@@ -93,6 +93,7 @@ typedef enum {
     ARG_BSTR,
     ARG_INT,
     ARG_UINT,
+    ARG_ADDR,
     ARG_DOUBLE
 } instr_arg_type_t;
 
@@ -107,6 +108,8 @@ typedef enum {
     X(equal,          1, 0,           0)          \
     X(icall,          1, ARG_BSTR,    ARG_UINT)   \
     X(icallv,         1, ARG_BSTR,    ARG_UINT)   \
+    X(jmp,            0, ARG_ADDR,    0)          \
+    X(jmp_false,      0, ARG_ADDR,    0)          \
     X(long,           1, ARG_INT,     0)          \
     X(neg,            1, 0,           0)          \
     X(nequal,         1, 0,           0)          \

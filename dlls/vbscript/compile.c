@@ -33,11 +33,25 @@ typedef struct {
     unsigned instr_size;
     vbscode_t *code;
 
+    unsigned *labels;
+    unsigned labels_size;
+    unsigned labels_cnt;
+
     dim_decl_t *dim_decls;
     dynamic_var_t *global_vars;
 } compile_ctx_t;
 
 static HRESULT compile_expression(compile_ctx_t*,expression_t*);
+static HRESULT compile_statement(compile_ctx_t*,statement_t*);
+
+static const struct {
+    instr_arg_type_t arg1_type;
+    instr_arg_type_t arg2_type;
+} instr_info[] = {
+#define X(n,a,b,c) {b,c},
+OP_LIST
+#undef X
+};
 
 static inline void *compiler_alloc(vbscode_t *vbscode, size_t size)
 {
@@ -90,6 +104,18 @@ static HRESULT push_instr_int(compile_ctx_t *ctx, vbsop_t op, LONG arg)
         return E_OUTOFMEMORY;
 
     instr_ptr(ctx, ret)->arg1.lng = arg;
+    return S_OK;
+}
+
+static HRESULT push_instr_addr(compile_ctx_t *ctx, vbsop_t op, unsigned arg)
+{
+    unsigned ret;
+
+    ret = push_instr(ctx, op);
+    if(ret == -1)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, ret)->arg1.uint = arg;
     return S_OK;
 }
 
@@ -186,6 +212,35 @@ static HRESULT push_instr_bstr_uint(compile_ctx_t *ctx, vbsop_t op, const WCHAR 
     instr_ptr(ctx, instr)->arg1.bstr = bstr;
     instr_ptr(ctx, instr)->arg2.uint = arg2;
     return S_OK;
+}
+
+#define LABEL_FLAG 0x80000000
+
+static unsigned alloc_label(compile_ctx_t *ctx)
+{
+    if(!ctx->labels_size) {
+        ctx->labels = heap_alloc(8 * sizeof(*ctx->labels));
+        if(!ctx->labels)
+            return -1;
+        ctx->labels_size = 8;
+    }else if(ctx->labels_size == ctx->labels_cnt) {
+        unsigned *new_labels;
+
+        new_labels = heap_realloc(ctx->labels, 2*ctx->labels_size*sizeof(*ctx->labels));
+        if(!new_labels)
+            return -1;
+
+        ctx->labels = new_labels;
+        ctx->labels_size *= 2;
+    }
+
+    return ctx->labels_cnt++ | LABEL_FLAG;
+}
+
+static inline void label_set_addr(compile_ctx_t *ctx, unsigned label)
+{
+    assert(label & LABEL_FLAG);
+    ctx->labels[label & ~LABEL_FLAG] = ctx->instr_cnt;
 }
 
 static HRESULT compile_args(compile_ctx_t *ctx, expression_t *args, unsigned *ret)
@@ -292,6 +347,67 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
     return S_OK;
 }
 
+static HRESULT compile_if_statement(compile_ctx_t *ctx, if_statement_t *stat)
+{
+    unsigned cnd_jmp, endif_label = -1;
+    elseif_decl_t *elseif_decl;
+    HRESULT hres;
+
+    hres = compile_expression(ctx, stat->expr);
+    if(FAILED(hres))
+        return hres;
+
+    cnd_jmp = push_instr(ctx, OP_jmp_false);
+    if(cnd_jmp == -1)
+        return E_OUTOFMEMORY;
+
+    hres = compile_statement(ctx, stat->if_stat);
+    if(FAILED(hres))
+        return hres;
+
+    if(stat->else_stat || stat->elseifs) {
+        endif_label = alloc_label(ctx);
+        if(endif_label == -1)
+            return E_OUTOFMEMORY;
+
+        hres = push_instr_addr(ctx, OP_jmp, endif_label);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    for(elseif_decl = stat->elseifs; elseif_decl; elseif_decl = elseif_decl->next) {
+        instr_ptr(ctx, cnd_jmp)->arg1.uint = ctx->instr_cnt;
+
+        hres = compile_expression(ctx, elseif_decl->expr);
+        if(FAILED(hres))
+            return hres;
+
+        cnd_jmp = push_instr(ctx, OP_jmp_false);
+        if(cnd_jmp == -1)
+            return E_OUTOFMEMORY;
+
+        hres = compile_statement(ctx, elseif_decl->stat);
+        if(FAILED(hres))
+            return hres;
+
+        hres = push_instr_addr(ctx, OP_jmp, endif_label);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    instr_ptr(ctx, cnd_jmp)->arg1.uint = ctx->instr_cnt;
+
+    if(stat->else_stat) {
+        hres = compile_statement(ctx, stat->else_stat);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(endif_label != -1)
+        label_set_addr(ctx, endif_label);
+    return S_OK;
+}
+
 static HRESULT compile_assign_statement(compile_ctx_t *ctx, assign_statement_t *stat)
 {
     HRESULT hres;
@@ -365,6 +481,9 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
         case STAT_DIM:
             hres = compile_dim_statement(ctx, (dim_statement_t*)stat);
             break;
+        case STAT_IF:
+            hres = compile_if_statement(ctx, (if_statement_t*)stat);
+            break;
         default:
             FIXME("Unimplemented statement type %d\n", stat->type);
             hres = E_NOTIMPL;
@@ -376,6 +495,21 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
     }
 
     return S_OK;
+}
+
+static void resolve_labels(compile_ctx_t *ctx)
+{
+    instr_t *instr;
+
+    for(instr = ctx->code->instrs; instr < ctx->code->instrs+ctx->instr_cnt; instr++) {
+        if(instr_info[instr->op].arg1_type == ARG_ADDR && (instr->arg1.uint & LABEL_FLAG)) {
+            assert((instr->arg1.uint & ~LABEL_FLAG) < ctx->labels_cnt);
+            instr->arg1.uint = ctx->labels[instr->arg1.uint & ~LABEL_FLAG];
+        }
+        assert(instr_info[instr->op].arg2_type != ARG_ADDR);
+    }
+
+    ctx->labels_cnt = 0;
 }
 
 static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *func)
@@ -390,6 +524,8 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
 
     if(push_instr(ctx, OP_ret) == -1)
         return E_OUTOFMEMORY;
+
+    resolve_labels(ctx);
 
     if(ctx->dim_decls) {
         dim_decl_t *dim_decl;
@@ -508,6 +644,8 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, vbscode_t **ret)
 
     ctx.global_vars = NULL;
     ctx.dim_decls = NULL;
+    ctx.labels = NULL;
+    ctx.labels_cnt = ctx.labels_size = 0;
 
     hres = compile_func(&ctx, ctx.parser.stats, &ctx.code->global_code);
     if(FAILED(hres)) {
