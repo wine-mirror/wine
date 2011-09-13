@@ -65,6 +65,12 @@ HRESULT disp_get_id(IDispatch*,BSTR,DISPID*);
 HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,DISPPARAMS*,VARIANT*);
 HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,VARIANT*);
 
+typedef struct _dynamic_var_t {
+    struct _dynamic_var_t *next;
+    VARIANT v;
+    const WCHAR *name;
+} dynamic_var_t;
+
 struct _script_ctx_t {
     IActiveScriptSite *site;
     LCID lcid;
@@ -72,6 +78,8 @@ struct _script_ctx_t {
     IDispatch *host_global;
 
     vbdisp_t *script_obj;
+
+    dynamic_var_t *global_vars;
 
     struct list code_list;
     struct list named_items;

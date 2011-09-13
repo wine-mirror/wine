@@ -32,6 +32,9 @@ typedef struct {
     unsigned instr_cnt;
     unsigned instr_size;
     vbscode_t *code;
+
+    dim_decl_t *dim_decls;
+    dynamic_var_t *global_vars;
 } compile_ctx_t;
 
 static HRESULT compile_expression(compile_ctx_t*,expression_t*);
@@ -315,6 +318,38 @@ static HRESULT compile_assign_statement(compile_ctx_t *ctx, assign_statement_t *
     return hres;
 }
 
+static BOOL lookup_dim_decls(compile_ctx_t *ctx, const WCHAR *name)
+{
+    dim_decl_t *dim_decl;
+
+    for(dim_decl = ctx->dim_decls; dim_decl; dim_decl = dim_decl->next) {
+        if(!strcmpiW(dim_decl->name, name))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+static HRESULT compile_dim_statement(compile_ctx_t *ctx, dim_statement_t *stat)
+{
+    dim_decl_t *dim_decl = stat->dim_decls;
+
+    while(1) {
+        if(lookup_dim_decls(ctx, dim_decl->name)) {
+            FIXME("dim %s name redefined\n", debugstr_w(dim_decl->name));
+            return E_FAIL;
+        }
+
+        if(!dim_decl->next)
+            break;
+        dim_decl = dim_decl->next;
+    }
+
+    dim_decl->next = ctx->dim_decls;
+    ctx->dim_decls = stat->dim_decls;
+    return S_OK;
+}
+
 static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
 {
     HRESULT hres;
@@ -326,6 +361,9 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
             break;
         case STAT_CALL:
             hres = compile_member_expression(ctx, ((call_statement_t*)stat)->expr, FALSE);
+            break;
+        case STAT_DIM:
+            hres = compile_dim_statement(ctx, (dim_statement_t*)stat);
             break;
         default:
             FIXME("Unimplemented statement type %d\n", stat->type);
@@ -352,6 +390,52 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
 
     if(push_instr(ctx, OP_ret) == -1)
         return E_OUTOFMEMORY;
+
+    if(ctx->dim_decls) {
+        dim_decl_t *dim_decl;
+        dynamic_var_t *new_var;
+
+        for(dim_decl = ctx->dim_decls; dim_decl; dim_decl = dim_decl->next) {
+            new_var = compiler_alloc(ctx->code, sizeof(*new_var));
+            if(!new_var)
+                return E_OUTOFMEMORY;
+
+            new_var->name = compiler_alloc_string(ctx->code, dim_decl->name);
+            if(!new_var->name)
+                return E_OUTOFMEMORY;
+
+            V_VT(&new_var->v) = VT_EMPTY;
+
+            new_var->next = ctx->global_vars;
+            ctx->global_vars = new_var;
+        }
+    }
+
+    return S_OK;
+}
+
+static BOOL lookup_script_identifier(script_ctx_t *script, const WCHAR *identifier)
+{
+    dynamic_var_t *var;
+
+    for(var = script->global_vars; var; var = var->next) {
+        if(!strcmpiW(var->name, identifier))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+static HRESULT check_script_collisions(compile_ctx_t *ctx, script_ctx_t *script)
+{
+    dynamic_var_t *var;
+
+    for(var = ctx->global_vars; var; var = var->next) {
+        if(lookup_script_identifier(script, var->name)) {
+            FIXME("%s: redefined\n", debugstr_w(var->name));
+            return E_FAIL;
+        }
+    }
 
     return S_OK;
 }
@@ -422,11 +506,31 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, vbscode_t **ret)
     if(!ctx.code)
         return E_OUTOFMEMORY;
 
+    ctx.global_vars = NULL;
+    ctx.dim_decls = NULL;
+
     hres = compile_func(&ctx, ctx.parser.stats, &ctx.code->global_code);
     if(FAILED(hres)) {
         release_vbscode(ctx.code);
         return hres;
     }
+
+    hres = check_script_collisions(&ctx, script);
+    if(FAILED(hres)) {
+        release_vbscode(ctx.code);
+        return hres;
+    }
+
+    if(ctx.global_vars) {
+        dynamic_var_t *var;
+
+        for(var = ctx.global_vars; var->next; var = var->next);
+
+        var->next = script->global_vars;
+        script->global_vars = ctx.global_vars;
+    }
+
+    parser_release(&ctx.parser);
 
     list_add_tail(&script->code_list, &ctx.code->entry);
     *ret = ctx.code;
