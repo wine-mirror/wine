@@ -25,6 +25,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
+WINE_DECLARE_DEBUG_CHANNEL(vbscript_disas);
 
 typedef struct {
     parser_ctx_t parser;
@@ -45,13 +46,50 @@ static HRESULT compile_expression(compile_ctx_t*,expression_t*);
 static HRESULT compile_statement(compile_ctx_t*,statement_t*);
 
 static const struct {
+    const char *op_str;
     instr_arg_type_t arg1_type;
     instr_arg_type_t arg2_type;
 } instr_info[] = {
-#define X(n,a,b,c) {b,c},
+#define X(n,a,b,c) {#n,b,c},
 OP_LIST
 #undef X
 };
+
+static void dump_instr_arg(instr_arg_type_t type, instr_arg_t *arg)
+{
+    switch(type) {
+    case ARG_STR:
+    case ARG_BSTR:
+        TRACE_(vbscript_disas)("\t%s", debugstr_w(arg->str));
+        break;
+    case ARG_INT:
+        TRACE_(vbscript_disas)("\t%d", arg->uint);
+        break;
+    case ARG_UINT:
+    case ARG_ADDR:
+        TRACE_(vbscript_disas)("\t%u", arg->uint);
+        break;
+    case ARG_DOUBLE:
+        TRACE_(vbscript_disas)("\t%lf", *arg->dbl);
+        break;
+    case ARG_NONE:
+        break;
+    default:
+        assert(0);
+    }
+}
+
+static void dump_code(compile_ctx_t *ctx)
+{
+    instr_t *instr;
+
+    for(instr = ctx->code->instrs; instr < ctx->code->instrs+ctx->instr_cnt; instr++) {
+        TRACE_(vbscript_disas)("%d:\t%s", instr-ctx->code->instrs, instr_info[instr->op].op_str);
+        dump_instr_arg(instr_info[instr->op].arg1_type, &instr->arg1);
+        dump_instr_arg(instr_info[instr->op].arg2_type, &instr->arg2);
+        TRACE_(vbscript_disas)("\n");
+    }
+}
 
 static inline void *compiler_alloc(vbscode_t *vbscode, size_t size)
 {
@@ -669,6 +707,9 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, vbscode_t **ret)
     }
 
     parser_release(&ctx.parser);
+
+    if(TRACE_ON(vbscript_disas))
+        dump_code(&ctx);
 
     list_add_tail(&script->code_list, &ctx.code->entry);
     *ret = ctx.code;
