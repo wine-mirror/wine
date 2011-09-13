@@ -2462,8 +2462,8 @@
 @ stub -arch=win64 ?seekpos@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAA?AV?$fpos@H@2@V32@H@Z
 @ stub -arch=win32 ?seekpos@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAE?AV?$fpos@H@2@V32@H@Z
 @ stub -arch=win64 ?seekpos@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAA?AV?$fpos@H@2@V32@H@Z
-@ stub ?set_new_handler@std@@YAP6AXXZH@Z
-@ stub ?set_new_handler@std@@YAP6AXXZP6AXXZ@Z
+@ cdecl ?set_new_handler@std@@YAP6AXXZH@Z(long) msvcp90.?set_new_handler@std@@YAP6AXXZH@Z
+@ cdecl ?set_new_handler@std@@YAP6AXXZP6AXXZ@Z(ptr) msvcp90.?set_new_handler@std@@YAP6AXXZP6AXXZ@Z
 @ stub -arch=win32 ?set_rdbuf@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEXPAV?$basic_streambuf@DU?$char_traits@D@std@@@2@@Z
 @ stub -arch=win64 ?set_rdbuf@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAAXPEAV?$basic_streambuf@DU?$char_traits@D@std@@@2@@Z
 @ stub -arch=win32 ?set_rdbuf@?$basic_ios@GU?$char_traits@G@std@@@std@@QAEXPAV?$basic_streambuf@GU?$char_traits@G@std@@@2@@Z
