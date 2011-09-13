@@ -191,6 +191,11 @@ static HRESULT stack_pop_disp(exec_ctx_t *ctx, IDispatch **ret)
     return S_OK;
 }
 
+static inline void instr_jmp(exec_ctx_t *ctx, unsigned addr)
+{
+    ctx->instr = ctx->code->instrs + addr;
+}
+
 static void vbstack_to_dp(exec_ctx_t *ctx, unsigned arg_cnt, DISPPARAMS *dp)
 {
     dp->cArgs = arg_cnt;
@@ -369,8 +374,12 @@ static HRESULT interp_assign_member(exec_ctx_t *ctx)
 
 static HRESULT interp_jmp(exec_ctx_t *ctx)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    const unsigned arg = ctx->instr->arg1.uint;
+
+    TRACE("%u\n", arg);
+
+    instr_jmp(ctx, arg);
+    return S_OK;
 }
 
 static HRESULT interp_jmp_false(exec_ctx_t *ctx)
