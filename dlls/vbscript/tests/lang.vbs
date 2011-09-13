@@ -42,10 +42,14 @@ Call ok(&hffFFffFF& = -1, "&hffFFffFF& <> -1")
 Call ok(--1 = 1, "--1 = " & --1)
 Call ok(-empty = 0, "-empty = " & (-empty))
 
+x = "xx"
+Call ok(x = "xx", "x = " & x & " expected ""xx""")
+
 Call ok(true <> false, "true <> false is false")
 Call ok(not (true <> true), "true <> true is true")
 Call ok(not ("x" <> "x"), """x"" <> ""x"" is true")
 Call ok(not (empty <> empty), "empty <> empty is true")
+Call ok(x <> "x", "x = ""x""")
 
 Call ok(getVT(false) = "VT_BOOL", "getVT(false) is not VT_BOOL")
 Call ok(getVT(true) = "VT_BOOL", "getVT(true) is not VT_BOOL")
@@ -67,25 +71,32 @@ Call ok(getVT(1 & 100000) = "VT_BSTR", "getVT(1 & 100000) is not VT_BSTR")
 Call ok(getVT(-empty) = "VT_I2", "getVT(-empty) = " & getVT(-empty))
 Call ok(getVT(-null) = "VT_NULL", "getVT(-null) = " & getVT(-null))
 Call ok(getVT(y) = "VT_EMPTY*", "getVT(y) = " & getVT(y))
+x = true
+Call ok(getVT(x) = "VT_BOOL*", "getVT(x) = " & getVT(x))
 
+x = "xx"
 Call ok("ab" & "cd" = "abcd", """ab"" & ""cd"" <> ""abcd""")
 Call ok("ab " & null = "ab ", """ab"" & null = " & ("ab " & null))
 Call ok("ab " & empty = "ab ", """ab"" & empty = " & ("ab " & empty))
 Call ok(1 & 100000 = "1100000", "1 & 100000 = " & (1 & 100000))
+Call ok("ab" & x = "abxx", """ab"" & x = " & ("ab"&x))
 
 'if(isEnglishLocale) then
 '    Call ok("" & true = "True", """"" & true = " & true)
 '    Call ok(true & false = "TrueFalse", "true & false = " & (true & false))
 'end if
 
+x = 3
 Call ok(2+2 = 4, "2+2 = " & (2+2))
 Call ok(false + 6 + true = 5, "false + 6 + true <> 5")
 Call ok(getVT(2+null) = "VT_NULL", "getVT(2+null) = " & getVT(2+null))
 Call ok(2+empty = 2, "2+empty = " & (2+empty))
+Call ok(x+x = 6, "x+x = " & (x+x))
 
 Call ok(5-1 = 4, "5-1 = " & (5-1))
 Call ok(3+5-true = 9, "3+5-true <> 9")
 Call ok(getVT(2-null) = "VT_NULL", "getVT(2-null) = " & getVT(2-null))
 Call ok(2-empty = 2, "2-empty = " & (2-empty))
+Call ok(2-x = -1, "2-x = " & (2-x))
 
 reportSuccess()

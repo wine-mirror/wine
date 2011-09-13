@@ -288,10 +288,21 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, VARIANT *val, BOOL own_v
         return hres;
 
     switch(ref.type) {
-    case REF_VAR:
-        FIXME("REF_VAR not implemented\n");
-        hres = E_NOTIMPL;
+    case REF_VAR: {
+        VARIANT *v = ref.u.v;
+
+        if(V_VT(v) == (VT_VARIANT|VT_BYREF))
+            v = V_VARIANTREF(v);
+
+        if(own_val) {
+            VariantClear(v);
+            *v = *val;
+            hres = S_OK;
+        }else {
+            hres = VariantCopy(v, val);
+        }
         break;
+    }
     case REF_DISP:
         hres = disp_propput(ctx->script, ref.u.d.disp, ref.u.d.id, val);
         if(own_val)
