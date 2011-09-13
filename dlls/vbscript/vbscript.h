@@ -107,6 +107,7 @@ typedef enum {
     X(double,         1, ARG_DOUBLE,  0)          \
     X(empty,          1, 0,           0)          \
     X(equal,          1, 0,           0)          \
+    X(exp,            1, 0,           0)          \
     X(icall,          1, ARG_BSTR,    ARG_UINT)   \
     X(icallv,         1, ARG_BSTR,    ARG_UINT)   \
     X(idiv,           1, 0,           0)          \

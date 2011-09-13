@@ -210,7 +210,8 @@ MultiplicativeExpression
                                                 { $$ = new_binary_expression(ctx, EXPR_DIV, $1, $3); CHECK_ERROR; }
 
 ExpExpression
-    : UnaryExpression /* FIXME */   { $$ = $1; }
+    : UnaryExpression                           { $$ = $1; }
+    | ExpExpression '^' UnaryExpression         { $$ = new_binary_expression(ctx, EXPR_EXP, $1, $3); CHECK_ERROR; }
 
 UnaryExpression
     : LiteralExpression             { $$ = $1; }

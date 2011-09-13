@@ -24,6 +24,7 @@ typedef enum {
     EXPR_DOUBLE,
     EXPR_EMPTY,
     EXPR_EQUAL,
+    EXPR_EXP,
     EXPR_IDIV,
     EXPR_MEMBER,
     EXPR_MOD,
