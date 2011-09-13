@@ -2229,7 +2229,7 @@ HRESULT __cdecl wined3d_device_get_material(const struct wined3d_device *device,
 float __cdecl wined3d_device_get_npatch_mode(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_get_palette_entries(struct wined3d_device *device,
         UINT palette_idx, PALETTEENTRY *entries);
-struct wined3d_shader * __cdecl wined3d_device_get_pixel_shader(struct wined3d_device *device);
+struct wined3d_shader * __cdecl wined3d_device_get_pixel_shader(const struct wined3d_device *device);
 void __cdecl wined3d_device_get_primitive_type(struct wined3d_device *device, WINED3DPRIMITIVETYPE *primitive_topology);
 HRESULT __cdecl wined3d_device_get_ps_consts_b(struct wined3d_device *device,
         UINT start_register, BOOL *constants, UINT bool_count);
