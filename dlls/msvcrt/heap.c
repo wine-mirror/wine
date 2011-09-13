@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
       ~(alignment - 1)) - offset))
 
 
-typedef void (CDECL *MSVCRT_new_handler_func)(MSVCRT_size_t size);
+typedef int (CDECL *MSVCRT_new_handler_func)(MSVCRT_size_t size);
 
 static MSVCRT_new_handler_func MSVCRT_new_handler;
 static int MSVCRT_new_mode;
@@ -54,14 +54,28 @@ static MSVCRT_size_t MSVCRT_sbh_threshold = 0;
  */
 void* CDECL MSVCRT_operator_new(MSVCRT_size_t size)
 {
-  void *retval = HeapAlloc(GetProcessHeap(), 0, size);
-  TRACE("(%ld) returning %p\n", size, retval);
-  if(retval) return retval;
-  LOCK_HEAP;
-  if(MSVCRT_new_handler)
-    (*MSVCRT_new_handler)(size);
-  UNLOCK_HEAP;
-  return retval;
+  void *retval;
+  int freed;
+
+  do
+  {
+    retval = HeapAlloc(GetProcessHeap(), 0, size);
+    if(retval)
+    {
+      TRACE("(%ld) returning %p\n", size, retval);
+      return retval;
+    }
+
+    LOCK_HEAP;
+    if(MSVCRT_new_handler)
+      freed = (*MSVCRT_new_handler)(size);
+    else
+      freed = 0;
+    UNLOCK_HEAP;
+  } while(freed);
+
+  TRACE("(%ld) out of memory\n", size);
+  return NULL;
 }
 
 
