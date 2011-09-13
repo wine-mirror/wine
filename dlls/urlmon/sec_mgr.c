@@ -619,7 +619,7 @@ static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone, LPWSTR *ret_url)
     return hres;
 }
 
-static HRESULT map_uri_to_zone(IUri *uri, DWORD *zone)
+static HRESULT map_uri_to_zone(IUri *uri, DWORD *zone, IUri **ret_uri)
 {
     HRESULT hres;
     IUri *secur_uri;
@@ -629,7 +629,10 @@ static HRESULT map_uri_to_zone(IUri *uri, DWORD *zone)
         return hres;
 
     hres = map_security_uri_to_zone(secur_uri, zone);
-    IUri_Release(secur_uri);
+    if(FAILED(hres) || !ret_uri)
+        IUri_Release(secur_uri);
+    else
+        *ret_uri = secur_uri;
 
     return hres;
 }
@@ -708,67 +711,125 @@ static HRESULT get_action_policy(DWORD zone, DWORD action, BYTE *policy, DWORD s
     return hres;
 }
 
-static HRESULT get_security_id(LPCWSTR url, BYTE *secid, DWORD *secid_len)
+static HRESULT generate_security_id(IUri *uri, BYTE *secid, DWORD *secid_len, DWORD zone)
 {
-    LPWSTR secur_url, ptr, ptr2;
-    DWORD zone, len;
+    DWORD len;
     HRESULT hres;
+    DWORD scheme_type;
 
-    static const WCHAR wszFile[] = {'f','i','l','e',':'};
-
-    hres = map_url_to_zone(url, &zone, &secur_url);
     if(zone == URLZONE_INVALID)
-        return (hres == 0x80041001 || hres == S_OK) ? E_INVALIDARG : hres;
+        return E_INVALIDARG;
 
-    /* file protocol is a special case */
-    if(strlenW(secur_url) >= sizeof(wszFile)/sizeof(WCHAR)
-            && !memcmp(secur_url, wszFile, sizeof(wszFile))) {
-        WCHAR path[MAX_PATH];
-        len = sizeof(path)/sizeof(WCHAR);
+    hres = IUri_GetScheme(uri, &scheme_type);
+    if(FAILED(hres))
+        return hres;
 
-        hres = CoInternetParseUrl(secur_url, PARSE_PATH_FROM_URL, 0, path, len, &len, 0);
-        if(hres == S_OK && !PathIsNetworkPathW(path)) {
-            static const BYTE secidFile[] = {'f','i','l','e',':'};
+    /* Windows handles opaque URLs differently then hierarchical ones. */
+    if(!is_hierarchical_scheme(scheme_type) && scheme_type != URL_SCHEME_WILDCARD) {
+        BSTR display_uri;
 
-            CoTaskMemFree(secur_url);
+        hres = IUri_GetDisplayUri(uri, &display_uri);
+        if(FAILED(hres))
+            return hres;
 
-            if(*secid_len < sizeof(secidFile)+sizeof(zone))
-                return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+        len = WideCharToMultiByte(CP_ACP, 0, display_uri, -1, NULL, 0, NULL, NULL)-1;
 
-            memcpy(secid, secidFile, sizeof(secidFile));
-            *(DWORD*)(secid+sizeof(secidFile)) = zone;
-
-            *secid_len = sizeof(secidFile)+sizeof(zone);
-            return S_OK;
+        if(len+sizeof(DWORD) > *secid_len) {
+            SysFreeString(display_uri);
+            return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
         }
+
+        WideCharToMultiByte(CP_ACP, 0, display_uri, -1, (LPSTR)secid, len, NULL, NULL);
+        SysFreeString(display_uri);
+
+        *(DWORD*)(secid+len) = zone;
+    } else {
+        BSTR host, scheme;
+        DWORD host_len, scheme_len;
+        BYTE *ptr;
+
+        hres = IUri_GetHost(uri, &host);
+        if(FAILED(hres))
+            return hres;
+
+        /* The host can't be empty for Wildcard URIs. */
+        if(scheme_type == URL_SCHEME_WILDCARD && !*host) {
+            SysFreeString(host);
+            return E_INVALIDARG;
+        }
+
+        hres = IUri_GetSchemeName(uri, &scheme);
+        if(FAILED(hres)) {
+            SysFreeString(host);
+            return hres;
+        }
+
+        host_len = WideCharToMultiByte(CP_ACP, 0, host, -1, NULL, 0, NULL, NULL)-1;
+        scheme_len = WideCharToMultiByte(CP_ACP, 0, scheme, -1, NULL, 0, NULL, NULL)-1;
+
+        len = host_len+scheme_len+sizeof(BYTE);
+
+        if(len+sizeof(DWORD) > *secid_len) {
+            SysFreeString(host);
+            SysFreeString(scheme);
+            return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+        }
+
+        WideCharToMultiByte(CP_ACP, 0, scheme, -1, (LPSTR)secid, len, NULL, NULL);
+        SysFreeString(scheme);
+
+        ptr = secid+scheme_len;
+        *ptr++ = ':';
+
+        WideCharToMultiByte(CP_ACP, 0, host, -1, (LPSTR)ptr, host_len, NULL, NULL);
+        SysFreeString(host);
+
+        ptr += host_len;
+
+        *(DWORD*)ptr = zone;
     }
-
-    ptr = strchrW(secur_url, ':');
-    ptr2 = ++ptr;
-    while(*ptr2 == '/')
-        ptr2++;
-    if(ptr2 != ptr)
-        memmove(ptr, ptr2, (strlenW(ptr2)+1)*sizeof(WCHAR));
-
-    ptr = strchrW(ptr, '/');
-    if(ptr)
-        *ptr = 0;
-
-    len = WideCharToMultiByte(CP_ACP, 0, secur_url, -1, NULL, 0, NULL, NULL)-1;
-
-    if(len+sizeof(DWORD) > *secid_len) {
-        CoTaskMemFree(secur_url);
-        return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
-    }
-
-    WideCharToMultiByte(CP_ACP, 0, secur_url, -1, (LPSTR)secid, len, NULL, NULL);
-    CoTaskMemFree(secur_url);
-
-    *(DWORD*)(secid+len) = zone;
 
     *secid_len = len+sizeof(DWORD);
 
     return S_OK;
+}
+
+static HRESULT get_security_id_for_url(LPCWSTR url, BYTE *secid, DWORD *secid_len)
+{
+    HRESULT hres;
+    DWORD zone = URLZONE_INVALID;
+    LPWSTR secur_url = NULL;
+    IUri *uri;
+
+    hres = map_url_to_zone(url, &zone, &secur_url);
+    if(FAILED(hres))
+        return hres == 0x80041001 ? E_INVALIDARG : hres;
+
+    hres = CreateUri(secur_url, 0, 0, &uri);
+    CoTaskMemFree(secur_url);
+    if(FAILED(hres))
+        return hres;
+
+    hres = generate_security_id(uri, secid, secid_len, zone);
+    IUri_Release(uri);
+
+    return hres;
+}
+
+static HRESULT get_security_id_for_uri(IUri *uri, BYTE *secid, DWORD *secid_len)
+{
+    HRESULT hres;
+    IUri *secur_uri;
+    DWORD zone = URLZONE_INVALID;
+
+    hres = map_uri_to_zone(uri, &zone, &secur_uri);
+    if(FAILED(hres))
+        return hres;
+
+    hres = generate_security_id(secur_uri, secid, secid_len, zone);
+    IUri_Release(secur_uri);
+
+    return hres;
 }
 
 /***********************************************************************
@@ -955,7 +1016,7 @@ static HRESULT WINAPI SecManagerImpl_GetSecurityId(IInternetSecurityManagerEx2 *
     if(dwReserved)
         FIXME("dwReserved is not supported\n");
 
-    return get_security_id(pwszUrl, pbSecurityId, pcbSecurityId);
+    return get_security_id_for_url(pwszUrl, pbSecurityId, pcbSecurityId);
 }
 
 
@@ -1127,7 +1188,7 @@ static HRESULT WINAPI SecManagerImpl_MapUrlToZoneEx2(IInternetSecurityManagerEx2
     if(dwFlags)
         FIXME("Unsupported flags: %08x\n", dwFlags);
 
-    return map_uri_to_zone(pUri, pdwZone);
+    return map_uri_to_zone(pUri, pdwZone, NULL);
 }
 
 static HRESULT WINAPI SecManagerImpl_ProcessUrlActionEx2(IInternetSecurityManagerEx2 *iface,
@@ -1144,8 +1205,15 @@ static HRESULT WINAPI SecManagerImpl_GetSecurityIdEx2(IInternetSecurityManagerEx
         IUri *pUri, BYTE *pbSecurityId, DWORD *pcbSecurityId, DWORD_PTR dwReserved)
 {
     SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
-    FIXME("(%p)->(%p %p %p %08x) stub\n", This, pUri, pbSecurityId, pcbSecurityId, (DWORD)dwReserved);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p %p %p %08x) stub\n", This, pUri, pbSecurityId, pcbSecurityId, (DWORD)dwReserved);
+
+    if(dwReserved)
+        FIXME("dwReserved is not supported yet\n");
+
+    if(!pUri || !pcbSecurityId || !pbSecurityId)
+        return E_INVALIDARG;
+
+    return get_security_id_for_uri(pUri, pbSecurityId, pcbSecurityId);
 }
 
 static HRESULT WINAPI SecManagerImpl_QueryCustomPolicyEx2(IInternetSecurityManagerEx2 *iface,
