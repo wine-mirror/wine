@@ -35,6 +35,7 @@
 #include "objsafe.h"
 
 static INT (WINAPI *pLCIDToLocaleName)(LCID,LPWSTR,INT,DWORD);
+static LANGID (WINAPI *pGetUserDefaultUILanguage)(void);
 
 static const char doc_blank[] = "<html></html>";
 static const char doc_str1[] = "<html><body>test</body></html>";
@@ -4133,11 +4134,16 @@ static void test_navigator(IHTMLDocument2 *doc)
     test_language_string(bstr, LOCALE_SYSTEM_DEFAULT);
     SysFreeString(bstr);
 
-    bstr = NULL;
-    hres = IOmNavigator_get_browserLanguage(navigator, &bstr);
-    ok(hres == S_OK, "get_browserLanguage failed: %08x\n", hres);
-    test_language_string(bstr, GetUserDefaultUILanguage());
-    SysFreeString(bstr);
+    if (pGetUserDefaultUILanguage)
+    {
+        bstr = NULL;
+        hres = IOmNavigator_get_browserLanguage(navigator, &bstr);
+        ok(hres == S_OK, "get_browserLanguage failed: %08x\n", hres);
+        test_language_string(bstr, pGetUserDefaultUILanguage());
+        SysFreeString(bstr);
+    }
+    else
+        win_skip("GetUserDefaultUILanguage not available\n");
 
     bstr = NULL;
     hres = IOmNavigator_get_userLanguage(navigator, &bstr);
@@ -6155,7 +6161,9 @@ static void run_domtest(const char *str, domtest_t test)
 
 START_TEST(dom)
 {
-    pLCIDToLocaleName = (void*)GetProcAddress(GetModuleHandleA("kernel32.dll"), "LCIDToLocaleName");
+    HMODULE hkernel32 = GetModuleHandleA("kernel32.dll");
+    pLCIDToLocaleName = (void*)GetProcAddress(hkernel32, "LCIDToLocaleName");
+    pGetUserDefaultUILanguage = (void*)GetProcAddress(hkernel32, "GetUserDefaultUILanguage");
 
     CoInitialize(NULL);
 
