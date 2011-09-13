@@ -39,7 +39,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Nicht angegeben"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:110
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:251 regedit.rc:122 winefile.rc:110
 msgid "Name"
 msgstr "Name"
 
@@ -59,7 +59,7 @@ msgstr "Setup-Programme"
 msgid "Programs (*.exe)"
 msgstr "Programme (*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:195 notepad.rc:75
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:75
 #: oleview.rc:101 progman.rc:79 regedit.rc:195 winhlp32.rc:87
 msgid "All files (*.*)"
 msgstr "Alle Dateien (*.*)"
@@ -149,7 +149,7 @@ msgstr "Ü&ber den Folderpicker"
 msgid "Document Folders"
 msgstr "Dokumenten Ordner"
 
-#: comdlg32.rc:31 shell32.rc:199
+#: comdlg32.rc:31 shell32.rc:200
 msgid "My Documents"
 msgstr "Meine Dokumente"
 
@@ -1592,7 +1592,7 @@ msgstr "Erweiterte Schlüsselnutzung (Eigenschaft)"
 msgid "Friendly name"
 msgstr "Angezeigter Name"
 
-#: cryptui.rc:62 shell32.rc:251 ipconfig.rc:41
+#: cryptui.rc:62 shell32.rc:252 ipconfig.rc:41
 msgid "Description"
 msgstr "Beschreibung"
 
@@ -5770,7 +5770,7 @@ msgstr ""
 "Fügt den Inhalt der Datei als Objekt so in Ihr Dokument ein, dass Sie es mit "
 "dem Programm aktivieren können, mit dem es erstellt wurde."
 
-#: oledlg.rc:27 shell32.rc:193
+#: oledlg.rc:27 shell32.rc:194
 msgid "Browse"
 msgstr "Durchsuchen"
 
@@ -6356,152 +6356,152 @@ msgstr "Auswählen"
 msgid "Open"
 msgstr "Öffnen"
 
-#: shell32.rc:185
+#: shell32.rc:186
 msgid "Restart"
 msgstr "Neustarten"
 
-#: shell32.rc:186
+#: shell32.rc:187
 msgid "Do you want to simulate a Windows reboot?"
 msgstr "Möchten Sie, dass ein simulierter Windows Neustart durchgeführt wird?"
 
-#: shell32.rc:187
+#: shell32.rc:188
 msgid "Shutdown"
 msgstr "Beenden"
 
-#: shell32.rc:188
+#: shell32.rc:189
 msgid "Do you want to shutdown your Wine session?"
 msgstr "Möchten Sie die aktuelle Wine Sitzung beenden?"
 
-#: shell32.rc:198
+#: shell32.rc:199
 msgid "Start Menu\\Programs"
 msgstr "Startmenü\\Programme"
 
-#: shell32.rc:200
+#: shell32.rc:201
 msgid "Favorites"
 msgstr "Favoriten"
 
-#: shell32.rc:201
+#: shell32.rc:202
 msgid "Start Menu\\Programs\\StartUp"
 msgstr "Startmenü\\Programme\\Autostart"
 
-#: shell32.rc:202
+#: shell32.rc:203
 msgid "Recent"
 msgstr "Recent"
 
-#: shell32.rc:203
+#: shell32.rc:204
 msgid "SendTo"
 msgstr "SendTo"
 
-#: shell32.rc:204
+#: shell32.rc:205
 msgid "Start Menu"
 msgstr "Startmenü"
 
-#: shell32.rc:205
+#: shell32.rc:206
 msgid "My Music"
 msgstr "Eigene Musik"
 
-#: shell32.rc:206
+#: shell32.rc:207
 msgid "My Videos"
 msgstr "Eigene Videos"
 
-#: shell32.rc:207
+#: shell32.rc:208
 msgctxt "directory"
 msgid "Desktop"
 msgstr "Desktop"
 
-#: shell32.rc:208
+#: shell32.rc:209
 msgid "NetHood"
 msgstr "Netzwerkumgebung"
 
-#: shell32.rc:209
+#: shell32.rc:210
 msgid "Templates"
 msgstr "Vorlagen"
 
-#: shell32.rc:210
+#: shell32.rc:211
 msgid "Application Data"
 msgstr "Anwendungsdaten"
 
-#: shell32.rc:211
+#: shell32.rc:212
 msgid "PrintHood"
 msgstr "Druckumgebung"
 
-#: shell32.rc:212
+#: shell32.rc:213
 msgid "Local Settings\\Application Data"
 msgstr "Lokale Einstellungen\\Anwendungsdaten"
 
-#: shell32.rc:213
+#: shell32.rc:214
 msgid "Local Settings\\Temporary Internet Files"
 msgstr "Lokale Einstellungen\\Temporary Internet Files"
 
-#: shell32.rc:214
+#: shell32.rc:215
 msgid "Cookies"
 msgstr "Cookies"
 
-#: shell32.rc:215
+#: shell32.rc:216
 msgid "Local Settings\\History"
 msgstr "Lokale Einstellungen\\Verlauf"
 
-#: shell32.rc:216
+#: shell32.rc:217
 msgid "Program Files"
 msgstr "Programme"
 
-#: shell32.rc:218
+#: shell32.rc:219
 msgid "My Pictures"
 msgstr "Eigene Bilder"
 
-#: shell32.rc:219
+#: shell32.rc:220
 msgid "Program Files\\Common Files"
 msgstr "Programme\\Gemeinsame Dateien"
 
-#: shell32.rc:221 shell32.rc:147 shell32.rc:243
+#: shell32.rc:222 shell32.rc:147 shell32.rc:244
 msgid "Documents"
 msgstr "Dokumente"
 
-#: shell32.rc:222
+#: shell32.rc:223
 msgid "Start Menu\\Programs\\Administrative Tools"
 msgstr "Startmenü\\Programme\\Verwaltung"
 
-#: shell32.rc:223
+#: shell32.rc:224
 msgid "Music"
 msgstr "Musik"
 
-#: shell32.rc:224
+#: shell32.rc:225
 msgid "Pictures"
 msgstr "Bilder"
 
-#: shell32.rc:225
+#: shell32.rc:226
 msgid "Videos"
 msgstr "Videos"
 
-#: shell32.rc:226
+#: shell32.rc:227
 msgid "Local Settings\\Application Data\\Microsoft\\CD Burning"
 msgstr "Lokale Einstellungen\\Anwendungsdaten\\Microsoft\\CD Burning"
 
-#: shell32.rc:217
+#: shell32.rc:218
 msgid "Program Files (x86)"
 msgstr "Programme (x86)"
 
-#: shell32.rc:220
+#: shell32.rc:221
 msgid "Program Files (x86)\\Common Files"
 msgstr "Programme (x86)\\Gemeinsame Dateien"
 
-#: shell32.rc:227
+#: shell32.rc:228
 msgid "Contacts"
 msgstr "Kontakte"
 
-#: shell32.rc:228 winefile.rc:116
+#: shell32.rc:229 winefile.rc:116
 msgid "Links"
 msgstr "Links"
 
-#: shell32.rc:229
+#: shell32.rc:230
 msgid "Pictures\\Slide Shows"
 msgstr "Bilder\\Diashows"
 
-#: shell32.rc:230
+#: shell32.rc:231
 msgid "Music\\Playlists"
 msgstr "Musik\\Wiedergabelisten"
 
-#: shell32.rc:231 shell32.rc:244
+#: shell32.rc:232 shell32.rc:245
 msgid "Downloads"
 msgstr "Downloads"
 
@@ -6517,51 +6517,51 @@ msgstr "Ort"
 msgid "Model"
 msgstr "Modell"
 
-#: shell32.rc:232
+#: shell32.rc:233
 msgid "Microsoft\\Windows\\GameExplorer"
 msgstr "Microsoft\\Windows\\GameExplorer"
 
-#: shell32.rc:233
+#: shell32.rc:234
 msgid "Microsoft\\Windows\\Libraries"
 msgstr "Microsoft\\Windows\\Bibliotheken"
 
-#: shell32.rc:234
+#: shell32.rc:235
 msgid "Microsoft\\Windows\\Ringtones"
 msgstr "Microsoft\\Windows\\Ringtones"
 
-#: shell32.rc:235
+#: shell32.rc:236
 msgid "Music\\Sample Music"
 msgstr "Musik\\Beispielmusik"
 
-#: shell32.rc:236
+#: shell32.rc:237
 msgid "Pictures\\Sample Pictures"
 msgstr "Bilder\\Beispielbilder"
 
-#: shell32.rc:237
+#: shell32.rc:238
 msgid "Music\\Sample Playlists"
 msgstr "Musik\\Beispielwiedergabelisten"
 
-#: shell32.rc:238
+#: shell32.rc:239
 msgid "Videos\\Sample Videos"
 msgstr "Videos\\Beispielvideos"
 
-#: shell32.rc:239
+#: shell32.rc:240
 msgid "Saved Games"
 msgstr "Gespeicherte Spiele"
 
-#: shell32.rc:240
+#: shell32.rc:241
 msgid "Searches"
 msgstr "Suchvorgänge"
 
-#: shell32.rc:241
+#: shell32.rc:242
 msgid "Users"
 msgstr "Benutzer"
 
-#: shell32.rc:242
+#: shell32.rc:243
 msgid "OEM Links"
 msgstr "OEM Links"
 
-#: shell32.rc:245
+#: shell32.rc:246
 msgid "AppData\\LocalLow"
 msgstr "Anwendungsdaten\\LocalLow"
 
@@ -6633,7 +6633,7 @@ msgstr ""
 "\n"
 " Möchten Sie es stattdessen löschen?"
 
-#: shell32.rc:179
+#: shell32.rc:183
 msgid ""
 "This folder already contains a folder named '%1'.\n"
 "\n"
@@ -6648,43 +6648,43 @@ msgstr ""
 "\n"
 "Möchten sie trotzdem fortfahren?"
 
-#: shell32.rc:247
+#: shell32.rc:248
 msgid "New Folder"
 msgstr "Neuer Ordner"
 
-#: shell32.rc:249
+#: shell32.rc:250
 msgid "Wine Control Panel"
 msgstr "Wine Systemsteuerung"
 
-#: shell32.rc:191
+#: shell32.rc:192
 msgid "Unable to display Run File dialog box (internal error)"
 msgstr "Konnte Ausführen-Dialog nicht anzeigen (interner Fehler)"
 
-#: shell32.rc:192
+#: shell32.rc:193
 msgid "Unable to display Browse dialog box (internal error)"
 msgstr "Konnte Durchsuchen-Dialog nicht anzeigen (interner Fehler)"
 
-#: shell32.rc:194
+#: shell32.rc:195
 msgid "Executable files (*.exe)"
 msgstr "Programme (*.exe)"
 
-#: shell32.rc:253
+#: shell32.rc:254
 msgid "There is no Windows program configured to open this type of file."
 msgstr "Es ist kein Programm mit diesem Dateityp verknüpft."
 
-#: shell32.rc:255
+#: shell32.rc:256
 msgid "Are you sure you wish to permanently delete '%1'?"
 msgstr "Sind Sie sich sicher, dass Sie '%1'  für immer löschen möchten?"
 
-#: shell32.rc:256
+#: shell32.rc:257
 msgid "Are you sure you wish to permanently delete these %1 items?"
 msgstr "Sind Sie sich sicher, dass Sie diese %1 Objekte löschen möchten?"
 
-#: shell32.rc:257
+#: shell32.rc:258
 msgid "Confirm deletion"
 msgstr "Löschung bestätigen"
 
-#: shell32.rc:258
+#: shell32.rc:259
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
@@ -6694,7 +6694,7 @@ msgstr ""
 "\n"
 "Wollen Sie sie überschreiben?"
 
-#: shell32.rc:259
+#: shell32.rc:260
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
@@ -6704,11 +6704,11 @@ msgstr ""
 "\n"
 "Wollen Sie ihn überschreiben?"
 
-#: shell32.rc:260
+#: shell32.rc:261
 msgid "Confirm overwrite"
 msgstr "Überschreiben bestätigen"
 
-#: shell32.rc:277
+#: shell32.rc:278
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -6738,7 +6738,7 @@ msgstr ""
 "Public License erhalten haben; wenn nicht schreiben Sie der Free Software "
 "Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
-#: shell32.rc:265
+#: shell32.rc:266
 msgid "Wine License"
 msgstr "Wine Lizenz"
 

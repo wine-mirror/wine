@@ -41,7 +41,7 @@ msgstr ""
 msgid "Not specified"
 msgstr ""
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:110
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:251 regedit.rc:122 winefile.rc:110
 msgid "Name"
 msgstr "Nomo"
 
@@ -61,7 +61,7 @@ msgstr ""
 msgid "Programs (*.exe)"
 msgstr ""
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:195 notepad.rc:75
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:75
 #: oleview.rc:101 progman.rc:79 regedit.rc:195 winhlp32.rc:87
 msgid "All files (*.*)"
 msgstr "Tutaj dosieroj (*.*)"
@@ -152,7 +152,7 @@ msgstr "&Pri 'Test FolderPicker'"
 msgid "Document Folders"
 msgstr "Dokumentdosierujoj"
 
-#: comdlg32.rc:31 shell32.rc:199
+#: comdlg32.rc:31 shell32.rc:200
 msgid "My Documents"
 msgstr "Miaj Dokumentoj"
 
@@ -1607,7 +1607,7 @@ msgstr ""
 msgid "Friendly name"
 msgstr ""
 
-#: cryptui.rc:62 shell32.rc:251 ipconfig.rc:41
+#: cryptui.rc:62 shell32.rc:252 ipconfig.rc:41
 msgid "Description"
 msgstr "Description"
 
@@ -5846,7 +5846,7 @@ msgid ""
 "may activate it using the program which created it."
 msgstr ""
 
-#: oledlg.rc:27 shell32.rc:193
+#: oledlg.rc:27 shell32.rc:194
 msgid "Browse"
 msgstr ""
 
@@ -6431,156 +6431,156 @@ msgstr "Elektu"
 msgid "Open"
 msgstr "Malfermu"
 
-#: shell32.rc:185
+#: shell32.rc:186
 msgid "Restart"
 msgstr "Restartigu"
 
-#: shell32.rc:186
+#: shell32.rc:187
 msgid "Do you want to simulate a Windows reboot?"
 msgstr "Æu vi volas simuli Vindozan restartigon?"
 
-#: shell32.rc:187
+#: shell32.rc:188
 msgid "Shutdown"
 msgstr "Adiaýu"
 
-#: shell32.rc:188
+#: shell32.rc:189
 msgid "Do you want to shutdown your Wine session?"
 msgstr "Æu vi volas adiaýi Wine?"
 
-#: shell32.rc:198
+#: shell32.rc:199
 msgid "Start Menu\\Programs"
 msgstr "Start Menu\\Programs"
 
-#: shell32.rc:200
+#: shell32.rc:201
 msgid "Favorites"
 msgstr "Favorites"
 
-#: shell32.rc:201
+#: shell32.rc:202
 msgid "Start Menu\\Programs\\StartUp"
 msgstr "Start Menu\\Programs\\StartUp"
 
-#: shell32.rc:202
+#: shell32.rc:203
 msgid "Recent"
 msgstr "Recent"
 
-#: shell32.rc:203
+#: shell32.rc:204
 msgid "SendTo"
 msgstr "SendTo"
 
-#: shell32.rc:204
+#: shell32.rc:205
 msgid "Start Menu"
 msgstr "Start Menu"
 
-#: shell32.rc:205
+#: shell32.rc:206
 msgid "My Music"
 msgstr "Miaj Dokumentoj\\Muziko"
 
-#: shell32.rc:206
+#: shell32.rc:207
 msgid "My Videos"
 msgstr "Miai Dokumentoj\\Video"
 
-#: shell32.rc:207
+#: shell32.rc:208
 #, fuzzy
 msgctxt "directory"
 msgid "Desktop"
 msgstr "Desktop"
 
-#: shell32.rc:208
+#: shell32.rc:209
 msgid "NetHood"
 msgstr "NetHood"
 
-#: shell32.rc:209
+#: shell32.rc:210
 msgid "Templates"
 msgstr "Templates"
 
-#: shell32.rc:210
+#: shell32.rc:211
 msgid "Application Data"
 msgstr "Application Data"
 
-#: shell32.rc:211
+#: shell32.rc:212
 msgid "PrintHood"
 msgstr "PrintHood"
 
-#: shell32.rc:212
+#: shell32.rc:213
 msgid "Local Settings\\Application Data"
 msgstr "Local Settings\\Application Data"
 
-#: shell32.rc:213
+#: shell32.rc:214
 msgid "Local Settings\\Temporary Internet Files"
 msgstr "Temporary Internet Files"
 
-#: shell32.rc:214
+#: shell32.rc:215
 msgid "Cookies"
 msgstr "Cookies"
 
-#: shell32.rc:215
+#: shell32.rc:216
 msgid "Local Settings\\History"
 msgstr "History"
 
-#: shell32.rc:216
+#: shell32.rc:217
 msgid "Program Files"
 msgstr "Program Files"
 
-#: shell32.rc:218
+#: shell32.rc:219
 msgid "My Pictures"
 msgstr "Maj Documentoj\\Bildoj"
 
-#: shell32.rc:219
+#: shell32.rc:220
 msgid "Program Files\\Common Files"
 msgstr "Program Files\\Common Files"
 
-#: shell32.rc:221 shell32.rc:147 shell32.rc:243
+#: shell32.rc:222 shell32.rc:147 shell32.rc:244
 msgid "Documents"
 msgstr "Documents"
 
-#: shell32.rc:222
+#: shell32.rc:223
 msgid "Start Menu\\Programs\\Administrative Tools"
 msgstr "Start Menu\\Programs\\Administrative Tools"
 
-#: shell32.rc:223
+#: shell32.rc:224
 msgid "Music"
 msgstr "Documents\\Musiko"
 
-#: shell32.rc:224
+#: shell32.rc:225
 msgid "Pictures"
 msgstr "Documents\\Bildoj"
 
-#: shell32.rc:225
+#: shell32.rc:226
 msgid "Videos"
 msgstr "Documents\\Video"
 
-#: shell32.rc:226
+#: shell32.rc:227
 msgid "Local Settings\\Application Data\\Microsoft\\CD Burning"
 msgstr "Local Settings\\Application Data\\Microsoft\\CD Burning"
 
-#: shell32.rc:217
+#: shell32.rc:218
 #, fuzzy
 msgid "Program Files (x86)"
 msgstr "Program Files"
 
-#: shell32.rc:220
+#: shell32.rc:221
 #, fuzzy
 msgid "Program Files (x86)\\Common Files"
 msgstr "Program Files\\Common Files"
 
-#: shell32.rc:227
+#: shell32.rc:228
 #, fuzzy
 msgid "Contacts"
 msgstr "Enhavo"
 
-#: shell32.rc:228 winefile.rc:116
+#: shell32.rc:229 winefile.rc:116
 msgid "Links"
 msgstr ""
 
-#: shell32.rc:229
+#: shell32.rc:230
 msgid "Pictures\\Slide Shows"
 msgstr ""
 
-#: shell32.rc:230
+#: shell32.rc:231
 msgid "Music\\Playlists"
 msgstr ""
 
-#: shell32.rc:231 shell32.rc:244
+#: shell32.rc:232 shell32.rc:245
 msgid "Downloads"
 msgstr ""
 
@@ -6597,53 +6597,53 @@ msgstr "LAN Interkonekto"
 msgid "Model"
 msgstr ""
 
-#: shell32.rc:232
+#: shell32.rc:233
 msgid "Microsoft\\Windows\\GameExplorer"
 msgstr ""
 
-#: shell32.rc:233
+#: shell32.rc:234
 msgid "Microsoft\\Windows\\Libraries"
 msgstr ""
 
-#: shell32.rc:234
+#: shell32.rc:235
 msgid "Microsoft\\Windows\\Ringtones"
 msgstr ""
 
-#: shell32.rc:235
+#: shell32.rc:236
 msgid "Music\\Sample Music"
 msgstr ""
 
-#: shell32.rc:236
+#: shell32.rc:237
 msgid "Pictures\\Sample Pictures"
 msgstr ""
 
-#: shell32.rc:237
+#: shell32.rc:238
 msgid "Music\\Sample Playlists"
 msgstr ""
 
-#: shell32.rc:238
+#: shell32.rc:239
 msgid "Videos\\Sample Videos"
 msgstr ""
 
-#: shell32.rc:239
+#: shell32.rc:240
 #, fuzzy
 msgid "Saved Games"
 msgstr "Konservu &kiel"
 
-#: shell32.rc:240
+#: shell32.rc:241
 #, fuzzy
 msgid "Searches"
 msgstr "&Seræu"
 
-#: shell32.rc:241
+#: shell32.rc:242
 msgid "Users"
 msgstr ""
 
-#: shell32.rc:242
+#: shell32.rc:243
 msgid "OEM Links"
 msgstr ""
 
-#: shell32.rc:245
+#: shell32.rc:246
 msgid "AppData\\LocalLow"
 msgstr ""
 
@@ -6708,7 +6708,7 @@ msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 msgstr ""
 "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 
-#: shell32.rc:179
+#: shell32.rc:183
 msgid ""
 "This folder already contains a folder named '%1'.\n"
 "\n"
@@ -6722,47 +6722,47 @@ msgstr ""
 "selected folder they will be replaced. Do you still want to move or copy\n"
 "the folder?"
 
-#: shell32.rc:247
+#: shell32.rc:248
 msgid "New Folder"
 msgstr "New Folder"
 
-#: shell32.rc:249
+#: shell32.rc:250
 msgid "Wine Control Panel"
 msgstr "Wine Control Panel"
 
-#: shell32.rc:191
+#: shell32.rc:192
 msgid "Unable to display Run File dialog box (internal error)"
 msgstr ""
 
-#: shell32.rc:192
+#: shell32.rc:193
 msgid "Unable to display Browse dialog box (internal error)"
 msgstr ""
 
-#: shell32.rc:194
+#: shell32.rc:195
 #, fuzzy
 msgid "Executable files (*.exe)"
 msgstr "Tekstdosieroj (*.txt)"
 
-#: shell32.rc:253
+#: shell32.rc:254
 msgid "There is no Windows program configured to open this type of file."
 msgstr ""
 
-#: shell32.rc:255
+#: shell32.rc:256
 #, fuzzy
 msgid "Are you sure you wish to permanently delete '%1'?"
 msgstr "Æu vi estas certa pri forigo de '%1'?"
 
-#: shell32.rc:256
+#: shell32.rc:257
 #, fuzzy
 msgid "Are you sure you wish to permanently delete these %1 items?"
 msgstr "Æu vi estas certa pri forigo de æi tiuj %1 komponantoj?"
 
-#: shell32.rc:257
+#: shell32.rc:258
 #, fuzzy
 msgid "Confirm deletion"
 msgstr "Konfirmu forigon de dosiero"
 
-#: shell32.rc:258
+#: shell32.rc:259
 #, fuzzy
 msgid ""
 "A file already exists at the path %1.\n"
@@ -6772,7 +6772,7 @@ msgstr ""
 "Dosiero estas jam ekzistanta.\n"
 "Æu vi volas superskribi øin?"
 
-#: shell32.rc:259
+#: shell32.rc:260
 #, fuzzy
 msgid ""
 "A folder already exists at the path %1.\n"
@@ -6782,12 +6782,12 @@ msgstr ""
 "Dosiero estas jam ekzistanta.\n"
 "Æu vi volas superskribi øin?"
 
-#: shell32.rc:260
+#: shell32.rc:261
 #, fuzzy
 msgid "Confirm overwrite"
 msgstr "Konfirmu supreskribiton de dosieron"
 
-#: shell32.rc:277
+#: shell32.rc:278
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -6804,7 +6804,7 @@ msgid ""
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
 
-#: shell32.rc:265
+#: shell32.rc:266
 #, fuzzy
 msgid "Wine License"
 msgstr "Wine Helpanto"

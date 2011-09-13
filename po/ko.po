@@ -41,7 +41,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "지정되지 않음"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:110
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:251 regedit.rc:122 winefile.rc:110
 msgid "Name"
 msgstr "이름"
 
@@ -61,7 +61,7 @@ msgstr "설치 프로그램"
 msgid "Programs (*.exe)"
 msgstr "프로그램 (*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:195 notepad.rc:75
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:75
 #: oleview.rc:101 progman.rc:79 regedit.rc:195 winhlp32.rc:87
 msgid "All files (*.*)"
 msgstr "모든 파일 (*.*)"
@@ -151,7 +151,7 @@ msgstr "폴더-선택기-테스트 에 관하여(&A)"
 msgid "Document Folders"
 msgstr "문서 폴더"
 
-#: comdlg32.rc:31 shell32.rc:199
+#: comdlg32.rc:31 shell32.rc:200
 msgid "My Documents"
 msgstr "내 문서"
 
@@ -1593,7 +1593,7 @@ msgstr "확장 키 사용 (속성)"
 msgid "Friendly name"
 msgstr "애칭"
 
-#: cryptui.rc:62 shell32.rc:251 ipconfig.rc:41
+#: cryptui.rc:62 shell32.rc:252 ipconfig.rc:41
 msgid "Description"
 msgstr "설명"
 
@@ -5761,7 +5761,7 @@ msgstr ""
 "작성한 풀그림을 사용하여 활성화시킬수 있는 객체를 문서파일 내용으로 삽입하시"
 "오."
 
-#: oledlg.rc:27 shell32.rc:193
+#: oledlg.rc:27 shell32.rc:194
 msgid "Browse"
 msgstr "찾기"
 
@@ -6333,152 +6333,152 @@ msgstr "선택"
 msgid "Open"
 msgstr "열기"
 
-#: shell32.rc:185
+#: shell32.rc:186
 msgid "Restart"
 msgstr "다시 시작"
 
-#: shell32.rc:186
+#: shell32.rc:187
 msgid "Do you want to simulate a Windows reboot?"
 msgstr "당신은 윈도우즈 재부팅을  재현하겠습니까?"
 
-#: shell32.rc:187
+#: shell32.rc:188
 msgid "Shutdown"
 msgstr "끄기"
 
-#: shell32.rc:188
+#: shell32.rc:189
 msgid "Do you want to shutdown your Wine session?"
 msgstr "당신은 Wine 세션을 끄겠습니까?"
 
-#: shell32.rc:198
+#: shell32.rc:199
 msgid "Start Menu\\Programs"
 msgstr "시작 메뉴\\프로그램"
 
-#: shell32.rc:200
+#: shell32.rc:201
 msgid "Favorites"
 msgstr "즐겨찾기"
 
-#: shell32.rc:201
+#: shell32.rc:202
 msgid "Start Menu\\Programs\\StartUp"
 msgstr "시작 메뉴\\프로그램\\시작 프로그램"
 
-#: shell32.rc:202
+#: shell32.rc:203
 msgid "Recent"
 msgstr "최근 파일"
 
-#: shell32.rc:203
+#: shell32.rc:204
 msgid "SendTo"
 msgstr "보내기"
 
-#: shell32.rc:204
+#: shell32.rc:205
 msgid "Start Menu"
 msgstr "시작 메뉴"
 
-#: shell32.rc:205
+#: shell32.rc:206
 msgid "My Music"
 msgstr "내 음악"
 
-#: shell32.rc:206
+#: shell32.rc:207
 msgid "My Videos"
 msgstr "내 비디오"
 
-#: shell32.rc:207
+#: shell32.rc:208
 msgctxt "directory"
 msgid "Desktop"
 msgstr "바탕화면"
 
-#: shell32.rc:208
+#: shell32.rc:209
 msgid "NetHood"
 msgstr "네트워크 환경"
 
-#: shell32.rc:209
+#: shell32.rc:210
 msgid "Templates"
 msgstr "Templates"
 
-#: shell32.rc:210
+#: shell32.rc:211
 msgid "Application Data"
 msgstr "Application Data"
 
-#: shell32.rc:211
+#: shell32.rc:212
 msgid "PrintHood"
 msgstr "네트워크 환경"
 
-#: shell32.rc:212
+#: shell32.rc:213
 msgid "Local Settings\\Application Data"
 msgstr "Local Settings\\Application Data"
 
-#: shell32.rc:213
+#: shell32.rc:214
 msgid "Local Settings\\Temporary Internet Files"
 msgstr "Local Settings\\Temporary Internet Files"
 
-#: shell32.rc:214
+#: shell32.rc:215
 msgid "Cookies"
 msgstr "Cookies"
 
-#: shell32.rc:215
+#: shell32.rc:216
 msgid "Local Settings\\History"
 msgstr "Local Settings\\History"
 
-#: shell32.rc:216
+#: shell32.rc:217
 msgid "Program Files"
 msgstr "Program Files"
 
-#: shell32.rc:218
+#: shell32.rc:219
 msgid "My Pictures"
 msgstr "내 그림"
 
-#: shell32.rc:219
+#: shell32.rc:220
 msgid "Program Files\\Common Files"
 msgstr "Program Files\\Common Files"
 
-#: shell32.rc:221 shell32.rc:147 shell32.rc:243
+#: shell32.rc:222 shell32.rc:147 shell32.rc:244
 msgid "Documents"
 msgstr "문서"
 
-#: shell32.rc:222
+#: shell32.rc:223
 msgid "Start Menu\\Programs\\Administrative Tools"
 msgstr "시작메뉴\\프로그램\\관리 도구"
 
-#: shell32.rc:223
+#: shell32.rc:224
 msgid "Music"
 msgstr "내 음악"
 
-#: shell32.rc:224
+#: shell32.rc:225
 msgid "Pictures"
 msgstr "내 그림"
 
-#: shell32.rc:225
+#: shell32.rc:226
 msgid "Videos"
 msgstr "내 비디오"
 
-#: shell32.rc:226
+#: shell32.rc:227
 msgid "Local Settings\\Application Data\\Microsoft\\CD Burning"
 msgstr "Local Settings\\Application Data\\Microsoft\\CD Burning"
 
-#: shell32.rc:217
+#: shell32.rc:218
 msgid "Program Files (x86)"
 msgstr "Program Files (x86)"
 
-#: shell32.rc:220
+#: shell32.rc:221
 msgid "Program Files (x86)\\Common Files"
 msgstr "Program Files (x86)\\Common Files"
 
-#: shell32.rc:227
+#: shell32.rc:228
 msgid "Contacts"
 msgstr "Contacts"
 
-#: shell32.rc:228 winefile.rc:116
+#: shell32.rc:229 winefile.rc:116
 msgid "Links"
 msgstr "링크"
 
-#: shell32.rc:229
+#: shell32.rc:230
 msgid "Pictures\\Slide Shows"
 msgstr "Pictures\\Slide Shows"
 
-#: shell32.rc:230
+#: shell32.rc:231
 msgid "Music\\Playlists"
 msgstr "Music\\Playlists"
 
-#: shell32.rc:231 shell32.rc:244
+#: shell32.rc:232 shell32.rc:245
 msgid "Downloads"
 msgstr "다운로드"
 
@@ -6494,51 +6494,51 @@ msgstr "위치"
 msgid "Model"
 msgstr "모델"
 
-#: shell32.rc:232
+#: shell32.rc:233
 msgid "Microsoft\\Windows\\GameExplorer"
 msgstr "Microsoft\\Windows\\GameExplorer"
 
-#: shell32.rc:233
+#: shell32.rc:234
 msgid "Microsoft\\Windows\\Libraries"
 msgstr "Microsoft\\Windows\\Libraries"
 
-#: shell32.rc:234
+#: shell32.rc:235
 msgid "Microsoft\\Windows\\Ringtones"
 msgstr "Microsoft\\Windows\\Ringtones"
 
-#: shell32.rc:235
+#: shell32.rc:236
 msgid "Music\\Sample Music"
 msgstr "Music\\Sample Music"
 
-#: shell32.rc:236
+#: shell32.rc:237
 msgid "Pictures\\Sample Pictures"
 msgstr "Pictures\\Sample Pictures"
 
-#: shell32.rc:237
+#: shell32.rc:238
 msgid "Music\\Sample Playlists"
 msgstr "Music\\Sample Playlists"
 
-#: shell32.rc:238
+#: shell32.rc:239
 msgid "Videos\\Sample Videos"
 msgstr "Videos\\Sample Videos"
 
-#: shell32.rc:239
+#: shell32.rc:240
 msgid "Saved Games"
 msgstr "Saved Games"
 
-#: shell32.rc:240
+#: shell32.rc:241
 msgid "Searches"
 msgstr "Searches"
 
-#: shell32.rc:241
+#: shell32.rc:242
 msgid "Users"
 msgstr "Users"
 
-#: shell32.rc:242
+#: shell32.rc:243
 msgid "OEM Links"
 msgstr "OEM Links"
 
-#: shell32.rc:245
+#: shell32.rc:246
 msgid "AppData\\LocalLow"
 msgstr "AppData\\LocalLow"
 
@@ -6601,7 +6601,7 @@ msgstr "당신은 '%1' 들을(를) 휴지통으로 보내기를 바랍니까?"
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 msgstr "이 아이템'%1'을 휴지통으로 보낼 수 없습니다. 대신 지우겠습니까?"
 
-#: shell32.rc:179
+#: shell32.rc:183
 msgid ""
 "This folder already contains a folder named '%1'.\n"
 "\n"
@@ -6615,43 +6615,43 @@ msgstr ""
 "다\n"
 " 대체될 것입니다. 당신은 이 폴더를 이동시키거나 복사하겠습니까?"
 
-#: shell32.rc:247
+#: shell32.rc:248
 msgid "New Folder"
 msgstr "새 폴더"
 
-#: shell32.rc:249
+#: shell32.rc:250
 msgid "Wine Control Panel"
 msgstr "Wine 제어판"
 
-#: shell32.rc:191
+#: shell32.rc:192
 msgid "Unable to display Run File dialog box (internal error)"
 msgstr "파일 실행 대화 상자를 보여줄수 없습니다(내부 오류)"
 
-#: shell32.rc:192
+#: shell32.rc:193
 msgid "Unable to display Browse dialog box (internal error)"
 msgstr "찾기 대화 상자를 보여 줄 수 없습니다(내부 오류)"
 
-#: shell32.rc:194
+#: shell32.rc:195
 msgid "Executable files (*.exe)"
 msgstr "실행 파일 (*.exe)"
 
-#: shell32.rc:253
+#: shell32.rc:254
 msgid "There is no Windows program configured to open this type of file."
 msgstr "이 형식의 파일을 도록 구성된 윈도우 프로그램이 없습니다."
 
-#: shell32.rc:255
+#: shell32.rc:256
 msgid "Are you sure you wish to permanently delete '%1'?"
 msgstr "당신은  '%1'을 완전히 지우기를 바랍니까?"
 
-#: shell32.rc:256
+#: shell32.rc:257
 msgid "Are you sure you wish to permanently delete these %1 items?"
 msgstr "당신은 %1 아이템(들)을 완전히 지우기를 바랍니까?"
 
-#: shell32.rc:257
+#: shell32.rc:258
 msgid "Confirm deletion"
 msgstr "삭제 확인"
 
-#: shell32.rc:258
+#: shell32.rc:259
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
@@ -6660,7 +6660,7 @@ msgstr ""
 "경로 %1에 파일은 이미 존재합니다.\n"
 "바꾸기를 원합니까?"
 
-#: shell32.rc:259
+#: shell32.rc:260
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
@@ -6669,11 +6669,11 @@ msgstr ""
 "경로 %1에 폴더 이미 존재합니다.\n"
 "바꾸기를 원합니까?"
 
-#: shell32.rc:260
+#: shell32.rc:261
 msgid "Confirm overwrite"
 msgstr "덮어쓰기 확인"
 
-#: shell32.rc:277
+#: shell32.rc:278
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -6703,7 +6703,7 @@ msgstr ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
-#: shell32.rc:265
+#: shell32.rc:266
 msgid "Wine License"
 msgstr "Wine 라이센스"
 

@@ -41,7 +41,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Niet gespecificeerd"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:110
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:251 regedit.rc:122 winefile.rc:110
 msgid "Name"
 msgstr "Naam"
 
@@ -61,7 +61,7 @@ msgstr "Installatie-programma's"
 msgid "Programs (*.exe)"
 msgstr "Programma's (*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:195 notepad.rc:75
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:75
 #: oleview.rc:101 progman.rc:79 regedit.rc:195 winhlp32.rc:87
 msgid "All files (*.*)"
 msgstr "Alle bestanden (*.*)"
@@ -154,7 +154,7 @@ msgstr "&Info over FolderPicker"
 msgid "Document Folders"
 msgstr "Documenten Mappen"
 
-#: comdlg32.rc:31 shell32.rc:199
+#: comdlg32.rc:31 shell32.rc:200
 msgid "My Documents"
 msgstr "Mijn Documenten"
 
@@ -1608,7 +1608,7 @@ msgstr "Uitgebreid sleutel gebruik (eigenschap)"
 msgid "Friendly name"
 msgstr "Naam alias"
 
-#: cryptui.rc:62 shell32.rc:251 ipconfig.rc:41
+#: cryptui.rc:62 shell32.rc:252 ipconfig.rc:41
 msgid "Description"
 msgstr "Beschrijving"
 
@@ -5887,7 +5887,7 @@ msgstr ""
 "Voeg de inhoud van het bestand als object in uw document in, zodat u het "
 "later kunt bewerken met het programma waarmee u het heeft gemaakt."
 
-#: oledlg.rc:27 shell32.rc:193
+#: oledlg.rc:27 shell32.rc:194
 msgid "Browse"
 msgstr "Bladeren"
 
@@ -6463,153 +6463,153 @@ msgstr "Selecteren"
 msgid "Open"
 msgstr "Openen"
 
-#: shell32.rc:185
+#: shell32.rc:186
 msgid "Restart"
 msgstr "Herstarten"
 
-#: shell32.rc:186
+#: shell32.rc:187
 msgid "Do you want to simulate a Windows reboot?"
 msgstr "Wilt u een Windows herstart simuleren?"
 
-#: shell32.rc:187
+#: shell32.rc:188
 msgid "Shutdown"
 msgstr "Afsluiten"
 
-#: shell32.rc:188
+#: shell32.rc:189
 msgid "Do you want to shutdown your Wine session?"
 msgstr "Wilt u uw Wine sessie afsluiten?"
 
-#: shell32.rc:198
+#: shell32.rc:199
 msgid "Start Menu\\Programs"
 msgstr "Start Menu\\Programma's"
 
-#: shell32.rc:200
+#: shell32.rc:201
 msgid "Favorites"
 msgstr "Favorieten"
 
-#: shell32.rc:201
+#: shell32.rc:202
 msgid "Start Menu\\Programs\\StartUp"
 msgstr "Start Menu\\Programma's\\Opstarten"
 
-#: shell32.rc:202
+#: shell32.rc:203
 msgid "Recent"
 msgstr "Recent"
 
-#: shell32.rc:203
+#: shell32.rc:204
 msgid "SendTo"
 msgstr "SendTo"
 
-#: shell32.rc:204
+#: shell32.rc:205
 msgid "Start Menu"
 msgstr "Start Menu"
 
-#: shell32.rc:205
+#: shell32.rc:206
 msgid "My Music"
 msgstr "Mijn Muziek"
 
-#: shell32.rc:206
+#: shell32.rc:207
 msgid "My Videos"
 msgstr "Mijn Video's"
 
-#: shell32.rc:207
+#: shell32.rc:208
 #, fuzzy
 msgctxt "directory"
 msgid "Desktop"
 msgstr "Bureaublad"
 
-#: shell32.rc:208
+#: shell32.rc:209
 msgid "NetHood"
 msgstr "Netwerkomgeving"
 
-#: shell32.rc:209
+#: shell32.rc:210
 msgid "Templates"
 msgstr "Sjablonen"
 
-#: shell32.rc:210
+#: shell32.rc:211
 msgid "Application Data"
 msgstr "Application Data"
 
-#: shell32.rc:211
+#: shell32.rc:212
 msgid "PrintHood"
 msgstr "Printeromgeving"
 
-#: shell32.rc:212
+#: shell32.rc:213
 msgid "Local Settings\\Application Data"
 msgstr "Local Settings\\Application Data"
 
-#: shell32.rc:213
+#: shell32.rc:214
 msgid "Local Settings\\Temporary Internet Files"
 msgstr "Local Settings\\Tijdelijke Internetbestanden"
 
-#: shell32.rc:214
+#: shell32.rc:215
 msgid "Cookies"
 msgstr "Cookies"
 
-#: shell32.rc:215
+#: shell32.rc:216
 msgid "Local Settings\\History"
 msgstr "Local Settings\\Geschiedenis"
 
-#: shell32.rc:216
+#: shell32.rc:217
 msgid "Program Files"
 msgstr "Program Files"
 
-#: shell32.rc:218
+#: shell32.rc:219
 msgid "My Pictures"
 msgstr "Mijn Afbeeldingen"
 
-#: shell32.rc:219
+#: shell32.rc:220
 msgid "Program Files\\Common Files"
 msgstr "Program Files\\Common Files"
 
-#: shell32.rc:221 shell32.rc:147 shell32.rc:243
+#: shell32.rc:222 shell32.rc:147 shell32.rc:244
 msgid "Documents"
 msgstr "Documenten"
 
-#: shell32.rc:222
+#: shell32.rc:223
 msgid "Start Menu\\Programs\\Administrative Tools"
 msgstr "Start Menu\\Programma's\\Administratieve Tools"
 
-#: shell32.rc:223
+#: shell32.rc:224
 msgid "Music"
 msgstr "Documenten\\Mijn Muziek"
 
-#: shell32.rc:224
+#: shell32.rc:225
 msgid "Pictures"
 msgstr "Documenten\\Mijn Afbeeldingen"
 
-#: shell32.rc:225
+#: shell32.rc:226
 msgid "Videos"
 msgstr "Documenten\\Mijn Videos"
 
-#: shell32.rc:226
+#: shell32.rc:227
 msgid "Local Settings\\Application Data\\Microsoft\\CD Burning"
 msgstr "Local Settings\\Applicatie Data\\Microsoft\\CD Branden"
 
-#: shell32.rc:217
+#: shell32.rc:218
 msgid "Program Files (x86)"
 msgstr "Program Files (x86)"
 
-#: shell32.rc:220
+#: shell32.rc:221
 msgid "Program Files (x86)\\Common Files"
 msgstr "Program Files (x86)\\Common Files"
 
-#: shell32.rc:227
+#: shell32.rc:228
 msgid "Contacts"
 msgstr "Contacten"
 
-#: shell32.rc:228 winefile.rc:116
+#: shell32.rc:229 winefile.rc:116
 msgid "Links"
 msgstr "Links"
 
-#: shell32.rc:229
+#: shell32.rc:230
 msgid "Pictures\\Slide Shows"
 msgstr "Afbeeldingen\\Diashows"
 
-#: shell32.rc:230
+#: shell32.rc:231
 msgid "Music\\Playlists"
 msgstr "Muziek\\Afspeellijsten"
 
-#: shell32.rc:231 shell32.rc:244
+#: shell32.rc:232 shell32.rc:245
 msgid "Downloads"
 msgstr "Downloads"
 
@@ -6625,51 +6625,51 @@ msgstr "Locatie"
 msgid "Model"
 msgstr "Model"
 
-#: shell32.rc:232
+#: shell32.rc:233
 msgid "Microsoft\\Windows\\GameExplorer"
 msgstr "Microsoft\\Windows\\GameExplorer"
 
-#: shell32.rc:233
+#: shell32.rc:234
 msgid "Microsoft\\Windows\\Libraries"
 msgstr "Microsoft\\Windows\\Libraries"
 
-#: shell32.rc:234
+#: shell32.rc:235
 msgid "Microsoft\\Windows\\Ringtones"
 msgstr "Microsoft\\Windows\\Ringtones"
 
-#: shell32.rc:235
+#: shell32.rc:236
 msgid "Music\\Sample Music"
 msgstr "Muziek\\Voorbeelden van muziek"
 
-#: shell32.rc:236
+#: shell32.rc:237
 msgid "Pictures\\Sample Pictures"
 msgstr "Afbeeldingen\\Voorbeelden van afbeeldingen"
 
-#: shell32.rc:237
+#: shell32.rc:238
 msgid "Music\\Sample Playlists"
 msgstr "Muziek\\Voorbeelden van afspeellijsten"
 
-#: shell32.rc:238
+#: shell32.rc:239
 msgid "Videos\\Sample Videos"
 msgstr "Video's\\Voorbeelden van video's"
 
-#: shell32.rc:239
+#: shell32.rc:240
 msgid "Saved Games"
 msgstr "Opgeslagen Spellen"
 
-#: shell32.rc:240
+#: shell32.rc:241
 msgid "Searches"
 msgstr "Zoekopdrachten"
 
-#: shell32.rc:241
+#: shell32.rc:242
 msgid "Users"
 msgstr "Gebruikers"
 
-#: shell32.rc:242
+#: shell32.rc:243
 msgid "OEM Links"
 msgstr "OEM Links"
 
-#: shell32.rc:245
+#: shell32.rc:246
 msgid "AppData\\LocalLow"
 msgstr "AppData\\LocalLow"
 
@@ -6737,7 +6737,7 @@ msgstr ""
 "Bestand '%1' kan niet naar de Vuilnisbak worden verplaatst. Wilt u het "
 "bestand permanent verwijderen?"
 
-#: shell32.rc:179
+#: shell32.rc:183
 msgid ""
 "This folder already contains a folder named '%1'.\n"
 "\n"
@@ -6752,47 +6752,47 @@ msgstr ""
 "kopiëren\n"
 "of verplaatsen?"
 
-#: shell32.rc:247
+#: shell32.rc:248
 msgid "New Folder"
 msgstr "Nieuwe Map"
 
-#: shell32.rc:249
+#: shell32.rc:250
 msgid "Wine Control Panel"
 msgstr "Wine Configuratiescherm"
 
-#: shell32.rc:191
+#: shell32.rc:192
 msgid "Unable to display Run File dialog box (internal error)"
 msgstr "Fout tijdens tonen venster 'Uitvoeren Bestand' (interne fout)"
 
-#: shell32.rc:192
+#: shell32.rc:193
 msgid "Unable to display Browse dialog box (internal error)"
 msgstr "Fout tijdens tonen van Bladeren venster (interne fout)"
 
-#: shell32.rc:194
+#: shell32.rc:195
 msgid "Executable files (*.exe)"
 msgstr "Uitvoerbare bestanden (*.exe)"
 
-#: shell32.rc:253
+#: shell32.rc:254
 msgid "There is no Windows program configured to open this type of file."
 msgstr ""
 "Er is geen Windows-programma geconfigureerd om dit soort bestanden te openen."
 
-#: shell32.rc:255
+#: shell32.rc:256
 #, fuzzy
 msgid "Are you sure you wish to permanently delete '%1'?"
 msgstr "Weet u zeker dat u '%1' wilt verwijderen?"
 
-#: shell32.rc:256
+#: shell32.rc:257
 #, fuzzy
 msgid "Are you sure you wish to permanently delete these %1 items?"
 msgstr "Weet u zeker dat u deze %1 bestanden wilt verwijderen?"
 
-#: shell32.rc:257
+#: shell32.rc:258
 #, fuzzy
 msgid "Confirm deletion"
 msgstr "Bevestig bestandsverwijdering"
 
-#: shell32.rc:258
+#: shell32.rc:259
 #, fuzzy
 msgid ""
 "A file already exists at the path %1.\n"
@@ -6802,7 +6802,7 @@ msgstr ""
 "Bestand bestaat al.\n"
 "Wilt u het vervangen?"
 
-#: shell32.rc:259
+#: shell32.rc:260
 #, fuzzy
 msgid ""
 "A folder already exists at the path %1.\n"
@@ -6812,12 +6812,12 @@ msgstr ""
 "Bestand bestaat al.\n"
 "Wilt u het vervangen?"
 
-#: shell32.rc:260
+#: shell32.rc:261
 #, fuzzy
 msgid "Confirm overwrite"
 msgstr "Bevestig bestandsoverschrijving"
 
-#: shell32.rc:277
+#: shell32.rc:278
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -6847,7 +6847,7 @@ msgstr ""
 "along with this library; if not, write to the Free Software Foundation, "
 "Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
-#: shell32.rc:265
+#: shell32.rc:266
 msgid "Wine License"
 msgstr "Wine Licentie"
 

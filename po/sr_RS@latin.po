@@ -44,7 +44,7 @@ msgstr ""
 msgid "Not specified"
 msgstr "Nije određeno"
 
-#: appwiz.rc:35 shell32.rc:141 shell32.rc:250 regedit.rc:122 winefile.rc:110
+#: appwiz.rc:35 shell32.rc:141 shell32.rc:251 regedit.rc:122 winefile.rc:110
 #, fuzzy
 msgid "Name"
 msgstr ""
@@ -69,7 +69,7 @@ msgstr "Instalacioni programi"
 msgid "Programs (*.exe)"
 msgstr "Izvršne datoteke (*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:195 notepad.rc:75
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:75
 #: oleview.rc:101 progman.rc:79 regedit.rc:195 winhlp32.rc:87
 #, fuzzy
 msgid "All files (*.*)"
@@ -169,7 +169,7 @@ msgstr "&O FolderPicker testu"
 msgid "Document Folders"
 msgstr "Fascikle za dokumenta"
 
-#: comdlg32.rc:31 shell32.rc:199
+#: comdlg32.rc:31 shell32.rc:200
 msgid "My Documents"
 msgstr "Dokumenti"
 
@@ -1635,7 +1635,7 @@ msgstr ""
 msgid "Friendly name"
 msgstr ""
 
-#: cryptui.rc:62 shell32.rc:251 ipconfig.rc:41
+#: cryptui.rc:62 shell32.rc:252 ipconfig.rc:41
 msgid "Description"
 msgstr "Opis"
 
@@ -6067,7 +6067,7 @@ msgstr ""
 "Unesite sadržaj datoteke kao objekat u dokumentu kako biste ga aktivirali "
 "koristeći program koji ga je napravio."
 
-#: oledlg.rc:27 shell32.rc:193
+#: oledlg.rc:27 shell32.rc:194
 #, fuzzy
 msgid "Browse"
 msgstr ""
@@ -6662,153 +6662,153 @@ msgstr "Izaberi"
 msgid "Open"
 msgstr "Otvori"
 
-#: shell32.rc:185
+#: shell32.rc:186
 msgid "Restart"
 msgstr "Ponovno pokretanje"
 
-#: shell32.rc:186
+#: shell32.rc:187
 msgid "Do you want to simulate a Windows reboot?"
 msgstr "Želite li da simulirate ponovno pokretanje Windows-a?"
 
-#: shell32.rc:187
+#: shell32.rc:188
 msgid "Shutdown"
 msgstr "Gašenje"
 
-#: shell32.rc:188
+#: shell32.rc:189
 msgid "Do you want to shutdown your Wine session?"
 msgstr "Želite li da izgasite Wine sesiju?"
 
-#: shell32.rc:198
+#: shell32.rc:199
 msgid "Start Menu\\Programs"
 msgstr "„Start“ meni\\Programi"
 
-#: shell32.rc:200
+#: shell32.rc:201
 msgid "Favorites"
 msgstr "Omiljeno"
 
-#: shell32.rc:201
+#: shell32.rc:202
 msgid "Start Menu\\Programs\\StartUp"
 msgstr "„Start“ meni\\Programi\\Pokretanje"
 
-#: shell32.rc:202
+#: shell32.rc:203
 msgid "Recent"
 msgstr "Skorašnje"
 
-#: shell32.rc:203
+#: shell32.rc:204
 msgid "SendTo"
 msgstr "Pošalji u"
 
-#: shell32.rc:204
+#: shell32.rc:205
 msgid "Start Menu"
 msgstr "„Start“ meni"
 
-#: shell32.rc:205
+#: shell32.rc:206
 msgid "My Music"
 msgstr "Muzika"
 
-#: shell32.rc:206
+#: shell32.rc:207
 msgid "My Videos"
 msgstr "Video snimci"
 
-#: shell32.rc:207
+#: shell32.rc:208
 #, fuzzy
 msgctxt "directory"
 msgid "Desktop"
 msgstr "Radna površina"
 
-#: shell32.rc:208
+#: shell32.rc:209
 msgid "NetHood"
 msgstr "Internet"
 
-#: shell32.rc:209
+#: shell32.rc:210
 msgid "Templates"
 msgstr "Šabloni"
 
-#: shell32.rc:210
+#: shell32.rc:211
 msgid "Application Data"
 msgstr "Programski podaci"
 
-#: shell32.rc:211
+#: shell32.rc:212
 msgid "PrintHood"
 msgstr "Štampači"
 
-#: shell32.rc:212
+#: shell32.rc:213
 msgid "Local Settings\\Application Data"
 msgstr "Lokalne postavke\\Programski podaci"
 
-#: shell32.rc:213
+#: shell32.rc:214
 msgid "Local Settings\\Temporary Internet Files"
 msgstr "Lokalne postavke\\Privremene internet datoteke"
 
-#: shell32.rc:214
+#: shell32.rc:215
 msgid "Cookies"
 msgstr "Kolačići"
 
-#: shell32.rc:215
+#: shell32.rc:216
 msgid "Local Settings\\History"
 msgstr "Lokalne postavke\\Istorijat"
 
-#: shell32.rc:216
+#: shell32.rc:217
 msgid "Program Files"
 msgstr "Programi"
 
-#: shell32.rc:218
+#: shell32.rc:219
 msgid "My Pictures"
 msgstr "Slike"
 
-#: shell32.rc:219
+#: shell32.rc:220
 msgid "Program Files\\Common Files"
 msgstr "Programi\\Zajedničke datoteke"
 
-#: shell32.rc:221 shell32.rc:147 shell32.rc:243
+#: shell32.rc:222 shell32.rc:147 shell32.rc:244
 msgid "Documents"
 msgstr "Dokumenti"
 
-#: shell32.rc:222
+#: shell32.rc:223
 msgid "Start Menu\\Programs\\Administrative Tools"
 msgstr "„Start“ meni\\Programi\\Administrativne alatke"
 
-#: shell32.rc:223
+#: shell32.rc:224
 msgid "Music"
 msgstr "Muzika"
 
-#: shell32.rc:224
+#: shell32.rc:225
 msgid "Pictures"
 msgstr "Slike"
 
-#: shell32.rc:225
+#: shell32.rc:226
 msgid "Videos"
 msgstr "Video snimci"
 
-#: shell32.rc:226
+#: shell32.rc:227
 msgid "Local Settings\\Application Data\\Microsoft\\CD Burning"
 msgstr "Lokalne postavke\\Programski podaci\\Microsoft\\CD rezanje"
 
-#: shell32.rc:217
+#: shell32.rc:218
 msgid "Program Files (x86)"
 msgstr "Programi (x86)"
 
-#: shell32.rc:220
+#: shell32.rc:221
 msgid "Program Files (x86)\\Common Files"
 msgstr "Programi (x86)\\Zajedničke datoteke"
 
-#: shell32.rc:227
+#: shell32.rc:228
 msgid "Contacts"
 msgstr "Kontakti"
 
-#: shell32.rc:228 winefile.rc:116
+#: shell32.rc:229 winefile.rc:116
 msgid "Links"
 msgstr "Veze"
 
-#: shell32.rc:229
+#: shell32.rc:230
 msgid "Pictures\\Slide Shows"
 msgstr "Slike\\Pokretni prikazi"
 
-#: shell32.rc:230
+#: shell32.rc:231
 msgid "Music\\Playlists"
 msgstr "Muzika\\Spiskovi numera"
 
-#: shell32.rc:231 shell32.rc:244
+#: shell32.rc:232 shell32.rc:245
 msgid "Downloads"
 msgstr "Prijemi"
 
@@ -6824,51 +6824,51 @@ msgstr "Lokacija"
 msgid "Model"
 msgstr "Model"
 
-#: shell32.rc:232
+#: shell32.rc:233
 msgid "Microsoft\\Windows\\GameExplorer"
 msgstr "Microsoft\\Windows\\GameExplorer"
 
-#: shell32.rc:233
+#: shell32.rc:234
 msgid "Microsoft\\Windows\\Libraries"
 msgstr "Microsoft\\Windows\\Biblioteke"
 
-#: shell32.rc:234
+#: shell32.rc:235
 msgid "Microsoft\\Windows\\Ringtones"
 msgstr "Microsoft\\Windows\\Melodije"
 
-#: shell32.rc:235
+#: shell32.rc:236
 msgid "Music\\Sample Music"
 msgstr "Muzika\\Primerci"
 
-#: shell32.rc:236
+#: shell32.rc:237
 msgid "Pictures\\Sample Pictures"
 msgstr "Slike\\Primerci"
 
-#: shell32.rc:237
+#: shell32.rc:238
 msgid "Music\\Sample Playlists"
 msgstr "Muzika\\Primerci"
 
-#: shell32.rc:238
+#: shell32.rc:239
 msgid "Videos\\Sample Videos"
 msgstr "Video snimci\\Primerci"
 
-#: shell32.rc:239
+#: shell32.rc:240
 msgid "Saved Games"
 msgstr "Sačuvane igre"
 
-#: shell32.rc:240
+#: shell32.rc:241
 msgid "Searches"
 msgstr "Pretrage"
 
-#: shell32.rc:241
+#: shell32.rc:242
 msgid "Users"
 msgstr "Korisnici"
 
-#: shell32.rc:242
+#: shell32.rc:243
 msgid "OEM Links"
 msgstr "OEM veze"
 
-#: shell32.rc:245
+#: shell32.rc:246
 msgid "AppData\\LocalLow"
 msgstr "AppData\\LocalLow"
 
@@ -6932,7 +6932,7 @@ msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 msgstr ""
 "Stavka „%1“ se ne može poslati u smeće. Želite li da je trajno izbrišete?"
 
-#: shell32.rc:179
+#: shell32.rc:183
 msgid ""
 "This folder already contains a folder named '%1'.\n"
 "\n"
@@ -6947,48 +6947,48 @@ msgstr ""
 "umnožite\n"
 "fasciklu?"
 
-#: shell32.rc:247
+#: shell32.rc:248
 msgid "New Folder"
 msgstr "Nova fascikla"
 
-#: shell32.rc:249
+#: shell32.rc:250
 msgid "Wine Control Panel"
 msgstr "Wine upravljački panel"
 
-#: shell32.rc:191
+#: shell32.rc:192
 msgid "Unable to display Run File dialog box (internal error)"
 msgstr ""
 "Prikazivanje prozorčeta za pokretanje datoteke nije uspelo (unutrašnja "
 "greška)"
 
-#: shell32.rc:192
+#: shell32.rc:193
 msgid "Unable to display Browse dialog box (internal error)"
 msgstr "Prikazivanje prozorčeta za razgledanje nije uspelo (unutrašnja greška)"
 
-#: shell32.rc:194
+#: shell32.rc:195
 msgid "Executable files (*.exe)"
 msgstr "Izvršne datoteke (*.exe)"
 
-#: shell32.rc:253
+#: shell32.rc:254
 msgid "There is no Windows program configured to open this type of file."
 msgstr "Nijedan program nije podešen da otvara ovu vrstu datoteka."
 
-#: shell32.rc:255
+#: shell32.rc:256
 #, fuzzy
 msgid "Are you sure you wish to permanently delete '%1'?"
 msgstr "Želite li da izbrišete „%1“?"
 
-#: shell32.rc:256
+#: shell32.rc:257
 #, fuzzy
 msgid "Are you sure you wish to permanently delete these %1 items?"
 msgstr "Želite li da izbrišete ovih %1 stavki?"
 
-#: shell32.rc:257
+#: shell32.rc:258
 #, fuzzy
 msgid "Confirm deletion"
 msgstr "Potvrda brisanja datoteke"
 
-#: shell32.rc:258
+#: shell32.rc:259
 #, fuzzy
 msgid ""
 "A file already exists at the path %1.\n"
@@ -6998,7 +6998,7 @@ msgstr ""
 "Datoteka već postoji.\n"
 "Želite li da je zamenite?"
 
-#: shell32.rc:259
+#: shell32.rc:260
 #, fuzzy
 msgid ""
 "A folder already exists at the path %1.\n"
@@ -7008,12 +7008,12 @@ msgstr ""
 "Datoteka već postoji.\n"
 "Želite li da je zamenite?"
 
-#: shell32.rc:260
+#: shell32.rc:261
 #, fuzzy
 msgid "Confirm overwrite"
 msgstr "Potvrda zamene datoteke"
 
-#: shell32.rc:277
+#: shell32.rc:278
 msgid ""
 "Wine is free software; you can redistribute it and/or modify it under the "
 "terms of the GNU Lesser General Public License as published by the Free "
@@ -7043,7 +7043,7 @@ msgstr ""
 "along with this library; if not, write to the Free Software Foundation, "
 "Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
-#: shell32.rc:265
+#: shell32.rc:266
 msgid "Wine License"
 msgstr "Wine licenca"
 
