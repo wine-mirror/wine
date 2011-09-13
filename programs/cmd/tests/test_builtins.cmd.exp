@@ -729,6 +729,13 @@ foo ''
 @todo_wine@1
 @todo_wine@1
 non-builtin dir
+------------ Testing SHIFT ------------
+'p1' 'p2' 'p3' 'p4' 'p5'
+'p2' 'p3' 'p4' 'p5' ''
+'p3' 'p4' 'p5' '' ''
+'p3' 'p5' '' '' ''
+'p3' 'p5' '' '' ''
+'p5' '' '' '' ''
 ------------ Testing cmd invocation ------------
 ... a batch file can delete itself ...
 file correctly deleted

@@ -1256,6 +1256,26 @@ echo echo non-builtin dir> dir.cmd
 call dir /b
 cd .. & rd /s/q foobar
 
+echo ------------ Testing SHIFT ------------
+
+call :shiftFun p1 p2 p3 p4 p5
+goto :endShiftFun
+
+:shiftFun
+echo '%1' '%2' '%3' '%4' '%5'
+shift
+echo '%1' '%2' '%3' '%4' '%5'
+shift@tab@ /1
+echo '%1' '%2' '%3' '%4' '%5'
+shift /2
+echo '%1' '%2' '%3' '%4' '%5'
+shift /-1
+echo '%1' '%2' '%3' '%4' '%5'
+shift /0
+echo '%1' '%2' '%3' '%4' '%5'
+goto :eof
+:endShiftFun
+
 echo ------------ Testing cmd invocation ------------
 rem FIXME: only a stub ATM
 echo ... a batch file can delete itself ...
