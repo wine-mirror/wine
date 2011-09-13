@@ -40,7 +40,7 @@ msgstr "Nebol špecifikovaný žiadny príkaz."
 
 #: appwiz.rc:35 shell32.rc:141 shell32.rc:251 regedit.rc:122 winefile.rc:110
 msgid "Name"
-msgstr "Name"
+msgstr ""
 
 #: appwiz.rc:36
 msgid "Publisher"
@@ -189,27 +189,23 @@ msgstr "Súbor nenájdený"
 
 #: comdlg32.rc:44
 msgid "Please verify that the correct file name was given"
-msgstr "Please verify if the correct file name was given"
+msgstr ""
 
 #: comdlg32.rc:45
 msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
 msgstr ""
-"File does not exist\n"
-"Do you want to create file"
 
 #: comdlg32.rc:46
 msgid ""
 "File already exists.\n"
 "Do you want to replace it?"
 msgstr ""
-"File does already exist.\n"
-"Do you want to replace it?"
 
 #: comdlg32.rc:47
 msgid "Invalid character(s) in path"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: comdlg32.rc:48
 msgid ""
@@ -249,7 +245,7 @@ msgstr "Listovať pracovnú plochu"
 
 #: comdlg32.rc:123
 msgid "Regular"
-msgstr "Regular"
+msgstr ""
 
 #: comdlg32.rc:124
 msgid "Bold"
@@ -277,7 +273,7 @@ msgstr "Zelená"
 
 #: comdlg32.rc:134 wordpad.rc:117
 msgid "Olive"
-msgstr "Olive"
+msgstr ""
 
 #: comdlg32.rc:135 wordpad.rc:118
 msgid "Navy"
@@ -285,7 +281,7 @@ msgstr "Navy"
 
 #: comdlg32.rc:136 wordpad.rc:119
 msgid "Purple"
-msgstr "Purple"
+msgstr ""
 
 #: comdlg32.rc:137 wordpad.rc:120
 msgid "Teal"
@@ -293,11 +289,11 @@ msgstr "Teal"
 
 #: comdlg32.rc:138 wordpad.rc:121
 msgid "Gray"
-msgstr "Gray"
+msgstr ""
 
 #: comdlg32.rc:139 wordpad.rc:122
 msgid "Silver"
-msgstr "Silver"
+msgstr ""
 
 #: comdlg32.rc:140 wordpad.rc:123
 msgid "Red"
@@ -305,7 +301,7 @@ msgstr "Červená"
 
 #: comdlg32.rc:141 wordpad.rc:124
 msgid "Lime"
-msgstr "Lime"
+msgstr ""
 
 #: comdlg32.rc:142 wordpad.rc:125
 msgid "Yellow"
@@ -317,7 +313,7 @@ msgstr "Modrá"
 
 #: comdlg32.rc:144 wordpad.rc:127
 msgid "Fuchsia"
-msgstr "Fuchsia"
+msgstr ""
 
 #: comdlg32.rc:145 wordpad.rc:128
 msgid "Aqua"
@@ -329,44 +325,37 @@ msgstr "Biela"
 
 #: comdlg32.rc:66
 msgid "Unreadable Entry"
-msgstr "Unreadable Entry"
+msgstr ""
 
 #: comdlg32.rc:68
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %d and %d."
 msgstr ""
-"This value does not lie within the page range.\n"
-"Please enter a value between %d and %d."
 
 #: comdlg32.rc:70
 msgid "The 'from' entry cannot exceed the 'to' entry."
-msgstr "The 'from' entry cannot exceed the 'to' entry."
+msgstr ""
 
 #: comdlg32.rc:72
 msgid ""
 "Margins overlap or fall outside Paper boundaries.\n"
 "Please reenter margins."
 msgstr ""
-"Margins overlap or fall outside Paper boundaries.\n"
-"Please reenter margins"
 
 #: comdlg32.rc:74
-#, fuzzy
 msgid "The 'Number of copies' field cannot be empty."
-msgstr "The NumberOfCopies entry cannot be empty"
+msgstr ""
 
 #: comdlg32.rc:76
 msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
 msgstr ""
-"This large amount of prints is not supported by your printer.\n"
-"Please enter a value between 1 and %d"
 
 #: comdlg32.rc:77
 msgid "A printer error occurred."
-msgstr "A printer error occurred"
+msgstr ""
 
 #: comdlg32.rc:78
 msgid "No default printer defined."
@@ -393,20 +382,18 @@ msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
 msgstr ""
-"Before you can perform printer-related tasks such as page setup or printing "
-"a document, you need to install a printer. Please install one and retry."
 
 #: comdlg32.rc:151
 msgid "Select a font size between %d and %d points."
-msgstr "Select a font size between %d and %d points."
+msgstr ""
 
 #: comdlg32.rc:152 ieframe.rc:32
 msgid "&Save"
-msgstr "&Save"
+msgstr ""
 
 #: comdlg32.rc:153
 msgid "Save &in:"
-msgstr "Save &in:"
+msgstr ""
 
 #: comdlg32.rc:154
 msgid "Save"
@@ -434,7 +421,7 @@ msgstr "Chyba; "
 
 #: comdlg32.rc:96
 msgid "Pending deletion; "
-msgstr "Pending deletion; "
+msgstr ""
 
 #: comdlg32.rc:97
 msgid "Paper jam; "
@@ -446,7 +433,7 @@ msgstr "Chýba papier; "
 
 #: comdlg32.rc:99
 msgid "Feed paper manual; "
-msgstr "Feed paper manual; "
+msgstr ""
 
 #: comdlg32.rc:100
 msgid "Paper problem; "
@@ -458,7 +445,7 @@ msgstr "Tlačiareň v stave offline; "
 
 #: comdlg32.rc:102
 msgid "I/O Active; "
-msgstr "I/O Active; "
+msgstr ""
 
 #: comdlg32.rc:103
 msgid "Busy; "
@@ -470,7 +457,7 @@ msgstr "Prebieha tlač; "
 
 #: comdlg32.rc:105
 msgid "Output tray is full; "
-msgstr "Output tray is full; "
+msgstr ""
 
 #: comdlg32.rc:106
 msgid "Not available; "
@@ -502,7 +489,7 @@ msgstr "Chýba toner; "
 
 #: comdlg32.rc:113
 msgid "Page punt; "
-msgstr "Page punt; "
+msgstr ""
 
 #: comdlg32.rc:114
 msgid "Interrupted by user; "
@@ -530,7 +517,7 @@ msgstr "Implicitná tlačiareň; "
 
 #: comdlg32.rc:88
 msgid "There are %d documents in the queue"
-msgstr "There are %d documents in queue"
+msgstr ""
 
 #: comdlg32.rc:89
 msgid "Margins [inches]"
@@ -1590,7 +1577,7 @@ msgstr ""
 
 #: cryptui.rc:62 shell32.rc:252 ipconfig.rc:41
 msgid "Description"
-msgstr "Description"
+msgstr ""
 
 #: cryptui.rc:63
 #, fuzzy
@@ -1874,9 +1861,8 @@ msgid "Certificate Export Wizard"
 msgstr ""
 
 #: cryptui.rc:148
-#, fuzzy
 msgid "Export Format"
-msgstr "Normal"
+msgstr ""
 
 #: cryptui.rc:149
 msgid "Choose the format in which the content will be saved."
@@ -1915,9 +1901,8 @@ msgid "Serialized Certificate Store (*.sst)"
 msgstr ""
 
 #: cryptui.rc:160
-#, fuzzy
 msgid "File Format"
-msgstr "Normal"
+msgstr ""
 
 #: cryptui.rc:161
 msgid "Include all certificates in certificate path"
@@ -1991,9 +1976,8 @@ msgid "Object"
 msgstr ""
 
 #: dxdiagn.rc:25
-#, fuzzy
 msgid "Regional Setting"
-msgstr "Default"
+msgstr ""
 
 #: dxdiagn.rc:26
 msgid "%uMB used, %uMB available"
@@ -2148,7 +2132,7 @@ msgstr ""
 #: ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56 oleview.rc:58
 #: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
 msgid "&View"
-msgstr "&View"
+msgstr ""
 
 #: ieframe.rc:44
 msgid "&Toolbars"
@@ -2177,9 +2161,8 @@ msgid "&Help"
 msgstr "&Pomoc"
 
 #: ieframe.rc:57
-#, fuzzy
 msgid "&About Internet Explorer"
-msgstr "&Info..."
+msgstr ""
 
 #: ieframe.rc:67
 msgctxt "home page"
@@ -2462,14 +2445,12 @@ msgid "Out of paper\n"
 msgstr "Chýba papier; "
 
 #: winerror.mc:171
-#, fuzzy
 msgid "Write fault\n"
-msgstr "Default"
+msgstr ""
 
 #: winerror.mc:176
-#, fuzzy
 msgid "Read fault\n"
-msgstr "Default"
+msgstr ""
 
 #: winerror.mc:181
 msgid "General failure\n"
@@ -2559,9 +2540,8 @@ msgid "Print cancelled\n"
 msgstr ""
 
 #: winerror.mc:286
-#, fuzzy
 msgid "Network name deleted\n"
-msgstr "&Delete"
+msgstr ""
 
 #: winerror.mc:291
 msgid "Network access denied\n"
@@ -2621,9 +2601,8 @@ msgid "Invalid password\n"
 msgstr ""
 
 #: winerror.mc:361
-#, fuzzy
 msgid "Invalid parameter\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:366
 msgid "Net write fault\n"
@@ -3223,9 +3202,8 @@ msgid "Not registry file\n"
 msgstr "Súbory pomoci (*.hlp)"
 
 #: winerror.mc:1106
-#, fuzzy
 msgid "Key deleted\n"
-msgstr "&Delete"
+msgstr ""
 
 #: winerror.mc:1111
 msgid "No registry log space\n"
@@ -3573,9 +3551,8 @@ msgid "The destination element is full\n"
 msgstr ""
 
 #: winerror.mc:1536
-#, fuzzy
 msgid "The element address is invalid\n"
-msgstr "The specified device handle is invalid."
+msgstr ""
 
 #: winerror.mc:1541
 msgid "The magazine is not present\n"
@@ -3641,9 +3618,8 @@ msgid "Moving the replacement file failed\n"
 msgstr ""
 
 #: winerror.mc:1611
-#, fuzzy
 msgid "The journal is being deleted\n"
-msgstr "&Delete"
+msgstr ""
 
 #: winerror.mc:1616
 msgid "The journal is not active\n"
@@ -3699,9 +3675,8 @@ msgid "Invalid group name\n"
 msgstr ""
 
 #: winerror.mc:1681
-#, fuzzy
 msgid "Invalid computer name\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:1686
 msgid "Invalid event name\n"
@@ -3720,9 +3695,8 @@ msgid "Invalid network name\n"
 msgstr ""
 
 #: winerror.mc:1706
-#, fuzzy
 msgid "Invalid share name\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:1716
 msgid "Invalid message name\n"
@@ -3873,9 +3847,8 @@ msgid "Perform operation even when nothing changed\n"
 msgstr ""
 
 #: winerror.mc:1896
-#, fuzzy
 msgid "The user profile is invalid\n"
-msgstr "The specified device handle is invalid."
+msgstr ""
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server\n"
@@ -4046,9 +4019,8 @@ msgid "Server disabled\n"
 msgstr ""
 
 #: winerror.mc:2111
-#, fuzzy
 msgid "Server not disabled\n"
-msgstr "The driver was not enabled."
+msgstr ""
 
 #: winerror.mc:2116
 msgid "Invalid ID authority\n"
@@ -4157,9 +4129,8 @@ msgid "Cannot impersonate\n"
 msgstr "Nemožno nájsť tlačiareň"
 
 #: winerror.mc:2246
-#, fuzzy
 msgid "Invalid transaction state\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2251
 msgid "Security DB commit failure\n"
@@ -4407,9 +4378,8 @@ msgid "Hook procedure not installed\n"
 msgstr ""
 
 #: winerror.mc:2556
-#, fuzzy
 msgid "Invalid list box message\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2561
 msgid "Invalid LB_SETCOUNT sent\n"
@@ -4432,9 +4402,8 @@ msgid "Window has no system menu\n"
 msgstr ""
 
 #: winerror.mc:2586
-#, fuzzy
 msgid "Invalid message box style\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2591
 msgid "Invalid SPI parameter\n"
@@ -4510,9 +4479,8 @@ msgid "Menu item not found\n"
 msgstr "Súbor nenájdený"
 
 #: winerror.mc:2681
-#, fuzzy
 msgid "Invalid keyboard handle\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2686
 msgid "Hook type not allowed\n"
@@ -4527,9 +4495,8 @@ msgid "Timeout\n"
 msgstr ""
 
 #: winerror.mc:2701
-#, fuzzy
 msgid "Invalid monitor handle\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2706
 msgid "Event log file corrupt\n"
@@ -4586,9 +4553,8 @@ msgid "Unknown property\n"
 msgstr "Neznámy ovládač tlačiarne"
 
 #: winerror.mc:2766
-#, fuzzy
 msgid "Invalid handle state\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2771
 #, fuzzy
@@ -4612,14 +4578,12 @@ msgid "Product uninstalled\n"
 msgstr ""
 
 #: winerror.mc:2796
-#, fuzzy
 msgid "Invalid query syntax\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2801
-#, fuzzy
 msgid "Invalid field\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2806
 msgid "Device removed\n"
@@ -4667,9 +4631,8 @@ msgid "Function failed\n"
 msgstr "Otvoriť súbor"
 
 #: winerror.mc:2861
-#, fuzzy
 msgid "Invalid table\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2866
 msgid "Data type mismatch\n"
@@ -4702,9 +4665,8 @@ msgid "Failed to open the patch package\n"
 msgstr ""
 
 #: winerror.mc:2901
-#, fuzzy
 msgid "Invalid patch package\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2906
 msgid "Unsupported patch package\n"
@@ -4715,9 +4677,8 @@ msgid "Another version is installed\n"
 msgstr ""
 
 #: winerror.mc:2916
-#, fuzzy
 msgid "Invalid command line\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed\n"
@@ -4940,9 +4901,8 @@ msgid "Incomplete name\n"
 msgstr ""
 
 #: winerror.mc:3196
-#, fuzzy
 msgid "Invalid version option\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:3201
 msgid "No more members\n"
@@ -5124,9 +5084,8 @@ msgid "Invalid priority\n"
 msgstr ""
 
 #: winerror.mc:3416
-#, fuzzy
 msgid "Invalid printer name\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:3421
 msgid "Printer already exists\n"
@@ -5137,9 +5096,8 @@ msgid "Invalid printer command\n"
 msgstr ""
 
 #: winerror.mc:3431
-#, fuzzy
 msgid "Invalid data type\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:3436
 msgid "Invalid environment\n"
@@ -5283,14 +5241,12 @@ msgid "Already awaiting printer handle\n"
 msgstr ""
 
 #: winerror.mc:3611
-#, fuzzy
 msgid "Printer deleted\n"
-msgstr "&Delete"
+msgstr ""
 
 #: winerror.mc:3616
-#, fuzzy
 msgid "Invalid printer state\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:3621
 msgid "User must change password\n"
@@ -5314,9 +5270,8 @@ msgid "Invalid driver\n"
 msgstr ""
 
 #: winerror.mc:3646
-#, fuzzy
 msgid "Invalid object resolver set\n"
-msgstr "Invalid character(s) in path"
+msgstr ""
 
 #: winerror.mc:3651
 msgid "Incomplete RPC send\n"
@@ -6055,7 +6010,7 @@ msgstr ""
 
 #: shdoclc.rc:100 shell32.rc:94
 msgid "&Select"
-msgstr "&Select"
+msgstr ""
 
 #: shdoclc.rc:102
 msgid "&Cell"
@@ -6238,31 +6193,29 @@ msgstr ""
 #: shell32.rc:27 shell32.rc:42 shell32.rc:119 shell32.rc:159 taskmgr.rc:65
 #: taskmgr.rc:110 taskmgr.rc:252
 msgid "Lar&ge Icons"
-msgstr "Lar&ge Icons"
+msgstr ""
 
 #: shell32.rc:28 shell32.rc:43 shell32.rc:120 shell32.rc:160 taskmgr.rc:66
 #: taskmgr.rc:111 taskmgr.rc:253
 msgid "S&mall Icons"
-msgstr "S&mall Icons"
+msgstr ""
 
 #: shell32.rc:29 shell32.rc:44 shell32.rc:121 shell32.rc:161
 msgid "&List"
-msgstr "&List"
+msgstr ""
 
 #: shell32.rc:30 shell32.rc:45 shell32.rc:122 shell32.rc:162 taskmgr.rc:67
 #: taskmgr.rc:112 taskmgr.rc:254
 msgid "&Details"
-msgstr "&Details"
+msgstr "&Detaily"
 
 #: shell32.rc:48 winefile.rc:81
-#, fuzzy
 msgid "Arrange &Icons"
-msgstr "Lar&ge Icons"
+msgstr ""
 
 #: shell32.rc:50
-#, fuzzy
 msgid "By &Name"
-msgstr "Name"
+msgstr ""
 
 #: shell32.rc:51
 #, fuzzy
@@ -6284,14 +6237,12 @@ msgid "&Auto Arrange"
 msgstr ""
 
 #: shell32.rc:57
-#, fuzzy
 msgid "Line up Icons"
-msgstr "Lar&ge Icons"
+msgstr ""
 
 #: shell32.rc:62
-#, fuzzy
 msgid "Paste as Link"
-msgstr "Create &Link"
+msgstr ""
 
 #: shell32.rc:64
 msgid "New"
@@ -6302,9 +6253,8 @@ msgid "New &Folder"
 msgstr ""
 
 #: shell32.rc:67
-#, fuzzy
 msgid "New &Link"
-msgstr "Create &Link"
+msgstr ""
 
 #: shell32.rc:71
 #, fuzzy
@@ -6327,19 +6277,19 @@ msgstr ""
 
 #: shell32.rc:95
 msgid "E&xplore"
-msgstr "E&xplore"
+msgstr ""
 
 #: shell32.rc:98
 msgid "C&ut"
-msgstr "C&ut"
+msgstr ""
 
 #: shell32.rc:101
 msgid "Create &Link"
-msgstr "Create &Link"
+msgstr ""
 
 #: shell32.rc:103 regedit.rc:91
 msgid "&Rename"
-msgstr "&Rename"
+msgstr ""
 
 #: shell32.rc:114 notepad.rc:36 oleview.rc:35 regedit.rc:38 view.rc:31
 #: winhlp32.rc:34 wordpad.rc:37
@@ -6347,9 +6297,8 @@ msgid "E&xit"
 msgstr "U&končiť"
 
 #: shell32.rc:127
-#, fuzzy
 msgid "&About Control Panel"
-msgstr "&About Control Panel..."
+msgstr ""
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
@@ -6373,7 +6322,7 @@ msgstr "Veľkosť k dispozícii"
 
 #: shell32.rc:142
 msgid "Comments"
-msgstr "Comments"
+msgstr ""
 
 #: shell32.rc:143
 msgid "Owner"
@@ -6388,19 +6337,16 @@ msgid "Original location"
 msgstr ""
 
 #: shell32.rc:146
-#, fuzzy
 msgid "Date deleted"
-msgstr "&Delete"
+msgstr ""
 
 #: shell32.rc:156
-#, fuzzy
 msgid "Control Panel"
-msgstr "&About Control Panel..."
+msgstr ""
 
 #: shell32.rc:163
-#, fuzzy
 msgid "Select"
-msgstr "&Select"
+msgstr ""
 
 #: shell32.rc:164 oleview.rc:99
 #, fuzzy
@@ -6507,9 +6453,8 @@ msgid "Program Files\\Common Files"
 msgstr ""
 
 #: shell32.rc:222 shell32.rc:147 shell32.rc:244
-#, fuzzy
 msgid "Documents"
-msgstr "Comments"
+msgstr ""
 
 #: shell32.rc:223
 msgid "Start Menu\\Programs\\Administrative Tools"
@@ -6690,9 +6635,8 @@ msgid "New Folder"
 msgstr ""
 
 #: shell32.rc:250
-#, fuzzy
 msgid "Wine Control Panel"
-msgstr "&About Control Panel..."
+msgstr ""
 
 #: shell32.rc:192
 msgid "Unable to display Run File dialog box (internal error)"
@@ -6720,34 +6664,26 @@ msgid "Are you sure you wish to permanently delete these %1 items?"
 msgstr ""
 
 #: shell32.rc:258
-#, fuzzy
 msgid "Confirm deletion"
-msgstr "Pending deletion; "
+msgstr ""
 
 #: shell32.rc:259
-#, fuzzy
 msgid ""
 "A file already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"File does already exist.\n"
-"Do you want to replace it?"
 
 #: shell32.rc:260
-#, fuzzy
 msgid ""
 "A folder already exists at the path %1.\n"
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"File does already exist.\n"
-"Do you want to replace it?"
 
 #: shell32.rc:261
-#, fuzzy
 msgid "Confirm overwrite"
-msgstr "Pending deletion; "
+msgstr ""
 
 #: shell32.rc:278
 msgid ""
@@ -6838,7 +6774,7 @@ msgstr ""
 
 #: user32.rc:68 regedit.rc:176 winefile.rc:100
 msgid "Error"
-msgstr "Error"
+msgstr ""
 
 #: user32.rc:69
 msgid "&More Windows..."
@@ -6853,9 +6789,8 @@ msgid "The certificate is issued by an unknown or untrusted publisher."
 msgstr ""
 
 #: wininet.rc:27
-#, fuzzy
 msgid "The date on the certificate is invalid."
-msgstr "The specified device handle is invalid."
+msgstr ""
 
 #: wininet.rc:28
 msgid "The name on the certificate does not match the site."
@@ -6876,154 +6811,125 @@ msgstr "Nedefinovaná externá chyba."
 
 #: winmm.rc:30
 msgid "A device ID has been used that is out of range for your system."
-msgstr "A device ID has been used that is out of range for your system."
+msgstr ""
 
 #: winmm.rc:31
 msgid "The driver was not enabled."
-msgstr "The driver was not enabled."
+msgstr ""
 
 #: winmm.rc:32
 msgid ""
 "The specified device is already in use. Wait until it is free, and then try "
 "again."
 msgstr ""
-"The specified device is already in use. Wait until it is free, and then try "
-"again."
 
 #: winmm.rc:33
 msgid "The specified device handle is invalid."
-msgstr "The specified device handle is invalid."
+msgstr ""
 
 #: winmm.rc:34
-#, fuzzy
 msgid "There is no driver installed on your system!\n"
-msgstr "There is no driver installed on your system !\n"
+msgstr ""
 
 #: winmm.rc:35
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
 msgstr ""
-"Not enough memory available for this task. Quit one or more applications to "
-"increase available memory, and then try again."
 
 #: winmm.rc:36
 msgid ""
 "This function is not supported. Use the Capabilities function to determine "
 "which functions and messages the driver supports."
 msgstr ""
-"This function is not supported. Use the Capabilities function to determine "
-"which functions and messages the driver supports."
 
 #: winmm.rc:37
 msgid "An error number was specified that is not defined in the system."
-msgstr "An error number was specified that is not defined in the system."
+msgstr ""
 
 #: winmm.rc:38
 msgid "An invalid flag was passed to a system function."
-msgstr "An invalid flag was passed to a system function."
+msgstr ""
 
 #: winmm.rc:39
 msgid "An invalid parameter was passed to a system function."
-msgstr "An invalid parameter was passed to a system function."
+msgstr ""
 
 #: winmm.rc:42
-#, fuzzy
 msgid ""
 "The specified format is not supported or cannot be translated. Use the "
 "Capabilities function to determine the supported formats."
 msgstr ""
-"The specified format is not supported or cannot be translated. Use the "
-"Capabilities function to determine the supported formats"
 
 #: winmm.rc:43 winmm.rc:49
 msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
 msgstr ""
-"Cannot perform this operation while media data is still playing. Reset the "
-"device, or wait until the data is finished playing."
 
 #: winmm.rc:44
 msgid ""
 "The wave header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
 msgstr ""
-"The wave header was not prepared. Use the Prepare function to prepare the "
-"header, and then try again."
 
 #: winmm.rc:45
 msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
 msgstr ""
-"Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
-"and then try again."
 
 #: winmm.rc:48
 msgid ""
 "The MIDI header was not prepared. Use the Prepare function to prepare the "
 "header, and then try again."
 msgstr ""
-"The MIDI header was not prepared. Use the Prepare function to prepare the "
-"header, and then try again."
 
 #: winmm.rc:50
 msgid ""
 "A MIDI map was not found. There may be a problem with the driver, or the "
 "MIDIMAP.CFG file may be corrupt or missing."
 msgstr ""
-"A MIDI map was not found. There may be a problem with the driver, or the "
-"MIDIMAP.CFG file may be corrupt or missing."
 
 #: winmm.rc:51
 msgid ""
 "The port is transmitting data to the device. Wait until the data has been "
 "transmitted, and then try again."
 msgstr ""
-"The port is transmitting data to the device. Wait until the data has been "
-"transmitted, and then try again."
 
 #: winmm.rc:52
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system. Use MIDI Mapper to edit the setup."
 msgstr ""
-"The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use MIDI Mapper to edit the setup."
 
 #: winmm.rc:53
 msgid ""
 "The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
 "Windows SYSTEM directory, and then try again."
 msgstr ""
-"The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
-"Windows SYSTEM directory, and then try again."
 
 #: winmm.rc:56
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
 msgstr ""
-"Invalid MCI device ID. Use the ID returned when opening the MCI device."
 
 #: winmm.rc:57
 msgid "The driver cannot recognize the specified command parameter."
-msgstr "The driver cannot recognize the specified command parameter."
+msgstr ""
 
 #: winmm.rc:58
 msgid "The driver cannot recognize the specified command."
-msgstr "The driver cannot recognize the specified command."
+msgstr ""
 
 #: winmm.rc:59
 msgid ""
 "There is a problem with your media device. Make sure it is working correctly "
 "or contact the device manufacturer."
 msgstr ""
-"There is a problem with your media device. Make sure it is working correctly "
-"or contact the device manufacturer."
 
 #: winmm.rc:60
 msgid "The specified device is not open or is not recognized by MCI."
-msgstr "The specified device is not open or is not recognized by MCI."
+msgstr ""
 
 #: winmm.rc:61
 msgid ""
@@ -7031,23 +6937,17 @@ msgid ""
 "Quit one or more applications to increase available memory, and then try "
 "again."
 msgstr ""
-"Not enough memory available for this task.\n"
-"Quit one or more applications to increase available memory, and then try "
-"again."
 
 #: winmm.rc:62
 msgid ""
 "The device name is already being used as an alias by this application. Use a "
 "unique alias."
 msgstr ""
-"The device name is already being used as an alias by this application. Use a "
-"unique alias."
 
 #: winmm.rc:63
 msgid ""
 "There is an undetectable problem in loading the specified device driver."
 msgstr ""
-"There is an undetectable problem in loading the specified device driver."
 
 #: winmm.rc:64
 msgid "No command was specified."
@@ -7058,50 +6958,41 @@ msgid ""
 "The output string was too large to fit in the return buffer. Increase the "
 "size of the buffer."
 msgstr ""
-"The output string was to large to fit in the return buffer. Increase the "
-"size of the buffer."
 
 #: winmm.rc:66
 msgid ""
 "The specified command requires a character-string parameter. Please provide "
 "one."
 msgstr ""
-"The specified command requires a character-string parameter. Please provide "
-"one."
 
 #: winmm.rc:67
 msgid "The specified integer is invalid for this command."
-msgstr "The specified integer is invalid for this command."
+msgstr ""
 
 #: winmm.rc:68
 msgid ""
 "The device driver returned an invalid return type. Check with the device "
 "manufacturer about obtaining a new driver."
 msgstr ""
-"The device driver returned an invalid return type. Check with the device "
-"manufacturer about obtaining a new driver."
 
 #: winmm.rc:69
 msgid ""
 "There is a problem with the device driver. Check with the device "
 "manufacturer about obtaining a new driver."
 msgstr ""
-"There is a problem with the device driver. Check with the device "
-"manufacturer about obtaining a new driver."
 
 #: winmm.rc:70
 msgid "The specified command requires a parameter. Please supply one."
-msgstr "The specified command requires a parameter. Please supply one."
+msgstr ""
 
 #: winmm.rc:71
 msgid "The MCI device you are using does not support the specified command."
-msgstr "The MCI device you are using does not support the specified command."
+msgstr ""
 
 #: winmm.rc:72
 msgid ""
 "Cannot find the specified file. Make sure the path and filename are correct."
 msgstr ""
-"Cannot find the specified file. Make sure the path and filename are correct."
 
 #: winmm.rc:73
 msgid "The device driver is not ready."
@@ -7109,312 +7000,251 @@ msgstr "Ovládač zariadenia nie je pripravený."
 
 #: winmm.rc:74
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
-msgstr "A problem occurred in initializing MCI. Try restarting Windows."
+msgstr ""
 
 #: winmm.rc:75
 msgid ""
 "There is a problem with the device driver. The driver has closed. Cannot "
 "access error."
 msgstr ""
-"There is a problem with the device driver. The driver has closed. Cannot "
-"access error."
 
 #: winmm.rc:76
 msgid "Cannot use 'all' as the device name with the specified command."
-msgstr "Cannot use 'all' as the device name with the specified command."
+msgstr ""
 
 #: winmm.rc:77
-#, fuzzy
 msgid ""
 "Errors occurred in more than one device. Specify each command and device "
 "separately to determine which devices caused the error."
 msgstr ""
-"Errors occurred in more than one device. Specify each command and device "
-"separately to determine which devices caused the error"
 
 #: winmm.rc:78
 msgid "Cannot determine the device type from the given filename extension."
-msgstr "Cannot determine the device type from the given filename extension."
+msgstr ""
 
 #: winmm.rc:79
 msgid "The specified parameter is out of range for the specified command."
-msgstr "The specified parameter is out of range for the specified command."
+msgstr ""
 
 #: winmm.rc:80
 msgid "The specified parameters cannot be used together."
-msgstr "The specified parameters cannot be used together."
+msgstr ""
 
 #: winmm.rc:81
 msgid ""
 "Cannot save the specified file. Make sure you have enough disk space or are "
 "still connected to the network."
 msgstr ""
-"Cannot save the specified file. Make sure you have enough disk space or are "
-"still connected to the network."
 
 #: winmm.rc:82
 msgid ""
 "Cannot find the specified device. Make sure it is installed or that the "
 "device name is spelled correctly."
 msgstr ""
-"Cannot find the specified device. Make sure it is installed or that the "
-"device name is spelled correctly."
 
 #: winmm.rc:83
 msgid ""
 "The specified device is now being closed. Wait a few seconds, and then try "
 "again."
 msgstr ""
-"The specified device is now being closed. Wait a few seconds, and then try "
-"again."
 
 #: winmm.rc:84
 msgid ""
 "The specified alias is already being used in this application. Use a unique "
 "alias."
 msgstr ""
-"The specified alias is already being used in this application. Use a unique "
-"alias."
 
 #: winmm.rc:85
 msgid "The specified parameter is invalid for this command."
-msgstr "The specified parameter is invalid for this command."
+msgstr ""
 
 #: winmm.rc:86
 msgid ""
 "The device driver is already in use. To share it, use the 'shareable' "
 "parameter with each 'open' command."
 msgstr ""
-"The device driver is already in use. To share it, use the 'shareable' "
-"parameter with each 'open' command."
 
 #: winmm.rc:87
 msgid ""
 "The specified command requires an alias, file, driver, or device name. "
 "Please supply one."
 msgstr ""
-"The specified command requires an alias, file, driver, or device name. "
-"Please supply one."
 
 #: winmm.rc:88
 msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
 msgstr ""
-"The specified value for the time format is invalid. Refer to the MCI "
-"documentation for valid formats."
 
 #: winmm.rc:89
 msgid ""
 "A closing double-quotation mark is missing from the parameter value. Please "
 "supply one."
 msgstr ""
-"A closing double-quotation mark is missing from the parameter value. Please "
-"supply one."
 
 #: winmm.rc:90
 msgid "A parameter or value was specified twice. Only specify it once."
-msgstr "A parameter or value was specified twice. Only specify it once."
+msgstr ""
 
 #: winmm.rc:91
 msgid ""
 "The specified file cannot be played on the specified MCI device. The file "
 "may be corrupt, or not in the correct format."
 msgstr ""
-"The specified file cannot be played on the specified MCI device. The file "
-"may be corrupt, or not in the correct format."
 
 #: winmm.rc:92
 msgid "A null parameter block was passed to MCI."
-msgstr "A null parameter block was passed to MCI."
+msgstr ""
 
 #: winmm.rc:93
 msgid "Cannot save an unnamed file. Supply a filename."
-msgstr "Cannot save an unnamed file. Supply a filename."
+msgstr ""
 
 #: winmm.rc:94
 msgid "You must specify an alias when using the 'new' parameter."
-msgstr "You must specify an alias when using the 'new' parameter."
+msgstr ""
 
 #: winmm.rc:95
 msgid "Cannot use the 'notify' flag with auto-opened devices."
-msgstr "Cannot use the 'notify' flag with auto-opened devices."
+msgstr ""
 
 #: winmm.rc:96
 msgid "Cannot use a filename with the specified device."
-msgstr "Cannot use a filename with the specified device."
+msgstr ""
 
 #: winmm.rc:97
 msgid ""
 "Cannot carry out the commands in the order specified. Correct the command "
 "sequence, and then try again."
 msgstr ""
-"Cannot carry out the commands in the order specified. Correct the command "
-"sequence, and then try again."
 
 #: winmm.rc:98
 msgid ""
 "Cannot carry out the specified command on an auto-opened device. Wait until "
 "the device is closed, and then try again."
 msgstr ""
-"Cannot carry out the specified command on an auto-opened device. Wait until "
-"the device is closed, and then try again."
 
 #: winmm.rc:99
 msgid ""
 "The filename is invalid. Make sure the filename is not longer than 8 "
 "characters, followed by a period and an extension."
 msgstr ""
-"The filename is invalid. Make sure the filename is not longer than 8 "
-"characters, followed by a period and an extension."
 
 #: winmm.rc:100
 msgid ""
 "Cannot specify extra characters after a string enclosed in quotation marks."
 msgstr ""
-"Cannot specify extra characters after a string enclosed in quotation marks."
 
 #: winmm.rc:101
 msgid ""
 "The specified device is not installed on the system. Use the Drivers option "
 "in Control Panel to install the device."
 msgstr ""
-"The specified device is not installed on the system. Use the Drivers option "
-"in Control Panel to install the device."
 
 #: winmm.rc:102
 msgid ""
 "Cannot access the specified file or MCI device. Try changing directories or "
 "restarting your computer."
 msgstr ""
-"Cannot access the specified file or MCI device. Try changing directories or "
-"restarting your computer."
 
 #: winmm.rc:103
 msgid ""
 "Cannot access the specified file or MCI device because the application "
 "cannot change directories."
 msgstr ""
-"Cannot access the specified file or MCI device because the application "
-"cannot change directories."
 
 #: winmm.rc:104
 msgid ""
 "Cannot access specified file or MCI device because the application cannot "
 "change drives."
 msgstr ""
-"Cannot access specified file or MCI device because the application cannot "
-"change drives."
 
 #: winmm.rc:105
 msgid "Specify a device or driver name that is less than 79 characters."
-msgstr "Specify a device or driver name that is less than 79 characters."
+msgstr ""
 
 #: winmm.rc:106
 msgid "Specify a device or driver name that is less than 69 characters."
-msgstr "Specify a device or driver name that is less than 69 characters."
+msgstr ""
 
 #: winmm.rc:107
 msgid ""
 "The specified command requires an integer parameter. Please provide one."
 msgstr ""
-"The specified command requires an integer parameter. Please provide one."
 
 #: winmm.rc:108
 msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
 msgstr ""
-"All wave devices that can play files in the current format are in use. Wait "
-"until a wave device is free, and then try again."
 
 #: winmm.rc:109
 msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"Cannot set the current wave device for play back because it is in use. Wait "
-"until the device is free, and then try again."
 
 #: winmm.rc:110
 msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
 msgstr ""
-"All wave devices that can record files in the current format are in use. "
-"Wait until a wave device is free, and then try again."
 
 #: winmm.rc:111
 msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"Cannot set the current wave device for recording because it is in use. Wait "
-"until the device is free, and then try again."
 
 #: winmm.rc:112
 msgid "Any compatible waveform playback device may be used."
-msgstr "Any compatible waveform playback device may be used."
+msgstr ""
 
 #: winmm.rc:113
 msgid "Any compatible waveform recording device may be used."
-msgstr "Any compatible waveform recording device may be used."
+msgstr ""
 
 #: winmm.rc:114
 msgid ""
 "No wave device that can play files in the current format is installed. Use "
 "the Drivers option to install the wave device."
 msgstr ""
-"No wave device that can play files in the current format is installed. Use "
-"the Drivers option to install the wave device."
 
 #: winmm.rc:115
 msgid ""
 "The device you are trying to play to cannot recognize the current file "
 "format."
 msgstr ""
-"The device you are trying to play to cannot recognize the current file "
-"format."
 
 #: winmm.rc:116
 msgid ""
 "No wave device that can record files in the current format is installed. Use "
 "the Drivers option to install the wave device."
 msgstr ""
-"No wave device that can record files in the current format is installed. Use "
-"the Drivers option to install the wave device."
 
 #: winmm.rc:117
 msgid ""
 "The device you are trying to record from cannot recognize the current file "
 "format."
 msgstr ""
-"The device you are trying to record from cannot recognize the current file "
-"format."
 
 #: winmm.rc:122
 msgid ""
 "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
 "You can't use them together."
 msgstr ""
-"The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
-"You can't use them together."
 
 #: winmm.rc:124
 msgid ""
 "The specified MIDI port is already in use. Wait until it is free; then try "
 "again."
 msgstr ""
-"The specified MIDI port is already in use. Wait until it is free; then try "
-"again."
 
 #: winmm.rc:127
 msgid ""
 "The specified MIDI device is not installed on the system. Use the Drivers "
 "option from the Control Panel to install a MIDI device."
 msgstr ""
-"The specified MIDI device is not installed on the system. Use the Drivers "
-"option from the Control Panel to install a MIDI device."
 
 #: winmm.rc:125
 msgid ""
@@ -7422,37 +7252,30 @@ msgid ""
 "on the system. Use the MIDI Mapper option from the Control Panel to edit the "
 "setup."
 msgstr ""
-"The current MIDI Mapper setup refers to a MIDI device that is not installed "
-"on the system. Use the MIDI Mapper option from the Control Panel to edit the "
-"setup."
 
 #: winmm.rc:126
 msgid "An error occurred with the specified port."
-msgstr "An error occurred with the specified port."
+msgstr ""
 
 #: winmm.rc:129
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications; then, try again."
 msgstr ""
-"All multimedia timers are being used by other applications. Quit one of "
-"these applications; then, try again."
 
 #: winmm.rc:128
 msgid "The system doesn't have a current MIDI port specified."
-msgstr "The system doesnot have a current MIDI port specified."
+msgstr ""
 
 #: winmm.rc:123
 msgid ""
 "The system has no installed MIDI devices. Use the Drivers option from the "
 "Control Panel to install a MIDI driver."
 msgstr ""
-"The system has no installed MIDI devices. Use the Drivers option from the "
-"Control Panel to install a MIDI driver."
 
 #: winmm.rc:118
 msgid "There is no display window."
-msgstr "There is no display window."
+msgstr ""
 
 #: winmm.rc:119
 msgid "Could not create or use window."
@@ -7463,16 +7286,12 @@ msgid ""
 "Cannot read the specified file. Make sure the file is still present, or "
 "check your disk or network connection."
 msgstr ""
-"Cannot read the specified file. Make sure the file is still present, or "
-"check your disk or network connection."
 
 #: winmm.rc:121
 msgid ""
 "Cannot write to the specified file. Make sure you have enough disk space or "
 "are still connected to the network."
 msgstr ""
-"Cannot write to the specified file. Make sure you have enough disk space or "
-"are still connected to the network."
 
 #: winspool.rc:28
 msgid "The output file already exists.  Click OK to overwrite."
@@ -7766,7 +7585,7 @@ msgstr "Digi&tálne"
 
 #: clock.rc:32 notepad.rc:50 winefile.rc:64 wordpad.rc:81
 msgid "&Font..."
-msgstr "&Font..."
+msgstr ""
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -8308,9 +8127,8 @@ msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 msgstr ""
 
 #: explorer.rc:28
-#, fuzzy
 msgid "Wine Explorer"
-msgstr "E&xplore"
+msgstr ""
 
 #: explorer.rc:29
 #, fuzzy
@@ -8491,18 +8309,16 @@ msgid "Disconnected"
 msgstr "Súbor nenájdený"
 
 #: net.rc:47
-#, fuzzy
 msgid "A network error occurred"
-msgstr "A printer error occurred"
+msgstr ""
 
 #: net.rc:48
 msgid "Connection is being made"
 msgstr ""
 
 #: net.rc:49
-#, fuzzy
 msgid "Reconnecting"
-msgstr "Default"
+msgstr ""
 
 #: net.rc:40
 msgid "The following services are running:\n"
@@ -8582,9 +8398,8 @@ msgid "&Replace...\tCtrl+H"
 msgstr ""
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
-#, fuzzy
 msgid "&Contents\tF1"
-msgstr "Comments"
+msgstr ""
 
 #: notepad.rc:59
 msgid "&About Notepad"
@@ -8649,14 +8464,10 @@ msgid "'%s' could not be found."
 msgstr ""
 
 #: notepad.rc:88
-#, fuzzy
 msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
 msgstr ""
-"Not enough memory available for this task.\n"
-"Quit one or more applications to increase available memory, and then try "
-"again."
 
 #: notepad.rc:90
 msgid "Unicode (UTF-16)"
@@ -8729,9 +8540,8 @@ msgid "View &Type information"
 msgstr "Informácie"
 
 #: oleview.rc:49
-#, fuzzy
 msgid "Create &Instance"
-msgstr "Create &Link"
+msgstr ""
 
 #: oleview.rc:50
 msgid "Create Instance &On..."
@@ -8783,9 +8593,8 @@ msgid "&Group by type kind"
 msgstr ""
 
 #: oleview.rc:93 oleview.rc:94
-#, fuzzy
 msgid "OleView"
-msgstr "&View"
+msgstr ""
 
 #: oleview.rc:98
 msgid "ITypeLib viewer"
@@ -9002,7 +8811,7 @@ msgstr "&Viac okien..."
 
 #: progman.rc:41 taskmgr.rc:41 winefile.rc:63 winhlp32.rc:44
 msgid "&Options"
-msgstr "&Options"
+msgstr ""
 
 #: progman.rc:42
 msgid "&Arrange automatically"
@@ -9187,9 +8996,8 @@ msgid "&Expandable String Value"
 msgstr ""
 
 #: regedit.rc:56 regedit.rc:107
-#, fuzzy
 msgid "&Rename\tF2"
-msgstr "&Rename"
+msgstr ""
 
 #: regedit.rc:58 regedit.rc:110
 msgid "&Copy Key Name"
@@ -9225,9 +9033,8 @@ msgid "Modify Binary Data..."
 msgstr ""
 
 #: regedit.rc:109
-#, fuzzy
 msgid "&Export..."
-msgstr "&Font..."
+msgstr ""
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
@@ -9280,9 +9087,8 @@ msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr ""
 
 #: regedit.rc:201
-#, fuzzy
 msgid "(Default)"
-msgstr "Default"
+msgstr ""
 
 #: regedit.rc:202
 msgid "(value not set)"
@@ -10189,9 +9995,8 @@ msgid "disabled"
 msgstr ""
 
 #: winecfg.rc:58
-#, fuzzy
 msgid "Default Settings"
-msgstr "Default"
+msgstr ""
 
 #: winecfg.rc:59
 msgid "Wine Programs (*.exe,*.exe.so)"
@@ -10288,14 +10093,12 @@ msgid "Emulation"
 msgstr "Informácie"
 
 #: winecfg.rc:95
-#, fuzzy
 msgid "Controls Background"
-msgstr "&About Control Panel..."
+msgstr ""
 
 #: winecfg.rc:96
-#, fuzzy
 msgid "Controls Text"
-msgstr "&About Control Panel..."
+msgstr ""
 
 #: winecfg.rc:98
 msgid "Menu Background"
@@ -10314,9 +10117,8 @@ msgid "Selection Background"
 msgstr ""
 
 #: winecfg.rc:102
-#, fuzzy
 msgid "Selection Text"
-msgstr "&Select"
+msgstr ""
 
 #: winecfg.rc:103
 msgid "ToolTip Background"
@@ -10372,9 +10174,8 @@ msgid "Inactive Border"
 msgstr ""
 
 #: winecfg.rc:116
-#, fuzzy
 msgid "Controls Shadow"
-msgstr "&About Control Panel..."
+msgstr ""
 
 #: winecfg.rc:117
 msgid "Gray Text"
@@ -10617,9 +10418,8 @@ msgid "Tile &Vertically\tCtrl+F4"
 msgstr ""
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&About Wine File Manager"
-msgstr "&Info..."
+msgstr ""
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -10710,9 +10510,8 @@ msgid "&Fastest Times"
 msgstr ""
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "&Info..."
+msgstr ""
 
 #: winemine.rc:27
 msgid "WineMine"
@@ -10744,19 +10543,19 @@ msgstr "&Definovať..."
 
 #: winhlp32.rc:45
 msgid "History"
-msgstr "History"
+msgstr ""
 
 #: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"
-msgstr "Small"
+msgstr ""
 
 #: winhlp32.rc:49 winhlp32.rc:70
 msgid "Normal"
-msgstr "Normal"
+msgstr ""
 
 #: winhlp32.rc:50 winhlp32.rc:71
 msgid "Large"
-msgstr "Large"
+msgstr ""
 
 #: winhlp32.rc:54
 msgid "&Help on help\tF1"
@@ -10768,7 +10567,7 @@ msgstr "Vždy na &vrchu"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr "&Info..."
+msgstr ""
 
 #: winhlp32.rc:64
 #, fuzzy
@@ -10790,7 +10589,7 @@ msgstr "Chyba počas čítania súboru `%s'"
 
 #: winhlp32.rc:85
 msgid "Summary"
-msgstr "Summary"
+msgstr ""
 
 #: winhlp32.rc:84
 msgid "&Index"
@@ -10802,11 +10601,11 @@ msgstr "Súbory pomoci (*.hlp)"
 
 #: winhlp32.rc:89
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
-msgstr "Cannot find '%s'. Do you want to find this file yourself?"
+msgstr ""
 
 #: winhlp32.rc:90
 msgid "Cannot find a richedit implementation... Aborting"
-msgstr "Cannot find a richedit implementation... Aborting"
+msgstr ""
 
 #: winhlp32.rc:91
 msgid "Help topics: "
@@ -10877,9 +10676,8 @@ msgid "&Statusbar"
 msgstr ""
 
 #: wordpad.rc:73
-#, fuzzy
 msgid "&Options..."
-msgstr "&Options"
+msgstr ""
 
 #: wordpad.rc:75
 msgid "&Insert"
@@ -10890,9 +10688,8 @@ msgid "&Date and time..."
 msgstr ""
 
 #: wordpad.rc:79
-#, fuzzy
 msgid "F&ormat"
-msgstr "Normal"
+msgstr ""
 
 #: wordpad.rc:82 wordpad.rc:105
 msgid "&Bullet points"
@@ -10919,9 +10716,8 @@ msgid "&Pale yellow\tCtrl+2"
 msgstr ""
 
 #: wordpad.rc:93
-#, fuzzy
 msgid "&About Wine Wordpad"
-msgstr "&Info..."
+msgstr ""
 
 #: wordpad.rc:130
 msgid "Automatic"
