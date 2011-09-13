@@ -191,6 +191,7 @@ static void init_devices(HWND dialog, IDirectInput8W *lpDI, DIDevicesData *data,
     int i;
 
     /* Count devices */
+    data->ndevices = 0;
     IDirectInput8_EnumDevicesBySemantics(lpDI, NULL, lpdiaf, count_devices, (LPVOID) data, 0);
 
     /* Allocate devices */
