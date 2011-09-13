@@ -81,10 +81,10 @@ Call ok("ab " & empty = "ab ", """ab"" & empty = " & ("ab " & empty))
 Call ok(1 & 100000 = "1100000", "1 & 100000 = " & (1 & 100000))
 Call ok("ab" & x = "abxx", """ab"" & x = " & ("ab"&x))
 
-'if(isEnglishLocale) then
-'    Call ok("" & true = "True", """"" & true = " & true)
-'    Call ok(true & false = "TrueFalse", "true & false = " & (true & false))
-'end if
+if(isEnglishLocale) then
+    Call ok("" & true = "True", """"" & true = " & true)
+    Call ok(true & false = "TrueFalse", "true & false = " & (true & false))
+end if
 
 x = 3
 Call ok(2+2 = 4, "2+2 = " & (2+2))
@@ -98,5 +98,53 @@ Call ok(3+5-true = 9, "3+5-true <> 9")
 Call ok(getVT(2-null) = "VT_NULL", "getVT(2-null) = " & getVT(2-null))
 Call ok(2-empty = 2, "2-empty = " & (2-empty))
 Call ok(2-x = -1, "2-x = " & (2-x))
+
+if false then
+    ok false, "if false called"
+end if
+
+x = true
+if x then
+    x = false
+end if
+Call ok(not x, "x is false, if not evaluated?")
+
+x = false
+If false Then
+   Call ok(false, "inside if false")
+Else
+   x = true
+End If
+Call ok(x, "else not called?")
+
+x = false
+If false Then
+   Call ok(false, "inside if false")
+ElseIf not True Then
+   Call ok(false, "inside elseif not true")
+Else
+   x = true
+End If
+Call ok(x, "else not called?")
+
+x = false
+If false Then
+   Call ok(false, "inside if false")
+   x = 1
+   y = 10+x
+ElseIf not False Then
+   x = true
+Else
+   Call ok(false, "inside else not true")
+End If
+Call ok(x, "elseif not called?")
+
+x = false
+If false Then
+   Call ok(false, "inside if false")
+ElseIf not False Then
+   x = true
+End If
+Call ok(x, "elseif not called?")
 
 reportSuccess()
