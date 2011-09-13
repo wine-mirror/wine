@@ -25,6 +25,8 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "wine/debug.h"
+WINE_DEFAULT_DEBUG_CHANNEL(msvcp90);
 
 /* ??0_Mutex@std@@QAE@XZ */
 /* ??0_Mutex@std@@QEAA@XZ */
@@ -190,4 +192,30 @@ unsigned short __cdecl wctype(const char *property)
             return properties[i].mask;
 
     return 0;
+}
+
+typedef void (__cdecl *MSVCP_new_handler_func)(void);
+static MSVCP_new_handler_func MSVCP_new_handler;
+static int __cdecl new_handler_wrapper(MSVCP_size_t unused)
+{
+    MSVCP_new_handler();
+    return 1;
+}
+
+/* ?set_new_handler@std@@YAP6AXXZP6AXXZ@Z */
+MSVCP_new_handler_func __cdecl set_new_handler(MSVCP_new_handler_func new_handler)
+{
+    MSVCP_new_handler_func old_handler = MSVCP_new_handler;
+
+    TRACE("%p\n", new_handler);
+
+    MSVCP_new_handler = new_handler;
+    MSVCRT_set_new_handler(new_handler ? new_handler_wrapper : NULL);
+    return old_handler;
+}
+
+/* ?set_new_handler@std@@YAP6AXXZH@Z */
+MSVCP_new_handler_func __cdecl set_new_handler_reset(int unused)
+{
+    return set_new_handler(NULL);
 }

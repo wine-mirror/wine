@@ -5310,8 +5310,8 @@
 @ stub -arch=win64 ?seekpos@?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@MEAA?AV?$fpos@H@2@V32@H@Z
 @ stub -arch=win32 ?seekpos@strstreambuf@std@@MAE?AV?$fpos@H@2@V32@H@Z
 @ stub -arch=win64 ?seekpos@strstreambuf@std@@MEAA?AV?$fpos@H@2@V32@H@Z
-@ stub ?set_new_handler@std@@YAP6AXXZH@Z
-@ stub ?set_new_handler@std@@YAP6AXXZP6AXXZ@Z
+@ cdecl ?set_new_handler@std@@YAP6AXXZH@Z(long) set_new_handler_reset
+@ cdecl ?set_new_handler@std@@YAP6AXXZP6AXXZ@Z(ptr) set_new_handler
 @ stub ?setbase@std@@YA?AU?$_Smanip@H@1@H@Z
 @ stub -arch=win32 ?setbuf@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEPAV?$basic_streambuf@DU?$char_traits@D@std@@@2@PADH@Z
 @ stub -arch=win64 ?setbuf@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAPEAV?$basic_streambuf@DU?$char_traits@D@std@@@2@PEAD_J@Z

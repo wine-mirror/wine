@@ -29,6 +29,7 @@ void __cdecl _invalid_parameter(const wchar_t*, const wchar_t*,
 
 extern void* (__cdecl *MSVCRT_operator_new)(MSVCP_size_t);
 extern void (__cdecl *MSVCRT_operator_delete)(void*);
+extern void* (__cdecl *MSVCRT_set_new_handler)(void*);
 
 /* Copied from dlls/msvcrt/cpp.c */
 #ifdef __i386__  /* thiscall functions are i386-specific */
