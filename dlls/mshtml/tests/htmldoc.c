@@ -285,8 +285,18 @@ static BSTR a2bstr(const char *str)
 
 static BOOL is_english(void)
 {
-    return PRIMARYLANGID(GetSystemDefaultLangID()) == LANG_ENGLISH
-        && PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH;
+    static HMODULE hkernel32 = NULL;
+    static LANGID (WINAPI *pGetUserDefaultUILanguage)(void) = NULL;
+
+    if (!hkernel32)
+    {
+        hkernel32 = GetModuleHandleA("kernel32.dll");
+        pGetUserDefaultUILanguage = (void*)GetProcAddress(hkernel32, "GetUserDefaultUILanguage");
+    }
+    if (pGetUserDefaultUILanguage)
+        return PRIMARYLANGID(pGetUserDefaultUILanguage()) == LANG_ENGLISH;
+
+    return PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH;
 }
 
 #define EXPECT_UPDATEUI  1
