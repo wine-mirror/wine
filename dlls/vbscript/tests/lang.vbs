@@ -66,6 +66,7 @@ Call ok(getVT(&hffFFffFF&) = "VT_I2", "getVT(&hffFFffFF&) is not VT_I2")
 Call ok(getVT(1 & 100000) = "VT_BSTR", "getVT(1 & 100000) is not VT_BSTR")
 Call ok(getVT(-empty) = "VT_I2", "getVT(-empty) = " & getVT(-empty))
 Call ok(getVT(-null) = "VT_NULL", "getVT(-null) = " & getVT(-null))
+Call ok(getVT(y) = "VT_EMPTY*", "getVT(y) = " & getVT(y))
 
 Call ok("ab" & "cd" = "abcd", """ab"" & ""cd"" <> ""abcd""")
 Call ok("ab " & null = "ab ", """ab"" & null = " & ("ab " & null))

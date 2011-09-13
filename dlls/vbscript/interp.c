@@ -40,7 +40,8 @@ typedef HRESULT (*instr_func_t)(exec_ctx_t*);
 
 typedef enum {
     REF_NONE,
-    REF_DISP
+    REF_DISP,
+    REF_VAR
 } ref_type_t;
 
 typedef struct {
@@ -50,6 +51,7 @@ typedef struct {
             IDispatch *disp;
             DISPID id;
         } d;
+        VARIANT *v;
     } u;
 } ref_t;
 
@@ -59,11 +61,29 @@ typedef struct {
     BOOL owned;
 } variant_val_t;
 
+static BOOL lookup_dynamic_vars(dynamic_var_t *var, const WCHAR *name, ref_t *ref)
+{
+    while(var) {
+        if(!strcmpiW(var->name, name)) {
+            ref->type = REF_VAR;
+            ref->u.v = &var->v;
+            return TRUE;
+        }
+
+        var = var->next;
+    }
+
+    return FALSE;
+}
+
 static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, ref_t *ref)
 {
     named_item_t *item;
     DISPID id;
     HRESULT hres;
+
+    if(lookup_dynamic_vars(ctx->script->global_vars, name, ref))
+        return S_OK;
 
     LIST_FOR_EACH_ENTRY(item, &ctx->script->named_items, named_item_t, entry) {
         if(item->flags & SCRIPTITEM_GLOBALMEMBERS) {
@@ -210,12 +230,26 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
     vbstack_to_dp(ctx, arg_cnt, &dp);
 
     switch(ref.type) {
+    case REF_VAR:
+        if(!res) {
+            FIXME("REF_VAR no res\n");
+            return E_NOTIMPL;
+        }
+
+        if(arg_cnt) {
+            FIXME("arguments not implemented\n");
+            return E_NOTIMPL;
+        }
+
+        V_VT(res) = VT_BYREF|VT_VARIANT;
+        V_BYREF(res) = V_VT(ref.u.v) == (VT_VARIANT|VT_BYREF) ? V_VARIANTREF(ref.u.v) : ref.u.v;
+        break;
     case REF_DISP:
         hres = disp_call(ctx->script, ref.u.d.disp, ref.u.d.id, &dp, res);
         if(FAILED(hres))
             return hres;
         break;
-    default:
+    case REF_NONE:
         FIXME("%s not found\n", debugstr_w(identifier));
         return DISP_E_UNKNOWNNAME;
     }
@@ -254,6 +288,10 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, VARIANT *val, BOOL own_v
         return hres;
 
     switch(ref.type) {
+    case REF_VAR:
+        FIXME("REF_VAR not implemented\n");
+        hres = E_NOTIMPL;
+        break;
     case REF_DISP:
         hres = disp_propput(ctx->script, ref.u.d.disp, ref.u.d.id, val);
         if(own_val)
