@@ -185,18 +185,12 @@ RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp )
 }
 
 
-static void update_x11_clipping( X11DRV_PDEVICE *physDev )
+static void update_x11_clipping( X11DRV_PDEVICE *physDev, const RGNDATA *data )
 {
-    RGNDATA *data;
-
-    if (!(data = X11DRV_GetRegionData( physDev->region, 0 ))) return;
     wine_tsx11_lock();
     XSetClipRectangles( gdi_display, physDev->gc, physDev->dc_rect.left, physDev->dc_rect.top,
                         (XRectangle *)data->Buffer, data->rdh.nCount, YXBanded );
     wine_tsx11_unlock();
-
-    if (physDev->xrender) X11DRV_XRender_SetDeviceClipping(physDev, data);
-    HeapFree( GetProcessHeap(), 0, data );
 }
 
 /***********************************************************************
@@ -205,15 +199,24 @@ static void update_x11_clipping( X11DRV_PDEVICE *physDev )
  * Temporarily add a region to the current clipping region.
  * The returned region must be restored with restore_clipping_region.
  */
-HRGN add_extra_clipping_region( X11DRV_PDEVICE *dev, HRGN rgn )
+RGNDATA *add_extra_clipping_region( X11DRV_PDEVICE *dev, HRGN rgn )
 {
-    HRGN ret, clip;
+    RGNDATA *ret, *data;
+    HRGN clip;
 
-    if (!(clip = CreateRectRgn( 0, 0, 0, 0 ))) return 0;
+    if (!(ret = X11DRV_GetRegionData( dev->region, 0 ))) return NULL;
+    if (!(clip = CreateRectRgn( 0, 0, 0, 0 )))
+    {
+        HeapFree( GetProcessHeap(), 0, ret );
+        return NULL;
+    }
     CombineRgn( clip, dev->region, rgn, RGN_AND );
-    ret = dev->region;
-    dev->region = clip;
-    update_x11_clipping( dev );
+    if ((data = X11DRV_GetRegionData( clip, 0 )))
+    {
+        update_x11_clipping( dev, data );
+        HeapFree( GetProcessHeap(), 0, data );
+    }
+    DeleteObject( clip );
     return ret;
 }
 
@@ -221,12 +224,11 @@ HRGN add_extra_clipping_region( X11DRV_PDEVICE *dev, HRGN rgn )
 /***********************************************************************
  *           restore_clipping_region
  */
-void restore_clipping_region( X11DRV_PDEVICE *dev, HRGN rgn )
+void restore_clipping_region( X11DRV_PDEVICE *dev, RGNDATA *data )
 {
-    if (!rgn) return;
-    DeleteObject( dev->region );
-    dev->region = rgn;
-    update_x11_clipping( dev );
+    if (!data) return;
+    update_x11_clipping( dev, data );
+    HeapFree( GetProcessHeap(), 0, data );
 }
 
 
@@ -235,10 +237,13 @@ void restore_clipping_region( X11DRV_PDEVICE *dev, HRGN rgn )
  */
 void X11DRV_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn )
 {
+    RGNDATA *data;
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
 
     CombineRgn( physDev->region, vis_rgn, clip_rgn, clip_rgn ? RGN_AND : RGN_COPY );
-    update_x11_clipping( physDev );
+
+    if ((data = X11DRV_GetRegionData( physDev->region, 0 ))) update_x11_clipping( physDev, data );
+    HeapFree( GetProcessHeap(), 0, data );
 }
 
 

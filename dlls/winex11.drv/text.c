@@ -41,6 +41,7 @@ BOOL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
                         const RECT *lprect, LPCWSTR wstr, UINT count, const INT *lpDx )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
+    RGNDATA *saved_region = NULL;
     unsigned int i;
     fontObject*		pfo;
     XFontStruct*	font;
@@ -48,7 +49,6 @@ BOOL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     XChar2b		*str2b = NULL;
     BOOL		dibUpdateFlag = FALSE;
     BOOL                result = TRUE;
-    HRGN                saved_region = 0;
 
     if (!X11DRV_SetupGCForText( physDev )) return TRUE;
 
@@ -98,7 +98,10 @@ BOOL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 
     /* Draw the text (count > 0 verified) */
     if (!(str2b = X11DRV_cptable[pfo->fi->cptable].punicode_to_char2b( pfo, wstr, count )))
-        goto FAIL;
+    {
+        result = FALSE;
+        goto END;
+    }
 
     wine_tsx11_lock();
     XSetForeground( gdi_display, physDev->gc, physDev->textPixel );
@@ -116,8 +119,11 @@ BOOL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
             XTextItem16 *items;
 
             items = HeapAlloc( GetProcessHeap(), 0, count * sizeof(XTextItem16) );
-            if(items == NULL) goto FAIL;
-
+            if(items == NULL)
+            {
+                result = FALSE;
+                goto END;
+            }
             items[0].chars = str2b;
             items[0].delta = 0;
             items[0].nchars = 1;
@@ -167,17 +173,11 @@ BOOL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
             }
         }
     }
-    HeapFree( GetProcessHeap(), 0, str2b );
-
-    if (saved_region) restore_clipping_region( physDev, saved_region );
-    goto END;
-
-FAIL:
-    HeapFree( GetProcessHeap(), 0, str2b );
-    result = FALSE;
 
 END:
+    HeapFree( GetProcessHeap(), 0, str2b );
     if (dibUpdateFlag) X11DRV_UnlockDIBSection( physDev, TRUE );
+    restore_clipping_region( physDev, saved_region );
     return result;
 }
 

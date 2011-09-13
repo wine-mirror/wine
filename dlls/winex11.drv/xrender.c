@@ -1948,7 +1948,7 @@ BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     gsCacheEntryFormat *formatEntry;
     BOOL retv = FALSE;
     int textPixel, backgroundPixel;
-    HRGN saved_region = 0;
+    RGNDATA *saved_region = NULL;
     BOOL disable_antialias = FALSE;
     AA_Type aa_type = AA_None;
     unsigned int idx;
@@ -1957,7 +1957,7 @@ BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     if (!physdev->x11dev->has_gdi_font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pExtTextOut );
-        dev->funcs->pExtTextOut( dev, x, y, flags, lprect, wstr, count, lpDx );
+        return dev->funcs->pExtTextOut( dev, x, y, flags, lprect, wstr, count, lpDx );
     }
 
     if(is_dib_with_colortable( physdev->x11dev ))
@@ -2266,7 +2266,7 @@ BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     }
     LeaveCriticalSection(&xrender_cs);
 
-    if (saved_region) restore_clipping_region( physdev->x11dev, saved_region );
+    restore_clipping_region( physdev->x11dev, saved_region );
 
     retv = TRUE;
 

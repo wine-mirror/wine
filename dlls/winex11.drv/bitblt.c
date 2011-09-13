@@ -1902,7 +1902,7 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
         }
         else
         {
-            HRGN saved_region = 0;
+            RGNDATA *saved_region = NULL;
 
             if (clip) saved_region = add_extra_clipping_region( physdev, clip );
             X11DRV_LockDIBSection( physdev, DIB_Status_GdiMod );
@@ -1939,7 +1939,7 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
             }
 
             X11DRV_UnlockDIBSection( physdev, !ret );
-            if (saved_region) restore_clipping_region( physdev, saved_region );
+            restore_clipping_region( physdev, saved_region );
         }
         image->data = NULL;
     }
