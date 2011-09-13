@@ -374,6 +374,10 @@ static INT_PTR CALLBACK ConfigureDevicesDlgProc(HWND dialog, UINT uMsg, WPARAM w
             data->original_lpdiaf->rgoAction = HeapAlloc(GetProcessHeap(), 0, sizeof(DIACTIONW)*data->lpdiaf->dwNumActions);
             copy_actions(data->original_lpdiaf, data->lpdiaf);
 
+            /* Select the first device and show its actions */
+            SendDlgItemMessageW(dialog, IDC_CONTROLLERCOMBO, CB_SETCURSEL, 0, 0);
+            fill_device_object_list(dialog);
+
             break;
         }
 
