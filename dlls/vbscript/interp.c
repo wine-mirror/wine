@@ -257,6 +257,12 @@ static HRESULT interp_assign_ident(exec_ctx_t *ctx)
     return assign_ident(ctx, arg, v.v, v.owned);
 }
 
+static HRESULT interp_assign_member(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT interp_ret(exec_ctx_t *ctx)
 {
     TRACE("\n");

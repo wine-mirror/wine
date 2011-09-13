@@ -113,8 +113,8 @@ Statement
                                             { $1->args = $2; $$ = new_assign_statement(ctx, $1, $4); CHECK_ERROR; }
 
 MemberExpression
-    : tIdentifier                   { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
-    /* FIXME: MemberExpressionArgs '.' tIdentifier */
+    : tIdentifier                           { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
+    | CallExpression '.' tIdentifier        { $$ = new_member_expression(ctx, $1, $3); CHECK_ERROR; }
 
 Arguments_opt
     : EmptyBrackets_opt             { $$ = NULL; }

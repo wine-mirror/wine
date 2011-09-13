@@ -303,8 +303,11 @@ static HRESULT compile_assign_statement(compile_ctx_t *ctx, assign_statement_t *
     }
 
     if(stat->member_expr->obj_expr) {
-        FIXME("obj_expr not implemented\n");
-        hres = E_NOTIMPL;
+        hres = compile_expression(ctx, stat->member_expr->obj_expr);
+        if(FAILED(hres))
+            return hres;
+
+        hres = push_instr_bstr(ctx, OP_assign_member, stat->member_expr->identifier);
     }else {
         hres = push_instr_bstr(ctx, OP_assign_ident, stat->member_expr->identifier);
     }
