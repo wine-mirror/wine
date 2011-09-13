@@ -2022,9 +2022,8 @@ msgid "Default MidiOut Device"
 msgstr "Устройство вывода MIDI по умолчанию"
 
 #: dinput.rc:34
-#, fuzzy
 msgid "Action"
-msgstr "Activation"
+msgstr ""
 
 #: dinput.rc:35
 #, fuzzy
@@ -6080,55 +6079,55 @@ msgstr "Перемотать"
 
 #: shdoclc.rc:196
 msgid "Trace Tags"
-msgstr "Trace Tags"
+msgstr ""
 
 #: shdoclc.rc:197
 msgid "Resource Failures"
-msgstr "Resource Failures"
+msgstr ""
 
 #: shdoclc.rc:198
 msgid "Dump Tracking Info"
-msgstr "Dump Tracking Info"
+msgstr ""
 
 #: shdoclc.rc:199
 msgid "Debug Break"
-msgstr "Debug Break"
+msgstr ""
 
 #: shdoclc.rc:200
 msgid "Debug View"
-msgstr "Debug View"
+msgstr ""
 
 #: shdoclc.rc:201
 msgid "Dump Tree"
-msgstr "Dump Tree"
+msgstr ""
 
 #: shdoclc.rc:202
 msgid "Dump Lines"
-msgstr "Dump Lines"
+msgstr ""
 
 #: shdoclc.rc:203
 msgid "Dump DisplayTree"
-msgstr "Dump DisplayTree"
+msgstr ""
 
 #: shdoclc.rc:204
 msgid "Dump FormatCaches"
-msgstr "Dump FormatCaches"
+msgstr ""
 
 #: shdoclc.rc:205
 msgid "Dump LayoutRects"
-msgstr "Dump LayoutRects"
+msgstr ""
 
 #: shdoclc.rc:206
 msgid "Memory Monitor"
-msgstr "Memory Monitor"
+msgstr ""
 
 #: shdoclc.rc:207
 msgid "Performance Meters"
-msgstr "Performance Meters"
+msgstr ""
 
 #: shdoclc.rc:208
 msgid "Save HTML"
-msgstr "Save HTML"
+msgstr ""
 
 #: shdoclc.rc:210
 msgid "&Browse View"
@@ -8946,7 +8945,7 @@ msgstr "OleView"
 
 #: oleview.rc:98
 msgid "ITypeLib viewer"
-msgstr "ITypeLib viewer"
+msgstr ""
 
 #: oleview.rc:96
 msgid "OleView - OLE/COM Object Viewer"
@@ -9050,7 +9049,7 @@ msgstr "ObjectClasses"
 
 #: oleview.rc:129
 msgid "Grouped by Component Category"
-msgstr "Grouped by Component Category"
+msgstr ""
 
 #: oleview.rc:130
 msgid "OLE 1.0 Objects"
@@ -9070,7 +9069,7 @@ msgstr "ID приложения"
 
 #: oleview.rc:134
 msgid "Type Libraries"
-msgstr "Type Libraries"
+msgstr ""
 
 #: oleview.rc:135
 msgid "ver."
@@ -9086,11 +9085,11 @@ msgstr "Реестр"
 
 #: oleview.rc:139
 msgid "Implementation"
-msgstr "Implementation"
+msgstr ""
 
 #: oleview.rc:140
 msgid "Activation"
-msgstr "Activation"
+msgstr ""
 
 #: oleview.rc:142
 msgid "CoGetClassObject failed."
@@ -9106,11 +9105,11 @@ msgstr "байт"
 
 #: oleview.rc:148
 msgid "LoadTypeLib( %s ) failed ($%x)"
-msgstr "LoadTypeLib( %s ) failed ($%x)"
+msgstr ""
 
 #: oleview.rc:149
 msgid "Inherited Interfaces"
-msgstr "Inherited Interfaces"
+msgstr ""
 
 #: oleview.rc:124
 msgid "Save as an .IDL or .H file"
@@ -9122,7 +9121,7 @@ msgstr "Закрыть окно"
 
 #: oleview.rc:126
 msgid "Group typeinfos by kind"
-msgstr "Group typeinfos by kind"
+msgstr ""
 
 #: progman.rc:30
 msgid "&New..."
@@ -10863,7 +10862,7 @@ msgstr "Ошибка при выборе нового шрифта."
 
 #: winefile.rc:99
 msgid "Wine File Manager"
-msgstr "Winefile"
+msgstr ""
 
 #: winefile.rc:101
 msgid "root fs"
@@ -10895,7 +10894,7 @@ msgstr "Дата последнего изменения"
 
 #: winefile.rc:115
 msgid "Index/Inode"
-msgstr "Index/Inode"
+msgstr ""
 
 #: winefile.rc:118
 msgid "Security"
@@ -11350,9 +11349,10 @@ msgstr ""
 
 #: xcopy.rc:35
 msgid "%s? (Yes|No)\n"
-msgstr "%s? (Yes|No)\n"
+msgstr ""
 
 #: xcopy.rc:36
+#, fuzzy
 msgid "Overwrite %s? (Yes|No|All)\n"
 msgstr "Переписать %s? (Yes|No|All)\n"
 
