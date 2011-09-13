@@ -731,6 +731,16 @@ basic_string_char* __thiscall MSVCP_basic_string_char_assign_cstr(
             MSVCP_char_traits_char_length(str));
 }
 
+/* ?_Chassign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IAEXIID@Z */
+/* ?_Chassign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IEAAX_K0D@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_Chassign, 16)
+void __thiscall MSVCP_basic_string_char_Chassign(basic_string_char *this,
+        MSVCP_size_t off, MSVCP_size_t count, char ch)
+{
+    TRACE("%p %lu %lu %c\n", this, off, count, ch);
+    MSVCP_char_traits_char_assignn(basic_string_char_ptr(this)+off, count, ch);
+}
+
 /* ?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ */
 /* ?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEBDXZ */
 /* ?data@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ */
@@ -1688,6 +1698,16 @@ basic_string_wchar* __thiscall MSVCP_basic_string_wchar_assign_cstr(
 {
     return MSVCP_basic_string_wchar_assign_cstr_len(this, str,
             MSVCP_char_traits_wchar_length(str));
+}
+
+/* ?_Chassign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IAEXII_W@Z */
+/* ?_Chassign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IEAAX_K0_W@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_Chassign, 16)
+void __thiscall MSVCP_basic_string_wchar_Chassign(basic_string_wchar *this,
+        MSVCP_size_t off, MSVCP_size_t count, wchar_t ch)
+{
+    TRACE("%p %lu %lu %c\n", this, off, count, ch);
+    MSVCP_char_traits_wchar_assignn(basic_string_wchar_ptr(this)+off, count, ch);
 }
 
 /* ?c_str@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEPB_WXZ */
