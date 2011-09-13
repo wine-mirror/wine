@@ -89,7 +89,6 @@ struct IDirectDrawImpl
     BOOL                    d3d_initialized;
 
     /* Misc ddraw fields */
-    BOOL                    fake_vblank;
     BOOL                    initialized;
 
     /* DirectDraw things, which are not handled by WineD3D */

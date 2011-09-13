@@ -1520,21 +1520,16 @@ static HRESULT WINAPI ddraw1_GetMonitorFrequency(IDirectDraw *iface, DWORD *freq
  *****************************************************************************/
 static HRESULT WINAPI ddraw7_GetVerticalBlankStatus(IDirectDraw7 *iface, BOOL *status)
 {
-    IDirectDrawImpl *This = impl_from_IDirectDraw7(iface);
+    static BOOL fake_vblank;
 
     TRACE("iface %p, status %p.\n", iface, status);
 
-    /* This looks sane, the MSDN suggests it too */
-    EnterCriticalSection(&ddraw_cs);
     if(!status)
-    {
-        LeaveCriticalSection(&ddraw_cs);
         return DDERR_INVALIDPARAMS;
-    }
 
-    *status = This->fake_vblank;
-    This->fake_vblank = !This->fake_vblank;
-    LeaveCriticalSection(&ddraw_cs);
+    *status = fake_vblank;
+    fake_vblank = !fake_vblank;
+
     return DD_OK;
 }
 
