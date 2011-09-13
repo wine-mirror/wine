@@ -99,7 +99,7 @@ extern struct env_stack *pushd_directories;
 static const WCHAR *pagedMessage = NULL;
 static char  *output_bufA = NULL;
 #define MAX_WRITECONSOLE_SIZE 65535
-BOOL unicodePipes = FALSE;
+static BOOL unicodePipes = FALSE;
 
 
 /*******************************************************************

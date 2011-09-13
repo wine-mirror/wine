@@ -45,7 +45,7 @@ static void WCMD_part_execute(CMD_LIST **commands, const WCHAR *firstcmd,
                               const WCHAR *variable, const WCHAR *value,
                               BOOL isIF, BOOL conditionTRUE);
 
-struct env_stack *saved_environment;
+static struct env_stack *saved_environment;
 struct env_stack *pushd_directories;
 
 extern HINSTANCE hinst;
