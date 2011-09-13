@@ -994,6 +994,24 @@ basic_string_char* __thiscall MSVCP_basic_string_char_append_cstr(
             MSVCP_char_traits_char_length(append));
 }
 
+/* ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@PBD0@Z */
+/* ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@PEBD0@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_append_beg_end, 12)
+basic_string_char* __thiscall MSVCP_basic_string_char_append_beg_end(
+        basic_string_char *this, const char *beg, const char *end)
+{
+    return MSVCP_basic_string_char_append_cstr_len(this, beg, end-beg);
+}
+
+/* ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0@Z */
+/* ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_append_iter, 20)
+basic_string_char* __thiscall MSVCP_basic_string_char_append_iter(
+        basic_string_char *this, String_iterator_char beg, String_iterator_char end)
+{
+    return MSVCP_basic_string_char_append_cstr_len(this, beg.pos, end.pos-beg.pos+1);
+}
+
 /* ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@ID@Z */
 /* ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@_KD@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_append_len_ch, 12)
@@ -1994,6 +2012,24 @@ basic_string_wchar* __thiscall MSVCP_basic_string_wchar_append_cstr(
 {
     return MSVCP_basic_string_wchar_append_cstr_len(this, append,
             MSVCP_char_traits_wchar_length(append));
+}
+
+/* ?append@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@PB_W0@Z */
+/* ?append@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@PEB_W0@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_append_beg_end, 12)
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_append_beg_end(
+        basic_string_wchar *this, const wchar_t *beg, const wchar_t *end)
+{
+    return MSVCP_basic_string_wchar_append_cstr_len(this, beg, end-beg);
+}
+
+/* ?append@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0@Z */
+/* ?append@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_append_iter, 20)
+basic_string_wchar* __thiscall MSVCP_basic_string_wchar_append_iter(
+        basic_string_wchar *this, String_iterator_wchar beg, String_iterator_wchar end)
+{
+    return MSVCP_basic_string_wchar_append_cstr_len(this, beg.pos, end.pos-beg.pos+1);
 }
 
 /* ?append@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@I_W@Z */
