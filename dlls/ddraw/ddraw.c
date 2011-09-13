@@ -1674,18 +1674,9 @@ static HRESULT WINAPI ddraw2_GetAvailableVidMem(IDirectDraw2 *iface,
  *****************************************************************************/
 static HRESULT WINAPI ddraw7_Initialize(IDirectDraw7 *iface, GUID *Guid)
 {
-    IDirectDrawImpl *This = impl_from_IDirectDraw7(iface);
+    FIXME("iface %p, guid %s stub!\n", iface, debugstr_guid(Guid));
 
-    TRACE("iface %p, guid %s.\n", iface, debugstr_guid(Guid));
-
-    if(This->initialized)
-    {
-        return DDERR_ALREADYINITIALIZED;
-    }
-    else
-    {
-        return DD_OK;
-    }
+    return DDERR_ALREADYINITIALIZED;
 }
 
 static HRESULT WINAPI ddraw4_Initialize(IDirectDraw4 *iface, GUID *guid)
