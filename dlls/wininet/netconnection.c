@@ -238,6 +238,7 @@ static DWORD netconn_verify_cert(PCCERT_CONTEXT cert, HCERTSTORE store,
             static const DWORD supportedErrors =
                 CERT_TRUST_IS_NOT_TIME_VALID |
                 CERT_TRUST_IS_UNTRUSTED_ROOT |
+                CERT_TRUST_IS_PARTIAL_CHAIN |
                 CERT_TRUST_IS_OFFLINE_REVOCATION |
                 CERT_TRUST_REVOCATION_STATUS_UNKNOWN |
                 CERT_TRUST_IS_REVOKED |
@@ -247,7 +248,7 @@ static DWORD netconn_verify_cert(PCCERT_CONTEXT cert, HCERTSTORE store,
                 !(security_flags & SECURITY_FLAG_IGNORE_CERT_DATE_INVALID))
                 err = ERROR_INTERNET_SEC_CERT_DATE_INVALID;
             else if (chain->TrustStatus.dwErrorStatus &
-                     CERT_TRUST_IS_UNTRUSTED_ROOT &&
+                     (CERT_TRUST_IS_UNTRUSTED_ROOT | CERT_TRUST_IS_PARTIAL_CHAIN) &&
                      !(security_flags & SECURITY_FLAG_IGNORE_UNKNOWN_CA))
                 err = ERROR_INTERNET_INVALID_CA;
             else if (!(security_flags & SECURITY_FLAG_IGNORE_REVOCATION) &&
