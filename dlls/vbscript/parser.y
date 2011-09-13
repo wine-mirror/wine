@@ -48,8 +48,10 @@ static member_expression_t *new_member_expression(parser_ctx_t*,expression_t*,co
 static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
 static statement_t *new_assign_statement(parser_ctx_t*,member_expression_t*,expression_t*);
 static statement_t *new_dim_statement(parser_ctx_t*,dim_decl_t*);
+ static statement_t *new_if_statement(parser_ctx_t*,expression_t*,statement_t*,elseif_decl_t*,statement_t*);
 
 static dim_decl_t *new_dim_decl(parser_ctx_t*,const WCHAR*,dim_decl_t*);
+static elseif_decl_t *new_elseif_decl(parser_ctx_t*,expression_t*,statement_t*);
 
 #define CHECK_ERROR if(((parser_ctx_t*)ctx)->hres != S_OK) YYABORT
 
@@ -63,6 +65,7 @@ static dim_decl_t *new_dim_decl(parser_ctx_t*,const WCHAR*,dim_decl_t*);
     statement_t *statement;
     expression_t *expression;
     member_expression_t *member;
+    elseif_decl_t *elseif;
     dim_decl_t *dim_decl;
     LONG lng;
     BOOL bool;
@@ -86,13 +89,14 @@ static dim_decl_t *new_dim_decl(parser_ctx_t*,const WCHAR*,dim_decl_t*);
 %token <lng> tLong tShort
 %token <dbl> tDouble
 
-%type <statement> Statement StatementNl
+%type <statement> Statement StatementNl StatementsNl IfStatement Else_opt
 %type <expression> Expression LiteralExpression PrimaryExpression EqualityExpression CallExpression
 %type <expression> ConcatExpression AdditiveExpression ModExpression
 %type <expression> NotExpression UnaryExpression
 %type <member> MemberExpression
 %type <expression> Arguments_opt ArgumentList_opt ArgumentList
 %type <bool> OptionExplicit_opt
+%type <elseif> ElseIfs_opt ElseIfs ElseIf
 %type <dim_decl> DimDeclList
 
 %%
@@ -108,6 +112,10 @@ SourceElements
     : /* empty */
     | SourceElements StatementNl    { source_add_statement(ctx, $2); }
 
+StatementsNl
+    : StatementNl                           { $$ = $1; }
+    | StatementNl StatementsNl              { $1->next = $2; $$ = $1; }
+
 StatementNl
     : Statement tNL                 { $$ = $1; }
 
@@ -117,6 +125,7 @@ Statement
     | MemberExpression Arguments_opt '=' Expression
                                             { $1->args = $2; $$ = new_assign_statement(ctx, $1, $4); CHECK_ERROR; }
     | tDIM DimDeclList                      { $$ = new_dim_statement(ctx, $2); CHECK_ERROR; }
+    | IfStatement                           { $$ = $1; }
 
 MemberExpression
     : tIdentifier                           { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
@@ -125,6 +134,27 @@ MemberExpression
 DimDeclList /* FIXME: Support arrays */
     : tIdentifier                           { $$ = new_dim_decl(ctx, $1, NULL); CHECK_ERROR; }
     | tIdentifier ',' DimDeclList           { $$ = new_dim_decl(ctx, $1, $3); CHECK_ERROR; }
+
+IfStatement
+    : tIF Expression tTHEN tNL StatementsNl ElseIfs_opt Else_opt tEND tIF
+                                            { $$ = new_if_statement(ctx, $2, $5, $6, $7); CHECK_ERROR; }
+    /* FIXME: short if statement */
+
+ElseIfs_opt
+    : /* empty */                           { $$ = NULL; }
+    | ElseIfs                               { $$ = $1; }
+
+ElseIfs
+    : ElseIf                                { $$ = $1; }
+    | ElseIf ElseIfs                        { $1->next = $2; $$ = $1; }
+
+ElseIf
+    : tELSEIF Expression tTHEN tNL StatementsNl
+                                            { $$ = new_elseif_decl(ctx, $2, $5); }
+
+Else_opt
+    : /* empty */                           { $$ = NULL; }
+    | tELSE tNL StatementsNl                { $$ = $3; }
 
 Arguments_opt
     : EmptyBrackets_opt             { $$ = NULL; }
@@ -373,6 +403,36 @@ static statement_t *new_dim_statement(parser_ctx_t *ctx, dim_decl_t *decls)
         return NULL;
 
     stat->dim_decls = decls;
+    return &stat->stat;
+}
+
+static elseif_decl_t *new_elseif_decl(parser_ctx_t *ctx, expression_t *expr, statement_t *stat)
+{
+    elseif_decl_t *decl;
+
+    decl = parser_alloc(ctx, sizeof(*decl));
+    if(!decl)
+        return NULL;
+
+    decl->expr = expr;
+    decl->stat = stat;
+    decl->next = NULL;
+    return decl;
+}
+
+static statement_t *new_if_statement(parser_ctx_t *ctx, expression_t *expr, statement_t *if_stat, elseif_decl_t *elseif_decl,
+        statement_t *else_stat)
+{
+    if_statement_t *stat;
+
+    stat = new_statement(ctx, STAT_IF, sizeof(*stat));
+    if(!stat)
+        return NULL;
+
+    stat->expr = expr;
+    stat->if_stat = if_stat;
+    stat->elseifs = elseif_decl;
+    stat->else_stat = else_stat;
     return &stat->stat;
 }
 
