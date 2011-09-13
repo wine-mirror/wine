@@ -147,8 +147,13 @@ static int amt_from_gst_caps_audio(GstCaps *caps, AM_MEDIA_TYPE *amt) {
     if (!strcmp(typename, "audio/x-raw-float")) {
         wfe->SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
         wfx->wBitsPerSample = wfe->Samples.wValidBitsPerSample = 32;
-    } else
+    } else {
         wfe->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+        if (wfx->nChannels <= 2 && bpp <= 16 && depth == bpp)  {
+            wfx->wFormatTag = WAVE_FORMAT_PCM;
+            wfx->cbSize = 0;
+        }
+    }
     wfx->nBlockAlign = wfx->nChannels * wfx->wBitsPerSample/8;
     wfx->nAvgBytesPerSec = wfx->nSamplesPerSec * wfx->nBlockAlign;
     return 1;
