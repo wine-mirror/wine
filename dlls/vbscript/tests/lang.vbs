@@ -99,6 +99,13 @@ Call ok(getVT(2-null) = "VT_NULL", "getVT(2-null) = " & getVT(2-null))
 Call ok(2-empty = 2, "2-empty = " & (2-empty))
 Call ok(2-x = -1, "2-x = " & (2-x))
 
+Call ok(9 Mod 6 = 3, "9 Mod 6 = " & (9 Mod 6))
+Call ok(11.6 Mod 5.5 = False, "11.6 Mod 5.5 = " & (11.6 Mod 5.5 = 0.6))
+Call ok(7 Mod 4+2 = 5, "7 Mod 4+2 <> 5")
+Call ok(getVT(2 mod null) = "VT_NULL", "getVT(2 mod null) = " & getVT(2 mod null))
+Call ok(getVT(null mod 2) = "VT_NULL", "getVT(null mod 2) = " & getVT(null mod 2))
+'FIXME: Call ok(empty mod 2 = 0, "empty mod 2 = " & (empty mod 2))
+
 if false then
     ok false, "if false called"
 end if
