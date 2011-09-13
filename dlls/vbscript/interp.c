@@ -391,6 +391,9 @@ static HRESULT interp_jmp_false(exec_ctx_t *ctx)
     TRACE("%u\n", arg);
 
     hres = stack_pop_val(ctx, &val);
+    if(FAILED(hres))
+        return hres;
+
     if(V_VT(val.v) != VT_BOOL) {
         FIXME("unsupported for %s\n", debugstr_variant(val.v));
         release_val(&val);
