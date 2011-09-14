@@ -5720,8 +5720,7 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                 goto error;
             }
         }
-        else
-            *lpNumberOfBytesRecvd = n;
+        else if (lpNumberOfBytesRecvd) *lpNumberOfBytesRecvd = n;
 
         if ((lpOverlapped || lpCompletionRoutine) &&
              !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))

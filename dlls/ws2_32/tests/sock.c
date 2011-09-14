@@ -4031,18 +4031,37 @@ static void test_WSASendTo(void)
             "a successful call to WSASendTo()\n");
 }
 
+static DWORD WINAPI recv_thread(LPVOID arg)
+{
+    SOCKET sock = *(SOCKET *)arg;
+    char buffer[32];
+    WSABUF wsa;
+    WSAOVERLAPPED ov;
+    DWORD flags = 0;
+
+    wsa.buf = buffer;
+    wsa.len = sizeof(buffer);
+    ov.hEvent = WSACreateEvent();
+    WSARecv(sock, &wsa, 1, NULL, &flags, &ov, NULL);
+
+    WaitForSingleObject(ov.hEvent, 1000);
+    WSACloseEvent(ov.hEvent);
+    return 0;
+}
+
 static void test_WSARecv(void)
 {
-    SOCKET src, dest;
+    SOCKET src, dest, server = INVALID_SOCKET;
     char buf[20];
     WSABUF bufs;
     WSAOVERLAPPED ov;
-    DWORD bytesReturned;
-    DWORD flags;
+    DWORD bytesReturned, flags, id;
     struct linger ling;
-    int iret;
+    struct sockaddr_in addr;
+    int iret, len;
     DWORD dwret;
     BOOL bret;
+    HANDLE thread;
 
     memset(&ov, 0, sizeof(ov));
 
@@ -4067,6 +4086,9 @@ static void test_WSARecv(void)
     iret = setsockopt (src, SOL_SOCKET, SO_LINGER, (char *) &ling, sizeof(ling));
     ok(!iret, "Failed to set linger %d\n", GetLastError());
 
+    iret = WSARecv(dest, &bufs, 1, NULL, &flags, &ov, NULL);
+    ok(iret == SOCKET_ERROR && GetLastError() == ERROR_IO_PENDING, "WSARecv failed - %d error %d\n", iret, GetLastError());
+
     iret = WSARecv(dest, &bufs, 1, &bytesReturned, &flags, &ov, NULL);
     ok(iret == SOCKET_ERROR && GetLastError() == ERROR_IO_PENDING, "WSARecv failed - %d error %d\n", iret, GetLastError());
 
@@ -4081,7 +4103,42 @@ static void test_WSARecv(void)
         "Did not get disconnect event: %d, error %d\n", bret, GetLastError());
     ok(bytesReturned == 0, "Bytes received is %d\n", bytesReturned);
 
+    src = WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, 0);
+    ok(src != INVALID_SOCKET, "failed to create socket %d\n", WSAGetLastError());
+    if (src == INVALID_SOCKET) goto end;
+
+    server = WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
+    ok(server != INVALID_SOCKET, "failed to create socket %d\n", WSAGetLastError());
+    if (server == INVALID_SOCKET) goto end;
+
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    iret = bind(server, (struct sockaddr *)&addr, sizeof(addr));
+    if (iret) goto end;
+
+    len = sizeof(addr);
+    iret = getsockname(server, (struct sockaddr *)&addr, &len);
+    if (iret) goto end;
+
+    iret = listen(server, 1);
+    if (iret) goto end;
+
+    iret = connect(src, (struct sockaddr *)&addr, sizeof(addr));
+    if (iret) goto end;
+
+    len = sizeof(addr);
+    dest = accept(server, (struct sockaddr *)&addr, &len);
+    ok(dest != INVALID_SOCKET, "failed to create socket %d\n", WSAGetLastError());
+    if (dest == INVALID_SOCKET) goto end;
+
+    send(src, "test message", sizeof("test message"), 0);
+    thread = CreateThread(NULL, 0, recv_thread, &dest, 0, &id);
+    CloseHandle(thread);
+
 end:
+    if (server != INVALID_SOCKET)
+        closesocket(server);
     if (dest != INVALID_SOCKET)
         closesocket(dest);
     if (src != INVALID_SOCKET)
