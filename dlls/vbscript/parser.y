@@ -253,6 +253,8 @@ PrimaryExpression
 FunctionDecl
     : /* Storage_opt */ tSUB tIdentifier ArgumentsDecl_opt tNL StatementsNl_opt tEND tSUB
                                     { $$ = new_function_decl(ctx, $2, FUNC_SUB, $3, $5); CHECK_ERROR; }
+    | /* Storage_opt */ tFUNCTION tIdentifier ArgumentsDecl_opt tNL StatementsNl_opt tEND tFUNCTION
+                                    { $$ = new_function_decl(ctx, $2, FUNC_FUNCTION, $3, $5); CHECK_ERROR; }
 
 ArgumentsDecl_opt
     : EmptyBrackets_opt                         { $$ = NULL; }

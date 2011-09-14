@@ -621,6 +621,7 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
         if(ctx->sub_end_label == -1)
             return E_OUTOFMEMORY;
         break;
+    case FUNC_FUNCTION: /* FIXME */
     case FUNC_GLOBAL:
         break;
     }
@@ -833,6 +834,7 @@ static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source)
     ret->bstr_pool = NULL;
     ret->bstr_pool_size = 0;
     ret->bstr_cnt = 0;
+    ret->global_executed = FALSE;
 
     ret->global_code.type = FUNC_GLOBAL;
     ret->global_code.name = NULL;

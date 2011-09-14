@@ -412,7 +412,6 @@ static void test_vbscript_uninitializing(void)
     test_state(script, SCRIPTSTATE_INITIALIZED);
 
     hres = IActiveScriptParse64_ParseScriptText(parse, script_textW, NULL, NULL, NULL, 0, 1, 0x42, NULL, NULL);
-    todo_wine
     ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
 
     hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
@@ -441,9 +440,7 @@ static void test_vbscript_uninitializing(void)
     hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_CONNECTED);
     ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_CONNECTED) failed: %08x\n", hres);
     CHECK_CALLED(OnStateChange_CONNECTED);
-    todo_wine
     CHECK_CALLED(OnEnterScript);
-    todo_wine
     CHECK_CALLED(OnLeaveScript);
 
     test_state(script, SCRIPTSTATE_CONNECTED);

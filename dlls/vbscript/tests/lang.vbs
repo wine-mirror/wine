@@ -241,4 +241,67 @@ y = true
 Call TestSubLocalVal
 Call ok(x, "global x is not true?")
 
+if false then
+Function testfunc
+    x = true
+End Function
+end if
+
+x = false
+Call TestFunc
+Call ok(x, "x is false, testfunc not called?")
+
+Function FuncSetTrue(v)
+    Call ok(not v, "v is not true")
+    v = true
+End Function
+
+x = false
+FuncSetTrue x
+Call ok(x, "x was not set by FuncSetTrue")
+
+FuncSetTrue false
+Call ok(not false, "false is no longer false?")
+
+Function FuncSetTrue2(ByRef v)
+    Call ok(not v, "v is not true")
+    v = true
+End Function
+
+x = false
+FuncSetTrue2 x
+Call ok(x, "x was not set by FuncSetTrue")
+
+Function TestFuncArgVal(ByVal v)
+    Call ok(not v, "v is not false")
+    v = true
+    Call ok(v, "v is not true?")
+End Function
+
+x = false
+Call TestFuncArgVal(x)
+Call ok(not x, "x is true after TestFuncArgVal call?")
+
+Function TestFuncMultiArgs(a,b,c,d,e)
+    Call ok(a=1, "a = " & a)
+    Call ok(b=2, "b = " & b)
+    Call ok(c=3, "c = " & c)
+    Call ok(d=4, "d = " & d)
+    Call ok(e=5, "e = " & e)
+End Function
+
+TestFuncMultiArgs 1, 2, 3, 4, 5
+Call TestFuncMultiArgs(1, 2, 3, 4, 5)
+
+Function TestFuncLocalVal
+    x = false
+    Call ok(not x, "local x is not false?")
+    Dim x
+End Function
+
+x = true
+y = true
+Call TestFuncLocalVal
+Call ok(x, "global x is not true?")
+
 reportSuccess()

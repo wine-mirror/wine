@@ -164,6 +164,7 @@ typedef struct {
 
 typedef enum {
     FUNC_GLOBAL,
+    FUNC_FUNCTION,
     FUNC_SUB
 } function_type_t;
 
