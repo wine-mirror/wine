@@ -266,8 +266,10 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
             return hres;
         break;
     case REF_FUNC:
-        FIXME("functions not implemented\n");
-        return E_NOTIMPL;
+        hres = exec_script(ctx->script, ref.u.f, &dp, res);
+        if(FAILED(hres))
+            return hres;
+        break;
     case REF_NONE:
         FIXME("%s not found\n", debugstr_w(identifier));
         return DISP_E_UNKNOWNNAME;
@@ -812,11 +814,21 @@ OP_LIST
 #undef X
 };
 
-HRESULT exec_script(script_ctx_t *ctx, function_t *func)
+HRESULT exec_script(script_ctx_t *ctx, function_t *func, DISPPARAMS *dp, VARIANT *res)
 {
     exec_ctx_t exec;
     vbsop_t op;
     HRESULT hres = S_OK;
+
+    if(res) {
+        FIXME("returning value is not implemented\n");
+        return E_NOTIMPL;
+    }
+
+    if(dp && arg_cnt(dp)) {
+        FIXME("arguments not implemented\n");
+        return E_NOTIMPL;
+    }
 
     exec.stack_size = 16;
     exec.top = 0;

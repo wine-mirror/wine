@@ -65,6 +65,11 @@ HRESULT disp_get_id(IDispatch*,BSTR,DISPID*);
 HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,DISPPARAMS*,VARIANT*);
 HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,VARIANT*);
 
+static inline unsigned arg_cnt(const DISPPARAMS *dp)
+{
+    return dp->cArgs - dp->cNamedArgs;
+}
+
 typedef struct _dynamic_var_t {
     struct _dynamic_var_t *next;
     VARIANT v;
@@ -179,7 +184,7 @@ struct _vbscode_t {
 
 void release_vbscode(vbscode_t*) DECLSPEC_HIDDEN;
 HRESULT compile_script(script_ctx_t*,const WCHAR*,vbscode_t**) DECLSPEC_HIDDEN;
-HRESULT exec_script(script_ctx_t*,function_t*) DECLSPEC_HIDDEN;
+HRESULT exec_script(script_ctx_t*,function_t*,DISPPARAMS*,VARIANT*) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
 

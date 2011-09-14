@@ -175,4 +175,8 @@ Sub testsub
 End Sub
 end if
 
+x = false
+Call testsub
+Call ok(x, "x is false, testsub not called?")
+
 reportSuccess()
