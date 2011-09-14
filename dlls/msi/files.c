@@ -1164,8 +1164,10 @@ static UINT ITERATE_RemoveFiles(MSIRECORD *row, LPVOID param)
 
     dir = msi_dup_property(package->db, dirprop);
     if (!dir)
-        return ERROR_OUTOFMEMORY;
-
+    {
+        WARN("directory property has no value\n");
+        return ERROR_SUCCESS;
+    }
     size = 0;
     if ((filename = strdupW( MSI_RecordGetString(row, 3) )))
     {
