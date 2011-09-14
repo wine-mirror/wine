@@ -179,4 +179,46 @@ x = false
 Call testsub
 Call ok(x, "x is false, testsub not called?")
 
+Sub SubSetTrue(v)
+    Call ok(not v, "v is not true")
+    v = true
+End Sub
+
+x = false
+SubSetTrue x
+Call ok(x, "x was not set by SubSetTrue")
+
+SubSetTrue false
+Call ok(not false, "false is no longer false?")
+
+Sub SubSetTrue2(ByRef v)
+    Call ok(not v, "v is not true")
+    v = true
+End Sub
+
+x = false
+SubSetTrue2 x
+Call ok(x, "x was not set by SubSetTrue")
+
+Sub TestSubArgVal(ByVal v)
+    Call ok(not v, "v is not false")
+    v = true
+    Call ok(v, "v is not true?")
+End Sub
+
+x = false
+Call TestSubArgVal(x)
+Call ok(not x, "x is true after TestSubArgVal call?")
+
+Sub TestSubMultiArgs(a,b,c,d,e)
+    Call ok(a=1, "a = " & a)
+    Call ok(b=2, "b = " & b)
+    Call ok(c=3, "c = " & c)
+    Call ok(d=4, "d = " & d)
+    Call ok(e=5, "e = " & e)
+End Sub
+
+TestSubMultiArgs 1, 2, 3, 4, 5
+Call TestSubMultiArgs(1, 2, 3, 4, 5)
+
 reportSuccess()
