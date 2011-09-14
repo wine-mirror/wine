@@ -128,20 +128,51 @@ static void test_mutex(void)
     BOOL ret;
     HANDLE hCreated;
     HANDLE hOpened;
+    int i;
+    DWORD failed = 0;
 
     hCreated = CreateMutex(NULL, FALSE, "WineTestMutex");
     ok(hCreated != NULL, "CreateMutex failed with error %d\n", GetLastError());
-    wait_ret = WaitForSingleObject(hCreated, INFINITE);
-    ok(wait_ret == WAIT_OBJECT_0, "WaitForSingleObject failed with error 0x%08x\n", wait_ret);
 
-    /* yes, opening with just READ_CONTROL access allows us to successfully
-     * call ReleaseMutex */
-    hOpened = OpenMutex(READ_CONTROL, FALSE, "WineTestMutex");
+    hOpened = OpenMutex(0, FALSE, "WineTestMutex");
+    ok(hOpened == NULL, "OpenMutex succeded\n");
+
+    hOpened = OpenMutex(GENERIC_EXECUTE, FALSE, "WineTestMutex");
     ok(hOpened != NULL, "OpenMutex failed with error %d\n", GetLastError());
-    ret = ReleaseMutex(hOpened);
-    todo_wine ok(ret, "ReleaseMutex failed with error %d\n", GetLastError());
+    wait_ret = WaitForSingleObject(hOpened, INFINITE);
+    todo_wine ok(wait_ret == WAIT_OBJECT_0, "WaitForSingleObject failed with error %d\n", GetLastError());
+    CloseHandle(hOpened);
+
+    for(i=0; i < 31; i++)
+    {
+        wait_ret = WaitForSingleObject(hCreated, INFINITE);
+        ok(wait_ret == WAIT_OBJECT_0, "WaitForSingleObject failed with error 0x%08x\n", wait_ret);
+    }
+
+    hOpened = OpenMutex(GENERIC_READ | GENERIC_WRITE, FALSE, "WineTestMutex");
+    ok(hOpened != NULL, "OpenMutex failed with error %d\n", GetLastError());
+    wait_ret = WaitForSingleObject(hOpened, INFINITE);
+    todo_wine ok(wait_ret == WAIT_FAILED, "WaitForSingleObject succeeded\n");
+    CloseHandle(hOpened);
+
+    for (i = 0; i < 32; i++)
+    {
+        hOpened = OpenMutex(0x1 << i, FALSE, "WineTestMutex");
+        ReleaseMutex(hCreated);
+        if(hOpened != NULL)
+        {
+            CloseHandle(hOpened);
+        }
+        else
+        {
+            failed |=0x1 << i;
+        }
+    }
+
+    ok( failed == 0x0de0fffe, "open succeded when it shouldn't: %x\n", failed);
+
     ret = ReleaseMutex(hCreated);
-    todo_wine ok(!ret && (GetLastError() == ERROR_NOT_OWNER),
+    ok(!ret && (GetLastError() == ERROR_NOT_OWNER),
         "ReleaseMutex should have failed with ERROR_NOT_OWNER instead of %d\n", GetLastError());
 
     /* test case sensitivity */

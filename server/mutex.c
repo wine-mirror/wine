@@ -238,6 +238,14 @@ DECL_HANDLER(open_mutex)
     struct directory *root = NULL;
     struct mutex *mutex;
 
+    if ((req->access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL |
+                         MUTEX_ALL_ACCESS | STANDARD_RIGHTS_ALL | MAXIMUM_ALLOWED)) ||
+        !req->access)
+    {
+        set_error(STATUS_INVALID_PARAMETER);
+        return;
+    }
+
     get_req_unicode_str( &name );
     if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
         return;
