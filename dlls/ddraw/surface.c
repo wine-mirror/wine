@@ -5098,7 +5098,6 @@ static void STDMETHODCALLTYPE ddraw_surface_wined3d_object_destroyed(void *paren
         ddraw_free_handle(&surface->ddraw->d3ddevice->handle_table, surface->Handle - 1, DDRAW_HANDLE_SURFACE);
 
     /* Reduce the ddraw surface count. */
-    InterlockedDecrement(&surface->ddraw->surfaces);
     list_remove(&surface->surface_list_entry);
 
     HeapFree(GetProcessHeap(), 0, surface);

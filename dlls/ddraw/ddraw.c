@@ -2633,7 +2633,6 @@ static HRESULT ddraw_create_surface(IDirectDrawImpl *This, DDSURFACEDESC2 *pDDSD
     }
 
     /* Increase the surface counter, and attach the surface */
-    InterlockedIncrement(&This->surfaces);
     list_add_head(&This->surface_list, &(*ppSurf)->surface_list_entry);
 
     TRACE("Created surface %p.\n", *ppSurf);

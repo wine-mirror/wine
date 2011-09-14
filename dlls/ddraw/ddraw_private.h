@@ -114,7 +114,6 @@ struct IDirectDrawImpl
      * because of IParent
      */
     struct list surface_list;
-    LONG surfaces;
 
     /* FVF management */
     struct FvfToDecl       *decls;

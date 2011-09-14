@@ -960,9 +960,8 @@ DllMain(HINSTANCE hInstDLL,
                         ERR("(%p) EnumSurfaces failed, prepare for trouble\n", ddraw);
                 }
 
-                /* Check the surface count */
-                if(ddraw->surfaces > 0)
-                    ERR("DDraw %p still has %d surfaces attached\n", ddraw, ddraw->surfaces);
+                if (!list_empty(&ddraw->surface_list))
+                    ERR("DDraw %p still has surfaces attached.\n", ddraw);
 
                 /* Release all hanging references to destroy the objects. This
                     * restores the screen mode too
