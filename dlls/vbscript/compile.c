@@ -356,6 +356,8 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
     switch(expr->type) {
     case EXPR_ADD:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_add);
+    case EXPR_AND:
+        return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_and);
     case EXPR_BOOL:
         return push_instr_int(ctx, OP_bool, ((bool_expression_t*)expr)->value);
     case EXPR_CONCAT:

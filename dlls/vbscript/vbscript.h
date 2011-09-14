@@ -117,6 +117,7 @@ typedef enum {
 
 #define OP_LIST                                   \
     X(add,            1, 0,           0)          \
+    X(and,            1, 0,           0)          \
     X(assign_ident,   1, ARG_BSTR,    0)          \
     X(assign_member,  1, ARG_BSTR,    0)          \
     X(bool,           1, ARG_INT,     0)          \

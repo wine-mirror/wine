@@ -18,6 +18,7 @@
 
 typedef enum {
     EXPR_ADD,
+    EXPR_AND,
     EXPR_BOOL,
     EXPR_CONCAT,
     EXPR_DIV,
