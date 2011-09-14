@@ -39,6 +39,7 @@ typedef struct {
     unsigned labels_cnt;
 
     unsigned sub_end_label;
+    unsigned func_end_label;
 
     dim_decl_t *dim_decls;
     dynamic_var_t *global_vars;
@@ -555,6 +556,16 @@ static HRESULT compile_exitsub_statement(compile_ctx_t *ctx)
     return push_instr_addr(ctx, OP_jmp, ctx->sub_end_label);
 }
 
+static HRESULT compile_exitfunc_statement(compile_ctx_t *ctx)
+{
+    if(ctx->func_end_label == -1) {
+        FIXME("Exit Function outside Function?\n");
+        return E_FAIL;
+    }
+
+    return push_instr_addr(ctx, OP_jmp, ctx->func_end_label);
+}
+
 static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
 {
     HRESULT hres;
@@ -569,6 +580,9 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
             break;
         case STAT_DIM:
             hres = compile_dim_statement(ctx, (dim_statement_t*)stat);
+            break;
+        case STAT_EXITFUNC:
+            hres = compile_exitfunc_statement(ctx);
             break;
         case STAT_EXITSUB:
             hres = compile_exitsub_statement(ctx);
@@ -614,14 +628,19 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
     func->code_off = ctx->instr_cnt;
 
     ctx->sub_end_label = -1;
+    ctx->func_end_label = -1;
 
     switch(func->type) {
+    case FUNC_FUNCTION:
+        ctx->func_end_label = alloc_label(ctx);
+        if(ctx->func_end_label == -1)
+            return E_OUTOFMEMORY; /* FIXME ! */
+        break;
     case FUNC_SUB:
         ctx->sub_end_label = alloc_label(ctx);
         if(ctx->sub_end_label == -1)
             return E_OUTOFMEMORY;
         break;
-    case FUNC_FUNCTION: /* FIXME */
     case FUNC_GLOBAL:
         break;
     }
@@ -635,6 +654,8 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
 
     if(ctx->sub_end_label != -1)
         label_set_addr(ctx, ctx->sub_end_label);
+    if(ctx->func_end_label != -1)
+        label_set_addr(ctx, ctx->func_end_label);
 
     if(push_instr(ctx, OP_ret) == -1)
         return E_OUTOFMEMORY;

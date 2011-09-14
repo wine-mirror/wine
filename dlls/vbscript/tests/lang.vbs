@@ -304,4 +304,13 @@ y = true
 Call TestFuncLocalVal
 Call ok(x, "global x is not true?")
 
+Function TestFuncExit(ByRef a)
+    If a Then
+        Exit Function
+    End If
+    Call ok(false, "Exit Function not called?")
+End Function
+
+Call TestFuncExit(true)
+
 reportSuccess()

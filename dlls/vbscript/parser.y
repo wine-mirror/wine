@@ -139,6 +139,7 @@ Statement
     | tDIM DimDeclList                      { $$ = new_dim_statement(ctx, $2); CHECK_ERROR; }
     | IfStatement                           { $$ = $1; }
     | FunctionDecl                          { $$ = new_function_statement(ctx, $1); CHECK_ERROR; }
+    | tEXIT tFUNCTION                       { $$ = new_statement(ctx, STAT_EXITFUNC, 0); CHECK_ERROR; }
     | tEXIT tSUB                            { $$ = new_statement(ctx, STAT_EXITSUB, 0); CHECK_ERROR; }
 
 MemberExpression
