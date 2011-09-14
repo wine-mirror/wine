@@ -276,6 +276,25 @@ static void getNotepadPath(WCHAR *notepadPathW, DWORD size)
     MultiByteToWideChar(0, 0, notepadPath, -1, notepadPathW, size);
 }
 
+/* Creates a test file and returns a handle to it.  The file's path is returned
+ * in temp_file, which must be at least MAX_PATH characters in length.
+ */
+static HANDLE create_temp_file(WCHAR *temp_file)
+{
+    HANDLE file = INVALID_HANDLE_VALUE;
+    WCHAR temp_path[MAX_PATH];
+
+    if (GetTempPathW(sizeof(temp_path) / sizeof(temp_path[0]), temp_path))
+    {
+        static const WCHAR img[] = { 'i','m','g',0 };
+
+        if (GetTempFileNameW(temp_path, img, 0, temp_file))
+            file = CreateFileW(temp_file, GENERIC_READ | GENERIC_WRITE, 0, NULL,
+             CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    }
+    return file;
+}
+
 static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
 {
     HRESULT ret;
@@ -298,7 +317,7 @@ static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
      funcs->pfnAlloc(TRUSTERROR_MAX_STEPS * sizeof(DWORD));
     if (data.padwTrustStepErrors)
     {
-        WCHAR notepadPathW[MAX_PATH];
+        WCHAR pathW[MAX_PATH];
         PROVDATA_SIP provDataSIP = { 0 };
         static const GUID unknown = { 0xC689AAB8, 0x8E78, 0x11D0, { 0x8C,0x47,
          0x00,0xC0,0x4F,0xC2,0x95,0xEE } };
@@ -333,11 +352,31 @@ static void testObjTrust(SAFE_PROVIDER_FUNCTIONS *funcs, GUID *actionID)
         /* Crashes
         ret = funcs->pfnObjectTrust(&data);
          */
-        getNotepadPath(notepadPathW, MAX_PATH);
-        fileInfo.pcwszFilePath = notepadPathW;
+        /* Create and test with an empty file */
+        fileInfo.hFile = create_temp_file(pathW);
         /* pfnObjectTrust now crashes unless both pPDSip and psPfns are set */
         U(data).pPDSip = &provDataSIP;
         data.psPfns = (CRYPT_PROVIDER_FUNCTIONS *)funcs;
+        ret = funcs->pfnObjectTrust(&data);
+        ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);
+        ok(data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
+         TRUST_E_SUBJECT_FORM_UNKNOWN,
+         "expected TRUST_E_SUBJECT_FORM_UNKNOWN, got %08x\n",
+         data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV]);
+        CloseHandle(fileInfo.hFile);
+        fileInfo.hFile = NULL;
+        fileInfo.pcwszFilePath = pathW;
+        ret = funcs->pfnObjectTrust(&data);
+        ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);
+        ok(data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
+         TRUST_E_SUBJECT_FORM_UNKNOWN,
+         "expected TRUST_E_SUBJECT_FORM_UNKNOWN, got %08x\n",
+         data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV]);
+        DeleteFileW(pathW);
+        /* Test again with a file we expect to exist, and to contain no
+         * signature.
+         */
+        getNotepadPath(pathW, MAX_PATH);
         ret = funcs->pfnObjectTrust(&data);
         ok(ret == S_FALSE, "Expected S_FALSE, got %08x\n", ret);
         ok(data.padwTrustStepErrors[TRUSTERROR_STEP_FINAL_OBJPROV] ==
@@ -598,23 +637,6 @@ static struct _PeImage {
 };
 #include <poppack.h>
 
-/* Creates a test file and returns a handle to it.  The file's path is returned
- * in temp_file, which must be at least MAX_PATH characters in length.
- */
-static HANDLE create_temp_file(char *temp_file)
-{
-    HANDLE file = INVALID_HANDLE_VALUE;
-    char temp_path[MAX_PATH];
-
-    if (GetTempPathA(sizeof(temp_path), temp_path))
-    {
-        if (GetTempFileNameA(temp_path, "img", 0, temp_file))
-            file = CreateFileA(temp_file, GENERIC_READ | GENERIC_WRITE, 0, NULL,
-             CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    }
-    return file;
-}
-
 static void test_sip_create_indirect_data(void)
 {
     static GUID unknown = { 0xC689AAB8, 0x8E78, 0x11D0, { 0x8C,0x47,
@@ -622,7 +644,7 @@ static void test_sip_create_indirect_data(void)
     static char oid_sha1[] = szOID_OIWSEC_sha1;
     BOOL ret;
     SIP_SUBJECTINFO subjinfo = { 0 };
-    char temp_file[MAX_PATH];
+    WCHAR temp_file[MAX_PATH];
     HANDLE file;
     DWORD count;
 
@@ -708,7 +730,7 @@ static void test_sip_create_indirect_data(void)
         HeapFree(GetProcessHeap(), 0, indirect);
     }
     CloseHandle(file);
-    DeleteFileA(temp_file);
+    DeleteFileW(temp_file);
 }
 
 static void test_wintrust(void)
@@ -718,7 +740,7 @@ static void test_wintrust(void)
     WINTRUST_FILE_INFO file;
     LONG r;
     HRESULT hr;
-    WCHAR notepadPathW[MAX_PATH];
+    WCHAR pathW[MAX_PATH];
 
     memset(&wtd, 0, sizeof(wtd));
     wtd.cbStruct = sizeof(wtd);
@@ -729,8 +751,17 @@ static void test_wintrust(void)
     wtd.dwStateAction = WTD_STATEACTION_VERIFY;
     memset(&file, 0, sizeof(file));
     file.cbStruct = sizeof(file);
-    getNotepadPath(notepadPathW, MAX_PATH);
-    file.pcwszFilePath = notepadPathW;
+    file.pcwszFilePath = pathW;
+    /* Test with an empty file */
+    file.hFile = create_temp_file(pathW);
+    r = WinVerifyTrust(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
+    ok(r == TRUST_E_SUBJECT_FORM_UNKNOWN,
+     "expected TRUST_E_SUBJECT_FORM_UNKNOWN, got %08x\n", r);
+    CloseHandle(file.hFile);
+    DeleteFileW(pathW);
+    file.hFile = NULL;
+    /* Test with a known file path, which we expect not have a signature */
+    getNotepadPath(pathW, MAX_PATH);
     r = WinVerifyTrust(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
     ok(r == TRUST_E_NOSIGNATURE || r == CRYPT_E_FILE_ERROR,
      "expected TRUST_E_NOSIGNATURE or CRYPT_E_FILE_ERROR, got %08x\n", r);
