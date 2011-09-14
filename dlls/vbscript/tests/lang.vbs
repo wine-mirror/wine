@@ -106,6 +106,11 @@ call ok(false eqv false, "false does not equal false?")
 call ok(not (false eqv true), "false equals true?")
 call ok(getVT(false eqv null) = "VT_NULL", "getVT(false eqv null) = " & getVT(false eqv null))
 
+call ok(true imp true, "true does not imp true?")
+call ok(false imp false, "false does not imp false?")
+call ok(not (true imp false), "true imp false?")
+call ok(false imp null, "false imp null is false?")
+
 x = 3
 Call ok(2+2 = 4, "2+2 = " & (2+2))
 Call ok(false + 6 + true = 5, "false + 6 + true <> 5")
