@@ -97,6 +97,11 @@ call ok(false and false or true, "false and false or true is false?")
 call ok(true or false and false, "true or false and false is false?")
 call ok(null or true, "null or true is false")
 
+call ok(true xor false, "true xor false is false?")
+call ok(not (false xor false), "false xor false is true?")
+call ok(not (true or false xor true), "true or false xor true is true?")
+call ok(not (true xor false or true), "true xor false or true is true?")
+
 x = 3
 Call ok(2+2 = 4, "2+2 = " & (2+2))
 Call ok(false + 6 + true = 5, "false + 6 + true <> 5")
