@@ -2231,7 +2231,7 @@ HRESULT __cdecl wined3d_device_get_palette_entries(struct wined3d_device *device
         UINT palette_idx, PALETTEENTRY *entries);
 struct wined3d_shader * __cdecl wined3d_device_get_pixel_shader(const struct wined3d_device *device);
 void __cdecl wined3d_device_get_primitive_type(struct wined3d_device *device, WINED3DPRIMITIVETYPE *primitive_topology);
-HRESULT __cdecl wined3d_device_get_ps_consts_b(struct wined3d_device *device,
+HRESULT __cdecl wined3d_device_get_ps_consts_b(const struct wined3d_device *device,
         UINT start_register, BOOL *constants, UINT bool_count);
 HRESULT __cdecl wined3d_device_get_ps_consts_f(struct wined3d_device *device,
         UINT start_register, float *constants, UINT vector4f_count);
