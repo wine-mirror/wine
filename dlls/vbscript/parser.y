@@ -48,10 +48,13 @@ static member_expression_t *new_member_expression(parser_ctx_t*,expression_t*,co
 static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
 static statement_t *new_assign_statement(parser_ctx_t*,member_expression_t*,expression_t*);
 static statement_t *new_dim_statement(parser_ctx_t*,dim_decl_t*);
- static statement_t *new_if_statement(parser_ctx_t*,expression_t*,statement_t*,elseif_decl_t*,statement_t*);
+static statement_t *new_if_statement(parser_ctx_t*,expression_t*,statement_t*,elseif_decl_t*,statement_t*);
+static statement_t *new_function_statement(parser_ctx_t*,function_decl_t*);
 
 static dim_decl_t *new_dim_decl(parser_ctx_t*,const WCHAR*,dim_decl_t*);
 static elseif_decl_t *new_elseif_decl(parser_ctx_t*,expression_t*,statement_t*);
+static function_decl_t *new_function_decl(parser_ctx_t*,const WCHAR*,function_type_t,arg_decl_t*,statement_t*);
+static arg_decl_t *new_argument_decl(parser_ctx_t*,const WCHAR*,BOOL);
 
 #define CHECK_ERROR if(((parser_ctx_t*)ctx)->hres != S_OK) YYABORT
 
@@ -67,6 +70,8 @@ static elseif_decl_t *new_elseif_decl(parser_ctx_t*,expression_t*,statement_t*);
     member_expression_t *member;
     elseif_decl_t *elseif;
     dim_decl_t *dim_decl;
+    function_decl_t *func_decl;
+    arg_decl_t *arg_decl;
     LONG lng;
     BOOL bool;
     double dbl;
@@ -89,13 +94,15 @@ static elseif_decl_t *new_elseif_decl(parser_ctx_t*,expression_t*,statement_t*);
 %token <lng> tLong tShort
 %token <dbl> tDouble
 
-%type <statement> Statement StatementNl StatementsNl IfStatement Else_opt
+%type <statement> Statement StatementNl StatementsNl StatementsNl_opt IfStatement Else_opt
 %type <expression> Expression LiteralExpression PrimaryExpression EqualityExpression CallExpression
 %type <expression> ConcatExpression AdditiveExpression ModExpression IntdivExpression MultiplicativeExpression ExpExpression
 %type <expression> NotExpression UnaryExpression
 %type <member> MemberExpression
 %type <expression> Arguments_opt ArgumentList_opt ArgumentList
 %type <bool> OptionExplicit_opt
+%type <arg_decl> ArgumentsDecl_opt ArgumentDeclList ArgumentDecl
+%type <func_decl> FunctionDecl
 %type <elseif> ElseIfs_opt ElseIfs ElseIf
 %type <dim_decl> DimDeclList
 
@@ -112,6 +119,10 @@ SourceElements
     : /* empty */
     | SourceElements StatementNl    { source_add_statement(ctx, $2); }
 
+StatementsNl_opt
+    : /* empty */                           { $$ = NULL; }
+    | StatementsNl                          { $$ = $1; }
+
 StatementsNl
     : StatementNl                           { $$ = $1; }
     | StatementNl StatementsNl              { $1->next = $2; $$ = $1; }
@@ -126,6 +137,7 @@ Statement
                                             { $1->args = $2; $$ = new_assign_statement(ctx, $1, $4); CHECK_ERROR; }
     | tDIM DimDeclList                      { $$ = new_dim_statement(ctx, $2); CHECK_ERROR; }
     | IfStatement                           { $$ = $1; }
+    | FunctionDecl                          { $$ = new_function_statement(ctx, $1); CHECK_ERROR; }
 
 MemberExpression
     : tIdentifier                           { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
@@ -235,6 +247,23 @@ LiteralExpression
 
 PrimaryExpression
     : '(' Expression ')'            { $$ = $2; }
+
+FunctionDecl
+    : /* Storage_opt */ tSUB tIdentifier ArgumentsDecl_opt tNL StatementsNl_opt tEND tSUB
+                                    { $$ = new_function_decl(ctx, $2, FUNC_SUB, $3, $5); CHECK_ERROR; }
+
+ArgumentsDecl_opt
+    : EmptyBrackets_opt                         { $$ = NULL; }
+    | '(' ArgumentDeclList ')'                  { $$ = $2; }
+
+ArgumentDeclList
+    : ArgumentDecl                              { $$ = $1; }
+    | ArgumentDecl ',' ArgumentDeclList         { $1->next = $3; $$ = $1; }
+
+ArgumentDecl
+    : tIdentifier                               { $$ = new_argument_decl(ctx, $1, TRUE); }
+    | tBYREF tIdentifier                        { $$ = new_argument_decl(ctx, $2, TRUE); }
+    | tBYVAL tIdentifier                        { $$ = new_argument_decl(ctx, $2, FALSE); }
 
 %%
 
@@ -449,6 +478,48 @@ static statement_t *new_if_statement(parser_ctx_t *ctx, expression_t *expr, stat
     stat->if_stat = if_stat;
     stat->elseifs = elseif_decl;
     stat->else_stat = else_stat;
+    return &stat->stat;
+}
+
+static arg_decl_t *new_argument_decl(parser_ctx_t *ctx, const WCHAR *name, BOOL by_ref)
+{
+    arg_decl_t *arg_decl;
+
+    arg_decl = parser_alloc(ctx, sizeof(*arg_decl));
+    if(!arg_decl)
+        return NULL;
+
+    arg_decl->name = name;
+    arg_decl->by_ref = by_ref;
+    arg_decl->next = NULL;
+    return arg_decl;
+}
+
+static function_decl_t *new_function_decl(parser_ctx_t *ctx, const WCHAR *name, function_type_t type,
+        arg_decl_t *arg_decl, statement_t *body)
+{
+    function_decl_t *decl;
+
+    decl = parser_alloc(ctx, sizeof(*decl));
+    if(!decl)
+        return NULL;
+
+    decl->name = name;
+    decl->type = type;
+    decl->args = arg_decl;
+    decl->body = body;
+    return decl;
+}
+
+static statement_t *new_function_statement(parser_ctx_t *ctx, function_decl_t *decl)
+{
+    function_statement_t *stat;
+
+    stat = new_statement(ctx, STAT_FUNC, sizeof(*stat));
+    if(!stat)
+        return NULL;
+
+    stat->func_decl = decl;
     return &stat->stat;
 }
 

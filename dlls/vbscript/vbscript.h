@@ -146,6 +146,11 @@ typedef struct {
     instr_arg_t arg2;
 } instr_t;
 
+typedef enum {
+    FUNC_GLOBAL,
+    FUNC_SUB
+} function_type_t;
+
 struct _function_t {
     unsigned code_off;
     vbscode_t *code_ctx;

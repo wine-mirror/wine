@@ -85,8 +85,9 @@ typedef struct {
 typedef enum {
     STAT_ASSIGN,
     STAT_CALL,
-    STAT_IF,
-    STAT_DIM
+    STAT_DIM,
+    STAT_FUNC,
+    STAT_IF
 } statement_type_t;
 
 typedef struct _statement_t {
@@ -114,6 +115,25 @@ typedef struct _dim_statement_t {
     statement_t stat;
     dim_decl_t *dim_decls;
 } dim_statement_t;
+
+typedef struct _arg_decl_t {
+    const WCHAR *name;
+    BOOL by_ref;
+    struct _arg_decl_t *next;
+} arg_decl_t;
+
+typedef struct _function_decl_t {
+    const WCHAR *name;
+    function_type_t type;
+    arg_decl_t *args;
+    statement_t *body;
+    struct _function_decl_t *next;
+} function_decl_t;
+
+typedef struct _function_statement_t {
+    statement_t stat;
+    function_decl_t *func_decl;
+} function_statement_t;
 
 typedef struct _elseif_decl_t {
     expression_t *expr;
