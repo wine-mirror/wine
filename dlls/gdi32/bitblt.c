@@ -157,6 +157,45 @@ void free_heap_bits( struct gdi_image_bits *bits )
     HeapFree( GetProcessHeap(), 0, bits->ptr );
 }
 
+static DWORD convert_bits( const BITMAPINFO *src_info, struct bitblt_coords *src,
+                           BITMAPINFO *dst_info, struct gdi_image_bits *bits )
+{
+    void *ptr;
+    DWORD err;
+
+    dst_info->bmiHeader.biWidth = src->visrect.right - src->visrect.left;
+    if (!(ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( dst_info ))))
+        return ERROR_OUTOFMEMORY;
+
+    err = convert_bitmapinfo( src_info, bits->ptr, src, dst_info, ptr );
+    if (bits->free) bits->free( bits );
+    bits->ptr = ptr;
+    bits->is_copy = TRUE;
+    bits->free = free_heap_bits;
+    return err;
+}
+
+static DWORD stretch_bits( const BITMAPINFO *src_info, struct bitblt_coords *src,
+                           BITMAPINFO *dst_info, struct bitblt_coords *dst,
+                           struct gdi_image_bits *bits, int mode )
+{
+    void *ptr;
+    DWORD err;
+
+    dst_info->bmiHeader.biWidth = dst->visrect.right - dst->visrect.left;
+    dst_info->bmiHeader.biHeight = dst->visrect.bottom - dst->visrect.top;
+    if (src_info->bmiHeader.biHeight < 0) dst_info->bmiHeader.biHeight = -dst_info->bmiHeader.biHeight;
+    if (!(ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( dst_info ))))
+        return ERROR_OUTOFMEMORY;
+
+    err = stretch_bitmapinfo( src_info, bits->ptr, src, dst_info, ptr, dst, mode );
+    if (bits->free) bits->free( bits );
+    bits->ptr = ptr;
+    bits->is_copy = TRUE;
+    bits->free = free_heap_bits;
+    return err;
+}
+
 /* nulldrv fallback implementation using StretchDIBits */
 BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
                          PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
@@ -168,7 +207,6 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     BITMAPINFO *dst_info = (BITMAPINFO *)dst_buffer;
     DWORD err;
     struct gdi_image_bits bits;
-    LPVOID ptr;
 
     if (!(dc_src = get_dc_ptr( src_dev->hdc ))) return FALSE;
     src_dev = GET_DC_PHYSDEV( dc_src, pGetImage );
@@ -209,42 +247,20 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
             dst_info->bmiHeader.biClrUsed = 1;
         }
 
-        dst_info->bmiHeader.biWidth = src->visrect.right - src->visrect.left;
-        if ((ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( dst_info ))))
+        if (!(err = convert_bits( src_info, src, dst_info, &bits )))
         {
-            err = convert_bitmapinfo( src_info, bits.ptr, src, dst_info, ptr );
-            if (bits.free) bits.free( &bits );
-            bits.ptr = ptr;
-            bits.is_copy = TRUE;
-            bits.free = free_heap_bits;
-            if (!err)
-            {
-                /* get rid of the fake 1-bpp table */
-                if (dst_info->bmiHeader.biClrUsed == 1) dst_info->bmiHeader.biClrUsed = 0;
-                err = dst_dev->funcs->pPutImage( dst_dev, 0, 0, dst_info, &bits, src, dst, rop );
-            }
+            /* get rid of the fake 1-bpp table */
+            if (dst_info->bmiHeader.biClrUsed == 1) dst_info->bmiHeader.biClrUsed = 0;
+            err = dst_dev->funcs->pPutImage( dst_dev, 0, 0, dst_info, &bits, src, dst, rop );
         }
-        else err = ERROR_OUTOFMEMORY;
     }
 
     if (err == ERROR_TRANSFORM_NOT_SUPPORTED &&
         ((src->width != dst->width) || (src->height != dst->height)))
     {
         memcpy( src_info, dst_info, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
-        dst_info->bmiHeader.biWidth = dst->visrect.right - dst->visrect.left;
-        dst_info->bmiHeader.biHeight = dst->visrect.bottom - dst->visrect.top;
-        if (src_info->bmiHeader.biHeight < 0) dst_info->bmiHeader.biHeight = -dst_info->bmiHeader.biHeight;
-        if ((ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( dst_info ))))
-        {
-            err = stretch_bitmapinfo( src_info, bits.ptr, src, dst_info, ptr, dst,
-                                      GetStretchBltMode( dst_dev->hdc ) );
-            if (bits.free) bits.free( &bits );
-            bits.ptr = ptr;
-            bits.is_copy = TRUE;
-            bits.free = free_heap_bits;
-            if (!err) err = dst_dev->funcs->pPutImage( dst_dev, 0, 0, dst_info, &bits, src, dst, rop );
-        }
-        else err = ERROR_OUTOFMEMORY;
+        err = stretch_bits( src_info, src, dst_info, dst, &bits, GetStretchBltMode( dst_dev->hdc ));
+        if (!err) err = dst_dev->funcs->pPutImage( dst_dev, 0, 0, dst_info, &bits, src, dst, rop );
     }
 
     if (bits.free) bits.free( &bits );
