@@ -80,6 +80,7 @@ struct _script_ctx_t {
     vbdisp_t *script_obj;
 
     dynamic_var_t *global_vars;
+    function_t *global_funcs;
 
     struct list code_list;
     struct list named_items;

@@ -674,9 +674,15 @@ static HRESULT create_function(compile_ctx_t *ctx, function_decl_t *decl, functi
 static BOOL lookup_script_identifier(script_ctx_t *script, const WCHAR *identifier)
 {
     dynamic_var_t *var;
+    function_t *func;
 
     for(var = script->global_vars; var; var = var->next) {
         if(!strcmpiW(var->name, identifier))
+            return TRUE;
+    }
+
+    for(func = script->global_funcs; func; func = func->next) {
+        if(!strcmpiW(func->name, identifier))
             return TRUE;
     }
 
@@ -686,10 +692,18 @@ static BOOL lookup_script_identifier(script_ctx_t *script, const WCHAR *identifi
 static HRESULT check_script_collisions(compile_ctx_t *ctx, script_ctx_t *script)
 {
     dynamic_var_t *var;
+    function_t *func;
 
     for(var = ctx->global_vars; var; var = var->next) {
         if(lookup_script_identifier(script, var->name)) {
             FIXME("%s: redefined\n", debugstr_w(var->name));
+            return E_FAIL;
+        }
+    }
+
+    for(func = ctx->funcs; func; func = func->next) {
+        if(lookup_script_identifier(script, func->name)) {
+            FIXME("%s: redefined\n", debugstr_w(func->name));
             return E_FAIL;
         }
     }
@@ -813,6 +827,13 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, vbscode_t **ret)
 
         var->next = script->global_vars;
         script->global_vars = ctx.global_vars;
+    }
+
+    if(ctx.funcs) {
+        for(new_func = ctx.funcs; new_func->next; new_func = new_func->next);
+
+        new_func->next = script->global_funcs;
+        script->global_funcs = ctx.funcs;
     }
 
     if(TRACE_ON(vbscript_disas))
