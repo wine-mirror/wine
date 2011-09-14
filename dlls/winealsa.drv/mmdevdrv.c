@@ -238,7 +238,8 @@ int WINAPI AUDDRV_GetPriority(void)
 }
 
 static HRESULT alsa_get_card_devices(EDataFlow flow, WCHAR **ids, char **keys,
-        UINT *num, snd_ctl_t *ctl, int card, const WCHAR *cardnameW)
+        UINT *num, snd_ctl_t *ctl, int card, const WCHAR *cardnameW,
+        BOOL count_failed)
 {
     static const WCHAR dashW[] = {' ','-',' ',0};
     int err, device;
@@ -276,6 +277,8 @@ static HRESULT alsa_get_card_devices(EDataFlow flow, WCHAR **ids, char **keys,
         if((err = snd_pcm_open(&handle, devnode, stream, SND_PCM_NONBLOCK)) < 0){
             WARN("The device \"%s\" failed to open, pretending it doesn't exist: %d (%s)\n",
                     devnode, err, snd_strerror(err));
+            if(count_failed)
+                ++(*num);
             continue;
         }
 
@@ -328,7 +331,7 @@ static HRESULT alsa_get_card_devices(EDataFlow flow, WCHAR **ids, char **keys,
 }
 
 static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, char **keys,
-        UINT *num)
+        UINT *num, BOOL count_failed)
 {
     int err, card;
 
@@ -365,7 +368,8 @@ static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, char **keys,
         }
         MultiByteToWideChar(CP_UNIXCP, 0, cardname, -1, cardnameW, len);
 
-        alsa_get_card_devices(flow, ids, keys, num, ctl, card, cardnameW);
+        alsa_get_card_devices(flow, ids, keys, num, ctl, card, cardnameW,
+                count_failed);
 
         HeapFree(GetProcessHeap(), 0, cardnameW);
 
@@ -386,7 +390,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
 
     TRACE("%d %p %p %p %p\n", flow, ids, keys, num, def_index);
 
-    hr = alsa_enum_devices(flow, NULL, NULL, num);
+    hr = alsa_enum_devices(flow, NULL, NULL, num, TRUE);
     if(FAILED(hr))
         return hr;
 
@@ -411,7 +415,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
     memcpy((*keys)[0], defname, sizeof(defname));
     *def_index = 0;
 
-    hr = alsa_enum_devices(flow, (*ids) + 1, (*keys) + 1, num);
+    hr = alsa_enum_devices(flow, (*ids) + 1, (*keys) + 1, num, FALSE);
     if(FAILED(hr)){
         int i;
         for(i = 0; i < *num; ++i){
