@@ -175,7 +175,7 @@ static int mutex_signal( struct object *obj, unsigned int access )
     struct mutex *mutex = (struct mutex *)obj;
     assert( obj->ops == &mutex_ops );
 
-    if (!(access & SYNCHRONIZE))  /* FIXME: MUTEX_MODIFY_STATE? */
+    if (!(access & SYNCHRONIZE))
     {
         set_error( STATUS_ACCESS_DENIED );
         return 0;
@@ -265,7 +265,7 @@ DECL_HANDLER(release_mutex)
     struct mutex *mutex;
 
     if ((mutex = (struct mutex *)get_handle_obj( current->process, req->handle,
-                                                 MUTEX_MODIFY_STATE, &mutex_ops )))
+                                                 0, &mutex_ops )))
     {
         if (!mutex->count || (mutex->owner != current)) set_error( STATUS_MUTANT_NOT_OWNED );
         else

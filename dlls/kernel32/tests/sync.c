@@ -158,13 +158,15 @@ static void test_mutex(void)
     for (i = 0; i < 32; i++)
     {
         hOpened = OpenMutex(0x1 << i, FALSE, "WineTestMutex");
-        ReleaseMutex(hCreated);
         if(hOpened != NULL)
         {
+            ret = ReleaseMutex(hOpened);
+            ok(ret, "ReleaseMutex failed with error %d, access %x\n", GetLastError(), 1 << i);
             CloseHandle(hOpened);
         }
         else
         {
+            ReleaseMutex(hCreated);
             failed |=0x1 << i;
         }
     }
