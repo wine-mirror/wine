@@ -5128,8 +5128,7 @@ static UINT ACTION_ResolveSource(MSIPACKAGE* package)
     attrib = GetFileAttributesW(package->db->path);
     if (attrib == INVALID_FILE_ATTRIBUTES)
     {
-        LPWSTR prompt;
-        LPWSTR msg;
+        LPWSTR prompt, msg;
         DWORD size = 0;
 
         rc = MsiSourceListGetInfoW(package->ProductCode, NULL, 
@@ -5146,17 +5145,18 @@ static UINT ACTION_ResolveSource(MSIPACKAGE* package)
             prompt = strdupW(package->db->path);
 
         msg = msi_build_error_string(package, 1302, 1, prompt);
+        msi_free(prompt);
         while(attrib == INVALID_FILE_ATTRIBUTES)
         {
             rc = MessageBoxW(NULL, msg, NULL, MB_OKCANCEL);
             if (rc == IDCANCEL)
             {
-                msi_free(prompt);
+                msi_free(msg);
                 return ERROR_INSTALL_USEREXIT;
             }
             attrib = GetFileAttributesW(package->db->path);
         }
-        msi_free(prompt);
+        msi_free(msg);
         rc = ERROR_SUCCESS;
     }
     else
