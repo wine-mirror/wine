@@ -2235,7 +2235,7 @@ HRESULT __cdecl wined3d_device_get_ps_consts_b(const struct wined3d_device *devi
         UINT start_register, BOOL *constants, UINT bool_count);
 HRESULT __cdecl wined3d_device_get_ps_consts_f(struct wined3d_device *device,
         UINT start_register, float *constants, UINT vector4f_count);
-HRESULT __cdecl wined3d_device_get_ps_consts_i(struct wined3d_device *device,
+HRESULT __cdecl wined3d_device_get_ps_consts_i(const struct wined3d_device *device,
         UINT start_register, int *constants, UINT vector4i_count);
 HRESULT __cdecl wined3d_device_get_raster_status(struct wined3d_device *device,
         UINT swapchain_idx, WINED3DRASTER_STATUS *raster_status);
