@@ -472,6 +472,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_Arc,                         /* pArc */
     NULL,                               /* pArcTo */
     NULL,                               /* pBeginPath */
+    NULL,                               /* pBlendImage */
     X11DRV_ChoosePixelFormat,           /* pChoosePixelFormat */
     X11DRV_Chord,                       /* pChord */
     NULL,                               /* pCloseFigure */

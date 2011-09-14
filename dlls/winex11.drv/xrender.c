@@ -2598,6 +2598,7 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pArc */
     NULL,                               /* pArcTo */
     NULL,                               /* pBeginPath */
+    NULL,                               /* pBlendImage */
     NULL,                               /* pChoosePixelFormat */
     NULL,                               /* pChord */
     NULL,                               /* pCloseFigure */

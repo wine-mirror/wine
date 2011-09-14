@@ -506,6 +506,7 @@ const DC_FUNCTIONS dib_driver =
     NULL,                               /* pArc */
     NULL,                               /* pArcTo */
     NULL,                               /* pBeginPath */
+    NULL,                               /* pBlendImage */
     NULL,                               /* pChoosePixelFormat */
     NULL,                               /* pChord */
     NULL,                               /* pCloseFigure */

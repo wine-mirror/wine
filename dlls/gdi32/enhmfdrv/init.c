@@ -43,6 +43,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_Arc,                      /* pArc */
     NULL,                            /* pArcTo */
     EMFDRV_BeginPath,                /* pBeginPath */
+    NULL,                            /* pBlendImage */
     NULL,                            /* pChoosePixelFormat */
     EMFDRV_Chord,                    /* pChord */
     EMFDRV_CloseFigure,              /* pCloseFigure */

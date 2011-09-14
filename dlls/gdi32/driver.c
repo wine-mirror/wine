@@ -190,14 +190,14 @@ static INT nulldrv_AbortDoc( PHYSDEV dev )
     return 0;
 }
 
-static BOOL nulldrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
-                                PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION func)
+static BOOL nulldrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                         INT xstart, INT ystart, INT xend, INT yend )
 {
     return TRUE;
 }
 
-static BOOL nulldrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                         INT xstart, INT ystart, INT xend, INT yend )
+static DWORD nulldrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_bits *bits,
+                                 struct bitblt_coords *src, struct bitblt_coords *dst, BLENDFUNCTION func )
 {
     return TRUE;
 }
@@ -666,6 +666,7 @@ const DC_FUNCTIONS null_driver =
     nulldrv_Arc,                        /* pArc */
     nulldrv_ArcTo,                      /* pArcTo */
     nulldrv_BeginPath,                  /* pBeginPath */
+    nulldrv_BlendImage,                 /* pBlendImage */
     nulldrv_ChoosePixelFormat,          /* pChoosePixelFormat */
     nulldrv_Chord,                      /* pChord */
     nulldrv_CloseFigure,                /* pCloseFigure */

@@ -825,6 +825,7 @@ static const struct gdi_dc_funcs psdrv_funcs =
     PSDRV_Arc,                          /* pArc */
     NULL,                               /* pArcTo */
     NULL,                               /* pBeginPath */
+    NULL,                               /* pBlendImage */
     NULL,                               /* pChoosePixelFormat */
     PSDRV_Chord,                        /* pChord */
     NULL,                               /* pCloseFigure */
