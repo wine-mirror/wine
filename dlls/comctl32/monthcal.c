@@ -521,15 +521,27 @@ static void MONTHCAL_GetMinDate(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *date)
 static void MONTHCAL_GetMaxDate(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *date)
 {
   /* the latest date is in latest calendar */
-  SYSTEMTIME st, lt_month = infoPtr->calendars[MONTHCAL_GetCalCount(infoPtr)-1].month;
+  SYSTEMTIME st, *lt_month = &infoPtr->calendars[MONTHCAL_GetCalCount(infoPtr)-1].month;
+  INT first_day;
 
-  *date = lt_month;
+  *date = *lt_month;
+  st = *lt_month;
+
+  /* day of week of first day of current month */
+  st.wDay = 1;
+  first_day = MONTHCAL_CalculateDayOfWeek(&st, FALSE);
+
   MONTHCAL_GetNextMonth(date);
+  MONTHCAL_GetPrevMonth(&st);
 
-  MONTHCAL_GetMinDate(infoPtr, &st);
+  /* last calendar starts with some date from previous month that not displayed */
+  st.wDay = MONTHCAL_MonthLength(st.wMonth, st.wYear) +
+             (infoPtr->firstDay - first_day) % 7 + 1;
+  if (st.wDay > MONTHCAL_MonthLength(st.wMonth, st.wYear)) st.wDay -= 7;
+
   /* Use month length to get max day. 42 means max day count in calendar area */
   date->wDay = 42 - (MONTHCAL_MonthLength(st.wMonth, st.wYear) - st.wDay + 1) -
-                     MONTHCAL_MonthLength(lt_month.wMonth, lt_month.wYear);
+                     MONTHCAL_MonthLength(lt_month->wMonth, lt_month->wYear);
 
   /* fix day of week */
   MONTHCAL_CalculateDayOfWeek(date, TRUE);
