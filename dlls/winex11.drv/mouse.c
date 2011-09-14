@@ -1081,6 +1081,11 @@ static Cursor create_xlib_cursor( HDC hdc, const ICONINFOEXW *icon, int width, i
 
     if (has_alpha)
     {
+        /* make sure the bitmaps are owned by x11drv */
+        HBITMAP orig = SelectObject( hdc, icon->hbmMask );
+        SelectObject( hdc, xor_bitmap );
+        SelectObject( hdc, orig );
+
         memset( mask_bits, 0, width_bytes * height );
         for (y = 0, ptr = color_bits; y < height; y++)
             for (x = 0; x < width; x++, ptr++)
