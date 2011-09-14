@@ -91,6 +91,12 @@ call ok(true and not false, "true and not false is not true")
 call ok(not (false and true), "not (false and true) is not true")
 call ok(getVT(null and true) = "VT_NULL", "getVT(null and true) = " & getVT(null and true))
 
+call ok(false or true, "false or uie is false?")
+call ok(not (false or false), "false or false is not false?")
+call ok(false and false or true, "false and false or true is false?")
+call ok(true or false and false, "true or false and false is false?")
+call ok(null or true, "null or true is false")
+
 x = 3
 Call ok(2+2 = 4, "2+2 = " & (2+2))
 Call ok(false + 6 + true = 5, "false + 6 + true <> 5")
