@@ -427,6 +427,7 @@ static HRESULT init_script_cache(const HDC hdc, SCRIPT_CACHE *psc)
         heap_free(sc);
         return E_INVALIDARG;
     }
+    sc->sfnt = (GetFontData(hdc, MS_MAKE_TAG('h','e','a','d'), 0, NULL, 0)!=GDI_ERROR);
     *psc = sc;
     TRACE("<- %p\n", sc);
     return S_OK;
@@ -1747,11 +1748,8 @@ HRESULT WINAPI ScriptShapeOpenType( HDC hdc, SCRIPT_CACHE *psc,
     ((ScriptCache *)*psc)->userScript = tagScript;
     ((ScriptCache *)*psc)->userLang = tagLangSys;
 
-    /* set fNoGlyphIndex for symbolic, and device fonts or non truetype fonts */
-    if (!psa->fNoGlyphIndex &&
-        (!(get_cache_pitch_family(psc) & TMPF_TRUETYPE) ||
-         (get_cache_pitch_family(psc) & TMPF_DEVICE) ||
-         (((ScriptCache *)*psc)->tm.tmCharSet == SYMBOL_CHARSET)))
+    /* set fNoGlyphIndex non truetype/opentype fonts */
+    if (!psa->fNoGlyphIndex && !((ScriptCache *)*psc)->sfnt)
         psa->fNoGlyphIndex = TRUE;
 
     /* Initialize a SCRIPT_VISATTR and LogClust for each char in this run */

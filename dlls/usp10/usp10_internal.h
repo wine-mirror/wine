@@ -85,6 +85,7 @@ typedef struct {
 typedef struct {
     LOGFONTW lf;
     TEXTMETRICW tm;
+    BOOL sfnt;
     WORD *glyphs[GLYPH_MAX / GLYPH_BLOCK_SIZE];
     ABC *widths[GLYPH_MAX / GLYPH_BLOCK_SIZE];
     LPVOID GSUB_Table;
