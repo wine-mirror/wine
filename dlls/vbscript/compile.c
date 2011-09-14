@@ -40,6 +40,10 @@ typedef struct {
 
     dim_decl_t *dim_decls;
     dynamic_var_t *global_vars;
+
+    function_t *func;
+    function_t *funcs;
+    function_decl_t *func_decls;
 } compile_ctx_t;
 
 static HRESULT compile_expression(compile_ctx_t*,expression_t*);
@@ -514,6 +518,18 @@ static HRESULT compile_dim_statement(compile_ctx_t *ctx, dim_statement_t *stat)
     return S_OK;
 }
 
+static HRESULT compile_function_statement(compile_ctx_t *ctx, function_statement_t *stat)
+{
+    if(ctx->func != &ctx->code->global_code) {
+        FIXME("Function is not in the global code\n");
+        return E_FAIL;
+    }
+
+    stat->func_decl->next = ctx->func_decls;
+    ctx->func_decls = stat->func_decl;
+    return S_OK;
+}
+
 static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
 {
     HRESULT hres;
@@ -528,6 +544,9 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
             break;
         case STAT_DIM:
             hres = compile_dim_statement(ctx, (dim_statement_t*)stat);
+            break;
+        case STAT_FUNC:
+            hres = compile_function_statement(ctx, (function_statement_t*)stat);
             break;
         case STAT_IF:
             hres = compile_if_statement(ctx, (if_statement_t*)stat);
@@ -545,11 +564,11 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
     return S_OK;
 }
 
-static void resolve_labels(compile_ctx_t *ctx)
+static void resolve_labels(compile_ctx_t *ctx, unsigned off)
 {
     instr_t *instr;
 
-    for(instr = ctx->code->instrs; instr < ctx->code->instrs+ctx->instr_cnt; instr++) {
+    for(instr = ctx->code->instrs+off; instr < ctx->code->instrs+ctx->instr_cnt; instr++) {
         if(instr_info[instr->op].arg1_type == ARG_ADDR && (instr->arg1.uint & LABEL_FLAG)) {
             assert((instr->arg1.uint & ~LABEL_FLAG) < ctx->labels_cnt);
             instr->arg1.uint = ctx->labels[instr->arg1.uint & ~LABEL_FLAG];
@@ -566,35 +585,89 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
 
     func->code_off = ctx->instr_cnt;
 
+    ctx->func = func;
+    ctx->dim_decls = NULL;
     hres = compile_statement(ctx, stat);
+    ctx->func = NULL;
     if(FAILED(hres))
         return hres;
 
     if(push_instr(ctx, OP_ret) == -1)
         return E_OUTOFMEMORY;
 
-    resolve_labels(ctx);
+    resolve_labels(ctx, func->code_off);
 
     if(ctx->dim_decls) {
         dim_decl_t *dim_decl;
-        dynamic_var_t *new_var;
 
-        for(dim_decl = ctx->dim_decls; dim_decl; dim_decl = dim_decl->next) {
-            new_var = compiler_alloc(ctx->code, sizeof(*new_var));
-            if(!new_var)
-                return E_OUTOFMEMORY;
+        if(func->type == FUNC_GLOBAL) {
+            dynamic_var_t *new_var;
 
-            new_var->name = compiler_alloc_string(ctx->code, dim_decl->name);
-            if(!new_var->name)
-                return E_OUTOFMEMORY;
+            for(dim_decl = ctx->dim_decls; dim_decl; dim_decl = dim_decl->next) {
+                new_var = compiler_alloc(ctx->code, sizeof(*new_var));
+                if(!new_var)
+                    return E_OUTOFMEMORY;
 
-            V_VT(&new_var->v) = VT_EMPTY;
+                new_var->name = compiler_alloc_string(ctx->code, dim_decl->name);
+                if(!new_var->name)
+                    return E_OUTOFMEMORY;
 
-            new_var->next = ctx->global_vars;
-            ctx->global_vars = new_var;
+                V_VT(&new_var->v) = VT_EMPTY;
+
+                new_var->next = ctx->global_vars;
+                ctx->global_vars = new_var;
+            }
+        }else {
+            FIXME("var not implemented for functions\n");
         }
     }
 
+    return S_OK;
+}
+
+static BOOL lookup_funcs_name(compile_ctx_t *ctx, const WCHAR *name)
+{
+    function_t *iter;
+
+    for(iter = ctx->funcs; iter; iter = iter->next) {
+        if(!strcmpiW(iter->name, name))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+static HRESULT create_function(compile_ctx_t *ctx, function_decl_t *decl, function_t **ret)
+{
+    function_t *func;
+    HRESULT hres;
+
+    if(lookup_dim_decls(ctx, decl->name) || lookup_funcs_name(ctx, decl->name)) {
+        FIXME("%s: redefinition\n", debugstr_w(decl->name));
+        return E_FAIL;
+    }
+
+    func = compiler_alloc(ctx->code, sizeof(*func));
+    if(!func)
+        return E_OUTOFMEMORY;
+
+    func->name = compiler_alloc_string(ctx->code, decl->name);
+    if(!func->name)
+        return E_OUTOFMEMORY;
+
+    func->code_ctx = ctx->code;
+    func->type = decl->type;
+
+    if(decl->args) {
+        FIXME("arguments not implemented\n");
+        return E_NOTIMPL;
+    }
+
+    hres = compile_func(ctx, decl->body, func);
+    if(FAILED(hres))
+        return hres;
+
+    *ret = func;
     return S_OK;
 }
 
@@ -671,25 +744,40 @@ static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source)
     ret->bstr_pool_size = 0;
     ret->bstr_cnt = 0;
 
+    ret->global_code.type = FUNC_GLOBAL;
+    ret->global_code.name = NULL;
     ret->global_code.code_ctx = ret;
 
     list_init(&ret->entry);
     return ret;
 }
 
+static void release_compiler(compile_ctx_t *ctx)
+{
+    parser_release(&ctx->parser);
+    heap_free(ctx->labels);
+    if(ctx->code)
+        release_vbscode(ctx->code);
+}
+
 HRESULT compile_script(script_ctx_t *script, const WCHAR *src, vbscode_t **ret)
 {
+    function_t *new_func;
+    function_decl_t *func_decl;
     compile_ctx_t ctx;
+    vbscode_t *code;
     HRESULT hres;
 
     hres = parse_script(&ctx.parser, src);
     if(FAILED(hres))
         return hres;
 
-    ctx.code = alloc_vbscode(&ctx, src);
+    code = ctx.code = alloc_vbscode(&ctx, src);
     if(!ctx.code)
         return E_OUTOFMEMORY;
 
+    ctx.funcs = NULL;
+    ctx.func_decls = NULL;
     ctx.global_vars = NULL;
     ctx.dim_decls = NULL;
     ctx.labels = NULL;
@@ -697,13 +785,24 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, vbscode_t **ret)
 
     hres = compile_func(&ctx, ctx.parser.stats, &ctx.code->global_code);
     if(FAILED(hres)) {
-        release_vbscode(ctx.code);
+        release_compiler(&ctx);
         return hres;
+    }
+
+    for(func_decl = ctx.func_decls; func_decl; func_decl = func_decl->next) {
+        hres = create_function(&ctx, func_decl, &new_func);
+        if(FAILED(hres)) {
+            release_compiler(&ctx);
+            return hres;
+        }
+
+        new_func->next = ctx.funcs;
+        ctx.funcs = new_func;
     }
 
     hres = check_script_collisions(&ctx, script);
     if(FAILED(hres)) {
-        release_vbscode(ctx.code);
+        release_compiler(&ctx);
         return hres;
     }
 
@@ -716,12 +815,13 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, vbscode_t **ret)
         script->global_vars = ctx.global_vars;
     }
 
-    parser_release(&ctx.parser);
-
     if(TRACE_ON(vbscript_disas))
         dump_code(&ctx);
 
-    list_add_tail(&script->code_list, &ctx.code->entry);
-    *ret = ctx.code;
+    ctx.code = NULL;
+    release_compiler(&ctx);
+
+    list_add_tail(&script->code_list, &code->entry);
+    *ret = code;
     return S_OK;
 }

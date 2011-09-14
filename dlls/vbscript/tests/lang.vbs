@@ -169,4 +169,10 @@ ElseIf not False Then
 End If
 Call ok(x, "elseif not called?")
 
+if false then
+Sub testsub
+    x = true
+End Sub
+end if
+
 reportSuccess()

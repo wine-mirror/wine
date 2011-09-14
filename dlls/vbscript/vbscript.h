@@ -152,8 +152,11 @@ typedef enum {
 } function_type_t;
 
 struct _function_t {
+    function_type_t type;
+    const WCHAR *name;
     unsigned code_off;
     vbscode_t *code_ctx;
+    function_t *next;
 };
 
 struct _vbscode_t {
