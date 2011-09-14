@@ -468,9 +468,6 @@ extern INT X11DRV_DIB_Lock(X_PHYSBITMAP *,INT) DECLSPEC_HIDDEN;
 extern void X11DRV_DIB_Unlock(X_PHYSBITMAP *,BOOL) DECLSPEC_HIDDEN;
 
 extern void X11DRV_DIB_DeleteDIBSection(X_PHYSBITMAP *physBitmap, DIBSECTION *dib) DECLSPEC_HIDDEN;
-extern void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
-                                      DWORD xSrc, DWORD ySrc, DWORD xDest, DWORD yDest,
-                                      DWORD width, DWORD height) DECLSPEC_HIDDEN;
 
 /**************************************************************************
  * X11 GDI driver

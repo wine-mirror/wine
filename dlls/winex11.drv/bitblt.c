@@ -1186,128 +1186,6 @@ static int BITBLT_PutDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, const RECT 
     return exposures;
 }
 
-
-/***********************************************************************
- *           client_side_dib_copy
- */
-static BOOL client_side_dib_copy( X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,
-                                  X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
-                                  INT width, INT height )
-{
-    DIBSECTION srcDib, dstDib;
-    BYTE *srcPtr, *dstPtr;
-    INT srcRowOffset, dstRowOffset;
-    INT bytesPerPixel;
-    INT bytesToCopy;
-    INT y;
-    static RECT unusedRect;
-
-    if (GetObjectW(physDevSrc->bitmap->hbitmap, sizeof(srcDib), &srcDib) != sizeof(srcDib))
-      return FALSE;
-    if (GetObjectW(physDevDst->bitmap->hbitmap, sizeof(dstDib), &dstDib) != sizeof(dstDib))
-      return FALSE;
-
-    /* check for oversized values, just like X11DRV_DIB_CopyDIBSection() */
-    if (xSrc > srcDib.dsBm.bmWidth || ySrc > srcDib.dsBm.bmHeight)
-      return FALSE;
-    if (xSrc + width > srcDib.dsBm.bmWidth)
-      width = srcDib.dsBm.bmWidth - xSrc;
-    if (ySrc + height > srcDib.dsBm.bmHeight)
-      height = srcDib.dsBm.bmHeight - ySrc;
-
-    if (GetRgnBox(physDevDst->region, &unusedRect) == COMPLEXREGION)
-    {
-      /* for simple regions, the clipping was already done by BITBLT_GetVisRectangles */
-      FIXME("potential optimization: client-side complex region clipping\n");
-      return FALSE;
-    }
-    if (dstDib.dsBm.bmBitsPixel <= 8)
-    {
-      static BOOL fixme_once;
-      if(!fixme_once++) FIXME("potential optimization: client-side color-index mode DIB copy\n");
-      return FALSE;
-    }
-    if (!(srcDib.dsBmih.biCompression == BI_BITFIELDS &&
-          dstDib.dsBmih.biCompression == BI_BITFIELDS &&
-          !memcmp(srcDib.dsBitfields, dstDib.dsBitfields, 3*sizeof(DWORD)))
-        && !(srcDib.dsBmih.biCompression == BI_RGB &&
-             dstDib.dsBmih.biCompression == BI_RGB))
-    {
-      FIXME("potential optimization: client-side compressed DIB copy\n");
-      return FALSE;
-    }
-    if (srcDib.dsBm.bmBitsPixel != dstDib.dsBm.bmBitsPixel)
-    {
-      FIXME("potential optimization: pixel format conversion\n");
-      return FALSE;
-    }
-    if (srcDib.dsBmih.biWidth < 0 || dstDib.dsBmih.biWidth < 0)
-    {
-      FIXME("negative widths not yet implemented\n");
-      return FALSE;
-    }
-
-    switch (dstDib.dsBm.bmBitsPixel)
-    {
-      case 15:
-      case 16:
-        bytesPerPixel = 2;
-        break;
-      case 24:
-        bytesPerPixel = 3;
-        break;
-      case 32:
-        bytesPerPixel = 4;
-        break;
-      default:
-        FIXME("don't know how to work with a depth of %d\n", physDevSrc->depth);
-        return FALSE;
-    }
-
-    bytesToCopy = width * bytesPerPixel;
-
-    if (physDevSrc->bitmap->topdown)
-    {
-      srcPtr = &physDevSrc->bitmap->base[ySrc*srcDib.dsBm.bmWidthBytes + xSrc*bytesPerPixel];
-      srcRowOffset = srcDib.dsBm.bmWidthBytes;
-    }
-    else
-    {
-      srcPtr = &physDevSrc->bitmap->base[(srcDib.dsBm.bmHeight-ySrc-1)*srcDib.dsBm.bmWidthBytes
-        + xSrc*bytesPerPixel];
-      srcRowOffset = -srcDib.dsBm.bmWidthBytes;
-    }
-    if (physDevDst->bitmap->topdown)
-    {
-      dstPtr = &physDevDst->bitmap->base[yDst*dstDib.dsBm.bmWidthBytes + xDst*bytesPerPixel];
-      dstRowOffset = dstDib.dsBm.bmWidthBytes;
-    }
-    else
-    {
-      dstPtr = &physDevDst->bitmap->base[(dstDib.dsBm.bmHeight-yDst-1)*dstDib.dsBm.bmWidthBytes
-        + xDst*bytesPerPixel];
-      dstRowOffset = -dstDib.dsBm.bmWidthBytes;
-    }
-
-    /* Handle overlapping regions on the same DIB */
-    if (physDevSrc == physDevDst && ySrc < yDst)
-    {
-      srcPtr += srcRowOffset * (height - 1);
-      srcRowOffset = -srcRowOffset;
-      dstPtr += dstRowOffset * (height - 1);
-      dstRowOffset = -dstRowOffset;
-    }
-
-    for (y = yDst; y < yDst + height; ++y)
-    {
-      memmove(dstPtr, srcPtr, bytesToCopy);
-      srcPtr += srcRowOffset;
-      dstPtr += dstRowOffset;
-    }
-
-    return TRUE;
-}
-
 static BOOL same_format(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst)
 {
     if (physDevSrc->depth != physDevDst->depth) return FALSE;
@@ -1455,13 +1333,12 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     if (physDevDst == physDevSrc) sSrc = sDst;
 
     /* try client-side DIB copy */
-    if (!fStretch && rop == SRCCOPY &&
-        sSrc == DIB_Status_AppMod && sDst == DIB_Status_AppMod &&
-        same_format(physDevSrc, physDevDst))
+    if (!fStretch && sSrc == DIB_Status_AppMod)
     {
-        if (client_side_dib_copy( physDevSrc, src->visrect.left, src->visrect.top,
-                                  physDevDst, dst->visrect.left, dst->visrect.top, width, height ))
-            goto done;
+        if (physDevDst != physDevSrc) X11DRV_UnlockDIBSection( physDevSrc, FALSE );
+        X11DRV_UnlockDIBSection( physDevDst, FALSE );
+        dst_dev = GET_NEXT_PHYSDEV( dst_dev, pStretchBlt );
+        return dst_dev->funcs->pStretchBlt( dst_dev, dst, src_dev, src, rop );
     }
 
     X11DRV_CoerceDIBSection( physDevDst, DIB_Status_GdiMod );
@@ -1477,16 +1354,7 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
             XSetFunction( gdi_display, physDevDst->gc, OP_ROP(*opcode) );
             wine_tsx11_unlock();
 
-            if (physDevSrc != physDevDst)
-            {
-                if (sSrc == DIB_Status_AppMod)
-                {
-                    X11DRV_DIB_CopyDIBSection( physDevSrc, physDevDst, src->visrect.left, src->visrect.top,
-                                               dst->visrect.left, dst->visrect.top, width, height );
-                    goto done;
-                }
-                X11DRV_CoerceDIBSection( physDevSrc, DIB_Status_GdiMod );
-            }
+            if (physDevSrc != physDevDst) X11DRV_CoerceDIBSection( physDevSrc, DIB_Status_GdiMod );
             wine_tsx11_lock();
             XCopyArea( gdi_display, physDevSrc->drawable,
                        physDevDst->drawable, physDevDst->gc,
