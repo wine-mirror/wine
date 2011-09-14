@@ -594,7 +594,17 @@ r.test not found after delete, good
 del /q * succeeded on file1
 del /q * succeeded on file2.dat
 ------------ Testing del /s --------------
------------ Testing mkdir -----------
+------------ Testing rename ------------
+... ren and rename are synonymous ...
+foo renamed to bar
+bar renamed to foo
+... name collision ...
+foo
+bar
+... rename in other directory ...
+@todo_wine@rename impossible in other directory
+@todo_wine@original file still present
+------------ Testing mkdir ------------
 ... md and mkdir are synonymous ...
 0
 0

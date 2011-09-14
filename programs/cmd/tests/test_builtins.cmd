@@ -879,7 +879,37 @@ rmdir "foo:"
 cd ..
 rmdir "foo bar"
 
-echo ----------- Testing mkdir -----------
+echo ------------ Testing rename ------------
+mkdir foobar & cd foobar
+echo ... ren and rename are synonymous ...
+echo > foo
+rename foo bar
+if exist foo echo foo should be renamed!
+if exist bar echo foo renamed to bar
+ren bar foo
+if exist bar echo bar should be renamed!
+if exist foo echo bar renamed to foo
+echo ... name collision ...
+echo foo>foo
+echo bar>bar
+ren foo bar 2> nul
+type foo
+type bar
+rem no-op
+ren foo foo
+mkdir baz
+ren foo baz\abc
+echo ... rename in other directory ...
+if not exist baz\abc (
+    echo rename impossible in other directory
+    if exist foo echo original file still present
+) else (
+    echo shouldn't rename in other directory!
+    if not exist foo echo original file not present anymore
+)
+cd .. & rd /s/q foobar
+
+echo ------------ Testing mkdir ------------
 call :setError 0
 echo ... md and mkdir are synonymous ...
 mkdir foobar
