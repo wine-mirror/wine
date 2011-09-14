@@ -86,6 +86,7 @@ typedef enum {
     STAT_ASSIGN,
     STAT_CALL,
     STAT_DIM,
+    STAT_EXITSUB,
     STAT_FUNC,
     STAT_IF
 } statement_type_t;

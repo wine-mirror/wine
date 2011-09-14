@@ -45,6 +45,7 @@ static expression_t *new_binary_expression(parser_ctx_t*,expression_type_t,expre
 
 static member_expression_t *new_member_expression(parser_ctx_t*,expression_t*,const WCHAR*);
 
+static void *new_statement(parser_ctx_t*,statement_type_t,size_t);
 static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
 static statement_t *new_assign_statement(parser_ctx_t*,member_expression_t*,expression_t*);
 static statement_t *new_dim_statement(parser_ctx_t*,dim_decl_t*);
@@ -138,6 +139,7 @@ Statement
     | tDIM DimDeclList                      { $$ = new_dim_statement(ctx, $2); CHECK_ERROR; }
     | IfStatement                           { $$ = $1; }
     | FunctionDecl                          { $$ = new_function_statement(ctx, $1); CHECK_ERROR; }
+    | tEXIT tSUB                            { $$ = new_statement(ctx, STAT_EXITSUB, 0); CHECK_ERROR; }
 
 MemberExpression
     : tIdentifier                           { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
@@ -388,11 +390,11 @@ static member_expression_t *new_member_expression(parser_ctx_t *ctx, expression_
     return expr;
 }
 
-static void *new_statement(parser_ctx_t *ctx, statement_type_t type, unsigned size)
+static void *new_statement(parser_ctx_t *ctx, statement_type_t type, size_t size)
 {
     statement_t *stat;
 
-    stat = parser_alloc(ctx, size);
+    stat = parser_alloc(ctx, size ? size : sizeof(*stat));
     if(stat) {
         stat->type = type;
         stat->next = NULL;

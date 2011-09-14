@@ -218,6 +218,15 @@ Sub TestSubMultiArgs(a,b,c,d,e)
     Call ok(e=5, "e = " & e)
 End Sub
 
+Sub TestSubExit(ByRef a)
+    If a Then
+        Exit Sub
+    End If
+    Call ok(false, "Exit Sub not called?")
+End Sub
+
+Call TestSubExit(true)
+
 TestSubMultiArgs 1, 2, 3, 4, 5
 Call TestSubMultiArgs(1, 2, 3, 4, 5)
 
