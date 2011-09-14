@@ -231,7 +231,7 @@
 @ cdecl _cgets(ptr) msvcrt._cgets
 @ cdecl _chdir(str) msvcrt._chdir
 @ cdecl _chdrive(long) msvcrt._chdrive
-@ cdecl _chgsign( double ) msvcrt._chgsign
+@ cdecl _chgsign(double) msvcrt._chgsign
 @ cdecl -i386 -norelay _chkesp() msvcrt._chkesp
 @ cdecl _chmod(str long) msvcrt._chmod
 @ cdecl _chsize(long long) msvcrt._chsize
@@ -241,7 +241,7 @@
 @ extern _commode msvcrt._commode
 @ cdecl _control87(long long) msvcrt._control87
 @ cdecl _controlfp(long long) msvcrt._controlfp
-@ cdecl _copysign( double double ) msvcrt._copysign
+@ cdecl _copysign(double double) msvcrt._copysign
 @ varargs _cprintf(str) msvcrt._cprintf
 @ cdecl _cputs(str) msvcrt._cputs
 @ cdecl _creat(str long) msvcrt._creat
@@ -289,7 +289,7 @@
 @ cdecl _findfirsti64(str ptr) msvcrt._findfirsti64
 @ cdecl _findnext(long ptr) msvcrt._findnext
 @ cdecl _findnexti64(long ptr) msvcrt._findnexti64
-@ cdecl _finite( double ) msvcrt._finite
+@ cdecl _finite(double) msvcrt._finite
 @ cdecl _flsbuf(long ptr) msvcrt._flsbuf
 @ cdecl _flushall() msvcrt._flushall
 @ extern _fmode msvcrt._fmode
@@ -369,7 +369,7 @@
 @ cdecl _ismbcupper(long) msvcrt._ismbcupper
 @ cdecl _ismbslead(ptr ptr) msvcrt._ismbslead
 @ cdecl _ismbstrail(ptr ptr) msvcrt._ismbstrail
-@ cdecl _isnan( double ) msvcrt._isnan
+@ cdecl _isnan(double) msvcrt._isnan
 @ cdecl _itoa(long ptr long) msvcrt._itoa
 @ cdecl _itow(long ptr long) msvcrt._itow
 @ cdecl _j0(double) msvcrt._j0
@@ -630,7 +630,7 @@
 @ cdecl _wutime(wstr ptr) msvcrt._wutime
 @ cdecl _y0(double) msvcrt._y0
 @ cdecl _y1(double) msvcrt._y1
-@ cdecl _yn(long double ) msvcrt._yn
+@ cdecl _yn(long double) msvcrt._yn
 @ cdecl abort() msvcrt.abort
 @ cdecl abs(long) msvcrt.abs
 @ cdecl acos(double) msvcrt.acos
@@ -717,7 +717,7 @@
 @ cdecl iswxdigit(long) msvcrt.iswxdigit
 @ cdecl isxdigit(long) msvcrt.isxdigit
 @ cdecl labs(long) msvcrt.labs
-@ cdecl ldexp( double long) msvcrt.ldexp
+@ cdecl ldexp(double long) msvcrt.ldexp
 @ cdecl ldiv(long long) msvcrt.ldiv
 @ cdecl localeconv() msvcrt.localeconv
 @ cdecl localtime(ptr) msvcrt.localtime

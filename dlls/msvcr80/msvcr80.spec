@@ -369,7 +369,7 @@
 @ stub _cgetws_s
 @ cdecl _chdir(str) msvcrt._chdir
 @ cdecl _chdrive(long) msvcrt._chdrive
-@ cdecl _chgsign( double ) msvcrt._chgsign
+@ cdecl _chgsign(double) msvcrt._chgsign
 @ cdecl -i386 -norelay _chkesp() msvcrt._chkesp
 @ cdecl _chmod(str long) msvcrt._chmod
 @ cdecl _chsize(long long) msvcrt._chsize
@@ -382,7 +382,7 @@
 @ cdecl _control87(long long) msvcrt._control87
 @ cdecl _controlfp(long long) msvcrt._controlfp
 @ cdecl _controlfp_s(ptr long long) msvcrt._controlfp_s
-@ cdecl _copysign( double double ) msvcrt._copysign
+@ cdecl _copysign(double double) msvcrt._copysign
 @ varargs _cprintf(str) msvcrt._cprintf
 @ stub _cprintf_l
 @ stub _cprintf_p
@@ -466,7 +466,7 @@
 @ stub _findnext32i64
 @ cdecl _findnext64(long ptr) msvcrt._findnext64
 @ cdecl _findnext64i32(long ptr) msvcrt._findnext64i32
-@ cdecl _finite( double ) msvcrt._finite
+@ cdecl _finite(double) msvcrt._finite
 @ cdecl _flsbuf(long ptr) msvcrt._flsbuf
 @ cdecl _flushall() msvcrt._flushall
 @ extern _fmode msvcrt._fmode
@@ -659,7 +659,7 @@
 @ stub _ismbslead_l
 @ cdecl _ismbstrail(ptr ptr) msvcrt._ismbstrail
 @ stub _ismbstrail_l
-@ cdecl _isnan( double ) msvcrt._isnan
+@ cdecl _isnan(double) msvcrt._isnan
 @ cdecl _isprint_l(long ptr) msvcrt._isprint_l
 @ stub _ispunct_l
 @ cdecl _isspace_l(long ptr) msvcrt._isspace_l
@@ -1116,10 +1116,10 @@
 @ cdecl _vsprintf_p(ptr long str ptr) msvcrt._vsprintf_p
 @ cdecl _vsprintf_p_l(ptr long str ptr ptr) msvcrt._vsprintf_p_l
 @ stub _vsprintf_s_l
-@ cdecl _vswprintf(ptr long wstr ptr) msvcrt._vswprintf
+@ cdecl _vswprintf(ptr wstr ptr) msvcrt._vswprintf
 @ cdecl _vswprintf_c(ptr long wstr ptr) msvcrt._vswprintf_c
 @ cdecl _vswprintf_c_l(ptr long wstr ptr ptr) msvcrt._vswprintf_c_l
-@ cdecl _vswprintf_l(ptr long wstr ptr ptr) msvcrt._vswprintf_l
+@ cdecl _vswprintf_l(ptr wstr ptr ptr) msvcrt._vswprintf_l
 @ cdecl _vswprintf_p(ptr long wstr ptr) msvcrt._vswprintf
 @ cdecl _vswprintf_p_l(ptr long wstr ptr ptr) msvcrt._vswprintf_p_l
 @ cdecl _vswprintf_s_l(ptr long wstr ptr ptr) msvcrt._vswprintf_s_l
@@ -1275,7 +1275,7 @@
 @ cdecl _wutime64(wstr ptr) msvcrt._wutime64
 @ cdecl _y0(double) msvcrt._y0
 @ cdecl _y1(double) msvcrt._y1
-@ cdecl _yn(long double ) msvcrt._yn
+@ cdecl _yn(long double) msvcrt._yn
 @ cdecl abort() msvcrt.abort
 @ cdecl abs(long) msvcrt.abs
 @ cdecl acos(double) msvcrt.acos
@@ -1372,7 +1372,7 @@
 @ cdecl iswxdigit(long) msvcrt.iswxdigit
 @ cdecl isxdigit(long) msvcrt.isxdigit
 @ cdecl labs(long) msvcrt.labs
-@ cdecl ldexp( double long) msvcrt.ldexp
+@ cdecl ldexp(double long) msvcrt.ldexp
 @ cdecl ldiv(long long) msvcrt.ldiv
 @ cdecl localeconv() msvcrt.localeconv
 @ cdecl log(double) msvcrt.log
