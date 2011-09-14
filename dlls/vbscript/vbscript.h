@@ -126,10 +126,12 @@ typedef enum {
     X(double,         1, ARG_DOUBLE,  0)          \
     X(empty,          1, 0,           0)          \
     X(equal,          1, 0,           0)          \
+    X(eqv,            1, 0,           0)          \
     X(exp,            1, 0,           0)          \
     X(icall,          1, ARG_BSTR,    ARG_UINT)   \
     X(icallv,         1, ARG_BSTR,    ARG_UINT)   \
     X(idiv,           1, 0,           0)          \
+    X(imp,            1, 0,           0)          \
     X(jmp,            0, ARG_ADDR,    0)          \
     X(jmp_false,      0, ARG_ADDR,    0)          \
     X(long,           1, ARG_INT,     0)          \
@@ -143,7 +145,8 @@ typedef enum {
     X(ret,            0, 0,           0)          \
     X(short,          1, ARG_INT,     0)          \
     X(string,         1, ARG_STR,     0)          \
-    X(sub,            1, 0,           0)
+    X(sub,            1, 0,           0)          \
+    X(xor,            1, 0,           0)
 
 typedef enum {
 #define X(x,n,a,b) OP_##x,

@@ -612,6 +612,24 @@ static HRESULT interp_or(exec_ctx_t *ctx)
     return stack_push(ctx, &v);
 }
 
+static HRESULT interp_xor(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT interp_eqv(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT interp_imp(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT cmp_oper(exec_ctx_t *ctx)
 {
     variant_val_t l, r;

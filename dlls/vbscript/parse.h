@@ -25,8 +25,10 @@ typedef enum {
     EXPR_DOUBLE,
     EXPR_EMPTY,
     EXPR_EQUAL,
+    EXPR_EQV,
     EXPR_EXP,
     EXPR_IDIV,
+    EXPR_IMP,
     EXPR_MEMBER,
     EXPR_MOD,
     EXPR_MUL,
@@ -38,7 +40,8 @@ typedef enum {
     EXPR_STRING,
     EXPR_SUB,
     EXPR_ULONG,
-    EXPR_USHORT
+    EXPR_USHORT,
+    EXPR_XOR
 } expression_type_t;
 
 typedef struct _expression_t {

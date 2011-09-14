@@ -98,7 +98,7 @@ static arg_decl_t *new_argument_decl(parser_ctx_t*,const WCHAR*,BOOL);
 %type <statement> Statement StatementNl StatementsNl StatementsNl_opt IfStatement Else_opt
 %type <expression> Expression LiteralExpression PrimaryExpression EqualityExpression CallExpression
 %type <expression> ConcatExpression AdditiveExpression ModExpression IntdivExpression MultiplicativeExpression ExpExpression
-%type <expression> NotExpression UnaryExpression AndExpression OrExpression
+%type <expression> NotExpression UnaryExpression AndExpression OrExpression XorExpression EqvExpression
 %type <member> MemberExpression
 %type <expression> Arguments_opt ArgumentList_opt ArgumentList
 %type <bool> OptionExplicit_opt
@@ -188,7 +188,16 @@ EmptyBrackets_opt
     | tEMPTYBRACKETS
 
 Expression
+    : EqvExpression                             { $$ = $1; }
+    | Expression tIMP EqvExpression             { $$ = new_binary_expression(ctx, EXPR_IMP, $1, $3); CHECK_ERROR; }
+
+EqvExpression
+    : XorExpression                             { $$ = $1; }
+    | EqvExpression tEQV XorExpression          { $$ = new_binary_expression(ctx, EXPR_EQV, $1, $3); CHECK_ERROR; }
+
+XorExpression
     : OrExpression                              { $$ = $1; }
+    | XorExpression tXOR OrExpression           { $$ = new_binary_expression(ctx, EXPR_XOR, $1, $3); CHECK_ERROR; }
 
 OrExpression
     : AndExpression                             { $$ = $1; }

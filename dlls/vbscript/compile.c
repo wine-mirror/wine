@@ -370,10 +370,14 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
         return push_instr(ctx, OP_empty) != -1 ? S_OK : E_OUTOFMEMORY;
     case EXPR_EQUAL:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_equal);
+    case EXPR_EQV:
+        return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_eqv);
     case EXPR_EXP:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_exp);
     case EXPR_IDIV:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_idiv);
+    case EXPR_IMP:
+        return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_imp);
     case EXPR_MEMBER:
         return compile_member_expression(ctx, (member_expression_t*)expr, TRUE);
     case EXPR_MOD:
@@ -398,6 +402,8 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
         return push_instr_int(ctx, OP_short, ((int_expression_t*)expr)->value);
     case EXPR_ULONG:
         return push_instr_int(ctx, OP_long, ((int_expression_t*)expr)->value);
+    case EXPR_XOR:
+        return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_xor);
     default:
         FIXME("Unimplemented expression type %d\n", expr->type);
         return E_NOTIMPL;
