@@ -2436,6 +2436,9 @@ void surface_upload_data(const struct wined3d_surface *surface, const struct win
 
     LEAVE_GL();
 
+    if (wined3d_settings.strict_draw_ordering)
+        wglFlush();
+
     if (gl_info->quirks & WINED3D_QUIRK_FBO_TEX_UPDATE)
     {
         struct wined3d_device *device = surface->resource.device;
