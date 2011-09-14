@@ -230,4 +230,15 @@ Call TestSubExit(true)
 TestSubMultiArgs 1, 2, 3, 4, 5
 Call TestSubMultiArgs(1, 2, 3, 4, 5)
 
+Sub TestSubLocalVal
+    x = false
+    Call ok(not x, "local x is not false?")
+    Dim x
+End Sub
+
+x = true
+y = true
+Call TestSubLocalVal
+Call ok(x, "global x is not true?")
+
 reportSuccess()

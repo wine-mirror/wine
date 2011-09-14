@@ -500,12 +500,24 @@ static BOOL lookup_dim_decls(compile_ctx_t *ctx, const WCHAR *name)
     return FALSE;
 }
 
+static BOOL lookup_args_name(compile_ctx_t *ctx, const WCHAR *name)
+{
+    unsigned i;
+
+    for(i = 0; i < ctx->func->arg_cnt; i++) {
+        if(!strcmpiW(ctx->func->args[i].name, name))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
 static HRESULT compile_dim_statement(compile_ctx_t *ctx, dim_statement_t *stat)
 {
     dim_decl_t *dim_decl = stat->dim_decls;
 
     while(1) {
-        if(lookup_dim_decls(ctx, dim_decl->name)) {
+        if(lookup_dim_decls(ctx, dim_decl->name) || lookup_args_name(ctx, dim_decl->name)) {
             FIXME("dim %s name redefined\n", debugstr_w(dim_decl->name));
             return E_FAIL;
         }
@@ -517,6 +529,7 @@ static HRESULT compile_dim_statement(compile_ctx_t *ctx, dim_statement_t *stat)
 
     dim_decl->next = ctx->dim_decls;
     ctx->dim_decls = stat->dim_decls;
+    ctx->func->var_cnt++;
     return S_OK;
 }
 
@@ -627,11 +640,13 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
 
     resolve_labels(ctx, func->code_off);
 
-    if(ctx->dim_decls) {
+    if(func->var_cnt) {
         dim_decl_t *dim_decl;
 
         if(func->type == FUNC_GLOBAL) {
             dynamic_var_t *new_var;
+
+            func->var_cnt = 0;
 
             for(dim_decl = ctx->dim_decls; dim_decl; dim_decl = dim_decl->next) {
                 new_var = compiler_alloc(ctx->code, sizeof(*new_var));
@@ -648,7 +663,19 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
                 ctx->global_vars = new_var;
             }
         }else {
-            FIXME("var not implemented for functions\n");
+            unsigned i;
+
+            func->vars = compiler_alloc(ctx->code, func->var_cnt * sizeof(var_desc_t));
+            if(!func->vars)
+                return E_OUTOFMEMORY;
+
+            for(dim_decl = ctx->dim_decls, i=0; dim_decl; dim_decl = dim_decl->next, i++) {
+                func->vars[i].name = compiler_alloc_string(ctx->code, dim_decl->name);
+                if(!func->vars[i].name)
+                    return E_OUTOFMEMORY;
+            }
+
+            assert(i == func->var_cnt);
         }
     }
 
@@ -685,6 +712,8 @@ static HRESULT create_function(compile_ctx_t *ctx, function_decl_t *decl, functi
     if(!func->name)
         return E_OUTOFMEMORY;
 
+    func->vars = NULL;
+    func->var_cnt = 0;
     func->code_ctx = ctx->code;
     func->type = decl->type;
 
@@ -808,6 +837,8 @@ static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source)
     ret->global_code.type = FUNC_GLOBAL;
     ret->global_code.name = NULL;
     ret->global_code.code_ctx = ret;
+    ret->global_code.vars = NULL;
+    ret->global_code.var_cnt = 0;
     ret->global_code.arg_cnt = 0;
     ret->global_code.args = NULL;
 

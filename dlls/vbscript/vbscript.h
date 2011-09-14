@@ -167,11 +167,17 @@ typedef enum {
     FUNC_SUB
 } function_type_t;
 
+typedef struct {
+    const WCHAR *name;
+} var_desc_t;
+
 struct _function_t {
     function_type_t type;
     const WCHAR *name;
     arg_desc_t *args;
     unsigned arg_cnt;
+    var_desc_t *vars;
+    unsigned var_cnt;
     unsigned code_off;
     vbscode_t *code_ctx;
     function_t *next;

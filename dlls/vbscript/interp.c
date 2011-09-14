@@ -32,6 +32,7 @@ typedef struct {
     function_t *func;
 
     VARIANT *args;
+    VARIANT *vars;
 
     unsigned stack_size;
     unsigned top;
@@ -87,6 +88,14 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, ref_t *ref)
     unsigned i;
     DISPID id;
     HRESULT hres;
+
+    for(i=0; i < ctx->func->var_cnt; i++) {
+        if(!strcmpiW(ctx->func->vars[i].name, name)) {
+            ref->type = REF_VAR;
+            ref->u.v = ctx->vars+i;
+            return TRUE;
+        }
+    }
 
     for(i=0; i < ctx->func->arg_cnt; i++) {
         if(!strcmpiW(ctx->func->args[i].name, name)) {
@@ -827,14 +836,20 @@ OP_LIST
 
 static void release_exec(exec_ctx_t *ctx)
 {
-    if(ctx->args) {
-        unsigned i;
+    unsigned i;
 
+    if(ctx->args) {
         for(i=0; i < ctx->func->arg_cnt; i++)
             VariantClear(ctx->args+i);
     }
 
+    if(ctx->vars) {
+        for(i=0; i < ctx->func->var_cnt; i++)
+            VariantClear(ctx->vars+i);
+    }
+
     heap_free(ctx->args);
+    heap_free(ctx->vars);
     heap_free(ctx->stack);
 }
 
@@ -883,6 +898,16 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, DISPPARAMS *dp, VARIANT
         }
     }else {
         exec.args = NULL;
+    }
+
+    if(func->var_cnt) {
+        exec.vars = heap_alloc_zero(func->var_cnt * sizeof(VARIANT));
+        if(!exec.vars) {
+            release_exec(&exec);
+            return E_OUTOFMEMORY;
+        }
+    }else {
+        exec.vars = NULL;
     }
 
     exec.stack_size = 16;
