@@ -566,8 +566,26 @@ static HRESULT interp_not(exec_ctx_t *ctx)
 
 static HRESULT interp_and(exec_ctx_t *ctx)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    variant_val_t r, l;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = stack_pop_val(ctx, &r);
+    if(FAILED(hres))
+        return hres;
+
+    hres = stack_pop_val(ctx, &l);
+    if(SUCCEEDED(hres)) {
+        hres = VarAnd(l.v, r.v, &v);
+        release_val(&l);
+    }
+    release_val(&r);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push(ctx, &v);
 }
 
 static HRESULT cmp_oper(exec_ctx_t *ctx)

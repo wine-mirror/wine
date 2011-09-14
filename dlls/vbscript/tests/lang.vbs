@@ -86,6 +86,11 @@ if(isEnglishLocale) then
     Call ok(true & false = "TrueFalse", "true & false = " & (true & false))
 end if
 
+call ok(true and true, "true and true is not true")
+call ok(true and not false, "true and not false is not true")
+call ok(not (false and true), "not (false and true) is not true")
+call ok(getVT(null and true) = "VT_NULL", "getVT(null and true) = " & getVT(null and true))
+
 x = 3
 Call ok(2+2 = 4, "2+2 = " & (2+2))
 Call ok(false + 6 + true = 5, "false + 6 + true <> 5")
