@@ -658,9 +658,26 @@ static HRESULT create_function(compile_ctx_t *ctx, function_decl_t *decl, functi
     func->code_ctx = ctx->code;
     func->type = decl->type;
 
+    func->arg_cnt = 0;
     if(decl->args) {
-        FIXME("arguments not implemented\n");
-        return E_NOTIMPL;
+        arg_decl_t *arg;
+        unsigned i;
+
+        for(arg = decl->args; arg; arg = arg->next)
+            func->arg_cnt++;
+
+        func->args = compiler_alloc(ctx->code, func->arg_cnt * sizeof(arg_desc_t));
+        if(!func->args)
+            return E_OUTOFMEMORY;
+
+        for(i = 0, arg = decl->args; arg; arg = arg->next, i++) {
+            func->args[i].name = compiler_alloc_string(ctx->code, arg->name);
+            if(!func->args[i].name)
+                return E_OUTOFMEMORY;
+            func->args[i].by_ref = arg->by_ref;
+        }
+    }else {
+        func->args = NULL;
     }
 
     hres = compile_func(ctx, decl->body, func);
@@ -761,6 +778,8 @@ static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source)
     ret->global_code.type = FUNC_GLOBAL;
     ret->global_code.name = NULL;
     ret->global_code.code_ctx = ret;
+    ret->global_code.arg_cnt = 0;
+    ret->global_code.args = NULL;
 
     list_init(&ret->entry);
     return ret;

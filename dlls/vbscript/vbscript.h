@@ -152,6 +152,11 @@ typedef struct {
     instr_arg_t arg2;
 } instr_t;
 
+typedef struct {
+    const WCHAR *name;
+    BOOL by_ref;
+} arg_desc_t;
+
 typedef enum {
     FUNC_GLOBAL,
     FUNC_SUB
@@ -160,6 +165,8 @@ typedef enum {
 struct _function_t {
     function_type_t type;
     const WCHAR *name;
+    arg_desc_t *args;
+    unsigned arg_cnt;
     unsigned code_off;
     vbscode_t *code_ctx;
     function_t *next;
