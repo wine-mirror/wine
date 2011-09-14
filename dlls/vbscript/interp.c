@@ -41,7 +41,8 @@ typedef HRESULT (*instr_func_t)(exec_ctx_t*);
 typedef enum {
     REF_NONE,
     REF_DISP,
-    REF_VAR
+    REF_VAR,
+    REF_FUNC
 } ref_type_t;
 
 typedef struct {
@@ -52,6 +53,7 @@ typedef struct {
             DISPID id;
         } d;
         VARIANT *v;
+        function_t *f;
     } u;
 } ref_t;
 
@@ -79,11 +81,20 @@ static BOOL lookup_dynamic_vars(dynamic_var_t *var, const WCHAR *name, ref_t *re
 static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, ref_t *ref)
 {
     named_item_t *item;
+    function_t *func;
     DISPID id;
     HRESULT hres;
 
     if(lookup_dynamic_vars(ctx->script->global_vars, name, ref))
         return S_OK;
+
+    for(func = ctx->script->global_funcs; func; func = func->next) {
+        if(!strcmpiW(func->name, name)) {
+            ref->type = REF_FUNC;
+            ref->u.f = func;
+            return S_OK;
+        }
+    }
 
     LIST_FOR_EACH_ENTRY(item, &ctx->script->named_items, named_item_t, entry) {
         if(item->flags & SCRIPTITEM_GLOBALMEMBERS) {
@@ -254,6 +265,9 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
         if(FAILED(hres))
             return hres;
         break;
+    case REF_FUNC:
+        FIXME("functions not implemented\n");
+        return E_NOTIMPL;
     case REF_NONE:
         FIXME("%s not found\n", debugstr_w(identifier));
         return DISP_E_UNKNOWNNAME;
@@ -313,6 +327,9 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, VARIANT *val, BOOL own_v
         if(own_val)
             VariantClear(val);
         break;
+    case REF_FUNC:
+        FIXME("functions not implemented\n");
+        return E_NOTIMPL;
     case REF_NONE:
         FIXME("%s not found\n", debugstr_w(name));
         if(own_val)
