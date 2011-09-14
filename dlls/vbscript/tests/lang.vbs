@@ -313,4 +313,21 @@ End Function
 
 Call TestFuncExit(true)
 
+Function ReturnTrue
+     ReturnTrue = false
+     ReturnTrue = true
+End Function
+
+Call ok(ReturnTrue(), "ReturnTrue returned false?")
+
+Function SetVal(ByRef x, ByVal v)
+    x = v
+    SetVal = x
+    Exit Function
+End Function
+
+x = false
+ok SetVal(x, true), "SetVal returned false?"
+Call ok(x, "x is not set to true by SetVal?")
+
 reportSuccess()

@@ -37,6 +37,8 @@ typedef struct {
     unsigned stack_size;
     unsigned top;
     VARIANT *stack;
+
+    VARIANT ret_val;
 } exec_ctx_t;
 
 typedef HRESULT (*instr_func_t)(exec_ctx_t*);
@@ -81,13 +83,19 @@ static BOOL lookup_dynamic_vars(dynamic_var_t *var, const WCHAR *name, ref_t *re
     return FALSE;
 }
 
-static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, ref_t *ref)
+static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_t invoke_type, ref_t *ref)
 {
     named_item_t *item;
     function_t *func;
     unsigned i;
     DISPID id;
     HRESULT hres;
+
+    if(invoke_type == VBDISP_LET && ctx->func->type == FUNC_FUNCTION && !strcmpiW(name, ctx->func->name)) {
+        ref->type = REF_VAR;
+        ref->u.v = &ctx->ret_val;
+        return S_OK;
+    }
 
     for(i=0; i < ctx->func->var_cnt; i++) {
         if(!strcmpiW(ctx->func->vars[i].name, name)) {
@@ -259,7 +267,7 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
     DISPPARAMS dp;
     HRESULT hres;
 
-    hres = lookup_identifier(ctx, identifier, &ref);
+    hres = lookup_identifier(ctx, identifier, VBDISP_CALLGET, &ref);
     if(FAILED(hres))
         return hres;
 
@@ -324,7 +332,7 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, VARIANT *val, BOOL own_v
     ref_t ref;
     HRESULT hres;
 
-    hres = lookup_identifier(ctx, name, &ref);
+    hres = lookup_identifier(ctx, name, VBDISP_LET, &ref);
     if(FAILED(hres))
         return hres;
 
@@ -838,6 +846,8 @@ static void release_exec(exec_ctx_t *ctx)
 {
     unsigned i;
 
+    VariantClear(&ctx->ret_val);
+
     if(ctx->args) {
         for(i=0; i < ctx->func->arg_cnt; i++)
             VariantClear(ctx->args+i);
@@ -858,11 +868,6 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, DISPPARAMS *dp, VARIANT
     exec_ctx_t exec = {func->code_ctx};
     vbsop_t op;
     HRESULT hres = S_OK;
-
-    if(res) {
-        FIXME("returning value is not implemented\n");
-        return E_NOTIMPL;
-    }
 
     exec.code = func->code_ctx;
 
@@ -935,6 +940,14 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, DISPPARAMS *dp, VARIANT
     }
 
     assert(!exec.top);
+    if(func->type != FUNC_FUNCTION)
+        assert(V_VT(&exec.ret_val) == VT_EMPTY);
+
+    if(SUCCEEDED(hres) && res) {
+        *res = exec.ret_val;
+        V_VT(&exec.ret_val) = VT_EMPTY;
+    }
+
     release_exec(&exec);
 
     return hres;
