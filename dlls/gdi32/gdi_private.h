@@ -254,6 +254,9 @@ extern int bitmap_info_size( const BITMAPINFO * info, WORD coloruse ) DECLSPEC_H
 extern DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bitblt_coords *src,
                                  const BITMAPINFO *dst_info, void *dst_bits ) DECLSPEC_HIDDEN;
 
+extern DWORD stretch_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bitblt_coords *src,
+                                 const BITMAPINFO *dst_info, void *dst_bits, const struct bitblt_coords *dst,
+                                 INT mode ) DECLSPEC_HIDDEN;
 
 /* driver.c */
 extern const DC_FUNCTIONS null_driver DECLSPEC_HIDDEN;

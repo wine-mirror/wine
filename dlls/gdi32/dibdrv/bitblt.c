@@ -793,3 +793,17 @@ done:
 
     return ret;
 }
+
+DWORD stretch_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bitblt_coords *src,
+                          const BITMAPINFO *dst_info, void *dst_bits, const struct bitblt_coords *dst,
+                          INT mode )
+{
+    FIXME( "should stretch %dx%d -> %dx%d\n", src->width, src->height, dst->width, dst->height );
+
+    /* update coordinates, the destination rectangle is always stored at 0,0 */
+    *src = *dst;
+    src->x -= src->visrect.left;
+    src->y -= src->visrect.top;
+    offset_rect( &src->visrect, -src->visrect.left, -src->visrect.top );
+    return ERROR_SUCCESS;
+}

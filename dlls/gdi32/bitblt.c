@@ -230,8 +230,21 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     if (err == ERROR_TRANSFORM_NOT_SUPPORTED &&
         ((src->width != dst->width) || (src->height != dst->height)))
     {
-        FIXME( "should stretch %dx%d -> %dx%d\n",
-               src->width, src->height, dst->width, dst->height );
+        memcpy( src_info, dst_info, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
+        dst_info->bmiHeader.biWidth = dst->visrect.right - dst->visrect.left;
+        dst_info->bmiHeader.biHeight = dst->visrect.bottom - dst->visrect.top;
+        if (src_info->bmiHeader.biHeight < 0) dst_info->bmiHeader.biHeight = -dst_info->bmiHeader.biHeight;
+        if ((ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( dst_info ))))
+        {
+            err = stretch_bitmapinfo( src_info, bits.ptr, src, dst_info, ptr, dst,
+                                      GetStretchBltMode( dst_dev->hdc ) );
+            if (bits.free) bits.free( &bits );
+            bits.ptr = ptr;
+            bits.is_copy = TRUE;
+            bits.free = free_heap_bits;
+            if (!err) err = dst_dev->funcs->pPutImage( dst_dev, 0, 0, dst_info, &bits, src, dst, rop );
+        }
+        else err = ERROR_OUTOFMEMORY;
     }
 
     if (bits.free) bits.free( &bits );
