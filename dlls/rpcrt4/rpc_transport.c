@@ -111,19 +111,14 @@ typedef struct _RpcConnection_np
 {
   RpcConnection common;
   HANDLE pipe;
-  OVERLAPPED ovl;
+  OVERLAPPED read_ovl;
+  OVERLAPPED write_ovl;
   BOOL listening;
 } RpcConnection_np;
 
 static RpcConnection *rpcrt4_conn_np_alloc(void)
 {
-  RpcConnection_np *npc = HeapAlloc(GetProcessHeap(), 0, sizeof(RpcConnection_np));
-  if (npc)
-  {
-    npc->pipe = NULL;
-    memset(&npc->ovl, 0, sizeof(npc->ovl));
-    npc->listening = FALSE;
-  }
+  RpcConnection_np *npc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcConnection_np));
   return &npc->common;
 }
 
@@ -135,13 +130,13 @@ static RPC_STATUS rpcrt4_conn_listen_pipe(RpcConnection_np *npc)
   npc->listening = TRUE;
   for (;;)
   {
-      if (ConnectNamedPipe(npc->pipe, &npc->ovl))
+      if (ConnectNamedPipe(npc->pipe, &npc->read_ovl))
           return RPC_S_OK;
 
       switch(GetLastError())
       {
       case ERROR_PIPE_CONNECTED:
-          SetEvent(npc->ovl.hEvent);
+          SetEvent(npc->read_ovl.hEvent);
           return RPC_S_OK;
       case ERROR_IO_PENDING:
           /* will be completed in rpcrt4_protseq_np_wait_for_new_connection */
@@ -175,8 +170,8 @@ static RPC_STATUS rpcrt4_conn_create_pipe(RpcConnection *Connection, LPCSTR pnam
       return RPC_S_CANT_CREATE_ENDPOINT;
   }
 
-  memset(&npc->ovl, 0, sizeof(npc->ovl));
-  npc->ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+  npc->read_ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+  npc->write_ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
 
   /* Note: we don't call ConnectNamedPipe here because it must be done in the
    * server thread as the thread must be alertable */
@@ -233,11 +228,11 @@ static RPC_STATUS rpcrt4_conn_open_pipe(RpcConnection *Connection, LPCSTR pname,
   }
 
   /* success */
-  memset(&npc->ovl, 0, sizeof(npc->ovl));
   /* pipe is connected; change to message-read mode. */
   dwMode = PIPE_READMODE_MESSAGE;
   SetNamedPipeHandleState(pipe, &dwMode, NULL, NULL);
-  npc->ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+  npc->read_ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+  npc->write_ovl.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
   npc->pipe = pipe;
 
   return RPC_S_OK;
@@ -365,9 +360,11 @@ static void rpcrt4_conn_np_handoff(RpcConnection_np *old_npc, RpcConnection_np *
    * to the child, then reopen the server binding to continue listening */
 
   new_npc->pipe = old_npc->pipe;
-  new_npc->ovl = old_npc->ovl;
+  new_npc->read_ovl = old_npc->read_ovl;
+  new_npc->write_ovl = old_npc->write_ovl;
   old_npc->pipe = 0;
-  memset(&old_npc->ovl, 0, sizeof(old_npc->ovl));
+  memset(&old_npc->read_ovl, 0, sizeof(old_npc->read_ovl));
+  memset(&old_npc->write_ovl, 0, sizeof(old_npc->write_ovl));
   old_npc->listening = FALSE;
 }
 
@@ -416,7 +413,9 @@ static int rpcrt4_conn_np_read(RpcConnection *Connection,
   while (bytes_left)
   {
     DWORD bytes_read;
-    ret = ReadFile(npc->pipe, buf, bytes_left, &bytes_read, NULL);
+    ret = ReadFile(npc->pipe, buf, bytes_left, &bytes_read, &npc->read_ovl);
+    if (!ret && GetLastError() == ERROR_IO_PENDING)
+        ret = GetOverlappedResult(npc->pipe, &npc->read_ovl, &bytes_read, TRUE);
     if (!ret && GetLastError() == ERROR_MORE_DATA)
         ret = TRUE;
     if (!ret || !bytes_read)
@@ -438,7 +437,9 @@ static int rpcrt4_conn_np_write(RpcConnection *Connection,
   while (bytes_left)
   {
     DWORD bytes_written;
-    ret = WriteFile(npc->pipe, buf, bytes_left, &bytes_written, NULL);
+    ret = WriteFile(npc->pipe, buf, bytes_left, &bytes_written, &npc->write_ovl);
+    if (!ret && GetLastError() == ERROR_IO_PENDING)
+        ret = GetOverlappedResult(npc->pipe, &npc->write_ovl, &bytes_written, TRUE);
     if (!ret || !bytes_written)
         break;
     bytes_left -= bytes_written;
@@ -455,9 +456,13 @@ static int rpcrt4_conn_np_close(RpcConnection *Connection)
     CloseHandle(npc->pipe);
     npc->pipe = 0;
   }
-  if (npc->ovl.hEvent) {
-    CloseHandle(npc->ovl.hEvent);
-    npc->ovl.hEvent = 0;
+  if (npc->read_ovl.hEvent) {
+    CloseHandle(npc->read_ovl.hEvent);
+    npc->read_ovl.hEvent = 0;
+  }
+  if (npc->write_ovl.hEvent) {
+    CloseHandle(npc->write_ovl.hEvent);
+    npc->write_ovl.hEvent = 0;
   }
   return 0;
 }
@@ -661,7 +666,7 @@ static void *rpcrt4_protseq_np_get_wait_array(RpcServerProtseq *protseq, void *p
     conn = CONTAINING_RECORD(protseq->conn, RpcConnection_np, common);
     while (conn) {
         rpcrt4_conn_listen_pipe(conn);
-        if (conn->ovl.hEvent)
+        if (conn->read_ovl.hEvent)
             (*count)++;
         conn = CONTAINING_RECORD(conn->common.Next, RpcConnection_np, common);
     }
@@ -682,7 +687,7 @@ static void *rpcrt4_protseq_np_get_wait_array(RpcServerProtseq *protseq, void *p
     *count = 1;
     conn = CONTAINING_RECORD(protseq->conn, RpcConnection_np, common);
     while (conn) {
-        if ((objs[*count] = conn->ovl.hEvent))
+        if ((objs[*count] = conn->read_ovl.hEvent))
             (*count)++;
         conn = CONTAINING_RECORD(conn->common.Next, RpcConnection_np, common);
     }
@@ -729,7 +734,7 @@ static int rpcrt4_protseq_np_wait_for_new_connection(RpcServerProtseq *protseq, 
         EnterCriticalSection(&protseq->cs);
         conn = CONTAINING_RECORD(protseq->conn, RpcConnection_np, common);
         while (conn) {
-            if (b_handle == conn->ovl.hEvent) break;
+            if (b_handle == conn->read_ovl.hEvent) break;
             conn = CONTAINING_RECORD(conn->common.Next, RpcConnection_np, common);
         }
         cconn = NULL;
