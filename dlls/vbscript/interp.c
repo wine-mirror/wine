@@ -31,6 +31,8 @@ typedef struct {
     script_ctx_t *script;
     function_t *func;
 
+    VARIANT *args;
+
     unsigned stack_size;
     unsigned top;
     VARIANT *stack;
@@ -82,8 +84,17 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, ref_t *ref)
 {
     named_item_t *item;
     function_t *func;
+    unsigned i;
     DISPID id;
     HRESULT hres;
+
+    for(i=0; i < ctx->func->arg_cnt; i++) {
+        if(!strcmpiW(ctx->func->args[i].name, name)) {
+            ref->type = REF_VAR;
+            ref->u.v = ctx->args+i;
+            return S_OK;
+        }
+    }
 
     if(lookup_dynamic_vars(ctx->script->global_vars, name, ref))
         return S_OK;
@@ -814,9 +825,22 @@ OP_LIST
 #undef X
 };
 
+static void release_exec(exec_ctx_t *ctx)
+{
+    if(ctx->args) {
+        unsigned i;
+
+        for(i=0; i < ctx->func->arg_cnt; i++)
+            VariantClear(ctx->args+i);
+    }
+
+    heap_free(ctx->args);
+    heap_free(ctx->stack);
+}
+
 HRESULT exec_script(script_ctx_t *ctx, function_t *func, DISPPARAMS *dp, VARIANT *res)
 {
-    exec_ctx_t exec;
+    exec_ctx_t exec = {func->code_ctx};
     vbsop_t op;
     HRESULT hres = S_OK;
 
@@ -825,18 +849,50 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, DISPPARAMS *dp, VARIANT
         return E_NOTIMPL;
     }
 
-    if(dp && arg_cnt(dp)) {
-        FIXME("arguments not implemented\n");
-        return E_NOTIMPL;
+    exec.code = func->code_ctx;
+
+    if(dp ? func->arg_cnt != arg_cnt(dp) : func->arg_cnt) {
+        FIXME("wrong arg_cnt %d, expected %d\n", dp ? arg_cnt(dp) : 0, func->arg_cnt);
+        return E_FAIL;
+    }
+
+    if(func->arg_cnt) {
+        VARIANT *v;
+        unsigned i;
+
+        exec.args = heap_alloc_zero(func->arg_cnt * sizeof(VARIANT));
+        if(!exec.args) {
+            release_exec(&exec);
+            return E_OUTOFMEMORY;
+        }
+
+        for(i=0; i < func->arg_cnt; i++) {
+            v = get_arg(dp, i);
+            if(V_VT(v) == (VT_VARIANT|VT_BYREF)) {
+                if(func->args[i].by_ref)
+                    exec.args[i] = *v;
+                else
+                    hres = VariantCopy(exec.args+i, V_VARIANTREF(v));
+            }else {
+                hres = VariantCopy(exec.args+i, v);
+            }
+            if(FAILED(hres)) {
+                release_exec(&exec);
+                return hres;
+            }
+        }
+    }else {
+        exec.args = NULL;
     }
 
     exec.stack_size = 16;
     exec.top = 0;
     exec.stack = heap_alloc(exec.stack_size * sizeof(VARIANT));
-    if(!exec.stack)
+    if(!exec.stack) {
+        release_exec(&exec);
         return E_OUTOFMEMORY;
+    }
 
-    exec.code = func->code_ctx;
     exec.instr = exec.code->instrs + func->code_off;
     exec.script = ctx;
     exec.func = func;
@@ -854,7 +910,7 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, DISPPARAMS *dp, VARIANT
     }
 
     assert(!exec.top);
-    heap_free(exec.stack);
+    release_exec(&exec);
 
     return hres;
 }

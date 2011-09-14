@@ -70,6 +70,11 @@ static inline unsigned arg_cnt(const DISPPARAMS *dp)
     return dp->cArgs - dp->cNamedArgs;
 }
 
+static inline VARIANT *get_arg(DISPPARAMS *dp, DWORD i)
+{
+    return dp->rgvarg + dp->cArgs-i-1;
+}
+
 typedef struct _dynamic_var_t {
     struct _dynamic_var_t *next;
     VARIANT v;
