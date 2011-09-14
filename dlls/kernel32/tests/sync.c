@@ -140,7 +140,7 @@ static void test_mutex(void)
     hOpened = OpenMutex(GENERIC_EXECUTE, FALSE, "WineTestMutex");
     ok(hOpened != NULL, "OpenMutex failed with error %d\n", GetLastError());
     wait_ret = WaitForSingleObject(hOpened, INFINITE);
-    todo_wine ok(wait_ret == WAIT_OBJECT_0, "WaitForSingleObject failed with error %d\n", GetLastError());
+    ok(wait_ret == WAIT_OBJECT_0, "WaitForSingleObject failed with error %d\n", GetLastError());
     CloseHandle(hOpened);
 
     for(i=0; i < 31; i++)
@@ -152,7 +152,7 @@ static void test_mutex(void)
     hOpened = OpenMutex(GENERIC_READ | GENERIC_WRITE, FALSE, "WineTestMutex");
     ok(hOpened != NULL, "OpenMutex failed with error %d\n", GetLastError());
     wait_ret = WaitForSingleObject(hOpened, INFINITE);
-    todo_wine ok(wait_ret == WAIT_FAILED, "WaitForSingleObject succeeded\n");
+    ok(wait_ret == WAIT_FAILED, "WaitForSingleObject succeeded\n");
     CloseHandle(hOpened);
 
     for (i = 0; i < 32; i++)

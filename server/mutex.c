@@ -163,9 +163,9 @@ static int mutex_satisfied( struct object *obj, struct thread *thread )
 
 static unsigned int mutex_map_access( struct object *obj, unsigned int access )
 {
-    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | SYNCHRONIZE;
-    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE | MUTEX_MODIFY_STATE;
-    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
+    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ;
+    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE;
+    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE;
     if (access & GENERIC_ALL)     access |= STANDARD_RIGHTS_ALL | MUTEX_ALL_ACCESS;
     return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
