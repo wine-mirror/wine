@@ -102,6 +102,10 @@ call ok(not (false xor false), "false xor false is true?")
 call ok(not (true or false xor true), "true or false xor true is true?")
 call ok(not (true xor false or true), "true xor false or true is true?")
 
+call ok(false eqv false, "false does not equal false?")
+call ok(not (false eqv true), "false equals true?")
+call ok(getVT(false eqv null) = "VT_NULL", "getVT(false eqv null) = " & getVT(false eqv null))
+
 x = 3
 Call ok(2+2 = 4, "2+2 = " & (2+2))
 Call ok(false + 6 + true = 5, "false + 6 + true <> 5")
