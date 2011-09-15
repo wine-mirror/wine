@@ -209,17 +209,12 @@ static	LPWINE_DRIVER	DRIVER_TryOpenDriver16(LPCSTR lpFileName, LPARAM lParam2)
     LPWINE_DRIVER 	lpDrv = NULL;
     HMODULE16		hModule;
     DRIVERPROC16	lpProc;
-    LPCSTR		lpSFN;
     LPSTR		ptr;
 
     TRACE("('%s', %08lX);\n", lpFileName, lParam2);
 
     if (strlen(lpFileName) < 1) return lpDrv;
 
-    if ((lpSFN = strrchr(lpFileName, '\\')) == NULL)
-	lpSFN = lpFileName;
-    else
-	lpSFN++;
     if ((ptr = strchr(lpFileName, ' ')) != NULL) {
 	*ptr++ = '\0';
 	while (*ptr == ' ') ptr++;
