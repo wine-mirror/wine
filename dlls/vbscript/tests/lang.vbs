@@ -271,6 +271,14 @@ y = true
 Call TestSubLocalVal
 Call ok(x, "global x is not true?")
 
+Public Sub TestPublicSub
+End Sub
+Call TestPublicSub
+
+Private Sub TestPrivateSub
+End Sub
+Call TestPrivateSub
+
 if false then
 Function testfunc
     x = true
@@ -359,6 +367,14 @@ End Function
 x = false
 ok SetVal(x, true), "SetVal returned false?"
 Call ok(x, "x is not set to true by SetVal?")
+
+Public Function TestPublicFunc
+End Function
+Call TestPublicFunc
+
+Private Function TestPrivateFunc
+End Function
+Call TestPrivateFunc
 
 set x = testObj
 Call ok(getVT(x) = "VT_DISPATCH*", "getVT(x=testObj) = " & getVT(x))

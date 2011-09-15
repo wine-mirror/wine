@@ -31,7 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
 static int parser_error(const char*);
 
- static void parse_complete(parser_ctx_t*,BOOL);
+static void parse_complete(parser_ctx_t*,BOOL);
 
 static void source_add_statement(parser_ctx_t*,statement_t*);
 static void source_add_class(parser_ctx_t*,class_decl_t*);
@@ -57,9 +57,12 @@ static statement_t *new_function_statement(parser_ctx_t*,function_decl_t*);
 
 static dim_decl_t *new_dim_decl(parser_ctx_t*,const WCHAR*,dim_decl_t*);
 static elseif_decl_t *new_elseif_decl(parser_ctx_t*,expression_t*,statement_t*);
-static function_decl_t *new_function_decl(parser_ctx_t*,const WCHAR*,function_type_t,arg_decl_t*,statement_t*);
+static function_decl_t *new_function_decl(parser_ctx_t*,const WCHAR*,function_type_t,unsigned,arg_decl_t*,statement_t*);
 static arg_decl_t *new_argument_decl(parser_ctx_t*,const WCHAR*,BOOL);
 static class_decl_t *new_class_decl(parser_ctx_t*);
+
+#define STORAGE_IS_PRIVATE    1
+#define STORAGE_IS_DEFAULT    2
 
 #define CHECK_ERROR if(((parser_ctx_t*)ctx)->hres != S_OK) YYABORT
 
@@ -78,6 +81,7 @@ static class_decl_t *new_class_decl(parser_ctx_t*);
     function_decl_t *func_decl;
     arg_decl_t *arg_decl;
     class_decl_t *class_decl;
+    unsigned uint;
     LONG lng;
     BOOL bool;
     double dbl;
@@ -111,6 +115,7 @@ static class_decl_t *new_class_decl(parser_ctx_t*);
 %type <func_decl> FunctionDecl
 %type <elseif> ElseIfs_opt ElseIfs ElseIf
 %type <class_decl> ClassDeclaration ClassBody
+%type <uint> Storage Storage_opt
 %type <dim_decl> DimDeclList
 
 %%
@@ -286,10 +291,19 @@ ClassBody
     : /* empty */                               { $$ = new_class_decl(ctx); }
 
 FunctionDecl
-    : /* Storage_opt */ tSUB tIdentifier ArgumentsDecl_opt tNL StatementsNl_opt tEND tSUB
-                                    { $$ = new_function_decl(ctx, $2, FUNC_SUB, $3, $5); CHECK_ERROR; }
-    | /* Storage_opt */ tFUNCTION tIdentifier ArgumentsDecl_opt tNL StatementsNl_opt tEND tFUNCTION
-                                    { $$ = new_function_decl(ctx, $2, FUNC_FUNCTION, $3, $5); CHECK_ERROR; }
+    : Storage_opt tSUB tIdentifier ArgumentsDecl_opt tNL StatementsNl_opt tEND tSUB
+                                    { $$ = new_function_decl(ctx, $3, FUNC_SUB, $1, $4, $6); CHECK_ERROR; }
+    | Storage_opt tFUNCTION tIdentifier ArgumentsDecl_opt tNL StatementsNl_opt tEND tFUNCTION
+                                    { $$ = new_function_decl(ctx, $3, FUNC_FUNCTION, $1, $4, $6); CHECK_ERROR; }
+
+Storage_opt
+    : /* empty*/                    { $$ = 0; }
+    | Storage                       { $$ = $1; }
+
+Storage
+    : tPUBLIC tDEFAULT              { $$ = STORAGE_IS_DEFAULT; }
+    | tPUBLIC                       { $$ = 0; }
+    | tPRIVATE                      { $$ = STORAGE_IS_PRIVATE; }
 
 ArgumentsDecl_opt
     : EmptyBrackets_opt                         { $$ = NULL; }
@@ -566,9 +580,15 @@ static arg_decl_t *new_argument_decl(parser_ctx_t *ctx, const WCHAR *name, BOOL 
 }
 
 static function_decl_t *new_function_decl(parser_ctx_t *ctx, const WCHAR *name, function_type_t type,
-        arg_decl_t *arg_decl, statement_t *body)
+        unsigned storage_flags, arg_decl_t *arg_decl, statement_t *body)
 {
     function_decl_t *decl;
+
+    if(storage_flags & STORAGE_IS_DEFAULT) {
+        FIXME("Function declared as default property\n");
+        ctx->hres = E_FAIL;
+        return NULL;
+    }
 
     decl = parser_alloc(ctx, sizeof(*decl));
     if(!decl)
@@ -576,6 +596,7 @@ static function_decl_t *new_function_decl(parser_ctx_t *ctx, const WCHAR *name, 
 
     decl->name = name;
     decl->type = type;
+    decl->is_public = !(storage_flags & STORAGE_IS_PRIVATE);
     decl->args = arg_decl;
     decl->body = body;
     return decl;

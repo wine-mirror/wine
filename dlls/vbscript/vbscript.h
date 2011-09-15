@@ -204,6 +204,7 @@ typedef struct {
 struct _function_t {
     function_type_t type;
     const WCHAR *name;
+    BOOL is_public;
     arg_desc_t *args;
     unsigned arg_cnt;
     var_desc_t *vars;

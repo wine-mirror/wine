@@ -760,6 +760,7 @@ static HRESULT create_function(compile_ctx_t *ctx, function_decl_t *decl, functi
     func->var_cnt = 0;
     func->code_ctx = ctx->code;
     func->type = decl->type;
+    func->is_public = decl->is_public;
 
     func->arg_cnt = 0;
     if(decl->args) {
