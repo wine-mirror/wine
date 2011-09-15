@@ -96,7 +96,7 @@ static HRESULT WINAPI IDirect3DTexture8Impl_GetDevice(IDirect3DTexture8 *iface,
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    *device = (IDirect3DDevice8 *)This->parentDevice;
+    *device = This->parentDevice;
     IDirect3DDevice8_AddRef(*device);
 
     TRACE("Returning device %p.\n", *device);
