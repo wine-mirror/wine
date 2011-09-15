@@ -55,6 +55,12 @@ typedef struct named_item_t {
     struct list entry;
 } named_item_t;
 
+typedef struct _class_desc_t {
+    const WCHAR *name;
+    script_ctx_t *ctx;
+    struct _class_desc_t *next;
+} class_desc_t;
+
 typedef struct {
     IDispatchEx IDispatchEx_iface;
 
@@ -98,6 +104,7 @@ struct _script_ctx_t {
 
     dynamic_var_t *global_vars;
     function_t *global_funcs;
+    class_desc_t *classes;
 
     struct list code_list;
     struct list named_items;

@@ -47,6 +47,8 @@ typedef struct {
     function_t *func;
     function_t *funcs;
     function_decl_t *func_decls;
+
+    class_desc_t *classes;
 } compile_ctx_t;
 
 static HRESULT compile_expression(compile_ctx_t*,expression_t*);
@@ -779,8 +781,44 @@ static HRESULT create_function(compile_ctx_t *ctx, function_decl_t *decl, functi
     return S_OK;
 }
 
+static BOOL lookup_class_name(compile_ctx_t *ctx, const WCHAR *name)
+{
+    class_desc_t *iter;
+
+    for(iter = ctx->classes; iter; iter = iter->next) {
+        if(!strcmpiW(iter->name, name))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
+{
+    class_desc_t *class_desc;
+
+    if(lookup_dim_decls(ctx, class_decl->name) || lookup_funcs_name(ctx, class_decl->name)
+            || lookup_class_name(ctx, class_decl->name)) {
+        FIXME("%s: redefinition\n", debugstr_w(class_decl->name));
+        return E_FAIL;
+    }
+
+    class_desc = compiler_alloc(ctx->code, sizeof(*class_desc));
+    if(!class_desc)
+        return E_OUTOFMEMORY;
+
+    class_desc->name = compiler_alloc_string(ctx->code, class_decl->name);
+    if(!class_desc->name)
+        return E_OUTOFMEMORY;
+
+    class_desc->next = ctx->classes;
+    ctx->classes = class_desc;
+    return S_OK;
+}
+
 static BOOL lookup_script_identifier(script_ctx_t *script, const WCHAR *identifier)
 {
+    class_desc_t *class;
     dynamic_var_t *var;
     function_t *func;
 
@@ -794,11 +832,17 @@ static BOOL lookup_script_identifier(script_ctx_t *script, const WCHAR *identifi
             return TRUE;
     }
 
+    for(class = script->classes; class; class = class->next) {
+        if(!strcmpiW(class->name, identifier))
+            return TRUE;
+    }
+
     return FALSE;
 }
 
 static HRESULT check_script_collisions(compile_ctx_t *ctx, script_ctx_t *script)
 {
+    class_desc_t *class;
     dynamic_var_t *var;
     function_t *func;
 
@@ -812,6 +856,13 @@ static HRESULT check_script_collisions(compile_ctx_t *ctx, script_ctx_t *script)
     for(func = ctx->funcs; func; func = func->next) {
         if(lookup_script_identifier(script, func->name)) {
             FIXME("%s: redefined\n", debugstr_w(func->name));
+            return E_FAIL;
+        }
+    }
+
+    for(class = ctx->classes; class; class = class->next) {
+        if(lookup_script_identifier(script, class->name)) {
+            FIXME("%s: redefined\n", debugstr_w(class->name));
             return E_FAIL;
         }
     }
@@ -891,6 +942,7 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, vbscode_t **ret)
 {
     function_t *new_func;
     function_decl_t *func_decl;
+    class_decl_t *class_decl;
     compile_ctx_t ctx;
     vbscode_t *code;
     HRESULT hres;
@@ -907,6 +959,7 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, vbscode_t **ret)
     ctx.func_decls = NULL;
     ctx.global_vars = NULL;
     ctx.dim_decls = NULL;
+    ctx.classes = NULL;
     ctx.labels = NULL;
     ctx.labels_cnt = ctx.labels_size = 0;
 
@@ -925,6 +978,14 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, vbscode_t **ret)
 
         new_func->next = ctx.funcs;
         ctx.funcs = new_func;
+    }
+
+    for(class_decl = ctx.parser.class_decls; class_decl; class_decl = class_decl->next) {
+        hres = compile_class(&ctx, class_decl);
+        if(FAILED(hres)) {
+            release_compiler(&ctx);
+            return hres;
+        }
     }
 
     hres = check_script_collisions(&ctx, script);
@@ -947,6 +1008,20 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, vbscode_t **ret)
 
         new_func->next = script->global_funcs;
         script->global_funcs = ctx.funcs;
+    }
+
+    if(ctx.classes) {
+        class_desc_t *class = ctx.classes;
+
+        while(1) {
+            class->ctx = script;
+            if(!class->next)
+                break;
+            class = class->next;
+        }
+
+        class->next = script->classes;
+        script->classes = ctx.classes;
     }
 
     if(TRACE_ON(vbscript_disas))
