@@ -55,7 +55,7 @@ static BOOL X11DRV_XRender_Installed = FALSE;
 #define RepeatReflect 3
 #endif
 
-typedef enum wxr_format
+enum wxr_format
 {
   WXR_FORMAT_MONO,
   WXR_FORMAT_GRAY,
@@ -71,7 +71,7 @@ typedef enum wxr_format
   WXR_FORMAT_B8G8R8X8,
   WXR_NB_FORMATS,
   WXR_INVALID_FORMAT = WXR_NB_FORMATS
-} WXRFormat;
+};
 
 typedef struct wine_xrender_format_template
 {
@@ -233,7 +233,7 @@ static CRITICAL_SECTION xrender_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 #define NATIVE_BYTE_ORDER LSBFirst
 #endif
 
-static WXRFormat get_format_without_alpha( WXRFormat format )
+static enum wxr_format get_format_without_alpha( enum wxr_format format )
 {
     switch (format)
     {
@@ -1331,7 +1331,7 @@ static void UploadGlyph(struct xrender_physdev *physDev, int glyph, AA_Type form
     gsCacheEntry *entry = glyphsetCache + physDev->cache_index;
     gsCacheEntryFormat *formatEntry;
     UINT ggo_format = GGO_GLYPH_INDEX;
-    WXRFormat wxr_format;
+    enum wxr_format wxr_format;
     static const char zero[4];
     static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
 
