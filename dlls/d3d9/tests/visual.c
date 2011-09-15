@@ -1231,9 +1231,11 @@ static void fog_test(IDirect3DDevice9 *device)
         }
 
         color = getPixelColor(device, 160, 360);
-        ok(color_match(color, 0x00ff0000, 4), "Unfogged quad has color %08x\n", color);
+        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0x00, 0x00), 4),
+                "Unfogged quad has color %08x\n", color);
         color = getPixelColor(device, 160, 120);
-        ok(color == 0x0000ff00, "Fogged out quad has color %08x\n", color);
+        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0xff, 0x00), 1),
+                "Fogged out quad has color %08x\n", color);
 
         IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
@@ -1270,7 +1272,8 @@ static void fog_test(IDirect3DDevice9 *device)
         color = getPixelColor(device, 160, 360);
         todo_wine ok(color_match(color, 0x00e51900, 4), "Partially fogged quad has color %08x\n", color);
         color = getPixelColor(device, 160, 120);
-        ok(color == 0x0000ff00, "Fogged out quad has color %08x\n", color);
+        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0xff, 0x00), 1),
+                "Fogged out quad has color %08x\n", color);
 
         IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
@@ -1357,13 +1360,17 @@ static void fog_test(IDirect3DDevice9 *device)
             ok(SUCCEEDED(hr), "IDirect3DDevice9_EndScene failed, hr %#x.\n", hr);
         }
         color = getPixelColor(device, 10, 10);
-        ok(color == 0x0000ff00, "Rangefog with vertex fog returned color 0x%08x\n", color);
+        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0xff, 0x00), 1),
+                "Rangefog with vertex fog returned color 0x%08x\n", color);
         color = getPixelColor(device, 630, 10);
-        ok(color == 0x0000ff00, "Rangefog with vertex fog returned color 0x%08x\n", color);
+        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0xff, 0x00), 1),
+                "Rangefog with vertex fog returned color 0x%08x\n", color);
         color = getPixelColor(device, 10, 470);
-        ok(color == 0x0000ff00, "Rangefog with vertex fog returned color 0x%08x\n", color);
+        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0xff, 0x00), 1),
+                "Rangefog with vertex fog returned color 0x%08x\n", color);
         color = getPixelColor(device, 630, 470);
-        ok(color == 0x0000ff00, "Rangefog with vertex fog returned color 0x%08x\n", color);
+        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0xff, 0x00), 1),
+                "Rangefog with vertex fog returned color 0x%08x\n", color);
 
         hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
         ok(SUCCEEDED(hr), "IDirect3DDevice9_Present failed, hr %#x.\n", hr);
