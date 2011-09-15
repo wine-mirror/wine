@@ -130,7 +130,9 @@ static void test_PdhAddCounterA( void )
     ok(ret == PDH_INVALID_ARGUMENT, "PdhAddCounterA failed 0x%08x\n", ret);
 
     ret = PdhAddCounterA( query, "\\System\\Nonexistent Counter", 0, &counter );
-    ok(ret == PDH_CSTATUS_NO_COUNTER, "PdhAddCounterA failed 0x%08x\n", ret);
+    ok(ret == PDH_CSTATUS_NO_COUNTER ||
+       broken(ret == PDH_INVALID_PATH), /* Win2K */
+       "PdhAddCounterA failed 0x%08x\n", ret);
     ok(!counter, "PdhAddCounterA failed %p\n", counter);
 
     ret = PdhAddCounterA( query, "\\System\\System Up Time", 0, &counter );
@@ -177,7 +179,9 @@ static void test_PdhAddCounterW( void )
     ok(ret == PDH_INVALID_ARGUMENT, "PdhAddCounterW failed 0x%08x\n", ret);
 
     ret = PdhAddCounterW( query, nonexistent_counter, 0, &counter );
-    ok(ret == PDH_CSTATUS_NO_COUNTER, "PdhAddCounterW failed 0x%08x\n", ret);
+    ok(ret == PDH_CSTATUS_NO_COUNTER ||
+       broken(ret == PDH_INVALID_PATH), /* Win2K */
+       "PdhAddCounterW failed 0x%08x\n", ret);
     ok(!counter, "PdhAddCounterW failed %p\n", counter);
 
     ret = PdhAddCounterW( query, percentage_processor_time, 0, &counter );
