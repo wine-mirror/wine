@@ -1280,6 +1280,7 @@ static UINT msi_parse_summary( MSISUMMARYINFO *si, MSIPACKAGE *package )
         return ERROR_PATCH_PACKAGE_INVALID;
     }
     *p = 0;
+    if ((q = strchrW( template, ',' ))) *q = 0;
     if (!template[0] || !strcmpW( template, szIntel ))
         package->platform = PLATFORM_INTEL;
     else if (!strcmpW( template, szIntel64 ))
@@ -1329,6 +1330,10 @@ static UINT validate_package( MSIPACKAGE *package )
     BOOL is_wow64;
     UINT i;
 
+    if (package->platform == PLATFORM_INTEL64)
+    {
+        return ERROR_INSTALL_PLATFORM_UNSUPPORTED;
+    }
     IsWow64Process( GetCurrentProcess(), &is_wow64 );
     if (package->platform == PLATFORM_X64)
     {
