@@ -144,7 +144,11 @@ static BOOL is_english(void)
 static void test_disp(IDispatch *disp)
 {
     DISPID id, public_func_id, public_sub_id;
+    DISPID named_args[5] = {DISPID_PROPERTYPUT};
+    VARIANT v, args[5];
+    DISPPARAMS dp = {args, named_args};
     IDispatchEx *dispex;
+    EXCEPINFO ei = {0};
     BSTR str;
     HRESULT hres;
 
@@ -162,6 +166,28 @@ static void test_disp(IDispatch *disp)
     SysFreeString(str);
     ok(hres == S_OK, "GetDispID(publicSub) failed: %08x\n", hres);
     ok(public_sub_id != -1, "public_func_id = -1\n");
+
+    dp.cArgs = dp.cNamedArgs = 0;
+    hres = IDispatchEx_InvokeEx(dispex, public_func_id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &v, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_I2, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_I2(&v) == 4, "V_I2(v) = %d\n", V_I2(&v));
+
+    dp.cArgs = dp.cNamedArgs = 0;
+    hres = IDispatchEx_InvokeEx(dispex, public_func_id, 0, DISPATCH_METHOD, &dp, &v, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_I2, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_I2(&v) == 4, "V_I2(v) = %d\n", V_I2(&v));
+
+    dp.cArgs = dp.cNamedArgs = 0;
+    hres = IDispatchEx_InvokeEx(dispex, public_sub_id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &v, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_EMPTY, "V_VT(v) = %d\n", V_VT(&v));
+
+    dp.cArgs = dp.cNamedArgs = 0;
+    hres = IDispatchEx_InvokeEx(dispex, public_sub_id, 0, DISPATCH_METHOD, &dp, &v, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_EMPTY, "V_VT(v) = %d\n", V_VT(&v));
 
     str = a2bstr("privateSub");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseInsensitive, &id);

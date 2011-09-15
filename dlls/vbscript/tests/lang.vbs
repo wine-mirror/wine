@@ -400,4 +400,9 @@ End Class
 
 Call testDisp(new testClass)
 
+Set obj = New TestClass
+
+Call ok(obj.publicFunction = 4, "obj.publicFunction = " & obj.publicFunction)
+Call ok(obj.publicFunction() = 4, "obj.publicFunction() = " & obj.publicFunction())
+
 reportSuccess()

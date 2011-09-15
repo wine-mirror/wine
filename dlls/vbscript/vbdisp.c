@@ -22,6 +22,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
+static inline BOOL is_func_id(vbdisp_t *This, DISPID id)
+{
+    return id < This->desc->func_cnt;
+}
+
 static BOOL get_func_id(vbdisp_t *This, const WCHAR *name, BOOL search_private, DISPID *id)
 {
     unsigned i;
@@ -150,7 +155,35 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     vbdisp_t *This = impl_from_IDispatchEx(iface);
-    FIXME("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+
+    TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+
+    if(pvarRes)
+        V_VT(pvarRes) = VT_EMPTY;
+
+    if(id < 0)
+        return DISP_E_MEMBERNOTFOUND;
+
+    if(is_func_id(This, id)) {
+        function_t *func;
+
+        switch(wFlags) {
+        case DISPATCH_METHOD:
+        case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
+            func = This->desc->funcs[id].entries[VBDISP_CALLGET];
+            if(!func) {
+                FIXME("no invoke/getter\n");
+                return DISP_E_MEMBERNOTFOUND;
+            }
+
+            return exec_script(This->desc->ctx, func, pdp, pvarRes);
+        default:
+            FIXME("flags %x\n", wFlags);
+            return DISP_E_MEMBERNOTFOUND;
+        }
+    }
+
+    FIXME("not implemented for non-function ids\n");
     return DISP_E_MEMBERNOTFOUND;
 }
 
