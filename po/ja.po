@@ -145,7 +145,7 @@ msgstr "今日へ移動"
 
 #: comdlg32.rc:29
 msgid "&About FolderPicker Test"
-msgstr "&About FolderPicker Test"
+msgstr ""
 
 #: comdlg32.rc:30
 msgid "Document Folders"
@@ -330,7 +330,7 @@ msgstr "白"
 
 #: comdlg32.rc:66
 msgid "Unreadable Entry"
-msgstr "Unreadable Entry"
+msgstr ""
 
 #: comdlg32.rc:68
 msgid ""
@@ -648,7 +648,7 @@ msgstr "次回更新場所"
 
 #: crypt32.rc:42
 msgid "Yes or No Trust"
-msgstr "Yes or No Trust"
+msgstr ""
 
 #: crypt32.rc:43
 msgid "Email Address"
@@ -688,7 +688,7 @@ msgstr "S/MIME機能"
 
 #: crypt32.rc:52
 msgid "Prefer Signed Data"
-msgstr "Prefer Signed Data"
+msgstr ""
 
 #: crypt32.rc:53 cryptdlg.rc:31
 msgctxt "Certification Practice Statement"
@@ -697,11 +697,11 @@ msgstr "CPS"
 
 #: crypt32.rc:54 cryptdlg.rc:32
 msgid "User Notice"
-msgstr "User Notice"
+msgstr ""
 
 #: crypt32.rc:55
 msgid "On-line Certificate Status Protocol"
-msgstr "On-line Certificate Status Protocol"
+msgstr ""
 
 #: crypt32.rc:56
 msgid "Certification Authority Issuer"
@@ -765,39 +765,39 @@ msgstr "SpcMinimalCriteria"
 
 #: crypt32.rc:71
 msgid "Country/Region"
-msgstr "Country/Region"
+msgstr ""
 
 #: crypt32.rc:72
 msgid "Organization"
-msgstr "Organization"
+msgstr ""
 
 #: crypt32.rc:73
 msgid "Organizational Unit"
-msgstr "Organizational Unit"
+msgstr ""
 
 #: crypt32.rc:74
 msgid "Common Name"
-msgstr "Common Name"
+msgstr ""
 
 #: crypt32.rc:75
 msgid "Locality"
-msgstr "Locality"
+msgstr ""
 
 #: crypt32.rc:76
 msgid "State or Province"
-msgstr "State or Province"
+msgstr ""
 
 #: crypt32.rc:77
 msgid "Title"
-msgstr "Title"
+msgstr ""
 
 #: crypt32.rc:78
 msgid "Given Name"
-msgstr "Given Name"
+msgstr ""
 
 #: crypt32.rc:79
 msgid "Initials"
-msgstr "Initials"
+msgstr ""
 
 #: crypt32.rc:80
 msgid "Surname"
@@ -805,155 +805,155 @@ msgstr "ユーザー名"
 
 #: crypt32.rc:81
 msgid "Domain Component"
-msgstr "Domain Component"
+msgstr ""
 
 #: crypt32.rc:82
 msgid "Street Address"
-msgstr "Street Address"
+msgstr ""
 
 #: crypt32.rc:83
 msgid "Serial Number"
-msgstr "Serial Number"
+msgstr ""
 
 #: crypt32.rc:84
 msgid "CA Version"
-msgstr "CA Version"
+msgstr ""
 
 #: crypt32.rc:85
 msgid "Cross CA Version"
-msgstr "Cross CA Version"
+msgstr ""
 
 #: crypt32.rc:86
 msgid "Serialized Signature Serial Number"
-msgstr "Serialized Signature Serial Number"
+msgstr ""
 
 #: crypt32.rc:87
 msgid "Principal Name"
-msgstr "Principal Name"
+msgstr ""
 
 #: crypt32.rc:88
 msgid "Windows Product Update"
-msgstr "Windows Product Update"
+msgstr ""
 
 #: crypt32.rc:89
 msgid "Enrollment Name Value Pair"
-msgstr "Enrollment Name Value Pair"
+msgstr ""
 
 #: crypt32.rc:90
 msgid "OS Version"
-msgstr "OS Version"
+msgstr ""
 
 #: crypt32.rc:91
 msgid "Enrollment CSP"
-msgstr "Enrollment CSP"
+msgstr ""
 
 #: crypt32.rc:92
 msgid "CRL Number"
-msgstr "CRL Number"
+msgstr ""
 
 #: crypt32.rc:93
 msgid "Delta CRL Indicator"
-msgstr "Delta CRL Indicator"
+msgstr ""
 
 #: crypt32.rc:94
 msgid "Issuing Distribution Point"
-msgstr "Issuing Distribution Point"
+msgstr ""
 
 #: crypt32.rc:95
 msgid "Freshest CRL"
-msgstr "Freshest CRL"
+msgstr ""
 
 #: crypt32.rc:96
 msgid "Name Constraints"
-msgstr "Name Constraints"
+msgstr ""
 
 #: crypt32.rc:97
 msgid "Policy Mappings"
-msgstr "Policy Mappings"
+msgstr ""
 
 #: crypt32.rc:98
 msgid "Policy Constraints"
-msgstr "Policy Constraints"
+msgstr ""
 
 #: crypt32.rc:99
 msgid "Cross-Certificate Distribution Points"
-msgstr "Cross-Certificate Distribution Points"
+msgstr ""
 
 #: crypt32.rc:100
 msgid "Application Policies"
-msgstr "Application Policies"
+msgstr ""
 
 #: crypt32.rc:101
 msgid "Application Policy Mappings"
-msgstr "Application Policy Mappings"
+msgstr ""
 
 #: crypt32.rc:102
 msgid "Application Policy Constraints"
-msgstr "Application Policy Constraints"
+msgstr ""
 
 #: crypt32.rc:103
 msgid "CMC Data"
-msgstr "CMC Data"
+msgstr ""
 
 #: crypt32.rc:104
 msgid "CMC Response"
-msgstr "CMC Response"
+msgstr ""
 
 #: crypt32.rc:105
 msgid "Unsigned CMC Request"
-msgstr "Unsigned CMC Request"
+msgstr ""
 
 #: crypt32.rc:106
 msgid "CMC Status Info"
-msgstr "CMC Status Info"
+msgstr ""
 
 #: crypt32.rc:107
 msgid "CMC Extensions"
-msgstr "CMC Extensions"
+msgstr ""
 
 #: crypt32.rc:108
 msgid "CMC Attributes"
-msgstr "CMC Attributes"
+msgstr ""
 
 #: crypt32.rc:109
 msgid "PKCS 7 Data"
-msgstr "PKCS 7 Data"
+msgstr ""
 
 #: crypt32.rc:110
 msgid "PKCS 7 Signed"
-msgstr "PKCS 7 Signed"
+msgstr ""
 
 #: crypt32.rc:111
 msgid "PKCS 7 Enveloped"
-msgstr "PKCS 7 Enveloped"
+msgstr ""
 
 #: crypt32.rc:112
 msgid "PKCS 7 Signed Enveloped"
-msgstr "PKCS 7 Signed Enveloped"
+msgstr ""
 
 #: crypt32.rc:113
 msgid "PKCS 7 Digested"
-msgstr "PKCS 7 Digested"
+msgstr ""
 
 #: crypt32.rc:114
 msgid "PKCS 7 Encrypted"
-msgstr "PKCS 7 Encrypted"
+msgstr ""
 
 #: crypt32.rc:115
 msgid "Previous CA Certificate Hash"
-msgstr "Previous CA Certificate Hash"
+msgstr ""
 
 #: crypt32.rc:116
 msgid "Virtual Base CRL Number"
-msgstr "Virtual Base CRL Number"
+msgstr ""
 
 #: crypt32.rc:117
 msgid "Next CRL Publish"
-msgstr "Next CRL Publish"
+msgstr ""
 
 #: crypt32.rc:118
 msgid "CA Encryption Certificate"
-msgstr "CA Encryption Certificate"
+msgstr ""
 
 #: crypt32.rc:119 cryptui.rc:145
 msgid "Key Recovery Agent"
@@ -961,59 +961,59 @@ msgstr "キー回復エージェント"
 
 #: crypt32.rc:120
 msgid "Certificate Template Information"
-msgstr "Certificate Template Information"
+msgstr ""
 
 #: crypt32.rc:121
 msgid "Enterprise Root OID"
-msgstr "Enterprise Root OID"
+msgstr ""
 
 #: crypt32.rc:122
 msgid "Dummy Signer"
-msgstr "Dummy Signer"
+msgstr ""
 
 #: crypt32.rc:123
 msgid "Encrypted Private Key"
-msgstr "Encrypted Private Key"
+msgstr ""
 
 #: crypt32.rc:124
 msgid "Published CRL Locations"
-msgstr "Published CRL Locations"
+msgstr ""
 
 #: crypt32.rc:125
 msgid "Enforce Certificate Chain Policy"
-msgstr "Enforce Certificate Chain Policy"
+msgstr ""
 
 #: crypt32.rc:126
 msgid "Transaction Id"
-msgstr "Transaction Id"
+msgstr ""
 
 #: crypt32.rc:127
 msgid "Sender Nonce"
-msgstr "Sender Nonce"
+msgstr ""
 
 #: crypt32.rc:128
 msgid "Recipient Nonce"
-msgstr "Recipient Nonce"
+msgstr ""
 
 #: crypt32.rc:129
 msgid "Reg Info"
-msgstr "Reg Info"
+msgstr ""
 
 #: crypt32.rc:130
 msgid "Get Certificate"
-msgstr "Get Certificate"
+msgstr ""
 
 #: crypt32.rc:131
 msgid "Get CRL"
-msgstr "Get CRL"
+msgstr ""
 
 #: crypt32.rc:132
 msgid "Revoke Request"
-msgstr "Revoke Request"
+msgstr ""
 
 #: crypt32.rc:133
 msgid "Query Pending"
-msgstr "Query Pending"
+msgstr ""
 
 #: crypt32.rc:134 cryptui.rc:92
 msgid "Certificate Trust List"
@@ -1021,15 +1021,15 @@ msgstr "証明書信頼リスト"
 
 #: crypt32.rc:135
 msgid "Archived Key Certificate Hash"
-msgstr "Archived Key Certificate Hash"
+msgstr ""
 
 #: crypt32.rc:136
 msgid "Private Key Usage Period"
-msgstr "Private Key Usage Period"
+msgstr ""
 
 #: crypt32.rc:137
 msgid "Client Information"
-msgstr "Client Information"
+msgstr ""
 
 #: crypt32.rc:138
 msgid "Server Authentication"
@@ -1177,31 +1177,31 @@ msgstr "信頼されない証明書"
 
 #: crypt32.rc:182
 msgid "KeyID="
-msgstr "KeyID="
+msgstr ""
 
 #: crypt32.rc:183
 msgid "Certificate Issuer"
-msgstr "Certificate Issuer"
+msgstr ""
 
 #: crypt32.rc:184
 msgid "Certificate Serial Number="
-msgstr "Certificate Serial Number="
+msgstr ""
 
 #: crypt32.rc:185
 msgid "Other Name="
-msgstr "Other Name="
+msgstr ""
 
 #: crypt32.rc:186
 msgid "Email Address="
-msgstr "Email Address="
+msgstr ""
 
 #: crypt32.rc:187
 msgid "DNS Name="
-msgstr "DNS Name="
+msgstr ""
 
 #: crypt32.rc:188
 msgid "Directory Address"
-msgstr "Directory Address"
+msgstr ""
 
 #: crypt32.rc:189
 msgid "URL="
@@ -1209,23 +1209,23 @@ msgstr "URL="
 
 #: crypt32.rc:190
 msgid "IP Address="
-msgstr "IP Address="
+msgstr ""
 
 #: crypt32.rc:191
 msgid "Mask="
-msgstr "Mask="
+msgstr ""
 
 #: crypt32.rc:192
 msgid "Registered ID="
-msgstr "Registered ID="
+msgstr ""
 
 #: crypt32.rc:193
 msgid "Unknown Key Usage"
-msgstr "Unknown Key Usage"
+msgstr ""
 
 #: crypt32.rc:194
 msgid "Subject Type="
-msgstr "Subject Type="
+msgstr ""
 
 #: crypt32.rc:195
 msgctxt "Certificate Authority"
@@ -1234,11 +1234,11 @@ msgstr "CA"
 
 #: crypt32.rc:196
 msgid "End Entity"
-msgstr "End Entity"
+msgstr ""
 
 #: crypt32.rc:197
 msgid "Path Length Constraint="
-msgstr "Path Length Constraint="
+msgstr ""
 
 #: crypt32.rc:198
 msgctxt "path length"
@@ -1247,15 +1247,15 @@ msgstr "なし"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
-msgstr "Information Not Available"
+msgstr ""
 
 #: crypt32.rc:200
 msgid "Authority Info Access"
-msgstr "Authority Info Access"
+msgstr ""
 
 #: crypt32.rc:201
 msgid "Access Method="
-msgstr "Access Method="
+msgstr ""
 
 #: crypt32.rc:202
 msgctxt "Online Certificate Status Protocol"
@@ -1264,79 +1264,79 @@ msgstr "OCSP"
 
 #: crypt32.rc:203
 msgid "CA Issuers"
-msgstr "CA Issuers"
+msgstr ""
 
 #: crypt32.rc:204
 msgid "Unknown Access Method"
-msgstr "Unknown Access Method"
+msgstr ""
 
 #: crypt32.rc:205
 msgid "Alternative Name"
-msgstr "Alternative Name"
+msgstr ""
 
 #: crypt32.rc:206
 msgid "CRL Distribution Point"
-msgstr "CRL Distribution Point"
+msgstr ""
 
 #: crypt32.rc:207
 msgid "Distribution Point Name"
-msgstr "Distribution Point Name"
+msgstr ""
 
 #: crypt32.rc:208
 msgid "Full Name"
-msgstr "Full Name"
+msgstr ""
 
 #: crypt32.rc:209
 msgid "RDN Name"
-msgstr "RDN Name"
+msgstr ""
 
 #: crypt32.rc:210
 msgid "CRL Reason="
-msgstr "CRL Reason="
+msgstr ""
 
 #: crypt32.rc:211
 msgid "CRL Issuer"
-msgstr "CRL Issuer"
+msgstr ""
 
 #: crypt32.rc:212
 msgid "Key Compromise"
-msgstr "Key Compromise"
+msgstr ""
 
 #: crypt32.rc:213
 msgid "CA Compromise"
-msgstr "CA Compromise"
+msgstr ""
 
 #: crypt32.rc:214
 msgid "Affiliation Changed"
-msgstr "Affiliation Changed"
+msgstr ""
 
 #: crypt32.rc:215
 msgid "Superseded"
-msgstr "Superseded"
+msgstr ""
 
 #: crypt32.rc:216
 msgid "Operation Ceased"
-msgstr "Operation Ceased"
+msgstr ""
 
 #: crypt32.rc:217
 msgid "Certificate Hold"
-msgstr "Certificate Hold"
+msgstr ""
 
 #: crypt32.rc:218
 msgid "Financial Information="
-msgstr "Financial Information="
+msgstr ""
 
 #: crypt32.rc:219
 msgid "Available"
-msgstr "Available"
+msgstr ""
 
 #: crypt32.rc:220
 msgid "Not Available"
-msgstr "Not Available"
+msgstr ""
 
 #: crypt32.rc:221
 msgid "Meets Criteria="
-msgstr "Meets Criteria="
+msgstr ""
 
 #: crypt32.rc:222 cryptui.rc:163 oleaut32.rc:29 ipconfig.rc:44
 msgid "Yes"
@@ -1416,39 +1416,39 @@ msgstr "署名認証局"
 
 #: cryptdlg.rc:27
 msgid "Certificate Policy"
-msgstr "Certificate Policy"
+msgstr ""
 
 #: cryptdlg.rc:28
 msgid "Policy Identifier: "
-msgstr "Policy Identifier: "
+msgstr ""
 
 #: cryptdlg.rc:29
 msgid "Policy Qualifier Info"
-msgstr "Policy Qualifier Info"
+msgstr ""
 
 #: cryptdlg.rc:30
 msgid "Policy Qualifier Id="
-msgstr "Policy Qualifier Id="
+msgstr ""
 
 #: cryptdlg.rc:33
 msgid "Qualifier"
-msgstr "Qualifier"
+msgstr ""
 
 #: cryptdlg.rc:34
 msgid "Notice Reference"
-msgstr "Notice Reference"
+msgstr ""
 
 #: cryptdlg.rc:35
 msgid "Organization="
-msgstr "Organization="
+msgstr ""
 
 #: cryptdlg.rc:36
 msgid "Notice Number="
-msgstr "Notice Number="
+msgstr ""
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
-msgstr "Notice Text="
+msgstr ""
 
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
@@ -2916,6 +2916,7 @@ msgid "Invalid starting code segment for %1\n"
 msgstr "%1 における開始コード セグメントが正しくありません。\n"
 
 #: winerror.mc:736
+#, fuzzy
 msgid "Invalid starting stack segment for %1\n"
 msgstr ""
 "Invalid starting stack segment for %1\n"
@@ -3734,6 +3735,7 @@ msgid "Connection refused\n"
 msgstr "接続は拒否されました。\n"
 
 #: winerror.mc:1761
+#, fuzzy
 msgid "Connection gracefully closed\n"
 msgstr ""
 "接続は終了しました。\n"
@@ -6471,11 +6473,11 @@ msgstr "Program Files (x86)\\Common Files"
 
 #: shell32.rc:228
 msgid "Contacts"
-msgstr "Contacts"
+msgstr ""
 
 #: shell32.rc:229 winefile.rc:116
 msgid "Links"
-msgstr "Links"
+msgstr ""
 
 #: shell32.rc:230
 msgid "Pictures\\Slide Shows"
@@ -6531,15 +6533,15 @@ msgstr "Videos\\Sample Videos"
 
 #: shell32.rc:240
 msgid "Saved Games"
-msgstr "Saved Games"
+msgstr ""
 
 #: shell32.rc:241
 msgid "Searches"
-msgstr "Searches"
+msgstr ""
 
 #: shell32.rc:242
 msgid "Users"
-msgstr "Users"
+msgstr ""
 
 #: shell32.rc:243
 msgid "OEM Links"
@@ -6698,19 +6700,6 @@ msgid ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
-"Wine is free software; you can redistribute it and/or modify it under the "
-"terms of the GNU Lesser General Public License as published by the Free "
-"Software Foundation; either version 2.1 of the License, or (at your option) "
-"any later version.\n"
-"\n"
-"Wine is distributed in the hope that it will be useful, but WITHOUT ANY "
-"WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
-"FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for "
-"more details.\n"
-"\n"
-"You should have received a copy of the GNU Lesser General Public License "
-"along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
-"Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
 #: shell32.rc:266
 msgid "Wine License"
@@ -6782,7 +6771,7 @@ msgstr "エラー"
 
 #: user32.rc:69
 msgid "&More Windows..."
-msgstr "&More Windows..."
+msgstr ""
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -8336,7 +8325,7 @@ msgstr "上書き %s"
 
 #: cmd.rc:296
 msgid "More..."
-msgstr "More..."
+msgstr ""
 
 #: cmd.rc:297
 msgid "Line in Batch processing possibly truncated. Using:\n"
@@ -8443,7 +8432,7 @@ msgstr "CMD バージョン %s\n"
 
 #: cmd.rc:323
 msgid "More? "
-msgstr "More? "
+msgstr ""
 
 #: cmd.rc:324
 msgid "The input line is too long.\n"
@@ -9098,15 +9087,15 @@ msgstr "インターフェイス"
 
 #: oleview.rc:138
 msgid "Registry"
-msgstr "Registry"
+msgstr ""
 
 #: oleview.rc:139
 msgid "Implementation"
-msgstr "Implementation"
+msgstr ""
 
 #: oleview.rc:140
 msgid "Activation"
-msgstr "Activation"
+msgstr ""
 
 #: oleview.rc:142
 msgid "CoGetClassObject failed."
@@ -9641,6 +9630,7 @@ msgstr ""
 "条件の詳細は 'start /L' を起動してください。\n"
 
 #: start.rc:64
+#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -10403,15 +10393,15 @@ msgstr "native"
 
 #: winecfg.rc:54
 msgid "builtin"
-msgstr "builtin"
+msgstr ""
 
 #: winecfg.rc:55
 msgid "native, builtin"
-msgstr "native, builtin"
+msgstr ""
 
 #: winecfg.rc:56
 msgid "builtin, native"
-msgstr "builtin, native"
+msgstr ""
 
 #: winecfg.rc:57
 msgid "disabled"
@@ -10608,43 +10598,43 @@ msgstr "非アクティブ境界"
 
 #: winecfg.rc:116
 msgid "Controls Shadow"
-msgstr "Controls Shadow"
+msgstr ""
 
 #: winecfg.rc:117
 msgid "Gray Text"
-msgstr "Gray Text"
+msgstr ""
 
 #: winecfg.rc:118
 msgid "Controls Highlight"
-msgstr "Controls Highlight"
+msgstr ""
 
 #: winecfg.rc:119
 msgid "Controls Dark Shadow"
-msgstr "Controls Dark Shadow"
+msgstr ""
 
 #: winecfg.rc:120
 msgid "Controls Light"
-msgstr "Controls Light"
+msgstr ""
 
 #: winecfg.rc:121
 msgid "Controls Alternate Background"
-msgstr "Controls Alternate Background"
+msgstr ""
 
 #: winecfg.rc:122
 msgid "Hot Tracked Item"
-msgstr "Hot Tracked Item"
+msgstr ""
 
 #: winecfg.rc:123
 msgid "Active Title Bar Gradient"
-msgstr "Active Title Bar Gradient"
+msgstr ""
 
 #: winecfg.rc:124
 msgid "Inactive Title Bar Gradient"
-msgstr "Inactive Title Bar Gradient"
+msgstr ""
 
 #: winecfg.rc:125
 msgid "Menu Highlight"
-msgstr "Menu Highlight"
+msgstr ""
 
 #: winecfg.rc:126
 msgid "Menu Bar"
@@ -10693,7 +10683,7 @@ msgstr "それぞれの文字は %ld ピクセルの幅 %ld ピクセルの高�
 
 #: wineconsole.rc:35
 msgid "This is a test"
-msgstr "This is a test"
+msgstr ""
 
 #: wineconsole.rc:41
 msgid "wineconsole: Couldn't parse event id\n"
@@ -11077,27 +11067,27 @@ msgstr "変更あり(&M)"
 
 #: wordpad.rc:57
 msgid "E&xtras"
-msgstr "E&xtras"
+msgstr ""
 
 #: wordpad.rc:59
 msgid "Selection &info"
-msgstr "Selection &info"
+msgstr ""
 
 #: wordpad.rc:60
 msgid "Character &format"
-msgstr "Character &format"
+msgstr ""
 
 #: wordpad.rc:61
 msgid "&Def. char format"
-msgstr "&Def. char format"
+msgstr ""
 
 #: wordpad.rc:62
 msgid "Paragrap&h format"
-msgstr "Paragrap&h format"
+msgstr ""
 
 #: wordpad.rc:63
 msgid "&Get text"
-msgstr "&Get text"
+msgstr ""
 
 #: wordpad.rc:69
 msgid "&Formatbar"
