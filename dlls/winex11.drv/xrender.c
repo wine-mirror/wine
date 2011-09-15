@@ -106,12 +106,13 @@ static const WineXRenderFormatTemplate wxr_formats_template[WXR_NB_FORMATS] =
 typedef struct wine_xrender_format
 {
     WXRFormat               format;
-    XRenderPictFormat       *pict_format;
 } WineXRenderFormat;
 
 static WineXRenderFormat wxr_formats[WXR_NB_FORMATS];
 static int WineXRenderFormatsListSize = 0;
 static WineXRenderFormat *default_format = NULL;
+
+static XRenderPictFormat *pict_formats[WXR_NB_FORMATS];
 
 typedef struct
 {
@@ -128,7 +129,7 @@ typedef enum { AA_None = 0, AA_Grey, AA_RGB, AA_BGR, AA_VRGB, AA_VBGR, AA_MAXVAL
 typedef struct
 {
     GlyphSet glyphset;
-    const WineXRenderFormat *font_format;
+    XRenderPictFormat *font_format;
     int nrealized;
     BOOL *realized;
     void **bitmaps;
@@ -151,6 +152,7 @@ struct xrender_physdev
     int                cache_index;
     Picture            pict;
     Picture            pict_src;
+    XRenderPictFormat *pict_format;
     const WineXRenderFormat *format;
 };
 
@@ -317,7 +319,7 @@ static int load_xrender_formats(void)
             if(pict_format)
             {
                 wxr_formats[WineXRenderFormatsListSize].format = wxr_formats_template[i].wxr_format;
-                wxr_formats[WineXRenderFormatsListSize].pict_format = pict_format;
+                pict_formats[wxr_formats_template[i].wxr_format] = pict_format;
                 default_format = &wxr_formats[WineXRenderFormatsListSize];
                 WineXRenderFormatsListSize++;
                 TRACE("Loaded pict_format with id=%#lx for wxr_format=%#x\n", pict_format->id, wxr_formats_template[i].wxr_format);
@@ -335,7 +337,7 @@ static int load_xrender_formats(void)
             if(pict_format)
             {
                 wxr_formats[WineXRenderFormatsListSize].format = wxr_formats_template[i].wxr_format;
-                wxr_formats[WineXRenderFormatsListSize].pict_format = pict_format;
+                pict_formats[wxr_formats_template[i].wxr_format] = pict_format;
                 WineXRenderFormatsListSize++;
                 TRACE("Loaded pict_format with id=%#lx for wxr_format=%#x\n", pict_format->id, wxr_formats_template[i].wxr_format);
             }
@@ -455,10 +457,8 @@ sym_not_found:
 }
 
 /* Helper function to convert from a color packed in a 32-bit integer to a XRenderColor */
-static void get_xrender_color(const WineXRenderFormat *wxr_format, int src_color, XRenderColor *dst_color)
+static void get_xrender_color( XRenderPictFormat *pf, int src_color, XRenderColor *dst_color )
 {
-    XRenderPictFormat *pf = wxr_format->pict_format;
-
     if(pf->direct.redMask)
         dst_color->red = ((src_color >> pf->direct.red) & pf->direct.redMask) * 65535/pf->direct.redMask;
     else
@@ -552,7 +552,7 @@ static BOOL use_source_repeat( struct xrender_physdev *dev )
 
 static Picture get_xrender_picture( struct xrender_physdev *dev )
 {
-    if (!dev->pict && dev->format)
+    if (!dev->pict && dev->pict_format)
     {
         XRenderPictureAttributes pa;
         RGNDATA *clip = X11DRV_GetRegionData( dev->x11dev->region, 0 );
@@ -560,7 +560,7 @@ static Picture get_xrender_picture( struct xrender_physdev *dev )
         wine_tsx11_lock();
         pa.subwindow_mode = IncludeInferiors;
         dev->pict = pXRenderCreatePicture( gdi_display, dev->x11dev->drawable,
-                                           dev->format->pict_format, CPSubwindowMode, &pa );
+                                           dev->pict_format, CPSubwindowMode, &pa );
         if (dev->pict && clip)
             pXRenderSetPictureClipRectangles( gdi_display, dev->pict,
                                               dev->x11dev->dc_rect.left, dev->x11dev->dc_rect.top,
@@ -576,7 +576,7 @@ static Picture get_xrender_picture( struct xrender_physdev *dev )
 
 static Picture get_xrender_picture_source( struct xrender_physdev *dev, BOOL repeat )
 {
-    if (!dev->pict_src && dev->format)
+    if (!dev->pict_src && dev->pict_format)
     {
         XRenderPictureAttributes pa;
 
@@ -584,7 +584,7 @@ static Picture get_xrender_picture_source( struct xrender_physdev *dev, BOOL rep
         pa.subwindow_mode = IncludeInferiors;
         pa.repeat = repeat ? RepeatNormal : RepeatNone;
         dev->pict_src = pXRenderCreatePicture( gdi_display, dev->x11dev->drawable,
-                                               dev->format->pict_format, CPSubwindowMode|CPRepeat, &pa );
+                                               dev->pict_format, CPSubwindowMode|CPRepeat, &pa );
         wine_tsx11_unlock();
 
         TRACE("Allocing pict_src=%lx dc=%p drawable=%08lx repeat=%u\n",
@@ -614,6 +614,7 @@ static void free_xrender_picture( struct xrender_physdev *dev )
         }
         wine_tsx11_unlock();
     }
+    dev->pict_format = NULL;
     dev->format = NULL;
 }
 
@@ -621,6 +622,7 @@ static void update_xrender_drawable( struct xrender_physdev *dev )
 {
     free_xrender_picture( dev );
     dev->format = get_xrender_format_from_color_shifts( dev->x11dev->depth, dev->x11dev->color_shifts );
+    dev->pict_format = pict_formats[dev->format->format];
 }
 
 /* return a mask picture used to force alpha to 0 */
@@ -632,14 +634,13 @@ static Picture get_no_alpha_mask(void)
     wine_tsx11_lock();
     if (!pict)
     {
-        const WineXRenderFormat *fmt = get_xrender_format( WXR_FORMAT_A8R8G8B8 );
         XRenderPictureAttributes pa;
         XRenderColor col;
 
         pixmap = XCreatePixmap( gdi_display, root_window, 1, 1, 32 );
         pa.repeat = RepeatNormal;
         pa.component_alpha = True;
-        pict = pXRenderCreatePicture( gdi_display, pixmap, fmt->pict_format,
+        pict = pXRenderCreatePicture( gdi_display, pixmap, pict_formats[WXR_FORMAT_A8R8G8B8],
                                       CPRepeat|CPComponentAlpha, &pa );
         col.red = col.green = col.blue = 0xffff;
         col.alpha = 0;
@@ -1151,6 +1152,7 @@ static BOOL create_xrender_dc( PHYSDEV *pdev )
     physdev->x11dev = x11dev;
     physdev->cache_index = -1;
     physdev->format = get_xrender_format_from_color_shifts( x11dev->depth, x11dev->color_shifts );
+    physdev->pict_format = pict_formats[physdev->format->format];
     push_dc_driver( pdev, &physdev->dev, &xrender_funcs );
     return TRUE;
 }
@@ -1291,7 +1293,7 @@ static void xrenderdrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_r
 
 BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel, const DIBSECTION *dib)
 {
-    const WineXRenderFormat *fmt;
+    XRenderPictFormat *pict_format = NULL;
     ColorShifts shifts;
 
     /* When XRender is not around we can only use the screen_depth and when needed we perform depth conversion
@@ -1302,6 +1304,7 @@ BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel,
 
     if (dib)
     {
+        const WineXRenderFormat *fmt;
         const DWORD *bitfields;
         static const DWORD bitfields_32[3] = {0xff0000, 0x00ff00, 0x0000ff};
         static const DWORD bitfields_16[3] = {0x7c00, 0x03e0, 0x001f};
@@ -1323,6 +1326,7 @@ BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel,
                 dib->dsBm.bmBitsPixel, bitfields[0], bitfields[1], bitfields[2]);
             return FALSE;
         }
+        pict_format = pict_formats[fmt->format];
     }
     else
     {
@@ -1331,32 +1335,24 @@ BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel,
         /* We are dealing with a DDB */
         switch (bits_pixel)
         {
-            case 16:
-                fmt = get_xrender_format(WXR_FORMAT_R5G6B5);
-                break;
-            case 24:
-                fmt = get_xrender_format(WXR_FORMAT_R8G8B8);
-                break;
-            case 32:
-                fmt = get_xrender_format(WXR_FORMAT_A8R8G8B8);
-                break;
-            default:
-                fmt = NULL;
+        case 16: pict_format = pict_formats[WXR_FORMAT_R5G6B5]; break;
+        case 24: pict_format = pict_formats[WXR_FORMAT_R8G8B8]; break;
+        case 32: pict_format = pict_formats[WXR_FORMAT_A8R8G8B8]; break;
         }
 
-        if (!fmt)
+        if (!pict_format)
         {
             TRACE("Unhandled DDB bits_pixel=%d\n", bits_pixel);
             return FALSE;
         }
 
-        red_mask = fmt->pict_format->direct.redMask << fmt->pict_format->direct.red;
-        green_mask = fmt->pict_format->direct.greenMask << fmt->pict_format->direct.green;
-        blue_mask = fmt->pict_format->direct.blueMask << fmt->pict_format->direct.blue;
+        red_mask = pict_format->direct.redMask << pict_format->direct.red;
+        green_mask = pict_format->direct.greenMask << pict_format->direct.green;
+        blue_mask = pict_format->direct.blueMask << pict_format->direct.blue;
         X11DRV_PALETTE_ComputeColorShifts(&shifts, red_mask, green_mask, blue_mask);
     }
 
-    physBitmap->pixmap_depth = fmt->pict_format->depth;
+    physBitmap->pixmap_depth = pict_format->depth;
     physBitmap->trueColor = TRUE;
     physBitmap->pixmap_color_shifts = shifts;
     return TRUE;
@@ -1493,8 +1489,8 @@ static void UploadGlyph(struct xrender_physdev *physDev, int glyph, AA_Type form
         }
 
         wine_tsx11_lock();
-        formatEntry->font_format = get_xrender_format(wxr_format);
-        formatEntry->glyphset = pXRenderCreateGlyphSet(gdi_display, formatEntry->font_format->pict_format);
+        formatEntry->font_format = pict_formats[get_xrender_format(wxr_format)->format];
+        formatEntry->glyphset = pXRenderCreateGlyphSet(gdi_display, formatEntry->font_format);
         wine_tsx11_unlock();
     }
 
@@ -1851,12 +1847,13 @@ static Picture get_tile_pict(const WineXRenderFormat *wxr_format, const XRenderC
     if(!tile->xpm)
     {
         XRenderPictureAttributes pa;
+        XRenderPictFormat *pict_format = pict_formats[wxr_format->format];
 
         wine_tsx11_lock();
-        tile->xpm = XCreatePixmap(gdi_display, root_window, 1, 1, wxr_format->pict_format->depth);
+        tile->xpm = XCreatePixmap(gdi_display, root_window, 1, 1, pict_format->depth);
 
         pa.repeat = RepeatNormal;
-        tile->pict = pXRenderCreatePicture(gdi_display, tile->xpm, wxr_format->pict_format, CPRepeat, &pa);
+        tile->pict = pXRenderCreatePicture(gdi_display, tile->xpm, pict_format, CPRepeat, &pa);
         wine_tsx11_unlock();
 
         /* init current_color to something different from text_pixel */
@@ -1901,13 +1898,13 @@ static Picture get_mask_pict( int alpha )
 
     if (!pixmap)
     {
-        const WineXRenderFormat *fmt = get_xrender_format( WXR_FORMAT_A8R8G8B8 );
         XRenderPictureAttributes pa;
 
         wine_tsx11_lock();
         pixmap = XCreatePixmap( gdi_display, root_window, 1, 1, 32 );
         pa.repeat = RepeatNormal;
-        pict = pXRenderCreatePicture( gdi_display, pixmap, fmt->pict_format, CPRepeat, &pa );
+        pict = pXRenderCreatePicture( gdi_display, pixmap,
+                                      pict_formats[WXR_FORMAT_A8R8G8B8], CPRepeat, &pa );
         wine_tsx11_unlock();
         current_alpha = -1;
     }
@@ -2058,7 +2055,7 @@ BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         desired.y = physdev->x11dev->dc_rect.top + y;
         current.x = current.y = 0;
 
-        get_xrender_color(physdev->format, physdev->x11dev->textPixel, &col);
+        get_xrender_color(physdev->pict_format, physdev->x11dev->textPixel, &col);
         tile_pict = get_tile_pict(physdev->format, &col);
 
 	/* FIXME the mapping of Text/BkColor onto 1 or 0 needs investigation.
@@ -2109,7 +2106,7 @@ BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         pXRenderCompositeText16(gdi_display, render_op,
                                 tile_pict,
                                 pict,
-                                formatEntry->font_format->pict_format,
+                                formatEntry->font_format,
                                 0, 0, 0, 0, elts, count);
         wine_tsx11_unlock();
         HeapFree(GetProcessHeap(), 0, elts);
@@ -2367,15 +2364,15 @@ static void get_colors( struct xrender_physdev *physdev_src, struct xrender_phys
         {
             pixel = X11DRV_PALETTE_ToPhysical( physdev_dst->x11dev,
                                                RGB( rgb[0].rgbRed, rgb[0].rgbGreen, rgb[0].rgbBlue ));
-            get_xrender_color( physdev_dst->format, pixel, fg );
+            get_xrender_color( physdev_dst->pict_format, pixel, fg );
             pixel = X11DRV_PALETTE_ToPhysical( physdev_dst->x11dev,
                                                RGB( rgb[1].rgbRed, rgb[1].rgbGreen, rgb[1].rgbBlue ));
-            get_xrender_color( physdev_dst->format, pixel, bg );
+            get_xrender_color( physdev_dst->pict_format, pixel, bg );
             return;
         }
     }
-    get_xrender_color( physdev_dst->format, physdev_dst->x11dev->textPixel, fg );
-    get_xrender_color( physdev_dst->format, physdev_dst->x11dev->backgroundPixel, bg );
+    get_xrender_color( physdev_dst->pict_format, physdev_dst->x11dev->textPixel, fg );
+    get_xrender_color( physdev_dst->pict_format, physdev_dst->x11dev->backgroundPixel, bg );
 }
 
 static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xrender_physdev *physdev_dst,
@@ -2424,7 +2421,7 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
 
         /* Create a destination picture and fill it with textPixel color as the background color */
         wine_tsx11_lock();
-        dst_pict = pXRenderCreatePicture( gdi_display, drawable, physdev_dst->format->pict_format,
+        dst_pict = pXRenderCreatePicture( gdi_display, drawable, physdev_dst->pict_format,
                                           CPSubwindowMode|CPRepeat, &pa );
         pXRenderFillRectangle( gdi_display, PictOpSrc, dst_pict, &fg, x_dst, y_dst, width, height );
 
@@ -2442,7 +2439,7 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
         src_pict = get_xrender_picture_source( physdev_src, use_repeat );
 
         wine_tsx11_lock();
-        dst_pict = pXRenderCreatePicture( gdi_display, drawable, physdev_dst->format->pict_format,
+        dst_pict = pXRenderCreatePicture( gdi_display, drawable, physdev_dst->pict_format,
                                           CPSubwindowMode|CPRepeat, &pa );
 
         xrender_blit( PictOpSrc, src_pict, mask_pict, dst_pict,
@@ -2561,13 +2558,12 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
         if (format != physdev_src->format->format)
         {
             XRenderPictureAttributes pa;
-            const WineXRenderFormat *fmt = get_xrender_format( format );
 
             wine_tsx11_lock();
             pa.subwindow_mode = IncludeInferiors;
             pa.repeat = use_repeat ? RepeatNormal : RepeatNone;
-            tmp_pict = pXRenderCreatePicture( gdi_display, physdev_src->x11dev->drawable, fmt->pict_format,
-                                              CPSubwindowMode|CPRepeat, &pa );
+            tmp_pict = pXRenderCreatePicture( gdi_display, physdev_src->x11dev->drawable,
+                                              pict_formats[format], CPSubwindowMode|CPRepeat, &pa );
             wine_tsx11_unlock();
             src_pict = tmp_pict;
         }
@@ -2620,8 +2616,10 @@ void X11DRV_XRender_CopyBrush(X11DRV_PDEVICE *physDev, X_PHYSBITMAP *physBitmap,
         pa.subwindow_mode = IncludeInferiors;
         pa.repeat = RepeatNone;
 
-        src_pict = pXRenderCreatePicture(gdi_display, physBitmap->pixmap, src_format->pict_format, CPSubwindowMode|CPRepeat, &pa);
-        dst_pict = pXRenderCreatePicture(gdi_display, physDev->brush.pixmap, dst_format->pict_format, CPSubwindowMode|CPRepeat, &pa);
+        src_pict = pXRenderCreatePicture(gdi_display, physBitmap->pixmap,
+                                         pict_formats[src_format->format], CPSubwindowMode|CPRepeat, &pa);
+        dst_pict = pXRenderCreatePicture(gdi_display, physDev->brush.pixmap,
+                                         pict_formats[dst_format->format], CPSubwindowMode|CPRepeat, &pa);
 
         xrender_blit(PictOpSrc, src_pict, 0, dst_pict, 0, 0, 0, 0, 1.0, 1.0, width, height);
         pXRenderFreePicture(gdi_display, src_pict);
