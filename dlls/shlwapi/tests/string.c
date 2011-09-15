@@ -197,6 +197,39 @@ static const StrFromTimeIntervalResult StrFromTimeInterval_results[] = {
   { 0, 0, NULL }
 };
 
+
+/* Returns true if the user interface is in English. Note that this does not
+ * presume of the formatting of dates, numbers, etc.
+ */
+static BOOL is_lang_english(void)
+{
+    static HMODULE hkernel32 = NULL;
+    static LANGID (WINAPI *pGetThreadUILanguage)(void) = NULL;
+    static LANGID (WINAPI *pGetUserDefaultUILanguage)(void) = NULL;
+
+    if (!hkernel32)
+    {
+        hkernel32 = GetModuleHandleA("kernel32.dll");
+        pGetThreadUILanguage = (void*)GetProcAddress(hkernel32, "GetThreadUILanguage");
+        pGetUserDefaultUILanguage = (void*)GetProcAddress(hkernel32, "GetUserDefaultUILanguage");
+    }
+    if (pGetThreadUILanguage)
+        return PRIMARYLANGID(pGetThreadUILanguage()) == LANG_ENGLISH;
+    if (pGetUserDefaultUILanguage)
+        return PRIMARYLANGID(pGetUserDefaultUILanguage()) == LANG_ENGLISH;
+
+    return PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH;
+}
+
+/* Returns true if the dates, numbers, etc. are formatted using English
+ * conventions.
+ */
+static BOOL is_locale_english(void)
+{
+    /* Surprisingly GetThreadLocale() is irrelevant here */
+    return PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH;
+}
+
 static void test_StrChrA(void)
 {
   char string[129];
@@ -1405,15 +1438,18 @@ START_TEST(string)
   test_StrDupA();
 
   /* language-dependent test */
-  if (PRIMARYLANGID(GetUserDefaultLangID()) != LANG_ENGLISH)
-    skip("English is required for StrFromTimeInterval and StrFormat*Size tests\n");
-  else
+  if (is_lang_english() && is_locale_english())
   {
     test_StrFormatByteSize64A();
     test_StrFormatKBSizeA();
     test_StrFormatKBSizeW();
-    test_StrFromTimeIntervalA();
   }
+  else
+    skip("An English UI and locale is required for the StrFormat*Size tests\n");
+  if (is_lang_english())
+    test_StrFromTimeIntervalA();
+  else
+    skip("An English UI is required for the StrFromTimeInterval tests\n");
 
   test_StrCmpA();
   test_StrCmpW();
