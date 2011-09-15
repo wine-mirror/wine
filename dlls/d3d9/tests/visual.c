@@ -12179,7 +12179,6 @@ static void ds_size_test(IDirect3DDevice9 *device)
 {
     IDirect3DSurface9 *ds, *rt, *old_rt, *old_ds, *readback;
     HRESULT hr;
-    DWORD color;
     DWORD num_passes;
     struct
     {
@@ -12228,29 +12227,20 @@ static void ds_size_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00ff0000, 0.5f, 0);
     ok(SUCCEEDED(hr), "Target and Z Buffer clear failed, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_GetRenderTargetData(device, rt, readback);
-    ok(SUCCEEDED(hr), "IDirect3DDevice9_GetRenderTargetData failed, hr %#x.\n", hr);
-    color = getPixelColorFromSurface(readback, 2, 2);
-    ok(color == 0x000000FF, "DS size test: Pixel (2, 2) after clear is %#x, expected 0x000000FF\n", color);
-    color = getPixelColorFromSurface(readback, 31, 31);
-    ok(color == 0x000000FF, "DS size test: Pixel (31, 31) after clear is %#x, expected 0x000000FF\n", color);
-    color = getPixelColorFromSurface(readback, 32, 32);
-    ok(color == 0x000000FF, "DS size test: Pixel (32, 32) after clear is %#x, expected 0x000000FF\n", color);
-    color = getPixelColorFromSurface(readback, 63, 63);
-    ok(color == 0x000000FF, "DS size test: Pixel (63, 63) after clear is %#x, expected 0x000000FF\n", color);
+    /* Nvidia does not clear the surface(The color is still 0x000000ff), AMD does(the color is 0x00ff0000) */
 
     /* Turning on any depth-related state results in a ValidateDevice failure */
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_TRUE);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderState failed, hr %#x.\n", hr);
     hr = IDirect3DDevice9_ValidateDevice(device, &num_passes);
-    ok(hr == D3DERR_CONFLICTINGRENDERSTATE, "IDirect3DDevice9_ValidateDevice returned %#x, expected "
+    ok(hr == D3DERR_CONFLICTINGRENDERSTATE || hr == D3D_OK, "IDirect3DDevice9_ValidateDevice returned %#x, expected "
         "D3DERR_CONFLICTINGRENDERSTATE.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_FALSE);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderState failed, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, TRUE);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderState failed, hr %#x.\n", hr);
     hr = IDirect3DDevice9_ValidateDevice(device, &num_passes);
-    ok(hr == D3DERR_CONFLICTINGRENDERSTATE, "IDirect3DDevice9_ValidateDevice returned %#x, expected "
+    ok(hr == D3DERR_CONFLICTINGRENDERSTATE || hr == D3D_OK, "IDirect3DDevice9_ValidateDevice returned %#x, expected "
         "D3DERR_CONFLICTINGRENDERSTATE.\n", hr);
 
     /* Try to draw with the device in an invalid state */
@@ -12264,6 +12254,10 @@ static void ds_size_test(IDirect3DDevice9 *device)
         ok(SUCCEEDED(hr), "IDirect3DDevice9_DrawPrimitiveUP failed, hr %#x.\n", hr);
         hr = IDirect3DDevice9_EndScene(device);
         ok(SUCCEEDED(hr), "IDirect3DDevice9_EndScene failed, hr %#x.\n", hr);
+
+        /* Don't check the resulting draw unless we find an app that needs it. On nvidia ValidateDevice
+         * returns CONFLICTINGRENDERSTATE, so the result is undefined. On AMD d3d seems to assume the
+         * stored Z buffer value is 0.0 for all pixels, even those that are covered by the depth buffer */
     }
 
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, old_rt);
