@@ -3508,7 +3508,7 @@ msgstr "Login do serviço falhou\n"
 
 #: winerror.mc:1226
 msgid "Service start-hang\n"
-msgstr "Service start-hang\n"
+msgstr ""
 
 #: winerror.mc:1231
 msgid "Invalid service lock\n"
@@ -5181,7 +5181,7 @@ msgstr "Erro RPCInternal\n"
 
 #: winerror.mc:3251
 msgid "RPC divide-by-zero\n"
-msgstr "RPC divide-by-zero\n"
+msgstr ""
 
 #: winerror.mc:3256
 msgid "Address error\n"
@@ -5189,15 +5189,15 @@ msgstr "Erro de endereço\n"
 
 #: winerror.mc:3261
 msgid "Floating-point divide-by-zero\n"
-msgstr "Floating-point divide-by-zero\n"
+msgstr ""
 
 #: winerror.mc:3266
 msgid "Floating-point underflow\n"
-msgstr "Floating-point underflow\n"
+msgstr ""
 
 #: winerror.mc:3271
 msgid "Floating-point overflow\n"
-msgstr "Floating-point overflow\n"
+msgstr ""
 
 #: winerror.mc:3276
 msgid "No more entries\n"
@@ -5221,7 +5221,7 @@ msgstr "Handle de contexto estragado\n"
 
 #: winerror.mc:3301
 msgid "Binding handle mismatch\n"
-msgstr "Binding handle mismatch\n"
+msgstr ""
 
 #: winerror.mc:3306
 msgid "Cannot get call handle\n"
@@ -5643,8 +5643,6 @@ msgid ""
 "The specified installation package could not be opened.  Please check the "
 "file path and try again."
 msgstr ""
-"The specified installation package could not be opened.  Please check the "
-"file path and try again."
 
 #: msi.rc:28
 msgid "path %s not found"
@@ -5655,7 +5653,6 @@ msgid "insert disk %s"
 msgstr "insira o disco %s"
 
 #: msi.rc:30
-#, fuzzy
 msgid ""
 "Windows Installer %s\n"
 "\n"
@@ -5687,35 +5684,6 @@ msgid ""
 "\t/help\n"
 "\t/?\n"
 msgstr ""
-"Windows Installer %s\n"
-"\n"
-"Usage:\n"
-"msiexec command {required parameter} [optional parammeter]\n"
-"\n"
-"Install a product:\n"
-"\t/i {package|productcode} [property]\n"
-"\t/package {package|productcode} [property]\n"
-"\t/a package [property]\n"
-"Repair an installation:\n"
-"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
-"Uninstall a product:\n"
-"\t/uninstall {package|productcode} [property]\n"
-"\t/x {package|productcode} [property]\n"
-"Advertise a product:\n"
-"\t/j[u|m] package [/t transform] [/g languageid]\n"
-"Apply a patch:\n"
-"\t/p patchpackage [property]\n"
-"\t/p patchpackage /a package [property]\n"
-"Log and UI Modifiers for above commands:\n"
-"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
-"\t/q{|n|b|r|f|n+|b+|b-}\n"
-"Register MSI Service:\n"
-"\t/y\n"
-"Unregister MSI Service:\n"
-"\t/z\n"
-"Display this help:\n"
-"\t/help\n"
-"\t/?\n"
 
 #: msi.rc:57
 msgid "enter which folder contains %s"
@@ -6487,7 +6455,7 @@ msgstr "Explorador de Internet Wine"
 
 #: shdoclc.rc:30
 msgid "&w&bPage &p"
-msgstr "&w&bPage &p"
+msgstr ""
 
 #: shell32.rc:27 shell32.rc:42 shell32.rc:119 shell32.rc:159 taskmgr.rc:65
 #: taskmgr.rc:110 taskmgr.rc:252
@@ -8017,13 +7985,10 @@ msgid ""
 "Not Yet Implemented\n"
 "\n"
 msgstr ""
-"Not Yet Implemented\n"
-"\n"
 
 #: attrib.rc:28 cmd.rc:301
-#, fuzzy
 msgid "%s: File Not Found\n"
-msgstr "%s : File Not Found\n"
+msgstr ""
 
 #: attrib.rc:47
 msgid ""
@@ -8512,16 +8477,12 @@ msgid ""
 "PUSHD <directoryname> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <directoryname> saves the current directory onto a\n"
-"stack, and then changes the current directory to the supplied one.\n"
 
 #: cmd.rc:223
 msgid ""
 "POPD changes current directory to the last one saved with\n"
 "PUSHD.\n"
 msgstr ""
-"POPD changes current directory to the last one saved with\n"
-"PUSHD.\n"
 
 #: cmd.rc:231
 msgid ""
@@ -8551,7 +8512,7 @@ msgstr ""
 
 #: cmd.rc:244
 msgid "MORE displays output of files or piped input in pages.\n"
-msgstr "MORE displays output of files or piped input in pages.\n"
+msgstr ""
 
 #: cmd.rc:248
 msgid ""
@@ -8642,7 +8603,7 @@ msgstr ""
 
 #: cmd.rc:290
 msgid "Are you sure"
-msgstr "Are you sure"
+msgstr ""
 
 #: cmd.rc:291 xcopy.rc:40
 msgctxt "Yes key"
@@ -8656,59 +8617,59 @@ msgstr "N"
 
 #: cmd.rc:293
 msgid "File association missing for extension %s\n"
-msgstr "File association missing for extension %s\n"
+msgstr ""
 
 #: cmd.rc:294
 msgid "No open command associated with file type '%s'\n"
-msgstr "No open command associated with file type '%s'\n"
+msgstr ""
 
 #: cmd.rc:295
 msgid "Overwrite %s"
-msgstr "Overwrite %s"
+msgstr ""
 
 #: cmd.rc:296
 msgid "More..."
-msgstr "More..."
+msgstr ""
 
 #: cmd.rc:297
 msgid "Line in Batch processing possibly truncated. Using:\n"
-msgstr "Line in Batch processing possibly truncated. Using:\n"
+msgstr ""
 
 #: cmd.rc:299
 msgid "Argument missing\n"
-msgstr "Argument missing\n"
+msgstr ""
 
 #: cmd.rc:300
 msgid "Syntax error\n"
-msgstr "Syntax error\n"
+msgstr ""
 
 #: cmd.rc:302
 msgid "No help available for %s\n"
-msgstr "No help available for %s\n"
+msgstr ""
 
 #: cmd.rc:303
 msgid "Target to GOTO not found\n"
-msgstr "Target to GOTO not found\n"
+msgstr ""
 
 #: cmd.rc:304
 msgid "Current Date is %s\n"
-msgstr "Current Date is %s\n"
+msgstr ""
 
 #: cmd.rc:305
 msgid "Current Time is %s\n"
-msgstr "Current Time is %s\n"
+msgstr ""
 
 #: cmd.rc:306
 msgid "Enter new date: "
-msgstr "Enter new date: "
+msgstr ""
 
 #: cmd.rc:307
 msgid "Enter new time: "
-msgstr "Enter new time: "
+msgstr ""
 
 #: cmd.rc:308
 msgid "Environment variable %s not defined\n"
-msgstr "Environment variable %s not defined\n"
+msgstr ""
 
 #: cmd.rc:309 xcopy.rc:38
 msgid "Failed to open '%s'\n"
@@ -8716,7 +8677,7 @@ msgstr "Falhou ao abrir '%s'\n"
 
 #: cmd.rc:310
 msgid "Cannot call batch label outside of a batch script\n"
-msgstr "Cannot call batch label outside of a batch script\n"
+msgstr ""
 
 #: cmd.rc:311 xcopy.rc:42
 msgctxt "All key"
@@ -8725,23 +8686,23 @@ msgstr "A"
 
 #: cmd.rc:312
 msgid "%s, Delete"
-msgstr "%s, Delete"
+msgstr ""
 
 #: cmd.rc:313
 msgid "Echo is %s\n"
-msgstr "Echo is %s\n"
+msgstr ""
 
 #: cmd.rc:314
 msgid "Verify is %s\n"
-msgstr "Verify is %s\n"
+msgstr ""
 
 #: cmd.rc:315
 msgid "Verify must be ON or OFF\n"
-msgstr "Verify must be ON or OFF\n"
+msgstr ""
 
 #: cmd.rc:316
 msgid "Parameter error\n"
-msgstr "Parameter error\n"
+msgstr ""
 
 #: cmd.rc:317
 msgid ""
@@ -8749,21 +8710,18 @@ msgid ""
 "Volume Serial Number is %04x-%04x\n"
 "\n"
 msgstr ""
-"Volume in drive %c is %s\n"
-"Volume Serial Number is %04x-%04x\n"
-"\n"
 
 #: cmd.rc:318
 msgid "Volume label (11 characters, ENTER for none)?"
-msgstr "Volume label (11 characters, ENTER for none)?"
+msgstr ""
 
 #: cmd.rc:319
 msgid "PATH not found\n"
-msgstr "PATH not found\n"
+msgstr ""
 
 #: cmd.rc:320
 msgid "Press Return key to continue: "
-msgstr "Press Return key to continue: "
+msgstr ""
 
 #: cmd.rc:321
 msgid "Wine Command Prompt"
@@ -8771,15 +8729,15 @@ msgstr "Wine Command Prompt"
 
 #: cmd.rc:322
 msgid "CMD Version %s\n"
-msgstr "CMD Version %s\n"
+msgstr ""
 
 #: cmd.rc:323
 msgid "More? "
-msgstr "More? "
+msgstr ""
 
 #: cmd.rc:324
 msgid "The input line is too long.\n"
-msgstr "The input line is too long.\n"
+msgstr ""
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10049,6 +10007,7 @@ msgstr ""
 "condições; execute 'start /L' para detalhes.\n"
 
 #: start.rc:64
+#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -10096,7 +10055,7 @@ msgstr ""
 
 #: start.rc:68
 msgid "Could not translate the specified Unix filename to a DOS filename."
-msgstr "Could not translate the specified Unix filename to a DOS filename."
+msgstr ""
 
 #: taskkill.rc:27
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
@@ -11023,63 +10982,63 @@ msgstr "Texto da Caixa de Mensagem"
 
 #: winecfg.rc:112
 msgid "Application Workspace"
-msgstr "Application Workspace"
+msgstr ""
 
 #: winecfg.rc:113
 msgid "Window Frame"
-msgstr "Window Frame"
+msgstr ""
 
 #: winecfg.rc:114
 msgid "Active Border"
-msgstr "Active Border"
+msgstr ""
 
 #: winecfg.rc:115
 msgid "Inactive Border"
-msgstr "Inactive Border"
+msgstr ""
 
 #: winecfg.rc:116
 msgid "Controls Shadow"
-msgstr "Controls Shadow"
+msgstr ""
 
 #: winecfg.rc:117
 msgid "Gray Text"
-msgstr "Gray Text"
+msgstr ""
 
 #: winecfg.rc:118
 msgid "Controls Highlight"
-msgstr "Controls Highlight"
+msgstr ""
 
 #: winecfg.rc:119
 msgid "Controls Dark Shadow"
-msgstr "Controls Dark Shadow"
+msgstr ""
 
 #: winecfg.rc:120
 msgid "Controls Light"
-msgstr "Controls Light"
+msgstr ""
 
 #: winecfg.rc:121
 msgid "Controls Alternate Background"
-msgstr "Controls Alternate Background"
+msgstr ""
 
 #: winecfg.rc:122
 msgid "Hot Tracked Item"
-msgstr "Hot Tracked Item"
+msgstr ""
 
 #: winecfg.rc:123
 msgid "Active Title Bar Gradient"
-msgstr "Active Title Bar Gradient"
+msgstr ""
 
 #: winecfg.rc:124
 msgid "Inactive Title Bar Gradient"
-msgstr "Inactive Title Bar Gradient"
+msgstr ""
 
 #: winecfg.rc:125
 msgid "Menu Highlight"
-msgstr "Menu Highlight"
+msgstr ""
 
 #: winecfg.rc:126
 msgid "Menu Bar"
-msgstr "Menu Bar"
+msgstr ""
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"
@@ -11309,6 +11268,7 @@ msgid "Error while selecting new font."
 msgstr "Erro ao seleccionar novo tipo de letra."
 
 #: winefile.rc:99
+#, fuzzy
 msgid "Wine File Manager"
 msgstr "Winefile"
 
@@ -11671,11 +11631,11 @@ msgstr "Uma página"
 
 #: wordpad.rc:167
 msgid "Zoom in"
-msgstr "Zoom in"
+msgstr ""
 
 #: wordpad.rc:168
 msgid "Zoom out"
-msgstr "Zoom out"
+msgstr ""
 
 #: wordpad.rc:170
 msgid "Page"
