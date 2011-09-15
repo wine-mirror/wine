@@ -431,6 +431,8 @@ typedef CHAR           *PCH,        *LPCH;
 typedef const CHAR     *PCCH,       *LPCCH;
 typedef CHAR           *PSTR,       *LPSTR,     *NPSTR;
 typedef const CHAR     *PCSTR,      *LPCSTR;
+typedef CHAR           *PZZSTR;
+typedef const CHAR     *PCZZSTR;
 
 /* Unicode string types */
 typedef WCHAR          *PWCH,       *LPWCH;
@@ -453,6 +455,8 @@ typedef WCHAR           TCHAR,      *PTCHAR;
 #endif
 typedef LPWSTR          PTSTR,       LPTSTR;
 typedef LPCWSTR         PCTSTR,      LPCTSTR;
+typedef PZZSTR          PZZTSTR;
+typedef PCZZSTR         PCZZTSTR;
 #  define __TEXT(string) L##string
 # else  /* UNICODE */
 # ifndef _TCHAR_DEFINED
@@ -461,6 +465,8 @@ typedef CHAR            TCHAR,      *PTCHAR;
 # endif
 typedef LPSTR           PTSTR,       LPTSTR;
 typedef LPCSTR          PCTSTR,      LPCTSTR;
+typedef PZZWSTR         PZZTSTR;
+typedef PCZZWSTR        PCZZTSTR;
 #  define __TEXT(string) string
 # endif /* UNICODE */
 # define TEXT(quote) __TEXT(quote)
