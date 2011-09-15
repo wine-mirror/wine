@@ -2004,7 +2004,7 @@ static void test_lights(void)
     present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
 
     hr = IDirect3D9_CreateDevice( d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
-                                  D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_PUREDEVICE, &present_parameters, &device );
+                                  D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device );
     ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE || hr == D3DERR_INVALIDCALL,
        "IDirect3D9_CreateDevice failed with %08x\n", hr);
     if(!device)
