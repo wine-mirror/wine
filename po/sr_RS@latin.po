@@ -4314,9 +4314,8 @@ msgid "Security DB commit failure\n"
 msgstr ""
 
 #: winerror.mc:2256
-#, fuzzy
 msgid "Account is built-in\n"
-msgstr "native, builtin"
+msgstr ""
 
 #: winerror.mc:2261
 msgid "Group is built-in\n"
@@ -5781,7 +5780,7 @@ msgstr "Wine Video 1 video kodek"
 
 #: oleacc.rc:27
 msgid "unknown object"
-msgstr "unknown object"
+msgstr ""
 
 #: oleacc.rc:28
 msgid "title bar"
@@ -7029,19 +7028,6 @@ msgid ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
-"Wine is free software; you can redistribute it and/or modify it under the "
-"terms of the GNU Lesser General Public License as published by the Free "
-"Software Foundation; either version 2.1 of the License, or (at your option) "
-"any later version.\n"
-"\n"
-"Wine is distributed in the hope that it will be useful, but WITHOUT ANY "
-"WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
-"FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for "
-"more details.\n"
-"\n"
-"You should have received a copy of the GNU Lesser General Public License "
-"along with this library; if not, write to the Free Software Foundation, "
-"Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
 #: shell32.rc:266
 msgid "Wine License"
@@ -7926,7 +7912,7 @@ msgstr "&Digitalni"
 
 #: clock.rc:32 notepad.rc:50 winefile.rc:64 wordpad.rc:81
 msgid "&Font..."
-msgstr "&Font..."
+msgstr ""
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -8503,7 +8489,7 @@ msgstr ""
 
 #: ipconfig.rc:29
 msgid "%s adapter %s\n"
-msgstr "%s adapter %s\n"
+msgstr ""
 
 #: ipconfig.rc:30
 msgid "Ethernet"
@@ -9450,9 +9436,8 @@ msgid "Modify Binary Data..."
 msgstr ""
 
 #: regedit.rc:109
-#, fuzzy
 msgid "&Export..."
-msgstr "&Font..."
+msgstr ""
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
@@ -10406,7 +10391,7 @@ msgstr "Izaberite temu"
 
 #: winecfg.rc:45
 msgid "Folder"
-msgstr "Folder"
+msgstr ""
 
 #: winecfg.rc:46
 msgid "Links to"
@@ -10580,7 +10565,7 @@ msgstr "Tekst menija"
 
 #: winecfg.rc:100
 msgid "Scrollbar"
-msgstr "Scrollbar"
+msgstr ""
 
 #: winecfg.rc:101
 msgid "Selection Background"
@@ -10668,7 +10653,7 @@ msgstr "Kontrola alternativne pozadine"
 
 #: winecfg.rc:122
 msgid "Hot Tracked Item"
-msgstr "Hot Tracked Item"
+msgstr ""
 
 #: winecfg.rc:123
 msgid "Active Title Bar Gradient"
@@ -11044,7 +11029,7 @@ msgstr "Uvek na &vrhu"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr "&Info..."
+msgstr ""
 
 #: winhlp32.rc:64
 msgid "Annotation..."
@@ -11068,7 +11053,7 @@ msgstr "Pregled"
 
 #: winhlp32.rc:84
 msgid "&Index"
-msgstr "&Index"
+msgstr ""
 
 #: winhlp32.rc:88
 msgid "Help files (*.hlp)"
