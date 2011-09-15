@@ -6622,7 +6622,7 @@ msgstr "Silinme tarihi"
 
 #: shell32.rc:156
 msgid "Control Panel"
-msgstr "Control Panel"
+msgstr ""
 
 #: shell32.rc:163
 msgid "Select"
@@ -6926,7 +6926,7 @@ msgstr ""
 
 #: shell32.rc:250
 msgid "Wine Control Panel"
-msgstr "Wine Control Panel"
+msgstr ""
 
 #: shell32.rc:192
 msgid "Unable to display Run File dialog box (internal error)"
@@ -7960,13 +7960,10 @@ msgid ""
 "Not Yet Implemented\n"
 "\n"
 msgstr ""
-"Not Yet Implemented\n"
-"\n"
 
 #: attrib.rc:28 cmd.rc:301
-#, fuzzy
 msgid "%s: File Not Found\n"
-msgstr "%s : File Not Found\n"
+msgstr ""
 
 #: attrib.rc:47
 msgid ""
@@ -11148,6 +11145,7 @@ msgid "Error while selecting new font."
 msgstr "Yeni yazı tipi seçerken hata."
 
 #: winefile.rc:99
+#, fuzzy
 msgid "Wine File Manager"
 msgstr "Winefile"
 
