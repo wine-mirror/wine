@@ -385,6 +385,13 @@ static HRESULT interp_assign_ident(exec_ctx_t *ctx)
     return assign_ident(ctx, arg, v.v, v.owned);
 }
 
+static HRESULT interp_set_ident(exec_ctx_t *ctx)
+{
+    const BSTR arg = ctx->instr->arg1.bstr;
+    FIXME("%s\n", debugstr_w(arg));
+    return E_NOTIMPL;
+}
+
 static HRESULT interp_assign_member(exec_ctx_t *ctx)
 {
     BSTR identifier = ctx->instr->arg1.bstr;
@@ -417,6 +424,13 @@ static HRESULT interp_assign_member(exec_ctx_t *ctx)
     release_val(&val);
     IDispatch_Release(obj);
     return hres;
+}
+
+static HRESULT interp_set_member(exec_ctx_t *ctx)
+{
+    BSTR identifier = ctx->instr->arg1.bstr;
+    FIXME("%s\n", debugstr_w(identifier));
+    return E_NOTIMPL;
 }
 
 static HRESULT interp_jmp(exec_ctx_t *ctx)

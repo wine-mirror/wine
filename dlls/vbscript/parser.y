@@ -49,6 +49,7 @@ static member_expression_t *new_member_expression(parser_ctx_t*,expression_t*,co
 static void *new_statement(parser_ctx_t*,statement_type_t,size_t);
 static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
 static statement_t *new_assign_statement(parser_ctx_t*,member_expression_t*,expression_t*);
+static statement_t *new_set_statement(parser_ctx_t*,member_expression_t*,expression_t*);
 static statement_t *new_dim_statement(parser_ctx_t*,dim_decl_t*);
 static statement_t *new_if_statement(parser_ctx_t*,expression_t*,statement_t*,elseif_decl_t*,statement_t*);
 static statement_t *new_function_statement(parser_ctx_t*,function_decl_t*);
@@ -146,6 +147,8 @@ Statement
     | FunctionDecl                          { $$ = new_function_statement(ctx, $1); CHECK_ERROR; }
     | tEXIT tFUNCTION                       { $$ = new_statement(ctx, STAT_EXITFUNC, 0); CHECK_ERROR; }
     | tEXIT tSUB                            { $$ = new_statement(ctx, STAT_EXITSUB, 0); CHECK_ERROR; }
+    | tSET MemberExpression Arguments_opt '=' Expression
+                                            { $2->args = $3; $$ = new_set_statement(ctx, $2, $5); CHECK_ERROR; }
 
 MemberExpression
     : tIdentifier                           { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
@@ -457,6 +460,19 @@ static statement_t *new_assign_statement(parser_ctx_t *ctx, member_expression_t 
     assign_statement_t *stat;
 
     stat = new_statement(ctx, STAT_ASSIGN, sizeof(*stat));
+    if(!stat)
+        return NULL;
+
+    stat->member_expr = left;
+    stat->value_expr = right;
+    return &stat->stat;
+}
+
+static statement_t *new_set_statement(parser_ctx_t *ctx, member_expression_t *left, expression_t *right)
+{
+    assign_statement_t *stat;
+
+    stat = new_statement(ctx, STAT_SET, sizeof(*stat));
     if(!stat)
         return NULL;
 

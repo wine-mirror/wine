@@ -475,7 +475,7 @@ static HRESULT compile_if_statement(compile_ctx_t *ctx, if_statement_t *stat)
     return S_OK;
 }
 
-static HRESULT compile_assign_statement(compile_ctx_t *ctx, assign_statement_t *stat)
+static HRESULT compile_assign_statement(compile_ctx_t *ctx, assign_statement_t *stat, BOOL is_set)
 {
     HRESULT hres;
 
@@ -493,9 +493,9 @@ static HRESULT compile_assign_statement(compile_ctx_t *ctx, assign_statement_t *
         if(FAILED(hres))
             return hres;
 
-        hres = push_instr_bstr(ctx, OP_assign_member, stat->member_expr->identifier);
+        hres = push_instr_bstr(ctx, is_set ? OP_set_member : OP_assign_member, stat->member_expr->identifier);
     }else {
-        hres = push_instr_bstr(ctx, OP_assign_ident, stat->member_expr->identifier);
+        hres = push_instr_bstr(ctx, is_set ? OP_set_ident : OP_assign_ident, stat->member_expr->identifier);
     }
 
     return hres;
@@ -585,7 +585,7 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
     while(stat) {
         switch(stat->type) {
         case STAT_ASSIGN:
-            hres = compile_assign_statement(ctx, (assign_statement_t*)stat);
+            hres = compile_assign_statement(ctx, (assign_statement_t*)stat, FALSE);
             break;
         case STAT_CALL:
             hres = compile_member_expression(ctx, ((call_statement_t*)stat)->expr, FALSE);
@@ -604,6 +604,9 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
             break;
         case STAT_IF:
             hres = compile_if_statement(ctx, (if_statement_t*)stat);
+            break;
+        case STAT_SET:
+            hres = compile_assign_statement(ctx, (assign_statement_t*)stat, TRUE);
             break;
         default:
             FIXME("Unimplemented statement type %d\n", stat->type);
