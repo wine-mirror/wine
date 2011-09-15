@@ -283,16 +283,23 @@ static BSTR a2bstr(const char *str)
     return ret;
 }
 
-static BOOL is_english(void)
+/* Returns true if the user interface is in English. Note that this does not
+ * presume of the formatting of dates, numbers, etc.
+ */
+static BOOL is_lang_english(void)
 {
     static HMODULE hkernel32 = NULL;
+    static LANGID (WINAPI *pGetThreadUILanguage)(void) = NULL;
     static LANGID (WINAPI *pGetUserDefaultUILanguage)(void) = NULL;
 
     if (!hkernel32)
     {
         hkernel32 = GetModuleHandleA("kernel32.dll");
+        pGetThreadUILanguage = (void*)GetProcAddress(hkernel32, "GetThreadUILanguage");
         pGetUserDefaultUILanguage = (void*)GetProcAddress(hkernel32, "GetUserDefaultUILanguage");
     }
+    if (pGetThreadUILanguage)
+        return PRIMARYLANGID(pGetThreadUILanguage()) == LANG_ENGLISH;
     if (pGetUserDefaultUILanguage)
         return PRIMARYLANGID(pGetUserDefaultUILanguage()) == LANG_ENGLISH;
 
@@ -1629,7 +1636,7 @@ static HRESULT WINAPI InPlaceUIWindow_SetActiveObject(IOleInPlaceFrame *iface,
 
     if(expect_InPlaceUIWindow_SetActiveObject_active) {
         ok(pActiveObject != NULL, "pActiveObject = NULL\n");
-        if(pActiveObject && is_english())
+        if(pActiveObject && is_lang_english())
             ok(!lstrcmpW(wszHTML_Document, pszObjName), "%s != \"HTML Document\"\n", wine_dbgstr_w(pszObjName));
     }
     else {
@@ -1649,7 +1656,7 @@ static HRESULT WINAPI InPlaceFrame_SetActiveObject(IOleInPlaceFrame *iface,
     if(pActiveObject) {
         CHECK_EXPECT2(SetActiveObject);
 
-        if(pActiveObject && is_english())
+        if(pActiveObject && is_lang_english())
             ok(!lstrcmpW(wszHTML_Document, pszObjName), "%s != \"HTML Document\"\n", wine_dbgstr_w(pszObjName));
     }else {
         CHECK_EXPECT(SetActiveObject_null);
