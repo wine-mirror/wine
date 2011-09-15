@@ -55,7 +55,7 @@ static BOOL X11DRV_XRender_Installed = FALSE;
 #define RepeatReflect 3
 #endif
 
-typedef enum wine_xrformat
+typedef enum wxr_format
 {
   WXR_FORMAT_MONO,
   WXR_FORMAT_GRAY,
@@ -69,7 +69,8 @@ typedef enum wine_xrformat
   WXR_FORMAT_B8G8R8A8,
   WXR_FORMAT_X8R8G8B8,
   WXR_FORMAT_B8G8R8X8,
-  WXR_NB_FORMATS
+  WXR_NB_FORMATS,
+  WXR_INVALID_FORMAT = WXR_NB_FORMATS
 } WXRFormat;
 
 typedef struct wine_xrender_format_template
@@ -103,16 +104,8 @@ static const WineXRenderFormatTemplate wxr_formats_template[WXR_NB_FORMATS] =
     {WXR_FORMAT_B8G8R8X8,   32,     0,      0,      8,      0xff,   16,     0xff,   24,     0xff    },
 };
 
-typedef struct wine_xrender_format
-{
-    WXRFormat               format;
-} WineXRenderFormat;
-
-static WineXRenderFormat wxr_formats[WXR_NB_FORMATS];
-static int WineXRenderFormatsListSize = 0;
-static WineXRenderFormat *default_format = NULL;
-
-static XRenderPictFormat *pict_formats[WXR_NB_FORMATS];
+static enum wxr_format default_format;
+static XRenderPictFormat *pict_formats[WXR_NB_FORMATS + 1 /* invalid format */];
 
 typedef struct
 {
@@ -149,11 +142,11 @@ struct xrender_physdev
 {
     struct gdi_physdev dev;
     X11DRV_PDEVICE    *x11dev;
+    enum wxr_format    format;
     int                cache_index;
     Picture            pict;
     Picture            pict_src;
     XRenderPictFormat *pict_format;
-    const WineXRenderFormat *format;
 };
 
 static inline struct xrender_physdev *get_xrender_dev( PHYSDEV dev )
@@ -291,7 +284,9 @@ static BOOL is_wxrformat_compatible_with_default_visual(const WineXRenderFormatT
 
 static int load_xrender_formats(void)
 {
+    int count = 0;
     unsigned int i;
+
     for(i = 0; i < (sizeof(wxr_formats_template) / sizeof(wxr_formats_template[0])); i++)
     {
         XRenderPictFormat templ, *pict_format;
@@ -318,10 +313,9 @@ static int load_xrender_formats(void)
 
             if(pict_format)
             {
-                wxr_formats[WineXRenderFormatsListSize].format = wxr_formats_template[i].wxr_format;
                 pict_formats[wxr_formats_template[i].wxr_format] = pict_format;
-                default_format = &wxr_formats[WineXRenderFormatsListSize];
-                WineXRenderFormatsListSize++;
+                default_format = wxr_formats_template[i].wxr_format;
+                count++;
                 TRACE("Loaded pict_format with id=%#lx for wxr_format=%#x\n", pict_format->id, wxr_formats_template[i].wxr_format);
             }
         }
@@ -336,14 +330,13 @@ static int load_xrender_formats(void)
 
             if(pict_format)
             {
-                wxr_formats[WineXRenderFormatsListSize].format = wxr_formats_template[i].wxr_format;
                 pict_formats[wxr_formats_template[i].wxr_format] = pict_format;
-                WineXRenderFormatsListSize++;
+                count++;
                 TRACE("Loaded pict_format with id=%#lx for wxr_format=%#x\n", pict_format->id, wxr_formats_template[i].wxr_format);
             }
         }
     }
-    return WineXRenderFormatsListSize;
+    return count;
 }
 
 /***********************************************************************
@@ -477,31 +470,15 @@ static void get_xrender_color( XRenderPictFormat *pf, int src_color, XRenderColo
     dst_color->alpha = 0xffff;
 }
 
-static const WineXRenderFormat *get_xrender_format(WXRFormat format)
-{
-    int i;
-    for(i=0; i<WineXRenderFormatsListSize; i++)
-    {
-        if(wxr_formats[i].format == format)
-        {
-            TRACE("Returning wxr_format=%#x\n", format);
-            return &wxr_formats[i];
-        }
-    }
-    return NULL;
-}
-
-static const WineXRenderFormat *get_xrender_format_from_color_shifts(int depth, ColorShifts *shifts)
+static enum wxr_format get_xrender_format_from_color_shifts(int depth, ColorShifts *shifts)
 {
     int redMask, greenMask, blueMask;
     unsigned int i;
 
-    if(depth == 1)
-        return get_xrender_format(WXR_FORMAT_MONO);
+    if (depth == 1) return WXR_FORMAT_MONO;
 
     /* physDevs of a depth <=8, don't have color_shifts set and XRender can't handle those except for 1-bit */
-    if(!shifts)
-        return default_format;
+    if (!shifts) return default_format;
 
     redMask   = shifts->physicalRed.max << shifts->physicalRed.shift;
     greenMask = shifts->physicalGreen.max << shifts->physicalGreen.shift;
@@ -514,18 +491,12 @@ static const WineXRenderFormat *get_xrender_format_from_color_shifts(int depth, 
             redMask   == (wxr_formats_template[i].redMask << wxr_formats_template[i].red) &&
             greenMask == (wxr_formats_template[i].greenMask << wxr_formats_template[i].green) &&
             blueMask  == (wxr_formats_template[i].blueMask << wxr_formats_template[i].blue) )
-
-        {
-            /* When we reach this stage the format was found in our template table but this doesn't mean that
-            * the Xserver also supports this format (e.g. its depth might be too low). The call below verifies that.
-            */
-            return get_xrender_format(wxr_formats_template[i].wxr_format);
-        }
+            return wxr_formats_template[i].wxr_format;
     }
 
     /* This should not happen because when we reach 'shifts' must have been set and we only allows shifts which are backed by X */
     ERR("No XRender format found!\n");
-    return NULL;
+    return WXR_INVALID_FORMAT;
 }
 
 /* Set the x/y scaling and x/y offsets in the transformation matrix of the source picture */
@@ -615,14 +586,13 @@ static void free_xrender_picture( struct xrender_physdev *dev )
         wine_tsx11_unlock();
     }
     dev->pict_format = NULL;
-    dev->format = NULL;
 }
 
 static void update_xrender_drawable( struct xrender_physdev *dev )
 {
     free_xrender_picture( dev );
     dev->format = get_xrender_format_from_color_shifts( dev->x11dev->depth, dev->x11dev->color_shifts );
-    dev->pict_format = pict_formats[dev->format->format];
+    dev->pict_format = pict_formats[dev->format];
 }
 
 /* return a mask picture used to force alpha to 0 */
@@ -1152,7 +1122,7 @@ static BOOL create_xrender_dc( PHYSDEV *pdev )
     physdev->x11dev = x11dev;
     physdev->cache_index = -1;
     physdev->format = get_xrender_format_from_color_shifts( x11dev->depth, x11dev->color_shifts );
-    physdev->pict_format = pict_formats[physdev->format->format];
+    physdev->pict_format = pict_formats[physdev->format];
     push_dc_driver( pdev, &physdev->dev, &xrender_funcs );
     return TRUE;
 }
@@ -1304,7 +1274,6 @@ BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel,
 
     if (dib)
     {
-        const WineXRenderFormat *fmt;
         const DWORD *bitfields;
         static const DWORD bitfields_32[3] = {0xff0000, 0x00ff00, 0x0000ff};
         static const DWORD bitfields_16[3] = {0x7c00, 0x03e0, 0x001f};
@@ -1317,16 +1286,15 @@ BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel,
             bitfields = bitfields_16;
 
         X11DRV_PALETTE_ComputeColorShifts(&shifts, bitfields[0], bitfields[1], bitfields[2]);
-        fmt = get_xrender_format_from_color_shifts(dib->dsBm.bmBitsPixel, &shifts);
+        pict_format = pict_formats[get_xrender_format_from_color_shifts(dib->dsBm.bmBitsPixel, &shifts)];
 
         /* Common formats should be in our picture format table. */
-        if (!fmt)
+        if (!pict_format)
         {
             TRACE("Unhandled dibsection format bpp=%d, redMask=%x, greenMask=%x, blueMask=%x\n",
                 dib->dsBm.bmBitsPixel, bitfields[0], bitfields[1], bitfields[2]);
             return FALSE;
         }
-        pict_format = pict_formats[fmt->format];
     }
     else
     {
@@ -1489,7 +1457,7 @@ static void UploadGlyph(struct xrender_physdev *physDev, int glyph, AA_Type form
         }
 
         wine_tsx11_lock();
-        formatEntry->font_format = pict_formats[get_xrender_format(wxr_format)->format];
+        formatEntry->font_format = pict_formats[wxr_format];
         formatEntry->glyphset = pXRenderCreateGlyphSet(gdi_display, formatEntry->font_format);
         wine_tsx11_unlock();
     }
@@ -1833,7 +1801,7 @@ static void SmoothGlyphGray(XImage *image, int x, int y, void *bitmap, XGlyphInf
  * Returns an appropriate Picture for tiling the text colour.
  * Call and use result within the xrender_cs
  */
-static Picture get_tile_pict(const WineXRenderFormat *wxr_format, const XRenderColor *color)
+static Picture get_tile_pict( enum wxr_format wxr_format, const XRenderColor *color)
 {
     static struct
     {
@@ -1842,12 +1810,12 @@ static Picture get_tile_pict(const WineXRenderFormat *wxr_format, const XRenderC
         XRenderColor current_color;
     } tiles[WXR_NB_FORMATS], *tile;
 
-    tile = &tiles[wxr_format->format];
+    tile = &tiles[wxr_format];
 
     if(!tile->xpm)
     {
         XRenderPictureAttributes pa;
-        XRenderPictFormat *pict_format = pict_formats[wxr_format->format];
+        XRenderPictFormat *pict_format = pict_formats[wxr_format];
 
         wine_tsx11_lock();
         tile->xpm = XCreatePixmap(gdi_display, root_window, 1, 1, pict_format->depth);
@@ -1860,7 +1828,7 @@ static Picture get_tile_pict(const WineXRenderFormat *wxr_format, const XRenderC
         tile->current_color = *color;
         tile->current_color.red ^= 0xffff;
 
-        if(wxr_format->format == WXR_FORMAT_MONO)
+        if (wxr_format == WXR_FORMAT_MONO)
         {
             /* for a 1bpp bitmap we always need a 1 in the tile */
             XRenderColor col;
@@ -1872,7 +1840,7 @@ static Picture get_tile_pict(const WineXRenderFormat *wxr_format, const XRenderC
         }
     }
 
-    if (memcmp( color, &tile->current_color, sizeof(*color) ) && wxr_format->format != WXR_FORMAT_MONO)
+    if (memcmp( color, &tile->current_color, sizeof(*color) ) && wxr_format != WXR_FORMAT_MONO)
     {
         wine_tsx11_lock();
         pXRenderFillRectangle(gdi_display, PictOpSrc, tile->pict, color, 0, 0, 1, 1);
@@ -2060,7 +2028,7 @@ BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 
 	/* FIXME the mapping of Text/BkColor onto 1 or 0 needs investigation.
 	 */
-	if((physdev->format->format == WXR_FORMAT_MONO) && (textPixel == 0))
+	if((physdev->format == WXR_FORMAT_MONO) && (textPixel == 0))
 	    render_op = PictOpOutReverse; /* This gives us 'black' text */
 
         for(idx = 0; idx < count; idx++)
@@ -2355,7 +2323,7 @@ static void xrender_mono_blit( Picture src_pict, Picture mask_pict, Picture dst_
 static void get_colors( struct xrender_physdev *physdev_src, struct xrender_physdev *physdev_dst,
                         XRenderColor *fg, XRenderColor *bg )
 {
-    if (physdev_src->format->format == WXR_FORMAT_MONO)
+    if (physdev_src->format == WXR_FORMAT_MONO)
     {
         RGBQUAD rgb[2];
         int pixel;
@@ -2404,8 +2372,7 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
     if (drawable != physdev_dst->x11dev->drawable) x_dst = y_dst = 0;  /* using an intermediate pixmap */
 
     /* mono -> color */
-    if (physdev_src->format->format == WXR_FORMAT_MONO &&
-        physdev_dst->format->format != WXR_FORMAT_MONO)
+    if (physdev_src->format == WXR_FORMAT_MONO && physdev_dst->format != WXR_FORMAT_MONO)
     {
         XRenderColor fg, bg;
 
@@ -2468,8 +2435,8 @@ static BOOL xrenderdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
         return dst_dev->funcs->pStretchBlt( dst_dev, dst, src_dev, src, rop );
     }
 
-    if (physdev_dst->format->format == WXR_FORMAT_MONO &&
-        physdev_src->format->format != WXR_FORMAT_MONO)  /* XRender is of no use in this case */
+    /* XRender is of no use for color -> mono */
+    if (physdev_dst->format == WXR_FORMAT_MONO && physdev_src->format != WXR_FORMAT_MONO)
         return X11DRV_StretchBlt( &physdev_dst->x11dev->dev, dst, &physdev_src->x11dev->dev, src, rop );
 
     /* if not stretching, we only need to handle format conversion */
@@ -2554,8 +2521,8 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     if (!(blendfn.AlphaFormat & AC_SRC_ALPHA) && physdev_src->format)
     {
         /* we need a source picture with no alpha */
-        WXRFormat format = get_format_without_alpha( physdev_src->format->format );
-        if (format != physdev_src->format->format)
+        enum wxr_format format = get_format_without_alpha( physdev_src->format );
+        if (format != physdev_src->format)
         {
             XRenderPictureAttributes pa;
 
@@ -2596,15 +2563,15 @@ void X11DRV_XRender_CopyBrush(X11DRV_PDEVICE *physDev, X_PHYSBITMAP *physBitmap,
 {
     /* At depths >1, the depth of physBitmap and physDev might not be the same e.g. the physbitmap might be a 16-bit DIB while the physdev uses 24-bit */
     int depth = physBitmap->pixmap_depth == 1 ? 1 : physDev->depth;
-    const WineXRenderFormat *src_format = get_xrender_format_from_color_shifts(physBitmap->pixmap_depth, &physBitmap->pixmap_color_shifts);
-    const WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(physDev->depth, physDev->color_shifts);
+    enum wxr_format src_format = get_xrender_format_from_color_shifts(physBitmap->pixmap_depth, &physBitmap->pixmap_color_shifts);
+    enum wxr_format dst_format = get_xrender_format_from_color_shifts(physDev->depth, physDev->color_shifts);
 
     wine_tsx11_lock();
     physDev->brush.pixmap = XCreatePixmap(gdi_display, root_window, width, height, depth);
 
     /* Use XCopyArea when the physBitmap and brush.pixmap have the same format. */
     if( (physBitmap->pixmap_depth == 1) || (!X11DRV_XRender_Installed && physDev->depth == physBitmap->pixmap_depth) ||
-        (src_format->format == dst_format->format) )
+        (src_format == dst_format) )
     {
         XCopyArea( gdi_display, physBitmap->pixmap, physDev->brush.pixmap,
                    get_bitmap_gc(physBitmap->pixmap_depth), 0, 0, width, height, 0, 0 );
@@ -2617,9 +2584,9 @@ void X11DRV_XRender_CopyBrush(X11DRV_PDEVICE *physDev, X_PHYSBITMAP *physBitmap,
         pa.repeat = RepeatNone;
 
         src_pict = pXRenderCreatePicture(gdi_display, physBitmap->pixmap,
-                                         pict_formats[src_format->format], CPSubwindowMode|CPRepeat, &pa);
+                                         pict_formats[src_format], CPSubwindowMode|CPRepeat, &pa);
         dst_pict = pXRenderCreatePicture(gdi_display, physDev->brush.pixmap,
-                                         pict_formats[dst_format->format], CPSubwindowMode|CPRepeat, &pa);
+                                         pict_formats[dst_format], CPSubwindowMode|CPRepeat, &pa);
 
         xrender_blit(PictOpSrc, src_pict, 0, dst_pict, 0, 0, 0, 0, 1.0, 1.0, width, height);
         pXRenderFreePicture(gdi_display, src_pict);
