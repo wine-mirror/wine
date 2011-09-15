@@ -2411,13 +2411,15 @@ static void get_colors( struct xrender_physdev *physdev_src, struct xrender_phys
 }
 
 static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xrender_physdev *physdev_dst,
-                                  Pixmap pixmap, const struct bitblt_coords *src,
+                                  Drawable drawable, const struct bitblt_coords *src,
                                   const struct bitblt_coords *dst )
 {
     int width = dst->visrect.right - dst->visrect.left;
     int height = dst->visrect.bottom - dst->visrect.top;
     int x_src = physdev_src->x11dev->dc_rect.left + src->visrect.left;
     int y_src = physdev_src->x11dev->dc_rect.top + src->visrect.top;
+    int x_dst = physdev_dst->x11dev->dc_rect.left + dst->visrect.left;
+    int y_dst = physdev_dst->x11dev->dc_rect.top + dst->visrect.top;
     Picture src_pict=0, dst_pict=0, mask_pict=0;
     BOOL use_repeat;
     double xscale, yscale;
@@ -2433,6 +2435,8 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
         yscale = src->height / (double)dst->height;
     }
     else xscale = yscale = 1;  /* no scaling needed with a repeating source */
+
+    if (drawable != physdev_dst->x11dev->drawable) x_dst = y_dst = 0;  /* using an intermediate pixmap */
 
     /* mono -> color */
     if (physdev_src->info.format->format == WXR_FORMAT_MONO &&
@@ -2452,12 +2456,12 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
 
         /* Create a destination picture and fill it with textPixel color as the background color */
         wine_tsx11_lock();
-        dst_pict = pXRenderCreatePicture( gdi_display, pixmap, physdev_dst->info.format->pict_format,
+        dst_pict = pXRenderCreatePicture( gdi_display, drawable, physdev_dst->info.format->pict_format,
                                           CPSubwindowMode|CPRepeat, &pa );
-        pXRenderFillRectangle(gdi_display, PictOpSrc, dst_pict, &fg, 0, 0, width, height);
+        pXRenderFillRectangle( gdi_display, PictOpSrc, dst_pict, &fg, x_dst, y_dst, width, height );
 
         xrender_mono_blit( src_pict, mask_pict, dst_pict, x_src, y_src,
-                           0, 0, xscale, yscale, width, height );
+                           x_dst, y_dst, xscale, yscale, width, height );
 
         if (dst_pict) pXRenderFreePicture(gdi_display, dst_pict);
         wine_tsx11_unlock();
@@ -2470,11 +2474,11 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
         src_pict = get_xrender_picture_source( physdev_src->x11dev, use_repeat );
 
         wine_tsx11_lock();
-        dst_pict = pXRenderCreatePicture( gdi_display, pixmap, physdev_dst->info.format->pict_format,
+        dst_pict = pXRenderCreatePicture( gdi_display, drawable, physdev_dst->info.format->pict_format,
                                           CPSubwindowMode|CPRepeat, &pa );
 
         xrender_blit( PictOpSrc, src_pict, mask_pict, dst_pict,
-                      x_src, y_src, 0, 0, xscale, yscale, width, height );
+                      x_src, y_src, x_dst, y_dst, xscale, yscale, width, height );
 
         if (dst_pict) pXRenderFreePicture(gdi_display, dst_pict);
         wine_tsx11_unlock();
@@ -2490,10 +2494,7 @@ static BOOL xrenderdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
 {
     struct xrender_physdev *physdev_dst = get_xrender_dev( dst_dev );
     struct xrender_physdev *physdev_src = get_xrender_dev( src_dev );
-    INT width, height;
     INT sSrc, sDst;
-    Pixmap src_pixmap;
-    GC tmpGC;
     BOOL stretch = (src->width != dst->width) || (src->height != dst->height);
 
     if (src_dev->funcs != dst_dev->funcs)
@@ -2525,23 +2526,28 @@ static BOOL xrenderdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     X11DRV_CoerceDIBSection( physdev_dst->x11dev, DIB_Status_GdiMod );
     if (physdev_dst != physdev_src) X11DRV_CoerceDIBSection( physdev_src->x11dev, DIB_Status_GdiMod );
 
-    width  = dst->visrect.right - dst->visrect.left;
-    height = dst->visrect.bottom - dst->visrect.top;
+    if (rop != SRCCOPY)
+    {
+        GC tmpGC;
+        Pixmap tmp_pixmap;
 
-    wine_tsx11_lock();
-    tmpGC = XCreateGC( gdi_display, physdev_dst->x11dev->drawable, 0, NULL );
-    XSetSubwindowMode( gdi_display, tmpGC, IncludeInferiors );
-    XSetGraphicsExposures( gdi_display, tmpGC, False );
-    src_pixmap = XCreatePixmap( gdi_display, root_window, width, height, physdev_dst->x11dev->depth );
-    wine_tsx11_unlock();
+        wine_tsx11_lock();
+        tmpGC = XCreateGC( gdi_display, physdev_dst->x11dev->drawable, 0, NULL );
+        XSetSubwindowMode( gdi_display, tmpGC, IncludeInferiors );
+        XSetGraphicsExposures( gdi_display, tmpGC, False );
+        tmp_pixmap = XCreatePixmap( gdi_display, root_window, dst->visrect.right - dst->visrect.left,
+                                    dst->visrect.bottom - dst->visrect.top, physdev_dst->x11dev->depth );
+        wine_tsx11_unlock();
 
-    xrender_stretch_blit( physdev_src, physdev_dst, src_pixmap, src, dst );
-    execute_rop( physdev_dst->x11dev, src_pixmap, tmpGC, &dst->visrect, rop );
+        xrender_stretch_blit( physdev_src, physdev_dst, tmp_pixmap, src, dst );
+        execute_rop( physdev_dst->x11dev, tmp_pixmap, tmpGC, &dst->visrect, rop );
 
-    wine_tsx11_lock();
-    XFreePixmap( gdi_display, src_pixmap );
-    XFreeGC( gdi_display, tmpGC );
-    wine_tsx11_unlock();
+        wine_tsx11_lock();
+        XFreePixmap( gdi_display, tmp_pixmap );
+        XFreeGC( gdi_display, tmpGC );
+        wine_tsx11_unlock();
+    }
+    else xrender_stretch_blit( physdev_src, physdev_dst, physdev_dst->x11dev->drawable, src, dst );
 
     if (physdev_dst != physdev_src) X11DRV_UnlockDIBSection( physdev_src->x11dev, FALSE );
     X11DRV_UnlockDIBSection( physdev_dst->x11dev, TRUE );
