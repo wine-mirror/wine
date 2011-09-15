@@ -284,6 +284,8 @@ extern void update_x11_clipping( X11DRV_PDEVICE *physDev, const RGNDATA *data ) 
 extern RGNDATA *add_extra_clipping_region( X11DRV_PDEVICE *dev, HRGN rgn ) DECLSPEC_HIDDEN;
 extern void restore_clipping_region( X11DRV_PDEVICE *dev, RGNDATA *data ) DECLSPEC_HIDDEN;
 
+extern void execute_rop( X11DRV_PDEVICE *physdev, Pixmap src_pixmap, GC gc, const RECT *visrect, DWORD rop ) DECLSPEC_HIDDEN;
+
 extern BOOL X11DRV_SetupGCForPatBlt( X11DRV_PDEVICE *physDev, GC gc, BOOL fMapColors ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_SetupGCForBrush( X11DRV_PDEVICE *physDev ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_SetupGCForText( X11DRV_PDEVICE *physDev ) DECLSPEC_HIDDEN;

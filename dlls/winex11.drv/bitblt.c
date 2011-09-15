@@ -1195,8 +1195,7 @@ static BOOL same_format(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst)
     return FALSE;
 }
 
-static void execute_rop( X11DRV_PDEVICE *physdev, Pixmap src_pixmap, GC gc,
-                         const RECT *visrect, DWORD rop )
+void execute_rop( X11DRV_PDEVICE *physdev, Pixmap src_pixmap, GC gc, const RECT *visrect, DWORD rop )
 {
     Pixmap pixmaps[3];
     Pixmap result = src_pixmap;
@@ -1313,13 +1312,19 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
                         PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
 {
     X11DRV_PDEVICE *physDevDst = get_x11drv_dev( dst_dev );
-    X11DRV_PDEVICE *physDevSrc = get_x11drv_dev( src_dev ); /* FIXME: check that it's really an x11 dev */
+    X11DRV_PDEVICE *physDevSrc = get_x11drv_dev( src_dev );
     BOOL fStretch;
     INT width, height;
     INT sDst, sSrc = DIB_Status_None;
     const BYTE *opcode;
     Pixmap src_pixmap;
     GC tmpGC;
+
+    if (src_dev->funcs != dst_dev->funcs)
+    {
+        dst_dev = GET_NEXT_PHYSDEV( dst_dev, pStretchBlt );
+        return dst_dev->funcs->pStretchBlt( dst_dev, dst, src_dev, src, rop );
+    }
 
     fStretch = (src->width != dst->width) || (src->height != dst->height);
 
@@ -1336,7 +1341,7 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     if (!fStretch && sSrc == DIB_Status_AppMod)
     {
         if (physDevDst != physDevSrc) X11DRV_UnlockDIBSection( physDevSrc, FALSE );
-        X11DRV_UnlockDIBSection( physDevDst, FALSE );
+        X11DRV_UnlockDIBSection( physDevDst, TRUE );
         dst_dev = GET_NEXT_PHYSDEV( dst_dev, pStretchBlt );
         return dst_dev->funcs->pStretchBlt( dst_dev, dst, src_dev, src, rop );
     }
