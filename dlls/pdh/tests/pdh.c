@@ -54,7 +54,7 @@ static const WCHAR uptime[] =
 
 static const WCHAR system_uptime[] =
     {'\\','S','y','s','t','e','m','\\','S','y','s','t','e','m',' ','U','p',' ','T','i','m','e',0};
-static const WCHAR system_downtime[] = /* does not exist */
+static const WCHAR nonexistent_counter[] =
     {'\\','S','y','s','t','e','m','\\','S','y','s','t','e','m',' ','D','o','w','n',' ','T','i','m','e',0};
 static const WCHAR percentage_processor_time[] =
     {'\\','P','r','o','c','e','s','s','o','r','(','_','T','o','t','a','l',')',
@@ -129,7 +129,7 @@ static void test_PdhAddCounterA( void )
     ret = PdhAddCounterA( query, "\\System\\System Up Time", 0, NULL );
     ok(ret == PDH_INVALID_ARGUMENT, "PdhAddCounterA failed 0x%08x\n", ret);
 
-    ret = PdhAddCounterA( query, "\\System\\System Down Time", 0, &counter );
+    ret = PdhAddCounterA( query, "\\System\\Nonexistent Counter", 0, &counter );
     ok(ret == PDH_CSTATUS_NO_COUNTER, "PdhAddCounterA failed 0x%08x\n", ret);
     ok(!counter, "PdhAddCounterA failed %p\n", counter);
 
@@ -176,7 +176,7 @@ static void test_PdhAddCounterW( void )
     ret = PdhAddCounterW( query, percentage_processor_time, 0, NULL );
     ok(ret == PDH_INVALID_ARGUMENT, "PdhAddCounterW failed 0x%08x\n", ret);
 
-    ret = PdhAddCounterW( query, system_downtime, 0, &counter );
+    ret = PdhAddCounterW( query, nonexistent_counter, 0, &counter );
     ok(ret == PDH_CSTATUS_NO_COUNTER, "PdhAddCounterW failed 0x%08x\n", ret);
     ok(!counter, "PdhAddCounterW failed %p\n", counter);
 
@@ -267,7 +267,7 @@ static void test_PdhAddEnglishCounterW( void )
     ret = pPdhAddEnglishCounterW( query, system_uptime, 0, NULL );
     ok(ret == PDH_INVALID_ARGUMENT, "PdhAddEnglishCounterW failed 0x%08x\n", ret);
 
-    ret = pPdhAddEnglishCounterW( query, system_downtime, 0, &counter );
+    ret = pPdhAddEnglishCounterW( query, nonexistent_counter, 0, &counter );
     ok(ret == PDH_CSTATUS_NO_COUNTER, "PdhAddEnglishCounterW failed 0x%08x\n", ret);
     ok(!counter, "PdhAddEnglishCounterA failed %p\n", counter);
 
@@ -705,7 +705,7 @@ static void test_PdhValidatePathA( void )
     ret = PdhValidatePathA( "System Up Time" );
     ok(ret == PDH_CSTATUS_BAD_COUNTERNAME, "PdhValidatePathA failed 0x%08x\n", ret);
 
-    ret = PdhValidatePathA( "\\System\\System Down Time" );
+    ret = PdhValidatePathA( "\\System\\Nonexistent Counter" );
     ok(ret == PDH_CSTATUS_NO_COUNTER, "PdhValidatePathA failed 0x%08x\n", ret);
 
     ret = PdhValidatePathA( "\\System\\System Up Time" );
@@ -731,7 +731,7 @@ static void test_PdhValidatePathW( void )
     ret = PdhValidatePathW( uptime );
     ok(ret == PDH_CSTATUS_BAD_COUNTERNAME, "PdhValidatePathW failed 0x%08x\n", ret);
 
-    ret = PdhValidatePathW( system_downtime );
+    ret = PdhValidatePathW( nonexistent_counter );
     ok(ret == PDH_CSTATUS_NO_COUNTER, "PdhValidatePathW failed 0x%08x\n", ret);
 
     ret = PdhValidatePathW( system_uptime );
@@ -780,7 +780,7 @@ static void test_PdhValidatePathExW( void )
     ret = pPdhValidatePathExW( NULL, uptime );
     ok(ret == PDH_CSTATUS_BAD_COUNTERNAME, "PdhValidatePathExW failed 0x%08x\n", ret);
 
-    ret = pPdhValidatePathExW( NULL, system_downtime );
+    ret = pPdhValidatePathExW( NULL, nonexistent_counter );
     ok(ret == PDH_CSTATUS_NO_COUNTER, "PdhValidatePathExW failed 0x%08x\n", ret);
 
     ret = pPdhValidatePathExW( NULL, system_uptime );
