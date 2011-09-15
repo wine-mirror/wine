@@ -586,15 +586,15 @@ static void fog_test(IDirect3DDevice7 *device)
     }
 
     color = getPixelColor(device, 160, 360);
-    ok(color == 0x00FF0000, "Untransformed vertex with no table or vertex fog has color %08x\n", color);
+    ok(color_match(color, 0x00FF0000, 1), "Untransformed vertex with no table or vertex fog has color %08x\n", color);
     color = getPixelColor(device, 160, 120);
-    ok(color == 0x0000FF00, "Untransformed vertex with linear vertex fog has color %08x\n", color);
+    ok(color_match(color, 0x0000FF00, 1), "Untransformed vertex with linear vertex fog has color %08x\n", color);
     color = getPixelColor(device, 480, 120);
-    ok(color == 0x00FFFF00, "Transformed vertex with linear vertex fog has color %08x\n", color);
+    ok(color_match(color, 0x00FFFF00, 1), "Transformed vertex with linear vertex fog has color %08x\n", color);
     if(caps.dpcTriCaps.dwRasterCaps & D3DPRASTERCAPS_FOGTABLE)
     {
         color = getPixelColor(device, 480, 360);
-        ok(color == 0x0000FF00, "Transformed vertex with linear table fog has color %08x\n", color);
+        ok(color_match(color, 0x0000FF00, 1), "Transformed vertex with linear table fog has color %08x\n", color);
     }
     else
     {
@@ -641,7 +641,7 @@ static void fog_test(IDirect3DDevice7 *device)
         color = getPixelColor(device, 160, 360);
         ok(color_match(color, 0x00ff0000, 4), "Unfogged quad has color %08x\n", color);
         color = getPixelColor(device, 160, 120);
-        ok(color == 0x0000ff00, "Fogged out quad has color %08x\n", color);
+        ok(color_match(color, 0x0000ff00, 1), "Fogged out quad has color %08x\n", color);
 
         /* Test fog behavior with an orthogonal (but not identity) projection matrix */
         hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_WORLD, (D3DMATRIX *)world_mat2);
@@ -673,7 +673,7 @@ static void fog_test(IDirect3DDevice7 *device)
         color = getPixelColor(device, 160, 360);
         todo_wine ok(color_match(color, 0x00e51900, 4), "Partially fogged quad has color %08x\n", color);
         color = getPixelColor(device, 160, 120);
-        ok(color == 0x0000ff00, "Fogged out quad has color %08x\n", color);
+        ok(color_match(color, 0x0000ff00, 1), "Fogged out quad has color %08x\n", color);
 
         hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_WORLD, (D3DMATRIX *)ident_mat);
         ok(hr == D3D_OK, "SetTransform returned %#08x\n", hr);
