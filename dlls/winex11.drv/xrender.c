@@ -2357,12 +2357,13 @@ static void xrender_blit( int op, Picture src_pict, Picture mask_pict, Picture d
 
 /* Helper function for (stretched) mono->color blitting using xrender */
 static void xrender_mono_blit( Picture src_pict, Picture mask_pict, Picture dst_pict,
-                               int x_src, int y_src, double xscale, double yscale, int width, int height )
+                               int x_src, int y_src, int x_dst, int y_dst,
+                               double xscale, double yscale, int width, int height )
 {
     int x_offset, y_offset;
 
     /* When doing a mono->color blit, 'src_pict' contains a 1x1 picture for tiling, the actual
-     * source data is in mask_pict.  The 'src_pict' data effectively acts as an alpha channel to the
+     * source data is in mask_pict.  The 'mask_pict' data effectively acts as an alpha channel to the
      * tile data. We need PictOpOver for correct rendering.
      * Note since the 'source data' is in the mask picture, we have to pass x_src / y_src using
      * mask_x / mask_y
@@ -2383,7 +2384,7 @@ static void xrender_mono_blit( Picture src_pict, Picture mask_pict, Picture dst_
         set_xrender_transformation(mask_pict, 1, 1, 0, 0);
     }
     pXRenderComposite(gdi_display, PictOpOver, src_pict, mask_pict, dst_pict,
-                      0, 0, x_offset, y_offset, 0, 0, width, height);
+                      0, 0, x_offset, y_offset, x_dst, y_dst, width, height );
 }
 
 /***********************************************************************
@@ -2567,7 +2568,8 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
         dst_pict = pXRenderCreatePicture(gdi_display, pixmap, dst_format->pict_format, CPSubwindowMode|CPRepeat, &pa);
         pXRenderFillRectangle(gdi_display, PictOpSrc, dst_pict, &fg, 0, 0, width, height);
 
-        xrender_mono_blit(src_pict, mask_pict, dst_pict, x_src, y_src, xscale, yscale, width, height);
+        xrender_mono_blit(src_pict, mask_pict, dst_pict, x_src, y_src, 0, 0,
+                          xscale, yscale, width, height);
 
         if(dst_pict) pXRenderFreePicture(gdi_display, dst_pict);
         wine_tsx11_unlock();
