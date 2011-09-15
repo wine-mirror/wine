@@ -318,8 +318,11 @@ static HRESULT compile_member_expression(compile_ctx_t *ctx, member_expression_t
         return hres;
 
     if(expr->obj_expr) {
-        FIXME("obj_expr not implemented\n");
-        hres = E_NOTIMPL;
+        hres = compile_expression(ctx, expr->obj_expr);
+        if(FAILED(hres))
+            return hres;
+
+        hres = push_instr_bstr_uint(ctx, ret_val ? OP_mcall : OP_mcallv, expr->identifier, arg_cnt);
     }else {
         hres = push_instr_bstr_uint(ctx, ret_val ? OP_icall : OP_icallv, expr->identifier, arg_cnt);
     }

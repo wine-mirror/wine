@@ -146,6 +146,8 @@ typedef enum {
     X(jmp,            0, ARG_ADDR,    0)          \
     X(jmp_false,      0, ARG_ADDR,    0)          \
     X(long,           1, ARG_INT,     0)          \
+    X(mcall,          1, ARG_BSTR,    ARG_UINT)   \
+    X(mcallv,         1, ARG_BSTR,    ARG_UINT)   \
     X(mod,            1, 0,           0)          \
     X(mul,            1, 0,           0)          \
     X(neg,            1, 0,           0)          \

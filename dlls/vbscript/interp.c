@@ -327,6 +327,57 @@ static HRESULT interp_icallv(exec_ctx_t *ctx)
     return do_icall(ctx, NULL);
 }
 
+static HRESULT do_mcall(exec_ctx_t *ctx, VARIANT *res)
+{
+    const BSTR identifier = ctx->instr->arg1.bstr;
+    const unsigned arg_cnt = ctx->instr->arg2.uint;
+    IDispatch *obj;
+    DISPPARAMS dp;
+    DISPID id;
+    HRESULT hres;
+
+    hres = stack_pop_disp(ctx, &obj);
+    if(FAILED(hres))
+        return hres;
+
+    if(!obj) {
+        FIXME("NULL obj\n");
+        return E_FAIL;
+    }
+
+    vbstack_to_dp(ctx, arg_cnt, &dp);
+
+    hres = disp_get_id(obj, identifier, &id);
+    if(SUCCEEDED(hres))
+        hres = disp_call(ctx->script, obj, id, &dp, res);
+    IDispatch_Release(obj);
+    if(FAILED(hres))
+        return hres;
+
+    stack_popn(ctx, arg_cnt);
+    return S_OK;
+}
+
+static HRESULT interp_mcall(exec_ctx_t *ctx)
+{
+    VARIANT res;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = do_mcall(ctx, &res);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push(ctx, &res);
+}
+
+static HRESULT interp_mcallv(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, VARIANT *val, BOOL own_val)
 {
     ref_t ref;
