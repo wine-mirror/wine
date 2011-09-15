@@ -2794,8 +2794,6 @@ static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSurface
     presentation_parameters.BackBufferWidth = target->surface_desc.dwWidth;
     presentation_parameters.BackBufferHeight = target->surface_desc.dwHeight;
     presentation_parameters.BackBufferFormat = PixelFormat_DD2WineD3D(&target->surface_desc.u4.ddpfPixelFormat);
-    presentation_parameters.BackBufferCount = (target->surface_desc.dwFlags & DDSD_BACKBUFFERCOUNT)
-            ? target->surface_desc.dwBackBufferCount : 0;
     presentation_parameters.SwapEffect = WINED3DSWAPEFFECT_COPY;
     presentation_parameters.hDeviceWindow = ddraw->dest_window;
     presentation_parameters.Windowed = !(ddraw->cooperative_level & DDSCL_FULLSCREEN);
@@ -5644,27 +5642,6 @@ static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *
     return D3D_OK;
 }
 
-static HRESULT WINAPI findRenderTarget(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *surface_desc, void *ctx)
-{
-    IDirectDrawSurfaceImpl *s = impl_from_IDirectDrawSurface7(surface);
-    IDirectDrawSurfaceImpl **target = ctx;
-
-    if (!s->isRenderTarget)
-    {
-        *target = s;
-        IDirectDrawSurface7_Release(surface);
-        return DDENUMRET_CANCEL;
-    }
-
-    /* Recurse into the surface tree */
-    IDirectDrawSurface7_EnumAttachedSurfaces(surface, ctx, findRenderTarget);
-
-    IDirectDrawSurface7_Release(surface);
-    if (*target) return DDENUMRET_CANCEL;
-
-    return DDENUMRET_OK;
-}
-
 static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format,
         WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, BOOL lockable,
@@ -5672,33 +5649,24 @@ static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_par
 {
     struct IDirectDrawImpl *ddraw = ddraw_from_device_parent(device_parent);
     IDirectDrawSurfaceImpl *d3d_surface = ddraw->d3d_target;
-    IDirectDrawSurfaceImpl *target = NULL;
 
     TRACE("device_parent %p, container_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
             "\tmultisample_quality %u, lockable %u, surface %p.\n",
             device_parent, container_parent, width, height, format, multisample_type,
             multisample_quality, lockable, surface);
 
+    /* TODO: Return failure if the dimensions do not match, but this shouldn't
+     * happen. */
+
     if (d3d_surface->isRenderTarget)
     {
-        IDirectDrawSurface7_EnumAttachedSurfaces(&d3d_surface->IDirectDrawSurface7_iface, &target, findRenderTarget);
+        ERR("Frontbuffer already created.\n");
+        return E_FAIL;
     }
-    else
-    {
-        target = d3d_surface;
-    }
+    d3d_surface->isRenderTarget = TRUE;
 
-    if (!target)
-    {
-        target = ddraw->d3d_target;
-        ERR(" (%p) : No DirectDrawSurface found to create the back buffer. Using the front buffer as back buffer. Uncertain consequences\n", ddraw);
-    }
-
-    /* TODO: Return failure if the dimensions do not match, but this shouldn't happen */
-
-    *surface = target->wined3d_surface;
+    *surface = d3d_surface->wined3d_surface;
     wined3d_surface_incref(*surface);
-    target->isRenderTarget = TRUE;
 
     TRACE("Returning wineD3DSurface %p, it belongs to surface %p\n", *surface, d3d_surface);
 
