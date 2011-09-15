@@ -122,6 +122,41 @@ HBITMAP X11DRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
 }
 
 
+/***********************************************************************
+ *           X11DRV_create_phys_bitmap
+ */
+BOOL X11DRV_create_phys_bitmap( HBITMAP hbitmap, const BITMAP *bitmap, int depth,
+                                int true_color, const ColorShifts *shifts )
+{
+    X_PHYSBITMAP *physBitmap;
+
+    if (!(physBitmap = X11DRV_init_phys_bitmap( hbitmap ))) return FALSE;
+
+    physBitmap->pixmap_depth = depth;
+    physBitmap->trueColor = true_color;
+    if (true_color) physBitmap->pixmap_color_shifts = *shifts;
+
+    wine_tsx11_lock();
+    physBitmap->pixmap = XCreatePixmap( gdi_display, root_window,
+                                        bitmap->bmWidth, bitmap->bmHeight, physBitmap->pixmap_depth );
+    if (physBitmap->pixmap)
+    {
+        GC gc = get_bitmap_gc( depth );
+        XSetFunction( gdi_display, gc, GXclear );
+        XFillRectangle( gdi_display, physBitmap->pixmap, gc, 0, 0, bitmap->bmWidth, bitmap->bmHeight );
+        XSetFunction( gdi_display, gc, GXcopy );
+    }
+    wine_tsx11_unlock();
+    if (!physBitmap->pixmap)
+    {
+        WARN("Can't create Pixmap\n");
+        HeapFree( GetProcessHeap(), 0, physBitmap );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
 /****************************************************************************
  *	  CreateBitmap   (X11DRV.@)
  *
@@ -131,7 +166,6 @@ HBITMAP X11DRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
  */
 BOOL X11DRV_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap )
 {
-    X_PHYSBITMAP *physBitmap;
     BITMAP bitmap;
 
     if (!GetObjectW( hbitmap, sizeof(bitmap), &bitmap )) return FALSE;
@@ -146,50 +180,22 @@ BOOL X11DRV_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap )
             bitmap.bmPlanes, bitmap.bmBitsPixel);
         return FALSE;
     }
-    if (hbitmap == BITMAP_stock_phys_bitmap.hbitmap)
-    {
-        ERR( "called for stock bitmap, please report\n" );
-        return FALSE;
-    }
 
     TRACE("(%p) %dx%d %d bpp\n", hbitmap, bitmap.bmWidth, bitmap.bmHeight, bitmap.bmBitsPixel);
 
-    if (!(physBitmap = X11DRV_init_phys_bitmap( hbitmap ))) return FALSE;
-
-    if (!X11DRV_XRender_SetPhysBitmapDepth( physBitmap, bitmap.bmBitsPixel, NULL ))
+    if (bitmap.bmBitsPixel == 1)
     {
-        if(bitmap.bmBitsPixel == 1)
+        if (hbitmap == BITMAP_stock_phys_bitmap.hbitmap)
         {
-            physBitmap->pixmap_depth = 1;
-            physBitmap->trueColor = FALSE;
+            ERR( "called for stock bitmap, please report\n" );
+            return FALSE;
         }
-        else
-        {
-            physBitmap->pixmap_depth = screen_depth;
-            physBitmap->pixmap_color_shifts = X11DRV_PALETTE_default_shifts;
-            physBitmap->trueColor = (visual->class == TrueColor || visual->class == DirectColor);
-        }
+        return X11DRV_create_phys_bitmap( hbitmap, &bitmap, 1, FALSE, NULL );
     }
 
-    wine_tsx11_lock();
-    /* Create the pixmap */
-    physBitmap->pixmap = XCreatePixmap(gdi_display, root_window,
-                                       bitmap.bmWidth, bitmap.bmHeight, physBitmap->pixmap_depth);
-    if (physBitmap->pixmap)
-    {
-        GC gc = get_bitmap_gc(physBitmap->pixmap_depth);
-        XSetFunction( gdi_display, gc, GXclear );
-        XFillRectangle( gdi_display, physBitmap->pixmap, gc, 0, 0, bitmap.bmWidth, bitmap.bmHeight );
-        XSetFunction( gdi_display, gc, GXcopy );
-    }
-    wine_tsx11_unlock();
-    if (!physBitmap->pixmap)
-    {
-        WARN("Can't create Pixmap\n");
-        HeapFree( GetProcessHeap(), 0, physBitmap );
-        return FALSE;
-    }
-    return TRUE;
+    return X11DRV_create_phys_bitmap( hbitmap, &bitmap, screen_depth,
+                                      (visual->class == TrueColor || visual->class == DirectColor),
+                                      &X11DRV_PALETTE_default_shifts );
 }
 
 

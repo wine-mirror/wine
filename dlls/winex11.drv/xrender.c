@@ -1185,6 +1185,31 @@ static INT xrenderdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID 
  */
 static BOOL xrenderdrv_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap )
 {
+    XRenderPictFormat *pict_format = NULL;
+    ColorShifts shifts;
+    BITMAP bitmap;
+
+    if (!GetObjectW( hbitmap, sizeof(bitmap), &bitmap )) return FALSE;
+
+    if (bitmap.bmPlanes == 1 && bitmap.bmBitsPixel == screen_bpp)
+    {
+        switch (bitmap.bmBitsPixel)
+        {
+        case 16: pict_format = pict_formats[WXR_FORMAT_R5G6B5]; break;
+        case 24: pict_format = pict_formats[WXR_FORMAT_R8G8B8]; break;
+        case 32: pict_format = pict_formats[WXR_FORMAT_A8R8G8B8]; break;
+        }
+    }
+
+    if (pict_format)
+    {
+        X11DRV_PALETTE_ComputeColorShifts( &shifts,
+                                           pict_format->direct.redMask << pict_format->direct.red,
+                                           pict_format->direct.greenMask << pict_format->direct.green,
+                                           pict_format->direct.blueMask << pict_format->direct.blue );
+        return X11DRV_create_phys_bitmap( hbitmap, &bitmap, pict_format->depth, TRUE, &shifts );
+    }
+
     dev = GET_NEXT_PHYSDEV( dev, pCreateBitmap );
     return dev->funcs->pCreateBitmap( dev, hbitmap );
 }
@@ -1253,8 +1278,12 @@ static void xrenderdrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_r
 
 BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel, const DIBSECTION *dib)
 {
-    XRenderPictFormat *pict_format = NULL;
+    XRenderPictFormat *pict_format;
     ColorShifts shifts;
+    const DWORD *bitfields;
+    static const DWORD bitfields_32[3] = {0xff0000, 0x00ff00, 0x0000ff};
+    static const DWORD bitfields_16[3] = {0x7c00, 0x03e0, 0x001f};
+
 
     /* When XRender is not around we can only use the screen_depth and when needed we perform depth conversion
      * in software. Further we also return the screen depth for paletted formats or TrueColor formats with a low
@@ -1262,52 +1291,22 @@ BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel,
     if (!X11DRV_XRender_Installed || bits_pixel <= 8)
         return FALSE;
 
-    if (dib)
-    {
-        const DWORD *bitfields;
-        static const DWORD bitfields_32[3] = {0xff0000, 0x00ff00, 0x0000ff};
-        static const DWORD bitfields_16[3] = {0x7c00, 0x03e0, 0x001f};
-
-        if(dib->dsBmih.biCompression == BI_BITFIELDS)
-            bitfields = dib->dsBitfields;
-        else if(bits_pixel == 24 || bits_pixel == 32)
-            bitfields = bitfields_32;
-        else
-            bitfields = bitfields_16;
-
-        X11DRV_PALETTE_ComputeColorShifts(&shifts, bitfields[0], bitfields[1], bitfields[2]);
-        pict_format = pict_formats[get_xrender_format_from_color_shifts(dib->dsBm.bmBitsPixel, &shifts)];
-
-        /* Common formats should be in our picture format table. */
-        if (!pict_format)
-        {
-            TRACE("Unhandled dibsection format bpp=%d, redMask=%x, greenMask=%x, blueMask=%x\n",
-                dib->dsBm.bmBitsPixel, bitfields[0], bitfields[1], bitfields[2]);
-            return FALSE;
-        }
-    }
+    if(dib->dsBmih.biCompression == BI_BITFIELDS)
+        bitfields = dib->dsBitfields;
+    else if(bits_pixel == 24 || bits_pixel == 32)
+        bitfields = bitfields_32;
     else
+        bitfields = bitfields_16;
+
+    X11DRV_PALETTE_ComputeColorShifts(&shifts, bitfields[0], bitfields[1], bitfields[2]);
+    pict_format = pict_formats[get_xrender_format_from_color_shifts(dib->dsBm.bmBitsPixel, &shifts)];
+
+    /* Common formats should be in our picture format table. */
+    if (!pict_format)
     {
-        int red_mask, green_mask, blue_mask;
-
-        /* We are dealing with a DDB */
-        switch (bits_pixel)
-        {
-        case 16: pict_format = pict_formats[WXR_FORMAT_R5G6B5]; break;
-        case 24: pict_format = pict_formats[WXR_FORMAT_R8G8B8]; break;
-        case 32: pict_format = pict_formats[WXR_FORMAT_A8R8G8B8]; break;
-        }
-
-        if (!pict_format)
-        {
-            TRACE("Unhandled DDB bits_pixel=%d\n", bits_pixel);
-            return FALSE;
-        }
-
-        red_mask = pict_format->direct.redMask << pict_format->direct.red;
-        green_mask = pict_format->direct.greenMask << pict_format->direct.green;
-        blue_mask = pict_format->direct.blueMask << pict_format->direct.blue;
-        X11DRV_PALETTE_ComputeColorShifts(&shifts, red_mask, green_mask, blue_mask);
+        TRACE("Unhandled dibsection format bpp=%d, redMask=%x, greenMask=%x, blueMask=%x\n",
+              dib->dsBm.bmBitsPixel, bitfields[0], bitfields[1], bitfields[2]);
+        return FALSE;
     }
 
     physBitmap->pixmap_depth = pict_format->depth;
