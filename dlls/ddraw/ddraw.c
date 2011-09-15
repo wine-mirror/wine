@@ -1974,41 +1974,21 @@ static HRESULT WINAPI ddraw4_TestCooperativeLevel(IDirectDraw4 *iface)
 static HRESULT WINAPI ddraw7_GetGDISurface(IDirectDraw7 *iface, IDirectDrawSurface7 **GDISurface)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw7(iface);
-    struct wined3d_surface *wined3d_surface;
-    IDirectDrawSurface7 *ddsurf;
-    HRESULT hr;
-    DDSCAPS2 ddsCaps;
 
     TRACE("iface %p, surface %p.\n", iface, GDISurface);
 
-    /* Get the back buffer from the wineD3DDevice and search its
-     * attached surfaces for the front buffer. */
     EnterCriticalSection(&ddraw_cs);
-    hr = wined3d_device_get_back_buffer(This->wined3d_device,
-            0, 0, WINED3DBACKBUFFER_TYPE_MONO, &wined3d_surface);
-    if (FAILED(hr) || !wined3d_surface)
+
+    if (!(*GDISurface = &This->primary->IDirectDrawSurface7_iface))
     {
-        ERR("IWineD3DDevice::GetBackBuffer failed\n");
+        WARN("Primary not created yet.\n");
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_NOTFOUND;
     }
+    IDirectDrawSurface7_AddRef(*GDISurface);
 
-    ddsurf = wined3d_surface_get_parent(wined3d_surface);
-    wined3d_surface_decref(wined3d_surface);
-
-    /* Find the front buffer */
-    ddsCaps.dwCaps = DDSCAPS_FRONTBUFFER;
-    hr = IDirectDrawSurface7_GetAttachedSurface(ddsurf,
-                                                &ddsCaps,
-                                                GDISurface);
-    if(hr != DD_OK)
-    {
-        ERR("IDirectDrawSurface7::GetAttachedSurface failed, hr = %x\n", hr);
-    }
-
-    /* The AddRef is OK this time */
     LeaveCriticalSection(&ddraw_cs);
-    return hr;
+    return DD_OK;
 }
 
 static HRESULT WINAPI ddraw4_GetGDISurface(IDirectDraw4 *iface, IDirectDrawSurface4 **surface)
@@ -2803,19 +2783,11 @@ static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSurface
     WINED3DPRESENT_PARAMETERS presentation_parameters;
     IDirectDrawSurfaceImpl *target = surface;
     HRESULT hr = WINED3D_OK;
-    struct list *entry;
 
-    /* Search for the primary to use as render target. */
-    LIST_FOR_EACH(entry, &ddraw->surface_list)
+    if (ddraw->primary)
     {
-        IDirectDrawSurfaceImpl *primary = LIST_ENTRY(entry, IDirectDrawSurfaceImpl, surface_list_entry);
-        if ((primary->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER))
-                == (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER))
-        {
-            TRACE("Using primary %p as render target.\n", target);
-            target = primary;
-            break;
-        }
+        TRACE("Using primary %p.\n", ddraw->primary);
+        target = ddraw->primary;
     }
 
     memset(&presentation_parameters, 0, sizeof(presentation_parameters));
@@ -3250,6 +3222,9 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
             return hr;
         }
     }
+
+    if (desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+        ddraw->primary = object;
 
     /* Create a WineD3DTexture if a texture was requested */
     if (desc2.ddsCaps.dwCaps & DDSCAPS_TEXTURE)

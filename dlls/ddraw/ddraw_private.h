@@ -88,6 +88,8 @@ struct IDirectDrawImpl
     struct wined3d_device *wined3d_device;
     BOOL                    d3d_initialized;
 
+    IDirectDrawSurfaceImpl *primary;
+
     /* DirectDraw things, which are not handled by WineD3D */
     DWORD                   cooperative_level;
 
