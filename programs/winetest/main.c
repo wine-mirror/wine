@@ -391,9 +391,21 @@ static void print_version (void)
 
 static void print_language(void)
 {
+    HMODULE hkernel32;
+    LANGID (WINAPI *pGetUserDefaultUILanguage)(void);
+    LANGID (WINAPI *pGetThreadUILanguage)(void);
+
     xprintf ("    SystemDefaultLCID=%x\n", GetSystemDefaultLCID());
     xprintf ("    UserDefaultLCID=%x\n", GetUserDefaultLCID());
     xprintf ("    ThreadLocale=%x\n", GetThreadLocale());
+
+    hkernel32 = GetModuleHandleA("kernel32.dll");
+    pGetUserDefaultUILanguage = (void*)GetProcAddress(hkernel32, "GetUserDefaultUILanguage");
+    pGetThreadUILanguage = (void*)GetProcAddress(hkernel32, "GetThreadUILanguage");
+    if (pGetUserDefaultUILanguage)
+        xprintf ("    UserDefaultUILanguage=%x\n", pGetUserDefaultUILanguage());
+    if (pGetThreadUILanguage)
+        xprintf ("    ThreadUILanguage=%x\n", pGetThreadUILanguage());
 }
 
 static inline int is_dot_dir(const char* x)
