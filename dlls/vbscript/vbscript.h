@@ -169,6 +169,7 @@ typedef enum {
     X(set_ident,      1, ARG_BSTR,    0)          \
     X(set_member,     1, ARG_BSTR,    0)          \
     X(short,          1, ARG_INT,     0)          \
+    X(stop,           1, 0,           0)          \
     X(string,         1, ARG_STR,     0)          \
     X(sub,            1, 0,           0)          \
     X(xor,            1, 0,           0)

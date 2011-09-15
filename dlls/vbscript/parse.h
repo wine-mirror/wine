@@ -97,7 +97,8 @@ typedef enum {
     STAT_EXITSUB,
     STAT_FUNC,
     STAT_IF,
-    STAT_SET
+    STAT_SET,
+    STAT_STOP
 } statement_type_t;
 
 typedef struct _statement_t {

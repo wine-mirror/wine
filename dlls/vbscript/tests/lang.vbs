@@ -376,6 +376,9 @@ Private Function TestPrivateFunc
 End Function
 Call TestPrivateFunc
 
+' Stop has an effect only in debugging mode
+Stop
+
 set x = testObj
 Call ok(getVT(x) = "VT_DISPATCH*", "getVT(x=testObj) = " & getVT(x))
 

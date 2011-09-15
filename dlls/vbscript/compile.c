@@ -615,6 +615,9 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
         case STAT_SET:
             hres = compile_assign_statement(ctx, (assign_statement_t*)stat, TRUE);
             break;
+        case STAT_STOP:
+            hres = push_instr(ctx, OP_stop) == -1 ? E_OUTOFMEMORY : S_OK;
+            break;
         default:
             FIXME("Unimplemented statement type %d\n", stat->type);
             hres = E_NOTIMPL;

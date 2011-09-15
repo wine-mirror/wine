@@ -157,6 +157,7 @@ Statement
     | tEXIT tSUB                            { $$ = new_statement(ctx, STAT_EXITSUB, 0); CHECK_ERROR; }
     | tSET MemberExpression Arguments_opt '=' Expression
                                             { $2->args = $3; $$ = new_set_statement(ctx, $2, $5); CHECK_ERROR; }
+    | tSTOP                                 { $$ = new_statement(ctx, STAT_STOP, 0); CHECK_ERROR; }
 
 MemberExpression
     : tIdentifier                           { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }

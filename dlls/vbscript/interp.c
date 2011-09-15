@@ -576,6 +576,14 @@ static HRESULT interp_ret(exec_ctx_t *ctx)
     return S_OK;
 }
 
+static HRESULT interp_stop(exec_ctx_t *ctx)
+{
+    WARN("\n");
+
+    /* NOTE: this should have effect in debugging mode (that we don't support yet) */
+    return S_OK;
+}
+
 static HRESULT interp_bool(exec_ctx_t *ctx)
 {
     const VARIANT_BOOL arg = ctx->instr->arg1.lng;
