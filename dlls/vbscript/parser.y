@@ -34,6 +34,7 @@ static int parser_error(const char*);
  static void parse_complete(parser_ctx_t*,BOOL);
 
 static void source_add_statement(parser_ctx_t*,statement_t*);
+static void source_add_class(parser_ctx_t*,class_decl_t*);
 
 static void *new_expression(parser_ctx_t*,expression_type_t,size_t);
 static expression_t *new_bool_expression(parser_ctx_t*,VARIANT_BOOL);
@@ -56,6 +57,7 @@ static dim_decl_t *new_dim_decl(parser_ctx_t*,const WCHAR*,dim_decl_t*);
 static elseif_decl_t *new_elseif_decl(parser_ctx_t*,expression_t*,statement_t*);
 static function_decl_t *new_function_decl(parser_ctx_t*,const WCHAR*,function_type_t,arg_decl_t*,statement_t*);
 static arg_decl_t *new_argument_decl(parser_ctx_t*,const WCHAR*,BOOL);
+static class_decl_t *new_class_decl(parser_ctx_t*);
 
 #define CHECK_ERROR if(((parser_ctx_t*)ctx)->hres != S_OK) YYABORT
 
@@ -73,6 +75,7 @@ static arg_decl_t *new_argument_decl(parser_ctx_t*,const WCHAR*,BOOL);
     dim_decl_t *dim_decl;
     function_decl_t *func_decl;
     arg_decl_t *arg_decl;
+    class_decl_t *class_decl;
     LONG lng;
     BOOL bool;
     double dbl;
@@ -105,6 +108,7 @@ static arg_decl_t *new_argument_decl(parser_ctx_t*,const WCHAR*,BOOL);
 %type <arg_decl> ArgumentsDecl_opt ArgumentDeclList ArgumentDecl
 %type <func_decl> FunctionDecl
 %type <elseif> ElseIfs_opt ElseIfs ElseIf
+%type <class_decl> ClassDeclaration ClassBody
 %type <dim_decl> DimDeclList
 
 %%
@@ -118,7 +122,8 @@ OptionExplicit_opt
 
 SourceElements
     : /* empty */
-    | SourceElements StatementNl    { source_add_statement(ctx, $2); }
+    | SourceElements StatementNl            { source_add_statement(ctx, $2); }
+    | SourceElements ClassDeclaration       { source_add_class(ctx, $2); }
 
 StatementsNl_opt
     : /* empty */                           { $$ = NULL; }
@@ -268,6 +273,12 @@ LiteralExpression
 PrimaryExpression
     : '(' Expression ')'            { $$ = $2; }
 
+ClassDeclaration
+    : tCLASS tIdentifier tNL ClassBody tEND tCLASS tNL      { $4->name = $2; $$ = $4; }
+
+ClassBody
+    : /* empty */                               { $$ = new_class_decl(ctx); }
+
 FunctionDecl
     : /* Storage_opt */ tSUB tIdentifier ArgumentsDecl_opt tNL StatementsNl_opt tEND tSUB
                                     { $$ = new_function_decl(ctx, $2, FUNC_SUB, $3, $5); CHECK_ERROR; }
@@ -302,6 +313,12 @@ static void source_add_statement(parser_ctx_t *ctx, statement_t *stat)
     }else {
         ctx->stats = ctx->stats_tail = stat;
     }
+}
+
+static void source_add_class(parser_ctx_t *ctx, class_decl_t *class_decl)
+{
+    class_decl->next = ctx->class_decls;
+    ctx->class_decls = class_decl;
 }
 
 static void parse_complete(parser_ctx_t *ctx, BOOL option_explicit)
@@ -545,6 +562,18 @@ static statement_t *new_function_statement(parser_ctx_t *ctx, function_decl_t *d
     return &stat->stat;
 }
 
+static class_decl_t *new_class_decl(parser_ctx_t *ctx)
+{
+    class_decl_t *class_decl;
+
+    class_decl = parser_alloc(ctx, sizeof(*class_decl));
+    if(!class_decl)
+        return NULL;
+
+    class_decl->next = NULL;
+    return class_decl;
+}
+
 void *parser_alloc(parser_ctx_t *ctx, size_t size)
 {
     void *ret;
@@ -568,6 +597,7 @@ HRESULT parse_script(parser_ctx_t *ctx, const WCHAR *code)
     ctx->last_token = tNL;
     ctx->last_nl = 0;
     ctx->stats = ctx->stats_tail = NULL;
+    ctx->class_decls = NULL;
     ctx->option_explicit = FALSE;
 
     parser_parse(ctx);

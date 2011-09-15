@@ -355,4 +355,7 @@ x = false
 ok SetVal(x, true), "SetVal returned false?"
 Call ok(x, "x is not set to true by SetVal?")
 
+Class EmptyClass
+End Class
+
 reportSuccess()

@@ -142,6 +142,11 @@ typedef struct _function_statement_t {
     function_decl_t *func_decl;
 } function_statement_t;
 
+typedef struct _class_decl_t {
+    const WCHAR *name;
+    struct _class_decl_t *next;
+} class_decl_t;
+
 typedef struct _elseif_decl_t {
     expression_t *expr;
     statement_t *stat;
@@ -170,6 +175,7 @@ typedef struct {
 
     statement_t *stats;
     statement_t *stats_tail;
+    class_decl_t *class_decls;
 
     vbsheap_t heap;
 } parser_ctx_t;
