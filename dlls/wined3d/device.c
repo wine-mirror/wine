@@ -3232,7 +3232,7 @@ HRESULT CDECL wined3d_device_get_ps_consts_f(const struct wined3d_device *device
 /* Context activation is done by the caller. */
 /* Do not call while under the GL lock. */
 #define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)
-static HRESULT process_vertices_strided(struct wined3d_device *device, DWORD dwDestIndex, DWORD dwCount,
+static HRESULT process_vertices_strided(const struct wined3d_device *device, DWORD dwDestIndex, DWORD dwCount,
         const struct wined3d_stream_info *stream_info, struct wined3d_buffer *dest, DWORD flags,
         DWORD DestFVF)
 {
