@@ -184,7 +184,7 @@ static IDispatchExVtbl DispatchExVtbl = {
     DispatchEx_GetNameSpaceParent
 };
 
-static HRESULT create_vbdisp(vbdisp_t **ret)
+HRESULT create_vbdisp(vbdisp_t **ret)
 {
     vbdisp_t *vbdisp;
 

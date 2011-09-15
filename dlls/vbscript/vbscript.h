@@ -74,6 +74,7 @@ typedef enum {
     VBDISP_ANY
 } vbdisp_invoke_type_t;
 
+HRESULT create_vbdisp(vbdisp_t**);
 HRESULT disp_get_id(IDispatch*,BSTR,DISPID*);
 HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,DISPPARAMS*,VARIANT*);
 HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,VARIANT*);

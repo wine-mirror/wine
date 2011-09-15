@@ -447,8 +447,29 @@ static HRESULT interp_set_member(exec_ctx_t *ctx)
 static HRESULT interp_new(exec_ctx_t *ctx)
 {
     const WCHAR *arg = ctx->instr->arg1.bstr;
-    FIXME("%s\n", debugstr_w(arg));
-    return E_NOTIMPL;
+    class_desc_t *class_desc;
+    vbdisp_t *obj;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_w(arg));
+
+    for(class_desc = ctx->script->classes; class_desc; class_desc = class_desc->next) {
+        if(!strcmpiW(class_desc->name, arg))
+            break;
+    }
+    if(!class_desc) {
+        FIXME("Class %s not found\n", debugstr_w(arg));
+        return E_FAIL;
+    }
+
+    hres = create_vbdisp(&obj);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)&obj->IDispatchEx_iface;
+    return stack_push(ctx, &v);
 }
 
 static HRESULT interp_jmp(exec_ctx_t *ctx)

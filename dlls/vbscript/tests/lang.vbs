@@ -358,6 +358,10 @@ Call ok(x, "x is not set to true by SetVal?")
 set x = testObj
 Call ok(getVT(x) = "VT_DISPATCH*", "getVT(x=testObj) = " & getVT(x))
 
+Dim obj
+Set obj = New EmptyClass
+Call ok(getVT(obj) = "VT_DISPATCH*", "getVT(obj) = " & getVT(obj))
+
 Class EmptyClass
 End Class
 
