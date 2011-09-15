@@ -274,6 +274,7 @@ LiteralExpression
     | tDouble                       { $$ = new_double_expression(ctx, $1); CHECK_ERROR; }
     | tEMPTY                        { $$ = new_expression(ctx, EXPR_EMPTY, 0); CHECK_ERROR; }
     | tNULL                         { $$ = new_expression(ctx, EXPR_NULL, 0); CHECK_ERROR; }
+    | tNOTHING                      { $$ = new_expression(ctx, EXPR_NOTHING, 0); CHECK_ERROR; }
 
 PrimaryExpression
     : '(' Expression ')'            { $$ = $2; }

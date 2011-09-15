@@ -36,6 +36,7 @@ typedef enum {
     EXPR_NEQUAL,
     EXPR_NEW,
     EXPR_NOT,
+    EXPR_NOTHING,
     EXPR_NULL,
     EXPR_OR,
     EXPR_STRING,
