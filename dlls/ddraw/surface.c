@@ -39,6 +39,12 @@ static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawGammaControl(IDirectD
     return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawGammaControl_iface);
 }
 
+static HRESULT ddraw_surface_update_frontbuffer(IDirectDrawSurfaceImpl *surface)
+{
+    return wined3d_surface_blt(surface->ddraw->wined3d_frontbuffer, NULL,
+            surface->wined3d_surface, NULL, 0, NULL, WINED3DTEXF_POINT);
+}
+
 /*****************************************************************************
  * IUnknown parts follow
  *****************************************************************************/
@@ -1072,6 +1078,8 @@ static HRESULT WINAPI ddraw_surface7_Unlock(IDirectDrawSurface7 *iface, RECT *pR
     hr = wined3d_surface_unmap(This->wined3d_surface);
     if (SUCCEEDED(hr))
     {
+        if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
+            hr = ddraw_surface_update_frontbuffer(This);
         This->surface_desc.lpSurface = NULL;
     }
     LeaveCriticalSection(&ddraw_cs);
@@ -1170,6 +1178,9 @@ static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDra
     }
 
     hr = wined3d_surface_flip(This->wined3d_surface, Override->wined3d_surface, Flags);
+    if (SUCCEEDED(hr) && This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
+        hr = ddraw_surface_update_frontbuffer(This);
+
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -1268,6 +1279,8 @@ static HRESULT WINAPI ddraw_surface7_Blt(IDirectDrawSurface7 *iface, RECT *DestR
      * struct are supported anyway. */
     hr = wined3d_surface_blt(This->wined3d_surface, DestRect, Src ? Src->wined3d_surface : NULL,
             SrcRect, Flags, (WINEDDBLTFX *)DDBltFx, WINED3DTEXF_LINEAR);
+    if (SUCCEEDED(hr) && (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER))
+        hr = ddraw_surface_update_frontbuffer(This);
 
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
@@ -1828,6 +1841,8 @@ static HRESULT WINAPI ddraw_surface7_ReleaseDC(IDirectDrawSurface7 *iface, HDC h
 
     EnterCriticalSection(&ddraw_cs);
     hr = wined3d_surface_releasedc(This->wined3d_surface, hdc);
+    if (SUCCEEDED(hr) && (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER))
+        hr = ddraw_surface_update_frontbuffer(This);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -3673,6 +3688,8 @@ static HRESULT WINAPI ddraw_surface7_BltFast(IDirectDrawSurface7 *iface, DWORD d
     EnterCriticalSection(&ddraw_cs);
     hr = wined3d_surface_bltfast(This->wined3d_surface, dstx, dsty,
             src->wined3d_surface, rsrc, trans);
+    if (SUCCEEDED(hr) && (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER))
+        hr = ddraw_surface_update_frontbuffer(This);
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
     {
@@ -4297,6 +4314,14 @@ static HRESULT WINAPI ddraw_surface7_SetPalette(IDirectDrawSurface7 *iface, IDir
 
     /* Release the old palette */
     if(oldPal) IDirectDrawPalette_Release(oldPal);
+
+    /* Update the wined3d frontbuffer if this is the frontbuffer. */
+    if ((This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER) && This->ddraw->wined3d_frontbuffer)
+    {
+        hr = wined3d_surface_set_palette(This->ddraw->wined3d_frontbuffer, PalImpl ? PalImpl->wineD3DPalette : NULL);
+        if (FAILED(hr))
+            ERR("Failed to set frontbuffer palette, hr %#x.\n", hr);
+    }
 
     /* If this is a front buffer, also update the back buffers
      * TODO: How do things work for palettized cube textures?

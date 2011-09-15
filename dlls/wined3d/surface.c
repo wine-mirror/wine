@@ -3793,11 +3793,9 @@ HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined
             WARN("Ignoring flags %#x.\n", flags);
     }
 
-    /* FIXME: This will also prevent overlay flips, since overlays aren't on
-     * a swapchain either. */
-    if (surface->container.type != WINED3D_CONTAINER_SWAPCHAIN)
+    if (surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
     {
-        ERR("Flipped surface is not on a swapchain.\n");
+        ERR("Not supported on swapchain surfaces.\n");
         return WINEDDERR_NOTFLIPPABLE;
     }
 
@@ -3808,18 +3806,13 @@ HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined
         return WINEDDERR_NOTFLIPPABLE;
     }
 
-    if (surface->resource.usage & WINED3DUSAGE_OVERLAY)
-    {
-        flip_surface(surface, override);
+    flip_surface(surface, override);
 
-        /* Update the overlay if it is visible */
-        if (surface->overlay_dest)
-            return surface->surface_ops->surface_draw_overlay(surface);
-        else
-            return WINED3D_OK;
-    }
+    /* Update overlays if they're visible. */
+    if ((surface->resource.usage & WINED3DUSAGE_OVERLAY) && surface->overlay_dest)
+        return surface->surface_ops->surface_draw_overlay(surface);
 
-    return wined3d_surface_blt(surface, NULL, override, NULL, 0, NULL, WINED3DTEXF_POINT);
+    return WINED3D_OK;
 }
 
 /* Do not call while under the GL lock. */

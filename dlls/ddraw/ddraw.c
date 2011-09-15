@@ -5642,35 +5642,43 @@ static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *
     return D3D_OK;
 }
 
+static void STDMETHODCALLTYPE ddraw_frontbuffer_destroyed(void *parent)
+{
+    struct IDirectDrawImpl *ddraw = parent;
+    ddraw->wined3d_frontbuffer = NULL;
+}
+
+static const struct wined3d_parent_ops ddraw_frontbuffer_parent_ops =
+{
+    ddraw_frontbuffer_destroyed,
+};
+
 static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format,
         WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, BOOL lockable,
         struct wined3d_surface **surface)
 {
     struct IDirectDrawImpl *ddraw = ddraw_from_device_parent(device_parent);
-    IDirectDrawSurfaceImpl *d3d_surface = ddraw->d3d_target;
+    HRESULT hr;
 
     TRACE("device_parent %p, container_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
             "\tmultisample_quality %u, lockable %u, surface %p.\n",
             device_parent, container_parent, width, height, format, multisample_type,
             multisample_quality, lockable, surface);
 
-    /* TODO: Return failure if the dimensions do not match, but this shouldn't
-     * happen. */
-
-    if (d3d_surface->isRenderTarget)
+    if (ddraw->wined3d_frontbuffer)
     {
         ERR("Frontbuffer already created.\n");
         return E_FAIL;
     }
-    d3d_surface->isRenderTarget = TRUE;
 
-    *surface = d3d_surface->wined3d_surface;
-    wined3d_surface_incref(*surface);
+    hr = wined3d_surface_create(ddraw->wined3d_device, width, height, format, lockable, FALSE, 0,
+            WINED3DUSAGE_RENDERTARGET, WINED3DPOOL_DEFAULT, multisample_type, multisample_quality,
+            DefaultSurfaceType, ddraw, &ddraw_frontbuffer_parent_ops, surface);
+    if (SUCCEEDED(hr))
+        ddraw->wined3d_frontbuffer = *surface;
 
-    TRACE("Returning wineD3DSurface %p, it belongs to surface %p\n", *surface, d3d_surface);
-
-    return D3D_OK;
+    return hr;
 }
 
 static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_parent *device_parent,

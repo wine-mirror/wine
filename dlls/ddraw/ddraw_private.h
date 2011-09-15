@@ -89,6 +89,7 @@ struct IDirectDrawImpl
     BOOL                    d3d_initialized;
 
     IDirectDrawSurfaceImpl *primary;
+    struct wined3d_surface *wined3d_frontbuffer;
 
     /* DirectDraw things, which are not handled by WineD3D */
     DWORD                   cooperative_level;
@@ -183,9 +184,6 @@ struct IDirectDrawSurfaceImpl
     /* Misc things */
     DWORD                   uniqueness_value;
     UINT                    mipmap_level;
-
-    /* For D3DDevice creation */
-    BOOL                    isRenderTarget;
 
     /* Clipper objects */
     IDirectDrawClipperImpl  *clipper;
