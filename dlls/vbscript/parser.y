@@ -59,7 +59,9 @@ static dim_decl_t *new_dim_decl(parser_ctx_t*,const WCHAR*,dim_decl_t*);
 static elseif_decl_t *new_elseif_decl(parser_ctx_t*,expression_t*,statement_t*);
 static function_decl_t *new_function_decl(parser_ctx_t*,const WCHAR*,function_type_t,unsigned,arg_decl_t*,statement_t*);
 static arg_decl_t *new_argument_decl(parser_ctx_t*,const WCHAR*,BOOL);
+
 static class_decl_t *new_class_decl(parser_ctx_t*);
+static class_decl_t *add_class_function(parser_ctx_t*,class_decl_t*,function_decl_t*);
 
 #define STORAGE_IS_PRIVATE    1
 #define STORAGE_IS_DEFAULT    2
@@ -289,6 +291,7 @@ ClassDeclaration
 
 ClassBody
     : /* empty */                               { $$ = new_class_decl(ctx); }
+    | FunctionDecl tNL ClassBody                { $$ = add_class_function(ctx, $3, $1); CHECK_ERROR; }
 
 FunctionDecl
     : Storage_opt tSUB tIdentifier ArgumentsDecl_opt tNL StatementsNl_opt tEND tSUB
@@ -599,6 +602,7 @@ static function_decl_t *new_function_decl(parser_ctx_t *ctx, const WCHAR *name, 
     decl->is_public = !(storage_flags & STORAGE_IS_PRIVATE);
     decl->args = arg_decl;
     decl->body = body;
+    decl->next = NULL;
     return decl;
 }
 
@@ -622,7 +626,27 @@ static class_decl_t *new_class_decl(parser_ctx_t *ctx)
     if(!class_decl)
         return NULL;
 
+    class_decl->funcs = NULL;
     class_decl->next = NULL;
+    return class_decl;
+}
+
+static class_decl_t *add_class_function(parser_ctx_t *ctx, class_decl_t *class_decl, function_decl_t *decl)
+{
+    function_decl_t *iter;
+
+    for(iter = class_decl->funcs; iter; iter = iter->next) {
+        if(!strcmpiW(iter->name, decl->name)) {
+            if(decl->type == FUNC_SUB || decl->type == FUNC_FUNCTION) {
+                FIXME("Redefinition of %s::%s\n", debugstr_w(class_decl->name), debugstr_w(decl->name));
+                ctx->hres = E_FAIL;
+                return NULL;
+            }
+        }
+    }
+
+    decl->next = class_decl->funcs;
+    class_decl->funcs = decl;
     return class_decl;
 }
 

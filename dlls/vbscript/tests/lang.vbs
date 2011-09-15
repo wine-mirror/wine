@@ -386,4 +386,16 @@ Call ok(getVT(obj) = "VT_DISPATCH*", "getVT(obj) = " & getVT(obj))
 Class EmptyClass
 End Class
 
+Class TestClass
+    Public Function publicFunction()
+        publicFunction = 4
+    End Function
+
+    Public Sub publicSub
+    End Sub
+
+    Public Sub privateSub
+    End Sub
+End Class
+
 reportSuccess()

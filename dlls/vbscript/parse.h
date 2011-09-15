@@ -148,6 +148,7 @@ typedef struct _function_statement_t {
 
 typedef struct _class_decl_t {
     const WCHAR *name;
+    function_decl_t *funcs;
     struct _class_decl_t *next;
 } class_decl_t;
 
