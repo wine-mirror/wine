@@ -124,7 +124,8 @@ static void rectangle_settings(void) {
 
     /* Passing a NULL dest rect sets the position to 0/0 . Visually it can be seen that the overlay overlays the whole primary(==screen)*/
     hr2 = IDirectDrawSurface7_UpdateOverlay(overlay, NULL, primary, NULL, 0, NULL);
-    ok(hr2 == DD_OK || hr2 == DDERR_INVALIDPARAMS, "IDirectDrawSurface7_UpdateOverlay failed with hr=0x%08x\n", hr);
+    ok(hr2 == DD_OK || hr2 == DDERR_INVALIDPARAMS
+            || hr2 == DDERR_OUTOFCAPS, "IDirectDrawSurface7_UpdateOverlay failed with hr=0x%08x\n", hr2);
     hr = IDirectDrawSurface7_GetOverlayPosition(overlay, &posx, &posy);
     ok(hr == DD_OK, "IDirectDrawSurface7_GetOverlayPosition failed with hr=0x%08x\n", hr);
     if (SUCCEEDED(hr2))
