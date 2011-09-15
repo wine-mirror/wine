@@ -3213,7 +3213,7 @@ HRESULT CDECL wined3d_device_set_ps_consts_f(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_ps_consts_f(struct wined3d_device *device,
+HRESULT CDECL wined3d_device_get_ps_consts_f(const struct wined3d_device *device,
         UINT start_register, float *constants, UINT vector4f_count)
 {
     int count = min(vector4f_count, device->d3d_pshader_constantF - start_register);
