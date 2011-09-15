@@ -2435,58 +2435,10 @@ static void DeviceLoadTest(void)
         IDirectDrawSurface7_Release(texture_levels[0][0]);
         memset(texture_levels, 0, sizeof(texture_levels));
 
-        /* Test cubemap loading from cubemap with different number of faces. */
-        memset(&ddsd, 0, sizeof(DDSURFACEDESC2));
-        ddsd.dwSize = sizeof(ddsd);
-        ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
-        ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX;
-        ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_POSITIVEX;
-        ddsd.dwWidth = 128;
-        ddsd.dwHeight = 128;
-        hr = IDirectDraw7_CreateSurface(lpDD, &ddsd, &cube_face_levels[0][0][0], NULL);
-        ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
-        if (FAILED(hr)) goto out;
-
-        memset(&ddsd, 0, sizeof(DDSURFACEDESC2));
-        ddsd.dwSize = sizeof(ddsd);
-        ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
-        ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX;
-        ddsd.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_POSITIVEX | DDSCAPS2_CUBEMAP_POSITIVEY;
-        ddsd.dwWidth = 128;
-        ddsd.dwHeight = 128;
-        hr = IDirectDraw7_CreateSurface(lpDD, &ddsd, &cube_face_levels[1][0][0], NULL);
-        ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
-        if (FAILED(hr)) goto out;
-
-        /* INVALIDPARAMS tests currently would fail because wine doesn't support partial cube faces
-            (the above created cubemaps will have all faces. */
-        hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[0][0][0], NULL, cube_face_levels[1][0][0], NULL,
-                                        DDSCAPS2_CUBEMAP_ALLFACES);
-        todo_wine ok(hr==DDERR_INVALIDPARAMS, "IDirect3DDevice7_Load returned: %x\n",hr);
-
-        hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[0][0][0], NULL, cube_face_levels[1][0][0], NULL,
-                                        DDSCAPS2_CUBEMAP_POSITIVEX | DDSCAPS2_CUBEMAP_POSITIVEY);
-        todo_wine ok(hr==DDERR_INVALIDPARAMS, "IDirect3DDevice7_Load returned: %x\n",hr);
-
-        hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[0][0][0], NULL, cube_face_levels[1][0][0], NULL,
-                                        DDSCAPS2_CUBEMAP_POSITIVEX);
-        todo_wine ok(hr==DDERR_INVALIDPARAMS, "IDirect3DDevice7_Load returned: %x\n",hr);
-
-        hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[1][0][0], NULL, cube_face_levels[0][0][0], NULL,
-                                        DDSCAPS2_CUBEMAP_ALLFACES);
-        ok(hr==D3D_OK, "IDirect3DDevice7_Load returned: %x\n",hr);
-
-        hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[1][0][0], NULL, cube_face_levels[0][0][0], NULL,
-                                        DDSCAPS2_CUBEMAP_POSITIVEX);
-        ok(hr==D3D_OK, "IDirect3DDevice7_Load returned: %x\n",hr);
-
-        hr = IDirect3DDevice7_Load(lpD3DDevice, cube_face_levels[1][0][0], NULL, cube_face_levels[0][0][0], NULL,
-                                        DDSCAPS2_CUBEMAP_POSITIVEZ);
-        ok(hr==D3D_OK, "IDirect3DDevice7_Load returned: %x\n",hr);
-
-        IDirectDrawSurface7_Release(cube_face_levels[0][0][0]);
-        IDirectDrawSurface7_Release(cube_face_levels[1][0][0]);
-        memset(cube_face_levels, 0, sizeof(cube_face_levels));
+        /* Partial cube maps(e.g. created with an explicitly set DDSCAPS2_CUBEMAP_POSITIVEX flag)
+         * BSOD some Windows machines when an app tries to create them(Radeon X1600, Windows XP,
+         * Catalyst 10.2 driver, 6.14.10.6925)
+         */
     }
 
     /* Test texture loading with different mip level count (larger levels match, smaller levels missing in destination. */
