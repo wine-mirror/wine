@@ -405,4 +405,8 @@ Set obj = New TestClass
 Call ok(obj.publicFunction = 4, "obj.publicFunction = " & obj.publicFunction)
 Call ok(obj.publicFunction() = 4, "obj.publicFunction() = " & obj.publicFunction())
 
+obj.publicSub()
+Call obj.publicSub
+Call obj.publicFunction()
+
 reportSuccess()

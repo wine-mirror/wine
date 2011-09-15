@@ -374,8 +374,9 @@ static HRESULT interp_mcall(exec_ctx_t *ctx)
 
 static HRESULT interp_mcallv(exec_ctx_t *ctx)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    return do_mcall(ctx, NULL);
 }
 
 static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, VARIANT *val, BOOL own_val)
