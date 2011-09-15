@@ -144,19 +144,14 @@ typedef struct
     INT next;
 } gsCacheEntry;
 
-struct xrender_info
-{
-    int                cache_index;
-    Picture            pict;
-    Picture            pict_src;
-    const WineXRenderFormat *format;
-};
-
 struct xrender_physdev
 {
     struct gdi_physdev dev;
     X11DRV_PDEVICE    *x11dev;
-    struct xrender_info info;
+    int                cache_index;
+    Picture            pict;
+    Picture            pict_src;
+    const WineXRenderFormat *format;
 };
 
 static inline struct xrender_physdev *get_xrender_dev( PHYSDEV dev )
@@ -548,109 +543,84 @@ static void set_xrender_transformation(Picture src_pict, double xscale, double y
 }
 
 /* check if we can use repeating instead of scaling for the specified source DC */
-static BOOL use_source_repeat( X11DRV_PDEVICE *physDev )
+static BOOL use_source_repeat( struct xrender_physdev *dev )
 {
-    return (physDev->bitmap &&
-            physDev->drawable_rect.right - physDev->drawable_rect.left == 1 &&
-            physDev->drawable_rect.bottom - physDev->drawable_rect.top == 1);
+    return (dev->x11dev->bitmap &&
+            dev->x11dev->drawable_rect.right - dev->x11dev->drawable_rect.left == 1 &&
+            dev->x11dev->drawable_rect.bottom - dev->x11dev->drawable_rect.top == 1);
 }
 
-static struct xrender_info *get_xrender_info(X11DRV_PDEVICE *physDev)
+static Picture get_xrender_picture( struct xrender_physdev *dev )
 {
-    if(!physDev->xrender)
-    {
-        physDev->xrender = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physDev->xrender));
-
-        if(!physDev->xrender)
-        {
-            ERR("Unable to allocate XRENDERINFO!\n");
-            return NULL;
-        }
-        physDev->xrender->cache_index = -1;
-    }
-    if (!physDev->xrender->format)
-        physDev->xrender->format = get_xrender_format_from_color_shifts(physDev->depth, physDev->color_shifts);
-
-    return physDev->xrender;
-}
-
-static Picture get_xrender_picture(X11DRV_PDEVICE *physDev)
-{
-    struct xrender_info *info = get_xrender_info(physDev);
-    if (!info) return 0;
-
-    if (!info->pict && info->format)
+    if (!dev->pict && dev->format)
     {
         XRenderPictureAttributes pa;
-        RGNDATA *clip = X11DRV_GetRegionData( physDev->region, 0 );
+        RGNDATA *clip = X11DRV_GetRegionData( dev->x11dev->region, 0 );
 
         wine_tsx11_lock();
         pa.subwindow_mode = IncludeInferiors;
-        info->pict = pXRenderCreatePicture(gdi_display, physDev->drawable, info->format->pict_format,
-                                           CPSubwindowMode, &pa);
-        if (info->pict && clip)
-            pXRenderSetPictureClipRectangles( gdi_display, info->pict,
-                                              physDev->dc_rect.left, physDev->dc_rect.top,
+        dev->pict = pXRenderCreatePicture( gdi_display, dev->x11dev->drawable,
+                                           dev->format->pict_format, CPSubwindowMode, &pa );
+        if (dev->pict && clip)
+            pXRenderSetPictureClipRectangles( gdi_display, dev->pict,
+                                              dev->x11dev->dc_rect.left, dev->x11dev->dc_rect.top,
                                               (XRectangle *)clip->Buffer, clip->rdh.nCount );
         wine_tsx11_unlock();
-        TRACE("Allocing pict=%lx dc=%p drawable=%08lx\n", info->pict, physDev->dev.hdc, physDev->drawable);
+        TRACE( "Allocing pict=%lx dc=%p drawable=%08lx\n",
+               dev->pict, dev->dev.hdc, dev->x11dev->drawable );
         HeapFree( GetProcessHeap(), 0, clip );
     }
 
-    return info->pict;
+    return dev->pict;
 }
 
-static Picture get_xrender_picture_source(X11DRV_PDEVICE *physDev, BOOL repeat)
+static Picture get_xrender_picture_source( struct xrender_physdev *dev, BOOL repeat )
 {
-    struct xrender_info *info = get_xrender_info(physDev);
-    if (!info) return 0;
-
-    if (!info->pict_src && info->format)
+    if (!dev->pict_src && dev->format)
     {
         XRenderPictureAttributes pa;
 
         wine_tsx11_lock();
         pa.subwindow_mode = IncludeInferiors;
         pa.repeat = repeat ? RepeatNormal : RepeatNone;
-        info->pict_src = pXRenderCreatePicture(gdi_display, physDev->drawable, info->format->pict_format,
-                                               CPSubwindowMode|CPRepeat, &pa);
+        dev->pict_src = pXRenderCreatePicture( gdi_display, dev->x11dev->drawable,
+                                               dev->format->pict_format, CPSubwindowMode|CPRepeat, &pa );
         wine_tsx11_unlock();
 
         TRACE("Allocing pict_src=%lx dc=%p drawable=%08lx repeat=%u\n",
-              info->pict_src, physDev->dev.hdc, physDev->drawable, pa.repeat);
+              dev->pict_src, dev->dev.hdc, dev->x11dev->drawable, pa.repeat);
     }
 
-    return info->pict_src;
+    return dev->pict_src;
 }
 
 static void free_xrender_picture( struct xrender_physdev *dev )
 {
-    if (dev->info.pict || dev->info.pict_src)
+    if (dev->pict || dev->pict_src)
     {
         wine_tsx11_lock();
         XFlush( gdi_display );
-        if (dev->info.pict)
+        if (dev->pict)
         {
-            TRACE("freeing pict = %lx dc = %p\n", dev->info.pict, dev->dev.hdc);
-            pXRenderFreePicture(gdi_display, dev->info.pict);
-            dev->info.pict = 0;
+            TRACE("freeing pict = %lx dc = %p\n", dev->pict, dev->dev.hdc);
+            pXRenderFreePicture(gdi_display, dev->pict);
+            dev->pict = 0;
         }
-        if(dev->info.pict_src)
+        if(dev->pict_src)
         {
-            TRACE("freeing pict = %lx dc = %p\n", dev->info.pict_src, dev->dev.hdc);
-            pXRenderFreePicture(gdi_display, dev->info.pict_src);
-            dev->info.pict_src = 0;
+            TRACE("freeing pict = %lx dc = %p\n", dev->pict_src, dev->dev.hdc);
+            pXRenderFreePicture(gdi_display, dev->pict_src);
+            dev->pict_src = 0;
         }
         wine_tsx11_unlock();
     }
-    dev->info.format = NULL;
+    dev->format = NULL;
 }
 
 static void update_xrender_drawable( struct xrender_physdev *dev )
 {
     free_xrender_picture( dev );
-    dev->info.format = get_xrender_format_from_color_shifts( dev->x11dev->depth,
-                                                             dev->x11dev->color_shifts );
+    dev->format = get_xrender_format_from_color_shifts( dev->x11dev->depth, dev->x11dev->color_shifts );
 }
 
 /* return a mask picture used to force alpha to 0 */
@@ -1124,9 +1094,9 @@ static HFONT xrenderdrv_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
     lfsz_calc_hash(&lfsz);
 
     EnterCriticalSection(&xrender_cs);
-    if (physdev->info.cache_index != -1)
-        dec_ref_cache( physdev->info.cache_index );
-    physdev->info.cache_index = GetCacheEntry( dev->hdc, &lfsz );
+    if (physdev->cache_index != -1)
+        dec_ref_cache( physdev->cache_index );
+    physdev->cache_index = GetCacheEntry( dev->hdc, &lfsz );
     LeaveCriticalSection(&xrender_cs);
     physdev->x11dev->has_gdi_font = TRUE;
     return 0;
@@ -1134,10 +1104,10 @@ static HFONT xrenderdrv_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
 
 static void update_xrender_clipping( struct xrender_physdev *dev, const RGNDATA *data )
 {
-    if (dev->info.pict)
+    if (dev->pict)
     {
         wine_tsx11_lock();
-        pXRenderSetPictureClipRectangles( gdi_display, dev->info.pict,
+        pXRenderSetPictureClipRectangles( gdi_display, dev->pict,
                                           dev->x11dev->dc_rect.left, dev->x11dev->dc_rect.top,
                                           (XRectangle *)data->Buffer, data->rdh.nCount );
         wine_tsx11_unlock();
@@ -1179,9 +1149,8 @@ static BOOL create_xrender_dc( PHYSDEV *pdev )
 
     if (!physdev) return FALSE;
     physdev->x11dev = x11dev;
-    physdev->info.cache_index = -1;
-    physdev->info.format = get_xrender_format_from_color_shifts( x11dev->depth, x11dev->color_shifts );
-    x11dev->xrender = &physdev->info;
+    physdev->cache_index = -1;
+    physdev->format = get_xrender_format_from_color_shifts( x11dev->depth, x11dev->color_shifts );
     push_dc_driver( pdev, &physdev->dev, &xrender_funcs );
     return TRUE;
 }
@@ -1220,10 +1189,9 @@ static BOOL xrenderdrv_DeleteDC( PHYSDEV dev )
     free_xrender_picture( physdev );
 
     EnterCriticalSection( &xrender_cs );
-    if (physdev->info.cache_index != -1) dec_ref_cache( physdev->info.cache_index );
+    if (physdev->cache_index != -1) dec_ref_cache( physdev->cache_index );
     LeaveCriticalSection( &xrender_cs );
 
-    physdev->x11dev->xrender = NULL;
     HeapFree( GetProcessHeap(), 0, physdev );
     return TRUE;
 }
@@ -1406,7 +1374,7 @@ static void UploadGlyph(struct xrender_physdev *physDev, int glyph, AA_Type form
     Glyph gid;
     GLYPHMETRICS gm;
     XGlyphInfo gi;
-    gsCacheEntry *entry = glyphsetCache + physDev->info.cache_index;
+    gsCacheEntry *entry = glyphsetCache + physDev->cache_index;
     gsCacheEntryFormat *formatEntry;
     UINT ggo_format = GGO_GLYPH_INDEX;
     WXRFormat wxr_format;
@@ -2047,7 +2015,7 @@ BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 
     EnterCriticalSection(&xrender_cs);
 
-    entry = glyphsetCache + physdev->info.cache_index;
+    entry = glyphsetCache + physdev->cache_index;
     if( disable_antialias == FALSE )
         aa_type = entry->aa_default;
     formatEntry = entry->format[aa_type];
@@ -2079,7 +2047,7 @@ BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         POINT offset = {0, 0};
         POINT desired, current;
         int render_op = PictOpOver;
-        Picture pict = get_xrender_picture(physdev->x11dev);
+        Picture pict = get_xrender_picture( physdev );
         XRenderColor col;
 
         /* There's a bug in XRenderCompositeText that ignores the xDst and yDst parameters.
@@ -2090,12 +2058,12 @@ BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         desired.y = physdev->x11dev->dc_rect.top + y;
         current.x = current.y = 0;
 
-        get_xrender_color(physdev->info.format, physdev->x11dev->textPixel, &col);
-        tile_pict = get_tile_pict(physdev->info.format, &col);
+        get_xrender_color(physdev->format, physdev->x11dev->textPixel, &col);
+        tile_pict = get_tile_pict(physdev->format, &col);
 
 	/* FIXME the mapping of Text/BkColor onto 1 or 0 needs investigation.
 	 */
-	if((physdev->info.format->format == WXR_FORMAT_MONO) && (textPixel == 0))
+	if((physdev->format->format == WXR_FORMAT_MONO) && (textPixel == 0))
 	    render_op = PictOpOutReverse; /* This gives us 'black' text */
 
         for(idx = 0; idx < count; idx++)
@@ -2390,7 +2358,7 @@ static void xrender_mono_blit( Picture src_pict, Picture mask_pict, Picture dst_
 static void get_colors( struct xrender_physdev *physdev_src, struct xrender_physdev *physdev_dst,
                         XRenderColor *fg, XRenderColor *bg )
 {
-    if (physdev_src->info.format->format == WXR_FORMAT_MONO)
+    if (physdev_src->format->format == WXR_FORMAT_MONO)
     {
         RGBQUAD rgb[2];
         int pixel;
@@ -2399,15 +2367,15 @@ static void get_colors( struct xrender_physdev *physdev_src, struct xrender_phys
         {
             pixel = X11DRV_PALETTE_ToPhysical( physdev_dst->x11dev,
                                                RGB( rgb[0].rgbRed, rgb[0].rgbGreen, rgb[0].rgbBlue ));
-            get_xrender_color( physdev_dst->info.format, pixel, fg );
+            get_xrender_color( physdev_dst->format, pixel, fg );
             pixel = X11DRV_PALETTE_ToPhysical( physdev_dst->x11dev,
                                                RGB( rgb[1].rgbRed, rgb[1].rgbGreen, rgb[1].rgbBlue ));
-            get_xrender_color( physdev_dst->info.format, pixel, bg );
+            get_xrender_color( physdev_dst->format, pixel, bg );
             return;
         }
     }
-    get_xrender_color( physdev_dst->info.format, physdev_dst->x11dev->textPixel, fg );
-    get_xrender_color( physdev_dst->info.format, physdev_dst->x11dev->backgroundPixel, bg );
+    get_xrender_color( physdev_dst->format, physdev_dst->x11dev->textPixel, fg );
+    get_xrender_color( physdev_dst->format, physdev_dst->x11dev->backgroundPixel, bg );
 }
 
 static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xrender_physdev *physdev_dst,
@@ -2428,7 +2396,7 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
     pa.subwindow_mode = IncludeInferiors;
     pa.repeat = RepeatNone;
 
-    use_repeat = use_source_repeat( physdev_src->x11dev );
+    use_repeat = use_source_repeat( physdev_src );
     if (!use_repeat)
     {
         xscale = src->width / (double)dst->width;
@@ -2439,8 +2407,8 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
     if (drawable != physdev_dst->x11dev->drawable) x_dst = y_dst = 0;  /* using an intermediate pixmap */
 
     /* mono -> color */
-    if (physdev_src->info.format->format == WXR_FORMAT_MONO &&
-        physdev_dst->info.format->format != WXR_FORMAT_MONO)
+    if (physdev_src->format->format == WXR_FORMAT_MONO &&
+        physdev_dst->format->format != WXR_FORMAT_MONO)
     {
         XRenderColor fg, bg;
 
@@ -2448,15 +2416,15 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
         fg.alpha = bg.alpha = 0;
 
         /* We use the source drawable as a mask */
-        mask_pict = get_xrender_picture_source( physdev_src->x11dev, use_repeat );
+        mask_pict = get_xrender_picture_source( physdev_src, use_repeat );
 
         /* Use backgroundPixel as the foreground color */
         EnterCriticalSection( &xrender_cs );
-        src_pict = get_tile_pict( physdev_dst->info.format, &bg );
+        src_pict = get_tile_pict( physdev_dst->format, &bg );
 
         /* Create a destination picture and fill it with textPixel color as the background color */
         wine_tsx11_lock();
-        dst_pict = pXRenderCreatePicture( gdi_display, drawable, physdev_dst->info.format->pict_format,
+        dst_pict = pXRenderCreatePicture( gdi_display, drawable, physdev_dst->format->pict_format,
                                           CPSubwindowMode|CPRepeat, &pa );
         pXRenderFillRectangle( gdi_display, PictOpSrc, dst_pict, &fg, x_dst, y_dst, width, height );
 
@@ -2471,10 +2439,10 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
     {
         if (physdev_dst->x11dev->depth == 32 && physdev_src->x11dev->depth < 32)
             mask_pict = get_no_alpha_mask();
-        src_pict = get_xrender_picture_source( physdev_src->x11dev, use_repeat );
+        src_pict = get_xrender_picture_source( physdev_src, use_repeat );
 
         wine_tsx11_lock();
-        dst_pict = pXRenderCreatePicture( gdi_display, drawable, physdev_dst->info.format->pict_format,
+        dst_pict = pXRenderCreatePicture( gdi_display, drawable, physdev_dst->format->pict_format,
                                           CPSubwindowMode|CPRepeat, &pa );
 
         xrender_blit( PictOpSrc, src_pict, mask_pict, dst_pict,
@@ -2503,12 +2471,12 @@ static BOOL xrenderdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
         return dst_dev->funcs->pStretchBlt( dst_dev, dst, src_dev, src, rop );
     }
 
-    if (physdev_dst->info.format->format == WXR_FORMAT_MONO &&
-        physdev_src->info.format->format != WXR_FORMAT_MONO)  /* XRender is of no use in this case */
+    if (physdev_dst->format->format == WXR_FORMAT_MONO &&
+        physdev_src->format->format != WXR_FORMAT_MONO)  /* XRender is of no use in this case */
         return X11DRV_StretchBlt( &physdev_dst->x11dev->dev, dst, &physdev_src->x11dev->dev, src, rop );
 
     /* if not stretching, we only need to handle format conversion */
-    if (!stretch && physdev_dst->info.format == physdev_src->info.format)
+    if (!stretch && physdev_dst->format == physdev_src->format)
         return X11DRV_StretchBlt( &physdev_dst->x11dev->dev, dst, &physdev_src->x11dev->dev, src, rop );
 
     sSrc = sDst = X11DRV_LockDIBSection( physdev_dst->x11dev, DIB_Status_None );
@@ -2576,9 +2544,9 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     if (physdev_src != physdev_dst) X11DRV_LockDIBSection( physdev_src->x11dev, DIB_Status_GdiMod );
     X11DRV_LockDIBSection( physdev_dst->x11dev, DIB_Status_GdiMod );
 
-    dst_pict = get_xrender_picture( physdev_dst->x11dev );
+    dst_pict = get_xrender_picture( physdev_dst );
 
-    use_repeat = use_source_repeat( physdev_src->x11dev );
+    use_repeat = use_source_repeat( physdev_src );
     if (!use_repeat)
     {
         xscale = src->width / (double)dst->width;
@@ -2586,11 +2554,11 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     }
     else xscale = yscale = 1;  /* no scaling needed with a repeating source */
 
-    if (!(blendfn.AlphaFormat & AC_SRC_ALPHA) && physdev_src->info.format)
+    if (!(blendfn.AlphaFormat & AC_SRC_ALPHA) && physdev_src->format)
     {
         /* we need a source picture with no alpha */
-        WXRFormat format = get_format_without_alpha( physdev_src->info.format->format );
-        if (format != physdev_src->info.format->format)
+        WXRFormat format = get_format_without_alpha( physdev_src->format->format );
+        if (format != physdev_src->format->format)
         {
             XRenderPictureAttributes pa;
             const WineXRenderFormat *fmt = get_xrender_format( format );
@@ -2605,7 +2573,7 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
         }
     }
 
-    if (!src_pict) src_pict = get_xrender_picture_source( physdev_src->x11dev, use_repeat );
+    if (!src_pict) src_pict = get_xrender_picture_source( physdev_src, use_repeat );
 
     EnterCriticalSection( &xrender_cs );
     mask_pict = get_mask_pict( blendfn.SourceConstantAlpha * 257 );

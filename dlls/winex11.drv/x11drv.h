@@ -140,8 +140,6 @@ typedef struct
   /* X physical font */
 typedef UINT	 X_PHYSFONT;
 
-struct xrender_info;
-
   /* X physical device */
 typedef struct
 {
@@ -165,7 +163,6 @@ typedef struct
     Drawable      gl_drawable;
     Pixmap        pixmap;      /* Pixmap for a GLXPixmap gl_drawable */
     int           gl_copy;
-    struct xrender_info *xrender;
 } X11DRV_PDEVICE;
 
 static inline X11DRV_PDEVICE *get_x11drv_dev( PHYSDEV dev )
