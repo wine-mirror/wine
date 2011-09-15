@@ -390,6 +390,8 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_neg);
     case EXPR_NEQUAL:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_nequal);
+    case EXPR_NEW:
+        return push_instr_str(ctx, OP_new, ((string_expression_t*)expr)->value);
     case EXPR_NOT:
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_not);
     case EXPR_NULL:

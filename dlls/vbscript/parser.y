@@ -43,6 +43,7 @@ static expression_t *new_long_expression(parser_ctx_t*,expression_type_t,LONG);
 static expression_t *new_double_expression(parser_ctx_t*,double);
 static expression_t *new_unary_expression(parser_ctx_t*,expression_type_t,expression_t*);
 static expression_t *new_binary_expression(parser_ctx_t*,expression_type_t,expression_t*,expression_t*);
+static expression_t *new_new_expression(parser_ctx_t*,const WCHAR*);
 
 static member_expression_t *new_member_expression(parser_ctx_t*,expression_t*,const WCHAR*);
 
@@ -256,6 +257,7 @@ ExpExpression
 UnaryExpression
     : LiteralExpression             { $$ = $1; }
     | CallExpression                { $$ = $1; }
+    | tNEW tIdentifier              { $$ = new_new_expression(ctx, $2); CHECK_ERROR; }
     | '-' UnaryExpression           { $$ = new_unary_expression(ctx, EXPR_NEG, $2); CHECK_ERROR; }
 
 CallExpression
@@ -428,6 +430,18 @@ static member_expression_t *new_member_expression(parser_ctx_t *ctx, expression_
     expr->identifier = identifier;
     expr->args = NULL;
     return expr;
+}
+
+static expression_t *new_new_expression(parser_ctx_t *ctx, const WCHAR *identifier)
+{
+    string_expression_t *expr;
+
+    expr = new_expression(ctx, EXPR_NEW, sizeof(*expr));
+    if(!expr)
+        return NULL;
+
+    expr->value = identifier;
+    return &expr->expr;
 }
 
 static void *new_statement(parser_ctx_t *ctx, statement_type_t type, size_t size)

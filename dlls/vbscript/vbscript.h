@@ -146,6 +146,7 @@ typedef enum {
     X(mul,            1, 0,           0)          \
     X(neg,            1, 0,           0)          \
     X(nequal,         1, 0,           0)          \
+    X(new,            1, ARG_STR,     0)          \
     X(not,            1, 0,           0)          \
     X(null,           1, 0,           0)          \
     X(or,             1, 0,           0)          \
