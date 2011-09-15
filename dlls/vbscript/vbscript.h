@@ -85,7 +85,7 @@ typedef struct {
 } vbdisp_t;
 
 HRESULT create_vbdisp(const class_desc_t*,vbdisp_t**);
-HRESULT disp_get_id(IDispatch*,BSTR,DISPID*);
+HRESULT disp_get_id(IDispatch*,BSTR,BOOL,DISPID*);
 HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,DISPPARAMS*,VARIANT*);
 HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,VARIANT*);
 
@@ -241,7 +241,7 @@ struct _vbscode_t {
 
 void release_vbscode(vbscode_t*) DECLSPEC_HIDDEN;
 HRESULT compile_script(script_ctx_t*,const WCHAR*,vbscode_t**) DECLSPEC_HIDDEN;
-HRESULT exec_script(script_ctx_t*,function_t*,DISPPARAMS*,VARIANT*) DECLSPEC_HIDDEN;
+HRESULT exec_script(script_ctx_t*,function_t*,IDispatch*,DISPPARAMS*,VARIANT*) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
 

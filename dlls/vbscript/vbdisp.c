@@ -46,6 +46,15 @@ static BOOL get_func_id(vbdisp_t *This, const WCHAR *name, BOOL search_private, 
     return FALSE;
 }
 
+static HRESULT vbdisp_get_id(vbdisp_t *This, BSTR name, BOOL search_private, DISPID *id)
+{
+    if(get_func_id(This, name, search_private, id))
+        return S_OK;
+
+    *id = -1;
+    return DISP_E_UNKNOWNNAME;
+}
+
 static inline vbdisp_t *impl_from_IDispatchEx(IDispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, vbdisp_t, IDispatchEx_iface);
@@ -144,11 +153,7 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
         return E_NOTIMPL;
     }
 
-    if(get_func_id(This, bstrName, FALSE, pid))
-        return S_OK;
-
-    *pid = -1;
-    return DISP_E_UNKNOWNNAME;
+    return vbdisp_get_id(This, bstrName, FALSE, pid);
 }
 
 static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
@@ -176,7 +181,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
                 return DISP_E_MEMBERNOTFOUND;
             }
 
-            return exec_script(This->desc->ctx, func, pdp, pvarRes);
+            return exec_script(This->desc->ctx, func, (IDispatch*)&This->IDispatchEx_iface, pdp, pvarRes);
         default:
             FIXME("flags %x\n", wFlags);
             return DISP_E_MEMBERNOTFOUND;
@@ -247,6 +252,13 @@ static IDispatchExVtbl DispatchExVtbl = {
     DispatchEx_GetNameSpaceParent
 };
 
+static inline vbdisp_t *unsafe_impl_from_IDispatch(IDispatch *iface)
+{
+    return iface->lpVtbl == (IDispatchVtbl*)&DispatchExVtbl
+        ? CONTAINING_RECORD(iface, vbdisp_t, IDispatchEx_iface)
+        : NULL;
+}
+
 HRESULT create_vbdisp(const class_desc_t *desc, vbdisp_t **ret)
 {
     vbdisp_t *vbdisp;
@@ -269,13 +281,15 @@ HRESULT init_global(script_ctx_t *ctx)
     return create_vbdisp(&ctx->script_desc, &ctx->script_obj);
 }
 
-HRESULT disp_get_id(IDispatch *disp, BSTR name, DISPID *id)
+HRESULT disp_get_id(IDispatch *disp, BSTR name, BOOL search_private, DISPID *id)
 {
     IDispatchEx *dispex;
+    vbdisp_t *vbdisp;
     HRESULT hres;
 
-    if(disp->lpVtbl == (IDispatchVtbl*)&DispatchExVtbl)
-        FIXME("properly handle builtin objects\n");
+    vbdisp = unsafe_impl_from_IDispatch(disp);
+    if(vbdisp)
+        return vbdisp_get_id(vbdisp, name, search_private, id);
 
     hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     if(FAILED(hres)) {

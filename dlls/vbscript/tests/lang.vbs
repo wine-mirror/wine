@@ -388,6 +388,7 @@ End Class
 
 Class TestClass
     Public Function publicFunction()
+        privateSub()
         publicFunction = 4
     End Function
 

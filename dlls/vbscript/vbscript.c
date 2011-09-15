@@ -77,7 +77,7 @@ static HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code)
     code->global_executed = TRUE;
 
     IActiveScriptSite_OnEnterScript(ctx->site);
-    hres = exec_script(ctx, &code->global_code, NULL, NULL);
+    hres = exec_script(ctx, &code->global_code, NULL, NULL, NULL);
     IActiveScriptSite_OnLeaveScript(ctx->site);
 
     return hres;

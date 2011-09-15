@@ -30,6 +30,7 @@ typedef struct {
     instr_t *instr;
     script_ctx_t *script;
     function_t *func;
+    IDispatch *this_obj;
 
     VARIANT *args;
     VARIANT *vars;
@@ -113,6 +114,14 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         }
     }
 
+    hres = disp_get_id(ctx->this_obj, name, TRUE, &id);
+    if(SUCCEEDED(hres)) {
+        ref->type = REF_DISP;
+        ref->u.d.disp = ctx->this_obj;
+        ref->u.d.id = id;
+        return S_OK;
+    }
+
     if(lookup_dynamic_vars(ctx->script->global_vars, name, ref))
         return S_OK;
 
@@ -125,8 +134,8 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
     }
 
     LIST_FOR_EACH_ENTRY(item, &ctx->script->named_items, named_item_t, entry) {
-        if(item->flags & SCRIPTITEM_GLOBALMEMBERS) {
-            hres = disp_get_id(item->disp, name, &id);
+        if((item->flags & SCRIPTITEM_GLOBALMEMBERS) && item->disp != ctx->this_obj) {
+            hres = disp_get_id(item->disp, name, FALSE, &id);
             if(SUCCEEDED(hres)) {
                 ref->type = REF_DISP;
                 ref->u.d.disp = item->disp;
@@ -294,7 +303,7 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
             return hres;
         break;
     case REF_FUNC:
-        hres = exec_script(ctx->script, ref.u.f, &dp, res);
+        hres = exec_script(ctx->script, ref.u.f, NULL, &dp, res);
         if(FAILED(hres))
             return hres;
         break;
@@ -347,7 +356,7 @@ static HRESULT do_mcall(exec_ctx_t *ctx, VARIANT *res)
 
     vbstack_to_dp(ctx, arg_cnt, &dp);
 
-    hres = disp_get_id(obj, identifier, &id);
+    hres = disp_get_id(obj, identifier, FALSE, &id);
     if(SUCCEEDED(hres))
         hres = disp_call(ctx->script, obj, id, &dp, res);
     IDispatch_Release(obj);
@@ -480,7 +489,7 @@ static HRESULT interp_assign_member(exec_ctx_t *ctx)
         return hres;
     }
 
-    hres = disp_get_id(obj, identifier, &id);
+    hres = disp_get_id(obj, identifier, FALSE, &id);
     if(SUCCEEDED(hres))
         hres = disp_propput(ctx->script, obj, id, val.v);
 
@@ -1084,6 +1093,9 @@ static void release_exec(exec_ctx_t *ctx)
 
     VariantClear(&ctx->ret_val);
 
+    if(ctx->this_obj)
+        IDispatch_Release(ctx->this_obj);
+
     if(ctx->args) {
         for(i=0; i < ctx->func->arg_cnt; i++)
             VariantClear(ctx->args+i);
@@ -1099,7 +1111,7 @@ static void release_exec(exec_ctx_t *ctx)
     heap_free(ctx->stack);
 }
 
-HRESULT exec_script(script_ctx_t *ctx, function_t *func, DISPPARAMS *dp, VARIANT *res)
+HRESULT exec_script(script_ctx_t *ctx, function_t *func, IDispatch *this_obj, DISPPARAMS *dp, VARIANT *res)
 {
     exec_ctx_t exec = {func->code_ctx};
     vbsop_t op;
@@ -1158,6 +1170,14 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, DISPPARAMS *dp, VARIANT
         release_exec(&exec);
         return E_OUTOFMEMORY;
     }
+
+    if(this_obj)
+        exec.this_obj = this_obj;
+    else if (ctx->host_global)
+        exec.this_obj = ctx->host_global;
+    else
+        exec.this_obj = (IDispatch*)&ctx->script_obj->IDispatchEx_iface;
+    IDispatch_AddRef(exec.this_obj);
 
     exec.instr = exec.code->instrs + func->code_off;
     exec.script = ctx;
