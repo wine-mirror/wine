@@ -607,8 +607,8 @@ static void test_StrFromTimeIntervalA(void)
   {
     StrFromTimeIntervalA(szBuff, 256, result->ms, result->digits);
 
-    ok(!strcmp(result->time_interval, szBuff), "Formatted %d %d wrong\n",
-       result->ms, result->digits);
+    ok(!strcmp(result->time_interval, szBuff), "Formatted %d %d wrong: %s\n",
+       result->ms, result->digits, szBuff);
     result++;
   }
 }
