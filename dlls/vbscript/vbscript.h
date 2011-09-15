@@ -65,6 +65,8 @@ typedef struct {
     IDispatchEx IDispatchEx_iface;
 
     LONG ref;
+
+    const class_desc_t *desc;
 } vbdisp_t;
 
 typedef enum {
@@ -74,7 +76,7 @@ typedef enum {
     VBDISP_ANY
 } vbdisp_invoke_type_t;
 
-HRESULT create_vbdisp(vbdisp_t**);
+HRESULT create_vbdisp(const class_desc_t*,vbdisp_t**);
 HRESULT disp_get_id(IDispatch*,BSTR,DISPID*);
 HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,DISPPARAMS*,VARIANT*);
 HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,VARIANT*);
@@ -101,6 +103,7 @@ struct _script_ctx_t {
 
     IDispatch *host_global;
 
+    class_desc_t script_desc;
     vbdisp_t *script_obj;
 
     dynamic_var_t *global_vars;

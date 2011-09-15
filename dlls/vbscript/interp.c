@@ -463,7 +463,7 @@ static HRESULT interp_new(exec_ctx_t *ctx)
         return E_FAIL;
     }
 
-    hres = create_vbdisp(&obj);
+    hres = create_vbdisp(class_desc, &obj);
     if(FAILED(hres))
         return hres;
 

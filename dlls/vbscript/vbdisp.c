@@ -184,7 +184,7 @@ static IDispatchExVtbl DispatchExVtbl = {
     DispatchEx_GetNameSpaceParent
 };
 
-HRESULT create_vbdisp(vbdisp_t **ret)
+HRESULT create_vbdisp(const class_desc_t *desc, vbdisp_t **ret)
 {
     vbdisp_t *vbdisp;
 
@@ -194,6 +194,7 @@ HRESULT create_vbdisp(vbdisp_t **ret)
 
     vbdisp->IDispatchEx_iface.lpVtbl = &DispatchExVtbl;
     vbdisp->ref = 1;
+    vbdisp->desc = desc;
 
     *ret = vbdisp;
     return S_OK;
@@ -201,7 +202,8 @@ HRESULT create_vbdisp(vbdisp_t **ret)
 
 HRESULT init_global(script_ctx_t *ctx)
 {
-    return create_vbdisp(&ctx->script_obj);
+    ctx->script_desc.ctx = ctx;
+    return create_vbdisp(&ctx->script_desc, &ctx->script_obj);
 }
 
 HRESULT disp_get_id(IDispatch *disp, BSTR name, DISPID *id)
