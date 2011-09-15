@@ -60,6 +60,8 @@ DEFINE_EXPECT(global_success_d);
 DEFINE_EXPECT(global_success_i);
 DEFINE_EXPECT(global_vbvar_d);
 DEFINE_EXPECT(global_vbvar_i);
+DEFINE_EXPECT(testobj_propget_d);
+DEFINE_EXPECT(testobj_propget_i);
 DEFINE_EXPECT(testobj_propput_d);
 DEFINE_EXPECT(testobj_propput_i);
 
@@ -72,6 +74,7 @@ DEFINE_EXPECT(testobj_propput_i);
 #define DISPID_GLOBAL_TESTOBJ       1006
 #define DISPID_GLOBAL_ISNULLDISP    1007
 
+#define DISPID_TESTOBJ_PROPGET      2000
 #define DISPID_TESTOBJ_PROPPUT      2001
 
 static const WCHAR testW[] = {'t','e','s','t',0};
@@ -234,6 +237,12 @@ static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown
 
 static HRESULT WINAPI testObj_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
+    if(!strcmp_wa(bstrName, "propget")) {
+        CHECK_EXPECT(testobj_propget_d);
+        test_grfdex(grfdex, fdexNameCaseInsensitive);
+        *pid = DISPID_TESTOBJ_PROPGET;
+        return S_OK;
+    }
     if(!strcmp_wa(bstrName, "propput")) {
         CHECK_EXPECT(testobj_propput_d);
         test_grfdex(grfdex, fdexNameCaseInsensitive);
@@ -249,6 +258,21 @@ static HRESULT WINAPI testObj_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     switch(id) {
+    case DISPID_TESTOBJ_PROPGET:
+        CHECK_EXPECT(testobj_propget_i);
+
+        ok(wFlags == (DISPATCH_PROPERTYGET|DISPATCH_METHOD), "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgvarg, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        V_VT(pvarRes) = VT_I2;
+        V_I2(pvarRes) = 10;
+        return S_OK;
     case DISPID_TESTOBJ_PROPPUT:
         CHECK_EXPECT(testobj_propput_i);
 
@@ -801,6 +825,12 @@ static void run_tests(void)
     parse_script_a("Option Explicit\nvbvar() = 3");
     CHECK_CALLED(global_vbvar_d);
     CHECK_CALLED(global_vbvar_i);
+
+    SET_EXPECT(testobj_propget_d);
+    SET_EXPECT(testobj_propget_i);
+    parse_script_a("dim x\nx = testObj.propget");
+    CHECK_CALLED(testobj_propget_d);
+    CHECK_CALLED(testobj_propget_i);
 
     SET_EXPECT(testobj_propput_d);
     SET_EXPECT(testobj_propput_i);
