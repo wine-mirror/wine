@@ -78,11 +78,11 @@ msgstr "Muokattu"
 
 #: appwiz.rc:48
 msgid "Downloading..."
-msgstr "Downloading..."
+msgstr ""
 
 #: appwiz.rc:49
 msgid "Installing..."
-msgstr "Installing..."
+msgstr ""
 
 #: appwiz.rc:50
 msgid ""
@@ -504,7 +504,7 @@ msgstr "Ei väriainetta; "
 
 #: comdlg32.rc:113
 msgid "Page punt; "
-msgstr "Page punt; "
+msgstr ""
 
 #: comdlg32.rc:114
 msgid "Interrupted by user; "
@@ -2003,9 +2003,8 @@ msgid "Object"
 msgstr ""
 
 #: dxdiagn.rc:25
-#, fuzzy
 msgid "Regional Setting"
-msgstr "Default Settings"
+msgstr ""
 
 #: dxdiagn.rc:26
 msgid "%uMB used, %uMB available"
@@ -2219,9 +2218,8 @@ msgstr ""
 "&Ohje"
 
 #: ieframe.rc:57
-#, fuzzy
 msgid "&About Internet Explorer"
-msgstr "&About Notepad"
+msgstr ""
 
 #: ieframe.rc:67
 #, fuzzy
@@ -2414,9 +2412,8 @@ msgid "Invalid handle\n"
 msgstr ""
 
 #: winerror.mc:61
-#, fuzzy
 msgid "Memory trashed\n"
-msgstr "Memory Monitor"
+msgstr ""
 
 #: winerror.mc:66
 #, fuzzy
@@ -2571,9 +2568,8 @@ msgid "Bad network path\n"
 msgstr ""
 
 #: winerror.mc:236
-#, fuzzy
 msgid "Network busy\n"
-msgstr "Network share"
+msgstr ""
 
 #: winerror.mc:241
 #, fuzzy
@@ -2626,9 +2622,8 @@ msgid "Bad device type\n"
 msgstr ""
 
 #: winerror.mc:301
-#, fuzzy
 msgid "Bad network name\n"
-msgstr "Network share"
+msgstr ""
 
 #: winerror.mc:306
 msgid "Too many network names\n"
@@ -2853,9 +2848,8 @@ msgid "Drive is busy\n"
 msgstr "Asemat"
 
 #: winerror.mc:581
-#, fuzzy
 msgid "Same drive\n"
-msgstr "System drive"
+msgstr ""
 
 #: winerror.mc:586
 msgid "Not toplevel directory\n"
@@ -2942,9 +2936,8 @@ msgid "Lock failed\n"
 msgstr ""
 
 #: winerror.mc:691
-#, fuzzy
 msgid "Resource in use\n"
-msgstr "Resource Failures"
+msgstr ""
 
 #: winerror.mc:696
 #, fuzzy
@@ -3849,9 +3842,8 @@ msgid "Connection is active\n"
 msgstr ""
 
 #: winerror.mc:1786
-#, fuzzy
 msgid "Network unreachable\n"
-msgstr "Network share"
+msgstr ""
 
 #: winerror.mc:1791
 msgid "Host unreachable\n"
@@ -4947,9 +4939,8 @@ msgid "Unsupported name syntax\n"
 msgstr ""
 
 #: winerror.mc:3111
-#, fuzzy
 msgid "No network address\n"
-msgstr "Network share"
+msgstr ""
 
 #: winerror.mc:3116
 msgid "Duplicate endpoint\n"
@@ -6261,7 +6252,7 @@ msgstr "Trace Tags"
 
 #: shdoclc.rc:197
 msgid "Resource Failures"
-msgstr "Resource Failures"
+msgstr ""
 
 #: shdoclc.rc:198
 msgid "Dump Tracking Info"
@@ -6269,11 +6260,11 @@ msgstr "Dump Tracking Info"
 
 #: shdoclc.rc:199
 msgid "Debug Break"
-msgstr "Debug Break"
+msgstr ""
 
 #: shdoclc.rc:200
 msgid "Debug View"
-msgstr "Debug View"
+msgstr ""
 
 #: shdoclc.rc:201
 msgid "Dump Tree"
@@ -6297,23 +6288,23 @@ msgstr "Dump LayoutRects"
 
 #: shdoclc.rc:206
 msgid "Memory Monitor"
-msgstr "Memory Monitor"
+msgstr ""
 
 #: shdoclc.rc:207
 msgid "Performance Meters"
-msgstr "Performance Meters"
+msgstr ""
 
 #: shdoclc.rc:208
 msgid "Save HTML"
-msgstr "Save HTML"
+msgstr ""
 
 #: shdoclc.rc:210
 msgid "&Browse View"
-msgstr "&Browse View"
+msgstr ""
 
 #: shdoclc.rc:211
 msgid "&Edit View"
-msgstr "&Edit View"
+msgstr ""
 
 #: shdoclc.rc:216 shdoclc.rc:230
 msgid "Scroll Here"
@@ -6902,19 +6893,6 @@ msgid ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
-"Wine is free software; you can redistribute it and/or modify it under the "
-"terms of the GNU Lesser General Public License as published by the Free "
-"Software Foundation; either version 2.1 of the License, or (at your option) "
-"any later version.\n"
-"\n"
-"Wine is distributed in the hope that it will be useful, but WITHOUT ANY "
-"WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
-"FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for "
-"more details.\n"
-"\n"
-"You should have received a copy of the GNU Lesser General Public License "
-"along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
-"Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
 #: shell32.rc:266
 msgid "Wine License"
@@ -6973,9 +6951,8 @@ msgid "&Close\tAlt-F4"
 msgstr "&Sulje\tAlt+F4"
 
 #: user32.rc:35
-#, fuzzy
 msgid "&About Wine"
-msgstr "&About Notepad"
+msgstr ""
 
 #: user32.rc:46
 #, fuzzy
@@ -7712,9 +7689,8 @@ msgid "Timeout"
 msgstr ""
 
 #: wldap32.rc:113
-#, fuzzy
 msgid "Auth Unknown"
-msgstr "Context Unknown"
+msgstr ""
 
 #: wldap32.rc:114
 msgid "Filter Error"
@@ -8543,9 +8519,8 @@ msgid "Connection is being made"
 msgstr "Lähiverkkoyhteys"
 
 #: net.rc:49
-#, fuzzy
 msgid "Reconnecting"
-msgstr "Default Settings"
+msgstr ""
 
 #: net.rc:40
 msgid "The following services are running:\n"
@@ -8635,7 +8610,7 @@ msgstr ""
 
 #: notepad.rc:59
 msgid "&About Notepad"
-msgstr "&About Notepad"
+msgstr ""
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -8671,6 +8646,7 @@ msgid "Text files (*.txt)"
 msgstr "Teksti tiedostot (*.txt)"
 
 #: notepad.rc:79
+#, fuzzy
 msgid ""
 "File '%s' is too large for notepad.\n"
 "Please use a different editor."
@@ -8693,10 +8669,6 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"File '%s'\n"
-"does not exist\n"
-"\n"
-" Do you want to create a new file ?"
 
 #: notepad.rc:85
 msgid ""
@@ -8704,10 +8676,6 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"File '%s'\n"
-"has been modified\n"
-"\n"
-" Would you like to save the changes ?"
 
 #: notepad.rc:86
 msgid "'%s' could not be found."
@@ -8845,9 +8813,8 @@ msgid "&Refresh\tF5"
 msgstr "P&äivitä"
 
 #: oleview.rc:71
-#, fuzzy
 msgid "&About OleView"
-msgstr "&About Notepad"
+msgstr ""
 
 #: oleview.rc:79
 #, fuzzy
@@ -9114,9 +9081,8 @@ msgid "&Arrange Icons"
 msgstr ""
 
 #: progman.rc:54
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "&About Notepad"
+msgstr ""
 
 #: progman.rc:60
 msgid "Program Manager"
@@ -9718,9 +9684,8 @@ msgid "&Bring To Front"
 msgstr ""
 
 #: taskmgr.rc:90
-#, fuzzy
 msgid "&About Task Manager"
-msgstr "&About Notepad"
+msgstr ""
 
 #: taskmgr.rc:120
 msgid "&Switch To"
@@ -9744,9 +9709,8 @@ msgid "End Process &Tree"
 msgstr ""
 
 #: taskmgr.rc:152 winedbg.rc:29
-#, fuzzy
 msgid "&Debug"
-msgstr "Debug"
+msgstr ""
 
 #: taskmgr.rc:154
 msgid "Set &Priority"
@@ -9951,9 +9915,8 @@ msgid "Processes"
 msgstr ""
 
 #: taskmgr.rc:264
-#, fuzzy
 msgid "Performance"
-msgstr "Performance Meters"
+msgstr ""
 
 #: taskmgr.rc:265
 msgid "CPU Usage: %3d%%"
@@ -10153,9 +10116,8 @@ msgid "Warn"
 msgstr ""
 
 #: taskmgr.rc:331
-#, fuzzy
 msgid "Trace"
-msgstr "Trace Tags"
+msgstr ""
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
@@ -10254,15 +10216,15 @@ msgstr "Valitse teematiedosto"
 
 #: winecfg.rc:45
 msgid "Folder"
-msgstr "Shell Folder"
+msgstr ""
 
 #: winecfg.rc:46
 msgid "Links to"
-msgstr "Links to"
+msgstr ""
 
 #: winecfg.rc:42
 msgid "Wine configuration for %s"
-msgstr "Wine configuration for %s"
+msgstr ""
 
 #: winecfg.rc:51
 msgid ""
@@ -10298,23 +10260,23 @@ msgstr "ei käytössä"
 
 #: winecfg.rc:58
 msgid "Default Settings"
-msgstr "Default Settings"
+msgstr ""
 
 #: winecfg.rc:59
 msgid "Wine Programs (*.exe,*.exe.so)"
-msgstr "Wine Programs (*.exe,*.exe.so)"
+msgstr ""
 
 #: winecfg.rc:60
 msgid "Use global settings"
-msgstr "Use global settings"
+msgstr ""
 
 #: winecfg.rc:61
 msgid "Select an executable file"
-msgstr "Select an executable file"
+msgstr ""
 
 #: winecfg.rc:66
 msgid "Hardware"
-msgstr "Hardware"
+msgstr ""
 
 #: winecfg.rc:67
 msgctxt "vertex shader mode"
@@ -10322,40 +10284,35 @@ msgid "None"
 msgstr ""
 
 #: winecfg.rc:72
-#, fuzzy
 msgid "Autodetect..."
-msgstr "Autodetect"
+msgstr ""
 
 #: winecfg.rc:73
 msgid "Local hard disk"
-msgstr "Local hard disk"
+msgstr ""
 
 #: winecfg.rc:74
 msgid "Network share"
-msgstr "Network share"
+msgstr ""
 
 #: winecfg.rc:75
 msgid "Floppy disk"
-msgstr "Floppy disk"
+msgstr ""
 
 #: winecfg.rc:76
 msgid "CD-ROM"
 msgstr "CD-ROM"
 
 #: winecfg.rc:77
-#, fuzzy
 msgid ""
 "You cannot add any more drives.\n"
 "\n"
 "Each drive must have a letter, from A to Z, so you cannot have more than 26."
 msgstr ""
-"You cannot add any more drives.\n"
-"\n"
-"Each drive must have a letter, from A to Z, so you cannot have more than 26"
 
 #: winecfg.rc:78
 msgid "System drive"
-msgstr "System drive"
+msgstr ""
 
 #: winecfg.rc:79
 msgid ""
@@ -10364,10 +10321,6 @@ msgid ""
 "Most Windows applications expect drive C to exist, and will die messily if "
 "it doesn't. If you proceed remember to recreate it!"
 msgstr ""
-"Are you sure you want to delete drive C?\n"
-"\n"
-"Most Windows applications expect drive C to exist, and will die messily if "
-"it doesn't. If you proceed remember to recreate it!"
 
 #: winecfg.rc:80
 #, fuzzy
@@ -10377,7 +10330,7 @@ msgstr "Letter"
 
 #: winecfg.rc:81
 msgid "Drive Mapping"
-msgstr "Drive Mapping"
+msgstr ""
 
 #: winecfg.rc:82
 msgid ""
@@ -10385,25 +10338,22 @@ msgid ""
 "\n"
 "Remember to click 'Add' in the Drives tab to create one!\n"
 msgstr ""
-"You don't have a drive C. This is not so great.\n"
-"\n"
-"Remember to click 'Add' in the Drives tab to create one!\n"
 
 #: winecfg.rc:87
 msgid "Full"
-msgstr "Full"
+msgstr ""
 
 #: winecfg.rc:88
 msgid "Standard"
-msgstr "Standard"
+msgstr ""
 
 #: winecfg.rc:89
 msgid "Basic"
-msgstr "Basic"
+msgstr ""
 
 #: winecfg.rc:90
 msgid "Emulation"
-msgstr "Emulation"
+msgstr ""
 
 #: winecfg.rc:95
 #, fuzzy
@@ -10749,9 +10699,8 @@ msgid "Tile &Vertically\tCtrl+F4"
 msgstr "&Valitse kaikki"
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&About Wine File Manager"
-msgstr "&About Notepad"
+msgstr ""
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -10843,9 +10792,8 @@ msgid "&Fastest Times"
 msgstr "&Nopeimmat ajat"
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "&About Notepad"
+msgstr ""
 
 #: winemine.rc:27
 msgid "WineMine"
@@ -10877,19 +10825,19 @@ msgstr "&Aseta..."
 
 #: winhlp32.rc:45
 msgid "History"
-msgstr "History"
+msgstr ""
 
 #: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"
-msgstr "Small"
+msgstr ""
 
 #: winhlp32.rc:49 winhlp32.rc:70
 msgid "Normal"
-msgstr "Normal"
+msgstr ""
 
 #: winhlp32.rc:50 winhlp32.rc:71
 msgid "Large"
-msgstr "Large"
+msgstr ""
 
 #: winhlp32.rc:54
 #, fuzzy
@@ -10924,7 +10872,7 @@ msgstr "Virhe luettaessa ohjetiedostoa `%s'"
 
 #: winhlp32.rc:85
 msgid "Summary"
-msgstr "Summary"
+msgstr ""
 
 #: winhlp32.rc:84
 msgid "&Index"
@@ -10936,11 +10884,11 @@ msgstr "Ohjetiedostot (*.hlp)"
 
 #: winhlp32.rc:89
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
-msgstr "Cannot find '%s'. Do you want to find this file yourself?"
+msgstr ""
 
 #: winhlp32.rc:90
 msgid "Cannot find a richedit implementation... Aborting"
-msgstr "Cannot find a richedit implementation... Aborting"
+msgstr ""
 
 #: winhlp32.rc:91
 msgid "Help topics: "
