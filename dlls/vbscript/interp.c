@@ -599,8 +599,13 @@ static HRESULT interp_null(exec_ctx_t *ctx)
 
 static HRESULT interp_nothing(exec_ctx_t *ctx)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT v;
+
+    TRACE("\n");
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = NULL;
+    return stack_push(ctx, &v);
 }
 
 static HRESULT interp_not(exec_ctx_t *ctx)

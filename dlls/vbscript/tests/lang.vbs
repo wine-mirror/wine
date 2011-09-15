@@ -71,8 +71,13 @@ Call ok(getVT(1 & 100000) = "VT_BSTR", "getVT(1 & 100000) is not VT_BSTR")
 Call ok(getVT(-empty) = "VT_I2", "getVT(-empty) = " & getVT(-empty))
 Call ok(getVT(-null) = "VT_NULL", "getVT(-null) = " & getVT(-null))
 Call ok(getVT(y) = "VT_EMPTY*", "getVT(y) = " & getVT(y))
+Call ok(getVT(nothing) = "VT_DISPATCH", "getVT(nothing) = " & getVT(nothing))
+set x = nothing
+Call ok(getVT(x) = "VT_DISPATCH*", "getVT(x=nothing) = " & getVT(x))
 x = true
 Call ok(getVT(x) = "VT_BOOL*", "getVT(x) = " & getVT(x))
+
+Call ok(isNullDisp(nothing), "nothing is not nulldisp?")
 
 x = "xx"
 Call ok("ab" & "cd" = "abcd", """ab"" & ""cd"" <> ""abcd""")

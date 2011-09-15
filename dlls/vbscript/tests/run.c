@@ -70,6 +70,7 @@ DEFINE_EXPECT(testobj_propput_i);
 #define DISPID_GLOBAL_ISENGLOC      1004
 #define DISPID_GLOBAL_VBVAR         1005
 #define DISPID_GLOBAL_TESTOBJ       1006
+#define DISPID_GLOBAL_ISNULLDISP    1007
 
 #define DISPID_TESTOBJ_PROPPUT      2001
 
@@ -329,6 +330,12 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         *pid = DISPID_GLOBAL_VBVAR;
         return S_OK;
     }
+    if(!strcmp_wa(bstrName, "isNullDisp")) {
+        test_grfdex(grfdex, fdexNameCaseInsensitive);
+        *pid = DISPID_GLOBAL_ISNULLDISP;
+        return S_OK;
+    }
+
 
     if(strict_dispid_check && strcmp_wa(bstrName, "x"))
         ok(0, "unexpected call %s %x\n", wine_dbgstr_w(bstrName), grfdex);
@@ -459,6 +466,28 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         V_VT(pvarRes) = VT_DISPATCH;
         V_DISPATCH(pvarRes) = (IDispatch*)&testObj;
         return S_OK;
+
+    case DISPID_GLOBAL_ISNULLDISP: {
+        VARIANT *v;
+
+        ok(wFlags == (INVOKE_FUNC|INVOKE_PROPERTYGET), "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        v = pdp->rgvarg;
+        if(V_VT(v) == (VT_VARIANT|VT_BYREF))
+            v = V_VARIANTREF(v);
+
+        ok(V_VT(v) == VT_DISPATCH, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
+        V_VT(pvarRes) = VT_BOOL;
+        V_BOOL(pvarRes) = V_DISPATCH(v) ? VARIANT_FALSE : VARIANT_TRUE;
+        return S_OK;
+    }
     }
 
     ok(0, "unexpected call %d\n", id);
