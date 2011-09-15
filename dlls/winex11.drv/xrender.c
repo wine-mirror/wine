@@ -75,7 +75,6 @@ typedef enum wxr_format
 
 typedef struct wine_xrender_format_template
 {
-    WXRFormat wxr_format;
     unsigned int depth;
     unsigned int alpha;
     unsigned int alphaMask;
@@ -90,18 +89,18 @@ typedef struct wine_xrender_format_template
 static const WineXRenderFormatTemplate wxr_formats_template[WXR_NB_FORMATS] =
 {
     /* Format               depth   alpha   mask    red     mask    green   mask    blue    mask*/
-    {WXR_FORMAT_MONO,       1,      0,      0x01,   0,      0,      0,      0,      0,      0       },
-    {WXR_FORMAT_GRAY,       8,      0,      0xff,   0,      0,      0,      0,      0,      0       },
-    {WXR_FORMAT_X1R5G5B5,   16,     0,      0,      10,     0x1f,   5,      0x1f,   0,      0x1f    },
-    {WXR_FORMAT_X1B5G5R5,   16,     0,      0,      0,      0x1f,   5,      0x1f,   10,     0x1f    },
-    {WXR_FORMAT_R5G6B5,     16,     0,      0,      11,     0x1f,   5,      0x3f,   0,      0x1f    },
-    {WXR_FORMAT_B5G6R5,     16,     0,      0,      0,      0x1f,   5,      0x3f,   11,     0x1f    },
-    {WXR_FORMAT_R8G8B8,     24,     0,      0,      16,     0xff,   8,      0xff,   0,      0xff    },
-    {WXR_FORMAT_B8G8R8,     24,     0,      0,      0,      0xff,   8,      0xff,   16,     0xff    },
-    {WXR_FORMAT_A8R8G8B8,   32,     24,     0xff,   16,     0xff,   8,      0xff,   0,      0xff    },
-    {WXR_FORMAT_B8G8R8A8,   32,     0,      0xff,   8,      0xff,   16,     0xff,   24,     0xff    },
-    {WXR_FORMAT_X8R8G8B8,   32,     0,      0,      16,     0xff,   8,      0xff,   0,      0xff    },
-    {WXR_FORMAT_B8G8R8X8,   32,     0,      0,      8,      0xff,   16,     0xff,   24,     0xff    },
+/* WXR_FORMAT_MONO     */ { 1,      0,      0x01,   0,      0,      0,      0,      0,      0       },
+/* WXR_FORMAT_GRAY     */ { 8,      0,      0xff,   0,      0,      0,      0,      0,      0       },
+/* WXR_FORMAT_X1R5G5B5 */ { 16,     0,      0,      10,     0x1f,   5,      0x1f,   0,      0x1f    },
+/* WXR_FORMAT_X1B5G5R5 */ { 16,     0,      0,      0,      0x1f,   5,      0x1f,   10,     0x1f    },
+/* WXR_FORMAT_R5G6B5   */ { 16,     0,      0,      11,     0x1f,   5,      0x3f,   0,      0x1f    },
+/* WXR_FORMAT_B5G6R5   */ { 16,     0,      0,      0,      0x1f,   5,      0x3f,   11,     0x1f    },
+/* WXR_FORMAT_R8G8B8   */ { 24,     0,      0,      16,     0xff,   8,      0xff,   0,      0xff    },
+/* WXR_FORMAT_B8G8R8   */ { 24,     0,      0,      0,      0xff,   8,      0xff,   16,     0xff    },
+/* WXR_FORMAT_A8R8G8B8 */ { 32,     24,     0xff,   16,     0xff,   8,      0xff,   0,      0xff    },
+/* WXR_FORMAT_B8G8R8A8 */ { 32,     0,      0xff,   8,      0xff,   16,     0xff,   24,     0xff    },
+/* WXR_FORMAT_X8R8G8B8 */ { 32,     0,      0,      16,     0xff,   8,      0xff,   0,      0xff    },
+/* WXR_FORMAT_B8G8R8X8 */ { 32,     0,      0,      8,      0xff,   16,     0xff,   24,     0xff    },
 };
 
 static enum wxr_format default_format;
@@ -287,15 +286,15 @@ static int load_xrender_formats(void)
     int count = 0;
     unsigned int i;
 
-    for(i = 0; i < (sizeof(wxr_formats_template) / sizeof(wxr_formats_template[0])); i++)
+    for (i = 0; i < WXR_NB_FORMATS; i++)
     {
-        XRenderPictFormat templ, *pict_format;
+        XRenderPictFormat templ;
 
         if(is_wxrformat_compatible_with_default_visual(&wxr_formats_template[i]))
         {
             wine_tsx11_lock();
-            pict_format = pXRenderFindVisualFormat(gdi_display, visual);
-            if(!pict_format)
+            pict_formats[i] = pXRenderFindVisualFormat(gdi_display, visual);
+            if (!pict_formats[i])
             {
                 /* Xrender doesn't like DirectColor visuals, try to find a TrueColor one instead */
                 if (visual->class == DirectColor)
@@ -304,20 +303,13 @@ static int load_xrender_formats(void)
                     if (XMatchVisualInfo( gdi_display, DefaultScreen(gdi_display),
                                           screen_depth, TrueColor, &info ))
                     {
-                        pict_format = pXRenderFindVisualFormat(gdi_display, info.visual);
-                        if (pict_format) visual = info.visual;
+                        pict_formats[i] = pXRenderFindVisualFormat(gdi_display, info.visual);
+                        if (pict_formats[i]) visual = info.visual;
                     }
                 }
             }
             wine_tsx11_unlock();
-
-            if(pict_format)
-            {
-                pict_formats[wxr_formats_template[i].wxr_format] = pict_format;
-                default_format = wxr_formats_template[i].wxr_format;
-                count++;
-                TRACE("Loaded pict_format with id=%#lx for wxr_format=%#x\n", pict_format->id, wxr_formats_template[i].wxr_format);
-            }
+            if (pict_formats[i]) default_format = i;
         }
         else
         {
@@ -325,15 +317,13 @@ static int load_xrender_formats(void)
             get_xrender_template(&wxr_formats_template[i], &templ, &mask);
 
             wine_tsx11_lock();
-            pict_format = pXRenderFindFormat(gdi_display, mask, &templ, 0);
+            pict_formats[i] = pXRenderFindFormat(gdi_display, mask, &templ, 0);
             wine_tsx11_unlock();
-
-            if(pict_format)
-            {
-                pict_formats[wxr_formats_template[i].wxr_format] = pict_format;
-                count++;
-                TRACE("Loaded pict_format with id=%#lx for wxr_format=%#x\n", pict_format->id, wxr_formats_template[i].wxr_format);
-            }
+        }
+        if (pict_formats[i])
+        {
+            count++;
+            TRACE("Loaded pict_format with id=%#lx for wxr_format=%#x\n", pict_formats[i]->id, i);
         }
     }
     return count;
@@ -485,13 +475,13 @@ static enum wxr_format get_xrender_format_from_color_shifts(int depth, ColorShif
     blueMask  = shifts->physicalBlue.max << shifts->physicalBlue.shift;
 
     /* Try to locate a format which matches the specification of the dibsection. */
-    for(i = 0; i < (sizeof(wxr_formats_template) / sizeof(wxr_formats_template[0])); i++)
+    for(i = 0; i < WXR_NB_FORMATS; i++)
     {
         if( depth     == wxr_formats_template[i].depth &&
             redMask   == (wxr_formats_template[i].redMask << wxr_formats_template[i].red) &&
             greenMask == (wxr_formats_template[i].greenMask << wxr_formats_template[i].green) &&
             blueMask  == (wxr_formats_template[i].blueMask << wxr_formats_template[i].blue) )
-            return wxr_formats_template[i].wxr_format;
+            return i;
     }
 
     /* This should not happen because when we reach 'shifts' must have been set and we only allows shifts which are backed by X */
