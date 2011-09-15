@@ -55,9 +55,24 @@ typedef struct named_item_t {
     struct list entry;
 } named_item_t;
 
+typedef enum {
+    VBDISP_CALLGET,
+    VBDISP_LET,
+    VBDISP_SET,
+    VBDISP_ANY
+} vbdisp_invoke_type_t;
+
+typedef struct {
+    const WCHAR *name;
+    BOOL is_public;
+    function_t *entries[VBDISP_ANY];
+} vbdisp_funcprop_desc_t;
+
 typedef struct _class_desc_t {
     const WCHAR *name;
     script_ctx_t *ctx;
+    unsigned func_cnt;
+    vbdisp_funcprop_desc_t *funcs;
     struct _class_desc_t *next;
 } class_desc_t;
 
@@ -68,13 +83,6 @@ typedef struct {
 
     const class_desc_t *desc;
 } vbdisp_t;
-
-typedef enum {
-    VBDISP_CALLGET,
-    VBDISP_LET,
-    VBDISP_SET,
-    VBDISP_ANY
-} vbdisp_invoke_type_t;
 
 HRESULT create_vbdisp(const class_desc_t*,vbdisp_t**);
 HRESULT disp_get_id(IDispatch*,BSTR,DISPID*);

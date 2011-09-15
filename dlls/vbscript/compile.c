@@ -804,9 +804,26 @@ static BOOL lookup_class_name(compile_ctx_t *ctx, const WCHAR *name)
     return FALSE;
 }
 
+static HRESULT create_class_funcprop(compile_ctx_t *ctx, function_decl_t *func_decl, vbdisp_funcprop_desc_t *desc)
+{
+    desc->name = compiler_alloc_string(ctx->code, func_decl->name);
+    if(!desc->name)
+        return E_OUTOFMEMORY;
+
+    assert(!desc->entries[0]);
+
+    if(func_decl->is_public)
+        desc->is_public = TRUE;
+
+    return create_function(ctx, func_decl, desc->entries);
+}
+
 static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
 {
+    function_decl_t *func_decl;
     class_desc_t *class_desc;
+    unsigned i;
+    HRESULT hres;
 
     if(lookup_dim_decls(ctx, class_decl->name) || lookup_funcs_name(ctx, class_decl->name)
             || lookup_class_name(ctx, class_decl->name)) {
@@ -821,6 +838,22 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
     class_desc->name = compiler_alloc_string(ctx->code, class_decl->name);
     if(!class_desc->name)
         return E_OUTOFMEMORY;
+
+    class_desc->func_cnt = 1; /* always allocate slot for default getter */
+
+    for(func_decl = class_decl->funcs; func_decl; func_decl = func_decl->next)
+        class_desc->func_cnt++;
+
+    class_desc->funcs = compiler_alloc(ctx->code, class_desc->func_cnt*sizeof(*class_desc->funcs));
+    if(!class_desc->funcs)
+        return E_OUTOFMEMORY;
+    memset(class_desc->funcs, 0, class_desc->func_cnt*sizeof(*class_desc->funcs));
+
+    for(func_decl = class_decl->funcs, i=1; func_decl; func_decl = func_decl->next, i++) {
+        hres = create_class_funcprop(ctx, func_decl, class_desc->funcs + i);
+        if(FAILED(hres))
+            return hres;
+    }
 
     class_desc->next = ctx->classes;
     ctx->classes = class_desc;
