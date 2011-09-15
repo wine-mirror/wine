@@ -1404,13 +1404,10 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
 
     if (physDevDst != physDevSrc) X11DRV_CoerceDIBSection( physDevSrc, DIB_Status_GdiMod );
 
-    if(!X11DRV_XRender_GetSrcAreaStretch( physDevSrc, physDevDst, src_pixmap, tmpGC, src, dst ))
-    {
-        if (fStretch)
-            BITBLT_GetSrcAreaStretch( physDevSrc, physDevDst, src_pixmap, tmpGC, src, dst );
-        else
-            BITBLT_GetSrcArea( physDevSrc, physDevDst, src_pixmap, tmpGC, &src->visrect );
-    }
+    if (fStretch)
+        BITBLT_GetSrcAreaStretch( physDevSrc, physDevDst, src_pixmap, tmpGC, src, dst );
+    else
+        BITBLT_GetSrcArea( physDevSrc, physDevDst, src_pixmap, tmpGC, &src->visrect );
 
     execute_rop( physDevDst, src_pixmap, tmpGC, &dst->visrect, rop );
 

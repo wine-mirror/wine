@@ -2662,106 +2662,6 @@ void X11DRV_XRender_CopyBrush(X11DRV_PDEVICE *physDev, X_PHYSBITMAP *physBitmap,
     wine_tsx11_unlock();
 }
 
-BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
-                                      Pixmap pixmap, GC gc,
-                                      const struct bitblt_coords *src, const struct bitblt_coords *dst )
-{
-    BOOL stretch = (src->width != dst->width) || (src->height != dst->height);
-    int width = dst->visrect.right - dst->visrect.left;
-    int height = dst->visrect.bottom - dst->visrect.top;
-    int x_src = physDevSrc->dc_rect.left + src->visrect.left;
-    int y_src = physDevSrc->dc_rect.top + src->visrect.top;
-    struct xrender_info *src_info = get_xrender_info(physDevSrc);
-    const WineXRenderFormat *dst_format = get_xrender_format_from_color_shifts(physDevDst->depth, physDevDst->color_shifts);
-    Picture src_pict=0, dst_pict=0, mask_pict=0;
-    BOOL use_repeat;
-    double xscale, yscale;
-
-    XRenderPictureAttributes pa;
-    pa.subwindow_mode = IncludeInferiors;
-    pa.repeat = RepeatNone;
-
-    TRACE("src depth=%d widthSrc=%d heightSrc=%d xSrc=%d ySrc=%d\n",
-          physDevSrc->depth, src->width, src->height, x_src, y_src);
-    TRACE("dst depth=%d widthDst=%d heightDst=%d\n", physDevDst->depth, dst->width, dst->height);
-
-    if(!X11DRV_XRender_Installed)
-    {
-        TRACE("Not using XRender since it is not available or disabled\n");
-        return FALSE;
-    }
-
-    /* XRender can't handle palettes, so abort */
-    if(X11DRV_PALETTE_XPixelToPalette)
-        return FALSE;
-
-    /* XRender is of no use in this case */
-    if((physDevDst->depth == 1) && (physDevSrc->depth > 1))
-        return FALSE;
-
-    /* Just use traditional X copy when the formats match and we don't need stretching */
-    if((src_info->format->format == dst_format->format) && !stretch)
-    {
-        TRACE("Source and destination depth match and no stretching needed falling back to XCopyArea\n");
-        wine_tsx11_lock();
-        XCopyArea( gdi_display, physDevSrc->drawable, pixmap, gc, x_src, y_src, width, height, 0, 0);
-        wine_tsx11_unlock();
-        return TRUE;
-    }
-
-    use_repeat = use_source_repeat( physDevSrc );
-    if (!use_repeat)
-    {
-        xscale = src->width / (double)dst->width;
-        yscale = src->height / (double)dst->height;
-    }
-    else xscale = yscale = 1;  /* no scaling needed with a repeating source */
-
-    /* mono -> color */
-    if(physDevSrc->depth == 1 && physDevDst->depth > 1)
-    {
-        XRenderColor fg, bg;
-        get_xrender_color(dst_format, physDevDst->textPixel, &fg);
-        get_xrender_color(dst_format, physDevDst->backgroundPixel, &bg);
-
-        /* We use the source drawable as a mask */
-        mask_pict = get_xrender_picture_source( physDevSrc, use_repeat );
-
-        /* Use backgroundPixel as the foreground color */
-        EnterCriticalSection( &xrender_cs );
-        src_pict = get_tile_pict(dst_format, &bg);
-
-        /* Create a destination picture and fill it with textPixel color as the background color */
-        wine_tsx11_lock();
-        dst_pict = pXRenderCreatePicture(gdi_display, pixmap, dst_format->pict_format, CPSubwindowMode|CPRepeat, &pa);
-        pXRenderFillRectangle(gdi_display, PictOpSrc, dst_pict, &fg, 0, 0, width, height);
-
-        xrender_mono_blit(src_pict, mask_pict, dst_pict, x_src, y_src, 0, 0,
-                          xscale, yscale, width, height);
-
-        if(dst_pict) pXRenderFreePicture(gdi_display, dst_pict);
-        wine_tsx11_unlock();
-        LeaveCriticalSection( &xrender_cs );
-    }
-    else /* color -> color (can be at different depths) or mono -> mono */
-    {
-        if (physDevDst->depth == 32 && physDevSrc->depth < 32) mask_pict = get_no_alpha_mask();
-        src_pict = get_xrender_picture_source( physDevSrc, use_repeat );
-
-        wine_tsx11_lock();
-        dst_pict = pXRenderCreatePicture(gdi_display,
-                                          pixmap, dst_format->pict_format,
-                                          CPSubwindowMode|CPRepeat, &pa);
-
-        xrender_blit(PictOpSrc, src_pict, mask_pict, dst_pict,
-                     x_src, y_src, 0, 0, xscale, yscale, width, height);
-
-        if(dst_pict) pXRenderFreePicture(gdi_display, dst_pict);
-        wine_tsx11_unlock();
-    }
-    return TRUE;
-}
-
 static const struct gdi_dc_funcs xrender_funcs =
 {
     NULL,                               /* pAbortDoc */
@@ -2913,10 +2813,4 @@ BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel,
     return FALSE;
 }
 
-BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
-                                      Pixmap pixmap, GC gc,
-                                      const struct bitblt_coords *src, const struct bitblt_coords *dst )
-{
-    return FALSE;
-}
 #endif /* SONAME_LIBXRENDER */
