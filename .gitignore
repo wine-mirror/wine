@@ -75,6 +75,7 @@ dlls/msi/sql.tab.c
 dlls/msi/sql.tab.h
 dlls/mstask/mstask_local.h
 dlls/mstask/mstask_local_i.c
+dlls/msxml3/xmlparser.h
 dlls/msxml3/xslpattern.tab.c
 dlls/msxml3/xslpattern.tab.h
 dlls/msxml3/xslpattern.yy.c
@@ -234,7 +235,6 @@ include/wpcapi.h
 include/wtypes.h
 include/wuapi.h
 include/xmllite.h
-include/xmlparser.h
 libs/wpp/ppl.yy.c
 libs/wpp/ppy.tab.c
 libs/wpp/ppy.tab.h

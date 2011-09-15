@@ -44,6 +44,8 @@ RC_SRCS = \
 	schemas.rc \
 	version.rc
 
+IDL_H_SRCS = xmlparser.idl
+
 IDL_TLB_SRCS = msxml3_v1.idl
 
 @MAKE_DLL_RULES@
