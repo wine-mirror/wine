@@ -1869,15 +1869,14 @@ static void SmoothGlyphGray(XImage *image, int x, int y, void *bitmap, XGlyphInf
  * Returns an appropriate Picture for tiling the text colour.
  * Call and use result within the xrender_cs
  */
-static Picture get_tile_pict(const WineXRenderFormat *wxr_format, int text_pixel)
+static Picture get_tile_pict(const WineXRenderFormat *wxr_format, const XRenderColor *color)
 {
     static struct
     {
         Pixmap xpm;
         Picture pict;
-        int current_color;
+        XRenderColor current_color;
     } tiles[WXR_NB_FORMATS], *tile;
-    XRenderColor col;
 
     tile = &tiles[wxr_format->format];
 
@@ -1893,11 +1892,13 @@ static Picture get_tile_pict(const WineXRenderFormat *wxr_format, int text_pixel
         wine_tsx11_unlock();
 
         /* init current_color to something different from text_pixel */
-        tile->current_color = ~text_pixel;
+        tile->current_color = *color;
+        tile->current_color.red ^= 0xffff;
 
         if(wxr_format->format == WXR_FORMAT_MONO)
         {
             /* for a 1bpp bitmap we always need a 1 in the tile */
+            XRenderColor col;
             col.red = col.green = col.blue = 0;
             col.alpha = 0xffff;
             wine_tsx11_lock();
@@ -1906,13 +1907,12 @@ static Picture get_tile_pict(const WineXRenderFormat *wxr_format, int text_pixel
         }
     }
 
-    if(text_pixel != tile->current_color && wxr_format->format != WXR_FORMAT_MONO)
+    if (memcmp( color, &tile->current_color, sizeof(*color) ) && wxr_format->format != WXR_FORMAT_MONO)
     {
-        get_xrender_color(wxr_format, text_pixel, &col);
         wine_tsx11_lock();
-        pXRenderFillRectangle(gdi_display, PictOpSrc, tile->pict, &col, 0, 0, 1, 1);
+        pXRenderFillRectangle(gdi_display, PictOpSrc, tile->pict, color, 0, 0, 1, 1);
         wine_tsx11_unlock();
-        tile->current_color = text_pixel;
+        tile->current_color = *color;
     }
     return tile->pict;
 }
@@ -2080,6 +2080,7 @@ BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         POINT desired, current;
         int render_op = PictOpOver;
         Picture pict = get_xrender_picture(physdev->x11dev);
+        XRenderColor col;
 
         /* There's a bug in XRenderCompositeText that ignores the xDst and yDst parameters.
            So we pass zeros to the function and move to our starting position using the first
@@ -2089,7 +2090,8 @@ BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         desired.y = physdev->x11dev->dc_rect.top + y;
         current.x = current.y = 0;
 
-        tile_pict = get_tile_pict(physdev->info.format, physdev->x11dev->textPixel);
+        get_xrender_color(physdev->info.format, physdev->x11dev->textPixel, &col);
+        tile_pict = get_tile_pict(physdev->info.format, &col);
 
 	/* FIXME the mapping of Text/BkColor onto 1 or 0 needs investigation.
 	 */
@@ -2549,20 +2551,21 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
     /* mono -> color */
     if(physDevSrc->depth == 1 && physDevDst->depth > 1)
     {
-        XRenderColor col;
-        get_xrender_color(dst_format, physDevDst->textPixel, &col);
+        XRenderColor fg, bg;
+        get_xrender_color(dst_format, physDevDst->textPixel, &fg);
+        get_xrender_color(dst_format, physDevDst->backgroundPixel, &bg);
 
         /* We use the source drawable as a mask */
         mask_pict = get_xrender_picture_source( physDevSrc, use_repeat );
 
         /* Use backgroundPixel as the foreground color */
         EnterCriticalSection( &xrender_cs );
-        src_pict = get_tile_pict(dst_format, physDevDst->backgroundPixel);
+        src_pict = get_tile_pict(dst_format, &bg);
 
         /* Create a destination picture and fill it with textPixel color as the background color */
         wine_tsx11_lock();
         dst_pict = pXRenderCreatePicture(gdi_display, pixmap, dst_format->pict_format, CPSubwindowMode|CPRepeat, &pa);
-        pXRenderFillRectangle(gdi_display, PictOpSrc, dst_pict, &col, 0, 0, width, height);
+        pXRenderFillRectangle(gdi_display, PictOpSrc, dst_pict, &fg, 0, 0, width, height);
 
         xrender_mono_blit(src_pict, mask_pict, dst_pict, x_src, y_src, xscale, yscale, width, height);
 
