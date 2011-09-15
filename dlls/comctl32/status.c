@@ -207,6 +207,7 @@ STATUSBAR_DrawPart (const STATUS_INFO *infoPtr, HDC hdc, const STATUSWINDOWPART 
     UINT border = BDR_SUNKENOUTER;
     HTHEME theme = GetWindowTheme (infoPtr->Self);
     int themePart = SP_PANE;
+    int x = 0;
 
     TRACE("part bound %s\n", wine_dbgstr_rect(&r));
     if (part->style & SBT_POPOUT)
@@ -224,6 +225,12 @@ STATUSBAR_DrawPart (const STATUS_INFO *infoPtr, HDC hdc, const STATUSWINDOWPART 
     else
         DrawEdge(hdc, &r, border, BF_RECT|BF_ADJUST);
 
+    if (part->hIcon) {
+        INT cy = r.bottom - r.top;
+        DrawIconEx (hdc, r.left + 2, r.top, part->hIcon, cy, cy, 0, 0, DI_NORMAL);
+        x = 2 + cy;
+    }
+
     if (part->style & SBT_OWNERDRAW) {
 	DRAWITEMSTRUCT dis;
 
@@ -233,15 +240,9 @@ STATUSBAR_DrawPart (const STATUS_INFO *infoPtr, HDC hdc, const STATUSWINDOWPART 
 	dis.hDC = hdc;
 	dis.rcItem = r;
 	dis.itemData = (ULONG_PTR)part->text;
-       SendMessageW (infoPtr->Notify, WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
+        SendMessageW (infoPtr->Notify, WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
     } else {
-	if (part->hIcon) {
-	   INT cy = r.bottom - r.top;
-
-	    r.left += 2;
-	    DrawIconEx (hdc, r.left, r.top, part->hIcon, cy, cy, 0, 0, DI_NORMAL);
-	    r.left += cy;
-	}
+        r.left += x;
         DrawStatusTextW (hdc, &r, part->text, SBT_NOBORDERS);
     }
 }
