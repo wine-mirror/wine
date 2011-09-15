@@ -1726,7 +1726,7 @@ static void test_lights(void)
     d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
 
     hr = IDirect3D8_CreateDevice( d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
-                                  D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_PUREDEVICE, &d3dpp, &device );
+                                  D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dpp, &device );
     ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE || hr == D3DERR_INVALIDCALL,
        "IDirect3D8_CreateDevice failed with %08x\n", hr);
     if(!device)
@@ -2525,7 +2525,7 @@ static void test_ApplyStateBlock(void)
     d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
 
     hr = IDirect3D8_CreateDevice( d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
-                                  D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_PUREDEVICE, &d3dpp, &device );
+                                  D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dpp, &device );
     ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE || hr == D3DERR_INVALIDCALL,
        "IDirect3D8_CreateDevice failed with %#x\n", hr);
     if(!device)
