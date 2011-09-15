@@ -2223,7 +2223,7 @@ msgstr "&Toevoegen aan favorieten..."
 #: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
 #: winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
-msgstr "&Help"
+msgstr ""
 
 #: ieframe.rc:57
 #, fuzzy
@@ -2719,7 +2719,7 @@ msgstr "Openen mislukt\n"
 
 #: winerror.mc:431
 msgid "Buffer overflow\n"
-msgstr "Buffer overflow\n"
+msgstr ""
 
 #: winerror.mc:441
 msgid "No more search handles\n"
@@ -3149,7 +3149,7 @@ msgstr "Ongeldig adres\n"
 
 #: winerror.mc:976
 msgid "Arithmetic overflow\n"
-msgstr "Arithmetic overflow\n"
+msgstr ""
 
 #: winerror.mc:981
 msgid "Pipe connected\n"
@@ -5035,11 +5035,11 @@ msgstr "Floating-point delen-door-nul\n"
 
 #: winerror.mc:3266
 msgid "Floating-point underflow\n"
-msgstr "Floating-point underflow\n"
+msgstr ""
 
 #: winerror.mc:3271
 msgid "Floating-point overflow\n"
-msgstr "Floating-point overlow\n"
+msgstr ""
 
 #: winerror.mc:3276
 msgid "No more entries\n"
@@ -5055,7 +5055,7 @@ msgstr "Karaktervertalingstabelbestand te klein\n"
 
 #: winerror.mc:3291
 msgid "Null context handle\n"
-msgstr "Null context handle\n"
+msgstr ""
 
 #: winerror.mc:3296
 msgid "Context handle damaged\n"
@@ -5063,7 +5063,7 @@ msgstr "Context handle beschadigd\n"
 
 #: winerror.mc:3301
 msgid "Binding handle mismatch\n"
-msgstr "Binding handle mismatch\n"
+msgstr ""
 
 #: winerror.mc:3306
 msgid "Cannot get call handle\n"
@@ -6833,19 +6833,6 @@ msgid ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
-"Wine is free software; you can redistribute it and/or modify it under the "
-"terms of the GNU Lesser General Public License as published by the Free "
-"Software Foundation; either version 2.1 of the License, or (at your option) "
-"any later version.\n"
-"\n"
-"Wine is distributed in the hope that it will be useful, but WITHOUT ANY "
-"WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
-"FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for "
-"more details.\n"
-"\n"
-"You should have received a copy of the GNU Lesser General Public License "
-"along with this library; if not, write to the Free Software Foundation, "
-"Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 
 #: shell32.rc:266
 msgid "Wine License"
@@ -9792,6 +9779,7 @@ msgstr ""
 "onder bepaalde voorwaarden; draai 'start /L' voor details.\n"
 
 #: start.rc:64
+#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -11038,6 +11026,7 @@ msgid "Error while selecting new font."
 msgstr "Probleem tijdens het selecteren van het nieuwe lettertype."
 
 #: winefile.rc:99
+#, fuzzy
 msgid "Wine File Manager"
 msgstr "Winefile"
 
