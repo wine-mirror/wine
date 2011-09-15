@@ -394,8 +394,10 @@ Class TestClass
     Public Sub publicSub
     End Sub
 
-    Public Sub privateSub
+    Private Sub privateSub
     End Sub
 End Class
+
+Call testDisp(new testClass)
 
 reportSuccess()

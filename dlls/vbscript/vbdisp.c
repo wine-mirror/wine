@@ -22,6 +22,25 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
+static BOOL get_func_id(vbdisp_t *This, const WCHAR *name, BOOL search_private, DISPID *id)
+{
+    unsigned i;
+
+    for(i = 0; i < This->desc->func_cnt; i++) {
+        if(!search_private && !This->desc->funcs[i].is_public)
+            continue;
+        if(!This->desc->funcs[i].name) /* default value may not exist */
+            continue;
+
+        if(!strcmpiW(This->desc->funcs[i].name, name)) {
+            *id = i;
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 static inline vbdisp_t *impl_from_IDispatchEx(IDispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, vbdisp_t, IDispatchEx_iface);
@@ -112,8 +131,19 @@ static HRESULT WINAPI DispatchEx_Invoke(IDispatchEx *iface, DISPID dispIdMember,
 static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     vbdisp_t *This = impl_from_IDispatchEx(iface);
-    FIXME("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
+
+    if(grfdex & ~(fdexNameEnsure|fdexNameCaseInsensitive)) {
+        FIXME("unsupported flags %x\n", grfdex);
+        return E_NOTIMPL;
+    }
+
+    if(get_func_id(This, bstrName, FALSE, pid))
+        return S_OK;
+
+    *pid = -1;
+    return DISP_E_UNKNOWNNAME;
 }
 
 static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,

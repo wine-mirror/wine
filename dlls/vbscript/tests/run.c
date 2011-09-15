@@ -73,6 +73,7 @@ DEFINE_EXPECT(testobj_propput_i);
 #define DISPID_GLOBAL_VBVAR         1005
 #define DISPID_GLOBAL_TESTOBJ       1006
 #define DISPID_GLOBAL_ISNULLDISP    1007
+#define DISPID_GLOBAL_TESTDISP      1008
 
 #define DISPID_TESTOBJ_PROPGET      2000
 #define DISPID_TESTOBJ_PROPPUT      2001
@@ -138,6 +139,46 @@ static BOOL is_english(void)
 {
     return PRIMARYLANGID(GetSystemDefaultLangID()) == LANG_ENGLISH
         && PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH;
+}
+
+static void test_disp(IDispatch *disp)
+{
+    DISPID id, public_func_id, public_sub_id;
+    IDispatchEx *dispex;
+    BSTR str;
+    HRESULT hres;
+
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08x\n", hres);
+
+    str = a2bstr("publicFunction");
+    hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseInsensitive, &public_func_id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID(publicFunction) failed: %08x\n", hres);
+    ok(public_func_id != -1, "public_func_id = -1\n");
+
+    str = a2bstr("publicSub");
+    hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseInsensitive, &public_sub_id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID(publicSub) failed: %08x\n", hres);
+    ok(public_sub_id != -1, "public_func_id = -1\n");
+
+    str = a2bstr("privateSub");
+    hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseInsensitive, &id);
+    SysFreeString(str);
+    ok(hres == DISP_E_UNKNOWNNAME, "GetDispID(privateSub) failed: %08x, expected DISP_E_UNKNOWNNAME\n", hres);
+    ok(id == -1, "id = %d\n", id);
+
+    str = a2bstr("dynprop");
+    hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseInsensitive|fdexNameEnsure, &id);
+    ok(hres == DISP_E_UNKNOWNNAME, "GetDispID(privateProp) failed: %08x, expected DISP_E_UNKNOWNNAME\n", hres);
+    ok(id == -1, "id = %d\n", id);
+    hres = IDispatchEx_GetDispID(dispex, str, fdexNameEnsure, &id);
+    ok(hres == DISP_E_UNKNOWNNAME, "GetDispID(privateProp) failed: %08x, expected DISP_E_UNKNOWNNAME\n", hres);
+    ok(id == -1, "id = %d\n", id);
+    SysFreeString(str);
+
+    IDispatchEx_Release(dispex);
 }
 
 #define test_grfdex(a,b) _test_grfdex(__LINE__,a,b)
@@ -359,7 +400,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         *pid = DISPID_GLOBAL_ISNULLDISP;
         return S_OK;
     }
-
+    if(!strcmp_wa(bstrName, "testDisp")) {
+        test_grfdex(grfdex, fdexNameCaseInsensitive);
+        *pid = DISPID_GLOBAL_TESTDISP;
+        return S_OK;
+    }
 
     if(strict_dispid_check && strcmp_wa(bstrName, "x"))
         ok(0, "unexpected call %s %x\n", wine_dbgstr_w(bstrName), grfdex);
@@ -473,7 +518,6 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
         ok(V_VT(pdp->rgvarg) == VT_I2, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
         ok(V_I2(pdp->rgvarg) == 3, "V_I2(psp->rgvargs) = %d\n", V_I2(pdp->rgvarg));
-
         return S_OK;
 
     case DISPID_GLOBAL_TESTOBJ:
@@ -512,6 +556,20 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         V_BOOL(pvarRes) = V_DISPATCH(v) ? VARIANT_FALSE : VARIANT_TRUE;
         return S_OK;
     }
+
+    case DISPID_GLOBAL_TESTDISP:
+        ok(wFlags == INVOKE_FUNC, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(!pvarRes, "pvarRes != NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        ok(V_VT(pdp->rgvarg) == VT_DISPATCH, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
+        test_disp(V_DISPATCH(pdp->rgvarg));
+        return S_OK;
     }
 
     ok(0, "unexpected call %d\n", id);
