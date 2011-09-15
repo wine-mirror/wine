@@ -4401,8 +4401,12 @@ static HRESULT WINAPI enum_z_fmt_cb(DDPIXELFORMAT *fmt, void *ctx)
     if (U1(*fmt).dwZBufferBitDepth == 24) expected_pitch = ddsd.dwWidth * 4;
     else expected_pitch = ddsd.dwWidth * U1(*fmt).dwZBufferBitDepth / 8;
 
-    /* Some formats(16 bit depth without stencil) return pitch 0 */
-    if (U1(ddsd).lPitch != 0 && U1(ddsd).lPitch != expected_pitch)
+    /* Some formats(16 bit depth without stencil) return pitch 0
+     *
+     * The Radeon X1600 Catalyst 10.2 Windows XP driver returns an otherwise sane
+     * pitch with an extra 128 bytes, regardless of the format and width */
+    if (U1(ddsd).lPitch != 0 && U1(ddsd).lPitch != expected_pitch
+            && !broken(U1(ddsd).lPitch == expected_pitch + 128))
     {
         ok(0, "Z buffer pitch is %u, expected %u\n", U1(ddsd).lPitch, expected_pitch);
         dump_format(fmt);
