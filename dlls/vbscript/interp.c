@@ -388,8 +388,19 @@ static HRESULT interp_assign_ident(exec_ctx_t *ctx)
 static HRESULT interp_set_ident(exec_ctx_t *ctx)
 {
     const BSTR arg = ctx->instr->arg1.bstr;
-    FIXME("%s\n", debugstr_w(arg));
-    return E_NOTIMPL;
+    IDispatch *disp;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_w(arg));
+
+    hres = stack_pop_disp(ctx, &disp);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = disp;
+    return assign_ident(ctx, ctx->instr->arg1.bstr, &v, TRUE);
 }
 
 static HRESULT interp_assign_member(exec_ctx_t *ctx)

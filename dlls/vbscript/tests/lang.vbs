@@ -355,6 +355,9 @@ x = false
 ok SetVal(x, true), "SetVal returned false?"
 Call ok(x, "x is not set to true by SetVal?")
 
+set x = testObj
+Call ok(getVT(x) = "VT_DISPATCH*", "getVT(x=testObj) = " & getVT(x))
+
 Class EmptyClass
 End Class
 
