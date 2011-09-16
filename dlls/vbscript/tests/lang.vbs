@@ -404,6 +404,14 @@ Class TestClass
     Public Sub publicSub
     End Sub
 
+    Public Sub setPrivateProp(x)
+        privateProp = x
+    End Sub
+
+    Function getPrivateProp
+        getPrivateProp = privateProp
+    End Function
+
     Private Sub privateSub
     End Sub
 End Class
@@ -418,5 +426,13 @@ Call ok(obj.publicFunction() = 4, "obj.publicFunction() = " & obj.publicFunction
 obj.publicSub()
 Call obj.publicSub
 Call obj.publicFunction()
+
+Call ok(getVT(obj.publicProp) = "VT_EMPTY", "getVT(obj.publicProp) = " & getVT(obj.publicProp))
+obj.publicProp = 3
+Call ok(obj.publicProp = 3, "obj.publicProp = " & obj.publicProp)
+obj.publicProp() = 3
+
+Call obj.setPrivateProp(6)
+Call ok(obj.getPrivateProp = 6, "obj.getPrivateProp = " & obj.getPrivateProp)
 
 reportSuccess()

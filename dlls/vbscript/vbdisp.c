@@ -67,6 +67,64 @@ HRESULT vbdisp_get_id(vbdisp_t *This, BSTR name, BOOL search_private, DISPID *id
     return DISP_E_UNKNOWNNAME;
 }
 
+static VARIANT *get_propput_arg(const DISPPARAMS *dp)
+{
+    unsigned i;
+
+    for(i=0; i < dp->cNamedArgs; i++) {
+        if(dp->rgdispidNamedArgs[i] == DISPID_PROPERTYPUT)
+            return dp->rgvarg+i;
+    }
+
+    return NULL;
+}
+
+static HRESULT invoke_variant_prop(vbdisp_t *This, VARIANT *v, WORD flags, DISPPARAMS *dp, VARIANT *res)
+{
+    HRESULT hres;
+
+    switch(flags) {
+    case DISPATCH_PROPERTYGET|DISPATCH_METHOD:
+        if(dp->cArgs) {
+            WARN("called with arguments\n");
+            return DISP_E_MEMBERNOTFOUND; /* That's what tests show */
+        }
+
+        hres = VariantCopy(res, v);
+        break;
+
+    case DISPATCH_PROPERTYPUT: {
+        VARIANT *put_val;
+
+        put_val = get_propput_arg(dp);
+        if(!put_val) {
+            WARN("no value to set\n");
+            return DISP_E_PARAMNOTOPTIONAL;
+        }
+
+        if(res)
+            V_VT(res) = VT_EMPTY;
+
+        hres = VariantCopy(v, put_val);
+        break;
+    }
+
+    default:
+        FIXME("unimplemented flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return hres;
+}
+
+static void clean_props(vbdisp_t *This)
+{
+    unsigned i;
+
+    for(i=0; i < This->desc->prop_cnt; i++)
+        VariantClear(This->props+i);
+}
+
 static inline vbdisp_t *impl_from_IDispatchEx(IDispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, vbdisp_t, IDispatchEx_iface);
@@ -110,8 +168,10 @@ static ULONG WINAPI DispatchEx_Release(IDispatchEx *iface)
     vbdisp_t *This = impl_from_IDispatchEx(iface);
     LONG ref = InterlockedIncrement(&This->ref);
 
-    if(!ref)
+    if(!ref) {
+        clean_props(This);
         heap_free(This);
+    }
 
     return ref;
 }
@@ -200,7 +260,9 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         }
     }
 
-    FIXME("not implemented for non-function ids\n");
+    if(id < This->desc->prop_cnt + This->desc->func_cnt)
+        return invoke_variant_prop(This, This->props+(id-This->desc->func_cnt), wFlags, pdp, pvarRes);
+
     return DISP_E_MEMBERNOTFOUND;
 }
 
@@ -275,7 +337,7 @@ HRESULT create_vbdisp(const class_desc_t *desc, vbdisp_t **ret)
 {
     vbdisp_t *vbdisp;
 
-    vbdisp = heap_alloc_zero(sizeof(*vbdisp));
+    vbdisp = heap_alloc_zero(sizeof(*vbdisp) + (desc->prop_cnt-1)*sizeof(VARIANT));
     if(!vbdisp)
         return E_OUTOFMEMORY;
 

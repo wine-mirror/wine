@@ -89,6 +89,7 @@ typedef struct {
     LONG ref;
 
     const class_desc_t *desc;
+    VARIANT props[1];
 } vbdisp_t;
 
 HRESULT create_vbdisp(const class_desc_t*,vbdisp_t**);

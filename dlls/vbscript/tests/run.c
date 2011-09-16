@@ -188,6 +188,36 @@ static void test_disp(IDispatch *disp)
     SysFreeString(str);
     ok(hres == S_OK, "GetDispID(publicProp2) failed: %08x\n", hres);
 
+    hres = IDispatchEx_InvokeEx(dispex, public_prop_id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &v, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_EMPTY, "V_VT(v) = %d\n", V_VT(&v));
+
+    V_VT(args) = VT_BOOL;
+    V_BOOL(args) = VARIANT_TRUE;
+    dp.cArgs = dp.cNamedArgs = 1;
+    V_VT(&v) = VT_BOOL;
+    hres = IDispatchEx_InvokeEx(dispex, public_prop_id, 0, DISPATCH_PROPERTYPUT, &dp, &v, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_EMPTY, "V_VT(v) = %d\n", V_VT(&v));
+
+    dp.cArgs = dp.cNamedArgs = 0;
+    hres = IDispatchEx_InvokeEx(dispex, public_prop_id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &v, &ei, NULL);
+   ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BOOL, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_BOOL(&v), "V_BOOL(v) = %x\n", V_BOOL(&v));
+
+    dp.cArgs = 1;
+    hres = IDispatchEx_InvokeEx(dispex, public_prop_id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &v, &ei, NULL);
+    ok(hres == DISP_E_MEMBERNOTFOUND, "InvokeEx failed: %08x, expected DISP_E_MEMBERNOTFOUND\n", hres);
+    ok(V_VT(&v) == VT_EMPTY, "V_VT(v) = %d\n", V_VT(&v));
+
+    V_VT(args) = VT_BOOL;
+    V_BOOL(args) = VARIANT_FALSE;
+    dp.cArgs = 1;
+    V_VT(&v) = VT_BOOL;
+    hres = IDispatchEx_InvokeEx(dispex, public_prop_id, 0, DISPATCH_PROPERTYPUT, &dp, NULL, &ei, NULL);
+    ok(hres == DISP_E_PARAMNOTOPTIONAL, "InvokeEx failed: %08x, expected DISP_E_PARAMNOTOPTIONAL\n", hres);
+
     str = a2bstr("publicFunction");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseInsensitive, &public_func_id);
     SysFreeString(str);
