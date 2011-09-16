@@ -159,6 +159,30 @@ static const char *current_url;
 
 static DWORD dwl_flags;
 
+
+/* Returns true if the user interface is in English. Note that this does not
+ * presume of the formatting of dates, numbers, etc.
+ */
+static BOOL is_lang_english(void)
+{
+    static HMODULE hkernel32 = NULL;
+    static LANGID (WINAPI *pGetThreadUILanguage)(void) = NULL;
+    static LANGID (WINAPI *pGetUserDefaultUILanguage)(void) = NULL;
+
+    if (!hkernel32)
+    {
+        hkernel32 = GetModuleHandleA("kernel32.dll");
+        pGetThreadUILanguage = (void*)GetProcAddress(hkernel32, "GetThreadUILanguage");
+        pGetUserDefaultUILanguage = (void*)GetProcAddress(hkernel32, "GetUserDefaultUILanguage");
+    }
+    if (pGetThreadUILanguage)
+        return PRIMARYLANGID(pGetThreadUILanguage()) == LANG_ENGLISH;
+    if (pGetUserDefaultUILanguage)
+        return PRIMARYLANGID(pGetUserDefaultUILanguage()) == LANG_ENGLISH;
+
+    return PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH;
+}
+
 static int strcmp_wa(LPCWSTR strw, const char *stra)
 {
     CHAR buf[512];
@@ -2080,7 +2104,7 @@ static void test_ie_funcs(IUnknown *unk)
     /* Name */
     hres = IWebBrowser2_get_Name(wb, &sName);
     ok(hres == S_OK, "getName failed: %08x, expected S_OK\n", hres);
-    if (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) == LANG_ENGLISH)
+    if (is_lang_english())
         ok(!strcmp_wa(sName, "Microsoft Web Browser Control"), "got '%s', expected 'Microsoft Web Browser Control'\n", wine_dbgstr_w(sName));
     else /* Non-English cannot be blank. */
         ok(sName!=NULL, "get_Name return a NULL string.\n");
