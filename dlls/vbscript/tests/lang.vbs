@@ -399,6 +399,8 @@ Class TestClass
         publicFunction = 4
     End Function
 
+    Public publicProp2
+
     Public Sub publicSub
     End Sub
 

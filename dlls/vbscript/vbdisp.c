@@ -46,10 +46,22 @@ static BOOL get_func_id(vbdisp_t *This, const WCHAR *name, BOOL search_private, 
     return FALSE;
 }
 
-static HRESULT vbdisp_get_id(vbdisp_t *This, BSTR name, BOOL search_private, DISPID *id)
+HRESULT vbdisp_get_id(vbdisp_t *This, BSTR name, BOOL search_private, DISPID *id)
 {
+    unsigned i;
+
     if(get_func_id(This, name, search_private, id))
         return S_OK;
+
+    for(i=0; i < This->desc->prop_cnt; i++) {
+        if(!search_private && !This->desc->props[i].is_public)
+            continue;
+
+        if(!strcmpiW(This->desc->props[i].name, name)) {
+            *id = i + This->desc->func_cnt;
+            return S_OK;
+        }
+    }
 
     *id = -1;
     return DISP_E_UNKNOWNNAME;

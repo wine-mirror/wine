@@ -160,7 +160,7 @@ static BOOL is_lang_english(void)
 
 static void test_disp(IDispatch *disp)
 {
-    DISPID id, public_func_id, public_sub_id;
+    DISPID id, public_prop_id, public_prop2_id, public_func_id, public_sub_id;
     DISPID named_args[5] = {DISPID_PROPERTYPUT};
     VARIANT v, args[5];
     DISPPARAMS dp = {args, named_args};
@@ -171,6 +171,22 @@ static void test_disp(IDispatch *disp)
 
     hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     ok(hres == S_OK, "Could not get IDispatchEx iface: %08x\n", hres);
+
+    str = a2bstr("publicProp");
+    hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseInsensitive, &public_prop_id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID(publicProp) failed: %08x\n", hres);
+
+    str = a2bstr("PUBLICPROP");
+    hres = IDispatchEx_GetDispID(dispex, str, 0, &id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID(PUBLICPROP) failed: %08x\n", hres);
+    ok(public_prop_id == id, "id = %d\n", public_prop_id);
+
+    str = a2bstr("publicPROP2");
+    hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseInsensitive, &public_prop2_id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID(publicProp2) failed: %08x\n", hres);
 
     str = a2bstr("publicFunction");
     hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseInsensitive, &public_func_id);
