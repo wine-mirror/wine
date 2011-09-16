@@ -199,6 +199,19 @@ ElseIf not False Then
 End If
 Call ok(x, "elseif not called?")
 
+x = false
+y = false
+while not (x and y)
+    if x then
+        y = true
+    end if
+    x = true
+wend
+call ok((x and y), "x or y is false after while")
+
+while false
+wend
+
 if false then
 Sub testsub
     x = true

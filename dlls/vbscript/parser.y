@@ -52,6 +52,7 @@ static statement_t *new_call_statement(parser_ctx_t*,member_expression_t*);
 static statement_t *new_assign_statement(parser_ctx_t*,member_expression_t*,expression_t*);
 static statement_t *new_set_statement(parser_ctx_t*,member_expression_t*,expression_t*);
 static statement_t *new_dim_statement(parser_ctx_t*,dim_decl_t*);
+static statement_t *new_while_statement(parser_ctx_t*,statement_type_t,expression_t*,statement_t*);
 static statement_t *new_if_statement(parser_ctx_t*,expression_t*,statement_t*,elseif_decl_t*,statement_t*);
 static statement_t *new_function_statement(parser_ctx_t*,function_decl_t*);
 
@@ -153,6 +154,8 @@ Statement
                                             { $1->args = $2; $$ = new_assign_statement(ctx, $1, $4); CHECK_ERROR; }
     | tDIM DimDeclList                      { $$ = new_dim_statement(ctx, $2); CHECK_ERROR; }
     | IfStatement                           { $$ = $1; }
+    | tWHILE Expression tNL StatementsNl_opt tWEND
+                                            { $$ = new_while_statement(ctx, STAT_WHILE, $2, $4); CHECK_ERROR; }
     | FunctionDecl                          { $$ = new_function_statement(ctx, $1); CHECK_ERROR; }
     | tEXIT tFUNCTION                       { $$ = new_statement(ctx, STAT_EXITFUNC, 0); CHECK_ERROR; }
     | tEXIT tPROPERTY                       { $$ = new_statement(ctx, STAT_EXITPROP, 0); CHECK_ERROR; }
@@ -563,6 +566,19 @@ static elseif_decl_t *new_elseif_decl(parser_ctx_t *ctx, expression_t *expr, sta
     decl->stat = stat;
     decl->next = NULL;
     return decl;
+}
+
+static statement_t *new_while_statement(parser_ctx_t *ctx, statement_type_t type, expression_t *expr, statement_t *body)
+{
+    while_statement_t *stat;
+
+    stat = new_statement(ctx, type, sizeof(*stat));
+    if(!stat)
+        return NULL;
+
+    stat->expr = expr;
+    stat->body = body;
+    return &stat->stat;
 }
 
 static statement_t *new_if_statement(parser_ctx_t *ctx, expression_t *expr, statement_t *if_stat, elseif_decl_t *elseif_decl,

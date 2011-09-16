@@ -483,6 +483,34 @@ static HRESULT compile_if_statement(compile_ctx_t *ctx, if_statement_t *stat)
     return S_OK;
 }
 
+static HRESULT compile_while_statement(compile_ctx_t *ctx, while_statement_t *stat)
+{
+    unsigned start_addr;
+    unsigned jmp_end;
+    HRESULT hres;
+
+    start_addr = ctx->instr_cnt;
+
+    hres = compile_expression(ctx, stat->expr);
+    if(FAILED(hres))
+        return hres;
+
+    jmp_end = push_instr(ctx, OP_jmp_false);
+    if(jmp_end == -1)
+        return E_OUTOFMEMORY;
+
+    hres = compile_statement(ctx, stat->body);
+    if(FAILED(hres))
+        return hres;
+
+    hres = push_instr_addr(ctx, OP_jmp, start_addr);
+    if(FAILED(hres))
+        return hres;
+
+    instr_ptr(ctx, jmp_end)->arg1.uint = ctx->instr_cnt;
+    return S_OK;
+}
+
 static HRESULT compile_assign_statement(compile_ctx_t *ctx, assign_statement_t *stat, BOOL is_set)
 {
     HRESULT hres;
@@ -631,6 +659,9 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
             break;
         case STAT_STOP:
             hres = push_instr(ctx, OP_stop) == -1 ? E_OUTOFMEMORY : S_OK;
+            break;
+        case STAT_WHILE:
+            hres = compile_while_statement(ctx, (while_statement_t*)stat);
             break;
         default:
             FIXME("Unimplemented statement type %d\n", stat->type);

@@ -99,7 +99,8 @@ typedef enum {
     STAT_FUNC,
     STAT_IF,
     STAT_SET,
-    STAT_STOP
+    STAT_STOP,
+    STAT_WHILE
 } statement_type_t;
 
 typedef struct _statement_t {
@@ -175,6 +176,12 @@ typedef struct {
     elseif_decl_t *elseifs;
     statement_t *else_stat;
 } if_statement_t;
+
+typedef struct {
+    statement_t stat;
+    expression_t *expr;
+    statement_t *body;
+} while_statement_t;
 
 typedef struct {
     const WCHAR *code;
