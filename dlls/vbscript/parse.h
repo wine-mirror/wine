@@ -100,7 +100,8 @@ typedef enum {
     STAT_IF,
     STAT_SET,
     STAT_STOP,
-    STAT_WHILE
+    STAT_WHILE,
+    STAT_WHILELOOP
 } statement_type_t;
 
 typedef struct _statement_t {

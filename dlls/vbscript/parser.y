@@ -156,6 +156,8 @@ Statement
     | IfStatement                           { $$ = $1; }
     | tWHILE Expression tNL StatementsNl_opt tWEND
                                             { $$ = new_while_statement(ctx, STAT_WHILE, $2, $4); CHECK_ERROR; }
+    | tDO tWHILE Expression tNL StatementsNl_opt tLOOP
+                                            { $$ = new_while_statement(ctx, STAT_WHILELOOP, $3, $5); CHECK_ERROR; }
     | FunctionDecl                          { $$ = new_function_statement(ctx, $1); CHECK_ERROR; }
     | tEXIT tFUNCTION                       { $$ = new_statement(ctx, STAT_EXITFUNC, 0); CHECK_ERROR; }
     | tEXIT tPROPERTY                       { $$ = new_statement(ctx, STAT_EXITPROP, 0); CHECK_ERROR; }

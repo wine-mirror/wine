@@ -661,6 +661,7 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
             hres = push_instr(ctx, OP_stop) == -1 ? E_OUTOFMEMORY : S_OK;
             break;
         case STAT_WHILE:
+        case STAT_WHILELOOP:
             hres = compile_while_statement(ctx, (while_statement_t*)stat);
             break;
         default:

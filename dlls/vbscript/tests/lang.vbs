@@ -212,6 +212,19 @@ call ok((x and y), "x or y is false after while")
 while false
 wend
 
+x = false
+y = false
+do while not (x and y)
+    if x then
+        y = true
+    end if
+    x = true
+loop
+call ok((x and y), "x or y is false after while")
+
+do while false
+loop
+
 if false then
 Sub testsub
     x = true
