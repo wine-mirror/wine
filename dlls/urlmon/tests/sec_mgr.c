@@ -100,6 +100,8 @@ static const WCHAR url10[] = {'f','i','l','e',':','/','/','s','o','m','e','%','2
         '.','j','p','g',0};
 static const WCHAR url11[] = {'f','i','l','e',':','/','/','c',':','/','I','n','d','e','x','.','h','t','m',0};
 static const WCHAR url12[] = {'f','i','l','e',':','/','/','/','c',':','/','I','n','d','e','x','.','h','t','m',0};
+static const WCHAR url13[] = {'h','t','t','p',':','g','o','o','g','l','e','.','c','o','m',0};
+static const WCHAR url14[] = {'z','i','p',':','t','e','s','t','i','n','g','.','c','o','m','/','t','e','s','t','i','n','g',0};
 
 static const WCHAR url4e[] = {'f','i','l','e',':','s','o','m','e',' ','f','i','l','e',
         '.','j','p','g',0};
@@ -121,6 +123,8 @@ static const BYTE secid7[] = {'f','t','p',':','z','o','n','e','3',
         '.','w','i','n','e','t','e','s','t',3,0,0,0};
 static const BYTE secid10[] =
     {'f','i','l','e',':','s','o','m','e','%','2','0','f','i','l','e','.','j','p','g',3,0,0,0};
+static const BYTE secid14[] =
+    {'z','i','p',':','t','e','s','t','i','n','g','.','c','o','m','/','t','e','s','t','i','n','g',3,0,0,0};
 static const BYTE secid10_2[] =
     {'f','i','l','e',':','s','o','m','e',' ','f','i','l','e','.','j','p','g',3,0,0,0};
 
@@ -414,6 +418,28 @@ static void test_SecurityManager(void)
     ok(!memcmp(buf, secid10, size) ||
        !memcmp(buf, secid10_2, size), /* win2k3 */
        "wrong secid\n");
+
+    zone = 100;
+    hres = IInternetSecurityManager_MapUrlToZone(secmgr, url13, &zone, 0);
+    ok(hres == S_OK, "MapUrlToZone failed: %08x\n", hres);
+    ok(zone == URLZONE_INVALID || broken(zone == URLZONE_INTERNET), "zone=%d\n", zone);
+
+    size = sizeof(buf);
+    memset(buf, 0xf0, sizeof(buf));
+    hres = IInternetSecurityManager_GetSecurityId(secmgr, url13, buf, &size, 0);
+    ok(hres == E_INVALIDARG || broken(hres == S_OK), "GetSecurityId failed: %08x\n", hres);
+
+    zone = 100;
+    hres = IInternetSecurityManager_MapUrlToZone(secmgr, url14, &zone, 0);
+    ok(hres == S_OK, "MapUrlToZone failed: %08x, expected S_OK\n", hres);
+    ok(zone == URLZONE_INTERNET, "zone=%d\n", zone);
+
+    size = sizeof(buf);
+    memset(buf, 0xf0, sizeof(buf));
+    hres = IInternetSecurityManager_GetSecurityId(secmgr, url14, buf, &size, 0);
+    ok(hres == S_OK, "GetSecurityId failed: %08x, expected S_OK\n", hres);
+    todo_wine ok(size == sizeof(secid14), "size=%d\n", size);
+    todo_wine ok(!memcmp(buf, secid14, size), "wrong secid\n");
 
     zone = 100;
     hres = IInternetSecurityManager_MapUrlToZone(secmgr, NULL, &zone, 0);
@@ -1734,7 +1760,9 @@ static const struct {
     {"ftp://zone3.winetest/file.test",0,0,URLZONE_INTERNET},
     {"/file/testing/test.test",Uri_CREATE_ALLOW_RELATIVE,0,URLZONE_INTERNET},
     {"zip://testing.com/",0,0,URLZONE_INTERNET},
-    {"zip:testing.com",0,0,URLZONE_INTERNET}
+    {"zip:testing.com",0,0,URLZONE_INTERNET},
+    {"http:google.com",0,S_OK,URLZONE_INVALID},
+    {"http:/google.com",0,S_OK,URLZONE_INVALID}
 };
 
 static void test_SecurityManagerEx2(void)

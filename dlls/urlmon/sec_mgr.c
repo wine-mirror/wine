@@ -62,6 +62,15 @@ static inline BOOL is_drive_path(const WCHAR *path)
     return isalphaW(*path) && *(path+1) == ':';
 }
 
+/* List of schemes types Windows seems to expect to be hierarchical. */
+static inline BOOL is_hierarchical_scheme(URL_SCHEME type) {
+    return(type == URL_SCHEME_HTTP || type == URL_SCHEME_FTP ||
+           type == URL_SCHEME_GOPHER || type == URL_SCHEME_NNTP ||
+           type == URL_SCHEME_TELNET || type == URL_SCHEME_WAIS ||
+           type == URL_SCHEME_FILE || type == URL_SCHEME_HTTPS ||
+           type == URL_SCHEME_RES);
+}
+
 /********************************************************************
  * get_string_from_reg [internal]
  *
@@ -466,6 +475,19 @@ static HRESULT get_zone_from_domains(IUri *uri, DWORD *zone)
     if(FAILED(hres))
         return hres;
 
+    /* Known hierarchical scheme types must have a host. If they don't Windows
+     * assigns URLZONE_INVALID to the zone.
+     */
+    if((scheme_type != URL_SCHEME_UNKNOWN && scheme_type != URL_SCHEME_FILE)
+        && is_hierarchical_scheme(scheme_type) && !*host) {
+        *zone = URLZONE_INVALID;
+
+        SysFreeString(host);
+
+        /* The MapUrlToZone functions return S_OK when this condition occurs. */
+        return S_OK;
+    }
+
     hres = IUri_GetSchemeName(uri, &scheme);
     if(FAILED(hres)) {
         SysFreeString(host);
@@ -695,8 +717,8 @@ static HRESULT get_security_id(LPCWSTR url, BYTE *secid, DWORD *secid_len)
     static const WCHAR wszFile[] = {'f','i','l','e',':'};
 
     hres = map_url_to_zone(url, &zone, &secur_url);
-    if(FAILED(hres))
-        return hres == 0x80041001 ? E_INVALIDARG : hres;
+    if(zone == URLZONE_INVALID)
+        return (hres == 0x80041001 || hres == S_OK) ? E_INVALIDARG : hres;
 
     /* file protocol is a special case */
     if(strlenW(secur_url) >= sizeof(wszFile)/sizeof(WCHAR)
