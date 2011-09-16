@@ -406,6 +406,14 @@ Class TestClass
         Call ok(false, "exit property not returned?")
     End Property
 
+    Public Default Property Get DefValGet
+        DefValGet = privateProp
+        funcCalled = "GetDefVal"
+    End Property
+
+    Public Property Let DefValGet(x)
+    End Property
+
     Public publicProp2
 
     Public Sub publicSub

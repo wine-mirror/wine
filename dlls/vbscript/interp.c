@@ -92,7 +92,8 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
     DISPID id;
     HRESULT hres;
 
-    if(invoke_type == VBDISP_LET && (ctx->func->type == FUNC_FUNCTION || ctx->func->type == FUNC_PROPGET)
+    if(invoke_type == VBDISP_LET
+            && (ctx->func->type == FUNC_FUNCTION || ctx->func->type == FUNC_PROPGET || ctx->func->type == FUNC_DEFGET)
             && !strcmpiW(name, ctx->func->name)) {
         ref->type = REF_VAR;
         ref->u.v = &ctx->ret_val;
@@ -1237,7 +1238,7 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, IDispatch *this_obj, DI
     }
 
     assert(!exec.top);
-    if(func->type != FUNC_FUNCTION && func->type != FUNC_PROPGET)
+    if(func->type != FUNC_FUNCTION && func->type != FUNC_PROPGET && func->type != FUNC_DEFGET)
         assert(V_VT(&exec.ret_val) == VT_EMPTY);
 
     if(SUCCEEDED(hres) && res) {

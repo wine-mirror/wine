@@ -684,6 +684,7 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
     case FUNC_PROPGET:
     case FUNC_PROPLET:
     case FUNC_PROPSET:
+    case FUNC_DEFGET:
         ctx->prop_end_label = alloc_label(ctx);
         if(ctx->prop_end_label == -1)
             return E_OUTOFMEMORY;
@@ -846,6 +847,7 @@ static HRESULT create_class_funcprop(compile_ctx_t *ctx, function_decl_t *func_d
         case FUNC_FUNCTION:
         case FUNC_SUB:
         case FUNC_PROPGET:
+        case FUNC_DEFGET:
             invoke_type = VBDISP_CALLGET;
             break;
         case FUNC_PROPLET:
@@ -885,7 +887,7 @@ static BOOL lookup_class_funcs(class_desc_t *class_desc, const WCHAR *name)
 
 static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
 {
-    function_decl_t *func_decl;
+    function_decl_t *func_decl, *func_prop_decl;
     class_prop_decl_t *prop_decl;
     class_desc_t *class_desc;
     unsigned i;
@@ -908,8 +910,14 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
     class_desc->func_cnt = 1; /* always allocate slot for default getter */
     class_desc->prop_cnt = 0;
 
-    for(func_decl = class_decl->funcs; func_decl; func_decl = func_decl->next)
-        class_desc->func_cnt++;
+    for(func_decl = class_decl->funcs; func_decl; func_decl = func_decl->next) {
+        for(func_prop_decl = func_decl; func_prop_decl; func_prop_decl = func_prop_decl->next_prop_func) {
+            if(func_prop_decl->type == FUNC_DEFGET)
+                break;
+        }
+        if(!func_prop_decl)
+            class_desc->func_cnt++;
+    }
 
     class_desc->funcs = compiler_alloc(ctx->code, class_desc->func_cnt*sizeof(*class_desc->funcs));
     if(!class_desc->funcs)
@@ -917,7 +925,14 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
     memset(class_desc->funcs, 0, class_desc->func_cnt*sizeof(*class_desc->funcs));
 
     for(func_decl = class_decl->funcs, i=1; func_decl; func_decl = func_decl->next, i++) {
-        hres = create_class_funcprop(ctx, func_decl, class_desc->funcs + i);
+        for(func_prop_decl = func_decl; func_prop_decl; func_prop_decl = func_prop_decl->next_prop_func) {
+            if(func_prop_decl->type == FUNC_DEFGET) {
+                i--;
+                break;
+            }
+        }
+
+        hres = create_class_funcprop(ctx, func_decl, class_desc->funcs + (func_prop_decl ? 0 : i));
         if(FAILED(hres))
             return hres;
     }

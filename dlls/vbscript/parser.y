@@ -602,8 +602,7 @@ static function_decl_t *new_function_decl(parser_ctx_t *ctx, const WCHAR *name, 
 
     if(storage_flags & STORAGE_IS_DEFAULT) {
         if(type == FUNC_PROPGET) {
-            FIXME("default value not implemented\n");
-            ctx->hres = E_NOTIMPL;
+            type = FUNC_DEFGET;
         }else {
             FIXME("Invalid default property\n");
             ctx->hres = E_FAIL;
