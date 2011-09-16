@@ -2435,13 +2435,14 @@ static BOOL xrenderdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
         return dst_dev->funcs->pStretchBlt( dst_dev, dst, src_dev, src, rop );
     }
 
+    if (!X11DRV_XRender_Installed) goto x11drv_fallback;
+
     /* XRender is of no use for color -> mono */
     if (physdev_dst->format == WXR_FORMAT_MONO && physdev_src->format != WXR_FORMAT_MONO)
-        return X11DRV_StretchBlt( &physdev_dst->x11dev->dev, dst, &physdev_src->x11dev->dev, src, rop );
+        goto x11drv_fallback;
 
     /* if not stretching, we only need to handle format conversion */
-    if (!stretch && physdev_dst->format == physdev_src->format)
-        return X11DRV_StretchBlt( &physdev_dst->x11dev->dev, dst, &physdev_src->x11dev->dev, src, rop );
+    if (!stretch && physdev_dst->format == physdev_src->format) goto x11drv_fallback;
 
     sSrc = sDst = X11DRV_LockDIBSection( physdev_dst->x11dev, DIB_Status_None );
     if (physdev_dst != physdev_src) sSrc = X11DRV_LockDIBSection( physdev_src->x11dev, DIB_Status_None );
@@ -2484,6 +2485,9 @@ static BOOL xrenderdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     if (physdev_dst != physdev_src) X11DRV_UnlockDIBSection( physdev_src->x11dev, FALSE );
     X11DRV_UnlockDIBSection( physdev_dst->x11dev, TRUE );
     return TRUE;
+
+x11drv_fallback:
+    return X11DRV_StretchBlt( &physdev_dst->x11dev->dev, dst, &physdev_src->x11dev->dev, src, rop );
 }
 
 
