@@ -442,6 +442,11 @@ Class TestClass
 
     Private Sub privateSub
     End Sub
+
+    Public Sub Class_Initialize
+        publicProp2 = 2
+        privateProp = true
+    End Sub
 End Class
 
 Call testDisp(new testClass)

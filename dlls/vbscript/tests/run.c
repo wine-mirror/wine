@@ -160,7 +160,7 @@ static BOOL is_lang_english(void)
 
 static void test_disp(IDispatch *disp)
 {
-    DISPID id, public_prop_id, public_prop2_id, public_func_id, public_sub_id;
+    DISPID id, public_prop_id, public_prop2_id, public_func_id, public_sub_id, defvalget_id;
     DISPID named_args[5] = {DISPID_PROPERTYPUT};
     VARIANT v, args[5];
     DISPPARAMS dp = {args, named_args};
@@ -188,6 +188,23 @@ static void test_disp(IDispatch *disp)
     SysFreeString(str);
     ok(hres == S_OK, "GetDispID(publicProp2) failed: %08x\n", hres);
 
+    str = a2bstr("defValGet");
+    hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseInsensitive, &defvalget_id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID(defValGet) failed: %08x\n", hres);
+    ok(defvalget_id == DISPID_VALUE, "id = %d\n", defvalget_id);
+
+    str = a2bstr("privateProp");
+    hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseInsensitive, &id);
+    SysFreeString(str);
+    ok(hres == DISP_E_UNKNOWNNAME, "GetDispID(privateProp) failed: %08x, expected DISP_E_UNKNOWNNAME\n", hres);
+    ok(id == -1, "id = %d\n", id);
+
+    str = a2bstr("class_initialize");
+    hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseInsensitive, &id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID(publicProp2) failed: %08x\n", hres);
+
     hres = IDispatchEx_InvokeEx(dispex, public_prop_id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &v, &ei, NULL);
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
     ok(V_VT(&v) == VT_EMPTY, "V_VT(v) = %d\n", V_VT(&v));
@@ -202,7 +219,7 @@ static void test_disp(IDispatch *disp)
 
     dp.cArgs = dp.cNamedArgs = 0;
     hres = IDispatchEx_InvokeEx(dispex, public_prop_id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &v, &ei, NULL);
-   ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
     ok(V_VT(&v) == VT_BOOL, "V_VT(v) = %d\n", V_VT(&v));
     ok(V_BOOL(&v), "V_BOOL(v) = %x\n", V_BOOL(&v));
 
@@ -229,6 +246,44 @@ static void test_disp(IDispatch *disp)
     SysFreeString(str);
     ok(hres == S_OK, "GetDispID(publicSub) failed: %08x\n", hres);
     ok(public_sub_id != -1, "public_func_id = -1\n");
+
+    dp.cArgs = dp.cNamedArgs = 0;
+    hres = IDispatchEx_InvokeEx(dispex, public_func_id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &v, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_I2, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_I2(&v) == 4, "V_I2(v) = %d\n", V_I2(&v));
+
+    dp.cArgs = dp.cNamedArgs = 0;
+    hres = IDispatchEx_InvokeEx(dispex, public_func_id, 0, DISPATCH_PROPERTYGET, &dp, &v, &ei, NULL);
+    ok(hres == DISP_E_MEMBERNOTFOUND, "InvokeEx failed: %08x, expected DISP_E_MEMBERNOTFOUND\n", hres);
+    ok(V_VT(&v) == VT_EMPTY, "V_VT(v) = %d\n", V_VT(&v));
+
+    dp.cArgs = dp.cNamedArgs = 0;
+    hres = IDispatchEx_InvokeEx(dispex, public_func_id, 0, DISPATCH_METHOD, &dp, &v, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_I2, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_I2(&v) == 4, "V_I2(v) = %d\n", V_I2(&v));
+
+    dp.cArgs = dp.cNamedArgs = 0;
+    hres = IDispatchEx_InvokeEx(dispex, public_sub_id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &v, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_EMPTY, "V_VT(v) = %d\n", V_VT(&v));
+
+    dp.cArgs = dp.cNamedArgs = 0;
+    hres = IDispatchEx_InvokeEx(dispex, public_sub_id, 0, DISPATCH_PROPERTYGET, &dp, &v, &ei, NULL);
+    ok(hres == DISP_E_MEMBERNOTFOUND, "InvokeEx failed: %08x, expected DISP_E_MEMBERNOTFOUND\n", hres);
+    ok(V_VT(&v) == VT_EMPTY, "V_VT(v) = %d\n", V_VT(&v));
+
+    dp.cArgs = dp.cNamedArgs = 0;
+    hres = IDispatchEx_InvokeEx(dispex, public_sub_id, 0, DISPATCH_METHOD, &dp, &v, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_EMPTY, "V_VT(v) = %d\n", V_VT(&v));
+
+    V_VT(args) = VT_BOOL;
+    V_BOOL(args) = VARIANT_TRUE;
+    dp.cArgs = dp.cNamedArgs = 1;
+    hres = IDispatchEx_InvokeEx(dispex, public_sub_id, 0, DISPATCH_PROPERTYPUT, &dp, NULL, &ei, NULL);
+    ok(FAILED(hres), "InvokeEx succeeded: %08x\n", hres);
 
     dp.cArgs = dp.cNamedArgs = 0;
     hres = IDispatchEx_InvokeEx(dispex, public_func_id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &v, &ei, NULL);
