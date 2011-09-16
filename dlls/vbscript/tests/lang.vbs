@@ -225,6 +225,11 @@ call ok((x and y), "x or y is false after while")
 do while false
 loop
 
+do while true
+    exit do
+    ok false, "exit do didn't work"
+loop
+
 if false then
 Sub testsub
     x = true
