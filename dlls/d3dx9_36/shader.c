@@ -1273,50 +1273,40 @@ HRESULT WINAPI D3DXGetShaderConstantTable(CONST DWORD* byte_code,
 HRESULT WINAPI D3DXGetShaderSamplers(CONST DWORD *byte_code, LPCSTR *samplers, UINT *count)
 {
     HRESULT hr;
-    LPD3DXCONSTANTTABLE constant_table = NULL;
-    D3DXCONSTANTTABLE_DESC constant_table_desc;
     UINT i, sampler_count = 0;
+    UINT size;
+    LPCSTR data;
+    const D3DXSHADER_CONSTANTTABLE *ctab_header;
+    const D3DXSHADER_CONSTANTINFO *constant_info;
 
     TRACE("byte_code %p, samplers %p, count %p\n", byte_code, samplers, count);
 
     if (count) *count = 0;
 
-    hr = D3DXGetShaderConstantTable(byte_code, &constant_table);
-    if (hr != D3D_OK)
+    hr = D3DXFindShaderComment(byte_code, MAKEFOURCC('C','T','A','B'), (LPCVOID *)&data, &size);
+    if (hr != D3D_OK) return D3D_OK;
+
+    if (size < sizeof(D3DXSHADER_CONSTANTTABLE)) return D3D_OK;
+
+    ctab_header = (const D3DXSHADER_CONSTANTTABLE *)data;
+    if (ctab_header->Size != sizeof(*ctab_header)) return D3D_OK;
+
+    constant_info = (D3DXSHADER_CONSTANTINFO *)(data + ctab_header->ConstantInfo);
+    for (i = 0; i < ctab_header->Constants; i++)
     {
-        WARN("Failed to get constant table\n");
+        const D3DXSHADER_TYPEINFO *type;
 
-        /* no samplers found, all is fine */
-        return D3D_OK;
-    }
+        TRACE("name = %s\n", data + constant_info[i].Name);
 
-    hr = ID3DXConstantTable_GetDesc(constant_table, &constant_table_desc);
-    if (hr != D3D_OK)
-    {
-        WARN("Failed to get constant table desc\n");
-        goto err_out;
-    }
+        type = (D3DXSHADER_TYPEINFO *)(data + constant_info[i].TypeInfo);
 
-    for (i = 0; i < constant_table_desc.Constants; ++i)
-    {
-        D3DXHANDLE handle = ID3DXConstantTable_GetConstant(constant_table, NULL, i);
-        D3DXCONSTANT_DESC constant_desc;
-        UINT size;
-
-        hr = ID3DXConstantTable_GetConstantDesc(constant_table, handle, &constant_desc, &size);
-        if (hr != D3D_OK)
+        if (type->Type == D3DXPT_SAMPLER
+                || type->Type == D3DXPT_SAMPLER1D
+                || type->Type == D3DXPT_SAMPLER2D
+                || type->Type == D3DXPT_SAMPLER3D
+                || type->Type == D3DXPT_SAMPLERCUBE)
         {
-            WARN("Failed to get constant desc\n");
-            goto err_out;
-        }
-
-        if (constant_desc.Type == D3DXPT_SAMPLER
-                || constant_desc.Type == D3DXPT_SAMPLER1D
-                || constant_desc.Type == D3DXPT_SAMPLER2D
-                || constant_desc.Type == D3DXPT_SAMPLER3D
-                || constant_desc.Type == D3DXPT_SAMPLERCUBE)
-        {
-            if (samplers) samplers[sampler_count] = constant_desc.Name;
+            if (samplers) samplers[sampler_count] = data + constant_info[i].Name;
 
             ++sampler_count;
         }
@@ -1324,10 +1314,7 @@ HRESULT WINAPI D3DXGetShaderSamplers(CONST DWORD *byte_code, LPCSTR *samplers, U
 
     TRACE("Found %u samplers\n", sampler_count);
 
-err_out:
-
     if (count) *count = sampler_count;
-    if (constant_table) ID3DXConstantTable_Release(constant_table);
 
-    return hr;
+    return D3D_OK;
 }

@@ -768,6 +768,7 @@ static const DWORD get_shader_samplers_blob[] =
 static void test_get_shader_samplers(void)
 {
     LPCSTR samplers[16] = {NULL}; /* maximum number of sampler registers v/ps 3.0 = 16 */
+    LPCSTR sampler_orig;
     UINT count = 2;
     HRESULT hr;
 
@@ -785,11 +786,22 @@ static void test_get_shader_samplers(void)
     hr = D3DXGetShaderSamplers(get_shader_samplers_blob, samplers, NULL);
     ok(hr == D3D_OK, "D3DXGetShaderSamplers failed, got %x, expected %x\n", hr, D3D_OK);
 
-    ok(!strcmp(samplers[0], "s"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[0], "s");
-    ok(!strcmp(samplers[1], "s1D"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[1], "s1D");
-    ok(!strcmp(samplers[2], "s2D"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[2], "s2D");
-    ok(!strcmp(samplers[3], "s3D"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[3], "s3D");
-    ok(!strcmp(samplers[4], "scube"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[4], "scube");
+    /* check that sampler points to shader blob */
+    sampler_orig = (LPCSTR)&get_shader_samplers_blob[0x2E];
+    ok(sampler_orig == samplers[0], "D3DXGetShaderSamplers failed, got %p, expected %p\n", samplers[0], sampler_orig);
+
+    sampler_orig = (LPCSTR)&get_shader_samplers_blob[0x33];
+    ok(sampler_orig == samplers[1], "D3DXGetShaderSamplers failed, got %p, expected %p\n", samplers[1], sampler_orig);
+
+    sampler_orig = (LPCSTR)&get_shader_samplers_blob[0x38];
+    ok(sampler_orig == samplers[2], "D3DXGetShaderSamplers failed, got %p, expected %p\n", samplers[2], sampler_orig);
+
+    sampler_orig = (LPCSTR)&get_shader_samplers_blob[0x3D];
+    ok(sampler_orig == samplers[3], "D3DXGetShaderSamplers failed, got %p, expected %p\n", samplers[3], sampler_orig);
+
+    sampler_orig = (LPCSTR)&get_shader_samplers_blob[0x42];
+    ok(sampler_orig == samplers[4], "D3DXGetShaderSamplers failed, got %p, expected %p\n", samplers[4], sampler_orig);
+
     ok(!strcmp(samplers[5], "dummy"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[5], "dummy");
 
     /* reset samplers */
@@ -804,12 +816,33 @@ static void test_get_shader_samplers(void)
     ok(hr == D3D_OK, "D3DXGetShaderSamplers failed, got %x, expected %x\n", hr, D3D_OK);
     ok(count == 5, "D3DXGetShaderSamplers failed, got %u, expected %u\n", count, 5);
 
-    ok(!strcmp(samplers[0], "s"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[0], "s");
-    ok(!strcmp(samplers[1], "s1D"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[1], "s1D");
-    ok(!strcmp(samplers[2], "s2D"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[2], "s2D");
-    ok(!strcmp(samplers[3], "s3D"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[3], "s3D");
-    ok(!strcmp(samplers[4], "scube"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[4], "scube");
+    /* check that sampler points to shader blob */
+    sampler_orig = (LPCSTR)&get_shader_samplers_blob[0x2E];
+    ok(sampler_orig == samplers[0], "D3DXGetShaderSamplers failed, got %p, expected %p\n", samplers[0], sampler_orig);
+
+    sampler_orig = (LPCSTR)&get_shader_samplers_blob[0x33];
+    ok(sampler_orig == samplers[1], "D3DXGetShaderSamplers failed, got %p, expected %p\n", samplers[1], sampler_orig);
+
+    sampler_orig = (LPCSTR)&get_shader_samplers_blob[0x38];
+    ok(sampler_orig == samplers[2], "D3DXGetShaderSamplers failed, got %p, expected %p\n", samplers[2], sampler_orig);
+
+    sampler_orig = (LPCSTR)&get_shader_samplers_blob[0x3D];
+    ok(sampler_orig == samplers[3], "D3DXGetShaderSamplers failed, got %p, expected %p\n", samplers[3], sampler_orig);
+
+    sampler_orig = (LPCSTR)&get_shader_samplers_blob[0x42];
+    ok(sampler_orig == samplers[4], "D3DXGetShaderSamplers failed, got %p, expected %p\n", samplers[4], sampler_orig);
+
     ok(!strcmp(samplers[5], "dummy"), "D3DXGetShaderSamplers failed, got \"%s\", expected \"%s\"\n", samplers[5], "dummy");
+
+    /* check without ctab */
+    hr = D3DXGetShaderSamplers(simple_vs, samplers, &count);
+    ok(hr == D3D_OK, "D3DXGetShaderSamplers failed, got %x, expected %x\n", hr, D3D_OK);
+    ok(count == 0, "D3DXGetShaderSamplers failed, got %u, expected %u\n", count, 0);
+
+    /* check invalid ctab */
+    hr = D3DXGetShaderSamplers(shader_with_invalid_ctab, samplers, &count);
+    ok(hr == D3D_OK, "D3DXGetShaderSamplers failed, got %x, expected %x\n", hr, D3D_OK);
+    ok(count == 0, "D3DXGetShaderSamplers failed, got %u, expected %u\n", count, 0);
 }
 
 START_TEST(shader)
