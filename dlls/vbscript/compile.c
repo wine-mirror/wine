@@ -813,16 +813,42 @@ static BOOL lookup_class_name(compile_ctx_t *ctx, const WCHAR *name)
 
 static HRESULT create_class_funcprop(compile_ctx_t *ctx, function_decl_t *func_decl, vbdisp_funcprop_desc_t *desc)
 {
+    vbdisp_invoke_type_t invoke_type;
+    function_decl_t *funcprop_decl;
+    HRESULT hres;
+
     desc->name = compiler_alloc_string(ctx->code, func_decl->name);
     if(!desc->name)
         return E_OUTOFMEMORY;
 
-    assert(!desc->entries[0]);
+    for(funcprop_decl = func_decl; funcprop_decl; funcprop_decl = funcprop_decl->next_prop_func) {
+        switch(funcprop_decl->type) {
+        case FUNC_FUNCTION:
+        case FUNC_SUB:
+        case FUNC_PROPGET:
+            invoke_type = VBDISP_CALLGET;
+            break;
+        case FUNC_PROPLET:
+            invoke_type = VBDISP_LET;
+            break;
+        case FUNC_PROPSET:
+            invoke_type = VBDISP_SET;
+            break;
+        default:
+            assert(0);
+        }
 
-    if(func_decl->is_public)
-        desc->is_public = TRUE;
+        assert(!desc->entries[invoke_type]);
 
-    return create_function(ctx, func_decl, desc->entries);
+        if(funcprop_decl->is_public)
+            desc->is_public = TRUE;
+
+        hres = create_function(ctx, funcprop_decl, desc->entries+invoke_type);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return S_OK;
 }
 
 static BOOL lookup_class_funcs(class_desc_t *class_desc, const WCHAR *name)

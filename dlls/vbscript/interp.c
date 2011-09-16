@@ -92,7 +92,8 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
     DISPID id;
     HRESULT hres;
 
-    if(invoke_type == VBDISP_LET && ctx->func->type == FUNC_FUNCTION && !strcmpiW(name, ctx->func->name)) {
+    if(invoke_type == VBDISP_LET && (ctx->func->type == FUNC_FUNCTION || ctx->func->type == FUNC_PROPGET)
+            && !strcmpiW(name, ctx->func->name)) {
         ref->type = REF_VAR;
         ref->u.v = &ctx->ret_val;
         return S_OK;
@@ -114,7 +115,7 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         }
     }
 
-    hres = disp_get_id(ctx->this_obj, name, TRUE, &id);
+    hres = disp_get_id(ctx->this_obj, name, invoke_type, TRUE, &id);
     if(SUCCEEDED(hres)) {
         ref->type = REF_DISP;
         ref->u.d.disp = ctx->this_obj;
@@ -135,7 +136,7 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
 
     LIST_FOR_EACH_ENTRY(item, &ctx->script->named_items, named_item_t, entry) {
         if((item->flags & SCRIPTITEM_GLOBALMEMBERS) && item->disp != ctx->this_obj) {
-            hres = disp_get_id(item->disp, name, FALSE, &id);
+            hres = disp_get_id(item->disp, name, invoke_type, FALSE, &id);
             if(SUCCEEDED(hres)) {
                 ref->type = REF_DISP;
                 ref->u.d.disp = item->disp;
@@ -356,7 +357,7 @@ static HRESULT do_mcall(exec_ctx_t *ctx, VARIANT *res)
 
     vbstack_to_dp(ctx, arg_cnt, &dp);
 
-    hres = disp_get_id(obj, identifier, FALSE, &id);
+    hres = disp_get_id(obj, identifier, VBDISP_CALLGET, FALSE, &id);
     if(SUCCEEDED(hres))
         hres = disp_call(ctx->script, obj, id, &dp, res);
     IDispatch_Release(obj);
@@ -489,7 +490,7 @@ static HRESULT interp_assign_member(exec_ctx_t *ctx)
         return hres;
     }
 
-    hres = disp_get_id(obj, identifier, FALSE, &id);
+    hres = disp_get_id(obj, identifier, VBDISP_LET, FALSE, &id);
     if(SUCCEEDED(hres))
         hres = disp_propput(ctx->script, obj, id, val.v);
 
@@ -1204,7 +1205,7 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, IDispatch *this_obj, DI
     }
 
     assert(!exec.top);
-    if(func->type != FUNC_FUNCTION)
+    if(func->type != FUNC_FUNCTION && func->type != FUNC_PROPGET)
         assert(V_VT(&exec.ret_val) == VT_EMPTY);
 
     if(SUCCEEDED(hres) && res) {

@@ -449,4 +449,12 @@ obj.publicProp() = 3
 Call obj.setPrivateProp(6)
 Call ok(obj.getPrivateProp = 6, "obj.getPrivateProp = " & obj.getPrivateProp)
 
+Dim funcCalled
+funcCalled = ""
+Call ok(obj.gsProp = 6, "obj.gsProp = " & obj.gsProp)
+Call ok(funcCalled = "gsProp get", "funcCalled = " & funcCalled)
+obj.gsProp = 3
+Call ok(funcCalled = "gsProp let", "funcCalled = " & funcCalled)
+Call ok(obj.getPrivateProp = 3, "obj.getPrivateProp = " & obj.getPrivateProp)
+
 reportSuccess()

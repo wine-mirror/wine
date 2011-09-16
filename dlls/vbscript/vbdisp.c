@@ -27,15 +27,21 @@ static inline BOOL is_func_id(vbdisp_t *This, DISPID id)
     return id < This->desc->func_cnt;
 }
 
-static BOOL get_func_id(vbdisp_t *This, const WCHAR *name, BOOL search_private, DISPID *id)
+static BOOL get_func_id(vbdisp_t *This, const WCHAR *name, vbdisp_invoke_type_t invoke_type, BOOL search_private, DISPID *id)
 {
     unsigned i;
 
-    for(i = 0; i < This->desc->func_cnt; i++) {
-        if(!search_private && !This->desc->funcs[i].is_public)
-            continue;
-        if(!This->desc->funcs[i].name) /* default value may not exist */
-            continue;
+    for(i = invoke_type == VBDISP_ANY ? 0 : 1; i < This->desc->func_cnt; i++) {
+        if(invoke_type == VBDISP_ANY) {
+            if(!search_private && !This->desc->funcs[i].is_public)
+                continue;
+            if(!i && !This->desc->funcs[0].name) /* default value may not exist */
+                continue;
+        }else {
+            if(!This->desc->funcs[i].entries[invoke_type]
+                || (!search_private && !This->desc->funcs[i].entries[invoke_type]->is_public))
+                continue;
+        }
 
         if(!strcmpiW(This->desc->funcs[i].name, name)) {
             *id = i;
@@ -46,11 +52,11 @@ static BOOL get_func_id(vbdisp_t *This, const WCHAR *name, BOOL search_private, 
     return FALSE;
 }
 
-HRESULT vbdisp_get_id(vbdisp_t *This, BSTR name, BOOL search_private, DISPID *id)
+HRESULT vbdisp_get_id(vbdisp_t *This, BSTR name, vbdisp_invoke_type_t invoke_type, BOOL search_private, DISPID *id)
 {
     unsigned i;
 
-    if(get_func_id(This, name, search_private, id))
+    if(get_func_id(This, name, invoke_type, search_private, id))
         return S_OK;
 
     for(i=0; i < This->desc->prop_cnt; i++) {
@@ -225,7 +231,7 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
         return E_NOTIMPL;
     }
 
-    return vbdisp_get_id(This, bstrName, FALSE, pid);
+    return vbdisp_get_id(This, bstrName, VBDISP_ANY, FALSE, pid);
 }
 
 static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
@@ -254,6 +260,30 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
             }
 
             return exec_script(This->desc->ctx, func, (IDispatch*)&This->IDispatchEx_iface, pdp, pvarRes);
+        case DISPATCH_PROPERTYPUT: {
+            VARIANT *put_val;
+            DISPPARAMS dp = {NULL, NULL, 1, 0};
+
+            if(arg_cnt(pdp)) {
+                FIXME("arguments not implemented\n");
+                return E_NOTIMPL;
+            }
+
+            put_val = get_propput_arg(pdp);
+            if(!put_val) {
+                WARN("no value to set\n");
+                return DISP_E_PARAMNOTOPTIONAL;
+            }
+
+            dp.rgvarg = put_val;
+            func = This->desc->funcs[id].entries[V_VT(put_val) == VT_DISPATCH ? VBDISP_SET : VBDISP_LET];
+            if(!func) {
+                FIXME("no letter/setter\n");
+                return DISP_E_MEMBERNOTFOUND;
+            }
+
+            return exec_script(This->desc->ctx, func, (IDispatch*)&This->IDispatchEx_iface, &dp, NULL);
+        }
         default:
             FIXME("flags %x\n", wFlags);
             return DISP_E_MEMBERNOTFOUND;
@@ -355,7 +385,7 @@ HRESULT init_global(script_ctx_t *ctx)
     return create_vbdisp(&ctx->script_desc, &ctx->script_obj);
 }
 
-HRESULT disp_get_id(IDispatch *disp, BSTR name, BOOL search_private, DISPID *id)
+HRESULT disp_get_id(IDispatch *disp, BSTR name, vbdisp_invoke_type_t invoke_type, BOOL search_private, DISPID *id)
 {
     IDispatchEx *dispex;
     vbdisp_t *vbdisp;
@@ -363,7 +393,7 @@ HRESULT disp_get_id(IDispatch *disp, BSTR name, BOOL search_private, DISPID *id)
 
     vbdisp = unsafe_impl_from_IDispatch(disp);
     if(vbdisp)
-        return vbdisp_get_id(vbdisp, name, search_private, id);
+        return vbdisp_get_id(vbdisp, name, invoke_type, search_private, id);
 
     hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
     if(FAILED(hres)) {

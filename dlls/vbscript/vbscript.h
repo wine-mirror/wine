@@ -93,7 +93,7 @@ typedef struct {
 } vbdisp_t;
 
 HRESULT create_vbdisp(const class_desc_t*,vbdisp_t**);
-HRESULT disp_get_id(IDispatch*,BSTR,BOOL,DISPID*);
+HRESULT disp_get_id(IDispatch*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*);
 HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,DISPPARAMS*,VARIANT*);
 HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,VARIANT*);
 
