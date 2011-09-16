@@ -24,7 +24,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
-extern int echo_mode;
 extern WCHAR quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 extern BATCH_CONTEXT *context;
 extern DWORD errorlevel;
