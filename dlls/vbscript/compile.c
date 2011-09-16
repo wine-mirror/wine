@@ -40,6 +40,7 @@ typedef struct {
 
     unsigned sub_end_label;
     unsigned func_end_label;
+    unsigned prop_end_label;
 
     dim_decl_t *dim_decls;
     dynamic_var_t *global_vars;
@@ -585,6 +586,16 @@ static HRESULT compile_exitfunc_statement(compile_ctx_t *ctx)
     return push_instr_addr(ctx, OP_jmp, ctx->func_end_label);
 }
 
+static HRESULT compile_exitprop_statement(compile_ctx_t *ctx)
+{
+    if(ctx->prop_end_label == -1) {
+        FIXME("Exit Property outside Property?\n");
+        return E_FAIL;
+    }
+
+    return push_instr_addr(ctx, OP_jmp, ctx->prop_end_label);
+}
+
 static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
 {
     HRESULT hres;
@@ -602,6 +613,9 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
             break;
         case STAT_EXITFUNC:
             hres = compile_exitfunc_statement(ctx);
+            break;
+        case STAT_EXITPROP:
+            hres = compile_exitprop_statement(ctx);
             break;
         case STAT_EXITSUB:
             hres = compile_exitsub_statement(ctx);
@@ -654,6 +668,7 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
 
     ctx->sub_end_label = -1;
     ctx->func_end_label = -1;
+    ctx->prop_end_label = -1;
 
     switch(func->type) {
     case FUNC_FUNCTION:
@@ -669,7 +684,10 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
     case FUNC_PROPGET:
     case FUNC_PROPLET:
     case FUNC_PROPSET:
-        /* FIXME */
+        ctx->prop_end_label = alloc_label(ctx);
+        if(ctx->prop_end_label == -1)
+            return E_OUTOFMEMORY;
+        break;
     case FUNC_GLOBAL:
         break;
     }
@@ -685,6 +703,8 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
         label_set_addr(ctx, ctx->sub_end_label);
     if(ctx->func_end_label != -1)
         label_set_addr(ctx, ctx->func_end_label);
+    if(ctx->prop_end_label != -1)
+        label_set_addr(ctx, ctx->prop_end_label);
 
     if(push_instr(ctx, OP_ret) == -1)
         return E_OUTOFMEMORY;

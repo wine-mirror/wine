@@ -94,6 +94,7 @@ typedef enum {
     STAT_CALL,
     STAT_DIM,
     STAT_EXITFUNC,
+    STAT_EXITPROP,
     STAT_EXITSUB,
     STAT_FUNC,
     STAT_IF,

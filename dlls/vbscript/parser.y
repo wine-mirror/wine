@@ -155,6 +155,7 @@ Statement
     | IfStatement                           { $$ = $1; }
     | FunctionDecl                          { $$ = new_function_statement(ctx, $1); CHECK_ERROR; }
     | tEXIT tFUNCTION                       { $$ = new_statement(ctx, STAT_EXITFUNC, 0); CHECK_ERROR; }
+    | tEXIT tPROPERTY                       { $$ = new_statement(ctx, STAT_EXITPROP, 0); CHECK_ERROR; }
     | tEXIT tSUB                            { $$ = new_statement(ctx, STAT_EXITSUB, 0); CHECK_ERROR; }
     | tSET MemberExpression Arguments_opt '=' Expression
                                             { $2->args = $3; $$ = new_set_statement(ctx, $2, $5); CHECK_ERROR; }

@@ -402,6 +402,8 @@ Class TestClass
     Public Property Get gsProp()
         gsProp = privateProp
         funcCalled = "gsProp get"
+        exit property
+        Call ok(false, "exit property not returned?")
     End Property
 
     Public publicProp2
@@ -412,10 +414,14 @@ Class TestClass
     Public Property Let gsProp(val)
         privateProp = val
         funcCalled = "gsProp let"
+        exit property
+        Call ok(false, "exit property not returned?")
     End Property
 
     Public Property Set gsProp(val)
         funcCalled = "gsProp set"
+        exit property
+        Call ok(false, "exit property not returned?")
     End Property
 
     Public Sub setPrivateProp(x)
