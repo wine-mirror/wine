@@ -491,4 +491,23 @@ Call ok(obj.getPrivateProp() = true, "obj.getPrivateProp() = " & obj.getPrivateP
 
 x = (New testclass).publicProp
 
+Class TermTest
+    Public Sub Class_Terminate()
+        funcCalled = "terminate"
+    End Sub
+End Class
+
+Set obj = New TermTest
+funcCalled = ""
+Set obj = Nothing
+Call ok(funcCalled = "terminate", "funcCalled = " & funcCalled)
+
+Set obj = New TermTest
+funcCalled = ""
+Call obj.Class_Terminate
+Call ok(funcCalled = "terminate", "funcCalled = " & funcCalled)
+funcCalled = ""
+Set obj = Nothing
+Call ok(funcCalled = "terminate", "funcCalled = " & funcCalled)
+
 reportSuccess()

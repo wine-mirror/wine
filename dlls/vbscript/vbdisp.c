@@ -123,6 +123,23 @@ static HRESULT invoke_variant_prop(vbdisp_t *This, VARIANT *v, WORD flags, DISPP
     return hres;
 }
 
+static void run_terminator(vbdisp_t *This)
+{
+    if(This->terminator_ran)
+        return;
+    This->terminator_ran = TRUE;
+
+    if(This->desc->class_terminate_id) {
+        DISPPARAMS dp = {0};
+
+        This->ref++;
+        exec_script(This->desc->ctx, This->desc->funcs[This->desc->class_terminate_id].entries[VBDISP_CALLGET],
+                (IDispatch*)&This->IDispatchEx_iface, &dp, NULL);
+        This->ref--;
+    }
+
+}
+
 static void clean_props(vbdisp_t *This)
 {
     unsigned i;
@@ -172,8 +189,12 @@ static ULONG WINAPI DispatchEx_AddRef(IDispatchEx *iface)
 static ULONG WINAPI DispatchEx_Release(IDispatchEx *iface)
 {
     vbdisp_t *This = impl_from_IDispatchEx(iface);
-    LONG ref = InterlockedIncrement(&This->ref);
+    LONG ref = InterlockedDecrement(&This->ref);
 
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
+        run_terminator(This);
     if(!ref) {
         clean_props(This);
         heap_free(This);

@@ -77,6 +77,7 @@ typedef struct _class_desc_t {
     const WCHAR *name;
     script_ctx_t *ctx;
     unsigned class_initialize_id;
+    unsigned class_terminate_id;
     unsigned func_cnt;
     vbdisp_funcprop_desc_t *funcs;
     unsigned prop_cnt;
@@ -88,6 +89,7 @@ typedef struct {
     IDispatchEx IDispatchEx_iface;
 
     LONG ref;
+    BOOL terminator_ran;
 
     const class_desc_t *desc;
     VARIANT props[1];
