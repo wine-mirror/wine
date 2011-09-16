@@ -94,6 +94,8 @@
 @ stub WriteHitLogging
 @ stub ZonesReInit
 
+331 stdcall @(ptr long ptr) propsys.InitPropVariantFromBuffer
+335 stdcall @(ptr long ptr) propsys.InitVariantFromBuffer
 362 stdcall @(ptr ptr) propsys.InitVariantFromGUIDAsString
 410 stdcall @(long long) URLMON_410
 423 stdcall @(long long long long) URLMON_423
