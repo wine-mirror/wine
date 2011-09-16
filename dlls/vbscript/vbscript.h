@@ -63,6 +63,11 @@ typedef enum {
 } vbdisp_invoke_type_t;
 
 typedef struct {
+    BOOL is_public;
+    const WCHAR *name;
+} vbdisp_prop_desc_t;
+
+typedef struct {
     const WCHAR *name;
     BOOL is_public;
     function_t *entries[VBDISP_ANY];
@@ -73,6 +78,8 @@ typedef struct _class_desc_t {
     script_ctx_t *ctx;
     unsigned func_cnt;
     vbdisp_funcprop_desc_t *funcs;
+    unsigned prop_cnt;
+    vbdisp_prop_desc_t *props;
     struct _class_desc_t *next;
 } class_desc_t;
 

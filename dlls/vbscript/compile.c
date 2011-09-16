@@ -821,9 +821,22 @@ static HRESULT create_class_funcprop(compile_ctx_t *ctx, function_decl_t *func_d
     return create_function(ctx, func_decl, desc->entries);
 }
 
+static BOOL lookup_class_funcs(class_desc_t *class_desc, const WCHAR *name)
+{
+    unsigned i;
+
+    for(i=0; i < class_desc->func_cnt; i++) {
+        if(class_desc->funcs[i].name && !strcmpiW(class_desc->funcs[i].name, name))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
 static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
 {
     function_decl_t *func_decl;
+    class_prop_decl_t *prop_decl;
     class_desc_t *class_desc;
     unsigned i;
     HRESULT hres;
@@ -843,6 +856,7 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
         return E_OUTOFMEMORY;
 
     class_desc->func_cnt = 1; /* always allocate slot for default getter */
+    class_desc->prop_cnt = 0;
 
     for(func_decl = class_decl->funcs; func_decl; func_decl = func_decl->next)
         class_desc->func_cnt++;
@@ -856,6 +870,26 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
         hres = create_class_funcprop(ctx, func_decl, class_desc->funcs + i);
         if(FAILED(hres))
             return hres;
+    }
+
+    for(prop_decl = class_decl->props; prop_decl; prop_decl = prop_decl->next)
+        class_desc->prop_cnt++;
+
+    class_desc->props = compiler_alloc(ctx->code, class_desc->prop_cnt*sizeof(*class_desc->props));
+    if(!class_desc->props)
+        return E_OUTOFMEMORY;
+
+    for(prop_decl = class_decl->props, i=0; prop_decl; prop_decl = prop_decl->next, i++) {
+        if(lookup_class_funcs(class_desc, prop_decl->name)) {
+            FIXME("Property %s redefined\n", debugstr_w(prop_decl->name));
+            return E_FAIL;
+        }
+
+        class_desc->props[i].name = compiler_alloc_string(ctx->code, prop_decl->name);
+        if(!class_desc->props[i].name)
+            return E_OUTOFMEMORY;
+
+        class_desc->props[i].is_public = prop_decl->is_public;
     }
 
     class_desc->next = ctx->classes;
