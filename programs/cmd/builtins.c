@@ -50,11 +50,13 @@ struct env_stack *pushd_directories;
 
 extern HINSTANCE hinst;
 extern WCHAR inbuilt[][10];
-extern int verify_mode, defaultColor;
+extern int defaultColor;
 extern BOOL echo_mode;
 extern WCHAR quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 extern BATCH_CONTEXT *context;
 extern DWORD errorlevel;
+
+static BOOL verify_mode = FALSE;
 
 static const WCHAR dotW[]    = {'.','\0'};
 static const WCHAR dotdotW[] = {'.','.','\0'};
@@ -2617,11 +2619,11 @@ void WCMD_verify (const WCHAR *command) {
     return;
   }
   if (lstrcmpiW(command, onW) == 0) {
-    verify_mode = 1;
+    verify_mode = TRUE;
     return;
   }
   else if (lstrcmpiW(command, offW) == 0) {
-    verify_mode = 0;
+    verify_mode = FALSE;
     return;
   }
   else WCMD_output (WCMD_LoadMessage(WCMD_VERIFYERR));

@@ -86,7 +86,7 @@ const WCHAR externals[NUM_EXTERNALS][10] = {
 
 HINSTANCE hinst;
 DWORD errorlevel;
-int verify_mode = 0, defaultColor = 7;
+int defaultColor = 7;
 BOOL echo_mode = TRUE;
 static int opt_c, opt_k, opt_s;
 const WCHAR newline[] = {'\r','\n','\0'};
