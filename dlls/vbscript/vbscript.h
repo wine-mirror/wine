@@ -90,6 +90,7 @@ typedef struct {
 
     LONG ref;
     BOOL terminator_ran;
+    struct list entry;
 
     const class_desc_t *desc;
     VARIANT props[1];
@@ -99,6 +100,7 @@ HRESULT create_vbdisp(const class_desc_t*,vbdisp_t**);
 HRESULT disp_get_id(IDispatch*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*);
 HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,DISPPARAMS*,VARIANT*);
 HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,VARIANT*);
+void collect_objects(script_ctx_t*);
 
 static inline unsigned arg_cnt(const DISPPARAMS *dp)
 {
@@ -129,6 +131,7 @@ struct _script_ctx_t {
     function_t *global_funcs;
     class_desc_t *classes;
 
+    struct list objects;
     struct list code_list;
     struct list named_items;
 };

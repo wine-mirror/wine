@@ -884,6 +884,8 @@ static HRESULT parse_script(DWORD flags, BSTR script_str)
 
     hres = IActiveScriptParse64_ParseScriptText(parser, script_str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
 
+    IActiveScript_Close(engine);
+
     IDispatch_Release(script_disp);
     IActiveScript_Release(engine);
     IUnknown_Release(parser);
@@ -905,6 +907,61 @@ static void parse_script_af(DWORD flags, const char *src)
 static void parse_script_a(const char *src)
 {
     parse_script_af(SCRIPTITEM_GLOBALMEMBERS, src);
+}
+
+static void test_gc(void)
+{
+    IActiveScriptParse *parser;
+    IActiveScript *engine;
+    BSTR src;
+    HRESULT hres;
+
+    strict_dispid_check = FALSE;
+
+    engine = create_script();
+    if(!engine)
+        return;
+
+    hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+
+    hres = IActiveScriptParse64_InitNew(parser);
+    ok(hres == S_OK, "InitNew failed: %08x\n", hres);
+
+    hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+
+    hres = IActiveScript_AddNamedItem(engine, testW,
+            SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS);
+    ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
+
+    hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
+
+    src = a2bstr(
+            "class C\n"
+            "    Public ref\n"
+            "    Public Sub Class_Terminate\n"
+            "        Call reportSuccess()\n"
+            "    End Sub\n"
+            "End Class\n"
+            "Dim x\n"
+            "set x = new C\n"
+            "set x.ref = x\n"
+            "set x = nothing\n");
+
+    hres = IActiveScriptParse64_ParseScriptText(parser, src, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08x\n", hres);
+    SysFreeString(src);
+
+    SET_EXPECT(global_success_d);
+    SET_EXPECT(global_success_i);
+    IActiveScript_Close(engine);
+    CHECK_CALLED(global_success_d);
+    CHECK_CALLED(global_success_i);
+
+    IActiveScript_Release(engine);
+    IUnknown_Release(parser);
 }
 
 static BSTR get_script_from_file(const char *filename)
@@ -1041,6 +1098,8 @@ static void run_tests(void)
     CHECK_CALLED(testobj_propput_i);
 
     run_from_res("lang.vbs");
+
+    test_gc();
 }
 
 static BOOL check_vbscript(void)

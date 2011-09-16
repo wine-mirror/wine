@@ -144,6 +144,9 @@ static void clean_props(vbdisp_t *This)
 {
     unsigned i;
 
+    if(!This->desc)
+        return;
+
     for(i=0; i < This->desc->prop_cnt; i++)
         VariantClear(This->props+i);
 }
@@ -197,6 +200,7 @@ static ULONG WINAPI DispatchEx_Release(IDispatchEx *iface)
         run_terminator(This);
     if(!ref) {
         clean_props(This);
+        list_remove(&This->entry);
         heap_free(This);
     }
 
@@ -247,6 +251,9 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
 
     TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(bstrName), grfdex, pid);
 
+    if(!This->desc)
+        return E_UNEXPECTED;
+
     if(grfdex & ~(fdexNameEnsure|fdexNameCaseInsensitive)) {
         FIXME("unsupported flags %x\n", grfdex);
         return E_NOTIMPL;
@@ -261,6 +268,9 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     vbdisp_t *This = impl_from_IDispatchEx(iface);
 
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
+
+    if(!This->desc)
+        return E_UNEXPECTED;
 
     if(pvarRes)
         V_VT(pvarRes) = VT_EMPTY;
@@ -408,8 +418,22 @@ HRESULT create_vbdisp(const class_desc_t *desc, vbdisp_t **ret)
         }
     }
 
+    list_add_tail(&desc->ctx->objects, &vbdisp->entry);
     *ret = vbdisp;
     return S_OK;
+}
+
+void collect_objects(script_ctx_t *ctx)
+{
+    vbdisp_t *iter, *iter2;
+
+    LIST_FOR_EACH_ENTRY_SAFE(iter, iter2, &ctx->objects, vbdisp_t, entry)
+        run_terminator(iter);
+
+    LIST_FOR_EACH_ENTRY_SAFE(iter, iter2, &ctx->objects, vbdisp_t, entry) {
+        clean_props(iter);
+        iter->desc = NULL;
+    }
 }
 
 HRESULT init_global(script_ctx_t *ctx)

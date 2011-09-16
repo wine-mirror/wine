@@ -112,6 +112,8 @@ static HRESULT set_ctx_site(VBScript *This)
 
 static void destroy_script(script_ctx_t *ctx)
 {
+    collect_objects(ctx);
+
     while(!list_empty(&ctx->code_list))
         release_vbscode(LIST_ENTRY(list_head(&ctx->code_list), vbscode_t, entry));
 
@@ -509,6 +511,7 @@ static HRESULT WINAPI VBScriptParse_InitNew(IActiveScriptParse *iface)
     if(!ctx)
         return E_OUTOFMEMORY;
 
+    list_init(&ctx->objects);
     list_init(&ctx->code_list);
     list_init(&ctx->named_items);
 
