@@ -69,7 +69,7 @@ DEFINE_EXPECT(testobj_propput_i);
 #define DISPID_GLOBAL_TRACE         1001
 #define DISPID_GLOBAL_OK            1002
 #define DISPID_GLOBAL_GETVT         1003
-#define DISPID_GLOBAL_ISENGLOC      1004
+#define DISPID_GLOBAL_ISENGLANG     1004
 #define DISPID_GLOBAL_VBVAR         1005
 #define DISPID_GLOBAL_TESTOBJ       1006
 #define DISPID_GLOBAL_ISNULLDISP    1007
@@ -135,10 +135,27 @@ static const char *vt2a(VARIANT *v)
     }
 }
 
-static BOOL is_english(void)
+/* Returns true if the user interface is in English. Note that this does not
+ * presume of the formatting of dates, numbers, etc.
+ */
+static BOOL is_lang_english(void)
 {
-    return PRIMARYLANGID(GetSystemDefaultLangID()) == LANG_ENGLISH
-        && PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH;
+    static HMODULE hkernel32 = NULL;
+    static LANGID (WINAPI *pGetThreadUILanguage)(void) = NULL;
+    static LANGID (WINAPI *pGetUserDefaultUILanguage)(void) = NULL;
+
+    if (!hkernel32)
+    {
+        hkernel32 = GetModuleHandleA("kernel32.dll");
+        pGetThreadUILanguage = (void*)GetProcAddress(hkernel32, "GetThreadUILanguage");
+        pGetUserDefaultUILanguage = (void*)GetProcAddress(hkernel32, "GetUserDefaultUILanguage");
+    }
+    if (pGetThreadUILanguage)
+        return PRIMARYLANGID(pGetThreadUILanguage()) == LANG_ENGLISH;
+    if (pGetUserDefaultUILanguage)
+        return PRIMARYLANGID(pGetUserDefaultUILanguage()) == LANG_ENGLISH;
+
+    return PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH;
 }
 
 static void test_disp(IDispatch *disp)
@@ -405,9 +422,9 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         *pid = DISPID_GLOBAL_GETVT;
         return S_OK;
     }
-    if(!strcmp_wa(bstrName, "isEnglishLocale")) {
+    if(!strcmp_wa(bstrName, "isEnglishLang")) {
         test_grfdex(grfdex, fdexNameCaseInsensitive);
-        *pid = DISPID_GLOBAL_ISENGLOC;
+        *pid = DISPID_GLOBAL_ISENGLANG;
         return S_OK;
     }
     if(!strcmp_wa(bstrName, "testObj")) {
@@ -511,7 +528,7 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         V_BSTR(pvarRes) = a2bstr(vt2a(pdp->rgvarg));
         return S_OK;
 
-    case DISPID_GLOBAL_ISENGLOC:
+    case DISPID_GLOBAL_ISENGLANG:
         ok(wFlags == (INVOKE_FUNC|INVOKE_PROPERTYGET), "wFlags = %x\n", wFlags);
         ok(pdp != NULL, "pdp == NULL\n");
         ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
@@ -521,10 +538,10 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         ok(pei != NULL, "pei == NULL\n");
 
         V_VT(pvarRes) = VT_BOOL;
-        if(is_english()) {
+        if(is_lang_english()) {
             V_BOOL(pvarRes) = VARIANT_TRUE;
         }else {
-            skip("Skipping some test in non-English locale\n");
+            skip("Skipping some tests in non-English UIs\n");
             V_BOOL(pvarRes) = VARIANT_FALSE;
         }
         return S_OK;
