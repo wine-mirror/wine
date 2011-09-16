@@ -33,7 +33,7 @@
 @ stub InitPropVariantFromDoubleVector
 @ stub InitPropVariantFromFileTime
 @ stub InitPropVariantFromFileTimeVector
-@ stub InitPropVariantFromGUIDAsString
+@ stdcall InitPropVariantFromGUIDAsString(ptr ptr)
 @ stub InitPropVariantFromInt16Vector
 @ stub InitPropVariantFromInt32Vector
 @ stub InitPropVariantFromInt64Vector
@@ -51,7 +51,7 @@
 @ stub InitVariantFromDoubleArray
 @ stub InitVariantFromFileTime
 @ stub InitVariantFromFileTimeArray
-@ stub InitVariantFromGUIDAsString
+@ stdcall InitVariantFromGUIDAsString(ptr ptr)
 @ stub InitVariantFromInt16Array
 @ stub InitVariantFromInt32Array
 @ stub InitVariantFromInt64Array

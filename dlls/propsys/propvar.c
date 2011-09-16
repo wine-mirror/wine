@@ -32,6 +32,7 @@
 #include "propvarutil.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(propsys);
 
@@ -85,4 +86,49 @@ HRESULT WINAPI PropVariantChangeType(PROPVARIANT *ppropvarDest, REFPROPVARIANT p
     }
 
     return E_FAIL;
+}
+
+static void PROPVAR_GUIDToWSTR(REFGUID guid, WCHAR *str)
+{
+    static const WCHAR format[] = {'{','%','0','8','X','-','%','0','4','X','-','%','0','4','X',
+        '-','%','0','2','X','%','0','2','X','-','%','0','2','X','%','0','2','X','%','0','2','X',
+        '%','0','2','X','%','0','2','X','%','0','2','X','}',0};
+
+    sprintfW(str, format, guid->Data1, guid->Data2, guid->Data3,
+            guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+            guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
+}
+
+HRESULT WINAPI InitPropVariantFromGUIDAsString(REFGUID guid, PROPVARIANT *ppropvar)
+{
+    TRACE("(%p %p)\n", guid, ppropvar);
+
+    if(!guid)
+        return E_FAIL;
+
+    ppropvar->vt = VT_LPWSTR;
+    ppropvar->u.pwszVal = CoTaskMemAlloc(39*sizeof(WCHAR));
+    if(!ppropvar->u.pwszVal)
+        return E_OUTOFMEMORY;
+
+    PROPVAR_GUIDToWSTR(guid, ppropvar->u.pwszVal);
+    return S_OK;
+}
+
+HRESULT WINAPI InitVariantFromGUIDAsString(REFGUID guid, VARIANT *pvar)
+{
+    TRACE("(%p %p)\n", guid, pvar);
+
+    if(!guid) {
+        FIXME("guid == NULL\n");
+        return E_FAIL;
+    }
+
+    V_VT(pvar) = VT_BSTR;
+    V_BSTR(pvar) = SysAllocStringLen(NULL, 38);
+    if(!V_BSTR(pvar))
+        return E_OUTOFMEMORY;
+
+    PROPVAR_GUIDToWSTR(guid, V_BSTR(pvar));
+    return S_OK;
 }
