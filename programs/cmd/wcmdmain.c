@@ -86,7 +86,8 @@ const WCHAR externals[NUM_EXTERNALS][10] = {
 
 HINSTANCE hinst;
 DWORD errorlevel;
-int echo_mode = 1, verify_mode = 0, defaultColor = 7;
+int verify_mode = 0, defaultColor = 7;
+BOOL echo_mode = TRUE;
 static int opt_c, opt_k, opt_s;
 const WCHAR newline[] = {'\r','\n','\0'};
 static const WCHAR equalsW[] = {'=','\0'};
@@ -1233,7 +1234,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
                    CMD_LIST **cmdList)
 {
     WCHAR *cmd, *p, *redir;
-    int status, i, prev_echo_mode;
+    int status, i;
     DWORD count, creationDisposition;
     HANDLE h;
     WCHAR *whichcmd;
@@ -1246,7 +1247,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
     DWORD  idx_stdhandles[3] = {STD_INPUT_HANDLE,
                                 STD_OUTPUT_HANDLE,
                                 STD_ERROR_HANDLE};
-    BOOL piped = FALSE;
+    BOOL prev_echo_mode, piped = FALSE;
 
     WINE_TRACE("command on entry:%s (%p), with forVariable '%s'='%s'\n",
                wine_dbgstr_w(command), cmdList,

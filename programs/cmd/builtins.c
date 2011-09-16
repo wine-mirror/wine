@@ -50,7 +50,8 @@ struct env_stack *pushd_directories;
 
 extern HINSTANCE hinst;
 extern WCHAR inbuilt[][10];
-extern int echo_mode, verify_mode, defaultColor;
+extern int verify_mode, defaultColor;
+extern BOOL echo_mode;
 extern WCHAR quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 extern BATCH_CONTEXT *context;
 extern DWORD errorlevel;
@@ -876,11 +877,11 @@ void WCMD_echo (const WCHAR *command) {
     return;
   }
   if (lstrcmpiW(command, onW) == 0) {
-    echo_mode = 1;
+    echo_mode = TRUE;
     return;
   }
   if (lstrcmpiW(command, offW) == 0) {
-    echo_mode = 0;
+    echo_mode = FALSE;
     return;
   }
   WCMD_output_asis (command);
