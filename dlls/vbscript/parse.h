@@ -93,6 +93,8 @@ typedef enum {
     STAT_ASSIGN,
     STAT_CALL,
     STAT_DIM,
+    STAT_DOUNTIL,
+    STAT_DOWHILE,
     STAT_EXITDO,
     STAT_EXITFUNC,
     STAT_EXITPROP,

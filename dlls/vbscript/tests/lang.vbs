@@ -248,6 +248,42 @@ do until false
     ok false, "exit do didn't work"
 loop
 
+x = false
+y = false
+do
+    if x then
+        y = true
+    end if
+    x = true
+loop until x and y
+call ok((x and y), "x or y is false after while")
+
+do
+loop until true
+
+do
+    exit do
+    ok false, "exit do didn't work"
+loop until false
+
+x = false
+y = false
+do
+    if x then
+        y = true
+    end if
+    x = true
+loop while not (x and y)
+call ok((x and y), "x or y is false after while")
+
+do
+loop while false
+
+do
+    exit do
+    ok false, "exit do didn't work"
+loop while true
+
 if false then
 Sub testsub
     x = true

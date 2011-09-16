@@ -211,7 +211,7 @@ static BSTR alloc_bstr_arg(compile_ctx_t *ctx, const WCHAR *str)
             return NULL;
         ctx->code->bstr_pool_size = 8;
     }else if(ctx->code->bstr_pool_size == ctx->code->bstr_cnt) {
-       BSTR *new_pool;
+        BSTR *new_pool;
 
         new_pool = heap_realloc(ctx->code->bstr_pool, ctx->code->bstr_pool_size*2*sizeof(BSTR));
         if(!new_pool)
@@ -524,6 +524,34 @@ static HRESULT compile_while_statement(compile_ctx_t *ctx, while_statement_t *st
     return S_OK;
 }
 
+static HRESULT compile_dowhile_statement(compile_ctx_t *ctx, while_statement_t *stat)
+{
+    unsigned start_addr, prev_label;
+    HRESULT hres;
+
+    start_addr = ctx->instr_cnt;
+
+    prev_label = ctx->while_end_label;
+    if((ctx->while_end_label = alloc_label(ctx)) == -1)
+        return E_OUTOFMEMORY;
+
+    hres = compile_statement(ctx, stat->body);
+    if(FAILED(hres))
+        return hres;
+
+    hres = compile_expression(ctx, stat->expr);
+    if(FAILED(hres))
+        return hres;
+
+    hres = push_instr_addr(ctx, stat->stat.type == STAT_DOUNTIL ? OP_jmp_false : OP_jmp_true, start_addr);
+    if(FAILED(hres))
+        return hres;
+
+    label_set_addr(ctx, ctx->while_end_label);
+    ctx->while_end_label = prev_label;
+    return S_OK;
+}
+
 static HRESULT compile_assign_statement(compile_ctx_t *ctx, assign_statement_t *stat, BOOL is_set)
 {
     HRESULT hres;
@@ -661,6 +689,10 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
             break;
         case STAT_DIM:
             hres = compile_dim_statement(ctx, (dim_statement_t*)stat);
+            break;
+        case STAT_DOWHILE:
+        case STAT_DOUNTIL:
+            hres = compile_dowhile_statement(ctx, (while_statement_t*)stat);
             break;
         case STAT_EXITDO:
             hres = compile_exitdo_statement(ctx);
