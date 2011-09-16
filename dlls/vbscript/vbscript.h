@@ -211,7 +211,10 @@ typedef struct {
 typedef enum {
     FUNC_GLOBAL,
     FUNC_FUNCTION,
-    FUNC_SUB
+    FUNC_SUB,
+    FUNC_PROPGET,
+    FUNC_PROPLET,
+    FUNC_PROPSET
 } function_type_t;
 
 typedef struct {

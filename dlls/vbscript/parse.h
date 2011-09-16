@@ -140,6 +140,7 @@ typedef struct _function_decl_t {
     arg_decl_t *args;
     statement_t *body;
     struct _function_decl_t *next;
+    struct _function_decl_t *next_prop_func;
 } function_decl_t;
 
 typedef struct {

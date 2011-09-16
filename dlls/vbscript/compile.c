@@ -666,6 +666,10 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
         if(ctx->sub_end_label == -1)
             return E_OUTOFMEMORY;
         break;
+    case FUNC_PROPGET:
+    case FUNC_PROPLET:
+    case FUNC_PROPSET:
+        /* FIXME */
     case FUNC_GLOBAL:
         break;
     }

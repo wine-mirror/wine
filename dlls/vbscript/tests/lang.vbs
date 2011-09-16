@@ -399,10 +399,24 @@ Class TestClass
         publicFunction = 4
     End Function
 
+    Public Property Get gsProp()
+        gsProp = privateProp
+        funcCalled = "gsProp get"
+    End Property
+
     Public publicProp2
 
     Public Sub publicSub
     End Sub
+
+    Public Property Let gsProp(val)
+        privateProp = val
+        funcCalled = "gsProp let"
+    End Property
+
+    Public Property Set gsProp(val)
+        funcCalled = "gsProp set"
+    End Property
 
     Public Sub setPrivateProp(x)
         privateProp = x

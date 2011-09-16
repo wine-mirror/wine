@@ -115,7 +115,7 @@ static class_decl_t *add_variant_prop(parser_ctx_t*,class_decl_t*,const WCHAR*,u
 %type <expression> Arguments_opt ArgumentList_opt ArgumentList
 %type <bool> OptionExplicit_opt
 %type <arg_decl> ArgumentsDecl_opt ArgumentDeclList ArgumentDecl
-%type <func_decl> FunctionDecl
+%type <func_decl> FunctionDecl PropertyDecl
 %type <elseif> ElseIfs_opt ElseIfs ElseIf
 %type <class_decl> ClassDeclaration ClassBody
 %type <uint> Storage Storage_opt
@@ -295,6 +295,15 @@ ClassBody
     : /* empty */                               { $$ = new_class_decl(ctx); }
     | FunctionDecl tNL ClassBody                { $$ = add_class_function(ctx, $3, $1); CHECK_ERROR; }
     | Storage tIdentifier tNL ClassBody         { $$ = add_variant_prop(ctx, $4, $2, $1); CHECK_ERROR; }
+    | PropertyDecl tNL ClassBody                { $$ = add_class_function(ctx, $3, $1); CHECK_ERROR; }
+
+PropertyDecl
+    : Storage_opt tPROPERTY tGET tIdentifier EmptyBrackets_opt tNL StatementsNl_opt tEND tPROPERTY
+                                    { $$ = new_function_decl(ctx, $4, FUNC_PROPGET, $1, NULL, $7); CHECK_ERROR; }
+    | Storage_opt tPROPERTY tLET tIdentifier '(' ArgumentDecl ')' tNL StatementsNl_opt tEND tPROPERTY
+                                    { $$ = new_function_decl(ctx, $4, FUNC_PROPLET, $1, $6, $9); CHECK_ERROR; }
+    | Storage_opt tPROPERTY tSET tIdentifier '(' ArgumentDecl ')' tNL StatementsNl_opt tEND tPROPERTY
+                                    { $$ = new_function_decl(ctx, $4, FUNC_PROPSET, $1, $6, $9); CHECK_ERROR; }
 
 FunctionDecl
     : Storage_opt tSUB tIdentifier ArgumentsDecl_opt tNL StatementsNl_opt tEND tSUB
@@ -591,9 +600,14 @@ static function_decl_t *new_function_decl(parser_ctx_t *ctx, const WCHAR *name, 
     function_decl_t *decl;
 
     if(storage_flags & STORAGE_IS_DEFAULT) {
-        FIXME("Function declared as default property\n");
-        ctx->hres = E_FAIL;
-        return NULL;
+        if(type == FUNC_PROPGET) {
+            FIXME("default value not implemented\n");
+            ctx->hres = E_NOTIMPL;
+        }else {
+            FIXME("Invalid default property\n");
+            ctx->hres = E_FAIL;
+            return NULL;
+        }
     }
 
     decl = parser_alloc(ctx, sizeof(*decl));
@@ -606,6 +620,7 @@ static function_decl_t *new_function_decl(parser_ctx_t *ctx, const WCHAR *name, 
     decl->args = arg_decl;
     decl->body = body;
     decl->next = NULL;
+    decl->next_prop_func = NULL;
     return decl;
 }
 
@@ -646,6 +661,20 @@ static class_decl_t *add_class_function(parser_ctx_t *ctx, class_decl_t *class_d
                 ctx->hres = E_FAIL;
                 return NULL;
             }
+
+            while(1) {
+                if(iter->type == decl->type) {
+                    FIXME("Redefinition of %s::%s\n", debugstr_w(class_decl->name), debugstr_w(decl->name));
+                    ctx->hres = E_FAIL;
+                    return NULL;
+                }
+                if(!iter->next_prop_func)
+                    break;
+                iter = iter->next_prop_func;
+            }
+
+            iter->next_prop_func = decl;
+            return class_decl;
         }
     }
 
