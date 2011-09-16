@@ -62,6 +62,7 @@ static arg_decl_t *new_argument_decl(parser_ctx_t*,const WCHAR*,BOOL);
 
 static class_decl_t *new_class_decl(parser_ctx_t*);
 static class_decl_t *add_class_function(parser_ctx_t*,class_decl_t*,function_decl_t*);
+static class_decl_t *add_variant_prop(parser_ctx_t*,class_decl_t*,const WCHAR*,unsigned);
 
 #define STORAGE_IS_PRIVATE    1
 #define STORAGE_IS_DEFAULT    2
@@ -293,6 +294,7 @@ ClassDeclaration
 ClassBody
     : /* empty */                               { $$ = new_class_decl(ctx); }
     | FunctionDecl tNL ClassBody                { $$ = add_class_function(ctx, $3, $1); CHECK_ERROR; }
+    | Storage tIdentifier tNL ClassBody         { $$ = add_variant_prop(ctx, $4, $2, $1); CHECK_ERROR; }
 
 FunctionDecl
     : Storage_opt tSUB tIdentifier ArgumentsDecl_opt tNL StatementsNl_opt tEND tSUB
@@ -628,6 +630,7 @@ static class_decl_t *new_class_decl(parser_ctx_t *ctx)
         return NULL;
 
     class_decl->funcs = NULL;
+    class_decl->props = NULL;
     class_decl->next = NULL;
     return class_decl;
 }
@@ -648,6 +651,27 @@ static class_decl_t *add_class_function(parser_ctx_t *ctx, class_decl_t *class_d
 
     decl->next = class_decl->funcs;
     class_decl->funcs = decl;
+    return class_decl;
+}
+
+static class_decl_t *add_variant_prop(parser_ctx_t *ctx, class_decl_t *class_decl, const WCHAR *identifier, unsigned storage_flags)
+{
+    class_prop_decl_t *prop;
+
+    if(storage_flags & STORAGE_IS_DEFAULT) {
+        FIXME("variant prop van't be default value\n");
+        ctx->hres = E_FAIL;
+        return NULL;
+    }
+
+    prop = parser_alloc(ctx, sizeof(*prop));
+    if(!prop)
+        return NULL;
+
+    prop->name = identifier;
+    prop->is_public = !(storage_flags & STORAGE_IS_PRIVATE);
+    prop->next = class_decl->props;
+    class_decl->props = prop;
     return class_decl;
 }
 

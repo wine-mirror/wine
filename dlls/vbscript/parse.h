@@ -142,14 +142,21 @@ typedef struct _function_decl_t {
     struct _function_decl_t *next;
 } function_decl_t;
 
-typedef struct _function_statement_t {
+typedef struct {
     statement_t stat;
     function_decl_t *func_decl;
 } function_statement_t;
 
+typedef struct _class_prop_decl_t {
+    BOOL is_public;
+    const WCHAR *name;
+    struct _class_prop_decl_t *next;
+} class_prop_decl_t;
+
 typedef struct _class_decl_t {
     const WCHAR *name;
     function_decl_t *funcs;
+    class_prop_decl_t *props;
     struct _class_decl_t *next;
 } class_decl_t;
 

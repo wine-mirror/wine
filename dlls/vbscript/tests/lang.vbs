@@ -390,6 +390,10 @@ Class EmptyClass
 End Class
 
 Class TestClass
+    Public publicProp
+
+    Private privateProp
+
     Public Function publicFunction()
         privateSub()
         publicFunction = 4
