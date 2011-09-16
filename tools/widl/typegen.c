@@ -2336,6 +2336,11 @@ static void write_array_element_type(FILE *file, const type_t *type,
                                     ref->typestring_offset, tfsoff);
             return;
         }
+        if (cont_is_complex && is_string_type(NULL, elem))
+        {
+            write_string_tfs(file, NULL, elem, TYPE_CONTEXT_CONTAINER, NULL, tfsoff);
+            return;
+        }
         if (!is_string_type(NULL, elem) &&
             (type_get_type(ref) == TYPE_BASIC || type_get_type(ref) == TYPE_ENUM))
         {
