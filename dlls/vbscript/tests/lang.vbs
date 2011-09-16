@@ -462,5 +462,7 @@ Call ok(funcCalled = "gsProp get", "funcCalled = " & funcCalled)
 obj.gsProp = 3
 Call ok(funcCalled = "gsProp let", "funcCalled = " & funcCalled)
 Call ok(obj.getPrivateProp = 3, "obj.getPrivateProp = " & obj.getPrivateProp)
+Set obj.gsProp = New testclass
+Call ok(funcCalled = "gsProp set", "funcCalled = " & funcCalled)
 
 reportSuccess()

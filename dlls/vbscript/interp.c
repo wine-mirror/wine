@@ -502,8 +502,40 @@ static HRESULT interp_assign_member(exec_ctx_t *ctx)
 static HRESULT interp_set_member(exec_ctx_t *ctx)
 {
     BSTR identifier = ctx->instr->arg1.bstr;
-    FIXME("%s\n", debugstr_w(identifier));
-    return E_NOTIMPL;
+    IDispatch *obj, *val;
+    DISPID id;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_w(identifier));
+
+    hres = stack_pop_disp(ctx, &obj);
+    if(FAILED(hres))
+        return hres;
+
+    if(!obj) {
+        FIXME("NULL obj\n");
+        return E_FAIL;
+    }
+
+    hres = stack_pop_disp(ctx, &val);
+    if(FAILED(hres)) {
+        IDispatch_Release(obj);
+        return hres;
+    }
+
+    hres = disp_get_id(obj, identifier, VBDISP_SET, FALSE, &id);
+    if(SUCCEEDED(hres)) {
+        VARIANT v;
+
+        V_VT(&v) = VT_DISPATCH;
+        V_DISPATCH(&v) = val;
+        hres = disp_propput(ctx->script, obj, id, &v);
+    }
+
+    if(val)
+        IDispatch_Release(val);
+    IDispatch_Release(obj);
+    return hres;
 }
 
 static HRESULT interp_new(exec_ctx_t *ctx)
