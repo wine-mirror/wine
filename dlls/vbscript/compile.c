@@ -496,7 +496,7 @@ static HRESULT compile_while_statement(compile_ctx_t *ctx, while_statement_t *st
     if(FAILED(hres))
         return hres;
 
-    jmp_end = push_instr(ctx, OP_jmp_false);
+    jmp_end = push_instr(ctx, stat->stat.type == STAT_UNTIL ? OP_jmp_true : OP_jmp_false);
     if(jmp_end == -1)
         return E_OUTOFMEMORY;
 
@@ -686,6 +686,7 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
         case STAT_STOP:
             hres = push_instr(ctx, OP_stop) == -1 ? E_OUTOFMEMORY : S_OK;
             break;
+        case STAT_UNTIL:
         case STAT_WHILE:
         case STAT_WHILELOOP:
             hres = compile_while_statement(ctx, (while_statement_t*)stat);

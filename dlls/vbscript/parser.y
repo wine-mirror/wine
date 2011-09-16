@@ -114,7 +114,7 @@ static class_decl_t *add_variant_prop(parser_ctx_t*,class_decl_t*,const WCHAR*,u
 %type <expression> NotExpression UnaryExpression AndExpression OrExpression XorExpression EqvExpression
 %type <member> MemberExpression
 %type <expression> Arguments_opt ArgumentList_opt ArgumentList
-%type <bool> OptionExplicit_opt
+%type <bool> OptionExplicit_opt DoType
 %type <arg_decl> ArgumentsDecl_opt ArgumentDeclList ArgumentDecl
 %type <func_decl> FunctionDecl PropertyDecl
 %type <elseif> ElseIfs_opt ElseIfs ElseIf
@@ -156,8 +156,9 @@ Statement
     | IfStatement                           { $$ = $1; }
     | tWHILE Expression tNL StatementsNl_opt tWEND
                                             { $$ = new_while_statement(ctx, STAT_WHILE, $2, $4); CHECK_ERROR; }
-    | tDO tWHILE Expression tNL StatementsNl_opt tLOOP
-                                            { $$ = new_while_statement(ctx, STAT_WHILELOOP, $3, $5); CHECK_ERROR; }
+    | tDO DoType Expression tNL StatementsNl_opt tLOOP
+                                            { $$ = new_while_statement(ctx, $2 ? STAT_WHILELOOP : STAT_UNTIL, $3, $5);
+                                              CHECK_ERROR; }
     | FunctionDecl                          { $$ = new_function_statement(ctx, $1); CHECK_ERROR; }
     | tEXIT tDO                             { $$ = new_statement(ctx, STAT_EXITDO, 0); CHECK_ERROR; }
     | tEXIT tFUNCTION                       { $$ = new_statement(ctx, STAT_EXITFUNC, 0); CHECK_ERROR; }
@@ -174,6 +175,10 @@ MemberExpression
 DimDeclList /* FIXME: Support arrays */
     : tIdentifier                           { $$ = new_dim_decl(ctx, $1, NULL); CHECK_ERROR; }
     | tIdentifier ',' DimDeclList           { $$ = new_dim_decl(ctx, $1, $3); CHECK_ERROR; }
+
+DoType
+    : tWHILE        { $$ = TRUE; }
+    | tUNTIL        { $$ = FALSE; }
 
 IfStatement
     : tIF Expression tTHEN tNL StatementsNl ElseIfs_opt Else_opt tEND tIF

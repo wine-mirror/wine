@@ -101,6 +101,7 @@ typedef enum {
     STAT_IF,
     STAT_SET,
     STAT_STOP,
+    STAT_UNTIL,
     STAT_WHILE,
     STAT_WHILELOOP
 } statement_type_t;

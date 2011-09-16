@@ -611,6 +611,31 @@ static HRESULT interp_jmp_false(exec_ctx_t *ctx)
     return S_OK;
 }
 
+static HRESULT interp_jmp_true(exec_ctx_t *ctx)
+{
+    const unsigned arg = ctx->instr->arg1.uint;
+    variant_val_t val;
+    HRESULT hres;
+
+    TRACE("%u\n", arg);
+
+    hres = stack_pop_val(ctx, &val);
+    if(FAILED(hres))
+        return hres;
+
+    if(V_VT(val.v) != VT_BOOL) {
+        FIXME("unsupported for %s\n", debugstr_variant(val.v));
+        release_val(&val);
+        return E_NOTIMPL;
+    }
+
+    if(V_BOOL(val.v))
+        instr_jmp(ctx, ctx->instr->arg1.uint);
+    else
+        ctx->instr++;
+    return S_OK;
+}
+
 static HRESULT interp_ret(exec_ctx_t *ctx)
 {
     TRACE("\n");
