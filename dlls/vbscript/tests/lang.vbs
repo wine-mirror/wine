@@ -473,4 +473,13 @@ Call ok(obj.getPrivateProp = 3, "obj.getPrivateProp = " & obj.getPrivateProp)
 Set obj.gsProp = New testclass
 Call ok(funcCalled = "gsProp set", "funcCalled = " & funcCalled)
 
+x = obj
+Call ok(x = 3, "(x = obj) = " & x)
+Call ok(funcCalled = "GetDefVal", "funcCalled = " & funcCalled)
+funcCalled = ""
+Call ok(obj = 3, "(x = obj) = " & obj)
+Call ok(funcCalled = "GetDefVal", "funcCalled = " & funcCalled)
+
+x = (New testclass).publicProp
+
 reportSuccess()

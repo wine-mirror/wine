@@ -199,8 +199,17 @@ static HRESULT stack_pop_val(exec_ctx_t *ctx, variant_val_t *v)
     }
 
     if(V_VT(var) == VT_DISPATCH) {
-        FIXME("got dispatch - get its default value\n");
-        return E_NOTIMPL;
+        DISPPARAMS dp = {0};
+        HRESULT hres;
+
+        hres = disp_call(ctx->script, V_DISPATCH(var), DISPID_VALUE, &dp, &v->store);
+        if(v->owned)
+            IDispatch_Release(V_DISPATCH(var));
+        if(FAILED(hres))
+            return hres;
+
+        v->owned = TRUE;
+        v->v = &v->store;
     }else {
         v->v = var;
     }
