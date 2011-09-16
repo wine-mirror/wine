@@ -893,6 +893,8 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
     unsigned i;
     HRESULT hres;
 
+    static const WCHAR class_initializeW[] = {'c','l','a','s','s','_','i','n','i','t','i','a','l','i','z','e',0};
+
     if(lookup_dim_decls(ctx, class_decl->name) || lookup_funcs_name(ctx, class_decl->name)
             || lookup_class_name(ctx, class_decl->name)) {
         FIXME("%s: redefinition\n", debugstr_w(class_decl->name));
@@ -909,6 +911,7 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
 
     class_desc->func_cnt = 1; /* always allocate slot for default getter */
     class_desc->prop_cnt = 0;
+    class_desc->class_initialize_id = 0;
 
     for(func_decl = class_decl->funcs; func_decl; func_decl = func_decl->next) {
         for(func_prop_decl = func_decl; func_prop_decl; func_prop_decl = func_prop_decl->next_prop_func) {
@@ -930,6 +933,15 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
                 i--;
                 break;
             }
+        }
+
+        if(!strcmpiW(class_initializeW, func_decl->name)) {
+            if(func_decl->type != FUNC_SUB) {
+                FIXME("class initializer is not sub\n");
+                return E_FAIL;
+            }
+
+            class_desc->class_initialize_id = i;
         }
 
         hres = create_class_funcprop(ctx, func_decl, class_desc->funcs + (func_prop_decl ? 0 : i));

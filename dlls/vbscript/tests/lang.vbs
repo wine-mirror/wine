@@ -465,6 +465,7 @@ obj.publicProp = 3
 Call ok(obj.publicProp = 3, "obj.publicProp = " & obj.publicProp)
 obj.publicProp() = 3
 
+Call ok(obj.getPrivateProp() = true, "obj.getPrivateProp() = " & obj.getPrivateProp())
 Call obj.setPrivateProp(6)
 Call ok(obj.getPrivateProp = 6, "obj.getPrivateProp = " & obj.getPrivateProp)
 
@@ -484,6 +485,9 @@ Call ok(funcCalled = "GetDefVal", "funcCalled = " & funcCalled)
 funcCalled = ""
 Call ok(obj = 3, "(x = obj) = " & obj)
 Call ok(funcCalled = "GetDefVal", "funcCalled = " & funcCalled)
+
+Call obj.Class_Initialize
+Call ok(obj.getPrivateProp() = true, "obj.getPrivateProp() = " & obj.getPrivateProp())
 
 x = (New testclass).publicProp
 

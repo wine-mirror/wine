@@ -375,6 +375,18 @@ HRESULT create_vbdisp(const class_desc_t *desc, vbdisp_t **ret)
     vbdisp->ref = 1;
     vbdisp->desc = desc;
 
+    if(desc->class_initialize_id) {
+        DISPPARAMS dp = {0};
+        HRESULT hres;
+
+        hres = exec_script(desc->ctx, desc->funcs[desc->class_initialize_id].entries[VBDISP_CALLGET],
+                           (IDispatch*)&vbdisp->IDispatchEx_iface, &dp, NULL);
+        if(FAILED(hres)) {
+            IDispatchEx_Release(&vbdisp->IDispatchEx_iface);
+            return hres;
+        }
+    }
+
     *ret = vbdisp;
     return S_OK;
 }
