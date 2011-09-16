@@ -132,3 +132,48 @@ HRESULT WINAPI InitVariantFromGUIDAsString(REFGUID guid, VARIANT *pvar)
     PROPVAR_GUIDToWSTR(guid, V_BSTR(pvar));
     return S_OK;
 }
+
+HRESULT WINAPI InitPropVariantFromBuffer(const VOID *pv, UINT cb, PROPVARIANT *ppropvar)
+{
+    TRACE("(%p %u %p)\n", pv, cb, ppropvar);
+
+    ppropvar->u.caub.pElems = CoTaskMemAlloc(cb);
+    if(!ppropvar->u.caub.pElems)
+        return E_OUTOFMEMORY;
+
+    ppropvar->vt = VT_VECTOR|VT_UI1;
+    ppropvar->u.caub.cElems = cb;
+    memcpy(ppropvar->u.caub.pElems, pv, cb);
+    return S_OK;
+}
+
+HRESULT WINAPI InitVariantFromBuffer(const VOID *pv, UINT cb, VARIANT *pvar)
+{
+    SAFEARRAY *arr;
+    void *data;
+    HRESULT hres;
+
+    TRACE("(%p %u %p)\n", pv, cb, pvar);
+
+    arr = SafeArrayCreateVector(VT_UI1, 0, cb);
+    if(!arr)
+        return E_OUTOFMEMORY;
+
+    hres = SafeArrayAccessData(arr, &data);
+    if(FAILED(hres)) {
+        SafeArrayDestroy(arr);
+        return hres;
+    }
+
+    memcpy(data, pv, cb);
+
+    hres = SafeArrayUnaccessData(arr);
+    if(FAILED(hres)) {
+        SafeArrayDestroy(arr);
+        return hres;
+    }
+
+    V_VT(pvar) = VT_ARRAY|VT_UI1;
+    V_ARRAY(pvar) = arr;
+    return S_OK;
+}

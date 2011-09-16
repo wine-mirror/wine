@@ -28,7 +28,7 @@
 @ stub DllRegisterServer
 @ stub DllUnregisterServer
 @ stub InitPropVariantFromBooleanVector
-@ stub InitPropVariantFromBuffer
+@ stdcall InitPropVariantFromBuffer(ptr long ptr)
 @ stub InitPropVariantFromCLSID
 @ stub InitPropVariantFromDoubleVector
 @ stub InitPropVariantFromFileTime
@@ -47,7 +47,7 @@
 @ stub InitPropVariantFromUInt64Vector
 @ stub InitPropVariantVectorFromPropVariant
 @ stub InitVariantFromBooleanArray
-@ stub InitVariantFromBuffer
+@ stdcall InitVariantFromBuffer(ptr long ptr)
 @ stub InitVariantFromDoubleArray
 @ stub InitVariantFromFileTime
 @ stub InitVariantFromFileTimeArray
