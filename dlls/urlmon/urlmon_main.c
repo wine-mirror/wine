@@ -907,6 +907,16 @@ BOOL WINAPI IsLoggingEnabledW(LPCWSTR url)
 }
 
 /***********************************************************************
+ *           IsProtectedModeURL (URLMON.111)
+ *    Undocumented, added in IE7
+ */
+BOOL WINAPI IsProtectedModeURL(const WCHAR *url)
+{
+    FIXME("stub: %s\n", debugstr_w(url));
+    return TRUE;
+}
+
+/***********************************************************************
  *           URLMON_410 (URLMON.410)
  *    Undocumented, added in IE8
  */

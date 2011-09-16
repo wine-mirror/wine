@@ -94,6 +94,7 @@
 @ stub WriteHitLogging
 @ stub ZonesReInit
 
+111 stdcall @(wstr) IsProtectedModeURL
 331 stdcall @(ptr long ptr) propsys.InitPropVariantFromBuffer
 335 stdcall @(ptr long ptr) propsys.InitVariantFromBuffer
 362 stdcall @(ptr ptr) propsys.InitVariantFromGUIDAsString
