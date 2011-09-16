@@ -398,7 +398,7 @@ HRESULT create_vbdisp(const class_desc_t *desc, vbdisp_t **ret)
 {
     vbdisp_t *vbdisp;
 
-    vbdisp = heap_alloc_zero(sizeof(*vbdisp) + (desc->prop_cnt-1)*sizeof(VARIANT));
+    vbdisp = heap_alloc_zero( FIELD_OFFSET( vbdisp_t, props[desc->prop_cnt] ));
     if(!vbdisp)
         return E_OUTOFMEMORY;
 
