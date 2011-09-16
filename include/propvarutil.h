@@ -37,6 +37,8 @@ typedef int PROPVAR_CHANGE_FLAGS;
 
 HRESULT WINAPI PropVariantChangeType(PROPVARIANT *ppropvarDest, REFPROPVARIANT propvarSrc,
                                      PROPVAR_CHANGE_FLAGS flags, VARTYPE vt);
+HRESULT WINAPI InitPropVariantFromGUIDAsString(REFGUID guid, PROPVARIANT *ppropvar);
+HRESULT WINAPI InitVariantFromGUIDAsString(REFGUID guid, VARIANT *pvar);
 
 
 #ifdef __cplusplus

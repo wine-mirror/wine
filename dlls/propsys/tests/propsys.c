@@ -24,10 +24,13 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#define NONAMELESSUNION
+
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
 #include "propsys.h"
+#include "propvarutil.h"
 #include "initguid.h"
 #include "wine/test.h"
 
@@ -44,6 +47,13 @@ static char *show_guid(const GUID *guid, char *buf)
         guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
 
     return buf;
+}
+
+static int strcmp_wa(LPCWSTR strw, const char *stra)
+{
+    CHAR buf[512];
+    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
+    return lstrcmpA(stra, buf);
 }
 
 static void test_PSStringFromPropertyKey(void)
@@ -450,9 +460,58 @@ static void test_PSRefreshPropertySchema(void)
     CoUninitialize();
 }
 
+static void test_InitPropVariantFromGUIDAsString(void)
+{
+    PROPVARIANT propvar;
+    VARIANT var;
+    HRESULT hres;
+    int i;
+
+    const struct {
+        REFGUID guid;
+        const char *str;
+    } testcases[] = {
+        {&IID_NULL,             "{00000000-0000-0000-0000-000000000000}" },
+        {&dummy_guid,           "{DEADBEEF-DEAD-BEEF-DEAD-BEEFCAFEBABE}" },
+    };
+
+    hres = InitPropVariantFromGUIDAsString(NULL, &propvar);
+    ok(hres == E_FAIL, "InitPropVariantFromGUIDAsString returned %x\n", hres);
+
+    if(0) {
+        /* Returns strange data on Win7, crashes on older systems */
+        InitVariantFromGUIDAsString(NULL, &var);
+
+        /* Crashes on windows */
+        InitPropVariantFromGUIDAsString(&IID_NULL, NULL);
+        InitVariantFromGUIDAsString(&IID_NULL, NULL);
+    }
+
+    for(i=0; i<sizeof(testcases)/sizeof(testcases[0]); i++) {
+        memset(&propvar, 0, sizeof(PROPVARIANT));
+        hres = InitPropVariantFromGUIDAsString(testcases[i].guid, &propvar);
+        ok(hres == S_OK, "%d) InitPropVariantFromGUIDAsString returned %x\n", i, hres);
+        ok(propvar.vt == VT_LPWSTR, "%d) propvar.vt = %d\n", i, propvar.vt);
+        ok(!strcmp_wa(propvar.u.pwszVal, testcases[i].str), "%d) propvar.u.pwszVal = %s\n",
+                i, wine_dbgstr_w(propvar.u.pwszVal));
+        CoTaskMemFree(propvar.u.pwszVal);
+
+        memset(&var, 0, sizeof(VARIANT));
+        hres = InitVariantFromGUIDAsString(testcases[i].guid, &var);
+        ok(hres == S_OK, "%d) InitVariantFromGUIDAsString returned %x\n", i, hres);
+        ok(V_VT(&var) == VT_BSTR, "%d) V_VT(&var) = %d\n", i, V_VT(&var));
+        ok(SysStringLen(V_BSTR(&var)) == 38, "SysStringLen returned %d\n",
+                SysStringLen(V_BSTR(&var)));
+        ok(!strcmp_wa(V_BSTR(&var), testcases[i].str), "%d) V_BSTR(&var) = %s\n",
+                i, wine_dbgstr_w(V_BSTR(&var)));
+        VariantClear(&var);
+    }
+}
+
 START_TEST(propsys)
 {
     test_PSStringFromPropertyKey();
     test_PSPropertyKeyFromString();
     test_PSRefreshPropertySchema();
+    test_InitPropVariantFromGUIDAsString();
 }
