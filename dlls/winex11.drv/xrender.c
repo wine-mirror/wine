@@ -2336,10 +2336,10 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
                                   Drawable drawable, const struct bitblt_coords *src,
                                   const struct bitblt_coords *dst )
 {
-    int width = dst->visrect.right - dst->visrect.left;
-    int height = dst->visrect.bottom - dst->visrect.top;
-    int x_src = physdev_src->x11dev->dc_rect.left + src->visrect.left;
-    int y_src = physdev_src->x11dev->dc_rect.top + src->visrect.top;
+    int width = abs( dst->width );
+    int height = abs( dst->height );
+    int x_src = physdev_src->x11dev->dc_rect.left + src->x;
+    int y_src = physdev_src->x11dev->dc_rect.top + src->y;
     int x_dst, y_dst;
     Picture src_pict = 0, dst_pict, mask_pict = 0;
     BOOL use_repeat;
@@ -2357,7 +2357,8 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
     {
         XRenderPictureAttributes pa;
 
-        x_dst = y_dst = 0;
+        x_dst = dst->x;
+        y_dst = dst->y;
         pa.repeat = RepeatNone;
         wine_tsx11_lock();
         dst_pict = pXRenderCreatePicture( gdi_display, drawable, physdev_dst->pict_format, CPRepeat, &pa );
@@ -2365,10 +2366,15 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
     }
     else
     {
-        x_dst = physdev_dst->x11dev->dc_rect.left + dst->visrect.left;
-        y_dst = physdev_dst->x11dev->dc_rect.top + dst->visrect.top;
+        x_dst = physdev_dst->x11dev->dc_rect.left + dst->x;
+        y_dst = physdev_dst->x11dev->dc_rect.top + dst->y;
         dst_pict = get_xrender_picture( physdev_dst );
     }
+
+    if (src->width < 0) x_src += src->width + 1;
+    if (src->height < 0) y_src += src->height + 1;
+    if (dst->width < 0) x_dst += dst->width + 1;
+    if (dst->height < 0) y_dst += dst->height + 1;
 
     /* mono -> color */
     if (physdev_src->format == WXR_FORMAT_MONO && physdev_dst->format != WXR_FORMAT_MONO)
@@ -2463,16 +2469,23 @@ static BOOL xrenderdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     {
         GC tmpGC;
         Pixmap tmp_pixmap;
+        struct bitblt_coords tmp;
+
+        /* make coordinates relative to tmp pixmap */
+        tmp = *dst;
+        tmp.x -= tmp.visrect.left;
+        tmp.y -= tmp.visrect.top;
+        OffsetRect( &tmp.visrect, -tmp.visrect.left, -tmp.visrect.top );
 
         wine_tsx11_lock();
         tmpGC = XCreateGC( gdi_display, physdev_dst->x11dev->drawable, 0, NULL );
         XSetSubwindowMode( gdi_display, tmpGC, IncludeInferiors );
         XSetGraphicsExposures( gdi_display, tmpGC, False );
-        tmp_pixmap = XCreatePixmap( gdi_display, root_window, dst->visrect.right - dst->visrect.left,
-                                    dst->visrect.bottom - dst->visrect.top, physdev_dst->x11dev->depth );
+        tmp_pixmap = XCreatePixmap( gdi_display, root_window, tmp.visrect.right - tmp.visrect.left,
+                                    tmp.visrect.bottom - tmp.visrect.top, physdev_dst->x11dev->depth );
         wine_tsx11_unlock();
 
-        xrender_stretch_blit( physdev_src, physdev_dst, tmp_pixmap, src, dst );
+        xrender_stretch_blit( physdev_src, physdev_dst, tmp_pixmap, src, &tmp );
         execute_rop( physdev_dst->x11dev, tmp_pixmap, tmpGC, &dst->visrect, rop );
 
         wine_tsx11_lock();
@@ -2547,12 +2560,11 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
 
     wine_tsx11_lock();
     xrender_blit( PictOpOver, src_pict, mask_pict, dst_pict,
-                  physdev_src->x11dev->dc_rect.left + src->visrect.left,
-                  physdev_src->x11dev->dc_rect.top + src->visrect.top,
-                  physdev_dst->x11dev->dc_rect.left + dst->visrect.left,
-                  physdev_dst->x11dev->dc_rect.top + dst->visrect.top,
-                  xscale, yscale,
-                  dst->visrect.right - dst->visrect.left, dst->visrect.bottom - dst->visrect.top );
+                  physdev_src->x11dev->dc_rect.left + src->x,
+                  physdev_src->x11dev->dc_rect.top + src->y,
+                  physdev_dst->x11dev->dc_rect.left + dst->x,
+                  physdev_dst->x11dev->dc_rect.top + dst->y,
+                  xscale, yscale, dst->width, dst->height );
     if (tmp_pict) pXRenderFreePicture( gdi_display, tmp_pict );
     wine_tsx11_unlock();
 
