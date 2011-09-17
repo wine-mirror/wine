@@ -193,8 +193,8 @@ static void proxy_free_variables( var_list_t *args, const char *local_var_prefix
 static void gen_proxy(type_t *iface, const var_t *func, int idx,
                       unsigned int proc_offset)
 {
-  type_t *rettype = type_function_get_rettype(func->type);
-  int has_ret = !is_void(rettype);
+  var_t *retval = type_function_get_retval(func->type);
+  int has_ret = !is_void(retval->type);
   int has_full_pointer = is_full_pointer_function(func);
   const char *callconv = get_attrp(func->type->attrs, ATTR_CALLCONV);
   const var_list_t *args = type_get_function_args(func->type);
@@ -204,7 +204,7 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
   if (is_interpreted_func( iface, func ))
   {
       if (get_stub_mode() == MODE_Oif && !is_callas( func->attrs )) return;
-      write_type_decl_left(proxy, type_function_get_rettype(func->type));
+      write_type_decl_left(proxy, retval->type);
       print_proxy( " %s %s_%s_Proxy(\n", callconv, iface->name, get_name(func));
       write_args(proxy, args, iface->name, 1, TRUE);
       print_proxy( ")\n");
@@ -221,7 +221,7 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
   print_proxy( "}\n");
   print_proxy( "\n");
 
-  write_type_decl_left(proxy, rettype);
+  write_type_decl_left(proxy, retval->type);
   print_proxy( " %s %s_%s_Proxy(\n", callconv, iface->name, get_name(func));
   write_args(proxy, args, iface->name, 1, TRUE);
   print_proxy( ")\n");
@@ -231,14 +231,13 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
   /* local variables */
   if (has_ret) {
     print_proxy( "%s", "" );
-    write_type_decl_left(proxy, rettype);
-    print_proxy( " _RetVal;\n");
+    write_type_decl(proxy, retval->type, retval->name);
+    fprintf( proxy, ";\n" );
   }
   print_proxy( "RPC_MESSAGE _RpcMessage;\n" );
   if (has_ret) {
-    if (decl_indirect(rettype))
-      print_proxy("void *_p_%s = &%s;\n",
-                 "_RetVal", "_RetVal");
+    if (decl_indirect(retval->type))
+        print_proxy("void *_p_%s = &%s;\n", retval->name, retval->name);
   }
   print_proxy( "\n");
 
@@ -282,10 +281,10 @@ static void gen_proxy(type_t *iface, const var_t *func, int idx,
 
   if (has_ret)
   {
-      if (decl_indirect(rettype))
-          print_proxy("MIDL_memset(&%s, 0, sizeof(%s));\n", "_RetVal", "_RetVal");
-      else if (is_ptr(rettype) || is_array(rettype))
-          print_proxy("%s = 0;\n", "_RetVal");
+      if (decl_indirect(retval->type))
+          print_proxy("MIDL_memset(&%s, 0, sizeof(%s));\n", retval->name, retval->name);
+      else if (is_ptr(retval->type) || is_array(retval->type))
+          print_proxy("%s = 0;\n", retval->name);
       write_remoting_arguments(proxy, indent, func, "", PASS_RETURN, PHASE_UNMARSHAL);
   }
 

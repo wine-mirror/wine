@@ -899,10 +899,10 @@ static void write_var_init(FILE *file, int indent, const type_t *t, const char *
 
 void write_parameters_init(FILE *file, int indent, const var_t *func, const char *local_var_prefix)
 {
-    const var_t *var;
+    const var_t *var = type_function_get_retval(func->type);
 
-    if (!is_void(type_function_get_rettype(func->type)))
-        write_var_init(file, indent, type_function_get_rettype(func->type), "_RetVal", local_var_prefix);
+    if (!is_void(var->type))
+        write_var_init(file, indent, var->type, var->name, local_var_prefix);
 
     if (!type_get_function_args(func->type))
         return;
@@ -4473,12 +4473,8 @@ void write_remoting_arguments(FILE *file, int indent, const var_t *func, const c
 
     if (pass == PASS_RETURN)
     {
-        var_t var;
-        var = *func;
-        var.type = type_function_get_rettype(func->type);
-        var.name = xstrdup( "_RetVal" );
-        write_remoting_arg( file, indent, func, local_var_prefix, pass, phase, &var );
-        free( var.name );
+        write_remoting_arg( file, indent, func, local_var_prefix, pass, phase,
+                            type_function_get_retval(func->type) );
     }
     else
     {
@@ -4535,14 +4531,14 @@ void declare_stub_args( FILE *file, int indent, const var_t *func )
 {
     int in_attr, out_attr;
     int i = 0;
-    const var_t *var;
+    const var_t *var = type_function_get_retval(func->type);
 
-    /* declare return value '_RetVal' */
-    if (!is_void(type_function_get_rettype(func->type)))
+    /* declare return value */
+    if (!is_void(var->type))
     {
         print_file(file, indent, "%s", "");
-        write_type_decl_left(file, type_function_get_rettype(func->type));
-        fprintf(file, " _RetVal;\n");
+        write_type_decl(file, var->type, var->name);
+        fprintf(file, ";\n");
     }
 
     if (!type_get_function_args(func->type))
@@ -4695,7 +4691,7 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
 void write_func_param_struct( FILE *file, const type_t *iface, const type_t *func,
                               const char *var_decl, int add_retval )
 {
-    type_t *rettype = type_function_get_rettype( func );
+    var_t *retval = type_function_get_retval( func );
     const var_list_t *args = type_get_function_args( func );
     const var_t *arg;
     int needs_packing;
@@ -4729,11 +4725,12 @@ void write_func_param_struct( FILE *file, const type_t *iface, const type_t *fun
         else
             fprintf( file, "%s DECLSPEC_ALIGN(%u);\n", arg->name, pointer_size );
     }
-    if (add_retval && !is_void( rettype ))
+    if (add_retval && !is_void( retval->type ))
     {
         print_file(file, 2, "%s", "");
-        write_type_decl( file, rettype, "_RetVal" );
-        if (is_array( rettype ) || is_ptr( rettype ) || type_memsize( rettype ) == pointer_size)
+        write_type_decl( file, retval->type, retval->name );
+        if (is_array( retval->type ) || is_ptr( retval->type ) ||
+            type_memsize( retval->type ) == pointer_size)
             fprintf( file, ";\n" );
         else
             fprintf( file, " DECLSPEC_ALIGN(%u);\n", pointer_size );

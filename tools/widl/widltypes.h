@@ -329,7 +329,7 @@ struct enumeration_details
 struct func_details
 {
   var_list_t *args;
-  struct _type_t *rettype;
+  struct _var_t *retval;
   int idx;
 };
 
