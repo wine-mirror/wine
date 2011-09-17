@@ -2984,7 +2984,7 @@ static void test_hglobal_storage_creation(void)
 
     r = ILockBytes_Stat(ilb, &stat, STATFLAG_NONAME);
     ok(r == S_OK, "ILockBytes_Stat failed, hr=%x\n", r);
-    ok(stat.cbSize.LowPart < 2512, "expected truncated size, got %d\n", stat.cbSize.LowPart);
+    ok(stat.cbSize.u.LowPart < 2512, "expected truncated size, got %d\n", stat.cbSize.u.LowPart);
 
     ILockBytes_Release(ilb);
 }
