@@ -765,7 +765,7 @@ static void test_gamma(void)
     ramp[0][0] = 0;
     for (i = 1; i < 256; i++) ramp[0][i] = ramp[0][i - 1] + 512;
     ret = SetDeviceGammaRamp(hdc, &ramp);
-    todo_wine ok(ret, "SetDeviceGammaRamp failed\n");
+    ok(ret, "SetDeviceGammaRamp failed\n");
 
     /* cleanup: set old ramp again */
     ret = SetDeviceGammaRamp(hdc, &oldramp);

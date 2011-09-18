@@ -335,7 +335,7 @@ static BOOL ComputeGammaFromRamp(WORD ramp[256], float *gamma)
     return FALSE;
   }
   /* check that the gamma is reasonably uniform across the ramp */
-  if (g_max - g_min > 0.1) {
+  if (g_max - g_min > 12.8) {
     ERR("ramp not uniform (max=%f, min=%f, avg=%f), rejected\n", g_max, g_min, g_avg);
     return FALSE;
   }
