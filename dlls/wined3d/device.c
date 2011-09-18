@@ -3738,7 +3738,7 @@ HRESULT CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *devi
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_texture_stage_state(struct wined3d_device *device,
+HRESULT CDECL wined3d_device_get_texture_stage_state(const struct wined3d_device *device,
         UINT stage, WINED3DTEXTURESTAGESTATETYPE state, DWORD *value)
 {
     TRACE("device %p, stage %u, state %s, value %p.\n",
