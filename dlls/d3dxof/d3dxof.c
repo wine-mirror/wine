@@ -575,7 +575,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_GetData(IDirectXFileData* iface, LPCS
 {
   IDirectXFileDataImpl *This = impl_from_IDirectXFileData(iface);
 
-  TRACE("(%p/%p)->(%s,%p,%p)\n", This, iface, szMember, pcbSize, ppvData);
+  TRACE("(%p/%p)->(%s,%p,%p)\n", This, iface, debugstr_a(szMember), pcbSize, ppvData);
 
   if (!pcbSize || !ppvData)
     return DXFILEERR_BADVALUE;
