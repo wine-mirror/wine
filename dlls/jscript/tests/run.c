@@ -108,6 +108,29 @@ static IDispatch *script_disp;
 static int invoke_version;
 static IActiveScriptError *script_error;
 
+/* Returns true if the user interface is in English. Note that this does not
+ * presume of the formatting of dates, numbers, etc.
+ */
+static BOOL is_lang_english(void)
+{
+    static HMODULE hkernel32 = NULL;
+    static LANGID (WINAPI *pGetThreadUILanguage)(void) = NULL;
+    static LANGID (WINAPI *pGetUserDefaultUILanguage)(void) = NULL;
+
+    if (!hkernel32)
+    {
+        hkernel32 = GetModuleHandleA("kernel32.dll");
+        pGetThreadUILanguage = (void*)GetProcAddress(hkernel32, "GetThreadUILanguage");
+        pGetUserDefaultUILanguage = (void*)GetProcAddress(hkernel32, "GetUserDefaultUILanguage");
+    }
+    if (pGetThreadUILanguage)
+        return PRIMARYLANGID(pGetThreadUILanguage()) == LANG_ENGLISH;
+    if (pGetUserDefaultUILanguage)
+        return PRIMARYLANGID(pGetUserDefaultUILanguage()) == LANG_ENGLISH;
+
+    return PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH;
+}
+
 static BSTR a2bstr(const char *str)
 {
     BSTR ret;
@@ -1145,8 +1168,8 @@ static void test_IActiveScriptError(IActiveScriptError *error, SCODE errorcode, 
 
     ok(excep.wCode == 0, "IActiveScriptError_GetExceptionInfo -- excep.wCode: expected 0, got 0x%08x\n", excep.wCode);
     ok(excep.wReserved == 0, "IActiveScriptError_GetExceptionInfo -- excep.wReserved: expected 0, got %d\n", excep.wReserved);
-    if (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) != LANG_ENGLISH)
-        skip("Non-english locale (test with hardcoded strings)\n");
+    if (!is_lang_english())
+        skip("Non-english UI (test with hardcoded strings)\n");
     else {
         ok(excep.bstrSource != NULL && !lstrcmpW(excep.bstrSource, script_source),
            "IActiveScriptError_GetExceptionInfo -- excep.bstrSource is not valid: expected %s, got %s\n",
