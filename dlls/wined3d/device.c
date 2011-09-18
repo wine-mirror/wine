@@ -3574,7 +3574,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
 /* Do not call while under the GL lock. */
 HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
         UINT src_start_idx, UINT dst_idx, UINT vertex_count, struct wined3d_buffer *dst_buffer,
-        struct wined3d_vertex_declaration *declaration, DWORD flags, DWORD dst_fvf)
+        const struct wined3d_vertex_declaration *declaration, DWORD flags, DWORD dst_fvf)
 {
     struct wined3d_state *state = &device->stateBlock->state;
     BOOL vbo = FALSE, streamWasUP = state->user_stream;

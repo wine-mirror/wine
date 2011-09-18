@@ -2282,7 +2282,7 @@ HRESULT __cdecl wined3d_device_present(struct wined3d_device *device, const RECT
         const RECT *dst_rect, HWND dst_window_override, const RGNDATA *dirty_region);
 HRESULT __cdecl wined3d_device_process_vertices(struct wined3d_device *device,
         UINT src_start_idx, UINT dst_idx, UINT vertex_count, struct wined3d_buffer *dst_buffer,
-        struct wined3d_vertex_declaration *declaration, DWORD flags, DWORD dst_fvf);
+        const struct wined3d_vertex_declaration *declaration, DWORD flags, DWORD dst_fvf);
 void __cdecl wined3d_device_release_focus_window(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_reset(struct wined3d_device *device,
         WINED3DPRESENT_PARAMETERS *present_parameters, wined3d_device_reset_cb callback);
