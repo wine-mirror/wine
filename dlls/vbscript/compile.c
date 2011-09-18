@@ -95,7 +95,7 @@ static void dump_code(compile_ctx_t *ctx)
     instr_t *instr;
 
     for(instr = ctx->code->instrs; instr < ctx->code->instrs+ctx->instr_cnt; instr++) {
-        TRACE_(vbscript_disas)("%d:\t%s", instr-ctx->code->instrs, instr_info[instr->op].op_str);
+        TRACE_(vbscript_disas)("%d:\t%s", (int)(instr-ctx->code->instrs), instr_info[instr->op].op_str);
         dump_instr_arg(instr_info[instr->op].arg1_type, &instr->arg1);
         dump_instr_arg(instr_info[instr->op].arg2_type, &instr->arg2);
         TRACE_(vbscript_disas)("\n");
