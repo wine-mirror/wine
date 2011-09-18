@@ -2000,9 +2000,8 @@ msgid "Object"
 msgstr ""
 
 #: dxdiagn.rc:25
-#, fuzzy
 msgid "Regional Setting"
-msgstr "Default Settings"
+msgstr ""
 
 #: dxdiagn.rc:26
 msgid "%uMB used, %uMB available"
@@ -2193,9 +2192,8 @@ msgid "&Help"
 msgstr "&Помощ"
 
 #: ieframe.rc:57
-#, fuzzy
 msgid "&About Internet Explorer"
-msgstr "&About Notepad"
+msgstr ""
 
 #: ieframe.rc:67
 msgctxt "home page"
@@ -2386,9 +2384,8 @@ msgid "Invalid handle\n"
 msgstr ""
 
 #: winerror.mc:61
-#, fuzzy
 msgid "Memory trashed\n"
-msgstr "Memory Monitor"
+msgstr ""
 
 #: winerror.mc:66
 #, fuzzy
@@ -2479,14 +2476,12 @@ msgid "Out of paper\n"
 msgstr "Няма хартия; "
 
 #: winerror.mc:171
-#, fuzzy
 msgid "Write fault\n"
-msgstr "Default"
+msgstr ""
 
 #: winerror.mc:176
-#, fuzzy
 msgid "Read fault\n"
-msgstr "Default"
+msgstr ""
 
 #: winerror.mc:181
 msgid "General failure\n"
@@ -2535,9 +2530,8 @@ msgid "Bad network path\n"
 msgstr ""
 
 #: winerror.mc:236
-#, fuzzy
 msgid "Network busy\n"
-msgstr "Network share"
+msgstr ""
 
 #: winerror.mc:241
 #, fuzzy
@@ -2577,9 +2571,8 @@ msgid "Print cancelled\n"
 msgstr ""
 
 #: winerror.mc:286
-#, fuzzy
 msgid "Network name deleted\n"
-msgstr "Date deleted"
+msgstr ""
 
 #: winerror.mc:291
 msgid "Network access denied\n"
@@ -2590,9 +2583,8 @@ msgid "Bad device type\n"
 msgstr ""
 
 #: winerror.mc:301
-#, fuzzy
 msgid "Bad network name\n"
-msgstr "Network share"
+msgstr ""
 
 #: winerror.mc:306
 msgid "Too many network names\n"
@@ -2646,9 +2638,8 @@ msgid "Invalid parameter\n"
 msgstr "Невалидни знаци в пътя"
 
 #: winerror.mc:366
-#, fuzzy
 msgid "Net write fault\n"
-msgstr "Default"
+msgstr ""
 
 #: winerror.mc:371
 msgid "No process slots\n"
@@ -2817,9 +2808,8 @@ msgid "Drive is busy\n"
 msgstr "Устройства"
 
 #: winerror.mc:581
-#, fuzzy
 msgid "Same drive\n"
-msgstr "System drive"
+msgstr ""
 
 #: winerror.mc:586
 msgid "Not toplevel directory\n"
@@ -2906,9 +2896,8 @@ msgid "Lock failed\n"
 msgstr ""
 
 #: winerror.mc:691
-#, fuzzy
 msgid "Resource in use\n"
-msgstr "Resource Failures"
+msgstr ""
 
 #: winerror.mc:696
 #, fuzzy
@@ -3251,9 +3240,8 @@ msgid "Not registry file\n"
 msgstr "&Вмъкни файл в регистъра..."
 
 #: winerror.mc:1106
-#, fuzzy
 msgid "Key deleted\n"
-msgstr "Date deleted"
+msgstr ""
 
 #: winerror.mc:1111
 msgid "No registry log space\n"
@@ -3669,9 +3657,8 @@ msgid "Moving the replacement file failed\n"
 msgstr ""
 
 #: winerror.mc:1611
-#, fuzzy
 msgid "The journal is being deleted\n"
-msgstr "Date deleted"
+msgstr ""
 
 #: winerror.mc:1616
 msgid "The journal is not active\n"
@@ -3811,9 +3798,8 @@ msgid "Connection is active\n"
 msgstr ""
 
 #: winerror.mc:1786
-#, fuzzy
 msgid "Network unreachable\n"
-msgstr "Network share"
+msgstr ""
 
 #: winerror.mc:1791
 msgid "Host unreachable\n"
@@ -4907,9 +4893,8 @@ msgid "Unsupported name syntax\n"
 msgstr ""
 
 #: winerror.mc:3111
-#, fuzzy
 msgid "No network address\n"
-msgstr "Network share"
+msgstr ""
 
 #: winerror.mc:3116
 msgid "Duplicate endpoint\n"
@@ -5320,9 +5305,8 @@ msgid "Already awaiting printer handle\n"
 msgstr ""
 
 #: winerror.mc:3611
-#, fuzzy
 msgid "Printer deleted\n"
-msgstr "Date deleted"
+msgstr ""
 
 #: winerror.mc:3616
 #, fuzzy
@@ -5499,7 +5483,6 @@ msgid "insert disk %s"
 msgstr "поставете диск %s"
 
 #: msi.rc:30
-#, fuzzy
 msgid ""
 "Windows Installer %s\n"
 "\n"
@@ -5531,35 +5514,6 @@ msgid ""
 "\t/help\n"
 "\t/?\n"
 msgstr ""
-"Windows Installer %s\n"
-"\n"
-"Usage:\n"
-"msiexec command {required parameter} [optional parammeter]\n"
-"\n"
-"Install a product:\n"
-"\t/i {package|productcode} [property]\n"
-"\t/package {package|productcode} [property]\n"
-"\t/a package [property]\n"
-"Repair an installation:\n"
-"\t/f[p|o|e|d|c|a|u|m|s|v] {package|productcode}\n"
-"Uninstall a product:\n"
-"\t/uninstall {package|productcode} [property]\n"
-"\t/x {package|productcode} [property]\n"
-"Advertise a product:\n"
-"\t/j[u|m] package [/t transform] [/g languageid]\n"
-"Apply a patch:\n"
-"\t/p patchpackage [property]\n"
-"\t/p patchpackage /a package [property]\n"
-"Log and UI Modifiers for above commands:\n"
-"\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] logfile\n"
-"\t/q{|n|b|r|f|n+|b+|b-}\n"
-"Register MSI Service:\n"
-"\t/y\n"
-"Unregister MSI Service:\n"
-"\t/z\n"
-"Display this help:\n"
-"\t/help\n"
-"\t/?\n"
 
 #: msi.rc:57
 msgid "enter which folder contains %s"
@@ -5897,9 +5851,8 @@ msgid ""
 msgstr ""
 
 #: oledlg.rc:27 shell32.rc:194
-#, fuzzy
 msgid "Browse"
-msgstr "&Browse View"
+msgstr ""
 
 #: oledlg.rc:28
 msgid ""
@@ -5908,9 +5861,8 @@ msgid ""
 msgstr ""
 
 #: oledlg.rc:29
-#, fuzzy
 msgid "Add Control"
-msgstr "Control"
+msgstr ""
 
 #: oledlg.rc:34
 msgid "Inserts the contents of the clipboard into your document as %s."
@@ -6897,9 +6849,8 @@ msgid "&Close\tAlt-F4"
 msgstr "&Затвори\tAlt-F4"
 
 #: user32.rc:35
-#, fuzzy
 msgid "&About Wine"
-msgstr "&About Notepad"
+msgstr ""
 
 #: user32.rc:46
 #, fuzzy
@@ -7634,9 +7585,8 @@ msgid "Timeout"
 msgstr ""
 
 #: wldap32.rc:113
-#, fuzzy
 msgid "Auth Unknown"
-msgstr "Context Unknown"
+msgstr ""
 
 #: wldap32.rc:114
 msgid "Filter Error"
@@ -7744,9 +7694,8 @@ msgid "&Always on Top"
 msgstr ""
 
 #: clock.rc:42
-#, fuzzy
 msgid "&About Clock"
-msgstr "&About Notepad"
+msgstr ""
 
 #: clock.rc:48
 msgid "Clock"
@@ -8460,9 +8409,8 @@ msgid "Connection is being made"
 msgstr "LAN връзка"
 
 #: net.rc:49
-#, fuzzy
 msgid "Reconnecting"
-msgstr "Default Settings"
+msgstr ""
 
 #: net.rc:40
 msgid "The following services are running:\n"
@@ -8750,9 +8698,8 @@ msgid "&Refresh\tF5"
 msgstr "&Обнови\tF5"
 
 #: oleview.rc:71
-#, fuzzy
 msgid "&About OleView"
-msgstr "&About Notepad"
+msgstr ""
 
 #: oleview.rc:79
 #, fuzzy
@@ -9013,9 +8960,8 @@ msgid "&Arrange Icons"
 msgstr ""
 
 #: progman.rc:54
-#, fuzzy
 msgid "&About Program Manager"
-msgstr "&About Notepad"
+msgstr ""
 
 #: progman.rc:60
 msgid "Program Manager"
@@ -9264,9 +9210,8 @@ msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr ""
 
 #: regedit.rc:201
-#, fuzzy
 msgid "(Default)"
-msgstr "Default"
+msgstr ""
 
 #: regedit.rc:202
 msgid "(value not set)"
@@ -9614,9 +9559,8 @@ msgid "&Bring To Front"
 msgstr ""
 
 #: taskmgr.rc:90
-#, fuzzy
 msgid "&About Task Manager"
-msgstr "&About Notepad"
+msgstr ""
 
 #: taskmgr.rc:120
 msgid "&Switch To"
@@ -10292,9 +10236,8 @@ msgid "Controls Background"
 msgstr "&Копирай фона"
 
 #: winecfg.rc:96
-#, fuzzy
 msgid "Controls Text"
-msgstr "Control"
+msgstr ""
 
 #: winecfg.rc:98
 #, fuzzy
@@ -10376,9 +10319,8 @@ msgid "Inactive Border"
 msgstr ""
 
 #: winecfg.rc:116
-#, fuzzy
 msgid "Controls Shadow"
-msgstr "Control Panel"
+msgstr ""
 
 #: winecfg.rc:117
 msgid "Gray Text"
@@ -10393,9 +10335,8 @@ msgid "Controls Dark Shadow"
 msgstr ""
 
 #: winecfg.rc:120
-#, fuzzy
 msgid "Controls Light"
-msgstr "Control"
+msgstr ""
 
 #: winecfg.rc:121
 msgid "Controls Alternate Background"
@@ -10422,9 +10363,8 @@ msgid "Menu Bar"
 msgstr ""
 
 #: wineconsole.rc:26
-#, fuzzy
 msgid "Set &Defaults"
-msgstr "Default"
+msgstr ""
 
 #: wineconsole.rc:28
 msgid "&Mark"
@@ -10625,9 +10565,8 @@ msgid "Tile &Vertically\tCtrl+F4"
 msgstr "Маркирай &всичко\tCtrl+A"
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&About Wine File Manager"
-msgstr "&About Notepad"
+msgstr ""
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -10715,9 +10654,8 @@ msgid "&Fastest Times"
 msgstr ""
 
 #: winemine.rc:49
-#, fuzzy
 msgid "&About WineMine"
-msgstr "&About Notepad"
+msgstr ""
 
 #: winemine.rc:27
 msgid "WineMine"
@@ -10887,9 +10825,8 @@ msgid "&Statusbar"
 msgstr ""
 
 #: wordpad.rc:73
-#, fuzzy
 msgid "&Options..."
-msgstr "&Options"
+msgstr ""
 
 #: wordpad.rc:75
 msgid "&Insert"
