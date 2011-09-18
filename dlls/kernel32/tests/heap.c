@@ -724,6 +724,11 @@ static void test_debug_heap( const char *argv0, DWORD flags )
     if (!strcmp( keyname + strlen(keyname) - 3, ".so" )) keyname[strlen(keyname) - 3] = 0;
 
     err = RegCreateKeyA( HKEY_LOCAL_MACHINE, keyname, &hkey );
+    if (err == ERROR_ACCESS_DENIED)
+    {
+        skip("Not authorized to change the image file execution options\n");
+        return;
+    }
     ok( !err, "failed to create '%s' error %u\n", keyname, err );
     if (err) return;
 
