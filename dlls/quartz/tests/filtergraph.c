@@ -1811,39 +1811,44 @@ static void test_render_filter_priority(void)
 
     hr = IFilterMapper2_RegisterFilter(pMapper2, &CLSID_TestFilter2, wszFilterInstanceName2, NULL,
                     &CLSID_LegacyAmFilterCategory, NULL, &rgf2);
-    ok(hr == S_OK, "IFilterMapper2_RegisterFilter failed with %x\n", hr);
+    if (hr == E_ACCESSDENIED)
+        skip("Not authorized to register filters\n");
+    else
+    {
+        ok(hr == S_OK, "IFilterMapper2_RegisterFilter failed with %x\n", hr);
 
-    rgf2.dwMerit = MERIT_PREFERRED;
-    rgPinType[0].clsMinorType = &mediasubtype2;
+        rgf2.dwMerit = MERIT_PREFERRED;
+        rgPinType[0].clsMinorType = &mediasubtype2;
 
-    hr = IFilterMapper2_RegisterFilter(pMapper2, &CLSID_TestFilter4, wszFilterInstanceName4, NULL,
+        hr = IFilterMapper2_RegisterFilter(pMapper2, &CLSID_TestFilter4, wszFilterInstanceName4, NULL,
                     &CLSID_LegacyAmFilterCategory, NULL, &rgf2);
-    ok(hr == S_OK, "IFilterMapper2_RegisterFilter failed with %x\n", hr);
+        ok(hr == S_OK, "IFilterMapper2_RegisterFilter failed with %x\n", hr);
 
-    S1(U(rgf2)).cPins2 = 2;
-    rgPins2[0].dwFlags = 0;
-    rgPinType[0].clsMinorType = &mediasubtype1;
+        S1(U(rgf2)).cPins2 = 2;
+        rgPins2[0].dwFlags = 0;
+        rgPinType[0].clsMinorType = &mediasubtype1;
 
-    rgPins2[1].dwFlags = REG_PINFLAG_B_OUTPUT;
-    rgPins2[1].cInstances = 1;
-    rgPins2[1].nMediaTypes = 1;
-    rgPins2[1].lpMediaType = &rgPinType[1];
-    rgPins2[1].nMediums = 0;
-    rgPins2[1].lpMedium = NULL;
-    rgPins2[1].clsPinCategory = NULL;
-    rgPinType[1].clsMajorType = &MEDIATYPE_Video;
-    rgPinType[1].clsMinorType = &mediasubtype2;
+        rgPins2[1].dwFlags = REG_PINFLAG_B_OUTPUT;
+        rgPins2[1].cInstances = 1;
+        rgPins2[1].nMediaTypes = 1;
+        rgPins2[1].lpMediaType = &rgPinType[1];
+        rgPins2[1].nMediums = 0;
+        rgPins2[1].lpMedium = NULL;
+        rgPins2[1].clsPinCategory = NULL;
+        rgPinType[1].clsMajorType = &MEDIATYPE_Video;
+        rgPinType[1].clsMinorType = &mediasubtype2;
 
-    hr = IFilterMapper2_RegisterFilter(pMapper2, &CLSID_TestFilter3, wszFilterInstanceName3, NULL,
+        hr = IFilterMapper2_RegisterFilter(pMapper2, &CLSID_TestFilter3, wszFilterInstanceName3, NULL,
                     &CLSID_LegacyAmFilterCategory, NULL, &rgf2);
-    ok(hr == S_OK, "IFilterMapper2_RegisterFilter failed with %x\n", hr);
+        ok(hr == S_OK, "IFilterMapper2_RegisterFilter failed with %x\n", hr);
 
-    hr = IFilterGraph2_Render(pgraph2, ptestfilter->ppPins[0]);
-    ok(hr == S_OK, "IFilterGraph2_Render failed with %08x\n", hr);
+        hr = IFilterGraph2_Render(pgraph2, ptestfilter->ppPins[0]);
+        ok(hr == S_OK, "IFilterGraph2_Render failed with %08x\n", hr);
 
-    get_connected_filter_name(ptestfilter, ConnectedFilterName1);
-    ok(!lstrcmp(ConnectedFilterName1, "TestfilterInstance3"),
-            "unexpected connected filter: %s\n", ConnectedFilterName1);
+        get_connected_filter_name(ptestfilter, ConnectedFilterName1);
+        ok(!lstrcmp(ConnectedFilterName1, "TestfilterInstance3"),
+           "unexpected connected filter: %s\n", ConnectedFilterName1);
+    }
 
     hr = IFilterMapper2_UnregisterFilter(pMapper2, &CLSID_LegacyAmFilterCategory, NULL,
             &CLSID_TestFilter2);
