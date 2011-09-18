@@ -275,6 +275,14 @@ DirectDrawCreate(GUID *GUID,
     EnterCriticalSection(&ddraw_cs);
     hr = DDRAW_Create(GUID, (void **) DD, UnkOuter, &IID_IDirectDraw);
     LeaveCriticalSection(&ddraw_cs);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IDirectDraw_Initialize(*DD, GUID);
+        if (FAILED(hr))
+            IDirectDraw_Release(*DD);
+    }
+
     return hr;
 }
 
@@ -304,6 +312,15 @@ DirectDrawCreateEx(GUID *GUID,
     EnterCriticalSection(&ddraw_cs);
     hr = DDRAW_Create(GUID, DD, UnkOuter, iid);
     LeaveCriticalSection(&ddraw_cs);
+
+    if (SUCCEEDED(hr))
+    {
+        IDirectDraw7 *ddraw7 = *(IDirectDraw7 **)DD;
+        hr = IDirectDraw7_Initialize(ddraw7, GUID);
+        if (FAILED(hr))
+            IDirectDraw7_Release(ddraw7);
+    }
+
     return hr;
 }
 

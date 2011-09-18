@@ -81,6 +81,7 @@ struct IDirectDrawImpl
 
     /* See comment in IDirectDraw::AddRef */
     LONG                    ref7, ref4, ref2, ref3, ref1, numIfaces;
+    BOOL initialized;
 
     /* WineD3D linkage */
     struct wined3d *wineD3D;

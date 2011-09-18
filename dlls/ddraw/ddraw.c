@@ -1537,11 +1537,22 @@ static HRESULT WINAPI ddraw2_GetAvailableVidMem(IDirectDraw2 *iface,
  *  DDERR_ALREADYINITIALIZED on repeated calls
  *
  *****************************************************************************/
-static HRESULT WINAPI ddraw7_Initialize(IDirectDraw7 *iface, GUID *Guid)
+static HRESULT WINAPI ddraw7_Initialize(IDirectDraw7 *iface, GUID *guid)
 {
-    FIXME("iface %p, guid %s stub!\n", iface, debugstr_guid(Guid));
+    IDirectDrawImpl *This = impl_from_IDirectDraw7(iface);
 
-    return DDERR_ALREADYINITIALIZED;
+    TRACE("iface %p, guid %s.\n", iface, debugstr_guid(guid));
+
+    if (This->initialized)
+        return DDERR_ALREADYINITIALIZED;
+
+    /* FIXME: To properly take the GUID into account we should call
+     * ddraw_init() here instead of in DDRAW_Create(). */
+    if (guid)
+        FIXME("Ignoring guid %s.\n", debugstr_guid(guid));
+
+    This->initialized = TRUE;
+    return DD_OK;
 }
 
 static HRESULT WINAPI ddraw4_Initialize(IDirectDraw4 *iface, GUID *guid)
@@ -1575,7 +1586,7 @@ static HRESULT WINAPI d3d1_Initialize(IDirect3D *iface, REFIID riid)
 {
     TRACE("iface %p, riid %s.\n", iface, debugstr_guid(riid));
 
-    return D3D_OK;
+    return DDERR_ALREADYINITIALIZED;
 }
 
 /*****************************************************************************
