@@ -5472,8 +5472,6 @@ msgid ""
 "The specified installation package could not be opened.  Please check the "
 "file path and try again."
 msgstr ""
-"The specified installation package could not be opened.  Please check the "
-"file path and try again."
 
 #: msi.rc:28
 msgid "path %s not found"
@@ -6417,11 +6415,11 @@ msgstr "Original location"
 
 #: shell32.rc:146
 msgid "Date deleted"
-msgstr "Date deleted"
+msgstr ""
 
 #: shell32.rc:156
 msgid "Control Panel"
-msgstr "Control Panel"
+msgstr ""
 
 #: shell32.rc:163
 msgid "Select"
@@ -6681,32 +6679,27 @@ msgid ""
 "\n"
 "Do you want to replace it?"
 msgstr ""
-"This folder already contains a file called '%1'.\n"
-"\n"
-"Do you want to replace it?"
 
 #: shell32.rc:172
 msgid "Are you sure you want to delete the selected item(s)?"
-msgstr "Are you sure you want to delete the selected item(s)?"
+msgstr ""
 
 #: shell32.rc:174
 msgid ""
 "Are you sure that you want to send '%1' and all its content to the Trash?"
 msgstr ""
-"Are you sure that you want to send '%1' and all its content to the Trash?"
 
 #: shell32.rc:173
 msgid "Are you sure that you want to send '%1' to the Trash?"
-msgstr "Are you sure that you want to send '%1' to the Trash?"
+msgstr ""
 
 #: shell32.rc:175
 msgid "Are you sure that you want to send these %1 items to the Trash?"
-msgstr "Are you sure that you want to send these %1 items to the Trash?"
+msgstr ""
 
 #: shell32.rc:176
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 msgstr ""
-"The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 
 #: shell32.rc:183
 msgid ""
@@ -6716,19 +6709,14 @@ msgid ""
 "selected folder they will be replaced. Do you still want to move or copy\n"
 "the folder?"
 msgstr ""
-"This folder already contains a folder named '%1'.\n"
-"\n"
-"If the files in the destination folder have the same names as files in the\n"
-"selected folder they will be replaced. Do you still want to move or copy\n"
-"the folder?"
 
 #: shell32.rc:248
 msgid "New Folder"
-msgstr "New Folder"
+msgstr ""
 
 #: shell32.rc:250
 msgid "Wine Control Panel"
-msgstr "Wine Control Panel"
+msgstr ""
 
 #: shell32.rc:192
 msgid "Unable to display Run File dialog box (internal error)"
@@ -10776,11 +10764,11 @@ msgstr "Helpaj dosieroj (*.hlp)"
 
 #: winhlp32.rc:89
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
-msgstr "Cannot find '%s'. Do you want to find this file yourself?"
+msgstr ""
 
 #: winhlp32.rc:90
 msgid "Cannot find a richedit implementation... Aborting"
-msgstr "Cannot find a richedit implementation... Aborting"
+msgstr ""
 
 #: winhlp32.rc:91
 msgid "Help topics: "
