@@ -5076,15 +5076,15 @@ msgstr "Adresse fejl\n"
 
 #: winerror.mc:3261
 msgid "Floating-point divide-by-zero\n"
-msgstr "Floating-point divide-by-zero\n"
+msgstr ""
 
 #: winerror.mc:3266
 msgid "Floating-point underflow\n"
-msgstr "Floating-point underflow\n"
+msgstr ""
 
 #: winerror.mc:3271
 msgid "Floating-point overflow\n"
-msgstr "Floating-point overflow\n"
+msgstr ""
 
 #: winerror.mc:3276
 msgid "No more entries\n"
@@ -9891,6 +9891,7 @@ msgstr ""
 "under visse betingelser; kør 'start /L' for yderligere oplysninger.\n"
 
 #: start.rc:64
+#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
