@@ -2095,9 +2095,7 @@ static HRESULT WINAPI IShellView2_fnCreateViewWindow2(IShellView2 *iface,
 
     TRACE("-- psvPrev %p, pfs %p, psbOwner %p, prcView %p\n",
             view_params->psvPrev, view_params->pfs, view_params->psbOwner, view_params->prcView);
-    TRACE("-- vmode %#x, flags %#x, left %d, top %d, right %d, bottom %d\n",
-            view_params->pfs->ViewMode, view_params->pfs->fFlags, view_params->prcView->left,
-            view_params->prcView->top, view_params->prcView->right, view_params->prcView->bottom);
+    TRACE("-- vmode %#x, flags %#x, view %s\n", view_params->pfs->ViewMode, view_params->pfs->fFlags, wine_dbgstr_rect(view_params->prcView));
 
     if (!view_params->psbOwner) return E_UNEXPECTED;
 
