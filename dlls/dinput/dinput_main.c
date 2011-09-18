@@ -883,7 +883,7 @@ static HRESULT WINAPI IDirectInput8AImpl_EnumDevicesBySemantics(
     int i, j;
 
 
-    FIXME("(this=%p,%s,%p,%p,%p,%04x): semi-stub\n", This, ptszUserName, lpdiActionFormat,
+    FIXME("(this=%p,%s,%p,%p,%p,%04x): semi-stub\n", This, debugstr_a(ptszUserName), lpdiActionFormat,
           lpCallback, pvRef, dwFlags);
 #define X(x) if (dwFlags & x) FIXME("\tdwFlags |= "#x"\n");
 	X(DIEDBSFL_ATTACHEDONLY)
