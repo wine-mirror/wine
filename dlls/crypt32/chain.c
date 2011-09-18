@@ -1664,7 +1664,7 @@ static void dump_extension(const CERT_EXTENSION *ext)
 
 static LPCSTR filetime_to_str(const FILETIME *time)
 {
-    static char date[80];
+    char date[80];
     char dateFmt[80]; /* sufficient for all versions of LOCALE_SSHORTDATE */
     SYSTEMTIME sysTime;
 
@@ -1675,7 +1675,7 @@ static LPCSTR filetime_to_str(const FILETIME *time)
     FileTimeToSystemTime(time, &sysTime);
     GetDateFormatA(LOCALE_SYSTEM_DEFAULT, 0, &sysTime, dateFmt, date,
      sizeof(date) / sizeof(date[0]));
-    return date;
+    return wine_dbg_sprintf("%s", date);
 }
 
 static void dump_element(PCCERT_CONTEXT cert)
