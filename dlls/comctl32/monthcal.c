@@ -1679,7 +1679,7 @@ static LRESULT
 MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
 {
   MCHITTESTINFO htinfo;
-  SYSTEMTIME ht_month;
+  SYSTEMTIME *ht_month;
   INT day, calIdx;
 
   if(!lpht || lpht->cbSize < MCHITTESTINFO_V1_SIZE) return -1;
@@ -1718,8 +1718,6 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
     return fill_hittest_info(&htinfo, lpht);
   }
 
-  ht_month = infoPtr->calendars[calIdx].month;
-
   /* are we in the header? */
   if (PtInRect(&infoPtr->calendars[calIdx].title, lpht->pt)) {
     /* FIXME: buttons hittesting could be optimized cause maximum
@@ -1756,57 +1754,66 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
     return fill_hittest_info(&htinfo, lpht);
   }
 
-  /* days area (including week days and week numbers */
+  ht_month = &infoPtr->calendars[calIdx].month;
+  /* days area (including week days and week numbers) */
   day = MONTHCAL_GetDayFromPos(infoPtr, lpht->pt, calIdx);
   if (PtInRect(&infoPtr->calendars[calIdx].wdays, lpht->pt))
   {
     htinfo.uHit = MCHT_CALENDARDAY;
     htinfo.iOffset = calIdx;
-    htinfo.st.wYear  = ht_month.wYear;
-    htinfo.st.wMonth = (day < 1) ? ht_month.wMonth -1 : ht_month.wMonth;
+    htinfo.st.wYear  = ht_month->wYear;
+    htinfo.st.wMonth = (day < 1) ? ht_month->wMonth -1 : ht_month->wMonth;
     htinfo.st.wDay   = (day < 1) ?
-      MONTHCAL_MonthLength(ht_month.wMonth-1, ht_month.wYear) - day : day;
+      MONTHCAL_MonthLength(ht_month->wMonth-1, ht_month->wYear) - day : day;
 
     MONTHCAL_GetDayPos(infoPtr, &htinfo.st, &htinfo.iCol, &htinfo.iRow, calIdx);
   }
   else if(PtInRect(&infoPtr->calendars[calIdx].weeknums, lpht->pt))
   {
     htinfo.uHit = MCHT_CALENDARWEEKNUM;
-    htinfo.st.wYear  = ht_month.wYear;
+    htinfo.st.wYear = ht_month->wYear;
     htinfo.iOffset = calIdx;
 
     if (day < 1)
     {
-      htinfo.st.wMonth = ht_month.wMonth - 1;
-      htinfo.st.wDay = MONTHCAL_MonthLength(ht_month.wMonth-1, ht_month.wYear) - day;
+      htinfo.st.wMonth = ht_month->wMonth - 1;
+      htinfo.st.wDay = MONTHCAL_MonthLength(ht_month->wMonth-1, ht_month->wYear) - day;
     }
-    else if (day > MONTHCAL_MonthLength(ht_month.wMonth, ht_month.wYear))
+    else if (day > MONTHCAL_MonthLength(ht_month->wMonth, ht_month->wYear))
     {
-      htinfo.st.wMonth = ht_month.wMonth + 1;
-      htinfo.st.wDay = day - MONTHCAL_MonthLength(ht_month.wMonth, ht_month.wYear);
+      htinfo.st.wMonth = ht_month->wMonth + 1;
+      htinfo.st.wDay = day - MONTHCAL_MonthLength(ht_month->wMonth, ht_month->wYear);
     }
     else
     {
-      htinfo.st.wMonth = ht_month.wMonth;
+      htinfo.st.wMonth = ht_month->wMonth;
       htinfo.st.wDay = day;
     }
   }
   else if(PtInRect(&infoPtr->calendars[calIdx].days, lpht->pt))
   {
       htinfo.iOffset = calIdx;
-      htinfo.st.wYear  = ht_month.wYear;
-      htinfo.st.wMonth = ht_month.wMonth;
-      if (day < 1)
+      htinfo.st.wYear  = ht_month->wYear;
+      htinfo.st.wMonth = ht_month->wMonth;
+      /* previous month only valid for first calendar */
+      if (day < 1 && calIdx == 0)
       {
 	  htinfo.uHit = MCHT_CALENDARDATEPREV;
 	  MONTHCAL_GetPrevMonth(&htinfo.st);
 	  htinfo.st.wDay = MONTHCAL_MonthLength(htinfo.st.wMonth, htinfo.st.wYear) + day;
       }
-      else if (day > MONTHCAL_MonthLength(ht_month.wMonth, ht_month.wYear))
+      /* next month only valid for last calendar */
+      else if (day > MONTHCAL_MonthLength(ht_month->wMonth, ht_month->wYear) &&
+               calIdx == MONTHCAL_GetCalCount(infoPtr)-1)
       {
 	  htinfo.uHit = MCHT_CALENDARDATENEXT;
 	  MONTHCAL_GetNextMonth(&htinfo.st);
-	  htinfo.st.wDay = day - MONTHCAL_MonthLength(ht_month.wMonth, ht_month.wYear);
+	  htinfo.st.wDay = day - MONTHCAL_MonthLength(ht_month->wMonth, ht_month->wYear);
+      }
+      /* multiple calendars case - blank areas for previous/next month */
+      else if (day < 1 || day > MONTHCAL_MonthLength(ht_month->wMonth, ht_month->wYear))
+      {
+          htinfo.uHit = MCHT_CALENDARBK;
       }
       else
       {
