@@ -45,7 +45,7 @@ HINSTANCE shdocvw_hinstance = 0;
 static HMODULE SHDOCVW_hshell32 = 0;
 static HINSTANCE ieframe_instance;
 
-HINSTANCE get_ieframe_instance(void)
+static HINSTANCE get_ieframe_instance(void)
 {
     static const WCHAR ieframe_dllW[] = {'i','e','f','r','a','m','e','.','d','l','l',0};
 

@@ -52,7 +52,6 @@ static inline void SHDOCVW_UnlockModule(void) { InterlockedDecrement( &SHDOCVW_r
 
 extern HINSTANCE shdocvw_hinstance DECLSPEC_HIDDEN;
 
-HINSTANCE get_ieframe_instance(void) DECLSPEC_HIDDEN;
 
 /* memory allocation functions */
 
