@@ -404,10 +404,10 @@ NTSTATUS WINAPI NtOpenDirectoryObject(PHANDLE DirectoryHandle, ACCESS_MASK Desir
                                       POBJECT_ATTRIBUTES ObjectAttributes)
 {
     NTSTATUS ret;
-    TRACE("(%p,0x%08x,%s)\n", DirectoryHandle, DesiredAccess, debugstr_ObjectAttributes(ObjectAttributes));
 
     if (!DirectoryHandle) return STATUS_ACCESS_VIOLATION;
     if (!ObjectAttributes) return STATUS_INVALID_PARAMETER;
+    TRACE("(%p,0x%08x,%s)\n", DirectoryHandle, DesiredAccess, debugstr_ObjectAttributes(ObjectAttributes));
     /* Have to test it here because server won't know difference between
      * ObjectName == NULL and ObjectName == "" */
     if (!ObjectAttributes->ObjectName)
@@ -452,9 +452,9 @@ NTSTATUS WINAPI NtCreateDirectoryObject(PHANDLE DirectoryHandle, ACCESS_MASK Des
                                         POBJECT_ATTRIBUTES ObjectAttributes)
 {
     NTSTATUS ret;
-    TRACE("(%p,0x%08x,%s)\n", DirectoryHandle, DesiredAccess, debugstr_ObjectAttributes(ObjectAttributes));
 
     if (!DirectoryHandle) return STATUS_ACCESS_VIOLATION;
+    TRACE("(%p,0x%08x,%s)\n", DirectoryHandle, DesiredAccess, debugstr_ObjectAttributes(ObjectAttributes));
 
     SERVER_START_REQ(create_directory)
     {
