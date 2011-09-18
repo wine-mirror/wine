@@ -67,14 +67,14 @@ static void test_enum_service_providers(void)
     items = 0;
 
     hr = IDirectPlay8Peer_EnumServiceProviders(peer, NULL, NULL, NULL, &size, &items, 0);
-    todo_wine ok(hr == DPNERR_BUFFERTOOSMALL, "IDirectPlay8Peer_EnumServiceProviders failed with %x\n", hr);
-    todo_wine ok(size != 0, "size is unexpectedly 0\n");
+    ok(hr == DPNERR_BUFFERTOOSMALL, "IDirectPlay8Peer_EnumServiceProviders failed with %x\n", hr);
+    ok(size != 0, "size is unexpectedly 0\n");
 
     serv_prov_info = (DPN_SERVICE_PROVIDER_INFO*) HeapAlloc(GetProcessHeap(), 0, size);
 
     hr = IDirectPlay8Peer_EnumServiceProviders(peer, NULL, NULL, serv_prov_info, &size, &items, 0);
-    todo_wine ok(hr == S_OK, "IDirectPlay8Peer_EnumServiceProviders failed with %x\n", hr);
-    todo_wine ok(items != 0, "Found unexpectedly no service providers\n");
+    ok(hr == S_OK, "IDirectPlay8Peer_EnumServiceProviders failed with %x\n", hr);
+    ok(items != 0, "Found unexpectedly no service providers\n");
 
     trace("number of items found: %d\n", items);
 
@@ -93,14 +93,15 @@ static void test_enum_service_providers(void)
     items = 0;
 
     hr = IDirectPlay8Peer_EnumServiceProviders(peer, &CLSID_DP8SP_TCPIP, NULL, NULL, &size, &items, 0);
-    todo_wine ok(hr == DPNERR_BUFFERTOOSMALL, "IDirectPlay8Peer_EnumServiceProviders failed with %x\n", hr);
-    todo_wine ok(size != 0, "size is unexpectedly 0\n");
+    ok(hr == DPNERR_BUFFERTOOSMALL, "IDirectPlay8Peer_EnumServiceProviders failed with %x\n", hr);
+    ok(size != 0, "size is unexpectedly 0\n");
 
     serv_prov_info = (DPN_SERVICE_PROVIDER_INFO*) HeapAlloc(GetProcessHeap(), 0, size);
 
     hr = IDirectPlay8Peer_EnumServiceProviders(peer, &CLSID_DP8SP_TCPIP, NULL, serv_prov_info, &size, &items, 0);
-    todo_wine ok(hr == S_OK, "IDirectPlay8Peer_EnumServiceProviders failed with %x\n", hr);
-    todo_wine ok(items != 0, "Found unexpectedly no adapter\n");
+    ok(hr == S_OK, "IDirectPlay8Peer_EnumServiceProviders failed with %x\n", hr);
+    ok(items != 0, "Found unexpectedly no adapter\n");
+
 
     for (i=0;i<items;i++)
     {

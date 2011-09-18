@@ -95,8 +95,53 @@ static HRESULT WINAPI IDirectPlay8PeerImpl_EnumServiceProviders(IDirectPlay8Peer
         DPN_SERVICE_PROVIDER_INFO * const pSPInfoBuffer, DWORD * const pcbEnumData,
         DWORD * const pcReturned, const DWORD dwFlags)
 {
-    FIXME("(%p)->(%p,%p,%p,%p,%p,%x): stub\n", iface, pguidServiceProvider, pguidApplication, pSPInfoBuffer, pcbEnumData, pcReturned, dwFlags);
-    return DPNERR_GENERIC;
+    static const WCHAR dp_providerW[] = {'D','i','r','e','c','t','P','l','a','y','8',' ','T','C','P','/','I','P',' ',
+                                         'S','e','r','v','i','c','e',' ','P','r','o','v','i','d','e','r','\0'};
+    static const WCHAR dp_adapterW[] = {'L','o','c','a','l',' ','A','r','e','a',' ','C','o','n','n','e','c','t','i','o','n',
+                                        ' ','-',' ','I','P','v','4','\0'};
+
+    static const GUID adapter_guid = {0x4ce725f6, 0xd3c0, 0xdade, {0xba, 0x6f, 0x11, 0xf9, 0x65, 0xbc, 0x42, 0x99}};
+    DWORD req_size;
+
+    TRACE("(%p)->(%p,%p,%p,%p,%p,%x): stub\n", iface, pguidServiceProvider, pguidApplication, pSPInfoBuffer,
+                                               pcbEnumData, pcReturned, dwFlags);
+
+    if(!pguidServiceProvider)
+    {
+        req_size = sizeof(DPN_SERVICE_PROVIDER_INFO) + sizeof(dp_providerW);
+    }
+    else if(IsEqualGUID(pguidServiceProvider, &CLSID_DP8SP_TCPIP))
+    {
+        req_size = sizeof(DPN_SERVICE_PROVIDER_INFO) + sizeof(dp_adapterW);
+    }
+    else
+    {
+        FIXME("Application requested a provider we don't handle (yet)\n");
+        *pcReturned = 0;
+        return DPNERR_DOESNOTEXIST;
+    }
+
+    if(*pcbEnumData < req_size)
+    {
+        *pcbEnumData = req_size;
+        return DPNERR_BUFFERTOOSMALL;
+    }
+
+    pSPInfoBuffer->pwszName = (LPWSTR)(pSPInfoBuffer + sizeof(DPN_SERVICE_PROVIDER_INFO));
+
+    if(!pguidServiceProvider)
+    {
+        lstrcpyW(pSPInfoBuffer->pwszName, dp_providerW);
+        pSPInfoBuffer->guid = CLSID_DP8SP_TCPIP;
+    }
+    else
+    {
+        lstrcpyW(pSPInfoBuffer->pwszName, dp_adapterW);
+        pSPInfoBuffer->guid = adapter_guid;
+    }
+
+    *pcReturned = 1;
+    return DPN_OK;
 }
 
 static HRESULT WINAPI IDirectPlay8PeerImpl_CancelAsyncOperation(IDirectPlay8Peer *iface,
