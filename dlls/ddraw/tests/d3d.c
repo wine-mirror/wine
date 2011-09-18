@@ -4483,6 +4483,135 @@ static void z_format_test(void)
     ok(count, "Expected at least one supported Z Buffer format\n");
 }
 
+static void test_initialize(void)
+{
+    IDirectDraw7 *ddraw7;
+    IDirectDraw4 *ddraw4;
+    IDirectDraw2 *ddraw2;
+    IDirectDraw *ddraw1;
+    IDirect3D *d3d1;
+    HRESULT hr;
+
+    /* IDirectDraw */
+    if (FAILED(hr = DirectDrawCreate(NULL, &ddraw1, NULL)))
+    {
+        skip("Failed to create IDirectDraw object (%#x), skipping tests.\n", hr);
+        return;
+    }
+
+    hr = IDirectDraw_Initialize(ddraw1, NULL);
+    ok(hr == DDERR_ALREADYINITIALIZED, "Initialize returned hr %#x.\n", hr);
+    IDirectDraw_Release(ddraw1);
+
+    CoInitialize(NULL);
+    hr = CoCreateInstance(&CLSID_DirectDraw, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectDraw, (void **)&ddraw1);
+    ok(SUCCEEDED(hr), "Failed to create IDirectDraw instance, hr %#x.\n", hr);
+    hr = IDirectDraw_Initialize(ddraw1, NULL);
+    ok(hr == DD_OK, "Initialize returned hr %#x, expected DD_OK.\n", hr);
+    hr = IDirectDraw_Initialize(ddraw1, NULL);
+    ok(hr == DDERR_ALREADYINITIALIZED, "Initialize returned hr %#x, expected DDERR_ALREADYINITIALIZED.\n", hr);
+    IDirectDraw_Release(ddraw1);
+    CoUninitialize();
+
+    hr = DirectDrawCreate(NULL, &ddraw1, NULL);
+    ok(SUCCEEDED(hr), "Failed to create IDirectDraw object, hr %#x.\n", hr);
+
+    /* IDirectDraw2 */
+    if (SUCCEEDED(IDirectDraw_QueryInterface(ddraw1, &IID_IDirectDraw2, (void **)&ddraw2)))
+    {
+        hr = IDirectDraw2_Initialize(ddraw2, NULL);
+        ok(hr == DDERR_ALREADYINITIALIZED, "Initialize returned hr %#x.\n", hr);
+        IDirectDraw2_Release(ddraw2);
+
+        CoInitialize(NULL);
+        hr = CoCreateInstance(&CLSID_DirectDraw, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectDraw2, (void **)&ddraw2);
+        ok(SUCCEEDED(hr), "Failed to create IDirectDraw2 instance, hr %#x.\n", hr);
+        hr = IDirectDraw2_Initialize(ddraw2, NULL);
+        ok(hr == DD_OK, "Initialize returned hr %#x, expected DD_OK.\n", hr);
+        hr = IDirectDraw2_Initialize(ddraw2, NULL);
+        ok(hr == DDERR_ALREADYINITIALIZED, "Initialize returned hr %#x, expected DDERR_ALREADYINITIALIZED.\n", hr);
+        IDirectDraw2_Release(ddraw2);
+        CoUninitialize();
+    }
+    else skip("Failed to query IDirectDraw2 interface, skipping tests.\n");
+
+    /* IDirectDraw4 */
+    if (SUCCEEDED(IDirectDraw_QueryInterface(ddraw1, &IID_IDirectDraw4, (void **)&ddraw4)))
+    {
+        hr = IDirectDraw4_Initialize(ddraw4, NULL);
+        ok(hr == DDERR_ALREADYINITIALIZED, "Initialize returned hr %#x.\n", hr);
+        IDirectDraw4_Release(ddraw4);
+
+        CoInitialize(NULL);
+        hr = CoCreateInstance(&CLSID_DirectDraw, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectDraw4, (void **)&ddraw4);
+        ok(SUCCEEDED(hr), "Failed to create IDirectDraw4 instance, hr %#x.\n", hr);
+        hr = IDirectDraw4_Initialize(ddraw4, NULL);
+        ok(hr == DD_OK, "Initialize returned hr %#x, expected DD_OK.\n", hr);
+        hr = IDirectDraw4_Initialize(ddraw4, NULL);
+        ok(hr == DDERR_ALREADYINITIALIZED, "Initialize returned hr %#x, expected DDERR_ALREADYINITIALIZED.\n", hr);
+        IDirectDraw4_Release(ddraw4);
+        CoUninitialize();
+    }
+    else skip("Failed to query IDirectDraw4 interface, skipping tests.\n");
+
+    /* IDirect3D */
+    if (SUCCEEDED(IDirectDraw_QueryInterface(ddraw1, &IID_IDirect3D, (void **)&d3d1)))
+    {
+        IDirectDraw *ddraw;
+
+        hr = IDirect3D_Initialize(d3d1, NULL);
+        ok(hr == DDERR_ALREADYINITIALIZED, "Initialize returned hr %#x.\n", hr);
+        IDirect3D_Release(d3d1);
+
+        if (0) /* This crashes on the W2KPROSP4 testbot. */
+        {
+            CoInitialize(NULL);
+            hr = CoCreateInstance(&CLSID_DirectDraw, NULL, CLSCTX_INPROC_SERVER, &IID_IDirect3D, (void **)&d3d1);
+            ok(hr == E_NOINTERFACE, "CoCreateInstance returned hr %#x, expected E_NOINTERFACE.\n", hr);
+            CoUninitialize();
+        }
+
+        CoInitialize(NULL);
+        hr = CoCreateInstance(&CLSID_DirectDraw, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectDraw, (void **)&ddraw);
+        ok(SUCCEEDED(hr), "Failed to create IDirectDraw instance, hr %#x.\n", hr);
+        hr = IDirectDraw_QueryInterface(ddraw, &IID_IDirect3D, (void **)&d3d1);
+        ok(SUCCEEDED(hr), "Failed to query IDirect3D interface, hr %#x.\n", hr);
+        IDirectDraw_Release(ddraw);
+        /* IDirect3D_Initialize() just returns DDERR_ALREADYINITIALIZED. */
+        hr = IDirect3D_Initialize(d3d1, NULL);
+        ok(hr == DDERR_ALREADYINITIALIZED, "Initialize returned hr %#x, expected DDERR_ALREADYINITIALIZED.\n", hr);
+        hr = IDirectDraw_Initialize(ddraw, NULL);
+        ok(hr == DD_OK, "Initialize returned hr %#x, expected DD_OK.\n", hr);
+        hr = IDirectDraw_Initialize(ddraw, NULL);
+        ok(hr == DDERR_ALREADYINITIALIZED, "Initialize returned hr %#x, expected DDERR_ALREADYINITIALIZED.\n", hr);
+        IDirect3D_Release(d3d1);
+        CoUninitialize();
+    }
+    else skip("Failed to query IDirect3D interface, skipping tests.\n");
+
+    IDirectDraw_Release(ddraw1);
+
+    /* IDirectDraw7 */
+    if (FAILED(hr = pDirectDrawCreateEx(NULL, (void **)&ddraw7, &IID_IDirectDraw7, NULL)))
+    {
+        skip("Failed to create IDirectDraw7 object (%#x), skipping tests.\n", hr);
+        return;
+    }
+    hr = IDirectDraw7_Initialize(ddraw7, NULL);
+    ok(hr == DDERR_ALREADYINITIALIZED, "Initialize returned hr %#x.\n", hr);
+    IDirectDraw7_Release(ddraw7);
+
+    CoInitialize(NULL);
+    hr = CoCreateInstance(&CLSID_DirectDraw, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectDraw7, (void **)&ddraw7);
+    ok(SUCCEEDED(hr), "Failed to create IDirectDraw7 instance, hr %#x.\n", hr);
+    hr = IDirectDraw7_Initialize(ddraw7, NULL);
+    ok(hr == DD_OK, "Initialize returned hr %#x, expected DD_OK.\n", hr);
+    hr = IDirectDraw7_Initialize(ddraw7, NULL);
+    ok(hr == DDERR_ALREADYINITIALIZED, "Initialize returned hr %#x, expected DDERR_ALREADYINITIALIZED.\n", hr);
+    IDirectDraw7_Release(ddraw7);
+    CoUninitialize();
+}
+
 START_TEST(d3d)
 {
     init_function_pointers();
@@ -4529,4 +4658,5 @@ START_TEST(d3d)
     test_window_style();
     test_redundant_mode_set();
     test_coop_level_mode_set();
+    test_initialize();
 }
