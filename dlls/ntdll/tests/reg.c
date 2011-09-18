@@ -1198,6 +1198,11 @@ static void test_redirection(void)
 
     pRtlInitUnicodeString( &str, classes64W );
     status = pNtCreateKey( &key64, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    if (status == STATUS_ACCESS_DENIED)
+    {
+        skip("Not authorized to modify the Classes key\n");
+        return;
+    }
     ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
 
     pRtlInitUnicodeString( &str, classes32W );
