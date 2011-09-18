@@ -761,6 +761,12 @@ static void test_gamma(void)
     ret = SetDeviceGammaRamp(hdc, &ramp);
     ok(!ret, "SetDeviceGammaRamp succeeded\n");
 
+    /* try a ramp which is not uniform */
+    ramp[0][0] = 0;
+    for (i = 1; i < 256; i++) ramp[0][i] = ramp[0][i - 1] + 512;
+    ret = SetDeviceGammaRamp(hdc, &ramp);
+    todo_wine ok(ret, "SetDeviceGammaRamp failed\n");
+
     /* cleanup: set old ramp again */
     ret = SetDeviceGammaRamp(hdc, &oldramp);
     ok(ret, "SetDeviceGammaRamp failed\n");
