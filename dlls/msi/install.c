@@ -489,7 +489,7 @@ UINT WINAPI MsiGetSourcePathA( MSIHANDLE hInstall, LPCSTR szFolder,
     awstring str;
     UINT r;
 
-    TRACE("%s %p %p\n", szFolder, debugstr_a(szPathBuf), pcchPathBuf);
+    TRACE("%s %p %p\n", debugstr_a(szFolder), debugstr_a(szPathBuf), pcchPathBuf);
 
     str.unicode = FALSE;
     str.str.a = szPathBuf;
