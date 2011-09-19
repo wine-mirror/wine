@@ -2333,7 +2333,7 @@ static void get_colors( struct xrender_physdev *physdev_src, struct xrender_phys
 }
 
 static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xrender_physdev *physdev_dst,
-                                  Drawable drawable, const struct bitblt_coords *src,
+                                  Drawable drawable, HRGN clip, const struct bitblt_coords *src,
                                   const struct bitblt_coords *dst )
 {
     int width = abs( dst->width );
@@ -2344,6 +2344,7 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
     Picture src_pict = 0, dst_pict, mask_pict = 0;
     BOOL use_repeat;
     double xscale, yscale;
+    RGNDATA *clip_data = NULL;
 
     use_repeat = use_source_repeat( physdev_src );
     if (!use_repeat)
@@ -2357,11 +2358,15 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
     {
         XRenderPictureAttributes pa;
 
+        if (clip) clip_data = X11DRV_GetRegionData( clip, 0 );
         x_dst = dst->x;
         y_dst = dst->y;
         pa.repeat = RepeatNone;
         wine_tsx11_lock();
         dst_pict = pXRenderCreatePicture( gdi_display, drawable, physdev_dst->pict_format, CPRepeat, &pa );
+        if (clip_data)
+            pXRenderSetPictureClipRectangles( gdi_display, dst_pict, 0, 0,
+                                              (XRectangle *)clip_data->Buffer, clip_data->rdh.nCount );
         wine_tsx11_unlock();
     }
     else
@@ -2369,6 +2374,7 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
         x_dst = physdev_dst->x11dev->dc_rect.left + dst->x;
         y_dst = physdev_dst->x11dev->dc_rect.top + dst->y;
         dst_pict = get_xrender_picture( physdev_dst );
+        if (clip) clip_data = add_xrender_clipping_region( physdev_dst, clip );
     }
 
     if (src->width < 0) x_src += src->width + 1;
@@ -2421,6 +2427,9 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
         pXRenderFreePicture( gdi_display, dst_pict );
         wine_tsx11_unlock();
     }
+    else update_xrender_clipping( physdev_dst, clip_data );
+
+    HeapFree( GetProcessHeap(), 0, clip_data );
 }
 
 
@@ -2485,7 +2494,7 @@ static BOOL xrenderdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
                                     tmp.visrect.bottom - tmp.visrect.top, physdev_dst->x11dev->depth );
         wine_tsx11_unlock();
 
-        xrender_stretch_blit( physdev_src, physdev_dst, tmp_pixmap, src, &tmp );
+        xrender_stretch_blit( physdev_src, physdev_dst, tmp_pixmap, 0, src, &tmp );
         execute_rop( physdev_dst->x11dev, tmp_pixmap, tmpGC, &dst->visrect, rop );
 
         wine_tsx11_lock();
@@ -2493,7 +2502,12 @@ static BOOL xrenderdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
         XFreeGC( gdi_display, tmpGC );
         wine_tsx11_unlock();
     }
-    else xrender_stretch_blit( physdev_src, physdev_dst, 0, src, dst );
+    else
+    {
+        HRGN rgn = CreateRectRgnIndirect( &dst->visrect );
+        xrender_stretch_blit( physdev_src, physdev_dst, 0, rgn, src, dst );
+        DeleteObject( rgn );
+    }
 
     if (physdev_dst != physdev_src) X11DRV_UnlockDIBSection( physdev_src->x11dev, FALSE );
     X11DRV_UnlockDIBSection( physdev_dst->x11dev, TRUE );
