@@ -189,8 +189,6 @@ static HRESULT WINAPI ActiveScriptSite_OnLeaveScript(IActiveScriptSite *iface)
     return S_OK;
 }
 
-#undef ACTSCPSITE_THIS
-
 static const IActiveScriptSiteVtbl ActiveScriptSiteVtbl = {
     ActiveScriptSite_QueryInterface,
     ActiveScriptSite_AddRef,
