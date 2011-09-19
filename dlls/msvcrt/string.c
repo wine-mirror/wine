@@ -842,7 +842,7 @@ __int64 CDECL MSVCRT_strtoi64_l(const char *nptr, char **endptr, int base, MSVCR
     BOOL negative = FALSE;
     __int64 ret = 0;
 
-    TRACE("(%s %p %d %p)\n", nptr, endptr, base, locale);
+    TRACE("(%s %p %d %p)\n", debugstr_a(nptr), endptr, base, locale);
 
     if (!MSVCRT_CHECK_PMT(nptr != NULL) || !MSVCRT_CHECK_PMT(base == 0 || base >= 2) ||
         !MSVCRT_CHECK_PMT(base <= 36)) {
@@ -922,7 +922,7 @@ unsigned __int64 CDECL MSVCRT_strtoui64_l(const char *nptr, char **endptr, int b
     BOOL negative = FALSE;
     unsigned __int64 ret = 0;
 
-    TRACE("(%s %p %d %p)\n", nptr, endptr, base, locale);
+    TRACE("(%s %p %d %p)\n", debugstr_a(nptr), endptr, base, locale);
 
     if (!MSVCRT_CHECK_PMT(nptr != NULL) || !MSVCRT_CHECK_PMT(base == 0 || base >= 2) ||
         !MSVCRT_CHECK_PMT(base <= 36)) {
