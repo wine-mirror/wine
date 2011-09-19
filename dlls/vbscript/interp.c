@@ -991,8 +991,18 @@ static HRESULT interp_lt(exec_ctx_t *ctx)
 
 static HRESULT interp_lteq(exec_ctx_t *ctx)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = cmp_oper(ctx);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(&v) = VT_BOOL;
+    V_BOOL(&v) = hres == VARCMP_LT || hres == VARCMP_EQ ? VARIANT_TRUE : VARIANT_FALSE;
+    return stack_push(ctx, &v);
 }
 
 static HRESULT interp_concat(exec_ctx_t *ctx)

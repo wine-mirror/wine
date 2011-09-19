@@ -126,6 +126,8 @@ Call ok(not (true > 0), "true > 0")
 Call ok(not (0 > 1 = 1), "0 > 1 = 1")
 Call ok(1 < 2, "! 1 < 2")
 Call ok(1 = 1 < 0, "! 1 = 1 < 0")
+Call ok(1 <= 2, "! 1 <= 2")
+Call ok(2 <= 2, "! 2 <= 2")
 
 x = 3
 Call ok(2+2 = 4, "2+2 = " & (2+2))
