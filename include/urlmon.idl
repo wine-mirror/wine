@@ -1262,6 +1262,18 @@ cpp_quote("#define URLPOLICY_CHANNEL_SOFTDIST_PRECACHE     0x00020000")
 cpp_quote("#define URLPOLICY_CHANNEL_SOFTDIST_AUTOINSTALL  0x00030000")
 cpp_quote("#define URLACTION_CHANNEL_SOFTDIST_MAX          0x00001eff")
 
+cpp_quote("#define URLACTION_BEHAVIOR_MIN           0x00002000")
+cpp_quote("#define URLACTION_BEHAVIOR_RUN           0x00002000")
+cpp_quote("#define URLPOLICY_BEHAVIOR_CHECK_LIST    0x00010000")
+
+cpp_quote("#define URLACTION_FEATURE_MIN                        0x00002100")
+cpp_quote("#define URLACTION_FEATURE_MIME_SNIFFING              0x00002100")
+cpp_quote("#define URLACTION_FEATURE_ZONE_ELEVATION             0x00002101")
+cpp_quote("#define URLACTION_FEATURE_WINDOW_RESTRICTIONS        0x00002102")
+cpp_quote("#define URLACTION_FEATURE_SCRIPT_STATUS_BAR          0x00002103")
+cpp_quote("#define URLACTION_FEATURE_FORCE_ADDR_AND_STATUS      0x00002104")
+cpp_quote("#define URLACTION_FEATURE_BLOCK_INPUT_PROMPTS        0x00002105")
+
 cpp_quote("#define URLPOLICY_ALLOW     0x00")
 cpp_quote("#define URLPOLICY_QUERY     0x01")
 cpp_quote("#define URLPOLICY_DISALLOW  0x03")
