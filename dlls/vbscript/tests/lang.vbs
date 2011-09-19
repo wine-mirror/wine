@@ -620,6 +620,16 @@ Call ok(not (x is Nothing), "x is 1")
 Call ok(Nothing is Nothing, "Nothing is not Nothing")
 Call ok(x is obj and true, "x is obj and true is false")
 
+Class TestMe
+    Public Sub Test(MyMe)
+        Call ok(Me is MyMe, "Me is not MyMe")
+    End Sub
+End Class
+
+Set obj = New TestMe
+Call obj.test(obj)
+
 Call ok(getVT(test) = "VT_DISPATCH", "getVT(test) = " & getVT(test))
+Call ok(Me is Test, "Me is not Test")
 
 reportSuccess()

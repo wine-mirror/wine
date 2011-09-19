@@ -710,8 +710,14 @@ static HRESULT interp_stop(exec_ctx_t *ctx)
 
 static HRESULT interp_me(exec_ctx_t *ctx)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT v;
+
+    TRACE("\n");
+
+    IDispatch_AddRef(ctx->this_obj);
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = ctx->this_obj;
+    return stack_push(ctx, &v);
 }
 
 static HRESULT interp_bool(exec_ctx_t *ctx)
