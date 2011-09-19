@@ -1564,6 +1564,7 @@ static LRESULT
 MONTHCAL_SetSelRange(MONTHCAL_INFO *infoPtr, SYSTEMTIME *range)
 {
   SYSTEMTIME old_range[2];
+  INT diff;
 
   TRACE("%p\n", range);
 
@@ -1590,7 +1591,21 @@ MONTHCAL_SetSelRange(MONTHCAL_INFO *infoPtr, SYSTEMTIME *range)
     infoPtr->minSel = range[1];
     infoPtr->maxSel = range[0];
   }
-  infoPtr->calendars[0].month = infoPtr->minSel;
+
+  diff = MONTHCAL_MonthDiff(&infoPtr->calendars[MONTHCAL_GetCalCount(infoPtr)-1].month, &infoPtr->maxSel);
+  if (diff < 0)
+  {
+    diff = MONTHCAL_MonthDiff(&infoPtr->calendars[0].month, &infoPtr->maxSel);
+    if (diff > 0) diff = 0;
+  }
+
+  if (diff != 0)
+  {
+    INT i;
+
+    for (i = 0; i < MONTHCAL_GetCalCount(infoPtr); i++)
+      MONTHCAL_GetMonth(&infoPtr->calendars[i].month, diff);
+  }
 
   /* update day of week */
   MONTHCAL_CalculateDayOfWeek(&infoPtr->minSel, TRUE);
