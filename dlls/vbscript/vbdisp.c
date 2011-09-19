@@ -123,21 +123,21 @@ static HRESULT invoke_variant_prop(vbdisp_t *This, VARIANT *v, WORD flags, DISPP
     return hres;
 }
 
-static void run_terminator(vbdisp_t *This)
+static BOOL run_terminator(vbdisp_t *This)
 {
+    DISPPARAMS dp = {0};
+
     if(This->terminator_ran)
-        return;
+        return TRUE;
     This->terminator_ran = TRUE;
 
-    if(This->desc->class_terminate_id) {
-        DISPPARAMS dp = {0};
+    if(!This->desc->class_terminate_id)
+        return TRUE;
 
-        This->ref++;
-        exec_script(This->desc->ctx, This->desc->funcs[This->desc->class_terminate_id].entries[VBDISP_CALLGET],
-                (IDispatch*)&This->IDispatchEx_iface, &dp, NULL);
-        This->ref--;
-    }
-
+    This->ref++;
+    exec_script(This->desc->ctx, This->desc->funcs[This->desc->class_terminate_id].entries[VBDISP_CALLGET],
+            (IDispatch*)&This->IDispatchEx_iface, &dp, NULL);
+    return !--This->ref;
 }
 
 static void clean_props(vbdisp_t *This)
@@ -196,9 +196,7 @@ static ULONG WINAPI DispatchEx_Release(IDispatchEx *iface)
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
-        run_terminator(This);
-    if(!ref) {
+    if(!ref && run_terminator(This)) {
         clean_props(This);
         list_remove(&This->entry);
         heap_free(This);
@@ -431,8 +429,10 @@ void collect_objects(script_ctx_t *ctx)
         run_terminator(iter);
 
     LIST_FOR_EACH_ENTRY_SAFE(iter, iter2, &ctx->objects, vbdisp_t, entry) {
+        IDispatchEx_AddRef(&iter->IDispatchEx_iface);
         clean_props(iter);
         iter->desc = NULL;
+        IDispatchEx_Release(&iter->IDispatchEx_iface);
     }
 }
 
