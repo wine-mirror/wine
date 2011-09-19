@@ -72,7 +72,7 @@
 @ stdcall RegisterBindStatusCallback(ptr ptr ptr long)
 @ stdcall RegisterFormatEnumerator(ptr ptr long)
 @ stub RegisterMediaTypeClass
-@ stub RegisterMediaTypes
+@ stdcall RegisterMediaTypes(long ptr ptr)
 @ stdcall ReleaseBindInfo(ptr)
 @ stdcall RevokeBindStatusCallback(ptr ptr)
 @ stdcall RevokeFormatEnumerator(ptr ptr)

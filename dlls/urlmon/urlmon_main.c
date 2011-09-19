@@ -935,3 +935,13 @@ BOOL WINAPI URLMON_423(DWORD unknown1, DWORD unknown2, DWORD unknown3, DWORD unk
     FIXME("stub: %d %d %d %d\n", unknown1, unknown2, unknown3, unknown4);
     return FALSE;
 }
+
+/***********************************************************************
+ *            RegisterMediaTypes
+ *    Added in IE3, registers known MIME-type strings.
+ */
+HRESULT WINAPI RegisterMediaTypes(UINT types, LPCSTR *szTypes, CLIPFORMAT *cfTypes)
+{
+   FIXME("stub: %u %p %p\n", types, szTypes, cfTypes);
+   return E_INVALIDARG;
+}
