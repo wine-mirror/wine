@@ -32,4 +32,6 @@ Call ok(not isObject(4), "isObject(4) is true?")
 Call ok(not isObject("x"), "isObject(""x"") is true?")
 Call ok(not isObject(Null), "isObject(Null) is true?")
 
+Call ok(getVT(err) = "VT_DISPATCH", "getVT(err) = " & getVT(err))
+
 Call reportSuccess()

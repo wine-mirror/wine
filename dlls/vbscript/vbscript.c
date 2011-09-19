@@ -131,6 +131,8 @@ static void destroy_script(script_ctx_t *ctx)
         IDispatch_Release(ctx->host_global);
     if(ctx->site)
         IActiveScriptSite_Release(ctx->site);
+    if(ctx->err_obj)
+        IDispatchEx_Release(&ctx->err_obj->IDispatchEx_iface);
     if(ctx->global_obj)
         IDispatchEx_Release(&ctx->global_obj->IDispatchEx_iface);
     if(ctx->script_obj)

@@ -1399,5 +1399,5 @@ HRESULT init_global(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    return S_OK;
+    return init_err(ctx);
 }

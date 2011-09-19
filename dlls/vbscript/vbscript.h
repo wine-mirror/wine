@@ -150,6 +150,9 @@ struct _script_ctx_t {
     class_desc_t global_desc;
     vbdisp_t *global_obj;
 
+    class_desc_t err_desc;
+    vbdisp_t *err_obj;
+
     dynamic_var_t *global_vars;
     function_t *global_funcs;
     class_desc_t *classes;
@@ -160,6 +163,7 @@ struct _script_ctx_t {
 };
 
 HRESULT init_global(script_ctx_t*);
+HRESULT init_err(script_ctx_t*);
 
 typedef enum {
     ARG_NONE = 0,

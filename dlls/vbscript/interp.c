@@ -48,6 +48,7 @@ typedef enum {
     REF_NONE,
     REF_DISP,
     REF_VAR,
+    REF_OBJ,
     REF_FUNC
 } ref_type_t;
 
@@ -60,6 +61,7 @@ typedef struct {
         } d;
         VARIANT *v;
         function_t *f;
+        IDispatch *obj;
     } u;
 } ref_t;
 
@@ -91,6 +93,8 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
     unsigned i;
     DISPID id;
     HRESULT hres;
+
+    static const WCHAR errW[] = {'e','r','r',0};
 
     if(invoke_type == VBDISP_LET
             && (ctx->func->type == FUNC_FUNCTION || ctx->func->type == FUNC_PROPGET || ctx->func->type == FUNC_DEFGET)
@@ -145,6 +149,12 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
                 return S_OK;
             }
         }
+    }
+
+    if(!strcmpiW(name, errW)) {
+        ref->type = REF_OBJ;
+        ref->u.obj = (IDispatch*)&ctx->script->err_obj->IDispatchEx_iface;
+        return S_OK;
     }
 
     hres = vbdisp_get_id(ctx->script->global_obj, name, invoke_type, TRUE, &id);
@@ -291,8 +301,8 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
 {
     BSTR identifier = ctx->instr->arg1.bstr;
     const unsigned arg_cnt = ctx->instr->arg2.uint;
-    ref_t ref = {0};
     DISPPARAMS dp;
+    ref_t ref;
     HRESULT hres;
 
     hres = lookup_identifier(ctx, identifier, VBDISP_CALLGET, &ref);
@@ -325,6 +335,18 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
         hres = exec_script(ctx->script, ref.u.f, NULL, &dp, res);
         if(FAILED(hres))
             return hres;
+        break;
+    case REF_OBJ:
+        if(arg_cnt) {
+            FIXME("arguments on object\n");
+            return E_NOTIMPL;
+        }
+
+        if(res) {
+            IDispatch_AddRef(ref.u.obj);
+            V_VT(res) = VT_DISPATCH;
+            V_DISPATCH(res) = ref.u.obj;
+        }
         break;
     case REF_NONE:
         FIXME("%s not found\n", debugstr_w(identifier));
@@ -439,6 +461,9 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, VARIANT *val, BOOL own_v
         break;
     case REF_FUNC:
         FIXME("functions not implemented\n");
+        return E_NOTIMPL;
+    case REF_OBJ:
+        FIXME("REF_OBJ\n");
         return E_NOTIMPL;
     case REF_NONE:
         FIXME("%s not found\n", debugstr_w(name));
