@@ -522,11 +522,9 @@ static HRESULT compile_while_statement(compile_ctx_t *ctx, while_statement_t *st
     if(jmp_end == -1)
         return E_OUTOFMEMORY;
 
-    if(stat->stat.type != STAT_WHILE) {
-        prev_label = ctx->while_end_label;
-        if((ctx->while_end_label = alloc_label(ctx)) == -1)
-            return E_OUTOFMEMORY;
-    }
+    prev_label = ctx->while_end_label;
+    if(stat->stat.type != STAT_WHILE && (ctx->while_end_label = alloc_label(ctx)) == -1)
+        return E_OUTOFMEMORY;
 
     hres = compile_statement(ctx, stat->body);
     if(FAILED(hres))
