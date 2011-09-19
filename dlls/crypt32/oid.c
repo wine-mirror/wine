@@ -614,8 +614,8 @@ BOOL WINAPI CryptRegisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
     HKEY hKey;
     LPSTR szKey;
 
-    TRACE("(%x, %s, %s, %s, %s)\n", dwEncodingType, pszFuncName,
-     debugstr_a(pszOID), debugstr_w(pwszDll), pszOverrideFuncName);
+    TRACE("(%x, %s, %s, %s, %s)\n", dwEncodingType, debugstr_a(pszFuncName),
+          debugstr_a(pszOID), debugstr_w(pwszDll), debugstr_a(pszOverrideFuncName));
 
     /* Native does nothing pwszDll is NULL */
     if (!pwszDll)

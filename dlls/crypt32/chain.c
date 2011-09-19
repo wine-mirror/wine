@@ -1668,7 +1668,7 @@ static LPCSTR filetime_to_str(const FILETIME *time)
     char dateFmt[80]; /* sufficient for all versions of LOCALE_SSHORTDATE */
     SYSTEMTIME sysTime;
 
-    if (!time) return NULL;
+    if (!time) return "(null)";
 
     GetLocaleInfoA(LOCALE_SYSTEM_DEFAULT, LOCALE_SSHORTDATE, dateFmt,
      sizeof(dateFmt) / sizeof(dateFmt[0]));
