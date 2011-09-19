@@ -1534,8 +1534,13 @@ static BOOL matching_color_info( PHYSDEV dev, const ColorShifts *color_shifts, c
     return FALSE;
 }
 
+static inline BOOL is_r8g8b8( int depth, const ColorShifts *color_shifts )
+{
+    return depth == 24 && color_shifts->logicalBlue.shift == 0 && color_shifts->logicalRed.shift == 16;
+}
+
 /* copy the image bits, fixing up alignment and byte swapping as necessary */
-static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts, XImage *image,
+static DWORD copy_image_bits( BITMAPINFO *info, BOOL is_r8g8b8, XImage *image,
                               const struct gdi_image_bits *src_bits, struct gdi_image_bits *dst_bits,
                               struct bitblt_coords *coords, const int *mapping, unsigned int zeropad_mask )
 {
@@ -1563,8 +1568,7 @@ static DWORD copy_image_bits( BITMAPINFO *info, const ColorShifts *color_shifts,
         need_byteswap = (image->byte_order != client_byte_order);
         break;
     case 24:
-        need_byteswap = ((image->byte_order == LSBFirst && color_shifts->logicalBlue.shift == 16) ||
-                         (image->byte_order == MSBFirst && color_shifts->logicalBlue.shift == 0));
+        need_byteswap = (image->byte_order == MSBFirst) ^ !is_r8g8b8;
         break;
     default:
         need_byteswap = FALSE;
@@ -1737,7 +1741,7 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
             mapping = X11DRV_PALETTE_PaletteToXPixel;
     }
 
-    ret = copy_image_bits( info, color_shifts, image, bits, &dst_bits, src, mapping, ~0u );
+    ret = copy_image_bits( info, is_r8g8b8(depth,color_shifts), image, bits, &dst_bits, src, mapping, ~0u );
 
     if (!ret)
     {
@@ -1940,7 +1944,7 @@ DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
 
     src_bits.ptr     = image->data;
     src_bits.is_copy = TRUE;
-    ret = copy_image_bits( info, color_shifts, image, &src_bits, bits, src, mapping,
+    ret = copy_image_bits( info, is_r8g8b8(depth,color_shifts), image, &src_bits, bits, src, mapping,
                            zeropad_masks[(width * image->bits_per_pixel) & 31] );
 
     if (!ret && bits->ptr == image->data)
