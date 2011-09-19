@@ -545,8 +545,8 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 	PWSTR pProvider = NULL, pContainer = NULL;
 	BOOL ret = FALSE;
 
-	TRACE("(%p, %s, %s, %d, %08x)\n", phProv, pszContainer,
-		pszProvider, dwProvType, dwFlags);
+	TRACE("(%p, %s, %s, %d, %08x)\n", phProv, debugstr_a(pszContainer),
+              debugstr_a(pszProvider), dwProvType, dwFlags);
 
 	if ( !CRYPT_ANSIToUnicode(pszContainer, &pContainer, -1) )
 	{

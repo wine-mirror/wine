@@ -1739,8 +1739,8 @@ LSTATUS WINAPI RegGetValueA( HKEY hKey, LPCSTR pszSubKey, LPCSTR pszValue,
     LONG ret;
 
     TRACE("(%p,%s,%s,%d,%p,%p,%p=%d)\n", 
-          hKey, pszSubKey, pszValue, dwFlags, pdwType, pvData, pcbData,
-          cbData);
+          hKey, debugstr_a(pszSubKey), debugstr_a(pszValue), dwFlags,
+          pdwType, pvData, pcbData, cbData);
 
     if (pvData && !pcbData)
         return ERROR_INVALID_PARAMETER;
