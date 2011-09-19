@@ -96,8 +96,10 @@
 @ stub ZonesReInit
 
 111 stdcall @(wstr) IsProtectedModeURL
+329 stdcall @(ptr ptr) propsys.VariantToGUID
 331 stdcall @(ptr long ptr) propsys.InitPropVariantFromBuffer
 335 stdcall @(ptr long ptr) propsys.InitVariantFromBuffer
+350 stdcall @(ptr ptr) propsys.PropVariantToGUID
 362 stdcall @(ptr ptr) propsys.InitVariantFromGUIDAsString
 410 stdcall @(long long) URLMON_410
 423 stdcall @(long long long long) URLMON_423

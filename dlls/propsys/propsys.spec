@@ -119,7 +119,7 @@
 @ stub PropVariantToFileTime
 @ stub PropVariantToFileTimeVector
 @ stub PropVariantToFileTimeVectorAlloc
-@ stub PropVariantToGUID
+@ stdcall PropVariantToGUID(ptr ptr)
 @ stub PropVariantToInt16
 @ stub PropVariantToInt16Vector
 @ stub PropVariantToInt16VectorAlloc
@@ -175,7 +175,7 @@
 @ stub VariantToDoubleArrayAlloc
 @ stub VariantToDoubleWithDefault
 @ stub VariantToFileTime
-@ stub VariantToGUID
+@ stdcall VariantToGUID(ptr ptr)
 @ stub VariantToInt16
 @ stub VariantToInt16Array
 @ stub VariantToInt16ArrayAlloc

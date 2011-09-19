@@ -177,3 +177,109 @@ HRESULT WINAPI InitVariantFromBuffer(const VOID *pv, UINT cb, VARIANT *pvar)
     V_ARRAY(pvar) = arr;
     return S_OK;
 }
+
+static inline DWORD PROPVAR_HexToNum(const WCHAR *hex)
+{
+    DWORD ret;
+
+    if(hex[0]>='0' && hex[0]<='9')
+        ret = hex[0]-'0';
+    else if(hex[0]>='a' && hex[0]<='f')
+        ret = hex[0]-'a'+10;
+    else if(hex[0]>='A' && hex[0]<='F')
+        ret = hex[0]-'A'+10;
+    else
+        return -1;
+
+    ret <<= 4;
+    if(hex[1]>='0' && hex[1]<='9')
+        return ret + hex[1]-'0';
+    else if(hex[1]>='a' && hex[1]<='f')
+        return ret + hex[1]-'a'+10;
+    else if(hex[1]>='A' && hex[1]<='F')
+        return ret + hex[1]-'A'+10;
+    else
+        return -1;
+}
+
+static inline HRESULT PROPVAR_WCHARToGUID(const WCHAR *str, int len, GUID *guid)
+{
+    DWORD i, val=0;
+    const WCHAR *p;
+
+    memset(guid, 0, sizeof(GUID));
+
+    if(len!=38 || str[0]!='{' || str[9]!='-' || str[14]!='-'
+            || str[19]!='-' || str[24]!='-' || str[37]!='}') {
+        WARN("Error parsing %s\n", debugstr_w(str));
+        return E_INVALIDARG;
+    }
+
+    p = str+1;
+    for(i=0; i<4 && val!=-1; i++) {
+        val = PROPVAR_HexToNum(p);
+        guid->Data1 = (guid->Data1<<8) + val;
+        p += 2;
+    }
+    p++;
+    for(i=0; i<2 && val!=-1; i++) {
+        val = PROPVAR_HexToNum(p);
+        guid->Data2 = (guid->Data2<<8) + val;
+        p += 2;
+    }
+    p++;
+    for(i=0; i<2 && val!=-1; i++) {
+        val = PROPVAR_HexToNum(p);
+        guid->Data3 = (guid->Data3<<8) + val;
+        p += 2;
+    }
+    p++;
+    for(i=0; i<8 && val!=-1; i++) {
+        if(i == 2)
+            p++;
+
+        val = guid->Data4[i] = PROPVAR_HexToNum(p);
+        p += 2;
+    }
+
+    if(val == -1) {
+        WARN("Error parsing %s\n", debugstr_w(str));
+        memset(guid, 0, sizeof(GUID));
+        return E_INVALIDARG;
+    }
+    return S_OK;
+}
+
+HRESULT WINAPI PropVariantToGUID(const PROPVARIANT *ppropvar, GUID *guid)
+{
+    TRACE("%p %p)\n", ppropvar, guid);
+
+    switch(ppropvar->vt) {
+    case VT_BSTR:
+        return PROPVAR_WCHARToGUID(ppropvar->u.bstrVal, SysStringLen(ppropvar->u.bstrVal), guid);
+    case VT_LPWSTR:
+        return PROPVAR_WCHARToGUID(ppropvar->u.pwszVal, strlenW(ppropvar->u.pwszVal), guid);
+
+    default:
+        FIXME("unsupported vt: %d\n", ppropvar->vt);
+        return E_NOTIMPL;
+    }
+}
+
+HRESULT WINAPI VariantToGUID(const VARIANT *pvar, GUID *guid)
+{
+    TRACE("(%p %p)\n", pvar, guid);
+
+    switch(V_VT(pvar)) {
+    case VT_BSTR: {
+        HRESULT hres = PROPVAR_WCHARToGUID(V_BSTR(pvar), SysStringLen(V_BSTR(pvar)), guid);
+        if(hres == E_INVALIDARG)
+            return E_FAIL;
+        return hres;
+    }
+
+    default:
+        FIXME("unsupported vt: %d\n", V_VT(pvar));
+        return E_NOTIMPL;
+    }
+}
