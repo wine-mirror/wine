@@ -941,6 +941,30 @@ static HRESULT interp_nequal(exec_ctx_t *ctx)
     return stack_push(ctx, &v);
 }
 
+static HRESULT interp_gt(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT interp_gteq(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT interp_lt(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT interp_lteq(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT interp_concat(exec_ctx_t *ctx)
 {
     variant_val_t r, l;

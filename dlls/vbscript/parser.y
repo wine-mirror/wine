@@ -248,6 +248,10 @@ EqualityExpression
     : ConcatExpression                          { $$ = $1; }
     | EqualityExpression '=' ConcatExpression   { $$ = new_binary_expression(ctx, EXPR_EQUAL, $1, $3); CHECK_ERROR; }
     | EqualityExpression tNEQ ConcatExpression  { $$ = new_binary_expression(ctx, EXPR_NEQUAL, $1, $3); CHECK_ERROR; }
+    | EqualityExpression '>' ConcatExpression   { $$ = new_binary_expression(ctx, EXPR_GT, $1, $3); CHECK_ERROR; }
+    | EqualityExpression '<' ConcatExpression   { $$ = new_binary_expression(ctx, EXPR_LT, $1, $3); CHECK_ERROR; }
+    | EqualityExpression tGTEQ ConcatExpression { $$ = new_binary_expression(ctx, EXPR_GTEQ, $1, $3); CHECK_ERROR; }
+    | EqualityExpression tLTEQ ConcatExpression { $$ = new_binary_expression(ctx, EXPR_LTEQ, $1, $3); CHECK_ERROR; }
 
 ConcatExpression
     : AdditiveExpression                        { $$ = $1; }
