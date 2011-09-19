@@ -599,9 +599,14 @@ str_t __cdecl s_get_filename(void)
     return (char *)__FILE__;
 }
 
-int __cdecl s_echo_ranged_int(int n)
+int __cdecl s_echo_ranged_int(int i, int j, int k)
 {
-    return n;
+    return min( 100, i + j + k );
+}
+
+int __cdecl s_echo_ranged_int2(int i)
+{
+    return i;
 }
 
 void __cdecl s_get_ranged_enum(renum_t *re)
@@ -934,10 +939,12 @@ basic_tests(void)
   ok(!strcmp(str, __FILE__), "get_filename() returned %s instead of %s\n", str, __FILE__);
   midl_user_free(str);
 
-  x = echo_ranged_int(0);
+  x = echo_ranged_int(0,0,0);
   ok(x == 0, "echo_ranged_int() returned %d instead of 0\n", x);
-  x = echo_ranged_int(100);
+  x = echo_ranged_int(10,20,100);
   ok(x == 100, "echo_ranged_int() returned %d instead of 100\n", x);
+  x = echo_ranged_int2(40);
+  ok(x == 40, "echo_ranged_int() returned %d instead of 40\n", x);
 
   if (!old_windows_version)
   {
