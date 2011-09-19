@@ -2069,7 +2069,7 @@ msgstr ""
 
 #: hhctrl.rc:45
 msgid "Sync"
-msgstr "Sync"
+msgstr ""
 
 #: hhctrl.rc:47 wordpad.rc:155
 msgid "Options"
