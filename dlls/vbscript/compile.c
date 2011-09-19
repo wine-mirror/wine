@@ -405,6 +405,8 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_lt);
     case EXPR_LTEQ:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_lteq);
+    case EXPR_ME:
+        return push_instr(ctx, OP_me) != -1 ? S_OK : E_OUTOFMEMORY;
     case EXPR_MEMBER:
         return compile_member_expression(ctx, (member_expression_t*)expr, TRUE);
     case EXPR_MOD:

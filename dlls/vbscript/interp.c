@@ -708,6 +708,12 @@ static HRESULT interp_stop(exec_ctx_t *ctx)
     return S_OK;
 }
 
+static HRESULT interp_me(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT interp_bool(exec_ctx_t *ctx)
 {
     const VARIANT_BOOL arg = ctx->instr->arg1.lng;

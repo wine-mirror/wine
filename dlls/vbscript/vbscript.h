@@ -203,6 +203,7 @@ typedef enum {
     X(lteq,           1, 0,           0)          \
     X(mcall,          1, ARG_BSTR,    ARG_UINT)   \
     X(mcallv,         1, ARG_BSTR,    ARG_UINT)   \
+    X(me,             1, 0,           0)          \
     X(mod,            1, 0,           0)          \
     X(mul,            1, 0,           0)          \
     X(neg,            1, 0,           0)          \

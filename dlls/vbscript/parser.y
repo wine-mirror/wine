@@ -307,6 +307,7 @@ LiteralExpression
 
 PrimaryExpression
     : '(' Expression ')'            { $$ = $2; }
+    | tME                           { $$ = new_expression(ctx, EXPR_ME, 0); CHECK_ERROR; }
 
 ClassDeclaration
     : tCLASS tIdentifier tNL ClassBody tEND tCLASS tNL      { $4->name = $2; $$ = $4; }
