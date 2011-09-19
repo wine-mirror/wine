@@ -90,6 +90,7 @@ struct IDirectDrawImpl
 
     IDirectDrawSurfaceImpl *primary;
     struct wined3d_surface *wined3d_frontbuffer;
+    struct wined3d_swapchain *wined3d_swapchain;
 
     /* DirectDraw things, which are not handled by WineD3D */
     DWORD                   cooperative_level;
@@ -160,7 +161,6 @@ struct IDirectDrawSurfaceImpl
     IDirectDrawImpl         *ddraw;
     struct wined3d_surface *wined3d_surface;
     struct wined3d_texture *wined3d_texture;
-    struct wined3d_swapchain *wined3d_swapchain;
 
     /* This implementation handles attaching surfaces to other surfaces */
     IDirectDrawSurfaceImpl  *next_attached;

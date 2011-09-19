@@ -2533,23 +2533,6 @@ static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw, IDirectDrawSurfac
     return DD_OK;
 }
 
-static HRESULT ddraw_create_gdi_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSurfaceImpl *primary,
-        WINED3DPRESENT_PARAMETERS *presentation_parameters)
-{
-    HRESULT hr;
-
-    ddraw->d3d_target = primary;
-    hr = wined3d_device_init_gdi(ddraw->wined3d_device, presentation_parameters);
-    ddraw->d3d_target = NULL;
-    if (FAILED(hr))
-    {
-        WARN("Failed to initialize GDI ddraw implementation, hr %#x.\n", hr);
-        primary->wined3d_swapchain = NULL;
-    }
-
-    return hr;
-}
-
 static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSurfaceImpl *surface)
 {
     WINED3DPRESENT_PARAMETERS presentation_parameters;
@@ -2596,7 +2579,18 @@ static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSurface
     }
     else if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
-        hr = ddraw_create_gdi_swapchain(ddraw, target, &presentation_parameters);
+        hr = wined3d_device_init_gdi(ddraw->wined3d_device, &presentation_parameters);
+        if (FAILED(hr))
+            WARN("Failed to initialize GDI ddraw implementation, hr %#x.\n", hr);
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        if (FAILED(hr = wined3d_device_get_swapchain(ddraw->wined3d_device, 0, &ddraw->wined3d_swapchain)))
+        {
+            ERR("Failed to get swapchain, hr %#x.\n", hr);
+            ddraw->wined3d_swapchain = NULL;
+        }
     }
 
     return hr;
@@ -5341,27 +5335,20 @@ static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent
         WINED3DPRESENT_PARAMETERS *present_parameters, struct wined3d_swapchain **swapchain)
 {
     struct IDirectDrawImpl *ddraw = ddraw_from_device_parent(device_parent);
-    IDirectDrawSurfaceImpl *iterator;
     HRESULT hr;
 
     TRACE("device_parent %p, present_parameters %p, swapchain %p.\n", device_parent, present_parameters, swapchain);
 
+    if (ddraw->wined3d_swapchain)
+    {
+        ERR("Swapchain already created.\n");
+        return E_FAIL;
+    }
+
     hr = wined3d_swapchain_create(ddraw->wined3d_device, present_parameters,
             DefaultSurfaceType, NULL, &ddraw_null_wined3d_parent_ops, swapchain);
     if (FAILED(hr))
-    {
         WARN("Failed to create swapchain, hr %#x.\n", hr);
-        *swapchain = NULL;
-        return hr;
-    }
-
-    ddraw->d3d_target->wined3d_swapchain = *swapchain;
-    iterator = ddraw->d3d_target->complex_array[0];
-    while (iterator)
-    {
-        iterator->wined3d_swapchain = *swapchain;
-        iterator = iterator->complex_array[0];
-    }
 
     return hr;
 }

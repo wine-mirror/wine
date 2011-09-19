@@ -385,21 +385,57 @@ void ddraw_surface_destroy(IDirectDrawSurfaceImpl *This)
 
 static void ddraw_surface_cleanup(IDirectDrawSurfaceImpl *surface)
 {
+    IDirectDrawImpl *ddraw = surface->ddraw;
+    BOOL destroy_swapchain = FALSE;
     IDirectDrawSurfaceImpl *surf;
     IUnknown *ifaceToRelease;
     UINT i;
 
     TRACE("surface %p.\n", surface);
 
-    if (surface->wined3d_swapchain)
+    if ((ddraw->d3d_initialized && surface == ddraw->d3d_target
+            && DefaultSurfaceType == SURFACE_OPENGL)
+            || ((surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+            && DefaultSurfaceType != SURFACE_OPENGL))
+        destroy_swapchain = TRUE;
+
+    /* The refcount test shows that the palette is detached when the surface
+     * is destroyed. */
+    IDirectDrawSurface7_SetPalette(&surface->IDirectDrawSurface7_iface, NULL);
+
+    /* Loop through all complex attached surfaces and destroy them.
+     *
+     * Yet again, only the root can have more than one complexly attached
+     * surface, all the others have a total of one. */
+    for (i = 0; i < MAX_COMPLEX_ATTACHED; ++i)
     {
-        IDirectDrawImpl *ddraw = surface->ddraw;
+        if (!surface->complex_array[i])
+            break;
 
-        /* If it's the render target, destroy the D3D device. */
-        if (ddraw->d3d_initialized && surface == ddraw->d3d_target)
+        surf = surface->complex_array[i];
+        surface->complex_array[i] = NULL;
+        while (surf)
         {
-            TRACE("Destroying the render target, uninitializing D3D.\n");
+            IDirectDrawSurfaceImpl *destroy = surf;
+            surf = surf->complex_array[0];              /* Iterate through the "tree" */
+            ddraw_surface_destroy(destroy);             /* Destroy it */
+        }
+    }
 
+    ifaceToRelease = surface->ifaceToRelease;
+
+    /* Destroy the root surface. */
+    ddraw_surface_destroy(surface);
+
+    if (ddraw->wined3d_swapchain && destroy_swapchain)
+    {
+        TRACE("Destroying the swapchain.\n");
+
+        wined3d_swapchain_decref(ddraw->wined3d_swapchain);
+        ddraw->wined3d_swapchain = NULL;
+
+        if (DefaultSurfaceType == SURFACE_OPENGL)
+        {
             for (i = 0; i < ddraw->numConvertedDecls; ++i)
             {
                 wined3d_vertex_declaration_decref(ddraw->decls[i].decl);
@@ -430,38 +466,8 @@ static void ddraw_surface_cleanup(IDirectDrawSurfaceImpl *surface)
             wined3d_device_uninit_gdi(ddraw->wined3d_device);
         }
 
-        surface->wined3d_swapchain = NULL;
-
-        TRACE("D3D unloaded.\n");
+        TRACE("Swapchain destroyed.\n");
     }
-
-    /* The refcount test shows that the palette is detached when the surface
-     * is destroyed. */
-    IDirectDrawSurface7_SetPalette(&surface->IDirectDrawSurface7_iface, NULL);
-
-    /* Loop through all complex attached surfaces and destroy them.
-     *
-     * Yet again, only the root can have more than one complexly attached
-     * surface, all the others have a total of one. */
-    for (i = 0; i < MAX_COMPLEX_ATTACHED; ++i)
-    {
-        if (!surface->complex_array[i])
-            break;
-
-        surf = surface->complex_array[i];
-        surface->complex_array[i] = NULL;
-        while (surf)
-        {
-            IDirectDrawSurfaceImpl *destroy = surf;
-            surf = surf->complex_array[0];              /* Iterate through the "tree" */
-            ddraw_surface_destroy(destroy);             /* Destroy it */
-        }
-    }
-
-    ifaceToRelease = surface->ifaceToRelease;
-
-    /* Destroy the root surface. */
-    ddraw_surface_destroy(surface);
 
     /* Reduce the ddraw refcount */
     if (ifaceToRelease)
@@ -3859,7 +3865,7 @@ static HRESULT WINAPI ddraw_surface7_SetClipper(IDirectDrawSurface7 *iface,
     hr = wined3d_surface_set_clipper(This->wined3d_surface,
             This->clipper ? This->clipper->wineD3DClipper : NULL);
 
-    if (This->wined3d_swapchain)
+    if ((This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE) && This->ddraw->wined3d_swapchain)
     {
         clipWindow = NULL;
         if(clipper) {
@@ -3867,9 +3873,9 @@ static HRESULT WINAPI ddraw_surface7_SetClipper(IDirectDrawSurface7 *iface,
         }
 
         if (clipWindow)
-            wined3d_swapchain_set_window(This->wined3d_swapchain, clipWindow);
+            wined3d_swapchain_set_window(This->ddraw->wined3d_swapchain, clipWindow);
         else
-            wined3d_swapchain_set_window(This->wined3d_swapchain, This->ddraw->d3d_window);
+            wined3d_swapchain_set_window(This->ddraw->wined3d_swapchain, This->ddraw->d3d_window);
     }
 
     LeaveCriticalSection(&ddraw_cs);
