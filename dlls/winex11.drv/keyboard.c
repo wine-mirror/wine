@@ -2301,7 +2301,7 @@ INT CDECL X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
       name = XKeysymToString(keys);
       wine_tsx11_unlock();
       TRACE("found scan=%04x keyc=%u keysym=%04x string=%s\n",
-            scanCode, keyc, (int)keys, name);
+            scanCode, keyc, (int)keys, debugstr_a(name));
       if (lpBuffer && nSize && name)
           return MultiByteToWideChar(CP_UNIXCP, 0, name, -1, lpBuffer, nSize);
   }
