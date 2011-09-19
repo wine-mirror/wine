@@ -116,6 +116,10 @@ call ok(false imp false, "false does not imp false?")
 call ok(not (true imp false), "true imp false?")
 call ok(false imp null, "false imp null is false?")
 
+Call ok(2 >= 1, "! 2 >= 1")
+Call ok(2 >= 2, "! 2 >= 2")
+Call ok(not(true >= 2), "true >= 2 ?")
+
 x = 3
 Call ok(2+2 = 4, "2+2 = " & (2+2))
 Call ok(false + 6 + true = 5, "false + 6 + true <> 5")
