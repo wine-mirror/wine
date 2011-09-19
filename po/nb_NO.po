@@ -7951,13 +7951,10 @@ msgid ""
 "Not Yet Implemented\n"
 "\n"
 msgstr ""
-"Not Yet Implemented\n"
-"\n"
 
 #: attrib.rc:28 cmd.rc:301
-#, fuzzy
 msgid "%s: File Not Found\n"
-msgstr "%s : File Not Found\n"
+msgstr ""
 
 #: attrib.rc:47
 msgid ""
