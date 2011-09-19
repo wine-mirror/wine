@@ -700,6 +700,45 @@ HRESULT WINAPI CoInternetIsFeatureEnabled(INTERNETFEATURELIST FeatureEntry, DWOR
 HRESULT WINAPI CoInternetIsFeatureEnabledForUrl(INTERNETFEATURELIST FeatureEntry, DWORD dwFlags, LPCWSTR szURL,
         IInternetSecurityManager *pSecMgr)
 {
-    FIXME("(%d %08x %s %p)\n", FeatureEntry, dwFlags, debugstr_w(szURL), pSecMgr);
-    return E_NOTIMPL;
+    DWORD urlaction = 0;
+    HRESULT hres;
+
+    TRACE("(%d %08x %s %p)\n", FeatureEntry, dwFlags, debugstr_w(szURL), pSecMgr);
+
+    if(FeatureEntry == FEATURE_MIME_SNIFFING)
+        urlaction = URLACTION_FEATURE_MIME_SNIFFING;
+    else if(FeatureEntry == FEATURE_WINDOW_RESTRICTIONS)
+        urlaction = URLACTION_FEATURE_WINDOW_RESTRICTIONS;
+    else if(FeatureEntry == FEATURE_ZONE_ELEVATION)
+        urlaction = URLACTION_FEATURE_ZONE_ELEVATION;
+
+    if(!szURL || !urlaction || !pSecMgr)
+        return CoInternetIsFeatureEnabled(FeatureEntry, dwFlags);
+
+    switch(dwFlags) {
+    case GET_FEATURE_FROM_THREAD:
+    case GET_FEATURE_FROM_THREAD_LOCALMACHINE:
+    case GET_FEATURE_FROM_THREAD_INTRANET:
+    case GET_FEATURE_FROM_THREAD_TRUSTED:
+    case GET_FEATURE_FROM_THREAD_INTERNET:
+    case GET_FEATURE_FROM_THREAD_RESTRICTED:
+        FIXME("unsupported flags %x\n", dwFlags);
+        return E_NOTIMPL;
+
+    case GET_FEATURE_FROM_PROCESS:
+        hres = CoInternetIsFeatureEnabled(FeatureEntry, dwFlags);
+        if(hres != S_OK)
+            return hres;
+        /* fall through */
+
+    default: {
+        DWORD policy = URLPOLICY_DISALLOW;
+
+        hres = IInternetSecurityManager_ProcessUrlAction(pSecMgr, szURL, urlaction,
+                (BYTE*)&policy, sizeof(DWORD), NULL, 0, PUAF_NOUI, 0);
+        if(hres!=S_OK || policy!=URLPOLICY_ALLOW)
+            return S_OK;
+        return S_FALSE;
+    }
+    }
 }
