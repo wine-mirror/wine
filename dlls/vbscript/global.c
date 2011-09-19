@@ -25,8 +25,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
 static HRESULT Global_IsObject(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("(%s)\n", debugstr_variant(arg));
+
+    if(V_VT(arg) == (VT_VARIANT|VT_BYREF))
+        arg = V_VARIANTREF(arg);
+
+    if(res) {
+        V_VT(res) = VT_BOOL;
+        V_BOOL(res) = V_VT(arg) == VT_DISPATCH ? VARIANT_TRUE : VARIANT_FALSE;
+    }
+    return S_OK;
 }
 
 static const builtin_prop_t global_props[] = {
