@@ -620,4 +620,6 @@ Call ok(not (x is Nothing), "x is 1")
 Call ok(Nothing is Nothing, "Nothing is not Nothing")
 Call ok(x is obj and true, "x is obj and true is false")
 
+Call ok(getVT(test) = "VT_DISPATCH", "getVT(test) = " & getVT(test))
+
 reportSuccess()

@@ -149,6 +149,29 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
                 return S_OK;
             }
         }
+
+        if((item->flags & SCRIPTITEM_ISVISIBLE) && !strcmpiW(item->name, name)) {
+            if(!item->disp) {
+                IUnknown *unk;
+
+                hres = IActiveScriptSite_GetItemInfo(ctx->script->site, name, SCRIPTINFO_IUNKNOWN, &unk, NULL);
+                if(FAILED(hres)) {
+                    WARN("GetItemInfo failed: %08x\n", hres);
+                    continue;
+                }
+
+                hres = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)&item->disp);
+                IUnknown_Release(unk);
+                if(FAILED(hres)) {
+                    WARN("object does not implement IDispatch\n");
+                    continue;
+                }
+            }
+
+            ref->type = REF_OBJ;
+            ref->u.obj = item->disp;
+            return S_OK;
+        }
     }
 
     if(!strcmpiW(name, errW)) {
