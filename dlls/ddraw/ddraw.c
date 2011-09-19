@@ -2554,7 +2554,19 @@ static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSurface
 {
     WINED3DPRESENT_PARAMETERS presentation_parameters;
     IDirectDrawSurfaceImpl *target = surface;
+    WINED3DDISPLAYMODE mode;
     HRESULT hr = WINED3D_OK;
+
+    /* FIXME: wined3d_get_adapter_display_mode() would be more appropriate
+     * here, since we don't actually have a swapchain yet, but
+     * wined3d_device_get_display_mode() has some special handling for color
+     * depth changes. */
+    hr = wined3d_device_get_display_mode(ddraw->wined3d_device, 0, &mode);
+    if (FAILED(hr))
+    {
+        ERR("Failed to get display mode.\n");
+        return hr;
+    }
 
     if (ddraw->primary)
     {
@@ -2563,9 +2575,9 @@ static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSurface
     }
 
     memset(&presentation_parameters, 0, sizeof(presentation_parameters));
-    presentation_parameters.BackBufferWidth = target->surface_desc.dwWidth;
-    presentation_parameters.BackBufferHeight = target->surface_desc.dwHeight;
-    presentation_parameters.BackBufferFormat = PixelFormat_DD2WineD3D(&target->surface_desc.u4.ddpfPixelFormat);
+    presentation_parameters.BackBufferWidth = mode.Width;
+    presentation_parameters.BackBufferHeight = mode.Height;
+    presentation_parameters.BackBufferFormat = mode.Format;
     presentation_parameters.SwapEffect = WINED3DSWAPEFFECT_COPY;
     presentation_parameters.hDeviceWindow = ddraw->dest_window;
     presentation_parameters.Windowed = !(ddraw->cooperative_level & DDSCL_FULLSCREEN);
@@ -2588,7 +2600,6 @@ static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSurface
     }
 
     return hr;
-
 }
 
 /*****************************************************************************
