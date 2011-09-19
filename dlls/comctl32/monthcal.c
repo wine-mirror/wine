@@ -202,6 +202,11 @@ static inline void MONTHCAL_NotifySelect(const MONTHCAL_INFO *infoPtr)
     SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmsc.nmhdr.idFrom, (LPARAM)&nmsc);
 }
 
+static inline int MONTHCAL_MonthDiff(const SYSTEMTIME *left, const SYSTEMTIME *right)
+{
+    return (right->wYear - left->wYear)*12 + right->wMonth - left->wMonth;
+}
+
 /* returns the number of days in any given month, checking for leap days */
 /* January is 1, December is 12 */
 int MONTHCAL_MonthLength(int month, int year)
@@ -1462,6 +1467,7 @@ static LRESULT
 MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
 {
   SYSTEMTIME prev = infoPtr->minSel;
+  INT diff;
   WORD day;
 
   TRACE("%p\n", curSel);
@@ -1474,7 +1480,22 @@ MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
 
   if(!MONTHCAL_IsDateInValidRange(infoPtr, curSel, FALSE)) return FALSE;
 
-  infoPtr->calendars[0].month = *curSel;
+  /* scroll calendars only if we have to */
+  diff = MONTHCAL_MonthDiff(&infoPtr->calendars[MONTHCAL_GetCalCount(infoPtr)-1].month, curSel);
+  if (diff <= 0)
+  {
+    diff = MONTHCAL_MonthDiff(&infoPtr->calendars[0].month, curSel);
+    if (diff > 0) diff = 0;
+  }
+
+  if (diff != 0)
+  {
+    INT i;
+
+    for (i = 0; i < MONTHCAL_GetCalCount(infoPtr); i++)
+      MONTHCAL_GetMonth(&infoPtr->calendars[i].month, diff);
+  }
+
   infoPtr->minSel = *curSel;
   infoPtr->maxSel = *curSel;
 
@@ -1542,56 +1563,49 @@ MONTHCAL_GetSelRange(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *range)
 static LRESULT
 MONTHCAL_SetSelRange(MONTHCAL_INFO *infoPtr, SYSTEMTIME *range)
 {
+  SYSTEMTIME old_range[2];
+
   TRACE("%p\n", range);
 
-  if(!range) return FALSE;
+  if(!range || !(infoPtr->dwStyle & MCS_MULTISELECT)) return FALSE;
 
-  if(infoPtr->dwStyle & MCS_MULTISELECT)
+  /* adjust timestamps */
+  if(!MONTHCAL_ValidateTime(&range[0])) MONTHCAL_CopyTime(&infoPtr->todaysDate, &range[0]);
+  if(!MONTHCAL_ValidateTime(&range[1])) MONTHCAL_CopyTime(&infoPtr->todaysDate, &range[1]);
+
+  /* maximum range exceeded */
+  if(!MONTHCAL_IsSelRangeValid(infoPtr, &range[0], &range[1], NULL)) return FALSE;
+
+  old_range[0] = infoPtr->minSel;
+  old_range[1] = infoPtr->maxSel;
+
+  /* swap if min > max */
+  if(MONTHCAL_CompareSystemTime(&range[0], &range[1]) <= 0)
   {
-    SYSTEMTIME old_range[2];
+    infoPtr->minSel = range[0];
+    infoPtr->maxSel = range[1];
+  }
+  else
+  {
+    infoPtr->minSel = range[1];
+    infoPtr->maxSel = range[0];
+  }
+  infoPtr->calendars[0].month = infoPtr->minSel;
 
-    /* adjust timestamps */
-    if(!MONTHCAL_ValidateTime(&range[0]))
-      MONTHCAL_CopyTime(&infoPtr->todaysDate, &range[0]);
-    if(!MONTHCAL_ValidateTime(&range[1]))
-      MONTHCAL_CopyTime(&infoPtr->todaysDate, &range[1]);
+  /* update day of week */
+  MONTHCAL_CalculateDayOfWeek(&infoPtr->minSel, TRUE);
+  MONTHCAL_CalculateDayOfWeek(&infoPtr->maxSel, TRUE);
 
-    /* maximum range exceeded */
-    if(!MONTHCAL_IsSelRangeValid(infoPtr, &range[0], &range[1], NULL)) return FALSE;
-
-    old_range[0] = infoPtr->minSel;
-    old_range[1] = infoPtr->maxSel;
-
-    /* swap if min > max */
-    if(MONTHCAL_CompareSystemTime(&range[0], &range[1]) <= 0)
-    {
-      infoPtr->minSel = range[0];
-      infoPtr->maxSel = range[1];
-    }
-    else
-    {
-      infoPtr->minSel = range[1];
-      infoPtr->maxSel = range[0];
-    }
-    infoPtr->calendars[0].month = infoPtr->minSel;
-
-    /* update day of week */
-    MONTHCAL_CalculateDayOfWeek(&infoPtr->minSel, TRUE);
-    MONTHCAL_CalculateDayOfWeek(&infoPtr->maxSel, TRUE);
-
-    /* redraw if bounds changed */
-    /* FIXME: no actual need to redraw everything */
-    if(!MONTHCAL_IsDateEqual(&old_range[0], &range[0]) ||
-       !MONTHCAL_IsDateEqual(&old_range[1], &range[1]))
-    {
-       InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
-    }
-
-    TRACE("[min,max]=[%d %d]\n", infoPtr->minSel.wDay, infoPtr->maxSel.wDay);
-    return TRUE;
+  /* redraw if bounds changed */
+  /* FIXME: no actual need to redraw everything */
+  if(!MONTHCAL_IsDateEqual(&old_range[0], &range[0]) ||
+     !MONTHCAL_IsDateEqual(&old_range[1], &range[1]))
+  {
+     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
   }
 
-  return FALSE;
+  TRACE("[min,max]=[%d %d]\n", infoPtr->minSel.wDay, infoPtr->maxSel.wDay);
+  return TRUE;
 }
 
 
