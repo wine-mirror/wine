@@ -436,6 +436,7 @@ struct _var_t {
   expr_t *eval;
   enum storage_class stgclass;
   unsigned int procstring_offset;
+  unsigned int typestring_offset;
 
   struct _loc_info_t loc_info;
 

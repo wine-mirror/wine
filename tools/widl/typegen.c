@@ -966,7 +966,7 @@ static unsigned char get_parameter_fc( const var_t *var, int is_return, unsigned
 
     *flags = 0;
     *stack_size = get_stack_size( var, &is_byval );
-    *typestring_offset = var->type->typestring_offset;
+    *typestring_offset = var->typestring_offset;
 
     if (is_in)     *flags |= IsIn;
     if (is_out)    *flags |= IsOut;
@@ -1005,7 +1005,10 @@ static unsigned char get_parameter_fc( const var_t *var, int is_return, unsigned
         *flags |= MustFree;
         if (type_array_is_decl_as_ptr(var->type) && var->type->details.array.ptr_tfsoff &&
             get_pointer_fc( var->type, var->attrs, !is_return ) == RPC_FC_RP)
+        {
+            *typestring_offset = var->type->typestring_offset;
             *flags |= IsSimpleRef;
+        }
         break;
     case TGT_STRING:
         *flags |= MustFree;
@@ -1207,12 +1210,12 @@ static unsigned int write_old_procformatstring_type(FILE *file, int indent, cons
     }
     else
     {
-        unsigned short offset = var->type->typestring_offset;
+        unsigned short offset = var->typestring_offset;
 
-        if (is_interpreted && is_array(var->type) &&
+        if (!is_interpreted && is_array(var->type) &&
             type_array_is_decl_as_ptr(var->type) &&
             var->type->details.array.ptr_tfsoff)
-            offset = var->type->details.array.ptr_tfsoff;
+            offset = var->type->typestring_offset;
 
         if (is_return)
             print_file(file, indent, "0x52,    /* FC_RETURN_PARAM */\n");
@@ -3611,7 +3614,7 @@ static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *ty
 static unsigned int process_tfs_stmts(FILE *file, const statement_list_t *stmts,
                                       type_pred_t pred, unsigned int *typeformat_offset)
 {
-    const var_t *var;
+    var_t *var;
     const statement_t *stmt;
 
     if (stmts) LIST_FOR_EACH_ENTRY( stmt, stmts, const statement_t, entry )
@@ -3633,16 +3636,16 @@ static unsigned int process_tfs_stmts(FILE *file, const statement_list_t *stmts,
             current_func = func;
             if (is_local(func->attrs)) continue;
 
-            if (!is_void(type_function_get_rettype(func->type)))
-            {
-                write_type_tfs( file, 2, func->attrs, type_function_get_rettype(func->type),
-                                func->name, TYPE_CONTEXT_PARAM, typeformat_offset);
-            }
+            var = type_function_get_retval(func->type);
+            if (!is_void(var->type))
+                var->typestring_offset = write_type_tfs( file, 2, func->attrs, var->type, func->name,
+                                                         TYPE_CONTEXT_PARAM, typeformat_offset);
 
             if (type_get_function_args(func->type))
-                LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
-                    write_type_tfs( file, 2, var->attrs, var->type, var->name,
-                                    TYPE_CONTEXT_TOPLEVELPARAM, typeformat_offset );
+                LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), var_t, entry )
+                    var->typestring_offset = write_type_tfs( file, 2, var->attrs, var->type, var->name,
+                                                             TYPE_CONTEXT_TOPLEVELPARAM,
+                                                             typeformat_offset );
         }
     }
 
@@ -4606,7 +4609,7 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
                 fprintf(file, " = NdrContextHandleInitialize(\n");
                 print_file(file, indent + 1, "&__frame->_StubMsg,\n");
                 print_file(file, indent + 1, "(PFORMAT_STRING)&__MIDL_TypeFormatString.Format[%d]);\n",
-                           var->type->typestring_offset);
+                           var->typestring_offset);
                 break;
             case TGT_ARRAY:
                 if (type_array_has_conformance(var->type))

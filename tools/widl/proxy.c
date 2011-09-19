@@ -148,7 +148,7 @@ static int need_delegation_indirect(const type_t *iface)
 
 static void free_variable( const var_t *arg, const char *local_var_prefix )
 {
-  unsigned int type_offset = arg->type->typestring_offset;
+  unsigned int type_offset = arg->typestring_offset;
   type_t *type = arg->type;
 
   write_parameter_conf_or_var_exprs(proxy, indent, local_var_prefix, PHASE_FREE, arg, FALSE);
