@@ -2651,7 +2651,7 @@ static BOOL FTP_SendCommandA(INT nSocket, FTP_COMMAND ftpCmd, LPCSTR lpszParam,
 	int nRC = 0;
 	DWORD dwParamLen;
 
-	TRACE("%d: (%s) %d\n", ftpCmd, lpszParam, nSocket);
+	TRACE("%d: (%s) %d\n", ftpCmd, debugstr_a(lpszParam), nSocket);
 
 	if (lpfnStatusCB)
         {
