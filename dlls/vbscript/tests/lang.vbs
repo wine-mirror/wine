@@ -608,4 +608,16 @@ funcCalled = ""
 Set obj = Nothing
 Call ok(funcCalled = "terminate", "funcCalled = " & funcCalled)
 
+Set obj = new EmptyClass
+Set x = obj
+Set y = new EmptyClass
+
+Call ok(obj is x, "obj is not x")
+Call ok(x is obj, "x is not obj")
+Call ok(not (obj is y), "obj is not y")
+Call ok(not obj is y, "obj is not y")
+Call ok(not (x is Nothing), "x is 1")
+Call ok(Nothing is Nothing, "Nothing is not Nothing")
+Call ok(x is obj and true, "x is obj and true is false")
+
 reportSuccess()

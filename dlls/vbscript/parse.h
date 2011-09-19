@@ -31,6 +31,7 @@ typedef enum {
     EXPR_GTEQ,
     EXPR_IDIV,
     EXPR_IMP,
+    EXPR_IS,
     EXPR_LT,
     EXPR_LTEQ,
     EXPR_MEMBER,

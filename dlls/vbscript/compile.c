@@ -387,6 +387,8 @@ static HRESULT compile_expression(compile_ctx_t *ctx, expression_t *expr)
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_gteq);
     case EXPR_IDIV:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_idiv);
+    case EXPR_IS:
+        return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_is);
     case EXPR_IMP:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_imp);
     case EXPR_LT:
