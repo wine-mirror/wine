@@ -70,6 +70,7 @@ DEFINE_EXPECT(ParseUrl_SECURITY_URL_input2);
 DEFINE_EXPECT(ParseUrl_SECURITY_URL_expected);
 DEFINE_EXPECT(ParseUrl_SECURITY_URL_http);
 DEFINE_EXPECT(ParseUrl_SECURITY_DOMAIN_expected);
+DEFINE_EXPECT(ProcessUrlAction);
 
 static HRESULT (WINAPI *pCoInternetCreateSecurityManager)(IServiceProvider *, IInternetSecurityManager**, DWORD);
 static HRESULT (WINAPI *pCoInternetCreateZoneManager)(IServiceProvider *, IInternetZoneManager**, DWORD);
@@ -77,6 +78,9 @@ static HRESULT (WINAPI *pCoInternetGetSecurityUrl)(LPCWSTR, LPWSTR*, PSUACTION, 
 static HRESULT (WINAPI *pCoInternetGetSecurityUrlEx)(IUri*, IUri**, PSUACTION, DWORD_PTR);
 static HRESULT (WINAPI *pCreateUri)(LPCWSTR, DWORD, DWORD_PTR, IUri**);
 static HRESULT (WINAPI *pCoInternetGetSession)(DWORD, IInternetSession**, DWORD);
+static HRESULT (WINAPI *pCoInternetIsFeatureEnabled)(INTERNETFEATURELIST, DWORD);
+static HRESULT (WINAPI *pCoInternetIsFeatureEnabledForUrl)(INTERNETFEATURELIST, DWORD, LPCWSTR, IInternetSecurityManager*);
+static HRESULT (WINAPI *pCoInternetIsFeatureZoneElevationEnabled)(LPCWSTR, LPCWSTR, IInternetSecurityManager*, DWORD);
 
 static const WCHAR url1[] = {'r','e','s',':','/','/','m','s','h','t','m','l','.','d','l','l',
         '/','b','l','a','n','k','.','h','t','m',0};
@@ -128,6 +132,7 @@ const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY =
     {0x10200490,0xfa38,0x11d0,{0xac,0x0e,0x00,0xa0,0xc9,0xf,0xff,0xc0}};
 
 static int called_securl_http;
+static DWORD ProcessUrlAction_policy;
 
 static struct secmgr_test {
     LPCWSTR url;
@@ -248,6 +253,103 @@ cleanup:
     return ret;
 }
 
+static HRESULT WINAPI SecurityManager_QueryInterface(IInternetSecurityManager* This,
+        REFIID riid, void **ppvObject)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static ULONG WINAPI SecurityManager_AddRef(IInternetSecurityManager* This)
+{
+    return 2;
+}
+
+static ULONG WINAPI SecurityManager_Release(IInternetSecurityManager* This)
+{
+    return 1;
+}
+
+static HRESULT WINAPI SecurityManager_SetSecuritySite(IInternetSecurityManager* This,
+        IInternetSecurityMgrSite *pSite)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SecurityManager_GetSecuritySite(IInternetSecurityManager* This,
+        IInternetSecurityMgrSite **ppSite)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SecurityManager_MapUrlToZone(IInternetSecurityManager* This,
+        LPCWSTR pwszUrl, DWORD *pdwZone, DWORD dwFlags)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SecurityManager_GetSecurityId(IInternetSecurityManager* This,
+        LPCWSTR pwszUrl, BYTE *pbSecurityId, DWORD *pcbSecurityId, DWORD_PTR dwReserved)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SecurityManager_ProcessUrlAction(IInternetSecurityManager* This,
+        LPCWSTR pwszUrl, DWORD dwAction, BYTE *pPolicy, DWORD cbPolicy,
+        BYTE *pContext, DWORD cbContext, DWORD dwFlags, DWORD dwReserved)
+{
+    CHECK_EXPECT(ProcessUrlAction);
+    ok(dwAction == URLACTION_FEATURE_ZONE_ELEVATION, "dwAction = %x\n", dwAction);
+    ok(cbPolicy == sizeof(DWORD), "cbPolicy = %d\n", cbPolicy);
+    ok(!pContext, "pContext != NULL\n");
+    ok(dwFlags == PUAF_NOUI, "dwFlags = %x\n", dwFlags);
+    ok(dwReserved == 0, "dwReserved = %x\n", dwReserved);
+
+    *pPolicy = ProcessUrlAction_policy;
+    return ProcessUrlAction_policy==URLPOLICY_ALLOW ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI SecurityManager_QueryCustomPolicy(IInternetSecurityManager* This,
+        LPCWSTR pwszUrl, REFGUID guidKey, BYTE **ppPolicy, DWORD *pcbPolicy,
+        BYTE *pContext, DWORD cbContext, DWORD dwReserved)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SecurityManager_SetZoneMapping(IInternetSecurityManager* This,
+        DWORD dwZone, LPCWSTR lpszPattern, DWORD dwFlags)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SecurityManager_GetZoneMappings(IInternetSecurityManager* This,
+        DWORD dwZone, IEnumString **ppenumString, DWORD dwFlags)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IInternetSecurityManagerVtbl SecurityManagerVtbl = {
+    SecurityManager_QueryInterface,
+    SecurityManager_AddRef,
+    SecurityManager_Release,
+    SecurityManager_SetSecuritySite,
+    SecurityManager_GetSecuritySite,
+    SecurityManager_MapUrlToZone,
+    SecurityManager_GetSecurityId,
+    SecurityManager_ProcessUrlAction,
+    SecurityManager_QueryCustomPolicy,
+    SecurityManager_SetZoneMapping,
+    SecurityManager_GetZoneMappings
+};
+
+static IInternetSecurityManager security_manager = { &SecurityManagerVtbl };
 
 static void test_SecurityManager(void)
 {
@@ -1702,6 +1804,75 @@ static void test_SecurityManagerEx2(void)
     IInternetSecurityManager_Release(sec_mgr);
 }
 
+static void test_CoInternetIsFeatureZoneElevationEnabled(void)
+{
+    struct {
+        const char *url_from;
+        const char *url_to;
+        DWORD flags;
+        HRESULT hres;
+        DWORD policy_flags;
+    } testcases[] = {
+        /*  0 */ { "http://www.winehq.org", "http://www.winehq.org", 0, S_FALSE, URLPOLICY_ALLOW },
+        /*  1 */ { "http://www.winehq.org", "http://www.winehq.org", 0, S_OK, URLPOLICY_DISALLOW },
+        /*  2 */ { "http://www.winehq.org", "http://www.codeweavers.com", 0, S_FALSE, URLPOLICY_ALLOW },
+        /*  3 */ { "http://www.winehq.org", "http://www.codeweavers.com", 0, S_OK, URLPOLICY_DISALLOW },
+        /*  4 */ { "http://www.winehq.org", "http://www.winehq.org", GET_FEATURE_FROM_PROCESS, S_FALSE, -1 },
+        /*  5 */ { "http://www.winehq.org", "http://www.winehq.org/dir", GET_FEATURE_FROM_PROCESS, S_FALSE, -1 },
+        /*  6 */ { "http://www.winehq.org", "http://www.codeweavers.com", GET_FEATURE_FROM_PROCESS, S_FALSE, -1 },
+        /*  7 */ { "http://www.winehq.org", "ftp://winehq.org", GET_FEATURE_FROM_PROCESS, S_FALSE, -1 },
+        /*  8 */ { "http://www.winehq.org", "ftp://winehq.org", GET_FEATURE_FROM_PROCESS|0x100, S_FALSE, URLPOLICY_ALLOW },
+        /*  9 */ { "http://www.winehq.org", "ftp://winehq.org", GET_FEATURE_FROM_REGISTRY, S_FALSE, URLPOLICY_ALLOW },
+    };
+
+    WCHAR *url_from, *url_to;
+    int i;
+    HRESULT hres;
+
+    if(!pCoInternetIsFeatureZoneElevationEnabled || !pCoInternetIsFeatureEnabled
+            || !pCoInternetIsFeatureEnabledForUrl) {
+        win_skip("Skipping CoInternetIsFeatureZoneElevationEnabled tests\n");
+        return;
+    }
+
+
+    hres = pCoInternetIsFeatureEnabled(FEATURE_ZONE_ELEVATION, GET_FEATURE_FROM_PROCESS);
+    ok(SUCCEEDED(hres), "CoInternetIsFeatureEnabled returned %x\n", hres);
+
+    trace("Testing CoInternetIsFeatureZoneElevationEnabled... (%x)\n", hres);
+
+    for(i=0; i<sizeof(testcases)/sizeof(testcases[0]); i++) {
+        if(hres==S_OK && testcases[i].flags == GET_FEATURE_FROM_PROCESS)
+            testcases[i].policy_flags = URLPOLICY_ALLOW;
+    }
+
+    for(i=0; i<sizeof(testcases)/sizeof(testcases[0]); i++) {
+        url_from = a2w(testcases[i].url_from);
+        url_to = a2w(testcases[i].url_to);
+
+        if(testcases[i].policy_flags != -1) {
+            ProcessUrlAction_policy = testcases[i].policy_flags;
+            SET_EXPECT(ProcessUrlAction);
+        }
+        hres = pCoInternetIsFeatureZoneElevationEnabled(url_from, url_to,
+                &security_manager, testcases[i].flags);
+        ok(hres == testcases[i].hres, "%d) CoInternetIsFeatureZoneElevationEnabled returned %x\n", i, hres);
+        if(testcases[i].policy_flags != -1)
+            CHECK_CALLED(ProcessUrlAction);
+
+        if(testcases[i].policy_flags != -1)
+            SET_EXPECT(ProcessUrlAction);
+        hres = pCoInternetIsFeatureEnabledForUrl(FEATURE_ZONE_ELEVATION,
+                testcases[i].flags, url_to, &security_manager);
+        ok(hres == testcases[i].hres, "%d) CoInternetIsFeatureEnabledForUrl returned %x\n", i, hres);
+        if(testcases[i].policy_flags != -1)
+            CHECK_CALLED(ProcessUrlAction);
+
+        heap_free(url_from);
+        heap_free(url_to);
+    }
+}
+
 START_TEST(sec_mgr)
 {
     HMODULE hurlmon;
@@ -1715,6 +1886,9 @@ START_TEST(sec_mgr)
     pCoInternetGetSecurityUrlEx = (void*) GetProcAddress(hurlmon, "CoInternetGetSecurityUrlEx");
     pCreateUri = (void*) GetProcAddress(hurlmon, "CreateUri");
     pCoInternetGetSession = (void*) GetProcAddress(hurlmon, "CoInternetGetSession");
+    pCoInternetIsFeatureEnabled = (void*) GetProcAddress(hurlmon, "CoInternetIsFeatureEnabled");
+    pCoInternetIsFeatureEnabledForUrl = (void*) GetProcAddress(hurlmon, "CoInternetIsFeatureEnabledForUrl");
+    pCoInternetIsFeatureZoneElevationEnabled = (void*) GetProcAddress(hurlmon, "CoInternetIsFeatureZoneElevationEnabled");
 
     if (!pCoInternetCreateSecurityManager || !pCoInternetCreateZoneManager ||
         !pCoInternetGetSecurityUrl) {
@@ -1751,6 +1925,7 @@ START_TEST(sec_mgr)
     test_GetZoneAttributes();
     test_SetZoneAttributes();
     test_InternetSecurityMarshalling();
+    test_CoInternetIsFeatureZoneElevationEnabled();
 
     unregister_protocols();
     OleUninitialize();
