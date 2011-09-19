@@ -1344,8 +1344,9 @@ DWORD WINAPI VerInstallFileA(
     OFSTRUCT	ofs;
 
     TRACE("(%x,%s,%s,%s,%s,%s,%p,%d)\n",
-	    flags,srcfilename,destfilename,srcdir,destdir,curdir,tmpfile,*tmpfilelen
-    );
+          flags,debugstr_a(srcfilename),debugstr_a(destfilename),
+          debugstr_a(srcdir),debugstr_a(destdir),debugstr_a(curdir),
+          tmpfile,*tmpfilelen);
     xret = 0;
     if (!srcdir || !srcfilename) return VIF_CANNOTREADSRC;
     sprintf(srcfn,"%s\\%s",srcdir,srcfilename);
