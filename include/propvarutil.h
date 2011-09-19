@@ -41,6 +41,8 @@ HRESULT WINAPI InitPropVariantFromGUIDAsString(REFGUID guid, PROPVARIANT *ppropv
 HRESULT WINAPI InitVariantFromGUIDAsString(REFGUID guid, VARIANT *pvar);
 HRESULT WINAPI InitPropVariantFromBuffer(const VOID *pv, UINT cb, PROPVARIANT *ppropvar);
 HRESULT WINAPI InitVariantFromBuffer(const VOID *pv, UINT cb, VARIANT *pvar);
+HRESULT WINAPI PropVariantToGUID(const PROPVARIANT *ppropvar, GUID *guid);
+HRESULT WINAPI VariantToGUID(const VARIANT *pvar, GUID *guid);
 
 
 #ifdef __cplusplus
