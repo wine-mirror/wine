@@ -147,6 +147,14 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         }
     }
 
+    hres = vbdisp_get_id(ctx->script->global_obj, name, invoke_type, TRUE, &id);
+    if(SUCCEEDED(hres)) {
+        ref->type = REF_DISP;
+        ref->u.d.disp = (IDispatch*)&ctx->script->global_obj->IDispatchEx_iface;
+        ref->u.d.id = id;
+        return S_OK;
+    }
+
     if(!ctx->func->code_ctx->option_explicit)
         FIXME("create an attempt to set\n");
 

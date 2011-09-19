@@ -125,6 +125,7 @@ dlls/urlmon/urlmon_urlmon_p.c
 dlls/vbscript/parser.tab.c
 dlls/vbscript/parser.tab.h
 dlls/vbscript/vbscript_classes.h
+dlls/vbscript/vbsglobal.h
 dlls/windowscodecs/windowscodecs_wincodec.h
 dlls/windowscodecs/windowscodecs_wincodec_p.c
 include/activaut.h

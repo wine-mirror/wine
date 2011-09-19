@@ -107,6 +107,16 @@ static inline void *compiler_alloc(vbscode_t *vbscode, size_t size)
     return vbsheap_alloc(&vbscode->heap, size);
 }
 
+static inline void *compiler_alloc_zero(vbscode_t *vbscode, size_t size)
+{
+    void *ret;
+
+    ret = vbsheap_alloc(&vbscode->heap, size);
+    if(ret)
+        memset(ret, 0, size);
+    return ret;
+}
+
 static WCHAR *compiler_alloc_string(vbscode_t *vbscode, const WCHAR *str)
 {
     size_t size;
@@ -1006,7 +1016,7 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
         return E_FAIL;
     }
 
-    class_desc = compiler_alloc(ctx->code, sizeof(*class_desc));
+    class_desc = compiler_alloc_zero(ctx->code, sizeof(*class_desc));
     if(!class_desc)
         return E_OUTOFMEMORY;
 
@@ -1015,9 +1025,6 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
         return E_OUTOFMEMORY;
 
     class_desc->func_cnt = 1; /* always allocate slot for default getter */
-    class_desc->prop_cnt = 0;
-    class_desc->class_initialize_id = 0;
-    class_desc->class_terminate_id = 0;
 
     for(func_decl = class_decl->funcs; func_decl; func_decl = func_decl->next) {
         for(func_prop_decl = func_decl; func_prop_decl; func_prop_decl = func_prop_decl->next_prop_func) {

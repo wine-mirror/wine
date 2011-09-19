@@ -3,6 +3,7 @@ IMPORTS   = oleaut32
 
 C_SRCS = \
 	compile.c \
+	global.c \
 	interp.c \
 	lex.c \
 	vbdisp.c \
@@ -14,8 +15,12 @@ BISON_SRCS = \
 
 RC_SRCS = vbscript.rc
 
+IDL_H_SRCS = \
+	vbscript_classes.idl \
+	vbsglobal.idl
+
 IDL_TLB_SRCS = vbsglobal.idl
-IDL_H_SRCS = vbscript_classes.idl
+
 IDL_R_SRCS = vbscript_classes.idl
 
 @MAKE_DLL_RULES@

@@ -46,6 +46,7 @@ void vbsheap_free(vbsheap_t*) DECLSPEC_HIDDEN;
 typedef struct _function_t function_t;
 typedef struct _vbscode_t vbscode_t;
 typedef struct _script_ctx_t script_ctx_t;
+typedef struct _vbdisp_t vbdisp_t;
 
 typedef struct named_item_t {
     IDispatch *disp;
@@ -73,19 +74,37 @@ typedef struct {
     function_t *entries[VBDISP_ANY];
 } vbdisp_funcprop_desc_t;
 
+#define BP_GET      1
+#define BP_GETPUT   2
+
+typedef struct {
+    DISPID id;
+    HRESULT (*proc)(vbdisp_t*,VARIANT*,unsigned,VARIANT*);
+    DWORD flags;
+    unsigned min_args;
+    unsigned max_args;
+} builtin_prop_t;
+
 typedef struct _class_desc_t {
     const WCHAR *name;
     script_ctx_t *ctx;
+
     unsigned class_initialize_id;
     unsigned class_terminate_id;
     unsigned func_cnt;
     vbdisp_funcprop_desc_t *funcs;
+
     unsigned prop_cnt;
     vbdisp_prop_desc_t *props;
+
+    unsigned builtin_prop_cnt;
+    const builtin_prop_t *builtin_props;
+    ITypeInfo *typeinfo;
+
     struct _class_desc_t *next;
 } class_desc_t;
 
-typedef struct {
+struct _vbdisp_t {
     IDispatchEx IDispatchEx_iface;
 
     LONG ref;
@@ -94,10 +113,11 @@ typedef struct {
 
     const class_desc_t *desc;
     VARIANT props[1];
-} vbdisp_t;
+};
 
 HRESULT create_vbdisp(const class_desc_t*,vbdisp_t**);
 HRESULT disp_get_id(IDispatch*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*);
+HRESULT vbdisp_get_id(vbdisp_t*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*);
 HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,DISPPARAMS*,VARIANT*);
 HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,VARIANT*);
 void collect_objects(script_ctx_t*);
@@ -126,6 +146,9 @@ struct _script_ctx_t {
 
     class_desc_t script_desc;
     vbdisp_t *script_obj;
+
+    class_desc_t global_desc;
+    vbdisp_t *global_obj;
 
     dynamic_var_t *global_vars;
     function_t *global_funcs;
@@ -267,6 +290,19 @@ struct _vbscode_t {
 void release_vbscode(vbscode_t*) DECLSPEC_HIDDEN;
 HRESULT compile_script(script_ctx_t*,const WCHAR*,vbscode_t**) DECLSPEC_HIDDEN;
 HRESULT exec_script(script_ctx_t*,function_t*,IDispatch*,DISPPARAMS*,VARIANT*) DECLSPEC_HIDDEN;
+
+#define TID_LIST \
+    XDIID(ErrObj) \
+    XDIID(GlobalObj)
+
+typedef enum {
+#define XDIID(iface) iface ## _tid,
+TID_LIST
+#undef XDIID
+    LAST_tid
+} tid_t;
+
+HRESULT get_typeinfo(tid_t,ITypeInfo**);
 
 HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
 

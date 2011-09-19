@@ -69,6 +69,14 @@ HRESULT vbdisp_get_id(vbdisp_t *This, BSTR name, vbdisp_invoke_type_t invoke_typ
         }
     }
 
+    if(This->desc->typeinfo) {
+        HRESULT hres;
+
+        hres = ITypeInfo_GetIDsOfNames(This->desc->typeinfo, &name, 1, id);
+        if(SUCCEEDED(hres))
+            return S_OK;
+    }
+
     *id = -1;
     return DISP_E_UNKNOWNNAME;
 }
@@ -121,6 +129,36 @@ static HRESULT invoke_variant_prop(vbdisp_t *This, VARIANT *v, WORD flags, DISPP
     }
 
     return hres;
+}
+
+static HRESULT invoke_builtin(vbdisp_t *This, const builtin_prop_t *prop, WORD flags, DISPPARAMS *dp, VARIANT *res)
+{
+    switch(flags) {
+    case DISPATCH_PROPERTYGET:
+        if(!(prop->flags & (BP_GET|BP_GETPUT))) {
+            FIXME("property does not support DISPATCH_PROPERTYGET\n");
+            return E_FAIL;
+        }
+        /* FALLTHROUGH */
+    case DISPATCH_PROPERTYGET|DISPATCH_METHOD:
+        if(arg_cnt(dp) < prop->min_args || arg_cnt(dp) > (prop->max_args ? prop->max_args : prop->min_args)) {
+            FIXME("invalid number of arguments\n");
+            return E_FAIL;
+        }
+
+        return prop->proc(This, dp->rgvarg, dp->cArgs, res);
+    case DISPATCH_PROPERTYPUT:
+        if(!(prop->flags & (BP_GET|BP_GETPUT))) {
+            FIXME("property does not support DISPATCH_PROPERTYPUT\n");
+            return E_FAIL;
+        }
+
+        FIXME("call put\n");
+        return E_NOTIMPL;
+    default:
+        FIXME("unsupported flags %x\n", flags);
+        return E_NOTIMPL;
+    }
 }
 
 static BOOL run_terminator(vbdisp_t *This)
@@ -322,6 +360,20 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     if(id < This->desc->prop_cnt + This->desc->func_cnt)
         return invoke_variant_prop(This, This->props+(id-This->desc->func_cnt), wFlags, pdp, pvarRes);
 
+    if(This->desc->builtin_prop_cnt) {
+        unsigned min = 0, max = This->desc->builtin_prop_cnt-1, i;
+
+        while(min <= max) {
+            i = (min+max)/2;
+            if(This->desc->builtin_props[i].id == id)
+                return invoke_builtin(This, This->desc->builtin_props+i, wFlags, pdp, pvarRes);
+            if(This->desc->builtin_props[i].id < id)
+                min = i+1;
+            else
+                max = i-1;
+        }
+    }
+
     return DISP_E_MEMBERNOTFOUND;
 }
 
@@ -434,12 +486,6 @@ void collect_objects(script_ctx_t *ctx)
         iter->desc = NULL;
         IDispatchEx_Release(&iter->IDispatchEx_iface);
     }
-}
-
-HRESULT init_global(script_ctx_t *ctx)
-{
-    ctx->script_desc.ctx = ctx;
-    return create_vbdisp(&ctx->script_desc, &ctx->script_obj);
 }
 
 HRESULT disp_get_id(IDispatch *disp, BSTR name, vbdisp_invoke_type_t invoke_type, BOOL search_private, DISPID *id)

@@ -22,6 +22,7 @@
 #include "objsafe.h"
 #include "rpcproxy.h"
 #include "vbscript_classes.h"
+#include "vbsglobal.h"
 
 #include "wine/debug.h"
 
@@ -30,6 +31,66 @@ WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 static HINSTANCE vbscript_hinstance;
+
+static ITypeLib *typelib;
+static ITypeInfo *typeinfos[LAST_tid];
+
+static REFIID tid_ids[] = {
+#define XDIID(iface) &DIID_ ## iface,
+TID_LIST
+#undef XDIID
+};
+
+HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
+{
+    HRESULT hres;
+
+    if (!typelib) {
+        ITypeLib *tl;
+
+        static const WCHAR vbscript_dll1W[] = {'v','b','s','c','r','i','p','t','.','d','l','l','\\','1',0};
+
+        hres = LoadTypeLib(vbscript_dll1W, &tl);
+        if(FAILED(hres)) {
+            ERR("LoadRegTypeLib failed: %08x\n", hres);
+            return hres;
+        }
+
+        if(InterlockedCompareExchangePointer((void**)&typelib, tl, NULL))
+            ITypeLib_Release(tl);
+    }
+
+    if(!typeinfos[tid]) {
+        ITypeInfo *ti;
+
+        hres = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &ti);
+        if(FAILED(hres)) {
+            ERR("GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_guid(tid_ids[tid]), hres);
+            return hres;
+        }
+
+        if(InterlockedCompareExchangePointer((void**)(typeinfos+tid), ti, NULL))
+            ITypeInfo_Release(ti);
+    }
+
+    *typeinfo = typeinfos[tid];
+    return S_OK;
+}
+
+static void release_typelib(void)
+{
+    unsigned i;
+
+    if(!typelib)
+        return;
+
+    for(i=0; i < sizeof(typeinfos)/sizeof(*typeinfos); i++) {
+        if(typeinfos[i])
+            ITypeInfo_Release(typeinfos[i]);
+    }
+
+    ITypeLib_Release(typelib);
+}
 
 const char *debugstr_variant(const VARIANT *v)
 {
@@ -210,6 +271,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
         DisableThreadLibraryCalls(hInstDLL);
         vbscript_hinstance = hInstDLL;
         break;
+    case DLL_PROCESS_DETACH:
+        release_typelib();
     }
 
     return TRUE;
