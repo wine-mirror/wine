@@ -1336,23 +1336,6 @@ static void WOD_PushData(WINMM_Device *device)
             queue = queue->lpNext;
     }
 
-    if(avail_frames != 0 && queue_frames == 0){
-        hr = IAudioRenderClient_GetBuffer(device->render, avail_frames, &data);
-        if(FAILED(hr)){
-            ERR("GetBuffer failed: %08x\n", hr);
-            goto exit;
-        }
-
-        hr = IAudioRenderClient_ReleaseBuffer(device->render, avail_frames,
-                AUDCLNT_BUFFERFLAGS_SILENT);
-        if(FAILED(hr)){
-            ERR("ReleaseBuffer failed: %08x\n", hr);
-            goto exit;
-        }
-
-        goto exit;
-    }
-
     if(queue_frames < avail_frames)
         avail_frames = queue_frames;
     if(avail_frames == 0)
