@@ -1481,6 +1481,37 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
             flags, fx, debug_d3dtexturefiltertype(filter));
     TRACE("Usage is %s.\n", debug_d3dusage(dst_surface->resource.usage));
 
+    if (fx)
+    {
+        TRACE("dwSize %#x.\n", fx->dwSize);
+        TRACE("dwDDFX %#x.\n", fx->dwDDFX);
+        TRACE("dwROP %#x.\n", fx->dwROP);
+        TRACE("dwDDROP %#x.\n", fx->dwDDROP);
+        TRACE("dwRotationAngle %#x.\n", fx->dwRotationAngle);
+        TRACE("dwZBufferOpCode %#x.\n", fx->dwZBufferOpCode);
+        TRACE("dwZBufferLow %#x.\n", fx->dwZBufferLow);
+        TRACE("dwZBufferHigh %#x.\n", fx->dwZBufferHigh);
+        TRACE("dwZBufferBaseDest %#x.\n", fx->dwZBufferBaseDest);
+        TRACE("dwZDestConstBitDepth %#x.\n", fx->dwZDestConstBitDepth);
+        TRACE("lpDDSZBufferDest %p.\n", fx->u1.lpDDSZBufferDest);
+        TRACE("dwZSrcConstBitDepth %#x.\n", fx->dwZSrcConstBitDepth);
+        TRACE("lpDDSZBufferSrc %p.\n", fx->u2.lpDDSZBufferSrc);
+        TRACE("dwAlphaEdgeBlendBitDepth %#x.\n", fx->dwAlphaEdgeBlendBitDepth);
+        TRACE("dwAlphaEdgeBlend %#x.\n", fx->dwAlphaEdgeBlend);
+        TRACE("dwReserved %#x.\n", fx->dwReserved);
+        TRACE("dwAlphaDestConstBitDepth %#x.\n", fx->dwAlphaDestConstBitDepth);
+        TRACE("lpDDSAlphaDest %p.\n", fx->u3.lpDDSAlphaDest);
+        TRACE("dwAlphaSrcConstBitDepth %#x.\n", fx->dwAlphaSrcConstBitDepth);
+        TRACE("lpDDSAlphaSrc %p.\n", fx->u4.lpDDSAlphaSrc);
+        TRACE("lpDDSPattern %p.\n", fx->u5.lpDDSPattern);
+        TRACE("ddckDestColorkey {%#x, %#x}.\n",
+                fx->ddckDestColorkey.dwColorSpaceLowValue,
+                fx->ddckDestColorkey.dwColorSpaceHighValue);
+        TRACE("ddckSrcColorkey {%#x, %#x}.\n",
+                fx->ddckSrcColorkey.dwColorSpaceLowValue,
+                fx->ddckSrcColorkey.dwColorSpaceHighValue);
+    }
+
     if ((dst_surface->flags & SFLAG_LOCKED) || (src_surface && (src_surface->flags & SFLAG_LOCKED)))
     {
         WARN("Surface is busy, returning WINEDDERR_SURFACEBUSY.\n");
