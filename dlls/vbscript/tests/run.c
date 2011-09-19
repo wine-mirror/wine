@@ -1098,6 +1098,7 @@ static void run_tests(void)
     CHECK_CALLED(testobj_propput_i);
 
     run_from_res("lang.vbs");
+    run_from_res("api.vbs");
 
     test_gc();
 }
