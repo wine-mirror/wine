@@ -9695,6 +9695,7 @@ msgstr ""
 "Bedingungen weiter zu verbreiten; führe 'start /L' für mehr Details aus.\n"
 
 #: start.rc:64
+#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -10921,7 +10922,7 @@ msgstr "&Nebeneinander\tUmschalt+F4"
 #: winefile.rc:87
 #, fuzzy
 msgid "&About Wine File Manager"
-msgstr "Winefile"
+msgstr "&Info über Wine File Manager"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -10932,6 +10933,7 @@ msgid "Error while selecting new font."
 msgstr "Fehler während der Schriftart-Auswahl."
 
 #: winefile.rc:99
+#, fuzzy
 msgid "Wine File Manager"
 msgstr "Winefile"
 
