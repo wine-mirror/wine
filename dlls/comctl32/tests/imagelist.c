@@ -372,6 +372,8 @@ static void test_add_remove(void)
     /* destroy it */
     ok(ImageList_Destroy(himl),"destroy imagelist failed\n");
 
+    ok(-1==ImageList_AddIcon((HIMAGELIST)0xdeadbeef, hicon1),"don't crash on bad handle\n");
+
     ok(DestroyIcon(hicon1),"icon 1 wasn't deleted\n");
     ok(DestroyIcon(hicon2),"icon 2 wasn't deleted\n");
     ok(DestroyIcon(hicon3),"icon 3 wasn't deleted\n");
@@ -380,6 +382,8 @@ static void test_add_remove(void)
 static void test_imagecount(void)
 {
     HIMAGELIST himl;
+
+    ok(0==ImageList_GetImageCount((HIMAGELIST)0xdeadbeef),"don't crash on bad handle\n");
 
     if (!pImageList_SetImageCount)
     {
@@ -451,6 +455,8 @@ static void test_DrawIndirect(void)
     ok(!pImageList_DrawIndirect(&imldp), "zero hdc succeeded!\n");
     imldp.hdcDst = hdc;
     ok(!pImageList_DrawIndirect(&imldp),"zero himl succeeded!\n");
+    imldp.himl = (HIMAGELIST)0xdeadbeef;
+    ok(!pImageList_DrawIndirect(&imldp),"bad himl succeeded!\n");
     imldp.himl = himl;
 
     REDRAW(hwndfortest);
@@ -1752,11 +1758,15 @@ static void test_iconsize(void)
     ok(cy == 0x1abe11ed, "got %d\n", cy);
 
     ImageList_Destroy(himl);
+
+    ret = ImageList_GetIconSize((HIMAGELIST)0xdeadbeef, &cx, &cy);
+    ok(!ret, "got %d\n", ret);
 }
 
-static void test_create(void)
+static void test_create_destroy(void)
 {
     HIMAGELIST himl;
+    BOOL rc;
 
     /* list with zero or negative image dimensions */
     himl = ImageList_Create(0, 0, ILC_COLOR16, 0, 3);
@@ -1773,6 +1783,9 @@ static void test_create(void)
 
     himl = ImageList_Create(-1, 16, ILC_COLOR16, 0, 3);
     ok(himl == NULL, "got %p\n", himl);
+
+    rc = ImageList_Destroy((HIMAGELIST)0xdeadbeef);
+    ok(rc == FALSE, "ImageList_Destroy(0xdeadbeef) should fail and not crash\n");
 }
 
 static void test_IImageList_Clone(void)
@@ -1912,7 +1925,7 @@ START_TEST(imagelist)
 
     InitCommonControls();
 
-    test_create();
+    test_create_destroy();
     test_hotspot();
     test_add_remove();
     test_imagecount();

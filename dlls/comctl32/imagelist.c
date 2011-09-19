@@ -54,6 +54,7 @@
 #include "commoncontrols.h"
 #include "imagelist.h"
 #include "wine/debug.h"
+#include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(imagelist);
 
@@ -3587,7 +3588,17 @@ static const IImageListVtbl ImageListImpl_Vtbl = {
 
 static inline BOOL is_valid(HIMAGELIST himl)
 {
-    return himl && himl->lpVtbl == &ImageListImpl_Vtbl;
+    BOOL valid;
+    __TRY
+    {
+        valid = himl && himl->lpVtbl == &ImageListImpl_Vtbl;
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        valid = FALSE;
+    }
+    __ENDTRY
+    return valid;
 }
 
 /*************************************************************************
