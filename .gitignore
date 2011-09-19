@@ -146,6 +146,7 @@ include/commoncontrols.h
 include/config.h
 include/control.h
 include/cor.h
+include/cordebug.h
 include/ctfutb.h
 include/ctxtcall.h
 include/d3d10.h

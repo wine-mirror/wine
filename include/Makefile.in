@@ -18,6 +18,7 @@ PUBLIC_IDL_H_SRCS = \
 	commoncontrols.idl \
 	control.idl \
 	cor.idl \
+	cordebug.idl \
 	ctfutb.idl \
 	ctxtcall.idl \
 	d3d10.idl \
