@@ -742,3 +742,53 @@ HRESULT WINAPI CoInternetIsFeatureEnabledForUrl(INTERNETFEATURELIST FeatureEntry
     }
     }
 }
+
+/***********************************************************************
+ *             CoInternetIsFeatureZoneElevationEnabled (URLMON.@)
+ */
+HRESULT WINAPI CoInternetIsFeatureZoneElevationEnabled(LPCWSTR szFromURL, LPCWSTR szToURL,
+        IInternetSecurityManager *pSecMgr, DWORD dwFlags)
+{
+    HRESULT hres;
+
+    TRACE("(%s %s %p %x)\n", debugstr_w(szFromURL), debugstr_w(szToURL), pSecMgr, dwFlags);
+
+    if(!pSecMgr || !szToURL)
+        return CoInternetIsFeatureEnabled(FEATURE_ZONE_ELEVATION, dwFlags);
+
+    switch(dwFlags) {
+    case GET_FEATURE_FROM_THREAD:
+    case GET_FEATURE_FROM_THREAD_LOCALMACHINE:
+    case GET_FEATURE_FROM_THREAD_INTRANET:
+    case GET_FEATURE_FROM_THREAD_TRUSTED:
+    case GET_FEATURE_FROM_THREAD_INTERNET:
+    case GET_FEATURE_FROM_THREAD_RESTRICTED:
+        FIXME("unsupported flags %x\n", dwFlags);
+        return E_NOTIMPL;
+
+    case GET_FEATURE_FROM_PROCESS:
+        hres = CoInternetIsFeatureEnabled(FEATURE_ZONE_ELEVATION, dwFlags);
+        if(hres != S_OK)
+            return hres;
+        /* fall through */
+
+    default: {
+        DWORD policy = URLPOLICY_DISALLOW;
+
+        hres = IInternetSecurityManager_ProcessUrlAction(pSecMgr, szToURL,
+                URLACTION_FEATURE_ZONE_ELEVATION, (BYTE*)&policy, sizeof(DWORD),
+                NULL, 0, PUAF_NOUI, 0);
+        if(FAILED(hres))
+            return S_OK;
+
+        switch(policy) {
+        case URLPOLICY_ALLOW:
+            return S_FALSE;
+        case URLPOLICY_QUERY:
+            FIXME("Ask user dialog not implemented\n");
+        default:
+            return S_OK;
+        }
+    }
+    }
+}

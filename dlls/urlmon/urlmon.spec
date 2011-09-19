@@ -22,6 +22,7 @@
 @ stdcall CoInternetGetSession(long ptr long)
 @ stdcall CoInternetIsFeatureEnabled(long long)
 @ stdcall CoInternetIsFeatureEnabledForUrl(long long wstr ptr)
+@ stdcall CoInternetIsFeatureZoneElevationEnabled(wstr wstr ptr long)
 @ stdcall CoInternetParseUrl(wstr long long wstr long ptr long)
 @ stdcall CoInternetParseIUri(ptr long long wstr long ptr long)
 @ stdcall CoInternetQueryInfo(ptr long long ptr long ptr long)
