@@ -164,7 +164,7 @@ NTSTATUS WINAPI RtlQueryAtomInAtomTable( RTL_ATOM_TABLE table, RTL_ATOM atom, UL
     }
 
     TRACE( "%p %x -> %s (%x)\n",
-           table, atom, len ? debugstr_wn(name, wlen / sizeof(WCHAR)) : NULL, status );
+           table, atom, len ? debugstr_wn(name, wlen / sizeof(WCHAR)) : "(null)", status );
     return status;
 }
 
