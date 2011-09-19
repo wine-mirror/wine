@@ -1540,9 +1540,9 @@ static inline BOOL is_r8g8b8( int depth, const ColorShifts *color_shifts )
 }
 
 /* copy the image bits, fixing up alignment and byte swapping as necessary */
-static DWORD copy_image_bits( BITMAPINFO *info, BOOL is_r8g8b8, XImage *image,
-                              const struct gdi_image_bits *src_bits, struct gdi_image_bits *dst_bits,
-                              struct bitblt_coords *coords, const int *mapping, unsigned int zeropad_mask )
+DWORD copy_image_bits( BITMAPINFO *info, BOOL is_r8g8b8, XImage *image,
+                       const struct gdi_image_bits *src_bits, struct gdi_image_bits *dst_bits,
+                       struct bitblt_coords *coords, const int *mapping, unsigned int zeropad_mask )
 {
 #ifdef WORDS_BIGENDIAN
     static const int client_byte_order = MSBFirst;

@@ -277,6 +277,9 @@ extern X_PHYSBITMAP *X11DRV_init_phys_bitmap( HBITMAP hbitmap ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_create_phys_bitmap( HBITMAP hbitmap, const BITMAP *bitmap, int depth,
                                        int true_color, const ColorShifts *shifts ) DECLSPEC_HIDDEN;
 extern Pixmap X11DRV_get_pixmap( HBITMAP hbitmap ) DECLSPEC_HIDDEN;
+extern DWORD copy_image_bits( BITMAPINFO *info, BOOL is_r8g8b8, XImage *image,
+                              const struct gdi_image_bits *src_bits, struct gdi_image_bits *dst_bits,
+                              struct bitblt_coords *coords, const int *mapping, unsigned int zeropad_mask ) DECLSPEC_HIDDEN;
 
 extern RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp ) DECLSPEC_HIDDEN;
 extern void update_x11_clipping( X11DRV_PDEVICE *physDev, const RGNDATA *data ) DECLSPEC_HIDDEN;
