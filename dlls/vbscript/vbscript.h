@@ -186,6 +186,7 @@ typedef enum {
     X(double,         1, ARG_DOUBLE,  0)          \
     X(empty,          1, 0,           0)          \
     X(equal,          1, 0,           0)          \
+    X(errmode,        1, ARG_INT,     0)          \
     X(eqv,            1, 0,           0)          \
     X(exp,            1, 0,           0)          \
     X(gt,             1, 0,           0)          \

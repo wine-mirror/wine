@@ -732,6 +732,13 @@ static HRESULT interp_bool(exec_ctx_t *ctx)
     return stack_push(ctx, &v);
 }
 
+static HRESULT interp_errmode(exec_ctx_t *ctx)
+{
+    const int err_mode = ctx->instr->arg1.uint;
+    FIXME("%d\n", err_mode);
+    return E_NOTIMPL;
+}
+
 static HRESULT interp_string(exec_ctx_t *ctx)
 {
     VARIANT v;

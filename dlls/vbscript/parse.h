@@ -107,6 +107,7 @@ typedef enum {
     STAT_EXITSUB,
     STAT_FUNC,
     STAT_IF,
+    STAT_ONERROR,
     STAT_SET,
     STAT_STOP,
     STAT_UNTIL,
@@ -193,6 +194,11 @@ typedef struct {
     expression_t *expr;
     statement_t *body;
 } while_statement_t;
+
+typedef struct {
+    statement_t stat;
+    BOOL resume_next;
+} onerror_statement_t;
 
 typedef struct {
     const WCHAR *code;

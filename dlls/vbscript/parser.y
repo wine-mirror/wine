@@ -55,6 +55,7 @@ static statement_t *new_dim_statement(parser_ctx_t*,dim_decl_t*);
 static statement_t *new_while_statement(parser_ctx_t*,statement_type_t,expression_t*,statement_t*);
 static statement_t *new_if_statement(parser_ctx_t*,expression_t*,statement_t*,elseif_decl_t*,statement_t*);
 static statement_t *new_function_statement(parser_ctx_t*,function_decl_t*);
+static statement_t *new_onerror_statement(parser_ctx_t*,BOOL);
 
 static dim_decl_t *new_dim_decl(parser_ctx_t*,const WCHAR*,dim_decl_t*);
 static elseif_decl_t *new_elseif_decl(parser_ctx_t*,expression_t*,statement_t*);
@@ -170,6 +171,8 @@ Statement
     | tSET MemberExpression Arguments_opt '=' Expression
                                             { $2->args = $3; $$ = new_set_statement(ctx, $2, $5); CHECK_ERROR; }
     | tSTOP                                 { $$ = new_statement(ctx, STAT_STOP, 0); CHECK_ERROR; }
+    | tON tERROR tRESUME tNEXT              { $$ = new_onerror_statement(ctx, TRUE); CHECK_ERROR; }
+    | tON tERROR tGOTO '0'                  { $$ = new_onerror_statement(ctx, FALSE); CHECK_ERROR; }
 
 MemberExpression
     : tIdentifier                           { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
@@ -611,6 +614,18 @@ static statement_t *new_if_statement(parser_ctx_t *ctx, expression_t *expr, stat
     stat->if_stat = if_stat;
     stat->elseifs = elseif_decl;
     stat->else_stat = else_stat;
+    return &stat->stat;
+}
+
+static statement_t *new_onerror_statement(parser_ctx_t *ctx, BOOL resume_next)
+{
+    onerror_statement_t *stat;
+
+    stat = new_statement(ctx, STAT_ONERROR, sizeof(*stat));
+    if(!stat)
+        return NULL;
+
+    stat->resume_next = resume_next;
     return &stat->stat;
 }
 

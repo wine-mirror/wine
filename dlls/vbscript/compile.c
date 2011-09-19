@@ -697,6 +697,11 @@ static HRESULT compile_exitprop_statement(compile_ctx_t *ctx)
     return push_instr_addr(ctx, OP_jmp, ctx->prop_end_label);
 }
 
+static HRESULT compile_onerror_statement(compile_ctx_t *ctx, onerror_statement_t *stat)
+{
+    return push_instr_int(ctx, OP_errmode, stat->resume_next);
+}
+
 static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
 {
     HRESULT hres;
@@ -733,6 +738,9 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
             break;
         case STAT_IF:
             hres = compile_if_statement(ctx, (if_statement_t*)stat);
+            break;
+        case STAT_ONERROR:
+            hres = compile_onerror_statement(ctx, (onerror_statement_t*)stat);
             break;
         case STAT_SET:
             hres = compile_assign_statement(ctx, (assign_statement_t*)stat, TRUE);
