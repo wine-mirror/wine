@@ -1472,7 +1472,7 @@ static HRESULT WINAPI IShellLinkA_fnSetDescription(IShellLinkA *iface, LPCSTR ps
 {
     IShellLinkImpl *This = impl_from_IShellLinkA(iface);
 
-    TRACE("(%p)->(pName=%s)\n", This, pszName);
+    TRACE("(%p)->(pName=%s)\n", This, debugstr_a(pszName));
 
     HeapFree(GetProcessHeap(), 0, This->sDescription);
     if (pszName)
@@ -1540,7 +1540,7 @@ static HRESULT WINAPI IShellLinkA_fnSetArguments(IShellLinkA *iface, LPCSTR pszA
 {
     IShellLinkImpl *This = impl_from_IShellLinkA(iface);
 
-    TRACE("(%p)->(args=%s)\n",This, pszArgs);
+    TRACE("(%p)->(args=%s)\n",This, debugstr_a(pszArgs));
 
     HeapFree(GetProcessHeap(), 0, This->sArgs);
     if (pszArgs)
@@ -1664,7 +1664,7 @@ static HRESULT WINAPI IShellLinkA_fnSetPath(IShellLinkA *iface, LPCSTR pszFile)
     HRESULT r;
     LPWSTR str;
 
-    TRACE("(%p)->(path=%s)\n",This, pszFile);
+    TRACE("(%p)->(path=%s)\n",This, debugstr_a(pszFile));
 
     if (!pszFile) return E_INVALIDARG;
 
