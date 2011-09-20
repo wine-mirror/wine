@@ -100,7 +100,10 @@ static void test_D3DXCheckTextureRequirements(IDirect3DDevice9 *device)
     width = caps.MaxTextureWidth-1;
     hr = D3DXCheckTextureRequirements(device, &width, NULL, NULL, 0, NULL, D3DPOOL_DEFAULT);
     ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
-    ok(width == caps.MaxTextureWidth-1, "Returned width %d, expected %d\n", width, caps.MaxTextureWidth-1);
+    if (caps.TextureCaps & D3DPTEXTURECAPS_POW2)
+        ok(width == caps.MaxTextureWidth, "Returned width %d, expected %d\n", width, caps.MaxTextureWidth);
+    else
+        ok(width == caps.MaxTextureWidth-1, "Returned width %d, expected %d\n", width, caps.MaxTextureWidth-1);
 
     /* mipmaps */
     width = 64; height = 63;
