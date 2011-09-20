@@ -1243,7 +1243,7 @@ static HRESULT WINAPI ID3DXMeshImpl_OptimizeInplace(ID3DXMesh *iface, DWORD flag
         return E_NOTIMPL;
     }
 
-    hr = iface->lpVtbl->LockIndexBuffer(iface, 0, (void**)&indices);
+    hr = iface->lpVtbl->LockIndexBuffer(iface, 0, &indices);
     if (FAILED(hr)) goto cleanup;
 
     dword_indices = HeapAlloc(GetProcessHeap(), 0, This->numfaces * 3 * sizeof(DWORD));
@@ -3010,7 +3010,7 @@ static HRESULT load_skin_mesh_from_xof(IDirectXFileData *filedata,
     }
     d3dxmesh->lpVtbl->UnlockVertexBuffer(d3dxmesh);
 
-    hr = d3dxmesh->lpVtbl->LockIndexBuffer(d3dxmesh, 0, (void**)&indices);
+    hr = d3dxmesh->lpVtbl->LockIndexBuffer(d3dxmesh, 0, &indices);
     if (FAILED(hr)) goto cleanup;
 
     index_in_ptr = mesh_data.indices;

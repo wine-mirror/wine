@@ -2268,7 +2268,7 @@ static void test_D3DXFloat_Array(void)
     out = D3DXFloat32To16Array(&half, &single, 0);
     ok(out == &half, "Got %p, expected %p.\n", out, &half);
 
-    out = D3DXFloat16To32Array(&single, (D3DXFLOAT16 *)&half, 0);
+    out = D3DXFloat16To32Array(&single, &half, 0);
     ok(out == &single, "Got %p, expected %p.\n", out, &single);
 
     for (i = 0; i < sizeof(testdata)/sizeof(testdata[0]); i++)
