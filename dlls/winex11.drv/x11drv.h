@@ -282,7 +282,6 @@ extern DWORD copy_image_bits( BITMAPINFO *info, BOOL is_r8g8b8, XImage *image,
                               struct bitblt_coords *coords, const int *mapping, unsigned int zeropad_mask ) DECLSPEC_HIDDEN;
 
 extern RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp ) DECLSPEC_HIDDEN;
-extern void update_x11_clipping( X11DRV_PDEVICE *physDev, const RGNDATA *data ) DECLSPEC_HIDDEN;
 extern RGNDATA *add_extra_clipping_region( X11DRV_PDEVICE *dev, HRGN rgn ) DECLSPEC_HIDDEN;
 extern void restore_clipping_region( X11DRV_PDEVICE *dev, RGNDATA *data ) DECLSPEC_HIDDEN;
 

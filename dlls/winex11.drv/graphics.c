@@ -188,7 +188,7 @@ RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp )
 /***********************************************************************
  *           update_x11_clipping
  */
-void update_x11_clipping( X11DRV_PDEVICE *physDev, const RGNDATA *data )
+static void update_x11_clipping( X11DRV_PDEVICE *physDev, const RGNDATA *data )
 {
     wine_tsx11_lock();
     XSetClipRectangles( gdi_display, physDev->gc, physDev->dc_rect.left, physDev->dc_rect.top,
