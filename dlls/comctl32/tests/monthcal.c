@@ -1799,6 +1799,26 @@ static void test_MCM_SIZERECTTOMIN(void)
     DestroyWindow(hwnd);
 }
 
+static void test_MCM_GETCALENDARCOUNT(void)
+{
+    HWND hwnd;
+    DWORD ret;
+
+    hwnd = create_monthcal_control(0);
+
+    ret = SendMessageA(hwnd, MCM_GETCALENDARCOUNT, 0, 0);
+    if (ret == 0)
+    {
+        win_skip("Message MCM_GETCALENDARCOUNT unsupported. Skipping.\n");
+        DestroyWindow(hwnd);
+        return;
+    }
+
+    todo_wine expect(2, ret);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(monthcal)
 {
     BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
@@ -1866,6 +1886,7 @@ START_TEST(monthcal)
     test_hittest_v6();
     test_get_set_border();
     test_MCM_SIZERECTTOMIN();
+    test_MCM_GETCALENDARCOUNT();
 
     unload_v6_module(ctx_cookie, hCtx);
 

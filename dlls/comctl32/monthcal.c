@@ -2809,6 +2809,9 @@ MONTHCAL_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case MCM_GETUNICODEFORMAT:
     return MONTHCAL_GetUnicodeFormat(infoPtr);
 
+  case MCM_GETCALENDARCOUNT:
+    return MONTHCAL_GetCalCount(infoPtr);
+
   case WM_GETDLGCODE:
     return DLGC_WANTARROWS | DLGC_WANTCHARS;
 
