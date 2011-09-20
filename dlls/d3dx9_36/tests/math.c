@@ -2219,7 +2219,9 @@ static void test_D3DXVec_Array(void)
 static void test_D3DXFloat_Array(void)
 {
     static const float z = 0.0f;
-    float nnan = 0.0f/z;
+    /* Compilers set different sign bits on 0.0 / 0.0, pick the right ones for NaN and -NaN */
+    float tmpnan = 0.0f/z;
+    float nnan = copysignf(1, tmpnan) < 0.0f ? tmpnan : -tmpnan;
     float nan = -nnan;
     unsigned int i;
     void *out = NULL;
