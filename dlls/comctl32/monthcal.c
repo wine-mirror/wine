@@ -987,14 +987,20 @@ static void MONTHCAL_PaintTodayTitle(const MONTHCAL_INFO *infoPtr, HDC hdc, cons
 /* today mark + focus */
 static void MONTHCAL_PaintFocusAndCircle(const MONTHCAL_INFO *infoPtr, HDC hdc, const PAINTSTRUCT *ps)
 {
-  if((infoPtr->minSel.wMonth == infoPtr->todaysDate.wMonth) &&
-     (infoPtr->minSel.wYear  == infoPtr->todaysDate.wYear) &&
-    !(infoPtr->dwStyle & MCS_NOTODAYCIRCLE))
+  /* circle today date if only it's in fully visible month */
+  if (!(infoPtr->dwStyle & MCS_NOTODAYCIRCLE))
   {
-    MONTHCAL_CircleDay(infoPtr, hdc, &infoPtr->todaysDate);
+    INT i;
+
+    for (i = 0; i < MONTHCAL_GetCalCount(infoPtr); i++)
+      if (!MONTHCAL_CompareMonths(&infoPtr->todaysDate, &infoPtr->calendars[i].month))
+      {
+        MONTHCAL_CircleDay(infoPtr, hdc, &infoPtr->todaysDate);
+        break;
+      }
   }
 
-  if(!MONTHCAL_IsDateEqual(&infoPtr->focusedSel, &st_null))
+  if (!MONTHCAL_IsDateEqual(&infoPtr->focusedSel, &st_null))
   {
     RECT r;
     MONTHCAL_GetDayRect(infoPtr, &infoPtr->focusedSel, &r, -1);
