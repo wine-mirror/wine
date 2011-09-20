@@ -2766,6 +2766,80 @@ x11drv_fallback:
 
 
 /***********************************************************************
+ *           xrenderdrv_BlendImage
+ */
+static DWORD xrenderdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_bits *bits,
+                                    struct bitblt_coords *src, struct bitblt_coords *dst,
+                                    BLENDFUNCTION func )
+{
+    struct xrender_physdev *physdev = get_xrender_dev( dev );
+    DWORD ret;
+    enum wxr_format format;
+    XRenderPictFormat *pict_format;
+    Picture dst_pict, src_pict, mask_pict;
+    Pixmap src_pixmap;
+    BOOL use_repeat;
+
+    if (!X11DRV_XRender_Installed)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pBlendImage );
+        return dev->funcs->pBlendImage( dev, info, bits, src, dst, func );
+    }
+
+    format = get_xrender_format_from_bitmapinfo( info, func.AlphaFormat & AC_SRC_ALPHA );
+    if (!(pict_format = pict_formats[format])) goto update_format;
+
+    /* make sure we can create an image with the same bpp */
+    if (info->bmiHeader.biBitCount != pixmap_formats[pict_format->depth]->bits_per_pixel)
+        goto update_format;
+
+    if (format == WXR_FORMAT_MONO && physdev->format != WXR_FORMAT_MONO)
+        goto update_format;
+
+    if (!bits) return ERROR_SUCCESS;  /* just querying the format */
+
+    ret = create_image_pixmap( info, bits, src, format, &src_pixmap, &src_pict, &use_repeat );
+    if (!ret)
+    {
+        double xscale, yscale;
+
+        X11DRV_LockDIBSection( physdev->x11dev, DIB_Status_GdiMod );
+
+        if (!use_repeat)
+        {
+            xscale = src->width / (double)dst->width;
+            yscale = src->height / (double)dst->height;
+        }
+        else xscale = yscale = 1;  /* no scaling needed with a repeating source */
+
+        dst_pict = get_xrender_picture( physdev, 0, &dst->visrect );
+
+        EnterCriticalSection( &xrender_cs );
+        mask_pict = get_mask_pict( func.SourceConstantAlpha * 257 );
+
+        wine_tsx11_lock();
+        xrender_blit( PictOpOver, src_pict, mask_pict, dst_pict, src->x, src->y,
+                      physdev->x11dev->dc_rect.left + dst->x,
+                      physdev->x11dev->dc_rect.top + dst->y,
+                      xscale, yscale, dst->width, dst->height );
+        pXRenderFreePicture( gdi_display, src_pict );
+        XFreePixmap( gdi_display, src_pixmap );
+        wine_tsx11_unlock();
+
+        LeaveCriticalSection( &xrender_cs );
+
+        X11DRV_UnlockDIBSection( physdev->x11dev, TRUE );
+    }
+    return ret;
+
+update_format:
+    if (info->bmiHeader.biHeight > 0) info->bmiHeader.biHeight = -info->bmiHeader.biHeight;
+    set_color_info( physdev->pict_format, info );
+    return ERROR_BAD_FORMAT;
+}
+
+
+/***********************************************************************
  *           xrenderdrv_AlphaBlend
  */
 static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
@@ -2881,7 +2955,7 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pArc */
     NULL,                               /* pArcTo */
     NULL,                               /* pBeginPath */
-    NULL,                               /* pBlendImage */
+    xrenderdrv_BlendImage,              /* pBlendImage */
     NULL,                               /* pChoosePixelFormat */
     NULL,                               /* pChord */
     NULL,                               /* pCloseFigure */
