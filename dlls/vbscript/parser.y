@@ -198,7 +198,9 @@ DoType
 IfStatement
     : tIF Expression tTHEN tNL StatementsNl ElseIfs_opt Else_opt tEND tIF
                                             { $$ = new_if_statement(ctx, $2, $5, $6, $7); CHECK_ERROR; }
-    /* FIXME: short if statement */
+    | tIF Expression tTHEN Statement        { $$ = new_if_statement(ctx, $2, $4, NULL, NULL); CHECK_ERROR; }
+    | tIF Expression tTHEN Statement tELSE Statement
+                                            { $$ = new_if_statement(ctx, $2, $4, NULL, $6); CHECK_ERROR; }
 
 ElseIfs_opt
     : /* empty */                           { $$ = NULL; }

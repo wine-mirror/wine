@@ -164,6 +164,29 @@ Call ok(2^3^2 = 64, "2^3^2 = " & (2^3^2))
 Call ok(-3^2 = 9, "-3^2 = " & (-3^2))
 Call ok(2*3^2 = 18, "2*3^2 = " & (2*3^2))
 
+if true then y = true : x = y
+ok x, "x is false"
+
+x = true : if false then x = false
+ok x, "x is false, if false called?"
+
+if not false then x = true
+ok x, "x is false, if not false not called?"
+
+if not false then x = "test" : x = true
+ok x, "x is false, if not false not called?"
+
+if false then x = y : call ok(false, "if false .. : called")
+
+if false then x = y : call ok(false, "if false .. : called") else x = "else"
+Call ok(x = "else", "else not called?")
+
+if true then x = y else y = x : Call ok(false, "in else?")
+
+if false then :
+
+if false then x = y : if true then call ok(false, "embedded if called")
+
 if false then
     ok false, "if false called"
 end if
