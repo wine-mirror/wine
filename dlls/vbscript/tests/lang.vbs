@@ -41,6 +41,8 @@ Call ok(&hffFFffFF& = -1, "&hffFFffFF& <> -1")
 Call ok(&hffFFffFF& = -1, "&hffFFffFF& <> -1")
 Call ok(--1 = 1, "--1 = " & --1)
 Call ok(-empty = 0, "-empty = " & (-empty))
+Call ok(true = -1, "! true = -1")
+Call ok(false = 0, "false <> 0")
 
 x = "xx"
 Call ok(x = "xx", "x = " & x & " expected ""xx""")
@@ -50,6 +52,12 @@ Call ok(not (true <> true), "true <> true is true")
 Call ok(not ("x" <> "x"), """x"" <> ""x"" is true")
 Call ok(not (empty <> empty), "empty <> empty is true")
 Call ok(x <> "x", "x = ""x""")
+Call ok("true" <> true, """true"" = true is true")
+
+Call ok("" = true = false, """"" = true = false is false")
+Call ok(not(false = true = ""), "false = true = """" is true")
+Call ok(not (false = false <> false = false), "false = false <> false = false is true")
+Call ok(not ("" <> false = false), """"" <> false = false is true")
 
 Call ok(getVT(false) = "VT_BOOL", "getVT(false) is not VT_BOOL")
 Call ok(getVT(true) = "VT_BOOL", "getVT(true) is not VT_BOOL")
@@ -76,6 +84,11 @@ set x = nothing
 Call ok(getVT(x) = "VT_DISPATCH*", "getVT(x=nothing) = " & getVT(x))
 x = true
 Call ok(getVT(x) = "VT_BOOL*", "getVT(x) = " & getVT(x))
+Call ok(getVT(false or true) = "VT_BOOL", "getVT(false) is not VT_BOOL")
+x = "x"
+Call ok(getVT(x) = "VT_BSTR*", "getVT(x) is not VT_BSTR*")
+x = 0.0
+Call ok(getVT(x) = "VT_R8*", "getVT(x) = " & getVT(x))
 
 Call ok(isNullDisp(nothing), "nothing is not nulldisp?")
 
@@ -472,6 +485,13 @@ End Function
 
 Call TestFuncExit(true)
 
+Sub SubParseTest
+End Sub : x = false
+Call SubParseTest
+
+Function FuncParseTest
+End Function : x = false
+
 Function ReturnTrue
      ReturnTrue = false
      ReturnTrue = true
@@ -509,6 +529,9 @@ Call ok(getVT(obj) = "VT_DISPATCH*", "getVT(obj) = " & getVT(obj))
 
 Class EmptyClass
 End Class
+
+Set x = obj
+Call ok(getVT(x) = "VT_DISPATCH*", "getVT(x) = " & getVT(x))
 
 Class TestClass
     Public publicProp
@@ -630,6 +653,9 @@ Call ok(funcCalled = "terminate", "funcCalled = " & funcCalled)
 funcCalled = ""
 Set obj = Nothing
 Call ok(funcCalled = "terminate", "funcCalled = " & funcCalled)
+
+Call (New testclass).publicSub()
+Call (New testclass).publicSub
 
 x = "following ':' is correct syntax" :
 x = "following ':' is correct syntax" :: :
