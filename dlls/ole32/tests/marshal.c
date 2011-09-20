@@ -2268,7 +2268,7 @@ static void test_freethreadedmarshaler(void)
     IMarshal_Release(pFTMarshal);
 }
 
-static void reg_unreg_wine_test_class(BOOL Register)
+static HRESULT reg_unreg_wine_test_class(BOOL Register)
 {
     HRESULT hr;
     char buffer[256];
@@ -2286,9 +2286,16 @@ static void reg_unreg_wine_test_class(BOOL Register)
     if (Register)
     {
         error = RegCreateKeyEx(HKEY_CLASSES_ROOT, buffer, 0, NULL, 0, KEY_SET_VALUE, NULL, &hkey, &dwDisposition);
+        if (error == ERROR_ACCESS_DENIED)
+        {
+            skip("Not authorized to modify the Classes key\n");
+            return E_FAIL;
+        }
         ok(error == ERROR_SUCCESS, "RegCreateKeyEx failed with error %d\n", error);
+        if (error != ERROR_SUCCESS) hr = E_FAIL;
         error = RegSetValueEx(hkey, NULL, 0, REG_SZ, (const unsigned char *)"\"ole32.dll\"", strlen("\"ole32.dll\"") + 1);
         ok(error == ERROR_SUCCESS, "RegSetValueEx failed with error %d\n", error);
+        if (error != ERROR_SUCCESS) hr = E_FAIL;
         RegCloseKey(hkey);
     }
     else
@@ -2297,6 +2304,7 @@ static void reg_unreg_wine_test_class(BOOL Register)
         *strrchr(buffer, '\\') = '\0';
         RegDeleteKey(HKEY_CLASSES_ROOT, buffer);
     }
+    return hr;
 }
 
 static void test_inproc_handler(void)
@@ -2305,7 +2313,8 @@ static void test_inproc_handler(void)
     IUnknown *pObject;
     IUnknown *pObject2;
 
-    reg_unreg_wine_test_class(TRUE);
+    if (FAILED(reg_unreg_wine_test_class(TRUE)))
+        return;
 
     hr = CoCreateInstance(&CLSID_WineTest, NULL, CLSCTX_INPROC_HANDLER, &IID_IUnknown, (void **)&pObject);
     ok_ole_success(hr, "CoCreateInstance");
@@ -2386,7 +2395,8 @@ static void test_handler_marshaling(void)
     HANDLE thread;
     static const LARGE_INTEGER ullZero;
 
-    reg_unreg_wine_test_class(TRUE);
+    if (FAILED(reg_unreg_wine_test_class(TRUE)))
+        return;
     cLocks = 0;
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
