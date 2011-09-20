@@ -1,0 +1,7 @@
+TESTDLL   = wshom.ocx
+IMPORTS   = ole32
+
+C_SRCS = \
+	wshom.c
+
+@MAKE_TEST_RULES@
