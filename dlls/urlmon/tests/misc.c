@@ -1545,7 +1545,7 @@ static void test_internet_features_registry(void) {
     char *name;
     HKEY feature_control;
     HKEY feature;
-    DWORD value;
+    DWORD value, skip_zone;
     BOOL delete_feature_key = TRUE;
     BOOL delete_feature_control_key = FALSE;
 
@@ -1615,21 +1615,32 @@ static void test_internet_features_registry(void) {
 
     value = 1;
     res = RegSetValueExA(feature, "*", 0, REG_DWORD, (BYTE*)&value, sizeof(DWORD));
-    ok(res == ERROR_SUCCESS, "RegSetValueEx failed: %d\n", res);
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip("Not allowed to modify zone elevation\n");
+        skip_zone = 1;
+    }
+    else
+    {
+        skip_zone = 0;
+        ok(res == ERROR_SUCCESS, "RegSetValueEx failed: %d\n", res);
 
-    hres = pCoInternetIsFeatureEnabled(FEATURE_ZONE_ELEVATION, GET_FEATURE_FROM_PROCESS);
-    ok(hres == S_OK, "CoInternetIsFeatureEnabled returned %08x, expected S_OK\n", hres);
-
+        hres = pCoInternetIsFeatureEnabled(FEATURE_ZONE_ELEVATION, GET_FEATURE_FROM_PROCESS);
+        ok(hres == S_OK, "CoInternetIsFeatureEnabled returned %08x, expected S_OK\n", hres);
+    }
     RegDeleteValueA(feature, "*");
     RegCloseKey(feature);
     RegCloseKey(feature_control);
 
     /* Value is still cached from last time. */
-    hres = pCoInternetIsFeatureEnabled(FEATURE_ZONE_ELEVATION, GET_FEATURE_FROM_PROCESS);
-    ok(hres == S_OK, "CoInternetIsFeatureEnabled returned %08x, expected S_OK\n", hres);
+    if (!skip_zone)
+    {
+        hres = pCoInternetIsFeatureEnabled(FEATURE_ZONE_ELEVATION, GET_FEATURE_FROM_PROCESS);
+        ok(hres == S_OK, "CoInternetIsFeatureEnabled returned %08x, expected S_OK\n", hres);
 
-    hres = pCoInternetSetFeatureEnabled(FEATURE_ZONE_ELEVATION, SET_FEATURE_ON_PROCESS, FALSE);
-    ok(hres == S_OK, "CoInternetSetFeatureEnabled failed: %08x\n", hres);
+        hres = pCoInternetSetFeatureEnabled(FEATURE_ZONE_ELEVATION, SET_FEATURE_ON_PROCESS, FALSE);
+        ok(hres == S_OK, "CoInternetSetFeatureEnabled failed: %08x\n", hres);
+    }
 
     test_internet_feature_defaults();
 }
