@@ -293,6 +293,20 @@ BOOL nulldrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     err = dst_dev->funcs->pBlendImage( dst_dev, dst_info, &bits, src, dst, func );
     if (err == ERROR_BAD_FORMAT)
     {
+        /* 1-bpp source without a color table uses black & white */
+        if (src_info->bmiHeader.biBitCount == 1 && !src_info->bmiHeader.biClrUsed)
+        {
+            src_info->bmiColors[0].rgbRed      = 0;
+            src_info->bmiColors[0].rgbGreen    = 0;
+            src_info->bmiColors[0].rgbBlue     = 0;
+            src_info->bmiColors[0].rgbReserved = 0;
+            src_info->bmiColors[1].rgbRed      = 0xff;
+            src_info->bmiColors[1].rgbGreen    = 0xff;
+            src_info->bmiColors[1].rgbBlue     = 0xff;
+            src_info->bmiColors[1].rgbReserved = 0;
+            src_info->bmiHeader.biClrUsed = 2;
+        }
+
         err = convert_bits( src_info, src, dst_info, &bits );
         if (!err) err = dst_dev->funcs->pBlendImage( dst_dev, dst_info, &bits, src, dst, func );
     }
