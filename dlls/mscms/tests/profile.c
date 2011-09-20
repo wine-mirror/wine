@@ -952,6 +952,16 @@ static void test_OpenColorProfileA(void)
 
         ret = pCloseColorProfile( handle );
         ok( ret, "CloseColorProfile() failed (%d)\n", GetLastError() );
+
+        profile.dwType = PROFILE_FILENAME;
+        profile.pProfileData = (void *)"sRGB Color Space Profile.icm";
+        profile.cbDataSize = sizeof("sRGB Color Space Profile.icm");
+
+        handle = pOpenColorProfileA( &profile, PROFILE_READ, FILE_SHARE_READ, OPEN_EXISTING );
+        ok( handle != NULL, "OpenColorProfileA() failed (%d)\n", GetLastError() );
+
+        ret = pCloseColorProfile( handle );
+        ok( ret, "CloseColorProfile() failed (%d)\n", GetLastError() );
     }
 }
 

@@ -1,6 +1,6 @@
 MODULE    = mscms.dll
 IMPORTLIB = mscms
-IMPORTS   = advapi32
+IMPORTS   = shlwapi advapi32
 EXTRALIBS = @LCMSLIBS@
 
 C_SRCS = \

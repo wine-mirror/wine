@@ -30,6 +30,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winreg.h"
+#include "shlwapi.h"
 #include "icm.h"
 
 #include "mscms_priv.h"
@@ -1470,7 +1471,25 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
         if (!flags) return NULL;
         if (!sharing) sharing = FILE_SHARE_READ;
 
-        handle = CreateFileW( profile->pProfileData, flags, sharing, NULL, creation, 0, NULL );
+        if (!PathIsRelativeW( profile->pProfileData ))
+            handle = CreateFileW( profile->pProfileData, flags, sharing, NULL, creation, 0, NULL );
+        else
+        {
+            DWORD size;
+            WCHAR *path;
+
+            if (!GetColorDirectoryW( NULL, NULL, &size ) && GetLastError() == ERROR_MORE_DATA)
+            {
+                size += (strlenW( profile->pProfileData ) + 2) * sizeof(WCHAR);
+                if (!(path = HeapAlloc( GetProcessHeap(), 0, size ))) return NULL;
+                GetColorDirectoryW( NULL, path, &size );
+                PathAddBackslashW( path );
+                strcatW( path, profile->pProfileData );
+            }
+            else return NULL;
+            handle = CreateFileW( path, flags, sharing, NULL, creation, 0, NULL );
+            HeapFree( GetProcessHeap(), 0, path );
+        }
         if (handle == INVALID_HANDLE_VALUE)
         {
             WARN( "Unable to open color profile %u\n", GetLastError() );
