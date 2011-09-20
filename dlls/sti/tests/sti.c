@@ -244,12 +244,15 @@ static void test_launch_app_registry(void)
     if (SUCCEEDED(hr))
     {
         hr = IStillImage_RegisterLaunchApplication(pStiW, appName, appName);
-        ok(SUCCEEDED(hr), "could not register launch application, error 0x%X\n", hr);
-        if (SUCCEEDED(hr))
+        if (hr == E_ACCESSDENIED)
+            skip("Not authorized to register a launch application\n");
+        else if (SUCCEEDED(hr))
         {
             hr = IStillImage_UnregisterLaunchApplication(pStiW, appName);
             ok(SUCCEEDED(hr), "could not unregister launch application, error 0x%X\n", hr);
         }
+        else
+            ok(0, "could not register launch application, error 0x%X\n", hr);
         IStillImage_Release(pStiW);
     }
     else
