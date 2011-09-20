@@ -1339,7 +1339,7 @@ static HRESULT WINAPI IAVIStream_fnWriteData(IAVIStream *iface, DWORD fcc,
 
     /* ckid,size => 2 * sizeof(DWORD) */
     dwPos += 2 * sizeof(DWORD) + size;
-    if (size >= This->paf->dwMoviChunkPos - 2 * sizeof(DWORD))
+    if (dwPos >= This->paf->dwMoviChunkPos - 2 * sizeof(DWORD))
       return AVIERR_UNSUPPORTED; /* not enough space left */
   }
 
