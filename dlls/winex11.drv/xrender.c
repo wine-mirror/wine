@@ -2845,6 +2845,8 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     struct xrender_physdev *physdev_dst = get_xrender_dev( dst_dev );
     struct xrender_physdev *physdev_src = get_xrender_dev( src_dev );
     Picture dst_pict, src_pict = 0, mask_pict = 0, tmp_pict = 0;
+    XRenderPictureAttributes pa;
+    Pixmap tmp_pixmap = 0;
     double xscale, yscale;
     BOOL use_repeat;
 
@@ -2867,25 +2869,47 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     }
     else xscale = yscale = 1;  /* no scaling needed with a repeating source */
 
-    if (!(blendfn.AlphaFormat & AC_SRC_ALPHA) && physdev_src->format)
+    src_pict = get_xrender_picture_source( physdev_src, use_repeat );
+
+    if (physdev_src->format == WXR_FORMAT_MONO && physdev_dst->format != WXR_FORMAT_MONO)
+    {
+        /* mono -> color blending needs an intermediate color pixmap */
+        XRenderColor fg, bg;
+        int width = src->visrect.right - src->visrect.left;
+        int height = src->visrect.bottom - src->visrect.top;
+
+        /* blending doesn't use the destination DC colors */
+        fg.red = fg.green = fg.blue = 0;
+        bg.red = bg.green = bg.blue = 0xffff;
+        fg.alpha = bg.alpha = 0xffff;
+
+        wine_tsx11_lock();
+        tmp_pixmap = XCreatePixmap( gdi_display, root_window, width, height,
+                                    physdev_dst->pict_format->depth );
+        pa.repeat = use_repeat ? RepeatNormal : RepeatNone;
+        tmp_pict = pXRenderCreatePicture( gdi_display, tmp_pixmap, physdev_dst->pict_format,
+                                          CPRepeat, &pa );
+        wine_tsx11_unlock();
+
+        xrender_mono_blit( src_pict, tmp_pict, physdev_dst->format, &fg, &bg,
+                           src->visrect.left, src->visrect.top, 0, 0, 1, 1, width, height );
+    }
+    else if (!(blendfn.AlphaFormat & AC_SRC_ALPHA) && physdev_src->pict_format)
     {
         /* we need a source picture with no alpha */
         enum wxr_format format = get_format_without_alpha( physdev_src->format );
         if (format != physdev_src->format)
         {
-            XRenderPictureAttributes pa;
-
             wine_tsx11_lock();
             pa.subwindow_mode = IncludeInferiors;
             pa.repeat = use_repeat ? RepeatNormal : RepeatNone;
             tmp_pict = pXRenderCreatePicture( gdi_display, physdev_src->x11dev->drawable,
                                               pict_formats[format], CPSubwindowMode|CPRepeat, &pa );
             wine_tsx11_unlock();
-            src_pict = tmp_pict;
         }
     }
 
-    if (!src_pict) src_pict = get_xrender_picture_source( physdev_src, use_repeat );
+    if (tmp_pict) src_pict = tmp_pict;
 
     EnterCriticalSection( &xrender_cs );
     mask_pict = get_mask_pict( blendfn.SourceConstantAlpha * 257 );
@@ -2899,6 +2923,7 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
 
     wine_tsx11_lock();
     if (tmp_pict) pXRenderFreePicture( gdi_display, tmp_pict );
+    if (tmp_pixmap) XFreePixmap( gdi_display, tmp_pixmap );
     wine_tsx11_unlock();
 
     LeaveCriticalSection( &xrender_cs );
