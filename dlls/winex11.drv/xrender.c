@@ -2388,6 +2388,56 @@ static void get_colors( struct xrender_physdev *physdev_src, struct xrender_phys
     get_xrender_color( physdev_dst->pict_format, physdev_dst->x11dev->backgroundPixel, bg );
 }
 
+/* create a pixmap and render picture for an image */
+static DWORD create_image_pixmap( BITMAPINFO *info, const struct gdi_image_bits *bits,
+                                  struct bitblt_coords *src, enum wxr_format format,
+                                  Pixmap *pixmap, Picture *pict, BOOL *use_repeat )
+{
+    DWORD ret;
+    int width = src->visrect.right - src->visrect.left;
+    int height = src->visrect.bottom - src->visrect.top;
+    int depth = pict_formats[format]->depth;
+    struct gdi_image_bits dst_bits;
+    XRenderPictureAttributes pa;
+    XImage *image;
+
+    wine_tsx11_lock();
+    image = XCreateImage( gdi_display, visual, depth, ZPixmap, 0, NULL,
+                          info->bmiHeader.biWidth, height, 32, 0 );
+    wine_tsx11_unlock();
+    if (!image) return ERROR_OUTOFMEMORY;
+
+    ret = copy_image_bits( info, (format == WXR_FORMAT_R8G8B8), image, bits, &dst_bits, src, NULL, ~0u );
+    if (ret) return ret;
+
+    image->data = dst_bits.ptr;
+    /* hack: make sure the bits are readable if we are reading from a DIB section */
+    /* to be removed once we get rid of DIB access protections */
+    if (!dst_bits.is_copy) IsBadReadPtr( dst_bits.ptr, image->height * image->bytes_per_line );
+
+    *use_repeat = (width == 1 && height == 1);
+    pa.repeat = *use_repeat ? RepeatNormal : RepeatNone;
+
+    wine_tsx11_lock();
+    *pixmap = XCreatePixmap( gdi_display, root_window, width, height, depth );
+    XPutImage( gdi_display, *pixmap, get_bitmap_gc( depth ), image,
+               src->visrect.left, 0, 0, 0, width, height );
+    *pict = pXRenderCreatePicture( gdi_display, *pixmap, pict_formats[format], CPRepeat, &pa );
+    wine_tsx11_unlock();
+
+    /* make coordinates relative to the pixmap */
+    src->x -= src->visrect.left;
+    src->y -= src->visrect.top;
+    OffsetRect( &src->visrect, -src->visrect.left, -src->visrect.top );
+
+    image->data = NULL;
+    wine_tsx11_lock();
+    XDestroyImage( image );
+    wine_tsx11_unlock();
+    if (dst_bits.free) dst_bits.free( &dst_bits );
+    return ret;
+}
+
 static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xrender_physdev *physdev_dst,
                                   Drawable drawable, HRGN clip, const struct bitblt_coords *src,
                                   const struct bitblt_coords *dst )
@@ -2488,20 +2538,17 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
     HeapFree( GetProcessHeap(), 0, clip_data );
 }
 
-static void xrender_put_image( XImage *image, HRGN clip, XRenderPictFormat *src_format,
+
+static void xrender_put_image( Pixmap src_pixmap, Picture src_pict, HRGN clip,
                                XRenderPictFormat *dst_format, struct xrender_physdev *physdev,
-                               Drawable drawable, struct bitblt_coords *src, struct bitblt_coords *dst )
+                               Drawable drawable, struct bitblt_coords *src,
+                               struct bitblt_coords *dst, BOOL use_repeat )
 {
     int x_src, y_src, x_dst, y_dst;
-    Picture dst_pict, src_pict;
+    Picture dst_pict;
     XRenderPictureAttributes pa;
-    Pixmap src_pixmap;
     double xscale, yscale;
     RGNDATA *clip_data = NULL;
-
-    /* make source relative to tmp pixmap origin */
-    x_src = src->x - src->visrect.left;
-    y_src = src->y - src->visrect.top;
 
     if (drawable)  /* using an intermediate pixmap */
     {
@@ -2524,35 +2571,25 @@ static void xrender_put_image( XImage *image, HRGN clip, XRenderPictFormat *src_
         if (clip) clip_data = add_xrender_clipping_region( physdev, clip );
     }
 
-    if (image->width == 1 && image->height == 1)
+    if (!use_repeat)
     {
-        pa.repeat = RepeatNormal;
-        xscale = yscale = 1;  /* no scaling needed with a repeating source */
-    }
-    else
-    {
-        pa.repeat = RepeatNone;
         xscale = src->width / (double)dst->width;
         yscale = src->height / (double)dst->height;
     }
+    else xscale = yscale = 1;  /* no scaling needed with a repeating source */
 
+    x_src = src->x;
+    y_src = src->y;
     if (src->width < 0) x_src += src->width + 1;
     if (src->height < 0) y_src += src->height + 1;
     if (dst->width < 0) x_dst += dst->width + 1;
     if (dst->height < 0) y_dst += dst->height + 1;
 
     wine_tsx11_lock();
-    src_pixmap = XCreatePixmap( gdi_display, root_window, image->width, image->height, src_format->depth );
-    XPutImage( gdi_display, src_pixmap, get_bitmap_gc( src_format->depth ),
-               image, src->visrect.left, 0, 0, 0, image->width, image->height );
-    src_pict = pXRenderCreatePicture( gdi_display, src_pixmap, src_format, CPRepeat, &pa );
-
     xrender_blit( PictOpSrc, src_pict, 0, dst_pict, x_src, y_src, x_dst, y_dst,
                   xscale, yscale, abs( dst->width ), abs( dst->height ));
 
     if (drawable) pXRenderFreePicture( gdi_display, dst_pict );
-    pXRenderFreePicture( gdi_display, src_pict );
-    XFreePixmap( gdi_display, src_pixmap );
     wine_tsx11_unlock();
 
     if (!drawable) update_xrender_clipping( physdev, clip_data );
@@ -2655,12 +2692,13 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMA
     struct xrender_physdev *physdev;
     X_PHYSBITMAP *bitmap;
     DWORD ret;
-    XImage *image;
     Pixmap tmp_pixmap;
     GC gc;
-    struct gdi_image_bits dst_bits;
     enum wxr_format src_format, dst_format;
     XRenderPictFormat *pict_format;
+    Pixmap src_pixmap;
+    Picture src_pict;
+    BOOL use_repeat;
 
     if (!X11DRV_XRender_Installed) goto x11drv_fallback;
 
@@ -2691,23 +2729,10 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMA
 
     if (!bits) return ERROR_SUCCESS;  /* just querying the format */
 
-    wine_tsx11_lock();
-    image = XCreateImage( gdi_display, visual, pict_format->depth, ZPixmap, 0, NULL,
-                          info->bmiHeader.biWidth, src->visrect.bottom - src->visrect.top, 32, 0 );
-    wine_tsx11_unlock();
-    if (!image) return ERROR_OUTOFMEMORY;
-
-    ret = copy_image_bits( info, (src_format == WXR_FORMAT_R8G8B8),
-                           image, bits, &dst_bits, src, NULL, ~0u );
-
+    ret = create_image_pixmap( info, bits, src, src_format, &src_pixmap, &src_pict, &use_repeat );
     if (!ret)
     {
         struct bitblt_coords tmp;
-
-        image->data = dst_bits.ptr;
-        /* hack: make sure the bits are readable if we are reading from a DIB section */
-        /* to be removed once we get rid of DIB access protections */
-        if (!dst_bits.is_copy) IsBadReadPtr( dst_bits.ptr, image->height * image->bytes_per_line );
 
         if (bitmap)
         {
@@ -2716,8 +2741,8 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMA
 
             X11DRV_DIB_Lock( bitmap, DIB_Status_GdiMod );
 
-            xrender_put_image( image, rgn, pict_formats[src_format], pict_formats[dst_format],
-                               NULL, bitmap->pixmap, src, dst );
+            xrender_put_image( src_pixmap, src_pict, rgn, pict_formats[dst_format],
+                               NULL, bitmap->pixmap, src, dst, use_repeat );
 
             X11DRV_DIB_Unlock( bitmap, TRUE );
             DeleteObject( rgn );
@@ -2746,8 +2771,8 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMA
                                             tmp.visrect.bottom - tmp.visrect.top, physdev->x11dev->depth );
                 wine_tsx11_unlock();
 
-                xrender_put_image( image, NULL, pict_format, physdev->pict_format,
-                                   NULL, tmp_pixmap, src, &tmp );
+                xrender_put_image( src_pixmap, src_pict, NULL, physdev->pict_format,
+                                   NULL, tmp_pixmap, src, &tmp, use_repeat );
                 execute_rop( physdev->x11dev, tmp_pixmap, gc, &dst->visrect, rop );
 
                 wine_tsx11_lock();
@@ -2761,20 +2786,19 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMA
             {
                 HRGN rgn = CreateRectRgnIndirect( &dst->visrect );
                 if (clip) CombineRgn( rgn, rgn, clip, RGN_AND );
-                xrender_put_image( image, rgn, pict_format, physdev->pict_format, physdev, 0, src, dst );
+                xrender_put_image( src_pixmap, src_pict, rgn,
+                                   physdev->pict_format, physdev, 0, src, dst, use_repeat );
                 DeleteObject( rgn );
             }
 
-            X11DRV_UnlockDIBSection( physdev->x11dev, !ret );
+            X11DRV_UnlockDIBSection( physdev->x11dev, TRUE );
         }
 
-        image->data = NULL;
+        wine_tsx11_lock();
+        pXRenderFreePicture( gdi_display, src_pict );
+        XFreePixmap( gdi_display, src_pixmap );
+        wine_tsx11_unlock();
     }
-
-    wine_tsx11_lock();
-    XDestroyImage( image );
-    wine_tsx11_unlock();
-    if (dst_bits.free) dst_bits.free( &dst_bits );
     return ret;
 
 update_format:
