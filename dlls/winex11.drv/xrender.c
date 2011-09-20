@@ -2288,6 +2288,7 @@ static void xrender_blit( int op, Picture src_pict, Picture mask_pict, Picture d
     /* When we need to scale we perform scaling and source_x / source_y translation using a transformation matrix.
      * This is needed because XRender is inaccurate in combination with scaled source coordinates passed to XRenderComposite.
      * In all other cases we do use XRenderComposite for translation as it is faster than using a transformation matrix. */
+    wine_tsx11_lock();
     if(xscale != 1.0 || yscale != 1.0)
     {
         /* In case of mirroring we need a source x- and y-offset because without the pixels will be
@@ -2305,21 +2306,28 @@ static void xrender_blit( int op, Picture src_pict, Picture mask_pict, Picture d
     }
     pXRenderComposite( gdi_display, op, src_pict, mask_pict, dst_pict,
                        x_offset, y_offset, 0, 0, x_dst, y_dst, width, height );
+    wine_tsx11_unlock();
 }
 
 /* Helper function for (stretched) mono->color blitting using xrender */
-static void xrender_mono_blit( Picture src_pict, Picture mask_pict, Picture dst_pict,
+static void xrender_mono_blit( Picture src_pict, Picture dst_pict,
+                               enum wxr_format dst_format, XRenderColor *fg, XRenderColor *bg,
                                int x_src, int y_src, int x_dst, int y_dst,
                                double xscale, double yscale, int width, int height )
 {
+    Picture tile_pict;
     int x_offset, y_offset;
 
-    /* When doing a mono->color blit, 'src_pict' contains a 1x1 picture for tiling, the actual
-     * source data is in mask_pict.  The 'mask_pict' data effectively acts as an alpha channel to the
-     * tile data. We need PictOpOver for correct rendering.
-     * Note since the 'source data' is in the mask picture, we have to pass x_src / y_src using
-     * mask_x / mask_y
+    /* When doing a mono->color blit, the source data is used as mask, and the source picture
+     * contains a 1x1 picture for tiling. The source data effectively acts as an alpha channel to
+     * the tile data.
      */
+    EnterCriticalSection( &xrender_cs );
+    tile_pict = get_tile_pict( dst_format, bg );
+
+    wine_tsx11_lock();
+    pXRenderFillRectangle( gdi_display, PictOpSrc, dst_pict, fg, x_dst, y_dst, width, height );
+
     if (xscale != 1.0 || yscale != 1.0)
     {
         /* In case of mirroring we need a source x- and y-offset because without the pixels will be
@@ -2327,16 +2335,18 @@ static void xrender_mono_blit( Picture src_pict, Picture mask_pict, Picture dst_
          */
         x_offset = (xscale < 0) ? -width : 0;
         y_offset = (yscale < 0) ? -height : 0;
-        set_xrender_transformation(mask_pict, xscale, yscale, x_src, y_src);
+        set_xrender_transformation(src_pict, xscale, yscale, x_src, y_src);
     }
     else
     {
         x_offset = x_src;
         y_offset = y_src;
-        set_xrender_transformation(mask_pict, 1, 1, 0, 0);
+        set_xrender_transformation(src_pict, 1, 1, 0, 0);
     }
-    pXRenderComposite(gdi_display, PictOpOver, src_pict, mask_pict, dst_pict,
+    pXRenderComposite(gdi_display, PictOpOver, tile_pict, src_pict, dst_pict,
                       0, 0, x_offset, y_offset, x_dst, y_dst, width, height );
+    wine_tsx11_unlock();
+    LeaveCriticalSection( &xrender_cs );
 }
 
 static void get_colors( struct xrender_physdev *physdev_src, struct xrender_physdev *physdev_dst,
@@ -2456,6 +2466,8 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
     if (dst->width < 0) x_dst += dst->width + 1;
     if (dst->height < 0) y_dst += dst->height + 1;
 
+    src_pict = get_xrender_picture_source( physdev_src, use_repeat );
+
     /* mono -> color */
     if (physdev_src->format == WXR_FORMAT_MONO && physdev_dst->format != WXR_FORMAT_MONO)
     {
@@ -2464,35 +2476,16 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
         get_colors( physdev_src, physdev_dst, &fg, &bg );
         fg.alpha = bg.alpha = 0;
 
-        /* We use the source drawable as a mask */
-        mask_pict = get_xrender_picture_source( physdev_src, use_repeat );
-
-        /* Use backgroundPixel as the foreground color */
-        EnterCriticalSection( &xrender_cs );
-        src_pict = get_tile_pict( physdev_dst->format, &bg );
-
-        /* Create a destination picture and fill it with textPixel color as the background color */
-        wine_tsx11_lock();
-        pXRenderFillRectangle( gdi_display, PictOpSrc, dst_pict, &fg, x_dst, y_dst, width, height );
-
-        xrender_mono_blit( src_pict, mask_pict, dst_pict, x_src, y_src,
-                           x_dst, y_dst, xscale, yscale, width, height );
-
-        wine_tsx11_unlock();
-        LeaveCriticalSection( &xrender_cs );
+        xrender_mono_blit( src_pict, dst_pict, physdev_dst->format, &fg, &bg,
+                           x_src, y_src, x_dst, y_dst, xscale, yscale, width, height );
     }
     else /* color -> color (can be at different depths) or mono -> mono */
     {
         if (physdev_dst->x11dev->depth == 32 && physdev_src->x11dev->depth < 32)
             mask_pict = get_no_alpha_mask();
-        src_pict = get_xrender_picture_source( physdev_src, use_repeat );
-
-        wine_tsx11_lock();
 
         xrender_blit( PictOpSrc, src_pict, mask_pict, dst_pict,
                       x_src, y_src, x_dst, y_dst, xscale, yscale, width, height );
-
-        wine_tsx11_unlock();
     }
 
     if (drawable)
@@ -2551,12 +2544,15 @@ static void xrender_put_image( Pixmap src_pixmap, Picture src_pict, HRGN clip,
     if (dst->width < 0) x_dst += dst->width + 1;
     if (dst->height < 0) y_dst += dst->height + 1;
 
-    wine_tsx11_lock();
     xrender_blit( PictOpSrc, src_pict, 0, dst_pict, x_src, y_src, x_dst, y_dst,
                   xscale, yscale, abs( dst->width ), abs( dst->height ));
 
-    if (drawable) pXRenderFreePicture( gdi_display, dst_pict );
-    wine_tsx11_unlock();
+    if (drawable)
+    {
+        wine_tsx11_lock();
+        pXRenderFreePicture( gdi_display, dst_pict );
+        wine_tsx11_unlock();
+    }
 }
 
 
@@ -2817,11 +2813,12 @@ static DWORD xrenderdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct 
         EnterCriticalSection( &xrender_cs );
         mask_pict = get_mask_pict( func.SourceConstantAlpha * 257 );
 
-        wine_tsx11_lock();
         xrender_blit( PictOpOver, src_pict, mask_pict, dst_pict, src->x, src->y,
                       physdev->x11dev->dc_rect.left + dst->x,
                       physdev->x11dev->dc_rect.top + dst->y,
                       xscale, yscale, dst->width, dst->height );
+
+        wine_tsx11_lock();
         pXRenderFreePicture( gdi_display, src_pict );
         XFreePixmap( gdi_display, src_pixmap );
         wine_tsx11_unlock();
@@ -2893,13 +2890,14 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     EnterCriticalSection( &xrender_cs );
     mask_pict = get_mask_pict( blendfn.SourceConstantAlpha * 257 );
 
-    wine_tsx11_lock();
     xrender_blit( PictOpOver, src_pict, mask_pict, dst_pict,
                   physdev_src->x11dev->dc_rect.left + src->x,
                   physdev_src->x11dev->dc_rect.top + src->y,
                   physdev_dst->x11dev->dc_rect.left + dst->x,
                   physdev_dst->x11dev->dc_rect.top + dst->y,
                   xscale, yscale, dst->width, dst->height );
+
+    wine_tsx11_lock();
     if (tmp_pict) pXRenderFreePicture( gdi_display, tmp_pict );
     wine_tsx11_unlock();
 
