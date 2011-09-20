@@ -963,9 +963,8 @@ static void MONTHCAL_PaintTodayTitle(const MONTHCAL_INFO *infoPtr, HDC hdc, cons
 
   col = infoPtr->dwStyle & MCS_NOTODAYCIRCLE ? 0 : 1;
   if (infoPtr->dwStyle & MCS_WEEKNUMBERS) col--;
-  /* TODO: when multiple calendars layout is calculated use first column/last row calendar for that
-     imaginary day position */
-  MONTHCAL_GetDayRectI(infoPtr, &text_rect, col, 6, 0);
+  /* label is located below first calendar last row */
+  MONTHCAL_GetDayRectI(infoPtr, &text_rect, col, 6, infoPtr->dim.cx * infoPtr->dim.cy - infoPtr->dim.cx);
   box_rect = text_rect;
 
   GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &infoPtr->todaysDate, NULL,
