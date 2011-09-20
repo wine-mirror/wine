@@ -145,7 +145,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
                 srcrow = srcdata;
                 dstrow = pbBuffer;
                 for (y=0; y<prc->Height; y++) {
-                    srcbyte=(const BYTE*)srcrow;
+                    srcbyte = srcrow;
                     dstpixel=(DWORD*)dstrow;
                     for (x=0; x<prc->Width; x+=8) {
                         BYTE srcval;
@@ -214,7 +214,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
                 srcrow = srcdata;
                 dstrow = pbBuffer;
                 for (y=0; y<prc->Height; y++) {
-                    srcbyte=(const BYTE*)srcrow;
+                    srcbyte = srcrow;
                     dstpixel=(DWORD*)dstrow;
                     for (x=0; x<prc->Width; x+=4) {
                         BYTE srcval;
@@ -279,7 +279,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
                 srcrow = srcdata;
                 dstrow = pbBuffer;
                 for (y=0; y<prc->Height; y++) {
-                    srcbyte=(const BYTE*)srcrow;
+                    srcbyte = srcrow;
                     dstpixel=(DWORD*)dstrow;
                     for (x=0; x<prc->Width; x+=2) {
                         BYTE srcval;
@@ -322,7 +322,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
                 srcrow = srcdata;
                 dstrow = pbBuffer;
                 for (y=0; y<prc->Height; y++) {
-                    srcbyte=(const BYTE*)srcrow;
+                    srcbyte = srcrow;
                     dstpixel=(DWORD*)dstrow;
                     for (x=0; x<prc->Width; x++)
                     {
@@ -378,7 +378,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
                 srcrow = srcdata;
                 dstrow = pbBuffer;
                 for (y=0; y<prc->Height; y++) {
-                    srcbyte=(const BYTE*)srcrow;
+                    srcbyte = srcrow;
                     dstpixel=(DWORD*)dstrow;
                     for (x=0; x<prc->Width; x++)
                         *dstpixel++ = colors[*srcbyte++];
@@ -417,7 +417,7 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
                 srcrow = srcdata;
                 dstrow = pbBuffer;
                 for (y=0; y<prc->Height; y++) {
-                    srcbyte=(const BYTE*)srcrow;
+                    srcbyte = srcrow;
                     dstpixel=(DWORD*)dstrow;
                     for (x=0; x<prc->Width; x++)
                     {
