@@ -186,15 +186,22 @@ static WCHAR *font_name_from_file( const WCHAR *filename )
     return ret;
 }
 
-WCHAR *font_version_from_file( const WCHAR *filename )
+WCHAR *msi_font_version_from_file( const WCHAR *filename )
 {
+    static const WCHAR dotzerodotzeroW[] = {'.','0','.','0',0};
     WCHAR *version, *p, *ret = NULL;
+    int len;
 
     if ((p = version = load_ttf_name_id( filename, NAME_ID_VERSION )))
     {
         while (*p && !isdigitW( *p )) p++;
-        ret = msi_alloc( (strlenW( p ) + 1) * sizeof(WCHAR) );
+        len = strlenW( p ) + strlenW(dotzerodotzeroW) + 1;
+        ret = msi_alloc( len * sizeof(WCHAR) );
         strcpyW( ret, p );
+        if ((p = strchrW( p, '.' )) && !(p = strchrW( p + 1, '.' )))
+        {
+            strcatW( ret, dotzerodotzeroW );
+        }
         msi_free( version );
     }
     return ret;

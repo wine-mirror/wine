@@ -2196,7 +2196,7 @@ static UINT calculate_file_cost( MSIPACKAGE *package )
                 msi_free( file_version );
                 continue;
             }
-            else if ((font_version = font_version_from_file( file->TargetPath )))
+            else if ((font_version = msi_font_version_from_file( file->TargetPath )))
             {
                 if (msi_compare_font_versions( font_version, file->Version ) < 0)
                 {

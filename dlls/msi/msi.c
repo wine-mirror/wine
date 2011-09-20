@@ -3017,11 +3017,8 @@ end:
     return ret;
 }
 
-/******************************************************************
- * MsiGetFileVersionW         [MSI.@]
- */
-UINT WINAPI MsiGetFileVersionW(LPCWSTR szFilePath, LPWSTR lpVersionBuf,
-                LPDWORD pcchVersionBuf, LPWSTR lpLangBuf, LPDWORD pcchLangBuf)
+static UINT get_file_version( const WCHAR *path, WCHAR *verbuf, DWORD *verlen,
+                              WCHAR *langbuf, DWORD *langlen )
 {
     static const WCHAR szVersionResource[] = {'\\',0};
     static const WCHAR szVersionFormat[] = {
@@ -3030,91 +3027,94 @@ UINT WINAPI MsiGetFileVersionW(LPCWSTR szFilePath, LPWSTR lpVersionBuf,
         '\\','V','a','r','F','i','l','e','I','n','f','o','\\',
         'T','r','a','n','s','l','a','t','i','o','n',0};
     static const WCHAR szLangFormat[] = {'%','d',0};
-    UINT ret = 0;
-    DWORD dwVerLen, gle;
-    LPVOID lpVer = NULL;
+    UINT ret = ERROR_SUCCESS;
+    DWORD len, error;
+    LPVOID version;
     VS_FIXEDFILEINFO *ffi;
     USHORT *lang;
-    UINT puLen;
     WCHAR tmp[32];
 
-    TRACE("%s %p %d %p %d\n", debugstr_w(szFilePath),
-          lpVersionBuf, pcchVersionBuf?*pcchVersionBuf:0,
-          lpLangBuf, pcchLangBuf?*pcchLangBuf:0);
+    if (!(len = GetFileVersionInfoSizeW( path, NULL )))
+    {
+        error = GetLastError();
+        if (error == ERROR_BAD_PATHNAME) return ERROR_FILE_NOT_FOUND;
+        return error;
+    }
+    if (!(version = msi_alloc( len ))) return ERROR_OUTOFMEMORY;
+    if (!GetFileVersionInfoW( path, 0, len, version ))
+    {
+        msi_free( version );
+        return GetLastError();
+    }
+    if (verlen)
+    {
+        if (VerQueryValueW( version, szVersionResource, (LPVOID *)&ffi, &len ) && len > 0)
+        {
+            sprintfW( tmp, szVersionFormat,
+                      HIWORD(ffi->dwFileVersionMS), LOWORD(ffi->dwFileVersionMS),
+                      HIWORD(ffi->dwFileVersionLS), LOWORD(ffi->dwFileVersionLS) );
+            if (verbuf) lstrcpynW( verbuf, tmp, *verlen );
+            len = strlenW( tmp );
+            if (len >= *verlen) ret = ERROR_MORE_DATA;
+            *verlen = len;
+        }
+        else
+        {
+            if (verbuf) *verbuf = 0;
+            *verlen = 0;
+        }
+    }
+    if (langlen)
+    {
+        if (VerQueryValueW( version, szLangResource, (LPVOID *)&lang, &len ) && len > 0)
+        {
+            sprintfW( tmp, szLangFormat, *lang );
+            if (langbuf) lstrcpynW( langbuf, tmp, *langlen );
+            len = strlenW( tmp );
+            if (len >= *langlen) ret = ERROR_MORE_DATA;
+            *langlen = len;
+        }
+        else
+        {
+            if (langbuf) *langbuf = 0;
+            *langlen = 0;
+        }
+    }
+    msi_free( version );
+    return ret;
+}
 
-    if ((lpVersionBuf && !pcchVersionBuf) ||
-        (lpLangBuf && !pcchLangBuf))
+
+/******************************************************************
+ * MsiGetFileVersionW         [MSI.@]
+ */
+UINT WINAPI MsiGetFileVersionW( LPCWSTR path, LPWSTR verbuf, LPDWORD verlen,
+                                LPWSTR langbuf, LPDWORD langlen )
+{
+    UINT ret;
+
+    TRACE("%s %p %u %p %u\n", debugstr_w(path), verbuf, verlen ? *verlen : 0,
+          langbuf, langlen ? *langlen : 0);
+
+    if ((verbuf && !verlen) || (langbuf && !langlen))
         return ERROR_INVALID_PARAMETER;
 
-    dwVerLen = GetFileVersionInfoSizeW(szFilePath, NULL);
-    if( !dwVerLen )
+    ret = get_file_version( path, verbuf, verlen, langbuf, langlen );
+    if (ret == ERROR_RESOURCE_DATA_NOT_FOUND)
     {
-        gle = GetLastError();
-        if (gle == ERROR_BAD_PATHNAME)
-            return ERROR_FILE_NOT_FOUND;
-        else if (gle == ERROR_RESOURCE_DATA_NOT_FOUND)
-            return ERROR_FILE_INVALID;
-
-        return gle;
-    }
-
-    lpVer = msi_alloc(dwVerLen);
-    if( !lpVer )
-    {
-        ret = ERROR_OUTOFMEMORY;
-        goto end;
-    }
-
-    if( !GetFileVersionInfoW(szFilePath, 0, dwVerLen, lpVer) )
-    {
-        ret = GetLastError();
-        goto end;
-    }
-
-    if (pcchVersionBuf)
-    {
-        if( VerQueryValueW(lpVer, szVersionResource, (LPVOID*)&ffi, &puLen) &&
-            (puLen > 0) )
+        int len;
+        WCHAR *version = msi_font_version_from_file( path );
+        if (!version) return ERROR_FILE_INVALID;
+        len = strlenW( version );
+        if (*verlen > len)
         {
-            wsprintfW(tmp, szVersionFormat,
-                  HIWORD(ffi->dwFileVersionMS), LOWORD(ffi->dwFileVersionMS),
-                  HIWORD(ffi->dwFileVersionLS), LOWORD(ffi->dwFileVersionLS));
-            if (lpVersionBuf) lstrcpynW(lpVersionBuf, tmp, *pcchVersionBuf);
-
-            if (strlenW(tmp) >= *pcchVersionBuf)
-                ret = ERROR_MORE_DATA;
-
-            *pcchVersionBuf = lstrlenW(tmp);
+            strcpyW( verbuf, version );
+            ret = ERROR_SUCCESS;
         }
-        else
-        {
-            if (lpVersionBuf) *lpVersionBuf = 0;
-            *pcchVersionBuf = 0;
-        }
+        else ret = ERROR_MORE_DATA;
+        *verlen = len;
+        msi_free( version );
     }
-
-    if (pcchLangBuf)
-    {
-        if (VerQueryValueW(lpVer, szLangResource, (LPVOID*)&lang, &puLen) &&
-            (puLen > 0))
-        {
-            wsprintfW(tmp, szLangFormat, *lang);
-            if (lpLangBuf) lstrcpynW(lpLangBuf, tmp, *pcchLangBuf);
-
-            if (strlenW(tmp) >= *pcchLangBuf)
-                ret = ERROR_MORE_DATA;
-
-            *pcchLangBuf = lstrlenW(tmp);
-        }
-        else
-        {
-            if (lpLangBuf) *lpLangBuf = 0;
-            *pcchLangBuf = 0;
-        }
-    }
-
-end:
-    msi_free(lpVer);
     return ret;
 }
 
