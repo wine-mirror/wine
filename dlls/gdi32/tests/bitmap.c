@@ -2942,7 +2942,39 @@ static void test_StretchBlt(void)
     check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
                              0, 0, 2, 2, 1, 1, -2, -2, expected, expected, __LINE__);
 
-    /* Tidy up */
+    SelectObject(hdcSrc, oldSrc);
+    DeleteObject(bmpSrc);
+
+    biSrc.bmiHeader.biHeight = -2;
+    biSrc.bmiHeader.biBitCount = 24;
+    bmpSrc = CreateDIBSection(hdcScreen, &biSrc, DIB_RGB_COLORS, (void**)&srcBuffer, NULL, 0);
+    oldSrc = SelectObject(hdcSrc, bmpSrc);
+
+    expected[0] = 0xFEEDFACE, expected[1] = 0xCAFED00D;
+    expected[2] = 0x76543210, expected[3] = 0xFEDCBA98;
+    memcpy(dstBuffer, expected, 4 * sizeof(*dstBuffer));
+    StretchBlt(hdcSrc, 0, 0, 2, 2, hdcDst, 0, 0, 2, 2, SRCCOPY );
+    memset(dstBuffer, 0x55, 4 * sizeof(*dstBuffer));
+    StretchBlt(hdcDst, 0, 0, 2, 2, hdcSrc, 0, 0, 2, 2, SRCCOPY );
+    expected[0] = 0x00EDFACE, expected[1] = 0x00FED00D;
+    expected[2] = 0x00543210, expected[3] = 0x00DCBA98;
+    ok(!memcmp(dstBuffer, expected, 16),
+       "StretchBlt expected { %08X, %08X, %08X, %08X } got { %08X, %08X, %08X, %08X }\n",
+        expected[0], expected[1], expected[2], expected[3],
+        dstBuffer[0], dstBuffer[1], dstBuffer[2], dstBuffer[3] );
+
+    expected[0] = 0xFEEDFACE, expected[1] = 0xCAFED00D;
+    expected[2] = 0x76543210, expected[3] = 0xFEDCBA98;
+    memcpy(srcBuffer, expected, 4 * sizeof(*dstBuffer));
+    memset(dstBuffer, 0x55, 4 * sizeof(*dstBuffer));
+    StretchBlt(hdcDst, 0, 0, 2, 2, hdcSrc, 0, 0, 2, 2, SRCCOPY );
+    expected[0] = 0x00EDFACE, expected[1] = 0x00D00DFE;
+    expected[2] = 0x00543210, expected[3] = 0x00BA9876;
+    ok(!memcmp(dstBuffer, expected, 16),
+       "StretchBlt expected { %08X, %08X, %08X, %08X } got { %08X, %08X, %08X, %08X }\n",
+        expected[0], expected[1], expected[2], expected[3],
+        dstBuffer[0], dstBuffer[1], dstBuffer[2], dstBuffer[3] );
+
     SelectObject(hdcSrc, oldSrc);
     DeleteObject(bmpSrc);
     DeleteDC(hdcSrc);
