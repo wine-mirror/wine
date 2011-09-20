@@ -2853,13 +2853,18 @@ static void test_SHGetShellKey(void)
     hkey = pSHGetShellKey(SHKEY_Root_HKLM, WineTestW, FALSE);
     ok(hkey == NULL, "hkey != NULL\n");
 
-    hkey = pSHGetShellKey(SHKEY_Root_HKLM, WineTestW, TRUE);
-    ok(hkey != NULL, "Can't create key\n");
+    hkey = pSHGetShellKey(SHKEY_Root_HKLM, NULL, FALSE);
+    ok(hkey != NULL, "Can't open key\n");
+    ok(SUCCEEDED(RegDeleteKeyW(hkey, WineTestW)), "Can't delte key\n");
     RegCloseKey(hkey);
 
-    hkey = pSHGetShellKey(SHKEY_Root_HKLM, NULL, FALSE);
+    hkey = pSHGetShellKey(SHKEY_Root_HKLM, WineTestW, TRUE);
+    if (!hkey && GetLastError() == ERROR_ACCESS_DENIED)
+    {
+        skip("Not authorized to create keys\n");
+        return;
+    }
     ok(hkey != NULL, "Can't create key\n");
-    ok(SUCCEEDED(RegDeleteKeyW(hkey, WineTestW)), "Can't delte key\n");
     RegCloseKey(hkey);
 
     if (!pSKGetValueW || !pSKSetValueW || !pSKDeleteValueW || !pSKAllocValueW)
