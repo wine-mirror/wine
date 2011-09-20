@@ -319,7 +319,9 @@ static int parse_next_token(void *lval, parser_ctx_t *ctx)
         int ret = check_keywords(ctx);
         if(!ret)
             return parse_identifier(ctx, lval);
-        return ret;
+        if(ret != tREM)
+            return ret;
+        c = '\'';
     }
 
     switch(c) {

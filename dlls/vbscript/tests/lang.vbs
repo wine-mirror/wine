@@ -611,6 +611,8 @@ Call ok(funcCalled = "terminate", "funcCalled = " & funcCalled)
 x = "following ':' is correct syntax" :
 x = "following ':' is correct syntax" :: :
 :: x = "also correct syntax"
+rem another ugly way for comments
+x = "rem as simplestatement" : rem rem comment
 :
 
 Set obj = new EmptyClass
