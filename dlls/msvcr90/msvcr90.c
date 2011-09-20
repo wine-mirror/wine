@@ -358,3 +358,11 @@ void* CDECL _CRT_RTC_INITW(void *unk1, void *unk2, int unk3, int unk4, int unk5)
     TRACE("%p %p %x %x %x\n", unk1, unk2, unk3, unk4, unk5);
     return NULL;
 }
+
+/*********************************************************************
+ *              _vswprintf_p (MSVCR90.@)
+ */
+int CDECL MSVCR90__vswprintf_p(wchar_t *buffer, size_t length, const wchar_t *format, __ms_va_list args)
+{
+    return _vswprintf_p_l(buffer, length, format, NULL, args);
+}
