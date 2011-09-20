@@ -35,6 +35,9 @@ typedef struct {
     VARIANT *args;
     VARIANT *vars;
 
+    dynamic_var_t *dynamic_vars;
+    vbsheap_t heap;
+
     unsigned stack_size;
     unsigned top;
     VARIANT *stack;
@@ -120,6 +123,9 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         }
     }
 
+    if(lookup_dynamic_vars(ctx->func->type == FUNC_GLOBAL ? ctx->script->global_vars : ctx->dynamic_vars, name, ref))
+        return S_OK;
+
     hres = disp_get_id(ctx->this_obj, name, invoke_type, TRUE, &id);
     if(SUCCEEDED(hres)) {
         ref->type = REF_DISP;
@@ -128,7 +134,7 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         return S_OK;
     }
 
-    if(lookup_dynamic_vars(ctx->script->global_vars, name, ref))
+    if(ctx->func->type != FUNC_GLOBAL && lookup_dynamic_vars(ctx->script->global_vars, name, ref))
         return S_OK;
 
     for(func = ctx->script->global_funcs; func; func = func->next) {
@@ -187,9 +193,6 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         ref->u.d.id = id;
         return S_OK;
     }
-
-    if(!ctx->func->code_ctx->option_explicit)
-        FIXME("create an attempt to set\n");
 
     ref->type = REF_NONE;
     return S_OK;
@@ -488,11 +491,48 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, VARIANT *val, BOOL own_v
     case REF_OBJ:
         FIXME("REF_OBJ\n");
         return E_NOTIMPL;
-    case REF_NONE:
-        FIXME("%s not found\n", debugstr_w(name));
-        if(own_val)
-            VariantClear(val);
-        return DISP_E_UNKNOWNNAME;
+    case REF_NONE: {
+        dynamic_var_t *new_var;
+        vbsheap_t *heap;
+        WCHAR *str;
+        unsigned size;
+
+        if(ctx->func->code_ctx->option_explicit) {
+            FIXME("throw exception\n");
+            return E_FAIL;
+        }
+
+        TRACE("creating variable %s\n", debugstr_w(name));
+
+        heap = ctx->func->type == FUNC_GLOBAL ? &ctx->script->heap : &ctx->heap;
+
+        new_var = vbsheap_alloc(heap, sizeof(*new_var));
+        if(!new_var)
+            return E_OUTOFMEMORY;
+
+        size = (strlenW(name)+1)*sizeof(WCHAR);
+        str = vbsheap_alloc(heap, size);
+        if(!str)
+            return E_OUTOFMEMORY;
+        memcpy(str, name, size);
+        new_var->name = str;
+
+        if(own_val) {
+            new_var->v = *val;
+        }else {
+            hres = VariantCopy(&new_var->v, val);
+            if(FAILED(hres))
+                return hres;
+        }
+
+        if(ctx->func->type == FUNC_GLOBAL) {
+            new_var->next = ctx->script->global_vars;
+            ctx->script->global_vars = new_var;
+        }else {
+            new_var->next = ctx->dynamic_vars;
+            ctx->dynamic_vars = new_var;
+        }
+    }
     }
 
     return hres;
@@ -1392,6 +1432,7 @@ static void release_exec(exec_ctx_t *ctx)
             VariantClear(ctx->vars+i);
     }
 
+    vbsheap_free(&ctx->heap);
     heap_free(ctx->args);
     heap_free(ctx->vars);
     heap_free(ctx->stack);
@@ -1409,6 +1450,8 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, IDispatch *this_obj, DI
         FIXME("wrong arg_cnt %d, expected %d\n", dp ? arg_cnt(dp) : 0, func->arg_cnt);
         return E_FAIL;
     }
+
+    vbsheap_init(&exec.heap);
 
     if(func->arg_cnt) {
         VARIANT *v;

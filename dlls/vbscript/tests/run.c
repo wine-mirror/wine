@@ -1097,6 +1097,16 @@ static void run_tests(void)
     CHECK_CALLED(testobj_propput_d);
     CHECK_CALLED(testobj_propput_i);
 
+    parse_script_a("x = 1\n Call ok(x = 1, \"x = \" & x)");
+
+    strict_dispid_check = FALSE;
+
+    parse_script_a("Sub testsub\n"
+                   "x = 1\n"
+                   "Call ok(x = 1, \"x = \" & x)\n"
+                   "End Sub\n"
+                   "Call testsub()");
+
     run_from_res("lang.vbs");
     run_from_res("api.vbs");
 

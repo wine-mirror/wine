@@ -157,6 +157,8 @@ struct _script_ctx_t {
     function_t *global_funcs;
     class_desc_t *classes;
 
+    vbsheap_t heap;
+
     struct list objects;
     struct list code_list;
     struct list named_items;
