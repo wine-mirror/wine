@@ -2107,7 +2107,8 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
                 alsa_wrap_buffer(This,
                         This->tmp_buffer + written * This->fmt->nBlockAlign,
                         written_frames - written);
-
+            else
+                This->lcl_offs_frames += written;
             This->held_frames = written_frames - written;
         }
     }

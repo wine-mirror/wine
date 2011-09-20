@@ -1740,7 +1740,8 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
             if(This->buf_state == LOCKED_WRAPPED)
                 oss_wrap_buffer(This, This->tmp_buffer + w_bytes,
                         written_frames - w_frames);
-
+            else
+                This->lcl_offs_frames += w_frames;
             This->held_frames = written_frames - w_frames;
         }
     }
