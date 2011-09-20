@@ -608,6 +608,11 @@ funcCalled = ""
 Set obj = Nothing
 Call ok(funcCalled = "terminate", "funcCalled = " & funcCalled)
 
+x = "following ':' is correct syntax" :
+x = "following ':' is correct syntax" :: :
+:: x = "also correct syntax"
+:
+
 Set obj = new EmptyClass
 Set x = obj
 Set y = new EmptyClass

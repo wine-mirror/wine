@@ -66,6 +66,8 @@ static class_decl_t *new_class_decl(parser_ctx_t*);
 static class_decl_t *add_class_function(parser_ctx_t*,class_decl_t*,function_decl_t*);
 static class_decl_t *add_variant_prop(parser_ctx_t*,class_decl_t*,const WCHAR*,unsigned);
 
+static statement_t *link_statements(statement_t*,statement_t*);
+
 #define STORAGE_IS_PRIVATE    1
 #define STORAGE_IS_DEFAULT    2
 
@@ -109,7 +111,7 @@ static class_decl_t *add_variant_prop(parser_ctx_t*,class_decl_t*,const WCHAR*,u
 %token <lng> tLong tShort
 %token <dbl> tDouble
 
-%type <statement> Statement StatementNl StatementsNl StatementsNl_opt IfStatement Else_opt
+%type <statement> Statement SimpleStatement StatementNl StatementsNl StatementsNl_opt IfStatement Else_opt
 %type <expression> Expression LiteralExpression PrimaryExpression EqualityExpression CallExpression
 %type <expression> ConcatExpression AdditiveExpression ModExpression IntdivExpression MultiplicativeExpression ExpExpression
 %type <expression> NotExpression UnaryExpression AndExpression OrExpression XorExpression EqvExpression
@@ -143,12 +145,19 @@ StatementsNl_opt
 
 StatementsNl
     : StatementNl                           { $$ = $1; }
-    | StatementNl StatementsNl              { $1->next = $2; $$ = $1; }
+    | StatementNl StatementsNl              { $$ = link_statements($1, $2); }
 
 StatementNl
     : Statement tNL                 { $$ = $1; }
 
 Statement
+    : ':'                                   { $$ = NULL; }
+    | ':' Statement                         { $$ = $2; }
+    | SimpleStatement                       { $$ = $1; }
+    | SimpleStatement ':' Statement         { $1->next = $3; $$ = $1; }
+    | SimpleStatement ':'                   { $$ = $1; }
+
+SimpleStatement
     : MemberExpression ArgumentList_opt     { $1->args = $2; $$ = new_call_statement(ctx, $1); CHECK_ERROR; }
     | tCALL MemberExpression Arguments_opt  { $2->args = $3; $$ = new_call_statement(ctx, $2); CHECK_ERROR; }
     | MemberExpression Arguments_opt '=' Expression
@@ -366,6 +375,9 @@ static int parser_error(const char *str)
 
 static void source_add_statement(parser_ctx_t *ctx, statement_t *stat)
 {
+    if(!stat)
+        return;
+
     if(ctx->stats) {
         ctx->stats_tail->next = stat;
         ctx->stats_tail = stat;
@@ -750,6 +762,16 @@ static class_decl_t *add_variant_prop(parser_ctx_t *ctx, class_decl_t *class_dec
     prop->next = class_decl->props;
     class_decl->props = prop;
     return class_decl;
+}
+
+static statement_t *link_statements(statement_t *head, statement_t *tail)
+{
+    statement_t *iter;
+
+    for(iter = head; iter->next; iter = iter->next);
+    iter->next = tail;
+
+    return head;
 }
 
 void *parser_alloc(parser_ctx_t *ctx, size_t size)
