@@ -176,7 +176,7 @@ size_t CDECL _strncnt(const char *str, size_t maxlen)
  */
 unsigned int CDECL _strnextc(const char *str)
 {
-    return (unsigned int)str[0];
+    return (unsigned char)str[0];
 }
 
 
