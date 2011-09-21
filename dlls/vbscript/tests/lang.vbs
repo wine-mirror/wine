@@ -688,4 +688,22 @@ Call obj.test(obj)
 Call ok(getVT(test) = "VT_DISPATCH", "getVT(test) = " & getVT(test))
 Call ok(Me is Test, "Me is not Test")
 
+Const c1 = 1, c2 = 2
+Call ok(c1 = 1, "c1 = " & c1)
+Call ok(getVT(c1) = "VT_I2", "getVT(c1) = " & getVT(c1))
+
+if false then Const conststr = "str"
+Call ok(conststr = "str", "conststr = " & conststr)
+Call ok(getVT(conststr) = "VT_BSTR", "getVT(conststr) = " & getVT(conststr))
+Call ok(conststr = "str", "conststr = " & conststr)
+
+Sub ConstTestSub
+    Const funcconst = 1
+    Call ok(c1 = 1, "c1 = " & c1)
+    Call ok(funcconst = 1, "funcconst = " & funcconst)
+End Sub
+
+Call ConstTestSub
+Dim funcconst
+
 reportSuccess()
