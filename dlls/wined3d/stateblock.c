@@ -880,7 +880,7 @@ HRESULT CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock)
 
     wined3d_state_record_lights(&stateblock->state, src_state);
 
-    TRACE("Captue done.\n");
+    TRACE("Capture done.\n");
 
     return WINED3D_OK;
 }
