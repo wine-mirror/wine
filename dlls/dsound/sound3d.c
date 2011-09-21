@@ -787,9 +787,9 @@ static ULONG WINAPI IDirectSound3DListenerImpl_Release(LPDIRECTSOUND3DLISTENER i
 
     if (!ref) {
         This->device->listener = 0;
-        HeapFree(GetProcessHeap(), 0, This);
         if (!InterlockedDecrement(&This->device->primary->numIfaces))
             primarybuffer_destroy(This->device->primary);
+        HeapFree(GetProcessHeap(), 0, This);
         TRACE("(%p) released\n", This);
     }
     return ref;
