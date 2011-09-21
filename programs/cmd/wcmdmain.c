@@ -1502,7 +1502,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
 	WCMD_if (p, cmdList);
         break;
       case WCMD_LABEL:
-        WCMD_volume (1, p);
+        WCMD_volume (TRUE, p);
         break;
       case WCMD_MD:
       case WCMD_MKDIR:
@@ -1560,7 +1560,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
         WCMD_verify (p);
         break;
       case WCMD_VOL:
-        WCMD_volume (0, p);
+        WCMD_volume (FALSE, p);
         break;
       case WCMD_PUSHD:
         WCMD_pushd(p);

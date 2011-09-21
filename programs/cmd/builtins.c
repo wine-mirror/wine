@@ -2644,11 +2644,13 @@ void WCMD_version (void) {
 /****************************************************************************
  * WCMD_volume
  *
- * Display volume info and/or set volume label. Returns 0 if error.
+ * Display volume information (set_label = FALSE)
+ * Additionally set volume label (set_label = TRUE)
+ * Returns 1 on success, 0 otherwise
  */
 
-int WCMD_volume (int mode, const WCHAR *path) {
-
+int WCMD_volume(BOOL set_label, const WCHAR *path)
+{
   DWORD count, serial;
   WCHAR string[MAX_PATH], label[MAX_PATH], curdir[MAX_PATH];
   BOOL status;
@@ -2679,7 +2681,7 @@ int WCMD_volume (int mode, const WCHAR *path) {
   }
   WCMD_output (WCMD_LoadMessage(WCMD_VOLUMEDETAIL),
     	curdir[0], label, HIWORD(serial), LOWORD(serial));
-  if (mode) {
+  if (set_label) {
     WCMD_output (WCMD_LoadMessage(WCMD_VOLUMEPROMPT));
     WCMD_ReadFile (GetStdHandle(STD_INPUT_HANDLE), string,
                    sizeof(string)/sizeof(WCHAR), &count, NULL);

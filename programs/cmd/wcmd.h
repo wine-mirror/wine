@@ -94,7 +94,7 @@ void WCMD_title (const WCHAR *);
 void WCMD_type (WCHAR *);
 void WCMD_verify (const WCHAR *command);
 void WCMD_version (void);
-int  WCMD_volume (int mode, const WCHAR *command);
+int  WCMD_volume (BOOL set_label, const WCHAR *command);
 
 WCHAR *WCMD_fgets (WCHAR *s, int n, HANDLE stream);
 WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where, WCHAR **end);
