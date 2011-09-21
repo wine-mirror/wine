@@ -51,9 +51,7 @@ typedef struct _NOTIFICATIONLIST
 	LPNOTIFYREGISTER apidl; /* array of entries to watch*/
 	UINT cidl;		/* number of pidls in array */
 	LONG wEventMask;	/* subscribed events */
-	LONG wSignalledEvent;   /* event that occurred */
 	DWORD dwFlags;		/* client flags */
-	LPCITEMIDLIST pidlSignaled; /*pidl of the path that caused the signal*/
 	ULONG id;
 } NOTIFICATIONLIST, *LPNOTIFICATIONLIST;
 
@@ -185,7 +183,6 @@ SHChangeNotifyRegister(
     item->hwnd = hwnd;
     item->uMsg = uMsg;
     item->wEventMask = wEventMask;
-    item->wSignalledEvent = 0;
     item->dwFlags = fSources;
     item->id = InterlockedIncrement( &next_id );
 
@@ -236,6 +233,15 @@ BOOL WINAPI SHChangeNotifyUpdateEntryList(DWORD unknown1, DWORD unknown2,
     return -1;
 }
 
+struct new_delivery_notification
+{
+    LONG event;
+    DWORD pidl1_size;
+    DWORD pidl2_size;
+    LPITEMIDLIST pidls[2];
+    BYTE data[1];
+};
+
 static BOOL should_notify( LPCITEMIDLIST changed, LPCITEMIDLIST watched, BOOL sub )
 {
     TRACE("%p %p %d\n", changed, watched, sub );
@@ -260,6 +266,7 @@ void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID 
         DWORD flags;
     } *cur, *next;
 
+    HANDLE shared_data = NULL;
     LPITEMIDLIST Pidls[2];
     LPNOTIFICATIONLIST ptr;
     struct list recipients;
@@ -368,16 +375,43 @@ void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID 
     {
         TRACE("notifying %p, event %s(%x)\n", cur->hwnd, DumpEvent(wEventId), wEventId);
 
-        ptr->wSignalledEvent |= wEventId;
+        if (cur->flags  & SHCNRF_NewDelivery) {
+            if(!shared_data) {
+                struct new_delivery_notification *notification;
+                UINT size1 = ILGetSize(Pidls[0]), size2 = ILGetSize(Pidls[1]);
+                UINT offset = (size1+sizeof(int)-1)/sizeof(int)*sizeof(int);
 
-        if (cur->flags  & SHCNRF_NewDelivery)
-            FIXME("SHCNRF_NewDelivery flag is not supported\n");
-        else
+                notification = SHAlloc(sizeof(struct new_delivery_notification)+offset+size2);
+                if(!notification) {
+                    ERR("out of memory\n");
+                } else {
+                    notification->event = wEventId;
+                    notification->pidl1_size = size1;
+                    notification->pidl2_size = size2;
+                    if(size1)
+                        memcpy(notification->data, Pidls[0], size1);
+                    if(size2)
+                        memcpy(notification->data+offset, Pidls[1], size2);
+
+                    shared_data = SHAllocShared(notification,
+                        sizeof(struct new_delivery_notification)+size1+size2,
+                        GetCurrentProcessId());
+                    SHFree(notification);
+                }
+            }
+
+            if(shared_data)
+                SendMessageA(cur->hwnd, cur->msg, (WPARAM)shared_data, GetCurrentProcessId());
+            else
+                ERR("out of memory\n");
+        } else {
             SendMessageA(cur->hwnd, cur->msg, (WPARAM)Pidls, wEventId);
+        }
 
         list_remove(&cur->entry);
         SHFree(cur);
     }
+    SHFreeShared(shared_data, GetCurrentProcessId());
     SHFree(Pidls[0]);
     SHFree(Pidls[1]);
 
@@ -418,33 +452,28 @@ HANDLE WINAPI SHChangeNotification_Lock(
 	LPITEMIDLIST **lppidls,
 	LPLONG lpwEventId)
 {
-    DWORD i;
-    LPNOTIFICATIONLIST node;
-    LPCITEMIDLIST *idlist;
+    struct new_delivery_notification *ndn;
+    UINT offset;
 
     TRACE("%p %08x %p %p\n", hChange, dwProcessId, lppidls, lpwEventId);
 
-    /* EnterCriticalSection(&SHELL32_ChangenotifyCS); */
-
-    LIST_FOR_EACH_ENTRY( node, &notifications, NOTIFICATIONLIST, entry )
-    {
-        if (node == hChange)
-        {
-            idlist = SHAlloc( sizeof(LPCITEMIDLIST *) * node->cidl );
-            for(i=0; i<node->cidl; i++)
-                idlist[i] = node->pidlSignaled;
-            *lpwEventId = node->wSignalledEvent;
-            *lppidls = (LPITEMIDLIST*)idlist;
-            node->wSignalledEvent = 0;
-            /* LeaveCriticalSection(&SHELL32_ChangenotifyCS); */
-            return node;
-        }
+    ndn = SHLockShared(hChange, dwProcessId);
+    if(!ndn) {
+        WARN("SHLockShared failed\n");
+        return NULL;
     }
-    ERR("Couldn't find %p\n", hChange );
 
-    /* LeaveCriticalSection(&SHELL32_ChangenotifyCS); */
+    if(lppidls) {
+        offset = (ndn->pidl1_size+sizeof(int)-1)/sizeof(int)*sizeof(int);
+        ndn->pidls[0] = ndn->pidl1_size ? (LPITEMIDLIST)ndn->data : NULL;
+        ndn->pidls[1] = ndn->pidl2_size ? (LPITEMIDLIST)(ndn->data+offset) : NULL;
+        *lppidls = ndn->pidls;
+    }
 
-    return 0;
+    if(lpwEventId)
+        *lpwEventId = ndn->event;
+
+    return ndn;
 }
 
 /*************************************************************************
@@ -452,8 +481,8 @@ HANDLE WINAPI SHChangeNotification_Lock(
  */
 BOOL WINAPI SHChangeNotification_Unlock ( HANDLE hLock)
 {
-    TRACE("\n");
-    return 1;
+    TRACE("%p\n", hLock);
+    return SHUnlockShared(hLock);
 }
 
 /*************************************************************************
