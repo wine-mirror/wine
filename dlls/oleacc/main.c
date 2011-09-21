@@ -95,8 +95,8 @@ HRESULT WINAPI DllUnregisterServer(void)
 
 void WINAPI GetOleaccVersionInfo(DWORD* pVersion, DWORD* pBuild)
 {
-    *pVersion = MAKELONG(2,4); /* Windows XP version of oleacc: 4.2.5406.0 */
-    *pBuild = MAKELONG(0,5406);
+    *pVersion = MAKELONG(0,7); /* Windows 7 version of oleacc: 7.0.0.0 */
+    *pBuild = MAKELONG(0,0);
 }
 
 UINT WINAPI GetRoleTextW(DWORD role, LPWSTR lpRole, UINT rolemax)
