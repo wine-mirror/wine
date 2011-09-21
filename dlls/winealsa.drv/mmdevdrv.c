@@ -285,7 +285,7 @@ static HRESULT alsa_get_card_devices(snd_pcm_stream_t stream, WCHAR **ids, char 
             continue;
         }
 
-        sprintf(devnode, "hw:%d,%d", card, device);
+        sprintf(devnode, "plughw:%d,%d", card, device);
         if(!alsa_try_open(devnode, stream)){
             if(count_failed)
                 ++(*num);
