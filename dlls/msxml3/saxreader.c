@@ -1873,14 +1873,14 @@ static HRESULT internal_parseStream(saxreader *This, IStream *stream, BOOL vbInt
     HRESULT hr;
     ULONG dataRead;
     char data[1024];
+    int ret;
 
+    dataRead = 0;
     hr = IStream_Read(stream, data, sizeof(data), &dataRead);
-    if(hr != S_OK)
-        return hr;
+    if(FAILED(hr)) return hr;
 
     hr = SAXLocator_create(This, &locator, vbInterface);
-    if(FAILED(hr))
-        return hr;
+    if(FAILED(hr)) return hr;
 
     locator->pParserCtxt = xmlCreatePushParserCtxt(
             &locator->saxreader->sax, locator,
@@ -1892,25 +1892,34 @@ static HRESULT internal_parseStream(saxreader *This, IStream *stream, BOOL vbInt
     }
 
     This->isParsing = TRUE;
-    while(1)
+
+    if(dataRead != sizeof(data))
     {
-        hr = IStream_Read(stream, data, sizeof(data), &dataRead);
-        if(hr != S_OK)
-            break;
-
-        if(xmlParseChunk(locator->pParserCtxt, data, dataRead, 0) != XML_ERR_OK) hr = E_FAIL;
-        else hr = locator->ret;
-
-        if(hr != S_OK) break;
-
-        if(dataRead != sizeof(data))
+        ret = xmlParseChunk(locator->pParserCtxt, data, 0, 1);
+        hr = ret != XML_ERR_OK ? E_FAIL : locator->ret;
+    }
+    else
+    {
+        while(1)
         {
-            if(xmlParseChunk(locator->pParserCtxt, data, 0, 1) != XML_ERR_OK) hr = E_FAIL;
-            else hr = locator->ret;
+            dataRead = 0;
+            hr = IStream_Read(stream, data, sizeof(data), &dataRead);
+            if (FAILED(hr)) break;
 
-            break;
+            ret = xmlParseChunk(locator->pParserCtxt, data, dataRead, 0);
+            hr = ret != XML_ERR_OK ? E_FAIL : locator->ret;
+
+            if (hr != S_OK) break;
+
+            if (dataRead != sizeof(data))
+            {
+                ret = xmlParseChunk(locator->pParserCtxt, data, 0, 1);
+                hr = ret != XML_ERR_OK ? E_FAIL : locator->ret;
+                break;
+            }
         }
     }
+
     This->isParsing = FALSE;
 
     xmlFreeParserCtxt(locator->pParserCtxt);
