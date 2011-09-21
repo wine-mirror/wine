@@ -1224,6 +1224,7 @@ static void oss_write_data(ACImpl *This)
 
     written = write(This->fd, buf, to_write * This->fmt->nBlockAlign);
     if(written < 0){
+        /* EAGAIN is OSS buffer full, log that too */
         WARN("write failed: %d (%s)\n", errno, strerror(errno));
         return;
     }
@@ -1729,9 +1730,12 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
         w_bytes = write(This->fd, buffer,
                 written_frames * This->fmt->nBlockAlign);
         if(w_bytes < 0){
-            LeaveCriticalSection(&This->lock);
-            WARN("write failed: %d (%s)\n", errno, strerror(errno));
-            return E_FAIL;
+            if(errno != EAGAIN){
+                LeaveCriticalSection(&This->lock);
+                WARN("write failed: %d (%s)\n", errno, strerror(errno));
+                return E_FAIL;
+            }else /* OSS buffer full */
+                w_bytes = 0;
         }
         w_frames = w_bytes / This->fmt->nBlockAlign;
         This->inbuf_frames += w_frames;
