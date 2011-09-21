@@ -25,7 +25,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
-
 #define YYLEX_PARAM ctx
 #define YYPARSE_PARAM ctx
 
@@ -56,11 +55,13 @@ static statement_t *new_while_statement(parser_ctx_t*,statement_type_t,expressio
 static statement_t *new_if_statement(parser_ctx_t*,expression_t*,statement_t*,elseif_decl_t*,statement_t*);
 static statement_t *new_function_statement(parser_ctx_t*,function_decl_t*);
 static statement_t *new_onerror_statement(parser_ctx_t*,BOOL);
+static statement_t *new_const_statement(parser_ctx_t*,const_decl_t*);
 
 static dim_decl_t *new_dim_decl(parser_ctx_t*,const WCHAR*,dim_decl_t*);
 static elseif_decl_t *new_elseif_decl(parser_ctx_t*,expression_t*,statement_t*);
 static function_decl_t *new_function_decl(parser_ctx_t*,const WCHAR*,function_type_t,unsigned,arg_decl_t*,statement_t*);
 static arg_decl_t *new_argument_decl(parser_ctx_t*,const WCHAR*,BOOL);
+static const_decl_t *new_const_decl(parser_ctx_t*,const WCHAR*,expression_t*);
 
 static class_decl_t *new_class_decl(parser_ctx_t*);
 static class_decl_t *add_class_function(parser_ctx_t*,class_decl_t*,function_decl_t*);
@@ -88,6 +89,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
     function_decl_t *func_decl;
     arg_decl_t *arg_decl;
     class_decl_t *class_decl;
+    const_decl_t *const_decl;
     unsigned uint;
     LONG lng;
     BOOL bool;
@@ -98,7 +100,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %token tTRUE tFALSE
 %token tNOT tAND tOR tXOR tEQV tIMP tNEQ
 %token tIS tLTEQ tGTEQ tMOD
-%token tCALL tDIM tSUB tFUNCTION tPROPERTY tGET tLET
+%token tCALL tDIM tSUB tFUNCTION tPROPERTY tGET tLET tCONST
 %token tIF tELSE tELSEIF tEND tTHEN tEXIT
 %token tWHILE tWEND tDO tLOOP tUNTIL
 %token tBYREF tBYVAL
@@ -124,6 +126,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %type <class_decl> ClassDeclaration ClassBody
 %type <uint> Storage Storage_opt
 %type <dim_decl> DimDeclList
+%type <const_decl> ConstDecl ConstDeclList
 
 %%
 
@@ -182,6 +185,7 @@ SimpleStatement
     | tSTOP                                 { $$ = new_statement(ctx, STAT_STOP, 0); CHECK_ERROR; }
     | tON tERROR tRESUME tNEXT              { $$ = new_onerror_statement(ctx, TRUE); CHECK_ERROR; }
     | tON tERROR tGOTO '0'                  { $$ = new_onerror_statement(ctx, FALSE); CHECK_ERROR; }
+    | tCONST ConstDeclList                  { $$ = new_const_statement(ctx, $2); CHECK_ERROR; }
 
 MemberExpression
     : tIdentifier                           { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
@@ -190,6 +194,13 @@ MemberExpression
 DimDeclList /* FIXME: Support arrays */
     : tIdentifier                           { $$ = new_dim_decl(ctx, $1, NULL); CHECK_ERROR; }
     | tIdentifier ',' DimDeclList           { $$ = new_dim_decl(ctx, $1, $3); CHECK_ERROR; }
+
+ConstDeclList
+    : ConstDecl                             { $$ = $1; }
+    | ConstDecl ',' ConstDeclList           { $1->next = $3; $$ = $1; }
+
+ConstDecl
+    : tIdentifier '=' LiteralExpression     { $$ = new_const_decl(ctx, $1, $3); CHECK_ERROR; }
 
 DoType
     : tWHILE        { $$ = TRUE; }
@@ -764,6 +775,32 @@ static class_decl_t *add_variant_prop(parser_ctx_t *ctx, class_decl_t *class_dec
     prop->next = class_decl->props;
     class_decl->props = prop;
     return class_decl;
+}
+
+static const_decl_t *new_const_decl(parser_ctx_t *ctx, const WCHAR *name, expression_t *expr)
+{
+    const_decl_t *decl;
+
+    decl = parser_alloc(ctx, sizeof(*decl));
+    if(!decl)
+        return NULL;
+
+    decl->name = name;
+    decl->value_expr = expr;
+    decl->next = NULL;
+    return decl;
+}
+
+static statement_t *new_const_statement(parser_ctx_t *ctx, const_decl_t *decls)
+{
+    const_statement_t *stat;
+
+    stat = new_statement(ctx, STAT_CONST, sizeof(*stat));
+    if(!stat)
+        return NULL;
+
+    stat->decls = decls;
+    return &stat->stat;
 }
 
 static statement_t *link_statements(statement_t *head, statement_t *tail)

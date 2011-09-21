@@ -98,6 +98,7 @@ typedef struct {
 typedef enum {
     STAT_ASSIGN,
     STAT_CALL,
+    STAT_CONST,
     STAT_DIM,
     STAT_DOUNTIL,
     STAT_DOWHILE,
@@ -199,6 +200,17 @@ typedef struct {
     statement_t stat;
     BOOL resume_next;
 } onerror_statement_t;
+
+typedef struct _const_decl_t {
+    const WCHAR *name;
+    expression_t *value_expr;
+    struct _const_decl_t *next;
+} const_decl_t;
+
+typedef struct {
+    statement_t stat;
+    const_decl_t *decls;
+} const_statement_t;
 
 typedef struct {
     const WCHAR *code;

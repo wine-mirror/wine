@@ -31,6 +31,7 @@ static const WCHAR byrefW[] = {'b','y','r','e','f',0};
 static const WCHAR byvalW[] = {'b','y','v','a','l',0};
 static const WCHAR callW[] = {'c','a','l','l',0};
 static const WCHAR classW[] = {'c','l','a','s','s',0};
+static const WCHAR constW[] = {'c','o','n','s','t',0};
 static const WCHAR defaultW[] = {'d','e','f','a','u','l','t',0};
 static const WCHAR dimW[] = {'d','i','m',0};
 static const WCHAR doW[] = {'d','o',0};
@@ -85,6 +86,7 @@ static const struct {
     {byvalW,     tBYVAL},
     {callW,      tCALL},
     {classW,     tCLASS},
+    {constW,     tCONST},
     {defaultW,   tDEFAULT},
     {dimW,       tDIM},
     {doW,        tDO},
