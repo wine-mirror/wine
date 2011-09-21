@@ -137,6 +137,49 @@ static inline saxattributes *impl_from_ISAXAttributes( ISAXAttributes *iface )
     return CONTAINING_RECORD(iface, saxattributes, ISAXAttributes_iface);
 }
 
+/* property names */
+static const WCHAR PropertyCharsetW[] = {
+    'c','h','a','r','s','e','t',0
+};
+static const WCHAR PropertyDeclHandlerW[] = {
+    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/',
+    's','a','x','/','p','r','o','p','e','r','t','i','e','s','/',
+    'd','e','c','l','a','r','a','t','i','o','n',
+    '-','h','a','n','d','l','e','r',0
+};
+static const WCHAR PropertyDomNodeW[] = {
+    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/',
+    's','a','x','/','p','r','o','p','e','r','t','i','e','s','/',
+    'd','o','m','-','n','o','d','e',0
+};
+static const WCHAR PropertyInputSourceW[] = {
+    'i','n','p','u','t','-','s','o','u','r','c','e',0
+};
+static const WCHAR PropertyLexicalHandlerW[] = {
+    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/',
+    's','a','x','/','p','r','o','p','e','r','t','i','e','s','/',
+    'l','e','x','i','c','a','l','-','h','a','n','d','l','e','r',0
+};
+static const WCHAR PropertyMaxElementDepthW[] = {
+    'm','a','x','-','e','l','e','m','e','n','t','-','d','e','p','t','h',0
+};
+static const WCHAR PropertyMaxXMLSizeW[] = {
+    'm','a','x','-','x','m','l','-','s','i','z','e',0
+};
+static const WCHAR PropertySchemaDeclHandlerW[] = {
+    's','c','h','e','m','a','-','d','e','c','l','a','r','a','t','i','o','n','-',
+    'h','a','n','d','l','e','r',0
+};
+static const WCHAR PropertyXMLDeclEncodingW[] = {
+    'x','m','l','d','e','c','l','-','e','n','c','o','d','i','n','g',0
+};
+static const WCHAR PropertyXMLDeclStandaloneW[] = {
+    'x','m','l','d','e','c','l','-','s','t','a','n','d','a','l','o','n','e',0
+};
+static const WCHAR PropertyXMLDeclVersionW[] = {
+    'x','m','l','d','e','c','l','-','v','e','r','s','i','o','n',0
+};
+
 static inline BOOL has_content_handler(const saxlocator *locator)
 {
     return  (locator->vbInterface && locator->saxreader->vbcontentHandler) ||
@@ -2191,57 +2234,13 @@ static HRESULT internal_parseURL(
 
 static HRESULT internal_putProperty(
     saxreader* This,
-    const WCHAR *pProp,
+    const WCHAR *prop,
     VARIANT value,
     BOOL vbInterface)
 {
-    static const WCHAR wszCharset[] = {
-        'c','h','a','r','s','e','t',0
-    };
-    static const WCHAR wszDeclarationHandler[] = {
-        'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/',
-        's','a','x','/','p','r','o','p','e','r','t','i','e','s','/',
-        'd','e','c','l','a','r','a','t','i','o','n',
-        '-','h','a','n','d','l','e','r',0
-    };
-    static const WCHAR wszDomNode[] = {
-        'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/',
-        's','a','x','/','p','r','o','p','e','r','t','i','e','s','/',
-        'd','o','m','-','n','o','d','e',0
-    };
-    static const WCHAR wszInputSource[] = {
-        'i','n','p','u','t','-','s','o','u','r','c','e',0
-    };
-    static const WCHAR wszLexicalHandler[] = {
-        'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/',
-        's','a','x','/','p','r','o','p','e','r','t','i','e','s','/',
-        'l','e','x','i','c','a','l','-','h','a','n','d','l','e','r',0
-    };
-    static const WCHAR wszMaxElementDepth[] = {
-        'm','a','x','-','e','l','e','m','e','n','t','-','d','e','p','t','h',0
-    };
-    static const WCHAR wszMaxXMLSize[] = {
-        'm','a','x','-','x','m','l','-','s','i','z','e',0
-    };
-    static const WCHAR wszSchemaDeclarationHandler[] = {
-        's','c','h','e','m','a','-',
-        'd','e','c','l','a','r','a','t','i','o','n','-',
-        'h','a','n','d','l','e','r',0
-    };
-    static const WCHAR wszXMLDeclEncoding[] = {
-        'x','m','l','d','e','c','l','-','e','n','c','o','d','i','n','g',0
-    };
-    static const WCHAR wszXMLDeclStandalone[] = {
-        'x','m','l','d','e','c','l',
-        '-','s','t','a','n','d','a','l','o','n','e',0
-    };
-    static const WCHAR wszXMLDeclVersion[] = {
-        'x','m','l','d','e','c','l','-','v','e','r','s','i','o','n',0
-    };
+    TRACE("(%p)->(%s %s)\n", This, debugstr_w(prop), debugstr_variant(&value));
 
-    TRACE("(%p)->(%s %s)\n", This, debugstr_w(pProp), debugstr_variant(&value));
-
-    if(!memcmp(pProp, wszDeclarationHandler, sizeof(wszDeclarationHandler)))
+    if(!memcmp(prop, PropertyDeclHandlerW, sizeof(PropertyDeclHandlerW)))
     {
         if(This->isParsing) return E_FAIL;
 
@@ -2267,65 +2266,101 @@ static HRESULT internal_putProperty(
         return S_OK;
     }
 
-    if(!memcmp(pProp, wszLexicalHandler, sizeof(wszLexicalHandler)))
+    if(!memcmp(prop, PropertyLexicalHandlerW, sizeof(PropertyLexicalHandlerW)))
     {
         if(This->isParsing) return E_FAIL;
 
-        if(V_UNKNOWN(&value))
+        switch (V_VT(&value))
         {
-            if(vbInterface)
-                IVBSAXLexicalHandler_AddRef(
-                        (IVBSAXLexicalHandler*)V_UNKNOWN(&value));
+        case VT_EMPTY:
+            if (vbInterface)
+            {
+                if (This->vblexicalHandler)
+                {
+                    IVBSAXLexicalHandler_Release(This->vblexicalHandler);
+                    This->vblexicalHandler = NULL;
+                }
+            }
             else
-                ISAXLexicalHandler_AddRef(
-                        (ISAXLexicalHandler*)V_UNKNOWN(&value));
-        }
-        if((vbInterface && This->vblexicalHandler)
-                || (!vbInterface && This->lexicalHandler))
-        {
-            if(vbInterface)
-                IVBSAXLexicalHandler_Release(This->vblexicalHandler);
+                if (This->lexicalHandler)
+                {
+                    ISAXLexicalHandler_Release(This->lexicalHandler);
+                    This->lexicalHandler = NULL;
+                }
+            break;
+        case VT_UNKNOWN:
+            if (V_UNKNOWN(&value)) IUnknown_AddRef(V_UNKNOWN(&value));
+
+            if ((vbInterface && This->vblexicalHandler) ||
+               (!vbInterface && This->lexicalHandler))
+            {
+                if (vbInterface)
+                    IVBSAXLexicalHandler_Release(This->vblexicalHandler);
+                else
+                    ISAXLexicalHandler_Release(This->lexicalHandler);
+            }
+
+            if (vbInterface)
+                This->vblexicalHandler = (IVBSAXLexicalHandler*)V_UNKNOWN(&value);
             else
-                ISAXLexicalHandler_Release(This->lexicalHandler);
+                This->lexicalHandler = (ISAXLexicalHandler*)V_UNKNOWN(&value);
+            break;
+        default:
+            return E_INVALIDARG;
         }
-        if(vbInterface)
-            This->vblexicalHandler = (IVBSAXLexicalHandler*)V_UNKNOWN(&value);
-        else
-            This->lexicalHandler = (ISAXLexicalHandler*)V_UNKNOWN(&value);
+
         return S_OK;
     }
 
-    FIXME("(%p)->(%s): unsupported property\n", This, debugstr_w(pProp));
+    FIXME("(%p)->(%s): unsupported property\n", This, debugstr_w(prop));
 
-    if(!memcmp(pProp, wszCharset, sizeof(wszCharset)))
+    if(!memcmp(prop, PropertyCharsetW, sizeof(PropertyCharsetW)))
         return E_NOTIMPL;
 
-    if(!memcmp(pProp, wszDomNode, sizeof(wszDomNode)))
+    if(!memcmp(prop, PropertyDomNodeW, sizeof(PropertyDomNodeW)))
         return E_FAIL;
 
-    if(!memcmp(pProp, wszInputSource, sizeof(wszInputSource)))
+    if(!memcmp(prop, PropertyInputSourceW, sizeof(PropertyInputSourceW)))
         return E_NOTIMPL;
 
-    if(!memcmp(pProp, wszMaxElementDepth, sizeof(wszMaxElementDepth)))
+    if(!memcmp(prop, PropertyMaxElementDepthW, sizeof(PropertyMaxElementDepthW)))
         return E_NOTIMPL;
 
-    if(!memcmp(pProp, wszMaxXMLSize, sizeof(wszMaxXMLSize)))
+    if(!memcmp(prop, PropertyMaxXMLSizeW, sizeof(PropertyMaxXMLSizeW)))
         return E_NOTIMPL;
 
-    if(!memcmp(pProp, wszSchemaDeclarationHandler,
-                sizeof(wszSchemaDeclarationHandler)))
+    if(!memcmp(prop, PropertySchemaDeclHandlerW, sizeof(PropertySchemaDeclHandlerW)))
         return E_NOTIMPL;
 
-    if(!memcmp(pProp, wszXMLDeclEncoding, sizeof(wszXMLDeclEncoding)))
+    if(!memcmp(prop, PropertyXMLDeclEncodingW, sizeof(PropertyXMLDeclEncodingW)))
         return E_FAIL;
 
-    if(!memcmp(pProp, wszXMLDeclStandalone, sizeof(wszXMLDeclStandalone)))
+    if(!memcmp(prop, PropertyXMLDeclStandaloneW, sizeof(PropertyXMLDeclStandaloneW)))
         return E_FAIL;
 
-    if(!memcmp(pProp, wszXMLDeclVersion, sizeof(wszXMLDeclVersion)))
+    if(!memcmp(prop, PropertyXMLDeclVersionW, sizeof(PropertyXMLDeclVersionW)))
         return E_FAIL;
 
     return E_INVALIDARG;
+}
+
+static HRESULT internal_getProperty(const saxreader* This, const WCHAR *prop, VARIANT *value, BOOL vb)
+{
+    TRACE("(%p)->(%s)\n", This, debugstr_w(prop));
+
+    if (!value) return E_POINTER;
+
+    if (!memcmp(PropertyLexicalHandlerW, prop, sizeof(PropertyLexicalHandlerW)))
+    {
+        V_VT(value) = VT_UNKNOWN;
+        V_UNKNOWN(value) = vb ? (IUnknown*)This->vblexicalHandler : (IUnknown*)This->lexicalHandler;
+        if (V_UNKNOWN(value)) IUnknown_AddRef(V_UNKNOWN(value));
+        return S_OK;
+    }
+
+    FIXME("(%p)->(%s) unsupported property\n", This, debugstr_w(prop));
+
+    return E_NOTIMPL;
 }
 
 /*** IVBSAXXMLReader interface ***/
@@ -2516,13 +2551,11 @@ static HRESULT WINAPI saxxmlreader_putFeature(
 
 static HRESULT WINAPI saxxmlreader_getProperty(
     IVBSAXXMLReader* iface,
-    const WCHAR *pProp,
-    VARIANT *pValue)
+    const WCHAR *prop,
+    VARIANT *value)
 {
     saxreader *This = impl_from_IVBSAXXMLReader( iface );
-
-    FIXME("(%p)->(%s %p) stub\n", This, debugstr_w(pProp), pValue);
-    return E_NOTIMPL;
+    return internal_getProperty(This, prop, value, TRUE);
 }
 
 static HRESULT WINAPI saxxmlreader_putProperty(
@@ -2725,11 +2758,11 @@ static HRESULT WINAPI isaxxmlreader_putFeature(
 
 static HRESULT WINAPI isaxxmlreader_getProperty(
         ISAXXMLReader* iface,
-        const WCHAR *pProp,
-        VARIANT *pValue)
+        const WCHAR *prop,
+        VARIANT *value)
 {
     saxreader *This = impl_from_ISAXXMLReader( iface );
-    return IVBSAXXMLReader_getProperty(&This->IVBSAXXMLReader_iface, pProp, pValue);
+    return internal_getProperty(This, prop, value, FALSE);
 }
 
 static HRESULT WINAPI isaxxmlreader_putProperty(
