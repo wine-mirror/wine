@@ -46,6 +46,9 @@ typedef struct {
     dim_decl_t *dim_decls;
     dynamic_var_t *global_vars;
 
+    const_decl_t *const_decls;
+    const_decl_t *global_consts;
+
     function_t *func;
     function_t *funcs;
     function_decl_t *func_decls;
@@ -302,6 +305,26 @@ static inline void label_set_addr(compile_ctx_t *ctx, unsigned label)
     ctx->labels[label & ~LABEL_FLAG] = ctx->instr_cnt;
 }
 
+static expression_t *lookup_const_decls(compile_ctx_t *ctx, const WCHAR *name, BOOL lookup_global)
+{
+    const_decl_t *decl;
+
+    for(decl = ctx->const_decls; decl; decl = decl->next) {
+        if(!strcmpiW(decl->name, name))
+            return decl->value_expr;
+    }
+
+    if(!lookup_global)
+        return NULL;
+
+    for(decl = ctx->global_consts; decl; decl = decl->next) {
+        if(!strcmpiW(decl->name, name))
+            return decl->value_expr;
+    }
+
+    return NULL;
+}
+
 static HRESULT compile_args(compile_ctx_t *ctx, expression_t *args, unsigned *ret)
 {
     unsigned arg_cnt = 0;
@@ -324,6 +347,14 @@ static HRESULT compile_member_expression(compile_ctx_t *ctx, member_expression_t
 {
     unsigned arg_cnt = 0;
     HRESULT hres;
+
+    if(ret_val && !expr->args) {
+        expression_t *const_expr;
+
+        const_expr = lookup_const_decls(ctx, expr->identifier, TRUE);
+        if(const_expr)
+            return compile_expression(ctx, const_expr);
+    }
 
     hres = compile_args(ctx, expr->args, &arg_cnt);
     if(FAILED(hres))
@@ -627,7 +658,8 @@ static HRESULT compile_dim_statement(compile_ctx_t *ctx, dim_statement_t *stat)
     dim_decl_t *dim_decl = stat->dim_decls;
 
     while(1) {
-        if(lookup_dim_decls(ctx, dim_decl->name) || lookup_args_name(ctx, dim_decl->name)) {
+        if(lookup_dim_decls(ctx, dim_decl->name) || lookup_args_name(ctx, dim_decl->name)
+           || lookup_const_decls(ctx, dim_decl->name, FALSE)) {
             FIXME("dim %s name redefined\n", debugstr_w(dim_decl->name));
             return E_FAIL;
         }
@@ -640,6 +672,39 @@ static HRESULT compile_dim_statement(compile_ctx_t *ctx, dim_statement_t *stat)
     dim_decl->next = ctx->dim_decls;
     ctx->dim_decls = stat->dim_decls;
     ctx->func->var_cnt++;
+    return S_OK;
+}
+
+static HRESULT compile_const_statement(compile_ctx_t *ctx, const_statement_t *stat)
+{
+    const_decl_t *decl, *next_decl = stat->decls;
+
+    do {
+        decl = next_decl;
+
+        if(lookup_const_decls(ctx, decl->name, FALSE) || lookup_args_name(ctx, decl->name)
+                || lookup_dim_decls(ctx, decl->name)) {
+            FIXME("%s redefined\n", debugstr_w(decl->name));
+            return E_FAIL;
+        }
+
+        if(ctx->func->type == FUNC_GLOBAL) {
+            HRESULT hres;
+
+            hres = compile_expression(ctx, decl->value_expr);
+            if(FAILED(hres))
+                return hres;
+
+            hres = push_instr_bstr(ctx, OP_const, decl->name);
+            if(FAILED(hres))
+                return hres;
+        }
+
+        next_decl = decl->next;
+        decl->next = ctx->const_decls;
+        ctx->const_decls = decl;
+    } while(next_decl);
+
     return S_OK;
 }
 
@@ -711,6 +776,9 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
             break;
         case STAT_CALL:
             hres = compile_member_expression(ctx, ((call_statement_t*)stat)->expr, FALSE);
+            break;
+        case STAT_CONST:
+            hres = compile_const_statement(ctx, (const_statement_t*)stat);
             break;
         case STAT_DIM:
             hres = compile_dim_statement(ctx, (dim_statement_t*)stat);
@@ -815,6 +883,7 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
 
     ctx->func = func;
     ctx->dim_decls = NULL;
+    ctx->const_decls = NULL;
     hres = compile_statement(ctx, stat);
     ctx->func = NULL;
     if(FAILED(hres))
@@ -893,7 +962,7 @@ static HRESULT create_function(compile_ctx_t *ctx, function_decl_t *decl, functi
     function_t *func;
     HRESULT hres;
 
-    if(lookup_dim_decls(ctx, decl->name) || lookup_funcs_name(ctx, decl->name)) {
+    if(lookup_dim_decls(ctx, decl->name) || lookup_funcs_name(ctx, decl->name) || lookup_const_decls(ctx, decl->name, FALSE)) {
         FIXME("%s: redefinition\n", debugstr_w(decl->name));
         return E_FAIL;
     }
@@ -1019,7 +1088,7 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
     static const WCHAR class_terminateW[] = {'c','l','a','s','s','_','t','e','r','m','i','n','a','t','e',0};
 
     if(lookup_dim_decls(ctx, class_decl->name) || lookup_funcs_name(ctx, class_decl->name)
-            || lookup_class_name(ctx, class_decl->name)) {
+            || lookup_const_decls(ctx, class_decl->name, FALSE) || lookup_class_name(ctx, class_decl->name)) {
         FIXME("%s: redefinition\n", debugstr_w(class_decl->name));
         return E_FAIL;
     }
@@ -1247,6 +1316,7 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, vbscode_t **ret)
     ctx.dim_decls = NULL;
     ctx.classes = NULL;
     ctx.labels = NULL;
+    ctx.global_consts = NULL;
     ctx.labels_cnt = ctx.labels_size = 0;
 
     hres = compile_func(&ctx, ctx.parser.stats, &ctx.code->global_code);
@@ -1254,6 +1324,8 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, vbscode_t **ret)
         release_compiler(&ctx);
         return hres;
     }
+
+    ctx.global_consts = ctx.const_decls;
 
     for(func_decl = ctx.func_decls; func_decl; func_decl = func_decl->next) {
         hres = create_function(&ctx, func_decl, &new_func);

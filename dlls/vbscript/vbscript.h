@@ -184,6 +184,7 @@ typedef enum {
     X(assign_member,  1, ARG_BSTR,    0)          \
     X(bool,           1, ARG_INT,     0)          \
     X(concat,         1, 0,           0)          \
+    X(const,          1, ARG_BSTR,    0)          \
     X(div,            1, 0,           0)          \
     X(double,         1, ARG_DOUBLE,  0)          \
     X(empty,          1, 0,           0)          \

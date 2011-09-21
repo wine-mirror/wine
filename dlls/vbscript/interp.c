@@ -644,6 +644,13 @@ static HRESULT interp_set_member(exec_ctx_t *ctx)
     return hres;
 }
 
+static HRESULT interp_const(exec_ctx_t *ctx)
+{
+    BSTR arg = ctx->instr->arg1.bstr;
+    FIXME("%s\n", debugstr_w(arg));
+    return E_NOTIMPL;
+}
+
 static HRESULT interp_new(exec_ctx_t *ctx)
 {
     const WCHAR *arg = ctx->instr->arg1.bstr;
