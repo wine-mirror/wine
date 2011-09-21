@@ -2856,7 +2856,17 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
         return dst_dev->funcs->pAlphaBlend( dst_dev, dst, src_dev, src, blendfn );
     }
 
-    if (physdev_src != physdev_dst) X11DRV_LockDIBSection( physdev_src->x11dev, DIB_Status_GdiMod );
+    if (physdev_dst != physdev_src)
+    {
+        int status = X11DRV_LockDIBSection( physdev_src->x11dev, DIB_Status_None );
+        if (status == DIB_Status_AppMod || status == DIB_Status_InSync)
+        {
+            X11DRV_UnlockDIBSection( physdev_src->x11dev, FALSE );
+            dst_dev = GET_NEXT_PHYSDEV( dst_dev, pAlphaBlend );
+            return dst_dev->funcs->pAlphaBlend( dst_dev, dst, src_dev, src, blendfn );
+        }
+        X11DRV_CoerceDIBSection( physdev_src->x11dev, DIB_Status_GdiMod );
+    }
     X11DRV_LockDIBSection( physdev_dst->x11dev, DIB_Status_GdiMod );
 
     dst_pict = get_xrender_picture( physdev_dst, 0, &dst->visrect );
