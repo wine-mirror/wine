@@ -731,7 +731,7 @@ static LRESULT ShellView_OnCreate(IShellViewImpl *This)
         LPITEMIDLIST raw_pidl;
         SHChangeNotifyEntry ntreg;
 
-        hr = IPersistFolder2_GetCurFolder(ppf2, (LPITEMIDLIST*)&raw_pidl);
+        hr = IPersistFolder2_GetCurFolder(ppf2, &raw_pidl);
         if(SUCCEEDED(hr))
         {
             LPITEMIDLIST computer_pidl;

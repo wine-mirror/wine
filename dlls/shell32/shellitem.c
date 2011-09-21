@@ -1080,7 +1080,7 @@ HRESULT WINAPI SHCreateShellItemArrayFromDataObject(IDataObject *pdo, REFIID rii
         for(i = 0; i < pida->cidl; i++)
             children[i] = (LPCITEMIDLIST) ((LPBYTE)pida+pida->aoffset[i+1]);
 
-        ret = SHCreateShellItemArray(parent_pidl, NULL, pida->cidl, children, (IShellItemArray**)&psia);
+        ret = SHCreateShellItemArray(parent_pidl, NULL, pida->cidl, children, &psia);
 
         HeapFree(GetProcessHeap(), 0, children);
 

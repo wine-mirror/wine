@@ -466,7 +466,7 @@ static HRESULT WINAPI IServiceProvider_fnQueryInterface(IServiceProvider *iface,
     if(IsEqualIID(riid, &IID_IServiceProvider))
     {
         *ppvObj = iface;
-        IServiceProvider_AddRef((IServiceProvider*)iface);
+        IServiceProvider_AddRef(iface);
         return S_OK;
     }
 
@@ -532,7 +532,7 @@ static HRESULT WINAPI IServiceProvider_fnQueryService(IServiceProvider *iface,
     if(punk)
     {
         *ppv = punk;
-        IUnknown_AddRef((IUnknown*)punk);
+        IUnknown_AddRef(punk);
         return S_OK;
     }
 

@@ -3894,8 +3894,8 @@ static void test_GetUIObject(void)
         ok(hr == S_OK, "Got 0x%08x\n", hr);
         if(SUCCEEDED(hr))
         {
-            hr = IShellFolder_GetUIObjectOf(psf, NULL, 1, (LPCITEMIDLIST*)&pidl_child,
-                                            &IID_IContextMenu, NULL, (void**)&pcm);
+            hr = IShellFolder_GetUIObjectOf(psf, NULL, 1, &pidl_child, &IID_IContextMenu, NULL,
+                                            (void**)&pcm);
             ok(hr == S_OK, "Got 0x%08x\n", hr);
             if(SUCCEEDED(hr))
             {
