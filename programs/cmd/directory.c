@@ -51,13 +51,12 @@ typedef enum _DISPLAYORDER
     Date
 } DISPLAYORDER;
 
-static int file_total, dir_total, recurse, wide, bare, max_width, lower;
-static int shortname, usernames;
+static int file_total, dir_total, max_width;
 static ULONGLONG byte_total;
 static DISPLAYTIME dirTime;
 static DISPLAYORDER dirOrder;
 static BOOL orderReverse, orderGroupDirs, orderGroupDirsReverse, orderByCol;
-static BOOL separator;
+static BOOL paged_mode, recurse, wide, bare, lower, shortname, usernames, separator;
 static ULONG showattrs, attrsbits;
 
 static const WCHAR dotW[]    = {'.','\0'};
@@ -631,7 +630,7 @@ static void WCMD_dir_trailer(WCHAR drive) {
 void WCMD_directory (WCHAR *cmd) {
 
   WCHAR path[MAX_PATH], cwd[MAX_PATH];
-  int status, paged_mode;
+  int status;
   CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
   WCHAR *p;
   WCHAR string[MAXSTRING];
