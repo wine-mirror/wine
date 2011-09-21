@@ -213,6 +213,8 @@ static const IID * const option_iids[] = {
 static const IID * const table_iids[] = {
     ELEM_IFACES,
     &IID_IHTMLTable,
+    &IID_IHTMLTable2,
+    &IID_IHTMLTable3,
     &IID_IConnectionPointContainer,
     NULL
 };

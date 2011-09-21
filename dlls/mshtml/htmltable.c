@@ -34,7 +34,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 struct HTMLTable {
     HTMLElement element;
 
-    IHTMLTable IHTMLTable_iface;
+    IHTMLTable  IHTMLTable_iface;
+    IHTMLTable2 IHTMLTable2_iface;
+    IHTMLTable3 IHTMLTable3_iface;
 
     ConnectionPoint cp;
     nsIDOMHTMLTableElement *nstable;
@@ -43,6 +45,16 @@ struct HTMLTable {
 static inline HTMLTable *impl_from_IHTMLTable(IHTMLTable *iface)
 {
     return CONTAINING_RECORD(iface, HTMLTable, IHTMLTable_iface);
+}
+
+static inline HTMLTable *impl_from_IHTMLTable2(IHTMLTable2 *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLTable, IHTMLTable2_iface);
+}
+
+static inline HTMLTable *impl_from_IHTMLTable3(IHTMLTable3 *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLTable, IHTMLTable3_iface);
 }
 
 static HRESULT WINAPI HTMLTable_QueryInterface(IHTMLTable *iface,
@@ -515,6 +527,185 @@ static const IHTMLTableVtbl HTMLTableVtbl = {
     HTMLTable_get_onreadystatechange
 };
 
+/* IHTMLTable2 */
+static HRESULT WINAPI HTMLTable2_QueryInterface(IHTMLTable2 *iface,
+                                                         REFIID riid, void **ppv)
+{
+    HTMLTable *This = impl_from_IHTMLTable2(iface);
+
+    return IHTMLDOMNode_QueryInterface(&This->element.node.IHTMLDOMNode_iface, riid, ppv);
+}
+
+static ULONG WINAPI HTMLTable2_AddRef(IHTMLTable2 *iface)
+{
+    HTMLTable *This = impl_from_IHTMLTable2(iface);
+
+    return IHTMLDOMNode_AddRef(&This->element.node.IHTMLDOMNode_iface);
+}
+
+static ULONG WINAPI HTMLTable2_Release(IHTMLTable2 *iface)
+{
+    HTMLTable *This = impl_from_IHTMLTable2(iface);
+
+    return IHTMLDOMNode_Release(&This->element.node.IHTMLDOMNode_iface);
+}
+
+static HRESULT WINAPI HTMLTable2_GetTypeInfoCount(IHTMLTable2 *iface, UINT *pctinfo)
+{
+    HTMLTable *This = impl_from_IHTMLTable2(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->element.node.dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI HTMLTable2_GetTypeInfo(IHTMLTable2 *iface, UINT iTInfo,
+                                              LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLTable *This = impl_from_IHTMLTable2(iface);
+    return IDispatchEx_GetTypeInfo(&This->element.node.dispex.IDispatchEx_iface, iTInfo, lcid,
+            ppTInfo);
+}
+
+static HRESULT WINAPI HTMLTable2_GetIDsOfNames(IHTMLTable2 *iface, REFIID riid,
+                                                LPOLESTR *rgszNames, UINT cNames,
+                                                LCID lcid, DISPID *rgDispId)
+{
+    HTMLTable *This = impl_from_IHTMLTable2(iface);
+    return IDispatchEx_GetIDsOfNames(&This->element.node.dispex.IDispatchEx_iface, riid, rgszNames,
+            cNames, lcid, rgDispId);
+}
+
+static HRESULT WINAPI HTMLTable2_Invoke(IHTMLTable2 *iface, DISPID dispIdMember,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLTable *This = impl_from_IHTMLTable2(iface);
+    return IDispatchEx_Invoke(&This->element.node.dispex.IDispatchEx_iface, dispIdMember, riid,
+            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI HTMLTable2_firstPage(IHTMLTable2 *iface)
+{
+    HTMLTable *This = impl_from_IHTMLTable2(iface);
+    FIXME("(%p)->()\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLTable2_lastPage(IHTMLTable2 *iface)
+{
+    HTMLTable *This = impl_from_IHTMLTable2(iface);
+    FIXME("(%p)->()\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLTable2_cells(IHTMLTable2 *iface, IHTMLElementCollection **p)
+{
+    HTMLTable *This = impl_from_IHTMLTable2(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLTable2_moveRow(IHTMLTable2 *iface, LONG indexFrom, LONG indexTo, IDispatch **row)
+{
+    HTMLTable *This = impl_from_IHTMLTable2(iface);
+    FIXME("(%p)->(%d %d %p)\n", This, indexFrom, indexTo, row);
+    return E_NOTIMPL;
+}
+
+
+static const IHTMLTable2Vtbl HTMLTable2Vtbl = {
+    HTMLTable2_QueryInterface,
+    HTMLTable2_AddRef,
+    HTMLTable2_Release,
+    HTMLTable2_GetTypeInfoCount,
+    HTMLTable2_GetTypeInfo,
+    HTMLTable2_GetIDsOfNames,
+    HTMLTable2_Invoke,
+    HTMLTable2_firstPage,
+    HTMLTable2_lastPage,
+    HTMLTable2_cells,
+    HTMLTable2_moveRow
+};
+
+/* IHTMLTable3 */
+static HRESULT WINAPI HTMLTable3_QueryInterface(IHTMLTable3 *iface,
+                                                         REFIID riid, void **ppv)
+{
+    HTMLTable *This = impl_from_IHTMLTable3(iface);
+
+    return IHTMLDOMNode_QueryInterface(&This->element.node.IHTMLDOMNode_iface, riid, ppv);
+}
+
+static ULONG WINAPI HTMLTable3_AddRef(IHTMLTable3 *iface)
+{
+    HTMLTable *This = impl_from_IHTMLTable3(iface);
+
+    return IHTMLDOMNode_AddRef(&This->element.node.IHTMLDOMNode_iface);
+}
+
+static ULONG WINAPI HTMLTable3_Release(IHTMLTable3 *iface)
+{
+    HTMLTable *This = impl_from_IHTMLTable3(iface);
+
+    return IHTMLDOMNode_Release(&This->element.node.IHTMLDOMNode_iface);
+}
+
+static HRESULT WINAPI HTMLTable3_GetTypeInfoCount(IHTMLTable3 *iface, UINT *pctinfo)
+{
+    HTMLTable *This = impl_from_IHTMLTable3(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->element.node.dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI HTMLTable3_GetTypeInfo(IHTMLTable3 *iface, UINT iTInfo,
+                                              LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLTable *This = impl_from_IHTMLTable3(iface);
+    return IDispatchEx_GetTypeInfo(&This->element.node.dispex.IDispatchEx_iface, iTInfo, lcid,
+            ppTInfo);
+}
+
+static HRESULT WINAPI HTMLTable3_GetIDsOfNames(IHTMLTable3 *iface, REFIID riid,
+                                                LPOLESTR *rgszNames, UINT cNames,
+                                                LCID lcid, DISPID *rgDispId)
+{
+    HTMLTable *This = impl_from_IHTMLTable3(iface);
+    return IDispatchEx_GetIDsOfNames(&This->element.node.dispex.IDispatchEx_iface, riid, rgszNames,
+            cNames, lcid, rgDispId);
+}
+
+static HRESULT WINAPI HTMLTable3_Invoke(IHTMLTable3 *iface, DISPID dispIdMember,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLTable *This = impl_from_IHTMLTable3(iface);
+    return IDispatchEx_Invoke(&This->element.node.dispex.IDispatchEx_iface, dispIdMember, riid,
+            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI HTMLTable3_put_summary(IHTMLTable3 *iface, BSTR v)
+{
+    HTMLTable *This = impl_from_IHTMLTable3(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLTable3_get_summary(IHTMLTable3 *iface, BSTR * p)
+{
+    HTMLTable *This = impl_from_IHTMLTable3(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static const IHTMLTable3Vtbl HTMLTable3Vtbl = {
+    HTMLTable3_QueryInterface,
+    HTMLTable3_AddRef,
+    HTMLTable3_Release,
+    HTMLTable3_GetTypeInfoCount,
+    HTMLTable3_GetTypeInfo,
+    HTMLTable3_GetIDsOfNames,
+    HTMLTable3_Invoke,
+    HTMLTable3_put_summary,
+    HTMLTable3_get_summary
+};
+
 static inline HTMLTable *impl_from_HTMLDOMNode(HTMLDOMNode *iface)
 {
     return CONTAINING_RECORD(iface, HTMLTable, element.node);
@@ -534,6 +725,12 @@ static HRESULT HTMLTable_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
         *ppv = &This->IHTMLTable_iface;
     }else if(IsEqualGUID(&IID_IHTMLTable, riid)) {
         TRACE("(%p)->(IID_IHTMLTable %p)\n", This, ppv);
+        *ppv = &This->IHTMLTable_iface;
+    }else if(IsEqualGUID(&IID_IHTMLTable2, riid)) {
+        TRACE("(%p)->(IID_IHTMLTable2 %p)\n", This, ppv);
+        *ppv = &This->IHTMLTable_iface;
+    }else if(IsEqualGUID(&IID_IHTMLTable3, riid)) {
+        TRACE("(%p)->(IID_IHTMLTable3 %p)\n", This, ppv);
         *ppv = &This->IHTMLTable_iface;
     }
 
