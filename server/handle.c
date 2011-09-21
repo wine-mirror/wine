@@ -267,7 +267,7 @@ static obj_handle_t alloc_global_handle_no_access_check( void *obj, unsigned int
 {
     if (!global_table)
     {
-        if (!(global_table = (struct handle_table *)alloc_handle_table( NULL, 0 )))
+        if (!(global_table = alloc_handle_table( NULL, 0 )))
             return 0;
         make_object_static( &global_table->obj );
     }
@@ -336,7 +336,7 @@ struct handle_table *copy_handle_table( struct process *process, struct process 
     assert( parent_table );
     assert( parent_table->obj.ops == &handle_table_ops );
 
-    if (!(table = (struct handle_table *)alloc_handle_table( process, parent_table->count )))
+    if (!(table = alloc_handle_table( process, parent_table->count )))
         return NULL;
 
     if ((table->last = parent_table->last) >= 0)
