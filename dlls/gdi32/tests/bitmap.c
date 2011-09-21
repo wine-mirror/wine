@@ -2662,15 +2662,6 @@ static void test_get16dibits(void)
     ReleaseDC(NULL, screen_dc);
 }
 
-static BOOL compare_buffers_no_alpha(UINT32 *a, UINT32 *b, int length)
-{
-    int i;
-    for(i = 0; i < length; i++)
-        if((a[i] & 0x00FFFFFF) != (b[i] & 0x00FFFFFF))
-            return FALSE;
-    return TRUE;
-}
-
 static void check_BitBlt_pixel(HDC hdcDst, HDC hdcSrc, UINT32 *dstBuffer, UINT32 *srcBuffer,
                                DWORD dwRop, UINT32 expected, int line)
 {
@@ -2763,13 +2754,12 @@ static void check_StretchBlt_pixel(HDC hdcDst, HDC hdcSrc, UINT32 *dstBuffer, UI
 static void check_StretchBlt_stretch(HDC hdcDst, HDC hdcSrc, UINT32 *dstBuffer, UINT32 *srcBuffer,
                                      int nXOriginDest, int nYOriginDest, int nWidthDest, int nHeightDest,
                                      int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc,
-                                     UINT32 expected[4], UINT32 legacy_expected[4], int line)
+                                     UINT32 expected[4], int line)
 {
     memset(dstBuffer, 0, 16);
     StretchBlt(hdcDst, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest,
                hdcSrc, nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc, SRCCOPY);
-    ok(memcmp(dstBuffer, expected, 16) == 0 ||
-        broken(compare_buffers_no_alpha(dstBuffer, legacy_expected, 4)),
+    ok(memcmp(dstBuffer, expected, 16) == 0,
         "StretchBlt expected { %08X, %08X, %08X, %08X } got { %08X, %08X, %08X, %08X } "
         "stretching { %d, %d, %d, %d } to { %d, %d, %d, %d } from line %d\n",
         expected[0], expected[1], expected[2], expected[3],
@@ -2786,7 +2776,7 @@ static void test_StretchBlt(void)
     UINT32 *dstBuffer, *srcBuffer;
     HBRUSH hBrush, hOldBrush;
     BITMAPINFO biDst, biSrc;
-    UINT32 expected[4], legacy_expected[4];
+    UINT32 expected[4];
 
     memset(&biDst, 0, sizeof(BITMAPINFO));
     biDst.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -2839,49 +2829,42 @@ static void test_StretchBlt(void)
     expected[0] = 0xCAFED00D, expected[1] = 0xFEEDFACE;
     expected[2] = 0xFEDCBA98, expected[3] = 0x76543210;
     check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
-                             0, 0, 2, 2, 0, 0, 2, 2, expected, expected, __LINE__);
+                             0, 0, 2, 2, 0, 0, 2, 2, expected, __LINE__);
 
     expected[0] = 0xCAFED00D, expected[1] = 0x00000000;
     expected[2] = 0x00000000, expected[3] = 0x00000000;
     check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
-                             0, 0, 1, 1, 0, 0, 1, 1, expected, expected, __LINE__);
+                             0, 0, 1, 1, 0, 0, 1, 1, expected, __LINE__);
 
     expected[0] = 0xCAFED00D, expected[1] = 0xCAFED00D;
     expected[2] = 0xCAFED00D, expected[3] = 0xCAFED00D;
     check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
-                             0, 0, 2, 2, 0, 0, 1, 1, expected, expected, __LINE__);
+                             0, 0, 2, 2, 0, 0, 1, 1, expected, __LINE__);
 
     expected[0] = 0xCAFED00D, expected[1] = 0x00000000;
     expected[2] = 0x00000000, expected[3] = 0x00000000;
     check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
-                             0, 0, 1, 1, 0, 0, 2, 2, expected, expected, __LINE__);
+                             0, 0, 1, 1, 0, 0, 2, 2, expected, __LINE__);
 
     expected[0] = 0x76543210, expected[1] = 0xFEDCBA98;
     expected[2] = 0xFEEDFACE, expected[3] = 0xCAFED00D;
     check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
-                             0, 0, 2, 2, 1, 1, -2, -2, expected, expected, __LINE__);
+                             0, 0, 2, 2, 1, 1, -2, -2, expected, __LINE__);
 
     expected[0] = 0x76543210, expected[1] = 0xFEDCBA98;
     expected[2] = 0xFEEDFACE, expected[3] = 0xCAFED00D;
     check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
-                             1, 1, -2, -2, 0, 0, 2, 2, expected, expected, __LINE__);
+                             1, 1, -2, -2, 0, 0, 2, 2, expected, __LINE__);
 
-    /* This result seems broken. One might expect the following result:
-     * 0xCAFED00D 0xFEEDFACE
-     * 0xFEDCBA98 0x76543210
-     */
     expected[0] = 0xCAFED00D, expected[1] = 0x00000000;
-    expected[2] = 0xFEDCBA98, expected[3] = 0x76543210;
-    legacy_expected[0] = 0xCAFED00D, legacy_expected[1] = 0x00000000;
-    legacy_expected[2] = 0x00000000, legacy_expected[3] = 0x00000000;
+    expected[2] = 0x00000000, expected[3] = 0x00000000;
     todo_wine check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
-                                       1, 1, -2, -2, 1, 1, -2, -2, expected,
-                                       legacy_expected, __LINE__);
+                                       1, 1, -2, -2, 1, 1, -2, -2, expected, __LINE__);
 
     expected[0] = 0x00000000, expected[1] = 0x00000000;
     expected[2] = 0x00000000, expected[3] = 0xCAFED00D;
     check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
-                             1, 1, 2, 2, 0, 0, 2, 2, expected, expected, __LINE__);
+                             1, 1, 2, 2, 0, 0, 2, 2, expected, __LINE__);
 
     SelectObject(hdcDst, oldDst);
     DeleteObject(bmpDst);
@@ -2895,12 +2878,12 @@ static void test_StretchBlt(void)
     expected[0] = 0xFEDCBA98, expected[1] = 0x76543210;
     expected[2] = 0xCAFED00D, expected[3] = 0xFEEDFACE;
     check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
-                             0, 0, 2, 2, 0, 0, 2, 2, expected, expected, __LINE__);
+                             0, 0, 2, 2, 0, 0, 2, 2, expected, __LINE__);
 
     expected[0] = 0xFEEDFACE, expected[1] = 0xCAFED00D;
     expected[2] = 0x76543210, expected[3] = 0xFEDCBA98;
     check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
-                             0, 0, 2, 2, 1, 1, -2, -2, expected, expected, __LINE__);
+                             0, 0, 2, 2, 1, 1, -2, -2, expected, __LINE__);
 
     SelectObject(hdcSrc, oldSrc);
     DeleteObject(bmpSrc);
@@ -2916,12 +2899,12 @@ static void test_StretchBlt(void)
     expected[0] = 0xCAFED00D, expected[1] = 0xFEEDFACE;
     expected[2] = 0xFEDCBA98, expected[3] = 0x76543210;
     check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
-                             0, 0, 2, 2, 0, 0, 2, 2, expected, expected, __LINE__);
+                             0, 0, 2, 2, 0, 0, 2, 2, expected, __LINE__);
 
     expected[0] = 0x76543210, expected[1] = 0xFEDCBA98;
     expected[2] = 0xFEEDFACE, expected[3] = 0xCAFED00D;
     check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
-                             0, 0, 2, 2, 1, 1, -2, -2, expected, expected, __LINE__);
+                             0, 0, 2, 2, 1, 1, -2, -2, expected, __LINE__);
 
     SelectObject(hdcDst, oldDst);
     DeleteObject(bmpDst);
@@ -2935,12 +2918,12 @@ static void test_StretchBlt(void)
     expected[0] = 0xFEDCBA98, expected[1] = 0x76543210;
     expected[2] = 0xCAFED00D, expected[3] = 0xFEEDFACE;
     check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
-                             0, 0, 2, 2, 0, 0, 2, 2, expected, expected, __LINE__);
+                             0, 0, 2, 2, 0, 0, 2, 2, expected, __LINE__);
 
     expected[0] = 0xFEEDFACE, expected[1] = 0xCAFED00D;
     expected[2] = 0x76543210, expected[3] = 0xFEDCBA98;
     check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
-                             0, 0, 2, 2, 1, 1, -2, -2, expected, expected, __LINE__);
+                             0, 0, 2, 2, 1, 1, -2, -2, expected, __LINE__);
 
     SelectObject(hdcSrc, oldSrc);
     DeleteObject(bmpSrc);
