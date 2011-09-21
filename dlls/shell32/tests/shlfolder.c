@@ -4343,16 +4343,23 @@ struct ChNotifyTest {
 };
 
 struct ChNotifyTest *exp_data;
+BOOL test_new_delivery_flag;
 
 static LRESULT CALLBACK testwindow_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    UINT signal = (UINT)lparam;
+    LONG signal = (LONG)lparam;
 
     switch(msg){
     case WM_USER_NOTIFY:
-        if(exp_data->missing_events > 0){
+        if(exp_data->missing_events > 0) {
             WCHAR *path1, *path2;
-            LPCITEMIDLIST *pidls = (LPCITEMIDLIST*)wparam;
+            LPITEMIDLIST *pidls = (LPITEMIDLIST*)wparam;
+            HANDLE hLock = NULL;
+
+            if(test_new_delivery_flag) {
+                hLock = SHChangeNotification_Lock((HANDLE)wparam, lparam, &pidls, &signal);
+                ok(hLock != NULL, "SHChangeNotification_Lock returned NULL\n");
+            }
 
             ok(exp_data->signal == signal,
                     "%s: expected notification type %x, got: %x\n",
@@ -4367,6 +4374,9 @@ static LRESULT CALLBACK testwindow_wndproc(HWND hwnd, UINT msg, WPARAM wparam, L
             HeapFree(GetProcessHeap(), 0, path2);
 
             exp_data->missing_events--;
+
+            if(test_new_delivery_flag)
+                SHChangeNotification_Unlock(hLock);
         }else
             ok(0, "Didn't expect a WM_USER_NOTIFY message (event: %x)\n", signal);
         return 0;
@@ -4408,7 +4418,7 @@ static void do_events(void)
     trace("%s: took %d tries\n", exp_data->id, c);
 }
 
-static void test_SHChangeNotify(void)
+static void test_SHChangeNotify(BOOL test_new_delivery)
 {
     HWND wnd;
     ULONG notifyID, i;
@@ -4418,10 +4428,14 @@ static void test_SHChangeNotify(void)
     const CHAR root_dirA[] = "C:\\shell32_cn_test";
     const WCHAR root_dirW[] = {'C',':','\\','s','h','e','l','l','3','2','_','c','n','_','t','e','s','t',0};
 
+    trace("SHChangeNotify tests (%x)\n", test_new_delivery);
+
     CreateDirectoryW(NULL, NULL);
     has_unicode = !(GetLastError() == ERROR_CALL_NOT_IMPLEMENTED);
 
-    register_testwindow_class();
+    test_new_delivery_flag = test_new_delivery;
+    if(!test_new_delivery)
+        register_testwindow_class();
 
     wnd = CreateWindowExA(0, testwindow_class, testwindow_class, 0,
             CW_USEDEFAULT, CW_USEDEFAULT, 130, 105,
@@ -4439,7 +4453,7 @@ static void test_SHChangeNotify(void)
     ok(hr == S_OK, "SHILCreateFromPath failed: 0x%08x\n", hr);
     entries[0].fRecursive = TRUE;
 
-    notifyID = SHChangeNotifyRegister(wnd, SHCNRF_ShellLevel,
+    notifyID = SHChangeNotifyRegister(wnd, !test_new_delivery ? SHCNRF_ShellLevel : SHCNRF_ShellLevel|SHCNRF_NewDelivery,
             SHCNE_ALLEVENTS, WM_USER_NOTIFY, 1, entries);
     ok(notifyID != 0, "Failed to register a window for change notifications\n");
 
@@ -4595,7 +4609,8 @@ START_TEST(shlfolder)
     test_SHGetIDListFromObject();
     test_SHGetItemFromObject();
     test_ShellItemCompare();
-    test_SHChangeNotify();
+    test_SHChangeNotify(FALSE);
+    test_SHChangeNotify(TRUE);
     test_ShellItemBindToHandler();
     test_ShellItemGetAttributes();
     test_SHCreateDefaultContextMenu();
