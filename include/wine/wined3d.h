@@ -2215,7 +2215,7 @@ HRESULT __cdecl wined3d_device_get_creation_parameters(struct wined3d_device *de
 HRESULT __cdecl wined3d_device_get_current_texture_palette(struct wined3d_device *device, UINT *palette_idx);
 HRESULT __cdecl wined3d_device_get_depth_stencil(struct wined3d_device *device,
         struct wined3d_surface **depth_stencil);
-HRESULT __cdecl wined3d_device_get_device_caps(struct wined3d_device *device, WINED3DCAPS *caps);
+HRESULT __cdecl wined3d_device_get_device_caps(const struct wined3d_device *device, WINED3DCAPS *caps);
 HRESULT __cdecl wined3d_device_get_display_mode(struct wined3d_device *device,
         UINT swapchain_idx, WINED3DDISPLAYMODE *mode);
 HRESULT __cdecl wined3d_device_get_front_buffer_data(struct wined3d_device *device,

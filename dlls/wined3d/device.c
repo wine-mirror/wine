@@ -3913,7 +3913,7 @@ HRESULT CDECL wined3d_device_get_back_buffer(const struct wined3d_device *device
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_device_caps(struct wined3d_device *device, WINED3DCAPS *caps)
+HRESULT CDECL wined3d_device_get_device_caps(const struct wined3d_device *device, WINED3DCAPS *caps)
 {
     TRACE("device %p, caps %p.\n", device, caps);
 
