@@ -3920,7 +3920,7 @@ HRESULT CDECL wined3d_device_get_device_caps(const struct wined3d_device *device
     return wined3d_get_device_caps(device->wined3d, device->adapter->ordinal, device->devType, caps);
 }
 
-HRESULT CDECL wined3d_device_get_display_mode(struct wined3d_device *device,
+HRESULT CDECL wined3d_device_get_display_mode(const struct wined3d_device *device,
         UINT swapchain_idx, WINED3DDISPLAYMODE *mode)
 {
     struct wined3d_swapchain *swapchain;
