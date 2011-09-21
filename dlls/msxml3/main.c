@@ -105,7 +105,7 @@ void wineXmlCallbackError(char const* caller, xmlErrorPtr err)
     case XML_ERR_WARNING: dbcl = __WINE_DBCL_WARN; break;
     default:              dbcl = __WINE_DBCL_ERR; break;
     }
-    wine_dbg_log(dbcl, &__wine_dbch_msxml, caller, "%s", err->message);
+    wine_dbg_log(dbcl, &__wine_dbch_msxml, caller, "%s", debugstr_a(err->message));
 }
 
 /* Support for loading xml files from a Wine Windows drive */
@@ -288,7 +288,7 @@ const char *debugstr_variant(const VARIANT *v)
         return wine_dbg_sprintf("{VT_UINT: %u}", V_UINT(v));
     case VT_BSTR|VT_BYREF:
         return wine_dbg_sprintf("{VT_BSTR|VT_BYREF: ptr %p, data %s}",
-            V_BSTRREF(v), V_BSTRREF(v) ? debugstr_w(*V_BSTRREF(v)) : NULL);
+            V_BSTRREF(v), debugstr_w(V_BSTRREF(v) ? *V_BSTRREF(v) : NULL));
     default:
         return wine_dbg_sprintf("{vt %d}", V_VT(v));
     }

@@ -573,6 +573,11 @@ OLECHAR const* dt_to_bstr(XDR_DT dt)
     return DT_wstring_table[dt];
 }
 
+const char* debugstr_dt(XDR_DT dt)
+{
+    return debugstr_a(dt != DT_INVALID ? (const char*)DT_string_table[dt] : NULL);
+}
+
 HRESULT dt_validate(XDR_DT dt, xmlChar const* content)
 {
     xmlDocPtr tmp_doc;
@@ -580,7 +585,7 @@ HRESULT dt_validate(XDR_DT dt, xmlChar const* content)
     xmlNsPtr ns;
     HRESULT hr;
 
-    TRACE("(dt:%s, %s)\n", dt_to_str(dt), wine_dbgstr_a((char const*)content));
+    TRACE("(dt:%s, %s)\n", debugstr_dt(dt), wine_dbgstr_a((char const*)content));
 
     if (!datatypes_schema)
     {
@@ -650,7 +655,7 @@ HRESULT dt_validate(XDR_DT dt, xmlChar const* content)
             }
             return hr;
         default:
-            FIXME("need to handle dt:%s\n", dt_to_str(dt));
+            FIXME("need to handle dt:%s\n", debugstr_dt(dt));
             return S_OK;
     }
 }

@@ -663,7 +663,7 @@ static inline HRESULT variant_from_dt(XDR_DT dt, xmlChar* str, VARIANT* v)
     case DT_IDREF:
     case DT_IDREFS:
     case DT_NOTATION:
-        FIXME("need to handle dt:%s\n", dt_to_str(dt));
+        FIXME("need to handle dt:%s\n", debugstr_dt(dt));
         V_VT(v) = VT_BSTR;
         V_BSTR(v) = bstr_from_xmlChar(str);
         if (!V_BSTR(v))
@@ -729,7 +729,7 @@ static XDR_DT element_get_dt(xmlNodePtr node)
         }
     }
 
-    TRACE("=> dt:%s\n", dt_to_str(dt));
+    TRACE("=> dt:%s\n", debugstr_dt(dt));
     return dt;
 }
 
@@ -786,7 +786,7 @@ static HRESULT WINAPI domelem_put_nodeTypedValue(
     }
     else
     {
-        FIXME("not implemented for dt:%s\n", dt_to_str(dt));
+        FIXME("not implemented for dt:%s\n", debugstr_dt(dt));
         return E_NOTIMPL;
     }
 
@@ -934,7 +934,7 @@ static HRESULT WINAPI domelem_put_dataType(
             }
             break;
         default:
-            FIXME("need to handle dt:%s\n", dt_to_str(dt));
+            FIXME("need to handle dt:%s\n", debugstr_dt(dt));
             break;
         }
     }

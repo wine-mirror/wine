@@ -888,12 +888,12 @@ static HRESULT WINAPI httprequest_get_responseText(IXMLHTTPRequest *iface, BSTR 
         if (size >= 4)
         {
             encoding = xmlDetectCharEncoding(ptr, 4);
-            TRACE("detected encoding: %s\n", xmlGetCharEncodingName(encoding));
+            TRACE("detected encoding: %s\n", debugstr_a(xmlGetCharEncodingName(encoding)));
             if ( encoding != XML_CHAR_ENCODING_UTF8 &&
                  encoding != XML_CHAR_ENCODING_UTF16LE &&
                  encoding != XML_CHAR_ENCODING_NONE )
             {
-                FIXME("unsupported encoding: %s\n", xmlGetCharEncodingName(encoding));
+                FIXME("unsupported encoding: %s\n", debugstr_a(xmlGetCharEncodingName(encoding)));
                 GlobalUnlock(hglobal);
                 return E_FAIL;
             }

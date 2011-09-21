@@ -333,6 +333,7 @@ extern XDR_DT  SchemaCache_get_node_dt(IXMLDOMSchemaCollection2* iface, xmlNodeP
 extern XDR_DT str_to_dt(xmlChar const* str, int len /* calculated if -1 */) DECLSPEC_HIDDEN;
 extern XDR_DT bstr_to_dt(OLECHAR const* bstr, int len /* calculated if -1 */) DECLSPEC_HIDDEN;
 extern xmlChar const* dt_to_str(XDR_DT dt) DECLSPEC_HIDDEN;
+extern const char* debugstr_dt(XDR_DT dt) DECLSPEC_HIDDEN;
 extern OLECHAR const* dt_to_bstr(XDR_DT dt) DECLSPEC_HIDDEN;
 extern HRESULT dt_validate(XDR_DT dt, xmlChar const* content) DECLSPEC_HIDDEN;
 
