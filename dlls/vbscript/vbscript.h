@@ -136,6 +136,7 @@ typedef struct _dynamic_var_t {
     struct _dynamic_var_t *next;
     VARIANT v;
     const WCHAR *name;
+    BOOL is_const;
 } dynamic_var_t;
 
 struct _script_ctx_t {

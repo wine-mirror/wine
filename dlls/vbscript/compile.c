@@ -921,6 +921,7 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
                     return E_OUTOFMEMORY;
 
                 V_VT(&new_var->v) = VT_EMPTY;
+                new_var->is_const = FALSE;
 
                 new_var->next = ctx->global_vars;
                 ctx->global_vars = new_var;

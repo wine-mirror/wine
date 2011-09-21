@@ -24,7 +24,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
 
-
 typedef struct {
     vbscode_t *code;
     instr_t *instr;
@@ -52,6 +51,7 @@ typedef enum {
     REF_DISP,
     REF_VAR,
     REF_OBJ,
+    REF_CONST,
     REF_FUNC
 } ref_type_t;
 
@@ -78,7 +78,7 @@ static BOOL lookup_dynamic_vars(dynamic_var_t *var, const WCHAR *name, ref_t *re
 {
     while(var) {
         if(!strcmpiW(var->name, name)) {
-            ref->type = REF_VAR;
+            ref->type = var->is_const ? REF_CONST : REF_VAR;
             ref->u.v = &var->v;
             return TRUE;
         }
@@ -198,7 +198,7 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
     return S_OK;
 }
 
-static HRESULT add_dynamic_var(exec_ctx_t *ctx, const WCHAR *name, VARIANT *val, BOOL own_val)
+static HRESULT add_dynamic_var(exec_ctx_t *ctx, const WCHAR *name, BOOL is_const, VARIANT *val, BOOL own_val)
 {
     dynamic_var_t *new_var;
     vbsheap_t *heap;
@@ -218,6 +218,7 @@ static HRESULT add_dynamic_var(exec_ctx_t *ctx, const WCHAR *name, VARIANT *val,
         return E_OUTOFMEMORY;
     memcpy(str, name, size);
     new_var->name = str;
+    new_var->is_const = is_const;
 
     if(own_val) {
         new_var->v = *val;
@@ -379,6 +380,7 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
 
     switch(ref.type) {
     case REF_VAR:
+    case REF_CONST:
         if(!res) {
             FIXME("REF_VAR no res\n");
             return E_NOTIMPL;
@@ -531,13 +533,16 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, VARIANT *val, BOOL own_v
     case REF_OBJ:
         FIXME("REF_OBJ\n");
         return E_NOTIMPL;
+    case REF_CONST:
+        FIXME("REF_CONST\n");
+        return E_NOTIMPL;
     case REF_NONE:
         if(ctx->func->code_ctx->option_explicit) {
             FIXME("throw exception\n");
             hres = E_FAIL;
         }else {
             TRACE("creating variable %s\n", debugstr_w(name));
-            hres = add_dynamic_var(ctx, name, val, own_val);
+            hres = add_dynamic_var(ctx, name, FALSE, val, own_val);
         }
     }
 
@@ -653,8 +658,28 @@ static HRESULT interp_set_member(exec_ctx_t *ctx)
 static HRESULT interp_const(exec_ctx_t *ctx)
 {
     BSTR arg = ctx->instr->arg1.bstr;
-    FIXME("%s\n", debugstr_w(arg));
-    return E_NOTIMPL;
+    variant_val_t val;
+    ref_t ref;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_w(arg));
+
+    assert(ctx->func->type == FUNC_GLOBAL);
+
+    hres = lookup_identifier(ctx, arg, VBDISP_CALLGET, &ref);
+    if(FAILED(hres))
+        return hres;
+
+    if(ref.type != REF_NONE) {
+        FIXME("%s already defined\n", debugstr_w(arg));
+        return E_FAIL;
+    }
+
+    hres = stack_pop_val(ctx, &val);
+    if(FAILED(hres))
+        return hres;
+
+    return add_dynamic_var(ctx, arg, TRUE, val.v, val.owned);
 }
 
 static HRESULT interp_new(exec_ctx_t *ctx)
@@ -1547,6 +1572,5 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, IDispatch *this_obj, DI
     }
 
     release_exec(&exec);
-
     return hres;
 }
