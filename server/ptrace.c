@@ -463,6 +463,25 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
             set_error( STATUS_ACCESS_DENIED );
             goto done;
         }
+
+        if (len > 3)
+        {
+            char procmem[24];
+            int fd;
+
+            sprintf( procmem, "/proc/%u/mem", process->unix_pid );
+            if ((fd = open( procmem, O_WRONLY )) != -1)
+            {
+                ssize_t r = pwrite( fd, src, size, ptr );
+                close( fd );
+                if (r == size)
+                {
+                    ret = 1;
+                    goto done;
+                }
+            }
+        }
+
         /* first word is special */
         if (len > 1)
         {
