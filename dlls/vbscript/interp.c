@@ -198,6 +198,46 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
     return S_OK;
 }
 
+static HRESULT add_dynamic_var(exec_ctx_t *ctx, const WCHAR *name, VARIANT *val, BOOL own_val)
+{
+    dynamic_var_t *new_var;
+    vbsheap_t *heap;
+    WCHAR *str;
+    unsigned size;
+    HRESULT hres;
+
+    heap = ctx->func->type == FUNC_GLOBAL ? &ctx->script->heap : &ctx->heap;
+
+    new_var = vbsheap_alloc(heap, sizeof(*new_var));
+    if(!new_var)
+        return E_OUTOFMEMORY;
+
+    size = (strlenW(name)+1)*sizeof(WCHAR);
+    str = vbsheap_alloc(heap, size);
+    if(!str)
+        return E_OUTOFMEMORY;
+    memcpy(str, name, size);
+    new_var->name = str;
+
+    if(own_val) {
+        new_var->v = *val;
+    }else {
+        hres = VariantCopy(&new_var->v, val);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(ctx->func->type == FUNC_GLOBAL) {
+        new_var->next = ctx->script->global_vars;
+        ctx->script->global_vars = new_var;
+    }else {
+        new_var->next = ctx->dynamic_vars;
+        ctx->dynamic_vars = new_var;
+    }
+
+    return S_OK;
+}
+
 static inline VARIANT *stack_pop(exec_ctx_t *ctx)
 {
     assert(ctx->top);
@@ -491,48 +531,14 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, VARIANT *val, BOOL own_v
     case REF_OBJ:
         FIXME("REF_OBJ\n");
         return E_NOTIMPL;
-    case REF_NONE: {
-        dynamic_var_t *new_var;
-        vbsheap_t *heap;
-        WCHAR *str;
-        unsigned size;
-
+    case REF_NONE:
         if(ctx->func->code_ctx->option_explicit) {
             FIXME("throw exception\n");
-            return E_FAIL;
-        }
-
-        TRACE("creating variable %s\n", debugstr_w(name));
-
-        heap = ctx->func->type == FUNC_GLOBAL ? &ctx->script->heap : &ctx->heap;
-
-        new_var = vbsheap_alloc(heap, sizeof(*new_var));
-        if(!new_var)
-            return E_OUTOFMEMORY;
-
-        size = (strlenW(name)+1)*sizeof(WCHAR);
-        str = vbsheap_alloc(heap, size);
-        if(!str)
-            return E_OUTOFMEMORY;
-        memcpy(str, name, size);
-        new_var->name = str;
-
-        if(own_val) {
-            new_var->v = *val;
+            hres = E_FAIL;
         }else {
-            hres = VariantCopy(&new_var->v, val);
-            if(FAILED(hres))
-                return hres;
+            TRACE("creating variable %s\n", debugstr_w(name));
+            hres = add_dynamic_var(ctx, name, val, own_val);
         }
-
-        if(ctx->func->type == FUNC_GLOBAL) {
-            new_var->next = ctx->script->global_vars;
-            ctx->script->global_vars = new_var;
-        }else {
-            new_var->next = ctx->dynamic_vars;
-            ctx->dynamic_vars = new_var;
-        }
-    }
     }
 
     return hres;
