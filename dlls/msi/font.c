@@ -111,7 +111,8 @@ static WCHAR *load_ttf_name_id( const WCHAR *filename, DWORD id )
     ttOffsetTable.uMajorVersion = SWAPWORD(ttOffsetTable.uMajorVersion);
     ttOffsetTable.uMinorVersion = SWAPWORD(ttOffsetTable.uMinorVersion);
 
-    if (ttOffsetTable.uMajorVersion != 1 || ttOffsetTable.uMinorVersion != 0)
+    if ((ttOffsetTable.uMajorVersion != 1 || ttOffsetTable.uMinorVersion != 0) &&
+        (ttOffsetTable.uMajorVersion != 0x4f54 || ttOffsetTable.uMinorVersion != 0x544f))
         goto end;
 
     for (i=0; i< ttOffsetTable.uNumOfTables; i++)
@@ -192,8 +193,10 @@ WCHAR *msi_font_version_from_file( const WCHAR *filename )
     WCHAR *version, *p, *ret = NULL;
     int len;
 
-    if ((p = version = load_ttf_name_id( filename, NAME_ID_VERSION )))
+    if ((version = load_ttf_name_id( filename, NAME_ID_VERSION )))
     {
+        if ((p = strchrW( version, ';' ))) *p = 0;
+        p = version;
         while (*p && !isdigitW( *p )) p++;
         len = strlenW( p ) + strlenW(dotzerodotzeroW) + 1;
         ret = msi_alloc( len * sizeof(WCHAR) );
