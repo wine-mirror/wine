@@ -237,15 +237,28 @@ int WINAPI AUDDRV_GetPriority(void)
     return Priority_Neutral;
 }
 
-static HRESULT alsa_get_card_devices(EDataFlow flow, WCHAR **ids, char **keys,
+static BOOL alsa_try_open(const char *devnode, snd_pcm_stream_t stream)
+{
+    snd_pcm_t *handle;
+    int err;
+
+    if((err = snd_pcm_open(&handle, devnode, stream, SND_PCM_NONBLOCK)) < 0){
+        WARN("The device \"%s\" failed to open: %d (%s).\n",
+                devnode, err, snd_strerror(err));
+        return FALSE;
+    }
+
+    snd_pcm_close(handle);
+    return TRUE;
+}
+
+static HRESULT alsa_get_card_devices(snd_pcm_stream_t stream, WCHAR **ids, char **keys,
         UINT *num, snd_ctl_t *ctl, int card, const WCHAR *cardnameW,
         BOOL count_failed)
 {
     static const WCHAR dashW[] = {' ','-',' ',0};
     int err, device;
     snd_pcm_info_t *info;
-    snd_pcm_stream_t stream = (flow == eRender ? SND_PCM_STREAM_PLAYBACK :
-        SND_PCM_STREAM_CAPTURE);
 
     info = HeapAlloc(GetProcessHeap(), 0, snd_pcm_info_sizeof());
     if(!info)
@@ -259,7 +272,6 @@ static HRESULT alsa_get_card_devices(EDataFlow flow, WCHAR **ids, char **keys,
             err = snd_ctl_pcm_next_device(ctl, &device)){
         const char *devname;
         char devnode[32];
-        snd_pcm_t *handle;
 
         snd_pcm_info_set_device(info, device);
 
@@ -274,15 +286,11 @@ static HRESULT alsa_get_card_devices(EDataFlow flow, WCHAR **ids, char **keys,
         }
 
         sprintf(devnode, "hw:%d,%d", card, device);
-        if((err = snd_pcm_open(&handle, devnode, stream, SND_PCM_NONBLOCK)) < 0){
-            WARN("The device \"%s\" failed to open, pretending it doesn't exist: %d (%s)\n",
-                    devnode, err, snd_strerror(err));
+        if(!alsa_try_open(devnode, stream)){
             if(count_failed)
                 ++(*num);
             continue;
         }
-
-        snd_pcm_close(handle);
 
         if(ids && keys){
             DWORD len, cardlen;
@@ -333,10 +341,24 @@ static HRESULT alsa_get_card_devices(EDataFlow flow, WCHAR **ids, char **keys,
 static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, char **keys,
         UINT *num, BOOL count_failed)
 {
+    snd_pcm_stream_t stream = (flow == eRender ? SND_PCM_STREAM_PLAYBACK :
+        SND_PCM_STREAM_CAPTURE);
     int err, card;
 
     card = -1;
     *num = 0;
+
+    if(alsa_try_open(defname, stream)){
+        if(ids && keys){
+            *ids = HeapAlloc(GetProcessHeap(), 0, sizeof(defaultW));
+            memcpy(*ids, defaultW, sizeof(defaultW));
+            *keys = HeapAlloc(GetProcessHeap(), 0, sizeof(defname));
+            memcpy(*keys, defname, sizeof(defname));
+        }
+        ++*num;
+    }else if(count_failed)
+        ++*num;
+
     for(err = snd_card_next(&card); card != -1 && err >= 0;
             err = snd_card_next(&card)){
         char cardpath[64];
@@ -368,7 +390,7 @@ static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, char **keys,
         }
         MultiByteToWideChar(CP_UNIXCP, 0, cardname, -1, cardnameW, len);
 
-        alsa_get_card_devices(flow, ids, keys, num, ctl, card, cardnameW,
+        alsa_get_card_devices(stream, ids, keys, num, ctl, card, cardnameW,
                 count_failed);
 
         HeapFree(GetProcessHeap(), 0, cardnameW);
@@ -401,21 +423,17 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
         return S_OK;
     }
 
-    *ids = HeapAlloc(GetProcessHeap(), 0, (*num + 1) * sizeof(WCHAR *));
-    *keys = HeapAlloc(GetProcessHeap(), 0, (*num + 1) * sizeof(char *));
+    *ids = HeapAlloc(GetProcessHeap(), 0, *num * sizeof(WCHAR *));
+    *keys = HeapAlloc(GetProcessHeap(), 0, *num * sizeof(char *));
     if(!*ids || !*keys){
         HeapFree(GetProcessHeap(), 0, *ids);
         HeapFree(GetProcessHeap(), 0, *keys);
         return E_OUTOFMEMORY;
     }
 
-    (*ids)[0] = HeapAlloc(GetProcessHeap(), 0, sizeof(defaultW));
-    memcpy((*ids)[0], defaultW, sizeof(defaultW));
-    (*keys)[0] = HeapAlloc(GetProcessHeap(), 0, sizeof(defname));
-    memcpy((*keys)[0], defname, sizeof(defname));
     *def_index = 0;
 
-    hr = alsa_enum_devices(flow, (*ids) + 1, (*keys) + 1, num, FALSE);
+    hr = alsa_enum_devices(flow, *ids, *keys, num, FALSE);
     if(FAILED(hr)){
         int i;
         for(i = 0; i < *num; ++i){
@@ -426,8 +444,6 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
         HeapFree(GetProcessHeap(), 0, *keys);
         return E_OUTOFMEMORY;
     }
-
-    ++(*num); /* for default device */
 
     return S_OK;
 }
