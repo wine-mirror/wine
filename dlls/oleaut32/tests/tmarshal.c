@@ -475,6 +475,40 @@ static HRESULT WINAPI Widget_VariantArrayPtr(
     return S_OK;
 }
 
+static HRESULT WINAPI Widget_VariantCArray(
+    IWidget * iface,
+    ULONG count,
+    VARIANT values[])
+{
+    ULONG i;
+    VARIANT inc, res;
+    HRESULT hr;
+
+    trace("VariantCArray(%u,%p)\n", count, values);
+
+    ok(count == 2, "count is %d\n", count);
+    for (i = 0; i < count; i++)
+        ok(V_VT(&values[i]) == VT_I4, "values[%d] is not VT_I4\n", i);
+
+    V_VT(&inc) = VT_I4;
+    V_I4(&inc) = 1;
+    for (i = 0; i < count; i++) {
+        VariantInit(&res);
+        hr = VarAdd(&values[i], &inc, &res);
+        if (!SUCCEEDED(hr)) {
+            ok(0, "VarAdd failed at %u with error 0x%x\n", i, hr);
+            return hr;
+        }
+        hr = VariantCopy(&values[i], &res);
+        if (!SUCCEEDED(hr)) {
+            ok(0, "VariantCopy failed at %u with error 0x%x\n", i, hr);
+            return hr;
+        }
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI Widget_Variant(
     IWidget __RPC_FAR * iface,
     VARIANT var)
@@ -640,6 +674,7 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_Value,
     Widget_Array,
     Widget_VariantArrayPtr,
+    Widget_VariantCArray,
     Widget_Variant,
     Widget_VarArg,
     Widget_StructArgs,
@@ -1229,6 +1264,18 @@ static void test_typelibmarshal(void)
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_VARIANT, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
     ok_ole_success(hr, IDispatch_Invoke);
     VariantClear(&varresult);
+
+    /* call VariantCArray - test marshaling of variant arrays */
+    V_VT(&vararg[0]) = VT_I4;
+    V_I4(&vararg[0]) = 1;
+    V_VT(&vararg[1]) = VT_I4;
+    V_I4(&vararg[1]) = 2;
+    hr = IWidget_VariantCArray(pWidget, 2, vararg);
+    ok_ole_success(hr, IWidget_VariantCArray);
+    todo_wine
+    ok(V_VT(&vararg[0]) == VT_I4 && V_I4(&vararg[0]) == 2, "vararg[0] = %d[%d]\n", V_VT(&vararg[0]), V_I4(&vararg[0]));
+    todo_wine
+    ok(V_VT(&vararg[1]) == VT_I4 && V_I4(&vararg[1]) == 3, "vararg[1] = %d[%d]\n", V_VT(&vararg[1]), V_I4(&vararg[1]));
 
     /* call VarArg */
     VariantInit(&vararg[3]);

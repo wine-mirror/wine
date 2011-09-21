@@ -597,7 +597,7 @@ _xsize(const TYPEDESC *td, ITypeInfo *tinfo) {
     case VT_CY:
         return sizeof(CY);
     case VT_VARIANT:
-	return sizeof(VARIANT)+3; /* FIXME: why the +3? */
+	return sizeof(VARIANT);
     case VT_CARRAY: {
 	int i, arrsize = 1;
 	const ARRAYDESC *adesc = td->u.lpadesc;

@@ -111,6 +111,9 @@ library TestTypelib
         [id(DISPID_TM_VARARRAYPTR)]
         HRESULT VariantArrayPtr([in] SAFEARRAY(VARIANT) *values);
 
+        [id(DISPID_TM_VARCARRAY)]
+        HRESULT VariantCArray([in] ULONG count, [in, out] VARIANT values[2]);
+
         [id(DISPID_TM_VARIANT)]
         HRESULT Variant([in] VARIANT var);
 
