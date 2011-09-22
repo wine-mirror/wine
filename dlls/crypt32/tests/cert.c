@@ -634,6 +634,51 @@ static void testCertProperties(void)
     CertFreeCertificateContext(context);
 }
 
+static void testCreateCert(void)
+{
+    PCCERT_CONTEXT cert, enumCert;
+    DWORD count, size;
+    BOOL ret;
+
+    SetLastError(0xdeadbeef);
+    cert = CertCreateCertificateContext(0, NULL, 0);
+    ok(!cert && GetLastError() == E_INVALIDARG,
+     "expected E_INVALIDARG, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    cert = CertCreateCertificateContext(0, selfSignedCert,
+     sizeof(selfSignedCert));
+    ok(!cert && GetLastError() == E_INVALIDARG,
+     "expected E_INVALIDARG, got %08x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    cert = CertCreateCertificateContext(X509_ASN_ENCODING, NULL, 0);
+    ok(!cert &&
+     (GetLastError() == CRYPT_E_ASN1_EOD ||
+     broken(GetLastError() == OSS_MORE_INPUT /* NT4 */)),
+     "expected CRYPT_E_ASN1_EOD, got %08x\n", GetLastError());
+
+    cert = CertCreateCertificateContext(X509_ASN_ENCODING,
+     selfSignedCert, sizeof(selfSignedCert));
+    ok(cert != NULL, "creating cert failed: %08x\n", GetLastError());
+    /* Even in-memory certs are expected to have a store associated with them */
+    todo_wine
+    ok(cert->hCertStore != NULL, "expected created cert to have a store\n");
+    /* The cert doesn't have the archived property set (which would imply it
+     * doesn't show up in enumerations.)
+     */
+    size = 0;
+    ret = CertGetCertificateContextProperty(cert, CERT_ARCHIVED_PROP_ID,
+     NULL, &size);
+    ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
+       "expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+    /* Strangely, enumerating the certs in the store finds none. */
+    enumCert = NULL;
+    count = 0;
+    while ((enumCert = CertEnumCertificatesInStore(cert->hCertStore, enumCert)))
+        count++;
+    ok(!count, "expected 0, got %d\n", count);
+    CertFreeCertificateContext(cert);
+}
+
 static void testDupCert(void)
 {
     HCERTSTORE store;
@@ -3634,6 +3679,7 @@ START_TEST(cert)
 
     testAddCert();
     testCertProperties();
+    testCreateCert();
     testDupCert();
     testFindCert();
     testGetSubjectCert();

@@ -141,6 +141,12 @@ PCCERT_CONTEXT WINAPI CertCreateCertificateContext(DWORD dwCertEncodingType,
     TRACE("(%08x, %p, %d)\n", dwCertEncodingType, pbCertEncoded,
      cbCertEncoded);
 
+    if ((dwCertEncodingType & CERT_ENCODING_TYPE_MASK) != X509_ASN_ENCODING)
+    {
+        SetLastError(E_INVALIDARG);
+        return NULL;
+    }
+
     ret = CryptDecodeObjectEx(dwCertEncodingType, X509_CERT_TO_BE_SIGNED,
      pbCertEncoded, cbCertEncoded, CRYPT_DECODE_ALLOC_FLAG, NULL,
      &certInfo, &size);
