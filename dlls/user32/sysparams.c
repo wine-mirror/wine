@@ -124,7 +124,7 @@ static const struct
     {"InfoText", RGB(0, 0, 0)},                     /* COLOR_INFOTEXT */
     {"InfoWindow", RGB(255, 255, 225)},             /* COLOR_INFOBK */
     {"ButtonAlternateFace", RGB(181, 181, 181)},    /* COLOR_ALTERNATEBTNFACE */
-    {"HotTrackingColor", RGB(0, 0, 128)},           /* COLOR_HOTLIGHT */
+    {"HotTrackingColor", RGB(0, 0, 200)},           /* COLOR_HOTLIGHT */
     {"GradientActiveTitle", RGB(166, 202, 240)},    /* COLOR_GRADIENTACTIVECAPTION */
     {"GradientInactiveTitle", RGB(192, 192, 192)},  /* COLOR_GRADIENTINACTIVECAPTION */
     {"MenuHilight", RGB(10, 36, 106)},              /* COLOR_MENUHILIGHT */
