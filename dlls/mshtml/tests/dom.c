@@ -4459,7 +4459,8 @@ static void test_window(IHTMLDocument2 *doc)
     str = NULL;
     hres = IHTMLWindow2_toString(window, &str);
     ok(hres == S_OK, "toString failed: %08x\n", hres);
-    ok(!strcmp_wa(str, "[object]"), "toString returned %s\n", wine_dbgstr_w(str));
+    ok(!strcmp_wa(str, "[object]") ||
+       !strcmp_wa(str, "[object Window]") /* win7 ie9 */, "toString returned %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     test_window_name(window, NULL);
