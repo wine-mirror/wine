@@ -1671,17 +1671,18 @@ static LRESULT WINMM_Reset(HWAVE hwave)
     WINMM_CBInfo cb_info;
     WINMM_Device *device = WINMM_GetDeviceFromHWAVE(hwave);
     WAVEHDR *first;
-    MMRESULT mr;
+    HRESULT hr;
 
     TRACE("(%p)\n", hwave);
 
     if(!WINMM_ValidateAndLock(device))
         return MMSYSERR_INVALHANDLE;
 
-    mr = WINMM_Pause(hwave);
-    if(mr != MMSYSERR_NOERROR){
+    hr = IAudioClient_Stop(device->client);
+    if(FAILED(hr)){
         LeaveCriticalSection(&device->lock);
-        return mr;
+        ERR("Stop failed: %08x\n", hr);
+        return MMSYSERR_ERROR;
     }
     device->stopped = TRUE;
 
@@ -1694,6 +1695,7 @@ static LRESULT WINMM_Reset(HWAVE hwave)
     device->played_frames = 0;
     device->loop_counter = 0;
     device->last_clock_pos = 0;
+    IAudioClient_Reset(device->client);
 
     cb_info = device->cb_info;
 
