@@ -1453,7 +1453,7 @@ static void D3D1_TextureMapBlendTest(void)
 
     memcpy(exdesc.lpData, test1_quads, sizeof(test1_quads));
 
-    exe_buffer_ptr = 256 + (char*)exdesc.lpData;
+    exe_buffer_ptr = sizeof(test1_quads) + (char*)exdesc.lpData;
 
     EXEBUF_PUT_PROCESSVERTICES(8, exe_buffer_ptr);
 
@@ -1478,7 +1478,7 @@ static void D3D1_TextureMapBlendTest(void)
 
     EXEBUF_END(exe_buffer_ptr);
 
-    exe_length = ((char*)exe_buffer_ptr - (char*)exdesc.lpData) - 256;
+    exe_length = ((char*)exe_buffer_ptr - (char*)exdesc.lpData) - sizeof(test1_quads);
 
     hr = IDirect3DExecuteBuffer_Unlock(ExecuteBuffer);
     if (FAILED(hr)) {
@@ -1488,7 +1488,7 @@ static void D3D1_TextureMapBlendTest(void)
     memset(&exdata, 0, sizeof(D3DEXECUTEDATA));
     exdata.dwSize = sizeof(D3DEXECUTEDATA);
     exdata.dwVertexCount = 8;
-    exdata.dwInstructionOffset = 256;
+    exdata.dwInstructionOffset = sizeof(test1_quads);
     exdata.dwInstructionLength = exe_length;
     hr = IDirect3DExecuteBuffer_SetExecuteData(ExecuteBuffer, &exdata);
     ok(hr == D3D_OK, "IDirect3DExecuteBuffer_SetExecuteData failed with %08x\n", hr);
@@ -1585,7 +1585,7 @@ static void D3D1_TextureMapBlendTest(void)
 
     memcpy(exdesc.lpData, test1_quads, sizeof(test1_quads));
 
-    exe_buffer_ptr = 256 + (char*)exdesc.lpData;
+    exe_buffer_ptr = sizeof(test1_quads) + (char*)exdesc.lpData;
 
     EXEBUF_PUT_PROCESSVERTICES(8, exe_buffer_ptr);
 
@@ -1599,7 +1599,7 @@ static void D3D1_TextureMapBlendTest(void)
 
     EXEBUF_END(exe_buffer_ptr);
 
-    exe_length = ((char*)exe_buffer_ptr - (char*)exdesc.lpData) - 256;
+    exe_length = ((char*)exe_buffer_ptr - (char*)exdesc.lpData) - sizeof(test1_quads);
 
     hr = IDirect3DExecuteBuffer_Unlock(ExecuteBuffer);
     if (FAILED(hr)) {
@@ -1609,7 +1609,7 @@ static void D3D1_TextureMapBlendTest(void)
     memset(&exdata, 0, sizeof(D3DEXECUTEDATA));
     exdata.dwSize = sizeof(D3DEXECUTEDATA);
     exdata.dwVertexCount = 8;
-    exdata.dwInstructionOffset = 256;
+    exdata.dwInstructionOffset = sizeof(test1_quads);
     exdata.dwInstructionLength = exe_length;
     hr = IDirect3DExecuteBuffer_SetExecuteData(ExecuteBuffer, &exdata);
     ok(hr == D3D_OK, "IDirect3DExecuteBuffer_SetExecuteData failed with %08x\n", hr);
@@ -1706,7 +1706,7 @@ static void D3D1_TextureMapBlendTest(void)
 
     memcpy(exdesc.lpData, test2_quads, sizeof(test2_quads));
 
-    exe_buffer_ptr = 256 + (char*)exdesc.lpData;
+    exe_buffer_ptr = sizeof(test2_quads) + (char*)exdesc.lpData;
 
     EXEBUF_PUT_PROCESSVERTICES(8, exe_buffer_ptr);
 
@@ -1721,7 +1721,7 @@ static void D3D1_TextureMapBlendTest(void)
 
     EXEBUF_END(exe_buffer_ptr);
 
-    exe_length = ((char*)exe_buffer_ptr - (char*)exdesc.lpData) - 256;
+    exe_length = ((char*)exe_buffer_ptr - (char*)exdesc.lpData) - sizeof(test2_quads);
 
     hr = IDirect3DExecuteBuffer_Unlock(ExecuteBuffer);
     if (FAILED(hr)) {
@@ -1731,7 +1731,7 @@ static void D3D1_TextureMapBlendTest(void)
     memset(&exdata, 0, sizeof(D3DEXECUTEDATA));
     exdata.dwSize = sizeof(D3DEXECUTEDATA);
     exdata.dwVertexCount = 8;
-    exdata.dwInstructionOffset = 256;
+    exdata.dwInstructionOffset = sizeof(test2_quads);
     exdata.dwInstructionLength = exe_length;
     hr = IDirect3DExecuteBuffer_SetExecuteData(ExecuteBuffer, &exdata);
     ok(hr == D3D_OK, "IDirect3DExecuteBuffer_SetExecuteData failed with %08x\n", hr);
@@ -1832,7 +1832,7 @@ static void D3D1_TextureMapBlendTest(void)
 
     memcpy(exdesc.lpData, test1_quads, sizeof(test1_quads));
 
-    exe_buffer_ptr = 256 + (char*)exdesc.lpData;
+    exe_buffer_ptr = sizeof(test1_quads) + (char*)exdesc.lpData;
 
     EXEBUF_PUT_PROCESSVERTICES(8, exe_buffer_ptr);
 
@@ -1847,7 +1847,7 @@ static void D3D1_TextureMapBlendTest(void)
 
     EXEBUF_END(exe_buffer_ptr);
 
-    exe_length = ((char*)exe_buffer_ptr - (char*)exdesc.lpData) - 256;
+    exe_length = ((char*)exe_buffer_ptr - (char*)exdesc.lpData) - sizeof(test1_quads);
 
     hr = IDirect3DExecuteBuffer_Unlock(ExecuteBuffer);
     if (FAILED(hr)) {
@@ -1857,7 +1857,7 @@ static void D3D1_TextureMapBlendTest(void)
     memset(&exdata, 0, sizeof(D3DEXECUTEDATA));
     exdata.dwSize = sizeof(D3DEXECUTEDATA);
     exdata.dwVertexCount = 8;
-    exdata.dwInstructionOffset = 256;
+    exdata.dwInstructionOffset = sizeof(test1_quads);
     exdata.dwInstructionLength = exe_length;
     hr = IDirect3DExecuteBuffer_SetExecuteData(ExecuteBuffer, &exdata);
     ok(hr == D3D_OK, "IDirect3DExecuteBuffer_SetExecuteData failed with %08x\n", hr);
@@ -1970,7 +1970,7 @@ static void D3D1_TextureMapBlendTest(void)
 
         memcpy(exdesc.lpData, test1_quads, sizeof(test1_quads));
 
-        exe_buffer_ptr = 256 + (char*)exdesc.lpData;
+        exe_buffer_ptr = sizeof(test1_quads) + (char*)exdesc.lpData;
 
         EXEBUF_PUT_PROCESSVERTICES(8, exe_buffer_ptr);
 
@@ -1985,7 +1985,7 @@ static void D3D1_TextureMapBlendTest(void)
 
         EXEBUF_END(exe_buffer_ptr);
 
-        exe_length = ((char*)exe_buffer_ptr - (char*)exdesc.lpData) - 256;
+        exe_length = ((char*)exe_buffer_ptr - (char*)exdesc.lpData) - sizeof(test1_quads);
 
         hr = IDirect3DExecuteBuffer_Unlock(ExecuteBuffer);
         if (FAILED(hr)) {
@@ -1995,7 +1995,7 @@ static void D3D1_TextureMapBlendTest(void)
         memset(&exdata, 0, sizeof(D3DEXECUTEDATA));
         exdata.dwSize = sizeof(D3DEXECUTEDATA);
         exdata.dwVertexCount = 8;
-        exdata.dwInstructionOffset = 256;
+        exdata.dwInstructionOffset = sizeof(test1_quads);
         exdata.dwInstructionLength = exe_length;
         hr = IDirect3DExecuteBuffer_SetExecuteData(ExecuteBuffer, &exdata);
         ok(hr == D3D_OK, "IDirect3DExecuteBuffer_SetExecuteData failed with %08x\n", hr);
