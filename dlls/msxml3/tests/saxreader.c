@@ -711,7 +711,7 @@ static const ISAXAttributesVtbl SAXAttributesVtbl =
 
 static ISAXAttributes saxattributes = { &SAXAttributesVtbl };
 
-static int lexicalhandler_addrefcalled;
+static int handler_addrefcalled;
 
 static HRESULT WINAPI isaxlexical_QueryInterface(ISAXLexicalHandler* iface, REFIID riid, void **ppvObject)
 {
@@ -732,7 +732,7 @@ static HRESULT WINAPI isaxlexical_QueryInterface(ISAXLexicalHandler* iface, REFI
 
 static ULONG WINAPI isaxlexical_AddRef(ISAXLexicalHandler* iface)
 {
-    lexicalhandler_addrefcalled++;
+    handler_addrefcalled++;
     return 2;
 }
 
@@ -803,6 +803,78 @@ static const ISAXLexicalHandlerVtbl SAXLexicalHandlerVtbl =
 };
 
 static ISAXLexicalHandler saxlexicalhandler = { &SAXLexicalHandlerVtbl };
+
+static HRESULT WINAPI isaxdecl_QueryInterface(ISAXDeclHandler* iface, REFIID riid, void **ppvObject)
+{
+    *ppvObject = NULL;
+
+    if(IsEqualGUID(riid, &IID_IUnknown) ||
+       IsEqualGUID(riid, &IID_ISAXDeclHandler))
+    {
+        *ppvObject = iface;
+    }
+    else
+    {
+        return E_NOINTERFACE;
+    }
+
+    return S_OK;
+}
+
+static ULONG WINAPI isaxdecl_AddRef(ISAXDeclHandler* iface)
+{
+    handler_addrefcalled++;
+    return 2;
+}
+
+static ULONG WINAPI isaxdecl_Release(ISAXDeclHandler* iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI isaxdecl_elementDecl(ISAXDeclHandler* iface,
+    const WCHAR * pName, int nName, const WCHAR * pModel, int nModel)
+{
+    ok(0, "call not expected\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxdecl_attributeDecl(ISAXDeclHandler* iface,
+    const WCHAR * pElementName, int nElementName, const WCHAR * pAttributeName,
+    int nAttributeName, const WCHAR * pType, int nType, const WCHAR * pValueDefault,
+    int nValueDefault, const WCHAR * pValue, int nValue)
+{
+    ok(0, "call not expected\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxdecl_internalEntityDecl(ISAXDeclHandler* iface,
+    const WCHAR * pName, int nName, const WCHAR * pValue, int nValue)
+{
+    ok(0, "call not expected\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI isaxdecl_externalEntityDecl(ISAXDeclHandler* iface,
+    const WCHAR * pName, int nName, const WCHAR * pPublicId, int nPublicId,
+    const WCHAR * pSystemId, int nSystemId)
+{
+    ok(0, "call not expected\n");
+    return E_NOTIMPL;
+}
+
+static const ISAXDeclHandlerVtbl SAXDeclHandlerVtbl =
+{
+   isaxdecl_QueryInterface,
+   isaxdecl_AddRef,
+   isaxdecl_Release,
+   isaxdecl_elementDecl,
+   isaxdecl_attributeDecl,
+   isaxdecl_internalEntityDecl,
+   isaxdecl_externalEntityDecl
+};
+
+static ISAXDeclHandler saxdeclhandler = { &SAXDeclHandlerVtbl };
 
 typedef struct mxwriter_write_test_t {
     BOOL        last;
@@ -1094,10 +1166,22 @@ static void test_saxreader(void)
     SysFreeString(bstrData);
 }
 
+struct saxreader_props_test_t
+{
+    const char *prop_name;
+    IUnknown   *iface;
+};
+
+static const struct saxreader_props_test_t props_test_data[] = {
+    { "http://xml.org/sax/properties/lexical-handler", (IUnknown*)&saxlexicalhandler },
+    { "http://xml.org/sax/properties/declaration-handler", (IUnknown*)&saxdeclhandler },
+    { 0 }
+};
+
 static void test_saxreader_properties(void)
 {
+    const struct saxreader_props_test_t *ptr = props_test_data;
     ISAXXMLReader *reader;
-    VARIANT v;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_SAXXMLReader, NULL, CLSCTX_INPROC_SERVER,
@@ -1107,71 +1191,77 @@ static void test_saxreader_properties(void)
     hr = ISAXXMLReader_getProperty(reader, _bstr_("http://xml.org/sax/properties/lexical-handler"), NULL);
     EXPECT_HR(hr, E_POINTER);
 
-    /* set/remove lexical handler */
-    V_VT(&v) = VT_EMPTY;
-    V_UNKNOWN(&v) = (IUnknown*)0xdeadbeef;
-    hr = ISAXXMLReader_getProperty(reader, _bstr_("http://xml.org/sax/properties/lexical-handler"), &v);
-    EXPECT_HR(hr, S_OK);
-    ok(V_VT(&v) == VT_UNKNOWN, "got %d\n", V_VT(&v));
-    ok(V_UNKNOWN(&v) == NULL, "got %p\n", V_UNKNOWN(&v));
+    while (ptr->prop_name)
+    {
+        VARIANT v;
 
-    V_VT(&v) = VT_UNKNOWN;
-    V_UNKNOWN(&v) = (IUnknown*)&saxlexicalhandler;
-    hr = ISAXXMLReader_putProperty(reader, _bstr_("http://xml.org/sax/properties/lexical-handler"), v);
-    EXPECT_HR(hr, S_OK);
+        V_VT(&v) = VT_EMPTY;
+        V_UNKNOWN(&v) = (IUnknown*)0xdeadbeef;
+        hr = ISAXXMLReader_getProperty(reader, _bstr_(ptr->prop_name), &v);
+        EXPECT_HR(hr, S_OK);
+        ok(V_VT(&v) == VT_UNKNOWN, "got %d\n", V_VT(&v));
+        ok(V_UNKNOWN(&v) == NULL, "got %p\n", V_UNKNOWN(&v));
 
-    V_VT(&v) = VT_EMPTY;
-    V_UNKNOWN(&v) = (IUnknown*)0xdeadbeef;
-    lexicalhandler_addrefcalled = 0;
-    hr = ISAXXMLReader_getProperty(reader, _bstr_("http://xml.org/sax/properties/lexical-handler"), &v);
-    EXPECT_HR(hr, S_OK);
-    ok(V_VT(&v) == VT_UNKNOWN, "got %d\n", V_VT(&v));
-    ok(V_UNKNOWN(&v) == (IUnknown*)&saxlexicalhandler, "got %p\n", V_UNKNOWN(&v));
-    ok(lexicalhandler_addrefcalled == 1, "AddRef called %d times\n", lexicalhandler_addrefcalled);
-    VariantClear(&v);
+        V_VT(&v) = VT_UNKNOWN;
+        V_UNKNOWN(&v) = ptr->iface;
+        hr = ISAXXMLReader_putProperty(reader, _bstr_(ptr->prop_name), v);
+        EXPECT_HR(hr, S_OK);
 
-    V_VT(&v) = VT_EMPTY;
-    V_UNKNOWN(&v) = (IUnknown*)0xdeadbeef;
-    hr = ISAXXMLReader_putProperty(reader, _bstr_("http://xml.org/sax/properties/lexical-handler"), v);
-    EXPECT_HR(hr, S_OK);
+        V_VT(&v) = VT_EMPTY;
+        V_UNKNOWN(&v) = (IUnknown*)0xdeadbeef;
+        handler_addrefcalled = 0;
+        hr = ISAXXMLReader_getProperty(reader, _bstr_(ptr->prop_name), &v);
+        EXPECT_HR(hr, S_OK);
+        ok(V_VT(&v) == VT_UNKNOWN, "got %d\n", V_VT(&v));
+        ok(V_UNKNOWN(&v) == ptr->iface, "got %p\n", V_UNKNOWN(&v));
+        ok(handler_addrefcalled == 1, "AddRef called %d times\n", handler_addrefcalled);
+        VariantClear(&v);
 
-    V_VT(&v) = VT_EMPTY;
-    V_UNKNOWN(&v) = (IUnknown*)0xdeadbeef;
-    hr = ISAXXMLReader_getProperty(reader, _bstr_("http://xml.org/sax/properties/lexical-handler"), &v);
-    EXPECT_HR(hr, S_OK);
-    ok(V_VT(&v) == VT_UNKNOWN, "got %d\n", V_VT(&v));
-    ok(V_UNKNOWN(&v) == NULL, "got %p\n", V_UNKNOWN(&v));
+        V_VT(&v) = VT_EMPTY;
+        V_UNKNOWN(&v) = (IUnknown*)0xdeadbeef;
+        hr = ISAXXMLReader_putProperty(reader, _bstr_(ptr->prop_name), v);
+        EXPECT_HR(hr, S_OK);
 
-    V_VT(&v) = VT_UNKNOWN;
-    V_UNKNOWN(&v) = (IUnknown*)&saxlexicalhandler;
-    hr = ISAXXMLReader_putProperty(reader, _bstr_("http://xml.org/sax/properties/lexical-handler"), v);
-    EXPECT_HR(hr, S_OK);
+        V_VT(&v) = VT_EMPTY;
+        V_UNKNOWN(&v) = (IUnknown*)0xdeadbeef;
+        hr = ISAXXMLReader_getProperty(reader, _bstr_(ptr->prop_name), &v);
+        EXPECT_HR(hr, S_OK);
+        ok(V_VT(&v) == VT_UNKNOWN, "got %d\n", V_VT(&v));
+        ok(V_UNKNOWN(&v) == NULL, "got %p\n", V_UNKNOWN(&v));
 
-    /* only VT_EMPTY seems to be valid to reset property */
-    V_VT(&v) = VT_I4;
-    V_UNKNOWN(&v) = (IUnknown*)0xdeadbeef;
-    hr = ISAXXMLReader_putProperty(reader, _bstr_("http://xml.org/sax/properties/lexical-handler"), v);
-    EXPECT_HR(hr, E_INVALIDARG);
+        V_VT(&v) = VT_UNKNOWN;
+        V_UNKNOWN(&v) = ptr->iface;
+        hr = ISAXXMLReader_putProperty(reader, _bstr_(ptr->prop_name), v);
+        EXPECT_HR(hr, S_OK);
 
-    V_VT(&v) = VT_EMPTY;
-    V_UNKNOWN(&v) = (IUnknown*)0xdeadbeef;
-    hr = ISAXXMLReader_getProperty(reader, _bstr_("http://xml.org/sax/properties/lexical-handler"), &v);
-    EXPECT_HR(hr, S_OK);
-    ok(V_VT(&v) == VT_UNKNOWN, "got %d\n", V_VT(&v));
-    ok(V_UNKNOWN(&v) == (IUnknown*)&saxlexicalhandler, "got %p\n", V_UNKNOWN(&v));
-    VariantClear(&v);
+        /* only VT_EMPTY seems to be valid to reset property */
+        V_VT(&v) = VT_I4;
+        V_UNKNOWN(&v) = (IUnknown*)0xdeadbeef;
+        hr = ISAXXMLReader_putProperty(reader, _bstr_(ptr->prop_name), v);
+        EXPECT_HR(hr, E_INVALIDARG);
 
-    V_VT(&v) = VT_UNKNOWN;
-    V_UNKNOWN(&v) = NULL;
-    hr = ISAXXMLReader_putProperty(reader, _bstr_("http://xml.org/sax/properties/lexical-handler"), v);
-    EXPECT_HR(hr, S_OK);
+        V_VT(&v) = VT_EMPTY;
+        V_UNKNOWN(&v) = (IUnknown*)0xdeadbeef;
+        hr = ISAXXMLReader_getProperty(reader, _bstr_(ptr->prop_name), &v);
+        EXPECT_HR(hr, S_OK);
+        ok(V_VT(&v) == VT_UNKNOWN, "got %d\n", V_VT(&v));
+        ok(V_UNKNOWN(&v) == ptr->iface, "got %p\n", V_UNKNOWN(&v));
+        VariantClear(&v);
 
-    V_VT(&v) = VT_EMPTY;
-    V_UNKNOWN(&v) = (IUnknown*)0xdeadbeef;
-    hr = ISAXXMLReader_getProperty(reader, _bstr_("http://xml.org/sax/properties/lexical-handler"), &v);
-    EXPECT_HR(hr, S_OK);
-    ok(V_VT(&v) == VT_UNKNOWN, "got %d\n", V_VT(&v));
-    ok(V_UNKNOWN(&v) == NULL, "got %p\n", V_UNKNOWN(&v));
+        V_VT(&v) = VT_UNKNOWN;
+        V_UNKNOWN(&v) = NULL;
+        hr = ISAXXMLReader_putProperty(reader, _bstr_(ptr->prop_name), v);
+        EXPECT_HR(hr, S_OK);
+
+        V_VT(&v) = VT_EMPTY;
+        V_UNKNOWN(&v) = (IUnknown*)0xdeadbeef;
+        hr = ISAXXMLReader_getProperty(reader, _bstr_(ptr->prop_name), &v);
+        EXPECT_HR(hr, S_OK);
+        ok(V_VT(&v) == VT_UNKNOWN, "got %d\n", V_VT(&v));
+        ok(V_UNKNOWN(&v) == NULL, "got %p\n", V_UNKNOWN(&v));
+
+        ptr++;
+    }
 
     ISAXXMLReader_Release(reader);
     free_bstrs();

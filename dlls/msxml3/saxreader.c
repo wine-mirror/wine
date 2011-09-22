@@ -2244,25 +2244,45 @@ static HRESULT internal_putProperty(
     {
         if(This->isParsing) return E_FAIL;
 
-        if(V_UNKNOWN(&value))
+        switch (V_VT(&value))
         {
-            if(vbInterface)
-                IVBSAXDeclHandler_AddRef((IVBSAXDeclHandler*)V_UNKNOWN(&value));
+        case VT_EMPTY:
+            if (vbInterface)
+            {
+                if (This->vbdeclHandler)
+                {
+                    IVBSAXDeclHandler_Release(This->vbdeclHandler);
+                    This->vbdeclHandler = NULL;
+                }
+            }
             else
-                ISAXDeclHandler_AddRef((ISAXDeclHandler*)V_UNKNOWN(&value));
-        }
-        if((vbInterface && This->vbdeclHandler)
-                || (!vbInterface && This->declHandler))
-        {
-            if(vbInterface)
-                IVBSAXDeclHandler_Release(This->vbdeclHandler);
+                if (This->declHandler)
+                {
+                    ISAXDeclHandler_Release(This->declHandler);
+                    This->declHandler = NULL;
+                }
+            break;
+        case VT_UNKNOWN:
+            if (V_UNKNOWN(&value)) IUnknown_AddRef(V_UNKNOWN(&value));
+
+            if ((vbInterface && This->vbdeclHandler) ||
+               (!vbInterface && This->declHandler))
+            {
+                if (vbInterface)
+                    IVBSAXDeclHandler_Release(This->vbdeclHandler);
+                else
+                    ISAXDeclHandler_Release(This->declHandler);
+            }
+
+            if (vbInterface)
+                This->vbdeclHandler = (IVBSAXDeclHandler*)V_UNKNOWN(&value);
             else
-                ISAXDeclHandler_Release(This->declHandler);
+                This->declHandler = (ISAXDeclHandler*)V_UNKNOWN(&value);
+            break;
+        default:
+            return E_INVALIDARG;
         }
-        if(vbInterface)
-            This->vbdeclHandler = (IVBSAXDeclHandler*)V_UNKNOWN(&value);
-        else
-            This->declHandler = (ISAXDeclHandler*)V_UNKNOWN(&value);
+
         return S_OK;
     }
 
@@ -2354,6 +2374,14 @@ static HRESULT internal_getProperty(const saxreader* This, const WCHAR *prop, VA
     {
         V_VT(value) = VT_UNKNOWN;
         V_UNKNOWN(value) = vb ? (IUnknown*)This->vblexicalHandler : (IUnknown*)This->lexicalHandler;
+        if (V_UNKNOWN(value)) IUnknown_AddRef(V_UNKNOWN(value));
+        return S_OK;
+    }
+
+    if (!memcmp(PropertyDeclHandlerW, prop, sizeof(PropertyDeclHandlerW)))
+    {
+        V_VT(value) = VT_UNKNOWN;
+        V_UNKNOWN(value) = vb ? (IUnknown*)This->vbdeclHandler : (IUnknown*)This->declHandler;
         if (V_UNKNOWN(value)) IUnknown_AddRef(V_UNKNOWN(value));
         return S_OK;
     }
