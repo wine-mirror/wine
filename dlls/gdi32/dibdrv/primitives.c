@@ -104,6 +104,57 @@ static inline void do_rop_codes_mask_8(BYTE *dst, BYTE src, struct rop_codes *co
     do_rop_mask_8( dst, (src & codes->a1) ^ codes->a2, (src & codes->x1) ^ codes->x2, mask );
 }
 
+static inline void do_rop_codes_line_32(DWORD *dst, const DWORD *src, struct rop_codes *codes, int len)
+{
+    for (; len > 0; len--, src++, dst++) do_rop_codes_32( dst, *src, codes );
+}
+
+static inline void do_rop_codes_line_16(WORD *dst, const WORD *src, struct rop_codes *codes, int len)
+{
+    for (; len > 0; len--, src++, dst++) do_rop_codes_16( dst, *src, codes );
+}
+
+static inline void do_rop_codes_line_8(BYTE *dst, const BYTE *src, struct rop_codes *codes, int len)
+{
+    for (; len > 0; len--, src++, dst++) do_rop_codes_8( dst, *src, codes );
+}
+
+static inline void do_rop_codes_line_4(BYTE *dst, int dst_x, const BYTE *src, int src_x,
+                                      struct rop_codes *codes, int len)
+{
+    BYTE src_val;
+
+    for (src += src_x / 2, dst += dst_x / 2; len > 0; len--, dst_x++, src_x++)
+    {
+        if (dst_x & 1)
+        {
+            if (src_x & 1) src_val = *src++;
+            else           src_val = *src >> 4;
+            do_rop_codes_mask_8( dst++, src_val, codes, 0x0f );
+        }
+        else
+        {
+            if (src_x & 1) src_val = *src++ << 4;
+            else           src_val = *src;
+            do_rop_codes_mask_8( dst, src_val, codes, 0xf0 );
+        }
+    }
+}
+
+static inline void do_rop_codes_line_1(BYTE *dst, int dst_x, const BYTE *src, int src_x,
+                                      struct rop_codes *codes, int len)
+{
+    BYTE src_val;
+
+    for (src += src_x / 8, dst += dst_x / 8; len > 0; len--, dst_x++, src_x++)
+    {
+        src_val = *src & pixel_masks_1[src_x & 7] ? 0xff : 0;
+        do_rop_codes_mask_8( dst, src_val, codes, pixel_masks_1[dst_x & 7] );
+        if ((src_x & 7) == 7) src++;
+        if ((dst_x & 7) == 7) dst++;
+    }
+}
+
 static void solid_rects_32(const dib_info *dib, int num, const RECT *rc, DWORD and, DWORD xor)
 {
     DWORD *ptr, *start;
@@ -706,9 +757,7 @@ static void copy_rect_32(const dib_info *dst, const RECT *rc,
         get_rop_codes( rop2, &codes );
         for (y = rc->top; y < rc->bottom; y++)
         {
-            for (x = rc->left, dst_ptr = dst_start, src_ptr = src_start; x < rc->right; x++)
-                do_rop_codes_32( dst_ptr++, *src_ptr++, &codes );
-
+            do_rop_codes_line_32( dst_start, src_start, &codes, rc->right - rc->left );
             dst_start += dst->stride / 4;
             src_start += src->stride / 4;
         }
@@ -750,12 +799,7 @@ static void copy_rect_24(const dib_info *dst, const RECT *rc,
         get_rop_codes( rop2, &codes );
         for (y = rc->top; y < rc->bottom; y++)
         {
-            for (x = rc->left, dst_ptr = dst_start, src_ptr = src_start; x < rc->right; x++)
-            {
-                do_rop_codes_8( dst_ptr++, *src_ptr++, &codes );
-                do_rop_codes_8( dst_ptr++, *src_ptr++, &codes );
-                do_rop_codes_8( dst_ptr++, *src_ptr++, &codes );
-            }
+            do_rop_codes_line_8( dst_start, src_start, &codes, (rc->right - rc->left) * 3 );
             dst_start += dst->stride;
             src_start += src->stride;
         }
@@ -797,9 +841,7 @@ static void copy_rect_16(const dib_info *dst, const RECT *rc,
         get_rop_codes( rop2, &codes );
         for (y = rc->top; y < rc->bottom; y++)
         {
-            for (x = rc->left, dst_ptr = dst_start, src_ptr = src_start; x < rc->right; x++)
-                do_rop_codes_16( dst_ptr++, *src_ptr++, &codes );
-
+            do_rop_codes_line_16( dst_start, src_start, &codes, rc->right - rc->left );
             dst_start += dst->stride / 2;
             src_start += src->stride / 2;
         }
@@ -841,9 +883,7 @@ static void copy_rect_8(const dib_info *dst, const RECT *rc,
         get_rop_codes( rop2, &codes );
         for (y = rc->top; y < rc->bottom; y++)
         {
-            for (x = rc->left, dst_ptr = dst_start, src_ptr = src_start; x < rc->right; x++)
-                do_rop_codes_8( dst_ptr++, *src_ptr++, &codes );
-
+            do_rop_codes_line_8( dst_start, src_start, &codes, rc->right - rc->left );
             dst_start += dst->stride;
             src_start += src->stride;
         }
@@ -888,21 +928,7 @@ static void copy_rect_4(const dib_info *dst, const RECT *rc,
         get_rop_codes( rop2, &codes );
         for (y = rc->top; y < rc->bottom; y++)
         {
-            for (x = rc->left, src_x = origin->x, dst_ptr = dst_start, src_ptr = src_start; x < rc->right; x++, src_x++)
-            {
-                if (x & 1)
-                {
-                    if (src_x & 1) src_val =  *src_ptr++;
-                    else           src_val =  *src_ptr >> 4;
-                    do_rop_codes_mask_8( dst_ptr++, src_val, &codes, 0x0f );
-                }
-                else
-                {
-                    if (src_x & 1) src_val = *src_ptr++ << 4;
-                    else           src_val = *src_ptr;
-                    do_rop_codes_mask_8( dst_ptr, src_val, &codes, 0xf0 );
-                }
-            }
+            do_rop_codes_line_4( dst_start, rc->left, src_start, origin->x, &codes, rc->right - rc->left );
             dst_start += dst->stride;
             src_start += src->stride;
         }
@@ -947,15 +973,7 @@ static void copy_rect_1(const dib_info *dst, const RECT *rc,
         get_rop_codes( rop2, &codes );
         for (y = rc->top; y < rc->bottom; y++)
         {
-            dst_bitpos = rc->left & 7;
-            src_bitpos = origin->x & 7;
-            for (x = rc->left, dst_ptr = dst_start, src_ptr = src_start; x < rc->right; x++)
-            {
-                src_val = *src_ptr & pixel_masks_1[src_bitpos] ? 0xff : 0;
-                do_rop_codes_mask_8( dst_ptr, src_val, &codes, pixel_masks_1[dst_bitpos] );
-                if (dst_bitpos++ == 7) { dst_ptr++, dst_bitpos = 0; }
-                if (src_bitpos++ == 7) { src_ptr++, src_bitpos = 0; }
-            }
+            do_rop_codes_line_1( dst_start, rc->left, src_start, origin->x, &codes, rc->right - rc->left );
             dst_start += dst->stride;
             src_start += src->stride;
         }
