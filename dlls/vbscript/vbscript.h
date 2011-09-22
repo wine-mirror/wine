@@ -171,6 +171,8 @@ struct _script_ctx_t {
 HRESULT init_global(script_ctx_t*);
 HRESULT init_err(script_ctx_t*);
 
+IUnknown *create_ax_site(script_ctx_t*) DECLSPEC_HIDDEN;
+
 typedef enum {
     ARG_NONE = 0,
     ARG_STR,

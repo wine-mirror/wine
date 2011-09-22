@@ -664,3 +664,101 @@ HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pU
     IActiveScript_Release(&ret->IActiveScript_iface);
     return hres;
 }
+
+typedef struct {
+    IServiceProvider IServiceProvider_iface;
+
+    LONG ref;
+
+    IServiceProvider *sp;
+} AXSite;
+
+static inline AXSite *impl_from_IServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, AXSite, IServiceProvider_iface);
+}
+
+static HRESULT WINAPI AXSite_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
+{
+    AXSite *This = impl_from_IServiceProvider(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IServiceProvider_iface;
+    }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
+        TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
+        *ppv = &This->IServiceProvider_iface;
+    }else {
+        TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI AXSite_AddRef(IServiceProvider *iface)
+{
+    AXSite *This = impl_from_IServiceProvider(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI AXSite_Release(IServiceProvider *iface)
+{
+    AXSite *This = impl_from_IServiceProvider(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
+        heap_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI AXSite_QueryService(IServiceProvider *iface,
+        REFGUID guidService, REFIID riid, void **ppv)
+{
+    AXSite *This = impl_from_IServiceProvider(iface);
+
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
+
+    return IServiceProvider_QueryService(This->sp, guidService, riid, ppv);
+}
+
+static IServiceProviderVtbl AXSiteVtbl = {
+    AXSite_QueryInterface,
+    AXSite_AddRef,
+    AXSite_Release,
+    AXSite_QueryService
+};
+
+IUnknown *create_ax_site(script_ctx_t *ctx)
+{
+    IServiceProvider *sp;
+    AXSite *ret;
+    HRESULT hres;
+
+    hres = IActiveScriptSite_QueryInterface(ctx->site, &IID_IServiceProvider, (void**)&sp);
+    if(FAILED(hres)) {
+        ERR("Could not get IServiceProvider iface: %08x\n", hres);
+        return NULL;
+    }
+
+    ret = heap_alloc(sizeof(*ret));
+    if(!ret) {
+        IServiceProvider_Release(sp);
+        return NULL;
+    }
+
+    ret->IServiceProvider_iface.lpVtbl = &AXSiteVtbl;
+    ret->ref = 1;
+    ret->sp = sp;
+
+    return (IUnknown*)&ret->IServiceProvider_iface;
+}
