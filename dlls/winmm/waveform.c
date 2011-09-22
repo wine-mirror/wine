@@ -1670,6 +1670,7 @@ static LRESULT WINMM_Reset(HWAVE hwave)
 {
     WINMM_CBInfo cb_info;
     WINMM_Device *device = WINMM_GetDeviceFromHWAVE(hwave);
+    BOOL is_out;
     WAVEHDR *first;
     HRESULT hr;
 
@@ -1686,10 +1687,7 @@ static LRESULT WINMM_Reset(HWAVE hwave)
     }
     device->stopped = TRUE;
 
-    if(device->render)
-        first = WOD_MarkDoneHeaders(device);
-    else
-        first = device->first;
+    first = device->first;
     device->first = device->last = device->playing = NULL;
     device->ofs_bytes = 0;
     device->played_frames = 0;
@@ -1698,6 +1696,7 @@ static LRESULT WINMM_Reset(HWAVE hwave)
     IAudioClient_Reset(device->client);
 
     cb_info = device->cb_info;
+    is_out = device->render ? TRUE : FALSE;
 
     LeaveCriticalSection(&device->lock);
 
@@ -1705,7 +1704,7 @@ static LRESULT WINMM_Reset(HWAVE hwave)
         WAVEHDR *next = first->lpNext;
         first->dwFlags &= ~WHDR_INQUEUE;
         first->dwFlags |= WHDR_DONE;
-        if(device->render)
+        if(is_out)
             WINMM_NotifyClient(&cb_info, WOM_DONE, (DWORD_PTR)first, 0);
         else
             WINMM_NotifyClient(&cb_info, WIM_DATA, (DWORD_PTR)first, 0);
