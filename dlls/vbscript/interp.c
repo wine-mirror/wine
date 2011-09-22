@@ -682,6 +682,22 @@ static HRESULT interp_const(exec_ctx_t *ctx)
     return add_dynamic_var(ctx, arg, TRUE, val.v, val.owned);
 }
 
+static HRESULT interp_val(exec_ctx_t *ctx)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT interp_pop(exec_ctx_t *ctx)
+{
+    const unsigned n = ctx->instr->arg1.uint;
+
+    TRACE("%u\n", n);
+
+    stack_popn(ctx, n);
+    return S_OK;
+}
+
 static HRESULT interp_new(exec_ctx_t *ctx)
 {
     const WCHAR *arg = ctx->instr->arg1.bstr;
@@ -708,6 +724,13 @@ static HRESULT interp_new(exec_ctx_t *ctx)
     V_VT(&v) = VT_DISPATCH;
     V_DISPATCH(&v) = (IDispatch*)&obj->IDispatchEx_iface;
     return stack_push(ctx, &v);
+}
+
+static HRESULT interp_step(exec_ctx_t *ctx)
+{
+    const BSTR ident = ctx->instr->arg2.bstr;
+    FIXME("%s\n", debugstr_w(ident));
+    return E_NOTIMPL;
 }
 
 static HRESULT interp_jmp(exec_ctx_t *ctx)
@@ -1437,6 +1460,13 @@ static HRESULT interp_neg(exec_ctx_t *ctx)
         return hres;
 
     return stack_push(ctx, &v);
+}
+
+static HRESULT interp_incc(exec_ctx_t *ctx)
+{
+    const BSTR ident = ctx->instr->arg1.bstr;
+    FIXME("%s\n", debugstr_w(ident));
+    return E_NOTIMPL;
 }
 
 static const instr_func_t op_funcs[] = {

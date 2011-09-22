@@ -199,6 +199,7 @@ typedef enum {
     X(icallv,         1, ARG_BSTR,    ARG_UINT)   \
     X(idiv,           1, 0,           0)          \
     X(imp,            1, 0,           0)          \
+    X(incc,           1, ARG_BSTR,    0)          \
     X(is,             1, 0,           0)          \
     X(jmp,            0, ARG_ADDR,    0)          \
     X(jmp_false,      0, ARG_ADDR,    0)          \
@@ -218,13 +219,16 @@ typedef enum {
     X(nothing,        1, 0,           0)          \
     X(null,           1, 0,           0)          \
     X(or,             1, 0,           0)          \
+    X(pop,            1, ARG_UINT,    0)          \
     X(ret,            0, 0,           0)          \
     X(set_ident,      1, ARG_BSTR,    0)          \
     X(set_member,     1, ARG_BSTR,    0)          \
     X(short,          1, ARG_INT,     0)          \
+    X(step,           0, ARG_ADDR,    ARG_BSTR)   \
     X(stop,           1, 0,           0)          \
     X(string,         1, ARG_STR,     0)          \
     X(sub,            1, 0,           0)          \
+    X(val,            1, 0,           0)          \
     X(xor,            1, 0,           0)
 
 typedef enum {

@@ -169,6 +169,18 @@ static HRESULT push_instr_int(compile_ctx_t *ctx, vbsop_t op, LONG arg)
     return S_OK;
 }
 
+static HRESULT push_instr_uint(compile_ctx_t *ctx, vbsop_t op, unsigned arg)
+{
+    unsigned ret;
+
+    ret = push_instr(ctx, op);
+    if(ret == -1)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, ret)->arg1.uint = arg;
+    return S_OK;
+}
+
 static HRESULT push_instr_addr(compile_ctx_t *ctx, vbsop_t op, unsigned arg)
 {
     unsigned ret;
@@ -603,6 +615,68 @@ static HRESULT compile_dowhile_statement(compile_ctx_t *ctx, while_statement_t *
     return S_OK;
 }
 
+static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *stat)
+{
+    unsigned step_instr, instr;
+    BSTR identifier;
+    HRESULT hres;
+
+    identifier = alloc_bstr_arg(ctx, stat->identifier);
+    if(!identifier)
+        return E_OUTOFMEMORY;
+
+    hres = compile_expression(ctx, stat->from_expr);
+    if(FAILED(hres))
+        return hres;
+
+    instr = push_instr(ctx, OP_assign_ident);
+    if(instr == -1)
+        return E_OUTOFMEMORY;
+    instr_ptr(ctx, instr)->arg1.bstr = identifier;
+
+    hres = compile_expression(ctx, stat->to_expr);
+    if(FAILED(hres))
+        return hres;
+
+    if(push_instr(ctx, OP_val) == -1)
+        return E_OUTOFMEMORY;
+
+    if(stat->step_expr) {
+        hres = compile_expression(ctx, stat->step_expr);
+        if(FAILED(hres))
+            return hres;
+
+        if(push_instr(ctx, OP_val) == -1)
+            return E_OUTOFMEMORY;
+    }else {
+        hres = push_instr_int(ctx, OP_short, 1);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    step_instr = push_instr(ctx, OP_step);
+    if(step_instr == -1)
+        return E_OUTOFMEMORY;
+    instr_ptr(ctx, step_instr)->arg2.bstr = identifier;
+
+    hres = compile_statement(ctx, stat->body);
+    if(FAILED(hres))
+        return hres;
+
+    instr = push_instr(ctx, OP_incc);
+    if(instr == -1)
+        return E_OUTOFMEMORY;
+    instr_ptr(ctx, instr)->arg1.bstr = identifier;
+
+    hres = push_instr_addr(ctx, OP_jmp, step_instr);
+    if(FAILED(hres))
+        return hres;
+
+    instr_ptr(ctx, step_instr)->arg1.uint = ctx->instr_cnt;
+
+    return push_instr_uint(ctx, OP_pop, 2);
+}
+
 static HRESULT compile_assign_statement(compile_ctx_t *ctx, assign_statement_t *stat, BOOL is_set)
 {
     HRESULT hres;
@@ -798,6 +872,9 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
             break;
         case STAT_EXITSUB:
             hres = compile_exitsub_statement(ctx);
+            break;
+        case STAT_FORTO:
+            hres = compile_forto_statement(ctx, (forto_statement_t*)stat);
             break;
         case STAT_FUNC:
             hres = compile_function_statement(ctx, (function_statement_t*)stat);
