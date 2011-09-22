@@ -625,7 +625,7 @@ static MMRESULT WINMM_TryDeviceMapping(WINMM_OpenInfo *info, WORD channels,
     if(mr != MMSYSERR_NOERROR)
         return WAVERR_BADFORMAT;
 
-    device = WINMM_GetDeviceFromHWAVE((HWAVE)info->handle);
+    device = WINMM_GetDeviceFromHWAVE(info->handle);
     if(!device)
         return MMSYSERR_INVALHANDLE;
 
@@ -917,7 +917,7 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_MMDevice *mmdevice,
     device->cb_info.flags = HIWORD(info->flags & CALLBACK_TYPEMASK);
     device->cb_info.callback = info->callback;
     device->cb_info.user = info->cb_user;
-    device->cb_info.hwave = (HWAVE)device->handle;
+    device->cb_info.hwave = device->handle;
 
     info->handle = device->handle;
 
@@ -1645,7 +1645,7 @@ static HRESULT WINMM_BeginPlaying(WINMM_Device *device)
 
 static LRESULT WINMM_Pause(HWAVE hwave)
 {
-    WINMM_Device *device = WINMM_GetDeviceFromHWAVE((HWAVE)hwave);
+    WINMM_Device *device = WINMM_GetDeviceFromHWAVE(hwave);
     HRESULT hr;
 
     TRACE("(%p)\n", hwave);
@@ -1670,7 +1670,7 @@ static LRESULT WINMM_Pause(HWAVE hwave)
 static LRESULT WINMM_Reset(HWAVE hwave)
 {
     WINMM_CBInfo cb_info;
-    WINMM_Device *device = WINMM_GetDeviceFromHWAVE((HWAVE)hwave);
+    WINMM_Device *device = WINMM_GetDeviceFromHWAVE(hwave);
     WAVEHDR *first;
     MMRESULT mr;
 
@@ -1752,7 +1752,7 @@ static MMRESULT WINMM_FramesToMMTime(MMTIME *time, UINT32 played_frames,
 
 static LRESULT WINMM_GetPosition(HWAVE hwave, MMTIME *time)
 {
-    WINMM_Device *device = WINMM_GetDeviceFromHWAVE((HWAVE)hwave);
+    WINMM_Device *device = WINMM_GetDeviceFromHWAVE(hwave);
     UINT32 played_frames, sample_rate, bytes_per_frame;
 
     TRACE("(%p, %p)\n", hwave, time);
@@ -2823,8 +2823,7 @@ UINT WINAPI waveOutMessage(HWAVEOUT hWaveOut, UINT uMessage,
         return WINMM_QueryInstanceIDSize(HandleToULong(hWaveOut),
                 (DWORD_PTR*)dwParam1, TRUE);
     case DRV_QUERYFUNCTIONINSTANCEID:
-        return WINMM_QueryInstanceID(HandleToULong(hWaveOut),
-                (WCHAR*)dwParam1, (DWORD_PTR)dwParam2, TRUE);
+        return WINMM_QueryInstanceID(HandleToULong(hWaveOut), (WCHAR*)dwParam1, dwParam2, TRUE);
     /* TODO: Remove after dsound has been rewritten for mmdevapi */
     case DRV_QUERYDSOUNDDESC:
     case DRV_QUERYDSOUNDIFACE:
@@ -3203,8 +3202,7 @@ UINT WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
         return WINMM_QueryInstanceIDSize(HandleToULong(hWaveIn),
                 (DWORD_PTR*)dwParam1, FALSE);
     case DRV_QUERYFUNCTIONINSTANCEID:
-        return WINMM_QueryInstanceID(HandleToULong(hWaveIn),
-                (WCHAR*)dwParam1, (DWORD_PTR)dwParam2, FALSE);
+        return WINMM_QueryInstanceID(HandleToULong(hWaveIn), (WCHAR*)dwParam1, dwParam2, FALSE);
     /* TODO: Remove after dsound has been rewritten for mmdevapi */
     case DRV_QUERYDSOUNDDESC:
     case DRV_QUERYDSOUNDIFACE:
