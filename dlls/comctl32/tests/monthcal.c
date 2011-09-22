@@ -1316,18 +1316,15 @@ static void test_monthrange(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     res = SendMessage(hwnd, MCM_GETMONTHRANGE, GMR_VISIBLE, (LPARAM)st_visible);
-    todo_wine {
-        expect(2, res);
-    }
+    expect(2, res);
+
     expect(2000, st_visible[0].wYear);
     expect(11, st_visible[0].wMonth);
     expect(1, st_visible[0].wDay);
     expect(2000, st_visible[1].wYear);
+    expect(12, st_visible[1].wMonth);
+    expect(31, st_visible[1].wDay);
 
-    todo_wine {
-        expect(12, st_visible[1].wMonth);
-        expect(31, st_visible[1].wDay);
-    }
     res = SendMessage(hwnd, MCM_GETMONTHRANGE, GMR_DAYSTATE, (LPARAM)st_daystate);
     todo_wine {
         expect(4, res);
@@ -1335,12 +1332,9 @@ static void test_monthrange(void)
     expect(2000, st_daystate[0].wYear);
     expect(10, st_daystate[0].wMonth);
     expect(29, st_daystate[0].wDay);
-
-    todo_wine {
-        expect(2001, st_daystate[1].wYear);
-        expect(1, st_daystate[1].wMonth);
-        expect(6, st_daystate[1].wDay);
-    }
+    expect(2001, st_daystate[1].wYear);
+    expect(1, st_daystate[1].wMonth);
+    expect(6, st_daystate[1].wDay);
 
     ok_sequence(sequences, MONTHCAL_SEQ_INDEX, monthcal_monthrange_seq, "monthcal monthrange", FALSE);
 
@@ -1814,7 +1808,7 @@ static void test_MCM_GETCALENDARCOUNT(void)
         return;
     }
 
-    todo_wine expect(2, ret);
+    expect(2, ret);
 
     DestroyWindow(hwnd);
 }

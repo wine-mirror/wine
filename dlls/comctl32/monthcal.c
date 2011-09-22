@@ -71,6 +71,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(monthcal);
 #define MC_PREVNEXTMONTHTIMER   1	/* Timer IDs */
 #define MC_TODAYUPDATETIMER     2
 
+#define MC_CALENDAR_PADDING     6
+
 #define countof(arr) (sizeof(arr)/sizeof(arr[0]))
 
 /* convert from days to 100 nanoseconds unit - used as FILETIME unit */
@@ -2392,7 +2394,6 @@ MONTHCAL_SetFocus(const MONTHCAL_INFO *infoPtr)
 static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
 {
   static const WCHAR O0W[] = { '0','0',0 };
-  HDC hdc = GetDC(infoPtr->hwndSelf);
   RECT *title=&infoPtr->calendars[0].title;
   RECT *prev=&infoPtr->titlebtnprev;
   RECT *next=&infoPtr->titlebtnnext;
@@ -2402,16 +2403,19 @@ static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
   RECT *weeknumrect=&infoPtr->calendars[0].weeknums;
   RECT *days=&infoPtr->calendars[0].days;
   RECT *todayrect=&infoPtr->todayrect;
-  SIZE size, sz;
-  TEXTMETRICW tm;
-  HFONT currentFont;
-  INT xdiv, dx, dy, i;
-  RECT client;
+
+  INT xdiv, dx, dy, i, j, x, y, c_dx, c_dy;
   WCHAR buff[80];
+  TEXTMETRICW tm;
+  SIZE size, sz;
+  RECT client;
+  HFONT font;
+  HDC hdc;
 
   GetClientRect(infoPtr->hwndSelf, &client);
 
-  currentFont = SelectObject(hdc, infoPtr->hFont);
+  hdc = GetDC(infoPtr->hwndSelf);
+  font = SelectObject(hdc, infoPtr->hFont);
 
   /* get the height and width of each day's text */
   GetTextMetricsW(hdc, &tm);
@@ -2441,6 +2445,10 @@ static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
   /* recalculate the height and width increments and offsets */
   GetTextExtentPoint32W(hdc, O0W, 2, &size);
 
+  /* restore the originally selected font */
+  SelectObject(hdc, font);
+  ReleaseDC(infoPtr->hwndSelf, hdc);
+
   xdiv = (infoPtr->dwStyle & MCS_WEEKNUMBERS) ? 8 : 7;
 
   infoPtr->width_increment  = size.cx * 2 + 4;
@@ -2461,21 +2469,17 @@ static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
   next->right  = title->right - 4;
   next->left   = next->right - (title->bottom - title->top);
 
-  /* titlemonth->left and right change based upon the current month */
-  /* and are recalculated in refresh as the current month may change */
-  /* without the control being resized */
+  /* titlemonth->left and right change based upon the current month
+     and are recalculated in refresh as the current month may change
+     without the control being resized */
   titlemonth->top    = titleyear->top    = title->top    + (infoPtr->height_increment)/2;
   titlemonth->bottom = titleyear->bottom = title->bottom - (infoPtr->height_increment)/2;
 
-  /* setup the dimensions of the rectangle we draw the names of the */
-  /* days of the week in */
-  weeknumrect->left = 0;
+  /* week numbers */
+  weeknumrect->left  = 0;
+  weeknumrect->right = infoPtr->dwStyle & MCS_WEEKNUMBERS ? prev->right : 0;
 
-  if(infoPtr->dwStyle & MCS_WEEKNUMBERS)
-    weeknumrect->right = prev->right;
-  else
-    weeknumrect->right = weeknumrect->left;
-
+  /* days abbreviated names */
   wdays->left   = days->left   = weeknumrect->right;
   wdays->right  = days->right  = wdays->left + 7 * infoPtr->width_increment;
   wdays->top    = title->bottom;
@@ -2489,29 +2493,62 @@ static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
   todayrect->top    = days->bottom;
   todayrect->bottom = days->bottom + infoPtr->height_increment;
 
-  /* offset all rectangles to center in client area */
-  dx = (client.right  - title->right) / 2;
-  dy = (client.bottom - todayrect->bottom) / 2;
+  /* compute calendar count, update all calendars */
+  x = (client.right  + MC_CALENDAR_PADDING) / (title->right - title->left + MC_CALENDAR_PADDING);
+  /* today label affects whole height */
+  if (infoPtr->dwStyle & MCS_NOTODAY)
+    y = (client.bottom + MC_CALENDAR_PADDING) / (days->bottom - title->top + MC_CALENDAR_PADDING);
+  else
+    y = (client.bottom - todayrect->bottom + todayrect->top + MC_CALENDAR_PADDING) /
+         (days->bottom - title->top + MC_CALENDAR_PADDING);
 
-  /* if calendar doesn't fit client area show it at left/top bounds */
-  if (title->left + dx < 0) dx = 0;
-  if (title->top  + dy < 0) dy = 0;
+  /* TODO: ensure that count is properly adjusted to fit 12 months constraint */
+  if (x == 0) x = 1;
+  if (y == 0) y = 1;
 
-  if (dx != 0 || dy != 0)
+  infoPtr->dim.cx = x;
+  infoPtr->dim.cy = y;
+  infoPtr->calendars = ReAlloc(infoPtr->calendars, MONTHCAL_GetCalCount(infoPtr) * sizeof(CALENDAR_INFO));
+
+  for (i = 1; i < MONTHCAL_GetCalCount(infoPtr); i++)
   {
-    OffsetRect(title, dx, dy);
-    OffsetRect(prev,  dx, dy);
-    OffsetRect(next,  dx, dy);
-    OffsetRect(titlemonth, dx, dy);
-    OffsetRect(titleyear, dx, dy);
-    OffsetRect(wdays, dx, dy);
-    OffsetRect(weeknumrect, dx, dy);
-    OffsetRect(days, dx, dy);
-    OffsetRect(todayrect, dx, dy);
+      /* set months */
+      infoPtr->calendars[i] = infoPtr->calendars[0];
+      MONTHCAL_GetMonth(&infoPtr->calendars[i].month, i);
   }
 
-  /* TODO: update calendars count */
-  infoPtr->dim.cx = infoPtr->dim.cy = 1;
+  /* offset all rectangles to center in client area */
+  c_dx = (client.right  - x * title->right - MC_CALENDAR_PADDING * (x-1)) / 2;
+  c_dy = (client.bottom - y * todayrect->bottom - MC_CALENDAR_PADDING * (y-1)) / 2;
+
+  /* if calendar doesn't fit client area show it at left/top bounds */
+  if (title->left + c_dx < 0) c_dx = 0;
+  if (title->top  + c_dy < 0) c_dy = 0;
+
+  for (i = 0; i < y; i++)
+  {
+      for (j = 0; j < x; j++)
+      {
+          dx = j*(title->right - title->left + MC_CALENDAR_PADDING) + c_dx;
+          dy = i*(days->bottom - title->top  + MC_CALENDAR_PADDING) + c_dy;
+
+          OffsetRect(&infoPtr->calendars[i*x+j].title, dx, dy);
+          OffsetRect(&infoPtr->calendars[i*x+j].titlemonth, dx, dy);
+          OffsetRect(&infoPtr->calendars[i*x+j].titleyear, dx, dy);
+          OffsetRect(&infoPtr->calendars[i*x+j].wdays, dx, dy);
+          OffsetRect(&infoPtr->calendars[i*x+j].weeknums, dx, dy);
+          OffsetRect(&infoPtr->calendars[i*x+j].days, dx, dy);
+      }
+  }
+
+  OffsetRect(prev, c_dx, c_dy);
+  OffsetRect(next, (x-1)*(title->right - title->left + MC_CALENDAR_PADDING) + c_dx, c_dy);
+
+  i = infoPtr->dim.cx * infoPtr->dim.cy - infoPtr->dim.cx;
+  todayrect->left   = infoPtr->calendars[i].title.left;
+  todayrect->right  = infoPtr->calendars[i].title.right;
+  todayrect->top    = infoPtr->calendars[i].days.bottom;
+  todayrect->bottom = infoPtr->calendars[i].days.bottom + infoPtr->height_increment;
 
   TRACE("dx=%d dy=%d client[%s] title[%s] wdays[%s] days[%s] today[%s]\n",
 	infoPtr->width_increment,infoPtr->height_increment,
@@ -2520,11 +2557,6 @@ static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
         wine_dbgstr_rect(wdays),
         wine_dbgstr_rect(days),
         wine_dbgstr_rect(todayrect));
-
-  /* restore the originally selected font */
-  SelectObject(hdc, currentFont);
-
-  ReleaseDC(infoPtr->hwndSelf, hdc);
 }
 
 static LRESULT MONTHCAL_Size(MONTHCAL_INFO *infoPtr, int Width, int Height)
