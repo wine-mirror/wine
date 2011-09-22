@@ -44,6 +44,7 @@ static const WCHAR errorW[] = {'e','r','r','o','r',0};
 static const WCHAR exitW[] = {'e','x','i','t',0};
 static const WCHAR explicitW[] = {'e','x','p','l','i','c','i','t',0};
 static const WCHAR falseW[] = {'f','a','l','s','e',0};
+static const WCHAR forW[] = {'f','o','r',0};
 static const WCHAR functionW[] = {'f','u','n','c','t','i','o','n',0};
 static const WCHAR getW[] = {'g','e','t',0};
 static const WCHAR gotoW[] = {'g','o','t','o',0};
@@ -68,9 +69,11 @@ static const WCHAR publicW[] = {'p','u','b','l','i','c',0};
 static const WCHAR remW[] = {'r','e','m',0};
 static const WCHAR resumeW[] = {'r','e','s','u','m','e',0};
 static const WCHAR setW[] = {'s','e','t',0};
+static const WCHAR stepW[] = {'s','t','e','p',0};
 static const WCHAR stopW[] = {'s','t','o','p',0};
 static const WCHAR subW[] = {'s','u','b',0};
 static const WCHAR thenW[] = {'t','h','e','n',0};
+static const WCHAR toW[] = {'t','o',0};
 static const WCHAR trueW[] = {'t','r','u','e',0};
 static const WCHAR untilW[] = {'u','n','t','i','l',0};
 static const WCHAR wendW[] = {'w','e','n','d',0};
@@ -99,6 +102,7 @@ static const struct {
     {exitW,      tEXIT},
     {explicitW,  tEXPLICIT},
     {falseW,     tFALSE},
+    {forW,       tFOR},
     {functionW,  tFUNCTION},
     {getW,       tGET},
     {gotoW,      tGOTO},
@@ -123,9 +127,11 @@ static const struct {
     {remW,       tREM},
     {resumeW,    tRESUME},
     {setW,       tSET},
+    {stepW,      tSTEP},
     {stopW,      tSTOP},
     {subW,       tSUB},
     {thenW,      tTHEN},
+    {toW,        tTO},
     {trueW,      tTRUE},
     {untilW,     tUNTIL},
     {wendW,      tWEND},

@@ -52,6 +52,7 @@ static statement_t *new_assign_statement(parser_ctx_t*,member_expression_t*,expr
 static statement_t *new_set_statement(parser_ctx_t*,member_expression_t*,expression_t*);
 static statement_t *new_dim_statement(parser_ctx_t*,dim_decl_t*);
 static statement_t *new_while_statement(parser_ctx_t*,statement_type_t,expression_t*,statement_t*);
+static statement_t *new_forto_statement(parser_ctx_t*,const WCHAR*,expression_t*,expression_t*,expression_t*,statement_t*);
 static statement_t *new_if_statement(parser_ctx_t*,expression_t*,statement_t*,elseif_decl_t*,statement_t*);
 static statement_t *new_function_statement(parser_ctx_t*,function_decl_t*);
 static statement_t *new_onerror_statement(parser_ctx_t*,BOOL);
@@ -102,7 +103,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %token tIS tLTEQ tGTEQ tMOD
 %token tCALL tDIM tSUB tFUNCTION tPROPERTY tGET tLET tCONST
 %token tIF tELSE tELSEIF tEND tTHEN tEXIT
-%token tWHILE tWEND tDO tLOOP tUNTIL
+%token tWHILE tWEND tDO tLOOP tUNTIL tFOR tTO tSTEP
 %token tBYREF tBYVAL
 %token tOPTION tEXPLICIT
 %token tSTOP
@@ -118,7 +119,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %type <expression> ConcatExpression AdditiveExpression ModExpression IntdivExpression MultiplicativeExpression ExpExpression
 %type <expression> NotExpression UnaryExpression AndExpression OrExpression XorExpression EqvExpression
 %type <member> MemberExpression
-%type <expression> Arguments_opt ArgumentList_opt ArgumentList
+%type <expression> Arguments_opt ArgumentList_opt ArgumentList Step_opt
 %type <bool> OptionExplicit_opt DoType
 %type <arg_decl> ArgumentsDecl_opt ArgumentDeclList ArgumentDecl
 %type <func_decl> FunctionDecl PropertyDecl
@@ -186,6 +187,8 @@ SimpleStatement
     | tON tERROR tRESUME tNEXT              { $$ = new_onerror_statement(ctx, TRUE); CHECK_ERROR; }
     | tON tERROR tGOTO '0'                  { $$ = new_onerror_statement(ctx, FALSE); CHECK_ERROR; }
     | tCONST ConstDeclList                  { $$ = new_const_statement(ctx, $2); CHECK_ERROR; }
+    | tFOR tIdentifier '=' Expression tTO Expression Step_opt tNL StatementsNl_opt tNEXT
+                                            { $$ = new_forto_statement(ctx, $2, $4, $6, $7, $9); CHECK_ERROR; }
 
 MemberExpression
     : tIdentifier                           { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
@@ -205,6 +208,10 @@ ConstDecl
 DoType
     : tWHILE        { $$ = TRUE; }
     | tUNTIL        { $$ = FALSE; }
+
+Step_opt
+    : /* empty */                           { $$ = NULL;}
+    | tSTEP Expression                      { $$ = $2; }
 
 IfStatement
     : tIF Expression tTHEN tNL StatementsNl ElseIfs_opt Else_opt tEND tIF
@@ -622,6 +629,23 @@ static statement_t *new_while_statement(parser_ctx_t *ctx, statement_type_t type
         return NULL;
 
     stat->expr = expr;
+    stat->body = body;
+    return &stat->stat;
+}
+
+static statement_t *new_forto_statement(parser_ctx_t *ctx, const WCHAR *identifier, expression_t *from_expr,
+        expression_t *to_expr, expression_t *step_expr, statement_t *body)
+{
+    forto_statement_t *stat;
+
+    stat = new_statement(ctx, STAT_FORTO, sizeof(*stat));
+    if(!stat)
+        return NULL;
+
+    stat->identifier = identifier;
+    stat->from_expr = from_expr;
+    stat->to_expr = to_expr;
+    stat->step_expr = step_expr;
     stat->body = body;
     return &stat->stat;
 }
