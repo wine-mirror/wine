@@ -1518,8 +1518,28 @@ static HRESULT interp_neg(exec_ctx_t *ctx)
 static HRESULT interp_incc(exec_ctx_t *ctx)
 {
     const BSTR ident = ctx->instr->arg1.bstr;
-    FIXME("%s\n", debugstr_w(ident));
-    return E_NOTIMPL;
+    VARIANT v;
+    ref_t ref;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = lookup_identifier(ctx, ident, VBDISP_LET, &ref);
+    if(FAILED(hres))
+        return hres;
+
+    if(ref.type != REF_VAR) {
+        FIXME("ref.type is not REF_VAR\n");
+        return E_FAIL;
+    }
+
+    hres = VarAdd(stack_top(ctx, 0), ref.u.v, &v);
+    if(FAILED(hres))
+        return hres;
+
+    VariantClear(ref.u.v);
+    *ref.u.v = v;
+    return S_OK;
 }
 
 static const instr_func_t op_funcs[] = {
