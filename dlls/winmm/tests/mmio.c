@@ -74,7 +74,7 @@ static void test_mmioDescend(char *fname)
     hmmio = mmioOpen(fname, &mmio, MMIO_READ);
     if (fname && !hmmio)
     {
-        skip("%s file is missing, skipping the test\n", fname);
+        trace("No optional %s file. Skipping the test\n", fname);
         return;
     }
     ok(hmmio != 0, "mmioOpen error %u\n", mmio.wErrorRet);
@@ -241,7 +241,7 @@ static void test_mmioOpen(char *fname)
     hmmio = mmioOpen(fname, &mmio, MMIO_READ);
     if (fname && !hmmio)
     {
-        skip("%s file is missing, skipping the test\n", fname);
+        trace("No optional %s file. Skipping the test\n", fname);
         return;
     }
     ok(hmmio != 0, "mmioOpen error %u\n", mmio.wErrorRet);
@@ -494,7 +494,7 @@ static void test_mmioSetBuffer(char *fname)
     hmmio = mmioOpen(fname, &mmio, MMIO_READ);
     if (fname && !hmmio)
     {
-        skip("%s file is missing, skipping the test\n", fname);
+        trace("No optional %s file. Skipping the test\n", fname);
         return;
     }
     ok(hmmio != 0, "mmioOpen error %u\n", mmio.wErrorRet);
@@ -671,6 +671,10 @@ static void test_mmioOpen_fourcc(void)
 
 START_TEST(mmio)
 {
+    /* Make it possible to run the tests against a specific AVI file in
+     * addition to the builtin test data. This is mostly meant as a
+     * debugging aid and is not part of the standard tests.
+     */
     char fname[] = "msrle.avi";
 
     test_mmioDescend(NULL);
