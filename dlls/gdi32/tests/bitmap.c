@@ -879,7 +879,7 @@ static void test_dib_formats(void)
                 bi->bmiHeader.biSizeImage = 0;
                 memset( bi->bmiColors, 0xaa, sizeof(RGBQUAD) * 256 );
 
-                hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+                hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
                 if (expect_ok && (planes == 1 || planes * bpp <= 16))
                     ok( hdib != NULL, "CreateDIBSection failed for %u/%u/%u\n", bpp, planes, compr );
                 else
@@ -1006,7 +1006,7 @@ static void test_dib_formats(void)
     *(DWORD *)&bi->bmiColors[1] = 0;
     *(DWORD *)&bi->bmiColors[2] = 0;
 
-    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
     ok( hdib == NULL, "CreateDIBSection succeeded with null bitfields\n" );
     ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_RGB_COLORS);
     ok( !ret, "SetDIBits succeeded with null bitfields\n" );
@@ -1034,7 +1034,7 @@ static void test_dib_formats(void)
     *(DWORD *)&bi->bmiColors[0] = 3;
     *(DWORD *)&bi->bmiColors[1] = 0;
     *(DWORD *)&bi->bmiColors[2] = 7;
-    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
     ok( hdib == NULL, "CreateDIBSection succeeded with null bitfields\n" );
     ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_RGB_COLORS);
     ok( !ret, "SetDIBits succeeded with null bitfields\n" );
@@ -1043,7 +1043,7 @@ static void test_dib_formats(void)
     *(DWORD *)&bi->bmiColors[0] = 0x55;
     *(DWORD *)&bi->bmiColors[1] = 0x44;
     *(DWORD *)&bi->bmiColors[2] = 0x33;
-    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
     ok( hdib != NULL, "CreateDIBSection failed with bad bitfields\n" );
     if (hdib) DeleteObject( hdib );
     ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_RGB_COLORS);
@@ -1053,7 +1053,7 @@ static void test_dib_formats(void)
     bi->bmiHeader.biHeight = 2;
     bi->bmiHeader.biBitCount = 32;
     bi->bmiHeader.biCompression = BI_RGB;
-    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
     ok( hdib == NULL, "CreateDIBSection succeeded with negative width\n" );
     hdib = CreateDIBitmap( hdc, &bi->bmiHeader, 0, bits, bi, DIB_RGB_COLORS );
     ok( hdib == NULL, "CreateDIBitmap succeeded with negative width\n" );
@@ -1076,7 +1076,7 @@ static void test_dib_formats(void)
     bi->bmiHeader.biHeight = 2;
     bi->bmiHeader.biBitCount = 32;
     bi->bmiHeader.biCompression = BI_RGB;
-    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
     ok( hdib == NULL, "CreateDIBSection succeeded with zero width\n" );
     hdib = CreateDIBitmap( hdc, &bi->bmiHeader, 0, bits, bi, DIB_RGB_COLORS );
     ok( hdib != NULL, "CreateDIBitmap failed with zero width\n" );
@@ -1100,7 +1100,7 @@ static void test_dib_formats(void)
     bi->bmiHeader.biHeight = 0;
     bi->bmiHeader.biBitCount = 32;
     bi->bmiHeader.biCompression = BI_RGB;
-    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
     ok( hdib == NULL, "CreateDIBSection succeeded with zero height\n" );
     hdib = CreateDIBitmap( hdc, &bi->bmiHeader, 0, bits, bi, DIB_RGB_COLORS );
     ok( hdib != NULL, "CreateDIBitmap failed with zero height\n" );
