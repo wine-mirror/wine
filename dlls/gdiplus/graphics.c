@@ -4329,7 +4329,7 @@ GpStatus gdip_format_string(HDC hdc,
     nheight = roundr(rect->Height);
 
     if (rect->Width >= INT_MAX || rect->Width < 0.5) nwidth = INT_MAX;
-    if (rect->Height >= INT_MAX || rect->Width < 0.5) nheight = INT_MAX;
+    if (rect->Height >= INT_MAX || rect->Height < 0.5) nheight = INT_MAX;
 
     for(i = 0, j = 0; i < length; i++){
         /* FIXME: This makes the indexes passed to callback inaccurate. */
