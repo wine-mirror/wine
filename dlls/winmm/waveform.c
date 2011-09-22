@@ -1231,32 +1231,30 @@ static UINT32 WINMM_HeaderLenFrames(WINMM_Device *device, WAVEHDR *header)
 static WAVEHDR *WOD_MarkDoneHeaders(WINMM_Device *device)
 {
     HRESULT hr;
-    WAVEHDR *queue, *first = device->first;
+    WAVEHDR *first = device->first, *queue = first, *last = NULL;
     UINT64 clock_freq, clock_pos, clock_frames;
     UINT32 nloops, queue_frames = 0;
 
     hr = IAudioClock_GetFrequency(device->clock, &clock_freq);
     if(FAILED(hr)){
         ERR("GetFrequency failed: %08x\n", hr);
-        return first;
+        return NULL;
     }
 
     hr = IAudioClock_GetPosition(device->clock, &clock_pos, NULL);
     if(FAILED(hr)){
         ERR("GetPosition failed: %08x\n", hr);
-        return first;
+        return NULL;
     }
 
     clock_frames = (clock_pos / (double)clock_freq) * device->samples_per_sec;
 
-    first = queue = device->first;
     nloops = device->loop_counter;
     while(queue &&
             (queue_frames += WINMM_HeaderLenFrames(device, queue)) <=
                 clock_frames - device->last_clock_pos){
         if(!nloops){
-            device->first->dwFlags &= ~WHDR_INQUEUE;
-            device->first->dwFlags |= WHDR_DONE;
+            last = queue;
             device->last_clock_pos += queue_frames;
             queue_frames = 0;
             queue = device->first = queue->lpNext;
@@ -1273,7 +1271,11 @@ static WAVEHDR *WOD_MarkDoneHeaders(WINMM_Device *device)
         }
     }
 
-    return first;
+    if(last){
+        last->lpNext = NULL;
+        return first;
+    }else
+        return NULL;
 }
 
 static void WOD_PushData(WINMM_Device *device)
@@ -1426,8 +1428,10 @@ exit:
 
     LeaveCriticalSection(&device->lock);
 
-    while(first && (first->dwFlags & WHDR_DONE)){
+    while(first){
         WAVEHDR *next = first->lpNext;
+        first->dwFlags &= ~WHDR_INQUEUE;
+        first->dwFlags |= WHDR_DONE;
         WINMM_NotifyClient(&cb_info, WOM_DONE, (DWORD_PTR)first, 0);
         first = next;
     }
@@ -1535,7 +1539,7 @@ static void WID_PullACMData(WINMM_Device *device)
 static void WID_PullData(WINMM_Device *device)
 {
     WINMM_CBInfo cb_info;
-    WAVEHDR *queue, *first = NULL;
+    WAVEHDR *queue, *first = NULL, *last = NULL;
     HRESULT hr;
 
     TRACE("(%p)\n", device->handle);
@@ -1588,8 +1592,7 @@ static void WID_PullData(WINMM_Device *device)
 
             if(queue->dwBufferLength - queue->dwBytesRecorded <
                     device->bytes_per_frame){
-                queue->dwFlags &= ~WHDR_INQUEUE;
-                queue->dwFlags |= WHDR_DONE;
+                last = queue;
                 device->first = queue = queue->lpNext;
             }
 
@@ -1606,10 +1609,15 @@ exit:
 
     LeaveCriticalSection(&device->lock);
 
-    while(first && (first->dwFlags & WHDR_DONE)){
-        WAVEHDR *next = first->lpNext;
-        WINMM_NotifyClient(&cb_info, WIM_DATA, (DWORD_PTR)first, 0);
-        first = next;
+    if(last){
+        last->lpNext = NULL;
+        while(first){
+            WAVEHDR *next = first->lpNext;
+            first->dwFlags &= ~WHDR_INQUEUE;
+            first->dwFlags |= WHDR_DONE;
+            WINMM_NotifyClient(&cb_info, WIM_DATA, (DWORD_PTR)first, 0);
+            first = next;
+        }
     }
 }
 
@@ -3075,8 +3083,6 @@ UINT WINAPI waveInStop(HWAVEIN hWaveIn)
     buf = device->first;
     if(buf && buf->dwBytesRecorded > 0){
         device->first = buf->lpNext;
-        buf->dwFlags &= ~WHDR_INQUEUE;
-        buf->dwFlags |= WHDR_DONE;
     }else
         buf = NULL;
 
@@ -3084,8 +3090,11 @@ UINT WINAPI waveInStop(HWAVEIN hWaveIn)
 
     LeaveCriticalSection(&device->lock);
 
-    if(buf)
+    if(buf){
+        buf->dwFlags &= ~WHDR_INQUEUE;
+        buf->dwFlags |= WHDR_DONE;
         WINMM_NotifyClient(&cb_info, WIM_DATA, (DWORD_PTR)buf, 0);
+    }
 
     return MMSYSERR_NOERROR;
 }
