@@ -447,7 +447,7 @@ PCCTL_CONTEXT WINAPI CertCreateCTLContext(DWORD dwMsgAndCertEncodingType,
 end:
     if (!ret)
     {
-        CryptMemFree(ctl);
+        CertFreeCTLContext(ctl);
         ctl = NULL;
         LocalFree(ctlInfo);
         CryptMemFree(content);

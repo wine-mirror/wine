@@ -58,7 +58,7 @@ PCCRL_CONTEXT WINAPI CertCreateCRLContext(DWORD dwCertEncodingType,
         data = CryptMemAlloc(cbCrlEncoded);
         if (!data)
         {
-            CryptMemFree(crl);
+            CertFreeCRLContext(crl);
             crl = NULL;
             goto end;
         }

@@ -160,7 +160,7 @@ PCCERT_CONTEXT WINAPI CertCreateCertificateContext(DWORD dwCertEncodingType,
         data = CryptMemAlloc(cbCertEncoded);
         if (!data)
         {
-            CryptMemFree(cert);
+            CertFreeCertificateContext(cert);
             cert = NULL;
             goto end;
         }
