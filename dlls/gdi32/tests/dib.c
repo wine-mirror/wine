@@ -103,6 +103,15 @@ static const char *sha1_graphics_a8r8g8b8[] =
     "7da9dd3d40d44d92deb9883fb7110443c2d5769a",
     "e358efb1c11172e40855de620bdb8a8e545cd790",
     "9e0c2596c6ecb4f1bc97b18ec3ca493d37626608",
+    "58806549380c964e7a53ad54821d2eb86fa5b9ce",
+    "7fc30d3058c235ce39088de0a598b8c7fe7ca61f",
+    "52a6c769c227f2bb1949097c4c87fed5ee0cbcb1",
+    "8a010d4c5af51fcc34d51be3197878782bdf63e7",
+    "c84c2c33e22eb7e5c4a2faad3b3b99a359d77528",
+    "41bcc1f57c60bdec3c4d1e749084a12867f91224",
+    "94645300d6eb51020a7ef8261dee2941cd51b5df",
+    "c56f5bdc9cac4f0bc81c33295d9aed8eaf4cb1f2",
+    "21cdfde38ac7edbb241ec83d82f31286e90c4629",
     NULL
 };
 
@@ -135,6 +144,15 @@ static const char *sha1_graphics_a8b8g8r8[] =
     "abdf003699364fe45fab7dc61e67c606d0063b40",
     "89abaadff4e68c738cf9251c51e3609564843381",
     "f6aa3f907f620b9f3493f03cb3b4b292df3a9545",
+    "77d0ad32938147aa4038c1eced232b7b5a5f88f3",
+    "43d36e57b702ce56eb250bf53f1ecc4680990cfe",
+    "fd6e0ebb52710ebcdd8dd69931165c83c4930b41",
+    "71b9756fdfeedce1e6db201176d21a981b881662",
+    "5319528d9af750c172ae62ee85ddb2eaef73b193",
+    "b7ce8aa3c328eedaed7306234ed9bae67708e627",
+    "19b32a0daa91201725b5e13820c343d0a84ff698",
+    "abca6a80a99b05722d2d87ce2a8b94ef1ae549e1",
+    "2ba70994d0b4ce87fdf6fbc33ada11252178061e",
     NULL
 };
 
@@ -167,6 +185,15 @@ static const char *sha1_graphics_24[] =
     "e649e00efe7fea1eb8b17f7867fe089e5270c44b",
     "a0bffbbfb0adf6f188479c88da04e25d76ab4822",
     "92a1ab214dd8027c407814420449119466c92840",
+    "b58f19c1800344a2b8e017eb784705bdb2bd8450",
+    "5747a6d5c6ce79731c55e8cf33f7da3025cd35fd",
+    "955390669afed2369b15b32fa519f2f921cdf1a0",
+    "201906f7d763b930a98c97f8eeab417f2b65e723",
+    "5313357d50c40c05a3b3a83d0d2013a138c955a1",
+    "701c5af1d0c28294ce7d804b5697643c430d22a0",
+    "b0a959745b2db1d9f449e68e4479a4f36301879c",
+    "63f764b9bd2f4876ab1ee0f3c0eb55b5a7de5212",
+    "e171f6ec77bca91d6b8559911bce296c0bac469e",
     NULL
 };
 
@@ -199,6 +226,14 @@ static const char *sha1_graphics_r5g5b5[] =
     "ecc2991277d7314f55b00e0f284ae3703aeef81e",
     "656bf3b7121bcd620a0a3ad488f0d66604824577",
     "d7d8493b5fa7a3a8323d6ac84245093a79f052c1",
+    "df5dafe96e528c2cc7fd11e4934e298f53cec34b",
+    "a49530722328ae88fd765792ac0c657efbcce75d",
+    "aa46aa2226e3121eaefa9d0836418e0b69262d69",
+    "333f3f2cf3ff15736d59f92a33c45323d3987d6d",
+    "a6fd83542c3826132e88d3f5e304d604c0056fad",
+    "a8d6a5285a927ba3a3be34b06a06c70a20d4c1b3",
+    "e428d213ad02651287894f093413949dcb369208",
+    "7df915bedcc5951a1b6f828490f7dbb93212e835",
     NULL
 };
 
@@ -231,6 +266,14 @@ static const char *sha1_graphics_r4g4b4[] =
     "f14d9a4bd8a365b7c8f068a0dad481b6eb2b178b",
     "8933450132bf949ba4bc28626968425b5ed2867d",
     "9928a8f28a66c00069a124f7171b248817005763",
+    "e4a9dcc3e565cd3a6b7087dd1433f3898bb9cdb2",
+    "eca4f9b16b3bddfd0735fdd792e0ccaadfb9ba49",
+    "233e588cf660e2c9b552cf02065cf63fa6655864",
+    "0740ff74dcd259d9a644ba51ad77ff0d40348951",
+    "a3345acaf272f2e288626906e3056cd0ced70499",
+    "957a86fbe8a96dd068db65e4e624a52bcc84af46",
+    "13b0f240054dc57ba0e2dfde74048496304a2c7f",
+    "51ef267eb9c15487c9430f505e8a6c929eb2170c",
     NULL
 };
 
@@ -263,6 +306,14 @@ static const char *sha1_graphics_8[] =
     "4e5e7d5fd64818b2b3d3e793c88f603b699d2f0f",
     "c4efce8f7ed2d380ea5dc6fe1ef8448a27827532",
     "bdc0a354635b879871077c5b712570e469863c99",
+    "d599bf210423fe3adbb4f1de87d9360de97827d0",
+    "bae7c8b789e4e9b336c03c4daee3bce63fe039d9",
+    "cc01f17928f7780cefd423ea653b072eea723a1b",
+    "c005662a47f14c2f1b7c7fb3b0ef0fc390c6ea6a",
+    "675cde16a6ad2bcd8d7e72780b07a0ccd8d0393a",
+    "ea39ac62ca2f815a1d029340c6465994b6f03cb0",
+    "9a603513cd81acf70cf8b27b0d544e7f672e9d40",
+    "f4a334e69535de74ee5ed54be93a75120a66e54a",
     NULL
 };
 
@@ -295,6 +346,14 @@ static const char *sha1_graphics_4[] =
     "1bcc54eaf8e3c2b7c59ecccb23c240181d7ba8b8",
     "4f827ca6927f15191588456f985bf29d2a3b3c24",
     "e7de769c3d12ea9dd223bef4881c578823bec67e",
+    "6fb102d020e5554116feefc8482104f3ae2036d2",
+    "ae546ffd30b837afc7dfcb5c9ce4f01d15b35ddc",
+    "20c9eb3276c08fdce35755e349bec94b04929812",
+    "628d837163a25c6520f19c0602383176dbad528e",
+    "b5a12cff7100290ad43f5ed17a321b42de048893",
+    "b672afbeeafb44194a821f0def81a8892872937e",
+    "db0124045882b598feea192186cf7eb7a0387866",
+    "602d91471378fe24a2d0248bd8a92b624f099fea",
     NULL
 };
 
@@ -340,6 +399,16 @@ static const char *sha1_graphics_1[] =
     "4afb0649488f6e6f7d3a2b8bf438d82f2c88f4d1",
     "f2fe295317e795a88edd0b2c52618b8cb0e7f2ce",
     "ffc78c075d4be66806f6c59180772d5eed963dc0",
+    "c86eeaeed09871dee4b43722ba512d2d3af7f4d0",
+    "24b1a6241c81dbb950cfbe5da6798fd59eb36266",
+    "1007d3b531b4bc3553d4547bc88443fc1f497cf6",
+    "b71ca46be287598f716bb04fac0a52ad139c70db",
+    "6589e48498e30ab036fbfe94d73427b2b1238a69",
+    "4dce919117d2e41df9f5d4d0de14f97ae650046d",
+    "22c2e078f69d73b7a5cb3f7dcbb8fbaa007ef3ac",
+    "be36cda370650e6d5fb0570aeb8ced491d0c2b1c",
+    "4c34cb8e47f9ff4b4348aa2d40cce7cb54d65cb0",
+    "18f4497e43903e8df5b27da4ceebf62b15550a87",
     NULL
 };
 
@@ -999,6 +1068,83 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     }
 
     compare_hash_broken_todo(bmi, bits, sha1, "hatch brushes", 1, FALSE); /* nt4 is different */
+    memset(bits, 0xcc, dib_size);
+
+    /* overlapping blits */
+
+    orig_brush = SelectObject(hdc, solid_brush);
+
+    Rectangle(hdc, 10, 10, 100, 100);
+    Rectangle(hdc, 20, 15, 30, 40);
+    Rectangle(hdc, 15, 15, 20, 20);
+    Rectangle(hdc, 15, 20, 50, 45);
+    BitBlt( hdc, 20, 20, 100, 100, hdc, 10, 10, SRCCOPY );
+    compare_hash(bmi, bits, sha1, "overlapping BitBlt SRCCOPY +x, +y");
+    memset(bits, 0xcc, dib_size);
+
+    Rectangle(hdc, 10, 10, 100, 100);
+    Rectangle(hdc, 20, 15, 30, 40);
+    Rectangle(hdc, 15, 15, 20, 20);
+    Rectangle(hdc, 15, 20, 50, 45);
+    BitBlt( hdc, 10, 10, 100, 100, hdc, 20, 20, SRCCOPY );
+    if (bmi->bmiHeader.biBitCount == 1)  /* Windows gets this one wrong */
+        compare_hash_broken_todo(bmi, bits, sha1, "overlapping BitBlt SRCCOPY -x, -y",1, FALSE);
+    else
+        compare_hash(bmi, bits, sha1, "overlapping BitBlt SRCCOPY -x, -y");
+    memset(bits, 0xcc, dib_size);
+
+    Rectangle(hdc, 10, 10, 100, 100);
+    Rectangle(hdc, 20, 15, 30, 40);
+    Rectangle(hdc, 15, 15, 20, 20);
+    Rectangle(hdc, 15, 20, 50, 45);
+    BitBlt( hdc, 20, 10, 100, 100, hdc, 10, 20, SRCCOPY );
+    compare_hash(bmi, bits, sha1, "overlapping BitBlt SRCCOPY +x, -y");
+    memset(bits, 0xcc, dib_size);
+
+    Rectangle(hdc, 10, 10, 100, 100);
+    Rectangle(hdc, 20, 15, 30, 40);
+    Rectangle(hdc, 15, 15, 20, 20);
+    Rectangle(hdc, 15, 20, 50, 45);
+    BitBlt( hdc, 10, 20, 100, 100, hdc, 20, 10, SRCCOPY );
+    if (bmi->bmiHeader.biBitCount == 1)  /* Windows gets this one wrong */
+        compare_hash_broken_todo(bmi, bits, sha1, "overlapping BitBlt SRCCOPY -x, +y", 1, FALSE );
+    else
+        compare_hash(bmi, bits, sha1, "overlapping BitBlt SRCCOPY -x, +y" );
+    memset(bits, 0xcc, dib_size);
+
+    Rectangle(hdc, 10, 10, 100, 100);
+    Rectangle(hdc, 20, 15, 30, 40);
+    Rectangle(hdc, 15, 15, 20, 20);
+    Rectangle(hdc, 15, 20, 50, 45);
+    BitBlt( hdc, 20, 20, 100, 100, hdc, 10, 10, PATPAINT );
+    compare_hash(bmi, bits, sha1, "overlapping BitBlt PATPAINT +x, +y");
+    memset(bits, 0xcc, dib_size);
+
+    Rectangle(hdc, 10, 10, 100, 100);
+    Rectangle(hdc, 20, 15, 30, 40);
+    Rectangle(hdc, 15, 15, 20, 20);
+    Rectangle(hdc, 15, 20, 50, 45);
+    BitBlt( hdc, 10, 10, 100, 100, hdc, 20, 20, PATPAINT );
+    compare_hash(bmi, bits, sha1, "overlapping BitBlt PATPAINT -x, -y");
+    memset(bits, 0xcc, dib_size);
+
+    Rectangle(hdc, 10, 10, 100, 100);
+    Rectangle(hdc, 20, 15, 30, 40);
+    Rectangle(hdc, 15, 15, 20, 20);
+    Rectangle(hdc, 15, 20, 50, 45);
+    BitBlt( hdc, 20, 10, 100, 100, hdc, 10, 20, PATPAINT );
+    if (bmi->bmiHeader.biBitCount >= 24)  /* Windows gets this one wrong */
+        compare_hash_broken_todo(bmi, bits, sha1, "overlapping BitBlt PATPAINT +x, -y", 1, FALSE);
+    else
+        compare_hash(bmi, bits, sha1, "overlapping BitBlt PATPAINT +x, -y");
+    memset(bits, 0xcc, dib_size);
+
+    Rectangle(hdc, 10, 10, 100, 100);
+    Rectangle(hdc, 20, 15, 30, 40);
+    Rectangle(hdc, 15, 15, 20, 20);
+    Rectangle(hdc, 15, 20, 50, 45);
+    BitBlt( hdc, 10, 20, 100, 100, hdc, 20, 10, PATPAINT );
+    compare_hash(bmi, bits, sha1, "overlapping BitBlt PATPAINT -x, +y" );
     memset(bits, 0xcc, dib_size);
 
     SelectObject(hdc, orig_brush);
