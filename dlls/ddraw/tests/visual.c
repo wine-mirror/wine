@@ -1485,8 +1485,8 @@ static void D3D1_TextureMapBlendTest(void)
         trace("IDirect3DExecuteBuffer_Unlock failed with %08x\n", hr);
     }
 
-    memset(&exdata, 0, sizeof(D3DEXECUTEDATA));
-    exdata.dwSize = sizeof(D3DEXECUTEDATA);
+    memset(&exdata, 0, sizeof(exdata));
+    exdata.dwSize = sizeof(exdata);
     exdata.dwVertexCount = 8;
     exdata.dwInstructionOffset = sizeof(test1_quads);
     exdata.dwInstructionLength = exe_length;
@@ -1606,8 +1606,8 @@ static void D3D1_TextureMapBlendTest(void)
         trace("IDirect3DExecuteBuffer_Unlock failed with %08x\n", hr);
     }
 
-    memset(&exdata, 0, sizeof(D3DEXECUTEDATA));
-    exdata.dwSize = sizeof(D3DEXECUTEDATA);
+    memset(&exdata, 0, sizeof(exdata));
+    exdata.dwSize = sizeof(exdata);
     exdata.dwVertexCount = 8;
     exdata.dwInstructionOffset = sizeof(test1_quads);
     exdata.dwInstructionLength = exe_length;
@@ -1728,8 +1728,8 @@ static void D3D1_TextureMapBlendTest(void)
         trace("IDirect3DExecuteBuffer_Unlock failed with %08x\n", hr);
     }
 
-    memset(&exdata, 0, sizeof(D3DEXECUTEDATA));
-    exdata.dwSize = sizeof(D3DEXECUTEDATA);
+    memset(&exdata, 0, sizeof(exdata));
+    exdata.dwSize = sizeof(exdata);
     exdata.dwVertexCount = 8;
     exdata.dwInstructionOffset = sizeof(test2_quads);
     exdata.dwInstructionLength = exe_length;
@@ -1854,8 +1854,8 @@ static void D3D1_TextureMapBlendTest(void)
         trace("IDirect3DExecuteBuffer_Unlock failed with %08x\n", hr);
     }
 
-    memset(&exdata, 0, sizeof(D3DEXECUTEDATA));
-    exdata.dwSize = sizeof(D3DEXECUTEDATA);
+    memset(&exdata, 0, sizeof(exdata));
+    exdata.dwSize = sizeof(exdata);
     exdata.dwVertexCount = 8;
     exdata.dwInstructionOffset = sizeof(test1_quads);
     exdata.dwInstructionLength = exe_length;
@@ -1992,8 +1992,8 @@ static void D3D1_TextureMapBlendTest(void)
             trace("IDirect3DExecuteBuffer_Unlock failed with %08x\n", hr);
         }
 
-        memset(&exdata, 0, sizeof(D3DEXECUTEDATA));
-        exdata.dwSize = sizeof(D3DEXECUTEDATA);
+        memset(&exdata, 0, sizeof(exdata));
+        exdata.dwSize = sizeof(exdata);
         exdata.dwVertexCount = 8;
         exdata.dwInstructionOffset = sizeof(test1_quads);
         exdata.dwInstructionLength = exe_length;
