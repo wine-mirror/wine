@@ -1752,7 +1752,7 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
         infoPtr->HasFocus = FALSE;
         infoPtr->MouseDownID = -1;
         infoPtr->TextColor = comctl32_color.clrWindowText;
-        infoPtr->LinkColor = comctl32_color.clrHighlight;
+        infoPtr->LinkColor = comctl32_color.clrHotTrackingColor;
         infoPtr->VisitedColor = comctl32_color.clrHighlight;
         infoPtr->BackColor = infoPtr->Style & LWS_TRANSPARENT ?
                              comctl32_color.clrWindow : comctl32_color.clrBtnFace;
