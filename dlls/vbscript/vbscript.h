@@ -143,6 +143,9 @@ struct _script_ctx_t {
     IActiveScriptSite *site;
     LCID lcid;
 
+    IInternetHostSecurityManager *secmgr;
+    DWORD safeopt;
+
     IDispatch *host_global;
 
     class_desc_t script_desc;

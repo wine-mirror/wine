@@ -19,9 +19,117 @@
 #include "vbscript.h"
 #include "vbscript_defs.h"
 
+#include "mshtmhst.h"
+#include "objsafe.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vbscript);
+
+#define VB_E_CANNOT_CREATE_OBJ 0x800a01ad
+
+/* Defined as extern in urlmon.idl, but not exported by uuid.lib */
+const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY =
+    {0x10200490,0xfa38,0x11d0,{0xac,0x0e,0x00,0xa0,0xc9,0xf,0xff,0xc0}};
+
+static IInternetHostSecurityManager *get_sec_mgr(script_ctx_t *ctx)
+{
+    IInternetHostSecurityManager *secmgr;
+    IServiceProvider *sp;
+    HRESULT hres;
+
+    if(!ctx->site)
+        return NULL;
+
+    if(ctx->secmgr)
+        return ctx->secmgr;
+
+    hres = IActiveScriptSite_QueryInterface(ctx->site, &IID_IServiceProvider, (void**)&sp);
+    if(FAILED(hres))
+        return NULL;
+
+    hres = IServiceProvider_QueryService(sp, &SID_SInternetHostSecurityManager, &IID_IInternetHostSecurityManager,
+            (void**)&secmgr);
+    IServiceProvider_Release(sp);
+    if(FAILED(hres))
+        return NULL;
+
+    return ctx->secmgr = secmgr;
+}
+
+static IUnknown *create_object(script_ctx_t *ctx, const WCHAR *progid)
+{
+    IInternetHostSecurityManager *secmgr = NULL;
+    IObjectWithSite *obj_site;
+    struct CONFIRMSAFETY cs;
+    IClassFactoryEx *cfex;
+    IClassFactory *cf;
+    DWORD policy_size;
+    BYTE *bpolicy;
+    IUnknown *obj;
+    DWORD policy;
+    GUID guid;
+    HRESULT hres;
+
+    hres = CLSIDFromProgID(progid, &guid);
+    if(FAILED(hres))
+        return NULL;
+
+    TRACE("GUID %s\n", debugstr_guid(&guid));
+
+    if(ctx->safeopt & INTERFACE_USES_SECURITY_MANAGER) {
+        secmgr = get_sec_mgr(ctx);
+        if(!secmgr)
+            return NULL;
+
+        policy = 0;
+        hres = IInternetHostSecurityManager_ProcessUrlAction(secmgr, URLACTION_ACTIVEX_RUN,
+                (BYTE*)&policy, sizeof(policy), (BYTE*)&guid, sizeof(GUID), 0, 0);
+        if(FAILED(hres) || policy != URLPOLICY_ALLOW)
+            return NULL;
+    }
+
+    hres = CoGetClassObject(&guid, CLSCTX_INPROC_SERVER|CLSCTX_LOCAL_SERVER, NULL, &IID_IClassFactory, (void**)&cf);
+    if(FAILED(hres))
+        return NULL;
+
+    hres = IClassFactory_QueryInterface(cf, &IID_IClassFactoryEx, (void**)&cfex);
+    if(SUCCEEDED(hres)) {
+        FIXME("Use IClassFactoryEx\n");
+        IClassFactoryEx_Release(cfex);
+    }
+
+    hres = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&obj);
+    if(FAILED(hres))
+        return NULL;
+
+    if(secmgr) {
+        cs.clsid = guid;
+        cs.pUnk = obj;
+        cs.dwFlags = 0;
+        hres = IInternetHostSecurityManager_QueryCustomPolicy(secmgr, &GUID_CUSTOM_CONFIRMOBJECTSAFETY,
+                &bpolicy, &policy_size, (BYTE*)&cs, sizeof(cs), 0);
+        if(SUCCEEDED(hres)) {
+            policy = policy_size >= sizeof(DWORD) ? *(DWORD*)bpolicy : URLPOLICY_DISALLOW;
+            CoTaskMemFree(bpolicy);
+        }
+
+        if(FAILED(hres) || policy != URLPOLICY_ALLOW) {
+            IUnknown_Release(obj);
+            return NULL;
+        }
+    }
+
+    hres = IUnknown_QueryInterface(obj, &IID_IObjectWithSite, (void**)&obj_site);
+    if(SUCCEEDED(hres)) {
+        FIXME("ObjectWithSite\n");
+        IObjectWithSite_Release(obj_site);
+        IUnknown_Release(obj);
+        return NULL;
+    }
+
+    return obj;
+}
 
 static HRESULT Global_CCur(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
@@ -483,8 +591,30 @@ static HRESULT Global_MsgBox(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VA
 
 static HRESULT Global_CreateObject(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    IUnknown *obj;
+    HRESULT hres;
+
+    TRACE("(%s)\n", debugstr_variant(arg));
+
+    if(V_VT(arg) != VT_BSTR) {
+        FIXME("non-bstr arg\n");
+        return E_INVALIDARG;
+    }
+
+    obj = create_object(This->desc->ctx, V_BSTR(arg));
+    if(!obj)
+        return VB_E_CANNOT_CREATE_OBJ;
+
+    if(res) {
+        hres = IUnknown_QueryInterface(obj, &IID_IDispatch, (void**)&V_DISPATCH(res));
+        if(FAILED(hres))
+            return hres;
+
+        V_VT(res) = VT_DISPATCH;
+    }
+
+    IUnknown_Release(obj);
+    return S_OK;
 }
 
 static HRESULT Global_GetObject(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

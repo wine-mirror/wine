@@ -129,6 +129,8 @@ static void destroy_script(script_ctx_t *ctx)
 
     if(ctx->host_global)
         IDispatch_Release(ctx->host_global);
+    if(ctx->secmgr)
+        IInternetHostSecurityManager_Release(ctx->secmgr);
     if(ctx->site)
         IActiveScriptSite_Release(ctx->site);
     if(ctx->err_obj)
@@ -516,6 +518,7 @@ static HRESULT WINAPI VBScriptParse_InitNew(IActiveScriptParse *iface)
     if(!ctx)
         return E_OUTOFMEMORY;
 
+    ctx->safeopt = This->safeopt;
     vbsheap_init(&ctx->heap);
     list_init(&ctx->objects);
     list_init(&ctx->code_list);

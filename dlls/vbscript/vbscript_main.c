@@ -20,6 +20,7 @@
 
 #include "vbscript.h"
 #include "objsafe.h"
+#include "mshtmhst.h"
 #include "rpcproxy.h"
 #include "vbscript_classes.h"
 #include "vbsglobal.h"
