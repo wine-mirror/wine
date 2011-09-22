@@ -18,7 +18,7 @@
 
 Option Explicit
 
-dim x, y
+dim x, y, z
 
 call ok(true, "true is not true?")
 ok true, "true is not true?"
@@ -332,6 +332,60 @@ do
     exit do
     ok false, "exit do didn't work"
 loop while true
+
+y = "for1:"
+for x = 5 to 8
+    y = y & " " & x
+next
+Call ok(y = "for1: 5 6 7 8", "y = " & y)
+
+y = "for2:"
+for x = 5 to 8 step 2
+    y = y & " " & x
+next
+Call ok(y = "for2: 5 7", "y = " & y)
+
+y = "for3:"
+x = 2
+for x = x+3 to 8
+    y = y & " " & x
+next
+Call ok(y = "for3: 5 6 7 8", "y = " & y)
+
+y = "for4:"
+for x = 5 to 4
+    y = y & " " & x
+next
+Call ok(y = "for4:", "y = " & y)
+
+y = "for5:"
+for x = 5 to 3 step true
+    y = y & " " & x
+next
+Call ok(y = "for5: 5 4 3", "y = " & y)
+
+y = "for6:"
+z = 4
+for x = 5 to z step 3-4
+    y = y & " " & x
+    z = 0
+next
+Call ok(y = "for6: 5 4", "y = " & y)
+
+y = "for7:"
+z = 1
+for x = 5 to 8 step z
+    y = y & " " & x
+    z = 2
+next
+Call ok(y = "for7: 5 6 7 8", "y = " & y)
+
+y = "for8:"
+for x = 5 to 8
+    y = y & " " & x
+    x = x+1
+next
+Call ok(y = "for8: 5 7", "y = " & y)
 
 if false then
 Sub testsub
