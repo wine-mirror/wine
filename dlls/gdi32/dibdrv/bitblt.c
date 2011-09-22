@@ -478,7 +478,7 @@ static DWORD copy_rect( dib_info *dst, const RECT *dst_rect, const dib_info *src
     origin.y = src_rect->top;
     overlap = get_overlap( dst, dst_rect, src, src_rect );
 
-    if (clip == NULL) dst->funcs->copy_rect( dst, dst_rect, src, &origin, rop2 );
+    if (clip == NULL) dst->funcs->copy_rect( dst, dst_rect, src, &origin, rop2, overlap );
     else
     {
         clip_data = get_wine_region( clip );
@@ -492,7 +492,7 @@ static DWORD copy_rect( dib_info *dst, const RECT *dst_rect, const dib_info *src
                     {
                         origin.x = src_rect->left + clipped_rect.left - dst_rect->left;
                         origin.y = src_rect->top  + clipped_rect.top  - dst_rect->top;
-                        dst->funcs->copy_rect( dst, &clipped_rect, src, &origin, rop2 );
+                        dst->funcs->copy_rect( dst, &clipped_rect, src, &origin, rop2, overlap );
                     }
                 }
             }
@@ -509,7 +509,7 @@ static DWORD copy_rect( dib_info *dst, const RECT *dst_rect, const dib_info *src
                         {
                             origin.x = src_rect->left + clipped_rect.left - dst_rect->left;
                             origin.y = src_rect->top  + clipped_rect.top  - dst_rect->top;
-                            dst->funcs->copy_rect( dst, &clipped_rect, src, &origin, rop2 );
+                            dst->funcs->copy_rect( dst, &clipped_rect, src, &origin, rop2, overlap );
                         }
                     }
                 }
@@ -528,7 +528,7 @@ static DWORD copy_rect( dib_info *dst, const RECT *dst_rect, const dib_info *src
                     {
                         origin.x = src_rect->left + clipped_rect.left - dst_rect->left;
                         origin.y = src_rect->top  + clipped_rect.top  - dst_rect->top;
-                        dst->funcs->copy_rect( dst, &clipped_rect, src, &origin, rop2 );
+                        dst->funcs->copy_rect( dst, &clipped_rect, src, &origin, rop2, overlap );
                     }
                 }
             }
@@ -541,7 +541,7 @@ static DWORD copy_rect( dib_info *dst, const RECT *dst_rect, const dib_info *src
                 {
                     origin.x = src_rect->left + clipped_rect.left - dst_rect->left;
                     origin.y = src_rect->top  + clipped_rect.top  - dst_rect->top;
-                    dst->funcs->copy_rect( dst, &clipped_rect, src, &origin, rop2 );
+                    dst->funcs->copy_rect( dst, &clipped_rect, src, &origin, rop2, overlap );
                 }
             }
         }

@@ -109,14 +109,32 @@ static inline void do_rop_codes_line_32(DWORD *dst, const DWORD *src, struct rop
     for (; len > 0; len--, src++, dst++) do_rop_codes_32( dst, *src, codes );
 }
 
+static inline void do_rop_codes_line_rev_32(DWORD *dst, const DWORD *src, struct rop_codes *codes, int len)
+{
+    for (src += len - 1, dst += len - 1; len > 0; len--, src--, dst--)
+        do_rop_codes_32( dst, *src, codes );
+}
+
 static inline void do_rop_codes_line_16(WORD *dst, const WORD *src, struct rop_codes *codes, int len)
 {
     for (; len > 0; len--, src++, dst++) do_rop_codes_16( dst, *src, codes );
 }
 
+static inline void do_rop_codes_line_rev_16(WORD *dst, const WORD *src, struct rop_codes *codes, int len)
+{
+    for (src += len - 1, dst += len - 1; len > 0; len--, src--, dst--)
+        do_rop_codes_16( dst, *src, codes );
+}
+
 static inline void do_rop_codes_line_8(BYTE *dst, const BYTE *src, struct rop_codes *codes, int len)
 {
     for (; len > 0; len--, src++, dst++) do_rop_codes_8( dst, *src, codes );
+}
+
+static inline void do_rop_codes_line_rev_8(BYTE *dst, const BYTE *src, struct rop_codes *codes, int len)
+{
+    for (src += len - 1, dst += len - 1; len > 0; len--, src--, dst--)
+        do_rop_codes_8( dst, *src, codes );
 }
 
 static inline void do_rop_codes_line_4(BYTE *dst, int dst_x, const BYTE *src, int src_x,
@@ -141,6 +159,30 @@ static inline void do_rop_codes_line_4(BYTE *dst, int dst_x, const BYTE *src, in
     }
 }
 
+static inline void do_rop_codes_line_rev_4(BYTE *dst, int dst_x, const BYTE *src, int src_x,
+                                          struct rop_codes *codes, int len)
+{
+    BYTE src_val;
+
+    src_x += len - 1;
+    dst_x += len - 1;
+    for (src += src_x / 2, dst += dst_x / 2; len > 0; len--, dst_x--, src_x--)
+    {
+        if (dst_x & 1)
+        {
+            if (src_x & 1) src_val = *src;
+            else           src_val = *src-- >> 4;
+            do_rop_codes_mask_8( dst, src_val, codes, 0x0f );
+        }
+        else
+        {
+            if (src_x & 1) src_val = *src << 4;
+            else           src_val = *src--;
+            do_rop_codes_mask_8( dst--, src_val, codes, 0xf0 );
+        }
+    }
+}
+
 static inline void do_rop_codes_line_1(BYTE *dst, int dst_x, const BYTE *src, int src_x,
                                       struct rop_codes *codes, int len)
 {
@@ -152,6 +194,22 @@ static inline void do_rop_codes_line_1(BYTE *dst, int dst_x, const BYTE *src, in
         do_rop_codes_mask_8( dst, src_val, codes, pixel_masks_1[dst_x & 7] );
         if ((src_x & 7) == 7) src++;
         if ((dst_x & 7) == 7) dst++;
+    }
+}
+
+static inline void do_rop_codes_line_rev_1(BYTE *dst, int dst_x, const BYTE *src, int src_x,
+                                          struct rop_codes *codes, int len)
+{
+    BYTE src_val;
+
+    src_x += len - 1;
+    dst_x += len - 1;
+    for (src += src_x / 8, dst += dst_x / 8; len > 0; len--, dst_x--, src_x--)
+    {
+        src_val = *src & pixel_masks_1[src_x & 7] ? 0xff : 0;
+        do_rop_codes_mask_8( dst, src_val, codes, pixel_masks_1[dst_x & 7] );
+        if ((src_x & 7) == 0) src--;
+        if ((dst_x & 7) == 0) dst--;
     }
 }
 
@@ -724,14 +782,12 @@ static void pattern_rects_null(const dib_info *dib, int num, const RECT *rc, con
 }
 
 static void copy_rect_32(const dib_info *dst, const RECT *rc,
-                         const dib_info *src, const POINT *origin, int rop2)
+                         const dib_info *src, const POINT *origin, int rop2, int overlap)
 {
-    DWORD *dst_start = get_pixel_ptr_32(dst, rc->left, rc->top);
-    DWORD *src_start = get_pixel_ptr_32(src, origin->x, origin->y);
-    DWORD *dst_ptr, *src_ptr;
+    DWORD *dst_start, *src_start;
     DWORD and = 0, xor = 0;
     struct rop_codes codes;
-    int x, y;
+    int y, dst_stride, src_stride;
 
     switch (rop2)
     {
@@ -743,36 +799,46 @@ static void copy_rect_32(const dib_info *dst, const RECT *rc,
     case R2_BLACK:
         dst->funcs->solid_rects( dst, 1, rc, and, xor );
         return;
+    }
 
-    case R2_COPYPEN:
-        for (y = rc->top; y < rc->bottom; y++)
-        {
-            memcpy( dst_start, src_start, (rc->right - rc->left) * 4 );
-            dst_start += dst->stride / 4;
-            src_start += src->stride / 4;
-        }
+    if (overlap & OVERLAP_BELOW)
+    {
+        dst_start = get_pixel_ptr_32(dst, rc->left, rc->bottom - 1);
+        src_start = get_pixel_ptr_32(src, origin->x, origin->y + rc->bottom - rc->top - 1);
+        dst_stride = -dst->stride / 4;
+        src_stride = -src->stride / 4;
+    }
+    else
+    {
+        dst_start = get_pixel_ptr_32(dst, rc->left, rc->top);
+        src_start = get_pixel_ptr_32(src, origin->x, origin->y);
+        dst_stride = dst->stride / 4;
+        src_stride = src->stride / 4;
+    }
+
+    if (rop2 == R2_COPYPEN)
+    {
+        for (y = rc->top; y < rc->bottom; y++, dst_start += dst_stride, src_start += src_stride)
+            memmove( dst_start, src_start, (rc->right - rc->left) * 4 );
         return;
+    }
 
-    default:
-        get_rop_codes( rop2, &codes );
-        for (y = rc->top; y < rc->bottom; y++)
-        {
+    get_rop_codes( rop2, &codes );
+    for (y = rc->top; y < rc->bottom; y++, dst_start += dst_stride, src_start += src_stride)
+    {
+        if (overlap & OVERLAP_RIGHT)
+            do_rop_codes_line_rev_32( dst_start, src_start, &codes, rc->right - rc->left );
+        else
             do_rop_codes_line_32( dst_start, src_start, &codes, rc->right - rc->left );
-            dst_start += dst->stride / 4;
-            src_start += src->stride / 4;
-        }
-        return;
     }
 }
 
 static void copy_rect_24(const dib_info *dst, const RECT *rc,
-                         const dib_info *src, const POINT *origin, int rop2)
+                         const dib_info *src, const POINT *origin, int rop2, int overlap)
 {
-    BYTE *dst_start = get_pixel_ptr_24(dst, rc->left, rc->top);
-    BYTE *src_start = get_pixel_ptr_24(src, origin->x, origin->y);
-    BYTE *dst_ptr, *src_ptr;
+    BYTE *dst_start, *src_start;
     DWORD and = 0, xor = 0;
-    int x, y;
+    int y, dst_stride, src_stride;
     struct rop_codes codes;
 
     switch (rop2)
@@ -785,36 +851,46 @@ static void copy_rect_24(const dib_info *dst, const RECT *rc,
     case R2_BLACK:
         dst->funcs->solid_rects( dst, 1, rc, and, xor );
         return;
+    }
 
-    case R2_COPYPEN:
-        for (y = rc->top; y < rc->bottom; y++)
-        {
-            memcpy( dst_start, src_start, (rc->right - rc->left) * 3);
-            dst_start += dst->stride;
-            src_start += src->stride;
-        }
+    if (overlap & OVERLAP_BELOW)
+    {
+        dst_start = get_pixel_ptr_24(dst, rc->left, rc->bottom - 1);
+        src_start = get_pixel_ptr_24(src, origin->x, origin->y + rc->bottom - rc->top - 1);
+        dst_stride = -dst->stride;
+        src_stride = -src->stride;
+    }
+    else
+    {
+        dst_start = get_pixel_ptr_24(dst, rc->left, rc->top);
+        src_start = get_pixel_ptr_24(src, origin->x, origin->y);
+        dst_stride = dst->stride;
+        src_stride = src->stride;
+    }
+
+    if (rop2 == R2_COPYPEN)
+    {
+        for (y = rc->top; y < rc->bottom; y++, dst_start += dst_stride, src_start += src_stride)
+            memmove( dst_start, src_start, (rc->right - rc->left) * 3 );
         return;
+    }
 
-    default:
-        get_rop_codes( rop2, &codes );
-        for (y = rc->top; y < rc->bottom; y++)
-        {
+    get_rop_codes( rop2, &codes );
+    for (y = rc->top; y < rc->bottom; y++, dst_start += dst_stride, src_start += src_stride)
+    {
+        if (overlap & OVERLAP_RIGHT)
+            do_rop_codes_line_rev_8( dst_start, src_start, &codes, (rc->right - rc->left) * 3 );
+        else
             do_rop_codes_line_8( dst_start, src_start, &codes, (rc->right - rc->left) * 3 );
-            dst_start += dst->stride;
-            src_start += src->stride;
-        }
-        return;
     }
 }
 
 static void copy_rect_16(const dib_info *dst, const RECT *rc,
-                         const dib_info *src, const POINT *origin, int rop2)
+                         const dib_info *src, const POINT *origin, int rop2, int overlap)
 {
-    WORD *dst_start = get_pixel_ptr_16(dst, rc->left, rc->top);
-    WORD *src_start = get_pixel_ptr_16(src, origin->x, origin->y);
-    WORD *dst_ptr, *src_ptr;
+    WORD *dst_start, *src_start;
     DWORD and = 0, xor = 0;
-    int x, y;
+    int y, dst_stride, src_stride;
     struct rop_codes codes;
 
     switch (rop2)
@@ -827,36 +903,46 @@ static void copy_rect_16(const dib_info *dst, const RECT *rc,
     case R2_BLACK:
         dst->funcs->solid_rects( dst, 1, rc, and, xor );
         return;
+    }
 
-    case R2_COPYPEN:
-        for (y = rc->top; y < rc->bottom; y++)
-        {
-            memcpy( dst_start, src_start, (rc->right - rc->left) * 2 );
-            dst_start += dst->stride / 2;
-            src_start += src->stride / 2;
-        }
+    if (overlap & OVERLAP_BELOW)
+    {
+        dst_start = get_pixel_ptr_16(dst, rc->left, rc->bottom - 1);
+        src_start = get_pixel_ptr_16(src, origin->x, origin->y + rc->bottom - rc->top - 1);
+        dst_stride = -dst->stride / 2;
+        src_stride = -src->stride / 2;
+    }
+    else
+    {
+        dst_start = get_pixel_ptr_16(dst, rc->left, rc->top);
+        src_start = get_pixel_ptr_16(src, origin->x, origin->y);
+        dst_stride = dst->stride / 2;
+        src_stride = src->stride / 2;
+    }
+
+    if (rop2 == R2_COPYPEN)
+    {
+        for (y = rc->top; y < rc->bottom; y++, dst_start += dst_stride, src_start += src_stride)
+            memmove( dst_start, src_start, (rc->right - rc->left) * 2 );
         return;
+    }
 
-    default:
-        get_rop_codes( rop2, &codes );
-        for (y = rc->top; y < rc->bottom; y++)
-        {
+    get_rop_codes( rop2, &codes );
+    for (y = rc->top; y < rc->bottom; y++, dst_start += dst_stride, src_start += src_stride)
+    {
+        if (overlap & OVERLAP_RIGHT)
+            do_rop_codes_line_rev_16( dst_start, src_start, &codes, rc->right - rc->left );
+        else
             do_rop_codes_line_16( dst_start, src_start, &codes, rc->right - rc->left );
-            dst_start += dst->stride / 2;
-            src_start += src->stride / 2;
-        }
-        return;
     }
 }
 
 static void copy_rect_8(const dib_info *dst, const RECT *rc,
-                        const dib_info *src, const POINT *origin, int rop2)
+                        const dib_info *src, const POINT *origin, int rop2, int overlap)
 {
-    BYTE *dst_start = get_pixel_ptr_8(dst, rc->left, rc->top);
-    BYTE *src_start = get_pixel_ptr_8(src, origin->x, origin->y);
-    BYTE *dst_ptr, *src_ptr;
+    BYTE *dst_start, *src_start;
     DWORD and = 0, xor = 0;
-    int x, y;
+    int y, dst_stride, src_stride;
     struct rop_codes codes;
 
     switch (rop2)
@@ -869,36 +955,46 @@ static void copy_rect_8(const dib_info *dst, const RECT *rc,
     case R2_BLACK:
         dst->funcs->solid_rects( dst, 1, rc, and, xor );
         return;
+    }
 
-    case R2_COPYPEN:
-        for (y = rc->top; y < rc->bottom; y++)
-        {
-            memcpy( dst_start, src_start, (rc->right - rc->left) );
-            dst_start += dst->stride;
-            src_start += src->stride;
-        }
+    if (overlap & OVERLAP_BELOW)
+    {
+        dst_start = get_pixel_ptr_8(dst, rc->left, rc->bottom - 1);
+        src_start = get_pixel_ptr_8(src, origin->x, origin->y + rc->bottom - rc->top - 1);
+        dst_stride = -dst->stride;
+        src_stride = -src->stride;
+    }
+    else
+    {
+        dst_start = get_pixel_ptr_8(dst, rc->left, rc->top);
+        src_start = get_pixel_ptr_8(src, origin->x, origin->y);
+        dst_stride = dst->stride;
+        src_stride = src->stride;
+    }
+
+    if (rop2 == R2_COPYPEN)
+    {
+        for (y = rc->top; y < rc->bottom; y++, dst_start += dst_stride, src_start += src_stride)
+            memmove( dst_start, src_start, (rc->right - rc->left) );
         return;
+    }
 
-    default:
-        get_rop_codes( rop2, &codes );
-        for (y = rc->top; y < rc->bottom; y++)
-        {
+    get_rop_codes( rop2, &codes );
+    for (y = rc->top; y < rc->bottom; y++, dst_start += dst_stride, src_start += src_stride)
+    {
+        if (overlap & OVERLAP_RIGHT)
+            do_rop_codes_line_rev_8( dst_start, src_start, &codes, rc->right - rc->left );
+        else
             do_rop_codes_line_8( dst_start, src_start, &codes, rc->right - rc->left );
-            dst_start += dst->stride;
-            src_start += src->stride;
-        }
-        return;
     }
 }
 
 static void copy_rect_4(const dib_info *dst, const RECT *rc,
-                        const dib_info *src, const POINT *origin, int rop2)
+                        const dib_info *src, const POINT *origin, int rop2, int overlap)
 {
-    BYTE *dst_start = get_pixel_ptr_4(dst, rc->left, rc->top);
-    BYTE *src_start = get_pixel_ptr_4(src, origin->x, origin->y);
-    BYTE *dst_ptr, *src_ptr, src_val;
+    BYTE *dst_start, *src_start;
     DWORD and = 0, xor = 0;
-    int x, src_x, y;
+    int y, dst_stride, src_stride;
     struct rop_codes codes;
 
     switch (rop2)
@@ -911,39 +1007,48 @@ static void copy_rect_4(const dib_info *dst, const RECT *rc,
     case R2_BLACK:
         dst->funcs->solid_rects( dst, 1, rc, and, xor );
         return;
+    }
 
-    case R2_COPYPEN:
-        if ((rc->left & 1) == 0 && (origin->x & 1) == 0 && (rc->right & 1) == 0)
-        {
-            for (y = rc->top; y < rc->bottom; y++)
-            {
-                memcpy( dst_start, src_start, (rc->right - rc->left) / 2 );
-                dst_start += dst->stride;
-                src_start += src->stride;
-            }
-            return;
-        }
-        /* fall through */
-    default:
-        get_rop_codes( rop2, &codes );
-        for (y = rc->top; y < rc->bottom; y++)
-        {
-            do_rop_codes_line_4( dst_start, rc->left, src_start, origin->x, &codes, rc->right - rc->left );
-            dst_start += dst->stride;
-            src_start += src->stride;
-        }
+    if (overlap & OVERLAP_BELOW)
+    {
+        dst_start = get_pixel_ptr_4(dst, 0, rc->bottom - 1);
+        src_start = get_pixel_ptr_4(src, 0, origin->y + rc->bottom - rc->top - 1);
+        dst_stride = -dst->stride;
+        src_stride = -src->stride;
+    }
+    else
+    {
+        dst_start = get_pixel_ptr_4(dst, 0, rc->top);
+        src_start = get_pixel_ptr_4(src, 0, origin->y);
+        dst_stride = dst->stride;
+        src_stride = src->stride;
+    }
+
+    if (rop2 == R2_COPYPEN && (rc->left & 1) == 0 && (origin->x & 1) == 0 && (rc->right & 1) == 0)
+    {
+        dst_start += rc->left / 2;
+        src_start += origin->x / 2;
+        for (y = rc->top; y < rc->bottom; y++, dst_start += dst_stride, src_start += src_stride)
+            memmove( dst_start, src_start, (rc->right - rc->left) / 2 );
         return;
+    }
+
+    get_rop_codes( rop2, &codes );
+    for (y = rc->top; y < rc->bottom; y++, dst_start += dst_stride, src_start += src_stride)
+    {
+        if (overlap & OVERLAP_RIGHT)
+            do_rop_codes_line_rev_4( dst_start, rc->left, src_start, origin->x, &codes, rc->right - rc->left );
+        else
+            do_rop_codes_line_4( dst_start, rc->left, src_start, origin->x, &codes, rc->right - rc->left );
     }
 }
 
 static void copy_rect_1(const dib_info *dst, const RECT *rc,
-                        const dib_info *src, const POINT *origin, int rop2)
+                        const dib_info *src, const POINT *origin, int rop2, int overlap)
 {
-    BYTE *dst_start = get_pixel_ptr_1(dst, rc->left, rc->top);
-    BYTE *src_start = get_pixel_ptr_1(src, origin->x, origin->y);
-    BYTE *dst_ptr, *src_ptr, src_val;
+    BYTE *dst_start, *src_start;
     DWORD and = 0, xor = 0;
-    int x, y, dst_bitpos, src_bitpos;
+    int y, dst_stride, src_stride;
     struct rop_codes codes;
 
     switch (rop2)
@@ -956,33 +1061,44 @@ static void copy_rect_1(const dib_info *dst, const RECT *rc,
     case R2_BLACK:
         dst->funcs->solid_rects( dst, 1, rc, and, xor );
         return;
+    }
 
-    case R2_COPYPEN:
-        if ((rc->left & 7) == 0 && (origin->x & 7) == 0 && (rc->right & 7) == 0)
-        {
-            for (y = rc->top; y < rc->bottom; y++)
-            {
-                memcpy( dst_start, src_start, (rc->right - rc->left) / 8);
-                dst_start += dst->stride;
-                src_start += src->stride;
-            }
-            return;
-        }
-        /* fall through */
-    default:
-        get_rop_codes( rop2, &codes );
-        for (y = rc->top; y < rc->bottom; y++)
-        {
-            do_rop_codes_line_1( dst_start, rc->left, src_start, origin->x, &codes, rc->right - rc->left );
-            dst_start += dst->stride;
-            src_start += src->stride;
-        }
+    if (overlap & OVERLAP_BELOW)
+    {
+        dst_start = get_pixel_ptr_1(dst, 0, rc->bottom - 1);
+        src_start = get_pixel_ptr_1(src, 0, origin->y + rc->bottom - rc->top - 1);
+        dst_stride = -dst->stride;
+        src_stride = -src->stride;
+    }
+    else
+    {
+        dst_start = get_pixel_ptr_1(dst, 0, rc->top);
+        src_start = get_pixel_ptr_1(src, 0, origin->y);
+        dst_stride = dst->stride;
+        src_stride = src->stride;
+    }
+
+    if (rop2 == R2_COPYPEN && (rc->left & 7) == 0 && (origin->x & 7) == 0 && (rc->right & 7) == 0)
+    {
+        dst_start += rc->left / 8;
+        src_start += origin->x / 8;
+        for (y = rc->top; y < rc->bottom; y++, dst_start += dst_stride, src_start += src_stride)
+            memmove( dst_start, src_start, (rc->right - rc->left) / 8 );
         return;
+    }
+
+    get_rop_codes( rop2, &codes );
+    for (y = rc->top; y < rc->bottom; y++, dst_start += dst_stride, src_start += src_stride)
+    {
+        if (overlap & OVERLAP_RIGHT)
+            do_rop_codes_line_rev_1( dst_start, rc->left, src_start, origin->x, &codes, rc->right - rc->left );
+        else
+            do_rop_codes_line_1( dst_start, rc->left, src_start, origin->x, &codes, rc->right - rc->left );
     }
 }
 
 static void copy_rect_null(const dib_info *dst, const RECT *rc,
-                           const dib_info *src, const POINT *origin, int rop2)
+                           const dib_info *src, const POINT *origin, int rop2, int overlap)
 {
     return;
 }
