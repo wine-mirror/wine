@@ -245,6 +245,12 @@ static inline VARIANT *stack_pop(exec_ctx_t *ctx)
     return ctx->stack + --ctx->top;
 }
 
+static inline VARIANT *stack_top(exec_ctx_t *ctx, unsigned n)
+{
+    assert(ctx->top >= n);
+    return ctx->stack + (ctx->top-n-1);
+}
+
 static HRESULT stack_push(exec_ctx_t *ctx, VARIANT *v)
 {
     if(ctx->stack_size == ctx->top) {
@@ -745,8 +751,39 @@ static HRESULT interp_new(exec_ctx_t *ctx)
 static HRESULT interp_step(exec_ctx_t *ctx)
 {
     const BSTR ident = ctx->instr->arg2.bstr;
-    FIXME("%s\n", debugstr_w(ident));
-    return E_NOTIMPL;
+    BOOL gteq_zero;
+    VARIANT zero;
+    ref_t ref;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_w(ident));
+
+    V_VT(&zero) = VT_I2;
+    V_I2(&zero) = 0;
+    hres = VarCmp(stack_top(ctx, 0), &zero, ctx->script->lcid, 0);
+    if(FAILED(hres))
+        return hres;
+
+    gteq_zero = hres == VARCMP_GT || hres == VARCMP_EQ;
+
+    hres = lookup_identifier(ctx, ident, VBDISP_ANY, &ref);
+    if(FAILED(hres))
+        return hres;
+
+    if(ref.type != REF_VAR) {
+        FIXME("%s is not REF_VAR\n", debugstr_w(ident));
+        return E_FAIL;
+    }
+
+    hres = VarCmp(ref.u.v, stack_top(ctx, 1), ctx->script->lcid, 0);
+    if(FAILED(hres))
+        return hres;
+
+    if(hres == VARCMP_EQ || hres == (gteq_zero ? VARCMP_LT : VARCMP_GT))
+        ctx->instr++;
+    else
+        instr_jmp(ctx, ctx->instr->arg1.uint);
+    return S_OK;
 }
 
 static HRESULT interp_jmp(exec_ctx_t *ctx)
