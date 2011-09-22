@@ -387,6 +387,15 @@ for x = 5 to 8
 next
 Call ok(y = "for8: 5 7", "y = " & y)
 
+for x = 1.5 to 1
+    Call ok(false, "for..to called when unexpected")
+next
+
+for x = 1 to 100
+    exit for
+    Call ok(false, "exit for not escaped the loop?")
+next
+
 if false then
 Sub testsub
     x = true

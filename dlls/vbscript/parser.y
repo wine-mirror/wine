@@ -178,6 +178,7 @@ SimpleStatement
                                               CHECK_ERROR; }
     | FunctionDecl                          { $$ = new_function_statement(ctx, $1); CHECK_ERROR; }
     | tEXIT tDO                             { $$ = new_statement(ctx, STAT_EXITDO, 0); CHECK_ERROR; }
+    | tEXIT tFOR                            { $$ = new_statement(ctx, STAT_EXITFOR, 0); CHECK_ERROR; }
     | tEXIT tFUNCTION                       { $$ = new_statement(ctx, STAT_EXITFUNC, 0); CHECK_ERROR; }
     | tEXIT tPROPERTY                       { $$ = new_statement(ctx, STAT_EXITPROP, 0); CHECK_ERROR; }
     | tEXIT tSUB                            { $$ = new_statement(ctx, STAT_EXITSUB, 0); CHECK_ERROR; }

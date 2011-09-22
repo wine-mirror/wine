@@ -39,6 +39,7 @@ typedef struct {
     unsigned labels_cnt;
 
     unsigned while_end_label;
+    unsigned for_end_label;
     unsigned sub_end_label;
     unsigned func_end_label;
     unsigned prop_end_label;
@@ -617,7 +618,7 @@ static HRESULT compile_dowhile_statement(compile_ctx_t *ctx, while_statement_t *
 
 static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *stat)
 {
-    unsigned step_instr, instr;
+    unsigned step_instr, instr, prev_label;
     BSTR identifier;
     HRESULT hres;
 
@@ -654,10 +655,16 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
             return hres;
     }
 
+    prev_label = ctx->for_end_label;
+    ctx->for_end_label = alloc_label(ctx);
+    if(ctx->for_end_label == -1)
+        return E_OUTOFMEMORY;
+
     step_instr = push_instr(ctx, OP_step);
     if(step_instr == -1)
         return E_OUTOFMEMORY;
     instr_ptr(ctx, step_instr)->arg2.bstr = identifier;
+    instr_ptr(ctx, step_instr)->arg1.uint = ctx->for_end_label;
 
     hres = compile_statement(ctx, stat->body);
     if(FAILED(hres))
@@ -672,7 +679,8 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
     if(FAILED(hres))
         return hres;
 
-    instr_ptr(ctx, step_instr)->arg1.uint = ctx->instr_cnt;
+    label_set_addr(ctx, ctx->for_end_label);
+    ctx->for_end_label = prev_label;
 
     return push_instr_uint(ctx, OP_pop, 2);
 }
@@ -804,6 +812,16 @@ static HRESULT compile_exitdo_statement(compile_ctx_t *ctx)
     return push_instr_addr(ctx, OP_jmp, ctx->while_end_label);
 }
 
+static HRESULT compile_exitfor_statement(compile_ctx_t *ctx)
+{
+    if(ctx->for_end_label == -1) {
+        FIXME("Exit For outside For Loop\n");
+        return E_FAIL;
+    }
+
+    return push_instr_addr(ctx, OP_jmp, ctx->for_end_label);
+}
+
 static HRESULT compile_exitsub_statement(compile_ctx_t *ctx)
 {
     if(ctx->sub_end_label == -1) {
@@ -863,6 +881,9 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
             break;
         case STAT_EXITDO:
             hres = compile_exitdo_statement(ctx);
+            break;
+        case STAT_EXITFOR:
+            hres = compile_exitfor_statement(ctx);
             break;
         case STAT_EXITFUNC:
             hres = compile_exitfunc_statement(ctx);
@@ -931,6 +952,7 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
     func->code_off = ctx->instr_cnt;
 
     ctx->while_end_label = -1;
+    ctx->for_end_label = -1;
     ctx->sub_end_label = -1;
     ctx->func_end_label = -1;
     ctx->prop_end_label = -1;
@@ -967,6 +989,7 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
         return hres;
 
     assert(ctx->while_end_label == -1);
+    assert(ctx->for_end_label == -1);
 
     if(ctx->sub_end_label != -1)
         label_set_addr(ctx, ctx->sub_end_label);
