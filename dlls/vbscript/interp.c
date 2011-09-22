@@ -37,6 +37,8 @@ typedef struct {
     dynamic_var_t *dynamic_vars;
     vbsheap_t heap;
 
+    BOOL resume_next;
+
     unsigned stack_size;
     unsigned top;
     VARIANT *stack;
@@ -891,8 +893,11 @@ static HRESULT interp_bool(exec_ctx_t *ctx)
 static HRESULT interp_errmode(exec_ctx_t *ctx)
 {
     const int err_mode = ctx->instr->arg1.uint;
-    FIXME("%d\n", err_mode);
-    return E_NOTIMPL;
+
+    TRACE("%d\n", err_mode);
+
+    ctx->resume_next = err_mode;
+    return S_OK;
 }
 
 static HRESULT interp_string(exec_ctx_t *ctx)
@@ -1659,7 +1664,10 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, IDispatch *this_obj, DI
         op = exec.instr->op;
         hres = op_funcs[op](&exec);
         if(FAILED(hres)) {
-            FIXME("Failed %08x\n", hres);
+            if(exec.resume_next)
+                FIXME("Failed %08x in resume next mode\n", hres);
+            else
+                WARN("Failed %08x\n", hres);
             stack_popn(&exec, exec.top);
             break;
         }
