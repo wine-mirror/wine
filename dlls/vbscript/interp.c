@@ -126,12 +126,14 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
     if(lookup_dynamic_vars(ctx->func->type == FUNC_GLOBAL ? ctx->script->global_vars : ctx->dynamic_vars, name, ref))
         return S_OK;
 
-    hres = disp_get_id(ctx->this_obj, name, invoke_type, TRUE, &id);
-    if(SUCCEEDED(hres)) {
-        ref->type = REF_DISP;
-        ref->u.d.disp = ctx->this_obj;
-        ref->u.d.id = id;
-        return S_OK;
+    if(ctx->func->type != FUNC_GLOBAL) {
+        hres = disp_get_id(ctx->this_obj, name, invoke_type, TRUE, &id);
+        if(SUCCEEDED(hres)) {
+            ref->type = REF_DISP;
+            ref->u.d.disp = ctx->this_obj;
+            ref->u.d.id = id;
+            return S_OK;
+        }
     }
 
     if(ctx->func->type != FUNC_GLOBAL && lookup_dynamic_vars(ctx->script->global_vars, name, ref))
@@ -145,8 +147,22 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         }
     }
 
+    if(!strcmpiW(name, errW)) {
+        ref->type = REF_OBJ;
+        ref->u.obj = (IDispatch*)&ctx->script->err_obj->IDispatchEx_iface;
+        return S_OK;
+    }
+
+    hres = vbdisp_get_id(ctx->script->global_obj, name, invoke_type, TRUE, &id);
+    if(SUCCEEDED(hres)) {
+        ref->type = REF_DISP;
+        ref->u.d.disp = (IDispatch*)&ctx->script->global_obj->IDispatchEx_iface;
+        ref->u.d.id = id;
+        return S_OK;
+    }
+
     LIST_FOR_EACH_ENTRY(item, &ctx->script->named_items, named_item_t, entry) {
-        if((item->flags & SCRIPTITEM_GLOBALMEMBERS) && item->disp != ctx->this_obj) {
+        if((item->flags & SCRIPTITEM_GLOBALMEMBERS)) {
             hres = disp_get_id(item->disp, name, invoke_type, FALSE, &id);
             if(SUCCEEDED(hres)) {
                 ref->type = REF_DISP;
@@ -178,20 +194,6 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
             ref->u.obj = item->disp;
             return S_OK;
         }
-    }
-
-    if(!strcmpiW(name, errW)) {
-        ref->type = REF_OBJ;
-        ref->u.obj = (IDispatch*)&ctx->script->err_obj->IDispatchEx_iface;
-        return S_OK;
-    }
-
-    hres = vbdisp_get_id(ctx->script->global_obj, name, invoke_type, TRUE, &id);
-    if(SUCCEEDED(hres)) {
-        ref->type = REF_DISP;
-        ref->u.d.disp = (IDispatch*)&ctx->script->global_obj->IDispatchEx_iface;
-        ref->u.d.id = id;
-        return S_OK;
     }
 
     ref->type = REF_NONE;
