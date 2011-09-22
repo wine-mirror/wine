@@ -2930,7 +2930,7 @@ msgstr "%1 의 올바르지 않은 EXE 서명 \n"
 
 #: winerror.mc:751
 msgid "EXE %1 is marked invalid\n"
-msgstr "EXE %1  는 올바르지 않다고 표시되어 있습니다\n"
+msgstr "EXE %1 는 올바르지 않다고 표시되어 있습니다\n"
 
 #: winerror.mc:756
 msgid "Bad EXE format for %1\n"
@@ -2938,7 +2938,7 @@ msgstr "%1의 나쁜 EXE 형식\n"
 
 #: winerror.mc:761
 msgid "Iterated data exceeds 64k in %1\n"
-msgstr ""
+msgstr "%1의 반복 데이타가 64k를 넘음\n"
 
 #: winerror.mc:766
 msgid "Invalid MinAllocSize in %1\n"
@@ -6689,6 +6689,18 @@ msgid ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
+"Wine은 자유 소프트웨어입니다; 당신은 이것을 자유 소프트웨어 재단에 위해 발표"
+"된GNU 약소 일반 공중 사용 허가서의 조건에 따라 수정이나 배포를 할 수 있습니"
+"다;버젼 2.1의 라이센스나,(당신의 선택에 따라)무엇이든 최신 버젼을 사용합니"
+"다.\n"
+"\n"
+"Wine은 '어떠한 보증도 없이' 유용하고 사용될 것이라는 희망으로 배포됩니다; 심"
+"지어 '특정 목적에 대한 적합성'및 '상품성'의 묵시적 보증도 없습니다. 자세한 내"
+"용은 GNU 약소 일반 공중 사용 허가서를 참고하십시오.\n"
+"\n"
+"당신은 Wine에 포함되어 있는 GNU 약소 공중 사용 허가서의 사본을 받으셨을 것입"
+"니다; 그렇지 않으면 자유 소프트웨어 재단 주식회사 , 51 Franklin St, Fifth "
+"Floor, Boston, MA 02110-1301, USA에 편지를 보내십시오."
 
 #: shell32.rc:266
 msgid "Wine License"
@@ -7632,7 +7644,6 @@ msgid "%s: File Not Found\n"
 msgstr "%s :파일을 찾을 수 없습니다\n"
 
 #: attrib.rc:47
-#, fuzzy
 msgid ""
 "ATTRIB - Displays or changes file attributes.\n"
 "\n"
@@ -7653,25 +7664,24 @@ msgid ""
 "  /S  Processes matching files in the current folder and all subfolders.\n"
 "  /D  Processes folders as well.\n"
 msgstr ""
-"ATTRIB - 파일 속성을 보여주거나 바꿉니다.\n"
+"ATTRIB - 파일  속성을 바꾸거나 보여줍니다.\n"
 "\n"
 "문법:\n"
 "ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [드라이브:][경로][파일이름]\n"
-"\t     [/S [/D]]\n"
+"       [/S [/D]]\n"
 "\n"
-"어디에:\n"
+"Where:\n"
 "\n"
-"+      속성을 설정합니다.\n"
-"-       속성을  지웁니다.\n"
-"R   읽기-전용 파일 속성을 설정합니다\n"
-"A   압축 파일 속성을 설정합니다.\n"
-"S   시스템 파일 속성을 설정합니다.\n"
-"H   숨은 파일 속성을 설정합니다.\n"
-"[드라이브:][경로][파일이름]\n"
-"속성 작업을 할 파일이나 파일들을 지정합니다.\n"
-"/S  현재 폴더와 모든 하위 폴더에서 일치하는 파일들을 \n"
-"처리합니.\n"
-"/D  폴더를 함께 처리합니다.\n"
+"    +      속성을 설정합니다.\n"
+"    -       속성을 지웁니다.\n"
+"  R   읽기-전용 속성를 설정합니다.\n"
+"  A   압축 파일 속성을 설정합니다.\n"
+"  S   시스템 파일 속성을 설정합니다.\n"
+"  H   숨은 파일 속성을 설정합니다.\n"
+"  [드라이브:][경로][파일이름]\n"
+"      속성 작업을 할 파일이나 파일들을 지정합니다.\n"
+"  /S  현재 폴더와 모든 하위 폴더에서 일치하는 파일들을 처리합니다.\n"
+"  /D  폴더를 함께 처리합니다.\n"
 
 #: clock.rc:29
 msgid "Ana&log"
@@ -8188,7 +8198,6 @@ msgstr ""
 "호출한 셀로 돌아갑니다.\n"
 
 #: cmd.rc:288
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -8255,10 +8264,11 @@ msgstr ""
 "SET\t\t환경 변수 보여주거나 바꾸기\n"
 "SETLOCAL\t배치 파일에서 환경변수의 지역화 시작을 알려줌\n"
 "TIME\t\t시스템 날짜 바꾸거나 보여주기\n"
-"TITLE\t\tCMD  세션의 창 제목 설정\n"
+"TITLE\t\tCMD 세션의 창 제목 설정\n"
 "TYPE\t\t텍스트 파일의 내용 보여주기\n"
 "VER\t\tCMD 현재 버젼 보여주기\n"
 "VOL\t\t디스크 장치의 불륨 라벨 보여주기\n"
+"XCOPY\t\t원본 파일이나 디렉토리 구조를 대상으로 복사함\n"
 "EXIT\t\tCMD 닫기\n"
 "\n"
 "HELP <명령>을 치면 그 명령의 상세한 정보를 보여줌\n"
@@ -9034,7 +9044,7 @@ msgstr "모든 객체"
 
 #: oleview.rc:133
 msgid "Application IDs"
-msgstr "프로그램 IDs"
+msgstr "응용프로그램 IDs"
 
 #: oleview.rc:134
 msgid "Type Libraries"
@@ -9042,7 +9052,7 @@ msgstr "타입 라이브러리"
 
 #: oleview.rc:135
 msgid "ver."
-msgstr ""
+msgstr "버젼."
 
 #: oleview.rc:136
 msgid "Interfaces"
@@ -9546,7 +9556,6 @@ msgid "Exports selected branch of the registry to a text file"
 msgstr "레지스트리의 선택된 부분을 텍스트 파일로 내보내기"
 
 #: start.rc:46
-#, fuzzy
 msgid ""
 "Start a program, or open a document in the program normally used for files "
 "with that suffix.\n"
@@ -9570,25 +9579,27 @@ msgid ""
 "This is free software, and you are welcome to redistribute it\n"
 "under certain conditions; run 'start /L' for details.\n"
 msgstr ""
-"풀그림을 실행시키거나 보통 파일에서 사용되는  풀그림으로 문서 열기\n"
-"Usage:\n"
+"풀그림을 실행시키거나, 보통 파일 확장자에서 사용되는  풀그림으로 문서 열기\n"
+"사용법:\n"
 "start [옵션] 풀그림이나 파일 이름 [...]\n"
 "start [옵션] 문서 파일 이름\n"
 "\n"
-"Options:\n"
+"옵션:\n"
 "/M[inimized] 풀그림 최소화 상태로 실행.\n"
 "/MAX[imized] 풀그림 최대화 상태로 실행.\n"
 "/R[estored]  풀그림을 보통상태로 시작시키기 (최소화도 아니고 최대화도 아"
 "님).\n"
-"/W[ait]      시작된 풀그림이 끝날 때까지 기다림, 끝날 때 종료코드를 남김.\n"
-"/Unix        윈도우 익스플로어같이 유닉스 파일이름을 사용해서 시작.\n"
+"/W[ait]      시작된 풀그림이 끝날 때까지 기다림, 끝날 때 종료코드를 '남김.\n"
+"/Unix        윈도우 탐색기같이 유닉스 파일이름을 사용해서 시작.\n"
 "/ProgIDOpen  지정한 progID를 사용해서 문서 열기.\n"
 "/L           사용자 라이센스 보여줌\n"
+"/?         \t\t 도움말을 보여주고 끝내기.\n"
 "\n"
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
-"Start comes with ABSOLUTELY NO WARRANTY; for details run with /L option.\n"
-"This is free software, and you are welcome to redistribute it\n"
-"under certain conditions; run 'start /L' for details.\n"
+"Start는 보증이 없이 제공됩니다; /L 옵션과 함께 실행시키면 자세한 내용을 볼 "
+"수 있습니다.\n"
+"이것은 자유 소프트웨어이고, 당신은 특정 조건하에서 재배포를 환영\n"
+"합니다; 'start /L'을 실행시키면 자세한 것을 볼 수 있습니다\n"
 
 #: start.rc:64
 msgid ""
@@ -9609,6 +9620,19 @@ msgid ""
 "\n"
 "See the COPYING.LIB file for license information.\n"
 msgstr ""
+"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
+"당신은 이것을 자유 소프트웨어 재단에 위해 발표된GNU 약소 일반 공중 사용 허가"
+"서의 조건에 따라 수정이나 배포를 할 수 있습니다;버젼 2.1의 라이센스나,(당신"
+"의 선택에 따라)무엇이든 최신 버젼을 사용합니다.\n"
+"\n"
+"이 프로그램은 '어떠한 보증도 없이' 유용하고 사용될 것이라는 희망으로 배포됩니"
+"다; 심지어 '특정 목적에 대한 적합성'및 '상품성'의 묵시적 보증도 없습니다. 자"
+"세한 내용은 GNU 약소 일반 공중 사용 허가서를 참고하십시오.\n"
+"\n"
+"당신은 이 프로그램에 포함되어 있는 GNU 약소 공중 사용 허가서의 사본을 받으셨"
+"을 것입니다; 그렇지 않으면 자유 소프트웨어 재단 주식회사 , 51 Franklin St, "
+"Fifth Floor, Boston, MA 02110-1301, USA에 편지를 보내십시오.\n"
+"COPYING.LIB 파일에서 라이센스 정보를 볼 수 있습니다.\n"
 
 #: start.rc:66
 msgid ""
@@ -10780,9 +10804,8 @@ msgid "Tile &Vertically\tCtrl+F4"
 msgstr "세로 바둑판식 정렬(&V)\tCtrl+F4"
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&About Wine File Manager"
-msgstr "Winefile"
+msgstr "Wine 파일 관리자 정보(&A)"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -10793,9 +10816,8 @@ msgid "Error while selecting new font."
 msgstr "새 글꼴 선택 오류."
 
 #: winefile.rc:99
-#, fuzzy
 msgid "Wine File Manager"
-msgstr "Winefile"
+msgstr "Wine 파일 관리자"
 
 #: winefile.rc:101
 msgid "root fs"
