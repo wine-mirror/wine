@@ -37,33 +37,20 @@ static DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
 
 #define expect_eq(expr, value, type, format) { type ret = (expr); ok((value) == ret, #expr " expected " format " got " format "\n", value, ret); }
 
-static INT BITMAP_GetWidthBytes( INT bmWidth, INT bpp )
+static inline int get_bitmap_stride( int width, int bpp )
 {
-    switch(bpp)
-    {
-    case 1:
-	return 2 * ((bmWidth+15) >> 4);
+    return ((width * bpp + 15) >> 3) & ~1;
+}
 
-    case 24:
-	bmWidth *= 3; /* fall through */
-    case 8:
-        return bmWidth + (bmWidth & 1);
+static inline int get_dib_stride( int width, int bpp )
+{
+    return ((width * bpp + 31) >> 3) & ~3;
+}
 
-    case 32:
-        return bmWidth * 4;
-
-    case 16:
-    case 15:
-        return bmWidth * 2;
-
-    case 4:
-        return 2 * ((bmWidth+3) >> 2);
-
-    default:
-        trace("Unknown depth %d, please report.\n", bpp );
-        assert(0);
-    }
-    return -1;
+static inline int get_dib_image_size( const BITMAPINFO *info )
+{
+    return get_dib_stride( info->bmiHeader.biWidth, info->bmiHeader.biBitCount )
+        * abs( info->bmiHeader.biHeight );
 }
 
 static void test_bitmap_info(HBITMAP hbm, INT expected_depth, const BITMAPINFOHEADER *bmih)
@@ -79,7 +66,7 @@ static void test_bitmap_info(HBITMAP hbm, INT expected_depth, const BITMAPINFOHE
     ok(bm.bmType == 0, "wrong bm.bmType %d\n", bm.bmType);
     ok(bm.bmWidth == bmih->biWidth, "wrong bm.bmWidth %d\n", bm.bmWidth);
     ok(bm.bmHeight == bmih->biHeight, "wrong bm.bmHeight %d\n", bm.bmHeight);
-    width_bytes = BITMAP_GetWidthBytes(bm.bmWidth, bm.bmBitsPixel);
+    width_bytes = get_bitmap_stride(bm.bmWidth, bm.bmBitsPixel);
     ok(bm.bmWidthBytes == width_bytes, "wrong bm.bmWidthBytes %d != %d\n", bm.bmWidthBytes, width_bytes);
     ok(bm.bmPlanes == bmih->biPlanes, "wrong bm.bmPlanes %d\n", bm.bmPlanes);
     ok(bm.bmBitsPixel == expected_depth, "wrong bm.bmBitsPixel %d != %d\n", bm.bmBitsPixel, expected_depth);
@@ -253,11 +240,6 @@ static void test_createdibitmap(void)
     ReleaseDC(0, hdc);
 }
 
-static INT DIB_GetWidthBytes( int width, int bpp )
-{
-    return ((width * bpp + 31) / 8) & ~3;
-}
-
 static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER *bmih)
 {
     BITMAP bm;
@@ -273,8 +255,8 @@ static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER 
     ok(bm.bmType == 0, "wrong bm.bmType %d\n", bm.bmType);
     ok(bm.bmWidth == bmih->biWidth, "wrong bm.bmWidth %d\n", bm.bmWidth);
     ok(bm.bmHeight == abs(bmih->biHeight), "wrong bm.bmHeight %d\n", bm.bmHeight);
-    dib_width_bytes = DIB_GetWidthBytes(bm.bmWidth, bm.bmBitsPixel);
-    bm_width_bytes = BITMAP_GetWidthBytes(bm.bmWidth, bm.bmBitsPixel);
+    dib_width_bytes = get_dib_stride(bm.bmWidth, bm.bmBitsPixel);
+    bm_width_bytes = get_bitmap_stride(bm.bmWidth, bm.bmBitsPixel);
     if (bm.bmWidthBytes != dib_width_bytes) /* Win2k bug */
         ok(bm.bmWidthBytes == bm_width_bytes, "wrong bm.bmWidthBytes %d != %d\n", bm.bmWidthBytes, bm_width_bytes);
     else
@@ -1904,7 +1886,7 @@ static void test_GetDIBits(void)
     ok(bm.bmType == 0, "wrong bmType %d\n", bm.bmType);
     ok(bm.bmWidth == 16, "wrong bmWidth %d\n", bm.bmWidth);
     ok(bm.bmHeight == 16, "wrong bmHeight %d\n", bm.bmHeight);
-    ok(bm.bmWidthBytes == BITMAP_GetWidthBytes(bm.bmWidth, bm.bmBitsPixel), "wrong bmWidthBytes %d\n", bm.bmWidthBytes);
+    ok(bm.bmWidthBytes == get_bitmap_stride(bm.bmWidth, bm.bmBitsPixel), "wrong bmWidthBytes %d\n", bm.bmWidthBytes);
     ok(bm.bmPlanes == GetDeviceCaps(hdc, PLANES), "wrong bmPlanes %u\n", bm.bmPlanes);
     ok(bm.bmBitsPixel == GetDeviceCaps(hdc, BITSPIXEL), "wrong bmBitsPixel %d\n", bm.bmBitsPixel);
     ok(!bm.bmBits, "wrong bmBits %p\n", bm.bmBits);
@@ -2378,7 +2360,7 @@ static void test_select_object(void)
         ok(bm.bmType == 0, "wrong bmType %d\n", bm.bmType);
         ok(bm.bmWidth == 10, "wrong bmWidth %d\n", bm.bmWidth);
         ok(bm.bmHeight == 10, "wrong bmHeight %d\n", bm.bmHeight);
-        ok(bm.bmWidthBytes == BITMAP_GetWidthBytes(bm.bmWidth, bm.bmBitsPixel), "wrong bmWidthBytes %d\n", bm.bmWidthBytes);
+        ok(bm.bmWidthBytes == get_bitmap_stride(bm.bmWidth, bm.bmBitsPixel), "wrong bmWidthBytes %d\n", bm.bmWidthBytes);
         ok(bm.bmPlanes == planes, "wrong bmPlanes %u\n", bm.bmPlanes);
         if(depths[i] == 15) {
             ok(bm.bmBitsPixel == 16, "wrong bmBitsPixel %d(15 bpp special)\n", bm.bmBitsPixel);
@@ -2751,15 +2733,17 @@ static void check_StretchBlt_pixel(HDC hdcDst, HDC hdcSrc, UINT32 *dstBuffer, UI
         dwRop, expected, *dstBuffer, line);
 }
 
-static void check_StretchBlt_stretch(HDC hdcDst, HDC hdcSrc, UINT32 *dstBuffer, UINT32 *srcBuffer,
+static void check_StretchBlt_stretch(HDC hdcDst, HDC hdcSrc, BITMAPINFO *dst_info, UINT32 *dstBuffer, UINT32 *srcBuffer,
                                      int nXOriginDest, int nYOriginDest, int nWidthDest, int nHeightDest,
                                      int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc,
-                                     UINT32 expected[4], int line)
+                                     UINT32 *expected, int line)
 {
-    memset(dstBuffer, 0, 16);
+    int dst_size = get_dib_image_size( dst_info );
+
+    memset(dstBuffer, 0, dst_size);
     StretchBlt(hdcDst, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest,
                hdcSrc, nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc, SRCCOPY);
-    ok(memcmp(dstBuffer, expected, 16) == 0,
+    ok(memcmp(dstBuffer, expected, dst_size) == 0,
         "StretchBlt expected { %08X, %08X, %08X, %08X } got { %08X, %08X, %08X, %08X } "
         "stretching { %d, %d, %d, %d } to { %d, %d, %d, %d } from line %d\n",
         expected[0], expected[1], expected[2], expected[3],
@@ -2776,12 +2760,12 @@ static void test_StretchBlt(void)
     UINT32 *dstBuffer, *srcBuffer;
     HBRUSH hBrush, hOldBrush;
     BITMAPINFO biDst, biSrc;
-    UINT32 expected[4];
+    UINT32 expected[256];
 
     memset(&biDst, 0, sizeof(BITMAPINFO));
     biDst.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    biDst.bmiHeader.biWidth = 2;
-    biDst.bmiHeader.biHeight = -2;
+    biDst.bmiHeader.biWidth = 16;
+    biDst.bmiHeader.biHeight = -16;
     biDst.bmiHeader.biPlanes = 1;
     biDst.bmiHeader.biBitCount = 32;
     biDst.bmiHeader.biCompression = BI_RGB;
@@ -2796,7 +2780,7 @@ static void test_StretchBlt(void)
         NULL, 0);
     oldDst = SelectObject(hdcDst, bmpDst);
 
-    bmpSrc = CreateDIBSection(hdcScreen, &biDst, DIB_RGB_COLORS, (void**)&srcBuffer,
+    bmpSrc = CreateDIBSection(hdcScreen, &biSrc, DIB_RGB_COLORS, (void**)&srcBuffer,
         NULL, 0);
     oldSrc = SelectObject(hdcSrc, bmpSrc);
 
@@ -2824,105 +2808,113 @@ static void test_StretchBlt(void)
 
     /* Top-down to top-down tests */
     srcBuffer[0] = 0xCAFED00D, srcBuffer[1] = 0xFEEDFACE;
-    srcBuffer[2] = 0xFEDCBA98, srcBuffer[3] = 0x76543210;
+    srcBuffer[16] = 0xFEDCBA98, srcBuffer[17] = 0x76543210;
 
+    memset( expected, 0, get_dib_image_size( &biDst ) );
     expected[0] = 0xCAFED00D, expected[1] = 0xFEEDFACE;
-    expected[2] = 0xFEDCBA98, expected[3] = 0x76543210;
-    check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
+    expected[16] = 0xFEDCBA98, expected[17] = 0x76543210;
+    check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 2, 0, 0, 2, 2, expected, __LINE__);
 
     expected[0] = 0xCAFED00D, expected[1] = 0x00000000;
-    expected[2] = 0x00000000, expected[3] = 0x00000000;
-    check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
+    expected[16] = 0x00000000, expected[17] = 0x00000000;
+    check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 1, 1, 0, 0, 1, 1, expected, __LINE__);
 
     expected[0] = 0xCAFED00D, expected[1] = 0xCAFED00D;
-    expected[2] = 0xCAFED00D, expected[3] = 0xCAFED00D;
-    check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
+    expected[16] = 0xCAFED00D, expected[17] = 0xCAFED00D;
+    check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 2, 0, 0, 1, 1, expected, __LINE__);
 
     expected[0] = 0xCAFED00D, expected[1] = 0x00000000;
-    expected[2] = 0x00000000, expected[3] = 0x00000000;
-    check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
+    expected[16] = 0x00000000, expected[17] = 0x00000000;
+    check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 1, 1, 0, 0, 2, 2, expected, __LINE__);
 
     expected[0] = 0x76543210, expected[1] = 0xFEDCBA98;
-    expected[2] = 0xFEEDFACE, expected[3] = 0xCAFED00D;
-    check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
+    expected[16] = 0xFEEDFACE, expected[17] = 0xCAFED00D;
+    check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 2, 1, 1, -2, -2, expected, __LINE__);
 
     expected[0] = 0x76543210, expected[1] = 0xFEDCBA98;
-    expected[2] = 0xFEEDFACE, expected[3] = 0xCAFED00D;
-    check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
+    expected[16] = 0xFEEDFACE, expected[17] = 0xCAFED00D;
+    check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              1, 1, -2, -2, 0, 0, 2, 2, expected, __LINE__);
 
     expected[0] = 0xCAFED00D, expected[1] = 0x00000000;
-    expected[2] = 0x00000000, expected[3] = 0x00000000;
-    todo_wine check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
+    expected[16] = 0x00000000, expected[17] = 0x00000000;
+    todo_wine check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                                        1, 1, -2, -2, 1, 1, -2, -2, expected, __LINE__);
 
     expected[0] = 0x00000000, expected[1] = 0x00000000;
-    expected[2] = 0x00000000, expected[3] = 0xCAFED00D;
-    check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
+    expected[16] = 0x00000000, expected[17] = 0xCAFED00D, expected[18] = 0xFEEDFACE;
+    expected[32] = 0x00000000, expected[33] = 0xFEDCBA98, expected[34] = 0x76543210;
+
+    check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              1, 1, 2, 2, 0, 0, 2, 2, expected, __LINE__);
 
     SelectObject(hdcDst, oldDst);
     DeleteObject(bmpDst);
 
     /* Top-down to bottom-up tests */
-    biDst.bmiHeader.biHeight = 2;
+    biDst.bmiHeader.biHeight = 16;
     bmpDst = CreateDIBSection(hdcScreen, &biDst, DIB_RGB_COLORS, (void**)&dstBuffer,
         NULL, 0);
     oldDst = SelectObject(hdcDst, bmpDst);
 
-    expected[0] = 0xFEDCBA98, expected[1] = 0x76543210;
-    expected[2] = 0xCAFED00D, expected[3] = 0xFEEDFACE;
-    check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
+    memset( expected, 0, get_dib_image_size( &biDst ) );
+
+    expected[224] = 0xFEDCBA98, expected[225] = 0x76543210;
+    expected[240] = 0xCAFED00D, expected[241] = 0xFEEDFACE;
+    check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 2, 0, 0, 2, 2, expected, __LINE__);
 
-    expected[0] = 0xFEEDFACE, expected[1] = 0xCAFED00D;
-    expected[2] = 0x76543210, expected[3] = 0xFEDCBA98;
-    check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
+    expected[224] = 0xFEEDFACE, expected[225] = 0xCAFED00D;
+    expected[240] = 0x76543210, expected[241] = 0xFEDCBA98;
+    check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 2, 1, 1, -2, -2, expected, __LINE__);
 
     SelectObject(hdcSrc, oldSrc);
     DeleteObject(bmpSrc);
 
     /* Bottom-up to bottom-up tests */
-    biSrc.bmiHeader.biHeight = 2;
+    biSrc.bmiHeader.biHeight = 16;
     bmpSrc = CreateDIBSection(hdcScreen, &biSrc, DIB_RGB_COLORS, (void**)&srcBuffer,
         NULL, 0);
-    srcBuffer[0] = 0xCAFED00D, srcBuffer[1] = 0xFEEDFACE;
-    srcBuffer[2] = 0xFEDCBA98, srcBuffer[3] = 0x76543210;
+    srcBuffer[224] = 0xCAFED00D, srcBuffer[225] = 0xFEEDFACE;
+    srcBuffer[240] = 0xFEDCBA98, srcBuffer[241] = 0x76543210;
     oldSrc = SelectObject(hdcSrc, bmpSrc);
 
-    expected[0] = 0xCAFED00D, expected[1] = 0xFEEDFACE;
-    expected[2] = 0xFEDCBA98, expected[3] = 0x76543210;
-    check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
+    memset( expected, 0, get_dib_image_size( &biDst ) );
+
+    expected[224] = 0xCAFED00D, expected[225] = 0xFEEDFACE;
+    expected[240] = 0xFEDCBA98, expected[241] = 0x76543210;
+    check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 2, 0, 0, 2, 2, expected, __LINE__);
 
-    expected[0] = 0x76543210, expected[1] = 0xFEDCBA98;
-    expected[2] = 0xFEEDFACE, expected[3] = 0xCAFED00D;
-    check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
+    expected[224] = 0x76543210, expected[225] = 0xFEDCBA98;
+    expected[240] = 0xFEEDFACE, expected[241] = 0xCAFED00D;
+    check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 2, 1, 1, -2, -2, expected, __LINE__);
 
     SelectObject(hdcDst, oldDst);
     DeleteObject(bmpDst);
 
     /* Bottom-up to top-down tests */
-    biDst.bmiHeader.biHeight = -2;
+    biDst.bmiHeader.biHeight = -16;
     bmpDst = CreateDIBSection(hdcScreen, &biDst, DIB_RGB_COLORS, (void**)&dstBuffer,
         NULL, 0);
     oldDst = SelectObject(hdcDst, bmpDst);
 
+    memset( expected, 0, get_dib_image_size( &biDst ) );
     expected[0] = 0xFEDCBA98, expected[1] = 0x76543210;
-    expected[2] = 0xCAFED00D, expected[3] = 0xFEEDFACE;
-    check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
+    expected[16] = 0xCAFED00D, expected[17] = 0xFEEDFACE;
+    check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 2, 0, 0, 2, 2, expected, __LINE__);
 
     expected[0] = 0xFEEDFACE, expected[1] = 0xCAFED00D;
-    expected[2] = 0x76543210, expected[3] = 0xFEDCBA98;
-    check_StretchBlt_stretch(hdcDst, hdcSrc, dstBuffer, srcBuffer,
+    expected[16] = 0x76543210, expected[17] = 0xFEDCBA98;
+    check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 2, 1, 1, -2, -2, expected, __LINE__);
 
     SelectObject(hdcSrc, oldSrc);
@@ -2933,12 +2925,13 @@ static void test_StretchBlt(void)
     bmpSrc = CreateDIBSection(hdcScreen, &biSrc, DIB_RGB_COLORS, (void**)&srcBuffer, NULL, 0);
     oldSrc = SelectObject(hdcSrc, bmpSrc);
 
+    memset( expected, 0, get_dib_image_size( &biDst ) );
     expected[0] = 0xFEEDFACE, expected[1] = 0xCAFED00D;
     expected[2] = 0x76543210, expected[3] = 0xFEDCBA98;
     memcpy(dstBuffer, expected, 4 * sizeof(*dstBuffer));
-    StretchBlt(hdcSrc, 0, 0, 2, 2, hdcDst, 0, 0, 2, 2, SRCCOPY );
+    StretchBlt(hdcSrc, 0, 0, 4, 1, hdcDst, 0, 0, 4, 1, SRCCOPY );
     memset(dstBuffer, 0x55, 4 * sizeof(*dstBuffer));
-    StretchBlt(hdcDst, 0, 0, 2, 2, hdcSrc, 0, 0, 2, 2, SRCCOPY );
+    StretchBlt(hdcDst, 0, 0, 4, 1, hdcSrc, 0, 0, 4, 1, SRCCOPY );
     expected[0] = 0x00EDFACE, expected[1] = 0x00FED00D;
     expected[2] = 0x00543210, expected[3] = 0x00DCBA98;
     ok(!memcmp(dstBuffer, expected, 16),
@@ -2950,9 +2943,9 @@ static void test_StretchBlt(void)
     expected[2] = 0x76543210, expected[3] = 0xFEDCBA98;
     memcpy(srcBuffer, expected, 4 * sizeof(*dstBuffer));
     memset(dstBuffer, 0x55, 4 * sizeof(*dstBuffer));
-    StretchBlt(hdcDst, 0, 0, 2, 2, hdcSrc, 0, 0, 2, 2, SRCCOPY );
+    StretchBlt(hdcDst, 0, 0, 4, 1, hdcSrc, 0, 0, 4, 1, SRCCOPY );
     expected[0] = 0x00EDFACE, expected[1] = 0x00D00DFE;
-    expected[2] = 0x00543210, expected[3] = 0x00BA9876;
+    expected[2] = 0x0010CAFE, expected[3] = 0x00765432;
     ok(!memcmp(dstBuffer, expected, 16),
        "StretchBlt expected { %08X, %08X, %08X, %08X } got { %08X, %08X, %08X, %08X }\n",
         expected[0], expected[1], expected[2], expected[3],
