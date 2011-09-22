@@ -147,6 +147,11 @@ struct rop_codes
     DWORD a1, a2, x1, x2;
 };
 
+#define OVERLAP_LEFT  0x01  /* dest starts left of source */
+#define OVERLAP_RIGHT 0x02  /* dest starts right of source */
+#define OVERLAP_ABOVE 0x04  /* dest starts above source */
+#define OVERLAP_BELOW 0x08  /* dest starts below source */
+
 extern void get_rop_codes(INT rop, struct rop_codes *codes);
 extern void calc_and_xor_masks(INT rop, DWORD color, DWORD *and, DWORD *xor) DECLSPEC_HIDDEN;
 extern void update_brush_rop( dibdrv_physdev *pdev, INT rop ) DECLSPEC_HIDDEN;
