@@ -5098,6 +5098,10 @@ static const WCHAR WC_LINK[] = { 'S','y','s','L','i','n','k',0 };
 /* SysLink styles */
 #define LWS_TRANSPARENT      0x0001
 #define LWS_IGNORERETURN     0x0002
+#define LWS_NOPREFIX         0x0004
+#define LWS_USEVISUALSTYLE   0x0008
+#define LWS_USECUSTOMTEXT    0x0010
+#define LWS_RIGHT            0x0020
 
 /* SysLink messages */
 #define LM_HITTEST           (WM_USER + 768)
@@ -5115,9 +5119,11 @@ static const WCHAR WC_LINK[] = { 'S','y','s','L','i','n','k',0 };
 
 /* SysLink links states */
 
-#define LIS_FOCUSED     1
-#define LIS_ENABLED     2
-#define LIS_VISITED     4
+#define LIS_FOCUSED          0x0001
+#define LIS_ENABLED          0x0002
+#define LIS_VISITED          0x0004
+#define LIS_HOTTRACK         0x0008
+#define LIS_DEFAULTCOLORS    0x0010
 
 /* SysLink misc. */
 
