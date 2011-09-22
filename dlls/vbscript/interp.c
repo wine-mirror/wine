@@ -684,8 +684,24 @@ static HRESULT interp_const(exec_ctx_t *ctx)
 
 static HRESULT interp_val(exec_ctx_t *ctx)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    variant_val_t val;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = stack_pop_val(ctx, &val);
+    if(FAILED(hres))
+        return hres;
+
+    if(!val.owned) {
+        V_VT(&v) = VT_EMPTY;
+        hres = VariantCopy(&v, val.v);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return stack_push(ctx, val.owned ? val.v : &v);
 }
 
 static HRESULT interp_pop(exec_ctx_t *ctx)
