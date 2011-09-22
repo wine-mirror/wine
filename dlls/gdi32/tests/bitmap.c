@@ -2826,6 +2826,7 @@ static void test_StretchBlt(void)
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 2, 0, 0, 1, 1, expected, __LINE__);
 
+    /* This is an example of the dst width (height) == 1 exception, explored below */
     expected[0] = 0xCAFED00D, expected[1] = 0x00000000;
     expected[16] = 0x00000000, expected[17] = 0x00000000;
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
@@ -2853,10 +2854,63 @@ static void test_StretchBlt(void)
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              1, 1, 2, 2, 0, 0, 2, 2, expected, __LINE__);
 
+    /* when dst width is 1 merge src width - 1 pixels */
+    memset( srcBuffer, 0, get_dib_image_size( &biSrc ) );
+    srcBuffer[0] = 0x0000ff00, srcBuffer[1] = 0x0000f0f0, srcBuffer[2] = 0x0000cccc, srcBuffer[3] = 0x0000aaaa;
+    srcBuffer[16] = 0xFEDCBA98, srcBuffer[17] = 0x76543210;
+
+    memset( expected, 0, get_dib_image_size( &biDst ) );
+    expected[0] = srcBuffer[0];
+    check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
+                             0, 0, 1, 1, 0, 0, 2, 1, expected, __LINE__);
+
+    expected[0] = srcBuffer[0] & srcBuffer[1];
+todo_wine
+    check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
+                             0, 0, 1, 1, 0, 0, 3, 1, expected, __LINE__);
+
+    expected[0] = srcBuffer[0] & srcBuffer[1] & srcBuffer[2];
+todo_wine
+    check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
+                             0, 0, 1, 1, 0, 0, 4, 1, expected, __LINE__);
+
+    /* this doesn't happen if the src width is -ve */
+    expected[0] = srcBuffer[1] & srcBuffer[2];
+todo_wine
+    check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
+                             0, 0, 1, 1, 2, 0, -2, 1, expected, __LINE__);
+
+    /* when dst width > 1 behaviour reverts to what one would expect */
+    expected[0] = srcBuffer[0] & srcBuffer[1], expected[1] = srcBuffer[2] & srcBuffer[3];
+todo_wine
+    check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
+                             0, 0, 2, 1, 0, 0, 4, 1, expected, __LINE__);
+
+    /* similarly in the vertical direction */
+    memset( expected, 0, get_dib_image_size( &biDst ) );
+    expected[0] = srcBuffer[0];
+    check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
+                             0, 0, 1, 1, 0, 0, 1, 2, expected, __LINE__);
+
+    /* check that it's the dst size in device units that needs to be 1 */
+    SetMapMode( hdcDst, MM_ISOTROPIC );
+    SetWindowExtEx( hdcDst, 200, 200, NULL );
+    SetViewportExtEx( hdcDst, 100, 100, NULL );
+
+    expected[0] = srcBuffer[0] & srcBuffer[1] & srcBuffer[2];
+todo_wine
+    check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
+                             0, 0, 2, 2, 0, 0, 4, 1, expected, __LINE__);
+    SetMapMode( hdcDst, MM_TEXT );
+
     SelectObject(hdcDst, oldDst);
     DeleteObject(bmpDst);
 
     /* Top-down to bottom-up tests */
+    memset( srcBuffer, 0, get_dib_image_size( &biSrc ) );
+    srcBuffer[0] = 0xCAFED00D, srcBuffer[1] = 0xFEEDFACE;
+    srcBuffer[16] = 0xFEDCBA98, srcBuffer[17] = 0x76543210;
+
     biDst.bmiHeader.biHeight = 16;
     bmpDst = CreateDIBSection(hdcScreen, &biDst, DIB_RGB_COLORS, (void**)&dstBuffer,
         NULL, 0);
