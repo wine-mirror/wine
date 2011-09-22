@@ -139,14 +139,15 @@ static HRESULT invoke_builtin(vbdisp_t *This, const builtin_prop_t *prop, WORD f
             FIXME("property does not support DISPATCH_PROPERTYGET\n");
             return E_FAIL;
         }
-        /* FALLTHROUGH */
+        break;
     case DISPATCH_PROPERTYGET|DISPATCH_METHOD:
-        if(arg_cnt(dp) < prop->min_args || arg_cnt(dp) > (prop->max_args ? prop->max_args : prop->min_args)) {
-            FIXME("invalid number of arguments\n");
+        break;
+    case DISPATCH_METHOD:
+        if(prop->flags & (BP_GET|BP_GETPUT)) {
+            FIXME("Call on property\n");
             return E_FAIL;
         }
-
-        return prop->proc(This, dp->rgvarg, dp->cArgs, res);
+        break;
     case DISPATCH_PROPERTYPUT:
         if(!(prop->flags & (BP_GET|BP_GETPUT))) {
             FIXME("property does not support DISPATCH_PROPERTYPUT\n");
@@ -159,6 +160,13 @@ static HRESULT invoke_builtin(vbdisp_t *This, const builtin_prop_t *prop, WORD f
         FIXME("unsupported flags %x\n", flags);
         return E_NOTIMPL;
     }
+
+    if(arg_cnt(dp) < prop->min_args || arg_cnt(dp) > (prop->max_args ? prop->max_args : prop->min_args)) {
+        FIXME("invalid number of arguments\n");
+        return E_FAIL;
+    }
+
+    return prop->proc(This, dp->rgvarg, dp->cArgs, res);
 }
 
 static BOOL run_terminator(vbdisp_t *This)
