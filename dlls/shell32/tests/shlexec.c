@@ -2220,10 +2220,10 @@ static void test_directory(void)
     /* copy this executable to a new folder and cd to it */
     sprintf(newdir, "%s\\newfolder", tmpdir);
     rc = CreateDirectoryA( newdir, NULL );
-    ok( rc, "failed to create %s err %u\n", path, GetLastError() );
+    ok( rc, "failed to create %s err %u\n", newdir, GetLastError() );
     sprintf(path, "%s\\%s", newdir, path_find_file_name(argv0));
     CopyFileA(argv0, path, FALSE);
-    SetCurrentDirectory(tmpdir),
+    SetCurrentDirectory(tmpdir);
 
     sprintf(params, "shlexec \"%s\" Exec", child_file);
 
