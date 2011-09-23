@@ -389,9 +389,24 @@ static HRESULT WINAPI IDirectPlay8PeerImpl_SetSPCaps(IDirectPlay8Peer *iface, co
 static HRESULT WINAPI IDirectPlay8PeerImpl_GetSPCaps(IDirectPlay8Peer *iface, const GUID * const pguidSP,
         DPN_SP_CAPS * const pdpspCaps, const DWORD dwFlags)
 {
-    FIXME("(%p)->(%p,%p,%x): stub\n", iface, pguidSP, pdpspCaps, dwFlags);
+    TRACE("(%p)->(%p,%p,%x)\n", iface, pguidSP, pdpspCaps, dwFlags);
 
-    return DPNERR_GENERIC;
+    if(pdpspCaps->dwSize != sizeof(DPN_SP_CAPS))
+    {
+        return DPNERR_INVALIDPARAM;
+    }
+
+    pdpspCaps->dwFlags = DPNSPCAPS_SUPPORTSDPNSRV | DPNSPCAPS_SUPPORTSBROADCAST |
+                         DPNSPCAPS_SUPPORTSALLADAPTERS | DPNSPCAPS_SUPPORTSTHREADPOOL;
+    pdpspCaps->dwNumThreads = 3;
+    pdpspCaps->dwDefaultEnumCount = 5;
+    pdpspCaps->dwDefaultEnumRetryInterval = 1500;
+    pdpspCaps->dwDefaultEnumTimeout = 1500;
+    pdpspCaps->dwMaxEnumPayloadSize = 983;
+    pdpspCaps->dwBuffersPerThread = 1;
+    pdpspCaps->dwSystemBufferSize = 8192;
+
+    return DPN_OK;
 }
 
 static HRESULT WINAPI IDirectPlay8PeerImpl_GetConnectionInfo(IDirectPlay8Peer *iface, const DPNID dpnid,

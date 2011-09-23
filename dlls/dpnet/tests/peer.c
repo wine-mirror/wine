@@ -115,6 +115,32 @@ static void test_enum_service_providers(void)
     ok(HeapFree(GetProcessHeap(), 0, serv_prov_info), "Failed freeing server provider info\n");
 }
 
+static void test_get_sp_caps(void)
+{
+    DPN_SP_CAPS caps;
+    HRESULT hr;
+
+    memset(&caps, 0, sizeof(DPN_SP_CAPS));
+
+    hr = IDirectPlay8Peer_GetSPCaps(peer, &CLSID_DP8SP_TCPIP, &caps, 0);
+    ok(hr == DPNERR_INVALIDPARAM, "GetSPCaps unexpectedly returned %x\n", hr);
+
+    caps.dwSize = sizeof(DPN_SP_CAPS);
+
+    hr = IDirectPlay8Peer_GetSPCaps(peer, &CLSID_DP8SP_TCPIP, &caps, 0);
+    ok(hr == DPN_OK, "GetSPCaps failed with %x\n", hr);
+
+    ok(caps.dwFlags == (DPNSPCAPS_SUPPORTSDPNSRV | DPNSPCAPS_SUPPORTSBROADCAST | DPNSPCAPS_SUPPORTSALLADAPTERS |
+                        DPNSPCAPS_SUPPORTSTHREADPOOL), "provider unexpectedly misses some capability flags\n");
+    ok(caps.dwNumThreads == 3, "expected 3, got %d\n", caps.dwNumThreads);
+    ok(caps.dwDefaultEnumCount == 5, "expected 5, got %d\n", caps.dwDefaultEnumCount);
+    ok(caps.dwDefaultEnumRetryInterval == 1500, "expected 1500, got %d\n", caps.dwDefaultEnumRetryInterval);
+    ok(caps.dwDefaultEnumTimeout == 1500, "expected 1500, got %d\n", caps.dwDefaultEnumTimeout);
+    ok(caps.dwMaxEnumPayloadSize == 983, "expected 983, got %d\n", caps.dwMaxEnumPayloadSize);
+    ok(caps.dwBuffersPerThread == 1, "expected 1, got %d\n", caps.dwBuffersPerThread);
+    ok(caps.dwSystemBufferSize == 8192, "expected 8192, got %d\n", caps.dwSystemBufferSize);
+}
+
 static void test_cleanup_dp(void)
 {
     HRESULT hr;
@@ -132,5 +158,6 @@ START_TEST(peer)
 {
     test_init_dp();
     test_enum_service_providers();
+    test_get_sp_caps();
     test_cleanup_dp();
 }
