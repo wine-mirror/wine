@@ -945,7 +945,7 @@ void ACTION_UpdateComponentStates( MSIPACKAGE *package, MSIFEATURE *feature )
     }
 }
 
-UINT WINAPI MSI_SetFeatureStateW( MSIPACKAGE *package, LPCWSTR szFeature, INSTALLSTATE iState )
+UINT MSI_SetFeatureStateW( MSIPACKAGE *package, LPCWSTR szFeature, INSTALLSTATE iState )
 {
     UINT rc = ERROR_SUCCESS;
     MSIFEATURE *feature, *child;
