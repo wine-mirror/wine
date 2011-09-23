@@ -102,6 +102,19 @@ static char  *output_bufA = NULL;
 #define MAX_WRITECONSOLE_SIZE 65535
 static BOOL unicodePipes = FALSE;
 
+/*
+ * Returns a buffer for reading from/writing to file
+ * Never freed
+ */
+static char *get_file_buffer(void)
+{
+    if (!output_bufA) {
+        output_bufA = HeapAlloc(GetProcessHeap(), 0, MAX_WRITECONSOLE_SIZE);
+        if (!output_bufA)
+            WINE_FIXME("Out of memory - could not allocate ansi 64K buffer\n");
+    }
+    return output_bufA;
+}
 
 /*******************************************************************
  * WCMD_output_asis_len - send output to current standard output
@@ -126,23 +139,18 @@ static void WCMD_output_asis_len(const WCHAR *message, int len, HANDLE device) {
     if (!res) {
       BOOL usedDefaultChar = FALSE;
       DWORD convertedChars;
+      char *buffer;
 
       if (!unicodePipes) {
-        /*
-         * Allocate buffer to use when writing to file. (Not freed, as one off)
-         */
-        if (!output_bufA) output_bufA = HeapAlloc(GetProcessHeap(), 0,
-                                                  MAX_WRITECONSOLE_SIZE);
-        if (!output_bufA) {
-          WINE_FIXME("Out of memory - could not allocate ansi 64K buffer\n");
-          return;
-        }
+
+        if (!(buffer = get_file_buffer()))
+            return;
 
         /* Convert to OEM, then output */
         convertedChars = WideCharToMultiByte(GetConsoleOutputCP(), 0, message,
-                            len, output_bufA, MAX_WRITECONSOLE_SIZE,
+                            len, buffer, MAX_WRITECONSOLE_SIZE,
                             "?", &usedDefaultChar);
-        WriteFile(device, output_bufA, convertedChars,
+        WriteFile(device, buffer, convertedChars,
                   &nOut, FALSE);
       } else {
         WriteFile(device, message, len*sizeof(WCHAR),
@@ -223,21 +231,16 @@ BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars,
     if (!res) {
 
         DWORD numRead;
-        /*
-         * Allocate buffer to use when reading from file. Not freed
-         */
-        if (!output_bufA) output_bufA = HeapAlloc(GetProcessHeap(), 0,
-                                                  MAX_WRITECONSOLE_SIZE);
-        if (!output_bufA) {
-          WINE_FIXME("Out of memory - could not allocate ansi 64K buffer\n");
-          return 0;
-        }
+        char *buffer;
+
+        if (!(buffer = get_file_buffer()))
+            return FALSE;
 
         /* Read from file (assume OEM codepage) */
-        res = ReadFile(hIn, output_bufA, maxChars, &numRead, unused);
+        res = ReadFile(hIn, buffer, maxChars, &numRead, unused);
 
         /* Convert from OEM */
-        *charsRead = MultiByteToWideChar(GetConsoleCP(), 0, output_bufA, numRead,
+        *charsRead = MultiByteToWideChar(GetConsoleCP(), 0, buffer, numRead,
                          intoBuf, maxChars);
 
     }
