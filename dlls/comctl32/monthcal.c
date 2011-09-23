@@ -1491,7 +1491,11 @@ MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
   /* exit earlier if selection equals current */
   if (MONTHCAL_IsDateEqual(&infoPtr->minSel, curSel)) return TRUE;
 
-  if(!MONTHCAL_IsDateInValidRange(infoPtr, curSel, FALSE)) return FALSE;
+  selection = *curSel;
+  selection.wHour = selection.wMinute = selection.wSecond = selection.wMilliseconds = 0;
+  MONTHCAL_CalculateDayOfWeek(&selection, TRUE);
+
+  if(!MONTHCAL_IsDateInValidRange(infoPtr, &selection, FALSE)) return FALSE;
 
   /* scroll calendars only if we have to */
   diff = MONTHCAL_MonthDiff(&infoPtr->calendars[MONTHCAL_GetCalCount(infoPtr)-1].month, curSel);
@@ -1509,6 +1513,7 @@ MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
       MONTHCAL_GetMonth(&infoPtr->calendars[i].month, diff);
   }
 
+  /* we need to store time part as it is */
   selection = *curSel;
   MONTHCAL_CalculateDayOfWeek(&selection, TRUE);
   infoPtr->minSel = infoPtr->maxSel = selection;
@@ -1977,10 +1982,18 @@ MONTHCAL_RButtonUp(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   if( TrackPopupMenu(hMenu, TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD,
 		     menupoint.x, menupoint.y, 0, infoPtr->hwndSelf, NULL))
   {
-      infoPtr->calendars[0].month = infoPtr->todaysDate;
-      infoPtr->minSel = infoPtr->todaysDate;
-      infoPtr->maxSel = infoPtr->todaysDate;
-      InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
+      if (infoPtr->dwStyle & MCS_MULTISELECT)
+      {
+          SYSTEMTIME range[2];
+
+          range[0] = range[1] = infoPtr->todaysDate;
+          MONTHCAL_SetSelRange(infoPtr, range);
+      }
+      else
+          MONTHCAL_SetCurSel(infoPtr, &infoPtr->todaysDate);
+
+      MONTHCAL_NotifySelectionChange(infoPtr);
+      MONTHCAL_NotifySelect(infoPtr);
   }
 
   return 0;
@@ -2153,10 +2166,15 @@ MONTHCAL_LButtonDown(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   }
   case MCHT_TODAYLINK:
   {
-    infoPtr->calendars[0].month = infoPtr->todaysDate;
-    infoPtr->minSel = infoPtr->todaysDate;
-    infoPtr->maxSel = infoPtr->todaysDate;
-    InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
+    if (infoPtr->dwStyle & MCS_MULTISELECT)
+    {
+        SYSTEMTIME range[2];
+
+        range[0] = range[1] = infoPtr->todaysDate;
+        MONTHCAL_SetSelRange(infoPtr, range);
+    }
+    else
+        MONTHCAL_SetCurSel(infoPtr, &infoPtr->todaysDate);
 
     MONTHCAL_NotifySelectionChange(infoPtr);
     MONTHCAL_NotifySelect(infoPtr);
