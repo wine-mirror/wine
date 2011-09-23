@@ -57,7 +57,7 @@ static HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length, st
     memset(shader_info->output_signature, 0, sizeof(*shader_info->output_signature));
 
     hr = parse_dxbc(dxbc, dxbc_length, shdr_handler, shader_info);
-    if (!shader_info->shader_code) hr = E_FAIL;
+    if (!shader_info->shader_code) hr = E_INVALIDARG;
 
     if (FAILED(hr))
     {
@@ -267,6 +267,7 @@ HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d1
     {
         WARN("Failed to create wined3d vertex shader, hr %#x.\n", hr);
         shader_free_signature(&shader->output_signature);
+        hr = E_INVALIDARG;
         return hr;
     }
 
@@ -411,8 +412,9 @@ HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader, struct 
             &shader->output_signature, shader, &d3d10_geometry_shader_wined3d_parent_ops, &shader->wined3d_shader, 4);
     if (FAILED(hr))
     {
-        WARN("Failed to create wined3d vertex shader, hr %#x.\n", hr);
+        WARN("Failed to create wined3d geometry shader, hr %#x.\n", hr);
         shader_free_signature(&shader->output_signature);
+        hr = E_INVALIDARG;
         return hr;
     }
 
@@ -553,6 +555,7 @@ HRESULT d3d10_pixel_shader_init(struct d3d10_pixel_shader *shader, struct d3d10_
     {
         WARN("Failed to create wined3d pixel shader, hr %#x.\n", hr);
         shader_free_signature(&shader->output_signature);
+        hr = E_INVALIDARG;
         return hr;
     }
 

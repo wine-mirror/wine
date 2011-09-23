@@ -374,7 +374,7 @@ HRESULT parse_dxbc(const char *data, SIZE_T data_size,
     if (tag != TAG_DXBC)
     {
         WARN("Wrong tag.\n");
-        return E_FAIL;
+        return E_INVALIDARG;
     }
 
     /* checksum? */
