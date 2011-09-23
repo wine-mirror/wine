@@ -1817,6 +1817,57 @@ static void test_MCM_GETCALENDARCOUNT(void)
     DestroyWindow(hwnd);
 }
 
+static void test_daystate(void)
+{
+    MONTHDAYSTATE state[4];
+    DWORD ret, style;
+    HWND hwnd;
+
+    /* without MCS_DAYSTATE */
+    hwnd = create_monthcal_control(0);
+
+    ret = SendMessageA(hwnd, MCM_GETMONTHRANGE, GMR_DAYSTATE, 0);
+    expect(4, ret);
+
+    ret = SendMessageA(hwnd, MCM_SETDAYSTATE, 4, (LPARAM)&state);
+    expect(0, ret);
+
+    ret = SendMessageA(hwnd, MCM_SETDAYSTATE, 2, (LPARAM)&state);
+    expect(0, ret);
+
+    ret = SendMessageA(hwnd, MCM_SETDAYSTATE, 0, 0);
+    expect(0, ret);
+
+    /* try to switch on */
+    SetWindowLongA(hwnd, GWL_STYLE, GetWindowLongA(hwnd, GWL_STYLE) | MCS_DAYSTATE);
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    ok((style & MCS_DAYSTATE) == 0, "got 0x%08x\n", style);
+
+    DestroyWindow(hwnd);
+
+    /* with MCS_DAYSTATE */
+    hwnd = create_monthcal_control(MCS_DAYSTATE);
+
+    ret = SendMessageA(hwnd, MCM_GETMONTHRANGE, GMR_DAYSTATE, 0);
+    expect(4, ret);
+
+    ret = SendMessageA(hwnd, MCM_SETDAYSTATE, 4, (LPARAM)&state);
+    expect(1, ret);
+
+    ret = SendMessageA(hwnd, MCM_SETDAYSTATE, 2, (LPARAM)&state);
+    expect(0, ret);
+
+    ret = SendMessageA(hwnd, MCM_SETDAYSTATE, 0, 0);
+    expect(0, ret);
+
+    /* try to switch off */
+    SetWindowLongA(hwnd, GWL_STYLE, GetWindowLongA(hwnd, GWL_STYLE) & ~MCS_DAYSTATE);
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    ok((style & MCS_DAYSTATE) == MCS_DAYSTATE, "got 0x%08x\n", style);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(monthcal)
 {
     BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
@@ -1859,6 +1910,7 @@ START_TEST(monthcal)
     test_maxselday();
     test_selrange();
     test_killfocus();
+    test_daystate();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
