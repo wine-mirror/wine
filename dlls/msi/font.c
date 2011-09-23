@@ -143,17 +143,28 @@ static WCHAR *load_ttf_name_id( const WCHAR *filename, DWORD id )
             break;
 
         ttRecord.uNameID = SWAPWORD(ttRecord.uNameID);
-        if (ttRecord.uNameID == id)
+        ttRecord.uPlatformID = SWAPWORD(ttRecord.uPlatformID);
+        ttRecord.uEncodingID = SWAPWORD(ttRecord.uEncodingID);
+        if (ttRecord.uNameID == id && ttRecord.uPlatformID == 3 &&
+            (ttRecord.uEncodingID == 0 || ttRecord.uEncodingID == 1))
         {
-            LPSTR buf;
+            WCHAR *buf;
+            unsigned int i;
 
             ttRecord.uStringLength = SWAPWORD(ttRecord.uStringLength);
             ttRecord.uStringOffset = SWAPWORD(ttRecord.uStringOffset);
             SetFilePointer(handle, tblDir.uOffset + ttRecord.uStringOffset + ttNTHeader.uStorageOffset,
                            NULL, FILE_BEGIN);
-            if (!(buf = msi_alloc_zero( ttRecord.uStringLength + 1 ))) goto end;
+            if (!(buf = msi_alloc_zero( ttRecord.uStringLength + sizeof(WCHAR) ))) goto end;
+            dwRead = 0;
             ReadFile(handle, buf, ttRecord.uStringLength, &dwRead, NULL);
-            ret = strdupAtoW(buf);
+            if (dwRead % sizeof(WCHAR))
+            {
+                msi_free(buf);
+                goto end;
+            }
+            for (i = 0; i < dwRead / sizeof(WCHAR); i++) buf[i] = SWAPWORD(buf[i]);
+            ret = strdupW(buf);
             msi_free(buf);
             break;
         }
