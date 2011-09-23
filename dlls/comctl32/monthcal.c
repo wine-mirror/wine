@@ -1680,12 +1680,13 @@ MONTHCAL_SetToday(MONTHCAL_INFO *infoPtr, const SYSTEMTIME *today)
 {
   TRACE("%p\n", today);
 
-  if(!today) return FALSE;
+  if (today)
+  {
+    /* remember if date was set successfully */
+    if (MONTHCAL_UpdateToday(infoPtr, today)) infoPtr->todaySet = TRUE;
+  }
 
-  /* remember if date was set successfully */
-  if(MONTHCAL_UpdateToday(infoPtr, today)) infoPtr->todaySet = TRUE;
-
-  return TRUE;
+  return 0;
 }
 
 /* returns calendar index containing specified point, or -1 if it's background */

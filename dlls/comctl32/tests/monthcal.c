@@ -775,6 +775,23 @@ static void test_currdate(void)
     res = SendMessage(hwnd, MCM_SETCURSEL, 0, (LPARAM)&st_new);
     expect(1, res);
 
+    /* set with invalid day of week */
+    memset(&st_test, 0, sizeof(st_test));
+    st_test.wYear = 2009;
+    st_test.wDay  = 7;
+    st_test.wMonth = 10;
+    st_test.wDayOfWeek = 100;
+    res = SendMessage(hwnd, MCM_SETCURSEL, 0, (LPARAM)&st_test);
+    todo_wine expect(1, res);
+
+    memset(&st_test, 0, sizeof(st_test));
+    res = SendMessage(hwnd, MCM_GETCURSEL, 0, (LPARAM)&st_test);
+    expect(1, res);
+    expect(2009, st_test.wYear);
+    todo_wine expect(7, st_test.wDay);
+    expect(10, st_test.wMonth);
+    todo_wine expect(3, st_test.wDayOfWeek);
+
     DestroyWindow(hwnd);
 }
 
@@ -1162,7 +1179,8 @@ static void test_todaylink(void)
     st_test.wMonth = 1;
     st_test.wYear = 2005;
 
-    SendMessage(hwnd, MCM_SETTODAY, 0, (LPARAM)&st_test);
+    res = SendMessage(hwnd, MCM_SETTODAY, 0, (LPARAM)&st_test);
+    expect(0, res);
 
     memset(&st_new, 0, sizeof(st_new));
     res = SendMessage(hwnd, MCM_GETTODAY, 0, (LPARAM)&st_new);
@@ -1206,7 +1224,8 @@ static void test_today(void)
     st_new.wDay = 27;
     st_new.wMonth = 27;
 
-    SendMessage(hwnd, MCM_SETTODAY, 0, (LPARAM)&st_test);
+    res = SendMessage(hwnd, MCM_SETTODAY, 0, (LPARAM)&st_test);
+    expect(0, res);
 
     res = SendMessage(hwnd, MCM_GETTODAY, 0, (LPARAM)&st_new);
     expect(1, res);
@@ -1223,7 +1242,8 @@ static void test_today(void)
     st_test.wDay = 0;
     st_test.wMonth = 0;
 
-    SendMessage(hwnd, MCM_SETTODAY, 0, (LPARAM)&st_test);
+    res = SendMessage(hwnd, MCM_SETTODAY, 0, (LPARAM)&st_test);
+    expect(0, res);
 
     res = SendMessage(hwnd, MCM_GETTODAY, 0, (LPARAM)&st_new);
     expect(1, res);
