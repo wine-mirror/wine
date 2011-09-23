@@ -1329,8 +1329,7 @@ static void WOD_PushData(WINMM_Device *device)
     nloops = 0;
     while(queue && queue_frames < avail_frames){
         queue_bytes = WINMM_HeaderLenBytes(device, queue);
-        queue_frames = (queue_bytes - ofs) / device->bytes_per_frame;
-
+        queue_frames += (queue_bytes - ofs) / device->bytes_per_frame;
         ofs = 0;
 
         if(queue->dwFlags & WHDR_ENDLOOP && nloops < device->loop_counter){
