@@ -363,6 +363,9 @@ static const IID * const cstyle_iids[] = {
     &IID_IDispatch,
     &IID_IDispatchEx,
     &IID_IHTMLCurrentStyle,
+    &IID_IHTMLCurrentStyle2,
+    &IID_IHTMLCurrentStyle3,
+    &IID_IHTMLCurrentStyle4,
     NULL
 };
 
