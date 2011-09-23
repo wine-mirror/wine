@@ -145,24 +145,17 @@ static WCHAR *load_ttf_name_id( const WCHAR *filename, DWORD id )
         ttRecord.uNameID = SWAPWORD(ttRecord.uNameID);
         if (ttRecord.uNameID == id)
         {
-            int nPos;
             LPSTR buf;
 
             ttRecord.uStringLength = SWAPWORD(ttRecord.uStringLength);
             ttRecord.uStringOffset = SWAPWORD(ttRecord.uStringOffset);
-            nPos = SetFilePointer(handle, 0, NULL, FILE_CURRENT);
             SetFilePointer(handle, tblDir.uOffset + ttRecord.uStringOffset + ttNTHeader.uStorageOffset,
                            NULL, FILE_BEGIN);
-            buf = msi_alloc_zero( ttRecord.uStringLength + 1 );
+            if (!(buf = msi_alloc_zero( ttRecord.uStringLength + 1 ))) goto end;
             ReadFile(handle, buf, ttRecord.uStringLength, &dwRead, NULL);
-            if (strlen(buf) > 0)
-            {
-                ret = strdupAtoW(buf);
-                msi_free(buf);
-                break;
-            }
+            ret = strdupAtoW(buf);
             msi_free(buf);
-            SetFilePointer(handle,nPos, NULL, FILE_BEGIN);
+            break;
         }
     }
 
@@ -179,6 +172,12 @@ static WCHAR *font_name_from_file( const WCHAR *filename )
 
     if ((name = load_ttf_name_id( filename, NAME_ID_FULL_FONT_NAME )))
     {
+        if (!name[0])
+        {
+            WARN("empty font name\n");
+            msi_free( name );
+            return NULL;
+        }
         ret = msi_alloc( (strlenW( name ) + strlenW( truetypeW ) + 1 ) * sizeof(WCHAR) );
         strcpyW( ret, name );
         strcatW( ret, truetypeW );
@@ -189,22 +188,26 @@ static WCHAR *font_name_from_file( const WCHAR *filename )
 
 WCHAR *msi_font_version_from_file( const WCHAR *filename )
 {
-    static const WCHAR dotzerodotzeroW[] = {'.','0','.','0',0};
-    WCHAR *version, *p, *ret = NULL;
-    int len;
+    static const WCHAR fmtW[] = {'%','u','.','%','u','.','0','.','0',0};
+    WCHAR *version, *p, *q, *ret = NULL;
 
     if ((version = load_ttf_name_id( filename, NAME_ID_VERSION )))
     {
+        int len, major = 0, minor = 0;
         if ((p = strchrW( version, ';' ))) *p = 0;
         p = version;
         while (*p && !isdigitW( *p )) p++;
-        len = strlenW( p ) + strlenW(dotzerodotzeroW) + 1;
-        ret = msi_alloc( len * sizeof(WCHAR) );
-        strcpyW( ret, p );
-        if ((p = strchrW( p, '.' )) && !(p = strchrW( p + 1, '.' )))
+        if ((q = strchrW( p, '.' )))
         {
-            strcatW( ret, dotzerodotzeroW );
+            major = atoiW( p );
+            p = ++q;
+            while (*q && isdigitW( *q )) q++;
+            if (!*q || *q == ' ') minor = atoiW( p );
+            else major = 0;
         }
+        len = strlenW( fmtW ) + 20;
+        ret = msi_alloc( len * sizeof(WCHAR) );
+        sprintfW( ret, fmtW, major, minor );
         msi_free( version );
     }
     return ret;
