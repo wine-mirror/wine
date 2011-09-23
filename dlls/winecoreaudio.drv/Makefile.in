@@ -3,12 +3,10 @@ IMPORTS   = uuid winmm ole32 user32
 EXTRALIBS = @COREAUDIO@
 
 C_SRCS = \
-	audio.c \
 	audiounit.c \
 	coreaudio.c \
 	coremidi.c \
 	midi.c \
-	mixer.c \
 	mmdevdrv.c
 
 @MAKE_DLL_RULES@

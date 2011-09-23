@@ -42,9 +42,7 @@ static LRESULT CoreAudio_drvLoad(void)
 {
     TRACE("()\n");
 
-    if (CoreAudio_WaveInit() != DRV_SUCCESS ||
-        CoreAudio_MIDIInit() != DRV_SUCCESS ||
-        CoreAudio_MixerInit() != DRV_SUCCESS)
+    if (CoreAudio_MIDIInit() != DRV_SUCCESS)
         return DRV_FAILURE;
 
     return DRV_SUCCESS;
@@ -56,9 +54,7 @@ static LRESULT CoreAudio_drvLoad(void)
 static LRESULT CoreAudio_drvFree(void)
 {
     TRACE("()\n");
-    CoreAudio_WaveRelease();
     CoreAudio_MIDIRelease();
-    CoreAudio_MixerRelease();
     return DRV_SUCCESS;
 }
 
