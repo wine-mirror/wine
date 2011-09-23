@@ -209,6 +209,73 @@ static void test_pixel_shader_constant(IDirect3DDevice9 *device_ptr)
     ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_SetPixelShaderConstantF returned 0x%08x\n", hr);
 }
 
+static void test_wrong_shader(IDirect3DDevice9 *device_ptr)
+{
+    static const DWORD simple_vs[] =
+    {
+        0xfffe0101,                                     /* vs_1_1               */
+        0x0000001f, 0x80000000, 0x900f0000,             /* dcl_position0 v0     */
+        0x00000009, 0xc0010000, 0x90e40000, 0xa0e40000, /* dp4 oPos.x, v0, c0   */
+        0x00000009, 0xc0020000, 0x90e40000, 0xa0e40001, /* dp4 oPos.y, v0, c1   */
+        0x00000009, 0xc0040000, 0x90e40000, 0xa0e40002, /* dp4 oPos.z, v0, c2   */
+        0x00000009, 0xc0080000, 0x90e40000, 0xa0e40003, /* dp4 oPos.w, v0, c3   */
+        0x0000ffff                                      /* END                  */
+    };
+
+    static const DWORD simple_ps[] =
+    {
+        0xffff0101,                                                             /* ps_1_1                       */
+        0x00000051, 0xa00f0001, 0x3f800000, 0x00000000, 0x00000000, 0x00000000, /* def c1 = 1.0, 0.0, 0.0, 0.0  */
+        0x00000042, 0xb00f0000,                                                 /* tex t0                       */
+        0x00000008, 0x800f0000, 0xa0e40001, 0xa0e40000,                         /* dp3 r0, c1, c0               */
+        0x00000005, 0x800f0000, 0x90e40000, 0x80e40000,                         /* mul r0, v0, r0               */
+        0x00000005, 0x800f0000, 0xb0e40000, 0x80e40000,                         /* mul r0, t0, r0               */
+        0x0000ffff                                                              /* END                          */
+    };
+
+#if 0
+float4 main(const float4 color : COLOR) : SV_TARGET
+{
+    float4 o;
+
+    o = color;
+
+    return o;
+}
+#endif
+    static const DWORD ps_4_0[] =
+    {
+        0x43425844, 0x4da9446f, 0xfbe1f259, 0x3fdb3009, 0x517521fa, 0x00000001, 0x000001ac,
+        0x00000005, 0x00000034, 0x0000008c, 0x000000bc, 0x000000f0, 0x00000130, 0x46454452,
+        0x00000050, 0x00000000, 0x00000000, 0x00000000, 0x0000001c, 0xffff0400, 0x00000100,
+        0x0000001c, 0x7263694d, 0x666f736f, 0x52282074, 0x4c482029, 0x53204c53, 0x65646168,
+        0x6f432072, 0x6c69706d, 0x39207265, 0x2e39322e, 0x2e323539, 0x31313133, 0xababab00,
+        0x4e475349, 0x00000028, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000,
+        0x00000003, 0x00000000, 0x00000f0f, 0x4f4c4f43, 0xabab0052, 0x4e47534f, 0x0000002c,
+        0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+        0x0000000f, 0x545f5653, 0x45475241, 0xabab0054, 0x52444853, 0x00000038, 0x00000040,
+        0x0000000e, 0x03001062, 0x001010f2, 0x00000000, 0x03000065, 0x001020f2, 0x00000000,
+        0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e, 0x54415453,
+        0x00000074, 0x00000002, 0x00000000, 0x00000000, 0x00000002, 0x00000000, 0x00000000,
+        0x00000000, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000001,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000,
+    };
+
+    IDirect3DVertexShader9 *vs;
+    IDirect3DPixelShader9 *ps;
+    HRESULT hret;
+
+    hret = IDirect3DDevice9_CreateVertexShader(device_ptr, simple_ps, &vs);
+    ok(hret == D3DERR_INVALIDCALL, "CreateVertexShader returned: hret 0x%x, shader_ptr %p.\n", hret, vs);
+    hret = IDirect3DDevice9_CreatePixelShader(device_ptr, simple_vs, &ps);
+    ok(hret == D3DERR_INVALIDCALL, "CreatePixelShader returned: hret 0x%x, shader_ptr %p.\n", hret, ps);
+
+    hret = IDirect3DDevice9_CreatePixelShader(device_ptr, ps_4_0, &ps);
+    ok(hret == D3DERR_INVALIDCALL, "CreatePixelShader returned: hret 0x%x, shader_ptr %p.\n", hret, ps);
+}
+
 START_TEST(shader)
 {
     D3DCAPS9 caps;
@@ -239,6 +306,8 @@ START_TEST(shader)
         test_get_set_pixel_shader(device_ptr);
         /* No max pixel shader constant value??? */
         test_pixel_shader_constant(device_ptr);
+        if (caps.VertexShaderVersion & 0xffff)
+            test_wrong_shader(device_ptr);
     }
     else skip("No pixel shader support\n");
 
