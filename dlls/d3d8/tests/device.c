@@ -2701,6 +2701,88 @@ done:
     DestroyWindow(focus_window);
 }
 
+static void test_wrong_shader(void)
+{
+    HRESULT hr;
+    HWND hwnd = NULL;
+    IDirect3D8 *d3d = NULL;
+    IDirect3DDevice8 *device = NULL;
+    D3DPRESENT_PARAMETERS d3dpp;
+    D3DDISPLAYMODE d3ddm;
+    DWORD vs, ps;
+
+    static const DWORD vs_2_0[] =
+    {
+        0xfffe0200,                                         /* vs_2_0           */
+        0x0200001f, 0x80000000, 0x900f0000,                 /* dcl_position v0  */
+        0x02000001, 0x800f0001, 0xa0e40001,                 /* mov r1, c1       */
+        0x03000002, 0xd00f0000, 0x80e40001, 0xa0e40002,     /* add oD0, r1, c2  */
+        0x02000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0     */
+        0x0000ffff                                          /* end              */
+    };
+    static const DWORD ps_2_0[] =
+    {
+        0xffff0200,                                         /* ps_2_0           */
+        0x02000001, 0x800f0001, 0xa0e40001,                 /* mov r1, c1       */
+        0x03000002, 0x800f0000, 0x80e40001, 0xa0e40002,     /* add r0, r1, c2   */
+        0x02000001, 0x800f0800, 0x80e40000,                 /* mov oC0, r0      */
+        0x0000ffff                                          /* end              */
+    };
+
+    static const DWORD decl[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(D3DVSDE_POSITION, D3DVSDT_FLOAT3),
+        D3DVSD_END()
+    };
+
+    d3d = pDirect3DCreate8(D3D_SDK_VERSION);
+    ok(d3d != NULL, "Failed to create IDirect3D8 object\n");
+    hwnd = CreateWindow("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "Failed to create window\n");
+    if (!d3d || !hwnd)
+        goto cleanup;
+
+    IDirect3D8_GetAdapterDisplayMode(d3d, D3DADAPTER_DEFAULT, &d3ddm);
+    ZeroMemory(&d3dpp, sizeof(d3dpp));
+    d3dpp.Windowed = TRUE;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferWidth = 800;
+    d3dpp.BackBufferHeight = 600;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+
+    hr = IDirect3D8_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
+            D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device);
+    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL || broken(hr == D3DERR_NOTAVAILABLE), "IDirect3D8_CreateDevice failed with %#08x\n", hr);
+    if (!device)
+    {
+        skip("could not create device, IDirect3D8_CreateDevice returned %#08x\n", hr);
+        goto cleanup;
+    }
+
+    hr = IDirect3DDevice8_CreateVertexShader(device, decl, simple_ps, &vs, 0);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_CreateVertexShader returned %#08x\n", hr);
+
+    hr = IDirect3DDevice8_CreatePixelShader(device, simple_vs, &ps);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_CreatePixelShader returned %#08x\n", hr);
+
+    hr = IDirect3DDevice8_CreateVertexShader(device, decl, vs_2_0, &vs, 0);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_CreateVertexShader returned %#08x\n", hr);
+
+    hr = IDirect3DDevice8_CreatePixelShader(device, ps_2_0, &ps);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_CreatePixelShader returned %#08x\n", hr);
+
+cleanup:
+    if (device)
+    {
+        UINT refcount = IDirect3DDevice8_Release(device);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
+    if (d3d)
+        IDirect3D8_Release(d3d);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -2751,6 +2833,7 @@ START_TEST(device)
         test_wndproc_windowed();
         test_depth_stencil_size();
         test_window_style();
+        test_wrong_shader();
     }
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
