@@ -1276,26 +1276,6 @@ static void X11DRV_DIB_SetImageBits_8( int lines, const BYTE *srcbits,
 	    /* ==== pal 8 dib -> rgb or bgr 555 or 565 bmp ==== */
 	    dstbits=(BYTE*)bmpImage->data+left*2+(lines-1)*bmpImage->bytes_per_line;
 	    for (h = lines ; h--; ) {
-#if defined(__i386__) && defined(__GNUC__)
-		int _cl1,_cl2; /* temp outputs for asm below */
-		/* Borrowed from DirectDraw */
-		__asm__ __volatile__(
-		"xor %%eax,%%eax\n"
-		"cld\n"
-		"1:\n"
-		"    lodsb\n"
-		"    movw (%%edx,%%eax,4),%%ax\n"
-		"    stosw\n"
-		"      xor %%eax,%%eax\n"
-		"    loop 1b\n"
-		:"=S" (srcbyte), "=D" (_cl1), "=c" (_cl2)
-		:"S" (srcbyte),
-		 "D" (dstbits),
-		 "c" (width),
-		 "d" (colors)
-		:"eax", "cc", "memory"
-		);
-#else
 		DWORD* dstpixel=(DWORD*)dstbits;
 		for (x=0; x<width/2; x++) {
 		    /* Do 2 pixels at a time */
@@ -1306,7 +1286,6 @@ static void X11DRV_DIB_SetImageBits_8( int lines, const BYTE *srcbits,
 		    /* And then the odd pixel */
 		    *((WORD*)dstpixel)=colors[srcbyte[0]];
 		}
-#endif
 		srcbyte = (srcbits += linebytes);
 		dstbits -= bmpImage->bytes_per_line;
 	    }
@@ -1321,31 +1300,10 @@ static void X11DRV_DIB_SetImageBits_8( int lines, const BYTE *srcbits,
 	    dstbits=(BYTE*)bmpImage->data+left*4+(lines-1)*bmpImage->bytes_per_line;
 	    /* ==== pal 8 dib -> rgb or bgr 0888 bmp ==== */
 	    for (h = lines ; h--; ) {
-#if defined(__i386__) && defined(__GNUC__)
-		int _cl1,_cl2; /* temp outputs for asm below */
-		/* Borrowed from DirectDraw */
-		__asm__ __volatile__(
-		"xor %%eax,%%eax\n"
-		"cld\n"
-		"1:\n"
-		"    lodsb\n"
-		"    movl (%%edx,%%eax,4),%%eax\n"
-		"    stosl\n"
-		"      xor %%eax,%%eax\n"
-		"    loop 1b\n"
-		:"=S" (srcbyte), "=D" (_cl1), "=c" (_cl2)
-		:"S" (srcbyte),
-		 "D" (dstbits),
-		 "c" (width),
-		 "d" (colors)
-		:"eax", "cc", "memory"
-		);
-#else
 		DWORD* dstpixel=(DWORD*)dstbits;
 		for (x=0; x<width; x++) {
 		    *dstpixel++=colors[*srcbyte++];
 		}
-#endif
 		srcbyte = (srcbits += linebytes);
 		dstbits -= bmpImage->bytes_per_line;
 	    }
