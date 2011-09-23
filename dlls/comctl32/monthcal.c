@@ -247,9 +247,7 @@ static inline BOOL MONTHCAL_IsDateEqual(const SYSTEMTIME *first, const SYSTEMTIM
 static BOOL MONTHCAL_ValidateDate(const SYSTEMTIME *time)
 {
   if(time->wMonth < 1 || time->wMonth > 12 ) return FALSE;
-  if(time->wDayOfWeek > 6) return FALSE;
-  if(time->wDay > MONTHCAL_MonthLength(time->wMonth, time->wYear))
-	  return FALSE;
+  if(time->wDay > MONTHCAL_MonthLength(time->wMonth, time->wYear)) return FALSE;
 
   return TRUE;
 }
@@ -1481,7 +1479,7 @@ MONTHCAL_GetCurSel(const MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
 static LRESULT
 MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
 {
-  SYSTEMTIME prev = infoPtr->minSel;
+  SYSTEMTIME prev = infoPtr->minSel, selection;
   INT diff;
   WORD day;
 
@@ -1511,8 +1509,9 @@ MONTHCAL_SetCurSel(MONTHCAL_INFO *infoPtr, SYSTEMTIME *curSel)
       MONTHCAL_GetMonth(&infoPtr->calendars[i].month, diff);
   }
 
-  infoPtr->minSel = *curSel;
-  infoPtr->maxSel = *curSel;
+  selection = *curSel;
+  MONTHCAL_CalculateDayOfWeek(&selection, TRUE);
+  infoPtr->minSel = infoPtr->maxSel = selection;
 
   /* if selection is still in current month, reduce rectangle */
   day = prev.wDay;

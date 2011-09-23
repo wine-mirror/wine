@@ -782,15 +782,15 @@ static void test_currdate(void)
     st_test.wMonth = 10;
     st_test.wDayOfWeek = 100;
     res = SendMessage(hwnd, MCM_SETCURSEL, 0, (LPARAM)&st_test);
-    todo_wine expect(1, res);
+    expect(1, res);
 
     memset(&st_test, 0, sizeof(st_test));
     res = SendMessage(hwnd, MCM_GETCURSEL, 0, (LPARAM)&st_test);
     expect(1, res);
     expect(2009, st_test.wYear);
-    todo_wine expect(7, st_test.wDay);
+    expect(7, st_test.wDay);
     expect(10, st_test.wMonth);
-    todo_wine expect(3, st_test.wDayOfWeek);
+    expect(3, st_test.wDayOfWeek);
 
     DestroyWindow(hwnd);
 }
