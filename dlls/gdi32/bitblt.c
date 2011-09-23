@@ -120,10 +120,13 @@ static BOOL get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
     else  /* stretching */
     {
         /* map source rectangle into destination coordinates */
-        rect.left   = dst->x + (src->visrect.left - src->x)*dst->width/src->width;
-        rect.top    = dst->y + (src->visrect.top - src->y)*dst->height/src->height;
-        rect.right  = dst->x + (src->visrect.right - src->x)*dst->width/src->width;
-        rect.bottom = dst->y + (src->visrect.bottom - src->y)*dst->height/src->height;
+        rect = src->visrect;
+        offset_rect( &rect, -min( src->x, src->x + src->width + 1),
+                     -min( src->y, src->y + src->height + 1) );
+        rect.left   = dst->x + rect.left * dst->width / abs(src->width);
+        rect.top    = dst->y + rect.top * dst->height / abs(src->height);
+        rect.right  = dst->x + rect.right * dst->width / abs(src->width);
+        rect.bottom = dst->y + rect.bottom * dst->height / abs(src->height);
         if (rect.left > rect.right) swap_ints( &rect.left, &rect.right );
         if (rect.top > rect.bottom) swap_ints( &rect.top, &rect.bottom );
 
@@ -135,10 +138,13 @@ static BOOL get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
         if (!intersect_rect( &dst->visrect, &rect, &dst->visrect )) return FALSE;
 
         /* map destination rectangle back to source coordinates */
-        rect.left   = src->x + (dst->visrect.left - dst->x)*src->width/dst->width;
-        rect.top    = src->y + (dst->visrect.top - dst->y)*src->height/dst->height;
-        rect.right  = src->x + (dst->visrect.right - dst->x)*src->width/dst->width;
-        rect.bottom = src->y + (dst->visrect.bottom - dst->y)*src->height/dst->height;
+        rect = dst->visrect;
+        offset_rect( &rect, -min( dst->x, dst->x + dst->width + 1),
+                     -min( dst->y, dst->y + dst->height + 1) );
+        rect.left   = src->x + rect.left * src->width / abs(dst->width);
+        rect.top    = src->y + rect.top * src->height / abs(dst->height);
+        rect.right  = src->x + rect.right * src->width / abs(dst->width);
+        rect.bottom = src->y + rect.bottom * src->height / abs(dst->height);
         if (rect.left > rect.right) swap_ints( &rect.left, &rect.right );
         if (rect.top > rect.bottom) swap_ints( &rect.top, &rect.bottom );
 
