@@ -54,12 +54,12 @@ char* wave_generate_la(WAVEFORMATEX* wfx, double duration, DWORD* size, BOOL iee
     for (i=0;i<nb_samples;i++) {
         double y=sin(440.0*2*PI*i/wfx->nSamplesPerSec);
         if (wfx->wBitsPerSample==8) {
-            unsigned char sample=(unsigned char)((double)127.5*(y+1.0));
+            unsigned char sample=127.5*(y+1.0);
             *b++=sample;
             if (wfx->nChannels==2)
                 *b++=sample;
         } else if (wfx->wBitsPerSample == 16) {
-            signed short sample=(signed short)((double)32767.5*y-0.5);
+            signed short sample=32767.5*y-0.5;
             b[0]=sample & 0xff;
             b[1]=sample >> 8;
             b+=2;
@@ -69,7 +69,7 @@ char* wave_generate_la(WAVEFORMATEX* wfx, double duration, DWORD* size, BOOL iee
                 b+=2;
             }
         } else if (wfx->wBitsPerSample == 24) {
-            signed int sample=(signed int)((double)8388607.5*y-0.5);
+            signed int sample=8388607.5*y-0.5;
             b[0]=sample & 0xff;
             b[1]=(sample >> 8)&0xff;
             b[2]=sample >> 16;
@@ -93,7 +93,7 @@ char* wave_generate_la(WAVEFORMATEX* wfx, double duration, DWORD* size, BOOL iee
                     b+=4;
                 }
             } else {
-                signed int sample=(signed int)((double)2147483647.5*y-0.5);
+                signed int sample=2147483647.5*y-0.5;
                 b[0]=sample & 0xff;
                 b[1]=(sample >> 8)&0xff;
                 b[2]=(sample >> 16)&0xff;
