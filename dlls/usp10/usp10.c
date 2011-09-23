@@ -991,7 +991,7 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
             WORD *glyphs = heap_alloc_zero(sizeof(WORD) * numGlyphs);
             WORD *pwLogClust = heap_alloc_zero(sizeof(WORD) * cChar);
             int *piAdvance = heap_alloc_zero(sizeof(int) * numGlyphs);
-            SCRIPT_VISATTR *psva = heap_alloc_zero(sizeof(SCRIPT_VISATTR) * cChar);
+            SCRIPT_VISATTR *psva = heap_alloc_zero(sizeof(SCRIPT_VISATTR) * numGlyphs);
             GOFFSET *pGoffset = heap_alloc_zero(sizeof(GOFFSET) * numGlyphs);
             ABC *abc = heap_alloc_zero(sizeof(ABC));
             int numGlyphsReturned;
