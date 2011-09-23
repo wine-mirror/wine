@@ -725,7 +725,7 @@ static UINT get_tablecolumns( MSIDATABASE *db, LPCWSTR szTableName, MSICOLUMNINF
 }
 
 UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
-                       MSICONDITION persistent, MSITABLE **table_ret)
+                       MSICONDITION persistent )
 {
     enum StringPersistence string_persistence = (persistent) ? StringPersistent : StringNonPersistent;
     UINT r, nField;
@@ -870,10 +870,7 @@ err:
         tv->ops->delete( tv );
 
     if (r == ERROR_SUCCESS)
-    {
         list_add_head( &db->tables, &table->entry );
-        *table_ret = table;
-    }
     else
         free_table( table );
 

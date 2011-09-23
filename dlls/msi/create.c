@@ -61,7 +61,6 @@ static UINT CREATE_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT 
 static UINT CREATE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 {
     MSICREATEVIEW *cv = (MSICREATEVIEW*)view;
-    MSITABLE *table;
     BOOL persist = (cv->bIsTemp) ? MSICONDITION_FALSE : MSICONDITION_TRUE;
 
     TRACE("%p Table %s (%s)\n", cv, debugstr_w(cv->name),
@@ -70,7 +69,7 @@ static UINT CREATE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
     if (cv->bIsTemp && !cv->hold)
         return ERROR_SUCCESS;
 
-    return msi_create_table( cv->db, cv->name, cv->col_info, persist, &table);
+    return msi_create_table( cv->db, cv->name, cv->col_info, persist );
 }
 
 static UINT CREATE_close( struct tagMSIVIEW *view )
