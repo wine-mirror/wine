@@ -47,9 +47,9 @@
 #include "devpkey.h"
 #include "dshow.h"
 #include "dsound.h"
-#include "endpointvolume.h"
 
 #include "initguid.h"
+#include "endpointvolume.h"
 #include "audiopolicy.h"
 #include "audioclient.h"
 

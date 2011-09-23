@@ -1775,4 +1775,29 @@ DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     return MMSYSERR_NOTSUPPORTED;
 }
 
-/*-----------------------------------------------------------------------*/
+/**************************************************************************
+ * 				DriverProc (WINEOSS.1)
+ */
+LRESULT CALLBACK OSS_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
+                                LPARAM dwParam1, LPARAM dwParam2)
+{
+     TRACE("(%08lX, %p, %08X, %08lX, %08lX)\n",
+           dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+
+    switch(wMsg) {
+    case DRV_LOAD:
+    case DRV_FREE:
+    case DRV_OPEN:
+    case DRV_CLOSE:
+    case DRV_ENABLE:
+    case DRV_DISABLE:
+    case DRV_QUERYCONFIGURE:
+    case DRV_CONFIGURE:
+        return 1;
+    case DRV_INSTALL:
+    case DRV_REMOVE:
+        return DRV_SUCCESS;
+    default:
+	return 0;
+    }
+}
