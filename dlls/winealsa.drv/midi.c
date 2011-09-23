@@ -51,8 +51,9 @@
 #include "mmreg.h"
 #include "dsound.h"
 #include "dsdriver.h"
-#include "alsa.h"
 #include "wine/debug.h"
+
+#include <alsa/asoundlib.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
@@ -1390,4 +1391,29 @@ DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     return MMSYSERR_NOTSUPPORTED;
 }
 
-/*-----------------------------------------------------------------------*/
+/**************************************************************************
+ * 				DriverProc (WINEALSA.@)
+ */
+LRESULT CALLBACK ALSA_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
+                                 LPARAM dwParam1, LPARAM dwParam2)
+{
+/* EPP     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",  */
+/* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */
+
+    switch(wMsg) {
+    case DRV_LOAD:
+    case DRV_FREE:
+    case DRV_OPEN:
+    case DRV_CLOSE:
+    case DRV_ENABLE:
+    case DRV_DISABLE:
+    case DRV_QUERYCONFIGURE:
+    case DRV_CONFIGURE:
+        return 1;
+    case DRV_INSTALL:
+    case DRV_REMOVE:
+        return DRV_SUCCESS;
+    default:
+	return 0;
+    }
+}

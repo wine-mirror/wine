@@ -37,9 +37,9 @@
 #include "devpkey.h"
 #include "dshow.h"
 #include "dsound.h"
-#include "endpointvolume.h"
 
 #include "initguid.h"
+#include "endpointvolume.h"
 #include "audioclient.h"
 #include "audiopolicy.h"
 #include "dsdriver.h"
@@ -158,7 +158,6 @@ static const IAudioStreamVolumeVtbl AudioStreamVolume_Vtbl;
 static const IChannelAudioVolumeVtbl ChannelAudioVolume_Vtbl;
 static const IAudioSessionManager2Vtbl AudioSessionManager2_Vtbl;
 
-int wine_snd_pcm_recover(snd_pcm_t *pcm, int err, int silent);
 static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client);
 
 static inline ACImpl *impl_from_IAudioClient(IAudioClient *iface)
@@ -235,6 +234,49 @@ enum DriverPriority {
 int WINAPI AUDDRV_GetPriority(void)
 {
     return Priority_Neutral;
+}
+
+/**************************************************************************
+ * 			wine_snd_pcm_recover		[internal]
+ *
+ * Code slightly modified from alsa-lib v1.0.23 snd_pcm_recover implementation.
+ * used to recover from XRUN errors (buffer underflow/overflow)
+ */
+static int wine_snd_pcm_recover(snd_pcm_t *pcm, int err, int silent)
+{
+    if (err > 0)
+        err = -err;
+    if (err == -EINTR)	/* nothing to do, continue */
+        return 0;
+    if (err == -EPIPE) {
+        const char *s;
+        if (snd_pcm_stream(pcm) == SND_PCM_STREAM_PLAYBACK)
+            s = "underrun";
+        else
+            s = "overrun";
+        if (!silent)
+            ERR("%s occurred\n", s);
+        err = snd_pcm_prepare(pcm);
+        if (err < 0) {
+            ERR("cannot recover from %s, prepare failed: %s\n", s, snd_strerror(err));
+            return err;
+        }
+        return 0;
+    }
+    if (err == -ESTRPIPE) {
+        while ((err = snd_pcm_resume(pcm)) == -EAGAIN)
+            /* wait until suspend flag is released */
+            poll(NULL, 0, 1000);
+        if (err < 0) {
+            err = snd_pcm_prepare(pcm);
+            if (err < 0) {
+                ERR("cannot recover from suspend, prepare failed: %s\n", snd_strerror(err));
+                return err;
+            }
+        }
+        return 0;
+    }
+    return err;
 }
 
 static BOOL alsa_try_open(const char *devnode, snd_pcm_stream_t stream)
