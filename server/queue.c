@@ -957,11 +957,8 @@ static void msg_queue_destroy( struct object *obj )
         free( timer );
     }
     if (queue->timeout) remove_timeout_user( queue->timeout );
-    if (queue->input)
-    {
-        queue->input->cursor_count -= queue->cursor_count;
-        release_object( queue->input );
-    }
+    queue->input->cursor_count -= queue->cursor_count;
+    release_object( queue->input );
     if (queue->hooks) release_object( queue->hooks );
     if (queue->fd) release_object( queue->fd );
 }
