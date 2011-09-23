@@ -2392,13 +2392,13 @@ ULONG __cdecl wined3d_rendertarget_view_incref(struct wined3d_rendertarget_view 
 
 HRESULT __cdecl wined3d_shader_create_gs(struct wined3d_device *device, const DWORD *byte_code,
         const struct wined3d_shader_signature *output_signature, void *parent,
-        const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader);
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader, unsigned int max_version);
 HRESULT __cdecl wined3d_shader_create_ps(struct wined3d_device *device, const DWORD *byte_code,
         const struct wined3d_shader_signature *output_signature, void *parent,
-        const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader);
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader, unsigned int max_version);
 HRESULT __cdecl wined3d_shader_create_vs(struct wined3d_device *device, const DWORD *byte_code,
         const struct wined3d_shader_signature *output_signature, void *parent,
-        const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader);
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_shader **shader, unsigned int max_version);
 ULONG __cdecl wined3d_shader_decref(struct wined3d_shader *shader);
 HRESULT __cdecl wined3d_shader_get_byte_code(const struct wined3d_shader *shader,
         void *byte_code, UINT *byte_code_size);

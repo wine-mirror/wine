@@ -262,7 +262,7 @@ HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d1
     }
 
     hr = wined3d_shader_create_vs(device->wined3d_device, shader_info.shader_code,
-            &shader->output_signature, shader, &d3d10_vertex_shader_wined3d_parent_ops, &shader->wined3d_shader);
+            &shader->output_signature, shader, &d3d10_vertex_shader_wined3d_parent_ops, &shader->wined3d_shader, 4);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d vertex shader, hr %#x.\n", hr);
@@ -408,7 +408,7 @@ HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader, struct 
     }
 
     hr = wined3d_shader_create_gs(device->wined3d_device, shader_info.shader_code,
-            &shader->output_signature, shader, &d3d10_geometry_shader_wined3d_parent_ops, &shader->wined3d_shader);
+            &shader->output_signature, shader, &d3d10_geometry_shader_wined3d_parent_ops, &shader->wined3d_shader, 4);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d vertex shader, hr %#x.\n", hr);
@@ -548,7 +548,7 @@ HRESULT d3d10_pixel_shader_init(struct d3d10_pixel_shader *shader, struct d3d10_
     }
 
     hr = wined3d_shader_create_ps(device->wined3d_device, shader_info.shader_code,
-            &shader->output_signature, shader, &d3d10_pixel_shader_wined3d_parent_ops, &shader->wined3d_shader);
+            &shader->output_signature, shader, &d3d10_pixel_shader_wined3d_parent_ops, &shader->wined3d_shader, 4);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d pixel shader, hr %#x.\n", hr);
