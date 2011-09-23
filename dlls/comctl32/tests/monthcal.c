@@ -1317,7 +1317,6 @@ static void test_monthrange(void)
 
     res = SendMessage(hwnd, MCM_GETMONTHRANGE, GMR_VISIBLE, (LPARAM)st_visible);
     expect(2, res);
-
     expect(2000, st_visible[0].wYear);
     expect(11, st_visible[0].wMonth);
     expect(1, st_visible[0].wDay);
@@ -1326,9 +1325,7 @@ static void test_monthrange(void)
     expect(31, st_visible[1].wDay);
 
     res = SendMessage(hwnd, MCM_GETMONTHRANGE, GMR_DAYSTATE, (LPARAM)st_daystate);
-    todo_wine {
-        expect(4, res);
-    }
+    expect(4, res);
     expect(2000, st_daystate[0].wYear);
     expect(10, st_daystate[0].wMonth);
     expect(29, st_daystate[0].wDay);
@@ -1337,6 +1334,13 @@ static void test_monthrange(void)
     expect(6, st_daystate[1].wDay);
 
     ok_sequence(sequences, MONTHCAL_SEQ_INDEX, monthcal_monthrange_seq, "monthcal monthrange", FALSE);
+
+    /* with null date array parameter */
+    res = SendMessage(hwnd, MCM_GETMONTHRANGE, GMR_VISIBLE, 0);
+    expect(2, res);
+
+    res = SendMessage(hwnd, MCM_GETMONTHRANGE, GMR_DAYSTATE, 0);
+    expect(4, res);
 
     /* resize control to display single Calendar */
     MoveWindow(hwnd, 0, 0, r.right, r.bottom, FALSE);

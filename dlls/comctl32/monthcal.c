@@ -1330,42 +1330,51 @@ MONTHCAL_SetFirstDayOfWeek(MONTHCAL_INFO *infoPtr, INT day)
 static LRESULT
 MONTHCAL_GetMonthRange(const MONTHCAL_INFO *infoPtr, DWORD flag, SYSTEMTIME *st)
 {
+  INT range;
+
   TRACE("flag=%d, st=%p\n", flag, st);
 
-  if(st)
+  switch (flag) {
+  case GMR_VISIBLE:
   {
-    switch (flag) {
-    case GMR_VISIBLE:
-    {
-        st[0] = infoPtr->calendars[0].month;
-        st[1] = infoPtr->calendars[MONTHCAL_GetCalCount(infoPtr)-1].month;
+      if (st)
+      {
+          st[0] = infoPtr->calendars[0].month;
+          st[1] = infoPtr->calendars[MONTHCAL_GetCalCount(infoPtr)-1].month;
 
-        if (st[0].wMonth == min_allowed_date.wMonth &&
-            st[0].wYear  == min_allowed_date.wYear)
-        {
-            st[0].wDay = min_allowed_date.wDay;
-        }
-        else
-            st[0].wDay = 1;
-        MONTHCAL_CalculateDayOfWeek(&st[0], TRUE);
+          if (st[0].wMonth == min_allowed_date.wMonth &&
+              st[0].wYear  == min_allowed_date.wYear)
+          {
+              st[0].wDay = min_allowed_date.wDay;
+          }
+          else
+              st[0].wDay = 1;
+          MONTHCAL_CalculateDayOfWeek(&st[0], TRUE);
 
-        st[1].wDay = MONTHCAL_MonthLength(st[1].wMonth, st[1].wYear);
-        MONTHCAL_CalculateDayOfWeek(&st[1], TRUE);
+          st[1].wDay = MONTHCAL_MonthLength(st[1].wMonth, st[1].wYear);
+          MONTHCAL_CalculateDayOfWeek(&st[1], TRUE);
+      }
 
-        return MONTHCAL_GetCalCount(infoPtr);
-    }
-    case GMR_DAYSTATE:
-    {
-        MONTHCAL_GetMinDate(infoPtr, &st[0]);
-        MONTHCAL_GetMaxDate(infoPtr, &st[1]);
-        break;
-    }
-    default:
-        WARN("Unknown flag value, got %d\n", flag);
-    }
+      range = MONTHCAL_GetCalCount(infoPtr);
+      break;
+  }
+  case GMR_DAYSTATE:
+  {
+      if (st)
+      {
+          MONTHCAL_GetMinDate(infoPtr, &st[0]);
+          MONTHCAL_GetMaxDate(infoPtr, &st[1]);
+      }
+      /* include two partially visible months */
+      range = MONTHCAL_GetCalCount(infoPtr) + 2;
+      break;
+  }
+  default:
+      WARN("Unknown flag value, got %d\n", flag);
+      range = 0;
   }
 
-  return infoPtr->monthRange;
+  return range;
 }
 
 
