@@ -3306,6 +3306,11 @@ static void setup_fpu(void)
     __asm__ volatile ("fnstcw %0" : "=m" (cw));
     cw = (cw & ~0xf3f) | 0x3f;
     __asm__ volatile ("fldcw %0" : : "m" (cw));
+#elif defined(__i386__) && defined(_MSC_VER)
+    WORD cw;
+    __asm fnstcw cw;
+    cw = (cw & ~0xf3f) | 0x3f;
+    __asm fldcw cw;
 #else
     FIXME("FPU setup not implemented for this platform.\n");
 #endif

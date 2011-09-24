@@ -2913,8 +2913,13 @@ cleanup:
 static inline void set_fpu_cw(WORD cw)
 {
 #if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+#define D3D9_TEST_SET_FPU_CW 1
     __asm__ volatile ("fnclex");
     __asm__ volatile ("fldcw %0" : : "m" (cw));
+#elif defined(__i386__) && defined(_MSC_VER)
+#define D3D9_TEST_SET_FPU_CW 1
+    __asm fnclex;
+    __asm fldcw cw;
 #endif
 }
 
@@ -2922,14 +2927,18 @@ static inline WORD get_fpu_cw(void)
 {
     WORD cw = 0;
 #if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+#define D3D9_TEST_GET_FPU_CW 1
     __asm__ volatile ("fnstcw %0" : "=m" (cw));
+#elif defined(__i386__) && defined(_MSC_VER)
+#define D3D9_TEST_GET_FPU_CW 1
+    __asm fnstcw cw;
 #endif
     return cw;
 }
 
 static void test_fpu_setup(void)
 {
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+#if defined(D3D9_TEST_SET_FPU_CW) && defined(D3D9_TEST_GET_FPU_CW)
     D3DPRESENT_PARAMETERS present_parameters;
     IDirect3DDevice9 *device;
     HWND window = NULL;
