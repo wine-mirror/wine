@@ -113,7 +113,6 @@ static HDDEDATA	CALLBACK WDML_InvokeCallback16(DWORD pfn16, UINT uType, UINT uFm
             map3216_conv_context(&cc16, (const CONVCONTEXT*)dwData1);
             d1 = MapLS(&cc16);
         }
-        else
         break;
     default:
         d1 = dwData1;
