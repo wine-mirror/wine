@@ -84,6 +84,7 @@ HRESULT WINAPI D3D10CreateDevice(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE driver
 
             case D3D10_DRIVER_TYPE_NULL:
                 FIXME("NULL device not implemented, falling back to refrast\n");
+                /* fall through, for now */
             case D3D10_DRIVER_TYPE_REFERENCE:
             {
                 HMODULE refrast = LoadLibraryA("d3d10ref.dll");
