@@ -176,7 +176,7 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where, WCHAR **end) {
 /****************************************************************************
  * WCMD_fgets
  *
- * Get one line from a batch file. We can't use the native f* functions because
+ * Get one line from a batch file/console. We can't use the native f* functions because
  * of the filename syntax differences between DOS and Unix. Also need to lose
  * the LF (or CRLF) from the line.
  */
