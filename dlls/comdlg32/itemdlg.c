@@ -647,6 +647,7 @@ static void customctrl_resize(FileDialogImpl *This, customctrl *ctrl)
         GetWindowRect(ctrl->hwnd, &rc);
         SetWindowPos(ctrl->wrapper_hwnd, NULL, 0, 0, rc.right-rc.left, rc.bottom-rc.top,
                      SWP_NOZORDER|SWP_NOMOVE|SWP_NOZORDER);
+        break;
     case IDLG_CCTRL_RADIOBUTTONLIST:
     case IDLG_CCTRL_EDITBOX:
     case IDLG_CCTRL_SEPARATOR:
