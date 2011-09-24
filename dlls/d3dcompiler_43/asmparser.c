@@ -1327,12 +1327,19 @@ static void gen_oldvs_output(struct bwriter_shader *shader) {
 static void gen_oldps_input(struct bwriter_shader *shader, DWORD texcoords) {
     switch(texcoords) {
         case 8: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 7, 0, FALSE, T7_VARYING, BWRITERSP_WRITEMASK_ALL, TRUE);
+            /* fall through */
         case 7: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 6, 0, FALSE, T6_VARYING, BWRITERSP_WRITEMASK_ALL, TRUE);
+            /* fall through */
         case 6: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 5, 0, FALSE, T5_VARYING, BWRITERSP_WRITEMASK_ALL, TRUE);
+            /* fall through */
         case 5: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 4, 0, FALSE, T4_VARYING, BWRITERSP_WRITEMASK_ALL, TRUE);
+            /* fall through */
         case 4: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 3, 0, FALSE, T3_VARYING, BWRITERSP_WRITEMASK_ALL, TRUE);
+            /* fall through */
         case 3: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 2, 0, FALSE, T2_VARYING, BWRITERSP_WRITEMASK_ALL, TRUE);
+            /* fall through */
         case 2: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 1, 0, FALSE, T1_VARYING, BWRITERSP_WRITEMASK_ALL, TRUE);
+            /* fall through */
         case 1: record_declaration(shader, BWRITERDECLUSAGE_TEXCOORD, 0, 0, FALSE, T0_VARYING, BWRITERSP_WRITEMASK_ALL, TRUE);
     };
     record_declaration(shader, BWRITERDECLUSAGE_COLOR, 0, 0, FALSE, C0_VARYING, BWRITERSP_WRITEMASK_ALL, TRUE);
