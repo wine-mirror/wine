@@ -127,7 +127,7 @@ static HRESULT WINAPI IDirectPlay8PeerImpl_EnumServiceProviders(IDirectPlay8Peer
         return DPNERR_BUFFERTOOSMALL;
     }
 
-    pSPInfoBuffer->pwszName = (LPWSTR)(pSPInfoBuffer + sizeof(DPN_SERVICE_PROVIDER_INFO));
+    pSPInfoBuffer->pwszName = (LPWSTR)(pSPInfoBuffer + 1);
 
     if(!pguidServiceProvider)
     {
