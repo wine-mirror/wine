@@ -850,6 +850,12 @@ static HRESULT WINAPI PrimaryBufferImpl_Unlock(
 		return DSERR_PRIOLEVELNEEDED;
 	}
 
+    if((p1 && ((BYTE*)p1 < device->buffer ||
+                    (BYTE*)p1 >= device->buffer + device->buflen)) ||
+            (p2 && ((BYTE*)p2 < device->buffer ||
+                    (BYTE*)p2 >= device->buffer + device->buflen)))
+        return DSERR_INVALIDPARAM;
+
 	return DS_OK;
 }
 
