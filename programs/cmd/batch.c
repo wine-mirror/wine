@@ -585,7 +585,7 @@ void WCMD_call (WCHAR *command) {
       SetFilePointer(context -> h, li.u.LowPart,
                      &li.u.HighPart, FILE_BEGIN);
     } else {
-      WCMD_output_asis( WCMD_LoadMessage(WCMD_CALLINSCRIPT));
+      WCMD_output_asis_stderr(WCMD_LoadMessage(WCMD_CALLINSCRIPT));
     }
   }
 }

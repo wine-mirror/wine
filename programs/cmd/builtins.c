@@ -524,7 +524,7 @@ void WCMD_create_dir (WCHAR *command) {
     WCHAR *argN = command;
 
     if (param1[0] == 0x00) {
-        WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
+        WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
         return;
     }
     /* Loop through all args */
@@ -575,7 +575,7 @@ static void WCMD_delete_parse_attributes(DWORD *wantSet, DWORD *wantClear) {
             case 'S': mask = FILE_ATTRIBUTE_SYSTEM;   break;
             case 'A': mask = FILE_ATTRIBUTE_ARCHIVE;  break;
             default:
-                WCMD_output (WCMD_LoadMessage(WCMD_SYNTAXERR));
+                WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
             }
             if (negate)
                 *wantClear |= mask;
@@ -843,14 +843,14 @@ BOOL WCMD_delete (WCHAR *command) {
         found = WCMD_delete_one(thisArg);
         if (!found) {
             errorlevel = 1;
-            WCMD_output (WCMD_LoadMessage(WCMD_FILENOTFOUND), thisArg);
+            WCMD_output_stderr(WCMD_LoadMessage(WCMD_FILENOTFOUND), thisArg);
         }
         foundAny |= found;
     }
 
     /* Handle no valid args */
     if (!argsProcessed)
-        WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
+        WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
 
     return foundAny;
 }
@@ -1380,7 +1380,7 @@ void WCMD_goto (CMD_LIST **cmdList) {
     static const WCHAR eofW[] = {':','e','o','f','\0'};
 
     if (param1[0] == 0x00) {
-      WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
+      WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
       return;
     }
 
@@ -1408,7 +1408,7 @@ void WCMD_goto (CMD_LIST **cmdList) {
         if (lstrcmpiW (current, paramStart) == 0) return;
       }
     }
-    WCMD_output (WCMD_LoadMessage(WCMD_NOTARGET));
+    WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOTARGET));
   }
   return;
 }
@@ -1568,7 +1568,7 @@ void WCMD_move (void) {
   WCHAR            ext[MAX_PATH];
 
   if (param1[0] == 0x00) {
-    WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
+    WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
     return;
   }
 
@@ -1760,7 +1760,7 @@ void WCMD_remove_dir (WCHAR *command) {
 
   /* Handle no valid args */
   if (argsProcessed == 0) {
-    WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
+    WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
     return;
   }
 
@@ -1789,7 +1789,7 @@ void WCMD_rename (void) {
 
   /* Must be at least two args */
   if (param1[0] == 0x00 || param2[0] == 0x00) {
-    WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
+    WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
     errorlevel = 1;
     return;
   }
@@ -2256,7 +2256,7 @@ void WCMD_setshow_env (WCHAR *s) {
 
     /* If no parameter, or no '=' sign, return an error */
     if (!(*s) || ((p = strchrW (s, '=')) == NULL )) {
-      WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
+      WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
       return;
     }
 
@@ -2284,7 +2284,7 @@ void WCMD_setshow_env (WCHAR *s) {
     if (p == NULL) {
       env = GetEnvironmentStringsW();
       if (WCMD_setshow_sortenv( env, s ) == 0) {
-        WCMD_output (WCMD_LoadMessage(WCMD_MISSINGENV), s);
+        WCMD_output_stderr(WCMD_LoadMessage(WCMD_MISSINGENV), s);
         errorlevel = 1;
       }
       return;
@@ -2321,7 +2321,7 @@ void WCMD_setshow_path (const WCHAR *command) {
       WCMD_output_asis ( newline);
     }
     else {
-      WCMD_output (WCMD_LoadMessage(WCMD_NOPATH));
+      WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOPATH));
     }
   }
   else {
@@ -2445,7 +2445,7 @@ void WCMD_type (WCHAR *command) {
   BOOL  writeHeaders  = FALSE;
 
   if (param1[0] == 0x00) {
-    WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
+    WCMD_output_stderr(WCMD_LoadMessage(WCMD_NOARG));
     return;
   }
 
@@ -2467,7 +2467,7 @@ void WCMD_type (WCHAR *command) {
 		FILE_ATTRIBUTE_NORMAL, NULL);
     if (h == INVALID_HANDLE_VALUE) {
       WCMD_print_error ();
-      WCMD_output (WCMD_LoadMessage(WCMD_READFAIL), thisArg);
+      WCMD_output(WCMD_LoadMessage(WCMD_READFAIL), thisArg); /* should be _stderr */
       errorlevel = 1;
     } else {
       if (writeHeaders) {
@@ -2570,7 +2570,7 @@ void WCMD_more (WCHAR *command) {
 		FILE_ATTRIBUTE_NORMAL, NULL);
       if (h == INVALID_HANDLE_VALUE) {
         WCMD_print_error ();
-        WCMD_output (WCMD_LoadMessage(WCMD_READFAIL), thisArg);
+        WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), thisArg);
         errorlevel = 1;
       } else {
         ULONG64 curPos  = 0;
@@ -2626,7 +2626,7 @@ void WCMD_verify (const WCHAR *command) {
     verify_mode = FALSE;
     return;
   }
-  else WCMD_output (WCMD_LoadMessage(WCMD_VERIFYERR));
+  else WCMD_output_stderr(WCMD_LoadMessage(WCMD_VERIFYERR));
 }
 
 /****************************************************************************
@@ -2667,7 +2667,7 @@ int WCMD_volume(BOOL set_label, const WCHAR *path)
   else {
     static const WCHAR fmt[] = {'%','s','\\','\0'};
     if ((path[1] != ':') || (strlenW(path) != 2)) {
-      WCMD_output (WCMD_LoadMessage(WCMD_SYNTAXERR));
+      WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
       return 0;
     }
     wsprintfW (curdir, fmt, path);
@@ -2916,7 +2916,7 @@ void WCMD_color (void) {
   HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
   if (param1[0] != 0x00 && strlenW(param1) > 2) {
-    WCMD_output (WCMD_LoadMessage(WCMD_ARGERR));
+    WCMD_output_stderr(WCMD_LoadMessage(WCMD_ARGERR));
     return;
   }
 
