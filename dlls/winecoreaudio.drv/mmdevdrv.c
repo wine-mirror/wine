@@ -700,7 +700,7 @@ static DWORD get_channel_mask(unsigned int channels)
     case 7:
         return KSAUDIO_SPEAKER_5POINT1 | SPEAKER_BACK_CENTER;
     case 8:
-        return KSAUDIO_SPEAKER_7POINT1; /* not 7POINT1_SURROUND */
+        return KSAUDIO_SPEAKER_7POINT1_SURROUND; /* Vista deprecates 7POINT1 */
     }
     FIXME("Unknown speaker configuration: %u\n", channels);
     return 0;
