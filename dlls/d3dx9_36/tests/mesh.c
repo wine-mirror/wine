@@ -5949,6 +5949,7 @@ static void test_convert_point_reps_to_adjacency(void)
         }
 
         HeapFree(GetProcessHeap(), 0, adjacency);
+        adjacency = NULL;
         if (i != 0) /* First mesh will be freed during cleanup */
             mesh->lpVtbl->Release(mesh);
     }
