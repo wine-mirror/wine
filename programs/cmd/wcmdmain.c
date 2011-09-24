@@ -174,7 +174,7 @@ void WCMD_output (const WCHAR *format, ...) {
   va_start(ap,format);
   ret = vsnprintfW(string, sizeof(string)/sizeof(WCHAR), format, ap);
   if( ret >= (sizeof(string)/sizeof(WCHAR))) {
-       WINE_ERR("Output truncated in WCMD_output\n" );
+       WINE_ERR("Output truncated\n" );
        ret = (sizeof(string)/sizeof(WCHAR)) - 1;
        string[ret] = '\0';
   }
@@ -182,6 +182,27 @@ void WCMD_output (const WCHAR *format, ...) {
   WCMD_output_asis_len(string, ret, GetStdHandle(STD_OUTPUT_HANDLE));
 }
 
+/*******************************************************************
+ * WCMD_output_stderr - send output to current standard error device.
+ *
+ */
+
+void WCMD_output_stderr (const WCHAR *format, ...) {
+
+  va_list ap;
+  WCHAR string[1024];
+  int ret;
+
+  va_start(ap,format);
+  ret = vsnprintfW(string, sizeof(string)/sizeof(WCHAR), format, ap);
+  if( ret >= (sizeof(string)/sizeof(WCHAR))) {
+       WINE_ERR("Output truncated\n" );
+       ret = (sizeof(string)/sizeof(WCHAR)) - 1;
+       string[ret] = '\0';
+  }
+  va_end(ap);
+  WCMD_output_asis_len(string, ret, GetStdHandle(STD_ERROR_HANDLE));
+}
 
 static int line_count;
 static int max_height;

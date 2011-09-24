@@ -73,6 +73,7 @@ void WCMD_leave_paged_mode(void);
 void WCMD_more (WCHAR *);
 void WCMD_move (void);
 void WCMD_output (const WCHAR *format, ...);
+void WCMD_output_stderr (const WCHAR *format, ...);
 void WCMD_output_asis (const WCHAR *message);
 void WCMD_output_asis_stderr (const WCHAR *message);
 void WCMD_pause (void);
