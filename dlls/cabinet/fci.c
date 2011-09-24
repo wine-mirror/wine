@@ -466,10 +466,13 @@ static cab_ULONG fci_get_checksum( const void *pv, UINT cb, cab_ULONG seed )
   switch (cb % 4) {
     case 3:
       ul |= (((ULONG)(*pb++)) << 16);
+      /* fall through */
     case 2:
       ul |= (((ULONG)(*pb++)) <<  8);
+      /* fall through */
     case 1:
       ul |= *pb;
+      /* fall through */
     default:
       break;
   }

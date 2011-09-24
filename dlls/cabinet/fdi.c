@@ -360,7 +360,9 @@ static cab_ULONG checksum(const cab_UBYTE *data, cab_UWORD bytes, cab_ULONG csum
 
   switch (bytes & 3) {
   case 3: ul |= *data++ << 16;
+  /* fall through */
   case 2: ul |= *data++ <<  8;
+  /* fall through */
   case 1: ul |= *data;
   }
   csum ^= ul;
