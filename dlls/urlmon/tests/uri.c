@@ -4291,6 +4291,31 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_JAVASCRIPT,S_OK},
             {URLZONE_INVALID,E_NOTIMPL}
         }
+    },
+    {   "*://google.com", 0, S_OK, FALSE,
+        {
+            {"*:google.com/",S_OK,FALSE},
+            {"google.com",S_OK},
+            {"*:google.com/",S_OK,FALSE},
+            {"google.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"google.com",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/",S_OK,FALSE},
+            {"/",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"*://google.com",S_OK,FALSE},
+            {"*",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_DNS,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_WILDCARD,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
     }
 };
 

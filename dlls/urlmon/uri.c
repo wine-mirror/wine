@@ -155,6 +155,7 @@ typedef struct {
     BOOL            has_implicit_scheme;
     BOOL            has_implicit_ip;
     UINT            implicit_ipv4;
+    BOOL            must_have_path;
 
     const WCHAR     *scheme;
     DWORD           scheme_len;
@@ -1938,10 +1939,7 @@ static BOOL parse_path_hierarchical(const WCHAR **ptr, parse_data *data, DWORD f
     const BOOL is_file = data->scheme_type == URL_SCHEME_FILE;
 
     if(is_path_delim(**ptr)) {
-        if(data->scheme_type == URL_SCHEME_WILDCARD) {
-            /* Wildcard schemes don't get a '/' attached if their path is
-             * empty.
-             */
+        if(data->scheme_type == URL_SCHEME_WILDCARD && !data->must_have_path) {
             data->path = NULL;
             data->path_len = 0;
         } else if(!(flags & Uri_CREATE_NO_CANONICALIZE)) {
@@ -2068,6 +2066,8 @@ static BOOL parse_path_opaque(const WCHAR **ptr, parse_data *data, DWORD flags) 
 static BOOL parse_hierpart(const WCHAR **ptr, parse_data *data, DWORD flags) {
     const WCHAR *start = *ptr;
 
+    data->must_have_path = FALSE;
+
     /* For javascript: URIs, simply set everything as a path */
     if(data->scheme_type == URL_SCHEME_JAVASCRIPT) {
         data->path = *ptr;
@@ -2086,6 +2086,13 @@ static BOOL parse_hierpart(const WCHAR **ptr, parse_data *data, DWORD flags) {
            !(flags & Uri_CREATE_NO_CRACK_UNKNOWN_SCHEMES)) {
             TRACE("(%p %p %x): Treating URI as an hierarchical URI.\n", ptr, data, flags);
             data->is_opaque = FALSE;
+
+            if(data->scheme_type == URL_SCHEME_WILDCARD && !data->has_implicit_scheme) {
+                if(**ptr == '/' && *(*ptr+1) == '/') {
+                    data->must_have_path = TRUE;
+                    *ptr += 2;
+                }
+            }
 
             /* TODO: Handle hierarchical URI's, parse authority then parse the path. */
             if(!parse_authority(ptr, data, flags))
@@ -3184,6 +3191,9 @@ static BOOL canonicalize_hierpart(const parse_data *data, Uri *uri, DWORD flags,
          */
         if((data->is_relative && (data->host || data->has_port)) ||
            (!data->is_relative && data->scheme_type != URL_SCHEME_WILDCARD)) {
+            if(data->scheme_type == URL_SCHEME_WILDCARD)
+                FIXME("Here\n");
+
             if(!computeOnly) {
                 INT pos = uri->canon_len;
 
