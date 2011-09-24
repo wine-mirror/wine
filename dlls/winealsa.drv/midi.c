@@ -50,7 +50,6 @@
 #include "mmddk.h"
 #include "mmreg.h"
 #include "dsound.h"
-#include "dsdriver.h"
 #include "wine/debug.h"
 
 #include <alsa/asoundlib.h>

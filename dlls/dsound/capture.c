@@ -38,7 +38,6 @@
 #include "winnls.h"
 #include "wine/debug.h"
 #include "dsound.h"
-#include "dsdriver.h"
 #include "dsound_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
@@ -89,8 +88,6 @@ static ULONG WINAPI IDirectSoundCaptureNotifyImpl_Release(LPDIRECTSOUNDNOTIFY if
     TRACE("(%p) ref was %d\n", This, ref + 1);
 
     if (!ref) {
-        if (This->dscb->hwnotify)
-            IDsDriverNotify_Release(This->dscb->hwnotify);
 	This->dscb->notify=NULL;
 	IDirectSoundCaptureBuffer_Release((LPDIRECTSOUNDCAPTUREBUFFER)This->dscb);
 	HeapFree(GetProcessHeap(),0,This);
@@ -119,13 +116,7 @@ static HRESULT WINAPI IDirectSoundCaptureNotifyImpl_SetNotificationPositions(
 	    notify[i].dwOffset,notify[i].hEventNotify);
     }
 
-    if (This->dscb->hwnotify) {
-	HRESULT hres;
-	hres = IDsDriverNotify_SetNotificationPositions(This->dscb->hwnotify, howmuch, notify);
-	if (hres != DS_OK)
-	    WARN("IDsDriverNotify_SetNotificationPositions failed\n");
-	return hres;
-    } else if (howmuch > 0) {
+    if (howmuch > 0) {
 	/* Make an internal copy of the caller-supplied array.
 	 * Replace the existing copy if one is already present. */
 	if (This->dscb->notifies)
@@ -202,6 +193,7 @@ IDirectSoundCaptureBufferImpl_QueryInterface(
 {
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     HRESULT hres;
+
     TRACE( "(%p,%s,%p)\n", This, debugstr_guid(riid), ppobj );
 
     if (ppobj == NULL) {
@@ -212,27 +204,15 @@ IDirectSoundCaptureBufferImpl_QueryInterface(
     *ppobj = NULL;
 
     if ( IsEqualGUID( &IID_IDirectSoundNotify, riid ) ) {
-	if (!This->notify)
+	if (!This->notify){
 	    hres = IDirectSoundCaptureNotifyImpl_Create(This, &This->notify);
-	if (This->notify) {
-	    IDirectSoundNotify_AddRef((LPDIRECTSOUNDNOTIFY)This->notify);
-	    if (This->device->hwbuf && !This->hwnotify) {
-		hres = IDsCaptureDriverBuffer_QueryInterface(This->device->hwbuf,
-		    &IID_IDsDriverNotify, (LPVOID*)&(This->hwnotify));
-		if (hres != DS_OK) {
-		    WARN("IDsCaptureDriverBuffer_QueryInterface failed\n");
-		    IDirectSoundNotify_Release((LPDIRECTSOUNDNOTIFY)This->notify);
-		    *ppobj = 0;
-		    return hres;
-	        }
-	    }
-
-            *ppobj = This->notify;
-	    return DS_OK;
+	    if(FAILED(hres))
+		return hres;
 	}
 
-	WARN("IID_IDirectSoundNotify\n");
-	return E_FAIL;
+        IDirectSoundNotify_AddRef((LPDIRECTSOUNDNOTIFY)This->notify);
+        *ppobj = This->notify;
+        return DS_OK;
     }
 
     if ( IsEqualGUID( &IID_IDirectSoundCaptureBuffer, riid ) ||
@@ -277,20 +257,11 @@ IDirectSoundCaptureBufferImpl_Release( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
 	    This->device->hwi = 0;
 	}
 
-	if (This->device->hwbuf)
-	    IDsCaptureDriverBuffer_Release(This->device->hwbuf);
-
         /* remove from DirectSoundCaptureDevice */
         This->device->capture_buffer = NULL;
 
         if (This->notify)
 	    IDirectSoundNotify_Release((LPDIRECTSOUNDNOTIFY)This->notify);
-
-        /* If driver manages its own buffer, IDsCaptureDriverBuffer_Release
-           should have freed the buffer. Prevent freeing it again in
-           IDirectSoundCaptureBufferImpl_Create */
-        if (!(This->device->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY))
-	    This->device->buffer = NULL;
 
 	HeapFree(GetProcessHeap(), 0, This->notifies);
         HeapFree( GetProcessHeap(), 0, This );
@@ -346,11 +317,7 @@ IDirectSoundCaptureBufferImpl_GetCurrentPosition(
         return DSERR_INVALIDPARAM;
     }
 
-    if (This->device->driver) {
-        hres = IDsCaptureDriverBuffer_GetPosition(This->device->hwbuf, lpdwCapturePosition, lpdwReadPosition );
-	if (hres != DS_OK)
-	    WARN("IDsCaptureDriverBuffer_GetPosition failed\n");
-    } else if (This->device->hwi) {
+    if (This->device->hwi) {
         DWORD pos;
 
         EnterCriticalSection(&This->device->lock);
@@ -493,14 +460,7 @@ IDirectSoundCaptureBufferImpl_Lock(
 
     EnterCriticalSection(&(This->device->lock));
 
-    if (This->device->driver) {
-        hres = IDsCaptureDriverBuffer_Lock(This->device->hwbuf, lplpvAudioPtr1,
-                                           lpdwAudioBytes1, lplpvAudioPtr2,
-                                           lpdwAudioBytes2, dwReadCusor,
-                                           dwReadBytes, dwFlags);
-	if (hres != DS_OK)
-	    WARN("IDsCaptureDriverBuffer_Lock failed\n");
-    } else if (This->device->hwi) {
+    if (This->device->hwi) {
         *lplpvAudioPtr1 = This->device->buffer + dwReadCusor;
         if ( (dwReadCusor + dwReadBytes) > This->device->buflen) {
             *lpdwAudioBytes1 = This->device->buflen - dwReadCusor;
@@ -540,7 +500,7 @@ IDirectSoundCaptureBufferImpl_Start(
         return DSERR_INVALIDPARAM;
     }
 
-    if ( (This->device->driver == 0) && (This->device->hwi == 0) ) {
+    if ( This->device->hwi == 0 ) {
         WARN("no driver\n");
         return DSERR_NODRIVER;
     }
@@ -557,11 +517,7 @@ IDirectSoundCaptureBufferImpl_Start(
 
     LeaveCriticalSection(&(This->device->lock));
 
-    if (This->device->driver) {
-        hres = IDsCaptureDriverBuffer_Start(This->device->hwbuf, dwFlags);
-	if (hres != DS_OK)
-	    WARN("IDsCaptureDriverBuffer_Start failed\n");
-    } else if (This->device->hwi) {
+    if (This->device->hwi) {
         DirectSoundCaptureDevice *device = This->device;
 
         if (device->buffer) {
@@ -652,11 +608,7 @@ IDirectSoundCaptureBufferImpl_Stop( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
 
     LeaveCriticalSection(&(This->device->lock));
 
-    if (This->device->driver) {
-        hres = IDsCaptureDriverBuffer_Stop(This->device->hwbuf);
-        if (hres != DS_OK)
-            WARN("IDsCaptureDriverBuffer_Stop() failed\n");
-    } else if (This->device->hwi) {
+    if (This->device->hwi) {
         hres = mmErr(waveInReset(This->device->hwi));
         if (hres != DS_OK)
             WARN("waveInReset() failed\n");
@@ -687,12 +639,7 @@ IDirectSoundCaptureBufferImpl_Unlock(
         return DSERR_INVALIDPARAM;
     }
 
-    if (This->device->driver) {
-        hres = IDsCaptureDriverBuffer_Unlock(This->device->hwbuf, lpvAudioPtr1,
-                                             dwAudioBytes1, lpvAudioPtr2, dwAudioBytes2);
-	if (hres != DS_OK)
-	    WARN("IDsCaptureDriverBuffer_Unlock failed\n");
-    } else if (!This->device->hwi) {
+    if (!This->device->hwi) {
         WARN("invalid call\n");
         hres = DSERR_INVALIDCALL;
     }
@@ -877,7 +824,7 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
 	*ppobj = NULL;
 	return DSERR_OUTOFMEMORY;
     } else {
-    	HRESULT err = DS_OK;
+        HRESULT err = DS_OK;
         LPBYTE newbuf;
         DWORD buflen;
         IDirectSoundCaptureBufferImpl *This = *ppobj;
@@ -885,9 +832,8 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
         This->ref = 1;
         This->device = device;
         This->device->capture_buffer = This;
-	This->notify = NULL;
-	This->nrofnotifies = 0;
-	This->hwnotify = NULL;
+        This->notify = NULL;
+        This->nrofnotifies = 0;
 
         This->pdscbd = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
             lpcDSCBufferDesc->dwSize);
@@ -903,72 +849,32 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
 
         This->lpVtbl = &dscbvt;
 
-	if (device->driver) {
-            if (This->device->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMOPEN)
-                FIXME("DSDDESC_DOMMSYSTEMOPEN not supported\n");
+        err = mmErr(waveInOpen(&(device->hwi),
+            device->drvdesc.dnDevNode, device->pwfx,
+            (DWORD_PTR)DSOUND_capture_callback, (DWORD_PTR)device,
+            CALLBACK_FUNCTION | WAVE_MAPPED));
+        if (err != DS_OK) {
+            WARN("waveInOpen failed\n");
+            This->device->capture_buffer = 0;
+            HeapFree( GetProcessHeap(), 0, This );
+            *ppobj = NULL;
+            return err;
+        }
 
-            if (This->device->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) {
-                /* allocate buffer from system memory */
-                buflen = lpcDSCBufferDesc->dwBufferBytes;
-                TRACE("desired buflen=%d, old buffer=%p\n", buflen, device->buffer);
-                if (device->buffer)
-                    newbuf = HeapReAlloc(GetProcessHeap(),0,device->buffer,buflen);
-                else
-                    newbuf = HeapAlloc(GetProcessHeap(),0,buflen);
-
-                if (newbuf == NULL) {
-                    WARN("failed to allocate capture buffer\n");
-                    err = DSERR_OUTOFMEMORY;
-                    /* but the old buffer might still exist and must be re-prepared */
-                } else {
-                    device->buffer = newbuf;
-                    device->buflen = buflen;
-                }
-            } else {
-                /* let driver allocate memory */
-                device->buflen = lpcDSCBufferDesc->dwBufferBytes;
-                /* FIXME: */
-                HeapFree( GetProcessHeap(), 0, device->buffer);
-                device->buffer = NULL;
-            }
-
-	    err = IDsCaptureDriver_CreateCaptureBuffer(device->driver,
-		device->pwfx,0,0,&(device->buflen),&(device->buffer),(LPVOID*)&(device->hwbuf));
-	    if (err != DS_OK) {
-		WARN("IDsCaptureDriver_CreateCaptureBuffer failed\n");
-		This->device->capture_buffer = 0;
-		HeapFree( GetProcessHeap(), 0, This );
-		*ppobj = NULL;
-		return err;
-	    }
-	} else {
-	    DWORD flags = CALLBACK_FUNCTION | WAVE_MAPPED;
-            err = mmErr(waveInOpen(&(device->hwi),
-                device->drvdesc.dnDevNode, device->pwfx,
-                (DWORD_PTR)DSOUND_capture_callback, (DWORD_PTR)device, flags));
-            if (err != DS_OK) {
-                WARN("waveInOpen failed\n");
-		This->device->capture_buffer = 0;
-		HeapFree( GetProcessHeap(), 0, This );
-		*ppobj = NULL;
-		return err;
-            }
-
-	    buflen = lpcDSCBufferDesc->dwBufferBytes;
-            TRACE("desired buflen=%d, old buffer=%p\n", buflen, device->buffer);
-	    if (device->buffer)
-                newbuf = HeapReAlloc(GetProcessHeap(),0,device->buffer,buflen);
-	    else
-		newbuf = HeapAlloc(GetProcessHeap(),0,buflen);
-            if (newbuf == NULL) {
-                WARN("failed to allocate capture buffer\n");
-                err = DSERR_OUTOFMEMORY;
-                /* but the old buffer might still exist and must be re-prepared */
-            } else {
-                device->buffer = newbuf;
-                device->buflen = buflen;
-            }
-	}
+        buflen = lpcDSCBufferDesc->dwBufferBytes;
+        TRACE("desired buflen=%d, old buffer=%p\n", buflen, device->buffer);
+        if (device->buffer)
+            newbuf = HeapReAlloc(GetProcessHeap(),0,device->buffer,buflen);
+        else
+            newbuf = HeapAlloc(GetProcessHeap(),0,buflen);
+        if (newbuf == NULL) {
+            WARN("failed to allocate capture buffer\n");
+            err = DSERR_OUTOFMEMORY;
+            /* but the old buffer might still exist and must be re-prepared */
+        } else {
+            device->buffer = newbuf;
+            device->buflen = buflen;
+        }
     }
 
     TRACE("returning DS_OK\n");
@@ -1018,11 +924,6 @@ static ULONG DirectSoundCaptureDevice_Release(
             IDirectSoundCaptureBufferImpl_Release(
 		(LPDIRECTSOUNDCAPTUREBUFFER8) device->capture_buffer);
 
-        if (device->driver) {
-            IDsCaptureDriver_Close(device->driver);
-            IDsCaptureDriver_Release(device->driver);
-        }
-
         HeapFree(GetProcessHeap(), 0, device->pwfx);
         device->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection( &(device->lock) );
@@ -1042,6 +943,8 @@ static HRESULT DirectSoundCaptureDevice_Initialize(
     BOOLEAN found = FALSE;
     GUID devGUID;
     DirectSoundCaptureDevice *device = *ppDevice;
+    WAVEINCAPSA    wic;
+
     TRACE("(%p, %s)\n", ppDevice, debugstr_guid(lpcGUID));
 
     /* Default device? */
@@ -1086,64 +989,22 @@ static HRESULT DirectSoundCaptureDevice_Initialize(
     *ppDevice = device;
     device->guid = devGUID;
 
-    /* Disable the direct sound driver to force emulation if requested. */
-    device->driver = NULL;
-    if (ds_hw_accel != DS_HW_ACCEL_EMULATION)
-    {
-        err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDIFACE,(DWORD_PTR)&device->driver,0));
-        if ( (err != DS_OK) && (err != DSERR_UNSUPPORTED) ) {
-            WARN("waveInMessage failed; err=%x\n",err);
-            return err;
-        }
-    }
-    err = DS_OK;
-
-    /* Get driver description */
-    if (device->driver) {
-        TRACE("using DirectSound driver\n");
-        err = IDsCaptureDriver_GetDriverDesc(device->driver, &(device->drvdesc));
-	if (err != DS_OK) {
-	    WARN("IDsCaptureDriver_GetDriverDesc failed\n");
-	    return err;
-	}
-    } else {
-        TRACE("using WINMM\n");
-        /* if no DirectSound interface available, use WINMM API instead */
-        device->drvdesc.dwFlags = DSDDESC_DOMMSYSTEMOPEN |
-            DSDDESC_DOMMSYSTEMSETFORMAT;
-    }
+    device->drvdesc.dwFlags = 0;
 
     device->drvdesc.dnDevNode = wid;
 
-    /* open the DirectSound driver if available */
-    if (device->driver && (err == DS_OK))
-        err = IDsCaptureDriver_Open(device->driver);
+    *ppDevice = device;
+
+    err = mmErr(waveInGetDevCapsA((UINT)device->drvdesc.dnDevNode, &wic, sizeof(wic)));
 
     if (err == DS_OK) {
-        *ppDevice = device;
+        device->drvcaps.dwFlags = 0;
+        lstrcpynA(device->drvdesc.szDrvname, wic.szPname,
+                  sizeof(device->drvdesc.szDrvname));
 
-        /* the driver is now open, so it's now allowed to call GetCaps */
-        if (device->driver) {
-	    device->drvcaps.dwSize = sizeof(device->drvcaps);
-            err = IDsCaptureDriver_GetCaps(device->driver,&(device->drvcaps));
-	    if (err != DS_OK) {
-		WARN("IDsCaptureDriver_GetCaps failed\n");
-		return err;
-	    }
-        } else /*if (device->hwi)*/ {
-            WAVEINCAPSA    wic;
-            err = mmErr(waveInGetDevCapsA((UINT)device->drvdesc.dnDevNode, &wic, sizeof(wic)));
-
-            if (err == DS_OK) {
-                device->drvcaps.dwFlags = 0;
-                lstrcpynA(device->drvdesc.szDrvname, wic.szPname,
-                          sizeof(device->drvdesc.szDrvname));
-
-                device->drvcaps.dwFlags |= DSCCAPS_EMULDRIVER;
-                device->drvcaps.dwFormats = wic.dwFormats;
-                device->drvcaps.dwChannels = wic.wChannels;
-            }
-        }
+        device->drvcaps.dwFlags |= DSCCAPS_EMULDRIVER;
+        device->drvcaps.dwFormats = wic.dwFormats;
+        device->drvcaps.dwChannels = wic.wChannels;
     }
 
     return err;

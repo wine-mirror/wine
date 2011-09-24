@@ -32,7 +32,6 @@
 #include "mmddk.h"
 #include "wine/debug.h"
 #include "dsound.h"
-#include "dsdriver.h"
 #include "dsound_private.h"
 #include "dsconf.h"
 
@@ -252,9 +251,9 @@ static HRESULT DSPROPERTY_DescriptionW(
     }
 
     if (ppd->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_RENDER)
-        err = waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,ds_hw_accel);
+        err = waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0);
     else
-        err = waveInMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,ds_hw_accel);
+        err = waveInMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0);
 
     if (err != MMSYSERR_NOERROR)
     {

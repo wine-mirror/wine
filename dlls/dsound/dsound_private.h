@@ -25,18 +25,10 @@
 
 #include "wine/list.h"
 
-/* direct sound hardware acceleration levels */
-#define DS_HW_ACCEL_FULL        0	/* default on Windows 98 */
-#define DS_HW_ACCEL_STANDARD    1	/* default on Windows 2000 */
-#define DS_HW_ACCEL_BASIC       2
-#define DS_HW_ACCEL_EMULATION   3
-
 extern int ds_emuldriver DECLSPEC_HIDDEN;
 extern int ds_hel_buflen DECLSPEC_HIDDEN;
 extern int ds_snd_queue_max DECLSPEC_HIDDEN;
-extern int ds_snd_queue_min DECLSPEC_HIDDEN;
 extern int ds_snd_shadow_maxsize DECLSPEC_HIDDEN;
-extern int ds_hw_accel DECLSPEC_HIDDEN;
 extern int ds_default_sample_rate DECLSPEC_HIDDEN;
 extern int ds_default_bits_per_sample DECLSPEC_HIDDEN;
 
@@ -68,6 +60,66 @@ extern const mixfunc mixfunctions[4] DECLSPEC_HIDDEN;
 typedef void (*normfunc)(const void *, void *, unsigned);
 extern const normfunc normfunctions[4] DECLSPEC_HIDDEN;
 
+typedef struct _DSDRIVERDESC
+{
+    DWORD      	dwFlags;
+    CHAR	szDesc[256];
+    CHAR	szDrvname[256];
+    DWORD	dnDevNode;
+    WORD	wVxdId;
+    WORD	wReserved;
+    ULONG	ulDeviceNum;
+    DWORD	dwHeapType;
+    LPVOID	pvDirectDrawHeap;
+    DWORD	dwMemStartAddress;
+    DWORD	dwMemEndAddress;
+    DWORD	dwMemAllocExtra;
+    LPVOID	pvReserved1;
+    LPVOID	pvReserved2;
+} DSDRIVERDESC,*PDSDRIVERDESC;
+
+typedef struct _DSDRIVERCAPS
+{
+    DWORD	dwFlags;
+    DWORD	dwMinSecondarySampleRate;
+    DWORD	dwMaxSecondarySampleRate;
+    DWORD	dwPrimaryBuffers;
+    DWORD	dwMaxHwMixingAllBuffers;
+    DWORD	dwMaxHwMixingStaticBuffers;
+    DWORD	dwMaxHwMixingStreamingBuffers;
+    DWORD	dwFreeHwMixingAllBuffers;
+    DWORD	dwFreeHwMixingStaticBuffers;
+    DWORD	dwFreeHwMixingStreamingBuffers;
+    DWORD	dwMaxHw3DAllBuffers;
+    DWORD	dwMaxHw3DStaticBuffers;
+    DWORD	dwMaxHw3DStreamingBuffers;
+    DWORD	dwFreeHw3DAllBuffers;
+    DWORD	dwFreeHw3DStaticBuffers;
+    DWORD	dwFreeHw3DStreamingBuffers;
+    DWORD	dwTotalHwMemBytes;
+    DWORD	dwFreeHwMemBytes;
+    DWORD	dwMaxContigFreeHwMemBytes;
+} DSDRIVERCAPS,*PDSDRIVERCAPS;
+
+typedef struct _DSVOLUMEPAN
+{
+    DWORD	dwTotalLeftAmpFactor;
+    DWORD	dwTotalRightAmpFactor;
+    LONG	lVolume;
+    DWORD	dwVolAmpFactor;
+    LONG	lPan;
+    DWORD	dwPanLeftAmpFactor;
+    DWORD	dwPanRightAmpFactor;
+} DSVOLUMEPAN,*PDSVOLUMEPAN;
+
+typedef struct _DSCDRIVERCAPS
+{
+    DWORD	dwSize;
+    DWORD	dwFlags;
+    DWORD	dwFormats;
+    DWORD	dwChannels;
+} DSCDRIVERCAPS,*PDSCDRIVERCAPS;
+
 /*****************************************************************************
  * IDirectSoundDevice implementation structure
  */
@@ -76,7 +128,6 @@ struct DirectSoundDevice
     LONG                        ref;
 
     GUID                        guid;
-    PIDSDRIVER                  driver;
     DSDRIVERDESC                drvdesc;
     DSDRIVERCAPS                drvcaps;
     DWORD                       priolevel;
@@ -85,7 +136,6 @@ struct DirectSoundDevice
     LPWAVEHDR                   pwave;
     UINT                        timerID, pwplay, pwqueue, prebuf, helfrags;
     DWORD                       fraglen;
-    PIDSDRIVERBUFFER            hwbuf;
     LPBYTE                      buffer;
     DWORD                       writelead, buflen, state, playpos, mixpos;
     int                         nrofbuffers;
@@ -162,7 +212,6 @@ struct IDirectSoundBufferImpl
     /* IDirectSoundBufferImpl fields */
     DirectSoundDevice*          device;
     RTL_RWLOCK                  lock;
-    PIDSDRIVERBUFFER            hwbuf;
     PWAVEFORMATEX               pwfx;
     BufferMemory*               buffer;
     LPBYTE                      tmp_buffer;
@@ -181,7 +230,6 @@ struct IDirectSoundBufferImpl
     IDirectSoundNotifyImpl*     notify;
     LPDSBPOSITIONNOTIFY         notifies;
     int                         nrofnotifies;
-    PIDSDRIVERNOTIFY            hwnotify;
 
     /* DirectSound3DBuffer fields */
     IDirectSound3DBufferImpl*   ds3db;
@@ -217,10 +265,8 @@ struct DirectSoundCaptureDevice
     LONG                               ref;
 
     /* DirectSound driver stuff */
-    PIDSCDRIVER                        driver;
     DSDRIVERDESC                       drvdesc;
     DSCDRIVERCAPS                      drvcaps;
-    PIDSCDRIVERBUFFER                  hwbuf;
 
     /* wave driver info */
     HWAVEIN                            hwi;
@@ -258,7 +304,6 @@ struct IDirectSoundCaptureBufferImpl
     IDirectSoundCaptureNotifyImpl*      notify;
     LPDSBPOSITIONNOTIFY                 notifies;
     int                                 nrofnotifies;
-    PIDSDRIVERNOTIFY                    hwnotify;
 };
 
 /*****************************************************************************

@@ -42,7 +42,6 @@
 #include "endpointvolume.h"
 #include "audioclient.h"
 #include "audiopolicy.h"
-#include "dsdriver.h"
 
 #include <alsa/asoundlib.h>
 

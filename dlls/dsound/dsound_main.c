@@ -52,7 +52,6 @@
 #include "rpcproxy.h"
 #include "initguid.h"
 #include "ksmedia.h"
-#include "dsdriver.h"
 
 #include "dsound_private.h"
 
@@ -93,9 +92,7 @@ HRESULT mmErr(UINT err)
 int ds_emuldriver = 0;
 int ds_hel_buflen = 32768 * 2;
 int ds_snd_queue_max = 10;
-int ds_snd_queue_min = 6;
 int ds_snd_shadow_maxsize = 2;
-int ds_hw_accel = DS_HW_ACCEL_FULL;
 int ds_default_sample_rate = 44100;
 int ds_default_bits_per_sample = 16;
 static int ds_default_playback;
@@ -158,20 +155,6 @@ void setup_dsound_options(void)
     if (!get_config_key( hkey, appkey, "SndQueueMax", buffer, MAX_PATH ))
         ds_snd_queue_max = atoi(buffer);
 
-    if (!get_config_key( hkey, appkey, "SndQueueMin", buffer, MAX_PATH ))
-        ds_snd_queue_min = atoi(buffer);
-
-    if (!get_config_key( hkey, appkey, "HardwareAcceleration", buffer, MAX_PATH )) {
-	if (strcmp(buffer, "Full") == 0)
-	    ds_hw_accel = DS_HW_ACCEL_FULL;
-	else if (strcmp(buffer, "Standard") == 0)
-	    ds_hw_accel = DS_HW_ACCEL_STANDARD;
-	else if (strcmp(buffer, "Basic") == 0)
-	    ds_hw_accel = DS_HW_ACCEL_BASIC;
-	else if (strcmp(buffer, "Emulation") == 0)
-	    ds_hw_accel = DS_HW_ACCEL_EMULATION;
-    }
-
     if (!get_config_key( hkey, appkey, "DefaultPlayback", buffer, MAX_PATH ))
         ds_default_playback = atoi(buffer);
 
@@ -193,15 +176,8 @@ void setup_dsound_options(void)
     TRACE("ds_emuldriver = %d\n", ds_emuldriver);
     TRACE("ds_hel_buflen = %d\n", ds_hel_buflen);
     TRACE("ds_snd_queue_max = %d\n", ds_snd_queue_max);
-    TRACE("ds_snd_queue_min = %d\n", ds_snd_queue_min);
-    TRACE("ds_hw_accel = %s\n",
-        ds_hw_accel==DS_HW_ACCEL_FULL ? "Full" :
-        ds_hw_accel==DS_HW_ACCEL_STANDARD ? "Standard" :
-        ds_hw_accel==DS_HW_ACCEL_BASIC ? "Basic" :
-        ds_hw_accel==DS_HW_ACCEL_EMULATION ? "Emulation" :
-        "Unknown");
     TRACE("ds_default_playback = %d\n", ds_default_playback);
-    TRACE("ds_default_capture = %d\n", ds_default_playback);
+    TRACE("ds_default_capture = %d\n", ds_default_capture);
     TRACE("ds_default_sample_rate = %d\n", ds_default_sample_rate);
     TRACE("ds_default_bits_per_sample = %d\n", ds_default_bits_per_sample);
     TRACE("ds_snd_shadow_maxsize = %d\n", ds_snd_shadow_maxsize);
@@ -339,11 +315,13 @@ HRESULT WINAPI DirectSoundEnumerateW(
 	LPVOID lpContext )
 {
     unsigned devs, wod;
-    DSDRIVERDESC desc;
     GUID guid;
     int err;
-    WCHAR wDesc[MAXPNAMELEN];
-    WCHAR wName[MAXPNAMELEN];
+    WAVEOUTCAPSW caps;
+
+    const static WCHAR winmmW[] = {'w','i','n','m','m','.','d','l','l',0};
+    const static WCHAR primary_driverW[] = {'P','r','i','m','a','r','y',' ',
+        'S','o','u','n','d',' ','D','r','i','v','e','r',0};
 
     TRACE("lpDSEnumCallback = %p, lpContext = %p\n",
 	lpDSEnumCallback, lpContext);
@@ -361,13 +339,11 @@ HRESULT WINAPI DirectSoundEnumerateW(
             static const WCHAR empty[] = { 0 };
 	    for (wod = 0; wod < devs; ++wod) {
                 if (IsEqualGUID( &guid, &DSOUND_renderer_guids[wod] ) ) {
-                    err = mmErr(waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,ds_hw_accel));
+                    err = mmErr(waveOutGetDevCapsW(wod, &caps, sizeof(caps)));
                     if (err == DS_OK) {
                         TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
-                              "Primary Sound Driver",desc.szDrvname,lpContext);
-                        MultiByteToWideChar( CP_ACP, 0, "Primary Sound Driver", -1,
-                                             wDesc, sizeof(wDesc)/sizeof(WCHAR) );
-                        if (lpDSEnumCallback(NULL, wDesc, empty, lpContext) == FALSE)
+                              "Primary Sound Driver","",lpContext);
+                        if (lpDSEnumCallback(NULL, primary_driverW, empty, lpContext) == FALSE)
                             return DS_OK;
 		    }
 		}
@@ -376,19 +352,13 @@ HRESULT WINAPI DirectSoundEnumerateW(
     }
 
     for (wod = 0; wod < devs; ++wod) {
-        err = mmErr(waveOutMessage(UlongToHandle(wod),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,ds_hw_accel));
+        err = mmErr(waveOutGetDevCapsW(wod, &caps, sizeof(caps)));
 	if (err == DS_OK) {
             TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
-                  debugstr_guid(&DSOUND_renderer_guids[wod]),desc.szDesc,desc.szDrvname,lpContext);
-            MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1,
-                                 wDesc, sizeof(wDesc)/sizeof(WCHAR) );
-            wDesc[(sizeof(wDesc)/sizeof(WCHAR)) - 1] = '\0';
+                  debugstr_guid(&DSOUND_renderer_guids[wod]),
+                  wine_dbgstr_w(caps.szPname),"winmm.dll",lpContext);
 
-            MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1,
-                                 wName, sizeof(wName)/sizeof(WCHAR) );
-            wName[(sizeof(wName)/sizeof(WCHAR)) - 1] = '\0';
-
-            if (lpDSEnumCallback(&DSOUND_renderer_guids[wod], wDesc, wName, lpContext) == FALSE)
+            if (lpDSEnumCallback(&DSOUND_renderer_guids[wod], caps.szPname, winmmW, lpContext) == FALSE)
                 return DS_OK;
 	}
     }
@@ -464,7 +434,7 @@ DirectSoundCaptureEnumerateW(
 	if (GetDeviceID(&DSDEVID_DefaultCapture, &guid) == DS_OK) {
 	    for (wid = 0; wid < devs; ++wid) {
                 if (IsEqualGUID( &guid, &DSOUND_capture_guids[wid] ) ) {
-                    err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,ds_hw_accel));
+                    err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
                     if (err == DS_OK) {
                         TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
                               "Primary Sound Capture Driver",desc.szDrvname,lpContext);
@@ -483,7 +453,7 @@ DirectSoundCaptureEnumerateW(
     }
 
     for (wid = 0; wid < devs; ++wid) {
-        err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,ds_hw_accel));
+        err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
 	if (err == DS_OK) {
             TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
                   debugstr_guid(&DSOUND_capture_guids[wid]),desc.szDesc,desc.szDrvname,lpContext);

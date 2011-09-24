@@ -248,7 +248,6 @@ SRCDIR_INCLUDES = \
 	dplobby8.h \
 	dpnathlp.h \
 	dsconf.h \
-	dsdriver.h \
 	dsgetdc.h \
 	dshow.h \
 	dsound.h \

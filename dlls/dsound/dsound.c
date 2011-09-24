@@ -37,7 +37,6 @@
 #include "ksmedia.h"
 #include "wine/debug.h"
 #include "dsound.h"
-#include "dsdriver.h"
 #include "dsound_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
@@ -1265,21 +1264,13 @@ ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
         if (hr != DS_OK)
             WARN("DSOUND_PrimaryDestroy failed\n");
 
-        if (device->driver)
-            IDsDriver_Close(device->driver);
-
-        if (device->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMOPEN)
-            waveOutClose(device->hwo);
-
-        if (device->driver)
-            IDsDriver_Release(device->driver);
+        waveOutClose(device->hwo);
 
         DSOUND_renderer[device->drvdesc.dnDevNode] = NULL;
 
         HeapFree(GetProcessHeap(), 0, device->tmp_buffer);
         HeapFree(GetProcessHeap(), 0, device->mix_buffer);
-        if (device->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY)
-            HeapFree(GetProcessHeap(), 0, device->buffer);
+        HeapFree(GetProcessHeap(), 0, device->buffer);
         RtlDeleteResource(&device->buffer_list_lock);
         device->mixlock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&device->mixlock);
@@ -1350,6 +1341,8 @@ HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcG
     BOOLEAN found = FALSE;
     GUID devGUID;
     DirectSoundDevice * device = *ppDevice;
+    WAVEOUTCAPSA woc;
+
     TRACE("(%p,%s)\n",ppDevice,debugstr_guid(lpcGUID));
 
     if (*ppDevice != NULL) {
@@ -1406,7 +1399,6 @@ HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcG
 
     *ppDevice = device;
     device->guid = devGUID;
-    device->driver = NULL;
 
     device->drvdesc.dnDevNode = wod;
     hr = DSOUND_ReopenDevice(device, FALSE);
@@ -1416,59 +1408,50 @@ HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcG
         return hr;
     }
 
-    if (device->driver) {
-        /* the driver is now open, so it's now allowed to call GetCaps */
-        hr = IDsDriver_GetCaps(device->driver,&(device->drvcaps));
-        if (hr != DS_OK) {
-            WARN("IDsDriver_GetCaps failed\n");
-            return hr;
-        }
-    } else {
-        WAVEOUTCAPSA woc;
-        hr = mmErr(waveOutGetDevCapsA(device->drvdesc.dnDevNode, &woc, sizeof(woc)));
-        if (hr != DS_OK) {
-            WARN("waveOutGetDevCaps failed\n");
-            return hr;
-        }
-        ZeroMemory(&device->drvcaps, sizeof(device->drvcaps));
-        if ((woc.dwFormats & WAVE_FORMAT_1M08) ||
-            (woc.dwFormats & WAVE_FORMAT_2M08) ||
-            (woc.dwFormats & WAVE_FORMAT_4M08) ||
-            (woc.dwFormats & WAVE_FORMAT_48M08) ||
-            (woc.dwFormats & WAVE_FORMAT_96M08)) {
-            device->drvcaps.dwFlags |= DSCAPS_PRIMARY8BIT;
-            device->drvcaps.dwFlags |= DSCAPS_PRIMARYMONO;
-        }
-        if ((woc.dwFormats & WAVE_FORMAT_1M16) ||
-            (woc.dwFormats & WAVE_FORMAT_2M16) ||
-            (woc.dwFormats & WAVE_FORMAT_4M16) ||
-            (woc.dwFormats & WAVE_FORMAT_48M16) ||
-            (woc.dwFormats & WAVE_FORMAT_96M16)) {
-            device->drvcaps.dwFlags |= DSCAPS_PRIMARY16BIT;
-            device->drvcaps.dwFlags |= DSCAPS_PRIMARYMONO;
-        }
-        if ((woc.dwFormats & WAVE_FORMAT_1S08) ||
-            (woc.dwFormats & WAVE_FORMAT_2S08) ||
-            (woc.dwFormats & WAVE_FORMAT_4S08) ||
-            (woc.dwFormats & WAVE_FORMAT_48S08) ||
-            (woc.dwFormats & WAVE_FORMAT_96S08)) {
-            device->drvcaps.dwFlags |= DSCAPS_PRIMARY8BIT;
-            device->drvcaps.dwFlags |= DSCAPS_PRIMARYSTEREO;
-        }
-        if ((woc.dwFormats & WAVE_FORMAT_1S16) ||
-            (woc.dwFormats & WAVE_FORMAT_2S16) ||
-            (woc.dwFormats & WAVE_FORMAT_4S16) ||
-            (woc.dwFormats & WAVE_FORMAT_48S16) ||
-            (woc.dwFormats & WAVE_FORMAT_96S16)) {
-            device->drvcaps.dwFlags |= DSCAPS_PRIMARY16BIT;
-            device->drvcaps.dwFlags |= DSCAPS_PRIMARYSTEREO;
-        }
-        if (ds_emuldriver)
-            device->drvcaps.dwFlags |= DSCAPS_EMULDRIVER;
-        device->drvcaps.dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
-        device->drvcaps.dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
-        ZeroMemory(&device->volpan, sizeof(device->volpan));
+    hr = mmErr(waveOutGetDevCapsA(device->drvdesc.dnDevNode, &woc, sizeof(woc)));
+    if (hr != DS_OK) {
+        WARN("waveOutGetDevCaps failed\n");
+        return hr;
     }
+    ZeroMemory(&device->drvcaps, sizeof(device->drvcaps));
+    if ((woc.dwFormats & WAVE_FORMAT_1M08) ||
+        (woc.dwFormats & WAVE_FORMAT_2M08) ||
+        (woc.dwFormats & WAVE_FORMAT_4M08) ||
+        (woc.dwFormats & WAVE_FORMAT_48M08) ||
+        (woc.dwFormats & WAVE_FORMAT_96M08)) {
+        device->drvcaps.dwFlags |= DSCAPS_PRIMARY8BIT;
+        device->drvcaps.dwFlags |= DSCAPS_PRIMARYMONO;
+    }
+    if ((woc.dwFormats & WAVE_FORMAT_1M16) ||
+        (woc.dwFormats & WAVE_FORMAT_2M16) ||
+        (woc.dwFormats & WAVE_FORMAT_4M16) ||
+        (woc.dwFormats & WAVE_FORMAT_48M16) ||
+        (woc.dwFormats & WAVE_FORMAT_96M16)) {
+        device->drvcaps.dwFlags |= DSCAPS_PRIMARY16BIT;
+        device->drvcaps.dwFlags |= DSCAPS_PRIMARYMONO;
+    }
+    if ((woc.dwFormats & WAVE_FORMAT_1S08) ||
+        (woc.dwFormats & WAVE_FORMAT_2S08) ||
+        (woc.dwFormats & WAVE_FORMAT_4S08) ||
+        (woc.dwFormats & WAVE_FORMAT_48S08) ||
+        (woc.dwFormats & WAVE_FORMAT_96S08)) {
+        device->drvcaps.dwFlags |= DSCAPS_PRIMARY8BIT;
+        device->drvcaps.dwFlags |= DSCAPS_PRIMARYSTEREO;
+    }
+    if ((woc.dwFormats & WAVE_FORMAT_1S16) ||
+        (woc.dwFormats & WAVE_FORMAT_2S16) ||
+        (woc.dwFormats & WAVE_FORMAT_4S16) ||
+        (woc.dwFormats & WAVE_FORMAT_48S16) ||
+        (woc.dwFormats & WAVE_FORMAT_96S16)) {
+        device->drvcaps.dwFlags |= DSCAPS_PRIMARY16BIT;
+        device->drvcaps.dwFlags |= DSCAPS_PRIMARYSTEREO;
+    }
+
+    if(ds_emuldriver)
+        device->drvcaps.dwFlags |= DSCAPS_EMULDRIVER;
+    device->drvcaps.dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
+    device->drvcaps.dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
+    ZeroMemory(&device->volpan, sizeof(device->volpan));
 
     hr = DSOUND_PrimaryCreate(device);
     if (hr == DS_OK) {
@@ -1556,10 +1539,7 @@ HRESULT DirectSoundDevice_CreateSoundBuffer(
             if (device->primary) {
                 *ppdsb = (IDirectSoundBuffer*)&device->primary->IDirectSoundBuffer8_iface;
                 device->primary->dsbd.dwFlags &= ~(DSBCAPS_LOCHARDWARE | DSBCAPS_LOCSOFTWARE);
-                if (device->hwbuf)
-                    device->primary->dsbd.dwFlags |= DSBCAPS_LOCHARDWARE;
-                else
-                    device->primary->dsbd.dwFlags |= DSBCAPS_LOCSOFTWARE;
+                device->primary->dsbd.dwFlags |= DSBCAPS_LOCSOFTWARE;
             } else
                 WARN("primarybuffer_create() failed\n");
         }

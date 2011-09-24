@@ -46,11 +46,6 @@
 
 #include "wine/debug.h"
 
-/* TODO: Remove after dsound has been rewritten for mmdevapi */
-#include "dsound.h"
-#include "dsdriver.h"
-#define DS_HW_ACCEL_FULL 0
-
 WINE_DEFAULT_DEBUG_CHANNEL(winmm);
 
 /* FIXME: Should be localized */
@@ -2763,53 +2758,6 @@ static UINT WINMM_QueryInstanceID(UINT device, WCHAR *str, DWORD_PTR len,
     return MMSYSERR_NOERROR;
 }
 
-static UINT WINMM_DRVMessage(UINT dev, UINT message, DWORD_PTR param1,
-        DWORD_PTR param2, BOOL is_out)
-{
-    WINE_MLD *wmld;
-    UINT type = is_out ? MMDRV_WAVEOUT : MMDRV_WAVEIN;
-
-    TRACE("(%u, %u, %ld, %ld, %d)\n", dev, message, param1, param2, is_out);
-
-    if((wmld = MMDRV_Get(ULongToHandle(dev), type, FALSE)) == NULL){
-        if((wmld = MMDRV_Get(ULongToHandle(dev), type, TRUE)) != NULL)
-            return MMDRV_PhysicalFeatures(wmld, message, param1, param2);
-        return MMSYSERR_INVALHANDLE;
-    }
-
-    if(message < DRVM_IOCTL ||
-            (message >= DRVM_IOCTL_LAST && message < DRVM_MAPPER))
-        return MMSYSERR_INVALPARAM;
-
-    return MMDRV_Message(wmld, message, param1, param2);
-}
-
-static UINT WINMM_FillDSDriverDesc(UINT dev, DSDRIVERDESC *desc, BOOL is_out)
-{
-    WCHAR *name;
-
-    if(is_out){
-        if(dev >= g_outmmdevices_count)
-            return MMSYSERR_INVALHANDLE;
-        name = g_out_mmdevices[dev].out_caps.szPname;
-    }else{
-        if(dev >= g_inmmdevices_count)
-            return MMSYSERR_INVALHANDLE;
-        name = g_in_mmdevices[dev].in_caps.szPname;
-    }
-
-    memset(desc, 0, sizeof(*desc));
-
-    strcpy(desc->szDesc, "WinMM: ");
-    WideCharToMultiByte(CP_ACP, 0, name, -1,
-            desc->szDesc + strlen(desc->szDesc),
-            sizeof(desc->szDesc) - strlen(desc->szDesc), NULL, NULL);
-
-    strcpy(desc->szDrvname, "winmm.dll");
-
-    return MMSYSERR_NOERROR;
-}
-
 /**************************************************************************
  * 				waveOutMessage 		[WINMM.@]
  */
@@ -2824,14 +2772,6 @@ UINT WINAPI waveOutMessage(HWAVEOUT hWaveOut, UINT uMessage,
                 (DWORD_PTR*)dwParam1, TRUE);
     case DRV_QUERYFUNCTIONINSTANCEID:
         return WINMM_QueryInstanceID(HandleToULong(hWaveOut), (WCHAR*)dwParam1, dwParam2, TRUE);
-    /* TODO: Remove after dsound has been rewritten for mmdevapi */
-    case DRV_QUERYDSOUNDDESC:
-    case DRV_QUERYDSOUNDIFACE:
-        if(dwParam2 == DS_HW_ACCEL_FULL)
-            return WINMM_DRVMessage(HandleToULong(hWaveOut), uMessage,
-                    dwParam1, 0, TRUE);
-        return WINMM_FillDSDriverDesc(HandleToULong(hWaveOut),
-                (DSDRIVERDESC*)dwParam1, TRUE);
     }
 
     return MMSYSERR_NOTSUPPORTED;
@@ -3203,14 +3143,6 @@ UINT WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
                 (DWORD_PTR*)dwParam1, FALSE);
     case DRV_QUERYFUNCTIONINSTANCEID:
         return WINMM_QueryInstanceID(HandleToULong(hWaveIn), (WCHAR*)dwParam1, dwParam2, FALSE);
-    /* TODO: Remove after dsound has been rewritten for mmdevapi */
-    case DRV_QUERYDSOUNDDESC:
-    case DRV_QUERYDSOUNDIFACE:
-        if(dwParam2 == DS_HW_ACCEL_FULL)
-            return WINMM_DRVMessage(HandleToULong(hWaveIn), uMessage,
-                    dwParam1, 0, FALSE);
-        return WINMM_FillDSDriverDesc(HandleToULong(hWaveIn),
-                (DSDRIVERDESC*)dwParam1, FALSE);
     }
 
     return MMSYSERR_NOTSUPPORTED;

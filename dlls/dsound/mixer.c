@@ -38,7 +38,6 @@
 #include "dsound.h"
 #include "ks.h"
 #include "ksmedia.h"
-#include "dsdriver.h"
 #include "dsound_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
@@ -694,7 +693,7 @@ static DWORD DSOUND_MixToPrimary(const DirectSoundDevice *device, DWORD writepos
 
 		TRACE("MixToPrimary for %p, state=%d\n", dsb, dsb->state);
 
-		if (dsb->buflen && dsb->state && !dsb->hwbuf) {
+		if (dsb->buflen && dsb->state) {
 			TRACE("Checking %p, mixlen=%d\n", dsb, mixlen);
 			RtlAcquireResourceShared(&dsb->lock, TRUE);
 			/* if buffer is stopping it is stopped now */
@@ -814,7 +813,6 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 		BOOL recover = FALSE, all_stopped = FALSE;
 		DWORD playpos, writepos, writelead, maxq, frag, prebuff_max, prebuff_left, size1, size2, mixplaypos, mixplaypos2;
 		LPVOID buf1, buf2;
-		BOOL lock = (device->hwbuf && !(device->drvdesc.dwFlags & DSDDESC_DONTNEEDPRIMARYLOCK));
 		int nfiller;
 
 		/* the sound of silence */
@@ -835,7 +833,7 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 
 		/* calc maximum prebuff */
 		prebuff_max = (device->prebuf * device->fraglen);
-		if (!device->hwbuf && playpos + prebuff_max >= device->helfrags * device->fraglen)
+		if (playpos + prebuff_max >= device->helfrags * device->fraglen)
 			prebuff_max += device->buflen - device->helfrags * device->fraglen;
 
 		/* check how close we are to an underrun. It occurs when the writepos overtakes the mixpos */
@@ -864,30 +862,22 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 			size2 = playpos;
 			FillMemory(device->mix_buffer + mixplaypos, device->mix_buffer_len - mixplaypos, 0);
 			FillMemory(device->mix_buffer, mixplaypos2, 0);
-			if (lock)
-				IDsDriverBuffer_Lock(device->hwbuf, &buf1, &size1, &buf2, &size2, device->playpos, size1+size2, 0);
 			FillMemory(buf1, size1, nfiller);
 			if (playpos && (!buf2 || !size2))
 				FIXME("%d: (%d, %d)=>(%d, %d) There should be an additional buffer here!!\n", __LINE__, device->playpos, device->mixpos, playpos, writepos);
 			FillMemory(buf2, size2, nfiller);
-			if (lock)
-				IDsDriverBuffer_Unlock(device->hwbuf, buf1, size1, buf2, size2);
 		} else {
 			buf1 = device->buffer + device->playpos;
 			buf2 = NULL;
 			size1 = playpos - device->playpos;
 			size2 = 0;
 			FillMemory(device->mix_buffer + mixplaypos, mixplaypos2 - mixplaypos, 0);
-			if (lock)
-				IDsDriverBuffer_Lock(device->hwbuf, &buf1, &size1, &buf2, &size2, device->playpos, size1+size2, 0);
 			FillMemory(buf1, size1, nfiller);
 			if (buf2 && size2)
 			{
 				FIXME("%d: There should be no additional buffer here!!\n", __LINE__);
 				FillMemory(buf2, size2, nfiller);
 			}
-			if (lock)
-				IDsDriverBuffer_Unlock(device->hwbuf, buf1, size1, buf2, size2);
 		}
 		device->playpos = playpos;
 
@@ -896,9 +886,6 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 
 		TRACE("prebuff_left = %d, prebuff_max = %dx%d=%d, writelead=%d\n",
 			prebuff_left, device->prebuf, device->fraglen, prebuff_max, writelead);
-
-		if (lock)
-			IDsDriverBuffer_Lock(device->hwbuf, &buf1, &size1, &buf2, &size2, writepos, maxq, 0);
 
 		/* do the mixing */
 		frag = DSOUND_MixToPrimary(device, writepos, maxq, recover, &all_stopped);
@@ -916,27 +903,14 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 		device->mixpos = writepos + frag;
 		device->mixpos %= device->buflen;
 
-		if (lock)
-		{
-			DWORD frag2 = (frag > size1 ? frag - size1 : 0);
-			frag -= frag2;
-			if (frag2 > size2)
-			{
-				FIXME("Buffering too much! (%d, %d, %d, %d)\n", maxq, frag, size2, frag2 - size2);
-				frag2 = size2;
-			}
-			IDsDriverBuffer_Unlock(device->hwbuf, buf1, frag, buf2, frag2);
-		}
-
 		/* update prebuff left */
 		prebuff_left = DSOUND_BufPtrDiff(device->buflen, device->mixpos, playpos);
 
 		/* check if have a whole fragment */
 		if (prebuff_left >= device->fraglen){
 
-			/* update the wave queue if using wave system */
-			if (!device->hwbuf)
-				DSOUND_WaveQueue(device, FALSE);
+			/* update the wave queue */
+            DSOUND_WaveQueue(device, FALSE);
 
 			/* buffers are full. start playing if applicable */
 			if(device->state == STATE_STARTING){
@@ -974,12 +948,7 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 
 	} else {
 
-		/* update the wave queue if using wave system */
-		if (!device->hwbuf)
-			DSOUND_WaveQueue(device, TRUE);
-		else
-			/* Keep alsa happy, which needs GetPosition called once every 10 ms */
-			IDsDriverBuffer_GetPosition(device->hwbuf, NULL, NULL);
+        DSOUND_WaveQueue(device, TRUE);
 
 		/* in the DSSCL_WRITEPRIMARY mode, the app is totally in charge... */
 		if (device->state == STATE_STARTING) {

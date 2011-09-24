@@ -50,7 +50,6 @@
 #include "mmddk.h"
 #include "wine/debug.h"
 #include "dsound.h"
-#include "dsdriver.h"
 #include "dsound_private.h"
 
 /* default velocity of sound in the air */

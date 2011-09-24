@@ -46,7 +46,6 @@
 #include "winternl.h"
 #include "wine/debug.h"
 #include "dsound.h"
-#include "dsdriver.h"
 #include "dsound_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
