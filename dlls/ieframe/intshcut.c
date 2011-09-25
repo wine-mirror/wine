@@ -77,7 +77,7 @@ static inline InternetShortcut* impl_from_IPersistFile(IPersistFile *iface)
 
 static inline InternetShortcut* impl_from_IPropertySetStorage(IPropertySetStorage *iface)
 {
-    return (InternetShortcut*)((char*)iface - FIELD_OFFSET(InternetShortcut, IPropertySetStorage_iface));
+    return CONTAINING_RECORD(iface, InternetShortcut, IPropertySetStorage_iface);
 }
 
 static BOOL run_winemenubuilder( const WCHAR *args )
