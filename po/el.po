@@ -10738,8 +10738,9 @@ msgid "Unicode text document"
 msgstr ""
 
 #: wordpad.rc:143
-msgid "Printer files (*.PRN)"
-msgstr ""
+#, fuzzy
+msgid "Printer files (*.prn)"
+msgstr "Εκτυπωτής αποσυνδεδεμένος; "
 
 #: wordpad.rc:148
 msgid "Left"

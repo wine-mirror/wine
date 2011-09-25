@@ -11322,7 +11322,8 @@ msgid "Unicode text document"
 msgstr "מסמך טקסט יוניקוד"
 
 #: wordpad.rc:143
-msgid "Printer files (*.PRN)"
+#, fuzzy
+msgid "Printer files (*.prn)"
 msgstr "קובצי מדפסת (‎*.PRN)"
 
 #: wordpad.rc:148

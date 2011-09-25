@@ -11236,7 +11236,8 @@ msgid "Unicode text document"
 msgstr "Besedilni dokument Unicode"
 
 #: wordpad.rc:143
-msgid "Printer files (*.PRN)"
+#, fuzzy
+msgid "Printer files (*.prn)"
 msgstr "Datoteke tiskalnika (*.PRN)"
 
 #: wordpad.rc:148

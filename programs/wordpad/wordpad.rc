@@ -140,7 +140,7 @@ BEGIN
     STRING_NEWFILE_RICHTEXT,       "Rich text document"
     STRING_NEWFILE_TXT,            "Text document"
     STRING_NEWFILE_TXT_UNICODE,    "Unicode text document"
-    STRING_PRINTER_FILES_PRN,      "Printer files (*.PRN)"
+    STRING_PRINTER_FILES_PRN,      "Printer files (*.prn)"
 END
 
 STRINGTABLE

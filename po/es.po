@@ -11677,7 +11677,7 @@ msgstr ""
 
 #: wordpad.rc:143
 #, fuzzy
-msgid "Printer files (*.PRN)"
+msgid "Printer files (*.prn)"
 msgstr "Documentos de texto (*.txt)"
 
 #: wordpad.rc:148

@@ -10765,7 +10765,7 @@ msgstr ""
 
 #: wordpad.rc:143
 #, fuzzy
-msgid "Printer files (*.PRN)"
+msgid "Printer files (*.prn)"
 msgstr "แฟ้มตํารา (*.txt)"
 
 #: wordpad.rc:148
