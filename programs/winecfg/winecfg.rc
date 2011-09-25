@@ -56,7 +56,7 @@ BEGIN
     IDS_DLL_BUILTIN_NATIVE  "builtin, native"
     IDS_DLL_DISABLED        "disabled"
     IDS_DEFAULT_SETTINGS    "Default Settings"
-    IDS_EXECUTABLE_FILTER   "Wine Programs (*.exe,*.exe.so)"
+    IDS_EXECUTABLE_FILTER   "Wine Programs (*.exe; *.exe.so)"
     IDS_USE_GLOBAL_SETTINGS "Use global settings"
     IDS_SELECT_EXECUTABLE   "Select an executable file"
 END

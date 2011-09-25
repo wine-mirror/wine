@@ -10366,7 +10366,7 @@ msgstr "Поставке интернета"
 
 #: winecfg.rc:59
 #, fuzzy
-msgid "Wine Programs (*.exe,*.exe.so)"
+msgid "Wine Programs (*.exe; *.exe.so)"
 msgstr "Извршне датотеке (*.exe)"
 
 #: winecfg.rc:60

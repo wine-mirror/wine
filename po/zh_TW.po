@@ -10349,7 +10349,8 @@ msgid "Default Settings"
 msgstr "預設設定"
 
 #: winecfg.rc:59
-msgid "Wine Programs (*.exe,*.exe.so)"
+#, fuzzy
+msgid "Wine Programs (*.exe; *.exe.so)"
 msgstr "Wine 程式 (*.exe,*.exe.so)"
 
 #: winecfg.rc:60

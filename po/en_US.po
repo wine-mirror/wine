@@ -10415,8 +10415,8 @@ msgid "Default Settings"
 msgstr "Default Settings"
 
 #: winecfg.rc:59
-msgid "Wine Programs (*.exe,*.exe.so)"
-msgstr "Wine Programs (*.exe,*.exe.so)"
+msgid "Wine Programs (*.exe; *.exe.so)"
+msgstr "Wine Programs (*.exe; *.exe.so)"
 
 #: winecfg.rc:60
 msgid "Use global settings"

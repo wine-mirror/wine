@@ -10505,7 +10505,7 @@ msgstr "תצורה - הגדרות בררת המחדל"
 
 #: winecfg.rc:59
 #, fuzzy
-msgid "Wine Programs (*.exe,*.exe.so)"
+msgid "Wine Programs (*.exe; *.exe.so)"
 msgstr "תכניות Wine‏ (‎*.exe,*.exe.so)"
 
 #: winecfg.rc:60

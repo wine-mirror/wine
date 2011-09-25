@@ -10147,7 +10147,7 @@ msgid "Default Settings"
 msgstr "Defaýltaj Agordoj"
 
 #: winecfg.rc:59
-msgid "Wine Programs (*.exe,*.exe.so)"
+msgid "Wine Programs (*.exe; *.exe.so)"
 msgstr ""
 
 #: winecfg.rc:60

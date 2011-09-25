@@ -11019,7 +11019,8 @@ msgid "Default Settings"
 msgstr "Setări implicite"
 
 #: winecfg.rc:59
-msgid "Wine Programs (*.exe,*.exe.so)"
+#, fuzzy
+msgid "Wine Programs (*.exe; *.exe.so)"
 msgstr "Programe Wine (*.exe,*.exe.so)"
 
 #: winecfg.rc:60

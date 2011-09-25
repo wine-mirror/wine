@@ -10441,7 +10441,8 @@ msgid "Default Settings"
 msgstr "Numatytosios nuostatos"
 
 #: winecfg.rc:59
-msgid "Wine Programs (*.exe,*.exe.so)"
+#, fuzzy
+msgid "Wine Programs (*.exe; *.exe.so)"
 msgstr "Wine programos (*.exe,*.exe.so)"
 
 #: winecfg.rc:60
