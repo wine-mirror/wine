@@ -2393,7 +2393,8 @@ static void test_read_write(void)
     user_apc_ran = FALSE;
     if (pQueueUserAPC) {
         trace("Queueing an user APC\n"); /* verify the file is non alerable */
-        ok(pQueueUserAPC(&user_apc, GetCurrentThread(), 0), "QueueUserAPC failed: %d\n", GetLastError());
+        ret = pQueueUserAPC(&user_apc, GetCurrentThread(), 0);
+        ok(ret, "QueueUserAPC failed: %d\n", GetLastError());
     }
 
     SetLastError(12345678);

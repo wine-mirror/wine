@@ -598,12 +598,14 @@ static void test_MapViewOfFile(void)
     ptr = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 0 );
     if (!ptr)
     {
+        SIZE_T size;
         ok( GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLastError() );
         SetLastError(0xdeadbeef);
         ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
         ok( ptr != NULL, "MapViewOfFile FILE_MAP_READ error %u\n", GetLastError() );
         SetLastError(0xdeadbeef);
-        ok( VirtualQuery( ptr, &info, sizeof(info) ) == sizeof(info),
+        size = VirtualQuery( ptr, &info, sizeof(info) );
+        ok( size == sizeof(info),
             "VirtualQuery error %u\n", GetLastError() );
         ok( info.BaseAddress == ptr, "%p != %p\n", info.BaseAddress, ptr );
         ok( info.AllocationBase == ptr, "%p != %p\n", info.AllocationBase, ptr );
@@ -623,12 +625,14 @@ static void test_MapViewOfFile(void)
     ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
     if (!ptr)
     {
+        SIZE_T size;
         ok( GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLastError() );
         SetLastError(0xdeadbeef);
         ptr = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 0 );
         ok( ptr != NULL, "MapViewOfFile FILE_MAP_WRITE error %u\n", GetLastError() );
         SetLastError(0xdeadbeef);
-        ok( VirtualQuery( ptr, &info, sizeof(info) ) == sizeof(info),
+        size = VirtualQuery( ptr, &info, sizeof(info) );
+        ok( size == sizeof(info),
             "VirtualQuery error %u\n", GetLastError() );
         ok( info.BaseAddress == ptr, "%p != %p\n", info.BaseAddress, ptr );
         ok( info.AllocationBase == ptr, "%p != %p\n", info.AllocationBase, ptr );

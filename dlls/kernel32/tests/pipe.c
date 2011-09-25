@@ -480,7 +480,8 @@ static DWORD CALLBACK serverThreadMain2(LPVOID arg)
         user_apc_ran = FALSE;
         if (i == 0 && pQueueUserAPC) {
             trace("Queueing an user APC\n"); /* verify the pipe is non alerable */
-            ok(pQueueUserAPC(&user_apc, GetCurrentThread(), 0), "QueueUserAPC failed: %d\n", GetLastError());
+            success = pQueueUserAPC(&user_apc, GetCurrentThread(), 0);
+            ok(success, "QueueUserAPC failed: %d\n", GetLastError());
         }
 
         /* Wait for client to connect */

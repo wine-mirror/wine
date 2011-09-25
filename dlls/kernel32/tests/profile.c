@@ -448,8 +448,8 @@ static void test_profile_delete_on_close(void)
 
     h = CreateFile(testfile, GENERIC_WRITE, FILE_SHARE_READ, NULL,
                     CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, NULL);
-    ok( WriteFile( h, contents, sizeof contents - 1, &size, NULL ),
-                    "Cannot write test file: %x\n", GetLastError() );
+    res = WriteFile( h, contents, sizeof contents - 1, &size, NULL );
+    ok( res, "Cannot write test file: %x\n", GetLastError() );
     ok( size == sizeof contents - 1, "Test file: partial write\n");
 
     SetLastError(0xdeadbeef);
@@ -472,8 +472,8 @@ static void test_profile_refresh(void)
 
     h = CreateFile(testfile, GENERIC_WRITE, FILE_SHARE_READ, NULL,
                     CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, NULL);
-    ok( WriteFile( h, contents1, sizeof contents1 - 1, &size, NULL ),
-                    "Cannot write test file: %x\n", GetLastError() );
+    res = WriteFile( h, contents1, sizeof contents1 - 1, &size, NULL );
+    ok( res, "Cannot write test file: %x\n", GetLastError() );
     ok( size == sizeof contents1 - 1, "Test file: partial write\n");
 
     SetLastError(0xdeadbeef);
@@ -488,8 +488,8 @@ static void test_profile_refresh(void)
 
     h = CreateFile(testfile, GENERIC_WRITE, FILE_SHARE_READ, NULL,
                     CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, NULL);
-    ok( WriteFile( h, contents2, sizeof contents2 - 1, &size, NULL ),
-                    "Cannot write test file: %x\n", GetLastError() );
+    res = WriteFile( h, contents2, sizeof contents2 - 1, &size, NULL );
+    ok( res, "Cannot write test file: %x\n", GetLastError() );
     ok( size == sizeof contents2 - 1, "Test file: partial write\n");
 
     SetLastError(0xdeadbeef);
