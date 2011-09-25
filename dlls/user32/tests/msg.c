@@ -9516,8 +9516,8 @@ static DWORD CALLBACK send_msg_thread_2(void *param)
 
         case WAIT_OBJECT_0 + EV_SENDMSG:
             trace("thread: sending message\n");
-            ok( SendNotifyMessageA(info->hwnd, WM_USER, 0, 0),
-                "SendNotifyMessageA failed error %u\n", GetLastError());
+            ret = SendNotifyMessageA(info->hwnd, WM_USER, 0, 0);
+            ok(ret, "SendNotifyMessageA failed error %u\n", GetLastError());
             SetEvent(info->hevent[EV_ACK]);
             break;
 

@@ -5094,20 +5094,20 @@ static void test_CreateWindow(void)
                 ok( !pGetProcessDefaultLayout( NULL ), "GetProcessDefaultLayout succeeded\n" );
                 ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
                 SetLastError( 0xdeadbeef );
-                ok( pGetProcessDefaultLayout( &layout ),
-                    "GetProcessDefaultLayout failed err %u\n", GetLastError ());
+                res = pGetProcessDefaultLayout( &layout );
+                ok( res, "GetProcessDefaultLayout failed err %u\n", GetLastError ());
                 ok( layout == 0, "GetProcessDefaultLayout wrong layout %x\n", layout );
                 SetLastError( 0xdeadbeef );
-                ok( pSetProcessDefaultLayout( 7 ),
-                    "SetProcessDefaultLayout failed err %u\n", GetLastError ());
-                ok( pGetProcessDefaultLayout( &layout ),
-                    "GetProcessDefaultLayout failed err %u\n", GetLastError ());
+                res = pSetProcessDefaultLayout( 7 );
+                ok( res, "SetProcessDefaultLayout failed err %u\n", GetLastError ());
+                res = pGetProcessDefaultLayout( &layout );
+                ok( res, "GetProcessDefaultLayout failed err %u\n", GetLastError ());
                 ok( layout == 7, "GetProcessDefaultLayout wrong layout %x\n", layout );
                 SetLastError( 0xdeadbeef );
-                ok( pSetProcessDefaultLayout( LAYOUT_RTL ),
-                    "SetProcessDefaultLayout failed err %u\n", GetLastError ());
-                ok( pGetProcessDefaultLayout( &layout ),
-                    "GetProcessDefaultLayout failed err %u\n", GetLastError ());
+                res = pSetProcessDefaultLayout( LAYOUT_RTL );
+                ok( res, "SetProcessDefaultLayout failed err %u\n", GetLastError ());
+                res = pGetProcessDefaultLayout( &layout );
+                ok( res, "GetProcessDefaultLayout failed err %u\n", GetLastError ());
                 ok( layout == LAYOUT_RTL, "GetProcessDefaultLayout wrong layout %x\n", layout );
                 hwnd = CreateWindowEx(WS_EX_APPWINDOW, "static", NULL, WS_POPUP,
                                       0, 0, 100, 100, 0, 0, 0, NULL);
