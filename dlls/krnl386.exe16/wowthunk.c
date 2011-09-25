@@ -223,7 +223,7 @@ static DWORD call16_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RE
     if (record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
     {
         /* unwinding: restore the stack pointer in the TEB, and leave the Win16 mutex */
-        STACK32FRAME *frame32 = (STACK32FRAME *)((char *)frame - offsetof(STACK32FRAME,frame));
+        STACK32FRAME *frame32 = CONTAINING_RECORD(frame, STACK32FRAME, frame);
         NtCurrentTeb()->WOW32Reserved = (void *)frame32->frame16;
         _LeaveWin16Lock();
     }
