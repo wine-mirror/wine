@@ -1286,6 +1286,7 @@ BOOL WINAPI GetDeviceGammaRamp(HDC hDC, LPVOID ptr)
     BOOL ret = FALSE;
     DC *dc = get_dc_ptr( hDC );
 
+    TRACE("%p, %p\n", hDC, ptr);
     if( dc )
     {
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetDeviceGammaRamp );
@@ -1303,6 +1304,7 @@ BOOL WINAPI SetDeviceGammaRamp(HDC hDC, LPVOID ptr)
     BOOL ret = FALSE;
     DC *dc = get_dc_ptr( hDC );
 
+    TRACE("%p, %p\n", hDC, ptr);
     if( dc )
     {
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetDeviceGammaRamp );
@@ -1317,7 +1319,7 @@ BOOL WINAPI SetDeviceGammaRamp(HDC hDC, LPVOID ptr)
  */
 HCOLORSPACE WINAPI GetColorSpace(HDC hdc)
 {
-/*FIXME    Need to to whatever GetColorSpace actually does */
+/*FIXME    Need to do whatever GetColorSpace actually does */
     return 0;
 }
 
