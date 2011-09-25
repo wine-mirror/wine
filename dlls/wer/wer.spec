@@ -63,7 +63,7 @@
 @ stub WerpSvcReportFromMachineQueue
 @ stdcall WerAddExcludedApplication(wstr long)
 @ stdcall WerRemoveExcludedApplication(wstr long)
-@ stub WerReportAddDump
+@ stdcall WerReportAddDump(ptr ptr ptr long ptr ptr long)
 @ stub WerReportAddFile
 @ stdcall WerReportCloseHandle(ptr)
 @ stdcall WerReportCreate(wstr long ptr ptr)

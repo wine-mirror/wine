@@ -54,6 +54,9 @@ extern "C" {
 #define WER_SUBMIT_ARCHIVE_PARAMETERS_ONLY  0x1000
 #define WER_SUBMIT_REPORT_MACHINE_ID        0x2000
 
+#define WER_MAX_PREFERRED_MODULES           128
+#define WER_MAX_PREFERRED_MODULES_BUFFER    256
+
 /* #### */
 
 typedef HANDLE HREPORT;
@@ -109,6 +112,38 @@ typedef enum _WER_SUBMIT_RESULT
     WerReportAsync,
     WerCustomAction
 } WER_SUBMIT_RESULT, *PWER_SUBMIT_RESULT;
+
+typedef enum _WER_DUMP_TYPE
+{
+    WerDumpTypeMicroDump = 1,
+    WerDumpTypeMiniDump,
+    WerDumpTypeHeapDump,
+    WerDumpTypeMax
+} WER_DUMP_TYPE;
+
+/* #### */
+
+typedef struct _WER_DUMP_CUSTOM_OPTIONS
+{
+    DWORD dwSize;
+    DWORD dwMask;
+    DWORD dwDumpFlags;
+    BOOL  bOnlyThisThread;
+    DWORD dwExceptionThreadFlags;
+    DWORD dwOtherThreadFlags;
+    DWORD dwExceptionThreadExFlags;
+    DWORD dwOtherThreadExFlags;
+    DWORD dwPreferredModuleFlags;
+    DWORD dwOtherModuleFlags;
+    WCHAR wzPreferredModuleList[WER_MAX_PREFERRED_MODULES_BUFFER];
+
+} WER_DUMP_CUSTOM_OPTIONS, *PWER_DUMP_CUSTOM_OPTIONS;
+
+typedef struct _WER_EXCEPTION_INFORMATION
+{
+    PEXCEPTION_POINTERS pExceptionPointers;
+    BOOL bClientPointers;
+} WER_EXCEPTION_INFORMATION, *PWER_EXCEPTION_INFORMATION;
 
 /* #### */
 
