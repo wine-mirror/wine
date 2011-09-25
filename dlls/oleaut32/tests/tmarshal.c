@@ -495,12 +495,12 @@ static HRESULT WINAPI Widget_VariantCArray(
     for (i = 0; i < count; i++) {
         VariantInit(&res);
         hr = VarAdd(&values[i], &inc, &res);
-        if (!SUCCEEDED(hr)) {
+        if (FAILED(hr)) {
             ok(0, "VarAdd failed at %u with error 0x%x\n", i, hr);
             return hr;
         }
         hr = VariantCopy(&values[i], &res);
-        if (!SUCCEEDED(hr)) {
+        if (FAILED(hr)) {
             ok(0, "VariantCopy failed at %u with error 0x%x\n", i, hr);
             return hr;
         }
