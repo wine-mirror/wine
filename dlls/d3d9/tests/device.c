@@ -2858,6 +2858,7 @@ static void test_reset_fullscreen(void)
     WNDCLASSEX wc = {0};
     IDirect3DDevice9 *device = NULL;
     IDirect3D9 *d3d = NULL;
+    ATOM atom;
     static const struct message messages[] =
     {
         {WM_ACTIVATEAPP,    FOCUS_WINDOW},
@@ -2872,7 +2873,8 @@ static void test_reset_fullscreen(void)
     wc.lpfnWndProc = test_proc;
     wc.lpszClassName = "test_reset_fullscreen";
 
-    ok(RegisterClassEx(&wc), "Failed to register a new window class. GetLastError:%d\n", GetLastError());
+    atom = RegisterClassEx(&wc);
+    ok(atom, "Failed to register a new window class. GetLastError:%d\n", GetLastError());
 
     device_window = focus_window = CreateWindowEx(0, wc.lpszClassName, "Test Reset Fullscreen", 0, 0, 0, screen_width, screen_height, NULL, NULL, NULL, NULL);
     ok(device_window != NULL, "Failed to create a window. GetLastError:%d\n", GetLastError());
