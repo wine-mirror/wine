@@ -3784,12 +3784,15 @@ if (0)
     if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
     if (is_wow64 && pGetSystemWow64DirectoryW)
     {
+        UINT len;
         *dirW = 0;
-        ok(GetSystemDirectoryW(dirW, MAX_PATH) > 0, "GetSystemDirectoryW failed: %u\n", GetLastError());
+        len = GetSystemDirectoryW(dirW, MAX_PATH);
+        ok(len > 0, "GetSystemDirectoryW failed: %u\n", GetLastError());
         hr = pSHParseDisplayName(dirW, NULL, &pidl1, 0, NULL);
         ok(hr == S_OK, "failed %08x\n", hr);
         *dirW = 0;
-        ok(pGetSystemWow64DirectoryW(dirW, MAX_PATH) > 0, "GetSystemWow64DirectoryW failed: %u\n", GetLastError());
+        len = pGetSystemWow64DirectoryW(dirW, MAX_PATH);
+        ok(len > 0, "GetSystemWow64DirectoryW failed: %u\n", GetLastError());
         hr = pSHParseDisplayName(dirW, NULL, &pidl2, 0, NULL);
         ok(hr == S_OK, "failed %08x\n", hr);
         ret = pILIsEqual(pidl1, pidl2);
