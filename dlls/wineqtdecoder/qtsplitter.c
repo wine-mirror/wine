@@ -922,7 +922,7 @@ static HRESULT QT_Process_Movie(QTSplitter* filter)
     if (trk)
        hr = QT_Process_Video_Track(filter, trk);
 
-    if (!SUCCEEDED(hr))
+    if (FAILED(hr))
         return hr;
 
     trk = GetMovieIndTrackType(filter->pQTMovie, 1, AudioMediaCharacteristic, movieTrackCharacteristic | movieTrackEnabledOnly);
@@ -959,14 +959,14 @@ static HRESULT WINAPI QTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin, 
             hr = VFW_E_INVALID_DIRECTION;
     }
 
-    if (!SUCCEEDED(hr))
+    if (FAILED(hr))
     {
         LeaveCriticalSection(This->pin.pCritSec);
         return hr;
     }
 
     hr = IPin_QueryInterface(pReceivePin, &IID_IAsyncReader, (LPVOID *)&This->pReader);
-    if (!SUCCEEDED(hr))
+    if (FAILED(hr))
     {
         LeaveCriticalSection(This->pin.pCritSec);
         TRACE("Input source is not an AsyncReader\n");
@@ -976,7 +976,7 @@ static HRESULT WINAPI QTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin, 
     LeaveCriticalSection(This->pin.pCritSec);
     EnterCriticalSection(&((QTSplitter *)This->pin.pinInfo.pFilter)->filter.csFilter);
     hr = QT_Process_Movie((QTSplitter *)This->pin.pinInfo.pFilter);
-    if (!SUCCEEDED(hr))
+    if (FAILED(hr))
     {
         LeaveCriticalSection(&((QTSplitter *)This->pin.pinInfo.pFilter)->filter.csFilter);
         TRACE("Unable to process movie\n");
