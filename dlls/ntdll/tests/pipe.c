@@ -238,8 +238,10 @@ static DWORD WINAPI thread(PVOID main_thread)
     Sleep(400);
 
     if (main_thread) {
+        DWORD ret;
         userapc_called = FALSE;
-        ok(pQueueUserAPC(&userapc, main_thread, 0), "can't queue user apc, GetLastError: %x\n", GetLastError());
+        ret = pQueueUserAPC(&userapc, main_thread, 0);
+        ok(ret, "can't queue user apc, GetLastError: %x\n", GetLastError());
         CloseHandle(main_thread);
     }
 
@@ -264,6 +266,7 @@ static void test_alertable(void)
     HANDLE hPipe;
     NTSTATUS res;
     HANDLE hThread;
+    DWORD ret;
 
     memset(&iosb, 0x55, sizeof(iosb));
 
@@ -275,7 +278,8 @@ static void test_alertable(void)
 
 /* queue an user apc before calling listen */
     userapc_called = FALSE;
-    ok(pQueueUserAPC(&userapc, GetCurrentThread(), 0), "can't queue user apc, GetLastError: %x\n", GetLastError());
+    ret = pQueueUserAPC(&userapc, GetCurrentThread(), 0);
+    ok(ret, "can't queue user apc, GetLastError: %x\n", GetLastError());
 
     res = listen_pipe(hPipe, hEvent, &iosb, TRUE);
     todo_wine ok(res == STATUS_CANCELLED, "NtFsControlFile returned %x\n", res);
@@ -332,6 +336,7 @@ static void test_nonalertable(void)
     HANDLE hPipe;
     NTSTATUS res;
     HANDLE hThread;
+    DWORD ret;
 
     memset(&iosb, 0x55, sizeof(iosb));
 
@@ -345,7 +350,8 @@ static void test_nonalertable(void)
     ok(hThread != INVALID_HANDLE_VALUE, "can't create thread, GetLastError: %x\n", GetLastError());
 
     userapc_called = FALSE;
-    ok(pQueueUserAPC(&userapc, GetCurrentThread(), 0), "can't queue user apc, GetLastError: %x\n", GetLastError());
+    ret = pQueueUserAPC(&userapc, GetCurrentThread(), 0);
+    ok(ret, "can't queue user apc, GetLastError: %x\n", GetLastError());
 
     res = listen_pipe(hPipe, hEvent, &iosb, TRUE);
     todo_wine ok(!res, "NtFsControlFile returned %x\n", res);
