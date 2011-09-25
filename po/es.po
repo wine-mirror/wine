@@ -9362,7 +9362,7 @@ msgid "version 1.0"
 msgstr "Versión"
 
 #: oleview.rc:100
-msgid "TypeLib files (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
 msgstr ""
 
 #: oleview.rc:103

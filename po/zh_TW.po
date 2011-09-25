@@ -8922,7 +8922,7 @@ msgstr "版本 1.0 "
 
 #: oleview.rc:100
 #, fuzzy
-msgid "TypeLib files (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
 msgstr "TypeLib 檔案 (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
 
 #: oleview.rc:103
