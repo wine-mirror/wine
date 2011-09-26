@@ -28,6 +28,35 @@ import "comcat.idl";
 #include <shdispid.h>
 
 /*****************************************************************************
+ * IEnumACString interface
+ */
+[
+    local,
+    object,
+    uuid(8e74c210-cf9d-4eaf-a403-7356428f0a5a),
+    pointer_default(unique)
+]
+interface IEnumACString : IEnumString
+{
+    typedef IEnumACString *PENUMACSTRING, *LPENUMACSTRING;
+
+    typedef enum _tagACENUMOPTION
+    {
+        ACEO_NONE            = 0x00000000,
+        ACEO_MOSTRECENTFIRST = 0x00000001,
+        ACEO_FIRSTUNUSED     = 0x00010000,
+    } ACENUMOPTION;
+
+    HRESULT NextItem( [out] LPWSTR pszUrl,
+                      [in] ULONG cchMax,
+                      [out] ULONG *pulSortIndex);
+
+    HRESULT SetEnumOptions( [in] DWORD dwOptions );
+
+    HRESULT GetEnumOptions( [out] DWORD *pdwOptions );
+}
+
+/*****************************************************************************
  * IAutoComplete interface
  */
 [

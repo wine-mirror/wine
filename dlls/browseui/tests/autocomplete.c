@@ -23,6 +23,7 @@
 #include <initguid.h>
 #include <windows.h>
 #include <shlobj.h>
+#include <shldisp.h>
 #include <shlwapi.h>
 #include <shlguid.h>
 
@@ -127,10 +128,8 @@ static HRESULT STDMETHODCALLTYPE TestACL_QueryInterface(IEnumString *iface, REFI
         return S_OK;
     }
 
-#if 0   /* IID_IEnumACString not defined yet in wine */
     if (!IsEqualGUID(iid, &IID_IEnumACString))
         trace("unknown interface queried\n");
-#endif
     return E_NOINTERFACE;
 }
 
@@ -239,6 +238,7 @@ static void test_ACLMulti(void)
     const char *strings2[] = {"a", "b", "d"};
     WCHAR exp[] = {'A','B','C',0};
     IEnumString *obj;
+    IEnumACString *unk;
     TestACL *acl1, *acl2;
     IACList *acl;
     IObjMgr *mgr;
@@ -252,11 +252,10 @@ static void test_ACLMulti(void)
     ok(obj->lpVtbl->QueryInterface(obj, &IID_IACList2, &tmp) == E_NOINTERFACE,
         "Unexpected interface IACList2 in ACLMulti\n");
     stop_on_error(obj->lpVtbl->QueryInterface(obj, &IID_IObjMgr, (LPVOID *)&mgr));
-#if 0        /* IID_IEnumACString not defined yet in wine */
-    ole_ok(obj->lpVtbl->QueryInterface(obj, &IID_IEnumACString, &unk));
+
+    todo_wine ole_ok(obj->lpVtbl->QueryInterface(obj, &IID_IEnumACString, (LPVOID*)&unk));
     if (unk != NULL)
         unk->lpVtbl->Release(unk);
-#endif
 
     ok(obj->lpVtbl->Next(obj, 1, (LPOLESTR *)&tmp, &i) == S_FALSE, "Unexpected return from Next\n");
     ok(i == 0, "Unexpected fetched value %d\n", i);
