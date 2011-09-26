@@ -17,6 +17,7 @@ C_SRCS = \
 	rebar.c \
 	status.c \
 	subclass.c \
+	syslink.c \
 	tab.c \
 	toolbar.c \
 	tooltips.c \
