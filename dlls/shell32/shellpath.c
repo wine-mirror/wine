@@ -3277,7 +3277,7 @@ static HRESULT redirect_known_folder(
 
 struct knownfolder
 {
-    const struct IKnownFolderVtbl *vtbl;
+    IKnownFolder IKnownFolder_iface;
     LONG refs;
     KNOWNFOLDERID id;
     LPWSTR registryPath;
@@ -3285,7 +3285,7 @@ struct knownfolder
 
 static inline struct knownfolder *impl_from_IKnownFolder( IKnownFolder *iface )
 {
-    return (struct knownfolder *)((char *)iface - FIELD_OFFSET( struct knownfolder, vtbl ));
+    return CONTAINING_RECORD( iface, struct knownfolder, IKnownFolder_iface );
 }
 
 static ULONG WINAPI knownfolder_AddRef(
@@ -3643,12 +3643,12 @@ static HRESULT knownfolder_create( void **ppv )
     kf = HeapAlloc( GetProcessHeap(), 0, sizeof(*kf) );
     if (!kf) return E_OUTOFMEMORY;
 
-    kf->vtbl = &knownfolder_vtbl;
+    kf->IKnownFolder_iface.lpVtbl = &knownfolder_vtbl;
     kf->refs = 1;
     memset( &kf->id, 0, sizeof(kf->id) );
     kf->registryPath = NULL;
 
-    *ppv = &kf->vtbl;
+    *ppv = &kf->IKnownFolder_iface.lpVtbl;
 
     TRACE("returning iface %p\n", *ppv);
     return S_OK;
@@ -3656,7 +3656,7 @@ static HRESULT knownfolder_create( void **ppv )
 
 struct foldermanager
 {
-    const struct IKnownFolderManagerVtbl *vtbl;
+    IKnownFolderManager IKnownFolderManager_iface;
     LONG refs;
     UINT num_ids;
     KNOWNFOLDERID *ids;
@@ -3664,7 +3664,7 @@ struct foldermanager
 
 static inline struct foldermanager *impl_from_IKnownFolderManager( IKnownFolderManager *iface )
 {
-    return (struct foldermanager *)((char *)iface - FIELD_OFFSET( struct foldermanager, vtbl ));
+    return CONTAINING_RECORD( iface, struct foldermanager, IKnownFolderManager_iface );
 }
 
 static ULONG WINAPI foldermanager_AddRef(
@@ -3938,7 +3938,7 @@ static HRESULT foldermanager_create( void **ppv )
     fm = HeapAlloc( GetProcessHeap(), 0, sizeof(*fm) );
     if (!fm) return E_OUTOFMEMORY;
 
-    fm->vtbl = &foldermanager_vtbl;
+    fm->IKnownFolderManager_iface.lpVtbl = &foldermanager_vtbl;
     fm->refs = 1;
     fm->num_ids = 0;
 
@@ -3961,7 +3961,7 @@ static HRESULT foldermanager_create( void **ppv )
         }
     }
     TRACE("found %u known folders\n", fm->num_ids);
-    *ppv = &fm->vtbl;
+    *ppv = &fm->IKnownFolderManager_iface;
 
     TRACE("returning iface %p\n", *ppv);
     return S_OK;
