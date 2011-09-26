@@ -832,6 +832,7 @@ static LRESULT SYSLINK_Draw (const SYSLINK_INFO *infoPtr, HDC hdc)
     PDOC_ITEM Current;
     HFONT hOldFont;
     COLORREF OldTextColor, OldBkColor;
+    HBRUSH hBrush;
 
     hOldFont = SelectObject(hdc, infoPtr->Font);
     OldTextColor = SetTextColor(hdc, infoPtr->TextColor);
@@ -842,6 +843,13 @@ static LRESULT SYSLINK_Draw (const SYSLINK_INFO *infoPtr, HDC hdc)
     rc.bottom -= SL_BOTTOMMARGIN + SL_TOPMARGIN;
 
     if(rc.right < 0 || rc.bottom < 0) return 0;
+
+    hBrush = (HBRUSH)SendMessageW(infoPtr->Notify, WM_CTLCOLORSTATIC,
+                                  (WPARAM)hdc, (LPARAM)infoPtr->Self);
+    if (!hBrush)
+        hBrush = CreateSolidBrush(infoPtr->BackColor);
+    FillRect(hdc, &rc, hBrush);
+    DeleteObject(hBrush);
 
     for(Current = infoPtr->Items; Current != NULL; Current = Current->Next)
     {
@@ -908,23 +916,6 @@ static LRESULT SYSLINK_Paint (const SYSLINK_INFO *infoPtr, HDC hdcParam)
         if (!hdcParam) EndPaint (infoPtr->Self, &ps);
     }
     return 0;
-}
-
-/***********************************************************************
- * SYSLINK_EraseBkgnd
- * Handles the WM_ERASEBKGND message.
- */
-static LRESULT SYSLINK_EraseBkgnd (const SYSLINK_INFO *infoPtr, HDC hdc)
-{
-   HBRUSH hbr;
-   RECT r;
-
-   GetClientRect(infoPtr->Self, &r);
-   hbr = CreateSolidBrush(infoPtr->BackColor);
-   FillRect(hdc, &r, hbr);
-   DeleteObject(hbr);
-
-   return 1;
 }
 
 /***********************************************************************
@@ -1572,7 +1563,7 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
         return SYSLINK_Paint (infoPtr, (HDC)wParam);
 
     case WM_ERASEBKGND:
-        return SYSLINK_EraseBkgnd(infoPtr, (HDC)wParam);
+        return 0;
 
     case WM_SETCURSOR:
     {
@@ -1752,7 +1743,7 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
         infoPtr->HasFocus = FALSE;
         infoPtr->MouseDownID = -1;
         infoPtr->TextColor = comctl32_color.clrWindowText;
-        infoPtr->LinkColor = comctl32_color.clrHotTrackingColor;
+        infoPtr->LinkColor = comctl32_color.clrHighlight;
         infoPtr->VisitedColor = comctl32_color.clrHighlight;
         infoPtr->BackColor = infoPtr->Style & LWS_TRANSPARENT ?
                              comctl32_color.clrWindow : comctl32_color.clrBtnFace;
