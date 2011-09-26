@@ -635,6 +635,7 @@ static BOOL INTERNET_ConfigureProxy( appinfo_t *lpwai )
         UrlComponents.dwUserNameLength = INTERNET_MAX_USER_NAME_LENGTH;
         UrlComponents.lpszPassword = password;
         UrlComponents.dwPasswordLength = INTERNET_MAX_PASSWORD_LENGTH;
+        UrlComponents.dwUrlPathLength = 0;
         UrlComponents.dwExtraInfoLength = 0;
 
         if(InternetCrackUrlW(wpi.proxy, 0, 0, &UrlComponents))
