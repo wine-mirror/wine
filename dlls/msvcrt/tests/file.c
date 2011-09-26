@@ -130,15 +130,15 @@ static void test_fileops( void )
         ok(buffer[0] == outbuffer[strlen(outbuffer)-1],"fgets exchanged chars for bufmode=%x\n", bufmodes[bufmode]);
 
         rewind(file);
-        for (i = 0, c = EOF; i < sizeof(outbuffer); i++)
+        for (i = 0; i < sizeof(outbuffer); i++)
         {
-            ok((c = fgetc(file)) == outbuffer[i], "fgetc returned wrong data for bufmode=%x\n", bufmodes[bufmode]);
+            ok(fgetc(file) == outbuffer[i], "fgetc returned wrong data for bufmode=%x\n", bufmodes[bufmode]);
         }
         ok((c = fgetc(file)) == EOF, "getc did not return EOF for bufmode=%x\n", bufmodes[bufmode]);
         ok(feof(file), "feof did not return EOF for bufmode=%x\n", bufmodes[bufmode]);
         ok(ungetc(c, file) == EOF, "ungetc(EOF) did not return EOF for bufmode=%x\n", bufmodes[bufmode]);
         ok(feof(file), "feof after ungetc(EOF) did not return EOF for bufmode=%x\n", bufmodes[bufmode]);
-        ok((c = fgetc(file)) == EOF, "getc did not return EOF for bufmode=%x\n", bufmodes[bufmode]);
+        ok(fgetc(file) == EOF, "getc did not return EOF for bufmode=%x\n", bufmodes[bufmode]);
         c = outbuffer[sizeof(outbuffer) - 1];
         ok(ungetc(c, file) == c, "ungetc did not return its input for bufmode=%x\n", bufmodes[bufmode]);
         ok(!feof(file), "feof after ungetc returned EOF for bufmode=%x\n", bufmodes[bufmode]);
@@ -146,7 +146,7 @@ static void test_fileops( void )
         ok(c == outbuffer[sizeof(outbuffer) - 1],
            "getc did not return ungetc'd data for bufmode=%x\n", bufmodes[bufmode]);
         ok(!feof(file), "feof after getc returned EOF prematurely for bufmode=%x\n", bufmodes[bufmode]);
-        ok((c = fgetc(file)) == EOF, "getc did not return EOF for bufmode=%x\n", bufmodes[bufmode]);
+        ok(fgetc(file) == EOF, "getc did not return EOF for bufmode=%x\n", bufmodes[bufmode]);
         ok(feof(file), "feof after getc did not return EOF for bufmode=%x\n", bufmodes[bufmode]);
 
         rewind(file);
