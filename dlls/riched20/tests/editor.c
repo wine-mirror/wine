@@ -5040,20 +5040,29 @@ static void test_EM_STREAMIN(void)
 
   const char * streamText3 = "RichEdit1";
 
-  struct StringWithLength cookieForStream4;
   const char * streamText4 =
       "This text just needs to be long enough to cause run to be split onto "
       "two separate lines and make sure the null terminating character is "
       "handled properly.\0";
   int length4 = strlen(streamText4) + 1;
-  cookieForStream4.buffer = (char *)streamText4;
-  cookieForStream4.length = length4;
+  struct StringWithLength cookieForStream4 = {
+      length4,
+      (char *)streamText4,
+  };
+
+  const WCHAR streamText5[] = { 'T', 'e', 's', 't', 'S', 'o', 'm', 'e', 'T', 'e', 'x', 't' };
+  int length5 = sizeof(streamText5) / sizeof(WCHAR);
+  struct StringWithLength cookieForStream5 = {
+      sizeof(streamText5),
+      (char *)streamText5,
+  };
 
   /* Minimal test without \par at the end */
   es.dwCookie = (DWORD_PTR)&streamText0;
   es.dwError = 0;
   es.pfnCallback = test_EM_STREAMIN_esCallback;
-  SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
+  result = SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
+  todo_wine ok(result == 12, "got %ld, expected %d\n", result, 12);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   ok (result  == 12,
@@ -5067,7 +5076,8 @@ static void test_EM_STREAMIN(void)
   es.dwCookie = (DWORD_PTR)&streamText0a;
   es.dwError = 0;
   es.pfnCallback = test_EM_STREAMIN_esCallback;
-  SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
+  result = SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
+  todo_wine ok(result == 12, "got %ld, expected %d\n", result, 12);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   ok (result  == 12,
@@ -5081,7 +5091,8 @@ static void test_EM_STREAMIN(void)
   es.dwCookie = (DWORD_PTR)&streamText0b;
   es.dwError = 0;
   es.pfnCallback = test_EM_STREAMIN_esCallback;
-  SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
+  result = SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
+  todo_wine ok(result == 13, "got %ld, expected %d\n", result, 13);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   ok (result  == 14,
@@ -5094,7 +5105,8 @@ static void test_EM_STREAMIN(void)
   es.dwCookie = (DWORD_PTR)&streamText1;
   es.dwError = 0;
   es.pfnCallback = test_EM_STREAMIN_esCallback;
-  SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
+  result = SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
+  todo_wine ok(result == 12, "got %ld, expected %d\n", result, 12);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   ok (result  == 12,
@@ -5106,7 +5118,8 @@ static void test_EM_STREAMIN(void)
 
   es.dwCookie = (DWORD_PTR)&streamText2;
   es.dwError = 0;
-  SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
+  result = SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
+  ok(result == 0, "got %ld, expected %d\n", result, 0);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   ok (result  == 0,
@@ -5117,7 +5130,8 @@ static void test_EM_STREAMIN(void)
 
   es.dwCookie = (DWORD_PTR)&streamText3;
   es.dwError = 0;
-  SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
+  result = SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
+  ok(result == 0, "got %ld, expected %d\n", result, 0);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   ok (result  == 0,
@@ -5129,12 +5143,24 @@ static void test_EM_STREAMIN(void)
   es.dwCookie = (DWORD_PTR)&cookieForStream4;
   es.dwError = 0;
   es.pfnCallback = test_EM_STREAMIN_esCallback2;
-  SendMessage(hwndRichEdit, EM_STREAMIN, SF_TEXT, (LPARAM)&es);
+  result = SendMessage(hwndRichEdit, EM_STREAMIN, SF_TEXT, (LPARAM)&es);
+  ok(result == length4, "got %ld, expected %d\n", result, length4);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   ok (result  == length4,
       "EM_STREAMIN: Test 4 returned %ld, expected %d\n", result, length4);
   ok(es.dwError == 0, "EM_STREAMIN: Test 4 set error %d, expected %d\n", es.dwError, 0);
+
+  es.dwCookie = (DWORD_PTR)&cookieForStream5;
+  es.dwError = 0;
+  es.pfnCallback = test_EM_STREAMIN_esCallback2;
+  result = SendMessage(hwndRichEdit, EM_STREAMIN, SF_TEXT | SF_UNICODE, (LPARAM)&es);
+  ok(result == sizeof(streamText5), "got %ld, expected %u\n", result, (UINT)sizeof(streamText5));
+
+  result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+  ok (result  == length5,
+      "EM_STREAMIN: Test 4 returned %ld, expected %d\n", result, length5);
+  ok(es.dwError == 0, "EM_STREAMIN: Test 5 set error %d, expected %d\n", es.dwError, 0);
 
   DestroyWindow(hwndRichEdit);
 }
