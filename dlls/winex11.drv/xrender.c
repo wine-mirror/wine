@@ -104,6 +104,23 @@ static const WineXRenderFormatTemplate wxr_formats_template[WXR_NB_FORMATS] =
 /* WXR_FORMAT_B8G8R8X8 */ { 32,     0,      0,      8,      0xff,   16,     0xff,   24,     0xff    },
 };
 
+static const ColorShifts wxr_color_shifts[WXR_NB_FORMATS] =
+{
+    /* format                phys red    phys green  phys blue   log red     log green   log blue */
+/* WXR_FORMAT_MONO     */ { { 0,0,0 },  { 0,0,0 },  { 0,0,0 },  { 0,0,0 },  { 0,0,0 },  { 0,0,0 }  },
+/* WXR_FORMAT_GRAY     */ { { 0,0,0 },  { 0,0,0 },  { 0,0,0 },  { 0,0,0 },  { 0,0,0 },  { 0,0,0 }  },
+/* WXR_FORMAT_X1R5G5B5 */ { {10,5,31},  { 5,5,31},  { 0,5,31},  {10,5,31},  { 5,5,31},  { 0,5,31}  },
+/* WXR_FORMAT_X1B5G5R5 */ { { 0,5,31},  { 5,5,31},  {10,5,31},  { 0,5,31},  { 5,5,31},  {10,5,31}  },
+/* WXR_FORMAT_R5G6B5   */ { {11,5,31},  { 5,6,63},  { 0,5,31},  {11,5,31},  { 5,6,63},  { 0,5,31}  },
+/* WXR_FORMAT_B5G6R5   */ { { 0,5,31},  { 5,6,63},  {11,5,31},  { 0,5,31},  { 5,6,63},  {11,5,31}  },
+/* WXR_FORMAT_R8G8B8   */ { {16,8,255}, { 8,8,255}, { 0,8,255}, {16,8,255}, { 8,8,255}, { 0,8,255} },
+/* WXR_FORMAT_B8G8R8   */ { { 0,8,255}, { 8,8,255}, {16,8,255}, { 0,8,255}, { 8,8,255}, {16,8,255} },
+/* WXR_FORMAT_A8R8G8B8 */ { {16,8,255}, { 8,8,255}, { 0,8,255}, {16,8,255}, { 8,8,255}, { 0,8,255} },
+/* WXR_FORMAT_B8G8R8A8 */ { { 8,8,255}, {16,8,255}, {24,8,255}, { 8,8,255}, {16,8,255}, {24,8,255} },
+/* WXR_FORMAT_X8R8G8B8 */ { {16,8,255}, { 8,8,255}, { 0,8,255}, {16,8,255}, { 8,8,255}, { 0,8,255} },
+/* WXR_FORMAT_B8G8R8X8 */ { { 8,8,255}, {16,8,255}, {24,8,255}, { 8,8,255}, {16,8,255}, {24,8,255} },
+};
+
 static enum wxr_format default_format = WXR_INVALID_FORMAT;
 static XRenderPictFormat *pict_formats[WXR_NB_FORMATS + 1 /* invalid format */];
 
@@ -1230,8 +1247,7 @@ static INT xrenderdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID 
  */
 static BOOL xrenderdrv_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap )
 {
-    XRenderPictFormat *pict_format = NULL;
-    ColorShifts shifts;
+    enum wxr_format format = WXR_INVALID_FORMAT;
     BITMAP bitmap;
 
     if (!GetObjectW( hbitmap, sizeof(bitmap), &bitmap )) return FALSE;
@@ -1240,20 +1256,15 @@ static BOOL xrenderdrv_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap )
     {
         switch (bitmap.bmBitsPixel)
         {
-        case 16: pict_format = pict_formats[WXR_FORMAT_R5G6B5]; break;
-        case 24: pict_format = pict_formats[WXR_FORMAT_R8G8B8]; break;
-        case 32: pict_format = pict_formats[WXR_FORMAT_A8R8G8B8]; break;
+        case 16: format = WXR_FORMAT_R5G6B5; break;
+        case 24: format = WXR_FORMAT_R8G8B8; break;
+        case 32: format = WXR_FORMAT_A8R8G8B8; break;
         }
     }
 
-    if (pict_format)
-    {
-        X11DRV_PALETTE_ComputeColorShifts( &shifts,
-                                           pict_format->direct.redMask << pict_format->direct.red,
-                                           pict_format->direct.greenMask << pict_format->direct.green,
-                                           pict_format->direct.blueMask << pict_format->direct.blue );
-        return X11DRV_create_phys_bitmap( hbitmap, &bitmap, pict_format->depth, TRUE, &shifts );
-    }
+    if (pict_formats[format])
+        return X11DRV_create_phys_bitmap( hbitmap, &bitmap, pict_formats[format]->depth,
+                                          TRUE, &wxr_color_shifts[format] );
 
     dev = GET_NEXT_PHYSDEV( dev, pCreateBitmap );
     return dev->funcs->pCreateBitmap( dev, hbitmap );

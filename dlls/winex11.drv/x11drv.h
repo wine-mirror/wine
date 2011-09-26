@@ -108,8 +108,8 @@ typedef struct {
 
 typedef struct
 {
-    ChannelShift physicalRed, physicalBlue, physicalGreen;
-    ChannelShift logicalRed, logicalBlue, logicalGreen;
+    ChannelShift physicalRed, physicalGreen, physicalBlue;
+    ChannelShift logicalRed, logicalGreen, logicalBlue;
 } ColorShifts;
 
   /* X physical bitmap */
