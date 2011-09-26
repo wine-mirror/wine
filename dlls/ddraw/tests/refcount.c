@@ -19,7 +19,6 @@
  */
 #define COBJMACROS
 
-#include <assert.h>
 #include "wine/test.h"
 #include "ddraw.h"
 #include "d3d.h"

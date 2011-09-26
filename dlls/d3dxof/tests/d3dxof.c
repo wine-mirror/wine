@@ -19,8 +19,8 @@
  */
 #define COBJMACROS
 
-#include <assert.h>
 #include <stdio.h>
+
 #include "wine/test.h"
 #include "initguid.h"
 #include "dxfile.h"

@@ -19,7 +19,6 @@
 /* For IID_IDirectDraw3 - it is not in dxguid.dll */
 #define INITGUID
 
-#include <assert.h>
 #include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"

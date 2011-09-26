@@ -17,7 +17,6 @@
  */
 #define COBJMACROS
 
-#include <assert.h>
 #include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"

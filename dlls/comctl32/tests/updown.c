@@ -44,7 +44,6 @@
  *   - more stuff to test
  */
 
-#include <assert.h>
 #include <windows.h>
 #include <commctrl.h>
 #include <stdio.h>
