@@ -2905,13 +2905,11 @@ void WCMD_assoc (const WCHAR *command, BOOL assoc) {
 /****************************************************************************
  * WCMD_color
  *
- * Clear the terminal screen.
+ * Colors the terminal screen.
  */
 
 void WCMD_color (void) {
 
-  /* Emulate by filling the screen from the top left to bottom right with
-        spaces, then moving the cursor to the top left afterwards */
   CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
   HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
