@@ -2364,7 +2364,7 @@ LPWSTR WINAPI StrFormatByteSizeW(LONGLONG llBytes, LPWSTR lpszDest, UINT cchMax)
    * counts that lie exactly on a 1024 byte boundary.
    */
   if (i > 8)
-    dBytes = (double)(llBytes >> 20) + 0.001; /* Scale down by I MB */
+    dBytes = (double)(llBytes >> 20) + 0.001; /* Scale down by 1 MB */
   else
     dBytes = (double)llBytes + 0.00001;
 

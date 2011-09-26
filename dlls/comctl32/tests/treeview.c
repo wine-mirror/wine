@@ -1129,7 +1129,7 @@ static void test_expandinvisible(void)
 
     hTree = create_treeview_control(0);
 
-    /* The test builds the following tree and expands then node 1, while node 0 is collapsed.
+    /* The test builds the following tree and expands node 1, while node 0 is collapsed.
      *
      * 0
      * |- 1
@@ -1385,7 +1385,7 @@ static void test_expandnotify(void)
     ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, ret);
     ok((item.state & TVIS_EXPANDED) == 0, "expected collapsed\n");
-    /* all next collapse/expand attempts won't produce any notifications,
+    /* all further collapse/expand attempts won't produce any notifications,
        the only way is to reset with all children removed */
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "collapse after expand notifications", FALSE);
 
@@ -1480,7 +1480,7 @@ static void test_TVS_SINGLEEXPAND(void)
     ok(ret, "got %d\n", ret);
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_singleexpand_seq, "singleexpand notifications", FALSE);
 
-    /* a workaround for NT4 that sends expanding notification when nothing is about to expand */
+    /* a workaround for NT4 that sends expand notifications when nothing is about to expand */
     ret = SendMessageA(hTree, TVM_DELETEITEM, 0, (LPARAM)hRoot);
     ok(ret, "got %d\n", ret);
     fill_tree(hTree);

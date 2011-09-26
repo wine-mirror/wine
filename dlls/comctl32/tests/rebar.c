@@ -1115,7 +1115,7 @@ START_TEST(rebar)
 
     init_system_font_height();
 
-    /* LoadLibrary is needed. This file has no references to functions in comctl32 */
+    /* LoadLibrary is needed. This file has no reference to functions in comctl32 */
     hComctl32 = LoadLibraryA("comctl32.dll");
     pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
     if (!pInitCommonControlsEx)

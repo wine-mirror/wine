@@ -135,7 +135,7 @@ static void test_mutex(void)
     ok(hCreated != NULL, "CreateMutex failed with error %d\n", GetLastError());
 
     hOpened = OpenMutex(0, FALSE, "WineTestMutex");
-    ok(hOpened == NULL, "OpenMutex succeded\n");
+    ok(hOpened == NULL, "OpenMutex succeeded\n");
 
     hOpened = OpenMutex(GENERIC_EXECUTE, FALSE, "WineTestMutex");
     ok(hOpened != NULL, "OpenMutex failed with error %d\n", GetLastError());
@@ -171,7 +171,7 @@ static void test_mutex(void)
         }
     }
 
-    ok( failed == 0x0de0fffe, "open succeded when it shouldn't: %x\n", failed);
+    ok( failed == 0x0de0fffe, "open succeeded when it shouldn't: %x\n", failed);
 
     ret = ReleaseMutex(hCreated);
     ok(!ret && (GetLastError() == ERROR_NOT_OWNER),

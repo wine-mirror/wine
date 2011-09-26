@@ -173,10 +173,10 @@ static const WCHAR wfile[] = {'t','e','s','t','.','a','v','i',0};
 static const char afile[] = "test.avi";
 
 /* This test doesn't use the quartz filtergraph because it makes it impossible
- * to be certain that a thread is really one owned by the avi splitter
- * A lot of the decoder filters will also have their own thread, and windows'
+ * to be certain that a thread is really one owned by the avi splitter.
+ * A lot of the decoder filters will also have their own thread, and Windows'
  * filtergraph has a separate thread for start/stop/seeking requests.
- * By avoiding the filtergraph all together and connecting streams directly to
+ * By avoiding the filtergraph altogether and connecting streams directly to
  * the null renderer I am sure that this is not the case here.
  */
 static void test_threads(void)
@@ -200,7 +200,7 @@ static void test_threads(void)
         return;
     }
 
-    /* Before doing anything (number of threads at the start differs per OS) */
+    /* Before doing anything (the thread count at the start differs per OS) */
     baselevel = count_threads();
 
     file = CreateFileW(wfile, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
@@ -280,7 +280,7 @@ static void test_threads(void)
 
     curlevel = count_threads();
     ok(curlevel == baselevel,
-        "Amount of threads should be %d not %d\n", baselevel, curlevel);
+        "The thread count should be %d not %d\n", baselevel, curlevel);
 
     hr = IPin_Connect(filepin, avipin, NULL);
     ok(hr == S_OK, "Could not connect: %08x\n", hr);
@@ -290,7 +290,7 @@ static void test_threads(void)
     expected = 1 + baselevel;
     curlevel = count_threads();
     ok(curlevel == expected,
-        "Amount of threads should be %d not %d\n", expected, curlevel);
+        "The thread count should be %d not %d\n", expected, curlevel);
 
     IUnknown_Release(avipin);
     avipin = NULL;
@@ -346,7 +346,7 @@ static void test_threads(void)
     if (hr != S_OK)
         goto fail2;
     /* At this point there is a minimalistic connected avi splitter that can
-     * Be used for all sorts of source filter tests, however that still needs
+     * be used for all sorts of source filter tests. However that still needs
      * to be written at a later time.
      *
      * Interesting tests:
@@ -366,7 +366,7 @@ static void test_threads(void)
 
     curlevel = count_threads();
     ok(curlevel == expected,
-        "Amount of threads should be %d not %d\n", expected, curlevel);
+        "The thread count should be %d not %d\n", expected, curlevel);
 
     IBaseFilter_Pause(pavi);
     IBaseFilter_Pause(preader);
@@ -442,7 +442,7 @@ fail:
     curlevel = count_threads();
     todo_wine
     ok(curlevel == baselevel,
-        "Amount of threads should be %d not %d\n", baselevel, curlevel);
+        "The thread count should be %d not %d\n", baselevel, curlevel);
 }
 
 START_TEST(avisplitter)

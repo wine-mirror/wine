@@ -460,7 +460,7 @@ static void test_status_ownerdraw(void)
     r = SendMessage(hWndStatus, SB_SETTEXT, SBT_OWNERDRAW, (LPARAM)statustext);
     ok( r == TRUE, "Sendmessage returned %d, expected 1\n", r);
     ok( 1 == g_wmdrawitm_ctr, "got %d drawitem messages expected 1\n", g_wmdrawitm_ctr);
-    /* ;and again */
+    /* and again */
     g_wmdrawitm_ctr = 0;
     r = SendMessage(hWndStatus, SB_SETTEXT, SBT_OWNERDRAW, (LPARAM)statustext);
     ok( r == TRUE, "Sendmessage returned %d, expected 1\n", r);

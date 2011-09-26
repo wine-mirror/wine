@@ -369,7 +369,7 @@ static WCHAR* utf8_chars_to_wchars(LPCSTR string)
  * FIXME: should not use stdio
  */
 
-static HRESULT convert_to_native_icon(IStream *icoFile, int *indeces, int numIndeces,
+static HRESULT convert_to_native_icon(IStream *icoFile, int *indices, int numIndices,
                                       const CLSID *outputFormat, const char *outputFileName, LPCWSTR commentW)
 {
     WCHAR *dosOutputFileName = NULL;
@@ -420,7 +420,7 @@ static HRESULT convert_to_native_icon(IStream *icoFile, int *indeces, int numInd
         goto end;
     }
 
-    for (i = 0; i < numIndeces; i++)
+    for (i = 0; i < numIndices; i++)
     {
         IWICBitmapFrameDecode *sourceFrame = NULL;
         IWICBitmapSource *sourceBitmap = NULL;
@@ -428,10 +428,10 @@ static HRESULT convert_to_native_icon(IStream *icoFile, int *indeces, int numInd
         IPropertyBag2 *options = NULL;
         UINT width, height;
 
-        hr = IWICBitmapDecoder_GetFrame(decoder, indeces[i], &sourceFrame);
+        hr = IWICBitmapDecoder_GetFrame(decoder, indices[i], &sourceFrame);
         if (FAILED(hr))
         {
-            WINE_ERR("error 0x%08X getting frame %d\n", hr, indeces[i]);
+            WINE_ERR("error 0x%08X getting frame %d\n", hr, indices[i]);
             goto endloop;
         }
         hr = WICConvertBitmapSource(&GUID_WICPixelFormat32bppBGRA, (IWICBitmapSource*)sourceFrame, &sourceBitmap);

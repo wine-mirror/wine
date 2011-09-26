@@ -2855,7 +2855,7 @@ static void test_SHGetShellKey(void)
 
     hkey = pSHGetShellKey(SHKEY_Root_HKLM, NULL, FALSE);
     ok(hkey != NULL, "Can't open key\n");
-    ok(SUCCEEDED(RegDeleteKeyW(hkey, WineTestW)), "Can't delte key\n");
+    ok(SUCCEEDED(RegDeleteKeyW(hkey, WineTestW)), "Can't delete key\n");
     RegCloseKey(hkey);
 
     hkey = pSHGetShellKey(SHKEY_Root_HKLM, WineTestW, TRUE);
@@ -2911,7 +2911,7 @@ static void test_SHGetShellKey(void)
 
     hkey = pSHGetShellKey(SHKEY_Root_HKLM, NULL, FALSE);
     ok(hkey != NULL, "Can't create key\n");
-    ok(SUCCEEDED(RegDeleteKeyW(hkey, WineTestW)), "Can't delte key\n");
+    ok(SUCCEEDED(RegDeleteKeyW(hkey, WineTestW)), "Can't delete key\n");
     RegCloseKey(hkey);
 }
 
