@@ -150,7 +150,7 @@ static void test_create_invalid(void)
 /* create a pipe with sharing = 0 */
     res = pNtCreateNamedPipeFile(&handle, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr, &iosb, 0, 2 /*FILE_CREATE*/,
                                  0, 1, 0, 0, 0xFFFFFFFF, 500, 500, &timeout);
-    todo_wine ok(res == STATUS_INVALID_PARAMETER, "NtCreateNamedPipeFile returned %x\n", res);
+    ok(res == STATUS_INVALID_PARAMETER, "NtCreateNamedPipeFile returned %x\n", res);
     if (!res)
         CloseHandle(handle);
 

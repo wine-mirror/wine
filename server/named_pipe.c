@@ -940,6 +940,12 @@ DECL_HANDLER(create_named_pipe)
     struct unicode_str name;
     struct directory *root = NULL;
 
+    if (!req->sharing || (req->sharing & ~(FILE_SHARE_READ | FILE_SHARE_WRITE)))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
     reply->handle = 0;
     get_req_unicode_str( &name );
     if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
