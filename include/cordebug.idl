@@ -19,6 +19,10 @@
 import "unknwn.idl";
 import "objidl.idl";
 
+cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
+cpp_quote("#undef CreateProcess")
+cpp_quote("#endif")
+
 interface ICorDebugAppDomain;
 interface ICorDebugAppDomainEnum;
 interface ICorDebugAssembly;
@@ -51,6 +55,7 @@ interface ICorDebugStepper;
 interface ICorDebugStepperEnum;
 interface ICorDebugThreadEnum;
 interface ICorDebugUnmanagedCallback;
+interface ICorDebugValue;
 interface ICorDebugValueBreakpoint;
 
 

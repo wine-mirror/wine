@@ -33,6 +33,18 @@ HRESULT assembly_create(ASSEMBLY **out, LPCWSTR file) DECLSPEC_HIDDEN;
 HRESULT assembly_release(ASSEMBLY *assembly) DECLSPEC_HIDDEN;
 HRESULT assembly_get_runtime_version(ASSEMBLY *assembly, LPSTR *version) DECLSPEC_HIDDEN;
 
+/* Mono embedding */
+typedef struct _MonoDomain MonoDomain;
+typedef struct _MonoAssembly MonoAssembly;
+typedef struct _MonoAssemblyName MonoAssemblyName;
+typedef struct _MonoType MonoType;
+typedef struct _MonoImage MonoImage;
+typedef struct _MonoClass MonoClass;
+typedef struct _MonoObject MonoObject;
+typedef struct _MonoMethod MonoMethod;
+typedef struct _MonoProfiler MonoProfiler;
+
+typedef struct loaded_mono loaded_mono;
 typedef struct RuntimeHost RuntimeHost;
 
 typedef struct CLRRuntimeInfo
@@ -47,6 +59,19 @@ typedef struct CLRRuntimeInfo
     WCHAR mscorlib_path[MAX_PATH];
     struct RuntimeHost *loaded_runtime;
 } CLRRuntimeInfo;
+
+struct RuntimeHost
+{
+    ICorRuntimeHost ICorRuntimeHost_iface;
+    ICLRRuntimeHost ICLRRuntimeHost_iface;
+    ICorDebug       ICorDebug_iface;
+    const CLRRuntimeInfo *version;
+    loaded_mono *mono;
+    struct list domains;
+    MonoDomain *default_domain;
+    CRITICAL_SECTION lock;
+    LONG ref;
+};
 
 extern HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
     DWORD startup_flags, DWORD runtimeinfo_flags, BOOL legacy, ICLRRuntimeInfo **result) DECLSPEC_HIDDEN;
@@ -70,17 +95,6 @@ extern HRESULT parse_config_file(LPCWSTR filename, parsed_config_file *result) D
 
 extern void free_parsed_config_file(parsed_config_file *file) DECLSPEC_HIDDEN;
 
-/* Mono embedding */
-typedef struct _MonoDomain MonoDomain;
-typedef struct _MonoAssembly MonoAssembly;
-typedef struct _MonoAssemblyName MonoAssemblyName;
-typedef struct _MonoType MonoType;
-typedef struct _MonoImage MonoImage;
-typedef struct _MonoClass MonoClass;
-typedef struct _MonoObject MonoObject;
-typedef struct _MonoMethod MonoMethod;
-typedef struct _MonoProfiler MonoProfiler;
-
 typedef enum {
 	MONO_IMAGE_OK,
 	MONO_IMAGE_ERROR_ERRNO,
@@ -92,7 +106,7 @@ typedef MonoAssembly* (*MonoAssemblyPreLoadFunc)(MonoAssemblyName *aname, char *
 
 typedef void (*MonoProfileFunc)(MonoProfiler *prof);
 
-typedef struct loaded_mono
+struct loaded_mono
 {
     HMODULE mono_handle;
     HMODULE glib_handle;
@@ -126,7 +140,7 @@ typedef struct loaded_mono
     void (CDECL *mono_thread_pool_cleanup)(void);
     void (CDECL *mono_thread_suspend_all_other_threads)(void);
     void (CDECL *mono_threads_set_shutting_down)(void);
-} loaded_mono;
+};
 
 /* loaded runtime interfaces */
 extern void unload_all_runtimes(void) DECLSPEC_HIDDEN;
@@ -144,5 +158,9 @@ extern HRESULT RuntimeHost_CreateManagedInstance(RuntimeHost *This, LPCWSTR name
     MonoDomain *domain, MonoObject **result) DECLSPEC_HIDDEN;
 
 extern HRESULT RuntimeHost_Destroy(RuntimeHost *This) DECLSPEC_HIDDEN;
+
+HRESULT WINAPI CLRMetaHost_GetRuntime(ICLRMetaHost* iface, LPCWSTR pwzVersion, REFIID iid, LPVOID *ppRuntime) DECLSPEC_HIDDEN;
+
+extern void cordebug_init(RuntimeHost *This);
 
 #endif   /* __MSCOREE_PRIVATE__ */

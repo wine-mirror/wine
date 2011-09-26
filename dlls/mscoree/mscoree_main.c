@@ -35,11 +35,13 @@
 
 #include "initguid.h"
 #include "msxml2.h"
-#include "cor.h"
 #include "corerror.h"
+#include "cor.h"
 #include "mscoree.h"
-#include "fusion.h"
+#include "corhdr.h"
+#include "cordebug.h"
 #include "metahost.h"
+#include "fusion.h"
 #include "wine/list.h"
 #include "mscoree_private.h"
 
@@ -444,10 +446,43 @@ HRESULT WINAPI CreateConfigStream(LPCWSTR filename, IStream **stream)
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI CreateDebuggingInterfaceFromVersion(int nDebugVersion, LPCWSTR version, IUnknown **ppIUnk)
+HRESULT WINAPI CreateDebuggingInterfaceFromVersion(int nDebugVersion, LPCWSTR version, IUnknown **ppv)
 {
-    FIXME("(%d %s, %p): stub\n", nDebugVersion, debugstr_w(version), ppIUnk);
-    return E_NOTIMPL;
+    const WCHAR v2_0[] = {'v','2','.','0','.','5','0','7','2','7',0};
+    HRESULT hr = E_FAIL;
+    ICLRRuntimeInfo *runtimeinfo;
+
+    if(nDebugVersion < 1 || nDebugVersion > 4)
+        return E_INVALIDARG;
+
+    TRACE("(%d %s, %p): stub\n", nDebugVersion, debugstr_w(version), ppv);
+
+    if(!ppv)
+        return E_INVALIDARG;
+
+    *ppv = NULL;
+
+    if(strcmpW(version, v2_0) != 0)
+    {
+        FIXME("Currently .NET Version '%s' not support.\n", debugstr_w(version));
+        return E_INVALIDARG;
+    }
+
+    if(nDebugVersion != 3)
+        return E_INVALIDARG;
+
+    hr = CLRMetaHost_GetRuntime(0, version, &IID_ICLRRuntimeInfo, (void**)&runtimeinfo);
+    if(hr == S_OK)
+    {
+        hr = ICLRRuntimeInfo_GetInterface(runtimeinfo, &CLSID_CLRDebuggingLegacy, &IID_ICorDebug, (void**)ppv);
+
+        ICLRRuntimeInfo_Release(runtimeinfo);
+    }
+
+    if(!*ppv)
+        return E_FAIL;
+
+    return hr;
 }
 
 HRESULT WINAPI CLRCreateInstance(REFCLSID clsid, REFIID riid, LPVOID *ppInterface)

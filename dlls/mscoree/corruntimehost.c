@@ -32,6 +32,8 @@
 #include "cor.h"
 #include "mscoree.h"
 #include "metahost.h"
+#include "corhdr.h"
+#include "cordebug.h"
 #include "wine/list.h"
 #include "mscoree_private.h"
 
@@ -42,18 +44,6 @@ WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
 #include "initguid.h"
 
 DEFINE_GUID(IID__AppDomain, 0x05f696dc,0x2b29,0x3663,0xad,0x8b,0xc4,0x38,0x9c,0xf2,0xa7,0x13);
-
-struct RuntimeHost
-{
-    ICorRuntimeHost ICorRuntimeHost_iface;
-    ICLRRuntimeHost ICLRRuntimeHost_iface;
-    const CLRRuntimeInfo *version;
-    loaded_mono *mono;
-    struct list domains;
-    MonoDomain *default_domain;
-    CRITICAL_SECTION lock;
-    LONG ref;
-};
 
 struct DomainEntry
 {
@@ -796,6 +786,9 @@ HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version,
 
     This->ICorRuntimeHost_iface.lpVtbl = &corruntimehost_vtbl;
     This->ICLRRuntimeHost_iface.lpVtbl = &CLRHostVtbl;
+
+    cordebug_init(This);
+
     This->ref = 1;
     This->version = runtime_version;
     This->mono = loaded_mono;
@@ -830,6 +823,11 @@ HRESULT RuntimeHost_GetInterface(RuntimeHost *This, REFCLSID clsid, REFIID riid,
         hr = MetaDataDispenser_CreateInstance(&unk);
         if (FAILED(hr))
             return hr;
+    }
+    else if (IsEqualGUID(clsid, &CLSID_CLRDebuggingLegacy))
+    {
+        unk = (IUnknown*)&This->ICorDebug_iface;
+        IUnknown_AddRef(unk);
     }
     else
         unk = NULL;

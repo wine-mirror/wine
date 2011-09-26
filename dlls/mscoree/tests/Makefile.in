@@ -2,6 +2,7 @@ TESTDLL   = mscoree.dll
 IMPORTS   = shlwapi
 
 C_SRCS = \
+	debugging.c \
 	metahost.c \
 	mscoree.c
 

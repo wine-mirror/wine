@@ -29,8 +29,10 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "ole2.h"
-
 #include "cor.h"
+#include "mscoree.h"
+#include "corhdr.h"
+#include "cordebug.h"
 #include "metahost.h"
 #include "wine/list.h"
 #include "mscoree_private.h"

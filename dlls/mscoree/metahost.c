@@ -32,9 +32,12 @@
 #include "ole2.h"
 
 #include "corerror.h"
+#include "cor.h"
 #include "mscoree.h"
-#include "fusion.h"
+#include "corhdr.h"
+#include "cordebug.h"
 #include "metahost.h"
+#include "fusion.h"
 #include "wine/list.h"
 #include "mscoree_private.h"
 
@@ -1002,7 +1005,7 @@ static BOOL parse_runtime_version(LPCWSTR version, DWORD *major, DWORD *minor, D
         return FALSE;
 }
 
-static HRESULT WINAPI CLRMetaHost_GetRuntime(ICLRMetaHost* iface,
+HRESULT WINAPI CLRMetaHost_GetRuntime(ICLRMetaHost* iface,
     LPCWSTR pwzVersion, REFIID iid, LPVOID *ppRuntime)
 {
     int i;
