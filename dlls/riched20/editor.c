@@ -1470,6 +1470,8 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   if (!invalidRTF && !inStream.editstream->dwError)
   {
     if (format & SF_RTF) {
+      from = ME_GetCursorOfs(&editor->pCursors[0]);
+
       /* setup the RTF parser */
       memset(&parser, 0, sizeof parser);
       RTFSetEditStream(&parser, &inStream);
@@ -1563,6 +1565,8 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
           }
         }
       }
+      to = ME_GetCursorOfs(&editor->pCursors[0]);
+      num_read = to - from;
 
       style = parser.style;
     }

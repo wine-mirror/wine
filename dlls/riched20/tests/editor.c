@@ -5062,7 +5062,7 @@ static void test_EM_STREAMIN(void)
   es.dwError = 0;
   es.pfnCallback = test_EM_STREAMIN_esCallback;
   result = SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
-  todo_wine ok(result == 12, "got %ld, expected %d\n", result, 12);
+  ok(result == 12, "got %ld, expected %d\n", result, 12);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   ok (result  == 12,
@@ -5077,7 +5077,7 @@ static void test_EM_STREAMIN(void)
   es.dwError = 0;
   es.pfnCallback = test_EM_STREAMIN_esCallback;
   result = SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
-  todo_wine ok(result == 12, "got %ld, expected %d\n", result, 12);
+  ok(result == 12, "got %ld, expected %d\n", result, 12);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   ok (result  == 12,
@@ -5092,7 +5092,7 @@ static void test_EM_STREAMIN(void)
   es.dwError = 0;
   es.pfnCallback = test_EM_STREAMIN_esCallback;
   result = SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
-  todo_wine ok(result == 13, "got %ld, expected %d\n", result, 13);
+  ok(result == 13, "got %ld, expected %d\n", result, 13);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   ok (result  == 14,
@@ -5106,7 +5106,7 @@ static void test_EM_STREAMIN(void)
   es.dwError = 0;
   es.pfnCallback = test_EM_STREAMIN_esCallback;
   result = SendMessage(hwndRichEdit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
-  todo_wine ok(result == 12, "got %ld, expected %d\n", result, 12);
+  ok(result == 12, "got %ld, expected %d\n", result, 12);
 
   result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
   ok (result  == 12,
