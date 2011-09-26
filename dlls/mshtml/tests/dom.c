@@ -365,7 +365,6 @@ static const IID * const cstyle_iids[] = {
     &IID_IHTMLCurrentStyle,
     &IID_IHTMLCurrentStyle2,
     &IID_IHTMLCurrentStyle3,
-    &IID_IHTMLCurrentStyle4,
     NULL
 };
 
@@ -4568,8 +4567,20 @@ static void test_defaults(IHTMLDocument2 *doc)
     hres = IHTMLElement2_get_currentStyle(elem2, &cstyle);
     ok(hres == S_OK, "get_currentStyle failed: %08x\n", hres);
     if(SUCCEEDED(hres)) {
+        IUnknown *unk;
+
         test_disp((IUnknown*)cstyle, &DIID_DispHTMLCurrentStyle, "[object]");
         test_ifaces((IUnknown*)cstyle, cstyle_iids);
+
+        hres = IHTMLCurrentStyle_QueryInterface(cstyle, &IID_IHTMLCurrentStyle4, (void**)&unk);
+        if(SUCCEEDED(hres))
+            IUnknown_Release(unk);
+        else
+        {
+           /*IE6 doesn't have interface */
+           win_skip("IID_IHTMLCurrentStyle4 not supported\n");
+        }
+
         IHTMLCurrentStyle_Release(cstyle);
     }
     IHTMLElement2_Release(elem2);
