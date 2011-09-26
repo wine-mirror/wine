@@ -2278,6 +2278,35 @@ done_unlock:
     return retv;
 }
 
+/* multiply the alpha channel of a picture */
+static void multiply_alpha( Picture pict, XRenderPictFormat *format, int alpha,
+                            int x, int y, int width, int height )
+{
+    XRenderPictureAttributes pa;
+    Pixmap src_pixmap, mask_pixmap;
+    Picture src_pict, mask_pict;
+    XRenderColor color;
+
+    wine_tsx11_lock();
+    src_pixmap = XCreatePixmap( gdi_display, root_window, 1, 1, format->depth );
+    mask_pixmap = XCreatePixmap( gdi_display, root_window, 1, 1, format->depth );
+    pa.repeat = RepeatNormal;
+    src_pict = pXRenderCreatePicture( gdi_display, src_pixmap, format, CPRepeat, &pa );
+    pa.component_alpha = True;
+    mask_pict = pXRenderCreatePicture( gdi_display, mask_pixmap, format, CPRepeat|CPComponentAlpha, &pa );
+    color.red = color.green = color.blue = color.alpha = 0xffff;
+    pXRenderFillRectangle( gdi_display, PictOpSrc, src_pict, &color, 0, 0, 1, 1 );
+    color.alpha = alpha;
+    pXRenderFillRectangle( gdi_display, PictOpSrc, mask_pict, &color, 0, 0, 1, 1 );
+    pXRenderComposite( gdi_display, PictOpInReverse, src_pict, mask_pict, pict,
+                       0, 0, 0, 0, x, y, width, height );
+    pXRenderFreePicture( gdi_display, src_pict );
+    pXRenderFreePicture( gdi_display, mask_pict );
+    XFreePixmap( gdi_display, src_pixmap );
+    XFreePixmap( gdi_display, mask_pixmap );
+    wine_tsx11_unlock();
+}
+
 /* Helper function for (stretched) blitting using xrender */
 static void xrender_blit( int op, Picture src_pict, Picture mask_pict, Picture dst_pict,
                           int x_src, int y_src, int x_dst, int y_dst,
@@ -2317,13 +2346,16 @@ static void xrender_mono_blit( Picture src_pict, Picture dst_pict,
 {
     Picture tile_pict;
     int x_offset, y_offset;
+    XRenderColor color;
 
     /* When doing a mono->color blit, the source data is used as mask, and the source picture
      * contains a 1x1 picture for tiling. The source data effectively acts as an alpha channel to
      * the tile data.
      */
     EnterCriticalSection( &xrender_cs );
-    tile_pict = get_tile_pict( dst_format, bg );
+    color = *bg;
+    color.alpha = 0xffff;  /* tile pict needs 100% alpha */
+    tile_pict = get_tile_pict( dst_format, &color );
 
     wine_tsx11_lock();
     pXRenderFillRectangle( gdi_display, PictOpSrc, dst_pict, fg, x_dst, y_dst, width, height );
@@ -2347,6 +2379,10 @@ static void xrender_mono_blit( Picture src_pict, Picture dst_pict,
                       0, 0, x_offset, y_offset, x_dst, y_dst, width, height );
     wine_tsx11_unlock();
     LeaveCriticalSection( &xrender_cs );
+
+    /* force the alpha channel for background pixels, it has been set to 100% by the tile */
+    if (bg->alpha != 0xffff && (dst_format == WXR_FORMAT_A8R8G8B8 || dst_format == WXR_FORMAT_B8G8R8A8))
+        multiply_alpha( dst_pict, pict_formats[dst_format], bg->alpha, x_dst, y_dst, width, height );
 }
 
 static void get_colors( struct xrender_physdev *physdev_src, struct xrender_physdev *physdev_dst,

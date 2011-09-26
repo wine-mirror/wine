@@ -2761,6 +2761,7 @@ static void test_StretchBlt(void)
     HBRUSH hBrush, hOldBrush;
     BITMAPINFO biDst, biSrc;
     UINT32 expected[256];
+    RGBQUAD colors[2];
 
     memset(&biDst, 0, sizeof(BITMAPINFO));
     biDst.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -3007,6 +3008,48 @@ todo_wine
 
     SelectObject(hdcSrc, oldSrc);
     DeleteObject(bmpSrc);
+
+    biSrc.bmiHeader.biBitCount = 1;
+    bmpSrc = CreateDIBSection(hdcScreen, &biSrc, DIB_RGB_COLORS, (void**)&srcBuffer, NULL, 0);
+    oldSrc = SelectObject(hdcSrc, bmpSrc);
+    *((DWORD *)colors + 0) = 0x123456;
+    *((DWORD *)colors + 1) = 0x335577;
+    SetDIBColorTable( hdcSrc, 0, 2, colors );
+    srcBuffer[0] = 0x55555555;
+    memset(dstBuffer, 0xcc, 4 * sizeof(*dstBuffer));
+    SetTextColor( hdcDst, 0 );
+    SetBkColor( hdcDst, 0 );
+    StretchBlt(hdcDst, 0, 0, 4, 1, hdcSrc, 0, 0, 4, 1, SRCCOPY );
+    expected[0] = expected[2] = 0x00123456;
+    expected[1] = expected[3] = 0x00335577;
+    ok(!memcmp(dstBuffer, expected, 16),
+       "StretchBlt expected { %08X, %08X, %08X, %08X } got { %08X, %08X, %08X, %08X }\n",
+        expected[0], expected[1], expected[2], expected[3],
+        dstBuffer[0], dstBuffer[1], dstBuffer[2], dstBuffer[3] );
+
+    SelectObject(hdcSrc, oldSrc);
+    DeleteObject(bmpSrc);
+
+    bmpSrc = CreateBitmap( 16, 16, 1, 1, 0 );
+    oldSrc = SelectObject(hdcSrc, bmpSrc);
+    SetPixel( hdcSrc, 0, 0, 0 );
+    SetPixel( hdcSrc, 1, 0, 0xffffff );
+    SetPixel( hdcSrc, 2, 0, 0xffffff );
+    SetPixel( hdcSrc, 3, 0, 0 );
+    memset(dstBuffer, 0xcc, 4 * sizeof(*dstBuffer));
+    SetTextColor( hdcDst, RGB(0x22,0x44,0x66) );
+    SetBkColor( hdcDst, RGB(0x65,0x43,0x21) );
+    StretchBlt(hdcDst, 0, 0, 4, 1, hdcSrc, 0, 0, 4, 1, SRCCOPY );
+    expected[0] = expected[3] = 0x00224466;
+    expected[1] = expected[2] = 0x00654321;
+    ok(!memcmp(dstBuffer, expected, 16),
+       "StretchBlt expected { %08X, %08X, %08X, %08X } got { %08X, %08X, %08X, %08X }\n",
+        expected[0], expected[1], expected[2], expected[3],
+        dstBuffer[0], dstBuffer[1], dstBuffer[2], dstBuffer[3] );
+
+    SelectObject(hdcSrc, oldSrc);
+    DeleteObject(bmpSrc);
+
     DeleteDC(hdcSrc);
 
     SelectObject(hdcDst, oldDst);
