@@ -92,27 +92,6 @@ static void keep_responsive(time_t delay_time)
     }
 }
 
-static void processPendingMessages(void)
-{
-    MSG msg;
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-}
-
-static void pressKeyWithModifier(HWND hwnd, BYTE mod_vk, BYTE vk)
-{
-    BYTE mod_scan_code = MapVirtualKey(mod_vk, MAPVK_VK_TO_VSC);
-    BYTE scan_code = MapVirtualKey(vk, MAPVK_VK_TO_VSC);
-    SetFocus(hwnd);
-    keybd_event(mod_vk, mod_scan_code, 0, 0);
-    keybd_event(vk, scan_code, 0, 0);
-    keybd_event(vk, scan_code, KEYEVENTF_KEYUP, 0);
-    keybd_event(mod_vk, mod_scan_code, KEYEVENTF_KEYUP, 0);
-    processPendingMessages();
-}
-
 static void simulate_typing_characters(HWND hwnd, const char* szChars)
 {
     int ret;
@@ -4674,6 +4653,22 @@ static void test_EM_REPLACESEL(int redraw)
     DestroyWindow(hwndRichEdit);
 }
 
+/* Native riched20 inspects the keyboard state (e.g. GetKeyState)
+ * to test the state of the modifiers (Ctrl/Alt/Shift).
+ *
+ * Therefore Ctrl-<key> keystrokes need to be simulated with
+ * keybd_event or by using SetKeyboardState to set the modifiers
+ * and SendMessage to simulate the keystrokes.
+ */
+static LRESULT send_ctrl_key(HWND hwnd, UINT key)
+{
+    LRESULT result;
+    hold_key(VK_CONTROL);
+    result = SendMessage(hwnd, WM_KEYDOWN, key, 1);
+    release_key(VK_CONTROL);
+    return result;
+}
+
 static void test_WM_PASTE(void)
 {
     int result;
@@ -4686,34 +4681,19 @@ static void test_WM_PASTE(void)
     const char* text3 = "testing paste\r\npaste\r\ntesting paste";
     HWND hwndRichEdit = new_richedit(NULL);
 
-    /* Native riched20 inspects the keyboard state (e.g. GetKeyState)
-     * to test the state of the modifiers (Ctrl/Alt/Shift).
-     *
-     * Therefore Ctrl-<key> keystrokes need to be simulated with
-     * keybd_event or by using SetKeyboardState to set the modifiers
-     * and SendMessage to simulate the keystrokes.
-     */
-
-    /* Sent keystrokes with keybd_event */
-#define SEND_CTRL_C(hwnd) pressKeyWithModifier(hwnd, VK_CONTROL, 'C')
-#define SEND_CTRL_X(hwnd) pressKeyWithModifier(hwnd, VK_CONTROL, 'X')
-#define SEND_CTRL_V(hwnd) pressKeyWithModifier(hwnd, VK_CONTROL, 'V')
-#define SEND_CTRL_Z(hwnd) pressKeyWithModifier(hwnd, VK_CONTROL, 'Z')
-#define SEND_CTRL_Y(hwnd) pressKeyWithModifier(hwnd, VK_CONTROL, 'Y')
-
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text1);
     SendMessage(hwndRichEdit, EM_SETSEL, 0, 14);
 
-    SEND_CTRL_C(hwndRichEdit);   /* Copy */
+    send_ctrl_key(hwndRichEdit, 'C');   /* Copy */
     SendMessage(hwndRichEdit, EM_SETSEL, 14, 14);
-    SEND_CTRL_V(hwndRichEdit);   /* Paste */
+    send_ctrl_key(hwndRichEdit, 'V');   /* Paste */
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     /* Pasted text should be visible at this step */
     result = strcmp(text1_step1, buffer);
     ok(result == 0,
         "test paste: strcmp = %i, text='%s'\n", result, buffer);
 
-    SEND_CTRL_Z(hwndRichEdit);   /* Undo */
+    send_ctrl_key(hwndRichEdit, 'Z');   /* Undo */
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     /* Text should be the same as before (except for \r -> \r\n conversion) */
     result = strcmp(text1_after, buffer);
@@ -4722,32 +4702,26 @@ static void test_WM_PASTE(void)
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text2);
     SendMessage(hwndRichEdit, EM_SETSEL, 8, 13);
-    SEND_CTRL_C(hwndRichEdit);   /* Copy */
+    send_ctrl_key(hwndRichEdit, 'C');   /* Copy */
     SendMessage(hwndRichEdit, EM_SETSEL, 14, 14);
-    SEND_CTRL_V(hwndRichEdit);   /* Paste */
+    send_ctrl_key(hwndRichEdit, 'V');   /* Paste */
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     /* Pasted text should be visible at this step */
     result = strcmp(text3, buffer);
     ok(result == 0,
         "test paste: strcmp = %i\n", result);
-    SEND_CTRL_Z(hwndRichEdit);   /* Undo */
+    send_ctrl_key(hwndRichEdit, 'Z');   /* Undo */
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     /* Text should be the same as before (except for \r -> \r\n conversion) */
     result = strcmp(text2_after, buffer);
     ok(result == 0,
         "test paste: strcmp = %i\n", result);
-    SEND_CTRL_Y(hwndRichEdit);   /* Redo */
+    send_ctrl_key(hwndRichEdit, 'Y');   /* Redo */
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     /* Text should revert to post-paste state */
     result = strcmp(buffer,text3);
     ok(result == 0,
         "test paste: strcmp = %i\n", result);
-
-#undef SEND_CTRL_C
-#undef SEND_CTRL_X
-#undef SEND_CTRL_V
-#undef SEND_CTRL_Z
-#undef SEND_CTRL_Y
 
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, 0);
     /* Send WM_CHAR to simulates Ctrl-V */
@@ -5962,9 +5936,6 @@ static LONG CALLBACK customWordBreakProc(WCHAR *text, int pos, int bytes, int co
     return 0;
 }
 
-#define SEND_CTRL_LEFT(hwnd) pressKeyWithModifier(hwnd, VK_CONTROL, VK_LEFT)
-#define SEND_CTRL_RIGHT(hwnd) pressKeyWithModifier(hwnd, VK_CONTROL, VK_RIGHT)
-
 static void test_word_movement(void)
 {
     HWND hwnd;
@@ -5980,25 +5951,25 @@ static void test_word_movement(void)
     SendMessage(hwnd, EM_SETSEL, 0, 0);
     /* |one two three */
 
-    SEND_CTRL_RIGHT(hwnd);
+    send_ctrl_key(hwnd, VK_RIGHT);
     /* one |two  three */
     SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
     ok(sel_start == 4, "Cursor is at %d instead of %d\n", sel_start, 4);
 
-    SEND_CTRL_RIGHT(hwnd);
+    send_ctrl_key(hwnd, VK_RIGHT);
     /* one two  |three */
     SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
     ok(sel_start == 9, "Cursor is at %d instead of %d\n", sel_start, 9);
 
-    SEND_CTRL_LEFT(hwnd);
+    send_ctrl_key(hwnd, VK_LEFT);
     /* one |two  three */
     SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
     ok(sel_start == 4, "Cursor is at %d instead of %d\n", sel_start, 4);
 
-    SEND_CTRL_LEFT(hwnd);
+    send_ctrl_key(hwnd, VK_LEFT);
     /* |one two  three */
     SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
@@ -6006,7 +5977,7 @@ static void test_word_movement(void)
 
     SendMessage(hwnd, EM_SETSEL, 8, 8);
     /* one two | three */
-    SEND_CTRL_RIGHT(hwnd);
+    send_ctrl_key(hwnd, VK_RIGHT);
     /* one two  |three */
     SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
@@ -6014,7 +5985,7 @@ static void test_word_movement(void)
 
     SendMessage(hwnd, EM_SETSEL, 11, 11);
     /* one two  th|ree */
-    SEND_CTRL_LEFT(hwnd);
+    send_ctrl_key(hwnd, VK_LEFT);
     /* one two  |three */
     SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
@@ -6025,7 +5996,7 @@ static void test_word_movement(void)
     ok (result == TRUE, "Failed to clear the text.\n");
     SendMessage(hwnd, EM_SETWORDBREAKPROC, 0, (LPARAM)customWordBreakProc);
     /* |one twoXthree */
-    SEND_CTRL_RIGHT(hwnd);
+    send_ctrl_key(hwnd, VK_RIGHT);
     /* one twoX|three */
     SendMessage(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
@@ -6045,7 +6016,7 @@ static void test_word_movement(void)
     ok (result == TRUE, "Failed to clear the text.\n");
     SendMessageW(hwnd, EM_SETWORDBREAKPROC, 0, (LPARAM)customWordBreakProc);
     /* |one twoXthree */
-    SEND_CTRL_RIGHT(hwnd);
+    send_ctrl_key(hwnd, VK_RIGHT);
     /* one twoX|three */
     SendMessageW(hwnd, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
     ok(sel_start == sel_end, "Selection should be empty\n");
