@@ -971,9 +971,7 @@ DECL_HANDLER(create_named_pipe)
             release_object( pipe );
             return;
         }
-        if ((pipe->maxinstances != req->maxinstances) ||
-            (pipe->timeout != req->timeout) ||
-            (pipe->flags != req->flags))
+        if (pipe->sharing != req->sharing)
         {
             set_error( STATUS_ACCESS_DENIED );
             release_object( pipe );

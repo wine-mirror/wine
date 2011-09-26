@@ -374,7 +374,7 @@ static void test_CreateNamedPipe_instances_must_match(void)
     ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
 
     hnp2 = CreateNamedPipe(PIPENAME, PIPE_ACCESS_INBOUND, PIPE_TYPE_BYTE | PIPE_WAIT,
-        /* nMaxInstances */ 1,
+        /* nMaxInstances */ 2,
         /* nOutBufSize */ 1024,
         /* nInBufSize */ 1024,
         /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
@@ -384,7 +384,25 @@ static void test_CreateNamedPipe_instances_must_match(void)
 
     ok(CloseHandle(hnp), "CloseHandle\n");
 
-    /* etc, etc */
+    /* check everything else */
+    hnp = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
+        /* nMaxInstances */ 4,
+        /* nOutBufSize */ 1024,
+        /* nInBufSize */ 1024,
+        /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
+        /* lpSecurityAttrib */ NULL);
+    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
+
+    hnp2 = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_MESSAGE,
+        /* nMaxInstances */ 3,
+        /* nOutBufSize */ 102,
+        /* nInBufSize */ 24,
+        /* nDefaultWait */ 1234,
+        /* lpSecurityAttrib */ NULL);
+    ok(hnp2 != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
+
+    ok(CloseHandle(hnp), "CloseHandle\n");
+    ok(CloseHandle(hnp2), "CloseHandle\n");
 }
 
 /** implementation of alarm() */
