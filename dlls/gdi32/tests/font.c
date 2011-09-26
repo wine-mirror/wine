@@ -1364,11 +1364,10 @@ todo_wine {
         for (n = 0; n < ret; n++)
         {
             DWORD j;
-#if 0
-            if (kern_pair[n].wFirst < 127 && kern_pair[n].wSecond < 127)
+            /* Disabled to limit console spam */
+            if (0 && kern_pair[n].wFirst < 127 && kern_pair[n].wSecond < 127)
                 trace("{'%c','%c',%d},\n",
                       kern_pair[n].wFirst, kern_pair[n].wSecond, kern_pair[n].iKernAmount);
-#endif
             for (j = 0; j < kd[i].total_kern_pairs; j++)
             {
                 if (kern_pair[n].wFirst == kd[i].kern_pair[j].wFirst &&
@@ -1820,6 +1819,7 @@ static void test_GetFontUnicodeRanges(void)
     HFONT hfont, hfont_old;
     DWORD size;
     GLYPHSET *gs;
+    DWORD i;
 
     if (!pGetFontUnicodeRanges)
     {
@@ -1844,10 +1844,10 @@ static void test_GetFontUnicodeRanges(void)
 
     size = pGetFontUnicodeRanges(hdc, gs);
     ok(size, "GetFontUnicodeRanges failed\n");
-#if 0
-    for (i = 0; i < gs->cRanges; i++)
-        trace("%03d wcLow %04x cGlyphs %u\n", i, gs->ranges[i].wcLow, gs->ranges[i].cGlyphs);
-#endif
+
+    if (0) /* Disabled to limit console spam */
+        for (i = 0; i < gs->cRanges; i++)
+            trace("%03d wcLow %04x cGlyphs %u\n", i, gs->ranges[i].wcLow, gs->ranges[i].cGlyphs);
     trace("found %u ranges\n", gs->cRanges);
 
     HeapFree(GetProcessHeap(), 0, gs);
@@ -1878,10 +1878,9 @@ static INT CALLBACK arial_enum_proc(const LOGFONT *lf, const TEXTMETRIC *tm, DWO
     ok(lf->lfHeight == tm->tmHeight, "lfHeight %d != tmHeight %d\n", lf->lfHeight, tm->tmHeight);
 
     if (type != TRUETYPE_FONTTYPE) return 1;
-#if 0
-    trace("enumed font \"%s\", charset %d, height %d, weight %d, italic %d\n",
-          lf->lfFaceName, lf->lfCharSet, lf->lfHeight, lf->lfWeight, lf->lfItalic);
-#endif
+    if (0) /* Disabled to limit console spam */
+        trace("enumed font \"%s\", charset %d, height %d, weight %d, italic %d\n",
+              lf->lfFaceName, lf->lfCharSet, lf->lfHeight, lf->lfWeight, lf->lfItalic);
     if (efd->total < MAX_ENUM_FONTS)
         efd->lf[efd->total++] = *lf;
     else
@@ -1897,10 +1896,9 @@ static INT CALLBACK arial_enum_procw(const LOGFONTW *lf, const TEXTMETRICW *tm, 
     ok(lf->lfHeight == tm->tmHeight, "lfHeight %d != tmHeight %d\n", lf->lfHeight, tm->tmHeight);
 
     if (type != TRUETYPE_FONTTYPE) return 1;
-#if 0
-    trace("enumed font \"%s\", charset %d, height %d, weight %d, italic %d\n",
-          lf->lfFaceName, lf->lfCharSet, lf->lfHeight, lf->lfWeight, lf->lfItalic);
-#endif
+    if (0) /* Disabled to limit console spam */
+        trace("enumed font %s, charset %d, height %d, weight %d, italic %d\n",
+              wine_dbgstr_w(lf->lfFaceName), lf->lfCharSet, lf->lfHeight, lf->lfWeight, lf->lfItalic);
     if (efd->total < MAX_ENUM_FONTS)
         efd->lf[efd->total++] = *lf;
     else
