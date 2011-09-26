@@ -3333,10 +3333,9 @@ static HRESULT WINAPI knownfolder_QueryInterface(
 }
 
 static HRESULT knownfolder_set_id(
-    IKnownFolder *iface,
+    struct knownfolder *knownfolder,
     const KNOWNFOLDERID *kfid)
 {
-    struct knownfolder *knownfolder = impl_from_IKnownFolder( iface );
     HKEY hKey;
     HRESULT hr;
 
@@ -3636,7 +3635,7 @@ static const struct IKnownFolderVtbl knownfolder_vtbl =
     knownfolder_GetFolderDefinition
 };
 
-static HRESULT knownfolder_create( void **ppv )
+static HRESULT knownfolder_create( struct knownfolder **knownfolder )
 {
     struct knownfolder *kf;
 
@@ -3648,9 +3647,9 @@ static HRESULT knownfolder_create( void **ppv )
     memset( &kf->id, 0, sizeof(kf->id) );
     kf->registryPath = NULL;
 
-    *ppv = &kf->IKnownFolder_iface.lpVtbl;
+    *knownfolder = kf;
 
-    TRACE("returning iface %p\n", *ppv);
+    TRACE("returning iface %p\n", &kf->IKnownFolder_iface);
     return S_OK;
 }
 
@@ -3783,6 +3782,7 @@ static HRESULT WINAPI foldermanager_GetFolder(
     IKnownFolder **ppkf)
 {
     struct foldermanager *fm = impl_from_IKnownFolderManager( iface );
+    struct knownfolder *kf;
     HRESULT hr;
 
     TRACE("%s, %p\n", debugstr_guid(rfid), ppkf);
@@ -3792,9 +3792,14 @@ static HRESULT WINAPI foldermanager_GetFolder(
         WARN("unknown folder\n");
         return E_INVALIDARG;
     }
-    hr = knownfolder_create( (void **)ppkf );
+    hr = knownfolder_create( &kf );
     if (SUCCEEDED( hr ))
-        hr = knownfolder_set_id( *ppkf, rfid );
+    {
+        hr = knownfolder_set_id( kf, rfid );
+        *ppkf = &kf->IKnownFolder_iface;
+    }
+    else
+        *ppkf = NULL;
 
     return hr;
 }
