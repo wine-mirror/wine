@@ -1342,13 +1342,14 @@ todo_wine {
         trace("total_kern_pairs %u\n", total_kern_pairs);
         kern_pair = HeapAlloc(GetProcessHeap(), 0, total_kern_pairs * sizeof(*kern_pair));
 
-#if 0 /* Win98 (GetKerningPairsA) and XP behave differently here, the test passes on XP */
+        /* Win98 (GetKerningPairsA) and XP behave differently here, the test
+         * passes on XP.
+         */
         SetLastError(0xdeadbeef);
         ret = GetKerningPairsW(hdc, 0, kern_pair);
         ok(GetLastError() == ERROR_INVALID_PARAMETER,
-           "got error %ld, expected ERROR_INVALID_PARAMETER\n", GetLastError());
-        ok(ret == 0, "got %lu, expected 0\n", ret);
-#endif
+           "got error %u, expected ERROR_INVALID_PARAMETER\n", GetLastError());
+        ok(ret == 0, "got %u, expected 0\n", ret);
 
         ret = GetKerningPairsW(hdc, 100, NULL);
         ok(ret == total_kern_pairs, "got %u, expected %u\n", ret, total_kern_pairs);
