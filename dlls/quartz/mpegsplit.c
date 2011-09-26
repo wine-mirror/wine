@@ -128,12 +128,14 @@ static HRESULT parse_header(BYTE *header, LONGLONG *plen, LONGLONG *pduration)
     LONGLONG duration;
 
     int bitrate_index, freq_index, lsf = 1, mpeg1, layer, padding, bitrate, length;
+    if (header[0] != 0xff)
+        return E_INVALIDARG;
 
-    if (!(header[0] == 0xff && ((header[1]>>5)&0x7) == 0x7 &&
+    if (!(((header[1]>>5)&0x7) == 0x7 &&
        ((header[1]>>1)&0x3) != 0 && ((header[2]>>4)&0xf) != 0xf &&
        ((header[2]>>2)&0x3) != 0x3))
     {
-        FIXME("Not a valid header: %02x:%02x\n", header[0], header[1]);
+        FIXME("Not a valid header: %02x:%02x\n", header[1], header[2]);
         return E_INVALIDARG;
     }
 
@@ -147,7 +149,7 @@ static HRESULT parse_header(BYTE *header, LONGLONG *plen, LONGLONG *pduration)
     padding = ((header[2]>>1)&0x1);
 
     bitrate = tabsel_123[lsf][layer-1][bitrate_index] * 1000;
-    if (!bitrate || layer != 3)
+    if (!bitrate)
     {
         FIXME("Not a valid header: %02x:%02x:%02x:%02x\n", header[0], header[1], header[2], header[3]);
         return E_INVALIDARG;
@@ -353,6 +355,7 @@ static HRESULT MPEGSplitter_query_accept(LPVOID iface, const AM_MEDIA_TYPE *pmt)
         FIXME("MPEG-1 system streams not yet supported.\n");
     else if (IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_MPEG1VideoCD))
         FIXME("MPEG-1 VideoCD streams not yet supported.\n");
+    else FIXME("%s\n", debugstr_guid(&pmt->subtype));
 
     return S_FALSE;
 }
