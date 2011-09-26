@@ -6169,7 +6169,7 @@ static void check_vertex_components(int line, int mesh_number, int vertex_number
             {
                 D3DXVECTOR2 *got = (D3DXVECTOR2*)(got_ptr + decl_ptr->Offset);
                 D3DXVECTOR2 *exp = (D3DXVECTOR2*)(exp_ptr + decl_ptr->Offset);
-                FLOAT diff = fmaxf(fabsf(got->x - exp->x), fabsf(got->y - exp->y));
+                FLOAT diff = max(fabsf(got->x - exp->x), fabsf(got->y - exp->y));
                 ok_(__FILE__,line)(diff <= FLT_EPSILON, "Mesh %d: Got (%f, %f) for vertex %d %s, expected (%f, %f).\n",
                     mesh_number, got->x, got->y, vertex_number, usage_strings[decl_ptr->Usage], exp->x, exp->y);
                 break;
@@ -6178,8 +6178,8 @@ static void check_vertex_components(int line, int mesh_number, int vertex_number
             {
                 D3DXVECTOR3 *got = (D3DXVECTOR3*)(got_ptr + decl_ptr->Offset);
                 D3DXVECTOR3 *exp = (D3DXVECTOR3*)(exp_ptr + decl_ptr->Offset);
-                FLOAT diff = fmaxf(fabsf(got->x - exp->x), fabsf(got->y - exp->y));
-                diff = fmaxf(diff, fabsf(got->z - exp->z));
+                FLOAT diff = max(fabsf(got->x - exp->x), fabsf(got->y - exp->y));
+                diff = max(diff, fabsf(got->z - exp->z));
                 ok_(__FILE__,line)(diff <= FLT_EPSILON, "Mesh %d: Got (%f, %f, %f) for vertex %d %s, expected (%f, %f, %f).\n",
                     mesh_number, got->x, got->y, got->z, vertex_number, usage_strings[decl_ptr->Usage], exp->x, exp->y, exp->z);
                 break;
@@ -6188,9 +6188,9 @@ static void check_vertex_components(int line, int mesh_number, int vertex_number
             {
                 D3DXVECTOR4 *got = (D3DXVECTOR4*)(got_ptr + decl_ptr->Offset);
                 D3DXVECTOR4 *exp = (D3DXVECTOR4*)(exp_ptr + decl_ptr->Offset);
-                FLOAT diff = fmaxf(fabsf(got->x - exp->x), fabsf(got->y - exp->y));
-                diff = fmaxf(diff, fabsf(got->z - exp->z));
-                diff = fmaxf(diff, fabsf(got->w - exp->w));
+                FLOAT diff = max(fabsf(got->x - exp->x), fabsf(got->y - exp->y));
+                diff = max(diff, fabsf(got->z - exp->z));
+                diff = max(diff, fabsf(got->w - exp->w));
                 ok_(__FILE__,line)(diff <= FLT_EPSILON, "Mesh %d: Got (%f, %f, %f, %f) for vertex %d %s, expected (%f, %f, %f, %f).\n",
                     mesh_number, got->x, got->y, got->z, got->w, vertex_number, usage_strings[decl_ptr->Usage], exp->x, exp->y, exp->z, got->w);
                 break;
