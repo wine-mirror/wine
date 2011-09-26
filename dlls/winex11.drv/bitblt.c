@@ -1710,8 +1710,8 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
     {
         if (!(bitmap = X11DRV_get_phys_bitmap( hbitmap ))) return ERROR_INVALID_HANDLE;
         physdev = NULL;
-        depth = bitmap->pixmap_depth;
-        color_shifts = &bitmap->pixmap_color_shifts;
+        depth = bitmap->depth;
+        color_shifts = &bitmap->color_shifts;
     }
     else
     {
@@ -1853,8 +1853,8 @@ DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
     {
         if (!(bitmap = X11DRV_get_phys_bitmap( hbitmap ))) return ERROR_INVALID_HANDLE;
         physdev = NULL;
-        depth = bitmap->pixmap_depth;
-        color_shifts = &bitmap->pixmap_color_shifts;
+        depth = bitmap->depth;
+        color_shifts = &bitmap->color_shifts;
     }
     else
     {

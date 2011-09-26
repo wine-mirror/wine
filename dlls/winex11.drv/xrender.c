@@ -1345,9 +1345,9 @@ BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel,
         return FALSE;
     }
 
-    physBitmap->pixmap_depth = pict_format->depth;
+    physBitmap->depth = pict_format->depth;
     physBitmap->trueColor = TRUE;
-    physBitmap->pixmap_color_shifts = shifts;
+    physBitmap->color_shifts = shifts;
     return TRUE;
 }
 
@@ -2694,8 +2694,7 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMA
     {
         if (!(bitmap = X11DRV_get_phys_bitmap( hbitmap ))) return ERROR_INVALID_HANDLE;
         physdev = NULL;
-        dst_format = get_xrender_format_from_color_shifts( bitmap->pixmap_depth,
-                                                           &bitmap->pixmap_color_shifts );
+        dst_format = get_xrender_format_from_color_shifts( bitmap->depth, &bitmap->color_shifts );
     }
     else
     {
@@ -2980,19 +2979,19 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
 void X11DRV_XRender_CopyBrush(X11DRV_PDEVICE *physDev, X_PHYSBITMAP *physBitmap, int width, int height)
 {
     /* At depths >1, the depth of physBitmap and physDev might not be the same e.g. the physbitmap might be a 16-bit DIB while the physdev uses 24-bit */
-    int depth = physBitmap->pixmap_depth == 1 ? 1 : physDev->depth;
-    enum wxr_format src_format = get_xrender_format_from_color_shifts(physBitmap->pixmap_depth, &physBitmap->pixmap_color_shifts);
+    int depth = physBitmap->depth == 1 ? 1 : physDev->depth;
+    enum wxr_format src_format = get_xrender_format_from_color_shifts(physBitmap->depth, &physBitmap->color_shifts);
     enum wxr_format dst_format = get_xrender_format_from_color_shifts(physDev->depth, physDev->color_shifts);
 
     wine_tsx11_lock();
     physDev->brush.pixmap = XCreatePixmap(gdi_display, root_window, width, height, depth);
 
     /* Use XCopyArea when the physBitmap and brush.pixmap have the same format. */
-    if( (physBitmap->pixmap_depth == 1) || (!X11DRV_XRender_Installed && physDev->depth == physBitmap->pixmap_depth) ||
+    if( (physBitmap->depth == 1) || (!X11DRV_XRender_Installed && physDev->depth == physBitmap->depth) ||
         (src_format == dst_format) )
     {
         XCopyArea( gdi_display, physBitmap->pixmap, physDev->brush.pixmap,
-                   get_bitmap_gc(physBitmap->pixmap_depth), 0, 0, width, height, 0, 0 );
+                   get_bitmap_gc(physBitmap->depth), 0, 0, width, height, 0, 0 );
     }
     else /* We need depth conversion */
     {

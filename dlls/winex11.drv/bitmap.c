@@ -55,7 +55,7 @@ void X11DRV_BITMAP_Init(void)
 
     wine_tsx11_lock();
     bitmap_context = XUniqueContext();
-    BITMAP_stock_phys_bitmap.pixmap_depth = 1;
+    BITMAP_stock_phys_bitmap.depth = 1;
     BITMAP_stock_phys_bitmap.pixmap = XCreatePixmap( gdi_display, root_window, 1, 1, 1 );
     bitmap_gc[0] = XCreateGC( gdi_display, BITMAP_stock_phys_bitmap.pixmap, 0, NULL );
     XSetGraphicsExposures( gdi_display, bitmap_gc[0], False );
@@ -100,15 +100,15 @@ HBITMAP X11DRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
 
     physDev->bitmap = physBitmap;
     physDev->drawable = physBitmap->pixmap;
-    physDev->color_shifts = physBitmap->trueColor ? &physBitmap->pixmap_color_shifts : NULL;
+    physDev->color_shifts = physBitmap->trueColor ? &physBitmap->color_shifts : NULL;
     SetRect( &physDev->drawable_rect, 0, 0, bitmap.bmWidth, bitmap.bmHeight );
     physDev->dc_rect = physDev->drawable_rect;
 
       /* Change GC depth if needed */
 
-    if (physDev->depth != physBitmap->pixmap_depth)
+    if (physDev->depth != physBitmap->depth)
     {
-        physDev->depth = physBitmap->pixmap_depth;
+        physDev->depth = physBitmap->depth;
         wine_tsx11_lock();
         XFreeGC( gdi_display, physDev->gc );
         physDev->gc = XCreateGC( gdi_display, physDev->drawable, 0, NULL );
@@ -132,13 +132,13 @@ BOOL X11DRV_create_phys_bitmap( HBITMAP hbitmap, const BITMAP *bitmap, int depth
 
     if (!(physBitmap = X11DRV_init_phys_bitmap( hbitmap ))) return FALSE;
 
-    physBitmap->pixmap_depth = depth;
+    physBitmap->depth = depth;
     physBitmap->trueColor = true_color;
-    if (true_color) physBitmap->pixmap_color_shifts = *shifts;
+    if (true_color) physBitmap->color_shifts = *shifts;
 
     wine_tsx11_lock();
     physBitmap->pixmap = XCreatePixmap( gdi_display, root_window,
-                                        bitmap->bmWidth, bitmap->bmHeight, physBitmap->pixmap_depth );
+                                        bitmap->bmWidth, bitmap->bmHeight, physBitmap->depth );
     if (physBitmap->pixmap)
     {
         GC gc = get_bitmap_gc( depth );

@@ -1185,7 +1185,7 @@ static XID create_bitmap_glxpixmap(X11DRV_PDEVICE *physDev, WineGLPixelFormat *f
 
     vis = pglXGetVisualFromFBConfig(gdi_display, fmt->fbconfig);
     if(vis) {
-        if(vis->depth == physDev->bitmap->pixmap_depth)
+        if(vis->depth == physDev->bitmap->depth)
             ret = pglXCreateGLXPixmap(gdi_display, vis, physDev->bitmap->pixmap);
         XFree(vis);
     }

@@ -3451,8 +3451,8 @@ static void X11DRV_DIB_DoCopyDIBSection(X_PHYSBITMAP *physBitmap, BOOL toDIB,
   descr.colorMap    = colorMap;
   descr.nColorMap   = nColorMap;
   descr.bits        = dibSection.dsBm.bmBits;
-  descr.depth       = physBitmap->pixmap_depth;
-  descr.shifts      = physBitmap->trueColor ? &physBitmap->pixmap_color_shifts : NULL;
+  descr.depth       = physBitmap->depth;
+  descr.shifts      = physBitmap->trueColor ? &physBitmap->color_shifts : NULL;
   descr.compression = dibSection.dsBmih.biCompression;
   descr.physBitmap  = physBitmap;
 
@@ -3523,7 +3523,7 @@ static void X11DRV_DIB_DoUpdateDIBSection(X_PHYSBITMAP *physBitmap, BOOL toDIB)
     GetObjectW( physBitmap->hbitmap, sizeof(bitmap), &bitmap );
     X11DRV_DIB_DoCopyDIBSection(physBitmap, toDIB,
                                 physBitmap->colorMap, physBitmap->nColorMap,
-                                physBitmap->pixmap, get_bitmap_gc(physBitmap->pixmap_depth),
+                                physBitmap->pixmap, get_bitmap_gc(physBitmap->depth),
                                 0, 0, 0, 0, bitmap.bmWidth, bitmap.bmHeight);
 }
 
@@ -3893,13 +3893,13 @@ HBITMAP X11DRV_CreateDIBSection( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *bmi, 
     {
         if (dib.dsBm.bmBitsPixel == 1)
         {
-            physBitmap->pixmap_depth = 1;
+            physBitmap->depth = 1;
             physBitmap->trueColor = FALSE;
         }
         else
         {
-            physBitmap->pixmap_depth = screen_depth;
-            physBitmap->pixmap_color_shifts = X11DRV_PALETTE_default_shifts;
+            physBitmap->depth = screen_depth;
+            physBitmap->color_shifts = X11DRV_PALETTE_default_shifts;
             physBitmap->trueColor = (visual->class == TrueColor || visual->class == DirectColor);
         }
     }
@@ -3911,7 +3911,7 @@ HBITMAP X11DRV_CreateDIBSection( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *bmi, 
 
     if (X11DRV_DIB_QueryXShm( &pixmaps )
             && (physBitmap->image = X11DRV_XShmCreateImage( dib.dsBm.bmWidth, dib.dsBm.bmHeight,
-                                                            physBitmap->pixmap_depth, &physBitmap->shminfo )))
+                                                            physBitmap->depth, &physBitmap->shminfo )))
     {
         if (pixmaps)
         {
@@ -3930,7 +3930,7 @@ HBITMAP X11DRV_CreateDIBSection( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *bmi, 
     {
         physBitmap->shm_mode = X11DRV_SHM_NONE;
         physBitmap->image = X11DRV_DIB_CreateXImage( dib.dsBm.bmWidth, dib.dsBm.bmHeight,
-                                                     physBitmap->pixmap_depth );
+                                                     physBitmap->depth );
     }
 
 #ifdef HAVE_LIBXXSHM
@@ -3940,13 +3940,13 @@ HBITMAP X11DRV_CreateDIBSection( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *bmi, 
         physBitmap->pixmap = XShmCreatePixmap( gdi_display, root_window,
                                                physBitmap->shminfo.shmaddr, &physBitmap->shminfo,
                                                dib.dsBm.bmWidth, dib.dsBm.bmHeight,
-                                               physBitmap->pixmap_depth );
+                                               physBitmap->depth );
     }
     else
 #endif
     {
         physBitmap->pixmap = XCreatePixmap( gdi_display, root_window, dib.dsBm.bmWidth,
-                                            dib.dsBm.bmHeight, physBitmap->pixmap_depth );
+                                            dib.dsBm.bmHeight, physBitmap->depth );
     }
 
     wine_tsx11_unlock();
@@ -3954,7 +3954,7 @@ HBITMAP X11DRV_CreateDIBSection( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *bmi, 
 
     if (physBitmap->trueColor)
     {
-        ColorShifts *shifts = &physBitmap->pixmap_color_shifts;
+        ColorShifts *shifts = &physBitmap->color_shifts;
 
         /* When XRender is around and used, we also support dibsections in other formats like 16-bit. In these
          * cases we need to override the mask of XImages. The reason is that during XImage creation the masks are

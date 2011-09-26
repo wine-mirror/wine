@@ -118,8 +118,8 @@ typedef struct
     HBITMAP      hbitmap;
     Pixmap       pixmap;
     XID          glxpixmap;
-    int          pixmap_depth;
-    ColorShifts  pixmap_color_shifts;
+    int          depth;             /* depth of the X pixmap */
+    ColorShifts  color_shifts;      /* color shifts of the X pixmap */
     /* the following fields are only used for DIB section bitmaps */
     int          status, p_status;  /* mapping status */
     XImage      *image;             /* cached XImage */
