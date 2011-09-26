@@ -1541,7 +1541,6 @@ static void test_EM_SETOPTIONS(void)
     SendMessage(hwndRichEdit, EM_SETOPTIONS, ECOOP_SET, 0);
 
     /* testing no readonly by sending 'a' to the control*/
-    SetFocus(hwndRichEdit);
     SendMessage(hwndRichEdit, WM_CHAR, 'a', 0x1E0001);
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     ok(buffer[0]=='a', 
@@ -1551,7 +1550,6 @@ static void test_EM_SETOPTIONS(void)
     /* READONLY - sending 'a' to the control */
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
     SendMessage(hwndRichEdit, EM_SETOPTIONS, ECOOP_SET, ECO_READONLY);
-    SetFocus(hwndRichEdit);
     SendMessage(hwndRichEdit, WM_CHAR, 'a', 0x1E0001);
     SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
     ok(buffer[0]==text[0], 
