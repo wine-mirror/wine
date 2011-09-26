@@ -104,7 +104,7 @@ static const WineXRenderFormatTemplate wxr_formats_template[WXR_NB_FORMATS] =
 /* WXR_FORMAT_B8G8R8X8 */ { 32,     0,      0,      8,      0xff,   16,     0xff,   24,     0xff    },
 };
 
-static enum wxr_format default_format;
+static enum wxr_format default_format = WXR_INVALID_FORMAT;
 static XRenderPictFormat *pict_formats[WXR_NB_FORMATS + 1 /* invalid format */];
 
 typedef struct
@@ -487,7 +487,7 @@ static enum wxr_format get_xrender_format_from_color_shifts(int depth, ColorShif
     }
 
     /* This should not happen because when we reach 'shifts' must have been set and we only allows shifts which are backed by X */
-    ERR("No XRender format found!\n");
+    ERR("No XRender format found for %u %08x/%08x/%08x\n", depth, redMask, greenMask, blueMask);
     return WXR_INVALID_FORMAT;
 }
 
@@ -639,14 +639,6 @@ static void free_xrender_picture( struct xrender_physdev *dev )
         }
         wine_tsx11_unlock();
     }
-    dev->pict_format = NULL;
-}
-
-static void update_xrender_drawable( struct xrender_physdev *dev )
-{
-    free_xrender_picture( dev );
-    dev->format = get_xrender_format_from_color_shifts( dev->x11dev->depth, dev->x11dev->color_shifts );
-    dev->pict_format = pict_formats[dev->format];
 }
 
 /* return a mask picture used to force alpha to 0 */
@@ -1127,7 +1119,7 @@ static HFONT xrenderdrv_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
     return 0;
 }
 
-static BOOL create_xrender_dc( PHYSDEV *pdev )
+static BOOL create_xrender_dc( PHYSDEV *pdev, enum wxr_format format )
 {
     X11DRV_PDEVICE *x11dev = get_x11drv_dev( *pdev );
     struct xrender_physdev *physdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physdev) );
@@ -1135,8 +1127,8 @@ static BOOL create_xrender_dc( PHYSDEV *pdev )
     if (!physdev) return FALSE;
     physdev->x11dev = x11dev;
     physdev->cache_index = -1;
-    physdev->format = get_xrender_format_from_color_shifts( x11dev->depth, x11dev->color_shifts );
-    physdev->pict_format = pict_formats[physdev->format];
+    physdev->format = format;
+    physdev->pict_format = pict_formats[format];
     push_dc_driver( pdev, &physdev->dev, &xrender_funcs );
     return TRUE;
 }
@@ -1176,7 +1168,7 @@ static void set_color_info( XRenderPictFormat *format, BITMAPINFO *info )
 static BOOL xrenderdrv_CreateDC( PHYSDEV *pdev, LPCWSTR driver, LPCWSTR device,
                                  LPCWSTR output, const DEVMODEW* initData )
 {
-    return create_xrender_dc( pdev );
+    return create_xrender_dc( pdev, default_format );
 }
 
 /**********************************************************************
@@ -1191,7 +1183,7 @@ static BOOL xrenderdrv_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
     }
     /* otherwise we have been called by x11drv */
 
-    return create_xrender_dc( pdev );
+    return create_xrender_dc( pdev, WXR_FORMAT_MONO );
 }
 
 /**********************************************************************
@@ -1226,7 +1218,7 @@ static INT xrenderdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID 
         if (*(const enum x11drv_escape_codes *)in_data == X11DRV_SET_DRAWABLE)
         {
             BOOL ret = dev->funcs->pExtEscape( dev, escape, in_count, in_data, out_count, out_data );
-            if (ret) update_xrender_drawable( physdev );
+            if (ret) free_xrender_picture( physdev );  /* pict format doesn't change, only drawable */
             return ret;
         }
     }
@@ -1285,7 +1277,13 @@ static HBITMAP xrenderdrv_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
 
     dev = GET_NEXT_PHYSDEV( dev, pSelectBitmap );
     ret = dev->funcs->pSelectBitmap( dev, hbitmap );
-    if (ret) update_xrender_drawable( physdev );
+    if (ret)
+    {
+        free_xrender_picture( physdev );
+        physdev->format = get_xrender_format_from_color_shifts( physdev->x11dev->depth,
+                                                                physdev->x11dev->color_shifts );
+        physdev->pict_format = pict_formats[physdev->format];
+    }
     return ret;
 }
 
