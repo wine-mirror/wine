@@ -3030,13 +3030,15 @@ struct create_named_pipe_request
     unsigned int   attributes;
     obj_handle_t   rootdir;
     unsigned int   options;
+    unsigned int   sharing;
     unsigned int   maxinstances;
     unsigned int   outsize;
     unsigned int   insize;
+    char __pad_44[4];
     timeout_t      timeout;
     unsigned int   flags;
     /* VARARG(name,unicode_str); */
-    char __pad_52[4];
+    char __pad_60[4];
 };
 struct create_named_pipe_reply
 {
@@ -5635,6 +5637,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 425
+#define SERVER_PROTOCOL_VERSION 426
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -2186,6 +2186,7 @@ enum message_type
     unsigned int   attributes;   /* object attributes */
     obj_handle_t   rootdir;      /* root directory */
     unsigned int   options;
+    unsigned int   sharing;
     unsigned int   maxinstances;
     unsigned int   outsize;
     unsigned int   insize;

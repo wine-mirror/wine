@@ -91,6 +91,7 @@ struct named_pipe
 {
     struct object       obj;         /* object header */
     unsigned int        flags;
+    unsigned int        sharing;
     unsigned int        maxinstances;
     unsigned int        outsize;
     unsigned int        insize;
@@ -960,6 +961,7 @@ DECL_HANDLER(create_named_pipe)
         pipe->maxinstances = req->maxinstances;
         pipe->timeout = req->timeout;
         pipe->flags = req->flags;
+        pipe->sharing = req->sharing;
     }
     else
     {

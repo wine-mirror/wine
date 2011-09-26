@@ -2781,6 +2781,7 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
         req->attributes = attr->Attributes;
         req->rootdir = wine_server_obj_handle( attr->RootDirectory );
         req->options = options;
+        req->sharing = sharing;
         req->flags = 
             (pipe_type) ? NAMED_PIPE_MESSAGE_STREAM_WRITE : 0 |
             (read_mode) ? NAMED_PIPE_MESSAGE_STREAM_READ  : 0 |
