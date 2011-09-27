@@ -1347,6 +1347,60 @@ BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
     return r;
 }
 
+static void free_accept_types( WCHAR **accept_types )
+{
+    WCHAR *ptr, **types = accept_types;
+
+    if (!types) return;
+    while ((ptr = *types))
+    {
+        heap_free( ptr );
+        types++;
+    }
+    heap_free( accept_types );
+}
+
+static WCHAR **convert_accept_types( const char **accept_types )
+{
+    unsigned int count;
+    const char **types = accept_types;
+    WCHAR **typesW;
+    BOOL invalid_pointer = FALSE;
+
+    if (!types) return NULL;
+    count = 0;
+    while (*types)
+    {
+        __TRY
+        {
+            /* find out how many there are */
+            if (*types && **types)
+            {
+                TRACE("accept type: %s\n", debugstr_a(*types));
+                count++;
+            }
+        }
+        __EXCEPT_PAGE_FAULT
+        {
+            WARN("invalid accept type pointer\n");
+            invalid_pointer = TRUE;
+        }
+        __ENDTRY;
+        types++;
+    }
+    if (invalid_pointer) return NULL;
+    if (!(typesW = heap_alloc( sizeof(WCHAR *) * (count + 1) ))) return NULL;
+    count = 0;
+    types = accept_types;
+    while (*types)
+    {
+        if (*types && **types) typesW[count++] = heap_strdupAtoW( *types );
+        types++;
+    }
+    typesW[count] = NULL;
+    return typesW;
+}
+
 /***********************************************************************
  *           HttpOpenRequestA (WININET.@)
  *
@@ -1364,9 +1418,7 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
 {
     LPWSTR szVerb = NULL, szObjectName = NULL;
     LPWSTR szVersion = NULL, szReferrer = NULL, *szAcceptTypes = NULL;
-    INT acceptTypesCount;
     HINTERNET rc = FALSE;
-    LPCSTR *types;
 
     TRACE("(%p, %s, %s, %s, %s, %p, %08x, %08lx)\n", hHttpSession,
           debugstr_a(lpszVerb), debugstr_a(lpszObjectName),
@@ -1401,65 +1453,12 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
             goto end;
     }
 
-    if (lpszAcceptTypes)
-    {
-        acceptTypesCount = 0;
-        types = lpszAcceptTypes;
-        while (*types)
-        {
-            __TRY
-            {
-                /* find out how many there are */
-                if (*types && **types)
-                {
-                    TRACE("accept type: %s\n", debugstr_a(*types));
-                    acceptTypesCount++;
-                }
-            }
-            __EXCEPT_PAGE_FAULT
-            {
-                WARN("invalid accept type pointer\n");
-            }
-            __ENDTRY;
-            types++;
-        }
-        szAcceptTypes = heap_alloc(sizeof(WCHAR *) * (acceptTypesCount+1));
-        if (!szAcceptTypes) goto end;
-
-        acceptTypesCount = 0;
-        types = lpszAcceptTypes;
-        while (*types)
-        {
-            __TRY
-            {
-                if (*types && **types)
-                    szAcceptTypes[acceptTypesCount++] = heap_strdupAtoW(*types);
-            }
-            __EXCEPT_PAGE_FAULT
-            {
-                /* ignore invalid pointer */
-            }
-            __ENDTRY;
-            types++;
-        }
-        szAcceptTypes[acceptTypesCount] = NULL;
-    }
-
-    rc = HttpOpenRequestW(hHttpSession, szVerb, szObjectName,
-                          szVersion, szReferrer,
-                          (LPCWSTR*)szAcceptTypes, dwFlags, dwContext);
+    szAcceptTypes = convert_accept_types( lpszAcceptTypes );
+    rc = HttpOpenRequestW(hHttpSession, szVerb, szObjectName, szVersion, szReferrer,
+                          (const WCHAR **)szAcceptTypes, dwFlags, dwContext);
 
 end:
-    if (szAcceptTypes)
-    {
-        acceptTypesCount = 0;
-        while (szAcceptTypes[acceptTypesCount])
-        {
-            heap_free(szAcceptTypes[acceptTypesCount]);
-            acceptTypesCount++;
-        }
-        heap_free(szAcceptTypes);
-    }
+    free_accept_types(szAcceptTypes);
     heap_free(szReferrer);
     heap_free(szVersion);
     heap_free(szObjectName);

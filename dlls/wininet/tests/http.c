@@ -3085,7 +3085,7 @@ static void test_bogus_accept_types_array(void)
 {
     HINTERNET ses, con, req;
     static const char *types[] = { (const char *)6240, "*/*", "%p", "", (const char *)0xffffffff, "*/*", NULL };
-    DWORD size;
+    DWORD size, error;
     char buffer[32];
     BOOL ret;
 
@@ -3097,11 +3097,14 @@ static void test_bogus_accept_types_array(void)
 
     buffer[0] = 0;
     size = sizeof(buffer);
+    SetLastError(0xdeadbeef);
     ret = HttpQueryInfo(req, HTTP_QUERY_ACCEPT | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, NULL);
-    ok(ret, "HttpQueryInfo failed: %u\n", GetLastError());
-    ok(!strcmp(buffer, ", */*, %p, , , */*") || /* IE6 */
-       !strcmp(buffer, "*/*, %p, */*"),
-       "got '%s' expected '*/*, %%p, */*' or ', */*, %%p, , , */*'\n", buffer);
+    error = GetLastError();
+    ok(!ret || broken(ret), "HttpQueryInfo succeeded\n");
+    if (!ret) ok(error == ERROR_HTTP_HEADER_NOT_FOUND, "expected ERROR_HTTP_HEADER_NOT_FOUND, got %u\n", error);
+    ok(broken(!strcmp(buffer, ", */*, %p, , , */*")) /* IE6 */ ||
+       broken(!strcmp(buffer, "*/*, %p, */*")) /* IE7/8 */ ||
+       !strcmp(buffer, ""), "got '%s' expected ''\n", buffer);
 
     InternetCloseHandle(req);
     InternetCloseHandle(con);
