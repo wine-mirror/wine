@@ -8989,9 +8989,8 @@ msgid "version 1.0"
 msgstr "versija 1.0"
 
 #: oleview.rc:100
-#, fuzzy
 msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
-msgstr "TypeLib failai (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+msgstr "TypeLib failai (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
 
 #: oleview.rc:103
 msgid "Bind to file via a File Moniker"
@@ -10406,12 +10405,11 @@ msgstr "Wine konfigūravimas: %s"
 
 #: winecfg.rc:87
 msgid "Selected driver: %s"
-msgstr ""
+msgstr "Parinkta tvarkyklė: %s"
 
 #: winecfg.rc:88
-#, fuzzy
 msgid "(None)"
-msgstr "Joks"
+msgstr "(jokia)"
 
 #: winecfg.rc:51
 msgid ""
@@ -10450,9 +10448,8 @@ msgid "Default Settings"
 msgstr "Numatytosios nuostatos"
 
 #: winecfg.rc:59
-#, fuzzy
 msgid "Wine Programs (*.exe; *.exe.so)"
-msgstr "Wine programos (*.exe,*.exe.so)"
+msgstr "Wine programos (*.exe; *.exe.so)"
 
 #: winecfg.rc:60
 msgid "Use global settings"
@@ -11197,9 +11194,8 @@ msgid "Unicode text document"
 msgstr "Teksto unikodu dokumentas"
 
 #: wordpad.rc:143
-#, fuzzy
 msgid "Printer files (*.prn)"
-msgstr "Spausdintuvo failai (*.PRN)"
+msgstr "Spausdintuvo failai (*.prn)"
 
 #: wordpad.rc:148
 msgid "Left"
