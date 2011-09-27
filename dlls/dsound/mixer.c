@@ -26,6 +26,7 @@
 #include <stdarg.h>
 #include <math.h>	/* Insomnia - pow() function */
 
+#define COBJMACROS
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
 #include "windef.h"
@@ -742,17 +743,21 @@ static DWORD DSOUND_MixToPrimary(const DirectSoundDevice *device, DWORD writepos
 
 static void DSOUND_WaveQueue(DirectSoundDevice *device, BOOL force)
 {
-	DWORD prebuf_frags, wave_writepos, wave_fragpos, i;
+	DWORD prebuf_frames, buf_offs_bytes, wave_fragpos;
+	int prebuf_frags;
+	BYTE *buffer;
+	HRESULT hr;
+
 	TRACE("(%p)\n", device);
 
 	/* calculate the current wave frag position */
 	wave_fragpos = (device->pwplay + device->pwqueue) % device->helfrags;
 
 	/* calculate the current wave write position */
-	wave_writepos = wave_fragpos * device->fraglen;
+	buf_offs_bytes = wave_fragpos * device->fraglen;
 
-	TRACE("wave_fragpos = %i, wave_writepos = %i, pwqueue = %i, prebuf = %i\n",
-		wave_fragpos, wave_writepos, device->pwqueue, device->prebuf);
+	TRACE("wave_fragpos = %i, buf_offs_bytes = %i, pwqueue = %i, prebuf = %i\n",
+		wave_fragpos, buf_offs_bytes, device->pwqueue, device->prebuf);
 
 	if (!force)
 	{
@@ -776,23 +781,50 @@ static void DSOUND_WaveQueue(DirectSoundDevice *device, BOOL force)
 
 	TRACE("prebuf_frags = %i\n", prebuf_frags);
 
+	if(!prebuf_frags)
+		return;
+
 	/* adjust queue */
 	device->pwqueue += prebuf_frags;
 
-	/* get out of CS when calling the wave system */
-	LeaveCriticalSection(&(device->mixlock));
-	/* **** */
+	prebuf_frames = ((prebuf_frags + wave_fragpos > device->helfrags) ?
+			(prebuf_frags + wave_fragpos - device->helfrags) :
+			(prebuf_frags)) * device->fraglen / device->pwfx->nBlockAlign;
 
-	/* queue up the new buffers */
-	for(i=0; i<prebuf_frags; i++){
-		TRACE("queueing wave buffer %i\n", wave_fragpos);
-		waveOutWrite(device->hwo, &device->pwave[wave_fragpos], sizeof(WAVEHDR));
-		wave_fragpos++;
-		wave_fragpos %= device->helfrags;
+	hr = IAudioRenderClient_GetBuffer(device->render, prebuf_frames, &buffer);
+	if(FAILED(hr)){
+		WARN("GetBuffer failed: %08x\n", hr);
+		return;
 	}
 
-	/* **** */
-	EnterCriticalSection(&(device->mixlock));
+	memcpy(buffer, device->buffer + buf_offs_bytes,
+			prebuf_frames * device->pwfx->nBlockAlign);
+
+	hr = IAudioRenderClient_ReleaseBuffer(device->render, prebuf_frames, 0);
+	if(FAILED(hr)){
+		WARN("ReleaseBuffer failed: %08x\n", hr);
+		return;
+	}
+
+	/* check if anything wrapped */
+	prebuf_frags = prebuf_frags + wave_fragpos - device->helfrags;
+	if(prebuf_frags > 0){
+		prebuf_frames = prebuf_frags * device->fraglen / device->pwfx->nBlockAlign;
+
+		hr = IAudioRenderClient_GetBuffer(device->render, prebuf_frames, &buffer);
+		if(FAILED(hr)){
+			WARN("GetBuffer failed: %08x\n", hr);
+			return;
+		}
+
+		memcpy(buffer, device->buffer, prebuf_frames * device->pwfx->nBlockAlign);
+
+		hr = IAudioRenderClient_ReleaseBuffer(device->render, prebuf_frames, 0);
+		if(FAILED(hr)){
+			WARN("ReleaseBuffer failed: %08x\n", hr);
+			return;
+		}
+	}
 
 	TRACE("queue now = %i\n", device->pwqueue);
 }
@@ -804,10 +836,39 @@ static void DSOUND_WaveQueue(DirectSoundDevice *device, BOOL force)
  */
 static void DSOUND_PerformMix(DirectSoundDevice *device)
 {
+	UINT64 clock_pos, clock_freq, pos_bytes;
+	UINT delta_frags;
+	HRESULT hr;
+
 	TRACE("(%p)\n", device);
 
 	/* **** */
-	EnterCriticalSection(&(device->mixlock));
+	EnterCriticalSection(&device->mixlock);
+
+	hr = IAudioClock_GetFrequency(device->clock, &clock_freq);
+	if(FAILED(hr)){
+		WARN("GetFrequency failed: %08x\n", hr);
+        LeaveCriticalSection(&device->mixlock);
+		return;
+	}
+
+	hr = IAudioClock_GetPosition(device->clock, &clock_pos, NULL);
+	if(FAILED(hr)){
+		WARN("GetCurrentPadding failed: %08x\n", hr);
+        LeaveCriticalSection(&device->mixlock);
+		return;
+	}
+
+	pos_bytes = (clock_pos / (double)clock_freq) * device->pwfx->nSamplesPerSec *
+		device->pwfx->nBlockAlign;
+
+	delta_frags = (pos_bytes - device->last_pos_bytes) / device->fraglen;
+	if(delta_frags > 0){
+		device->pwplay += delta_frags;
+		device->pwplay %= device->helfrags;
+		device->pwqueue -= delta_frags;
+		device->last_pos_bytes = pos_bytes - (pos_bytes % device->fraglen);
+	}
 
 	if (device->priolevel != DSSCL_WRITEPRIMARY) {
 		BOOL recover = FALSE, all_stopped = FALSE;
@@ -825,7 +886,7 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 		}
 
 		TRACE("primary playpos=%d, writepos=%d, clrpos=%d, mixpos=%d, buflen=%d\n",
-		      playpos,writepos,device->playpos,device->mixpos,device->buflen);
+			playpos,writepos,device->playpos,device->mixpos,device->buflen);
 		assert(device->playpos < device->buflen);
 
 		mixplaypos = DSOUND_bufpos_to_mixpos(device, device->playpos);
@@ -910,7 +971,7 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 		if (prebuff_left >= device->fraglen){
 
 			/* update the wave queue */
-            DSOUND_WaveQueue(device, FALSE);
+			DSOUND_WaveQueue(device, FALSE);
 
 			/* buffers are full. start playing if applicable */
 			if(device->state == STATE_STARTING){
@@ -948,7 +1009,7 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 
 	} else {
 
-        DSOUND_WaveQueue(device, TRUE);
+		DSOUND_WaveQueue(device, TRUE);
 
 		/* in the DSSCL_WRITEPRIMARY mode, the app is totally in charge... */
 		if (device->state == STATE_STARTING) {
@@ -978,13 +1039,6 @@ void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD_PTR dwUser,
 	TRACE("(%d,%d,0x%lx,0x%lx,0x%lx)\n",timerID,msg,dwUser,dw1,dw2);
 	TRACE("entering at %d\n", start_time);
 
-	if (DSOUND_renderer[device->drvdesc.dnDevNode] != device) {
-		ERR("dsound died without killing us?\n");
-		timeKillEvent(timerID);
-		timeEndPeriod(DS_TIME_RES);
-		return;
-	}
-
 	RtlAcquireResourceShared(&(device->buffer_list_lock), TRUE);
 
 	if (device->ref)
@@ -994,38 +1048,4 @@ void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD_PTR dwUser,
 
 	end_time = GetTickCount();
 	TRACE("completed processing at %d, duration = %d\n", end_time, end_time - start_time);
-}
-
-void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
-{
-	DirectSoundDevice * device = (DirectSoundDevice*)dwUser;
-	TRACE("(%p,%x,%lx,%lx,%lx)\n",hwo,msg,dwUser,dw1,dw2);
-	TRACE("entering at %d, msg=%08x(%s)\n", GetTickCount(), msg,
-		msg==MM_WOM_DONE ? "MM_WOM_DONE" : msg==MM_WOM_CLOSE ? "MM_WOM_CLOSE" : 
-		msg==MM_WOM_OPEN ? "MM_WOM_OPEN" : "UNKNOWN");
-
-	/* check if packet completed from wave driver */
-	if (msg == MM_WOM_DONE) {
-
-		/* **** */
-		EnterCriticalSection(&(device->mixlock));
-
-		TRACE("done playing primary pos=%d\n", device->pwplay * device->fraglen);
-
-		/* update playpos */
-		device->pwplay++;
-		device->pwplay %= device->helfrags;
-
-		/* sanity */
-		if(device->pwqueue == 0){
-			ERR("Wave queue corrupted!\n");
-		}
-
-		/* update queue */
-		device->pwqueue--;
-
-		LeaveCriticalSection(&(device->mixlock));
-		/* **** */
-	}
-	TRACE("completed\n");
 }

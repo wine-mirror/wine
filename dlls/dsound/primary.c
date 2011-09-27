@@ -25,6 +25,7 @@
 
 #include <stdarg.h>
 
+#define COBJMACROS
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
 #include "windef.h"
@@ -83,32 +84,86 @@ static void DSOUND_RecalcPrimary(DirectSoundDevice *device)
 
 HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
 {
-	HRESULT hres = DS_OK;
-	TRACE("(%p, %d)\n", device, forcewave);
+    HRESULT hres;
 
-    waveOutClose(device->hwo);
+    TRACE("(%p, %d)\n", device, forcewave);
+
+    if(device->client){
+        IAudioClient_Release(device->client);
+        device->client = NULL;
+    }
+    if(device->render){
+        IAudioRenderClient_Release(device->render);
+        device->render = NULL;
+    }
+    if(device->clock){
+        IAudioClock_Release(device->clock);
+        device->clock = NULL;
+    }
+    if(device->volume){
+        IAudioStreamVolume_Release(device->volume);
+        device->volume = NULL;
+    }
 
     device->drvdesc.dwFlags = 0;
-
-    hres = mmErr(waveOutOpen(&(device->hwo), device->drvdesc.dnDevNode,
-                device->pwfx, (DWORD_PTR)DSOUND_callback, (DWORD_PTR)device,
-                CALLBACK_FUNCTION | WAVE_MAPPED));
-    if (FAILED(hres)) {
-        WARN("waveOutOpen failed: %08x\n", hres);
+    hres = IMMDevice_Activate(device->mmdevice, &IID_IAudioClient,
+            CLSCTX_INPROC_SERVER, NULL, (void **)&device->client);
+    if(FAILED(hres)){
+        WARN("Activate failed: %08x\n", hres);
         return hres;
     }
 
-	return hres;
+    /* buffer size = 200 * 100000 (100 ns) = 2.0 seconds */
+    hres = IAudioClient_Initialize(device->client,
+            AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_NOPERSIST,
+            200 * 100000, 50000, device->pwfx, NULL);
+    if(FAILED(hres)){
+        IAudioClient_Release(device->client);
+        device->client = NULL;
+        WARN("Initialize failed: %08x\n", hres);
+        return hres;
+    }
+
+    hres = IAudioClient_GetService(device->client, &IID_IAudioRenderClient,
+            (void**)&device->render);
+    if(FAILED(hres)){
+        IAudioClient_Release(device->client);
+        device->client = NULL;
+        WARN("GetService failed: %08x\n", hres);
+        return hres;
+    }
+
+    hres = IAudioClient_GetService(device->client, &IID_IAudioClock,
+            (void**)&device->clock);
+    if(FAILED(hres)){
+        IAudioClient_Release(device->client);
+        IAudioRenderClient_Release(device->render);
+        device->client = NULL;
+        device->render = NULL;
+        WARN("GetService failed: %08x\n", hres);
+        return hres;
+    }
+
+    hres = IAudioClient_GetService(device->client, &IID_IAudioStreamVolume,
+            (void**)&device->volume);
+    if(FAILED(hres)){
+        IAudioClient_Release(device->client);
+        IAudioRenderClient_Release(device->render);
+        IAudioClock_Release(device->clock);
+        device->client = NULL;
+        device->render = NULL;
+        device->clock = NULL;
+        WARN("GetService failed: %08x\n", hres);
+        return hres;
+    }
+
+    return S_OK;
 }
 
 static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 {
 	DWORD buflen;
-	HRESULT err = DS_OK;
-    LPBYTE newbuf;
-    LPWAVEHDR headers = NULL;
-    DWORD overshot;
-    unsigned int c;
+	LPBYTE newbuf;
 
 	TRACE("(%p)\n", device);
 
@@ -128,9 +183,6 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
 	if (device->state == STATE_PLAYING) device->state = STATE_STARTING;
 	else if (device->state == STATE_STOPPING) device->state = STATE_STOPPED;
 
-    /* Start in pause mode, to allow buffers to get filled */
-    waveOutPause(device->hwo);
-
     TRACE("desired buflen=%d, old buffer=%p\n", buflen, device->buffer);
 
     /* reallocate emulated primary buffer */
@@ -146,70 +198,33 @@ static HRESULT DSOUND_PrimaryOpen(DirectSoundDevice *device)
     }
 
     DSOUND_RecalcPrimary(device);
-    if (device->pwave)
-        headers = HeapReAlloc(GetProcessHeap(),0,device->pwave, device->helfrags * sizeof(WAVEHDR));
-    else
-        headers = HeapAlloc(GetProcessHeap(),0,device->helfrags * sizeof(WAVEHDR));
-
-    if (!headers) {
-        ERR("failed to allocate wave headers\n");
-        HeapFree(GetProcessHeap(), 0, newbuf);
-        DSOUND_RecalcPrimary(device);
-        return DSERR_OUTOFMEMORY;
-    }
 
     device->buffer = newbuf;
-    device->pwave = headers;
 
-    /* prepare fragment headers */
-    for (c=0; c<device->helfrags; c++) {
-        device->pwave[c].lpData = (char*)device->buffer + c*device->fraglen;
-        device->pwave[c].dwBufferLength = device->fraglen;
-        device->pwave[c].dwUser = (DWORD_PTR)device;
-        device->pwave[c].dwFlags = 0;
-        device->pwave[c].dwLoops = 0;
-        err = mmErr(waveOutPrepareHeader(device->hwo,&device->pwave[c],sizeof(WAVEHDR)));
-        if (err != DS_OK) {
-            while (c--)
-                waveOutUnprepareHeader(device->hwo,&device->pwave[c],sizeof(WAVEHDR));
-            break;
-        }
-    }
-
-    overshot = device->buflen % device->fraglen;
-    /* sanity */
-    if(overshot)
-    {
-        overshot -= overshot % device->pwfx->nBlockAlign;
-        device->pwave[device->helfrags - 1].dwBufferLength += overshot;
-    }
-
-    TRACE("fraglen=%d, overshot=%d\n", device->fraglen, overshot);
+    TRACE("fraglen=%d\n", device->fraglen);
 
 	device->mixfunction = mixfunctions[device->pwfx->wBitsPerSample/8 - 1];
 	device->normfunction = normfunctions[device->pwfx->wBitsPerSample/8 - 1];
 	FillMemory(device->buffer, device->buflen, (device->pwfx->wBitsPerSample == 8) ? 128 : 0);
 	FillMemory(device->mix_buffer, device->mix_buffer_len, 0);
-	device->pwplay = device->pwqueue = device->playpos = device->mixpos = 0;
-	return err;
+	device->last_pos_bytes = device->pwplay = device->pwqueue = device->playpos = device->mixpos = 0;
+	return DS_OK;
 }
 
 
 static void DSOUND_PrimaryClose(DirectSoundDevice *device)
 {
-    unsigned c;
+    HRESULT hr;
 
-	TRACE("(%p)\n", device);
+    TRACE("(%p)\n", device);
 
-    /* get out of CS when calling the wave system */
-    LeaveCriticalSection(&(device->mixlock));
-    /* **** */
     device->pwqueue = (DWORD)-1; /* resetting queues */
-    waveOutReset(device->hwo);
-    for (c=0; c<device->helfrags; c++)
-        waveOutUnprepareHeader(device->hwo, &device->pwave[c], sizeof(WAVEHDR));
-    /* **** */
-    EnterCriticalSection(&(device->mixlock));
+
+    if(device->client){
+        hr = IAudioClient_Stop(device->client);
+        if(FAILED(hr))
+            WARN("Stop failed: %08x\n", hr);
+    }
 
     /* clear the queue */
     device->pwqueue = 0;
@@ -240,7 +255,6 @@ HRESULT DSOUND_PrimaryDestroy(DirectSoundDevice *device)
 	EnterCriticalSection(&(device->mixlock));
 
 	DSOUND_PrimaryClose(device);
-	HeapFree(GetProcessHeap(),0,device->pwave);
 	HeapFree(GetProcessHeap(),0,device->pwfx);
 	device->pwfx=NULL;
 
@@ -252,32 +266,32 @@ HRESULT DSOUND_PrimaryDestroy(DirectSoundDevice *device)
 
 HRESULT DSOUND_PrimaryPlay(DirectSoundDevice *device)
 {
-	HRESULT err = DS_OK;
-	TRACE("(%p)\n", device);
+    HRESULT hr;
 
-	err = mmErr(waveOutRestart(device->hwo));
-	if (err != DS_OK)
-		WARN("waveOutRestart failed\n");
+    TRACE("(%p)\n", device);
 
-	return err;
+    hr = IAudioClient_Start(device->client);
+    if(FAILED(hr)){
+        WARN("Start failed: %08x\n", hr);
+        return hr;
+    }
+
+    return DS_OK;
 }
 
 HRESULT DSOUND_PrimaryStop(DirectSoundDevice *device)
 {
-	HRESULT err = DS_OK;
-	TRACE("(%p)\n", device);
+    HRESULT hr;
 
-	/* don't call the wave system with the lock set */
-	LeaveCriticalSection(&(device->mixlock));
+    TRACE("(%p)\n", device);
 
-	err = mmErr(waveOutPause(device->hwo));
+    hr = IAudioClient_Stop(device->client);
+    if(FAILED(hr)){
+        WARN("Stop failed: %08x\n", hr);
+        return hr;
+    }
 
-	EnterCriticalSection(&(device->mixlock));
-
-	if (err != DS_OK)
-		WARN("waveOutPause failed\n");
-
-	return err;
+    return DS_OK;
 }
 
 HRESULT DSOUND_PrimaryGetPosition(DirectSoundDevice *device, LPDWORD playpos, LPDWORD writepos)
@@ -331,15 +345,15 @@ LPWAVEFORMATEX DSOUND_CopyFormat(LPCWAVEFORMATEX wfex)
 	return pwfx;
 }
 
-HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex)
+HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX passed_fmt)
 {
 	HRESULT err = DSERR_BUFFERLOST;
 	int i;
-	DWORD nSamplesPerSec, bpp, chans;
-	LPWAVEFORMATEX oldpwfx;
-        BOOL forced = device->priolevel == DSSCL_WRITEPRIMARY;
+	WAVEFORMATEX *old_fmt;
+	WAVEFORMATEXTENSIBLE *fmtex;
+	BOOL forced = (device->priolevel == DSSCL_WRITEPRIMARY);
 
-	TRACE("(%p,%p)\n", device, wfex);
+	TRACE("(%p,%p)\n", device, passed_fmt);
 
 	if (device->priolevel == DSSCL_NORMAL) {
 		WARN("failed priority check!\n");
@@ -347,29 +361,26 @@ HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex)
 	}
 
 	/* Let's be pedantic! */
-	if (wfex == NULL) {
-		WARN("invalid parameter: wfex==NULL!\n");
+	if (passed_fmt == NULL) {
+		WARN("invalid parameter: passed_fmt==NULL!\n");
 		return DSERR_INVALIDPARAM;
 	}
 	TRACE("(formattag=0x%04x,chans=%d,samplerate=%d,"
-              "bytespersec=%d,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
-	      wfex->wFormatTag, wfex->nChannels, wfex->nSamplesPerSec,
-	      wfex->nAvgBytesPerSec, wfex->nBlockAlign,
-	      wfex->wBitsPerSample, wfex->cbSize);
+			  "bytespersec=%d,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
+		  passed_fmt->wFormatTag, passed_fmt->nChannels, passed_fmt->nSamplesPerSec,
+		  passed_fmt->nAvgBytesPerSec, passed_fmt->nBlockAlign,
+		  passed_fmt->wBitsPerSample, passed_fmt->cbSize);
 
 	/* **** */
 	RtlAcquireResourceExclusive(&(device->buffer_list_lock), TRUE);
 	EnterCriticalSection(&(device->mixlock));
 
-	nSamplesPerSec = device->pwfx->nSamplesPerSec;
-	bpp = device->pwfx->wBitsPerSample;
-	chans = device->pwfx->nChannels;
-
-	oldpwfx = device->pwfx;
-	device->pwfx = DSOUND_CopyFormat(wfex);
+	old_fmt = device->pwfx;
+	device->pwfx = DSOUND_CopyFormat(passed_fmt);
+	fmtex = (WAVEFORMATEXTENSIBLE *)device->pwfx;
 	if (device->pwfx == NULL) {
-		device->pwfx = oldpwfx;
-		oldpwfx = NULL;
+		device->pwfx = old_fmt;
+		old_fmt = NULL;
 		err = DSERR_OUTOFMEMORY;
 		goto done;
 	}
@@ -377,21 +388,97 @@ HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex)
 	DSOUND_PrimaryClose(device);
 
 	err = DSOUND_ReopenDevice(device, FALSE);
-	if (FAILED(err))
-	{
-		WARN("DSOUND_ReopenDevice failed: %08x\n", err);
-		goto done;
+	if(SUCCEEDED(err))
+		goto opened;
+
+	/* requested format failed, so try others */
+	if(device->pwfx->wFormatTag == WAVE_FORMAT_IEEE_FLOAT){
+		device->pwfx->wFormatTag = WAVE_FORMAT_PCM;
+		device->pwfx->wBitsPerSample = 32;
+		device->pwfx->nAvgBytesPerSec = passed_fmt->nSamplesPerSec * device->pwfx->nBlockAlign;
+		device->pwfx->nBlockAlign = passed_fmt->nChannels * (device->pwfx->wBitsPerSample / 8);
+
+		err = DSOUND_ReopenDevice(device, FALSE);
+		if(SUCCEEDED(err))
+			goto opened;
 	}
+
+	if(device->pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+			 IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)){
+		fmtex->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+		device->pwfx->wBitsPerSample = 32;
+		device->pwfx->nAvgBytesPerSec = passed_fmt->nSamplesPerSec * device->pwfx->nBlockAlign;
+		device->pwfx->nBlockAlign = passed_fmt->nChannels * (device->pwfx->wBitsPerSample / 8);
+
+		err = DSOUND_ReopenDevice(device, FALSE);
+		if(SUCCEEDED(err))
+			goto opened;
+	}
+
+	device->pwfx->wBitsPerSample = 32;
+	device->pwfx->nAvgBytesPerSec = passed_fmt->nSamplesPerSec * device->pwfx->nBlockAlign;
+	device->pwfx->nBlockAlign = passed_fmt->nChannels * (device->pwfx->wBitsPerSample / 8);
+	err = DSOUND_ReopenDevice(device, FALSE);
+	if(SUCCEEDED(err))
+		goto opened;
+
+	device->pwfx->wBitsPerSample = 16;
+	device->pwfx->nAvgBytesPerSec = passed_fmt->nSamplesPerSec * device->pwfx->nBlockAlign;
+	device->pwfx->nBlockAlign = passed_fmt->nChannels * (device->pwfx->wBitsPerSample / 8);
+	err = DSOUND_ReopenDevice(device, FALSE);
+	if(SUCCEEDED(err))
+		goto opened;
+
+	device->pwfx->wBitsPerSample = 8;
+	device->pwfx->nAvgBytesPerSec = passed_fmt->nSamplesPerSec * device->pwfx->nBlockAlign;
+	device->pwfx->nBlockAlign = passed_fmt->nChannels * (device->pwfx->wBitsPerSample / 8);
+	err = DSOUND_ReopenDevice(device, FALSE);
+	if(SUCCEEDED(err))
+		goto opened;
+
+	device->pwfx->nChannels = (passed_fmt->nChannels == 2) ? 1 : 2;
+	device->pwfx->wBitsPerSample = passed_fmt->wBitsPerSample;
+	device->pwfx->nAvgBytesPerSec = passed_fmt->nSamplesPerSec * device->pwfx->nBlockAlign;
+	device->pwfx->nBlockAlign = passed_fmt->nChannels * (device->pwfx->wBitsPerSample / 8);
+	err = DSOUND_ReopenDevice(device, FALSE);
+	if(SUCCEEDED(err))
+		goto opened;
+
+	device->pwfx->wBitsPerSample = 32;
+	device->pwfx->nAvgBytesPerSec = passed_fmt->nSamplesPerSec * device->pwfx->nBlockAlign;
+	device->pwfx->nBlockAlign = passed_fmt->nChannels * (device->pwfx->wBitsPerSample / 8);
+	err = DSOUND_ReopenDevice(device, FALSE);
+	if(SUCCEEDED(err))
+		goto opened;
+
+	device->pwfx->wBitsPerSample = 16;
+	device->pwfx->nAvgBytesPerSec = passed_fmt->nSamplesPerSec * device->pwfx->nBlockAlign;
+	device->pwfx->nBlockAlign = passed_fmt->nChannels * (device->pwfx->wBitsPerSample / 8);
+	err = DSOUND_ReopenDevice(device, FALSE);
+	if(SUCCEEDED(err))
+		goto opened;
+
+	device->pwfx->wBitsPerSample = 8;
+	device->pwfx->nAvgBytesPerSec = passed_fmt->nSamplesPerSec * device->pwfx->nBlockAlign;
+	device->pwfx->nBlockAlign = passed_fmt->nChannels * (device->pwfx->wBitsPerSample / 8);
+	err = DSOUND_ReopenDevice(device, FALSE);
+	if(SUCCEEDED(err))
+		goto opened;
+
+	WARN("No formats could be opened\n");
+	goto done;
+
+opened:
 	err = DSOUND_PrimaryOpen(device);
 	if (err != DS_OK) {
 		WARN("DSOUND_PrimaryOpen failed\n");
 		goto done;
 	}
 
-	if (wfex->nSamplesPerSec/100 != device->pwfx->nSamplesPerSec/100 && forced && device->buffer)
+	if (passed_fmt->nSamplesPerSec/100 != device->pwfx->nSamplesPerSec/100 && forced && device->buffer)
 	{
 		DSOUND_PrimaryClose(device);
-		device->pwfx->nSamplesPerSec = wfex->nSamplesPerSec;
+		device->pwfx->nSamplesPerSec = passed_fmt->nSamplesPerSec;
 		err = DSOUND_ReopenDevice(device, TRUE);
 		if (FAILED(err))
 			WARN("DSOUND_ReopenDevice(2) failed: %08x\n", err);
@@ -405,7 +492,9 @@ HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX wfex)
 	device->mixfunction = mixfunctions[device->pwfx->wBitsPerSample/8 - 1];
 	device->normfunction = normfunctions[device->pwfx->wBitsPerSample/8 - 1];
 
-	if (nSamplesPerSec != device->pwfx->nSamplesPerSec || bpp != device->pwfx->wBitsPerSample || chans != device->pwfx->nChannels) {
+	if (old_fmt->nSamplesPerSec != device->pwfx->nSamplesPerSec ||
+			old_fmt->wBitsPerSample != device->pwfx->wBitsPerSample ||
+			old_fmt->nChannels != device->pwfx->nChannels) {
 		IDirectSoundBufferImpl** dsb = device->buffers;
 		for (i = 0; i < device->nrofbuffers; i++, dsb++) {
 			/* **** */
@@ -426,7 +515,7 @@ done:
 	RtlReleaseResource(&(device->buffer_list_lock));
 	/* **** */
 
-	HeapFree(GetProcessHeap(), 0, oldpwfx);
+	HeapFree(GetProcessHeap(), 0, old_fmt);
 	return err;
 }
 
@@ -453,10 +542,11 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 static HRESULT WINAPI PrimaryBufferImpl_SetVolume(
 	LPDIRECTSOUNDBUFFER iface,LONG vol
 ) {
-        IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer(iface);
-        DirectSoundDevice *device = This->device;
-	DWORD ampfactors;
-	HRESULT hres = DS_OK;
+	IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer(iface);
+	DirectSoundDevice *device = This->device;
+	HRESULT hr;
+	float lvol, rvol;
+
 	TRACE("(%p,%d)\n", iface, vol);
 
 	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLVOLUME)) {
@@ -470,31 +560,64 @@ static HRESULT WINAPI PrimaryBufferImpl_SetVolume(
 	}
 
 	/* **** */
-	EnterCriticalSection(&(device->mixlock));
+	EnterCriticalSection(&device->mixlock);
 
-	waveOutGetVolume(device->hwo, &ampfactors);
-	device->volpan.dwTotalLeftAmpFactor=ampfactors & 0xffff;
-	device->volpan.dwTotalRightAmpFactor=ampfactors >> 16;
+	hr = IAudioStreamVolume_GetChannelVolume(device->volume, 0, &lvol);
+	if(FAILED(hr)){
+		LeaveCriticalSection(&device->mixlock);
+		WARN("GetChannelVolume failed: %08x\n", hr);
+		return hr;
+	}
+
+	if(device->pwfx->nChannels > 1){
+		hr = IAudioStreamVolume_GetChannelVolume(device->volume, 1, &rvol);
+		if(FAILED(hr)){
+			LeaveCriticalSection(&device->mixlock);
+			WARN("GetChannelVolume failed: %08x\n", hr);
+			return hr;
+		}
+	}else
+		rvol = 1;
+
+	device->volpan.dwTotalLeftAmpFactor = ((UINT16)(lvol * (DWORD)0xFFFF));
+	device->volpan.dwTotalRightAmpFactor = ((UINT16)(rvol * (DWORD)0xFFFF));
+
 	DSOUND_AmpFactorToVolPan(&device->volpan);
 	if (vol != device->volpan.lVolume) {
-	    device->volpan.lVolume=vol;
-	    DSOUND_RecalcVolPan(&device->volpan);
-			ampfactors = (device->volpan.dwTotalLeftAmpFactor & 0xffff) | (device->volpan.dwTotalRightAmpFactor << 16);
-			waveOutSetVolume(device->hwo, ampfactors);
+		device->volpan.lVolume=vol;
+		DSOUND_RecalcVolPan(&device->volpan);
+		lvol = (float)((DWORD)(device->volpan.dwTotalLeftAmpFactor & 0xFFFF) / (float)0xFFFF);
+		hr = IAudioStreamVolume_SetChannelVolume(device->volume, 0, lvol);
+		if(FAILED(hr)){
+			LeaveCriticalSection(&device->mixlock);
+			WARN("SetChannelVolume failed: %08x\n", hr);
+			return hr;
+		}
+
+		if(device->pwfx->nChannels > 1){
+			rvol = (float)((DWORD)(device->volpan.dwTotalRightAmpFactor & 0xFFFF) / (float)0xFFFF);
+			hr = IAudioStreamVolume_SetChannelVolume(device->volume, 1, rvol);
+			if(FAILED(hr)){
+				LeaveCriticalSection(&device->mixlock);
+				WARN("SetChannelVolume failed: %08x\n", hr);
+				return hr;
+			}
+		}
 	}
 
 	LeaveCriticalSection(&(device->mixlock));
 	/* **** */
 
-	return hres;
+	return DS_OK;
 }
 
 static HRESULT WINAPI PrimaryBufferImpl_GetVolume(
 	LPDIRECTSOUNDBUFFER iface,LPLONG vol
 ) {
-        IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer(iface);
-        DirectSoundDevice *device = This->device;
-	DWORD ampfactors;
+	IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer(iface);
+	DirectSoundDevice *device = This->device;
+	float lvol, rvol;
+	HRESULT hr;
 	TRACE("(%p,%p)\n", iface, vol);
 
 	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLVOLUME)) {
@@ -507,11 +630,32 @@ static HRESULT WINAPI PrimaryBufferImpl_GetVolume(
 		return DSERR_INVALIDPARAM;
 	}
 
-	waveOutGetVolume(device->hwo, &ampfactors);
-	device->volpan.dwTotalLeftAmpFactor=ampfactors & 0xffff;
-	device->volpan.dwTotalRightAmpFactor=ampfactors >> 16;
+	EnterCriticalSection(&device->mixlock);
+
+	hr = IAudioStreamVolume_GetChannelVolume(device->volume, 0, &lvol);
+	if(FAILED(hr)){
+		LeaveCriticalSection(&device->mixlock);
+		WARN("GetChannelVolume failed: %08x\n", hr);
+		return hr;
+	}
+
+	if(device->pwfx->nChannels > 1){
+		hr = IAudioStreamVolume_GetChannelVolume(device->volume, 1, &rvol);
+		if(FAILED(hr)){
+			LeaveCriticalSection(&device->mixlock);
+			WARN("GetChannelVolume failed: %08x\n", hr);
+			return hr;
+		}
+	}else
+		rvol = 1;
+
+	device->volpan.dwTotalLeftAmpFactor = ((UINT16)(lvol * (DWORD)0xFFFF));
+	device->volpan.dwTotalRightAmpFactor = ((UINT16)(rvol * (DWORD)0xFFFF));
+
 	DSOUND_AmpFactorToVolPan(&device->volpan);
 	*vol = device->volpan.lVolume;
+
+	LeaveCriticalSection(&device->mixlock);
 
 	return DS_OK;
 }
@@ -776,10 +920,10 @@ static HRESULT WINAPI PrimaryBufferImpl_SetCurrentPosition(
 static HRESULT WINAPI PrimaryBufferImpl_SetPan(
 	LPDIRECTSOUNDBUFFER iface,LONG pan
 ) {
-        IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer(iface);
-        DirectSoundDevice *device = This->device;
-	DWORD ampfactors;
-        HRESULT hres = DS_OK;
+	IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer(iface);
+	DirectSoundDevice *device = This->device;
+	float lvol, rvol;
+	HRESULT hr;
 	TRACE("(%p,%d)\n", iface, pan);
 
 	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLPAN)) {
@@ -793,31 +937,65 @@ static HRESULT WINAPI PrimaryBufferImpl_SetPan(
 	}
 
 	/* **** */
-	EnterCriticalSection(&(device->mixlock));
+	EnterCriticalSection(&device->mixlock);
 
-	waveOutGetVolume(device->hwo, &ampfactors);
-	device->volpan.dwTotalLeftAmpFactor=ampfactors & 0xffff;
-	device->volpan.dwTotalRightAmpFactor=ampfactors >> 16;
+	hr = IAudioStreamVolume_GetChannelVolume(device->volume, 0, &lvol);
+	if(FAILED(hr)){
+		LeaveCriticalSection(&device->mixlock);
+		WARN("GetChannelVolume failed: %08x\n", hr);
+		return hr;
+	}
+
+	if(device->pwfx->nChannels > 1){
+		hr = IAudioStreamVolume_GetChannelVolume(device->volume, 1, &rvol);
+		if(FAILED(hr)){
+			LeaveCriticalSection(&device->mixlock);
+			WARN("GetChannelVolume failed: %08x\n", hr);
+			return hr;
+		}
+	}else
+		rvol = 1;
+
+	device->volpan.dwTotalLeftAmpFactor = ((UINT16)(lvol * (DWORD)0xFFFF));
+	device->volpan.dwTotalRightAmpFactor = ((UINT16)(rvol * (DWORD)0xFFFF));
+
 	DSOUND_AmpFactorToVolPan(&device->volpan);
 	if (pan != device->volpan.lPan) {
 		device->volpan.lPan=pan;
 		DSOUND_RecalcVolPan(&device->volpan);
-		ampfactors = (device->volpan.dwTotalLeftAmpFactor & 0xffff) | (device->volpan.dwTotalRightAmpFactor << 16);
-		waveOutSetVolume(device->hwo, ampfactors);
+
+		lvol = (float)((DWORD)(device->volpan.dwTotalLeftAmpFactor & 0xFFFF) / (float)0xFFFF);
+		hr = IAudioStreamVolume_SetChannelVolume(device->volume, 0, lvol);
+		if(FAILED(hr)){
+			LeaveCriticalSection(&device->mixlock);
+			WARN("SetChannelVolume failed: %08x\n", hr);
+			return hr;
+		}
+
+		if(device->pwfx->nChannels > 1){
+			rvol = (float)((DWORD)(device->volpan.dwTotalRightAmpFactor & 0xFFFF) / (float)0xFFFF);
+			hr = IAudioStreamVolume_SetChannelVolume(device->volume, 1, rvol);
+			if(FAILED(hr)){
+				LeaveCriticalSection(&device->mixlock);
+				WARN("SetChannelVolume failed: %08x\n", hr);
+				return hr;
+			}
+		}
 	}
 
-	LeaveCriticalSection(&(device->mixlock));
+	LeaveCriticalSection(&device->mixlock);
 	/* **** */
 
-	return hres;
+	return DS_OK;
 }
 
 static HRESULT WINAPI PrimaryBufferImpl_GetPan(
 	LPDIRECTSOUNDBUFFER iface,LPLONG pan
 ) {
-        IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer(iface);
-        DirectSoundDevice *device = This->device;
-	DWORD ampfactors;
+	IDirectSoundBufferImpl *This = impl_from_IDirectSoundBuffer(iface);
+	DirectSoundDevice *device = This->device;
+	float lvol, rvol;
+	HRESULT hr;
 	TRACE("(%p,%p)\n", iface, pan);
 
 	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLPAN)) {
@@ -830,11 +1008,33 @@ static HRESULT WINAPI PrimaryBufferImpl_GetPan(
 		return DSERR_INVALIDPARAM;
 	}
 
-	waveOutGetVolume(device->hwo, &ampfactors);
-	device->volpan.dwTotalLeftAmpFactor=ampfactors & 0xffff;
-	device->volpan.dwTotalRightAmpFactor=ampfactors >> 16;
+	EnterCriticalSection(&device->mixlock);
+
+	hr = IAudioStreamVolume_GetChannelVolume(device->volume, 0, &lvol);
+	if(FAILED(hr)){
+		LeaveCriticalSection(&device->mixlock);
+		WARN("GetChannelVolume failed: %08x\n", hr);
+		return hr;
+	}
+
+	if(device->pwfx->nChannels > 1){
+		hr = IAudioStreamVolume_GetChannelVolume(device->volume, 1, &rvol);
+		if(FAILED(hr)){
+			LeaveCriticalSection(&device->mixlock);
+			WARN("GetChannelVolume failed: %08x\n", hr);
+			return hr;
+		}
+	}else
+		rvol = 1;
+
+	device->volpan.dwTotalLeftAmpFactor = ((UINT16)(lvol * (DWORD)0xFFFF));
+	device->volpan.dwTotalRightAmpFactor = ((UINT16)(rvol * (DWORD)0xFFFF));
+
 	DSOUND_AmpFactorToVolPan(&device->volpan);
 	*pan = device->volpan.lPan;
+
+	LeaveCriticalSection(&device->mixlock);
+
 	return DS_OK;
 }
 

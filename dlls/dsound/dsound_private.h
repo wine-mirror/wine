@@ -23,6 +23,11 @@
 #define DS_TIME_RES 2  /* Resolution of multimedia timer */
 #define DS_TIME_DEL 10  /* Delay of multimedia timer callback, and duration of HEL fragment */
 
+#include "wingdi.h"
+#include "mmdeviceapi.h"
+#include "audioclient.h"
+#include "mmsystem.h"
+
 #include "wine/list.h"
 
 extern int ds_emuldriver DECLSPEC_HIDDEN;
@@ -132,9 +137,8 @@ struct DirectSoundDevice
     DSDRIVERCAPS                drvcaps;
     DWORD                       priolevel;
     PWAVEFORMATEX               pwfx;
-    HWAVEOUT                    hwo;
-    LPWAVEHDR                   pwave;
     UINT                        timerID, pwplay, pwqueue, prebuf, helfrags;
+    UINT64                      last_pos_bytes;
     DWORD                       fraglen;
     LPBYTE                      buffer;
     DWORD                       writelead, buflen, state, playpos, mixpos;
@@ -156,6 +160,14 @@ struct DirectSoundDevice
     IDirectSound3DListenerImpl*	listener;
     DS3DLISTENER                ds3dl;
     BOOL                        ds3dl_need_recalc;
+
+    IMMDevice *mmdevice;
+    IAudioClient *client;
+    IAudioClock *clock;
+    IAudioStreamVolume *volume;
+    IAudioRenderClient *render;
+
+    struct list entry;
 };
 
 /* reference counted buffer memory for duplicated buffer memory */
@@ -397,7 +409,6 @@ void DSOUND_MixToTemporary(const IDirectSoundBufferImpl *dsb, DWORD writepos, DW
 DWORD DSOUND_secpos_to_bufpos(const IDirectSoundBufferImpl *dsb, DWORD secpos, DWORD secmixpos, DWORD* overshot) DECLSPEC_HIDDEN;
 
 void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2) DECLSPEC_HIDDEN;
-void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2) DECLSPEC_HIDDEN;
 
 /* sound3d.c */
 
@@ -416,12 +427,16 @@ HRESULT DSOUND_CaptureCreate8(REFIID riid, LPDIRECTSOUNDCAPTURE8 *ppDSC8) DECLSP
 
 #define DSOUND_FREQSHIFT (20)
 
-extern DirectSoundDevice* DSOUND_renderer[MAXWAVEDRIVERS] DECLSPEC_HIDDEN;
-extern GUID DSOUND_renderer_guids[MAXWAVEDRIVERS] DECLSPEC_HIDDEN;
+extern CRITICAL_SECTION DSOUND_renderers_lock DECLSPEC_HIDDEN;
+extern struct list DSOUND_renderers DECLSPEC_HIDDEN;
 
 extern DirectSoundCaptureDevice * DSOUND_capture[MAXWAVEDRIVERS] DECLSPEC_HIDDEN;
+
+extern GUID DSOUND_renderer_guids[MAXWAVEDRIVERS] DECLSPEC_HIDDEN;
 extern GUID DSOUND_capture_guids[MAXWAVEDRIVERS] DECLSPEC_HIDDEN;
 
 HRESULT mmErr(UINT err) DECLSPEC_HIDDEN;
 void setup_dsound_options(void) DECLSPEC_HIDDEN;
 const char * dumpCooperativeLevel(DWORD level) DECLSPEC_HIDDEN;
+
+HRESULT get_mmdevice(EDataFlow flow, const GUID *tgt, IMMDevice **device) DECLSPEC_HIDDEN;

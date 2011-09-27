@@ -1,6 +1,6 @@
 MODULE    = dsound.dll
 IMPORTLIB = dsound
-IMPORTS   = dxguid uuid winmm ole32 advapi32
+IMPORTS   = dxguid uuid winmm ole32 advapi32 user32
 
 C_SRCS = \
 	buffer.c \

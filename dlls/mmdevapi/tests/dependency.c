@@ -71,7 +71,7 @@ START_TEST(dependency)
     ok(!GetModuleHandle("dsound.dll"), "dsound.dll was already loaded!\n");
 
     hr = IMMDevice_Activate(dev, &IID_IDirectSound8, CLSCTX_INPROC_SERVER, NULL, (void**)&ds8);
-    todo_wine ok(hr == S_OK, "Activating ds8 interface failed: 0x%08x\n", hr);
+    ok(hr == S_OK, "Activating ds8 interface failed: 0x%08x\n", hr);
     if (hr == S_OK)
     {
         ok(GetModuleHandle("dsound.dll") != NULL, "dsound.dll not loaded!\n");
