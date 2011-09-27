@@ -28,3 +28,12 @@ STRINGTABLE
     IDS_EXPLORER_TITLE  "Wine Explorer"
     IDS_PATHBOX_LABEL   "Location:"
 }
+
+#define WINE_FILEDESCRIPTION_STR "Wine Explorer"
+#define WINE_FILENAME_STR "explorer.exe"
+#define WINE_FILEVERSION 6,1,7601,17567
+#define WINE_FILEVERSION_STR "6.1.7601.17567"
+#define WINE_PRODUCTVERSION 6,1,7601,17567
+#define WINE_PRODUCTVERSION_STR "6.1.7601.17567"
+
+#include "wine/wine_common_ver.rc"
