@@ -280,21 +280,22 @@ struct DirectSoundCaptureDevice
     DSDRIVERDESC                       drvdesc;
     DSCDRIVERCAPS                      drvcaps;
 
-    /* wave driver info */
-    HWAVEIN                            hwi;
-
     /* more stuff */
     LPBYTE                             buffer;
-    DWORD                              buflen;
+    DWORD                              buflen, write_pos_bytes;
 
     PWAVEFORMATEX                      pwfx;
 
     IDirectSoundCaptureBufferImpl*     capture_buffer;
     DWORD                              state;
-    LPWAVEHDR                          pwave;
-    int                                nrofpwaves;
-    int                                index;
+    UINT timerID;
     CRITICAL_SECTION                   lock;
+
+    IMMDevice *mmdevice;
+    IAudioClient *client;
+    IAudioCaptureClient *capture;
+
+    struct list entry;
 };
 
 /*****************************************************************************
@@ -428,9 +429,9 @@ HRESULT DSOUND_CaptureCreate8(REFIID riid, LPDIRECTSOUNDCAPTURE8 *ppDSC8) DECLSP
 #define DSOUND_FREQSHIFT (20)
 
 extern CRITICAL_SECTION DSOUND_renderers_lock DECLSPEC_HIDDEN;
+extern CRITICAL_SECTION DSOUND_capturers_lock DECLSPEC_HIDDEN;
+extern struct list DSOUND_capturers DECLSPEC_HIDDEN;
 extern struct list DSOUND_renderers DECLSPEC_HIDDEN;
-
-extern DirectSoundCaptureDevice * DSOUND_capture[MAXWAVEDRIVERS] DECLSPEC_HIDDEN;
 
 extern GUID DSOUND_renderer_guids[MAXWAVEDRIVERS] DECLSPEC_HIDDEN;
 extern GUID DSOUND_capture_guids[MAXWAVEDRIVERS] DECLSPEC_HIDDEN;
@@ -440,3 +441,7 @@ void setup_dsound_options(void) DECLSPEC_HIDDEN;
 const char * dumpCooperativeLevel(DWORD level) DECLSPEC_HIDDEN;
 
 HRESULT get_mmdevice(EDataFlow flow, const GUID *tgt, IMMDevice **device) DECLSPEC_HIDDEN;
+
+BOOL DSOUND_check_supported(IAudioClient *client, DWORD rate,
+        DWORD depth, WORD channels) DECLSPEC_HIDDEN;
+UINT DSOUND_create_timer(LPTIMECALLBACK cb, DWORD_PTR user) DECLSPEC_HIDDEN;

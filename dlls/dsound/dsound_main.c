@@ -68,6 +68,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 struct list DSOUND_renderers = LIST_INIT(DSOUND_renderers);
 CRITICAL_SECTION DSOUND_renderers_lock;
 
+struct list DSOUND_capturers = LIST_INIT(DSOUND_capturers);
+CRITICAL_SECTION DSOUND_capturers_lock;
+
 GUID                    DSOUND_renderer_guids[MAXWAVEDRIVERS];
 GUID                    DSOUND_capture_guids[MAXWAVEDRIVERS];
 
@@ -652,64 +655,17 @@ DirectSoundCaptureEnumerateW(
     LPDSENUMCALLBACKW lpDSEnumCallback,
     LPVOID lpContext)
 {
-    unsigned devs, wid;
-    DSDRIVERDESC desc;
-    GUID guid;
-    int err;
-    WCHAR wDesc[MAXPNAMELEN];
-    WCHAR wName[MAXPNAMELEN];
-
     TRACE("(%p,%p)\n", lpDSEnumCallback, lpContext );
 
     if (lpDSEnumCallback == NULL) {
-	WARN("invalid parameter: lpDSEnumCallback == NULL\n");
+        WARN("invalid parameter: lpDSEnumCallback == NULL\n");
         return DSERR_INVALIDPARAM;
     }
 
     setup_dsound_options();
 
-    devs = waveInGetNumDevs();
-    if (devs > 0) {
-	if (GetDeviceID(&DSDEVID_DefaultCapture, &guid) == DS_OK) {
-	    for (wid = 0; wid < devs; ++wid) {
-                if (IsEqualGUID( &guid, &DSOUND_capture_guids[wid] ) ) {
-                    err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
-                    if (err == DS_OK) {
-                        TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
-                              "Primary Sound Capture Driver",desc.szDrvname,lpContext);
-                        MultiByteToWideChar( CP_ACP, 0, "Primary Sound Capture Driver", -1,
-                                             wDesc, sizeof(wDesc)/sizeof(WCHAR) );
-                        MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1,
-                                             wName, sizeof(wName)/sizeof(WCHAR) );
-                        wName[(sizeof(wName)/sizeof(WCHAR)) - 1] = '\0';
-
-                        if (lpDSEnumCallback(NULL, wDesc, wName, lpContext) == FALSE)
-                            return DS_OK;
-                    }
-                }
-	    }
-	}
-    }
-
-    for (wid = 0; wid < devs; ++wid) {
-        err = mmErr(waveInMessage(UlongToHandle(wid),DRV_QUERYDSOUNDDESC,(DWORD_PTR)&desc,0));
-	if (err == DS_OK) {
-            TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
-                  debugstr_guid(&DSOUND_capture_guids[wid]),desc.szDesc,desc.szDrvname,lpContext);
-            MultiByteToWideChar( CP_ACP, 0, desc.szDesc, -1,
-                                 wDesc, sizeof(wDesc)/sizeof(WCHAR) );
-            wDesc[(sizeof(wDesc)/sizeof(WCHAR)) - 1] = '\0';
-
-            MultiByteToWideChar( CP_ACP, 0, desc.szDrvname, -1,
-                                 wName, sizeof(wName)/sizeof(WCHAR) );
-            wName[(sizeof(wName)/sizeof(WCHAR)) - 1] = '\0';
-
-            if (lpDSEnumCallback(&DSOUND_capture_guids[wid], wDesc, wName, lpContext) == FALSE)
-                return DS_OK;
-	}
-    }
-
-    return DS_OK;
+    return enumerate_mmdevices(eCapture, DSOUND_capture_guids,
+            lpDSEnumCallback, lpContext);
 }
 
 /*******************************************************************************
@@ -877,21 +833,17 @@ HRESULT WINAPI DllCanUnloadNow(void)
  */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    int i;
     TRACE("(%p %d %p)\n", hInstDLL, fdwReason, lpvReserved);
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
         TRACE("DLL_PROCESS_ATTACH\n");
-        for (i = 0; i < MAXWAVEDRIVERS; i++) {
-            DSOUND_capture[i] = NULL;
-            INIT_GUID(DSOUND_capture_guids[i],  0xbd6dd71b, 0x3deb, 0x11d1, 0xb1, 0x71, 0x00, 0xc0, 0x4f, 0xc2, 0x00, 0x00 + i);
-        }
         instance = hInstDLL;
         DisableThreadLibraryCalls(hInstDLL);
         /* Increase refcount on dsound by 1 */
         GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)hInstDLL, &hInstDLL);
         InitializeCriticalSection(&DSOUND_renderers_lock);
+        InitializeCriticalSection(&DSOUND_capturers_lock);
         InitializeCriticalSection(&g_devenum_lock);
         break;
     case DLL_PROCESS_DETACH:

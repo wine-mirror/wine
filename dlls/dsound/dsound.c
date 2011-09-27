@@ -1343,7 +1343,7 @@ HRESULT DirectSoundDevice_GetCaps(
     return DS_OK;
 }
 
-static BOOL DSOUND_check_supported(IAudioClient *client, DWORD rate,
+BOOL DSOUND_check_supported(IAudioClient *client, DWORD rate,
         DWORD depth, WORD channels)
 {
     WAVEFORMATEX fmt, *junk;
@@ -1364,7 +1364,7 @@ static BOOL DSOUND_check_supported(IAudioClient *client, DWORD rate,
     return hr == S_OK;
 }
 
-static UINT DSOUND_create_timer(LPTIMECALLBACK cb, DWORD_PTR user)
+UINT DSOUND_create_timer(LPTIMECALLBACK cb, DWORD_PTR user)
 {
     UINT triggertime = DS_TIME_DEL, res = DS_TIME_RES, id;
     TIMECAPS time;
