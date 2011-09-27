@@ -1335,10 +1335,8 @@ HRESULT DirectSoundDevice_GetCaps(
     lpDSCaps->dwTotalHwMemBytes                 = device->drvcaps.dwTotalHwMemBytes;
     lpDSCaps->dwFreeHwMemBytes                  = device->drvcaps.dwFreeHwMemBytes;
     lpDSCaps->dwMaxContigFreeHwMemBytes         = device->drvcaps.dwMaxContigFreeHwMemBytes;
-
-    /* driver doesn't have these */
-    lpDSCaps->dwUnlockTransferRateHwBuffers     = 4096; /* But we have none... */
-    lpDSCaps->dwPlayCpuOverheadSwBuffers        = 1;    /* 1% */
+    lpDSCaps->dwUnlockTransferRateHwBuffers     = device->drvcaps.dwUnlockTransferRateHwBuffers;
+    lpDSCaps->dwPlayCpuOverheadSwBuffers        = device->drvcaps.dwPlayCpuOverheadSwBuffers;
 
     return DS_OK;
 }

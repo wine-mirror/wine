@@ -65,47 +65,6 @@ extern const mixfunc mixfunctions[4] DECLSPEC_HIDDEN;
 typedef void (*normfunc)(const void *, void *, unsigned);
 extern const normfunc normfunctions[4] DECLSPEC_HIDDEN;
 
-typedef struct _DSDRIVERDESC
-{
-    DWORD      	dwFlags;
-    CHAR	szDesc[256];
-    CHAR	szDrvname[256];
-    DWORD	dnDevNode;
-    WORD	wVxdId;
-    WORD	wReserved;
-    ULONG	ulDeviceNum;
-    DWORD	dwHeapType;
-    LPVOID	pvDirectDrawHeap;
-    DWORD	dwMemStartAddress;
-    DWORD	dwMemEndAddress;
-    DWORD	dwMemAllocExtra;
-    LPVOID	pvReserved1;
-    LPVOID	pvReserved2;
-} DSDRIVERDESC,*PDSDRIVERDESC;
-
-typedef struct _DSDRIVERCAPS
-{
-    DWORD	dwFlags;
-    DWORD	dwMinSecondarySampleRate;
-    DWORD	dwMaxSecondarySampleRate;
-    DWORD	dwPrimaryBuffers;
-    DWORD	dwMaxHwMixingAllBuffers;
-    DWORD	dwMaxHwMixingStaticBuffers;
-    DWORD	dwMaxHwMixingStreamingBuffers;
-    DWORD	dwFreeHwMixingAllBuffers;
-    DWORD	dwFreeHwMixingStaticBuffers;
-    DWORD	dwFreeHwMixingStreamingBuffers;
-    DWORD	dwMaxHw3DAllBuffers;
-    DWORD	dwMaxHw3DStaticBuffers;
-    DWORD	dwMaxHw3DStreamingBuffers;
-    DWORD	dwFreeHw3DAllBuffers;
-    DWORD	dwFreeHw3DStaticBuffers;
-    DWORD	dwFreeHw3DStreamingBuffers;
-    DWORD	dwTotalHwMemBytes;
-    DWORD	dwFreeHwMemBytes;
-    DWORD	dwMaxContigFreeHwMemBytes;
-} DSDRIVERCAPS,*PDSDRIVERCAPS;
-
 typedef struct _DSVOLUMEPAN
 {
     DWORD	dwTotalLeftAmpFactor;
@@ -117,14 +76,6 @@ typedef struct _DSVOLUMEPAN
     DWORD	dwPanRightAmpFactor;
 } DSVOLUMEPAN,*PDSVOLUMEPAN;
 
-typedef struct _DSCDRIVERCAPS
-{
-    DWORD	dwSize;
-    DWORD	dwFlags;
-    DWORD	dwFormats;
-    DWORD	dwChannels;
-} DSCDRIVERCAPS,*PDSCDRIVERCAPS;
-
 /*****************************************************************************
  * IDirectSoundDevice implementation structure
  */
@@ -133,8 +84,7 @@ struct DirectSoundDevice
     LONG                        ref;
 
     GUID                        guid;
-    DSDRIVERDESC                drvdesc;
-    DSDRIVERCAPS                drvcaps;
+    DSCAPS                      drvcaps;
     DWORD                       priolevel;
     PWAVEFORMATEX               pwfx;
     UINT                        timerID, pwplay, pwqueue, prebuf, helfrags;
@@ -272,15 +222,11 @@ void secondarybuffer_destroy(IDirectSoundBufferImpl *This) DECLSPEC_HIDDEN;
  */
 struct DirectSoundCaptureDevice
 {
-    /* IDirectSoundCaptureImpl fields */
     GUID                               guid;
     LONG                               ref;
 
-    /* DirectSound driver stuff */
-    DSDRIVERDESC                       drvdesc;
-    DSCDRIVERCAPS                      drvcaps;
+    DSCCAPS                            drvcaps;
 
-    /* more stuff */
     LPBYTE                             buffer;
     DWORD                              buflen, write_pos_bytes;
 

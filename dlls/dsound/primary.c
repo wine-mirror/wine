@@ -105,7 +105,6 @@ HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
         device->volume = NULL;
     }
 
-    device->drvdesc.dwFlags = 0;
     hres = IMMDevice_Activate(device->mmdevice, &IID_IAudioClient,
             CLSCTX_INPROC_SERVER, NULL, (void **)&device->client);
     if(FAILED(hres)){

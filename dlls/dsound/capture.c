@@ -1029,8 +1029,6 @@ static HRESULT DirectSoundCaptureDevice_Initialize(
 
     device->mmdevice = mmdevice;
 
-    device->drvdesc.dwFlags = 0;
-
     device->drvcaps.dwFlags = 0;
 
     device->drvcaps.dwFormats = 0;
