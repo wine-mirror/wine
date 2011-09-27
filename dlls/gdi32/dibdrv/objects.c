@@ -288,13 +288,6 @@ static inline DWORD calc_outcode(const POINT *pt, const RECT *clip)
     return out;
 }
 
-typedef struct
-{
-    unsigned int dx, dy;
-    int bias;
-    DWORD octant;
-} bres_params;
-
 /******************************************************************************
  *                clip_line
  *
@@ -365,8 +358,8 @@ typedef struct
  * Moving end point from x2 to x2 - m find y2 - n
  *                     n = (2mdy + bias - dy - 1) / 2dx + 1
  */
-static int clip_line(const POINT *start, const POINT *end, const RECT *clip,
-                     const bres_params *params, POINT *pt1, POINT *pt2)
+int clip_line(const POINT *start, const POINT *end, const RECT *clip,
+              const bres_params *params, POINT *pt1, POINT *pt2)
 {
     int m, n;
     BOOL clipped = FALSE;

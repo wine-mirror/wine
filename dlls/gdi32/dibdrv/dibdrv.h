@@ -124,12 +124,15 @@ static inline dibdrv_physdev *get_dibdrv_pdev( PHYSDEV dev )
 
 typedef struct primitive_funcs
 {
-    void        (* solid_rects)(const dib_info *dib, int num, const RECT *rc, DWORD and, DWORD xor);
-    void      (* pattern_rects)(const dib_info *dib, int num, const RECT *rc, const POINT *orign, const dib_info *brush, void *and_bits, void *xor_bits);
-    void          (* copy_rect)(const dib_info *dst, const RECT *rc, const dib_info *src, const POINT *origin, int rop2, int overlap);
-    DWORD (* colorref_to_pixel)(const dib_info *dib, COLORREF color);
-    BOOL         (* convert_to)(dib_info *dst, const dib_info *src, const RECT *src_rect);
-    BOOL   (* create_rop_masks)(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits);
+    void            (* solid_rects)(const dib_info *dib, int num, const RECT *rc, DWORD and, DWORD xor);
+    void          (* pattern_rects)(const dib_info *dib, int num, const RECT *rc, const POINT *orign,
+                                    const dib_info *brush, void *and_bits, void *xor_bits);
+    void              (* copy_rect)(const dib_info *dst, const RECT *rc, const dib_info *src,
+                                    const POINT *origin, int rop2, int overlap);
+    DWORD     (* colorref_to_pixel)(const dib_info *dib, COLORREF color);
+    BOOL             (* convert_to)(dib_info *dst, const dib_info *src, const RECT *src_rect);
+    BOOL       (* create_rop_masks)(const dib_info *dib, const dib_info *hatch,
+                                    const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits);
 } primitive_funcs;
 
 extern const primitive_funcs funcs_8888 DECLSPEC_HIDDEN;
@@ -152,6 +155,13 @@ struct rop_codes
 #define OVERLAP_ABOVE 0x04  /* dest starts above source */
 #define OVERLAP_BELOW 0x08  /* dest starts below source */
 
+typedef struct
+{
+    unsigned int dx, dy;
+    int bias;
+    DWORD octant;
+} bres_params;
+
 extern void get_rop_codes(INT rop, struct rop_codes *codes);
 extern void calc_and_xor_masks(INT rop, DWORD color, DWORD *and, DWORD *xor) DECLSPEC_HIDDEN;
 extern void update_brush_rop( dibdrv_physdev *pdev, INT rop ) DECLSPEC_HIDDEN;
@@ -171,6 +181,8 @@ extern DWORD get_fg_color(dibdrv_physdev *pdev, COLORREF color) DECLSPEC_HIDDEN;
 extern BOOL brush_rects( dibdrv_physdev *pdev, int num, const RECT *rects ) DECLSPEC_HIDDEN;
 extern HRGN add_extra_clipping_region( dibdrv_physdev *pdev, HRGN rgn ) DECLSPEC_HIDDEN;
 extern void restore_clipping_region( dibdrv_physdev *pdev, HRGN rgn ) DECLSPEC_HIDDEN;
+extern int clip_line(const POINT *start, const POINT *end, const RECT *clip,
+                     const bres_params *params, POINT *pt1, POINT *pt2) DECLSPEC_HIDDEN;
 
 static inline BOOL defer_pen(dibdrv_physdev *pdev)
 {
