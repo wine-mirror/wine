@@ -574,39 +574,37 @@ static void test_merge(void)
 
 struct my_IStream
 {
-    IStream is;
+    IStream IStream_iface;
     char *iml_data; /* written imagelist data */
     ULONG iml_data_size;
 };
 
-static HRESULT STDMETHODCALLTYPE Test_Stream_QueryInterface(
-    IStream* This,
-    REFIID riid,
-    void** ppvObject)
+struct my_IStream *impl_from_IStream(IStream *iface)
+{
+    return CONTAINING_RECORD(iface, struct my_IStream, IStream_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE Test_Stream_QueryInterface(IStream *iface, REFIID riid,
+                                                            void **ppvObject)
 {
     assert(0);
     return E_NOTIMPL;
 }
 
-static ULONG STDMETHODCALLTYPE Test_Stream_AddRef(
-    IStream* This)
+static ULONG STDMETHODCALLTYPE Test_Stream_AddRef(IStream *iface)
 {
     assert(0);
     return 2;
 }
 
-static ULONG STDMETHODCALLTYPE Test_Stream_Release(
-    IStream* This)
+static ULONG STDMETHODCALLTYPE Test_Stream_Release(IStream *iface)
 {
     assert(0);
     return 1;
 }
 
-static HRESULT STDMETHODCALLTYPE Test_Stream_Read(
-    IStream* This,
-    void* pv,
-    ULONG cb,
-    ULONG* pcbRead)
+static HRESULT STDMETHODCALLTYPE Test_Stream_Read(IStream *iface, void *pv, ULONG cb,
+                                                  ULONG *pcbRead)
 {
     assert(0);
     return E_NOTIMPL;
@@ -624,13 +622,10 @@ static BOOL allocate_storage(struct my_IStream *my_is, ULONG add)
     return my_is->iml_data ? TRUE : FALSE;
 }
 
-static HRESULT STDMETHODCALLTYPE Test_Stream_Write(
-    IStream* This,
-    const void* pv,
-    ULONG cb,
-    ULONG* pcbWritten)
+static HRESULT STDMETHODCALLTYPE Test_Stream_Write(IStream *iface, const void *pv, ULONG cb,
+                                                   ULONG *pcbWritten)
 {
-    struct my_IStream *my_is = (struct my_IStream *)This;
+    struct my_IStream *my_is = impl_from_IStream(iface);
     ULONG current_iml_data_size = my_is->iml_data_size;
 
     if (!allocate_storage(my_is, cb)) return E_FAIL;
@@ -641,82 +636,61 @@ static HRESULT STDMETHODCALLTYPE Test_Stream_Write(
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE Test_Stream_Seek(
-    IStream* This,
-    LARGE_INTEGER dlibMove,
-    DWORD dwOrigin,
-    ULARGE_INTEGER* plibNewPosition)
+static HRESULT STDMETHODCALLTYPE Test_Stream_Seek(IStream *iface, LARGE_INTEGER dlibMove,
+                                                  DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
 {
     assert(0);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE Test_Stream_SetSize(
-    IStream* This,
-    ULARGE_INTEGER libNewSize)
+static HRESULT STDMETHODCALLTYPE Test_Stream_SetSize(IStream *iface, ULARGE_INTEGER libNewSize)
 {
     assert(0);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE Test_Stream_CopyTo(
-    IStream* This,
-    IStream* pstm,
-    ULARGE_INTEGER cb,
-    ULARGE_INTEGER* pcbRead,
-    ULARGE_INTEGER* pcbWritten)
+static HRESULT STDMETHODCALLTYPE Test_Stream_CopyTo(IStream *iface, IStream *pstm,
+                                                    ULARGE_INTEGER cb, ULARGE_INTEGER *pcbRead,
+                                                    ULARGE_INTEGER *pcbWritten)
 {
     assert(0);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE Test_Stream_Commit(
-    IStream* This,
-    DWORD grfCommitFlags)
+static HRESULT STDMETHODCALLTYPE Test_Stream_Commit(IStream *iface, DWORD grfCommitFlags)
 {
     assert(0);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE Test_Stream_Revert(
-    IStream* This)
+static HRESULT STDMETHODCALLTYPE Test_Stream_Revert(IStream *iface)
 {
     assert(0);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE Test_Stream_LockRegion(
-    IStream* This,
-    ULARGE_INTEGER libOffset,
-    ULARGE_INTEGER cb,
-    DWORD dwLockType)
+static HRESULT STDMETHODCALLTYPE Test_Stream_LockRegion(IStream *iface, ULARGE_INTEGER libOffset,
+                                                        ULARGE_INTEGER cb, DWORD dwLockType)
 {
     assert(0);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE Test_Stream_UnlockRegion(
-    IStream* This,
-    ULARGE_INTEGER libOffset,
-    ULARGE_INTEGER cb,
-    DWORD dwLockType)
+static HRESULT STDMETHODCALLTYPE Test_Stream_UnlockRegion(IStream *iface, ULARGE_INTEGER libOffset,
+                                                          ULARGE_INTEGER cb, DWORD dwLockType)
 {
     assert(0);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE Test_Stream_Stat(
-    IStream* This,
-    STATSTG* pstatstg,
-    DWORD grfStatFlag)
+static HRESULT STDMETHODCALLTYPE Test_Stream_Stat(IStream *iface, STATSTG *pstatstg,
+                                                  DWORD grfStatFlag)
 {
     assert(0);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE Test_Stream_Clone(
-    IStream* This,
-    IStream** ppstm)
+static HRESULT STDMETHODCALLTYPE Test_Stream_Clone(IStream *iface, IStream **ppstm)
 {
     assert(0);
     return E_NOTIMPL;
@@ -866,7 +840,7 @@ static void check_iml_data(HIMAGELIST himl, INT cx, INT cy, INT cur, INT max, IN
     ok(cyy == cy, "wrong cy %d (expected %d)\n", cyy, cy);
 
     iml_clear_stream_data();
-    ret = ImageList_Write(himl, &Test_Stream.is);
+    ret = ImageList_Write(himl, &Test_Stream.IStream_iface);
     ok(ret, "ImageList_Write failed\n");
 
     ok(Test_Stream.iml_data != 0, "ImageList_Write didn't write any data\n");
