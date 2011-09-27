@@ -885,7 +885,7 @@ done:
 }
 
 DWORD stretch_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bitblt_coords *src,
-                          const BITMAPINFO *dst_info, void *dst_bits, const struct bitblt_coords *dst,
+                          const BITMAPINFO *dst_info, void *dst_bits, struct bitblt_coords *dst,
                           INT mode )
 {
     FIXME( "should stretch %dx%d -> %dx%d\n", src->width, src->height, dst->width, dst->height );
