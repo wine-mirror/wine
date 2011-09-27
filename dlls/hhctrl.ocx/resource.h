@@ -38,4 +38,6 @@
 #define HHTB_REFRESH    1
 #define HHTB_HOME       2
 #define HHTB_SYNC       3
-#define HHTB_NUMBITMAPS HHTB_SYNC
+#define HHTB_CONTRACT   4
+#define HHTB_EXPAND     5
+#define HHTB_NUMBITMAPS HHTB_EXPAND

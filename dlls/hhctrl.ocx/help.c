@@ -810,8 +810,8 @@ static void TB_AddButtonsFromFlags(HHInfo *pHHInfo, TBBUTTON *pButtons, DWORD dw
 
     if (dwButtonFlags & HHWIN_BUTTON_EXPAND)
     {
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_EXPAND, nHistBitmaps + HIST_VIEWTREE);
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_CONTRACT, nHistBitmaps + HIST_VIEWTREE);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_EXPAND, nHHBitmaps + HHTB_EXPAND);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_CONTRACT, nHHBitmaps + HHTB_CONTRACT);
 
         if (pHHInfo->WinType.fNotExpanded)
             pButtons[1].fsState |= TBSTATE_HIDDEN;
