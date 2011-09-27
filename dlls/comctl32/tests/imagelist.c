@@ -771,18 +771,10 @@ static void check_ilhead_data(const char *ilh_data, INT cx, INT cy, INT cur, INT
     ok(ilh->cy == cy, "wrong cy %d (expected %d)\n", ilh->cy, cy);
     ok(ilh->bkcolor == CLR_NONE, "wrong bkcolor %x\n", ilh->bkcolor);
     ok(ilh->flags == ILC_COLOR24, "wrong flags %04x\n", ilh->flags);
-    ok(ilh->ovls[0] == -1 ||
-       ilh->ovls[0] == 0, /* win95 */
-       "wrong ovls[0] %04x\n", ilh->ovls[0]);
-    ok(ilh->ovls[1] == -1 ||
-       ilh->ovls[1] == 0, /* win95 */
-       "wrong ovls[1] %04x\n", ilh->ovls[1]);
-    ok(ilh->ovls[2] == -1 ||
-       ilh->ovls[2] == 0, /* win95 */
-       "wrong ovls[2] %04x\n", ilh->ovls[2]);
-    ok(ilh->ovls[3] == -1 ||
-       ilh->ovls[3] == 0, /* win95 */
-       "wrong ovls[3] %04x\n", ilh->ovls[3]);
+    ok(ilh->ovls[0] == -1, "wrong ovls[0] %04x\n", ilh->ovls[0]);
+    ok(ilh->ovls[1] == -1, "wrong ovls[1] %04x\n", ilh->ovls[1]);
+    ok(ilh->ovls[2] == -1, "wrong ovls[2] %04x\n", ilh->ovls[2]);
+    ok(ilh->ovls[3] == -1, "wrong ovls[3] %04x\n", ilh->ovls[3]);
 }
 
 static HBITMAP create_bitmap(INT cx, INT cy, COLORREF color, const char *comment)
