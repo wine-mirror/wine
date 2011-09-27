@@ -1386,6 +1386,159 @@ static void test_write_watch(void)
     VirtualFree( base, 0, MEM_FREE );
 }
 
+static void test_VirtualProtect(void)
+{
+    static const struct test_data
+    {
+        DWORD prot_set, prot_get;
+    } td[] =
+    {
+        { 0, 0 }, /* 0x00 */
+        { PAGE_NOACCESS, PAGE_NOACCESS }, /* 0x01 */
+        { PAGE_READONLY, PAGE_READONLY }, /* 0x02 */
+        { PAGE_READONLY | PAGE_NOACCESS, 0 }, /* 0x03 */
+        { PAGE_READWRITE, PAGE_READWRITE }, /* 0x04 */
+        { PAGE_READWRITE | PAGE_NOACCESS, 0 }, /* 0x05 */
+        { PAGE_READWRITE | PAGE_READONLY, 0 }, /* 0x06 */
+        { PAGE_READWRITE | PAGE_READONLY | PAGE_NOACCESS, 0 }, /* 0x07 */
+        { PAGE_WRITECOPY, 0 }, /* 0x08 */
+        { PAGE_WRITECOPY | PAGE_NOACCESS, 0 }, /* 0x09 */
+        { PAGE_WRITECOPY | PAGE_READONLY, 0 }, /* 0x0a */
+        { PAGE_WRITECOPY | PAGE_NOACCESS | PAGE_READONLY, 0 }, /* 0x0b */
+        { PAGE_WRITECOPY | PAGE_READWRITE, 0 }, /* 0x0c */
+        { PAGE_WRITECOPY | PAGE_READWRITE | PAGE_NOACCESS, 0 }, /* 0x0d */
+        { PAGE_WRITECOPY | PAGE_READWRITE | PAGE_READONLY, 0 }, /* 0x0e */
+        { PAGE_WRITECOPY | PAGE_READWRITE | PAGE_READONLY | PAGE_NOACCESS, 0 }, /* 0x0f */
+
+        { PAGE_EXECUTE, PAGE_EXECUTE }, /* 0x10 */
+        { PAGE_EXECUTE_READ, PAGE_EXECUTE_READ }, /* 0x20 */
+        { PAGE_EXECUTE_READ | PAGE_EXECUTE, 0 }, /* 0x30 */
+        { PAGE_EXECUTE_READWRITE, PAGE_EXECUTE_READWRITE }, /* 0x40 */
+        { PAGE_EXECUTE_READWRITE | PAGE_EXECUTE, 0 }, /* 0x50 */
+        { PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_READ, 0 }, /* 0x60 */
+        { PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_READ | PAGE_EXECUTE, 0 }, /* 0x70 */
+        { PAGE_EXECUTE_WRITECOPY, 0 }, /* 0x80 */
+        { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE, 0 }, /* 0x90 */
+        { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE_READ, 0 }, /* 0xa0 */
+        { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE_READ | PAGE_EXECUTE, 0 }, /* 0xb0 */
+        { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE_READWRITE, 0 }, /* 0xc0 */
+        { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE, 0 }, /* 0xd0 */
+        { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_READ, 0 }, /* 0xe0 */
+        { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_READ | PAGE_EXECUTE, 0 } /* 0xf0 */
+    };
+    char *base;
+    DWORD ret, old_prot, rw_prot, exec_prot, i, j;
+    MEMORY_BASIC_INFORMATION info;
+    SYSTEM_INFO si;
+
+    GetSystemInfo(&si);
+    trace("system page size %#x\n", si.dwPageSize);
+
+    SetLastError(0xdeadbeef);
+    base = VirtualAlloc(0, si.dwPageSize, MEM_RESERVE | MEM_COMMIT, PAGE_NOACCESS);
+    ok(base != NULL, "VirtualAlloc failed %d\n", GetLastError());
+
+    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    {
+        SetLastError(0xdeadbeef);
+        ret = VirtualQuery(base, &info, sizeof(info));
+        ok(ret, "VirtualQuery failed %d\n", GetLastError());
+        ok(info.BaseAddress == base, "%d: got %p != expected %p\n", i, info.BaseAddress, base);
+        ok(info.RegionSize == si.dwPageSize, "%d: got %#lx != expected %#x\n", i, info.RegionSize, si.dwPageSize);
+        ok(info.Protect == PAGE_NOACCESS, "%d: got %#x != expected PAGE_NOACCESS\n", i, info.Protect);
+        ok(info.AllocationBase == base, "%d: %p != %p\n", i, info.AllocationBase, base);
+        ok(info.AllocationProtect == PAGE_NOACCESS, "%d: %#x != PAGE_NOACCESS\n", i, info.AllocationProtect);
+        ok(info.State == MEM_COMMIT, "%d: %#x != MEM_COMMIT\n", i, info.State);
+        ok(info.Type == MEM_PRIVATE, "%d: %#x != MEM_PRIVATE\n", i, info.Type);
+
+        old_prot = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        ret = VirtualProtect(base, si.dwPageSize, td[i].prot_set, &old_prot);
+        if (td[i].prot_get)
+        {
+            ok(ret, "%d: VirtualProtect error %d\n", i, GetLastError());
+            ok(old_prot == PAGE_NOACCESS, "%d: got %#x != expected PAGE_NOACCESS\n", i, old_prot);
+
+            SetLastError(0xdeadbeef);
+            ret = VirtualQuery(base, &info, sizeof(info));
+            ok(ret, "VirtualQuery failed %d\n", GetLastError());
+            ok(info.BaseAddress == base, "%d: got %p != expected %p\n", i, info.BaseAddress, base);
+            ok(info.RegionSize == si.dwPageSize, "%d: got %#lx != expected %#x\n", i, info.RegionSize, si.dwPageSize);
+            ok(info.Protect == td[i].prot_get, "%d: got %#x != expected %#x\n", i, info.Protect, td[i].prot_get);
+            ok(info.AllocationBase == base, "%d: %p != %p\n", i, info.AllocationBase, base);
+            ok(info.AllocationProtect == PAGE_NOACCESS, "%d: %#x != PAGE_NOACCESS\n", i, info.AllocationProtect);
+            ok(info.State == MEM_COMMIT, "%d: %#x != MEM_COMMIT\n", i, info.State);
+            ok(info.Type == MEM_PRIVATE, "%d: %#x != MEM_PRIVATE\n", i, info.Type);
+        }
+        else
+        {
+            /* FIXME: remove the condition below once Wine is fixed */
+            if ((td[i].prot_set == PAGE_WRITECOPY) || (td[i].prot_set == PAGE_EXECUTE_WRITECOPY))
+            todo_wine {
+            ok(!ret, "%d: VirtualProtect should fail\n", i);
+            ok(GetLastError() == ERROR_INVALID_PARAMETER, "%d: expected ERROR_INVALID_PARAMETER, got %d\n", i, GetLastError());
+            }
+            else {
+            ok(!ret, "%d: VirtualProtect should fail\n", i);
+            ok(GetLastError() == ERROR_INVALID_PARAMETER, "%d: expected ERROR_INVALID_PARAMETER, got %d\n", i, GetLastError());
+            }
+        }
+
+        old_prot = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        ret = VirtualProtect(base, si.dwPageSize, PAGE_NOACCESS, &old_prot);
+        ok(ret, "%d: VirtualProtect error %d\n", i, GetLastError());
+        if (td[i].prot_get)
+            ok(old_prot == td[i].prot_get, "%d: got %#x != expected %#x\n", i, old_prot, td[i].prot_get);
+        else
+        {
+            /* FIXME: remove the condition below once Wine is fixed */
+            if ((td[i].prot_set == PAGE_WRITECOPY) || (td[i].prot_set == PAGE_EXECUTE_WRITECOPY))
+            todo_wine ok(old_prot == PAGE_NOACCESS, "%d: got %#x != expected PAGE_NOACCESS\n", i, old_prot);
+            else
+            ok(old_prot == PAGE_NOACCESS, "%d: got %#x != expected PAGE_NOACCESS\n", i, old_prot);
+        }
+    }
+
+    exec_prot = 0;
+
+    for (i = 0; i <= 4; i++)
+    {
+        rw_prot = 0;
+
+        for (j = 0; j <= 4; j++)
+        {
+            DWORD prot = exec_prot | rw_prot;
+
+            SetLastError(0xdeadbeef);
+            ret = VirtualProtect(base, si.dwPageSize, prot, &old_prot);
+            if ((rw_prot && exec_prot) || (!rw_prot && !exec_prot))
+            {
+                ok(!ret, "VirtualProtect(%02x) should fail\n", prot);
+                ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+            }
+            else
+            {
+                if (prot & (PAGE_WRITECOPY | PAGE_EXECUTE_WRITECOPY))
+                {
+                    todo_wine {
+                    ok(!ret, "VirtualProtect(%02x) should fail\n", prot);
+                    ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+                    }
+                }
+                else
+                    ok(ret, "VirtualProtect(%02x) error %d\n", prot, GetLastError());
+            }
+
+            rw_prot = 1 << j;
+        }
+
+        exec_prot = 1 << (i + 4);
+    }
+
+    VirtualFree(base, 0, MEM_FREE);
+}
+
 START_TEST(virtual)
 {
     int argc;
@@ -1421,7 +1574,7 @@ START_TEST(virtual)
     pResetWriteWatch = (void *) GetProcAddress(hkernel32, "ResetWriteWatch");
     pNtAreMappedFilesTheSame = (void *)GetProcAddress( GetModuleHandle("ntdll.dll"),
                                                        "NtAreMappedFilesTheSame" );
-
+    test_VirtualProtect();
     test_VirtualAllocEx();
     test_VirtualAlloc();
     test_MapViewOfFile();
