@@ -8938,9 +8938,8 @@ msgid "version 1.0"
 msgstr "버젼 1.0"
 
 #: oleview.rc:100
-#, fuzzy
 msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
-msgstr "TypeLib 파일 (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+msgstr "TypeLib 파일들 (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
 
 #: oleview.rc:103
 msgid "Bind to file via a File Moniker"
@@ -10380,9 +10379,8 @@ msgid "Default Settings"
 msgstr "기본 설정"
 
 #: winecfg.rc:59
-#, fuzzy
 msgid "Wine Programs (*.exe; *.exe.so)"
-msgstr "Wine 프로그램 (*.exe,*.exe.so)"
+msgstr "Wine 프로그램들 (*.exe,*.exe.so)"
 
 #: winecfg.rc:60
 msgid "Use global settings"
@@ -11127,9 +11125,8 @@ msgid "Unicode text document"
 msgstr "유니코드 텍스트 문서"
 
 #: wordpad.rc:143
-#, fuzzy
 msgid "Printer files (*.prn)"
-msgstr "프린터 파일 (*.PRN)"
+msgstr "프린터 파일들 (*.prn)"
 
 #: wordpad.rc:148
 msgid "Left"
