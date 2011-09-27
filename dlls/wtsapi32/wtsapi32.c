@@ -277,7 +277,7 @@ BOOL WINAPI WTSQueryUserConfigW(LPWSTR pServerName, LPWSTR pUserName, WTS_CONFIG
 BOOL WINAPI WTSRegisterSessionNotification(HWND hWnd, DWORD dwFlags)
 {
     FIXME("Stub %p 0x%08x\n", hWnd, dwFlags);
-    return FALSE;
+    return TRUE;
 }
 
 /************************************************************
