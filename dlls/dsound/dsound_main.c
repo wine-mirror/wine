@@ -78,6 +78,8 @@ static IMMDeviceEnumerator *g_devenum;
 static CRITICAL_SECTION g_devenum_lock;
 static HANDLE g_devenum_thread;
 
+WCHAR wine_vxd_drv[] = { 'w','i','n','e','m','m','.','v','x','d', 0 };
+
 HRESULT mmErr(UINT err)
 {
 	switch(err) {
@@ -491,7 +493,9 @@ HRESULT get_mmdevice(EDataFlow flow, const GUID *tgt, IMMDevice **device)
     return DSERR_INVALIDPARAM;
 }
 
-static HRESULT enumerate_mmdevices(EDataFlow flow, GUID *guids,
+/* S_FALSE means the callback returned FALSE at some point
+ * S_OK means the callback always returned TRUE */
+HRESULT enumerate_mmdevices(EDataFlow flow, GUID *guids,
         LPDSENUMCALLBACKW cb, void *user)
 {
     IMMDeviceEnumerator *devenum;
@@ -503,8 +507,6 @@ static HRESULT enumerate_mmdevices(EDataFlow flow, GUID *guids,
     static const WCHAR primary_desc[] = {'P','r','i','m','a','r','y',' ',
         'S','o','u','n','d',' ','D','r','i','v','e','r',0};
     static const WCHAR empty_drv[] = {0};
-    static const WCHAR wine_vxd_drv[] = { 'w','i','n','e','m','m','.',
-        'v','x','d', 0 };
 
     devenum = get_mmdevenum();
     if(!devenum)
@@ -574,7 +576,7 @@ static HRESULT enumerate_mmdevices(EDataFlow flow, GUID *guids,
 
     IMMDeviceCollection_Release(coll);
 
-    return DS_OK;
+    return (keep_going == TRUE) ? S_OK : S_FALSE;
 }
 
 /***************************************************************************
@@ -594,6 +596,8 @@ HRESULT WINAPI DirectSoundEnumerateW(
 	LPDSENUMCALLBACKW lpDSEnumCallback,
 	LPVOID lpContext )
 {
+    HRESULT hr;
+
     TRACE("(%p,%p)\n", lpDSEnumCallback, lpContext);
 
     if (lpDSEnumCallback == NULL) {
@@ -603,8 +607,9 @@ HRESULT WINAPI DirectSoundEnumerateW(
 
     setup_dsound_options();
 
-    return enumerate_mmdevices(eRender, DSOUND_renderer_guids,
+    hr = enumerate_mmdevices(eRender, DSOUND_renderer_guids,
             lpDSEnumCallback, lpContext);
+    return SUCCEEDED(hr) ? DS_OK : hr;
 }
 
 /***************************************************************************
@@ -655,6 +660,8 @@ DirectSoundCaptureEnumerateW(
     LPDSENUMCALLBACKW lpDSEnumCallback,
     LPVOID lpContext)
 {
+    HRESULT hr;
+
     TRACE("(%p,%p)\n", lpDSEnumCallback, lpContext );
 
     if (lpDSEnumCallback == NULL) {
@@ -664,8 +671,9 @@ DirectSoundCaptureEnumerateW(
 
     setup_dsound_options();
 
-    return enumerate_mmdevices(eCapture, DSOUND_capture_guids,
+    hr = enumerate_mmdevices(eCapture, DSOUND_capture_guids,
             lpDSEnumCallback, lpContext);
+    return SUCCEEDED(hr) ? DS_OK : hr;
 }
 
 /*******************************************************************************
