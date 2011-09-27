@@ -174,7 +174,7 @@ msgstr "Oblíbené"
 msgid "System Path"
 msgstr "Systémový adresář"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:97 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:95 winefile.rc:103
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -10542,6 +10542,19 @@ msgstr "Odkaz na"
 msgid "Wine configuration for %s"
 msgstr "Úprava Wine pro %s"
 
+#: winecfg.rc:87
+msgid "Selected driver: %s"
+msgstr ""
+
+#: winecfg.rc:88
+#, fuzzy
+msgid "(None)"
+msgstr ""
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"Žádná klávesová zkratka.\n"
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"Žádný"
+
 #: winecfg.rc:51
 msgid ""
 "Changing the load order of this library is not recommended.\n"
@@ -10675,154 +10688,138 @@ msgstr ""
 "\n"
 "Klikněte na ‘Přidat...’ v záložce Disky a vytvořte ho!\n"
 
-#: winecfg.rc:87
-msgid "Full"
-msgstr "Plná"
-
-#: winecfg.rc:88
-msgid "Standard"
-msgstr "Standardní"
-
-#: winecfg.rc:89
-msgid "Basic"
-msgstr "Základní"
-
-#: winecfg.rc:90
-msgid "Emulation"
-msgstr "Emulace"
-
-#: winecfg.rc:95
+#: winecfg.rc:93
 msgid "Controls Background"
 msgstr "Pozadí ovládacích prvků"
 
-#: winecfg.rc:96
+#: winecfg.rc:94
 msgid "Controls Text"
 msgstr "Písmo ovládacích prvků"
 
-#: winecfg.rc:98
+#: winecfg.rc:96
 msgid "Menu Background"
 msgstr "Pozadí menu"
 
-#: winecfg.rc:99
+#: winecfg.rc:97
 msgid "Menu Text"
 msgstr "Písmo menu"
 
-#: winecfg.rc:100
+#: winecfg.rc:98
 msgid "Scrollbar"
 msgstr "Rolovací pruh"
 
-#: winecfg.rc:101
+#: winecfg.rc:99
 msgid "Selection Background"
 msgstr "Pozadí výběru"
 
-#: winecfg.rc:102
+#: winecfg.rc:100
 msgid "Selection Text"
 msgstr "Písmo výběru"
 
-#: winecfg.rc:103
+#: winecfg.rc:101
 msgid "ToolTip Background"
 msgstr "Pozadí tipu"
 
-#: winecfg.rc:104
+#: winecfg.rc:102
 msgid "ToolTip Text"
 msgstr "Písmo tipu"
 
-#: winecfg.rc:105
+#: winecfg.rc:103
 msgid "Window Background"
 msgstr "Pozadí okna"
 
-#: winecfg.rc:106
+#: winecfg.rc:104
 msgid "Window Text"
 msgstr "Písmo okna"
 
-#: winecfg.rc:107
+#: winecfg.rc:105
 msgid "Active Title Bar"
 msgstr "Pozadí titulku aktivního okna"
 
-#: winecfg.rc:108
+#: winecfg.rc:106
 msgid "Active Title Text"
 msgstr "Písmo titulku aktivního okna"
 
-#: winecfg.rc:109
+#: winecfg.rc:107
 msgid "Inactive Title Bar"
 msgstr "Pozadí titulku neaktivného okna"
 
-#: winecfg.rc:110
+#: winecfg.rc:108
 msgid "Inactive Title Text"
 msgstr "Písmo titulku neaktivního okna"
 
-#: winecfg.rc:111
+#: winecfg.rc:109
 msgid "Message Box Text"
 msgstr ""
 
-#: winecfg.rc:112
+#: winecfg.rc:110
 #, fuzzy
 msgid "Application Workspace"
 msgstr "Programy"
 
-#: winecfg.rc:113
+#: winecfg.rc:111
 #, fuzzy
 msgid "Window Frame"
 msgstr "Písmo okna"
 
-#: winecfg.rc:114
+#: winecfg.rc:112
 #, fuzzy
 msgid "Active Border"
 msgstr "Pozadí titulku aktivního okna"
 
-#: winecfg.rc:115
+#: winecfg.rc:113
 #, fuzzy
 msgid "Inactive Border"
 msgstr "Pozadí titulku neaktivného okna"
 
-#: winecfg.rc:116
+#: winecfg.rc:114
 #, fuzzy
 msgid "Controls Shadow"
 msgstr "Pozadí ovládacích prvků"
 
-#: winecfg.rc:117
+#: winecfg.rc:115
 msgid "Gray Text"
 msgstr ""
 
-#: winecfg.rc:118
+#: winecfg.rc:116
 #, fuzzy
 msgid "Controls Highlight"
 msgstr "Písmo ovládacích prvků"
 
-#: winecfg.rc:119
+#: winecfg.rc:117
 #, fuzzy
 msgid "Controls Dark Shadow"
 msgstr "Pozadí ovládacích prvků"
 
-#: winecfg.rc:120
+#: winecfg.rc:118
 #, fuzzy
 msgid "Controls Light"
 msgstr "Písmo ovládacích prvků"
 
-#: winecfg.rc:121
+#: winecfg.rc:119
 #, fuzzy
 msgid "Controls Alternate Background"
 msgstr "Pozadí ovládacích prvků"
 
-#: winecfg.rc:122
+#: winecfg.rc:120
 msgid "Hot Tracked Item"
 msgstr ""
 
-#: winecfg.rc:123
+#: winecfg.rc:121
 #, fuzzy
 msgid "Active Title Bar Gradient"
 msgstr "Pozadí titulku aktivního okna"
 
-#: winecfg.rc:124
+#: winecfg.rc:122
 #, fuzzy
 msgid "Inactive Title Bar Gradient"
 msgstr "Pozadí titulku neaktivného okna"
 
-#: winecfg.rc:125
+#: winecfg.rc:123
 msgid "Menu Highlight"
 msgstr ""
 
-#: winecfg.rc:126
+#: winecfg.rc:124
 #, fuzzy
 msgid "Menu Bar"
 msgstr "Pozadí menu"

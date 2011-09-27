@@ -55,96 +55,64 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
-static struct DSOUNDACCEL
+static BOOL get_driver_name(PROPVARIANT *pv)
 {
-  UINT displayID;
-  UINT visible;
-  const char* settingStr;
-} DSound_HW_Accels[] = {
-  {IDS_ACCEL_FULL,      1, "Full"},
-  {IDS_ACCEL_STANDARD,  0, "Standard"},
-  {IDS_ACCEL_BASIC,     0, "Basic"},
-  {IDS_ACCEL_EMULATION, 1, "Emulation"},
-  {0, 0, 0}
-};
+    IMMDeviceEnumerator *devenum;
+    IMMDevice *device;
+    IPropertyStore *ps;
+    HRESULT hr;
 
-static const char* DSound_Rates[] = {
-  "48000",
-  "44100",
-  "22050",
-  "16000",
-  "11025",
-  "8000",
-  NULL
-};
+    static const WCHAR wine_info_deviceW[] = {'W','i','n','e',' ',
+        'i','n','f','o',' ','d','e','v','i','c','e',0};
 
-static const char* DSound_Bits[] = {
-  "8",
-  "16",
-  NULL
-};
+    hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL,
+            CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&devenum);
+    if(FAILED(hr))
+        return FALSE;
+
+    hr = IMMDeviceEnumerator_GetDevice(devenum, wine_info_deviceW, &device);
+    IMMDeviceEnumerator_Release(devenum);
+    if(FAILED(hr))
+        return FALSE;
+
+    hr = IMMDevice_OpenPropertyStore(device, STGM_READ, &ps);
+    if(FAILED(hr)){
+        IMMDevice_Release(device);
+        return FALSE;
+    }
+
+    hr = IPropertyStore_GetValue(ps,
+            (const PROPERTYKEY *)&DEVPKEY_Device_Driver, pv);
+    IPropertyStore_Release(ps);
+    IMMDevice_Release(device);
+    if(FAILED(hr))
+        return FALSE;
+
+    return TRUE;
+}
 
 static void initAudioDlg (HWND hDlg)
 {
-    int i, j, found;
-    char* buf = NULL;
+    WCHAR display_str[256], format_str[256], disabled_str[64];
+    PROPVARIANT pv;
 
     WINE_TRACE("\n");
 
-    SendDlgItemMessage(hDlg, IDC_DSOUND_HW_ACCEL, CB_RESETCONTENT, 0, 0);
-    buf = get_reg_key(config_key, keypath("DirectSound"), "HardwareAcceleration", "Full");
+    LoadStringW(GetModuleHandle(NULL), IDS_AUDIO_DRIVER,
+            format_str, sizeof(format_str) / sizeof(*format_str));
+    LoadStringW(GetModuleHandle(NULL), IDS_AUDIO_DRIVER_NONE,
+            disabled_str, sizeof(disabled_str) / sizeof(*disabled_str));
 
-    j = found = 0;
-    for (i = 0; 0 != DSound_HW_Accels[i].displayID; ++i) {
-      WCHAR accelStr[64];
-      int match;
+    PropVariantInit(&pv);
+    if(get_driver_name(&pv) && pv.u.pwszVal[0] != '\0')
+        wnsprintfW(display_str, sizeof(display_str) / sizeof(*display_str),
+                format_str, pv.u.pwszVal);
+    else
+        wnsprintfW(display_str, sizeof(display_str) / sizeof(*display_str),
+                format_str, disabled_str);
+    PropVariantClear(&pv);
 
-      match = (strcmp(buf, DSound_HW_Accels[i].settingStr) == 0);
-      if (match)
-      {
-        DSound_HW_Accels[i].visible = 1;
-        found = 1;
-      }
-
-      if (DSound_HW_Accels[i].visible)
-      {
-        LoadStringW (GetModuleHandle (NULL), DSound_HW_Accels[i].displayID,
-                     accelStr, sizeof(accelStr)/sizeof(accelStr[0]));
-        SendDlgItemMessageW (hDlg, IDC_DSOUND_HW_ACCEL, CB_ADDSTRING, 0, (LPARAM)accelStr);
-        if (match)
-          SendDlgItemMessage(hDlg, IDC_DSOUND_HW_ACCEL, CB_SETCURSEL, j, 0);
-        j++;
-      }
-    }
-    if (!found) {
-      WINE_ERR("Invalid Direct Sound HW Accel read from registry (%s)\n", buf);
-    }
-    HeapFree(GetProcessHeap(), 0, buf);
-
-    SendDlgItemMessage(hDlg, IDC_DSOUND_RATES, CB_RESETCONTENT, 0, 0);
-    for (i = 0; NULL != DSound_Rates[i]; ++i) {
-      SendDlgItemMessage(hDlg, IDC_DSOUND_RATES, CB_ADDSTRING, 0, (LPARAM) DSound_Rates[i]);
-    }
-    buf = get_reg_key(config_key, keypath("DirectSound"), "DefaultSampleRate", "44100");
-    for (i = 0; NULL != DSound_Rates[i]; ++i) {
-      if (strcmp(buf, DSound_Rates[i]) == 0) {
-	SendDlgItemMessage(hDlg, IDC_DSOUND_RATES, CB_SETCURSEL, i, 0);
-	break ;
-      }
-    }
-
-    SendDlgItemMessage(hDlg, IDC_DSOUND_BITS, CB_RESETCONTENT, 0, 0);
-    for (i = 0; NULL != DSound_Bits[i]; ++i) {
-      SendDlgItemMessage(hDlg, IDC_DSOUND_BITS, CB_ADDSTRING, 0, (LPARAM) DSound_Bits[i]);
-    }
-    buf = get_reg_key(config_key, keypath("DirectSound"), "DefaultBitsPerSample", "16");
-    for (i = 0; NULL != DSound_Bits[i]; ++i) {
-      if (strcmp(buf, DSound_Bits[i]) == 0) {
-	SendDlgItemMessage(hDlg, IDC_DSOUND_BITS, CB_SETCURSEL, i, 0);
-	break ;
-      }
-    }
-    HeapFree(GetProcessHeap(), 0, buf);
+    SetDlgItemTextW(hDlg, IDC_AUDIO_DRIVER, display_str);
 }
 
 INT_PTR CALLBACK
@@ -157,46 +125,7 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
               if(!PlaySound(MAKEINTRESOURCE(IDW_TESTSOUND), NULL, SND_RESOURCE | SND_SYNC))
                   MessageBox(NULL, "Audio test failed!", "Error", MB_OK | MB_ICONERROR);
               break;
-          case IDC_DSOUND_HW_ACCEL:
-            if (HIWORD(wParam) == CBN_SELCHANGE) {
-              int selected_dsound_accel;
-              int i, j = 0;
-
-              SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
-              selected_dsound_accel = SendDlgItemMessage(hDlg, IDC_DSOUND_HW_ACCEL, CB_GETCURSEL, 0, 0);
-              for (i = 0; DSound_HW_Accels[i].settingStr; ++i)
-              {
-                if (DSound_HW_Accels[i].visible)
-                {
-                  if (j == selected_dsound_accel)
-                  {
-                    set_reg_key(config_key, keypath("DirectSound"), "HardwareAcceleration",
-                      DSound_HW_Accels[i].settingStr);
-                    break;
-                  }
-                  j++;
-                }
-              }
-            }
-            break;
-          case IDC_DSOUND_RATES:
-            if (HIWORD(wParam) == CBN_SELCHANGE) {
-              int selected_dsound_rate;
-              SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
-              selected_dsound_rate = SendDlgItemMessage(hDlg, IDC_DSOUND_RATES, CB_GETCURSEL, 0, 0);
-              set_reg_key(config_key, keypath("DirectSound"), "DefaultSampleRate", DSound_Rates[selected_dsound_rate]);
-            }
-            break;
-          case IDC_DSOUND_BITS:
-            if (HIWORD(wParam) == CBN_SELCHANGE) {
-              int selected_dsound_bits;
-              SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
-              selected_dsound_bits = SendDlgItemMessage(hDlg, IDC_DSOUND_BITS, CB_GETCURSEL, 0, 0);
-              set_reg_key(config_key, keypath("DirectSound"), "DefaultBitsPerSample", DSound_Bits[selected_dsound_bits]);
-            }
-            break;
         }
-        break;
       case WM_SHOWWINDOW:
         set_window_title(hDlg);
         break;

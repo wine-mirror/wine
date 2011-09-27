@@ -169,15 +169,11 @@
 #define IDC_APP_REMOVEAPP               1202
 
 /* audio tab */
-#define IDC_AUDIO_TEST                  1301
-#define IDC_DSOUND_HW_ACCEL             1303
-#define IDC_DSOUND_RATES                1310
-#define IDC_DSOUND_BITS                 1311
-#define IDW_TESTSOUND                   1312
-#define IDS_ACCEL_FULL                  8300
-#define IDS_ACCEL_STANDARD              8301
-#define IDS_ACCEL_BASIC                 8302
-#define IDS_ACCEL_EMULATION             8303
+#define IDC_AUDIO_TEST                  1300
+#define IDC_AUDIO_DRIVER                1301
+#define IDS_AUDIO_DRIVER                1302
+#define IDS_AUDIO_DRIVER_NONE           1303
+#define IDW_TESTSOUND                   1308
 
 /* desktop integration tab */
 #define IDC_THEME_COLORCOMBO            1401

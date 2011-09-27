@@ -163,7 +163,7 @@ msgstr "お気に入り"
 msgid "System Path"
 msgstr "システム パス"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:97 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:95 winefile.rc:103
 msgctxt "display name"
 msgid "Desktop"
 msgstr "デスクトップ"
@@ -10376,6 +10376,15 @@ msgstr "リンク先"
 msgid "Wine configuration for %s"
 msgstr "Wine設定 %s用"
 
+#: winecfg.rc:87
+msgid "Selected driver: %s"
+msgstr ""
+
+#: winecfg.rc:88
+#, fuzzy
+msgid "(None)"
+msgstr "なし"
+
 #: winecfg.rc:51
 msgid ""
 "Changing the load order of this library is not recommended.\n"
@@ -10502,143 +10511,127 @@ msgstr ""
 "C ドライブを作成するためにドライブタブ内の [追加] を忘れずにクリックしてくだ"
 "さい!\n"
 
-#: winecfg.rc:87
-msgid "Full"
-msgstr "完全"
-
-#: winecfg.rc:88
-msgid "Standard"
-msgstr "標準"
-
-#: winecfg.rc:89
-msgid "Basic"
-msgstr "基本"
-
-#: winecfg.rc:90
-msgid "Emulation"
-msgstr "エミュレーション"
-
-#: winecfg.rc:95
+#: winecfg.rc:93
 msgid "Controls Background"
 msgstr "コントロールの背景"
 
-#: winecfg.rc:96
+#: winecfg.rc:94
 msgid "Controls Text"
 msgstr "コントロールのテキスト"
 
-#: winecfg.rc:98
+#: winecfg.rc:96
 msgid "Menu Background"
 msgstr "メニューの背景"
 
-#: winecfg.rc:99
+#: winecfg.rc:97
 msgid "Menu Text"
 msgstr "メニューのテキスト"
 
-#: winecfg.rc:100
+#: winecfg.rc:98
 msgid "Scrollbar"
 msgstr "スクロールバー"
 
-#: winecfg.rc:101
+#: winecfg.rc:99
 msgid "Selection Background"
 msgstr "選択項目の背景"
 
-#: winecfg.rc:102
+#: winecfg.rc:100
 msgid "Selection Text"
 msgstr "選択項目のテキスト"
 
-#: winecfg.rc:103
+#: winecfg.rc:101
 msgid "ToolTip Background"
 msgstr "ヒントの背景"
 
-#: winecfg.rc:104
+#: winecfg.rc:102
 msgid "ToolTip Text"
 msgstr "ヒントのテキスト"
 
-#: winecfg.rc:105
+#: winecfg.rc:103
 msgid "Window Background"
 msgstr "ウィンドウの背景"
 
-#: winecfg.rc:106
+#: winecfg.rc:104
 msgid "Window Text"
 msgstr "ウィンドウのテキスト"
 
-#: winecfg.rc:107
+#: winecfg.rc:105
 msgid "Active Title Bar"
 msgstr "アクティブ タイトル バー"
 
-#: winecfg.rc:108
+#: winecfg.rc:106
 msgid "Active Title Text"
 msgstr "アクティブ タイトルのテキスト"
 
-#: winecfg.rc:109
+#: winecfg.rc:107
 msgid "Inactive Title Bar"
 msgstr "非アクティブ タイトル バー"
 
-#: winecfg.rc:110
+#: winecfg.rc:108
 msgid "Inactive Title Text"
 msgstr "非アクティブ タイトルのテキスト"
 
-#: winecfg.rc:111
+#: winecfg.rc:109
 msgid "Message Box Text"
 msgstr "メッセージ ボックスのテキスト"
 
-#: winecfg.rc:112
+#: winecfg.rc:110
 msgid "Application Workspace"
 msgstr "アプリケーション作業域"
 
-#: winecfg.rc:113
+#: winecfg.rc:111
 msgid "Window Frame"
 msgstr "ウィンドウの境界"
 
-#: winecfg.rc:114
+#: winecfg.rc:112
 msgid "Active Border"
 msgstr "アクティブ境界"
 
-#: winecfg.rc:115
+#: winecfg.rc:113
 msgid "Inactive Border"
 msgstr "非アクティブ境界"
 
-#: winecfg.rc:116
+#: winecfg.rc:114
 msgid "Controls Shadow"
 msgstr ""
 
-#: winecfg.rc:117
+#: winecfg.rc:115
 msgid "Gray Text"
 msgstr ""
 
-#: winecfg.rc:118
+#: winecfg.rc:116
 msgid "Controls Highlight"
 msgstr ""
 
-#: winecfg.rc:119
+#: winecfg.rc:117
 msgid "Controls Dark Shadow"
 msgstr ""
 
-#: winecfg.rc:120
+#: winecfg.rc:118
 msgid "Controls Light"
 msgstr ""
 
-#: winecfg.rc:121
+#: winecfg.rc:119
 msgid "Controls Alternate Background"
 msgstr ""
 
-#: winecfg.rc:122
+#: winecfg.rc:120
 msgid "Hot Tracked Item"
 msgstr ""
 
-#: winecfg.rc:123
+#: winecfg.rc:121
 msgid "Active Title Bar Gradient"
 msgstr ""
 
-#: winecfg.rc:124
+#: winecfg.rc:122
 msgid "Inactive Title Bar Gradient"
 msgstr ""
 
-#: winecfg.rc:125
+#: winecfg.rc:123
 msgid "Menu Highlight"
 msgstr ""
 
-#: winecfg.rc:126
+#: winecfg.rc:124
 msgid "Menu Bar"
 msgstr "メニュー バー"
 

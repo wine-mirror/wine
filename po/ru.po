@@ -162,7 +162,7 @@ msgstr "Избранное"
 msgid "System Path"
 msgstr "Системный путь"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:97 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:95 winefile.rc:103
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Рабочий стол"
@@ -10381,6 +10381,15 @@ msgstr "Связано с"
 msgid "Wine configuration for %s"
 msgstr "Настройка Wine для %s"
 
+#: winecfg.rc:87
+msgid "Selected driver: %s"
+msgstr ""
+
+#: winecfg.rc:88
+#, fuzzy
+msgid "(None)"
+msgstr "Нет"
+
 #: winecfg.rc:51
 msgid ""
 "Changing the load order of this library is not recommended.\n"
@@ -10505,143 +10514,127 @@ msgstr ""
 "\n"
 "Не забудьте его создать!\n"
 
-#: winecfg.rc:87
-msgid "Full"
-msgstr "Полное"
-
-#: winecfg.rc:88
-msgid "Standard"
-msgstr "Стандартное"
-
-#: winecfg.rc:89
-msgid "Basic"
-msgstr "Минимальное"
-
-#: winecfg.rc:90
-msgid "Emulation"
-msgstr "Эмуляция"
-
-#: winecfg.rc:95
+#: winecfg.rc:93
 msgid "Controls Background"
 msgstr "Элементы управления - фон"
 
-#: winecfg.rc:96
+#: winecfg.rc:94
 msgid "Controls Text"
 msgstr "Элементы управления - текст"
 
-#: winecfg.rc:98
+#: winecfg.rc:96
 msgid "Menu Background"
 msgstr "Меню - фон"
 
-#: winecfg.rc:99
+#: winecfg.rc:97
 msgid "Menu Text"
 msgstr "Меню - текст"
 
-#: winecfg.rc:100
+#: winecfg.rc:98
 msgid "Scrollbar"
 msgstr "Полоса прокрутки"
 
-#: winecfg.rc:101
+#: winecfg.rc:99
 msgid "Selection Background"
 msgstr "Выделение - фон"
 
-#: winecfg.rc:102
+#: winecfg.rc:100
 msgid "Selection Text"
 msgstr "Выделение - текст"
 
-#: winecfg.rc:103
+#: winecfg.rc:101
 msgid "ToolTip Background"
 msgstr "Подсказка - фон"
 
-#: winecfg.rc:104
+#: winecfg.rc:102
 msgid "ToolTip Text"
 msgstr "Подсказка - текст"
 
-#: winecfg.rc:105
+#: winecfg.rc:103
 msgid "Window Background"
 msgstr "Содержимое окна - фон"
 
-#: winecfg.rc:106
+#: winecfg.rc:104
 msgid "Window Text"
 msgstr "Содержимое окна - текст"
 
-#: winecfg.rc:107
+#: winecfg.rc:105
 msgid "Active Title Bar"
 msgstr "Активное окно"
 
-#: winecfg.rc:108
+#: winecfg.rc:106
 msgid "Active Title Text"
 msgstr "Активное окно - текст"
 
-#: winecfg.rc:109
+#: winecfg.rc:107
 msgid "Inactive Title Bar"
 msgstr "Пассивное окно"
 
-#: winecfg.rc:110
+#: winecfg.rc:108
 msgid "Inactive Title Text"
 msgstr "Пассивное окно - текст"
 
-#: winecfg.rc:111
+#: winecfg.rc:109
 msgid "Message Box Text"
 msgstr "Окно сообщения - текст"
 
-#: winecfg.rc:112
+#: winecfg.rc:110
 msgid "Application Workspace"
 msgstr "Содержимое окна MDI - фон"
 
-#: winecfg.rc:113
+#: winecfg.rc:111
 msgid "Window Frame"
 msgstr "Окно - рамка"
 
-#: winecfg.rc:114
+#: winecfg.rc:112
 msgid "Active Border"
 msgstr "Активное окно - рамка"
 
-#: winecfg.rc:115
+#: winecfg.rc:113
 msgid "Inactive Border"
 msgstr "Пассивное окно - рамка"
 
-#: winecfg.rc:116
+#: winecfg.rc:114
 msgid "Controls Shadow"
 msgstr "Элементы управления - тень"
 
-#: winecfg.rc:117
+#: winecfg.rc:115
 msgid "Gray Text"
 msgstr "Недоступный элемент"
 
-#: winecfg.rc:118
+#: winecfg.rc:116
 msgid "Controls Highlight"
 msgstr "Элементы управления - светлая рамка"
 
-#: winecfg.rc:119
+#: winecfg.rc:117
 msgid "Controls Dark Shadow"
 msgstr "Элементы управления - темная тень"
 
-#: winecfg.rc:120
+#: winecfg.rc:118
 msgid "Controls Light"
 msgstr "Элементы управления - свет"
 
-#: winecfg.rc:121
+#: winecfg.rc:119
 msgid "Controls Alternate Background"
 msgstr "Элементы управления - фон 2"
 
-#: winecfg.rc:122
+#: winecfg.rc:120
 msgid "Hot Tracked Item"
 msgstr "Ссылка, Подсветка"
 
-#: winecfg.rc:123
+#: winecfg.rc:121
 msgid "Active Title Bar Gradient"
 msgstr "Градиент активного окна"
 
-#: winecfg.rc:124
+#: winecfg.rc:122
 msgid "Inactive Title Bar Gradient"
 msgstr "Градиент пассивного окна"
 
-#: winecfg.rc:125
+#: winecfg.rc:123
 msgid "Menu Highlight"
 msgstr "Плоское меню - подсветка"
 
-#: winecfg.rc:126
+#: winecfg.rc:124
 msgid "Menu Bar"
 msgstr "Плоское меню - фон"
 

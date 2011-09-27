@@ -161,7 +161,7 @@ msgstr "Закладки"
 msgid "System Path"
 msgstr "Системний шлях"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:97 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:95 winefile.rc:103
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -10355,6 +10355,15 @@ msgstr "Посилання на"
 msgid "Wine configuration for %s"
 msgstr "Параметри Wine для %s"
 
+#: winecfg.rc:87
+msgid "Selected driver: %s"
+msgstr ""
+
+#: winecfg.rc:88
+#, fuzzy
+msgid "(None)"
+msgstr "Немає"
+
 #: winecfg.rc:51
 msgid ""
 "Changing the load order of this library is not recommended.\n"
@@ -10480,143 +10489,127 @@ msgstr ""
 "\n"
 "Натисніть 'Додати' в закладці Диски щоб створити його!\n"
 
-#: winecfg.rc:87
-msgid "Full"
-msgstr "Повне"
-
-#: winecfg.rc:88
-msgid "Standard"
-msgstr "Стандартне"
-
-#: winecfg.rc:89
-msgid "Basic"
-msgstr "Базове"
-
-#: winecfg.rc:90
-msgid "Emulation"
-msgstr "Емуляція"
-
-#: winecfg.rc:95
+#: winecfg.rc:93
 msgid "Controls Background"
 msgstr "Елементи керування - фон"
 
-#: winecfg.rc:96
+#: winecfg.rc:94
 msgid "Controls Text"
 msgstr "Елементи керування - текст"
 
-#: winecfg.rc:98
+#: winecfg.rc:96
 msgid "Menu Background"
 msgstr "Меню - фон"
 
-#: winecfg.rc:99
+#: winecfg.rc:97
 msgid "Menu Text"
 msgstr "Меню - текст"
 
-#: winecfg.rc:100
+#: winecfg.rc:98
 msgid "Scrollbar"
 msgstr "Смуга прокручування"
 
-#: winecfg.rc:101
+#: winecfg.rc:99
 msgid "Selection Background"
 msgstr "Виділення - фон"
 
-#: winecfg.rc:102
+#: winecfg.rc:100
 msgid "Selection Text"
 msgstr "Виділення - текст"
 
-#: winecfg.rc:103
+#: winecfg.rc:101
 msgid "ToolTip Background"
 msgstr "Підказка - фон"
 
-#: winecfg.rc:104
+#: winecfg.rc:102
 msgid "ToolTip Text"
 msgstr "Підказка - текст"
 
-#: winecfg.rc:105
+#: winecfg.rc:103
 msgid "Window Background"
 msgstr "Вікно - фон"
 
-#: winecfg.rc:106
+#: winecfg.rc:104
 msgid "Window Text"
 msgstr "Вікно - текст"
 
-#: winecfg.rc:107
+#: winecfg.rc:105
 msgid "Active Title Bar"
 msgstr "Заголовок акт. вікна"
 
-#: winecfg.rc:108
+#: winecfg.rc:106
 msgid "Active Title Text"
 msgstr "Заголовок акт. - текст"
 
-#: winecfg.rc:109
+#: winecfg.rc:107
 msgid "Inactive Title Bar"
 msgstr "Заголовок неак. вікна"
 
-#: winecfg.rc:110
+#: winecfg.rc:108
 msgid "Inactive Title Text"
 msgstr "Заголовок неак. вікна - текст"
 
-#: winecfg.rc:111
+#: winecfg.rc:109
 msgid "Message Box Text"
 msgstr "Вікно повідомлення - текст"
 
-#: winecfg.rc:112
+#: winecfg.rc:110
 msgid "Application Workspace"
 msgstr "Робоче поле програми"
 
-#: winecfg.rc:113
+#: winecfg.rc:111
 msgid "Window Frame"
 msgstr "Вікно - рамка"
 
-#: winecfg.rc:114
+#: winecfg.rc:112
 msgid "Active Border"
 msgstr "Активна рамка"
 
-#: winecfg.rc:115
+#: winecfg.rc:113
 msgid "Inactive Border"
 msgstr "Неактивна рамка"
 
-#: winecfg.rc:116
+#: winecfg.rc:114
 msgid "Controls Shadow"
 msgstr "Елементи керування - тінь"
 
-#: winecfg.rc:117
+#: winecfg.rc:115
 msgid "Gray Text"
 msgstr "Недоступний елемент - текст"
 
-#: winecfg.rc:118
+#: winecfg.rc:116
 msgid "Controls Highlight"
 msgstr "Ел-ти керув. - світла рамка"
 
-#: winecfg.rc:119
+#: winecfg.rc:117
 msgid "Controls Dark Shadow"
 msgstr "Ел-ти керув. - темна тінь"
 
-#: winecfg.rc:120
+#: winecfg.rc:118
 msgid "Controls Light"
 msgstr "Елементи керування - світло"
 
-#: winecfg.rc:121
+#: winecfg.rc:119
 msgid "Controls Alternate Background"
 msgstr "Ел-ти керув. - інший фон"
 
-#: winecfg.rc:122
+#: winecfg.rc:120
 msgid "Hot Tracked Item"
 msgstr "Посилання, Підсвічування"
 
-#: winecfg.rc:123
+#: winecfg.rc:121
 msgid "Active Title Bar Gradient"
 msgstr "Градієнт заголовка акт. вікна"
 
-#: winecfg.rc:124
+#: winecfg.rc:122
 msgid "Inactive Title Bar Gradient"
 msgstr "Град. заголовка неакт. вікна"
 
-#: winecfg.rc:125
+#: winecfg.rc:123
 msgid "Menu Highlight"
 msgstr "Меню - підсвічування"
 
-#: winecfg.rc:126
+#: winecfg.rc:124
 msgid "Menu Bar"
 msgstr "Рядок меню"
 

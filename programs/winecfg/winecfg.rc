@@ -84,10 +84,8 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_ACCEL_FULL              "Full"
-    IDS_ACCEL_STANDARD          "Standard"
-    IDS_ACCEL_BASIC             "Basic"
-    IDS_ACCEL_EMULATION         "Emulation"
+    IDS_AUDIO_DRIVER "Selected driver: %s"
+    IDS_AUDIO_DRIVER_NONE "(None)"
 END
 
 STRINGTABLE
