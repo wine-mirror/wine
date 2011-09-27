@@ -2866,24 +2866,20 @@ static void test_StretchBlt(void)
                              0, 0, 1, 1, 0, 0, 2, 1, expected, __LINE__);
 
     expected[0] = srcBuffer[0] & srcBuffer[1];
-todo_wine
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 1, 1, 0, 0, 3, 1, expected, __LINE__);
 
     expected[0] = srcBuffer[0] & srcBuffer[1] & srcBuffer[2];
-todo_wine
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 1, 1, 0, 0, 4, 1, expected, __LINE__);
 
     /* this doesn't happen if the src width is -ve */
     expected[0] = srcBuffer[1] & srcBuffer[2];
-todo_wine
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 1, 1, 2, 0, -2, 1, expected, __LINE__);
 
     /* when dst width > 1 behaviour reverts to what one would expect */
     expected[0] = srcBuffer[0] & srcBuffer[1], expected[1] = srcBuffer[2] & srcBuffer[3];
-todo_wine
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 1, 0, 0, 4, 1, expected, __LINE__);
 
@@ -2899,7 +2895,6 @@ todo_wine
     SetViewportExtEx( hdcDst, 100, 100, NULL );
 
     expected[0] = srcBuffer[0] & srcBuffer[1] & srcBuffer[2];
-todo_wine
     check_StretchBlt_stretch(hdcDst, hdcSrc, &biDst, dstBuffer, srcBuffer,
                              0, 0, 2, 2, 0, 0, 4, 1, expected, __LINE__);
     SetMapMode( hdcDst, MM_TEXT );

@@ -1113,3 +1113,23 @@ DWORD stretch_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
     offset_rect( &src->visrect, -src->visrect.left, -src->visrect.top );
     return ERROR_SUCCESS;
 }
+
+/***********************************************************************
+ *           dibdrv_StretchBlt
+ */
+BOOL dibdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                        PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop )
+{
+    BOOL ret;
+    DC *dc_dst = get_dc_ptr( dst_dev->hdc );
+
+    if (!dc_dst) return FALSE;
+
+    if (dst->width == 1 && src->width > 1) src->width--;
+    if (dst->height == 1 && src->height > 1) src->height--;
+
+    ret = dc_dst->nulldrv.funcs->pStretchBlt( &dc_dst->nulldrv, dst,
+                                              src_dev, src, rop );
+    release_dc_ptr( dc_dst );
+    return ret;
+}

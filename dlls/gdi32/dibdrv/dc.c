@@ -611,7 +611,7 @@ const DC_FUNCTIONS dib_driver =
     NULL,                               /* pSetWorldTransform */
     NULL,                               /* pStartDoc */
     NULL,                               /* pStartPage */
-    NULL,                               /* pStretchBlt */
+    dibdrv_StretchBlt,                  /* pStretchBlt */
     NULL,                               /* pStretchDIBits */
     NULL,                               /* pStrokeAndFillPath */
     NULL,                               /* pStrokePath */

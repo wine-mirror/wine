@@ -116,6 +116,8 @@ extern HBRUSH   dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush ) DECLSPEC_HIDDEN
 extern HPEN     dibdrv_SelectPen( PHYSDEV dev, HPEN hpen ) DECLSPEC_HIDDEN;
 extern COLORREF dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern COLORREF dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                                   PHYSDEV src_dev, struct bitblt_coords *src, DWORD rop ) DECLSPEC_HIDDEN;
 
 static inline dibdrv_physdev *get_dibdrv_pdev( PHYSDEV dev )
 {
