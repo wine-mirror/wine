@@ -34,6 +34,8 @@
 
 #define IDB_HHTOOLBAR   1000
 /* IDB_HHTOOLBAR bitmaps: */
-#define HH_STOP         0
-#define HH_REFRESH      1
-#define HH_HOME         2
+#define HHTB_STOP       0
+#define HHTB_REFRESH    1
+#define HHTB_HOME       2
+#define HHTB_SYNC       3
+#define HHTB_NUMBITMAPS HHTB_SYNC

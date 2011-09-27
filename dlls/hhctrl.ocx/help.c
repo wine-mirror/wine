@@ -796,7 +796,7 @@ static void TB_AddButtonsFromFlags(HHInfo *pHHInfo, TBBUTTON *pButtons, DWORD dw
     /* hhctrl.ocx bitmaps */
     tbAB.hInst = hhctrl_hinstance;
     tbAB.nID = IDB_HHTOOLBAR;
-    nHHBitmaps = SendMessageW(hToolbar, TB_ADDBITMAP, 0, (LPARAM)&tbAB);
+    nHHBitmaps = SendMessageW(hToolbar, TB_ADDBITMAP, HHTB_NUMBITMAPS, (LPARAM)&tbAB);
 
     *pdwNumButtons = 0;
 
@@ -826,17 +826,16 @@ static void TB_AddButtonsFromFlags(HHInfo *pHHInfo, TBBUTTON *pButtons, DWORD dw
         TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_FORWARD, nHistBitmaps + HIST_FORWARD);
 
     if (dwButtonFlags & HHWIN_BUTTON_STOP)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_STOP, nHHBitmaps + HH_STOP);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_STOP, nHHBitmaps + HHTB_STOP);
 
     if (dwButtonFlags & HHWIN_BUTTON_REFRESH)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_REFRESH, nHHBitmaps + HH_REFRESH);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_REFRESH, nHHBitmaps + HHTB_REFRESH);
 
     if (dwButtonFlags & HHWIN_BUTTON_HOME)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_HOME, nHHBitmaps + HH_HOME);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_HOME, nHHBitmaps + HHTB_HOME);
 
-    /* FIXME: Load the correct button bitmaps */
     if (dwButtonFlags & HHWIN_BUTTON_SYNC)
-        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_SYNC, nStdBitmaps + STD_PRINT);
+        TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_SYNC, nHHBitmaps + HHTB_SYNC);
 
     if (dwButtonFlags & HHWIN_BUTTON_OPTIONS)
         TB_AddButton(pButtons, (*pdwNumButtons)++, IDTB_OPTIONS, nStdBitmaps + STD_PROPERTIES);
