@@ -5598,12 +5598,8 @@ static void process_pending_renames(HKEY hkey)
         {
             lstrcpyA(buf2ptr, src);
             buf2ptr += strlen(src) + 1;
-            if (*dst)
-            {
-                lstrcpyA(buf2ptr, dst);
-                buf2ptr += strlen(dst) + 1;
-            }
-            buf2ptr++;
+            lstrcpyA(buf2ptr, dst);
+            buf2ptr += strlen(dst) + 1;
             continue;
         }
 
