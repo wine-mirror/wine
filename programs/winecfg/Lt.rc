@@ -56,7 +56,7 @@ BEGIN
                     15,50,230,120
     PUSHBUTTON	    "&Pridėti programą...",IDC_APP_ADDAPP, 90,174,75,14
     PUSHBUTTON	    "Pa&šalinti programą",IDC_APP_REMOVEAPP, 170,174,75,14
-    LTEXT           "&Windows versija:",IDC_STATIC,17,196,58,8
+    LTEXT           "Windows &versija:",IDC_STATIC,17,196,58,8
     COMBOBOX        IDC_WINVER,83,194,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
@@ -67,7 +67,7 @@ BEGIN
     GROUPBOX    " Langų nuostatos ",IDC_STATIC,8,4,244,84
     CONTROL     "Automatiškai &užvaldyti pelę viso ekrano languose",IDC_FULLSCREEN_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
     CONTROL     "Leisti langų tvarkytuvei &dekoruoti langus",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
-    CONTROL     "Leisti langų tvarkytuvei kontroliuoti &langus",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
+    CONTROL     "Leisti langų tvarkytuvei &kontroliuoti langus",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
     CONTROL     "&Emuliuoti virtualų darbalaukį",IDC_ENABLE_DESKTOP,"Button",
                 BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
     LTEXT       "Darbalaukio d&ydis:",IDC_DESKTOP_SIZE,15,70,60,8,WS_DISABLED
@@ -76,7 +76,7 @@ BEGIN
     EDITTEXT    IDC_DESKTOP_HEIGHT,133,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
     GROUPBOX    " Direct3D ",IDC_STATIC,8,95,244,49
-    LTEXT       "Verte&x Shader palaikymas: ",IDC_STATIC,15,110,90,32
+    LTEXT       "&Vertex Shader palaikymas: ",IDC_STATIC,15,110,90,32
     COMBOBOX    IDC_D3D_VSHADER_MODE,110,108,135,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL     "Leisti &Pixel Shader (jei palaiko aparatinė įranga)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
 
@@ -109,11 +109,11 @@ CAPTION "Redaguoti nustelbimą"
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Įkėlimo tvarka ",IDC_STATIC,8,4,94,66
-    CONTROL         "&Įtaisyta (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
-    CONTROL         "&Sava (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
-    CONTROL         "Į&taisyta po to sava",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
-    CONTROL         "S&ava po to įtaisyta",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
-    CONTROL         "&Išjungti",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
+    CONTROL         "&Įtaisyta (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,80,10
+    CONTROL         "&Sava (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,80,10
+    CONTROL         "Į&taisyta, po to sava",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,80,10
+    CONTROL         "S&ava, po to įtaisyta",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,80,10
+    CONTROL         "&Išjungti",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,80,10
     DEFPUSHBUTTON   "Gerai",IDOK,8,74,45,14,WS_GROUP
     PUSHBUTTON      "Atsisakyti",IDCANCEL,57,74,45,14,WS_GROUP
 END
@@ -165,7 +165,7 @@ IDD_AUDIOCFG DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Driver Diagnostics ",IDC_STATIC,8,4,244,27
+    GROUPBOX        " Tvarkyklės diagnostika ",IDC_STATIC,8,4,244,27
     LTEXT           "",IDC_AUDIO_DRIVER,18,16,230,8
     PUSHBUTTON      "&Testuoti garsą",IDC_AUDIO_TEST,8,33,63,14
 END
