@@ -1231,32 +1231,6 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     device->fb.render_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             sizeof(*device->fb.render_targets) * gl_info->limits.buffers);
 
-    device->palette_count = 1;
-    device->palettes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PALETTEENTRY*));
-    if (!device->palettes || !device->fb.render_targets)
-    {
-        ERR("Out of memory!\n");
-        hr = E_OUTOFMEMORY;
-        goto err_out;
-    }
-
-    device->palettes[0] = HeapAlloc(GetProcessHeap(), 0, sizeof(PALETTEENTRY) * 256);
-    if (!device->palettes[0])
-    {
-        ERR("Out of memory!\n");
-        hr = E_OUTOFMEMORY;
-        goto err_out;
-    }
-
-    for (i = 0; i < 256; ++i)
-    {
-        device->palettes[0][i].peRed = 0xff;
-        device->palettes[0][i].peGreen = 0xff;
-        device->palettes[0][i].peBlue = 0xff;
-        device->palettes[0][i].peFlags = 0xff;
-    }
-    device->currentPalette = 0;
-
     /* Initialize the texture unit mapping to a 1:1 mapping */
     for (state = 0; state < MAX_COMBINED_SAMPLERS; ++state)
     {
@@ -1385,12 +1359,6 @@ err_out:
     HeapFree(GetProcessHeap(), 0, device->fb.render_targets);
     HeapFree(GetProcessHeap(), 0, device->swapchains);
     device->swapchain_count = 0;
-    if (device->palettes)
-    {
-        HeapFree(GetProcessHeap(), 0, device->palettes[0]);
-        HeapFree(GetProcessHeap(), 0, device->palettes);
-    }
-    device->palette_count = 0;
     if (swapchain)
         wined3d_swapchain_decref(swapchain);
     if (device->stateBlock)
@@ -1578,12 +1546,6 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     HeapFree(GetProcessHeap(), 0, device->swapchains);
     device->swapchains = NULL;
     device->swapchain_count = 0;
-
-    for (i = 0; i < device->palette_count; ++i)
-        HeapFree(GetProcessHeap(), 0, device->palettes[i]);
-    HeapFree(GetProcessHeap(), 0, device->palettes);
-    device->palettes = NULL;
-    device->palette_count = 0;
 
     HeapFree(GetProcessHeap(), 0, device->fb.render_targets);
     device->fb.render_targets = NULL;
@@ -4571,135 +4533,6 @@ HRESULT CDECL wined3d_device_validate_device(struct wined3d_device *device, DWOR
     *num_passes = 1;
 
     TRACE("returning D3D_OK\n");
-    return WINED3D_OK;
-}
-
-static void dirtify_p8_texture_samplers(struct wined3d_device *device)
-{
-    UINT i;
-
-    for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
-    {
-        struct wined3d_texture *texture = device->stateBlock->state.textures[i];
-        if (texture && (texture->resource.format->id == WINED3DFMT_P8_UINT
-                || texture->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM))
-            device_invalidate_state(device, STATE_SAMPLER(i));
-    }
-}
-
-HRESULT CDECL wined3d_device_set_palette_entries(struct wined3d_device *device,
-        UINT palette_idx, const PALETTEENTRY *entries)
-{
-    UINT i;
-
-    TRACE("device %p, palette_idx %u, entries %p.\n", device, palette_idx, entries);
-
-    if (palette_idx >= MAX_PALETTES)
-    {
-        WARN("Invalid palette index %u.\n", palette_idx);
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if (palette_idx >= device->palette_count)
-    {
-        UINT new_size = device->palette_count;
-        PALETTEENTRY **palettes;
-
-        do
-        {
-           new_size *= 2;
-        } while (palette_idx >= new_size);
-        palettes = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, device->palettes, sizeof(*palettes) * new_size);
-        if (!palettes)
-        {
-            ERR("Out of memory!\n");
-            return E_OUTOFMEMORY;
-        }
-        device->palettes = palettes;
-        device->palette_count = new_size;
-    }
-
-    if (!device->palettes[palette_idx])
-    {
-        device->palettes[palette_idx] = HeapAlloc(GetProcessHeap(),  0, sizeof(PALETTEENTRY) * 256);
-        if (!device->palettes[palette_idx])
-        {
-            ERR("Out of memory!\n");
-            return E_OUTOFMEMORY;
-        }
-    }
-
-    for (i = 0; i < 256; ++i)
-    {
-        device->palettes[palette_idx][i].peRed = entries[i].peRed;
-        device->palettes[palette_idx][i].peGreen = entries[i].peGreen;
-        device->palettes[palette_idx][i].peBlue = entries[i].peBlue;
-        device->palettes[palette_idx][i].peFlags = entries[i].peFlags;
-    }
-
-    if (palette_idx == device->currentPalette)
-        dirtify_p8_texture_samplers(device);
-
-    return WINED3D_OK;
-}
-
-HRESULT CDECL wined3d_device_get_palette_entries(struct wined3d_device *device,
-        UINT palette_idx, PALETTEENTRY *entries)
-{
-    UINT i;
-
-    TRACE("device %p, palette_idx %u, entries %p.\n", device, palette_idx, entries);
-
-    if (palette_idx >= device->palette_count || !device->palettes[palette_idx])
-    {
-        /* What happens in such situation isn't documented; Native seems to
-         * silently abort on such conditions. */
-        WARN("Invalid palette index %u.\n", palette_idx);
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    for (i = 0; i < 256; ++i)
-    {
-        entries[i].peRed = device->palettes[palette_idx][i].peRed;
-        entries[i].peGreen = device->palettes[palette_idx][i].peGreen;
-        entries[i].peBlue = device->palettes[palette_idx][i].peBlue;
-        entries[i].peFlags = device->palettes[palette_idx][i].peFlags;
-    }
-
-    return WINED3D_OK;
-}
-
-HRESULT CDECL wined3d_device_set_current_texture_palette(struct wined3d_device *device, UINT palette_idx)
-{
-    TRACE("device %p, palette_idx %u.\n", device, palette_idx);
-
-    /* Native appears to silently abort on attempt to make an uninitialized
-     * palette current and render. (tested with reference rasterizer). */
-    if (palette_idx >= device->palette_count || !device->palettes[palette_idx])
-    {
-        WARN("Invalid palette index %u.\n", palette_idx);
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    /* TODO: stateblocks? */
-    if (device->currentPalette != palette_idx)
-    {
-        device->currentPalette = palette_idx;
-        dirtify_p8_texture_samplers(device);
-    }
-
-    return WINED3D_OK;
-}
-
-HRESULT CDECL wined3d_device_get_current_texture_palette(struct wined3d_device *device, UINT *palette_idx)
-{
-    TRACE("device %p, palette_idx %p.\n", device, palette_idx);
-
-    if (!palette_idx)
-        return WINED3DERR_INVALIDCALL;
-
-    *palette_idx = device->currentPalette;
-
     return WINED3D_OK;
 }
 

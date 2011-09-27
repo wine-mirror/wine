@@ -3869,19 +3869,6 @@ void surface_internal_preload(struct wined3d_surface *surface, enum WINED3DSRGB 
         /* TODO: Use already acquired context when possible. */
         context = context_acquire(device, NULL);
 
-        if (surface->resource.format->id == WINED3DFMT_P8_UINT
-                || surface->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM)
-        {
-            if (palette9_changed(surface))
-            {
-                TRACE("Reloading surface because the d3d8/9 palette was changed\n");
-                /* TODO: This is not necessarily needed with hw palettized texture support */
-                surface_load_location(surface, SFLAG_INSYSMEM, NULL);
-                /* Make sure the texture is reloaded because of the palette change, this kills performance though :( */
-                surface_modify_location(surface, SFLAG_INTEXTURE, FALSE);
-            }
-        }
-
         surface_load(surface, srgb == SRGB_SRGB ? TRUE : FALSE);
 
         if (surface->resource.pool == WINED3DPOOL_DEFAULT)
@@ -4493,29 +4480,12 @@ void d3dfmt_p8_init_palette(const struct wined3d_surface *surface, BYTE table[25
 
     if (!pal)
     {
-        /* In DirectDraw the palette is a property of the surface, there are no such things as device palettes. */
-        if (device->wined3d->flags & WINED3D_PALETTE_PER_SURFACE)
+        ERR("This code should never get entered for DirectDraw!, expect problems\n");
+        if (index_in_alpha)
         {
-            ERR("This code should never get entered for DirectDraw!, expect problems\n");
-            if (index_in_alpha)
-            {
-                /* Guarantees that memory representation remains correct after sysmem<->texture transfers even if
-                 * there's no palette at this time. */
-                for (i = 0; i < 256; i++) table[i][3] = i;
-            }
-        }
-        else
-        {
-            /* Direct3D >= 8 palette usage style: P8 textures use device palettes, palette entry format is A8R8G8B8,
-             * alpha is stored in peFlags and may be used by the app if D3DPTEXTURECAPS_ALPHAPALETTE device
-             * capability flag is present (wine does advertise this capability) */
-            for (i = 0; i < 256; ++i)
-            {
-                table[i][0] = device->palettes[device->currentPalette][i].peRed;
-                table[i][1] = device->palettes[device->currentPalette][i].peGreen;
-                table[i][2] = device->palettes[device->currentPalette][i].peBlue;
-                table[i][3] = device->palettes[device->currentPalette][i].peFlags;
-            }
+            /* Guarantees that memory representation remains correct after sysmem<->texture transfers even if
+             * there's no palette at this time. */
+            for (i = 0; i < 256; i++) table[i][3] = i;
         }
     }
     else
@@ -4697,35 +4667,6 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
             ERR("Unsupported conversion type %#x.\n", convert);
     }
     return WINED3D_OK;
-}
-
-BOOL palette9_changed(struct wined3d_surface *surface)
-{
-    struct wined3d_device *device = surface->resource.device;
-
-    if (surface->palette || (surface->resource.format->id != WINED3DFMT_P8_UINT
-            && surface->resource.format->id != WINED3DFMT_P8_UINT_A8_UNORM))
-    {
-        /* If a ddraw-style palette is attached assume no d3d9 palette change.
-         * Also the palette isn't interesting if the surface format isn't P8 or A8P8
-         */
-        return FALSE;
-    }
-
-    if (surface->palette9)
-    {
-        if (!memcmp(surface->palette9, device->palettes[device->currentPalette], sizeof(PALETTEENTRY) * 256))
-        {
-            return FALSE;
-        }
-    }
-    else
-    {
-        surface->palette9 = HeapAlloc(GetProcessHeap(), 0, sizeof(PALETTEENTRY) * 256);
-    }
-    memcpy(surface->palette9, device->palettes[device->currentPalette], sizeof(PALETTEENTRY) * 256);
-
-    return TRUE;
 }
 
 void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back)

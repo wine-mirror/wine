@@ -683,25 +683,6 @@ static void texture2d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
         context = context_acquire(device, NULL);
     }
 
-    if (texture->resource.format->id == WINED3DFMT_P8_UINT
-            || texture->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM)
-    {
-        for (i = 0; i < sub_count; ++i)
-        {
-            struct wined3d_surface *surface = surface_from_resource(texture->sub_resources[i]);
-
-            if (palette9_changed(surface))
-            {
-                TRACE("Reloading surface %p because the d3d8/9 palette was changed.\n", surface);
-                /* TODO: This is not necessarily needed with hw palettized texture support. */
-                surface_load_location(surface, SFLAG_INSYSMEM, NULL);
-                /* Make sure the texture is reloaded because of the palette
-                 * change, this kills performance though :( */
-                surface_modify_location(surface, SFLAG_INTEXTURE, FALSE);
-            }
-        }
-    }
-
     if (gl_tex->dirty)
     {
         /* Reload the surfaces if the texture is marked dirty. */

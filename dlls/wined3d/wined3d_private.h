@@ -1712,11 +1712,6 @@ struct wined3d_device
     struct wined3d_surface *onscreen_depth_stencil;
     struct wined3d_surface *auto_depth_stencil;
 
-    /* palettes texture management */
-    PALETTEENTRY **palettes;
-    UINT palette_count;
-    UINT currentPalette;
-
     /* For rendering to a texture using glCopyTexImage */
     GLuint                  depth_blt_texture;
 
@@ -2179,8 +2174,6 @@ typedef enum {
 HRESULT d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_alpha_ck, BOOL use_texturing,
         struct wined3d_format *format, CONVERT_TYPES *convert) DECLSPEC_HIDDEN;
 void d3dfmt_p8_init_palette(const struct wined3d_surface *surface, BYTE table[256][4], BOOL colorkey) DECLSPEC_HIDDEN;
-
-BOOL palette9_changed(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 
 struct wined3d_vertex_declaration_element
 {

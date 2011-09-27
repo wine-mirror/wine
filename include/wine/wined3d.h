@@ -1234,8 +1234,7 @@ enum wined3d_sysval_semantic
 #define WINED3DDEVCAPS_RTPATCHHANDLEZERO                        0x00800000
 #define WINED3DDEVCAPS_NPATCHES                                 0x01000000
 
-#define WINED3D_PALETTE_PER_SURFACE                             0x00000001
-#define WINED3D_LEGACY_DEPTH_BIAS                               0x00000002
+#define WINED3D_LEGACY_DEPTH_BIAS                               0x00000001
 
 /* dwDDFX */
 /* arithmetic stretching along y axis */
@@ -2212,7 +2211,6 @@ HRESULT __cdecl wined3d_device_get_clip_plane(const struct wined3d_device *devic
 HRESULT __cdecl wined3d_device_get_clip_status(const struct wined3d_device *device, WINED3DCLIPSTATUS *clip_status);
 HRESULT __cdecl wined3d_device_get_creation_parameters(struct wined3d_device *device,
         WINED3DDEVICE_CREATION_PARAMETERS *creation_parameters);
-HRESULT __cdecl wined3d_device_get_current_texture_palette(struct wined3d_device *device, UINT *palette_idx);
 HRESULT __cdecl wined3d_device_get_depth_stencil(struct wined3d_device *device,
         struct wined3d_surface **depth_stencil);
 HRESULT __cdecl wined3d_device_get_device_caps(const struct wined3d_device *device, WINED3DCAPS *caps);
@@ -2227,8 +2225,6 @@ HRESULT __cdecl wined3d_device_get_light(const struct wined3d_device *device, UI
 HRESULT __cdecl wined3d_device_get_light_enable(const struct wined3d_device *device, UINT light_idx, BOOL *enable);
 HRESULT __cdecl wined3d_device_get_material(const struct wined3d_device *device, WINED3DMATERIAL *material);
 float __cdecl wined3d_device_get_npatch_mode(struct wined3d_device *device);
-HRESULT __cdecl wined3d_device_get_palette_entries(struct wined3d_device *device,
-        UINT palette_idx, PALETTEENTRY *entries);
 struct wined3d_shader * __cdecl wined3d_device_get_pixel_shader(const struct wined3d_device *device);
 void __cdecl wined3d_device_get_primitive_type(const struct wined3d_device *device,
         WINED3DPRIMITIVETYPE *primitive_topology);
@@ -2291,7 +2287,6 @@ void __cdecl wined3d_device_restore_fullscreen_window(struct wined3d_device *dev
 HRESULT __cdecl wined3d_device_set_base_vertex_index(struct wined3d_device *device, INT base_index);
 HRESULT __cdecl wined3d_device_set_clip_plane(struct wined3d_device *device, UINT plane_idx, const float *plane);
 HRESULT __cdecl wined3d_device_set_clip_status(struct wined3d_device *device, const WINED3DCLIPSTATUS *clip_status);
-HRESULT __cdecl wined3d_device_set_current_texture_palette(struct wined3d_device *device, UINT palette_idx);
 void __cdecl wined3d_device_set_cursor_position(struct wined3d_device *device,
         int x_screen_space, int y_screen_space, DWORD flags);
 HRESULT __cdecl wined3d_device_set_cursor_properties(struct wined3d_device *device,
@@ -2309,8 +2304,6 @@ HRESULT __cdecl wined3d_device_set_light_enable(struct wined3d_device *device, U
 HRESULT __cdecl wined3d_device_set_material(struct wined3d_device *device, const WINED3DMATERIAL *material);
 void __cdecl wined3d_device_set_multithreaded(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_set_npatch_mode(struct wined3d_device *device, float segments);
-HRESULT __cdecl wined3d_device_set_palette_entries(struct wined3d_device *device,
-        UINT palette_idx, const PALETTEENTRY *entries);
 HRESULT __cdecl wined3d_device_set_pixel_shader(struct wined3d_device *device, struct wined3d_shader *shader);
 void __cdecl wined3d_device_set_primitive_type(struct wined3d_device *device, WINED3DPRIMITIVETYPE primitive_topology);
 HRESULT __cdecl wined3d_device_set_ps_consts_b(struct wined3d_device *device,
