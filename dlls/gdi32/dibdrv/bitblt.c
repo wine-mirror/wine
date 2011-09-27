@@ -884,11 +884,227 @@ done:
     return ret;
 }
 
+/****************************************************************************
+ *               calc_1d_stretch_params   (helper for stretch_bitmapinfo)
+ *
+ * If one plots the dst axis vertically, the src axis horizontally, then a
+ * 1-d stretch/shrink is rather like finding the pixels to draw a straight
+ * line.  Following a Bresenham type argument from point (s_i, d_i) we must
+ * pick either (s_i + 1, d_i) or (s_i + 1, d_i + 1), however the choice
+ * depends on where the centre of the next pixel is, ie whether the
+ * point (s_i + 3/2, d_i + 1) (the mid-point between the two centres)
+ * lies above or below the idea line.  The differences in error between
+ * both choices and the current pixel is the same as per Bresenham,
+ * the only difference is the error between the zeroth and first pixel.
+ * This is now 3 dy - 2 dx (cf 2 dy - dx for the line case).
+ *
+ * Here we use the Bresenham line clipper to provide the start and end points
+ * and add the additional dy - dx error term by passing this as the bias.
+ *
+ */
+static DWORD calc_1d_stretch_params( INT dst_start, INT dst_length, INT dst_vis_start, INT dst_vis_end,
+                                     INT src_start, INT src_length, INT src_vis_start, INT src_vis_end,
+                                     INT *dst_clipped_start, INT *src_clipped_start,
+                                     INT *dst_clipped_end, INT *src_clipped_end,
+                                     struct stretch_params *stretch_params, BOOL *stretch )
+{
+    bres_params bres_params;
+    POINT start, end, clipped_start, clipped_end;
+    RECT clip;
+    int clip_status, m, n;
+
+    stretch_params->src_inc = stretch_params->dst_inc = 1;
+
+    bres_params.dy = abs( dst_length );
+    bres_params.dx = abs( src_length );
+
+    if (bres_params.dx > bres_params.dy) bres_params.octant = 1;
+    else bres_params.octant = 2;
+    if (src_length < 0)
+    {
+        bres_params.octant = 5 - bres_params.octant;
+        stretch_params->src_inc = -1;
+    }
+    if (dst_length < 0)
+    {
+        bres_params.octant = 9 - bres_params.octant;
+        stretch_params->dst_inc = -1;
+    }
+    bres_params.octant = 1 << (bres_params.octant - 1);
+
+    if (bres_params.dx > bres_params.dy)
+        bres_params.bias = bres_params.dy - bres_params.dx;
+    else
+        bres_params.bias = bres_params.dx - bres_params.dy;
+
+    start.x = src_start;
+    start.y = dst_start;
+    end.x   = src_start + src_length;
+    end.y   = dst_start + dst_length;
+
+    clip.left   = src_vis_start;
+    clip.right  = src_vis_end;
+    clip.top    = dst_vis_start;
+    clip.bottom = dst_vis_end;
+
+    clip_status = clip_line( &start, &end, &clip, &bres_params, &clipped_start, &clipped_end );
+
+    if (!clip_status) return ERROR_NO_DATA;
+
+    m = abs( clipped_start.x - start.x );
+    n = abs( clipped_start.y - start.y );
+
+    if (bres_params.dx > bres_params.dy)
+    {
+        stretch_params->err_start = 3 * bres_params.dy - 2 * bres_params.dx +
+            m * 2 * bres_params.dy - n * 2 * bres_params.dx;
+        stretch_params->err_add_1 = 2 * bres_params.dy - 2 * bres_params.dx;
+        stretch_params->err_add_2 = 2 * bres_params.dy;
+        stretch_params->length = abs( clipped_end.x - clipped_start.x );
+        *stretch = FALSE;
+    }
+    else
+    {
+        stretch_params->err_start = 3 * bres_params.dx - 2 * bres_params.dy +
+            n * 2 * bres_params.dx - m * 2 * bres_params.dy;
+        stretch_params->err_add_1 = 2 * bres_params.dx - 2 * bres_params.dy;
+        stretch_params->err_add_2 = 2 * bres_params.dx;
+        stretch_params->length = abs( clipped_end.y - clipped_start.y );
+        *stretch = TRUE;
+    }
+
+    /* The endpoint will usually have been clipped out as we don't want to touch
+       that pixel, if it is we'll increment the length. */
+    if (end.x != clipped_end.x || end.y != clipped_end.y)
+    {
+        clipped_end.x += stretch_params->src_inc;
+        clipped_end.y += stretch_params->dst_inc;
+        stretch_params->length++;
+    }
+
+    *src_clipped_start = clipped_start.x;
+    *dst_clipped_start = clipped_start.y;
+    *src_clipped_end   = clipped_end.x;
+    *dst_clipped_end   = clipped_end.y;
+
+    return ERROR_SUCCESS;
+}
+
+
 DWORD stretch_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bitblt_coords *src,
                           const BITMAPINFO *dst_info, void *dst_bits, struct bitblt_coords *dst,
                           INT mode )
 {
-    FIXME( "should stretch %dx%d -> %dx%d\n", src->width, src->height, dst->width, dst->height );
+    dib_info src_dib, dst_dib;
+    POINT dst_start, src_start, dst_end, src_end;
+    RECT rect;
+    BOOL hstretch, vstretch;
+    struct stretch_params v_params, h_params;
+    int err;
+    DWORD ret;
+    void (* row_fn)(const dib_info *dst_dib, const POINT *dst_start,
+                    const dib_info *src_dib, const POINT *src_start,
+                    const struct stretch_params *params, int mode, BOOL keep_dst);
+
+    TRACE("dst %d, %d - %d x %d visrect %s src %d, %d - %d x %d visrect %s\n",
+          dst->x, dst->y, dst->width, dst->height, wine_dbgstr_rect(&dst->visrect),
+          src->x, src->y, src->width, src->height, wine_dbgstr_rect(&src->visrect));
+
+    if ( !init_dib_info_from_bitmapinfo( &src_dib, src_info, src_bits, 0 ) )
+        return ERROR_BAD_FORMAT;
+    if ( !init_dib_info_from_bitmapinfo( &dst_dib, dst_info, dst_bits, 0 ) )
+        return ERROR_BAD_FORMAT;
+
+    /* v */
+    ret = calc_1d_stretch_params( dst->y, dst->height, dst->visrect.top, dst->visrect.bottom,
+                                  src->y, src->height, src->visrect.top, src->visrect.bottom,
+                                  &dst_start.y, &src_start.y, &dst_end.y, &src_end.y,
+                                  &v_params, &vstretch );
+    if (ret) return ret;
+
+    /* h */
+    ret = calc_1d_stretch_params( dst->x, dst->width, dst->visrect.left, dst->visrect.right,
+                                  src->x, src->width, src->visrect.left, src->visrect.right,
+                                  &dst_start.x, &src_start.x, &dst_end.x, &src_end.x,
+                                  &h_params, &hstretch );
+    if (ret) return ret;
+
+    TRACE("got dst start %d, %d inc %d, %d. src start %d, %d inc %d, %d len %d x %d\n",
+          dst_start.x, dst_start.y, h_params.dst_inc, v_params.dst_inc,
+          src_start.x, src_start.y, h_params.src_inc, v_params.src_inc,
+          h_params.length, v_params.length);
+
+    rect.left   = dst_start.x;
+    rect.top    = dst_start.y;
+    rect.right  = dst_end.x;
+    rect.bottom = dst_end.y;
+
+    if (rect.right < rect.left) { INT tmp = rect.left; rect.left = rect.right+1; rect.right = tmp+1; }
+    if (rect.bottom < rect.top) { INT tmp = rect.top; rect.top = rect.bottom+1; rect.bottom = tmp+1; }
+    intersect_rect( &dst->visrect, &dst->visrect, &rect );
+
+    dst_start.x -= dst->visrect.left;
+    dst_start.y -= dst->visrect.top;
+
+    err = v_params.err_start;
+
+    row_fn = hstretch ? dst_dib.funcs->stretch_row : dst_dib.funcs->shrink_row;
+
+    if (vstretch)
+    {
+        BOOL need_row = TRUE;
+        RECT last_row, this_row;
+        if (hstretch) mode = STRETCH_DELETESCANS;
+        last_row.left = 0;
+        last_row.right = dst->visrect.right - dst->visrect.left;
+
+        while (v_params.length--)
+        {
+            if (need_row)
+            {
+                row_fn( &dst_dib, &dst_start, &src_dib, &src_start, &h_params, mode, FALSE );
+                need_row = FALSE;
+            }
+            else
+            {
+                last_row.top = dst_start.y - v_params.dst_inc;
+                last_row.bottom = dst_start.y;
+                this_row = last_row;
+                offset_rect( &this_row, 0, v_params.dst_inc );
+                copy_rect( &dst_dib, &this_row, &dst_dib, &last_row, NULL, R2_COPYPEN );
+            }
+
+            if (err > 0)
+            {
+                src_start.y += v_params.src_inc;
+                need_row = TRUE;
+                err += v_params.err_add_1;
+            }
+            else err += v_params.err_add_2;
+            dst_start.y += v_params.dst_inc;
+        }
+    }
+    else
+    {
+        int merged_rows = 0;
+        int faster_mode = mode;
+
+        while (v_params.length--)
+        {
+            if (hstretch) faster_mode = merged_rows ? mode : STRETCH_DELETESCANS;
+            row_fn( &dst_dib, &dst_start, &src_dib, &src_start, &h_params, faster_mode, merged_rows != 0 );
+            merged_rows++;
+
+            if (err > 0)
+            {
+                dst_start.y += v_params.dst_inc;
+                merged_rows = 0;
+                err += v_params.err_add_1;
+            }
+            else err += v_params.err_add_2;
+            src_start.y += v_params.src_inc;
+        }
+    }
 
     /* update coordinates, the destination rectangle is always stored at 0,0 */
     *src = *dst;

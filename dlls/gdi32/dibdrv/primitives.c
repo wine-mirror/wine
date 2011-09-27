@@ -3570,6 +3570,411 @@ static BOOL create_rop_masks_null(const dib_info *dib, const dib_info *hatch, co
     return FALSE;
 }
 
+static inline void rop_codes_from_stretch_mode( int mode, struct rop_codes *codes )
+{
+    switch (mode)
+    {
+    default:
+    case STRETCH_DELETESCANS:
+        get_rop_codes( R2_COPYPEN, codes );
+        break;
+    case STRETCH_ORSCANS:
+        get_rop_codes( R2_MERGEPEN, codes );
+        break;
+    case STRETCH_ANDSCANS:
+        get_rop_codes( R2_MASKPEN, codes );
+        break;
+    }
+    return;
+}
+
+static void stretch_row_32(const dib_info *dst_dib, const POINT *dst_start,
+                           const dib_info *src_dib, const POINT *src_start,
+                           const struct stretch_params *params, int mode,
+                           BOOL keep_dst)
+{
+    DWORD *dst_ptr = get_pixel_ptr_32( dst_dib, dst_start->x, dst_start->y );
+    DWORD *src_ptr = get_pixel_ptr_32( src_dib, src_start->x, src_start->y );
+    int err = params->err_start;
+    int width;
+    struct rop_codes codes;
+
+    rop_codes_from_stretch_mode( mode, &codes );
+    for (width = params->length; width; width--)
+    {
+        do_rop_codes_32( dst_ptr, *src_ptr, &codes );
+        dst_ptr += params->dst_inc;
+        if (err > 0)
+        {
+            src_ptr += params->src_inc;
+            err += params->err_add_1;
+        }
+        else err += params->err_add_2;
+    }
+}
+
+static void stretch_row_24(const dib_info *dst_dib, const POINT *dst_start,
+                           const dib_info *src_dib, const POINT *src_start,
+                           const struct stretch_params *params, int mode,
+                           BOOL keep_dst)
+{
+    BYTE *dst_ptr = get_pixel_ptr_24( dst_dib, dst_start->x, dst_start->y );
+    BYTE *src_ptr = get_pixel_ptr_24( src_dib, src_start->x, src_start->y );
+    int err = params->err_start;
+    int width;
+    struct rop_codes codes;
+
+    rop_codes_from_stretch_mode( mode, &codes );
+    for (width = params->length; width; width--)
+    {
+        do_rop_codes_8( dst_ptr,     *src_ptr,       &codes );
+        do_rop_codes_8( dst_ptr + 1, *(src_ptr + 1), &codes );
+        do_rop_codes_8( dst_ptr + 2, *(src_ptr + 2), &codes );
+        dst_ptr += 3 * params->dst_inc;
+        if (err > 0)
+        {
+            src_ptr += 3 * params->src_inc;
+            err += params->err_add_1;
+        }
+        else err += params->err_add_2;
+    }
+}
+
+static void stretch_row_16(const dib_info *dst_dib, const POINT *dst_start,
+                           const dib_info *src_dib, const POINT *src_start,
+                           const struct stretch_params *params, int mode,
+                           BOOL keep_dst)
+{
+    WORD *dst_ptr = get_pixel_ptr_16( dst_dib, dst_start->x, dst_start->y );
+    WORD *src_ptr = get_pixel_ptr_16( src_dib, src_start->x, src_start->y );
+    int err = params->err_start;
+    int width;
+    struct rop_codes codes;
+
+    rop_codes_from_stretch_mode( mode, &codes );
+    for (width = params->length; width; width--)
+    {
+        do_rop_codes_16( dst_ptr, *src_ptr, &codes );
+        dst_ptr += params->dst_inc;
+        if (err > 0)
+        {
+            src_ptr += params->src_inc;
+            err += params->err_add_1;
+        }
+        else err += params->err_add_2;
+    }
+}
+
+static void stretch_row_8(const dib_info *dst_dib, const POINT *dst_start,
+                          const dib_info *src_dib, const POINT *src_start,
+                          const struct stretch_params *params, int mode,
+                          BOOL keep_dst)
+{
+    BYTE *dst_ptr = get_pixel_ptr_8( dst_dib, dst_start->x, dst_start->y );
+    BYTE *src_ptr = get_pixel_ptr_8( src_dib, src_start->x, src_start->y );
+    int err = params->err_start;
+    int width;
+    struct rop_codes codes;
+
+    rop_codes_from_stretch_mode( mode, &codes );
+    for (width = params->length; width; width--)
+    {
+        do_rop_codes_8( dst_ptr, *src_ptr, &codes );
+        dst_ptr += params->dst_inc;
+        if (err > 0)
+        {
+            src_ptr += params->src_inc;
+            err += params->err_add_1;
+        }
+        else err += params->err_add_2;
+    }
+}
+
+static void stretch_row_4(const dib_info *dst_dib, const POINT *dst_start,
+                          const dib_info *src_dib, const POINT *src_start,
+                          const struct stretch_params *params, int mode,
+                          BOOL keep_dst)
+{
+    BYTE *dst_ptr = get_pixel_ptr_4( dst_dib, dst_start->x, dst_start->y );
+    BYTE *src_ptr = get_pixel_ptr_4( src_dib, src_start->x, src_start->y );
+    int err = params->err_start;
+    int width, dst_x = dst_start->x, src_x = src_start->x;
+    struct rop_codes codes;
+    BYTE src_val;
+
+    rop_codes_from_stretch_mode( mode, &codes );
+    for (width = params->length; width; width--)
+    {
+        if (src_x & 1) src_val = (*src_ptr & 0x0f) | (*src_ptr << 4);
+        else src_val = (*src_ptr & 0xf0) | (*src_ptr >> 4);
+
+        do_rop_codes_mask_8( dst_ptr, src_val, &codes, (dst_x & 1) ? 0x0f : 0xf0 );
+
+        if ((dst_x & ~1) != ((dst_x + params->dst_inc) & ~1))
+            dst_ptr += params->dst_inc;
+        dst_x += params->dst_inc;
+
+        if (err > 0)
+        {
+            if ((src_x & ~1) != ((src_x + params->src_inc) & ~1))
+                src_ptr += params->src_inc;
+            src_x += params->src_inc;
+            err += params->err_add_1;
+        }
+        else err += params->err_add_2;
+    }
+}
+
+static void stretch_row_1(const dib_info *dst_dib, const POINT *dst_start,
+                          const dib_info *src_dib, const POINT *src_start,
+                          const struct stretch_params *params, int mode,
+                          BOOL keep_dst)
+{
+    BYTE *dst_ptr = get_pixel_ptr_1( dst_dib, dst_start->x, dst_start->y );
+    BYTE *src_ptr = get_pixel_ptr_1( src_dib, src_start->x, src_start->y );
+    int err = params->err_start;
+    int width, dst_x = dst_start->x, src_x = src_start->x;
+    struct rop_codes codes;
+    BYTE src_val;
+
+    rop_codes_from_stretch_mode( mode, &codes );
+    for (width = params->length; width; width--)
+    {
+        src_val = *src_ptr & pixel_masks_1[src_x % 8] ? 0xff : 0;
+        do_rop_codes_mask_8( dst_ptr, src_val, &codes, pixel_masks_1[dst_x % 8] );
+
+        if ((dst_x & ~7) != ((dst_x + params->dst_inc) & ~7))
+            dst_ptr += params->dst_inc;
+        dst_x += params->dst_inc;
+
+        if (err > 0)
+        {
+            if ((src_x & ~7) != ((src_x + params->src_inc) & ~7))
+                src_ptr += params->src_inc;
+            src_x += params->src_inc;
+            err += params->err_add_1;
+        }
+        else err += params->err_add_2;
+    }
+}
+
+static void stretch_row_null(const dib_info *dst_dib, const POINT *dst_start,
+                             const dib_info *src_dib, const POINT *src_start,
+                             const struct stretch_params *params, int mode,
+                             BOOL keep_dst)
+{
+    FIXME("bit count %d\n", dst_dib->bit_count);
+    return;
+}
+
+static void shrink_row_32(const dib_info *dst_dib, const POINT *dst_start,
+                          const dib_info *src_dib, const POINT *src_start,
+                          const struct stretch_params *params, int mode,
+                          BOOL keep_dst)
+{
+    DWORD *dst_ptr = get_pixel_ptr_32( dst_dib, dst_start->x, dst_start->y );
+    DWORD *src_ptr = get_pixel_ptr_32( src_dib, src_start->x, src_start->y );
+    int err = params->err_start;
+    int width;
+    struct rop_codes codes;
+    DWORD init_val = (mode == STRETCH_ANDSCANS) ? ~0u : 0u;
+    BOOL new_pix = TRUE;
+
+    rop_codes_from_stretch_mode( mode, &codes );
+    for (width = params->length; width; width--)
+    {
+        if (new_pix && !keep_dst) *dst_ptr = init_val;
+        do_rop_codes_32( dst_ptr, *src_ptr, &codes );
+        new_pix = FALSE;
+        src_ptr += params->src_inc;
+        if (err > 0)
+        {
+            dst_ptr += params->dst_inc;
+            new_pix = TRUE;
+            err += params->err_add_1;
+        }
+        else err += params->err_add_2;
+    }
+}
+
+static void shrink_row_24(const dib_info *dst_dib, const POINT *dst_start,
+                          const dib_info *src_dib, const POINT *src_start,
+                          const struct stretch_params *params, int mode,
+                          BOOL keep_dst)
+{
+    BYTE *dst_ptr = get_pixel_ptr_24( dst_dib, dst_start->x, dst_start->y );
+    BYTE *src_ptr = get_pixel_ptr_24( src_dib, src_start->x, src_start->y );
+    int err = params->err_start;
+    int width;
+    struct rop_codes codes;
+    BYTE init_val = (mode == STRETCH_ANDSCANS) ? ~0u : 0u;
+    BOOL new_pix = TRUE;
+
+    rop_codes_from_stretch_mode( mode, &codes );
+    for (width = params->length; width; width--)
+    {
+        if (new_pix && !keep_dst) memset( dst_ptr, init_val, 3 );
+        do_rop_codes_8( dst_ptr,      *src_ptr,      &codes );
+        do_rop_codes_8( dst_ptr + 1, *(src_ptr + 1), &codes );
+        do_rop_codes_8( dst_ptr + 2, *(src_ptr + 2), &codes );
+        new_pix = FALSE;
+        src_ptr += 3 * params->src_inc;
+        if (err > 0)
+        {
+            dst_ptr += 3 * params->dst_inc;
+            new_pix = TRUE;
+            err += params->err_add_1;
+        }
+        else err += params->err_add_2;
+    }
+}
+
+static void shrink_row_16(const dib_info *dst_dib, const POINT *dst_start,
+                          const dib_info *src_dib, const POINT *src_start,
+                          const struct stretch_params *params, int mode,
+                          BOOL keep_dst)
+{
+    WORD *dst_ptr = get_pixel_ptr_16( dst_dib, dst_start->x, dst_start->y );
+    WORD *src_ptr = get_pixel_ptr_16( src_dib, src_start->x, src_start->y );
+    int err = params->err_start;
+    int width;
+    struct rop_codes codes;
+    WORD init_val = (mode == STRETCH_ANDSCANS) ? ~0u : 0u;
+    BOOL new_pix = TRUE;
+
+    rop_codes_from_stretch_mode( mode, &codes );
+    for (width = params->length; width; width--)
+    {
+        if (new_pix && !keep_dst) *dst_ptr = init_val;
+        do_rop_codes_16( dst_ptr, *src_ptr, &codes );
+        new_pix = FALSE;
+        src_ptr += params->src_inc;
+        if (err > 0)
+        {
+            dst_ptr += params->dst_inc;
+            new_pix = TRUE;
+            err += params->err_add_1;
+        }
+        else err += params->err_add_2;
+    }
+}
+
+static void shrink_row_8(const dib_info *dst_dib, const POINT *dst_start,
+                         const dib_info *src_dib, const POINT *src_start,
+                         const struct stretch_params *params, int mode,
+                         BOOL keep_dst)
+{
+    BYTE *dst_ptr = get_pixel_ptr_8( dst_dib, dst_start->x, dst_start->y );
+    BYTE *src_ptr = get_pixel_ptr_8( src_dib, src_start->x, src_start->y );
+    int err = params->err_start;
+    int width;
+    struct rop_codes codes;
+    BYTE init_val = (mode == STRETCH_ANDSCANS) ? ~0u : 0u;
+    BOOL new_pix = TRUE;
+
+    rop_codes_from_stretch_mode( mode, &codes );
+    for (width = params->length; width; width--)
+    {
+        if (new_pix && !keep_dst) *dst_ptr = init_val;
+        do_rop_codes_8( dst_ptr, *src_ptr, &codes );
+        new_pix = FALSE;
+        src_ptr += params->src_inc;
+        if (err > 0)
+        {
+            dst_ptr += params->dst_inc;
+            new_pix = TRUE;
+            err += params->err_add_1;
+        }
+        else err += params->err_add_2;
+    }
+}
+
+static void shrink_row_4(const dib_info *dst_dib, const POINT *dst_start,
+                         const dib_info *src_dib, const POINT *src_start,
+                         const struct stretch_params *params, int mode,
+                         BOOL keep_dst)
+{
+    BYTE *dst_ptr = get_pixel_ptr_8( dst_dib, dst_start->x, dst_start->y );
+    BYTE *src_ptr = get_pixel_ptr_8( src_dib, src_start->x, src_start->y );
+    int err = params->err_start;
+    int width, dst_x = dst_start->x, src_x = src_start->x;
+    struct rop_codes codes;
+    BYTE src_val, init_val = (mode == STRETCH_ANDSCANS) ? ~0u : 0u;
+    BOOL new_pix = TRUE;
+
+    rop_codes_from_stretch_mode( mode, &codes );
+    for (width = params->length; width; width--)
+    {
+        if (new_pix && !keep_dst) do_rop_mask_8( dst_ptr, 0, init_val, (dst_x & 1) ? 0xf0 : 0x0f );
+
+        if (src_x & 1) src_val = (*src_ptr & 0x0f) | (*src_ptr << 4);
+        else src_val = (*src_ptr & 0xf0) | (*src_ptr >> 4);
+
+        do_rop_codes_mask_8( dst_ptr, src_val, &codes, (dst_x & 1) ? 0xf0 : 0x0f );
+        new_pix = FALSE;
+
+        if ((src_x & ~1) != ((src_x + params->src_inc) & ~1))
+            src_ptr += params->src_inc;
+        src_x += params->src_inc;
+
+        if (err > 0)
+        {
+            if ((dst_x & ~1) != ((dst_x + params->dst_inc) & ~1))
+                dst_ptr += params->dst_inc;
+            dst_x += params->dst_inc;
+            new_pix = TRUE;
+            err += params->err_add_1;
+        }
+        else err += params->err_add_2;
+    }
+}
+
+static void shrink_row_1(const dib_info *dst_dib, const POINT *dst_start,
+                         const dib_info *src_dib, const POINT *src_start,
+                         const struct stretch_params *params, int mode,
+                         BOOL keep_dst)
+{
+    BYTE *dst_ptr = get_pixel_ptr_1( dst_dib, dst_start->x, dst_start->y );
+    BYTE *src_ptr = get_pixel_ptr_1( src_dib, src_start->x, src_start->y );
+    int err = params->err_start;
+    int width, dst_x = dst_start->x, src_x = src_start->x;
+    struct rop_codes codes;
+    BYTE src_val, init_val = (mode == STRETCH_ANDSCANS) ? ~0u : 0u;
+    BOOL new_pix = TRUE;
+
+    rop_codes_from_stretch_mode( mode, &codes );
+    for (width = params->length; width; width--)
+    {
+        if (new_pix && !keep_dst) do_rop_mask_8( dst_ptr, 0, init_val, pixel_masks_1[dst_x % 8] );
+        src_val = *src_ptr & pixel_masks_1[src_x % 8] ? 0xff : 0;
+        do_rop_codes_mask_8( dst_ptr, src_val, &codes, pixel_masks_1[dst_x % 8] );
+        new_pix = FALSE;
+
+        if ((src_x & ~7) != ((src_x + params->src_inc) & ~7))
+            src_ptr += params->src_inc;
+        src_x += params->src_inc;
+
+        if (err > 0)
+        {
+            if ((dst_x & ~7) != ((dst_x + params->dst_inc) & ~7))
+                dst_ptr += params->dst_inc;
+            dst_x += params->dst_inc;
+            new_pix = TRUE;
+            err += params->err_add_1;
+        }
+        else err += params->err_add_2;
+    }
+}
+
+static void shrink_row_null(const dib_info *dst_dib, const POINT *dst_start,
+                            const dib_info *src_dib, const POINT *src_start,
+                            const struct stretch_params *params, int mode,
+                            BOOL keep_dst)
+{
+    FIXME("bit count %d\n", dst_dib->bit_count);
+    return;
+}
+
 const primitive_funcs funcs_8888 =
 {
     solid_rects_32,
@@ -3577,7 +3982,9 @@ const primitive_funcs funcs_8888 =
     copy_rect_32,
     colorref_to_pixel_888,
     convert_to_8888,
-    create_rop_masks_32
+    create_rop_masks_32,
+    stretch_row_32,
+    shrink_row_32
 };
 
 const primitive_funcs funcs_32 =
@@ -3587,7 +3994,9 @@ const primitive_funcs funcs_32 =
     copy_rect_32,
     colorref_to_pixel_masks,
     convert_to_32,
-    create_rop_masks_32
+    create_rop_masks_32,
+    stretch_row_32,
+    shrink_row_32
 };
 
 const primitive_funcs funcs_24 =
@@ -3597,7 +4006,9 @@ const primitive_funcs funcs_24 =
     copy_rect_24,
     colorref_to_pixel_888,
     convert_to_24,
-    create_rop_masks_24
+    create_rop_masks_24,
+    stretch_row_24,
+    shrink_row_24
 };
 
 const primitive_funcs funcs_555 =
@@ -3607,7 +4018,9 @@ const primitive_funcs funcs_555 =
     copy_rect_16,
     colorref_to_pixel_555,
     convert_to_555,
-    create_rop_masks_16
+    create_rop_masks_16,
+    stretch_row_16,
+    shrink_row_16
 };
 
 const primitive_funcs funcs_16 =
@@ -3617,7 +4030,9 @@ const primitive_funcs funcs_16 =
     copy_rect_16,
     colorref_to_pixel_masks,
     convert_to_16,
-    create_rop_masks_16
+    create_rop_masks_16,
+    stretch_row_16,
+    shrink_row_16
 };
 
 const primitive_funcs funcs_8 =
@@ -3627,7 +4042,9 @@ const primitive_funcs funcs_8 =
     copy_rect_8,
     colorref_to_pixel_colortable,
     convert_to_8,
-    create_rop_masks_8
+    create_rop_masks_8,
+    stretch_row_8,
+    shrink_row_8
 };
 
 const primitive_funcs funcs_4 =
@@ -3637,7 +4054,9 @@ const primitive_funcs funcs_4 =
     copy_rect_4,
     colorref_to_pixel_colortable,
     convert_to_4,
-    create_rop_masks_4
+    create_rop_masks_4,
+    stretch_row_4,
+    shrink_row_4
 };
 
 const primitive_funcs funcs_1 =
@@ -3647,7 +4066,9 @@ const primitive_funcs funcs_1 =
     copy_rect_1,
     colorref_to_pixel_colortable,
     convert_to_1,
-    create_rop_masks_1
+    create_rop_masks_1,
+    stretch_row_1,
+    shrink_row_1
 };
 
 const primitive_funcs funcs_null =
@@ -3657,5 +4078,7 @@ const primitive_funcs funcs_null =
     copy_rect_null,
     colorref_to_pixel_null,
     convert_to_null,
-    create_rop_masks_null
+    create_rop_masks_null,
+    stretch_row_null,
+    shrink_row_null
 };

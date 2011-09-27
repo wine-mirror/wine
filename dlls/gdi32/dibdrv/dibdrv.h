@@ -122,6 +122,13 @@ static inline dibdrv_physdev *get_dibdrv_pdev( PHYSDEV dev )
     return (dibdrv_physdev *)dev;
 }
 
+struct stretch_params
+{
+    int err_start, err_add_1, err_add_2;
+    unsigned int length;
+    int dst_inc, src_inc;
+};
+
 typedef struct primitive_funcs
 {
     void            (* solid_rects)(const dib_info *dib, int num, const RECT *rc, DWORD and, DWORD xor);
@@ -133,6 +140,12 @@ typedef struct primitive_funcs
     BOOL             (* convert_to)(dib_info *dst, const dib_info *src, const RECT *src_rect);
     BOOL       (* create_rop_masks)(const dib_info *dib, const dib_info *hatch,
                                     const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits);
+    void            (* stretch_row)(const dib_info *dst_dib, const POINT *dst_start,
+                                    const dib_info *src_dib, const POINT *src_start,
+                                    const struct stretch_params *params, int mode, BOOL keep_dst);
+    void             (* shrink_row)(const dib_info *dst_dib, const POINT *dst_start,
+                                    const dib_info *src_dib, const POINT *src_start,
+                                    const struct stretch_params *params, int mode, BOOL keep_dst);
 } primitive_funcs;
 
 extern const primitive_funcs funcs_8888 DECLSPEC_HIDDEN;
