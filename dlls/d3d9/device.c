@@ -1790,61 +1790,33 @@ static HRESULT WINAPI IDirect3DDevice9Impl_ValidateDevice(IDirect3DDevice9Ex *if
 static HRESULT WINAPI IDirect3DDevice9Impl_SetPaletteEntries(IDirect3DDevice9Ex *iface,
         UINT PaletteNumber, const PALETTEENTRY *pEntries)
 {
-    IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
-    HRESULT hr;
+    FIXME("iface %p, palette_idx %u, entries %p unimplemented.\n", iface, PaletteNumber, pEntries);
 
-    TRACE("iface %p, palette_idx %u, entries %p.\n", iface, PaletteNumber, pEntries);
-
-    wined3d_mutex_lock();
-    hr = wined3d_device_set_palette_entries(This->wined3d_device, PaletteNumber, pEntries);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI IDirect3DDevice9Impl_GetPaletteEntries(IDirect3DDevice9Ex *iface,
         UINT PaletteNumber, PALETTEENTRY *pEntries)
 {
-    IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
-    HRESULT hr;
+    FIXME("iface %p, palette_idx %u, entries %p unimplemented.\n", iface, PaletteNumber, pEntries);
 
-    TRACE("iface %p, palette_idx %u, entries %p.\n", iface, PaletteNumber, pEntries);
-
-    wined3d_mutex_lock();
-    hr = wined3d_device_get_palette_entries(This->wined3d_device, PaletteNumber, pEntries);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI IDirect3DDevice9Impl_SetCurrentTexturePalette(IDirect3DDevice9Ex *iface,
         UINT PaletteNumber)
 {
-    IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
-    HRESULT hr;
+    FIXME("iface %p, palette_idx %u unimplemented.\n", iface, PaletteNumber);
 
-    TRACE("iface %p, palette_idx %u.\n", iface, PaletteNumber);
-
-    wined3d_mutex_lock();
-    hr = wined3d_device_set_current_texture_palette(This->wined3d_device, PaletteNumber);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI IDirect3DDevice9Impl_GetCurrentTexturePalette(IDirect3DDevice9Ex *iface,
         UINT *PaletteNumber)
 {
-    IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
-    HRESULT hr;
+    FIXME("iface %p, palette_idx %p.\n", iface, PaletteNumber);
 
-    TRACE("iface %p, palette_idx %p.\n", iface, PaletteNumber);
-
-    wined3d_mutex_lock();
-    hr = wined3d_device_get_current_texture_palette(This->wined3d_device, PaletteNumber);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI IDirect3DDevice9Impl_SetScissorRect(IDirect3DDevice9Ex *iface,
