@@ -1838,61 +1838,36 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetInfo(IDirect3DDevice8 *iface,
 static HRESULT WINAPI IDirect3DDevice8Impl_SetPaletteEntries(IDirect3DDevice8 *iface,
         UINT PaletteNumber, const PALETTEENTRY *pEntries)
 {
-    IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    HRESULT hr;
+    FIXME("iface %p, palette_idx %u, entries %p unimplemented\n", iface, PaletteNumber, pEntries);
 
-    TRACE("iface %p, palette_idx %u, entries %p.\n", iface, PaletteNumber, pEntries);
+    /* GPUs stopped supporting palettized textures with the Shader Model 1 generation. Wined3d
+     * does not have a d3d8/9-style palette API */
 
-    wined3d_mutex_lock();
-    hr = wined3d_device_set_palette_entries(This->wined3d_device, PaletteNumber, pEntries);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_GetPaletteEntries(IDirect3DDevice8 *iface,
         UINT PaletteNumber, PALETTEENTRY *pEntries)
 {
-    IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    HRESULT hr;
+    FIXME("iface %p, palette_idx %u, entries %p unimplemented.\n", iface, PaletteNumber, pEntries);
 
-    TRACE("iface %p, palette_idx %u, entries %p.\n", iface, PaletteNumber, pEntries);
-
-    wined3d_mutex_lock();
-    hr = wined3d_device_get_palette_entries(This->wined3d_device, PaletteNumber, pEntries);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_SetCurrentTexturePalette(IDirect3DDevice8 *iface,
         UINT PaletteNumber)
 {
-    IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    HRESULT hr;
+    FIXME("iface %p, palette_idx %u unimplemented.\n", iface, PaletteNumber);
 
-    TRACE("iface %p, palette_idx %u.\n", iface, PaletteNumber);
-
-    wined3d_mutex_lock();
-    hr = wined3d_device_set_current_texture_palette(This->wined3d_device, PaletteNumber);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT  WINAPI  IDirect3DDevice8Impl_GetCurrentTexturePalette(IDirect3DDevice8 *iface,
         UINT *PaletteNumber)
 {
-    IDirect3DDevice8Impl *This = impl_from_IDirect3DDevice8(iface);
-    HRESULT hr;
+    FIXME("iface %p, palette_idx %p unimplemented.\n", iface, PaletteNumber);
 
-    TRACE("iface %p, palette_idx %p.\n", iface, PaletteNumber);
-
-    wined3d_mutex_lock();
-    hr = wined3d_device_get_current_texture_palette(This->wined3d_device, PaletteNumber);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_DrawPrimitive(IDirect3DDevice8 *iface,
