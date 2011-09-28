@@ -349,6 +349,7 @@ int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
     int len, buflen, mapid = -1;
     WCHAR *filename;
     char *endq = NULL;
+    HWND hwnd;
 
     hh_process = TRUE;
 
@@ -404,11 +405,17 @@ int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
 
     /* Open a specific help topic */
     if(mapid != -1)
-        HtmlHelpW(GetDesktopWindow(), filename, HH_HELP_CONTEXT, mapid);
+        hwnd = HtmlHelpW(GetDesktopWindow(), filename, HH_HELP_CONTEXT, mapid);
     else
-        HtmlHelpW(GetDesktopWindow(), filename, HH_DISPLAY_TOPIC, 0);
+        hwnd = HtmlHelpW(GetDesktopWindow(), filename, HH_DISPLAY_TOPIC, 0);
 
     heap_free(filename);
+
+    if (!hwnd)
+    {
+        ERR("Failed to open HTML Help file '%s'.\n", szCmdLine);
+        return 0;
+    }
 
     while (GetMessageW(&msg, 0, 0, 0))
     {
