@@ -115,8 +115,7 @@ static BOOL WCMD_ask_confirm (const WCHAR *message, BOOL showSureText,
           WCMD_output_asis (Abuffer);
       }
       WCMD_output_asis (endBkt);
-      WCMD_ReadFile (GetStdHandle(STD_INPUT_HANDLE), answer,
-                     sizeof(answer)/sizeof(WCHAR), &count, NULL);
+      WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, sizeof(answer)/sizeof(WCHAR), &count);
       answer[0] = toupperW(answer[0]);
     }
 
@@ -306,7 +305,7 @@ void WCMD_choice (const WCHAR * command) {
     while (TRUE) {
 
         /* FIXME: Add support for option /T */
-        WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, 1, &count, NULL);
+        WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, 1, &count);
 
         if (!opt_s)
             answer[0] = toupperW(answer[0]);
@@ -1697,8 +1696,7 @@ void WCMD_pause (void) {
   WCHAR string[32];
 
   WCMD_output (anykey);
-  WCMD_ReadFile (GetStdHandle(STD_INPUT_HANDLE), string,
-                 sizeof(string)/sizeof(WCHAR), &count, NULL);
+  WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string)/sizeof(WCHAR), &count);
 }
 
 /****************************************************************************
@@ -2146,8 +2144,7 @@ void WCMD_setshow_date (void) {
       WCMD_output (WCMD_LoadMessage(WCMD_CURRENTDATE), curdate);
       if (strstrW (quals, parmT) == NULL) {
         WCMD_output (WCMD_LoadMessage(WCMD_NEWDATE));
-        WCMD_ReadFile (GetStdHandle(STD_INPUT_HANDLE),
-                       buffer, sizeof(buffer)/sizeof(WCHAR), &count, NULL);
+        WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), buffer, sizeof(buffer)/sizeof(WCHAR), &count);
         if (count > 2) {
           WCMD_output (WCMD_LoadMessage(WCMD_NYI));
         }
@@ -2265,8 +2262,7 @@ void WCMD_setshow_env (WCHAR *s) {
     if (strlenW(p) != 0) WCMD_output(p);
 
     /* Read the reply */
-    WCMD_ReadFile (GetStdHandle(STD_INPUT_HANDLE), string,
-                   sizeof(string)/sizeof(WCHAR), &count, NULL);
+    WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string)/sizeof(WCHAR), &count);
     if (count > 1) {
       string[count-1] = '\0'; /* ReadFile output is not null-terminated! */
       if (string[count-2] == '\r') string[count-2] = '\0'; /* Under Windoze we get CRLF! */
@@ -2376,8 +2372,7 @@ void WCMD_setshow_time (void) {
       WCMD_output (WCMD_LoadMessage(WCMD_CURRENTTIME), curtime);
       if (strstrW (quals, parmT) == NULL) {
         WCMD_output (WCMD_LoadMessage(WCMD_NEWTIME));
-        WCMD_ReadFile (GetStdHandle(STD_INPUT_HANDLE), buffer,
-                       sizeof(buffer)/sizeof(WCHAR), &count, NULL);
+        WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), buffer, sizeof(buffer)/sizeof(WCHAR), &count);
         if (count > 2) {
           WCMD_output (WCMD_LoadMessage(WCMD_NYI));
         }
@@ -2474,7 +2469,7 @@ void WCMD_type (WCHAR *command) {
         static const WCHAR fmt[] = {'\n','%','s','\n','\n','\0'};
         WCMD_output(fmt, thisArg);
       }
-      while (WCMD_ReadFile (h, buffer, sizeof(buffer)/sizeof(WCHAR) - 1, &count, NULL)) {
+      while (WCMD_ReadFile(h, buffer, sizeof(buffer)/sizeof(WCHAR) - 1, &count)) {
         if (count == 0) break;	/* ReadFile reports success on EOF! */
         buffer[count] = 0;
         WCMD_output_asis (buffer);
@@ -2528,7 +2523,7 @@ void WCMD_more (WCHAR *command) {
     wsprintfW(moreStrPage, moreFmt, moreStr);
 
     WCMD_enter_paged_mode(moreStrPage);
-    while (WCMD_ReadFile (hstdin, buffer, (sizeof(buffer)/sizeof(WCHAR))-1, &count, NULL)) {
+    while (WCMD_ReadFile(hstdin, buffer, (sizeof(buffer)/sizeof(WCHAR))-1, &count)) {
       if (count == 0) break;	/* ReadFile reports success on EOF! */
       buffer[count] = 0;
       WCMD_output_asis (buffer);
@@ -2559,8 +2554,7 @@ void WCMD_more (WCHAR *command) {
         wsprintfW(moreStrPage, moreFmt2, moreStr, 100);
         WCMD_leave_paged_mode();
         WCMD_output_asis(moreStrPage);
-        WCMD_ReadFile (GetStdHandle(STD_INPUT_HANDLE), buffer,
-                       sizeof(buffer)/sizeof(WCHAR), &count, NULL);
+        WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), buffer, sizeof(buffer)/sizeof(WCHAR), &count);
         WCMD_enter_paged_mode(moreStrPage);
       }
 
@@ -2582,7 +2576,7 @@ void WCMD_more (WCHAR *command) {
         fileLen = (((ULONG64)fileInfo.nFileSizeHigh) << 32) + fileInfo.nFileSizeLow;
 
         needsPause = TRUE;
-        while (WCMD_ReadFile (h, buffer, (sizeof(buffer)/sizeof(WCHAR))-1, &count, NULL)) {
+        while (WCMD_ReadFile(h, buffer, (sizeof(buffer)/sizeof(WCHAR))-1, &count)) {
           if (count == 0) break;	/* ReadFile reports success on EOF! */
           buffer[count] = 0;
           curPos += count;
@@ -2683,8 +2677,7 @@ int WCMD_volume(BOOL set_label, const WCHAR *path)
     	curdir[0], label, HIWORD(serial), LOWORD(serial));
   if (set_label) {
     WCMD_output (WCMD_LoadMessage(WCMD_VOLUMEPROMPT));
-    WCMD_ReadFile (GetStdHandle(STD_INPUT_HANDLE), string,
-                   sizeof(string)/sizeof(WCHAR), &count, NULL);
+    WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string)/sizeof(WCHAR), &count);
     if (count > 1) {
       string[count-1] = '\0';		/* ReadFile output is not null-terminated! */
       if (string[count-2] == '\r') string[count-2] = '\0'; /* Under Windoze we get CRLF! */

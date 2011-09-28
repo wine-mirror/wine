@@ -108,8 +108,7 @@ void WCMD_opt_s_strip_quotes(WCHAR *cmd);
 WCHAR *WCMD_LoadMessage(UINT id);
 WCHAR *WCMD_strdupW(const WCHAR *input);
 void WCMD_strsubstW(WCHAR *start, const WCHAR* next, const WCHAR* insert, int len);
-BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars,
-                   LPDWORD charsRead, const LPOVERLAPPED unused);
+BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWORD charsRead);
 
 WCHAR    *WCMD_ReadAndParseLine(const WCHAR *initialcmd, CMD_LIST **output,
                                 HANDLE readFrom, const BOOL is_console_handle);

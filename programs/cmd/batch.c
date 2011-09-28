@@ -197,7 +197,7 @@ WCHAR *WCMD_fgets(WCHAR *s, int noChars, HANDLE h, BOOL is_console_handle)
 
   /* TODO: More intelligent buffering for reading lines from files */
   do {
-    status = WCMD_ReadFile (h, s, 1, &bytes, NULL);
+    status = WCMD_ReadFile(h, s, 1, &bytes);
     if ((status == 0) || ((bytes == 0) && (s == p))) return NULL;
     if (*s == '\n') bytes = 0;
     else if (*s != '\r') {

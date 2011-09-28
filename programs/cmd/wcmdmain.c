@@ -237,11 +237,9 @@ void WCMD_leave_paged_mode(void)
  * WCMD_Readfile
  *
  *	Read characters in from a console/file, returning result in Unicode
- *      with signature identical to ReadFile
  */
-BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars,
-                          LPDWORD charsRead, const LPOVERLAPPED unused) {
-
+BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWORD charsRead)
+{
     BOOL   res;
 
     /* Try to read from console as Unicode */
@@ -258,7 +256,7 @@ BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars,
             return FALSE;
 
         /* Read from file (assume OEM codepage) */
-        res = ReadFile(hIn, buffer, maxChars, &numRead, unused);
+        res = ReadFile(hIn, buffer, maxChars, &numRead, NULL);
 
         /* Convert from OEM */
         *charsRead = MultiByteToWideChar(GetConsoleCP(), 0, buffer, numRead,
@@ -293,8 +291,7 @@ static void WCMD_output_asis_handle (DWORD std_handle, const WCHAR *message) {
         if (++line_count >= max_height - 1) {
           line_count = 0;
           WCMD_output_asis_len(pagedMessage, strlenW(pagedMessage), handle);
-          WCMD_ReadFile (GetStdHandle(STD_INPUT_HANDLE), string,
-                         sizeof(string)/sizeof(WCHAR), &count, NULL);
+          WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string)/sizeof(WCHAR), &count);
         }
       }
     } while (((message = ptr) != NULL) && (*ptr));
