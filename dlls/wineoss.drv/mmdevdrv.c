@@ -667,7 +667,7 @@ static WAVEFORMATEX *clone_format(const WAVEFORMATEX *fmt)
     return ret;
 }
 
-static HRESULT setup_oss_device(ACImpl *This, const WAVEFORMATEX *fmt,
+static HRESULT setup_oss_device(int fd, const WAVEFORMATEX *fmt,
         WAVEFORMATEX **out, BOOL query)
 {
     int tmp, oss_format;
@@ -682,7 +682,7 @@ static HRESULT setup_oss_device(ACImpl *This, const WAVEFORMATEX *fmt,
     tmp = oss_format = get_oss_format(fmt);
     if(oss_format < 0)
         return AUDCLNT_E_UNSUPPORTED_FORMAT;
-    if(ioctl(This->fd, SNDCTL_DSP_SETFMT, &tmp) < 0){
+    if(ioctl(fd, SNDCTL_DSP_SETFMT, &tmp) < 0){
         WARN("SETFMT failed: %d (%s)\n", errno, strerror(errno));
         return E_FAIL;
     }
@@ -696,7 +696,7 @@ static HRESULT setup_oss_device(ACImpl *This, const WAVEFORMATEX *fmt,
         return E_OUTOFMEMORY;
 
     tmp = fmt->nSamplesPerSec;
-    if(ioctl(This->fd, SNDCTL_DSP_SPEED, &tmp) < 0){
+    if(ioctl(fd, SNDCTL_DSP_SPEED, &tmp) < 0){
         WARN("SPEED failed: %d (%s)\n", errno, strerror(errno));
         CoTaskMemFree(closest);
         return E_FAIL;
@@ -708,7 +708,7 @@ static HRESULT setup_oss_device(ACImpl *This, const WAVEFORMATEX *fmt,
     }
 
     tmp = fmt->nChannels;
-    if(ioctl(This->fd, SNDCTL_DSP_CHANNELS, &tmp) < 0){
+    if(ioctl(fd, SNDCTL_DSP_CHANNELS, &tmp) < 0){
         WARN("CHANNELS failed: %d (%s)\n", errno, strerror(errno));
         CoTaskMemFree(closest);
         return E_FAIL;
@@ -862,7 +862,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         return AUDCLNT_E_ALREADY_INITIALIZED;
     }
 
-    hr = setup_oss_device(This, fmt, NULL, FALSE);
+    hr = setup_oss_device(This->fd, fmt, NULL, FALSE);
     if(hr == S_FALSE){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_UNSUPPORTED_FORMAT;
@@ -1082,6 +1082,7 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
         WAVEFORMATEX **outpwfx)
 {
     ACImpl *This = impl_from_IAudioClient(iface);
+    int fd = -1;
     HRESULT ret;
 
     TRACE("(%p)->(%x, %p, %p)\n", This, mode, pwfx, outpwfx);
@@ -1098,11 +1099,20 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
 
     dump_fmt(pwfx);
 
-    EnterCriticalSection(&This->lock);
+    if(This->dataflow == eRender)
+        fd = open(This->ai.devnode, O_WRONLY, 0);
+    else if(This->dataflow == eCapture)
+        fd = open(This->ai.devnode, O_RDONLY, 0);
 
-    ret = setup_oss_device(This, pwfx, outpwfx, TRUE);
+    if(fd < 0){
+        ERR("Unable to open device %s: %d (%s)\n", This->ai.devnode, errno,
+                strerror(errno));
+        return AUDCLNT_E_DEVICE_INVALIDATED;
+    }
 
-    LeaveCriticalSection(&This->lock);
+    ret = setup_oss_device(fd, pwfx, outpwfx, TRUE);
+
+    close(fd);
 
     return ret;
 }
