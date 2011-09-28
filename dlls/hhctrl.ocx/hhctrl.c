@@ -166,15 +166,17 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         NMHDR nmhdr;
         const WCHAR *index = NULL;
         int tab_index = TAB_CONTENTS;
+        const WCHAR *default_index = NULL;
 
         if (!filename)
             return NULL;
 
-        if (!resolve_filename(filename, fullname, MAX_PATH, &index, NULL))
+        if (!resolve_filename(filename, fullname, MAX_PATH, &default_index, NULL))
         {
             WARN("can't find %s\n", debugstr_w(filename));
             return 0;
         }
+        index = default_index;
 
         info = CreateHelpViewer(fullname);
         if(!info)
@@ -183,10 +185,20 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         if(!index)
             index = info->WinType.pszFile;
 
+        /* called to load a specified topic */
+        switch(command)
+        {
+        case HH_DISPLAY_TOPIC:
+        case HH_DISPLAY_TOC:
+            if (data)
+                index = (const WCHAR *)data;
+            break;
+        }
+
         res = NavigateToChm(info, info->pCHMInfo->szFile, index);
 
-        if (index != info->WinType.pszFile)
-            heap_free((WCHAR*)index);
+        if (default_index)
+            heap_free((WCHAR*)default_index);
 
         if(!res)
         {
@@ -199,8 +211,6 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         case HH_DISPLAY_TOPIC:
         case HH_DISPLAY_TOC:
             tab_index = TAB_CONTENTS;
-            if (data)
-                FIXME("Should jump to topic '%s'.\n", debugstr_w((WCHAR *)data));
             break;
         case HH_DISPLAY_INDEX:
             tab_index = TAB_INDEX;
