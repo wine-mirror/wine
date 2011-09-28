@@ -159,12 +159,13 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
     {
     case HH_DISPLAY_TOPIC:
     case HH_DISPLAY_TOC:
+    case HH_DISPLAY_INDEX:
     case HH_DISPLAY_SEARCH:{
         HHInfo *info;
         BOOL res;
+        NMHDR nmhdr;
         const WCHAR *index = NULL;
-
-        FIXME("Not all HH cases handled correctly\n");
+        int tab_index = TAB_CONTENTS;
 
         if (!filename)
             return NULL;
@@ -192,6 +193,32 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
             ReleaseHelpViewer(info);
             return NULL;
         }
+
+        switch(command)
+        {
+        case HH_DISPLAY_TOPIC:
+        case HH_DISPLAY_TOC:
+            tab_index = TAB_CONTENTS;
+            if (data)
+                FIXME("Should jump to topic '%s'.\n", debugstr_w((WCHAR *)data));
+            break;
+        case HH_DISPLAY_INDEX:
+            tab_index = TAB_INDEX;
+            if (data)
+                FIXME("Should select keyword '%s'.\n", debugstr_w((WCHAR *)data));
+            break;
+        case HH_DISPLAY_SEARCH:
+            tab_index = TAB_SEARCH;
+            if (data)
+                FIXME("Should display search specified by HH_FTS_QUERY structure.\n");
+            break;
+        }
+        /* open the requested tab */
+        memset(&nmhdr, 0, sizeof(nmhdr));
+        nmhdr.code = TCN_SELCHANGE;
+        SendMessageW(info->hwndTabCtrl, TCM_SETCURSEL, (WPARAM)info->tabs[tab_index].id, 0);
+        SendMessageW(info->WinType.hwndNavigation, WM_NOTIFY, 0, (LPARAM)&nmhdr);
+
         return info->WinType.hwndHelp;
     }
     case HH_HELP_CONTEXT: {
