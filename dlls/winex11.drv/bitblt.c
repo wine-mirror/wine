@@ -52,9 +52,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(bitblt);
 
 #define MAX_OP_LEN  6  /* Longest opcode + 1 for the terminating 0 */
 
-#define SWAP_INT32(i1,i2) \
-    do { INT __t = *(i1); *(i1) = *(i2); *(i2) = __t; } while(0)
-
 static const unsigned char BITBLT_Opcodes[256][MAX_OP_LEN] =
 {
     { OP(PAT,DST,GXclear) },                         /* 0x00  0              */
@@ -619,339 +616,6 @@ static unsigned long image_pixel_mask( X11DRV_PDEVICE *physDev )
 
 
 /***********************************************************************
- *           BITBLT_StretchRow
- *
- * Stretch a row of pixels. Helper function for BITBLT_StretchImage.
- */
-static void BITBLT_StretchRow( int *rowSrc, int *rowDst,
-                               INT startDst, INT widthDst,
-                               INT xinc, INT xoff, WORD mode )
-{
-    register INT xsrc = xinc * startDst + xoff;
-    rowDst += startDst;
-    switch(mode)
-    {
-    case STRETCH_ANDSCANS:
-        for(; widthDst > 0; widthDst--, xsrc += xinc)
-            *rowDst++ &= rowSrc[xsrc >> 16];
-        break;
-    case STRETCH_ORSCANS:
-        for(; widthDst > 0; widthDst--, xsrc += xinc)
-            *rowDst++ |= rowSrc[xsrc >> 16];
-        break;
-    case STRETCH_DELETESCANS:
-        for(; widthDst > 0; widthDst--, xsrc += xinc)
-            *rowDst++ = rowSrc[xsrc >> 16];
-        break;
-    }
-}
-
-
-/***********************************************************************
- *           BITBLT_ShrinkRow
- *
- * Shrink a row of pixels. Helper function for BITBLT_StretchImage.
- */
-static void BITBLT_ShrinkRow( int *rowSrc, int *rowDst,
-                              INT startSrc, INT widthSrc,
-                              INT xinc, INT xoff, WORD mode )
-{
-    register INT xdst = xinc * startSrc + xoff;
-    rowSrc += startSrc;
-    switch(mode)
-    {
-    case STRETCH_ORSCANS:
-        for(; widthSrc > 0; widthSrc--, xdst += xinc)
-            rowDst[xdst >> 16] |= *rowSrc++;
-        break;
-    case STRETCH_ANDSCANS:
-        for(; widthSrc > 0; widthSrc--, xdst += xinc)
-            rowDst[xdst >> 16] &= *rowSrc++;
-        break;
-    case STRETCH_DELETESCANS:
-        for(; widthSrc > 0; widthSrc--, xdst += xinc)
-            rowDst[xdst >> 16] = *rowSrc++;
-        break;
-    }
-}
-
-
-/***********************************************************************
- *           BITBLT_GetRow
- *
- * Retrieve a row from an image. Helper function for BITBLT_StretchImage.
- */
-static void BITBLT_GetRow( XImage *image, int *pdata, INT row,
-                           INT start, INT width, INT depthDst,
-                           int fg, int bg, unsigned long pixel_mask, BOOL swap)
-{
-    register INT i;
-
-    assert( (row >= 0) && (row < image->height) );
-    assert( (start >= 0) && (width <= image->width) );
-
-    pdata += swap ? start+width-1 : start;
-    if (image->depth == depthDst)  /* color -> color */
-    {
-        if (X11DRV_PALETTE_XPixelToPalette && (depthDst != 1))
-            if (swap) for (i = 0; i < width; i++)
-                *pdata-- = X11DRV_PALETTE_XPixelToPalette[XGetPixel( image, i, row )];
-            else for (i = 0; i < width; i++)
-                *pdata++ = X11DRV_PALETTE_XPixelToPalette[XGetPixel( image, i, row )];
-        else
-            if (swap) for (i = 0; i < width; i++)
-                *pdata-- = XGetPixel( image, i, row );
-            else for (i = 0; i < width; i++)
-                *pdata++ = XGetPixel( image, i, row );
-    }
-    else
-    {
-        if (image->depth == 1)  /* monochrome -> color */
-        {
-            if (X11DRV_PALETTE_XPixelToPalette)
-            {
-                fg = X11DRV_PALETTE_XPixelToPalette[fg];
-                bg = X11DRV_PALETTE_XPixelToPalette[bg];
-            }
-            if (swap) for (i = 0; i < width; i++)
-                *pdata-- = XGetPixel( image, i, row ) ? bg : fg;
-            else for (i = 0; i < width; i++)
-                *pdata++ = XGetPixel( image, i, row ) ? bg : fg;
-        }
-        else  /* color -> monochrome */
-        {
-            if (swap) for (i = 0; i < width; i++)
-                *pdata-- = ((XGetPixel( image, i, row ) & pixel_mask) == bg) ? 1 : 0;
-            else for (i = 0; i < width; i++)
-                *pdata++ = ((XGetPixel( image, i, row ) & pixel_mask) == bg) ? 1 : 0;
-        }
-    }
-}
-
-
-/***********************************************************************
- *           BITBLT_StretchImage
- *
- * Stretch an X image.
- * FIXME: does not work for full 32-bit coordinates.
- */
-static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
-                                 INT widthSrc, INT heightSrc,
-                                 INT widthDst, INT heightDst,
-                                 RECT *visRectSrc, RECT *visRectDst,
-                                 int foreground, int background,
-                                 unsigned long pixel_mask, WORD mode )
-{
-    int *rowSrc, *rowDst, *pixel;
-    char *pdata;
-    INT xinc, xoff, yinc, ysrc, ydst;
-    register INT x, y;
-    BOOL hstretch, vstretch, hswap, vswap;
-
-    hswap = widthSrc * widthDst < 0;
-    vswap = heightSrc * heightDst < 0;
-    widthSrc  = abs(widthSrc);
-    heightSrc = abs(heightSrc);
-    widthDst  = abs(widthDst);
-    heightDst = abs(heightDst);
-
-    if (!(rowSrc = HeapAlloc( GetProcessHeap(), 0,
-                              (widthSrc+widthDst)*sizeof(int) ))) return;
-    rowDst = rowSrc + widthSrc;
-
-      /* When stretching, all modes are the same, and DELETESCANS is faster */
-    if ((widthSrc < widthDst) && (heightSrc < heightDst))
-        mode = STRETCH_DELETESCANS;
-
-    if (mode == STRETCH_HALFTONE) /* FIXME */
-        mode = STRETCH_DELETESCANS;
-
-    if (mode != STRETCH_DELETESCANS)
-        memset( rowDst, (mode == STRETCH_ANDSCANS) ? 0xff : 0x00,
-                widthDst*sizeof(int) );
-
-    hstretch = (widthSrc < widthDst);
-    vstretch = (heightSrc < heightDst);
-
-    if (hstretch)
-    {
-        xinc = (widthSrc << 16) / widthDst;
-        xoff = ((widthSrc << 16) - (xinc * widthDst)) / 2;
-    }
-    else
-    {
-        xinc = ((int)widthDst << 16) / widthSrc;
-        xoff = ((widthDst << 16) - (xinc * widthSrc)) / 2;
-    }
-
-    wine_tsx11_lock();
-    if (vstretch)
-    {
-        yinc = (heightSrc << 16) / heightDst;
-        ydst = visRectDst->top;
-        if (vswap)
-        {
-            ysrc = yinc * (heightDst - ydst - 1);
-            yinc = -yinc;
-        }
-        else
-            ysrc = yinc * ydst;
-
-        for ( ; (ydst < visRectDst->bottom); ysrc += yinc, ydst++)
-        {
-            if (((ysrc >> 16) < visRectSrc->top) ||
-                ((ysrc >> 16) >= visRectSrc->bottom)) continue;
-
-            /* Retrieve a source row */
-            BITBLT_GetRow( srcImage, rowSrc, (ysrc >> 16) - visRectSrc->top,
-                           visRectSrc->left, visRectSrc->right - visRectSrc->left,
-                           dstImage->depth, foreground, background, pixel_mask, hswap );
-
-            /* Stretch or shrink it */
-            if (hstretch)
-                BITBLT_StretchRow( rowSrc, rowDst, visRectDst->left,
-                                   visRectDst->right - visRectDst->left,
-                                   xinc, xoff, mode );
-            else BITBLT_ShrinkRow( rowSrc, rowDst, visRectSrc->left,
-                                   visRectSrc->right - visRectSrc->left,
-                                   xinc, xoff, mode );
-
-            /* Store the destination row */
-            pixel = rowDst + visRectDst->right - 1;
-            y = ydst - visRectDst->top;
-            for (x = visRectDst->right-visRectDst->left-1; x >= 0; x--)
-                XPutPixel( dstImage, x, y, *pixel-- );
-            if (mode != STRETCH_DELETESCANS)
-                memset( rowDst, (mode == STRETCH_ANDSCANS) ? 0xff : 0x00,
-                        widthDst*sizeof(int) );
-
-            /* Make copies of the destination row */
-
-            pdata = dstImage->data + dstImage->bytes_per_line * y;
-            while (((ysrc + yinc) >> 16 == ysrc >> 16) &&
-                   (ydst < visRectDst->bottom-1))
-            {
-                memcpy( pdata + dstImage->bytes_per_line, pdata,
-                        dstImage->bytes_per_line );
-                pdata += dstImage->bytes_per_line;
-                ysrc += yinc;
-                ydst++;
-            }
-        }
-    }
-    else  /* Shrinking */
-    {
-        yinc = (heightDst << 16) / heightSrc;
-        ysrc = visRectSrc->top;
-        ydst = ((heightDst << 16) - (yinc * heightSrc)) / 2;
-        if (vswap)
-        {
-            ydst += yinc * (heightSrc - ysrc - 1);
-            yinc = -yinc;
-        }
-        else
-            ydst += yinc * ysrc;
-
-        for( ; (ysrc < visRectSrc->bottom); ydst += yinc, ysrc++)
-        {
-            if (((ydst >> 16) < visRectDst->top) ||
-                ((ydst >> 16) >= visRectDst->bottom)) continue;
-
-            /* Retrieve a source row */
-            BITBLT_GetRow( srcImage, rowSrc, ysrc - visRectSrc->top,
-                           visRectSrc->left, visRectSrc->right - visRectSrc->left,
-                           dstImage->depth, foreground, background, pixel_mask, hswap );
-
-            /* Stretch or shrink it */
-            if (hstretch)
-                BITBLT_StretchRow( rowSrc, rowDst, visRectDst->left,
-                                   visRectDst->right - visRectDst->left,
-                                   xinc, xoff, mode );
-            else BITBLT_ShrinkRow( rowSrc, rowDst, visRectSrc->left,
-                                   visRectSrc->right - visRectSrc->left,
-                                   xinc, xoff, mode );
-
-            /* Merge several source rows into the destination */
-            if (mode == STRETCH_DELETESCANS)
-            {
-                /* Simply skip the overlapping rows */
-                while (((ydst + yinc) >> 16 == ydst >> 16) &&
-                       (ysrc < visRectSrc->bottom-1))
-                {
-                    ydst += yinc;
-                    ysrc++;
-                }
-            }
-            else if (((ydst + yinc) >> 16 == ydst >> 16) &&
-                     (ysrc < visRectSrc->bottom-1))
-                continue;  /* Restart loop for next overlapping row */
-
-            /* Store the destination row */
-            pixel = rowDst + visRectDst->right - 1;
-            y = (ydst >> 16) - visRectDst->top;
-            for (x = visRectDst->right-visRectDst->left-1; x >= 0; x--)
-                XPutPixel( dstImage, x, y, *pixel-- );
-            if (mode != STRETCH_DELETESCANS)
-                memset( rowDst, (mode == STRETCH_ANDSCANS) ? 0xff : 0x00,
-                        widthDst*sizeof(int) );
-        }
-    }
-    wine_tsx11_unlock();
-    HeapFree( GetProcessHeap(), 0, rowSrc );
-}
-
-
-/***********************************************************************
- *           BITBLT_GetSrcAreaStretch
- *
- * Retrieve an area from the source DC, stretching and mapping all the
- * pixels to Windows colors.
- */
-static int BITBLT_GetSrcAreaStretch( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
-                                     Pixmap pixmap, GC gc,
-                                     const struct bitblt_coords *src, const struct bitblt_coords *dst )
-{
-    XImage *imageSrc, *imageDst;
-    RECT rectSrc = src->visrect;
-    RECT rectDst = dst->visrect;
-    int fg, bg;
-
-    OffsetRect( &rectSrc, -src->x, -src->y );
-    OffsetRect( &rectDst, -dst->x, -dst->y );
-
-    if (src->width < 0)  OffsetRect( &rectSrc, -src->width, 0 );
-    if (dst->width < 0)  OffsetRect( &rectDst, -dst->width, 0 );
-    if (src->height < 0) OffsetRect( &rectSrc, 0, -src->height );
-    if (dst->height < 0) OffsetRect( &rectDst, 0, -dst->height );
-
-    get_colors(physDevDst, physDevSrc, &fg, &bg);
-    wine_tsx11_lock();
-    /* FIXME: avoid BadMatch errors */
-    imageSrc = XGetImage( gdi_display, physDevSrc->drawable,
-                          physDevSrc->dc_rect.left + src->visrect.left,
-                          physDevSrc->dc_rect.top + src->visrect.top,
-                          src->visrect.right - src->visrect.left,
-                          src->visrect.bottom - src->visrect.top,
-                          AllPlanes, ZPixmap );
-    wine_tsx11_unlock();
-
-    imageDst = X11DRV_DIB_CreateXImage( rectDst.right - rectDst.left,
-                                        rectDst.bottom - rectDst.top, physDevDst->depth );
-    BITBLT_StretchImage( imageSrc, imageDst, src->width, src->height,
-                         dst->width, dst->height, &rectSrc, &rectDst,
-                         fg, physDevDst->depth != 1 ? bg : physDevSrc->backgroundPixel,
-                         image_pixel_mask( physDevSrc ), GetStretchBltMode(physDevDst->dev.hdc) );
-    wine_tsx11_lock();
-    XPutImage( gdi_display, pixmap, gc, imageDst, 0, 0, 0, 0,
-               rectDst.right - rectDst.left, rectDst.bottom - rectDst.top );
-    XDestroyImage( imageSrc );
-    X11DRV_DIB_DestroyXImage( imageDst );
-    wine_tsx11_unlock();
-    return 0;  /* no exposure events generated */
-}
-
-
-/***********************************************************************
  *           BITBLT_GetSrcArea
  *
  * Retrieve an area from the source DC, mapping all the
@@ -1313,19 +977,17 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
 {
     X11DRV_PDEVICE *physDevDst = get_x11drv_dev( dst_dev );
     X11DRV_PDEVICE *physDevSrc = get_x11drv_dev( src_dev );
-    BOOL fStretch;
     INT width, height;
     const BYTE *opcode;
     Pixmap src_pixmap;
     GC tmpGC;
 
-    if (src_dev->funcs != dst_dev->funcs)
+    if (src_dev->funcs != dst_dev->funcs ||
+        src->width != dst->width || src->height != dst->height)  /* no stretching with core X11 */
     {
         dst_dev = GET_NEXT_PHYSDEV( dst_dev, pStretchBlt );
         return dst_dev->funcs->pStretchBlt( dst_dev, dst, src_dev, src, rop );
     }
-
-    fStretch = (src->width != dst->width) || (src->height != dst->height);
 
     width  = dst->visrect.right - dst->visrect.left;
     height = dst->visrect.bottom - dst->visrect.top;
@@ -1336,7 +998,7 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     opcode = BITBLT_Opcodes[(rop >> 16) & 0xff];
 
     /* a few optimizations for single-op ROPs */
-    if (!fStretch && !opcode[1] && OP_SRCDST(opcode[0]) == OP_ARGS(SRC,DST))
+    if (!opcode[1] && OP_SRCDST(opcode[0]) == OP_ARGS(SRC,DST))
     {
         if (same_format(physDevSrc, physDevDst))
         {
@@ -1385,11 +1047,7 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     src_pixmap = XCreatePixmap( gdi_display, root_window, width, height, physDevDst->depth );
     wine_tsx11_unlock();
 
-    if (fStretch)
-        BITBLT_GetSrcAreaStretch( physDevSrc, physDevDst, src_pixmap, tmpGC, src, dst );
-    else
-        BITBLT_GetSrcArea( physDevSrc, physDevDst, src_pixmap, tmpGC, &src->visrect );
-
+    BITBLT_GetSrcArea( physDevSrc, physDevDst, src_pixmap, tmpGC, &src->visrect );
     execute_rop( physDevDst, src_pixmap, tmpGC, &dst->visrect, rop );
 
     wine_tsx11_lock();
