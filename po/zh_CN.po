@@ -7778,6 +7778,7 @@ msgid ""
 msgstr ""
 
 #: attrib.rc:28 cmd.rc:301
+#, fuzzy
 msgid "%s: File Not Found\n"
 msgstr "找不到文件\n"
 

@@ -9676,6 +9676,7 @@ msgid "Close message sent to top-level windows of process with PID %u.\n"
 msgstr "PID %u 의 프로세스의 최상위 창에 닫는 메세지 보냈습니다.\n"
 
 #: taskkill.rc:34
+#, fuzzy
 msgid ""
 "Close message sent to top-level windows of process \"%s\" with PID %u.\n"
 msgstr "PID %u 의 프로세스 \"%s\"의 최상위 창에 닫는 메세지 보냈습니다.\n"
@@ -9685,6 +9686,7 @@ msgid "Process with PID %u was forcibly terminated.\n"
 msgstr "PID %u 의 프로세스는 강제로 종료되었습니다.\n"
 
 #: taskkill.rc:36
+#, fuzzy
 msgid "Process \"%s\" with PID %u was forcibly terminated.\n"
 msgstr "PID %u 의 프로세스 \"%s\" 는 강제로 종료되엇습니다.\n"
 
@@ -11298,6 +11300,7 @@ msgid "Overwrite %s? (Yes|No|All)\n"
 msgstr "%s를 덮어쓰겠습니까? (예|아니오|모두)\n"
 
 #: xcopy.rc:37
+#, fuzzy
 msgid "Copying of '%s' to '%s' failed with r/c %d\n"
 msgstr " r/c %d로 '%s'를  '%s'로 복사 실패 \n"
 

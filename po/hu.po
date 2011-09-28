@@ -6148,6 +6148,7 @@ msgstr ""
 "dokumentumra."
 
 #: oledlg.rc:38
+#, fuzzy
 msgid ""
 "Inserts a picture of the clipboard contents into your document.  The picture "
 "is linked to the source file so that changes to the file will be reflected "
@@ -6158,6 +6159,7 @@ msgstr ""
 "dokumentumra."
 
 #: oledlg.rc:39
+#, fuzzy
 msgid ""
 "Inserts a shortcut which points to the location of the clipboard contents.  "
 "The shortcut is linked to the source file so that changes to the file will "
