@@ -668,7 +668,7 @@ static WAVEFORMATEX *clone_format(const WAVEFORMATEX *fmt)
 }
 
 static HRESULT setup_oss_device(ACImpl *This, const WAVEFORMATEX *fmt,
-        WAVEFORMATEX **out)
+        WAVEFORMATEX **out, BOOL query)
 {
     int tmp, oss_format;
     double tenth;
@@ -723,7 +723,8 @@ static HRESULT setup_oss_device(ACImpl *This, const WAVEFORMATEX *fmt,
 
         ((WAVEFORMATEXTENSIBLE*)closest)->dwChannelMask = mask;
 
-        if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+        if(query && fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+                fmtex->dwChannelMask != 0 &&
                 fmtex->dwChannelMask != mask)
             ret = S_FALSE;
     }
@@ -861,7 +862,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         return AUDCLNT_E_ALREADY_INITIALIZED;
     }
 
-    hr = setup_oss_device(This, fmt, NULL);
+    hr = setup_oss_device(This, fmt, NULL, FALSE);
     if(hr == S_FALSE){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_UNSUPPORTED_FORMAT;
@@ -1099,7 +1100,7 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
 
     EnterCriticalSection(&This->lock);
 
-    ret = setup_oss_device(This, pwfx, outpwfx);
+    ret = setup_oss_device(This, pwfx, outpwfx, TRUE);
 
     LeaveCriticalSection(&This->lock);
 

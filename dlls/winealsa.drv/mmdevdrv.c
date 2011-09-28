@@ -1383,6 +1383,7 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
         ((WAVEFORMATEXTENSIBLE*)closest)->dwChannelMask = mask;
 
         if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+                fmtex->dwChannelMask != 0 &&
                 fmtex->dwChannelMask != mask)
             hr = S_FALSE;
     }

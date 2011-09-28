@@ -1118,6 +1118,7 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
         WAVEFORMATEX **outpwfx)
 {
     ACImpl *This = impl_from_IAudioClient(iface);
+    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)pwfx;
     AudioQueueRef aqueue;
     HRESULT hr;
 
@@ -1134,6 +1135,11 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
         return E_INVALIDARG;
 
     dump_fmt(pwfx);
+
+    if(pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+            fmtex->dwChannelMask != 0 &&
+            fmtex->dwChannelMask != get_channel_mask(pwfx->nChannels))
+        return AUDCLNT_E_UNSUPPORTED_FORMAT;
 
     OSSpinLockLock(&This->lock);
 

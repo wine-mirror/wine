@@ -220,6 +220,47 @@ static void test_audioclient(void)
             NULL, (void**)&ac);
     ok(hr == S_OK, "Activation failed with %08x\n", hr);
 
+    if(pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
+        WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)pwfx;
+        WAVEFORMATEX *fmt2 = NULL;
+
+        ok(fmtex->dwChannelMask != 0, "Got empty dwChannelMask\n");
+
+        fmtex->dwChannelMask = 0xffff;
+
+        hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000, 0, pwfx, NULL);
+        ok(hr == S_OK, "Initialize(dwChannelMask = 0xffff) returns %08x\n", hr);
+
+        IAudioClient_Release(ac);
+
+        hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+                NULL, (void**)&ac);
+        ok(hr == S_OK, "Activation failed with %08x\n", hr);
+
+        fmtex->dwChannelMask = 0;
+
+        hr = IAudioClient_IsFormatSupported(ac, AUDCLNT_SHAREMODE_SHARED, pwfx, &fmt2);
+        ok(hr == S_OK, "IsFormatSupported(dwChannelMask = 0) call returns %08x\n", hr);
+        ok(fmtex->dwChannelMask == 0, "Passed format was modified\n");
+
+        CoTaskMemFree(fmt2);
+
+        hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000, 0, pwfx, NULL);
+        ok(hr == S_OK, "Initialize(dwChannelMask = 0) returns %08x\n", hr);
+
+        IAudioClient_Release(ac);
+
+        hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+                NULL, (void**)&ac);
+        ok(hr == S_OK, "Activation failed with %08x\n", hr);
+
+        CoTaskMemFree(pwfx);
+
+        hr = IAudioClient_GetMixFormat(ac, &pwfx);
+        ok(hr == S_OK, "Valid GetMixFormat returns %08x\n", hr);
+    }else
+        skip("Skipping dwChannelMask tests\n");
+
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000, 0, pwfx, NULL);
     ok(hr == S_OK, "Valid Initialize returns %08x\n", hr);
 
