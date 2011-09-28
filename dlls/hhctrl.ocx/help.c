@@ -448,6 +448,7 @@ static LRESULT Child_OnSize(HWND hwnd)
 static LRESULT OnTabChange(HWND hwnd)
 {
     HHInfo *info = (HHInfo*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+    int tab_id, tab_index, i;
 
     TRACE("%p\n", hwnd);
 
@@ -457,7 +458,23 @@ static LRESULT OnTabChange(HWND hwnd)
     if(info->tabs[info->current_tab].hwnd)
         ShowWindow(info->tabs[info->current_tab].hwnd, SW_HIDE);
 
-    info->current_tab = SendMessageW(info->hwndTabCtrl, TCM_GETCURSEL, 0, 0);
+    tab_id = (int) SendMessageW(info->hwndTabCtrl, TCM_GETCURSEL, 0, 0);
+    /* convert the ID of the tab to an index in our tab list */
+    tab_index = -1;
+    for (i=0; i<TAB_NUMTABS; i++)
+    {
+        if (info->tabs[i].id == tab_id)
+        {
+            tab_index = i;
+            break;
+        }
+    }
+    if (tab_index == -1)
+    {
+        FIXME("Tab ID %d does not correspond to a valid index in the tab list.\n", tab_id);
+        return 0;
+    }
+    info->current_tab = tab_index;
 
     if(info->tabs[info->current_tab].hwnd)
         ShowWindow(info->tabs[info->current_tab].hwnd, SW_SHOW);

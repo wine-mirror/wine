@@ -111,6 +111,7 @@ typedef struct CHMInfo
 #define TAB_INDEX      1
 #define TAB_SEARCH     2
 #define TAB_FAVORITES  3
+#define TAB_NUMTABS    TAB_FAVORITES
 
 typedef struct {
     HWND hwnd;
