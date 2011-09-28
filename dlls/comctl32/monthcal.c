@@ -962,7 +962,7 @@ static void MONTHCAL_PaintWeeknumbers(const MONTHCAL_INFO *infoPtr, HDC hdc, con
   r = infoPtr->calendars[calIdx].weeknums;
 
   /* erase whole week numbers area */
-  FillRect(hdc, &r, infoPtr->brushes[BrushTitle]);
+  FillRect(hdc, &r, infoPtr->brushes[BrushMonth]);
   SetTextColor(hdc, infoPtr->colors[MCSC_TITLEBK]);
 
   /* reduce rectangle to one week number */
