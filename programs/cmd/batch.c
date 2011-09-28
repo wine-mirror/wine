@@ -89,7 +89,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, int called, WCHAR *startLabel, HAN
 
   while (context -> skip_rest == FALSE) {
       CMD_LIST *toExecute = NULL;         /* Commands left to be executed */
-      if (WCMD_ReadAndParseLine(NULL, &toExecute, h) == NULL)
+      if (!WCMD_ReadAndParseLine(NULL, &toExecute, h, FALSE))
         break;
       WCMD_process_commands(toExecute, FALSE, NULL, NULL);
       WCMD_free_commands(toExecute);
@@ -181,21 +181,19 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where, WCHAR **end) {
  * the LF (or CRLF) from the line.
  */
 
-WCHAR *WCMD_fgets (WCHAR *s, int noChars, HANDLE h)
+WCHAR *WCMD_fgets(WCHAR *s, int noChars, HANDLE h, BOOL is_console_handle)
 {
   DWORD bytes, charsRead;
   BOOL status;
   WCHAR *p;
 
   p = s;
-  if ((status = ReadConsoleW(h, s, noChars, &charsRead, NULL))) {
+  if (is_console_handle) {
+    status = ReadConsoleW(h, s, noChars, &charsRead, NULL);
+    if (!status) return NULL;
     s[charsRead-2] = '\0'; /* Strip \r\n */
     return p;
   }
-
-  /* Continue only if we have no console (i.e. a file) handle */
-  if (GetLastError() != ERROR_INVALID_HANDLE)
-    return NULL;
 
   /* TODO: More intelligent buffering for reading lines from files */
   do {

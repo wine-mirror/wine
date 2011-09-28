@@ -1786,8 +1786,9 @@ static BOOL WCMD_IsEndQuote(const WCHAR *quote, int quoteIndex)
  *     - Anything else gets put into the command string (including
  *            redirects)
  */
-WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE readFrom) {
-
+WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output,
+                             HANDLE readFrom, const BOOL is_console_handle)
+{
     WCHAR    *curPos;
     int       inQuotes = 0;
     WCHAR     curString[MAXSTRING];
@@ -1831,7 +1832,8 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
     } else if (readFrom == INVALID_HANDLE_VALUE) {
         WINE_FIXME("No command nor handle supplied\n");
     } else {
-        if (WCMD_fgets(extraSpace, MAXSTRING, readFrom) == NULL) return NULL;
+        if (!WCMD_fgets(extraSpace, MAXSTRING, readFrom, is_console_handle))
+          return NULL;
     }
     curPos = extraSpace;
 
@@ -2191,7 +2193,8 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
         /* Read more, skipping any blank lines */
         while (*extraSpace == 0x00) {
           if (!context) WCMD_output_asis( WCMD_LoadMessage(WCMD_MOREPROMPT));
-          if (WCMD_fgets(extraSpace, MAXSTRING, readFrom) == NULL) break;
+          if (!WCMD_fgets(extraSpace, MAXSTRING, readFrom, is_console_handle))
+            break;
         }
         curPos = extraSpace;
         if (context) handleExpansion(extraSpace, FALSE, NULL, NULL);
@@ -2282,6 +2285,8 @@ int wmain (int argc, WCHAR *argvW[])
   WCHAR string[1024];
   WCHAR envvar[4];
   int opt_q;
+  BOOL is_console;
+  DWORD dummy;
   int opt_t = 0;
   static const WCHAR promptW[] = {'P','R','O','M','P','T','\0'};
   static const WCHAR defaultpromptW[] = {'$','P','$','G','\0'};
@@ -2497,7 +2502,7 @@ int wmain (int argc, WCHAR *argvW[])
        */
 
       /* Parse the command string, without reading any more input */
-      WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE);
+      WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE, FALSE);
       WCMD_process_commands(toExecute, FALSE, NULL, NULL);
       WCMD_free_commands(toExecute);
       toExecute = NULL;
@@ -2593,7 +2598,7 @@ int wmain (int argc, WCHAR *argvW[])
 
   if (opt_k) {
       /* Parse the command string, without reading any more input */
-      WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE);
+      WCMD_ReadAndParseLine(cmd, &toExecute, INVALID_HANDLE_VALUE, FALSE);
       WCMD_process_commands(toExecute, FALSE, NULL, NULL);
       WCMD_free_commands(toExecute);
       toExecute = NULL;
@@ -2606,13 +2611,13 @@ int wmain (int argc, WCHAR *argvW[])
 
   SetEnvironmentVariableW(promptW, defaultpromptW);
   WCMD_version ();
+  is_console = !!GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &dummy);
   while (TRUE) {
 
     /* Read until EOF (which for std input is never, but if redirect
        in place, may occur                                          */
     if (echo_mode) WCMD_show_prompt();
-    if (WCMD_ReadAndParseLine(NULL, &toExecute,
-                              GetStdHandle(STD_INPUT_HANDLE)) == NULL)
+    if (!WCMD_ReadAndParseLine(NULL, &toExecute, GetStdHandle(STD_INPUT_HANDLE), is_console))
       break;
     WCMD_process_commands(toExecute, FALSE, NULL, NULL);
     WCMD_free_commands(toExecute);
