@@ -47,7 +47,8 @@ static const char* convert_input_data(const char *data, DWORD size, DWORD *new_s
     for (i = 0; i < size; i++) {
         switch (data[i]) {
             case '\n':
-                *ptr++ = '\r';
+                if (data[i-1] != '\r')
+                    *ptr++ = '\r';
                 *ptr++ = '\n';
                 break;
             case '@':
