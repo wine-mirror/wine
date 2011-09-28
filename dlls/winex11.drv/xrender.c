@@ -2609,7 +2609,6 @@ static BOOL xrenderdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
 {
     struct xrender_physdev *physdev_dst = get_xrender_dev( dst_dev );
     struct xrender_physdev *physdev_src = get_xrender_dev( src_dev );
-    INT sSrc, sDst;
     BOOL stretch = (src->width != dst->width) || (src->height != dst->height);
 
     if (src_dev->funcs != dst_dev->funcs)
@@ -2627,20 +2626,8 @@ static BOOL xrenderdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     /* if not stretching, we only need to handle format conversion */
     if (!stretch && physdev_dst->format == physdev_src->format) goto x11drv_fallback;
 
-    sSrc = sDst = X11DRV_LockDIBSection( physdev_dst->x11dev, DIB_Status_None );
-    if (physdev_dst != physdev_src) sSrc = X11DRV_LockDIBSection( physdev_src->x11dev, DIB_Status_None );
-
-    /* try client-side DIB copy */
-    if (!stretch && sSrc == DIB_Status_AppMod)
-    {
-        if (physdev_dst != physdev_src) X11DRV_UnlockDIBSection( physdev_src->x11dev, FALSE );
-        X11DRV_UnlockDIBSection( physdev_dst->x11dev, TRUE );
-        dst_dev = GET_NEXT_PHYSDEV( dst_dev, pStretchBlt );
-        return dst_dev->funcs->pStretchBlt( dst_dev, dst, src_dev, src, rop );
-    }
-
-    X11DRV_CoerceDIBSection( physdev_dst->x11dev, DIB_Status_GdiMod );
-    if (physdev_dst != physdev_src) X11DRV_CoerceDIBSection( physdev_src->x11dev, DIB_Status_GdiMod );
+    X11DRV_LockDIBSection( physdev_dst->x11dev, DIB_Status_GdiMod );
+    if (physdev_dst != physdev_src) X11DRV_LockDIBSection( physdev_src->x11dev, DIB_Status_GdiMod );
 
     if (rop != SRCCOPY)
     {

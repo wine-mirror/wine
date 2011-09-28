@@ -1315,7 +1315,6 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     X11DRV_PDEVICE *physDevSrc = get_x11drv_dev( src_dev );
     BOOL fStretch;
     INT width, height;
-    INT sDst, sSrc = DIB_Status_None;
     const BYTE *opcode;
     Pixmap src_pixmap;
     GC tmpGC;
@@ -1328,25 +1327,11 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
 
     fStretch = (src->width != dst->width) || (src->height != dst->height);
 
-    if (physDevDst != physDevSrc)
-        sSrc = X11DRV_LockDIBSection( physDevSrc, DIB_Status_None );
-
     width  = dst->visrect.right - dst->visrect.left;
     height = dst->visrect.bottom - dst->visrect.top;
 
-    sDst = X11DRV_LockDIBSection( physDevDst, DIB_Status_None );
-    if (physDevDst == physDevSrc) sSrc = sDst;
-
-    /* try client-side DIB copy */
-    if (!fStretch && sSrc == DIB_Status_AppMod)
-    {
-        if (physDevDst != physDevSrc) X11DRV_UnlockDIBSection( physDevSrc, FALSE );
-        X11DRV_UnlockDIBSection( physDevDst, TRUE );
-        dst_dev = GET_NEXT_PHYSDEV( dst_dev, pStretchBlt );
-        return dst_dev->funcs->pStretchBlt( dst_dev, dst, src_dev, src, rop );
-    }
-
-    X11DRV_CoerceDIBSection( physDevDst, DIB_Status_GdiMod );
+    X11DRV_LockDIBSection( physDevDst, DIB_Status_GdiMod );
+    if (physDevDst != physDevSrc) X11DRV_LockDIBSection( physDevSrc, DIB_Status_GdiMod );
 
     opcode = BITBLT_Opcodes[(rop >> 16) & 0xff];
 
@@ -1359,7 +1344,6 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
             XSetFunction( gdi_display, physDevDst->gc, OP_ROP(*opcode) );
             wine_tsx11_unlock();
 
-            if (physDevSrc != physDevDst) X11DRV_CoerceDIBSection( physDevSrc, DIB_Status_GdiMod );
             wine_tsx11_lock();
             XCopyArea( gdi_display, physDevSrc->drawable,
                        physDevDst->drawable, physDevDst->gc,
@@ -1376,7 +1360,6 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
         {
             int fg, bg;
 
-            X11DRV_CoerceDIBSection( physDevSrc, DIB_Status_GdiMod );
             get_colors(physDevDst, physDevSrc, &fg, &bg);
             wine_tsx11_lock();
             XSetBackground( gdi_display, physDevDst->gc, fg );
@@ -1401,8 +1384,6 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     XSetGraphicsExposures( gdi_display, tmpGC, False );
     src_pixmap = XCreatePixmap( gdi_display, root_window, width, height, physDevDst->depth );
     wine_tsx11_unlock();
-
-    if (physDevDst != physDevSrc) X11DRV_CoerceDIBSection( physDevSrc, DIB_Status_GdiMod );
 
     if (fStretch)
         BITBLT_GetSrcAreaStretch( physDevSrc, physDevDst, src_pixmap, tmpGC, src, dst );
