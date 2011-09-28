@@ -4602,16 +4602,21 @@ DWORD WineEngGetGlyphIndices(GdiFont *font, LPCWSTR lpstr, INT count,
 				LPWORD pgi, DWORD flags)
 {
     int i;
-    int default_char = -1;
+    WORD default_char;
+    BOOL got_default = FALSE;
 
-    if  (flags & GGI_MARK_NONEXISTING_GLYPHS) default_char = 0xffff;  /* XP would use 0x1f for bitmap fonts */
+    if (flags & GGI_MARK_NONEXISTING_GLYPHS)
+    {
+        default_char = 0xffff;  /* XP would use 0x1f for bitmap fonts */
+        got_default = TRUE;
+    }
 
     for(i = 0; i < count; i++)
     {
         pgi[i] = get_glyph_index(font, lpstr[i]);
         if  (pgi[i] == 0)
         {
-            if (default_char == -1)
+            if (!got_default)
             {
                 if (FT_IS_SFNT(font->ft_face))
                 {
@@ -4624,6 +4629,7 @@ DWORD WineEngGetGlyphIndices(GdiFont *font, LPCWSTR lpstr, INT count,
                     WineEngGetTextMetrics(font, &textm);
                     default_char = textm.tmDefaultChar;
                 }
+                got_default = TRUE;
             }
             pgi[i] = default_char;
         }
