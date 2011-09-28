@@ -539,7 +539,10 @@ static HRESULT WINAPI ServerRpcChannelBuffer_GetBuffer(LPRPCCHANNELBUFFER iface,
         if (msg->Buffer)
             status = RPC_S_OK;
         else
-            status = ERROR_OUTOFMEMORY;
+        {
+            HeapFree(GetProcessHeap(), 0, channel_hook_data);
+            return E_OUTOFMEMORY;
+        }
     }
     else
         status = I_RpcGetBuffer(msg);
