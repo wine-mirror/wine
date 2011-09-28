@@ -238,6 +238,7 @@ static void test_ACLMulti(void)
     WCHAR exp[] = {'A','B','C',0};
     IEnumString *obj;
     IEnumACString *unk;
+    HRESULT hr;
     TestACL *acl1, *acl2;
     IACList *acl;
     IObjMgr *mgr;
@@ -252,9 +253,15 @@ static void test_ACLMulti(void)
         "Unexpected interface IACList2 in ACLMulti\n");
     stop_on_error(obj->lpVtbl->QueryInterface(obj, &IID_IObjMgr, (LPVOID *)&mgr));
 
-    todo_wine ole_ok(obj->lpVtbl->QueryInterface(obj, &IID_IEnumACString, (LPVOID*)&unk));
-    if (unk != NULL)
-        unk->lpVtbl->Release(unk);
+    hr = obj->lpVtbl->QueryInterface(obj, &IID_IEnumACString, (LPVOID*)&unk);
+    if (hr == E_NOINTERFACE)
+        todo_wine win_skip("IEnumACString is not supported, skipping tests\n");
+    else
+    {
+        ok(hr == S_OK, "QueryInterface(IID_IEnumACString) failed: %x\n", hr);
+        if (unk != NULL)
+            unk->lpVtbl->Release(unk);
+    }
 
     ok(obj->lpVtbl->Next(obj, 1, (LPOLESTR *)&tmp, &i) == S_FALSE, "Unexpected return from Next\n");
     ok(i == 0, "Unexpected fetched value %d\n", i);
