@@ -10337,12 +10337,11 @@ msgstr "%s를 위한 Wine 설정"
 
 #: winecfg.rc:87
 msgid "Selected driver: %s"
-msgstr ""
+msgstr "선택된 드라이버: %s"
 
 #: winecfg.rc:88
-#, fuzzy
 msgid "(None)"
-msgstr "없음"
+msgstr "(없음)"
 
 #: winecfg.rc:51
 msgid ""
