@@ -584,7 +584,7 @@ static NTSTATUS get_vprot_flags( DWORD protect, unsigned int *vprot )
         *vprot = 0;
         break;
     default:
-        return STATUS_INVALID_PARAMETER;
+        return STATUS_INVALID_PAGE_PROTECTION;
     }
     if (protect & PAGE_GUARD) *vprot |= VPROT_GUARD;
     if (protect & PAGE_NOCACHE) *vprot |= VPROT_NOCACHE;
@@ -2501,7 +2501,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         access = SECTION_MAP_READ;
         break;
     default:
-        return STATUS_INVALID_PARAMETER;
+        return STATUS_INVALID_PAGE_PROTECTION;
     }
 
     if (process != NtCurrentProcess())
