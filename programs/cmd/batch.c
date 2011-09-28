@@ -181,13 +181,23 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where, WCHAR **end) {
  * the LF (or CRLF) from the line.
  */
 
-WCHAR *WCMD_fgets (WCHAR *s, int noChars, HANDLE h) {
-
-  DWORD bytes;
+WCHAR *WCMD_fgets (WCHAR *s, int noChars, HANDLE h)
+{
+  DWORD bytes, charsRead;
   BOOL status;
   WCHAR *p;
 
   p = s;
+  if ((status = ReadConsoleW(h, s, noChars, &charsRead, NULL))) {
+    s[charsRead-2] = '\0'; /* Strip \r\n */
+    return p;
+  }
+
+  /* Continue only if we have no console (i.e. a file) handle */
+  if (GetLastError() != ERROR_INVALID_HANDLE)
+    return NULL;
+
+  /* TODO: More intelligent buffering for reading lines from files */
   do {
     status = WCMD_ReadFile (h, s, 1, &bytes, NULL);
     if ((status == 0) || ((bytes == 0) && (s == p))) return NULL;
