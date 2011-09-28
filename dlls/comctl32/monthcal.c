@@ -1675,6 +1675,8 @@ MONTHCAL_UpdateToday(MONTHCAL_INFO *infoPtr, const SYSTEMTIME *today)
   /* only two days need redrawing */
   InvalidateRect(infoPtr->hwndSelf, &old_r, FALSE);
   InvalidateRect(infoPtr->hwndSelf, &new_r, FALSE);
+  /* and today label */
+  InvalidateRect(infoPtr->hwndSelf, &infoPtr->todayrect, FALSE);
   return TRUE;
 }
 
