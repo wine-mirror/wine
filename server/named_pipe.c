@@ -1005,9 +1005,12 @@ DECL_HANDLER(get_named_pipe_info)
     server = get_pipe_server_obj( current->process, req->handle, FILE_READ_ATTRIBUTES );
     if (!server)
     {
+        if (get_error() != STATUS_OBJECT_TYPE_MISMATCH)
+            return;
+
         clear_error();
         client = (struct pipe_client *)get_handle_obj( current->process, req->handle,
-                                                       FILE_READ_ATTRIBUTES, &pipe_client_ops );
+                                                       0, &pipe_client_ops );
         if (!client) return;
         server = client->server;
     }

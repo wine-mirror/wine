@@ -160,7 +160,7 @@ static void test_create_invalid(void)
     ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
 
     res = pNtQueryInformationFile(handle, &iosb, &info, sizeof(info), (FILE_INFORMATION_CLASS)24);
-    todo_wine ok(res == STATUS_ACCESS_DENIED, "NtQueryInformationFile returned %x\n", res);
+    ok(res == STATUS_ACCESS_DENIED, "NtQueryInformationFile returned %x\n", res);
 
 /* test FILE_CREATE creation disposition */
     res = pNtCreateNamedPipeFile(&handle2, SYNCHRONIZE, &attr, &iosb, FILE_SHARE_READ | FILE_SHARE_WRITE, 2 /*FILE_CREATE*/,
