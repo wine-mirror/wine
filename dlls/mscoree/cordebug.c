@@ -86,7 +86,7 @@ static HRESULT WINAPI CorDebug_Initialize(ICorDebug *iface)
 {
     RuntimeHost *This = impl_from_ICorDebug( iface );
     FIXME("stub %p\n", This);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI CorDebug_Terminate(ICorDebug *iface)
