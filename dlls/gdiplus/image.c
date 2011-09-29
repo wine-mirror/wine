@@ -1370,12 +1370,12 @@ GpStatus WINGDIPAPI GdipCreateHBITMAPFromBitmap(GpBitmap* bitmap,
     HBITMAP* hbmReturn, ARGB background)
 {
     GpStatus stat;
-    HBITMAP result, oldbitmap;
+    HBITMAP result;
     UINT width, height;
     HDC hdc;
-    GpGraphics *graphics;
     BITMAPINFOHEADER bih;
-    void *bits;
+    LPBYTE bits;
+    BitmapData lockeddata;
     TRACE("(%p,%p,%x)\n", bitmap, hbmReturn, background);
 
     if (!bitmap || !hbmReturn) return InvalidParameter;
@@ -1398,25 +1398,19 @@ GpStatus WINGDIPAPI GdipCreateHBITMAPFromBitmap(GpBitmap* bitmap,
     hdc = CreateCompatibleDC(NULL);
     if (!hdc) return GenericError;
 
-    result = CreateDIBSection(hdc, (BITMAPINFO*)&bih, DIB_RGB_COLORS, &bits,
+    result = CreateDIBSection(hdc, (BITMAPINFO*)&bih, DIB_RGB_COLORS, (void**)&bits,
         NULL, 0);
 
     if (result)
     {
-        oldbitmap = SelectObject(hdc, result);
+        lockeddata.Stride = -width * 4;
+        lockeddata.Scan0 = bits - (lockeddata.Stride * (height - 1));
 
-        stat = GdipCreateFromHDC(hdc, &graphics);
+        stat = GdipBitmapLockBits(bitmap, NULL, ImageLockModeRead|ImageLockModeUserInputBuf,
+            PixelFormat32bppPARGB, &lockeddata);
+
         if (stat == Ok)
-        {
-            stat = GdipGraphicsClear(graphics, background);
-
-            if (stat == Ok)
-                stat = GdipDrawImage(graphics, (GpImage*)bitmap, 0, 0);
-
-            GdipDeleteGraphics(graphics);
-        }
-
-        SelectObject(hdc, oldbitmap);
+            stat = GdipBitmapUnlockBits(bitmap, &lockeddata);
     }
     else
         stat = GenericError;

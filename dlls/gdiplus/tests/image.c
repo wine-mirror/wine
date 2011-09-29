@@ -1514,6 +1514,12 @@ static void test_createhbitmap(void)
         expect(32, bm.bmBitsPixel);
         ok(bm.bmBits != NULL, "got DDB, expected DIB\n");
 
+        if (bm.bmBits)
+        {
+            DWORD val = *(DWORD*)bm.bmBits;
+            ok(val == 0xff686868, "got %x, expected 0xff686868\n", val);
+        }
+
         hdc = CreateCompatibleDC(NULL);
 
         oldhbitmap = SelectObject(hdc, hbitmap);
@@ -1523,6 +1529,49 @@ static void test_createhbitmap(void)
         DeleteDC(hdc);
 
         expect(0x686868, pixel);
+
+        DeleteObject(hbitmap);
+    }
+
+    stat = GdipDisposeImage((GpImage*)bitmap);
+    expect(Ok, stat);
+
+    /* create alpha Bitmap */
+    stat = GdipCreateBitmapFromScan0(8, 20, 32, PixelFormat32bppARGB, bits, &bitmap);
+    expect(Ok, stat);
+
+    /* create HBITMAP */
+    stat = GdipCreateHBITMAPFromBitmap(bitmap, &hbitmap, 0);
+    expect(Ok, stat);
+
+    if (stat == Ok)
+    {
+        ret = GetObjectA(hbitmap, sizeof(BITMAP), &bm);
+        expect(sizeof(BITMAP), ret);
+
+        expect(0, bm.bmType);
+        expect(8, bm.bmWidth);
+        expect(20, bm.bmHeight);
+        expect(32, bm.bmWidthBytes);
+        expect(1, bm.bmPlanes);
+        expect(32, bm.bmBitsPixel);
+        ok(bm.bmBits != NULL, "got DDB, expected DIB\n");
+
+        if (bm.bmBits)
+        {
+            DWORD val = *(DWORD*)bm.bmBits;
+            ok(val == 0x682a2a2a, "got %x, expected 0x682a2a2a\n", val);
+        }
+
+        hdc = CreateCompatibleDC(NULL);
+
+        oldhbitmap = SelectObject(hdc, hbitmap);
+        pixel = GetPixel(hdc, 5, 5);
+        SelectObject(hdc, oldhbitmap);
+
+        DeleteDC(hdc);
+
+        expect(0x2a2a2a, pixel);
 
         DeleteObject(hbitmap);
     }
