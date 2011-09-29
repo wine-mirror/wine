@@ -1960,7 +1960,18 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
                 {
                     pli->NamedPipeType = (reply->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE) ? 
                         FILE_PIPE_TYPE_MESSAGE : FILE_PIPE_TYPE_BYTE;
-                    pli->NamedPipeConfiguration = 0; /* FIXME */
+                    switch (reply->sharing)
+                    {
+                        case FILE_SHARE_READ:
+                            pli->NamedPipeConfiguration = FILE_PIPE_OUTBOUND;
+                            break;
+                        case FILE_SHARE_WRITE:
+                            pli->NamedPipeConfiguration = FILE_PIPE_INBOUND;
+                            break;
+                        case FILE_SHARE_READ | FILE_SHARE_WRITE:
+                            pli->NamedPipeConfiguration = FILE_PIPE_FULL_DUPLEX;
+                            break;
+                    }
                     pli->MaximumInstances = reply->maxinstances;
                     pli->CurrentInstances = reply->instances;
                     pli->InboundQuota = reply->insize;

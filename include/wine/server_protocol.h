@@ -3063,11 +3063,11 @@ struct get_named_pipe_info_reply
 {
     struct reply_header __header;
     unsigned int   flags;
+    unsigned int   sharing;
     unsigned int   maxinstances;
     unsigned int   instances;
     unsigned int   outsize;
     unsigned int   insize;
-    char __pad_28[4];
 };
 
 
@@ -5637,6 +5637,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 426
+#define SERVER_PROTOCOL_VERSION 427
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

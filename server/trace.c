@@ -2629,6 +2629,7 @@ static void dump_get_named_pipe_info_request( const struct get_named_pipe_info_r
 static void dump_get_named_pipe_info_reply( const struct get_named_pipe_info_reply *req )
 {
     fprintf( stderr, " flags=%08x", req->flags );
+    fprintf( stderr, ", sharing=%08x", req->sharing );
     fprintf( stderr, ", maxinstances=%08x", req->maxinstances );
     fprintf( stderr, ", instances=%08x", req->instances );
     fprintf( stderr, ", outsize=%08x", req->outsize );

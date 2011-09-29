@@ -1026,6 +1026,7 @@ DECL_HANDLER(get_named_pipe_info)
     }
 
     reply->flags        = server->pipe->flags;
+    reply->sharing      = server->pipe->sharing;
     reply->maxinstances = server->pipe->maxinstances;
     reply->instances    = server->pipe->instances;
     reply->insize       = server->pipe->insize;

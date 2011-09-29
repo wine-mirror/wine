@@ -2208,6 +2208,7 @@ enum message_type
     obj_handle_t   handle;
 @REPLY
     unsigned int   flags;
+    unsigned int   sharing;
     unsigned int   maxinstances;
     unsigned int   instances;
     unsigned int   outsize;

@@ -181,7 +181,8 @@ static void test_create(void)
     IO_STATUS_BLOCK iosb;
 
     static const DWORD access[] = { 0, GENERIC_READ, GENERIC_WRITE, GENERIC_READ | GENERIC_WRITE};
-    static const DWORD sharing[] = { FILE_SHARE_READ, FILE_SHARE_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE };
+    static const DWORD sharing[] =    { FILE_SHARE_READ, FILE_SHARE_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE };
+    static const DWORD pipe_config[]= {               1,                0,                                  2 };
 
     for (j = 0; j < sizeof(sharing) / sizeof(DWORD); j++) {
         for (k = 0; k < sizeof(access) / sizeof(DWORD); k++) {
@@ -196,12 +197,16 @@ static void test_create(void)
 
             res = pNtQueryInformationFile(hserver, &iosb, &info, sizeof(info), (FILE_INFORMATION_CLASS)24);
             ok(!res, "NtQueryInformationFile for server returned %x, sharing: %x\n", res, sharing[j]);
+            ok(info.NamedPipeConfiguration == pipe_config[j], "wrong duplex status for pipe: %d, expected %d\n",
+               info.NamedPipeConfiguration, pipe_config[j]);
 
             hclient = CreateFileW(testpipe, access[k], 0, 0, OPEN_EXISTING, 0, 0);
             if (hclient != INVALID_HANDLE_VALUE) {
                 res = pNtQueryInformationFile(hclient, &iosb, &info, sizeof(info), (FILE_INFORMATION_CLASS)24);
                 ok(!res, "NtQueryInformationFile for client returned %x, access: %x, sharing: %x\n",
                    res, access[k], sharing[j]);
+                ok(info.NamedPipeConfiguration == pipe_config[j], "wrong duplex status for pipe: %d, expected %d\n",
+                   info.NamedPipeConfiguration, pipe_config[j]);
                 CloseHandle(hclient);
             }
 
