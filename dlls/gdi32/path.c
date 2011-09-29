@@ -1826,6 +1826,7 @@ static BOOL PATH_WidenPath(DC *dc)
                 pStrokes[numStrokes - 1] = HeapAlloc(GetProcessHeap(), 0, sizeof(GdiPath));
                 PATH_InitGdiPath(pStrokes[numStrokes - 1]);
                 pStrokes[numStrokes - 1]->state = PATH_Open;
+                /* fall through */
             case PT_LINETO:
             case (PT_LINETO | PT_CLOSEFIGURE):
                 point.x = pPath->pPoints[i].x;
