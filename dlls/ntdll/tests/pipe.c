@@ -172,6 +172,55 @@ static void test_create_invalid(void)
     CloseHandle(handle);
 }
 
+static void test_create(void)
+{
+    HANDLE hserver;
+    NTSTATUS res;
+    int j, k;
+    FILE_PIPE_LOCAL_INFORMATION info;
+    IO_STATUS_BLOCK iosb;
+
+    static const DWORD access[] = { 0, GENERIC_READ, GENERIC_WRITE, GENERIC_READ | GENERIC_WRITE};
+    static const DWORD sharing[] = { FILE_SHARE_READ, FILE_SHARE_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE };
+
+    for (j = 0; j < sizeof(sharing) / sizeof(DWORD); j++) {
+        for (k = 0; k < sizeof(access) / sizeof(DWORD); k++) {
+            HANDLE hclient;
+            BOOL should_succeed = TRUE;
+
+            res  = create_pipe(&hserver, sharing[j], FILE_SYNCHRONOUS_IO_NONALERT);
+            if (res) {
+                ok(0, "NtCreateNamedPipeFile returned %x, sharing: %x\n", res, sharing[j]);
+                continue;
+            }
+
+            res = pNtQueryInformationFile(hserver, &iosb, &info, sizeof(info), (FILE_INFORMATION_CLASS)24);
+            ok(!res, "NtQueryInformationFile for server returned %x, sharing: %x\n", res, sharing[j]);
+
+            hclient = CreateFileW(testpipe, access[k], 0, 0, OPEN_EXISTING, 0, 0);
+            if (hclient != INVALID_HANDLE_VALUE) {
+                res = pNtQueryInformationFile(hclient, &iosb, &info, sizeof(info), (FILE_INFORMATION_CLASS)24);
+                ok(!res, "NtQueryInformationFile for client returned %x, access: %x, sharing: %x\n",
+                   res, access[k], sharing[j]);
+                CloseHandle(hclient);
+            }
+
+            if (access[k] & GENERIC_WRITE)
+                should_succeed &= !!(sharing[j] & FILE_SHARE_WRITE);
+            if (access[k] & GENERIC_READ)
+                should_succeed &= !!(sharing[j] & FILE_SHARE_READ);
+
+            if (should_succeed)
+                ok(hclient != INVALID_HANDLE_VALUE, "CreateFile failed for sharing %x, access: %x, GetLastError: %d\n",
+                   sharing[j], access[k], GetLastError());
+            else
+                ok(hclient == INVALID_HANDLE_VALUE, "CreateFile succeded for sharing %x, access: %x\n", sharing[j], access[k]);
+
+            CloseHandle(hserver);
+        }
+    }
+}
+
 static BOOL ioapc_called;
 static void CALLBACK ioapc(void *arg, PIO_STATUS_BLOCK io, ULONG reserved)
 {
@@ -418,6 +467,9 @@ START_TEST(pipe)
 
     trace("starting invalid create tests\n");
     test_create_invalid();
+
+    trace("starting create tests\n");
+    test_create();
 
     trace("starting overlapped tests\n");
     test_overlapped();

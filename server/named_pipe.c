@@ -804,11 +804,21 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
     struct named_pipe *pipe = (struct named_pipe *)obj;
     struct pipe_server *server;
     struct pipe_client *client;
+    unsigned int pipe_sharing;
     int fds[2];
 
     if (!(server = find_available_server( pipe )))
     {
         set_error( STATUS_PIPE_NOT_AVAILABLE );
+        return NULL;
+    }
+
+    pipe_sharing = server->pipe->sharing;
+    if (((access & GENERIC_READ) && !(pipe_sharing & FILE_SHARE_READ)) ||
+        ((access & GENERIC_WRITE) && !(pipe_sharing & FILE_SHARE_WRITE)))
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        release_object( server );
         return NULL;
     }
 
