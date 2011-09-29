@@ -47,6 +47,8 @@ typedef struct _xmlparser
 {
     IXMLParser IXMLParser_iface;
     LONG ref;
+
+    int flags;
 } xmlparser;
 
 static inline xmlparser *impl_from_IXMLParser( IXMLParser *iface )
@@ -186,9 +188,9 @@ static ULONG WINAPI xmlparser_GetFlags(IXMLParser *iface)
 {
     xmlparser *This = impl_from_IXMLParser( iface );
 
-    FIXME("(%p)\n", This);
+    TRACE("(%p)\n", This);
 
-    return 0;
+    return This->flags;
 }
 
 static HRESULT WINAPI xmlparser_GetURL(IXMLParser *iface, const WCHAR **ppBuf)
@@ -338,9 +340,11 @@ static HRESULT WINAPI xmlparser_SetFlags(IXMLParser *iface, ULONG flags)
 {
     xmlparser *This = impl_from_IXMLParser( iface );
 
-    FIXME("(%p %d)\n", This, flags);
+    TRACE("(%p %d)\n", This, flags);
 
-    return E_NOTIMPL;
+    This->flags = flags;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlparser_SetSecureBaseURL(IXMLParser *iface, const WCHAR *baseUrl)
@@ -411,6 +415,7 @@ HRESULT XMLParser_create(IUnknown* pUnkOuter, void**ppObj)
         return E_OUTOFMEMORY;
 
     This->IXMLParser_iface.lpVtbl = &xmlparser_vtbl;
+    This->flags = 0;
     This->ref = 1;
 
     *ppObj = &This->IXMLParser_iface;

@@ -80,6 +80,7 @@ dlls/msi/sql.tab.c
 dlls/msi/sql.tab.h
 dlls/mstask/mstask_local.h
 dlls/mstask/mstask_local_i.c
+dlls/msxml3/tests/xmlparser.h
 dlls/msxml3/xmlparser.h
 dlls/msxml3/xslpattern.tab.c
 dlls/msxml3/xslpattern.tab.h

@@ -29,10 +29,9 @@
 #include "perhist.h"
 #include "docobj.h"
 #include "urlmon.h"
+#include "xmlparser.h"
 
 #include "wine/test.h"
-
-DEFINE_GUID(CLSID_XMLView, 0x48123bc4, 0x99d9, 0x11d1, 0xa6,0xb3, 0x00,0xc0,0x4f,0xd9,0x15,0x55);
 
 HRESULT (WINAPI *pCreateURLMoniker)(IMoniker*, LPCWSTR, IMoniker**);
 
