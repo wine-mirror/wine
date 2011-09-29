@@ -1,5 +1,5 @@
 TESTDLL   = mscoree.dll
-IMPORTS   = shlwapi
+IMPORTS   = ole32 shlwapi uuid
 
 C_SRCS = \
 	debugging.c \

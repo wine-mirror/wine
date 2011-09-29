@@ -64,7 +64,6 @@ struct RuntimeHost
 {
     ICorRuntimeHost ICorRuntimeHost_iface;
     ICLRRuntimeHost ICLRRuntimeHost_iface;
-    ICorDebug       ICorDebug_iface;
     const CLRRuntimeInfo *version;
     loaded_mono *mono;
     struct list domains;
@@ -72,6 +71,18 @@ struct RuntimeHost
     CRITICAL_SECTION lock;
     LONG ref;
 };
+
+typedef struct CorDebug
+{
+    ICorDebug ICorDebug_iface;
+    LONG ref;
+
+    ICLRRuntimeHost *runtimehost;
+
+    /* ICorDebug Callback */
+    ICorDebugManagedCallback *pCallback;
+    ICorDebugManagedCallback2 *pCallback2;
+} CorDebug;
 
 extern HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
     DWORD startup_flags, DWORD runtimeinfo_flags, BOOL legacy, ICLRRuntimeInfo **result) DECLSPEC_HIDDEN;
@@ -161,6 +172,6 @@ extern HRESULT RuntimeHost_Destroy(RuntimeHost *This) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI CLRMetaHost_GetRuntime(ICLRMetaHost* iface, LPCWSTR pwzVersion, REFIID iid, LPVOID *ppRuntime) DECLSPEC_HIDDEN;
 
-extern void cordebug_init(RuntimeHost *This) DECLSPEC_HIDDEN;
+extern HRESULT CorDebug_Create(ICLRRuntimeHost *runtimehost, IUnknown** ppUnk) DECLSPEC_HIDDEN;
 
 #endif   /* __MSCOREE_PRIVATE__ */

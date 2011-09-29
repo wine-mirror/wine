@@ -787,8 +787,6 @@ HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version,
     This->ICorRuntimeHost_iface.lpVtbl = &corruntimehost_vtbl;
     This->ICLRRuntimeHost_iface.lpVtbl = &CLRHostVtbl;
 
-    cordebug_init(This);
-
     This->ref = 1;
     This->version = runtime_version;
     This->mono = loaded_mono;
@@ -826,8 +824,9 @@ HRESULT RuntimeHost_GetInterface(RuntimeHost *This, REFCLSID clsid, REFIID riid,
     }
     else if (IsEqualGUID(clsid, &CLSID_CLRDebuggingLegacy))
     {
-        unk = (IUnknown*)&This->ICorDebug_iface;
-        IUnknown_AddRef(unk);
+        hr = CorDebug_Create(&This->ICLRRuntimeHost_iface, &unk);
+        if (FAILED(hr))
+            return hr;
     }
     else
         unk = NULL;
