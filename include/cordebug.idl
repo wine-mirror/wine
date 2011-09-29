@@ -43,6 +43,9 @@ interface ICorDebugFrame;
 interface ICorDebugFrameEnum;
 interface ICorDebugFunction;
 interface ICorDebugFunctionBreakpoint;
+interface ICorDebugManagedCallback;
+interface ICorDebugManagedCallback2;
+interface ICorDebugMDA;
 interface ICorDebugModule;
 interface ICorDebugModuleBreakpoint;
 interface ICorDebugModuleEnum;
@@ -86,6 +89,9 @@ cpp_quote("#endif")
 
 typedef ULONG64 CORDB_ADDRESS;
 typedef ULONG64 CORDB_REGISTER;
+
+typedef UINT64 TASKID;
+typedef DWORD CONNID;
 
 
 cpp_quote("#ifndef _COR_IL_MAP")
@@ -350,6 +356,61 @@ interface ICorDebugManagedCallback : IUnknown
                                [in] ICorDebugBreakpoint *pBreakpoint, [in] DWORD dwError);
 };
 
+[
+    object,
+    local,
+    uuid(250E5EEA-DB5C-4C76-B6F3-8C46F12E3203),
+    pointer_default(unique)
+]
+interface ICorDebugManagedCallback2 : IUnknown
+{
+    HRESULT FunctionRemapOpportunity([in] ICorDebugAppDomain *pAppDomain,
+                   [in] ICorDebugThread *pThread, [in] ICorDebugFunction *pOldFunction,
+                   [in] ICorDebugFunction *pNewFunction, [in] ULONG32 oldILOffset);
+
+    HRESULT CreateConnection([in] ICorDebugProcess *pProcess, [in] CONNID dwConnectionId,
+                                [in] WCHAR *pConnName);
+
+    HRESULT ChangeConnection([in] ICorDebugProcess *pProcess, [in] CONNID dwConnectionId );
+
+    HRESULT DestroyConnection([in] ICorDebugProcess *pProcess, [in] CONNID dwConnectionId );
+
+
+    typedef enum CorDebugExceptionCallbackType
+    {
+        DEBUG_EXCEPTION_FIRST_CHANCE = 1,
+        DEBUG_EXCEPTION_USER_FIRST_CHANCE = 2,
+        DEBUG_EXCEPTION_CATCH_HANDLER_FOUND = 3,
+        DEBUG_EXCEPTION_UNHANDLED = 4
+    } CorDebugExceptionCallbackType;
+
+    typedef enum CorDebugExceptionFlags
+    {
+        DEBUG_EXCEPTION_CAN_BE_INTERCEPTED = 0x0001
+    } CorDebugExceptionFlags;
+
+    HRESULT Exception( [in] ICorDebugAppDomain *pAppDomain, [in] ICorDebugThread *pThread,
+                       [in] ICorDebugFrame *pFrame, [in] ULONG32 nOffset,
+                       [in] CorDebugExceptionCallbackType dwEventType, [in] DWORD dwFlags );
+
+    typedef enum CorDebugExceptionUnwindCallbackType
+    {
+        DEBUG_EXCEPTION_UNWIND_BEGIN = 1,
+        DEBUG_EXCEPTION_INTERCEPTED = 2
+    } CorDebugExceptionUnwindCallbackType;
+
+    HRESULT ExceptionUnwind( [in] ICorDebugAppDomain *pAppDomain, [in] ICorDebugThread *pThread,
+                             [in] CorDebugExceptionUnwindCallbackType dwEventType,
+                             [in] DWORD dwFlags );
+
+    HRESULT FunctionRemapComplete([in] ICorDebugAppDomain *pAppDomain,
+                             [in] ICorDebugThread *pThread, [in] ICorDebugFunction *pFunction);
+
+    HRESULT MDANotification([in] ICorDebugController * pController,
+                            [in] ICorDebugThread *pThread, [in] ICorDebugMDA * pMDA
+    );
+
+};
 [
     object,
     local,
@@ -953,4 +1014,28 @@ interface ICorDebugCode : IUnknown
                                  [out] COR_DEBUG_IL_TO_NATIVE_MAP map[]);
     HRESULT GetEnCRemapSequencePoints([in] ULONG32 cMap,[out] ULONG32 *pcMap,
                                       [out] ULONG32 offsets[]);
+};
+
+[
+    object,
+    local,
+    uuid(CC726F2F-1DB7-459b-B0EC-05F01D841B42),
+    pointer_default(unique)
+]
+interface ICorDebugMDA : IUnknown
+{
+    HRESULT GetName([in] ULONG32 cchName, [out] ULONG32 * pcchName, [out] WCHAR szName[]);
+
+    HRESULT GetDescription([in] ULONG32 cchName, [out] ULONG32 * pcchName, [out] WCHAR szName[]);
+
+    HRESULT GetXML([in] ULONG32 cchName, [out] ULONG32 * pcchName, [out] WCHAR szName[]);
+
+    typedef enum CorDebugMDAFlags
+    {
+        MDA_FLAG_SLIP = 0x2
+    } CorDebugMDAFlags;
+
+    HRESULT GetFlags([in] CorDebugMDAFlags * pFlags);
+
+    HRESULT GetOSThreadId([out] DWORD * pOsTid);
 };
