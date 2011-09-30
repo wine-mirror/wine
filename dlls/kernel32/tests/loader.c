@@ -662,7 +662,7 @@ static void test_section_access(void)
 
         SetLastError(0xdeadbeef);
         hlib = LoadLibrary(dll_name);
-        ok(ret, "LoadLibrary error %d\n", GetLastError());
+        ok(hlib != 0, "LoadLibrary error %d\n", GetLastError());
 
         size = VirtualQuery((char *)hlib + section.VirtualAddress, &info, sizeof(info));
         ok(size == sizeof(info),
