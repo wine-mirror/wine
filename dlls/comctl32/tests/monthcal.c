@@ -466,6 +466,29 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
         add_message(sequences, PARENT_SEQ_INDEX, &msg);
     }
 
+    if (message == WM_NOTIFY)
+    {
+        NMHDR *hdr = (NMHDR*)lParam;
+        switch (hdr->code)
+        {
+          case MCN_GETDAYSTATE:
+          {
+            NMDAYSTATE *nmstate = (NMDAYSTATE*)lParam;
+            MONTHDAYSTATE months[14] = { 0 };
+
+            ok(nmstate->cDayState > 0, "got %d\n", nmstate->cDayState);
+            ok(nmstate->cDayState <= 14, "got %d\n", nmstate->cDayState);
+            ok(nmstate->prgDayState != NULL, "got %p\n", nmstate->prgDayState);
+
+            nmstate->prgDayState = months;
+
+            return TRUE;
+          }
+          default:
+            break;
+        }
+    }
+
     defwndproc_counter++;
     ret = DefWindowProcA(hwnd, message, wParam, lParam);
     defwndproc_counter--;

@@ -1884,24 +1884,25 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
 /* MCN_GETDAYSTATE notification helper */
 static void MONTHCAL_NotifyDayState(MONTHCAL_INFO *infoPtr)
 {
-  if(infoPtr->dwStyle & MCS_DAYSTATE) {
-    NMDAYSTATE nmds;
+  MONTHDAYSTATE *state;
+  NMDAYSTATE nmds;
 
-    nmds.nmhdr.hwndFrom = infoPtr->hwndSelf;
-    nmds.nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
-    nmds.nmhdr.code     = MCN_GETDAYSTATE;
-    nmds.cDayState	= MONTHCAL_GetMonthRange(infoPtr, GMR_DAYSTATE, 0);
-    nmds.prgDayState	= Alloc(nmds.cDayState * sizeof(MONTHDAYSTATE));
+  if (!(infoPtr->dwStyle & MCS_DAYSTATE)) return;
 
-    MONTHCAL_GetMinDate(infoPtr, &nmds.stStart);
-    nmds.stStart.wDay = 1;
+  nmds.nmhdr.hwndFrom = infoPtr->hwndSelf;
+  nmds.nmhdr.idFrom   = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
+  nmds.nmhdr.code     = MCN_GETDAYSTATE;
+  nmds.cDayState      = MONTHCAL_GetMonthRange(infoPtr, GMR_DAYSTATE, 0);
+  nmds.prgDayState    = state = Alloc(nmds.cDayState * sizeof(MONTHDAYSTATE));
 
-    SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmds.nmhdr.idFrom, (LPARAM)&nmds);
-    memcpy(infoPtr->monthdayState, nmds.prgDayState,
-        MONTHCAL_GetMonthRange(infoPtr, GMR_DAYSTATE, 0)*sizeof(MONTHDAYSTATE));
+  MONTHCAL_GetMinDate(infoPtr, &nmds.stStart);
+  nmds.stStart.wDay = 1;
 
-    Free(nmds.prgDayState);
-  }
+  SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, nmds.nmhdr.idFrom, (LPARAM)&nmds);
+  memcpy(infoPtr->monthdayState, nmds.prgDayState,
+      MONTHCAL_GetMonthRange(infoPtr, GMR_DAYSTATE, 0)*sizeof(MONTHDAYSTATE));
+
+  Free(state);
 }
 
 /* no valid range check performed */
