@@ -294,8 +294,7 @@ static BOOL alsa_try_open(const char *devnode, snd_pcm_stream_t stream)
 }
 
 static HRESULT alsa_get_card_devices(snd_pcm_stream_t stream, WCHAR **ids, char **keys,
-        UINT *num, snd_ctl_t *ctl, int card, const WCHAR *cardnameW,
-        BOOL count_failed)
+        UINT *num, snd_ctl_t *ctl, int card, const WCHAR *cardnameW)
 {
     static const WCHAR dashW[] = {' ','-',' ',0};
     int err, device;
@@ -327,11 +326,8 @@ static HRESULT alsa_get_card_devices(snd_pcm_stream_t stream, WCHAR **ids, char 
         }
 
         sprintf(devnode, "plughw:%d,%d", card, device);
-        if(!alsa_try_open(devnode, stream)){
-            if(count_failed)
-                ++(*num);
+        if(!alsa_try_open(devnode, stream))
             continue;
-        }
 
         if(ids && keys){
             DWORD len, cardlen;
@@ -380,7 +376,7 @@ static HRESULT alsa_get_card_devices(snd_pcm_stream_t stream, WCHAR **ids, char 
 }
 
 static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, char **keys,
-        UINT *num, BOOL count_failed)
+        UINT *num)
 {
     snd_pcm_stream_t stream = (flow == eRender ? SND_PCM_STREAM_PLAYBACK :
         SND_PCM_STREAM_CAPTURE);
@@ -397,8 +393,7 @@ static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, char **keys,
             memcpy(*keys, defname, sizeof(defname));
         }
         ++*num;
-    }else if(count_failed)
-        ++*num;
+    }
 
     for(err = snd_card_next(&card); card != -1 && err >= 0;
             err = snd_card_next(&card)){
@@ -431,8 +426,7 @@ static HRESULT alsa_enum_devices(EDataFlow flow, WCHAR **ids, char **keys,
         }
         MultiByteToWideChar(CP_UNIXCP, 0, cardname, -1, cardnameW, len);
 
-        alsa_get_card_devices(stream, ids, keys, num, ctl, card, cardnameW,
-                count_failed);
+        alsa_get_card_devices(stream, ids, keys, num, ctl, card, cardnameW);
 
         HeapFree(GetProcessHeap(), 0, cardnameW);
 
@@ -453,7 +447,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
 
     TRACE("%d %p %p %p %p\n", flow, ids, keys, num, def_index);
 
-    hr = alsa_enum_devices(flow, NULL, NULL, num, TRUE);
+    hr = alsa_enum_devices(flow, NULL, NULL, num);
     if(FAILED(hr))
         return hr;
 
@@ -474,7 +468,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
 
     *def_index = 0;
 
-    hr = alsa_enum_devices(flow, *ids, *keys, num, FALSE);
+    hr = alsa_enum_devices(flow, *ids, *keys, num);
     if(FAILED(hr)){
         int i;
         for(i = 0; i < *num; ++i){
