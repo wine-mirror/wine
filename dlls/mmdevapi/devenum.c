@@ -1236,14 +1236,10 @@ static ULONG WINAPI info_device_ps_Release(IPropertyStore *iface)
 static HRESULT WINAPI info_device_ps_GetValue(IPropertyStore *iface,
         REFPROPERTYKEY key, PROPVARIANT *pv)
 {
-    MMDevPropStore *This = impl_from_IPropertyStore(iface);
-    TRACE("(%p)->(\"%s,%u\", %p)\n", This, debugstr_guid(&key->fmtid), key ? key->pid : 0, pv);
+    TRACE("(static)->(\"%s,%u\", %p)\n", debugstr_guid(&key->fmtid), key ? key->pid : 0, pv);
 
     if (!key || !pv)
         return E_POINTER;
-    if (This->access != STGM_READ
-        && This->access != STGM_READWRITE)
-        return STG_E_ACCESSDENIED;
 
     if (IsEqualPropertyKey(*key, DEVPKEY_Device_Driver))
     {
