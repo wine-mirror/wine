@@ -36,7 +36,7 @@
 @ stdcall DwmIsCompositionEnabled(ptr)
 @ stub DwmModifyPreviousDxFrameDuration
 @ stub DwmQueryThumbnailSourceSize
-@ stub DwmRegisterThumbnail
+@ stdcall DwmRegisterThumbnail(long long ptr)
 @ stub DwmSetDxFrameDuration
 @ stub DwmSetPresentParameters
 @ stdcall DwmSetWindowAttribute(long long ptr long)

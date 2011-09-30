@@ -198,3 +198,13 @@ HRESULT WINAPI DwmGetWindowAttribute(HWND hwnd, DWORD attribute, PVOID pv_attrib
 
     return E_NOTIMPL;
 }
+
+/**********************************************************************
+ *           DwmRegisterThumbnail         (DWMAPI.@)
+ */
+HRESULT WINAPI DwmRegisterThumbnail(HWND dest, HWND src, PHTHUMBNAIL thumbnail_id)
+{
+    FIXME("(%p %p %p) stub\n", dest, src, thumbnail_id);
+
+    return E_NOTIMPL;
+}
