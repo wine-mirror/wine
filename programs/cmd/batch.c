@@ -176,9 +176,14 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where, WCHAR **end) {
 /****************************************************************************
  * WCMD_fgets
  *
- * Get one line from a batch file/console. We can't use the native f* functions because
- * of the filename syntax differences between DOS and Unix. Also need to lose
- * the LF (or CRLF) from the line.
+ * Gets one line from a file/console and puts it into buffer s
+ * Pre:  s has size noChars
+ *       1 <= noChars <= MAXSTRING
+ * Post: s is filled with at most noChars-1 characters, and gets nul-terminated
+         s does not include EOL terminator
+ * Returns:
+ *       s on success
+ *       NULL on error or EOF
  */
 
 WCHAR *WCMD_fgets(WCHAR *s, int noChars, HANDLE h, BOOL is_console_handle)
@@ -186,6 +191,9 @@ WCHAR *WCMD_fgets(WCHAR *s, int noChars, HANDLE h, BOOL is_console_handle)
   DWORD bytes, charsRead;
   BOOL status;
   WCHAR *p;
+
+  /* We can't use the native f* functions because of the filename syntax differences
+     between DOS and Unix. Also need to lose the LF (or CRLF) from the line. */
 
   p = s;
   if (is_console_handle) {
