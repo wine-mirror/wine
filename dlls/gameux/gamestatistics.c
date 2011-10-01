@@ -946,7 +946,7 @@ static HRESULT WINAPI GameStatisticsImpl_Save(
 
     TRACE("(%p, %d)\n", This, trackChanges);
 
-    if(trackChanges == TRUE)
+    if(trackChanges)
         FIXME("tracking changes not yet implemented\n");
 
     hr = GAMEUX_updateStatisticsFile(&This->stats);
