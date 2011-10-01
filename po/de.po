@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-09-07 23:43+0200\n"
+"PO-Revision-Date: 2011-10-01 18:05+0200\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -7748,6 +7748,25 @@ msgid ""
 "  /S  Processes matching files in the current folder and all subfolders.\n"
 "  /D  Processes folders as well.\n"
 msgstr ""
+"ATTRIB - Zeigt oder ändert Dateiattribute.\n"
+"\n"
+"Syntax:\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [Laufwerk:][Pfad][Dateiname]\n"
+"       [/S [/D]]\n"
+"\n"
+"Dabei:\n"
+"\n"
+"  +   Setzt ein Attribut.\n"
+"  -   Löscht ein Attribut.\n"
+"  R   Schreibschut Dateiattribut.\n"
+"  A   Archiv Dateiattribut.\n"
+"  S   System Dateiattribut.\n"
+"  H   Verbergen Dateiattribut.\n"
+"   [Laufwerk:][Pfad][Dateiname]\n"
+"      Gibt eine Datei oder mehrere Dateien für attrib an.\n"
+"  /S  Zutreffende Dateien im aktuellen Verzeichnis und Unterverzeichnissen "
+"verarbeiten.\n"
+"  /D  Auch Verzeichnisse verarbeiten.\n"
 
 #: clock.rc:29
 msgid "Ana&log"
@@ -7915,7 +7934,6 @@ msgid ""
 msgstr "HELP zeigt die Hilfe an\n"
 
 #: cmd.rc:94
-#, fuzzy
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -7929,13 +7947,12 @@ msgstr ""
 "IF wird benutzt, um einen Befehl bedingt auszuführen.\n"
 "\n"
 "Syntax:\tIF [NOT] EXIST Dateiname Befehl\n"
-"IF [NOT] Zeichenkette1==Zeichenkette2 Befehl\n"
-"IF [NOT] ERRORLEVEL Nummer Befehl\n"
+"        IF [NOT] Zeichenkette1==Zeichenkette2 Befehl\n"
+"        IF [NOT] ERRORLEVEL Nummer Befehl\n"
 "\n"
 "In der zweiten Form des Befehls, müssen die beiden Zeichenketten in "
-"doppelten\n"
-"Anführungszeichen stehen. Der Vergleich achtet nicht auf die Groß- und\n"
-"Kleinschreibung.\n"
+"doppelten Anführungszeichen stehen. Der Vergleich achtet nicht auf "
+"die Groß- und Kleinschreibung.\n"
 
 #: cmd.rc:100
 msgid ""
@@ -8245,6 +8262,14 @@ msgid ""
 "Specifying no file type after the equal sign removes the current "
 "association, if any.\n"
 msgstr ""
+"ASSOC zeigt oder ändert Dateierweiterungs Zuordungen\n"
+"\n"
+"Syntax: ASSOC [.erw[=[Dateityp]]]\n"
+"\n"
+"ASSOC zeigt ohne Parameter die aktuellen Dateierweiterungs Zuordungen an.\n"
+"Mit nur einer Dateierweiterung, wird die aktuelle Zurordung angezeigt.\n"
+"Ohne Zuordung nach dem Gleichheitszeichen wird die aktuelle Zuordnung "
+"gelöscht, falls es eine gab.\n"
 
 #: cmd.rc:242
 msgid ""
@@ -8259,6 +8284,15 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string "
 "associated to the specified file type.\n"
 msgstr ""
+"FTYPE zeigt oder ändert die Öffnen-Befehle zu Dateierweiterungs Zuordungen\n"
+"\n"
+"Syntax: FTYPE [Dateityp[=[Öffnen-Befehl]]]\n"
+"\n"
+"Zeigt ohne Parameter die Dateitypen für die aktuell Öffnen-Befehle definiert "
+"sind.\n"
+"Mit nur einem Dateityp, wird der aktuelle Öffnen-Befehl angezeigt.\n"
+"Ohne Öffnen-Befehl nach dem Gleichheitszeichen wird der aktuell zugeordnete "
+"Öffnen-Befehl gelöscht.\n"
 
 #: cmd.rc:244
 msgid "MORE displays output of files or piped input in pages.\n"
@@ -8593,7 +8627,6 @@ msgid "Default gateway"
 msgstr "Standard Gateway"
 
 #: net.rc:27
-#, fuzzy
 msgid ""
 "The syntax of this command is:\n"
 "\n"
@@ -8605,12 +8638,11 @@ msgid ""
 msgstr ""
 "Die Syntax von diesem Befehl ist:\n"
 "\n"
-"NET HELP Befehl\n"
-"    -or-\n"
+"NET Befehl [Parameter]\n"
+"    -oder-\n"
 "NET Befehl /HELP\n"
 "\n"
-"   Mögliche Befehle:\n"
-"   NET HELP    NET START    NET STOP    NET USE\n"
+"Befehl kann hier HELP, START, STOP oder USE sein.\n"
 
 #: net.rc:28
 msgid ""
@@ -8621,6 +8653,12 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
+"Die Syntax dieses Befehls ist:\n"
+"\n"
+"NET START [Dienst]\n"
+"\n"
+"Zeigt eine Liste laufender Dienste wenn kein Dienst angegeben wurde. "
+"Ansonsten wird der angegebene Dienst gestartet.\n"
 
 #: net.rc:29
 msgid ""
@@ -8630,6 +8668,11 @@ msgid ""
 "\n"
 "Where 'service' is the name of the service to stop.\n"
 msgstr ""
+"Die Syntax dieses Befehls ist:\n"
+"\n"
+"NET STOP Dienst\n"
+"\n"
+"Der angegebene Dienst wird gestoppt.\n"
 
 #: net.rc:30
 msgid "Stopping dependent service: %s\n"
@@ -9024,9 +9067,8 @@ msgid "version 1.0"
 msgstr "Version 1.0"
 
 #: oleview.rc:100
-#, fuzzy
 msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
-msgstr "TypeLib Dateien (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+msgstr "TypeLib Dateien (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
 
 #: oleview.rc:103
 msgid "Bind to file via a File Moniker"
@@ -9696,7 +9738,6 @@ msgstr ""
 "Bedingungen weiter zu verbreiten; führe 'start /L' für mehr Details aus.\n"
 
 #: start.rc:64
-#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -9716,19 +9757,21 @@ msgid ""
 "See the COPYING.LIB file for license information.\n"
 msgstr ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
-"This program is free software; you can redistribute it and/or\n"
-"modify it under the terms of the GNU Lesser Public License\n"
-"as published by the Free Software Foundation; either version 2.1\n"
-"of the License, or (at your option) any later version.\n"
+"Dieses Programm ist freie Software; Sie dürfen es unter den Bedingungen\n"
+"der GNU Lesser General Public License, wie von der Free Software Foundation\n"
+"veröffentlicht, weiterverteilen und/oder modifizieren; entweder gemäß\n"
+"Version 2.1 der Lizenz oder (nach Ihrer Option) jeder späteren Version.\n"
 "\n"
-"This program is distributed in the hope that it will be useful,\n"
-"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-"GNU Lesser Public License for more details.\n"
+"Diese Bibliothek wird in der Hoffnung weiterverbreitet, daß es nützlich sein\n"
+"wird, jedoch OHNE IRGENDEINE GARANTIE, auch ohne die implizierte\n"
+"Garantie der MARKTREIFE oder der VERWENDBARKEIT FÜR EINEN\n"
+"BESTIMMTEN ZWECK. Mehr Details finden Sie in der\n"
+"GNU Lesser General Public License.\n"
 "\n"
-"You should have received a copy of the GNU Lesser Public License\n"
-"along with this program; if not, write to the Free Software\n"
-"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n"
+"Sie sollten eine Kopie der GNU Lesser General Public License zusammen\n"
+"mit diesem Programm erhalten haben; falls nicht, schreiben Sie an die Free\n"
+"Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110, USA."
+"\n"
 "\n"
 "Schau in die Datei COPYING.LIB für Lizenzinformationen.\n"
 
@@ -10448,12 +10491,11 @@ msgstr "Wine-Konfiguration für %s"
 
 #: winecfg.rc:87
 msgid "Selected driver: %s"
-msgstr ""
+msgstr "Ausgewählter Treiber: %s"
 
 #: winecfg.rc:88
-#, fuzzy
 msgid "(None)"
-msgstr "Kein"
+msgstr "(Kein)"
 
 #: winecfg.rc:51
 msgid ""
@@ -10492,9 +10534,8 @@ msgid "Default Settings"
 msgstr "Standardeinstellungen"
 
 #: winecfg.rc:59
-#, fuzzy
 msgid "Wine Programs (*.exe; *.exe.so)"
-msgstr "Wine-Programme (*.exe,*.exe.so)"
+msgstr "Wine-Programme (*.exe; *.exe.so)"
 
 #: winecfg.rc:60
 msgid "Use global settings"
@@ -10915,9 +10956,8 @@ msgid "Tile &Vertically\tCtrl+F4"
 msgstr "&Nebeneinander\tUmschalt+F4"
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&About Wine File Manager"
-msgstr "&Info über Wine File Manager"
+msgstr "&Info über Wine Dateimanager"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -10928,9 +10968,8 @@ msgid "Error while selecting new font."
 msgstr "Fehler während der Schriftart-Auswahl."
 
 #: winefile.rc:99
-#, fuzzy
 msgid "Wine File Manager"
-msgstr "Winefile"
+msgstr "Wine Dateimanager"
 
 #: winefile.rc:101
 msgid "root fs"
@@ -11247,9 +11286,8 @@ msgid "Unicode text document"
 msgstr "Unicode-Textdokument"
 
 #: wordpad.rc:143
-#, fuzzy
 msgid "Printer files (*.prn)"
-msgstr "Druckerdateien (*.PRN)"
+msgstr "Druckerdateien (*.prn)"
 
 #: wordpad.rc:148
 msgid "Left"
