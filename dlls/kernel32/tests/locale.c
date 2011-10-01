@@ -1135,11 +1135,62 @@ static void test_GetNumberFormatA(void)
   }
 }
 
+struct comparestringa_entry {
+  LCID lcid;
+  DWORD flags;
+  const char *first;
+  int first_len;
+  const char *second;
+  int second_len;
+  int ret;
+};
+
+static const struct comparestringa_entry comparestringa_data[] = {
+  { LOCALE_SYSTEM_DEFAULT, 0, "EndDialog", -1, "_Property", -1, CSTR_GREATER_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, "osp_vba.sreg0070", -1, "_IEWWBrowserComp", -1, CSTR_GREATER_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, "r", -1, "\\", -1, CSTR_GREATER_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, "osp_vba.sreg0031", -1, "OriginalDatabase", -1, CSTR_GREATER_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, "AAA", -1, "aaa", -1, CSTR_GREATER_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, "AAA", -1, "aab", -1, CSTR_LESS_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, "AAA", -1, "Aab", -1, CSTR_LESS_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, ".AAA", -1, "Aab", -1, CSTR_LESS_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, ".AAA", -1, "A.ab", -1, CSTR_LESS_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, "aa", -1, "AB", -1, CSTR_LESS_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, "aa", -1, "Aab", -1, CSTR_LESS_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, "aB", -1, "Aab", -1, CSTR_GREATER_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, "Ba", -1, "bab", -1, CSTR_LESS_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, "{100}{83}{71}{71}{71}", -1, "Global_DataAccess_JRO", -1, CSTR_LESS_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, "a", -1, "{", -1, CSTR_GREATER_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, "A", -1, "{", -1, CSTR_GREATER_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, "3.5", 0, "4.0", -1, CSTR_LESS_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, "3.5", -1, "4.0", -1, CSTR_LESS_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, "3.520.4403.2", -1, "4.0.2927.10", -1, CSTR_LESS_THAN },
+  /* hyphen and apostrophe are treated differently depending on whether SORT_STRINGSORT specified or not */
+  { LOCALE_SYSTEM_DEFAULT, 0, "-o", -1, "/m", -1, CSTR_GREATER_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, "/m", -1, "-o", -1, CSTR_LESS_THAN },
+  { LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "-o", -1, "/m", -1, CSTR_LESS_THAN },
+  { LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "/m", -1, "-o", -1, CSTR_GREATER_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, "'o", -1, "/m", -1, CSTR_GREATER_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, "/m", -1, "'o", -1, CSTR_LESS_THAN },
+  { LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "'o", -1, "/m", -1, CSTR_LESS_THAN },
+  { LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "/m", -1, "'o", -1, CSTR_GREATER_THAN },
+  { LOCALE_SYSTEM_DEFAULT, 0, "aLuZkUtZ", 8, "aLuZkUtZ", 9, CSTR_EQUAL },
+  { LOCALE_SYSTEM_DEFAULT, 0, "aLuZkUtZ", 7, "aLuZkUtZ\0A", 10, CSTR_LESS_THAN }
+};
 
 static void test_CompareStringA(void)
 {
-  int ret;
+  int ret, i;
   LCID lcid = MAKELCID(MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT), SORT_DEFAULT);
+
+  for (i = 0; i < sizeof(comparestringa_data)/sizeof(struct comparestringa_entry); i++)
+  {
+      const struct comparestringa_entry *entry = &comparestringa_data[i];
+
+      ret = CompareStringA(entry->lcid, entry->flags, entry->first, entry->first_len,
+          entry->second, entry->second_len);
+      ok(ret == entry->ret, "%d: got %d, expected %d\n", i, ret, entry->ret);
+  }
 
   ret = CompareStringA(lcid, NORM_IGNORECASE, "Salut", -1, "Salute", -1);
   ok (ret== 1, "(Salut/Salute) Expected 1, got %d\n", ret);
@@ -1189,89 +1240,6 @@ static void test_CompareStringA(void)
     ret = lstrcmpA(NULL, "");
     ok (ret == -1 || broken(ret == -2) /* win9x */, "lstrcmpA(NULL, \"\") should return -1, got %d\n", ret);
  
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT,0,"EndDialog",-1,"_Property",-1);
-    ok( ret == 3, "EndDialog vs _Property ... expected 3, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT,0,"osp_vba.sreg0070",-1,"_IEWWBrowserComp",-1);
-    ok( ret == 3, "osp_vba.sreg0070 vs _IEWWBrowserComp ... expected 3, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT,0,"r",-1,"\\",-1); 
-    ok( ret == 3, "r vs \\ ... expected 3, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT,0,"osp_vba.sreg0031", -1, "OriginalDatabase", -1 );
-    ok( ret == 3, "osp_vba.sreg0031 vs OriginalDatabase ... expected 3, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "AAA", -1, "aaa", -1 );
-    ok( ret == 3, "AAA vs aaa expected 3, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "AAA", -1, "aab", -1 );
-    ok( ret == 1, "AAA vs aab expected 1, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "AAA", -1, "Aab", -1 );
-    ok( ret == 1, "AAA vs Aab expected 1, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, ".AAA", -1, "Aab", -1 );
-    ok( ret == 1, ".AAA vs Aab expected 1, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, ".AAA", -1, "A.ab", -1 );
-    ok( ret == 1, ".AAA vs A.ab expected 1, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "aa", -1, "AB", -1 );
-    ok( ret == 1, "aa vs AB expected 1, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "aa", -1, "Aab", -1 );
-    ok( ret == 1, "aa vs Aab expected 1, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "aB", -1, "Aab", -1 );
-    ok( ret == 3, "aB vs Aab expected 3, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "Ba", -1, "bab", -1 );
-    ok( ret == 1, "Ba vs bab expected 1, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "{100}{83}{71}{71}{71}", -1, "Global_DataAccess_JRO", -1 );
-    ok( ret == 1, "{100}{83}{71}{71}{71} vs Global_DataAccess_JRO expected 1, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "a", -1, "{", -1 );
-    ok( ret == 3, "a vs { expected 3, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "A", -1, "{", -1 );
-    ok( ret == 3, "A vs { expected 3, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "3.5", 0, "4.0", -1 );
-    ok(ret == 1, "3.5/0 vs 4.0/-1 expected 1, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "3.5", -1, "4.0", -1 );
-    ok(ret == 1, "3.5 vs 4.0 expected 1, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "3.520.4403.2", -1, "4.0.2927.10", -1 );
-    ok(ret == 1, "3.520.4403.2 vs 4.0.2927.10 expected 1, got %d\n", ret);
-
-   /* hyphen and apostrophe are treated differently depending on
-    * whether SORT_STRINGSORT specified or not
-    */
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "-o", -1, "/m", -1 );
-    ok(ret == 3, "-o vs /m expected 3, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "/m", -1, "-o", -1 );
-    ok(ret == 1, "/m vs -o expected 1, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "-o", -1, "/m", -1 );
-    ok(ret == 1, "-o vs /m expected 1, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "/m", -1, "-o", -1 );
-    ok(ret == 3, "/m vs -o expected 3, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "'o", -1, "/m", -1 );
-    ok(ret == 3, "'o vs /m expected 3, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "/m", -1, "'o", -1 );
-    ok(ret == 1, "/m vs 'o expected 1, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "'o", -1, "/m", -1 );
-    ok(ret == 1, "'o vs /m expected 1, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "/m", -1, "'o", -1 );
-    ok(ret == 3, "/m vs 'o expected 3, got %d\n", ret);
 
     if (0) { /* this requires collation table patch to make it MS compatible */
     ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "'o", -1, "-o", -1 );
@@ -1311,11 +1279,6 @@ static void test_CompareStringA(void)
     ok(ret == 1, "-m vs `o expected 1, got %d\n", ret);
     }
 
-    ret = CompareStringA(LOCALE_USER_DEFAULT, 0, "aLuZkUtZ", 8, "aLuZkUtZ", 9);
-    ok(ret == 2, "aLuZkUtZ vs aLuZkUtZ\\0 expected 2, got %d\n", ret);
-
-    ret = CompareStringA(LOCALE_USER_DEFAULT, 0, "aLuZkUtZ", 7, "aLuZkUtZ\0A", 10);
-    ok(ret == 1, "aLuZkUtZ vs aLuZkUtZ\\0A expected 1, got %d\n", ret);
 
     /* WinXP handles embedded NULLs differently than earlier versions */
     ret = CompareStringA(LOCALE_USER_DEFAULT, 0, "aLuZkUtZ", 8, "aLuZkUtZ\0A", 10);
