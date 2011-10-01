@@ -658,7 +658,7 @@ static void test_get_set_bkcolor(void)
 
 static void test_get_set_imagelist(void)
 {
-    HIMAGELIST hImageList = NULL;
+    HIMAGELIST himl;
     HWND hTree;
 
     hTree = create_treeview_control(0);
@@ -667,9 +667,9 @@ static void test_get_set_imagelist(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     /* Test a NULL HIMAGELIST */
-    SendMessage( hTree, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)hImageList );
-    hImageList = (HIMAGELIST)SendMessage( hTree, TVM_GETIMAGELIST, TVSIL_NORMAL, 0 );
-    ok(hImageList == NULL, "NULL image list, reported as 0x%p, expected 0.\n", hImageList);
+    SendMessage( hTree, TVM_SETIMAGELIST, TVSIL_NORMAL, 0 );
+    himl = (HIMAGELIST)SendMessage( hTree, TVM_GETIMAGELIST, TVSIL_NORMAL, 0 );
+    ok(himl == NULL, "NULL image list, reported as %p, expected 0.\n", himl);
 
     /* TODO: Test an actual image list */
 
@@ -1607,12 +1607,16 @@ static void test_htreeitem_layout(void)
 
 static void test_TVS_CHECKBOXES(void)
 {
+    HIMAGELIST himl;
     TVITEMA item;
     HWND hTree;
     DWORD ret;
 
     hTree = create_treeview_control(0);
     fill_tree(hTree);
+
+    himl = (HIMAGELIST)SendMessageA(hTree, TVM_GETIMAGELIST, TVSIL_STATE, 0);
+    ok(himl == NULL, "got %p\n", himl);
 
     item.hItem = hRoot;
     item.mask = TVIF_STATE;
@@ -1632,6 +1636,8 @@ static void test_TVS_CHECKBOXES(void)
 
     /* enabling check boxes set all items to 1 state image index */
     SetWindowLongA(hTree, GWL_STYLE, GetWindowLongA(hTree, GWL_STYLE) | TVS_CHECKBOXES);
+    himl = (HIMAGELIST)SendMessageA(hTree, TVM_GETIMAGELIST, TVSIL_STATE, 0);
+    ok(himl != NULL, "got %p\n", himl);
 
     item.hItem = hRoot;
     item.mask = TVIF_STATE;
@@ -1652,8 +1658,16 @@ static void test_TVS_CHECKBOXES(void)
     DestroyWindow(hTree);
 
     /* the same, but initially created with TVS_CHECKBOXES */
+    hTree = create_treeview_control(0);
+    fill_tree(hTree);
+    himl = (HIMAGELIST)SendMessageA(hTree, TVM_GETIMAGELIST, TVSIL_STATE, 0);
+    ok(himl == NULL, "got %p\n", himl);
+    DestroyWindow(hTree);
+
     hTree = create_treeview_control(TVS_CHECKBOXES);
     fill_tree(hTree);
+    himl = (HIMAGELIST)SendMessageA(hTree, TVM_GETIMAGELIST, TVSIL_STATE, 0);
+    todo_wine ok(himl == NULL, "got %p\n", himl);
 
     item.hItem = hRoot;
     item.mask = TVIF_STATE;

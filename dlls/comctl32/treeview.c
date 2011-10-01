@@ -66,6 +66,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(treeview);
 
+enum StateListType
+{
+  OriginInternal,
+  OriginUser
+};
+
 /* internal structures */
 
 typedef struct _TREEITEM    /* HTREEITEM is a _TREEINFO *. */
@@ -156,6 +162,7 @@ typedef struct tagTREEVIEW_INFO
   HIMAGELIST    himlState;
   int           stateImageHeight;
   int           stateImageWidth;
+  enum StateListType statehimlType;
   HDPA          items;
 
   DWORD lastKeyPressTimestamp;
@@ -1756,22 +1763,21 @@ TREEVIEW_NaturalHeight(const TREEVIEW_INFO *infoPtr)
 }
 
 static LRESULT
-TREEVIEW_SetImageList(TREEVIEW_INFO *infoPtr, WPARAM wParam, HIMAGELIST himlNew)
+TREEVIEW_SetImageList(TREEVIEW_INFO *infoPtr, UINT type, HIMAGELIST himlNew)
 {
     HIMAGELIST himlOld = 0;
     int oldWidth  = infoPtr->normalImageWidth;
     int oldHeight = infoPtr->normalImageHeight;
 
+    TRACE("%u,%p\n", type, himlNew);
 
-    TRACE("%lx,%p\n", wParam, himlNew);
-
-    switch (wParam)
+    switch (type)
     {
     case TVSIL_NORMAL:
 	himlOld = infoPtr->himlNormal;
 	infoPtr->himlNormal = himlNew;
 
-	if (himlNew != NULL)
+	if (himlNew)
 	    ImageList_GetIconSize(himlNew, &infoPtr->normalImageWidth,
 				  &infoPtr->normalImageHeight);
 	else
@@ -1786,9 +1792,12 @@ TREEVIEW_SetImageList(TREEVIEW_INFO *infoPtr, WPARAM wParam, HIMAGELIST himlNew)
 	himlOld = infoPtr->himlState;
 	infoPtr->himlState = himlNew;
 
-	if (himlNew != NULL)
+	if (himlNew)
+	{
 	    ImageList_GetIconSize(himlNew, &infoPtr->stateImageWidth,
 				  &infoPtr->stateImageHeight);
+	    infoPtr->statehimlType = OriginUser;
+	}
 	else
 	{
 	    infoPtr->stateImageWidth = 0;
@@ -1796,6 +1805,9 @@ TREEVIEW_SetImageList(TREEVIEW_INFO *infoPtr, WPARAM wParam, HIMAGELIST himlNew)
 	}
 
 	break;
+
+    default:
+        ERR("unknown imagelist type %u\n", type);
     }
 
     if (oldWidth != infoPtr->normalImageWidth ||
@@ -4950,7 +4962,7 @@ TREEVIEW_MouseWheel(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 /* Create/Destroy *******************************************************/
 
 static void
-initialize_checkboxes(TREEVIEW_INFO *infoPtr)
+TREEVIEW_InitCheckboxes(TREEVIEW_INFO *infoPtr)
 {
     RECT rc;
     HBITMAP hbm, hbmOld;
@@ -4958,6 +4970,7 @@ initialize_checkboxes(TREEVIEW_INFO *infoPtr)
     int nIndex;
 
     infoPtr->himlState = ImageList_Create(16, 16, ILC_COLOR | ILC_MASK, 3, 0);
+    infoPtr->statehimlType = OriginInternal;
 
     hdcScreen = GetDC(0);
 
@@ -5089,7 +5102,7 @@ TREEVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
             hwnd, 0, 0, 0);
 
     if (infoPtr->dwStyle & TVS_CHECKBOXES)
-        initialize_checkboxes(infoPtr);
+        TREEVIEW_InitCheckboxes(infoPtr);
 
     /* Make sure actual scrollbar state is consistent with uInternalStatus */
     ShowScrollBar(hwnd, SB_VERT, FALSE);
@@ -5121,9 +5134,10 @@ TREEVIEW_Destroy(TREEVIEW_INFO *infoPtr)
 
     CloseThemeData (GetWindowTheme (infoPtr->hwnd));
 
+    if (infoPtr->statehimlType == OriginInternal)
+        ImageList_Destroy(infoPtr->himlState);
     /* Deassociate treeview from the window before doing anything drastic. */
     SetWindowLongPtrW(infoPtr->hwnd, 0, 0);
-
 
     DeleteObject(infoPtr->hDefaultFont);
     DeleteObject(infoPtr->hBoldFont);
@@ -5459,7 +5473,7 @@ TREEVIEW_StyleChanged(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
         {
             if (dwNewStyle & TVS_CHECKBOXES)
             {
-                initialize_checkboxes(infoPtr);
+                TREEVIEW_InitCheckboxes(infoPtr);
                 TRACE("checkboxes enabled\n");
 
                 /* set all items to state image index 1 */
