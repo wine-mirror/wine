@@ -1124,7 +1124,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
           /* Process the input file */
           if (input == INVALID_HANDLE_VALUE) {
             WCMD_print_error ();
-            WCMD_output (WCMD_LoadMessage(WCMD_READFAIL), item);
+            WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), item);
             errorlevel = 1;
             return; /* FOR loop aborts at first failure here */
 
@@ -1539,7 +1539,7 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList) {
     WCMD_parameter(s, 1, &command, NULL);
   }
   else {
-    WCMD_output (WCMD_LoadMessage(WCMD_SYNTAXERR));
+    WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
     return;
   }
 

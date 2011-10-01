@@ -1055,7 +1055,7 @@ void WCMD_run_program (WCHAR *command, int called) {
     if (strchrW(param1, '.') != NULL) extensionsupplied = TRUE;
     if (strlenW(param1) >= MAX_PATH)
     {
-        WCMD_output_asis(WCMD_LoadMessage(WCMD_LINETOOLONG));
+        WCMD_output_asis_stderr(WCMD_LoadMessage(WCMD_LINETOOLONG));
         return;
     }
 
@@ -1836,9 +1836,9 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output,
 
     /* Handle truncated input - issue warning */
     if (strlenW(extraSpace) == MAXSTRING -1) {
-        WCMD_output_asis(WCMD_LoadMessage(WCMD_TRUNCATEDLINE));
-        WCMD_output_asis(extraSpace);
-        WCMD_output_asis(newline);
+        WCMD_output_asis_stderr(WCMD_LoadMessage(WCMD_TRUNCATEDLINE));
+        WCMD_output_asis_stderr(extraSpace);
+        WCMD_output_asis_stderr(newline);
     }
 
     /* Replace env vars if in a batch context */
