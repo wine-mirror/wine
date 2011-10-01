@@ -2760,7 +2760,7 @@ static HRESULT WINAPI domdoc_validateNode(
     {
 
         hr = SchemaCache_validate_tree(This->properties->schemaCache, get_node_obj(node)->node);
-        if (!FAILED(hr))
+        if (SUCCEEDED(hr))
         {
             ++validated;
             /* TODO: get a real error code here */
