@@ -199,7 +199,12 @@ WCHAR *WCMD_fgets(WCHAR *s, int noChars, HANDLE h, BOOL is_console_handle)
   if (is_console_handle) {
     status = ReadConsoleW(h, s, noChars, &charsRead, NULL);
     if (!status) return NULL;
-    s[charsRead-2] = '\0'; /* Strip \r\n */
+    if (s[charsRead-2] == '\r')
+      s[charsRead-2] = '\0'; /* Strip \r\n */
+    else {
+      /* Truncate */
+      s[noChars-1] = '\0';
+    }
     return p;
   }
 
