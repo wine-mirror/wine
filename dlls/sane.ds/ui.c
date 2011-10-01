@@ -994,7 +994,7 @@ static INT_PTR CALLBACK DialogProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
                 switch (((NMHDR*)lParam)->code)
                 {
                     case PSN_APPLY:
-                        if (psn->lParam == TRUE)
+                        if (psn->lParam)
                         {
                             activeDS.currentState = 6;
                             if (activeDS.windowMessage)
