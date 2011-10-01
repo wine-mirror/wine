@@ -601,9 +601,9 @@ static void dialog_choose_font(void)
             fmt.dwEffects |= CFE_BOLD;
         if(cf.nFontType & ITALIC_FONTTYPE)
             fmt.dwEffects |= CFE_ITALIC;
-        if(cf.lpLogFont->lfUnderline == TRUE)
+        if(cf.lpLogFont->lfUnderline)
             fmt.dwEffects |= CFE_UNDERLINE;
-        if(cf.lpLogFont->lfStrikeOut == TRUE)
+        if(cf.lpLogFont->lfStrikeOut)
             fmt.dwEffects |= CFE_STRIKEOUT;
 
         fmt.crTextColor = cf.rgbColors;
