@@ -165,7 +165,7 @@ static void start_dosbox( const char *appname, const char *args )
     if (!GetTempFileNameW( path, cfgW, 0, config )) return;
     if (!GetCurrentDirectoryW( MAX_PATH, path )) return;
     if (!GetShortPathNameA( appname, app, MAX_PATH )) return;
-    if (!GetShortPathNameW( path, path, MAX_PATH )) return;
+    GetShortPathNameW( path, path, MAX_PATH );
     file = CreateFileW( config, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
     if (file == INVALID_HANDLE_VALUE) return;
 
