@@ -56,7 +56,7 @@ static struct enum_device_entry
     /* HAL device */
     {
         "WINE Direct3D7 Hardware acceleration using WineD3D",
-        "Wine D3D7 HAL",
+        "Direct3D HAL",
         &IID_IDirect3DHALDevice,
     },
 
