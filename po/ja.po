@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-09-11 22:43+0900\n"
+"PO-Revision-Date: 2011-10-02 17:22+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Japanese\n"
@@ -145,7 +145,7 @@ msgstr "今日へ移動"
 
 #: comdlg32.rc:29
 msgid "&About FolderPicker Test"
-msgstr ""
+msgstr "バージョン情報(&A)"
 
 #: comdlg32.rc:30
 msgid "Document Folders"
@@ -2916,11 +2916,8 @@ msgid "Invalid starting code segment for %1\n"
 msgstr "%1 における開始コード セグメントが正しくありません。\n"
 
 #: winerror.mc:736
-#, fuzzy
 msgid "Invalid starting stack segment for %1\n"
-msgstr ""
-"Invalid starting stack segment for %1\n"
-"%1 における開始スタック セグメントが正しくありません。\n"
+msgstr "%1 における開始スタック セグメントが正しくありません。\n"
 
 #: winerror.mc:741
 msgid "Invalid module type for %1\n"
@@ -3735,11 +3732,8 @@ msgid "Connection refused\n"
 msgstr "接続は拒否されました。\n"
 
 #: winerror.mc:1761
-#, fuzzy
 msgid "Connection gracefully closed\n"
-msgstr ""
-"接続は終了しました。\n"
-"Connection gracefully closed\n"
+msgstr "接続は終了しました。\n"
 
 #: winerror.mc:1766
 msgid "Address already associated with transport endpoint\n"
@@ -7657,7 +7651,6 @@ msgid "%s: File Not Found\n"
 msgstr "%s: ファイルが見つかりません\n"
 
 #: attrib.rc:47
-#, fuzzy
 msgid ""
 "ATTRIB - Displays or changes file attributes.\n"
 "\n"
@@ -7683,21 +7676,21 @@ msgstr ""
 "構文:\n"
 "ATTRIB [+R | -R] [+A | -A] [+S | -S] [+H | -H] [ドライブ:][パス][ファイル"
 "名]\n"
-"\t     [/S [/D]]\n"
+"       [/S [/D]]\n"
 "\n"
 "オプション:\n"
 "\n"
-"+   属性を設定します。\n"
-"-   属性を消去します。\n"
-"R   読み取り専用ファイル属性\n"
-"A   アーカイブ ファイル属性。\n"
-"S   システム ファイル属性。\n"
-"H   隠しファイル属性。\n"
-"[ドライブ:][パス][ファイル名]\n"
-"attribが処理するファイルやファイル群を指定します。\n"
-"/S  カレント フォルダとすべてのサブフォルダで\n"
-"マッチするファイルを処理します。\n"
-"/D  フォルダも同様に処理します。\n"
+"  +   属性を設定します。\n"
+"  -   属性を消去します。\n"
+"  R   読み取り専用ファイル属性。\n"
+"  A   アーカイブ ファイル属性。\n"
+"  S   システム ファイル属性。\n"
+"  H   隠しファイル属性。\n"
+"  [ドライブ:][パス][ファイル名]\n"
+"      attribが処理するファイルやファイル群を指定します。\n"
+"  /S  カレント フォルダとすべてのサブフォルダでマッチするファイルを処理しま"
+"す。\n"
+"  /D  フォルダも同様に処理します。\n"
 
 #: clock.rc:29
 msgid "Ana&log"
@@ -8965,9 +8958,8 @@ msgid "version 1.0"
 msgstr "バージョン 1.0"
 
 #: oleview.rc:100
-#, fuzzy
 msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
-msgstr "TypeLib ファイル (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+msgstr "TypeLib ファイル (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
 
 #: oleview.rc:103
 msgid "Bind to file via a File Moniker"
@@ -9631,7 +9623,6 @@ msgstr ""
 "条件の詳細は 'start /L' を起動してください。\n"
 
 #: start.rc:64
-#, fuzzy
 msgid ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "This program is free software; you can redistribute it and/or\n"
@@ -9650,20 +9641,21 @@ msgid ""
 "\n"
 "See the COPYING.LIB file for license information.\n"
 msgstr ""
-"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
-"This program is free software; you can redistribute it and/or\n"
-"modify it under the terms of the GNU Lesser Public License\n"
-"as published by the Free Software Foundation; either version 2.1\n"
-"of the License, or (at your option) any later version.\n"
+"start.exe バージョン 0.2 Copyright (C) 2003, Dan Kegel\n"
+"このプログラムはフリーソフトウェアです。あなたはこれを、フリーソフトウェ\n"
+"ア財団によって発行されたGNU 劣等一般公衆利用許諾契約書(バージョン2.1 \n"
+"か、希望によってはそれ以降のバージョンのうちどれか)の定める条件の下で\n"
+"再頒布または改変することができます。\n"
 "\n"
-"This program is distributed in the hope that it will be useful,\n"
-"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-"GNU Lesser Public License for more details.\n"
+"このプログラムは有用であることを願って頒布されますが、*全くの無保証* \n"
+"です。商業可能性の保証や特定の目的への適合性は、言外に示されたものも含\n"
+"め全く存在しません。詳しくはGNU 劣等一般公衆利用許諾契約書をご覧くださ\n"
+"い。\n"
 "\n"
-"You should have received a copy of the GNU Lesser Public License\n"
-"along with this program; if not, write to the Free Software\n"
-"Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n"
+"あなたはこのライブラリと共に、GNU 劣等一般公衆利用許諾契約書の複製物を\n"
+"一部受け取ったはずです。もし受け取っていなければ、フリーソフトウェア財\n"
+"団まで請求してください(宛先は the Free Software Foundation, Inc.,\n"
+"51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA)。\n"
 "\n"
 "ライセンスの内容については COPYING.LIB ファイルを参照してください。\n"
 
@@ -10381,7 +10373,6 @@ msgid "Selected driver: %s"
 msgstr ""
 
 #: winecfg.rc:88
-#, fuzzy
 msgid "(None)"
 msgstr "なし"
 
@@ -10422,9 +10413,8 @@ msgid "Default Settings"
 msgstr "既定の設定"
 
 #: winecfg.rc:59
-#, fuzzy
 msgid "Wine Programs (*.exe; *.exe.so)"
-msgstr "Wine プログラム (*.exe,*.exe.so)"
+msgstr "Wine プログラム (*.exe; *.exe.so)"
 
 #: winecfg.rc:60
 msgid "Use global settings"
@@ -10844,9 +10834,8 @@ msgid "Tile &Vertically\tCtrl+F4"
 msgstr "左右に並べて表示(&V)\tCtrl+F4"
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&About Wine File Manager"
-msgstr "Wine ファイルマネージャ"
+msgstr "バージョン情報(&A)"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -11173,9 +11162,8 @@ msgid "Unicode text document"
 msgstr "Unicodeテキスト文書"
 
 #: wordpad.rc:143
-#, fuzzy
 msgid "Printer files (*.prn)"
-msgstr "プリンタファイル (*.PRN)"
+msgstr "プリンタ ファイル (*.prn)"
 
 #: wordpad.rc:148
 msgid "Left"
