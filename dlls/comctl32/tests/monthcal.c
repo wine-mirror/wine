@@ -1865,9 +1865,16 @@ static void test_daystate(void)
     MONTHDAYSTATE state[4];
     DWORD ret, style;
     HWND hwnd;
+    RECT r;
 
     /* without MCS_DAYSTATE */
     hwnd = create_monthcal_control(0);
+
+    ret = SendMessage(hwnd, MCM_GETMINREQRECT, 0, (LPARAM)&r);
+    expect(TRUE, ret);
+
+    /* resize control to display two Calendars */
+    MoveWindow(hwnd, 0, 0, r.right, (5/2)*r.bottom, FALSE);
 
     ret = SendMessageA(hwnd, MCM_GETMONTHRANGE, GMR_DAYSTATE, 0);
     expect(4, ret);
