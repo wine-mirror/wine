@@ -161,6 +161,6 @@ extern HRESULT RuntimeHost_Destroy(RuntimeHost *This) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI CLRMetaHost_GetRuntime(ICLRMetaHost* iface, LPCWSTR pwzVersion, REFIID iid, LPVOID *ppRuntime) DECLSPEC_HIDDEN;
 
-extern void cordebug_init(RuntimeHost *This);
+extern void cordebug_init(RuntimeHost *This) DECLSPEC_HIDDEN;
 
 #endif   /* __MSCOREE_PRIVATE__ */
