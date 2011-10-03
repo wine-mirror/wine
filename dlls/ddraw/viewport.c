@@ -1127,6 +1127,14 @@ IDirect3DViewportImpl *unsafe_impl_from_IDirect3DViewport3(IDirect3DViewport3 *i
     return CONTAINING_RECORD(iface, IDirect3DViewportImpl, IDirect3DViewport3_iface);
 }
 
+IDirect3DViewportImpl *unsafe_impl_from_IDirect3DViewport2(IDirect3DViewport2 *iface)
+{
+    /* IDirect3DViewport and IDirect3DViewport3 use the same iface. */
+    if (!iface) return NULL;
+    assert(iface->lpVtbl == (IDirect3DViewport2Vtbl *)&d3d_viewport_vtbl);
+    return CONTAINING_RECORD(iface, IDirect3DViewportImpl, IDirect3DViewport3_iface);
+}
+
 IDirect3DViewportImpl *unsafe_impl_from_IDirect3DViewport(IDirect3DViewport *iface)
 {
     /* IDirect3DViewport and IDirect3DViewport3 use the same iface. */
