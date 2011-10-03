@@ -347,6 +347,7 @@ NTSTATUS FILE_GetNtStatus(void)
     case ECONNRESET:return STATUS_PIPE_DISCONNECTED;
     case EFAULT:    return STATUS_ACCESS_VIOLATION;
     case ESPIPE:    return STATUS_ILLEGAL_FUNCTION;
+    case ETIME:     return STATUS_IO_TIMEOUT;
     case ENOEXEC:   /* ?? */
     case EEXIST:    /* ?? */
     default:
