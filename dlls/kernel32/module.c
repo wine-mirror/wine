@@ -648,7 +648,10 @@ DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName, DWORD size 
         len = min(size, pldr->FullDllName.Length / sizeof(WCHAR));
         memcpy(lpFileName, pldr->FullDllName.Buffer, len * sizeof(WCHAR));
         if (len < size)
+        {
             lpFileName[len] = '\0';
+            SetLastError( 0 );
+        }
         else
             SetLastError( ERROR_INSUFFICIENT_BUFFER );
     }

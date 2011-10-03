@@ -44,13 +44,21 @@ static void testGetModuleFileName(const char* name)
 
     /* first test, with enough space in buffer */
     memset(bufA, '-', sizeof(bufA));
+    SetLastError(0xdeadbeef);
     len1A = GetModuleFileNameA(hMod, bufA, sizeof(bufA));
+    ok(GetLastError() == ERROR_SUCCESS ||
+       broken(GetLastError() == 0xdeadbeef), /* <= XP SP3 */
+       "LastError was not reset: %u\n", GetLastError());
     ok(len1A > 0, "Getting module filename for handle %p\n", hMod);
 
     if (is_unicode_enabled)
     {
         memset(bufW, '-', sizeof(bufW));
+        SetLastError(0xdeadbeef);
         len1W = GetModuleFileNameW(hMod, bufW, sizeof(bufW) / sizeof(WCHAR));
+        ok(GetLastError() == ERROR_SUCCESS ||
+           broken(GetLastError() == 0xdeadbeef), /* <= XP SP3 */
+           "LastError was not reset: %u\n", GetLastError());
         ok(len1W > 0, "Getting module filename for handle %p\n", hMod);
     }
 
