@@ -128,7 +128,7 @@ libwine.a: wine.def
 libwine.dll: $(OBJS) wine.def Makefile.in
 	$(DLLWRAP) --def $(srcdir)/wine.def -o $@ $(OBJS) $(EXTRALIBS)
 
-DYLIB_LDFLAGS = -compatibility_version $(SOVERSION) -current_version $(VERSION)
+DYLIB_LDFLAGS = -compatibility_version $(SOVERSION) -current_version $(VERSION) -headerpad_max_install_names
 
 libwine.$(VERSION).dylib: $(OBJS) $(RELPATH) Makefile.in
 	$(LDSHARED) -install_name $(libdir)/$(DYNAME) $(DYLIB_LDFLAGS) $(OBJS) $(EXTRALIBS) $(LDFLAGS) $(LIBS) -o $@
