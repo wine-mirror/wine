@@ -177,7 +177,7 @@ typedef struct
     DWORD octant;
 } bres_params;
 
-extern void get_rop_codes(INT rop, struct rop_codes *codes);
+extern void get_rop_codes(INT rop, struct rop_codes *codes) DECLSPEC_HIDDEN;
 extern void calc_and_xor_masks(INT rop, DWORD color, DWORD *and, DWORD *xor) DECLSPEC_HIDDEN;
 extern void update_brush_rop( dibdrv_physdev *pdev, INT rop ) DECLSPEC_HIDDEN;
 extern void reset_dash_origin(dibdrv_physdev *pdev) DECLSPEC_HIDDEN;
