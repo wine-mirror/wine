@@ -320,7 +320,7 @@ IDirect3DViewportImpl_SetViewport(IDirect3DViewport3 *iface,
         IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport);
         if (current_viewport)
         {
-            if ((IDirect3DViewportImpl *)current_viewport == This) viewport_activate(This, FALSE);
+            if (current_viewport == iface) viewport_activate(This, FALSE);
             IDirect3DViewport3_Release(current_viewport);
         }
     }
@@ -974,7 +974,7 @@ IDirect3DViewportImpl_SetViewport2(IDirect3DViewport3 *iface,
         IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport);
         if (current_viewport)
         {
-            if ((IDirect3DViewportImpl *)current_viewport == This) viewport_activate(This, FALSE);
+            if (current_viewport == iface) viewport_activate(This, FALSE);
             IDirect3DViewport3_Release(current_viewport);
         }
     }
