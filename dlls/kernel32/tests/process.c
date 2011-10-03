@@ -1739,10 +1739,10 @@ static void test_QueryFullProcessImageNameA(void)
 static void test_QueryFullProcessImageNameW(void)
 {
     HANDLE hSelf;
-    WCHAR module_name[1024];
+    WCHAR module_name[1024], device[1024];
     WCHAR deviceW[] = {'\\','D', 'e','v','i','c','e',0};
     WCHAR buf[1024];
-    DWORD size;
+    DWORD size, len;
 
     if (!pQueryFullProcessImageNameW)
     {
@@ -1787,13 +1787,6 @@ static void test_QueryFullProcessImageNameW(void)
     expect_eq_d(0, size);
     expect_eq_d(ERROR_INSUFFICIENT_BUFFER, GetLastError());
 
-    /* native path */
-    size = sizeof(buf) / sizeof(buf[0]);
-    expect_eq_d(TRUE, pQueryFullProcessImageNameW(hSelf, PROCESS_NAME_NATIVE, buf, &size));
-    expect_eq_d(lstrlenW(buf), size);
-    ok(buf[0] == '\\', "NT path should begin with '\\'\n");
-    todo_wine ok(memcmp(buf, deviceW, sizeof(WCHAR)*lstrlenW(deviceW)) == 0, "NT path should begin with \\Device\n");
-
     /* Buffer too small */
     size = lstrlenW(module_name)/2;
     SetLastError(0xdeadbeef);
@@ -1802,6 +1795,33 @@ static void test_QueryFullProcessImageNameW(void)
     expect_eq_d(lstrlenW(module_name)/2, size);  /* size not changed(!) */
     expect_eq_d(ERROR_INSUFFICIENT_BUFFER, GetLastError());
     expect_eq_ws_i(module_name, buf);  /* buffer not changed */
+
+
+    /* native path */
+    size = sizeof(buf) / sizeof(buf[0]);
+    expect_eq_d(TRUE, pQueryFullProcessImageNameW(hSelf, PROCESS_NAME_NATIVE, buf, &size));
+    expect_eq_d(lstrlenW(buf), size);
+    ok(buf[0] == '\\', "NT path should begin with '\\'\n");
+    todo_wine ok(memcmp(buf, deviceW, sizeof(WCHAR)*lstrlenW(deviceW)) == 0, "NT path should begin with \\Device\n");
+
+    module_name[2] = '\0';
+    *device = '\0';
+    size = QueryDosDeviceW(module_name, device, sizeof(device));
+    ok(size, "QueryDosDeviceW failed: le=%u\n", GetLastError());
+    len = lstrlenW(device);
+    ok(size >= len+2, "expected %d to be greater than %d+2 = strlen(%s)\n", size, len, wine_dbgstr_w(device));
+
+    if (size >= lstrlenW(buf))
+    {
+        ok(0, "expected %s\\ to match the start of %s\n", wine_dbgstr_w(device), wine_dbgstr_w(buf));
+    }
+    else
+    {
+        todo_wine ok(buf[len] == '\\', "expected '%c' to be a '\\' in %s\n", buf[len], wine_dbgstr_w(module_name));
+        buf[len] = '\0';
+        todo_wine ok(lstrcmpiW(device, buf) == 0, "expected %s to match %s\n", wine_dbgstr_w(device), wine_dbgstr_w(buf));
+        todo_wine ok(lstrcmpiW(module_name+3, buf+len+1) == 0, "expected '%s' to match '%s'\n", wine_dbgstr_w(module_name+3), wine_dbgstr_w(buf+len+1));
+    }
 
     CloseHandle(hSelf);
 }
