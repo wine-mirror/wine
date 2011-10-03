@@ -197,8 +197,10 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_InPlaceDeactivate(IOleInPlaceOb
     if(!This->doc_obj->in_place_active)
         return S_OK;
 
-    if(This->doc_obj->frame)
+    if(This->doc_obj->frame) {
         IOleInPlaceFrame_Release(This->doc_obj->frame);
+        This->doc_obj->frame = NULL;
+    }
 
     if(This->doc_obj->hwnd) {
         ShowWindow(This->doc_obj->hwnd, SW_HIDE);
