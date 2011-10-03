@@ -109,6 +109,11 @@ static void _dump_D3DVIEWPORT2(const D3DVIEWPORT2 *lpvp)
             lpvp->dvMinZ, lpvp->dvMaxZ);
 }
 
+static inline IDirect3DViewportImpl *impl_from_IDirect3DViewport3(IDirect3DViewport3 *iface)
+{
+    return CONTAINING_RECORD(iface, IDirect3DViewportImpl, lpVtbl);
+}
+
 /*****************************************************************************
  * IUnknown Methods.
  *****************************************************************************/
@@ -161,7 +166,7 @@ static HRESULT WINAPI IDirect3DViewportImpl_QueryInterface(IDirect3DViewport3 *i
 static ULONG WINAPI
 IDirect3DViewportImpl_AddRef(IDirect3DViewport3 *iface)
 {
-    IDirect3DViewportImpl *This = (IDirect3DViewportImpl *)iface;
+    IDirect3DViewportImpl *This = impl_from_IDirect3DViewport3(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("%p increasing refcount to %u.\n", This, ref);
@@ -181,7 +186,7 @@ IDirect3DViewportImpl_AddRef(IDirect3DViewport3 *iface)
 static ULONG WINAPI
 IDirect3DViewportImpl_Release(IDirect3DViewport3 *iface)
 {
-    IDirect3DViewportImpl *This = (IDirect3DViewportImpl *)iface;
+    IDirect3DViewportImpl *This = impl_from_IDirect3DViewport3(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("%p decreasing refcount to %u.\n", This, ref);
@@ -235,7 +240,7 @@ static HRESULT WINAPI
 IDirect3DViewportImpl_GetViewport(IDirect3DViewport3 *iface,
                                   D3DVIEWPORT *lpData)
 {
-    IDirect3DViewportImpl *This = (IDirect3DViewportImpl *)iface;
+    IDirect3DViewportImpl *This = impl_from_IDirect3DViewport3(iface);
     DWORD dwSize;
 
     TRACE("iface %p, data %p.\n", iface, lpData);
@@ -288,8 +293,8 @@ static HRESULT WINAPI
 IDirect3DViewportImpl_SetViewport(IDirect3DViewport3 *iface,
                                   D3DVIEWPORT *lpData)
 {
-    IDirect3DViewportImpl *This = (IDirect3DViewportImpl *)iface;
-    LPDIRECT3DVIEWPORT3 current_viewport;
+    IDirect3DViewportImpl *This = impl_from_IDirect3DViewport3(iface);
+    IDirect3DViewport3 *current_viewport;
 
     TRACE("iface %p, data %p.\n", iface, lpData);
 
@@ -358,7 +363,7 @@ IDirect3DViewportImpl_TransformVertices(IDirect3DViewport3 *iface,
                                         DWORD dwFlags,
                                         DWORD *lpOffScreen)
 {
-    IDirect3DViewportImpl *This = (IDirect3DViewportImpl *)iface;
+    IDirect3DViewportImpl *This = impl_from_IDirect3DViewport3(iface);
     D3DMATRIX view_mat, world_mat, proj_mat, mat;
     float *in;
     float *out;
@@ -515,7 +520,7 @@ static HRESULT WINAPI
 IDirect3DViewportImpl_SetBackground(IDirect3DViewport3 *iface,
                                     D3DMATERIALHANDLE hMat)
 {
-    IDirect3DViewportImpl *This = (IDirect3DViewportImpl *)iface;
+    IDirect3DViewportImpl *This = impl_from_IDirect3DViewport3(iface);
     IDirect3DMaterialImpl *m;
 
     TRACE("iface %p, material %#x.\n", iface, hMat);
@@ -565,7 +570,7 @@ IDirect3DViewportImpl_GetBackground(IDirect3DViewport3 *iface,
                                     D3DMATERIALHANDLE *lphMat,
                                     BOOL *lpValid)
 {
-    IDirect3DViewportImpl *This = (IDirect3DViewportImpl *)iface;
+    IDirect3DViewportImpl *This = impl_from_IDirect3DViewport3(iface);
 
     TRACE("iface %p, material %p, valid %p.\n", iface, lphMat, lpValid);
 
@@ -655,10 +660,10 @@ IDirect3DViewportImpl_GetBackgroundDepth(IDirect3DViewport3 *iface,
 static HRESULT WINAPI IDirect3DViewportImpl_Clear(IDirect3DViewport3 *iface,
         DWORD dwCount, D3DRECT *lpRects, DWORD dwFlags)
 {
-    IDirect3DViewportImpl *This = (IDirect3DViewportImpl *)iface;
+    IDirect3DViewportImpl *This = impl_from_IDirect3DViewport3(iface);
     DWORD color = 0x00000000;
     HRESULT hr;
-    LPDIRECT3DVIEWPORT3 current_viewport;
+    IDirect3DViewport3 *current_viewport;
     IDirect3DDevice3 *d3d_device3;
 
     TRACE("iface %p, rect_count %u, rects %p, flags %#x.\n", iface, dwCount, lpRects, dwFlags);
@@ -692,7 +697,7 @@ static HRESULT WINAPI IDirect3DViewportImpl_Clear(IDirect3DViewport3 *iface,
 
     IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport);
     if(current_viewport) {
-        IDirect3DViewportImpl *vp = (IDirect3DViewportImpl *)current_viewport;
+        IDirect3DViewportImpl *vp = impl_from_IDirect3DViewport3(current_viewport);
         viewport_activate(vp, TRUE);
         IDirect3DViewport3_Release(current_viewport);
     }
@@ -718,7 +723,7 @@ static HRESULT WINAPI IDirect3DViewportImpl_Clear(IDirect3DViewport3 *iface,
 static HRESULT WINAPI IDirect3DViewportImpl_AddLight(IDirect3DViewport3 *iface,
         IDirect3DLight *lpDirect3DLight)
 {
-    IDirect3DViewportImpl *This = (IDirect3DViewportImpl *)iface;
+    IDirect3DViewportImpl *This = impl_from_IDirect3DViewport3(iface);
     IDirect3DLightImpl *lpDirect3DLightImpl = unsafe_impl_from_IDirect3DLight(lpDirect3DLight);
     DWORD i = 0;
     DWORD map = This->map_lights;
@@ -773,7 +778,7 @@ static HRESULT WINAPI IDirect3DViewportImpl_AddLight(IDirect3DViewport3 *iface,
 static HRESULT WINAPI IDirect3DViewportImpl_DeleteLight(IDirect3DViewport3 *iface,
         IDirect3DLight *lpDirect3DLight)
 {
-    IDirect3DViewportImpl *This = (IDirect3DViewportImpl *)iface;
+    IDirect3DViewportImpl *This = impl_from_IDirect3DViewport3(iface);
     IDirect3DLightImpl *l = unsafe_impl_from_IDirect3DLight(lpDirect3DLight);
 
     TRACE("iface %p, light %p.\n", iface, lpDirect3DLight);
@@ -815,7 +820,7 @@ static HRESULT WINAPI IDirect3DViewportImpl_DeleteLight(IDirect3DViewport3 *ifac
 static HRESULT WINAPI IDirect3DViewportImpl_NextLight(IDirect3DViewport3 *iface,
         IDirect3DLight *lpDirect3DLight, IDirect3DLight **lplpDirect3DLight, DWORD dwFlags)
 {
-    IDirect3DViewportImpl *This = (IDirect3DViewportImpl *)iface;
+    IDirect3DViewportImpl *This = impl_from_IDirect3DViewport3(iface);
     IDirect3DLightImpl *l = unsafe_impl_from_IDirect3DLight(lpDirect3DLight);
     struct list *entry;
     HRESULT hr;
@@ -896,7 +901,7 @@ static HRESULT WINAPI
 IDirect3DViewportImpl_GetViewport2(IDirect3DViewport3 *iface,
                                    D3DVIEWPORT2 *lpData)
 {
-    IDirect3DViewportImpl *This = (IDirect3DViewportImpl *)iface;
+    IDirect3DViewportImpl *This = impl_from_IDirect3DViewport3(iface);
     DWORD dwSize;
 
     TRACE("iface %p, data %p.\n", iface, lpData);
@@ -948,8 +953,8 @@ static HRESULT WINAPI
 IDirect3DViewportImpl_SetViewport2(IDirect3DViewport3 *iface,
                                    D3DVIEWPORT2 *lpData)
 {
-    IDirect3DViewportImpl *This = (IDirect3DViewportImpl *)iface;
-    LPDIRECT3DVIEWPORT3 current_viewport;
+    IDirect3DViewportImpl *This = impl_from_IDirect3DViewport3(iface);
+    IDirect3DViewport3 *current_viewport;
 
     TRACE("iface %p, data %p.\n", iface, lpData);
 
@@ -1051,9 +1056,9 @@ IDirect3DViewportImpl_Clear2(IDirect3DViewport3 *iface,
                              D3DVALUE dvZ,
                              DWORD dwStencil)
 {
-    IDirect3DViewportImpl *This = (IDirect3DViewportImpl *)iface;
+    IDirect3DViewportImpl *This = impl_from_IDirect3DViewport3(iface);
     HRESULT hr;
-    LPDIRECT3DVIEWPORT3 current_viewport;
+    IDirect3DViewport3 *current_viewport;
     IDirect3DDevice3 *d3d_device3;
 
     TRACE("iface %p, rect_count %u, rects %p, flags %#x, color 0x%08x, depth %.8e, stencil %u.\n",
@@ -1074,7 +1079,7 @@ IDirect3DViewportImpl_Clear2(IDirect3DViewport3 *iface,
             dwCount, lpRects, dwFlags, dwColor, dvZ, dwStencil);
     IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport);
     if(current_viewport) {
-        IDirect3DViewportImpl *vp = (IDirect3DViewportImpl *)current_viewport;
+        IDirect3DViewportImpl *vp = impl_from_IDirect3DViewport3(current_viewport);
         viewport_activate(vp, TRUE);
         IDirect3DViewport3_Release(current_viewport);
     }
