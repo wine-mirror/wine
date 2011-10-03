@@ -150,9 +150,9 @@ const char*     WINMM_ErrorToString(MMRESULT error) DECLSPEC_HIDDEN;
 
 void		TIME_MMTimeStop(void) DECLSPEC_HIDDEN;
 
-MMRESULT WINMM_CheckCallback(DWORD_PTR dwCallback, DWORD fdwOpen, BOOL mixer);
+MMRESULT WINMM_CheckCallback(DWORD_PTR dwCallback, DWORD fdwOpen, BOOL mixer) DECLSPEC_HIDDEN;
 
-BOOL WINMM_InitWaveform(void);
+BOOL WINMM_InitWaveform(void) DECLSPEC_HIDDEN;
 
 /* Global variables */
 extern CRITICAL_SECTION WINMM_cs DECLSPEC_HIDDEN;
