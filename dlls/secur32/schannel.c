@@ -925,10 +925,11 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
     struct schan_transport transport;
     struct schan_context *ctx;
     struct schan_buffers *b;
+    SECURITY_STATUS status;
     SecBuffer *buffer;
     SIZE_T data_size;
+    SIZE_T length;
     char *data;
-    SSIZE_T sent = 0;
     int idx;
 
     TRACE("context_handle %p, quality %d, message %p, message_seq_no %d\n",
@@ -959,29 +960,21 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
         init_schan_buffers(&transport.out, message, schan_encrypt_message_get_next_buffer_token);
     schan_imp_set_session_transport(ctx->session, &transport);
 
-    while (sent < data_size)
-    {
-        SIZE_T length = data_size - sent;
-        SECURITY_STATUS status = schan_imp_send(ctx->session, data + sent, &length);
-        if (status == SEC_I_CONTINUE_NEEDED)
-            break;
-        else if (status != SEC_E_OK)
-        {
-            HeapFree(GetProcessHeap(), 0, data);
-            ERR("Returning %d\n", status);
-            return status;
-        }
+    length = data_size;
+    status = schan_imp_send(ctx->session, data, &length);
 
-        sent += length;
-    }
+    TRACE("Sent %ld bytes.\n", length);
 
-    TRACE("Sent %ld bytes\n", sent);
+    if (length != data_size)
+        status = SEC_E_INTERNAL_ERROR;
 
     b = &transport.out;
     b->desc->pBuffers[b->current_buffer_idx].cbBuffer = b->offset;
     HeapFree(GetProcessHeap(), 0, data);
 
-    return SEC_E_OK;
+    TRACE("Returning %#x.\n", status);
+
+    return status;
 }
 
 static int schan_decrypt_message_get_next_buffer(const struct schan_transport *t, struct schan_buffers *s)
