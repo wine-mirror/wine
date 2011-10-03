@@ -2388,29 +2388,6 @@ static void xrender_mono_blit( Picture src_pict, Picture dst_pict,
         multiply_alpha( dst_pict, pict_formats[dst_format], bg->alpha, x_dst, y_dst, width, height );
 }
 
-static void get_colors( struct xrender_physdev *physdev_src, struct xrender_physdev *physdev_dst,
-                        XRenderColor *fg, XRenderColor *bg )
-{
-    if (physdev_src->format == WXR_FORMAT_MONO)
-    {
-        RGBQUAD rgb[2];
-        int pixel;
-
-        if (GetDIBColorTable( physdev_src->dev.hdc, 0, 2, rgb ) == 2)
-        {
-            pixel = X11DRV_PALETTE_ToPhysical( physdev_dst->x11dev,
-                                               RGB( rgb[0].rgbRed, rgb[0].rgbGreen, rgb[0].rgbBlue ));
-            get_xrender_color( physdev_dst->pict_format, pixel, fg );
-            pixel = X11DRV_PALETTE_ToPhysical( physdev_dst->x11dev,
-                                               RGB( rgb[1].rgbRed, rgb[1].rgbGreen, rgb[1].rgbBlue ));
-            get_xrender_color( physdev_dst->pict_format, pixel, bg );
-            return;
-        }
-    }
-    get_xrender_color( physdev_dst->pict_format, physdev_dst->x11dev->textPixel, fg );
-    get_xrender_color( physdev_dst->pict_format, physdev_dst->x11dev->backgroundPixel, bg );
-}
-
 /* create a pixmap and render picture for an image */
 static DWORD create_image_pixmap( BITMAPINFO *info, const struct gdi_image_bits *bits,
                                   struct bitblt_coords *src, enum wxr_format format,
@@ -2512,7 +2489,8 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
     {
         XRenderColor fg, bg;
 
-        get_colors( physdev_src, physdev_dst, &fg, &bg );
+        get_xrender_color( physdev_dst->pict_format, physdev_dst->x11dev->textPixel, &fg );
+        get_xrender_color( physdev_dst->pict_format, physdev_dst->x11dev->backgroundPixel, &bg );
         fg.alpha = bg.alpha = 0;
 
         xrender_mono_blit( src_pict, dst_pict, physdev_dst->format, &fg, &bg,
