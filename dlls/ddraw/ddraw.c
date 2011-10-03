@@ -4150,7 +4150,7 @@ static HRESULT WINAPI d3d3_CreateViewport(IDirect3D3 *iface, IDirect3DViewport3 
     d3d_viewport_init(object, This);
 
     TRACE("Created viewport %p.\n", object);
-    *viewport = (IDirect3DViewport3 *)object;
+    *viewport = &object->IDirect3DViewport3_iface;
 
     return D3D_OK;
 }

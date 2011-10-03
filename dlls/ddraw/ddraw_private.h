@@ -442,7 +442,7 @@ IDirect3DMaterialImpl *d3d_material_create(IDirectDrawImpl *ddraw) DECLSPEC_HIDD
  *****************************************************************************/
 struct IDirect3DViewportImpl
 {
-    const IDirect3DViewport3Vtbl *lpVtbl;
+    IDirect3DViewport3 IDirect3DViewport3_iface;
     LONG ref;
 
     /* IDirect3DViewport fields */

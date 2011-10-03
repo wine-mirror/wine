@@ -111,7 +111,7 @@ static void _dump_D3DVIEWPORT2(const D3DVIEWPORT2 *lpvp)
 
 static inline IDirect3DViewportImpl *impl_from_IDirect3DViewport3(IDirect3DViewport3 *iface)
 {
-    return CONTAINING_RECORD(iface, IDirect3DViewportImpl, lpVtbl);
+    return CONTAINING_RECORD(iface, IDirect3DViewportImpl, IDirect3DViewport3_iface);
 }
 
 /*****************************************************************************
@@ -1124,12 +1124,12 @@ IDirect3DViewportImpl *unsafe_impl_from_IDirect3DViewport3(IDirect3DViewport3 *i
 {
     if (!iface) return NULL;
     assert(iface->lpVtbl == &d3d_viewport_vtbl);
-    return CONTAINING_RECORD(iface, IDirect3DViewportImpl, lpVtbl);
+    return CONTAINING_RECORD(iface, IDirect3DViewportImpl, IDirect3DViewport3_iface);
 }
 
 void d3d_viewport_init(IDirect3DViewportImpl *viewport, IDirectDrawImpl *ddraw)
 {
-    viewport->lpVtbl = &d3d_viewport_vtbl;
+    viewport->IDirect3DViewport3_iface.lpVtbl = &d3d_viewport_vtbl;
     viewport->ref = 1;
     viewport->ddraw = ddraw;
     viewport->use_vp2 = 0xff;

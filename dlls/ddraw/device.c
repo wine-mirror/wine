@@ -775,7 +775,7 @@ static HRESULT WINAPI IDirect3DDeviceImpl_2_AddViewport(IDirect3DDevice2 *iface,
 
     TRACE("iface %p, viewport %p.\n", iface, Direct3DViewport2);
 
-    return IDirect3DDevice3_AddViewport((IDirect3DDevice3 *)&This->IDirect3DDevice3_vtbl, (IDirect3DViewport3 *)vp);
+    return IDirect3DDevice3_AddViewport((IDirect3DDevice3 *)&This->IDirect3DDevice3_vtbl, &vp->IDirect3DViewport3_iface);
 }
 
 static HRESULT WINAPI IDirect3DDeviceImpl_1_AddViewport(IDirect3DDevice *iface,
@@ -786,7 +786,7 @@ static HRESULT WINAPI IDirect3DDeviceImpl_1_AddViewport(IDirect3DDevice *iface,
 
     TRACE("iface %p, viewport %p.\n", iface, Direct3DViewport);
 
-    return IDirect3DDevice3_AddViewport((IDirect3DDevice3 *)&This->IDirect3DDevice3_vtbl, (IDirect3DViewport3 *)vp);
+    return IDirect3DDevice3_AddViewport((IDirect3DDevice3 *)&This->IDirect3DDevice3_vtbl, &vp->IDirect3DViewport3_iface);
 }
 
 /*****************************************************************************
@@ -836,7 +836,7 @@ static HRESULT WINAPI IDirect3DDeviceImpl_2_DeleteViewport(IDirect3DDevice2 *ifa
 
     TRACE("iface %p, viewport %p.\n", iface, Direct3DViewport2);
 
-    return IDirect3DDevice3_DeleteViewport((IDirect3DDevice3 *)&This->IDirect3DDevice3_vtbl, (IDirect3DViewport3 *)vp);
+    return IDirect3DDevice3_DeleteViewport((IDirect3DDevice3 *)&This->IDirect3DDevice3_vtbl, &vp->IDirect3DViewport3_iface);
 }
 
 static HRESULT WINAPI IDirect3DDeviceImpl_1_DeleteViewport(IDirect3DDevice *iface,
@@ -847,7 +847,7 @@ static HRESULT WINAPI IDirect3DDeviceImpl_1_DeleteViewport(IDirect3DDevice *ifac
 
     TRACE("iface %p, viewport %p.\n", iface, Direct3DViewport);
 
-    return IDirect3DDevice3_DeleteViewport((IDirect3DDevice3 *)&This->IDirect3DDevice3_vtbl, (IDirect3DViewport3 *)vp);
+    return IDirect3DDevice3_DeleteViewport((IDirect3DDevice3 *)&This->IDirect3DDevice3_vtbl, &vp->IDirect3DViewport3_iface);
 }
 
 /*****************************************************************************
@@ -876,6 +876,7 @@ IDirect3DDeviceImpl_3_NextViewport(IDirect3DDevice3 *iface,
 {
     IDirect3DDeviceImpl *This = device_from_device3(iface);
     IDirect3DViewportImpl *vp = unsafe_impl_from_IDirect3DViewport3(Viewport3);
+    IDirect3DViewportImpl *next;
     struct list *entry;
 
     TRACE("iface %p, viewport %p, next %p, flags %#x.\n",
@@ -911,7 +912,10 @@ IDirect3DDeviceImpl_3_NextViewport(IDirect3DDevice3 *iface,
     }
 
     if (entry)
-        *lplpDirect3DViewport3 = (IDirect3DViewport3 *)LIST_ENTRY(entry, IDirect3DViewportImpl, entry);
+    {
+        next = LIST_ENTRY(entry, IDirect3DViewportImpl, entry);
+        *lplpDirect3DViewport3 = &next->IDirect3DViewport3_iface;
+    }
     else
         *lplpDirect3DViewport3 = NULL;
 
@@ -931,7 +935,7 @@ static HRESULT WINAPI IDirect3DDeviceImpl_2_NextViewport(IDirect3DDevice2 *iface
             iface, Viewport2, lplpDirect3DViewport2, Flags);
 
     hr = IDirect3DDevice3_NextViewport((IDirect3DDevice3 *)&This->IDirect3DDevice3_vtbl,
-            (IDirect3DViewport3 *)vp, &res, Flags);
+            &vp->IDirect3DViewport3_iface, &res, Flags);
     *lplpDirect3DViewport2 = (IDirect3DViewport2 *)res;
     return hr;
 }
@@ -948,7 +952,7 @@ static HRESULT WINAPI IDirect3DDeviceImpl_1_NextViewport(IDirect3DDevice *iface,
             iface, Viewport, lplpDirect3DViewport, Flags);
 
     hr = IDirect3DDevice3_NextViewport((IDirect3DDevice3 *)&This->IDirect3DDevice3_vtbl,
-            (IDirect3DViewport3 *)vp, &res, Flags);
+            &vp->IDirect3DViewport3_iface, &res, Flags);
     *lplpDirect3DViewport = (IDirect3DViewport *)res;
     return hr;
 }
@@ -1726,8 +1730,8 @@ IDirect3DDeviceImpl_3_SetCurrentViewport(IDirect3DDevice3 *iface,
     if (This->current_viewport)
     {
         TRACE("ViewportImpl is at %p, interface is at %p\n", This->current_viewport,
-                (IDirect3DViewport3 *)This->current_viewport);
-        IDirect3DViewport3_Release((IDirect3DViewport3 *)This->current_viewport);
+                &This->current_viewport->IDirect3DViewport3_iface);
+        IDirect3DViewport3_Release(&This->current_viewport->IDirect3DViewport3_iface);
     }
     IDirect3DViewport3_AddRef(Direct3DViewport3);
 
@@ -1750,7 +1754,7 @@ static HRESULT WINAPI IDirect3DDeviceImpl_2_SetCurrentViewport(IDirect3DDevice2 
     TRACE("iface %p, viewport %p.\n", iface, Direct3DViewport2);
 
     return IDirect3DDevice3_SetCurrentViewport((IDirect3DDevice3 *)&This->IDirect3DDevice3_vtbl,
-            (IDirect3DViewport3 *)vp);
+            &vp->IDirect3DViewport3_iface);
 }
 
 /*****************************************************************************
@@ -1780,7 +1784,7 @@ IDirect3DDeviceImpl_3_GetCurrentViewport(IDirect3DDevice3 *iface,
         return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
-    *Direct3DViewport3 = (IDirect3DViewport3 *)This->current_viewport;
+    *Direct3DViewport3 = &This->current_viewport->IDirect3DViewport3_iface;
 
     /* AddRef the returned viewport */
     if(*Direct3DViewport3) IDirect3DViewport3_AddRef(*Direct3DViewport3);
