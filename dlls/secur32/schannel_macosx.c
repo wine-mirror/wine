@@ -628,6 +628,12 @@ unsigned int schan_imp_get_session_cipher_block_size(schan_imp_session session)
     }
 }
 
+unsigned int schan_imp_get_max_message_size(schan_imp_session session)
+{
+    FIXME("Returning 1 << 14.\n");
+    return 1 << 14;
+}
+
 SECURITY_STATUS schan_imp_get_connection_info(schan_imp_session session,
                                               SecPkgContext_ConnectionInfo *info)
 {

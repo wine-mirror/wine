@@ -62,6 +62,7 @@ MAKE_FUNCPTR(gnutls_mac_get_key_size);
 MAKE_FUNCPTR(gnutls_perror);
 MAKE_FUNCPTR(gnutls_protocol_get_version);
 MAKE_FUNCPTR(gnutls_set_default_priority);
+MAKE_FUNCPTR(gnutls_record_get_max_size);
 MAKE_FUNCPTR(gnutls_record_recv);
 MAKE_FUNCPTR(gnutls_record_send);
 MAKE_FUNCPTR(gnutls_transport_set_errno);
@@ -289,6 +290,11 @@ unsigned int schan_imp_get_session_cipher_block_size(schan_imp_session session)
     return schannel_get_cipher_block_size(cipher);
 }
 
+unsigned int schan_imp_get_max_message_size(schan_imp_session session)
+{
+    return pgnutls_record_get_max_size((gnutls_session_t)session);
+}
+
 SECURITY_STATUS schan_imp_get_connection_info(schan_imp_session session,
                                               SecPkgContext_ConnectionInfo *info)
 {
@@ -423,6 +429,7 @@ BOOL schan_imp_init(void)
     LOAD_FUNCPTR(gnutls_perror)
     LOAD_FUNCPTR(gnutls_protocol_get_version)
     LOAD_FUNCPTR(gnutls_set_default_priority)
+    LOAD_FUNCPTR(gnutls_record_get_max_size);
     LOAD_FUNCPTR(gnutls_record_recv);
     LOAD_FUNCPTR(gnutls_record_send);
     LOAD_FUNCPTR(gnutls_transport_set_errno)
