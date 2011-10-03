@@ -249,6 +249,11 @@ static CRITICAL_SECTION xrender_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 #define NATIVE_BYTE_ORDER LSBFirst
 #endif
 
+static BOOL has_alpha( enum wxr_format format )
+{
+    return (format == WXR_FORMAT_A8R8G8B8 || format == WXR_FORMAT_B8G8R8A8);
+}
+
 static enum wxr_format get_format_without_alpha( enum wxr_format format )
 {
     switch (format)
@@ -2514,7 +2519,7 @@ static void xrender_stretch_blit( struct xrender_physdev *physdev_src, struct xr
 }
 
 
-static void xrender_put_image( Pixmap src_pixmap, Picture src_pict, HRGN clip,
+static void xrender_put_image( Pixmap src_pixmap, Picture src_pict, Picture mask_pict, HRGN clip,
                                XRenderPictFormat *dst_format, struct xrender_physdev *physdev,
                                Drawable drawable, struct bitblt_coords *src,
                                struct bitblt_coords *dst, BOOL use_repeat )
@@ -2561,7 +2566,7 @@ static void xrender_put_image( Pixmap src_pixmap, Picture src_pict, HRGN clip,
     if (dst->width < 0) x_dst += dst->width + 1;
     if (dst->height < 0) y_dst += dst->height + 1;
 
-    xrender_blit( PictOpSrc, src_pict, 0, dst_pict, x_src, y_src, x_dst, y_dst,
+    xrender_blit( PictOpSrc, src_pict, mask_pict, dst_pict, x_src, y_src, x_dst, y_dst,
                   xscale, yscale, abs( dst->width ), abs( dst->height ));
 
     if (drawable)
@@ -2655,7 +2660,7 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMA
     enum wxr_format src_format, dst_format;
     XRenderPictFormat *pict_format;
     Pixmap src_pixmap;
-    Picture src_pict;
+    Picture src_pict, mask_pict = 0;
     BOOL use_repeat;
 
     if (!X11DRV_XRender_Installed) goto x11drv_fallback;
@@ -2686,6 +2691,8 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMA
 
     if (!bits) return ERROR_SUCCESS;  /* just querying the format */
 
+    if (!has_alpha( src_format ) && has_alpha( dst_format )) mask_pict = get_no_alpha_mask();
+
     ret = create_image_pixmap( info, bits, src, src_format, &src_pixmap, &src_pict, &use_repeat );
     if (!ret)
     {
@@ -2698,8 +2705,8 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMA
 
             X11DRV_DIB_Lock( bitmap, DIB_Status_GdiMod );
 
-            xrender_put_image( src_pixmap, src_pict, rgn, pict_formats[dst_format],
-                               NULL, bitmap->pixmap, src, dst, use_repeat );
+            xrender_put_image( src_pixmap, src_pict, mask_pict, rgn,
+                               pict_formats[dst_format], NULL, bitmap->pixmap, src, dst, use_repeat );
 
             X11DRV_DIB_Unlock( bitmap, TRUE );
             DeleteObject( rgn );
@@ -2728,7 +2735,7 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMA
                                             tmp.visrect.bottom - tmp.visrect.top, physdev->x11dev->depth );
                 wine_tsx11_unlock();
 
-                xrender_put_image( src_pixmap, src_pict, NULL, physdev->pict_format,
+                xrender_put_image( src_pixmap, src_pict, mask_pict, NULL, physdev->pict_format,
                                    NULL, tmp_pixmap, src, &tmp, use_repeat );
                 execute_rop( physdev->x11dev, tmp_pixmap, gc, &dst->visrect, rop );
 
@@ -2739,7 +2746,7 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMA
 
                 restore_clipping_region( physdev->x11dev, clip_data );
             }
-            else xrender_put_image( src_pixmap, src_pict, clip,
+            else xrender_put_image( src_pixmap, src_pict, mask_pict, clip,
                                     physdev->pict_format, physdev, 0, src, dst, use_repeat );
 
             X11DRV_UnlockDIBSection( physdev->x11dev, TRUE );
