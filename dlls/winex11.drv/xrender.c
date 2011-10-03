@@ -1943,8 +1943,8 @@ static inline BOOL is_dib_with_colortable( X11DRV_PDEVICE *physDev )
 /***********************************************************************
  *           xrenderdrv_ExtTextOut
  */
-BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
-                            const RECT *lprect, LPCWSTR wstr, UINT count, const INT *lpDx )
+static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
+                                   const RECT *lprect, LPCWSTR wstr, UINT count, const INT *lpDx )
 {
     struct xrender_physdev *physdev = get_xrender_dev( dev );
     XGCValues xgcval;
