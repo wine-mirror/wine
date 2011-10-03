@@ -582,24 +582,6 @@ int main()
 #endif  /* BITBLT_TEST */
 
 
-static void get_colors(X11DRV_PDEVICE *physDevDst, X11DRV_PDEVICE *physDevSrc,
-		       int *fg, int *bg)
-{
-    RGBQUAD rgb[2];
-
-    *fg = physDevDst->textPixel;
-    *bg = physDevDst->backgroundPixel;
-    if(physDevSrc->depth == 1) {
-        if(GetDIBColorTable(physDevSrc->dev.hdc, 0, 2, rgb) == 2) {
-            DWORD logcolor;
-            logcolor = RGB(rgb[0].rgbRed, rgb[0].rgbGreen, rgb[0].rgbBlue);
-            *fg = X11DRV_PALETTE_ToPhysical( physDevDst, logcolor );
-            logcolor = RGB(rgb[1].rgbRed, rgb[1].rgbGreen,rgb[1].rgbBlue);
-            *bg = X11DRV_PALETTE_ToPhysical( physDevDst, logcolor );
-        }
-    }
-}
-
 /* return a mask for meaningful bits when doing an XGetPixel on an image */
 static unsigned long image_pixel_mask( X11DRV_PDEVICE *physDev )
 {
@@ -629,7 +611,6 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
     int exposures = 0;
     INT width  = visRectSrc->right - visRectSrc->left;
     INT height = visRectSrc->bottom - visRectSrc->top;
-    int fg, bg;
     BOOL memdc = (GetObjectType(physDevSrc->dev.hdc) == OBJ_MEMDC);
 
     if (physDevSrc->depth == physDevDst->depth)
@@ -690,20 +671,16 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
     {
         if (physDevSrc->depth == 1)  /* monochrome -> color */
         {
-	    get_colors(physDevDst, physDevSrc, &fg, &bg);
-
             wine_tsx11_lock();
             if (X11DRV_PALETTE_XPixelToPalette)
             {
-                XSetBackground( gdi_display, gc,
-                             X11DRV_PALETTE_XPixelToPalette[fg] );
-                XSetForeground( gdi_display, gc,
-                             X11DRV_PALETTE_XPixelToPalette[bg]);
+                XSetBackground( gdi_display, gc, X11DRV_PALETTE_XPixelToPalette[physDevDst->textPixel] );
+                XSetForeground( gdi_display, gc, X11DRV_PALETTE_XPixelToPalette[physDevDst->backgroundPixel]);
             }
             else
             {
-                XSetBackground( gdi_display, gc, fg );
-                XSetForeground( gdi_display, gc, bg );
+                XSetBackground( gdi_display, gc, physDevDst->textPixel );
+                XSetForeground( gdi_display, gc, physDevDst->backgroundPixel );
             }
             XCopyPlane( gdi_display, physDevSrc->drawable, pixmap, gc,
                         physDevSrc->dc_rect.left + visRectSrc->left,
@@ -1004,9 +981,6 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
         {
             wine_tsx11_lock();
             XSetFunction( gdi_display, physDevDst->gc, OP_ROP(*opcode) );
-            wine_tsx11_unlock();
-
-            wine_tsx11_lock();
             XCopyArea( gdi_display, physDevSrc->drawable,
                        physDevDst->drawable, physDevDst->gc,
                        physDevSrc->dc_rect.left + src->visrect.left,
@@ -1020,12 +994,9 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
         }
         if (physDevSrc->depth == 1)
         {
-            int fg, bg;
-
-            get_colors(physDevDst, physDevSrc, &fg, &bg);
             wine_tsx11_lock();
-            XSetBackground( gdi_display, physDevDst->gc, fg );
-            XSetForeground( gdi_display, physDevDst->gc, bg );
+            XSetBackground( gdi_display, physDevDst->gc, physDevDst->textPixel );
+            XSetForeground( gdi_display, physDevDst->gc, physDevDst->backgroundPixel );
             XSetFunction( gdi_display, physDevDst->gc, OP_ROP(*opcode) );
             XCopyPlane( gdi_display, physDevSrc->drawable,
                         physDevDst->drawable, physDevDst->gc,
