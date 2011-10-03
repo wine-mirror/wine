@@ -3429,14 +3429,12 @@ BOOL WINAPI QueryFullProcessImageNameW(HANDLE hProcess, DWORD dwFlags, LPWSTR lp
 {
     BYTE buffer[sizeof(UNICODE_STRING) + MAX_PATH*sizeof(WCHAR)];  /* this buffer should be enough */
     UNICODE_STRING *dynamic_buffer = NULL;
-    UNICODE_STRING nt_path;
     UNICODE_STRING *result = NULL;
     NTSTATUS status;
     DWORD needed;
 
-    RtlInitUnicodeStringEx(&nt_path, NULL);
-    /* FIXME: On Windows, ProcessImageFileName return an NT path. We rely that it being a DOS path,
-     * as this is on Wine. */
+    /* FIXME: On Windows, ProcessImageFileName return an NT path. In Wine it
+     * is a DOS path and we depend on this. */
     status = NtQueryInformationProcess(hProcess, ProcessImageFileName, buffer,
                                        sizeof(buffer) - sizeof(WCHAR), &needed);
     if (status == STATUS_INFO_LENGTH_MISMATCH)
@@ -3452,28 +3450,56 @@ BOOL WINAPI QueryFullProcessImageNameW(HANDLE hProcess, DWORD dwFlags, LPWSTR lp
 
     if (dwFlags & PROCESS_NAME_NATIVE)
     {
-        result->Buffer[result->Length / sizeof(WCHAR)] = 0;
-        if (!RtlDosPathNameToNtPathName_U(result->Buffer, &nt_path, NULL, NULL))
+        WCHAR drive[3];
+        WCHAR device[1024];
+        DWORD ntlen, devlen;
+
+        if (result->Buffer[1] != ':' || result->Buffer[0] < 'A' || result->Buffer[0] > 'Z')
         {
-            status = STATUS_OBJECT_PATH_NOT_FOUND;
+            /* We cannot convert it to an NT device path so fail */
+            status = STATUS_NO_SUCH_DEVICE;
             goto cleanup;
         }
-        result = &nt_path;
-    }
 
-    if (result->Length/sizeof(WCHAR) + 1 > *pdwSize)
+        /* Find this drive's NT device path */
+        drive[0] = result->Buffer[0];
+        drive[1] = ':';
+        drive[2] = 0;
+        if (!QueryDosDeviceW(drive, device, sizeof(device)/sizeof(*device)))
+        {
+            status = STATUS_NO_SUCH_DEVICE;
+            goto cleanup;
+        }
+
+        devlen = lstrlenW(device);
+        ntlen = devlen + (result->Length/sizeof(WCHAR) - 2);
+        if (ntlen + 1 > *pdwSize)
+        {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            return 0;
+        }
+        *pdwSize = ntlen;
+
+        memcpy(lpExeName, device, devlen * sizeof(*device));
+        memcpy(lpExeName + devlen, result->Buffer + 2, result->Length - 2 * sizeof(WCHAR));
+        lpExeName[*pdwSize] = 0;
+        TRACE("NT path: %s\n", debugstr_w(lpExeName));
+    }
+    else
     {
-        status = STATUS_BUFFER_TOO_SMALL;
-        goto cleanup;
-    }
+        if (result->Length/sizeof(WCHAR) + 1 > *pdwSize)
+        {
+            status = STATUS_BUFFER_TOO_SMALL;
+            goto cleanup;
+        }
 
-    *pdwSize = result->Length/sizeof(WCHAR);
-    memcpy( lpExeName, result->Buffer, result->Length );
-    lpExeName[*pdwSize] = 0;
+        *pdwSize = result->Length/sizeof(WCHAR);
+        memcpy( lpExeName, result->Buffer, result->Length );
+        lpExeName[*pdwSize] = 0;
+    }
 
 cleanup:
     HeapFree(GetProcessHeap(), 0, dynamic_buffer);
-    RtlFreeUnicodeString(&nt_path);
     if (status) SetLastError( RtlNtStatusToDosError(status) );
     return !status;
 }
