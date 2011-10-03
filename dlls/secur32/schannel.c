@@ -62,23 +62,6 @@ struct schan_context
     ULONG req_ctx_attr;
 };
 
-struct schan_buffers
-{
-    SIZE_T offset;
-    SIZE_T limit;
-    const SecBufferDesc *desc;
-    int current_buffer_idx;
-    BOOL allow_buffer_resize;
-    int (*get_next_buffer)(const struct schan_transport *, struct schan_buffers *);
-};
-
-struct schan_transport
-{
-    struct schan_context *ctx;
-    struct schan_buffers in;
-    struct schan_buffers out;
-};
-
 static struct schan_handle *schan_handle_table;
 static struct schan_handle *schan_free_handles;
 static SIZE_T schan_handle_table_size;
@@ -496,7 +479,7 @@ static void schan_resize_current_buffer(const struct schan_buffers *s, SIZE_T mi
     b->pvBuffer = new_data;
 }
 
-static char *schan_get_buffer(const struct schan_transport *t, struct schan_buffers *s, SIZE_T *count)
+char *schan_get_buffer(const struct schan_transport *t, struct schan_buffers *s, SIZE_T *count)
 {
     SIZE_T max_count;
     PSecBuffer buffer;

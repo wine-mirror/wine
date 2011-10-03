@@ -65,6 +65,7 @@ MAKE_FUNCPTR(gnutls_set_default_priority);
 MAKE_FUNCPTR(gnutls_record_get_max_size);
 MAKE_FUNCPTR(gnutls_record_recv);
 MAKE_FUNCPTR(gnutls_record_send);
+MAKE_FUNCPTR(gnutls_transport_get_ptr);
 MAKE_FUNCPTR(gnutls_transport_set_errno);
 MAKE_FUNCPTR(gnutls_transport_set_ptr);
 MAKE_FUNCPTR(gnutls_transport_set_pull_function);
@@ -340,11 +341,23 @@ SECURITY_STATUS schan_imp_send(schan_imp_session session, const void *buffer,
                                SIZE_T *length)
 {
     gnutls_session_t s = (gnutls_session_t)session;
-    ssize_t ret = pgnutls_record_send(s, buffer, *length);
+    ssize_t ret;
+
+again:
+    ret = pgnutls_record_send(s, buffer, *length);
+
     if (ret >= 0)
         *length = ret;
     else if (ret == GNUTLS_E_AGAIN)
+    {
+        struct schan_transport *t = (struct schan_transport *)pgnutls_transport_get_ptr(s);
+        SIZE_T count = 0;
+
+        if (schan_get_buffer(t, &t->out, &count))
+            goto again;
+
         return SEC_I_CONTINUE_NEEDED;
+    }
     else
     {
         pgnutls_perror(ret);
@@ -432,6 +445,7 @@ BOOL schan_imp_init(void)
     LOAD_FUNCPTR(gnutls_record_get_max_size);
     LOAD_FUNCPTR(gnutls_record_recv);
     LOAD_FUNCPTR(gnutls_record_send);
+    LOAD_FUNCPTR(gnutls_transport_get_ptr)
     LOAD_FUNCPTR(gnutls_transport_set_errno)
     LOAD_FUNCPTR(gnutls_transport_set_ptr)
     LOAD_FUNCPTR(gnutls_transport_set_pull_function)

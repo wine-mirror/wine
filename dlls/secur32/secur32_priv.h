@@ -183,6 +183,24 @@ typedef struct schan_imp_certificate_credentials_opaque *schan_imp_certificate_c
 
 struct schan_transport;
 
+struct schan_buffers
+{
+    SIZE_T offset;
+    SIZE_T limit;
+    const SecBufferDesc *desc;
+    int current_buffer_idx;
+    BOOL allow_buffer_resize;
+    int (*get_next_buffer)(const struct schan_transport *, struct schan_buffers *);
+};
+
+struct schan_transport
+{
+    struct schan_context *ctx;
+    struct schan_buffers in;
+    struct schan_buffers out;
+};
+
+char *schan_get_buffer(const struct schan_transport *t, struct schan_buffers *s, SIZE_T *count) DECLSPEC_HIDDEN;
 extern int schan_pull(struct schan_transport *t, void *buff, size_t *buff_len) DECLSPEC_HIDDEN;
 extern int schan_push(struct schan_transport *t, const void *buff, size_t *buff_len) DECLSPEC_HIDDEN;
 
