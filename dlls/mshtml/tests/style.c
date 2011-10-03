@@ -2044,10 +2044,10 @@ static void basic_style_test(IHTMLDocument2 *doc)
     cstyle = get_current_style(elem);
     test_current_style(cstyle);
     IHTMLCurrentStyle_Release(cstyle);
+    IHTMLElement_Release(elem);
 
     elem = get_element_by_id(doc, "divid");
     test_style_filters(elem);
-    IHTMLElement_Release(elem);
 
     test_set_csstext(style);
     IHTMLStyle_Release(style);
