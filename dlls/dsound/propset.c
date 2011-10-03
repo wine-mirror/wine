@@ -111,7 +111,7 @@ struct search_data {
     GUID *found_guid;
 };
 
-BOOL CALLBACK search_callback(GUID *guid, const WCHAR *desc,
+static BOOL CALLBACK search_callback(GUID *guid, const WCHAR *desc,
         const WCHAR *module, void *user)
 {
     struct search_data *search = user;
@@ -276,6 +276,7 @@ static HRESULT DSPROPERTY_DescriptionW(
     return S_OK;
 }
 
+static
 BOOL CALLBACK enum_callback(GUID *guid, const WCHAR *desc, const WCHAR *module,
         void *user)
 {
