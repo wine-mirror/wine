@@ -4045,7 +4045,7 @@ HRESULT CDECL wined3d_device_end_scene(struct wined3d_device *device)
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_present(struct wined3d_device *device, const RECT *src_rect,
+HRESULT CDECL wined3d_device_present(const struct wined3d_device *device, const RECT *src_rect,
         const RECT *dst_rect, HWND dst_window_override, const RGNDATA *dirty_region)
 {
     UINT i;

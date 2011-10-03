@@ -2278,7 +2278,7 @@ HRESULT __cdecl wined3d_device_init_3d(struct wined3d_device *device, WINED3DPRE
 HRESULT __cdecl wined3d_device_init_gdi(struct wined3d_device *device, WINED3DPRESENT_PARAMETERS *present_parameters);
 HRESULT __cdecl wined3d_device_multiply_transform(struct wined3d_device *device,
         WINED3DTRANSFORMSTATETYPE state, const WINED3DMATRIX *matrix);
-HRESULT __cdecl wined3d_device_present(struct wined3d_device *device, const RECT *src_rect,
+HRESULT __cdecl wined3d_device_present(const struct wined3d_device *device, const RECT *src_rect,
         const RECT *dst_rect, HWND dst_window_override, const RGNDATA *dirty_region);
 HRESULT __cdecl wined3d_device_process_vertices(struct wined3d_device *device,
         UINT src_start_idx, UINT dst_idx, UINT vertex_count, struct wined3d_buffer *dst_buffer,
