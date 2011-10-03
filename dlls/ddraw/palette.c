@@ -258,6 +258,13 @@ static const struct IDirectDrawPaletteVtbl ddraw_palette_vtbl =
     IDirectDrawPaletteImpl_SetEntries
 };
 
+IDirectDrawPaletteImpl *unsafe_impl_from_IDirectDrawPalette(IDirectDrawPalette *iface)
+{
+    if (!iface) return NULL;
+    assert(iface->lpVtbl == &ddraw_palette_vtbl);
+    return CONTAINING_RECORD(iface, IDirectDrawPaletteImpl, lpVtbl);
+}
+
 HRESULT ddraw_palette_init(IDirectDrawPaletteImpl *palette,
         IDirectDrawImpl *ddraw, DWORD flags, PALETTEENTRY *entries)
 {

@@ -369,6 +369,8 @@ struct IDirectDrawPaletteImpl
     IUnknown                  *ifaceToRelease;
 };
 
+IDirectDrawPaletteImpl *unsafe_impl_from_IDirectDrawPalette(IDirectDrawPalette *iface) DECLSPEC_HIDDEN;
+
 HRESULT ddraw_palette_init(IDirectDrawPaletteImpl *palette,
         IDirectDrawImpl *ddraw, DWORD flags, PALETTEENTRY *entries) DECLSPEC_HIDDEN;
 

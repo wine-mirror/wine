@@ -4288,7 +4288,7 @@ static HRESULT WINAPI ddraw_surface7_SetPalette(IDirectDrawSurface7 *iface, IDir
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface7(iface);
     IDirectDrawPalette *oldPal;
     IDirectDrawSurfaceImpl *surf;
-    IDirectDrawPaletteImpl *PalImpl = (IDirectDrawPaletteImpl *)Pal;
+    IDirectDrawPaletteImpl *PalImpl = unsafe_impl_from_IDirectDrawPalette(Pal);
     HRESULT hr;
 
     TRACE("iface %p, palette %p.\n", iface, Pal);
