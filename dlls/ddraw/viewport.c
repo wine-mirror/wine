@@ -1115,6 +1115,13 @@ static const struct IDirect3DViewport3Vtbl d3d_viewport_vtbl =
     IDirect3DViewportImpl_Clear2,
 };
 
+IDirect3DViewportImpl *unsafe_impl_from_IDirect3DViewport3(IDirect3DViewport3 *iface)
+{
+    if (!iface) return NULL;
+    assert(iface->lpVtbl == &d3d_viewport_vtbl);
+    return CONTAINING_RECORD(iface, IDirect3DViewportImpl, lpVtbl);
+}
+
 void d3d_viewport_init(IDirect3DViewportImpl *viewport, IDirectDrawImpl *ddraw)
 {
     viewport->lpVtbl = &d3d_viewport_vtbl;
