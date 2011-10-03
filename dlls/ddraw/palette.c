@@ -70,7 +70,7 @@ IDirectDrawPaletteImpl_QueryInterface(IDirectDrawPalette *iface,
 static ULONG WINAPI
 IDirectDrawPaletteImpl_AddRef(IDirectDrawPalette *iface)
 {
-    IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
+    IDirectDrawPaletteImpl *This = impl_from_IDirectDrawPalette(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
     TRACE("%p increasing refcount to %u.\n", This, ref);
@@ -90,7 +90,7 @@ IDirectDrawPaletteImpl_AddRef(IDirectDrawPalette *iface)
 static ULONG WINAPI
 IDirectDrawPaletteImpl_Release(IDirectDrawPalette *iface)
 {
-    IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
+    IDirectDrawPaletteImpl *This = impl_from_IDirectDrawPalette(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("%p decreasing refcount to %u.\n", This, ref);
@@ -155,7 +155,7 @@ static HRESULT WINAPI
 IDirectDrawPaletteImpl_GetCaps(IDirectDrawPalette *iface,
                                DWORD *Caps)
 {
-    IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
+    IDirectDrawPaletteImpl *This = impl_from_IDirectDrawPalette(iface);
 
     TRACE("iface %p, caps %p.\n", iface, Caps);
 
@@ -191,7 +191,7 @@ IDirectDrawPaletteImpl_SetEntries(IDirectDrawPalette *iface,
                                   DWORD Count,
                                   PALETTEENTRY *PalEnt)
 {
-    IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
+    IDirectDrawPaletteImpl *This = impl_from_IDirectDrawPalette(iface);
     HRESULT hr;
 
     TRACE("iface %p, flags %#x, start %u, count %u, entries %p.\n",
@@ -230,7 +230,7 @@ IDirectDrawPaletteImpl_GetEntries(IDirectDrawPalette *iface,
                                   DWORD Count,
                                   PALETTEENTRY *PalEnt)
 {
-    IDirectDrawPaletteImpl *This = (IDirectDrawPaletteImpl *)iface;
+    IDirectDrawPaletteImpl *This = impl_from_IDirectDrawPalette(iface);
     HRESULT hr;
 
     TRACE("iface %p, flags %#x, start %u, count %u, entries %p.\n",
@@ -262,7 +262,7 @@ IDirectDrawPaletteImpl *unsafe_impl_from_IDirectDrawPalette(IDirectDrawPalette *
 {
     if (!iface) return NULL;
     assert(iface->lpVtbl == &ddraw_palette_vtbl);
-    return CONTAINING_RECORD(iface, IDirectDrawPaletteImpl, lpVtbl);
+    return CONTAINING_RECORD(iface, IDirectDrawPaletteImpl, IDirectDrawPalette_iface);
 }
 
 HRESULT ddraw_palette_init(IDirectDrawPaletteImpl *palette,
@@ -270,7 +270,7 @@ HRESULT ddraw_palette_init(IDirectDrawPaletteImpl *palette,
 {
     HRESULT hr;
 
-    palette->lpVtbl = &ddraw_palette_vtbl;
+    palette->IDirectDrawPalette_iface.lpVtbl = &ddraw_palette_vtbl;
     palette->ref = 1;
 
     hr = wined3d_palette_create(ddraw->wined3d_device, flags,

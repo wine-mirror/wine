@@ -3609,7 +3609,7 @@ static HRESULT WINAPI ddraw7_CreatePalette(IDirectDraw7 *iface, DWORD Flags,
     }
 
     TRACE("Created palette %p.\n", object);
-    *Palette = (IDirectDrawPalette *)object;
+    *Palette = &object->IDirectDrawPalette_iface;
     LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
 }
@@ -3626,7 +3626,7 @@ static HRESULT WINAPI ddraw4_CreatePalette(IDirectDraw4 *iface, DWORD flags, PAL
     hr = ddraw7_CreatePalette(&This->IDirectDraw7_iface, flags, entries, palette, outer_unknown);
     if (SUCCEEDED(hr) && *palette)
     {
-        IDirectDrawPaletteImpl *impl = (IDirectDrawPaletteImpl *)*palette;
+        IDirectDrawPaletteImpl *impl = impl_from_IDirectDrawPalette(*palette);
         IDirectDraw7_Release(&This->IDirectDraw7_iface);
         IDirectDraw4_AddRef(iface);
         impl->ifaceToRelease = (IUnknown *)iface;
@@ -3646,7 +3646,7 @@ static HRESULT WINAPI ddraw2_CreatePalette(IDirectDraw2 *iface, DWORD flags,
     hr = ddraw7_CreatePalette(&This->IDirectDraw7_iface, flags, entries, palette, outer_unknown);
     if (SUCCEEDED(hr) && *palette)
     {
-        IDirectDrawPaletteImpl *impl = (IDirectDrawPaletteImpl *)*palette;
+        IDirectDrawPaletteImpl *impl = impl_from_IDirectDrawPalette(*palette);
         IDirectDraw7_Release(&This->IDirectDraw7_iface);
         impl->ifaceToRelease = NULL;
     }
@@ -3666,7 +3666,7 @@ static HRESULT WINAPI ddraw1_CreatePalette(IDirectDraw *iface, DWORD flags,
     hr = ddraw7_CreatePalette(&This->IDirectDraw7_iface, flags, entries, palette, outer_unknown);
     if (SUCCEEDED(hr) && *palette)
     {
-        IDirectDrawPaletteImpl *impl = (IDirectDrawPaletteImpl *)*palette;
+        IDirectDrawPaletteImpl *impl = impl_from_IDirectDrawPalette(*palette);
         IDirectDraw7_Release(&This->IDirectDraw7_iface);
         impl->ifaceToRelease = NULL;
     }

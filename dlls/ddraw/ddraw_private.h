@@ -360,7 +360,7 @@ IDirectDrawClipperImpl *unsafe_impl_from_IDirectDrawClipper(IDirectDrawClipper *
 struct IDirectDrawPaletteImpl
 {
     /* IUnknown fields */
-    const IDirectDrawPaletteVtbl *lpVtbl;
+    IDirectDrawPalette IDirectDrawPalette_iface;
     LONG ref;
 
     struct wined3d_palette *wineD3DPalette;
@@ -368,6 +368,11 @@ struct IDirectDrawPaletteImpl
     /* IDirectDrawPalette fields */
     IUnknown                  *ifaceToRelease;
 };
+
+static inline IDirectDrawPaletteImpl *impl_from_IDirectDrawPalette(IDirectDrawPalette *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectDrawPaletteImpl, IDirectDrawPalette_iface);
+}
 
 IDirectDrawPaletteImpl *unsafe_impl_from_IDirectDrawPalette(IDirectDrawPalette *iface) DECLSPEC_HIDDEN;
 
