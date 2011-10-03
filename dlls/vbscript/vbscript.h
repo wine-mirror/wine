@@ -115,12 +115,12 @@ struct _vbdisp_t {
     VARIANT props[1];
 };
 
-HRESULT create_vbdisp(const class_desc_t*,vbdisp_t**);
-HRESULT disp_get_id(IDispatch*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*);
-HRESULT vbdisp_get_id(vbdisp_t*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*);
-HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,DISPPARAMS*,VARIANT*);
-HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,VARIANT*);
-void collect_objects(script_ctx_t*);
+HRESULT create_vbdisp(const class_desc_t*,vbdisp_t**) DECLSPEC_HIDDEN;
+HRESULT disp_get_id(IDispatch*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*) DECLSPEC_HIDDEN;
+HRESULT vbdisp_get_id(vbdisp_t*,BSTR,vbdisp_invoke_type_t,BOOL,DISPID*) DECLSPEC_HIDDEN;
+HRESULT disp_call(script_ctx_t*,IDispatch*,DISPID,DISPPARAMS*,VARIANT*) DECLSPEC_HIDDEN;
+HRESULT disp_propput(script_ctx_t*,IDispatch*,DISPID,VARIANT*) DECLSPEC_HIDDEN;
+void collect_objects(script_ctx_t*) DECLSPEC_HIDDEN;
 
 static inline unsigned arg_cnt(const DISPPARAMS *dp)
 {
@@ -168,8 +168,8 @@ struct _script_ctx_t {
     struct list named_items;
 };
 
-HRESULT init_global(script_ctx_t*);
-HRESULT init_err(script_ctx_t*);
+HRESULT init_global(script_ctx_t*) DECLSPEC_HIDDEN;
+HRESULT init_err(script_ctx_t*) DECLSPEC_HIDDEN;
 
 IUnknown *create_ax_site(script_ctx_t*) DECLSPEC_HIDDEN;
 
@@ -321,9 +321,9 @@ TID_LIST
     LAST_tid
 } tid_t;
 
-HRESULT get_typeinfo(tid_t,ITypeInfo**);
+HRESULT get_typeinfo(tid_t,ITypeInfo**) DECLSPEC_HIDDEN;
 
-HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**);
+HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 
 const char *debugstr_variant(const VARIANT*) DECLSPEC_HIDDEN;
 
