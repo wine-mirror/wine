@@ -559,6 +559,7 @@ static HRESULT function_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
     case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
         if(!res)
             return E_INVALIDARG;
+        /* fall through */
     case DISPATCH_METHOD:
         hres = typeinfo_invoke(This->obj, This->info, flags, params, res, ei);
         break;
@@ -611,6 +612,7 @@ static HRESULT function_invoke(DispatchEx *This, func_info_t *func, WORD flags, 
     case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
         if(!res)
             return E_INVALIDARG;
+        /* fall through */
     case DISPATCH_METHOD:
         hres = typeinfo_invoke(This, func, flags, dp, res, ei);
         break;
@@ -653,6 +655,7 @@ static HRESULT function_invoke(DispatchEx *This, func_info_t *func, WORD flags, 
     }
     default:
         FIXME("Unimplemented flags %x\n", flags);
+        /* fall through */
     case DISPATCH_PROPERTYPUT:
         hres = E_NOTIMPL;
     }
@@ -932,6 +935,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
             if(!pvarRes)
                 return E_INVALIDARG;
+            /* fall through */
         case DISPATCH_METHOD: {
             DISPID named_arg = DISPID_THIS;
             DISPPARAMS dp = {NULL, &named_arg, 0, 1};
