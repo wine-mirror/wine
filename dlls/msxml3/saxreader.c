@@ -49,6 +49,24 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
 
+enum ReaderFeatures
+{
+    ExhaustiveErrors             = 1 << 1,
+    ExternalGeneralEntities      = 1 << 2,
+    ExternalParameterEntities    = 1 << 3,
+    ForcedResync                 = 1 << 4,
+    NamespacePrefixes            = 1 << 5,
+    Namespace                    = 1 << 6,
+    ParameterEntities            = 1 << 7,
+    PreserveSystemIndentifiers   = 1 << 8,
+    ProhibitDTD                  = 1 << 9,
+    SchemaValidation             = 1 << 10,
+    ServerHttpRequest            = 1 << 11,
+    SuppressValidationfatalError = 1 << 12,
+    UseInlineSchema              = 1 << 13,
+    UseSchemaLocation            = 1 << 14
+};
+
 struct bstrpool
 {
     BSTR *pool;
@@ -72,6 +90,7 @@ typedef struct _saxreader
     xmlSAXHandler sax;
     BOOL isParsing;
     struct bstrpool pool;
+    enum ReaderFeatures features;
 } saxreader;
 
 typedef struct _saxlocator
@@ -179,6 +198,23 @@ static const WCHAR PropertyXMLDeclStandaloneW[] = {
 static const WCHAR PropertyXMLDeclVersionW[] = {
     'x','m','l','d','e','c','l','-','v','e','r','s','i','o','n',0
 };
+
+/* feature names */
+static const WCHAR FeatureExternalGeneralEntitiesW[] = {
+    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/','s','a','x','/',
+    'f','e','a','t','u','r','e','s','/','e','x','t','e','r','n','a','l','-','g','e','n','e','r','a','l',
+    '-','e','n','t','i','t','i','e','s',0
+};
+
+static inline HRESULT set_feature_value(saxreader *reader, enum ReaderFeatures feature, VARIANT_BOOL value)
+{
+    if (value == VARIANT_TRUE)
+        reader->features |=  feature;
+    else
+        reader->features &= ~feature;
+
+    return S_OK;
+}
 
 static inline BOOL has_content_handler(const saxlocator *locator)
 {
@@ -2568,12 +2604,17 @@ static HRESULT WINAPI saxxmlreader_getFeature(
 
 static HRESULT WINAPI saxxmlreader_putFeature(
     IVBSAXXMLReader* iface,
-    const WCHAR *pFeature,
-    VARIANT_BOOL vfValue)
+    const WCHAR *feature,
+    VARIANT_BOOL value)
 {
     saxreader *This = impl_from_IVBSAXXMLReader( iface );
 
-    FIXME("(%p)->(%s %x) stub\n", This, debugstr_w(pFeature), vfValue);
+    TRACE("(%p)->(%s %x)\n", This, debugstr_w(feature), value);
+
+    if (!strcmpW(FeatureExternalGeneralEntitiesW, feature) && value == VARIANT_FALSE)
+        return set_feature_value(This, ExternalGeneralEntities, value);
+
+    FIXME("(%p)->(%s %x) stub\n", This, debugstr_w(feature), value);
     return E_NOTIMPL;
 }
 
@@ -2964,6 +3005,7 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     reader->pool.pool = NULL;
     reader->pool.index = 0;
     reader->pool.len = 0;
+    reader->features = 0;
 
     memset(&reader->sax, 0, sizeof(xmlSAXHandler));
     reader->sax.initialized = XML_SAX2_MAGIC;
