@@ -1,4 +1,4 @@
-1 stub ApplyPatchToFileA
+1 stdcall ApplyPatchToFileA(str str str long)
 2 stub ApplyPatchToFileByHandles
 3 stub ApplyPatchToFileByHandlesEx
 4 stub ApplyPatchToFileExA
