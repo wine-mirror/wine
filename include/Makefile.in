@@ -422,6 +422,7 @@ SRCDIR_INCLUDES = \
 	oledberr.h \
 	oledlg.h \
 	opnrst.idl \
+	patchapi.h \
 	pdh.h \
 	pdhmsg.h \
 	pktdef.h \
