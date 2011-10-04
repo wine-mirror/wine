@@ -2780,6 +2780,8 @@ UINT WINAPI waveOutMessage(HWAVEOUT hWaveOut, UINT uMessage,
                 (DWORD_PTR*)dwParam1, TRUE);
     case DRV_QUERYFUNCTIONINSTANCEID:
         return WINMM_QueryInstanceID(HandleToULong(hWaveOut), (WCHAR*)dwParam1, dwParam2, TRUE);
+    case DRV_QUERYMAPPABLE:
+        return MMSYSERR_NOERROR;
     }
 
     return MMSYSERR_NOTSUPPORTED;
@@ -3152,6 +3154,8 @@ UINT WINAPI waveInMessage(HWAVEIN hWaveIn, UINT uMessage,
                 (DWORD_PTR*)dwParam1, FALSE);
     case DRV_QUERYFUNCTIONINSTANCEID:
         return WINMM_QueryInstanceID(HandleToULong(hWaveIn), (WCHAR*)dwParam1, dwParam2, FALSE);
+    case DRV_QUERYMAPPABLE:
+        return MMSYSERR_NOERROR;
     }
 
     return MMSYSERR_NOTSUPPORTED;

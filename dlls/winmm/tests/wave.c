@@ -30,6 +30,7 @@
 #include "winnls.h"
 #include "mmsystem.h"
 #define NOBITMAP
+#include "mmddk.h"
 #include "mmreg.h"
 #include "ks.h"
 #include "ksguid.h"
@@ -890,6 +891,11 @@ static void wave_out_test_device(UINT_PTR device)
        rc==MMSYSERR_INVALPARAM, /* Vista, W2K8 */
        "waveOutGetDevCapsW(%s): unexpected return value %s\n",
        dev_name(device),wave_out_error(rc));
+
+    rc=waveOutMessage((HWAVEOUT)device, DRV_QUERYMAPPABLE, 0, 0);
+    ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_NOTSUPPORTED,
+            "DRV_QUERYMAPPABLE(%s): unexpected return value %s\n",
+            dev_name(device),wave_out_error(rc));
 
     nameA=NULL;
     rc=waveOutMessage((HWAVEOUT)device, DRV_QUERYDEVICEINTERFACESIZE,
