@@ -221,31 +221,39 @@ ULONG WINAPI UlPropSize(LPSPropValue lpProp)
     switch (PROP_TYPE(lpProp->ulPropTag))
     {
     case PT_MV_I2:       ulRet = lpProp->Value.MVi.cValues;
+                         /* fall through */
     case PT_BOOLEAN:
     case PT_I2:          ulRet *= sizeof(USHORT);
                          break;
     case PT_MV_I4:       ulRet = lpProp->Value.MVl.cValues;
+                         /* fall through */
     case PT_ERROR:
     case PT_I4:          ulRet *= sizeof(LONG);
                          break;
     case PT_MV_I8:       ulRet = lpProp->Value.MVli.cValues;
+                         /* fall through */
     case PT_I8:          ulRet *= sizeof(LONG64);
                          break;
     case PT_MV_R4:       ulRet = lpProp->Value.MVflt.cValues;
+                         /* fall through */
     case PT_R4:          ulRet *= sizeof(float);
                          break;
     case PT_MV_APPTIME:
     case PT_MV_R8:       ulRet = lpProp->Value.MVdbl.cValues;
+                         /* fall through */
     case PT_APPTIME:
     case PT_R8:          ulRet *= sizeof(double);
                          break;
     case PT_MV_CURRENCY: ulRet = lpProp->Value.MVcur.cValues;
+                         /* fall through */
     case PT_CURRENCY:    ulRet *= sizeof(CY);
                          break;
     case PT_MV_SYSTIME:  ulRet = lpProp->Value.MVft.cValues;
+                         /* fall through */
     case PT_SYSTIME:     ulRet *= sizeof(FILETIME);
                          break;
     case PT_MV_CLSID:    ulRet = lpProp->Value.MVguid.cValues;
+                         /* fall through */
     case PT_CLSID:       ulRet *= sizeof(GUID);
                          break;
     case PT_MV_STRING8:  ulRet = 0u;
