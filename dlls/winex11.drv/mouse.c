@@ -726,6 +726,15 @@ static Cursor create_xcursor_cursor( HDC hdc, const ICONINFOEXW *iinfo, HANDLE i
         goto cleanup;
     }
     info->bmiHeader.biBitCount = 1;
+    info->bmiColors[0].rgbRed      = 0;
+    info->bmiColors[0].rgbGreen    = 0;
+    info->bmiColors[0].rgbBlue     = 0;
+    info->bmiColors[0].rgbReserved = 0;
+    info->bmiColors[1].rgbRed      = 0xff;
+    info->bmiColors[1].rgbGreen    = 0xff;
+    info->bmiColors[1].rgbBlue     = 0xff;
+    info->bmiColors[1].rgbReserved = 0;
+
     mask_size = ((width + 31) / 32 * 4) * height; /* width_bytes * height */
     info->bmiHeader.biSizeImage = mask_size;
     hbmMask = CreateDIBSection( hdc, info, DIB_RGB_COLORS, (VOID **) &mask_bits, NULL, 0);
