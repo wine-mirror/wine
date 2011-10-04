@@ -822,8 +822,6 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
 /*******************************************************************************
  * DirectSoundCaptureDevice
  */
-DirectSoundCaptureDevice * DSOUND_capture[MAXWAVEDRIVERS];
-
 static HRESULT DirectSoundCaptureDevice_Create(
     DirectSoundCaptureDevice ** ppDevice)
 {
@@ -880,8 +878,8 @@ static ULONG DirectSoundCaptureDevice_Release(
     return ref;
 }
 
-void CALLBACK DSOUND_capture_timer(UINT timerID, UINT msg, DWORD_PTR user,
-        DWORD_PTR dw1, DWORD_PTR dw2)
+static void CALLBACK DSOUND_capture_timer(UINT timerID, UINT msg, DWORD_PTR user,
+                                          DWORD_PTR dw1, DWORD_PTR dw2)
 {
     DirectSoundCaptureDevice *device = (DirectSoundCaptureDevice*)user;
     UINT32 packet_frames, packet_bytes, avail_bytes;
