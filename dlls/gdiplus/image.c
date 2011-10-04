@@ -1404,7 +1404,7 @@ GpStatus WINGDIPAPI GdipCreateHBITMAPFromBitmap(GpBitmap* bitmap,
     if (result)
     {
         lockeddata.Stride = -width * 4;
-        lockeddata.Scan0 = bits - (lockeddata.Stride * (height - 1));
+        lockeddata.Scan0 = bits + (width * 4 * (height - 1));
 
         stat = GdipBitmapLockBits(bitmap, NULL, ImageLockModeRead|ImageLockModeUserInputBuf,
             PixelFormat32bppPARGB, &lockeddata);

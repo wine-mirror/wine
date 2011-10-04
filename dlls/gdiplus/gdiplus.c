@@ -407,7 +407,7 @@ BOOL lengthen_path(GpPath *path, INT len)
 void convert_32bppARGB_to_32bppPARGB(UINT width, UINT height,
     BYTE *dst_bits, INT dst_stride, const BYTE *src_bits, INT src_stride)
 {
-    UINT x, y;
+    INT x, y;
     for (y=0; y<height; y++)
     {
         const BYTE *src=src_bits+y*src_stride;
