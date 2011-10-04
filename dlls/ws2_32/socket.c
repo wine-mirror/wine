@@ -2575,7 +2575,8 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         case WS_SO_LINGER:
         {
             struct linger lingval;
-            unsigned int len = sizeof(struct linger);
+            int so_type;
+            unsigned int len = sizeof(struct linger), slen = sizeof(int);
 
             /* struct linger and LINGER have different sizes */
             if (!optlen || *optlen < sizeof(LINGER) || !optval)
@@ -2586,7 +2587,12 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
                 return SOCKET_ERROR;
 
-            if (getsockopt(fd, SOL_SOCKET, SO_LINGER, &lingval, &len) != 0 )
+            if ((getsockopt(fd, SOL_SOCKET, SO_TYPE, &so_type, &slen) == 0 && so_type == SOCK_DGRAM))
+            {
+                SetLastError(WSAENOPROTOOPT);
+                ret = SOCKET_ERROR;
+            }
+            else if (getsockopt(fd, SOL_SOCKET, SO_LINGER, &lingval, &len) != 0)
             {
                 SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
                 ret = SOCKET_ERROR;

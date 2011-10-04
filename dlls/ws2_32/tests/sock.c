@@ -2630,12 +2630,12 @@ static void test_extendedSocketOptions(void)
         "got %d with %d and optval: 0x%x/%d (expected SOCKET_ERROR with WSAEINVAL)\n",
         ret, WSAGetLastError(), optval, optval);
 
+    SetLastError(0xdeadbeef);
     optlen = sizeof(LINGER);
     ret = getsockopt(sock, SOL_SOCKET, SO_LINGER, (char *)&linger_val, &optlen);
-    todo_wine{
-    ok(ret == SOCKET_ERROR, "getsockopt should fail for UDP sockets but return value is 0x%08x\n", ret);
-    }
-
+    ok( (ret == SOCKET_ERROR) && (WSAGetLastError() == WSAENOPROTOOPT), 
+        "getsockopt should fail for UDP sockets setting last error to WSAENOPROTOOPT, got %d with %d\n", 
+        ret, WSAGetLastError());
     closesocket(sock);
 
     if((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_IP)) == INVALID_SOCKET) {
