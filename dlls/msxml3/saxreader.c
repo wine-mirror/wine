@@ -217,6 +217,10 @@ static const WCHAR FeatureLexicalHandlerParEntitiesW[] = {
     '/','l','e','x','i','c','a','l','-','h','a','n','d','l','e','r','/','p','a','r','a','m','e','t','e','r','-','e','n','t','i','t','i','e','s',0
 };
 
+static const WCHAR FeatureProhibitDTDW[] = {
+    'p','r','o','h','i','b','i','t','-','d','t','d',0
+};
+
 static inline HRESULT set_feature_value(saxreader *reader, enum ReaderFeatures feature, VARIANT_BOOL value)
 {
     if (value == VARIANT_TRUE)
@@ -2632,6 +2636,12 @@ static HRESULT WINAPI saxxmlreader_putFeature(
     {
         FIXME("(%p)->(%s %x) stub\n", This, debugstr_w(feature), value);
         return set_feature_value(This, LexicalHandlerParEntities, value);
+    }
+
+    if (!strcmpW(FeatureProhibitDTDW, feature))
+    {
+        FIXME("(%p)->(%s %x) stub\n", This, debugstr_w(feature), value);
+        return set_feature_value(This, ProhibitDTD, value);
     }
 
     FIXME("(%p)->(%s %x) stub\n", This, debugstr_w(feature), value);
