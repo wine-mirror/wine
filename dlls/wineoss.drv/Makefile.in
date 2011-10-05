@@ -1,5 +1,6 @@
 MODULE    = wineoss.drv
-IMPORTS   = uuid winmm ole32 user32
+IMPORTS   = uuid ole32 user32
+DELAYIMPORTS = winmm
 EXTRAINCL = @OSS4INCL@
 
 C_SRCS = \

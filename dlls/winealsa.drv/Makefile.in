@@ -1,5 +1,6 @@
 MODULE    = winealsa.drv
-IMPORTS   = uuid winmm ole32
+IMPORTS   = uuid ole32
+DELAYIMPORTS = winmm
 EXTRALIBS = @ALSALIBS@
 
 C_SRCS = \

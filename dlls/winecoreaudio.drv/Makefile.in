@@ -1,5 +1,6 @@
 MODULE    = winecoreaudio.drv
-IMPORTS   = uuid winmm ole32 user32
+IMPORTS   = uuid ole32 user32
+DELAYIMPORTS = winmm
 EXTRALIBS = @COREAUDIO@
 
 C_SRCS = \
