@@ -167,7 +167,7 @@ msgstr "我的最愛"
 msgid "System Path"
 msgstr "系統路徑"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:97 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:98 winefile.rc:103
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -10329,6 +10329,11 @@ msgstr ""
 msgid "Audio test failed!"
 msgstr ""
 
+#: winecfg.rc:91
+#, fuzzy
+msgid "(System default)"
+msgstr "系統路徑"
+
 #: winecfg.rc:51
 msgid ""
 "Changing the load order of this library is not recommended.\n"
@@ -10460,71 +10465,71 @@ msgstr ""
 "\n"
 "請記得點選「儲存槽」頁籤的「加入」來建立一個！\n"
 
-#: winecfg.rc:95
+#: winecfg.rc:96
 msgid "Controls Background"
 msgstr "按鈕背景"
 
-#: winecfg.rc:96
+#: winecfg.rc:97
 msgid "Controls Text"
 msgstr "按鈕文字"
 
-#: winecfg.rc:98
+#: winecfg.rc:99
 msgid "Menu Background"
 msgstr "功能表背景"
 
-#: winecfg.rc:99
+#: winecfg.rc:100
 msgid "Menu Text"
 msgstr "功能表文字"
 
-#: winecfg.rc:100
+#: winecfg.rc:101
 msgid "Scrollbar"
 msgstr "捲軸"
 
-#: winecfg.rc:101
+#: winecfg.rc:102
 msgid "Selection Background"
 msgstr "選择區背景"
 
-#: winecfg.rc:102
+#: winecfg.rc:103
 msgid "Selection Text"
 msgstr "選择區文字"
 
-#: winecfg.rc:103
+#: winecfg.rc:104
 msgid "ToolTip Background"
 msgstr "提示區背景"
 
-#: winecfg.rc:104
+#: winecfg.rc:105
 msgid "ToolTip Text"
 msgstr "提示區文字"
 
-#: winecfg.rc:105
+#: winecfg.rc:106
 msgid "Window Background"
 msgstr "視窗背景"
 
-#: winecfg.rc:106
+#: winecfg.rc:107
 msgid "Window Text"
 msgstr "視窗文字"
 
-#: winecfg.rc:107
+#: winecfg.rc:108
 msgid "Active Title Bar"
 msgstr "當前標題欄"
 
-#: winecfg.rc:108
+#: winecfg.rc:109
 msgid "Active Title Text"
 msgstr "當前標題欄文字"
 
-#: winecfg.rc:109
+#: winecfg.rc:110
 msgid "Inactive Title Bar"
 msgstr "非當前標題欄"
 
-#: winecfg.rc:110
+#: winecfg.rc:111
 msgid "Inactive Title Text"
 msgstr "非當前標題欄文字"
 
-#: winecfg.rc:111
+#: winecfg.rc:112
 msgid "Message Box Text"
 msgstr ""
 
-#: winecfg.rc:112
+#: winecfg.rc:113
 #, fuzzy
 msgid "Application Workspace"
 msgstr ""
@@ -10533,70 +10538,70 @@ msgstr ""
 "#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
 "應用程式"
 
-#: winecfg.rc:113
+#: winecfg.rc:114
 #, fuzzy
 msgid "Window Frame"
 msgstr "視窗文字"
 
-#: winecfg.rc:114
+#: winecfg.rc:115
 #, fuzzy
 msgid "Active Border"
 msgstr "當前標題欄"
 
-#: winecfg.rc:115
+#: winecfg.rc:116
 #, fuzzy
 msgid "Inactive Border"
 msgstr "非當前標題欄"
 
-#: winecfg.rc:116
+#: winecfg.rc:117
 #, fuzzy
 msgid "Controls Shadow"
 msgstr "按鈕背景"
 
-#: winecfg.rc:117
+#: winecfg.rc:118
 #, fuzzy
 msgid "Gray Text"
 msgstr "文本文字"
 
-#: winecfg.rc:118
+#: winecfg.rc:119
 #, fuzzy
 msgid "Controls Highlight"
 msgstr "按鈕文字"
 
-#: winecfg.rc:119
+#: winecfg.rc:120
 #, fuzzy
 msgid "Controls Dark Shadow"
 msgstr "按鈕背景"
 
-#: winecfg.rc:120
+#: winecfg.rc:121
 #, fuzzy
 msgid "Controls Light"
 msgstr "按鈕文字"
 
-#: winecfg.rc:121
+#: winecfg.rc:122
 #, fuzzy
 msgid "Controls Alternate Background"
 msgstr "按鈕背景"
 
-#: winecfg.rc:122
+#: winecfg.rc:123
 msgid "Hot Tracked Item"
 msgstr ""
 
-#: winecfg.rc:123
+#: winecfg.rc:124
 #, fuzzy
 msgid "Active Title Bar Gradient"
 msgstr "當前標題欄"
 
-#: winecfg.rc:124
+#: winecfg.rc:125
 #, fuzzy
 msgid "Inactive Title Bar Gradient"
 msgstr "非當前標題欄"
 
-#: winecfg.rc:125
+#: winecfg.rc:126
 msgid "Menu Highlight"
 msgstr ""
 
-#: winecfg.rc:126
+#: winecfg.rc:127
 #, fuzzy
 msgid "Menu Bar"
 msgstr "功能表背景"

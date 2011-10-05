@@ -179,7 +179,7 @@ msgstr "Kedvencek"
 msgid "System Path"
 msgstr "Rendszer elérési útvonal"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:97 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:98 winefile.rc:103
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -10506,6 +10506,11 @@ msgstr ""
 msgid "Audio test failed!"
 msgstr ""
 
+#: winecfg.rc:91
+#, fuzzy
+msgid "(System default)"
+msgstr "Rendszer elérési útvonal"
+
 #: winecfg.rc:51
 msgid ""
 "Changing the load order of this library is not recommended.\n"
@@ -10625,142 +10630,142 @@ msgid ""
 "Remember to click 'Add' in the Drives tab to create one!\n"
 msgstr ""
 
-#: winecfg.rc:95
+#: winecfg.rc:96
 #, fuzzy
 msgid "Controls Background"
 msgstr "Háttér &másolása"
 
-#: winecfg.rc:96
+#: winecfg.rc:97
 #, fuzzy
 msgid "Controls Text"
 msgstr "Control"
 
-#: winecfg.rc:98
+#: winecfg.rc:99
 #, fuzzy
 msgid "Menu Background"
 msgstr "&Háttér"
 
-#: winecfg.rc:99
+#: winecfg.rc:100
 msgid "Menu Text"
 msgstr ""
 
-#: winecfg.rc:100
+#: winecfg.rc:101
 #, fuzzy
 msgid "Scrollbar"
 msgstr "görgetősáv"
 
-#: winecfg.rc:101
+#: winecfg.rc:102
 #, fuzzy
 msgid "Selection Background"
 msgstr "Beállítás há&ttérként"
 
-#: winecfg.rc:102
+#: winecfg.rc:103
 #, fuzzy
 msgid "Selection Text"
 msgstr "Kijelölés &információ"
 
-#: winecfg.rc:103
+#: winecfg.rc:104
 #, fuzzy
 msgid "ToolTip Background"
 msgstr "Háttér &másolása"
 
-#: winecfg.rc:104
+#: winecfg.rc:105
 msgid "ToolTip Text"
 msgstr ""
 
-#: winecfg.rc:105
+#: winecfg.rc:106
 #, fuzzy
 msgid "Window Background"
 msgstr "Háttér &másolása"
 
-#: winecfg.rc:106
+#: winecfg.rc:107
 #, fuzzy
 msgid "Window Text"
 msgstr "&Ablakok"
 
-#: winecfg.rc:107
+#: winecfg.rc:108
 #, fuzzy
 msgid "Active Title Bar"
 msgstr "címsor"
 
-#: winecfg.rc:108
+#: winecfg.rc:109
 msgid "Active Title Text"
 msgstr ""
 
-#: winecfg.rc:109
+#: winecfg.rc:110
 msgid "Inactive Title Bar"
 msgstr ""
 
-#: winecfg.rc:110
+#: winecfg.rc:111
 msgid "Inactive Title Text"
 msgstr ""
 
-#: winecfg.rc:111
+#: winecfg.rc:112
 #, fuzzy
 msgid "Message Box Text"
 msgstr "Üzenet összesítő"
 
-#: winecfg.rc:112
+#: winecfg.rc:113
 #, fuzzy
 msgid "Application Workspace"
 msgstr "Alkalmazás szabályok"
 
-#: winecfg.rc:113
+#: winecfg.rc:114
 #, fuzzy
 msgid "Window Frame"
 msgstr "&Ablakok"
 
-#: winecfg.rc:114
+#: winecfg.rc:115
 msgid "Active Border"
 msgstr ""
 
-#: winecfg.rc:115
+#: winecfg.rc:116
 msgid "Inactive Border"
 msgstr ""
 
-#: winecfg.rc:116
+#: winecfg.rc:117
 #, fuzzy
 msgid "Controls Shadow"
 msgstr "Vezérlőpult"
 
-#: winecfg.rc:117
+#: winecfg.rc:118
 msgid "Gray Text"
 msgstr ""
 
-#: winecfg.rc:118
+#: winecfg.rc:119
 msgid "Controls Highlight"
 msgstr ""
 
-#: winecfg.rc:119
+#: winecfg.rc:120
 msgid "Controls Dark Shadow"
 msgstr ""
 
-#: winecfg.rc:120
+#: winecfg.rc:121
 #, fuzzy
 msgid "Controls Light"
 msgstr "Control"
 
-#: winecfg.rc:121
+#: winecfg.rc:122
 msgid "Controls Alternate Background"
 msgstr ""
 
-#: winecfg.rc:122
+#: winecfg.rc:123
 msgid "Hot Tracked Item"
 msgstr ""
 
-#: winecfg.rc:123
+#: winecfg.rc:124
 msgid "Active Title Bar Gradient"
 msgstr ""
 
-#: winecfg.rc:124
+#: winecfg.rc:125
 msgid "Inactive Title Bar Gradient"
 msgstr ""
 
-#: winecfg.rc:125
+#: winecfg.rc:126
 msgid "Menu Highlight"
 msgstr ""
 
-#: winecfg.rc:126
+#: winecfg.rc:127
 #, fuzzy
 msgid "Menu Bar"
 msgstr "menüsor"

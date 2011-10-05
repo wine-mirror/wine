@@ -167,7 +167,7 @@ msgstr "Favoritele mele"
 msgid "System Path"
 msgstr "Calea de sistem"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:97 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:98 winefile.rc:103
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -10999,6 +10999,11 @@ msgstr ""
 msgid "Audio test failed!"
 msgstr ""
 
+#: winecfg.rc:91
+#, fuzzy
+msgid "(System default)"
+msgstr "Calea de sistem"
+
 #: winecfg.rc:51
 msgid ""
 "Changing the load order of this library is not recommended.\n"
@@ -11132,127 +11137,127 @@ msgstr ""
 "\n"
 "Nu uitați să o adăugați în subfereastra „Mapare de discuri”!\n"
 
-#: winecfg.rc:95
+#: winecfg.rc:96
 msgid "Controls Background"
 msgstr "Fundal controale"
 
-#: winecfg.rc:96
+#: winecfg.rc:97
 msgid "Controls Text"
 msgstr "Text controale"
 
-#: winecfg.rc:98
+#: winecfg.rc:99
 msgid "Menu Background"
 msgstr "Fundal meniu"
 
-#: winecfg.rc:99
+#: winecfg.rc:100
 msgid "Menu Text"
 msgstr "Text meniu"
 
-#: winecfg.rc:100
+#: winecfg.rc:101
 msgid "Scrollbar"
 msgstr "Bare de defilare"
 
-#: winecfg.rc:101
+#: winecfg.rc:102
 msgid "Selection Background"
 msgstr "Fundal selecție"
 
-#: winecfg.rc:102
+#: winecfg.rc:103
 msgid "Selection Text"
 msgstr "Text selecție"
 
-#: winecfg.rc:103
+#: winecfg.rc:104
 msgid "ToolTip Background"
 msgstr "Fundal baloane de ajutor"
 
-#: winecfg.rc:104
+#: winecfg.rc:105
 msgid "ToolTip Text"
 msgstr "Text baloane de ajutor"
 
-#: winecfg.rc:105
+#: winecfg.rc:106
 msgid "Window Background"
 msgstr "Fundal fereastră"
 
-#: winecfg.rc:106
+#: winecfg.rc:107
 msgid "Window Text"
 msgstr "Text fereastră"
 
-#: winecfg.rc:107
+#: winecfg.rc:108
 msgid "Active Title Bar"
 msgstr "Bară de titlu activă"
 
-#: winecfg.rc:108
+#: winecfg.rc:109
 msgid "Active Title Text"
 msgstr "Text bară de titlu activă"
 
-#: winecfg.rc:109
+#: winecfg.rc:110
 msgid "Inactive Title Bar"
 msgstr "Bară de titlu inactivă"
 
-#: winecfg.rc:110
+#: winecfg.rc:111
 msgid "Inactive Title Text"
 msgstr "Text bară de titlu inactivă"
 
-#: winecfg.rc:111
+#: winecfg.rc:112
 msgid "Message Box Text"
 msgstr "Text casetă de mesaje"
 
-#: winecfg.rc:112
+#: winecfg.rc:113
 msgid "Application Workspace"
 msgstr "Spațiul de lucru al aplicației"
 
-#: winecfg.rc:113
+#: winecfg.rc:114
 msgid "Window Frame"
 msgstr "Cadru de fereastră"
 
-#: winecfg.rc:114
+#: winecfg.rc:115
 msgid "Active Border"
 msgstr "Margini active"
 
-#: winecfg.rc:115
+#: winecfg.rc:116
 msgid "Inactive Border"
 msgstr "Margini inactive"
 
-#: winecfg.rc:116
+#: winecfg.rc:117
 msgid "Controls Shadow"
 msgstr "Umbră pentru controale"
 
-#: winecfg.rc:117
+#: winecfg.rc:118
 msgid "Gray Text"
 msgstr "Text gri"
 
-#: winecfg.rc:118
+#: winecfg.rc:119
 msgid "Controls Highlight"
 msgstr "Evidențiere controale"
 
-#: winecfg.rc:119
+#: winecfg.rc:120
 msgid "Controls Dark Shadow"
 msgstr "Umbră întunecată pentru controale"
 
-#: winecfg.rc:120
+#: winecfg.rc:121
 msgid "Controls Light"
 msgstr "Lumină pentru controale"
 
-#: winecfg.rc:121
+#: winecfg.rc:122
 msgid "Controls Alternate Background"
 msgstr "Fundal alternativ pentru controale"
 
-#: winecfg.rc:122
+#: winecfg.rc:123
 msgid "Hot Tracked Item"
 msgstr "Element cu urmărire fierbinte"
 
-#: winecfg.rc:123
+#: winecfg.rc:124
 msgid "Active Title Bar Gradient"
 msgstr "Gradient bară de titlu activă"
 
-#: winecfg.rc:124
+#: winecfg.rc:125
 msgid "Inactive Title Bar Gradient"
 msgstr "Gradient bară de titlu inactivă"
 
-#: winecfg.rc:125
+#: winecfg.rc:126
 msgid "Menu Highlight"
 msgstr "Evidențiere meniu"
 
-#: winecfg.rc:126
+#: winecfg.rc:127
 msgid "Menu Bar"
 msgstr "Bară de meniu"
 

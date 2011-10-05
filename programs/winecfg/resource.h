@@ -173,9 +173,14 @@
 #define IDC_AUDIO_DRIVER                1301
 #define IDS_AUDIO_DRIVER                1302
 #define IDS_AUDIO_DRIVER_NONE           1303
+#define IDC_AUDIOOUT_DEVICE             1304
+#define IDC_VOICEOUT_DEVICE             1305
+#define IDC_AUDIOIN_DEVICE              1306
+#define IDC_VOICEIN_DEVICE              1307
 #define IDW_TESTSOUND                   1308
 #define IDS_AUDIO_TEST_FAILED           1309
 #define IDS_AUDIO_TEST_FAILED_TITLE     1310
+#define IDS_AUDIO_SYSDEFAULT            1311
 
 /* desktop integration tab */
 #define IDC_THEME_COLORCOMBO            1401

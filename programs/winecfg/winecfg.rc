@@ -88,6 +88,7 @@ BEGIN
     IDS_AUDIO_DRIVER_NONE "(None)"
     IDS_AUDIO_TEST_FAILED "Audio test failed!"
     IDS_AUDIO_TEST_FAILED_TITLE "Error"
+    IDS_AUDIO_SYSDEFAULT "(System default)"
 END
 
 STRINGTABLE

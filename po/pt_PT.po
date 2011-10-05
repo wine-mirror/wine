@@ -173,7 +173,7 @@ msgstr "Favoritos"
 msgid "System Path"
 msgstr "Localização do Sistema"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:97 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:98 winefile.rc:103
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -10786,6 +10786,11 @@ msgstr ""
 msgid "Audio test failed!"
 msgstr "Reset ao disco rígido falhou\n"
 
+#: winecfg.rc:91
+#, fuzzy
+msgid "(System default)"
+msgstr "Localização do Sistema"
+
 #: winecfg.rc:51
 msgid ""
 "Changing the load order of this library is not recommended.\n"
@@ -10919,127 +10924,127 @@ msgstr ""
 "Certifique-se que clica em  ?Adicionar? no seprador Unidades para criar "
 "uma!\n"
 
-#: winecfg.rc:95
+#: winecfg.rc:96
 msgid "Controls Background"
 msgstr "Fundo dos Controlos"
 
-#: winecfg.rc:96
+#: winecfg.rc:97
 msgid "Controls Text"
 msgstr "Texto dos Controlos"
 
-#: winecfg.rc:98
+#: winecfg.rc:99
 msgid "Menu Background"
 msgstr "Fundo do Menu"
 
-#: winecfg.rc:99
+#: winecfg.rc:100
 msgid "Menu Text"
 msgstr "Texto do Menu"
 
-#: winecfg.rc:100
+#: winecfg.rc:101
 msgid "Scrollbar"
 msgstr "Barra de Rolagem"
 
-#: winecfg.rc:101
+#: winecfg.rc:102
 msgid "Selection Background"
 msgstr "Fundo de Selecção"
 
-#: winecfg.rc:102
+#: winecfg.rc:103
 msgid "Selection Text"
 msgstr "Texto de Selecção"
 
-#: winecfg.rc:103
+#: winecfg.rc:104
 msgid "ToolTip Background"
 msgstr "Fundo das Dicas"
 
-#: winecfg.rc:104
+#: winecfg.rc:105
 msgid "ToolTip Text"
 msgstr "Texto das Dicas"
 
-#: winecfg.rc:105
+#: winecfg.rc:106
 msgid "Window Background"
 msgstr "Fundo das Janelas"
 
-#: winecfg.rc:106
+#: winecfg.rc:107
 msgid "Window Text"
 msgstr "Texto das Janelas"
 
-#: winecfg.rc:107
+#: winecfg.rc:108
 msgid "Active Title Bar"
 msgstr "Barra de Título Activa"
 
-#: winecfg.rc:108
+#: winecfg.rc:109
 msgid "Active Title Text"
 msgstr "Texto de Título Activo"
 
-#: winecfg.rc:109
+#: winecfg.rc:110
 msgid "Inactive Title Bar"
 msgstr "Barra de Título Inactiva"
 
-#: winecfg.rc:110
+#: winecfg.rc:111
 msgid "Inactive Title Text"
 msgstr "Texto de Título Inactivo"
 
-#: winecfg.rc:111
+#: winecfg.rc:112
 msgid "Message Box Text"
 msgstr "Texto da Caixa de Mensagem"
 
-#: winecfg.rc:112
+#: winecfg.rc:113
 msgid "Application Workspace"
 msgstr ""
 
-#: winecfg.rc:113
+#: winecfg.rc:114
 msgid "Window Frame"
 msgstr ""
 
-#: winecfg.rc:114
+#: winecfg.rc:115
 msgid "Active Border"
 msgstr ""
 
-#: winecfg.rc:115
+#: winecfg.rc:116
 msgid "Inactive Border"
 msgstr ""
 
-#: winecfg.rc:116
+#: winecfg.rc:117
 msgid "Controls Shadow"
 msgstr ""
 
-#: winecfg.rc:117
+#: winecfg.rc:118
 msgid "Gray Text"
 msgstr ""
 
-#: winecfg.rc:118
+#: winecfg.rc:119
 msgid "Controls Highlight"
 msgstr ""
 
-#: winecfg.rc:119
+#: winecfg.rc:120
 msgid "Controls Dark Shadow"
 msgstr ""
 
-#: winecfg.rc:120
+#: winecfg.rc:121
 msgid "Controls Light"
 msgstr ""
 
-#: winecfg.rc:121
+#: winecfg.rc:122
 msgid "Controls Alternate Background"
 msgstr ""
 
-#: winecfg.rc:122
+#: winecfg.rc:123
 msgid "Hot Tracked Item"
 msgstr ""
 
-#: winecfg.rc:123
+#: winecfg.rc:124
 msgid "Active Title Bar Gradient"
 msgstr ""
 
-#: winecfg.rc:124
+#: winecfg.rc:125
 msgid "Inactive Title Bar Gradient"
 msgstr ""
 
-#: winecfg.rc:125
+#: winecfg.rc:126
 msgid "Menu Highlight"
 msgstr ""
 
-#: winecfg.rc:126
+#: winecfg.rc:127
 msgid "Menu Bar"
 msgstr ""
 
