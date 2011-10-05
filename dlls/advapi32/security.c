@@ -3600,7 +3600,7 @@ DWORD WINAPI SetEntriesInAclA( ULONG count, PEXPLICIT_ACCESSA pEntries,
 {
     DWORD err = ERROR_SUCCESS;
     EXPLICIT_ACCESSW *pEntriesW;
-    int alloc_index, free_index;
+    UINT alloc_index, free_index;
 
     TRACE("%d %p %p %p\n", count, pEntries, OldAcl, NewAcl);
 
