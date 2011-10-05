@@ -233,6 +233,11 @@ void WCMD_leave_paged_mode(void)
   pagedMessage = NULL;
 }
 
+static inline BOOL is_console_handle(HANDLE h)
+{
+    return (((DWORD_PTR)h) & 3) == 3;
+}
+
 /***************************************************************************
  * WCMD_Readfile
  *
@@ -240,30 +245,23 @@ void WCMD_leave_paged_mode(void)
  */
 BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWORD charsRead)
 {
-    BOOL   res;
+    DWORD numRead;
+    char *buffer;
 
-    /* Try to read from console as Unicode */
-    res = ReadConsoleW(hIn, intoBuf, maxChars, charsRead, NULL);
+    if (is_console_handle(hIn))
+        /* Try to read from console as Unicode */
+        return ReadConsoleW(hIn, intoBuf, maxChars, charsRead, NULL);
 
-    /* If reading from console has failed we assume its file
-       i/o so read in and convert from OEM codepage               */
-    if (!res) {
+    /* We assume it's a file handle and read then convert from assumed OEM codepage */
+    if (!(buffer = get_file_buffer()))
+        return FALSE;
 
-        DWORD numRead;
-        char *buffer;
+    if (!ReadFile(hIn, buffer, maxChars, &numRead, NULL))
+        return FALSE;
 
-        if (!(buffer = get_file_buffer()))
-            return FALSE;
+    *charsRead = MultiByteToWideChar(GetConsoleCP(), 0, buffer, numRead, intoBuf, maxChars);
 
-        /* Read from file (assume OEM codepage) */
-        res = ReadFile(hIn, buffer, maxChars, &numRead, NULL);
-
-        /* Convert from OEM */
-        *charsRead = MultiByteToWideChar(GetConsoleCP(), 0, buffer, numRead,
-                         intoBuf, maxChars);
-
-    }
-    return res;
+    return TRUE;
 }
 
 /*******************************************************************
