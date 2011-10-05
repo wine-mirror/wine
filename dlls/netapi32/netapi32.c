@@ -20,6 +20,7 @@
 
 #include "wine/debug.h"
 #include "lm.h"
+#include "lmat.h"
 #include "netbios.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(netbios);
@@ -235,4 +236,13 @@ NET_API_STATUS WINAPI NetUseEnum(LMSTR server, DWORD level, LPBYTE* bufptr, DWOR
     FIXME("stub (%p, %d, %p, %d, %p, %p, %p)\n", server, level, bufptr, prefmaxsize,
            entriesread, totalentries, resumehandle);
     return ERROR_NOT_SUPPORTED;
+}
+
+NET_API_STATUS WINAPI NetScheduleJobEnum(LPCWSTR server, LPBYTE* bufptr, DWORD prefmaxsize, LPDWORD entriesread,
+                                         LPDWORD totalentries, LPDWORD resumehandle)
+{
+    FIXME("stub (%s, %p, %d, %p, %p, %p)\n", debugstr_w(server), bufptr, prefmaxsize, entriesread, totalentries, resumehandle);
+    *entriesread = 0;
+    *totalentries = 0;
+    return NERR_Success;
 }
