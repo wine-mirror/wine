@@ -2383,7 +2383,14 @@ static HRESULT internal_putProperty(
         return S_OK;
     }
 
-    FIXME("(%p)->(%s): unsupported property\n", This, debugstr_w(prop));
+    if(!memcmp(prop, PropertyMaxXMLSizeW, sizeof(PropertyMaxXMLSizeW)))
+    {
+        if (V_VT(&value) == VT_I4 && V_I4(&value) == 0) return S_OK;
+        FIXME("(%p)->(%s): max-xml-size unsupported\n", This, debugstr_variant(&value));
+        return E_NOTIMPL;
+    }
+
+    FIXME("(%p)->(%s:%s): unsupported property\n", This, debugstr_w(prop), debugstr_variant(&value));
 
     if(!memcmp(prop, PropertyCharsetW, sizeof(PropertyCharsetW)))
         return E_NOTIMPL;
@@ -2395,9 +2402,6 @@ static HRESULT internal_putProperty(
         return E_NOTIMPL;
 
     if(!memcmp(prop, PropertyMaxElementDepthW, sizeof(PropertyMaxElementDepthW)))
-        return E_NOTIMPL;
-
-    if(!memcmp(prop, PropertyMaxXMLSizeW, sizeof(PropertyMaxXMLSizeW)))
         return E_NOTIMPL;
 
     if(!memcmp(prop, PropertySchemaDeclHandlerW, sizeof(PropertySchemaDeclHandlerW)))
