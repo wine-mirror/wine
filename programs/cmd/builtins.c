@@ -1587,7 +1587,10 @@ void WCMD_move (void) {
   WCMD_splitpath(input, drive, dir, fname, ext);
 
   hff = FindFirstFileW(input, &fd);
-  while (hff != INVALID_HANDLE_VALUE) {
+  if (hff == INVALID_HANDLE_VALUE)
+    return;
+
+  do {
     WCHAR  dest[MAX_PATH];
     WCHAR  src[MAX_PATH];
     DWORD attribs;
@@ -1674,14 +1677,9 @@ void WCMD_move (void) {
       WCMD_print_error ();
       errorlevel = 1;
     }
+  } while (FindNextFileW(hff, &fd) != 0);
 
-    /* Step on to next match */
-    if (FindNextFileW(hff, &fd) == 0) {
-      FindClose(hff);
-      hff = INVALID_HANDLE_VALUE;
-      break;
-    }
-  }
+  FindClose(hff);
 }
 
 /****************************************************************************
@@ -1810,7 +1808,10 @@ void WCMD_rename (void) {
   WCMD_splitpath(input, drive, dir, fname, ext);
 
   hff = FindFirstFileW(input, &fd);
-  while (hff != INVALID_HANDLE_VALUE) {
+  if (hff == INVALID_HANDLE_VALUE)
+    return;
+
+ do {
     WCHAR  dest[MAX_PATH];
     WCHAR  src[MAX_PATH];
     WCHAR *dotSrc = NULL;
@@ -1866,14 +1867,9 @@ void WCMD_rename (void) {
       WCMD_print_error ();
       errorlevel = 1;
     }
+  } while (FindNextFileW(hff, &fd) != 0);
 
-    /* Step on to next match */
-    if (FindNextFileW(hff, &fd) == 0) {
-      FindClose(hff);
-      hff = INVALID_HANDLE_VALUE;
-      break;
-    }
-  }
+  FindClose(hff);
 }
 
 /*****************************************************************************
@@ -2058,33 +2054,26 @@ void WCMD_setshow_default (const WCHAR *command) {
     /* Search for appropriate directory */
     WINE_TRACE("Looking for directory '%s'\n", wine_dbgstr_w(string));
     hff = FindFirstFileW(string, &fd);
-    while (hff != INVALID_HANDLE_VALUE) {
-      if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-        WCHAR fpath[MAX_PATH];
-        WCHAR drive[10];
-        WCHAR dir[MAX_PATH];
-        WCHAR fname[MAX_PATH];
-        WCHAR ext[MAX_PATH];
-        static const WCHAR fmt[] = {'%','s','%','s','%','s','\0'};
+    if (hff != INVALID_HANDLE_VALUE) {
+      do {
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+          WCHAR fpath[MAX_PATH];
+          WCHAR drive[10];
+          WCHAR dir[MAX_PATH];
+          WCHAR fname[MAX_PATH];
+          WCHAR ext[MAX_PATH];
+          static const WCHAR fmt[] = {'%','s','%','s','%','s','\0'};
 
-        /* Convert path into actual directory spec */
-        GetFullPathNameW(string, sizeof(fpath)/sizeof(WCHAR), fpath, NULL);
-        WCMD_splitpath(fpath, drive, dir, fname, ext);
+          /* Convert path into actual directory spec */
+          GetFullPathNameW(string, sizeof(fpath)/sizeof(WCHAR), fpath, NULL);
+          WCMD_splitpath(fpath, drive, dir, fname, ext);
 
-        /* Rebuild path */
-        wsprintfW(string, fmt, drive, dir, fd.cFileName);
-
-        FindClose(hff);
-        hff = INVALID_HANDLE_VALUE;
-        break;
-      }
-
-      /* Step on to next match */
-      if (FindNextFileW(hff, &fd) == 0) {
-        FindClose(hff);
-        hff = INVALID_HANDLE_VALUE;
-        break;
-      }
+          /* Rebuild path */
+          wsprintfW(string, fmt, drive, dir, fd.cFileName);
+          break;
+        }
+      } while (FindNextFileW(hff, &fd) != 0);
+      FindClose(hff);
     }
 
     /* Change to that directory */
