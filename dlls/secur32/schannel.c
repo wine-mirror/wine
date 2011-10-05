@@ -433,7 +433,7 @@ static void init_schan_buffers(struct schan_buffers *s, const PSecBufferDesc des
         int (*get_next_buffer)(const struct schan_transport *, struct schan_buffers *))
 {
     s->offset = 0;
-    s->limit = 0;
+    s->limit = ~0UL;
     s->desc = desc;
     s->current_buffer_idx = -1;
     s->allow_buffer_resize = FALSE;
@@ -507,6 +507,8 @@ char *schan_get_buffer(const struct schan_transport *t, struct schan_buffers *s,
 
     schan_resize_current_buffer(s, s->offset + *count);
     max_count = buffer->cbBuffer - s->offset;
+    if (s->limit != ~0UL && s->limit < max_count)
+        max_count = s->limit;
     if (!max_count)
     {
         int buffer_idx;
@@ -523,7 +525,11 @@ char *schan_get_buffer(const struct schan_transport *t, struct schan_buffers *s,
         return schan_get_buffer(t, s, count);
     }
 
-    if (*count > max_count) *count = max_count;
+    if (*count > max_count)
+        *count = max_count;
+    if (s->limit != ~0UL)
+        s->limit -= *count;
+
     return (char *)buffer->pvBuffer + s->offset;
 }
 
@@ -558,13 +564,6 @@ int schan_pull(struct schan_transport *t, void *buff, size_t *buff_len)
     b = schan_get_buffer(t, &t->in, &local_len);
     if (!b)
         return EAGAIN;
-
-    if (t->in.limit != 0 && t->in.offset + local_len >= t->in.limit)
-    {
-        local_len = t->in.limit - t->in.offset;
-        if (local_len == 0)
-            return EAGAIN;
-    }
 
     memcpy(buff, b, local_len);
     t->in.offset += local_len;
