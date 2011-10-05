@@ -2390,6 +2390,13 @@ static HRESULT internal_putProperty(
         return E_NOTIMPL;
     }
 
+    if(!memcmp(prop, PropertyMaxElementDepthW, sizeof(PropertyMaxElementDepthW)))
+    {
+        if (V_VT(&value) == VT_I4 && V_I4(&value) == 0) return S_OK;
+        FIXME("(%p)->(%s): max-element-depth unsupported\n", This, debugstr_variant(&value));
+        return E_NOTIMPL;
+    }
+
     FIXME("(%p)->(%s:%s): unsupported property\n", This, debugstr_w(prop), debugstr_variant(&value));
 
     if(!memcmp(prop, PropertyCharsetW, sizeof(PropertyCharsetW)))
@@ -2399,9 +2406,6 @@ static HRESULT internal_putProperty(
         return E_FAIL;
 
     if(!memcmp(prop, PropertyInputSourceW, sizeof(PropertyInputSourceW)))
-        return E_NOTIMPL;
-
-    if(!memcmp(prop, PropertyMaxElementDepthW, sizeof(PropertyMaxElementDepthW)))
         return E_NOTIMPL;
 
     if(!memcmp(prop, PropertySchemaDeclHandlerW, sizeof(PropertySchemaDeclHandlerW)))
