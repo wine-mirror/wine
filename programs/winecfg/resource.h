@@ -174,6 +174,8 @@
 #define IDS_AUDIO_DRIVER                1302
 #define IDS_AUDIO_DRIVER_NONE           1303
 #define IDW_TESTSOUND                   1308
+#define IDS_AUDIO_TEST_FAILED           1309
+#define IDS_AUDIO_TEST_FAILED_TITLE     1310
 
 /* desktop integration tab */
 #define IDC_THEME_COLORCOMBO            1401

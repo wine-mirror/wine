@@ -115,6 +115,40 @@ static void initAudioDlg (HWND hDlg)
     SetDlgItemTextW(hDlg, IDC_AUDIO_DRIVER, display_str);
 }
 
+static void test_sound(void)
+{
+    BOOL (WINAPI *pPlaySoundW)(const WCHAR *, HMODULE, DWORD);
+    HMODULE winmm;
+
+    static const WCHAR winmmW[] = {'w','i','n','m','m','.','d','l','l',0};
+
+    winmm = LoadLibraryW(winmmW);
+    if(!winmm){
+        WINE_ERR("LoadLibrary failed: %u\n", GetLastError());
+        return;
+    }
+
+    pPlaySoundW = (void*)GetProcAddress(winmm, "PlaySoundW");
+    if(!pPlaySoundW){
+        WINE_ERR("GetProcAddress failed: %u\n", GetLastError());
+        FreeLibrary(winmm);
+        return;
+    }
+
+    if(!pPlaySoundW(MAKEINTRESOURCEW(IDW_TESTSOUND), NULL, SND_RESOURCE | SND_SYNC)){
+        WCHAR error_str[256], title_str[256];
+
+        LoadStringW(GetModuleHandle(NULL), IDS_AUDIO_TEST_FAILED,
+                error_str, sizeof(error_str) / sizeof(*error_str));
+        LoadStringW(GetModuleHandle(NULL), IDS_AUDIO_TEST_FAILED_TITLE,
+                title_str, sizeof(title_str) / sizeof(*title_str));
+
+        MessageBoxW(NULL, error_str, title_str, MB_OK | MB_ICONERROR);
+    }
+
+    FreeLibrary(winmm);
+}
+
 INT_PTR CALLBACK
 AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -122,8 +156,7 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
       case WM_COMMAND:
         switch (LOWORD(wParam)) {
           case IDC_AUDIO_TEST:
-              if(!PlaySound(MAKEINTRESOURCE(IDW_TESTSOUND), NULL, SND_RESOURCE | SND_SYNC))
-                  MessageBox(NULL, "Audio test failed!", "Error", MB_OK | MB_ICONERROR);
+              test_sound();
               break;
         }
       case WM_SHOWWINDOW:

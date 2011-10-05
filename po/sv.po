@@ -165,7 +165,7 @@ msgstr "Mina Favoriter"
 msgid "System Path"
 msgstr "Systemsökväg"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:95 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:97 winefile.rc:103
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -6796,7 +6796,7 @@ msgstr "A&vsluta\tAlt-F4"
 msgid "Nex&t\tCtrl-F6"
 msgstr ""
 
-#: user32.rc:68 regedit.rc:176 winefile.rc:100
+#: user32.rc:68 regedit.rc:176 winecfg.rc:90 winefile.rc:100
 msgid "Error"
 msgstr "Fel"
 
@@ -10376,6 +10376,11 @@ msgstr ""
 msgid "(None)"
 msgstr "Ingen"
 
+#: winecfg.rc:89
+#, fuzzy
+msgid "Audio test failed!"
+msgstr "Återställning av hårddisk misslyckades\n"
+
 #: winecfg.rc:51
 msgid ""
 "Changing the load order of this library is not recommended.\n"
@@ -10502,127 +10507,127 @@ msgstr ""
 "\n"
 "Kom ihåg att klicka på ‘Lägg till’ i fliken Enheter för att skapa en!\n"
 
-#: winecfg.rc:93
+#: winecfg.rc:95
 msgid "Controls Background"
 msgstr "Bakgrund i kontroller"
 
-#: winecfg.rc:94
+#: winecfg.rc:96
 msgid "Controls Text"
 msgstr "Text i kontroller"
 
-#: winecfg.rc:96
+#: winecfg.rc:98
 msgid "Menu Background"
 msgstr "Menybakgrund"
 
-#: winecfg.rc:97
+#: winecfg.rc:99
 msgid "Menu Text"
 msgstr "Menytext"
 
-#: winecfg.rc:98
+#: winecfg.rc:100
 msgid "Scrollbar"
 msgstr "Rullningslist"
 
-#: winecfg.rc:99
+#: winecfg.rc:101
 msgid "Selection Background"
 msgstr "Bakgrund för markering"
 
-#: winecfg.rc:100
+#: winecfg.rc:102
 msgid "Selection Text"
 msgstr "Text för markering"
 
-#: winecfg.rc:101
+#: winecfg.rc:103
 msgid "ToolTip Background"
 msgstr "Bakgrund för verktygstips"
 
-#: winecfg.rc:102
+#: winecfg.rc:104
 msgid "ToolTip Text"
 msgstr "Text för verktygstips"
 
-#: winecfg.rc:103
+#: winecfg.rc:105
 msgid "Window Background"
 msgstr "Fönsterbakgrund"
 
-#: winecfg.rc:104
+#: winecfg.rc:106
 msgid "Window Text"
 msgstr "Fönstertext"
 
-#: winecfg.rc:105
+#: winecfg.rc:107
 msgid "Active Title Bar"
 msgstr "Aktiv titellist"
 
-#: winecfg.rc:106
+#: winecfg.rc:108
 msgid "Active Title Text"
 msgstr "Aktiv titeltext"
 
-#: winecfg.rc:107
+#: winecfg.rc:109
 msgid "Inactive Title Bar"
 msgstr "Inaktiv titellist"
 
-#: winecfg.rc:108
+#: winecfg.rc:110
 msgid "Inactive Title Text"
 msgstr "Inaktiv titeltext"
 
-#: winecfg.rc:109
+#: winecfg.rc:111
 msgid "Message Box Text"
 msgstr "Text i meddelandefönster"
 
-#: winecfg.rc:110
+#: winecfg.rc:112
 msgid "Application Workspace"
 msgstr "Arbetsyta i program"
 
-#: winecfg.rc:111
+#: winecfg.rc:113
 msgid "Window Frame"
 msgstr "Fönsterram"
 
-#: winecfg.rc:112
+#: winecfg.rc:114
 msgid "Active Border"
 msgstr "Aktiv kant"
 
-#: winecfg.rc:113
+#: winecfg.rc:115
 msgid "Inactive Border"
 msgstr "Inaktiv kant"
 
-#: winecfg.rc:114
+#: winecfg.rc:116
 msgid "Controls Shadow"
 msgstr "Skugga i kontroller"
 
-#: winecfg.rc:115
+#: winecfg.rc:117
 msgid "Gray Text"
 msgstr "Grå text"
 
-#: winecfg.rc:116
+#: winecfg.rc:118
 msgid "Controls Highlight"
 msgstr "Markering i kontroller"
 
-#: winecfg.rc:117
+#: winecfg.rc:119
 msgid "Controls Dark Shadow"
 msgstr "Mörk skugga i kontroller"
 
-#: winecfg.rc:118
+#: winecfg.rc:120
 msgid "Controls Light"
 msgstr "Ljus i kontroller"
 
-#: winecfg.rc:119
+#: winecfg.rc:121
 msgid "Controls Alternate Background"
 msgstr "Alternativ bakgrund i kontroller"
 
-#: winecfg.rc:120
+#: winecfg.rc:122
 msgid "Hot Tracked Item"
 msgstr "Hovrat föremål"
 
-#: winecfg.rc:121
+#: winecfg.rc:123
 msgid "Active Title Bar Gradient"
 msgstr "Gradient för aktiv titellist"
 
-#: winecfg.rc:122
+#: winecfg.rc:124
 msgid "Inactive Title Bar Gradient"
 msgstr "Gradient för inaktiv titellist"
 
-#: winecfg.rc:123
+#: winecfg.rc:125
 msgid "Menu Highlight"
 msgstr "Menymarkering"
 
-#: winecfg.rc:124
+#: winecfg.rc:126
 msgid "Menu Bar"
 msgstr "Menyrad"
 

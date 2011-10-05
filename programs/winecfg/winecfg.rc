@@ -86,6 +86,8 @@ STRINGTABLE
 BEGIN
     IDS_AUDIO_DRIVER "Selected driver: %s"
     IDS_AUDIO_DRIVER_NONE "(None)"
+    IDS_AUDIO_TEST_FAILED "Audio test failed!"
+    IDS_AUDIO_TEST_FAILED_TITLE "Error"
 END
 
 STRINGTABLE

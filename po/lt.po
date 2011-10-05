@@ -166,7 +166,7 @@ msgstr "Adresynas"
 msgid "System Path"
 msgstr "Sistemos kelias"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:95 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:97 winefile.rc:103
 msgctxt "display name"
 msgid "Desktop"
 msgstr "Darbalaukis"
@@ -6788,7 +6788,7 @@ msgstr "&Užverti\tVald-F4"
 msgid "Nex&t\tCtrl-F6"
 msgstr "Ki&tas\tVald-F6"
 
-#: user32.rc:68 regedit.rc:176 winefile.rc:100
+#: user32.rc:68 regedit.rc:176 winecfg.rc:90 winefile.rc:100
 msgid "Error"
 msgstr "Klaida"
 
@@ -10411,6 +10411,11 @@ msgstr "Parinkta tvarkyklė: %s"
 msgid "(None)"
 msgstr "(jokia)"
 
+#: winecfg.rc:89
+#, fuzzy
+msgid "Audio test failed!"
+msgstr "Nepavyko paleisti standžiojo disko iš naujo\n"
+
 #: winecfg.rc:51
 msgid ""
 "Changing the load order of this library is not recommended.\n"
@@ -10534,127 +10539,127 @@ msgstr ""
 "\n"
 "Nepamirškite paspausti „Pridėti“ diskų kortelėje, kad jį sukurtumėte!\n"
 
-#: winecfg.rc:93
+#: winecfg.rc:95
 msgid "Controls Background"
 msgstr "Valdiklių fonas"
 
-#: winecfg.rc:94
+#: winecfg.rc:96
 msgid "Controls Text"
 msgstr "Valdiklių tekstas"
 
-#: winecfg.rc:96
+#: winecfg.rc:98
 msgid "Menu Background"
 msgstr "Meniu fonas"
 
-#: winecfg.rc:97
+#: winecfg.rc:99
 msgid "Menu Text"
 msgstr "Meniu tekstas"
 
-#: winecfg.rc:98
+#: winecfg.rc:100
 msgid "Scrollbar"
 msgstr "Slankjuostė"
 
-#: winecfg.rc:99
+#: winecfg.rc:101
 msgid "Selection Background"
 msgstr "Žymėjimo fonas"
 
-#: winecfg.rc:100
+#: winecfg.rc:102
 msgid "Selection Text"
 msgstr "Žymėjimo tekstas"
 
-#: winecfg.rc:101
+#: winecfg.rc:103
 msgid "ToolTip Background"
 msgstr "Patarimo fonas"
 
-#: winecfg.rc:102
+#: winecfg.rc:104
 msgid "ToolTip Text"
 msgstr "Patarimo tekstas"
 
-#: winecfg.rc:103
+#: winecfg.rc:105
 msgid "Window Background"
 msgstr "Lango fonas"
 
-#: winecfg.rc:104
+#: winecfg.rc:106
 msgid "Window Text"
 msgstr "Lango tekstas"
 
-#: winecfg.rc:105
+#: winecfg.rc:107
 msgid "Active Title Bar"
 msgstr "Aktyvi lango antraštės juosta"
 
-#: winecfg.rc:106
+#: winecfg.rc:108
 msgid "Active Title Text"
 msgstr "Aktyvios lango antraštės tekstas"
 
-#: winecfg.rc:107
+#: winecfg.rc:109
 msgid "Inactive Title Bar"
 msgstr "Neaktyvi lango antraštės juosta"
 
-#: winecfg.rc:108
+#: winecfg.rc:110
 msgid "Inactive Title Text"
 msgstr "Neaktyvios lango antraštės tekstas"
 
-#: winecfg.rc:109
+#: winecfg.rc:111
 msgid "Message Box Text"
 msgstr "Pranešimo lango tekstas"
 
-#: winecfg.rc:110
+#: winecfg.rc:112
 msgid "Application Workspace"
 msgstr "Programos erdvė"
 
-#: winecfg.rc:111
+#: winecfg.rc:113
 msgid "Window Frame"
 msgstr "Lango rėmelis"
 
-#: winecfg.rc:112
+#: winecfg.rc:114
 msgid "Active Border"
 msgstr "Aktyvi kraštinė"
 
-#: winecfg.rc:113
+#: winecfg.rc:115
 msgid "Inactive Border"
 msgstr "Neaktyvi kraštinė"
 
-#: winecfg.rc:114
+#: winecfg.rc:116
 msgid "Controls Shadow"
 msgstr "Valdiklių šešėlis"
 
-#: winecfg.rc:115
+#: winecfg.rc:117
 msgid "Gray Text"
 msgstr "Pilkas tekstas"
 
-#: winecfg.rc:116
+#: winecfg.rc:118
 msgid "Controls Highlight"
 msgstr "Valdiklių paryškinimas"
 
-#: winecfg.rc:117
+#: winecfg.rc:119
 msgid "Controls Dark Shadow"
 msgstr "Valdiklių tamsus šešėlis"
 
-#: winecfg.rc:118
+#: winecfg.rc:120
 msgid "Controls Light"
 msgstr "Valdiklių šviesumas"
 
-#: winecfg.rc:119
+#: winecfg.rc:121
 msgid "Controls Alternate Background"
 msgstr "Valdiklių alternatyvus fonas"
 
-#: winecfg.rc:120
+#: winecfg.rc:122
 msgid "Hot Tracked Item"
 msgstr "Pažymėtas elementas"
 
-#: winecfg.rc:121
+#: winecfg.rc:123
 msgid "Active Title Bar Gradient"
 msgstr "Aktyvios lango antraštės gradientas"
 
-#: winecfg.rc:122
+#: winecfg.rc:124
 msgid "Inactive Title Bar Gradient"
 msgstr "Neaktyvios lango antraštės gradientas"
 
-#: winecfg.rc:123
+#: winecfg.rc:125
 msgid "Menu Highlight"
 msgstr "Meniu paryškinimas"
 
-#: winecfg.rc:124
+#: winecfg.rc:126
 msgid "Menu Bar"
 msgstr "Meniu juosta"
 

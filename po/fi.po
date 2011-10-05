@@ -163,7 +163,7 @@ msgstr "Suosikit"
 msgid "System Path"
 msgstr "Järjestelmäkansio"
 
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:95 winefile.rc:103
+#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:97 winefile.rc:103
 #, fuzzy
 msgctxt "display name"
 msgid "Desktop"
@@ -6963,7 +6963,7 @@ msgstr "&Sulje\tAlt+F4"
 msgid "Nex&t\tCtrl-F6"
 msgstr ""
 
-#: user32.rc:68 regedit.rc:176 winefile.rc:100
+#: user32.rc:68 regedit.rc:176 winecfg.rc:90 winefile.rc:100
 msgid "Error"
 msgstr "Virhe"
 
@@ -10234,6 +10234,10 @@ msgstr ""
 msgid "(None)"
 msgstr ""
 
+#: winecfg.rc:89
+msgid "Audio test failed!"
+msgstr ""
+
 #: winecfg.rc:51
 msgid ""
 "Changing the load order of this library is not recommended.\n"
@@ -10347,139 +10351,139 @@ msgid ""
 "Remember to click 'Add' in the Drives tab to create one!\n"
 msgstr ""
 
-#: winecfg.rc:93
+#: winecfg.rc:95
 #, fuzzy
 msgid "Controls Background"
 msgstr "&Kopioi Tausta"
 
-#: winecfg.rc:94
+#: winecfg.rc:96
 #, fuzzy
 msgid "Controls Text"
 msgstr "Hallinta"
 
-#: winecfg.rc:96
+#: winecfg.rc:98
 #, fuzzy
 msgid "Menu Background"
 msgstr "&Kopioi Tausta"
 
-#: winecfg.rc:97
+#: winecfg.rc:99
 msgid "Menu Text"
 msgstr ""
 
-#: winecfg.rc:98
+#: winecfg.rc:100
 #, fuzzy
 msgid "Scrollbar"
 msgstr "Vieritä Tänne"
 
-#: winecfg.rc:99
+#: winecfg.rc:101
 #, fuzzy
 msgid "Selection Background"
 msgstr "&Aseta Taustaksi"
 
-#: winecfg.rc:100
+#: winecfg.rc:102
 #, fuzzy
 msgid "Selection Text"
 msgstr "&Valitse Kaikki"
 
-#: winecfg.rc:101
+#: winecfg.rc:103
 #, fuzzy
 msgid "ToolTip Background"
 msgstr "&Kopioi Tausta"
 
-#: winecfg.rc:102
-msgid "ToolTip Text"
-msgstr ""
-
-#: winecfg.rc:103
-#, fuzzy
-msgid "Window Background"
-msgstr "&Kopioi Tausta"
-
 #: winecfg.rc:104
-msgid "Window Text"
+msgid "ToolTip Text"
 msgstr ""
 
 #: winecfg.rc:105
 #, fuzzy
-msgid "Active Title Bar"
-msgstr "&Ilman otsikkopalkkia"
+msgid "Window Background"
+msgstr "&Kopioi Tausta"
 
 #: winecfg.rc:106
-msgid "Active Title Text"
+msgid "Window Text"
 msgstr ""
 
 #: winecfg.rc:107
-msgid "Inactive Title Bar"
-msgstr ""
+#, fuzzy
+msgid "Active Title Bar"
+msgstr "&Ilman otsikkopalkkia"
 
 #: winecfg.rc:108
-msgid "Inactive Title Text"
+msgid "Active Title Text"
 msgstr ""
 
 #: winecfg.rc:109
-msgid "Message Box Text"
+msgid "Inactive Title Bar"
 msgstr ""
 
 #: winecfg.rc:110
+msgid "Inactive Title Text"
+msgstr ""
+
+#: winecfg.rc:111
+msgid "Message Box Text"
+msgstr ""
+
+#: winecfg.rc:112
 #, fuzzy
 msgid "Application Workspace"
 msgstr "Valinnat"
 
-#: winecfg.rc:111
+#: winecfg.rc:113
 msgid "Window Frame"
 msgstr ""
 
-#: winecfg.rc:112
+#: winecfg.rc:114
 msgid "Active Border"
 msgstr ""
 
-#: winecfg.rc:113
+#: winecfg.rc:115
 msgid "Inactive Border"
 msgstr ""
 
-#: winecfg.rc:114
+#: winecfg.rc:116
 #, fuzzy
 msgid "Controls Shadow"
 msgstr "Ohjauspaneeli"
 
-#: winecfg.rc:115
+#: winecfg.rc:117
 msgid "Gray Text"
 msgstr ""
 
-#: winecfg.rc:116
+#: winecfg.rc:118
 msgid "Controls Highlight"
 msgstr ""
 
-#: winecfg.rc:117
+#: winecfg.rc:119
 msgid "Controls Dark Shadow"
 msgstr ""
 
-#: winecfg.rc:118
+#: winecfg.rc:120
 #, fuzzy
 msgid "Controls Light"
 msgstr "Hallinta"
 
-#: winecfg.rc:119
+#: winecfg.rc:121
 msgid "Controls Alternate Background"
 msgstr ""
 
-#: winecfg.rc:120
+#: winecfg.rc:122
 msgid "Hot Tracked Item"
 msgstr ""
 
-#: winecfg.rc:121
+#: winecfg.rc:123
 msgid "Active Title Bar Gradient"
 msgstr ""
 
-#: winecfg.rc:122
+#: winecfg.rc:124
 msgid "Inactive Title Bar Gradient"
 msgstr ""
 
-#: winecfg.rc:123
+#: winecfg.rc:125
 msgid "Menu Highlight"
 msgstr ""
 
-#: winecfg.rc:124
+#: winecfg.rc:126
 msgid "Menu Bar"
 msgstr ""
 
