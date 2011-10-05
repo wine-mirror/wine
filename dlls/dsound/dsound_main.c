@@ -108,14 +108,11 @@ HRESULT mmErr(UINT err)
 }
 
 /* All default settings, you most likely don't want to touch these, see wiki on UsefulRegistryKeys */
-int ds_emuldriver = 0;
 int ds_hel_buflen = 32768 * 2;
 int ds_snd_queue_max = 10;
 int ds_snd_shadow_maxsize = 2;
 int ds_default_sample_rate = 44100;
 int ds_default_bits_per_sample = 16;
-static int ds_default_playback;
-static int ds_default_capture;
 static HINSTANCE instance;
 
 /*
@@ -165,23 +162,14 @@ void setup_dsound_options(void)
 
     /* get options */
 
-    if (!get_config_key( hkey, appkey, "EmulDriver", buffer, MAX_PATH ))
-        ds_emuldriver = strcmp(buffer, "N");
-
     if (!get_config_key( hkey, appkey, "HelBuflen", buffer, MAX_PATH ))
         ds_hel_buflen = atoi(buffer);
 
     if (!get_config_key( hkey, appkey, "SndQueueMax", buffer, MAX_PATH ))
         ds_snd_queue_max = atoi(buffer);
 
-    if (!get_config_key( hkey, appkey, "DefaultPlayback", buffer, MAX_PATH ))
-        ds_default_playback = atoi(buffer);
-
     if (!get_config_key( hkey, appkey, "MaxShadowSize", buffer, MAX_PATH ))
         ds_snd_shadow_maxsize = atoi(buffer);
-
-    if (!get_config_key( hkey, appkey, "DefaultCapture", buffer, MAX_PATH ))
-        ds_default_capture = atoi(buffer);
 
     if (!get_config_key( hkey, appkey, "DefaultSampleRate", buffer, MAX_PATH ))
         ds_default_sample_rate = atoi(buffer);
@@ -192,11 +180,8 @@ void setup_dsound_options(void)
     if (appkey) RegCloseKey( appkey );
     if (hkey) RegCloseKey( hkey );
 
-    TRACE("ds_emuldriver = %d\n", ds_emuldriver);
     TRACE("ds_hel_buflen = %d\n", ds_hel_buflen);
     TRACE("ds_snd_queue_max = %d\n", ds_snd_queue_max);
-    TRACE("ds_default_playback = %d\n", ds_default_playback);
-    TRACE("ds_default_capture = %d\n", ds_default_capture);
     TRACE("ds_default_sample_rate = %d\n", ds_default_sample_rate);
     TRACE("ds_default_bits_per_sample = %d\n", ds_default_bits_per_sample);
     TRACE("ds_snd_shadow_maxsize = %d\n", ds_snd_shadow_maxsize);
