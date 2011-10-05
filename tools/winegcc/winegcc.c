@@ -199,6 +199,7 @@ struct options
     int force_pointer_size;
     int large_address_aware;
     int unwind_tables;
+    int strip;
     const char* wine_objdir;
     const char* output_name;
     const char* image_base;
@@ -1009,6 +1010,8 @@ static void build(struct options* opts)
             strarray_add(link_args, "-image_base");
             strarray_add(link_args, opts->image_base);
         }
+        if (opts->strip)
+            strarray_add(link_args, "-Wl,-x");
         break;
     case PLATFORM_SOLARIS:
         {
@@ -1417,6 +1420,15 @@ int main(int argc, char **argv)
 			opts.shared = 1;
                         raw_compiler_arg = raw_linker_arg = 0;
 		    }
+                    else if (strcmp("-s", argv[i]) == 0 && opts.target_platform == PLATFORM_APPLE)
+                    {
+                        /* On Mac, change -s into -Wl,-x. ld's -s switch
+                         * is deprecated, and it doesn't work on Tiger with
+                         * MH_BUNDLEs anyway
+                         */
+                        opts.strip = 1;
+                        raw_linker_arg = 0;
+                    }
                     break;
                 case 'v':
                     if (argv[i][2] == 0) verbose++;
