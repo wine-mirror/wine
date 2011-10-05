@@ -1032,6 +1032,14 @@ static void test_query_svc(void)
     else
         ok(statusproc->dwProcessId == 0,
            "Expect no process id for this stopped service\n");
+
+    /* same call with null needed pointer */
+    SetLastError(0xdeadbeef);
+    ret = pQueryServiceStatusEx(svc_handle, SC_STATUS_PROCESS_INFO, (BYTE*)statusproc, bufsize, NULL);
+    ok(!ret, "Expected failure\n");
+    ok(broken(GetLastError() == ERROR_INVALID_PARAMETER) /* NT4 */ ||
+       GetLastError() == ERROR_INVALID_ADDRESS, "got %d\n", GetLastError());
+
     HeapFree(GetProcessHeap(), 0, statusproc);
 
     CloseServiceHandle(svc_handle);
