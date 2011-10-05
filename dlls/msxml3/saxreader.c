@@ -56,7 +56,7 @@ enum ReaderFeatures
     ExternalParameterEntities    = 1 << 3,
     ForcedResync                 = 1 << 4,
     NamespacePrefixes            = 1 << 5,
-    Namespace                    = 1 << 6,
+    Namespaces                   = 1 << 6,
     ParameterEntities            = 1 << 7,
     PreserveSystemIndentifiers   = 1 << 8,
     ProhibitDTD                  = 1 << 9,
@@ -221,6 +221,11 @@ static const WCHAR FeatureProhibitDTDW[] = {
     'p','r','o','h','i','b','i','t','-','d','t','d',0
 };
 
+static const WCHAR FeatureNamespacesW[] = {
+    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/','s','a','x','/','f','e','a','t','u','r','e','s',
+    '/','n','a','m','e','s','p','a','c','e','s',0
+};
+
 static inline HRESULT set_feature_value(saxreader *reader, enum ReaderFeatures feature, VARIANT_BOOL value)
 {
     if (value == VARIANT_TRUE)
@@ -228,6 +233,12 @@ static inline HRESULT set_feature_value(saxreader *reader, enum ReaderFeatures f
     else
         reader->features &= ~feature;
 
+    return S_OK;
+}
+
+static inline HRESULT get_feature_value(const saxreader *reader, enum ReaderFeatures feature, VARIANT_BOOL *value)
+{
+    *value = reader->features & feature ? VARIANT_TRUE : VARIANT_FALSE;
     return S_OK;
 }
 
@@ -2616,12 +2627,15 @@ static HRESULT WINAPI saxxmlreader_Invoke(
 /*** IVBSAXXMLReader methods ***/
 static HRESULT WINAPI saxxmlreader_getFeature(
     IVBSAXXMLReader* iface,
-    const WCHAR *pFeature,
-    VARIANT_BOOL *pValue)
+    const WCHAR *feature,
+    VARIANT_BOOL *value)
 {
     saxreader *This = impl_from_IVBSAXXMLReader( iface );
 
-    FIXME("(%p)->(%s %p) stub\n", This, debugstr_w(pFeature), pValue);
+    if (!strcmpW(FeatureNamespacesW, feature))
+        return get_feature_value(This, Namespaces, value);
+
+    FIXME("(%p)->(%s %p) stub\n", This, debugstr_w(feature), value);
     return E_NOTIMPL;
 }
 
@@ -2651,6 +2665,9 @@ static HRESULT WINAPI saxxmlreader_putFeature(
         FIXME("(%p)->(%s %x) stub\n", This, debugstr_w(feature), value);
         return set_feature_value(This, ProhibitDTD, value);
     }
+
+    if (!strcmpW(FeatureNamespacesW, feature) && value == VARIANT_TRUE)
+        return set_feature_value(This, Namespaces, value);
 
     FIXME("(%p)->(%s %x) stub\n", This, debugstr_w(feature), value);
     return E_NOTIMPL;
@@ -3043,7 +3060,7 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     reader->pool.pool = NULL;
     reader->pool.index = 0;
     reader->pool.len = 0;
-    reader->features = 0;
+    reader->features = Namespaces;
 
     memset(&reader->sax, 0, sizeof(xmlSAXHandler));
     reader->sax.initialized = XML_SAX2_MAGIC;

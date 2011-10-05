@@ -1267,6 +1267,50 @@ static void test_saxreader_properties(void)
     free_bstrs();
 }
 
+struct feature_ns_entry_t {
+    const GUID *guid;
+    const char *clsid;
+    VARIANT_BOOL value;
+};
+
+static const struct feature_ns_entry_t feature_ns_entry_data[] = {
+    { &CLSID_SAXXMLReader,   "CLSID_SAXXMLReader",   VARIANT_TRUE },
+    { &CLSID_SAXXMLReader30, "CLSID_SAXXMLReader30", VARIANT_TRUE },
+    { &CLSID_SAXXMLReader40, "CLSID_SAXXMLReader40", VARIANT_TRUE },
+    { &CLSID_SAXXMLReader60, "CLSID_SAXXMLReader60", VARIANT_TRUE },
+    { 0 }
+};
+
+static void test_saxreader_features(void)
+{
+    const struct feature_ns_entry_t *entry = feature_ns_entry_data;
+    ISAXXMLReader *reader;
+
+    while (entry->guid)
+    {
+        VARIANT_BOOL value;
+        HRESULT hr;
+
+        hr = CoCreateInstance(entry->guid, NULL, CLSCTX_INPROC_SERVER, &IID_ISAXXMLReader, (void**)&reader);
+        if (hr != S_OK)
+        {
+            win_skip("can't create %s instance\n", entry->clsid);
+            entry++;
+            continue;
+        }
+
+        value = 0xc;
+        hr = ISAXXMLReader_getFeature(reader, _bstr_("http://xml.org/sax/features/namespaces"), &value);
+        EXPECT_HR(hr, S_OK);
+
+        ok(entry->value == value, "%s: got wrong default value %x, expected %x\n", entry->clsid, value, entry->value);
+
+        ISAXXMLReader_Release(reader);
+
+        entry++;
+    }
+}
+
 /* UTF-8 data with UTF-8 BOM and UTF-16 in prolog */
 static const CHAR UTF8BOMTest[] =
 "\xEF\xBB\xBF<?xml version = \"1.0\" encoding = \"UTF-16\"?>\n"
@@ -2317,6 +2361,7 @@ START_TEST(saxreader)
 
     test_saxreader();
     test_saxreader_properties();
+    test_saxreader_features();
     test_encoding();
 
     /* MXXMLWriter tests */
