@@ -64,7 +64,8 @@ enum ReaderFeatures
     ServerHttpRequest            = 1 << 11,
     SuppressValidationfatalError = 1 << 12,
     UseInlineSchema              = 1 << 13,
-    UseSchemaLocation            = 1 << 14
+    UseSchemaLocation            = 1 << 14,
+    LexicalHandlerParEntities    = 1 << 15
 };
 
 struct bstrpool
@@ -209,6 +210,11 @@ static const WCHAR FeatureExternalGeneralEntitiesW[] = {
 static const WCHAR FeatureExternalParameterEntitiesW[] = {
     'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/','s','a','x','/','f','e','a','t','u','r','e','s',
     '/','e','x','t','e','r','n','a','l','-','p','a','r','a','m','e','t','e','r','-','e','n','t','i','t','i','e','s',0
+};
+
+static const WCHAR FeatureLexicalHandlerParEntitiesW[] = {
+    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/','s','a','x','/','f','e','a','t','u','r','e','s',
+    '/','l','e','x','i','c','a','l','-','h','a','n','d','l','e','r','/','p','a','r','a','m','e','t','e','r','-','e','n','t','i','t','i','e','s',0
 };
 
 static inline HRESULT set_feature_value(saxreader *reader, enum ReaderFeatures feature, VARIANT_BOOL value)
@@ -2621,6 +2627,12 @@ static HRESULT WINAPI saxxmlreader_putFeature(
 
     if (!strcmpW(FeatureExternalParameterEntitiesW, feature) && value == VARIANT_FALSE)
         return set_feature_value(This, ExternalParameterEntities, value);
+
+    if (!strcmpW(FeatureLexicalHandlerParEntitiesW, feature))
+    {
+        FIXME("(%p)->(%s %x) stub\n", This, debugstr_w(feature), value);
+        return set_feature_value(This, LexicalHandlerParEntities, value);
+    }
 
     FIXME("(%p)->(%s %x) stub\n", This, debugstr_w(feature), value);
     return E_NOTIMPL;
