@@ -75,3 +75,5 @@ typedef struct MMDevice {
 
 extern HRESULT AudioClient_Create(MMDevice *parent, IAudioClient **ppv) DECLSPEC_HIDDEN;
 extern HRESULT AudioEndpointVolume_Create(MMDevice *parent, IAudioEndpointVolume **ppv) DECLSPEC_HIDDEN;
+
+extern const WCHAR drv_keyW[] DECLSPEC_HIDDEN;

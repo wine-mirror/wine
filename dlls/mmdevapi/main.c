@@ -53,6 +53,9 @@ static HINSTANCE instance;
 
 DriverFuncs drvs;
 
+const WCHAR drv_keyW[] = {'S','o','f','t','w','a','r','e','\\',
+    'W','i','n','e','\\','D','r','i','v','e','r','s',0};
+
 static const char *get_priority_string(int prio)
 {
     switch(prio){
@@ -106,8 +109,6 @@ static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
 
 static BOOL init_driver(void)
 {
-    static const WCHAR drv_key[] = {'S','o','f','t','w','a','r','e','\\',
-        'W','i','n','e','\\','D','r','i','v','e','r','s',0};
     static const WCHAR drv_value[] = {'A','u','d','i','o',0};
 
     static WCHAR default_list[] = {'a','l','s','a',',','o','s','s',',',
@@ -120,7 +121,7 @@ static BOOL init_driver(void)
     if(drvs.module)
         return TRUE;
 
-    if(RegOpenKeyW(HKEY_CURRENT_USER, drv_key, &key) == ERROR_SUCCESS){
+    if(RegOpenKeyW(HKEY_CURRENT_USER, drv_keyW, &key) == ERROR_SUCCESS){
         DWORD size = sizeof(reg_list);
 
         if(RegQueryValueExW(key, drv_value, 0, NULL, (BYTE*)reg_list,

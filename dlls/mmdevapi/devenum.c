@@ -909,21 +909,79 @@ static HRESULT WINAPI MMDevEnum_EnumAudioEndpoints(IMMDeviceEnumerator *iface, E
 static HRESULT WINAPI MMDevEnum_GetDefaultAudioEndpoint(IMMDeviceEnumerator *iface, EDataFlow flow, ERole role, IMMDevice **device)
 {
     MMDevEnumImpl *This = impl_from_IMMDeviceEnumerator(iface);
+    WCHAR reg_key[256];
+    HKEY key;
+    HRESULT hr;
+
+    static const WCHAR slashW[] = {'\\',0};
+    static const WCHAR reg_out_nameW[] = {'D','e','f','a','u','l','t','O','u','t','p','u','t',0};
+    static const WCHAR reg_vout_nameW[] = {'D','e','f','a','u','l','t','V','o','i','c','e','O','u','t','p','u','t',0};
+    static const WCHAR reg_in_nameW[] = {'D','e','f','a','u','l','t','I','n','p','u','t',0};
+    static const WCHAR reg_vin_nameW[] = {'D','e','f','a','u','l','t','V','o','i','c','e','I','n','p','u','t',0};
+
     TRACE("(%p)->(%u,%u,%p)\n", This, flow, role, device);
 
     if (!device)
         return E_POINTER;
+
+    if((flow != eRender && flow != eCapture) ||
+            (role != eConsole && role != eMultimedia && role != eCommunications)){
+        WARN("Unknown flow (%u) or role (%u)\n", flow, role);
+        return E_INVALIDARG;
+    }
+
     *device = NULL;
+
+    if(!drvs.module_name[0])
+        return E_NOTFOUND;
+
+    lstrcpyW(reg_key, drv_keyW);
+    lstrcatW(reg_key, slashW);
+    lstrcatW(reg_key, drvs.module_name);
+
+    if(RegOpenKeyW(HKEY_CURRENT_USER, reg_key, &key) == ERROR_SUCCESS){
+        const WCHAR *reg_x_name, *reg_vx_name;
+        WCHAR def_id[256];
+        DWORD size = sizeof(def_id);
+
+        if(flow == eRender){
+            reg_x_name = reg_out_nameW;
+            reg_vx_name = reg_vout_nameW;
+        }else{
+            reg_x_name = reg_in_nameW;
+            reg_vx_name = reg_vin_nameW;
+        }
+
+        if(role == eCommunications &&
+                RegQueryValueExW(key, reg_vx_name, 0, NULL,
+                    (BYTE*)def_id, &size) == ERROR_SUCCESS){
+            hr = IMMDeviceEnumerator_GetDevice(iface, def_id, device);
+            if(SUCCEEDED(hr)){
+                RegCloseKey(key);
+                return S_OK;
+            }
+
+            TRACE("Unable to find voice device %s\n", wine_dbgstr_w(def_id));
+        }
+
+        if(RegQueryValueExW(key, reg_x_name, 0, NULL,
+                    (BYTE*)def_id, &size) == ERROR_SUCCESS){
+            hr = IMMDeviceEnumerator_GetDevice(iface, def_id, device);
+            if(SUCCEEDED(hr)){
+                RegCloseKey(key);
+                return S_OK;
+            }
+
+            TRACE("Unable to find device %s\n", wine_dbgstr_w(def_id));
+        }
+
+        RegCloseKey(key);
+    }
 
     if (flow == eRender)
         *device = &MMDevice_def_play->IMMDevice_iface;
-    else if (flow == eCapture)
-        *device = &MMDevice_def_rec->IMMDevice_iface;
     else
-    {
-        WARN("Unknown flow %u\n", flow);
-        return E_INVALIDARG;
-    }
+        *device = &MMDevice_def_rec->IMMDevice_iface;
 
     if (!*device)
         return E_NOTFOUND;
