@@ -42,6 +42,7 @@
 
 static IMMDeviceEnumerator *mme = NULL;
 static IMMDevice *dev = NULL;
+static HRESULT hexcl = S_OK; /* or AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED */
 
 static inline const char *dbgstr_guid( const GUID *id )
 {
@@ -142,7 +143,7 @@ static void test_audioclient(void)
 
     hr = IAudioClient_GetDevicePeriod(ac, &t1, &t2);
     ok(hr == S_OK, "Valid GetDevicePeriod call returns %08x\n", hr);
-    trace("Returned periods: %u.%05u ms %u.%05u ms\n",
+    trace("Returned periods: %u.%04u ms %u.%04u ms\n",
           (UINT)(t1/10000), (UINT)(t1 % 10000),
           (UINT)(t2/10000), (UINT)(t2 % 10000));
 
@@ -185,11 +186,17 @@ static void test_audioclient(void)
         ok(hr == E_POINTER, "IsFormatSupported(Shared,NULL) call returns %08x\n", hr);
 
         hr = IAudioClient_IsFormatSupported(ac, AUDCLNT_SHAREMODE_EXCLUSIVE, pwfx, NULL);
-        ok(hr == S_OK || hr == AUDCLNT_E_UNSUPPORTED_FORMAT, "IsFormatSupported(Exclusive) call returns %08x\n", hr);
+        ok(hr == S_OK || hr == AUDCLNT_E_UNSUPPORTED_FORMAT || hr == AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED,
+           "IsFormatSupported(Exclusive) call returns %08x\n", hr);
+        hexcl = hr;
 
+        pwfx2 = (WAVEFORMATEX*)0xDEADF00D;
         hr = IAudioClient_IsFormatSupported(ac, AUDCLNT_SHAREMODE_EXCLUSIVE, pwfx, &pwfx2);
-        ok(hr == S_OK || hr == AUDCLNT_E_UNSUPPORTED_FORMAT, "IsFormatSupported(Exclusive) call returns %08x\n", hr);
+        ok(hr == hexcl, "IsFormatSupported(Exclusive) call returns %08x\n", hr);
         ok(pwfx2 == NULL, "pwfx2 non-null on exclusive IsFormatSupported\n");
+
+        if (hexcl != AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED)
+            hexcl = S_OK;
 
         hr = IAudioClient_IsFormatSupported(ac, 0xffffffff, pwfx, NULL);
         ok(hr == E_INVALIDARG ||
@@ -213,6 +220,14 @@ static void test_audioclient(void)
 
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 0, 0, pwfx, NULL);
     ok(hr == S_OK, "Initialize with 0 buffer size returns %08x\n", hr);
+    if(hr == S_OK){
+        UINT32 num;
+
+        hr = IAudioClient_GetBufferSize(ac, &num);
+        ok(hr == S_OK, "GetBufferSize from duration 0 returns %08x\n", hr);
+        if(hr == S_OK)
+            trace("Initialize(duration=0) GetBufferSize is %u\n", num);
+    }
 
     IAudioClient_Release(ac);
 
@@ -263,10 +278,9 @@ static void test_audioclient(void)
 
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000, 0, pwfx, NULL);
     ok(hr == S_OK, "Valid Initialize returns %08x\n", hr);
-
     if (hr != S_OK)
     {
-        skip("Cannot initialize %08x, remainder of tests is useless\n", hr);
+        IAudioClient_Release(ac);
         CoTaskMemFree(pwfx);
         return;
     }
@@ -274,10 +288,11 @@ static void test_audioclient(void)
     hr = IAudioClient_GetStreamLatency(ac, NULL);
     ok(hr == E_POINTER, "GetStreamLatency(NULL) call returns %08x\n", hr);
 
-    hr = IAudioClient_GetStreamLatency(ac, &t1);
+    hr = IAudioClient_GetStreamLatency(ac, &t2);
     ok(hr == S_OK, "Valid GetStreamLatency call returns %08x\n", hr);
-    trace("Returned latency: %u.%05u ms\n",
-          (UINT)(t1/10000), (UINT)(t1 % 10000));
+    trace("Returned latency: %u.%04u ms\n",
+          (UINT)(t2/10000), (UINT)(t2 % 10000));
+    ok(t2 >= t1, "Latency < default period, delta %ldus\n", (long)((t2-t1)/10));
 
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000, 0, pwfx, NULL);
     ok(hr == AUDCLNT_E_ALREADY_INITIALIZED, "Calling Initialize twice returns %08x\n", hr);
@@ -293,6 +308,9 @@ static void test_audioclient(void)
        , "SetEventHandle returns %08x\n", hr);
 
     hr = IAudioClient_Reset(ac);
+    ok(hr == S_OK, "Reset on an initialized stream returns %08x\n", hr);
+
+    hr = IAudioClient_Reset(ac);
     ok(hr == S_OK, "Reset on a resetted stream returns %08x\n", hr);
 
     hr = IAudioClient_Stop(ac);
@@ -300,6 +318,9 @@ static void test_audioclient(void)
 
     hr = IAudioClient_Start(ac);
     ok(hr == S_OK, "Start on a stopped stream returns %08x\n", hr);
+
+    hr = IAudioClient_Start(ac);
+    ok(hr == AUDCLNT_E_NOT_STOPPED, "Start twice returns %08x\n", hr);
 
     IAudioClient_Release(ac);
 
@@ -327,8 +348,6 @@ static void test_references(void)
 
     hr = IAudioClient_GetMixFormat(ac, &pwfx);
     ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
-    if(hr != S_OK)
-        return;
 
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000,
             0, pwfx, NULL);
@@ -338,6 +357,10 @@ static void test_references(void)
 
     hr = IAudioClient_GetService(ac, &IID_IAudioRenderClient, (void**)&rc);
     ok(hr == S_OK, "GetService failed: %08x\n", hr);
+    if(hr != S_OK) {
+        IAudioClient_Release(ac);
+        return;
+    }
 
     IAudioRenderClient_AddRef(rc);
     ref = IAudioRenderClient_Release(rc);
@@ -452,8 +475,6 @@ static void test_event(void)
 
     hr = IAudioClient_GetMixFormat(ac, &pwfx);
     ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
-    if(hr != S_OK)
-        return;
 
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED,
             AUDCLNT_STREAMFLAGS_EVENTCALLBACK, 5000000,
@@ -475,7 +496,7 @@ static void test_event(void)
     ok(hr == S_OK, "Start failed: %08x\n", hr);
 
     hr = IAudioClient_Stop(ac);
-    ok(hr == S_OK, "Start failed: %08x\n", hr);
+    ok(hr == S_OK, "Stop failed: %08x\n", hr);
 
     /* test releasing a playing stream */
     hr = IAudioClient_Start(ac);
@@ -529,6 +550,9 @@ static void test_padding(void)
     hr = IAudioRenderClient_GetBuffer(arc, psize, &buf);
     ok(hr == S_OK, "GetBuffer failed: %08x\n", hr);
     ok(buf != NULL, "NULL buffer returned\n");
+
+    hr = IAudioClient_Reset(ac);
+    ok(hr == AUDCLNT_E_BUFFER_OPERATION_PENDING, "Reset failed: %08x\n", hr);
 
     hr = IAudioRenderClient_ReleaseBuffer(arc, psize,
             AUDCLNT_BUFFERFLAGS_SILENT);
@@ -704,8 +728,8 @@ static void test_clock(void)
 
 static void test_session(void)
 {
-    IAudioClient *ses1_ac1, *ses1_ac2, *cap_ac = NULL;
-    IAudioSessionControl2 *ses1_ctl, *ses1_ctl2, *cap_ctl;
+    IAudioClient *ses1_ac1, *ses1_ac2, *cap_ac;
+    IAudioSessionControl2 *ses1_ctl, *ses1_ctl2, *cap_ctl = NULL;
     IMMDevice *cap_dev;
     GUID ses1_guid;
     AudioSessionState state;
@@ -731,9 +755,11 @@ static void test_session(void)
     hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
             NULL, (void**)&ses1_ac2);
     ok(hr == S_OK, "Activation failed with %08x\n", hr);
-    if (FAILED(hr))
-    {
-        IAudioClient_Release(ses1_ac1);
+    if(FAILED(hr)){
+        skip("Unable to open the same device twice. Skipping session tests\n");
+
+        ref = IAudioClient_Release(ses1_ac1);
+        ok(ref == 0, "AudioClient wasn't released: %u\n", ref);
         return;
     }
 
@@ -744,26 +770,30 @@ static void test_session(void)
     hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(mme, eCapture,
             eMultimedia, &cap_dev);
     if(hr == S_OK){
-        WAVEFORMATEX *cap_pwfx;
-
         hr = IMMDevice_Activate(cap_dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
                 NULL, (void**)&cap_ac);
+        ok((hr == S_OK)^(cap_ac == NULL), "Activate %08x &out pointer\n", hr);
         ok(hr == S_OK, "Activate failed: %08x\n", hr);
+        IMMDevice_Release(cap_dev);
+    }
+    if(hr == S_OK){
+        WAVEFORMATEX *cap_pwfx;
 
         hr = IAudioClient_GetMixFormat(cap_ac, &cap_pwfx);
         ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
 
         hr = IAudioClient_Initialize(cap_ac, AUDCLNT_SHAREMODE_SHARED,
                 0, 5000000, 0, cap_pwfx, &ses1_guid);
-        ok(hr == S_OK, "Initialize failed: %08x\n", hr);
-
+        ok(hr == S_OK, "Initialize failed for capture in rendering session: %08x\n", hr);
+        CoTaskMemFree(cap_pwfx);
+    }
+    if(hr == S_OK){
         hr = IAudioClient_GetService(cap_ac, &IID_IAudioSessionControl, (void**)&cap_ctl);
         ok(hr == S_OK, "GetService failed: %08x\n", hr);
-
-        IMMDevice_Release(cap_dev);
-        CoTaskMemFree(cap_pwfx);
+        if(FAILED(hr))
+            cap_ctl = NULL;
     }else
-        skip("No capture device available; skipping capture device in render session tests\n");
+        skip("No capture session: %08x; skipping capture device in render session tests\n", hr);
 
     hr = IAudioClient_GetService(ses1_ac1, &IID_IAudioSessionControl2, (void**)&ses1_ctl);
     ok(hr == E_NOINTERFACE, "GetService gave wrong error: %08x\n", hr);
@@ -791,7 +821,7 @@ static void test_session(void)
     ok(hr == S_OK, "GetState failed: %08x\n", hr);
     ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
 
-    if(cap_ac){
+    if(cap_ctl){
         hr = IAudioSessionControl_GetState(cap_ctl, &state);
         ok(hr == S_OK, "GetState failed: %08x\n", hr);
         ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
@@ -808,7 +838,7 @@ static void test_session(void)
     ok(hr == S_OK, "GetState failed: %08x\n", hr);
     ok(state == AudioSessionStateActive, "Got wrong state: %d\n", state);
 
-    if(cap_ac){
+    if(cap_ctl){
         hr = IAudioSessionControl_GetState(cap_ctl, &state);
         ok(hr == S_OK, "GetState failed: %08x\n", hr);
         ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
@@ -825,7 +855,7 @@ static void test_session(void)
     ok(hr == S_OK, "GetState failed: %08x\n", hr);
     ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
 
-    if(cap_ac){
+    if(cap_ctl){
         hr = IAudioSessionControl_GetState(cap_ctl, &state);
         ok(hr == S_OK, "GetState failed: %08x\n", hr);
         ok(state == AudioSessionStateInactive, "Got wrong state: %d\n", state);
@@ -1183,6 +1213,8 @@ static void test_volume_dependence(void)
     hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
             NULL, (void**)&ac);
     ok(hr == S_OK, "Activation failed with %08x\n", hr);
+    if(hr != S_OK)
+        return;
 
     hr = IAudioClient_GetMixFormat(ac, &fmt);
     ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
@@ -1287,6 +1319,7 @@ static void test_session_creation(void)
 
     hr = IMMDevice_Activate(dev, &IID_IAudioSessionManager,
             CLSCTX_INPROC_SERVER, NULL, (void**)&sesm);
+    ok((hr == S_OK)^(sesm == NULL), "Activate %08x &out pointer\n", hr);
     ok(hr == S_OK, "Activate failed: %08x\n", hr);
 
     hr = IAudioSessionManager_GetSimpleAudioVolume(sesm, &session_guid,
@@ -1312,6 +1345,7 @@ static void test_session_creation(void)
 
         hr = IMMDevice_Activate(cap_dev, &IID_IAudioSessionManager,
                 CLSCTX_INPROC_SERVER, NULL, (void**)&cap_sesm);
+        ok((hr == S_OK)^(cap_sesm == NULL), "Activate %08x &out pointer\n", hr);
         ok(hr == S_OK, "Activate failed: %08x\n", hr);
 
         hr = IAudioSessionManager_GetSimpleAudioVolume(cap_sesm, &session_guid,
@@ -1330,6 +1364,8 @@ static void test_session_creation(void)
                 CLSCTX_INPROC_SERVER, NULL, (void**)&cap_ac);
         ok(hr == S_OK, "Activate failed: %08x\n", hr);
 
+        IMMDevice_Release(cap_dev);
+
         hr = IAudioClient_GetMixFormat(cap_ac, &cap_pwfx);
         ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
 
@@ -1337,23 +1373,28 @@ static void test_session_creation(void)
                 0, 5000000, 0, cap_pwfx, &session_guid);
         ok(hr == S_OK, "Initialize failed: %08x\n", hr);
 
-        hr = IAudioClient_GetService(cap_ac, &IID_ISimpleAudioVolume,
-                (void**)&cap_sav);
-        ok(hr == S_OK, "GetService failed: %08x\n", hr);
-
-        vol = 0.5f;
-        hr = ISimpleAudioVolume_GetMasterVolume(cap_sav, &vol);
-        ok(hr == S_OK, "GetMasterVolume failed: %08x\n", hr);
-        ok(vol == 1.f, "Got wrong volume: %f\n", vol);
-
         CoTaskMemFree(cap_pwfx);
-        ISimpleAudioVolume_Release(cap_sav);
+
+        if(hr == S_OK){
+            hr = IAudioClient_GetService(cap_ac, &IID_ISimpleAudioVolume,
+                    (void**)&cap_sav);
+            ok(hr == S_OK, "GetService failed: %08x\n", hr);
+        }
+        if(hr == S_OK){
+            vol = 0.5f;
+            hr = ISimpleAudioVolume_GetMasterVolume(cap_sav, &vol);
+            ok(hr == S_OK, "GetMasterVolume failed: %08x\n", hr);
+            ok(vol == 1.f, "Got wrong volume: %f\n", vol);
+
+            ISimpleAudioVolume_Release(cap_sav);
+        }
+
         IAudioClient_Release(cap_ac);
-        IMMDevice_Release(cap_dev);
     }
 
     hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
             NULL, (void**)&ac);
+    ok((hr == S_OK)^(ac == NULL), "Activate %08x &out pointer\n", hr);
     ok(hr == S_OK, "Activation failed with %08x\n", hr);
 
     hr = IAudioClient_GetMixFormat(ac, &fmt);
@@ -1365,14 +1406,16 @@ static void test_session_creation(void)
 
     hr = IAudioClient_GetService(ac, &IID_ISimpleAudioVolume, (void**)&sav);
     ok(hr == S_OK, "GetService failed: %08x\n", hr);
+    if(hr == S_OK){
+        vol = 0.5f;
+        hr = ISimpleAudioVolume_GetMasterVolume(sav, &vol);
+        ok(hr == S_OK, "GetMasterVolume failed: %08x\n", hr);
+        ok(fabs(vol - 0.6f) < 0.05f, "Got wrong volume: %f\n", vol);
 
-    vol = 0.5f;
-    hr = ISimpleAudioVolume_GetMasterVolume(sav, &vol);
-    ok(hr == S_OK, "GetMasterVolume failed: %08x\n", hr);
-    ok(fabs(vol - 0.6f) < 0.05f, "Got wrong volume: %f\n", vol);
+        ISimpleAudioVolume_Release(sav);
+    }
 
     CoTaskMemFree(fmt);
-    ISimpleAudioVolume_Release(sav);
     IAudioClient_Release(ac);
 }
 

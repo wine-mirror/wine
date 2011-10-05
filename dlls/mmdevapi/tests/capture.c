@@ -196,7 +196,7 @@ static void test_audioclient(void)
 
     hr = IAudioClient_GetDevicePeriod(ac, &t1, &t2);
     ok(hr == S_OK, "Valid GetDevicePeriod call returns %08x\n", hr);
-    trace("Returned periods: %u.%05u ms %u.%05u ms\n",
+    trace("Returned periods: %u.%04u ms %u.%04u ms\n",
           (UINT)(t1/10000), (UINT)(t1 % 10000),
           (UINT)(t2/10000), (UINT)(t2 % 10000));
 
@@ -278,7 +278,7 @@ static void test_audioclient(void)
 
     hr = IAudioClient_GetStreamLatency(ac, &t1);
     ok(hr == S_OK, "Valid GetStreamLatency call returns %08x\n", hr);
-    trace("Returned latency: %u.%05u ms\n",
+    trace("Returned latency: %u.%04u ms\n",
           (UINT)(t1/10000), (UINT)(t1 % 10000));
 
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000, 0, pwfx, NULL);
