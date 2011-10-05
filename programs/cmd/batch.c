@@ -176,17 +176,17 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where, WCHAR **end) {
 /****************************************************************************
  * WCMD_fgets
  *
- * Gets one line from a file/console and puts it into buffer s
- * Pre:  s has size noChars
+ * Gets one line from a file/console and puts it into buffer buf
+ * Pre:  buf has size noChars
  *       1 <= noChars <= MAXSTRING
- * Post: s is filled with at most noChars-1 characters, and gets nul-terminated
-         s does not include EOL terminator
+ * Post: buf is filled with at most noChars-1 characters, and gets nul-terminated
+         buf does not include EOL terminator
  * Returns:
- *       s on success
+ *       buf on success
  *       NULL on error or EOF
  */
 
-WCHAR *WCMD_fgets(WCHAR *s, int noChars, HANDLE h, BOOL is_console_handle)
+WCHAR *WCMD_fgets(WCHAR *buf, int noChars, HANDLE h, const BOOL is_console_handle)
 {
   DWORD bytes, charsRead;
   BOOL status;
@@ -195,29 +195,29 @@ WCHAR *WCMD_fgets(WCHAR *s, int noChars, HANDLE h, BOOL is_console_handle)
   /* We can't use the native f* functions because of the filename syntax differences
      between DOS and Unix. Also need to lose the LF (or CRLF) from the line. */
 
-  p = s;
+  p = buf;
   if (is_console_handle) {
-    status = ReadConsoleW(h, s, noChars, &charsRead, NULL);
+    status = ReadConsoleW(h, buf, noChars, &charsRead, NULL);
     if (!status) return NULL;
-    if (s[charsRead-2] == '\r')
-      s[charsRead-2] = '\0'; /* Strip \r\n */
+    if (buf[charsRead-2] == '\r')
+      buf[charsRead-2] = '\0'; /* Strip \r\n */
     else {
       /* Truncate */
-      s[noChars-1] = '\0';
+      buf[noChars-1] = '\0';
     }
     return p;
   }
 
   /* TODO: More intelligent buffering for reading lines from files */
   do {
-    status = WCMD_ReadFile(h, s, 1, &bytes);
-    if ((status == 0) || ((bytes == 0) && (s == p))) return NULL;
-    if (*s == '\n') bytes = 0;
-    else if (*s != '\r') {
-      s++;
+    status = WCMD_ReadFile(h, buf, 1, &bytes);
+    if ((status == 0) || ((bytes == 0) && (buf == p))) return NULL;
+    if (*buf == '\n') bytes = 0;
+    else if (*buf != '\r') {
+      buf++;
       noChars--;
     }
-    *s = '\0';
+    *buf = '\0';
   } while ((bytes == 1) && (noChars > 1));
   return p;
 }

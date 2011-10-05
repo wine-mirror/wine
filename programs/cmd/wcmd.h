@@ -97,7 +97,7 @@ void WCMD_verify (const WCHAR *command);
 void WCMD_version (void);
 int  WCMD_volume (BOOL set_label, const WCHAR *command);
 
-WCHAR *WCMD_fgets (WCHAR *s, int n, HANDLE stream, const BOOL is_console_handle);
+WCHAR *WCMD_fgets (WCHAR *buf, int n, HANDLE stream, const BOOL is_console_handle);
 WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where, WCHAR **end);
 WCHAR *WCMD_skip_leading_spaces (WCHAR *string);
 BOOL WCMD_keyword_ws_found(const WCHAR *keyword, int len, const WCHAR *ptr);
