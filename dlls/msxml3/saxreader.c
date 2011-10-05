@@ -824,18 +824,20 @@ static HRESULT WINAPI isaxattributes_getLength(
 
 static HRESULT WINAPI isaxattributes_getURI(
         ISAXAttributes* iface,
-        int nIndex,
-        const WCHAR **pUrl,
-        int *pUriSize)
+        int index,
+        const WCHAR **url,
+        int *size)
 {
     saxattributes *This = impl_from_ISAXAttributes( iface );
-    TRACE("(%p)->(%d)\n", This, nIndex);
+    TRACE("(%p)->(%d)\n", This, index);
 
-    if(nIndex>=This->nb_attributes || nIndex<0) return E_INVALIDARG;
-    if(!pUrl || !pUriSize) return E_POINTER;
+    if(index >= This->nb_attributes || index < 0) return E_INVALIDARG;
+    if(!url || !size) return E_POINTER;
 
-    *pUriSize = SysStringLen(This->szURI[nIndex]);
-    *pUrl = This->szURI[nIndex];
+    *size = SysStringLen(This->szURI[index]);
+    *url = This->szURI[index];
+
+    TRACE("(%s:%d)\n", debugstr_w(This->szURI[index]), *size);
 
     return S_OK;
 }
@@ -878,27 +880,29 @@ static HRESULT WINAPI isaxattributes_getQName(
 
 static HRESULT WINAPI isaxattributes_getName(
         ISAXAttributes* iface,
-        int nIndex,
-        const WCHAR **pUri,
+        int index,
+        const WCHAR **uri,
         int *pUriLength,
-        const WCHAR **pLocalName,
+        const WCHAR **localName,
         int *pLocalNameSize,
-        const WCHAR **pQName,
+        const WCHAR **QName,
         int *pQNameLength)
 {
     saxattributes *This = impl_from_ISAXAttributes( iface );
-    TRACE("(%p)->(%d)\n", This, nIndex);
+    TRACE("(%p)->(%d)\n", This, index);
 
-    if(nIndex>=This->nb_attributes || nIndex<0) return E_INVALIDARG;
-    if(!pUri || !pUriLength || !pLocalName || !pLocalNameSize
-            || !pQName || !pQNameLength) return E_POINTER;
+    if(index>=This->nb_attributes || index<0) return E_INVALIDARG;
+    if(!uri || !pUriLength || !localName || !pLocalNameSize
+            || !QName || !pQNameLength) return E_POINTER;
 
-    *pUriLength = SysStringLen(This->szURI[nIndex]);
-    *pUri = This->szURI[nIndex];
-    *pLocalNameSize = SysStringLen(This->szLocalname[nIndex]);
-    *pLocalName = This->szLocalname[nIndex];
-    *pQNameLength = SysStringLen(This->szQName[nIndex]);
-    *pQName = This->szQName[nIndex];
+    *pUriLength = SysStringLen(This->szURI[index]);
+    *uri = This->szURI[index];
+    *pLocalNameSize = SysStringLen(This->szLocalname[index]);
+    *localName = This->szLocalname[index];
+    *pQNameLength = SysStringLen(This->szQName[index]);
+    *QName = This->szQName[index];
+
+    TRACE("(%s, %s, %s)\n", debugstr_w(*uri), debugstr_w(*localName), debugstr_w(*QName));
 
     return S_OK;
 }
@@ -1005,18 +1009,20 @@ static HRESULT WINAPI isaxattributes_getTypeFromQName(
 
 static HRESULT WINAPI isaxattributes_getValue(
         ISAXAttributes* iface,
-        int nIndex,
-        const WCHAR **pValue,
+        int index,
+        const WCHAR **value,
         int *nValue)
 {
     saxattributes *This = impl_from_ISAXAttributes( iface );
-    TRACE("(%p)->(%d)\n", This, nIndex);
+    TRACE("(%p)->(%d)\n", This, index);
 
-    if(nIndex>=This->nb_attributes || nIndex<0) return E_INVALIDARG;
-    if(!pValue || !nValue) return E_POINTER;
+    if(index>=This->nb_attributes || index<0) return E_INVALIDARG;
+    if(!value || !nValue) return E_POINTER;
 
-    *nValue = SysStringLen(This->szValue[nIndex]);
-    *pValue = This->szValue[nIndex];
+    *nValue = SysStringLen(This->szValue[index]);
+    *value = This->szValue[index];
+
+    TRACE("(%s:%d)\n", debugstr_w(*value), *nValue);
 
     return S_OK;
 }
