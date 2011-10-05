@@ -332,8 +332,8 @@ HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
     if (bm.bmBits)
         SetBitmapBits( hbitmap, bm.bmHeight * bm.bmWidthBytes, bm.bmBits );
 
-    TRACE("%dx%d, %d colors returning %p\n", bm.bmWidth, bm.bmHeight,
-          1 << (bm.bmPlanes * bm.bmBitsPixel), hbitmap);
+    TRACE("%dx%d, bpp %d planes %d: returning %p\n", bm.bmWidth, bm.bmHeight,
+          bm.bmBitsPixel, bm.bmPlanes, hbitmap);
 
     return hbitmap;
 }
