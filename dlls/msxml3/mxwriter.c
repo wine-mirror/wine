@@ -822,28 +822,28 @@ static HRESULT WINAPI mxwriter_saxcontent_endElement(
     int nQName)
 {
     mxwriter *This = impl_from_ISAXContentHandler( iface );
-    xmlChar *s;
 
-    TRACE("(%p)->(%s %s %s)\n", This, debugstr_wn(namespaceUri, nnamespaceUri),
-        debugstr_wn(local_name, nlocal_name), debugstr_wn(QName, nQName));
+    TRACE("(%p)->(%s:%d %s:%d %s:%d)\n", This, debugstr_wn(namespaceUri, nnamespaceUri), nnamespaceUri,
+        debugstr_wn(local_name, nlocal_name), nlocal_name, debugstr_wn(QName, nQName), nQName);
 
     if ((!namespaceUri || !local_name || !QName) && This->class_version != MSXML6)
         return E_INVALIDARG;
 
-    s = xmlchar_from_wchar(QName);
-
-    if (This->element && QName && !strcmpW(This->element, QName))
+    if (This->element && QName && !strncmpW(This->element, QName, nQName))
     {
         xmlOutputBufferWriteString(This->buffer, "/>");
     }
     else
     {
+        xmlChar *s = xmlchar_from_wcharn(QName, nQName);
+
         xmlOutputBufferWriteString(This->buffer, "</");
         xmlOutputBufferWriteString(This->buffer, (char*)s);
         xmlOutputBufferWriteString(This->buffer, ">");
+
+        heap_free(s);
     }
 
-    heap_free(s);
     set_element_name(This, NULL, 0);
 
     return S_OK;
