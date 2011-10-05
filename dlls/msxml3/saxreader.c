@@ -206,6 +206,11 @@ static const WCHAR FeatureExternalGeneralEntitiesW[] = {
     '-','e','n','t','i','t','i','e','s',0
 };
 
+static const WCHAR FeatureExternalParameterEntitiesW[] = {
+    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/','s','a','x','/','f','e','a','t','u','r','e','s',
+    '/','e','x','t','e','r','n','a','l','-','p','a','r','a','m','e','t','e','r','-','e','n','t','i','t','i','e','s',0
+};
+
 static inline HRESULT set_feature_value(saxreader *reader, enum ReaderFeatures feature, VARIANT_BOOL value)
 {
     if (value == VARIANT_TRUE)
@@ -2613,6 +2618,9 @@ static HRESULT WINAPI saxxmlreader_putFeature(
 
     if (!strcmpW(FeatureExternalGeneralEntitiesW, feature) && value == VARIANT_FALSE)
         return set_feature_value(This, ExternalGeneralEntities, value);
+
+    if (!strcmpW(FeatureExternalParameterEntitiesW, feature) && value == VARIANT_FALSE)
+        return set_feature_value(This, ExternalParameterEntities, value);
 
     FIXME("(%p)->(%s %x) stub\n", This, debugstr_w(feature), value);
     return E_NOTIMPL;
