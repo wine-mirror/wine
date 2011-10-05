@@ -312,6 +312,7 @@ SRCDIR_INCLUDES = \
 	lm.h \
 	lmaccess.h \
 	lmapibuf.h \
+	lmat.h \
 	lmbrowsr.h \
 	lmcons.h \
 	lmerr.h \
