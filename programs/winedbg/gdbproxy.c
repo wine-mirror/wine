@@ -999,7 +999,7 @@ static enum packet_return packet_continue(struct gdb_context* gdbctx)
     return packet_reply_status(gdbctx);
 }
 
-static enum packet_return packet_verbose(struct gdb_context* gdbctx)
+static enum packet_return packet_verbose_cont(struct gdb_context* gdbctx)
 {
     int i;
     int defaultAction = -1; /* magic non action */
@@ -1012,9 +1012,6 @@ static enum packet_return packet_verbose(struct gdb_context* gdbctx)
     unsigned int threadID = 0;
     struct dbg_thread*  thd;
 
-    /* basic check */
-    assert(gdbctx->in_packet_len >= 4);
-
     /* OK we have vCont followed by..
     * ? for query
     * c for packet_continue
@@ -1023,11 +1020,6 @@ static enum packet_return packet_verbose(struct gdb_context* gdbctx)
     * Ssig  for step signal
     * and then an optional thread ID at the end..
     * *******************************************/
-
-    if (gdbctx->trace & GDBPXY_TRC_COMMAND)
-        fprintf(stderr, "trying to process a verbose packet\n");
-    /* now check that we've got Cont */
-    assert(strncmp(gdbctx->in_packet, "Cont", 4) == 0);
 
     /* Query */
     if (gdbctx->in_packet[4] == '?')
@@ -1095,7 +1087,7 @@ static enum packet_return packet_verbose(struct gdb_context* gdbctx)
          * (they're running winedbg, so I'm sure they can fix the problem from the error message!) */
         if (threadCount == 100)
         {
-            fprintf(stderr, "Wow, that's a lot of threads, change threadIDs in wine/programms/winedgb/gdbproxy.c to be higher\n");
+            fprintf(stderr, "Wow, that's a lot of threads, change threadIDs in wine/programms/winedbg/gdbproxy.c to be higher\n");
             break;
         }
     }
@@ -1197,6 +1189,58 @@ static enum packet_return packet_verbose(struct gdb_context* gdbctx)
     be_cpu->single_step(&gdbctx->context, FALSE);
     return packet_reply_status(gdbctx);
 }
+
+struct verbose_defail
+{
+    const char*         name;
+    unsigned            len;
+    enum packet_return  (*handler)(struct gdb_context*);
+} verbose_details[] =
+{
+    /* {"Attach",           6}, */
+    {"Cont",             4, packet_verbose_cont},
+    /* {"File",             4},
+    {"FlashErase",      10},
+    {"FlashWrite",      10},
+    {"FlashDone",        9},
+    {"Kill",             4},
+    {"Run",              3},
+    {"Stopped",          7},*/
+};
+
+static enum packet_return packet_verbose(struct gdb_context* gdbctx)
+{
+    unsigned i;
+    unsigned klen;
+
+    for (klen = 0; ; klen++)
+    {
+        if (klen == gdbctx->in_packet_len ||
+            gdbctx->in_packet[klen] == ';' ||
+            gdbctx->in_packet[klen] == ':' ||
+            gdbctx->in_packet[klen] == '?')
+        {
+            if (gdbctx->trace & GDBPXY_TRC_COMMAND)
+                fprintf(stderr, "trying to process a verbose packet %*.*s\n",
+                        gdbctx->in_packet_len, gdbctx->in_packet_len, gdbctx->in_packet);
+            for (i = 0; i < sizeof(verbose_details)/sizeof(verbose_details[0]); i++)
+            {
+                if (klen == verbose_details[i].len &&
+                    !memcmp(gdbctx->in_packet, verbose_details[i].name, verbose_details[i].len))
+                {
+                    return verbose_details[i].handler(gdbctx);
+                }
+            }
+            /* no matching handler found, abort */
+            break;
+        }
+    }
+
+    if (gdbctx->trace & GDBPXY_TRC_COMMAND_FIXME)
+        fprintf(stderr, "No support for verbose packet %*.*s\n",
+                gdbctx->in_packet_len, gdbctx->in_packet_len, gdbctx->in_packet);
+    return packet_error;
+ }
 
 static enum packet_return packet_continue_signal(struct gdb_context* gdbctx)
 {
