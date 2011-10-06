@@ -51,6 +51,7 @@ PUBLIC_IDL_H_SRCS = \
 	mimeinfo.idl \
 	mimeole.idl \
 	mlang.idl \
+	mmc.idl \
 	mmdeviceapi.idl \
 	mmstream.idl \
 	mscoree.idl \

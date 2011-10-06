@@ -179,6 +179,7 @@ include/metahost.h
 include/mimeinfo.h
 include/mimeole.h
 include/mlang.h
+include/mmc.h
 include/mmdeviceapi.h
 include/mmstream.h
 include/mscoree.h
