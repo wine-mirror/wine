@@ -797,18 +797,15 @@ int CDECL MSVCRT__close(int fd)
   LOCK_FILES();
   hand = msvcrt_fdtoh(fd);
   TRACE(":fd (%d) handle (%p)\n",fd,hand);
-  if (hand == INVALID_HANDLE_VALUE)
+  if (!msvcrt_is_valid_fd(fd)) {
     ret = -1;
-  else if (!CloseHandle(hand))
-  {
-    WARN(":failed-last error (%d)\n",GetLastError());
-    msvcrt_set_errno(GetLastError());
-    ret = -1;
-  }
-  else
-  {
+  } else {
     msvcrt_free_fd(fd);
-    ret = 0;
+    ret = CloseHandle(hand) ? 0 : -1;
+    if (ret) {
+      WARN(":failed-last error (%d)\n",GetLastError());
+      msvcrt_set_errno(GetLastError());
+    }
   }
   UNLOCK_FILES();
   TRACE(":ok\n");
