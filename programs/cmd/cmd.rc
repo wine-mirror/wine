@@ -122,10 +122,10 @@ variable, for example:\n\
 		PATH %PATH%;c:\\temp\n"
 
   WCMD_PAUSE,
-"PAUSE displays a message on the screen 'Press Return key to continue'\n\
-and waits for the user to press the Return key. It is mainly useful in\n\
-batch files to allow the user to read the output of a previous command\n\
-before it scrolls off the screen.\n"
+"PAUSE displays a message on the screen asking the user to press a key.\n\
+\n\
+It is mainly useful in batch files to allow the user to read the output\n\
+of a previous command before it scrolls off the screen.\n"
 
   WCMD_PROMPT,
 "PROMPT sets the command-line prompt.\n\
@@ -271,6 +271,7 @@ MD (MKDIR)\tCreate a subdirectory\n\
 MORE\t\tDisplay output in pages\n\
 MOVE\t\tMove a file, set of files or directory tree\n\
 PATH\t\tSet or show the search path\n\
+PAUSE\t\tSuspend execution of a batch file\n\
 POPD\t\tRestore the directory to the last one saved with PUSHD\n\
 PROMPT\t\tChange the command prompt\n\
 PUSHD\t\tChange to a new directory, saving the current one\n\
@@ -317,7 +318,7 @@ Enter HELP <command> for further information on any of the above commands.\n"
   WCMD_VOLUMEDETAIL, "Volume in drive %c is %s\nVolume Serial Number is %04x-%04x\n\n"
   WCMD_VOLUMEPROMPT, "Volume label (11 characters, ENTER for none)?"
   WCMD_NOPATH, "PATH not found\n"
-  WCMD_ANYKEY,"Press Return key to continue: "
+  WCMD_ANYKEY,"Press any key to continue... "
   WCMD_CONSTITLE,"Wine Command Prompt"
   WCMD_VERSION,"CMD Version %s\n"
   WCMD_MOREPROMPT, "More? "

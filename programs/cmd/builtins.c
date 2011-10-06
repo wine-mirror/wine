@@ -1685,16 +1685,25 @@ void WCMD_move (void) {
 /****************************************************************************
  * WCMD_pause
  *
- * Wait for keyboard input.
+ * Suspend execution of a batch script until a key is typed
  */
 
-void WCMD_pause (void) {
-
+void WCMD_pause (void)
+{
+  DWORD oldmode;
+  BOOL have_console;
   DWORD count;
-  WCHAR string[32];
+  WCHAR key;
+  HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
 
-  WCMD_output (anykey);
-  WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string)/sizeof(WCHAR), &count);
+  have_console = GetConsoleMode(hIn, &oldmode);
+  if (have_console)
+      SetConsoleMode(hIn, 0);
+
+  WCMD_output(anykey);
+  WCMD_ReadFile(hIn, &key, 1, &count);
+  if (have_console)
+    SetConsoleMode(hIn, oldmode);
 }
 
 /****************************************************************************

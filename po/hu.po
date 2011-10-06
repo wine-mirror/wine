@@ -7932,13 +7932,13 @@ msgstr "Ciklus a beszámolók kezelése közben"
 msgid "Referral hop limit exceeded"
 msgstr "Beszámolási ugrás limit túllépve"
 
-#: attrib.rc:27 cmd.rc:298
+#: attrib.rc:27 cmd.rc:299
 msgid ""
 "Not Yet Implemented\n"
 "\n"
 msgstr ""
 
-#: attrib.rc:28 cmd.rc:301
+#: attrib.rc:28 cmd.rc:302
 #, fuzzy
 msgid "%s: File Not Found\n"
 msgstr "Fájl nem található"
@@ -8153,10 +8153,10 @@ msgstr ""
 
 #: cmd.rc:128
 msgid ""
-"PAUSE displays a message on the screen 'Press Return key to continue'\n"
-"and waits for the user to press the Return key. It is mainly useful in\n"
-"batch files to allow the user to read the output of a previous command\n"
-"before it scrolls off the screen.\n"
+"PAUSE displays a message on the screen asking the user to press a key.\n"
+"\n"
+"It is mainly useful in batch files to allow the user to read the output\n"
+"of a previous command before it scrolls off the screen.\n"
 msgstr ""
 
 #: cmd.rc:149
@@ -8335,7 +8335,7 @@ msgid ""
 "to the operating system or shell from which you invoked cmd.\n"
 msgstr ""
 
-#: cmd.rc:288
+#: cmd.rc:289
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -8357,6 +8357,7 @@ msgid ""
 "MORE\t\tDisplay output in pages\n"
 "MOVE\t\tMove a file, set of files or directory tree\n"
 "PATH\t\tSet or show the search path\n"
+"PAUSE\t\tSuspend execution of a batch file\n"
 "POPD\t\tRestore the directory to the last one saved with PUSHD\n"
 "PROMPT\t\tChange the command prompt\n"
 "PUSHD\t\tChange to a new directory, saving the current one\n"
@@ -8375,141 +8376,141 @@ msgid ""
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
 
-#: cmd.rc:290
+#: cmd.rc:291
 msgid "Are you sure"
 msgstr ""
 
-#: cmd.rc:291 xcopy.rc:40
+#: cmd.rc:292 xcopy.rc:40
 msgctxt "Yes key"
 msgid "Y"
 msgstr ""
 
-#: cmd.rc:292 xcopy.rc:41
+#: cmd.rc:293 xcopy.rc:41
 msgctxt "No key"
 msgid "N"
 msgstr ""
 
-#: cmd.rc:293
+#: cmd.rc:294
 msgid "File association missing for extension %s\n"
 msgstr ""
 
-#: cmd.rc:294
+#: cmd.rc:295
 msgid "No open command associated with file type '%s'\n"
 msgstr ""
 
-#: cmd.rc:295
+#: cmd.rc:296
 msgid "Overwrite %s"
 msgstr ""
 
-#: cmd.rc:296
+#: cmd.rc:297
 msgid "More..."
 msgstr ""
 
-#: cmd.rc:297
+#: cmd.rc:298
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr ""
 
-#: cmd.rc:299
+#: cmd.rc:300
 msgid "Argument missing\n"
 msgstr ""
 
-#: cmd.rc:300
+#: cmd.rc:301
 msgid "Syntax error\n"
 msgstr ""
 
-#: cmd.rc:302
+#: cmd.rc:303
 msgid "No help available for %s\n"
 msgstr ""
 
-#: cmd.rc:303
+#: cmd.rc:304
 msgid "Target to GOTO not found\n"
 msgstr ""
 
-#: cmd.rc:304
+#: cmd.rc:305
 msgid "Current Date is %s\n"
 msgstr ""
 
-#: cmd.rc:305
+#: cmd.rc:306
 msgid "Current Time is %s\n"
 msgstr ""
 
-#: cmd.rc:306
+#: cmd.rc:307
 msgid "Enter new date: "
 msgstr ""
 
-#: cmd.rc:307
+#: cmd.rc:308
 msgid "Enter new time: "
 msgstr ""
 
-#: cmd.rc:308
+#: cmd.rc:309
 msgid "Environment variable %s not defined\n"
 msgstr ""
 
-#: cmd.rc:309 xcopy.rc:38
+#: cmd.rc:310 xcopy.rc:38
 msgid "Failed to open '%s'\n"
 msgstr ""
 
-#: cmd.rc:310
+#: cmd.rc:311
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr ""
 
-#: cmd.rc:311 xcopy.rc:42
+#: cmd.rc:312 xcopy.rc:42
 msgctxt "All key"
 msgid "A"
 msgstr ""
 
-#: cmd.rc:312
+#: cmd.rc:313
 msgid "%s, Delete"
 msgstr ""
 
-#: cmd.rc:313
+#: cmd.rc:314
 msgid "Echo is %s\n"
 msgstr ""
 
-#: cmd.rc:314
+#: cmd.rc:315
 msgid "Verify is %s\n"
 msgstr ""
 
-#: cmd.rc:315
+#: cmd.rc:316
 msgid "Verify must be ON or OFF\n"
 msgstr ""
 
-#: cmd.rc:316
+#: cmd.rc:317
 msgid "Parameter error\n"
 msgstr ""
 
-#: cmd.rc:317
+#: cmd.rc:318
 msgid ""
 "Volume in drive %c is %s\n"
 "Volume Serial Number is %04x-%04x\n"
 "\n"
 msgstr ""
 
-#: cmd.rc:318
+#: cmd.rc:319
 msgid "Volume label (11 characters, ENTER for none)?"
 msgstr ""
 
-#: cmd.rc:319
+#: cmd.rc:320
 msgid "PATH not found\n"
 msgstr ""
 
-#: cmd.rc:320
-msgid "Press Return key to continue: "
-msgstr ""
-
 #: cmd.rc:321
-msgid "Wine Command Prompt"
+msgid "Press any key to continue... "
 msgstr ""
 
 #: cmd.rc:322
-msgid "CMD Version %s\n"
+msgid "Wine Command Prompt"
 msgstr ""
 
 #: cmd.rc:323
-msgid "More? "
+msgid "CMD Version %s\n"
 msgstr ""
 
 #: cmd.rc:324
+msgid "More? "
+msgstr ""
+
+#: cmd.rc:325
 msgid "The input line is too long.\n"
 msgstr ""
 
