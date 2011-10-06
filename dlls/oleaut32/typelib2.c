@@ -5218,49 +5218,56 @@ static const ITypeLib2Vtbl typelib2vt =
 
 static ICreateTypeLib2 *ICreateTypeLib2_Constructor(SYSKIND syskind, LPCOLESTR szFile)
 {
-    ICreateTypeLib2Impl *pCreateTypeLib2Impl;
+    ICreateTypeLib2Impl *create_tlib2;
     int failed = 0;
 
     TRACE("Constructing ICreateTypeLib2 (%d, %s)\n", syskind, debugstr_w(szFile));
 
-    pCreateTypeLib2Impl = heap_alloc_zero(sizeof(ICreateTypeLib2Impl));
-    if (!pCreateTypeLib2Impl) return NULL;
+    create_tlib2 = heap_alloc_zero(sizeof(ICreateTypeLib2Impl));
+    if (!create_tlib2) return NULL;
 
-    pCreateTypeLib2Impl->filename = heap_alloc((strlenW(szFile) + 1) * sizeof(WCHAR));
-    if (!pCreateTypeLib2Impl->filename) {
-	heap_free(pCreateTypeLib2Impl);
+    create_tlib2->filename = heap_alloc((strlenW(szFile) + 1) * sizeof(WCHAR));
+    if (!create_tlib2->filename) {
+	heap_free(create_tlib2);
 	return NULL;
     }
-    strcpyW(pCreateTypeLib2Impl->filename, szFile);
+    strcpyW(create_tlib2->filename, szFile);
 
-    ctl2_init_header(pCreateTypeLib2Impl);
-    ctl2_init_segdir(pCreateTypeLib2Impl);
+    ctl2_init_header(create_tlib2);
+    ctl2_init_segdir(create_tlib2);
 
-    pCreateTypeLib2Impl->typelib_header.varflags |= syskind;
+    create_tlib2->typelib_header.varflags |= syskind;
 
     /*
      * The following two calls return an offset or -1 if out of memory. We
      * specifically need an offset of 0, however, so...
      */
-    if (ctl2_alloc_segment(pCreateTypeLib2Impl, MSFT_SEG_GUIDHASH, 0x80, 0x80)) { failed = 1; }
-    if (ctl2_alloc_segment(pCreateTypeLib2Impl, MSFT_SEG_NAMEHASH, 0x200, 0x200)) { failed = 1; }
+    if (ctl2_alloc_segment(create_tlib2, MSFT_SEG_GUIDHASH, 0x80, 0x80) == 0)
+    {
+        create_tlib2->typelib_guidhash_segment = (int *)create_tlib2->typelib_segment_data[MSFT_SEG_GUIDHASH];
+        memset(create_tlib2->typelib_guidhash_segment, 0xff, 0x80);
+    }
+    else
+        failed = 1;
 
-    pCreateTypeLib2Impl->typelib_guidhash_segment = (int *)pCreateTypeLib2Impl->typelib_segment_data[MSFT_SEG_GUIDHASH];
-    pCreateTypeLib2Impl->typelib_namehash_segment = (int *)pCreateTypeLib2Impl->typelib_segment_data[MSFT_SEG_NAMEHASH];
+    if (ctl2_alloc_segment(create_tlib2, MSFT_SEG_NAMEHASH, 0x200, 0x200) == 0)
+    {
+        create_tlib2->typelib_namehash_segment = (int *)create_tlib2->typelib_segment_data[MSFT_SEG_NAMEHASH];
+        memset(create_tlib2->typelib_namehash_segment, 0xff, 0x200);        
+    }
+    else
+        failed = 1;
 
-    memset(pCreateTypeLib2Impl->typelib_guidhash_segment, 0xff, 0x80);
-    memset(pCreateTypeLib2Impl->typelib_namehash_segment, 0xff, 0x200);
-
-    pCreateTypeLib2Impl->ICreateTypeLib2_iface.lpVtbl = &ctypelib2vt;
-    pCreateTypeLib2Impl->ITypeLib2_iface.lpVtbl = &typelib2vt;
-    pCreateTypeLib2Impl->ref = 1;
+    create_tlib2->ICreateTypeLib2_iface.lpVtbl = &ctypelib2vt;
+    create_tlib2->ITypeLib2_iface.lpVtbl = &typelib2vt;
+    create_tlib2->ref = 1;
 
     if (failed) {
-        ICreateTypeLib2_fnRelease(&pCreateTypeLib2Impl->ICreateTypeLib2_iface);
-	return 0;
+        ICreateTypeLib2_fnRelease(&create_tlib2->ICreateTypeLib2_iface);
+	return NULL;
     }
 
-    return &pCreateTypeLib2Impl->ICreateTypeLib2_iface;
+    return &create_tlib2->ICreateTypeLib2_iface;
 }
 
 /******************************************************************************
