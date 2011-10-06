@@ -282,6 +282,7 @@ typedef struct tagFace {
 typedef struct tagFamily {
     struct list entry;
     const WCHAR *FamilyName;
+    const WCHAR *EnglishName;
     struct list faces;
 } Family;
 
@@ -1378,6 +1379,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
             if(!family) {
                 family = HeapAlloc(GetProcessHeap(), 0, sizeof(*family));
                 family->FamilyName = strdupW(localised_family ? localised_family : english_family);
+                family->EnglishName = localised_family ? strdupW(english_family) : NULL;
                 list_init(&family->faces);
                 list_add_tail(&font_list, &family->entry);
 
