@@ -14878,6 +14878,7 @@ wine_fn_config_dll mciwave enable_mciwave
 wine_fn_config_dll midimap enable_midimap
 wine_fn_config_dll mlang enable_mlang implib
 wine_fn_config_test dlls/mlang/tests mlang_test
+wine_fn_config_dll mmcndmgr enable_mmcndmgr
 wine_fn_config_dll mmdevapi enable_mmdevapi
 wine_fn_config_test dlls/mmdevapi/tests mmdevapi_test
 wine_fn_config_dll mmdevldr.vxd enable_win16

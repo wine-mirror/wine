@@ -1,0 +1,9 @@
+MODULE    = mmcndmgr.dll
+IMPORTS   = uuid oleaut32 ole32 user32
+
+C_SRCS = \
+	mmcndmgr.c
+
+IDL_TLB_SRCS = mmcndmgr.idl
+
+@MAKE_DLL_RULES@
