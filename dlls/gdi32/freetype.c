@@ -1145,9 +1145,183 @@ static WCHAR *get_face_name(FT_Face ft_face, FT_UShort name_id, FT_UShort langua
     return ret;
 }
 
+static LONG reg_load_dword(HKEY hkey, const WCHAR *value, DWORD *data)
+{
+    DWORD type, needed;
+    LONG r = RegQueryValueExW(hkey, value, NULL, &type, NULL, &needed);
+    if(r != ERROR_SUCCESS) return r;
+    if(type != REG_DWORD || needed != sizeof(DWORD)) return ERROR_BAD_CONFIGURATION;
+    return RegQueryValueExW(hkey, value, NULL, &type, (BYTE*)data, &needed);
+}
+
 static inline LONG reg_save_dword(HKEY hkey, const WCHAR *value, DWORD data)
 {
     return RegSetValueExW(hkey, value, 0, REG_DWORD, (BYTE*)&data, sizeof(DWORD));
+}
+
+static void load_face(HKEY hkey_face, WCHAR *face_name, Family *family)
+{
+    DWORD needed;
+    DWORD num_strikes, max_strike_key_len;
+
+    /* If we have a File Name key then this is a real font, not just the parent
+       key of a bunch of non-scalable strikes */
+    if(RegQueryValueExA(hkey_face, "File Name", NULL, NULL, NULL, &needed) == ERROR_SUCCESS)
+    {
+        DWORD italic, bold;
+        Face *face;
+        face = HeapAlloc(GetProcessHeap(), 0, sizeof(*face));
+        face->cached_enum_data = NULL;
+
+        face->file = HeapAlloc(GetProcessHeap(), 0, needed);
+        RegQueryValueExA(hkey_face, "File Name", NULL, NULL, (BYTE*)face->file, &needed);
+
+        face->StyleName = strdupW(face_name);
+        face->family = family;
+
+        if(RegQueryValueExW(hkey_face, face_full_name_value, NULL, NULL, NULL, &needed) == ERROR_SUCCESS)
+        {
+            WCHAR *fullName = HeapAlloc(GetProcessHeap(), 0, needed);
+            RegQueryValueExW(hkey_face, face_full_name_value, NULL, NULL, (BYTE*)fullName, &needed);
+            face->FullName = fullName;
+        }
+        else
+            face->FullName = NULL;
+
+        reg_load_dword(hkey_face, face_index_value, (DWORD*)&face->face_index);
+        reg_load_dword(hkey_face, face_italic_value, &italic);
+        reg_load_dword(hkey_face, face_bold_value, &bold);
+        reg_load_dword(hkey_face, face_version_value, (DWORD*)&face->font_version);
+        reg_load_dword(hkey_face, face_external_value, (DWORD*)&face->external);
+
+        needed = sizeof(face->fs);
+        RegQueryValueExW(hkey_face, face_font_sig_value, NULL, NULL, (BYTE*)&face->fs, &needed);
+        memset(&face->fs_links, 0, sizeof(face->fs_links));
+
+        if(reg_load_dword(hkey_face, face_height_value, (DWORD*)&face->size.height) != ERROR_SUCCESS)
+        {
+            face->scalable = TRUE;
+            memset(&face->size, 0, sizeof(face->size));
+        }
+        else
+        {
+            face->scalable = FALSE;
+            reg_load_dword(hkey_face, face_width_value, (DWORD*)&face->size.width);
+            reg_load_dword(hkey_face, face_size_value, (DWORD*)&face->size.size);
+            reg_load_dword(hkey_face, face_x_ppem_value, (DWORD*)&face->size.x_ppem);
+            reg_load_dword(hkey_face, face_y_ppem_value, (DWORD*)&face->size.y_ppem);
+            reg_load_dword(hkey_face, face_internal_leading_value, (DWORD*)&face->size.internal_leading);
+
+            TRACE("Adding bitmap size h %d w %d size %ld x_ppem %ld y_ppem %ld\n",
+                  face->size.height, face->size.width, face->size.size >> 6,
+                  face->size.x_ppem >> 6, face->size.y_ppem >> 6);
+        }
+
+        face->ntmFlags = 0;
+        if (italic) face->ntmFlags |= NTM_ITALIC;
+        if (bold) face->ntmFlags |= NTM_BOLD;
+        if (face->ntmFlags == 0) face->ntmFlags = NTM_REGULAR;
+
+        TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
+              face->fs.fsCsb[0], face->fs.fsCsb[1],
+              face->fs.fsUsb[0], face->fs.fsUsb[1],
+              face->fs.fsUsb[2], face->fs.fsUsb[3]);
+
+        if(!italic && !bold)
+            list_add_head(&family->faces, &face->entry);
+        else
+            list_add_tail(&family->faces, &face->entry);
+
+        TRACE("Added font %s %s\n", debugstr_w(family->FamilyName), debugstr_w(face->StyleName));
+    }
+
+    /* do we have any bitmap strikes? */
+    RegQueryInfoKeyW(hkey_face, NULL, NULL, NULL, &num_strikes, &max_strike_key_len, NULL, NULL,
+                     NULL, NULL, NULL, NULL);
+    if(num_strikes != 0)
+    {
+        WCHAR strike_name[10];
+        DWORD strike_index = 0;
+
+        needed = sizeof(strike_name) / sizeof(WCHAR);
+        while(RegEnumKeyExW(hkey_face, strike_index++, strike_name, &needed,
+                            NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
+        {
+            HKEY hkey_strike;
+            RegOpenKeyExW(hkey_face, strike_name, 0, KEY_ALL_ACCESS, &hkey_strike);
+            load_face(hkey_strike, face_name, family);
+            RegCloseKey(hkey_strike);
+            needed = sizeof(strike_name) / sizeof(WCHAR);
+        }
+    }
+}
+
+static void load_font_list_from_cache(HKEY hkey_font_cache)
+{
+    DWORD max_family_key_len, size;
+    WCHAR *family_name;
+    DWORD family_index = 0;
+    Family *family;
+    HKEY hkey_family;
+
+    RegQueryInfoKeyW(hkey_font_cache, NULL, NULL, NULL, NULL, &max_family_key_len, NULL, NULL,
+                     NULL, NULL, NULL, NULL);
+    family_name = HeapAlloc(GetProcessHeap(), 0, (max_family_key_len + 1) * sizeof(WCHAR));
+
+    size = max_family_key_len + 1;
+    while(RegEnumKeyExW(hkey_font_cache, family_index++, family_name, &size,
+                        NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
+    {
+        WCHAR *english_family = NULL;
+        DWORD face_index = 0;
+        WCHAR *face_name;
+        DWORD max_face_key_len;
+
+        RegOpenKeyExW(hkey_font_cache, family_name, 0, KEY_ALL_ACCESS, &hkey_family);
+        TRACE("opened family key %s\n", debugstr_w(family_name));
+        if(RegQueryValueExW(hkey_family, english_name_value, NULL, NULL, NULL, &size) == ERROR_SUCCESS)
+        {
+            english_family = HeapAlloc(GetProcessHeap(), 0, size);
+            RegQueryValueExW(hkey_family, english_name_value, NULL, NULL, (BYTE*)english_family, &size);
+        }
+
+        family = HeapAlloc(GetProcessHeap(), 0, sizeof(*family));
+        family->FamilyName = strdupW(family_name);
+        family->EnglishName = english_family;
+        list_init(&family->faces);
+        list_add_tail(&font_list, &family->entry);
+
+        if(english_family)
+        {
+            FontSubst *subst = HeapAlloc(GetProcessHeap(), 0, sizeof(*subst));
+            subst->from.name = strdupW(english_family);
+            subst->from.charset = -1;
+            subst->to.name = strdupW(family_name);
+            subst->to.charset = -1;
+            add_font_subst(&font_subst_list, subst, 0);
+        }
+
+        RegQueryInfoKeyW(hkey_family, NULL, NULL, NULL, NULL, &max_face_key_len, NULL, NULL,
+                         NULL, NULL, NULL, NULL);
+
+        face_name = HeapAlloc(GetProcessHeap(), 0, (max_face_key_len + 1) * sizeof(WCHAR));
+        size = max_face_key_len + 1;
+        while(RegEnumKeyExW(hkey_family, face_index++, face_name, &size,
+                            NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
+        {
+            HKEY hkey_face;
+
+            RegOpenKeyExW(hkey_family, face_name, 0, KEY_ALL_ACCESS, &hkey_face);
+            load_face(hkey_face, face_name, family);
+            RegCloseKey(hkey_face);
+            size = max_face_key_len + 1;
+        }
+        HeapFree(GetProcessHeap(), 0, face_name);
+        RegCloseKey(hkey_family);
+        size = max_family_key_len + 1;
+    }
+
+    HeapFree(GetProcessHeap(), 0, family_name);
 }
 
 static LONG create_font_cache_key(HKEY *hkey, DWORD *disposition)
@@ -3005,7 +3179,10 @@ BOOL WineEngInit(void)
 
     create_font_cache_key(&hkey_font_cache, &disposition);
 
-    init_font_list();
+    if(disposition == REG_CREATED_NEW_KEY)
+        init_font_list();
+    else
+        load_font_list_from_cache(hkey_font_cache);
 
     RegCloseKey(hkey_font_cache);
 
@@ -3013,7 +3190,9 @@ BOOL WineEngInit(void)
     LoadSubstList();
     DumpSubstList();
     LoadReplaceList();
-    update_reg_entries();
+
+    if(disposition == REG_CREATED_NEW_KEY)
+        update_reg_entries();
 
     update_system_links();
     init_system_links();
