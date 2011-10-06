@@ -188,38 +188,42 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where, WCHAR **end) {
 
 WCHAR *WCMD_fgets(WCHAR *buf, int noChars, HANDLE h)
 {
-  DWORD bytes, charsRead;
+  DWORD charsRead;
   BOOL status;
-  WCHAR *p;
+  LARGE_INTEGER filepos;
+  int i;
 
   /* We can't use the native f* functions because of the filename syntax differences
      between DOS and Unix. Also need to lose the LF (or CRLF) from the line. */
 
-  p = buf;
-  if (WCMD_is_console_handle(h)) {
-    status = ReadConsoleW(h, buf, noChars, &charsRead, NULL);
-    if (!status) return NULL;
-    if (buf[charsRead-2] == '\r')
-      buf[charsRead-2] = '\0'; /* Strip \r\n */
-    else {
-      /* Truncate */
-      buf[noChars-1] = '\0';
-    }
-    return p;
+  if (!WCMD_is_console_handle(h)) {
+    /* Save current file position */
+    filepos.QuadPart = 0;
+    SetFilePointerEx(h, filepos, &filepos, FILE_CURRENT);
   }
 
-  /* TODO: More intelligent buffering for reading lines from files */
-  do {
-    status = WCMD_ReadFile(h, buf, 1, &bytes);
-    if ((status == 0) || ((bytes == 0) && (buf == p))) return NULL;
-    if (*buf == '\n') bytes = 0;
-    else if (*buf != '\r') {
-      buf++;
-      noChars--;
-    }
-    *buf = '\0';
-  } while ((bytes == 1) && (noChars > 1));
-  return p;
+  status = WCMD_ReadFile(h, buf, noChars, &charsRead);
+  if (!status || charsRead == 0) return NULL;
+
+  /* Find first EOL */
+  for (i = 0; i < charsRead; i++) {
+    if (buf[i] == '\n' || buf[i] == '\r')
+      break;
+  }
+
+  if (!WCMD_is_console_handle(h) && i != charsRead) {
+    /* Sets file pointer to the start of the next line, if any */
+    filepos.QuadPart += i + 1 + (buf[i] == '\r' ? 1 : 0);
+    SetFilePointerEx(h, filepos, NULL, FILE_BEGIN);
+  }
+
+  /* Truncate at EOL (or end of buffer) */
+  if (i == noChars)
+    i--;
+
+  buf[i] = '\0';
+
+  return buf;
 }
 
 /* WCMD_splitpath - copied from winefile as no obvious way to use it otherwise */
