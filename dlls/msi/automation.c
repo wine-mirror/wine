@@ -1510,6 +1510,7 @@ static void variant_from_registry_value(VARIANT *pVarResult, DWORD dwType, LPBYT
             while (idx >= 0 && !szString[idx]) idx--;
             for (; idx >= 0; idx--)
                 if (!szString[idx]) szString[idx] = '\n';
+            /* fall through */
         case REG_SZ:
             V_VT(pVarResult) = VT_BSTR;
             V_BSTR(pVarResult) = SysAllocStringByteLen((LPCSTR)szString, dwSize);

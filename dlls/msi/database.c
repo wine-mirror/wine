@@ -658,6 +658,7 @@ static LPWSTR msi_build_createsql_columns(LPWSTR *columns_data, LPWSTR *types, D
         {
             case 'l':
                 lstrcpyW(extra, type_notnull);
+                /* fall through */
             case 'L':
                 lstrcatW(extra, localizable);
                 type = type_char;
@@ -665,12 +666,14 @@ static LPWSTR msi_build_createsql_columns(LPWSTR *columns_data, LPWSTR *types, D
                 break;
             case 's':
                 lstrcpyW(extra, type_notnull);
+                /* fall through */
             case 'S':
                 type = type_char;
                 sprintfW(size, size_fmt, ptr);
                 break;
             case 'i':
                 lstrcpyW(extra, type_notnull);
+                /* fall through */
             case 'I':
                 if (len <= 2)
                     type = type_int;
@@ -685,6 +688,7 @@ static LPWSTR msi_build_createsql_columns(LPWSTR *columns_data, LPWSTR *types, D
                 break;
             case 'v':
                 lstrcpyW(extra, type_notnull);
+                /* fall through */
             case 'V':
                 type = type_object;
                 break;
