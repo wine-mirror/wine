@@ -658,7 +658,7 @@
 @ stub _iswcsym_l
 @ stub _iswcsymf_l
 @ stub _iswctype_l
-@ stub _iswdigit_l
+@ cdecl _iswdigit_l(long ptr) msvcrt._iswdigit_l
 @ stub _iswgraph_l
 @ stub _iswlower_l
 @ stub _iswprint_l

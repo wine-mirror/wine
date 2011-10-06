@@ -824,7 +824,7 @@
 @ stub _iswcsym_l
 @ stub _iswcsymf_l
 @ stub _iswctype_l
-@ stub _iswdigit_l
+@ cdecl _iswdigit_l(long ptr) msvcrt._iswdigit_l
 @ stub _iswgraph_l
 @ stub _iswlower_l
 @ stub _iswprint_l
@@ -1267,7 +1267,7 @@
 @ cdecl _vswprintf_c(ptr long wstr ptr) msvcrt._vswprintf_c
 @ cdecl _vswprintf_c_l(ptr long wstr ptr ptr) msvcrt._vswprintf_c_l
 @ cdecl _vswprintf_l(ptr wstr ptr ptr) msvcrt._vswprintf_l
-@ cdecl _vswprintf_p(ptr long wstr ptr) msvcrt._vswprintf
+@ cdecl _vswprintf_p(ptr long wstr ptr) msvcr90._vswprintf_p
 @ cdecl _vswprintf_p_l(ptr long wstr ptr ptr) msvcrt._vswprintf_p_l
 @ cdecl _vswprintf_s_l(ptr long wstr ptr ptr) msvcrt._vswprintf_s_l
 @ stub _vwprintf_l

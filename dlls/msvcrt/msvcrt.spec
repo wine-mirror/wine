@@ -607,7 +607,7 @@
 @ cdecl _iswalpha_l(long ptr) MSVCRT__iswalpha_l
 # stub _iswcntrl_l(long ptr)
 # stub _iswctype_l(long long ptr)
-# stub _iswdigit_l(long ptr)
+@ cdecl _iswdigit_l(long ptr) MSVCRT__iswdigit_l
 # stub _iswgraph_l(long ptr)
 # stub _iswlower_l(long ptr)
 # stub _iswprint_l(long ptr)
