@@ -204,22 +204,21 @@ static void test_dtm_set_format(void)
 
 static void test_mccolor_types(HWND hWndDateTime, int mccolor_type, const char* mccolor_name)
 {
-    LRESULT r;
-    COLORREF theColor, prevColor;
+    COLORREF theColor, prevColor, crColor;
 
     theColor=RGB(0,0,0);
-    r = SendMessage(hWndDateTime, DTM_SETMCCOLOR, mccolor_type, theColor);
-    ok(r != -1, "%s: Set RGB(0,0,0): Expected COLORREF of previous value, got %ld\n", mccolor_name, r);
+    crColor = SendMessage(hWndDateTime, DTM_SETMCCOLOR, mccolor_type, theColor);
+    ok(crColor != ~0u, "%s: Set RGB(0,0,0): Expected COLORREF of previous value, got %d\n", mccolor_name, crColor);
     prevColor=theColor;
     theColor=RGB(255,255,255);
-    r = SendMessage(hWndDateTime, DTM_SETMCCOLOR, mccolor_type, theColor);
-    ok(r==prevColor, "%s: Set RGB(255,255,255): Expected COLORREF of previous value, got %ld\n", mccolor_name, r);
+    crColor = SendMessage(hWndDateTime, DTM_SETMCCOLOR, mccolor_type, theColor);
+    ok(crColor==prevColor, "%s: Set RGB(255,255,255): Expected COLORREF of previous value, got %d\n", mccolor_name, crColor);
     prevColor=theColor;
     theColor=RGB(100,180,220);
-    r = SendMessage(hWndDateTime, DTM_SETMCCOLOR, mccolor_type, theColor);
-    ok(r==prevColor, "%s: Set RGB(100,180,220): Expected COLORREF of previous value, got %ld\n", mccolor_name, r);
-    r = SendMessage(hWndDateTime, DTM_GETMCCOLOR, mccolor_type, 0);
-    ok(r==theColor, "%s: GETMCCOLOR: Expected %d, got %ld\n", mccolor_name, theColor, r);
+    crColor = SendMessage(hWndDateTime, DTM_SETMCCOLOR, mccolor_type, theColor);
+    ok(crColor==prevColor, "%s: Set RGB(100,180,220): Expected COLORREF of previous value, got %d\n", mccolor_name, crColor);
+    crColor = SendMessage(hWndDateTime, DTM_GETMCCOLOR, mccolor_type, 0);
+    ok(crColor==theColor, "%s: GETMCCOLOR: Expected %d, got %d\n", mccolor_name, theColor, crColor);
 }
 
 static void test_dtm_set_and_get_mccolor(void)
