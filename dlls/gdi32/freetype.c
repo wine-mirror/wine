@@ -3154,6 +3154,40 @@ static void init_font_list(void)
     }
 }
 
+static BOOL move_to_front(const WCHAR *name)
+{
+    Family *family, *cursor2;
+    LIST_FOR_EACH_ENTRY_SAFE(family, cursor2, &font_list, Family, entry)
+    {
+        if(!strcmpiW(family->FamilyName, name))
+        {
+            list_remove(&family->entry);
+            list_add_head(&font_list, &family->entry);
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static const WCHAR arial[] = {'A','r','i','a','l',0};
+static const WCHAR bitstream_vera_sans[] = {'B','i','t','s','t','r','e','a','m',' ','V','e','r','a',' ','S','a','n','s',0};
+static const WCHAR bitstream_vera_sans_mono[] = {'B','i','t','s','t','r','e','a','m',' ','V','e','r','a',' ','S','a','n','s',' ','M','o','n','o',0};
+static const WCHAR bitstream_vera_serif[] = {'B','i','t','s','t','r','e','a','m',' ','V','e','r','a',' ','S','e','r','i','f',0};
+static const WCHAR courier_new[] = {'C','o','u','r','i','e','r',' ','N','e','w',0};
+static const WCHAR times_new_roman[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n',0};
+
+static void reorder_font_list(void)
+{
+    if(!move_to_front(times_new_roman))
+        move_to_front(bitstream_vera_serif);
+
+    if(!move_to_front(courier_new))
+        move_to_front(bitstream_vera_sans_mono);
+
+    if(!move_to_front(arial))
+        move_to_front(bitstream_vera_sans);
+}
+
 /*************************************************************
  *    WineEngInit
  *
@@ -3185,6 +3219,8 @@ BOOL WineEngInit(void)
         load_font_list_from_cache(hkey_font_cache);
 
     RegCloseKey(hkey_font_cache);
+
+    reorder_font_list();
 
     DumpFontList();
     LoadSubstList();
