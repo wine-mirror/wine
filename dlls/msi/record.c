@@ -494,6 +494,7 @@ UINT MSI_RecordGetStringW(MSIRECORD *rec, UINT iField,
     case MSIFIELD_NULL:
         if( szValue && *pcchValue > 0 )
             szValue[0] = 0;
+        break;
     default:
         break;
     }
