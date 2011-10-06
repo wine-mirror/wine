@@ -69,7 +69,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /* FIXME: this should be allocated dynamically */
 #define MSVCRT_MAX_FILES 2048
-#define MSVCRT_FD_BLOCK_SIZE 64
+#define MSVCRT_FD_BLOCK_SIZE 32
 
 /* ioinfo structure size is different in msvcrXX.dll's */
 typedef struct {
@@ -82,7 +82,7 @@ typedef struct {
 
 /*********************************************************************
  *		__pioinfo (MSVCRT.@)
- * array of pointers to ioinfo arrays [64]
+ * array of pointers to ioinfo arrays [32]
  */
 ioinfo * MSVCRT___pioinfo[MSVCRT_MAX_FILES/MSVCRT_FD_BLOCK_SIZE] = { 0 };
 
@@ -229,7 +229,7 @@ static HANDLE msvcrt_fdtoh(int fd)
     return INVALID_HANDLE_VALUE;
   }
   if (msvcrt_get_ioinfo(fd)->handle == INVALID_HANDLE_VALUE)
-      FIXME("returning INVALID_HANDLE_VALUE for %d\n", fd);
+      WARN("returning INVALID_HANDLE_VALUE for %d\n", fd);
   return msvcrt_get_ioinfo(fd)->handle;
 }
 
