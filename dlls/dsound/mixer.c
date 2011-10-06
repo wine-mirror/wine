@@ -788,7 +788,7 @@ static void DSOUND_WaveQueue(DirectSoundDevice *device, BOOL force)
 	device->pwqueue += prebuf_frags;
 
 	prebuf_frames = ((prebuf_frags + wave_fragpos > device->helfrags) ?
-			(prebuf_frags + wave_fragpos - device->helfrags) :
+			(device->helfrags - wave_fragpos) :
 			(prebuf_frags)) * device->fraglen / device->pwfx->nBlockAlign;
 
 	hr = IAudioRenderClient_GetBuffer(device->render, prebuf_frames, &buffer);
@@ -859,8 +859,8 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 		return;
 	}
 
-	pos_bytes = (clock_pos / (double)clock_freq) * device->pwfx->nSamplesPerSec *
-		device->pwfx->nBlockAlign;
+	pos_bytes = ceil(clock_pos * device->pwfx->nBlockAlign *
+		(clock_freq / (double)device->pwfx->nSamplesPerSec));
 
 	delta_frags = (pos_bytes - device->last_pos_bytes) / device->fraglen;
 	if(delta_frags > 0){
