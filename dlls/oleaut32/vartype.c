@@ -3764,7 +3764,7 @@ HRESULT WINAPI VarCyFromI8(LONG64 llIn, CY* pCyOut)
  */
 HRESULT WINAPI VarCyFromUI8(ULONG64 ullIn, CY* pCyOut)
 {
-    if (ullIn >= (I8_MAX/CY_MULTIPLIER)) return DISP_E_OVERFLOW;
+    if (ullIn > (I8_MAX/CY_MULTIPLIER)) return DISP_E_OVERFLOW;
     pCyOut->int64 = ullIn * CY_MULTIPLIER;
     return S_OK;
 }
