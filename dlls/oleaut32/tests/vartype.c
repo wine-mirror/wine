@@ -72,17 +72,19 @@ static HMODULE hOleaut32;
 /* Macros for converting and testing results */
 #define CONVVARS(typ) HRESULT hres; CONV_TYPE out; typ in
 
+#define _EXPECT_NO_OUT(res)     ok(hres == res, "expected " #res ", got hres=0x%08x\n", hres)
+#define EXPECT_OVERFLOW _EXPECT_NO_OUT(DISP_E_OVERFLOW)
+#define EXPECT_MISMATCH _EXPECT_NO_OUT(DISP_E_TYPEMISMATCH)
+#define EXPECT_BADVAR   _EXPECT_NO_OUT(DISP_E_BADVARTYPE)
+#define EXPECT_INVALID  _EXPECT_NO_OUT(E_INVALIDARG)
+#define EXPECT_LT       _EXPECT_NO_OUT(VARCMP_LT)
+#define EXPECT_GT       _EXPECT_NO_OUT(VARCMP_GT)
+#define EXPECT_EQ       _EXPECT_NO_OUT(VARCMP_EQ)
+
 #define _EXPECTRES(res, x, fs) \
   ok((hres == S_OK && out == (CONV_TYPE)(x)) || ((HRESULT)res != S_OK && hres == (HRESULT)res), \
      "expected " #x ", got " fs "; hres=0x%08x\n", out, hres)
 #define EXPECT(x)       EXPECTRES(S_OK, (x))
-#define EXPECT_OVERFLOW EXPECTRES(DISP_E_OVERFLOW, DISP_E_OVERFLOW)
-#define EXPECT_MISMATCH EXPECTRES(DISP_E_TYPEMISMATCH,DISP_E_TYPEMISMATCH)
-#define EXPECT_BADVAR   EXPECTRES(DISP_E_BADVARTYPE, DISP_E_BADVARTYPE)
-#define EXPECT_INVALID  EXPECTRES(E_INVALIDARG, E_INVALIDARG)
-#define EXPECT_LT       EXPECTRES(VARCMP_LT, VARCMP_LT)
-#define EXPECT_GT       EXPECTRES(VARCMP_GT, VARCMP_GT)
-#define EXPECT_EQ       EXPECTRES(VARCMP_EQ, VARCMP_EQ)
 #define EXPECT_DBL(x)   \
   ok(hres == S_OK && fabs(out-(x))<=1e-14*(x), "expected %16.16g, got %16.16g; hres=0x%08x\n", (x), out, hres)
 
@@ -151,8 +153,8 @@ static HMODULE hOleaut32;
   ok(hres == S_OK && V_VT(&vDst) == typ && (CONV_TYPE)res == in, \
      "hres=0x%X, type=%d (should be %d(" #typ ")), value=%d (should be 1)\n", \
       hres, V_VT(&vDst), typ, (int)res);
-#define BADVAR(typ)   CHANGETYPEEX(typ); out = (CONV_TYPE)hres; EXPECT_BADVAR
-#define MISMATCH(typ) CHANGETYPEEX(typ); out = (CONV_TYPE)hres; EXPECT_MISMATCH
+#define BADVAR(typ)   CHANGETYPEEX(typ); EXPECT_BADVAR
+#define MISMATCH(typ) CHANGETYPEEX(typ); EXPECT_MISMATCH
 
 #define INITIAL_TYPETEST(vt, val, fs) \
   VariantInit(&vSrc); \
@@ -847,7 +849,8 @@ static void test_VarI1Copy(void)
 
 static void test_VarI1ChangeTypeEx(void)
 {
-  CONVVARS(CONV_TYPE);
+  HRESULT hres;
+  signed char in;
   VARIANTARG vSrc, vDst;
 
   in = 1;
@@ -1131,7 +1134,8 @@ static void test_VarUI1Copy(void)
 
 static void test_VarUI1ChangeTypeEx(void)
 {
-  CONVVARS(CONV_TYPE);
+  HRESULT hres;
+  BYTE in;
   VARIANTARG vSrc, vDst;
 
   in = 1;
@@ -1380,7 +1384,8 @@ static void test_VarI2Copy(void)
 
 static void test_VarI2ChangeTypeEx(void)
 {
-  CONVVARS(CONV_TYPE);
+  HRESULT hres;
+  SHORT in;
   VARIANTARG vSrc, vDst;
 
   in = 1;
@@ -1619,7 +1624,8 @@ static void test_VarUI2Copy(void)
 
 static void test_VarUI2ChangeTypeEx(void)
 {
-  CONVVARS(CONV_TYPE);
+  HRESULT hres;
+  USHORT in;
   VARIANTARG vSrc, vDst;
 
   in = 1;
@@ -1874,7 +1880,8 @@ static void test_VarI4Copy(void)
 
 static void test_VarI4ChangeTypeEx(void)
 {
-  CONVVARS(CONV_TYPE);
+  HRESULT hres;
+  LONG in;
   VARIANTARG vSrc, vDst;
 
   in = 1;
@@ -2108,7 +2115,8 @@ static void test_VarUI4Copy(void)
 
 static void test_VarUI4ChangeTypeEx(void)
 {
-  CONVVARS(CONV_TYPE);
+  HRESULT hres;
+  ULONG in;
   VARIANTARG vSrc, vDst;
 
   in = 1;
@@ -2385,7 +2393,8 @@ static void test_VarI8Copy(void)
 
 static void test_VarI8ChangeTypeEx(void)
 {
-  CONVVARS(CONV_TYPE);
+  HRESULT hres;
+  LONG64 in;
   VARIANTARG vSrc, vDst;
 
   if (!HAVE_OLEAUT32_I8)
@@ -2650,7 +2659,8 @@ static void test_VarUI8Copy(void)
 
 static void test_VarUI8ChangeTypeEx(void)
 {
-  CONVVARS(CONV_TYPE);
+  HRESULT hres;
+  ULONG64 in;
   VARIANTARG vSrc, vDst;
 
   if (!HAVE_OLEAUT32_I8)
@@ -2858,7 +2868,8 @@ static void test_VarR4Copy(void)
 static void test_VarR4ChangeTypeEx(void)
 {
 #ifdef HAS_UINT64_TO_FLOAT
-  CONVVARS(CONV_TYPE);
+  HRESULT hres;
+  float in;
   VARIANTARG vSrc, vDst;
 
   in = 1.0f;
@@ -3069,7 +3080,8 @@ static void test_VarR8Copy(void)
 static void test_VarR8ChangeTypeEx(void)
 {
 #ifdef HAS_UINT64_TO_FLOAT
-  CONVVARS(CONV_TYPE);
+  HRESULT hres;
+  double in;
   VARIANTARG vSrc, vDst;
 
   in = 1.0;
@@ -3488,7 +3500,8 @@ static void test_VarDateChangeTypeEx(void)
           '1','/','2','/','7','0','\0' };
   static const WCHAR sz25570Nls[] = {
     '1','/','2','/','1','9','7','0',' ','1','2',':','0','0',':','0','0',' ','A','M','\0' };
-  CONVVARS(CONV_TYPE);
+  HRESULT hres;
+  DATE in;
   VARIANTARG vSrc, vDst;
   LCID lcid;
 
@@ -3897,11 +3910,13 @@ static void test_VarCyMulI8(void)
 }
 
 #define MATHCMP(l, r) left = l; right = r; pVarCyFromR8(left, &cyLeft); pVarCyFromR8(right, &cyRight); \
-  hres = pVarCyCmp(cyLeft, cyRight); out.int64 = hres
+  hres = pVarCyCmp(cyLeft, cyRight)
 
 static void test_VarCyCmp(void)
 {
-  MATHVARS2;
+  HRESULT hres;
+  double left = 0.0, right = 0.0;
+  CY cyLeft, cyRight;
 
   CHECKPTR(VarCyCmp);
   MATHCMP(-1.0, -1.0); EXPECT_EQ;
@@ -3918,11 +3933,13 @@ static void test_VarCyCmp(void)
 }
 
 #define MATHCMPR8(l, r) left = l; right = r; pVarCyFromR8(left, &cyLeft); \
-  hres = pVarCyCmpR8(cyLeft, right); out.int64 = hres
+  hres = pVarCyCmpR8(cyLeft, right);
 
 static void test_VarCyCmpR8(void)
 {
-  MATHVARS1;
+  HRESULT hres;
+  double left = 0.0;
+  CY cyLeft;
   double right;
 
   CHECKPTR(VarCyCmpR8);
@@ -4819,7 +4836,8 @@ static void test_VarBoolChangeTypeEx(void)
   static const WCHAR szTrue[] = { 'T','r','u','e','\0' };
   static const WCHAR szFalse[] = { 'F','a','l','s','e','\0' };
   static const WCHAR szFaux[] = { 'F','a','u','x','\0' };
-  CONVVARS(CONV_TYPE);
+  HRESULT hres;
+  VARIANT_BOOL in;
   VARIANTARG vSrc, vDst;
   LCID lcid;
 
