@@ -82,8 +82,7 @@ static HMODULE hOleaut32;
 #define EXPECT_EQ       _EXPECT_NO_OUT(VARCMP_EQ)
 
 #define _EXPECTRES(res, x, fs) \
-  ok((hres == S_OK && out == (CONV_TYPE)(x)) || ((HRESULT)res != S_OK && hres == (HRESULT)res), \
-     "expected " #x ", got " fs "; hres=0x%08x\n", out, hres)
+  ok(hres == S_OK && out == (CONV_TYPE)(x), "expected " #x ", got " fs "; hres=0x%08x\n", out, hres)
 #define EXPECT(x)       EXPECTRES(S_OK, (x))
 #define EXPECT_DBL(x)   \
   ok(hres == S_OK && fabs(out-(x))<=1e-14*(x), "expected %16.16g, got %16.16g; hres=0x%08x\n", (x), out, hres)
@@ -1151,8 +1150,6 @@ static void test_VarUI1ChangeTypeEx(void)
 
 #undef CONV_TYPE
 #define CONV_TYPE SHORT
-#undef EXPECTRES
-#define EXPECTRES(res, x) _EXPECTRES(res, x, "%d")
 
 static void test_VarI2FromI1(void)
 {
@@ -1644,9 +1641,6 @@ static void test_VarUI2ChangeTypeEx(void)
 
 #undef CONV_TYPE
 #define CONV_TYPE LONG
-#undef EXPECTRES
-#define EXPECTRES(res, x) _EXPECTRES(res, x, "%d")
-
 
 static void test_VarI4FromI1(void)
 {
@@ -2135,10 +2129,6 @@ static void test_VarUI4ChangeTypeEx(void)
 
 #undef CONV_TYPE
 #define CONV_TYPE LONG64
-#undef EXPECTRES
-#define EXPECTRES(res, x) \
-  ok(hres == S_OK || ((HRESULT)res != S_OK && hres == (HRESULT)res), \
-     "expected hres " #x ", got hres=0x%08x\n", hres)
 
 #define EXPECTI8(x) \
   ok((hres == S_OK && out == (CONV_TYPE)(x)), \
@@ -2544,7 +2534,10 @@ static void test_VarUI8FromBool(void)
   int i;
 
   CHECKPTR(VarUI8FromBool);
-  CONVERTRANGE(VarUI8FromBool, -32768, 32768);
+  for (i = -32768; i < 32768; i++)
+  {
+    CONVERT(VarUI8FromBool, i); EXPECTI8(i);
+  }
 }
 
 static void test_VarUI8FromI8(void)
@@ -2885,8 +2878,6 @@ static void test_VarR4ChangeTypeEx(void)
 
 #undef CONV_TYPE
 #define CONV_TYPE double
-#undef EXPECTRES
-#define EXPECTRES(res, x) _EXPECTRES(res, x, "%15.15f")
 
 static void test_VarR8FromI1(void)
 {
@@ -3541,10 +3532,6 @@ static void test_VarDateChangeTypeEx(void)
 
 #undef CONV_TYPE
 #define CONV_TYPE CY
-#undef EXPECTRES
-#define EXPECTRES(res, x) \
-  ok(hres == S_OK || ((HRESULT)res != S_OK && hres == (HRESULT)res), \
-     "expected hres " #x ", got hres=0x%08x\n", hres)
 
 #define EXPECTCY(x) \
   ok((hres == S_OK && out.int64 == (LONGLONG)(x*CY_MULTIPLIER)), \
@@ -4048,10 +4035,6 @@ static void test_VarCyInt(void)
 
 #undef CONV_TYPE
 #define CONV_TYPE DECIMAL
-#undef EXPECTRES
-#define EXPECTRES(res, x) \
-  ok(hres == S_OK || ((HRESULT)res != S_OK && hres == (HRESULT)res), \
-     "expected hres " #x ", got hres=0x%08x\n", hres)
 
 #define EXPECTDEC(scl, sgn, hi, lo) ok(hres == S_OK && \
   S(U(out)).scale == (BYTE)(scl) && S(U(out)).sign == (BYTE)(sgn) && \
@@ -4576,10 +4559,6 @@ static void test_VarDecCmp(void)
 
 #undef CONV_TYPE
 #define CONV_TYPE VARIANT_BOOL
-#undef _EXPECTRES
-#define _EXPECTRES(res, x, fs) \
-  ok((hres == S_OK && out == (CONV_TYPE)(x)) || ((HRESULT)res != S_OK && hres == (HRESULT)res), \
-     "expected " #x ", got " fs "; hres=0x%08x\n", out, hres)
 #undef EXPECTRES
 #define EXPECTRES(res, x) _EXPECTRES(res, x, "%d")
 #undef CONVERTRANGE
