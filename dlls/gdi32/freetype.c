@@ -472,6 +472,26 @@ typedef struct tagFontSubst {
     NameCs to;
 } FontSubst;
 
+/* Registry font cache key and value names */
+static const WCHAR wine_fonts_key[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
+                                       'F','o','n','t','s',0};
+static const WCHAR wine_fonts_cache_key[] = {'C','a','c','h','e',0};
+static const WCHAR english_name_value[] = {'E','n','g','l','i','s','h',' ','N','a','m','e',0};
+static const WCHAR face_index_value[] = {'I','n','d','e','x',0};
+static const WCHAR face_italic_value[] = {'I','t','a','l','i','c',0};
+static const WCHAR face_bold_value[] = {'B','o','l','d',0};
+static const WCHAR face_version_value[] = {'V','e','r','s','i','o','n',0};
+static const WCHAR face_external_value[] = {'E','x','t','e','r','n','a','l',0};
+static const WCHAR face_height_value[] = {'H','e','i','g','h','t',0};
+static const WCHAR face_width_value[] = {'W','i','d','t','h',0};
+static const WCHAR face_size_value[] = {'S','i','z','e',0};
+static const WCHAR face_x_ppem_value[] = {'X','p','p','e','m',0};
+static const WCHAR face_y_ppem_value[] = {'Y','p','p','e','m',0};
+static const WCHAR face_internal_leading_value[] = {'I','n','t','e','r','n','a','l',' ','L','e','a','d','i','n','g',0};
+static const WCHAR face_font_sig_value[] = {'F','o','n','t',' ','S','i','g','n','a','t','u','r','e',0};
+static const WCHAR face_full_name_value[] = {'F','u','l','l',' ','N','a','m','e','\0'};
+
+
 struct font_mapping
 {
     struct list entry;
@@ -1125,6 +1145,83 @@ static WCHAR *get_face_name(FT_Face ft_face, FT_UShort name_id, FT_UShort langua
     return ret;
 }
 
+static inline LONG reg_save_dword(HKEY hkey, const WCHAR *value, DWORD data)
+{
+    return RegSetValueExW(hkey, value, 0, REG_DWORD, (BYTE*)&data, sizeof(DWORD));
+}
+
+static LONG create_font_cache_key(HKEY *hkey, DWORD *disposition)
+{
+    LONG ret;
+    HKEY hkey_wine_fonts;
+
+    /* We don't want to create the fonts key as volatile, so open this first */
+    ret = RegCreateKeyExW(HKEY_CURRENT_USER, wine_fonts_key, 0, NULL, 0,
+                          KEY_ALL_ACCESS, NULL, &hkey_wine_fonts, NULL);
+    if(ret != ERROR_SUCCESS)
+    {
+        WARN("Can't create %s\n", debugstr_w(wine_fonts_key));
+        return ret;
+    }
+
+    ret = RegCreateKeyExW(hkey_wine_fonts, wine_fonts_cache_key, 0, NULL, REG_OPTION_VOLATILE,
+                          KEY_ALL_ACCESS, NULL, hkey, disposition);
+    RegCloseKey(hkey_wine_fonts);
+    return ret;
+}
+
+static void add_face_to_cache(Face *face)
+{
+    HKEY hkey_font_cache, hkey_family, hkey_face;
+    WCHAR *face_key_name;
+
+    create_font_cache_key(&hkey_font_cache, NULL);
+
+    RegCreateKeyExW(hkey_font_cache, face->family->FamilyName, 0,
+                    NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey_family, NULL);
+    if(face->family->EnglishName)
+        RegSetValueExW(hkey_family, english_name_value, 0, REG_SZ, (BYTE*)face->family->EnglishName,
+                       (strlenW(face->family->EnglishName) + 1) * sizeof(WCHAR));
+
+    if(face->scalable)
+        face_key_name = face->StyleName;
+    else
+    {
+        static const WCHAR fmtW[] = {'%','s','\\','%','d',0};
+        face_key_name = HeapAlloc(GetProcessHeap(), 0, (strlenW(face->StyleName) + 10) * sizeof(WCHAR));
+        sprintfW(face_key_name, fmtW, face->StyleName, face->size.y_ppem);
+    }
+    RegCreateKeyExW(hkey_family, face_key_name, 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL,
+                    &hkey_face, NULL);
+    if(!face->scalable)
+        HeapFree(GetProcessHeap(), 0, face_key_name);
+
+    RegSetValueExA(hkey_face, "File Name", 0, REG_BINARY, (BYTE*)face->file, strlen(face->file) + 1);
+    if (face->FullName)
+        RegSetValueExW(hkey_face, face_full_name_value, 0, REG_SZ, (BYTE*)face->FullName,
+                       (strlenW(face->FullName) + 1) * sizeof(WCHAR));
+
+    reg_save_dword(hkey_face, face_index_value, face->face_index);
+    reg_save_dword(hkey_face, face_italic_value, (face->ntmFlags & NTM_ITALIC) != 0);
+    reg_save_dword(hkey_face, face_bold_value, (face->ntmFlags & NTM_BOLD) != 0);
+    reg_save_dword(hkey_face, face_version_value, face->font_version);
+    reg_save_dword(hkey_face, face_external_value, face->external);
+
+    RegSetValueExW(hkey_face, face_font_sig_value, 0, REG_BINARY, (BYTE*)&face->fs, sizeof(face->fs));
+
+    if(!face->scalable)
+    {
+        reg_save_dword(hkey_face, face_height_value, face->size.height);
+        reg_save_dword(hkey_face, face_width_value, face->size.width);
+        reg_save_dword(hkey_face, face_size_value, face->size.size);
+        reg_save_dword(hkey_face, face_x_ppem_value, face->size.x_ppem);
+        reg_save_dword(hkey_face, face_y_ppem_value, face->size.y_ppem);
+        reg_save_dword(hkey_face, face_internal_leading_value, face->size.internal_leading);
+    }
+    RegCloseKey(hkey_face);
+    RegCloseKey(hkey_family);
+    RegCloseKey(hkey_font_cache);
+}
 
 /*****************************************************************
  *  load_sfnt_table
@@ -1218,6 +1315,8 @@ static void AddFaceToFamily(Face *face, Family *family)
 
 #define ADDFONT_EXTERNAL_FONT 0x01
 #define ADDFONT_FORCE_BITMAP  0x02
+#define ADDFONT_ADD_TO_CACHE  0x04
+
 static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_size, char *fake_family, const WCHAR *target_family, DWORD flags)
 {
     FT_Face ft_face;
@@ -1537,6 +1636,9 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
                 }
             }
 
+            if(flags & ADDFONT_ADD_TO_CACHE)
+                add_face_to_cache(face);
+
             AddFaceToFamily(face, family);
 
         } while(!FT_IS_SCALABLE(ft_face) && ++bitmap_num < ft_face->num_fixed_sizes);
@@ -1806,7 +1908,11 @@ static BOOL ReadFontDir(const char *dirname, BOOL external_fonts)
 	if(S_ISDIR(statbuf.st_mode))
 	    ReadFontDir(path, external_fonts);
 	else
-	    AddFontFileToList(path, NULL, NULL, external_fonts ? ADDFONT_EXTERNAL_FONT : 0);
+        {
+            DWORD addfont_flags = ADDFONT_ADD_TO_CACHE;
+            if(external_fonts) addfont_flags |= ADDFONT_EXTERNAL_FONT;
+            AddFontFileToList(path, NULL, NULL, addfont_flags);
+        }
     }
     closedir(dir);
     return TRUE;
@@ -1874,7 +1980,7 @@ LOAD_FUNCPTR(FcPatternGetString);
         if(len < 4) continue;
         ext = &file[ len - 3 ];
         if(strcasecmp(ext, "pfa") && strcasecmp(ext, "pfb"))
-            AddFontFileToList(file, NULL, NULL,  ADDFONT_EXTERNAL_FONT);
+            AddFontFileToList(file, NULL, NULL, ADDFONT_EXTERNAL_FONT | ADDFONT_ADD_TO_CACHE);
     }
     pFcFontSetDestroy(fontset);
     pFcObjectSetDestroy(os);
@@ -1906,7 +2012,7 @@ static BOOL load_font_from_data_dir(LPCWSTR file)
         WideCharToMultiByte(CP_UNIXCP, 0, file, -1, unix_name + strlen(unix_name), len, NULL, NULL);
 
         EnterCriticalSection( &freetype_cs );
-        ret = AddFontFileToList(unix_name, NULL, NULL, ADDFONT_FORCE_BITMAP);
+        ret = AddFontFileToList(unix_name, NULL, NULL, ADDFONT_FORCE_BITMAP | ADDFONT_ADD_TO_CACHE);
         LeaveCriticalSection( &freetype_cs );
         HeapFree(GetProcessHeap(), 0, unix_name);
     }
@@ -1953,7 +2059,7 @@ static void load_system_fonts(void)
 
                 sprintfW(pathW, fmtW, windowsdir, data);
                 if((unixname = wine_get_unix_file_name(pathW))) {
-                    added = AddFontFileToList(unixname, NULL, NULL, ADDFONT_FORCE_BITMAP);
+                    added = AddFontFileToList(unixname, NULL, NULL, ADDFONT_FORCE_BITMAP | ADDFONT_ADD_TO_CACHE);
                     HeapFree(GetProcessHeap(), 0, unixname);
                 }
                 if (!added)
@@ -2125,8 +2231,11 @@ INT WineEngAddFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
 
         if((unixname = wine_get_unix_file_name(file)))
         {
+            DWORD addfont_flags = ADDFONT_FORCE_BITMAP;
+
+            if(!(flags & FR_PRIVATE)) addfont_flags |= ADDFONT_ADD_TO_CACHE;
             EnterCriticalSection( &freetype_cs );
-            ret = AddFontFileToList(unixname, NULL, NULL, ADDFONT_FORCE_BITMAP);
+            ret = AddFontFileToList(unixname, NULL, NULL, addfont_flags);
             LeaveCriticalSection( &freetype_cs );
             HeapFree(GetProcessHeap(), 0, unixname);
         }
@@ -2806,7 +2915,7 @@ static void init_font_list(void)
                 {
                     if((unixname = wine_get_unix_file_name(data)))
                     {
-                        AddFontFileToList(unixname, NULL, NULL, ADDFONT_FORCE_BITMAP);
+                        AddFontFileToList(unixname, NULL, NULL, ADDFONT_FORCE_BITMAP | ADDFONT_ADD_TO_CACHE);
                         HeapFree(GetProcessHeap(), 0, unixname);
                     }
                 }
@@ -2819,7 +2928,7 @@ static void init_font_list(void)
                     sprintfW(pathW, fmtW, windowsdir, data);
                     if((unixname = wine_get_unix_file_name(pathW)))
                     {
-                        added = AddFontFileToList(unixname, NULL, NULL, ADDFONT_FORCE_BITMAP);
+                        added = AddFontFileToList(unixname, NULL, NULL, ADDFONT_FORCE_BITMAP | ADDFONT_ADD_TO_CACHE);
                         HeapFree(GetProcessHeap(), 0, unixname);
                     }
                     if (!added)
@@ -2878,6 +2987,8 @@ static void init_font_list(void)
  */
 BOOL WineEngInit(void)
 {
+    HKEY hkey_font_cache;
+    DWORD disposition;
     HANDLE font_mutex;
 
     /* update locale dependent font info in registry */
@@ -2892,7 +3003,11 @@ BOOL WineEngInit(void)
     }
     WaitForSingleObject(font_mutex, INFINITE);
 
+    create_font_cache_key(&hkey_font_cache, &disposition);
+
     init_font_list();
+
+    RegCloseKey(hkey_font_cache);
 
     DumpFontList();
     LoadSubstList();
