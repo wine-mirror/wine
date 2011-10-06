@@ -914,6 +914,7 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
     SCRIPT_STATE sState;
     int i, num_items = 255;
     BYTE   *BidiLevel;
+    WCHAR *iString = NULL;
 
     TRACE("(%p,%p,%d,%d,%d,0x%x,%d,%p,%p,%p,%p,%p,%p)\n",
           hdc, pString, cString, cGlyphs, iCharset, dwFlags, iReqWidth,
@@ -944,6 +945,14 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
         sControl = *psControl;
     else
         memset(&sControl, 0, sizeof(SCRIPT_CONTROL));
+
+    if (dwFlags & SSA_PASSWORD)
+    {
+        iString = heap_alloc(sizeof(WCHAR)*cString);
+        for (i = 0; i < cString; i++)
+            iString[i] = *((const WCHAR *)pString);
+        pString = iString;
+    }
 
     hr = ScriptItemize(pString, cString, num_items, &sControl, &sState, analysis->pItem,
                        &analysis->numItems);
@@ -1026,9 +1035,11 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
     heap_free(BidiLevel);
 
     *pssa = analysis;
+    heap_free(iString);
     return S_OK;
 
 error:
+    heap_free(iString);
     heap_free(analysis->glyphs);
     heap_free(analysis->logattrs);
     heap_free(analysis->pItem);
