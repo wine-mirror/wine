@@ -1133,7 +1133,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
             WCHAR buffer[MAXSTRING] = {'\0'};
             WCHAR *where, *parm;
 
-            while (WCMD_fgets(buffer, sizeof(buffer)/sizeof(WCHAR), input, FALSE)) {
+            while (WCMD_fgets(buffer, sizeof(buffer)/sizeof(WCHAR), input)) {
 
               /* Skip blank lines*/
               parm = WCMD_parameter (buffer, 0, &where, NULL);
@@ -1393,7 +1393,7 @@ void WCMD_goto (CMD_LIST **cmdList) {
     if (*paramStart == ':') paramStart++;
 
     SetFilePointer (context -> h, 0, NULL, FILE_BEGIN);
-    while (WCMD_fgets (string, sizeof(string)/sizeof(WCHAR), context -> h, FALSE)) {
+    while (WCMD_fgets (string, sizeof(string)/sizeof(WCHAR), context -> h)) {
       str = string;
       while (isspaceW (*str)) str++;
       if (*str == ':') {

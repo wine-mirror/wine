@@ -89,7 +89,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, int called, WCHAR *startLabel, HAN
 
   while (context -> skip_rest == FALSE) {
       CMD_LIST *toExecute = NULL;         /* Commands left to be executed */
-      if (!WCMD_ReadAndParseLine(NULL, &toExecute, h, FALSE))
+      if (!WCMD_ReadAndParseLine(NULL, &toExecute, h))
         break;
       WCMD_process_commands(toExecute, FALSE, NULL, NULL);
       WCMD_free_commands(toExecute);
@@ -186,7 +186,7 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where, WCHAR **end) {
  *       NULL on error or EOF
  */
 
-WCHAR *WCMD_fgets(WCHAR *buf, int noChars, HANDLE h, const BOOL is_console_handle)
+WCHAR *WCMD_fgets(WCHAR *buf, int noChars, HANDLE h)
 {
   DWORD bytes, charsRead;
   BOOL status;
@@ -196,7 +196,7 @@ WCHAR *WCMD_fgets(WCHAR *buf, int noChars, HANDLE h, const BOOL is_console_handl
      between DOS and Unix. Also need to lose the LF (or CRLF) from the line. */
 
   p = buf;
-  if (is_console_handle) {
+  if (WCMD_is_console_handle(h)) {
     status = ReadConsoleW(h, buf, noChars, &charsRead, NULL);
     if (!status) return NULL;
     if (buf[charsRead-2] == '\r')

@@ -97,7 +97,11 @@ void WCMD_verify (const WCHAR *command);
 void WCMD_version (void);
 int  WCMD_volume (BOOL set_label, const WCHAR *command);
 
-WCHAR *WCMD_fgets (WCHAR *buf, int n, HANDLE stream, const BOOL is_console_handle);
+static inline BOOL WCMD_is_console_handle(HANDLE h)
+{
+    return (((DWORD_PTR)h) & 3) == 3;
+}
+WCHAR *WCMD_fgets (WCHAR *buf, int n, HANDLE stream);
 WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where, WCHAR **end);
 WCHAR *WCMD_skip_leading_spaces (WCHAR *string);
 BOOL WCMD_keyword_ws_found(const WCHAR *keyword, int len, const WCHAR *ptr);
@@ -110,8 +114,7 @@ WCHAR *WCMD_strdupW(const WCHAR *input);
 void WCMD_strsubstW(WCHAR *start, const WCHAR* next, const WCHAR* insert, int len);
 BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWORD charsRead);
 
-WCHAR    *WCMD_ReadAndParseLine(const WCHAR *initialcmd, CMD_LIST **output,
-                                HANDLE readFrom, const BOOL is_console_handle);
+WCHAR    *WCMD_ReadAndParseLine(const WCHAR *initialcmd, CMD_LIST **output, HANDLE readFrom);
 CMD_LIST *WCMD_process_commands(CMD_LIST *thisCmd, BOOL oneBracket,
                                 const WCHAR *var, const WCHAR *val);
 void      WCMD_free_commands(CMD_LIST *cmds);
