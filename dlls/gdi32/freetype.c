@@ -2745,12 +2745,7 @@ sym_not_found:
     return FALSE;
 }
 
-/*************************************************************
- *    WineEngInit
- *
- * Initialize FreeType library and create a list of available faces
- */
-BOOL WineEngInit(void)
+static void init_font_list(void)
 {
     static const WCHAR dot_fonW[] = {'.','f','o','n','\0'};
     static const WCHAR pathW[] = {'P','a','t','h',0};
@@ -2758,21 +2753,7 @@ BOOL WineEngInit(void)
     DWORD valuelen, datalen, i = 0, type, dlen, vlen;
     WCHAR windowsdir[MAX_PATH];
     char *unixname;
-    HANDLE font_mutex;
     const char *data_dir;
-
-    TRACE("\n");
-
-    /* update locale dependent font info in registry */
-    update_font_info();
-
-    if(!init_freetype()) return FALSE;
-
-    if((font_mutex = CreateMutexW(NULL, FALSE, font_mutex_nameW)) == NULL) {
-        ERR("Failed to create font mutex\n");
-        return FALSE;
-    }
-    WaitForSingleObject(font_mutex, INFINITE);
 
     delete_external_font_keys();
 
@@ -2791,7 +2772,8 @@ BOOL WineEngInit(void)
     /* load the system truetype fonts */
     data_dir = wine_get_data_dir();
     if (!data_dir) data_dir = wine_get_build_dir();
-    if (data_dir && (unixname = HeapAlloc(GetProcessHeap(), 0, strlen(data_dir) + sizeof("/fonts/")))) {
+    if (data_dir && (unixname = HeapAlloc(GetProcessHeap(), 0, strlen(data_dir) + sizeof("/fonts/"))))
+    {
         strcpy(unixname, data_dir);
         strcat(unixname, "/fonts/");
         ReadFontDir(unixname, TRUE);
@@ -2804,20 +2786,22 @@ BOOL WineEngInit(void)
        will skip these. */
     if(RegOpenKeyW(HKEY_LOCAL_MACHINE,
                    is_win9x() ? win9x_font_reg_key : winnt_font_reg_key,
-		   &hkey) == ERROR_SUCCESS) {
+                   &hkey) == ERROR_SUCCESS)
+    {
         LPWSTR data, valueW;
         RegQueryInfoKeyW(hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-			 &valuelen, &datalen, NULL, NULL);
+                         &valuelen, &datalen, NULL, NULL);
 
-	valuelen++; /* returned value doesn't include room for '\0' */
-	valueW = HeapAlloc(GetProcessHeap(), 0, valuelen * sizeof(WCHAR));
-	data = HeapAlloc(GetProcessHeap(), 0, datalen * sizeof(WCHAR));
+        valuelen++; /* returned value doesn't include room for '\0' */
+        valueW = HeapAlloc(GetProcessHeap(), 0, valuelen * sizeof(WCHAR));
+        data = HeapAlloc(GetProcessHeap(), 0, datalen * sizeof(WCHAR));
         if (valueW && data)
         {
             dlen = datalen * sizeof(WCHAR);
             vlen = valuelen;
             while(RegEnumValueW(hkey, i++, valueW, &vlen, NULL, &type, (LPBYTE)data,
-                                &dlen) == ERROR_SUCCESS) {
+                                &dlen) == ERROR_SUCCESS)
+            {
                 if(data[0] && (data[1] == ':'))
                 {
                     if((unixname = wine_get_unix_file_name(data)))
@@ -2848,7 +2832,7 @@ BOOL WineEngInit(void)
         }
         HeapFree(GetProcessHeap(), 0, data);
         HeapFree(GetProcessHeap(), 0, valueW);
-	RegCloseKey(hkey);
+        RegCloseKey(hkey);
     }
 
     load_fontconfig_fonts();
@@ -2885,6 +2869,30 @@ BOOL WineEngInit(void)
         }
         RegCloseKey(hkey);
     }
+}
+
+/*************************************************************
+ *    WineEngInit
+ *
+ * Initialize FreeType library and create a list of available faces
+ */
+BOOL WineEngInit(void)
+{
+    HANDLE font_mutex;
+
+    /* update locale dependent font info in registry */
+    update_font_info();
+
+    if(!init_freetype()) return FALSE;
+
+    if((font_mutex = CreateMutexW(NULL, FALSE, font_mutex_nameW)) == NULL)
+    {
+        ERR("Failed to create font mutex\n");
+        return FALSE;
+    }
+    WaitForSingleObject(font_mutex, INFINITE);
+
+    init_font_list();
 
     DumpFontList();
     LoadSubstList();
