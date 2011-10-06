@@ -1229,6 +1229,7 @@ HRESULT set_event_handler(event_target_t **event_target, nsIDOMNode *nsnode, HTM
 
     default:
         FIXME("not supported vt=%d\n", V_VT(var));
+        /* fall through */
     case VT_EMPTY:
         return E_NOTIMPL;
     }
