@@ -2287,9 +2287,12 @@ HRESULT WINAPI ScriptStringGetLogicalWidths(SCRIPT_STRING_ANALYSIS ssa, int *piD
 
     for (i = 0; i < analysis->numItems; i++)
     {
-        for (j = 0; j < analysis->glyphs[i].numGlyphs; j++)
+        int cChar = analysis->pItem[i+1].iCharPos - analysis->pItem[i].iCharPos;
+        for (j = 0; j < cChar; j++)
         {
-            piDx[next] = analysis->glyphs[i].piAdvance[j];
+
+            int glyph = analysis->glyphs[i].pwLogClust[j];
+            piDx[next] = analysis->glyphs[i].piAdvance[glyph];
             next++;
         }
     }
