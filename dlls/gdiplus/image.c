@@ -2399,7 +2399,8 @@ GpStatus WINGDIPAPI GdipGetPropertyCount(GpImage *image, UINT* num)
     if(!(calls++))
         FIXME("not implemented\n");
 
-    return InvalidParameter;
+    *num = 0;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetPropertyIdList(GpImage *image, UINT num, PROPID* list)
