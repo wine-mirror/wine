@@ -186,6 +186,13 @@ static HRESULT writer_set_property(mxwriter *writer, MXWRITER_PROPS property, VA
     return S_OK;
 }
 
+static HRESULT writer_get_property(const mxwriter *writer, MXWRITER_PROPS property, VARIANT_BOOL *value)
+{
+    if (!value) return E_POINTER;
+    *value = writer->props[property];
+    return S_OK;
+}
+
 static inline mxwriter *impl_from_IMXWriter(IMXWriter *iface)
 {
     return CONTAINING_RECORD(iface, mxwriter, IMXWriter_iface);
@@ -469,12 +476,7 @@ static HRESULT WINAPI mxwriter_get_byteOrderMark(IMXWriter *iface, VARIANT_BOOL 
     mxwriter *This = impl_from_IMXWriter( iface );
 
     TRACE("(%p)->(%p)\n", This, value);
-
-    if (!value) return E_POINTER;
-
-    *value = This->props[MXWriter_BOM];
-
-    return S_OK;
+    return writer_get_property(This, MXWriter_BOM, value);
 }
 
 static HRESULT WINAPI mxwriter_put_indent(IMXWriter *iface, VARIANT_BOOL value)
@@ -490,12 +492,7 @@ static HRESULT WINAPI mxwriter_get_indent(IMXWriter *iface, VARIANT_BOOL *value)
     mxwriter *This = impl_from_IMXWriter( iface );
 
     TRACE("(%p)->(%p)\n", This, value);
-
-    if (!value) return E_POINTER;
-
-    *value = This->props[MXWriter_Indent];
-
-    return S_OK;
+    return writer_get_property(This, MXWriter_Indent, value);
 }
 
 static HRESULT WINAPI mxwriter_put_standalone(IMXWriter *iface, VARIANT_BOOL value)
@@ -511,12 +508,7 @@ static HRESULT WINAPI mxwriter_get_standalone(IMXWriter *iface, VARIANT_BOOL *va
     mxwriter *This = impl_from_IMXWriter( iface );
 
     TRACE("(%p)->(%p)\n", This, value);
-
-    if (!value) return E_POINTER;
-
-    *value = This->props[MXWriter_Standalone];
-
-    return S_OK;
+    return writer_get_property(This, MXWriter_Standalone, value);
 }
 
 static HRESULT WINAPI mxwriter_put_omitXMLDeclaration(IMXWriter *iface, VARIANT_BOOL value)
@@ -532,12 +524,7 @@ static HRESULT WINAPI mxwriter_get_omitXMLDeclaration(IMXWriter *iface, VARIANT_
     mxwriter *This = impl_from_IMXWriter( iface );
 
     TRACE("(%p)->(%p)\n", This, value);
-
-    if (!value) return E_POINTER;
-
-    *value = This->props[MXWriter_OmitXmlDecl];
-
-    return S_OK;
+    return writer_get_property(This, MXWriter_OmitXmlDecl, value);
 }
 
 static HRESULT WINAPI mxwriter_put_version(IMXWriter *iface, BSTR version)
@@ -578,12 +565,7 @@ static HRESULT WINAPI mxwriter_get_disableOutputEscaping(IMXWriter *iface, VARIA
     mxwriter *This = impl_from_IMXWriter( iface );
 
     TRACE("(%p)->(%p)\n", This, value);
-
-    if (!value) return E_POINTER;
-
-    *value = This->props[MXWriter_DisableEscaping];
-
-    return S_OK;
+    return writer_get_property(This, MXWriter_DisableEscaping, value);
 }
 
 static HRESULT WINAPI mxwriter_flush(IMXWriter *iface)
