@@ -167,7 +167,7 @@ typedef struct tagICreateTypeLib2Impl
     ITypeLib2 ITypeLib2_iface;
     LONG ref;
 
-    WCHAR *filename;
+    BSTR filename;
 
     MSFT_Header typelib_header;
     INT helpStringDll;
@@ -4329,7 +4329,7 @@ static ULONG WINAPI ICreateTypeLib2_fnRelease(ICreateTypeLib2 *iface)
             This->typelib_segment_data[i] = NULL;
 	}
 
-        heap_free(This->filename);
+        SysFreeString(This->filename);
         This->filename = NULL;
 
 	while (This->typeinfos) {
@@ -5216,22 +5216,21 @@ static const ITypeLib2Vtbl typelib2vt =
     ITypeLib2_fnGetAllCustData,
 };
 
-static ICreateTypeLib2 *ICreateTypeLib2_Constructor(SYSKIND syskind, LPCOLESTR szFile)
+static ICreateTypeLib2 *ICreateTypeLib2_Constructor(SYSKIND syskind, LPCOLESTR filename)
 {
     ICreateTypeLib2Impl *create_tlib2;
     int failed = 0;
 
-    TRACE("Constructing ICreateTypeLib2 (%d, %s)\n", syskind, debugstr_w(szFile));
+    TRACE("Constructing ICreateTypeLib2 (%d, %s)\n", syskind, debugstr_w(filename));
 
     create_tlib2 = heap_alloc_zero(sizeof(ICreateTypeLib2Impl));
     if (!create_tlib2) return NULL;
 
-    create_tlib2->filename = heap_alloc((strlenW(szFile) + 1) * sizeof(WCHAR));
+    create_tlib2->filename = SysAllocString(filename);
     if (!create_tlib2->filename) {
 	heap_free(create_tlib2);
 	return NULL;
     }
-    strcpyW(create_tlib2->filename, szFile);
 
     ctl2_init_header(create_tlib2);
     ctl2_init_segdir(create_tlib2);
