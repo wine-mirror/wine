@@ -28,6 +28,19 @@ extern "C" {
 #define APPLY_OPTION_TEST_ONLY      0x00000004
 #define APPLY_OPTION_VALID_FLAGS    0x00000007
 
+typedef struct _PATCH_IGNORE_RANGE
+{
+    ULONG OffsetInOldFile;
+    ULONG LengthInBytes;
+} PATCH_IGNORE_RANGE, *PPATCH_IGNORE_RANGE;
+
+typedef struct _PATCH_RETAIN_RANGE
+{
+    ULONG OffsetInOldFile;
+    ULONG LengthInBytes;
+    ULONG OffsetInNewFile;
+} PATCH_RETAIN_RANGE, *PPATCH_RETAIN_RANGE;
+
 BOOL WINAPI ApplyPatchToFileA(LPCSTR,LPCSTR,LPCSTR,ULONG);
 BOOL WINAPI ApplyPatchToFileW(LPCWSTR,LPCWSTR,LPCWSTR,ULONG);
 #define     ApplyPatchToFile WINELIB_NAME_AW(ApplyPatchToFile)

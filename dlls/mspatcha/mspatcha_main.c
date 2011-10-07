@@ -64,7 +64,7 @@ static inline WCHAR *strdupAW( const char *src )
 }
 
 /*****************************************************
- *    ApplyPatchToFileA (MSPATCHA.6)
+ *    ApplyPatchToFileA (MSPATCHA.1)
  */
 BOOL WINAPI ApplyPatchToFileA(LPCSTR patch_file, LPCSTR old_file, LPCSTR new_file, ULONG apply_flags)
 {
@@ -98,6 +98,32 @@ BOOL WINAPI ApplyPatchToFileW(LPCWSTR patch_file, LPCWSTR old_file, LPCWSTR new_
     FIXME("stub - %s, %s, %s, %08x\n", debugstr_w(patch_file), debugstr_w(old_file),
           debugstr_w(new_file), apply_flags);
 
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/*****************************************************
+ *    GetFilePatchSignatureA (MSPATCHA.7)
+ */
+BOOL WINAPI GetFilePatchSignatureA(LPCSTR filename, ULONG flags, PVOID data, ULONG ignore_range_count,
+                                   PPATCH_IGNORE_RANGE ignore_range, ULONG retain_range_count,
+                                   PPATCH_RETAIN_RANGE retain_range, ULONG bufsize, LPSTR buffer)
+{
+    FIXME("stub - %s, %x, %p, %u, %p, %u, %p, %u, %p\n", debugstr_a(filename), flags, data,
+          ignore_range_count, ignore_range, retain_range_count, retain_range, bufsize, buffer);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/*****************************************************
+ *    GetFilePatchSignatureW (MSPATCHA.9)
+ */
+BOOL WINAPI GetFilePatchSignatureW(LPCWSTR filename, ULONG flags, PVOID data, ULONG ignore_range_count,
+                                   PPATCH_IGNORE_RANGE ignore_range, ULONG retain_range_count,
+                                   PPATCH_RETAIN_RANGE retain_range, ULONG bufsize, LPWSTR buffer)
+{
+    FIXME("stub - %s, %x, %p, %u, %p, %u, %p, %u, %p\n", debugstr_w(filename), flags, data,
+          ignore_range_count, ignore_range, retain_range_count, retain_range, bufsize, buffer);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }

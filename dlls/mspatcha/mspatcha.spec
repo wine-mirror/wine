@@ -4,9 +4,9 @@
 4 stub ApplyPatchToFileExA
 5 stub ApplyPatchToFileExW
 6 stdcall ApplyPatchToFileW(wstr wstr wstr long)
-7 stub GetFilePatchSignatureA
+7 stdcall GetFilePatchSignatureA(str long ptr long ptr long ptr long ptr)
 8 stub GetFilePatchSignatureByHandle
-9 stub GetFilePatchSignatureW
+9 stdcall GetFilePatchSignatureW(wstr long ptr long ptr long ptr long ptr)
 10 stub TestApplyPatchToFileA
 11 stub TestApplyPatchToFileByHandles
 12 stub TestApplyPatchToFileW
