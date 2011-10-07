@@ -1591,7 +1591,7 @@ static void test_offset_in_overlapped_structure(void)
 
 static void test_LockFile(void)
 {
-    HANDLE handle;
+    HANDLE handle, handle2;
     DWORD written;
     OVERLAPPED overlapped;
     int limited_LockFile;
@@ -1605,6 +1605,14 @@ static void test_LockFile(void)
     {
         ok(0,"couldn't create file \"%s\" (err=%d)\n",filename,GetLastError());
         return;
+    }
+    handle2 = CreateFileA( filename, GENERIC_READ | GENERIC_WRITE,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                           OPEN_EXISTING, 0, 0 );
+    if (handle2 == INVALID_HANDLE_VALUE)
+    {
+        ok( 0, "couldn't open file \"%s\" (err=%d)\n", filename, GetLastError() );
+        goto cleanup;
     }
     ok( WriteFile( handle, sillytext, strlen(sillytext), &written, NULL ), "write failed\n" );
 
@@ -1656,6 +1664,23 @@ static void test_LockFile(void)
             "UnlockFileEx 150,100 again succeeded\n" );
     }
 
+    /* shared lock can overlap exclusive if handles are equal */
+    S(U(overlapped)).Offset = 300;
+    ok( LockFileEx( handle, LOCKFILE_EXCLUSIVE_LOCK, 0, 100, 0, &overlapped ),
+        "LockFileEx exclusive 300,100 failed\n" );
+    ok( !LockFileEx( handle2, LOCKFILE_FAIL_IMMEDIATELY, 0, 100, 0, &overlapped ),
+        "LockFileEx handle2 300,100 succeeded\n" );
+    ret = LockFileEx( handle, LOCKFILE_FAIL_IMMEDIATELY, 0, 100, 0, &overlapped );
+    todo_wine
+    ok( ret, "LockFileEx 300,100 failed\n" );
+    ok( UnlockFileEx( handle, 0, 100, 0, &overlapped ), "UnlockFileEx 300,100 failed\n" );
+    /* exclusive lock is removed first */
+    ok( LockFileEx( handle2, LOCKFILE_FAIL_IMMEDIATELY, 0, 100, 0, &overlapped ),
+        "LockFileEx handle2 300,100 failed\n" );
+    ok( UnlockFileEx( handle2, 0, 100, 0, &overlapped ), "UnlockFileEx 300,100 failed\n" );
+    if (ret)
+        ok( UnlockFileEx( handle, 0, 100, 0, &overlapped ), "UnlockFileEx 300,100 failed\n" );
+
     ret = LockFile( handle, 0, 0x10000000, 0, 0xf0000000 );
     if (ret)
     {
@@ -1689,6 +1714,8 @@ static void test_LockFile(void)
 
     ok( UnlockFile( handle, 100, 0, 0, 0 ), "UnlockFile 100,0 failed\n" );
 
+    CloseHandle( handle2 );
+cleanup:
     CloseHandle( handle );
     DeleteFileA( filename );
 }
