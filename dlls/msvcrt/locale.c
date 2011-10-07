@@ -1151,6 +1151,7 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
 
             if(category != MSVCRT_LC_ALL)
                 break;
+            /* fall through */
         case MSVCRT_LC_CTYPE:
             locinfo->lc_handle[MSVCRT_LC_CTYPE] =
                 loc->locinfo->lc_handle[MSVCRT_LC_CTYPE];
@@ -1175,6 +1176,7 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
 
             if(category != MSVCRT_LC_ALL)
                 break;
+            /* fall through */
         case MSVCRT_LC_MONETARY:
             locinfo->lc_handle[MSVCRT_LC_MONETARY] =
                 loc->locinfo->lc_handle[MSVCRT_LC_MONETARY];
@@ -1208,6 +1210,7 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
 
             if(category != MSVCRT_LC_ALL)
                 break;
+            /* fall through */
         case MSVCRT_LC_NUMERIC:
             locinfo->lc_handle[MSVCRT_LC_NUMERIC] =
                 loc->locinfo->lc_handle[MSVCRT_LC_NUMERIC];
@@ -1225,6 +1228,7 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
 
             if(category != MSVCRT_LC_ALL)
                 break;
+            /* fall through */
         case MSVCRT_LC_TIME:
             locinfo->lc_handle[MSVCRT_LC_TIME] =
                 loc->locinfo->lc_handle[MSVCRT_LC_TIME];
