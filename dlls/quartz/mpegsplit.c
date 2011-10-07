@@ -182,7 +182,8 @@ static HRESULT FillBuffer(MPEGSplitterImpl *This, IMediaSample *pCurrentSample)
     IMediaSample_GetPointer(pCurrentSample, &fbuf);
 
     /* Find the next valid header.. it <SHOULD> be right here */
-    assert(parse_header(fbuf, &length, &This->position) == S_OK);
+    hr = parse_header(fbuf, &length, &This->position);
+    assert(hr == S_OK);
     IMediaSample_SetActualDataLength(pCurrentSample, length);
 
     /* Queue the next sample */
@@ -739,7 +740,9 @@ static HRESULT MPEGSplitter_first_request(LPVOID iface)
     IMediaSample *sample;
 
     TRACE("Seeking? %d\n", This->seek);
-    assert(parse_header(This->header, &length, NULL) == S_OK);
+
+    hr = parse_header(This->header, &length, NULL);
+    assert(hr == S_OK);
 
     if (pin->rtCurrent >= pin->rtStop)
     {
