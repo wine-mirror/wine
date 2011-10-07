@@ -219,7 +219,9 @@ int main( int argc, char *argv[] )
         }
     }
 
+#ifndef __APPLE__
     if (wine_main_preload_info)
+#endif
     {
         for (i = 0; wine_main_preload_info[i].size; i++)
             reserve_area( wine_main_preload_info[i].addr, wine_main_preload_info[i].size );
