@@ -1531,6 +1531,76 @@ DWORD WINAPI AllocateAndGetUdpTableFromStack(PMIB_UDPTABLE *ppUdpTable, BOOL bOr
         }
         else ret = ERROR_NOT_SUPPORTED;
     }
+#elif defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_STRUCT_XINPGEN)
+    {
+        size_t Len = 0;
+        char *Buf = NULL;
+        struct xinpgen *pXIG, *pOrigXIG;
+
+        if (sysctlbyname ("net.inet.udp.pcblist", NULL, &Len, NULL, 0) < 0)
+        {
+            ERR ("Failure to read net.inet.udp.pcblist via sysctlbyname!\n");
+            ret = ERROR_NOT_SUPPORTED;
+            goto done;
+        }
+
+        Buf = HeapAlloc (GetProcessHeap (), 0, Len);
+        if (!Buf)
+        {
+            ret = ERROR_OUTOFMEMORY;
+            goto done;
+        }
+
+        if (sysctlbyname ("net.inet.udp.pcblist", Buf, &Len, NULL, 0) < 0)
+        {
+            ERR ("Failure to read net.inet.udp.pcblist via sysctlbyname!\n");
+            ret = ERROR_NOT_SUPPORTED;
+            goto done;
+        }
+
+        /* Might be nothing here; first entry is just a header it seems */
+        if (Len <= sizeof (struct xinpgen)) goto done;
+
+        pOrigXIG = (struct xinpgen *)Buf;
+        pXIG = pOrigXIG;
+
+        for (pXIG = (struct xinpgen *)((char *)pXIG + pXIG->xig_len);
+             pXIG->xig_len > sizeof (struct xinpgen);
+             pXIG = (struct xinpgen *)((char *)pXIG + pXIG->xig_len))
+        {
+            struct inpcb *pINData;
+            struct xsocket *pSockData;
+
+            pINData = &((struct xinpcb *)pXIG)->xi_inp;
+            pSockData = &((struct xinpcb *)pXIG)->xi_socket;
+
+            /* Ignore sockets for other protocols */
+            if (pSockData->xso_protocol != IPPROTO_UDP)
+                continue;
+
+            /* Ignore PCBs that were freed while generating the data */
+            if (pINData->inp_gencnt > pOrigXIG->xig_gen)
+                continue;
+
+            /* we're only interested in IPv4 addresses */
+            if (!(pINData->inp_vflag & INP_IPV4) ||
+                (pINData->inp_vflag & INP_IPV6))
+                continue;
+
+            /* If all 0's, skip it */
+            if (!pINData->inp_laddr.s_addr &&
+                !pINData->inp_lport)
+                continue;
+
+            /* Fill in structure details */
+            row.dwLocalAddr = pINData->inp_laddr.s_addr;
+            row.dwLocalPort = pINData->inp_lport;
+            if (!(table = append_udp_row( heap, flags, table, &count, &row ))) break;
+        }
+
+    done:
+        HeapFree (GetProcessHeap (), 0, Buf);
+    }
 #else
     FIXME( "not implemented\n" );
     ret = ERROR_NOT_SUPPORTED;
