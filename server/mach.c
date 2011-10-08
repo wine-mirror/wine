@@ -29,6 +29,9 @@
 #include <stdarg.h>
 #include <sys/types.h>
 #include <unistd.h>
+#ifdef HAVE_SYS_SYSCALL_H
+#include <sys/syscall.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -46,21 +49,6 @@
 #include <mach/mach_error.h>
 #include <mach/thread_act.h>
 #include <servers/bootstrap.h>
-
-#if defined(__APPLE__) && defined(__i386__)
-extern int pthread_kill_syscall( mach_port_t, int );
-__ASM_GLOBAL_FUNC( pthread_kill_syscall,
-                   "movl $328,%eax\n\t"  /* SYS___pthread_kill */
-                   "int $0x80\n\t"
-                   "jae 1f\n\t"
-                   "negl %eax\n"
-                   "1:\tret" )
-#else
-static inline int pthread_kill_syscall( mach_port_t, int )
-{
-    return -ENOSYS;
-}
-#endif
 
 static mach_port_t server_mach_port;
 
@@ -268,11 +256,7 @@ int send_thread_signal( struct thread *thread, int sig )
         if (!mach_port_extract_right( process_port, thread->unix_tid,
                                       MACH_MSG_TYPE_COPY_SEND, &port, &type ))
         {
-            if ((ret = pthread_kill_syscall( port, sig )) < 0)
-            {
-                errno = -ret;
-                ret = -1;
-            }
+            ret = syscall( SYS___pthread_kill, port, sig );
             mach_port_deallocate( mach_task_self(), port );
         }
         else errno = ESRCH;
