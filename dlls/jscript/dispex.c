@@ -664,6 +664,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     switch(wFlags) {
     case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
         wFlags = DISPATCH_METHOD;
+        /* fall through */
     case DISPATCH_METHOD:
     case DISPATCH_CONSTRUCT:
         hres = invoke_prop_func(This, This, prop, wFlags, pdp, pvarRes, &jsexcept, pspCaller);
