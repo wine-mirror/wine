@@ -4037,9 +4037,10 @@ static HRESULT RegExpConstr_leftContext(script_ctx_t *ctx, vdisp_t *jsthis, WORD
 
         V_VT(retv) = VT_BSTR;
         V_BSTR(retv) = ret;
+        break;
     }
     case DISPATCH_PROPERTYPUT:
-        return S_OK;
+        break;
     default:
         FIXME("unsupported flags\n");
         return E_NOTIMPL;
@@ -4063,9 +4064,10 @@ static HRESULT RegExpConstr_rightContext(script_ctx_t *ctx, vdisp_t *jsthis, WOR
 
         V_VT(retv) = VT_BSTR;
         V_BSTR(retv) = ret;
+        break;
     }
     case DISPATCH_PROPERTYPUT:
-        return S_OK;
+        break;
     default:
         FIXME("unsupported flags\n");
         return E_NOTIMPL;
