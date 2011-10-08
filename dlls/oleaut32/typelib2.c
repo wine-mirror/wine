@@ -899,11 +899,13 @@ static HRESULT ctl2_encode_variant(
         mask = 0x3ffffff;
         if(V_UI4(&v)>0x3ffffff)
             break;
+        /* fall through */
     case VT_I1:
     case VT_UI1:
     case VT_BOOL:
-         if(!mask)
-             mask = 0xff;
+        if(!mask)
+            mask = 0xff;
+        /* fall through */
     case VT_I2:
     case VT_UI2:
         if(!mask)
