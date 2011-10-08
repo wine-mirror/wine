@@ -1958,6 +1958,7 @@ static HRESULT WINAPI domdoc_createNode(
     case NODE_ENTITY_REFERENCE:
     case NODE_PROCESSING_INSTRUCTION:
         if (!name || *name == 0) return E_FAIL;
+        break;
     default:
         break;
     }
