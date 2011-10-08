@@ -166,12 +166,19 @@ NTSTATUS WINAPI RtlAllocateAndInitializeSid (
     switch( nSubAuthorityCount )
     {
         case 8: tmp_sid->SubAuthority[7]= nSubAuthority7;
+            /* fall through */
         case 7: tmp_sid->SubAuthority[6]= nSubAuthority6;
+            /* fall through */
         case 6: tmp_sid->SubAuthority[5]= nSubAuthority5;
+            /* fall through */
         case 5: tmp_sid->SubAuthority[4]= nSubAuthority4;
+            /* fall through */
         case 4: tmp_sid->SubAuthority[3]= nSubAuthority3;
+            /* fall through */
         case 3: tmp_sid->SubAuthority[2]= nSubAuthority2;
+            /* fall through */
         case 2: tmp_sid->SubAuthority[1]= nSubAuthority1;
+            /* fall through */
         case 1: tmp_sid->SubAuthority[0]= nSubAuthority0;
         break;
     }
