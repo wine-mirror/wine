@@ -1806,7 +1806,7 @@ static void test_QueryFullProcessImageNameW(void)
 
     module_name[2] = '\0';
     *device = '\0';
-    size = QueryDosDeviceW(module_name, device, sizeof(device));
+    size = QueryDosDeviceW(module_name, device, sizeof(device)/sizeof(device[0]));
     ok(size, "QueryDosDeviceW failed: le=%u\n", GetLastError());
     len = lstrlenW(device);
     ok(size >= len+2, "expected %d to be greater than %d+2 = strlen(%s)\n", size, len, wine_dbgstr_w(device));
