@@ -369,7 +369,8 @@ static NONCLIENTMETRICSW nonclient_metrics =
     18,    /* iMenuHeight */
     { 0 }, /* lfMenuFont */
     { 0 }, /* lfStatusFont */
-    { 0 }  /* lfMessageFont */
+    { 0 }, /* lfMessageFont */
+    0      /* iPaddedBorderWidth */
 };
 
 /* some additional non client metric info */
@@ -462,6 +463,10 @@ static void SYSPARAMS_NonClientMetrics32WTo32A( const NONCLIENTMETRICSW* lpnm32W
     SYSPARAMS_LogFont32WTo32A( &lpnm32W->lfMenuFont,		&lpnm32A->lfMenuFont );
     SYSPARAMS_LogFont32WTo32A( &lpnm32W->lfStatusFont,		&lpnm32A->lfStatusFont );
     SYSPARAMS_LogFont32WTo32A( &lpnm32W->lfMessageFont,		&lpnm32A->lfMessageFont );
+    if (lpnm32A->cbSize == sizeof(NONCLIENTMETRICSA) && lpnm32W->cbSize == sizeof(NONCLIENTMETRICSW))
+        lpnm32A->iPaddedBorderWidth = lpnm32W->iPaddedBorderWidth;
+    else
+        lpnm32A->iPaddedBorderWidth = 0;
 }
 
 static void SYSPARAMS_NonClientMetrics32ATo32W( const NONCLIENTMETRICSA* lpnm32A, LPNONCLIENTMETRICSW lpnm32W )
@@ -480,6 +485,10 @@ static void SYSPARAMS_NonClientMetrics32ATo32W( const NONCLIENTMETRICSA* lpnm32A
     SYSPARAMS_LogFont32ATo32W( &lpnm32A->lfMenuFont,		&lpnm32W->lfMenuFont );
     SYSPARAMS_LogFont32ATo32W( &lpnm32A->lfStatusFont,		&lpnm32W->lfStatusFont );
     SYSPARAMS_LogFont32ATo32W( &lpnm32A->lfMessageFont,		&lpnm32W->lfMessageFont );
+    if (lpnm32A->cbSize == sizeof(NONCLIENTMETRICSA) && lpnm32W->cbSize == sizeof(NONCLIENTMETRICSW))
+        lpnm32W->iPaddedBorderWidth = lpnm32A->iPaddedBorderWidth;
+    else
+        lpnm32W->iPaddedBorderWidth = 0;
 }
 
 
@@ -1569,7 +1578,8 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
         if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
 
-        if (lpnm && lpnm->cbSize == sizeof(NONCLIENTMETRICSW))
+        if (lpnm && (lpnm->cbSize == sizeof(NONCLIENTMETRICSW) ||
+                     lpnm->cbSize == FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth)))
             *lpnm = nonclient_metrics;
         else
             ret = FALSE;
@@ -1580,7 +1590,8 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     {
         LPNONCLIENTMETRICSW lpnm = pvParam;
 
-        if (lpnm && lpnm->cbSize == sizeof(NONCLIENTMETRICSW))
+        if (lpnm && (lpnm->cbSize == sizeof(NONCLIENTMETRICSW) ||
+                     lpnm->cbSize == FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth)))
         {
             NONCLIENTMETRICSW ncm;
             ret = set_uint_param( SPI_SETBORDER_IDX,
@@ -1626,7 +1637,10 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                     METRICS_REGKEY, METRICS_MESSAGELOGFONT_VALNAME,
                     &lpnm->lfMessageFont, fWinIni);
             if( ret) {
-                ncm = *lpnm;
+                memcpy(&ncm, lpnm, FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth));
+                ncm.cbSize = sizeof(ncm);
+                ncm.iPaddedBorderWidth = (lpnm->cbSize == sizeof(NONCLIENTMETRICSW)) ?
+                                         lpnm->iPaddedBorderWidth : 0;
                 normalize_nonclientmetrics( &ncm);
                 nonclient_metrics = ncm;
                 spi_loaded[SPI_NONCLIENTMETRICS_IDX] = TRUE;
@@ -2526,7 +2540,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     {
 	NONCLIENTMETRICSW tmp;
         LPNONCLIENTMETRICSA lpnmA = pvParam;
-	if (lpnmA && lpnmA->cbSize == sizeof(NONCLIENTMETRICSA))
+        if (lpnmA && (lpnmA->cbSize == sizeof(NONCLIENTMETRICSA) ||
+                      lpnmA->cbSize == FIELD_OFFSET(NONCLIENTMETRICSA, iPaddedBorderWidth)))
 	{
 	    tmp.cbSize = sizeof(NONCLIENTMETRICSW);
 	    ret = SystemParametersInfoW( uiAction, uiParam, &tmp, fuWinIni );
@@ -2542,7 +2557,8 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     {
         NONCLIENTMETRICSW tmp;
         LPNONCLIENTMETRICSA lpnmA = pvParam;
-        if (lpnmA && lpnmA->cbSize == sizeof(NONCLIENTMETRICSA))
+        if (lpnmA && (lpnmA->cbSize == sizeof(NONCLIENTMETRICSA) ||
+                      lpnmA->cbSize == FIELD_OFFSET(NONCLIENTMETRICSA, iPaddedBorderWidth)))
         {
             tmp.cbSize = sizeof(NONCLIENTMETRICSW);
             SYSPARAMS_NonClientMetrics32ATo32W( lpnmA, &tmp );

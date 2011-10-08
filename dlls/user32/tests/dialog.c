@@ -1198,7 +1198,7 @@ static void test_MessageBoxFontTest(void)
     }
     GetObjectW(hFont, sizeof(LOGFONTW), &lfStaticFont);
 
-    ncMetrics.cbSize = sizeof(NONCLIENTMETRICSW);
+    ncMetrics.cbSize = FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth);
     SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, 0, &ncMetrics, 0);
     ok( !memcmp(&lfStaticFont, &ncMetrics.lfMessageFont, FIELD_OFFSET(LOGFONTW, lfFaceName)) &&
         !lstrcmpW(lfStaticFont.lfFaceName, ncMetrics.lfMessageFont.lfFaceName),
