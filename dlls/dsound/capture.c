@@ -1048,7 +1048,7 @@ static HRESULT DirectSoundCaptureDevice_Initialize(
     }
     IAudioClient_Release(client);
 
-    device->timerID = DSOUND_create_timer(&DSOUND_capture_timer, (DWORD_PTR)device);
+    device->timerID = DSOUND_create_timer(DSOUND_capture_timer, (DWORD_PTR)device);
 
     list_add_tail(&DSOUND_capturers, &device->entry);
 
