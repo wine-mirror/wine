@@ -74,14 +74,6 @@ BOOL WINAPI _MPR_25( LPBYTE lpMem, INT len )
 }
 
 /*****************************************************************
- *  DllCanUnloadNow  [MPR.@]
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_OK;
-}
-
-/*****************************************************************
  *  DllMain  [MPR.init]
  */
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
