@@ -199,6 +199,7 @@ static WCHAR* assoc_query(ASSOCSTR assocStr, LPCWSTR name, LPCWSTR extra);
 static HRESULT open_icon(LPCWSTR filename, int index, BOOL bWait, IStream **ppStream);
 
 /* Utility routines */
+#ifndef __APPLE__
 static unsigned short crc16(const char* string)
 {
     unsigned short crc = 0;
@@ -217,6 +218,7 @@ static unsigned short crc16(const char* string)
     }
     return crc;
 }
+#endif
 
 static char *strdupA( const char *str )
 {
