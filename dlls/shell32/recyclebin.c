@@ -41,7 +41,6 @@
 #include "wine/debug.h"
 
 #include "shell32_main.h"
-#include "enumidlist.h"
 #include "xdg.h"
 #include "pidl.h"
 

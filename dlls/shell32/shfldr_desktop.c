@@ -42,7 +42,6 @@
 #include "ole2.h"
 #include "shlguid.h"
 
-#include "enumidlist.h"
 #include "pidl.h"
 #include "undocshell.h"
 #include "shell32_main.h"

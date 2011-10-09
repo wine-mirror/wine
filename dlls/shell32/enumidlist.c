@@ -32,7 +32,7 @@
 #include "shlwapi.h"
 
 #include "pidl.h"
-#include "enumidlist.h"
+#include "shell32_main.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 

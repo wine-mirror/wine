@@ -42,7 +42,6 @@
 
 #include "commctrl.h"
 #include "cpanel.h"
-#include "enumidlist.h"
 #include "pidl.h"
 #include "undocshell.h"
 #include "shell32_main.h"

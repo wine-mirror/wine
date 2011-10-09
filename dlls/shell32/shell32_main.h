@@ -204,4 +204,14 @@ HRESULT SHELL_RegisterShellFolders(void) DECLSPEC_HIDDEN;
 /* Detect Shell Links */
 BOOL SHELL_IsShortcut(LPCITEMIDLIST) DECLSPEC_HIDDEN;
 
+
+/* Creates an IEnumIDList; add LPITEMIDLISTs to it with AddToEnumList. */
+LPENUMIDLIST IEnumIDList_Constructor(void) DECLSPEC_HIDDEN;
+BOOL AddToEnumList(IEnumIDList *list, LPITEMIDLIST pidl) DECLSPEC_HIDDEN;
+
+/* Enumerates the folders and/or files (depending on dwFlags) in lpszPath and
+ * adds them to the already-created list.
+ */
+BOOL CreateFolderEnumList(IEnumIDList *list, LPCWSTR lpszPath, DWORD dwFlags) DECLSPEC_HIDDEN;
+
 #endif

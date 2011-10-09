@@ -38,7 +38,6 @@
 #include "winreg.h"
 
 #include "pidl.h"
-#include "enumidlist.h"
 #include "undocshell.h"
 #include "shell32_main.h"
 #include "shresdef.h"
