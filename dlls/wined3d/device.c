@@ -4109,7 +4109,7 @@ void CDECL wined3d_device_set_primitive_type(struct wined3d_device *device,
     device->updateStateBlock->state.gl_primitive_type = gl_primitive_type_from_d3d(primitive_type);
 }
 
-void CDECL wined3d_device_get_primitive_type(struct wined3d_device *device,
+void CDECL wined3d_device_get_primitive_type(const struct wined3d_device *device,
         WINED3DPRIMITIVETYPE *primitive_type)
 {
     TRACE("device %p, primitive_type %p\n", device, primitive_type);
