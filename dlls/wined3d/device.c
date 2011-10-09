@@ -5119,10 +5119,12 @@ HRESULT CDECL wined3d_device_get_render_target(struct wined3d_device *device,
     }
 
     *render_target = device->fb.render_targets[render_target_idx];
-    if (*render_target)
-        wined3d_surface_incref(*render_target);
-
     TRACE("Returning render target %p.\n", *render_target);
+
+    if (!*render_target)
+        return WINED3DERR_NOTFOUND;
+
+    wined3d_surface_incref(*render_target);
 
     return WINED3D_OK;
 }

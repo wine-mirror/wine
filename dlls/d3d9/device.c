@@ -1142,24 +1142,19 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetRenderTarget(IDirect3DDevice9Ex *i
     }
 
     wined3d_mutex_lock();
-
     hr = wined3d_device_get_render_target(This->wined3d_device, RenderTargetIndex, &wined3d_surface);
-
-    if (FAILED(hr))
-    {
-        FIXME("Call to IWineD3DDevice_GetRenderTarget failed, hr %#x\n", hr);
-    }
-    else if (!wined3d_surface)
-    {
-        *ppRenderTarget = NULL;
-    }
-    else
+    if (SUCCEEDED(hr))
     {
         *ppRenderTarget = wined3d_surface_get_parent(wined3d_surface);
         IDirect3DSurface9_AddRef(*ppRenderTarget);
         wined3d_surface_decref(wined3d_surface);
     }
-
+    else
+    {
+        if (hr != WINED3DERR_NOTFOUND)
+            WARN("Failed to get render target %u, hr %#x.\n", RenderTargetIndex, hr);
+        *ppRenderTarget = NULL;
+    }
     wined3d_mutex_unlock();
 
     return hr;
