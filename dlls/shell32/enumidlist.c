@@ -45,7 +45,7 @@ typedef struct tagENUMLIST
 
 typedef struct
 {
-	const IEnumIDListVtbl          *lpVtbl;
+	IEnumIDList			IEnumIDList_iface;
 	LONG				ref;
 	LPENUMLIST			mpFirst;
 	LPENUMLIST			mpLast;
@@ -180,6 +180,11 @@ static BOOL DeleteList(IEnumIDListImpl *This)
 	return TRUE;
 }
 
+static inline IEnumIDListImpl *impl_from_IEnumIDList(IEnumIDList *iface)
+{
+    return CONTAINING_RECORD(iface, IEnumIDListImpl, IEnumIDList_iface);
+}
+
 /**************************************************************************
  *  IEnumIDList_Folder_Constructor
  *
@@ -193,22 +198,22 @@ IEnumIDList * IEnumIDList_Constructor(void)
     if (lpeidl)
     {
         lpeidl->ref = 1;
-        lpeidl->lpVtbl = &eidlvt;
+        lpeidl->IEnumIDList_iface.lpVtbl = &eidlvt;
     }
+    else
+        return NULL;
+
     TRACE("-- (%p)->()\n",lpeidl);
 
-    return (IEnumIDList*)lpeidl;
+    return &lpeidl->IEnumIDList_iface;
 }
 
 /**************************************************************************
- *  EnumIDList_QueryInterface
+ *  IEnumIDList::QueryInterface
  */
-static HRESULT WINAPI IEnumIDList_fnQueryInterface(
-	IEnumIDList * iface,
-	REFIID riid,
-	LPVOID *ppvObj)
+static HRESULT WINAPI IEnumIDList_fnQueryInterface(IEnumIDList *iface, REFIID riid, void **ppvObj)
 {
-	IEnumIDListImpl *This = (IEnumIDListImpl *)iface;
+        IEnumIDListImpl *This = impl_from_IEnumIDList(iface);
 
 	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
@@ -232,12 +237,11 @@ static HRESULT WINAPI IEnumIDList_fnQueryInterface(
 }
 
 /******************************************************************************
- * IEnumIDList_fnAddRef
+ * IEnumIDList::AddRef
  */
-static ULONG WINAPI IEnumIDList_fnAddRef(
-	IEnumIDList * iface)
+static ULONG WINAPI IEnumIDList_fnAddRef(IEnumIDList *iface)
 {
-	IEnumIDListImpl *This = (IEnumIDListImpl *)iface;
+        IEnumIDListImpl *This = impl_from_IEnumIDList(iface);
 	ULONG refCount = InterlockedIncrement(&This->ref);
 
 	TRACE("(%p)->(%u)\n", This, refCount - 1);
@@ -245,12 +249,11 @@ static ULONG WINAPI IEnumIDList_fnAddRef(
 	return refCount;
 }
 /******************************************************************************
- * IEnumIDList_fnRelease
+ * IEnumIDList::Release
  */
-static ULONG WINAPI IEnumIDList_fnRelease(
-	IEnumIDList * iface)
+static ULONG WINAPI IEnumIDList_fnRelease(IEnumIDList *iface)
 {
-	IEnumIDListImpl *This = (IEnumIDListImpl *)iface;
+        IEnumIDListImpl *This = impl_from_IEnumIDList(iface);
 	ULONG refCount = InterlockedDecrement(&This->ref);
 
 	TRACE("(%p)->(%u)\n", This, refCount + 1);
@@ -264,16 +267,13 @@ static ULONG WINAPI IEnumIDList_fnRelease(
 }
 
 /**************************************************************************
- *  IEnumIDList_fnNext
+ *  IEnumIDList::Next
  */
 
-static HRESULT WINAPI IEnumIDList_fnNext(
-	IEnumIDList * iface,
-	ULONG celt,
-	LPITEMIDLIST * rgelt,
-	ULONG *pceltFetched)
+static HRESULT WINAPI IEnumIDList_fnNext(IEnumIDList *iface, ULONG celt, LPITEMIDLIST *rgelt,
+        ULONG *pceltFetched)
 {
-	IEnumIDListImpl *This = (IEnumIDListImpl *)iface;
+        IEnumIDListImpl *This = impl_from_IEnumIDList(iface);
 
 	ULONG    i;
 	HRESULT  hr = S_OK;
@@ -313,12 +313,11 @@ static HRESULT WINAPI IEnumIDList_fnNext(
 }
 
 /**************************************************************************
-*  IEnumIDList_fnSkip
+*  IEnumIDList::Skip
 */
-static HRESULT WINAPI IEnumIDList_fnSkip(
-	IEnumIDList * iface,ULONG celt)
+static HRESULT WINAPI IEnumIDList_fnSkip(IEnumIDList *iface, ULONG celt)
 {
-	IEnumIDListImpl *This = (IEnumIDListImpl *)iface;
+        IEnumIDListImpl *This = impl_from_IEnumIDList(iface);
 
 	DWORD    dwIndex;
 	HRESULT  hr = S_OK;
@@ -335,32 +334,27 @@ static HRESULT WINAPI IEnumIDList_fnSkip(
 	return hr;
 }
 /**************************************************************************
-*  IEnumIDList_fnReset
+*  IEnumIDList::Reset
 */
-static HRESULT WINAPI IEnumIDList_fnReset(
-	IEnumIDList * iface)
+static HRESULT WINAPI IEnumIDList_fnReset(IEnumIDList *iface)
 {
-	IEnumIDListImpl *This = (IEnumIDListImpl *)iface;
+        IEnumIDListImpl *This = impl_from_IEnumIDList(iface);
 
 	TRACE("(%p)\n",This);
 	This->mpCurrent = This->mpFirst;
 	return S_OK;
 }
 /**************************************************************************
-*  IEnumIDList_fnClone
+*  IEnumIDList::Clone
 */
-static HRESULT WINAPI IEnumIDList_fnClone(
-	IEnumIDList * iface,LPENUMIDLIST * ppenum)
+static HRESULT WINAPI IEnumIDList_fnClone(IEnumIDList *iface, IEnumIDList **ppenum)
 {
-	IEnumIDListImpl *This = (IEnumIDListImpl *)iface;
+        IEnumIDListImpl *This = impl_from_IEnumIDList(iface);
 
 	TRACE("(%p)->() to (%p)->() E_NOTIMPL\n",This,ppenum);
 	return E_NOTIMPL;
 }
 
-/**************************************************************************
- *  IEnumIDList_fnVTable
- */
 static const IEnumIDListVtbl eidlvt =
 {
 	IEnumIDList_fnQueryInterface,
