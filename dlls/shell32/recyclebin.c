@@ -410,33 +410,27 @@ static HRESULT WINAPI RecycleBin_EnumObjects(IShellFolder2 *iface, HWND hwnd, SH
     RecycleBin *This = impl_from_IShellFolder2(iface);
     IEnumIDList *list;
     LPITEMIDLIST *pidls;
-    HRESULT ret;
+    HRESULT ret = E_OUTOFMEMORY;
     int pidls_count;
     int i=0;
 
     TRACE("(%p, %p, %x, %p)\n", This, hwnd, grfFlags, ppenumIDList);
 
+    *ppenumIDList = NULL;
+    list = IEnumIDList_Constructor();
+    if (!list)
+        return E_OUTOFMEMORY;
+
     if (grfFlags & SHCONTF_NONFOLDERS)
     {
-        *ppenumIDList = NULL;
         if (FAILED(ret = TRASH_EnumItems(&pidls, &pidls_count)))
-            return ret;
-
-        list = IEnumIDList_Constructor();
-        if (list == NULL)
             goto failed;
         for (i=0; i<pidls_count; i++)
             if (!AddToEnumList(list, pidls[i]))
                 goto failed;
-        *ppenumIDList = list;
     }
-    else
-    {
-        *ppenumIDList = IEnumIDList_Constructor();
-        if (*ppenumIDList == NULL)
-            return E_OUTOFMEMORY;
-    }
-    
+
+    *ppenumIDList = list;
     return S_OK;
 
 failed:
@@ -445,7 +439,7 @@ failed:
     for (; i<pidls_count; i++)
         ILFree(pidls[i]);
     SHFree(pidls);
-    return E_OUTOFMEMORY;
+    return ret;
 }
 
 static HRESULT WINAPI RecycleBin_BindToObject(IShellFolder2 *This, LPCITEMIDLIST pidl, LPBC pbc, REFIID riid, void **ppv)
