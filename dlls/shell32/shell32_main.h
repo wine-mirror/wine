@@ -223,11 +223,11 @@ typedef struct
 
 /* Creates an IEnumIDList; add LPITEMIDLISTs to it with AddToEnumList. */
 IEnumIDListImpl *IEnumIDList_Constructor(void) DECLSPEC_HIDDEN;
-BOOL AddToEnumList(IEnumIDList *list, LPITEMIDLIST pidl) DECLSPEC_HIDDEN;
+BOOL AddToEnumList(IEnumIDListImpl *list, LPITEMIDLIST pidl) DECLSPEC_HIDDEN;
 
 /* Enumerates the folders and/or files (depending on dwFlags) in lpszPath and
  * adds them to the already-created list.
  */
-BOOL CreateFolderEnumList(IEnumIDList *list, LPCWSTR lpszPath, DWORD dwFlags) DECLSPEC_HIDDEN;
+BOOL CreateFolderEnumList(IEnumIDListImpl *list, LPCWSTR lpszPath, DWORD dwFlags) DECLSPEC_HIDDEN;
 
 #endif

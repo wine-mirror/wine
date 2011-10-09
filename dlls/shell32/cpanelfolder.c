@@ -286,7 +286,7 @@ static PIDLCPanelStruct* _ILGetCPanelPointer(LPCITEMIDLIST pidl)
  /**************************************************************************
  *		ISF_ControlPanel_fnEnumObjects
  */
-static BOOL SHELL_RegisterCPanelApp(IEnumIDList* list, LPCSTR path)
+static BOOL SHELL_RegisterCPanelApp(IEnumIDListImpl *list, LPCSTR path)
 {
     LPITEMIDLIST pidl;
     CPlApplet* applet;
@@ -329,7 +329,7 @@ static BOOL SHELL_RegisterCPanelApp(IEnumIDList* list, LPCSTR path)
     return TRUE;
 }
 
-static int SHELL_RegisterRegistryCPanelApps(IEnumIDList* list, HKEY hkey_root, LPCSTR szRepPath)
+static int SHELL_RegisterRegistryCPanelApps(IEnumIDListImpl *list, HKEY hkey_root, LPCSTR szRepPath)
 {
     char name[MAX_PATH];
     char value[MAX_PATH];
@@ -358,7 +358,7 @@ static int SHELL_RegisterRegistryCPanelApps(IEnumIDList* list, HKEY hkey_root, L
     return cnt;
 }
 
-static int SHELL_RegisterCPanelFolders(IEnumIDList* list, HKEY hkey_root, LPCSTR szRepPath)
+static int SHELL_RegisterCPanelFolders(IEnumIDListImpl *list, HKEY hkey_root, LPCSTR szRepPath)
 {
     char name[MAX_PATH];
     HKEY hkey;
@@ -391,19 +391,18 @@ static int SHELL_RegisterCPanelFolders(IEnumIDList* list, HKEY hkey_root, LPCSTR
 /**************************************************************************
  *  CreateCPanelEnumList()
  */
-static BOOL CreateCPanelEnumList(
-    IEnumIDList * iface,
-    DWORD dwFlags)
+static BOOL CreateCPanelEnumList(IEnumIDListImpl *list, DWORD dwFlags)
 {
     CHAR szPath[MAX_PATH];
     WIN32_FIND_DATAA wfd;
     HANDLE hFile;
 
-    TRACE("(%p)->(flags=0x%08x)\n", iface, dwFlags);
+    TRACE("(%p)->(flags=0x%08x)\n", list, dwFlags);
 
     /* enumerate control panel folders */
     if (dwFlags & SHCONTF_FOLDERS)
-        SHELL_RegisterCPanelFolders(iface, HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\ControlPanel\\NameSpace");
+        SHELL_RegisterCPanelFolders(list, HKEY_LOCAL_MACHINE,
+                "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\ControlPanel\\NameSpace");
 
     /* enumerate the control panel applets */
     if (dwFlags & SHCONTF_NONFOLDERS)
@@ -414,7 +413,7 @@ static BOOL CreateCPanelEnumList(
         p = PathAddBackslashA(szPath);
         strcpy(p, "*.cpl");
 
-        TRACE("-- (%p)-> enumerate SHCONTF_NONFOLDERS of %s\n",iface,debugstr_a(szPath));
+        TRACE("-- (%p)-> enumerate SHCONTF_NONFOLDERS of %s\n", list, debugstr_a(szPath));
         hFile = FindFirstFileA(szPath, &wfd);
 
         if (hFile != INVALID_HANDLE_VALUE)
@@ -426,14 +425,16 @@ static BOOL CreateCPanelEnumList(
 
                 if (!(wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
                     strcpy(p, wfd.cFileName);
-                    SHELL_RegisterCPanelApp(iface, szPath);
+                    SHELL_RegisterCPanelApp(list, szPath);
                 }
             } while(FindNextFileA(hFile, &wfd));
             FindClose(hFile);
         }
 
-        SHELL_RegisterRegistryCPanelApps(iface, HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Control Panel\\Cpls");
-        SHELL_RegisterRegistryCPanelApps(iface, HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Control Panel\\Cpls");
+        SHELL_RegisterRegistryCPanelApps(list, HKEY_LOCAL_MACHINE,
+                "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Control Panel\\Cpls");
+        SHELL_RegisterRegistryCPanelApps(list, HKEY_CURRENT_USER,
+                "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Control Panel\\Cpls");
     }
     return TRUE;
 }
@@ -451,8 +452,8 @@ static HRESULT WINAPI ISF_ControlPanel_fnEnumObjects(IShellFolder2 *iface, HWND 
 
     if (!(list = IEnumIDList_Constructor()))
         return E_OUTOFMEMORY;
+    CreateCPanelEnumList(list, dwFlags);
     *ppEnumIDList = &list->IEnumIDList_iface;
-    CreateCPanelEnumList(*ppEnumIDList, dwFlags);
 
     TRACE("--(%p)->(new ID List: %p)\n", This, *ppEnumIDList);
 

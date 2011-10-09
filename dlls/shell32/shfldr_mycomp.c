@@ -292,7 +292,7 @@ static const WCHAR MyComputer_NameSpaceW[] = { 'S','O','F','T','W','A','R','E',
  'o','r','e','r','\\','M','y','C','o','m','p','u','t','e','r','\\','N','a','m',
  'e','s','p','a','c','e','\0' };
 
-static BOOL CreateMyCompEnumList(IEnumIDList *list, DWORD dwFlags)
+static BOOL CreateMyCompEnumList(IEnumIDListImpl *list, DWORD dwFlags)
 {
     BOOL ret = TRUE;
 
@@ -362,8 +362,8 @@ static HRESULT WINAPI ISF_MyComputer_fnEnumObjects (IShellFolder2 *iface,
 
     if (!(list = IEnumIDList_Constructor()))
         return E_OUTOFMEMORY;
+    CreateMyCompEnumList(list, dwFlags);
     *ppEnumIDList = &list->IEnumIDList_iface;
-    CreateMyCompEnumList(*ppEnumIDList, dwFlags);
 
     TRACE ("-- (%p)->(new ID List: %p)\n", This, *ppEnumIDList);
 

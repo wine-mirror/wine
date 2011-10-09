@@ -455,8 +455,8 @@ IShellFolder_fnEnumObjects (IShellFolder2 * iface, HWND hwndOwner,
 
     if (!(list = IEnumIDList_Constructor()))
         return E_OUTOFMEMORY;
+    CreateFolderEnumList(list, This->sPathTarget, dwFlags);
     *ppEnumIDList = &list->IEnumIDList_iface;
-    CreateFolderEnumList(*ppEnumIDList, This->sPathTarget, dwFlags);
 
     TRACE ("-- (%p)->(new ID List: %p)\n", This, *ppEnumIDList);
 

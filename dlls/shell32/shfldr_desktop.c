@@ -286,7 +286,7 @@ static const WCHAR Desktop_NameSpaceW[] = { 'S','O','F','T','W','A','R','E',
  'o','r','e','r','\\','D','e','s','k','t','o','p','\\','N','a','m','e','s','p',
  'a','c','e','\0' };
 
-static BOOL CreateDesktopEnumList(IEnumIDList *list, DWORD dwFlags)
+static BOOL CreateDesktopEnumList(IEnumIDListImpl *list, DWORD dwFlags)
 {
     BOOL ret = TRUE;
     WCHAR szPath[MAX_PATH];
@@ -352,8 +352,8 @@ static HRESULT WINAPI ISF_Desktop_fnEnumObjects (IShellFolder2 * iface,
 
     if (!(list = IEnumIDList_Constructor()))
         return E_OUTOFMEMORY;
+    CreateDesktopEnumList(list, dwFlags);
     *ppEnumIDList = &list->IEnumIDList_iface;
-    CreateDesktopEnumList(*ppEnumIDList, dwFlags);
 
     TRACE ("-- (%p)->(new ID List: %p)\n", This, *ppEnumIDList);
 

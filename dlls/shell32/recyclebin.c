@@ -426,7 +426,7 @@ static HRESULT WINAPI RecycleBin_EnumObjects(IShellFolder2 *iface, HWND hwnd, SH
         if (FAILED(ret = TRASH_EnumItems(&pidls, &pidls_count)))
             goto failed;
         for (i=0; i<pidls_count; i++)
-            if (!AddToEnumList(&list->IEnumIDList_iface, pidls[i]))
+            if (!AddToEnumList(list, pidls[i]))
                 goto failed;
     }
 

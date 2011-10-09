@@ -39,17 +39,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 /**************************************************************************
  *  AddToEnumList()
  */
-BOOL AddToEnumList(
-	IEnumIDList * iface,
-	LPITEMIDLIST pidl)
+BOOL AddToEnumList(IEnumIDListImpl *This, LPITEMIDLIST pidl)
 {
-	IEnumIDListImpl *This = (IEnumIDListImpl *)iface;
-
         struct enumlist *pNew;
 
 	TRACE("(%p)->(pidl=%p)\n",This,pidl);
 
-    if (!iface || !pidl)
+    if (!This || !pidl)
         return FALSE;
 
         pNew = SHAlloc(sizeof(*pNew));
@@ -83,10 +79,7 @@ BOOL AddToEnumList(
 /**************************************************************************
  *  CreateFolderEnumList()
  */
-BOOL CreateFolderEnumList(
-	IEnumIDList *list,
-	LPCWSTR lpszPath,
-	DWORD dwFlags)
+BOOL CreateFolderEnumList(IEnumIDListImpl *list, LPCWSTR lpszPath, DWORD dwFlags)
 {
     LPITEMIDLIST pidl=NULL;
     WIN32_FIND_DATAW stffile;
