@@ -66,8 +66,8 @@ struct process
     affinity_t           affinity;        /* process affinity mask */
     int                  priority;        /* priority class */
     int                  suspend;         /* global process suspend count */
-    int                  is_system;       /* is it a system process? */
-    unsigned int         create_flags;    /* process creation flags */
+    unsigned int         is_system:1;     /* is it a system process? */
+    unsigned int         debug_children:1;/* also debug all child processes */
     struct list          locks;           /* list of file locks owned by the process */
     struct list          classes;         /* window classes owned by the process */
     struct console_input*console;         /* console input */

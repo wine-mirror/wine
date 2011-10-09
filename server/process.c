@@ -322,7 +322,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     process->priority        = PROCESS_PRIOCLASS_NORMAL;
     process->suspend         = 0;
     process->is_system       = 0;
-    process->create_flags    = 0;
+    process->debug_children  = 0;
     process->console         = NULL;
     process->startup_state   = STARTUP_IN_PROGRESS;
     process->startup_info    = NULL;
@@ -937,7 +937,7 @@ DECL_HANDLER(new_process)
 
     if (!(thread = create_process( socket_fd, current, req->inherit_all ))) goto done;
     process = thread->process;
-    process->create_flags = req->create_flags;
+    process->debug_children = !(req->create_flags & DEBUG_ONLY_THIS_PROCESS);
     process->startup_info = (struct startup_info *)grab_object( info );
 
     /* connect to the window station */
@@ -972,7 +972,7 @@ DECL_HANDLER(new_process)
     /* attach to the debugger if requested */
     if (req->create_flags & (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS))
         set_process_debugger( process, current );
-    else if (parent->debugger && !(parent->create_flags & DEBUG_ONLY_THIS_PROCESS))
+    else if (parent->debugger && parent->debug_children)
         set_process_debugger( process, parent->debugger );
 
     if (!(req->create_flags & CREATE_NEW_PROCESS_GROUP))
