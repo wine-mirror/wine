@@ -164,14 +164,8 @@ BOOL CreateFolderEnumList(
     return succeeded;
 }
 
-/**************************************************************************
-*   DeleteList()
-*/
-static BOOL DeleteList(
-	IEnumIDList * iface)
+static BOOL DeleteList(IEnumIDListImpl *This)
 {
-	IEnumIDListImpl *This = (IEnumIDListImpl *)iface;
-
 	LPENUMLIST  pDelete;
 
 	TRACE("(%p)->()\n",This);
@@ -263,7 +257,7 @@ static ULONG WINAPI IEnumIDList_fnRelease(
 
 	if (!refCount) {
 	  TRACE(" destroying IEnumIDList(%p)\n",This);
-	  DeleteList((IEnumIDList*)This);
+          DeleteList(This);
 	  HeapFree(GetProcessHeap(),0,This);
 	}
 	return refCount;
