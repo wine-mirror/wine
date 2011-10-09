@@ -205,8 +205,24 @@ HRESULT SHELL_RegisterShellFolders(void) DECLSPEC_HIDDEN;
 BOOL SHELL_IsShortcut(LPCITEMIDLIST) DECLSPEC_HIDDEN;
 
 
+/* IEnumIDList stuff */
+struct enumlist
+{
+        struct enumlist *pNext;
+        LPITEMIDLIST    pidl;
+};
+
+typedef struct
+{
+        IEnumIDList     IEnumIDList_iface;
+        LONG            ref;
+        struct enumlist *mpFirst;
+        struct enumlist *mpLast;
+        struct enumlist *mpCurrent;
+} IEnumIDListImpl;
+
 /* Creates an IEnumIDList; add LPITEMIDLISTs to it with AddToEnumList. */
-LPENUMIDLIST IEnumIDList_Constructor(void) DECLSPEC_HIDDEN;
+IEnumIDListImpl *IEnumIDList_Constructor(void) DECLSPEC_HIDDEN;
 BOOL AddToEnumList(IEnumIDList *list, LPITEMIDLIST pidl) DECLSPEC_HIDDEN;
 
 /* Enumerates the folders and/or files (depending on dwFlags) in lpszPath and

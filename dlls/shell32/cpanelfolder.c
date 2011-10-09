@@ -445,16 +445,18 @@ static HRESULT WINAPI ISF_ControlPanel_fnEnumObjects(IShellFolder2 *iface, HWND 
         DWORD dwFlags, LPENUMIDLIST *ppEnumIDList)
 {
     ICPanelImpl *This = impl_from_IShellFolder2(iface);
+    IEnumIDListImpl *list;
 
     TRACE("(%p)->(HWND=%p flags=0x%08x pplist=%p)\n", This, hwndOwner, dwFlags, ppEnumIDList);
 
-    *ppEnumIDList = IEnumIDList_Constructor();
-    if (*ppEnumIDList)
-        CreateCPanelEnumList(*ppEnumIDList, dwFlags);
+    if (!(list = IEnumIDList_Constructor()))
+        return E_OUTOFMEMORY;
+    *ppEnumIDList = &list->IEnumIDList_iface;
+    CreateCPanelEnumList(*ppEnumIDList, dwFlags);
 
     TRACE("--(%p)->(new ID List: %p)\n", This, *ppEnumIDList);
 
-    return(*ppEnumIDList) ? S_OK : E_OUTOFMEMORY;
+    return S_OK;
 }
 
 /**************************************************************************

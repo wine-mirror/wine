@@ -408,7 +408,7 @@ static HRESULT WINAPI RecycleBin_ParseDisplayName(IShellFolder2 *This, HWND hwnd
 static HRESULT WINAPI RecycleBin_EnumObjects(IShellFolder2 *iface, HWND hwnd, SHCONTF grfFlags, IEnumIDList **ppenumIDList)
 {
     RecycleBin *This = impl_from_IShellFolder2(iface);
-    IEnumIDList *list;
+    IEnumIDListImpl *list;
     LPITEMIDLIST *pidls;
     HRESULT ret = E_OUTOFMEMORY;
     int pidls_count;
@@ -426,16 +426,16 @@ static HRESULT WINAPI RecycleBin_EnumObjects(IShellFolder2 *iface, HWND hwnd, SH
         if (FAILED(ret = TRASH_EnumItems(&pidls, &pidls_count)))
             goto failed;
         for (i=0; i<pidls_count; i++)
-            if (!AddToEnumList(list, pidls[i]))
+            if (!AddToEnumList(&list->IEnumIDList_iface, pidls[i]))
                 goto failed;
     }
 
-    *ppenumIDList = list;
+    *ppenumIDList = &list->IEnumIDList_iface;
     return S_OK;
 
 failed:
     if (list)
-        IEnumIDList_Release(list);
+        IEnumIDList_Release(&list->IEnumIDList_iface);
     for (; i<pidls_count; i++)
         ILFree(pidls[i]);
     SHFree(pidls);

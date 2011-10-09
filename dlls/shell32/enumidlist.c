@@ -36,22 +36,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
-struct enumlist
-{
-	struct enumlist		*pNext;
-	LPITEMIDLIST		pidl;
-};
-
-typedef struct
-{
-	IEnumIDList			IEnumIDList_iface;
-	LONG				ref;
-	struct enumlist			*mpFirst;
-	struct enumlist			*mpLast;
-	struct enumlist			*mpCurrent;
-
-} IEnumIDListImpl;
-
 /**************************************************************************
  *  AddToEnumList()
  */
@@ -340,7 +324,7 @@ static const IEnumIDListVtbl eidlvt =
 	IEnumIDList_fnClone,
 };
 
-IEnumIDList *IEnumIDList_Constructor(void)
+IEnumIDListImpl *IEnumIDList_Constructor(void)
 {
     IEnumIDListImpl *lpeidl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*lpeidl));
 
@@ -349,10 +333,8 @@ IEnumIDList *IEnumIDList_Constructor(void)
         lpeidl->ref = 1;
         lpeidl->IEnumIDList_iface.lpVtbl = &eidlvt;
     }
-    else
-        return NULL;
 
     TRACE("-- (%p)->()\n",lpeidl);
 
-    return &lpeidl->IEnumIDList_iface;
+    return lpeidl;
 }

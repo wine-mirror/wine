@@ -345,17 +345,19 @@ static HRESULT WINAPI ISF_Desktop_fnEnumObjects (IShellFolder2 * iface,
                 HWND hwndOwner, DWORD dwFlags, LPENUMIDLIST * ppEnumIDList)
 {
     IDesktopFolderImpl *This = impl_from_IShellFolder2(iface);
+    IEnumIDListImpl *list;
 
     TRACE ("(%p)->(HWND=%p flags=0x%08x pplist=%p)\n",
            This, hwndOwner, dwFlags, ppEnumIDList);
 
-    *ppEnumIDList = IEnumIDList_Constructor();
-    if (*ppEnumIDList)
-        CreateDesktopEnumList(*ppEnumIDList, dwFlags);
+    if (!(list = IEnumIDList_Constructor()))
+        return E_OUTOFMEMORY;
+    *ppEnumIDList = &list->IEnumIDList_iface;
+    CreateDesktopEnumList(*ppEnumIDList, dwFlags);
 
     TRACE ("-- (%p)->(new ID List: %p)\n", This, *ppEnumIDList);
 
-    return *ppEnumIDList ? S_OK : E_OUTOFMEMORY;
+    return S_OK;
 }
 
 /**************************************************************************
