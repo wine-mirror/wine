@@ -1758,6 +1758,56 @@ cleanup:
     if(hwnd) DestroyWindow(hwnd);
 }
 
+static void test_get_rt(void)
+{
+    IDirect3DSurface9 *backbuffer, *rt;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d9;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
+    ULONG ref;
+    UINT i;
+
+    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create IDirect3D9 object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 128, 128, 0, 0, 0, 0);
+    device = create_device(d3d9, window, window, TRUE);
+    if (!device)
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &backbuffer);
+    ok(SUCCEEDED(hr), "Failed to get backbuffer, hr %#x.\n", hr);
+    ok(!!backbuffer, "Got a NULL backbuffer.\n");
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+
+    for (i = 1; i < caps.NumSimultaneousRTs; ++i)
+    {
+        rt = backbuffer;
+        hr = IDirect3DDevice9_GetRenderTarget(device, i, &rt);
+        ok(hr == D3DERR_NOTFOUND, "IDirect3DDevice9_GetRenderTarget returned %#x.\n", hr);
+        ok(!rt, "Got rt %p.\n", rt);
+    }
+
+    IDirect3DSurface9_Release(backbuffer);
+
+    ref = IDirect3DDevice9_Release(device);
+    ok(!ref, "The device was not properly freed: refcount %u.\n", ref);
+done:
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+}
+
 /* Test what happens when IDirect3DDevice9_DrawIndexedPrimitive is called without a valid index buffer set. */
 static void test_draw_indexed(void)
 {
@@ -3119,6 +3169,7 @@ START_TEST(device)
         test_scene();
         test_limits();
         test_depthstenciltest();
+        test_get_rt();
         test_draw_indexed();
         test_null_stream();
         test_lights();
