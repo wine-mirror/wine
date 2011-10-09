@@ -53,8 +53,6 @@ typedef struct
 
 } IEnumIDListImpl;
 
-static const IEnumIDListVtbl eidlvt;
-
 /**************************************************************************
  *  AddToEnumList()
  */
@@ -183,29 +181,6 @@ static BOOL DeleteList(IEnumIDListImpl *This)
 static inline IEnumIDListImpl *impl_from_IEnumIDList(IEnumIDList *iface)
 {
     return CONTAINING_RECORD(iface, IEnumIDListImpl, IEnumIDList_iface);
-}
-
-/**************************************************************************
- *  IEnumIDList_Folder_Constructor
- *
- */
-
-IEnumIDList * IEnumIDList_Constructor(void)
-{
-    IEnumIDListImpl *lpeidl = HeapAlloc(GetProcessHeap(),
-     HEAP_ZERO_MEMORY, sizeof(IEnumIDListImpl));
-
-    if (lpeidl)
-    {
-        lpeidl->ref = 1;
-        lpeidl->IEnumIDList_iface.lpVtbl = &eidlvt;
-    }
-    else
-        return NULL;
-
-    TRACE("-- (%p)->()\n",lpeidl);
-
-    return &lpeidl->IEnumIDList_iface;
 }
 
 /**************************************************************************
@@ -365,3 +340,20 @@ static const IEnumIDListVtbl eidlvt =
 	IEnumIDList_fnReset,
 	IEnumIDList_fnClone,
 };
+
+IEnumIDList *IEnumIDList_Constructor(void)
+{
+    IEnumIDListImpl *lpeidl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*lpeidl));
+
+    if (lpeidl)
+    {
+        lpeidl->ref = 1;
+        lpeidl->IEnumIDList_iface.lpVtbl = &eidlvt;
+    }
+    else
+        return NULL;
+
+    TRACE("-- (%p)->()\n",lpeidl);
+
+    return &lpeidl->IEnumIDList_iface;
+}
