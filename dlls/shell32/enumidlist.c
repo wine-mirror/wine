@@ -36,20 +36,19 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
-typedef struct tagENUMLIST
+struct enumlist
 {
-	struct tagENUMLIST	*pNext;
+	struct enumlist		*pNext;
 	LPITEMIDLIST		pidl;
-
-} ENUMLIST, *LPENUMLIST;
+};
 
 typedef struct
 {
 	IEnumIDList			IEnumIDList_iface;
 	LONG				ref;
-	LPENUMLIST			mpFirst;
-	LPENUMLIST			mpLast;
-	LPENUMLIST			mpCurrent;
+	struct enumlist			*mpFirst;
+	struct enumlist			*mpLast;
+	struct enumlist			*mpCurrent;
 
 } IEnumIDListImpl;
 
@@ -62,14 +61,14 @@ BOOL AddToEnumList(
 {
 	IEnumIDListImpl *This = (IEnumIDListImpl *)iface;
 
-	LPENUMLIST  pNew;
+        struct enumlist *pNew;
 
 	TRACE("(%p)->(pidl=%p)\n",This,pidl);
 
     if (!iface || !pidl)
         return FALSE;
 
-        pNew = SHAlloc(sizeof(ENUMLIST));
+        pNew = SHAlloc(sizeof(*pNew));
 	if(pNew)
 	{
 	  /*set the next pointer */
@@ -164,7 +163,7 @@ BOOL CreateFolderEnumList(
 
 static BOOL DeleteList(IEnumIDListImpl *This)
 {
-	LPENUMLIST  pDelete;
+        struct enumlist *pDelete;
 
 	TRACE("(%p)->()\n",This);
 
