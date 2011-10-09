@@ -299,6 +299,7 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
 {
     int screen = DefaultScreen(gdi_display);
     Window win = 0, root = 0;
+    const char *gl_renderer;
     const char* str;
     XVisualInfo *vis;
     GLXContext ctx = NULL;
@@ -349,6 +350,7 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
         ERR_(winediag)( "Unable to activate OpenGL context, most likely your OpenGL drivers haven't been installed correctly\n" );
         goto done;
     }
+    gl_renderer = (const char *)pglGetString(GL_RENDERER);
     WineGLInfo.glVersion = (const char *) pglGetString(GL_VERSION);
     str = (const char *) pglGetString(GL_EXTENSIONS);
     WineGLInfo.glExtensions = HeapAlloc(GetProcessHeap(), 0, strlen(str)+1);
@@ -369,7 +371,7 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
     WineGLInfo.glxDirect = pglXIsDirect(gdi_display, ctx);
 
     TRACE("GL version             : %s.\n", WineGLInfo.glVersion);
-    TRACE("GL renderer            : %s.\n", pglGetString(GL_RENDERER));
+    TRACE("GL renderer            : %s.\n", gl_renderer);
     TRACE("GLX version            : %d.%d.\n", WineGLInfo.glxVersion[0], WineGLInfo.glxVersion[1]);
     TRACE("Server GLX version     : %s.\n", WineGLInfo.glxServerVersion);
     TRACE("Server GLX vendor:     : %s.\n", WineGLInfo.glxServerVendor);
@@ -387,7 +389,9 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
          * Detect a local X11 server by checking whether the X11 socket is a Unix socket.
          */
         if(!getsockname(fd, (struct sockaddr *)&uaddr, &uaddrlen) && uaddr.sun_family == AF_UNIX)
-            ERR_(winediag)("Direct rendering is disabled, most likely your OpenGL drivers haven't been installed correctly\n");
+            ERR_(winediag)("Direct rendering is disabled, most likely your OpenGL drivers "
+                           "haven't been installed correctly (using GL renderer %s, version %s).\n",
+                           debugstr_a(gl_renderer), debugstr_a(WineGLInfo.glVersion));
     }
     else
     {
@@ -400,9 +404,10 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
          * to load a DRI module 'Software Rasterizer' is returned. When Mesa is compiled as a OpenGL reference driver
          * it shows 'Mesa X11'.
          */
-        const char *gl_renderer = (const char *)pglGetString(GL_RENDERER);
         if(!strcmp(gl_renderer, "Software Rasterizer") || !strcmp(gl_renderer, "Mesa X11"))
-            ERR_(winediag)("The Mesa OpenGL driver is using software rendering, most likely your OpenGL drivers haven't been installed correctly\n");
+            ERR_(winediag)("The Mesa OpenGL driver is using software rendering, most likely your OpenGL "
+                           "drivers haven't been installed correctly (using GL renderer %s, version %s).\n",
+                           debugstr_a(gl_renderer), debugstr_a(WineGLInfo.glVersion));
     }
     ret = TRUE;
 
