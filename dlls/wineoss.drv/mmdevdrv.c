@@ -119,6 +119,7 @@ struct ACImpl {
 
     int fd;
     oss_audioinfo ai;
+    char devnode[OSS_DEVNODE_SIZE];
 
     BOOL initted, playing;
     UINT64 written_frames;
@@ -281,10 +282,34 @@ int WINAPI AUDDRV_GetPriority(void)
     return Priority_Preferred;
 }
 
+static const char *oss_clean_devnode(const char *devnode)
+{
+    static char ret[OSS_DEVNODE_SIZE];
+
+    const char *dot, *slash;
+    size_t len;
+
+    dot = strrchr(devnode, '.');
+    if(!dot)
+        return devnode;
+
+    slash = strrchr(devnode, '/');
+    if(slash && dot < slash)
+        return devnode;
+
+    len = dot - devnode;
+
+    memcpy(ret, devnode, len);
+    ret[len] = '\0';
+
+    return ret;
+}
+
 static UINT get_default_index(EDataFlow flow, char **keys, UINT num)
 {
     int fd = -1, err, i;
     oss_audioinfo ai;
+    const char *devnode;
 
     if(flow == eRender)
         fd = open("/dev/dsp", O_WRONLY);
@@ -306,8 +331,9 @@ static UINT get_default_index(EDataFlow flow, char **keys, UINT num)
     close(fd);
 
     TRACE("Default devnode: %s\n", ai.devnode);
+    devnode = oss_clean_devnode(ai.devnode);
     for(i = 0; i < num; ++i)
-        if(!strcmp(ai.devnode, keys[i]))
+        if(!strcmp(devnode, keys[i]))
             return i;
 
     WARN("Couldn't find default device! Choosing first.\n");
@@ -317,7 +343,7 @@ static UINT get_default_index(EDataFlow flow, char **keys, UINT num)
 HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
         UINT *num, UINT *def_index)
 {
-    int i, mixer_fd;
+    int i, j, mixer_fd;
     oss_sysinfo sysinfo;
     static int print_once = 0;
 
@@ -365,6 +391,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
     *num = 0;
     for(i = 0; i < sysinfo.numaudios; ++i){
         oss_audioinfo ai = {0};
+        const char *devnode;
         int fd;
 
         ai.dev = i;
@@ -374,13 +401,22 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
             continue;
         }
 
+        devnode = oss_clean_devnode(ai.devnode);
+
+        /* check for duplicates */
+        for(j = 0; j < *num; ++j)
+            if(!strcmp(devnode, (*keys)[j]))
+                break;
+        if(j != *num)
+            continue;
+
         if(flow == eRender)
-            fd = open(ai.devnode, O_WRONLY, 0);
+            fd = open(devnode, O_WRONLY, 0);
         else
-            fd = open(ai.devnode, O_RDONLY, 0);
+            fd = open(devnode, O_RDONLY, 0);
         if(fd < 0){
             WARN("Opening device \"%s\" failed, pretending it doesn't exist: %d (%s)\n",
-                    ai.devnode, errno, strerror(errno));
+                    devnode, errno, strerror(errno));
             continue;
         }
         close(fd);
@@ -390,7 +426,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
             size_t len;
 
             (*keys)[*num] = HeapAlloc(GetProcessHeap(), 0,
-                    strlen(ai.devnode) + 1);
+                    strlen(devnode) + 1);
             if(!(*keys)[*num]){
                 for(i = 0; i < *num; ++i){
                     HeapFree(GetProcessHeap(), 0, (*ids)[i]);
@@ -401,7 +437,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, char ***keys,
                 close(mixer_fd);
                 return E_OUTOFMEMORY;
             }
-            strcpy((*keys)[*num], ai.devnode);
+            strcpy((*keys)[*num], devnode);
 
             len = MultiByteToWideChar(CP_UNIXCP, 0, ai.name, -1, NULL, 0);
             (*ids)[*num] = HeapAlloc(GetProcessHeap(), 0,
@@ -467,6 +503,8 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(char *devnode, IMMDevice *dev,
         HeapFree(GetProcessHeap(), 0, This);
         return E_FAIL;
     }
+
+    strcpy(This->devnode, devnode);
 
     TRACE("OSS audioinfo:\n");
     TRACE("devnode: %s\n", This->ai.devnode);
@@ -1100,12 +1138,12 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
     dump_fmt(pwfx);
 
     if(This->dataflow == eRender)
-        fd = open(This->ai.devnode, O_WRONLY, 0);
+        fd = open(This->devnode, O_WRONLY, 0);
     else if(This->dataflow == eCapture)
-        fd = open(This->ai.devnode, O_RDONLY, 0);
+        fd = open(This->devnode, O_RDONLY, 0);
 
     if(fd < 0){
-        ERR("Unable to open device %s: %d (%s)\n", This->ai.devnode, errno,
+        ERR("Unable to open device %s: %d (%s)\n", This->devnode, errno,
                 strerror(errno));
         return AUDCLNT_E_DEVICE_INVALIDATED;
     }
