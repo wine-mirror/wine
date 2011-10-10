@@ -583,89 +583,6 @@ int main()
 
 
 /***********************************************************************
- *           BITBLT_GetSrcArea
- *
- * Retrieve an area from the source DC, mapping all the
- * pixels to Windows colors.
- */
-static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
-                              Pixmap pixmap, GC gc, RECT *visRectSrc )
-{
-    XImage *imageSrc;
-    register INT x, y;
-    int exposures = 0;
-    INT width  = visRectSrc->right - visRectSrc->left;
-    INT height = visRectSrc->bottom - visRectSrc->top;
-    BOOL memdc = (GetObjectType(physDevSrc->dev.hdc) == OBJ_MEMDC);
-
-    if (physDevSrc->depth == 1)
-    {
-        /* MSDN says if StretchBlt must convert a bitmap from monochrome
-           to color or vice versa, the foreground and background color of
-           the device context are used.  In fact, it also applies to the
-           case when it is converted from mono to mono. */
-        wine_tsx11_lock();
-        if (X11DRV_PALETTE_XPixelToPalette && physDevDst->depth != 1)
-        {
-            XSetBackground( gdi_display, gc, X11DRV_PALETTE_XPixelToPalette[physDevDst->textPixel] );
-            XSetForeground( gdi_display, gc, X11DRV_PALETTE_XPixelToPalette[physDevDst->backgroundPixel]);
-        }
-        else
-        {
-            XSetBackground( gdi_display, gc, physDevDst->textPixel );
-            XSetForeground( gdi_display, gc, physDevDst->backgroundPixel );
-        }
-        XCopyPlane( gdi_display, physDevSrc->drawable, pixmap, gc,
-                    physDevSrc->dc_rect.left + visRectSrc->left,
-                    physDevSrc->dc_rect.top + visRectSrc->top,
-                    width, height, 0, 0, 1 );
-        exposures++;
-        wine_tsx11_unlock();
-    }
-    else  /* color -> color */
-    {
-        wine_tsx11_lock();
-        if (!X11DRV_PALETTE_XPixelToPalette)
-        {
-            XCopyArea( gdi_display, physDevSrc->drawable, pixmap, gc,
-                       physDevSrc->dc_rect.left + visRectSrc->left,
-                       physDevSrc->dc_rect.top + visRectSrc->top,
-                       width, height, 0, 0);
-            exposures++;
-        }
-        else
-        {
-            if (memdc)
-                imageSrc = XGetImage( gdi_display, physDevSrc->drawable,
-                                      physDevSrc->dc_rect.left + visRectSrc->left,
-                                      physDevSrc->dc_rect.top + visRectSrc->top,
-                                      width, height, AllPlanes, ZPixmap );
-            else
-            {
-                /* Make sure we don't get a BadMatch error */
-                XCopyArea( gdi_display, physDevSrc->drawable, pixmap, gc,
-                           physDevSrc->dc_rect.left + visRectSrc->left,
-                           physDevSrc->dc_rect.top + visRectSrc->top,
-                           width, height, 0, 0);
-                exposures++;
-                imageSrc = XGetImage( gdi_display, pixmap, 0, 0, width, height,
-                                      AllPlanes, ZPixmap );
-            }
-            for (y = 0; y < height; y++)
-                for (x = 0; x < width; x++)
-                    XPutPixel(imageSrc, x, y,
-                              X11DRV_PALETTE_XPixelToPalette[XGetPixel(imageSrc, x, y)]);
-            XPutImage( gdi_display, pixmap, gc, imageSrc,
-                       0, 0, 0, 0, width, height );
-            XDestroyImage( imageSrc );
-        }
-        wine_tsx11_unlock();
-    }
-    return exposures;
-}
-
-
-/***********************************************************************
  *           BITBLT_GetDstArea
  *
  * Retrieve an area from the destination DC, mapping all the
@@ -896,11 +813,12 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     INT width, height;
     const BYTE *opcode;
     Pixmap src_pixmap;
-    GC tmpGC;
+    GC gc;
 
     if (src_dev->funcs != dst_dev->funcs ||
         src->width != dst->width || src->height != dst->height ||  /* no stretching with core X11 */
-        (physDevDst->depth == 1 && physDevSrc->depth != 1))  /* color -> mono done by hand */
+        (physDevDst->depth == 1 && physDevSrc->depth != 1) ||  /* color -> mono done by hand */
+        (X11DRV_PALETTE_XPixelToPalette && physDevSrc->depth != 1))  /* needs palette mapping */
     {
         dst_dev = GET_NEXT_PHYSDEV( dst_dev, pStretchBlt );
         return dst_dev->funcs->pStretchBlt( dst_dev, dst, src_dev, src, rop );
@@ -952,18 +870,48 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     }
 
     wine_tsx11_lock();
-    tmpGC = XCreateGC( gdi_display, physDevDst->drawable, 0, NULL );
-    XSetSubwindowMode( gdi_display, tmpGC, IncludeInferiors );
-    XSetGraphicsExposures( gdi_display, tmpGC, False );
+    gc = XCreateGC( gdi_display, physDevDst->drawable, 0, NULL );
+    XSetSubwindowMode( gdi_display, gc, IncludeInferiors );
+    XSetGraphicsExposures( gdi_display, gc, False );
+
+    /* retrieve the source */
+
     src_pixmap = XCreatePixmap( gdi_display, root_window, width, height, physDevDst->depth );
+    if (physDevSrc->depth == 1)
+    {
+        /* MSDN says if StretchBlt must convert a bitmap from monochrome
+           to color or vice versa, the foreground and background color of
+           the device context are used.  In fact, it also applies to the
+           case when it is converted from mono to mono. */
+        if (X11DRV_PALETTE_XPixelToPalette && physDevDst->depth != 1)
+        {
+            XSetBackground( gdi_display, gc, X11DRV_PALETTE_XPixelToPalette[physDevDst->textPixel] );
+            XSetForeground( gdi_display, gc, X11DRV_PALETTE_XPixelToPalette[physDevDst->backgroundPixel]);
+        }
+        else
+        {
+            XSetBackground( gdi_display, gc, physDevDst->textPixel );
+            XSetForeground( gdi_display, gc, physDevDst->backgroundPixel );
+        }
+        XCopyPlane( gdi_display, physDevSrc->drawable, src_pixmap, gc,
+                    physDevSrc->dc_rect.left + src->visrect.left,
+                    physDevSrc->dc_rect.top + src->visrect.top,
+                    width, height, 0, 0, 1 );
+    }
+    else  /* color -> color */
+    {
+        XCopyArea( gdi_display, physDevSrc->drawable, src_pixmap, gc,
+                   physDevSrc->dc_rect.left + src->visrect.left,
+                   physDevSrc->dc_rect.top + src->visrect.top,
+                   width, height, 0, 0 );
+    }
     wine_tsx11_unlock();
 
-    BITBLT_GetSrcArea( physDevSrc, physDevDst, src_pixmap, tmpGC, &src->visrect );
-    execute_rop( physDevDst, src_pixmap, tmpGC, &dst->visrect, rop );
+    execute_rop( physDevDst, src_pixmap, gc, &dst->visrect, rop );
 
     wine_tsx11_lock();
     XFreePixmap( gdi_display, src_pixmap );
-    XFreeGC( gdi_display, tmpGC );
+    XFreeGC( gdi_display, gc );
     wine_tsx11_unlock();
 
 done:
