@@ -31,6 +31,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
+#include "winreg.h"
 #include "usp10.h"
 
 #include "usp10_internal.h"
@@ -147,142 +148,187 @@ typedef struct _scriptData
     SCRIPT_ANALYSIS a;
     SCRIPT_PROPERTIES props;
     OPENTYPE_TAG scriptTag;
+    WCHAR fallbackFont[LF_FACESIZE];
 } scriptData;
 
 /* the must be in order so that the index matches the Script value */
 static const scriptData scriptInformation[] = {
     {{SCRIPT_UNDEFINED, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_NEUTRAL, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     0x00000000},
+     0x00000000,
+     {0}},
     {{Script_Latin, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_ENGLISH, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
-     MS_MAKE_TAG('l','a','t','n')},
+     MS_MAKE_TAG('l','a','t','n'),
+     {0}},
     {{Script_CR, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_NEUTRAL, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     0x00000000},
+     0x00000000,
+     {0}},
     {{Script_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_ENGLISH, 1, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     0x00000000},
+     0x00000000,
+     {0}},
     {{Script_Control, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_ENGLISH, 0, 1, 0, 0, ANSI_CHARSET, 1, 0, 0, 0, 0, 0, 1, 0, 0},
-     0x00000000},
+     0x00000000,
+     {0}},
     {{Script_Punctuation, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_NEUTRAL, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     0x00000000},
+     0x00000000,
+     {0}},
     {{Script_Arabic, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
      {LANG_ARABIC, 0, 1, 0, 0, ARABIC_CHARSET, 0, 0, 0, 0, 0, 0, 1, 1, 0},
-     MS_MAKE_TAG('a','r','a','b')},
+     MS_MAKE_TAG('a','r','a','b'),
+     {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0}},
     {{Script_Arabic_Numeric, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
      {LANG_ARABIC, 1, 1, 0, 0, ARABIC_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
-     MS_MAKE_TAG('a','r','a','b')},
+     MS_MAKE_TAG('a','r','a','b'),
+     {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0}},
     {{Script_Hebrew, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
      {LANG_HEBREW, 0, 1, 0, 1, HEBREW_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     MS_MAKE_TAG('h','e','b','r')},
+     MS_MAKE_TAG('h','e','b','r'),
+     {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0}},
     {{Script_Syriac, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
      {LANG_SYRIAC, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 1, 0, 0, 1, 0},
-     MS_MAKE_TAG('s','y','r','c')},
+     MS_MAKE_TAG('s','y','r','c'),
+     {'E','s','t','r','a','n','g','e','l','o',' ','E','d','e','s','s','a',0}},
     {{Script_Persian, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
      {LANG_PERSIAN, 1, 1, 0, 0, ARABIC_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     MS_MAKE_TAG('s','y','r','c')},
+     MS_MAKE_TAG('s','y','r','c'),
+     {'E','s','t','r','a','n','g','e','l','o',' ','E','d','e','s','s','a',0}},
     {{Script_Thaana, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
      {LANG_DIVEHI, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     MS_MAKE_TAG('t','h','a','a')},
+     MS_MAKE_TAG('t','h','a','a'),
+     {'M','V',' ','B','o','l','i',0}},
     {{Script_Greek, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_GREEK, 0, 0, 0, 0, GREEK_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     MS_MAKE_TAG('g','r','e','k')},
+     MS_MAKE_TAG('g','r','e','k'),
+     {0}},
     {{Script_Cyrillic, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_RUSSIAN, 0, 0, 0, 0, RUSSIAN_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     MS_MAKE_TAG('c','y','r','l')},
+     MS_MAKE_TAG('c','y','r','l'),
+     {0}},
     {{Script_Armenian, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_ARMENIAN, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
-     MS_MAKE_TAG('a','r','m','n')},
+     MS_MAKE_TAG('a','r','m','n'),
+     {0}},
     {{Script_Georgian, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_GEORGIAN, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
-     MS_MAKE_TAG('g','e','o','r')},
+     MS_MAKE_TAG('g','e','o','r'),
+     {0}},
     {{Script_Sinhala, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_SINHALESE, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     MS_MAKE_TAG('s','i','n','h')},
+     MS_MAKE_TAG('s','i','n','h'),
+     {'I','s','k','o','o','l','a',' ','P','o','t','a',0}},
     {{Script_Tibetan, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_TIBETAN, 0, 1, 1, 1, DEFAULT_CHARSET, 0, 0, 1, 0, 1, 0, 0, 0, 0},
-     MS_MAKE_TAG('t','i','b','t')},
+     MS_MAKE_TAG('t','i','b','t'),
+     {'M','i','c','r','o','s','o','f','t',' ','H','i','m','a','l','a','y','a',0}},
     {{Script_Tibetan_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_TIBETAN, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     MS_MAKE_TAG('t','i','b','t')},
+     MS_MAKE_TAG('t','i','b','t'),
+     {'M','i','c','r','o','s','o','f','t',' ','H','i','m','a','l','a','y','a',0}},
     {{Script_Phags_pa, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_MONGOLIAN, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     MS_MAKE_TAG('p','h','a','g')},
+     MS_MAKE_TAG('p','h','a','g'),
+     {'M','i','c','r','o','s','o','f','t',' ','P','h','a','g','s','P','a',0}},
     {{Script_Thai, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_THAI, 0, 1, 1, 1, THAI_CHARSET, 0, 0, 1, 0, 1, 0, 0, 0, 1},
-     MS_MAKE_TAG('t','h','a','i')},
+     MS_MAKE_TAG('t','h','a','i'),
+     {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0}},
     {{Script_Thai_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_THAI, 1, 1, 0, 0, THAI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     MS_MAKE_TAG('t','h','a','i')},
+     MS_MAKE_TAG('t','h','a','i'),
+     {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0}},
     {{Script_Lao, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_LAO, 0, 1, 1, 1, DEFAULT_CHARSET, 0, 0, 1, 0, 1, 0, 0, 0, 0},
-     MS_MAKE_TAG('l','a','o',' ')},
+     MS_MAKE_TAG('l','a','o',' '),
+     {'D','o','k','C','h','a','m','p','a',0}},
     {{Script_Lao_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_LAO, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     MS_MAKE_TAG('l','a','o',' ')},
+     MS_MAKE_TAG('l','a','o',' '),
+     {'D','o','k','C','h','a','m','p','a',0}},
     {{Script_Devanagari, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_HINDI, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-     MS_MAKE_TAG('d','e','v','a')},
+     MS_MAKE_TAG('d','e','v','a'),
+     {'M','a','n','g','a','l',0}},
     {{Script_Devanagari_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_HINDI, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     MS_MAKE_TAG('d','e','v','a')},
+     MS_MAKE_TAG('d','e','v','a'),
+     {'M','a','n','g','a','l',0}},
     {{Script_Bengali, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_BENGALI, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-     MS_MAKE_TAG('b','e','n','g')},
+     MS_MAKE_TAG('b','e','n','g'),
+     {'V','r','i','n','d','a',0}},
     {{Script_Bengali_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_BENGALI, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     MS_MAKE_TAG('b','e','n','g')},
+     MS_MAKE_TAG('b','e','n','g'),
+     {'V','r','i','n','d','a',0}},
     {{Script_Bengali_Currency, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_BENGALI, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     MS_MAKE_TAG('b','e','n','g')},
+     MS_MAKE_TAG('b','e','n','g'),
+     {'V','r','i','n','d','a',0}},
     {{Script_Gurmukhi, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_PUNJABI, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-     MS_MAKE_TAG('g','u','r','u')},
+     MS_MAKE_TAG('g','u','r','u'),
+     {'R','a','a','v','i',0}},
     {{Script_Gurmukhi_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_PUNJABI, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     MS_MAKE_TAG('g','u','r','u')},
+     MS_MAKE_TAG('g','u','r','u'),
+     {'R','a','a','v','i',0}},
     {{Script_Gujarati, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_GUJARATI, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-     MS_MAKE_TAG('g','u','j','r')},
+     MS_MAKE_TAG('g','u','j','r'),
+     {'S','h','r','u','t','i',0}},
     {{Script_Gujarati_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_GUJARATI, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     MS_MAKE_TAG('g','u','j','r')},
+     MS_MAKE_TAG('g','u','j','r'),
+     {'S','h','r','u','t','i',0}},
     {{Script_Gujarati_Currency, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_GUJARATI, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     MS_MAKE_TAG('g','u','j','r')},
+     MS_MAKE_TAG('g','u','j','r'),
+     {'S','h','r','u','t','i',0}},
     {{Script_Oriya, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_ORIYA, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-     MS_MAKE_TAG('o','r','y','a')},
+     MS_MAKE_TAG('o','r','y','a'),
+     {'K','a','l','i','n','g','a',0}},
     {{Script_Oriya_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_ORIYA, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     MS_MAKE_TAG('o','r','y','a')},
+     MS_MAKE_TAG('o','r','y','a'),
+     {'K','a','l','i','n','g','a',0}},
     {{Script_Tamil, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_TAMIL, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-     MS_MAKE_TAG('t','a','m','l')},
+     MS_MAKE_TAG('t','a','m','l'),
+     {'L','a','t','h','a',0}},
     {{Script_Tamil_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_TAMIL, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     MS_MAKE_TAG('t','a','m','l')},
+     MS_MAKE_TAG('t','a','m','l'),
+     {'L','a','t','h','a',0}},
     {{Script_Telugu, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_TELUGU, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-     MS_MAKE_TAG('t','e','l','u')},
+     MS_MAKE_TAG('t','e','l','u'),
+     {'G','a','u','t','a','m','i',0}},
     {{Script_Telugu_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_TELUGU, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     MS_MAKE_TAG('t','e','l','u')},
+     MS_MAKE_TAG('t','e','l','u'),
+     {'G','a','u','t','a','m','i',0}},
     {{Script_Kannada, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_KANNADA, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-     MS_MAKE_TAG('k','n','d','a')},
+     MS_MAKE_TAG('k','n','d','a'),
+     {'T','u','n','g','a',0}},
     {{Script_Kannada_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_KANNADA, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     MS_MAKE_TAG('k','n','d','a')},
+     MS_MAKE_TAG('k','n','d','a'),
+     {'T','u','n','g','a',0}},
     {{Script_Malayalam, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_MALAYALAM, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 1, 0, 0, 0, 0},
-     MS_MAKE_TAG('m','l','y','m')},
+     MS_MAKE_TAG('m','l','y','m'),
+     {'K','a','r','t','i','k','a',0}},
     {{Script_Malayalam_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_MALAYALAM, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-     MS_MAKE_TAG('m','l','y','m')},
+     MS_MAKE_TAG('m','l','y','m'),
+     {'K','a','r','t','i','k','a',0}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -312,6 +358,7 @@ static const SCRIPT_PROPERTIES *script_props[] =
 };
 
 typedef struct {
+    ScriptCache *sc;
     int numGlyphs;
     WORD* glyphs;
     WORD* pwLogClust;
@@ -320,6 +367,7 @@ typedef struct {
     GOFFSET* pGoffset;
     ABC* abc;
     int iMaxPosX;
+    HFONT fallbackFont;
 } StringGlyphs;
 
 typedef struct {
@@ -327,7 +375,6 @@ typedef struct {
     DWORD dwFlags;
     BOOL invalid;
     int clip_len;
-    ScriptCache *sc;
     int cItems;
     int cMaxGlyphs;
     SCRIPT_ITEM* pItem;
@@ -964,6 +1011,55 @@ static inline int getGivenTabWidth(ScriptCache *psc, SCRIPT_TABDEF *pTabdef, int
 }
 
 /***********************************************************************
+ * Helper function for ScriptStringAnalyse
+ */
+static BOOL requires_fallback(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa,
+                              const WCHAR *pwcInChars, int cChars )
+{
+    /* FIXME: When to properly fallback is still a bit of a mystery */
+    WORD *glyphs;
+
+    if (psa->fNoGlyphIndex)
+        return FALSE;
+
+    if (init_script_cache(hdc, psc) != S_OK)
+        return FALSE;
+
+    if (SHAPE_CheckFontForRequiredFeatures(hdc, (ScriptCache *)*psc, psa) != S_OK)
+        return TRUE;
+
+    glyphs = heap_alloc(sizeof(WORD) * cChars);
+    if (ScriptGetCMap(hdc, psc, pwcInChars, cChars, 0, glyphs) != S_OK)
+    {
+        heap_free(glyphs);
+        return TRUE;
+    }
+    heap_free(glyphs);
+
+    return FALSE;
+}
+
+static void find_fallback_font(DWORD scriptid, LPWSTR FaceName)
+{
+    HKEY hkey;
+
+    if (!RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Uniscribe\\Fallback", &hkey))
+    {
+        static const WCHAR szFmt[] = {'%','x',0};
+        WCHAR value[10];
+        DWORD count = LF_FACESIZE * sizeof(WCHAR);
+        DWORD type;
+
+        sprintfW(value, szFmt, scriptInformation[scriptid].scriptTag);
+        if (RegQueryValueExW(hkey, value, 0, &type, (LPBYTE)FaceName, &count))
+            lstrcpyW(FaceName,scriptInformation[scriptid].fallbackFont);
+        RegCloseKey(hkey);
+    }
+    else
+        lstrcpyW(FaceName,scriptInformation[scriptid].fallbackFont);
+}
+
+/***********************************************************************
  *      ScriptStringAnalyse (USP10.@)
  *
  */
@@ -1061,7 +1157,7 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
 
         for (i = 0; i < analysis->numItems; i++)
         {
-            SCRIPT_CACHE *sc = (SCRIPT_CACHE *)&analysis->sc;
+            SCRIPT_CACHE *sc = (SCRIPT_CACHE*)&analysis->glyphs[i].sc;
             int cChar = analysis->pItem[i+1].iCharPos - analysis->pItem[i].iCharPos;
             int numGlyphs = 1.5 * cChar + 16;
             WORD *glyphs = heap_alloc_zero(sizeof(WORD) * numGlyphs);
@@ -1071,14 +1167,33 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
             GOFFSET *pGoffset = heap_alloc_zero(sizeof(GOFFSET) * numGlyphs);
             ABC *abc = heap_alloc_zero(sizeof(ABC));
             int numGlyphsReturned;
+            HFONT originalFont = 0x0;
 
             /* FIXME: non unicode strings */
             const WCHAR* pStr = (const WCHAR*)pString;
+            analysis->glyphs[i].fallbackFont = NULL;
+
+            if ((dwFlags & SSA_FALLBACK) && requires_fallback(hdc, sc, &analysis->pItem[i].a, &pStr[analysis->pItem[i].iCharPos], cChar))
+            {
+                LOGFONTW lf;
+                GetObjectW(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), & lf);
+                lf.lfCharSet = scriptInformation[analysis->pItem[i].a.eScript].props.bCharSet;
+                find_fallback_font(analysis->pItem[i].a.eScript, lf.lfFaceName);
+                analysis->glyphs[i].fallbackFont = CreateFontIndirectW(&lf);
+                if (analysis->glyphs[i].fallbackFont)
+                {
+                    ScriptFreeCache(sc);
+                    originalFont = SelectObject(hdc, analysis->glyphs[i].fallbackFont);
+                }
+            }
+
             hr = ScriptShape(hdc, sc, &pStr[analysis->pItem[i].iCharPos],
                              cChar, numGlyphs, &analysis->pItem[i].a,
                              glyphs, pwLogClust, psva, &numGlyphsReturned);
             hr = ScriptPlace(hdc, sc, glyphs, numGlyphsReturned, psva, &analysis->pItem[i].a,
                              piAdvance, pGoffset, abc);
+            if (originalFont)
+                SelectObject(hdc,originalFont);
 
             if (dwFlags & SSA_TAB)
             {
@@ -1086,7 +1201,7 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
                 for (tabi = 0; tabi < cChar; tabi++)
                 {
                     if (pStr[analysis->pItem[i].iCharPos+tabi] == 0x0009)
-                        piAdvance[tabi] = getGivenTabWidth(analysis->sc, pTabdef, analysis->pItem[i].iCharPos+tabi, tab_x);
+                        piAdvance[tabi] = getGivenTabWidth(analysis->glyphs[i].sc, pTabdef, analysis->pItem[i].iCharPos+tabi, tab_x);
                     tab_x+=piAdvance[tabi];
                 }
             }
@@ -1122,7 +1237,6 @@ error:
     heap_free(analysis->logattrs);
     heap_free(analysis->pItem);
     heap_free(analysis->logical2visual);
-    heap_free(analysis->sc);
     heap_free(analysis);
     return hr;
 }
@@ -1146,6 +1260,7 @@ static HRESULT SS_ItemOut( SCRIPT_STRING_ANALYSIS ssa,
     INT BkMode = 0;
     INT runStart, runEnd;
     INT iGlyph, cGlyphs;
+    HFONT oldFont = 0x0;
 
     TRACE("(%p,%d,%d,%d,%d,%d, 0x%1x, %d, %d)\n",
          ssa, iX, iY, iItem, cStart, cEnd, uOptions, fSelected, fDisabled);
@@ -1167,8 +1282,9 @@ static HRESULT SS_ItemOut( SCRIPT_STRING_ANALYSIS ssa,
             TextColor = GetTextColor(analysis->hdc);
             SetTextColor(analysis->hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
         }
-
     }
+    if (analysis->glyphs[iItem].fallbackFont)
+        oldFont = SelectObject(analysis->hdc, analysis->glyphs[iItem].fallbackFont);
 
     if (cStart >= 0 && analysis->pItem[iItem+1].iCharPos > cStart && analysis->pItem[iItem].iCharPos <= cStart)
         runStart = cStart - analysis->pItem[iItem].iCharPos;
@@ -1206,7 +1322,8 @@ static HRESULT SS_ItemOut( SCRIPT_STRING_ANALYSIS ssa,
 
     cGlyphs++;
 
-    hr = ScriptTextOut(analysis->hdc, (SCRIPT_CACHE *)&analysis->sc, iX + off_x,
+    hr = ScriptTextOut(analysis->hdc,
+                       (SCRIPT_CACHE *)&analysis->glyphs[iItem].sc, iX + off_x,
                        iY, uOptions, prc, &analysis->pItem[iItem].a, NULL, 0,
                        &analysis->glyphs[iItem].glyphs[iGlyph], cGlyphs,
                        &analysis->glyphs[iItem].piAdvance[iGlyph], NULL,
@@ -1221,6 +1338,8 @@ static HRESULT SS_ItemOut( SCRIPT_STRING_ANALYSIS ssa,
         if (!fDisabled)
             SetTextColor(analysis->hdc, TextColor);
     }
+    if (analysis->glyphs[iItem].fallbackFont)
+        SelectObject(analysis->hdc, oldFont);
 
     return hr;
 }
@@ -1447,7 +1566,6 @@ HRESULT WINAPI ScriptStringFree(SCRIPT_STRING_ANALYSIS *pssa)
     if (!pssa || !(analysis = *pssa)) return E_INVALIDARG;
 
     invalid = analysis->invalid;
-    ScriptFreeCache((SCRIPT_CACHE *)&analysis->sc);
 
     if (analysis->glyphs)
     {
@@ -1459,6 +1577,10 @@ HRESULT WINAPI ScriptStringFree(SCRIPT_STRING_ANALYSIS *pssa)
             heap_free(analysis->glyphs[i].psva);
             heap_free(analysis->glyphs[i].pGoffset);
             heap_free(analysis->glyphs[i].abc);
+            if (analysis->glyphs[i].fallbackFont)
+                DeleteObject(analysis->glyphs[i].fallbackFont);
+            ScriptFreeCache((SCRIPT_CACHE *)&analysis->glyphs[i].sc);
+            heap_free(analysis->glyphs[i].sc);
         }
         heap_free(analysis->glyphs);
     }
@@ -1466,7 +1588,6 @@ HRESULT WINAPI ScriptStringFree(SCRIPT_STRING_ANALYSIS *pssa)
     heap_free(analysis->pItem);
     heap_free(analysis->logattrs);
     heap_free(analysis->sz);
-    heap_free(analysis->sc);
     heap_free(analysis->logical2visual);
     heap_free(analysis);
 
@@ -2439,12 +2560,16 @@ const SIZE * WINAPI ScriptString_pSize(SCRIPT_STRING_ANALYSIS ssa)
     if (!analysis->sz)
     {
         if (!(analysis->sz = heap_alloc(sizeof(SIZE)))) return NULL;
-        analysis->sz->cy = analysis->sc->tm.tmHeight;
+        analysis->sz->cy = analysis->glyphs[0].sc->tm.tmHeight;
 
         analysis->sz->cx = 0;
         for (i = 0; i < analysis->numItems; i++)
+        {
+            if (analysis->glyphs[i].sc->tm.tmHeight > analysis->sz->cy)
+                analysis->sz->cy = analysis->glyphs[i].sc->tm.tmHeight;
             for (j = 0; j < analysis->glyphs[i].numGlyphs; j++)
                 analysis->sz->cx += analysis->glyphs[i].piAdvance[j];
+        }
     }
     return analysis->sz;
 }
