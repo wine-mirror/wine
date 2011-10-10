@@ -7926,16 +7926,16 @@ msgstr ""
 "PATH %PATH%;c:\\temp\n"
 
 #: cmd.rc:128
-#, fuzzy
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
 "It is mainly useful in batch files to allow the user to read the output\n"
 "of a previous command before it scrolls off the screen.\n"
 msgstr ""
-"PAUSE는 'Press Return key to continue' 메세지를 화면에 보여주고\n"
-"사용자가 리턴 키를 누를 때까지 기다림. 이것은 주로 배치파일에서  스크린을\n"
-"넘치게 하는 이전 명령의 결과를 읽도록 한다\n"
+"PAUSE 는 사용자가 아무 키나 누르라는 메세지를 화면에 보여줍니다.\n"
+"\n"
+"사용자가 화면에서 스크롤 하기 전에 이전 명령의 결과를 읽을 수 있도록\n"
+"배치파일에서 주로 유용하게 사용합니다."
 
 #: cmd.rc:149
 msgid ""
@@ -8199,7 +8199,6 @@ msgstr ""
 "호출한 셀로 돌아갑니다.\n"
 
 #: cmd.rc:289
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -8259,6 +8258,7 @@ msgstr ""
 "MORE\t\t페이지 출력 보여주기\n"
 "MOVE\t\t파일 이나 여러 파일,그리고 디렉토리 구조 이동\n"
 "PATH\t\t탐색 경로 보여주거나 설정하기\n"
+"PAUSE\t\t배치 파일에서 실행을 정지시킴\n"
 "POPD\t\tPUSHD로 마지막으로 저장했던 디렉토리로 돌아가기\n"
 "PROMPT\t\t명령 프롬프트 바꾸기\n"
 "PUSHD\t\t현재 디렉토리를 저장하고, 새 디렉토리로 바꾸기\n"
@@ -8398,13 +8398,12 @@ msgid "PATH not found\n"
 msgstr "PATH를 찾을 수 없습니다\n"
 
 #: cmd.rc:321
-#, fuzzy
 msgid "Press any key to continue... "
-msgstr "리턴 키를 누르면 계속: "
+msgstr "아무 키나 누르면 진행함... "
 
 #: cmd.rc:322
 msgid "Wine Command Prompt"
-msgstr "Wine 명령 입력대기"
+msgstr "Wine 명령 프롬프트"
 
 #: cmd.rc:323
 msgid "CMD Version %s\n"
@@ -8412,7 +8411,7 @@ msgstr "CMD 버젼 %s\n"
 
 #: cmd.rc:324
 msgid "More? "
-msgstr " 더? "
+msgstr "더? "
 
 #: cmd.rc:325
 msgid "The input line is too long.\n"
@@ -9680,17 +9679,16 @@ msgid "Close message sent to top-level windows of process with PID %u.\n"
 msgstr "PID %u 의 프로세스의 최상위 창에 닫는 메세지 보냈습니다.\n"
 
 #: taskkill.rc:34
-#, fuzzy
 msgid ""
 "Close message sent to top-level windows of process \"%s\" with PID %u.\n"
-msgstr "PID %u 의 프로세스 \"%s\"의 최상위 창에 닫는 메세지 보냈습니다.\n"
+msgstr ""
+"PID %u 의 프로세스 \"%s\"의 최상위 창에 닫으라는 메세지를 보냈습니다.\n"
 
 #: taskkill.rc:35
 msgid "Process with PID %u was forcibly terminated.\n"
 msgstr "PID %u 의 프로세스는 강제로 종료되었습니다.\n"
 
 #: taskkill.rc:36
-#, fuzzy
 msgid "Process \"%s\" with PID %u was forcibly terminated.\n"
 msgstr "PID %u 의 프로세스 \"%s\" 는 강제로 종료되엇습니다.\n"
 
@@ -9700,7 +9698,7 @@ msgstr "오류: 프로세스 \"%s\"를 찾을 수 없습니다.\n"
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
-msgstr "오류: 프로세스 목록을 열거 할 수 업습니다.\n"
+msgstr "오류: 프로세스 목록을 열거 할 수 없습니다.\n"
 
 #: taskkill.rc:39
 msgid "Error: Unable to terminate process \"%s\".\n"
@@ -10348,14 +10346,12 @@ msgid "(None)"
 msgstr "(없음)"
 
 #: winecfg.rc:89
-#, fuzzy
 msgid "Audio test failed!"
-msgstr "하드디스크 재설정 실패\n"
+msgstr "오디오 테스트 실패\n"
 
 #: winecfg.rc:91
-#, fuzzy
 msgid "(System default)"
-msgstr "시스템 경로"
+msgstr "(시스템 기본)"
 
 #: winecfg.rc:51
 msgid ""
@@ -11313,7 +11309,6 @@ msgid "Overwrite %s? (Yes|No|All)\n"
 msgstr "%s를 덮어쓰겠습니까? (예|아니오|모두)\n"
 
 #: xcopy.rc:37
-#, fuzzy
 msgid "Copying of '%s' to '%s' failed with r/c %d\n"
 msgstr " r/c %d로 '%s'를  '%s'로 복사 실패 \n"
 
