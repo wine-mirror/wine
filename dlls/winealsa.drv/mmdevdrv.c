@@ -1043,18 +1043,12 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
 exit:
     HeapFree(GetProcessHeap(), 0, sw_params);
     if(FAILED(hr)){
-        if(This->local_buffer){
-            HeapFree(GetProcessHeap(), 0, This->local_buffer);
-            This->local_buffer = NULL;
-        }
-        if(This->fmt){
-            CoTaskMemFree(This->fmt);
-            This->fmt = NULL;
-        }
-        if(This->vols){
-            HeapFree(GetProcessHeap(), 0, This->vols);
-            This->vols = NULL;
-        }
+        HeapFree(GetProcessHeap(), 0, This->local_buffer);
+        This->local_buffer = NULL;
+        CoTaskMemFree(This->fmt);
+        This->fmt = NULL;
+        HeapFree(GetProcessHeap(), 0, This->vols);
+        This->vols = NULL;
     }
 
     LeaveCriticalSection(&This->lock);
