@@ -360,7 +360,7 @@ INT PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_data,
 	}
       }
     default:
-        FIXME("Unimplemented code 0x%x\n", nEscape);
+        FIXME("Unimplemented code %d\n", nEscape);
 	return 0;
     }
 }
