@@ -897,6 +897,72 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
     return res;
 }
 
+static inline int getGivenTabWidth(ScriptCache *psc, SCRIPT_TABDEF *pTabdef, int charPos, int current_x)
+{
+    int defWidth;
+    int cTabStops=0;
+    INT *lpTabPos = NULL;
+    INT nTabOrg = 0;
+    INT x = 0;
+
+    if (pTabdef)
+        lpTabPos = pTabdef->pTabStops;
+
+    if (pTabdef && pTabdef->iTabOrigin)
+    {
+        if (pTabdef->iScale)
+            nTabOrg = (pTabdef->iTabOrigin * pTabdef->iScale)/4;
+        else
+            nTabOrg = pTabdef->iTabOrigin * psc->tm.tmAveCharWidth;
+    }
+
+    if (pTabdef)
+        cTabStops = pTabdef->cTabStops;
+
+    if (cTabStops == 1)
+    {
+        if (pTabdef->iScale)
+            defWidth = ((pTabdef->pTabStops[0])*pTabdef->iScale) / 4;
+        else
+            defWidth = (pTabdef->pTabStops[0])*psc->tm.tmAveCharWidth;
+        cTabStops = 0;
+    }
+    else
+        defWidth = 8 * psc->tm.tmAveCharWidth;
+
+    for (; cTabStops>0 ; lpTabPos++, cTabStops--)
+    {
+        int position = *lpTabPos;
+        if (position < 0)
+            position = -1 * position;
+        if (pTabdef->iScale)
+            position = (position * pTabdef->iScale) / 4;
+        else
+            position = position * psc->tm.tmAveCharWidth;
+
+        if( nTabOrg + position > current_x)
+        {
+            if( *lpTabPos >= 0)
+            {
+                /* a left aligned tab */
+                x = (nTabOrg + *lpTabPos) - current_x;
+                break;
+            }
+            else
+            {
+                FIXME("Negative tabstop\n");
+                break;
+            }
+        }
+    }
+    if ((!cTabStops) && (defWidth > 0))
+        x =((((current_x - nTabOrg) / defWidth)+1) * defWidth) - current_x;
+    else if ((!cTabStops) && (defWidth < 0))
+        FIXME("TODO: Negative defWidth\n");
+
+    return x;
+}
+
 /***********************************************************************
  *      ScriptStringAnalyse (USP10.@)
  *
@@ -989,6 +1055,7 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
 
     if (dwFlags & SSA_GLYPHS)
     {
+        int tab_x = 0;
         if (!(analysis->glyphs = heap_alloc_zero(sizeof(StringGlyphs) * analysis->numItems)))
             goto error;
 
@@ -1012,6 +1079,17 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
                              glyphs, pwLogClust, psva, &numGlyphsReturned);
             hr = ScriptPlace(hdc, sc, glyphs, numGlyphsReturned, psva, &analysis->pItem[i].a,
                              piAdvance, pGoffset, abc);
+
+            if (dwFlags & SSA_TAB)
+            {
+                int tabi = 0;
+                for (tabi = 0; tabi < cChar; tabi++)
+                {
+                    if (pStr[analysis->pItem[i].iCharPos+tabi] == 0x0009)
+                        piAdvance[tabi] = getGivenTabWidth(analysis->sc, pTabdef, analysis->pItem[i].iCharPos+tabi, tab_x);
+                    tab_x+=piAdvance[tabi];
+                }
+            }
 
             analysis->glyphs[i].numGlyphs = numGlyphsReturned;
             analysis->glyphs[i].glyphs = glyphs;
@@ -1798,6 +1876,9 @@ HRESULT WINAPI ScriptShapeOpenType( HDC hdc, SCRIPT_CACHE *psc,
                 chInput = mirror_char(pwcChars[idx]);
             else
                 chInput = pwcChars[idx];
+            /* special case for tabs */
+            if (chInput == 0x0009)
+                chInput = 0x0020;
             if (!(pwOutGlyphs[i] = get_cache_glyph(psc, chInput)))
             {
                 WORD glyph;
