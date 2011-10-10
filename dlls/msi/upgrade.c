@@ -185,8 +185,8 @@ static UINT ITERATE_FindRelatedProducts(MSIRECORD *rec, LPVOID param)
             if (!check_language(check, language, attributes))
             {
                 index ++;
-                continue;
                 TRACE("language doesn't match\n");
+                continue;
             }
             TRACE("found related product\n");
 
