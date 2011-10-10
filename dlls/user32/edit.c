@@ -53,6 +53,7 @@
 #include "winnt.h"
 #include "win.h"
 #include "imm.h"
+#include "usp10.h"
 #include "wine/unicode.h"
 #include "controls.h"
 #include "user_private.h"
@@ -153,6 +154,10 @@ typedef struct
 	 */
 	UINT composition_len;   /* length of composition, 0 == no composition */
 	int composition_start;  /* the character position for the composition */
+	/*
+	 * Uniscribe Data
+	 */
+	SCRIPT_LOGATTR *logAttr;
 } EDITSTATE;
 
 
@@ -247,6 +252,14 @@ static HBRUSH EDIT_NotifyCtlColor(EDITSTATE *es, HDC hdc)
 }
 
 
+static inline UINT get_text_length(EDITSTATE *es)
+{
+    if(es->text_length == (UINT)-1)
+        es->text_length = strlenW(es->text);
+    return es->text_length;
+}
+
+
 /*********************************************************************
  *
  *	EDIT_WordBreakProc
@@ -256,61 +269,51 @@ static HBRUSH EDIT_NotifyCtlColor(EDITSTATE *es, HDC hdc)
  *		allows to be called without linebreaks between s[0] up to
  *		s[count - 1].  Remember it is only called
  *		internally, so we can decide this for ourselves.
+ *		Additional we will always be breaking the full string.
  *
  */
-static INT EDIT_WordBreakProc(LPWSTR s, INT index, INT count, INT action)
+static INT EDIT_WordBreakProc(EDITSTATE *es, LPWSTR s, INT index, INT count, INT action)
 {
-	INT ret = 0;
+    INT ret = 0;
 
-	TRACE("s=%p, index=%d, count=%d, action=%d\n", s, index, count, action);
+    TRACE("s=%p, index=%d, count=%d, action=%d\n", s, index, count, action);
 
-	if(!s) return 0;
+    if(!s) return 0;
 
-	switch (action) {
-	case WB_LEFT:
-		if (!count)
-			break;
-		if (index)
-			index--;
-		if (s[index] == ' ') {
-			while (index && (s[index] == ' '))
-				index--;
-			if (index) {
-				while (index && (s[index] != ' '))
-					index--;
-				if (s[index] == ' ')
-					index++;
-			}
-		} else {
-			while (index && (s[index] != ' '))
-				index--;
-			if (s[index] == ' ')
-				index++;
-		}
-		ret = index;
-		break;
-	case WB_RIGHT:
-		if (!count)
-			break;
-		if (index)
-			index--;
-		if (s[index] == ' ')
-			while ((index < count) && (s[index] == ' ')) index++;
-		else {
-			while (s[index] && (s[index] != ' ') && (index < count))
-				index++;
-			while ((s[index] == ' ') && (index < count)) index++;
-		}
-		ret = index;
-		break;
-	case WB_ISDELIMITER:
-		ret = (s[index] == ' ');
-		break;
-	default:
-		ERR("unknown action code, please report !\n");
-		break;
-	}
-	return ret;
+    if (!es->logAttr)
+    {
+        SCRIPT_ANALYSIS psa;
+
+        memset(&psa,0,sizeof(SCRIPT_ANALYSIS));
+        psa.eScript = SCRIPT_UNDEFINED;
+
+        es->logAttr = HeapAlloc(GetProcessHeap(), 0, sizeof(SCRIPT_LOGATTR) * get_text_length(es));
+        ScriptBreak(es->text, get_text_length(es), &psa, es->logAttr);
+    }
+
+    switch (action) {
+    case WB_LEFT:
+        if (index)
+            index--;
+        while (index && !es->logAttr[index].fSoftBreak)
+            index--;
+        ret = index;
+        break;
+    case WB_RIGHT:
+        if (!count)
+            break;
+        while (s[index] && index < count && !es->logAttr[index].fSoftBreak)
+            index++;
+        ret = index;
+        break;
+    case WB_ISDELIMITER:
+        ret = es->logAttr[index].fWhiteSpace;
+        break;
+    default:
+        ERR("unknown action code, please report !\n");
+        break;
+    }
+    return ret;
 }
 
 
@@ -357,7 +360,7 @@ static INT EDIT_CallWordBreakProc(EDITSTATE *es, INT start, INT index, INT count
 	    }
         }
 	else
-            ret = EDIT_WordBreakProc(es->text + start, index, count, action);
+            ret = EDIT_WordBreakProc(es, es->text, index+start, count+start, action) - start;
 
 	return ret;
 }
@@ -640,14 +643,6 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 		SelectObject(dc, old_font);
 
 	ReleaseDC(es->hwndSelf, dc);
-}
-
-
-static inline UINT get_text_length(EDITSTATE *es)
-{
-    if(es->text_length == (UINT)-1)
-        es->text_length = strlenW(es->text);
-    return es->text_length;
 }
 
 /*********************************************************************
@@ -1086,6 +1081,9 @@ static void EDIT_GetLineRect(EDITSTATE *es, INT line, INT scol, INT ecol, LPRECT
 static inline void text_buffer_changed(EDITSTATE *es)
 {
     es->text_length = (UINT)-1;
+
+    HeapFree( GetProcessHeap(), 0, es->logAttr );
+    es->logAttr = NULL;
 }
 
 /*********************************************************************
@@ -4318,6 +4316,7 @@ cleanup:
 	HeapFree(GetProcessHeap(), 0, es->first_line_def);
 	HeapFree(GetProcessHeap(), 0, es->undo_text);
 	if (es->hloc32W) LocalFree(es->hloc32W);
+	HeapFree(GetProcessHeap(), 0, es->logAttr);
 	HeapFree(GetProcessHeap(), 0, es);
 	return FALSE;
 }
