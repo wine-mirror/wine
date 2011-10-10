@@ -919,11 +919,8 @@ static UINT WHERE_delete( struct tagMSIVIEW *view )
 
     free_reorder(wv);
 
-    if (wv->order_info)
-    {
-        msi_free(wv->order_info);
-        wv->order_info = NULL;
-    }
+    msi_free(wv->order_info);
+    wv->order_info = NULL;
 
     msiobj_release( &wv->db->hdr );
     msi_free( wv );
