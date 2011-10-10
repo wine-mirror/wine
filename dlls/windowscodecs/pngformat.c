@@ -364,6 +364,7 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
     case PNG_COLOR_TYPE_GRAY_ALPHA:
         /* WIC does not support grayscale alpha formats so use RGBA */
         ppng_set_gray_to_rgb(This->png_ptr);
+        /* fall through */
     case PNG_COLOR_TYPE_RGB_ALPHA:
         This->bpp = bit_depth * 4;
         switch (bit_depth)

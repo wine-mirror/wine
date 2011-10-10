@@ -295,6 +295,7 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
     {
     case 0: /* WhiteIsZero */
         decode_info->invert_grayscale = 1;
+        /* fall through */
     case 1: /* BlackIsZero */
         if (samples != 1)
         {
