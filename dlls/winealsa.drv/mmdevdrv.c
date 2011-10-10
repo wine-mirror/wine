@@ -50,8 +50,8 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
-static const REFERENCE_TIME DefaultPeriod = 200000;
-static const REFERENCE_TIME MinimumPeriod = 100000;
+static const REFERENCE_TIME DefaultPeriod = 100000;
+static const REFERENCE_TIME MinimumPeriod = 50000;
 
 struct ACImpl;
 typedef struct ACImpl ACImpl;
@@ -94,7 +94,7 @@ struct ACImpl {
     LONG ref;
 
     snd_pcm_t *pcm_handle;
-    snd_pcm_uframes_t period_alsa, bufsize_alsa;
+    snd_pcm_uframes_t alsa_bufsize_frames;
     snd_pcm_hw_params_t *hw_params; /* does not hold state between calls */
     snd_pcm_format_t alsa_format;
 
@@ -108,8 +108,9 @@ struct ACImpl {
     float *vols;
 
     BOOL initted, started;
+    REFERENCE_TIME mmdev_period_rt;
     UINT64 written_frames;
-    UINT32 bufsize_frames, held_frames, tmp_buffer_frames, period_us;
+    UINT32 bufsize_frames, held_frames, tmp_buffer_frames;
     UINT32 lcl_offs_frames; /* offs into local_buffer where valid data starts */
 
     HANDLE timer;
@@ -233,49 +234,6 @@ enum DriverPriority {
 int WINAPI AUDDRV_GetPriority(void)
 {
     return Priority_Neutral;
-}
-
-/**************************************************************************
- * 			wine_snd_pcm_recover		[internal]
- *
- * Code slightly modified from alsa-lib v1.0.23 snd_pcm_recover implementation.
- * used to recover from XRUN errors (buffer underflow/overflow)
- */
-static int wine_snd_pcm_recover(snd_pcm_t *pcm, int err, int silent)
-{
-    if (err > 0)
-        err = -err;
-    if (err == -EINTR)	/* nothing to do, continue */
-        return 0;
-    if (err == -EPIPE) {
-        const char *s;
-        if (snd_pcm_stream(pcm) == SND_PCM_STREAM_PLAYBACK)
-            s = "underrun";
-        else
-            s = "overrun";
-        if (!silent)
-            ERR("%s occurred\n", s);
-        err = snd_pcm_prepare(pcm);
-        if (err < 0) {
-            ERR("cannot recover from %s, prepare failed: %s\n", s, snd_strerror(err));
-            return err;
-        }
-        return 0;
-    }
-    if (err == -ESTRPIPE) {
-        while ((err = snd_pcm_resume(pcm)) == -EAGAIN)
-            /* wait until suspend flag is released */
-            poll(NULL, 0, 1000);
-        if (err < 0) {
-            err = snd_pcm_prepare(pcm);
-            if (err < 0) {
-                ERR("cannot recover from suspend, prepare failed: %s\n", snd_strerror(err));
-                return err;
-            }
-        }
-        return 0;
-    }
-    return err;
 }
 
 static BOOL alsa_try_open(const char *devnode, snd_pcm_stream_t stream)
@@ -836,9 +794,9 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
     ACImpl *This = impl_from_IAudioClient(iface);
     snd_pcm_sw_params_t *sw_params = NULL;
     snd_pcm_format_t format;
-    snd_pcm_uframes_t boundary;
+    snd_pcm_uframes_t alsa_period_frames;
     const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)fmt;
-    unsigned int time_us, rate;
+    unsigned int rate, mmdev_period_frames, alsa_period_us;
     int err, i;
     HRESULT hr = S_OK;
 
@@ -862,6 +820,9 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         TRACE("Unknown flags: %08x\n", flags);
         return E_INVALIDARG;
     }
+
+    if(!duration)
+        duration = 300000; /* 0.03s */
 
     EnterCriticalSection(&This->lock);
 
@@ -946,10 +907,10 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         goto exit;
     }
 
-    time_us = MinimumPeriod / 10;
+    alsa_period_us = duration / 100; /* duration / 10 converted to us */
     if((err = snd_pcm_hw_params_set_period_time_near(This->pcm_handle,
-                This->hw_params, &time_us, NULL)) < 0){
-        WARN("Unable to set max period time to %u: %d (%s)\n", time_us,
+                This->hw_params, &alsa_period_us, NULL)) < 0){
+        WARN("Unable to set period time near %u: %d (%s)\n", alsa_period_us,
                 err, snd_strerror(err));
         hr = E_FAIL;
         goto exit;
@@ -957,6 +918,27 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
 
     if((err = snd_pcm_hw_params(This->pcm_handle, This->hw_params)) < 0){
         WARN("Unable to set hw params: %d (%s)\n", err, snd_strerror(err));
+        hr = E_FAIL;
+        goto exit;
+    }
+
+    if((err = snd_pcm_hw_params_current(This->pcm_handle, This->hw_params)) < 0){
+        WARN("Unable to get current hw params: %d (%s)\n", err, snd_strerror(err));
+        hr = E_FAIL;
+        goto exit;
+    }
+
+    if((err = snd_pcm_hw_params_get_period_size(This->hw_params,
+                    &alsa_period_frames, NULL)) < 0){
+        WARN("Unable to get period size: %d (%s)\n", err, snd_strerror(err));
+        hr = E_FAIL;
+        goto exit;
+    }
+    TRACE("alsa_period_frames: %lu\n", alsa_period_frames);
+
+    if((err = snd_pcm_hw_params_get_buffer_size(This->hw_params,
+                    &This->alsa_bufsize_frames)) < 0){
+        WARN("Unable to get buffer size: %d (%s)\n", err, snd_strerror(err));
         hr = E_FAIL;
         goto exit;
     }
@@ -973,8 +955,46 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         goto exit;
     }
 
-    if(!duration)
-        duration = 300000; /* 0.03s */
+    if((err = snd_pcm_sw_params_set_start_threshold(This->pcm_handle,
+                    sw_params, 1)) < 0){
+        WARN("Unable set start threshold to 0: %d (%s)\n", err, snd_strerror(err));
+        hr = E_FAIL;
+        goto exit;
+    }
+
+    if((err = snd_pcm_sw_params_set_stop_threshold(This->pcm_handle,
+                    sw_params, This->alsa_bufsize_frames)) < 0){
+        WARN("Unable set stop threshold to %lu: %d (%s)\n",
+                This->alsa_bufsize_frames, err, snd_strerror(err));
+        hr = E_FAIL;
+        goto exit;
+    }
+
+    if((err = snd_pcm_sw_params(This->pcm_handle, sw_params)) < 0){
+        WARN("Unable set sw params: %d (%s)\n", err, snd_strerror(err));
+        hr = E_FAIL;
+        goto exit;
+    }
+
+    if((err = snd_pcm_prepare(This->pcm_handle)) < 0){
+        WARN("Unable to prepare device: %d (%s)\n", err, snd_strerror(err));
+        hr = E_FAIL;
+        goto exit;
+    }
+
+    if(period)
+        This->mmdev_period_rt = period;
+    else
+        This->mmdev_period_rt = DefaultPeriod;
+
+    /* Check if the ALSA buffer is so small that it will run out before
+     * the next MMDevAPI period tick occurs. Allow a little wiggle room
+     * with 120% of the period time. */
+    mmdev_period_frames = fmt->nSamplesPerSec * (This->mmdev_period_rt / 10000000.);
+    if(This->alsa_bufsize_frames < 1.2 * mmdev_period_frames)
+        FIXME("ALSA buffer time is smaller than our period time. Expect underruns. (%lu < %u)\n",
+                This->alsa_bufsize_frames, mmdev_period_frames);
+
     This->bufsize_frames = ceil((duration / 10000000.) * fmt->nSamplesPerSec);
     This->local_buffer = HeapAlloc(GetProcessHeap(), 0,
             This->bufsize_frames * fmt->nBlockAlign);
@@ -986,76 +1006,6 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         memset(This->local_buffer, 128, This->bufsize_frames * fmt->nBlockAlign);
     else
         memset(This->local_buffer, 0, This->bufsize_frames * fmt->nBlockAlign);
-
-    if((err = snd_pcm_sw_params_get_boundary(sw_params, &boundary)) < 0){
-        WARN("Unable to get boundary: %d (%s)\n", err, snd_strerror(err));
-        hr = E_FAIL;
-        goto exit;
-    }
-
-    if((err = snd_pcm_sw_params_set_start_threshold(This->pcm_handle,
-                sw_params, boundary)) < 0){
-        WARN("Unable to set start threshold to %lx: %d (%s)\n", boundary, err,
-                snd_strerror(err));
-        hr = E_FAIL;
-        goto exit;
-    }
-
-    if((err = snd_pcm_sw_params_set_stop_threshold(This->pcm_handle,
-                sw_params, boundary)) < 0){
-        WARN("Unable to set stop threshold to %lx: %d (%s)\n", boundary, err,
-                snd_strerror(err));
-        hr = E_FAIL;
-        goto exit;
-    }
-
-    if((err = snd_pcm_sw_params_set_avail_min(This->pcm_handle,
-                sw_params, 0)) < 0){
-        WARN("Unable to set avail min to 0: %d (%s)\n", err, snd_strerror(err));
-        hr = E_FAIL;
-        goto exit;
-    }
-
-    if((err = snd_pcm_sw_params_set_silence_size(This->pcm_handle,
-                    sw_params, boundary)) < 0){
-        WARN("Unable to set silence size to %lx: %d (%s)\n", boundary, err,
-                snd_strerror(err));
-        hr = E_FAIL;
-        goto exit;
-    }
-
-    if((err = snd_pcm_sw_params(This->pcm_handle, sw_params)) < 0){
-        WARN("Unable to set sw params: %d (%s)\n", err, snd_strerror(err));
-        hr = E_FAIL;
-        goto exit;
-    }
-
-    if((err = snd_pcm_prepare(This->pcm_handle)) < 0){
-        WARN("Unable to prepare device: %d (%s)\n", err, snd_strerror(err));
-        hr = E_FAIL;
-        goto exit;
-    }
-
-    if((err = snd_pcm_hw_params_get_buffer_size(This->hw_params,
-                    &This->bufsize_alsa)) < 0){
-        WARN("Unable to get buffer size: %d (%s)\n", err, snd_strerror(err));
-        hr = E_FAIL;
-        goto exit;
-    }
-
-    if((err = snd_pcm_hw_params_get_period_size(This->hw_params,
-                    &This->period_alsa, NULL)) < 0){
-        WARN("Unable to get period size: %d (%s)\n", err, snd_strerror(err));
-        hr = E_FAIL;
-        goto exit;
-    }
-
-    if((err = snd_pcm_hw_params_get_period_time(This->hw_params,
-                    &This->period_us, NULL)) < 0){
-        WARN("Unable to get period time: %d (%s)\n", err, snd_strerror(err));
-        hr = E_FAIL;
-        goto exit;
-    }
 
     This->fmt = clone_format(fmt);
     if(!This->fmt){
@@ -1181,12 +1131,13 @@ static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient *iface,
         snd_pcm_sframes_t avail_frames;
 
         avail_frames = snd_pcm_avail_update(This->pcm_handle);
-
-        if(This->bufsize_alsa < avail_frames){
-            WARN("Xrun detected\n");
+        if(This->alsa_bufsize_frames < avail_frames ||
+                snd_pcm_state(This->pcm_handle) == SND_PCM_STATE_XRUN)
             *out = This->held_frames;
-        }else
-            *out = This->bufsize_alsa - avail_frames + This->held_frames;
+        else
+            *out = This->alsa_bufsize_frames - avail_frames + This->held_frames;
+        TRACE("PCM state: %u, avail: %ld, pad: %u\n",
+                snd_pcm_state(This->pcm_handle), avail_frames, *out);
     }else if(This->dataflow == eCapture){
         *out = This->held_frames;
     }else{
@@ -1558,7 +1509,7 @@ static snd_pcm_sframes_t alsa_write_best_effort(snd_pcm_t *handle, BYTE *buf,
         WARN("writei failed, recovering: %ld (%s)\n", written,
                 snd_strerror(written));
 
-        ret = wine_snd_pcm_recover(handle, written, 0);
+        ret = snd_pcm_recover(handle, written, 0);
         if(ret < 0){
             WARN("Could not recover: %d (%s)\n", ret, snd_strerror(ret));
             return ret;
@@ -1573,9 +1524,30 @@ static snd_pcm_sframes_t alsa_write_best_effort(snd_pcm_t *handle, BYTE *buf,
 static void alsa_write_data(ACImpl *This)
 {
     snd_pcm_sframes_t written;
-    snd_pcm_uframes_t to_write;
+    snd_pcm_uframes_t to_write, avail;
+    int err;
     BYTE *buf =
         This->local_buffer + (This->lcl_offs_frames * This->fmt->nBlockAlign);
+
+    /* this call seems to be required to get an accurate snd_pcm_state() */
+    avail = snd_pcm_avail_update(This->pcm_handle);
+
+    if(snd_pcm_state(This->pcm_handle) == SND_PCM_STATE_XRUN ||
+            avail > This->alsa_bufsize_frames){
+        TRACE("XRun state, recovering\n");
+
+        if((err = snd_pcm_recover(This->pcm_handle, -EPIPE, 1)) < 0)
+            WARN("snd_pcm_recover failed: %d (%s)\n", err, snd_strerror(err));
+
+        if((err = snd_pcm_reset(This->pcm_handle)) < 0)
+            WARN("snd_pcm_reset failed: %d (%s)\n", err, snd_strerror(err));
+
+        if((err = snd_pcm_prepare(This->pcm_handle)) < 0)
+            WARN("snd_pcm_prepare failed: %d (%s)\n", err, snd_strerror(err));
+    }
+
+    if(This->held_frames == 0)
+        return;
 
     if(This->lcl_offs_frames + This->held_frames > This->bufsize_frames)
         to_write = This->bufsize_frames - This->lcl_offs_frames;
@@ -1626,7 +1598,7 @@ static void alsa_read_data(ACImpl *This)
 
         WARN("read failed, recovering: %ld (%s)\n", nread, snd_strerror(nread));
 
-        ret = wine_snd_pcm_recover(This->pcm_handle, nread, 0);
+        ret = snd_pcm_recover(This->pcm_handle, nread, 0);
         if(ret < 0){
             WARN("Recover failed: %d (%s)\n", ret, snd_strerror(ret));
             return;
@@ -1666,7 +1638,7 @@ static void CALLBACK alsa_push_buffer_data(void *user, BOOLEAN timer)
     EnterCriticalSection(&This->lock);
 
     if(This->started){
-        if(This->dataflow == eRender && This->held_frames)
+        if(This->dataflow == eRender)
             alsa_write_data(This);
         else if(This->dataflow == eCapture)
             alsa_read_data(This);
@@ -1678,36 +1650,9 @@ static void CALLBACK alsa_push_buffer_data(void *user, BOOLEAN timer)
     LeaveCriticalSection(&This->lock);
 }
 
-static HRESULT alsa_consider_start(ACImpl *This)
-{
-    snd_pcm_sframes_t avail;
-    int err;
-
-    avail = snd_pcm_avail_update(This->pcm_handle);
-    if(avail < 0){
-        WARN("Unable to get avail_update: %ld (%s)\n", avail,
-                snd_strerror(avail));
-        return E_FAIL;
-    }
-
-    if(This->period_alsa < This->bufsize_alsa - avail){
-        if((err = snd_pcm_start(This->pcm_handle)) < 0){
-            WARN("Start failed: %d (%s), state: %d\n", err, snd_strerror(err),
-                    snd_pcm_state(This->pcm_handle));
-            return E_FAIL;
-        }
-
-        return S_OK;
-    }
-
-    return S_FALSE;
-}
-
 static HRESULT WINAPI AudioClient_Start(IAudioClient *iface)
 {
     ACImpl *This = impl_from_IAudioClient(iface);
-    DWORD period_ms;
-    HRESULT hr;
 
     TRACE("(%p)\n", This);
 
@@ -1728,16 +1673,6 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient *iface)
         return AUDCLNT_E_NOT_STOPPED;
     }
 
-    hr = alsa_consider_start(This);
-    if(FAILED(hr)){
-        LeaveCriticalSection(&This->lock);
-        return hr;
-    }
-
-    period_ms = This->period_us / 1000;
-    if(!period_ms)
-        period_ms = 10;
-
     if(This->dataflow == eCapture){
         /* dump any data that might be leftover in the ALSA capture buffer */
         snd_pcm_readi(This->pcm_handle, This->local_buffer,
@@ -1745,7 +1680,7 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient *iface)
     }
 
     if(!CreateTimerQueueTimer(&This->timer, g_timer_q, alsa_push_buffer_data,
-            This, 0, period_ms, WT_EXECUTEINTIMERTHREAD)){
+            This, 0, This->mmdev_period_rt / 10000, WT_EXECUTEINTIMERTHREAD)){
         LeaveCriticalSection(&This->lock);
         WARN("Unable to create timer: %u\n", GetLastError());
         return E_FAIL;
@@ -1761,7 +1696,6 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient *iface)
 static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
 {
     ACImpl *This = impl_from_IAudioClient(iface);
-    int err;
     HANDLE event;
     BOOL wait;
 
@@ -1779,23 +1713,20 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
         return S_FALSE;
     }
 
+    if(snd_pcm_drop(This->pcm_handle) < 0)
+        WARN("snd_pcm_drop failed\n");
+
+    if(snd_pcm_reset(This->pcm_handle) < 0)
+        WARN("snd_pcm_reset failed\n");
+
+    if(snd_pcm_prepare(This->pcm_handle) < 0)
+        WARN("snd_pcm_prepare failed\n");
+
     event = CreateEventW(NULL, TRUE, FALSE, NULL);
     wait = !DeleteTimerQueueTimer(g_timer_q, This->timer, event);
     if(wait)
         WARN("DeleteTimerQueueTimer error %u\n", GetLastError());
     wait = wait && GetLastError() == ERROR_IO_PENDING;
-
-    if((err = snd_pcm_drop(This->pcm_handle)) < 0){
-        LeaveCriticalSection(&This->lock);
-        WARN("Drop failed: %d (%s)\n", err, snd_strerror(err));
-        return E_FAIL;
-    }
-
-    if((err = snd_pcm_prepare(This->pcm_handle)) < 0){
-        LeaveCriticalSection(&This->lock);
-        WARN("Prepare failed: %d (%s)\n", err, snd_strerror(err));
-        return E_FAIL;
-    }
 
     This->started = FALSE;
 
@@ -1830,6 +1761,15 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient *iface)
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_BUFFER_OPERATION_PENDING;
     }
+
+    if(snd_pcm_drop(This->pcm_handle) < 0)
+        WARN("snd_pcm_drop failed\n");
+
+    if(snd_pcm_reset(This->pcm_handle) < 0)
+        WARN("snd_pcm_reset failed\n");
+
+    if(snd_pcm_prepare(This->pcm_handle) < 0)
+        WARN("snd_pcm_prepare failed\n");
 
     This->held_frames = 0;
     This->written_frames = 0;
@@ -2093,7 +2033,6 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
 {
     ACImpl *This = impl_from_IAudioRenderClient(iface);
     BYTE *buffer;
-    HRESULT hr;
 
     TRACE("(%p)->(%u, %x)\n", This, written_frames, flags);
 
@@ -2118,43 +2057,10 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
             memset(buffer, 0, written_frames * This->fmt->nBlockAlign);
     }
 
-    if(This->held_frames){
-        if(This->buf_state == LOCKED_WRAPPED)
-            alsa_wrap_buffer(This, buffer, written_frames);
+    if(This->buf_state == LOCKED_WRAPPED)
+        alsa_wrap_buffer(This, buffer, written_frames);
 
-        This->held_frames += written_frames;
-    }else{
-        snd_pcm_sframes_t written;
-
-        written = alsa_write_best_effort(This->pcm_handle, buffer,
-                written_frames, This);
-        if(written < 0){
-            This->buf_state = NOT_LOCKED;
-            LeaveCriticalSection(&This->lock);
-            ERR("write failed: %ld (%s)\n", written, snd_strerror(written));
-            return E_FAIL;
-        }
-
-        if(written < written_frames){
-            if(This->buf_state == LOCKED_WRAPPED)
-                alsa_wrap_buffer(This,
-                        This->tmp_buffer + written * This->fmt->nBlockAlign,
-                        written_frames - written);
-            else
-                This->lcl_offs_frames += written;
-            This->held_frames = written_frames - written;
-        }
-    }
-
-    if(This->started &&
-            snd_pcm_state(This->pcm_handle) == SND_PCM_STATE_PREPARED){
-        hr = alsa_consider_start(This);
-        if(FAILED(hr)){
-            LeaveCriticalSection(&This->lock);
-            return hr;
-        }
-    }
-
+    This->held_frames += written_frames;
     This->written_frames += written_frames;
     This->buf_state = NOT_LOCKED;
 
