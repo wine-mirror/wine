@@ -528,10 +528,8 @@ static void HttpProtocol_close_connection(Protocol *prot)
         This->http_negotiate = NULL;
     }
 
-    if(This->full_header) {
-        heap_free(This->full_header);
-        This->full_header = NULL;
-    }
+    heap_free(This->full_header);
+    This->full_header = NULL;
 }
 
 static void HttpProtocol_on_error(Protocol *prot, DWORD error)
