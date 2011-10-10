@@ -463,10 +463,13 @@ static void SYSPARAMS_NonClientMetrics32WTo32A( const NONCLIENTMETRICSW* lpnm32W
     SYSPARAMS_LogFont32WTo32A( &lpnm32W->lfMenuFont,		&lpnm32A->lfMenuFont );
     SYSPARAMS_LogFont32WTo32A( &lpnm32W->lfStatusFont,		&lpnm32A->lfStatusFont );
     SYSPARAMS_LogFont32WTo32A( &lpnm32W->lfMessageFont,		&lpnm32A->lfMessageFont );
-    if (lpnm32A->cbSize == sizeof(NONCLIENTMETRICSA) && lpnm32W->cbSize == sizeof(NONCLIENTMETRICSW))
-        lpnm32A->iPaddedBorderWidth = lpnm32W->iPaddedBorderWidth;
-    else
-        lpnm32A->iPaddedBorderWidth = 0;
+    if (lpnm32A->cbSize > FIELD_OFFSET(NONCLIENTMETRICSA, iPaddedBorderWidth))
+    {
+        if (lpnm32W->cbSize > FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth))
+            lpnm32A->iPaddedBorderWidth = lpnm32W->iPaddedBorderWidth;
+        else
+            lpnm32A->iPaddedBorderWidth = 0;
+    }
 }
 
 static void SYSPARAMS_NonClientMetrics32ATo32W( const NONCLIENTMETRICSA* lpnm32A, LPNONCLIENTMETRICSW lpnm32W )
@@ -485,10 +488,13 @@ static void SYSPARAMS_NonClientMetrics32ATo32W( const NONCLIENTMETRICSA* lpnm32A
     SYSPARAMS_LogFont32ATo32W( &lpnm32A->lfMenuFont,		&lpnm32W->lfMenuFont );
     SYSPARAMS_LogFont32ATo32W( &lpnm32A->lfStatusFont,		&lpnm32W->lfStatusFont );
     SYSPARAMS_LogFont32ATo32W( &lpnm32A->lfMessageFont,		&lpnm32W->lfMessageFont );
-    if (lpnm32A->cbSize == sizeof(NONCLIENTMETRICSA) && lpnm32W->cbSize == sizeof(NONCLIENTMETRICSW))
-        lpnm32W->iPaddedBorderWidth = lpnm32A->iPaddedBorderWidth;
-    else
-        lpnm32W->iPaddedBorderWidth = 0;
+    if (lpnm32W->cbSize > FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth))
+    {
+        if (lpnm32A->cbSize > FIELD_OFFSET(NONCLIENTMETRICSA, iPaddedBorderWidth))
+            lpnm32W->iPaddedBorderWidth = lpnm32A->iPaddedBorderWidth;
+        else
+            lpnm32W->iPaddedBorderWidth = 0;
+    }
 }
 
 
