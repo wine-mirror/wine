@@ -582,21 +582,6 @@ int main()
 #endif  /* BITBLT_TEST */
 
 
-/* return a mask for meaningful bits when doing an XGetPixel on an image */
-static unsigned long image_pixel_mask( X11DRV_PDEVICE *physDev )
-{
-    unsigned long ret;
-    ColorShifts *shifts = physDev->color_shifts;
-
-    if (!shifts) shifts = &X11DRV_PALETTE_default_shifts;
-    ret = (shifts->physicalRed.max << shifts->physicalRed.shift) |
-        (shifts->physicalGreen.max << shifts->physicalGreen.shift) |
-        (shifts->physicalBlue.max << shifts->physicalBlue.shift);
-    if (!ret) ret = (1 << physDev->depth) - 1;
-    return ret;
-}
-
-
 /***********************************************************************
  *           BITBLT_GetSrcArea
  *
@@ -606,40 +591,49 @@ static unsigned long image_pixel_mask( X11DRV_PDEVICE *physDev )
 static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
                               Pixmap pixmap, GC gc, RECT *visRectSrc )
 {
-    XImage *imageSrc, *imageDst;
+    XImage *imageSrc;
     register INT x, y;
     int exposures = 0;
     INT width  = visRectSrc->right - visRectSrc->left;
     INT height = visRectSrc->bottom - visRectSrc->top;
     BOOL memdc = (GetObjectType(physDevSrc->dev.hdc) == OBJ_MEMDC);
 
-    if (physDevSrc->depth == physDevDst->depth)
+    if (physDevSrc->depth == 1)
+    {
+        /* MSDN says if StretchBlt must convert a bitmap from monochrome
+           to color or vice versa, the foreground and background color of
+           the device context are used.  In fact, it also applies to the
+           case when it is converted from mono to mono. */
+        wine_tsx11_lock();
+        if (X11DRV_PALETTE_XPixelToPalette && physDevDst->depth != 1)
+        {
+            XSetBackground( gdi_display, gc, X11DRV_PALETTE_XPixelToPalette[physDevDst->textPixel] );
+            XSetForeground( gdi_display, gc, X11DRV_PALETTE_XPixelToPalette[physDevDst->backgroundPixel]);
+        }
+        else
+        {
+            XSetBackground( gdi_display, gc, physDevDst->textPixel );
+            XSetForeground( gdi_display, gc, physDevDst->backgroundPixel );
+        }
+        XCopyPlane( gdi_display, physDevSrc->drawable, pixmap, gc,
+                    physDevSrc->dc_rect.left + visRectSrc->left,
+                    physDevSrc->dc_rect.top + visRectSrc->top,
+                    width, height, 0, 0, 1 );
+        exposures++;
+        wine_tsx11_unlock();
+    }
+    else  /* color -> color */
     {
         wine_tsx11_lock();
-        if (!X11DRV_PALETTE_XPixelToPalette ||
-            (physDevDst->depth == 1))  /* monochrome -> monochrome */
+        if (!X11DRV_PALETTE_XPixelToPalette)
         {
-            if (physDevDst->depth == 1)
-            {
-                /* MSDN says if StretchBlt must convert a bitmap from monochrome
-                   to color or vice versa, the foreground and background color of
-                   the device context are used.  In fact, it also applies to the
-                   case when it is converted from mono to mono. */
-                XSetBackground( gdi_display, gc, physDevDst->textPixel );
-                XSetForeground( gdi_display, gc, physDevDst->backgroundPixel );
-                XCopyPlane( gdi_display, physDevSrc->drawable, pixmap, gc,
-                            physDevSrc->dc_rect.left + visRectSrc->left,
-                            physDevSrc->dc_rect.top + visRectSrc->top,
-                            width, height, 0, 0, 1);
-            }
-            else
-                XCopyArea( gdi_display, physDevSrc->drawable, pixmap, gc,
-                           physDevSrc->dc_rect.left + visRectSrc->left,
-                           physDevSrc->dc_rect.top + visRectSrc->top,
-                           width, height, 0, 0);
+            XCopyArea( gdi_display, physDevSrc->drawable, pixmap, gc,
+                       physDevSrc->dc_rect.left + visRectSrc->left,
+                       physDevSrc->dc_rect.top + visRectSrc->top,
+                       width, height, 0, 0);
             exposures++;
         }
-        else  /* color -> color */
+        else
         {
             if (memdc)
                 imageSrc = XGetImage( gdi_display, physDevSrc->drawable,
@@ -666,61 +660,6 @@ static int BITBLT_GetSrcArea( X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDe
             XDestroyImage( imageSrc );
         }
         wine_tsx11_unlock();
-    }
-    else
-    {
-        if (physDevSrc->depth == 1)  /* monochrome -> color */
-        {
-            wine_tsx11_lock();
-            if (X11DRV_PALETTE_XPixelToPalette)
-            {
-                XSetBackground( gdi_display, gc, X11DRV_PALETTE_XPixelToPalette[physDevDst->textPixel] );
-                XSetForeground( gdi_display, gc, X11DRV_PALETTE_XPixelToPalette[physDevDst->backgroundPixel]);
-            }
-            else
-            {
-                XSetBackground( gdi_display, gc, physDevDst->textPixel );
-                XSetForeground( gdi_display, gc, physDevDst->backgroundPixel );
-            }
-            XCopyPlane( gdi_display, physDevSrc->drawable, pixmap, gc,
-                        physDevSrc->dc_rect.left + visRectSrc->left,
-                        physDevSrc->dc_rect.top + visRectSrc->top,
-                        width, height, 0, 0, 1 );
-            exposures++;
-            wine_tsx11_unlock();
-        }
-        else  /* color -> monochrome */
-        {
-            unsigned long pixel_mask;
-            wine_tsx11_lock();
-            /* FIXME: avoid BadMatch error */
-            imageSrc = XGetImage( gdi_display, physDevSrc->drawable,
-                                  physDevSrc->dc_rect.left + visRectSrc->left,
-                                  physDevSrc->dc_rect.top + visRectSrc->top,
-                                  width, height, AllPlanes, ZPixmap );
-            if (!imageSrc)
-            {
-                wine_tsx11_unlock();
-                return exposures;
-            }
-            imageDst = X11DRV_DIB_CreateXImage( width, height, physDevDst->depth );
-            if (!imageDst)
-            {
-                XDestroyImage(imageSrc);
-                wine_tsx11_unlock();
-                return exposures;
-            }
-            pixel_mask = image_pixel_mask( physDevSrc );
-            for (y = 0; y < height; y++)
-                for (x = 0; x < width; x++)
-                    XPutPixel(imageDst, x, y,
-                              !((XGetPixel(imageSrc,x,y) ^ physDevSrc->backgroundPixel) & pixel_mask));
-            XPutImage( gdi_display, pixmap, gc, imageDst,
-                       0, 0, 0, 0, width, height );
-            XDestroyImage( imageSrc );
-            X11DRV_DIB_DestroyXImage( imageDst );
-            wine_tsx11_unlock();
-        }
     }
     return exposures;
 }
@@ -960,7 +899,8 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     GC tmpGC;
 
     if (src_dev->funcs != dst_dev->funcs ||
-        src->width != dst->width || src->height != dst->height)  /* no stretching with core X11 */
+        src->width != dst->width || src->height != dst->height ||  /* no stretching with core X11 */
+        (physDevDst->depth == 1 && physDevSrc->depth != 1))  /* color -> mono done by hand */
     {
         dst_dev = GET_NEXT_PHYSDEV( dst_dev, pStretchBlt );
         return dst_dev->funcs->pStretchBlt( dst_dev, dst, src_dev, src, rop );
