@@ -47,11 +47,11 @@ static void test_ddraw_objects(void)
     IDirectDraw2 *DDraw2;
     IDirectDraw  *DDraw1;
     IDirectDrawPalette *palette;
-    IDirectDrawSurface7 *surface = NULL;
-    IDirectDrawSurface *surface1;
+    IDirectDrawSurface7 *surface = NULL, *stencil;
+    IDirectDrawSurface *surface1, *stencil1;
     IDirectDrawSurface4 *surface4;
     PALETTEENTRY Table[256];
-    DDSURFACEDESC2 ddsd;
+    DDSURFACEDESC2 ddsd, ddsd_stencil;
 
     hr = pDirectDrawCreateEx(NULL, (void **) &DDraw7, &IID_IDirectDraw7, NULL);
     ok(hr == DD_OK || hr==DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreateEx returned: %x\n", hr);
@@ -91,6 +91,17 @@ static void test_ddraw_objects(void)
     U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
     U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8 | DDPF_RGB;
     U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 8;
+
+    memset(&ddsd_stencil, 0, sizeof(ddsd_stencil));
+    ddsd_stencil.dwSize = sizeof(ddsd_stencil);
+    ddsd_stencil.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    ddsd_stencil.dwWidth = ddsd.dwWidth;
+    ddsd_stencil.dwHeight = ddsd.dwHeight;
+    ddsd_stencil.ddsCaps.dwCaps = DDSCAPS_3DDEVICE | DDSCAPS_ZBUFFER;
+    U4(ddsd_stencil).ddpfPixelFormat.dwSize = sizeof(U4(ddsd_stencil).ddpfPixelFormat);
+    U4(ddsd_stencil).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+    U1(U4(ddsd_stencil).ddpfPixelFormat).dwZBufferBitDepth = 16;
+    U3(U4(ddsd_stencil).ddpfPixelFormat).dwZBitMask = 0x0000FFFF;
 
     hr = IDirectDraw7_CreateSurface(DDraw7, &ddsd, &surface, NULL);
     if (!surface)
@@ -185,6 +196,87 @@ static void test_ddraw_objects(void)
     ref = getRefcount( (IUnknown *) DDraw1);
     ok(ref == 1, "Got refcount %d, expected 1\n", ref);
     IDirectDrawSurface_Release(surface1);
+
+    /* AddAttachedSurface with IDirectDrawSurface7 */
+    ddsd.dwSize = sizeof(DDSURFACEDESC2);
+    ddsd.ddsCaps.dwCaps |= DDSCAPS_3DDEVICE;
+    hr = IDirectDraw7_CreateSurface(DDraw7, &ddsd, &surface, NULL);
+    ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ddsd_stencil.dwSize = sizeof(DDSURFACEDESC2);
+        hr = IDirectDraw7_CreateSurface(DDraw7, &ddsd_stencil, &stencil, NULL);
+        ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            /* AddAttachedSurface with DeleteAttachedSurface */
+            hr = IDirectDrawSurface7_AddAttachedSurface(surface, stencil);
+            ok(hr == DD_OK, "AddAttachedSurface returned %08x\n", hr);
+            if (SUCCEEDED(hr))
+            {
+                ref = getRefcount( (IUnknown *) stencil);
+                ok(ref == 2, "Got refcount %d, expected 2\n", ref);
+                hr = IDirectDrawSurface7_DeleteAttachedSurface(surface, 0, stencil);
+                ok(hr == DD_OK, "DeleteAttachedSurface returned %08x\n", hr);
+                ref = getRefcount( (IUnknown *) stencil);
+                ok(ref == 1, "Got refcount %d, expected 1\n", ref);
+            }
+
+            /* Releasing a surface should detach any attached surfaces */
+            hr = IDirectDrawSurface7_AddAttachedSurface(surface, stencil);
+            ok(hr == DD_OK, "AddAttachedSurface returned %08x\n", hr);
+            ref = getRefcount( (IUnknown *) stencil);
+            ok(ref == 2, "Got refcount %d, expected 2\n", ref);
+            ref = IDirectDrawSurface7_Release(surface);
+            ok(!ref, "Got refcount %d, expected 0\n", ref);
+            ref = getRefcount( (IUnknown *) stencil);
+            ok(ref == 1, "Got refcount %d, expected 1\n", ref);
+            ref = IDirectDrawSurface7_Release(stencil);
+            ok(!ref, "Got refcount %d, expected 0\n", ref);
+        }
+        else
+            IDirectDrawSurface7_Release(surface);
+    }
+
+    /* AddAttachedSurface with IDirectDrawSurface */
+    ddsd.dwSize = sizeof(DDSURFACEDESC);
+    hr = IDirectDraw_CreateSurface(DDraw1, (DDSURFACEDESC *) &ddsd, &surface1, NULL);
+    ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ddsd_stencil.dwSize = sizeof(DDSURFACEDESC);
+        hr = IDirectDraw_CreateSurface(DDraw1, (DDSURFACEDESC *) &ddsd_stencil, &stencil1, NULL);
+        ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            /* AddAttachedSurface with DeleteAttachedSurface */
+            hr = IDirectDrawSurface_AddAttachedSurface(surface1, stencil1);
+            ok(hr == DD_OK, "AddAttachedSurface returned %08x\n", hr);
+            if (SUCCEEDED(hr))
+            {
+                ref = getRefcount( (IUnknown *) stencil1);
+                ok(ref == 2, "Got refcount %d, expected 2\n", ref);
+                hr = IDirectDrawSurface_DeleteAttachedSurface(surface1, 0, stencil1);
+                ok(hr == DD_OK, "DeleteAttachedSurface returned %08x\n", hr);
+                ref = getRefcount( (IUnknown *) stencil1);
+                ok(ref == 1, "Got refcount %d, expected 1\n", ref);
+            }
+
+            /* Releasing a surface should detach any attached surfaces */
+            hr = IDirectDrawSurface_AddAttachedSurface(surface1, stencil1);
+            ok(hr == DD_OK, "AddAttachedSurface returned %08x\n", hr);
+            ref = getRefcount( (IUnknown *) stencil1);
+            ok(ref == 2, "Got refcount %d, expected 2\n", ref);
+            ref = IDirectDrawSurface_Release(surface1);
+            ok(!ref, "Got refcount %d, expected 0\n", ref);
+            ref = getRefcount( (IUnknown *) stencil1);
+            todo_wine ok(ref == 1, "Got refcount %d, expected 1\n", ref);
+            ref = IDirectDrawSurface_Release(stencil1);
+            todo_wine ok(!ref, "Got refcount %d, expected 0\n", ref);
+        }
+        else
+            IDirectDrawSurface_Release(surface1);
+    }
 
     IDirectDraw7_Release(DDraw7);
     IDirectDraw4_Release(DDraw4);
