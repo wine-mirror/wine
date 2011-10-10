@@ -1426,29 +1426,29 @@ static HRESULT ddraw_surface_attach_surface(IDirectDrawSurfaceImpl *This, IDirec
     return DD_OK;
 }
 
-static HRESULT WINAPI ddraw_surface7_AddAttachedSurface(IDirectDrawSurface7 *iface, IDirectDrawSurface7 *Attach)
+static HRESULT WINAPI ddraw_surface7_AddAttachedSurface(IDirectDrawSurface7 *iface, IDirectDrawSurface7 *attachment)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface7(iface);
-    IDirectDrawSurfaceImpl *Surf = unsafe_impl_from_IDirectDrawSurface7(Attach);
+    IDirectDrawSurfaceImpl *attachment_impl = unsafe_impl_from_IDirectDrawSurface7(attachment);
     HRESULT hr;
 
-    TRACE("iface %p, attachment %p.\n", iface, Attach);
+    TRACE("iface %p, attachment %p.\n", iface, attachment);
 
     /* Version 7 of this interface seems to refuse everything except z buffers, as per msdn */
-    if(!(Surf->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER))
+    if(!(attachment_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER))
     {
 
         WARN("Application tries to attach a non Z buffer surface. caps %08x\n",
-              Surf->surface_desc.ddsCaps.dwCaps);
+              attachment_impl->surface_desc.ddsCaps.dwCaps);
         return DDERR_CANNOTATTACHSURFACE;
     }
 
-    hr = ddraw_surface_attach_surface(This, Surf);
+    hr = ddraw_surface_attach_surface(This, attachment_impl);
     if (FAILED(hr))
     {
         return hr;
     }
-    ddraw_surface7_AddRef(Attach);
+    ddraw_surface7_AddRef(attachment);
     return hr;
 }
 
@@ -1473,7 +1473,7 @@ static HRESULT WINAPI ddraw_surface4_AddAttachedSurface(IDirectDrawSurface4 *ifa
 static HRESULT WINAPI ddraw_surface3_AddAttachedSurface(IDirectDrawSurface3 *iface, IDirectDrawSurface3 *attachment)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
-    IDirectDrawSurfaceImpl *attach_impl = unsafe_impl_from_IDirectDrawSurface3(attachment);
+    IDirectDrawSurfaceImpl *attachment_impl = unsafe_impl_from_IDirectDrawSurface3(attachment);
     HRESULT hr;
 
     TRACE("iface %p, attachment %p.\n", iface, attachment);
@@ -1484,11 +1484,11 @@ static HRESULT WINAPI ddraw_surface3_AddAttachedSurface(IDirectDrawSurface3 *ifa
      * -> primaries can be attached to offscreen plain surfaces
      * -> z buffers can be attached to primaries */
     if (This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_OFFSCREENPLAIN)
-            && attach_impl->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_OFFSCREENPLAIN))
+            && attachment_impl->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_OFFSCREENPLAIN))
     {
         /* Sizes have to match */
-        if (attach_impl->surface_desc.dwWidth != This->surface_desc.dwWidth
-                || attach_impl->surface_desc.dwHeight != This->surface_desc.dwHeight)
+        if (attachment_impl->surface_desc.dwWidth != This->surface_desc.dwWidth
+                || attachment_impl->surface_desc.dwHeight != This->surface_desc.dwHeight)
         {
             WARN("Surface sizes do not match.\n");
             return DDERR_CANNOTATTACHSURFACE;
@@ -1496,7 +1496,7 @@ static HRESULT WINAPI ddraw_surface3_AddAttachedSurface(IDirectDrawSurface3 *ifa
         /* OK */
     }
     else if (This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE)
-            && attach_impl->surface_desc.ddsCaps.dwCaps & (DDSCAPS_ZBUFFER))
+            && attachment_impl->surface_desc.ddsCaps.dwCaps & (DDSCAPS_ZBUFFER))
     {
         /* OK */
     }
@@ -1506,7 +1506,7 @@ static HRESULT WINAPI ddraw_surface3_AddAttachedSurface(IDirectDrawSurface3 *ifa
         return DDERR_CANNOTATTACHSURFACE;
     }
 
-    hr = ddraw_surface_attach_surface(This, attach_impl);
+    hr = ddraw_surface_attach_surface(This, attachment_impl);
     if (FAILED(hr))
     {
         return hr;
