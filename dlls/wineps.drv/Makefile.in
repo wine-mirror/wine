@@ -1,6 +1,6 @@
 MODULE    = wineps.drv
 IMPORTS   = user32 gdi32 winspool advapi32
-EXTRAINCL = @FREETYPEINCL@ @CUPSINCL@
+EXTRAINCL = @CUPSINCL@
 
 C_SRCS = \
 	afm.c \
@@ -58,7 +58,6 @@ C_SRCS = \
 	ppd.c \
 	ps.c \
 	text.c \
-	truetype.c \
 	type1.c \
 	type1afm.c \
 	type42.c
