@@ -348,7 +348,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
 
                 groups->GroupCount = tg->count;
                 memcpy( sids, (char *)buffer + non_sid_portion,
-                        reply->user_len - non_sid_portion - FIELD_OFFSET( TOKEN_GROUPS, Groups[tg->count] ));
+                        reply->user_len - FIELD_OFFSET( TOKEN_GROUPS, Groups[tg->count] ));
 
                 for (i = 0; i < tg->count; i++)
                 {
