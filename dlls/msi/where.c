@@ -205,7 +205,6 @@ static UINT parse_column(MSIWHEREVIEW *wv, union ext_column *column,
             column->parsed.column = i;
             column->parsed.table = table;
             return ERROR_SUCCESS;
-            break;
         }
     }
     while ((table = table->next));
