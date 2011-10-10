@@ -155,7 +155,6 @@ static DWORD FT_SimpleVersion;
 static void *ft_handle = NULL;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f = NULL
-MAKE_FUNCPTR(FT_Vector_Unit);
 MAKE_FUNCPTR(FT_Done_Face);
 MAKE_FUNCPTR(FT_Get_Char_Index);
 MAKE_FUNCPTR(FT_Get_Module);
@@ -164,6 +163,7 @@ MAKE_FUNCPTR(FT_Get_Sfnt_Name_Count);
 MAKE_FUNCPTR(FT_Get_Sfnt_Table);
 MAKE_FUNCPTR(FT_Init_FreeType);
 MAKE_FUNCPTR(FT_Load_Glyph);
+MAKE_FUNCPTR(FT_Load_Sfnt_Table);
 MAKE_FUNCPTR(FT_Matrix_Multiply);
 #ifdef FT_MULFIX_INLINED
 #define pFT_MulFix FT_MULFIX_INLINED
@@ -175,13 +175,13 @@ MAKE_FUNCPTR(FT_New_Memory_Face);
 MAKE_FUNCPTR(FT_Outline_Get_Bitmap);
 MAKE_FUNCPTR(FT_Outline_Transform);
 MAKE_FUNCPTR(FT_Outline_Translate);
+MAKE_FUNCPTR(FT_Render_Glyph);
 MAKE_FUNCPTR(FT_Select_Charmap);
 MAKE_FUNCPTR(FT_Set_Charmap);
 MAKE_FUNCPTR(FT_Set_Pixel_Sizes);
 MAKE_FUNCPTR(FT_Vector_Transform);
-MAKE_FUNCPTR(FT_Render_Glyph);
+MAKE_FUNCPTR(FT_Vector_Unit);
 static void (*pFT_Library_Version)(FT_Library,FT_Int*,FT_Int*,FT_Int*);
-static FT_Error (*pFT_Load_Sfnt_Table)(FT_Face,FT_ULong,FT_Long,FT_Byte*,FT_ULong*);
 static FT_ULong (*pFT_Get_First_Char)(FT_Face,FT_UInt*);
 static FT_ULong (*pFT_Get_Next_Char)(FT_Face,FT_ULong,FT_UInt*);
 static FT_TrueTypeEngineType (*pFT_Get_TrueType_Engine_Type)(FT_Library);
@@ -1397,57 +1397,6 @@ static void add_face_to_cache(Face *face)
     RegCloseKey(hkey_font_cache);
 }
 
-/*****************************************************************
- *  load_sfnt_table
- *
- * Wrapper around FT_Load_Sfnt_Table to cope with older versions
- * of FreeType that don't export this function.
- *
- */
-static FT_Error load_sfnt_table(FT_Face ft_face, FT_ULong table, FT_Long offset, FT_Byte *buf, FT_ULong *len)
-{
-
-    FT_Error err;
-
-    /* If the FT_Load_Sfnt_Table function is there we'll use it */
-    if(pFT_Load_Sfnt_Table)
-    {
-        err = pFT_Load_Sfnt_Table(ft_face, table, offset, buf, len);
-    }
-#ifdef HAVE_FREETYPE_INTERNAL_SFNT_H
-    else  /* Do it the hard way */
-    {
-        TT_Face tt_face = (TT_Face) ft_face;
-        SFNT_Interface *sfnt;
-        if (FT_Version.major==2 && FT_Version.minor==0)
-        {
-            /* 2.0.x */
-            sfnt = *(SFNT_Interface**)((char*)tt_face + 528);
-        }
-        else
-        {
-            /* A field was added in the middle of the structure in 2.1.x */
-            sfnt = *(SFNT_Interface**)((char*)tt_face + 532);
-        }
-        err = sfnt->load_any(tt_face, table, offset, buf, len);
-    }
-#else
-    else
-    {
-        static int msg;
-        if(!msg)
-        {
-            MESSAGE("This version of Wine was compiled with freetype headers later than 2.2.0\n"
-                    "but is being run with a freetype library without the FT_Load_Sfnt_Table function.\n"
-                    "Please upgrade your freetype library.\n");
-            msg++;
-        }
-        err = FT_Err_Unimplemented_Feature;
-    }
-#endif
-    return err;
-}
-
 static inline int TestStyles(DWORD flags, DWORD styles)
 {
     return (flags & styles) == styles;
@@ -1582,7 +1531,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
             {
                 FT_ULong len = 0;
 
-                if(!load_sfnt_table(ft_face, FT_MAKE_TAG('E','B','S','C'), 0, NULL, &len))
+                if(!pFT_Load_Sfnt_Table(ft_face, FT_MAKE_TAG('E','B','S','C'), 0, NULL, &len))
                 {
                     TRACE("Skipping Wine bitmap-only TrueType font %s\n", debugstr_a(file));
                     pFT_Done_Face(ft_face);
@@ -1782,7 +1731,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
 
             /* check for the presence of the 'CFF ' table to check if the font is Type1 */
             tmp_size = 0;
-            if (pFT_Load_Sfnt_Table && !pFT_Load_Sfnt_Table(ft_face, FT_MAKE_TAG('C','F','F',' '), 0, NULL, &tmp_size))
+            if (!pFT_Load_Sfnt_Table(ft_face, FT_MAKE_TAG('C','F','F',' '), 0, NULL, &tmp_size))
             {
                 TRACE("Font %s/%p is OTF Type1\n", wine_dbgstr_a(file), font_data_ptr);
                 face->ntmFlags |= NTM_PS_OPENTYPE;
@@ -2950,7 +2899,6 @@ static BOOL init_freetype(void)
 
 #define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(ft_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
 
-    LOAD_FUNCPTR(FT_Vector_Unit)
     LOAD_FUNCPTR(FT_Done_Face)
     LOAD_FUNCPTR(FT_Get_Char_Index)
     LOAD_FUNCPTR(FT_Get_Module)
@@ -2959,6 +2907,7 @@ static BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Get_Sfnt_Table)
     LOAD_FUNCPTR(FT_Init_FreeType)
     LOAD_FUNCPTR(FT_Load_Glyph)
+    LOAD_FUNCPTR(FT_Load_Sfnt_Table)
     LOAD_FUNCPTR(FT_Matrix_Multiply)
 #ifndef FT_MULFIX_INLINED
     LOAD_FUNCPTR(FT_MulFix)
@@ -2968,16 +2917,15 @@ static BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Outline_Get_Bitmap)
     LOAD_FUNCPTR(FT_Outline_Transform)
     LOAD_FUNCPTR(FT_Outline_Translate)
+    LOAD_FUNCPTR(FT_Render_Glyph)
     LOAD_FUNCPTR(FT_Select_Charmap)
     LOAD_FUNCPTR(FT_Set_Charmap)
     LOAD_FUNCPTR(FT_Set_Pixel_Sizes)
     LOAD_FUNCPTR(FT_Vector_Transform)
-    LOAD_FUNCPTR(FT_Render_Glyph)
-
+    LOAD_FUNCPTR(FT_Vector_Unit)
 #undef LOAD_FUNCPTR
     /* Don't warn if these ones are missing */
     pFT_Library_Version = wine_dlsym(ft_handle, "FT_Library_Version", NULL, 0);
-    pFT_Load_Sfnt_Table = wine_dlsym(ft_handle, "FT_Load_Sfnt_Table", NULL, 0);
     pFT_Get_First_Char = wine_dlsym(ft_handle, "FT_Get_First_Char", NULL, 0);
     pFT_Get_Next_Char = wine_dlsym(ft_handle, "FT_Get_Next_Char", NULL, 0);
     pFT_Get_TrueType_Engine_Type = wine_dlsym(ft_handle, "FT_Get_TrueType_Engine_Type", NULL, 0);
@@ -2987,12 +2935,6 @@ static BOOL init_freetype(void)
 #ifdef HAVE_FREETYPE_FTWINFNT_H
     pFT_Get_WinFNT_Header = wine_dlsym(ft_handle, "FT_Get_WinFNT_Header", NULL, 0);
 #endif
-      if(!wine_dlsym(ft_handle, "FT_Get_Postscript_Name", NULL, 0) &&
-	 !wine_dlsym(ft_handle, "FT_Sqrt64", NULL, 0)) {
-	/* try to avoid 2.0.4: >= 2.0.5 has FT_Get_Postscript_Name and
-	   <= 2.0.3 has FT_Sqrt64 */
-	  goto sym_not_found;
-      }
 
     if(pFT_Init_FreeType(&library) != 0) {
         ERR("Can't init FreeType library\n");
@@ -3021,7 +2963,7 @@ sym_not_found:
     WINE_MESSAGE(
       "Wine cannot find certain functions that it needs inside the FreeType\n"
       "font library.  To enable Wine to use TrueType fonts please upgrade\n"
-      "FreeType to at least version 2.0.5.\n"
+      "FreeType to at least version 2.1.4.\n"
       "http://www.freetype.org\n");
     wine_dlclose(ft_handle, NULL, 0);
     ft_handle = NULL;
@@ -6558,10 +6500,10 @@ DWORD WineEngGetFontData(GdiFont *font, DWORD table, DWORD offset, LPVOID buf,
     if(buf && len)
     {
         FT_ULong needed = 0;
-        err = load_sfnt_table(ft_face, table, offset, NULL, &needed);
+        err = pFT_Load_Sfnt_Table(ft_face, table, offset, NULL, &needed);
         if( !err && needed < len) len = needed;
     }
-    err = load_sfnt_table(ft_face, table, offset, buf, &len);
+    err = pFT_Load_Sfnt_Table(ft_face, table, offset, buf, &len);
 
     if(err) {
         TRACE("Can't find table %c%c%c%c\n",
