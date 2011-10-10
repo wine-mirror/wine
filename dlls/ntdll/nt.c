@@ -1280,6 +1280,7 @@ void fill_cpu_info(void)
                     if (strstr(buffer, "SSE2"))  user_shared_data->ProcessorFeatures[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
                     if (strstr(buffer, "SSE3"))  user_shared_data->ProcessorFeatures[PF_SSE3_INSTRUCTIONS_AVAILABLE] = TRUE;
                     if (strstr(buffer, "PAE"))   user_shared_data->ProcessorFeatures[PF_PAE_ENABLED] = TRUE;
+                    if (strstr(buffer, "HTT"))   cached_sci.FeatureSet |= CPU_FEATURE_HTT;
                 }
                 break; /* CPU_TYPE_I386 */
             default: break;
