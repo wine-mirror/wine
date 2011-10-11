@@ -814,3 +814,14 @@ BOOL WINAPI SetThreadPreferredUILanguages( DWORD flags, PCZZWSTR buffer, PULONG 
     FIXME( "%u, %p, %p\n", flags, buffer, count );
     return TRUE;
 }
+
+/***********************************************************************
+ *              GetThreadPreferredUILanguages (KERNEL32.@)
+ */
+BOOL WINAPI GetThreadPreferredUILanguages( DWORD flags, PULONG count, PCZZWSTR buffer, PULONG buffersize )
+{
+    FIXME( "%u, %p, %p %p\n", flags, count, buffer, buffersize );
+    *count = 0;
+    *buffersize = 0;
+    return TRUE;
+}

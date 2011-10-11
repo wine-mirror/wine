@@ -653,6 +653,7 @@
 @ stdcall GetThreadId(ptr)
 @ stdcall GetThreadIOPendingFlag(long ptr)
 @ stdcall GetThreadLocale()
+@ stdcall GetThreadPreferredUILanguages(long ptr ptr ptr)
 @ stdcall GetThreadPriority(long)
 @ stdcall GetThreadPriorityBoost(long ptr)
 @ stdcall GetThreadSelectorEntry(long long ptr)
