@@ -57,6 +57,22 @@ static IInternetHostSecurityManager *get_sec_mgr(script_ctx_t *ctx)
     return ctx->secmgr = secmgr;
 }
 
+static HRESULT return_bstr(VARIANT *res, const WCHAR *str)
+{
+    BSTR ret;
+
+    if(!res)
+        return S_OK;
+
+    ret = SysAllocString(str);
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    V_VT(res) = VT_BSTR;
+    V_BSTR(res) = ret;
+    return S_OK;
+}
+
 static IUnknown *create_object(script_ctx_t *ctx, const WCHAR *progid)
 {
     IInternetHostSecurityManager *secmgr = NULL;
@@ -193,10 +209,51 @@ static HRESULT Global_CStr(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARI
     return E_NOTIMPL;
 }
 
+static inline WCHAR hex_char(unsigned n)
+{
+    return n < 10 ? '0'+n : 'A'+n-10;
+}
+
 static HRESULT Global_Hex(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    WCHAR buf[17], *ptr;
+    DWORD n;
+
+    TRACE("%s\n", debugstr_variant(arg));
+
+    switch(V_VT(arg)) {
+    case VT_I2:
+        n = (WORD)V_I2(arg);
+        break;
+    case VT_I4:
+        n = V_I4(arg);
+        break;
+    case VT_EMPTY:
+        n = 0;
+        break;
+    case VT_NULL:
+        if(res)
+            V_VT(res) = VT_NULL;
+        return S_OK;
+    default:
+        FIXME("unsupported type %s\n", debugstr_variant(arg));
+        return E_NOTIMPL;
+    }
+
+    buf[16] = 0;
+    ptr = buf+15;
+
+    if(n) {
+        do {
+            *ptr-- = hex_char(n & 0xf);
+            n >>= 4;
+        }while(n);
+        ptr++;
+    }else {
+        *ptr = '0';
+    }
+
+    return return_bstr(res, ptr);
 }
 
 static HRESULT Global_Oct(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
