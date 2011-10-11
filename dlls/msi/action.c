@@ -3611,9 +3611,26 @@ static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
     target = MSI_RecordGetString(row, 5);
     if (strchrW(target, '['))
     {
-        deformat_string(package, target, &deformated);
-        IShellLinkW_SetPath(sl,deformated);
-        msi_free(deformated);
+        int len;
+        WCHAR *format_string, *p;
+
+        if (!(p = strchrW( target, ']' ))) goto err;
+        len = p - target + 1;
+        format_string = msi_alloc( (len + 1) * sizeof(WCHAR) );
+        memcpy( format_string, target, len * sizeof(WCHAR) );
+        format_string[len] = 0;
+        deformat_string( package, format_string, &deformated );
+        msi_free( format_string );
+
+        path = msi_alloc( (strlenW( deformated ) + strlenW( p + 1 ) + 2) * sizeof(WCHAR) );
+        strcpyW( path, deformated );
+        PathAddBackslashW( path );
+        strcatW( path, p + 1 );
+        TRACE("target path is %s\n", debugstr_w(path));
+
+        IShellLinkW_SetPath( sl, path );
+        msi_free( deformated );
+        msi_free( path );
     }
     else
     {
