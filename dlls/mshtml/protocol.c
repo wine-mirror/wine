@@ -478,6 +478,9 @@ static HRESULT WINAPI AboutProtocolInfo_QueryInfo(IInternetProtocolInfo *iface, 
     case QUERY_USES_HISTORYFOLDER:
         FIXME("Unsupported option QUERY_USES_HISTORYFOLDER\n");
         return E_FAIL;
+    case QUERY_IS_CACHED_AND_USABLE_OFFLINE:
+        FIXME("Unsupported option QUERY_IS_CACHED_AND_USABLE_OFFLINE\n");
+        return E_NOTIMPL;
     default:
         return E_FAIL;
     }

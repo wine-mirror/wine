@@ -881,7 +881,8 @@ interface IInternetProtocolInfo : IUnknown
         QUERY_USES_CACHE,
         QUERY_IS_SECURE,
         QUERY_IS_SAFE,
-        QUERY_USES_HISTORYFOLDER
+        QUERY_USES_HISTORYFOLDER,
+        QUERY_IS_CACHED_AND_USABLE_OFFLINE
     } QUERYOPTION;
 
     HRESULT ParseUrl(

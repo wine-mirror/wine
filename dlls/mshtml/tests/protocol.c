@@ -755,6 +755,7 @@ static void test_about_protocol(void)
             case QUERY_IS_SECURE:
             case QUERY_IS_SAFE:
             case QUERY_USES_HISTORYFOLDER:
+            case QUERY_IS_CACHED_AND_USABLE_OFFLINE:
                 break;
             default:
                 hres = IInternetProtocolInfo_QueryInfo(protocol_info, about_blank_url, i, 0,
