@@ -10262,8 +10262,7 @@ fi
                          freetype/ftoutln.h \
                          freetype/ftwinfnt.h \
                          freetype/ftmodapi.h \
-                         freetype/ftlcdfil.h \
-                         freetype/internal/sfnt.h
+                         freetype/ftlcdfil.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#ifdef HAVE_FT2BUILD_H
@@ -10304,21 +10303,6 @@ _ACEOF
 
 fi
 
-        ac_save_CFLAGS="$CFLAGS"
-        CFLAGS="$CFLAGS $ac_freetype_libs"
-        for ac_func in FT_Load_Sfnt_Table
-do :
-  ac_fn_c_check_func "$LINENO" "FT_Load_Sfnt_Table" "ac_cv_func_FT_Load_Sfnt_Table"
-if test "x$ac_cv_func_FT_Load_Sfnt_Table" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_FT_LOAD_SFNT_TABLE 1
-_ACEOF
-
-fi
-done
-
-        CFLAGS="$ac_save_CFLAGS"
-	CPPFLAGS="$ac_save_CPPFLAGS"
 		if test "$ac_cv_header_freetype_freetype_h" = "yes" -a "$wine_cv_fttrigon" = "yes"
 	then
 

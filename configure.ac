@@ -1373,8 +1373,7 @@ then
                          freetype/ftoutln.h \
                          freetype/ftwinfnt.h \
                          freetype/ftmodapi.h \
-                         freetype/ftlcdfil.h \
-                         freetype/internal/sfnt.h,,,
+                         freetype/ftlcdfil.h,,,
                          [#ifdef HAVE_FT2BUILD_H
                           # include <ft2build.h>
                           #endif])
@@ -1383,11 +1382,6 @@ then
           [Define if you have the <freetype/fttrigon.h> header file.])
                     wine_cv_fttrigon=yes],[wine_cv_fttrigon=no])
         AC_CHECK_TYPES(FT_TrueTypeEngineType,,,[#include <freetype/ftmodapi.h>])
-        ac_save_CFLAGS="$CFLAGS"
-        CFLAGS="$CFLAGS $ac_freetype_libs"
-        AC_CHECK_FUNCS(FT_Load_Sfnt_Table)
-        CFLAGS="$ac_save_CFLAGS"
-	CPPFLAGS="$ac_save_CPPFLAGS"
 	dnl Check that we have at least freetype/freetype.h
 	if test "$ac_cv_header_freetype_freetype_h" = "yes" -a "$wine_cv_fttrigon" = "yes"
 	then

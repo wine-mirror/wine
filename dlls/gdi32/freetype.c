@@ -117,9 +117,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(font);
 #ifdef HAVE_FREETYPE_FTOUTLN_H
 #include <freetype/ftoutln.h>
 #endif
-#ifdef HAVE_FREETYPE_INTERNAL_SFNT_H
-#include <freetype/internal/sfnt.h>
-#endif
 #ifdef HAVE_FREETYPE_FTTRIGON_H
 #include <freetype/fttrigon.h>
 #endif
