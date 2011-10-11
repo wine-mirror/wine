@@ -4456,7 +4456,7 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_front_buffer_data(struct wined3d_device *device,
+HRESULT CDECL wined3d_device_get_front_buffer_data(const struct wined3d_device *device,
         UINT swapchain_idx, struct wined3d_surface *dst_surface)
 {
     struct wined3d_swapchain *swapchain;
