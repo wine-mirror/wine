@@ -1253,51 +1253,66 @@ static void oss_silence_buffer(ACImpl *This, BYTE *buf, UINT32 frames)
 
 static void oss_write_data(ACImpl *This)
 {
-    ssize_t written;
+    ssize_t written_bytes;
     UINT32 written_frames;
-    size_t to_write;
+    size_t to_write_frames, to_write_bytes;
+    audio_buf_info bi;
     BYTE *buf =
         This->local_buffer + (This->lcl_offs_frames * This->fmt->nBlockAlign);
 
     if(This->lcl_offs_frames + This->held_frames > This->bufsize_frames)
-        to_write = This->bufsize_frames - This->lcl_offs_frames;
+        to_write_frames = This->bufsize_frames - This->lcl_offs_frames;
     else
-        to_write = This->held_frames;
+        to_write_frames = This->held_frames;
+    to_write_bytes = to_write_frames * This->fmt->nBlockAlign;
+
+    if(ioctl(This->fd, SNDCTL_DSP_GETOSPACE, &bi) < 0){
+        WARN("GETOSPACE failed: %d (%s)\n", errno, strerror(errno));
+        return;
+    }
+
+    if(bi.bytes < to_write_bytes){
+        to_write_frames = bi.bytes / This->fmt->nBlockAlign;
+        to_write_bytes = to_write_frames * This->fmt->nBlockAlign;
+    }
 
     if(This->session->mute)
-        oss_silence_buffer(This, buf, to_write);
+        oss_silence_buffer(This, buf, to_write_frames);
 
-    written = write(This->fd, buf, to_write * This->fmt->nBlockAlign);
-    if(written < 0){
+    written_bytes = write(This->fd, buf, to_write_bytes);
+    if(written_bytes < 0){
         /* EAGAIN is OSS buffer full, log that too */
         WARN("write failed: %d (%s)\n", errno, strerror(errno));
         return;
     }
-    written_frames = written / This->fmt->nBlockAlign;
+    written_frames = written_bytes / This->fmt->nBlockAlign;
 
     This->lcl_offs_frames += written_frames;
     This->lcl_offs_frames %= This->bufsize_frames;
     This->held_frames -= written_frames;
     This->inbuf_frames += written_frames;
 
-    if(written_frames < to_write){
+    if(written_frames < to_write_frames){
         /* OSS buffer probably full */
         return;
     }
 
-    if(This->held_frames){
+    bi.bytes -= written_bytes;
+    if(This->held_frames && bi.bytes >= This->fmt->nBlockAlign){
         /* wrapped and have some data back at the start to write */
 
-        if(This->session->mute)
-            oss_silence_buffer(This, This->local_buffer, This->held_frames);
+        to_write_frames = bi.bytes / This->fmt->nBlockAlign;
+        to_write_bytes = to_write_frames * This->fmt->nBlockAlign;
 
-        written = write(This->fd, This->local_buffer,
-                This->held_frames * This->fmt->nBlockAlign);
-        if(written < 0){
+        if(This->session->mute)
+            oss_silence_buffer(This, This->local_buffer, to_write_frames);
+
+        written_bytes = write(This->fd, This->local_buffer, to_write_bytes);
+        if(written_bytes < 0){
             WARN("write failed: %d (%s)\n", errno, strerror(errno));
             return;
         }
-        written_frames = written / This->fmt->nBlockAlign;
+        written_frames = written_bytes / This->fmt->nBlockAlign;
 
         This->lcl_offs_frames += written_frames;
         This->lcl_offs_frames %= This->bufsize_frames;
