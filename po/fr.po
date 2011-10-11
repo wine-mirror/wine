@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-09-06 22:11+0100\n"
+"PO-Revision-Date: 2011-10-10 22:11+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -7738,7 +7738,6 @@ msgid "%s: File Not Found\n"
 msgstr "%s : fichier non trouvé\n"
 
 #: attrib.rc:47
-#, fuzzy
 msgid ""
 "ATTRIB - Displays or changes file attributes.\n"
 "\n"
@@ -7768,17 +7767,17 @@ msgstr ""
 "\n"
 "où\n"
 "\n"
-"+   Définit un attribut.\n"
-"-   Supprime un attribut.\n"
-"R   Attribut de fichier en lecture seule.\n"
-"A   Attribut de fichier archive.\n"
-"S   Attribut de fichier système.\n"
-"H   Attribut de fichier caché.\n"
-"[lecteur:][chemin][nomFichier]\n"
-"Spécifie un ou plusieurs fichiers à faire traiter par attrib.\n"
-"/S  Traite les fichiers correspondants dans le dossier courant\n"
-"et tous les sous-dossiers.\n"
-"/D  Traite également les dossiers.\n"
+"  +   Définit un attribut.\n"
+"  -   Supprime un attribut.\n"
+"  R   Attribut de fichier en lecture seule.\n"
+"  A   Attribut de fichier archive.\n"
+"  S   Attribut de fichier système.\n"
+"  H   Attribut de fichier caché.\n"
+"  [lecteur:][chemin][nomFichier]\n"
+"      Spécifie un ou plusieurs fichiers qu'attrib doit traiter.\n"
+"  /S  Traite les fichiers correspondants dans le dossier courant\n"
+"      et tous les sous-dossiers.\n"
+"  /D  Traite également les dossiers.\n"
 
 #: clock.rc:29
 msgid "Ana&log"
@@ -8031,18 +8030,19 @@ msgstr ""
 "PATH %PATH%;c:\\temp\n"
 
 #: cmd.rc:128
-#, fuzzy
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
 "It is mainly useful in batch files to allow the user to read the output\n"
 "of a previous command before it scrolls off the screen.\n"
 msgstr ""
-"PAUSE affiche un message sur l'écran : « Pressez Entrée pour continuer »\n"
-"et attend que l'utilisateur presse la touche Entrée. PAUSE est surtout "
-"utilisé dans\n"
-"les fichiers batchs pour permettre à l'utilisateur de lire la sortie de\n"
-"la dernière commande avant qu'elle ne disparaisse de l'écran.\n"
+"PAUSE affiche un message à l'écran demandant à l'utilisateur d'appuyer sur "
+"une touche.\n"
+"\n"
+"Principalement utilisé dans des fichiers batchs pour permettre à "
+"l'utilisateur\n"
+"de lire la sortie de la dernière commande avant qu'elle ne disparaisse de "
+"l'écran.\n"
 
 #: cmd.rc:149
 msgid ""
@@ -8325,7 +8325,6 @@ msgstr ""
 "au système d'exploitation ou au shell où vous avez invoqué cmd.\n"
 
 #: cmd.rc:289
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -8387,6 +8386,7 @@ msgstr ""
 "MORE\t\tAffiche du texte par pages\n"
 "MOVE\t\tDéplace un fichier, un groupe de fichiers ou un répertoire\n"
 "PATH\t\tRègle ou affiche le chemin de recherche\n"
+"PAUSE\t\tSuspend l'exécution d'un fichier batch\n"
 "POPD\t\tRemplace le répertoire courant par le dernier enregistré avec\n"
 "\t\tPUSHD\n"
 "PROMPT\t\tChange l'invite de commande\n"
@@ -8529,9 +8529,8 @@ msgid "PATH not found\n"
 msgstr "PATH non trouvé\n"
 
 #: cmd.rc:321
-#, fuzzy
 msgid "Press any key to continue... "
-msgstr "Appuyez sur ENTRÉE pour continuer : "
+msgstr "Appuyez sur une touche pour continuer... "
 
 #: cmd.rc:322
 msgid "Wine Command Prompt"
@@ -9075,9 +9074,8 @@ msgid "version 1.0"
 msgstr "version 1.0"
 
 #: oleview.rc:100
-#, fuzzy
 msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
-msgstr "Fichiers TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
+msgstr "Fichiers TypeLib (*.tlb ; *.olb ; *.dll ; *.ocx ; *.exe)"
 
 #: oleview.rc:103
 msgid "Bind to file via a File Moniker"
@@ -10519,22 +10517,19 @@ msgstr "Configuration de Wine pour %s"
 
 #: winecfg.rc:87
 msgid "Selected driver: %s"
-msgstr ""
+msgstr "Pilote sélectionné : %s"
 
 #: winecfg.rc:88
-#, fuzzy
 msgid "(None)"
-msgstr "Aucune"
+msgstr "(Aucun)"
 
 #: winecfg.rc:89
-#, fuzzy
 msgid "Audio test failed!"
-msgstr "Échec de réinitialisation du disque dur\n"
+msgstr "Échec du test audio !\n"
 
 #: winecfg.rc:91
-#, fuzzy
 msgid "(System default)"
-msgstr "Chemin système (path)"
+msgstr "(Valeur par défaut du système)"
 
 #: winecfg.rc:51
 msgid ""
@@ -10573,9 +10568,8 @@ msgid "Default Settings"
 msgstr "Paramètres par défaut"
 
 #: winecfg.rc:59
-#, fuzzy
 msgid "Wine Programs (*.exe; *.exe.so)"
-msgstr "Programmes de Wine (*.exe,*.exe.so)"
+msgstr "Programmes de Wine (*.exe ; *.exe.so)"
 
 #: winecfg.rc:60
 msgid "Use global settings"
@@ -10998,9 +10992,8 @@ msgid "Tile &Vertically\tCtrl+F4"
 msgstr "Arranger &verticalement\tCtrl+F4"
 
 #: winefile.rc:87
-#, fuzzy
 msgid "&About Wine File Manager"
-msgstr "Gestionnaire de fichiers de Wine"
+msgstr "À &propos du gestionnaire de fichiers de Wine"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -11327,9 +11320,8 @@ msgid "Unicode text document"
 msgstr "Document texte Unicode"
 
 #: wordpad.rc:143
-#, fuzzy
 msgid "Printer files (*.prn)"
-msgstr "Fichiers d'impression (*.PRN)"
+msgstr "Fichiers d'impression (*.prn)"
 
 #: wordpad.rc:148
 msgid "Left"
