@@ -165,6 +165,7 @@ struct IDirectDrawSurfaceImpl
     /* This implementation handles attaching surfaces to other surfaces */
     IDirectDrawSurfaceImpl  *next_attached;
     IDirectDrawSurfaceImpl  *first_attached;
+    IUnknown                *attached_iface;
 
     /* Complex surfaces are organized in a tree, although the tree is degenerated to a list in most cases.
      * In mipmap and primary surfaces each level has only one attachment, which is the next surface level.

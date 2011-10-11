@@ -216,6 +216,14 @@ static void test_ddraw_objects(void)
             {
                 ref = getRefcount( (IUnknown *) stencil);
                 ok(ref == 2, "Got refcount %d, expected 2\n", ref);
+                hr = IDirectDrawSurface7_QueryInterface(surface, &IID_IDirectDrawSurface, (void **) &surface1);
+                ok(hr == DD_OK, "IDirectDrawSurface7_QueryInterface returned %08x\n", hr);
+                hr = IDirectDrawSurface7_QueryInterface(stencil, &IID_IDirectDrawSurface, (void **) &stencil1);
+                ok(hr == DD_OK, "IDirectDrawSurface7_QueryInterface returned %08x\n", hr);
+                hr = IDirectDrawSurface_DeleteAttachedSurface(surface1, 0, stencil1);
+                ok(hr == DDERR_SURFACENOTATTACHED, "DeleteAttachedSurface returned %08x\n", hr);
+                if (stencil1 != NULL) IDirectDrawSurface_Release(stencil1);
+                if (surface1 != NULL) IDirectDrawSurface_Release(surface1);
                 hr = IDirectDrawSurface7_DeleteAttachedSurface(surface, 0, stencil);
                 ok(hr == DD_OK, "DeleteAttachedSurface returned %08x\n", hr);
                 ref = getRefcount( (IUnknown *) stencil);
@@ -270,9 +278,9 @@ static void test_ddraw_objects(void)
             ref = IDirectDrawSurface_Release(surface1);
             ok(!ref, "Got refcount %d, expected 0\n", ref);
             ref = getRefcount( (IUnknown *) stencil1);
-            todo_wine ok(ref == 1, "Got refcount %d, expected 1\n", ref);
+            ok(ref == 1, "Got refcount %d, expected 1\n", ref);
             ref = IDirectDrawSurface_Release(stencil1);
-            todo_wine ok(!ref, "Got refcount %d, expected 0\n", ref);
+            ok(!ref, "Got refcount %d, expected 0\n", ref);
         }
         else
             IDirectDrawSurface_Release(surface1);

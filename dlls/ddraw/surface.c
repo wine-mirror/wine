@@ -1350,7 +1350,7 @@ static HRESULT WINAPI ddraw_surface1_Blt(IDirectDrawSurface *iface, RECT *dst_re
  *
  * Attaches a surface to another surface. How the surface attachments work
  * is not totally understood yet, and this method is prone to problems.
- * he surface that is attached is AddRef-ed.
+ * The surface that is attached is AddRef-ed.
  *
  * Tests with complex surfaces suggest that the surface attachments form a
  * tree, but no method to test this has been found yet.
@@ -1449,6 +1449,7 @@ static HRESULT WINAPI ddraw_surface7_AddAttachedSurface(IDirectDrawSurface7 *ifa
         return hr;
     }
     ddraw_surface7_AddRef(attachment);
+    attachment_impl->attached_iface = (IUnknown *)attachment;
     return hr;
 }
 
@@ -1468,6 +1469,7 @@ static HRESULT WINAPI ddraw_surface4_AddAttachedSurface(IDirectDrawSurface4 *ifa
     }
     ddraw_surface4_AddRef(attachment);
     ddraw_surface7_Release(&attachment_impl->IDirectDrawSurface7_iface);
+    attachment_impl->attached_iface = (IUnknown *)attachment;
     return hr;
 }
 static HRESULT WINAPI ddraw_surface3_AddAttachedSurface(IDirectDrawSurface3 *iface, IDirectDrawSurface3 *attachment)
@@ -1512,6 +1514,7 @@ static HRESULT WINAPI ddraw_surface3_AddAttachedSurface(IDirectDrawSurface3 *ifa
         return hr;
     }
     ddraw_surface3_AddRef(attachment);
+    attachment_impl->attached_iface = (IUnknown *)attachment;
     return hr;
 }
 
@@ -1531,6 +1534,7 @@ static HRESULT WINAPI ddraw_surface2_AddAttachedSurface(IDirectDrawSurface2 *ifa
     }
     ddraw_surface2_AddRef(attachment);
     ddraw_surface3_Release(&attachment_impl->IDirectDrawSurface3_iface);
+    attachment_impl->attached_iface = (IUnknown *)attachment;
     return hr;
 }
 
@@ -1550,6 +1554,7 @@ static HRESULT WINAPI ddraw_surface1_AddAttachedSurface(IDirectDrawSurface *ifac
     }
     ddraw_surface1_AddRef(attachment);
     ddraw_surface3_Release(&attachment_impl->IDirectDrawSurface3_iface);
+    attachment_impl->attached_iface = (IUnknown *)attachment;
     return hr;
 }
 
@@ -1569,17 +1574,24 @@ static HRESULT WINAPI ddraw_surface1_AddAttachedSurface(IDirectDrawSurface *ifac
  *
  *****************************************************************************/
 static HRESULT ddraw_surface_delete_attached_surface(IDirectDrawSurfaceImpl *This,
-        IDirectDrawSurfaceImpl *Surf)
+        IDirectDrawSurfaceImpl *Surf, IUnknown *detach_iface)
 {
     IDirectDrawSurfaceImpl *Prev = This;
 
-    TRACE("surface %p, attachment %p.\n", This, Surf);
+    TRACE("surface %p, attachment %p, detach_iface %p.\n", This, Surf, detach_iface);
 
     EnterCriticalSection(&ddraw_cs);
     if (!Surf || (Surf->first_attached != This) || (Surf == This) )
     {
         LeaveCriticalSection(&ddraw_cs);
         return DDERR_CANNOTDETACHSURFACE;
+    }
+
+    if (Surf->attached_iface != detach_iface)
+    {
+        WARN("Surf->attach_iface %p != detach_iface %p.\n", Surf->attached_iface, detach_iface);
+        LeaveCriticalSection(&ddraw_cs);
+        return DDERR_SURFACENOTATTACHED;
     }
 
     /* Remove MIPMAPSUBLEVEL if this seemed to be one */
@@ -1612,6 +1624,8 @@ static HRESULT ddraw_surface_delete_attached_surface(IDirectDrawSurfaceImpl *Thi
         IDirect3DDeviceImpl_UpdateDepthStencil(This->ddraw->d3ddevice);
     }
     LeaveCriticalSection(&ddraw_cs);
+    IUnknown_Release(Surf->attached_iface);
+    Surf->attached_iface = NULL;
     return DD_OK;
 }
 
@@ -1620,17 +1634,10 @@ static HRESULT WINAPI ddraw_surface7_DeleteAttachedSurface(IDirectDrawSurface7 *
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface7(iface);
     IDirectDrawSurfaceImpl *attachment_impl = unsafe_impl_from_IDirectDrawSurface7(attachment);
-    HRESULT hr;
 
     TRACE("iface %p, flags %#x, attachment %p.\n", iface, flags, attachment);
 
-    hr = ddraw_surface_delete_attached_surface(This, attachment_impl);
-    if (FAILED(hr))
-    {
-        return hr;
-    }
-    ddraw_surface7_Release(attachment);
-    return hr;
+    return ddraw_surface_delete_attached_surface(This, attachment_impl, (IUnknown *)attachment);
 }
 
 static HRESULT WINAPI ddraw_surface4_DeleteAttachedSurface(IDirectDrawSurface4 *iface,
@@ -1638,17 +1645,10 @@ static HRESULT WINAPI ddraw_surface4_DeleteAttachedSurface(IDirectDrawSurface4 *
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface4(iface);
     IDirectDrawSurfaceImpl *attachment_impl = unsafe_impl_from_IDirectDrawSurface4(attachment);
-    HRESULT hr;
 
     TRACE("iface %p, flags %#x, attachment %p.\n", iface, flags, attachment);
 
-    hr = ddraw_surface_delete_attached_surface(This, attachment_impl);
-    if (FAILED(hr))
-    {
-        return hr;
-    }
-    ddraw_surface4_Release(attachment);
-    return hr;
+    return ddraw_surface_delete_attached_surface(This, attachment_impl, (IUnknown *)attachment);
 }
 
 static HRESULT WINAPI ddraw_surface3_DeleteAttachedSurface(IDirectDrawSurface3 *iface,
@@ -1656,16 +1656,10 @@ static HRESULT WINAPI ddraw_surface3_DeleteAttachedSurface(IDirectDrawSurface3 *
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface3(iface);
     IDirectDrawSurfaceImpl *attachment_impl = unsafe_impl_from_IDirectDrawSurface3(attachment);
-    HRESULT hr;
+
     TRACE("iface %p, flags %#x, attachment %p.\n", iface, flags, attachment);
 
-    hr = ddraw_surface_delete_attached_surface(This, attachment_impl);
-    if (FAILED(hr))
-    {
-        return hr;
-    }
-    ddraw_surface3_Release(attachment);
-    return hr;
+    return ddraw_surface_delete_attached_surface(This, attachment_impl, (IUnknown *)attachment);
 }
 
 static HRESULT WINAPI ddraw_surface2_DeleteAttachedSurface(IDirectDrawSurface2 *iface,
@@ -1673,16 +1667,10 @@ static HRESULT WINAPI ddraw_surface2_DeleteAttachedSurface(IDirectDrawSurface2 *
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface2(iface);
     IDirectDrawSurfaceImpl *attachment_impl = unsafe_impl_from_IDirectDrawSurface2(attachment);
-    HRESULT hr;
+
     TRACE("iface %p, flags %#x, attachment %p.\n", iface, flags, attachment);
 
-    hr = ddraw_surface_delete_attached_surface(This, attachment_impl);
-    if (FAILED(hr))
-    {
-        return hr;
-    }
-    ddraw_surface2_Release(attachment);
-    return hr;
+    return ddraw_surface_delete_attached_surface(This, attachment_impl, (IUnknown *)attachment);
 }
 
 static HRESULT WINAPI ddraw_surface1_DeleteAttachedSurface(IDirectDrawSurface *iface,
@@ -1690,16 +1678,10 @@ static HRESULT WINAPI ddraw_surface1_DeleteAttachedSurface(IDirectDrawSurface *i
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface(iface);
     IDirectDrawSurfaceImpl *attachment_impl = unsafe_impl_from_IDirectDrawSurface(attachment);
-    HRESULT hr;
+
     TRACE("iface %p, flags %#x, attachment %p.\n", iface, flags, attachment);
 
-    hr = ddraw_surface_delete_attached_surface(This, attachment_impl);
-    if (FAILED(hr))
-    {
-        return hr;
-    }
-    ddraw_surface1_Release(attachment);
-    return hr;
+    return ddraw_surface_delete_attached_surface(This, attachment_impl, (IUnknown *)attachment);
 }
 
 /*****************************************************************************
@@ -5100,9 +5082,6 @@ static void STDMETHODCALLTYPE ddraw_surface_wined3d_object_destroyed(void *paren
     /* Check for attached surfaces and detach them. */
     if (surface->first_attached != surface)
     {
-        IDirectDrawSurface7 *root = &surface->first_attached->IDirectDrawSurface7_iface;
-        IDirectDrawSurface7 *detach = &surface->IDirectDrawSurface7_iface;
-
         /* Well, this shouldn't happen: The surface being attached is
          * referenced in AddAttachedSurface(), so it shouldn't be released
          * until DeleteAttachedSurface() is called, because the refcount is
@@ -5111,18 +5090,14 @@ static void STDMETHODCALLTYPE ddraw_surface_wined3d_object_destroyed(void *paren
         WARN("Surface is still attached to surface %p.\n", surface->first_attached);
 
         /* The refcount will drop to -1 here */
-        if (FAILED(IDirectDrawSurface7_DeleteAttachedSurface(root, 0, detach)))
+        if (FAILED(ddraw_surface_delete_attached_surface(surface->first_attached, surface, surface->attached_iface)))
             ERR("DeleteAttachedSurface failed.\n");
     }
 
     while (surface->next_attached)
-    {
-        IDirectDrawSurface7 *root = &surface->IDirectDrawSurface7_iface;
-        IDirectDrawSurface7 *detach = &surface->next_attached->IDirectDrawSurface7_iface;
-
-        if (FAILED(IDirectDrawSurface7_DeleteAttachedSurface(root, 0, detach)))
+        if (FAILED(ddraw_surface_delete_attached_surface(surface,
+                surface->next_attached, surface->next_attached->attached_iface)))
             ERR("DeleteAttachedSurface failed.\n");
-    }
 
     /* Having a texture handle set implies that the device still exists. */
     if (surface->Handle)
