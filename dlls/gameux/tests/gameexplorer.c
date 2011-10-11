@@ -656,30 +656,42 @@ static void test_install_uninstall_game(void)
     }
 }
 
-START_TEST(gameexplorer)
+static void run_tests(void)
 {
-    HRESULT r;
     BOOL gameExplorerAvailable = FALSE;
     BOOL gameExplorer2Available = FALSE;
 
+    test_create(&gameExplorerAvailable, &gameExplorer2Available);
+
+    if(gameExplorerAvailable)
+        test_add_remove_game();
+
+    if(gameExplorer2Available)
+        test_install_uninstall_game();
+}
+
+START_TEST(gameexplorer)
+{
     if(_loadDynamicRoutines())
     {
-        r = CoInitialize( NULL );
-        ok( r == S_OK, "failed to init COM\n");
+        HRESULT hr;
 
-        test_create(&gameExplorerAvailable, &gameExplorer2Available);
+        hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+        ok(hr == S_OK, "Failed to initialize COM, hr %#x.\n", hr);
+        trace("Running apartment threaded tests.\n");
+        run_tests();
+        if(SUCCEEDED(hr))
+            CoUninitialize();
 
-        if(gameExplorerAvailable)
-            test_add_remove_game();
-
-        if(gameExplorer2Available)
-            test_install_uninstall_game();
+        hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+        ok(hr == S_OK, "Failed to initialize COM, hr %#x.\n", hr);
+        trace("Running multithreaded tests.\n");
+        run_tests();
+        if(SUCCEEDED(hr))
+            CoUninitialize();
     }
     else
         /* this is not a failure, because both procedures loaded by address
          * are always available on systems which has gameux.dll */
         win_skip("too old system, cannot load required dynamic procedures\n");
-
-
-    CoUninitialize();
 }
