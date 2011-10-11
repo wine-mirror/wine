@@ -507,7 +507,7 @@ static enum wxr_format get_xrender_format_from_color_shifts(int depth, ColorShif
     return WXR_INVALID_FORMAT;
 }
 
-static enum wxr_format get_xrender_format_from_bitmapinfo( const BITMAPINFO *info, BOOL use_alpha )
+static enum wxr_format get_xrender_format_from_bitmapinfo( const BITMAPINFO *info )
 {
     if (info->bmiHeader.biPlanes != 1) return WXR_INVALID_FORMAT;
 
@@ -539,8 +539,7 @@ static enum wxr_format get_xrender_format_from_bitmapinfo( const BITMAPINFO *inf
             break;
         }
         if (info->bmiHeader.biCompression != BI_RGB) break;
-        if (info->bmiHeader.biBitCount == 16) return WXR_FORMAT_X1R5G5B5;
-        return use_alpha ? WXR_FORMAT_A8R8G8B8 : WXR_FORMAT_X8R8G8B8;
+        return (info->bmiHeader.biBitCount == 16) ? WXR_FORMAT_X1R5G5B5 : WXR_FORMAT_A8R8G8B8;
     }
     return WXR_INVALID_FORMAT;
 }
@@ -2678,7 +2677,7 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMA
         dst_format = physdev->format;
     }
 
-    src_format = get_xrender_format_from_bitmapinfo( info, TRUE );
+    src_format = get_xrender_format_from_bitmapinfo( info );
     if (!(pict_format = pict_formats[src_format])) goto update_format;
 
     /* make sure we can create an image with the same bpp */
@@ -2792,7 +2791,12 @@ static DWORD xrenderdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct 
         return dev->funcs->pBlendImage( dev, info, bits, src, dst, func );
     }
 
-    format = get_xrender_format_from_bitmapinfo( info, func.AlphaFormat & AC_SRC_ALPHA );
+    format = get_xrender_format_from_bitmapinfo( info );
+    if (!(func.AlphaFormat & AC_SRC_ALPHA))
+        format = get_format_without_alpha( format );
+    else if (format != WXR_FORMAT_A8R8G8B8)
+        return ERROR_INVALID_PARAMETER;
+
     if (!(pict_format = pict_formats[format])) goto update_format;
 
     /* make sure we can create an image with the same bpp */
@@ -2864,6 +2868,12 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     {
         dst_dev = GET_NEXT_PHYSDEV( dst_dev, pAlphaBlend );
         return dst_dev->funcs->pAlphaBlend( dst_dev, dst, src_dev, src, blendfn );
+    }
+
+    if ((blendfn.AlphaFormat & AC_SRC_ALPHA) && physdev_src->format != WXR_FORMAT_A8R8G8B8)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
     }
 
     if (physdev_dst != physdev_src)
