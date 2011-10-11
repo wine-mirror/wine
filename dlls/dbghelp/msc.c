@@ -45,9 +45,7 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#ifndef PATH_MAX
-#define PATH_MAX MAX_PATH
-#endif
+
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
