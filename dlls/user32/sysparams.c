@@ -1582,11 +1582,21 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     {
         LPNONCLIENTMETRICSW lpnm = pvParam;
 
+        if (!lpnm)
+        {
+            ret = FALSE;
+            break;
+        }
+
         if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
 
-        if (lpnm && (lpnm->cbSize == sizeof(NONCLIENTMETRICSW) ||
-                     lpnm->cbSize == FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth)))
+        if (lpnm->cbSize == sizeof(NONCLIENTMETRICSW))
             *lpnm = nonclient_metrics;
+        else if (lpnm->cbSize == FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth))
+        {
+            memcpy(lpnm, &nonclient_metrics, FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth));
+            lpnm->cbSize = FIELD_OFFSET(NONCLIENTMETRICSW, iPaddedBorderWidth);
+        }
         else
             ret = FALSE;
         break;
