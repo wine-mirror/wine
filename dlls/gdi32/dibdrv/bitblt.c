@@ -1133,3 +1133,19 @@ BOOL dibdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     release_dc_ptr( dc_dst );
     return ret;
 }
+
+/***********************************************************************
+ *           dibdrv_AlphaBlend
+ */
+BOOL dibdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
+                        PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION blend )
+{
+    BOOL ret;
+    DC *dc_dst = get_dc_ptr( dst_dev->hdc );
+
+    if (!dc_dst) return FALSE;
+
+    ret = dc_dst->nulldrv.funcs->pAlphaBlend( &dc_dst->nulldrv, dst, src_dev, src, blend );
+    release_dc_ptr( dc_dst );
+    return ret;
+}

@@ -501,7 +501,7 @@ const DC_FUNCTIONS dib_driver =
 {
     NULL,                               /* pAbortDoc */
     NULL,                               /* pAbortPath */
-    NULL,                               /* pAlphaBlend */
+    dibdrv_AlphaBlend,                  /* pAlphaBlend */
     NULL,                               /* pAngleArc */
     NULL,                               /* pArc */
     NULL,                               /* pArcTo */
