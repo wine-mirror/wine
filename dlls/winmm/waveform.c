@@ -1587,7 +1587,8 @@ static void WID_PullData(WINMM_Device *device)
             to_copy_bytes = min(packet * device->bytes_per_frame,
                     queue->dwBufferLength - queue->dwBytesRecorded);
 
-            memcpy(queue->lpData + queue->dwBytesRecorded, data,
+            memcpy(queue->lpData + queue->dwBytesRecorded,
+                    data + (packet_len - packet) * device->bytes_per_frame,
                     to_copy_bytes);
 
             queue->dwBytesRecorded += to_copy_bytes;
