@@ -4553,7 +4553,7 @@ HRESULT CDECL wined3d_device_set_software_vertex_processing(struct wined3d_devic
     return WINED3D_OK;
 }
 
-BOOL CDECL wined3d_device_get_software_vertex_processing(struct wined3d_device *device)
+BOOL CDECL wined3d_device_get_software_vertex_processing(const struct wined3d_device *device)
 {
     static BOOL warned;
 
