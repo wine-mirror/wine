@@ -920,9 +920,14 @@ BOOL WINAPI GetTextExtentPoint32A( HDC hdc, LPCSTR str, INT count,
 {
     BOOL ret = FALSE;
     INT wlen;
-    LPWSTR p = FONT_mbtowc(hdc, str, count, &wlen, NULL);
+    LPWSTR p;
 
-    if (p) {
+    if (count < 0) return FALSE;
+
+    p = FONT_mbtowc(hdc, str, count, &wlen, NULL);
+
+    if (p)
+    {
 	ret = GetTextExtentPoint32W( hdc, p, wlen, size );
 	HeapFree( GetProcessHeap(), 0, p );
     }
@@ -975,10 +980,15 @@ BOOL WINAPI GetTextExtentExPointI( HDC hdc, const WORD *indices, INT count, INT 
                                    LPINT nfit, LPINT dxs, LPSIZE size )
 {
     BOOL ret = FALSE;
-    DC * dc = get_dc_ptr( hdc );
+    DC *dc;
+
+    if (count < 0) return FALSE;
+
+    dc = get_dc_ptr( hdc );
     if (!dc) return FALSE;
 
-    if(dc->gdiFont) {
+    if(dc->gdiFont)
+    {
         ret = WineEngGetTextExtentExPointI(dc->gdiFont, indices, count, max_ext, nfit, dxs, size);
         size->cx = abs(INTERNAL_XDSTOWS(dc, size->cx));
         size->cy = abs(INTERNAL_YDSTOWS(dc, size->cy));
@@ -1051,11 +1061,15 @@ BOOL WINAPI GetTextExtentExPointA( HDC hdc, LPCSTR str, INT count,
     INT wlen;
     INT *walpDx = NULL;
     LPWSTR p = NULL;
-    
-    if (alpDx &&
-       NULL == (walpDx = HeapAlloc(GetProcessHeap(), 0, count * sizeof(INT))))
-       return FALSE;
-    
+
+    if (count < 0) return FALSE;
+
+    if (alpDx)
+    {
+        walpDx = HeapAlloc( GetProcessHeap(), 0, count * sizeof(INT) );
+        if (!walpDx) return FALSE;
+    }
+
     p = FONT_mbtowc(hdc, str, count, &wlen, NULL);
     ret = GetTextExtentExPointW( hdc, p, wlen, maxExt, lpnFit, walpDx, size);
     if (walpDx)
@@ -1118,9 +1132,10 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
 
     TRACE("(%p, %s, %d)\n",hdc,debugstr_wn(str,count),maxExt);
 
+    if (count < 0) return FALSE;
+
     dc = get_dc_ptr(hdc);
-    if (! dc)
-        return FALSE;
+    if (!dc) return FALSE;
 
     GetTextMetricsW(hdc, &tm);
 

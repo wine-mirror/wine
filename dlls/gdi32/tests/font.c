@@ -1054,6 +1054,7 @@ static void test_text_extents(void)
     HFONT hfont;
     SIZE sz;
     SIZE sz1, sz2;
+    BOOL ret;
 
     memset(&lf, 0, sizeof(lf));
     strcpy(lf.lfFaceName, "Arial");
@@ -1109,6 +1110,14 @@ static void test_text_extents(void)
     ok(sz1.cx == sz2.cx && sz1.cy == sz2.cy,
        "GetTextExtentExPointW with lpnFit and alpDx both NULL returns incorrect results\n");
     HeapFree(GetProcessHeap(), 0, extents);
+
+    /* extents functions fail with -ve counts (the interesting case being -1) */
+    ret = GetTextExtentPointA(hdc, "o", -1, &sz);
+    ok(ret == FALSE, "got %d\n", ret);
+    ret = GetTextExtentExPointA(hdc, "o", -1, 0, NULL, NULL, &sz);
+    ok(ret == FALSE, "got %d\n", ret);
+    ret = GetTextExtentExPointW(hdc, wt, -1, 0, NULL, NULL, &sz1);
+    ok(ret == FALSE, "got %d\n", ret);
 
     hfont = SelectObject(hdc, hfont);
     DeleteObject(hfont);
