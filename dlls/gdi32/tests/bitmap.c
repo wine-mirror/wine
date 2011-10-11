@@ -35,8 +35,6 @@
 static BOOL (WINAPI *pGdiAlphaBlend)(HDC,int,int,int,int,HDC,int,int,int,int,BLENDFUNCTION);
 static DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
 
-#define expect_eq(expr, value, type, format) { type ret = (expr); ok((value) == ret, #expr " expected " format " got " format "\n", value, ret); }
-
 static inline int get_bitmap_stride( int width, int bpp )
 {
     return ((width * bpp + 15) >> 3) & ~1;
@@ -3232,19 +3230,16 @@ static void test_StretchDIBits(void)
 
 static void test_GdiAlphaBlend(void)
 {
-    /* test out-of-bound parameters for GdiAlphaBlend */
     HDC hdcNull;
-
     HDC hdcDst;
     HBITMAP bmpDst;
     HBITMAP oldDst;
-
-    BITMAPINFO bmi;
+    BITMAPINFO *bmi;
     HDC hdcSrc;
     HBITMAP bmpSrc;
     HBITMAP oldSrc;
     LPVOID bits;
-
+    BOOL ret;
     BLENDFUNCTION blend;
 
     if (!pGdiAlphaBlend)
@@ -3258,14 +3253,14 @@ static void test_GdiAlphaBlend(void)
     bmpDst = CreateCompatibleBitmap(hdcNull, 100, 100);
     hdcSrc = CreateCompatibleDC(hdcNull);
 
-    memset(&bmi, 0, sizeof(bmi));  /* as of Wine 0.9.44 we require the src to be a DIB section */
-    bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
-    bmi.bmiHeader.biHeight = 20;
-    bmi.bmiHeader.biWidth = 20;
-    bmi.bmiHeader.biBitCount = 32;
-    bmi.bmiHeader.biPlanes = 1;
-    bmi.bmiHeader.biCompression = BI_RGB;
-    bmpSrc = CreateDIBSection(hdcDst, &bmi, DIB_RGB_COLORS, &bits, NULL, 0);
+    bmi = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, FIELD_OFFSET( BITMAPINFO, bmiColors[3] ));
+    bmi->bmiHeader.biSize = sizeof(bmi->bmiHeader);
+    bmi->bmiHeader.biHeight = 20;
+    bmi->bmiHeader.biWidth = 20;
+    bmi->bmiHeader.biBitCount = 32;
+    bmi->bmiHeader.biPlanes = 1;
+    bmi->bmiHeader.biCompression = BI_RGB;
+    bmpSrc = CreateDIBSection(hdcDst, bmi, DIB_RGB_COLORS, &bits, NULL, 0);
     ok(bmpSrc != NULL, "Couldn't create source bitmap\n");
 
     oldDst = SelectObject(hdcDst, bmpDst);
@@ -3276,26 +3271,111 @@ static void test_GdiAlphaBlend(void)
     blend.SourceConstantAlpha = 128;
     blend.AlphaFormat = 0;
 
-    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, 0, 20, 20, blend), TRUE, BOOL, "%d");
     SetLastError(0xdeadbeef);
-    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, -1, 0, 10, 10, blend), FALSE, BOOL, "%d");
-    expect_eq(GetLastError(), ERROR_INVALID_PARAMETER, int, "%d");
-    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, -1, 10, 10, blend), FALSE, BOOL, "%d");
-    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 15, 0, 10, 10, blend), FALSE, BOOL, "%d");
-    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 10, 10, -2, 3, blend), FALSE, BOOL, "%d");
-    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 10, 10, -2, 3, blend), FALSE, BOOL, "%d");
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, 0, 20, 20, blend);
+    ok( ret, "GdiAlphaBlend failed err %u\n", GetLastError() );
+
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, -1, 0, 10, 10, blend);
+    ok( !ret, "GdiAlphaBlend succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, -1, 10, 10, blend);
+    ok( !ret, "GdiAlphaBlend succeeded\n" );
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 15, 0, 10, 10, blend);
+    ok( !ret, "GdiAlphaBlend succeeded\n" );
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 10, 10, -2, 3, blend);
+    ok( !ret, "GdiAlphaBlend succeeded\n" );
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 10, 10, -2, 3, blend);
+    ok( !ret, "GdiAlphaBlend succeeded\n" );
 
     SetWindowOrgEx(hdcSrc, -10, -10, NULL);
-    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, -1, 0, 10, 10, blend), TRUE, BOOL, "%d");
-    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, -1, 10, 10, blend), TRUE, BOOL, "%d");
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, -1, 0, 10, 10, blend);
+    ok( ret, "GdiAlphaBlend failed err %u\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, -1, 10, 10, blend);
+    ok( ret, "GdiAlphaBlend failed err %u\n", GetLastError() );
     SetMapMode(hdcSrc, MM_ANISOTROPIC);
     ScaleWindowExtEx(hdcSrc, 10, 1, 10, 1, NULL);
-    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, -1, 0, 30, 30, blend), TRUE, BOOL, "%d");
-    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, -1, 30, 30, blend), TRUE, BOOL, "%d");
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, -1, 0, 30, 30, blend);
+    ok( ret, "GdiAlphaBlend failed err %u\n", GetLastError() );
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, -1, 30, 30, blend);
+    ok( ret, "GdiAlphaBlend failed err %u\n", GetLastError() );
 
     SetLastError(0xdeadbeef);
-    expect_eq(pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, NULL, 0, 0, 20, 20, blend), FALSE, BOOL, "%d");
-    expect_eq(GetLastError(), 0xdeadbeef, int, "%d");
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, NULL, 0, 0, 20, 20, blend);
+    ok( !ret, "GdiAlphaBlend succeeded\n" );
+    ok( GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError() );
+
+    /* AC_SRC_ALPHA requires 32-bpp BI_RGB format */
+
+    blend.AlphaFormat = AC_SRC_ALPHA;
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, 0, 20, 20, blend);
+    ok( ret, "GdiAlphaBlend failed err %u\n", GetLastError() );
+
+    bmi->bmiHeader.biCompression = BI_BITFIELDS;
+    ((DWORD *)bmi->bmiColors)[0] = 0xff0000;
+    ((DWORD *)bmi->bmiColors)[1] = 0x00ff00;
+    ((DWORD *)bmi->bmiColors)[2] = 0x0000ff;
+    bmpSrc = CreateDIBSection(hdcDst, bmi, DIB_RGB_COLORS, &bits, NULL, 0);
+    ok(bmpSrc != NULL, "Couldn't create source bitmap\n");
+    oldSrc = SelectObject(hdcSrc, bmpSrc);
+    DeleteObject( oldSrc );
+
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, 0, 20, 20, blend);
+    ok( ret, "GdiAlphaBlend failed err %u\n", GetLastError() );
+
+    bmi->bmiHeader.biCompression = BI_BITFIELDS;
+    ((DWORD *)bmi->bmiColors)[0] = 0x0000ff;
+    ((DWORD *)bmi->bmiColors)[1] = 0x00ff00;
+    ((DWORD *)bmi->bmiColors)[2] = 0xff0000;
+    bmpSrc = CreateDIBSection(hdcDst, bmi, DIB_RGB_COLORS, &bits, NULL, 0);
+    ok(bmpSrc != NULL, "Couldn't create source bitmap\n");
+    oldSrc = SelectObject(hdcSrc, bmpSrc);
+    DeleteObject( oldSrc );
+
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, 0, 20, 20, blend);
+    ok( !ret, "GdiAlphaBlend succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    bmi->bmiHeader.biBitCount = 24;
+    bmi->bmiHeader.biCompression = BI_RGB;
+    bmpSrc = CreateDIBSection(hdcDst, bmi, DIB_RGB_COLORS, &bits, NULL, 0);
+    ok(bmpSrc != NULL, "Couldn't create source bitmap\n");
+    oldSrc = SelectObject(hdcSrc, bmpSrc);
+    DeleteObject( oldSrc );
+
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, 0, 20, 20, blend);
+    ok( !ret, "GdiAlphaBlend succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    bmi->bmiHeader.biBitCount = 1;
+    bmpSrc = CreateDIBSection(hdcDst, bmi, DIB_RGB_COLORS, &bits, NULL, 0);
+    ok(bmpSrc != NULL, "Couldn't create source bitmap\n");
+    oldSrc = SelectObject(hdcSrc, bmpSrc);
+    DeleteObject( oldSrc );
+
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, 0, 20, 20, blend);
+    ok( !ret, "GdiAlphaBlend succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    bmpSrc = CreateBitmap( 100, 100, 1, 1, NULL );
+    ok(bmpSrc != NULL, "Couldn't create source bitmap\n");
+    oldSrc = SelectObject(hdcSrc, bmpSrc);
+    DeleteObject( oldSrc );
+
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcSrc, 0, 0, 20, 20, blend);
+    ok( !ret, "GdiAlphaBlend succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
 
     SelectObject(hdcDst, oldDst);
     SelectObject(hdcSrc, oldSrc);

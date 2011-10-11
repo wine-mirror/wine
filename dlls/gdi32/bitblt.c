@@ -292,7 +292,7 @@ BOOL nulldrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     src_dev = GET_DC_PHYSDEV( dc_src, pGetImage );
     err = src_dev->funcs->pGetImage( src_dev, 0, src_info, &bits, src );
     release_dc_ptr( dc_src );
-    if (err) return FALSE;
+    if (err) goto done;
 
     dst_dev = GET_DC_PHYSDEV( dc_dst, pBlendImage );
     memcpy( dst_info, src_info, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
@@ -326,6 +326,8 @@ BOOL nulldrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     }
 
     if (bits.free) bits.free( &bits );
+done:
+    if (err) SetLastError( err );
     return !err;
 }
 
