@@ -497,6 +497,7 @@ UINT ACTION_PatchFiles( MSIPACKAGE *package )
     LIST_FOR_EACH_ENTRY( patch, &package->filepatches, MSIFILEPATCH, entry )
     {
         MSIFILE *file = patch->File;
+        MSICOMPONENT *comp = file->Component;
 
         rc = msi_load_media_info( package, patch->Sequence, mi );
         if (rc != ERROR_SUCCESS)
@@ -504,7 +505,8 @@ UINT ACTION_PatchFiles( MSIPACKAGE *package )
             ERR("Unable to load media info for %s (%u)\n", debugstr_w(file->File), rc);
             return ERROR_FUNCTION_FAILED;
         }
-        if (!file->Component->Enabled) continue;
+        comp->Action = msi_get_component_action( package, comp );
+        if (!comp->Enabled || comp->Action != INSTALLSTATE_LOCAL) continue;
 
         if (!patch->IsApplied)
         {
