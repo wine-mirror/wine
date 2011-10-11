@@ -44,10 +44,13 @@
 #include "fusion.h"
 #include "wine/list.h"
 #include "mscoree_private.h"
+#include "rpcproxy.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL( mscoree );
+
+static HINSTANCE MSCOREE_hInstance;
 
 char *WtoA(LPCWSTR wstr)
 {
@@ -115,6 +118,8 @@ HRESULT WINAPI CorBindToRuntimeHost(LPCWSTR pwszVersion, LPCWSTR pwszBuildFlavor
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
+
+    MSCOREE_hInstance = hinstDLL;
 
     switch (fdwReason)
     {
@@ -508,14 +513,12 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
 
 HRESULT WINAPI DllRegisterServer(void)
 {
-    FIXME("\n");
-    return S_OK;
+    return __wine_register_resources( MSCOREE_hInstance );
 }
 
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    FIXME("\n");
-    return S_OK;
+    return __wine_unregister_resources( MSCOREE_hInstance );
 }
 
 HRESULT WINAPI DllCanUnloadNow(VOID)

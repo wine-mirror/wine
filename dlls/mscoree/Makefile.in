@@ -10,4 +10,6 @@ C_SRCS = \
 	metahost.c \
 	mscoree_main.c
 
+IDL_R_SRCS = mscoree_classes.idl
+
 @MAKE_DLL_RULES@
