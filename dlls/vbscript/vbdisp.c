@@ -133,6 +133,8 @@ static HRESULT invoke_variant_prop(vbdisp_t *This, VARIANT *v, WORD flags, DISPP
 
 static HRESULT invoke_builtin(vbdisp_t *This, const builtin_prop_t *prop, WORD flags, DISPPARAMS *dp, VARIANT *res)
 {
+    VARIANT *args;
+
     switch(flags) {
     case DISPATCH_PROPERTYGET:
         if(!(prop->flags & (BP_GET|BP_GETPUT))) {
@@ -166,7 +168,12 @@ static HRESULT invoke_builtin(vbdisp_t *This, const builtin_prop_t *prop, WORD f
         return E_FAIL;
     }
 
-    return prop->proc(This, dp->rgvarg, dp->cArgs, res);
+    if(arg_cnt(dp) == 1 && V_VT(dp->rgvarg) == (VT_BYREF|VT_VARIANT))
+        args = V_VARIANTREF(dp->rgvarg);
+    else
+        args = dp->rgvarg;
+
+    return prop->proc(This, args, dp->cArgs, res);
 }
 
 static BOOL run_terminator(vbdisp_t *This)
