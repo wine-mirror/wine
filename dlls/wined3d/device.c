@@ -4473,7 +4473,7 @@ HRESULT CDECL wined3d_device_get_front_buffer_data(const struct wined3d_device *
     return hr;
 }
 
-HRESULT CDECL wined3d_device_validate_device(struct wined3d_device *device, DWORD *num_passes)
+HRESULT CDECL wined3d_device_validate_device(const struct wined3d_device *device, DWORD *num_passes)
 {
     const struct wined3d_state *state = &device->stateBlock->state;
     struct wined3d_texture *texture;
