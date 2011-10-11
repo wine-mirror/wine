@@ -604,6 +604,21 @@ bar
 ... rename in other directory ...
 @todo_wine@rename impossible in other directory
 @todo_wine@original file still present
+------------ Testing move ------------
+... file move ...
+file move succeeded
+@todo_wine@file move with overwrite succeeded@or_broken@file overwrite impossible!
+@todo_wine@bar@or_broken@baz
+file moved in subdirectory
+@todo_wine@moving a file to itself is a no-op@or_broken@moving a file to itself should be a no-op!
+@todo_wine@ErrorLevel: 0@or_broken@ErrorLevel: 1
+... directory move ...
+simple directory move succeeded
+moving a directory to itself gives error; errlevel 1
+...... dir in dir move ......
+foo
+bar2
+foo2
 ------------ Testing mkdir ------------
 ... md and mkdir are synonymous ...
 0

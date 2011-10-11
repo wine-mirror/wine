@@ -909,6 +909,76 @@ if not exist baz\abc (
 )
 cd .. & rd /s/q foobar
 
+echo ------------ Testing move ------------
+mkdir foobar & cd foobar
+echo ... file move ...
+echo >foo
+move foo bar > nul 2>&1
+if not exist foo (
+    if exist bar (
+        echo file move succeeded
+    )
+)
+echo bar>bar
+echo baz> baz
+move /Y bar baz > nul 2>&1
+if not exist bar (
+    if exist baz (
+        echo file move with overwrite succeeded
+    )
+) else (
+    echo file overwrite impossible!
+    del bar
+)
+type baz
+
+mkdir rep
+move baz rep > nul 2>&1
+if not exist baz (
+    if exist rep\baz (
+        echo file moved in subdirectory
+    )
+)
+call :setError 0
+move rep\baz . > nul 2>&1
+move /Y baz baz > nul 2>&1
+if errorlevel 1 (
+    echo moving a file to itself should be a no-op!
+) else (
+    echo moving a file to itself is a no-op
+)
+echo ErrorLevel: %ErrorLevel%
+call :setError 0
+del baz
+echo ... directory move ...
+mkdir foo\bar
+mkdir baz
+echo baz2>baz\baz2
+move baz foo\bar > nul 2>&1
+if not exist baz (
+    if exist foo\bar\baz\baz2 (
+        echo simple directory move succeeded
+    )
+)
+call :setError 0
+mkdir baz
+move baz baz > nul 2>&1
+echo moving a directory to itself gives error; errlevel %ErrorLevel%
+echo ...... dir in dir move ......
+rd /s/q foo
+mkdir foo bar
+echo foo2>foo\foo2
+echo bar2>bar\bar2
+move foo bar > nul 2>&1
+if not exist foo (
+    if exist bar (
+        dir /b /ad bar
+        dir /b /a-d bar
+        dir /b bar\foo
+    )
+)
+cd .. & rd /s/q foobar
+
 echo ------------ Testing mkdir ------------
 call :setError 0
 echo ... md and mkdir are synonymous ...
