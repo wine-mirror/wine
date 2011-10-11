@@ -387,6 +387,13 @@ static HRESULT GAMEUX_ParseGameDefinition(
 
     return hr;
 }
+
+struct parse_gdf_thread_param
+{
+    struct GAMEUX_GAME_DATA *GameData;
+    HRESULT hr;
+};
+
 /*******************************************************************************
  * GAMEUX_ParseGDFBinary
  *
@@ -399,8 +406,10 @@ static HRESULT GAMEUX_ParseGameDefinition(
  *                                  GDF will be stored in other fields of this
  *                                  structure.
  */
-static HRESULT GAMEUX_ParseGDFBinary(struct GAMEUX_GAME_DATA *GameData)
+static DWORD WINAPI GAMEUX_ParseGDFBinary(void *thread_param)
 {
+    struct parse_gdf_thread_param *ctx = thread_param;
+    struct GAMEUX_GAME_DATA *GameData = ctx->GameData;
     static const WCHAR sRes[] = {'r','e','s',':','/','/',0};
     static const WCHAR sDATA[] = {'D','A','T','A',0};
     static const WCHAR sSlash[] = {'/',0};
@@ -422,6 +431,8 @@ static HRESULT GAMEUX_ParseGDFBinary(struct GAMEUX_GAME_DATA *GameData)
     lstrcatW(sResourcePath, sDATA);
     lstrcatW(sResourcePath, sSlash);
     lstrcatW(sResourcePath, ID_GDF_XML_STR);
+
+    CoInitialize(NULL);
 
     hr = CoCreateInstance(&CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER,
             &IID_IXMLDOMDocument, (void**)&document);
@@ -474,8 +485,11 @@ static HRESULT GAMEUX_ParseGDFBinary(struct GAMEUX_GAME_DATA *GameData)
         IXMLDOMDocument_Release(document);
     }
 
-    return hr;
+    CoUninitialize();
+    ctx->hr = hr;
+    return 0;
 }
+
 /*******************************************************************
  * GAMEUX_RemoveRegistryRecord
  *
@@ -548,12 +562,35 @@ static HRESULT GAMEUX_RegisterGame(LPCWSTR sGDFBinaryPath,
 
     /* load data from GDF binary */
     if(SUCCEEDED(hr))
-        hr = GAMEUX_ParseGDFBinary(&GameData);
+    {
+        struct parse_gdf_thread_param thread_param;
+        HANDLE thread;
+        HRESULT hr;
+        DWORD ret;
+
+        thread_param.GameData = &GameData;
+        if(!(thread = CreateThread(NULL, 0, GAMEUX_ParseGDFBinary, &thread_param, 0, &ret)))
+        {
+            ERR("Failed to create thread.\n");
+            hr = E_FAIL;
+            goto done;
+        }
+        ret = WaitForSingleObject(thread, INFINITE);
+        CloseHandle(thread);
+        if(ret != WAIT_OBJECT_0)
+        {
+            ERR("Wait failed (%#x).\n", ret);
+            hr = E_FAIL;
+            goto done;
+        }
+        hr = thread_param.hr;
+    }
 
     /* save data to registry */
     if(SUCCEEDED(hr))
         hr = GAMEUX_WriteRegistryRecord(&GameData);
 
+done:
     GAMEUX_uninitGameData(&GameData);
     TRACE("returning 0x%08x\n", hr);
     return hr;
