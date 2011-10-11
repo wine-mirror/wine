@@ -720,7 +720,7 @@ static struct decoder_pattern const ico_patterns[] = {
     {0}
 };
 
-static const BYTE jpeg_magic[] = {0xff, 0xd8, 0xff, 0xe0};
+static const BYTE jpeg_magic[] = {0xff, 0xd8};
 
 static GUID const * const jpeg_formats[] = {
     &GUID_WICPixelFormat24bppBGR,
@@ -730,7 +730,7 @@ static GUID const * const jpeg_formats[] = {
 };
 
 static struct decoder_pattern const jpeg_patterns[] = {
-    {4,0,jpeg_magic,mask_all,0},
+    {2,0,jpeg_magic,mask_all,0},
     {0}
 };
 
