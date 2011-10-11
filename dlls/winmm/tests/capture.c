@@ -133,6 +133,7 @@ static void wave_in_test_deviceIn(int device, LPWAVEFORMATEX pwfx, DWORD format,
     WAVEHDR frag;
     MMRESULT rc;
     DWORD res;
+    MMTIME mmt;
     WORD nChannels = pwfx->nChannels;
     WORD wBitsPerSample = pwfx->wBitsPerSample;
     DWORD nSamplesPerSec = pwfx->nSamplesPerSec;
@@ -223,6 +224,12 @@ static void wave_in_test_deviceIn(int device, LPWAVEFORMATEX pwfx, DWORD format,
         ok(frag.dwBytesRecorded==pwfx->nAvgBytesPerSec,
            "frag.dwBytesRecorded=%d, should=%d\n",
            frag.dwBytesRecorded,pwfx->nAvgBytesPerSec);
+
+        mmt.wType = TIME_SAMPLES;
+        rc=waveInGetPosition(win, &mmt, sizeof(mmt));
+        ok(rc==MMSYSERR_NOERROR,"waveInGetPosition(%s): rc=%s\n",
+           dev_name(device),wave_in_error(rc));
+        ok(mmt.u.cb == frag.dwBytesRecorded, "Got wrong position: %u\n", mmt.u.cb);
 
         /* stop playing on error */
         if (res!=WAIT_OBJECT_0) {

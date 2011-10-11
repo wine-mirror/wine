@@ -1495,6 +1495,8 @@ static void WID_PullACMData(WINMM_Device *device)
         hr = IAudioCaptureClient_ReleaseBuffer(device->capture, packet);
         if(FAILED(hr))
             ERR("ReleaseBuffer failed: %08x\n", hr);
+
+        device->played_frames += packet;
     }
 
     queue = device->first;
@@ -1602,6 +1604,8 @@ static void WID_PullData(WINMM_Device *device)
         hr = IAudioCaptureClient_ReleaseBuffer(device->capture, packet_len);
         if(FAILED(hr))
             ERR("ReleaseBuffer failed: %08x\n", hr);
+
+        device->played_frames += packet_len;
     }
 
 exit:
