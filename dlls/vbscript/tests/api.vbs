@@ -34,4 +34,20 @@ Call ok(not isObject(Null), "isObject(Null) is true?")
 
 Call ok(getVT(err) = "VT_DISPATCH", "getVT(err) = " & getVT(err))
 
+Sub TestHex(x, ex)
+    Call ok(hex(x) = ex, "hex(" & x & ") = " & hex(x) & " expected " & ex)
+End Sub
+
+TestHex 0, "0"
+TestHex 6, "6"
+TestHex 16, "10"
+TestHex &hdeadbeef&, "DEADBEEF"
+TestHex -1, "FFFF"
+TestHex -16, "FFF0"
+TestHex -934859845, "C8472BBB"
+TestHex empty, "0"
+
+Call ok(getVT(hex(null)) = "VT_NULL", "getVT(hex(null)) = " & getVT(hex(null)))
+Call ok(getVT(hex(empty)) = "VT_BSTR", "getVT(hex(empty)) = " & getVT(hex(empty)))
+
 Call reportSuccess()
