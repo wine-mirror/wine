@@ -154,11 +154,15 @@ static void *ft_handle = NULL;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f = NULL
 MAKE_FUNCPTR(FT_Done_Face);
 MAKE_FUNCPTR(FT_Get_Char_Index);
+MAKE_FUNCPTR(FT_Get_First_Char);
 MAKE_FUNCPTR(FT_Get_Module);
+MAKE_FUNCPTR(FT_Get_Next_Char);
 MAKE_FUNCPTR(FT_Get_Sfnt_Name);
 MAKE_FUNCPTR(FT_Get_Sfnt_Name_Count);
 MAKE_FUNCPTR(FT_Get_Sfnt_Table);
+MAKE_FUNCPTR(FT_Get_WinFNT_Header);
 MAKE_FUNCPTR(FT_Init_FreeType);
+MAKE_FUNCPTR(FT_Library_Version);
 MAKE_FUNCPTR(FT_Load_Glyph);
 MAKE_FUNCPTR(FT_Load_Sfnt_Table);
 MAKE_FUNCPTR(FT_Matrix_Multiply);
@@ -178,15 +182,9 @@ MAKE_FUNCPTR(FT_Set_Charmap);
 MAKE_FUNCPTR(FT_Set_Pixel_Sizes);
 MAKE_FUNCPTR(FT_Vector_Transform);
 MAKE_FUNCPTR(FT_Vector_Unit);
-static void (*pFT_Library_Version)(FT_Library,FT_Int*,FT_Int*,FT_Int*);
-static FT_ULong (*pFT_Get_First_Char)(FT_Face,FT_UInt*);
-static FT_ULong (*pFT_Get_Next_Char)(FT_Face,FT_ULong,FT_UInt*);
 static FT_TrueTypeEngineType (*pFT_Get_TrueType_Engine_Type)(FT_Library);
 #ifdef HAVE_FREETYPE_FTLCDFIL_H
 static FT_Error (*pFT_Library_SetLcdFilter)(FT_Library, FT_LcdFilter);
-#endif
-#ifdef HAVE_FREETYPE_FTWINFNT_H
-MAKE_FUNCPTR(FT_Get_WinFNT_Header);
 #endif
 
 #ifdef SONAME_LIBFONTCONFIG
@@ -1449,9 +1447,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
     struct list *family_elem_ptr, *face_elem_ptr;
     FT_Error err;
     FT_Long face_index = 0, num_faces;
-#ifdef HAVE_FREETYPE_FTWINFNT_H
     FT_WinFNT_HeaderRec winfnt_header;
-#endif
     int i, bitmap_num, internal_leading;
     FONTSIGNATURE fs;
 
@@ -1632,14 +1628,13 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
                 if(pOS2->version == 0) {
                     FT_UInt dummy;
 
-                    if(!pFT_Get_First_Char || (pFT_Get_First_Char( ft_face, &dummy ) < 0x100))
+                    if(pFT_Get_First_Char( ft_face, &dummy ) < 0x100)
                         fs.fsCsb[0] |= FS_LATIN1;
                     else
                         fs.fsCsb[0] |= FS_SYMBOL;
                 }
             }
-#ifdef HAVE_FREETYPE_FTWINFNT_H
-            else if(pFT_Get_WinFNT_Header && !pFT_Get_WinFNT_Header(ft_face, &winfnt_header)) {
+            else if(!pFT_Get_WinFNT_Header(ft_face, &winfnt_header)) {
                 CHARSETINFO csi;
                 TRACE("pix_h %d charset %d dpi %dx%d pt %d\n", winfnt_header.pixel_height, winfnt_header.charset,
                       winfnt_header.vertical_resolution,winfnt_header.horizontal_resolution, winfnt_header.nominal_point_size);
@@ -1647,7 +1642,6 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
                     fs = csi.fs;
                 internal_leading = winfnt_header.internal_leading;
             }
-#endif
 
             face_elem_ptr = list_head(&family->faces);
             while(face_elem_ptr) {
@@ -2898,11 +2892,15 @@ static BOOL init_freetype(void)
 
     LOAD_FUNCPTR(FT_Done_Face)
     LOAD_FUNCPTR(FT_Get_Char_Index)
+    LOAD_FUNCPTR(FT_Get_First_Char)
     LOAD_FUNCPTR(FT_Get_Module)
+    LOAD_FUNCPTR(FT_Get_Next_Char)
     LOAD_FUNCPTR(FT_Get_Sfnt_Name)
     LOAD_FUNCPTR(FT_Get_Sfnt_Name_Count)
     LOAD_FUNCPTR(FT_Get_Sfnt_Table)
+    LOAD_FUNCPTR(FT_Get_WinFNT_Header)
     LOAD_FUNCPTR(FT_Init_FreeType)
+    LOAD_FUNCPTR(FT_Library_Version)
     LOAD_FUNCPTR(FT_Load_Glyph)
     LOAD_FUNCPTR(FT_Load_Sfnt_Table)
     LOAD_FUNCPTR(FT_Matrix_Multiply)
@@ -2922,15 +2920,9 @@ static BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Vector_Unit)
 #undef LOAD_FUNCPTR
     /* Don't warn if these ones are missing */
-    pFT_Library_Version = wine_dlsym(ft_handle, "FT_Library_Version", NULL, 0);
-    pFT_Get_First_Char = wine_dlsym(ft_handle, "FT_Get_First_Char", NULL, 0);
-    pFT_Get_Next_Char = wine_dlsym(ft_handle, "FT_Get_Next_Char", NULL, 0);
     pFT_Get_TrueType_Engine_Type = wine_dlsym(ft_handle, "FT_Get_TrueType_Engine_Type", NULL, 0);
 #ifdef HAVE_FREETYPE_FTLCDFIL_H
     pFT_Library_SetLcdFilter = wine_dlsym(ft_handle, "FT_Library_SetLcdFilter", NULL, 0);
-#endif
-#ifdef HAVE_FREETYPE_FTWINFNT_H
-    pFT_Get_WinFNT_Header = wine_dlsym(ft_handle, "FT_Get_WinFNT_Header", NULL, 0);
 #endif
 
     if(pFT_Init_FreeType(&library) != 0) {
@@ -2939,16 +2931,8 @@ static BOOL init_freetype(void)
         ft_handle = NULL;
 	return FALSE;
     }
-    FT_Version.major = FT_Version.minor = FT_Version.patch = -1;
-    if (pFT_Library_Version)
-        pFT_Library_Version(library,&FT_Version.major,&FT_Version.minor,&FT_Version.patch);
+    pFT_Library_Version(library,&FT_Version.major,&FT_Version.minor,&FT_Version.patch);
 
-    if (FT_Version.major<=0)
-    {
-        FT_Version.major=2;
-        FT_Version.minor=0;
-        FT_Version.patch=5;
-    }
     TRACE("FreeType version is %d.%d.%d\n",FT_Version.major,FT_Version.minor,FT_Version.patch);
     FT_SimpleVersion = ((FT_Version.major << 16) & 0xff0000) |
                        ((FT_Version.minor <<  8) & 0x00ff00) |
@@ -5661,16 +5645,13 @@ DWORD WineEngGetGlyphOutline(GdiFont *incoming_font, UINT glyph, UINT format,
 static BOOL get_bitmap_text_metrics(GdiFont *font)
 {
     FT_Face ft_face = font->ft_face;
-#ifdef HAVE_FREETYPE_FTWINFNT_H
     FT_WinFNT_HeaderRec winfnt_header;
-#endif
     const DWORD size = offsetof(OUTLINETEXTMETRICW, otmFiller); 
     font->potm = HeapAlloc(GetProcessHeap(), 0, size);
     font->potm->otmSize = size;
 
 #define TM font->potm->otmTextMetrics
-#ifdef HAVE_FREETYPE_FTWINFNT_H
-    if(pFT_Get_WinFNT_Header && !pFT_Get_WinFNT_Header(ft_face, &winfnt_header))
+    if(!pFT_Get_WinFNT_Header(ft_face, &winfnt_header))
     {
         TM.tmHeight = winfnt_header.pixel_height;
         TM.tmAscent = winfnt_header.ascent;
@@ -5694,7 +5675,6 @@ static BOOL get_bitmap_text_metrics(GdiFont *font)
         TM.tmCharSet = winfnt_header.charset;
     }
     else
-#endif
     {
         TM.tmAscent = ft_face->size->metrics.ascender >> 6;
         TM.tmDescent = -ft_face->size->metrics.descender >> 6;
@@ -6561,7 +6541,7 @@ static DWORD get_font_unicode_ranges(FT_Face face, GLYPHSET *gs)
 {
     DWORD num_ranges = 0;
 
-    if (face->charmap->encoding == FT_ENCODING_UNICODE && pFT_Get_First_Char)
+    if (face->charmap->encoding == FT_ENCODING_UNICODE)
     {
         FT_UInt glyph_code;
         FT_ULong char_code, char_code_prev;
@@ -6870,7 +6850,7 @@ DWORD WineEngGetKerningPairs(GdiFont *font, DWORD cPairs, KERNINGPAIR *kern_pair
         return 0;
     }
 
-    if (font->ft_face->charmap->encoding == FT_ENCODING_UNICODE && pFT_Get_First_Char)
+    if (font->ft_face->charmap->encoding == FT_ENCODING_UNICODE)
     {
         FT_UInt glyph_code;
         FT_ULong char_code;
