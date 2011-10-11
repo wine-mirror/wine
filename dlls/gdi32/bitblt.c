@@ -65,12 +65,10 @@ static BOOL get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
     dst->height = rect.bottom - rect.top;
     if (dst->layout & LAYOUT_RTL && dst->layout & LAYOUT_BITMAPORIENTATIONPRESERVED)
     {
-        swap_ints( &rect.left, &rect.right );
-        dst->x = rect.left;
-        dst->width = rect.right - rect.left;
+        dst->x += dst->width;
+        dst->width = -dst->width;
     }
-    if (rect.left > rect.right) { swap_ints( &rect.left, &rect.right ); rect.left++; rect.right++; }
-    if (rect.top > rect.bottom) { swap_ints( &rect.top, &rect.bottom ); rect.top++; rect.bottom++; }
+    get_bounding_rect( &rect, dst->x, dst->y, dst->width, dst->height );
 
     if (get_clip_box( dc_dst, &clip ))
         intersect_rect( &dst->visrect, &rect, &clip );
@@ -92,12 +90,10 @@ static BOOL get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
     src->height = rect.bottom - rect.top;
     if (src->layout & LAYOUT_RTL && src->layout & LAYOUT_BITMAPORIENTATIONPRESERVED)
     {
-        swap_ints( &rect.left, &rect.right );
-        src->x = rect.left;
-        src->width = rect.right - rect.left;
+        src->x += src->width;
+        src->width = -src->width;
     }
-    if (rect.left > rect.right) { swap_ints( &rect.left, &rect.right ); rect.left++; rect.right++; }
-    if (rect.top > rect.bottom) { swap_ints( &rect.top, &rect.bottom ); rect.top++; rect.bottom++; }
+    get_bounding_rect( &rect, src->x, src->y, src->width, src->height );
 
     /* source is not clipped */
     if (dc_src->header.type == OBJ_MEMDC)
