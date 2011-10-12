@@ -344,7 +344,7 @@ unsigned int CDECL _mbsnextc(const unsigned char* str)
  */
 unsigned int CDECL _mbctolower(unsigned int c)
 {
-    if (MSVCRT_isleadbyte(c))
+    if (_ismbblead(c))
     {
       FIXME("Handle MBC chars\n");
       return c;
@@ -357,7 +357,7 @@ unsigned int CDECL _mbctolower(unsigned int c)
  */
 unsigned int CDECL _mbctoupper(unsigned int c)
 {
-    if (MSVCRT_isleadbyte(c))
+    if (_ismbblead(c))
     {
       FIXME("Handle MBC chars\n");
       return c;
@@ -803,7 +803,7 @@ int CDECL _mbsnbcmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_s
         return *cmp ? -1 : 0;
       if(!*cmp)
         return 1;
-      if (MSVCRT_isleadbyte(*str))
+      if (_ismbblead(*str))
       {
         strc=(len>=2)?_mbsnextc(str):0;
         clen=2;
@@ -813,7 +813,7 @@ int CDECL _mbsnbcmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_s
         strc=*str;
         clen=1;
       }
-      if (MSVCRT_isleadbyte(*cmp))
+      if (_ismbblead(*cmp))
         cmpc=(len>=2)?_mbsnextc(cmp):0;
       else
         cmpc=*str;
@@ -874,7 +874,7 @@ int CDECL _mbsnbicmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_
         return *cmp ? -1 : 0;
       if(!*cmp)
         return 1;
-      if (MSVCRT_isleadbyte(*str))
+      if (_ismbblead(*str))
       {
         strc=(len>=2)?_mbsnextc(str):0;
         clen=2;
@@ -884,7 +884,7 @@ int CDECL _mbsnbicmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_
         strc=*str;
         clen=1;
       }
-      if (MSVCRT_isleadbyte(*cmp))
+      if (_ismbblead(*cmp))
         cmpc=(len>=2)?_mbsnextc(cmp):0;
       else
         cmpc=*str;
@@ -1392,7 +1392,7 @@ MSVCRT_size_t CDECL _mbsnccnt(const unsigned char* str, MSVCRT_size_t len)
     ret=0;
     while(*str && len-- > 0)
     {
-      if(MSVCRT_isleadbyte(*str))
+      if(_ismbblead(*str))
       {
         if (!len)
           break;
@@ -1420,7 +1420,7 @@ MSVCRT_size_t CDECL _mbsnbcnt(const unsigned char* str, MSVCRT_size_t len)
     const unsigned char* xstr = str;
     while(*xstr && len-- > 0)
     {
-      if (MSVCRT_isleadbyte(*xstr++))
+      if (_ismbblead(*xstr++))
         xstr++;
     }
     return xstr-str;
@@ -1438,7 +1438,7 @@ unsigned char* CDECL _mbsnbcat(unsigned char* dst, const unsigned char* src, MSV
     {
         unsigned char *res = dst;
         while (*dst) {
-	    if (MSVCRT_isleadbyte(*dst++)) {
+	    if (_ismbblead(*dst++)) {
 		if (*dst) {
 		    dst++;
 		} else {
@@ -1485,7 +1485,7 @@ int CDECL _mbsnbcat_s(unsigned char *dst, MSVCRT_size_t size, const unsigned cha
 
     /* If necessary, check that the character preceding the null terminator is
      * a lead byte and move the pointer back by one for later overwrite. */
-    if (ptr != dst && get_mbcinfo()->ismbcodepage && MSVCRT_isleadbyte(*(ptr - 1)))
+    if (ptr != dst && get_mbcinfo()->ismbcodepage && _ismbblead(*(ptr - 1)))
         size++, ptr--;
 
     for (i = 0; *src && i < len; i++)
@@ -1515,13 +1515,13 @@ unsigned char* CDECL _mbsncat(unsigned char* dst, const unsigned char* src, MSVC
     unsigned char *res = dst;
     while (*dst)
     {
-      if (MSVCRT_isleadbyte(*dst++))
+      if (_ismbblead(*dst++))
         dst++;
     }
     while (*src && len--)
     {
       *dst++ = *src;
-      if(MSVCRT_isleadbyte(*src++))
+      if(_ismbblead(*src++))
         *dst++ = *src++;
     }
     *dst = '\0';
@@ -1676,7 +1676,7 @@ MSVCRT_size_t CDECL _mbsspn(const unsigned char* string, const unsigned char* se
 
     for (p = string; *p; p++)
     {
-        if (MSVCRT_isleadbyte(*p))
+        if (_ismbblead(*p))
         {
             for (q = set; *q; q++)
             {
@@ -1708,7 +1708,7 @@ unsigned char* CDECL _mbsspnp(const unsigned char* string, const unsigned char* 
 
     for (p = string; *p; p++)
     {
-        if (MSVCRT_isleadbyte(*p))
+        if (_ismbblead(*p))
         {
             for (q = set; *q; q++)
             {
@@ -1758,7 +1758,7 @@ unsigned char* CDECL _mbsrev(unsigned char* str)
     p=str;
     for(i=0; i<len; i++)
     {
-        if (MSVCRT_isleadbyte(*p))
+        if (_ismbblead(*p))
         {
             temp[i*2]=*p++;
             temp[i*2+1]=*p++;
@@ -1774,7 +1774,7 @@ unsigned char* CDECL _mbsrev(unsigned char* str)
     p=str;
     for(i=len-1; i>=0; i--)
     {
-        if(MSVCRT_isleadbyte(temp[i*2]))
+        if(_ismbblead(temp[i*2]))
         {
             *p++=temp[i*2];
             *p++=temp[i*2+1];
@@ -1799,13 +1799,13 @@ unsigned char* CDECL _mbspbrk(const unsigned char* str, const unsigned char* acc
 
     while(*str)
     {
-        for(p = accept; *p; p += (MSVCRT_isleadbyte(*p)?2:1) )
+        for(p = accept; *p; p += (_ismbblead(*p)?2:1) )
         {
             if (*p == *str)
-                if( !MSVCRT_isleadbyte(*p) || ( *(p+1) == *(str+1) ) )
+                if( !_ismbblead(*p) || ( *(p+1) == *(str+1) ) )
                      return (unsigned char*)str;
         }
-        str += (MSVCRT_isleadbyte(*str)?2:1);
+        str += (_ismbblead(*str)?2:1);
     }
     return NULL;
 }
