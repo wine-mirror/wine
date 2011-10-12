@@ -883,6 +883,7 @@ int            __cdecl MSVCRT_raise(int sig);
 
 extern MSVCRT__locale_t MSVCRT_locale;
 MSVCRT_pthreadlocinfo get_locinfo(void);
+MSVCRT_pthreadmbcinfo get_mbcinfo(void);
 void __cdecl MSVCRT__free_locale(MSVCRT__locale_t);
 void free_locinfo(MSVCRT_pthreadlocinfo);
 void free_mbcinfo(MSVCRT_pthreadmbcinfo);

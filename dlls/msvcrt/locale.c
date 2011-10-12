@@ -364,7 +364,7 @@ MSVCRT_pthreadlocinfo get_locinfo(void) {
 }
 
 /* INTERNAL: returns pthreadlocinfo struct */
-static MSVCRT_pthreadmbcinfo get_mbcinfo(void) {
+MSVCRT_pthreadmbcinfo get_mbcinfo(void) {
     thread_data_t *data = msvcrt_get_thread_data();
 
     if(!data || !data->have_locale)
@@ -1172,8 +1172,6 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
             swap_pointers((void**)&locinfo->pclmap, (void**)&loc->locinfo->pclmap);
             swap_pointers((void**)&locinfo->pcumap, (void**)&loc->locinfo->pcumap);
 
-            memcpy(get_mbcinfo(), loc->mbcinfo, sizeof(MSVCRT_threadmbcinfo));
-
             if(category != MSVCRT_LC_ALL)
                 break;
             /* fall through */
@@ -1323,5 +1321,6 @@ BOOL msvcrt_init_locale(void)
     MSVCRT__pctype = MSVCRT_locale->locinfo->pctype;
     for(i=MSVCRT_LC_MIN; i<=MSVCRT_LC_MAX; i++)
         MSVCRT___lc_handle[i] = MSVCRT_locale->locinfo->lc_handle[i];
+    _setmbcp(_MB_CP_ANSI);
     return TRUE;
 }
