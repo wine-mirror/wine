@@ -1910,6 +1910,21 @@ static void test_ScriptXtoX(void)
     else /* win2k3 */
         ok(piCP == 10, "Negative iX should return piCP=10 not %d\n", piCP);
 
+    for (iX = 0; iX <= 7; iX++)
+    {
+        WORD clust = 0;
+        INT advance = 16;
+        hr = ScriptXtoCP(iX, 1, 1, &clust, psva, &advance, &sa, &piCP, &piTrailing);
+        ok(piCP==0 && piTrailing==0,"%i should return 0(%i) and 0(%i)\n",iX, piCP,piTrailing);
+    }
+    for (iX = 8; iX < 16; iX++)
+    {
+        WORD clust = 0;
+        INT advance = 16;
+        hr = ScriptXtoCP(iX, 1, 1, &clust, psva, &advance, &sa, &piCP, &piTrailing);
+        ok(piCP==0 && piTrailing==1,"%i should return 0(%i) and 1(%i)\n",iX, piCP,piTrailing);
+    }
+
     sa.fRTL = TRUE;
     hr = ScriptXtoCP(-1, 10, 10, pwLogClust_RTL, psva, piAdvance, &sa, &piCP, &piTrailing);
     ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
@@ -1923,6 +1938,21 @@ static void test_ScriptXtoX(void)
     ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
     ok(piCP == -1, "iX=%d should return piCP=-1 not %d\n", iX, piCP);
     ok(piTrailing == 1, "iX=%d should return piTrailing=1 not %d\n", iX, piTrailing);
+
+    for (iX = 1; iX <= 8; iX++)
+    {
+        WORD clust = 0;
+        INT advance = 16;
+        hr = ScriptXtoCP(iX, 1, 1, &clust, psva, &advance, &sa, &piCP, &piTrailing);
+        ok(piCP==0 && piTrailing==1,"%i should return 0(%i) and 1(%i)\n",iX,piCP,piTrailing);
+    }
+    for (iX = 9; iX < 16; iX++)
+    {
+        WORD clust = 0;
+        INT advance = 16;
+        hr = ScriptXtoCP(iX, 1, 1, &clust, psva, &advance, &sa, &piCP, &piTrailing);
+        ok(piCP==0 && piTrailing==0,"%i should return 0(%i) and 0(%i)\n",iX,piCP,piTrailing);
+    }
 
     sa.fRTL = FALSE;
     test_item_ScriptXtoX(&sa, 10, 10, offsets, pwLogClust, piAdvance);

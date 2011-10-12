@@ -1806,7 +1806,7 @@ HRESULT WINAPI ScriptXtoCP(int iX,
     {
         if (iPosX > iX)
             item--;
-        if (item < cChars && ((iPosX - iLastPosX) / 2.0) + iX > iPosX)
+        if (item < cChars && ((iPosX - iLastPosX) / 2.0) + iX >= iPosX)
             *piTrailing = 1;
         else
             *piTrailing = 0;
