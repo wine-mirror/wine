@@ -142,6 +142,10 @@ static HRESULT WINAPI CorDebug_SetManagedHandler(ICorDebug *iface, ICorDebugMana
 
         ICorDebugManagedCallback_AddRef(This->pCallback);
     }
+    else
+    {
+        WARN("Debugging without interface ICorDebugManagedCallback2 is currently not supported.\n");
+    }
 
     return hr;
 }
