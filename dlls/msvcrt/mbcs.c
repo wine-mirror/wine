@@ -209,7 +209,9 @@ int CDECL _setmbcp(int cp)
       break;
     case _MB_CP_LOCALE:
       newcp = locinfo->lc_codepage;
-      break;
+      if(newcp)
+          break;
+      /* fall through (C locale) */
     case _MB_CP_SBCS:
       newcp = 20127;   /* ASCII */
       break;
