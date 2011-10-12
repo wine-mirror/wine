@@ -2360,10 +2360,8 @@ static HRESULT ca_setvol(ACImpl *This, UINT32 index)
             This->session->channel_vols[index] * This->vols[index];
 
     sc = AudioQueueSetParameter(This->aqueue, kAudioQueueParam_Volume, level);
-    if(sc != noErr){
+    if(sc != noErr)
         WARN("Setting _Volume property failed: %lx\n", sc);
-        return E_FAIL;
-    }
 
     return S_OK;
 }
