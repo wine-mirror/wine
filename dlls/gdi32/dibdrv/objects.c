@@ -1349,13 +1349,9 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
             rect.right = orig_dib.width;
             rect.bottom = orig_dib.height;
 
-            if(pdev->brush_dib.funcs->convert_to(&pdev->brush_dib, &orig_dib, &rect))
-            {
-                pdev->brush_rects = pattern_brush;
-                pdev->defer &= ~DEFER_BRUSH;
-            }
-            else
-                free_dib_info(&pdev->brush_dib);
+            pdev->brush_dib.funcs->convert_to(&pdev->brush_dib, &orig_dib, &rect);
+            pdev->brush_rects = pattern_brush;
+            pdev->defer &= ~DEFER_BRUSH;
             free_dib_info(&orig_dib);
         }
         GlobalUnlock((HGLOBAL)logbrush.lbHatch);

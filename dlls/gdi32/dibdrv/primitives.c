@@ -1141,7 +1141,7 @@ static inline BOOL bit_fields_match(const dib_info *d1, const dib_info *d2)
            d1->blue_mask  == d2->blue_mask;
 }
 
-static BOOL convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_rect)
+static void convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
     DWORD *dst_start = get_pixel_ptr_32(dst, 0, 0), *dst_pixel, src_val;
     int x, y, pad_size = (dst->width - (src_rect->right - src_rect->left)) * 4;
@@ -1376,16 +1376,10 @@ static BOOL convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
         }
         break;
     }
-
-    default:
-        FIXME("Unsupported conversion: %d -> 8888\n", src->bit_count);
-        return FALSE;
     }
-
-    return TRUE;
 }
 
-static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_rect)
+static void convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
     DWORD *dst_start = get_pixel_ptr_32(dst, 0, 0), *dst_pixel, src_val;
     int x, y, pad_size = (dst->width - (src_rect->right - src_rect->left)) * 4;
@@ -1648,16 +1642,10 @@ static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
         }
         break;
     }
-
-    default:
-        FIXME("Unsupported conversion: %d -> 32\n", src->bit_count);
-        return FALSE;
     }
-
-    return TRUE;
 }
 
-static BOOL convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_rect)
+static void convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
     BYTE *dst_start = get_pixel_ptr_24(dst, 0, 0), *dst_pixel;
     DWORD src_val;
@@ -1897,16 +1885,10 @@ static BOOL convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
         }
         break;
     }
-
-    default:
-        FIXME("Unsupported conversion: %d -> 24\n", src->bit_count);
-        return FALSE;
     }
-
-    return TRUE;
 }
 
-static BOOL convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_rect)
+static void convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
     WORD *dst_start = get_pixel_ptr_16(dst, 0, 0), *dst_pixel;
     INT x, y, pad_size = ((dst->width + 1) & ~1) * 2 - (src_rect->right - src_rect->left) * 2;
@@ -2145,16 +2127,10 @@ static BOOL convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
         }
         break;
     }
-
-    default:
-        FIXME("Unsupported conversion: %d -> 555\n", src->bit_count);
-        return FALSE;
-
     }
-    return TRUE;
 }
 
-static BOOL convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_rect)
+static void convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
     WORD *dst_start = get_pixel_ptr_16(dst, 0, 0), *dst_pixel;
     INT x, y, pad_size = ((dst->width + 1) & ~1) * 2 - (src_rect->right - src_rect->left) * 2;
@@ -2417,13 +2393,7 @@ static BOOL convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
         }
         break;
     }
-
-    default:
-        FIXME("Unsupported conversion: %d -> 16\n", src->bit_count);
-        return FALSE;
-
     }
-    return TRUE;
 }
 
 static inline BOOL color_tables_match(const dib_info *d1, const dib_info *d2)
@@ -2434,7 +2404,7 @@ static inline BOOL color_tables_match(const dib_info *d1, const dib_info *d2)
     return !memcmp(d1->color_table, d2->color_table, d1->color_table_size * sizeof(d1->color_table[0]));
 }
 
-static BOOL convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rect)
+static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
     BYTE *dst_start = get_pixel_ptr_8(dst, 0, 0), *dst_pixel;
     INT x, y, pad_size = ((dst->width + 3) & ~3) - (src_rect->right - src_rect->left);
@@ -2695,16 +2665,10 @@ static BOOL convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
         }
         break;
     }
-
-    default:
-        FIXME("Unsupported conversion: %d -> 8\n", src->bit_count);
-        return FALSE;
-
     }
-    return TRUE;
 }
 
-static BOOL convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rect)
+static void convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
     BYTE *dst_start = get_pixel_ptr_4(dst, 0, 0), *dst_pixel, dst_val;
     INT x, y, pad_size = ((dst->width + 7) & ~7) / 2 - (src_rect->right - src_rect->left + 1) / 2;
@@ -3088,17 +3052,10 @@ static BOOL convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
         }
         break;
     }
-
-    default:
-        FIXME("Unsupported conversion: %d -> 4\n", src->bit_count);
-        return FALSE;
-
     }
-
-    return TRUE;
 }
 
-static BOOL convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rect)
+static void convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
     BYTE *dst_start = get_pixel_ptr_1(dst, 0, 0), *dst_pixel, dst_val;
     INT x, y, pad_size = ((dst->width + 31) & ~31) / 8 - (src_rect->right - src_rect->left + 7) / 8;
@@ -3490,18 +3447,11 @@ static BOOL convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
         }
         break;
     }
-
-    default:
-        FIXME("Unsupported conversion: %d -> 1\n", src->bit_count);
-        return FALSE;
-
     }
-    return TRUE;
 }
 
-static BOOL convert_to_null(dib_info *dst, const dib_info *src, const RECT *src_rect)
+static void convert_to_null(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
-    return FALSE;
 }
 
 static BOOL create_rop_masks_32(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)

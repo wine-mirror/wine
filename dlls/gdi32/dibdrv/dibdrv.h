@@ -141,7 +141,7 @@ typedef struct primitive_funcs
     void              (* copy_rect)(const dib_info *dst, const RECT *rc, const dib_info *src,
                                     const POINT *origin, int rop2, int overlap);
     DWORD     (* colorref_to_pixel)(const dib_info *dib, COLORREF color);
-    BOOL             (* convert_to)(dib_info *dst, const dib_info *src, const RECT *src_rect);
+    void             (* convert_to)(dib_info *dst, const dib_info *src, const RECT *src_rect);
     BOOL       (* create_rop_masks)(const dib_info *dib, const dib_info *hatch,
                                     const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits);
     void            (* stretch_row)(const dib_info *dst_dib, const POINT *dst_start,
