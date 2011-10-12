@@ -580,8 +580,8 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(const char *key, IMMDevice *dev,
     This->hw_params = HeapAlloc(GetProcessHeap(), 0,
             snd_pcm_hw_params_sizeof());
     if(!This->hw_params){
-        HeapFree(GetProcessHeap(), 0, This);
         snd_pcm_close(This->pcm_handle);
+        HeapFree(GetProcessHeap(), 0, This);
         return E_OUTOFMEMORY;
     }
 
