@@ -850,6 +850,7 @@ int __cdecl      MSVCRT_iswalpha(MSVCRT_wint_t);
 int __cdecl      MSVCRT_iswspace(MSVCRT_wint_t);
 int __cdecl      MSVCRT_iswdigit(MSVCRT_wint_t);
 int __cdecl      MSVCRT_isleadbyte(int);
+int __cdecl      MSVCRT__isleadbyte_l(int, MSVCRT__locale_t);
 
 void __cdecl     MSVCRT__lock_file(MSVCRT_FILE*);
 void __cdecl     MSVCRT__unlock_file(MSVCRT_FILE*);

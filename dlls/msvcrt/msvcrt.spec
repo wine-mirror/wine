@@ -792,7 +792,7 @@
 # stub _mbsupr_l(str ptr)
 @ cdecl _mbsupr_s(str long)
 # stub _mbsupr_s_l(str long ptr)
-# stub _mbtowc_l(ptr str long ptr)
+@ cdecl _mbtowc_l(ptr str long ptr) MSVCRT_mbtowc_l
 @ cdecl _memccpy(ptr ptr long long) ntdll._memccpy
 @ cdecl _memicmp(str str long) ntdll._memicmp
 # stub _memicmp_l(str str long ptr)

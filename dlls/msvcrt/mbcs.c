@@ -1009,28 +1009,6 @@ unsigned char* CDECL _mbstok(unsigned char *str, const unsigned char *delim)
 }
 
 /*********************************************************************
- *		mbtowc(MSVCRT.@)
- */
-int CDECL MSVCRT_mbtowc(MSVCRT_wchar_t *dst, const char* str, MSVCRT_size_t n)
-{
-    /* temp var needed because MultiByteToWideChar wants non NULL destination */
-    MSVCRT_wchar_t tmpdst = '\0';
-
-    if(n <= 0 || !str)
-        return 0;
-    if(!MultiByteToWideChar(CP_ACP, 0, str, n, &tmpdst, 1))
-        return -1;
-    if(dst)
-        *dst = tmpdst;
-    /* return the number of bytes from src that have been used */
-    if(!*str)
-        return 0;
-    if(n >= 2 && MSVCRT_isleadbyte(*str) && str[1])
-        return 2;
-    return 1;
-}
-
-/*********************************************************************
  *		_mbbtombc(MSVCRT.@)
  */
 unsigned int CDECL _mbbtombc(unsigned int c)
@@ -1866,6 +1844,41 @@ MSVCRT_size_t CDECL _mbstrlen_l(const char* str, MSVCRT__locale_t locale)
 MSVCRT_size_t CDECL _mbstrlen(const char* str)
 {
     return _mbstrlen_l(str, NULL);
+}
+
+/*********************************************************************
+ *		_mbtowc_l(MSVCRT.@)
+ */
+int CDECL MSVCRT_mbtowc_l(MSVCRT_wchar_t *dst, const char* str, MSVCRT_size_t n, MSVCRT__locale_t locale)
+{
+    MSVCRT_pthreadlocinfo locinfo;
+    MSVCRT_wchar_t tmpdst = '\0';
+
+    if(!locale)
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
+
+    if(n <= 0 || !str)
+        return 0;
+    if(!MultiByteToWideChar(locinfo->lc_codepage, 0, str, n, &tmpdst, 1))
+        return -1;
+    if(dst)
+        *dst = tmpdst;
+    /* return the number of bytes from src that have been used */
+    if(!*str)
+        return 0;
+    if(n >= 2 && MSVCRT__isleadbyte_l(*str, locale) && str[1])
+        return 2;
+    return 1;
+}
+
+/*********************************************************************
+ *              mbtowc(MSVCRT.@)
+ */
+int CDECL MSVCRT_mbtowc(MSVCRT_wchar_t *dst, const char* str, MSVCRT_size_t n)
+{
+    return MSVCRT_mbtowc_l(dst, str, n, NULL);
 }
 
 /*********************************************************************
