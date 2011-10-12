@@ -23,6 +23,8 @@
  * populated correctly and the ismb* functions should reference it.
  */
 
+#include <stdio.h>
+
 #include "msvcrt.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -30,9 +32,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 unsigned char MSVCRT_mbctype[257] = { 0 };
-static int g_mbcp_is_multibyte = 0;
-
-int MSVCRT___mb_cur_max = 1;
 
 /* It seems that the data about valid trail bytes is not available from kernel32
  * so we have to store is here. The format is the same as for lead bytes in CPINFO */
@@ -85,7 +84,7 @@ static MSVCRT_wchar_t msvcrt_mbc_to_wc(unsigned int ch)
     mbch[1] = ch & 0xff;
     n_chars = 2;
   }
-  if (!MultiByteToWideChar(get_locinfo()->lc_codepage, 0, mbch, n_chars, &chW, 1))
+  if (!MultiByteToWideChar(get_mbcinfo()->mbcodepage, 0, mbch, n_chars, &chW, 1))
   {
     WARN("MultiByteToWideChar failed on %x\n", ch);
     return 0;
@@ -158,7 +157,7 @@ static inline MSVCRT_size_t u_strcspn( const unsigned char *s, const unsigned ch
  */
 unsigned char* CDECL __p__mbctype(void)
 {
-  return MSVCRT_mbctype;
+  return get_mbcinfo()->mbctype;
 }
 
 /*********************************************************************
@@ -187,7 +186,10 @@ int* CDECL ___mb_cur_max_l_func(MSVCRT__locale_t locale)
  */
 int CDECL _setmbcp(int cp)
 {
-  MSVCRT_pthreadlocinfo locinfo = get_locinfo();
+  const char format[] = ".%d";
+
+  MSVCRT_pthreadmbcinfo mbcinfo = get_mbcinfo();
+  char buf[32];
   int newcp;
   CPINFO cpi;
   BYTE *bytes;
@@ -208,7 +210,7 @@ int CDECL _setmbcp(int cp)
       newcp = GetOEMCP();
       break;
     case _MB_CP_LOCALE:
-      newcp = locinfo->lc_codepage;
+      newcp = get_locinfo()->lc_codepage;
       if(newcp)
           break;
       /* fall through (C locale) */
@@ -220,6 +222,14 @@ int CDECL _setmbcp(int cp)
       break;
   }
 
+  sprintf(buf, format, newcp);
+  mbcinfo->mblcid = MSVCRT_locale_to_LCID(buf);
+  if(mbcinfo->mblcid == -1)
+  {
+    WARN("Can't assign LCID to codepage (%d)\n", mbcinfo->mblcid);
+    mbcinfo->mblcid = 0;
+  }
+
   if (!GetCPInfo(newcp, &cpi))
   {
     WARN("Codepage %d not found\n", newcp);
@@ -228,13 +238,14 @@ int CDECL _setmbcp(int cp)
   }
 
   /* setup the _mbctype */
-  memset(MSVCRT_mbctype, 0, sizeof(MSVCRT_mbctype));
+  memset(mbcinfo->mbctype, 0, sizeof(unsigned char[257]));
+  memset(mbcinfo->mbcasemap, 0, sizeof(unsigned char[256]));
 
   bytes = cpi.LeadByte;
   while (bytes[0] || bytes[1])
   {
     for (i = bytes[0]; i <= bytes[1]; i++)
-      MSVCRT_mbctype[i + 1] |= _M1;
+      mbcinfo->mbctype[i + 1] |= _M1;
     bytes += 2;
   }
 
@@ -243,7 +254,7 @@ int CDECL _setmbcp(int cp)
     /* trail bytes not available through kernel32 but stored in a structure in msvcrt */
     struct cp_extra_info_t *cpextra = g_cpextrainfo;
 
-    g_mbcp_is_multibyte = 1;
+    mbcinfo->ismbcodepage = 1;
     while (TRUE)
     {
       if (cpextra->cp == 0 || cpextra->cp == newcp)
@@ -255,7 +266,7 @@ int CDECL _setmbcp(int cp)
         while (bytes[0] || bytes[1])
         {
           for (i = bytes[0]; i <= bytes[1]; i++)
-            MSVCRT_mbctype[i + 1] |= _M2;
+            mbcinfo->mbctype[i + 1] |= _M2;
           bytes += 2;
         }
         break;
@@ -264,13 +275,13 @@ int CDECL _setmbcp(int cp)
     }
   }
   else
-    g_mbcp_is_multibyte = 0;
+    mbcinfo->ismbcodepage = 0;
 
   /* we can't use GetStringTypeA directly because we don't have a locale - only a code page
    */
   charcount = 0;
   for (i = 0; i < 256; i++)
-    if (!(MSVCRT_mbctype[i + 1] & _M1))
+    if (!(mbcinfo->mbctype[i + 1] & _M1))
       bufA[charcount++] = i;
 
   ret = MultiByteToWideChar(newcp, 0, bufA, charcount, bufW, charcount);
@@ -281,12 +292,12 @@ int CDECL _setmbcp(int cp)
 
   curr_type = chartypes;
   for (i = 0; i < 256; i++)
-    if (!(MSVCRT_mbctype[i + 1] & _M1))
+    if (!(mbcinfo->mbctype[i + 1] & _M1))
     {
 	if ((*curr_type) & C1_UPPER)
-	    MSVCRT_mbctype[i + 1] |= _SBUP;
+	    mbcinfo->mbctype[i + 1] |= _SBUP;
 	if ((*curr_type) & C1_LOWER)
-	    MSVCRT_mbctype[i + 1] |= _SBLOW;
+	    mbcinfo->mbctype[i + 1] |= _SBLOW;
 	curr_type++;
     }
 
@@ -298,14 +309,15 @@ int CDECL _setmbcp(int cp)
      * also faster execution.
      */
     for (i = 161; i <= 165; i++)
-      MSVCRT_mbctype[i + 1] |= _MP;
+      mbcinfo->mbctype[i + 1] |= _MP;
     for (i = 166; i <= 223; i++)
-      MSVCRT_mbctype[i + 1] |= _MS;
+      mbcinfo->mbctype[i + 1] |= _MS;
   }
 
-  locinfo->lc_collate_cp = newcp;
-  locinfo->lc_codepage = newcp;
-  TRACE("(%d) -> %d\n", cp, locinfo->lc_codepage);
+  mbcinfo->mbcodepage = newcp;
+  if(mbcinfo == MSVCRT_locale->mbcinfo)
+    memcpy(MSVCRT_mbctype, MSVCRT_locale->mbcinfo->mbctype, sizeof(MSVCRT_mbctype));
+
   return 0;
 }
 
@@ -314,8 +326,7 @@ int CDECL _setmbcp(int cp)
  */
 int CDECL _getmbcp(void)
 {
-  /* FIXME: get_mbcinfo()->mbcodepage should be used here */
-  return get_locinfo()->lc_codepage;
+  return get_mbcinfo()->mbcodepage;
 }
 
 /*********************************************************************
@@ -361,7 +372,7 @@ unsigned int CDECL _mbctombb(unsigned int c)
 {
     unsigned int value;
 
-    if(get_locinfo()->lc_codepage == 932)
+    if(get_mbcinfo()->mbcodepage == 932)
     {
         if(c >= 0x829f && c <= 0x82f1)    /* Hiragana */
             return mbctombb_932_kana[c - 0x829f];
@@ -393,7 +404,7 @@ unsigned int CDECL _mbcjistojms(unsigned int c)
 {
   /* Conversion takes place only when codepage is 932.
      In all other cases, c is returned unchanged */
-  if(get_locinfo()->lc_codepage == 932)
+  if(get_mbcinfo()->mbcodepage == 932)
   {
     if(HIBYTE(c) >= 0x21 && HIBYTE(c) <= 0x7e &&
        LOBYTE(c) >= 0x21 && LOBYTE(c) <= 0x7e)
@@ -423,7 +434,7 @@ unsigned int CDECL _mbcjistojms(unsigned int c)
  */
 unsigned char* CDECL _mbsdec(const unsigned char* start, const unsigned char* cur)
 {
-  if(get_locinfo()->mb_cur_max > 1)
+  if(get_mbcinfo()->ismbcodepage)
     return (unsigned char *)(_ismbstrail(start,cur-1) ? cur - 2 : cur -1);
 
   return (unsigned char *)cur - 1; /* ASCII CP or SB char */
@@ -509,7 +520,7 @@ unsigned char* CDECL _mbsncpy(unsigned char* dst, const unsigned char* src, MSVC
   unsigned char* ret = dst;
   if(!n)
     return dst;
-  if (g_mbcp_is_multibyte)
+  if (get_mbcinfo()->ismbcodepage)
   {
     while (*src && n)
     {
@@ -561,7 +572,7 @@ int CDECL _mbsnbcpy_s(unsigned char* dst, MSVCRT_size_t size, const unsigned cha
     if(!n)
         return 0;
 
-    if(g_mbcp_is_multibyte)
+    if(get_mbcinfo()->ismbcodepage)
     {
         int is_lead = 0;
         while (*src && n)
@@ -617,7 +628,7 @@ unsigned char* CDECL _mbsnbcpy(unsigned char* dst, const unsigned char* src, MSV
   unsigned char* ret = dst;
   if(!n)
     return dst;
-  if(g_mbcp_is_multibyte)
+  if(get_mbcinfo()->ismbcodepage)
   {
     int is_lead = 0;
     while (*src && n)
@@ -647,7 +658,7 @@ unsigned char* CDECL _mbsnbcpy(unsigned char* dst, const unsigned char* src, MSV
  */
 int CDECL _mbscmp(const unsigned char* str, const unsigned char* cmp)
 {
-  if(get_locinfo()->mb_cur_max > 1)
+  if(get_mbcinfo()->ismbcodepage)
   {
     unsigned int strc, cmpc;
     do {
@@ -672,7 +683,7 @@ int CDECL _mbscmp(const unsigned char* str, const unsigned char* cmp)
  */
 int CDECL _mbsicoll(const unsigned char* str, const unsigned char* cmp)
 {
-  if(get_locinfo()->mb_cur_max > 1)
+  if(get_mbcinfo()->ismbcodepage)
   {
     unsigned int strc, cmpc;
     do {
@@ -700,7 +711,7 @@ int CDECL _mbsicoll(const unsigned char* str, const unsigned char* cmp)
  */
 int CDECL _mbscoll(const unsigned char* str, const unsigned char* cmp)
 {
-  if(get_locinfo()->mb_cur_max > 1)
+  if(get_mbcinfo()->ismbcodepage)
   {
     unsigned int strc, cmpc;
     do {
@@ -725,7 +736,7 @@ int CDECL _mbscoll(const unsigned char* str, const unsigned char* cmp)
  */
 int CDECL _mbsicmp(const unsigned char* str, const unsigned char* cmp)
 {
-  if(get_locinfo()->mb_cur_max > 1)
+  if(get_mbcinfo()->ismbcodepage)
   {
     unsigned int strc, cmpc;
     do {
@@ -752,7 +763,7 @@ int CDECL _mbsncmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_si
   if(!len)
     return 0;
 
-  if(get_locinfo()->mb_cur_max > 1)
+  if(get_mbcinfo()->ismbcodepage)
   {
     unsigned int strc, cmpc;
     while(len--)
@@ -782,7 +793,7 @@ int CDECL _mbsnbcmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_s
 {
   if (!len)
     return 0;
-  if(get_locinfo()->mb_cur_max > 1)
+  if(get_mbcinfo()->ismbcodepage)
   {
     unsigned int strc, cmpc;
     while (len)
@@ -825,7 +836,7 @@ int CDECL _mbsnbcmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_s
 int CDECL _mbsnicmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_size_t len)
 {
   /* FIXME: No tolower() for mb strings yet */
-  if(get_locinfo()->mb_cur_max > 1)
+  if(get_mbcinfo()->ismbcodepage)
   {
     unsigned int strc, cmpc;
     while(len--)
@@ -853,7 +864,7 @@ int CDECL _mbsnbicmp(const unsigned char* str, const unsigned char* cmp, MSVCRT_
 {
   if (!len)
     return 0;
-  if(get_locinfo()->mb_cur_max > 1)
+  if(get_mbcinfo()->ismbcodepage)
   {
     unsigned int strc, cmpc;
     while (len)
@@ -923,7 +934,7 @@ unsigned char * CDECL _mbsstr(const unsigned char *haystack, const unsigned char
  */
 unsigned char* CDECL _mbschr(const unsigned char* s, unsigned int x)
 {
-  if(get_locinfo()->mb_cur_max > 1)
+  if(get_mbcinfo()->ismbcodepage)
   {
     unsigned int c;
     while (1)
@@ -944,7 +955,7 @@ unsigned char* CDECL _mbschr(const unsigned char* s, unsigned int x)
  */
 unsigned char* CDECL _mbsrchr(const unsigned char* s, unsigned int x)
 {
-  if(get_locinfo()->mb_cur_max > 1)
+  if(get_mbcinfo()->ismbcodepage)
   {
     unsigned int c;
     unsigned char* match=NULL;
@@ -972,7 +983,7 @@ unsigned char* CDECL _mbstok(unsigned char *str, const unsigned char *delim)
     thread_data_t *data = msvcrt_get_thread_data();
     unsigned char *ret;
 
-    if(get_locinfo()->mb_cur_max > 1)
+    if(get_mbcinfo()->ismbcodepage)
     {
 	unsigned int c;
 
@@ -1024,7 +1035,7 @@ int CDECL MSVCRT_mbtowc(MSVCRT_wchar_t *dst, const char* str, MSVCRT_size_t n)
  */
 unsigned int CDECL _mbbtombc(unsigned int c)
 {
-  if(get_locinfo()->mb_cur_max > 1 &&
+  if(get_mbcinfo()->ismbcodepage &&
      ((c >= 0x20 && c <=0x7e) ||(c >= 0xa1 && c <= 0xdf)))
   {
     /* FIXME: I can't get this function to return anything
@@ -1065,7 +1076,7 @@ int CDECL _mbbtype(unsigned char c, int type)
 int CDECL _ismbbkana(unsigned int c)
 {
   /* FIXME: use lc_ctype when supported, not lc_all */
-  if(get_locinfo()->lc_codepage == 932)
+  if(get_mbcinfo()->mbcodepage == 932)
   {
     /* Japanese/Katakana, CP 932 */
     return (c >= 0xa1 && c <= 0xdf);
@@ -1175,7 +1186,7 @@ int CDECL _ismbcpunct(unsigned int ch)
 int CDECL _ismbchira(unsigned int c)
 {
   /* FIXME: use lc_ctype when supported, not lc_all */
-  if(get_locinfo()->lc_codepage == 932)
+  if(get_mbcinfo()->mbcodepage == 932)
   {
     /* Japanese/Hiragana, CP 932 */
     return (c >= 0x829f && c <= 0x82f1);
@@ -1189,7 +1200,7 @@ int CDECL _ismbchira(unsigned int c)
 int CDECL _ismbckata(unsigned int c)
 {
   /* FIXME: use lc_ctype when supported, not lc_all */
-  if(get_locinfo()->lc_codepage == 932)
+  if(get_mbcinfo()->mbcodepage == 932)
   {
     if(c < 256)
       return _ismbbkana(c);
@@ -1204,7 +1215,7 @@ int CDECL _ismbckata(unsigned int c)
  */
 int CDECL _ismbblead(unsigned int c)
 {
-  return (MSVCRT_mbctype[(c&0xff) + 1] & _M1) != 0;
+  return (get_mbcinfo()->mbctype[(c&0xff) + 1] & _M1) != 0;
 }
 
 
@@ -1213,7 +1224,7 @@ int CDECL _ismbblead(unsigned int c)
  */
 int CDECL _ismbbtrail(unsigned int c)
 {
-  return (MSVCRT_mbctype[(c&0xff) + 1] & _M2) != 0;
+  return (get_mbcinfo()->mbctype[(c&0xff) + 1] & _M2) != 0;
 }
 
 /*********************************************************************
@@ -1231,7 +1242,7 @@ int CDECL _ismbslead(const unsigned char* start, const unsigned char* str)
 {
   int lead = 0;
 
-  if(!g_mbcp_is_multibyte)
+  if(!get_mbcinfo()->ismbcodepage)
     return 0;
 
   /* Lead bytes can also be trail bytes so we need to analyse the string
@@ -1266,7 +1277,6 @@ int CDECL _mbsbtype(const unsigned char *str, MSVCRT_size_t count)
 {
   int lead = 0;
   const unsigned char *end = str + count;
-  int mbcp = g_mbcp_is_multibyte;
 
   /* Lead bytes can also be trail bytes so we need to analyse the string.
    * Also we must return _MBC_ILLEGAL for chars past the end of the string
@@ -1275,7 +1285,7 @@ int CDECL _mbsbtype(const unsigned char *str, MSVCRT_size_t count)
   {
     if (!*str)
       return _MBC_ILLEGAL;
-    lead = mbcp && !lead && _ismbblead(*str);
+    lead = get_mbcinfo()->ismbcodepage && !lead && _ismbblead(*str);
     str++;
   }
 
@@ -1298,7 +1308,7 @@ unsigned char* CDECL _mbsset(unsigned char* str, unsigned int c)
 {
   unsigned char* ret = str;
 
-  if(get_locinfo()->mb_cur_max == 1 || c < 256)
+  if(!get_mbcinfo()->ismbcodepage || c < 256)
     return u__strset(str, c); /* ASCII CP or SB char */
 
   c &= 0xffff; /* Strip high bits */
@@ -1324,7 +1334,7 @@ unsigned char* CDECL _mbsnbset(unsigned char *str, unsigned int c, MSVCRT_size_t
     if(!len)
 	return ret;
 
-    if(get_locinfo()->mb_cur_max == 1 || c < 256)
+    if(!get_mbcinfo()->ismbcodepage || c < 256)
 	return u__strnset(str, c, len); /* ASCII CP or SB char */
 
     c &= 0xffff; /* Strip high bits */
@@ -1354,7 +1364,7 @@ unsigned char* CDECL _mbsnset(unsigned char* str, unsigned int c, MSVCRT_size_t 
   if(!len)
     return ret;
 
-  if(get_locinfo()->mb_cur_max == 1 || c < 256)
+  if(!get_mbcinfo()->ismbcodepage || c < 256)
     return u__strnset(str, c, len); /* ASCII CP or SB char */
 
   c &= 0xffff; /* Strip high bits */
@@ -1377,7 +1387,7 @@ unsigned char* CDECL _mbsnset(unsigned char* str, unsigned int c, MSVCRT_size_t 
 MSVCRT_size_t CDECL _mbsnccnt(const unsigned char* str, MSVCRT_size_t len)
 {
   MSVCRT_size_t ret;
-  if(get_locinfo()->mb_cur_max > 1)
+  if(get_mbcinfo()->ismbcodepage)
   {
     ret=0;
     while(*str && len-- > 0)
@@ -1405,7 +1415,7 @@ MSVCRT_size_t CDECL _mbsnccnt(const unsigned char* str, MSVCRT_size_t len)
 MSVCRT_size_t CDECL _mbsnbcnt(const unsigned char* str, MSVCRT_size_t len)
 {
   MSVCRT_size_t ret;
-  if(get_locinfo()->mb_cur_max > 1)
+  if(get_mbcinfo()->ismbcodepage)
   {
     const unsigned char* xstr = str;
     while(*xstr && len-- > 0)
@@ -1424,7 +1434,7 @@ MSVCRT_size_t CDECL _mbsnbcnt(const unsigned char* str, MSVCRT_size_t len)
  */
 unsigned char* CDECL _mbsnbcat(unsigned char* dst, const unsigned char* src, MSVCRT_size_t len)
 {
-    if(get_locinfo()->mb_cur_max > 1)
+    if(get_mbcinfo()->ismbcodepage)
     {
         unsigned char *res = dst;
         while (*dst) {
@@ -1475,7 +1485,7 @@ int CDECL _mbsnbcat_s(unsigned char *dst, MSVCRT_size_t size, const unsigned cha
 
     /* If necessary, check that the character preceding the null terminator is
      * a lead byte and move the pointer back by one for later overwrite. */
-    if (ptr != dst && get_locinfo()->mb_cur_max > 1 && MSVCRT_isleadbyte(*(ptr - 1)))
+    if (ptr != dst && get_mbcinfo()->ismbcodepage && MSVCRT_isleadbyte(*(ptr - 1)))
         size++, ptr--;
 
     for (i = 0; *src && i < len; i++)
@@ -1500,7 +1510,7 @@ int CDECL _mbsnbcat_s(unsigned char *dst, MSVCRT_size_t size, const unsigned cha
  */
 unsigned char* CDECL _mbsncat(unsigned char* dst, const unsigned char* src, MSVCRT_size_t len)
 {
-  if(get_locinfo()->mb_cur_max > 1)
+  if(get_mbcinfo()->ismbcodepage)
   {
     unsigned char *res = dst;
     while (*dst)
@@ -1529,7 +1539,7 @@ unsigned char* CDECL _mbslwr(unsigned char* s)
   unsigned char *ret = s;
   if (!s)
     return NULL;
-  if (get_locinfo()->mb_cur_max > 1)
+  if (get_mbcinfo()->ismbcodepage)
   {
     unsigned int c;
     while (*s)
@@ -1563,7 +1573,7 @@ int CDECL _mbslwr_s(unsigned char* s, MSVCRT_size_t len)
     *MSVCRT__errno() = MSVCRT_EINVAL;
     return MSVCRT_EINVAL;
   }
-  if (get_locinfo()->mb_cur_max > 1)
+  if (get_mbcinfo()->ismbcodepage)
   {
     unsigned int c;
     for ( ; *s && len > 0; len--)
@@ -1597,7 +1607,7 @@ unsigned char* CDECL _mbsupr(unsigned char* s)
   unsigned char *ret = s;
   if (!s)
     return NULL;
-  if (get_locinfo()->mb_cur_max > 1)
+  if (get_mbcinfo()->ismbcodepage)
   {
     unsigned int c;
     while (*s)
@@ -1631,7 +1641,7 @@ int CDECL _mbsupr_s(unsigned char* s, MSVCRT_size_t len)
     *MSVCRT__errno() = MSVCRT_EINVAL;
     return MSVCRT_EINVAL;
   }
-  if (get_locinfo()->mb_cur_max > 1)
+  if (get_mbcinfo()->ismbcodepage)
   {
     unsigned int c;
     for ( ; *s && len > 0; len--)
@@ -1728,7 +1738,7 @@ unsigned char* CDECL _mbsspnp(const unsigned char* string, const unsigned char* 
  */
 MSVCRT_size_t CDECL _mbscspn(const unsigned char* str, const unsigned char* cmp)
 {
-  if (get_locinfo()->mb_cur_max > 1)
+  if (get_mbcinfo()->ismbcodepage)
     FIXME("don't handle double character case\n");
   return u_strcspn(str, cmp);
 }

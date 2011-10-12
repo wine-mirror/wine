@@ -140,8 +140,8 @@ typedef struct MSVCRT_threadmbcinfostruct {
     int ismbcodepage;
     int mblcid;
     unsigned short mbulinfo[6];
-    char mbctype[257];
-    char mbcasemap[256];
+    unsigned char mbctype[257];
+    unsigned char mbcasemap[256];
 } MSVCRT_threadmbcinfo;
 
 typedef struct MSVCRT_threadlocaleinfostruct *MSVCRT_pthreadlocinfo;
@@ -197,9 +197,10 @@ typedef struct __thread_data thread_data_t;
 
 extern thread_data_t *msvcrt_get_thread_data(void);
 
+LCID MSVCRT_locale_to_LCID(const char *);
+extern MSVCRT__locale_t MSVCRT_locale;
 extern int MSVCRT___lc_codepage;
 extern int MSVCRT___lc_collate_cp;
-extern int MSVCRT___mb_cur_max;
 extern WORD MSVCRT__ctype [257];
 extern unsigned short *MSVCRT__pctype;
 

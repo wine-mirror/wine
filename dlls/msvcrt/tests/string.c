@@ -1993,8 +1993,7 @@ static void test_wctob(void)
 
     _setmbcp(1250);
     ret = p_wctob(0x81);
-    /* wctob should not be affected by _setmbcp */
-    todo_wine ok(ret == EOF, "ret = %x\n", ret);
+    ok(ret == EOF, "ret = %x\n", ret);
 
     setlocale(LC_ALL, "C");
     ret = p_wctob(0x8141);

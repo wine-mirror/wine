@@ -44,6 +44,7 @@ MSVCRT__locale_t MSVCRT_locale = NULL;
 int MSVCRT___lc_codepage = 0;
 int MSVCRT___lc_collate_cp = 0;
 LCID MSVCRT___lc_handle[MSVCRT_LC_MAX - MSVCRT_LC_MIN + 1] = { 0 };
+int MSVCRT___mb_cur_max = 1;
 static unsigned char charmax = CHAR_MAX;
 
 /* MT */
@@ -209,7 +210,7 @@ find_best_locale_proc(HMODULE hModule, LPCSTR type, LPCSTR name, WORD LangID, LO
 extern int atoi(const char *);
 
 /* Internal: Find the LCID for a locale specification */
-static LCID MSVCRT_locale_to_LCID(const char *locale)
+LCID MSVCRT_locale_to_LCID(const char *locale)
 {
     LCID lcid;
     locale_search_t search;
