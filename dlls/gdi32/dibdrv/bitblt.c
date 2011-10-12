@@ -1034,13 +1034,7 @@ DWORD stretch_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
           src_start.x, src_start.y, h_params.src_inc, v_params.src_inc,
           h_params.length, v_params.length);
 
-    rect.left   = dst_start.x;
-    rect.top    = dst_start.y;
-    rect.right  = dst_end.x;
-    rect.bottom = dst_end.y;
-
-    if (rect.right < rect.left) { INT tmp = rect.left; rect.left = rect.right+1; rect.right = tmp+1; }
-    if (rect.bottom < rect.top) { INT tmp = rect.top; rect.top = rect.bottom+1; rect.bottom = tmp+1; }
+    get_bounding_rect( &rect, dst_start.x, dst_start.y, dst_end.x - dst_start.x, dst_end.y - dst_start.y );
     intersect_rect( &dst->visrect, &dst->visrect, &rect );
 
     dst_start.x -= dst->visrect.left;
