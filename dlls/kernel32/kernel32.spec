@@ -133,6 +133,8 @@
 
 # functions exported by name, ordinal doesn't matter
 
+@ stdcall AcquireSRWLockExclusive(ptr)
+@ stdcall AcquireSRWLockShared(ptr)
 @ stdcall ActivateActCtx(ptr ptr)
 @ stdcall AddAtomA(str)
 @ stdcall AddAtomW(wstr)
@@ -733,6 +735,7 @@
 @ stdcall IdnToNameprepUnicode(long wstr long ptr long)
 @ stdcall IdnToUnicode(long wstr long ptr long)
 @ stdcall InitAtomTable(long)
+@ stdcall InitializeSRWLock(ptr)
 @ stdcall InitializeCriticalSection(ptr)
 @ stdcall InitializeCriticalSectionAndSpinCount(ptr long)
 @ stdcall InitializeCriticalSectionEx(ptr long long)
@@ -995,6 +998,8 @@
 @ stdcall ReleaseActCtx(ptr)
 @ stdcall ReleaseMutex(long)
 @ stdcall ReleaseSemaphore(long long ptr)
+@ stdcall ReleaseSRWLockExclusive(ptr)
+@ stdcall ReleaseSRWLockShared(ptr)
 @ stdcall RemoveDirectoryA(str)
 @ stdcall RemoveDirectoryW(wstr)
 # @ stub RemoveLocalAlternateComputerNameA
