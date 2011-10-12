@@ -420,11 +420,15 @@ static const WCHAR bitstream_vera_sans[] = {'B','i','t','s','t','r','e','a','m',
 static const WCHAR bitstream_vera_sans_mono[] = {'B','i','t','s','t','r','e','a','m',' ','V','e','r','a',' ','S','a','n','s',' ','M','o','n','o',0};
 static const WCHAR bitstream_vera_serif[] = {'B','i','t','s','t','r','e','a','m',' ','V','e','r','a',' ','S','e','r','i','f',0};
 static const WCHAR courier_new[] = {'C','o','u','r','i','e','r',' ','N','e','w',0};
+static const WCHAR liberation_mono[] = {'L','i','b','e','r','a','t','i','o','n',' ','M','o','n','o',0};
+static const WCHAR liberation_sans[] = {'L','i','b','e','r','a','t','i','o','n',' ','S','a','n','s',0};
+static const WCHAR liberation_serif[] = {'L','i','b','e','r','a','t','i','o','n',' ','S','e','r','i','f',0};
 static const WCHAR times_new_roman[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n',0};
 
 static const WCHAR *default_serif_list[] =
 {
     times_new_roman,
+    liberation_serif,
     bitstream_vera_serif,
     NULL
 };
@@ -432,6 +436,7 @@ static const WCHAR *default_serif_list[] =
 static const WCHAR *default_fixed_list[] =
 {
     courier_new,
+    liberation_mono,
     bitstream_vera_sans_mono,
     NULL
 };
@@ -439,6 +444,7 @@ static const WCHAR *default_fixed_list[] =
 static const WCHAR *default_sans_list[] =
 {
     arial,
+    liberation_sans,
     bitstream_vera_sans,
     NULL
 };
