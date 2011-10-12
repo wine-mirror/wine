@@ -147,6 +147,20 @@ static void test_create_invalid(void)
 
     timeout.QuadPart = -100000000000ll;
 
+/* create a pipe with FILE_OVERWRITE */
+    res = pNtCreateNamedPipeFile(&handle, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr, &iosb, FILE_SHARE_READ, 4 /*FILE_OVERWRITE*/,
+                                 0, 1, 0, 0, 0xFFFFFFFF, 500, 500, &timeout);
+    todo_wine ok(res == STATUS_INVALID_PARAMETER, "NtCreateNamedPipeFile returned %x\n", res);
+    if (!res)
+        CloseHandle(handle);
+
+/* create a pipe with FILE_OVERWRITE_IF */
+    res = pNtCreateNamedPipeFile(&handle, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr, &iosb, FILE_SHARE_READ, 5 /*FILE_OVERWRITE_IF*/,
+                                 0, 1, 0, 0, 0xFFFFFFFF, 500, 500, &timeout);
+    todo_wine ok(res == STATUS_INVALID_PARAMETER, "NtCreateNamedPipeFile returned %x\n", res);
+    if (!res)
+        CloseHandle(handle);
+
 /* create a pipe with sharing = 0 */
     res = pNtCreateNamedPipeFile(&handle, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr, &iosb, 0, 2 /*FILE_CREATE*/,
                                  0, 1, 0, 0, 0xFFFFFFFF, 500, 500, &timeout);
