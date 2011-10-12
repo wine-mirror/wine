@@ -1294,8 +1294,21 @@ static BOOL convert_to_8888(dib_info *dst, const dib_info *src, const RECT *src_
         }
         else
         {
-            FIXME("Unsupported conversion: 16 (%08x, %08x, %08x) -> 8888\n", src->red_mask, src->green_mask, src->blue_mask);
-            return FALSE;
+            for(y = src_rect->top; y < src_rect->bottom; y++)
+            {
+                dst_pixel = dst_start;
+                src_pixel = src_start;
+                for(x = src_rect->left; x < src_rect->right; x++)
+                {
+                    src_val = *src_pixel++;
+                    *dst_pixel++ = (get_field( src_val, src->red_shift, src->red_len ) << 16 |
+                                    get_field( src_val, src->green_shift, src->green_len ) << 8 |
+                                    get_field( src_val, src->blue_shift, src->blue_len ));
+                }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
+                dst_start += dst->stride / 4;
+                src_start += src->stride / 2;
+            }
         }
         break;
     }
@@ -1547,8 +1560,21 @@ static BOOL convert_to_32(dib_info *dst, const dib_info *src, const RECT *src_re
         }
         else
         {
-            FIXME("Unsupported conversion: 16 (%08x, %08x, %08x) -> 32\n", src->red_mask, src->green_mask, src->blue_mask);
-            return FALSE;
+            for(y = src_rect->top; y < src_rect->bottom; y++)
+            {
+                dst_pixel = dst_start;
+                src_pixel = src_start;
+                for(x = src_rect->left; x < src_rect->right; x++)
+                {
+                    src_val = *src_pixel++;
+                    *dst_pixel++ = put_field(get_field(src_val, src->red_shift,   src->red_len ),   dst->red_shift,   dst->red_len)   |
+                                   put_field(get_field(src_val, src->green_shift, src->green_len ), dst->green_shift, dst->green_len) |
+                                   put_field(get_field(src_val, src->blue_shift,  src->blue_len ),  dst->blue_shift,  dst->blue_len);
+                }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
+                dst_start += dst->stride / 4;
+                src_start += src->stride / 2;
+            }
         }
         break;
     }
@@ -1783,8 +1809,21 @@ static BOOL convert_to_24(dib_info *dst, const dib_info *src, const RECT *src_re
         }
         else
         {
-            FIXME("Unsupported conversion: 16 (%08x, %08x, %08x) -> 24\n", src->red_mask, src->green_mask, src->blue_mask);
-            return FALSE;
+            for(y = src_rect->top; y < src_rect->bottom; y++)
+            {
+                dst_pixel = dst_start;
+                src_pixel = src_start;
+                for(x = src_rect->left; x < src_rect->right; x++)
+                {
+                    src_val = *src_pixel++;
+                    *dst_pixel++ = get_field(src_val, src->blue_shift,  src->blue_len );
+                    *dst_pixel++ = get_field(src_val, src->green_shift, src->green_len );
+                    *dst_pixel++ = get_field(src_val, src->red_shift,   src->red_len );
+                }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
+                dst_start += dst->stride;
+                src_start += src->stride / 2;
+            }
         }
         break;
     }
@@ -2018,8 +2057,21 @@ static BOOL convert_to_555(dib_info *dst, const dib_info *src, const RECT *src_r
         }
         else
         {
-            FIXME("Unsupported conversion: 16 (%08x, %08x, %08x) -> 555\n", src->red_mask, src->green_mask, src->blue_mask);
-            return FALSE;
+            for(y = src_rect->top; y < src_rect->bottom; y++)
+            {
+                dst_pixel = dst_start;
+                src_pixel = src_start;
+                for(x = src_rect->left; x < src_rect->right; x++)
+                {
+                    src_val = *src_pixel++;
+                    *dst_pixel++ = (((get_field(src_val, src->red_shift, src->red_len)     << 7) & 0x7c00) |
+                                    ((get_field(src_val, src->green_shift, src->green_len) << 2) & 0x03e0) |
+                                    ( get_field(src_val, src->blue_shift, src->blue_len)   >> 3));
+                }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
+                dst_start += dst->stride / 2;
+                src_start += src->stride / 2;
+            }
         }
         break;
     }
@@ -2277,9 +2329,21 @@ static BOOL convert_to_16(dib_info *dst, const dib_info *src, const RECT *src_re
         }
         else
         {
-            FIXME("Unsupported conversion: 16 (%08x, %08x, %08x) -> 16 (%08x, %08x, %08x)\n",
-                  src->red_mask, src->green_mask, src->blue_mask, dst->red_mask, dst->green_mask, dst->blue_mask);
-            return FALSE;
+            for(y = src_rect->top; y < src_rect->bottom; y++)
+            {
+                dst_pixel = dst_start;
+                src_pixel = src_start;
+                for(x = src_rect->left; x < src_rect->right; x++)
+                {
+                    src_val = *src_pixel++;
+                    *dst_pixel++ = put_field(get_field(src_val, src->red_shift,   src->red_len ),   dst->red_shift,   dst->red_len)   |
+                                   put_field(get_field(src_val, src->green_shift, src->green_len ), dst->green_shift, dst->green_len) |
+                                   put_field(get_field(src_val, src->blue_shift,  src->blue_len ),  dst->blue_shift,  dst->blue_len);
+                }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
+                dst_start += dst->stride / 2;
+                src_start += src->stride / 2;
+            }
         }
         break;
     }
@@ -2530,8 +2594,21 @@ static BOOL convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
         }
         else
         {
-            FIXME("Unsupported conversion: 16 (%08x, %08x, %08x) -> 8\n", src->red_mask, src->green_mask, src->blue_mask);
-            return FALSE;
+            for(y = src_rect->top; y < src_rect->bottom; y++)
+            {
+                dst_pixel = dst_start;
+                src_pixel = src_start;
+                for(x = src_rect->left; x < src_rect->right; x++)
+                {
+                    src_val = *src_pixel++;
+                    *dst_pixel++ = colorref_to_pixel_colortable(dst, (get_field(src_val, src->red_shift, src->red_len) |
+                                                                      get_field(src_val, src->green_shift, src->green_len) << 8 |
+                                                                      get_field(src_val, src->blue_shift, src->blue_len) << 16));
+                }
+                if(pad_size) memset(dst_pixel, 0, pad_size);
+                dst_start += dst->stride;
+                src_start += src->stride / 2;
+            }
         }
         break;
     }
@@ -2865,8 +2942,32 @@ static BOOL convert_to_4(dib_info *dst, const dib_info *src, const RECT *src_rec
         }
         else
         {
-            FIXME("Unsupported conversion: 16 (%08x, %08x, %08x) -> 4\n", src->red_mask, src->green_mask, src->blue_mask);
-            return FALSE;
+            for(y = src_rect->top; y < src_rect->bottom; y++)
+            {
+                dst_pixel = dst_start;
+                src_pixel = src_start;
+                for(x = src_rect->left; x < src_rect->right; x++)
+                {
+                    src_val = *src_pixel++;
+                    dst_val = colorref_to_pixel_colortable(dst, (get_field(src_val, src->red_shift, src->red_len) |
+                                                                 get_field(src_val, src->green_shift, src->green_len) << 8 |
+                                                                 get_field(src_val, src->blue_shift, src->blue_len) << 16));
+                    if((x - src_rect->left) & 1)
+                    {
+                        *dst_pixel = (dst_val & 0x0f) | (*dst_pixel & 0xf0);
+                        dst_pixel++;
+                    }
+                    else
+                        *dst_pixel = (dst_val << 4) & 0xf0;
+                }
+                if(pad_size)
+                {
+                    if((x - src_rect->left) & 1) dst_pixel++;
+                    memset(dst_pixel, 0, pad_size);
+                }
+                dst_start += dst->stride;
+                src_start += src->stride / 2;
+            }
         }
         break;
     }
@@ -3228,7 +3329,7 @@ static BOOL convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
                                                                 (((src_val >> src->green_shift) << 10) & 0x00fc00) |
                                                                 (((src_val >> src->green_shift) <<  4) & 0x000300) |
                                                                 (((src_val >> src->blue_shift)  << 19) & 0xf80000) |
-                                                                (((src_val >> src->blue_shift)  << 14) & 0x070000) );
+                                                                (((src_val >> src->blue_shift)  << 14) & 0x070000) ) ? 0xff : 0;
                     if(bit_pos == 0) *dst_pixel = 0;
                     *dst_pixel = (*dst_pixel & ~pixel_masks_1[bit_pos]) | (dst_val & pixel_masks_1[bit_pos]);
 
@@ -3249,8 +3350,33 @@ static BOOL convert_to_1(dib_info *dst, const dib_info *src, const RECT *src_rec
         }
         else
         {
-            FIXME("Unsupported conversion: 16 (%08x, %08x, %08x) -> 1\n", src->red_mask, src->green_mask, src->blue_mask);
-            return FALSE;
+            for(y = src_rect->top; y < src_rect->bottom; y++)
+            {
+                dst_pixel = dst_start;
+                src_pixel = src_start;
+                for(x = src_rect->left, bit_pos = 0; x < src_rect->right; x++)
+                {
+                    src_val = *src_pixel++;
+                    dst_val = colorref_to_pixel_colortable(dst, (get_field(src_val, src->red_shift, src->red_len) |
+                                                                 get_field(src_val, src->green_shift, src->green_len) << 8 |
+                                                                 get_field(src_val, src->blue_shift, src->blue_len) << 16)) ? 0xff : 0;
+                    if(bit_pos == 0) *dst_pixel = 0;
+                    *dst_pixel = (*dst_pixel & ~pixel_masks_1[bit_pos]) | (dst_val & pixel_masks_1[bit_pos]);
+
+                    if(++bit_pos == 8)
+                    {
+                        dst_pixel++;
+                        bit_pos = 0;
+                    }
+                }
+                if(pad_size)
+                {
+                    if(bit_pos != 0) dst_pixel++;
+                    memset(dst_pixel, 0, pad_size);
+                }
+                dst_start += dst->stride;
+                src_start += src->stride / 2;
+            }
         }
         break;
     }

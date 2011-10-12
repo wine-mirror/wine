@@ -821,7 +821,7 @@ static void test_dib_formats(void)
     HBITMAP hdib, hbmp;
     HDC hdc, memdc;
     UINT ret;
-    BOOL expect_ok, todo;
+    BOOL expect_ok;
 
     bi = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ) );
     hdc = GetDC( 0 );
@@ -846,7 +846,6 @@ static void test_dib_formats(void)
                 case 32: expect_ok = (compr == BI_RGB || compr == BI_BITFIELDS); break;
                 default: expect_ok = FALSE; break;
                 }
-                todo = (compr == BI_BITFIELDS) && bpp == 16;  /* wine doesn't like strange bitfields */
 
                 memset( bi, 0, sizeof(bi->bmiHeader) );
                 bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -897,36 +896,21 @@ static void test_dib_formats(void)
                 bi->bmiHeader.biSizeImage = 0;
                 ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_RGB_COLORS);
                 if (expect_ok)
-                {
-                    if (todo)
-                        todo_wine ok( ret, "SetDIBits failed for %u/%u/%u\n", bpp, planes, compr );
-                    else
-                        ok( ret, "SetDIBits failed for %u/%u/%u\n", bpp, planes, compr );
-                }
+                    ok( ret, "SetDIBits failed for %u/%u/%u\n", bpp, planes, compr );
                 else
                     ok( !ret ||
                         broken((bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8)), /* nt4 */
                         "SetDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
                 ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, DIB_RGB_COLORS );
                 if (expect_ok)
-                {
-                    if (todo)
-                        todo_wine ok( ret, "SetDIBitsToDevice failed for %u/%u/%u\n", bpp, planes, compr );
-                    else
-                        ok( ret, "SetDIBitsToDevice failed for %u/%u/%u\n", bpp, planes, compr );
-                }
+                    ok( ret, "SetDIBitsToDevice failed for %u/%u/%u\n", bpp, planes, compr );
                 else
                     ok( !ret ||
                         broken((bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8)), /* nt4 */
                         "SetDIBitsToDevice succeeded for %u/%u/%u\n", bpp, planes, compr );
                 ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_RGB_COLORS, SRCCOPY );
                 if (expect_ok)
-                {
-                    if (todo)
-                        todo_wine ok( ret, "StretchDIBits failed for %u/%u/%u\n", bpp, planes, compr );
-                    else
-                        ok( ret, "StretchDIBits failed for %u/%u/%u\n", bpp, planes, compr );
-                }
+                    ok( ret, "StretchDIBits failed for %u/%u/%u\n", bpp, planes, compr );
                 else
                     ok( !ret ||
                         broken((bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8)), /* nt4 */
@@ -953,32 +937,17 @@ static void test_dib_formats(void)
 
                 ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_RGB_COLORS);
                 if (expect_ok)
-                {
-                    if (todo)
-                        todo_wine ok( ret, "SetDIBits failed for %u/%u/%u\n", bpp, planes, compr );
-                    else
-                        ok( ret, "SetDIBits failed for %u/%u/%u\n", bpp, planes, compr );
-                }
+                    ok( ret, "SetDIBits failed for %u/%u/%u\n", bpp, planes, compr );
                 else
                     ok( !ret, "SetDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
                 ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, DIB_RGB_COLORS );
                 if (expect_ok)
-                {
-                    if (todo)
-                        todo_wine ok( ret, "SetDIBitsToDevice failed for %u/%u/%u\n", bpp, planes, compr );
-                    else
-                        ok( ret, "SetDIBitsToDevice failed for %u/%u/%u\n", bpp, planes, compr );
-                }
+                    ok( ret, "SetDIBitsToDevice failed for %u/%u/%u\n", bpp, planes, compr );
                 else
                     ok( !ret, "SetDIBitsToDevice succeeded for %u/%u/%u\n", bpp, planes, compr );
                 ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_RGB_COLORS, SRCCOPY );
                 if (expect_ok)
-                {
-                    if (todo)
-                        todo_wine ok( ret, "StretchDIBits failed for %u/%u/%u\n", bpp, planes, compr );
-                    else
-                        ok( ret, "StretchDIBits failed for %u/%u/%u\n", bpp, planes, compr );
-                }
+                    ok( ret, "StretchDIBits failed for %u/%u/%u\n", bpp, planes, compr );
                 else
                     ok( !ret, "StretchDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
 
@@ -1007,15 +976,15 @@ static void test_dib_formats(void)
     hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
     ok( hdib == NULL, "CreateDIBSection succeeded with null bitfields\n" );
     ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_RGB_COLORS);
-    ok( !ret, "SetDIBits succeeded with null bitfields\n" );
+    todo_wine ok( !ret, "SetDIBits succeeded with null bitfields\n" );
     /* other functions don't check */
     hdib = CreateDIBitmap( hdc, &bi->bmiHeader, 0, bits, bi, DIB_RGB_COLORS );
     ok( hdib != NULL, "CreateDIBitmap failed with null bitfields\n" );
     DeleteObject( hdib );
     ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, DIB_RGB_COLORS );
-    todo_wine ok( ret, "SetDIBitsToDevice failed with null bitfields\n" );
+    ok( ret, "SetDIBitsToDevice failed with null bitfields\n" );
     ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_RGB_COLORS, SRCCOPY );
-    todo_wine ok( ret, "StretchDIBits failed with null bitfields\n" );
+    ok( ret, "StretchDIBits failed with null bitfields\n" );
     ret = GetDIBits(hdc, hbmp, 0, 2, data, bi, DIB_RGB_COLORS);
     ok( ret, "GetDIBits failed with null bitfields\n" );
     bi->bmiHeader.biPlanes = 1;
@@ -1035,7 +1004,7 @@ static void test_dib_formats(void)
     hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
     ok( hdib == NULL, "CreateDIBSection succeeded with null bitfields\n" );
     ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_RGB_COLORS);
-    ok( !ret, "SetDIBits succeeded with null bitfields\n" );
+    todo_wine ok( !ret, "SetDIBits succeeded with null bitfields\n" );
 
     /* garbage is ok though */
     *(DWORD *)&bi->bmiColors[0] = 0x55;
@@ -1045,7 +1014,7 @@ static void test_dib_formats(void)
     ok( hdib != NULL, "CreateDIBSection failed with bad bitfields\n" );
     if (hdib) DeleteObject( hdib );
     ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_RGB_COLORS);
-    todo_wine ok( ret, "SetDIBits failed with bad bitfields\n" );
+    ok( ret, "SetDIBits failed with bad bitfields\n" );
 
     bi->bmiHeader.biWidth = -2;
     bi->bmiHeader.biHeight = 2;
