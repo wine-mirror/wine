@@ -519,6 +519,15 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
+    if (src_info->bmiHeader.biCompression == BI_BITFIELDS)
+    {
+        DWORD *masks = (DWORD *)src_info->bmiColors;
+        if (!masks[0] || !masks[1] || !masks[2])
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+    }
 
     src_bits.ptr = (void *)bits;
     src_bits.is_copy = FALSE;

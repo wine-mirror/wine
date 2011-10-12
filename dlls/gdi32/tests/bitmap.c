@@ -976,7 +976,7 @@ static void test_dib_formats(void)
     hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
     ok( hdib == NULL, "CreateDIBSection succeeded with null bitfields\n" );
     ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_RGB_COLORS);
-    todo_wine ok( !ret, "SetDIBits succeeded with null bitfields\n" );
+    ok( !ret, "SetDIBits succeeded with null bitfields\n" );
     /* other functions don't check */
     hdib = CreateDIBitmap( hdc, &bi->bmiHeader, 0, bits, bi, DIB_RGB_COLORS );
     ok( hdib != NULL, "CreateDIBitmap failed with null bitfields\n" );
@@ -984,7 +984,7 @@ static void test_dib_formats(void)
     ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, DIB_RGB_COLORS );
     ok( ret, "SetDIBitsToDevice failed with null bitfields\n" );
     ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_RGB_COLORS, SRCCOPY );
-    ok( ret, "StretchDIBits failed with null bitfields\n" );
+    todo_wine ok( ret, "StretchDIBits failed with null bitfields\n" );
     ret = GetDIBits(hdc, hbmp, 0, 2, data, bi, DIB_RGB_COLORS);
     ok( ret, "GetDIBits failed with null bitfields\n" );
     bi->bmiHeader.biPlanes = 1;
@@ -1004,7 +1004,7 @@ static void test_dib_formats(void)
     hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
     ok( hdib == NULL, "CreateDIBSection succeeded with null bitfields\n" );
     ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_RGB_COLORS);
-    todo_wine ok( !ret, "SetDIBits succeeded with null bitfields\n" );
+    ok( !ret, "SetDIBits succeeded with null bitfields\n" );
 
     /* garbage is ok though */
     *(DWORD *)&bi->bmiColors[0] = 0x55;
