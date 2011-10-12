@@ -415,6 +415,35 @@ static const WCHAR Gulim[] = {'G','u','l','i','m',0};
 static const WCHAR PMingLiU[] = {'P','M','i','n','g','L','i','U',0};
 static const WCHAR Batang[] = {'B','a','t','a','n','g',0};
 
+static const WCHAR arial[] = {'A','r','i','a','l',0};
+static const WCHAR bitstream_vera_sans[] = {'B','i','t','s','t','r','e','a','m',' ','V','e','r','a',' ','S','a','n','s',0};
+static const WCHAR bitstream_vera_sans_mono[] = {'B','i','t','s','t','r','e','a','m',' ','V','e','r','a',' ','S','a','n','s',' ','M','o','n','o',0};
+static const WCHAR bitstream_vera_serif[] = {'B','i','t','s','t','r','e','a','m',' ','V','e','r','a',' ','S','e','r','i','f',0};
+static const WCHAR courier_new[] = {'C','o','u','r','i','e','r',' ','N','e','w',0};
+static const WCHAR times_new_roman[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n',0};
+
+static const WCHAR *default_serif_list[] =
+{
+    times_new_roman,
+    bitstream_vera_serif,
+    NULL
+};
+
+static const WCHAR *default_fixed_list[] =
+{
+    courier_new,
+    bitstream_vera_sans_mono,
+    NULL
+};
+
+static const WCHAR *default_sans_list[] =
+{
+    arial,
+    bitstream_vera_sans,
+    NULL
+};
+
+
 static const WCHAR ArabicW[] = {'A','r','a','b','i','c','\0'};
 static const WCHAR BalticW[] = {'B','a','l','t','i','c','\0'};
 static const WCHAR CHINESE_BIG5W[] = {'C','H','I','N','E','S','E','_','B','I','G','5','\0'};
@@ -3092,23 +3121,22 @@ static BOOL move_to_front(const WCHAR *name)
     return FALSE;
 }
 
-static const WCHAR arial[] = {'A','r','i','a','l',0};
-static const WCHAR bitstream_vera_sans[] = {'B','i','t','s','t','r','e','a','m',' ','V','e','r','a',' ','S','a','n','s',0};
-static const WCHAR bitstream_vera_sans_mono[] = {'B','i','t','s','t','r','e','a','m',' ','V','e','r','a',' ','S','a','n','s',' ','M','o','n','o',0};
-static const WCHAR bitstream_vera_serif[] = {'B','i','t','s','t','r','e','a','m',' ','V','e','r','a',' ','S','e','r','i','f',0};
-static const WCHAR courier_new[] = {'C','o','u','r','i','e','r',' ','N','e','w',0};
-static const WCHAR times_new_roman[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n',0};
+static BOOL set_default(const WCHAR **name_list)
+{
+    while (*name_list)
+    {
+        if (move_to_front(*name_list)) return TRUE;
+        name_list++;
+    }
+
+    return FALSE;
+}
 
 static void reorder_font_list(void)
 {
-    if(!move_to_front(times_new_roman))
-        move_to_front(bitstream_vera_serif);
-
-    if(!move_to_front(courier_new))
-        move_to_front(bitstream_vera_sans_mono);
-
-    if(!move_to_front(arial))
-        move_to_front(bitstream_vera_sans);
+    set_default( default_serif_list );
+    set_default( default_fixed_list );
+    set_default( default_sans_list );
 }
 
 /*************************************************************
