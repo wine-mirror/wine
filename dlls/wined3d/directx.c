@@ -4313,9 +4313,6 @@ HRESULT CDECL wined3d_check_device_type(const struct wined3d *wined3d, UINT adap
     return hr;
 }
 
-/* Note: d3d8 passes in a pointer to a D3DCAPS8 structure, which is a true
-      subset of a D3DCAPS9 structure. However, it has to come via a void *
-      as the d3d8 interface cannot import the d3d9 header                  */
 HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapter_idx,
         WINED3DDEVTYPE device_type, WINED3DCAPS *caps)
 {
