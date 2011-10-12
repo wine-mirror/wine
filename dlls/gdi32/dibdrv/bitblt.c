@@ -473,6 +473,28 @@ static DWORD copy_rect( dib_info *dst, const RECT *dst_rect, const dib_info *src
     RECT clipped_rect;
     const WINEREGION *clip_data;
     int i, start, end, overlap;
+    DWORD and = 0, xor = 0;
+
+    switch (rop2)
+    {
+    case R2_NOT:   and = ~0u;
+        /* fall through */
+    case R2_WHITE: xor = ~0u;
+        /* fall through */
+    case R2_BLACK:
+        if (clip)
+        {
+            clip_data = get_wine_region( clip );
+            for (i = 0; i < clip_data->numRects; i++)
+                if (intersect_rect( &clipped_rect, dst_rect, clip_data->rects + i ))
+                    dst->funcs->solid_rects( dst, 1, &clipped_rect, and, xor );
+            release_wine_region( clip );
+        }
+        else dst->funcs->solid_rects( dst, 1, dst_rect, and, xor );
+        /* fall through */
+    case R2_NOP:
+        return ERROR_SUCCESS;
+    }
 
     origin.x = src_rect->left;
     origin.y = src_rect->top;

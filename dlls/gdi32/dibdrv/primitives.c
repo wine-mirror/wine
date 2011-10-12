@@ -785,21 +785,8 @@ static void copy_rect_32(const dib_info *dst, const RECT *rc,
                          const dib_info *src, const POINT *origin, int rop2, int overlap)
 {
     DWORD *dst_start, *src_start;
-    DWORD and = 0, xor = 0;
     struct rop_codes codes;
     int y, dst_stride, src_stride;
-
-    switch (rop2)
-    {
-    case R2_NOP:   return;
-    case R2_NOT:   and = ~0u;
-        /* fall through */
-    case R2_WHITE: xor = ~0u;
-        /* fall through */
-    case R2_BLACK:
-        dst->funcs->solid_rects( dst, 1, rc, and, xor );
-        return;
-    }
 
     if (overlap & OVERLAP_BELOW)
     {
@@ -837,21 +824,8 @@ static void copy_rect_24(const dib_info *dst, const RECT *rc,
                          const dib_info *src, const POINT *origin, int rop2, int overlap)
 {
     BYTE *dst_start, *src_start;
-    DWORD and = 0, xor = 0;
     int y, dst_stride, src_stride;
     struct rop_codes codes;
-
-    switch (rop2)
-    {
-    case R2_NOP:   return;
-    case R2_NOT:   and = ~0u;
-        /* fall through */
-    case R2_WHITE: xor = ~0u;
-        /* fall through */
-    case R2_BLACK:
-        dst->funcs->solid_rects( dst, 1, rc, and, xor );
-        return;
-    }
 
     if (overlap & OVERLAP_BELOW)
     {
@@ -889,21 +863,8 @@ static void copy_rect_16(const dib_info *dst, const RECT *rc,
                          const dib_info *src, const POINT *origin, int rop2, int overlap)
 {
     WORD *dst_start, *src_start;
-    DWORD and = 0, xor = 0;
     int y, dst_stride, src_stride;
     struct rop_codes codes;
-
-    switch (rop2)
-    {
-    case R2_NOP:   return;
-    case R2_NOT:   and = ~0u;
-        /* fall through */
-    case R2_WHITE: xor = ~0u;
-        /* fall through */
-    case R2_BLACK:
-        dst->funcs->solid_rects( dst, 1, rc, and, xor );
-        return;
-    }
 
     if (overlap & OVERLAP_BELOW)
     {
@@ -941,21 +902,8 @@ static void copy_rect_8(const dib_info *dst, const RECT *rc,
                         const dib_info *src, const POINT *origin, int rop2, int overlap)
 {
     BYTE *dst_start, *src_start;
-    DWORD and = 0, xor = 0;
     int y, dst_stride, src_stride;
     struct rop_codes codes;
-
-    switch (rop2)
-    {
-    case R2_NOP:   return;
-    case R2_NOT:   and = ~0u;
-        /* fall through */
-    case R2_WHITE: xor = ~0u;
-        /* fall through */
-    case R2_BLACK:
-        dst->funcs->solid_rects( dst, 1, rc, and, xor );
-        return;
-    }
 
     if (overlap & OVERLAP_BELOW)
     {
@@ -993,21 +941,8 @@ static void copy_rect_4(const dib_info *dst, const RECT *rc,
                         const dib_info *src, const POINT *origin, int rop2, int overlap)
 {
     BYTE *dst_start, *src_start;
-    DWORD and = 0, xor = 0;
     int y, dst_stride, src_stride;
     struct rop_codes codes;
-
-    switch (rop2)
-    {
-    case R2_NOP:   return;
-    case R2_NOT:   and = ~0u;
-        /* fall through */
-    case R2_WHITE: xor = ~0u;
-        /* fall through */
-    case R2_BLACK:
-        dst->funcs->solid_rects( dst, 1, rc, and, xor );
-        return;
-    }
 
     if (overlap & OVERLAP_BELOW)
     {
@@ -1047,21 +982,8 @@ static void copy_rect_1(const dib_info *dst, const RECT *rc,
                         const dib_info *src, const POINT *origin, int rop2, int overlap)
 {
     BYTE *dst_start, *src_start;
-    DWORD and = 0, xor = 0;
     int y, dst_stride, src_stride;
     struct rop_codes codes;
-
-    switch (rop2)
-    {
-    case R2_NOP:   return;
-    case R2_NOT:   and = ~0u;
-        /* fall through */
-    case R2_WHITE: xor = ~0u;
-        /* fall through */
-    case R2_BLACK:
-        dst->funcs->solid_rects( dst, 1, rc, and, xor );
-        return;
-    }
 
     if (overlap & OVERLAP_BELOW)
     {
