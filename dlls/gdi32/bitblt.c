@@ -160,7 +160,7 @@ void free_heap_bits( struct gdi_image_bits *bits )
 }
 
 static DWORD convert_bits( const BITMAPINFO *src_info, struct bitblt_coords *src,
-                           BITMAPINFO *dst_info, struct gdi_image_bits *bits )
+                           BITMAPINFO *dst_info, struct gdi_image_bits *bits, BOOL add_alpha )
 {
     void *ptr;
     DWORD err;
@@ -169,7 +169,7 @@ static DWORD convert_bits( const BITMAPINFO *src_info, struct bitblt_coords *src
     if (!(ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( dst_info ))))
         return ERROR_OUTOFMEMORY;
 
-    err = convert_bitmapinfo( src_info, bits->ptr, src, dst_info, ptr );
+    err = convert_bitmapinfo( src_info, bits->ptr, src, dst_info, ptr, add_alpha );
     if (bits->free) bits->free( bits );
     bits->ptr = ptr;
     bits->is_copy = TRUE;
@@ -252,7 +252,7 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
             dst_info->bmiHeader.biClrUsed = 1;
         }
 
-        if (!(err = convert_bits( src_info, src, dst_info, &bits )))
+        if (!(err = convert_bits( src_info, src, dst_info, &bits, FALSE )))
         {
             /* get rid of the fake 1-bpp table */
             if (dst_info->bmiHeader.biClrUsed == 1) dst_info->bmiHeader.biClrUsed = 0;
@@ -309,7 +309,7 @@ BOOL nulldrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
             src_info->bmiHeader.biClrUsed = 2;
         }
 
-        err = convert_bits( src_info, src, dst_info, &bits );
+        err = convert_bits( src_info, src, dst_info, &bits, TRUE );
         if (!err) err = dst_dev->funcs->pBlendImage( dst_dev, dst_info, &bits, src, dst, func );
     }
 

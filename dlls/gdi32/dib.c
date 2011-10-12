@@ -591,7 +591,7 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
         ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( dst_info ));
         if (ptr)
         {
-            err = convert_bitmapinfo( src_info, src_bits.ptr, &src, dst_info, ptr );
+            err = convert_bitmapinfo( src_info, src_bits.ptr, &src, dst_info, ptr, FALSE );
             if (src_bits.free) src_bits.free( &src_bits );
             src_bits.ptr = ptr;
             src_bits.is_copy = TRUE;
@@ -721,7 +721,7 @@ INT nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWOR
         ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( dst_info ));
         if (ptr)
         {
-            err = convert_bitmapinfo( src_info, src_bits.ptr, &src, dst_info, ptr );
+            err = convert_bitmapinfo( src_info, src_bits.ptr, &src, dst_info, ptr, FALSE );
             if (src_bits.free) src_bits.free( &src_bits );
             src_bits.ptr = ptr;
             src_bits.is_copy = TRUE;
@@ -1226,7 +1226,7 @@ INT WINAPI GetDIBits(
         else
             dst_info->bmiHeader.biHeight = -src.height;
 
-        convert_bitmapinfo( src_info, src_bits.ptr, &src, dst_info, bits );
+        convert_bitmapinfo( src_info, src_bits.ptr, &src, dst_info, bits, FALSE );
         if (src_bits.free) src_bits.free( &src_bits );
         ret = lines;
     }
