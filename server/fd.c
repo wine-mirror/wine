@@ -1321,9 +1321,9 @@ static struct file_lock *add_lock( struct fd *fd, int shared, file_pos_t start, 
         release_object( lock );
         return NULL;
     }
-    list_add_head( &fd->locks, &lock->fd_entry );
-    list_add_head( &fd->inode->locks, &lock->inode_entry );
-    list_add_head( &lock->process->locks, &lock->proc_entry );
+    list_add_tail( &fd->locks, &lock->fd_entry );
+    list_add_tail( &fd->inode->locks, &lock->inode_entry );
+    list_add_tail( &lock->process->locks, &lock->proc_entry );
     return lock;
 }
 
@@ -1395,7 +1395,7 @@ obj_handle_t lock_fd( struct fd *fd, file_pos_t start, file_pos_t count, int sha
     {
         struct file_lock *lock = LIST_ENTRY( ptr, struct file_lock, inode_entry );
         if (!lock_overlaps( lock, start, end )) continue;
-        if (lock->shared && shared) continue;
+        if (shared && (lock->shared || lock->fd == fd)) continue;
         /* found one */
         if (!wait)
         {

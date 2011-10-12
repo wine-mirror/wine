@@ -1671,7 +1671,6 @@ static void test_LockFile(void)
     ok( !LockFileEx( handle2, LOCKFILE_FAIL_IMMEDIATELY, 0, 100, 0, &overlapped ),
         "LockFileEx handle2 300,100 succeeded\n" );
     ret = LockFileEx( handle, LOCKFILE_FAIL_IMMEDIATELY, 0, 100, 0, &overlapped );
-    todo_wine
     ok( ret, "LockFileEx 300,100 failed\n" );
     ok( UnlockFileEx( handle, 0, 100, 0, &overlapped ), "UnlockFileEx 300,100 failed\n" );
     /* exclusive lock is removed first */
