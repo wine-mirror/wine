@@ -84,6 +84,8 @@ static void DSOUND_RecalcPrimary(DirectSoundDevice *device)
 
 HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
 {
+    UINT prebuf_frames;
+    REFERENCE_TIME prebuf_rt;
     HRESULT hres;
 
     TRACE("(%p, %d)\n", device, forcewave);
@@ -112,10 +114,11 @@ HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
         return hres;
     }
 
-    /* buffer size = 200 * 100000 (100 ns) = 2.0 seconds */
+    prebuf_frames = device->prebuf * DSOUND_fraglen(device->pwfx->nSamplesPerSec, device->pwfx->nBlockAlign) / device->pwfx->nBlockAlign;
+    prebuf_rt = (prebuf_frames / (double)device->pwfx->nSamplesPerSec) * 10000000;
     hres = IAudioClient_Initialize(device->client,
             AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_NOPERSIST,
-            200 * 100000, 50000, device->pwfx, NULL);
+            prebuf_rt, 50000, device->pwfx, NULL);
     if(FAILED(hres)){
         IAudioClient_Release(device->client);
         device->client = NULL;
