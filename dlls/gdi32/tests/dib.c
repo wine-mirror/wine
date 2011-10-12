@@ -112,6 +112,15 @@ static const char *sha1_graphics_a8r8g8b8[] =
     "94645300d6eb51020a7ef8261dee2941cd51b5df",
     "c56f5bdc9cac4f0bc81c33295d9aed8eaf4cb1f2",
     "21cdfde38ac7edbb241ec83d82f31286e90c4629",
+    "1fd2f4dcb62f8522171872e43fd4a35041d68100",
+    "39c31de73aafcfcadf0bf414da4495be9de54417",
+    "132949f59bfeb88dc2047e6eaecb8512aea3d9ab",
+    "f6a6d765bf23726329f96020ba8c5e3c0897aafa",
+    "e71d6bb9bd38eea5719f8ba57177997910e2d841",
+    "3d2ccbe51408232a04769546b1bdd74f84558a41",
+    "a1fe9aa885584a0f713d7c6f76c89830fbf28563",
+    "aaf62842bb98d8a2945c4f643baf50afaeea9307",
+    "287b2f2f2fb5a1d7ee4a29b43342103d78a7a8ab",
     NULL
 };
 
@@ -153,6 +162,15 @@ static const char *sha1_graphics_a8b8g8r8[] =
     "19b32a0daa91201725b5e13820c343d0a84ff698",
     "abca6a80a99b05722d2d87ce2a8b94ef1ae549e1",
     "2ba70994d0b4ce87fdf6fbc33ada11252178061e",
+    "7b4e1d47a03e2cec236d8fb6e2ae89d8ed078f79",
+    "89e90d6159d59886bbbf0c40a7cd01293c3cfda3",
+    "3a598f1eb35c1412b0c131e9d9e36a4aef9534d2",
+    "d01071c44259adc94b89978b7d51a058b6dad665",
+    "27ef47377e88f5ac5ad33b19eae27d56c456ac65",
+    "339908a568f384e1f384a3e1b0dd415779203b02",
+    "88fd743d00bd37d2ed722092146795b044d08a6e",
+    "118bf4c5bddc206ba737f7aa8b239940cd1aadc2",
+    "7cb51f6c5f1dae926601986c934533df5f8baa9f",
     NULL
 };
 
@@ -194,6 +212,15 @@ static const char *sha1_graphics_24[] =
     "b0a959745b2db1d9f449e68e4479a4f36301879c",
     "63f764b9bd2f4876ab1ee0f3c0eb55b5a7de5212",
     "e171f6ec77bca91d6b8559911bce296c0bac469e",
+    "9725669042ef68acb408404d196496d10340bb5a",
+    "03d5eb8e3a6662e6dc183f88ee2f285065fc9c51",
+    "f4c312f9a37ddc54a27f6b1421dab1ce0cec0c27",
+    "0f79500eda467cd3cbc220abdd37b5dba695d654",
+    "84c43a3cbd7d8c1ac9a0e9b6f07620158079b278",
+    "7d479beeb6758c164566638b5c873c188d6a91e7",
+    "80086808fca03e757d812e31d1ae576bf90dac9d",
+    "1015e0217ea13eaa62c7666b8b81aafd75f8f610",
+    "93e1aec608e037af3bfb7bd32dde446abe4eea11",
     NULL
 };
 
@@ -234,6 +261,15 @@ static const char *sha1_graphics_r5g5b5[] =
     "a8d6a5285a927ba3a3be34b06a06c70a20d4c1b3",
     "e428d213ad02651287894f093413949dcb369208",
     "7df915bedcc5951a1b6f828490f7dbb93212e835",
+    "645dc251d205139282b17eb7bece1055fff3bcd0",
+    "c3d4a1425e17de9e05e3f6dfc6a24c26bfd5ee12",
+    "2a66dae03890ff791eabb982949435adb19af02b",
+    "24ac219478ba406f30794550690486b14cbac5e8",
+    "6c652ecce55e71fee16bc1c9b2c5ae4161bdd2ea",
+    "9b02173f424c098ea0f4cc5db9eb65f69263d127",
+    "a92942269911a88793b3460b6f2a2cd56e48eec1",
+    "aa4a0a4b7f2697aaf270c89874631974bd9d7183",
+    "585061e403d9cac1603a38af420efe87338f381a",
     NULL
 };
 
@@ -274,6 +310,15 @@ static const char *sha1_graphics_r4g4b4[] =
     "957a86fbe8a96dd068db65e4e624a52bcc84af46",
     "13b0f240054dc57ba0e2dfde74048496304a2c7f",
     "51ef267eb9c15487c9430f505e8a6c929eb2170c",
+    "1b593d8e031d3b37fecf6f1df5a8f96c8e8bfef8",
+    "75ae8c80af4356a1a5eebde6608fbc31e8a95372",
+    "b89ae8de2d975b8adb263ace66fd953d29165a8b",
+    "e901ab4b20bc87370609d7ba1f21aa08abd9eced",
+    "3cbf5fffdd73f9639f3eb34ec1ab3055bc8618fb",
+    "8e2e70ade90711c4ac01352aa0373fce36ff5dc0",
+    "8c40d6d8e0c696c31f04c896e492a2a38703d870",
+    "9af4907a8144458a73dbb7471784f8c3d9aeffcf",
+    "e4731b63d41f6b51e30752ea52d85c4a2938731b",
     NULL
 };
 
@@ -314,6 +359,19 @@ static const char *sha1_graphics_8[] =
     "ea39ac62ca2f815a1d029340c6465994b6f03cb0",
     "9a603513cd81acf70cf8b27b0d544e7f672e9d40",
     "f4a334e69535de74ee5ed54be93a75120a66e54a",
+    "559fd1d15447745527c61fe43a94c6708bff3e39",
+    "995f77f2f53398399f09d1365cb4dfd105764e5c",
+    "c21851589a5f8a45ea5f9bb3e72f4f88d0a6697d",
+    "8c609921d4a3ed89a994a75482b27496bf103cf5",
+    "eb2ce16a6ae251f4965135ee776776b5fc02c42c",
+    "66493ee117719e172f327a426af601996025f28c",
+    "acead2745fec0b6c817fa601353bdf2d197b64f7",
+    "a6b858b2d125c159529d3f3ec45b31925a79acff",
+    "d83adc669c0dea0dc4812b93f998514b6f02d805",
+    "9e8ceb7c3cd68e043b6d875c8c84a1e394962412",
+    "9e996fc74eeef53f0a6c31aabb2edce6e103f189",
+    "7d1bfff706b0713e53209407889f83a0da26a81d",
+    "31e667c2dbb81dcf81d01cb88f794e88ddb90ff2",
     NULL
 };
 
@@ -354,6 +412,15 @@ static const char *sha1_graphics_4[] =
     "b672afbeeafb44194a821f0def81a8892872937e",
     "db0124045882b598feea192186cf7eb7a0387866",
     "602d91471378fe24a2d0248bd8a92b624f099fea",
+    "e772873b87a0f55ea51a3da323f64bf8814c6703",
+    "bbf027f506cbb80d359bf4892fcb75f816f2e446",
+    "ed44bded6b17df7fe92b191fd810d1aafbd55f52",
+    "a49bcb1ace42d548254d9e96d22088b1fe2e75b4",
+    "3e411b004a5be84451860c6da6a4a1a482b77862",
+    "3b3d2f18fdc75e938ca43cc2d0b41fa67c1c5d36",
+    "7811c536a6527112b438a6413f3927f2c79086a7",
+    "46760975993f9881b7bbe94123173e6a683d3f25",
+    "df5feb905a31c288008cf5e82d73ac818a160d82",
     NULL
 };
 
@@ -409,6 +476,15 @@ static const char *sha1_graphics_1[] =
     "be36cda370650e6d5fb0570aeb8ced491d0c2b1c",
     "4c34cb8e47f9ff4b4348aa2d40cce7cb54d65cb0",
     "18f4497e43903e8df5b27da4ceebf62b15550a87",
+    "3fa3570a2ebd38042b90f24bd3496233bca5a23d",
+    "65c8811c609203fd424f5ed5f92ca2268a1dca54",
+    "a45b297d709e297584eb0f2985294ec0ab53d8ad",
+    "0d180c37bc26d83a1a11f66168757f3de2493243",
+    "d1d2ecf71a37d9eda58fa09454aa871971428ace",
+    "6672da4e016b6e9de0ca218f8307cce7d48d62c4",
+    "ee22f43ea867228c6ff937d39e1826e285a107e8",
+    "a2a928de9007d765da496abec8c21b23601f8c45",
+    "28ded40e72d4327b9413571476b167fb28a1f420",
     NULL
 };
 
@@ -611,16 +687,21 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     DWORD dib_size = get_dib_size(bmi);
     HPEN solid_pen, dashed_pen, orig_pen;
     HBRUSH solid_brush, dib_brush, hatch_brush, orig_brush;
-    INT i, y, hatch_style;
+    HBITMAP bmp;
+    INT i, x, y, hatch_style;
+    HDC src_dc;
     HRGN hrgn, hrgn2;
+    BYTE dib_src_buf[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD)];
     BYTE dib_brush_buf[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD) + 16 * 16 * sizeof(DWORD)]; /* Enough for 16 x 16 at 32 bpp */
+    BITMAPINFO *src_bi = (BITMAPINFO*)dib_src_buf;
     BITMAPINFO *brush_bi = (BITMAPINFO*)dib_brush_buf;
-    BYTE *brush_bits;
-    BOOL dib_is_1bpp = (bmi->bmiHeader.biBitCount == 1);
+    BYTE *brush_bits, *src_bits;
+    BOOL ret, dib_is_1bpp = (bmi->bmiHeader.biBitCount == 1);
 
     memset(bits, 0xcc, dib_size);
     compare_hash(bmi, bits, sha1, "empty");
 
+    src_dc = CreateCompatibleDC( 0 );
     solid_pen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0xff));
     orig_pen = SelectObject(hdc, solid_pen);
     SetBrushOrgEx(hdc, 0, 0, NULL);
@@ -668,8 +749,6 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     for(i = 0, y = 10; i < 256; i++)
     {
-        BOOL ret;
-
         ret = PatBlt(hdc, 10, y, 100, 10, rop3[i]);
 
         if(rop_uses_src(rop3[i]))
@@ -804,8 +883,6 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     for(i = 0, y = 10; i < 256; i++)
     {
-        BOOL ret;
-
         if(!rop_uses_src(rop3[i]))
         {
             ret = PatBlt(hdc, 10 + i, y, 100, 20, rop3[i]);
@@ -834,8 +911,6 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     for(i = 0, y = 10; i < 256; i++)
     {
-        BOOL ret;
-
         if(!rop_uses_src(rop3[i]))
         {
             ret = PatBlt(hdc, 10 + i, y, 100, 20, rop3[i]);
@@ -864,8 +939,6 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     for(i = 0, y = 10; i < 256; i++)
     {
-        BOOL ret;
-
         if(!rop_uses_src(rop3[i]))
         {
             ret = PatBlt(hdc, 10 + i, y, 100, 20, rop3[i]);
@@ -894,8 +967,6 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     for(i = 0, y = 10; i < 256; i++)
     {
-        BOOL ret;
-
         if(!rop_uses_src(rop3[i]))
         {
             ret = PatBlt(hdc, 10 + i, y, 100, 20, rop3[i]);
@@ -934,8 +1005,6 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     for(i = 0, y = 10; i < 256; i++)
     {
-        BOOL ret;
-
         if(!rop_uses_src(rop3[i]))
         {
             ret = PatBlt(hdc, 10 + i, y, 100, 20, rop3[i]);
@@ -959,8 +1028,6 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     for(i = 0, y = 10; i < 256; i++)
     {
-        BOOL ret;
-
         if(!rop_uses_src(rop3[i]))
         {
             ret = PatBlt(hdc, 10 + i, y, 100, 20, rop3[i]);
@@ -987,8 +1054,6 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     SelectObject(hdc, dib_brush);
     for(i = 0, y = 10; i < 256; i++)
     {
-        BOOL ret;
-
         if(!rop_uses_src(rop3[i]))
         {
             ret = PatBlt(hdc, 10 + i, y, 100, 20, rop3[i]);
@@ -1050,8 +1115,6 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     for(i = 0, y = 10; i < 256; i++)
     {
-        BOOL ret;
-
         if(!rop_uses_src(rop3[i]))
         {
             for(hatch_style = HS_HORIZONTAL; hatch_style <= HS_DIAGCROSS; hatch_style++)
@@ -1147,6 +1210,184 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     compare_hash(bmi, bits, sha1, "overlapping BitBlt PATPAINT -x, +y" );
     memset(bits, 0xcc, dib_size);
 
+    /* blitting with 32-bpp BI_RGB source */
+
+    memset( dib_src_buf, 0, sizeof(dib_src_buf) );
+    src_bi->bmiHeader.biSize = sizeof(bmi->bmiHeader);
+    src_bi->bmiHeader.biHeight = 256;
+    src_bi->bmiHeader.biWidth = 256;
+    src_bi->bmiHeader.biBitCount = 32;
+    src_bi->bmiHeader.biPlanes = 1;
+    src_bi->bmiHeader.biCompression = BI_RGB;
+    bmp = CreateDIBSection(0, src_bi, DIB_RGB_COLORS, (void**)&src_bits, NULL, 0);
+    SelectObject( src_dc, bmp );
+    for (y = 0; y < 256; y++)
+        for (x = 0; x < 256; x++)
+        {
+            BYTE a = (x + y) * 2;
+            BYTE r = (BYTE)(y + 2 * x) * a / 255;
+            BYTE g = (BYTE)(x + y / 3) * a / 255;
+            BYTE b = (BYTE)(x / 3 + 2 * y) * a / 255;
+            ((DWORD *)src_bits)[y * 256 + x] = (a << 24) | RGB( r, g, b );
+        }
+
+    BitBlt( hdc, 100, 100, 256, 256, src_dc, 0, 0, SRCCOPY );
+    if (bmi->bmiHeader.biBitCount == 8)  /* broken on NT4 */
+        compare_hash_broken_todo(bmi, bits, sha1, "BitBlt src 32-bpp SRCCOPY", 1, FALSE );
+    else
+        compare_hash(bmi, bits, sha1, "BitBlt src 32-bpp SRCCOPY" );
+    memset(bits, 0xcc, dib_size);
+
+    /* blitting with 32-bpp r10g10b10 source */
+
+    src_bi->bmiHeader.biBitCount = 32;
+    src_bi->bmiHeader.biCompression = BI_BITFIELDS;
+    ((DWORD *)src_bi->bmiColors)[0] = 0x3ff00000;
+    ((DWORD *)src_bi->bmiColors)[1] = 0x000ffc00;
+    ((DWORD *)src_bi->bmiColors)[2] = 0x000003ff;
+    bmp = CreateDIBSection(0, src_bi, DIB_RGB_COLORS, (void**)&src_bits, NULL, 0);
+    SelectObject( src_dc, bmp );
+    for (y = 0; y < 256; y++)
+        for (x = 0; x < 256; x++)
+        {
+            WORD r = (7 * x + 3 * y) % 1024;
+            WORD g = (11 * x + y / 3) % 1024;
+            WORD b = (x / 3 + 9 * y) % 1024;
+            ((DWORD *)src_bits)[y * 256 + x] = r << 20 | g << 10 | b;
+        }
+
+    BitBlt( hdc, 100, 100, 256, 256, src_dc, 0, 0, SRCCOPY );
+    if (bmi->bmiHeader.biBitCount == 8)  /* broken on NT4 */
+        compare_hash_broken_todo(bmi, bits, sha1, "BitBlt src 32-bpp r10g10b10 SRCCOPY", 1, FALSE );
+    else
+        compare_hash(bmi, bits, sha1, "BitBlt src 32-bpp r10g10b10 SRCCOPY" );
+    memset(bits, 0xcc, dib_size);
+
+    /* blitting with 32-bpp b6g6r6 source */
+
+    src_bi->bmiHeader.biBitCount = 32;
+    src_bi->bmiHeader.biCompression = BI_BITFIELDS;
+    ((DWORD *)src_bi->bmiColors)[0] = 0x00003f;
+    ((DWORD *)src_bi->bmiColors)[1] = 0x000fc0;
+    ((DWORD *)src_bi->bmiColors)[2] = 0x03f000;
+    bmp = CreateDIBSection(0, src_bi, DIB_RGB_COLORS, (void**)&src_bits, NULL, 0);
+    SelectObject( src_dc, bmp );
+    for (y = 0; y < 256; y++)
+        for (x = 0; x < 256; x++)
+        {
+            BYTE r = (y + 2 * x) % 64;
+            BYTE g = (x + y / 3) % 64;
+            BYTE b = (x / 3 + 2 * y) % 64;
+            ((DWORD *)src_bits)[y * 256 + x] = r | g << 6 | b << 12;
+        }
+
+    BitBlt( hdc, 100, 100, 256, 256, src_dc, 0, 0, SRCCOPY );
+    if (bmi->bmiHeader.biBitCount == 8)  /* broken on NT4 */
+        compare_hash_broken_todo(bmi, bits, sha1, "BitBlt src 32-bpp b6g6r6 SRCCOPY", 1, FALSE );
+    else
+        compare_hash(bmi, bits, sha1, "BitBlt src 32-bpp b6g6r6 SRCCOPY" );
+    memset(bits, 0xcc, dib_size);
+
+    /* blitting with 24-bpp source */
+
+    src_bi->bmiHeader.biBitCount = 24;
+    src_bi->bmiHeader.biCompression = BI_RGB;
+    bmp = CreateDIBSection(0, src_bi, DIB_RGB_COLORS, (void**)&src_bits, NULL, 0);
+    DeleteObject( SelectObject( src_dc, bmp ) );
+    for (y = 0; y < 256; y++)
+        for (x = 0; x < 256; x++)
+        {
+            src_bits[(y * 256 + x) * 3 + 0] = x + 3 * y;
+            src_bits[(y * 256 + x) * 3 + 1] = 2 * x + 7 * y;
+            src_bits[(y * 256 + x) * 3 + 2] = 5 * x + 12 * y;
+        }
+
+    BitBlt( hdc, 100, 100, 256, 256, src_dc, 0, 0, SRCCOPY );
+    if (bmi->bmiHeader.biBitCount == 8)  /* broken on NT4 */
+        compare_hash_broken_todo(bmi, bits, sha1, "BitBlt src 24-bpp SRCCOPY", 1, FALSE );
+    else
+        compare_hash(bmi, bits, sha1, "BitBlt src 24-bpp SRCCOPY" );
+    memset(bits, 0xcc, dib_size);
+
+    /* blitting with 16-bpp BI_RGB source */
+
+    src_bi->bmiHeader.biBitCount = 16;
+    src_bi->bmiHeader.biCompression = BI_RGB;
+    bmp = CreateDIBSection(0, src_bi, DIB_RGB_COLORS, (void**)&src_bits, NULL, 0);
+    DeleteObject( SelectObject( src_dc, bmp ) );
+    for (y = 0; y < 256; y++)
+        for (x = 0; x < 256; x++)
+            ((WORD *)src_bits)[y * 256 + x] = x | x << 4 | x << 8 | y << 3 | y << 7;
+
+    BitBlt( hdc, 100, 100, 256, 256, src_dc, 0, 0, SRCCOPY );
+    compare_hash(bmi, bits, sha1, "BitBlt src 16-bpp SRCCOPY" );
+    memset(bits, 0xcc, dib_size);
+
+    /* blitting with 16-bpp b4g4r4 source */
+
+    src_bi->bmiHeader.biBitCount = 16;
+    src_bi->bmiHeader.biCompression = BI_BITFIELDS;
+    ((DWORD *)src_bi->bmiColors)[0] = 0x00000f;
+    ((DWORD *)src_bi->bmiColors)[1] = 0x0000f0;
+    ((DWORD *)src_bi->bmiColors)[2] = 0x000f00;
+    bmp = CreateDIBSection(0, src_bi, DIB_RGB_COLORS, (void**)&src_bits, NULL, 0);
+    DeleteObject( SelectObject( src_dc, bmp ) );
+    for (y = 0; y < 256; y++)
+        for (x = 0; x < 256; x++)
+            ((WORD *)src_bits)[y * 256 + x] = x | x << 4 | x << 8 | y << 3 | y << 7;
+
+    BitBlt( hdc, 100, 100, 256, 256, src_dc, 0, 0, SRCCOPY );
+    compare_hash(bmi, bits, sha1, "BitBlt src 16-bpp b4g4r4 SRCCOPY" );
+    memset(bits, 0xcc, dib_size);
+
+    /* blitting with 8-bpp source */
+
+    src_bi->bmiHeader.biBitCount = 8;
+    src_bi->bmiHeader.biCompression = BI_RGB;
+    src_bi->bmiHeader.biClrUsed = 160;
+    for (i = 0; i < 256; i++) ((DWORD *)src_bi->bmiColors)[i] = i | (i * 3) << 8 | (i / 2) << 16;
+    bmp = CreateDIBSection(0, src_bi, DIB_RGB_COLORS, (void**)&src_bits, NULL, 0);
+    DeleteObject( SelectObject( src_dc, bmp ) );
+    for (y = 0; y < 256; y++)
+        for (x = 0; x < 256; x++)
+            src_bits[y * 256 + x] = 3 * x + 5 * y;
+
+    BitBlt( hdc, 100, 100, 256, 256, src_dc, 0, 0, SRCCOPY );
+    compare_hash(bmi, bits, sha1, "BitBlt src 8-bpp SRCCOPY" );
+    memset(bits, 0xcc, dib_size);
+
+    /* blitting with 4-bpp source */
+
+    src_bi->bmiHeader.biBitCount = 4;
+    src_bi->bmiHeader.biClrUsed = 12;
+    for (i = 0; i < 16; i++) ((DWORD *)src_bi->bmiColors)[i] = i | (i * 5) << 8 | (i * 19) << 16;
+    bmp = CreateDIBSection(0, src_bi, DIB_RGB_COLORS, (void**)&src_bits, NULL, 0);
+    DeleteObject( SelectObject( src_dc, bmp ) );
+    for (y = 0; y < 256; y++)
+        for (x = 0; x < 256; x += 2)
+            src_bits[(y * 256 + x) / 2] = 7 * x + 3 * y;
+
+    BitBlt( hdc, 100, 100, 256, 256, src_dc, 0, 0, SRCCOPY );
+    compare_hash(bmi, bits, sha1, "BitBlt src 4-bpp SRCCOPY" );
+    memset(bits, 0xcc, dib_size);
+
+    /* blitting with 1-bpp source */
+
+    src_bi->bmiHeader.biBitCount = 1;
+    src_bi->bmiHeader.biClrUsed = 0;
+    for (i = 0; i < 2; i++) ((DWORD *)src_bi->bmiColors)[i] = (i + 37) | (i * 91) << 8 | (i * 53) << 16;
+    bmp = CreateDIBSection(0, src_bi, DIB_RGB_COLORS, (void**)&src_bits, NULL, 0);
+    DeleteObject( SelectObject( src_dc, bmp ) );
+    for (y = 0; y < 256; y++)
+        for (x = 0; x < 256; x += 8)
+            src_bits[(y * 256 + x) / 8] = 7 * x + 3 * y;
+
+    BitBlt( hdc, 100, 100, 256, 256, src_dc, 0, 0, SRCCOPY );
+    compare_hash(bmi, bits, sha1, "BitBlt src 1-bpp SRCCOPY" );
+    memset(bits, 0xcc, dib_size);
+
+    DeleteDC( src_dc );
+    DeleteObject( bmp );
     SelectObject(hdc, orig_brush);
     SelectObject(hdc, orig_pen);
     DeleteObject(hrgn);
