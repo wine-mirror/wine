@@ -202,7 +202,6 @@ extern MSVCRT__locale_t MSVCRT_locale;
 extern int MSVCRT___lc_codepage;
 extern int MSVCRT___lc_collate_cp;
 extern WORD MSVCRT__ctype [257];
-extern unsigned short *MSVCRT__pctype;
 
 void   msvcrt_set_errno(int);
 

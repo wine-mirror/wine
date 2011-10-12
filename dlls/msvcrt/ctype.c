@@ -51,13 +51,6 @@ WORD MSVCRT__ctype [257] = {
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-/* pctype is used by macros in the Win32 headers. It must point
- * To a table of flags exactly like ctype. To allow locale
- * changes to affect ctypes (i.e. isleadbyte), we use a second table
- * and update its flags whenever the current locale changes.
- */
-unsigned short *MSVCRT__pctype = NULL;
-
 /*********************************************************************
  *		__p__pctype (MSVCRT.@)
  */
