@@ -846,7 +846,7 @@ static void test_dib_formats(void)
                 case 32: expect_ok = (compr == BI_RGB || compr == BI_BITFIELDS); break;
                 default: expect_ok = FALSE; break;
                 }
-                todo = (compr == BI_BITFIELDS);  /* wine doesn't like strange bitfields */
+                todo = (compr == BI_BITFIELDS) && bpp == 16;  /* wine doesn't like strange bitfields */
 
                 memset( bi, 0, sizeof(bi->bmiHeader) );
                 bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
