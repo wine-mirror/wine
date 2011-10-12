@@ -71,6 +71,19 @@ static void test_CreateNamedPipe(int pipemode)
     ok(hnp == INVALID_HANDLE_VALUE && GetLastError() == ERROR_INVALID_NAME,
         "CreateNamedPipe should fail if name doesn't start with \\\\.\\pipe\n");
 
+    if (pipemode == PIPE_TYPE_BYTE)
+    {
+        /* Bad parameter checks */
+        hnp = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_MESSAGE,
+            /* nMaxInstances */ 1,
+            /* nOutBufSize */ 1024,
+            /* nInBufSize */ 1024,
+            /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
+            /* lpSecurityAttrib */ NULL);
+        ok(hnp == INVALID_HANDLE_VALUE && GetLastError() == ERROR_INVALID_PARAMETER,
+            "CreateNamedPipe should fail with PIPE_TYPE_BYTE | PIPE_READMODE_MESSAGE\n");
+    }
+
     hnp = CreateNamedPipe(NULL,
         PIPE_ACCESS_DUPLEX, pipemode | PIPE_WAIT,
         1, 1024, 1024, NMPWAIT_USE_DEFAULT_WAIT, NULL);

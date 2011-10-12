@@ -950,7 +950,8 @@ DECL_HANDLER(create_named_pipe)
     struct unicode_str name;
     struct directory *root = NULL;
 
-    if (!req->sharing || (req->sharing & ~(FILE_SHARE_READ | FILE_SHARE_WRITE)))
+    if (!req->sharing || (req->sharing & ~(FILE_SHARE_READ | FILE_SHARE_WRITE)) ||
+        (!(req->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE) && (req->flags & NAMED_PIPE_MESSAGE_STREAM_READ)))
     {
         set_error( STATUS_INVALID_PARAMETER );
         return;
