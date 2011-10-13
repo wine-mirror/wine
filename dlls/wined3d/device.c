@@ -4613,7 +4613,7 @@ HRESULT CDECL wined3d_device_set_npatch_mode(struct wined3d_device *device, floa
     return WINED3D_OK;
 }
 
-float CDECL wined3d_device_get_npatch_mode(struct wined3d_device *device)
+float CDECL wined3d_device_get_npatch_mode(const struct wined3d_device *device)
 {
     static BOOL warned;
 
