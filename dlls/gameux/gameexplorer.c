@@ -565,7 +565,6 @@ static HRESULT GAMEUX_RegisterGame(LPCWSTR sGDFBinaryPath,
     {
         struct parse_gdf_thread_param thread_param;
         HANDLE thread;
-        HRESULT hr;
         DWORD ret;
 
         thread_param.GameData = &GameData;
