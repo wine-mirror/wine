@@ -785,6 +785,7 @@ static NTSTATUS set_XOn(int fd)
 typedef struct serial_irq_info
 {
     int rx , tx, frame, overrun, parity, brk, buf_overrun;
+    DWORD temt;
 }serial_irq_info;
 
 /***********************************************************************
@@ -806,7 +807,6 @@ typedef struct async_commio
  */
 static NTSTATUS get_irq_info(int fd, serial_irq_info *irq_info)
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
 #ifdef TIOCGICOUNT
     struct serial_icounter_struct einfo;
     if (!ioctl(fd, TIOCGICOUNT, &einfo))
@@ -818,13 +818,38 @@ static NTSTATUS get_irq_info(int fd, serial_irq_info *irq_info)
         irq_info->parity      = einfo.parity;
         irq_info->brk         = einfo.brk;
         irq_info->buf_overrun = einfo.buf_overrun;
-        return STATUS_SUCCESS;
     }
-    TRACE("TIOCGICOUNT err %s\n", strerror(errno));
-    status = FILE_GetNtStatus();
-#endif
+    else
+    {
+        TRACE("TIOCGICOUNT err %s\n", strerror(errno));
+        memset(irq_info,0, sizeof(serial_irq_info));
+        return FILE_GetNtStatus();
+    }
+#else
     memset(irq_info,0, sizeof(serial_irq_info));
-    return status;
+    return STATUS_NOT_IMPLEMENTED;
+#endif
+    irq_info->temt = 0;
+    /* Generate a single TX_TXEMPTY event when the TX Buffer turns empty*/
+#ifdef TIOCSERGETLSR  /* prefer to log the state TIOCSERGETLSR */
+    if (ioctl(fd, TIOCSERGETLSR, &irq_info->temt))
+    {
+        TRACE("TIOCSERGETLSR err %s\n", strerror(errno));
+        return FILE_GetNtStatus();
+    }
+#elif defined(TIOCOUTQ)  /* otherwise we log when the out queue gets empty */
+    if (ioctl(fd, TIOCOUTQ, &irq_info->temt))
+    {
+        TRACE("TIOCOUTQ err %s\n", strerror(errno));
+        return FILE_GetNtStatus();
+    }
+    else
+    {
+        if (irq_info->temt == 0)
+            irq_info->temt = 1;
+    }
+#endif
+    return STATUS_SUCCESS;
 }
 
 
@@ -862,21 +887,8 @@ static DWORD check_events(int fd, DWORD mask,
     }
     if (mask & EV_TXEMPTY)
     {
-	queue = 0;
-/* We really want to know when all characters have gone out of the transmitter */
-#if defined(TIOCSERGETLSR) 
-	if (ioctl(fd, TIOCSERGETLSR, &queue))
-	    WARN("TIOCSERGETLSR returned error\n");
-	if (queue)
-/* TIOCOUTQ only checks for an empty buffer */
-#elif defined(TIOCOUTQ)
-	if (ioctl(fd, TIOCOUTQ, &queue))
-	    WARN("TIOCOUTQ returned error\n");
-	if (!queue)
-#endif
-           ret |= EV_TXEMPTY;
-	TRACE("OUTQUEUE %d, Transmitter %sempty\n",
-              queue, (ret & EV_TXEMPTY) ? "" : "not ");
+        if (!old->temt && new->temt)
+            ret |= EV_TXEMPTY;
     }
     return ret & mask;
 }
