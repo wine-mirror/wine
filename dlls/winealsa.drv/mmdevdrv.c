@@ -258,7 +258,7 @@ static HRESULT alsa_get_card_devices(snd_pcm_stream_t stream, WCHAR **ids, char 
     int err, device;
     snd_pcm_info_t *info;
 
-    info = HeapAlloc(GetProcessHeap(), 0, snd_pcm_info_sizeof());
+    info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, snd_pcm_info_sizeof());
     if(!info)
         return E_OUTOFMEMORY;
 
@@ -943,7 +943,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         goto exit;
     }
 
-    sw_params = HeapAlloc(GetProcessHeap(), 0, snd_pcm_sw_params_sizeof());
+    sw_params = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, snd_pcm_sw_params_sizeof());
     if(!sw_params){
         hr = E_OUTOFMEMORY;
         goto exit;
@@ -1364,7 +1364,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
     if(!fmt)
         return E_OUTOFMEMORY;
 
-    formats = HeapAlloc(GetProcessHeap(), 0, snd_pcm_format_mask_sizeof());
+    formats = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, snd_pcm_format_mask_sizeof());
     if(!formats){
         CoTaskMemFree(fmt);
         return E_OUTOFMEMORY;
