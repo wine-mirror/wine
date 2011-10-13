@@ -350,7 +350,7 @@ done:
 
 static UINT MSI_ApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szProductCode, LPCWSTR szCommandLine)
 {
-    UINT r, i;
+    UINT i, r = ERROR_FUNCTION_FAILED;
     DWORD size;
     LPCWSTR cmd_ptr = szCommandLine;
     LPWSTR cmd, *codes = NULL;
