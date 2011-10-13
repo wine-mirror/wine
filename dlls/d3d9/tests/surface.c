@@ -1,5 +1,6 @@
 /*
  * Copyright 2006-2007 Henri Verbeet
+ * Copyright 2011 Stefan Dösinger for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -238,8 +239,6 @@ static void test_lockrect_offset(IDirect3DDevice9 *device)
 
         hr = IDirect3DSurface9_UnlockRect(surface);
         ok(SUCCEEDED(hr), "UnlockRect failed (%08x)\n", hr);
-        hr = IDirect3DSurface9_UnlockRect(surface);
-        ok(hr == D3DERR_INVALIDCALL, "Double UnlockRect returned %08x, expected D3DERR_INVALIDCALL\n", hr);
 
         hr = IDirect3DSurface9_LockRect(surface, &locked_rect, &rect, 0);
         ok(SUCCEEDED(hr), "LockRect failed (%08x)\n", hr);
@@ -590,6 +589,50 @@ static void test_surface_format_null(IDirect3DDevice9 *device)
     IDirect3DTexture9_Release(texture);
 }
 
+static void test_surface_double_unlock(IDirect3DDevice9 *device)
+{
+    static const struct
+    {
+        D3DPOOL pool;
+        const char *name;
+    }
+    pools[] =
+    {
+        { D3DPOOL_DEFAULT,      "D3DPOOL_DEFAULT"   },
+        { D3DPOOL_SCRATCH,      "D3DPOOL_SCRATCH"   },
+        { D3DPOOL_SYSTEMMEM,    "D3DPOOL_SYSTEMMEM" },
+        /* There are no standalone MANAGED pool surfaces */
+    };
+    IDirect3DSurface9 *surface;
+    unsigned int i;
+    HRESULT hr;
+    D3DLOCKED_RECT lr;
+
+    for (i = 0; i < (sizeof(pools) / sizeof(*pools)); i++)
+    {
+        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 64, 64, D3DFMT_X8R8G8B8,
+                pools[i].pool, &surface, NULL);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateOffscreenPlainSurface failed, hr = 0x%08x, pool %s\n",
+                hr, pools[i].name);
+        hr = IDirect3DSurface9_UnlockRect(surface);
+        ok(hr == D3DERR_INVALIDCALL, "Unlock without lock returned 0x%08x, expected 0x%08x, pool %s\n",
+                hr, D3DERR_INVALIDCALL, pools[i].name);
+
+        hr = IDirect3DSurface9_LockRect(surface, &lr, NULL, 0);
+        ok(SUCCEEDED(hr), "IDirect3DSurface9_LockRect failed, hr = 0x%08x, pool %s\n",
+                hr, pools[i].name);
+        hr = IDirect3DSurface9_UnlockRect(surface);
+        ok(SUCCEEDED(hr), "IDirect3DSurface9_UnlockRect failed, hr = 0x%08x, pool %s\n",
+                hr, pools[i].name);
+
+        hr = IDirect3DSurface9_UnlockRect(surface);
+        ok(hr == D3DERR_INVALIDCALL, "Double unlock returned 0x%08x, expected 0x%08x, pool %s\n",
+                hr, D3DERR_INVALIDCALL, pools[i].name);
+
+        IDirect3DSurface9_Release(surface);
+    }
+}
+
 START_TEST(surface)
 {
     HMODULE d3d9_handle;
@@ -614,6 +657,7 @@ START_TEST(surface)
     test_getdc(device_ptr);
     test_surface_dimensions(device_ptr);
     test_surface_format_null(device_ptr);
+    test_surface_double_unlock(device_ptr);
 
     refcount = IDirect3DDevice9_Release(device_ptr);
     ok(!refcount, "Device has %u references left\n", refcount);
