@@ -655,7 +655,7 @@ void CDECL MSVCRT__free_locale(MSVCRT__locale_t locale)
 }
 
 /* _create_locale - not exported in native msvcrt */
-MSVCRT__locale_t MSVCRT__create_locale(int category, const char *locale)
+MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
 {
     static const char collate[] = "COLLATE=";
     static const char ctype[] = "CTYPE=";

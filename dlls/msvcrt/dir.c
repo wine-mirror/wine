@@ -983,7 +983,7 @@ int CDECL MSVCRT__wrmdir(const MSVCRT_wchar_t * dir)
 /******************************************************************
  *		_splitpath_s (MSVCRT.@)
  */
-int _splitpath_s(const char* inpath,
+int CDECL _splitpath_s(const char* inpath,
         char* drive, MSVCRT_size_t sz_drive,
         char* dir, MSVCRT_size_t sz_dir,
         char* fname, MSVCRT_size_t sz_fname,
@@ -1075,7 +1075,7 @@ void CDECL _splitpath(const char *inpath, char *drv, char *dir,
  *
  * Secure version of _wsplitpath
  */
-int _wsplitpath_s(const MSVCRT_wchar_t* inpath,
+int CDECL _wsplitpath_s(const MSVCRT_wchar_t* inpath,
                   MSVCRT_wchar_t* drive, MSVCRT_size_t sz_drive,
                   MSVCRT_wchar_t* dir, MSVCRT_size_t sz_dir,
                   MSVCRT_wchar_t* fname, MSVCRT_size_t sz_fname,
