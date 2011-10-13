@@ -2719,6 +2719,125 @@ MSVCP_size_t __thiscall MSVCP_basic_string_wchar_find_last_of_ch(
     return MSVCP_basic_string_wchar_find_last_of_cstr_substr(this, &ch, off, 1);
 }
 
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@IIPB_WI@Z */
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@_K0PEB_W0@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_replace_cstr_len, 20)
+basic_string_wchar* __thiscall basic_string_wchar_replace_cstr_len(basic_string_wchar *this,
+        MSVCP_size_t off, MSVCP_size_t len, const wchar_t *str, MSVCP_size_t str_len)
+{
+    MSVCP_size_t inside_pos = -1;
+    wchar_t *ptr = basic_string_wchar_ptr(this);
+
+    TRACE("%p %ld %ld %p %ld\n", this, off, len, str, str_len);
+
+    if(this->size < off)
+        MSVCP__String_base_Xran();
+
+    if(off+len > this->size)
+        len = this->size-off;
+
+    if(MSVCP_basic_string_wchar_npos-str_len <= this->size-len)
+        MSVCP__String_base_Xlen();
+
+    if(basic_string_wchar_inside(this, str))
+        inside_pos = str-ptr;
+
+    if(len < str_len)
+        basic_string_wchar_grow(this, this->size-len+str_len, FALSE);
+
+    if(inside_pos == -1) {
+        memmove(ptr+off+str_len, ptr+off+len, (this->size-off-len)*sizeof(wchar_t));
+        memcpy(ptr+off, str, str_len*sizeof(wchar_t));
+    } else if(len >= str_len) {
+        memmove(ptr+off, ptr+inside_pos, str_len*sizeof(wchar_t));
+        memmove(ptr+off+str_len, ptr+off+len, (this->size-off-len)*sizeof(wchar_t));
+    } else {
+        MSVCP_size_t size;
+
+        memmove(ptr+off+str_len, ptr+off+len, (this->size-off-len)*sizeof(wchar_t));
+
+        if(inside_pos < off+len) {
+            size = off+len-inside_pos;
+            if(size > str_len)
+                size = str_len;
+            memmove(ptr+off, ptr+inside_pos, size*sizeof(wchar_t));
+        } else {
+            size = 0;
+        }
+
+        if(str_len > size)
+            memmove(ptr+off+size, ptr+off+str_len, (str_len-size)*sizeof(wchar_t));
+    }
+
+    basic_string_wchar_eos(this, this->size-len+str_len);
+    return this;
+}
+
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@IIPB_W@Z */
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@_K0PEB_W@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_replace_cstr, 16)
+basic_string_wchar* __thiscall basic_string_wchar_replace_cstr(basic_string_wchar *this,
+        MSVCP_size_t off, MSVCP_size_t len, const wchar_t *str)
+{
+    return basic_string_wchar_replace_cstr_len(this, off, len, str,
+            MSVCP_char_traits_wchar_length(str));
+}
+
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@IIABV12@II@Z */
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@_K0AEBV12@00@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_replace_substr, 24)
+basic_string_wchar* __thiscall basic_string_wchar_replace_substr(basic_string_wchar *this, MSVCP_size_t off,
+        MSVCP_size_t len, const basic_string_wchar *str, MSVCP_size_t str_off, MSVCP_size_t str_len)
+{
+    if(str->size < str_off)
+        MSVCP__String_base_Xran();
+
+    if(str_off+str_len > str->size)
+        str_len = str->size-str_off;
+
+    return basic_string_wchar_replace_cstr_len(this, off, len,
+            basic_string_wchar_const_ptr(str)+str_off, str_len);
+}
+
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@IIABV12@@Z */
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@_K0AEBV12@@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_replace, 16)
+basic_string_wchar* __thiscall basic_string_wchar_replace(basic_string_wchar *this,
+        MSVCP_size_t off, MSVCP_size_t len, const basic_string_wchar *str)
+{
+    return basic_string_wchar_replace_cstr_len(this, off, len,
+            basic_string_wchar_const_ptr(str), str->size);
+}
+
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@III_W@Z */
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@_K00_W@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_replace_ch, 20)
+basic_string_wchar* __thiscall basic_string_wchar_replace_ch(basic_string_wchar *this,
+        MSVCP_size_t off, MSVCP_size_t len, MSVCP_size_t count, wchar_t ch)
+{
+    wchar_t *ptr = basic_string_wchar_ptr(this);
+
+    TRACE("%p %ld %ld %ld %c\n", this, off, len, count, ch);
+
+    if(this->size < off)
+        MSVCP__String_base_Xran();
+
+    if(off+len > this->size)
+        len = this->size-off;
+
+    if(MSVCP_basic_string_wchar_npos-count <= this->size-len)
+        MSVCP__String_base_Xlen();
+
+    if(len < count)
+        basic_string_wchar_grow(this, this->size-len+count, FALSE);
+
+    memmove(ptr+off+count, ptr+off+len, (this->size-off-len)*sizeof(wchar_t));
+    MSVCP_char_traits_wchar_assignn(ptr+off, count, ch);
+    basic_string_wchar_eos(this, this->size-len+count);
+
+    return this;
+}
+
 /* ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAA_WI@Z */
 /* ?at@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEA_W_K@Z */
 /* ??A?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAA_WI@Z */
