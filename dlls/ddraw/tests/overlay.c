@@ -1,7 +1,7 @@
 /*
  * Unit tests for DirectDraw overlay functions
  *
- * Copyright (C) 2008 Stefan Dösinger for CodeWeavers
+ * Copyright (C) 2008,2011 Stefan Dösinger for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -195,6 +195,9 @@ static void yv12_test(void)
     HRESULT hr;
     DDSURFACEDESC2 desc;
     IDirectDrawSurface7 *surface;
+    char *base;
+    RECT rect = {13, 17, 14, 18};
+    unsigned int offset;
 
     surface = create_overlay(256, 256, MAKEFOURCC('Y','V','1','2'));
     if(!surface) {
@@ -217,6 +220,20 @@ static void yv12_test(void)
     /* The overlay pitch seems to have 256 byte alignment */
     ok((U1(desc).lPitch & 0xff) == 0, "Expected 256 byte aligned pitch, got %u\n", U1(desc).lPitch);
 
+    base = desc.lpSurface;
+
+    hr = IDirectDrawSurface7_Unlock(surface, NULL);
+    ok(hr == DD_OK, "IDirectDrawSurface7_Unlock returned 0x%08x, expected DD_OK\n", hr);
+
+    /* YV12 uses 2x2 blocks with 6 bytes per block(4*Y, 1*U, 1*V). Unlike other block-based formats like DXT
+     * the entire Y channel is stored in one big chunk of memory, followed by the chroma channels. So
+     * partial locks do not really make sense. Show that they are allowed nevertheless and the offset points
+     * into the luminance data */
+    hr = IDirectDrawSurface7_Lock(surface, &rect, &desc, 0, NULL);
+    ok(hr == DD_OK, "Partial lock of a YV12 surface returned 0x%08x, expected DD_OK\n", hr);
+    offset = ((const char *) desc.lpSurface - base);
+    ok(offset == rect.top * U1(desc).lPitch + rect.left, "Expected %u byte offset from partial lock, got %u\n",
+            rect.top * U1(desc).lPitch + rect.left, offset);
     hr = IDirectDrawSurface7_Unlock(surface, NULL);
     ok(hr == DD_OK, "IDirectDrawSurface7_Unlock returned 0x%08x, expected DD_OK\n", hr);
 
