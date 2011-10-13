@@ -747,7 +747,6 @@ MSVCRT__locale_t MSVCRT__create_locale(int category, const char *locale)
     }
 
     memset(loc->locinfo, 0, sizeof(MSVCRT_threadlocinfo));
-    memset(loc->mbcinfo, 0, sizeof(MSVCRT_threadmbcinfo));
 
     loc->locinfo->lconv = MSVCRT_malloc(sizeof(struct MSVCRT_lconv));
     if(!loc->locinfo->lconv) {
@@ -840,18 +839,7 @@ MSVCRT__locale_t MSVCRT__create_locale(int category, const char *locale)
         }
     }
 
-    loc->mbcinfo->refcount = 1;
-    loc->mbcinfo->mbcodepage = loc->locinfo->lc_id[MSVCRT_LC_CTYPE].wCodePage;
-
-    for(i=0; i<256; i++) {
-        if(loc->locinfo->pclmap[i] != i) {
-            loc->mbcinfo->mbctype[i+1] |= 0x10;
-            loc->mbcinfo->mbcasemap[i] = loc->locinfo->pclmap[i];
-        } else if(loc->locinfo->pcumap[i] != i) {
-            loc->mbcinfo->mbctype[i+1] |= 0x20;
-            loc->mbcinfo->mbcasemap[i] = loc->locinfo->pcumap[i];
-        }
-    }
+    _setmbcp_l(loc->locinfo->lc_id[MSVCRT_LC_CTYPE].wCodePage, loc->mbcinfo);
 
     if(lcid[MSVCRT_LC_MONETARY] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_MONETARY)) {
         if(update_threadlocinfo_category(lcid[MSVCRT_LC_MONETARY], loc, MSVCRT_LC_MONETARY)) {

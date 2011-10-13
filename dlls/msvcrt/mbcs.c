@@ -182,24 +182,24 @@ int* CDECL ___mb_cur_max_l_func(MSVCRT__locale_t locale)
 }
 
 /*********************************************************************
- *		_setmbcp (MSVCRT.@)
+ * INTERNAL: _setmbcp_l
  */
-int CDECL _setmbcp(int cp)
+int _setmbcp_l(int cp, MSVCRT_pthreadmbcinfo mbcinfo)
 {
   const char format[] = ".%d";
 
-  MSVCRT_pthreadmbcinfo mbcinfo = get_mbcinfo();
-  char buf[32];
   int newcp;
   CPINFO cpi;
   BYTE *bytes;
   WORD chartypes[256];
-  WORD *curr_type;
   char bufA[256];
   WCHAR bufW[256];
   int charcount;
   int ret;
   int i;
+
+  if(!mbcinfo)
+      mbcinfo = get_mbcinfo();
 
   switch (cp)
   {
@@ -222,8 +222,8 @@ int CDECL _setmbcp(int cp)
       break;
   }
 
-  sprintf(buf, format, newcp);
-  mbcinfo->mblcid = MSVCRT_locale_to_LCID(buf);
+  sprintf(bufA, format, newcp);
+  mbcinfo->mblcid = MSVCRT_locale_to_LCID(bufA);
   if(mbcinfo->mblcid == -1)
   {
     WARN("Can't assign LCID to codepage (%d)\n", mbcinfo->mblcid);
@@ -290,16 +290,37 @@ int CDECL _setmbcp(int cp)
 
   GetStringTypeW(CT_CTYPE1, bufW, charcount, chartypes);
 
-  curr_type = chartypes;
+  charcount = 0;
   for (i = 0; i < 256; i++)
     if (!(mbcinfo->mbctype[i + 1] & _M1))
     {
-	if ((*curr_type) & C1_UPPER)
-	    mbcinfo->mbctype[i + 1] |= _SBUP;
-	if ((*curr_type) & C1_LOWER)
-	    mbcinfo->mbctype[i + 1] |= _SBLOW;
-	curr_type++;
+      if (chartypes[charcount] & C1_UPPER)
+      {
+        mbcinfo->mbctype[i + 1] |= _SBUP;
+        bufW[charcount] = tolowerW(bufW[charcount]);
+      }
+      else if (chartypes[charcount] & C1_LOWER)
+      {
+	mbcinfo->mbctype[i + 1] |= _SBLOW;
+        bufW[charcount] = toupperW(bufW[charcount]);
+      }
+      charcount++;
     }
+
+  ret = WideCharToMultiByte(newcp, 0, bufW, charcount, bufA, charcount, NULL, NULL);
+  if (ret != charcount)
+    ERR("WideCharToMultiByte failed for cp %d, ret=%d (exp %d), error=%d\n", newcp, ret, charcount, GetLastError());
+
+  charcount = 0;
+  for (i = 0; i < 256; i++)
+  {
+    if(!(mbcinfo->mbctype[i + 1] & _M1))
+    {
+      if(mbcinfo->mbctype[i] & (C1_UPPER|C1_LOWER))
+        mbcinfo->mbcasemap[i] = bufA[charcount];
+      charcount++;
+    }
+  }
 
   if (newcp == 932)   /* CP932 only - set _MP and _MS */
   {
@@ -315,10 +336,18 @@ int CDECL _setmbcp(int cp)
   }
 
   mbcinfo->mbcodepage = newcp;
-  if(mbcinfo == MSVCRT_locale->mbcinfo)
+  if(MSVCRT_locale && mbcinfo == MSVCRT_locale->mbcinfo)
     memcpy(MSVCRT_mbctype, MSVCRT_locale->mbcinfo->mbctype, sizeof(MSVCRT_mbctype));
 
   return 0;
+}
+
+/*********************************************************************
+ *              _setmbcp (MSVCRT.@)
+ */
+int CDECL _setmbcp(int cp)
+{
+    return _setmbcp_l(cp, NULL);
 }
 
 /*********************************************************************
