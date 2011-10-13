@@ -551,6 +551,7 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
                 arg1 = arg2;
                 argmod1 = argmod2;
                 rep1 = rep2;
+                /* fall through */
             case WINED3DTOP_SELECTARG1:
                 wrap_op1(gl_info, GL_MOV_ATI, dstreg, GL_NONE, GL_NONE,
                          arg1, rep1, argmod1);
@@ -558,9 +559,11 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
 
             case WINED3DTOP_MODULATE4X:
                 if(dstmod == GL_NONE) dstmod = GL_4X_BIT_ATI;
+                /* fall through */
             case WINED3DTOP_MODULATE2X:
                 if(dstmod == GL_NONE) dstmod = GL_2X_BIT_ATI;
                 dstmod |= GL_SATURATE_BIT_ATI;
+                /* fall through */
             case WINED3DTOP_MODULATE:
                 wrap_op2(gl_info, GL_MUL_ATI, dstreg, GL_NONE, dstmod,
                          arg1, rep1, argmod1,
@@ -569,8 +572,10 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
 
             case WINED3DTOP_ADDSIGNED2X:
                 dstmod = GL_2X_BIT_ATI;
+                /* fall through */
             case WINED3DTOP_ADDSIGNED:
                 argmodextra = GL_BIAS_BIT_ATI;
+                /* fall through */
             case WINED3DTOP_ADD:
                 dstmod |= GL_SATURATE_BIT_ATI;
                 wrap_op2(gl_info, GL_ADD_ATI, GL_REG_0_ATI, GL_NONE, dstmod,
@@ -598,10 +603,13 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
 
             case WINED3DTOP_BLENDCURRENTALPHA:
                 if(extrarg == GL_NONE) extrarg = register_for_arg(WINED3DTA_CURRENT, gl_info, stage, NULL, NULL, -1);
+                /* fall through */
             case WINED3DTOP_BLENDFACTORALPHA:
                 if(extrarg == GL_NONE) extrarg = register_for_arg(WINED3DTA_TFACTOR, gl_info, stage, NULL, NULL, -1);
+                /* fall through */
             case WINED3DTOP_BLENDTEXTUREALPHA:
                 if(extrarg == GL_NONE) extrarg = register_for_arg(WINED3DTA_TEXTURE, gl_info, stage, NULL, NULL, -1);
+                /* fall through */
             case WINED3DTOP_BLENDDIFFUSEALPHA:
                 if(extrarg == GL_NONE) extrarg = register_for_arg(WINED3DTA_DIFFUSE, gl_info, stage, NULL, NULL, -1);
                 wrap_op3(gl_info, GL_LERP_ATI, dstreg, GL_NONE, GL_NONE,
@@ -622,6 +630,7 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
 
             case WINED3DTOP_MODULATEINVALPHA_ADDCOLOR:
                 argmodextra = argmod1 & GL_COMP_BIT_ATI ? argmod1 & ~GL_COMP_BIT_ATI : argmod1 | GL_COMP_BIT_ATI;
+                /* fall through */
             case WINED3DTOP_MODULATEALPHA_ADDCOLOR:
                 if(!argmodextra) argmodextra = argmod1;
                 wrap_op3(gl_info, GL_MAD_ATI, dstreg, GL_NONE, GL_SATURATE_BIT_ATI,
@@ -632,6 +641,7 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
 
             case WINED3DTOP_MODULATEINVCOLOR_ADDALPHA:
                 argmodextra = argmod1 & GL_COMP_BIT_ATI ? argmod1 & ~GL_COMP_BIT_ATI : argmod1 | GL_COMP_BIT_ATI;
+                /* fall through */
             case WINED3DTOP_MODULATECOLOR_ADDALPHA:
                 if(!argmodextra) argmodextra = argmod1;
                 wrap_op3(gl_info, GL_MAD_ATI, dstreg, GL_NONE, GL_SATURATE_BIT_ATI,
@@ -688,6 +698,7 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
             case WINED3DTOP_SELECTARG2:
                 arg1 = arg2;
                 argmod1 = argmod2;
+                /* fall through */
             case WINED3DTOP_SELECTARG1:
                 wrap_op1(gl_info, GL_MOV_ATI, dstreg, GL_ALPHA, GL_NONE,
                          arg1, GL_NONE, argmod1);
@@ -695,9 +706,11 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
 
             case WINED3DTOP_MODULATE4X:
                 if(dstmod == GL_NONE) dstmod = GL_4X_BIT_ATI;
+                /* fall through */
             case WINED3DTOP_MODULATE2X:
                 if(dstmod == GL_NONE) dstmod = GL_2X_BIT_ATI;
                 dstmod |= GL_SATURATE_BIT_ATI;
+                /* fall through */
             case WINED3DTOP_MODULATE:
                 wrap_op2(gl_info, GL_MUL_ATI, dstreg, GL_ALPHA, dstmod,
                          arg1, GL_NONE, argmod1,
@@ -706,8 +719,10 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
 
             case WINED3DTOP_ADDSIGNED2X:
                 dstmod = GL_2X_BIT_ATI;
+                /* fall through */
             case WINED3DTOP_ADDSIGNED:
                 argmodextra = GL_BIAS_BIT_ATI;
+                /* fall through */
             case WINED3DTOP_ADD:
                 dstmod |= GL_SATURATE_BIT_ATI;
                 wrap_op2(gl_info, GL_ADD_ATI, dstreg, GL_ALPHA, dstmod,
@@ -735,10 +750,13 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
 
             case WINED3DTOP_BLENDCURRENTALPHA:
                 if(extrarg == GL_NONE) extrarg = register_for_arg(WINED3DTA_CURRENT, gl_info, stage, NULL, NULL, -1);
+                /* fall through */
             case WINED3DTOP_BLENDFACTORALPHA:
                 if(extrarg == GL_NONE) extrarg = register_for_arg(WINED3DTA_TFACTOR, gl_info, stage, NULL, NULL, -1);
+                /* fall through */
             case WINED3DTOP_BLENDTEXTUREALPHA:
                 if(extrarg == GL_NONE) extrarg = register_for_arg(WINED3DTA_TEXTURE, gl_info, stage, NULL, NULL, -1);
+                /* fall through */
             case WINED3DTOP_BLENDDIFFUSEALPHA:
                 if(extrarg == GL_NONE) extrarg = register_for_arg(WINED3DTA_DIFFUSE, gl_info, stage, NULL, NULL, -1);
                 wrap_op3(gl_info, GL_LERP_ATI, dstreg, GL_ALPHA, GL_NONE,
