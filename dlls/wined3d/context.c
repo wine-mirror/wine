@@ -1294,7 +1294,6 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *color_format;
     struct wined3d_context *ret;
-    PIXELFORMATDESCRIPTOR pfd;
     BOOL auxBuffers = FALSE;
     int pixel_format;
     unsigned int s;
@@ -1363,7 +1362,6 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         goto out;
     }
 
-    DescribePixelFormat(hdc, pixel_format, sizeof(pfd), &pfd);
     if (!context_set_pixel_format(gl_info, hdc, pixel_format))
     {
         ERR("Failed to set pixel format %d on device context %p.\n", pixel_format, hdc);
