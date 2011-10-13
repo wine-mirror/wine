@@ -232,7 +232,7 @@ LCID MSVCRT_locale_to_LCID(const char *locale)
 
     if(cp) {
         lstrcpynA(search.search_codepage, cp+1, MAX_ELEM_LEN);
-        if(cp-region-1 < MAX_ELEM_LEN)
+        if(region && cp-region-1<MAX_ELEM_LEN)
           search.search_country[cp-region-1] = '\0';
         if(cp-locale < MAX_ELEM_LEN)
             search.search_language[cp-locale] = '\0';
