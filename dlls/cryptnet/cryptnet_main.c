@@ -827,7 +827,7 @@ static BOOL CRYPT_Connect(const URL_COMPONENTSW *components,
      components->nPort, context, pCredentials, phInt, phInt);
 
     *phHost = NULL;
-    *phInt = InternetOpenW(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL,
+    *phInt = InternetOpenW(NULL, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL,
      context ? INTERNET_FLAG_ASYNC : 0);
     if (*phInt)
     {
