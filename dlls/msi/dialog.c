@@ -3787,7 +3787,7 @@ void msi_dialog_check_messages( HANDLE handle )
     if( uiThreadId != GetCurrentThreadId() )
     {
         if( handle )
-            WaitForSingleObject( handle, INFINITE );
+            MsgWaitForMultipleObjectsEx( 1, &handle, INFINITE, 0, 0 );
         return;
     }
 
