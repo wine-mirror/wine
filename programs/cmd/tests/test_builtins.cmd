@@ -932,6 +932,17 @@ if not exist bar (
 )
 type baz
 
+attrib +r baz
+move baz bazro > nul 2>&1
+if not exist baz (
+    if exist bazro (
+        echo read-only files are moveable
+        move bazro baz > nul 2>&1
+    )
+) else (
+    echo read-only file not moved!
+)
+attrib -r baz
 mkdir rep
 move baz rep > nul 2>&1
 if not exist baz (
