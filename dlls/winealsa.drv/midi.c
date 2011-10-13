@@ -1314,6 +1314,7 @@ DWORD WINAPI ALSA_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     switch (wMsg) {
     case DRVM_INIT:
         ALSA_MidiInit();
+        return 0;
     case DRVM_EXIT:
     case DRVM_ENABLE:
     case DRVM_DISABLE:
@@ -1357,6 +1358,7 @@ DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     switch (wMsg) {
     case DRVM_INIT:
         ALSA_MidiInit();
+        return 0;
     case DRVM_EXIT:
     case DRVM_ENABLE:
     case DRVM_DISABLE:
