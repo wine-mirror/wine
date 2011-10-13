@@ -6,7 +6,7 @@
  * Copyright 2002-2003 Raphael Junqueira
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
- * Copyright 2006-2008 Stefan Dösinger for CodeWeavers
+ * Copyright 2006-2011 Stefan Dösinger for CodeWeavers
  * Copyright 2007-2008 Henri Verbeet
  * Copyright 2006-2008 Roderick Colenbrander
  * Copyright 2009-2011 Henri Verbeet for CodeWeavers
@@ -3782,6 +3782,8 @@ HRESULT CDECL wined3d_surface_unmap(struct wined3d_surface *surface)
 HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         WINED3DLOCKED_RECT *locked_rect, const RECT *rect, DWORD flags)
 {
+    const struct wined3d_format *format = surface->resource.format;
+
     TRACE("surface %p, locked_rect %p, rect %s, flags %#x.\n",
             surface, locked_rect, wine_dbgstr_rect(rect), flags);
 
@@ -3790,6 +3792,29 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         WARN("Surface is already mapped.\n");
         return WINED3DERR_INVALIDCALL;
     }
+    if ((format->flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_COMPRESSED
+            && rect && (rect->left || rect->top
+            || rect->right != surface->resource.width
+            || rect->bottom != surface->resource.height))
+    {
+        UINT width_mask = format->block_width - 1;
+        UINT height_mask = format->block_height - 1;
+
+        if ((rect->left & width_mask) || (rect->right & width_mask)
+                || (rect->top & height_mask) || (rect->bottom & height_mask))
+        {
+            switch (surface->resource.pool)
+            {
+                case WINED3DPOOL_DEFAULT:
+                    WARN("Partial block lock with WINED3DPOOL_DEFAULT\n");
+                    return WINED3DERR_INVALIDCALL;
+
+                default:
+                    FIXME("Partial block lock with %s\n", debug_d3dpool(surface->resource.pool));
+            }
+        }
+    }
+
     surface->flags |= SFLAG_LOCKED;
 
     if (!(surface->flags & SFLAG_LOCKABLE))
@@ -3809,8 +3834,6 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
     }
     else
     {
-        const struct wined3d_format *format = surface->resource.format;
-
         if ((format->flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_COMPRESSED)
         {
             /* Compressed textures are block based, so calculate the offset of
