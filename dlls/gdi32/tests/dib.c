@@ -174,6 +174,106 @@ static const char *sha1_graphics_a8b8g8r8[] =
     NULL
 };
 
+static const char *sha1_graphics_r10g10b10[] =
+{
+    "a3cadd34d95d3d5cc23344f69aab1c2e55935fcf",
+    "b340b5d4750dd3dcd95d73c41b2c3a17f799210b",
+    "b1db68f35022c5fd43519ec8e98047e16bc4fff8",
+    "6e1902eb24865e74066fa9f2a7a49e6f9154f62f",
+    "35df9f4b0965fedf7bca36aa4f17b0fa20e2cd03",
+    "5652e1feb7d4f22c8a2721fd141157e0b9ef965e",
+    "22d89d5933f8b9bd60e9b22e42e7f5659269b63d",
+    "0ad27de0c916c073d0d18484fff899bbdb258db7",
+    "7c05ee5a01dad1e187537701a95382f0a3ec28dc",
+    "b00f0b4448be722d1a19ffe33aaaac4df848d397",
+    "7e5ce5c05a54e83890f022ba4e9853e4b254bf0c",
+    "2986b431a0022153e5f875da77cc792e3825ebd5",
+    "ca4b25a5459885ce1e0a36844612087893d425b1",
+    "181bd4616796d89174cedc0332fb320b65aeb0e2",
+    "6c417b1798ee319eeb404efe4aa136ed7ed37966",
+    "9a9f83e2035aa591d18101c919d1fd5b3456b46c",
+    "74ce9f5658cd8aeae4601fe72fcef07d9f75ec26",
+    "536eaaa901d652805a8977ecb2dc73f651094c5b",
+    "b8b1ac11bcc7174c5b23c18cc7919d09a04255c2",
+    "92cddcabf5365eef1e037f488af52b31669d987f",
+    "2c9c4f27bade080a2cd6f9160422762e267c2f5f",
+    "c7ce29d189dc06ba57e64f0cc32202f5a25ba48d",
+    "7ac4cb547c8f4ce5079c95afad9d0e2b0cd76a0e",
+    "d578210815e27fe210eb678a71e6d22ba4b4c196",
+    "c7a027c7079dfcc831ca8bc134a509958273073c",
+    "19cf978596195b848df8709aaf637f83f92b8336",
+    "798a835fe50156eeb478c0a6085b088f53409d52",
+    "86ddf268d854f37e5b478c48792b551b57635db6",
+    "8259d388e02542207b6a08d65d553871ce1c4a09",
+    "faea73ff9436223f8c4ee76ac9861a6609ac4ae4",
+    "66f8d78d4971934794478afee28b3a50e97f1b82",
+    "b8f16334bdced439e1c6fc69704bc95f7b46b147",
+    "63798fb175afef78fa8fe8133d9de97a0cc80651",
+    "5f629ab51719dd0ca5a67d880eb2631f5b598a7b",
+    "1ceb85697f649a62b1753438daa14944af7f450c",
+    "98ce4dbc04eb48fa0f96ef813db5b4dfa1b2dd39",
+    "3addb9ccd8f56fc0825f61b1b5af67d3297f4ded",
+    "ada202d2f526f6995f83412479891c1764b66e5a",
+    "68348e8f54883f4fe295354b024e291c85f1038f",
+    "07f55f85a5bb70de5841ea4f62a9af3d29d3d94b",
+    "d39315a1399639f6d4305a342c9ccf02a463b0dd",
+    "46196f50297260df2863e2fa76d2dfcf72006c23",
+    "0790585dfaef94f912b1ee81477d4ac448708708",
+    "43d67bc61ef54014b022891e5c024fc24b1fe797",
+    "e8783644428b637adbe80bcd084a33428cb69983",
+    NULL
+};
+
+static const char *sha1_graphics_r6g6b6[] =
+{
+    "a3cadd34d95d3d5cc23344f69aab1c2e55935fcf",
+    "a1adb32e70188a00f82fe58156b4da74f3ef7a0a",
+    "5b9dab3d8411afb25fbbeba0313db526815ac189",
+    "6415f551e28e1b38b2d721f0a9e003b7d215f6b2",
+    "2028d1b0d1acef35dc07027135023f35fb9746b9",
+    "378713720dcb5aadb730435ad0989a68ab189114",
+    "084152773feb01a85df6006f2f4f288a1442d37a",
+    "97b824953f60fc9a91028045baacbe7b7dc82b14",
+    "f33b1931f392bd09b3494efc23cf7d0ed3071014",
+    "287d755448e72e29e4812193e2b6f8098a214d82",
+    "4059d295aa05ace77853d7ee3d74305cdcbec9f5",
+    "2557ebd4fdacc0e5bcce3dae88a46dd247654ea1",
+    "e51bcf80211cd06e7d10225534b7a79b5454be27",
+    "9bf91a547f47b29bf370e9b60eae7cd6ce987617",
+    "0b94e0a5b739ab0020130646522e53da35a149ad",
+    "eab6e532845dfd5dc2701ef90669a5f7b63e9539",
+    "90deb2e2502186b3c62a58ec9b1c9d2b7b4089c1",
+    "a4e451f76a77bbc3e224a41e9b4fa78cb841a8af",
+    "084607a5c99a84140d93db57d1b0f3a0f51afdac",
+    "2128157e601ef0d6b3636b7387d3b28e876de728",
+    "8bdcdcd463f0052279d070ac763757f4db975483",
+    "9ea0ad22d7b61598fe36e9c942242e8e07e32edb",
+    "c39a25a61c4eade48dea62a97c9fb8714c06a8af",
+    "66b130f83381957cfc4763558c5f5cddf2e3b564",
+    "d548135ce2320499277ce12b80bc35004f8a9787",
+    "85a4f3f1b4b0a170198f1bb5d225fcf77887665e",
+    "1906ddfd829e735af49245171f8eb7673295d399",
+    "971a0b786d5bccb1bfb9cbb054740e4eb36f9b7a",
+    "e2896035f178b3d20e4f4d1accb1b3d1b4028865",
+    "defd95a10d44cad6e736542920b74efd53e9e7eb",
+    "eaccd012c0fc46e79cae1997ef101979e5654d8d",
+    "3f11a735e52030aa3d0f024d83803698293d10e5",
+    "82f45c5a34fbb9e36d947a876834d33a1f69719c",
+    "3d27002f4fe3c943468b7e3ef6985962c41ac8dc",
+    "3231c4d87faefb7ec5bd377613969c05b70343fc",
+    "00394e438e9edde978e88602c9ad2a572e965bf6",
+    "e760be69cb37c7be35d5968d7a294e1fd49d4f66",
+    "c1250ff2b67e6d2a8baccc5c93f8f5ad933c5c4f",
+    "3d6cf3753390a05504b1f50302f767df443f0f40",
+    "b7cf1bafe002673ae58ff50feea61ee32a1ae10a",
+    "0a613357e1e8ec8ff1ad956e46e527a05cab8500",
+    "bdd8ed3ca3ad107b43731ec253ecaa34750a10de",
+    "47499ad13b719de18c59c2bc9b38ed578db50b95",
+    "cd01f2c0a63b2229d4467d2f874d58edca32b3d4",
+    "94b54f1da5212b3f3a1195eda5ea927e160bc89d",
+    NULL
+};
+
 static const char *sha1_graphics_24[] =
 {
     "e993b15c9bd14fb45a15310450b7083c44e42665",
@@ -488,6 +588,8 @@ static const char *sha1_graphics_1[] =
     NULL
 };
 
+static const char *dst_format;
+
 static inline DWORD get_stride(BITMAPINFO *bmi)
 {
     return ((bmi->bmiHeader.biBitCount * bmi->bmiHeader.biWidth + 31) >> 3) & ~3;
@@ -559,11 +661,11 @@ static void compare_hash_broken_todo(BITMAPINFO *bmi, BYTE *bits, const char ***
         ok_cond = ok_cond || broken( !strcmp(hash, (*sha1)[i]) );
 
     if(todo)
-        todo_wine ok( ok_cond, "%d: %s: expected hash %s got %s\n",
-                      bmi->bmiHeader.biBitCount, info, **sha1, hash );
+        todo_wine ok( ok_cond, "%s: %s: expected hash %s got %s\n",
+                      dst_format, info, **sha1, hash );
     else
-        ok( ok_cond, "%d: %s: expected hash %s got %s\n",
-            bmi->bmiHeader.biBitCount, info, **sha1, hash );
+        ok( ok_cond, "%s: %s: expected hash %s got %s\n",
+            dst_format, info, **sha1, hash );
 
     *sha1 += num_broken + 1;
 
@@ -1432,6 +1534,7 @@ static void test_simple_graphics(void)
 
     orig_bm = SelectObject(mem_dc, dib);
 
+    dst_format = "8888";
     sha1 = sha1_graphics_a8r8g8b8;
     draw_graphics(mem_dc, bmi, bits, &sha1);
 
@@ -1456,14 +1559,15 @@ static void test_simple_graphics(void)
 
     orig_bm = SelectObject(mem_dc, dib);
 
+    dst_format = "8888 - bitfields";
     sha1 = sha1_graphics_a8r8g8b8;
     draw_graphics(mem_dc, bmi, bits, &sha1);
 
     SelectObject(mem_dc, orig_bm);
     DeleteObject(dib);
 
-    /* a8b8g8r8 - bitfields. */
-    trace("a8b8g8r8 - bitfields\n");
+    /* a8b8g8r8. */
+    trace("a8b8g8r8\n");
     bmi->bmiHeader.biBitCount = 32;
     bmi->bmiHeader.biCompression = BI_BITFIELDS;
     bit_fields[0] = 0x0000ff;
@@ -1480,7 +1584,58 @@ static void test_simple_graphics(void)
 
     orig_bm = SelectObject(mem_dc, dib);
 
+    dst_format = "a8b8g8r8";
     sha1 = sha1_graphics_a8b8g8r8;
+    draw_graphics(mem_dc, bmi, bits, &sha1);
+
+    SelectObject(mem_dc, orig_bm);
+    DeleteObject(dib);
+
+    /* r10g10b10. */
+    trace("r10g10b10\n");
+    bmi->bmiHeader.biBitCount = 32;
+    bmi->bmiHeader.biCompression = BI_BITFIELDS;
+    bit_fields[0] = 0x3ff00000;
+    bit_fields[1] = 0x000ffc00;
+    bit_fields[2] = 0x000003ff;
+
+    dib = CreateDIBSection(mem_dc, bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(dib != NULL, "ret NULL\n");
+    ok(GetObjectW( dib, sizeof(ds), &ds ), "GetObject failed\n");
+    ok(ds.dsBitfields[0] == 0x3ff00000, "got %08x\n", ds.dsBitfields[0]);
+    ok(ds.dsBitfields[1] == 0x000ffc00, "got %08x\n", ds.dsBitfields[1]);
+    ok(ds.dsBitfields[2] == 0x000003ff, "got %08x\n", ds.dsBitfields[2]);
+    ok(ds.dsBmih.biCompression == BI_BITFIELDS, "got %x\n", ds.dsBmih.biCompression);
+
+    orig_bm = SelectObject(mem_dc, dib);
+
+    dst_format = "r10g10b10";
+    sha1 = sha1_graphics_r10g10b10;
+    draw_graphics(mem_dc, bmi, bits, &sha1);
+
+    SelectObject(mem_dc, orig_bm);
+    DeleteObject(dib);
+
+    /* r6g6b6. */
+    trace("r6g6b6\n");
+    bmi->bmiHeader.biBitCount = 32;
+    bmi->bmiHeader.biCompression = BI_BITFIELDS;
+    bit_fields[0] = 0x0003f000;
+    bit_fields[1] = 0x00000fc0;
+    bit_fields[2] = 0x0000003f;
+
+    dib = CreateDIBSection(mem_dc, bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(dib != NULL, "ret NULL\n");
+    ok(GetObjectW( dib, sizeof(ds), &ds ), "GetObject failed\n");
+    ok(ds.dsBitfields[0] == 0x0003f000, "got %08x\n", ds.dsBitfields[0]);
+    ok(ds.dsBitfields[1] == 0x00000fc0, "got %08x\n", ds.dsBitfields[1]);
+    ok(ds.dsBitfields[2] == 0x0000003f, "got %08x\n", ds.dsBitfields[2]);
+    ok(ds.dsBmih.biCompression == BI_BITFIELDS, "got %x\n", ds.dsBmih.biCompression);
+
+    orig_bm = SelectObject(mem_dc, dib);
+
+    dst_format = "r6g6b6";
+    sha1 = sha1_graphics_r6g6b6;
     draw_graphics(mem_dc, bmi, bits, &sha1);
 
     SelectObject(mem_dc, orig_bm);
@@ -1495,6 +1650,7 @@ static void test_simple_graphics(void)
     ok(dib != NULL, "ret NULL\n");
     orig_bm = SelectObject(mem_dc, dib);
 
+    dst_format = "24";
     sha1 = sha1_graphics_24;
     draw_graphics(mem_dc, bmi, bits, &sha1);
 
@@ -1516,6 +1672,7 @@ static void test_simple_graphics(void)
 
     orig_bm = SelectObject(mem_dc, dib);
 
+    dst_format = "r5g5b5";
     sha1 = sha1_graphics_r5g5b5;
     draw_graphics(mem_dc, bmi, bits, &sha1);
 
@@ -1539,6 +1696,7 @@ static void test_simple_graphics(void)
 
     orig_bm = SelectObject(mem_dc, dib);
 
+    dst_format = "r4g4b4";
     sha1 = sha1_graphics_r4g4b4;
     draw_graphics(mem_dc, bmi, bits, &sha1);
 
@@ -1571,6 +1729,7 @@ static void test_simple_graphics(void)
 
     orig_bm = SelectObject(mem_dc, dib);
 
+    dst_format = "8";
     sha1 = sha1_graphics_8;
     draw_graphics(mem_dc, bmi, bits, &sha1);
 
@@ -1586,6 +1745,7 @@ static void test_simple_graphics(void)
 
     orig_bm = SelectObject(mem_dc, dib);
 
+    dst_format = "4";
     sha1 = sha1_graphics_4;
     draw_graphics(mem_dc, bmi, bits, &sha1);
 
@@ -1609,6 +1769,7 @@ static void test_simple_graphics(void)
 
     orig_bm = SelectObject(mem_dc, dib);
 
+    dst_format = "1";
     sha1 = sha1_graphics_1;
     draw_graphics(mem_dc, bmi, bits, &sha1);
 
