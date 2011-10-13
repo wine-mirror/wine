@@ -3444,7 +3444,7 @@ HRESULT WINAPI D3DXFrameDestroy(LPD3DXFRAME frame, LPD3DXALLOCATEHIERARCHY alloc
             current_frame = frame->pFrameSibling;
             frame->pFrameSibling = current_frame->pFrameSibling;
             current_frame->pFrameSibling = NULL;
-        } else if (frame) {
+        } else {
             current_frame = frame;
             last = TRUE;
         }
