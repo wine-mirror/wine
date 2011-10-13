@@ -10525,7 +10525,7 @@ msgstr "(Aucun)"
 
 #: winecfg.rc:89
 msgid "Audio test failed!"
-msgstr "Échec du test audio !\n"
+msgstr "Échec du test audio !"
 
 #: winecfg.rc:91
 msgid "(System default)"

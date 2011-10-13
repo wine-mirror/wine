@@ -3627,7 +3627,7 @@ msgstr "Impossibile spostare il file di sostituzione nella posizione\n"
 
 #: winerror.mc:1606
 msgid "Moving the replacement file failed\n"
-msgstr "Spostamento del file di sostituzione fallito"
+msgstr "Spostamento del file di sostituzione fallito\n"
 
 #: winerror.mc:1611
 msgid "The journal is being deleted\n"
