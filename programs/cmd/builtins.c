@@ -1554,8 +1554,8 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList) {
  * Move a file, directory tree or wildcarded set of files.
  */
 
-void WCMD_move (void) {
-
+void WCMD_move (void)
+{
   int             status;
   WIN32_FIND_DATAW fd;
   HANDLE          hff;
@@ -1594,6 +1594,7 @@ void WCMD_move (void) {
     WCHAR  dest[MAX_PATH];
     WCHAR  src[MAX_PATH];
     DWORD attribs;
+    BOOL ok = TRUE;
 
     WINE_TRACE("Processing file '%s'\n", wine_dbgstr_w(fd.cFileName));
 
@@ -1617,60 +1618,50 @@ void WCMD_move (void) {
     WINE_TRACE("Source '%s'\n", wine_dbgstr_w(src));
     WINE_TRACE("Dest   '%s'\n", wine_dbgstr_w(dest));
 
-    /* Check if file is read only, otherwise move it */
-    attribs = GetFileAttributesW(src);
-    if ((attribs != INVALID_FILE_ATTRIBUTES) &&
-        (attribs & FILE_ATTRIBUTE_READONLY)) {
-      SetLastError(ERROR_ACCESS_DENIED);
-      status = 0;
-    } else {
-      BOOL ok = TRUE;
+    /* If destination exists, prompt unless /Y supplied */
+    if (GetFileAttributesW(dest) != INVALID_FILE_ATTRIBUTES) {
+      BOOL force = FALSE;
+      WCHAR copycmd[MAXSTRING];
+      int len;
 
-      /* If destination exists, prompt unless /Y supplied */
-      if (GetFileAttributesW(dest) != INVALID_FILE_ATTRIBUTES) {
-        BOOL force = FALSE;
-        WCHAR copycmd[MAXSTRING];
-        int len;
+      /* /-Y has the highest priority, then /Y and finally the COPYCMD env. variable */
+      if (strstrW (quals, parmNoY))
+        force = FALSE;
+      else if (strstrW (quals, parmY))
+        force = TRUE;
+      else {
+        static const WCHAR copyCmdW[] = {'C','O','P','Y','C','M','D','\0'};
+        len = GetEnvironmentVariableW(copyCmdW, copycmd, sizeof(copycmd)/sizeof(WCHAR));
+        force = (len && len < (sizeof(copycmd)/sizeof(WCHAR))
+                     && ! lstrcmpiW (copycmd, parmY));
+      }
 
-        /* /-Y has the highest priority, then /Y and finally the COPYCMD env. variable */
-        if (strstrW (quals, parmNoY))
-          force = FALSE;
-        else if (strstrW (quals, parmY))
-          force = TRUE;
-        else {
-          static const WCHAR copyCmdW[] = {'C','O','P','Y','C','M','D','\0'};
-          len = GetEnvironmentVariableW(copyCmdW, copycmd, sizeof(copycmd)/sizeof(WCHAR));
-          force = (len && len < (sizeof(copycmd)/sizeof(WCHAR))
-                       && ! lstrcmpiW (copycmd, parmY));
-        }
+      /* Prompt if overwriting */
+      if (!force) {
+        WCHAR  question[MAXSTRING];
+        WCHAR  yesChar[10];
 
-        /* Prompt if overwriting */
-        if (!force) {
-          WCHAR  question[MAXSTRING];
-          WCHAR  yesChar[10];
+        strcpyW(yesChar, WCMD_LoadMessage(WCMD_YES));
 
-          strcpyW(yesChar, WCMD_LoadMessage(WCMD_YES));
+        /* Ask for confirmation */
+        wsprintfW(question, WCMD_LoadMessage(WCMD_OVERWRITE), dest);
+        ok = WCMD_ask_confirm(question, FALSE, NULL);
 
-          /* Ask for confirmation */
-          wsprintfW(question, WCMD_LoadMessage(WCMD_OVERWRITE), dest);
-          ok = WCMD_ask_confirm(question, FALSE, NULL);
-
-          /* So delete the destination prior to the move */
-          if (ok) {
-            if (!DeleteFileW(dest)) {
-              WCMD_print_error ();
-              errorlevel = 1;
-              ok = FALSE;
-            }
+        /* So delete the destination prior to the move */
+        if (ok) {
+          if (!DeleteFileW(dest)) {
+            WCMD_print_error ();
+            errorlevel = 1;
+            ok = FALSE;
           }
         }
       }
+    }
 
-      if (ok) {
-        status = MoveFileW(src, dest);
-      } else {
-        status = 1; /* Anything other than 0 to prevent error msg below */
-      }
+    if (ok) {
+      status = MoveFileW(src, dest);
+    } else {
+      status = 1; /* Anything other than 0 to prevent error msg below */
     }
 
     if (!status) {
