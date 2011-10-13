@@ -579,7 +579,7 @@ struct my_IStream
     ULONG iml_data_size;
 };
 
-struct my_IStream *impl_from_IStream(IStream *iface)
+static struct my_IStream *impl_from_IStream(IStream *iface)
 {
     return CONTAINING_RECORD(iface, struct my_IStream, IStream_iface);
 }
