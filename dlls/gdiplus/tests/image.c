@@ -886,6 +886,7 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     bmi.bmiHeader.biBitCount = 24;
     bmi.bmiHeader.biPlanes = 1;
     bmi.bmiHeader.biCompression = BI_RGB;
+    bmi.bmiHeader.biClrUsed = 0;
 
     hbm = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
     ok(hbm != NULL, "CreateDIBSection failed\n");
