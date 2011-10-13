@@ -1311,6 +1311,53 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         return NULL;
     }
 
+    if (device->shader_backend->shader_dirtifyable_constants())
+    {
+        /* Create the dirty constants array and initialize them to dirty */
+        ret->vshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
+                sizeof(*ret->vshader_const_dirty) * device->d3d_vshader_constantF);
+        if (!ret->vshader_const_dirty)
+            goto out;
+
+        ret->pshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
+                sizeof(*ret->pshader_const_dirty) * device->d3d_pshader_constantF);
+        if (!ret->pshader_const_dirty)
+            goto out;
+
+        memset(ret->vshader_const_dirty, 1,
+               sizeof(*ret->vshader_const_dirty) * device->d3d_vshader_constantF);
+        memset(ret->pshader_const_dirty, 1,
+                sizeof(*ret->pshader_const_dirty) * device->d3d_pshader_constantF);
+    }
+
+    ret->blit_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            gl_info->limits.buffers * sizeof(*ret->blit_targets));
+    if (!ret->blit_targets)
+        goto out;
+
+    ret->draw_buffers = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            gl_info->limits.buffers * sizeof(*ret->draw_buffers));
+    if (!ret->draw_buffers)
+        goto out;
+
+    ret->free_occlusion_query_size = 4;
+    ret->free_occlusion_queries = HeapAlloc(GetProcessHeap(), 0,
+            ret->free_occlusion_query_size * sizeof(*ret->free_occlusion_queries));
+    if (!ret->free_occlusion_queries)
+        goto out;
+
+    list_init(&ret->occlusion_queries);
+
+    ret->free_event_query_size = 4;
+    ret->free_event_queries = HeapAlloc(GetProcessHeap(), 0,
+            ret->free_event_query_size * sizeof(*ret->free_event_queries));
+    if (!ret->free_event_queries)
+        goto out;
+
+    list_init(&ret->event_queries);
+    list_init(&ret->fbo_list);
+    list_init(&ret->fbo_destroy_list);
+
     if (!(hdc = GetDC(swapchain->win_handle)))
     {
         WARN("Failed to retireve device context, trying swapchain backup.\n");
@@ -1362,36 +1409,41 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         goto out;
     }
 
+    context_enter(ret);
+
     if (!context_set_pixel_format(gl_info, hdc, pixel_format))
     {
         ERR("Failed to set pixel format %d on device context %p.\n", pixel_format, hdc);
+        context_release(ret);
         goto out;
     }
 
-    ctx = pwglCreateContext(hdc);
+    if (!(ctx = pwglCreateContext(hdc)))
+    {
+        ERR("Failed to create a WGL context.\n");
+        context_release(ret);
+        goto out;
+    }
+
     if (device->context_count)
     {
         if (!pwglShareLists(device->contexts[0]->glCtx, ctx))
         {
-            DWORD err = GetLastError();
             ERR("wglShareLists(%p, %p) failed, last error %#x.\n",
-                    device->contexts[0]->glCtx, ctx, err);
+                    device->contexts[0]->glCtx, ctx, GetLastError());
+            context_release(ret);
+            if (!pwglDeleteContext(ctx))
+                ERR("wglDeleteContext(%p) failed, last error %#x.\n", ctx, GetLastError());
+            goto out;
         }
-    }
-
-    if(!ctx) {
-        ERR("Failed to create a WGL context\n");
-        goto out;
     }
 
     if (!device_context_add(device, ret))
     {
         ERR("Failed to add the newly created context to the context list\n");
+        context_release(ret);
         if (!pwglDeleteContext(ctx))
-        {
-            DWORD err = GetLastError();
-            ERR("wglDeleteContext(%p) failed, last error %#x.\n", ctx, err);
-        }
+            ERR("wglDeleteContext(%p) failed, last error %#x.\n", ctx, GetLastError());
         goto out;
     }
 
@@ -1419,53 +1471,14 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     ret->hdc = hdc;
     ret->pixel_format = pixel_format;
 
-    if (device->shader_backend->shader_dirtifyable_constants())
-    {
-        /* Create the dirty constants array and initialize them to dirty */
-        ret->vshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
-                sizeof(*ret->vshader_const_dirty) * device->d3d_vshader_constantF);
-        ret->pshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
-                sizeof(*ret->pshader_const_dirty) * device->d3d_pshader_constantF);
-        memset(ret->vshader_const_dirty, 1,
-               sizeof(*ret->vshader_const_dirty) * device->d3d_vshader_constantF);
-        memset(ret->pshader_const_dirty, 1,
-                sizeof(*ret->pshader_const_dirty) * device->d3d_pshader_constantF);
-    }
-
-    ret->blit_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            gl_info->limits.buffers * sizeof(*ret->blit_targets));
-    if (!ret->blit_targets) goto out;
-
-    ret->draw_buffers = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            gl_info->limits.buffers * sizeof(*ret->draw_buffers));
-    if (!ret->draw_buffers) goto out;
-
-    ret->free_occlusion_query_size = 4;
-    ret->free_occlusion_queries = HeapAlloc(GetProcessHeap(), 0,
-            ret->free_occlusion_query_size * sizeof(*ret->free_occlusion_queries));
-    if (!ret->free_occlusion_queries) goto out;
-
-    list_init(&ret->occlusion_queries);
-
-    ret->free_event_query_size = 4;
-    ret->free_event_queries = HeapAlloc(GetProcessHeap(), 0,
-            ret->free_event_query_size * sizeof(*ret->free_event_queries));
-    if (!ret->free_event_queries) goto out;
-
-    list_init(&ret->event_queries);
-
-    TRACE("Successfully created new context %p\n", ret);
-
-    list_init(&ret->fbo_list);
-    list_init(&ret->fbo_destroy_list);
-
-    context_enter(ret);
-
     /* Set up the context defaults */
     if (!context_set_current(ret))
     {
-        ERR("Cannot activate context to set up defaults\n");
+        ERR("Cannot activate context to set up defaults.\n");
+        device_context_remove(device, ret);
         context_release(ret);
+        if (!pwglDeleteContext(ctx))
+            ERR("wglDeleteContext(%p) failed, last error %#x.\n", ctx, GetLastError());
         goto out;
     }
 
