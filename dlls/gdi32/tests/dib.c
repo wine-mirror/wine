@@ -422,6 +422,120 @@ static const char *sha1_graphics_r4g4b4[] =
     NULL
 };
 
+static const char *sha1_graphics_8_color[] =
+{
+    "41728d7ff2bb425b5fc06521adeabf6cc73136f3",
+    "e313bb57f699587b0bae2f17f5da5d977e6f2a61",
+    "49024d6cbdf1614327dfda9eda17675e76805f7e",
+    "63ba8ab7e7996857d52d4c2b995cfcd304daf25f",
+    "92295ae66712df050cfd6cc9fd2fd4101784c5fc",
+    "84d85009d35ae10abbc435f3913422544105cea2",
+    "eae349c2a481d6e8bfdf9a7f4f49384a14716a5f",
+    "6c51068ca1db36d948eaa34aed4a44d2cd1e8b32",
+    "f3aa8d89430748178952de56643069d80b40aad6",
+    "bd5fed74e2f1b097ef4c20bd30edfc6ee11eeccd",
+    "0546b87bf5fbe1b8168eed5d4a20649be92734a1",
+    "52b1363e821bf604d9df260bfa97e26d428c33fd",
+    "108732d9909ee5f3542a9b90b3ad96ec82446ab9",
+    "06c76c53dcf3ba5e213d483e27d841404c9aa90a",
+    "ae8fcdbdd44ba58e9bd46a4c56eb54f37483913c",
+    "89711289be6d5c55734878410e4923d5cca9aca9",
+    "8355caf57d51ad4e14275943088392e37dc75d33",
+    "5992b2e331a0e0f752598cc8d083cbecb5f4dde6",
+    "6f0570da9dea7f043f678088f8362ee458cd79fa",
+    "940db409d4c3e5640275724f9e5f7c1a0d2e21b2",
+    "242ce86967ea62fa69c1e6f597ccbcf2f0b1602c",
+    "5092b22af85a08f10a2899888bb9d552f25f828e",
+    "e91973be2651eeef568700463652838d8cbba976",
+    "1df851515ecf46df5c2d3279535c1763f72353dd",
+    "b68922915ebc2797d58deecf983f7d0cf9a5efbd",
+    "359bd76088a965bb0cee7c44800bc46b2638807e",
+    "e14e5734b33057b890368f3e9d482d9e5a0358c5",
+    "64205ccaa277e64eeea0c20e99900ac79858ca2c",
+    "2cdee35d43d62da09b4ddfddbd0948ddbb9fc48e",
+    "91f988f575338505ba8a40727865a8d3f2298624",
+    "d2b4557492ebb2e0f640a0a2f6fc3bdc8d8f36f9",
+    "421e8b608378e4f17774dd32ea6446fa0fa16f91",
+    "3b7488731da48635d86be551ab7c8c0f91c78219",
+    "4fd49cb49853ef950fd0b7e2e35718a71c8374c7",
+    "e15a355fc09bfd22267917898e2266168ff410e3",
+    "b9688566bddf18586787c00e68724e51e97dfb72",
+    "5e38e03310f1c66f2052af2a745d8c60515707c5",
+    "ea10eac72830dcae19bcb16a076c2b21d844b5b6",
+    "6376234f542467e5887adfece62f753e998dc19d",
+    "add949d009217ef2b847e34772ba363e4be7b1b8",
+    "28fcf9f7d098c05de632ae38b2fe33b9635ad445",
+    "0b58666deb3615e912896a764e5c6475989e95e4",
+    "bf460cc44c0edee851d72587c8425c3f06a62c55",
+    "5ac22e1a33b0204fdc7a68d54ee94648e96079a0",
+    "284abed096637c80bb50844e393da9dd4b3f19ac",
+    "9dc776c5ab8256b1301c7d1da60544a9410e6715",
+    "a433c41c05b6db008a4cb2c52a321d027c6be1fe",
+    "46f772c2832b3aad584674db666bd63e48b4f338",
+    "f3dc739da41fb299637c8660e8c46917ddcf87a8",
+    "eae47bf865d932f22a6e59b6fe8d041f220e1fbc",
+    NULL
+};
+
+static const char *sha1_graphics_8_grayscale[] =
+{
+    "41728d7ff2bb425b5fc06521adeabf6cc73136f3",
+    "df35491dd5038187c05bac06921402ba6d7773a8",
+    "c8cd6d34e011d5f9ca4b1190eec3b416e5e68e53",
+    "66a686ac22cd0ec326f2c97ef473781cabe9690b",
+    "9bddef7b97b8b03569f07011e66ddd67fe82d787",
+    "2a4cea20974bcfb92cf40b05746fc7eb465c4b0f",
+    "0a87689ca33f888f05dbfa21ddec11c069990d8b",
+    "8d0a92e6333e1b99591962e2def9bc9121111cf5",
+    "409c9f29f6fa2e312c8e0b4b3c59acb4d84d8717",
+    "1fbc234c28a8140965ad0fe30b4b799f6681e864",
+    "1fc709d5d3e55d5f96c451c209cd73c59dbfe733",
+    "96b6a32e057d5faeae57086cbb62a8e7b3e6e86f",
+    "aa66ea7c9b7214339858b9fc9bd4720d05e8c843",
+    "114bb377b4e78a1978e1ac09388c48861b5223a3",
+    "8d0a92e6333e1b99591962e2def9bc9121111cf5",
+    "9dc511d6947fe816185cdff93bf0cfe0349b72b4",
+    "eb4c14ee66b012187f5fe6a2ec28b6be956567c8",
+    "216388ddf6b563dd2058a9df65b40b6f72df1715",
+    "ad11e4b6979cf055e3bf1868112a7bef207385a4",
+    "47f72be971bd2d3399dabd018201f4f5075e96fe",
+    "de09d41c9ae4338fbfcfe9f8ed71d343537a6f3d",
+    "f39ab890a2b99d0c31e6e047f2315244972f5ffd",
+    "6e7baf7d328bc2c55366e32967a0db4d2f43ab82",
+    "15b991814d84d6aa252696dd0c6150ef88a8db3f",
+    "1cb52f2a4d17b9b0d8375d016aa8cf0677fcd29a",
+    "9a6cfd68523e40ea1d52847d7747da912cfe2ca9",
+    "82e641ebe47d9f8cc229b82b8315e69e52f812b1",
+    "15db343049e3a9b31addc5d2ffebc3fe91b39c51",
+    "a895daf1f20371d4d1c3f93c070124cc13e341c3",
+    "3ddc872384ed8f9eaef472aa14a1d79a2c3f3b04",
+    "0000000000000000000000000000000000000000",
+    "bd7d8c1cb4b2adc31cf8c7d39a4fa1e3ac7f2545",
+    "33fc8618ce62f5cdd9e06ad61e296f718a99899e",
+    "dcaa7fe030ae4d3029e38ca584047eeb2d17fe10",
+    "6d41e6168662e75baacf74d911d7419d54c8d73c",
+    "2404952157ba1519094a2da6bfbf2b0f1356432d",
+    "24caede65b40815a60b83c4edfa06bdc542388cd",
+    "650a51bedd1af92469d2950eb95220db35f95c6e",
+    "3f43aa11e6fccb747cc13224583fb2f951fee08c",
+    "04cea9753b575ecce8e55357eddfcec10ddfbbea",
+    "6b6f4b97f05e015eb37a5f6aff637235feacd030",
+    "85425940daf119125deb52421b2057acebe6d1cf",
+    "a3db92382cf0a4c7cafe52c27b1f41520aaa677d",
+    "9869b6f088822fb423996f9968e5a931301fc2c3",
+    "cdf63ab4ab32c2e8e27527a9588d0fb525f1c945",
+    "a7f81cf3326fa3608acc13cfce2f573912e9d745",
+    "f2ea92f523f8918b1d514a2d9555dcb4750273b4",
+    "84a4bc0c2c5d36d016da4df95a5d8d6c8ce3ba6f",
+    "f543efc84e638afbaa456e629100f0274de1a35b",
+    "1bd2587399006eed0d46beff397d32081f6bc58e",
+    "f8a571de89ed82ffb9cbc041ce1eacb064be2853",
+    "640a49455acabca6954a7fbb6af4e872af342d11",
+    "a1a941fa270cda48c648553ed4b427e16e96f8e0",
+    "f30a8d9f73ca043c5bfc18d9595e299fc0a39eec",
+    NULL
+};
+
 static const char *sha1_graphics_8[] =
 {
     "41728d7ff2bb425b5fc06521adeabf6cc73136f3",
@@ -521,6 +635,55 @@ static const char *sha1_graphics_4[] =
     "7811c536a6527112b438a6413f3927f2c79086a7",
     "46760975993f9881b7bbe94123173e6a683d3f25",
     "df5feb905a31c288008cf5e82d73ac818a160d82",
+    NULL
+};
+
+static const char *sha1_graphics_4_grayscale[] =
+{
+    "fa867e2976a549ecd3b1fa67df54963232fcef8c",
+    "6611ea6cb24bcf34c5f3688d57e2874aecb39c24",
+    "5ab1d3f8f5938c5d20a2fa3237e319077b21e716",
+    "1c201d149c0bd886ff8a427ad513f15a70991174",
+    "44646e67842a4d055bea1fad0434e6e4a0eb5465",
+    "315189097a02024d2eae61d524c4de07a396aee7",
+    "73ac786015dea36ac466a6524dba757d5d238ece",
+    "6e328cc4d53627f034b23706d8bf26afe18512ae",
+    "3c5b90cfeafdc1c99c8c62317d07276fdf66803e",
+    "95e6f509bb1cf9981efc47a0878ab0bd983eb349",
+    "2e1bc3b00e4ecc62b03785533dc0faeeda38d53f",
+    "6448226859cab61a61c95d3ed5ed5f216b1bb120",
+    "7f1cb06597b14edbea03b860aec3cebc4ebc3d62",
+    "ec3879342b5a44f6de6efe946243ae5ade00980d",
+    "6e328cc4d53627f034b23706d8bf26afe18512ae",
+    "51b50968a3a0570d5ed690fe44ba1a78a4d62ce2",
+    "d5bab61f78ac3355aa2e0776b2d5d9d71d61e77b",
+    "fa47c5195405f6a0eefba3e3a60ad463c7ee94c7",
+    "b2bda683edef912957845a33edc055902a801fed",
+    "b067f0421cb2c83b218b8ab6edbede2ff5723b57",
+    "c8de76f9c0900e5f86c7584fe94d5749376b7b49",
+    "43ee3e187dda14b86aef12371041ae70313b5a65",
+    "d4930552a7845111ffd9db57260be1ab97967c06",
+    "afdf41fca7951c6dd6193320de1295f2c68fe52a",
+    "f2f1f331fe6b1b31d7c9ddd37793b375fc01d3d4",
+    "f0af0f1edcb837bdf1535c1f5e9988c21ae9bfd1",
+    "0000000000000000000000000000000000000000",
+    "71c4577baaf35f12f6707b1e2f78a1e8c0d41d0b",
+    "9b7d6b12385bb9e1cd881758aff342bd5427432b",
+    "6fdd5aa022da2a8af6f1d02b6072ebc068b4b600",
+    "643fab30f1a59dc37f1e0f1a6006076fbf90a5fe",
+    "6edbc0b95e9ae3348ce7d12c44f9c8082b5f2aa9",
+    "9c0da52c4ceaa8fdfcff7351328dd520bb57e985",
+    "f8224430462f6a93f85ef33b8aa7299525990708",
+    "1cf93cecc942b41ab8fae21ea18418a6d64873e5",
+    "d58b8760ef01c12e691651c932d683c66fde3654",
+    "94ad53c578f6034dfc5c666e363203cdfb00f2cc",
+    "8cd7b0ba8426db344b4cb8820890603020ed65e9",
+    "ad96132f25ca14e1aeb17c86f8d187febf6401c9",
+    "3f131e855ba1611d8fb0f16a6979f8f56aacc7f3",
+    "ae64d1dc52dcfa8c644f953c4601fa2fbefec37b",
+    "2f3fb1bd8f416198d70e06f6d519571cd5eb4ef4",
+    "5eeb56afea8040a8fb18c11f29931b836474126d",
+    "a3405c085fc2f2184bcd0d1edcdcc66927e33659",
     NULL
 };
 
@@ -992,7 +1155,10 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             y += 25;
         }
     }
-    compare_hash_broken_todo(bmi, bits, sha1, "top-down 8888 dib brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
+    if (bmi->bmiHeader.biBitCount == 8 && bmi->bmiHeader.biClrUsed == 256)  /* 8-bpp grayscale broken on NT4 */
+        compare_hash_broken_todo(bmi, bits, sha1, "top-down 8888 dib brush patblt", 1, FALSE);
+    else
+        compare_hash_broken_todo(bmi, bits, sha1, "top-down 8888 dib brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
     memset(bits, 0xcc, dib_size);
 
     SelectObject(hdc, orig_brush);
@@ -1020,7 +1186,10 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             y += 25;
         }
     }
-    compare_hash_broken_todo(bmi, bits, sha1, "bottom-up 8888 dib brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
+    if (bmi->bmiHeader.biBitCount == 8 && bmi->bmiHeader.biClrUsed == 256)  /* 8-bpp grayscale broken on NT4 */
+        compare_hash_broken_todo(bmi, bits, sha1, "bottom-up 8888 dib brush patblt", 1, FALSE);
+    else
+        compare_hash_broken_todo(bmi, bits, sha1, "bottom-up 8888 dib brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
     memset(bits, 0xcc, dib_size);
 
     SelectObject(hdc, orig_brush);
@@ -1048,7 +1217,10 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             y += 25;
         }
     }
-    compare_hash_broken_todo(bmi, bits, sha1, "top-down 24 bpp brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
+    if (bmi->bmiHeader.biBitCount == 8 && bmi->bmiHeader.biClrUsed == 256)  /* 8-bpp grayscale broken on NT4 */
+        compare_hash_broken_todo(bmi, bits, sha1, "top-down 24 bpp brush patblt", 1, FALSE);
+    else
+        compare_hash_broken_todo(bmi, bits, sha1, "top-down 24 bpp brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
     memset(bits, 0xcc, dib_size);
 
     SelectObject(hdc, orig_brush);
@@ -1076,7 +1248,10 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             y += 25;
         }
     }
-    compare_hash_broken_todo(bmi, bits, sha1, "top-down 555 dib brush patblt", dib_is_1bpp ? 1 : 0, dib_is_1bpp);
+    if (bmi->bmiHeader.biBitCount == 8 && bmi->bmiHeader.biClrUsed == 256)  /* 8-bpp grayscale broken on NT4 */
+        compare_hash_broken_todo(bmi, bits, sha1, "top-down 555 dib brush patblt", 1, FALSE);
+    else
+        compare_hash_broken_todo(bmi, bits, sha1, "top-down 555 dib brush patblt", dib_is_1bpp ? 1 : 0, dib_is_1bpp);
     memset(bits, 0xcc, dib_size);
 
     SelectObject(hdc, orig_brush);
@@ -1422,7 +1597,10 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             ((WORD *)src_bits)[y * 256 + x] = x | x << 4 | x << 8 | y << 3 | y << 7;
 
     BitBlt( hdc, 100, 100, 256, 256, src_dc, 0, 0, SRCCOPY );
-    compare_hash(bmi, bits, sha1, "BitBlt src 16-bpp SRCCOPY" );
+    if (bmi->bmiHeader.biBitCount == 8 && bmi->bmiHeader.biClrUsed > 5)  /* broken on NT4 */
+        compare_hash_broken_todo(bmi, bits, sha1, "BitBlt src 16-bpp SRCCOPY", 1, FALSE );
+    else
+        compare_hash(bmi, bits, sha1, "BitBlt src 16-bpp SRCCOPY" );
     memset(bits, 0xcc, dib_size);
 
     /* blitting with 16-bpp b4g4r4 source */
@@ -1439,7 +1617,10 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
             ((WORD *)src_bits)[y * 256 + x] = x | x << 4 | x << 8 | y << 3 | y << 7;
 
     BitBlt( hdc, 100, 100, 256, 256, src_dc, 0, 0, SRCCOPY );
-    compare_hash(bmi, bits, sha1, "BitBlt src 16-bpp b4g4r4 SRCCOPY" );
+    if (bmi->bmiHeader.biBitCount == 8 && bmi->bmiHeader.biClrUsed > 5)  /* broken on NT4 */
+        compare_hash_broken_todo(bmi, bits, sha1, "BitBlt src 16-bpp b4g4r4 SRCCOPY", 1, FALSE );
+    else
+        compare_hash(bmi, bits, sha1, "BitBlt src 16-bpp b4g4r4 SRCCOPY" );
     memset(bits, 0xcc, dib_size);
 
     /* blitting with 8-bpp source */
@@ -1509,6 +1690,7 @@ static void test_simple_graphics(void)
     HBITMAP dib, orig_bm;
     const char **sha1;
     DIBSECTION ds;
+    int i;
 
     mem_dc = CreateCompatibleDC(NULL);
 
@@ -1703,6 +1885,49 @@ static void test_simple_graphics(void)
     SelectObject(mem_dc, orig_bm);
     DeleteObject(dib);
 
+    /* 8 color */
+    trace("8 color\n");
+    bmi->bmiHeader.biBitCount = 8;
+    bmi->bmiHeader.biCompression = BI_RGB;
+    bmi->bmiHeader.biClrUsed = 236;
+    for (i = 0; i < 236; i++)
+    {
+        bmi->bmiColors[i].rgbRed   = (i & 0x07) << 5;
+        bmi->bmiColors[i].rgbGreen = (i & 0x38) << 2;
+        bmi->bmiColors[i].rgbBlue  =  i & 0xc0;
+    }
+    dib = CreateDIBSection(0, bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(dib != NULL, "ret NULL\n");
+
+    orig_bm = SelectObject(mem_dc, dib);
+
+    dst_format = "8 color";
+    sha1 = sha1_graphics_8_color;
+    draw_graphics(mem_dc, bmi, bits, &sha1);
+
+    SelectObject(mem_dc, orig_bm);
+    DeleteObject(dib);
+
+    /* 8 grayscale */
+    trace("8 grayscale\n");
+    bmi->bmiHeader.biBitCount = 8;
+    bmi->bmiHeader.biCompression = BI_RGB;
+    bmi->bmiHeader.biClrUsed = 256;
+    for (i = 0; i < 256; i++)
+        bmi->bmiColors[i].rgbRed = bmi->bmiColors[i].rgbGreen = bmi->bmiColors[i].rgbBlue = i;
+
+    dib = CreateDIBSection(0, bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(dib != NULL, "ret NULL\n");
+
+    orig_bm = SelectObject(mem_dc, dib);
+
+    dst_format = "8 grayscale";
+    sha1 = sha1_graphics_8_grayscale;
+    draw_graphics(mem_dc, bmi, bits, &sha1);
+
+    SelectObject(mem_dc, orig_bm);
+    DeleteObject(dib);
+
     /* 8 */
     trace("8\n");
     bmi->bmiHeader.biBitCount = 8;
@@ -1747,6 +1972,24 @@ static void test_simple_graphics(void)
 
     dst_format = "4";
     sha1 = sha1_graphics_4;
+    draw_graphics(mem_dc, bmi, bits, &sha1);
+
+    SelectObject(mem_dc, orig_bm);
+    DeleteObject(dib);
+
+    /* 4 grayscale */
+    trace("4 grayscale\n");
+    bmi->bmiHeader.biClrUsed = 16;
+    for (i = 0; i < 16; i++)
+        bmi->bmiColors[i].rgbRed = bmi->bmiColors[i].rgbGreen = bmi->bmiColors[i].rgbBlue = i * 17;
+
+    dib = CreateDIBSection(0, bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(dib != NULL, "ret NULL\n");
+
+    orig_bm = SelectObject(mem_dc, dib);
+
+    dst_format = "4 grayscale";
+    sha1 = sha1_graphics_4_grayscale;
     draw_graphics(mem_dc, bmi, bits, &sha1);
 
     SelectObject(mem_dc, orig_bm);
