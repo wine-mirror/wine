@@ -2404,6 +2404,12 @@ static inline BOOL color_tables_match(const dib_info *d1, const dib_info *d2)
     return !memcmp(d1->color_table, d2->color_table, d1->color_table_size * sizeof(d1->color_table[0]));
 }
 
+static inline DWORD rgb_lookup_colortable(const dib_info *dst, BYTE r, BYTE g, BYTE b)
+{
+    /* Windows reduces precision to 5 bits, probably in order to build some sort of lookup cache */
+    return rgb_to_pixel_colortable( dst, (r & ~7) + 4, (g & ~7) + 4, (b & ~7) + 4 );
+}
+
 static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rect)
 {
     BYTE *dst_start = get_pixel_ptr_8(dst, 0, 0), *dst_pixel;
@@ -2425,7 +2431,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = rgb_to_pixel_colortable(dst, src_val >> 16, src_val >> 8, src_val );
+                    *dst_pixel++ = rgb_lookup_colortable(dst, src_val >> 16, src_val >> 8, src_val );
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride;
@@ -2441,10 +2447,10 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = rgb_to_pixel_colortable(dst,
-                                                           src_val >> src->red_shift,
-                                                           src_val >> src->green_shift,
-                                                           src_val >> src->blue_shift );
+                    *dst_pixel++ = rgb_lookup_colortable(dst,
+                                                         src_val >> src->red_shift,
+                                                         src_val >> src->green_shift,
+                                                         src_val >> src->blue_shift );
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride;
@@ -2460,10 +2466,10 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = rgb_to_pixel_colortable(dst,
-                                                           get_field(src_val, src->red_shift, src->red_len),
-                                                           get_field(src_val, src->green_shift, src->green_len),
-                                                           get_field(src_val, src->blue_shift, src->blue_len));
+                    *dst_pixel++ = rgb_lookup_colortable(dst,
+                                                         get_field(src_val, src->red_shift, src->red_len),
+                                                         get_field(src_val, src->green_shift, src->green_len),
+                                                         get_field(src_val, src->blue_shift, src->blue_len));
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride;
@@ -2483,7 +2489,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
             src_pixel = src_start;
             for(x = src_rect->left; x < src_rect->right; x++, src_pixel += 3)
             {
-                *dst_pixel++ = rgb_to_pixel_colortable(dst, src_pixel[2], src_pixel[1], src_pixel[0] );
+                *dst_pixel++ = rgb_lookup_colortable(dst, src_pixel[2], src_pixel[1], src_pixel[0] );
             }
             if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride;
@@ -2504,10 +2510,10 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = rgb_to_pixel_colortable(dst,
-                                                           ((src_val >> 7) & 0xf8) | ((src_val >> 12) & 0x07),
-                                                           ((src_val >> 2) & 0xf8) | ((src_val >> 7) & 0x07),
-                                                           ((src_val << 3) & 0xf8) | ((src_val >> 2) & 0x07) );
+                    *dst_pixel++ = rgb_lookup_colortable(dst,
+                                                         ((src_val >> 7) & 0xf8) | ((src_val >> 12) & 0x07),
+                                                         ((src_val >> 2) & 0xf8) | ((src_val >> 7) & 0x07),
+                                                         ((src_val << 3) & 0xf8) | ((src_val >> 2) & 0x07) );
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride;
@@ -2523,13 +2529,13 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = rgb_to_pixel_colortable(dst,
-                                                           (((src_val >> src->red_shift)   << 3) & 0xf8) |
-                                                           (((src_val >> src->red_shift)   >> 2) & 0x07),
-                                                           (((src_val >> src->green_shift) << 3) & 0xf8) |
-                                                           (((src_val >> src->green_shift) >> 2) & 0x07),
-                                                           (((src_val >> src->blue_shift)  << 3) & 0xf8) |
-                                                           (((src_val >> src->blue_shift)  >> 2) & 0x07) );
+                    *dst_pixel++ = rgb_lookup_colortable(dst,
+                                                         (((src_val >> src->red_shift)   << 3) & 0xf8) |
+                                                         (((src_val >> src->red_shift)   >> 2) & 0x07),
+                                                         (((src_val >> src->green_shift) << 3) & 0xf8) |
+                                                         (((src_val >> src->green_shift) >> 2) & 0x07),
+                                                         (((src_val >> src->blue_shift)  << 3) & 0xf8) |
+                                                         (((src_val >> src->blue_shift)  >> 2) & 0x07) );
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride;
@@ -2545,13 +2551,13 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = rgb_to_pixel_colortable(dst,
-                                                           (((src_val >> src->red_shift)   << 3) & 0xf8) |
-                                                           (((src_val >> src->red_shift)   >> 2) & 0x07),
-                                                           (((src_val >> src->green_shift) << 2) & 0xfc) |
-                                                           (((src_val >> src->green_shift) >> 4) & 0x03),
-                                                           (((src_val >> src->blue_shift)  << 3) & 0xf8) |
-                                                           (((src_val >> src->blue_shift)  >> 2) & 0x07) );
+                    *dst_pixel++ = rgb_lookup_colortable(dst,
+                                                         (((src_val >> src->red_shift)   << 3) & 0xf8) |
+                                                         (((src_val >> src->red_shift)   >> 2) & 0x07),
+                                                         (((src_val >> src->green_shift) << 2) & 0xfc) |
+                                                         (((src_val >> src->green_shift) >> 4) & 0x03),
+                                                         (((src_val >> src->blue_shift)  << 3) & 0xf8) |
+                                                         (((src_val >> src->blue_shift)  >> 2) & 0x07) );
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride;
@@ -2567,10 +2573,10 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = rgb_to_pixel_colortable(dst,
-                                                           get_field(src_val, src->red_shift, src->red_len),
-                                                           get_field(src_val, src->green_shift, src->green_len),
-                                                           get_field(src_val, src->blue_shift, src->blue_len));
+                    *dst_pixel++ = rgb_lookup_colortable(dst,
+                                                         get_field(src_val, src->red_shift, src->red_len),
+                                                         get_field(src_val, src->green_shift, src->green_len),
+                                                         get_field(src_val, src->blue_shift, src->blue_len));
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride;
