@@ -838,7 +838,7 @@
 @ stub _mbsupr_l
 @ cdecl _mbsupr_s(str long) msvcrt._mbsupr_s
 @ stub _mbsupr_s_l
-@ stub _mbtowc_l
+@ cdecl _mbtowc_l(ptr str long ptr) msvcrt._mbtowc_l
 @ cdecl _memccpy(ptr ptr long long) msvcrt._memccpy
 @ cdecl _memicmp(str str long) msvcrt._memicmp
 @ stub _memicmp_l
