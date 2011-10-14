@@ -102,6 +102,8 @@ typedef struct dibdrv_physdev
 
 extern BOOL     dibdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
                                    PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION blend ) DECLSPEC_HIDDEN;
+extern DWORD    dibdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_bits *bits,
+                                   struct bitblt_coords *src, struct bitblt_coords *dst, BLENDFUNCTION func ) DECLSPEC_HIDDEN;
 extern DWORD    dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
                                  struct gdi_image_bits *bits, struct bitblt_coords *src ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_LineTo( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
@@ -140,6 +142,8 @@ typedef struct primitive_funcs
                                     const dib_info *brush, void *and_bits, void *xor_bits);
     void              (* copy_rect)(const dib_info *dst, const RECT *rc, const dib_info *src,
                                     const POINT *origin, int rop2, int overlap);
+    void             (* blend_rect)(const dib_info *dst, const RECT *rc, const dib_info *src,
+                                    const POINT *origin, BLENDFUNCTION blend);
     DWORD     (* colorref_to_pixel)(const dib_info *dib, COLORREF color);
     void             (* convert_to)(dib_info *dst, const dib_info *src, const RECT *src_rect);
     BOOL       (* create_rop_masks)(const dib_info *dib, const dib_info *hatch,

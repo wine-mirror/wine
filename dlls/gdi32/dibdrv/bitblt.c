@@ -572,6 +572,35 @@ static DWORD copy_rect( dib_info *dst, const RECT *dst_rect, const dib_info *src
     return ERROR_SUCCESS;
 }
 
+static DWORD blend_rect( dib_info *dst, const RECT *dst_rect, const dib_info *src, const RECT *src_rect,
+                         HRGN clip, BLENDFUNCTION blend )
+{
+    POINT origin;
+    RECT clipped_rect;
+    const WINEREGION *clip_data;
+    int i;
+
+    origin.x = src_rect->left;
+    origin.y = src_rect->top;
+
+    if (clip == NULL) dst->funcs->blend_rect( dst, dst_rect, src, &origin, blend );
+    else
+    {
+        clip_data = get_wine_region( clip );
+        for (i = 0; i < clip_data->numRects; i++)
+        {
+            if (intersect_rect( &clipped_rect, dst_rect, clip_data->rects + i ))
+            {
+                origin.x = src_rect->left + clipped_rect.left - dst_rect->left;
+                origin.y = src_rect->top  + clipped_rect.top  - dst_rect->top;
+                dst->funcs->blend_rect( dst, &clipped_rect, src, &origin, blend );
+            }
+        }
+        release_wine_region( clip );
+    }
+    return ERROR_SUCCESS;
+}
+
 static DWORD copy_src_bits( dib_info *src, RECT *src_rect )
 {
     int y, stride = get_dib_stride( src->width, src->bit_count );
@@ -904,6 +933,49 @@ done:
     }
 
     return ret;
+}
+
+/***********************************************************************
+ *           dibdrv_BlendImage
+ */
+DWORD dibdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_bits *bits,
+                         struct bitblt_coords *src, struct bitblt_coords *dst, BLENDFUNCTION blend )
+{
+    dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
+    dib_info src_dib;
+    DWORD ret;
+
+    TRACE( "%p %p\n", dev, info );
+
+    if (info->bmiHeader.biPlanes != 1) goto update_format;
+    if (info->bmiHeader.biBitCount != 32) goto update_format;
+    if (info->bmiHeader.biCompression == BI_BITFIELDS)
+    {
+        DWORD *masks = (DWORD *)info->bmiColors;
+        if (masks[0] != 0xff0000 || masks[1] != 0x00ff00 || masks[2] != 0x0000ff)
+            goto update_format;
+    }
+
+    if (!bits) return ERROR_SUCCESS;
+    if ((src->width != dst->width) || (src->height != dst->height)) return ERROR_TRANSFORM_NOT_SUPPORTED;
+
+    init_dib_info_from_bitmapinfo( &src_dib, info, bits->ptr, 0 );
+    src_dib.bits.is_copy = bits->is_copy;
+
+    ret = blend_rect( &pdev->dib, &dst->visrect, &src_dib, &src->visrect, pdev->clip, blend );
+
+    free_dib_info( &src_dib );
+    return ret;
+
+update_format:
+    if (blend.AlphaFormat & AC_SRC_ALPHA)  /* source alpha requires A8R8G8B8 format */
+        return ERROR_INVALID_PARAMETER;
+
+    info->bmiHeader.biPlanes      = 1;
+    info->bmiHeader.biBitCount    = 32;
+    info->bmiHeader.biCompression = BI_RGB;
+    info->bmiHeader.biClrUsed     = 0;
+    return ERROR_BAD_FORMAT;
 }
 
 /****************************************************************************
