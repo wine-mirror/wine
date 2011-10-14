@@ -311,12 +311,6 @@ static void test_logpen(void)
             break;
         }
 
-if (pen[i].style == PS_USERSTYLE)
-{
-    todo_wine
-        ok(ext_pen.elp.elpPenStyle == pen[i].style, "expected %x, got %x\n", pen[i].style, ext_pen.elp.elpPenStyle);
-}
-else
         ok(ext_pen.elp.elpPenStyle == pen[i].style, "expected %x, got %x\n", pen[i].style, ext_pen.elp.elpPenStyle);
         ok(ext_pen.elp.elpWidth == 1, "expected 1, got %x\n", ext_pen.elp.elpWidth);
         ok(ext_pen.elp.elpColor == pen[i].ret_color, "expected %08x, got %08x\n", pen[i].ret_color, ext_pen.elp.elpColor);

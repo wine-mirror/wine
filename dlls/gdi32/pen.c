@@ -115,8 +115,6 @@ HPEN WINAPI CreatePenIndirect( const LOGPEN * pen )
 
 /***********************************************************************
  *           ExtCreatePen    (GDI32.@)
- *
- * FIXME: PS_USERSTYLE not handled
  */
 
 HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
@@ -137,13 +135,7 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
             return 0;
         }
 
-        if ((style & PS_TYPE_MASK) == PS_COSMETIC)
-        {
-            /* FIXME: PS_USERSTYLE workaround */
-            FIXME("PS_COSMETIC | PS_USERSTYLE not handled\n");
-            style = (style & ~PS_STYLE_MASK) | PS_SOLID;
-        }
-        else
+        if ((style & PS_TYPE_MASK) == PS_GEOMETRIC)
         {
             UINT i;
             BOOL has_neg = FALSE, all_zero = TRUE;
