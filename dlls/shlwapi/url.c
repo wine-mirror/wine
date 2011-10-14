@@ -1072,7 +1072,7 @@ HRESULT WINAPI UrlEscapeW(
     LPCWSTR src;
     DWORD needed = 0, ret;
     BOOL stop_escaping = FALSE;
-    WCHAR next[5], *dst = pszEscaped, *dst_ptr = NULL;
+    WCHAR next[5], *dst, *dst_ptr;
     INT len;
     PARSEDURLW parsed_url;
     DWORD int_flags;
@@ -1091,11 +1091,9 @@ HRESULT WINAPI UrlEscapeW(
 		   URL_ESCAPE_PERCENT))
         FIXME("Unimplemented flags: %08x\n", dwFlags);
 
-    if(pszUrl == pszEscaped) {
-        dst_ptr = dst = HeapAlloc(GetProcessHeap(), 0, *pcchEscaped*sizeof(WCHAR));
-        if(!dst)
-            return E_OUTOFMEMORY;
-    }
+    dst_ptr = dst = HeapAlloc(GetProcessHeap(), 0, *pcchEscaped*sizeof(WCHAR));
+    if(!dst_ptr)
+        return E_OUTOFMEMORY;
 
     /* fix up flags */
     if (dwFlags & URL_ESCAPE_SPACES_ONLY)
@@ -1213,8 +1211,7 @@ HRESULT WINAPI UrlEscapeW(
 
     if(needed < *pcchEscaped) {
         *dst = '\0';
-        if(pszUrl == pszEscaped)
-            memcpy(pszEscaped, dst-needed, (needed+1)*sizeof(WCHAR));
+        memcpy(pszEscaped, dst_ptr, (needed+1)*sizeof(WCHAR));
 
         ret = S_OK;
     } else {
@@ -1223,8 +1220,7 @@ HRESULT WINAPI UrlEscapeW(
     }
     *pcchEscaped = needed;
 
-    if(pszUrl == pszEscaped)
-        HeapFree(GetProcessHeap(), 0, dst_ptr);
+    HeapFree(GetProcessHeap(), 0, dst_ptr);
     return ret;
 }
 
