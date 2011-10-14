@@ -2873,6 +2873,7 @@ static void test_SHGetShellKey(void)
         return;
     }
 
+    size = sizeof(data);
     hres = pSKGetValueW(SHKEY_Root_HKLM, WineTestW, NULL, NULL, &data, &size);
     ok(hres == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "hres = %x\n", hres);
 
