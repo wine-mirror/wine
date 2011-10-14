@@ -1966,23 +1966,19 @@ static struct OIDToString oidMap[] = {
 
 static struct OIDToString *findSupportedOID(LPCSTR oid)
 {
-    int indexHigh = sizeof(oidMap) / sizeof(oidMap[0]) - 1, indexLow = 0, i;
-    struct OIDToString *ret = NULL;
+    int indexHigh = sizeof(oidMap) / sizeof(oidMap[0]) - 1, indexLow = 0;
 
-    for (i = (indexLow + indexHigh) / 2; !ret && indexLow <= indexHigh;
-     i = (indexLow + indexHigh) / 2)
+    while (indexLow <= indexHigh)
     {
-        int cmp;
-
-        cmp = strcmp(oid, oidMap[i].oid);
-        if (!cmp)
-            ret = &oidMap[i];
-        else if (cmp > 0)
+        int cmp, i = (indexLow + indexHigh) / 2;
+        if (!(cmp = strcmp(oid, oidMap[i].oid)))
+            return &oidMap[i];
+        if (cmp > 0)
             indexLow = i + 1;
         else
             indexHigh = i - 1;
     }
-    return ret;
+    return NULL;
 }
 
 static void add_local_oid_text_to_control(HWND text, LPCSTR oid)
