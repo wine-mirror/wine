@@ -899,6 +899,17 @@ rem no-op
 ren foo foo
 mkdir baz
 ren foo baz\abc
+echo ... rename read-only files ...
+echo > file1
+attrib +r file1
+ren file1 file2
+if not exist file1 (
+    if exist file2 (
+        echo read-only file renamed
+    )
+) else (
+    echo read-only file not renamed!
+)
 echo ... rename directories ...
 mkdir rep1
 ren rep1 rep2
