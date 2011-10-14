@@ -4,7 +4,7 @@
  * Copyright (C) 2005 Antoine Chavasse (a.chavasse@gmail.com)
  * Copyright (C) 2005 Christian Costa
  * Copyright 2005 Ivan Leo Puoti
- * Copyright (C) 2007 Stefan Dösinger
+ * Copyright (C) 2007-2009, 2011 Stefan Dösinger for CodeWeavers
  * Copyright (C) 2008 Alexander Dorofeyev
  *
  * This library is free software; you can redistribute it and/or
@@ -4528,6 +4528,184 @@ static void set_surface_desc_test(void)
     IDirectDrawSurface_Release(surface3);
 }
 
+static BOOL fourcc_supported(DWORD fourcc, DWORD caps)
+{
+    DDSURFACEDESC ddsd;
+    HRESULT hr;
+    IDirectDrawSurface *surface;
+
+    reset_ddsd(&ddsd);
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
+    ddsd.dwWidth = 4;
+    ddsd.dwHeight = 4;
+    ddsd.ddsCaps.dwCaps = caps;
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_FOURCC;
+    U4(ddsd).ddpfPixelFormat.dwFourCC = fourcc;
+    hr = IDirectDraw_CreateSurface(lpDD, &ddsd, &surface, NULL);
+    if (FAILED(hr))
+    {
+        return FALSE;
+    }
+    IDirectDrawSurface_Release(surface);
+    return TRUE;
+}
+
+static void partial_block_lock_test(void)
+{
+    IDirectDrawSurface7 *surface;
+    HRESULT hr;
+    DDSURFACEDESC2 ddsd;
+    IDirectDraw7 *dd7;
+    const struct
+    {
+        DWORD caps, caps2;
+        const char *name;
+        BOOL success;
+    }
+    pools[] =
+    {
+        {
+            DDSCAPS_VIDEOMEMORY, 0,
+            "D3DPOOL_DEFAULT", FALSE
+        },
+        {
+            DDSCAPS_SYSTEMMEMORY, 0,
+            "D3DPOOL_SYSTEMMEM", TRUE
+        },
+        {
+            0, DDSCAPS2_TEXTUREMANAGE,
+            "D3DPOOL_MANAGED", TRUE
+        }
+    };
+    const struct
+    {
+        DWORD fourcc;
+        DWORD caps;
+        const char *name;
+        unsigned int block_width;
+        unsigned int block_height;
+    }
+    formats[] =
+    {
+        {MAKEFOURCC('D','X','T','1'), DDSCAPS_TEXTURE, "D3DFMT_DXT1", 4, 4},
+        {MAKEFOURCC('D','X','T','2'), DDSCAPS_TEXTURE, "D3DFMT_DXT2", 4, 4},
+        {MAKEFOURCC('D','X','T','3'), DDSCAPS_TEXTURE, "D3DFMT_DXT3", 4, 4},
+        {MAKEFOURCC('D','X','T','4'), DDSCAPS_TEXTURE, "D3DFMT_DXT4", 4, 4},
+        {MAKEFOURCC('D','X','T','5'), DDSCAPS_TEXTURE, "D3DFMT_DXT5", 4, 4},
+        /* ATI2N surfaces aren't available in ddraw */
+        {MAKEFOURCC('U','Y','V','Y'), DDSCAPS_OVERLAY, "D3DFMT_UYVY", 2, 1},
+        {MAKEFOURCC('Y','U','Y','2'), DDSCAPS_OVERLAY, "D3DFMT_YUY2", 2, 1},
+    };
+    unsigned int i, j;
+    RECT rect;
+
+    hr = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw7, (void **) &dd7);
+    ok(SUCCEEDED(hr), "QueryInterface failed, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(formats) / sizeof(formats[0]); i++)
+    {
+        if (!fourcc_supported(formats[i].fourcc, formats[i].caps | DDSCAPS_VIDEOMEMORY))
+        {
+            skip("%s surfaces not supported, skipping partial block lock test\n", formats[i].name);
+            continue;
+        }
+
+        for (j = 0; j < (sizeof(pools) / sizeof(*pools)); j++)
+        {
+            if (formats[i].caps & DDSCAPS_OVERLAY && !(pools[j].caps & DDSCAPS_VIDEOMEMORY))
+                continue;
+
+            memset(&ddsd, 0, sizeof(ddsd));
+            ddsd.dwSize = sizeof(ddsd);
+            ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
+            ddsd.dwWidth = 128;
+            ddsd.dwHeight = 128;
+            ddsd.ddsCaps.dwCaps = pools[j].caps | formats[i].caps;
+            ddsd.ddsCaps.dwCaps2 = pools[j].caps2;
+            U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_FOURCC;
+            U4(ddsd).ddpfPixelFormat.dwFourCC = formats[i].fourcc;
+            hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface, NULL);
+            ok(SUCCEEDED(hr), "CreateSurface failed, hr %#x, format %s, pool %s\n",
+                hr, formats[i].name, pools[j].name);
+
+            /* All Windows versions allow partial block locks with DDSCAPS_SYSTEMMEMORY and
+             * DDSCAPS2_TEXTUREMANAGE, just like in d3d8 and d3d9. Windows XP also allows those locks
+             * with DDSCAPS_VIDEOMEMORY. Windows Vista and Windows 7 disallow partial locks of vidmem
+             * surfaces, making the ddraw behavior consistent with d3d8 and 9.
+             *
+             * Mark the Windows XP behavior as broken until we find an application that needs it */
+            if (formats[i].block_width > 1)
+            {
+                SetRect(&rect, formats[i].block_width >> 1, 0, formats[i].block_width, formats[i].block_height);
+                hr = IDirectDrawSurface7_Lock(surface, &rect, &ddsd, 0, NULL);
+                ok(!SUCCEEDED(hr) == !pools[j].success || broken(SUCCEEDED(hr)),
+                        "Partial block lock %s, expected %s, format %s, pool %s\n",
+                        SUCCEEDED(hr) ? "succeeded" : "failed", pools[j].success ? "success" : "failure",
+                        formats[i].name, pools[j].name);
+                if (SUCCEEDED(hr))
+                {
+                    hr = IDirectDrawSurface7_Unlock(surface, NULL);
+                    ok(SUCCEEDED(hr), "Unlock failed, hr %#x.\n", hr);
+                }
+
+                SetRect(&rect, 0, 0, formats[i].block_width >> 1, formats[i].block_height);
+                hr = IDirectDrawSurface7_Lock(surface, &rect, &ddsd, 0, NULL);
+                ok(!SUCCEEDED(hr) == !pools[j].success || broken(SUCCEEDED(hr)),
+                        "Partial block lock %s, expected %s, format %s, pool %s\n",
+                        SUCCEEDED(hr) ? "succeeded" : "failed", pools[j].success ? "success" : "failure",
+                        formats[i].name, pools[j].name);
+                if (SUCCEEDED(hr))
+                {
+                    hr = IDirectDrawSurface7_Unlock(surface, NULL);
+                    ok(SUCCEEDED(hr), "Unlock failed, hr %#x.\n", hr);
+                }
+            }
+
+            if (formats[i].block_height > 1)
+            {
+                SetRect(&rect, 0, formats[i].block_height >> 1, formats[i].block_width, formats[i].block_height);
+                hr = IDirectDrawSurface7_Lock(surface, &rect, &ddsd, 0, NULL);
+                ok(!SUCCEEDED(hr) == !pools[j].success || broken(SUCCEEDED(hr)),
+                        "Partial block lock %s, expected %s, format %s, pool %s\n",
+                        SUCCEEDED(hr) ? "succeeded" : "failed", pools[j].success ? "success" : "failure",
+                        formats[i].name, pools[j].name);
+                if (SUCCEEDED(hr))
+                {
+                    hr = IDirectDrawSurface7_Unlock(surface, NULL);
+                    ok(SUCCEEDED(hr), "Unlock failed, hr %#x.\n", hr);
+                }
+
+                SetRect(&rect, 0, 0, formats[i].block_width, formats[i].block_height >> 1);
+                hr = IDirectDrawSurface7_Lock(surface, &rect, &ddsd, 0, NULL);
+                ok(!SUCCEEDED(hr) == !pools[j].success || broken(SUCCEEDED(hr)),
+                        "Partial block lock %s, expected %s, format %s, pool %s\n",
+                        SUCCEEDED(hr) ? "succeeded" : "failed", pools[j].success ? "success" : "failure",
+                        formats[i].name, pools[j].name);
+                if (SUCCEEDED(hr))
+                {
+                    hr = IDirectDrawSurface7_Unlock(surface, NULL);
+                    ok(SUCCEEDED(hr), "Unlock failed, hr %#x.\n", hr);
+                }
+            }
+
+            SetRect(&rect, 0, 0, formats[i].block_width, formats[i].block_height);
+            hr = IDirectDrawSurface7_Lock(surface, &rect, &ddsd, 0, NULL);
+            ok(SUCCEEDED(hr), "Full block lock returned %08x, expected %08x, format %s, pool %s\n",
+                    hr, DD_OK, formats[i].name, pools[j].name);
+            if (SUCCEEDED(hr))
+            {
+                hr = IDirectDrawSurface7_Unlock(surface, NULL);
+                ok(SUCCEEDED(hr), "Unlock failed, hr %#x.\n", hr);
+            }
+
+            IDirectDrawSurface7_Release(surface);
+        }
+    }
+
+    IDirectDraw7_Release(dd7);
+}
+
 START_TEST(dsurface)
 {
     HRESULT ret;
@@ -4588,5 +4766,6 @@ START_TEST(dsurface)
     zbufferbitdepth_test();
     pixelformat_flag_test();
     set_surface_desc_test();
+    partial_block_lock_test();
     ReleaseDirectDraw();
 }
