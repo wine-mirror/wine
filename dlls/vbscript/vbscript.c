@@ -110,12 +110,9 @@ static HRESULT set_ctx_site(VBScript *This)
     return S_OK;
 }
 
-static void destroy_script(script_ctx_t *ctx)
+static void release_script(script_ctx_t *ctx)
 {
     collect_objects(ctx);
-
-    while(!list_empty(&ctx->code_list))
-        release_vbscode(LIST_ENTRY(list_head(&ctx->code_list), vbscode_t, entry));
 
     while(!list_empty(&ctx->named_items)) {
         named_item_t *iter = LIST_ENTRY(list_head(&ctx->named_items), named_item_t, entry);
@@ -127,19 +124,46 @@ static void destroy_script(script_ctx_t *ctx)
         heap_free(iter);
     }
 
-    if(ctx->host_global)
+    if(ctx->host_global) {
         IDispatch_Release(ctx->host_global);
-    if(ctx->secmgr)
+        ctx->host_global = NULL;
+    }
+
+    if(ctx->secmgr) {
         IInternetHostSecurityManager_Release(ctx->secmgr);
-    if(ctx->site)
+        ctx->secmgr = NULL;
+    }
+
+    if(ctx->site) {
         IActiveScriptSite_Release(ctx->site);
-    if(ctx->err_obj)
+        ctx->site = NULL;
+    }
+
+    if(ctx->err_obj) {
         IDispatchEx_Release(&ctx->err_obj->IDispatchEx_iface);
-    if(ctx->global_obj)
+        ctx->err_obj = NULL;
+    }
+
+    if(ctx->global_obj) {
         IDispatchEx_Release(&ctx->global_obj->IDispatchEx_iface);
-    if(ctx->script_obj)
+        ctx->global_obj = NULL;
+    }
+
+    if(ctx->script_obj) {
         IDispatchEx_Release(&ctx->script_obj->IDispatchEx_iface);
+        ctx->script_obj = NULL;
+    }
+
     vbsheap_free(&ctx->heap);
+    vbsheap_init(&ctx->heap);
+}
+
+static void destroy_script(script_ctx_t *ctx)
+{
+    while(!list_empty(&ctx->code_list))
+        release_vbscode(LIST_ENTRY(list_head(&ctx->code_list), vbscode_t, entry));
+
+    release_script(ctx);
     heap_free(ctx);
 }
 
@@ -167,13 +191,12 @@ static void decrease_state(VBScript *This, SCRIPTSTATE state)
             This->site = NULL;
         }
 
+        if(This->ctx)
+            release_script(This->ctx);
+
         This->thread_id = 0;
-
-        if(state == SCRIPTSTATE_CLOSED) {
-            destroy_script(This->ctx);
-            This->ctx = NULL;
-        }
-
+        break;
+    case SCRIPTSTATE_CLOSED:
         break;
     default:
         assert(0);
@@ -229,6 +252,11 @@ static ULONG WINAPI VBScript_Release(IActiveScript *iface)
     TRACE("(%p) ref=%d\n", iface, ref);
 
     if(!ref) {
+        if(This->ctx) {
+            decrease_state(This, SCRIPTSTATE_CLOSED);
+            destroy_script(This->ctx);
+            This->ctx = NULL;
+        }
         if(This->site)
             IActiveScriptSite_Release(This->site);
         heap_free(This);
@@ -413,7 +441,7 @@ static HRESULT WINAPI VBScript_GetScriptDispatch(IActiveScript *iface, LPCOLESTR
     if(!ppdisp)
         return E_POINTER;
 
-    if(This->thread_id != GetCurrentThreadId() || !This->ctx->script_obj) {
+    if(This->thread_id != GetCurrentThreadId() || !This->ctx || !This->ctx->script_obj) {
         *ppdisp = NULL;
         return E_UNEXPECTED;
     }
