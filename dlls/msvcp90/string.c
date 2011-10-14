@@ -1310,6 +1310,30 @@ MSVCP_bool __cdecl MSVCP_basic_string_char_leq_cstr_bstr(
     return MSVCP_basic_string_char_compare_cstr(right, left) >= 0;
 }
 
+/* ??$?ODU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
+/* ??$?ODU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z */
+MSVCP_bool __cdecl MSVCP_basic_string_char_greater(
+        const basic_string_char *left, const basic_string_char *right)
+{
+    return MSVCP_basic_string_char_compare(left, right) > 0;
+}
+
+/* ??$?ODU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PBD@Z */
+/* ??$?ODU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PEBD@Z */
+MSVCP_bool __cdecl MSVCP_basic_string_char_greater_bstr_cstr(
+        const basic_string_char *left, const char *right)
+{
+    return MSVCP_basic_string_char_compare_cstr(left, right) > 0;
+}
+
+/* ??$?ODU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPBDABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
+/* ??$?ODU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NPEBDAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@@Z */
+MSVCP_bool __cdecl MSVCP_basic_string_char_greater_cstr_bstr(
+        const char *left, const basic_string_char *right)
+{
+    return MSVCP_basic_string_char_compare_cstr(right, left) < 0;
+}
+
 /* ?find@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDII@Z */
 /* ?find@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K1@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_find_cstr_substr, 16)
@@ -2605,6 +2629,30 @@ MSVCP_bool __cdecl MSVCP_basic_string_wchar_leq_cstr_bstr(
         const wchar_t *left, const basic_string_wchar *right)
 {
     return MSVCP_basic_string_wchar_compare_cstr(right, left) >= 0;
+}
+
+/* ??$?O_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@0@Z */
+/* ??$?O_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@0@Z */
+MSVCP_bool __cdecl MSVCP_basic_string_wchar_greater(
+        const basic_string_wchar *left, const basic_string_wchar *right)
+{
+    return MSVCP_basic_string_wchar_compare(left, right) > 0;
+}
+
+/* ??$?O_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PB_W@Z */
+/* ??$?O_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PEB_W@Z */
+MSVCP_bool __cdecl MSVCP_basic_string_wchar_greater_bstr_cstr(
+        const basic_string_wchar *left, const wchar_t *right)
+{
+    return MSVCP_basic_string_wchar_compare_cstr(left, right) > 0;
+}
+
+/* ??$?O_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NPB_WABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z */
+/* ??$?O_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NPEB_WAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z */
+MSVCP_bool __cdecl MSVCP_basic_string_wchar_greater_cstr_bstr(
+        const wchar_t *left, const basic_string_wchar *right)
+{
+    return MSVCP_basic_string_wchar_compare_cstr(right, left) < 0;
 }
 
 /* ?find@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WII@Z */
