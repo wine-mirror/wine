@@ -74,6 +74,7 @@ DEFINE_EXPECT(testobj_propput_i);
 #define DISPID_GLOBAL_TESTOBJ       1006
 #define DISPID_GLOBAL_ISNULLDISP    1007
 #define DISPID_GLOBAL_TESTDISP      1008
+#define DISPID_GLOBAL_REFOBJ        1009
 
 #define DISPID_TESTOBJ_PROPGET      2000
 #define DISPID_TESTOBJ_PROPPUT      2001
@@ -342,6 +343,7 @@ static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid,
     else
         return E_NOINTERFACE;
 
+    IUnknown_AddRef((IUnknown*)*ppv);
     return S_OK;
 }
 
@@ -415,6 +417,19 @@ static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex,
 }
 
 static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown **ppunk)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
@@ -500,6 +515,38 @@ static IDispatchExVtbl testObjVtbl = {
 
 static IDispatchEx testObj = { &testObjVtbl };
 
+static ULONG refobj_ref;
+
+static ULONG WINAPI RefObj_AddRef(IDispatchEx *iface)
+{
+    return ++refobj_ref;
+}
+
+static ULONG WINAPI RefObj_Release(IDispatchEx *iface)
+{
+    return --refobj_ref;
+}
+
+static IDispatchExVtbl RefObjVtbl = {
+    DispatchEx_QueryInterface,
+    RefObj_AddRef,
+    RefObj_Release,
+    DispatchEx_GetTypeInfoCount,
+    DispatchEx_GetTypeInfo,
+    DispatchEx_GetIDsOfNames,
+    DispatchEx_Invoke,
+    DispatchEx_GetDispID,
+    DispatchEx_InvokeEx,
+    DispatchEx_DeleteMemberByName,
+    DispatchEx_DeleteMemberByDispID,
+    DispatchEx_GetMemberProperties,
+    DispatchEx_GetMemberName,
+    DispatchEx_GetNextDispID,
+    DispatchEx_GetNameSpaceParent
+};
+
+static IDispatchEx RefObj = { &RefObjVtbl };
+
 static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     if(!strcmp_wa(bstrName, "ok")) {
@@ -547,6 +594,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
     if(!strcmp_wa(bstrName, "testDisp")) {
         test_grfdex(grfdex, fdexNameCaseInsensitive);
         *pid = DISPID_GLOBAL_TESTDISP;
+        return S_OK;
+    }
+    if(!strcmp_wa(bstrName, "RefObj")) {
+        test_grfdex(grfdex, fdexNameCaseInsensitive);
+        *pid = DISPID_GLOBAL_REFOBJ;
         return S_OK;
     }
 
@@ -677,6 +729,22 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
         V_VT(pvarRes) = VT_DISPATCH;
         V_DISPATCH(pvarRes) = (IDispatch*)&testObj;
+        return S_OK;
+
+    case DISPID_GLOBAL_REFOBJ:
+        ok(wFlags == (DISPATCH_PROPERTYGET|DISPATCH_METHOD), "wFlags = %x\n", wFlags);
+
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgvarg, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        IDispatchEx_AddRef(&RefObj);
+        V_VT(pvarRes) = VT_DISPATCH;
+        V_DISPATCH(pvarRes) = (IDispatch*)&RefObj;
         return S_OK;
 
     case DISPID_GLOBAL_ISNULLDISP: {
@@ -850,6 +918,7 @@ static HRESULT parse_script(DWORD flags, BSTR script_str)
     IActiveScriptParse *parser;
     IActiveScript *engine;
     IDispatch *script_disp;
+    LONG ref;
     HRESULT hres;
 
     engine = create_script();
@@ -888,8 +957,9 @@ static HRESULT parse_script(DWORD flags, BSTR script_str)
 
     IDispatch_Release(script_disp);
     IActiveScript_Release(engine);
-    IUnknown_Release(parser);
 
+    ref = IUnknown_Release(parser);
+    ok(!ref, "ref=%d\n", ref);
     return hres;
 }
 
@@ -962,6 +1032,63 @@ static void test_gc(void)
 
     IActiveScript_Release(engine);
     IUnknown_Release(parser);
+}
+
+static HRESULT test_global_vars_ref(BOOL use_close)
+{
+    IActiveScriptParse *parser;
+    IActiveScript *engine;
+    BSTR script_str;
+    LONG ref;
+    HRESULT hres;
+
+    engine = create_script();
+    if(!engine)
+        return S_OK;
+
+    hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+    if (FAILED(hres))
+    {
+        IActiveScript_Release(engine);
+        return hres;
+    }
+
+    hres = IActiveScriptParse64_InitNew(parser);
+    ok(hres == S_OK, "InitNew failed: %08x\n", hres);
+
+    hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+
+    hres = IActiveScript_AddNamedItem(engine, testW, SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS);
+    ok(hres == S_OK, "AddNamedItem failed: %08x\n", hres);
+
+    hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
+
+    refobj_ref = 0;
+
+    script_str = a2bstr("Dim x\nset x = RefObj\n");
+    hres = IActiveScriptParse64_ParseScriptText(parser, script_str, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+    SysFreeString(script_str);
+
+    ok(refobj_ref, "refobj_ref = 0\n");
+
+    if(use_close) {
+        hres = IActiveScript_Close(engine);
+        ok(hres == S_OK, "Close failed: %08x\n", hres);
+    }else {
+        hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_UNINITIALIZED);
+        ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08x\n", hres);
+    }
+
+    ok(!refobj_ref, "refobj_ref = %d\n", refobj_ref);
+
+    IActiveScript_Release(engine);
+
+    ref = IUnknown_Release(parser);
+    ok(!ref, "ref=%d\n", ref);
+    return hres;
 }
 
 static BSTR get_script_from_file(const char *filename)
@@ -1098,6 +1225,9 @@ static void run_tests(void)
     CHECK_CALLED(testobj_propput_i);
 
     parse_script_a("x = 1\n Call ok(x = 1, \"x = \" & x)");
+
+    test_global_vars_ref(TRUE);
+    test_global_vars_ref(FALSE);
 
     strict_dispid_check = FALSE;
 
