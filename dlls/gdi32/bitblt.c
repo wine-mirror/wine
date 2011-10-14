@@ -774,6 +774,14 @@ BOOL WINAPI GdiAlphaBlend(HDC hdcDst, int xDst, int yDst, int widthDst, int heig
             SetLastError( ERROR_INVALID_PARAMETER );
             ret = FALSE;
         }
+        else if (dcSrc == dcDst && src.x + src.width > dst.x && src.x < dst.x + dst.width &&
+                 src.y + src.height > dst.y && src.y < dst.y + dst.height)
+        {
+            WARN( "Overlapping coords: (%d,%d), %dx%d and (%d,%d), %dx%d\n",
+                  src.x, src.y, src.width, src.height, dst.x, dst.y, dst.width, dst.height );
+            SetLastError( ERROR_INVALID_PARAMETER );
+            ret = FALSE;
+        }
         else if (!ret) ret = dst_dev->funcs->pAlphaBlend( dst_dev, &dst, src_dev, &src, blendFunction );
 
         release_dc_ptr( dcDst );

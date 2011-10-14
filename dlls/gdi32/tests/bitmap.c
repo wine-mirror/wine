@@ -3279,6 +3279,25 @@ static void test_GdiAlphaBlend(void)
     ok( !ret, "GdiAlphaBlend succeeded\n" );
     ok( GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError() );
 
+    /* overlapping source and dest not allowed */
+
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcDst, 19, 19, 20, 20, blend);
+    ok( !ret, "GdiAlphaBlend succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 20, 20, 20, 20, hdcDst, 1, 1, 20, 20, blend);
+    ok( !ret, "GdiAlphaBlend succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcDst, 20, 10, 20, 20, blend);
+    ok( ret, "GdiAlphaBlend succeeded\n" );
+    SetLastError(0xdeadbeef);
+    ret = pGdiAlphaBlend(hdcDst, 0, 0, 20, 20, hdcDst, 10, 20, 20, 20, blend);
+    ok( ret, "GdiAlphaBlend succeeded\n" );
+
     /* AC_SRC_ALPHA requires 32-bpp BI_RGB format */
 
     blend.AlphaFormat = AC_SRC_ALPHA;
