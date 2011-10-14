@@ -333,6 +333,8 @@ void Indic_ReorderCharacters( HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, L
         while((next < cChar) && lex(input[next]) == lex_Generic)
             next++;
         index = next;
+        if (next >= cChar)
+            break;
         next = Indic_process_next_syllable(input, cChar, 0, &center, index, lex);
         if (next != -1)
         {
