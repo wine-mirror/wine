@@ -1,5 +1,6 @@
 /*
  * Copyright 2006-2007 Henri Verbeet
+ * Copyright 2011 Stefan Dösinger for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -411,6 +412,77 @@ static void test_surface_format_null(IDirect3DDevice8 *device)
     IDirect3DTexture8_Release(texture);
 }
 
+static void test_surface_double_unlock(IDirect3DDevice8 *device)
+{
+    static  struct
+    {
+        D3DPOOL pool;
+        const char *name;
+    }
+    pools[] =
+    {
+        { D3DPOOL_DEFAULT,      "D3DPOOL_DEFAULT"   },
+        { D3DPOOL_SYSTEMMEM,    "D3DPOOL_SYSTEMMEM" },
+    };
+    IDirect3DSurface8 *surface;
+    unsigned int i;
+    HRESULT hr;
+    D3DLOCKED_RECT lr;
+    IDirect3D8 *d3d;
+
+    hr = IDirect3DDevice8_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "IDirect3DDevice8_GetDirect3D failed, hr = 0x%08x\n", hr);
+
+    for (i = 0; i < (sizeof(pools) / sizeof(*pools)); i++)
+    {
+        switch (pools[i].pool)
+        {
+            case D3DPOOL_DEFAULT:
+                hr = IDirect3D8_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_RENDERTARGET,
+                        D3DRTYPE_SURFACE, D3DFMT_X8R8G8B8);
+                if (FAILED(hr))
+                {
+                    skip("D3DFMT_X8R8G8B8 render targets not supported, skipping double unlock DEFAULT pool test\n");
+                    continue;
+                }
+
+                hr = IDirect3DDevice8_CreateRenderTarget(device, 64, 64, D3DFMT_X8R8G8B8,
+                        D3DMULTISAMPLE_NONE, TRUE, &surface);
+                ok(SUCCEEDED(hr), "IDirect3DDevice8_CreateRenderTarget failed, hr = 0x%08x, pool %s\n",
+                        hr, pools[i].name);
+                break;
+
+            case D3DPOOL_SYSTEMMEM:
+                hr = IDirect3DDevice8_CreateImageSurface(device, 64, 64, D3DFMT_X8R8G8B8, &surface);
+                ok(SUCCEEDED(hr), "IDirect3DDevice8_CreateImageSurface failed, hr = 0x%08x, pool %s\n",
+                        hr, pools[i].name);
+                break;
+
+            default:
+                break;
+        }
+
+        hr = IDirect3DSurface8_UnlockRect(surface);
+        ok(hr == D3DERR_INVALIDCALL, "Unlock without lock returned 0x%08x, expected 0x%08x, pool %s\n",
+                hr, D3DERR_INVALIDCALL, pools[i].name);
+
+        hr = IDirect3DSurface8_LockRect(surface, &lr, NULL, 0);
+        ok(SUCCEEDED(hr), "IDirect3DSurface8_LockRect failed, hr = 0x%08x, pool %s\n",
+                hr, pools[i].name);
+        hr = IDirect3DSurface8_UnlockRect(surface);
+        ok(SUCCEEDED(hr), "IDirect3DSurface8_UnlockRect failed, hr = 0x%08x, pool %s\n",
+                hr, pools[i].name);
+
+        hr = IDirect3DSurface8_UnlockRect(surface);
+        ok(hr == D3DERR_INVALIDCALL, "Double unlock returned 0x%08x, expected 0x%08x, pool %s\n",
+                hr, D3DERR_INVALIDCALL, pools[i].name);
+
+        IDirect3DSurface8_Release(surface);
+    }
+
+    IDirect3D8_Release(d3d);
+}
+
 START_TEST(surface)
 {
     HMODULE d3d8_handle;
@@ -433,6 +505,7 @@ START_TEST(surface)
     test_private_data(device_ptr);
     test_surface_dimensions(device_ptr);
     test_surface_format_null(device_ptr);
+    test_surface_double_unlock(device_ptr);
 
     refcount = IDirect3DDevice8_Release(device_ptr);
     ok(!refcount, "Device has %u references left\n", refcount);
