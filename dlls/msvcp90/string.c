@@ -637,10 +637,8 @@ basic_string_char* __thiscall MSVCP_basic_string_char_erase(
 {
     TRACE("%p %lu %lu\n", this, pos, len);
 
-    if(pos > this->size) {
+    if(pos > this->size)
         MSVCP__String_base_Xran();
-        return NULL;
-    }
 
     if(len > this->size-pos)
         len = this->size-pos;
@@ -664,10 +662,8 @@ basic_string_char* __thiscall MSVCP_basic_string_char_assign_substr(
 {
     TRACE("%p %p %lu %lu\n", this, assign, pos, len);
 
-    if(assign->size < pos) {
+    if(assign->size < pos)
         MSVCP__String_base_Xran();
-        return NULL;
-    }
 
     if(len > assign->size-pos)
         len = assign->size-pos;
@@ -2087,10 +2083,8 @@ basic_string_wchar* __thiscall MSVCP_basic_string_wchar_erase(
 {
     TRACE("%p %lu %lu\n", this, pos, len);
 
-    if(pos > this->size) {
+    if(pos > this->size)
         MSVCP__String_base_Xran();
-        return NULL;
-    }
 
     if(len > this->size-pos)
         len = this->size-pos;
@@ -2114,10 +2108,8 @@ basic_string_wchar* __thiscall MSVCP_basic_string_wchar_assign_substr(
 {
     TRACE("%p %p %lu %lu\n", this, assign, pos, len);
 
-    if(assign->size < pos) {
+    if(assign->size < pos)
         MSVCP__String_base_Xran();
-        return NULL;
-    }
 
     if(len > assign->size-pos)
         len = assign->size-pos;
