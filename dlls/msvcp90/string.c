@@ -3418,3 +3418,43 @@ MSVCP_size_t __cdecl MSVCP_basic_string_wchar_Pdif(String_iterator_wchar i1, Str
 
     return !i1.pos ? 0 : i1.pos-i2.pos;
 }
+
+/* _String_val class */
+/* ??_F?$_String_val@DV?$allocator@D@std@@@std@@QAEXXZ */
+/* ??_F?$_String_val@DV?$allocator@D@std@@@std@@QEAAXXZ */
+/* ??_F?$_String_val@GV?$allocator@G@std@@@std@@QAEXXZ */
+/* ??_F?$_String_val@GV?$allocator@G@std@@@std@@QEAAXXZ */
+/* ??_F?$_String_val@_WV?$allocator@_W@std@@@std@@QAEXXZ */
+/* ??_F?$_String_val@_WV?$allocator@_W@std@@@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_String_val_ctor, 4)
+void* __thiscall _String_val_ctor(void *this)
+{
+    TRACE("%p\n", this);
+    return this;
+}
+
+/* ??0?$_String_val@DV?$allocator@D@std@@@std@@IAE@V?$allocator@D@1@@Z */
+/* ??0?$_String_val@DV?$allocator@D@std@@@std@@IEAA@V?$allocator@D@1@@Z */
+/* ??0?$_String_val@GV?$allocator@G@std@@@std@@IAE@V?$allocator@G@1@@Z */
+/* ??0?$_String_val@GV?$allocator@G@std@@@std@@IEAA@V?$allocator@G@1@@Z */
+/* ??0?$_String_val@_WV?$allocator@_W@std@@@std@@IAE@V?$allocator@_W@1@@Z */
+/* ??0?$_String_val@_WV?$allocator@_W@std@@@std@@IEAA@V?$allocator@_W@1@@Z */
+/* ??0?$_String_val@DV?$allocator@D@std@@@std@@QAE@ABV01@@Z */
+/* ??0?$_String_val@DV?$allocator@D@std@@@std@@QEAA@AEBV01@@Z */
+/* ??0?$_String_val@GV?$allocator@G@std@@@std@@QAE@ABV01@@Z */
+/* ??0?$_String_val@GV?$allocator@G@std@@@std@@QEAA@AEBV01@@Z */
+/* ??0?$_String_val@_WV?$allocator@_W@std@@@std@@QAE@ABV01@@Z */
+/* ??0?$_String_val@_WV?$allocator@_W@std@@@std@@QEAA@AEBV01@@Z */
+/* ??4?$_String_val@DV?$allocator@D@std@@@std@@QAEAAV01@ABV01@@Z */
+/* ??4?$_String_val@DV?$allocator@D@std@@@std@@QEAAAEAV01@AEBV01@@Z */
+/* ??4?$_String_val@GV?$allocator@G@std@@@std@@QAEAAV01@ABV01@@Z */
+/* ??4?$_String_val@GV?$allocator@G@std@@@std@@QEAAAEAV01@AEBV01@@Z */
+/* ??4?$_String_val@_WV?$allocator@_W@std@@@std@@QAEAAV01@ABV01@@Z */
+/* ??4?$_String_val@_WV?$allocator@_W@std@@@std@@QEAAAEAV01@AEBV01@@Z */
+/* ??4?$_String_val@DV?$allocator@D@std@@@std@@QAEAAV01@ABV01@@Z */
+DEFINE_THISCALL_WRAPPER(_String_val_null_ctor, 8)
+void* __thiscall _String_val_null_ctor(void *this, const void *misc)
+{
+    TRACE("%p %p\n", this, misc);
+    return this;
+}
