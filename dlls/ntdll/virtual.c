@@ -187,8 +187,8 @@ static int VIRTUAL_GetUnixProt( BYTE vprot )
     if ((vprot & VPROT_COMMITTED) && !(vprot & VPROT_GUARD))
     {
         if (vprot & VPROT_READ) prot |= PROT_READ;
-        if (vprot & VPROT_WRITE) prot |= PROT_WRITE;
-        if (vprot & VPROT_WRITECOPY) prot |= PROT_WRITE;
+        if (vprot & VPROT_WRITE) prot |= PROT_WRITE | PROT_READ;
+        if (vprot & VPROT_WRITECOPY) prot |= PROT_WRITE | PROT_READ;
         if (vprot & VPROT_EXEC) prot |= PROT_EXEC | PROT_READ;
         if (vprot & VPROT_WRITEWATCH) prot &= ~PROT_WRITE;
     }
@@ -1345,9 +1345,9 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
         if (sec->Characteristics & IMAGE_SCN_MEM_WRITE)
         {
             if (sec->Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA)
-                vprot |= VPROT_READ | VPROT_WRITE;
+                vprot |= VPROT_WRITE;
             else
-                vprot |= VPROT_READ | VPROT_WRITECOPY;
+                vprot |= VPROT_WRITECOPY;
         }
 
         /* Dumb game crack lets the AOEP point into a data section. Adjust. */
