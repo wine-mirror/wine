@@ -791,10 +791,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_Acquire(LPDIRECTINPUTDEVICE8W iface)
     res = This->acquired ? S_FALSE : DI_OK;
     This->acquired = 1;
     if (res == DI_OK)
-    {
-        This->queue_head = This->queue_tail = This->overflow = 0;
         check_dinput_hooks(iface);
-    }
     LeaveCriticalSection(&This->crit);
 
     return res;

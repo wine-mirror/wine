@@ -72,6 +72,9 @@ static void test_acquire(LPDIRECTINPUT pDI, HWND hwnd)
     LPDIRECTINPUTDEVICE pMouse = NULL;
     DIMOUSESTATE m_state;
     HWND hwnd2;
+    DIPROPDWORD di_op;
+    DIDEVICEOBJECTDATA mouse_state;
+    DWORD cnt;
 
     if (! SetForegroundWindow(hwnd))
     {
@@ -85,6 +88,14 @@ static void test_acquire(LPDIRECTINPUT pDI, HWND hwnd)
 
     hr = IDirectInputDevice_SetCooperativeLevel(pMouse, hwnd, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND);
     ok(hr == S_OK, "SetCooperativeLevel: %08x\n", hr);
+
+    memset(&di_op, 0, sizeof(di_op));
+    di_op.dwData = 20;
+    di_op.diph.dwHow = DIPH_DEVICE;
+    di_op.diph.dwSize = sizeof(DIPROPDWORD);
+    di_op.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+    hr = IDirectInputDevice_SetProperty(pMouse, DIPROP_BUFFERSIZE, (LPCDIPROPHEADER)&di_op);
+    ok(hr == S_OK, "SetProperty() failed: %08x\n", hr);
 
     hr = IDirectInputDevice_SetDataFormat(pMouse, &c_dfDIMouse);
     ok(SUCCEEDED(hr), "IDirectInputDevice_SetDataFormat() failed: %08x\n", hr);
@@ -112,6 +123,25 @@ static void test_acquire(LPDIRECTINPUT pDI, HWND hwnd)
     SetActiveWindow( hwnd );
     hr = IDirectInputDevice_Acquire(pMouse);
     ok(hr == S_OK, "Acquire() failed: %08x\n", hr);
+
+    mouse_event(MOUSEEVENTF_MOVE, 10, 10, 0, 0);
+    cnt = 1;
+    hr = IDirectInputDevice_GetDeviceData(pMouse, sizeof(mouse_state), &mouse_state, &cnt, 0);
+    ok(hr == S_OK && cnt > 0, "GetDeviceData() failed: %08x cnt:%d\n", hr, cnt);
+
+    mouse_event(MOUSEEVENTF_MOVE, 10, 10, 0, 0);
+    IDirectInputDevice_Unacquire(pMouse);
+    cnt = 1;
+    hr = IDirectInputDevice_GetDeviceData(pMouse, sizeof(mouse_state), &mouse_state, &cnt, 0);
+    ok(hr == S_OK && cnt > 0, "GetDeviceData() failed: %08x cnt:%d\n", hr, cnt);
+
+    IDirectInputDevice_Acquire(pMouse);
+    mouse_event(MOUSEEVENTF_MOVE, 10, 10, 0, 0);
+    IDirectInputDevice_Unacquire(pMouse);
+    IDirectInputDevice_Acquire(pMouse);
+    cnt = 1;
+    hr = IDirectInputDevice_GetDeviceData(pMouse, sizeof(mouse_state), &mouse_state, &cnt, 0);
+    ok(hr == S_OK && cnt > 0, "GetDeviceData() failed: %08x cnt:%d\n", hr, cnt);
 
     if (pMouse) IUnknown_Release(pMouse);
 
