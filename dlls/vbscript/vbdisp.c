@@ -495,10 +495,14 @@ void collect_objects(script_ctx_t *ctx)
     LIST_FOR_EACH_ENTRY_SAFE(iter, iter2, &ctx->objects, vbdisp_t, entry)
         run_terminator(iter);
 
-    LIST_FOR_EACH_ENTRY_SAFE(iter, iter2, &ctx->objects, vbdisp_t, entry) {
+    while(!list_empty(&ctx->objects)) {
+        iter = LIST_ENTRY(list_head(&ctx->objects), vbdisp_t, entry);
+
         IDispatchEx_AddRef(&iter->IDispatchEx_iface);
         clean_props(iter);
         iter->desc = NULL;
+        list_remove(&iter->entry);
+        list_init(&iter->entry);
         IDispatchEx_Release(&iter->IDispatchEx_iface);
     }
 }
