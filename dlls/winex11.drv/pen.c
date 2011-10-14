@@ -42,11 +42,11 @@ HPEN X11DRV_SelectPen( PHYSDEV dev, HPEN hpen )
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     LOGPEN logpen;
     int i;
+    EXTLOGPEN *elp = NULL;
 
     if (!GetObjectW( hpen, sizeof(logpen), &logpen ))
     {
         /* must be an extended pen */
-        EXTLOGPEN *elp;
         INT size = GetObjectW( hpen, 0, NULL );
 
         if (!size) return 0;
@@ -55,13 +55,10 @@ HPEN X11DRV_SelectPen( PHYSDEV dev, HPEN hpen )
         elp = HeapAlloc( GetProcessHeap(), 0, size );
 
         GetObjectW( hpen, size, elp );
-        /* FIXME: add support for user style pens */
         logpen.lopnStyle = elp->elpPenStyle;
         logpen.lopnWidth.x = elp->elpWidth;
         logpen.lopnWidth.y = 0;
         logpen.lopnColor = elp->elpColor;
-
-        HeapFree( GetProcessHeap(), 0, elp );
     }
     else
         physDev->pen.ext = 0;
@@ -109,8 +106,10 @@ HPEN X11DRV_SelectPen( PHYSDEV dev, HPEN hpen )
             memcpy(physDev->pen.dashes, PEN_alternate, physDev->pen.dash_len);
             break;
       case PS_USERSTYLE:
-        FIXME("PS_USERSTYLE is not supported\n");
-        /* fall through */
+            physDev->pen.dash_len = min(elp->elpNumEntries, MAX_DASHLEN);
+            for(i = 0; i < physDev->pen.dash_len ; i++)
+                physDev->pen.dashes[i] = min(elp->elpStyleEntry[i], 255);
+            break;
       default:
         physDev->pen.dash_len = 0;
         break;
@@ -119,6 +118,8 @@ HPEN X11DRV_SelectPen( PHYSDEV dev, HPEN hpen )
         (logpen.lopnStyle & PS_STYLE_MASK) != PS_ALTERNATE)
         for(i = 0; i < physDev->pen.dash_len; i++)
             physDev->pen.dashes[i] *= (physDev->pen.width ? physDev->pen.width : 1);
+
+    HeapFree( GetProcessHeap(), 0, elp );
 
     return hpen;
 }
