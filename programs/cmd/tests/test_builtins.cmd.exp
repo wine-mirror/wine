@@ -601,6 +601,9 @@ bar renamed to foo
 ... name collision ...
 foo
 bar
+... rename directories ...
+dir renamed
+read-only dir renamed
 ... rename in other directory ...
 @todo_wine@rename impossible in other directory
 @todo_wine@original file still present

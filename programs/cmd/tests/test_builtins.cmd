@@ -899,6 +899,21 @@ rem no-op
 ren foo foo
 mkdir baz
 ren foo baz\abc
+echo ... rename directories ...
+mkdir rep1
+ren rep1 rep2
+if not exist rep1 (
+    if exist rep2 (
+        echo dir renamed
+    )
+)
+attrib +r rep2
+ren rep2 rep1
+if not exist rep2 (
+    if exist rep1 (
+        echo read-only dir renamed
+    )
+)
 echo ... rename in other directory ...
 if not exist baz\abc (
     echo rename impossible in other directory
