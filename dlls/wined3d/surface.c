@@ -3713,7 +3713,7 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         WARN("Surface is already mapped.\n");
         return WINED3DERR_INVALIDCALL;
     }
-    if ((format->flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_COMPRESSED
+    if ((format->flags & WINED3DFMT_FLAG_COMPRESSED)
             && rect && (rect->left || rect->top
             || rect->right != surface->resource.width
             || rect->bottom != surface->resource.height))
