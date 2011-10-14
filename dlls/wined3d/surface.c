@@ -2476,7 +2476,7 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
     }
 
     /* NPOT block sizes would be silly. */
-    if ((src_format->flags & WINED3DFMT_FLAG_COMPRESSED)
+    if ((src_format->flags & WINED3DFMT_FLAG_BLOCKS)
             && ((update_w & (src_format->block_width - 1) || update_h & (src_format->block_height - 1))
             && (src_w != update_w || dst_w != update_w || src_h != update_h || dst_h != update_h)))
     {
@@ -3096,7 +3096,7 @@ DWORD CDECL wined3d_surface_get_pitch(const struct wined3d_surface *surface)
 
     TRACE("surface %p.\n", surface);
 
-    if ((format->flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_COMPRESSED)
+    if ((format->flags & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_BLOCKS)
     {
         /* Since compressed formats are block based, pitch means the amount of
          * bytes to the next row of block rather than the next row of pixels. */
@@ -3713,7 +3713,7 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         WARN("Surface is already mapped.\n");
         return WINED3DERR_INVALIDCALL;
     }
-    if ((format->flags & WINED3DFMT_FLAG_COMPRESSED)
+    if ((format->flags & WINED3DFMT_FLAG_BLOCKS)
             && rect && (rect->left || rect->top
             || rect->right != surface->resource.width
             || rect->bottom != surface->resource.height))
@@ -3755,7 +3755,7 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
     }
     else
     {
-        if ((format->flags & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_COMPRESSED)
+        if ((format->flags & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_BLOCKS)
         {
             /* Compressed textures are block based, so calculate the offset of
              * the block that contains the top-left pixel of the locked rectangle. */
@@ -6666,7 +6666,7 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
     dstwidth = xdst.right - xdst.left;
     width = (xdst.right - xdst.left) * bpp;
 
-    if (src_format->flags & dst_format->flags & WINED3DFMT_FLAG_COMPRESSED)
+    if (src_format->flags & dst_format->flags & WINED3DFMT_FLAG_BLOCKS)
     {
         TRACE("%s -> %s copy.\n", debug_d3dformat(src_format->id), debug_d3dformat(dst_format->id));
 

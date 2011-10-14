@@ -2788,6 +2788,7 @@ extern enum wined3d_format_id pixelformat_for_depth(DWORD depth) DECLSPEC_HIDDEN
 #define WINED3DFMT_FLAG_SHADOW                      0x00004000
 #define WINED3DFMT_FLAG_COMPRESSED                  0x00008000
 #define WINED3DFMT_FLAG_BROKEN_PITCH                0x00010000
+#define WINED3DFMT_FLAG_BLOCKS                      0x00020000
 
 struct wined3d_format
 {

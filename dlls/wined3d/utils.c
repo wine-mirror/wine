@@ -189,7 +189,7 @@ static const struct wined3d_format_base_flags format_base_flags[] =
     {WINED3DFMT_S8_UINT_D24_FLOAT,  WINED3DFMT_FLAG_FLOAT},
 };
 
-struct wined3d_format_compression_info
+struct wined3d_format_block_info
 {
     enum wined3d_format_id id;
     UINT block_width;
@@ -197,7 +197,7 @@ struct wined3d_format_compression_info
     UINT block_byte_count;
 };
 
-static const struct wined3d_format_compression_info format_compression_info[] =
+static const struct wined3d_format_block_info format_block_info[] =
 {
     {WINED3DFMT_DXT1,   4,  4,  8},
     {WINED3DFMT_DXT2,   4,  4,  16},
@@ -205,6 +205,8 @@ static const struct wined3d_format_compression_info format_compression_info[] =
     {WINED3DFMT_DXT4,   4,  4,  16},
     {WINED3DFMT_DXT5,   4,  4,  16},
     {WINED3DFMT_ATI2N,  4,  4,  16},
+    {WINED3DFMT_YUY2,   2,  1,  4},
+    {WINED3DFMT_UYVY,   2,  1,  4},
 };
 
 struct wined3d_format_vertex_info
@@ -594,23 +596,28 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             WINED3D_GL_EXT_NONE,        NULL},
     {WINED3DFMT_DXT1,                   GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT, 0,
             GL_RGBA,                    GL_UNSIGNED_BYTE,                 0,
-            WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_SRGB_READ,
+            WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_SRGB_READ
+            | WINED3DFMT_FLAG_COMPRESSED,
             EXT_TEXTURE_COMPRESSION_S3TC, NULL},
     {WINED3DFMT_DXT2,                   GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT, 0,
             GL_RGBA,                    GL_UNSIGNED_BYTE,                 0,
-            WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_SRGB_READ,
+            WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_SRGB_READ
+            | WINED3DFMT_FLAG_COMPRESSED,
             EXT_TEXTURE_COMPRESSION_S3TC, NULL},
     {WINED3DFMT_DXT3,                   GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT, 0,
             GL_RGBA,                    GL_UNSIGNED_BYTE,                 0,
-            WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_SRGB_READ,
+            WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_SRGB_READ
+            | WINED3DFMT_FLAG_COMPRESSED,
             EXT_TEXTURE_COMPRESSION_S3TC, NULL},
     {WINED3DFMT_DXT4,                   GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT, 0,
             GL_RGBA,                    GL_UNSIGNED_BYTE,                 0,
-            WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_SRGB_READ,
+            WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_SRGB_READ
+            | WINED3DFMT_FLAG_COMPRESSED,
             EXT_TEXTURE_COMPRESSION_S3TC, NULL},
     {WINED3DFMT_DXT5,                   GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT, 0,
             GL_RGBA,                    GL_UNSIGNED_BYTE,                 0,
-            WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_SRGB_READ,
+            WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_SRGB_READ
+            | WINED3DFMT_FLAG_COMPRESSED,
             EXT_TEXTURE_COMPRESSION_S3TC, NULL},
     /* IEEE formats */
     {WINED3DFMT_R32_FLOAT,              GL_RGB32F_ARB,                    GL_RGB32F_ARB,                          0,
@@ -857,11 +864,11 @@ static const struct wined3d_format_texture_info format_texture_info[] =
     /* Vendor-specific formats */
     {WINED3DFMT_ATI2N,                  GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI, GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI, 0,
             GL_LUMINANCE_ALPHA,         GL_UNSIGNED_BYTE,                 0,
-            WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
+            WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_COMPRESSED,
             ATI_TEXTURE_COMPRESSION_3DC, NULL},
     {WINED3DFMT_ATI2N,                  GL_COMPRESSED_RED_GREEN_RGTC2,    GL_COMPRESSED_RED_GREEN_RGTC2,         0,
             GL_LUMINANCE_ALPHA,         GL_UNSIGNED_BYTE,                 0,
-            WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
+            WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_COMPRESSED,
             ARB_TEXTURE_COMPRESSION_RGTC, NULL},
     {WINED3DFMT_INTZ,                   GL_DEPTH24_STENCIL8_EXT,          GL_DEPTH24_STENCIL8_EXT,                0,
             GL_DEPTH_STENCIL_EXT,       GL_UNSIGNED_INT_24_8_EXT,         0,
@@ -946,27 +953,27 @@ static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
     return TRUE;
 }
 
-static BOOL init_format_compression_info(struct wined3d_gl_info *gl_info)
+static BOOL init_format_block_info(struct wined3d_gl_info *gl_info)
 {
     unsigned int i;
 
-    for (i = 0; i < (sizeof(format_compression_info) / sizeof(*format_compression_info)); ++i)
+    for (i = 0; i < (sizeof(format_block_info) / sizeof(*format_block_info)); ++i)
     {
         struct wined3d_format *format;
-        int fmt_idx = getFmtIdx(format_compression_info[i].id);
+        int fmt_idx = getFmtIdx(format_block_info[i].id);
 
         if (fmt_idx == -1)
         {
             ERR("Format %s (%#x) not found.\n",
-                    debug_d3dformat(format_compression_info[i].id), format_compression_info[i].id);
+                    debug_d3dformat(format_block_info[i].id), format_block_info[i].id);
             return FALSE;
         }
 
         format = &gl_info->formats[fmt_idx];
-        format->block_width = format_compression_info[i].block_width;
-        format->block_height = format_compression_info[i].block_height;
-        format->block_byte_count = format_compression_info[i].block_byte_count;
-        format->flags |= WINED3DFMT_FLAG_COMPRESSED;
+        format->block_width = format_block_info[i].block_width;
+        format->block_height = format_block_info[i].block_height;
+        format->block_byte_count = format_block_info[i].block_byte_count;
+        format->flags |= WINED3DFMT_FLAG_BLOCKS;
     }
 
     return TRUE;
@@ -1623,7 +1630,7 @@ BOOL initPixelFormatsNoGL(struct wined3d_gl_info *gl_info)
 {
     if (!init_format_base_info(gl_info)) return FALSE;
 
-    if (!init_format_compression_info(gl_info))
+    if (!init_format_block_info(gl_info))
     {
         HeapFree(GetProcessHeap(), 0, gl_info->formats);
         gl_info->formats = NULL;
@@ -1638,7 +1645,7 @@ BOOL initPixelFormats(struct wined3d_gl_info *gl_info, enum wined3d_pci_vendor v
 {
     if (!init_format_base_info(gl_info)) return FALSE;
 
-    if (!init_format_compression_info(gl_info)) goto fail;
+    if (!init_format_block_info(gl_info)) goto fail;
     if (!init_format_texture_info(gl_info)) goto fail;
     if (!init_format_vertex_info(gl_info)) goto fail;
 
@@ -1678,7 +1685,7 @@ UINT wined3d_format_calculate_size(const struct wined3d_format *format, UINT ali
     {
         size = 0;
     }
-    else if (format->flags & WINED3DFMT_FLAG_COMPRESSED)
+    else if (format->flags & WINED3DFMT_FLAG_BLOCKS)
     {
         UINT row_block_count = (width + format->block_width - 1) / format->block_width;
         UINT row_count = (height + format->block_height - 1) / format->block_height;

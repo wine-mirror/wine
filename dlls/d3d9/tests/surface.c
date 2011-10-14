@@ -663,6 +663,8 @@ static void test_surface_lockrect_blocks(IDirect3DDevice9 *device)
          * which doesn't match the format spec. On newer Nvidia cards
          * it has the correct 4x4 block size */
         {MAKEFOURCC('A','T','I','2'), "ATI2N",       4, 4, TRUE},
+        {D3DFMT_YUY2,                 "D3DFMT_YUY2", 2, 1, FALSE},
+        {D3DFMT_UYVY,                 "D3DFMT_UYVY", 2, 1, FALSE},
     };
     static const struct
     {
