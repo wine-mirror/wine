@@ -1342,29 +1342,26 @@ static void cleanup(void)
 static struct mibImplementation *findSupportedQuery(UINT *ids, UINT idLength,
     UINT *matchingIndex)
 {
-    int indexHigh = DEFINE_SIZEOF(supportedIDs) - 1, indexLow = 0, i;
-    struct mibImplementation *impl = NULL;
+    int indexHigh = DEFINE_SIZEOF(supportedIDs) - 1, indexLow = 0;
     AsnObjectIdentifier oid1 = { idLength, ids};
 
     if (!idLength)
         return NULL;
-    for (i = (indexLow + indexHigh) / 2; !impl && indexLow <= indexHigh;
-         i = (indexLow + indexHigh) / 2)
-    {
-        INT cmp;
 
-        cmp = SnmpUtilOidNCmp(&oid1, &supportedIDs[i].name, idLength);
-        if (!cmp)
+    while (indexLow <= indexHigh)
+    {
+        INT cmp, i = (indexLow + indexHigh) / 2;
+        if (!(cmp = SnmpUtilOidNCmp(&oid1, &supportedIDs[i].name, idLength)))
         {
-            impl = &supportedIDs[i];
             *matchingIndex = i;
+            return &supportedIDs[i];
         }
-        else if (cmp > 0)
+        if (cmp > 0)
             indexLow = i + 1;
         else
             indexHigh = i - 1;
     }
-    return impl;
+    return NULL;
 }
 
 /*****************************************************************************
