@@ -31,6 +31,7 @@
 #include "wine/test.h"
 
 static HCRYPTPROV crypt_prov;
+static BOOL (WINAPI *pGdiAlphaBlend)(HDC,int,int,int,int,HDC,int,int,int,int,BLENDFUNCTION);
 static DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
 
 static const DWORD rop3[256] =
@@ -113,14 +114,19 @@ static const char *sha1_graphics_a8r8g8b8[] =
     "c56f5bdc9cac4f0bc81c33295d9aed8eaf4cb1f2",
     "21cdfde38ac7edbb241ec83d82f31286e90c4629",
     "1fd2f4dcb62f8522171872e43fd4a35041d68100",
+    "68c18db6abfda626cab12d198298d4c39264bfbc",
+    "6b59ae6c20749020ad43175e05110dc33b6a59b5",
     "39c31de73aafcfcadf0bf414da4495be9de54417",
     "132949f59bfeb88dc2047e6eaecb8512aea3d9ab",
     "f6a6d765bf23726329f96020ba8c5e3c0897aafa",
+    "a7aa311cdc6137f15b9ef9cb1a92ac54ec02f058",
     "e71d6bb9bd38eea5719f8ba57177997910e2d841",
     "3d2ccbe51408232a04769546b1bdd74f84558a41",
     "a1fe9aa885584a0f713d7c6f76c89830fbf28563",
+    "d7085333becdec7759a5229e5fe9ba1e11db0c22",
     "aaf62842bb98d8a2945c4f643baf50afaeea9307",
     "287b2f2f2fb5a1d7ee4a29b43342103d78a7a8ab",
+    "d7dd4700f49808541bba99244b7eb5840e0a2439",
     NULL
 };
 
@@ -163,14 +169,19 @@ static const char *sha1_graphics_a8b8g8r8[] =
     "abca6a80a99b05722d2d87ce2a8b94ef1ae549e1",
     "2ba70994d0b4ce87fdf6fbc33ada11252178061e",
     "7b4e1d47a03e2cec236d8fb6e2ae89d8ed078f79",
+    "075c4cb50e2cf96ab5d132c9f7bb1c1deb4735bd",
+    "8566c1110ab5cb8f754787b47923c8bff38f790c",
     "89e90d6159d59886bbbf0c40a7cd01293c3cfda3",
     "3a598f1eb35c1412b0c131e9d9e36a4aef9534d2",
     "d01071c44259adc94b89978b7d51a058b6dad665",
+    "e6d33b106bcda374e662d338c57a457dbcaa108a",
     "27ef47377e88f5ac5ad33b19eae27d56c456ac65",
     "339908a568f384e1f384a3e1b0dd415779203b02",
     "88fd743d00bd37d2ed722092146795b044d08a6e",
+    "c0537ec24147e74939219213d864ee113cad9967",
     "118bf4c5bddc206ba737f7aa8b239940cd1aadc2",
     "7cb51f6c5f1dae926601986c934533df5f8baa9f",
+    "86c84cc8306975edecc6d4a89a8aff29f59b55a7",
     NULL
 };
 
@@ -213,14 +224,19 @@ static const char *sha1_graphics_r10g10b10[] =
     "1ceb85697f649a62b1753438daa14944af7f450c",
     "98ce4dbc04eb48fa0f96ef813db5b4dfa1b2dd39",
     "3addb9ccd8f56fc0825f61b1b5af67d3297f4ded",
+    "f00bac7e18827cfb264fae2e8a0da17b9db18d52",
+    "63c1c6c63e82f3b8bd977a1381b248e05321394d",
     "ada202d2f526f6995f83412479891c1764b66e5a",
     "68348e8f54883f4fe295354b024e291c85f1038f",
     "07f55f85a5bb70de5841ea4f62a9af3d29d3d94b",
+    "e9167564031ead3459eee6a3ebb2f58f100d931f",
     "d39315a1399639f6d4305a342c9ccf02a463b0dd",
     "46196f50297260df2863e2fa76d2dfcf72006c23",
     "0790585dfaef94f912b1ee81477d4ac448708708",
+    "589fb8a85d924ad19ed78409ae89475ba479c30a",
     "43d67bc61ef54014b022891e5c024fc24b1fe797",
     "e8783644428b637adbe80bcd084a33428cb69983",
+    "fc0c32afb719295f28bcfef22803bef94f798e20",
     NULL
 };
 
@@ -263,14 +279,19 @@ static const char *sha1_graphics_r6g6b6[] =
     "3231c4d87faefb7ec5bd377613969c05b70343fc",
     "00394e438e9edde978e88602c9ad2a572e965bf6",
     "e760be69cb37c7be35d5968d7a294e1fd49d4f66",
+    "996fb708ddc4b94eb8d1585bd83a5c8a1e2633ba",
+    "caa39eb482e8fc2e00f1c6737735c023ac9363ef",
     "c1250ff2b67e6d2a8baccc5c93f8f5ad933c5c4f",
     "3d6cf3753390a05504b1f50302f767df443f0f40",
     "b7cf1bafe002673ae58ff50feea61ee32a1ae10a",
+    "da9e896a3a98b330980152b2e4a43cb6e686c730",
     "0a613357e1e8ec8ff1ad956e46e527a05cab8500",
     "bdd8ed3ca3ad107b43731ec253ecaa34750a10de",
     "47499ad13b719de18c59c2bc9b38ed578db50b95",
+    "643e82ac67ab2b0c034a3fcfa498b072a5f2be5c",
     "cd01f2c0a63b2229d4467d2f874d58edca32b3d4",
     "94b54f1da5212b3f3a1195eda5ea927e160bc89d",
+    "49341c297a887186bd47d7465d827ab3147f05e3",
     NULL
 };
 
@@ -313,14 +334,19 @@ static const char *sha1_graphics_24[] =
     "63f764b9bd2f4876ab1ee0f3c0eb55b5a7de5212",
     "e171f6ec77bca91d6b8559911bce296c0bac469e",
     "9725669042ef68acb408404d196496d10340bb5a",
+    "26e7e1c300ba0c5aaaef03eeb71d529f6def9289",
+    "b1f602d2a74095cc0115ae2ae07b642498e6c0fc",
     "03d5eb8e3a6662e6dc183f88ee2f285065fc9c51",
     "f4c312f9a37ddc54a27f6b1421dab1ce0cec0c27",
     "0f79500eda467cd3cbc220abdd37b5dba695d654",
+    "8d4e3e9d81cc30aaad555ed9e27aed7c615de630",
     "84c43a3cbd7d8c1ac9a0e9b6f07620158079b278",
     "7d479beeb6758c164566638b5c873c188d6a91e7",
     "80086808fca03e757d812e31d1ae576bf90dac9d",
+    "9560096f1b85ae6d939d736165c44df00a47c424",
     "1015e0217ea13eaa62c7666b8b81aafd75f8f610",
     "93e1aec608e037af3bfb7bd32dde446abe4eea11",
+    "b25ba91487ec945410deb2b51bc1156890c032a8",
     NULL
 };
 
@@ -362,14 +388,24 @@ static const char *sha1_graphics_r5g5b5[] =
     "e428d213ad02651287894f093413949dcb369208",
     "7df915bedcc5951a1b6f828490f7dbb93212e835",
     "645dc251d205139282b17eb7bece1055fff3bcd0",
+    "76215275593631f5900aad3616d725733dc39493",
+    "81655a550703849a616d4a16504bb9c6f999285f",
+    "573d65665d20f00d36d9782ae2b89772140524ab",
+    "619414c1b33ac60cb0c0de61df86245d472259b0",
     "c3d4a1425e17de9e05e3f6dfc6a24c26bfd5ee12",
     "2a66dae03890ff791eabb982949435adb19af02b",
     "24ac219478ba406f30794550690486b14cbac5e8",
+    "2b28d20690dc92374ebecb5508f8fdc6c7581790",
+    "db8c34882ddd46716d14bbf569d530f80db65ed4",
     "6c652ecce55e71fee16bc1c9b2c5ae4161bdd2ea",
     "9b02173f424c098ea0f4cc5db9eb65f69263d127",
     "a92942269911a88793b3460b6f2a2cd56e48eec1",
+    "059db9f0426b371e464ef3d30f1a4f4aa599e101",
+    "a52d6ceee5c2a04b4e059c0d49337a997cc17e40",
     "aa4a0a4b7f2697aaf270c89874631974bd9d7183",
     "585061e403d9cac1603a38af420efe87338f381a",
+    "8f447a3820c83662086dfa836da2205b0130fd5f",
+    "3772003c7fb420003512d0c437b3659d96d89ce4",
     NULL
 };
 
@@ -411,14 +447,19 @@ static const char *sha1_graphics_r4g4b4[] =
     "13b0f240054dc57ba0e2dfde74048496304a2c7f",
     "51ef267eb9c15487c9430f505e8a6c929eb2170c",
     "1b593d8e031d3b37fecf6f1df5a8f96c8e8bfef8",
+    "9dd123938b0a02601d8d458ecbd6535ddefea724",
+    "815a1e4fc7f3a00c2990c150e87eba0b13f66811",
     "75ae8c80af4356a1a5eebde6608fbc31e8a95372",
     "b89ae8de2d975b8adb263ace66fd953d29165a8b",
     "e901ab4b20bc87370609d7ba1f21aa08abd9eced",
+    "e9105c6ed8355519e0cf2d2217ed7af43cec8ba0",
     "3cbf5fffdd73f9639f3eb34ec1ab3055bc8618fb",
     "8e2e70ade90711c4ac01352aa0373fce36ff5dc0",
     "8c40d6d8e0c696c31f04c896e492a2a38703d870",
+    "e13c821c236ea0b67cca64c9da7be15e88fc712f",
     "9af4907a8144458a73dbb7471784f8c3d9aeffcf",
     "e4731b63d41f6b51e30752ea52d85c4a2938731b",
+    "f0acb3cfcda62e95bee5f7bc8830ffeb3dd7e5a7",
     NULL
 };
 
@@ -461,19 +502,24 @@ static const char *sha1_graphics_8_color[] =
     "e15a355fc09bfd22267917898e2266168ff410e3",
     "b9688566bddf18586787c00e68724e51e97dfb72",
     "5e38e03310f1c66f2052af2a745d8c60515707c5",
+    "f994fb5019bf4c1a96eccf89af599eae0aa6b412",
+    "3a71ad6fef147067641e49a5f69b2454e3a5010d",
     "ea10eac72830dcae19bcb16a076c2b21d844b5b6",
     "6376234f542467e5887adfece62f753e998dc19d",
     "add949d009217ef2b847e34772ba363e4be7b1b8",
     "28fcf9f7d098c05de632ae38b2fe33b9635ad445",
     "0b58666deb3615e912896a764e5c6475989e95e4",
     "bf460cc44c0edee851d72587c8425c3f06a62c55",
+    "ea74c00c45569007383b632d7f1d2adc82645717",
     "5ac22e1a33b0204fdc7a68d54ee94648e96079a0",
     "284abed096637c80bb50844e393da9dd4b3f19ac",
     "9dc776c5ab8256b1301c7d1da60544a9410e6715",
     "a433c41c05b6db008a4cb2c52a321d027c6be1fe",
     "46f772c2832b3aad584674db666bd63e48b4f338",
+    "a9f9ca0049235db51ab7359a5fc3d21be42d2aac",
     "f3dc739da41fb299637c8660e8c46917ddcf87a8",
     "eae47bf865d932f22a6e59b6fe8d041f220e1fbc",
+    "9ae38bb94c7b4c0c6dfebbee23d1de4db9b77488",
     NULL
 };
 
@@ -520,19 +566,24 @@ static const char *sha1_graphics_8_grayscale[] =
     "3f43aa11e6fccb747cc13224583fb2f951fee08c",
     "04cea9753b575ecce8e55357eddfcec10ddfbbea",
     "6b6f4b97f05e015eb37a5f6aff637235feacd030",
+    "1bd06e4e11929e5e91c3c9f20def639b20e731e8",
+    "d63a6086547e90d2ba84aaebfeae24f3ba0c04f1",
     "85425940daf119125deb52421b2057acebe6d1cf",
     "a3db92382cf0a4c7cafe52c27b1f41520aaa677d",
     "9869b6f088822fb423996f9968e5a931301fc2c3",
     "cdf63ab4ab32c2e8e27527a9588d0fb525f1c945",
     "a7f81cf3326fa3608acc13cfce2f573912e9d745",
     "f2ea92f523f8918b1d514a2d9555dcb4750273b4",
+    "e9c16e43a8f589ae85289c5c3ffea6b22fba1806",
     "84a4bc0c2c5d36d016da4df95a5d8d6c8ce3ba6f",
     "f543efc84e638afbaa456e629100f0274de1a35b",
     "1bd2587399006eed0d46beff397d32081f6bc58e",
     "f8a571de89ed82ffb9cbc041ce1eacb064be2853",
     "640a49455acabca6954a7fbb6af4e872af342d11",
+    "589e7911e09332ee090371deae17b0120ff990b5",
     "a1a941fa270cda48c648553ed4b427e16e96f8e0",
     "f30a8d9f73ca043c5bfc18d9595e299fc0a39eec",
+    "fb63bbb2f944fb63ed2d7399f07b168740c1034b",
     NULL
 };
 
@@ -575,16 +626,21 @@ static const char *sha1_graphics_8[] =
     "f4a334e69535de74ee5ed54be93a75120a66e54a",
     "559fd1d15447745527c61fe43a94c6708bff3e39",
     "995f77f2f53398399f09d1365cb4dfd105764e5c",
+    "61907a6685bba93077da40cfb28cf2ab74552fd2",
+    "122015e5e17c1c317c6e51c0e207826b606a4077",
     "c21851589a5f8a45ea5f9bb3e72f4f88d0a6697d",
     "8c609921d4a3ed89a994a75482b27496bf103cf5",
     "eb2ce16a6ae251f4965135ee776776b5fc02c42c",
     "66493ee117719e172f327a426af601996025f28c",
     "acead2745fec0b6c817fa601353bdf2d197b64f7",
     "a6b858b2d125c159529d3f3ec45b31925a79acff",
+    "1f1379089d7c6e8d733aaa4eaffbe02db6255b61",
     "d83adc669c0dea0dc4812b93f998514b6f02d805",
     "9e8ceb7c3cd68e043b6d875c8c84a1e394962412",
     "9e996fc74eeef53f0a6c31aabb2edce6e103f189",
+    "6b8abd1785304d6531c1e4cc65c1ffcdcb2196a5",
     "7d1bfff706b0713e53209407889f83a0da26a81d",
+    "31e667c2dbb81dcf81d01cb88f794e88ddb90ff2",
     "31e667c2dbb81dcf81d01cb88f794e88ddb90ff2",
     NULL
 };
@@ -627,13 +683,18 @@ static const char *sha1_graphics_4[] =
     "db0124045882b598feea192186cf7eb7a0387866",
     "602d91471378fe24a2d0248bd8a92b624f099fea",
     "e772873b87a0f55ea51a3da323f64bf8814c6703",
+    "21aa1ff238a2d78efed1aa658ac8fe21b1e64daa",
+    "1a579cd280422131c35e907a023ee0e80749b5a4",
     "bbf027f506cbb80d359bf4892fcb75f816f2e446",
     "ed44bded6b17df7fe92b191fd810d1aafbd55f52",
     "a49bcb1ace42d548254d9e96d22088b1fe2e75b4",
+    "e2a21a965dfd0bd09f9270917f681610efc18ce7",
     "3e411b004a5be84451860c6da6a4a1a482b77862",
     "3b3d2f18fdc75e938ca43cc2d0b41fa67c1c5d36",
     "7811c536a6527112b438a6413f3927f2c79086a7",
+    "525ef3615040225752a2fe646ab99ee64e360630",
     "46760975993f9881b7bbe94123173e6a683d3f25",
+    "df5feb905a31c288008cf5e82d73ac818a160d82",
     "df5feb905a31c288008cf5e82d73ac818a160d82",
     NULL
 };
@@ -676,14 +737,19 @@ static const char *sha1_graphics_4_grayscale[] =
     "f8224430462f6a93f85ef33b8aa7299525990708",
     "1cf93cecc942b41ab8fae21ea18418a6d64873e5",
     "d58b8760ef01c12e691651c932d683c66fde3654",
+    "94438c82b8812fe81a69d5d1429c5967cdbfed7a",
+    "764ea26f10fe11f7bdb538a26fc33d44b3a95d6d",
     "94ad53c578f6034dfc5c666e363203cdfb00f2cc",
     "8cd7b0ba8426db344b4cb8820890603020ed65e9",
     "ad96132f25ca14e1aeb17c86f8d187febf6401c9",
+    "027b05bc82ce4f897c4bf812610a641547368939",
     "3f131e855ba1611d8fb0f16a6979f8f56aacc7f3",
     "ae64d1dc52dcfa8c644f953c4601fa2fbefec37b",
     "2f3fb1bd8f416198d70e06f6d519571cd5eb4ef4",
+    "cc96ccaf6b99f60a49b03017515f83cba22b4c40",
     "5eeb56afea8040a8fb18c11f29931b836474126d",
     "a3405c085fc2f2184bcd0d1edcdcc66927e33659",
+    "f8681c09f1abfc38d31e47622cb8798cd896a00e",
     NULL
 };
 
@@ -740,14 +806,19 @@ static const char *sha1_graphics_1[] =
     "4c34cb8e47f9ff4b4348aa2d40cce7cb54d65cb0",
     "18f4497e43903e8df5b27da4ceebf62b15550a87",
     "3fa3570a2ebd38042b90f24bd3496233bca5a23d",
+    "2fcd25c2d19a01fa631fd19135d9f28b26b86259",
+    "655cfadeb157233c804d42b58195569c8846e3c1",
     "65c8811c609203fd424f5ed5f92ca2268a1dca54",
     "a45b297d709e297584eb0f2985294ec0ab53d8ad",
     "0d180c37bc26d83a1a11f66168757f3de2493243",
+    "b362ba4790def178c236c0ae7b0093dbba47cf24",
     "d1d2ecf71a37d9eda58fa09454aa871971428ace",
     "6672da4e016b6e9de0ca218f8307cce7d48d62c4",
     "ee22f43ea867228c6ff937d39e1826e285a107e8",
+    "832c3c3afd056e5d1cdfb2f466f27225c4adcc6c",
     "a2a928de9007d765da496abec8c21b23601f8c45",
     "28ded40e72d4327b9413571476b167fb28a1f420",
+    "23366004515f3bc46796ea505d748f8d0f97fbe1",
     NULL
 };
 
@@ -962,6 +1033,10 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     BITMAPINFO *brush_bi = (BITMAPINFO*)dib_brush_buf;
     BYTE *brush_bits, *src_bits;
     BOOL ret, dib_is_1bpp = (bmi->bmiHeader.biBitCount == 1);
+    BLENDFUNCTION blend;
+
+    blend.BlendOp = AC_SRC_OVER;
+    blend.BlendFlags = 0;
 
     memset(bits, 0xcc, dib_size);
     compare_hash(bmi, bits, sha1, "empty");
@@ -1515,6 +1590,36 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         compare_hash(bmi, bits, sha1, "BitBlt src 32-bpp SRCCOPY" );
     memset(bits, 0xcc, dib_size);
 
+    blend.SourceConstantAlpha = 0xd0;
+    blend.AlphaFormat = 0;
+    if (pGdiAlphaBlend) pGdiAlphaBlend( hdc, 100, 100, 256, 256, src_dc, 0, 0, 256, 256, blend );
+    if (bmi->bmiHeader.biBitCount == 16 && bmi->bmiHeader.biCompression == BI_RGB) /* 555 broken on w2k */
+    {
+        if (!pGdiAlphaBlend) (*sha1) += 2;
+        else compare_hash_broken_todo(bmi, bits, sha1, "AlphaBlend src 32-bpp no alpha", 1, FALSE );
+    }
+    else
+    {
+        if (!pGdiAlphaBlend) (*sha1)++;
+        else compare_hash_broken_todo(bmi, bits, sha1, "AlphaBlend src 32-bpp no alpha", 0, dib_is_1bpp );
+    }
+    memset(bits, 0xcc, dib_size);
+
+    blend.SourceConstantAlpha = 0xb0;
+    blend.AlphaFormat = AC_SRC_ALPHA;
+    if (pGdiAlphaBlend) pGdiAlphaBlend( hdc, 50, 50, 256, 256, src_dc, 0, 0, 256, 256, blend );
+    if (bmi->bmiHeader.biBitCount == 16 && bmi->bmiHeader.biCompression == BI_RGB) /* 555 broken on w2k */
+    {
+        if (!pGdiAlphaBlend) (*sha1) += 2;
+        else compare_hash_broken_todo(bmi, bits, sha1, "AlphaBlend src 32-bpp alpha", 1, FALSE );
+    }
+    else
+    {
+        if (!pGdiAlphaBlend) (*sha1)++;
+        else compare_hash_broken_todo(bmi, bits, sha1, "AlphaBlend src 32-bpp alpha", 0, dib_is_1bpp );
+    }
+    memset(bits, 0xcc, dib_size);
+
     /* blitting with 32-bpp r10g10b10 source */
 
     src_bi->bmiHeader.biBitCount = 32;
@@ -1586,6 +1691,21 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         compare_hash(bmi, bits, sha1, "BitBlt src 24-bpp SRCCOPY" );
     memset(bits, 0xcc, dib_size);
 
+    blend.SourceConstantAlpha = 0xe0;
+    blend.AlphaFormat = 0;
+    if (pGdiAlphaBlend) pGdiAlphaBlend( hdc, 100, 100, 256, 256, src_dc, 0, 0, 256, 256, blend );
+    if (bmi->bmiHeader.biBitCount == 16 && bmi->bmiHeader.biCompression == BI_RGB) /* 555 broken on w2k */
+    {
+        if (!pGdiAlphaBlend) (*sha1) += 2;
+        else compare_hash_broken_todo(bmi, bits, sha1, "AlphaBlend src 24-bpp", 1, FALSE );
+    }
+    else
+    {
+        if (!pGdiAlphaBlend) (*sha1)++;
+        else compare_hash_broken_todo(bmi, bits, sha1, "AlphaBlend src 24-bpp", 0, dib_is_1bpp );
+    }
+    memset(bits, 0xcc, dib_size);
+
     /* blitting with 16-bpp BI_RGB source */
 
     src_bi->bmiHeader.biBitCount = 16;
@@ -1639,6 +1759,21 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     compare_hash(bmi, bits, sha1, "BitBlt src 8-bpp SRCCOPY" );
     memset(bits, 0xcc, dib_size);
 
+    blend.SourceConstantAlpha = 0xd0;
+    blend.AlphaFormat = 0;
+    if (pGdiAlphaBlend) pGdiAlphaBlend( hdc, 100, 100, 256, 256, src_dc, 0, 0, 256, 256, blend );
+    if (bmi->bmiHeader.biBitCount == 16 && bmi->bmiHeader.biCompression == BI_RGB) /* 555 broken on w2k */
+    {
+        if (!pGdiAlphaBlend) (*sha1) += 2;
+        else compare_hash_broken_todo(bmi, bits, sha1, "AlphaBlend src 8-bpp", 1, FALSE );
+    }
+    else
+    {
+        if (!pGdiAlphaBlend) (*sha1)++;
+        else compare_hash_broken_todo(bmi, bits, sha1, "AlphaBlend src 8-bpp", 0, dib_is_1bpp );
+    }
+    memset(bits, 0xcc, dib_size);
+
     /* blitting with 4-bpp source */
 
     src_bi->bmiHeader.biBitCount = 4;
@@ -1667,6 +1802,21 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     BitBlt( hdc, 100, 100, 256, 256, src_dc, 0, 0, SRCCOPY );
     compare_hash(bmi, bits, sha1, "BitBlt src 1-bpp SRCCOPY" );
+    memset(bits, 0xcc, dib_size);
+
+    blend.SourceConstantAlpha = 0x90;
+    blend.AlphaFormat = 0;
+    if (pGdiAlphaBlend) pGdiAlphaBlend( hdc, 100, 100, 256, 256, src_dc, 0, 0, 256, 256, blend );
+    if (bmi->bmiHeader.biBitCount == 16 && bmi->bmiHeader.biCompression == BI_RGB) /* 555 broken on w2k */
+    {
+        if (!pGdiAlphaBlend) (*sha1) += 2;
+        else compare_hash_broken_todo(bmi, bits, sha1, "AlphaBlend src 1-bpp", 1, FALSE );
+    }
+    else
+    {
+        if (!pGdiAlphaBlend) (*sha1)++;
+        else compare_hash(bmi, bits, sha1, "AlphaBlend src 1-bpp" );
+    }
     memset(bits, 0xcc, dib_size);
 
     DeleteDC( src_dc );
@@ -2026,6 +2176,7 @@ START_TEST(dib)
 {
     HMODULE mod = GetModuleHandleA("gdi32.dll");
     pSetLayout = (void *)GetProcAddress( mod, "SetLayout" );
+    pGdiAlphaBlend = (void *)GetProcAddress( mod, "GdiAlphaBlend" );
 
     CryptAcquireContextW(&crypt_prov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
 
