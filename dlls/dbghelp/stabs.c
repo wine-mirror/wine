@@ -47,9 +47,6 @@
 # include <unistd.h>
 #endif
 #include <stdio.h>
-#ifndef PATH_MAX
-#define PATH_MAX MAX_PATH
-#endif
 #include <assert.h>
 #include <stdarg.h>
 
@@ -1272,7 +1269,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
     struct symt_function*       curr_func = NULL;
     struct symt_block*          block = NULL;
     struct symt_compiland*      compiland = NULL;
-    char                        srcpath[PATH_MAX]; /* path to directory source file is in */
+    char*                       srcpath = NULL;
     int                         i;
     int                         nstab;
     const char*                 ptr;
@@ -1294,7 +1291,6 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
     nstab = stablen / sizeof(struct stab_nlist);
     strs_end = strs + strtablen;
 
-    memset(srcpath, 0, sizeof(srcpath));
     memset(stabs_basic, 0, sizeof(stabs_basic));
     memset(&pending_block, 0, sizeof(pending_block));
     memset(&pending_func, 0, sizeof(pending_func));
@@ -1565,7 +1561,8 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             if (*ptr == '\0') /* end of N_SO file */
             {
                 /* Nuke old path. */
-                srcpath[0] = '\0';
+                HeapFree(GetProcessHeap(), 0, srcpath);
+                srcpath = NULL;
                 stabs_finalize_function(module, curr_func, 0);
                 curr_func = NULL;
                 source_idx = -1;
@@ -1583,7 +1580,10 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
                     compiland = symt_new_compiland(module, 0 /* FIXME */, source_idx);
                 }
                 else
+                {
+                    srcpath = HeapAlloc(GetProcessHeap(), 0, len + 1);
                     strcpy(srcpath, ptr);
+                }
             }
             break;
         case N_SOL:
