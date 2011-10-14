@@ -286,10 +286,10 @@
 @ stub -arch=win64 ??$?MGU?$char_traits@G@std@@V?$allocator@G@1@@std@@YA_NPEBGAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z
 @ cdecl -arch=win32 ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@0@Z(ptr ptr) MSVCP_basic_string_wchar_lower
 @ cdecl -arch=win64 ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@0@Z(ptr ptr) MSVCP_basic_string_wchar_lower
-@ cdecl -arch=win32 ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PB_W@Z(ptr str) MSVCP_basic_string_wchar_lower_bstr_cstr
-@ cdecl -arch=win64 ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PEB_W@Z(ptr str) MSVCP_basic_string_wchar_lower_bstr_cstr
-@ cdecl -arch=win32 ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NPB_WABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z(str ptr) MSVCP_basic_string_wchar_lower_cstr_bstr
-@ cdecl -arch=win64 ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NPEB_WAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z(str ptr) MSVCP_basic_string_wchar_lower_cstr_bstr
+@ cdecl -arch=win32 ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PB_W@Z(ptr wstr) MSVCP_basic_string_wchar_lower_bstr_cstr
+@ cdecl -arch=win64 ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@PEB_W@Z(ptr wstr) MSVCP_basic_string_wchar_lower_bstr_cstr
+@ cdecl -arch=win32 ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NPB_WABV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z(wstr ptr) MSVCP_basic_string_wchar_lower_cstr_bstr
+@ cdecl -arch=win64 ??$?M_WU?$char_traits@_W@std@@V?$allocator@_W@1@@std@@YA_NPEB_WAEBV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@0@@Z(wstr ptr) MSVCP_basic_string_wchar_lower_cstr_bstr
 @ cdecl -arch=win32 ??$?NDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z(ptr ptr) MSVCP_basic_string_char_leq
 @ cdecl -arch=win64 ??$?NDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NAEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@0@Z(ptr ptr) MSVCP_basic_string_char_leq
 @ cdecl -arch=win32 ??$?NDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@PBD@Z(ptr str) MSVCP_basic_string_char_leq_bstr_cstr
