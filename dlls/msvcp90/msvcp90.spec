@@ -4515,12 +4515,12 @@
 @ cdecl -arch=win64 ?max_size@?$allocator@G@std@@QEBA_KXZ(ptr) MSVCP_allocator_short_max_size
 @ thiscall -arch=win32 ?max_size@?$allocator@_W@std@@QBEIXZ(ptr) MSVCP_allocator_wchar_max_size
 @ cdecl -arch=win64 ?max_size@?$allocator@_W@std@@QEBA_KXZ(ptr) MSVCP_allocator_wchar_max_size
-@ stub -arch=win32 ?max_size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIXZ
-@ stub -arch=win64 ?max_size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KXZ
+@ thiscall -arch=win32 ?max_size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIXZ(ptr) basic_string_char_max_size
+@ cdecl -arch=win64 ?max_size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KXZ(ptr) basic_string_char_max_size
 @ stub -arch=win32 ?max_size@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIXZ
 @ stub -arch=win64 ?max_size@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_KXZ
-@ stub -arch=win32 ?max_size@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIXZ
-@ stub -arch=win64 ?max_size@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KXZ
+@ thiscall -arch=win32 ?max_size@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIXZ(ptr) basic_string_wchar_max_size
+@ cdecl -arch=win64 ?max_size@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KXZ(ptr) basic_string_wchar_max_size
 @ cdecl ?min@?$numeric_limits@C@std@@SACXZ() std_numeric_limits_signed_char_min
 @ cdecl ?min@?$numeric_limits@D@std@@SADXZ() std_numeric_limits_char_min
 @ cdecl ?min@?$numeric_limits@E@std@@SAEXZ() std_numeric_limits_unsigned_char_min

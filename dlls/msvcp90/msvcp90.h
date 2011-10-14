@@ -187,8 +187,10 @@ typedef struct _basic_string_wchar
 
 char* __stdcall MSVCP_allocator_char_allocate(void*, MSVCP_size_t);
 void __stdcall MSVCP_allocator_char_deallocate(void*, char*, MSVCP_size_t);
+MSVCP_size_t __stdcall MSVCP_allocator_char_max_size(void*);
 wchar_t* __stdcall MSVCP_allocator_wchar_allocate(void*, MSVCP_size_t);
 void __stdcall MSVCP_allocator_wchar_deallocate(void*, wchar_t*, MSVCP_size_t);
+MSVCP_size_t __stdcall MSVCP_allocator_wchar_max_size(void*);
 
 /* class locale */
 typedef struct

@@ -999,6 +999,15 @@ MSVCP_size_t __thiscall MSVCP_basic_string_char_length(basic_string_char *this)
     return this->size;
 }
 
+/* ?max_size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIXZ */
+/* ?max_size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KXZ */
+DEFINE_THISCALL_WRAPPER(basic_string_char_max_size, 4)
+MSVCP_size_t __thiscall basic_string_char_max_size(const basic_string_char *this)
+{
+    TRACE("%p\n", this);
+    return MSVCP_allocator_char_max_size(this->allocator)-1;
+}
+
 /* ?empty@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE_NXZ */
 /* ?empty@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_NXZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_empty, 4)
@@ -2438,6 +2447,15 @@ MSVCP_size_t __thiscall MSVCP_basic_string_wchar_length(basic_string_wchar *this
 {
     TRACE("%p\n", this);
     return this->size;
+}
+
+/* ?max_size@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIXZ */
+/* ?max_size@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KXZ */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_max_size, 4)
+MSVCP_size_t __thiscall basic_string_wchar_max_size(const basic_string_wchar *this)
+{
+    TRACE("%p\n", this);
+    return MSVCP_allocator_wchar_max_size(this->allocator)-1;
 }
 
 /* ?empty@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBE_NXZ */
