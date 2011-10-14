@@ -471,12 +471,130 @@ static void test_vbscript_uninitializing(void)
 
     test_state(script, SCRIPTSTATE_CLOSED);
 
+    SET_EXPECT(GetLCID);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+    CHECK_CALLED(GetLCID);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    test_state(script, SCRIPTSTATE_INITIALIZED);
+
+    SET_EXPECT(OnStateChange_CLOSED);
+    hres = IActiveScript_Close(script);
+    ok(hres == S_OK, "Close failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_CLOSED);
+
+    test_state(script, SCRIPTSTATE_CLOSED);
+
     IUnknown_Release(parse);
 
     ref = IActiveScript_Release(script);
     ok(!ref, "ref = %d\n", ref);
 }
 
+static void test_vbscript_release(void)
+{
+    IActiveScriptParse *parser;
+    IActiveScript *vbscript;
+    ULONG ref;
+    HRESULT hres;
+
+    vbscript = create_vbscript();
+
+    hres = IActiveScript_QueryInterface(vbscript, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hres == S_OK, "Could not get IActiveScriptParse iface: %08x\n", hres);
+
+    test_state(vbscript, SCRIPTSTATE_UNINITIALIZED);
+    test_safety(vbscript);
+
+    SET_EXPECT(GetLCID);
+    hres = IActiveScript_SetScriptSite(vbscript, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+    CHECK_CALLED(GetLCID);
+
+    test_state(vbscript, SCRIPTSTATE_UNINITIALIZED);
+
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hres = IActiveScriptParse64_InitNew(parser);
+    ok(hres == S_OK, "InitNew failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    test_state(vbscript, SCRIPTSTATE_INITIALIZED);
+
+    SET_EXPECT(OnStateChange_CONNECTED);
+    hres = IActiveScript_SetScriptState(vbscript, SCRIPTSTATE_CONNECTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_CONNECTED) failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_CONNECTED);
+
+    test_state(vbscript, SCRIPTSTATE_CONNECTED);
+
+    IActiveScriptParse64_Release(parser);
+
+    SET_EXPECT(OnStateChange_DISCONNECTED);
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    SET_EXPECT(OnStateChange_CLOSED);
+    ref = IActiveScript_Release(vbscript);
+    ok(!ref, "ref = %d\n", ref);
+    CHECK_CALLED(OnStateChange_DISCONNECTED);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+    CHECK_CALLED(OnStateChange_CLOSED);
+}
+
+static void test_vbscript_simplecreate(void)
+{
+    IActiveScript *script;
+    ULONG ref;
+    HRESULT hres;
+
+    script = create_vbscript();
+
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_UNINITIALIZED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_UNINITIALIZED) failed: %08x\n", hres);
+
+    ref = IActiveScript_Release(script);
+    ok(!ref, "ref = %d\n", ref);
+}
+
+static void test_vbscript_initializing(void)
+{
+    IActiveScriptParse *parse;
+    IActiveScript *script;
+    ULONG ref;
+    HRESULT hres;
+
+    script = create_vbscript();
+
+    hres = IActiveScript_QueryInterface(script, &IID_IActiveScriptParse, (void**)&parse);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08x\n", hres);
+
+    test_state(script, SCRIPTSTATE_UNINITIALIZED);
+
+    SET_EXPECT(GetLCID);
+    hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08x\n", hres);
+    CHECK_CALLED(GetLCID);
+
+    SET_EXPECT(OnStateChange_INITIALIZED);
+    hres = IActiveScriptParse64_InitNew(parse);
+    ok(hres == S_OK, "InitNew failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_INITIALIZED);
+
+    hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);
+    ok(hres == E_UNEXPECTED, "SetScriptSite failed: %08x, expected E_UNEXPECTED\n", hres);
+
+    SET_EXPECT(OnStateChange_CLOSED);
+    hres = IActiveScript_Close(script);
+    ok(hres == S_OK, "Close failed: %08x\n", hres);
+    CHECK_CALLED(OnStateChange_CLOSED);
+
+    test_state(script, SCRIPTSTATE_CLOSED);
+
+    IUnknown_Release(parse);
+
+    ref = IActiveScript_Release(script);
+    ok(!ref, "ref = %d\n", ref);
+}
 
 static BOOL check_vbscript(void)
 {
@@ -498,6 +616,9 @@ START_TEST(vbscript)
     if(check_vbscript()) {
         test_vbscript();
         test_vbscript_uninitializing();
+        test_vbscript_release();
+        test_vbscript_simplecreate();
+        test_vbscript_initializing();
     }else {
         win_skip("VBScript engine not available\n");
     }
