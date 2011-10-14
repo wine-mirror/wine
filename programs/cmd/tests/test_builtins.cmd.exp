@@ -602,7 +602,7 @@ bar renamed to foo
 foo
 bar
 ... rename read-only files ...
-@todo_wine@read-only file renamed
+read-only file renamed
 ... rename directories ...
 dir renamed
 read-only dir renamed

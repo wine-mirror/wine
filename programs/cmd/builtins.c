@@ -1768,8 +1768,8 @@ void WCMD_remove_dir (WCHAR *command) {
  * Rename a file.
  */
 
-void WCMD_rename (void) {
-
+void WCMD_rename (void)
+{
   int             status;
   HANDLE          hff;
   WIN32_FIND_DATAW fd;
@@ -1779,7 +1779,6 @@ void WCMD_rename (void) {
   WCHAR            dir[MAX_PATH];
   WCHAR            fname[MAX_PATH];
   WCHAR            ext[MAX_PATH];
-  DWORD           attribs;
 
   errorlevel = 0;
 
@@ -1853,15 +1852,7 @@ void WCMD_rename (void) {
     WINE_TRACE("Source '%s'\n", wine_dbgstr_w(src));
     WINE_TRACE("Dest   '%s'\n", wine_dbgstr_w(dest));
 
-    /* Check if file is read only, otherwise move it */
-    attribs = GetFileAttributesW(src);
-    if ((attribs != INVALID_FILE_ATTRIBUTES) &&
-        (attribs & FILE_ATTRIBUTE_READONLY)) {
-      SetLastError(ERROR_ACCESS_DENIED);
-      status = 0;
-    } else {
-      status = MoveFileW(src, dest);
-    }
+    status = MoveFileW(src, dest);
 
     if (!status) {
       WCMD_print_error ();
