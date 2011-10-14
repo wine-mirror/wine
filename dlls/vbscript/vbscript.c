@@ -114,6 +114,9 @@ static void release_script(script_ctx_t *ctx)
 {
     collect_objects(ctx);
 
+    release_dynamic_vars(ctx->global_vars);
+    ctx->global_vars = NULL;
+
     while(!list_empty(&ctx->named_items)) {
         named_item_t *iter = LIST_ENTRY(list_head(&ctx->named_items), named_item_t, entry);
 

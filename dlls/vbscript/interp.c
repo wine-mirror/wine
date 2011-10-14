@@ -1561,11 +1561,20 @@ OP_LIST
 #undef X
 };
 
+void release_dynamic_vars(dynamic_var_t *var)
+{
+    while(var) {
+        VariantClear(&var->v);
+        var = var->next;
+    }
+}
+
 static void release_exec(exec_ctx_t *ctx)
 {
     unsigned i;
 
     VariantClear(&ctx->ret_val);
+    release_dynamic_vars(ctx->dynamic_vars);
 
     if(ctx->this_obj)
         IDispatch_Release(ctx->this_obj);
