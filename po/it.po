@@ -1,11 +1,11 @@
 # Italian translations for Wine
-#
+# Luca Bennati <lucak3@gmail.com>, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-10-07 13:37+0200\n"
+"PO-Revision-Date: 2011-10-14 14:56+0200\n"
 "Last-Translator: Luca Bennati <lucak3@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Italian\n"
@@ -8002,18 +8002,17 @@ msgstr ""
 "PATH %PATH%;c:\\temp\n"
 
 #: cmd.rc:128
-#, fuzzy
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
 "It is mainly useful in batch files to allow the user to read the output\n"
 "of a previous command before it scrolls off the screen.\n"
 msgstr ""
-"PAUSE mostra un messaggio sullo schermo 'Premere Invio per continuare'\n"
-"e aspetta che l'utente prema Invio. È utile principalmente nei files\n"
-"batch per permettere all'utente di leggere l'output di un comando "
-"precedente\n"
-"prima che scorra fuori dallo schermo.\n"
+"PAUSE mostra un messaggio sullo schermo che chiede all'utente di premere un "
+"tasto.\n"
+"\n"
+"È utile soprattutto in file batch per permettere all'utente di leggere\n"
+"l'output di un comando precedente prima che scorra via dallo schermo.\n"
 
 #: cmd.rc:149
 msgid ""
@@ -8489,9 +8488,8 @@ msgid "PATH not found\n"
 msgstr "PATH non trovato\n"
 
 #: cmd.rc:321
-#, fuzzy
 msgid "Press any key to continue... "
-msgstr "Premere Invio per continuare: "
+msgstr "Premere un tasto qualsiasi per continuare... "
 
 #: cmd.rc:322
 msgid "Wine Command Prompt"
