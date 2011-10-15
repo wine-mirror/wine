@@ -394,8 +394,8 @@ msgid ""
 "a document, you need to install a printer. Please install one and retry."
 msgstr ""
 "Abans que pugueu realitzar tasques relacionats amb la impressora com "
-"configurar la pàgina o imprimir un document, cal instal·lar una impressora. Si "
-"us plau, instal·leu una i torneu a intentar."
+"configurar la pàgina o imprimir un document, cal instal·lar una impressora. "
+"Si us plau, instal·leu una i torneu a intentar."
 
 #: comdlg32.rc:151
 msgid "Select a font size between %d and %d points."
@@ -1477,8 +1477,8 @@ msgstr ""
 
 #: cryptui.rc:31
 msgid "This certificate could not be validated to a trusted root certificate."
-msgstr "No s'ha pogut validar aquest certificat a un certificat d'arrel de "
-"confiança."
+msgstr ""
+"No s'ha pogut validar aquest certificat a un certificat d'arrel de confiança."
 
 #: cryptui.rc:32
 msgid "This certificate's issuer could not be found."
@@ -1486,8 +1486,8 @@ msgstr "No s'ha pogut trobar l'emissor d'aquest certificat."
 
 #: cryptui.rc:33
 msgid "All the intended purposes of this certificate could not be verified."
-msgstr "No s'ha pogut verificar tots els propòsits destinats d'aquest "
-"certificat."
+msgstr ""
+"No s'ha pogut verificar tots els propòsits destinats d'aquest certificat."
 
 #: cryptui.rc:34
 msgid "This certificate is intended for the following purposes:"
@@ -1683,7 +1683,8 @@ msgstr "Si us plau, seleccioneu un fitxer."
 
 #: cryptui.rc:82
 msgid "The file format is not recognized.  Please select another file."
-msgstr "El format de fitxer no es reconeix. Si us plau, seleccioneu un altre fitxer."
+msgstr ""
+"El format de fitxer no es reconeix. Si us plau, seleccioneu un altre fitxer."
 
 #: cryptui.rc:83
 msgid "Could not open "
@@ -1767,8 +1768,8 @@ msgid ""
 "sign messages with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
-"Ja no sereu capaç de desxifrar missatges amb aquest certificat, o "
-"signar missatges amb ell.\n"
+"Ja no sereu capaç de desxifrar missatges amb aquest certificat, o signar "
+"missatges amb ell.\n"
 "Esteu segur que voleu treure aquest certificat?"
 
 #: cryptui.rc:108
@@ -1777,8 +1778,8 @@ msgid ""
 "sign messages with them.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"Ja no sereu capaç de desxifrar missatges amb aquests certificats, o "
-"signar missatges amb ells.\n"
+"Ja no sereu capaç de desxifrar missatges amb aquests certificats, o signar "
+"missatges amb ells.\n"
 "Esteu segur que voleu treure aquests certificats?"
 
 #: cryptui.rc:109
@@ -1797,8 +1798,8 @@ msgid ""
 "verify messages signed with it.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"Ja no sereu capaç de xifrar missatges amb aquests certificats, o "
-"verificar missatges signats amb ella.\n"
+"Ja no sereu capaç de xifrar missatges amb aquests certificats, o verificar "
+"missatges signats amb ella.\n"
 "Esteu segur que voleu suprimir aquests certificats?"
 
 #: cryptui.rc:111
@@ -1807,8 +1808,8 @@ msgid ""
 "trusted.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
-"Els certificats emesos per aquesta autoritat de certificació ja no serà"
-"de confiança.\n"
+"Els certificats emesos per aquesta autoritat de certificació ja no seràde "
+"confiança.\n"
 "Esteu segur que voleu suprimir aquest certificat?"
 
 #: cryptui.rc:112
@@ -1817,8 +1818,8 @@ msgid ""
 "trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"Els certificats emesos per aquestas autoritats de certificació ja no seran"
-"de confiança.\n"
+"Els certificats emesos per aquestas autoritats de certificació ja no serande "
+"confiança.\n"
 "Esteu segur que voleu suprimir aquests certificats?"
 
 #: cryptui.rc:113
@@ -3265,7 +3266,7 @@ msgstr "Base de dades de servei encadenat\n"
 
 #: winerror.mc:1156
 msgid "Service already running\n"
-msgstr "El servei ja està executant"
+msgstr "El servei ja està executant\n"
 
 #: winerror.mc:1161
 msgid "Invalid service account\n"
@@ -4065,7 +4066,7 @@ msgstr "No es pot accedir a la informació de domini\n"
 
 #: winerror.mc:2161
 msgid "Invalid server state\n"
-msgstr "Estat de servidor invàlid"
+msgstr "Estat de servidor invàlid\n"
 
 #: winerror.mc:2166
 msgid "Invalid domain state\n"
@@ -5085,11 +5086,13 @@ msgstr "No hi ha més lligaments\n"
 
 #: winerror.mc:3446
 msgid "Can't logon with interdomain trust account\n"
-msgstr "No es pot iniciar la sessió amb compte de confiança de diversos dominis\n"
+msgstr ""
+"No es pot iniciar la sessió amb compte de confiança de diversos dominis\n"
 
 #: winerror.mc:3451
 msgid "Can't logon with workstation trust account\n"
-msgstr "No es pot iniciar la sessió amb compte de confiança d'estació de treball\n"
+msgstr ""
+"No es pot iniciar la sessió amb compte de confiança d'estació de treball\n"
 
 #: winerror.mc:3456
 msgid "Can't logon with server trust account\n"
@@ -5341,8 +5344,9 @@ msgstr "Aquest port no té opcions per configurar"
 
 #: mapi32.rc:28
 msgid "Mail sending failed as you do not have a MAPI mail client installed."
-msgstr "L'enviament de correu ha fallat perquè no teniu cap client de correu "
-"MAPI instal·lat."
+msgstr ""
+"L'enviament de correu ha fallat perquè no teniu cap client de correu MAPI "
+"instal·lat."
 
 #: mapi32.rc:29
 msgid "Send Mail"
@@ -5799,16 +5803,16 @@ msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s."
 msgstr ""
-"Insereix el contingut del portapapers en el document com %s de manera que "
-"el podeu activar mitjançant %s."
+"Insereix el contingut del portapapers en el document com %s de manera que el "
+"podeu activar mitjançant %s."
 
 #: oledlg.rc:36
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s.  It will be displayed as an icon."
 msgstr ""
-"Insereix el contingut del portapapers en el document com %s de manera que "
-"el podeu activar mitjançant %s. Es mostrarà com icona."
+"Insereix el contingut del portapapers en el document com %s de manera que el "
+"podeu activar mitjançant %s. Es mostrarà com icona."
 
 #: oledlg.rc:37
 msgid ""
@@ -5817,8 +5821,8 @@ msgid ""
 "your document."
 msgstr ""
 "Insereix el contingut del portapapers en el document com %s. Les dades es "
-"enllacen al fitxer d'origen perquè els canvis al fitxer es reflecteixin en el "
-"vostre document."
+"enllacen al fitxer d'origen perquè els canvis al fitxer es reflecteixin en "
+"el vostre document."
 
 #: oledlg.rc:38
 msgid ""
@@ -5895,8 +5899,8 @@ msgstr "Copia fitxers de:"
 
 #: setupapi.rc:31
 msgid "Type the path where the file is located, and then click OK."
-msgstr "Introduïu la ruta en que es troba el fitxer i llavors feu clic en "
-"D'accord."
+msgstr ""
+"Introduïu la ruta en que es troba el fitxer i llavors feu clic en D'accord."
 
 #: shdoclc.rc:39
 msgid "F&orward"
@@ -6618,8 +6622,8 @@ msgstr "Esteu segur que voleu enviar aquests %1 articles a la Paperera?"
 
 #: shell32.rc:176
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
-msgstr "L'article '%1' no es pot enviar a la Paperera. El voleu suprimir en "
-"lloc?"
+msgstr ""
+"L'article '%1' no es pot enviar a la Paperera. El voleu suprimir en lloc?"
 
 #: shell32.rc:183
 msgid ""
@@ -6632,7 +6636,8 @@ msgstr ""
 "Aquesta carpeta ja conté una carpeta anomenada '%1'.\n"
 "\n"
 "Si els fitxers en la carpeta de destinació tenen els mateixos noms que els\n"
-"fitxers en la carpeta seleccionada seran reemplaçats. they will be replaced.\n"
+"fitxers en la carpeta seleccionada seran reemplaçats. they will be "
+"replaced.\n"
 "Encara voleu moure o copiar la carpeta?"
 
 #: shell32.rc:248
@@ -6657,7 +6662,8 @@ msgstr "Fitxers executables (*.exe)"
 
 #: shell32.rc:254
 msgid "There is no Windows program configured to open this type of file."
-msgstr "No hi ha cap programa de Windows configurat per obrir aquest tipus de fitxer."
+msgstr ""
+"No hi ha cap programa de Windows configurat per obrir aquest tipus de fitxer."
 
 #: shell32.rc:256
 msgid "Are you sure you wish to permanently delete '%1'?"
@@ -6718,8 +6724,8 @@ msgstr ""
 "\n"
 "Wine es distribueix en l'esperança que sigui útil, però SENSE CAP GARANTIA, "
 "fins i tot sense la garantia implícita de COMERCIABILITAT o APTITUD PER A "
-"PROPÒSITS DETERMINATS. Consulteu la Llicència Pública General Menor GNU "
-"per més detalls.\n"
+"PROPÒSITS DETERMINATS. Consulteu la Llicència Pública General Menor GNU per "
+"més detalls.\n"
 "\n"
 "Hauríeu d'haver rebut una còpia de la Llicència Pública General Menor GNU "
 "juntament amb Wine, si no, escriviu a la Free Software Foundation, Inc., 51 "
@@ -6829,8 +6835,8 @@ msgstr "Error extern indefinit."
 
 #: winmm.rc:30
 msgid "A device ID has been used that is out of range for your system."
-msgstr "Un ID de dispositiu s'ha usat que està fora de l'abast del vostre "
-"sistema."
+msgstr ""
+"Un ID de dispositiu s'ha usat que està fora de l'abast del vostre sistema."
 
 #: winmm.rc:31
 msgid "The driver was not enabled."
@@ -6850,7 +6856,7 @@ msgstr "El mànec del dispositiu especificada no és vàlid."
 
 #: winmm.rc:34
 msgid "There is no driver installed on your system!\n"
-msgstr "No hi ha cap controlador instalat en el vostre sistema!"
+msgstr "No hi ha cap controlador instalat en el vostre sistema!\n"
 
 #: winmm.rc:35
 msgid ""
@@ -6910,8 +6916,8 @@ msgid ""
 "Cannot open the device without using the WAVE_ALLOWSYNC flag. Use the flag, "
 "and then try again."
 msgstr ""
-"No es pot obrir el dispositiu sense usar la bandera WAVE_ALLOWSYNC. "
-"Useu la bandera i llavors torneu a intentar."
+"No es pot obrir el dispositiu sense usar la bandera WAVE_ALLOWSYNC. Useu la "
+"bandera i llavors torneu a intentar."
 
 #: winmm.rc:48
 msgid ""
@@ -6943,8 +6949,7 @@ msgid ""
 "on the system. Use MIDI Mapper to edit the setup."
 msgstr ""
 "La configuració actual de MIDI Mapper refereix a un dispositiu MIDI que no "
-"està instal·lat en el sistema. Useu MIDI Mapper per editar la "
-"configuració."
+"està instal·lat en el sistema. Useu MIDI Mapper per editar la configuració."
 
 #: winmm.rc:53
 msgid ""
@@ -6956,7 +6961,9 @@ msgstr ""
 
 #: winmm.rc:56
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
-msgstr "ID de dispositiu MCI invàlida. Useu la ID retornada al obrir el dispositiu MCI."
+msgstr ""
+"ID de dispositiu MCI invàlida. Useu la ID retornada al obrir el dispositiu "
+"MCI."
 
 #: winmm.rc:57
 msgid "The driver cannot recognize the specified command parameter."
@@ -6994,8 +7001,8 @@ msgid ""
 "The device name is already being used as an alias by this application. Use a "
 "unique alias."
 msgstr ""
-"El nom de dispositiu ja s'usa com un àlies d'aquesta aplicació. "
-"Useu un àlies únic."
+"El nom de dispositiu ja s'usa com un àlies d'aquesta aplicació. Useu un "
+"àlies únic."
 
 #: winmm.rc:63
 msgid ""
@@ -7046,8 +7053,8 @@ msgstr ""
 
 #: winmm.rc:70
 msgid "The specified command requires a parameter. Please supply one."
-msgstr "El ordre especificat requereix un paràmetre. Si us plau, proporcioneu "
-"un."
+msgstr ""
+"El ordre especificat requereix un paràmetre. Si us plau, proporcioneu un."
 
 #: winmm.rc:71
 msgid "The MCI device you are using does not support the specified command."
@@ -7066,21 +7073,20 @@ msgstr "El controlador de dispositiu no està llest."
 
 #: winmm.rc:74
 msgid "A problem occurred in initializing MCI. Try restarting Windows."
-msgstr "Ha hagut un problema en inicialitzar MCI. Proveu a reiniciar "
-"Windows."
+msgstr "Ha hagut un problema en inicialitzar MCI. Proveu a reiniciar Windows."
 
 #: winmm.rc:75
 msgid ""
 "There is a problem with the device driver. The driver has closed. Cannot "
 "access error."
 msgstr ""
-"Hi ha un problema amb el controlador de dispositiu. El conductor s'ha tancat. "
-"Error d'incapacitat d'accedir."
+"Hi ha un problema amb el controlador de dispositiu. El conductor s'ha "
+"tancat. Error d'incapacitat d'accedir."
 
 #: winmm.rc:76
 msgid "Cannot use 'all' as the device name with the specified command."
-msgstr "No es pot usar 'all' com el nom del dispositiu amb l'ordre "
-"especificat."
+msgstr ""
+"No es pot usar 'all' com el nom del dispositiu amb l'ordre especificat."
 
 #: winmm.rc:77
 msgid ""
@@ -7092,8 +7098,9 @@ msgstr ""
 
 #: winmm.rc:78
 msgid "Cannot determine the device type from the given filename extension."
-msgstr "No es pot determinar el tipus de dispositiu de l'extensió del nom de "
-"fitxer donat."
+msgstr ""
+"No es pot determinar el tipus de dispositiu de l'extensió del nom de fitxer "
+"donat."
 
 #: winmm.rc:79
 msgid "The specified parameter is out of range for the specified command."
@@ -7131,9 +7138,7 @@ msgstr ""
 msgid ""
 "The specified alias is already being used in this application. Use a unique "
 "alias."
-msgstr ""
-"L'àlies especificat ja s'usa en aquesta aplicació. Useu un àlies "
-"únic."
+msgstr "L'àlies especificat ja s'usa en aquesta aplicació. Useu un àlies únic."
 
 #: winmm.rc:85
 msgid "The specified parameter is invalid for this command."
@@ -7160,8 +7165,8 @@ msgid ""
 "The specified value for the time format is invalid. Refer to the MCI "
 "documentation for valid formats."
 msgstr ""
-"El valor especificat pel format d'hora no és vàlid. Consulteu la documentació "
-"de MCI pels formats vàlids."
+"El valor especificat pel format d'hora no és vàlid. Consulteu la "
+"documentació de MCI pels formats vàlids."
 
 #: winmm.rc:89
 msgid ""
@@ -7173,8 +7178,9 @@ msgstr ""
 
 #: winmm.rc:90
 msgid "A parameter or value was specified twice. Only specify it once."
-msgstr "Un paràmetre o valor s'ha especificat dues vegades. Només "
-"especificeu-lo una vegada."
+msgstr ""
+"Un paràmetre o valor s'ha especificat dues vegades. Només especificeu-lo una "
+"vegada."
 
 #: winmm.rc:91
 msgid ""
@@ -7198,8 +7204,8 @@ msgstr "Heu d'especificar un àlies quan s'usa el paràmetre 'new'."
 
 #: winmm.rc:95
 msgid "Cannot use the 'notify' flag with auto-opened devices."
-msgstr "No es pot usar la bandera 'notify' amb els dispositius oberts "
-"automàticament."
+msgstr ""
+"No es pot usar la bandera 'notify' amb els dispositius oberts automàticament."
 
 #: winmm.rc:96
 msgid "Cannot use a filename with the specified device."
@@ -7234,7 +7240,8 @@ msgstr ""
 msgid ""
 "Cannot specify extra characters after a string enclosed in quotation marks."
 msgstr ""
-"No es pot especificar caràcters addicionals després d'una cadena entre cometes."
+"No es pot especificar caràcters addicionals després d'una cadena entre "
+"cometes."
 
 #: winmm.rc:101
 msgid ""
@@ -7249,8 +7256,8 @@ msgid ""
 "Cannot access the specified file or MCI device. Try changing directories or "
 "restarting your computer."
 msgstr ""
-"No es pot accedir al fitxer o dispositiu MCI. Intenteu canviar els directoris "
-"o reiniciar l'equip."
+"No es pot accedir al fitxer o dispositiu MCI. Intenteu canviar els "
+"directoris o reiniciar l'equip."
 
 #: winmm.rc:103
 msgid ""
@@ -7270,13 +7277,15 @@ msgstr ""
 
 #: winmm.rc:105
 msgid "Specify a device or driver name that is less than 79 characters."
-msgstr "Especifiqueu un nom de dispositiu o controlador que estigui menys de "
-"79 caràcters."
+msgstr ""
+"Especifiqueu un nom de dispositiu o controlador que estigui menys de 79 "
+"caràcters."
 
 #: winmm.rc:106
 msgid "Specify a device or driver name that is less than 69 characters."
-msgstr "Especifiqueu un nom de dispositiu o controlador que estigui menys de "
-"69 caràcters."
+msgstr ""
+"Especifiqueu un nom de dispositiu o controlador que estigui menys de 69 "
+"caràcters."
 
 #: winmm.rc:107
 msgid ""
@@ -7290,9 +7299,9 @@ msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
 msgstr ""
-"Tots els dispositius d'ones que poden reproduir els fitxers del format actual "
-"estan en ús. Espereu fins que un dispositiu d'ona estigui lliure i llavors "
-"torneu a intentar."
+"Tots els dispositius d'ones que poden reproduir els fitxers del format "
+"actual estan en ús. Espereu fins que un dispositiu d'ona estigui lliure i "
+"llavors torneu a intentar."
 
 #: winmm.rc:109
 msgid ""
@@ -7308,9 +7317,9 @@ msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
 msgstr ""
-"Tots els dispositius d'ona que poden gravar fitxers en el format actual estan "
-"en ús. Espereu fins que un dispositiu d'ona estigui lliure, i llavors torneu "
-"a intentar."
+"Tots els dispositius d'ona que poden gravar fitxers en el format actual "
+"estan en ús. Espereu fins que un dispositiu d'ona estigui lliure, i llavors "
+"torneu a intentar."
 
 #: winmm.rc:111
 msgid ""
@@ -7323,13 +7332,13 @@ msgstr ""
 
 #: winmm.rc:112
 msgid "Any compatible waveform playback device may be used."
-msgstr "Qualsevol dispositiu de reproducció de formas d'ona compatible es pot "
-"usar."
+msgstr ""
+"Qualsevol dispositiu de reproducció de formas d'ona compatible es pot usar."
 
 #: winmm.rc:113
 msgid "Any compatible waveform recording device may be used."
-msgstr "Qualsevol dispositiu de gravació de formas d'ona compatible es pot "
-"usar."
+msgstr ""
+"Qualsevol dispositiu de gravació de formas d'ona compatible es pot usar."
 
 #: winmm.rc:114
 msgid ""
@@ -7393,8 +7402,8 @@ msgid ""
 "on the system. Use the MIDI Mapper option from the Control Panel to edit the "
 "setup."
 msgstr ""
-"La configuració actual de MIDI Mapper es refereix a un dispositiu MIDI que no "
-"està instal·lat al sistema. Utilitzeu l'opció MIDI Mapper del Panell de "
+"La configuració actual de MIDI Mapper es refereix a un dispositiu MIDI que "
+"no està instal·lat al sistema. Utilitzeu l'opció MIDI Mapper del Panell de "
 "Control per modificar la configuració."
 
 #: winmm.rc:126
@@ -7447,8 +7456,8 @@ msgstr ""
 
 #: winspool.rc:28
 msgid "The output file already exists.  Click OK to overwrite."
-msgstr "El fitxer destinatari ja existeix. Feu clic en D'acord per "
-"sobreescriure."
+msgstr ""
+"El fitxer destinatari ja existeix. Feu clic en D'acord per sobreescriure."
 
 #: winspool.rc:29
 msgid "Unable to create the output file."
@@ -7894,9 +7903,11 @@ msgstr ""
 "El ordre GOTO transfereix l'execució a una altra declaració en un fitxer\n"
 "batch.\n"
 "\n"
-"L'etiqueta que és la destinació d'un GOTO pot ser de fins a 255 caràcters de\n"
+"L'etiqueta que és la destinació d'un GOTO pot ser de fins a 255 caràcters "
+"de\n"
 "longitud però no pot incloure espais (això és diferent d'altres sistemas\n"
-"operatius). Si dos o més etiquetes idèntiques existeixen en un fitxer batch,\n"
+"operatius). Si dos o més etiquetes idèntiques existeixen en un fitxer "
+"batch,\n"
 "el primer sempre s'executarà. Intentar fer GOTO a una etiqueta no existent\n"
 "termina l'execució del fitxer batch.\n"
 "\n"
@@ -8002,9 +8013,10 @@ msgid ""
 msgstr ""
 "PAUSE mostra un missatge en la pantalla demanant que l'usuari premi una\n"
 "tecla.\n"
+"\n"
 "És principalment útil en els fitxers batch per permetre que l'usuari\n"
 "llegeixi la sortida d'un ordre anterior abans que es desplaci fora de la\n"
-"pantalla."
+"pantalla.\n"
 
 #: cmd.rc:149
 msgid ""
@@ -8036,7 +8048,8 @@ msgstr ""
 "Les cadenes de caràcters següents tenen el significat especial que\n"
 "s'indica:\n"
 "\n"
-"$$    Signe de dòlar      $_ Nova línia             $b    Barra vertical (|)\n"
+"$$    Signe de dòlar      $_ Nova línia             $b    Barra vertical "
+"(|)\n"
 "$d    Data actual         $e Escapament             $g    Signe >\n"
 "$l    Signe <             $n Unitat actual          $p    Ruta actual\n"
 "$q    Signe d'igualtat    $t Temps actual           $v    Versió de cmd\n"
@@ -8060,7 +8073,8 @@ msgstr ""
 
 #: cmd.rc:156
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
-msgstr "REN <nom de fitxer> és la versió curta de RENAME. Canvia el nom\n"
+msgstr ""
+"REN <nom de fitxer> és la versió curta de RENAME. Canvia el nom\n"
 "d'un fitxer\n"
 
 #: cmd.rc:157
@@ -8127,7 +8141,8 @@ msgstr "TIME estableix o mostra l'hora actual del sistema.\n"
 
 #: cmd.rc:187
 msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
-msgstr "Estableix el títol de finestra per la finestra cmd, sintaxi TITLE\n"
+msgstr ""
+"Estableix el títol de finestra per la finestra cmd, sintaxi TITLE\n"
 "[cadena]\n"
 
 #: cmd.rc:191
@@ -8187,7 +8202,7 @@ msgstr ""
 "Els canvis d'entorn fets després d'un SETLOCAL són locals al fitxer batch,\n"
 "i es conserven fins que la pròxima ENDLOCAL es trobi (o al final del\n"
 "fitxer, el que passi primer), al qual punt la configuració de l'entorn\n"
-"anterior es restaura."
+"anterior es restaura.\n"
 
 #: cmd.rc:220
 msgid ""
@@ -8201,8 +8216,7 @@ msgstr ""
 msgid ""
 "POPD changes current directory to the last one saved with\n"
 "PUSHD.\n"
-msgstr ""
-"POPD canvia el directori actual al últim desat amb PUSHD.\n"
+msgstr "POPD canvia el directori actual al últim desat amb PUSHD.\n"
 
 #: cmd.rc:231
 msgid ""
@@ -8244,13 +8258,15 @@ msgstr ""
 "\n"
 "Sense paràmetres, mostra els tipus de fitxer pels quals les cadenes d'ordre\n"
 "de abertura estan definides actualment. Si s'usa amb només un tipus de\n"
-"fitxer, mostra la cadena d'ordre d'obertura associada, si hi ha. Especificar\n"
+"fitxer, mostra la cadena d'ordre d'obertura associada, si hi ha. "
+"Especificar\n"
 "cap ordre d'obertura després del signe igual treu la cadena de ordre\n"
 "associada al tipus de fitxer especificat.\n"
 
 #: cmd.rc:244
 msgid "MORE displays output of files or piped input in pages.\n"
-msgstr "MORE mostra la sortida dels fitxers o entrada de canonada en pàginas.\n"
+msgstr ""
+"MORE mostra la sortida dels fitxers o entrada de canonada en pàginas.\n"
 
 #: cmd.rc:248
 msgid ""
@@ -8268,7 +8284,8 @@ msgid ""
 "EXIT terminates the current command session and returns\n"
 "to the operating system or shell from which you invoked cmd.\n"
 msgstr ""
-"EXIT acaba la sessió d'ordres actual i torna al sistema operatiu o shell des\n"
+"EXIT acaba la sessió d'ordres actual i torna al sistema operatiu o shell "
+"des\n"
 "del qual heu invocat cmd.\n"
 
 #: cmd.rc:289
@@ -8352,7 +8369,7 @@ msgstr ""
 "Introduïu HELP <ordre> per més informació sobre qualsevol de les ordres\n"
 "anteriors.\n"
 
-#: cmd.rc:290
+#: cmd.rc:291
 msgid "Are you sure"
 msgstr "Esteu segur"
 
@@ -8499,7 +8516,8 @@ msgstr "Eina Diagnòstica de DirextX"
 
 #: dxdiag.rc:28
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
-msgstr "Ús: dxdiag [/whql:off | /whql:on] [/t nom_de_fitxer | /x nom_de_fitxer]"
+msgstr ""
+"Ús: dxdiag [/whql:off | /whql:on] [/t nom_de_fitxer | /x nom_de_fitxer]"
 
 #: explorer.rc:28
 msgid "Wine Explorer"
@@ -8531,7 +8549,8 @@ msgstr "Ús: ipconfig [ /? | /all ]\n"
 
 #: ipconfig.rc:28
 msgid "Error: Unknown or invalid command line parameters specified\n"
-msgstr "Error: Paràmetres de línia d'ordres desconeguts o invàlids\n"
+msgstr ""
+"Error: Paràmetres de línia d'ordres desconeguts o invàlids\n"
 "especificats\n"
 
 #: ipconfig.rc:29
@@ -9070,8 +9089,8 @@ msgstr "Canvia entre els modes de visualització expert i novells"
 msgid ""
 "Toggle the display of component categories that are not meant to be visible"
 msgstr ""
-"Alterna la visualització de les categories de component que no es suposen ser "
-"visibles"
+"Alterna la visualització de les categories de component que no es suposen "
+"ser visibles"
 
 #: oleview.rc:119
 msgid "Show or hide the toolbar"
@@ -9365,7 +9384,8 @@ msgstr "Error: No es pot afegir els claus a un equip remot\n"
 msgid ""
 "Error: The system was unable to find the specified registry key or value\n"
 msgstr ""
-"Error: El sistema no ha pogut trobar la clau o valor de registre especificada\n"
+"Error: El sistema no ha pogut trobar la clau o valor de registre "
+"especificada\n"
 
 #: regedit.rc:31
 msgid "&Registry"
@@ -9684,7 +9704,8 @@ msgstr ""
 "/?           Mostrar aquesta ajuda i sortir.\n"
 "\n"
 "start.exe versió 0.2 © 2003, Dan Kegel\n"
-"Start ve amb ABSOLUTAMENT CAP GARANTIA; per més detalls executar amb l'opció\n"
+"Start ve amb ABSOLUTAMENT CAP GARANTIA; per més detalls executar amb "
+"l'opció\n"
 "/L.\n"
 "Això és programari lliure, i esteu benvingut a redistribuir-lo sota certes\n"
 "condicions; executeu 'start /L' pels detalls.\n"
@@ -9728,14 +9749,16 @@ msgid ""
 "Application could not be started, or no application associated with the "
 "specified file.\n"
 "ShellExecuteEx failed"
-msgstr "L'aplicació no s'ha pogut iniciar, o no hi ha cap aplicació associada "
-"amb el fitxer especificat.\n"
+msgstr ""
+"L'aplicació no s'ha pogut iniciar, o no hi ha cap aplicació associada amb el "
+"fitxer especificat.\n"
 "Ha fallat ShellExecuteEx"
 
 #: start.rc:68
 msgid "Could not translate the specified Unix filename to a DOS filename."
-msgstr "No s'ha pogut traduir el nom de fitxer Unix especificat a un nom de "
-"fitxer DOS."
+msgstr ""
+"No s'ha pogut traduir el nom de fitxer Unix especificat a un nom de fitxer "
+"DOS."
 
 #: taskkill.rc:27
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
@@ -9763,15 +9786,16 @@ msgstr "Error: Les opcions /im i /pid són mútuament excloents.\n"
 
 #: taskkill.rc:33
 msgid "Close message sent to top-level windows of process with PID %u.\n"
-msgstr "Missatge de tancar enviat a les finestres del nivell superior del "
-"procès amb PID %u.\n"
+msgstr ""
+"Missatge de tancar enviat a les finestres del nivell superior del procès amb "
+"PID %u.\n"
 
 #: taskkill.rc:34
 msgid ""
 "Close message sent to top-level windows of process \"%s\" with PID %u.\n"
 msgstr ""
-"Missatge de tancar enviat a les finestres del nivell superior del procès "
-"\"%s\" amb PID %u.\n"
+"Missatge de tancar enviat a les finestres del nivell superior del procès \"%s"
+"\" amb PID %u.\n"
 
 #: taskkill.rc:35
 msgid "Process with PID %u was forcibly terminated.\n"
@@ -9947,12 +9971,14 @@ msgstr "Executa un nou programa"
 
 #: taskmgr.rc:188
 msgid "Task Manager remains in front of all other windows unless minimized"
-msgstr "L'Administrador de Tasques queda damunt totes les finestres a menys "
-"que estigui minimitzat"
+msgstr ""
+"L'Administrador de Tasques queda damunt totes les finestres a menys que "
+"estigui minimitzat"
 
 #: taskmgr.rc:190
 msgid "Task Manager is minimized when a SwitchTo operation is performed"
-msgstr "Es minimitza l'Administrador de Tasques cuan es realitza una operació "
+msgstr ""
+"Es minimitza l'Administrador de Tasques cuan es realitza una operació "
 "SwitchTo"
 
 #: taskmgr.rc:191
@@ -9961,8 +9987,9 @@ msgstr "Amaga l'Administrador de Tasques cuan es minimitza"
 
 #: taskmgr.rc:192
 msgid "Force Task Manager to update now, regardless of Update Speed setting"
-msgstr "Força que l'Administrador de Tasques s'actualitzi ara, independentment "
-"de la configuració de Velocitat d'Actualització"
+msgstr ""
+"Força que l'Administrador de Tasques s'actualitzi ara, independentment de la "
+"configuració de Velocitat d'Actualització"
 
 #: taskmgr.rc:193
 msgid "Displays tasks by using large icons"
@@ -10533,8 +10560,8 @@ msgid ""
 msgstr ""
 "No podeu afegir més unitats.\n"
 "\n"
-"Cada unitat ha de tenir una lletra, de A a Z, així que no podeu tenir més "
-"de 26."
+"Cada unitat ha de tenir una lletra, de A a Z, així que no podeu tenir més de "
+"26."
 
 #: winecfg.rc:78
 msgid "System drive"
@@ -10549,8 +10576,8 @@ msgid ""
 msgstr ""
 "Esteu segur que voleu suprimir la unitat C?\n"
 "\n"
-"La majoría de les aplicacions de Windows esperen que la unitat C existeixi, y "
-"fallaran desordenadament si no. Si procedeixes, recordeu recrear-la!"
+"La majoría de les aplicacions de Windows esperen que la unitat C existeixi, "
+"y fallaran desordenadament si no. Si procedeixes, recordeu recrear-la!"
 
 #: winecfg.rc:80
 msgctxt "Drive letter"
@@ -10729,8 +10756,9 @@ msgstr "Error de configuració"
 
 #: wineconsole.rc:39
 msgid "Screen buffer size must be greater or equal to the window's one"
-msgstr "La mida de la memòria intermèdia de pantalla ha de ser major o igual "
-"al de la finestra"
+msgstr ""
+"La mida de la memòria intermèdia de pantalla ha de ser major o igual al de "
+"la finestra"
 
 #: wineconsole.rc:34
 msgid "Each character is %ld pixels wide on %ld pixels high"
@@ -10791,7 +10819,8 @@ msgstr ""
 
 #: wineconsole.rc:50
 msgid "  <command>                The Wine program to launch in the console.\n"
-msgstr "  <ordre>                  El programa Wine que s'iniciarà en la consola.\n"
+msgstr ""
+"  <ordre>                  El programa Wine que s'iniciarà en la consola.\n"
 
 #: wineconsole.rc:51
 msgid ""
