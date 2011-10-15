@@ -3,7 +3,7 @@
  * Italian Language Support
  *
  * Copyright 2004 Ivan Leo Pioti
- * Copyright 2009 Luca Bennati
+ * Copyright 2009,2011 Luca Bennati
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -66,7 +66,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX    " Impostazioni delle finestre ",IDC_STATIC,8,4,244,84
-    CONTROL     "Automatically capture the &mouse in full-screen windows",IDC_FULLSCREEN_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    CONTROL     "Cattura automaticamente il &mouse nelle finestre a schermo pieno",IDC_FULLSCREEN_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
     CONTROL     "Permetti al gestore delle finestre di &decorare le finestre",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
     CONTROL     "Permetti al &gestore delle finestre di controllare le finestre",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
     CONTROL     "&Emula un desktop virtuale",IDC_ENABLE_DESKTOP,"Button",
@@ -115,7 +115,7 @@ BEGIN
     CONTROL         "In&tegrata poi nativa",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
     CONTROL         "N&ativa poi integrata",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
     CONTROL         "&Disabilita",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
-    DEFPUSHBUTTON   "OK",IDOK,8,74,45,14,WS_GROUP
+    DEFPUSHBUTTON   "Ok",IDOK,8,74,45,14,WS_GROUP
     PUSHBUTTON      "Annulla",IDCANCEL,57,74,45,14,WS_GROUP
 END
 
@@ -125,7 +125,7 @@ CAPTION "Seleziona la lettera dell'unità"
 FONT 8, "MS Shell Dlg"
 BEGIN
     COMBOBOX IDC_DRIVESA2Z,15,10,75,230,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    DEFPUSHBUTTON   "OK",IDOK,105,10,45,14,WS_GROUP
+    DEFPUSHBUTTON   "Ok",IDOK,105,10,45,14,WS_GROUP
     PUSHBUTTON      "Annulla",IDCANCEL,105,30,45,14,WS_GROUP
 END
 
@@ -166,13 +166,13 @@ IDD_AUDIOCFG DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Driver Diagnostics ",IDC_STATIC,8,4,244,27
+    GROUPBOX        " Diagnostica del driver ",IDC_STATIC,8,4,244,27
     LTEXT           "",IDC_AUDIO_DRIVER,18,16,230,8
-    GROUPBOX        " Defaults ",IDC_STATIC,8,33,244,76
-    LTEXT           "Output device:",IDC_STATIC,18,45,230,8
-    LTEXT           "Voice output device:",IDC_STATIC,18,61,230,8
-    LTEXT           "Input device:",IDC_STATIC,18,77,230,8
-    LTEXT           "Voice input device:",IDC_STATIC,18,93,230,8
+    GROUPBOX        " Valori predefiniti ",IDC_STATIC,8,33,244,76
+    LTEXT           "Unità output:",IDC_STATIC,18,45,230,8
+    LTEXT           "Unità output voce:",IDC_STATIC,18,61,230,8
+    LTEXT           "Unità input:",IDC_STATIC,18,77,230,8
+    LTEXT           "Unità input voce:",IDC_STATIC,18,93,230,8
     COMBOBOX        IDC_AUDIOOUT_DEVICE,110,43,135,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        IDC_VOICEOUT_DEVICE,110,59,135,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        IDC_AUDIOIN_DEVICE,110,75,135,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
