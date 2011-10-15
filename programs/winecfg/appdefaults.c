@@ -51,7 +51,7 @@ static const struct
 {
     { "win2008r2",   "Windows 2008 R2",   6,  1, 0x1DB1,VER_PLATFORM_WIN32_NT, "Service Pack 1", 1, 0, "ServerNT"},
     { "win7",        "Windows 7",         6,  1, 0x1DB1,VER_PLATFORM_WIN32_NT, "Service Pack 1", 1, 0, "WinNT"},
-    { "win2008",     "Windows 2008",      6,  0, 0x1771,VER_PLATFORM_WIN32_NT, "Service Pack 1", 0, 0, "ServerNT"},
+    { "win2008",     "Windows 2008",      6,  0, 0x1772,VER_PLATFORM_WIN32_NT, "Service Pack 2", 0, 0, "ServerNT"},
     { "vista",       "Windows Vista",     6,  0, 0x1772,VER_PLATFORM_WIN32_NT, "Service Pack 2", 2, 0, "WinNT"},
     { "win2003",     "Windows 2003",      5,  2, 0xECE, VER_PLATFORM_WIN32_NT, "Service Pack 2", 2, 0, "ServerNT"},
     { "winxp",       "Windows XP",        5,  1, 0xA28, VER_PLATFORM_WIN32_NT, "Service Pack 3", 3, 0, "WinNT"},
