@@ -4033,6 +4033,19 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
         return DDERR_INVALIDPARAMS;
     }
 
+    /* Tests show that only LPSURFACE and PIXELFORMAT can be set, and LPSURFACE is required
+     * for PIXELFORMAT to work */
+    if (DDSD->dwFlags & ~(DDSD_LPSURFACE | DDSD_PIXELFORMAT))
+    {
+        WARN("Invalid flags (0x%08x) set, returning DDERR_INVALIDPARAMS\n", DDSD->dwFlags);
+        return DDERR_INVALIDPARAMS;
+    }
+    if (!(DDSD->dwFlags & DDSD_LPSURFACE))
+    {
+        WARN("DDSD_LPSURFACE is not set, returning DDERR_INVALIDPARAMS\n");
+        return DDERR_INVALIDPARAMS;
+    }
+
     wined3d_mutex_lock();
     if (DDSD->dwFlags & DDSD_PIXELFORMAT)
     {
@@ -4052,27 +4065,8 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
                 wined3d_mutex_unlock();
                 return hr;
             }
+            This->surface_desc.u4.ddpfPixelFormat = DDSD->u4.ddpfPixelFormat;
         }
-    }
-    if (DDSD->dwFlags & DDSD_CKDESTOVERLAY)
-    {
-        wined3d_surface_set_color_key(This->wined3d_surface, DDCKEY_DESTOVERLAY,
-                (WINEDDCOLORKEY *)&DDSD->u3.ddckCKDestOverlay);
-    }
-    if (DDSD->dwFlags & DDSD_CKDESTBLT)
-    {
-        wined3d_surface_set_color_key(This->wined3d_surface, DDCKEY_DESTBLT,
-                (WINEDDCOLORKEY *)&DDSD->ddckCKDestBlt);
-    }
-    if (DDSD->dwFlags & DDSD_CKSRCOVERLAY)
-    {
-        wined3d_surface_set_color_key(This->wined3d_surface, DDCKEY_SRCOVERLAY,
-                (WINEDDCOLORKEY *)&DDSD->ddckCKSrcOverlay);
-    }
-    if (DDSD->dwFlags & DDSD_CKSRCBLT)
-    {
-        wined3d_surface_set_color_key(This->wined3d_surface, DDCKEY_SRCBLT,
-                (WINEDDCOLORKEY *)&DDSD->ddckCKSrcBlt);
     }
     if (DDSD->dwFlags & DDSD_LPSURFACE && DDSD->lpSurface)
     {
@@ -4089,9 +4083,8 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
                     break; /* Go on */
             }
         }
+        /* DDSD->lpSurface is set by Lock() */
     }
-
-    This->surface_desc = *DDSD;
 
     wined3d_mutex_unlock();
 
