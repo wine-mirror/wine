@@ -10346,9 +10346,8 @@ msgid "(None)"
 msgstr "(없음)"
 
 #: winecfg.rc:89
-#, fuzzy
 msgid "Audio test failed!"
-msgstr "오디오 테스트 실패\n"
+msgstr "오디오 테스트 실패!"
 
 #: winecfg.rc:91
 msgid "(System default)"
@@ -11311,7 +11310,7 @@ msgstr "%s를 덮어쓰겠습니까? (예|아니오|모두)\n"
 
 #: xcopy.rc:37
 msgid "Copying of '%s' to '%s' failed with r/c %d\n"
-msgstr " r/c %d로 '%s'를  '%s'로 복사 실패 \n"
+msgstr "r/c %d로 '%s'를 '%s'로 복사 실패 \n"
 
 #: xcopy.rc:39
 msgid "Failed during reading of '%s'\n"
