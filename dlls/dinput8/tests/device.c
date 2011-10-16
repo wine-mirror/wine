@@ -69,12 +69,13 @@ static void test_device_input(
     HRESULT hr;
     DIDEVICEOBJECTDATA obj_data;
     DWORD data_size = 1;
+    int i;
 
     hr = IDirectInputDevice8_Acquire(lpdid);
     ok (SUCCEEDED(hr), "Failed to acquire device hr=%08x\n", hr);
 
     if (event_type == INPUT_KEYBOARD)
-        keybd_event( event, 0, 0, 0);
+        keybd_event( event, DIK_SPACE, 0, 0);
 
     if (event_type == INPUT_MOUSE)
         mouse_event( event, 0, 0, 0, 0);
@@ -89,6 +90,28 @@ static void test_device_input(
     }
 
     ok (obj_data.uAppData == expected, "Retrieval of action failed uAppData=%lu expected=%d\n", obj_data.uAppData, expected);
+
+    /* Check for buffer owerflow */
+    for (i = 0; i < 17; i++)
+        if (event_type == INPUT_KEYBOARD)
+        {
+            keybd_event( VK_SPACE, DIK_SPACE, 0, 0);
+            keybd_event( VK_SPACE, DIK_SPACE, KEYEVENTF_KEYUP, 0);
+        }
+        else if (event_type == INPUT_MOUSE)
+        {
+            mouse_event(MOUSEEVENTF_LEFTDOWN, 1, 1, 0, 0);
+            mouse_event(MOUSEEVENTF_LEFTUP, 1, 1, 0, 0);
+        }
+
+    IDirectInputDevice8_Poll(lpdid);
+
+    data_size = 1;
+    hr = IDirectInputDevice8_GetDeviceData(lpdid, sizeof(obj_data), &obj_data, &data_size, 0);
+    ok(hr == DI_BUFFEROVERFLOW, "GetDeviceData() failed: %08x\n", hr);
+    data_size = 1;
+    hr = IDirectInputDevice8_GetDeviceData(lpdid, sizeof(obj_data), &obj_data, &data_size, 0);
+    ok(hr == DI_OK && data_size == 1, "GetDeviceData() failed: %08x cnt:%d\n", hr, data_size);
 }
 
 static void test_build_action_map(
@@ -134,6 +157,9 @@ static BOOL CALLBACK enumeration_callback(
     DIPROPDWORD dp;
     DIPROPRANGE dpr;
     struct enum_data *data = pvRef;
+    DWORD cnt;
+    DIDEVICEOBJECTDATA buffer[5];
+
     if (!data) return DIENUM_CONTINUE;
 
     data->ndevices++;
@@ -180,6 +206,10 @@ static BOOL CALLBACK enumeration_callback(
     ok (SUCCEEDED(hr), "GetProperty failed hr=%08x\n", hr);
     ok (dp.dwData == data->lpdiaf->dwBufferSize, "SetActionMap must set the buffer, buffersize=%d\n", dp.dwData);
 
+    cnt = 1;
+    hr = IDirectInputDevice_GetDeviceData(lpdid, sizeof(buffer[0]), buffer, &cnt, 0);
+    ok(hr == DIERR_NOTACQUIRED, "GetDeviceData() failed hr=%08x\n", hr);
+
     /* Test axis range */
     memset(&dpr, 0, sizeof(dpr));
     dpr.diph.dwSize = sizeof(dpr);
@@ -197,6 +227,10 @@ static BOOL CALLBACK enumeration_callback(
     /* SetActionMap has set the data format so now it should work */
     hr = IDirectInputDevice8_Acquire(lpdid);
     ok (SUCCEEDED(hr), "Acquire failed hr=%08x\n", hr);
+
+    cnt = 1;
+    hr = IDirectInputDevice_GetDeviceData(lpdid, sizeof(buffer[0]), buffer, &cnt, 0);
+    ok(hr == DI_OK, "GetDeviceData() failed hr=%08x\n", hr);
 
     /* SetActionMap should not work on an acquired device */
     hr = IDirectInputDevice8_SetActionMap(lpdid, data->lpdiaf, NULL, 0);
