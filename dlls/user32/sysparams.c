@@ -254,6 +254,7 @@ static const WCHAR METRICS_MENUWIDTH_VALNAME[]=       {'M','e','n','u','W','i','
 static const WCHAR METRICS_MENUHEIGHT_VALNAME[]=      {'M','e','n','u','H','e','i','g','h','t',0};
 static const WCHAR METRICS_ICONSIZE_VALNAME[]=        {'S','h','e','l','l',' ','I','c','o','n',' ','S','i','z','e',0};
 static const WCHAR METRICS_BORDERWIDTH_VALNAME[]=     {'B','o','r','d','e','r','W','i','d','t','h',0};
+static const WCHAR METRICS_PADDEDBORDERWIDTH_VALNAME[]={'P','a','d','d','e','d','B','o','r','d','e','r','W','i','d','t','h',0};
 static const WCHAR METRICS_CAPTIONLOGFONT_VALNAME[]=  {'C','a','p','t','i','o','n','F','o','n','t',0};
 static const WCHAR METRICS_SMCAPTIONLOGFONT_VALNAME[]={'S','m','C','a','p','t','i','o','n','F','o','n','t',0};
 static const WCHAR METRICS_MENULOGFONT_VALNAME[]=     {'M','e','n','u','F','o','n','t',0};
@@ -1079,6 +1080,7 @@ static void load_nonclient_metrics(void)
     ncm.iBorderWidth =  get_reg_metric(hkey, METRICS_BORDERWIDTH_VALNAME, 1);
     ncm.iScrollWidth = get_reg_metric(hkey, METRICS_SCROLLWIDTH_VALNAME, 16);
     ncm.iScrollHeight = get_reg_metric(hkey, METRICS_SCROLLHEIGHT_VALNAME, 16);
+    ncm.iPaddedBorderWidth = get_reg_metric(hkey, METRICS_PADDEDBORDERWIDTH_VALNAME, 0);
 
     /* size of the normal caption buttons */
     ncm.iCaptionHeight = get_reg_metric(hkey, METRICS_CAPTIONHEIGHT_VALNAME, 18);
