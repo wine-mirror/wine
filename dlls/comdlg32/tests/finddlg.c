@@ -103,11 +103,13 @@ static void test_param_check(void)
     /* invalid lpstrFindWhat (NULL) */
     CHECK_FINDREPLACE_FAIL(FRERR_BUFFERLENGTHZERO);
     fr.lpstrFindWhat = findbuffer;
+    strcpy(findbuffer, "abc");
 
     /* invalid lpstrReplaceWith (NULL) for ReplaceText */
     CHECK_FIND_SUCCEED();
     CHECK_REPLACE_FAIL(FRERR_BUFFERLENGTHZERO);
     fr.lpstrReplaceWith = replacebuffer;
+    strcpy(replacebuffer, "def");
 
     /* wReplaceWithLen may be 0, even for ReplaceText */
     CHECK_FIND_SUCCEED();
