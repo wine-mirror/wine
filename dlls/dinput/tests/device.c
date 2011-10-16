@@ -127,7 +127,7 @@ static void test_object_info(LPDIRECTINPUTDEVICE device, HWND hwnd)
         ok(hr == DI_OK, "SetProperty() failed: %08x\n", hr);
 
         cnt = 5;
-        hr = IDirectInputDevice_GetDeviceData(device, sizeof(buffer), buffer, &cnt, 0);
+        hr = IDirectInputDevice_GetDeviceData(device, sizeof(buffer[0]), buffer, &cnt, 0);
         ok(hr == DI_OK && cnt == 5, "GetDeviceData() failed: %08x cnt: %d\n", hr, cnt);
 
         dp.dwData = 20;
@@ -135,15 +135,17 @@ static void test_object_info(LPDIRECTINPUTDEVICE device, HWND hwnd)
         ok(hr == DI_OK, "SetProperty() failed: %08x\n", hr);
 
         cnt = 1;
-        hr = IDirectInputDevice_GetDeviceData(device, sizeof(buffer), buffer, &cnt, 0);
+        hr = IDirectInputDevice_GetDeviceData(device, sizeof(buffer[0]), buffer, &cnt, 0);
         ok(hr == DI_OK, "GetDeviceData() failed: %08x\n", hr);
 
         /* Cannot change mode while acquired */
         hr = IDirectInputDevice_Acquire(device);
         ok(hr == DI_OK, "Acquire() failed: %08x\n", hr);
         cnt = 1;
-        hr = IDirectInputDevice_GetDeviceData(device, sizeof(buffer), buffer, &cnt, 0);
+        hr = IDirectInputDevice_GetDeviceData(device, sizeof(buffer[0]), buffer, &cnt, 0);
         ok(hr == DI_OK, "GetDeviceData() failed: %08x\n", hr);
+
+
         hr = IDirectInputDevice_SetProperty(device, DIPROP_AXISMODE, &dp.diph);
         ok(hr == DIERR_ACQUIRED, "SetProperty() returned: %08x\n", hr);
         hr = IDirectInputDevice_Unacquire(device);
