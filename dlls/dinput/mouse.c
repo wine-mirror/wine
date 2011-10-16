@@ -419,7 +419,7 @@ static int dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM
     return ret;
 }
 
-static HRESULT warp_check( SysMouseImpl* This, BOOL force )
+static void warp_check( SysMouseImpl* This, BOOL force )
 {
     DWORD now = GetCurrentTime();
     const DWORD interval = This->clipped ? 500 : 10;
@@ -430,7 +430,7 @@ static HRESULT warp_check( SysMouseImpl* This, BOOL force )
 
         This->last_warped = now;
         This->need_warp = FALSE;
-        if (!GetWindowRect(This->base.win, &rect)) return DIERR_GENERIC;
+        if (!GetWindowRect(This->base.win, &rect)) return;
         This->mapped_center.x = (rect.left + rect.right) / 2;
         This->mapped_center.y = (rect.top + rect.bottom) / 2;
         if (!This->clipped)
@@ -447,7 +447,6 @@ static HRESULT warp_check( SysMouseImpl* This, BOOL force )
             This->clipped = GetClipCursor( &new_rect ) && EqualRect( &rect, &new_rect );
         }
     }
-    return DI_OK;
 }
 
 
@@ -569,7 +568,8 @@ static HRESULT WINAPI SysMouseWImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W iface, 
     }
     LeaveCriticalSection(&This->base.crit);
 
-    return warp_check( This, FALSE );
+    warp_check( This, FALSE );
+    return DI_OK;
 }
 
 static HRESULT WINAPI SysMouseAImpl_GetDeviceState(LPDIRECTINPUTDEVICE8A iface, DWORD len, LPVOID ptr)
@@ -588,7 +588,7 @@ static HRESULT WINAPI SysMouseWImpl_GetDeviceData(LPDIRECTINPUTDEVICE8W iface,
     HRESULT res;
 
     res = IDirectInputDevice2WImpl_GetDeviceData(iface, dodsize, dod, entries, flags);
-    if (SUCCEEDED(res)) res = warp_check( This, FALSE );
+    if (SUCCEEDED(res)) warp_check( This, FALSE );
     return res;
 }
 

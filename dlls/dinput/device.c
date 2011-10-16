@@ -1307,7 +1307,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetDeviceData(LPDIRECTINPUTDEVICE8W ifac
     }
     *entries = len;
 
-    if (This->overflow)
+    if (This->overflow && This->dinput->dwVersion == 0x0800)
         ret = DI_BUFFEROVERFLOW;
 
     if (!(flags & DIGDD_PEEK))
