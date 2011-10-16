@@ -371,6 +371,8 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
               }
               break;
         }
+        break;
+
       case WM_SHOWWINDOW:
         set_window_title(hDlg);
         break;
