@@ -788,14 +788,25 @@ static unsigned dde_connect(const WCHAR* key, const WCHAR* start, WCHAR* ddeexec
     WCHAR *     exec;
     DWORD       ddeInst = 0;
     DWORD       tid;
-    DWORD       resultLen;
+    DWORD       resultLen, endkeyLen;
     HSZ         hszApp, hszTopic;
     HCONV       hConv;
     HDDEDATA    hDdeData;
     unsigned    ret = SE_ERR_NOASSOC;
     BOOL unicode = !(GetVersion() & 0x80000000);
 
+    if (strlenW(key) + 1 > sizeof(regkey) / sizeof(regkey[0]))
+    {
+        FIXME("input parameter %s larger than buffer\n", debugstr_w(key));
+        return 2;
+    }
     strcpyW(regkey, key);
+    endkeyLen = sizeof(regkey) / sizeof(regkey[0]) - (endkey - regkey);
+    if (strlenW(wApplication) + 1 > endkeyLen)
+    {
+        FIXME("endkey %s overruns buffer\n", debugstr_w(wApplication));
+        return 2;
+    }
     strcpyW(endkey, wApplication);
     applen = sizeof(app);
     if (RegQueryValueW(HKEY_CLASSES_ROOT, regkey, app, &applen) != ERROR_SUCCESS)
@@ -809,6 +820,12 @@ static unsigned dde_connect(const WCHAR* key, const WCHAR* start, WCHAR* ddeexec
         /* Get application command from start string and find filename of application */
         if (*start == '"')
         {
+            if (strlenW(start + 1) + 1 > sizeof(command) / sizeof(command[0]))
+            {
+                FIXME("size of input parameter %s larger than buffer\n",
+                      debugstr_w(start + 1));
+                return 2;
+            }
             strcpyW(command, start+1);
             if ((ptr = strchrW(command, '"')))
                 *ptr = 0;
@@ -835,6 +852,11 @@ static unsigned dde_connect(const WCHAR* key, const WCHAR* start, WCHAR* ddeexec
             ERR("Unable to find application path for command %s\n", debugstr_w(start));
             return ERROR_ACCESS_DENIED;
         }
+        if (strlenW(ptr) + 1 > sizeof(app) / sizeof(app[0]))
+        {
+            FIXME("size of found path %s larger than buffer\n", debugstr_w(ptr));
+            return 2;
+        }
         strcpyW(app, ptr);
 
         /* Remove extensions (including .so) */
@@ -848,6 +870,11 @@ static unsigned dde_connect(const WCHAR* key, const WCHAR* start, WCHAR* ddeexec
         *ptr = 0;
     }
 
+    if (strlenW(wTopic) + 1 > endkeyLen)
+    {
+        FIXME("endkey %s overruns buffer\n", debugstr_w(wTopic));
+        return 2;
+    }
     strcpyW(endkey, wTopic);
     topiclen = sizeof(topic);
     if (RegQueryValueW(HKEY_CLASSES_ROOT, regkey, topic, &topiclen) != ERROR_SUCCESS)
@@ -889,6 +916,11 @@ static unsigned dde_connect(const WCHAR* key, const WCHAR* start, WCHAR* ddeexec
             DdeUninitialize(ddeInst);
             SetLastError(ERROR_DDE_FAIL);
             return 30; /* whatever */
+        }
+        if (strlenW(wIfexec) + 1 > endkeyLen)
+        {
+            FIXME("endkey %s overruns buffer\n", debugstr_w(wIfexec));
+            return 2;
         }
         strcpyW(endkey, wIfexec);
         ifexeclen = sizeof(ifexec);
