@@ -2238,7 +2238,7 @@ HRESULT __cdecl wined3d_device_get_raster_status(const struct wined3d_device *de
         UINT swapchain_idx, WINED3DRASTER_STATUS *raster_status);
 HRESULT __cdecl wined3d_device_get_render_state(const struct wined3d_device *device,
         WINED3DRENDERSTATETYPE state, DWORD *value);
-HRESULT __cdecl wined3d_device_get_render_target(struct wined3d_device *device,
+HRESULT __cdecl wined3d_device_get_render_target(const struct wined3d_device *device,
         UINT render_target_idx, struct wined3d_surface **render_target);
 HRESULT __cdecl wined3d_device_get_sampler_state(const struct wined3d_device *device,
         UINT sampler_idx, WINED3DSAMPLERSTATETYPE state, DWORD *value);

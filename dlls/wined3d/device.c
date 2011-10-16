@@ -4939,7 +4939,7 @@ void CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *device,
     if (FAILED(hr)) ERR("Color fill failed, hr %#x.\n", hr);
 }
 
-HRESULT CDECL wined3d_device_get_render_target(struct wined3d_device *device,
+HRESULT CDECL wined3d_device_get_render_target(const struct wined3d_device *device,
         UINT render_target_idx, struct wined3d_surface **render_target)
 {
     TRACE("device %p, render_target_idx %u, render_target %p.\n",
