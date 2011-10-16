@@ -66,7 +66,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX    " Ustawienia okna ",IDC_STATIC,8,4,244,92
-    CONTROL     "Automatically capture the &mouse in full-screen windows",IDC_FULLSCREEN_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,16
+    CONTROL     "Automatycznie przechywæ &mysz w oknach pe³noekranowych",IDC_FULLSCREEN_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,16
     CONTROL     "Pozwól mened¿erowi okien &dekorowaæ okna",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
     CONTROL     "Pozwól mened¿erowi okien &zarz¹dzaæ oknami Wine",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,52,230,8
     CONTROL     "Emuluj wirtualny &pulpit",IDC_ENABLE_DESKTOP,"Button",
@@ -93,7 +93,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Regu³y bibliotek DLL ",IDC_STATIC,8,4,244,210
-    LTEXT           "Dla ka¿dej biblioteki DLL mo¿na zdecydowaæ czy nale¿y u¿yæ wersji wbudowanej (dostarczonej z Wine) czy zewnêtrznej (wziêtej z Windows lub dostarczonej wraz z aplikacj¹)."
+    LTEXT           "Dla ka¿dej biblioteki DLL mo¿na zdecydowaæ czy nale¿y u¿yæ wersji wbudowanej (dostarczonej z Wine) czy natywnej (wziêtej z Windows lub dostarczonej wraz z aplikacj¹)."
                     ,IDC_STATIC,16,16,220,32
     LTEXT           "Nowa regu³a dla biblioteki:",IDC_STATIC,16,58,100,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
@@ -111,9 +111,9 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Biblioteka ",IDC_STATIC,8,4,134,66
     CONTROL         "Tylko &wbudowana (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,115,10
-    CONTROL         "Tylko &zewnêtrzna (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,115,10
+    CONTROL         "Tylko &natywna (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,115,10
     CONTROL         "Preferuj w&budowan¹",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,115,10
-    CONTROL         "Preferuj z&ewnêtrzn¹",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,115,10
+    CONTROL         "Preferuj n&atywn¹",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,115,10
     CONTROL         "&Wy³¹cz bibliotekê",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,115,10
     DEFPUSHBUTTON   "&OK",IDOK,18,74,45,14,WS_GROUP
     PUSHBUTTON      "&Anuluj",IDCANCEL,87,74,45,14,WS_GROUP
@@ -166,13 +166,13 @@ IDD_AUDIOCFG DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Driver Diagnostics ",IDC_STATIC,8,4,244,27
+    GROUPBOX        " Diagnostyka sterownika ",IDC_STATIC,8,4,244,27
     LTEXT           "",IDC_AUDIO_DRIVER,18,16,230,8
-    GROUPBOX        " Defaults ",IDC_STATIC,8,33,244,76
-    LTEXT           "Output device:",IDC_STATIC,18,45,230,8
-    LTEXT           "Voice output device:",IDC_STATIC,18,61,230,8
-    LTEXT           "Input device:",IDC_STATIC,18,77,230,8
-    LTEXT           "Voice input device:",IDC_STATIC,18,93,230,8
+    GROUPBOX        " Domyœlne ",IDC_STATIC,8,33,244,76
+    LTEXT           "Urz¹dzenie wyjœciowe:",IDC_STATIC,18,45,230,8
+    LTEXT           "Urz¹dzenie wyjœciowe g³osu:",IDC_STATIC,18,61,230,8
+    LTEXT           "Urz¹dzenie wejœciowe:",IDC_STATIC,18,77,230,8
+    LTEXT           "Urz¹dzenie wejœciowe g³osu:",IDC_STATIC,18,93,230,8
     COMBOBOX        IDC_AUDIOOUT_DEVICE,110,43,135,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        IDC_VOICEOUT_DEVICE,110,59,135,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        IDC_AUDIOIN_DEVICE,110,75,135,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
