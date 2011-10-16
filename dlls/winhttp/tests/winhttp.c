@@ -659,7 +659,8 @@ static void test_WinHttpAddHeaders(void)
         test_header_name, buffer, &len, &index);
     ok(ret == TRUE, "WinHttpQueryHeaders failed: %u\n", GetLastError());
     ok(index == 1, "WinHttpQueryHeaders failed to increment index.\n");
-    ok(memcmp(buffer, reverse ? test_flag_coalesce_reverse : test_flag_coalesce, sizeof(reverse ? test_flag_coalesce_reverse : test_flag_coalesce)) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
+    ok(memcmp(buffer, reverse ? test_flag_coalesce_reverse : test_flag_coalesce,
+                      reverse ? sizeof(test_flag_coalesce_reverse) : sizeof(test_flag_coalesce)) == 0, "WinHttpQueryHeaders returned incorrect string.\n");
 
     len = sizeof(buffer);
     ret = WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
@@ -683,7 +684,8 @@ static void test_WinHttpAddHeaders(void)
         test_header_name, buffer, &len, &index);
     ok(ret == TRUE, "WinHttpQueryHeaders failed: %u\n", GetLastError());
     ok(index == 1, "WinHttpQueryHeaders failed to increment index.\n");
-    ok(memcmp(buffer, reverse ? test_flag_coalesce_comma_reverse : test_flag_coalesce_comma, sizeof(reverse ? test_flag_coalesce_comma_reverse : test_flag_coalesce_comma)) == 0,
+    ok(memcmp(buffer, reverse ? test_flag_coalesce_comma_reverse : test_flag_coalesce_comma,
+                      reverse ? sizeof(test_flag_coalesce_comma_reverse) : sizeof(test_flag_coalesce_comma)) == 0,
         "WinHttpQueryHeaders returned incorrect string.\n");
 
     len = sizeof(buffer);
@@ -709,7 +711,8 @@ static void test_WinHttpAddHeaders(void)
         test_header_name, buffer, &len, &index);
     ok(ret == TRUE, "WinHttpQueryHeaders failed: %u\n", GetLastError());
     ok(index == 1, "WinHttpQueryHeaders failed to increment index.\n");
-    ok(memcmp(buffer, reverse ? test_flag_coalesce_semicolon_reverse : test_flag_coalesce_semicolon, sizeof(reverse ? test_flag_coalesce_semicolon_reverse : test_flag_coalesce_semicolon)) == 0,
+    ok(memcmp(buffer, reverse ? test_flag_coalesce_semicolon_reverse : test_flag_coalesce_semicolon,
+                      reverse ? sizeof(test_flag_coalesce_semicolon_reverse) : sizeof(test_flag_coalesce_semicolon)) == 0,
             "WinHttpQueryHeaders returned incorrect string.\n");
 
     len = sizeof(buffer);
