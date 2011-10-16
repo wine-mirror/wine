@@ -1029,6 +1029,8 @@ static BOOL requires_fallback(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa,
         return TRUE;
 
     glyphs = heap_alloc(sizeof(WORD) * cChars);
+    if (!glyphs)
+        return FALSE;
     if (ScriptGetCMap(hdc, psc, pwcInChars, cChars, 0, glyphs) != S_OK)
     {
         heap_free(glyphs);
@@ -1111,6 +1113,11 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
     if (dwFlags & SSA_PASSWORD)
     {
         iString = heap_alloc(sizeof(WCHAR)*cString);
+        if (!iString)
+        {
+            hr = E_OUTOFMEMORY;
+            goto error;
+        }
         for (i = 0; i < cString; i++)
             iString[i] = *((const WCHAR *)pString);
         pString = iString;
@@ -1132,6 +1139,9 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
                            &analysis->numItems);
     }
     if (hr != S_OK) goto error;
+
+    /* set back to out of memory for default goto error behaviour */
+    hr = E_OUTOFMEMORY;
 
     if (dwFlags & SSA_BREAK)
     {
@@ -1172,6 +1182,18 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
             /* FIXME: non unicode strings */
             const WCHAR* pStr = (const WCHAR*)pString;
             analysis->glyphs[i].fallbackFont = NULL;
+
+            if (!glyphs || !pwLogClust || !piAdvance || !psva || !pGoffset || !abc)
+            {
+                heap_free (glyphs);
+                heap_free (pwLogClust);
+                heap_free (piAdvance);
+                heap_free (psva);
+                heap_free (pGoffset);
+                heap_free (abc);
+                hr = E_OUTOFMEMORY;
+                goto error;
+            }
 
             if ((dwFlags & SSA_FALLBACK) && requires_fallback(hdc, sc, &analysis->pItem[i].a, &pStr[analysis->pItem[i].iCharPos], cChar))
             {
