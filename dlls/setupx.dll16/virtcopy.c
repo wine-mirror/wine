@@ -224,10 +224,10 @@ static RETERR16 VCP_VirtnodeCreate(const VCPFILESPEC *vfsSrc, const VCPFILESPEC 
 	vn_num += 20;
 	if (pvnlist)
 	    pvnlist = HeapReAlloc(heap, HEAP_ZERO_MEMORY, pvnlist,
-				sizeof(LPVIRTNODE *) * vn_num);
+				sizeof(*pvnlist) * vn_num);
 	else
 	    pvnlist = HeapAlloc(heap, HEAP_ZERO_MEMORY,
-				sizeof(LPVIRTNODE *) * vn_num);
+				sizeof(*pvnlist) * vn_num);
     }
     pvnlist[vn_last] = HeapAlloc(heap, HEAP_ZERO_MEMORY, sizeof(VIRTNODE));
     lpvn = pvnlist[vn_last];
