@@ -474,7 +474,7 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
           case MCN_GETDAYSTATE:
           {
             NMDAYSTATE *nmstate = (NMDAYSTATE*)lParam;
-            MONTHDAYSTATE months[14] = { 0 };
+            static MONTHDAYSTATE months[14] = { 0 };
 
             ok(nmstate->cDayState > 0, "got %d\n", nmstate->cDayState);
             ok(nmstate->cDayState <= 14, "got %d\n", nmstate->cDayState);
