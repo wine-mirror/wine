@@ -934,11 +934,6 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 			size2 = 0;
 			FillMemory(device->mix_buffer + mixplaypos, mixplaypos2 - mixplaypos, 0);
 			FillMemory(buf1, size1, nfiller);
-			if (buf2 && size2)
-			{
-				FIXME("%d: There should be no additional buffer here!!\n", __LINE__);
-				FillMemory(buf2, size2, nfiller);
-			}
 		}
 		device->playpos = playpos;
 
