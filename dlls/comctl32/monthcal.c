@@ -2543,6 +2543,11 @@ static void MONTHCAL_UpdateSize(MONTHCAL_INFO *infoPtr)
       infoPtr->monthdayState = ReAlloc(infoPtr->monthdayState,
           MONTHCAL_GetMonthRange(infoPtr, GMR_DAYSTATE, 0)*sizeof(MONTHDAYSTATE));
       MONTHCAL_NotifyDayState(infoPtr);
+
+      /* update pointers that we'll need */
+      title = &infoPtr->calendars[0].title;
+      wdays = &infoPtr->calendars[0].wdays;
+      days  = &infoPtr->calendars[0].days;
   }
 
   for (i = 1; i < MONTHCAL_GetCalCount(infoPtr); i++)
