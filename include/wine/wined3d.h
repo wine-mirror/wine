@@ -2211,7 +2211,7 @@ HRESULT __cdecl wined3d_device_get_clip_plane(const struct wined3d_device *devic
 HRESULT __cdecl wined3d_device_get_clip_status(const struct wined3d_device *device, WINED3DCLIPSTATUS *clip_status);
 HRESULT __cdecl wined3d_device_get_creation_parameters(struct wined3d_device *device,
         WINED3DDEVICE_CREATION_PARAMETERS *creation_parameters);
-HRESULT __cdecl wined3d_device_get_depth_stencil(struct wined3d_device *device,
+HRESULT __cdecl wined3d_device_get_depth_stencil(const struct wined3d_device *device,
         struct wined3d_surface **depth_stencil);
 HRESULT __cdecl wined3d_device_get_device_caps(const struct wined3d_device *device, WINED3DCAPS *caps);
 HRESULT __cdecl wined3d_device_get_display_mode(const struct wined3d_device *device,

@@ -4962,7 +4962,8 @@ HRESULT CDECL wined3d_device_get_render_target(const struct wined3d_device *devi
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_depth_stencil(struct wined3d_device *device, struct wined3d_surface **depth_stencil)
+HRESULT CDECL wined3d_device_get_depth_stencil(const struct wined3d_device *device,
+        struct wined3d_surface **depth_stencil)
 {
     TRACE("device %p, depth_stencil %p.\n", device, depth_stencil);
 
