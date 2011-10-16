@@ -1036,6 +1036,7 @@ static HRESULT DirectSoundCaptureDevice_Initialize(
     if(FAILED(hr)){
         DeleteCriticalSection(&device->lock);
         HeapFree(GetProcessHeap(), 0, device);
+        LeaveCriticalSection(&DSOUND_capturers_lock);
         return DSERR_NODRIVER;
     }
 
