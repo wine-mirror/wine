@@ -102,7 +102,7 @@ static void remap_synonym(char *name)
     if (!strcasecmp(_country_synonyms[i],name))
     {
       TRACE(":Mapping synonym %s to %s\n",name,_country_synonyms[i+1]);
-      memcpy(name, _country_synonyms[i+1], sizeof(_country_synonyms[i+1]));
+      strcpy(name, _country_synonyms[i+1]);
       return;
     }
   }
