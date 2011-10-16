@@ -1099,6 +1099,7 @@ struct wined3d_context
     UINT level;
     HGLRC restore_ctx;
     HDC restore_dc;
+    int restore_pf;
     HGLRC                   glCtx;
     HWND                    win_handle;
     HDC                     hdc;
