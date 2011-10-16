@@ -75,6 +75,7 @@ static void test_acquire(LPDIRECTINPUT pDI, HWND hwnd)
     DIPROPDWORD di_op;
     DIDEVICEOBJECTDATA mouse_state;
     DWORD cnt;
+    int i;
 
     if (! SetForegroundWindow(hwnd))
     {
@@ -90,7 +91,7 @@ static void test_acquire(LPDIRECTINPUT pDI, HWND hwnd)
     ok(hr == S_OK, "SetCooperativeLevel: %08x\n", hr);
 
     memset(&di_op, 0, sizeof(di_op));
-    di_op.dwData = 20;
+    di_op.dwData = 5;
     di_op.diph.dwHow = DIPH_DEVICE;
     di_op.diph.dwSize = sizeof(DIPROPDWORD);
     di_op.diph.dwHeaderSize = sizeof(DIPROPHEADER);
@@ -142,6 +143,17 @@ static void test_acquire(LPDIRECTINPUT pDI, HWND hwnd)
     cnt = 1;
     hr = IDirectInputDevice_GetDeviceData(pMouse, sizeof(mouse_state), &mouse_state, &cnt, 0);
     ok(hr == S_OK && cnt > 0, "GetDeviceData() failed: %08x cnt:%d\n", hr, cnt);
+
+    /* Check for buffer owerflow */
+    for (i = 0; i < 6; i++)
+        mouse_event(MOUSEEVENTF_MOVE, 10 + i, 10 + i, 0, 0);
+
+    cnt = 1;
+    hr = IDirectInputDevice_GetDeviceData(pMouse, sizeof(mouse_state), &mouse_state, &cnt, 0);
+    ok(hr == DI_OK, "GetDeviceData() failed: %08x cnt:%d\n", hr, cnt);
+    cnt = 1;
+    hr = IDirectInputDevice_GetDeviceData(pMouse, sizeof(mouse_state), &mouse_state, &cnt, 0);
+    ok(hr == DI_OK && cnt == 1, "GetDeviceData() failed: %08x cnt:%d\n", hr, cnt);
 
     if (pMouse) IUnknown_Release(pMouse);
 
