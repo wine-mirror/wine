@@ -987,7 +987,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTY
 
         const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
-        swapchain->context = HeapAlloc(GetProcessHeap(), 0, sizeof(swapchain->context));
+        swapchain->context = HeapAlloc(GetProcessHeap(), 0, sizeof(*swapchain->context));
         if (!swapchain->context)
         {
             ERR("Failed to create the context array.\n");
