@@ -869,7 +869,6 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
     restore_ctx = pwglGetCurrentContext();
     restore_dc = pwglGetCurrentDC();
 
-    context_update_window(context);
     if (context->valid && restore_ctx != context->glCtx)
         context_set_gl_context(context);
     else restore_ctx = NULL;
