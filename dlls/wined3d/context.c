@@ -768,6 +768,17 @@ static BOOL context_set_gl_context(struct wined3d_context *ctx)
         ctx->valid = 0;
         WARN("Trying fallback to the backup window.\n");
 
+        /* FIXME: If the context is destroyed it's no longer associated with
+         * a swapchain, so we can't use the swapchain to get a backup dc. To
+         * make this work windowless contexts would need to be handled by the
+         * device. */
+        if (ctx->destroyed)
+        {
+            FIXME("Unable to get backup dc for destroyed context %p.\n", ctx);
+            context_set_current(NULL);
+            return FALSE;
+        }
+
         if (!(dc = swapchain_get_backup_dc(swapchain)))
         {
             context_set_current(NULL);
