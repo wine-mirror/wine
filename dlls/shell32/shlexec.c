@@ -1797,6 +1797,7 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 
 	    /* terminate previous command string after the quote character */
 	    *end = '\0';
+            lpFile = wfileName;
 	}
 	else
 	{
@@ -1827,12 +1828,10 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 		}
 	    }
 
-           lstrcpynW(wfileName, sei_tmp.lpFile,sizeof(wfileName)/sizeof(WCHAR));
+            lpFile = sei_tmp.lpFile;
 	}
     } else
-       lstrcpynW(wfileName, sei_tmp.lpFile,sizeof(wfileName)/sizeof(WCHAR));
-
-    lpFile = wfileName;
+        lpFile = sei_tmp.lpFile;
 
     wcmd = wcmdBuffer;
     len = lstrlenW(wszApplicationName) + 1;
