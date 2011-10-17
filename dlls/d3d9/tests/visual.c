@@ -174,7 +174,7 @@ static IDirect3DDevice9 *init_d3d9(void)
     d3d9_ptr = d3d9_create(D3D_SDK_VERSION);
     if (!d3d9_ptr)
     {
-        skip("could not create D3D9\n");
+        win_skip("could not create D3D9\n");
         return NULL;
     }
 
