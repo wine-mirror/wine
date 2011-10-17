@@ -1469,6 +1469,7 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
     struct wined3d_device *device = dst_surface->resource.device;
     DWORD src_ds_flags, dst_ds_flags;
     RECT src_rect, dst_rect;
+    BOOL scale, convert;
 
     static const DWORD simple_blit = WINEDDBLT_ASYNC
             | WINEDDBLT_COLORFILL
@@ -1621,6 +1622,11 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
         goto fallback;
     }
 
+    scale = src_surface
+            && (src_rect.right - src_rect.left != dst_rect.right - dst_rect.left
+            || src_rect.bottom - src_rect.top != dst_rect.bottom - dst_rect.top);
+    convert = src_surface && src_surface->resource.format->id != dst_surface->resource.format->id;
+
     dst_ds_flags = dst_surface->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
     if (src_surface)
         src_ds_flags = src_surface->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL);
@@ -1675,8 +1681,7 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
                 return WINED3DERR_INVALIDCALL;
             }
 
-            if (src_surface->resource.height != dst_surface->resource.height
-                    || src_surface->resource.width != dst_surface->resource.width)
+            if (scale)
             {
                 WARN("Rejecting depth / stencil blit with mismatched surface sizes.\n");
                 return WINED3DERR_INVALIDCALL;
@@ -1688,6 +1693,19 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
     }
     else
     {
+        /* In principle this would apply to depth blits as well, but we don't
+         * implement those in the CPU blitter at the moment. */
+        if ((dst_surface->flags & SFLAG_INSYSMEM)
+                && (!src_surface || (src_surface->flags & SFLAG_INSYSMEM)))
+        {
+            if (scale)
+                TRACE("Not doing sysmem blit because of scaling.\n");
+            else if (convert)
+                TRACE("Not doing sysmem blit because of format conversion.\n");
+            else
+                return surface_cpu_blt(dst_surface, &dst_rect, src_surface, &src_rect, flags, fx, filter);
+        }
+
         if (flags & WINEDDBLT_COLORFILL)
         {
             WINED3DCOLORVALUE color;
