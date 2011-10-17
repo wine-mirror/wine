@@ -343,6 +343,7 @@ static inline IDirect3DDeviceImpl *impl_from_IDirect3DDevice3(IDirect3DDevice3 *
 IDirect3DDeviceImpl *unsafe_impl_from_IDirect3DDevice(IDirect3DDevice *iface) DECLSPEC_HIDDEN;
 IDirect3DDeviceImpl *unsafe_impl_from_IDirect3DDevice2(IDirect3DDevice2 *iface) DECLSPEC_HIDDEN;
 IDirect3DDeviceImpl *unsafe_impl_from_IDirect3DDevice3(IDirect3DDevice3 *iface) DECLSPEC_HIDDEN;
+IDirect3DDeviceImpl *unsafe_impl_from_IDirect3DDevice7(IDirect3DDevice7 *iface) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirectDrawClipper implementation structure

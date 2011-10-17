@@ -303,16 +303,16 @@ static HRESULT WINAPI IDirect3DVertexBufferImpl_1_Unlock(IDirect3DVertexBuffer *
  *****************************************************************************/
 static HRESULT WINAPI IDirect3DVertexBufferImpl_ProcessVertices(IDirect3DVertexBuffer7 *iface,
         DWORD VertexOp, DWORD DestIndex, DWORD Count, IDirect3DVertexBuffer7 *SrcBuffer,
-        DWORD SrcIndex, IDirect3DDevice7 *D3DDevice, DWORD Flags)
+        DWORD SrcIndex, IDirect3DDevice7 *device, DWORD Flags)
 {
     IDirect3DVertexBufferImpl *This = impl_from_IDirect3DVertexBuffer7(iface);
     IDirect3DVertexBufferImpl *Src = unsafe_impl_from_IDirect3DVertexBuffer7(SrcBuffer);
-    IDirect3DDeviceImpl *D3D = (IDirect3DDeviceImpl *)D3DDevice;
+    IDirect3DDeviceImpl *device_impl = unsafe_impl_from_IDirect3DDevice7(device);
     BOOL oldClip, doClip;
     HRESULT hr;
 
     TRACE("iface %p, vertex_op %#x, dst_idx %u, count %u, src_buffer %p, src_idx %u, device %p, flags %#x.\n",
-            iface, VertexOp, DestIndex, Count, SrcBuffer, SrcIndex, D3DDevice, Flags);
+            iface, VertexOp, DestIndex, Count, SrcBuffer, SrcIndex, device, Flags);
 
     /* Vertex operations:
      * D3DVOP_CLIP: Clips vertices outside the viewing frustrum. Needs clipping information
@@ -332,19 +332,19 @@ static HRESULT WINAPI IDirect3DVertexBufferImpl_ProcessVertices(IDirect3DVertexB
      * the vertex ops
      */
     doClip = VertexOp & D3DVOP_CLIP ? TRUE : FALSE;
-    wined3d_device_get_render_state(D3D->wined3d_device, WINED3DRS_CLIPPING, (DWORD *)&oldClip);
+    wined3d_device_get_render_state(device_impl->wined3d_device, WINED3DRS_CLIPPING, (DWORD *)&oldClip);
     if (doClip != oldClip)
-        wined3d_device_set_render_state(D3D->wined3d_device, WINED3DRS_CLIPPING, doClip);
+        wined3d_device_set_render_state(device_impl->wined3d_device, WINED3DRS_CLIPPING, doClip);
 
-    wined3d_device_set_stream_source(D3D->wined3d_device,
+    wined3d_device_set_stream_source(device_impl->wined3d_device,
             0, Src->wineD3DVertexBuffer, 0, get_flexible_vertex_size(Src->fvf));
-    wined3d_device_set_vertex_declaration(D3D->wined3d_device, Src->wineD3DVertexDeclaration);
-    hr = wined3d_device_process_vertices(D3D->wined3d_device, SrcIndex, DestIndex,
+    wined3d_device_set_vertex_declaration(device_impl->wined3d_device, Src->wineD3DVertexDeclaration);
+    hr = wined3d_device_process_vertices(device_impl->wined3d_device, SrcIndex, DestIndex,
             Count, This->wineD3DVertexBuffer, NULL, Flags, This->fvf);
 
     /* Restore the states if needed */
     if (doClip != oldClip)
-        wined3d_device_set_render_state(D3D->wined3d_device, WINED3DRS_CLIPPING, oldClip);
+        wined3d_device_set_render_state(device_impl->wined3d_device, WINED3DRS_CLIPPING, oldClip);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
