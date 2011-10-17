@@ -931,7 +931,7 @@ static const struct gdi_dc_funcs psdrv_funcs =
     PSDRV_StartDoc,                     /* pStartDoc */
     PSDRV_StartPage,                    /* pStartPage */
     NULL,                               /* pStretchBlt */
-    PSDRV_StretchDIBits,                /* pStretchDIBits */
+    NULL,                               /* pStretchDIBits */
     NULL,                               /* pStrokeAndFillPath */
     NULL,                               /* pStrokePath */
     NULL,                               /* pSwapBuffers */

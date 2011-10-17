@@ -38,7 +38,7 @@ static inline int get_dib_width_bytes( int width, int depth )
 /***************************************************************************
  *                PSDRV_WriteImageHeader
  *
- * Helper for PSDRV_StretchDIBits
+ * Helper for PSDRV_PutImage
  *
  * BUGS
  *  Uses level 2 PostScript
@@ -79,7 +79,7 @@ static BOOL PSDRV_WriteImageHeader(PHYSDEV dev, const BITMAPINFO *info, INT xDst
 /***************************************************************************
  *                PSDRV_WriteImageMaskHeader
  *
- * Helper for PSDRV_StretchDIBits
+ * Helper for PSDRV_PutImage
  *
  * We use the imagemask operator for 1bpp bitmaps since the output
  * takes much less time for the printer to render.
@@ -275,158 +275,4 @@ update_format:
     if (info->bmiHeader.biBitCount > 8) info->bmiHeader.biBitCount = 24;
     info->bmiHeader.biCompression = BI_RGB;
     return ERROR_BAD_FORMAT;
-}
-
-/***************************************************************************
- *
- *	PSDRV_StretchDIBits
- *
- * BUGS
- *  Doesn't work correctly if xSrc isn't byte aligned - this affects 1 and 4
- *  bit depths.
- *  Compression not implemented.
- */
-INT PSDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
-                         INT heightDst, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
-                         BITMAPINFO *info, UINT wUsage, DWORD dwRop )
-{
-    INT stride;
-    INT line;
-    POINT pt[2];
-    const BYTE *src_ptr;
-    BYTE *dst_ptr, *bitmap;
-    DWORD bitmap_size;
-
-    TRACE("%p (%d,%d %dx%d) -> (%d,%d %dx%d)\n", dev->hdc,
-	  xSrc, ySrc, widthSrc, heightSrc, xDst, yDst, widthDst, heightDst);
-
-    stride = get_dib_width_bytes( info->bmiHeader.biWidth, info->bmiHeader.biBitCount );
-
-    TRACE("full size=%dx%d bpp=%d compression=%d rop=%08x\n", info->bmiHeader.biWidth,
-	  info->bmiHeader.biHeight, info->bmiHeader.biBitCount, info->bmiHeader.biCompression, dwRop);
-
-
-    if(info->bmiHeader.biCompression != BI_RGB) {
-        FIXME("Compression not supported\n");
-	return FALSE;
-    }
-
-    pt[0].x = xDst;
-    pt[0].y = yDst;
-    pt[1].x = xDst + widthDst;
-    pt[1].y = yDst + heightDst;
-    LPtoDP( dev->hdc, pt, 2 );
-    xDst = pt[0].x;
-    yDst = pt[0].y;
-    widthDst = pt[1].x - pt[0].x;
-    heightDst = pt[1].y - pt[0].y;
-
-    switch (info->bmiHeader.biBitCount) {
-
-    case 1:
-	src_ptr = bits;
-	src_ptr += (ySrc * stride);
-	if(xSrc & 7)
-	    FIXME("This won't work...\n");
-        bitmap_size = heightSrc * ((widthSrc + 7) / 8);
-        dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
-        for(line = 0; line < heightSrc; line++, src_ptr += stride, dst_ptr += ((widthSrc + 7) / 8))
-            memcpy(dst_ptr, src_ptr + xSrc / 8, (widthSrc + 7) / 8);
-	break;
-
-    case 4:
-	src_ptr = bits;
-	src_ptr += (ySrc * stride);
-	if(xSrc & 1)
-	    FIXME("This won't work...\n");
-        bitmap_size = heightSrc * ((widthSrc + 1) / 2);
-        dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
-        for(line = 0; line < heightSrc; line++, src_ptr += stride, dst_ptr += ((widthSrc + 1) / 2))
-	    memcpy(dst_ptr, src_ptr + xSrc/2, (widthSrc+1)/2);
-	break;
-
-    case 8:
-	src_ptr = bits;
-	src_ptr += (ySrc * stride);
-        bitmap_size = heightSrc * widthSrc;
-        dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
-        for(line = 0; line < heightSrc; line++, src_ptr += stride, dst_ptr += widthSrc)
-	    memcpy(dst_ptr, src_ptr + xSrc, widthSrc);
-	break;
-
-    case 16:
-        src_ptr = bits;
-        src_ptr += (ySrc * stride);
-        bitmap_size = heightSrc * widthSrc * 3;
-        dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
-        
-        for(line = 0; line < heightSrc; line++, src_ptr += stride) {
-            const WORD *words = (const WORD *)src_ptr + xSrc;
-            int i;
-            for(i = 0; i < widthSrc; i++) {
-                BYTE r, g, b;
-
-                /* We want 0x0 -- 0x1f to map to 0x0 -- 0xff */
-                r = words[i] >> 10 & 0x1f;
-                r = r << 3 | r >> 2;
-                g = words[i] >> 5 & 0x1f;
-                g = g << 3 | g >> 2;
-                b = words[i] & 0x1f;
-                b = b << 3 | b >> 2;
-                dst_ptr[0] = r;
-                dst_ptr[1] = g;
-                dst_ptr[2] = b;
-                dst_ptr += 3;
-            }
-        }
-	break;
-
-    case 24:
-        src_ptr = bits;
-        src_ptr += (ySrc * stride);
-        bitmap_size = heightSrc * widthSrc * 3;
-        dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
-        for(line = 0; line < heightSrc; line++, src_ptr += stride) {
-            const BYTE *byte = src_ptr + xSrc * 3;
-            int i;
-            for(i = 0; i < widthSrc; i++) {
-                dst_ptr[0] = byte[i * 3 + 2];
-                dst_ptr[1] = byte[i * 3 + 1];
-                dst_ptr[2] = byte[i * 3];
-                dst_ptr += 3;
-            }
-        }
-	break;
-
-    case 32:
-        src_ptr = bits;
-        src_ptr += (ySrc * stride);
-        bitmap_size = heightSrc * widthSrc * 3;
-        dst_ptr = bitmap = HeapAlloc(GetProcessHeap(), 0, bitmap_size);
-        for(line = 0; line < heightSrc; line++, src_ptr += stride) {
-            const BYTE *byte = src_ptr + xSrc * 4;
-            int i;
-            for(i = 0; i < widthSrc; i++) {
-                dst_ptr[0] = byte[i * 4 + 2];
-                dst_ptr[1] = byte[i * 4 + 1];
-                dst_ptr[2] = byte[i * 4];
-                dst_ptr += 3;
-            }
-        }
-	break;
-
-    default:
-        FIXME("Unsupported depth\n");
-	return FALSE;
-
-    }
-
-    PSDRV_SetClip(dev);
-    PSDRV_WriteGSave(dev);
-    PSDRV_WriteImageBits( dev, info, xDst, yDst, widthDst, heightDst,
-                          widthSrc, heightSrc, bitmap, bitmap_size );
-    HeapFree(GetProcessHeap(), 0, bitmap);
-    PSDRV_WriteGRestore(dev);
-    PSDRV_ResetClip(dev);
-    return abs(heightSrc);
 }
