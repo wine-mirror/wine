@@ -4352,7 +4352,7 @@ static HRESULT WINAPI d3d3_CreateDevice(IDirect3D3 *iface, REFCLSID riid,
             surface_impl ? &surface_impl->IDirectDrawSurface7_iface : NULL, device ? &device7 : NULL);
     if (SUCCEEDED(hr))
     {
-        device_impl = (IDirect3DDeviceImpl *)device7;
+        device_impl = impl_from_IDirect3DDevice7(device7);
         *device = &device_impl->IDirect3DDevice3_iface;
     }
 
@@ -4375,7 +4375,7 @@ static HRESULT WINAPI d3d2_CreateDevice(IDirect3D2 *iface, REFCLSID riid,
             surface_impl ? &surface_impl->IDirectDrawSurface7_iface : NULL, device ? &device7 : NULL);
     if (SUCCEEDED(hr))
     {
-        device_impl = (IDirect3DDeviceImpl *)device7;
+        device_impl = impl_from_IDirect3DDevice7(device7);
         *device = &device_impl->IDirect3DDevice2_iface;
     }
 
