@@ -354,6 +354,7 @@ static int parse_next_token(void *lval, parser_ctx_t *ctx)
     case '^':
     case '\\':
     case '.':
+    case '_':
         return *ctx->ptr++;
     case '(':
         /* NOTE:
@@ -402,6 +403,15 @@ int parser_lex(void *lval, parser_ctx_t *ctx)
 
     while(1) {
         ret = parse_next_token(lval, ctx);
+        if(ret == '_') {
+            skip_spaces(ctx);
+            if(*ctx->ptr != '\n') {
+                FIXME("'_' not followed by newline\n");
+                return 0;
+            }
+            ctx->ptr++;
+            continue;
+        }
         if(ret != tNL || ctx->last_token != tNL)
             break;
 

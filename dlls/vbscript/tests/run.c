@@ -1226,6 +1226,8 @@ static void run_tests(void)
 
     parse_script_a("x = 1\n Call ok(x = 1, \"x = \" & x)");
 
+    parse_script_a("x = _    \n3");
+
     test_global_vars_ref(TRUE);
     test_global_vars_ref(FALSE);
 
