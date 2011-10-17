@@ -351,17 +351,17 @@ static HRESULT WINAPI IDirect3DVertexBufferImpl_ProcessVertices(IDirect3DVertexB
 
 static HRESULT WINAPI IDirect3DVertexBufferImpl_1_ProcessVertices(IDirect3DVertexBuffer *iface,
         DWORD VertexOp, DWORD DestIndex, DWORD Count, IDirect3DVertexBuffer *SrcBuffer,
-        DWORD SrcIndex, IDirect3DDevice3 *D3DDevice, DWORD Flags)
+        DWORD SrcIndex, IDirect3DDevice3 *device, DWORD Flags)
 {
     IDirect3DVertexBufferImpl *This = impl_from_IDirect3DVertexBuffer(iface);
     IDirect3DVertexBufferImpl *Src = unsafe_impl_from_IDirect3DVertexBuffer(SrcBuffer);
-    IDirect3DDeviceImpl *D3D = D3DDevice ? device_from_device3(D3DDevice) : NULL;
+    IDirect3DDeviceImpl *device_impl = unsafe_impl_from_IDirect3DDevice3(device);
 
     TRACE("iface %p, vertex_op %#x, dst_idx %u, count %u, src_buffer %p, src_idx %u, device %p, flags %#x.\n",
-            iface, VertexOp, DestIndex, Count, SrcBuffer, SrcIndex, D3DDevice, Flags);
+            iface, VertexOp, DestIndex, Count, SrcBuffer, SrcIndex, device, Flags);
 
     return IDirect3DVertexBuffer7_ProcessVertices(&This->IDirect3DVertexBuffer7_iface, VertexOp,
-            DestIndex, Count, &Src->IDirect3DVertexBuffer7_iface, SrcIndex, (IDirect3DDevice7 *)D3D,
+            DestIndex, Count, &Src->IDirect3DVertexBuffer7_iface, SrcIndex, (IDirect3DDevice7 *)device_impl,
             Flags);
 }
 
@@ -451,15 +451,15 @@ static HRESULT WINAPI IDirect3DVertexBufferImpl_Optimize(IDirect3DVertexBuffer7 
 }
 
 static HRESULT WINAPI IDirect3DVertexBufferImpl_1_Optimize(IDirect3DVertexBuffer *iface,
-        IDirect3DDevice3 *D3DDevice, DWORD Flags)
+        IDirect3DDevice3 *device, DWORD Flags)
 {
     IDirect3DVertexBufferImpl *This = impl_from_IDirect3DVertexBuffer(iface);
-    IDirect3DDeviceImpl *D3D = D3DDevice ? device_from_device3(D3DDevice) : NULL;
+    IDirect3DDeviceImpl *device_impl = unsafe_impl_from_IDirect3DDevice3(device);
 
-    TRACE("iface %p, device %p, flags %#x.\n", iface, D3DDevice, Flags);
+    TRACE("iface %p, device %p, flags %#x.\n", iface, device, Flags);
 
     return IDirect3DVertexBuffer7_Optimize(&This->IDirect3DVertexBuffer7_iface,
-            (IDirect3DDevice7 *)D3D, Flags);
+            (IDirect3DDevice7 *)device_impl, Flags);
 }
 
 /*****************************************************************************

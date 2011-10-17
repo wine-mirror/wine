@@ -6746,6 +6746,13 @@ static const struct IDirect3DDeviceVtbl d3d_device1_vtbl =
     IDirect3DDeviceImpl_1_GetDirect3D
 };
 
+IDirect3DDeviceImpl *unsafe_impl_from_IDirect3DDevice3(IDirect3DDevice3 *iface)
+{
+    if (!iface) return NULL;
+    assert(iface->lpVtbl == &d3d_device3_vtbl);
+    return CONTAINING_RECORD(iface, IDirect3DDeviceImpl, IDirect3DDevice3_vtbl);
+}
+
 IDirect3DDeviceImpl *unsafe_impl_from_IDirect3DDevice2(IDirect3DDevice2 *iface)
 {
     if (!iface) return NULL;

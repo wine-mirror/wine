@@ -295,18 +295,18 @@ static HRESULT WINAPI IDirect3DMaterialImpl_GetMaterial(IDirect3DMaterial3 *ifac
  *
  *****************************************************************************/
 static HRESULT WINAPI IDirect3DMaterialImpl_GetHandle(IDirect3DMaterial3 *iface,
-        IDirect3DDevice3 *lpDirect3DDevice3, D3DMATERIALHANDLE *lpHandle)
+        IDirect3DDevice3 *device, D3DMATERIALHANDLE *handle)
 {
     IDirect3DMaterialImpl *This = impl_from_IDirect3DMaterial3(iface);
-    IDirect3DDeviceImpl *device = device_from_device3(lpDirect3DDevice3);
+    IDirect3DDeviceImpl *device_impl = unsafe_impl_from_IDirect3DDevice3(device);
 
-    TRACE("iface %p, device %p, handle %p.\n", iface, lpDirect3DDevice3, lpHandle);
+    TRACE("iface %p, device %p, handle %p.\n", iface, device, handle);
 
     EnterCriticalSection(&ddraw_cs);
-    This->active_device = device;
+    This->active_device = device_impl;
     if(!This->Handle)
     {
-        DWORD h = ddraw_allocate_handle(&device->handle_table, This, DDRAW_HANDLE_MATERIAL);
+        DWORD h = ddraw_allocate_handle(&device_impl->handle_table, This, DDRAW_HANDLE_MATERIAL);
         if (h == DDRAW_INVALID_HANDLE)
         {
             ERR("Failed to allocate a material handle.\n");
@@ -316,8 +316,8 @@ static HRESULT WINAPI IDirect3DMaterialImpl_GetHandle(IDirect3DMaterial3 *iface,
 
         This->Handle = h + 1;
     }
-    *lpHandle = This->Handle;
-    TRACE(" returning handle %08x.\n", *lpHandle);
+    *handle = This->Handle;
+    TRACE(" returning handle %08x.\n", *handle);
     LeaveCriticalSection(&ddraw_cs);
 
     return D3D_OK;
