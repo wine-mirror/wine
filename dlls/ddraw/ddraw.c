@@ -3968,6 +3968,9 @@ static HRESULT WINAPI d3d3_EnumDevices(IDirect3D3 *iface, LPD3DENUMDEVICESCALLBA
                 | D3DPTEXTURECAPS_NONPOW2CONDITIONAL | D3DPTEXTURECAPS_PERSPECTIVE);
         hal_desc.dpcTriCaps.dwTextureCaps &= ~(D3DPTEXTURECAPS_POW2
                 | D3DPTEXTURECAPS_NONPOW2CONDITIONAL | D3DPTEXTURECAPS_PERSPECTIVE);
+        /* RGB, RAMP and MMX devices have a HAL dcmColorModel of 0 */
+        hal_desc.dcmColorModel = 0;
+
         hr = callback((GUID *)&IID_IDirect3DRGBDevice, reference_description,
                 device_name, &hal_desc, &hel_desc, context);
         if (hr != D3DENUMRET_OK)
@@ -3983,11 +3986,15 @@ static HRESULT WINAPI d3d3_EnumDevices(IDirect3D3 *iface, LPD3DENUMDEVICESCALLBA
     TRACE("Enumerating HAL Direct3D device.\n");
     hal_desc = device_desc1;
     hel_desc = device_desc1;
+
     /* The hal device does not have the pow2 flag set in hel, but in hal. */
     hel_desc.dpcLineCaps.dwTextureCaps &= ~(D3DPTEXTURECAPS_POW2
             | D3DPTEXTURECAPS_NONPOW2CONDITIONAL | D3DPTEXTURECAPS_PERSPECTIVE);
     hel_desc.dpcTriCaps.dwTextureCaps &= ~(D3DPTEXTURECAPS_POW2
             | D3DPTEXTURECAPS_NONPOW2CONDITIONAL | D3DPTEXTURECAPS_PERSPECTIVE);
+    /* HAL devices have a HEL dcmColorModel of 0 */
+    hel_desc.dcmColorModel = 0;
+
     hr = callback((GUID *)&IID_IDirect3DHALDevice, wined3d_description,
             device_name, &hal_desc, &hel_desc, context);
     if (hr != D3DENUMRET_OK)
