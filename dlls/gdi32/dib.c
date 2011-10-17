@@ -252,14 +252,19 @@ static BOOL build_rle_bitmap( const BITMAPINFO *info, struct gdi_image_bits *bit
     BYTE skip, num, data;
     BYTE *out_bits, *in_bits = bits->ptr;
 
-    *clip = NULL;
+    if (clip) *clip = NULL;
 
     assert( info->bmiHeader.biBitCount == 4 || info->bmiHeader.biBitCount == 8 );
 
-    out_bits = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( info ) );
-    *clip = CreateRectRgn( 0, 0, 0, 0 );
-    run   = CreateRectRgn( 0, 0, 0, 0 );
-    if (!out_bits || !*clip || !run) goto fail;
+    out_bits = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, get_dib_image_size( info ) );
+    if (!out_bits) goto fail;
+
+    if (clip)
+    {
+        *clip = CreateRectRgn( 0, 0, 0, 0 );
+        run   = CreateRectRgn( 0, 0, 0, 0 );
+        if (!*clip || !run) goto fail;
+    }
 
     x = left = right = 0;
     y = height - 1;
@@ -299,7 +304,7 @@ static BOOL build_rle_bitmap( const BITMAPINFO *info, struct gdi_image_bits *bit
         {
             if (data < 3)
             {
-                if(left != right)
+                if(left != right && clip)
                 {
                     SetRectRgn( run, left, y, right, y + 1 );
                     CombineRgn( *clip, run, *clip, RGN_OR );
@@ -365,7 +370,7 @@ static BOOL build_rle_bitmap( const BITMAPINFO *info, struct gdi_image_bits *bit
     }
 
 done:
-    DeleteObject( run );
+    if (run) DeleteObject( run );
     if (bits->free) bits->free( bits );
 
     bits->ptr     = out_bits;
@@ -376,7 +381,7 @@ done:
 
 fail:
     if (run) DeleteObject( run );
-    if (*clip) DeleteObject( *clip );
+    if (clip && *clip) DeleteObject( *clip );
     HeapFree( GetProcessHeap(), 0, out_bits );
     return FALSE;
 }
