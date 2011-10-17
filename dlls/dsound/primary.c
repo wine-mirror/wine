@@ -115,7 +115,8 @@ HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
     }
 
     prebuf_frames = device->prebuf * DSOUND_fraglen(device->pwfx->nSamplesPerSec, device->pwfx->nBlockAlign) / device->pwfx->nBlockAlign;
-    prebuf_rt = (prebuf_frames / (double)device->pwfx->nSamplesPerSec) * 10000000;
+    prebuf_rt = (10000000 * (UINT64)prebuf_frames) / device->pwfx->nSamplesPerSec;
+
     hres = IAudioClient_Initialize(device->client,
             AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_NOPERSIST,
             prebuf_rt, 50000, device->pwfx, NULL);
