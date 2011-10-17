@@ -158,6 +158,7 @@ typedef struct
 	 * Uniscribe Data
 	 */
 	SCRIPT_LOGATTR *logAttr;
+	SCRIPT_STRING_ANALYSIS ssa; /* Uniscribe Data for single line controls */
 } EDITSTATE;
 
 
@@ -363,6 +364,48 @@ static INT EDIT_CallWordBreakProc(EDITSTATE *es, INT start, INT index, INT count
             ret = EDIT_WordBreakProc(es, es->text, index+start, count+start, action) - start;
 
 	return ret;
+}
+
+static inline void EDIT_InvalidateUniscribeData(EDITSTATE *es)
+{
+	if (es->ssa)
+	{
+		ScriptStringFree(&es->ssa);
+		es->ssa = NULL;
+	}
+}
+
+static SCRIPT_STRING_ANALYSIS EDIT_UpdateUniscribeData(EDITSTATE *es, HDC dc, INT line)
+{
+	if (!(es->style & ES_MULTILINE))
+	{
+		if (!es->ssa)
+		{
+			INT length = get_text_length(es);
+			HFONT old_font = NULL;
+			HDC udc = dc;
+
+			if (!udc)
+				udc = GetDC(es->hwndSelf);
+			if (es->font)
+				old_font = SelectObject(udc, es->font);
+
+			if (es->style & ES_PASSWORD)
+				ScriptStringAnalyse(udc, &es->password_char, length, (1.5*length+16), -1, SSA_LINK|SSA_FALLBACK|SSA_GLYPHS|SSA_PASSWORD, -1, NULL, NULL, NULL, NULL, NULL, &es->ssa);
+			else
+				ScriptStringAnalyse(udc, es->text, length, (1.5*length+16), -1, SSA_LINK|SSA_FALLBACK|SSA_GLYPHS, -1, NULL, NULL, NULL, NULL, NULL, &es->ssa);
+
+			if (es->font)
+				SelectObject(udc, old_font);
+			if (udc != dc)
+				ReleaseDC(es->hwndSelf, udc);
+		}
+		return es->ssa;
+	}
+	else
+	{
+		return NULL;
+	}
 }
 
 /*********************************************************************
@@ -647,52 +690,19 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 
 /*********************************************************************
  *
- *	EDIT_GetPasswordPointer_SL
- *
- *	note: caller should free the (optionally) allocated buffer
- *
- */
-static LPWSTR EDIT_GetPasswordPointer_SL(EDITSTATE *es)
-{
-	if (es->style & ES_PASSWORD) {
-		INT len = get_text_length(es);
-		LPWSTR text = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
-		text[len] = '\0';
-		while(len) text[--len] = es->password_char;
-		return text;
-	} else
-		return es->text;
-}
-
-
-/*********************************************************************
- *
  *	EDIT_CalcLineWidth_SL
  *
  */
 static void EDIT_CalcLineWidth_SL(EDITSTATE *es)
 {
-	SIZE size;
-	LPWSTR text;
-	HDC dc;
-	HFONT old_font = 0;
+	const SIZE *size;
 
-	text = EDIT_GetPasswordPointer_SL(es);
-
-	dc = GetDC(es->hwndSelf);
-	if (es->font)
-		old_font = SelectObject(dc, es->font);
-
-	GetTextExtentPoint32W(dc, text, strlenW(text), &size);
-
-	if (es->font)
-		SelectObject(dc, old_font);
-	ReleaseDC(es->hwndSelf, dc);
-
-	if (es->style & ES_PASSWORD)
-		HeapFree(GetProcessHeap(), 0, text);
-
-	es->text_width = size.cx;
+	EDIT_UpdateUniscribeData(es, NULL, 0);
+	size = ScriptString_pSize(es->ssa);
+	if (size)
+		es->text_width = size->cx;
+	else
+		es->text_width = 0;
 }
 
 /*********************************************************************
@@ -708,11 +718,11 @@ static void EDIT_CalcLineWidth_SL(EDITSTATE *es)
 static INT EDIT_CharFromPos(EDITSTATE *es, INT x, INT y, LPBOOL after_wrap)
 {
 	INT index;
-	HDC dc;
-	HFONT old_font = 0;
 	INT x_high = 0, x_low = 0;
 
 	if (es->style & ES_MULTILINE) {
+		HDC dc;
+		HFONT old_font = 0;
 		INT line = (y - es->format_rect.top) / es->line_height + es->y_offset;
 		INT line_index = 0;
 		LINEDEF *line_def = es->first_line_def;
@@ -762,9 +772,12 @@ static INT EDIT_CharFromPos(EDITSTATE *es, INT x, INT y, LPBOOL after_wrap)
 		if (after_wrap)
 			*after_wrap = ((index == line_index + line_def->net_length) &&
 							(line_def->ending == END_WRAP));
+		if (es->font)
+			SelectObject(dc, old_font);
+		ReleaseDC(es->hwndSelf, dc);
 	} else {
-		LPWSTR text;
-		SIZE size;
+		INT xoff = 0;
+		INT trailing;
 		if (after_wrap)
 			*after_wrap = FALSE;
 		x -= es->format_rect.left;
@@ -780,60 +793,47 @@ static INT EDIT_CharFromPos(EDITSTATE *es, INT x, INT y, LPBOOL after_wrap)
 				x -= indent / 2;
 		}
 
-		text = EDIT_GetPasswordPointer_SL(es);
-		dc = GetDC(es->hwndSelf);
-		if (es->font)
-			old_font = SelectObject(dc, es->font);
+		EDIT_UpdateUniscribeData(es, NULL, 0);
+		if (es->x_offset)
+		{
+			if (es->x_offset>= get_text_length(es))
+			{
+				const SIZE *size;
+				size = ScriptString_pSize(es->ssa);
+				xoff = size->cx;
+			}
+			ScriptStringCPtoX(es->ssa, es->x_offset, FALSE, &xoff);
+		}
 		if (x < 0)
-                {
-                    INT low = 0;
-                    INT high = es->x_offset;
-                    while (low < high - 1)
-                    {
-                        INT mid = (low + high) / 2;
-                        GetTextExtentPoint32W( dc, text + mid,
-                                               es->x_offset - mid, &size );
-                        if (size.cx > -x) {
-                            low = mid;
-                            x_low = size.cx;
-                        } else {
-                            high = mid;
-                            x_high = size.cx;
-                        }
-                    }
-                    if (abs(x_high + x) <= abs(x_low + x) + 1)
-                        index = high;
-                    else
-                        index = low;
+		{
+			if (x + xoff > 0)
+			{
+				ScriptStringXtoCP(es->ssa, x+xoff, &index, &trailing);
+				if (trailing) index++;
+			}
+			else
+				index = 0;
 		}
-                else
-                {
-                    INT low = es->x_offset;
-                    INT high = get_text_length(es) + 1;
-                    while (low < high - 1)
-                    {
-                        INT mid = (low + high) / 2;
-                        GetTextExtentPoint32W( dc, text + es->x_offset,
-                                               mid - es->x_offset, &size );
-                        if (size.cx > x) {
-                               high = mid;
-                               x_high = size.cx;
-                        } else {
-                               low = mid;
-                               x_low = size.cx;
-                       }
-                    }
-                   if (abs(x_high - x) <= abs(x_low - x) + 1)
-                       index = high;
-                   else
-                       index = low;
+		else
+		{
+			if (x)
+			{
+				const SIZE *size;
+				size = ScriptString_pSize(es->ssa);
+				if (!size)
+					index = 0;
+				else if (x > size->cx)
+					index = get_text_length(es);
+				else
+				{
+					ScriptStringXtoCP(es->ssa, x+xoff, &index, &trailing);
+					if (trailing) index++;
+				}
+			}
+			else
+				index = es->x_offset;
 		}
-		if (es->style & ES_PASSWORD)
-			HeapFree(GetProcessHeap(), 0, text);
 	}
-	if (es->font)
-		SelectObject(dc, old_font);
-	ReleaseDC(es->hwndSelf, dc);
 	return index;
 }
 
@@ -970,7 +970,6 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
 	INT ll = 0;
 	HDC dc;
 	HFONT old_font = 0;
-	SIZE size;
 	LINEDEF *line_def;
 
 	index = min(index, len);
@@ -1021,16 +1020,33 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
 				es->tabs_count, es->tabs)) - es->x_offset;
 		}
 	} else {
-		LPWSTR text = EDIT_GetPasswordPointer_SL(es);
-		if (index < es->x_offset) {
-			GetTextExtentPoint32W(dc, text + index,
-					es->x_offset - index, &size);
-			x = -size.cx;
-		} else {
-			GetTextExtentPoint32W(dc, text + es->x_offset,
-					index - es->x_offset, &size);
-			 x = size.cx;
+		INT xoff = 0;
+		INT xi = 0;
+		EDIT_UpdateUniscribeData(es, NULL, 0);
+		if (es->x_offset)
+		{
+			if (es->x_offset>= get_text_length(es))
+			{
+				const SIZE *size;
+				size = ScriptString_pSize(es->ssa);
+				xoff = size->cx;
+			}
+			ScriptStringCPtoX(es->ssa, es->x_offset, FALSE, &xoff);
+		}
+		if (index)
+		{
+			if (index >= get_text_length(es))
+			{
+				const SIZE *size;
+				size = ScriptString_pSize(es->ssa);
+				xi = size->cx;
+			}
+			else
+				ScriptStringCPtoX(es->ssa, index, FALSE, &xi);
+		}
+		x = xi - xoff;
 
+		if (index >= es->x_offset) {
 			if (!es->x_offset && (es->style & (ES_RIGHT | ES_CENTER)))
 			{
 				w = es->format_rect.right - es->format_rect.left;
@@ -1044,8 +1060,6 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
 			}
 		}
 		y = 0;
-		if (es->style & ES_PASSWORD)
-			HeapFree(GetProcessHeap(), 0, text);
 	}
 	x += es->format_rect.left;
 	y += es->format_rect.top;
@@ -1067,14 +1081,17 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
 static void EDIT_GetLineRect(EDITSTATE *es, INT line, INT scol, INT ecol, LPRECT rc)
 {
 	INT line_index =  EDIT_EM_LineIndex(es, line);
+	INT pt1, pt2;
 
 	if (es->style & ES_MULTILINE)
 		rc->top = es->format_rect.top + (line - es->y_offset) * es->line_height;
 	else
 		rc->top = es->format_rect.top;
 	rc->bottom = rc->top + es->line_height;
-	rc->left = (scol == 0) ? es->format_rect.left : (short)LOWORD(EDIT_EM_PosFromChar(es, line_index + scol, TRUE));
-	rc->right = (ecol == -1) ? es->format_rect.right : (short)LOWORD(EDIT_EM_PosFromChar(es, line_index + ecol, TRUE));
+	pt1 = (scol == 0) ? es->format_rect.left : (short)LOWORD(EDIT_EM_PosFromChar(es, line_index + scol, TRUE));
+	pt2 = (ecol == -1) ? es->format_rect.right : (short)LOWORD(EDIT_EM_PosFromChar(es, line_index + ecol, TRUE));
+	rc->right = max(pt1 , pt2);
+	rc->left = min(pt1, pt2);
 }
 
 
@@ -1084,6 +1101,7 @@ static inline void text_buffer_changed(EDITSTATE *es)
 
     HeapFree( GetProcessHeap(), 0, es->logAttr );
     es->logAttr = NULL;
+    EDIT_InvalidateUniscribeData(es);
 }
 
 /*********************************************************************
@@ -2028,7 +2046,7 @@ static INT EDIT_PaintText(EDITSTATE *es, HDC dc, INT x, INT y, INT line, INT col
 		ret = (INT)LOWORD(TabbedTextOutW(dc, x, y, es->text + li + col, count,
 					es->tabs_count, es->tabs, es->format_rect.left - es->x_offset));
 	} else {
-		LPWSTR text = EDIT_GetPasswordPointer_SL(es);
+		LPWSTR text = es->text;
 		TextOutW(dc, x, y, text + li + col, count);
 		GetTextExtentPoint32W(dc, text + li + col, count, &size);
 		ret = size.cx;
@@ -2068,6 +2086,7 @@ static void EDIT_PaintLine(EDITSTATE *es, HDC dc, INT line, BOOL rev)
 	INT x;
 	INT y;
 	LRESULT pos;
+	SCRIPT_STRING_ANALYSIS ssa;
 
 	if (es->style & ES_MULTILINE) {
 		INT vlc = get_vertical_line_count(es);
@@ -2079,6 +2098,7 @@ static void EDIT_PaintLine(EDITSTATE *es, HDC dc, INT line, BOOL rev)
 
 	TRACE("line=%d\n", line);
 
+	ssa = EDIT_UpdateUniscribeData(es, dc, line);
 	pos = EDIT_EM_PosFromChar(es, EDIT_EM_LineIndex(es, line), FALSE);
 	x = (short)LOWORD(pos);
 	y = (short)HIWORD(pos);
@@ -2088,7 +2108,9 @@ static void EDIT_PaintLine(EDITSTATE *es, HDC dc, INT line, BOOL rev)
 	e = max(es->selection_start, es->selection_end);
 	s = min(li + ll, max(li, s));
 	e = min(li + ll, max(li, e));
-	if (rev && (s != e) &&
+	if (ssa)
+		ScriptStringOut(ssa, x, y, 0, &es->format_rect, s - li, e - li, FALSE);
+	else if (rev && (s != e) &&
 			((es->flags & EF_FOCUSED) || (es->style & ES_NOHIDESEL))) {
 		x += EDIT_PaintText(es, dc, x, y, line, 0, s - li, FALSE);
 		x += EDIT_PaintText(es, dc, x, y, line, s - li, e - s, TRUE);
@@ -2384,6 +2406,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 	s = es->selection_start;
 	e = es->selection_end;
 
+	EDIT_InvalidateUniscribeData(es);
 	if ((s == e) && !strl)
 		return;
 
@@ -2459,12 +2482,14 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 	}
 	else {
 		INT fw = es->format_rect.right - es->format_rect.left;
+		EDIT_InvalidateUniscribeData(es);
 		EDIT_CalcLineWidth_SL(es);
 		/* remove chars that don't fit */
 		if (honor_limit && !(es->style & ES_AUTOHSCROLL) && (es->text_width > fw)) {
 			while ((es->text_width > fw) && s + strl >= s) {
 				strcpyW(es->text + s + strl - 1, es->text + s + strl);
 				strl--;
+				EDIT_InvalidateUniscribeData(es);
 				EDIT_CalcLineWidth_SL(es);
 			}
                         text_buffer_changed(es);
@@ -2562,6 +2587,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 	    es->flags &= ~EF_UPDATE;
 	    EDIT_NOTIFY_PARENT(es, EN_CHANGE);
 	}
+	EDIT_InvalidateUniscribeData(es);
 }
 
 
@@ -2762,6 +2788,7 @@ static void EDIT_EM_SetPasswordChar(EDITSTATE *es, WCHAR c)
             SetWindowLongW( es->hwndSelf, GWL_STYLE, style & ~ES_PASSWORD );
             es->style &= ~ES_PASSWORD;
 	}
+	EDIT_InvalidateUniscribeData(es);
 	EDIT_UpdateText(es, NULL, TRUE);
 }
 
@@ -3490,6 +3517,9 @@ static void EDIT_WM_Paint(EDITSTATE *es, HDC hdc)
 					(es->style & ES_NOHIDESEL));
         dc = hdc ? hdc : BeginPaint(es->hwndSelf, &ps);
 
+	/* The dc we use for calcualting may not be the one we paint into.
+	   This is the safest action. */
+	EDIT_InvalidateUniscribeData(es);
 	GetClientRect(es->hwndSelf, &rcClient);
 
 	/* get the background brush */
@@ -3602,6 +3632,7 @@ static void EDIT_WM_SetFont(EDITSTATE *es, HFONT font, BOOL redraw)
 	RECT clientRect;
 
 	es->font = font;
+	EDIT_InvalidateUniscribeData(es);
 	dc = GetDC(es->hwndSelf);
 	if (font)
 		old_font = SelectObject(dc, font);
@@ -3693,6 +3724,7 @@ static void EDIT_WM_SetText(EDITSTATE *es, LPCWSTR text, BOOL unicode)
     }
     EDIT_EM_ScrollCaret(es);
     EDIT_UpdateScrollInfo(es);    
+    EDIT_InvalidateUniscribeData(es);
 }
 
 
@@ -4313,6 +4345,7 @@ static LRESULT EDIT_WM_NCCreate(HWND hwnd, LPCREATESTRUCTW lpcs, BOOL unicode)
 
 cleanup:
 	SetWindowLongPtrW(es->hwndSelf, 0, 0);
+	EDIT_InvalidateUniscribeData(es);
 	HeapFree(GetProcessHeap(), 0, es->first_line_def);
 	HeapFree(GetProcessHeap(), 0, es->undo_text);
 	if (es->hloc32W) LocalFree(es->hloc32W);
