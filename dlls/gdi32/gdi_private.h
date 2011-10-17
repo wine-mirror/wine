@@ -72,8 +72,6 @@ typedef struct tagGDIOBJHDR
     struct hdc_list *hdcs;
 } GDIOBJHDR;
 
-typedef struct gdi_dc_funcs DC_FUNCTIONS;
-
 /* It should not be necessary to access the contents of the GdiPath
  * structure directly; if you find that the exported functions don't
  * allow you to do what you want, then please place a new exported
@@ -198,7 +196,7 @@ typedef struct tagBITMAPOBJ
     GDIOBJHDR           header;
     BITMAP              bitmap;
     SIZE                size;   /* For SetBitmapDimension() */
-    const DC_FUNCTIONS *funcs; /* DC function table */
+    const struct gdi_dc_funcs *funcs; /* DC function table */
     /* For device-independent bitmaps: */
     DIBSECTION         *dib;
     RGBQUAD            *color_table;  /* DIB color table if <= 8bpp */
@@ -270,9 +268,9 @@ extern DWORD blend_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struc
                                BLENDFUNCTION blend ) DECLSPEC_HIDDEN;
 
 /* driver.c */
-extern const DC_FUNCTIONS null_driver DECLSPEC_HIDDEN;
-extern const DC_FUNCTIONS dib_driver DECLSPEC_HIDDEN;
-extern const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name ) DECLSPEC_HIDDEN;
+extern const struct gdi_dc_funcs null_driver DECLSPEC_HIDDEN;
+extern const struct gdi_dc_funcs dib_driver DECLSPEC_HIDDEN;
+extern const struct gdi_dc_funcs *DRIVER_load_driver( LPCWSTR name ) DECLSPEC_HIDDEN;
 extern BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size ) DECLSPEC_HIDDEN;
 
 /* enhmetafile.c */

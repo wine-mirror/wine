@@ -762,7 +762,7 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
  */
 static BOOL BITMAP_DeleteObject( HGDIOBJ handle )
 {
-    const DC_FUNCTIONS *funcs;
+    const struct gdi_dc_funcs *funcs;
     BITMAPOBJ *bmp = GDI_GetObjPtr( handle, OBJ_BITMAP );
 
     if (!bmp) return FALSE;

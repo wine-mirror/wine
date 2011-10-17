@@ -598,7 +598,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
 {
     HDC hdc;
     DC * dc;
-    const DC_FUNCTIONS *funcs;
+    const struct gdi_dc_funcs *funcs;
     WCHAR buf[300];
 
     GDI_CheckNotLock();

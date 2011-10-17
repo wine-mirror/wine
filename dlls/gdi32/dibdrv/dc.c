@@ -509,7 +509,7 @@ static INT dibdrv_SetROP2( PHYSDEV dev, INT rop )
     return next->funcs->pSetROP2( next, rop );
 }
 
-const DC_FUNCTIONS dib_driver =
+const struct gdi_dc_funcs dib_driver =
 {
     NULL,                               /* pAbortDoc */
     NULL,                               /* pAbortPath */

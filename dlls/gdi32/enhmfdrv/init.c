@@ -34,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
 static BOOL EMFDRV_DeleteDC( PHYSDEV dev );
 
-static const DC_FUNCTIONS EMFDRV_Funcs =
+static const struct gdi_dc_funcs EMFDRV_Funcs =
 {
     NULL,                            /* pAbortDoc */
     EMFDRV_AbortPath,                /* pAbortPath */

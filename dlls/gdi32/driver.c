@@ -138,7 +138,7 @@ static const struct gdi_dc_funcs *get_display_driver(void)
 /**********************************************************************
  *	     DRIVER_load_driver
  */
-const DC_FUNCTIONS *DRIVER_load_driver( LPCWSTR name )
+const struct gdi_dc_funcs *DRIVER_load_driver( LPCWSTR name )
 {
     HMODULE module;
     struct graphics_driver *driver, *new_driver;
@@ -651,7 +651,7 @@ static BOOL nulldrv_wglUseFontBitmapsW( PHYSDEV dev, DWORD start, DWORD count, D
     return FALSE;
 }
 
-const DC_FUNCTIONS null_driver =
+const struct gdi_dc_funcs null_driver =
 {
     nulldrv_AbortDoc,                   /* pAbortDoc */
     nulldrv_AbortPath,                  /* pAbortPath */

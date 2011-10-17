@@ -79,7 +79,7 @@ static INT MFDRV_GetDeviceCaps(PHYSDEV dev, INT cap)
 }
 
 
-static const DC_FUNCTIONS MFDRV_Funcs =
+static const struct gdi_dc_funcs MFDRV_Funcs =
 {
     NULL,                            /* pAbortDoc */
     MFDRV_AbortPath,                 /* pAbortPath */
