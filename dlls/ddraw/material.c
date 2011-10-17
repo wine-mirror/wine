@@ -464,7 +464,7 @@ void material_activate(IDirect3DMaterialImpl* This)
     d3d7mat.u3.emissive = This->mat.u3.emissive;
     d3d7mat.u4.power = This->mat.u4.power;
 
-    IDirect3DDevice7_SetMaterial((IDirect3DDevice7 *)This->active_device, &d3d7mat);
+    IDirect3DDevice7_SetMaterial(&This->active_device->IDirect3DDevice7_iface, &d3d7mat);
 }
 
 static const struct IDirect3DMaterial3Vtbl d3d_material3_vtbl =

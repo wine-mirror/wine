@@ -361,8 +361,8 @@ static HRESULT WINAPI IDirect3DVertexBufferImpl_1_ProcessVertices(IDirect3DVerte
             iface, VertexOp, DestIndex, Count, SrcBuffer, SrcIndex, device, Flags);
 
     return IDirect3DVertexBuffer7_ProcessVertices(&This->IDirect3DVertexBuffer7_iface, VertexOp,
-            DestIndex, Count, &Src->IDirect3DVertexBuffer7_iface, SrcIndex, (IDirect3DDevice7 *)device_impl,
-            Flags);
+            DestIndex, Count, &Src->IDirect3DVertexBuffer7_iface, SrcIndex,
+            device_impl ? &device_impl->IDirect3DDevice7_iface : NULL, Flags);
 }
 
 /*****************************************************************************
@@ -459,7 +459,7 @@ static HRESULT WINAPI IDirect3DVertexBufferImpl_1_Optimize(IDirect3DVertexBuffer
     TRACE("iface %p, device %p, flags %#x.\n", iface, device, Flags);
 
     return IDirect3DVertexBuffer7_Optimize(&This->IDirect3DVertexBuffer7_iface,
-            (IDirect3DDevice7 *)device_impl, Flags);
+            device_impl ? &device_impl->IDirect3DDevice7_iface : NULL, Flags);
 }
 
 /*****************************************************************************

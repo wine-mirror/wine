@@ -277,7 +277,7 @@ void *ddraw_get_object(struct ddraw_handle_table *t, DWORD handle, enum ddraw_ha
 struct IDirect3DDeviceImpl
 {
     /* IUnknown */
-    const IDirect3DDevice7Vtbl *lpVtbl;
+    IDirect3DDevice7 IDirect3DDevice7_iface;
     IDirect3DDevice3 IDirect3DDevice3_iface;
     IDirect3DDevice2 IDirect3DDevice2_iface;
     IDirect3DDevice IDirect3DDevice_iface;
@@ -342,7 +342,7 @@ static inline IDirect3DDeviceImpl *impl_from_IDirect3DDevice3(IDirect3DDevice3 *
 
 static inline IDirect3DDeviceImpl *impl_from_IDirect3DDevice7(IDirect3DDevice7 *iface)
 {
-    return CONTAINING_RECORD(iface, IDirect3DDeviceImpl, lpVtbl);
+    return CONTAINING_RECORD(iface, IDirect3DDeviceImpl, IDirect3DDevice7_iface);
 }
 
 IDirect3DDeviceImpl *unsafe_impl_from_IDirect3DDevice(IDirect3DDevice *iface) DECLSPEC_HIDDEN;

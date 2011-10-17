@@ -4328,7 +4328,7 @@ static HRESULT WINAPI d3d7_CreateDevice(IDirect3D7 *iface, REFCLSID riid,
     }
 
     TRACE("Created device %p.\n", object);
-    *device = (IDirect3DDevice7 *)object;
+    *device = &object->IDirect3DDevice7_iface;
 
     LeaveCriticalSection(&ddraw_cs);
     return D3D_OK;

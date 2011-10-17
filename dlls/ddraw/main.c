@@ -960,7 +960,7 @@ DllMain(HINSTANCE hInstDLL,
                 if(ddraw->d3ddevice)
                 {
                     WARN("DDraw %p has d3ddevice %p attached\n", ddraw, ddraw->d3ddevice);
-                    while(IDirect3DDevice7_Release((IDirect3DDevice7 *)ddraw->d3ddevice));
+                    while(IDirect3DDevice7_Release(&ddraw->d3ddevice->IDirect3DDevice7_iface));
                 }
 
                 /* Try to release the objects

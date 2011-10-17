@@ -157,7 +157,7 @@ HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *This,
                  * enable it before drawing. This overwrites any ALPHA*
                  * render state. */
                 wined3d_device_set_render_state(lpDevice->wined3d_device, WINED3DRS_COLORKEYENABLE, 1);
-                IDirect3DDevice7_DrawIndexedPrimitive((IDirect3DDevice7 *)lpDevice,
+                IDirect3DDevice7_DrawIndexedPrimitive(&lpDevice->IDirect3DDevice7_iface,
                         D3DPT_TRIANGLELIST, D3DFVF_TLVERTEX, tl_vx, 0, This->indices, count * 3, 0);
 	    } break;
 
@@ -216,7 +216,7 @@ HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *This,
                             lpDevice->view = ci->u2.dwArg[0];
                         if (ci->u1.dtstTransformStateType == D3DTRANSFORMSTATE_PROJECTION)
                             lpDevice->proj = ci->u2.dwArg[0];
-                        IDirect3DDevice7_SetTransform((IDirect3DDevice7 *)lpDevice,
+                        IDirect3DDevice7_SetTransform(&lpDevice->IDirect3DDevice7_iface,
                                 ci->u1.dtstTransformStateType, m);
                     }
 
@@ -283,7 +283,7 @@ HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *This,
 				break;
 			}
 
-                        IDirect3DDevice7_SetRenderState((IDirect3DDevice7 *)lpDevice, rs, ci->u2.dwArg[0]);
+                        IDirect3DDevice7_SetRenderState(&lpDevice->IDirect3DDevice7_iface, rs, ci->u2.dwArg[0]);
 		    }
 
 		    instr += size;

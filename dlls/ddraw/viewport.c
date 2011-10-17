@@ -72,7 +72,7 @@ void viewport_activate(IDirect3DViewportImpl *This, BOOL ignore_lights)
     }
 
     /* And also set the viewport */
-    IDirect3DDevice7_SetViewport((IDirect3DDevice7 *)This->active_device, &vp);
+    IDirect3DDevice7_SetViewport(&This->active_device->IDirect3DDevice7_iface, &vp);
 }
 
 /*****************************************************************************
@@ -692,7 +692,7 @@ static HRESULT WINAPI IDirect3DViewportImpl_Clear(IDirect3DViewport3 *iface,
         afterwards. */
     viewport_activate(This, TRUE);
 
-    hr = IDirect3DDevice7_Clear((IDirect3DDevice7 *)This->active_device, dwCount, lpRects,
+    hr = IDirect3DDevice7_Clear(&This->active_device->IDirect3DDevice7_iface, dwCount, lpRects,
             dwFlags & (D3DCLEAR_ZBUFFER | D3DCLEAR_TARGET), color, 1.0, 0x00000000);
 
     IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport);
@@ -1075,7 +1075,7 @@ IDirect3DViewportImpl_Clear2(IDirect3DViewport3 *iface,
      * one will be restored afterwards. */
     viewport_activate(This, TRUE);
 
-    hr = IDirect3DDevice7_Clear((IDirect3DDevice7 *)This->active_device,
+    hr = IDirect3DDevice7_Clear(&This->active_device->IDirect3DDevice7_iface,
             dwCount, lpRects, dwFlags, dwColor, dvZ, dwStencil);
     IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport);
     if(current_viewport) {
