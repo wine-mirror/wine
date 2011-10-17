@@ -984,7 +984,7 @@ static void test_dib_formats(void)
     ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, DIB_RGB_COLORS );
     ok( ret, "SetDIBitsToDevice failed with null bitfields\n" );
     ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_RGB_COLORS, SRCCOPY );
-    todo_wine ok( ret, "StretchDIBits failed with null bitfields\n" );
+    ok( ret, "StretchDIBits failed with null bitfields\n" );
     ret = GetDIBits(hdc, hbmp, 0, 2, data, bi, DIB_RGB_COLORS);
     ok( ret, "GetDIBits failed with null bitfields\n" );
     bi->bmiHeader.biPlanes = 1;
@@ -3152,7 +3152,7 @@ static void test_StretchDIBits(void)
     expected[2] = 0x00000000, expected[3] = 0x00000000;
     legacy_expected[0] = 0x00543210, legacy_expected[1] = 0x00000000;
     legacy_expected[2] = 0x00000000, legacy_expected[3] = 0x00000000;
-    todo_wine check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+    check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
                                 0, 0, 1, 1, 0, 0, 2, 2, expected, legacy_expected, __LINE__);
 
     expected[0] = 0x00000000, expected[1] = 0x00000000;

@@ -388,68 +388,136 @@ fail:
 
 
 
-/* nulldrv fallback implementation using SetDIBits/StretchBlt */
 INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
                            INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
-                           BITMAPINFO *info, UINT coloruse, DWORD rop )
+                           BITMAPINFO *src_info, UINT coloruse, DWORD rop )
 {
     DC *dc = get_nulldrv_dc( dev );
-    INT ret;
-    LONG height;
-    HBITMAP hBitmap;
-    HDC hdcMem;
+    char dst_buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *dst_info = (BITMAPINFO *)dst_buffer;
+    struct bitblt_coords src, dst;
+    struct gdi_image_bits src_bits;
+    DWORD err;
+    HRGN clip = NULL;
+    INT ret = 0;
+    INT height = abs( src_info->bmiHeader.biHeight );
+    BOOL top_down = src_info->bmiHeader.biHeight < 0, non_stretch_from_origin = FALSE;
+    RECT rect, clip_rect;
 
-    /* make sure we have a real implementation for StretchBlt and PutImage */
-    if (GET_DC_PHYSDEV( dc, pStretchBlt ) == dev || GET_DC_PHYSDEV( dc, pPutImage ) == dev)
-        return 0;
+    TRACE("%d %d %d %d <- %d %d %d %d rop %08x\n", xDst, yDst, widthDst, heightDst,
+          xSrc, ySrc, widthSrc, heightSrc, rop);
 
-    height = info->bmiHeader.biHeight;
+    src_bits.ptr = (void*)bits;
+    src_bits.is_copy = FALSE;
+    src_bits.free = NULL;
 
-    if (xSrc == 0 && ySrc == 0 && widthDst == widthSrc && heightDst == heightSrc &&
-        info->bmiHeader.biCompression == BI_RGB)
+    if (coloruse == DIB_PAL_COLORS && !fill_color_table_from_palette( src_info, dev->hdc )) return 0;
+
+    rect.left   = xDst;
+    rect.top    = yDst;
+    rect.right  = xDst + widthDst;
+    rect.bottom = yDst + heightDst;
+    LPtoDP( dc->hSelf, (POINT *)&rect, 2 );
+    dst.x      = rect.left;
+    dst.y      = rect.top;
+    dst.width  = rect.right - rect.left;
+    dst.height = rect.bottom - rect.top;
+
+    if (dc->layout & LAYOUT_RTL && rop & NOMIRRORBITMAP)
     {
-        /* Windows appears to have a fast case optimization
-         * that uses the wrong origin for top-down DIBs */
-        if (height < 0 && heightSrc < abs(height)) ySrc = abs(height) - heightSrc;
+        dst.x += dst.width;
+        dst.width = -dst.width;
+    }
+    rop &= ~NOMIRRORBITMAP;
 
-        if (xDst == 0 && yDst == 0 && info->bmiHeader.biCompression == BI_RGB && rop == SRCCOPY)
+    src.x      = xSrc;
+    src.width  = widthSrc;
+    src.y      = ySrc;
+    src.height = heightSrc;
+
+    if (src.x == 0 && src.y == 0 && src.width == dst.width && src.height == dst.height)
+        non_stretch_from_origin = TRUE;
+
+    if (src_info->bmiHeader.biCompression == BI_RLE4 || src_info->bmiHeader.biCompression == BI_RLE8)
+    {
+        BOOL want_clip = non_stretch_from_origin && (rop == SRCCOPY);
+        if (!build_rle_bitmap( src_info, &src_bits, want_clip ? &clip : NULL )) return 0;
+    }
+
+    if (rop != SRCCOPY || non_stretch_from_origin)
+    {
+        if (dst.width == 1 && src.width > 1) src.width--;
+        if (dst.height == 1 && src.height > 1) src.height--;
+    }
+
+    if (rop != SRCCOPY)
+    {
+        if (dst.width < 0 && dst.width == src.width)
         {
-            BITMAP bm;
-            hBitmap = GetCurrentObject( dev->hdc, OBJ_BITMAP );
-            if (GetObjectW( hBitmap, sizeof(bm), &bm ) &&
-                bm.bmWidth == widthSrc && bm.bmHeight == heightSrc &&
-                bm.bmBitsPixel == info->bmiHeader.biBitCount && bm.bmPlanes == 1)
-            {
-                /* fast path */
-                return SetDIBits( dev->hdc, hBitmap, 0, abs( height ), bits, info, coloruse );
-            }
+            /* This is off-by-one, but that's what Windows does */
+            dst.x += dst.width;
+            src.x += src.width;
+            dst.width = -dst.width;
+            src.width = -src.width;
+        }
+        if (dst.height < 0 && dst.height == src.height)
+        {
+            dst.y += dst.height;
+            src.y += src.height;
+            dst.height = -dst.height;
+            src.height = -src.height;
         }
     }
 
-    hdcMem = CreateCompatibleDC( dev->hdc );
-    hBitmap = CreateCompatibleBitmap( dev->hdc, info->bmiHeader.biWidth, height );
-    SelectObject( hdcMem, hBitmap );
-    if (coloruse == DIB_PAL_COLORS)
-        SelectPalette( hdcMem, GetCurrentObject( dev->hdc, OBJ_PAL ), FALSE );
+    if (!top_down || (rop == SRCCOPY && !non_stretch_from_origin)) src.y = height - src.y - src.height;
 
-    if (info->bmiHeader.biCompression == BI_RLE4 || info->bmiHeader.biCompression == BI_RLE8)
+    if (src.y >= height && src.y + src.height + 1 < height)
+        src.y = height - 1;
+    else if (src.y > 0 && src.y + src.height + 1 < 0)
+        src.y = -src.height - 1;
+
+    get_bounding_rect( &rect, src.x, src.y, src.width, src.height );
+
+    src.visrect.left   = 0;
+    src.visrect.right  = src_info->bmiHeader.biWidth;
+    src.visrect.top    = 0;
+    src.visrect.bottom = height;
+    if (!intersect_rect( &src.visrect, &src.visrect, &rect )) goto done;
+
+    get_bounding_rect( &rect, dst.x, dst.y, dst.width, dst.height );
+
+    if (get_clip_box( dc, &clip_rect ))
+        intersect_rect( &dst.visrect, &rect, &clip_rect );
+    else
+        dst.visrect = rect;
+    if (is_rect_empty( &dst.visrect )) goto done;
+
+    if (!intersect_vis_rectangles( &dst, &src )) goto done;
+
+    if (clip) OffsetRgn( clip, dst.x - src.x, dst.y - src.y );
+
+    dev = GET_DC_PHYSDEV( dc, pPutImage );
+    memcpy( dst_info, src_info, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
+    err = dev->funcs->pPutImage( dev, 0, clip, dst_info, &src_bits, &src, &dst, rop );
+    if (err == ERROR_BAD_FORMAT)
     {
-        /* when RLE compression is used, there may be some gaps (ie the DIB doesn't
-         * contain all the rectangle described in bmiHeader, but only part of it.
-         * This mean that those undescribed pixels must be left untouched.
-         * So, we first copy on a memory bitmap the current content of the
-         * destination rectangle, blit the DIB bits on top of it - hence leaving
-         * the gaps untouched -, and blitting the rectangle back.
-         * This insure that gaps are untouched on the destination rectangle
-         */
-        StretchBlt( hdcMem, xSrc, abs(height) - heightSrc - ySrc, widthSrc, heightSrc,
-                    dev->hdc, xDst, yDst, widthDst, heightDst, rop );
+        err = convert_bits( src_info, &src, dst_info, &src_bits, FALSE );
+        if (!err) err = dev->funcs->pPutImage( dev, 0, clip, dst_info, &src_bits, &src, &dst, rop );
     }
-    ret = SetDIBits( hdcMem, hBitmap, 0, abs( height ), bits, info, coloruse );
-    if (ret) StretchBlt( dev->hdc, xDst, yDst, widthDst, heightDst,
-                         hdcMem, xSrc, abs(height) - heightSrc - ySrc, widthSrc, heightSrc, rop );
-    DeleteDC( hdcMem );
-    DeleteObject( hBitmap );
+
+    if (err == ERROR_TRANSFORM_NOT_SUPPORTED)
+    {
+        memcpy( src_info, dst_info, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
+        err = stretch_bits( src_info, &src, dst_info, &dst, &src_bits, GetStretchBltMode( dev->hdc ) );
+        if (!err) err = dev->funcs->pPutImage( dev, 0, NULL, dst_info, &src_bits, &src, &dst, rop );
+    }
+    if (err) ret = 0;
+    else if (rop == SRCCOPY) ret = height;
+    else ret = src_info->bmiHeader.biHeight;
+
+done:
+    if (src_bits.free) src_bits.free( &src_bits );
+    if (clip) DeleteObject( clip );
     return ret;
 }
 
