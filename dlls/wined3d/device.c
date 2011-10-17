@@ -4628,7 +4628,7 @@ float CDECL wined3d_device_get_npatch_mode(const struct wined3d_device *device)
     return 0.0f;
 }
 
-static inline void invalidate_active_texture(struct wined3d_device *device, struct wined3d_context *context)
+static void invalidate_active_texture(const struct wined3d_device *device, struct wined3d_context *context)
 {
     DWORD sampler = device->rev_tex_unit_map[context->active_texture];
     if (sampler != WINED3D_UNMAPPED_STAGE)
