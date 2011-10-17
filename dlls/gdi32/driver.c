@@ -196,12 +196,6 @@ static BOOL nulldrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     return TRUE;
 }
 
-static DWORD nulldrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_bits *bits,
-                                 struct bitblt_coords *src, struct bitblt_coords *dst, BLENDFUNCTION func )
-{
-    return TRUE;
-}
-
 static INT nulldrv_ChoosePixelFormat( PHYSDEV dev, const PIXELFORMATDESCRIPTOR *descr )
 {
     return 0;

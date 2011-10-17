@@ -257,6 +257,9 @@ extern DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, str
 extern DWORD stretch_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bitblt_coords *src,
                                  const BITMAPINFO *dst_info, void *dst_bits, struct bitblt_coords *dst,
                                  INT mode ) DECLSPEC_HIDDEN;
+extern DWORD blend_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bitblt_coords *src,
+                               const BITMAPINFO *dst_info, void *dst_bits, struct bitblt_coords *dst,
+                               BLENDFUNCTION blend ) DECLSPEC_HIDDEN;
 
 /* driver.c */
 extern const DC_FUNCTIONS null_driver DECLSPEC_HIDDEN;
@@ -388,6 +391,8 @@ extern BOOL nulldrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
 extern BOOL nulldrv_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLOAT start, FLOAT sweep ) DECLSPEC_HIDDEN;
 extern BOOL nulldrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom, INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
 extern BOOL nulldrv_BeginPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern DWORD nulldrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_bits *bits,
+                                 struct bitblt_coords *src, struct bitblt_coords *dst, BLENDFUNCTION func ) DECLSPEC_HIDDEN;
 extern BOOL nulldrv_CloseFigure( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL nulldrv_EndPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern INT  nulldrv_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;

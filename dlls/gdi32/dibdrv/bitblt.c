@@ -1202,6 +1202,20 @@ DWORD stretch_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
     return ERROR_SUCCESS;
 }
 
+DWORD blend_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bitblt_coords *src,
+                        const BITMAPINFO *dst_info, void *dst_bits, struct bitblt_coords *dst,
+                        BLENDFUNCTION blend )
+{
+    dib_info src_dib, dst_dib;
+
+    if (!init_dib_info_from_bitmapinfo( &src_dib, src_info, src_bits, 0 ) )
+        return ERROR_BAD_FORMAT;
+    if (!init_dib_info_from_bitmapinfo( &dst_dib, dst_info, dst_bits, 0 ) )
+        return ERROR_BAD_FORMAT;
+
+    return blend_rect( &dst_dib, &dst->visrect, &src_dib, &src->visrect, NULL, blend );
+}
+
 /***********************************************************************
  *           dibdrv_StretchBlt
  */

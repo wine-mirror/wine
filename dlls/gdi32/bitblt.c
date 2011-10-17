@@ -198,6 +198,24 @@ static DWORD stretch_bits( const BITMAPINFO *src_info, struct bitblt_coords *src
     return err;
 }
 
+static DWORD blend_bits( const BITMAPINFO *src_info, const struct gdi_image_bits *src_bits,
+                         struct bitblt_coords *src, BITMAPINFO *dst_info,
+                         struct gdi_image_bits *dst_bits, struct bitblt_coords *dst, BLENDFUNCTION blend )
+{
+    if (!dst_bits->is_copy)
+    {
+        int size = get_dib_image_size( dst_info );
+        void *ptr = HeapAlloc( GetProcessHeap(), 0, size );
+        if (!ptr) return ERROR_OUTOFMEMORY;
+        memcpy( ptr, dst_bits->ptr, size );
+        if (dst_bits->free) dst_bits->free( dst_bits );
+        dst_bits->ptr = ptr;
+        dst_bits->is_copy = TRUE;
+        dst_bits->free = free_heap_bits;
+    }
+    return blend_bitmapinfo( src_info, src_bits->ptr, src, dst_info, dst_bits->ptr, dst, blend );
+}
+
 /***********************************************************************
  *           null driver fallback implementations
  */
@@ -327,6 +345,51 @@ done:
     return !err;
 }
 
+
+DWORD nulldrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_bits *bits,
+                          struct bitblt_coords *src, struct bitblt_coords *dst, BLENDFUNCTION blend )
+{
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *dst_info = (BITMAPINFO *)buffer;
+    struct gdi_image_bits dst_bits;
+    struct bitblt_coords orig_dst;
+    DC *dc = get_nulldrv_dc( dev );
+    DWORD err;
+
+    if (info->bmiHeader.biPlanes != 1) goto update_format;
+    if (info->bmiHeader.biBitCount != 32) goto update_format;
+    if (info->bmiHeader.biCompression == BI_BITFIELDS)
+    {
+        DWORD *masks = (DWORD *)info->bmiColors;
+        if (masks[0] != 0xff0000 || masks[1] != 0x00ff00 || masks[2] != 0x0000ff)
+            goto update_format;
+    }
+
+    if (!bits) return ERROR_SUCCESS;
+    if ((src->width != dst->width) || (src->height != dst->height)) return ERROR_TRANSFORM_NOT_SUPPORTED;
+
+    dev = GET_DC_PHYSDEV( dc, pGetImage );
+    orig_dst = *dst;
+    err = dev->funcs->pGetImage( dev, 0, dst_info, &dst_bits, dst );
+    if (err) return err;
+
+    dev = GET_DC_PHYSDEV( dc, pPutImage );
+    err = blend_bits( info, bits, src, dst_info, &dst_bits, dst, blend );
+    if (!err) err = dev->funcs->pPutImage( dev, 0, 0, dst_info, &dst_bits, dst, &orig_dst, SRCCOPY );
+
+    if (dst_bits.free) dst_bits.free( &dst_bits );
+    return err;
+
+update_format:
+    if (blend.AlphaFormat & AC_SRC_ALPHA)  /* source alpha requires A8R8G8B8 format */
+        return ERROR_INVALID_PARAMETER;
+
+    info->bmiHeader.biPlanes      = 1;
+    info->bmiHeader.biBitCount    = 32;
+    info->bmiHeader.biCompression = BI_RGB;
+    info->bmiHeader.biClrUsed     = 0;
+    return ERROR_BAD_FORMAT;
+}
 
 /***********************************************************************
  *           PatBlt    (GDI32.@)
