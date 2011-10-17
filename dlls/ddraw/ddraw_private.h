@@ -127,6 +127,7 @@ struct IDirectDrawImpl
 #define DDRAW_WINDOW_CLASS_NAME "ddraw_wc"
 
 HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type) DECLSPEC_HIDDEN;
+void ddraw_destroy_swapchain(IDirectDrawImpl *ddraw) DECLSPEC_HIDDEN;
 
 /* Utility functions */
 void DDRAW_Convert_DDSCAPS_1_To_2(const DDSCAPS *pIn, DDSCAPS2 *pOut) DECLSPEC_HIDDEN;

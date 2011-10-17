@@ -430,46 +430,7 @@ static void ddraw_surface_cleanup(IDirectDrawSurfaceImpl *surface)
     ddraw_surface_destroy(surface);
 
     if (ddraw->wined3d_swapchain && destroy_swapchain)
-    {
-        TRACE("Destroying the swapchain.\n");
-
-        wined3d_swapchain_decref(ddraw->wined3d_swapchain);
-        ddraw->wined3d_swapchain = NULL;
-
-        if (DefaultSurfaceType == SURFACE_OPENGL)
-        {
-            for (i = 0; i < ddraw->numConvertedDecls; ++i)
-            {
-                wined3d_vertex_declaration_decref(ddraw->decls[i].decl);
-            }
-            HeapFree(GetProcessHeap(), 0, ddraw->decls);
-            ddraw->numConvertedDecls = 0;
-
-            if (FAILED(wined3d_device_uninit_3d(ddraw->wined3d_device)))
-            {
-                ERR("Failed to uninit 3D.\n");
-            }
-            else
-            {
-                /* Free the d3d window if one was created. */
-                if (ddraw->d3d_window && ddraw->d3d_window != ddraw->dest_window)
-                {
-                    TRACE("Destroying the hidden render window %p.\n", ddraw->d3d_window);
-                    DestroyWindow(ddraw->d3d_window);
-                    ddraw->d3d_window = 0;
-                }
-            }
-
-            ddraw->d3d_initialized = FALSE;
-            ddraw->d3d_target = NULL;
-        }
-        else
-        {
-            wined3d_device_uninit_gdi(ddraw->wined3d_device);
-        }
-
-        TRACE("Swapchain destroyed.\n");
-    }
+        ddraw_destroy_swapchain(ddraw);
 
     /* Reduce the ddraw refcount */
     if (ifaceToRelease)

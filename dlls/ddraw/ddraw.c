@@ -410,6 +410,50 @@ static ULONG WINAPI d3d1_AddRef(IDirect3D *iface)
     return ddraw1_AddRef(&This->IDirectDraw_iface);
 }
 
+void ddraw_destroy_swapchain(IDirectDrawImpl *ddraw)
+{
+    TRACE("Destroying the swapchain.\n");
+
+    wined3d_swapchain_decref(ddraw->wined3d_swapchain);
+    ddraw->wined3d_swapchain = NULL;
+
+    if (DefaultSurfaceType == SURFACE_OPENGL)
+    {
+        UINT i;
+
+        for (i = 0; i < ddraw->numConvertedDecls; ++i)
+        {
+            wined3d_vertex_declaration_decref(ddraw->decls[i].decl);
+        }
+        HeapFree(GetProcessHeap(), 0, ddraw->decls);
+        ddraw->numConvertedDecls = 0;
+
+        if (FAILED(wined3d_device_uninit_3d(ddraw->wined3d_device)))
+        {
+            ERR("Failed to uninit 3D.\n");
+        }
+        else
+        {
+            /* Free the d3d window if one was created. */
+            if (ddraw->d3d_window && ddraw->d3d_window != ddraw->dest_window)
+            {
+                TRACE("Destroying the hidden render window %p.\n", ddraw->d3d_window);
+                DestroyWindow(ddraw->d3d_window);
+                ddraw->d3d_window = 0;
+            }
+        }
+
+        ddraw->d3d_initialized = FALSE;
+        ddraw->d3d_target = NULL;
+    }
+    else
+    {
+        wined3d_device_uninit_gdi(ddraw->wined3d_device);
+    }
+
+    TRACE("Swapchain destroyed.\n");
+}
+
 /*****************************************************************************
  * ddraw_destroy
  *
@@ -437,7 +481,16 @@ static void ddraw_destroy(IDirectDrawImpl *This)
     list_remove(&This->ddraw_list_entry);
     LeaveCriticalSection(&ddraw_cs);
 
-    /* Release the attached WineD3D stuff */
+    /* This can happen more or less legitimately for ddraw 1 and 2, where
+     * surfaces don't keep a reference to the ddraw object. The surfaces
+     * will of course be broken after this, (and on native trying to do
+     * anything with them in that state results in an access violation), but
+     * the release of the ddraw object should succeed without crashing. */
+    if (This->wined3d_swapchain)
+    {
+        WARN("DirectDraw object is being destroyed while the swapchain still exists.\n");
+        ddraw_destroy_swapchain(This);
+    }
     wined3d_device_decref(This->wined3d_device);
     wined3d_decref(This->wineD3D);
 
