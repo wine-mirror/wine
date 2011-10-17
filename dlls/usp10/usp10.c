@@ -1617,6 +1617,30 @@ HRESULT WINAPI ScriptStringFree(SCRIPT_STRING_ANALYSIS *pssa)
     return S_OK;
 }
 
+static inline int get_cluster_size(const WORD *pwLogClust, int cChars, int item,
+                                   int direction, int* iCluster, int *check_out)
+{
+    int clust_size = 1;
+    int check;
+    WORD clust = pwLogClust[item];
+
+    for (check = item+direction; check < cChars && check >= 0; check+=direction)
+    {
+        if (pwLogClust[check] == clust)
+        {
+            clust_size ++;
+            if (iCluster && *iCluster == -1)
+                *iCluster = item;
+        }
+        else break;
+    }
+
+    if (check_out)
+        *check_out = check;
+
+    return clust_size;
+}
+
 /***********************************************************************
  *      ScriptCPtoX (USP10.@)
  *
@@ -1674,19 +1698,9 @@ HRESULT WINAPI ScriptCPtoX(int iCP,
             int check;
             int clust = pwLogClust[item];
 
-            clust_size = 1;
             iCluster = -1;
-
-            for (check = item+1; check < cChars; check++)
-            {
-                if (pwLogClust[check] == clust)
-                {
-                    clust_size ++;
-                    if (iCluster == -1)
-                        iCluster = item;
-                }
-                else break;
-            }
+            clust_size = get_cluster_size(pwLogClust, cChars, item, 1, &iCluster,
+                                          &check);
 
             if (check >= cChars && !iMaxPos)
             {
@@ -1812,20 +1826,10 @@ HRESULT WINAPI ScriptXtoCP(int iX,
             int check;
             int clust = pwLogClust[item];
 
-            clust_size = 1;
             iCluster = -1;
             cjump = 0;
-
-            for (check = item+direction; check < cChars && check >= 0; check+=direction)
-            {
-                if (pwLogClust[check] == clust)
-                {
-                    clust_size ++;
-                    if (iCluster == -1)
-                        iCluster = item;
-                }
-                else break;
-            }
+            clust_size = get_cluster_size(pwLogClust, cChars, item, direction,
+                                          &iCluster, &check);
 
             if (check >= cChars && direction > 0)
             {
@@ -2569,12 +2573,23 @@ HRESULT WINAPI ScriptStringGetLogicalWidths(SCRIPT_STRING_ANALYSIS ssa, int *piD
     for (i = 0; i < analysis->numItems; i++)
     {
         int cChar = analysis->pItem[i+1].iCharPos - analysis->pItem[i].iCharPos;
+        int direction = 1;
+
+        if (analysis->pItem[i].a.fRTL && ! analysis->pItem[i].a.fLogicalOrder)
+            direction = -1;
+
         for (j = 0; j < cChar; j++)
         {
-
+            int k;
             int glyph = analysis->glyphs[i].pwLogClust[j];
-            piDx[next] = analysis->glyphs[i].piAdvance[glyph];
-            next++;
+            int clust_size = get_cluster_size(analysis->glyphs[i].pwLogClust,
+                                              cChar, j, direction, NULL, NULL);
+            for (k = 0; k < clust_size; k++)
+            {
+                piDx[next] = analysis->glyphs[i].piAdvance[glyph] / clust_size;
+                next++;
+                if (k) j++;
+            }
         }
     }
     return S_OK;
