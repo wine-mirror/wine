@@ -5380,7 +5380,7 @@ static HRESULT updateSurfaceDesc(struct wined3d_surface *surface,
     return WINED3D_OK;
 }
 
-static BOOL is_display_mode_supported(struct wined3d_device *device, const WINED3DPRESENT_PARAMETERS *pp)
+static BOOL is_display_mode_supported(const struct wined3d_device *device, const WINED3DPRESENT_PARAMETERS *pp)
 {
     UINT i, count;
     WINED3DDISPLAYMODE m;
