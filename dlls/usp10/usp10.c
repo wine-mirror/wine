@@ -1697,12 +1697,30 @@ HRESULT WINAPI ScriptCPtoX(int iCP,
                 iPosX += special_size;
             }
             else
-                iPosX += piAdvance[clust] / (float)clust_size;
+            {
+                if (scriptInformation[psa->eScript].props.fNeedsCaretInfo)
+                {
+                    clust_size --;
+                    if (clust_size == 0)
+                        iPosX += piAdvance[clust];
+                }
+                else
+                    iPosX += piAdvance[clust] / (float)clust_size;
+            }
         }
         else if (iSpecial != -1)
             iPosX += special_size;
         else /* (iCluster != -1) */
-            iPosX += piAdvance[pwLogClust[iCluster]] / (float)clust_size;
+        {
+            if (scriptInformation[psa->eScript].props.fNeedsCaretInfo)
+            {
+                clust_size --;
+                if (clust_size == 0)
+                    iPosX += piAdvance[pwLogClust[iCluster]];
+            }
+            else
+                iPosX += piAdvance[pwLogClust[iCluster]] / (float)clust_size;
+        }
     }
 
     if (iMaxPos > 0)
@@ -1737,6 +1755,7 @@ HRESULT WINAPI ScriptXtoCP(int iX,
     int iSpecial = -1;
     int iCluster = -1;
     int clust_size = 1;
+    int cjump = 0;
     float special_size = 0.0;
     int direction = 1;
 
@@ -1795,6 +1814,7 @@ HRESULT WINAPI ScriptXtoCP(int iX,
 
             clust_size = 1;
             iCluster = -1;
+            cjump = 0;
 
             for (check = item+direction; check < cChars && check >= 0; check+=direction)
             {
@@ -1816,12 +1836,30 @@ HRESULT WINAPI ScriptXtoCP(int iX,
                 iPosX += special_size;
             }
             else
-                iPosX += piAdvance[clust] / (float)clust_size;
+            {
+                if (scriptInformation[psa->eScript].props.fNeedsCaretInfo)
+                {
+                    if (!cjump)
+                        iPosX += piAdvance[clust];
+                    cjump++;
+                }
+                else
+                    iPosX += piAdvance[clust] / (float)clust_size;
+            }
         }
         else if (iSpecial != -1)
             iPosX += special_size;
         else /* (iCluster != -1) */
-            iPosX += piAdvance[pwLogClust[iCluster]] / (float)clust_size;
+        {
+            if (scriptInformation[psa->eScript].props.fNeedsCaretInfo)
+            {
+                if (!cjump)
+                    iPosX += piAdvance[pwLogClust[iCluster]];
+                cjump++;
+            }
+            else
+                iPosX += piAdvance[pwLogClust[iCluster]] / (float)clust_size;
+        }
     }
 
     if (direction > 0)
@@ -1829,7 +1867,11 @@ HRESULT WINAPI ScriptXtoCP(int iX,
         if (iPosX > iX)
             item--;
         if (item < cChars && ((iPosX - iLastPosX) / 2.0) + iX >= iPosX)
+        {
+            if (scriptInformation[psa->eScript].props.fNeedsCaretInfo && clust_size > 1)
+                item+=(clust_size-1);
             *piTrailing = 1;
+        }
         else
             *piTrailing = 0;
     }
@@ -1843,7 +1885,11 @@ HRESULT WINAPI ScriptXtoCP(int iX,
         if (iLastPosX == iX)
             *piTrailing = 0;
         else if (item < 0 || ((iLastPosX - iPosX) / 2.0) + iX <= iLastPosX)
+        {
+            if (scriptInformation[psa->eScript].props.fNeedsCaretInfo && clust_size > 1)
+                item-=(clust_size-1);
             *piTrailing = 1;
+        }
         else
             *piTrailing = 0;
     }
