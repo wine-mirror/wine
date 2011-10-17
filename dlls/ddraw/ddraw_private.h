@@ -280,7 +280,7 @@ struct IDirect3DDeviceImpl
     const IDirect3DDevice7Vtbl *lpVtbl;
     const IDirect3DDevice3Vtbl *IDirect3DDevice3_vtbl;
     const IDirect3DDevice2Vtbl *IDirect3DDevice2_vtbl;
-    const IDirect3DDeviceVtbl *IDirect3DDevice_vtbl;
+    IDirect3DDevice IDirect3DDevice_iface;
     LONG                    ref;
 
     /* Other object connections */
@@ -327,7 +327,7 @@ WINED3DZBUFFERTYPE IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DDeviceImpl *T
 
 static inline IDirect3DDeviceImpl *impl_from_IDirect3DDevice(IDirect3DDevice *iface)
 {
-    return CONTAINING_RECORD(iface, IDirect3DDeviceImpl, IDirect3DDevice_vtbl);
+    return CONTAINING_RECORD(iface, IDirect3DDeviceImpl, IDirect3DDevice_iface);
 }
 
 static inline IDirect3DDeviceImpl *device_from_device2(IDirect3DDevice2 *iface)

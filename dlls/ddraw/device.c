@@ -163,7 +163,7 @@ IDirect3DDeviceImpl_7_QueryInterface(IDirect3DDevice7 *iface,
     /* Direct3DDevice */
     else if ( IsEqualGUID( &IID_IDirect3DDevice  , refiid ) )
     {
-        *obj = &This->IDirect3DDevice_vtbl;
+        *obj = &This->IDirect3DDevice_iface;
         TRACE("(%p) Returning IDirect3DDevice interface at %p\n", This, *obj);
     }
     else if ( IsEqualGUID( &IID_IDirect3DDevice2  , refiid ) ) {
@@ -329,7 +329,7 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
                 {
                     /* No FIXME here because this might happen because of sloppy applications. */
                     WARN("Leftover matrix handle %#x (%p), deleting.\n", i + 1, entry->object);
-                    IDirect3DDevice_DeleteMatrix((IDirect3DDevice *)&This->IDirect3DDevice_vtbl, i + 1);
+                    IDirect3DDevice_DeleteMatrix(&This->IDirect3DDevice_iface, i + 1);
                     break;
                 }
 
@@ -6741,7 +6741,7 @@ IDirect3DDeviceImpl *unsafe_impl_from_IDirect3DDevice(IDirect3DDevice *iface)
 {
     if (!iface) return NULL;
     assert(iface->lpVtbl == &d3d_device1_vtbl);
-    return CONTAINING_RECORD(iface, IDirect3DDeviceImpl, IDirect3DDevice_vtbl);
+    return CONTAINING_RECORD(iface, IDirect3DDeviceImpl, IDirect3DDevice_iface);
 }
 
 /*****************************************************************************
@@ -6788,7 +6788,7 @@ HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDi
 
     device->IDirect3DDevice3_vtbl = &d3d_device3_vtbl;
     device->IDirect3DDevice2_vtbl = &d3d_device2_vtbl;
-    device->IDirect3DDevice_vtbl = &d3d_device1_vtbl;
+    device->IDirect3DDevice_iface.lpVtbl = &d3d_device1_vtbl;
     device->ref = 1;
     device->ddraw = ddraw;
     device->target = target;
