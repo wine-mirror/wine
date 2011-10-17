@@ -1641,6 +1641,39 @@ static inline int get_cluster_size(const WORD *pwLogClust, int cChars, int item,
     return clust_size;
 }
 
+static inline int get_glyph_cluster_advance(const int* piAdvance, const SCRIPT_VISATTR *pva, const WORD *pwLogClust, int cGlyphs, int cChars, int glyph, int direction)
+{
+    int advance;
+    int log_clust_max = 0;
+    int i;
+
+    advance = piAdvance[glyph];
+
+    for (i = 0; i < cChars; i++)
+    {
+        if (pwLogClust[i] > log_clust_max)
+            log_clust_max = pwLogClust[i];
+    }
+
+    if (glyph > log_clust_max)
+        return advance;
+
+    for (glyph+=direction; glyph < cGlyphs && glyph >= 0; glyph +=direction)
+    {
+        if (pva[glyph].fClusterStart)
+            break;
+        for (i = 0; i < cChars; i++)
+            if (pwLogClust[i] == glyph) break;
+        if (i != cChars)
+            break;
+        if (glyph > log_clust_max)
+            break;
+        advance += piAdvance[glyph];
+    }
+
+    return advance;
+}
+
 /***********************************************************************
  *      ScriptCPtoX (USP10.@)
  *
@@ -1662,6 +1695,7 @@ HRESULT WINAPI ScriptCPtoX(int iCP,
     int clust_size = 1;
     float special_size = 0.0;
     int iMaxPos = 0;
+    int advance = 0;
     BOOL rtl = FALSE;
 
     TRACE("(%d,%d,%d,%d,%p,%p,%p,%p,%p)\n",
@@ -1702,10 +1736,12 @@ HRESULT WINAPI ScriptCPtoX(int iCP,
             clust_size = get_cluster_size(pwLogClust, cChars, item, 1, &iCluster,
                                           &check);
 
+            advance = get_glyph_cluster_advance(piAdvance, psva, pwLogClust, cGlyphs, cChars, clust, 1);
+
             if (check >= cChars && !iMaxPos)
             {
                 for (check = clust; check < cChars; check++)
-                    special_size += piAdvance[check];
+                    special_size += get_glyph_cluster_advance(piAdvance, psva, pwLogClust, cGlyphs, cChars, check, 1);
                 iSpecial = item;
                 special_size /= (cChars - item);
                 iPosX += special_size;
@@ -1716,24 +1752,25 @@ HRESULT WINAPI ScriptCPtoX(int iCP,
                 {
                     clust_size --;
                     if (clust_size == 0)
-                        iPosX += piAdvance[clust];
+                        iPosX += advance;
                 }
                 else
-                    iPosX += piAdvance[clust] / (float)clust_size;
+                    iPosX += advance / (float)clust_size;
             }
         }
         else if (iSpecial != -1)
             iPosX += special_size;
         else /* (iCluster != -1) */
         {
+            int adv = get_glyph_cluster_advance(piAdvance, psva, pwLogClust, cGlyphs, cChars, pwLogClust[iCluster], 1);
             if (scriptInformation[psa->eScript].props.fNeedsCaretInfo)
             {
                 clust_size --;
                 if (clust_size == 0)
-                    iPosX += piAdvance[pwLogClust[iCluster]];
+                    iPosX += adv;
             }
             else
-                iPosX += piAdvance[pwLogClust[iCluster]] / (float)clust_size;
+                iPosX += adv / (float)clust_size;
         }
     }
 
@@ -1770,6 +1807,7 @@ HRESULT WINAPI ScriptXtoCP(int iX,
     int iCluster = -1;
     int clust_size = 1;
     int cjump = 0;
+    int advance;
     float special_size = 0.0;
     int direction = 1;
 
@@ -1830,11 +1868,12 @@ HRESULT WINAPI ScriptXtoCP(int iX,
             cjump = 0;
             clust_size = get_cluster_size(pwLogClust, cChars, item, direction,
                                           &iCluster, &check);
+            advance = get_glyph_cluster_advance(piAdvance, psva, pwLogClust, cGlyphs, cChars, clust, direction);
 
             if (check >= cChars && direction > 0)
             {
                 for (check = clust; check < cChars; check++)
-                    special_size += piAdvance[check];
+                    special_size += get_glyph_cluster_advance(piAdvance, psva, pwLogClust, cGlyphs, cChars, check, direction);
                 iSpecial = item;
                 special_size /= (cChars - item);
                 iPosX += special_size;
@@ -1844,25 +1883,26 @@ HRESULT WINAPI ScriptXtoCP(int iX,
                 if (scriptInformation[psa->eScript].props.fNeedsCaretInfo)
                 {
                     if (!cjump)
-                        iPosX += piAdvance[clust];
+                        iPosX += advance;
                     cjump++;
                 }
                 else
-                    iPosX += piAdvance[clust] / (float)clust_size;
+                    iPosX += advance / (float)clust_size;
             }
         }
         else if (iSpecial != -1)
             iPosX += special_size;
         else /* (iCluster != -1) */
         {
+            int adv = get_glyph_cluster_advance(piAdvance, psva, pwLogClust, cGlyphs, cChars, pwLogClust[iCluster], direction);
             if (scriptInformation[psa->eScript].props.fNeedsCaretInfo)
             {
                 if (!cjump)
-                    iPosX += piAdvance[pwLogClust[iCluster]];
+                    iPosX += adv;
                 cjump++;
             }
             else
-                iPosX += piAdvance[pwLogClust[iCluster]] / (float)clust_size;
+                iPosX += adv / (float)clust_size;
         }
     }
 
@@ -2584,9 +2624,11 @@ HRESULT WINAPI ScriptStringGetLogicalWidths(SCRIPT_STRING_ANALYSIS ssa, int *piD
             int glyph = analysis->glyphs[i].pwLogClust[j];
             int clust_size = get_cluster_size(analysis->glyphs[i].pwLogClust,
                                               cChar, j, direction, NULL, NULL);
+            int advance = get_glyph_cluster_advance(analysis->glyphs[i].piAdvance, analysis->glyphs[i].psva, analysis->glyphs[i].pwLogClust, analysis->glyphs[i].numGlyphs, cChar, glyph, direction);
+
             for (k = 0; k < clust_size; k++)
             {
-                piDx[next] = analysis->glyphs[i].piAdvance[glyph] / clust_size;
+                piDx[next] = advance / clust_size;
                 next++;
                 if (k) j++;
             }
