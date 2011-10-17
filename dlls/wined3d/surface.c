@@ -1866,6 +1866,11 @@ static void surface_unload(struct wined3d_resource *resource)
          * and all flags get lost
          */
         surface_init_sysmem(surface);
+        /* We also get here when the ddraw swapchain is destroyed, for example
+         * for a mode switch. In this case this surface won't necessarily be
+         * an implicit surface. We have to mark it lost so that the
+         * application can restore it after the mode switch. */
+        surface->flags |= SFLAG_LOST;
     }
     else
     {
@@ -2966,7 +2971,6 @@ HRESULT CDECL wined3d_surface_restore(struct wined3d_surface *surface)
 {
     TRACE("surface %p.\n", surface);
 
-    /* So far we don't lose anything :) */
     surface->flags &= ~SFLAG_LOST;
     return WINED3D_OK;
 }
