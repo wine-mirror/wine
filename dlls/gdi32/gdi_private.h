@@ -223,7 +223,12 @@ extern BOOL BIDI_Reorder( HDC hDC, LPCWSTR lpString, INT uCount, DWORD dwFlags, 
                           LPWSTR lpOutString, INT uCountOut, UINT *lpOrder, WORD **lpGlyphs, INT* cGlyphs ) DECLSPEC_HIDDEN;
 
 /* bitblt.c */
+extern DWORD convert_bits( const BITMAPINFO *src_info, struct bitblt_coords *src,
+                           BITMAPINFO *dst_info, struct gdi_image_bits *bits, BOOL add_alpha ) DECLSPEC_HIDDEN;
 extern BOOL intersect_vis_rectangles( struct bitblt_coords *dst, struct bitblt_coords *src ) DECLSPEC_HIDDEN;
+extern DWORD stretch_bits( const BITMAPINFO *src_info, struct bitblt_coords *src,
+                           BITMAPINFO *dst_info, struct bitblt_coords *dst,
+                           struct gdi_image_bits *bits, int mode ) DECLSPEC_HIDDEN;
 
 /* bitmap.c */
 extern void get_ddb_bitmapinfo( BITMAPOBJ *bmp, BITMAPINFO *info ) DECLSPEC_HIDDEN;

@@ -166,8 +166,8 @@ void free_heap_bits( struct gdi_image_bits *bits )
     HeapFree( GetProcessHeap(), 0, bits->ptr );
 }
 
-static DWORD convert_bits( const BITMAPINFO *src_info, struct bitblt_coords *src,
-                           BITMAPINFO *dst_info, struct gdi_image_bits *bits, BOOL add_alpha )
+DWORD convert_bits( const BITMAPINFO *src_info, struct bitblt_coords *src,
+                    BITMAPINFO *dst_info, struct gdi_image_bits *bits, BOOL add_alpha )
 {
     void *ptr;
     DWORD err;
@@ -184,9 +184,9 @@ static DWORD convert_bits( const BITMAPINFO *src_info, struct bitblt_coords *src
     return err;
 }
 
-static DWORD stretch_bits( const BITMAPINFO *src_info, struct bitblt_coords *src,
-                           BITMAPINFO *dst_info, struct bitblt_coords *dst,
-                           struct gdi_image_bits *bits, int mode )
+DWORD stretch_bits( const BITMAPINFO *src_info, struct bitblt_coords *src,
+                    BITMAPINFO *dst_info, struct bitblt_coords *dst,
+                    struct gdi_image_bits *bits, int mode )
 {
     void *ptr;
     DWORD err;
