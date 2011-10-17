@@ -330,9 +330,9 @@ static inline IDirect3DDeviceImpl *impl_from_IDirect3DDevice(IDirect3DDevice *if
     return CONTAINING_RECORD(iface, IDirect3DDeviceImpl, IDirect3DDevice_iface);
 }
 
-static inline IDirect3DDeviceImpl *device_from_device2(IDirect3DDevice2 *iface)
+static inline IDirect3DDeviceImpl *impl_from_IDirect3DDevice2(IDirect3DDevice2 *iface)
 {
-    return (IDirect3DDeviceImpl *)((char*)iface - FIELD_OFFSET(IDirect3DDeviceImpl, IDirect3DDevice2_vtbl));
+    return CONTAINING_RECORD(iface, IDirect3DDeviceImpl, IDirect3DDevice2_vtbl);
 }
 
 static inline IDirect3DDeviceImpl *device_from_device3(IDirect3DDevice3 *iface)
