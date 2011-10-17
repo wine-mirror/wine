@@ -316,7 +316,7 @@ IDirect3DViewportImpl_SetViewport(IDirect3DViewport3 *iface,
     This->viewports.vp1.dvMaxZ = 1.0;
 
     if (This->active_device) {
-        IDirect3DDevice3 *d3d_device3 = (IDirect3DDevice3 *)&This->active_device->IDirect3DDevice3_vtbl;
+        IDirect3DDevice3 *d3d_device3 = &This->active_device->IDirect3DDevice3_iface;
         IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport);
         if (current_viewport)
         {
@@ -672,7 +672,7 @@ static HRESULT WINAPI IDirect3DViewportImpl_Clear(IDirect3DViewport3 *iface,
         ERR(" Trying to clear a viewport not attached to a device !\n");
         return D3DERR_VIEWPORTHASNODEVICE;
     }
-    d3d_device3 = (IDirect3DDevice3 *)&This->active_device->IDirect3DDevice3_vtbl;
+    d3d_device3 = &This->active_device->IDirect3DDevice3_iface;
 
     EnterCriticalSection(&ddraw_cs);
     if (dwFlags & D3DCLEAR_TARGET) {
@@ -970,7 +970,7 @@ IDirect3DViewportImpl_SetViewport2(IDirect3DViewport3 *iface,
     memcpy(&(This->viewports.vp2), lpData, lpData->dwSize);
 
     if (This->active_device) {
-        IDirect3DDevice3 *d3d_device3 = (IDirect3DDevice3 *)&This->active_device->IDirect3DDevice3_vtbl;
+        IDirect3DDevice3 *d3d_device3 = &This->active_device->IDirect3DDevice3_iface;
         IDirect3DDevice3_GetCurrentViewport(d3d_device3, &current_viewport);
         if (current_viewport)
         {
@@ -1070,7 +1070,7 @@ IDirect3DViewportImpl_Clear2(IDirect3DViewport3 *iface,
         LeaveCriticalSection(&ddraw_cs);
         return D3DERR_VIEWPORTHASNODEVICE;
     }
-    d3d_device3 = (IDirect3DDevice3 *)&This->active_device->IDirect3DDevice3_vtbl;
+    d3d_device3 = &This->active_device->IDirect3DDevice3_iface;
     /* Need to temporarily activate viewport to clear it. Previously active
      * one will be restored afterwards. */
     viewport_activate(This, TRUE);

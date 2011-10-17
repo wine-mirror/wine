@@ -332,7 +332,7 @@ static HRESULT WINAPI IDirect3DMaterialImpl_2_GetHandle(IDirect3DMaterial2 *ifac
     TRACE("iface %p, device %p, handle %p.\n", iface, device, handle);
 
     return IDirect3DMaterial3_GetHandle(&This->IDirect3DMaterial3_iface, device_impl ?
-            (IDirect3DDevice3 *)&device_impl->IDirect3DDevice3_vtbl : NULL, handle);
+            &device_impl->IDirect3DDevice3_iface : NULL, handle);
 }
 
 static HRESULT WINAPI IDirect3DMaterialImpl_1_GetHandle(IDirect3DMaterial *iface,
@@ -344,7 +344,7 @@ static HRESULT WINAPI IDirect3DMaterialImpl_1_GetHandle(IDirect3DMaterial *iface
     TRACE("iface %p, device %p, handle %p.\n", iface, device, handle);
 
     return IDirect3DMaterial3_GetHandle(&This->IDirect3DMaterial3_iface, device_impl ?
-            (IDirect3DDevice3 *)&device_impl->IDirect3DDevice3_vtbl : NULL, handle);
+            &device_impl->IDirect3DDevice3_iface : NULL, handle);
 }
 
 static HRESULT WINAPI IDirect3DMaterialImpl_2_QueryInterface(IDirect3DMaterial2 *iface, REFIID riid,

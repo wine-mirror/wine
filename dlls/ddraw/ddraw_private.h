@@ -278,7 +278,7 @@ struct IDirect3DDeviceImpl
 {
     /* IUnknown */
     const IDirect3DDevice7Vtbl *lpVtbl;
-    const IDirect3DDevice3Vtbl *IDirect3DDevice3_vtbl;
+    IDirect3DDevice3 IDirect3DDevice3_iface;
     IDirect3DDevice2 IDirect3DDevice2_iface;
     IDirect3DDevice IDirect3DDevice_iface;
     LONG                    ref;
@@ -337,7 +337,7 @@ static inline IDirect3DDeviceImpl *impl_from_IDirect3DDevice2(IDirect3DDevice2 *
 
 static inline IDirect3DDeviceImpl *impl_from_IDirect3DDevice3(IDirect3DDevice3 *iface)
 {
-    return CONTAINING_RECORD(iface, IDirect3DDeviceImpl, IDirect3DDevice3_vtbl);
+    return CONTAINING_RECORD(iface, IDirect3DDeviceImpl, IDirect3DDevice3_iface);
 }
 
 IDirect3DDeviceImpl *unsafe_impl_from_IDirect3DDevice(IDirect3DDevice *iface) DECLSPEC_HIDDEN;

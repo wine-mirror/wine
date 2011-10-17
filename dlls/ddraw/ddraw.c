@@ -4339,6 +4339,8 @@ static HRESULT WINAPI d3d3_CreateDevice(IDirect3D3 *iface, REFCLSID riid,
 {
     IDirectDrawImpl *This = impl_from_IDirect3D3(iface);
     IDirectDrawSurfaceImpl *surface_impl = unsafe_impl_from_IDirectDrawSurface4(surface);
+    IDirect3DDevice7 *device7;
+    IDirect3DDeviceImpl *device_impl;
     HRESULT hr;
 
     TRACE("iface %p, riid %s, surface %p, device %p, outer_unknown %p.\n",
@@ -4347,9 +4349,12 @@ static HRESULT WINAPI d3d3_CreateDevice(IDirect3D3 *iface, REFCLSID riid,
     if (outer_unknown) return CLASS_E_NOAGGREGATION;
 
     hr = d3d7_CreateDevice(&This->IDirect3D7_iface, riid,
-            surface_impl ? &surface_impl->IDirectDrawSurface7_iface : NULL,
-            (IDirect3DDevice7 **)device);
-    if (*device) *device = (IDirect3DDevice3 *)&((IDirect3DDeviceImpl *)*device)->IDirect3DDevice3_vtbl;
+            surface_impl ? &surface_impl->IDirectDrawSurface7_iface : NULL, device ? &device7 : NULL);
+    if (SUCCEEDED(hr))
+    {
+        device_impl = (IDirect3DDeviceImpl *)device7;
+        *device = &device_impl->IDirect3DDevice3_iface;
+    }
 
     return hr;
 }
