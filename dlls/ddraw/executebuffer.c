@@ -292,7 +292,7 @@ HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *This,
 
 	    case D3DOP_STATERENDER: {
 	        int i;
-                IDirect3DDevice2 *d3d_device2 = (IDirect3DDevice2 *)&lpDevice->IDirect3DDevice2_vtbl;
+                IDirect3DDevice2 *d3d_device2 = &lpDevice->IDirect3DDevice2_iface;
 		TRACE("STATERENDER      (%d)\n", count);
 
 		for (i = 0; i < count; i++) {

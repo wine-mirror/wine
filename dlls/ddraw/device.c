@@ -167,7 +167,7 @@ IDirect3DDeviceImpl_7_QueryInterface(IDirect3DDevice7 *iface,
         TRACE("(%p) Returning IDirect3DDevice interface at %p\n", This, *obj);
     }
     else if ( IsEqualGUID( &IID_IDirect3DDevice2  , refiid ) ) {
-        *obj = &This->IDirect3DDevice2_vtbl;
+        *obj = &This->IDirect3DDevice2_iface;
         TRACE("(%p) Returning IDirect3DDevice2 interface at %p\n", This, *obj);
     }
     else if ( IsEqualGUID( &IID_IDirect3DDevice3  , refiid ) ) {
@@ -581,7 +581,7 @@ static HRESULT WINAPI IDirect3DDeviceImpl_1_SwapTextureHandles(IDirect3DDevice *
 
     TRACE("iface %p, tex1 %p, tex2 %p.\n", iface, D3DTex1, D3DTex2);
 
-    return IDirect3DDevice2_SwapTextureHandles((IDirect3DDevice2 *)&This->IDirect3DDevice2_vtbl, t1, t2);
+    return IDirect3DDevice2_SwapTextureHandles(&This->IDirect3DDevice2_iface, t1, t2);
 }
 
 /*****************************************************************************
@@ -1274,7 +1274,7 @@ static HRESULT WINAPI IDirect3DDeviceImpl_1_EnumTextureFormats(IDirect3DDevice *
 
     TRACE("iface %p, callback %p, context %p.\n", iface, Callback, Arg);
 
-    return IDirect3DDevice2_EnumTextureFormats((IDirect3DDevice2 *)&This->IDirect3DDevice2_vtbl, Callback, Arg);
+    return IDirect3DDevice2_EnumTextureFormats(&This->IDirect3DDevice2_iface, Callback, Arg);
 }
 
 /*****************************************************************************
@@ -6750,7 +6750,7 @@ IDirect3DDeviceImpl *unsafe_impl_from_IDirect3DDevice2(IDirect3DDevice2 *iface)
 {
     if (!iface) return NULL;
     assert(iface->lpVtbl == &d3d_device2_vtbl);
-    return CONTAINING_RECORD(iface, IDirect3DDeviceImpl, IDirect3DDevice2_vtbl);
+    return CONTAINING_RECORD(iface, IDirect3DDeviceImpl, IDirect3DDevice2_iface);
 }
 
 IDirect3DDeviceImpl *unsafe_impl_from_IDirect3DDevice(IDirect3DDevice *iface)
@@ -6803,7 +6803,7 @@ HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDi
         device->lpVtbl = &d3d_device7_fpu_setup_vtbl;
 
     device->IDirect3DDevice3_vtbl = &d3d_device3_vtbl;
-    device->IDirect3DDevice2_vtbl = &d3d_device2_vtbl;
+    device->IDirect3DDevice2_iface.lpVtbl = &d3d_device2_vtbl;
     device->IDirect3DDevice_iface.lpVtbl = &d3d_device1_vtbl;
     device->ref = 1;
     device->ddraw = ddraw;
