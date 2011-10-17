@@ -680,6 +680,7 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
     LPCDSCBUFFERDESC lpcDSCBufferDesc)
 {
     LPWAVEFORMATEX  wfex;
+    IDirectSoundCaptureBufferImpl *This;
     TRACE( "(%p,%p,%p)\n", device, ppobj, lpcDSCBufferDesc);
 
     if (ppobj == NULL) {
@@ -687,15 +688,15 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
 	return DSERR_INVALIDPARAM;
     }
 
+    *ppobj = NULL;
+
     if (!device) {
 	WARN("not initialized\n");
-        *ppobj = NULL;
 	return DSERR_UNINITIALIZED;
     }
 
     if (lpcDSCBufferDesc == NULL) {
 	WARN("invalid parameter: lpcDSCBufferDesc == NULL\n");
-        *ppobj = NULL;
 	return DSERR_INVALIDPARAM;
     }
 
@@ -704,7 +705,6 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
         (lpcDSCBufferDesc->dwBufferBytes == 0) ||
         (lpcDSCBufferDesc->lpwfxFormat == NULL) ) { /* FIXME: DSERR_BADFORMAT ? */
 	WARN("invalid lpcDSCBufferDesc\n");
-	*ppobj = NULL;
 	return DSERR_INVALIDPARAM;
     }
 
@@ -717,23 +717,19 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
         wfex->wBitsPerSample, wfex->cbSize);
 
     device->pwfx = DSOUND_CopyFormat(wfex);
-    if ( device->pwfx == NULL ) {
-	*ppobj = NULL;
+    if ( device->pwfx == NULL )
 	return DSERR_OUTOFMEMORY;
-    }
 
-    *ppobj = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
+    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
         sizeof(IDirectSoundCaptureBufferImpl));
 
-    if ( *ppobj == NULL ) {
+    if ( This == NULL ) {
 	WARN("out of memory\n");
-	*ppobj = NULL;
 	return DSERR_OUTOFMEMORY;
     } else {
         HRESULT err = DS_OK;
         LPBYTE newbuf;
         DWORD buflen;
-        IDirectSoundCaptureBufferImpl *This = *ppobj;
 
         This->ref = 1;
         This->device = device;
@@ -749,7 +745,6 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
             WARN("no memory\n");
             This->device->capture_buffer = 0;
             HeapFree( GetProcessHeap(), 0, This );
-            *ppobj = NULL;
             return DSERR_OUTOFMEMORY;
         }
 
@@ -762,7 +757,6 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
             HeapFree(GetProcessHeap(), 0, This->pdscbd);
             This->device->capture_buffer = 0;
             HeapFree( GetProcessHeap(), 0, This );
-            *ppobj = NULL;
             return err;
         }
 
@@ -776,7 +770,6 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
             HeapFree(GetProcessHeap(), 0, This->pdscbd);
             This->device->capture_buffer = 0;
             HeapFree( GetProcessHeap(), 0, This );
-            *ppobj = NULL;
             return err;
         }
 
@@ -789,7 +782,6 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
             HeapFree(GetProcessHeap(), 0, This->pdscbd);
             This->device->capture_buffer = 0;
             HeapFree( GetProcessHeap(), 0, This );
-            *ppobj = NULL;
             return err;
         }
 
@@ -807,12 +799,13 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
             HeapFree(GetProcessHeap(), 0, This->pdscbd);
             This->device->capture_buffer = 0;
             HeapFree( GetProcessHeap(), 0, This );
-            *ppobj = NULL;
             return DSERR_OUTOFMEMORY;
         }
         device->buffer = newbuf;
         device->buflen = buflen;
     }
+
+    *ppobj = This;
 
     TRACE("returning DS_OK\n");
     return DS_OK;
