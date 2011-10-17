@@ -314,7 +314,7 @@ static HRESULT WINAPI CorDebug_CanLaunchOrAttach(ICorDebug *iface, DWORD dwProce
 {
     CorDebug *This = impl_from_ICorDebug( iface );
     FIXME("stub %p %d %d\n", This, dwProcessId, win32DebuggingEnabled);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const struct ICorDebugVtbl cordebug_vtbl =
