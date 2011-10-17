@@ -325,9 +325,9 @@ HRESULT IDirect3DImpl_GetCaps(const struct wined3d *wined3d,
         D3DDEVICEDESC *Desc123, D3DDEVICEDESC7 *Desc7) DECLSPEC_HIDDEN;
 WINED3DZBUFFERTYPE IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DDeviceImpl *This) DECLSPEC_HIDDEN;
 
-static inline IDirect3DDeviceImpl *device_from_device1(IDirect3DDevice *iface)
+static inline IDirect3DDeviceImpl *impl_from_IDirect3DDevice(IDirect3DDevice *iface)
 {
-    return (IDirect3DDeviceImpl *)((char*)iface - FIELD_OFFSET(IDirect3DDeviceImpl, IDirect3DDevice_vtbl));
+    return CONTAINING_RECORD(iface, IDirect3DDeviceImpl, IDirect3DDevice_vtbl);
 }
 
 static inline IDirect3DDeviceImpl *device_from_device2(IDirect3DDevice2 *iface)
