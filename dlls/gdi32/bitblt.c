@@ -47,6 +47,60 @@ static inline void swap_ints( int *i, int *j )
     *j = tmp;
 }
 
+BOOL intersect_vis_rectangles( struct bitblt_coords *dst, struct bitblt_coords *src )
+{
+    RECT rect;
+
+    /* intersect the rectangles */
+
+    if ((src->width == dst->width) && (src->height == dst->height)) /* no stretching */
+    {
+        offset_rect( &src->visrect, dst->x - src->x, dst->y - src->y );
+        intersect_rect( &rect, &src->visrect, &dst->visrect );
+        src->visrect = dst->visrect = rect;
+        offset_rect( &src->visrect, src->x - dst->x, src->y - dst->y );
+    }
+    else  /* stretching */
+    {
+        /* map source rectangle into destination coordinates */
+        rect = src->visrect;
+        offset_rect( &rect, -min( src->x, src->x + src->width + 1),
+                     -min( src->y, src->y + src->height + 1) );
+        rect.left   = dst->x + rect.left * dst->width / abs(src->width);
+        rect.top    = dst->y + rect.top * dst->height / abs(src->height);
+        rect.right  = dst->x + rect.right * dst->width / abs(src->width);
+        rect.bottom = dst->y + rect.bottom * dst->height / abs(src->height);
+        if (rect.left > rect.right) swap_ints( &rect.left, &rect.right );
+        if (rect.top > rect.bottom) swap_ints( &rect.top, &rect.bottom );
+
+        /* avoid rounding errors */
+        rect.left--;
+        rect.top--;
+        rect.right++;
+        rect.bottom++;
+        if (!intersect_rect( &dst->visrect, &rect, &dst->visrect )) return FALSE;
+
+        /* map destination rectangle back to source coordinates */
+        rect = dst->visrect;
+        offset_rect( &rect, -min( dst->x, dst->x + dst->width + 1),
+                     -min( dst->y, dst->y + dst->height + 1) );
+        rect.left   = src->x + rect.left * src->width / abs(dst->width);
+        rect.top    = src->y + rect.top * src->height / abs(dst->height);
+        rect.right  = src->x + rect.right * src->width / abs(dst->width);
+        rect.bottom = src->y + rect.bottom * src->height / abs(dst->height);
+        if (rect.left > rect.right) swap_ints( &rect.left, &rect.right );
+        if (rect.top > rect.bottom) swap_ints( &rect.top, &rect.bottom );
+
+        /* avoid rounding errors */
+        rect.left--;
+        rect.top--;
+        rect.right++;
+        rect.bottom++;
+        if (!intersect_rect( &src->visrect, &rect, &src->visrect )) return FALSE;
+    }
+    return TRUE;
+}
+
 static BOOL get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
                                 DC *dc_src, struct bitblt_coords *src )
 {
@@ -104,54 +158,7 @@ static BOOL get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
     if (is_rect_empty( &src->visrect )) return FALSE;
     if (is_rect_empty( &dst->visrect )) return FALSE;
 
-    /* intersect the rectangles */
-
-    if ((src->width == dst->width) && (src->height == dst->height)) /* no stretching */
-    {
-        offset_rect( &src->visrect, dst->x - src->x, dst->y - src->y );
-        intersect_rect( &rect, &src->visrect, &dst->visrect );
-        src->visrect = dst->visrect = rect;
-        offset_rect( &src->visrect, src->x - dst->x, src->y - dst->y );
-    }
-    else  /* stretching */
-    {
-        /* map source rectangle into destination coordinates */
-        rect = src->visrect;
-        offset_rect( &rect, -min( src->x, src->x + src->width + 1),
-                     -min( src->y, src->y + src->height + 1) );
-        rect.left   = dst->x + rect.left * dst->width / abs(src->width);
-        rect.top    = dst->y + rect.top * dst->height / abs(src->height);
-        rect.right  = dst->x + rect.right * dst->width / abs(src->width);
-        rect.bottom = dst->y + rect.bottom * dst->height / abs(src->height);
-        if (rect.left > rect.right) swap_ints( &rect.left, &rect.right );
-        if (rect.top > rect.bottom) swap_ints( &rect.top, &rect.bottom );
-
-        /* avoid rounding errors */
-        rect.left--;
-        rect.top--;
-        rect.right++;
-        rect.bottom++;
-        if (!intersect_rect( &dst->visrect, &rect, &dst->visrect )) return FALSE;
-
-        /* map destination rectangle back to source coordinates */
-        rect = dst->visrect;
-        offset_rect( &rect, -min( dst->x, dst->x + dst->width + 1),
-                     -min( dst->y, dst->y + dst->height + 1) );
-        rect.left   = src->x + rect.left * src->width / abs(dst->width);
-        rect.top    = src->y + rect.top * src->height / abs(dst->height);
-        rect.right  = src->x + rect.right * src->width / abs(dst->width);
-        rect.bottom = src->y + rect.bottom * src->height / abs(dst->height);
-        if (rect.left > rect.right) swap_ints( &rect.left, &rect.right );
-        if (rect.top > rect.bottom) swap_ints( &rect.top, &rect.bottom );
-
-        /* avoid rounding errors */
-        rect.left--;
-        rect.top--;
-        rect.right++;
-        rect.bottom++;
-        if (!intersect_rect( &src->visrect, &rect, &src->visrect )) return FALSE;
-    }
-    return TRUE;
+    return intersect_vis_rectangles( dst, src );
 }
 
 void free_heap_bits( struct gdi_image_bits *bits )
