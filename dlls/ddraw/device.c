@@ -6732,6 +6732,13 @@ static const struct IDirect3DDeviceVtbl d3d_device1_vtbl =
     IDirect3DDeviceImpl_1_GetDirect3D
 };
 
+IDirect3DDeviceImpl *unsafe_impl_from_IDirect3DDevice(IDirect3DDevice *iface)
+{
+    if (!iface) return NULL;
+    assert(iface->lpVtbl == &d3d_device1_vtbl);
+    return CONTAINING_RECORD(iface, IDirect3DDeviceImpl, IDirect3DDevice_vtbl);
+}
+
 /*****************************************************************************
  * IDirect3DDeviceImpl_UpdateDepthStencil
  *

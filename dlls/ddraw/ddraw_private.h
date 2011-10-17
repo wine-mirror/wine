@@ -340,6 +340,8 @@ static inline IDirect3DDeviceImpl *device_from_device3(IDirect3DDevice3 *iface)
     return (IDirect3DDeviceImpl *)((char*)iface - FIELD_OFFSET(IDirect3DDeviceImpl, IDirect3DDevice3_vtbl));
 }
 
+IDirect3DDeviceImpl *unsafe_impl_from_IDirect3DDevice(IDirect3DDevice *iface) DECLSPEC_HIDDEN;
+
 /*****************************************************************************
  * IDirectDrawClipper implementation structure
  *****************************************************************************/

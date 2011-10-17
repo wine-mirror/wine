@@ -4551,11 +4551,12 @@ static HRESULT WINAPI d3d_texture1_GetHandle(IDirect3DTexture *iface,
         IDirect3DDevice *device, D3DTEXTUREHANDLE *handle)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirect3DTexture(iface);
-    IDirect3DDevice2 *device2 = (IDirect3DDevice2 *)&device_from_device1(device)->IDirect3DDevice2_vtbl;
+    IDirect3DDeviceImpl *device_impl = unsafe_impl_from_IDirect3DDevice(device);
 
     TRACE("iface %p, device %p, handle %p.\n", iface, device, handle);
 
-    return d3d_texture2_GetHandle(&This->IDirect3DTexture2_iface, device2, handle);
+    return d3d_texture2_GetHandle(&This->IDirect3DTexture2_iface,
+            device_impl ? (IDirect3DDevice2 *)&device_impl->IDirect3DDevice2_vtbl : NULL, handle);
 }
 
 /*****************************************************************************
