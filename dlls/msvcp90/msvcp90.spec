@@ -5186,14 +5186,14 @@
 @ cdecl -arch=win64 ?resize@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAX_K@Z(ptr long) MSVCP_basic_string_wchar_resize
 @ thiscall -arch=win32 ?resize@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXI_W@Z(ptr long long) MSVCP_basic_string_wchar_resize_ch
 @ cdecl -arch=win64 ?resize@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAX_K_W@Z(ptr long long) MSVCP_basic_string_wchar_resize_ch
-@ stub -arch=win32 ?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIABV12@I@Z
-@ stub -arch=win64 ?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KAEBV12@_K@Z
-@ stub -arch=win32 ?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIDI@Z
-@ stub -arch=win64 ?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KD_K@Z
-@ stub -arch=win32 ?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDI@Z
-@ stub -arch=win64 ?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K1@Z
-@ stub -arch=win32 ?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDII@Z
-@ stub -arch=win64 ?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K@Z
+@ thiscall -arch=win32 ?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIABV12@I@Z(ptr ptr long) MSVCP_basic_string_char_rfind_off
+@ cdecl -arch=win64 ?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KAEBV12@_K@Z(ptr ptr long) MSVCP_basic_string_char_rfind_off
+@ thiscall -arch=win32 ?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIDI@Z(ptr ptr long) MSVCP_basic_string_char_rfind_ch
+@ cdecl -arch=win64 ?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KD_K@Z(ptr ptr long) MSVCP_basic_string_char_rfind_ch
+@ thiscall -arch=win32 ?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDI@Z(ptr str long) MSVCP_basic_string_char_rfind_cstr_off
+@ cdecl -arch=win64 ?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K1@Z(ptr str long long) MSVCP_basic_string_char_rfind_cstr_substr
+@ thiscall -arch=win32 ?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDII@Z(ptr str long long) MSVCP_basic_string_char_rfind_cstr_substr
+@ cdecl -arch=win64 ?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K@Z(ptr str long) MSVCP_basic_string_char_rfind_cstr_off
 @ stub -arch=win32 ?rfind@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIABV12@I@Z
 @ stub -arch=win64 ?rfind@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_KAEBV12@_K@Z
 @ stub -arch=win32 ?rfind@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIGI@Z
@@ -5202,14 +5202,14 @@
 @ stub -arch=win64 ?rfind@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_KPEBG_K1@Z
 @ stub -arch=win32 ?rfind@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIPBGII@Z
 @ stub -arch=win64 ?rfind@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_KPEBG_K@Z
-@ stub -arch=win32 ?rfind@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIABV12@I@Z
-@ stub -arch=win64 ?rfind@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KAEBV12@_K@Z
-@ stub -arch=win32 ?rfind@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WI@Z
-@ stub -arch=win64 ?rfind@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K1@Z
-@ stub -arch=win32 ?rfind@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WII@Z
-@ stub -arch=win64 ?rfind@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K@Z
-@ stub -arch=win32 ?rfind@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEI_WI@Z
-@ stub -arch=win64 ?rfind@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_K_W_K@Z
+@ thiscall -arch=win32 ?rfind@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIABV12@I@Z(ptr ptr long) MSVCP_basic_string_wchar_rfind_off
+@ cdecl -arch=win64 ?rfind@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KAEBV12@_K@Z(ptr ptr long) MSVCP_basic_string_wchar_rfind_off
+@ thiscall -arch=win32 ?rfind@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WI@Z(ptr wstr long) MSVCP_basic_string_wchar_rfind_cstr_off
+@ cdecl -arch=win64 ?rfind@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K1@Z(ptr wstr long long) MSVCP_basic_string_wchar_rfind_cstr_substr
+@ thiscall -arch=win32 ?rfind@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPB_WII@Z(ptr wstr long long) MSVCP_basic_string_wchar_rfind_cstr_substr
+@ cdecl -arch=win64 ?rfind@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEB_W_K@Z(ptr wstr long) MSVCP_basic_string_wchar_rfind_cstr_off
+@ thiscall -arch=win32 ?rfind@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEI_WI@Z(ptr long long) MSVCP_basic_string_wchar_rfind_ch
+@ cdecl -arch=win64 ?rfind@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_K_W_K@Z(ptr long long) MSVCP_basic_string_wchar_rfind_ch
 @ cdecl ?round_error@?$numeric_limits@C@std@@SACXZ() std_numeric_limits_signed_char_round_error
 @ cdecl ?round_error@?$numeric_limits@D@std@@SADXZ() std_numeric_limits_char_round_error
 @ cdecl ?round_error@?$numeric_limits@E@std@@SAEXZ() std_numeric_limits_unsigned_char_round_error
