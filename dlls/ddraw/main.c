@@ -296,27 +296,27 @@ DirectDrawCreate(GUID *GUID,
  *
  ***********************************************************************/
 HRESULT WINAPI DECLSPEC_HOTPATCH
-DirectDrawCreateEx(GUID *GUID,
-                   LPVOID *DD,
+DirectDrawCreateEx(GUID *guid,
+                   LPVOID *dd,
                    REFIID iid,
                    IUnknown *UnkOuter)
 {
     HRESULT hr;
 
     TRACE("driver_guid %s, ddraw %p, interface_iid %s, outer_unknown %p.\n",
-            debugstr_guid(GUID), DD, debugstr_guid(iid), UnkOuter);
+            debugstr_guid(guid), dd, debugstr_guid(iid), UnkOuter);
 
     if (!IsEqualGUID(iid, &IID_IDirectDraw7))
         return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
-    hr = DDRAW_Create(GUID, DD, UnkOuter, iid);
+    hr = DDRAW_Create(guid, dd, UnkOuter, iid);
     LeaveCriticalSection(&ddraw_cs);
 
     if (SUCCEEDED(hr))
     {
-        IDirectDraw7 *ddraw7 = *(IDirectDraw7 **)DD;
-        hr = IDirectDraw7_Initialize(ddraw7, GUID);
+        IDirectDraw7 *ddraw7 = *(IDirectDraw7 **)dd;
+        hr = IDirectDraw7_Initialize(ddraw7, guid);
         if (FAILED(hr))
             IDirectDraw7_Release(ddraw7);
     }
