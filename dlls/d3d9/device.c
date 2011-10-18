@@ -582,26 +582,9 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_Reset(IDirect3DDevi
 
     hr = wined3d_device_reset(This->wined3d_device, &localParameters, reset_enum_callback);
     if (FAILED(hr))
-    {
         This->notreset = TRUE;
-
-        pPresentationParameters->BackBufferWidth            = localParameters.BackBufferWidth;
-        pPresentationParameters->BackBufferHeight           = localParameters.BackBufferHeight;
-        pPresentationParameters->BackBufferFormat           = d3dformat_from_wined3dformat(localParameters.BackBufferFormat);
-        pPresentationParameters->BackBufferCount            = localParameters.BackBufferCount;
-        pPresentationParameters->MultiSampleType            = localParameters.MultiSampleType;
-        pPresentationParameters->MultiSampleQuality         = localParameters.MultiSampleQuality;
-        pPresentationParameters->SwapEffect                 = localParameters.SwapEffect;
-        pPresentationParameters->hDeviceWindow              = localParameters.hDeviceWindow;
-        pPresentationParameters->Windowed                   = localParameters.Windowed;
-        pPresentationParameters->EnableAutoDepthStencil     = localParameters.EnableAutoDepthStencil;
-        pPresentationParameters->AutoDepthStencilFormat     = d3dformat_from_wined3dformat(localParameters.AutoDepthStencilFormat);
-        pPresentationParameters->Flags                      = localParameters.Flags;
-        pPresentationParameters->FullScreen_RefreshRateInHz = localParameters.FullScreen_RefreshRateInHz;
-        pPresentationParameters->PresentationInterval       = localParameters.PresentationInterval;
-    } else {
+    else
         This->notreset = FALSE;
-    }
 
     wined3d_mutex_unlock();
 

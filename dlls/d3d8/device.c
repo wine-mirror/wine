@@ -596,20 +596,6 @@ static HRESULT WINAPI IDirect3DDevice8Impl_Reset(IDirect3DDevice8 *iface,
     }
     wined3d_mutex_unlock();
 
-    pPresentationParameters->BackBufferWidth                    = localParameters.BackBufferWidth;
-    pPresentationParameters->BackBufferHeight                   = localParameters.BackBufferHeight;
-    pPresentationParameters->BackBufferFormat                   = d3dformat_from_wined3dformat(localParameters.BackBufferFormat);
-    pPresentationParameters->BackBufferCount                    = localParameters.BackBufferCount;
-    pPresentationParameters->MultiSampleType                    = localParameters.MultiSampleType;
-    pPresentationParameters->SwapEffect                         = localParameters.SwapEffect;
-    pPresentationParameters->hDeviceWindow                      = localParameters.hDeviceWindow;
-    pPresentationParameters->Windowed                           = localParameters.Windowed;
-    pPresentationParameters->EnableAutoDepthStencil             = localParameters.EnableAutoDepthStencil;
-    pPresentationParameters->AutoDepthStencilFormat             = d3dformat_from_wined3dformat(localParameters.AutoDepthStencilFormat);
-    pPresentationParameters->Flags                              = localParameters.Flags;
-    pPresentationParameters->FullScreen_RefreshRateInHz         = localParameters.FullScreen_RefreshRateInHz;
-    pPresentationParameters->FullScreen_PresentationInterval    = localParameters.PresentationInterval;
-
     return hr;
 }
 

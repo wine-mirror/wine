@@ -5524,7 +5524,7 @@ err:
 
 /* Do not call while under the GL lock. */
 HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
-        WINED3DPRESENT_PARAMETERS *present_parameters,
+        const WINED3DPRESENT_PARAMETERS *present_parameters,
         wined3d_device_reset_cb callback)
 {
     struct wined3d_resource *resource, *cursor;
