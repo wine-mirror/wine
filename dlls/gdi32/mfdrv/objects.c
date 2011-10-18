@@ -284,7 +284,7 @@ HBRUSH MFDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
             return 0;
         GDI_hdc_using_object(hbrush, dev->hdc);
     }
-    return MFDRV_SelectObject( dev, index ) ? hbrush : HGDI_ERROR;
+    return MFDRV_SelectObject( dev, index ) ? hbrush : 0;
 }
 
 /******************************************************************
@@ -408,7 +408,7 @@ HPEN MFDRV_SelectPen( PHYSDEV dev, HPEN hpen )
             return 0;
         GDI_hdc_using_object(hpen, dev->hdc);
     }
-    return MFDRV_SelectObject( dev, index ) ? hpen : HGDI_ERROR;
+    return MFDRV_SelectObject( dev, index ) ? hpen : 0;
 }
 
 
