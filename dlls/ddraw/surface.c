@@ -969,6 +969,7 @@ static HRESULT WINAPI ddraw_surface3_Lock(IDirectDrawSurface3 *iface, RECT *rect
     }
 
     surface_desc2.dwSize = surface_desc->dwSize;
+    surface_desc2.dwFlags = 0;
     hr = surface_lock(This, rect, &surface_desc2, flags, h);
     DDSD2_to_DDSD(&surface_desc2, surface_desc);
     surface_desc->dwSize = surface_desc2.dwSize;
@@ -993,6 +994,7 @@ static HRESULT WINAPI ddraw_surface2_Lock(IDirectDrawSurface2 *iface, RECT *rect
     }
 
     surface_desc2.dwSize = surface_desc->dwSize;
+    surface_desc2.dwFlags = 0;
     hr = surface_lock(This, rect, &surface_desc2, flags, h);
     DDSD2_to_DDSD(&surface_desc2, surface_desc);
     surface_desc->dwSize = surface_desc2.dwSize;
@@ -1017,6 +1019,7 @@ static HRESULT WINAPI ddraw_surface1_Lock(IDirectDrawSurface *iface, RECT *rect,
     }
 
     surface_desc2.dwSize = surface_desc->dwSize;
+    surface_desc2.dwFlags = 0;
     hr = surface_lock(This, rect, &surface_desc2, flags, h);
     DDSD2_to_DDSD(&surface_desc2, surface_desc);
     surface_desc->dwSize = surface_desc2.dwSize;
