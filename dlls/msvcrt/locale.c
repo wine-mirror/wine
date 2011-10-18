@@ -805,6 +805,9 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
         for(i=1; i<257; i++) {
             buf[0] = i-1;
 
+            /* builtin GetStringTypeA doesn't set output to 0 on invalid input */
+            loc->locinfo->ctype1[i] = 0;
+
             GetStringTypeA(lcid[MSVCRT_LC_CTYPE], CT_CTYPE1, buf,
                     1, loc->locinfo->ctype1+i);
         }
