@@ -1297,8 +1297,38 @@ static HRESULT WINAPI HTMLDocument_elementFromPoint(IHTMLDocument2 *iface, LONG 
                                                         IHTMLElement **elementHit)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    FIXME("(%p)->(%d %d %p)\n", This, x, y, elementHit);
-    return E_NOTIMPL;
+    nsIDOMNSDocument *nsdoc;
+    nsIDOMElement *nselem;
+    HTMLDOMNode *node;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%d %d %p)\n", This, x, y, elementHit);
+
+    nsres = nsIDOMHTMLDocument_QueryInterface(This->doc_node->nsdoc, &IID_nsIDOMNSDocument, (void**)&nsdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMNSDocument iface: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMNSDocument_ElementFromPoint(nsdoc, x, y, &nselem);
+    nsIDOMNSDocument_Release(nsdoc);
+    if(NS_FAILED(nsres)) {
+        ERR("ElementFromPoint failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    if(!nselem) {
+        *elementHit = NULL;
+        return S_OK;
+    }
+
+    hres = get_node(This->doc_node, (nsIDOMNode*)nselem, TRUE, &node);
+    nsIDOMElement_Release(nselem);
+    if(FAILED(hres))
+        return hres;
+
+    return IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)elementHit);
 }
 
 static HRESULT WINAPI HTMLDocument_get_parentWindow(IHTMLDocument2 *iface, IHTMLWindow2 **p)

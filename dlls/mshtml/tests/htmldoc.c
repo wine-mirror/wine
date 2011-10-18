@@ -213,10 +213,10 @@ static const char *nav_url;
 static const char html_page[] =
 "<html>"
 "<head><link rel=\"stylesheet\" type=\"text/css\" href=\"test.css\"></head>"
-"<body>test</body>"
+"<body><div>test</div></body>"
 "</html>";
 
-static const char css_data[] = "body {color: red}";
+static const char css_data[] = "body {color: red; margin: 0}";
 
 static const WCHAR http_urlW[] =
     {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g',0};
@@ -4429,6 +4429,23 @@ static void test_open_window(IHTMLDocument2 *doc)
     IHTMLWindow2_Release(window);
 }
 
+static void test_elem_from_point(IHTMLDocument2 *doc)
+{
+    IHTMLElement *elem;
+    BSTR tag;
+    HRESULT hres;
+
+    elem = NULL;
+    hres = IHTMLDocument2_elementFromPoint(doc, 3, 3, &elem);
+    ok(hres == S_OK, "elementFromPoint failed: %08x\n", hres);
+    ok(elem != NULL, "elem == NULL\n");
+
+    hres = IHTMLElement_get_tagName(elem, &tag);
+    IHTMLElement_Release(elem);
+    ok(hres == S_OK, "get_tagName failed: %08x\n", hres);
+    ok(!strcmp_wa(tag, "DIV"), "tag = %s\n", wine_dbgstr_w(tag));
+}
+
 static void test_clear(IHTMLDocument2 *doc)
 {
     HRESULT hres;
@@ -5526,6 +5543,7 @@ static void test_HTMLDocument(BOOL do_load)
         set_custom_uihandler(doc, &CustomDocHostUIHandler);
         test_download(DWL_CSS|DWL_TRYCSS);
         test_GetCurMoniker((IUnknown*)doc, &Moniker, NULL);
+        test_elem_from_point(doc);
     }
 
     test_MSHTML_QueryStatus(doc, OLECMDF_SUPPORTED);
