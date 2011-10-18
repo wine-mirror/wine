@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-10-14 14:56+0200\n"
+"PO-Revision-Date: 2011-10-18 18:05+0200\n"
 "Last-Translator: Luca Bennati <lucak3@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Italian\n"
@@ -694,7 +694,7 @@ msgstr "Preferisci dati firmati"
 #: crypt32.rc:53 cryptdlg.rc:31
 msgctxt "Certification Practice Statement"
 msgid "CPS"
-msgstr "CPS"
+msgstr "Dichiarazione della pratica di certificazione (CPS)"
 
 #: crypt32.rc:54 cryptdlg.rc:32
 msgid "User Notice"
@@ -702,7 +702,7 @@ msgstr "Notifica dell'utente"
 
 #: crypt32.rc:55
 msgid "On-line Certificate Status Protocol"
-msgstr "Protocollo Status Certificato on-line"
+msgstr "Protocollo di verifica online dei certificati (OCSP)"
 
 #: crypt32.rc:56
 msgid "Certification Authority Issuer"
@@ -1300,14 +1300,12 @@ msgid "CRL Issuer"
 msgstr "Emittente CRL"
 
 #: crypt32.rc:212
-#, fuzzy
 msgid "Key Compromise"
-msgstr "Compromesso chiave"
+msgstr "Chiave compromessa"
 
 #: crypt32.rc:213
-#, fuzzy
 msgid "CA Compromise"
-msgstr "Compromesso AC"
+msgstr "AC compromessa"
 
 #: crypt32.rc:214
 msgid "Affiliation Changed"
@@ -4486,9 +4484,8 @@ msgid "Hook type not allowed\n"
 msgstr "Tipo di aggancio non permesso\n"
 
 #: winerror.mc:2691
-#, fuzzy
 msgid "Interactive window station required\n"
-msgstr "Stazione di finestre interattiva richiesta\n"
+msgstr "Stazione interattiva di finestre richiesta\n"
 
 #: winerror.mc:2696
 msgid "Timeout\n"
@@ -5247,7 +5244,6 @@ msgid "Invalid driver\n"
 msgstr "Driver non valido\n"
 
 #: winerror.mc:3646
-#, fuzzy
 msgid "Invalid object resolver set\n"
 msgstr "Insieme di risolutori di oggetto non valido\n"
 
@@ -5268,7 +5264,6 @@ msgid "RPC pipe closed\n"
 msgstr "Pipe RPC chiusa\n"
 
 #: winerror.mc:3671
-#, fuzzy
 msgid "Discipline error on RPC pipe\n"
 msgstr "Errore di disciplina sulla pipe RPC\n"
 
