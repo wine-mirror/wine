@@ -375,6 +375,18 @@ static struct list font_subst_list = LIST_INIT(font_subst_list);
 
 static struct list font_list = LIST_INIT(font_list);
 
+struct freetype_physdev
+{
+    struct gdi_physdev dev;
+};
+
+static inline struct freetype_physdev *get_freetype_dev( PHYSDEV dev )
+{
+    return (struct freetype_physdev *)dev;
+}
+
+static const struct gdi_dc_funcs freetype_funcs;
+
 static const WCHAR defSerif[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n','\0'};
 static const WCHAR defSans[] = {'A','r','i','a','l','\0'};
 static const WCHAR defFixed[] = {'C','o','u','r','i','e','r',' ','N','e','w','\0'};
@@ -2973,6 +2985,7 @@ static BOOL init_freetype(void)
                        ((FT_Version.minor <<  8) & 0x00ff00) |
                        ((FT_Version.patch      ) & 0x0000ff);
 
+    font_driver = &freetype_funcs;
     return TRUE;
 
 sym_not_found:
@@ -3772,6 +3785,32 @@ static BOOL select_charmap(FT_Face ft_face, FT_Encoding encoding)
 
     return pFT_Select_Charmap(ft_face, encoding) == FT_Err_Ok;
 }
+
+
+/*************************************************************
+ * freetype_CreateDC
+ */
+static BOOL freetype_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
+                               LPCWSTR output, const DEVMODEW *devmode )
+{
+    struct freetype_physdev *physdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physdev) );
+
+    if (!physdev) return FALSE;
+    push_dc_driver( dev, &physdev->dev, &freetype_funcs );
+    return TRUE;
+}
+
+
+/*************************************************************
+ * freetype_DeleteDC
+ */
+static BOOL freetype_DeleteDC( PHYSDEV dev )
+{
+    struct freetype_physdev *physdev = get_freetype_dev( dev );
+    HeapFree( GetProcessHeap(), 0, physdev );
+    return TRUE;
+}
+
 
 /*************************************************************
  * WineEngCreateFontInstance
@@ -6977,6 +7016,130 @@ DWORD WineEngGetKerningPairs(GdiFont *font, DWORD cPairs, KERNINGPAIR *kern_pair
     LeaveCriticalSection( &freetype_cs );
     return font->total_kern_pairs;
 }
+
+static const struct gdi_dc_funcs freetype_funcs =
+{
+    NULL,                               /* pAbortDoc */
+    NULL,                               /* pAbortPath */
+    NULL,                               /* pAlphaBlend */
+    NULL,                               /* pAngleArc */
+    NULL,                               /* pArc */
+    NULL,                               /* pArcTo */
+    NULL,                               /* pBeginPath */
+    NULL,                               /* pBlendImage */
+    NULL,                               /* pChoosePixelFormat */
+    NULL,                               /* pChord */
+    NULL,                               /* pCloseFigure */
+    NULL,                               /* pCreateBitmap */
+    NULL,                               /* pCreateCompatibleDC */
+    freetype_CreateDC,                  /* pCreateDC */
+    NULL,                               /* pCreateDIBSection */
+    NULL,                               /* pDeleteBitmap */
+    freetype_DeleteDC,                  /* pDeleteDC */
+    NULL,                               /* pDeleteObject */
+    NULL,                               /* pDescribePixelFormat */
+    NULL,                               /* pDeviceCapabilities */
+    NULL,                               /* pEllipse */
+    NULL,                               /* pEndDoc */
+    NULL,                               /* pEndPage */
+    NULL,                               /* pEndPath */
+    NULL,                               /* pEnumDeviceFonts */
+    NULL,                               /* pEnumICMProfiles */
+    NULL,                               /* pExcludeClipRect */
+    NULL,                               /* pExtDeviceMode */
+    NULL,                               /* pExtEscape */
+    NULL,                               /* pExtFloodFill */
+    NULL,                               /* pExtSelectClipRgn */
+    NULL,                               /* pExtTextOut */
+    NULL,                               /* pFillPath */
+    NULL,                               /* pFillRgn */
+    NULL,                               /* pFlattenPath */
+    NULL,                               /* pFrameRgn */
+    NULL,                               /* pGdiComment */
+    NULL,                               /* pGetCharWidth */
+    NULL,                               /* pGetDeviceCaps */
+    NULL,                               /* pGetDeviceGammaRamp */
+    NULL,                               /* pGetICMProfile */
+    NULL,                               /* pGetImage */
+    NULL,                               /* pGetNearestColor */
+    NULL,                               /* pGetPixel */
+    NULL,                               /* pGetPixelFormat */
+    NULL,                               /* pGetSystemPaletteEntries */
+    NULL,                               /* pGetTextExtentExPoint */
+    NULL,                               /* pGetTextMetrics */
+    NULL,                               /* pIntersectClipRect */
+    NULL,                               /* pInvertRgn */
+    NULL,                               /* pLineTo */
+    NULL,                               /* pModifyWorldTransform */
+    NULL,                               /* pMoveTo */
+    NULL,                               /* pOffsetClipRgn */
+    NULL,                               /* pOffsetViewportOrg */
+    NULL,                               /* pOffsetWindowOrg */
+    NULL,                               /* pPaintRgn */
+    NULL,                               /* pPatBlt */
+    NULL,                               /* pPie */
+    NULL,                               /* pPolyBezier */
+    NULL,                               /* pPolyBezierTo */
+    NULL,                               /* pPolyDraw */
+    NULL,                               /* pPolyPolygon */
+    NULL,                               /* pPolyPolyline */
+    NULL,                               /* pPolygon */
+    NULL,                               /* pPolyline */
+    NULL,                               /* pPolylineTo */
+    NULL,                               /* pPutImage */
+    NULL,                               /* pRealizeDefaultPalette */
+    NULL,                               /* pRealizePalette */
+    NULL,                               /* pRectangle */
+    NULL,                               /* pResetDC */
+    NULL,                               /* pRestoreDC */
+    NULL,                               /* pRoundRect */
+    NULL,                               /* pSaveDC */
+    NULL,                               /* pScaleViewportExt */
+    NULL,                               /* pScaleWindowExt */
+    NULL,                               /* pSelectBitmap */
+    NULL,                               /* pSelectBrush */
+    NULL,                               /* pSelectClipPath */
+    NULL,                               /* pSelectFont */
+    NULL,                               /* pSelectPalette */
+    NULL,                               /* pSelectPen */
+    NULL,                               /* pSetArcDirection */
+    NULL,                               /* pSetBkColor */
+    NULL,                               /* pSetBkMode */
+    NULL,                               /* pSetDCBrushColor */
+    NULL,                               /* pSetDCPenColor */
+    NULL,                               /* pSetDIBColorTable */
+    NULL,                               /* pSetDIBitsToDevice */
+    NULL,                               /* pSetDeviceClipping */
+    NULL,                               /* pSetDeviceGammaRamp */
+    NULL,                               /* pSetLayout */
+    NULL,                               /* pSetMapMode */
+    NULL,                               /* pSetMapperFlags */
+    NULL,                               /* pSetPixel */
+    NULL,                               /* pSetPixelFormat */
+    NULL,                               /* pSetPolyFillMode */
+    NULL,                               /* pSetROP2 */
+    NULL,                               /* pSetRelAbs */
+    NULL,                               /* pSetStretchBltMode */
+    NULL,                               /* pSetTextAlign */
+    NULL,                               /* pSetTextCharacterExtra */
+    NULL,                               /* pSetTextColor */
+    NULL,                               /* pSetTextJustification */
+    NULL,                               /* pSetViewportExt */
+    NULL,                               /* pSetViewportOrg */
+    NULL,                               /* pSetWindowExt */
+    NULL,                               /* pSetWindowOrg */
+    NULL,                               /* pSetWorldTransform */
+    NULL,                               /* pStartDoc */
+    NULL,                               /* pStartPage */
+    NULL,                               /* pStretchBlt */
+    NULL,                               /* pStretchDIBits */
+    NULL,                               /* pStrokeAndFillPath */
+    NULL,                               /* pStrokePath */
+    NULL,                               /* pSwapBuffers */
+    NULL,                               /* pUnrealizePalette */
+    NULL,                               /* pWidenPath */
+    /* OpenGL not supported */
+};
 
 #else /* HAVE_FREETYPE */
 
