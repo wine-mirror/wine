@@ -6750,9 +6750,8 @@ msgid "Trash"
 msgstr "Corbeille"
 
 #: shlwapi.rc:27
-#, fuzzy
 msgid "%d bytes"
-msgstr "%ld octets"
+msgstr "%d octets"
 
 #: shlwapi.rc:28
 msgctxt "time unit: hours"
@@ -11462,60 +11461,51 @@ msgstr ""
 "Nombre invalide de paramètres - Utilisez xcopy /? pour obtenir de l'aide\n"
 
 #: xcopy.rc:28
-#, fuzzy
 msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
 msgstr ""
-"Paramètre invalide « %s » -  Utilisez xcopy /? pour obtenir de l'aide\n"
+"Paramètre « %1 » invalide -  Utilisez xcopy /? pour obtenir de l'aide\n"
 
 #: xcopy.rc:29
 msgid "Press <enter> to begin copying\n"
 msgstr "Appuyez sur ENTRÉE pour démarrer la copie\n"
 
 #: xcopy.rc:30
-#, fuzzy
 msgid "%1!d! file(s) would be copied\n"
-msgstr "%d fichier(s) seront copiés\n"
+msgstr "%1!d! fichier(s) seront copiés\n"
 
 #: xcopy.rc:31
-#, fuzzy
 msgid "%1!d! file(s) copied\n"
-msgstr "%d fichier(s) copiés\n"
+msgstr "%1!d! fichier(s) copiés\n"
 
 #: xcopy.rc:34
-#, fuzzy
 msgid ""
 "Is '%1' a filename or directory\n"
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
-"« %s » est-il un fichier ou un répertoire\n"
+"« %1 » est-il un fichier ou un répertoire\n"
 "dans la destination ?\n"
 "(F - Fichier, R - Répertoire)\n"
 
 #: xcopy.rc:35
-#, fuzzy
 msgid "%1? (Yes|No)\n"
-msgstr "%s ? (Oui|Non)\n"
+msgstr "%1 ? (Oui|Non)\n"
 
 #: xcopy.rc:36
-#, fuzzy
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr "Écraser  %s ? (Oui|Non|Tous)\n"
+msgstr "Écraser %1 ? (Oui|Non|Tous)\n"
 
 #: xcopy.rc:37
-#, fuzzy
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr "La copie de « %s » vers « %s » a échoué avec le code de retour %d\n"
+msgstr "La copie de « %1 » vers « %2 » a échoué avec le code de retour %3!d!\n"
 
 #: xcopy.rc:38
-#, fuzzy
 msgid "Failed to open '%1'\n"
-msgstr "Impossible d'ouvrir « %s »\n"
+msgstr "Impossible d'ouvrir « %1 »\n"
 
 #: xcopy.rc:39
-#, fuzzy
 msgid "Failed during reading of '%1'\n"
-msgstr "Impossible de lire « %s »\n"
+msgstr "Impossible de lire « %1 »\n"
 
 #: xcopy.rc:43
 msgctxt "File key"
