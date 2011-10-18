@@ -667,6 +667,38 @@ basic_string_char* __thiscall MSVCP_basic_string_char_erase(
     return this;
 }
 
+/* ?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AV?$_String_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0@Z */
+/* ?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA?AV?$_String_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0@Z */
+DEFINE_THISCALL_WRAPPER_RETPTR(basic_string_char_erase_iter_range, 20)
+String_iterator_char __thiscall basic_string_char_erase_iter_range(basic_string_char *this,
+        String_iterator_char beg, String_iterator_char end)
+{
+    String_iterator_char iter = { this, basic_string_char_ptr(this) };
+    MSVCP_size_t off = MSVCP_basic_string_char_Pdif(beg, iter);
+
+    MSVCP_basic_string_char_erase(this, off, MSVCP_basic_string_char_Pdif(end, beg));
+
+    iter.bstr = this;
+    iter.pos = basic_string_char_ptr(this)+off;
+    return iter;
+}
+
+/* ?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AV?$_String_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@@Z */
+/* ?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA?AV?$_String_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@@Z */
+DEFINE_THISCALL_WRAPPER_RETPTR(basic_string_char_erase_iter, 12)
+String_iterator_char __thiscall basic_string_char_erase_iter(
+        basic_string_char *this, String_iterator_char pos)
+{
+    String_iterator_char iter = { this, basic_string_char_ptr(this) };
+    MSVCP_size_t off = MSVCP_basic_string_char_Pdif(pos, iter);
+
+    MSVCP_basic_string_char_erase(this, off, 1);
+
+    iter.bstr = this;
+    iter.pos = basic_string_char_ptr(this)+off;
+    return iter;
+}
+
 /* ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@ABV12@II@Z */
 /* ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@AEBV12@_K1@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_assign_substr, 16)
@@ -2287,6 +2319,38 @@ basic_string_wchar* __thiscall MSVCP_basic_string_wchar_erase(
     }
 
     return this;
+}
+
+/* ?erase@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE?AV?$_String_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0@Z */
+/* ?erase@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA?AV?$_String_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0@Z */
+DEFINE_THISCALL_WRAPPER_RETPTR(basic_string_wchar_erase_iter_range, 20)
+String_iterator_wchar __thiscall basic_string_wchar_erase_iter_range(basic_string_wchar *this,
+        String_iterator_wchar beg, String_iterator_wchar end)
+{
+    String_iterator_wchar iter = { this, basic_string_wchar_ptr(this) };
+    MSVCP_size_t off = MSVCP_basic_string_wchar_Pdif(beg, iter);
+
+    MSVCP_basic_string_wchar_erase(this, off, MSVCP_basic_string_wchar_Pdif(end, beg));
+
+    iter.bstr = this;
+    iter.pos = basic_string_wchar_ptr(this)+off;
+    return iter;
+}
+
+/* ?erase@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE?AV?$_String_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@@Z */
+/* ?erase@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA?AV?$_String_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@@Z */
+DEFINE_THISCALL_WRAPPER_RETPTR(basic_string_wchar_erase_iter, 12)
+String_iterator_wchar __thiscall basic_string_wchar_erase_iter(
+        basic_string_wchar *this, String_iterator_wchar pos)
+{
+    String_iterator_wchar iter = { this, basic_string_wchar_ptr(this) };
+    MSVCP_size_t off = MSVCP_basic_string_wchar_Pdif(pos, iter);
+
+    MSVCP_basic_string_wchar_erase(this, off, 1);
+
+    iter.bstr = this;
+    iter.pos = basic_string_wchar_ptr(this)+off;
+    return iter;
 }
 
 /* ?assign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@ABV12@II@Z */
