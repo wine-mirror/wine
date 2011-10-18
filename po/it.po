@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-10-18 18:05+0200\n"
+"PO-Revision-Date: 2011-10-18 20:40+0200\n"
 "Last-Translator: Luca Bennati <lucak3@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Italian\n"
@@ -6734,9 +6734,8 @@ msgid "Trash"
 msgstr "Cestino"
 
 #: shlwapi.rc:27
-#, fuzzy
 msgid "%d bytes"
-msgstr "%ld byte"
+msgstr "%d byte"
 
 #: shlwapi.rc:28
 msgctxt "time unit: hours"
@@ -11400,59 +11399,50 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "Numero non valido di parametri - Digita xcopy /? per l'aiuto\n"
 
 #: xcopy.rc:28
-#, fuzzy
 msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
-msgstr "Parametro '%s' non valido -  Digita xcopy /? per l'aiuto\n"
+msgstr "Parametro '%1' non valido -  Digita xcopy /? per l'aiuto\n"
 
 #: xcopy.rc:29
 msgid "Press <enter> to begin copying\n"
 msgstr "Premi Invio per iniziare a copiare\n"
 
 #: xcopy.rc:30
-#, fuzzy
 msgid "%1!d! file(s) would be copied\n"
-msgstr "%d file saranno copiati\n"
+msgstr "%1!d! file saranno copiati\n"
 
 #: xcopy.rc:31
-#, fuzzy
 msgid "%1!d! file(s) copied\n"
-msgstr "%d file copiato/i\n"
+msgstr "%1!d! file copiato/i\n"
 
 #: xcopy.rc:34
-#, fuzzy
 msgid ""
 "Is '%1' a filename or directory\n"
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
-"'%s' è il nome di un file o una cartella\n"
+"'%1' è il nome di un file o una cartella\n"
 "nella destinazione?\n"
 "(F - File, C - Cartella)\n"
 
 #: xcopy.rc:35
-#, fuzzy
 msgid "%1? (Yes|No)\n"
-msgstr "%s? (Sì|No)\n"
+msgstr "%1? (Sì|No)\n"
 
 #: xcopy.rc:36
-#, fuzzy
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr "Sovrascrivere %s? (Sì|No|Tutti)\n"
+msgstr "Sovrascrivere %1? (Sì|No|Tutti)\n"
 
 #: xcopy.rc:37
-#, fuzzy
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr "La copia di '%s' in '%s' è fallita con r/c %d\n"
+msgstr "La copia di '%1' in '%2' è fallita con r/c %3!d!\n"
 
 #: xcopy.rc:38
-#, fuzzy
 msgid "Failed to open '%1'\n"
-msgstr "Impossibile aprire '%s'\n"
+msgstr "Impossibile aprire '%1'\n"
 
 #: xcopy.rc:39
-#, fuzzy
 msgid "Failed during reading of '%1'\n"
-msgstr "Errore durante la lettura di '%s'\n"
+msgstr "Errore durante la lettura di '%1'\n"
 
 #: xcopy.rc:43
 msgctxt "File key"
