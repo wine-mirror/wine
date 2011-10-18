@@ -1590,8 +1590,12 @@ static HRESULT ddraw_surface_delete_attached_surface(IDirectDrawSurfaceImpl *Thi
         IDirect3DDeviceImpl_UpdateDepthStencil(This->ddraw->d3ddevice);
     }
     LeaveCriticalSection(&ddraw_cs);
-    IUnknown_Release(Surf->attached_iface);
+
+    /* Set attached_iface to NULL before releasing it, the surface may go
+     * away. */
     Surf->attached_iface = NULL;
+    IUnknown_Release(detach_iface);
+
     return DD_OK;
 }
 
