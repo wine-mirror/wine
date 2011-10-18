@@ -43,16 +43,21 @@ BOOL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     RGNDATA *saved_region = NULL;
     unsigned int i;
-    fontObject*		pfo;
+    fontObject*		pfo = XFONT_GetFontObject( physDev->font );
     XFontStruct*	font;
     BOOL		rotated = FALSE;
     XChar2b		*str2b = NULL;
     BOOL		dibUpdateFlag = FALSE;
     BOOL                result = TRUE;
 
+    if (!pfo)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pExtTextOut );
+        return dev->funcs->pExtTextOut( dev, x, y, flags, lprect, wstr, count, lpDx );
+    }
+
     if (!X11DRV_SetupGCForText( physDev )) return TRUE;
 
-    pfo = XFONT_GetFontObject( physDev->font );
     font = pfo->fs;
 
     if (pfo->lf.lfEscapement && pfo->lpX11Trans)
@@ -232,5 +237,7 @@ BOOL X11DRV_GetTextExtentExPoint( PHYSDEV dev, LPCWSTR str, INT count,
 	HeapFree( GetProcessHeap(), 0, p );
 	return TRUE;
     }
-    return FALSE;
+
+    dev = GET_NEXT_PHYSDEV( dev, pGetTextExtentExPoint );
+    return dev->funcs->pGetTextExtentExPoint( dev, str, count, maxExt, lpnFit, alpDx, size );
 }

@@ -3391,14 +3391,16 @@ BOOL X11DRV_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LP
 BOOL X11DRV_GetTextMetrics(PHYSDEV dev, TEXTMETRICW *metrics)
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
+    fontObject *pfo = XFONT_GetFontObject( physDev->font );
 
-    if( CHECK_PFONT(physDev->font) )
+    if (pfo)
     {
-	fontObject* pfo = __PFONT(physDev->font);
 	X11DRV_cptable[pfo->fi->cptable].pGetTextMetricsW( pfo, metrics );
 	return TRUE;
     }
-    return FALSE;
+
+    dev = GET_NEXT_PHYSDEV( dev, pGetTextMetrics );
+    return dev->funcs->pGetTextMetrics( dev, metrics );
 }
 
 
@@ -3452,5 +3454,7 @@ BOOL X11DRV_GetCharWidth( PHYSDEV dev, UINT firstChar, UINT lastChar, LPINT buff
 
 	return TRUE;
     }
-    return FALSE;
+
+    dev = GET_NEXT_PHYSDEV( dev, pGetCharWidth );
+    return dev->funcs->pGetCharWidth( dev, firstChar, lastChar, buffer );
 }
