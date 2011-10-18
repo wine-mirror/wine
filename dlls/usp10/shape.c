@@ -1803,9 +1803,10 @@ static void DecomposeVowels(HDC hdc, WCHAR *pwOutChars, INT *pcChars, const Vowe
     }
 }
 
-static void ComposeConsonants(HDC hdc, WCHAR *pwOutChars, INT *pcChars, const ConsonantComponents consonants[])
+static void ComposeConsonants(HDC hdc, WCHAR *pwOutChars, INT *pcChars, const ConsonantComponents consonants[], WORD* pwLogClust)
 {
     int i;
+    int offset = 0;
     int cWalk;
 
     for (cWalk = 0; cWalk < *pcChars; cWalk++)
@@ -1825,6 +1826,11 @@ static void ComposeConsonants(HDC hdc, WCHAR *pwOutChars, INT *pcChars, const Co
                 for(k = cWalk+1; k < *pcChars - j; k++)
                     pwOutChars[k] = pwOutChars[k+j];
                 *pcChars = *pcChars - j;
+                for (k = j ; k > 0; k--)
+                    pwLogClust[cWalk + k + offset] = pwLogClust[cWalk + offset];
+                offset += j;
+                for (k = cWalk + j + offset; k < *pcChars + offset; k++)
+                    pwLogClust[k]--;
                 break;
             }
         }
@@ -2464,7 +2470,7 @@ static void ContextualShape_Devanagari(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSI
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
     /* Step 1: Compose Consonant and Nukta */
-    ComposeConsonants(hdc, input, &cCount, Devanagari_consonants);
+    ComposeConsonants(hdc, input, &cCount, Devanagari_consonants, pwLogClust);
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
@@ -2521,7 +2527,7 @@ static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
 
     /* Step 1: Decompose Vowels and Compose Consonents */
     DecomposeVowels(hdc, input,  &cCount, Bengali_vowels);
-    ComposeConsonants(hdc, input, &cCount, Bengali_consonants);
+    ComposeConsonants(hdc, input, &cCount, Bengali_consonants, pwLogClust);
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
@@ -2582,7 +2588,7 @@ static void ContextualShape_Gurmukhi(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
     /* Step 1: Compose Consonents */
-    ComposeConsonants(hdc, input, &cCount, Gurmukhi_consonants);
+    ComposeConsonants(hdc, input, &cCount, Gurmukhi_consonants, pwLogClust);
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
@@ -2678,7 +2684,7 @@ static void ContextualShape_Oriya(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
 
     /* Step 1: Decompose Vowels and Compose Consonents */
     DecomposeVowels(hdc, input,  &cCount, Oriya_vowels);
-    ComposeConsonants(hdc, input, &cCount, Oriya_consonants);
+    ComposeConsonants(hdc, input, &cCount, Oriya_consonants, pwLogClust);
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
@@ -2728,7 +2734,7 @@ static void ContextualShape_Tamil(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
 
     /* Step 1: Decompose Vowels and Compose Consonents */
     DecomposeVowels(hdc, input,  &cCount, Tamil_vowels);
-    ComposeConsonants(hdc, input, &cCount, Tamil_consonants);
+    ComposeConsonants(hdc, input, &cCount, Tamil_consonants, pwLogClust);
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
