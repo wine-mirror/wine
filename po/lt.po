@@ -1,12 +1,11 @@
 # Lithuanian translations for Wine
-# Aurimas Fišeras <aurimas@gmail.com>, 2011.
-# Aurimas Fišeras <aurimas@members.fsf.org>, 2011.
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-10-09 11:54+0300\n"
+"PO-Revision-Date: 2011-10-18 21:24+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -6733,9 +6732,8 @@ msgid "Trash"
 msgstr "Šiukšlinė"
 
 #: shlwapi.rc:27
-#, fuzzy
 msgid "%d bytes"
-msgstr "%ld baitai"
+msgstr "%d baitai"
 
 #: shlwapi.rc:28
 msgctxt "time unit: hours"
@@ -11343,59 +11341,50 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "Neteisingas parametrų skaičius - pagalba: xcopy /?\n"
 
 #: xcopy.rc:28
-#, fuzzy
 msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
-msgstr "Neteisingas parametras „%s“ - pagalba: xcopy /?\n"
+msgstr "Neteisingas parametras „%1“ – pagalba: xcopy /?\n"
 
 #: xcopy.rc:29
 msgid "Press <enter> to begin copying\n"
 msgstr "Spauskite <įvesti> kopijavimui pradėti\n"
 
 #: xcopy.rc:30
-#, fuzzy
 msgid "%1!d! file(s) would be copied\n"
-msgstr "bus nukopijuota failų: %d\n"
+msgstr "bus nukopijuota failų: %1!d!\n"
 
 #: xcopy.rc:31
-#, fuzzy
 msgid "%1!d! file(s) copied\n"
-msgstr "nukopijuota failų: %d\n"
+msgstr "nukopijuota failų: %1!d!\n"
 
 #: xcopy.rc:34
-#, fuzzy
 msgid ""
 "Is '%1' a filename or directory\n"
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
-"Ar „%s“ yra failas, ar katalogas,\n"
+"Ar „%1“ yra failas, ar katalogas,\n"
 "ar paskirtis?\n"
 "(F - failas, K - katalogas)\n"
 
 #: xcopy.rc:35
-#, fuzzy
 msgid "%1? (Yes|No)\n"
-msgstr "%s? (Taip|Ne)\n"
+msgstr "%1? (Taip|Ne)\n"
 
 #: xcopy.rc:36
-#, fuzzy
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr "Perrašyti %s? (Taip|Ne|Visus)\n"
+msgstr "Perrašyti %1? (Taip|Ne|Visus)\n"
 
 #: xcopy.rc:37
-#, fuzzy
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr "„%s“ kopijavimas į „%s“ nepavyko su r/c %d\n"
+msgstr "„%1“ kopijavimas į „%2“ nepavyko su r/c %3!d!\n"
 
 #: xcopy.rc:38
-#, fuzzy
 msgid "Failed to open '%1'\n"
-msgstr "Nepavyko atverti „%s“\n"
+msgstr "Nepavyko atverti „%1“\n"
 
 #: xcopy.rc:39
-#, fuzzy
 msgid "Failed during reading of '%1'\n"
-msgstr "Klaida skaitant „%s“\n"
+msgstr "Klaida skaitant „1“\n"
 
 #: xcopy.rc:43
 msgctxt "File key"
