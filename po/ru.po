@@ -8379,7 +8379,7 @@ msgstr "Введите новое время: "
 msgid "Environment variable %s not defined\n"
 msgstr "Переменная окружения %s не определена\n"
 
-#: cmd.rc:310 xcopy.rc:38
+#: cmd.rc:310
 msgid "Failed to open '%s'\n"
 msgstr "Не удалось открыть '%s'\n"
 
@@ -11331,7 +11331,8 @@ msgstr ""
 "подробного описания.\n"
 
 #: xcopy.rc:28
-msgid "Invalid parameter '%s' -  Use xcopy /? for help\n"
+#, fuzzy
+msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
 msgstr ""
 "Недопустимый параметр '%s' - попробуйте 'xcopy /?' для получения подробного\n"
 "описания.\n"
@@ -11341,16 +11342,19 @@ msgid "Press <enter> to begin copying\n"
 msgstr "Нажмите клавишу <Enter>, чтобы начать копирование.\n"
 
 #: xcopy.rc:30
-msgid "%d file(s) would be copied\n"
+#, fuzzy
+msgid "%1!d! file(s) would be copied\n"
 msgstr "%d файл(ов) было бы скопировано.\n"
 
 #: xcopy.rc:31
-msgid "%d file(s) copied\n"
+#, fuzzy
+msgid "%1!d! file(s) copied\n"
 msgstr "%d файл(ов) скопировано.\n"
 
 #: xcopy.rc:34
+#, fuzzy
 msgid ""
-"Is '%s' a filename or directory\n"
+"Is '%1' a filename or directory\n"
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
@@ -11358,19 +11362,28 @@ msgstr ""
 "(F - Файл, D - Папка)\n"
 
 #: xcopy.rc:35
-msgid "%s? (Yes|No)\n"
+#, fuzzy
+msgid "%1? (Yes|No)\n"
 msgstr "%s? (Y - Да|N - Нет)\n"
 
 #: xcopy.rc:36
-msgid "Overwrite %s? (Yes|No|All)\n"
+#, fuzzy
+msgid "Overwrite %1? (Yes|No|All)\n"
 msgstr "Переписать %s? (Y - Да|N - Нет|А - Все)\n"
 
 #: xcopy.rc:37
-msgid "Copying of '%s' to '%s' failed with r/c %d\n"
+#, fuzzy
+msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
 msgstr "При копировании '%s' в '%s' произошла ошибка: %d\n"
 
+#: xcopy.rc:38
+#, fuzzy
+msgid "Failed to open '%1'\n"
+msgstr "Не удалось открыть '%s'\n"
+
 #: xcopy.rc:39
-msgid "Failed during reading of '%s'\n"
+#, fuzzy
+msgid "Failed during reading of '%1'\n"
 msgstr "При чтении '%s' произошла ошибка\n"
 
 #: xcopy.rc:43

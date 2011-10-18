@@ -120,10 +120,12 @@ static int XCOPY_wprintf(const WCHAR *format, ...) {
     }
 
     va_start(parms, format);
-    len = vsnprintfW(output_bufW, MAX_WRITECONSOLE_SIZE/sizeof(WCHAR), format, parms);
+    SetLastError(NO_ERROR);
+    len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, format, 0, 0, output_bufW,
+                   MAX_WRITECONSOLE_SIZE/sizeof(*output_bufW), &parms);
     va_end(parms);
-    if (len < 0) {
-      WINE_FIXME("String too long.\n");
+    if (len == 0 && GetLastError() != NO_ERROR) {
+      WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
       return 0;
     }
 
@@ -183,7 +185,7 @@ static void XCOPY_FailMessage(DWORD err) {
       WINE_FIXME("FIXME: Cannot display message for error %d, status %d\n",
                  err, GetLastError());
     } else {
-      const WCHAR infostr[] = {'%', 's', '\n', 0};
+      const WCHAR infostr[] = {'%', '1', '\n', 0};
       XCOPY_wprintf(infostr, lpMsgBuf);
       LocalFree ((HLOCAL)lpMsgBuf);
     }
@@ -534,12 +536,12 @@ static int XCOPY_DoCopy(WCHAR *srcstem, WCHAR *srcspec,
                 if (flags & OPT_QUIET) {
                     /* Skip message */
                 } else if (flags & OPT_FULL) {
-                    const WCHAR infostr[]   = {'%', 's', ' ', '-', '>', ' ',
-                                               '%', 's', '\n', 0};
+                    const WCHAR infostr[]   = {'%', '1', ' ', '-', '>', ' ',
+                                               '%', '2', '\n', 0};
 
                     XCOPY_wprintf(infostr, copyFrom, copyTo);
                 } else {
-                    const WCHAR infostr[] = {'%', 's', '\n', 0};
+                    const WCHAR infostr[] = {'%', '1', '\n', 0};
                     XCOPY_wprintf(infostr, copyFrom);
                 }
 

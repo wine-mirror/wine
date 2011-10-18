@@ -25,18 +25,18 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 STRINGTABLE
 {
     STRING_INVPARMS, "Invalid number of parameters - Use xcopy /? for help\n"
-    STRING_INVPARM,  "Invalid parameter '%s' -  Use xcopy /? for help\n"
+    STRING_INVPARM,  "Invalid parameter '%1' -  Use xcopy /? for help\n"
     STRING_PAUSE,    "Press <enter> to begin copying\n"
-    STRING_SIMCOPY,  "%d file(s) would be copied\n"
-    STRING_COPY,     "%d file(s) copied\n"
-    STRING_QISDIR,   "Is '%s' a filename or directory\n\
+    STRING_SIMCOPY,  "%1!d! file(s) would be copied\n"
+    STRING_COPY,     "%1!d! file(s) copied\n"
+    STRING_QISDIR,   "Is '%1' a filename or directory\n\
                      on the target?\n\
                      (F - File, D - Directory)\n"
-    STRING_SRCPROMPT,"%s? (Yes|No)\n"
-    STRING_OVERWRITE,"Overwrite %s? (Yes|No|All)\n"
-    STRING_COPYFAIL, "Copying of '%s' to '%s' failed with r/c %d\n"
-    STRING_OPENFAIL, "Failed to open '%s'\n"
-    STRING_READFAIL, "Failed during reading of '%s'\n"
+    STRING_SRCPROMPT,"%1? (Yes|No)\n"
+    STRING_OVERWRITE,"Overwrite %1? (Yes|No|All)\n"
+    STRING_COPYFAIL, "Copying of '%1' to '%2' failed with r/c %3!d!\n"
+    STRING_OPENFAIL, "Failed to open '%1'\n"
+    STRING_READFAIL, "Failed during reading of '%1'\n"
     STRING_YES_CHAR, "#msgctxt#Yes key#Y"
     STRING_NO_CHAR,  "#msgctxt#No key#N"
     STRING_ALL_CHAR, "#msgctxt#All key#A"

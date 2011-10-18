@@ -8346,7 +8346,7 @@ msgstr "새 시간 입력: "
 msgid "Environment variable %s not defined\n"
 msgstr "환경 변수 %s 는 정의되지 않았습니다\n"
 
-#: cmd.rc:310 xcopy.rc:38
+#: cmd.rc:310
 msgid "Failed to open '%s'\n"
 msgstr "'%s' 열기 실패\n"
 
@@ -11275,7 +11275,8 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "올바르지 않은 매개변수의 갯수 - xcopy /?로 도움말을 보시오\n"
 
 #: xcopy.rc:28
-msgid "Invalid parameter '%s' -  Use xcopy /? for help\n"
+#, fuzzy
+msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
 msgstr "올바르지 않은 매개변수 '%s' -  xcopy /?로 도움말을 보시오\n"
 
 #: xcopy.rc:29
@@ -11283,16 +11284,19 @@ msgid "Press <enter> to begin copying\n"
 msgstr "<enter> 를 누르면 복사가 시작될 것입니다\n"
 
 #: xcopy.rc:30
-msgid "%d file(s) would be copied\n"
+#, fuzzy
+msgid "%1!d! file(s) would be copied\n"
 msgstr "%d 파일이 복사될 것입니다\n"
 
 #: xcopy.rc:31
-msgid "%d file(s) copied\n"
+#, fuzzy
+msgid "%1!d! file(s) copied\n"
 msgstr "%d 파일이 복사되었습니다\n"
 
 #: xcopy.rc:34
+#, fuzzy
 msgid ""
-"Is '%s' a filename or directory\n"
+"Is '%1' a filename or directory\n"
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
@@ -11301,19 +11305,28 @@ msgstr ""
 "(F - 파일, D - 디렉토리)\n"
 
 #: xcopy.rc:35
-msgid "%s? (Yes|No)\n"
+#, fuzzy
+msgid "%1? (Yes|No)\n"
 msgstr "%s? (예|아니오)\n"
 
 #: xcopy.rc:36
-msgid "Overwrite %s? (Yes|No|All)\n"
+#, fuzzy
+msgid "Overwrite %1? (Yes|No|All)\n"
 msgstr "%s를 덮어쓰겠습니까? (예|아니오|모두)\n"
 
 #: xcopy.rc:37
-msgid "Copying of '%s' to '%s' failed with r/c %d\n"
+#, fuzzy
+msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
 msgstr "r/c %d로 '%s'를 '%s'로 복사 실패 \n"
 
+#: xcopy.rc:38
+#, fuzzy
+msgid "Failed to open '%1'\n"
+msgstr "'%s' 열기 실패\n"
+
 #: xcopy.rc:39
-msgid "Failed during reading of '%s'\n"
+#, fuzzy
+msgid "Failed during reading of '%1'\n"
 msgstr "'%s를 읽지 못했습니다'\n"
 
 #: xcopy.rc:43

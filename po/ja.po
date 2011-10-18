@@ -8363,7 +8363,7 @@ msgstr "新しい時刻を入力してください: "
 msgid "Environment variable %s not defined\n"
 msgstr "環境変数 %s は定義されていません\n"
 
-#: cmd.rc:310 xcopy.rc:38
+#: cmd.rc:310
 msgid "Failed to open '%s'\n"
 msgstr "'%s' を開けません\n"
 
@@ -11315,7 +11315,8 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "パラメータの数が違います。xcopy /? で使い方を表示します\n"
 
 #: xcopy.rc:28
-msgid "Invalid parameter '%s' -  Use xcopy /? for help\n"
+#, fuzzy
+msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
 msgstr "無効なパラメータ '%s' です。xcopy /? で使い方を表示します\n"
 
 #: xcopy.rc:29
@@ -11323,16 +11324,19 @@ msgid "Press <enter> to begin copying\n"
 msgstr "コピーを開始するには <enter> を押してください\n"
 
 #: xcopy.rc:30
-msgid "%d file(s) would be copied\n"
+#, fuzzy
+msgid "%1!d! file(s) would be copied\n"
 msgstr "%d ファイルがコピーされる見込みです。\n"
 
 #: xcopy.rc:31
-msgid "%d file(s) copied\n"
+#, fuzzy
+msgid "%1!d! file(s) copied\n"
 msgstr "%d ファイルをコピーしました\n"
 
 #: xcopy.rc:34
+#, fuzzy
 msgid ""
-"Is '%s' a filename or directory\n"
+"Is '%1' a filename or directory\n"
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
@@ -11341,19 +11345,28 @@ msgstr ""
 "(F - ファイル、D - ディレクトリ)\n"
 
 #: xcopy.rc:35
-msgid "%s? (Yes|No)\n"
+#, fuzzy
+msgid "%1? (Yes|No)\n"
 msgstr "%s? (Yes|No)\n"
 
 #: xcopy.rc:36
-msgid "Overwrite %s? (Yes|No|All)\n"
+#, fuzzy
+msgid "Overwrite %1? (Yes|No|All)\n"
 msgstr "%s を上書きしますか? (Yes|No|All)\n"
 
 #: xcopy.rc:37
-msgid "Copying of '%s' to '%s' failed with r/c %d\n"
+#, fuzzy
+msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
 msgstr "'%s' から '%s' へのコピーは失敗しました。戻り値 %d\n"
 
+#: xcopy.rc:38
+#, fuzzy
+msgid "Failed to open '%1'\n"
+msgstr "'%s' を開けません\n"
+
 #: xcopy.rc:39
-msgid "Failed during reading of '%s'\n"
+#, fuzzy
+msgid "Failed during reading of '%1'\n"
 msgstr "'%s' の読み込み中に失敗しました\n"
 
 #: xcopy.rc:43

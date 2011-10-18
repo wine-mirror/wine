@@ -8492,7 +8492,7 @@ msgstr "voer de nieuwe tijd in: "
 msgid "Environment variable %s not defined\n"
 msgstr "Omgevingsvariable %s niet gedefinieerd\n"
 
-#: cmd.rc:310 xcopy.rc:38
+#: cmd.rc:310
 msgid "Failed to open '%s'\n"
 msgstr "Openen van '%s' is mislukt\n"
 
@@ -11498,7 +11498,8 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "Onjuist aantal parameters - Gebruik xcopy /? om hulp te krijgen\n"
 
 #: xcopy.rc:28
-msgid "Invalid parameter '%s' -  Use xcopy /? for help\n"
+#, fuzzy
+msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
 msgstr "Onjuiste parameter '%s' -  Gebruik xcopy /? om hulp te krijgen\n"
 
 #: xcopy.rc:29
@@ -11506,16 +11507,19 @@ msgid "Press <enter> to begin copying\n"
 msgstr "Druk op <enter> om te beginnen met kopiëren\n"
 
 #: xcopy.rc:30
-msgid "%d file(s) would be copied\n"
+#, fuzzy
+msgid "%1!d! file(s) would be copied\n"
 msgstr "%d bestand(en) zouden worden gekopieerd\n"
 
 #: xcopy.rc:31
-msgid "%d file(s) copied\n"
+#, fuzzy
+msgid "%1!d! file(s) copied\n"
 msgstr "%d bestand(en) gekopieerd\n"
 
 #: xcopy.rc:34
+#, fuzzy
 msgid ""
-"Is '%s' a filename or directory\n"
+"Is '%1' a filename or directory\n"
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
@@ -11524,19 +11528,28 @@ msgstr ""
 "(B - Bestand, D - Directory)\n"
 
 #: xcopy.rc:35
-msgid "%s? (Yes|No)\n"
+#, fuzzy
+msgid "%1? (Yes|No)\n"
 msgstr "%s? (Ja|Nee)\n"
 
 #: xcopy.rc:36
-msgid "Overwrite %s? (Yes|No|All)\n"
+#, fuzzy
+msgid "Overwrite %1? (Yes|No|All)\n"
 msgstr "Overschrijven %s? (Ja|Nee|Alles)\n"
 
 #: xcopy.rc:37
-msgid "Copying of '%s' to '%s' failed with r/c %d\n"
+#, fuzzy
+msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
 msgstr "Kopiëren van '%s' naar '%s' mislukt met r/c %d\n"
 
+#: xcopy.rc:38
+#, fuzzy
+msgid "Failed to open '%1'\n"
+msgstr "Openen van '%s' is mislukt\n"
+
 #: xcopy.rc:39
-msgid "Failed during reading of '%s'\n"
+#, fuzzy
+msgid "Failed during reading of '%1'\n"
 msgstr "Fout tijdens lezen van '%s'\n"
 
 #: xcopy.rc:43

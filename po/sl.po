@@ -8390,7 +8390,7 @@ msgstr "Vnesite nov čas:"
 msgid "Environment variable %s not defined\n"
 msgstr "Okoljska spremenljivka %s ni določena\n"
 
-#: cmd.rc:310 xcopy.rc:38
+#: cmd.rc:310
 msgid "Failed to open '%s'\n"
 msgstr "Napaka med odpiranjem '%s'\n"
 
@@ -11385,7 +11385,8 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "Neveljavno število parametrov - za pomoč uporabite xcopy /?\n"
 
 #: xcopy.rc:28
-msgid "Invalid parameter '%s' -  Use xcopy /? for help\n"
+#, fuzzy
+msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
 msgstr "Neveljaven parameter '%s' -  za pomoč uporabite xcopy /?\n"
 
 #: xcopy.rc:29
@@ -11393,16 +11394,19 @@ msgid "Press <enter> to begin copying\n"
 msgstr "Za začetek kopiranja pritisnite <enter>\n"
 
 #: xcopy.rc:30
-msgid "%d file(s) would be copied\n"
+#, fuzzy
+msgid "%1!d! file(s) would be copied\n"
 msgstr "%d datotek bo bilo prekopiranih\n"
 
 #: xcopy.rc:31
-msgid "%d file(s) copied\n"
+#, fuzzy
+msgid "%1!d! file(s) copied\n"
 msgstr "Prekopiranih je bilo %d datotek\n"
 
 #: xcopy.rc:34
+#, fuzzy
 msgid ""
-"Is '%s' a filename or directory\n"
+"Is '%1' a filename or directory\n"
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
@@ -11411,19 +11415,28 @@ msgstr ""
 "(F - Datoteka, D - Mapa)\n"
 
 #: xcopy.rc:35
-msgid "%s? (Yes|No)\n"
+#, fuzzy
+msgid "%1? (Yes|No)\n"
 msgstr "%s? (Da|Ne)\n"
 
 #: xcopy.rc:36
-msgid "Overwrite %s? (Yes|No|All)\n"
+#, fuzzy
+msgid "Overwrite %1? (Yes|No|All)\n"
 msgstr "Ali želite %s prepisati? (Da|Ne|Vse)\n"
 
 #: xcopy.rc:37
-msgid "Copying of '%s' to '%s' failed with r/c %d\n"
+#, fuzzy
+msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
 msgstr "Kopiranje '%s' v '%s' je spodletelo (koda napake: %d)\n"
 
+#: xcopy.rc:38
+#, fuzzy
+msgid "Failed to open '%1'\n"
+msgstr "Napaka med odpiranjem '%s'\n"
+
 #: xcopy.rc:39
-msgid "Failed during reading of '%s'\n"
+#, fuzzy
+msgid "Failed during reading of '%1'\n"
 msgstr "Napaka med branjem '%s'\n"
 
 #: xcopy.rc:43

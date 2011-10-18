@@ -8477,7 +8477,7 @@ msgstr "Saisissez la nouvelle heure : "
 msgid "Environment variable %s not defined\n"
 msgstr "La variable d'environnement %s n'est pas définie\n"
 
-#: cmd.rc:310 xcopy.rc:38
+#: cmd.rc:310
 msgid "Failed to open '%s'\n"
 msgstr "Impossible d'ouvrir « %s »\n"
 
@@ -11461,7 +11461,8 @@ msgstr ""
 "Nombre invalide de paramètres - Utilisez xcopy /? pour obtenir de l'aide\n"
 
 #: xcopy.rc:28
-msgid "Invalid parameter '%s' -  Use xcopy /? for help\n"
+#, fuzzy
+msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
 msgstr ""
 "Paramètre invalide « %s » -  Utilisez xcopy /? pour obtenir de l'aide\n"
 
@@ -11470,16 +11471,19 @@ msgid "Press <enter> to begin copying\n"
 msgstr "Appuyez sur ENTRÉE pour démarrer la copie\n"
 
 #: xcopy.rc:30
-msgid "%d file(s) would be copied\n"
+#, fuzzy
+msgid "%1!d! file(s) would be copied\n"
 msgstr "%d fichier(s) seront copiés\n"
 
 #: xcopy.rc:31
-msgid "%d file(s) copied\n"
+#, fuzzy
+msgid "%1!d! file(s) copied\n"
 msgstr "%d fichier(s) copiés\n"
 
 #: xcopy.rc:34
+#, fuzzy
 msgid ""
-"Is '%s' a filename or directory\n"
+"Is '%1' a filename or directory\n"
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
@@ -11488,19 +11492,28 @@ msgstr ""
 "(F - Fichier, R - Répertoire)\n"
 
 #: xcopy.rc:35
-msgid "%s? (Yes|No)\n"
+#, fuzzy
+msgid "%1? (Yes|No)\n"
 msgstr "%s ? (Oui|Non)\n"
 
 #: xcopy.rc:36
-msgid "Overwrite %s? (Yes|No|All)\n"
+#, fuzzy
+msgid "Overwrite %1? (Yes|No|All)\n"
 msgstr "Écraser  %s ? (Oui|Non|Tous)\n"
 
 #: xcopy.rc:37
-msgid "Copying of '%s' to '%s' failed with r/c %d\n"
+#, fuzzy
+msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
 msgstr "La copie de « %s » vers « %s » a échoué avec le code de retour %d\n"
 
+#: xcopy.rc:38
+#, fuzzy
+msgid "Failed to open '%1'\n"
+msgstr "Impossible d'ouvrir « %s »\n"
+
 #: xcopy.rc:39
-msgid "Failed during reading of '%s'\n"
+#, fuzzy
+msgid "Failed during reading of '%1'\n"
 msgstr "Impossible de lire « %s »\n"
 
 #: xcopy.rc:43
