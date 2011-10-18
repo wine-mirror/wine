@@ -1263,6 +1263,21 @@ error:
     return hr;
 }
 
+static inline BOOL does_glyph_start_cluster(const SCRIPT_VISATTR *pva, const WORD *pwLogClust, int cChars, int glyph, int direction)
+{
+    int i;
+
+    if (pva[glyph].fClusterStart)
+        return TRUE;
+    for (i = 0; i < cChars; i++)
+        if (pwLogClust[i] == glyph) break;
+    if (i != cChars)
+        return TRUE;
+
+    return FALSE;
+}
+
+
 static HRESULT SS_ItemOut( SCRIPT_STRING_ANALYSIS ssa,
                            int iX,
                            int iY,
@@ -1343,6 +1358,25 @@ static HRESULT SS_ItemOut( SCRIPT_STRING_ANALYSIS ssa,
         cGlyphs = analysis->glyphs[iItem].pwLogClust[runEnd] - iGlyph;
 
     cGlyphs++;
+
+    if (cEnd < 0 || scriptInformation[analysis->pItem[iItem].a.eScript].props.fNeedsCaretInfo)
+    {
+        INT direction;
+        INT clust_glyph;
+
+        clust_glyph = iGlyph + cGlyphs;
+        if (analysis->pItem[iItem].a.fRTL)
+            direction = -1;
+        else
+            direction = 1;
+
+        while(clust_glyph < analysis->glyphs[iItem].numGlyphs &&
+              !does_glyph_start_cluster(analysis->glyphs[iItem].psva, analysis->glyphs[iItem].pwLogClust, (analysis->pItem[iItem+1].iCharPos - analysis->pItem[iItem].iCharPos), clust_glyph, direction))
+        {
+            cGlyphs++;
+            clust_glyph++;
+        }
+    }
 
     hr = ScriptTextOut(analysis->hdc,
                        (SCRIPT_CACHE *)&analysis->glyphs[iItem].sc, iX + off_x,
@@ -1660,11 +1694,8 @@ static inline int get_glyph_cluster_advance(const int* piAdvance, const SCRIPT_V
 
     for (glyph+=direction; glyph < cGlyphs && glyph >= 0; glyph +=direction)
     {
-        if (pva[glyph].fClusterStart)
-            break;
-        for (i = 0; i < cChars; i++)
-            if (pwLogClust[i] == glyph) break;
-        if (i != cChars)
+
+        if (does_glyph_start_cluster(pva, pwLogClust, cChars, glyph, direction))
             break;
         if (glyph > log_clust_max)
             break;
