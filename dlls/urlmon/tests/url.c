@@ -3622,15 +3622,17 @@ static void test_StdURLMoniker(void)
     ok(hres == S_OK, "CreateAsyncBindCtx failed: %08x\n\n", hres);
     CHECK_CALLED(QueryInterface_IServiceProvider);
 
-    unk = (void*)0xdeadbeef;
-    hres = IMoniker_BindToStorage(mon, bctx, NULL, &IID_IStream, (void**)&unk);
-    ok(hres == MK_E_SYNTAX, "BindToStorage failed: %08x, expected MK_E_SYNTAX\n", hres);
-    ok(!unk, "unk = %p\n", unk);
+    if(pCreateUri) { /* Skip these tests on old IEs */
+        unk = (void*)0xdeadbeef;
+        hres = IMoniker_BindToStorage(mon, bctx, NULL, &IID_IStream, (void**)&unk);
+        ok(hres == MK_E_SYNTAX, "BindToStorage failed: %08x, expected MK_E_SYNTAX\n", hres);
+        ok(!unk, "unk = %p\n", unk);
 
-    unk = (void*)0xdeadbeef;
-    hres = IMoniker_BindToObject(mon, bctx, NULL, &IID_IUnknown, (void**)&unk);
-    ok(hres == MK_E_SYNTAX, "BindToStorage failed: %08x, expected MK_E_SYNTAX\n", hres);
-    ok(!unk, "unk = %p\n", unk);
+        unk = (void*)0xdeadbeef;
+        hres = IMoniker_BindToObject(mon, bctx, NULL, &IID_IUnknown, (void**)&unk);
+        ok(hres == MK_E_SYNTAX, "BindToStorage failed: %08x, expected MK_E_SYNTAX\n", hres);
+        ok(!unk, "unk = %p\n", unk);
+    }
 
     IMoniker_Release(mon);
 }
