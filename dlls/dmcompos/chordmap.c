@@ -163,7 +163,7 @@ static HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_SetDescriptor 
 		This->pDesc->ftDate = pDesc->ftDate;
 	if (pDesc->dwValidData & DMUS_OBJ_MEMORY) {
 		This->pDesc->llMemLength = pDesc->llMemLength;
-		memcpy (This->pDesc->pbMemData, pDesc->pbMemData, sizeof (pDesc->pbMemData));
+		memcpy (This->pDesc->pbMemData, pDesc->pbMemData, pDesc->llMemLength);
 	}
 	if (pDesc->dwValidData & DMUS_OBJ_STREAM) {
 		/* according to MSDN, we copy the stream */

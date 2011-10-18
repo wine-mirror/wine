@@ -272,8 +272,8 @@ static HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicObject_SetDescriptor
 	if (pDesc->dwValidData & DMUS_OBJ_DATE)
 		This->pDesc->ftDate = pDesc->ftDate;
 	if (pDesc->dwValidData & DMUS_OBJ_MEMORY) {
-		memcpy (&This->pDesc->llMemLength, &pDesc->llMemLength, sizeof (pDesc->llMemLength));				
-		memcpy (This->pDesc->pbMemData, pDesc->pbMemData, sizeof (pDesc->pbMemData));
+		This->pDesc->llMemLength = pDesc->llMemLength;
+		memcpy (This->pDesc->pbMemData, pDesc->pbMemData, pDesc->llMemLength);
 	}
 	if (pDesc->dwValidData & DMUS_OBJ_STREAM) {
 		/* according to MSDN, we copy the stream */
