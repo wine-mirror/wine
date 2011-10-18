@@ -521,14 +521,6 @@ static void update_font_code_page( DC *dc )
 
 /***********************************************************************
  *           FONT_SelectObject
- *
- * If the driver supports vector fonts we create a gdi font first and
- * then call the driver to give it a chance to supply its own device
- * font.  If the driver wants to do this it returns TRUE and we can
- * delete the gdi font, if the driver wants to use the gdi font it
- * should return FALSE, to signal an error return GDI_ERROR.  For
- * drivers that don't support vector fonts they must supply their own
- * font.
  */
 static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
 {
@@ -544,26 +536,16 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
         return 0;
     }
 
-    if (GetDeviceCaps( dc->hSelf, TEXTCAPS ) & TC_VA_ABLE)
-        dc->gdiFont = WineEngCreateFontInstance( dc, handle );
-
     physdev = GET_DC_PHYSDEV( dc, pSelectFont );
-    ret = physdev->funcs->pSelectFont( physdev, handle, dc->gdiFont );
-
-    if (ret && dc->gdiFont) dc->gdiFont = 0;
-
-    if (ret == HGDI_ERROR)
-    {
-        GDI_dec_ref_count( handle );
-        ret = 0; /* SelectObject returns 0 on error */
-    }
-    else
+    if (physdev->funcs->pSelectFont( physdev, handle ))
     {
         ret = dc->hFont;
         dc->hFont = handle;
         update_font_code_page( dc );
         GDI_dec_ref_count( ret );
     }
+    else GDI_dec_ref_count( handle );
+
     release_dc_ptr( dc );
     return ret;
 }

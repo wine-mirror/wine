@@ -1096,42 +1096,50 @@ void X11DRV_XRender_Finalize(void)
 /**********************************************************************
  *	     xrenderdrv_SelectFont
  */
-static HFONT xrenderdrv_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
+static HFONT xrenderdrv_SelectFont( PHYSDEV dev, HFONT hfont )
 {
     struct xrender_physdev *physdev = get_xrender_dev( dev );
-    LFANDSIZE lfsz;
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectFont );
+    HFONT ret = next->funcs->pSelectFont( next, hfont );
 
-    if (!GetObjectW( hfont, sizeof(lfsz.lf), &lfsz.lf )) return HGDI_ERROR;
+    if (!ret) return 0;
 
-    if (!gdiFont)
+    if (physdev->x11dev->has_gdi_font)
     {
-        dev = GET_NEXT_PHYSDEV( dev, pSelectFont );
-        return dev->funcs->pSelectFont( dev, hfont, gdiFont );
+        LFANDSIZE lfsz;
+
+        GetObjectW( hfont, sizeof(lfsz.lf), &lfsz.lf );
+
+        TRACE("h=%d w=%d weight=%d it=%d charset=%d name=%s\n",
+              lfsz.lf.lfHeight, lfsz.lf.lfWidth, lfsz.lf.lfWeight,
+              lfsz.lf.lfItalic, lfsz.lf.lfCharSet, debugstr_w(lfsz.lf.lfFaceName));
+        lfsz.lf.lfWidth = abs( lfsz.lf.lfWidth );
+        lfsz.devsize.cx = X11DRV_XWStoDS( dev->hdc, lfsz.lf.lfWidth );
+        lfsz.devsize.cy = X11DRV_YWStoDS( dev->hdc, lfsz.lf.lfHeight );
+
+        GetTransform( dev->hdc, 0x204, &lfsz.xform );
+        TRACE("font transform %f %f %f %f\n", lfsz.xform.eM11, lfsz.xform.eM12,
+              lfsz.xform.eM21, lfsz.xform.eM22);
+
+        /* Not used fields, would break hashing */
+        lfsz.xform.eDx = lfsz.xform.eDy = 0;
+
+        lfsz_calc_hash(&lfsz);
+
+        EnterCriticalSection(&xrender_cs);
+        if (physdev->cache_index != -1)
+            dec_ref_cache( physdev->cache_index );
+        physdev->cache_index = GetCacheEntry( dev->hdc, &lfsz );
+        LeaveCriticalSection(&xrender_cs);
     }
-
-    TRACE("h=%d w=%d weight=%d it=%d charset=%d name=%s\n",
-	  lfsz.lf.lfHeight, lfsz.lf.lfWidth, lfsz.lf.lfWeight,
-	  lfsz.lf.lfItalic, lfsz.lf.lfCharSet, debugstr_w(lfsz.lf.lfFaceName));
-    lfsz.lf.lfWidth = abs( lfsz.lf.lfWidth );
-    lfsz.devsize.cx = X11DRV_XWStoDS( dev->hdc, lfsz.lf.lfWidth );
-    lfsz.devsize.cy = X11DRV_YWStoDS( dev->hdc, lfsz.lf.lfHeight );
-
-    GetTransform( dev->hdc, 0x204, &lfsz.xform );
-    TRACE("font transform %f %f %f %f\n", lfsz.xform.eM11, lfsz.xform.eM12,
-          lfsz.xform.eM21, lfsz.xform.eM22);
-
-    /* Not used fields, would break hashing */
-    lfsz.xform.eDx = lfsz.xform.eDy = 0;
-
-    lfsz_calc_hash(&lfsz);
-
-    EnterCriticalSection(&xrender_cs);
-    if (physdev->cache_index != -1)
-        dec_ref_cache( physdev->cache_index );
-    physdev->cache_index = GetCacheEntry( dev->hdc, &lfsz );
-    LeaveCriticalSection(&xrender_cs);
-    physdev->x11dev->has_gdi_font = TRUE;
-    return 0;
+    else
+    {
+        EnterCriticalSection( &xrender_cs );
+        if (physdev->cache_index != -1) dec_ref_cache( physdev->cache_index );
+        physdev->cache_index = -1;
+        LeaveCriticalSection( &xrender_cs );
+    }
+    return ret;
 }
 
 static BOOL create_xrender_dc( PHYSDEV *pdev, enum wxr_format format )

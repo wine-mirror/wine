@@ -459,7 +459,7 @@ static HBRUSH nulldrv_SelectBrush( PHYSDEV dev, HBRUSH brush )
     return brush;
 }
 
-static HFONT nulldrv_SelectFont( PHYSDEV dev, HFONT font, HANDLE gdi_font )
+static HFONT nulldrv_SelectFont( PHYSDEV dev, HFONT font )
 {
     return 0;
 }

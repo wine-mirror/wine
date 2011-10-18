@@ -36,14 +36,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 /***********************************************************************
  *           SelectFont   (WINEPS.@)
  */
-HFONT PSDRV_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
+HFONT PSDRV_SelectFont( PHYSDEV dev, HFONT hfont )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectFont );
+    HFONT ret;
     LOGFONTW lf;
     BOOL subst = FALSE;
     char FaceName[LF_FACESIZE];
 
-    if (!GetObjectW( hfont, sizeof(lf), &lf )) return HGDI_ERROR;
+    if (!GetObjectW( hfont, sizeof(lf), &lf )) return 0;
 
     TRACE("FaceName = %s Height = %d Italic = %d Weight = %d\n",
 	  debugstr_w(lf.lfFaceName), lf.lfHeight, lf.lfItalic,
@@ -112,13 +114,15 @@ HFONT PSDRV_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
     physDev->font.escapement = lf.lfEscapement;
     physDev->font.set = FALSE;
 
-    if(gdiFont && !subst) {
-        if(PSDRV_SelectDownloadFont(dev))
-	    return 0; /* use gdi font */
+    if (!subst && ((ret = next->funcs->pSelectFont( next, hfont ))))
+    {
+        PSDRV_SelectDownloadFont(dev);
+        return ret;
     }
 
     PSDRV_SelectBuiltinFont(dev, hfont, &lf, FaceName);
-    return (HFONT)1; /* use device font */
+    next->funcs->pSelectFont( next, 0 );  /* tell next driver that we selected a device font */
+    return hfont;
 }
 
 /***********************************************************************

@@ -3226,24 +3226,32 @@ XFontStruct* XFONT_GetFontStruct( X_PHYSFONT pFont )
 /***********************************************************************
  *           SelectFont   (X11DRV.@)
  */
-HFONT X11DRV_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
+HFONT X11DRV_SelectFont( PHYSDEV dev, HFONT hfont )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectFont );
+    fontObject *pfo = XFONT_GetFontObject( physDev->font );
     LOGFONTW logfont;
     LOGFONT16 lf;
+    HFONT ret;
 
     TRACE("hdc=%p, hfont=%p\n", dev->hdc, hfont);
 
-    if (!GetObjectW( hfont, sizeof(logfont), &logfont )) return HGDI_ERROR;
+    if (using_client_side_fonts && ((ret = next->funcs->pSelectFont( next, hfont ))))
+    {
+        if (pfo) XFONT_ReleaseCacheEntry( pfo );
+        physDev->font = 0;
+        physDev->has_gdi_font = TRUE;
+        return ret;
+    }
 
-    TRACE("gdiFont = %p\n", gdiFont);
+    GetObjectW( hfont, sizeof(logfont), &logfont );
 
     EnterCriticalSection( &crtsc_fonts_X11 );
 
     if(fontList == NULL) X11DRV_FONT_InitX11Metrics();
 
-    if( CHECK_PFONT(physDev->font) )
-        XFONT_ReleaseCacheEntry( __PFONT(physDev->font) );
+    if (pfo) XFONT_ReleaseCacheEntry( pfo );
 
     FONT_LogFontWTo16(&logfont, &lf);
 
@@ -3306,7 +3314,8 @@ HFONT X11DRV_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
     LeaveCriticalSection( &crtsc_fonts_X11 );
 
     physDev->has_gdi_font = FALSE;
-    return (HFONT)1; /* Use a device font */
+    next->funcs->pSelectFont( next, 0 );  /* tell next driver that we selected a device font */
+    return hfont;
 }
 
 

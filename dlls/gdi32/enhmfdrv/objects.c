@@ -310,14 +310,14 @@ static BOOL EMFDRV_CreateFontIndirect(PHYSDEV dev, HFONT hFont )
 /***********************************************************************
  *           EMFDRV_SelectFont
  */
-HFONT EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont, HANDLE gdiFont )
+HFONT EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont )
 {
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*)dev;
     EMRSELECTOBJECT emr;
     DWORD index;
     int i;
 
-    if (physDev->restoring) return 0;  /* don't output SelectObject records during RestoreDC */
+    if (physDev->restoring) goto done;  /* don't output SelectObject records during RestoreDC */
 
     /* If the object is a stock font object, do not need to create it.
      * See definitions in  wingdi.h for range of stock fonts.
@@ -337,7 +337,7 @@ HFONT EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont, HANDLE gdiFont )
     if((index = EMFDRV_FindObject(dev, hFont)) != 0)
         goto found;
 
-    if (!(index = EMFDRV_CreateFontIndirect(dev, hFont ))) return HGDI_ERROR;
+    if (!(index = EMFDRV_CreateFontIndirect(dev, hFont ))) return 0;
     GDI_hdc_using_object(hFont, dev->hdc);
 
  found:
@@ -345,8 +345,11 @@ HFONT EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont, HANDLE gdiFont )
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
     if(!EMFDRV_WriteRecord( dev, &emr.emr ))
-        return HGDI_ERROR;
-    return 0;
+        return 0;
+done:
+    dev = GET_NEXT_PHYSDEV( dev, pSelectFont );
+    dev->funcs->pSelectFont( dev, hFont );
+    return hFont;
 }
 
 

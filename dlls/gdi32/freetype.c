@@ -378,6 +378,7 @@ static struct list font_list = LIST_INIT(font_list);
 struct freetype_physdev
 {
     struct gdi_physdev dev;
+    GdiFont           *font;
 };
 
 static inline struct freetype_physdev *get_freetype_dev( PHYSDEV dev )
@@ -3813,11 +3814,11 @@ static BOOL freetype_DeleteDC( PHYSDEV dev )
 
 
 /*************************************************************
- * WineEngCreateFontInstance
- *
+ * freetype_SelectFont
  */
-GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
+static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont )
 {
+    struct freetype_physdev *physdev = get_freetype_dev( dev );
     GdiFont *ret;
     Face *face, *best, *best_bitmap;
     Family *family, *last_resort_family;
@@ -3831,11 +3832,20 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
     HFONTLIST *hflist;
     FMAT2 dcmat;
     FontSubst *psub = NULL;
+    DC *dc = get_dc_ptr( dev->hdc );
 
-    if (!GetObjectW( hfont, sizeof(lf), &lf )) return NULL;
+    if (!hfont)  /* notification that the font has been changed by another driver */
+    {
+        dc->gdiFont = NULL;
+        physdev->font = NULL;
+        release_dc_ptr( dc );
+        return 0;
+    }
+
+    GetObjectW( hfont, sizeof(lf), &lf );
     lf.lfWidth = abs(lf.lfWidth);
 
-    can_use_bitmap = GetDeviceCaps(dc->hSelf, TEXTCAPS) & TC_RA_ABLE;
+    can_use_bitmap = GetDeviceCaps(dev->hdc, TEXTCAPS) & TC_RA_ABLE;
 
     TRACE("%s, h=%d, it=%d, weight=%d, PandF=%02x, charset=%d orient %d escapement %d\n",
 	  debugstr_w(lf.lfFaceName), lf.lfHeight, lf.lfItalic,
@@ -3869,18 +3879,16 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
     /* check the cache first */
     if((ret = find_in_cache(hfont, &lf, &dcmat, can_use_bitmap)) != NULL) {
         TRACE("returning cached gdiFont(%p) for hFont %p\n", ret, hfont);
-        LeaveCriticalSection( &freetype_cs );
-        return ret;
+        goto done;
     }
 
-    TRACE("not in cache\n");
     if(list_empty(&font_list)) /* No fonts installed */
     {
 	TRACE("No fonts installed\n");
-        LeaveCriticalSection( &freetype_cs );
-	return NULL;
+        goto done;
     }
 
+    TRACE("not in cache\n");
     ret = alloc_font();
 
     ret->font_desc.matrix = dcmat;
@@ -4067,8 +4075,8 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
     if(!last_resort_family) {
         FIXME("can't find a single appropriate font - bailing\n");
         free_font(ret);
-        LeaveCriticalSection( &freetype_cs );
-        return NULL;
+        ret = NULL;
+        goto done;
     }
 
     WARN("could only find a bitmap font - this will probably look awful!\n");
@@ -4154,8 +4162,8 @@ found_face:
         if((cachedfont = find_in_cache(hfont, &lf, &dcmat, can_use_bitmap)) != NULL) {
             TRACE("Found cached font after non-scalable matrix rescale!\n");
             free_font( ret );
-            LeaveCriticalSection( &freetype_cs );
-            return cachedfont;
+            ret = cachedfont;
+            goto done;
         }
         calc_hash(&ret->font_desc);
 
@@ -4182,8 +4190,8 @@ found_face:
     if (!ret->ft_face)
     {
         free_font( ret );
-        LeaveCriticalSection( &freetype_cs );
-        return 0;
+        ret = NULL;
+        goto done;
     }
 
     ret->ntmFlags = face->ntmFlags;
@@ -4219,8 +4227,15 @@ found_face:
     TRACE("caching: gdiFont=%p  hfont=%p\n", ret, hfont);
 
     add_to_cache(ret);
+done:
+    if (ret)
+    {
+        dc->gdiFont = ret;
+        physdev->font = ret;
+    }
     LeaveCriticalSection( &freetype_cs );
-    return ret;
+    release_dc_ptr( dc );
+    return ret ? hfont : 0;
 }
 
 static void dump_gdi_font_list(void)
@@ -7099,7 +7114,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pSelectBitmap */
     NULL,                               /* pSelectBrush */
     NULL,                               /* pSelectClipPath */
-    NULL,                               /* pSelectFont */
+    freetype_SelectFont,                /* pSelectFont */
     NULL,                               /* pSelectPalette */
     NULL,                               /* pSelectPen */
     NULL,                               /* pSetArcDirection */
@@ -7148,10 +7163,6 @@ static const struct gdi_dc_funcs freetype_funcs =
 BOOL WineEngInit(void)
 {
     return FALSE;
-}
-GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
-{
-    return NULL;
 }
 BOOL WineEngDestroyFontInstance(HFONT hfont)
 {

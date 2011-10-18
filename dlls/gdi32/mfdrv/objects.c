@@ -328,7 +328,7 @@ static UINT16 MFDRV_CreateFontIndirect(PHYSDEV dev, HFONT hFont, LOGFONTW *logfo
 /***********************************************************************
  *           MFDRV_SelectFont
  */
-HFONT MFDRV_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
+HFONT MFDRV_SelectFont( PHYSDEV dev, HFONT hfont )
 {
     LOGFONTW font;
     INT16 index;
@@ -337,13 +337,13 @@ HFONT MFDRV_SelectFont( PHYSDEV dev, HFONT hfont, HANDLE gdiFont )
     if( index < 0 )
     {
         if (!GetObjectW( hfont, sizeof(font), &font ))
-            return HGDI_ERROR;
+            return 0;
         index = MFDRV_CreateFontIndirect(dev, hfont, &font);
         if( index < 0 )
-            return HGDI_ERROR;
+            return 0;
         GDI_hdc_using_object(hfont, dev->hdc);
     }
-    return MFDRV_SelectObject( dev, index ) ? hfont : HGDI_ERROR;
+    return MFDRV_SelectObject( dev, index ) ? hfont : 0;
 }
 
 /******************************************************************
