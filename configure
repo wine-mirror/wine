@@ -12014,6 +12014,34 @@ if test $ac_cv_cflags__Wwrite_strings = yes; then :
   EXTRACFLAGS="$EXTRACFLAGS -Wwrite-strings"
 fi
 
+    case $host_cpu in
+    *i[3456789]86*) { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fno-omit-frame-pointer" >&5
+$as_echo_n "checking whether the compiler supports -fno-omit-frame-pointer... " >&6; }
+if ${ac_cv_cflags__fno_omit_frame_pointer+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -fno-omit-frame-pointer"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_cflags__fno_omit_frame_pointer=yes
+else
+  ac_cv_cflags__fno_omit_frame_pointer=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__fno_omit_frame_pointer" >&5
+$as_echo "$ac_cv_cflags__fno_omit_frame_pointer" >&6; }
+if test $ac_cv_cflags__fno_omit_frame_pointer = yes; then :
+  EXTRACFLAGS="$EXTRACFLAGS -fno-omit-frame-pointer"
+fi ;;
+  esac
+
     saved_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS -Wpointer-arith -Werror"
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for broken string.h that generates warnings with -Wpointer-arith" >&5

@@ -1684,6 +1684,11 @@ then
   WINE_TRY_CFLAGS([-Wunused-but-set-parameter])
   WINE_TRY_CFLAGS([-Wwrite-strings])
 
+  dnl gcc-4.6+ omits frame pointers by default, breaking some copy protections
+  case $host_cpu in
+    *i[[3456789]]86*) WINE_TRY_CFLAGS([-fno-omit-frame-pointer]) ;;
+  esac
+
   dnl Check for noisy string.h
   saved_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS -Wpointer-arith -Werror"
