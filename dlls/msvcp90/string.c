@@ -47,6 +47,10 @@ typedef struct {
     MSVCP_size_t val;
 } size_t_noverify;
 
+/* allocator class */
+typedef struct {
+} allocator;
+
 /* char_traits<char> */
 /* ?assign@?$char_traits@D@std@@SAXAADABD@Z */
 /* ?assign@?$char_traits@D@std@@SAXAEADAEBD@Z */
@@ -641,6 +645,16 @@ MSVCP_size_t __cdecl MSVCP_basic_string_char_Pdif(String_iterator_char i1, Strin
     }
 
     return !i1.pos ? 0 : i1.pos-i2.pos;
+}
+
+/* ?get_allocator@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE?AV?$allocator@D@2@XZ */
+/* ?get_allocator@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA?AV?$allocator@D@2@XZ */
+DEFINE_THISCALL_WRAPPER_RETPTR(basic_string_char_get_allocator, 4)
+allocator __thiscall basic_string_char_get_allocator(const basic_string_char *this)
+{
+    allocator ret;
+    TRACE("%p\n", this);
+    return ret;
 }
 
 /* ?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@II@Z */
@@ -2295,6 +2309,16 @@ MSVCP_size_t __cdecl MSVCP_basic_string_wchar_Pdif(String_iterator_wchar i1, Str
     }
 
     return !i1.pos ? 0 : i1.pos-i2.pos;
+}
+
+/* ?get_allocator@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBE?AV?$allocator@_W@2@XZ */
+/* ?get_allocator@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA?AV?$allocator@_W@2@XZ */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_get_allocator, 4)
+allocator __thiscall basic_string_wchar_get_allocator(const basic_string_wchar *this)
+{
+    allocator ret;
+    TRACE("%p\n", this);
+    return ret;
 }
 
 /* ?erase@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@II@Z */
