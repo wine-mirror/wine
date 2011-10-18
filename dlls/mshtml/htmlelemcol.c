@@ -61,7 +61,7 @@ static void elem_vector_add(elem_vector_t *buf, HTMLElement *elem)
 {
     if(buf->len == buf->size) {
         buf->size <<= 1;
-        buf->buf = heap_realloc(buf->buf, buf->size*sizeof(HTMLElement**));
+        buf->buf = heap_realloc(buf->buf, buf->size*sizeof(HTMLElement*));
     }
 
     buf->buf[buf->len++] = elem;
@@ -73,7 +73,7 @@ static void elem_vector_normalize(elem_vector_t *buf)
         heap_free(buf->buf);
         buf->buf = NULL;
     }else if(buf->size > buf->len) {
-        buf->buf = heap_realloc(buf->buf, buf->len*sizeof(HTMLElement**));
+        buf->buf = heap_realloc(buf->buf, buf->len*sizeof(HTMLElement*));
     }
 
     buf->size = buf->len;
@@ -530,7 +530,7 @@ IHTMLElementCollection *create_all_collection(HTMLDOMNode *node, BOOL include_ro
 {
     elem_vector_t buf = {NULL, 0, 8};
 
-    buf.buf = heap_alloc(buf.size*sizeof(HTMLElement**));
+    buf.buf = heap_alloc(buf.size*sizeof(HTMLElement*));
 
     if(include_root)
         elem_vector_add(&buf, elem_from_HTMLDOMNode(node));
