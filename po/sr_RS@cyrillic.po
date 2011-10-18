@@ -6990,7 +6990,8 @@ msgid "Trash"
 msgstr "Смеће"
 
 #: shlwapi.rc:27
-msgid "%ld bytes"
+#, fuzzy
+msgid "%d bytes"
 msgstr "%ld бајтова"
 
 #: shlwapi.rc:28

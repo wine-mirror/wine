@@ -7011,7 +7011,7 @@ msgid "Trash"
 msgstr "Çöp"
 
 #: shlwapi.rc:27
-msgid "%ld bytes"
+msgid "%d bytes"
 msgstr ""
 
 #: shlwapi.rc:28

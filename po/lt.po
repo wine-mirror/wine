@@ -6733,7 +6733,8 @@ msgid "Trash"
 msgstr "Šiukšlinė"
 
 #: shlwapi.rc:27
-msgid "%ld bytes"
+#, fuzzy
+msgid "%d bytes"
 msgstr "%ld baitai"
 
 #: shlwapi.rc:28

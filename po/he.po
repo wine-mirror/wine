@@ -6941,7 +6941,8 @@ msgid "Trash"
 msgstr "אשפה"
 
 #: shlwapi.rc:27
-msgid "%ld bytes"
+#, fuzzy
+msgid "%d bytes"
 msgstr "%ld בתים"
 
 #: shlwapi.rc:28

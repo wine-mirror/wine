@@ -7249,7 +7249,8 @@ msgid "Trash"
 msgstr "Gunoi"
 
 #: shlwapi.rc:27
-msgid "%ld bytes"
+#, fuzzy
+msgid "%d bytes"
 msgstr "%ld octeți"
 
 #: shlwapi.rc:28

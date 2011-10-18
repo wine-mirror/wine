@@ -6739,7 +6739,8 @@ msgid "Trash"
 msgstr "Kosz"
 
 #: shlwapi.rc:27
-msgid "%ld bytes"
+#, fuzzy
+msgid "%d bytes"
 msgstr "%ld bajtów"
 
 #: shlwapi.rc:28

@@ -6702,7 +6702,7 @@ msgid "Trash"
 msgstr ""
 
 #: shlwapi.rc:27
-msgid "%ld bytes"
+msgid "%d bytes"
 msgstr ""
 
 #: shlwapi.rc:28

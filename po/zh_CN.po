@@ -6937,7 +6937,8 @@ msgid "Trash"
 msgstr ""
 
 #: shlwapi.rc:27
-msgid "%ld bytes"
+#, fuzzy
+msgid "%d bytes"
 msgstr "%ld 字节"
 
 #: shlwapi.rc:28

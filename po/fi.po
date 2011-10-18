@@ -6903,7 +6903,8 @@ msgid "Trash"
 msgstr "Roskakori"
 
 #: shlwapi.rc:27
-msgid "%ld bytes"
+#, fuzzy
+msgid "%d bytes"
 msgstr "%ld tavua"
 
 #: shlwapi.rc:28

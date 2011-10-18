@@ -6726,8 +6726,8 @@ msgid "Trash"
 msgstr "Trash"
 
 #: shlwapi.rc:27
-msgid "%ld bytes"
-msgstr "%ld bytes"
+msgid "%d bytes"
+msgstr "%d bytes"
 
 #: shlwapi.rc:28
 msgctxt "time unit: hours"

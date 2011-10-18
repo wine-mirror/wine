@@ -6711,7 +6711,8 @@ msgid "Trash"
 msgstr "휴지통"
 
 #: shlwapi.rc:27
-msgid "%ld bytes"
+#, fuzzy
+msgid "%d bytes"
 msgstr "%ld 바이트"
 
 #: shlwapi.rc:28

@@ -7014,7 +7014,8 @@ msgid "Trash"
 msgstr "Reciclagem"
 
 #: shlwapi.rc:27
-msgid "%ld bytes"
+#, fuzzy
+msgid "%d bytes"
 msgstr "%ld bytes"
 
 #: shlwapi.rc:28

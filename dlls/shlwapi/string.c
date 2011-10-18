@@ -2344,7 +2344,7 @@ LPWSTR WINAPI StrFormatByteSizeW(LONGLONG llBytes, LPWSTR lpszDest, UINT cchMax)
   {
     WCHAR wszBytesFormat[64];
     LoadStringW(shlwapi_hInstance, IDS_BYTES_FORMAT, wszBytesFormat, 64);
-    snprintfW(lpszDest, cchMax, wszBytesFormat, (long)llBytes);
+    snprintfW(lpszDest, cchMax, wszBytesFormat, (int)llBytes);
     return lpszDest;
   }
 

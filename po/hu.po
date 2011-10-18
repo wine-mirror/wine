@@ -7102,7 +7102,8 @@ msgid "Trash"
 msgstr "Lomtár"
 
 #: shlwapi.rc:27
-msgid "%ld bytes"
+#, fuzzy
+msgid "%d bytes"
 msgstr "%ld bájt"
 
 #: shlwapi.rc:28
