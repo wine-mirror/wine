@@ -294,12 +294,14 @@ static int parse_hex_literal(parser_ctx_t *ctx, LONG *ret)
     while((d = hex_to_int(*++ctx->ptr)) != -1)
         l = l*16 + d;
 
-    if(begin + 9 /* max digits+1 */ < ctx->ptr || *ctx->ptr != '&') {
+    if(begin + 9 /* max digits+1 */ < ctx->ptr || (*ctx->ptr != '&' && is_identifier_char(*ctx->ptr))) {
         FIXME("invalid literal\n");
         return 0;
     }
 
-    ctx->ptr++;
+    if(*ctx->ptr == '&')
+        ctx->ptr++;
+
     *ret = l;
     return (short)l == l ? tShort : tLong;
 }

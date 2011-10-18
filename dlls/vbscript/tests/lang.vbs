@@ -43,6 +43,8 @@ Call ok(--1 = 1, "--1 = " & --1)
 Call ok(-empty = 0, "-empty = " & (-empty))
 Call ok(true = -1, "! true = -1")
 Call ok(false = 0, "false <> 0")
+Call ok(&hff = 255, "&hff <> 255")
+Call ok(&Hff = 255, "&Hff <> 255")
 
 x = "xx"
 Call ok(x = "xx", "x = " & x & " expected ""xx""")
