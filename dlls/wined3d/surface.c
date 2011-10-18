@@ -42,6 +42,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
 
 static void surface_cleanup(struct wined3d_surface *surface)
 {
+    struct wined3d_surface *overlay, *cur;
+
     TRACE("surface %p.\n", surface);
 
     if (surface->texture_name || (surface->flags & SFLAG_PBO)
@@ -108,6 +110,12 @@ static void surface_cleanup(struct wined3d_surface *surface)
         wined3d_surface_set_mem(surface, NULL);
     if (surface->overlay_dest)
         list_remove(&surface->overlay_entry);
+
+    LIST_FOR_EACH_ENTRY_SAFE(overlay, cur, &surface->overlays, struct wined3d_surface, overlay_entry)
+    {
+        list_remove(&overlay->overlay_entry);
+        overlay->overlay_dest = NULL;
+    }
 
     HeapFree(GetProcessHeap(), 0, surface->palette9);
 
@@ -1996,6 +2004,8 @@ static HRESULT gdi_surface_private_setup(struct wined3d_surface *surface)
 
 static void surface_gdi_cleanup(struct wined3d_surface *surface)
 {
+    struct wined3d_surface *overlay, *cur;
+
     TRACE("surface %p.\n", surface);
 
     if (surface->flags & SFLAG_DIBSECTION)
@@ -2013,6 +2023,12 @@ static void surface_gdi_cleanup(struct wined3d_surface *surface)
         wined3d_surface_set_mem(surface, NULL);
     if (surface->overlay_dest)
         list_remove(&surface->overlay_entry);
+
+    LIST_FOR_EACH_ENTRY_SAFE(overlay, cur, &surface->overlays, struct wined3d_surface, overlay_entry)
+    {
+        list_remove(&overlay->overlay_entry);
+        overlay->overlay_dest = NULL;
+    }
 
     HeapFree(GetProcessHeap(), 0, surface->palette9);
 
@@ -3277,6 +3293,7 @@ HRESULT CDECL wined3d_surface_update_overlay(struct wined3d_surface *surface, co
 
     if (surface->overlay_dest && (surface->overlay_dest != dst_surface || flags & WINEDDOVER_HIDE))
     {
+        surface->overlay_dest = NULL;
         list_remove(&surface->overlay_entry);
     }
 
