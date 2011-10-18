@@ -264,7 +264,11 @@ BOOL PSDRV_GetTextMetrics(PHYSDEV dev, TEXTMETRICW *metrics)
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
-    assert(physDev->font.fontloc == Builtin);
+    if (physDev->font.fontloc == Download)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetTextMetrics );
+        return dev->funcs->pGetTextMetrics( dev, metrics );
+    }
 
     memcpy(metrics, &(physDev->font.fontinfo.Builtin.tm),
 	   sizeof(physDev->font.fontinfo.Builtin.tm));
@@ -322,7 +326,11 @@ BOOL PSDRV_GetTextExtentExPoint(PHYSDEV dev, LPCWSTR str, INT count,
     float   	    width = 0.0;
     float   	    scale;
 
-    assert(physDev->font.fontloc == Builtin);
+    if (physDev->font.fontloc == Download)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetTextExtentExPoint );
+        return dev->funcs->pGetTextExtentExPoint( dev, str, count, maxExt, lpnFit, alpDx, size );
+    }
 
     TRACE("%s %i\n", debugstr_wn(str, count), count);
 
@@ -357,7 +365,11 @@ BOOL PSDRV_GetCharWidth(PHYSDEV dev, UINT firstChar, UINT lastChar, LPINT buffer
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     UINT    	    i;
 
-    assert(physDev->font.fontloc == Builtin);
+    if (physDev->font.fontloc == Download)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetCharWidth );
+        return dev->funcs->pGetCharWidth( dev, firstChar, lastChar, buffer );
+    }
 
     TRACE("U+%.4X U+%.4X\n", firstChar, lastChar);
 
