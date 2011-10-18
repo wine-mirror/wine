@@ -641,7 +641,7 @@ void ConnectionPoint_Init(ConnectionPoint*,ConnectionPointContainer*,REFIID,cp_s
 void ConnectionPointContainer_Init(ConnectionPointContainer*,IUnknown*) DECLSPEC_HIDDEN;
 void ConnectionPointContainer_Destroy(ConnectionPointContainer*) DECLSPEC_HIDDEN;
 
-NSContainer *NSContainer_Create(HTMLDocumentObj*,NSContainer*) DECLSPEC_HIDDEN;
+HRESULT create_nscontainer(HTMLDocumentObj*,NSContainer*,NSContainer**) DECLSPEC_HIDDEN;
 void NSContainer_Release(NSContainer*) DECLSPEC_HIDDEN;
 nsresult create_chrome_window(nsIWebBrowserChrome*,nsIWebBrowserChrome**) DECLSPEC_HIDDEN;
 

@@ -2377,11 +2377,11 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
 
     doc->usermode = UNKNOWN_USERMODE;
 
-    doc->nscontainer = NSContainer_Create(doc, NULL);
-    if(!doc->nscontainer) {
+    hres = create_nscontainer(doc, NULL, &doc->nscontainer);
+    if(FAILED(hres)) {
         ERR("Failed to init Gecko, returning CLASS_E_CLASSNOTAVAILABLE\n");
         htmldoc_release(&doc->basedoc);
-        return CLASS_E_CLASSNOTAVAILABLE;
+        return hres;
     }
 
     hres = htmldoc_query_interface(&doc->basedoc, riid, ppvObject);
