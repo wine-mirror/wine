@@ -49,6 +49,8 @@ struct graphics_driver
 static struct list drivers = LIST_INIT( drivers );
 static struct graphics_driver *display_driver;
 
+const struct gdi_dc_funcs *font_driver = NULL;
+
 static CRITICAL_SECTION driver_section;
 static CRITICAL_SECTION_DEBUG critsect_debug =
 {
