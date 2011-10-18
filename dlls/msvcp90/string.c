@@ -943,7 +943,7 @@ DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_ctor_cstr_len, 12)
 basic_string_char* __thiscall MSVCP_basic_string_char_ctor_cstr_len(
         basic_string_char *this, const char *str, MSVCP_size_t len)
 {
-    TRACE("%p %s %ld\n", this, str, len);
+    TRACE("%p %s %ld\n", this, debugstr_a(str), len);
 
     basic_string_char_tidy(this, FALSE, 0);
     MSVCP_basic_string_char_assign_cstr_len(this, str, len);
@@ -1152,7 +1152,7 @@ DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_append_cstr_len, 12)
 basic_string_char* __thiscall MSVCP_basic_string_char_append_cstr_len(
         basic_string_char *this, const char *append, MSVCP_size_t count)
 {
-    TRACE("%p %s %lu\n", this, append, count);
+    TRACE("%p %s %lu\n", this, debugstr_a(append), count);
 
     if(basic_string_char_inside(this, append))
         return MSVCP_basic_string_char_append_substr(this, this,
@@ -1235,7 +1235,7 @@ basic_string_char* __thiscall MSVCP_basic_string_char_append_ch(
 basic_string_char* __cdecl MSVCP_basic_string_char_concatenate_bstr_cstr(basic_string_char *ret,
         const basic_string_char *left, const char *right)
 {
-    TRACE("%p %s\n", left, right);
+    TRACE("%p %s\n", left, debugstr_a(right));
 
     MSVCP_basic_string_char_copy_ctor(ret, left);
     MSVCP_basic_string_char_append_cstr(ret, right);
@@ -1247,7 +1247,7 @@ basic_string_char* __cdecl MSVCP_basic_string_char_concatenate_bstr_cstr(basic_s
 basic_string_char* __cdecl MSVCP_basic_string_char_concatenate_cstr_bstr(basic_string_char *ret,
         const char *left, const basic_string_char *right)
 {
-    TRACE("%s %p\n", left, right);
+    TRACE("%s %p\n", debugstr_a(left), right);
 
     MSVCP_basic_string_char_ctor_cstr(ret, left);
     MSVCP_basic_string_char_append(ret, right);
@@ -1299,7 +1299,7 @@ int __thiscall MSVCP_basic_string_char_compare_substr_cstr_len(
 {
     int ans;
 
-    TRACE("%p %lu %lu %s %lu\n", this, pos, num, str, count);
+    TRACE("%p %lu %lu %s %lu\n", this, pos, num, debugstr_a(str), count);
 
     if(this->size < pos)
         MSVCP__String_base_Xran();
@@ -1531,7 +1531,7 @@ MSVCP_size_t __thiscall MSVCP_basic_string_char_find_cstr_substr(
 {
     const char *p, *end;
 
-    TRACE("%p %s %lu %lu\n", this, find, pos, len);
+    TRACE("%p %s %lu %lu\n", this, debugstr_a(find), pos, len);
 
     if(len==0 && pos<=this->size)
         return pos;
@@ -1586,7 +1586,7 @@ MSVCP_size_t __thiscall MSVCP_basic_string_char_rfind_cstr_substr(
 {
     const char *p, *end;
 
-    TRACE("%p %s %lu %lu\n", this, find, pos, len);
+    TRACE("%p %s %lu %lu\n", this, debugstr_a(find), pos, len);
 
     if(len==0)
         return pos<this->size ? pos : this->size;
