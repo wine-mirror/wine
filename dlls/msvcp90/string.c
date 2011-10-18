@@ -607,7 +607,7 @@ MSVCP_bool __thiscall basic_string_char_grow(
         if(new_res/3 < this->res/2)
             new_res = this->res + this->res/2;
 
-        ptr = MSVCP_allocator_char_allocate(this->allocator, new_res);
+        ptr = MSVCP_allocator_char_allocate(this->allocator, new_res+1);
         if(!ptr)
             ptr = MSVCP_allocator_char_allocate(this->allocator, new_size+1);
         else
@@ -2271,7 +2271,7 @@ MSVCP_bool __thiscall basic_string_wchar_grow(
         if(new_res/3 < this->res/2)
             new_res = this->res + this->res/2;
 
-        ptr = MSVCP_allocator_wchar_allocate(this->allocator, new_res);
+        ptr = MSVCP_allocator_wchar_allocate(this->allocator, new_res+1);
         if(!ptr)
             ptr = MSVCP_allocator_wchar_allocate(this->allocator, new_size+1);
         else
