@@ -629,6 +629,20 @@ MSVCP_bool __thiscall basic_string_char_grow(
     return (new_size>0);
 }
 
+/* ?_Pdif@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@KAIV?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0@Z */
+/* ?_Pdif@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@KA_KV?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0@Z */
+MSVCP_size_t __cdecl MSVCP_basic_string_char_Pdif(String_iterator_char i1, String_iterator_char i2)
+{
+    TRACE("(%p %p) (%p %p)\n", i1.bstr, i1.pos, i2.bstr, i2.pos);
+
+    if((!i1.bstr && i1.pos) || i1.bstr!=i2.bstr) {
+        _invalid_parameter(NULL, NULL, NULL, 0, 0);
+        return 0;
+    }
+
+    return !i1.pos ? 0 : i1.pos-i2.pos;
+}
+
 /* ?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@II@Z */
 /* ?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@_K0@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_erase, 12)
@@ -1967,6 +1981,75 @@ basic_string_char* __thiscall basic_string_char_replace_ch(basic_string_char *th
     return this;
 }
 
+/* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@000@Z */
+/* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@000@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_char_replace_iter_iter, 36)
+basic_string_char* __thiscall basic_string_char_replace_iter_iter(basic_string_char *this,
+        String_iterator_char beg, String_iterator_char end,
+        String_iterator_char res_beg, String_iterator_char res_end)
+{
+    String_iterator_char begin = { this, basic_string_char_ptr(this) };
+    return basic_string_char_replace_cstr_len(this,
+            MSVCP_basic_string_char_Pdif(beg, begin), MSVCP_basic_string_char_Pdif(end, beg),
+            res_beg.pos, MSVCP_basic_string_char_Pdif(res_end, res_beg));
+}
+
+/* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0ABV12@@Z */
+/* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0AEBV12@@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_char_replace_iter_bstr, 24)
+basic_string_char* __thiscall basic_string_char_replace_iter_bstr(basic_string_char *this,
+        String_iterator_char beg, String_iterator_char end, const basic_string_char *str)
+{
+    String_iterator_char begin = { this, basic_string_char_ptr(this) };
+    return basic_string_char_replace(this, MSVCP_basic_string_char_Pdif(beg, begin),
+            MSVCP_basic_string_char_Pdif(end, begin), str);
+}
+
+/* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0ID@Z */
+/* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0_KD@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_char_replace_iter_ch, 28)
+basic_string_char* __thiscall basic_string_char_replace_iter_ch(basic_string_char *this,
+        String_iterator_char beg, String_iterator_char end, MSVCP_size_t count, char ch)
+{
+    String_iterator_char begin = { this, basic_string_char_ptr(this) };
+    return basic_string_char_replace_ch(this, MSVCP_basic_string_char_Pdif(beg, begin),
+            MSVCP_basic_string_char_Pdif(end, begin), count, ch);
+}
+
+/* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0PBD1@Z */
+/* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0PEBD1@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_char_replace_iter_ptr_ptr, 28)
+basic_string_char* __thiscall basic_string_char_replace_iter_ptr_ptr(basic_string_char *this,
+        String_iterator_char beg, String_iterator_char end,
+        const char *res_beg, const char *res_end)
+{
+    String_iterator_char begin = { this, basic_string_char_ptr(this) };
+    return basic_string_char_replace_cstr_len(this, MSVCP_basic_string_char_Pdif(beg, begin),
+            MSVCP_basic_string_char_Pdif(end, begin), res_beg, res_end-res_beg);
+}
+
+/* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0PBD@Z */
+/* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0PEBD@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_char_replace_iter_cstr, 24)
+basic_string_char* __thiscall basic_string_char_replace_iter_cstr(basic_string_char *this,
+        String_iterator_char beg, String_iterator_char end, const char *str)
+{
+    String_iterator_char begin = { this, basic_string_char_ptr(this) };
+    return basic_string_char_replace_cstr(this, MSVCP_basic_string_char_Pdif(beg, begin),
+            MSVCP_basic_string_char_Pdif(end, begin), str);
+}
+
+/* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0PBDI@Z */
+/* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0PEBD_K@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_char_replace_iter_cstr_len, 28)
+basic_string_char* __thiscall basic_string_char_replace_iter_cstr_len(basic_string_char *this,
+        String_iterator_char beg, String_iterator_char end, const char *str, MSVCP_size_t len)
+{
+    String_iterator_char begin = { this, basic_string_char_ptr(this) };
+    return basic_string_char_replace_cstr_len(this, MSVCP_basic_string_char_Pdif(beg, begin),
+            MSVCP_basic_string_char_Pdif(end, begin), str, len);
+}
+
 /* ?resize@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXID@Z */
 /* ?resize@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAX_KD@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_resize_ch, 12)
@@ -2060,20 +2143,6 @@ String_reverse_iterator_char __thiscall MSVCP_basic_string_char_rend(basic_strin
     ret.bstr = this;
     ret.pos = basic_string_char_const_ptr(this);
     return ret;
-}
-
-/* ?_Pdif@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@KAIV?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0@Z */
-/* ?_Pdif@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@KA_KV?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0@Z */
-MSVCP_size_t __cdecl MSVCP_basic_string_char_Pdif(String_iterator_char i1, String_iterator_char i2)
-{
-    TRACE("(%p %p) (%p %p)\n", i1.bstr, i1.pos, i2.bstr, i2.pos);
-
-    if((!i1.bstr && i1.pos) || i1.bstr!=i2.bstr) {
-        _invalid_parameter(NULL, NULL, NULL, 0, 0);
-        return 0;
-    }
-
-    return !i1.pos ? 0 : i1.pos-i2.pos;
 }
 
 /* basic_string<wchar_t, char_traits<wchar_t>, allocator<wchar_t>> */
@@ -2180,6 +2249,20 @@ MSVCP_bool __thiscall basic_string_wchar_grow(
         basic_string_wchar_eos(this, 0);
 
     return (new_size>0);
+}
+
+/* ?_Pdif@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@KAIV?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0@Z */
+/* ?_Pdif@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@KA_KV?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0@Z */
+MSVCP_size_t __cdecl MSVCP_basic_string_wchar_Pdif(String_iterator_wchar i1, String_iterator_wchar i2)
+{
+    TRACE("(%p %p) (%p %p)\n", i1.bstr, i1.pos, i2.bstr, i2.pos);
+
+    if((!i1.bstr && i1.pos) || i1.bstr!=i2.bstr) {
+        _invalid_parameter(NULL, NULL, NULL, 0, 0);
+        return 0;
+    }
+
+    return !i1.pos ? 0 : i1.pos-i2.pos;
 }
 
 /* ?erase@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@II@Z */
@@ -3453,6 +3536,75 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_ch(basic_string_wchar 
     return this;
 }
 
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@000@Z */
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@000@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_replace_iter_iter, 36)
+basic_string_wchar* __thiscall basic_string_wchar_replace_iter_iter(basic_string_wchar *this,
+        String_iterator_wchar beg, String_iterator_wchar end,
+                String_iterator_wchar res_beg, String_iterator_wchar res_end)
+{
+    String_iterator_wchar begin = { this, basic_string_wchar_ptr(this) };
+    return basic_string_wchar_replace_cstr_len(this,
+            MSVCP_basic_string_wchar_Pdif(beg, begin), MSVCP_basic_string_wchar_Pdif(end, begin),
+            res_beg.pos, MSVCP_basic_string_wchar_Pdif(res_end, res_beg));
+}
+
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0ABV12@@Z */
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0AEBV12@@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_replace_iter_bstr, 24)
+basic_string_wchar* __thiscall basic_string_wchar_replace_iter_bstr(basic_string_wchar *this,
+        String_iterator_wchar beg, String_iterator_wchar end, const basic_string_wchar *str)
+{
+    String_iterator_wchar begin = { this, basic_string_wchar_ptr(this) };
+    return basic_string_wchar_replace(this, MSVCP_basic_string_wchar_Pdif(beg, begin),
+            MSVCP_basic_string_wchar_Pdif(end, begin), str);
+}
+
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0I_W@Z */
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0_K_W@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_replace_iter_ch, 28)
+basic_string_wchar* __thiscall basic_string_wchar_replace_iter_ch(basic_string_wchar *this,
+        String_iterator_wchar beg, String_iterator_wchar end, MSVCP_size_t count, wchar_t ch)
+{
+    String_iterator_wchar begin = { this, basic_string_wchar_ptr(this) };
+    return basic_string_wchar_replace_ch(this, MSVCP_basic_string_wchar_Pdif(beg, begin),
+            MSVCP_basic_string_wchar_Pdif(end, begin), count, ch);
+}
+
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0PB_W1@Z */
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0PEB_W1@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_replace_iter_ptr_ptr, 28)
+basic_string_wchar* __thiscall basic_string_wchar_replace_iter_ptr_ptr(basic_string_wchar *this,
+        String_iterator_wchar beg, String_iterator_wchar end,
+        const wchar_t *res_beg, const wchar_t *res_end)
+{
+    String_iterator_wchar begin = { this, basic_string_wchar_ptr(this) };
+    return basic_string_wchar_replace_cstr_len(this, MSVCP_basic_string_wchar_Pdif(beg, begin),
+            MSVCP_basic_string_wchar_Pdif(end, begin), res_beg, res_end-res_beg);
+}
+
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0PB_W@Z */
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0PEB_W@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_replace_iter_cstr, 24)
+basic_string_wchar* __thiscall basic_string_wchar_replace_iter_cstr(basic_string_wchar *this,
+        String_iterator_wchar beg, String_iterator_wchar end, const wchar_t *str)
+{
+    String_iterator_wchar begin = { this, basic_string_wchar_ptr(this) };
+    return basic_string_wchar_replace_cstr(this, MSVCP_basic_string_wchar_Pdif(beg, begin),
+            MSVCP_basic_string_wchar_Pdif(end, begin), str);
+}
+
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0PB_WI@Z */
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEAV12@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0PEB_W_K@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_replace_iter_cstr_len, 28)
+basic_string_wchar* __thiscall basic_string_wchar_replace_iter_cstr_len(basic_string_wchar *this,
+        String_iterator_wchar beg, String_iterator_wchar end, const wchar_t *str, MSVCP_size_t len)
+{
+    String_iterator_wchar begin = { this, basic_string_wchar_ptr(this) };
+    return basic_string_wchar_replace_cstr_len(this, MSVCP_basic_string_wchar_Pdif(beg, begin),
+            MSVCP_basic_string_wchar_Pdif(end, begin), str, len);
+}
+
 /* ??A?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAA_WI@Z */
 /* ??A?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAAAEA_W_K@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_operator_at, 8)
@@ -3618,20 +3770,6 @@ String_reverse_iterator_wchar __thiscall MSVCP_basic_string_wchar_rend(basic_str
     ret.bstr = this;
     ret.pos = basic_string_wchar_const_ptr(this);
     return ret;
-}
-
-/* ?_Pdif@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@KAIV?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0@Z */
-/* ?_Pdif@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@KA_KV?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0@Z */
-MSVCP_size_t __cdecl MSVCP_basic_string_wchar_Pdif(String_iterator_wchar i1, String_iterator_wchar i2)
-{
-    TRACE("(%p %p) (%p %p)\n", i1.bstr, i1.pos, i2.bstr, i2.pos);
-
-    if((!i1.bstr && i1.pos) || i1.bstr!=i2.bstr) {
-        _invalid_parameter(NULL, NULL, NULL, 0, 0);
-        return 0;
-    }
-
-    return !i1.pos ? 0 : i1.pos-i2.pos;
 }
 
 /* _String_val class */
