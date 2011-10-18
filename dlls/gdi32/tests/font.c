@@ -2473,7 +2473,7 @@ static BOOL get_first_last_from_cmap4(void *ptr, DWORD *first, DWORD *last, DWOR
                     + i - seg_count;
 
                 /* some fonts have broken last segment */
-                if ((char *)(glyph_ids + index + sizeof(*glyph_ids)) < (char *)ptr + limit)
+                if ((char *)(glyph_ids + index + 1) < (char *)ptr + limit)
                     index = GET_BE_WORD(glyph_ids[index]);
                 else
                 {
