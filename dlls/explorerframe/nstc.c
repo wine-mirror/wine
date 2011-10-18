@@ -1114,7 +1114,7 @@ static HRESULT WINAPI NSTC2_fnGetRootItems(INameSpaceTreeControl2* iface,
     if(!count)
         return E_INVALIDARG;
 
-    array = HeapAlloc(GetProcessHeap(), 0, sizeof(LPITEMIDLIST*)*count);
+    array = HeapAlloc(GetProcessHeap(), 0, sizeof(LPITEMIDLIST)*count);
 
     i = 0;
     LIST_FOR_EACH_ENTRY(root, &This->roots, nstc_root, entry)
