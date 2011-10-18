@@ -1116,6 +1116,7 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
     DC *dc;
     BOOL ret = FALSE;
     TEXTMETRICW tm;
+    PHYSDEV dev;
 
     TRACE("(%p, %s, %d)\n",hdc,debugstr_wn(str,count),maxExt);
 
@@ -1141,14 +1142,8 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
     else
 	dxs = alpDx;
 
-    if (dc->gdiFont)
-	ret = WineEngGetTextExtentExPoint(dc->gdiFont, str, count,
-					  0, NULL, dxs, size);
-    else
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetTextExtentExPoint );
-	ret = physdev->funcs->pGetTextExtentExPoint(physdev, str, count, 0, NULL, dxs, size);
-    }
+    dev = GET_DC_PHYSDEV( dc, pGetTextExtentExPoint );
+    ret = dev->funcs->pGetTextExtentExPoint(dev, str, count, 0, NULL, dxs, size);
 
     /* Perform device size to world size transformations.  */
     if (ret)

@@ -6445,11 +6445,10 @@ BOOL WineEngGetCharABCWidthsI(GdiFont *font, UINT firstChar, UINT count, LPWORD 
 }
 
 /*************************************************************
- * WineEngGetTextExtentExPoint
- *
+ * freetype_GetTextExtentExPoint
  */
-BOOL WineEngGetTextExtentExPoint(GdiFont *font, LPCWSTR wstr, INT count,
-                                 INT max_ext, LPINT pnfit, LPINT dxs, LPSIZE size)
+static BOOL freetype_GetTextExtentExPoint( PHYSDEV dev, LPCWSTR wstr, INT count,
+                                           INT max_ext, LPINT pnfit, LPINT dxs, LPSIZE size)
 {
     static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
     INT idx;
@@ -6458,19 +6457,25 @@ BOOL WineEngGetTextExtentExPoint(GdiFont *font, LPCWSTR wstr, INT count,
     TEXTMETRICW tm;
     FT_UInt glyph_index;
     GdiFont *linked_font;
+    struct freetype_physdev *physdev = get_freetype_dev( dev );
 
-    TRACE("%p, %s, %d, %d, %p\n", font, debugstr_wn(wstr, count), count,
-	  max_ext, size);
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetTextExtentExPoint );
+        return dev->funcs->pGetTextExtentExPoint( dev, wstr, count, max_ext, pnfit, dxs, size );
+    }
+
+    TRACE("%p, %s, %d, %d, %p\n", physdev->font, debugstr_wn(wstr, count), count, max_ext, size);
 
     GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
 
     size->cx = 0;
-    WineEngGetTextMetrics(font, &tm);
+    WineEngGetTextMetrics( physdev->font, &tm );
     size->cy = tm.tmHeight;
 
     for(idx = 0; idx < count; idx++) {
-        get_glyph_index_linked(font, wstr[idx], &linked_font, &glyph_index);
+        get_glyph_index_linked( physdev->font, wstr[idx], &linked_font, &glyph_index );
         WineEngGetGlyphOutline(linked_font, glyph_index, GGO_METRICS | GGO_GLYPH_INDEX,
                                &gm, 0, NULL, &identity);
 	size->cx += FONT_GM(linked_font,glyph_index)->adv;
@@ -7080,7 +7085,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pGetPixel */
     NULL,                               /* pGetPixelFormat */
     NULL,                               /* pGetSystemPaletteEntries */
-    NULL,                               /* pGetTextExtentExPoint */
+    freetype_GetTextExtentExPoint,      /* pGetTextExtentExPoint */
     NULL,                               /* pGetTextMetrics */
     NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
@@ -7223,13 +7228,6 @@ BOOL WineEngGetCharABCWidthsFloat(GdiFont *font, UINT first, UINT last, LPABCFLO
 
 BOOL WineEngGetCharABCWidthsI(GdiFont *font, UINT firstChar, UINT count, LPWORD pgi,
 			      LPABC buffer)
-{
-    ERR("called but we don't have FreeType\n");
-    return FALSE;
-}
-
-BOOL WineEngGetTextExtentExPoint(GdiFont *font, LPCWSTR wstr, INT count,
-                                 INT max_ext, LPINT nfit, LPINT dx, LPSIZE size)
 {
     ERR("called but we don't have FreeType\n");
     return FALSE;
