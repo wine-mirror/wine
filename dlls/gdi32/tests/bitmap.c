@@ -3054,7 +3054,7 @@ static void check_StretchDIBits_pixel(HDC hdcDst, UINT32 *dstBuffer, UINT32 *src
 static void check_StretchDIBits_stretch(HDC hdcDst, UINT32 *dstBuffer, UINT32 *srcBuffer,
                                         int nXOriginDest, int nYOriginDest, int nWidthDest, int nHeightDest,
                                         int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc,
-                                        UINT32 expected[4], UINT32 legacy_expected[4], int line)
+                                        UINT32 expected[4], int line)
 {
     BITMAPINFO bitmapInfo;
 
@@ -3087,7 +3087,7 @@ static void test_StretchDIBits(void)
     UINT32 *dstBuffer, srcBuffer[4];
     HBRUSH hBrush, hOldBrush;
     BITMAPINFO biDst;
-    UINT32 expected[4], legacy_expected[4];
+    UINT32 expected[4];
 
     memset(&biDst, 0, sizeof(BITMAPINFO));
     biDst.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -3134,46 +3134,42 @@ static void test_StretchDIBits(void)
     expected[0] = 0xCAFED00D, expected[1] = 0xFEEDFACE;
     expected[2] = 0xFEDCBA98, expected[3] = 0x76543210;
     check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
-                                0, 0, 2, 2, 0, 0, 2, 2, expected, expected, __LINE__);
+                                0, 0, 2, 2, 0, 0, 2, 2, expected, __LINE__);
 
     expected[0] = 0xCAFED00D, expected[1] = 0x00000000;
     expected[2] = 0x00000000, expected[3] = 0x00000000;
-    legacy_expected[0] = 0xFEDCBA98, legacy_expected[1] = 0x00000000;
-    legacy_expected[2] = 0x00000000, legacy_expected[3] = 0x00000000;
     check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
-                                0, 0, 1, 1, 0, 0, 1, 1, expected, legacy_expected, __LINE__);
+                                0, 0, 1, 1, 0, 0, 1, 1, expected, __LINE__);
 
     expected[0] = 0xFEDCBA98, expected[1] = 0xFEDCBA98;
     expected[2] = 0xFEDCBA98, expected[3] = 0xFEDCBA98;
     check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
-                                0, 0, 2, 2, 0, 0, 1, 1, expected, expected, __LINE__);
+                                0, 0, 2, 2, 0, 0, 1, 1, expected, __LINE__);
 
     expected[0] = 0x42441000, expected[1] = 0x00000000;
     expected[2] = 0x00000000, expected[3] = 0x00000000;
-    legacy_expected[0] = 0x00543210, legacy_expected[1] = 0x00000000;
-    legacy_expected[2] = 0x00000000, legacy_expected[3] = 0x00000000;
     check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
-                                0, 0, 1, 1, 0, 0, 2, 2, expected, legacy_expected, __LINE__);
+                                0, 0, 1, 1, 0, 0, 2, 2, expected, __LINE__);
 
     expected[0] = 0x00000000, expected[1] = 0x00000000;
     expected[2] = 0x00000000, expected[3] = 0x00000000;
     check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
-                                0, 0, 2, 2, 1, 1, -2, -2, expected, expected, __LINE__);
+                                0, 0, 2, 2, 1, 1, -2, -2, expected, __LINE__);
 
     expected[0] = 0x00000000, expected[1] = 0x00000000;
     expected[2] = 0x00000000, expected[3] = 0x00000000;
     check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
-                                0, 0, 2, 2, 1, 1, -2, -2, expected, expected, __LINE__);
+                                0, 0, 2, 2, 1, 1, -2, -2, expected, __LINE__);
 
     expected[0] = 0x00000000, expected[1] = 0x00000000;
     expected[2] = 0x00000000, expected[3] = 0x00000000;
     check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
-                                1, 1, -2, -2, 1, 1, -2, -2, expected, expected, __LINE__);
+                                1, 1, -2, -2, 1, 1, -2, -2, expected, __LINE__);
 
     expected[0] = 0x00000000, expected[1] = 0x00000000;
     expected[2] = 0x00000000, expected[3] = 0xCAFED00D;
     check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
-                                1, 1, 2, 2, 0, 0, 2, 2, expected, expected, __LINE__);
+                                1, 1, 2, 2, 0, 0, 2, 2, expected, __LINE__);
 
     SelectObject(hdcDst, oldDst);
     DeleteObject(bmpDst);
@@ -3187,7 +3183,7 @@ static void test_StretchDIBits(void)
     expected[0] = 0xFEDCBA98, expected[1] = 0x76543210;
     expected[2] = 0xCAFED00D, expected[3] = 0xFEEDFACE;
     check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
-                                0, 0, 2, 2, 0, 0, 2, 2, expected, expected, __LINE__);
+                                0, 0, 2, 2, 0, 0, 2, 2, expected, __LINE__);
 
     /* Tidy up */
     SelectObject(hdcDst, oldDst);
