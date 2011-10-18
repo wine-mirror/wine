@@ -728,18 +728,20 @@ static time_t find_dst_change(unsigned long min, unsigned long max, int *is_dst)
 static int init_tz_info(RTL_TIME_ZONE_INFORMATION *tzi)
 {
     static RTL_TIME_ZONE_INFORMATION cached_tzi;
-    static int current_year = -1;
+    static int current_year = -1, current_bias = 65535;
     struct tm *tm;
     time_t year_start, year_end, tmp, dlt = 0, std = 0;
-    int is_dst, current_is_dst;
+    int is_dst, current_is_dst, bias;
 
     RtlEnterCriticalSection( &TIME_tz_section );
 
     year_start = time(NULL);
-    tm = localtime(&year_start);
+    tm = gmtime(&year_start);
+    bias = (LONG)(mktime(tm) - year_start) / 60;
 
+    tm = localtime(&year_start);
     current_is_dst = tm->tm_isdst;
-    if (current_year == tm->tm_year)
+    if (current_year == tm->tm_year && current_bias == bias)
     {
         *tzi = cached_tzi;
         RtlLeaveCriticalSection( &TIME_tz_section );
@@ -748,8 +750,11 @@ static int init_tz_info(RTL_TIME_ZONE_INFORMATION *tzi)
 
     memset(tzi, 0, sizeof(*tzi));
 
-    TRACE("tz data will be valid through year %d\n", tm->tm_year + 1900);
+    TRACE("tz data will be valid through year %d, bias %d\n", tm->tm_year + 1900, bias);
     current_year = tm->tm_year;
+    current_bias = bias;
+
+    tzi->Bias = bias;
 
     tm->tm_isdst = 0;
     tm->tm_mday = 1;
@@ -763,10 +768,6 @@ static int init_tz_info(RTL_TIME_ZONE_INFORMATION *tzi)
     tm->tm_min = tm->tm_sec = 59;
     year_end = mktime(tm);
     TRACE("year_end: %s", ctime(&year_end));
-
-    tm = gmtime(&year_start);
-    tzi->Bias = (LONG)(mktime(tm) - year_start) / 60;
-    TRACE("bias: %d\n", tzi->Bias);
 
     tmp = find_dst_change(year_start, year_end, &is_dst);
     if (is_dst)
