@@ -2209,7 +2209,7 @@ HRESULT __cdecl wined3d_device_get_back_buffer(const struct wined3d_device *devi
 INT __cdecl wined3d_device_get_base_vertex_index(const struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_get_clip_plane(const struct wined3d_device *device, UINT plane_idx, float *plane);
 HRESULT __cdecl wined3d_device_get_clip_status(const struct wined3d_device *device, WINED3DCLIPSTATUS *clip_status);
-HRESULT __cdecl wined3d_device_get_creation_parameters(struct wined3d_device *device,
+HRESULT __cdecl wined3d_device_get_creation_parameters(const struct wined3d_device *device,
         WINED3DDEVICE_CREATION_PARAMETERS *creation_parameters);
 HRESULT __cdecl wined3d_device_get_depth_stencil(const struct wined3d_device *device,
         struct wined3d_surface **depth_stencil);
