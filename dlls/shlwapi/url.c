@@ -744,7 +744,7 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 
             if (base.nScheme == URL_SCHEME_HTTP || base.nScheme == URL_SCHEME_HTTPS)
                 manual_search = TRUE;
-            else if (work - base.pszSuffix > len_htmW * sizeof(WCHAR)) {
+            else if (work - base.pszSuffix > len_htmW) {
                 work -= len_htmW;
                 if (strncmpiW(work, htmW, len_htmW) == 0)
                     manual_search = TRUE;
@@ -752,7 +752,7 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
             }
 
             if (!manual_search &&
-                    work - base.pszSuffix > len_htmlW * sizeof(WCHAR)) {
+                    work - base.pszSuffix > len_htmlW) {
                 work -= len_htmlW;
                 if (strncmpiW(work, htmlW, len_htmlW) == 0)
                     manual_search = TRUE;
