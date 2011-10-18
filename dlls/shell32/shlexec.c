@@ -1517,7 +1517,7 @@ static UINT_PTR SHELL_execute_url( LPCWSTR lpFile, LPCWSTR wFile, LPCWSTR wcmd, 
     TRACE("Got URL: %s\n", debugstr_w(lpFile));
     /* Looking for ...protocol\shell\lpOperation\command */
     len = iSize + lstrlenW(wShell) + lstrlenW(wCommand) + 1;
-    if (psei->lpVerb)
+    if (psei->lpVerb && *psei->lpVerb)
         len += lstrlenW(psei->lpVerb);
     else
         len += lstrlenW(wszOpen);
@@ -1525,7 +1525,7 @@ static UINT_PTR SHELL_execute_url( LPCWSTR lpFile, LPCWSTR wFile, LPCWSTR wcmd, 
     memcpy(lpstrProtocol, lpFile, iSize*sizeof(WCHAR));
     lpstrProtocol[iSize] = '\0';
     strcatW(lpstrProtocol, wShell);
-    strcatW(lpstrProtocol, psei->lpVerb? psei->lpVerb: wszOpen);
+    strcatW(lpstrProtocol, psei->lpVerb && *psei->lpVerb ? psei->lpVerb: wszOpen);
     strcatW(lpstrProtocol, wCommand);
 
     /* Remove File Protocol from lpFile */

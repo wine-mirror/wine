@@ -92,7 +92,10 @@ static void strcat_param(char* str, const char* param)
 static char shell_call[2048]="";
 static int shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, LPCSTR directory)
 {
-    INT_PTR rc;
+    INT_PTR rc, rcEmpty = 0;
+
+    if(!operation)
+        rcEmpty = shell_execute("", file, parameters, directory);
 
     strcpy(shell_call, "ShellExecute(");
     strcat_param(shell_call, operation);
@@ -138,6 +141,10 @@ static int shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, LPCST
     WritePrivateProfileStringA(NULL, NULL, NULL, child_file);
     if (rc > 32)
         dump_child();
+
+    if(!operation)
+        ok(rc == rcEmpty || broken(rc > 32 && rcEmpty == SE_ERR_NOASSOC) /* NT4 */,
+                "Got different return value with empty string: %lu %lu\n", rc, rcEmpty);
 
     return rc;
 }

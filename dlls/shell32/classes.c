@@ -129,7 +129,7 @@ BOOL HCR_GetDefaultVerbW( HKEY hkeyClass, LPCWSTR szVerb, LPWSTR szDest, DWORD l
 
 	TRACE("%p %s %p\n", hkeyClass, debugstr_w(szVerb), szDest);
 
-        if (szVerb)
+        if (szVerb && *szVerb)
         {
             lstrcpynW(szDest, szVerb, len);
             return TRUE;
