@@ -1226,8 +1226,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_Load (LPPERSISTSTR
 
       IStream_Clone (pStm, &pClonedStream);
 	
-      liMove.QuadPart = 0;
-      liMove.QuadPart -= sizeof(FOURCC) + (sizeof(FOURCC)+sizeof(DWORD));
+      liMove.QuadPart = - (LONGLONG)(sizeof(FOURCC) * 2 + sizeof(DWORD));
       IStream_Seek (pClonedStream, liMove, STREAM_SEEK_CUR, NULL);
 	
       hr = IDirectMusicSegment8Impl_IPersistStream_LoadWave (iface, pClonedStream, &pWave);
