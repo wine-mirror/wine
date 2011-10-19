@@ -224,6 +224,10 @@ struct ntdll_thread_data
     int                wait_fd[2];    /* 1ec/300 fd for sleeping server requests */
     BOOL               wow64_redir;   /* 1f4/308 Wow64 filesystem redirection flag */
     pthread_t          pthread_id;    /* 1f8/310 pthread thread id */
+#ifdef __i386__
+    WINE_VM86_TEB_INFO vm86;          /* 1fc vm86 private data */
+    void              *exit_frame;    /* 204 exit frame pointer */
+#endif
 };
 
 static inline struct ntdll_thread_data *ntdll_get_thread_data(void)

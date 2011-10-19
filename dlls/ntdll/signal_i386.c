@@ -2473,9 +2473,41 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
 }
 
 
+extern void DECLSPEC_NORETURN call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg );
+__ASM_GLOBAL_FUNC( call_thread_entry_point,
+                   "pushl %ebp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                   "movl %esp,%ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                   "pushl %ebx\n\t"
+                   __ASM_CFI(".cfi_rel_offset %ebx,-4\n\t")
+                   "pushl %esi\n\t"
+                   __ASM_CFI(".cfi_rel_offset %esi,-8\n\t")
+                   "pushl %edi\n\t"
+                   __ASM_CFI(".cfi_rel_offset %edi,-12\n\t")
+                   "pushl %ebp\n\t"
+                   "pushl 12(%ebp)\n\t"
+                   "pushl 8(%ebp)\n\t"
+                   "call " __ASM_NAME("call_thread_func") );
+
+extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), void *frame );
+__ASM_GLOBAL_FUNC( call_thread_exit_func,
+                   "movl 4(%esp),%eax\n\t"
+                   "movl 8(%esp),%ecx\n\t"
+                   "movl 12(%esp),%ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa %ebp,4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebx,-4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %esi,-8\n\t")
+                   __ASM_CFI(".cfi_rel_offset %edi,-12\n\t")
+                   "leal -20(%ebp),%esp\n\t"
+                   "pushl %eax\n\t"
+                   "call *%ecx" );
+
 /* wrapper for apps that don't declare the thread function correctly */
-extern void DECLSPEC_NORETURN call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg );
-__ASM_GLOBAL_FUNC(call_thread_func,
+extern void DECLSPEC_NORETURN call_thread_func_wrapper( LPTHREAD_START_ROUTINE entry, void *arg );
+__ASM_GLOBAL_FUNC(call_thread_func_wrapper,
                   "pushl %ebp\n\t"
                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
@@ -2490,13 +2522,14 @@ __ASM_GLOBAL_FUNC(call_thread_func,
                   "int $3" )
 
 /***********************************************************************
- *           call_thread_entry_point
+ *           call_thread_func
  */
-void call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg )
+void call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg, void *frame )
 {
+    ntdll_get_thread_data()->exit_frame = frame;
     __TRY
     {
-        call_thread_func( entry, arg );
+        call_thread_func_wrapper( entry, arg );
     }
     __EXCEPT(unhandled_exception_filter)
     {
@@ -2511,7 +2544,8 @@ void call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg )
  */
 void WINAPI RtlExitUserThread( ULONG status )
 {
-    exit_thread( status );
+    if (!ntdll_get_thread_data()->exit_frame) exit_thread( status );
+    call_thread_exit_func( status, exit_thread, ntdll_get_thread_data()->exit_frame );
 }
 
 /***********************************************************************
@@ -2519,7 +2553,8 @@ void WINAPI RtlExitUserThread( ULONG status )
  */
 void abort_thread( int status )
 {
-    terminate_thread( status );
+    if (!ntdll_get_thread_data()->exit_frame) terminate_thread( status );
+    call_thread_exit_func( status, terminate_thread, ntdll_get_thread_data()->exit_frame );
 }
 
 /**********************************************************************
