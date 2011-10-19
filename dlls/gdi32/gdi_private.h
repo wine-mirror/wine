@@ -312,7 +312,6 @@ extern UINT WineEngGetOutlineTextMetrics(GdiFont*, UINT, LPOUTLINETEXTMETRICW) D
 extern UINT WineEngGetTextCharsetInfo(GdiFont *font, LPFONTSIGNATURE fs, DWORD flags) DECLSPEC_HIDDEN;
 extern BOOL WineEngGetTextExtentExPointI(GdiFont*, const WORD *, INT, INT, LPINT, LPINT, LPSIZE) DECLSPEC_HIDDEN;
 extern INT  WineEngGetTextFace(GdiFont*, INT, LPWSTR) DECLSPEC_HIDDEN;
-extern BOOL WineEngGetTextMetrics(GdiFont*, LPTEXTMETRICW) DECLSPEC_HIDDEN;
 extern BOOL WineEngFontIsLinked(GdiFont*) DECLSPEC_HIDDEN;
 extern BOOL WineEngInit(void) DECLSPEC_HIDDEN;
 extern BOOL WineEngRealizationInfo(GdiFont*, realization_info_t*) DECLSPEC_HIDDEN;

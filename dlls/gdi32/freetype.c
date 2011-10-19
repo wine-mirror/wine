@@ -6209,16 +6209,22 @@ DWORD WineEngGetGlyphOutline(GdiFont *font, UINT glyph, UINT format,
 }
 
 /*************************************************************
- * WineEngGetTextMetrics
- *
+ * freetype_GetTextMetrics
  */
-BOOL WineEngGetTextMetrics(GdiFont *font, LPTEXTMETRICW ptm)
+static BOOL freetype_GetTextMetrics( PHYSDEV dev, TEXTMETRICW *metrics )
 {
+    struct freetype_physdev *physdev = get_freetype_dev( dev );
     BOOL ret;
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetTextMetrics );
+        return dev->funcs->pGetTextMetrics( dev, metrics );
+    }
 
     GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
-    ret = get_text_metrics( font, ptm );
+    ret = get_text_metrics( physdev->font, metrics );
     LeaveCriticalSection( &freetype_cs );
     return ret;
 }
@@ -7089,7 +7095,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pGetPixelFormat */
     NULL,                               /* pGetSystemPaletteEntries */
     freetype_GetTextExtentExPoint,      /* pGetTextExtentExPoint */
-    NULL,                               /* pGetTextMetrics */
+    freetype_GetTextMetrics,            /* pGetTextMetrics */
     NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
     NULL,                               /* pLineTo */
@@ -7194,12 +7200,6 @@ DWORD WineEngGetGlyphOutline(GdiFont *font, UINT glyph, UINT format,
 {
     ERR("called but we don't have FreeType\n");
     return GDI_ERROR;
-}
-
-BOOL WineEngGetTextMetrics(GdiFont *font, LPTEXTMETRICW ptm)
-{
-    ERR("called but we don't have FreeType\n");
-    return FALSE;
 }
 
 UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,

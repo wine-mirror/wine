@@ -1222,17 +1222,13 @@ BOOL WINAPI GetTextMetricsA( HDC hdc, TEXTMETRICA *metrics )
  */
 BOOL WINAPI GetTextMetricsW( HDC hdc, TEXTMETRICW *metrics )
 {
+    PHYSDEV physdev;
     BOOL ret = FALSE;
     DC * dc = get_dc_ptr( hdc );
     if (!dc) return FALSE;
 
-    if (dc->gdiFont)
-        ret = WineEngGetTextMetrics(dc->gdiFont, metrics);
-    else
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetTextMetrics );
-        ret = physdev->funcs->pGetTextMetrics( physdev, metrics );
-    }
+    physdev = GET_DC_PHYSDEV( dc, pGetTextMetrics );
+    ret = physdev->funcs->pGetTextMetrics( physdev, metrics );
 
     if (ret)
     {
