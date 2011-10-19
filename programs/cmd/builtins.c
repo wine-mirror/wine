@@ -2229,7 +2229,7 @@ void WCMD_setshow_env (WCHAR *s) {
     s += 2;
     while (*s && (*s==' ' || *s=='\t')) s++;
     if (*s=='\"')
-        WCMD_opt_s_strip_quotes(s);
+        WCMD_strip_quotes(s);
 
     /* If no parameter, or no '=' sign, return an error */
     if (!(*s) || ((p = strchrW (s, '=')) == NULL )) {
@@ -2255,7 +2255,7 @@ void WCMD_setshow_env (WCHAR *s) {
     DWORD gle;
 
     if (*s=='\"')
-        WCMD_opt_s_strip_quotes(s);
+        WCMD_strip_quotes(s);
     p = strchrW (s, '=');
     if (p == NULL) {
       env = GetEnvironmentStringsW();

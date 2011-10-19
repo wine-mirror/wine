@@ -506,11 +506,11 @@ BOOL WCMD_keyword_ws_found(const WCHAR *keyword, int len, const WCHAR *ptr) {
 }
 
 /*************************************************************************
- * WCMD_opt_s_strip_quotes
+ * WCMD_strip_quotes
  *
  *	Remove first and last quote WCHARacters, preserving all other text
  */
-void WCMD_opt_s_strip_quotes(WCHAR *cmd) {
+void WCMD_strip_quotes(WCHAR *cmd) {
   WCHAR *src = cmd + 1, *dest = cmd, *lastq = NULL;
   while((*dest=*src) != '\0') {
       if (*src=='\"')
@@ -1204,7 +1204,7 @@ void WCMD_run_program (WCHAR *command, int called) {
         if ((opt_c || opt_k) && !opt_s && !status
             && GetLastError()==ERROR_FILE_NOT_FOUND && command[0]=='\"') {
           /* strip first and last quote WCHARacters and try again */
-          WCMD_opt_s_strip_quotes(command);
+          WCMD_strip_quotes(command);
           opt_s=1;
           WCMD_run_program(command, called);
           return;
@@ -2478,7 +2478,7 @@ int wmain (int argc, WCHAR *argvW[])
       /* strip first and last quote characters if opt_s; check for invalid
        * executable is done later */
       if (opt_s && *cmd=='\"')
-          WCMD_opt_s_strip_quotes(cmd);
+          WCMD_strip_quotes(cmd);
   }
 
   if (opt_c) {
