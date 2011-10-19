@@ -1025,6 +1025,51 @@ static void copy_rect_null(const dib_info *dst, const RECT *rc,
     return;
 }
 
+static DWORD get_pixel_32(const dib_info *dib, const POINT *pt)
+{
+    DWORD *ptr = get_pixel_ptr_32( dib, pt->x, pt->y );
+    return *ptr;
+}
+
+static DWORD get_pixel_24(const dib_info *dib, const POINT *pt)
+{
+    BYTE *ptr = get_pixel_ptr_24( dib, pt->x, pt->y );
+    return ptr[0] | ((DWORD)ptr[1] << 8) | ((DWORD)ptr[2] << 16);
+}
+
+static DWORD get_pixel_16(const dib_info *dib, const POINT *pt)
+{
+    WORD *ptr = get_pixel_ptr_16( dib, pt->x, pt->y );
+    return *ptr;
+}
+
+static DWORD get_pixel_8(const dib_info *dib, const POINT *pt)
+{
+    BYTE *ptr = get_pixel_ptr_8( dib, pt->x, pt->y );
+    return *ptr;
+}
+
+static DWORD get_pixel_4(const dib_info *dib, const POINT *pt)
+{
+    BYTE *ptr = get_pixel_ptr_4( dib, pt->x, pt->y );
+
+    if (pt->x & 1)
+        return *ptr & 0x0f;
+    else
+        return (*ptr >> 4) & 0x0f;
+}
+
+static DWORD get_pixel_1(const dib_info *dib, const POINT *pt)
+{
+    BYTE *ptr = get_pixel_ptr_1( dib, pt->x, pt->y );
+    return (*ptr & pixel_masks_1[pt->x & 0x7]) ? 1 : 0;
+}
+
+static DWORD get_pixel_null(const dib_info *dib, const POINT *pt)
+{
+    return 0;
+}
+
 static DWORD colorref_to_pixel_888(const dib_info *dib, COLORREF color)
 {
     return ( ((color >> 16) & 0xff) | (color & 0xff00) | ((color << 16) & 0xff0000) );
@@ -4350,6 +4395,7 @@ const primitive_funcs funcs_8888 =
     pattern_rects_32,
     copy_rect_32,
     blend_rect_8888,
+    get_pixel_32,
     colorref_to_pixel_888,
     pixel_to_colorref_888,
     convert_to_8888,
@@ -4364,6 +4410,7 @@ const primitive_funcs funcs_32 =
     pattern_rects_32,
     copy_rect_32,
     blend_rect_32,
+    get_pixel_32,
     colorref_to_pixel_masks,
     pixel_to_colorref_masks,
     convert_to_32,
@@ -4378,6 +4425,7 @@ const primitive_funcs funcs_24 =
     pattern_rects_24,
     copy_rect_24,
     blend_rect_24,
+    get_pixel_24,
     colorref_to_pixel_888,
     pixel_to_colorref_888,
     convert_to_24,
@@ -4392,6 +4440,7 @@ const primitive_funcs funcs_555 =
     pattern_rects_16,
     copy_rect_16,
     blend_rect_555,
+    get_pixel_16,
     colorref_to_pixel_555,
     pixel_to_colorref_555,
     convert_to_555,
@@ -4406,6 +4455,7 @@ const primitive_funcs funcs_16 =
     pattern_rects_16,
     copy_rect_16,
     blend_rect_16,
+    get_pixel_16,
     colorref_to_pixel_masks,
     pixel_to_colorref_masks,
     convert_to_16,
@@ -4420,6 +4470,7 @@ const primitive_funcs funcs_8 =
     pattern_rects_8,
     copy_rect_8,
     blend_rect_8,
+    get_pixel_8,
     colorref_to_pixel_colortable,
     pixel_to_colorref_colortable,
     convert_to_8,
@@ -4434,6 +4485,7 @@ const primitive_funcs funcs_4 =
     pattern_rects_4,
     copy_rect_4,
     blend_rect_4,
+    get_pixel_4,
     colorref_to_pixel_colortable,
     pixel_to_colorref_colortable,
     convert_to_4,
@@ -4448,6 +4500,7 @@ const primitive_funcs funcs_1 =
     pattern_rects_1,
     copy_rect_1,
     blend_rect_1,
+    get_pixel_1,
     colorref_to_pixel_colortable,
     pixel_to_colorref_colortable,
     convert_to_1,
@@ -4462,6 +4515,7 @@ const primitive_funcs funcs_null =
     pattern_rects_null,
     copy_rect_null,
     blend_rect_null,
+    get_pixel_null,
     colorref_to_pixel_null,
     pixel_to_colorref_null,
     convert_to_null,
