@@ -45,6 +45,7 @@ C_SRCS = \
 RC_SRCS = \
 	comctl32.rc \
 	comctl_Bg.rc \
+	comctl_Ca.rc \
 	comctl_Cs.rc \
 	comctl_Da.rc \
 	comctl_De.rc \
