@@ -259,12 +259,6 @@ static inline void order_end_points(int *s, int *e)
     }
 }
 
-static inline BOOL pt_in_rect( const RECT *rect, const POINT *pt )
-{
-    return ((pt->x >= rect->left) && (pt->x < rect->right) &&
-            (pt->y >= rect->top) && (pt->y < rect->bottom));
-}
-
 #define Y_INCREASING_MASK 0x0f
 #define X_INCREASING_MASK 0xc3
 #define X_MAJOR_MASK      0x99

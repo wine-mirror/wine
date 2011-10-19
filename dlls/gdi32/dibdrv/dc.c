@@ -606,7 +606,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pSetLayout */
     NULL,                               /* pSetMapMode */
     NULL,                               /* pSetMapperFlags */
-    NULL,                               /* pSetPixel */
+    dibdrv_SetPixel,                    /* pSetPixel */
     NULL,                               /* pSetPixelFormat */
     NULL,                               /* pSetPolyFillMode */
     dibdrv_SetROP2,                     /* pSetROP2 */

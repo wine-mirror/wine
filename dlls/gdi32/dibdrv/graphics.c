@@ -240,3 +240,43 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 
     return TRUE;
 }
+
+/***********************************************************************
+ *           dibdrv_SetPixel
+ */
+COLORREF dibdrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
+{
+    dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
+    int i;
+    POINT pt;
+    DWORD pixel;
+    const WINEREGION *clip = get_wine_region( pdev->clip );
+
+    TRACE( "(%p, %d, %d, %08x)\n", dev, x, y, color );
+
+    pt.x = x;
+    pt.y = y;
+    LPtoDP( dev->hdc, &pt, 1 );
+
+    /* SetPixel doesn't do the 1bpp massaging like other fg colors */
+    pixel = get_pixel_color( pdev, color, FALSE );
+    color = pdev->dib.funcs->pixel_to_colorref( &pdev->dib, pixel );
+
+    for (i = 0; i < clip->numRects; i++)
+    {
+        if (pt_in_rect( clip->rects + i, pt ))
+        {
+            RECT rect;
+            rect.left = pt.x;
+            rect.top =  pt.y;
+            rect.right = rect.left + 1;
+            rect.bottom = rect.top + 1;
+
+            pdev->dib.funcs->solid_rects( &pdev->dib, 1, &rect, 0, pixel );
+            break;
+        }
+    }
+
+    release_wine_region( pdev->clip );
+    return color;
+}

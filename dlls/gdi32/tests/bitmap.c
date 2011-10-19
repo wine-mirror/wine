@@ -582,17 +582,17 @@ static void test_dibsections(void)
 
     test_color(hdcmem, DIBINDEX(0), c0, 0, 1);
     test_color(hdcmem, DIBINDEX(1), c1, 0, 1);
-    test_color(hdcmem, DIBINDEX(2), c0, 1, 1);
-    test_color(hdcmem, PALETTEINDEX(0), c0, 1, 1);
-    test_color(hdcmem, PALETTEINDEX(1), c0, 1, 1);
-    test_color(hdcmem, PALETTEINDEX(2), c0, 1, 1);
+    test_color(hdcmem, DIBINDEX(2), c0, 0, 1);
+    test_color(hdcmem, PALETTEINDEX(0), c0, 0, 1);
+    test_color(hdcmem, PALETTEINDEX(1), c0, 0, 1);
+    test_color(hdcmem, PALETTEINDEX(2), c0, 0, 1);
     test_color(hdcmem, PALETTERGB(pbmi->bmiColors[0].rgbRed, pbmi->bmiColors[0].rgbGreen,
-        pbmi->bmiColors[0].rgbBlue), c0, 1, 1);
+        pbmi->bmiColors[0].rgbBlue), c0, 0, 1);
     test_color(hdcmem, PALETTERGB(pbmi->bmiColors[1].rgbRed, pbmi->bmiColors[1].rgbGreen,
-        pbmi->bmiColors[1].rgbBlue), c1, 1, 1);
-    test_color(hdcmem, PALETTERGB(0, 0, 0), c0, 1, 1);
-    test_color(hdcmem, PALETTERGB(0xff, 0xff, 0xff), c0, 1, 1);
-    test_color(hdcmem, PALETTERGB(0, 0, 0xfe), c1, 1, 1);
+        pbmi->bmiColors[1].rgbBlue), c1, 0, 1);
+    test_color(hdcmem, PALETTERGB(0, 0, 0), c0, 0, 1);
+    test_color(hdcmem, PALETTERGB(0xff, 0xff, 0xff), c0, 0, 1);
+    test_color(hdcmem, PALETTERGB(0, 0, 0xfe), c1, 0, 1);
 
     SelectObject(hdcmem, oldbm);
     DeleteObject(hdib);
@@ -706,20 +706,20 @@ static void test_dibsections(void)
 
     test_color(hdcmem, DIBINDEX(0), c0, 0, 1);
     test_color(hdcmem, DIBINDEX(1), c1, 0, 1);
-    test_color(hdcmem, DIBINDEX(2), c0, 1, 1);
+    test_color(hdcmem, DIBINDEX(2), c0, 0, 1);
     test_color(hdcmem, PALETTEINDEX(0), c0, 0, 1);
     test_color(hdcmem, PALETTEINDEX(1), c1, 0, 1);
-    test_color(hdcmem, PALETTEINDEX(2), c0, 1, 1);
+    test_color(hdcmem, PALETTEINDEX(2), c0, 0, 1);
     test_color(hdcmem, PALETTERGB(plogpal->palPalEntry[0].peRed, plogpal->palPalEntry[0].peGreen,
-        plogpal->palPalEntry[0].peBlue), c0, 1, 1);
+        plogpal->palPalEntry[0].peBlue), c0, 0, 1);
     test_color(hdcmem, PALETTERGB(plogpal->palPalEntry[1].peRed, plogpal->palPalEntry[1].peGreen,
-        plogpal->palPalEntry[1].peBlue), c1, 1, 1);
-    test_color(hdcmem, PALETTERGB(0, 0, 0), c1, 1, 1);
-    test_color(hdcmem, PALETTERGB(0xff, 0xff, 0xff), c0, 1, 1);
-    test_color(hdcmem, PALETTERGB(0, 0, 0xfe), c0, 1, 1);
-    test_color(hdcmem, PALETTERGB(0, 1, 0), c1, 1, 1);
-    test_color(hdcmem, PALETTERGB(0x3f, 0, 0x3f), c1, 1, 1);
-    test_color(hdcmem, PALETTERGB(0x40, 0, 0x40), c0, 1, 1);
+        plogpal->palPalEntry[1].peBlue), c1, 0, 1);
+    test_color(hdcmem, PALETTERGB(0, 0, 0), c1, 0, 1);
+    test_color(hdcmem, PALETTERGB(0xff, 0xff, 0xff), c0, 0, 1);
+    test_color(hdcmem, PALETTERGB(0, 0, 0xfe), c0, 0, 1);
+    test_color(hdcmem, PALETTERGB(0, 1, 0), c1, 0, 1);
+    test_color(hdcmem, PALETTERGB(0x3f, 0, 0x3f), c1, 0, 1);
+    test_color(hdcmem, PALETTERGB(0x40, 0, 0x40), c0, 0, 1);
 
     /* Bottom and 2nd row from top green, everything else magenta */
     bits[0] = bits[1] = 0xff;

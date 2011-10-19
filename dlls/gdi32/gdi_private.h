@@ -480,6 +480,12 @@ static inline void offset_rect( RECT *rect, int offset_x, int offset_y )
     rect->bottom += offset_y;
 }
 
+static inline BOOL pt_in_rect( const RECT *rect, POINT pt )
+{
+    return ((pt.x >= rect->left) && (pt.x < rect->right) &&
+            (pt.y >= rect->top) && (pt.y < rect->bottom));
+}
+
 static inline void get_bounding_rect( RECT *rect, int x, int y, int width, int height )
 {
     rect->left   = x;
