@@ -129,6 +129,7 @@ interface IHTMLDocument2;
 interface IHTMLElement2;
 interface IHTMLStyleSheetsCollection;
 interface IHTMLFrameBase;
+interface IHTMLStorage;
 
 /*****************************************************************************
  *    IHTMLFiltersCollection interface
@@ -10970,6 +10971,58 @@ interface IHTMLWindow5 : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLWindow6 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(30510453-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLWindow6 : IDispatch
+{
+    [propput, id(DISPID_IHTMLWINDOW6_XDOMAINREQUEST)]
+    HRESULT XDomainRequest([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW6_XDOMAINREQUEST)]
+    HRESULT XDomainRequest([out, retval] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLWINDOW6_SESSIONSTORAGE)]
+    HRESULT sessionStorage([out, retval] IHTMLStorage **p);
+
+    [propget, id(DISPID_IHTMLWINDOW6_LOCALSTORAGE)]
+    HRESULT localStorage([out, retval] IHTMLStorage **p);
+
+    [propput, id(DISPID_IHTMLWINDOW6_ONHASHCHANGE), displaybind, bindable]
+    HRESULT onhashchange([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW6_ONHASHCHANGE), displaybind, bindable]
+    HRESULT onhashchange([out, retval] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLWINDOW6_MAXCONNECTIONSPERSERVER)]
+    HRESULT maxConnectionsPerServer([out, retval] long *p);
+
+    [id(DISPID_IHTMLWINDOW6_POSTMESSAGE)]
+    HRESULT postMessage(
+            [in] BSTR msg,
+            [in, optional] VARIANT targetOrigin);
+
+    [id(DISPID_IHTMLWINDOW6_TOSTATICHTML)]
+    HRESULT toStaticHTML(
+            [in] BSTR bstrHTML,
+            [out, retval] BSTR *pbstrStaticHTML);
+
+    [propput, id(DISPID_IHTMLWINDOW6_ONMESSAGE), displaybind, bindable]
+    HRESULT onmessage([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW6_ONMESSAGE), displaybind, bindable]
+    HRESULT onmessage([out, retval] VARIANT *p);
+
+    [id(DISPID_IHTMLWINDOW6_MSWRITEPROFILERMARK)]
+    HRESULT msWriteProfilerMark([in] BSTR bstrProfilerMarkName);
+}
+
+/*****************************************************************************
  *    DispHTMLScreen dispinterface
  */
 [
@@ -11315,6 +11368,40 @@ methods:
 
     [propget, id(DISPID_IHTMLWINDOW4_FRAMEELEMENT)]
     IHTMLFrameBase *frameElement();
+
+    [propget, id(DISPID_IHTMLWINDOW6_SESSIONSTORAGE)]
+    IHTMLStorage *sessionStorage();
+
+    [propget, id(DISPID_IHTMLWINDOW6_LOCALSTORAGE)]
+    IHTMLStorage *localStorage();
+
+    [propput, id(DISPID_IHTMLWINDOW6_ONHASHCHANGE), displaybind, bindable]
+    void onhashchange(VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW6_ONHASHCHANGE), displaybind, bindable]
+    VARIANT onhashchange();
+
+    [propget, id(DISPID_IHTMLWINDOW6_MAXCONNECTIONSPERSERVER)]
+    long maxConnectionsPerServer();
+
+    [id(DISPID_IHTMLWINDOW6_POSTMESSAGE)]
+    void postMessage(
+            [in] BSTR msg,
+            [in, optional] VARIANT targetOrigin);
+
+    [id(DISPID_IHTMLWINDOW6_TOSTATICHTML)]
+    BSTR toStaticHTML([in] BSTR bstrHTML);
+
+    [propput, id(DISPID_IHTMLWINDOW6_ONMESSAGE), displaybind, bindable]
+    void onmessage(VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW6_ONMESSAGE), displaybind, bindable]
+    VARIANT onmessage();
+
+    [id(DISPID_IHTMLWINDOW6_MSWRITEPROFILERMARK)]
+    void msWriteProfilerMark([in] BSTR bstrProfilerMarkName);
+
+    WINE_IHTMLDOMCONSTRUCTOR_DISPINTERFACE_DECL;
 }
 
 /*****************************************************************************
@@ -11606,6 +11693,40 @@ methods:
 
     [propget, id(DISPID_IHTMLWINDOW5_XMLHTTPREQUEST)]
     VARIANT XMLHttpRequest();
+
+    [propget, id(DISPID_IHTMLWINDOW6_SESSIONSTORAGE)]
+    IHTMLStorage *sessionStorage();
+
+    [propget, id(DISPID_IHTMLWINDOW6_LOCALSTORAGE)]
+    IHTMLStorage *localStorage();
+
+    [propput, id(DISPID_IHTMLWINDOW6_ONHASHCHANGE), displaybind, bindable]
+    void onhashchange(VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW6_ONHASHCHANGE), displaybind, bindable]
+    VARIANT onhashchange();
+
+    [propget, id(DISPID_IHTMLWINDOW6_MAXCONNECTIONSPERSERVER)]
+    long maxConnectionsPerServer();
+
+    [id(DISPID_IHTMLWINDOW6_POSTMESSAGE)]
+    void postMessage(
+            [in] BSTR msg,
+            [in, optional] VARIANT targetOrigin);
+
+    [id(DISPID_IHTMLWINDOW6_TOSTATICHTML)]
+    BSTR toStaticHTML([in] BSTR bstrHTML);
+
+    [propput, id(DISPID_IHTMLWINDOW6_ONMESSAGE), displaybind, bindable]
+    void onmessage(VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW6_ONMESSAGE), displaybind, bindable]
+    VARIANT onmessage();
+
+    [id(DISPID_IHTMLWINDOW6_MSWRITEPROFILERMARK)]
+    void msWriteProfilerMark([in] BSTR bstrProfilerMarkName);
+
+    WINE_IHTMLDOMCONSTRUCTOR_DISPINTERFACE_DECL;
 }
 
 /*****************************************************************************
@@ -16453,6 +16574,45 @@ methods:
 
     [propget, id(DISPID_IHTMLSTYLEELEMENT_MEDIA), displaybind, bindable]
     BSTR media();
+}
+
+/*****************************************************************************
+ *    IHTMLStorage interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(30510474-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLStorage : IDispatch
+{
+    [propget, id(DISPID_IHTMLSTORAGE_LENGTH), hidden]
+    HRESULT length([out, retval] long *p);
+
+    [propget, id(DISPID_IHTMLSTORAGE_REMAININGSPACE), hidden]
+    HRESULT remainingSpace([out, retval] long *p);
+
+    [id(DISPID_IHTMLSTORAGE_KEY)]
+    HRESULT key(
+            [in] long lIndex,
+            [out, retval] BSTR *);
+
+    [id(DISPID_IHTMLSTORAGE_GETITEM)]
+    HRESULT getItem(
+            [in] BSTR bstrKey,
+            [out, retval] VARIANT *);
+
+    [id(DISPID_IHTMLSTORAGE_SETITEM)]
+    HRESULT setItem(
+            [in] BSTR bstrKey,
+            [in] BSTR bstrValue);
+
+    [id(DISPID_IHTMLSTORAGE_REMOVEITEM)]
+    HRESULT removeItem([in] BSTR bstrKey);
+
+    [id(DISPID_IHTMLSTORAGE_CLEAR)]
+    HRESULT clear();
 }
 
 /*****************************************************************************
