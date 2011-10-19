@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
+
 #include "vbscript.h"
 #include "vbscript_defs.h"
 
@@ -302,8 +304,7 @@ static HRESULT Global_IsObject(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, 
 {
     TRACE("(%s)\n", debugstr_variant(arg));
 
-    if(V_VT(arg) == (VT_VARIANT|VT_BYREF))
-        arg = V_VARIANTREF(arg);
+    assert(args_cnt == 1);
 
     if(res) {
         V_VT(res) = VT_BOOL;
