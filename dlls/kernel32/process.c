@@ -3842,3 +3842,14 @@ BOOL WINAPI GetNumaAvailableMemoryNode(UCHAR node, PULONGLONG available_bytes)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+/**********************************************************************
+ *           GetProcessDEPPolicy     (KERNEL32.@)
+ */
+BOOL WINAPI GetProcessDEPPolicy(HANDLE process, LPDWORD flags, PBOOL permanent)
+{
+    FIXME("(%p %p %p): stub\n", process, flags, permanent);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+
+}
