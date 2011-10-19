@@ -71,18 +71,31 @@ static const struct gdi_dc_funcs EMFDRV_Funcs =
     EMFDRV_FillPath,                 /* pFillPath */
     EMFDRV_FillRgn,                  /* pFillRgn */
     EMFDRV_FlattenPath,              /* pFlattenPath */
+    NULL,                            /* pFontIsLinked */
     EMFDRV_FrameRgn,                 /* pFrameRgn */
     EMFDRV_GdiComment,               /* pGdiComment */
+    NULL,                            /* pGdiRealizationInfo */
+    NULL,                            /* pGetCharABCWidths */
+    NULL,                            /* pGetCharABCWidthsI */
     NULL,                            /* pGetCharWidth */
     EMFDRV_GetDeviceCaps,            /* pGetDeviceCaps */
     NULL,                            /* pGetDeviceGammaRamp */
+    NULL,                            /* pGetFontData */
+    NULL,                            /* pGetFontUnicodeRanges */
+    NULL,                            /* pGetGlyphIndices */
+    NULL,                            /* pGetGlyphOutline */
     NULL,                            /* pGetICMProfile */
     NULL,                            /* pGetImage */
+    NULL,                            /* pGetKerningPairs */
     NULL,                            /* pGetNearestColor */
+    NULL,                            /* pGetOutlineTextMetrics */
     NULL,                            /* pGetPixel */
     NULL,                            /* pGetPixelFormat */
     NULL,                            /* pGetSystemPaletteEntries */
+    NULL,                            /* pGetTextCharsetInfo */
     NULL,                            /* pGetTextExtentExPoint */
+    NULL,                            /* pGetTextExtentExPointI */
+    NULL,                            /* pGetTextFace */
     NULL,                            /* pGetTextMetrics */
     EMFDRV_IntersectClipRect,        /* pIntersectClipRect */
     EMFDRV_InvertRgn,                /* pInvertRgn */

@@ -7084,18 +7084,31 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pFillPath */
     NULL,                               /* pFillRgn */
     NULL,                               /* pFlattenPath */
+    NULL,                               /* pFontIsLinked */
     NULL,                               /* pFrameRgn */
     NULL,                               /* pGdiComment */
+    NULL,                               /* pGdiRealizationInfo */
+    NULL,                               /* pGetCharABCWidths */
+    NULL,                               /* pGetCharABCWidthsI */
     freetype_GetCharWidth,              /* pGetCharWidth */
     NULL,                               /* pGetDeviceCaps */
     NULL,                               /* pGetDeviceGammaRamp */
+    NULL,                               /* pGetFontData */
+    NULL,                               /* pGetFontUnicodeRanges */
+    NULL,                               /* pGetGlyphIndices */
+    NULL,                               /* pGetGlyphOutline */
     NULL,                               /* pGetICMProfile */
     NULL,                               /* pGetImage */
+    NULL,                               /* pGetKerningPairs */
     NULL,                               /* pGetNearestColor */
+    NULL,                               /* pGetOutlineTextMetrics */
     NULL,                               /* pGetPixel */
     NULL,                               /* pGetPixelFormat */
     NULL,                               /* pGetSystemPaletteEntries */
+    NULL,                               /* pGetTextCharsetInfo */
     freetype_GetTextExtentExPoint,      /* pGetTextExtentExPoint */
+    NULL,                               /* pGetTextExtentExPointI */
+    NULL,                               /* pGetTextFace */
     freetype_GetTextMetrics,            /* pGetTextMetrics */
     NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */

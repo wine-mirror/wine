@@ -89,18 +89,31 @@ struct gdi_dc_funcs
     BOOL     (*pFillPath)(PHYSDEV);
     BOOL     (*pFillRgn)(PHYSDEV,HRGN,HBRUSH);
     BOOL     (*pFlattenPath)(PHYSDEV);
+    BOOL     (*pFontIsLinked)(PHYSDEV);
     BOOL     (*pFrameRgn)(PHYSDEV,HRGN,HBRUSH,INT,INT);
     BOOL     (*pGdiComment)(PHYSDEV,UINT,CONST BYTE*);
+    BOOL     (*pGdiRealizationInfo)(PHYSDEV,void*);
+    BOOL     (*pGetCharABCWidths)(PHYSDEV,UINT,UINT,LPABC);
+    BOOL     (*pGetCharABCWidthsI)(PHYSDEV,UINT,UINT,WORD*,LPABC);
     BOOL     (*pGetCharWidth)(PHYSDEV,UINT,UINT,LPINT);
     INT      (*pGetDeviceCaps)(PHYSDEV,INT);
     BOOL     (*pGetDeviceGammaRamp)(PHYSDEV,LPVOID);
+    DWORD    (*pGetFontData)(PHYSDEV,DWORD,DWORD,LPVOID,DWORD);
+    DWORD    (*pGetFontUnicodeRanges)(PHYSDEV,LPGLYPHSET);
+    DWORD    (*pGetGlyphIndices)(PHYSDEV,LPCWSTR,INT,LPWORD,DWORD);
+    DWORD    (*pGetGlyphOutline)(PHYSDEV,UINT,UINT,LPGLYPHMETRICS,DWORD,LPVOID,const MAT2*);
     BOOL     (*pGetICMProfile)(PHYSDEV,LPDWORD,LPWSTR);
     DWORD    (*pGetImage)(PHYSDEV,HBITMAP,BITMAPINFO*,struct gdi_image_bits*,struct bitblt_coords*);
+    DWORD    (*pGetKerningPairs)(PHYSDEV,DWORD,LPKERNINGPAIR);
     COLORREF (*pGetNearestColor)(PHYSDEV,COLORREF);
+    UINT     (*pGetOutlineTextMetrics)(PHYSDEV,UINT,LPOUTLINETEXTMETRICW);
     COLORREF (*pGetPixel)(PHYSDEV,INT,INT);
     INT      (*pGetPixelFormat)(PHYSDEV);
     UINT     (*pGetSystemPaletteEntries)(PHYSDEV,UINT,UINT,LPPALETTEENTRY);
+    UINT     (*pGetTextCharsetInfo)(PHYSDEV,LPFONTSIGNATURE,DWORD);
     BOOL     (*pGetTextExtentExPoint)(PHYSDEV,LPCWSTR,INT,INT,LPINT,LPINT,LPSIZE);
+    BOOL     (*pGetTextExtentExPointI)(PHYSDEV,const WORD*,INT,INT,LPINT,LPINT,LPSIZE);
+    INT      (*pGetTextFace)(PHYSDEV,INT,LPWSTR);
     BOOL     (*pGetTextMetrics)(PHYSDEV,TEXTMETRICW*);
     INT      (*pIntersectClipRect)(PHYSDEV,INT,INT,INT,INT);
     BOOL     (*pInvertRgn)(PHYSDEV,HRGN);
@@ -190,7 +203,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 15
+#define WINE_GDI_DRIVER_VERSION 16
 
 static inline PHYSDEV get_physdev_entry_point( PHYSDEV dev, size_t offset )
 {

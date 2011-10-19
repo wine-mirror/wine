@@ -500,18 +500,31 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pFillPath */
     NULL,                               /* pFillRgn */
     NULL,                               /* pFlattenPath */
+    NULL,                               /* pFontIsLinked */
     NULL,                               /* pFrameRgn */
     NULL,                               /* pGdiComment */
+    NULL,                               /* pGdiRealizationInfo */
+    NULL,                               /* pGetCharABCWidths */
+    NULL,                               /* pGetCharABCWidthsI */
     X11DRV_GetCharWidth,                /* pGetCharWidth */
     X11DRV_GetDeviceCaps,               /* pGetDeviceCaps */
     X11DRV_GetDeviceGammaRamp,          /* pGetDeviceGammaRamp */
+    NULL,                               /* pGetFontData */
+    NULL,                               /* pGetFontUnicodeRanges */
+    NULL,                               /* pGetGlyphIndices */
+    NULL,                               /* pGetGlyphOutline */
     X11DRV_GetICMProfile,               /* pGetICMProfile */
     X11DRV_GetImage,                    /* pGetImage */
+    NULL,                               /* pGetKerningPairs */
     X11DRV_GetNearestColor,             /* pGetNearestColor */
+    NULL,                               /* pGetOutlineTextMetrics */
     X11DRV_GetPixel,                    /* pGetPixel */
     X11DRV_GetPixelFormat,              /* pGetPixelFormat */
     X11DRV_GetSystemPaletteEntries,     /* pGetSystemPaletteEntries */
+    NULL,                               /* pGetTextCharsetInfo */
     X11DRV_GetTextExtentExPoint,        /* pGetTextExtentExPoint */
+    NULL,                               /* pGetTextExtentExPointI */
+    NULL,                               /* pGetTextFace */
     X11DRV_GetTextMetrics,              /* pGetTextMetrics */
     NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */

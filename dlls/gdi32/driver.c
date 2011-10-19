@@ -307,7 +307,27 @@ static BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const REC
     return TRUE;
 }
 
+static BOOL nulldrv_FontIsLinked( PHYSDEV dev )
+{
+    return FALSE;
+}
+
 static BOOL nulldrv_GdiComment( PHYSDEV dev, UINT size, const BYTE *data )
+{
+    return FALSE;
+}
+
+static BOOL nulldrv_GdiRealizationInfo( PHYSDEV dev, void *info )
+{
+    return FALSE;
+}
+
+static BOOL nulldrv_GetCharABCWidths( PHYSDEV dev, UINT first, UINT last, LPABC abc )
+{
+    return FALSE;
+}
+
+static BOOL nulldrv_GetCharABCWidthsI( PHYSDEV dev, UINT first, UINT count, WORD *indices, LPABC abc )
 {
     return FALSE;
 }
@@ -344,9 +364,40 @@ static BOOL nulldrv_GetDeviceGammaRamp( PHYSDEV dev, void *ramp )
     return FALSE;
 }
 
+static DWORD nulldrv_GetFontData( PHYSDEV dev, DWORD table, DWORD offset, LPVOID buffer, DWORD length )
+{
+    return FALSE;
+}
+
+static DWORD nulldrv_GetFontUnicodeRanges( PHYSDEV dev, LPGLYPHSET glyphs )
+{
+    return 0;
+}
+
+static DWORD nulldrv_GetGlyphIndices( PHYSDEV dev, LPCWSTR str, INT count, LPWORD indices, DWORD flags )
+{
+    return GDI_ERROR;
+}
+
+static DWORD nulldrv_GetGlyphOutline( PHYSDEV dev, UINT ch, UINT format, LPGLYPHMETRICS metrics,
+                                      DWORD size, LPVOID buffer, const MAT2 *mat )
+{
+    return GDI_ERROR;
+}
+
 static BOOL nulldrv_GetICMProfile( PHYSDEV dev, LPDWORD size, LPWSTR filename )
 {
     return FALSE;
+}
+
+static DWORD nulldrv_GetKerningPairs( PHYSDEV dev, DWORD count, LPKERNINGPAIR pairs )
+{
+    return 0;
+}
+
+static UINT nulldrv_GetOutlineTextMetrics( PHYSDEV dev, UINT size, LPOUTLINETEXTMETRICW otm )
+{
+    return 0;
 }
 
 static COLORREF nulldrv_GetPixel( PHYSDEV dev, INT x, INT y )
@@ -364,10 +415,26 @@ static UINT nulldrv_GetSystemPaletteEntries( PHYSDEV dev, UINT start, UINT count
     return 0;
 }
 
+static UINT nulldrv_GetTextCharsetInfo( PHYSDEV dev, LPFONTSIGNATURE fs, DWORD flags )
+{
+    return DEFAULT_CHARSET;
+}
+
 static BOOL nulldrv_GetTextExtentExPoint( PHYSDEV dev, LPCWSTR str, INT count, INT max_ext,
                                           INT *fit, INT *dx, SIZE *size )
 {
     return FALSE;
+}
+
+static BOOL nulldrv_GetTextExtentExPointI( PHYSDEV dev, const WORD *indices, INT count, INT max_ext,
+                                           INT *fit, INT *dx, SIZE *size )
+{
+    return FALSE;
+}
+
+static INT nulldrv_GetTextFace( PHYSDEV dev, INT size, LPWSTR name )
+{
+    return 0;
 }
 
 static BOOL nulldrv_GetTextMetrics( PHYSDEV dev, TEXTMETRICW *metrics )
@@ -690,18 +757,31 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_FillPath,                   /* pFillPath */
     nulldrv_FillRgn,                    /* pFillRgn */
     nulldrv_FlattenPath,                /* pFlattenPath */
+    nulldrv_FontIsLinked,               /* pFontIsLinked */
     nulldrv_FrameRgn,                   /* pFrameRgn */
     nulldrv_GdiComment,                 /* pGdiComment */
+    nulldrv_GdiRealizationInfo,         /* pGdiRealizationInfo */
+    nulldrv_GetCharABCWidths,           /* pGetCharABCWidths */
+    nulldrv_GetCharABCWidthsI,          /* pGetCharABCWidthsI */
     nulldrv_GetCharWidth,               /* pGetCharWidth */
     nulldrv_GetDeviceCaps,              /* pGetDeviceCaps */
     nulldrv_GetDeviceGammaRamp,         /* pGetDeviceGammaRamp */
+    nulldrv_GetFontData,                /* pGetFontData */
+    nulldrv_GetFontUnicodeRanges,       /* pGetFontUnicodeRanges */
+    nulldrv_GetGlyphIndices,            /* pGetGlyphIndices */
+    nulldrv_GetGlyphOutline,            /* pGetGlyphOutline */
     nulldrv_GetICMProfile,              /* pGetICMProfile */
     nulldrv_GetImage,                   /* pGetImage */
+    nulldrv_GetKerningPairs,            /* pGetKerningPairs */
     nulldrv_GetNearestColor,            /* pGetNearestColor */
+    nulldrv_GetOutlineTextMetrics,      /* pGetOutlineTextMetrics */
     nulldrv_GetPixel,                   /* pGetPixel */
     nulldrv_GetPixelFormat,             /* pGetPixelFormat */
     nulldrv_GetSystemPaletteEntries,    /* pGetSystemPaletteEntries */
+    nulldrv_GetTextCharsetInfo,         /* pGetTextCharsetInfo */
     nulldrv_GetTextExtentExPoint,       /* pGetTextExtentExPoint */
+    nulldrv_GetTextExtentExPointI,      /* pGetTextExtentExPointI */
+    nulldrv_GetTextFace,                /* pGetTextFace */
     nulldrv_GetTextMetrics,             /* pGetTextMetrics */
     nulldrv_IntersectClipRect,          /* pIntersectClipRect */
     nulldrv_InvertRgn,                  /* pInvertRgn */

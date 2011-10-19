@@ -853,18 +853,31 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pFillPath */
     NULL,                               /* pFillRgn */
     NULL,                               /* pFlattenPath */
+    NULL,                               /* pFontIsLinked */
     NULL,                               /* pFrameRgn */
     NULL,                               /* pGdiComment */
+    NULL,                               /* pGdiRealizationInfo */
+    NULL,                               /* pGetCharABCWidths */
+    NULL,                               /* pGetCharABCWidthsI */
     PSDRV_GetCharWidth,                 /* pGetCharWidth */
     PSDRV_GetDeviceCaps,                /* pGetDeviceCaps */
     NULL,                               /* pGetDeviceGammaRamp */
+    NULL,                               /* pGetFontData */
+    NULL,                               /* pGetFontUnicodeRanges */
+    NULL,                               /* pGetGlyphIndices */
+    NULL,                               /* pGetGlyphOutline */
     NULL,                               /* pGetICMProfile */
     NULL,                               /* pGetImage */
+    NULL,                               /* pGetKerningPairs */
     NULL,                               /* pGetNearestColor */
+    NULL,                               /* pGetOutlineTextMetrics */
     NULL,                               /* pGetPixel */
     NULL,                               /* pGetPixelFormat */
     NULL,                               /* pGetSystemPaletteEntries */
+    NULL,                               /* pGetTextCharsetInfo */
     PSDRV_GetTextExtentExPoint,         /* pGetTextExtentExPoint */
+    NULL,                               /* pGetTextExtentExPointI */
+    NULL,                               /* pGetTextFace */
     PSDRV_GetTextMetrics,               /* pGetTextMetrics */
     NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
