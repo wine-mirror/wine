@@ -392,7 +392,7 @@ void BREAK_line(const WCHAR *chars, int count, const SCRIPT_ANALYSIS *sa, SCRIPT
     debug_output_breaks(break_before,count);
 
     /* LB31 */
-    for (i = 0; i < count; i++)
+    for (i = 0; i < count-1; i++)
         else_break(&break_before[i+1],b_s);
 
     debug_output_breaks(break_before,count);
