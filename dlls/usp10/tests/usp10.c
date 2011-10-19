@@ -1901,6 +1901,7 @@ static void test_ScriptXtoX(void)
     HRESULT hr;
 
     memset(&sa, 0 , sizeof(SCRIPT_ANALYSIS));
+    memset(psva, 0, sizeof(psva));
 
     sa.fRTL = FALSE;
     hr = ScriptXtoCP(-1, 10, 10, pwLogClust, psva, piAdvance, &sa, &piCP, &piTrailing);
