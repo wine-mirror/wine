@@ -2228,6 +2228,74 @@ static void shadow_test(IDirect3DDevice8 *device)
     IDirect3D8_Release(d3d8);
 }
 
+static void multisample_copy_rects_test(IDirect3DDevice8 *device)
+{
+    IDirect3DSurface8 *original_ds, *original_rt, *rt, *readback;
+    RECT src_rect = {64, 64, 128, 128};
+    POINT dst_point = {96, 96};
+    D3DLOCKED_RECT locked_rect;
+    IDirect3D8 *d3d8;
+    D3DCOLOR color;
+    HRESULT hr;
+
+    hr = IDirect3DDevice8_GetDirect3D(device, &d3d8);
+    ok(SUCCEEDED(hr), "Failed to get d3d8 interface, hr %#x.\n", hr);
+    hr = IDirect3D8_CheckDeviceMultiSampleType(d3d8, D3DADAPTER_DEFAULT,
+            D3DDEVTYPE_HAL, D3DFMT_A8R8G8B8, TRUE, D3DMULTISAMPLE_2_SAMPLES);
+    IDirect3D8_Release(d3d8);
+    if (FAILED(hr))
+    {
+        skip("Multisampling not supported for D3DFMT_A8R8G8B8, skipping multisampled CopyRects test.\n");
+        return;
+    }
+
+    hr = IDirect3DDevice8_CreateRenderTarget(device, 256, 256, D3DFMT_A8R8G8B8,
+            D3DMULTISAMPLE_2_SAMPLES, FALSE, &rt);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_CreateImageSurface(device, 256, 256, D3DFMT_A8R8G8B8, &readback);
+    ok(SUCCEEDED(hr), "Failed to create readback surface, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_GetRenderTarget(device, &original_rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_GetDepthStencilSurface(device, &original_ds);
+    ok(SUCCEEDED(hr), "Failed to get depth/stencil, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetRenderTarget(device, rt, NULL);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ff00, 0.0, 0);
+    ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_CopyRects(device, rt, NULL, 0, readback, NULL);
+    ok(SUCCEEDED(hr), "Failed to read render target back, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
+    ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_CopyRects(device, rt, &src_rect, 1, readback, &dst_point);
+    ok(SUCCEEDED(hr), "Failed to read render target back, hr %#x.\n", hr);
+
+    hr = IDirect3DSurface8_LockRect(readback, &locked_rect, NULL, D3DLOCK_READONLY);
+    ok(SUCCEEDED(hr), "Failed to lock readback surface, hr %#x.\n", hr);
+
+    color = *(DWORD *)((BYTE *)locked_rect.pBits + 31 * locked_rect.Pitch + 31 * 4);
+    ok(color == 0xff00ff00, "Got unexpected color 0x%08x.\n", color);
+
+    color = *(DWORD *)((BYTE *)locked_rect.pBits + 127 * locked_rect.Pitch + 127 * 4);
+    ok(color == 0xffff0000, "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DSurface8_UnlockRect(readback);
+    ok(SUCCEEDED(hr), "Failed to unlock readback surface, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetRenderTarget(device, original_rt, original_ds);
+    ok(SUCCEEDED(hr), "Failed to restore original render target, hr %#x.\n", hr);
+
+    IDirect3DSurface8_Release(original_ds);
+    IDirect3DSurface8_Release(original_rt);
+    IDirect3DSurface8_Release(readback);
+    IDirect3DSurface8_Release(rt);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice8 *device_ptr;
@@ -2306,6 +2374,7 @@ START_TEST(visual)
     depth_buffer2_test(device_ptr);
     intz_test(device_ptr);
     shadow_test(device_ptr);
+    multisample_copy_rects_test(device_ptr);
 
 cleanup:
     if(device_ptr) {
