@@ -1823,7 +1823,7 @@ static WCHAR *lookup_manifest_file( HANDLE dir, struct assembly_identity *ai )
     static const WCHAR lookup_fmtW[] =
         {'%','s','_','%','s','_','%','s','_','%','u','.','%','u','.','*','.','*','_',
          '%','s','_','*','.','m','a','n','i','f','e','s','t',0};
-    static const WCHAR wine_trailerW[] = {'d','e','a','d','b','e','e','f','.','m','a','n','i','f','e','s','t',0};
+    static const WCHAR wine_trailerW[] = {'d','e','a','d','b','e','e','f','.','m','a','n','i','f','e','s','t'};
 
     WCHAR *lookup, *ret = NULL;
     UNICODE_STRING lookup_us;
@@ -1869,7 +1869,7 @@ static WCHAR *lookup_manifest_file( HANDLE dir, struct assembly_identity *ai )
             if (dir_info->NextEntryOffset) data_pos += dir_info->NextEntryOffset;
             else data_pos = data_len;
 
-            tmp = (WCHAR *)dir_info->FileName + (strchrW(lookup, '*') - lookup);
+            tmp = dir_info->FileName + (strchrW(lookup, '*') - lookup);
             build = atoiW(tmp);
             if (build < min_build) continue;
             tmp = strchrW(tmp, '.') + 1;
@@ -1877,7 +1877,8 @@ static WCHAR *lookup_manifest_file( HANDLE dir, struct assembly_identity *ai )
             if (build == min_build && revision < min_revision) continue;
             tmp = strchrW(tmp, '_') + 1;
             tmp = strchrW(tmp, '_') + 1;
-            if (!strcmpiW( tmp, wine_trailerW ))
+            if (dir_info->FileNameLength - (tmp - dir_info->FileName) * sizeof(WCHAR) == sizeof(wine_trailerW) &&
+                !memicmpW( tmp, wine_trailerW, sizeof(wine_trailerW) / sizeof(WCHAR) ))
             {
                 /* prefer a non-Wine manifest if we already have one */
                 /* we'll still load the builtin dll if specified through DllOverrides */
