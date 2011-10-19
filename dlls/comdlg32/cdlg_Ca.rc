@@ -120,10 +120,10 @@ FONT 8, "MS Shell Dlg"
 
 CHOOSE_FONT DIALOG  13, 54, 264, 147
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Tipus de lletra"
+CAPTION "Tipus de Lletra"
 FONT 8, "MS Shell Dlg"
 {
-    LTEXT           "&Tipus de lletra:",1088 ,6,3,40,9
+    LTEXT           "&Tipus de lletra:",1088 ,6,3,50,9
     COMBOBOX        1136 ,6,13,94,54,  CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | CBS_DISABLENOSCROLL |
                     CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP | CBS_SIMPLE
     LTEXT           "&Estil del tipus de lletra:",1089 ,108,3,44,9
@@ -144,7 +144,7 @@ FONT 8, "MS Shell Dlg"
                     CBS_AUTOHSCROLL |  WS_BORDER | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Exemple",grp2,98,72,120,36,WS_GROUP
     CTEXT           "AaBbYyZz",stc5,103,80,109,24,SS_NOPREFIX | NOT WS_VISIBLE
-    LTEXT           "Scr&ipt (translate):",stc7 ,98,114,80,9
+    LTEXT           "Scr&ipt:",stc7 ,98,114,80,9
     COMBOBOX        cmb5,98,124,120,90,CBS_DROPDOWNLIST | CBS_HASSTRINGS |
 		    CBS_AUTOHSCROLL |   WS_VSCROLL | WS_TABSTOP
 }
@@ -218,4 +218,152 @@ FONT 8, "MS Shell Dlg"
  PUSHBUTTON "Substitució &automàtica", 1025, 174, 38, 50, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Tancar", IDCANCEL, 174, 55, 50, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "A&juda", 1038, 174, 75, 50, 14, WS_GROUP | WS_TABSTOP
+}
+
+
+PRINT32 DIALOG  32, 32, 288, 186
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
+      DS_CONTEXTHELP | DS_3DLOOK
+CAPTION "Imprimir"
+FONT 8, "MS Shell Dlg"
+{
+    DEFPUSHBUTTON   "D'acord",     IDOK,     180,164, 48,14, WS_GROUP | BS_DEFPUSHBUTTON
+    PUSHBUTTON      "Cancella", IDCANCEL, 232,164, 48,14, WS_GROUP
+
+    GROUPBOX        "Printer",        grp4,   8,  4, 272,84, WS_GROUP
+    PUSHBUTTON      "A&juda",  pshHelp,  50, 161, 48,14, WS_GROUP
+    CONTROL         "Imprimeix a &fitxer", chx1, "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,212,70,64,12
+    PUSHBUTTON      "&Propietats",    psh2, 212, 17,  60,14, WS_GROUP
+    LTEXT           "&Nom:",         stc6,  16, 20,  36,8
+    COMBOBOX                          cmb4,  52, 18, 152,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+    LTEXT           "Estat:",        stc8,  16, 36,  36,10, SS_NOPREFIX
+    LTEXT           "Estat de Maniqu",    stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Tipus:",          stc7,  16, 48,  36,10, SS_NOPREFIX
+    LTEXT           "Tipus de Maniqu",     stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "On:",         stc10, 16, 60,  36,10, SS_NOPREFIX
+    LTEXT           "Ubicaci de Maniqu", stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Comentari:",       stc9,  16, 72,  36,10, SS_NOPREFIX
+    LTEXT           "Observaci de Maniqu",   stc13, 52, 72, 152,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+
+    GROUPBOX        "Copies",         grp2, 160, 92, 120,64, WS_GROUP
+    LTEXT           "Nombre de &copies:",stc5,168,108,68,8
+    ICON            "",               ico3, 162,124,  76,24, WS_GROUP | SS_CENTERIMAGE
+    CONTROL         "C&ompagina",       chx2,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,240,130,36,12
+    EDITTEXT                          edt3, 240,106,  32,12, WS_GROUP | ES_NUMBER
+
+    GROUPBOX        "Interval d'impressi",    grp1,   8,92,  144,64, WS_GROUP
+    CONTROL         "&Tot",           rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,106,64,12
+    CONTROL         "Pa&ges",         rad3,"Button",BS_AUTORADIOBUTTON,16,122,36,12
+    CONTROL         "&Selecci",     rad2,"Button",BS_AUTORADIOBUTTON,16,138,64,12
+    EDITTEXT                          edt1,  74,122,  26,12, WS_GROUP | ES_NUMBER
+    EDITTEXT                          edt2, 118,122,  26,12, WS_GROUP | ES_NUMBER
+    RTEXT           "&de:",         stc2,  52,124,  20,8
+    RTEXT           "&a:",           stc3, 100,124,  16,8
+}
+
+PRINT32_SETUP DIALOG  32, 32, 288, 178
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
+      DS_CONTEXTHELP | DS_3DLOOK
+CAPTION "Configuraci de la Impressi"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "D'acord",IDOK,180,156,48,14,WS_GROUP
+    PUSHBUTTON      "Cancella",IDCANCEL,232,156,48,14
+/*    PUSHBUTTON      "Network...", psh5, 284,156,48,14 */
+
+    GROUPBOX        "Impressora",        grp4,   8,  4, 272,84, WS_GROUP
+    PUSHBUTTON      "&Propietats",    psh2, 212, 17,  60,14, WS_GROUP
+    LTEXT           "&Nom:",         stc6,  16, 20,  36,8
+    COMBOBOX                          cmb1,  52, 18, 152,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+    LTEXT           "Estat:",        stc8,  16, 36,  36,10, SS_NOPREFIX
+    LTEXT           "Estat de Maniqu",    stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Tipus:",          stc7,  16, 48,  36,10, SS_NOPREFIX
+    LTEXT           "Tipus de Maniqu",     stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "On:",         stc10, 16, 60,  36,10, SS_NOPREFIX
+    LTEXT           "Ubicaci de Maniqu", stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Comentari:",       stc9,  16, 72,  36,10, SS_NOPREFIX
+    LTEXT           "Observaci de Maniqu",   stc13, 52, 72, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+
+    GROUPBOX        "Paper",          grp2,   8, 92, 164,56, WS_GROUP
+    LTEXT           "&Mida:",         stc2,  16,108,  36, 8
+    COMBOBOX                          cmb2,  52,106, 112,112,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+    LTEXT           "&Font:",       stc3,  16,128,  36, 8
+    COMBOBOX                          cmb3,  52,126, 112,112,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+
+    GROUPBOX        "Orientaci",    grp1, 180, 92, 100,56, WS_GROUP
+    ICON            "",               ico1, 195,112,  18,20, WS_GROUP
+    CONTROL         "&Vertical",      rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP |WS_TABSTOP,224,106,52,12
+    CONTROL         "&Horizontal",     rad2,"Button",BS_AUTORADIOBUTTON,224,126,52,12
+END
+
+PAGESETUPDLGORD DIALOG 32, 32, 240, 240
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Configuraci de la Pgina"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  CONTROL "", rct1, "Static", SS_WHITERECT, 80, 8, 80, 80
+  CONTROL "", rct2, "Static", SS_GRAYRECT, 160, 12, 4, 80
+  CONTROL "", rct3, "Static", SS_GRAYRECT,  84, 88, 80, 4
+  GROUPBOX "Paper", grp2, 8, 96, 224, 56, BS_GROUPBOX
+  LTEXT "&Mida:", stc2, 16, 112, 36, 8
+  COMBOBOX cmb2, 64, 110, 160, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
+  LTEXT "&Safata:", stc3, 16, 132, 36, 8
+  COMBOBOX cmb3, 64, 130, 160, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
+  GROUPBOX "Orientaci", grp1, 8, 156, 64, 56, BS_GROUPBOX
+  AUTORADIOBUTTON "&Vertical", rad1, 16, 170, 52, 12, BS_AUTORADIOBUTTON
+  AUTORADIOBUTTON "&Horizontal", rad2, 16, 190, 52, 12, BS_AUTORADIOBUTTON
+  GROUPBOX "Vores", grp4, 80, 156, 152, 56, BS_GROUPBOX
+  LTEXT "&Esquerra:", stc15, 88, 172, 21, 8
+  EDITTEXT edt4, 111, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  LTEXT "&Dreta:", stc16, 159, 172, 27, 8
+  EDITTEXT edt6, 187, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  LTEXT "S&uperior:", stc17, 88, 192, 21, 8
+  EDITTEXT edt5, 111, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  LTEXT "&Inferior:", stc18, 159, 192, 23, 8
+  EDITTEXT edt7, 187, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  DEFPUSHBUTTON "D'acord", IDOK, 71, 220, 50, 14, BS_PUSHBUTTON
+  PUSHBUTTON "Cancella", IDCANCEL, 126, 220, 50, 14
+  PUSHBUTTON "Imp&ressora...", psh3, 184, 220, 48, 14
+END
+
+NEWFILEOPENORD DIALOG 0, 0, 280, 164
+STYLE DS_MODALFRAME | DS_CONTEXTHELP | WS_VISIBLE | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN
+CAPTION "Obrir"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT	"Cerca &en:",IDC_LOOKINSTATIC,4,6,43,8, SS_NOTIFY
+    COMBOBOX	IDC_LOOKIN,49,3,132,100,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+
+    LTEXT	"" , IDC_TOOLBARSTATIC, 181, 2, 102, 17, NOT WS_GROUP | NOT WS_VISIBLE
+    LISTBOX	IDC_SHELLSTATIC,4,20,272,85, LBS_SORT | LBS_NOINTEGRALHEIGHT | LBS_MULTICOLUMN | WS_HSCROLL | NOT WS_VISIBLE
+
+    LTEXT	"&Nom de fitxer:",IDC_FILENAMESTATIC,5,112,46,8, SS_NOTIFY
+    EDITTEXT	IDC_FILENAME,60,110,155,12,ES_AUTOHSCROLL
+
+    LTEXT	"Fitxers de &tipus:",IDC_FILETYPESTATIC,5,128,55,8, SS_NOTIFY
+    COMBOBOX	IDC_FILETYPE,60,126,155,53,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    CONTROL	"Obre per noms &lectura",IDC_OPENREADONLY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,54,145,100,10
+
+    DEFPUSHBUTTON	"&Obre",		 IDOK,222,110,50,14
+    PUSHBUTTON		"Cancella",		 IDCANCEL,222,128,50,14
+    PUSHBUTTON		"&Ajuda",		 pshHelp,222,145,50,14
+}
+
+NEWFILEOPENV3ORD DIALOG 0, 0, 440, 300
+STYLE DS_MODALFRAME | DS_CONTEXTHELP | WS_VISIBLE | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN |
+      WS_THICKFRAME
+CAPTION "Obrir"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT           "Nom de fitxer:", IDC_FILENAMESTATIC, 160, 240, 60, 9, SS_RIGHT
+    EDITTEXT        IDC_FILENAME, 226, 240, 100, 12,  WS_CHILD | WS_VISIBLE | WS_TABSTOP
+
+    LTEXT           "Fitxers de tipus:", IDC_FILETYPESTATIC, 160, 256, 60, 9, SS_RIGHT
+    COMBOBOX        IDC_FILETYPE, 226, 256, 100, 12,  WS_CHILD | WS_VISIBLE | WS_TABSTOP |
+                    CBS_HASSTRINGS | CBS_DROPDOWNLIST
+
+    DEFPUSHBUTTON   "&Obre",  IDOK,     350, 240, 40, 14, WS_GROUP
+    PUSHBUTTON      "Cancella", IDCANCEL, 395, 240, 40, 14
+    PUSHBUTTON      "&Ajuda",  pshHelp,  350, 272, 40, 14
 }
