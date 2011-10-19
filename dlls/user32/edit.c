@@ -2489,6 +2489,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 			while ((es->text_width > fw) && s + strl >= s) {
 				strcpyW(es->text + s + strl - 1, es->text + s + strl);
 				strl--;
+				es->text_length = -1;
 				EDIT_InvalidateUniscribeData(es);
 				EDIT_CalcLineWidth_SL(es);
 			}
