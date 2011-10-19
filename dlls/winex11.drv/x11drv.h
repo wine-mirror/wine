@@ -186,8 +186,7 @@ extern HBITMAP X11DRV_CreateDIBSection( PHYSDEV dev, HBITMAP hbitmap,
                                         BITMAPINFO *bmi, UINT usage ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_DeleteBitmap( HBITMAP hbitmap ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
-extern BOOL X11DRV_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf,
-                                    FONTENUMPROCW dfeproc, LPARAM lp ) DECLSPEC_HIDDEN;
+extern BOOL X11DRV_EnumFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW dfeproc, LPARAM lp ) DECLSPEC_HIDDEN;
 extern INT X11DRV_EnumICMProfiles( PHYSDEV dev, ICMENUMPROCW proc, LPARAM lparam ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *lprect,

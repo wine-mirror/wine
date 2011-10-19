@@ -423,12 +423,12 @@ static UINT PSDRV_GetFontMetric(HDC hdc, const AFM *afm,
 }
 
 /***********************************************************************
- *           PSDRV_EnumDeviceFonts
+ *           PSDRV_EnumFonts
  */
-BOOL PSDRV_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lp )
+BOOL PSDRV_EnumFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lp )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pEnumDeviceFonts );
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pEnumFonts );
     ENUMLOGFONTEXW	lf;
     NEWTEXTMETRICEXW	tm;
     BOOL	  	ret;
@@ -436,7 +436,7 @@ BOOL PSDRV_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPA
     FONTFAMILY		*family;
     char                FaceName[LF_FACESIZE];
 
-    ret = next->funcs->pEnumDeviceFonts( next, plf, proc, lp );
+    ret = next->funcs->pEnumFonts( next, plf, proc, lp );
     if (!ret) return FALSE;
 
     if( plf && plf->lfFaceName[0] ) {

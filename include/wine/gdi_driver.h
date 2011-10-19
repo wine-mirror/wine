@@ -78,7 +78,7 @@ struct gdi_dc_funcs
     INT      (*pEndDoc)(PHYSDEV);
     INT      (*pEndPage)(PHYSDEV);
     BOOL     (*pEndPath)(PHYSDEV);
-    BOOL     (*pEnumDeviceFonts)(PHYSDEV,LPLOGFONTW,FONTENUMPROCW,LPARAM);
+    BOOL     (*pEnumFonts)(PHYSDEV,LPLOGFONTW,FONTENUMPROCW,LPARAM);
     INT      (*pEnumICMProfiles)(PHYSDEV,ICMENUMPROCW,LPARAM);
     INT      (*pExcludeClipRect)(PHYSDEV,INT,INT,INT,INT);
     INT      (*pExtDeviceMode)(LPSTR,HWND,LPDEVMODEA,LPSTR,LPSTR,LPDEVMODEA,LPSTR,DWORD);

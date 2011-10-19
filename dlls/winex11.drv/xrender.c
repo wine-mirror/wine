@@ -3023,7 +3023,7 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pEndDoc */
     NULL,                               /* pEndPage */
     NULL,                               /* pEndPath */
-    NULL,                               /* pEnumDeviceFonts */
+    NULL,                               /* pEnumFonts */
     NULL,                               /* pEnumICMProfiles */
     NULL,                               /* pExcludeClipRect */
     NULL,                               /* pExtDeviceMode */

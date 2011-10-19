@@ -3321,19 +3321,19 @@ HFONT X11DRV_SelectFont( PHYSDEV dev, HFONT hfont )
 
 /***********************************************************************
  *
- *           X11DRV_EnumDeviceFonts
+ *           X11DRV_EnumFonts
  */
-BOOL X11DRV_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lp )
+BOOL X11DRV_EnumFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lp )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pEnumDeviceFonts );
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pEnumFonts );
     ENUMLOGFONTEXW	lf;
     NEWTEXTMETRICEXW	tm;
     fontResource*	pfr = fontList;
     BOOL	  	ret;
     LOGFONTW lfW;
 
-    ret = next->funcs->pEnumDeviceFonts( next, plf, proc, lp );
+    ret = next->funcs->pEnumFonts( next, plf, proc, lp );
     if (!ret) return FALSE;
 
     /* don't enumerate x11 fonts if we're using client side fonts */

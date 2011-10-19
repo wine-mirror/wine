@@ -647,7 +647,7 @@ static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf, FONTENUMPROCW efpro
 
     if (dc)
     {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pEnumDeviceFonts );
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pEnumFonts );
 
         if (plf) TRACE("lfFaceName = %s lfCharset = %d\n", debugstr_w(plf->lfFaceName), plf->lfCharSet);
         fe.lpLogFontParam = plf;
@@ -655,7 +655,7 @@ static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf, FONTENUMPROCW efpro
         fe.lpData = lParam;
         fe.unicode = unicode;
         fe.hdc = hDC;
-	ret = physdev->funcs->pEnumDeviceFonts( physdev, plf, FONT_EnumInstance, (LPARAM)&fe );
+	ret = physdev->funcs->pEnumFonts( physdev, plf, FONT_EnumInstance, (LPARAM)&fe );
     }
     release_dc_ptr( dc );
     return ret;

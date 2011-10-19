@@ -105,7 +105,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pEndDoc */
     NULL,                            /* pEndPage */
     MFDRV_EndPath,                   /* pEndPath */
-    NULL,                            /* pEnumDeviceFonts */
+    NULL,                            /* pEnumFonts */
     NULL,                            /* pEnumICMProfiles */
     MFDRV_ExcludeClipRect,           /* pExcludeClipRect */
     NULL,                            /* pExtDeviceMode */

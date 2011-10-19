@@ -274,7 +274,7 @@ static INT nulldrv_EndPage( PHYSDEV dev )
     return 0;
 }
 
-static BOOL nulldrv_EnumDeviceFonts( PHYSDEV dev, LOGFONTW *logfont, FONTENUMPROCW proc, LPARAM lParam )
+static BOOL nulldrv_EnumFonts( PHYSDEV dev, LOGFONTW *logfont, FONTENUMPROCW proc, LPARAM lParam )
 {
     return TRUE;
 }
@@ -679,7 +679,7 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_EndDoc,                     /* pEndDoc */
     nulldrv_EndPage,                    /* pEndPage */
     nulldrv_EndPath,                    /* pEndPath */
-    nulldrv_EnumDeviceFonts,            /* pEnumDeviceFonts */
+    nulldrv_EnumFonts,                  /* pEnumFonts */
     nulldrv_EnumICMProfiles,            /* pEnumICMProfiles */
     nulldrv_ExcludeClipRect,            /* pExcludeClipRect */
     nulldrv_ExtDeviceMode,              /* pExtDeviceMode */

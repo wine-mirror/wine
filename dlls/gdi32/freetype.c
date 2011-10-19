@@ -4584,9 +4584,9 @@ static BOOL enum_face_charsets(Face *face, struct enum_charset_list *list,
 }
 
 /*************************************************************
- * freetype_EnumDeviceFonts
+ * freetype_EnumFonts
  */
-static BOOL freetype_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam )
+static BOOL freetype_EnumFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam )
 {
     Family *family;
     Face *face;
@@ -7073,7 +7073,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pEndDoc */
     NULL,                               /* pEndPage */
     NULL,                               /* pEndPath */
-    freetype_EnumDeviceFonts,           /* pEnumDeviceFonts */
+    freetype_EnumFonts,                 /* pEnumFonts */
     NULL,                               /* pEnumICMProfiles */
     NULL,                               /* pExcludeClipRect */
     NULL,                               /* pExtDeviceMode */

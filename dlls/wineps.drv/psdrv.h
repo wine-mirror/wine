@@ -425,7 +425,7 @@ extern DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCST
 extern BOOL PSDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom) DECLSPEC_HIDDEN;
 extern INT PSDRV_EndDoc( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern INT PSDRV_EndPage( PHYSDEV dev ) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lp ) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_EnumFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lp ) DECLSPEC_HIDDEN;
 extern INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
                                LPSTR lpszDevice, LPSTR lpszPort, LPDEVMODEA lpdmInput,
                                LPSTR lpszProfile, DWORD dwMode) DECLSPEC_HIDDEN;

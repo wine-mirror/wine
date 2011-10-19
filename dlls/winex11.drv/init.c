@@ -489,7 +489,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pEndDoc */
     NULL,                               /* pEndPage */
     NULL,                               /* pEndPath */
-    X11DRV_EnumDeviceFonts,             /* pEnumDeviceFonts */
+    X11DRV_EnumFonts,                   /* pEnumFonts */
     X11DRV_EnumICMProfiles,             /* pEnumICMProfiles */
     NULL,                               /* pExcludeClipRect */
     NULL,                               /* pExtDeviceMode */
