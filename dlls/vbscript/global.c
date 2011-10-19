@@ -278,8 +278,15 @@ static HRESULT Global_IsDate(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VA
 
 static HRESULT Global_IsEmpty(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("(%s)\n", debugstr_variant(arg));
+
+    assert(args_cnt == 1);
+
+    if(res) {
+        V_VT(res) = VT_BOOL;
+        V_BOOL(res) = V_VT(arg) == VT_EMPTY ? VARIANT_TRUE : VARIANT_FALSE;
+    }
+    return S_OK;
 }
 
 static HRESULT Global_IsNull(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
