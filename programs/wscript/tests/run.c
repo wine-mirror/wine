@@ -170,16 +170,28 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
 				      WORD wFlags, DISPPARAMS *pdp, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     switch(dispIdMember) {
-    case DISPID_TESTOBJ_OK:
+    case DISPID_TESTOBJ_OK: {
+        VARIANT *expr, *msg;
+
         ok(wFlags == INVOKE_FUNC, "wFlags = %x\n", wFlags);
         ok(pdp->cArgs == 2, "cArgs = %d\n", pdp->cArgs);
         ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
-        ok(V_VT(pdp->rgvarg) == VT_BSTR, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
-        ok(V_VT(pdp->rgvarg+1) == VT_BOOL, "V_VT(psp->rgvargs+1) = %d\n", V_VT(pdp->rgvarg));
-        ok(V_BOOL(pdp->rgvarg+1), "%s: %s\n", script_name, wine_dbgstr_w(V_BSTR(pdp->rgvarg)));
+
+        expr = pdp->rgvarg+1;
+        if(V_VT(expr) == (VT_VARIANT|VT_BYREF))
+            expr = V_VARIANTREF(expr);
+
+        msg = pdp->rgvarg;
+        if(V_VT(msg) == (VT_VARIANT|VT_BYREF))
+            msg = V_VARIANTREF(msg);
+
+        ok(V_VT(msg) == VT_BSTR, "V_VT(psp->rgvargs) = %d\n", V_VT(msg));
+        ok(V_VT(expr) == VT_BOOL, "V_VT(psp->rgvargs+1) = %d\n", V_VT(expr));
+        ok(V_BOOL(expr), "%s: %s\n", script_name, wine_dbgstr_w(V_BSTR(msg)));
         if(pVarResult)
             V_VT(pVarResult) = VT_EMPTY;
         break;
+    }
     case DISPID_TESTOBJ_TRACE:
         ok(wFlags == INVOKE_FUNC, "wFlags = %x\n", wFlags);
         ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
