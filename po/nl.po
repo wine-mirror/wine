@@ -121,7 +121,7 @@ msgid "uncompressed"
 msgstr "ongecomprimeerd"
 
 #: browseui.rc:25
-msgid "Cancelling..."
+msgid "Canceling..."
 msgstr "Annuleren..."
 
 #: comctl32.rc:39

@@ -121,7 +121,7 @@ msgid "uncompressed"
 msgstr "nestisnjeno"
 
 #: browseui.rc:25
-msgid "Cancelling..."
+msgid "Canceling..."
 msgstr "Preklicevanje ..."
 
 #: comctl32.rc:39

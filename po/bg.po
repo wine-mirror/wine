@@ -119,8 +119,8 @@ msgid "uncompressed"
 msgstr ""
 
 #: browseui.rc:25
-msgid "Cancelling..."
-msgstr ""
+msgid "Canceling..."
+msgstr "Инсталиране..."
 
 #: comctl32.rc:39
 msgid "Separator"

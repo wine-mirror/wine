@@ -119,7 +119,7 @@ msgid "uncompressed"
 msgstr "sin compresión"
 
 #: browseui.rc:25
-msgid "Cancelling..."
+msgid "Canceling..."
 msgstr "Cancelando..."
 
 #: comctl32.rc:39

@@ -22,7 +22,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-    IDS_CANCELLING    "Cancelling..."
+    IDS_CANCELLING    "Canceling..."
 }
 
 #define WINE_FILEDESCRIPTION_STR "Wine core dll"

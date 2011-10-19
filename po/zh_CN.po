@@ -115,7 +115,7 @@ msgid "uncompressed"
 msgstr "未压缩"
 
 #: browseui.rc:25
-msgid "Cancelling..."
+msgid "Canceling..."
 msgstr "正在取消..."
 
 #: comctl32.rc:39

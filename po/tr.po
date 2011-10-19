@@ -122,8 +122,8 @@ msgid "uncompressed"
 msgstr "sıkıştırılmamış"
 
 #: browseui.rc:25
-msgid "Cancelling..."
-msgstr ""
+msgid "Canceling..."
+msgstr "Kuruluyor..."
 
 #: comctl32.rc:39
 msgid "Separator"

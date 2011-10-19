@@ -119,7 +119,7 @@ msgid "uncompressed"
 msgstr "압축안됨"
 
 #: browseui.rc:25
-msgid "Cancelling..."
+msgid "Canceling..."
 msgstr "취소하는 중.."
 
 #: comctl32.rc:39

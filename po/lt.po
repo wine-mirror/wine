@@ -121,7 +121,7 @@ msgid "uncompressed"
 msgstr "neglaudintas"
 
 #: browseui.rc:25
-msgid "Cancelling..."
+msgid "Canceling..."
 msgstr "Atsisakoma..."
 
 #: comctl32.rc:39

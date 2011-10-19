@@ -120,7 +120,7 @@ msgid "uncompressed"
 msgstr "okomprimerad"
 
 #: browseui.rc:25
-msgid "Cancelling..."
+msgid "Canceling..."
 msgstr "Avbryter..."
 
 #: comctl32.rc:39

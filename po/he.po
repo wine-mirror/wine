@@ -118,7 +118,7 @@ msgid "uncompressed"
 msgstr "ללא דחיסה"
 
 #: browseui.rc:25
-msgid "Cancelling..."
+msgid "Canceling..."
 msgstr "בהליכי ביטול..."
 
 #: comctl32.rc:39

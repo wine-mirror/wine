@@ -118,7 +118,7 @@ msgid "uncompressed"
 msgstr "necomprimat"
 
 #: browseui.rc:25
-msgid "Cancelling..."
+msgid "Canceling..."
 msgstr "Renunț..."
 
 #: comctl32.rc:39
