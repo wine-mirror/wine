@@ -933,6 +933,115 @@ static void dsound8_tests(void)
     ok(rc==DS_OK,"DirectSoundEnumerateA() failed: %08x\n",rc);
 }
 
+static void test_hw_buffers(void)
+{
+    IDirectSound8 *ds;
+    IDirectSoundBuffer *primary, *primary2, **secondaries, *secondary;
+    IDirectSoundBuffer8 *buf8;
+    DSCAPS caps;
+    DSBCAPS bufcaps;
+    DSBUFFERDESC bufdesc;
+    WAVEFORMATEX fmt;
+    UINT i;
+    HRESULT hr;
+
+    hr = pDirectSoundCreate8(NULL, &ds, NULL);
+    ok(hr == S_OK || hr == DSERR_NODRIVER || hr == DSERR_ALLOCATED || hr == E_FAIL,
+            "DirectSoundCreate8 failed: %08x\n", hr);
+    if(hr != S_OK)
+        return;
+
+    caps.dwSize = sizeof(caps);
+
+    hr = IDirectSound8_GetCaps(ds, &caps);
+    ok(hr == S_OK, "GetCaps failed: %08x\n", hr);
+
+    ok(caps.dwPrimaryBuffers == 1, "Got wrong number of primary buffers: %u\n",
+            caps.dwPrimaryBuffers);
+
+    /* DSBCAPS_LOC* is ignored for primary buffers */
+    bufdesc.dwSize = sizeof(bufdesc);
+    bufdesc.dwFlags = DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_LOCHARDWARE |
+        DSBCAPS_PRIMARYBUFFER;
+    bufdesc.dwBufferBytes = 0;
+    bufdesc.dwReserved = 0;
+    bufdesc.lpwfxFormat = NULL;
+    bufdesc.guid3DAlgorithm = GUID_NULL;
+
+    hr = IDirectSound8_CreateSoundBuffer(ds, &bufdesc, &primary, NULL);
+    ok(hr == S_OK, "CreateSoundBuffer failed: %08x\n", hr);
+    if(hr != S_OK){
+        IDirectSound8_Release(ds);
+        return;
+    }
+
+    bufdesc.dwFlags = DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_LOCSOFTWARE |
+        DSBCAPS_PRIMARYBUFFER;
+
+    hr = IDirectSound8_CreateSoundBuffer(ds, &bufdesc, &primary2, NULL);
+    ok(hr == S_OK, "CreateSoundBuffer failed: %08x\n", hr);
+    ok(primary == primary2, "Got different primary buffers: %p, %p\n", primary, primary2);
+    if(hr == S_OK)
+        IDirectSoundBuffer_Release(primary2);
+
+    buf8 = (IDirectSoundBuffer8 *)0xDEADBEEF;
+    hr = IDirectSoundBuffer_QueryInterface(primary, &IID_IDirectSoundBuffer8,
+            (void**)&buf8);
+    ok(hr == E_NOINTERFACE, "QueryInterface gave wrong failure: %08x\n", hr);
+    ok(buf8 == NULL, "Pointer didn't get set to NULL\n");
+
+    fmt.wFormatTag = WAVE_FORMAT_PCM;
+    fmt.nChannels = 2;
+    fmt.nSamplesPerSec = 48000;
+    fmt.wBitsPerSample = 16;
+    fmt.nBlockAlign = fmt.nChannels * fmt.wBitsPerSample / 8;
+    fmt.nAvgBytesPerSec = fmt.nBlockAlign * fmt.nSamplesPerSec;
+    fmt.cbSize = 0;
+
+    bufdesc.lpwfxFormat = &fmt;
+    bufdesc.dwBufferBytes = fmt.nSamplesPerSec * fmt.nBlockAlign / 10;
+    bufdesc.dwFlags = DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_LOCHARDWARE |
+        DSBCAPS_CTRLVOLUME;
+
+    secondaries = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            sizeof(IDirectSoundBuffer *) * caps.dwMaxHwMixingAllBuffers);
+
+    /* try to fill all of the hw buffers */
+    trace("dwMaxHwMixingAllBuffers: %u\n", caps.dwMaxHwMixingAllBuffers);
+    trace("dwMaxHwMixingStaticBuffers: %u\n", caps.dwMaxHwMixingStaticBuffers);
+    trace("dwMaxHwMixingStreamingBuffers: %u\n", caps.dwMaxHwMixingStreamingBuffers);
+    for(i = 0; i < caps.dwMaxHwMixingAllBuffers; ++i){
+        hr = IDirectSound8_CreateSoundBuffer(ds, &bufdesc, &secondaries[i], NULL);
+        ok(hr == S_OK || hr == E_NOTIMPL || broken(hr == DSERR_CONTROLUNAVAIL),
+                "CreateSoundBuffer(%u) failed: %08x\n", i, hr);
+        if(hr != S_OK)
+            break;
+
+        bufcaps.dwSize = sizeof(bufcaps);
+        hr = IDirectSoundBuffer_GetCaps(secondaries[i], &bufcaps);
+        ok(hr == S_OK, "GetCaps failed: %08x\n", hr);
+        ok((bufcaps.dwFlags & DSBCAPS_LOCHARDWARE) != 0,
+                "Buffer wasn't allocated in hardware, dwFlags: %x\n", bufcaps.dwFlags);
+    }
+
+    /* see if we can create one more */
+    hr = IDirectSound8_CreateSoundBuffer(ds, &bufdesc, &secondary, NULL);
+    ok((i == caps.dwMaxHwMixingAllBuffers && hr == DSERR_ALLOCATED) || /* out of hw buffers */
+            (caps.dwMaxHwMixingAllBuffers == 0 && hr == DSERR_INVALIDCALL) || /* no hw buffers at all */
+            hr == E_NOTIMPL || /* don't support hw buffers */
+            broken(hr == DSERR_CONTROLUNAVAIL) || /* vmware winxp, others? */
+            broken(hr == S_OK) /* broken driver allows more hw bufs than dscaps claims */,
+            "CreateSoundBuffer gave wrong error: %08x\n", hr);
+    if(hr == S_OK)
+        IDirectSoundBuffer_Release(secondary);
+
+    for(i = 0; i < caps.dwMaxHwMixingAllBuffers; ++i)
+        if(secondaries[i])
+            IDirectSoundBuffer_Release(secondaries[i]);
+
+    IDirectSoundBuffer_Release(primary);
+    IDirectSound8_Release(ds);
+}
 
 START_TEST(dsound8)
 {
@@ -952,6 +1061,7 @@ START_TEST(dsound8)
         {
             IDirectSound8_tests();
             dsound8_tests();
+            test_hw_buffers();
         }
         else
             skip("dsound8 test skipped\n");

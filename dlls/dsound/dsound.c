@@ -1480,8 +1480,12 @@ HRESULT DirectSoundDevice_Initialize(DirectSoundDevice ** ppDevice, LPCGUID lpcG
             DSOUND_check_supported(device->client, 96000, 16, 2))
         device->drvcaps.dwFlags |= DSCAPS_PRIMARY16BIT | DSCAPS_PRIMARYSTEREO;
 
+    device->drvcaps.dwPrimaryBuffers = 1;
     device->drvcaps.dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
     device->drvcaps.dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
+    device->drvcaps.dwMaxHwMixingAllBuffers = 1;
+    device->drvcaps.dwMaxHwMixingStaticBuffers = 1;
+    device->drvcaps.dwMaxHwMixingStreamingBuffers = 1;
 
     ZeroMemory(&device->volpan, sizeof(device->volpan));
 
@@ -1538,6 +1542,12 @@ HRESULT DirectSoundDevice_CreateSoundBuffer(
         TRACE(")\n");
         TRACE("(bufferbytes=%d)\n",dsbd->dwBufferBytes);
         TRACE("(lpwfxFormat=%p)\n",dsbd->lpwfxFormat);
+    }
+
+    if (dsbd->dwFlags & DSBCAPS_LOCHARDWARE &&
+            !(dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER)) {
+        TRACE("LOCHARDWARE is not supported, returning E_NOTIMPL\n");
+        return E_NOTIMPL;
     }
 
     if (dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER) {
