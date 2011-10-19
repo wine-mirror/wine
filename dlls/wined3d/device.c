@@ -5838,7 +5838,8 @@ void CDECL wined3d_device_set_gamma_ramp(const struct wined3d_device *device,
     }
 }
 
-void CDECL wined3d_device_get_gamma_ramp(struct wined3d_device *device, UINT swapchain_idx, WINED3DGAMMARAMP *ramp)
+void CDECL wined3d_device_get_gamma_ramp(const struct wined3d_device *device,
+        UINT swapchain_idx, WINED3DGAMMARAMP *ramp)
 {
     struct wined3d_swapchain *swapchain;
 
