@@ -123,6 +123,54 @@ static inline BOOL rgbquad_equal(const RGBQUAD *a, const RGBQUAD *b)
     return FALSE;
 }
 
+static COLORREF make_rgb_colorref( dibdrv_physdev *pdev, COLORREF color,
+                                   BOOL *got_pixel, DWORD *pixel )
+{
+    BYTE type = color >> 24;
+    WORD index = LOWORD( color );
+    HPALETTE pal = GetCurrentObject( pdev->dev.hdc, OBJ_PAL );
+    PALETTEENTRY pal_ent;
+
+    *pixel = 0;
+    *got_pixel = FALSE;
+
+    switch( type )
+    {
+    case 0: break;
+
+    case 0x10: /* DIBINDEX */
+        *got_pixel = TRUE;
+        *pixel = 0;
+        color = RGB(0, 0, 0);
+
+        if (pdev->dib.bit_count <= 8 && index < (1 << pdev->dib.bit_count))
+        {
+            *pixel = index;
+            if (index < pdev->dib.color_table_size)
+                color = RGB( pdev->dib.color_table[index].rgbRed,
+                             pdev->dib.color_table[index].rgbGreen,
+                             pdev->dib.color_table[index].rgbBlue );
+        }
+        break;
+
+    case 2: /* PALETTERGB */
+        color &= 0xffffff;
+        break;
+
+    case 1: /* PALETTEINDEX */
+        if (!GetPaletteEntries( pal, index, 1, &pal_ent ))
+            GetPaletteEntries( pal, 0, 1, &pal_ent );
+        color = RGB( pal_ent.peRed, pal_ent.peGreen, pal_ent.peBlue );
+        break;
+
+    default:
+        FIXME("Unhandled color type %08x\n", color);
+        color &= 0xffffff;
+    }
+
+    return color;
+}
+
 /******************************************************************
  *                   get_pixel_color
  *
@@ -135,11 +183,17 @@ static inline BOOL rgbquad_equal(const RGBQUAD *a, const RGBQUAD *b)
 DWORD get_pixel_color( dibdrv_physdev *pdev, COLORREF color, BOOL mono_fixup )
 {
     RGBQUAD fg_quad;
+    BOOL got_pixel;
+    DWORD pixel;
+    COLORREF rgb_ref;
+
+    rgb_ref = make_rgb_colorref( pdev, color, &got_pixel, &pixel );
+    if (got_pixel) return pixel;
 
     if (pdev->dib.bit_count != 1 || !mono_fixup)
-        return pdev->dib.funcs->colorref_to_pixel( &pdev->dib, color );
+        return pdev->dib.funcs->colorref_to_pixel( &pdev->dib, rgb_ref );
 
-    fg_quad = rgbquad_from_colorref( color );
+    fg_quad = rgbquad_from_colorref( rgb_ref );
     if(rgbquad_equal(&fg_quad, pdev->dib.color_table))
         return 0;
     if(rgbquad_equal(&fg_quad, pdev->dib.color_table + 1))
