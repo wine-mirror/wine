@@ -2440,6 +2440,7 @@ static HRESULT WINAPI UnixSubFolderIterator_IEnumIDList_Next(IEnumIDList* iface,
                 !UNIXFS_is_pidl_of_type(rgelt[i], This->m_fFilter)) 
             {
                 SHFree(rgelt[i]);
+                rgelt[i] = NULL;
                 continue;
             }
             memset(((PBYTE)rgelt[i])+rgelt[i]->mkid.cb, 0, sizeof(USHORT));
