@@ -230,10 +230,15 @@ static void FONT_TextMetricWToA(const TEXTMETRICW *ptmW, LPTEXTMETRICA ptmA )
         ptmA->tmFirstChar = 0x1e;
         ptmA->tmLastChar = 0xff;  /* win9x behaviour - we need the OS2 table data to calculate correctly */
     }
-    else
+    else if (ptmW->tmPitchAndFamily & TMPF_TRUETYPE)
     {
         ptmA->tmFirstChar = ptmW->tmDefaultChar - 1;
         ptmA->tmLastChar = min(ptmW->tmLastChar, 0xff);
+    }
+    else
+    {
+        ptmA->tmFirstChar = min(ptmW->tmFirstChar, 0xff);
+        ptmA->tmLastChar  = min(ptmW->tmLastChar,  0xff);
     }
     ptmA->tmDefaultChar = ptmW->tmDefaultChar;
     ptmA->tmBreakChar = ptmW->tmBreakChar;
