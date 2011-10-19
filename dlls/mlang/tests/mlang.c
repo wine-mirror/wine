@@ -1202,7 +1202,7 @@ static void test_GetRfc1766Info(IMultiLanguage2 *iML2)
         ok(!lstrcmpA(rfc1766A, info_table[i].rfc1766),
             "#%02d: got '%s' (expected '%s')\n", i, rfc1766A, info_table[i].rfc1766);
 
-        /* Some IE versions truncate an oversized name one character to short */
+        /* Some IE versions truncate an oversized name one character too short */
         if (info_table[i].broken_name) {
             lstrcpyW(short_broken_name, info_table[i].broken_name);
             short_broken_name[MAX_LOCALE_NAME - 2] = 0;
