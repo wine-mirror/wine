@@ -6419,25 +6419,30 @@ BOOL WineEngGetCharABCWidthsFloat(GdiFont *font, UINT first, UINT last, LPABCFLO
 }
 
 /*************************************************************
- * WineEngGetCharABCWidthsI
- *
+ * freetype_GetCharABCWidthsI
  */
-BOOL WineEngGetCharABCWidthsI(GdiFont *font, UINT firstChar, UINT count, LPWORD pgi,
-			      LPABC buffer)
+static BOOL freetype_GetCharABCWidthsI( PHYSDEV dev, UINT firstChar, UINT count, LPWORD pgi, LPABC buffer )
 {
     static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
     UINT c;
     GLYPHMETRICS gm;
     FT_UInt glyph_index;
     GdiFont *linked_font;
+    struct freetype_physdev *physdev = get_freetype_dev( dev );
 
-    if(!FT_HAS_HORIZONTAL(font->ft_face))
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetCharABCWidthsI );
+        return dev->funcs->pGetCharABCWidthsI( dev, firstChar, count, pgi, buffer );
+    }
+
+    if(!FT_HAS_HORIZONTAL(physdev->font->ft_face))
         return FALSE;
 
     GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
 
-    get_glyph_index_linked(font, 'a', &linked_font, &glyph_index);
+    get_glyph_index_linked(physdev->font, 'a', &linked_font, &glyph_index);
     if (!pgi)
         for(c = firstChar; c < firstChar+count; c++) {
             get_glyph_outline(linked_font, c, GGO_METRICS | GGO_GLYPH_INDEX,
@@ -7094,7 +7099,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pGdiComment */
     NULL,                               /* pGdiRealizationInfo */
     freetype_GetCharABCWidths,          /* pGetCharABCWidths */
-    NULL,                               /* pGetCharABCWidthsI */
+    freetype_GetCharABCWidthsI,         /* pGetCharABCWidthsI */
     freetype_GetCharWidth,              /* pGetCharWidth */
     NULL,                               /* pGetDeviceCaps */
     NULL,                               /* pGetDeviceGammaRamp */
@@ -7224,13 +7229,6 @@ UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
 }
 
 BOOL WineEngGetCharABCWidthsFloat(GdiFont *font, UINT first, UINT last, LPABCFLOAT buffer)
-{
-    ERR("called but we don't have FreeType\n");
-    return FALSE;
-}
-
-BOOL WineEngGetCharABCWidthsI(GdiFont *font, UINT firstChar, UINT count, LPWORD pgi,
-			      LPABC buffer)
 {
     ERR("called but we don't have FreeType\n");
     return FALSE;

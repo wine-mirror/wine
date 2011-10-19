@@ -294,8 +294,6 @@ extern HANDLE WineEngAddFontMemResourceEx(PVOID, DWORD, PVOID, LPDWORD) DECLSPEC
 extern BOOL WineEngDestroyFontInstance(HFONT handle) DECLSPEC_HIDDEN;
 extern BOOL WineEngGetCharABCWidthsFloat(GdiFont *font, UINT firstChar,
                                          UINT lastChar, LPABCFLOAT buffer) DECLSPEC_HIDDEN;
-extern BOOL WineEngGetCharABCWidthsI(GdiFont *font, UINT firstChar,
-                                    UINT count, LPWORD pgi, LPABC buffer) DECLSPEC_HIDDEN;
 extern DWORD WineEngGetFontData(GdiFont*, DWORD, DWORD, LPVOID, DWORD) DECLSPEC_HIDDEN;
 extern DWORD WineEngGetFontUnicodeRanges(GdiFont *, LPGLYPHSET) DECLSPEC_HIDDEN;
 extern DWORD WineEngGetGlyphIndices(GdiFont *font, LPCWSTR lpstr, INT count,
