@@ -1612,23 +1612,19 @@ BOOL WINAPI GetCharWidth32W( HDC hdc, UINT firstChar, UINT lastChar,
 {
     UINT i;
     BOOL ret;
+    PHYSDEV dev;
     DC * dc = get_dc_ptr( hdc );
+
     if (!dc) return FALSE;
 
-    if (dc->gdiFont)
-        ret = WineEngGetCharWidth( dc->gdiFont, firstChar, lastChar, buffer );
-    else
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetCharWidth );
-        ret = physdev->funcs->pGetCharWidth( physdev, firstChar, lastChar, buffer);
-    }
+    dev = GET_DC_PHYSDEV( dc, pGetCharWidth );
+    ret = dev->funcs->pGetCharWidth( dev, firstChar, lastChar, buffer );
 
     if (ret)
     {
         /* convert device units to logical */
         for( i = firstChar; i <= lastChar; i++, buffer++ )
             *buffer = INTERNAL_XDSTOWS(dc, *buffer);
-        ret = TRUE;
     }
     release_dc_ptr( dc );
     return ret;
