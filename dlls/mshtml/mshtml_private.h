@@ -172,6 +172,7 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLWindow2) \
     XIID(IHTMLWindow3) \
     XIID(IHTMLWindow4) \
+    XIID(IHTMLWindow6) \
     XIID(IOmNavigator)
 
 typedef enum {
@@ -288,6 +289,7 @@ struct HTMLWindow {
     IHTMLWindow2       IHTMLWindow2_iface;
     IHTMLWindow3       IHTMLWindow3_iface;
     IHTMLWindow4       IHTMLWindow4_iface;
+    IHTMLWindow6       IHTMLWindow6_iface;
     IHTMLPrivateWindow IHTMLPrivateWindow_iface;
     IDispatchEx        IDispatchEx_iface;
     IServiceProvider   IServiceProvider_iface;
