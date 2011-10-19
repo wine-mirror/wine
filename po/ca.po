@@ -153,11 +153,11 @@ msgstr "Carpetas de Documents"
 
 #: comdlg32.rc:31 shell32.rc:200
 msgid "My Documents"
-msgstr "Els meus Documents"
+msgstr "Els meus documents"
 
 #: comdlg32.rc:32
 msgid "My Favorites"
-msgstr "Els meus Preferits"
+msgstr "Els meus preferits"
 
 #: comdlg32.rc:33
 msgid "System Path"
@@ -174,7 +174,7 @@ msgstr "Fonts"
 
 #: comdlg32.rc:36 shell32.rc:154 regedit.rc:200
 msgid "My Computer"
-msgstr "El meu Ordinador"
+msgstr "El meu ordinador"
 
 #: comdlg32.rc:41
 msgid "System Folders"
@@ -399,7 +399,7 @@ msgstr ""
 
 #: comdlg32.rc:151
 msgid "Select a font size between %d and %d points."
-msgstr "Seleccioneu una mida de font entre %d i %d punts."
+msgstr "Seleccioneu una mida de lletra entre %d i %d punts."
 
 #: comdlg32.rc:152 ieframe.rc:32
 msgid "&Save"
@@ -1365,7 +1365,7 @@ msgstr "Xifratge de Dades"
 
 #: crypt32.rc:228
 msgid "Key Agreement"
-msgstr "Accord de Clau"
+msgstr "Acord de Clau"
 
 #: crypt32.rc:229
 msgid "Certificate Signing"
@@ -2079,7 +2079,7 @@ msgstr "Í&ndex"
 
 #: hhctrl.rc:30 notepad.rc:52
 msgid "&Search"
-msgstr "Cerca"
+msgstr "&Cerca"
 
 #: hhctrl.rc:31
 msgid "Favor&ites"
@@ -5900,7 +5900,7 @@ msgstr "Copia fitxers de:"
 #: setupapi.rc:31
 msgid "Type the path where the file is located, and then click OK."
 msgstr ""
-"Introduïu la ruta en que es troba el fitxer i llavors feu clic en D'accord."
+"Introduïu la ruta en que es troba el fitxer i llavors feu clic en D'acord."
 
 #: shdoclc.rc:39
 msgid "F&orward"
@@ -6740,9 +6740,8 @@ msgid "Trash"
 msgstr "Paperera"
 
 #: shlwapi.rc:27
-#, fuzzy
 msgid "%d bytes"
-msgstr "%ld bytes"
+msgstr "%d bytes"
 
 #: shlwapi.rc:28
 msgctxt "time unit: hours"
@@ -7768,7 +7767,7 @@ msgstr "Digi&tal"
 
 #: clock.rc:32 notepad.rc:50 winefile.rc:64 wordpad.rc:81
 msgid "&Font..."
-msgstr "&Font..."
+msgstr "&Tipus de lletra..."
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -8714,7 +8713,7 @@ msgstr "%s      %s      %s      Recursos oberts: %lu\n"
 
 #: net.rc:44
 msgid "OK"
-msgstr "D'accord"
+msgstr "D'acord"
 
 #: net.rc:45
 msgid "Paused"
@@ -9438,7 +9437,7 @@ msgstr "&Copia Nom de Clau"
 
 #: regedit.rc:60 regedit.rc:112 wordpad.rc:50
 msgid "&Find...\tCtrl+F"
-msgstr "Cerca...\tCtrl+&F"
+msgstr "&Cerca...\tCtrl+&F"
 
 #: regedit.rc:61
 msgid "Find Ne&xt\tF3"
@@ -10446,7 +10445,7 @@ msgstr "Fitxer de tema (*.msstyles; *.theme)"
 
 #: winecfg.rc:44
 msgid "Select a theme file"
-msgstr "Seleccionar fitxer de tema"
+msgstr "Seleccioneu un fitxer de tema"
 
 #: winecfg.rc:45
 msgid "Folder"
@@ -10454,7 +10453,7 @@ msgstr "Carpeta"
 
 #: winecfg.rc:46
 msgid "Links to"
-msgstr "Vincula a"
+msgstr "Enllaça a"
 
 #: winecfg.rc:42
 msgid "Wine configuration for %s"
@@ -10490,19 +10489,19 @@ msgstr "Advertència: biblioteca de sistema"
 
 #: winecfg.rc:53
 msgid "native"
-msgstr "natiu"
+msgstr "nativa"
 
 #: winecfg.rc:54
 msgid "builtin"
-msgstr "incorporada"
+msgstr "interna"
 
 #: winecfg.rc:55
 msgid "native, builtin"
-msgstr "natiu, incorporada"
+msgstr "nativa, interna"
 
 #: winecfg.rc:56
 msgid "builtin, native"
-msgstr "incorporada, natiu"
+msgstr "interna, nativa"
 
 #: winecfg.rc:57
 msgid "disabled"
@@ -10522,7 +10521,7 @@ msgstr "Usar ajustaments globals"
 
 #: winecfg.rc:61
 msgid "Select an executable file"
-msgstr "Seleccioneu fitxer executable"
+msgstr "Seleccioneu un fitxer executable"
 
 #: winecfg.rc:66
 msgid "Hardware"
@@ -10939,11 +10938,11 @@ msgstr "&Quant al Gestor de Fixers de Wine..."
 
 #: winefile.rc:93
 msgid "Applying font settings"
-msgstr "Aplicant ajustaments de font"
+msgstr "Aplicant ajustaments de lletra"
 
 #: winefile.rc:94
 msgid "Error while selecting new font."
-msgstr "Error al seleccionar la nova font."
+msgstr "Error al seleccionar el nou tipus de lletra."
 
 #: winefile.rc:99
 msgid "Wine File Manager"
@@ -11401,59 +11400,50 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "Nombre de paràmetres invàlid - Useu xcopy /? per ajuda\n"
 
 #: xcopy.rc:28
-#, fuzzy
 msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
-msgstr "Paràmetre invàlida '%s' - Useu xcopy /? per ajuda\n"
+msgstr "Paràmetre invàlida '%1' - Useu xcopy /? per ajuda\n"
 
 #: xcopy.rc:29
 msgid "Press <enter> to begin copying\n"
 msgstr "Premeu <enter> per començar a copiar\n"
 
 #: xcopy.rc:30
-#, fuzzy
 msgid "%1!d! file(s) would be copied\n"
-msgstr "%d fitxer(s) es copiarian\n"
+msgstr "%1!d! fitxer(s) es copiarian\n"
 
 #: xcopy.rc:31
-#, fuzzy
 msgid "%1!d! file(s) copied\n"
-msgstr "%d fitxer(s) copiat(s)\n"
+msgstr "%1!d! fitxer(s) copiat(s)\n"
 
 #: xcopy.rc:34
-#, fuzzy
 msgid ""
 "Is '%1' a filename or directory\n"
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
-"És '%s' un nom de fitxer o un directori\n"
-"a la destinació?\n"
+"És '%1' un nom de fitxer o un\n"
+"directori a la destinació?\n"
 "(F - Fitxer, D - Directori)\n"
 
 #: xcopy.rc:35
-#, fuzzy
 msgid "%1? (Yes|No)\n"
-msgstr "%s? (Sí|No)\n"
+msgstr "%1? (Sí|No)\n"
 
 #: xcopy.rc:36
-#, fuzzy
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr "Sobreescriure %s? (Yes|No|All)\n"
+msgstr "Sobreescriure %1? (Yes|No|All)\n"
 
 #: xcopy.rc:37
-#, fuzzy
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr "La còpia de '%s' a '%s' ha fallat amb r/c %d\n"
+msgstr "La còpia de '%1' a '%2' ha fallat amb r/c %d\n"
 
 #: xcopy.rc:38
-#, fuzzy
 msgid "Failed to open '%1'\n"
-msgstr "S'ha fallat en obrir '%s'\n"
+msgstr "S'ha fallat en obrir '%1'\n"
 
 #: xcopy.rc:39
-#, fuzzy
 msgid "Failed during reading of '%1'\n"
-msgstr "S'ha fallat durant la lectura de '%s'\n"
+msgstr "S'ha fallat durant la lectura de '%1'\n"
 
 #: xcopy.rc:43
 msgctxt "File key"
