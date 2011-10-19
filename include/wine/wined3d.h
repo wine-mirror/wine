@@ -2295,7 +2295,7 @@ HRESULT __cdecl wined3d_device_set_depth_stencil(struct wined3d_device *device, 
 HRESULT __cdecl wined3d_device_set_dialog_box_mode(struct wined3d_device *device, BOOL enable_dialogs);
 HRESULT __cdecl wined3d_device_set_display_mode(struct wined3d_device *device,
         UINT swapchain_idx, const WINED3DDISPLAYMODE *mode);
-void __cdecl wined3d_device_set_gamma_ramp(struct wined3d_device *device,
+void __cdecl wined3d_device_set_gamma_ramp(const struct wined3d_device *device,
         UINT swapchain_idx, DWORD flags, const WINED3DGAMMARAMP *ramp);
 HRESULT __cdecl wined3d_device_set_index_buffer(struct wined3d_device *device,
         struct wined3d_buffer *index_buffer, enum wined3d_format_id format_id);
