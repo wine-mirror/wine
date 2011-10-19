@@ -57,6 +57,29 @@ static RECT get_device_rect( HDC hdc, int left, int top, int right, int bottom, 
 }
 
 /***********************************************************************
+ *           dibdrv_GetPixel
+ */
+COLORREF dibdrv_GetPixel( PHYSDEV dev, INT x, INT y )
+{
+    dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
+    POINT pt;
+    DWORD pixel;
+
+    TRACE( "(%p, %d, %d)\n", dev, x, y );
+
+    pt.x = x;
+    pt.y = y;
+    LPtoDP( dev->hdc, &pt, 1 );
+
+    if (pt.x < 0 || pt.x >= pdev->dib.width ||
+        pt.y < 0 || pt.y >= pdev->dib.height)
+        return CLR_INVALID;
+
+    pixel = pdev->dib.funcs->get_pixel( &pdev->dib, &pt );
+    return pdev->dib.funcs->pixel_to_colorref( &pdev->dib, pixel );
+}
+
+/***********************************************************************
  *           dibdrv_LineTo
  */
 BOOL dibdrv_LineTo( PHYSDEV dev, INT x, INT y )

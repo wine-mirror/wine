@@ -554,7 +554,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pGetICMProfile */
     dibdrv_GetImage,                    /* pGetImage */
     NULL,                               /* pGetNearestColor */
-    NULL,                               /* pGetPixel */
+    dibdrv_GetPixel,                    /* pGetPixel */
     NULL,                               /* pGetPixelFormat */
     NULL,                               /* pGetSystemPaletteEntries */
     NULL,                               /* pGetTextExtentExPoint */
