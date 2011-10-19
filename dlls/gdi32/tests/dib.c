@@ -1990,11 +1990,22 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     for (i = 0; i < 256; i++)
     {
-        COLORREF s;
+        COLORREF s, g;
         s = SetPixel( hdc, i * 2, 10, DIBINDEX(i) );
+        g = GetPixel( hdc, i * 2, 10 );
+        ok( s == g, "got %08x and %08x\n", s, g );
+
         s = SetPixel( hdc, i * 2, 20, PALETTEINDEX(i) );
+        g = GetPixel( hdc, i * 2, 20 );
+        ok( s == g, "got %08x and %08x\n", s, g );
+
         s = SetPixel( hdc, i * 2, 30, RGB( (i & 0x07) << 5, (i & 0x38) << 2, i & 0xc0 ) );
+        g = GetPixel( hdc, i * 2, 30 );
+        ok( s == g, "got %08x and %08x\n", s, g );
+
         s = SetPixel( hdc, i * 2, 40, PALETTERGB( (i & 0x07) << 5, (i & 0x38) << 2, i & 0xc0 ) );
+        g = GetPixel( hdc, i * 2, 40 );
+        ok( s == g, "got %08x and %08x\n", s, g );
     }
 
     compare_hash(bmi, bits, sha1, "SetPixel");
