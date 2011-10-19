@@ -131,6 +131,7 @@ static const char *sha1_graphics_a8r8g8b8[] =
     "af99228aa4cfbd1f61bd824db046144a3c6c2ed7",
     "568f87f0194ca19b69a5b2bcdef795d89c5721ce",
     "257d114354a93e681225072bcde756f155b70496",
+    "0cdf6fee6721d60d5d5ed26b1989eacddc16b14e",
     NULL
 };
 
@@ -189,6 +190,7 @@ static const char *sha1_graphics_a8b8g8r8[] =
     "af99228aa4cfbd1f61bd824db046144a3c6c2ed7",
     "25675c30adfe24d6cae60793b156dfdaa36ac3ba",
     "2c4f116451b571106beba8b85da8e4b923937246",
+    "9c8f3063504a81bbbfa8558e111c63d8bc36dbbf",
     NULL
 };
 
@@ -247,6 +249,7 @@ static const char *sha1_graphics_r10g10b10[] =
     "36f6db4fbe2a1630a7597d3a446f2902755c96ef",
     "d3f08946300e1700865042aed121870e292d1095",
     "abb56db94becb64d663b51f0ea6b4bd535a88ba0",
+    "3a81fe558c69ca0aea7e7191771ed86cf4321a5a",
     NULL
 };
 
@@ -305,6 +308,7 @@ static const char *sha1_graphics_r6g6b6[] =
     "325279e76367200d3fd7194d81c09fd139988ece",
     "c3def160a1e847605ff0fc7edd30397fa90635a0",
     "50acb1597c4d53ad63225376d2aa36f64e8a229d",
+    "796fd861474aa7861bd0384127df755458757ec3",
     NULL
 };
 
@@ -363,6 +367,7 @@ static const char *sha1_graphics_24[] =
     "d347ca5c6c4b6a61389247c3b6f61564033e8c25",
     "ee315634ed92da3a32c2675ecd1b369471c60936",
     "3491e2bd81e70dd203c8551cc2d39b19401caafe",
+    "826de85271b67a11e7bd1a6596b58a045a96b69e",
     NULL
 };
 
@@ -425,6 +430,7 @@ static const char *sha1_graphics_r5g5b5[] =
     "dab47c9dc149e570045d699598b14a613bf319b3",
     "2daca4d26a086ed34894693be0b0374402232809",
     "bf0e0b74ce5686b73c527843e0d0df0cd10efefe",
+    "517e32a8c0312b5676d498583ea092b0f198f2bc",
     NULL
 };
 
@@ -482,6 +488,7 @@ static const char *sha1_graphics_r4g4b4[] =
     "07b10c3f191d0a93e5e5694aae37dcad407e10f5",
     "f7900e60347029876ba55e8f0c4c02e89deb36b6",
     "734d4a7836891d729f4a9ec6916ead78eecb2596",
+    "d8ba2e556fd64c9c2f1746496e6e7dd7a487cd6d",
     NULL
 };
 
@@ -545,6 +552,7 @@ static const char *sha1_graphics_8_color[] =
     "678979a45126a76eb629992cd64734862f53a555",
     "2f7ba8803604c032cb1a1228bc021f0f1c03e245",
     "0204f06422a01787f7379d0edb51104bb023758a",
+    "1f9a21eba2f2ce87768a5618d9cfefa7e48fb386",
     NULL
 };
 
@@ -613,6 +621,7 @@ static const char *sha1_graphics_8_grayscale[] =
     "09640bad951c33e7d70a1fced83b1869f65b3fc5",
     "cb9ea8137eca1450e049879772f5c11a0e11ff0a",
     "a05e05b2e6e515baa59ea032d063ca11e70a72b5",
+    "d908c86b7301666a8d7999b831841115a4938181",
     NULL
 };
 
@@ -674,6 +683,7 @@ static const char *sha1_graphics_8[] =
     "465d9cd0a77ab4fcf035aa67544b2a26269e0b09",
     "600d6b2713d5e4c0d90c02660245ed26c7ae3033",
     "963d1fa8608c8b743e972eb9a4e9f3fc53c6c7e8",
+    "ba49de83c4668fb08956221f465b93e7dd6a3383",
     NULL
 };
 
@@ -731,6 +741,7 @@ static const char *sha1_graphics_4[] =
     "d8af3868c66c7d6dac35ec8ee0317b38a6910bb1",
     "ec8e2aebfb4a1c28ebcd0e053b9e4d8638b50951",
     "da401c745421f6bdfaefd590ab99dee948dce412",
+    "38a3b6edcba2a1fba6064f0b4d771aedae7f4673",
     NULL
 };
 
@@ -788,6 +799,7 @@ static const char *sha1_graphics_4_grayscale[] =
     "b5ee51cfc73acb59a2f6124509ea236f8fc7f9f7",
     "d374d4d92c940ae42a9b42c14d744341b68a8c14",
     "25ec9fd2eeb1514ba4e0458a444149a5456cf63a",
+    "2e4dc1e859350289575ffc2a47cd0033efca6c32",
     NULL
 };
 
@@ -860,6 +872,7 @@ static const char *sha1_graphics_1[] =
     "88763f8e8fcf4f78fa864325791a9dd35a0bd279",
     "013cee26bac8f815eadad4bfc012d9b5d01c3b7f",
     "6b2cb2346b5820bdd0251cd6a4aeb5c22ee82e85",
+    "6c4640b17e072efc682044c499e5a4f3481b7c87",
     NULL
 };
 
@@ -1973,6 +1986,18 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     solid_patblt( hdc, 10, 50, 1, 1, PALETTERGB( 0xff, 0, 0 ) );
 
     compare_hash(bmi, bits, sha1, "Colors");
+    memset(bits, 0xcc, dib_size);
+
+    for (i = 0; i < 256; i++)
+    {
+        COLORREF s;
+        s = SetPixel( hdc, i * 2, 10, DIBINDEX(i) );
+        s = SetPixel( hdc, i * 2, 20, PALETTEINDEX(i) );
+        s = SetPixel( hdc, i * 2, 30, RGB( (i & 0x07) << 5, (i & 0x38) << 2, i & 0xc0 ) );
+        s = SetPixel( hdc, i * 2, 40, PALETTERGB( (i & 0x07) << 5, (i & 0x38) << 2, i & 0xc0 ) );
+    }
+
+    compare_hash(bmi, bits, sha1, "SetPixel");
     memset(bits, 0xcc, dib_size);
 
     SelectObject(hdc, orig_brush);
