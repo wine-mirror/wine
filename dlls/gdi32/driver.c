@@ -276,7 +276,7 @@ static INT nulldrv_EndPage( PHYSDEV dev )
 
 static BOOL nulldrv_EnumDeviceFonts( PHYSDEV dev, LOGFONTW *logfont, FONTENUMPROCW proc, LPARAM lParam )
 {
-    return FALSE;
+    return TRUE;
 }
 
 static INT nulldrv_EnumICMProfiles( PHYSDEV dev, ICMENUMPROCW func, LPARAM lparam )

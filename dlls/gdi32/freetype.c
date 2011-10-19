@@ -4584,10 +4584,9 @@ static BOOL enum_face_charsets(Face *face, struct enum_charset_list *list,
 }
 
 /*************************************************************
- * WineEngEnumFonts
- *
+ * freetype_EnumDeviceFonts
  */
-DWORD WineEngEnumFonts(LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam)
+static BOOL freetype_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam )
 {
     Family *family;
     Face *face;
@@ -4627,7 +4626,7 @@ DWORD WineEngEnumFonts(LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam)
                 LIST_FOR_EACH(face_elem_ptr, &family->faces) {
                     face = LIST_ENTRY(face_elem_ptr, Face, entry);
                     if (!face_matches(face, plf)) continue;
-                    if (!enum_face_charsets(face, &enum_charsets, proc, lparam)) return 0;
+                    if (!enum_face_charsets(face, &enum_charsets, proc, lparam)) return FALSE;
 		}
 	    }
 	}
@@ -4636,11 +4635,11 @@ DWORD WineEngEnumFonts(LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam)
             family = LIST_ENTRY(family_elem_ptr, Family, entry);
             face_elem_ptr = list_head(&family->faces);
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
-            if (!enum_face_charsets(face, &enum_charsets, proc, lparam)) return 0;
+            if (!enum_face_charsets(face, &enum_charsets, proc, lparam)) return FALSE;
 	}
     }
     LeaveCriticalSection( &freetype_cs );
-    return 1;
+    return TRUE;
 }
 
 static void FTVectorToPOINTFX(FT_Vector *vec, POINTFX *pt)
@@ -7074,7 +7073,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pEndDoc */
     NULL,                               /* pEndPage */
     NULL,                               /* pEndPath */
-    NULL,                               /* pEnumDeviceFonts */
+    freetype_EnumDeviceFonts,           /* pEnumDeviceFonts */
     NULL,                               /* pEnumICMProfiles */
     NULL,                               /* pExcludeClipRect */
     NULL,                               /* pExtDeviceMode */
@@ -7183,11 +7182,6 @@ BOOL WineEngInit(void)
 BOOL WineEngDestroyFontInstance(HFONT hfont)
 {
     return FALSE;
-}
-
-DWORD WineEngEnumFonts(LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lparam)
-{
-    return 1;
 }
 
 DWORD WineEngGetGlyphIndices(GdiFont *font, LPCWSTR lpstr, INT count,

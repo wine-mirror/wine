@@ -428,12 +428,16 @@ static UINT PSDRV_GetFontMetric(HDC hdc, const AFM *afm,
 BOOL PSDRV_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lp )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pEnumDeviceFonts );
     ENUMLOGFONTEXW	lf;
     NEWTEXTMETRICEXW	tm;
-    BOOL	  	b, bRet = 0;
+    BOOL	  	ret;
     AFMLISTENTRY	*afmle;
     FONTFAMILY		*family;
     char                FaceName[LF_FACESIZE];
+
+    ret = next->funcs->pEnumDeviceFonts( next, plf, proc, lp );
+    if (!ret) return FALSE;
 
     if( plf && plf->lfFaceName[0] ) {
         WideCharToMultiByte(CP_ACP, 0, plf->lfFaceName, -1,
@@ -450,9 +454,8 @@ BOOL PSDRV_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPA
 
 	        TRACE("Got '%s'\n", afmle->afm->FontName);
 	        fm = PSDRV_GetFontMetric( dev->hdc, afmle->afm, &tm, &lf );
-		if( (b = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm, fm, lp )) )
-		     bRet = b;
-		else break;
+		if (!(ret = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm, fm, lp )))
+                    break;
 	    }
 	}
     } else {
@@ -464,10 +467,9 @@ BOOL PSDRV_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPA
 	    afmle = family->afmlist;
 	    TRACE("Got '%s'\n", afmle->afm->FontName);
 	    fm = PSDRV_GetFontMetric( dev->hdc, afmle->afm, &tm, &lf );
-	    if( (b = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm, fm, lp )) )
-	        bRet = b;
-	    else break;
+	    if (!(ret = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm, fm, lp )))
+                break;
 	}
     }
-    return bRet;
+    return ret;
 }

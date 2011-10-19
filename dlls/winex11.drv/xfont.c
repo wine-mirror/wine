@@ -3326,14 +3326,18 @@ HFONT X11DRV_SelectFont( PHYSDEV dev, HFONT hfont )
 BOOL X11DRV_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LPARAM lp )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pEnumDeviceFonts );
     ENUMLOGFONTEXW	lf;
     NEWTEXTMETRICEXW	tm;
     fontResource*	pfr = fontList;
-    BOOL	  	b, bRet = 0;
+    BOOL	  	ret;
     LOGFONTW lfW;
 
+    ret = next->funcs->pEnumDeviceFonts( next, plf, proc, lp );
+    if (!ret) return FALSE;
+
     /* don't enumerate x11 fonts if we're using client side fonts */
-    if (physDev->has_gdi_font) return FALSE;
+    if (physDev->has_gdi_font) return ret;
 
     if (!plf)
     {
@@ -3362,9 +3366,8 @@ BOOL X11DRV_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LP
 		   plf->lfCharSet == pfi->df.dfCharSet) {
 		    UINT xfm = XFONT_GetFontMetric( pfi, &lf, &tm );
 
-		    if( (b = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm, xfm, lp )) )
-		        bRet = b;
-		    else break;
+		    if (!(ret = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm, xfm, lp )))
+                        break;
 		}
 	    }
 	}
@@ -3376,12 +3379,11 @@ BOOL X11DRV_EnumDeviceFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc, LP
             {
 	        UINT xfm = XFONT_GetFontMetric( pfr->fi, &lf, &tm );
 
-	        if( (b = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm, xfm, lp )) )
-		    bRet = b;
-		else break;
+	        if (!(ret = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm, xfm, lp )))
+                    break;
             }
 	}
-    return bRet;
+    return ret;
 }
 
 

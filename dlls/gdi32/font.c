@@ -100,23 +100,20 @@ static const struct gdi_obj_funcs font_funcs =
     FONT_DeleteObject   /* pDeleteObject */
 };
 
-#define ENUM_UNICODE	0x00000001
-#define ENUM_CALLED     0x00000002
-
 typedef struct
 {
     GDIOBJHDR   header;
     LOGFONTW    logfont;
 } FONTOBJ;
 
-typedef struct
+struct font_enum
 {
   LPLOGFONTW          lpLogFontParam;
   FONTENUMPROCW       lpEnumFunc;
   LPARAM              lpData;
-  DWORD               dwFlags;
+  BOOL                unicode;
   HDC                 hdc;
-} fontEnum32;
+};
 
 /*
  *  For TranslateCharsetInfo
@@ -613,7 +610,7 @@ static BOOL FONT_DeleteObject( HGDIOBJ handle )
 static INT CALLBACK FONT_EnumInstance( const LOGFONTW *plf, const TEXTMETRICW *ptm,
                                        DWORD fType, LPARAM lp )
 {
-    fontEnum32 *pfe = (fontEnum32*)lp;
+    struct font_enum *pfe = (struct font_enum *)lp;
     INT ret = 1;
 
     /* lfCharSet is at the same offset in both LOGFONTA and LOGFONTW */
@@ -626,15 +623,13 @@ static INT CALLBACK FONT_EnumInstance( const LOGFONTW *plf, const TEXTMETRICW *p
         ENUMLOGFONTEXA logfont;
         NEWTEXTMETRICEXA tmA;
 
-        pfe->dwFlags |= ENUM_CALLED;
-        if (!(pfe->dwFlags & ENUM_UNICODE))
+        if (!pfe->unicode)
         {
             FONT_EnumLogFontExWToA( (const ENUMLOGFONTEXW *)plf, &logfont);
             FONT_NewTextMetricExWToA( (const NEWTEXTMETRICEXW *)ptm, &tmA );
             plf = (LOGFONTW *)&logfont.elfLogFont;
             ptm = (TEXTMETRICW *)&tmA;
         }
-
         ret = pfe->lpEnumFunc( plf, ptm, fType, pfe->lpData );
     }
     return ret;
@@ -643,37 +638,24 @@ static INT CALLBACK FONT_EnumInstance( const LOGFONTW *plf, const TEXTMETRICW *p
 /***********************************************************************
  *		FONT_EnumFontFamiliesEx
  */
-static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf,
-				    FONTENUMPROCW efproc,
-				    LPARAM lParam, DWORD dwUnicode)
+static INT FONT_EnumFontFamiliesEx( HDC hDC, LPLOGFONTW plf, FONTENUMPROCW efproc,
+                                    LPARAM lParam, BOOL unicode )
 {
-    INT ret = 1, ret2;
+    INT ret = 0;
     DC *dc = get_dc_ptr( hDC );
-    fontEnum32 fe32;
-    BOOL enum_gdi_fonts;
+    struct font_enum fe;
 
-    if (!dc) return 0;
-
-    if (plf)
-        TRACE("lfFaceName = %s lfCharset = %d\n", debugstr_w(plf->lfFaceName),
-	    plf->lfCharSet);
-    fe32.lpLogFontParam = plf;
-    fe32.lpEnumFunc = efproc;
-    fe32.lpData = lParam;
-    fe32.dwFlags = dwUnicode;
-    fe32.hdc = hDC;
-
-    enum_gdi_fonts = GetDeviceCaps(hDC, TEXTCAPS) & TC_VA_ABLE;
-
-    if (enum_gdi_fonts)
-        ret = WineEngEnumFonts( plf, FONT_EnumInstance, (LPARAM)&fe32 );
-    fe32.dwFlags &= ~ENUM_CALLED;
-    if (ret)
+    if (dc)
     {
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pEnumDeviceFonts );
-	ret2 = physdev->funcs->pEnumDeviceFonts( physdev, plf, FONT_EnumInstance, (LPARAM)&fe32 );
-	if(fe32.dwFlags & ENUM_CALLED) /* update ret iff a font gets enumed */
-	    ret = ret2;
+
+        if (plf) TRACE("lfFaceName = %s lfCharset = %d\n", debugstr_w(plf->lfFaceName), plf->lfCharSet);
+        fe.lpLogFontParam = plf;
+        fe.lpEnumFunc = efproc;
+        fe.lpData = lParam;
+        fe.unicode = unicode;
+        fe.hdc = hDC;
+	ret = physdev->funcs->pEnumDeviceFonts( physdev, plf, FONT_EnumInstance, (LPARAM)&fe );
     }
     release_dc_ptr( dc );
     return ret;
@@ -686,7 +668,7 @@ INT WINAPI EnumFontFamiliesExW( HDC hDC, LPLOGFONTW plf,
                                     FONTENUMPROCW efproc,
                                     LPARAM lParam, DWORD dwFlags )
 {
-    return  FONT_EnumFontFamiliesEx( hDC, plf, efproc, lParam, ENUM_UNICODE );
+    return FONT_EnumFontFamiliesEx( hDC, plf, efproc, lParam, TRUE );
 }
 
 /***********************************************************************
@@ -705,7 +687,7 @@ INT WINAPI EnumFontFamiliesExA( HDC hDC, LPLOGFONTA plf,
     }
     else plfW = NULL;
 
-    return FONT_EnumFontFamiliesEx( hDC, plfW, (FONTENUMPROCW)efproc, lParam, 0);
+    return FONT_EnumFontFamiliesEx( hDC, plfW, (FONTENUMPROCW)efproc, lParam, FALSE );
 }
 
 /***********************************************************************
