@@ -5789,6 +5789,9 @@ static void surface_load_sysmem(struct wined3d_surface *surface,
 {
     surface_prepare_system_memory(surface);
 
+    if (surface->flags & (SFLAG_INRB_MULTISAMPLE | SFLAG_INRB_RESOLVED))
+        surface_load_location(surface, SFLAG_INTEXTURE, NULL);
+
     /* Download the surface to system memory. */
     if (surface->flags & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX))
     {
@@ -5941,6 +5944,22 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         else
             surface_blt_fbo(device, WINED3DTEXF_POINT, surface, SFLAG_INSRGBTEX,
                     &src_rect, surface, SFLAG_INTEXTURE, &src_rect);
+
+        return WINED3D_OK;
+    }
+
+    if (surface->flags & (SFLAG_INRB_MULTISAMPLE | SFLAG_INRB_RESOLVED)
+            && (surface->resource.format->flags & attach_flags) == attach_flags
+            && fbo_blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
+                NULL, surface->resource.usage, surface->resource.pool, surface->resource.format,
+                NULL, surface->resource.usage, surface->resource.pool, surface->resource.format))
+    {
+        DWORD src_location = surface->flags & SFLAG_INRB_RESOLVED ? SFLAG_INRB_RESOLVED : SFLAG_INRB_MULTISAMPLE;
+        DWORD dst_location = srgb ? SFLAG_INSRGBTEX : SFLAG_INTEXTURE;
+        RECT rect = {0, 0, surface->resource.width, surface->resource.height};
+
+        surface_blt_fbo(device, WINED3DTEXF_POINT, surface, src_location,
+                &rect, surface, dst_location, &rect);
 
         return WINED3D_OK;
     }
