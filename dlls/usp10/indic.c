@@ -86,7 +86,7 @@ static INT consonant_header(LPCWSTR input, INT cChar, INT start, INT next,
     next++;
     if ((next < cChar) && lex(input[next]) == lex_Nukta)
             next++;
-    if (lex(input[next])==lex_Halant)
+    if ((next < cChar) && lex(input[next])==lex_Halant)
     {
         next++;
         if((next < cChar) && is_joiner( lex(input[next]) ))
@@ -94,7 +94,7 @@ static INT consonant_header(LPCWSTR input, INT cChar, INT start, INT next,
         if ((next < cChar) && is_consonant( lex(input[next]) ))
             return next;
     }
-    else if (is_joiner( lex(input[next]) ) && lex(input[next+1])==lex_Halant)
+    else if ((next < cChar) && is_joiner( lex(input[next]) ) && lex(input[next+1])==lex_Halant)
     {
         next+=2;
         if ((next < cChar) && is_consonant( lex(input[next]) ))
@@ -163,7 +163,7 @@ static INT parse_vowel_syllable(LPCWSTR input, INT cChar, INT start,
     else if ((next < cChar) && lex(input[next])==lex_ZWJ && is_consonant( lex(input[next+1]) ))
         next+=2;
 
-    if (is_matra( lex(input[next]) ))
+    if ((next < cChar) && is_matra( lex(input[next]) ))
     {
         while((next < cChar) && is_matra( lex(input[next]) ))
             next++;
