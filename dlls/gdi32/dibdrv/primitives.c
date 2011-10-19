@@ -1132,6 +1132,37 @@ static inline RGBQUAD colortable_entry(const dib_info *dib, DWORD index)
     return default_rgb;
 }
 
+static COLORREF pixel_to_colorref_888(const dib_info *dib, DWORD pixel)
+{
+    return ( ((pixel >> 16) & 0xff) | (pixel & 0xff00) | ((pixel << 16) & 0xff0000) );
+}
+
+static COLORREF pixel_to_colorref_masks(const dib_info *dib, DWORD pixel)
+{
+    return RGB( get_field( pixel, dib->red_shift,   dib->red_len ),
+                get_field( pixel, dib->green_shift, dib->green_len ),
+                get_field( pixel, dib->blue_shift,  dib->blue_len ) );
+}
+
+static COLORREF pixel_to_colorref_555(const dib_info *dib, DWORD pixel)
+{
+    return RGB( ((pixel >> 7) & 0xf8) | ((pixel >> 12) & 0x07),
+                ((pixel >> 2) & 0xf8) | ((pixel >>  7) & 0x07),
+                ((pixel << 3) & 0xf8) | ((pixel >>  2) & 0x07) );
+}
+
+static COLORREF pixel_to_colorref_colortable(const dib_info *dib, DWORD pixel)
+{
+    RGBQUAD quad = colortable_entry( dib, pixel );
+
+    return RGB( quad.rgbRed, quad.rgbGreen, quad.rgbBlue );
+}
+
+static COLORREF pixel_to_colorref_null(const dib_info *dib, DWORD pixel)
+{
+    return 0;
+}
+
 static inline BOOL bit_fields_match(const dib_info *d1, const dib_info *d2)
 {
     assert( d1->bit_count > 8 && d1->bit_count == d2->bit_count );
@@ -4320,6 +4351,7 @@ const primitive_funcs funcs_8888 =
     copy_rect_32,
     blend_rect_8888,
     colorref_to_pixel_888,
+    pixel_to_colorref_888,
     convert_to_8888,
     create_rop_masks_32,
     stretch_row_32,
@@ -4333,6 +4365,7 @@ const primitive_funcs funcs_32 =
     copy_rect_32,
     blend_rect_32,
     colorref_to_pixel_masks,
+    pixel_to_colorref_masks,
     convert_to_32,
     create_rop_masks_32,
     stretch_row_32,
@@ -4346,6 +4379,7 @@ const primitive_funcs funcs_24 =
     copy_rect_24,
     blend_rect_24,
     colorref_to_pixel_888,
+    pixel_to_colorref_888,
     convert_to_24,
     create_rop_masks_24,
     stretch_row_24,
@@ -4359,6 +4393,7 @@ const primitive_funcs funcs_555 =
     copy_rect_16,
     blend_rect_555,
     colorref_to_pixel_555,
+    pixel_to_colorref_555,
     convert_to_555,
     create_rop_masks_16,
     stretch_row_16,
@@ -4372,6 +4407,7 @@ const primitive_funcs funcs_16 =
     copy_rect_16,
     blend_rect_16,
     colorref_to_pixel_masks,
+    pixel_to_colorref_masks,
     convert_to_16,
     create_rop_masks_16,
     stretch_row_16,
@@ -4385,6 +4421,7 @@ const primitive_funcs funcs_8 =
     copy_rect_8,
     blend_rect_8,
     colorref_to_pixel_colortable,
+    pixel_to_colorref_colortable,
     convert_to_8,
     create_rop_masks_8,
     stretch_row_8,
@@ -4398,6 +4435,7 @@ const primitive_funcs funcs_4 =
     copy_rect_4,
     blend_rect_4,
     colorref_to_pixel_colortable,
+    pixel_to_colorref_colortable,
     convert_to_4,
     create_rop_masks_4,
     stretch_row_4,
@@ -4411,6 +4449,7 @@ const primitive_funcs funcs_1 =
     copy_rect_1,
     blend_rect_1,
     colorref_to_pixel_colortable,
+    pixel_to_colorref_colortable,
     convert_to_1,
     create_rop_masks_1,
     stretch_row_1,
@@ -4424,6 +4463,7 @@ const primitive_funcs funcs_null =
     copy_rect_null,
     blend_rect_null,
     colorref_to_pixel_null,
+    pixel_to_colorref_null,
     convert_to_null,
     create_rop_masks_null,
     stretch_row_null,
