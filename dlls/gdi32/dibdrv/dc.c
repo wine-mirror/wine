@@ -323,8 +323,8 @@ DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
 
 static void update_fg_colors( dibdrv_physdev *pdev )
 {
-    pdev->pen_color   = get_fg_color( pdev, pdev->pen_colorref );
-    pdev->brush_color = get_fg_color( pdev, pdev->brush_colorref );
+    pdev->pen_color   = get_pixel_color( pdev, pdev->pen_colorref,   TRUE );
+    pdev->brush_color = get_pixel_color( pdev, pdev->brush_colorref, TRUE );
 }
 
 static void update_masks( dibdrv_physdev *pdev, INT rop )
@@ -427,7 +427,7 @@ static COLORREF dibdrv_SetBkColor( PHYSDEV dev, COLORREF color )
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetBkColor );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
 
-    pdev->bkgnd_color = pdev->dib.funcs->colorref_to_pixel( &pdev->dib, color );
+    pdev->bkgnd_color = get_pixel_color( pdev, color, FALSE );
 
     if( GetBkMode(dev->hdc) == OPAQUE )
         calc_and_xor_masks( GetROP2(dev->hdc), pdev->bkgnd_color, &pdev->bkgnd_and, &pdev->bkgnd_xor );
@@ -488,7 +488,7 @@ static UINT dibdrv_SetDIBColorTable( PHYSDEV dev, UINT pos, UINT count, const RG
         if( pos + count > pdev->dib.color_table_size ) count = pdev->dib.color_table_size - pos;
         memcpy( pdev->dib.color_table + pos, colors, count * sizeof(RGBQUAD) );
 
-        pdev->bkgnd_color = pdev->dib.funcs->colorref_to_pixel( &pdev->dib, GetBkColor( dev->hdc ) );
+        pdev->bkgnd_color = get_pixel_color( pdev, GetBkColor( dev->hdc ), FALSE );
         update_fg_colors( pdev );
 
         update_masks( pdev, GetROP2( dev->hdc ) );

@@ -124,7 +124,7 @@ static inline BOOL rgbquad_equal(const RGBQUAD *a, const RGBQUAD *b)
 }
 
 /******************************************************************
- *                   get_fg_color
+ *                   get_pixel_color
  *
  * 1 bit bitmaps map the fg/bg colors as follows:
  * If the fg colorref exactly matches one of the color table entries then
@@ -132,20 +132,20 @@ static inline BOOL rgbquad_equal(const RGBQUAD *a, const RGBQUAD *b)
  * Otherwise the bg color is mapped to the closest entry in the table and
  * the fg takes the other one.
  */
-DWORD get_fg_color( dibdrv_physdev *pdev, COLORREF fg )
+DWORD get_pixel_color( dibdrv_physdev *pdev, COLORREF color, BOOL mono_fixup )
 {
     RGBQUAD fg_quad;
 
-    if(pdev->dib.bit_count != 1)
-        return pdev->dib.funcs->colorref_to_pixel( &pdev->dib, fg );
+    if (pdev->dib.bit_count != 1 || !mono_fixup)
+        return pdev->dib.funcs->colorref_to_pixel( &pdev->dib, color );
 
-    fg_quad = rgbquad_from_colorref( fg );
+    fg_quad = rgbquad_from_colorref( color );
     if(rgbquad_equal(&fg_quad, pdev->dib.color_table))
         return 0;
     if(rgbquad_equal(&fg_quad, pdev->dib.color_table + 1))
         return 1;
 
-    if(fg == GetBkColor(pdev->dev.hdc)) return pdev->bkgnd_color;
+    if(color == GetBkColor(pdev->dev.hdc)) return pdev->bkgnd_color;
     else return pdev->bkgnd_color ? 0 : 1;
 }
 
@@ -987,7 +987,7 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
         logpen.lopnColor = GetDCPenColor( dev->hdc );
 
     pdev->pen_colorref = logpen.lopnColor;
-    pdev->pen_color = get_fg_color( pdev, pdev->pen_colorref );
+    pdev->pen_color = get_pixel_color( pdev, pdev->pen_colorref, TRUE );
     calc_and_xor_masks(GetROP2(dev->hdc), pdev->pen_color, &pdev->pen_and, &pdev->pen_xor);
 
     pdev->pen_pattern = dash_patterns[PS_SOLID];
@@ -1039,7 +1039,7 @@ COLORREF dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
     if (GetCurrentObject(dev->hdc, OBJ_PEN) == GetStockObject( DC_PEN ))
     {
         pdev->pen_colorref = color;
-        pdev->pen_color = get_fg_color( pdev, pdev->pen_colorref );
+        pdev->pen_color = get_pixel_color( pdev, pdev->pen_colorref, TRUE );
         calc_and_xor_masks(GetROP2(dev->hdc), pdev->pen_color, &pdev->pen_and, &pdev->pen_xor);
     }
 
@@ -1311,7 +1311,7 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
     {
     case BS_SOLID:
         pdev->brush_colorref = logbrush.lbColor;
-        pdev->brush_color = get_fg_color( pdev, pdev->brush_colorref );
+        pdev->brush_color = get_pixel_color( pdev, pdev->brush_colorref, TRUE );
         calc_and_xor_masks(GetROP2(dev->hdc), pdev->brush_color, &pdev->brush_and, &pdev->brush_xor);
         pdev->brush_rects = solid_brush;
         pdev->defer &= ~DEFER_BRUSH;
@@ -1363,7 +1363,7 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
         if(logbrush.lbHatch > HS_DIAGCROSS) return 0;
         pdev->brush_hatch = logbrush.lbHatch;
         pdev->brush_colorref = logbrush.lbColor;
-        pdev->brush_color = get_fg_color( pdev, pdev->brush_colorref );
+        pdev->brush_color = get_pixel_color( pdev, pdev->brush_colorref, TRUE );
         calc_and_xor_masks(GetROP2(dev->hdc), pdev->brush_color, &pdev->brush_and, &pdev->brush_xor);
         pdev->brush_rects = pattern_brush;
         pdev->defer &= ~DEFER_BRUSH;
@@ -1388,7 +1388,7 @@ COLORREF dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color )
     if (GetCurrentObject(dev->hdc, OBJ_BRUSH) == GetStockObject( DC_BRUSH ))
     {
         pdev->brush_colorref = color;
-        pdev->brush_color = get_fg_color( pdev, pdev->brush_colorref );
+        pdev->brush_color = get_pixel_color( pdev, pdev->brush_colorref, TRUE );
         calc_and_xor_masks(GetROP2(dev->hdc), pdev->brush_color, &pdev->brush_and, &pdev->brush_xor);
     }
 
