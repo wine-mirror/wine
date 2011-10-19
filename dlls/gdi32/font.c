@@ -3049,6 +3049,8 @@ BOOL WINAPI GetCharABCWidthsFloatA( HDC hdc, UINT first, UINT last, LPABCFLOAT a
 BOOL WINAPI GetCharABCWidthsFloatW( HDC hdc, UINT first, UINT last, LPABCFLOAT abcf )
 {
     UINT i;
+    ABC *abc;
+    PHYSDEV dev;
     BOOL ret = FALSE;
     DC *dc = get_dc_ptr( hdc );
 
@@ -3056,28 +3058,24 @@ BOOL WINAPI GetCharABCWidthsFloatW( HDC hdc, UINT first, UINT last, LPABCFLOAT a
 
     if (!dc) return FALSE;
 
-    if (!abcf)
-    {
-        release_dc_ptr( dc );
-        return FALSE;
-    }
+    if (!abcf) goto done;
+    if (!(abc = HeapAlloc( GetProcessHeap(), 0, (last - first + 1) * sizeof(*abc) ))) goto done;
 
-    if (dc->gdiFont)
-        ret = WineEngGetCharABCWidthsFloat( dc->gdiFont, first, last, abcf );
-    else
-        FIXME("stub\n");
-
+    dev = GET_DC_PHYSDEV( dc, pGetCharABCWidths );
+    ret = dev->funcs->pGetCharABCWidths( dev, first, last, abc );
     if (ret)
     {
         /* convert device units to logical */
         for (i = first; i <= last; i++, abcf++)
         {
-            abcf->abcfA = abcf->abcfA * dc->xformVport2World.eM11;
-            abcf->abcfB = abcf->abcfB * dc->xformVport2World.eM11;
-            abcf->abcfC = abcf->abcfC * dc->xformVport2World.eM11;
+            abcf->abcfA = abc->abcA * dc->xformVport2World.eM11;
+            abcf->abcfB = abc->abcB * dc->xformVport2World.eM11;
+            abcf->abcfC = abc->abcC * dc->xformVport2World.eM11;
         }
     }
+    HeapFree( GetProcessHeap(), 0, abc );
 
+done:
     release_dc_ptr( dc );
     return ret;
 }
