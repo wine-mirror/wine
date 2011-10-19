@@ -655,8 +655,9 @@ static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
     if (((char *)pFree == (char *)subheap->base + subheap->headerSize) &&
         (subheap != &subheap->heap->subheap))
     {
-        SIZE_T size = 0;
         void *addr = subheap->base;
+
+        size = 0;
         /* Remove the free block from the list */
         list_remove( &pFree->entry );
         /* Remove the subheap from the list */
