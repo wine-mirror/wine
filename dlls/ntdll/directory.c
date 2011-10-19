@@ -2134,43 +2134,43 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
         int fd = open( unix_name, O_RDONLY | O_DIRECTORY );
         if (fd != -1)
         {
-            KERNEL_DIRENT *de;
+            KERNEL_DIRENT *kde;
 
             RtlEnterCriticalSection( &dir_section );
-            if ((de = start_vfat_ioctl( fd )))
+            if ((kde = start_vfat_ioctl( fd )))
             {
                 unix_name[pos - 1] = '/';
-                while (de[0].d_reclen)
+                while (kde[0].d_reclen)
                 {
                     /* make sure names are null-terminated to work around an x86-64 kernel bug */
-                    size_t len = min(de[0].d_reclen, sizeof(de[0].d_name) - 1 );
-                    de[0].d_name[len] = 0;
-                    len = min(de[1].d_reclen, sizeof(de[1].d_name) - 1 );
-                    de[1].d_name[len] = 0;
+                    size_t len = min(kde[0].d_reclen, sizeof(kde[0].d_name) - 1 );
+                    kde[0].d_name[len] = 0;
+                    len = min(kde[1].d_reclen, sizeof(kde[1].d_name) - 1 );
+                    kde[1].d_name[len] = 0;
 
-                    if (de[1].d_name[0])
+                    if (kde[1].d_name[0])
                     {
-                        ret = ntdll_umbstowcs( 0, de[1].d_name, strlen(de[1].d_name),
+                        ret = ntdll_umbstowcs( 0, kde[1].d_name, strlen(kde[1].d_name),
                                                buffer, MAX_DIR_ENTRY_LEN );
                         if (ret == length && !memicmpW( buffer, name, length))
                         {
-                            strcpy( unix_name + pos, de[1].d_name );
+                            strcpy( unix_name + pos, kde[1].d_name );
                             RtlLeaveCriticalSection( &dir_section );
                             close( fd );
                             goto success;
                         }
                     }
-                    ret = ntdll_umbstowcs( 0, de[0].d_name, strlen(de[0].d_name),
+                    ret = ntdll_umbstowcs( 0, kde[0].d_name, strlen(kde[0].d_name),
                                            buffer, MAX_DIR_ENTRY_LEN );
                     if (ret == length && !memicmpW( buffer, name, length))
                     {
                         strcpy( unix_name + pos,
-                                de[1].d_name[0] ? de[1].d_name : de[0].d_name );
+                                kde[1].d_name[0] ? kde[1].d_name : kde[0].d_name );
                         RtlLeaveCriticalSection( &dir_section );
                         close( fd );
                         goto success;
                     }
-                    if (ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de ) == -1)
+                    if (ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)kde ) == -1)
                     {
                         RtlLeaveCriticalSection( &dir_section );
                         close( fd );
