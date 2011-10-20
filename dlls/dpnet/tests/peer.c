@@ -70,7 +70,7 @@ static void test_enum_service_providers(void)
     ok(hr == DPNERR_BUFFERTOOSMALL, "IDirectPlay8Peer_EnumServiceProviders failed with %x\n", hr);
     ok(size != 0, "size is unexpectedly 0\n");
 
-    serv_prov_info = (DPN_SERVICE_PROVIDER_INFO*) HeapAlloc(GetProcessHeap(), 0, size);
+    serv_prov_info = HeapAlloc(GetProcessHeap(), 0, size);
 
     hr = IDirectPlay8Peer_EnumServiceProviders(peer, NULL, NULL, serv_prov_info, &size, &items, 0);
     ok(hr == S_OK, "IDirectPlay8Peer_EnumServiceProviders failed with %x\n", hr);
@@ -96,7 +96,7 @@ static void test_enum_service_providers(void)
     ok(hr == DPNERR_BUFFERTOOSMALL, "IDirectPlay8Peer_EnumServiceProviders failed with %x\n", hr);
     ok(size != 0, "size is unexpectedly 0\n");
 
-    serv_prov_info = (DPN_SERVICE_PROVIDER_INFO*) HeapAlloc(GetProcessHeap(), 0, size);
+    serv_prov_info = HeapAlloc(GetProcessHeap(), 0, size);
 
     hr = IDirectPlay8Peer_EnumServiceProviders(peer, &CLSID_DP8SP_TCPIP, NULL, serv_prov_info, &size, &items, 0);
     ok(hr == S_OK, "IDirectPlay8Peer_EnumServiceProviders failed with %x\n", hr);
