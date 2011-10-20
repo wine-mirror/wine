@@ -10993,7 +10993,8 @@ msgid "Screen buffer size must be greater or equal to the window's one"
 msgstr "Ekran tamponu en az pencereninki kadar büyük olmalıdır"
 
 #: wineconsole.rc:34
-msgid "Each character is %ld pixels wide on %ld pixels high"
+#, fuzzy
+msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
 msgstr "Her karakter %ld piksel genişliğinde ve %ld piksel yüksekliğinde"
 
 #: wineconsole.rc:35

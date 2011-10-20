@@ -10732,7 +10732,8 @@ msgstr ""
 "Velikost zaslonskega medpomnilnika mora biti večja ali enaka okenskemu."
 
 #: wineconsole.rc:34
-msgid "Each character is %ld pixels wide on %ld pixels high"
+#, fuzzy
+msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
 msgstr "Vsak znak je širok %ld točk in visok %ld točk"
 
 #: wineconsole.rc:35

@@ -415,6 +415,7 @@ static BOOL  select_font(struct dialog_info* di)
     int		font_idx, size_idx;
     WCHAR	buf[256];
     WCHAR	fmt[128];
+    DWORD_PTR   args[2];
     LOGFONTW    lf;
     HFONT       hFont, hOldFont;
     struct config_data config;
@@ -439,7 +440,10 @@ static BOOL  select_font(struct dialog_info* di)
     if (hOldFont) DeleteObject(hOldFont);
 
     LoadStringW(GetModuleHandleW(NULL), IDS_FNT_DISPLAY, fmt, sizeof(fmt) / sizeof(fmt[0]));
-    wsprintfW(buf, fmt, config.cell_width, config.cell_height);
+    args[0] = config.cell_width;
+    args[1] = config.cell_height;
+    FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
+                   fmt, 0, 0, buf, sizeof(buf)/sizeof(*buf), (__ms_va_list*)args);
 
     SendDlgItemMessageW(di->hDlg, IDC_FNT_FONT_INFO, WM_SETTEXT, 0, (LPARAM)buf);
 

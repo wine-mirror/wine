@@ -10819,7 +10819,8 @@ msgstr ""
 "de la fenêtre"
 
 #: wineconsole.rc:34
-msgid "Each character is %ld pixels wide on %ld pixels high"
+#, fuzzy
+msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
 msgstr "Chaque caractère fait %ld pixels de large et %ld pixels de haut"
 
 #: wineconsole.rc:35

@@ -10819,7 +10819,8 @@ msgid "Screen buffer size must be greater or equal to the window's one"
 msgstr "גודל מאגר המסך חייב להיות גדול או שווה לזה של החלון"
 
 #: wineconsole.rc:34
-msgid "Each character is %ld pixels wide on %ld pixels high"
+#, fuzzy
+msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
 msgstr "כל תו הוא ברוחב %ld פיקסלים על גובה של %ld פיקסלים"
 
 #: wineconsole.rc:35
