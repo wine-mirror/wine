@@ -293,8 +293,6 @@ extern INT WineEngAddFontResourceEx(LPCWSTR, DWORD, PVOID) DECLSPEC_HIDDEN;
 extern HANDLE WineEngAddFontMemResourceEx(PVOID, DWORD, PVOID, LPDWORD) DECLSPEC_HIDDEN;
 extern BOOL WineEngDestroyFontInstance(HFONT handle) DECLSPEC_HIDDEN;
 extern DWORD WineEngGetFontData(GdiFont*, DWORD, DWORD, LPVOID, DWORD) DECLSPEC_HIDDEN;
-extern DWORD WineEngGetGlyphIndices(GdiFont *font, LPCWSTR lpstr, INT count,
-                                    LPWORD pgi, DWORD flags) DECLSPEC_HIDDEN;
 extern DWORD WineEngGetGlyphOutline(GdiFont*, UINT glyph, UINT format,
                                     LPGLYPHMETRICS, DWORD buflen, LPVOID buf,
                                     const MAT2*) DECLSPEC_HIDDEN;

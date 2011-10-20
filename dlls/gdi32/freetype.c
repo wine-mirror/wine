@@ -4947,15 +4947,20 @@ static FT_UInt get_glyph_index(const GdiFont *font, UINT glyph)
 }
 
 /*************************************************************
- * WineEngGetGlyphIndices
- *
+ * freetype_GetGlyphIndices
  */
-DWORD WineEngGetGlyphIndices(GdiFont *font, LPCWSTR lpstr, INT count,
-				LPWORD pgi, DWORD flags)
+static DWORD freetype_GetGlyphIndices( PHYSDEV dev, LPCWSTR lpstr, INT count, LPWORD pgi, DWORD flags )
 {
+    struct freetype_physdev *physdev = get_freetype_dev( dev );
     int i;
     WORD default_char;
     BOOL got_default = FALSE;
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetGlyphIndices );
+        return dev->funcs->pGetGlyphIndices( dev, lpstr, count, pgi, flags );
+    }
 
     if (flags & GGI_MARK_NONEXISTING_GLYPHS)
     {
@@ -4968,20 +4973,20 @@ DWORD WineEngGetGlyphIndices(GdiFont *font, LPCWSTR lpstr, INT count,
 
     for(i = 0; i < count; i++)
     {
-        pgi[i] = get_glyph_index(font, lpstr[i]);
+        pgi[i] = get_glyph_index(physdev->font, lpstr[i]);
         if  (pgi[i] == 0)
         {
             if (!got_default)
             {
-                if (FT_IS_SFNT(font->ft_face))
+                if (FT_IS_SFNT(physdev->font->ft_face))
                 {
-                    TT_OS2 *pOS2 = pFT_Get_Sfnt_Table(font->ft_face, ft_sfnt_os2);
-                    default_char = (pOS2->usDefaultChar ? get_glyph_index(font, pOS2->usDefaultChar) : 0);
+                    TT_OS2 *pOS2 = pFT_Get_Sfnt_Table(physdev->font->ft_face, ft_sfnt_os2);
+                    default_char = (pOS2->usDefaultChar ? get_glyph_index(physdev->font, pOS2->usDefaultChar) : 0);
                 }
                 else
                 {
                     TEXTMETRICW textm;
-                    get_text_metrics(font, &textm);
+                    get_text_metrics(physdev->font, &textm);
                     default_char = textm.tmDefaultChar;
                 }
                 got_default = TRUE;
@@ -7083,7 +7088,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pGetDeviceGammaRamp */
     NULL,                               /* pGetFontData */
     freetype_GetFontUnicodeRanges,      /* pGetFontUnicodeRanges */
-    NULL,                               /* pGetGlyphIndices */
+    freetype_GetGlyphIndices,           /* pGetGlyphIndices */
     NULL,                               /* pGetGlyphOutline */
     NULL,                               /* pGetICMProfile */
     NULL,                               /* pGetImage */
@@ -7183,12 +7188,6 @@ BOOL WineEngInit(void)
 BOOL WineEngDestroyFontInstance(HFONT hfont)
 {
     return FALSE;
-}
-
-DWORD WineEngGetGlyphIndices(GdiFont *font, LPCWSTR lpstr, INT count,
-				LPWORD pgi, DWORD flags)
-{
-    return GDI_ERROR;
 }
 
 DWORD WineEngGetGlyphOutline(GdiFont *font, UINT glyph, UINT format,

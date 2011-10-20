@@ -2837,16 +2837,16 @@ DWORD WINAPI GetGlyphIndicesW(HDC hdc, LPCWSTR lpstr, INT count,
 			      LPWORD pgi, DWORD flags)
 {
     DC *dc = get_dc_ptr(hdc);
-    DWORD ret = GDI_ERROR;
+    PHYSDEV dev;
+    DWORD ret;
 
     TRACE("(%p, %s, %d, %p, 0x%x)\n",
           hdc, debugstr_wn(lpstr, count), count, pgi, flags);
 
     if(!dc) return GDI_ERROR;
 
-    if(dc->gdiFont)
-	ret = WineEngGetGlyphIndices(dc->gdiFont, lpstr, count, pgi, flags);
-
+    dev = GET_DC_PHYSDEV( dc, pGetGlyphIndices );
+    ret = dev->funcs->pGetGlyphIndices( dev, lpstr, count, pgi, flags );
     release_dc_ptr( dc );
     return ret;
 }
