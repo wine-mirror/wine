@@ -6602,10 +6602,20 @@ INT WineEngGetTextFace(GdiFont *font, INT count, LPWSTR str)
         return n;
 }
 
-UINT WineEngGetTextCharsetInfo(GdiFont *font, LPFONTSIGNATURE fs, DWORD flags)
+/*************************************************************
+ * freetype_GetTextCharsetInfo
+ */
+static UINT freetype_GetTextCharsetInfo( PHYSDEV dev, LPFONTSIGNATURE fs, DWORD flags )
 {
-    if (fs) *fs = font->fs;
-    return font->charset;
+    struct freetype_physdev *physdev = get_freetype_dev( dev );
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetTextCharsetInfo );
+        return dev->funcs->pGetTextCharsetInfo( dev, fs, flags );
+    }
+    if (fs) *fs = physdev->font->fs;
+    return physdev->font->charset;
 }
 
 BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph)
@@ -7119,7 +7129,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pGetPixel */
     NULL,                               /* pGetPixelFormat */
     NULL,                               /* pGetSystemPaletteEntries */
-    NULL,                               /* pGetTextCharsetInfo */
+    freetype_GetTextCharsetInfo,        /* pGetTextCharsetInfo */
     freetype_GetTextExtentExPoint,      /* pGetTextExtentExPoint */
     NULL,                               /* pGetTextExtentExPointI */
     NULL,                               /* pGetTextFace */
@@ -7247,12 +7257,6 @@ HANDLE WineEngAddFontMemResourceEx(PVOID pbFont, DWORD cbFont, PVOID pdv, DWORD 
 {
     FIXME("(%p, %u, %p, %p): stub\n", pbFont, cbFont, pdv, pcFonts);
     return NULL;
-}
-
-UINT WineEngGetTextCharsetInfo(GdiFont *font, LPFONTSIGNATURE fs, DWORD flags)
-{
-    FIXME("(%p, %p, %u): stub\n", font, fs, flags);
-    return DEFAULT_CHARSET;
 }
 
 BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph)

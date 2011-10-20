@@ -472,10 +472,7 @@ HFONT WINAPI CreateFontW( INT height, INT width, INT esc,
 static void update_font_code_page( DC *dc )
 {
     CHARSETINFO csi;
-    int charset = DEFAULT_CHARSET;
-
-    if (dc->gdiFont)
-        charset = WineEngGetTextCharsetInfo( dc->gdiFont, NULL, 0 );
+    int charset = GetTextCharsetInfo( dc->hSelf, NULL, 0 );
 
     /* Hmm, nicely designed api this one! */
     if (TranslateCharsetInfo( ULongToPtr(charset), &csi, TCI_SRCCHARSET) )
@@ -3261,12 +3258,12 @@ UINT WINAPI GetTextCharsetInfo(HDC hdc, LPFONTSIGNATURE fs, DWORD flags)
 {
     UINT ret = DEFAULT_CHARSET;
     DC *dc = get_dc_ptr(hdc);
+    PHYSDEV dev;
 
     if (dc)
     {
-        if (dc->gdiFont)
-            ret = WineEngGetTextCharsetInfo(dc->gdiFont, fs, flags);
-
+        dev = GET_DC_PHYSDEV( dc, pGetTextCharsetInfo );
+        ret = dev->funcs->pGetTextCharsetInfo( dev, fs, flags );
         release_dc_ptr( dc );
     }
 
