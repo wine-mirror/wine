@@ -1288,10 +1288,10 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetDeviceData(LPDIRECTINPUTDEVICE8W ifac
     TRACE("(%p) %p -> %p(%d) x%d, 0x%08x\n",
           This, dod, entries, entries ? *entries : 0, dodsize, flags);
 
-    if (This->dinput->dwVersion == 0x0800)
+    if (This->dinput->dwVersion == 0x0800 || dodsize == sizeof(DIDEVICEOBJECTDATA_DX3))
     {
-        if (!This->acquired) return DIERR_NOTACQUIRED;
         if (!This->queue_len) return DIERR_NOTBUFFERED;
+        if (!This->acquired) return DIERR_NOTACQUIRED;
     }
 
     if (!This->queue_len)

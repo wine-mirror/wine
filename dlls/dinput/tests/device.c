@@ -78,7 +78,9 @@ static void test_object_info(LPDIRECTINPUTDEVICE device, HWND hwnd)
     DIDEVICEOBJECTINSTANCE obj_info;
     DWORD obj_types[] = {DIDFT_BUTTON, DIDFT_AXIS, DIDFT_POV};
     int type_index;
-    int cnt = 0, cnt1 = 0;
+    int cnt1 = 0;
+    DWORD cnt = 0;
+    DIDEVICEOBJECTDATA buffer[5];
 
     hr = IDirectInputDevice_EnumObjects(device, enum_callback, &cnt, DIDFT_ALL);
     ok(SUCCEEDED(hr), "EnumObjects() failed: %08x\n", hr);
@@ -98,18 +100,51 @@ static void test_object_info(LPDIRECTINPUTDEVICE device, HWND hwnd)
         ok(SUCCEEDED(hr), "EnumObjects() failed: %08x\n", hr);
     }
 
+    /* Test buffered mode */
+    memset(&dp, 0, sizeof(dp));
+    dp.diph.dwSize = sizeof(DIPROPDWORD);
+    dp.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+    dp.diph.dwHow = DIPH_DEVICE;
+    dp.diph.dwObj = 0;
+    dp.dwData = 0;
+
+    hr = IDirectInputDevice_SetProperty(device, DIPROP_BUFFERSIZE, (LPCDIPROPHEADER)&dp.diph);
+    ok(hr == DI_OK, "SetProperty() failed: %08x\n", hr);
+    cnt = 5;
+    hr = IDirectInputDevice_GetDeviceData(device, sizeof(buffer[0]), buffer, &cnt, 0);
+    ok(hr == DI_OK && cnt == 5, "GetDeviceData() failed: %08x cnt: %d\n", hr, cnt);
+    hr = IDirectInputDevice_GetDeviceData(device, sizeof(DIDEVICEOBJECTDATA_DX3), buffer, &cnt, 0);
+    ok(hr == DIERR_NOTBUFFERED, "GetDeviceData() should have failed: %08x\n", hr);
+    IDirectInputDevice_Acquire(device);
+    hr = IDirectInputDevice_GetDeviceData(device, sizeof(DIDEVICEOBJECTDATA_DX3), buffer, &cnt, 0);
+    ok(hr == DIERR_NOTBUFFERED, "GetDeviceData() should have failed: %08x\n", hr);
+    IDirectInputDevice_Unacquire(device);
+
+    dp.dwData = 20;
+    hr = IDirectInputDevice_SetProperty(device, DIPROP_BUFFERSIZE, (LPCDIPROPHEADER)&dp.diph);
+    ok(hr == DI_OK, "SetProperty() failed: %08x\n", hr);
+    cnt = 5;
+    hr = IDirectInputDevice_GetDeviceData(device, sizeof(buffer[0]), buffer, &cnt, 0);
+    ok(hr == DI_OK, "GetDeviceData() failed: %08x\n", hr);
+    hr = IDirectInputDevice_GetDeviceData(device, sizeof(DIDEVICEOBJECTDATA_DX3), buffer, &cnt, 0);
+    ok(hr == DIERR_NOTACQUIRED, "GetDeviceData() should have failed: %08x\n", hr);
+    hr = IDirectInputDevice_Acquire(device);
+    ok(hr == DI_OK, "Acquire() failed: %08x\n", hr);
+    cnt = 1;
+    hr = IDirectInputDevice_GetDeviceData(device, sizeof(buffer[0]), buffer, &cnt, 0);
+    ok(hr == DI_OK, "GetDeviceData() failed: %08x\n", hr);
+    hr = IDirectInputDevice_Unacquire(device);
+    ok(hr == DI_OK, "Unacquire() failed: %08x\n", hr);
+    cnt = 1;
+    hr = IDirectInputDevice_GetDeviceData(device, sizeof(buffer[0]), buffer, &cnt, 0);
+    ok(hr == DI_OK, "GetDeviceData() failed: %08x\n", hr);
+
     /* No need to test devices without axis */
     obj_info.dwSize = sizeof(obj_info);
     hr = IDirectInputDevice_GetObjectInfo(device, &obj_info, 16, DIPH_BYOFFSET);
     if (SUCCEEDED(hr))
     {
-        DWORD cnt;
-        DIDEVICEOBJECTDATA buffer[5];
-
         /* No device supports per axis relative/absolute mode */
-        memset(&dp, 0, sizeof(dp));
-        dp.diph.dwSize = sizeof(DIPROPDWORD);
-        dp.diph.dwHeaderSize = sizeof(DIPROPHEADER);
         dp.diph.dwHow = DIPH_BYOFFSET;
         dp.diph.dwObj = 16;
         dp.dwData = DIPROPAXISMODE_ABS;
@@ -122,29 +157,9 @@ static void test_object_info(LPDIRECTINPUTDEVICE device, HWND hwnd)
         hr = IDirectInputDevice_SetProperty(device, DIPROP_AXISMODE, &dp.diph);
         ok(hr == DI_OK, "SetProperty() failed: %08x\n", hr);
 
-        dp.dwData = 0;
-        hr = IDirectInputDevice_SetProperty(device, DIPROP_BUFFERSIZE, (LPCDIPROPHEADER)&dp.diph);
-        ok(hr == DI_OK, "SetProperty() failed: %08x\n", hr);
-
-        cnt = 5;
-        hr = IDirectInputDevice_GetDeviceData(device, sizeof(buffer[0]), buffer, &cnt, 0);
-        ok(hr == DI_OK && cnt == 5, "GetDeviceData() failed: %08x cnt: %d\n", hr, cnt);
-
-        dp.dwData = 20;
-        hr = IDirectInputDevice_SetProperty(device, DIPROP_BUFFERSIZE, (LPCDIPROPHEADER)&dp.diph);
-        ok(hr == DI_OK, "SetProperty() failed: %08x\n", hr);
-
-        cnt = 1;
-        hr = IDirectInputDevice_GetDeviceData(device, sizeof(buffer[0]), buffer, &cnt, 0);
-        ok(hr == DI_OK, "GetDeviceData() failed: %08x\n", hr);
-
         /* Cannot change mode while acquired */
         hr = IDirectInputDevice_Acquire(device);
         ok(hr == DI_OK, "Acquire() failed: %08x\n", hr);
-        cnt = 1;
-        hr = IDirectInputDevice_GetDeviceData(device, sizeof(buffer[0]), buffer, &cnt, 0);
-        ok(hr == DI_OK, "GetDeviceData() failed: %08x\n", hr);
-
 
         hr = IDirectInputDevice_SetProperty(device, DIPROP_AXISMODE, &dp.diph);
         ok(hr == DIERR_ACQUIRED, "SetProperty() returned: %08x\n", hr);
