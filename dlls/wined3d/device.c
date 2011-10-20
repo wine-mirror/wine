@@ -5251,10 +5251,16 @@ void CDECL wined3d_device_set_cursor_position(struct wined3d_device *device,
     device->xScreenSpace = x_screen_space;
     device->yScreenSpace = y_screen_space;
 
-    /* switch to the software cursor if position diverges from the hardware one */
     if (device->hardwareCursor)
     {
         POINT pt;
+
+        GetCursorPos( &pt );
+        if (x_screen_space == pt.x && y_screen_space == pt.y)
+            return;
+        SetCursorPos( x_screen_space, y_screen_space );
+
+        /* Switch to the software cursor if position diverges from the hardware one. */
         GetCursorPos( &pt );
         if (x_screen_space != pt.x || y_screen_space != pt.y)
         {
