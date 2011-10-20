@@ -4345,6 +4345,7 @@ int WINAPI WS_shutdown(SOCKET s, int how)
         break;
     case 2: /* drop all */
         clear_flags |= FD_READ|FD_WRITE;
+        /*fall through */
     default:
         clear_flags |= FD_WINE_LISTENING;
     }
