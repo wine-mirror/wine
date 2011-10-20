@@ -3440,6 +3440,40 @@ static void free_font(GdiFont *font)
 }
 
 
+static DWORD get_font_data( GdiFont *font, DWORD table, DWORD offset, LPVOID buf, DWORD cbData)
+{
+    FT_Face ft_face = font->ft_face;
+    FT_ULong len;
+    FT_Error err;
+
+    if (!FT_IS_SFNT(ft_face)) return GDI_ERROR;
+
+    if(!buf)
+        len = 0;
+    else
+        len = cbData;
+
+    table = RtlUlongByteSwap( table );  /* MS tags differ in endianness from FT ones */
+
+    /* make sure value of len is the value freetype says it needs */
+    if (buf && len)
+    {
+        FT_ULong needed = 0;
+        err = pFT_Load_Sfnt_Table(ft_face, table, offset, NULL, &needed);
+        if( !err && needed < len) len = needed;
+    }
+    err = pFT_Load_Sfnt_Table(ft_face, table, offset, buf, &len);
+    if (err)
+    {
+        TRACE("Can't find table %c%c%c%c\n",
+              /* bytes were reversed */
+              HIBYTE(HIWORD(table)), LOBYTE(HIWORD(table)),
+              HIBYTE(LOWORD(table)), LOBYTE(LOWORD(table)));
+	return GDI_ERROR;
+    }
+    return len;
+}
+
 /*************************************************************
  * load_VDMX
  *
@@ -3477,7 +3511,7 @@ static LONG load_VDMX(GdiFont *font, LONG height)
     LONG ppem = 0;
     int i;
 
-    result = WineEngGetFontData(font, MS_VDMX_TAG, 0, hdr, 6);
+    result = get_font_data(font, MS_VDMX_TAG, 0, hdr, 6);
 
     if(result == GDI_ERROR) /* no vdmx table present, use linear scaling */
 	return ppem;
@@ -3494,7 +3528,7 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 	Ratios ratio;
 
 	offset = (3 * 2) + (i * sizeof(Ratios));
-	WineEngGetFontData(font, MS_VDMX_TAG, offset, &ratio, sizeof(Ratios));
+	get_font_data(font, MS_VDMX_TAG, offset, &ratio, sizeof(Ratios));
 	offset = -1;
 
 	TRACE("Ratios[%d] %d  %d : %d -> %d\n", i, ratio.bCharSet, ratio.xRatio, ratio.yStartRatio, ratio.yEndRatio);
@@ -3507,7 +3541,7 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 	    devYRatio <= ratio.yEndRatio))
 	    {
 		offset = (3 * 2) + (numRatios * 4) + (i * 2);
-		WineEngGetFontData(font, MS_VDMX_TAG, offset, &tmp, 2);
+		get_font_data(font, MS_VDMX_TAG, offset, &tmp, 2);
 		offset = GET_BE_WORD(tmp);
 		break;
 	    }
@@ -3518,7 +3552,7 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 	return ppem;
     }
 
-    if(WineEngGetFontData(font, MS_VDMX_TAG, offset, &group, 4) != GDI_ERROR) {
+    if(get_font_data(font, MS_VDMX_TAG, offset, &group, 4) != GDI_ERROR) {
 	USHORT recs;
 	BYTE startsz, endsz;
 	WORD *vTable;
@@ -3530,7 +3564,7 @@ static LONG load_VDMX(GdiFont *font, LONG height)
 	TRACE("recs=%d  startsz=%d  endsz=%d\n", recs, startsz, endsz);
 
 	vTable = HeapAlloc(GetProcessHeap(), 0, recs * 6);
-	result = WineEngGetFontData(font, MS_VDMX_TAG, offset + 4, vTable, recs * 6);
+	result = get_font_data(font, MS_VDMX_TAG, offset + 4, vTable, recs * 6);
 	if(result == GDI_ERROR) {
 	    FIXME("Failed to retrieve vTable\n");
 	    goto end;
@@ -4217,11 +4251,11 @@ found_face:
 
     if (lf.lfFaceName[0]=='@') /* We need to try to load the GSUB table */
     {
-        int length = WineEngGetFontData (ret, GSUB_TAG , 0, NULL, 0);
+        int length = get_font_data(ret, GSUB_TAG , 0, NULL, 0);
         if (length != GDI_ERROR)
         {
             ret->GSUB_Table = HeapAlloc(GetProcessHeap(),0,length);
-            WineEngGetFontData(ret, GSUB_TAG , 0, ret->GSUB_Table, length);
+            get_font_data(ret, GSUB_TAG , 0, ret->GSUB_Table, length);
             TRACE("Loaded GSUB table of %i bytes\n",length);
         }
     }
@@ -6548,50 +6582,23 @@ static BOOL freetype_GetTextExtentExPointI( PHYSDEV dev, const WORD *indices, IN
 }
 
 /*************************************************************
- * WineEngGetFontData
- *
+ * freetype_GetFontData
  */
-DWORD WineEngGetFontData(GdiFont *font, DWORD table, DWORD offset, LPVOID buf,
-			 DWORD cbData)
+static DWORD freetype_GetFontData( PHYSDEV dev, DWORD table, DWORD offset, LPVOID buf, DWORD cbData )
 {
-    FT_Face ft_face = font->ft_face;
-    FT_ULong len;
-    FT_Error err;
+    struct freetype_physdev *physdev = get_freetype_dev( dev );
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetFontData );
+        return dev->funcs->pGetFontData( dev, table, offset, buf, cbData );
+    }
 
     TRACE("font=%p, table=%c%c%c%c, offset=0x%x, buf=%p, cbData=0x%x\n",
-	font, LOBYTE(LOWORD(table)), HIBYTE(LOWORD(table)),
-        LOBYTE(HIWORD(table)), HIBYTE(HIWORD(table)), offset, buf, cbData);
+          physdev->font, LOBYTE(LOWORD(table)), HIBYTE(LOWORD(table)),
+          LOBYTE(HIWORD(table)), HIBYTE(HIWORD(table)), offset, buf, cbData);
 
-    if(!FT_IS_SFNT(ft_face))
-        return GDI_ERROR;
-
-    if(!buf)
-        len = 0;
-    else
-        len = cbData;
-
-    if(table) { /* MS tags differ in endianness from FT ones */
-        table = table >> 24 | table << 24 |
-	  (table >> 8 & 0xff00) | (table << 8 & 0xff0000);
-    }
-
-    /* make sure value of len is the value freetype says it needs */
-    if(buf && len)
-    {
-        FT_ULong needed = 0;
-        err = pFT_Load_Sfnt_Table(ft_face, table, offset, NULL, &needed);
-        if( !err && needed < len) len = needed;
-    }
-    err = pFT_Load_Sfnt_Table(ft_face, table, offset, buf, &len);
-
-    if(err) {
-        TRACE("Can't find table %c%c%c%c\n",
-              /* bytes were reversed */
-              HIBYTE(HIWORD(table)), LOBYTE(HIWORD(table)),
-              HIBYTE(LOWORD(table)), LOBYTE(LOWORD(table)));
-	return GDI_ERROR;
-    }
-    return len;
+    return get_font_data( physdev->font, table, offset, buf, cbData );
 }
 
 /*************************************************************
@@ -6963,7 +6970,7 @@ static DWORD freetype_GetKerningPairs( PHYSDEV dev, DWORD cPairs, KERNINGPAIR *k
 
     font->total_kern_pairs = 0;
 
-    length = WineEngGetFontData(font, MS_KERN_TAG, 0, NULL, 0);
+    length = get_font_data(font, MS_KERN_TAG, 0, NULL, 0);
 
     if (length == GDI_ERROR)
     {
@@ -6980,7 +6987,7 @@ static DWORD freetype_GetKerningPairs( PHYSDEV dev, DWORD cPairs, KERNINGPAIR *k
         return 0;
     }
 
-    WineEngGetFontData(font, MS_KERN_TAG, 0, buf, length);
+    get_font_data(font, MS_KERN_TAG, 0, buf, length);
 
     /* build a glyph index to char code map */
     glyph_to_char = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(USHORT) * 65536);
@@ -7132,7 +7139,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     freetype_GetCharWidth,              /* pGetCharWidth */
     NULL,                               /* pGetDeviceCaps */
     NULL,                               /* pGetDeviceGammaRamp */
-    NULL,                               /* pGetFontData */
+    freetype_GetFontData,               /* pGetFontData */
     freetype_GetFontUnicodeRanges,      /* pGetFontUnicodeRanges */
     freetype_GetGlyphIndices,           /* pGetGlyphIndices */
     freetype_GetGlyphOutline,           /* pGetGlyphOutline */
@@ -7234,13 +7241,6 @@ BOOL WineEngInit(void)
 BOOL WineEngDestroyFontInstance(HFONT hfont)
 {
     return FALSE;
-}
-
-DWORD WineEngGetFontData(GdiFont *font, DWORD table, DWORD offset, LPVOID buf,
-			 DWORD cbData)
-{
-    ERR("called but we don't have FreeType\n");
-    return GDI_ERROR;
 }
 
 INT WineEngAddFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)

@@ -2759,13 +2759,13 @@ DWORD WINAPI GetFontData(HDC hdc, DWORD table, DWORD offset,
     LPVOID buffer, DWORD length)
 {
     DC *dc = get_dc_ptr(hdc);
-    DWORD ret = GDI_ERROR;
+    PHYSDEV dev;
+    DWORD ret;
 
     if(!dc) return GDI_ERROR;
 
-    if(dc->gdiFont)
-      ret = WineEngGetFontData(dc->gdiFont, table, offset, buffer, length);
-
+    dev = GET_DC_PHYSDEV( dc, pGetFontData );
+    ret = dev->funcs->pGetFontData( dev, table, offset, buffer, length );
     release_dc_ptr( dc );
     return ret;
 }
