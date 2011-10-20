@@ -18,6 +18,7 @@
  */
 
 #define COBJMACROS
+#include <windowsx.h>
 #include <initguid.h>
 #include <d3d8.h>
 #include "wine/test.h"
@@ -780,6 +781,127 @@ cleanup:
     }
     if (pD3d) IDirect3D8_Release(pD3d);
     DestroyWindow(hwnd);
+}
+
+static const POINT *expect_pos;
+
+static LRESULT CALLBACK test_cursor_proc(HWND window, UINT message, WPARAM wparam, LPARAM lparam)
+{
+    if (message == WM_MOUSEMOVE)
+    {
+        if (expect_pos && expect_pos->x && expect_pos->y)
+        {
+            POINT p = {GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
+
+            ClientToScreen(window, &p);
+            if (expect_pos->x == p.x && expect_pos->y == p.y)
+                ++expect_pos;
+        }
+    }
+
+    return DefWindowProcA(window, message, wparam, lparam);
+}
+
+static void test_cursor_pos(void)
+{
+    IDirect3DSurface8 *cursor;
+    IDirect3DDevice8 *device;
+    WNDCLASSA wc = {0};
+    IDirect3D8 *d3d8;
+    UINT refcount;
+    HWND window;
+    HRESULT hr;
+    BOOL ret;
+
+    /* Note that we don't check for movement we're not supposed to receive.
+     * That's because it's hard to distinguish from the user accidentally
+     * moving the mouse. */
+    static const POINT points[] =
+    {
+        {50, 50},
+        {75, 75},
+        {100, 100},
+        {125, 125},
+        {150, 150},
+        {125, 125},
+        {150, 150},
+        {150, 150},
+        {0, 0},
+    };
+
+    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create IDirect3D8 object, skipping cursor tests.\n");
+        return;
+    }
+
+    wc.lpfnWndProc = test_cursor_proc;
+    wc.lpszClassName = "d3d8_test_cursor_wc";
+    ok(RegisterClassA(&wc), "Failed to register window class.\n");
+    window = CreateWindow("d3d8_test_cursor_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 320, 240, NULL, NULL, NULL, NULL);
+    ShowWindow(window, SW_SHOW);
+
+    device = create_device(d3d8, window, window, TRUE);
+    if (!device)
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice8_CreateImageSurface(device, 32, 32, D3DFMT_A8R8G8B8, &cursor);
+    ok(SUCCEEDED(hr), "Failed to create cursor surface, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetCursorProperties(device, 0, 0, cursor);
+    ok(SUCCEEDED(hr), "Failed to set cursor properties, hr %#x.\n", hr);
+    IDirect3DSurface8_Release(cursor);
+    ret = IDirect3DDevice8_ShowCursor(device, TRUE);
+    ok(!ret, "Failed to show cursor, hr %#x.\n", ret);
+
+    flush_events();
+    expect_pos = points;
+
+    ret = SetCursorPos(50, 50);
+    ok(ret, "Failed to set cursor position.\n");
+    flush_events();
+
+    IDirect3DDevice8_SetCursorPosition(device, 75, 75, 0);
+    flush_events();
+    /* SetCursorPosition() eats duplicates. */
+    IDirect3DDevice8_SetCursorPosition(device, 75, 75, 0);
+    flush_events();
+
+    ret = SetCursorPos(100, 100);
+    ok(ret, "Failed to set cursor position.\n");
+    flush_events();
+    /* Even if the position was set with SetCursorPos(). */
+    IDirect3DDevice8_SetCursorPosition(device, 100, 100, 0);
+    flush_events();
+
+    IDirect3DDevice8_SetCursorPosition(device, 125, 125, 0);
+    flush_events();
+    ret = SetCursorPos(150, 150);
+    ok(ret, "Failed to set cursor position.\n");
+    flush_events();
+    IDirect3DDevice8_SetCursorPosition(device, 125, 125, 0);
+    flush_events();
+
+    IDirect3DDevice8_SetCursorPosition(device, 150, 150, 0);
+    flush_events();
+    /* SetCursorPos() doesn't. */
+    ret = SetCursorPos(150, 150);
+    ok(ret, "Failed to set cursor position.\n");
+    flush_events();
+
+    ok(!expect_pos->x && !expect_pos->y, "Didn't receive MOUSEMOVE %u (%d, %d).\n",
+            expect_pos - points, expect_pos->x, expect_pos->y);
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    DestroyWindow(window);
+    UnregisterClassA("d3d8_test_cursor_wc", GetModuleHandleA(NULL));
+    if (d3d8)
+        IDirect3D8_Release(d3d8);
 }
 
 static void test_states(void)
@@ -2829,6 +2951,7 @@ START_TEST(device)
         test_refcount();
         test_mipmap_levels();
         test_cursor();
+        test_cursor_pos();
         test_states();
         test_reset();
         test_scene();
