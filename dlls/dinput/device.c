@@ -783,6 +783,8 @@ HRESULT WINAPI IDirectInputDevice2WImpl_Acquire(LPDIRECTINPUTDEVICE8W iface)
     IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
     HRESULT res;
 
+    TRACE("(%p)\n", This);
+
     if (!This->data_format.user_df) return DIERR_INVALIDPARAM;
     if (This->dwCoopLevel & DISCL_FOREGROUND && This->win != GetForegroundWindow())
         return DIERR_OTHERAPPHASPRIO;
@@ -812,6 +814,8 @@ HRESULT WINAPI IDirectInputDevice2WImpl_Unacquire(LPDIRECTINPUTDEVICE8W iface)
 {
     IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
     HRESULT res;
+
+    TRACE("(%p)\n", This);
 
     EnterCriticalSection(&This->crit);
     res = !This->acquired ? DI_NOEFFECT : DI_OK;
@@ -930,9 +934,10 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetEventNotification(LPDIRECTINPUTDEVICE
 ULONG WINAPI IDirectInputDevice2WImpl_Release(LPDIRECTINPUTDEVICE8W iface)
 {
     IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
-    ULONG ref;
+    ULONG ref = InterlockedDecrement(&(This->ref));
 
-    ref = InterlockedDecrement(&(This->ref));
+    TRACE("(%p) releasing from %d\n", This, ref + 1);
+
     if (ref) return ref;
 
     IDirectInputDevice_Unacquire(iface);
