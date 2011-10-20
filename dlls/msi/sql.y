@@ -490,6 +490,18 @@ from:
 
             PARSER_BUBBLE_UP_VIEW( sql, $$, where );
         }
+  | TK_FROM tablelist
+        {
+            SQL_input* sql = (SQL_input*) info;
+            MSIVIEW* where = NULL;
+            UINT r;
+
+            r = WHERE_CreateView( sql->db, &where, $2, NULL );
+            if( r != ERROR_SUCCESS )
+                YYABORT;
+
+            PARSER_BUBBLE_UP_VIEW( sql, $$, where );
+        }
     ;
 
 fromtable:
@@ -504,18 +516,6 @@ fromtable:
                 YYABORT;
 
             PARSER_BUBBLE_UP_VIEW( sql, $$, table );
-        }
-  | TK_FROM tablelist
-        {
-            SQL_input* sql = (SQL_input*) info;
-            MSIVIEW* join = NULL;
-            UINT r;
-
-            r = JOIN_CreateView( sql->db, &join, $2 );
-            if( r != ERROR_SUCCESS )
-                YYABORT;
-
-            PARSER_BUBBLE_UP_VIEW( sql, $$, join );
         }
     ;
 

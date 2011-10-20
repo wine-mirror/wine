@@ -123,8 +123,6 @@ UINT UPDATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
 
 UINT DELETE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table ) DECLSPEC_HIDDEN;
 
-UINT JOIN_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR tables ) DECLSPEC_HIDDEN;
-
 UINT ALTER_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR name, column_info *colinfo, int hold ) DECLSPEC_HIDDEN;
 
 UINT STREAMS_CreateView( MSIDATABASE *db, MSIVIEW **view ) DECLSPEC_HIDDEN;
