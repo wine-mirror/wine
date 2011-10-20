@@ -1776,6 +1776,7 @@ static void test_palette(void)
     INT size;
     BYTE buffer[1040];
     ColorPalette *palette=(ColorPalette*)buffer;
+    ARGB *entries = palette->Entries;
     ARGB color=0;
 
     /* test initial palette from non-indexed bitmap */
@@ -1819,8 +1820,8 @@ static void test_palette(void)
     expect(PaletteFlagsGrayScale, palette->Flags);
     expect(2, palette->Count);
 
-    expect(0xff000000, palette->Entries[0]);
-    expect(0xffffffff, palette->Entries[1]);
+    expect(0xff000000, entries[0]);
+    expect(0xffffffff, entries[1]);
 
     /* test getting/setting pixels */
     stat = GdipBitmapGetPixel(bitmap, 0, 0, &color);
@@ -1905,12 +1906,12 @@ static void test_palette(void)
     }
 
     /* test setting/getting a different palette */
-    palette->Entries[1] = 0xffcccccc;
+    entries[1] = 0xffcccccc;
 
     stat = GdipSetImagePalette((GpImage*)bitmap, palette);
     expect(Ok, stat);
 
-    palette->Entries[1] = 0;
+    entries[1] = 0;
 
     stat = GdipGetImagePaletteSize((GpImage*)bitmap, &size);
     expect(Ok, stat);
@@ -1920,7 +1921,7 @@ static void test_palette(void)
     expect(Ok, stat);
     expect(PaletteFlagsHalftone, palette->Flags);
     expect(256, palette->Count);
-    expect(0xffcccccc, palette->Entries[1]);
+    expect(0xffcccccc, entries[1]);
 
     /* test count < 256 */
     palette->Flags = 12345;
@@ -1929,8 +1930,8 @@ static void test_palette(void)
     stat = GdipSetImagePalette((GpImage*)bitmap, palette);
     expect(Ok, stat);
 
-    palette->Entries[1] = 0;
-    palette->Entries[3] = 0xdeadbeef;
+    entries[1] = 0;
+    entries[3] = 0xdeadbeef;
 
     stat = GdipGetImagePaletteSize((GpImage*)bitmap, &size);
     expect(Ok, stat);
@@ -1940,8 +1941,8 @@ static void test_palette(void)
     expect(Ok, stat);
     expect(12345, palette->Flags);
     expect(3, palette->Count);
-    expect(0xffcccccc, palette->Entries[1]);
-    expect(0xdeadbeef, palette->Entries[3]);
+    expect(0xffcccccc, entries[1]);
+    expect(0xdeadbeef, entries[3]);
 
     /* test count > 256 */
     palette->Count = 257;
