@@ -1103,6 +1103,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     BYTE dib_brush_buf[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD) + 16 * 16 * sizeof(DWORD)]; /* Enough for 16 x 16 at 32 bpp */
     BITMAPINFO *src_bi = (BITMAPINFO*)dib_src_buf;
     BITMAPINFO *brush_bi = (BITMAPINFO*)dib_brush_buf;
+    RGBQUAD *brush_colors = brush_bi->bmiColors;
     BYTE *brush_bits, *src_bits;
     BOOL ret, dib_is_1bpp = (bmi->bmiHeader.biBitCount == 1);
     BOOL dib_is_8bpp_gray = (bmi->bmiHeader.biBitCount == 8 && bmi->bmiColors[1].rgbRed == 1);
@@ -1411,11 +1412,11 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     brush_bi->bmiHeader = dib_brush_header_8;
     brush_bi->bmiHeader.biClrUsed = 3;
-    memset(brush_bi->bmiColors, 0, brush_bi->bmiHeader.biClrUsed * sizeof(RGBQUAD));
-    brush_bi->bmiColors[0].rgbRed = 0xff;
-    brush_bi->bmiColors[1].rgbRed = 0xff;
-    brush_bi->bmiColors[1].rgbGreen = 0xff;
-    brush_bi->bmiColors[1].rgbBlue = 0xff;
+    memset(brush_colors, 0, brush_bi->bmiHeader.biClrUsed * sizeof(RGBQUAD));
+    brush_colors[0].rgbRed = 0xff;
+    brush_colors[1].rgbRed = 0xff;
+    brush_colors[1].rgbGreen = 0xff;
+    brush_colors[1].rgbBlue = 0xff;
 
     brush_bits = (BYTE*)brush_bi + sizeof(BITMAPINFOHEADER) + brush_bi->bmiHeader.biClrUsed * sizeof(RGBQUAD);
     memset(brush_bits, 0, 16 * 16 * sizeof(BYTE));
@@ -2024,6 +2025,7 @@ static void test_simple_graphics(void)
 {
     char bmibuf[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD)];
     BITMAPINFO *bmi = (BITMAPINFO *)bmibuf;
+    RGBQUAD *colors = bmi->bmiColors;
     DWORD *bit_fields = (DWORD*)(bmibuf + sizeof(BITMAPINFOHEADER));
     HDC mem_dc;
     BYTE *bits;
@@ -2232,9 +2234,9 @@ static void test_simple_graphics(void)
     bmi->bmiHeader.biClrUsed = 236;
     for (i = 0; i < 236; i++)
     {
-        bmi->bmiColors[i].rgbRed   = (i & 0x07) << 5;
-        bmi->bmiColors[i].rgbGreen = (i & 0x38) << 2;
-        bmi->bmiColors[i].rgbBlue  =  i & 0xc0;
+        colors[i].rgbRed   = (i & 0x07) << 5;
+        colors[i].rgbGreen = (i & 0x38) << 2;
+        colors[i].rgbBlue  =  i & 0xc0;
     }
     dib = CreateDIBSection(0, bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
     ok(dib != NULL, "ret NULL\n");
@@ -2253,8 +2255,7 @@ static void test_simple_graphics(void)
     bmi->bmiHeader.biBitCount = 8;
     bmi->bmiHeader.biCompression = BI_RGB;
     bmi->bmiHeader.biClrUsed = 256;
-    for (i = 0; i < 256; i++)
-        bmi->bmiColors[i].rgbRed = bmi->bmiColors[i].rgbGreen = bmi->bmiColors[i].rgbBlue = i;
+    for (i = 0; i < 256; i++) colors[i].rgbRed = colors[i].rgbGreen = colors[i].rgbBlue = i;
 
     dib = CreateDIBSection(0, bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
     ok(dib != NULL, "ret NULL\n");
@@ -2273,21 +2274,21 @@ static void test_simple_graphics(void)
     bmi->bmiHeader.biBitCount = 8;
     bmi->bmiHeader.biCompression = BI_RGB;
     bmi->bmiHeader.biClrUsed = 5;
-    bmi->bmiColors[0].rgbRed = 0xff;
-    bmi->bmiColors[0].rgbGreen = 0xff;
-    bmi->bmiColors[0].rgbBlue = 0xff;
-    bmi->bmiColors[1].rgbRed = 0;
-    bmi->bmiColors[1].rgbGreen = 0;
-    bmi->bmiColors[1].rgbBlue = 0;
-    bmi->bmiColors[2].rgbRed = 0xff;
-    bmi->bmiColors[2].rgbGreen = 0;
-    bmi->bmiColors[2].rgbBlue = 0;
-    bmi->bmiColors[3].rgbRed = 0;
-    bmi->bmiColors[3].rgbGreen = 0xff;
-    bmi->bmiColors[3].rgbBlue = 0;
-    bmi->bmiColors[4].rgbRed = 0;
-    bmi->bmiColors[4].rgbGreen = 0;
-    bmi->bmiColors[4].rgbBlue = 0xff;
+    colors[0].rgbRed = 0xff;
+    colors[0].rgbGreen = 0xff;
+    colors[0].rgbBlue = 0xff;
+    colors[1].rgbRed = 0;
+    colors[1].rgbGreen = 0;
+    colors[1].rgbBlue = 0;
+    colors[2].rgbRed = 0xff;
+    colors[2].rgbGreen = 0;
+    colors[2].rgbBlue = 0;
+    colors[3].rgbRed = 0;
+    colors[3].rgbGreen = 0xff;
+    colors[3].rgbBlue = 0;
+    colors[4].rgbRed = 0;
+    colors[4].rgbGreen = 0;
+    colors[4].rgbBlue = 0xff;
 
     dib = CreateDIBSection(0, bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
     ok(dib != NULL, "ret NULL\n");
@@ -2320,8 +2321,7 @@ static void test_simple_graphics(void)
     /* 4 grayscale */
     trace("4 grayscale\n");
     bmi->bmiHeader.biClrUsed = 16;
-    for (i = 0; i < 16; i++)
-        bmi->bmiColors[i].rgbRed = bmi->bmiColors[i].rgbGreen = bmi->bmiColors[i].rgbBlue = i * 17;
+    for (i = 0; i < 16; i++) colors[i].rgbRed = colors[i].rgbGreen = colors[i].rgbBlue = i * 17;
 
     dib = CreateDIBSection(0, bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
     ok(dib != NULL, "ret NULL\n");
@@ -2340,12 +2340,12 @@ static void test_simple_graphics(void)
     bmi->bmiHeader.biBitCount = 1;
     bmi->bmiHeader.biClrUsed = 2;
 
-    bmi->bmiColors[0].rgbRed = 0x00;
-    bmi->bmiColors[0].rgbGreen = 0x01;
-    bmi->bmiColors[0].rgbBlue = 0xff;
-    bmi->bmiColors[1].rgbRed = 0xff;
-    bmi->bmiColors[1].rgbGreen = 0x00;
-    bmi->bmiColors[1].rgbBlue = 0x00;
+    colors[0].rgbRed = 0x00;
+    colors[0].rgbGreen = 0x01;
+    colors[0].rgbBlue = 0xff;
+    colors[1].rgbRed = 0xff;
+    colors[1].rgbGreen = 0x00;
+    colors[1].rgbBlue = 0x00;
 
     dib = CreateDIBSection(0, bmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
     ok(dib != NULL, "ret NULL\n");
