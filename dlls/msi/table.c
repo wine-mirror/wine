@@ -62,13 +62,6 @@ typedef struct tagMSICOLUMNINFO
     MSICOLUMNHASHENTRY **hash_table;
 } MSICOLUMNINFO;
 
-typedef struct tagMSIORDERINFO
-{
-    UINT *reorder;
-    UINT num_cols;
-    UINT cols[1];
-} MSIORDERINFO;
-
 struct tagMSITABLE
 {
     BYTE **data;
@@ -1019,7 +1012,6 @@ typedef struct tagMSITABLEVIEW
     MSIDATABASE   *db;
     MSITABLE      *table;
     MSICOLUMNINFO *columns;
-    MSIORDERINFO  *order;
     UINT           num_cols;
     UINT           row_size;
     WCHAR          name[1];
@@ -1046,9 +1038,6 @@ static UINT TABLE_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT *
         ERR("%p %p\n", tv, tv->columns );
         return ERROR_FUNCTION_FAILED;
     }
-
-    if (tv->order)
-        row = tv->order->reorder[row];
 
     n = bytes_per_column( tv->db, &tv->columns[col - 1], LONG_STR_BYTES );
     if (n != 2 && n != 3 && n != 4)
@@ -1225,9 +1214,6 @@ static UINT TABLE_get_row( struct tagMSIVIEW *view, UINT row, MSIRECORD **rec )
 
     if (!tv->table)
         return ERROR_INVALID_PARAMETER;
-
-    if (tv->order)
-        row = tv->order->reorder[row];
 
     return msi_view_get_row(tv->db, view, row, rec);
 }
@@ -1726,9 +1712,6 @@ static UINT msi_table_update(struct tagMSIVIEW *view, MSIRECORD *rec, UINT row)
     if (row != new_row + 1)
         return ERROR_FUNCTION_FAILED;
 
-    if(tv->order)
-        new_row = tv->order->reorder[new_row];
-
     return TABLE_set_row(view, new_row, rec, (1 << tv->num_cols) - 1);
 }
 
@@ -1852,13 +1835,6 @@ static UINT TABLE_delete( struct tagMSIVIEW *view )
 
     tv->table = NULL;
     tv->columns = NULL;
-
-    if (tv->order)
-    {
-        msi_free( tv->order->reorder );
-        msi_free( tv->order );
-        tv->order = NULL;
-    }
 
     msi_free( tv );
 
@@ -2072,161 +2048,6 @@ done:
     return r;
 }
 
-static UINT order_add_column(struct tagMSIVIEW *view, MSIORDERINFO *order, LPCWSTR name)
-{
-    UINT n, r, count;
-    MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
-
-    r = TABLE_get_dimensions(view, NULL, &count);
-    if (r != ERROR_SUCCESS)
-        return r;
-
-    if (order->num_cols >= count)
-        return ERROR_FUNCTION_FAILED;
-
-    r = VIEW_find_column(view, name, tv->name, &n);
-    if (r != ERROR_SUCCESS)
-        return r;
-
-    order->cols[order->num_cols] = n;
-    TRACE("Ordering by column %s (%d)\n", debugstr_w(name), n);
-
-    order->num_cols++;
-
-    return ERROR_SUCCESS;
-}
-
-static UINT order_compare(struct tagMSIVIEW *view, MSIORDERINFO *order,
-                          UINT a, UINT b, UINT *swap)
-{
-    UINT r, i, a_val = 0, b_val = 0;
-
-    *swap = 0;
-    for (i = 0; i < order->num_cols; i++)
-    {
-        r = TABLE_fetch_int(view, a, order->cols[i], &a_val);
-        if (r != ERROR_SUCCESS)
-            return r;
-
-        r = TABLE_fetch_int(view, b, order->cols[i], &b_val);
-        if (r != ERROR_SUCCESS)
-            return r;
-
-        if (a_val != b_val)
-        {
-            if (a_val > b_val)
-                *swap = 1;
-            break;
-        }
-    }
-
-    return ERROR_SUCCESS;
-}
-
-static UINT order_mergesort(struct tagMSIVIEW *view, MSIORDERINFO *order,
-                            UINT left, UINT right)
-{
-    UINT r, i, j, temp;
-    UINT swap = 0, center = (left + right) / 2;
-    UINT *array = order->reorder;
-
-    if (left == right)
-        return ERROR_SUCCESS;
-
-    /* sort the left half */
-    r = order_mergesort(view, order, left, center);
-    if (r != ERROR_SUCCESS)
-        return r;
-
-    /* sort the right half */
-    r = order_mergesort(view, order, center + 1, right);
-    if (r != ERROR_SUCCESS)
-        return r;
-
-    for (i = left, j = center + 1; (i <= center) && (j <= right); i++)
-    {
-        r = order_compare(view, order, array[i], array[j], &swap);
-        if (r != ERROR_SUCCESS)
-            return r;
-
-        if (swap)
-        {
-            temp = array[j];
-            memmove(&array[i + 1], &array[i], (j - i) * sizeof(UINT));
-            array[i] = temp;
-            j++;
-            center++;
-        }
-    }
-
-    return ERROR_SUCCESS;
-}
-
-static UINT order_verify(struct tagMSIVIEW *view, MSIORDERINFO *order, UINT num_rows)
-{
-    UINT i, swap, r;
-
-    for (i = 1; i < num_rows; i++)
-    {
-        r = order_compare(view, order, order->reorder[i - 1],
-                          order->reorder[i], &swap);
-        if (r != ERROR_SUCCESS)
-            return r;
-
-        if (!swap)
-            continue;
-
-        ERR("Bad order! %d\n", i);
-        return ERROR_FUNCTION_FAILED;
-    }
-
-    return ERROR_SUCCESS;
-}
-
-static UINT TABLE_sort(struct tagMSIVIEW *view, column_info *columns)
-{
-    MSITABLEVIEW *tv = (MSITABLEVIEW *)view;
-    MSIORDERINFO *order;
-    column_info *ptr;
-    UINT r, i;
-    UINT rows, cols;
-
-    TRACE("sorting table %s\n", debugstr_w(tv->name));
-
-    r = TABLE_get_dimensions(view, &rows, &cols);
-    if (r != ERROR_SUCCESS)
-        return r;
-
-    if (rows == 0)
-        return ERROR_SUCCESS;
-
-    order = msi_alloc_zero(sizeof(MSIORDERINFO) + sizeof(UINT) * cols);
-    if (!order)
-        return ERROR_OUTOFMEMORY;
-
-    for (ptr = columns; ptr; ptr = ptr->next)
-        order_add_column(view, order, ptr->column);
-
-    order->reorder = msi_alloc(rows * sizeof(UINT));
-    if (!order->reorder)
-        return ERROR_OUTOFMEMORY;
-
-    for (i = 0; i < rows; i++)
-        order->reorder[i] = i;
-
-    r = order_mergesort(view, order, 0, rows - 1);
-    if (r != ERROR_SUCCESS)
-        return r;
-
-    r = order_verify(view, order, rows);
-    if (r != ERROR_SUCCESS)
-        return r;
-
-    tv->order = order;
-
-    return ERROR_SUCCESS;
-}
-
 static UINT TABLE_drop(struct tagMSIVIEW *view)
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW*)view;
@@ -2292,7 +2113,7 @@ static const MSIVIEWOPS table_ops =
     TABLE_release,
     TABLE_add_column,
     TABLE_remove_column,
-    TABLE_sort,
+    NULL,
     TABLE_drop,
 };
 

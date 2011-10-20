@@ -333,14 +333,6 @@ static UINT SELECT_find_matching_rows( struct tagMSIVIEW *view, UINT col,
     return sv->table->ops->find_matching_rows( sv->table, col, val, row, handle );
 }
 
-static UINT SELECT_sort(struct tagMSIVIEW *view, column_info *columns)
-{
-    MSISELECTVIEW *sv = (MSISELECTVIEW *)view;
-
-    TRACE("%p %p\n", view, columns);
-
-    return sv->table->ops->sort( sv->table, columns );
-}
 
 static const MSIVIEWOPS select_ops =
 {
@@ -361,7 +353,7 @@ static const MSIVIEWOPS select_ops =
     NULL,
     NULL,
     NULL,
-    SELECT_sort,
+    NULL,
     NULL,
 };
 

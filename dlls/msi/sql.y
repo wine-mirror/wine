@@ -114,7 +114,7 @@ static struct expr * EXPR_wildcard( void *info );
 %type <string> table tablelist id
 %type <column_list> selcollist column column_and_type column_def table_def
 %type <column_list> column_assignment update_assign_list constlist
-%type <query> query from fromtable selectfrom unorderedsel
+%type <query> query from selectfrom unorderdfrom
 %type <query> oneupdate onedelete oneselect onequery onecreate oneinsert onealter onedrop
 %type <expr> expr val column_val const_val
 %type <column_type> column_type data_type data_type_l data_count
@@ -409,23 +409,6 @@ data_count:
     ;
 
 oneselect:
-    unorderedsel TK_ORDER TK_BY selcollist
-        {
-            UINT r;
-
-            if( $4 )
-            {
-                r = $1->ops->sort( $1, $4 );
-                if ( r != ERROR_SUCCESS)
-                    YYABORT;
-            }
-
-            $$ = $1;
-        }
-  | unorderedsel
-    ;
-
-unorderedsel:
     TK_SELECT selectfrom
         {
             $$ = $2;
@@ -477,34 +460,6 @@ selcollist:
     ;
 
 from:
-    fromtable
-  | TK_FROM tablelist TK_WHERE expr
-        {
-            SQL_input* sql = (SQL_input*) info;
-            MSIVIEW* where = NULL;
-            UINT r;
-
-            r = WHERE_CreateView( sql->db, &where, $2, $4 );
-            if( r != ERROR_SUCCESS )
-                YYABORT;
-
-            PARSER_BUBBLE_UP_VIEW( sql, $$, where );
-        }
-  | TK_FROM tablelist
-        {
-            SQL_input* sql = (SQL_input*) info;
-            MSIVIEW* where = NULL;
-            UINT r;
-
-            r = WHERE_CreateView( sql->db, &where, $2, NULL );
-            if( r != ERROR_SUCCESS )
-                YYABORT;
-
-            PARSER_BUBBLE_UP_VIEW( sql, $$, where );
-        }
-    ;
-
-fromtable:
     TK_FROM table
         {
             SQL_input* sql = (SQL_input*) info;
@@ -516,6 +471,47 @@ fromtable:
                 YYABORT;
 
             PARSER_BUBBLE_UP_VIEW( sql, $$, table );
+        }
+  | unorderdfrom TK_ORDER TK_BY selcollist
+        {
+            UINT r;
+
+            if( $4 )
+            {
+                r = $1->ops->sort( $1, $4 );
+                if ( r != ERROR_SUCCESS)
+                    YYABORT;
+            }
+
+            $$ = $1;
+        }
+  | unorderdfrom
+  ;
+
+unorderdfrom:
+    TK_FROM tablelist
+        {
+            SQL_input* sql = (SQL_input*) info;
+            MSIVIEW* where = NULL;
+            UINT r;
+
+            r = WHERE_CreateView( sql->db, &where, $2, NULL );
+            if( r != ERROR_SUCCESS )
+                YYABORT;
+
+            PARSER_BUBBLE_UP_VIEW( sql, $$, where );
+        }
+  | TK_FROM tablelist TK_WHERE expr
+        {
+            SQL_input* sql = (SQL_input*) info;
+            MSIVIEW* where = NULL;
+            UINT r;
+
+            r = WHERE_CreateView( sql->db, &where, $2, $4 );
+            if( r != ERROR_SUCCESS )
+                YYABORT;
+
+            PARSER_BUBBLE_UP_VIEW( sql, $$, where );
         }
     ;
 

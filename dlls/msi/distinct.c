@@ -268,15 +268,6 @@ static UINT DISTINCT_find_matching_rows( struct tagMSIVIEW *view, UINT col,
     return r;
 }
 
-static UINT DISTINCT_sort(struct tagMSIVIEW *view, column_info *columns)
-{
-    MSIDISTINCTVIEW *dv = (MSIDISTINCTVIEW *)view;
-
-    TRACE("%p %p\n", view, columns);
-
-    return dv->table->ops->sort( dv->table, columns );
-}
-
 static const MSIVIEWOPS distinct_ops =
 {
     DISTINCT_fetch_int,
@@ -296,7 +287,7 @@ static const MSIVIEWOPS distinct_ops =
     NULL,
     NULL,
     NULL,
-    DISTINCT_sort,
+    NULL,
     NULL,
 };
 
