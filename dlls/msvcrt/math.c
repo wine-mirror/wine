@@ -1351,7 +1351,7 @@ int CDECL _ecvt_s( char *buffer, MSVCRT_size_t length, double number, int ndigit
     /* handle cases with zero ndigits or less */
     prec = ndigits;
     if( prec < 1) prec = 2;
-    result = (char*)MSVCRT_malloc(prec + 7);
+    result = MSVCRT_malloc(prec + 7);
 
     if( number < 0) {
         *sign = TRUE;
