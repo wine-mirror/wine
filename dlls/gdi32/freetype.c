@@ -6239,29 +6239,34 @@ static BOOL freetype_GetTextMetrics( PHYSDEV dev, TEXTMETRICW *metrics )
 }
 
 /*************************************************************
- * WineEngGetOutlineTextMetrics
- *
+ * freetype_GetOutlineTextMetrics
  */
-UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
-				  OUTLINETEXTMETRICW *potm)
+static UINT freetype_GetOutlineTextMetrics( PHYSDEV dev, UINT cbSize, OUTLINETEXTMETRICW *potm )
 {
+    struct freetype_physdev *physdev = get_freetype_dev( dev );
     UINT ret = 0;
 
-    TRACE("font=%p\n", font);
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetOutlineTextMetrics );
+        return dev->funcs->pGetOutlineTextMetrics( dev, cbSize, potm );
+    }
 
-    if (!FT_IS_SCALABLE( font->ft_face )) return 0;
+    TRACE("font=%p\n", physdev->font);
+
+    if (!FT_IS_SCALABLE( physdev->font->ft_face )) return 0;
 
     GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
 
-    if (font->potm || get_outline_text_metrics( font ))
+    if (physdev->font->potm || get_outline_text_metrics( physdev->font ))
     {
-        if(cbSize >= font->potm->otmSize)
+        if(cbSize >= physdev->font->potm->otmSize)
         {
-	    memcpy(potm, font->potm, font->potm->otmSize);
-            scale_outline_font_metrics(font, potm);
+	    memcpy(potm, physdev->font->potm, physdev->font->potm->otmSize);
+            scale_outline_font_metrics(physdev->font, potm);
         }
-	ret = font->potm->otmSize;
+	ret = physdev->font->potm->otmSize;
     }
     LeaveCriticalSection( &freetype_cs );
     return ret;
@@ -7110,7 +7115,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pGetImage */
     freetype_GetKerningPairs,           /* pGetKerningPairs */
     NULL,                               /* pGetNearestColor */
-    NULL,                               /* pGetOutlineTextMetrics */
+    freetype_GetOutlineTextMetrics,     /* pGetOutlineTextMetrics */
     NULL,                               /* pGetPixel */
     NULL,                               /* pGetPixelFormat */
     NULL,                               /* pGetSystemPaletteEntries */
@@ -7204,13 +7209,6 @@ BOOL WineEngInit(void)
 BOOL WineEngDestroyFontInstance(HFONT hfont)
 {
     return FALSE;
-}
-
-UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
-				  OUTLINETEXTMETRICW *potm)
-{
-    ERR("called but we don't have FreeType\n");
-    return 0;
 }
 
 BOOL WineEngGetTextExtentExPointI(GdiFont *font, const WORD *indices, INT count,

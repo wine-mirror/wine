@@ -1450,19 +1450,23 @@ UINT WINAPI GetOutlineTextMetricsW(
 {
     DC *dc = get_dc_ptr( hdc );
     OUTLINETEXTMETRICW *output = lpOTM;
+    PHYSDEV dev;
     UINT ret;
 
     TRACE("(%p,%d,%p)\n", hdc, cbData, lpOTM);
     if(!dc) return 0;
 
-    if(dc->gdiFont) {
-        ret = WineEngGetOutlineTextMetrics(dc->gdiFont, cbData, output);
-        if(lpOTM && ret) {
-            if(ret > cbData) {
-                output = HeapAlloc(GetProcessHeap(), 0, ret);
-                WineEngGetOutlineTextMetrics(dc->gdiFont, ret, output);
-            }
+    dev = GET_DC_PHYSDEV( dc, pGetOutlineTextMetrics );
+    ret = dev->funcs->pGetOutlineTextMetrics( dev, cbData, output );
 
+    if (lpOTM && ret > cbData)
+    {
+        output = HeapAlloc(GetProcessHeap(), 0, ret);
+        ret = dev->funcs->pGetOutlineTextMetrics( dev, ret, output );
+    }
+
+    if (lpOTM && ret)
+    {
         output->otmTextMetrics.tmDigitizedAspectX = GetDeviceCaps(hdc, LOGPIXELSX);
         output->otmTextMetrics.tmDigitizedAspectY = GetDeviceCaps(hdc, LOGPIXELSY);
 
@@ -1473,65 +1477,46 @@ UINT WINAPI GetOutlineTextMetricsW(
 		(-abs(INTERNAL_YDSTOWS(dc, (y)))):		\
 		(abs(INTERNAL_YDSTOWS(dc, (y)))))
 
-	    output->otmTextMetrics.tmHeight           = HDPTOLP(output->otmTextMetrics.tmHeight);
-	    output->otmTextMetrics.tmAscent           = HDPTOLP(output->otmTextMetrics.tmAscent);
-	    output->otmTextMetrics.tmDescent          = HDPTOLP(output->otmTextMetrics.tmDescent);
-	    output->otmTextMetrics.tmInternalLeading  = HDPTOLP(output->otmTextMetrics.tmInternalLeading);
-	    output->otmTextMetrics.tmExternalLeading  = HDPTOLP(output->otmTextMetrics.tmExternalLeading);
-	    output->otmTextMetrics.tmAveCharWidth     = WDPTOLP(output->otmTextMetrics.tmAveCharWidth);
-	    output->otmTextMetrics.tmMaxCharWidth     = WDPTOLP(output->otmTextMetrics.tmMaxCharWidth);
-	    output->otmTextMetrics.tmOverhang         = WDPTOLP(output->otmTextMetrics.tmOverhang);
-	    output->otmAscent = HDPTOLP(output->otmAscent);
-	    output->otmDescent = HDPTOLP(output->otmDescent);
-	    output->otmLineGap = abs(INTERNAL_YDSTOWS(dc,output->otmLineGap));
-	    output->otmsCapEmHeight = abs(INTERNAL_YDSTOWS(dc,output->otmsCapEmHeight));
-	    output->otmsXHeight = abs(INTERNAL_YDSTOWS(dc,output->otmsXHeight));
-	    output->otmrcFontBox.top = HDPTOLP(output->otmrcFontBox.top);
-	    output->otmrcFontBox.bottom = HDPTOLP(output->otmrcFontBox.bottom);
-	    output->otmrcFontBox.left = WDPTOLP(output->otmrcFontBox.left);
-	    output->otmrcFontBox.right = WDPTOLP(output->otmrcFontBox.right);
-	    output->otmMacAscent = HDPTOLP(output->otmMacAscent);
-	    output->otmMacDescent = HDPTOLP(output->otmMacDescent);
-	    output->otmMacLineGap = abs(INTERNAL_YDSTOWS(dc,output->otmMacLineGap));
-	    output->otmptSubscriptSize.x = WDPTOLP(output->otmptSubscriptSize.x);
-	    output->otmptSubscriptSize.y = HDPTOLP(output->otmptSubscriptSize.y);
-	    output->otmptSubscriptOffset.x = WDPTOLP(output->otmptSubscriptOffset.x);
-	    output->otmptSubscriptOffset.y = HDPTOLP(output->otmptSubscriptOffset.y);
-	    output->otmptSuperscriptSize.x = WDPTOLP(output->otmptSuperscriptSize.x);
-	    output->otmptSuperscriptSize.y = HDPTOLP(output->otmptSuperscriptSize.y);
-	    output->otmptSuperscriptOffset.x = WDPTOLP(output->otmptSuperscriptOffset.x);
-	    output->otmptSuperscriptOffset.y = HDPTOLP(output->otmptSuperscriptOffset.y);
-	    output->otmsStrikeoutSize = abs(INTERNAL_YDSTOWS(dc,output->otmsStrikeoutSize));
-	    output->otmsStrikeoutPosition = HDPTOLP(output->otmsStrikeoutPosition);
-	    output->otmsUnderscoreSize = HDPTOLP(output->otmsUnderscoreSize);
-	    output->otmsUnderscorePosition = HDPTOLP(output->otmsUnderscorePosition);
+        output->otmTextMetrics.tmHeight           = HDPTOLP(output->otmTextMetrics.tmHeight);
+        output->otmTextMetrics.tmAscent           = HDPTOLP(output->otmTextMetrics.tmAscent);
+        output->otmTextMetrics.tmDescent          = HDPTOLP(output->otmTextMetrics.tmDescent);
+        output->otmTextMetrics.tmInternalLeading  = HDPTOLP(output->otmTextMetrics.tmInternalLeading);
+        output->otmTextMetrics.tmExternalLeading  = HDPTOLP(output->otmTextMetrics.tmExternalLeading);
+        output->otmTextMetrics.tmAveCharWidth     = WDPTOLP(output->otmTextMetrics.tmAveCharWidth);
+        output->otmTextMetrics.tmMaxCharWidth     = WDPTOLP(output->otmTextMetrics.tmMaxCharWidth);
+        output->otmTextMetrics.tmOverhang         = WDPTOLP(output->otmTextMetrics.tmOverhang);
+        output->otmAscent = HDPTOLP(output->otmAscent);
+        output->otmDescent = HDPTOLP(output->otmDescent);
+        output->otmLineGap = abs(INTERNAL_YDSTOWS(dc,output->otmLineGap));
+        output->otmsCapEmHeight = abs(INTERNAL_YDSTOWS(dc,output->otmsCapEmHeight));
+        output->otmsXHeight = abs(INTERNAL_YDSTOWS(dc,output->otmsXHeight));
+        output->otmrcFontBox.top = HDPTOLP(output->otmrcFontBox.top);
+        output->otmrcFontBox.bottom = HDPTOLP(output->otmrcFontBox.bottom);
+        output->otmrcFontBox.left = WDPTOLP(output->otmrcFontBox.left);
+        output->otmrcFontBox.right = WDPTOLP(output->otmrcFontBox.right);
+        output->otmMacAscent = HDPTOLP(output->otmMacAscent);
+        output->otmMacDescent = HDPTOLP(output->otmMacDescent);
+        output->otmMacLineGap = abs(INTERNAL_YDSTOWS(dc,output->otmMacLineGap));
+        output->otmptSubscriptSize.x = WDPTOLP(output->otmptSubscriptSize.x);
+        output->otmptSubscriptSize.y = HDPTOLP(output->otmptSubscriptSize.y);
+        output->otmptSubscriptOffset.x = WDPTOLP(output->otmptSubscriptOffset.x);
+        output->otmptSubscriptOffset.y = HDPTOLP(output->otmptSubscriptOffset.y);
+        output->otmptSuperscriptSize.x = WDPTOLP(output->otmptSuperscriptSize.x);
+        output->otmptSuperscriptSize.y = HDPTOLP(output->otmptSuperscriptSize.y);
+        output->otmptSuperscriptOffset.x = WDPTOLP(output->otmptSuperscriptOffset.x);
+        output->otmptSuperscriptOffset.y = HDPTOLP(output->otmptSuperscriptOffset.y);
+        output->otmsStrikeoutSize = abs(INTERNAL_YDSTOWS(dc,output->otmsStrikeoutSize));
+        output->otmsStrikeoutPosition = HDPTOLP(output->otmsStrikeoutPosition);
+        output->otmsUnderscoreSize = HDPTOLP(output->otmsUnderscoreSize);
+        output->otmsUnderscorePosition = HDPTOLP(output->otmsUnderscorePosition);
 #undef WDPTOLP
 #undef HDPTOLP
-            if(output != lpOTM) {
-                memcpy(lpOTM, output, cbData);
-                HeapFree(GetProcessHeap(), 0, output);
-                ret = cbData;
-            }
-	}
-    }
-
-    else { /* This stuff was in GetOutlineTextMetricsA, I've moved it here
-	      but really this should just be a return 0. */
-
-        ret = sizeof(*lpOTM);
-        if (lpOTM) {
-	    if(cbData < ret)
-	        ret = 0;
-	    else {
-	        memset(lpOTM, 0, ret);
-		lpOTM->otmSize = sizeof(*lpOTM);
-		GetTextMetricsW(hdc, &lpOTM->otmTextMetrics);
-		/*
-		  Further fill of the structure not implemented,
-		  Needs real values for the structure members
-		*/
-	    }
-	}
+        if(output != lpOTM)
+        {
+            memcpy(lpOTM, output, cbData);
+            HeapFree(GetProcessHeap(), 0, output);
+            ret = cbData;
+        }
     }
     release_dc_ptr(dc);
     return ret;
