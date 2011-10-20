@@ -434,7 +434,20 @@ static BOOL nulldrv_GetTextExtentExPointI( PHYSDEV dev, const WORD *indices, INT
 
 static INT nulldrv_GetTextFace( PHYSDEV dev, INT size, LPWSTR name )
 {
-    return 0;
+    INT ret = 0;
+    LOGFONTW font;
+    HFONT hfont = GetCurrentObject( dev->hdc, OBJ_FONT );
+
+    if (GetObjectW( hfont, sizeof(font), &font ))
+    {
+        ret = strlenW( font.lfFaceName ) + 1;
+        if (name)
+        {
+            lstrcpynW( name, font.lfFaceName, size );
+            ret = min( size, ret );
+        }
+    }
+    return ret;
 }
 
 static BOOL nulldrv_GetTextMetrics( PHYSDEV dev, TEXTMETRICW *metrics )

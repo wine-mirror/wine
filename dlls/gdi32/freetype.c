@@ -6595,17 +6595,26 @@ DWORD WineEngGetFontData(GdiFont *font, DWORD table, DWORD offset, LPVOID buf,
 }
 
 /*************************************************************
- * WineEngGetTextFace
- *
+ * freetype_GetTextFace
  */
-INT WineEngGetTextFace(GdiFont *font, INT count, LPWSTR str)
+static INT freetype_GetTextFace( PHYSDEV dev, INT count, LPWSTR str )
 {
-    INT n = strlenW(font->name) + 1;
-    if(str) {
-        lstrcpynW(str, font->name, count);
-        return min(count, n);
-    } else
-        return n;
+    INT n;
+    struct freetype_physdev *physdev = get_freetype_dev( dev );
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetTextFace );
+        return dev->funcs->pGetTextFace( dev, count, str );
+    }
+
+    n = strlenW(physdev->font->name) + 1;
+    if (str)
+    {
+        lstrcpynW(str, physdev->font->name, count);
+        n = min(count, n);
+    }
+    return n;
 }
 
 /*************************************************************
@@ -7138,7 +7147,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     freetype_GetTextCharsetInfo,        /* pGetTextCharsetInfo */
     freetype_GetTextExtentExPoint,      /* pGetTextExtentExPoint */
     freetype_GetTextExtentExPointI,     /* pGetTextExtentExPointI */
-    NULL,                               /* pGetTextFace */
+    freetype_GetTextFace,               /* pGetTextFace */
     freetype_GetTextMetrics,            /* pGetTextMetrics */
     NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
@@ -7232,12 +7241,6 @@ DWORD WineEngGetFontData(GdiFont *font, DWORD table, DWORD offset, LPVOID buf,
 {
     ERR("called but we don't have FreeType\n");
     return GDI_ERROR;
-}
-
-INT WineEngGetTextFace(GdiFont *font, INT count, LPWSTR str)
-{
-    ERR("called but we don't have FreeType\n");
-    return 0;
 }
 
 INT WineEngAddFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)

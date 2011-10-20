@@ -852,25 +852,14 @@ INT WINAPI GetTextFaceA( HDC hdc, INT count, LPSTR name )
  */
 INT WINAPI GetTextFaceW( HDC hdc, INT count, LPWSTR name )
 {
-    FONTOBJ *font;
-    INT     ret = 0;
+    PHYSDEV dev;
+    INT ret;
 
     DC * dc = get_dc_ptr( hdc );
     if (!dc) return 0;
 
-    if(dc->gdiFont)
-        ret = WineEngGetTextFace(dc->gdiFont, count, name);
-    else if ((font = GDI_GetObjPtr( dc->hFont, OBJ_FONT )))
-    {
-        INT n = strlenW(font->logfont.lfFaceName) + 1;
-        if (name)
-        {
-            lstrcpynW( name, font->logfont.lfFaceName, count );
-            ret = min(count, n);
-        }
-        else ret = n;
-        GDI_ReleaseObj( dc->hFont );
-    }
+    dev = GET_DC_PHYSDEV( dc, pGetTextFace );
+    ret = dev->funcs->pGetTextFace( dev, count, name );
     release_dc_ptr( dc );
     return ret;
 }
