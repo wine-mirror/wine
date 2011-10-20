@@ -2774,9 +2774,14 @@ static void set_space_status(void)
 	WCHAR fmt[64], b1[64], b2[64], buffer[BUFFER_LEN];
 
 	if (GetDiskFreeSpaceExW(NULL, &ulFreeBytesToCaller, &ulTotalBytes, &ulFreeBytes)) {
+		DWORD_PTR args[2];
 		format_bytes(b1, ulFreeBytesToCaller.QuadPart);
 		format_bytes(b2, ulTotalBytes.QuadPart);
-		wsprintfW(buffer, RS(fmt,IDS_FREE_SPACE_FMT), b1, b2);
+		args[0] = (DWORD_PTR)b1;
+		args[1] = (DWORD_PTR)b2;
+		FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
+		               RS(fmt,IDS_FREE_SPACE_FMT), 0, 0, buffer,
+		               sizeof(buffer)/sizeof(*buffer), (__ms_va_list*)args);
 	} else
 		lstrcpyW(buffer, sQMarks);
 

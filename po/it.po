@@ -10982,7 +10982,8 @@ msgid "Security"
 msgstr "Sicurezza"
 
 #: winefile.rc:120
-msgid "%s of %s free"
+#, fuzzy
+msgid "%1 of %2 free"
 msgstr "liberi %s di %s"
 
 #: winemine.rc:34
