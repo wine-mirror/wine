@@ -294,7 +294,6 @@ extern HANDLE WineEngAddFontMemResourceEx(PVOID, DWORD, PVOID, LPDWORD) DECLSPEC
 extern BOOL WineEngDestroyFontInstance(HFONT handle) DECLSPEC_HIDDEN;
 extern DWORD WineEngGetFontData(GdiFont*, DWORD, DWORD, LPVOID, DWORD) DECLSPEC_HIDDEN;
 extern BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph) DECLSPEC_HIDDEN;
-extern BOOL WineEngGetTextExtentExPointI(GdiFont*, const WORD *, INT, INT, LPINT, LPINT, LPSIZE) DECLSPEC_HIDDEN;
 extern INT  WineEngGetTextFace(GdiFont*, INT, LPWSTR) DECLSPEC_HIDDEN;
 extern BOOL WineEngFontIsLinked(GdiFont*) DECLSPEC_HIDDEN;
 extern BOOL WineEngInit(void) DECLSPEC_HIDDEN;

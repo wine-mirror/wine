@@ -945,7 +945,8 @@ BOOL WINAPI GetTextExtentPoint32W(
 BOOL WINAPI GetTextExtentExPointI( HDC hdc, const WORD *indices, INT count, INT max_ext,
                                    LPINT nfit, LPINT dxs, LPSIZE size )
 {
-    BOOL ret = FALSE;
+    PHYSDEV dev;
+    BOOL ret;
     DC *dc;
 
     if (count < 0) return FALSE;
@@ -953,20 +954,11 @@ BOOL WINAPI GetTextExtentExPointI( HDC hdc, const WORD *indices, INT count, INT 
     dc = get_dc_ptr( hdc );
     if (!dc) return FALSE;
 
-    if(dc->gdiFont)
-    {
-        ret = WineEngGetTextExtentExPointI(dc->gdiFont, indices, count, max_ext, nfit, dxs, size);
-        size->cx = abs(INTERNAL_XDSTOWS(dc, size->cx));
-        size->cy = abs(INTERNAL_YDSTOWS(dc, size->cy));
-        size->cx += count * dc->charExtra;
-    }
-    else
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetTextExtentExPoint );
-        FIXME("calling GetTextExtentExPoint\n");
-        ret = physdev->funcs->pGetTextExtentExPoint( physdev, indices, count, max_ext, nfit, dxs, size );
-    }
-
+    dev = GET_DC_PHYSDEV( dc, pGetTextExtentExPointI );
+    ret = dev->funcs->pGetTextExtentExPointI( dev, indices, count, max_ext, nfit, dxs, size );
+    size->cx = abs(INTERNAL_XDSTOWS(dc, size->cx));
+    size->cy = abs(INTERNAL_YDSTOWS(dc, size->cy));
+    size->cx += count * dc->charExtra;
     release_dc_ptr( dc );
 
     TRACE("(%p %p %d %p): returning %d x %d\n",
