@@ -195,7 +195,7 @@ static void init_devices(HWND dialog, IDirectInput8W *lpDI, DIDevicesData *data,
     IDirectInput8_EnumDevicesBySemantics(lpDI, NULL, lpdiaf, count_devices, (LPVOID) data, 0);
 
     /* Allocate devices */
-    data->devices = (DeviceData*) HeapAlloc(GetProcessHeap(), 0, sizeof(DeviceData) * data->ndevices);
+    data->devices = HeapAlloc(GetProcessHeap(), 0, sizeof(DeviceData) * data->ndevices);
 
     /* Collect and insert */
     data->ndevices = 0;
