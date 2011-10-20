@@ -119,15 +119,15 @@ static const WCHAR **build_list( const WCHAR *buffer )
                                 (count+1) * sizeof(WCHAR*) + (strlenW(buffer)+1) * sizeof(WCHAR) )))
     {
         WCHAR *str = (WCHAR *)(ret + count + 1);
-        WCHAR *p = str;
+        WCHAR *q = str;
 
         strcpyW( str, buffer );
         count = 0;
         for (;;)
         {
-            ret[count++] = p;
-            if (!(p = strchrW( p, ';' ))) break;
-            *p++ = 0;
+            ret[count++] = q;
+            if (!(q = strchrW( q, ';' ))) break;
+            *q++ = 0;
         }
         ret[count++] = NULL;
     }
