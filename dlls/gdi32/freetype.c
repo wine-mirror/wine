@@ -6896,7 +6896,10 @@ static DWORD parse_format0_kern_subtable(GdiFont *font,
     return nPairs;
 }
 
-DWORD WineEngGetKerningPairs(GdiFont *font, DWORD cPairs, KERNINGPAIR *kern_pair)
+/*************************************************************
+ * freetype_GetKerningPairs
+ */
+static DWORD freetype_GetKerningPairs( PHYSDEV dev, DWORD cPairs, KERNINGPAIR *kern_pair )
 {
     DWORD length;
     void *buf;
@@ -6904,6 +6907,14 @@ DWORD WineEngGetKerningPairs(GdiFont *font, DWORD cPairs, KERNINGPAIR *kern_pair
     const struct TT_kern_subtable *tt_kern_subtable;
     USHORT i, nTables;
     USHORT *glyph_to_char;
+    GdiFont *font;
+    struct freetype_physdev *physdev = get_freetype_dev( dev );
+
+    if (!(font = physdev->font))
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetKerningPairs );
+        return dev->funcs->pGetKerningPairs( dev, cPairs, kern_pair );
+    }
 
     GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
@@ -6913,11 +6924,11 @@ DWORD WineEngGetKerningPairs(GdiFont *font, DWORD cPairs, KERNINGPAIR *kern_pair
         {
             cPairs = min(cPairs, font->total_kern_pairs);
             memcpy(kern_pair, font->kern_pairs, cPairs * sizeof(*kern_pair));
-            LeaveCriticalSection( &freetype_cs );
-            return cPairs;
         }
+        else cPairs = font->total_kern_pairs;
+
         LeaveCriticalSection( &freetype_cs );
-        return font->total_kern_pairs;
+        return cPairs;
     }
 
     font->total_kern_pairs = 0;
@@ -7038,11 +7049,11 @@ DWORD WineEngGetKerningPairs(GdiFont *font, DWORD cPairs, KERNINGPAIR *kern_pair
     {
         cPairs = min(cPairs, font->total_kern_pairs);
         memcpy(kern_pair, font->kern_pairs, cPairs * sizeof(*kern_pair));
-        LeaveCriticalSection( &freetype_cs );
-        return cPairs;
     }
+    else cPairs = font->total_kern_pairs;
+
     LeaveCriticalSection( &freetype_cs );
-    return font->total_kern_pairs;
+    return cPairs;
 }
 
 static const struct gdi_dc_funcs freetype_funcs =
@@ -7097,7 +7108,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     freetype_GetGlyphOutline,           /* pGetGlyphOutline */
     NULL,                               /* pGetICMProfile */
     NULL,                               /* pGetImage */
-    NULL,                               /* pGetKerningPairs */
+    freetype_GetKerningPairs,           /* pGetKerningPairs */
     NULL,                               /* pGetNearestColor */
     NULL,                               /* pGetOutlineTextMetrics */
     NULL,                               /* pGetPixel */
@@ -7265,12 +7276,6 @@ BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
     lprs->wFlags = 0;
     lprs->nLanguageID = 0;
     return TRUE;
-}
-
-DWORD WineEngGetKerningPairs(GdiFont *font, DWORD cPairs, KERNINGPAIR *kern_pair)
-{
-    ERR("called but we don't have FreeType\n");
-    return 0;
 }
 
 BOOL WineEngRealizationInfo(GdiFont *font, realization_info_t *info)

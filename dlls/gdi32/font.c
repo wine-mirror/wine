@@ -2664,7 +2664,8 @@ DWORD WINAPI GetKerningPairsW( HDC hDC, DWORD cPairs,
                                  LPKERNINGPAIR lpKerningPairs )
 {
     DC *dc;
-    DWORD ret = 0;
+    DWORD ret;
+    PHYSDEV dev;
 
     TRACE("(%p,%d,%p)\n", hDC, cPairs, lpKerningPairs);
 
@@ -2677,9 +2678,8 @@ DWORD WINAPI GetKerningPairsW( HDC hDC, DWORD cPairs,
     dc = get_dc_ptr(hDC);
     if (!dc) return 0;
 
-    if (dc->gdiFont)
-        ret = WineEngGetKerningPairs(dc->gdiFont, cPairs, lpKerningPairs);
-
+    dev = GET_DC_PHYSDEV( dc, pGetKerningPairs );
+    ret = dev->funcs->pGetKerningPairs( dev, cPairs, lpKerningPairs );
     release_dc_ptr( dc );
     return ret;
 }
