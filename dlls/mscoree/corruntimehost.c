@@ -803,6 +803,26 @@ static void get_utf8_args(int *argc, char ***argv)
     HeapFree(GetProcessHeap(), 0, argvw);
 }
 
+static void FixupVTable(HMODULE hmodule)
+{
+    ASSEMBLY *assembly;
+    HRESULT hr;
+    VTableFixup *vtable_fixups;
+    ULONG vtable_fixup_count;
+
+    hr = assembly_from_hmodule(&assembly, hmodule);
+    if (SUCCEEDED(hr))
+    {
+        hr = assembly_get_vtable_fixups(assembly, &vtable_fixups, &vtable_fixup_count);
+        if (vtable_fixup_count)
+            FIXME("vtable fixups are not implemented; expect a crash\n");
+
+        assembly_release(assembly);
+    }
+    else
+        ERR("failed to read CLR headers, hr=%x\n", hr);
+}
+
 __int32 WINAPI _CorExeMain(void)
 {
     int exit_code;
@@ -829,6 +849,8 @@ __int32 WINAPI _CorExeMain(void)
     filenameA = WtoA(filename);
     if (!filenameA)
         return -1;
+
+    FixupVTable(GetModuleHandleW(NULL));
 
     hr = get_runtime_info(filename, NULL, NULL, 0, 0, FALSE, &info);
 
@@ -860,6 +882,22 @@ __int32 WINAPI _CorExeMain(void)
     unload_all_runtimes();
 
     return exit_code;
+}
+
+BOOL WINAPI _CorDllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+    FIXME("(%p, %d, %p): stub\n", hinstDLL, fdwReason, lpvReserved);
+
+    switch (fdwReason)
+    {
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(hinstDLL);
+        FixupVTable(hinstDLL);
+        break;
+    case DLL_PROCESS_DETACH:
+        break;
+    }
+    return TRUE;
 }
 
 HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version,
