@@ -599,14 +599,15 @@ static UINT WHERE_evaluate( MSIWHEREVIEW *wv, const UINT rows[],
     return ERROR_SUCCESS;
 }
 
-static UINT check_condition( MSIWHEREVIEW *wv, MSIRECORD *record, JOINTABLE *table,
+static UINT check_condition( MSIWHEREVIEW *wv, MSIRECORD *record, JOINTABLE **tables,
                              UINT table_rows[] )
 {
     UINT r = ERROR_FUNCTION_FAILED;
     INT val;
 
-    for (table_rows[table->table_index] = 0; table_rows[table->table_index] < table->row_count;
-         table_rows[table->table_index]++)
+    for (table_rows[(*tables)->table_index] = 0;
+         table_rows[(*tables)->table_index] < (*tables)->row_count;
+         table_rows[(*tables)->table_index]++)
     {
         val = 0;
         wv->rec_index = 0;
@@ -615,9 +616,9 @@ static UINT check_condition( MSIWHEREVIEW *wv, MSIRECORD *record, JOINTABLE *tab
             break;
         if (val)
         {
-            if (table->next)
+            if (*(tables + 1))
             {
-                r = check_condition(wv, record, table->next, table_rows);
+                r = check_condition(wv, record, tables + 1, table_rows);
                 if (r != ERROR_SUCCESS)
                     break;
             }
@@ -629,7 +630,7 @@ static UINT check_condition( MSIWHEREVIEW *wv, MSIRECORD *record, JOINTABLE *tab
             }
         }
     }
-    table_rows[table->table_index] = INVALID_ROW_INDEX;
+    table_rows[(*tables)->table_index] = INVALID_ROW_INDEX;
     return r;
 }
 
@@ -680,13 +681,96 @@ static int compare_entry( const void *left, const void *right )
     return 0;
 }
 
+static void add_to_array( JOINTABLE **array, JOINTABLE *elem )
+{
+    while (*array && *array != elem)
+        array++;
+    if (!*array)
+        *array = elem;
+}
+
+static BOOL in_array( JOINTABLE **array, JOINTABLE *elem )
+{
+    while (*array && *array != elem)
+        array++;
+    return *array != NULL;
+}
+
+#define CONST_EXPR 1 /* comparison to a constant value */
+#define JOIN_TO_CONST_EXPR 0x10000 /* comparison to a table involved with
+                                      a CONST_EXPR comaprison */
+
+static UINT reorder_check( const struct expr *expr, JOINTABLE **ordered_tables,
+                           BOOL process_joins, JOINTABLE **lastused )
+{
+    UINT res = 0;
+
+    switch (expr->type)
+    {
+        case EXPR_WILDCARD:
+        case EXPR_SVAL:
+        case EXPR_UVAL:
+            return 0;
+        case EXPR_COL_NUMBER:
+        case EXPR_COL_NUMBER32:
+        case EXPR_COL_NUMBER_STRING:
+            if (in_array(ordered_tables, expr->u.column.parsed.table))
+                return JOIN_TO_CONST_EXPR;
+            *lastused = expr->u.column.parsed.table;
+            return CONST_EXPR;
+        case EXPR_STRCMP:
+        case EXPR_COMPLEX:
+            res = reorder_check(expr->u.expr.right, ordered_tables, process_joins, lastused);
+            /* fall through */
+        case EXPR_UNARY:
+            res += reorder_check(expr->u.expr.left, ordered_tables, process_joins, lastused);
+            if (res == 0)
+                return 0;
+            if (res == CONST_EXPR)
+                add_to_array(ordered_tables, *lastused);
+            if (process_joins && res == JOIN_TO_CONST_EXPR + CONST_EXPR)
+                add_to_array(ordered_tables, *lastused);
+            return res;
+        default:
+            ERR("Unkown expr type: %i\n", expr->type);
+            assert(0);
+            return 0x1000000;
+    }
+}
+
+/* reorders the tablelist in a way to evaluate the condition as fast as possible */
+static JOINTABLE **ordertables( MSIWHEREVIEW *wv )
+{
+    JOINTABLE *table;
+    JOINTABLE **tables;
+
+    tables = msi_alloc_zero( (wv->table_count + 1) * sizeof(*tables) );
+
+    if (wv->cond)
+    {
+        table = NULL;
+        reorder_check(wv->cond, tables, FALSE, &table);
+        table = NULL;
+        reorder_check(wv->cond, tables, TRUE, &table);
+    }
+
+    table = wv->tables;
+    while (table)
+    {
+        add_to_array(tables, table);
+        table = table->next;
+    }
+    return tables;
+}
+
 static UINT WHERE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 {
     MSIWHEREVIEW *wv = (MSIWHEREVIEW*)view;
     UINT r;
     JOINTABLE *table = wv->tables;
     UINT *rows;
-    int i;
+    JOINTABLE **ordered_tables;
+    int i = 0;
 
     TRACE("%p %p\n", wv, record);
 
@@ -714,11 +798,13 @@ static UINT WHERE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
     }
     while ((table = table->next));
 
+    ordered_tables = ordertables( wv );
+
     rows = msi_alloc( wv->table_count * sizeof(*rows) );
     for (i = 0; i < wv->table_count; i++)
         rows[i] = INVALID_ROW_INDEX;
 
-    r =  check_condition(wv, record, wv->tables, rows);
+    r =  check_condition(wv, record, ordered_tables, rows);
 
     if (wv->order_info)
         wv->order_info->error = ERROR_SUCCESS;
@@ -729,6 +815,7 @@ static UINT WHERE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
         r = wv->order_info->error;
 
     msi_free( rows );
+    msi_free( ordered_tables );
     return r;
 }
 
