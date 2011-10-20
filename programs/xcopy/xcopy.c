@@ -93,7 +93,7 @@ static WCHAR *XCOPY_LoadMessage(UINT id) {
  *  and hence required WriteConsoleW to output it, however if file i/o is
  *  redirected, it needs to be WriteFile'd using OEM (not ANSI) format
  * ========================================================================= */
-static int XCOPY_wprintf(const WCHAR *format, ...) {
+static int __cdecl XCOPY_wprintf(const WCHAR *format, ...) {
 
     static WCHAR *output_bufW = NULL;
     static char  *output_bufA = NULL;
@@ -101,7 +101,7 @@ static int XCOPY_wprintf(const WCHAR *format, ...) {
     static BOOL  traceOutput  = FALSE;
 #define MAX_WRITECONSOLE_SIZE 65535
 
-    va_list parms;
+    __ms_va_list parms;
     DWORD   nOut;
     int len;
     DWORD   res = 0;
@@ -119,11 +119,11 @@ static int XCOPY_wprintf(const WCHAR *format, ...) {
       return 0;
     }
 
-    va_start(parms, format);
+    __ms_va_start(parms, format);
     SetLastError(NO_ERROR);
     len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, format, 0, 0, output_bufW,
                    MAX_WRITECONSOLE_SIZE/sizeof(*output_bufW), &parms);
-    va_end(parms);
+    __ms_va_end(parms);
     if (len == 0 && GetLastError() != NO_ERROR) {
       WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
       return 0;
