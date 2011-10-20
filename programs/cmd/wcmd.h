@@ -79,7 +79,7 @@ void WCMD_output_asis_stderr (const WCHAR *message);
 void WCMD_pause (void);
 void WCMD_popd (void);
 void WCMD_print_error (void);
-void WCMD_pushd (WCHAR *);
+void WCMD_pushd (const WCHAR *command);
 void WCMD_remove_dir (WCHAR *command);
 void WCMD_rename (void);
 void WCMD_run_program (WCHAR *command, int called);

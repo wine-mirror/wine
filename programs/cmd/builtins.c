@@ -1418,7 +1418,8 @@ void WCMD_goto (CMD_LIST **cmdList) {
  *	Push a directory onto the stack
  */
 
-void WCMD_pushd (WCHAR *command) {
+void WCMD_pushd (const WCHAR *command)
+{
     struct env_stack *curdir;
     WCHAR *thisdir;
     static const WCHAR parmD[] = {'/','D','\0'};
