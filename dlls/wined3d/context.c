@@ -1119,7 +1119,7 @@ void context_invalidate_state(struct wined3d_context *context, DWORD state)
 }
 
 /* This function takes care of wined3d pixel format selection. */
-static int context_choose_pixel_format(struct wined3d_device *device, HDC hdc,
+static int context_choose_pixel_format(const struct wined3d_device *device, HDC hdc,
         const struct wined3d_format *color_format, const struct wined3d_format *ds_format,
         BOOL auxBuffers, BOOL findCompatible)
 {
