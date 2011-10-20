@@ -502,10 +502,11 @@ BOOL MFDRV_MetaParam1(PHYSDEV dev, short func, short param1)
 {
     char buffer[8];
     METARECORD *mr = (METARECORD *)&buffer;
+    WORD *params = mr->rdParm;
 
     mr->rdSize = 4;
     mr->rdFunction = func;
-    *(mr->rdParm) = param1;
+    params[0] = param1;
     return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
 }
 
@@ -517,11 +518,12 @@ BOOL MFDRV_MetaParam2(PHYSDEV dev, short func, short param1, short param2)
 {
     char buffer[10];
     METARECORD *mr = (METARECORD *)&buffer;
+    WORD *params = mr->rdParm;
 
     mr->rdSize = 5;
     mr->rdFunction = func;
-    *(mr->rdParm) = param2;
-    *(mr->rdParm + 1) = param1;
+    params[0] = param2;
+    params[1] = param1;
     return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
 }
 
@@ -535,13 +537,14 @@ BOOL MFDRV_MetaParam4(PHYSDEV dev, short func, short param1, short param2,
 {
     char buffer[14];
     METARECORD *mr = (METARECORD *)&buffer;
+    WORD *params = mr->rdParm;
 
     mr->rdSize = 7;
     mr->rdFunction = func;
-    *(mr->rdParm) = param4;
-    *(mr->rdParm + 1) = param3;
-    *(mr->rdParm + 2) = param2;
-    *(mr->rdParm + 3) = param1;
+    params[0] = param4;
+    params[1] = param3;
+    params[2] = param2;
+    params[3] = param1;
     return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
 }
 
@@ -555,15 +558,16 @@ BOOL MFDRV_MetaParam6(PHYSDEV dev, short func, short param1, short param2,
 {
     char buffer[18];
     METARECORD *mr = (METARECORD *)&buffer;
+    WORD *params = mr->rdParm;
 
     mr->rdSize = 9;
     mr->rdFunction = func;
-    *(mr->rdParm) = param6;
-    *(mr->rdParm + 1) = param5;
-    *(mr->rdParm + 2) = param4;
-    *(mr->rdParm + 3) = param3;
-    *(mr->rdParm + 4) = param2;
-    *(mr->rdParm + 5) = param1;
+    params[0] = param6;
+    params[1] = param5;
+    params[2] = param4;
+    params[3] = param3;
+    params[4] = param2;
+    params[5] = param1;
     return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
 }
 
@@ -577,16 +581,17 @@ BOOL MFDRV_MetaParam8(PHYSDEV dev, short func, short param1, short param2,
 {
     char buffer[22];
     METARECORD *mr = (METARECORD *)&buffer;
+    WORD *params = mr->rdParm;
 
     mr->rdSize = 11;
     mr->rdFunction = func;
-    *(mr->rdParm) = param8;
-    *(mr->rdParm + 1) = param7;
-    *(mr->rdParm + 2) = param6;
-    *(mr->rdParm + 3) = param5;
-    *(mr->rdParm + 4) = param4;
-    *(mr->rdParm + 5) = param3;
-    *(mr->rdParm + 6) = param2;
-    *(mr->rdParm + 7) = param1;
+    params[0] = param8;
+    params[1] = param7;
+    params[2] = param6;
+    params[3] = param5;
+    params[4] = param4;
+    params[5] = param3;
+    params[6] = param2;
+    params[7] = param1;
     return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
 }
