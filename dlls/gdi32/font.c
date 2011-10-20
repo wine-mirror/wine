@@ -2503,6 +2503,7 @@ DWORD WINAPI GetGlyphOutlineW( HDC hdc, UINT uChar, UINT fuFormat,
 {
     DC *dc;
     DWORD ret;
+    PHYSDEV dev;
 
     TRACE("(%p, %04x, %04x, %p, %d, %p, %p)\n",
 	  hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
@@ -2512,12 +2513,8 @@ DWORD WINAPI GetGlyphOutlineW( HDC hdc, UINT uChar, UINT fuFormat,
     dc = get_dc_ptr(hdc);
     if(!dc) return GDI_ERROR;
 
-    if(dc->gdiFont)
-      ret = WineEngGetGlyphOutline(dc->gdiFont, uChar, fuFormat, lpgm,
-				   cbBuffer, lpBuffer, lpmat2);
-    else
-      ret = GDI_ERROR;
-
+    dev = GET_DC_PHYSDEV( dc, pGetGlyphOutline );
+    ret = dev->funcs->pGetGlyphOutline( dev, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
     release_dc_ptr( dc );
     return ret;
 }

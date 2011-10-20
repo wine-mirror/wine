@@ -6196,18 +6196,23 @@ end:
 }
 
 /*************************************************************
- * WineEngGetGlyphOutline
- *
+ * freetype_GetGlyphOutline
  */
-DWORD WineEngGetGlyphOutline(GdiFont *font, UINT glyph, UINT format,
-			     LPGLYPHMETRICS lpgm, DWORD buflen, LPVOID buf,
-			     const MAT2* lpmat)
+static DWORD freetype_GetGlyphOutline( PHYSDEV dev, UINT glyph, UINT format,
+                                       LPGLYPHMETRICS lpgm, DWORD buflen, LPVOID buf, const MAT2 *lpmat )
 {
+    struct freetype_physdev *physdev = get_freetype_dev( dev );
     DWORD ret;
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetGlyphOutline );
+        return dev->funcs->pGetGlyphOutline( dev, glyph, format, lpgm, buflen, buf, lpmat );
+    }
 
     GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
-    ret = get_glyph_outline( font, glyph, format, lpgm, buflen, buf, lpmat );
+    ret = get_glyph_outline( physdev->font, glyph, format, lpgm, buflen, buf, lpmat );
     LeaveCriticalSection( &freetype_cs );
     return ret;
 }
@@ -7089,7 +7094,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pGetFontData */
     freetype_GetFontUnicodeRanges,      /* pGetFontUnicodeRanges */
     freetype_GetGlyphIndices,           /* pGetGlyphIndices */
-    NULL,                               /* pGetGlyphOutline */
+    freetype_GetGlyphOutline,           /* pGetGlyphOutline */
     NULL,                               /* pGetICMProfile */
     NULL,                               /* pGetImage */
     NULL,                               /* pGetKerningPairs */
@@ -7188,14 +7193,6 @@ BOOL WineEngInit(void)
 BOOL WineEngDestroyFontInstance(HFONT hfont)
 {
     return FALSE;
-}
-
-DWORD WineEngGetGlyphOutline(GdiFont *font, UINT glyph, UINT format,
-			     LPGLYPHMETRICS lpgm, DWORD buflen, LPVOID buf,
-			     const MAT2* lpmat)
-{
-    ERR("called but we don't have FreeType\n");
-    return GDI_ERROR;
 }
 
 UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
