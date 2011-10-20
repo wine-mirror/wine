@@ -5356,14 +5356,18 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
     }
 
     if ( af == AF_UNSPEC)  /* did they not specify the address family? */
-        switch(protocol)
-	{
-          case IPPROTO_TCP:
-             if (type == SOCK_STREAM) { af = AF_INET; break; }
-          case IPPROTO_UDP:
-             if (type == SOCK_DGRAM)  { af = AF_INET; break; }
-          default: SetLastError(WSAEPROTOTYPE); return INVALID_SOCKET;
+    {
+        if ((protocol == IPPROTO_TCP && type == SOCK_STREAM) ||
+            (protocol == IPPROTO_UDP && type == SOCK_DGRAM))
+        {
+            af = AF_INET;
         }
+        else
+        {
+            SetLastError(WSAEPROTOTYPE);
+            return INVALID_SOCKET;
+        }
+    }
 
     SERVER_START_REQ( create_socket )
     {
