@@ -5981,7 +5981,7 @@ void device_resource_released(struct wined3d_device *device, struct wined3d_reso
     TRACE("Resource released.\n");
 }
 
-HRESULT CDECL wined3d_device_get_surface_from_dc(struct wined3d_device *device,
+HRESULT CDECL wined3d_device_get_surface_from_dc(const struct wined3d_device *device,
         HDC dc, struct wined3d_surface **surface)
 {
     struct wined3d_resource *resource;
