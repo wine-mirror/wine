@@ -44,6 +44,18 @@ Call ok(not isEmpty(4), "isEmpty(4) is true?")
 Call ok(not isEmpty("x"), "isEmpty(""x"") is true?")
 Call ok(not isEmpty(Null), "isEmpty(Null) is true?")
 
+Call ok(not isNull(new EmptyClass), "isNull(new EmptyClass) is true?")
+Set x = new EmptyClass
+Call ok(not isNull(x), "isNull(x) is true?")
+x = null
+Call ok(isNull(x), "isNull(x) is not true?")
+Call ok(not isNull(empty), "isNull(empty) is true?")
+Call ok(not isNull(Nothing), "isNull(Nothing) is true?")
+Call ok(not isNull(true), "isNull(true) is true?")
+Call ok(not isNull(4), "isNull(4) is true?")
+Call ok(not isNull("x"), "isNull(""x"") is true?")
+Call ok(isNull(Null), "isNull(Null) is not true?")
+
 Call ok(getVT(err) = "VT_DISPATCH", "getVT(err) = " & getVT(err))
 
 Sub TestHex(x, ex)
