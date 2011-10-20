@@ -478,6 +478,47 @@ HRESULT get_mmdevice(EDataFlow flow, const GUID *tgt, IMMDevice **device)
     return DSERR_INVALIDPARAM;
 }
 
+static BOOL send_device(IMMDevice *device, GUID *guid,
+        LPDSENUMCALLBACKW cb, void *user)
+{
+    IPropertyStore *ps;
+    PROPVARIANT pv;
+    BOOL keep_going;
+    HRESULT hr;
+
+    PropVariantInit(&pv);
+
+    hr = IMMDevice_OpenPropertyStore(device, STGM_READ, &ps);
+    if(FAILED(hr)){
+        WARN("OpenPropertyStore failed: %08x\n", hr);
+        return TRUE;
+    }
+
+    hr = get_mmdevice_guid(device, ps, guid);
+    if(FAILED(hr)){
+        IPropertyStore_Release(ps);
+        return TRUE;
+    }
+
+    hr = IPropertyStore_GetValue(ps,
+            (const PROPERTYKEY *)&DEVPKEY_Device_FriendlyName, &pv);
+    if(FAILED(hr)){
+        IPropertyStore_Release(ps);
+        WARN("GetValue(FriendlyName) failed: %08x\n", hr);
+        return TRUE;
+    }
+
+    TRACE("Calling back with %s (%s)\n", wine_dbgstr_guid(guid),
+            wine_dbgstr_w(pv.u.pwszVal));
+
+    keep_going = cb(guid, pv.u.pwszVal, wine_vxd_drv, user);
+
+    PropVariantClear(&pv);
+    IPropertyStore_Release(ps);
+
+    return keep_going;
+}
+
 /* S_FALSE means the callback returned FALSE at some point
  * S_OK means the callback always returned TRUE */
 HRESULT enumerate_mmdevices(EDataFlow flow, GUID *guids,
@@ -485,7 +526,8 @@ HRESULT enumerate_mmdevices(EDataFlow flow, GUID *guids,
 {
     IMMDeviceEnumerator *devenum;
     IMMDeviceCollection *coll;
-    UINT count, i;
+    IMMDevice *defdev = NULL;
+    UINT count, i, n;
     BOOL keep_going;
     HRESULT hr;
 
@@ -514,14 +556,24 @@ HRESULT enumerate_mmdevices(EDataFlow flow, GUID *guids,
     if(count == 0)
         return DS_OK;
 
+    TRACE("Calling back with NULL (%s)\n", wine_dbgstr_w(primary_desc));
     keep_going = cb(NULL, primary_desc, empty_drv, user);
+
+    /* always send the default device first */
+    if(keep_going){
+        hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(devenum, flow,
+                eMultimedia, &defdev);
+        if(FAILED(hr)){
+            defdev = NULL;
+            n = 0;
+        }else{
+            keep_going = send_device(defdev, &guids[0], cb, user);
+            n = 1;
+        }
+    }
 
     for(i = 0; keep_going && i < count; ++i){
         IMMDevice *device;
-        IPropertyStore *ps;
-        PROPVARIANT pv;
-
-        PropVariantInit(&pv);
 
         hr = IMMDeviceCollection_Item(coll, i, &device);
         if(FAILED(hr)){
@@ -529,36 +581,16 @@ HRESULT enumerate_mmdevices(EDataFlow flow, GUID *guids,
             continue;
         }
 
-        hr = IMMDevice_OpenPropertyStore(device, STGM_READ, &ps);
-        if(FAILED(hr)){
-            IMMDevice_Release(device);
-            WARN("OpenPropertyStore failed: %08x\n", hr);
-            continue;
+        if(device != defdev){
+            send_device(device, &guids[n], cb, user);
+            ++n;
         }
 
-        hr = get_mmdevice_guid(device, ps, &guids[i]);
-        if(FAILED(hr)){
-            IPropertyStore_Release(ps);
-            IMMDevice_Release(device);
-            continue;
-        }
-
-        hr = IPropertyStore_GetValue(ps,
-                (const PROPERTYKEY *)&DEVPKEY_Device_FriendlyName, &pv);
-        if(FAILED(hr)){
-            IPropertyStore_Release(ps);
-            IMMDevice_Release(device);
-            WARN("GetValue(FriendlyName) failed: %08x\n", hr);
-            continue;
-        }
-
-        keep_going = cb(&guids[i], pv.u.pwszVal, wine_vxd_drv, user);
-
-        PropVariantClear(&pv);
-        IPropertyStore_Release(ps);
         IMMDevice_Release(device);
     }
 
+    if(defdev)
+        IMMDevice_Release(defdev);
     IMMDeviceCollection_Release(coll);
 
     return (keep_going == TRUE) ? S_OK : S_FALSE;

@@ -25,6 +25,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
+#define NONAMELESSUNION
 #include <windows.h>
 #include <stdio.h>
 
@@ -34,6 +36,13 @@
 #include "mmreg.h"
 #include "ks.h"
 #include "ksmedia.h"
+
+#include "initguid.h"
+#include "wingdi.h"
+#include "mmdeviceapi.h"
+#include "audioclient.h"
+#include "propkey.h"
+#include "devpkey.h"
 
 #include "dsound_test.h"
 
@@ -1043,6 +1052,70 @@ static void test_hw_buffers(void)
     IDirectSound8_Release(ds);
 }
 
+static struct {
+    UINT dev_count;
+    GUID guid;
+} default_info = { 0 };
+
+static BOOL WINAPI default_device_cb(GUID *guid, const char *desc,
+        const char *module, void *user)
+{
+    trace("guid: %p, desc: %s\n", guid, desc);
+    if(!guid)
+        ok(default_info.dev_count == 0, "Got NULL GUID not in first position\n");
+    else{
+        if(default_info.dev_count == 0){
+            ok(IsEqualGUID(guid, &default_info.guid), "Expected default device GUID\n");
+        }else{
+            ok(!IsEqualGUID(guid, &default_info.guid), "Got default GUID at unexpected location: %u\n",
+                    default_info.dev_count);
+        }
+
+        /* only count real devices */
+        ++default_info.dev_count;
+    }
+
+    return TRUE;
+}
+
+static void test_first_device(void)
+{
+    IMMDeviceEnumerator *devenum;
+    IMMDevice *defdev;
+    IPropertyStore *ps;
+    PROPVARIANT pv;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL,
+            CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&devenum);
+    if(FAILED(hr)){
+        win_skip("MMDevAPI is not available, skipping default device test\n");
+        return;
+    }
+
+    hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(devenum, eRender,
+            eMultimedia, &defdev);
+    ok(hr == S_OK, "GetDefaultAudioEndpoint failed: %08x\n", hr);
+
+    hr = IMMDevice_OpenPropertyStore(defdev, STGM_READ, &ps);
+    ok(hr == S_OK, "OpenPropertyStore failed: %08x\n", hr);
+
+    PropVariantInit(&pv);
+
+    hr = IPropertyStore_GetValue(ps, &PKEY_AudioEndpoint_GUID, &pv);
+    ok(hr == S_OK, "GetValue failed: %08x\n", hr);
+
+    CLSIDFromString(pv.u.pwszVal, &default_info.guid);
+
+    PropVariantClear(&pv);
+    IPropertyStore_Release(ps);
+    IMMDevice_Release(defdev);
+    IMMDeviceEnumerator_Release(devenum);
+
+    hr = pDirectSoundEnumerateA(&default_device_cb, NULL);
+    ok(hr == S_OK, "DirectSoundEnumerateA failed: %08x\n", hr);
+}
+
 START_TEST(dsound8)
 {
     HMODULE hDsound;
@@ -1062,6 +1135,7 @@ START_TEST(dsound8)
             IDirectSound8_tests();
             dsound8_tests();
             test_hw_buffers();
+            test_first_device();
         }
         else
             skip("dsound8 test skipped\n");
