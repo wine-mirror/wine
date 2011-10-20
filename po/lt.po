@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-10-18 21:24+0300\n"
+"PO-Revision-Date: 2011-10-20 22:44+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -10717,9 +10717,9 @@ msgid "Screen buffer size must be greater or equal to the window's one"
 msgstr "Ekrano buferio dydis turi būti didesnis arba lygus lango buferiui"
 
 #: wineconsole.rc:34
-#, fuzzy
 msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
-msgstr "Kiekvienas simbolis yra %ld pikselių pločio ir %ld pikselių aukščio"
+msgstr ""
+"Kiekvienas simbolis yra %1!u! pikselių pločio ir %2!u! pikselių aukščio"
 
 #: wineconsole.rc:35
 msgid "This is a test"
@@ -10941,9 +10941,8 @@ msgid "Security"
 msgstr "Saugumas"
 
 #: winefile.rc:120
-#, fuzzy
 msgid "%1 of %2 free"
-msgstr "%s iš %s laisva"
+msgstr "%1 iš %2 laisva"
 
 #: winemine.rc:34
 msgid "&Game"
