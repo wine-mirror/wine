@@ -826,7 +826,7 @@ void released_obj(void)
         PostQuitMessage(0);
 }
 
-static BOOL create_ie_window(LPCSTR cmdline)
+static BOOL create_ie_window(const WCHAR *cmdline)
 {
     InternetExplorer *ie;
     HRESULT hres;
@@ -842,25 +842,24 @@ static BOOL create_ie_window(LPCSTR cmdline)
         IWebBrowser2_GoHome(&ie->IWebBrowser2_iface);
     }else {
         VARIANT var_url;
-        DWORD len;
         int cmdlen;
+
+        static const WCHAR nohomeW[] = {'-','n','o','h','o','m','e'};
 
         while(*cmdline == ' ' || *cmdline == '\t')
             cmdline++;
-        cmdlen = lstrlenA(cmdline);
+        cmdlen = strlenW(cmdline);
         if(cmdlen > 2 && cmdline[0] == '"' && cmdline[cmdlen-1] == '"') {
             cmdline++;
             cmdlen -= 2;
         }
 
-        if(cmdlen == 7 && !memcmp(cmdline, "-nohome", 7)) {
+        if(cmdlen == sizeof(nohomeW)/sizeof(*nohomeW) && !memcmp(cmdline, nohomeW, sizeof(nohomeW))) {
             ie->nohome = TRUE;
         }else {
             V_VT(&var_url) = VT_BSTR;
 
-            len = MultiByteToWideChar(CP_ACP, 0, cmdline, cmdlen, NULL, 0);
-            V_BSTR(&var_url) = SysAllocStringLen(NULL, len);
-            MultiByteToWideChar(CP_ACP, 0, cmdline, cmdlen, V_BSTR(&var_url), len);
+            V_BSTR(&var_url) = SysAllocStringLen(cmdline, cmdlen);
 
             /* navigate to the first page */
             IWebBrowser2_Navigate2(&ie->IWebBrowser2_iface, &var_url, NULL, NULL, NULL, NULL);
@@ -1020,12 +1019,14 @@ static void release_dde(void)
  *
  * Only returns on error.
  */
-DWORD WINAPI IEWinMain(const char *szCommandLine, int nShowWindow)
+DWORD WINAPI IEWinMain(const WCHAR *cmdline, int nShowWindow)
 {
     MSG msg;
     HRESULT hres;
 
-    TRACE("%s %d\n", debugstr_a(szCommandLine), nShowWindow);
+    static const WCHAR embeddingW[] = {'-','e','m','b','e','d','d','i','n','g',0};
+
+    TRACE("%s %d\n", debugstr_w(cmdline), nShowWindow);
 
     CoInitialize(NULL);
 
@@ -1037,8 +1038,8 @@ DWORD WINAPI IEWinMain(const char *szCommandLine, int nShowWindow)
 
     init_dde();
 
-    if(strcasecmp(szCommandLine, "-embedding")) {
-        if(!create_ie_window(szCommandLine)) {
+    if(strcmpiW(cmdline, embeddingW)) {
+        if(!create_ie_window(cmdline)) {
             CoUninitialize();
             ExitProcess(1);
         }

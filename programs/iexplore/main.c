@@ -25,7 +25,7 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
-extern DWORD WINAPI IEWinMain(LPSTR, int);
+extern DWORD WINAPI IEWinMain(const WCHAR*, int);
 
 static BOOL check_native_ie(void)
 {
@@ -68,13 +68,15 @@ static DWORD register_iexplore(BOOL doregister)
     return FAILED(hres);
 }
 
-int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE prev, WCHAR *cmdline, int show)
 {
+    static const WCHAR regserverW[] = {'r','e','g','s','e','r','v','e','r',0};
+    static const WCHAR unregserverW[] = {'u','n','r','e','g','s','e','r','v','e','r',0};
 
     if(*cmdline == '-' || *cmdline == '/') {
-        if(!strcasecmp(cmdline+1, "regserver"))
+        if(!strcmpiW(cmdline+1, regserverW))
             return register_iexplore(TRUE);
-        if(!strcasecmp(cmdline+1, "unregserver"))
+        if(!strcmpiW(cmdline+1, unregserverW))
             return register_iexplore(FALSE);
     }
 

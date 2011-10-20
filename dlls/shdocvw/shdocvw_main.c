@@ -117,7 +117,9 @@ HRESULT WINAPI DllUnregisterServer(void)
  */
 DWORD WINAPI IEWinMain(LPSTR szCommandLine, int nShowWindow)
 {
-    DWORD (WINAPI *pIEWinMain)(LPSTR,int);
+    DWORD (WINAPI *pIEWinMain)(const WCHAR*,int);
+    WCHAR *cmdline;
+    DWORD ret, len;
 
     TRACE("%s %d\n", debugstr_a(szCommandLine), nShowWindow);
 
@@ -125,7 +127,16 @@ DWORD WINAPI IEWinMain(LPSTR szCommandLine, int nShowWindow)
     if(!pIEWinMain)
         ExitProcess(1);
 
-    return pIEWinMain(szCommandLine, nShowWindow);
+    len = MultiByteToWideChar(CP_ACP, 0, szCommandLine, -1, NULL, 0);
+    cmdline = heap_alloc(len*sizeof(WCHAR));
+    if(!cmdline)
+        ExitProcess(1);
+    MultiByteToWideChar(CP_ACP, 0, szCommandLine, -1, cmdline, len);
+
+    ret = pIEWinMain(cmdline, nShowWindow);
+
+    heap_free(cmdline);
+    return ret;
 }
 
 /*************************************************************************
