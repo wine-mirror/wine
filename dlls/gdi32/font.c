@@ -3397,14 +3397,16 @@ BOOL WINAPI GetCharWidthI(HDC hdc, UINT first, UINT count, LPWORD glyphs, LPINT 
  */
 DWORD WINAPI GetFontUnicodeRanges(HDC hdc, LPGLYPHSET lpgs)
 {
-    DWORD ret = 0;
+    DWORD ret;
+    PHYSDEV dev;
     DC *dc = get_dc_ptr(hdc);
 
     TRACE("(%p, %p)\n", hdc, lpgs);
 
     if (!dc) return 0;
 
-    if (dc->gdiFont) ret = WineEngGetFontUnicodeRanges(dc->gdiFont, lpgs);
+    dev = GET_DC_PHYSDEV( dc, pGetFontUnicodeRanges );
+    ret = dev->funcs->pGetFontUnicodeRanges( dev, lpgs );
     release_dc_ptr(dc);
     return ret;
 }

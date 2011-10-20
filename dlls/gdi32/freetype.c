@@ -6675,11 +6675,21 @@ static DWORD get_font_unicode_ranges(FT_Face face, GLYPHSET *gs)
     return num_ranges;
 }
 
-DWORD WineEngGetFontUnicodeRanges(GdiFont *font, LPGLYPHSET glyphset)
+/*************************************************************
+ * freetype_GetFontUnicodeRanges
+ */
+static DWORD freetype_GetFontUnicodeRanges( PHYSDEV dev, LPGLYPHSET glyphset )
 {
-    DWORD size = 0;
-    DWORD num_ranges = get_font_unicode_ranges(font->ft_face, glyphset);
+    struct freetype_physdev *physdev = get_freetype_dev( dev );
+    DWORD size, num_ranges;
 
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGetFontUnicodeRanges );
+        return dev->funcs->pGetFontUnicodeRanges( dev, glyphset );
+    }
+
+    num_ranges = get_font_unicode_ranges(physdev->font->ft_face, glyphset);
     size = sizeof(GLYPHSET) + sizeof(WCRANGE) * (num_ranges - 1);
     if (glyphset)
     {
@@ -7072,7 +7082,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pGetDeviceCaps */
     NULL,                               /* pGetDeviceGammaRamp */
     NULL,                               /* pGetFontData */
-    NULL,                               /* pGetFontUnicodeRanges */
+    freetype_GetFontUnicodeRanges,      /* pGetFontUnicodeRanges */
     NULL,                               /* pGetGlyphIndices */
     NULL,                               /* pGetGlyphOutline */
     NULL,                               /* pGetICMProfile */
@@ -7243,12 +7253,6 @@ UINT WineEngGetTextCharsetInfo(GdiFont *font, LPFONTSIGNATURE fs, DWORD flags)
 BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph)
 {
     return FALSE;
-}
-
-DWORD WineEngGetFontUnicodeRanges(GdiFont *font, LPGLYPHSET glyphset)
-{
-    FIXME("(%p, %p): stub\n", font, glyphset);
-    return 0;
 }
 
 BOOL WineEngFontIsLinked(GdiFont *font)
