@@ -745,7 +745,6 @@ static HRESULT WINAPI HlinkFrame_Navigate(IHlinkFrame *iface, DWORD grfHLNF, LPB
         DWORD site_data = 0xdeadbeef;
 
         hres = IHlink_GetTargetFrameName(pihlNavigate, &frame_name);
-        todo_wine
         ok(hres == S_FALSE, "GetTargetFrameName failed: %08x\n", hres);
         ok(frame_name == NULL, "frame_name = %p\n", frame_name);
 

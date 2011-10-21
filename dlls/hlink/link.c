@@ -437,7 +437,15 @@ static HRESULT WINAPI IHlink_fnGetTargetFrameName(IHlink* iface,
     HlinkImpl  *This = impl_from_IHlink(iface);
 
     TRACE("(%p)->(%p)\n", This, ppwzTargetFrameName);
+
+    if(!This->TargetFrameName) {
+        *ppwzTargetFrameName = NULL;
+        return S_FALSE;
+    }
+
     *ppwzTargetFrameName = hlink_co_strdupW( This->TargetFrameName );
+    if(!*ppwzTargetFrameName)
+        return E_OUTOFMEMORY;
 
     return S_OK;
 }
