@@ -804,7 +804,6 @@ static BOOL build_command_line( WCHAR **argv )
             *p++='"';
         if (has_quote) {
             int bcount;
-            WCHAR* a;
 
             bcount=0;
             a=*arg;
@@ -1510,17 +1509,16 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline, const WCHA
 
         if (flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS))
         {
-            int pid;
             if (!(pid = fork()))
             {
-                int fd = open( "/dev/null", O_RDWR );
+                int nullfd = open( "/dev/null", O_RDWR );
                 setsid();
                 /* close stdin and stdout */
-                if (fd != -1)
+                if (nullfd != -1)
                 {
-                    dup2( fd, 0 );
-                    dup2( fd, 1 );
-                    close( fd );
+                    dup2( nullfd, 0 );
+                    dup2( nullfd, 1 );
+                    close( nullfd );
                 }
             }
             else if (pid != -1) _exit(0);  /* parent */
@@ -2250,14 +2248,14 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
 
     if (env && !(flags & CREATE_UNICODE_ENVIRONMENT))  /* convert environment to unicode */
     {
-        char *p = env;
+        char *e = env;
         DWORD lenW;
 
-        while (*p) p += strlen(p) + 1;
-        p++;  /* final null */
-        lenW = MultiByteToWideChar( CP_ACP, 0, env, p - (char*)env, NULL, 0 );
+        while (*e) e += strlen(e) + 1;
+        e++;  /* final null */
+        lenW = MultiByteToWideChar( CP_ACP, 0, env, e - (char*)env, NULL, 0 );
         envW = HeapAlloc( GetProcessHeap(), 0, lenW * sizeof(WCHAR) );
-        MultiByteToWideChar( CP_ACP, 0, env, p - (char*)env, envW, lenW );
+        MultiByteToWideChar( CP_ACP, 0, env, e - (char*)env, envW, lenW );
         flags |= CREATE_UNICODE_ENVIRONMENT;
     }
 
@@ -3206,11 +3204,11 @@ DWORD WINAPI GetProcessVersion( DWORD pid )
 
     if (!pid || pid == GetCurrentProcessId())
     {
-        IMAGE_NT_HEADERS *nt;
+        IMAGE_NT_HEADERS *pnt;
 
-        if ((nt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress )))
-            return ((nt->OptionalHeader.MajorSubsystemVersion << 16) |
-                    nt->OptionalHeader.MinorSubsystemVersion);
+        if ((pnt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress )))
+            return ((pnt->OptionalHeader.MajorSubsystemVersion << 16) |
+                    pnt->OptionalHeader.MinorSubsystemVersion);
         return 0;
     }
 
