@@ -408,7 +408,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids,
         MultiByteToWideChar(CP_UNIXCP, 0, nameA, -1, (*ids)[*num], len);
 
         (*keys)[*num] = HeapAlloc(GetProcessHeap(), 0, sizeof(AudioDeviceID));
-        if(!(*ids)[*num]){
+        if(!(*keys)[*num]){
             HeapFree(GetProcessHeap(), 0, devices);
             HeapFree(GetProcessHeap(), 0, (*ids)[*num]);
             for(j = 0; j < *num; ++j){
