@@ -501,8 +501,24 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
     err = dev->funcs->pPutImage( dev, 0, clip, dst_info, &src_bits, &src, &dst, rop );
     if (err == ERROR_BAD_FORMAT)
     {
-        err = convert_bits( src_info, &src, dst_info, &src_bits, FALSE );
-        if (!err) err = dev->funcs->pPutImage( dev, 0, clip, dst_info, &src_bits, &src, &dst, rop );
+        /* 1-bpp destination without a color table requires a fake 1-entry table
+         * that contains only the background color */
+        if (dst_info->bmiHeader.biBitCount == 1 && !dst_info->bmiHeader.biClrUsed)
+        {
+            COLORREF color = GetBkColor( dev->hdc );
+            dst_info->bmiColors[0].rgbRed      = GetRValue( color );
+            dst_info->bmiColors[0].rgbGreen    = GetGValue( color );
+            dst_info->bmiColors[0].rgbBlue     = GetBValue( color );
+            dst_info->bmiColors[0].rgbReserved = 0;
+            dst_info->bmiHeader.biClrUsed = 1;
+        }
+
+        if (!(err = convert_bits( src_info, &src, dst_info, &src_bits, FALSE )))
+        {
+            /* get rid of the fake 1-bpp table */
+            if (dst_info->bmiHeader.biClrUsed == 1) dst_info->bmiHeader.biClrUsed = 0;
+            err = dev->funcs->pPutImage( dev, 0, clip, dst_info, &src_bits, &src, &dst, rop );
+        }
     }
 
     if (err == ERROR_TRANSFORM_NOT_SUPPORTED)
