@@ -40,7 +40,7 @@ static inline HlinkBCImpl *impl_from_IHlinkBrowseContext(IHlinkBrowseContext *if
 }
 
 
-HRESULT WINAPI HLinkBrowseContext_Constructor(IUnknown *pUnkOuter, REFIID riid,
+HRESULT HLinkBrowseContext_Constructor(IUnknown *pUnkOuter, REFIID riid,
         LPVOID *ppv)
 {
     HlinkBCImpl * hl;

@@ -915,7 +915,7 @@ static const IPersistStreamVtbl psvt =
     IPersistStream_fnGetSizeMax,
 };
 
-HRESULT WINAPI HLink_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv)
+HRESULT HLink_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv)
 {
     HlinkImpl * hl;
 

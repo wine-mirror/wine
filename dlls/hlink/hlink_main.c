@@ -30,7 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(hlink);
 
 static HINSTANCE instance;
 
-typedef HRESULT (CALLBACK *LPFNCREATEINSTANCE)(IUnknown*, REFIID, LPVOID*);
+typedef HRESULT (*LPFNCREATEINSTANCE)(IUnknown*, REFIID, LPVOID*);
 
 typedef struct
 {
