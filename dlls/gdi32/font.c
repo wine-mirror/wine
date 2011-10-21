@@ -3378,10 +3378,12 @@ DWORD WINAPI GetFontUnicodeRanges(HDC hdc, LPGLYPHSET lpgs)
 BOOL WINAPI FontIsLinked(HDC hdc)
 {
     DC *dc = get_dc_ptr(hdc);
-    BOOL ret = FALSE;
+    PHYSDEV dev;
+    BOOL ret;
 
     if (!dc) return FALSE;
-    if (dc->gdiFont) ret = WineEngFontIsLinked(dc->gdiFont);
+    dev = GET_DC_PHYSDEV( dc, pFontIsLinked );
+    ret = dev->funcs->pFontIsLinked( dev );
     release_dc_ptr(dc);
     TRACE("returning %d\n", ret);
     return ret;

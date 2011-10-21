@@ -6748,14 +6748,22 @@ static DWORD freetype_GetFontUnicodeRanges( PHYSDEV dev, LPGLYPHSET glyphset )
 }
 
 /*************************************************************
- *     FontIsLinked
+ * freetype_FontIsLinked
  */
-BOOL WineEngFontIsLinked(GdiFont *font)
+static BOOL freetype_FontIsLinked( PHYSDEV dev )
 {
+    struct freetype_physdev *physdev = get_freetype_dev( dev );
     BOOL ret;
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pFontIsLinked );
+        return dev->funcs->pFontIsLinked( dev );
+    }
+
     GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
-    ret = !list_empty(&font->child_fonts);
+    ret = !list_empty(&physdev->font->child_fonts);
     LeaveCriticalSection( &freetype_cs );
     return ret;
 }
@@ -7130,7 +7138,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pFillPath */
     NULL,                               /* pFillRgn */
     NULL,                               /* pFlattenPath */
-    NULL,                               /* pFontIsLinked */
+    freetype_FontIsLinked,              /* pFontIsLinked */
     NULL,                               /* pFrameRgn */
     NULL,                               /* pGdiComment */
     NULL,                               /* pGdiRealizationInfo */
@@ -7262,11 +7270,6 @@ HANDLE WineEngAddFontMemResourceEx(PVOID pbFont, DWORD cbFont, PVOID pdv, DWORD 
 }
 
 BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph)
-{
-    return FALSE;
-}
-
-BOOL WineEngFontIsLinked(GdiFont *font)
 {
     return FALSE;
 }
