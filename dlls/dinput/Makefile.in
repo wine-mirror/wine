@@ -26,6 +26,7 @@ RC_SRCS = \
 	dinput.rc \
 	dinput_En.rc \
 	dinput_It.rc \
-	dinput_Ko.rc
+	dinput_Ko.rc \
+	dinput_Lt.rc
 
 @MAKE_DLL_RULES@
