@@ -190,7 +190,7 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
     STARTUPINFOA	startup;
     char*		format = NULL;
     BOOL		ret = FALSE;
-    char buffer[256];
+    char 		buffer[256];
 
     static const WCHAR AeDebugW[] = {'M','a','c','h','i','n','e','\\',
                                      'S','o','f','t','w','a','r','e','\\',
@@ -214,7 +214,6 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
 
     if (!NtOpenKey( &hDbgConf, KEY_READ, &attr ))
     {
-        char buffer[64];
         KEY_VALUE_PARTIAL_INFORMATION *info;
         DWORD format_size = 0;
 
@@ -286,7 +285,6 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
 	if (pMessageBoxA)
 	{
             static const char msg[] = ".\nDo you wish to debug it?";
-	    char buffer[256];
 
             format_exception_msg( epointers, buffer, sizeof(buffer)-sizeof(msg) );
             strcat( buffer, msg );
