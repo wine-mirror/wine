@@ -6831,17 +6831,26 @@ BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
 }
 
 /*************************************************************
- *     WineEngRealizationInfo
+ * freetype_GdiRealizationInfo
  */
-BOOL WineEngRealizationInfo(GdiFont *font, realization_info_t *info)
+static BOOL freetype_GdiRealizationInfo( PHYSDEV dev, void *ptr )
 {
-    FIXME("(%p, %p): stub!\n", font, info);
+    struct freetype_physdev *physdev = get_freetype_dev( dev );
+    realization_info_t *info = ptr;
+
+    if (!physdev->font)
+    {
+        dev = GET_NEXT_PHYSDEV( dev, pGdiRealizationInfo );
+        return dev->funcs->pGdiRealizationInfo( dev, ptr );
+    }
+
+    FIXME("(%p, %p): stub!\n", physdev->font, info);
 
     info->flags = 1;
-    if(FT_IS_SCALABLE(font->ft_face))
+    if(FT_IS_SCALABLE(physdev->font->ft_face))
         info->flags |= 2;
 
-    info->cache_num = font->cache_num;
+    info->cache_num = physdev->font->cache_num;
     info->unknown2 = -1;
     return TRUE;
 }
@@ -7141,7 +7150,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     freetype_FontIsLinked,              /* pFontIsLinked */
     NULL,                               /* pFrameRgn */
     NULL,                               /* pGdiComment */
-    NULL,                               /* pGdiRealizationInfo */
+    freetype_GdiRealizationInfo,        /* pGdiRealizationInfo */
     freetype_GetCharABCWidths,          /* pGetCharABCWidths */
     freetype_GetCharABCWidthsI,         /* pGetCharABCWidthsI */
     freetype_GetCharWidth,              /* pGetCharWidth */
@@ -7283,12 +7292,6 @@ BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
     lprs->wFlags = 0;
     lprs->nLanguageID = 0;
     return TRUE;
-}
-
-BOOL WineEngRealizationInfo(GdiFont *font, realization_info_t *info)
-{
-    ERR("called but we don't have FreeType\n");
-    return FALSE;
 }
 
 #endif /* HAVE_FREETYPE */

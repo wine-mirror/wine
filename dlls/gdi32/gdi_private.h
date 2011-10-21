@@ -294,7 +294,6 @@ extern HANDLE WineEngAddFontMemResourceEx(PVOID, DWORD, PVOID, LPDWORD) DECLSPEC
 extern BOOL WineEngDestroyFontInstance(HFONT handle) DECLSPEC_HIDDEN;
 extern BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph) DECLSPEC_HIDDEN;
 extern BOOL WineEngInit(void) DECLSPEC_HIDDEN;
-extern BOOL WineEngRealizationInfo(GdiFont*, realization_info_t*) DECLSPEC_HIDDEN;
 extern BOOL WineEngRemoveFontResourceEx(LPCWSTR, DWORD, PVOID) DECLSPEC_HIDDEN;
 
 /* gdiobj.c */

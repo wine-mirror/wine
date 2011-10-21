@@ -3397,11 +3397,12 @@ BOOL WINAPI FontIsLinked(HDC hdc)
 BOOL WINAPI GdiRealizationInfo(HDC hdc, realization_info_t *info)
 {
     DC *dc = get_dc_ptr(hdc);
-    BOOL ret = FALSE;
+    PHYSDEV dev;
+    BOOL ret;
 
     if (!dc) return FALSE;
-    if (dc->gdiFont) ret = WineEngRealizationInfo(dc->gdiFont, info);
+    dev = GET_DC_PHYSDEV( dc, pGdiRealizationInfo );
+    ret = dev->funcs->pGdiRealizationInfo( dev, info );
     release_dc_ptr(dc);
-
     return ret;
 }
