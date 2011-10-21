@@ -25,6 +25,18 @@ End Class
 
 Call ok(vbSunday = 1, "vbSunday = " & vbSunday)
 Call ok(getVT(vbSunday) = "VT_I2", "getVT(vbSunday) = " & getVT(vbSunday))
+Call ok(vbMonday = 2, "vbMonday = " & vbMonday)
+Call ok(getVT(vbMonday) = "VT_I2", "getVT(vbMonday) = " & getVT(vbMonday))
+Call ok(vbTuesday = 3, "vbTuesday = " & vbTuesday)
+Call ok(getVT(vbTuesday) = "VT_I2", "getVT(vbTuesday) = " & getVT(vbTuesday))
+Call ok(vbWednesday = 4, "vbWednesday = " & vbWednesday)
+Call ok(getVT(vbWednesday) = "VT_I2", "getVT(vbWednesday) = " & getVT(vbWednesday))
+Call ok(vbThursday = 5, "vbThursday = " & vbThursday)
+Call ok(getVT(vbThursday) = "VT_I2", "getVT(vbThursday) = " & getVT(vbThursday))
+Call ok(vbFriday = 6, "vbFriday = " & vbFriday)
+Call ok(getVT(vbFriday) = "VT_I2", "getVT(vbFriday) = " & getVT(vbFriday))
+Call ok(vbSaturday = 7, "vbSaturday = " & vbSaturday)
+Call ok(getVT(vbSaturday) = "VT_I2", "getVT(vbSaturday) = " & getVT(vbSaturday))
 
 Call ok(isObject(new EmptyClass), "isObject(new EmptyClass) is not true?")
 Set x = new EmptyClass

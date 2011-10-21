@@ -913,38 +913,38 @@ static HRESULT Global_vbSunday(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, 
 
 static HRESULT Global_vbMonday(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return return_short(res, 2);
 }
 
 static HRESULT Global_vbTuesday(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return return_short(res, 3);
 }
 
 static HRESULT Global_vbWednesday(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return return_short(res, 4);
 }
 
 static HRESULT Global_vbThursday(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return return_short(res, 5);
 }
 
 static HRESULT Global_vbFriday(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return return_short(res, 6);
 }
 
 static HRESULT Global_vbSaturday(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return return_short(res, 7);
 }
 
 static HRESULT Global_vbFirstJan1(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
