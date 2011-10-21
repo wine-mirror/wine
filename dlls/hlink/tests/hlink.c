@@ -1821,6 +1821,43 @@ static void test_HlinkClone(void)
     IMoniker_Release(dummy);
 }
 
+static void test_StdHlink(void)
+{
+    IHlink *hlink;
+    WCHAR *str;
+    HRESULT hres;
+
+    static const WCHAR testW[] = {'t','e','s','t',0};
+
+    hres = CoCreateInstance(&CLSID_StdHlink, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IHlink, (void**)&hlink);
+    ok(hres == S_OK, "CoCreateInstance failed: %08x\n", hres);
+
+    str = (void*)0xdeadbeef;
+    hres = IHlink_GetTargetFrameName(hlink, &str);
+    ok(hres == S_FALSE, "GetTargetFrameName failed: %08x\n", hres);
+    ok(!str, "str = %s\n", wine_dbgstr_w(str));
+
+    hres = IHlink_SetTargetFrameName(hlink, testW);
+    ok(hres == S_OK, "SetTargetFrameName failed: %08x\n", hres);
+
+    str = (void*)0xdeadbeef;
+    hres = IHlink_GetTargetFrameName(hlink, &str);
+    ok(hres == S_OK, "GetTargetFrameName failed: %08x\n", hres);
+    ok(!lstrcmpW(str, testW), "str = %s\n", wine_dbgstr_w(str));
+    CoTaskMemFree(str);
+
+    hres = IHlink_SetTargetFrameName(hlink, NULL);
+    ok(hres == S_OK, "SetTargetFrameName failed: %08x\n", hres);
+
+    str = (void*)0xdeadbeef;
+    hres = IHlink_GetTargetFrameName(hlink, &str);
+    ok(hres == S_FALSE, "GetTargetFrameName failed: %08x\n", hres);
+    ok(!str, "str = %s\n", wine_dbgstr_w(str));
+
+    IHlink_Release(hlink);
+}
+
 START_TEST(hlink)
 {
     CoInitialize(NULL);
@@ -1838,6 +1875,7 @@ START_TEST(hlink)
     test_HashLink();
     test_HlinkSite();
     test_HlinkClone();
+    test_StdHlink();
 
     CoUninitialize();
 }
