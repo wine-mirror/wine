@@ -772,7 +772,7 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
 #define ZWJ  0x200D
 
     int   cnt = 0, index = 0, str = 0;
-    int   New_Script = SCRIPT_UNDEFINED;
+    int   New_Script = -1;
     WORD  *levels = NULL;
     WORD  *strength = NULL;
     WORD  baselevel = 0;
@@ -859,7 +859,7 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
             New_Script = get_char_script(pwcInChars[cnt+j]);
         }
 
-        if ((levels && (levels[cnt] != pItems[index].a.s.uBidiLevel || (strength && (strength[cnt] != str)))) || New_Script != pItems[index].a.eScript || New_Script == Script_Control)
+        if ((levels && (levels[cnt] != pItems[index].a.s.uBidiLevel || (strength && (strength[cnt] != str)))) || (New_Script != -1 && New_Script != pItems[index].a.eScript) || New_Script == Script_Control)
         {
             TRACE("New_Level = %i, New_Strength = %i, New_Script=%d, eScript=%d\n", levels?levels[cnt]:-1, strength?strength[cnt]:str, New_Script, pItems[index].a.eScript);
 
