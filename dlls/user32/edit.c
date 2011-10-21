@@ -98,6 +98,7 @@ typedef struct tagLINEDEF {
 	LINE_END ending;
 	INT width;			/* width of the line in pixels */
 	INT index; 			/* line index into the buffer */
+	SCRIPT_STRING_ANALYSIS ssa;	/* Uniscribe Data */
 	struct tagLINEDEF *next;
 } LINEDEF;
 
@@ -176,6 +177,7 @@ typedef struct
 	} while(0)
 
 static const WCHAR empty_stringW[] = {0};
+static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap);
 
 /*********************************************************************
  *
@@ -366,8 +368,23 @@ static INT EDIT_CallWordBreakProc(EDITSTATE *es, INT start, INT index, INT count
 	return ret;
 }
 
+static inline void EDIT_InvalidateUniscribeData_linedef(LINEDEF *line_def)
+{
+	if (line_def->ssa)
+	{
+		ScriptStringFree(&line_def->ssa);
+		line_def->ssa = NULL;
+	}
+}
+
 static inline void EDIT_InvalidateUniscribeData(EDITSTATE *es)
 {
+	LINEDEF *line_def = es->first_line_def;
+	while (line_def)
+	{
+		EDIT_InvalidateUniscribeData_linedef(line_def);
+		line_def = line_def->next;
+	}
 	if (es->ssa)
 	{
 		ScriptStringFree(&es->ssa);
@@ -375,8 +392,43 @@ static inline void EDIT_InvalidateUniscribeData(EDITSTATE *es)
 	}
 }
 
+static SCRIPT_STRING_ANALYSIS EDIT_UpdateUniscribeData_linedef(EDITSTATE *es, HDC dc, LINEDEF *line_def)
+{
+	if (!line_def)
+		return NULL;
+
+	if (line_def->net_length && !line_def->ssa)
+	{
+		int index = line_def->index;
+		HFONT old_font = NULL;
+		HDC udc = dc;
+		SCRIPT_TABDEF tabdef;
+
+		if (!udc)
+			udc = GetDC(es->hwndSelf);
+		if (es->font)
+			old_font = SelectObject(udc, es->font);
+
+		tabdef.cTabStops = es->tabs_count;
+		tabdef.iScale = 0;
+		tabdef.pTabStops = es->tabs;
+		tabdef.iTabOrigin = 0;
+
+		ScriptStringAnalyse(udc, &es->text[index], line_def->net_length, (1.5*line_def->net_length+16), -1, SSA_LINK|SSA_FALLBACK|SSA_GLYPHS|SSA_TAB, -1, NULL, NULL, NULL, &tabdef, NULL, &line_def->ssa);
+
+		if (es->font)
+			SelectObject(udc, old_font);
+		if (udc != dc)
+			ReleaseDC(es->hwndSelf, udc);
+	}
+
+	return line_def->ssa;
+}
+
 static SCRIPT_STRING_ANALYSIS EDIT_UpdateUniscribeData(EDITSTATE *es, HDC dc, INT line)
 {
+	LINEDEF *line_def;
+
 	if (!(es->style & ES_MULTILINE))
 	{
 		if (!es->ssa)
@@ -404,7 +456,14 @@ static SCRIPT_STRING_ANALYSIS EDIT_UpdateUniscribeData(EDITSTATE *es, HDC dc, IN
 	}
 	else
 	{
-		return NULL;
+		line_def = es->first_line_def;
+		while (line_def && line)
+		{
+			line_def = line_def->next;
+			line--;
+		}
+
+		return EDIT_UpdateUniscribeData_linedef(es,dc,line_def);
 	}
 }
 
@@ -419,8 +478,6 @@ static SCRIPT_STRING_ANALYSIS EDIT_UpdateUniscribeData(EDITSTATE *es, HDC dc, IN
  */
 static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta, HRGN hrgn)
 {
-	HDC dc;
-	HFONT old_font = 0;
 	LPWSTR current_position, cp;
 	INT fw;
 	LINEDEF *current_line;
@@ -433,10 +490,6 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 
 	if (istart == iend && delta == 0)
 		return;
-
-	dc = GetDC(es->hwndSelf);
-	if (es->font)
-		old_font = SelectObject(dc, es->font);
 
 	previous_line = NULL;
 	current_line = es->first_line_def;
@@ -456,7 +509,6 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 	if (!current_line) /* Error occurred start is not inside previous buffer */
 	{
 		FIXME(" modification occurred outside buffer\n");
-		ReleaseDC(es->hwndSelf, dc);
 		return;
 	}
 
@@ -482,7 +534,7 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 			{
 				/* The buffer has been expanded, create a new line and
 				   insert it into the link list */
-				LINEDEF *new_line = HeapAlloc(GetProcessHeap(), 0, sizeof(LINEDEF));
+				LINEDEF *new_line = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(LINEDEF));
 				new_line->next = previous_line->next;
 				previous_line->next = new_line;
 				current_line = new_line;
@@ -532,33 +584,63 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 			current_line->net_length = cp - current_position;
 		}
 
-		/* Calculate line width */
-		current_line->width = (INT)LOWORD(GetTabbedTextExtentW(dc,
-					current_position, current_line->net_length,
-					es->tabs_count, es->tabs));
+		if (current_line->net_length)
+		{
+			const SIZE *sz;
+			EDIT_InvalidateUniscribeData_linedef(current_line);
+			EDIT_UpdateUniscribeData_linedef(es, NULL, current_line);
+			sz = ScriptString_pSize(current_line->ssa);
+			/* Calculate line width */
+			current_line->width = sz->cx;
+		}
+		else current_line->width = 0;
 
 		/* FIXME: check here for lines that are too wide even in AUTOHSCROLL (> 32767 ???) */
+
+/* Line breaks just look back from the end and find the next break and try that. */
+
 		if (!(es->style & ES_AUTOHSCROLL)) {
 		   if (current_line->width > fw) {
-			INT next = 0;
+
 			INT prev;
+			int w;
+			const SIZE *sz;
+
+			prev = current_line->net_length - 1;
+			w = current_line->net_length;
 			do {
-				prev = next;
-				next = EDIT_CallWordBreakProc(es, current_position - es->text,
-						prev + 1, current_line->net_length, WB_RIGHT);
-				current_line->width = (INT)LOWORD(GetTabbedTextExtentW(dc,
-							current_position, next, es->tabs_count, es->tabs));
-			} while (current_line->width <= fw);
-			if (!prev) { /* Didn't find a line break so force a break */
-				next = 0;
+				prev = EDIT_CallWordBreakProc(es, current_position - es->text,
+						prev-1, current_line->net_length, WB_LEFT);
+				current_line->net_length = prev;
+				EDIT_InvalidateUniscribeData_linedef(current_line);
+				EDIT_UpdateUniscribeData_linedef(es, NULL, current_line);
+				sz = ScriptString_pSize(current_line->ssa);
+				if (sz)
+					current_line->width = sz->cx;
+				else
+					prev = 0;
+			} while (prev && current_line->width > fw);
+			current_line->net_length = w;
+
+			if (prev == 0) { /* Didn't find a line break so force a break */
+				INT *piDx;
+				const INT *count;
+
+				EDIT_InvalidateUniscribeData_linedef(current_line);
+				EDIT_UpdateUniscribeData_linedef(es, NULL, current_line);
+
+				count = ScriptString_pcOutChars(current_line->ssa);
+				piDx = HeapAlloc(GetProcessHeap(),0,sizeof(INT) * (*count));
+				ScriptStringGetLogicalWidths(current_line->ssa,piDx);
+
+				prev = current_line->net_length-1;
 				do {
-					prev = next;
-					next++;
-					current_line->width = (INT)LOWORD(GetTabbedTextExtentW(dc,
-								current_position, next, es->tabs_count, es->tabs));
-				} while (current_line->width <= fw);
-				if (!prev)
+					current_line->width -= piDx[prev];
+					prev--;
+				} while ( prev > 0 && current_line->width > fw);
+				if (prev==0)
 					prev = 1;
+				HeapFree(GetProcessHeap(),0,piDx);
 			}
 
 			/* If the first line we are calculating, wrapped before istart, we must
@@ -579,8 +661,14 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 
 			current_line->net_length = prev;
 			current_line->ending = END_WRAP;
-			current_line->width = (INT)LOWORD(GetTabbedTextExtentW(dc, current_position,
-					current_line->net_length, es->tabs_count, es->tabs));
+
+			if (current_line->net_length > 0)
+			{
+				EDIT_UpdateUniscribeData_linedef(es, NULL, current_line);
+				sz = ScriptString_pSize(current_line->ssa);
+				current_line->width = sz->cx;
+			}
+			else current_line->width = 0;
 		    }
 		    else if (current_line == start_line &&
                              current_line->index != nstart_index &&
@@ -627,6 +715,7 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 		while (current_line)
 		{
 			pnext = current_line->next;
+			EDIT_InvalidateUniscribeData_linedef(current_line);
 			HeapFree(GetProcessHeap(), 0, current_line);
 			current_line = pnext;
 			es->line_count--;
@@ -656,9 +745,7 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 		if ((es->style & ES_CENTER) || (es->style & ES_RIGHT))
 			rc.left = es->format_rect.left;
 		else
-			rc.left = es->format_rect.left + (INT)LOWORD(GetTabbedTextExtentW(dc,
-					es->text + nstart_index, istart - nstart_index,
-					es->tabs_count, es->tabs)) - es->x_offset; /* Adjust for horz scroll */
+            rc.left = LOWORD(EDIT_EM_PosFromChar(es, nstart_index, FALSE));
 		rc.right = es->format_rect.right;
 		SetRectRgn(hrgn, rc.left, rc.top, rc.right, rc.bottom);
 
@@ -681,11 +768,6 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 		CombineRgn(hrgn, hrgn, tmphrgn, RGN_OR);
 		DeleteObject(tmphrgn);
 	}
-
-	if (es->font)
-		SelectObject(dc, old_font);
-
-	ReleaseDC(es->hwndSelf, dc);
 }
 
 /*********************************************************************
@@ -718,20 +800,19 @@ static void EDIT_CalcLineWidth_SL(EDITSTATE *es)
 static INT EDIT_CharFromPos(EDITSTATE *es, INT x, INT y, LPBOOL after_wrap)
 {
 	INT index;
-	INT x_high = 0, x_low = 0;
 
 	if (es->style & ES_MULTILINE) {
-		HDC dc;
-		HFONT old_font = 0;
+		int trailing;
 		INT line = (y - es->format_rect.top) / es->line_height + es->y_offset;
 		INT line_index = 0;
 		LINEDEF *line_def = es->first_line_def;
-		INT low, high;
+		EDIT_UpdateUniscribeData(es, NULL, line);
 		while ((line > 0) && line_def->next) {
 			line_index += line_def->length;
 			line_def = line_def->next;
 			line--;
 		}
+
 		x += es->x_offset - es->format_rect.left;
 		if (es->style & ES_RIGHT)
 			x -= (es->format_rect.right - es->format_rect.left) - line_def->width;
@@ -747,34 +828,13 @@ static INT EDIT_CharFromPos(EDITSTATE *es, INT x, INT y, LPBOOL after_wrap)
 				*after_wrap = FALSE;
 			return line_index;
 		}
-		dc = GetDC(es->hwndSelf);
-		if (es->font)
-			old_font = SelectObject(dc, es->font);
-                    low = line_index;
-                    high = line_index + line_def->net_length + 1;
-                    while (low < high - 1)
-                    {
-                        INT mid = (low + high) / 2;
-                        INT x_now = LOWORD(GetTabbedTextExtentW(dc, es->text + line_index, mid - line_index, es->tabs_count, es->tabs));
-                        if (x_now > x) {
-                            high = mid;
-                            x_high = x_now;
-                        } else {
-                            low = mid;
-                            x_low = x_now;
-                        }
-                    }
-                    if (abs(x_high - x) + 1 <= abs(x_low - x))
-                        index = high;
-                    else
-                        index = low;
 
+		ScriptStringXtoCP(line_def->ssa, x , &index, &trailing);
+		if (trailing) index++;
+		index += line_index;
 		if (after_wrap)
 			*after_wrap = ((index == line_index + line_def->net_length) &&
 							(line_def->ending == END_WRAP));
-		if (es->font)
-			SelectObject(dc, old_font);
-		ReleaseDC(es->hwndSelf, dc);
 	} else {
 		INT xoff = 0;
 		INT trailing;
@@ -963,21 +1023,17 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
 	INT len = get_text_length(es);
 	INT l;
 	INT li;
-	INT x;
+	INT x = 0;
 	INT y = 0;
 	INT w;
 	INT lw = 0;
-	INT ll = 0;
-	HDC dc;
-	HFONT old_font = 0;
 	LINEDEF *line_def;
 
 	index = min(index, len);
-	dc = GetDC(es->hwndSelf);
-	if (es->font)
-		old_font = SelectObject(dc, es->font);
 	if (es->style & ES_MULTILINE) {
 		l = EDIT_EM_LineFromChar(es, index);
+		EDIT_UpdateUniscribeData(es, NULL, l);
+
 		y = (l - es->y_offset) * es->line_height;
 		li = EDIT_EM_LineIndex(es, l);
 		if (after_wrap && (li == index) && l) {
@@ -998,27 +1054,15 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
 		while (line_def->index != li)
 			line_def = line_def->next;
 
-		ll = line_def->net_length;
 		lw = line_def->width;
-
 		w = es->format_rect.right - es->format_rect.left;
+		ScriptStringCPtoX(line_def->ssa, (index - 1) - li, TRUE, &x);
+		x -= es->x_offset;
+
 		if (es->style & ES_RIGHT)
-		{
-			x = LOWORD(GetTabbedTextExtentW(dc, es->text + li + (index - li), ll - (index - li),
-				es->tabs_count, es->tabs)) - es->x_offset;
-			x = w - x;
-		}
+			x = w - (lw - x);
 		else if (es->style & ES_CENTER)
-		{
-			x = LOWORD(GetTabbedTextExtentW(dc, es->text + li, index - li,
-				es->tabs_count, es->tabs)) - es->x_offset;
 			x += (w - lw) / 2;
-		}
-		else /* ES_LEFT */
-		{
-		    x = LOWORD(GetTabbedTextExtentW(dc, es->text + li, index - li,
-				es->tabs_count, es->tabs)) - es->x_offset;
-		}
 	} else {
 		INT xoff = 0;
 		INT xi = 0;
@@ -1063,9 +1107,6 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
 	}
 	x += es->format_rect.left;
 	y += es->format_rect.top;
-	if (es->font)
-		SelectObject(dc, old_font);
-	ReleaseDC(es->hwndSelf, dc);
 	return MAKELONG((INT16)x, (INT16)y);
 }
 
@@ -2102,6 +2143,32 @@ static void EDIT_PaintLine(EDITSTATE *es, HDC dc, INT line, BOOL rev)
 	pos = EDIT_EM_PosFromChar(es, EDIT_EM_LineIndex(es, line), FALSE);
 	x = (short)LOWORD(pos);
 	y = (short)HIWORD(pos);
+
+	if (es->style & ES_MULTILINE)
+	{
+		int line_idx = line;
+		x =  -es->x_offset;
+		if (es->style & ES_RIGHT || es->style & ES_CENTER)
+		{
+			LINEDEF *line_def = es->first_line_def;
+			int w, lw;
+
+			while (line_def && line_idx)
+			{
+				line_def = line_def->next;
+				line_idx--;
+			}
+			w = es->format_rect.right - es->format_rect.left;
+			lw = line_def->width;
+
+			if (es->style & ES_RIGHT)
+				x = w - (lw - x);
+			else if (es->style & ES_CENTER)
+				x += (w - lw) / 2;
+		}
+		x += es->format_rect.left;
+	}
+
 	li = EDIT_EM_LineIndex(es, line);
 	ll = EDIT_EM_LineLength(es, li);
 	s = min(es->selection_start, es->selection_end);
@@ -2811,6 +2878,7 @@ static BOOL EDIT_EM_SetTabStops(EDITSTATE *es, INT count, const INT *tabs)
 		es->tabs = HeapAlloc(GetProcessHeap(), 0, count * sizeof(INT));
 		memcpy(es->tabs, tabs, count * sizeof(INT));
 	}
+	EDIT_InvalidateUniscribeData(es);
 	return TRUE;
 }
 
