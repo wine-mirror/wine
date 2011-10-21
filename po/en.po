@@ -8441,12 +8441,12 @@ msgid ""
 msgstr ""
 
 #: net.rc:30
-msgid "Stopping dependent service: %s\n"
-msgstr "Stopping dependent service: %s\n"
+msgid "Stopping dependent service: %1\n"
+msgstr "Stopping dependent service: %1\n"
 
 #: net.rc:31
-msgid "Could not stop service %s\n"
-msgstr "Could not stop service %s\n"
+msgid "Could not stop service %1\n"
+msgstr "Could not stop service %1\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
@@ -8457,28 +8457,28 @@ msgid "Could not get handle to service.\n"
 msgstr "Could not get handle to service.\n"
 
 #: net.rc:34
-msgid "The %s service is starting.\n"
-msgstr "The %s service is starting.\n"
+msgid "The %1 service is starting.\n"
+msgstr "The %1 service is starting.\n"
 
 #: net.rc:35
-msgid "The %s service was started successfully.\n"
-msgstr "The %s service was started successfully.\n"
+msgid "The %1 service was started successfully.\n"
+msgstr "The %1 service was started successfully.\n"
 
 #: net.rc:36
-msgid "The %s service failed to start.\n"
-msgstr "The %s service failed to start.\n"
+msgid "The %1 service failed to start.\n"
+msgstr "The %1 service failed to start.\n"
 
 #: net.rc:37
-msgid "The %s service is stopping.\n"
-msgstr "The %s service is stopping.\n"
+msgid "The %1 service is stopping.\n"
+msgstr "The %1 service is stopping.\n"
 
 #: net.rc:38
-msgid "The %s service was stopped successfully.\n"
-msgstr "The %s service was stopped successfully.\n"
+msgid "The %1 service was stopped successfully.\n"
+msgstr "The %1 service was stopped successfully.\n"
 
 #: net.rc:39
-msgid "The %s service failed to stop.\n"
-msgstr "The %s service failed to stop.\n"
+msgid "The %1 service failed to stop.\n"
+msgstr "The %1 service failed to stop.\n"
 
 #: net.rc:41
 msgid "There are no entries in the list.\n"
@@ -8495,8 +8495,8 @@ msgstr ""
 "---------------------------------------------------------------\n"
 
 #: net.rc:43
-msgid "%s      %s      %s      Open resources: %lu\n"
-msgstr "%s      %s      %s      Open resources: %lu\n"
+msgid "%1      %2      %3      Open resources: %4!u!\n"
+msgstr "%1      %2      %3      Open resources: %4!u!\n"
 
 #: net.rc:44
 msgid "OK"

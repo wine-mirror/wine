@@ -8577,11 +8577,11 @@ msgid ""
 msgstr ""
 
 #: net.rc:30
-msgid "Stopping dependent service: %s\n"
+msgid "Stopping dependent service: %1\n"
 msgstr ""
 
 #: net.rc:31
-msgid "Could not stop service %s\n"
+msgid "Could not stop service %1\n"
 msgstr ""
 
 #: net.rc:32
@@ -8593,28 +8593,31 @@ msgid "Could not get handle to service.\n"
 msgstr ""
 
 #: net.rc:34
-msgid "The %s service is starting.\n"
+msgid "The %1 service is starting.\n"
 msgstr ""
 
 #: net.rc:35
-msgid "The %s service was started successfully.\n"
+msgid "The %1 service was started successfully.\n"
 msgstr ""
 
 #: net.rc:36
-msgid "The %s service failed to start.\n"
-msgstr ""
+#, fuzzy
+msgid "The %1 service failed to start.\n"
+msgstr "Neispravni akreditivi"
 
 #: net.rc:37
-msgid "The %s service is stopping.\n"
-msgstr ""
+#, fuzzy
+msgid "The %1 service is stopping.\n"
+msgstr "Ulaz na štampaču je otvoren; "
 
 #: net.rc:38
-msgid "The %s service was stopped successfully.\n"
+msgid "The %1 service was stopped successfully.\n"
 msgstr ""
 
 #: net.rc:39
-msgid "The %s service failed to stop.\n"
-msgstr ""
+#, fuzzy
+msgid "The %1 service failed to stop.\n"
+msgstr "Neispravni akreditivi"
 
 #: net.rc:41
 msgid "There are no entries in the list.\n"
@@ -8628,7 +8631,7 @@ msgid ""
 msgstr ""
 
 #: net.rc:43
-msgid "%s      %s      %s      Open resources: %lu\n"
+msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
 #: net.rc:44

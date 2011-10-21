@@ -8559,11 +8559,13 @@ msgid ""
 msgstr ""
 
 #: net.rc:30
-msgid "Stopping dependent service: %s\n"
+#, fuzzy
+msgid "Stopping dependent service: %1\n"
 msgstr "Зупинка залежної служби: %s\n"
 
 #: net.rc:31
-msgid "Could not stop service %s\n"
+#, fuzzy
+msgid "Could not stop service %1\n"
 msgstr "Неможливо зупинити службу %s\n"
 
 #: net.rc:32
@@ -8575,27 +8577,33 @@ msgid "Could not get handle to service.\n"
 msgstr "Неможливо отримати доступ до служби.\n"
 
 #: net.rc:34
-msgid "The %s service is starting.\n"
+#, fuzzy
+msgid "The %1 service is starting.\n"
 msgstr "Запуск служби %s .\n"
 
 #: net.rc:35
-msgid "The %s service was started successfully.\n"
+#, fuzzy
+msgid "The %1 service was started successfully.\n"
 msgstr "Служба %s успішно запущена.\n"
 
 #: net.rc:36
-msgid "The %s service failed to start.\n"
+#, fuzzy
+msgid "The %1 service failed to start.\n"
 msgstr "Помилка запуску служби %s .\n"
 
 #: net.rc:37
-msgid "The %s service is stopping.\n"
+#, fuzzy
+msgid "The %1 service is stopping.\n"
 msgstr "Зупинка служби %s .\n"
 
 #: net.rc:38
-msgid "The %s service was stopped successfully.\n"
+#, fuzzy
+msgid "The %1 service was stopped successfully.\n"
 msgstr "Служба %s успішно зупинена.\n"
 
 #: net.rc:39
-msgid "The %s service failed to stop.\n"
+#, fuzzy
+msgid "The %1 service failed to stop.\n"
 msgstr "Помилка зупинки служби %s .\n"
 
 #: net.rc:41
@@ -8613,7 +8621,8 @@ msgstr ""
 "---------------------------------------------------------------\n"
 
 #: net.rc:43
-msgid "%s      %s      %s      Open resources: %lu\n"
+#, fuzzy
+msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Відкритих ресурсів: %lu\n"
 
 #: net.rc:44

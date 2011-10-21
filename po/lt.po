@@ -8609,11 +8609,13 @@ msgstr ""
 "Kur „tarnyba“ yra stabdomos tarnybos pavadinimas.\n"
 
 #: net.rc:30
-msgid "Stopping dependent service: %s\n"
+#, fuzzy
+msgid "Stopping dependent service: %1\n"
 msgstr "Stabdoma priklausoma tarnyba: %s\n"
 
 #: net.rc:31
-msgid "Could not stop service %s\n"
+#, fuzzy
+msgid "Could not stop service %1\n"
 msgstr "Nepavyko sustabdyti tarnybos %s\n"
 
 #: net.rc:32
@@ -8625,27 +8627,33 @@ msgid "Could not get handle to service.\n"
 msgstr "Nepavyko gauti tarnybos rodyklės.\n"
 
 #: net.rc:34
-msgid "The %s service is starting.\n"
+#, fuzzy
+msgid "The %1 service is starting.\n"
 msgstr "Tarnyba %s yra paleidžiama.\n"
 
 #: net.rc:35
-msgid "The %s service was started successfully.\n"
+#, fuzzy
+msgid "The %1 service was started successfully.\n"
 msgstr "Tarnyba %s sėkmingai paleista.\n"
 
 #: net.rc:36
-msgid "The %s service failed to start.\n"
+#, fuzzy
+msgid "The %1 service failed to start.\n"
 msgstr "Tarnyba %s nepasileido.\n"
 
 #: net.rc:37
-msgid "The %s service is stopping.\n"
+#, fuzzy
+msgid "The %1 service is stopping.\n"
 msgstr "Tarnyba %s yra stabdoma.\n"
 
 #: net.rc:38
-msgid "The %s service was stopped successfully.\n"
+#, fuzzy
+msgid "The %1 service was stopped successfully.\n"
 msgstr "Tarnyba %s sėkmingai sustabdyta.\n"
 
 #: net.rc:39
-msgid "The %s service failed to stop.\n"
+#, fuzzy
+msgid "The %1 service failed to stop.\n"
 msgstr "Tarnyba %s nesustojo.\n"
 
 #: net.rc:41
@@ -8663,7 +8671,8 @@ msgstr ""
 "---------------------------------------------------------------\n"
 
 #: net.rc:43
-msgid "%s      %s      %s      Open resources: %lu\n"
+#, fuzzy
+msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Atverti ištekliai: %lu\n"
 
 #: net.rc:44

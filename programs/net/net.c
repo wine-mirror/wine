@@ -55,38 +55,40 @@ static int output_write(const WCHAR* str, int len)
     return count;
 }
 
-static int output_vprintf(const WCHAR* fmt, va_list va_args)
+static int output_vprintf(const WCHAR* fmt, __ms_va_list va_args)
 {
     WCHAR str[8192];
     int len;
 
-    len = vsnprintfW(str, sizeof(str)/sizeof(*str), fmt, va_args);
-    if (len < 0)
-        WINE_FIXME("String too long.\n");
+    SetLastError(NO_ERROR);
+    len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, fmt, 0, 0, str,
+                         sizeof(str)/sizeof(*str), &va_args);
+    if (len == 0 && GetLastError() != NO_ERROR)
+        WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(fmt));
     else
         output_write(str, len);
     return 0;
 }
 
-static int output_printf(const WCHAR* fmt, ...)
+static int __cdecl output_printf(const WCHAR* fmt, ...)
 {
-    va_list arguments;
+    __ms_va_list arguments;
 
-    va_start(arguments, fmt);
+    __ms_va_start(arguments, fmt);
     output_vprintf(fmt, arguments);
-    va_end(arguments);
+    __ms_va_end(arguments);
     return 0;
 }
 
-static int output_string(int msg, ...)
+static int __cdecl output_string(int msg, ...)
 {
     WCHAR fmt[8192];
-    va_list arguments;
+    __ms_va_list arguments;
 
     LoadStringW(GetModuleHandleW(NULL), msg, fmt, sizeof(fmt)/sizeof(fmt[0]));
-    va_start(arguments, msg);
+    __ms_va_start(arguments, msg);
     output_vprintf(fmt, arguments);
-    va_end(arguments);
+    __ms_va_end(arguments);
     return 0;
 }
 
@@ -156,7 +158,7 @@ static BOOL net_use(int argc, const WCHAR* argv[])
 
 static BOOL net_enum_services(void)
 {
-    static const WCHAR runningW[]={' ',' ',' ',' ','%','s','\n',0};
+    static const WCHAR runningW[]={' ',' ',' ',' ','%','1','\n',0};
     SC_HANDLE SCManager;
     LPENUM_SERVICE_STATUS_PROCESSW services;
     DWORD size, i, count, resume;

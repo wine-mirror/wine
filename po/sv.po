@@ -8563,11 +8563,13 @@ msgid ""
 msgstr ""
 
 #: net.rc:30
-msgid "Stopping dependent service: %s\n"
+#, fuzzy
+msgid "Stopping dependent service: %1\n"
 msgstr "Stoppar beroende tjänst: %s\n"
 
 #: net.rc:31
-msgid "Could not stop service %s\n"
+#, fuzzy
+msgid "Could not stop service %1\n"
 msgstr "Kunde inte stoppa tjänst %s\n"
 
 #: net.rc:32
@@ -8579,27 +8581,33 @@ msgid "Could not get handle to service.\n"
 msgstr "Kunde inte få en referens till tjänsten.\n"
 
 #: net.rc:34
-msgid "The %s service is starting.\n"
+#, fuzzy
+msgid "The %1 service is starting.\n"
 msgstr "Tjänsten %s startar.\n"
 
 #: net.rc:35
-msgid "The %s service was started successfully.\n"
+#, fuzzy
+msgid "The %1 service was started successfully.\n"
 msgstr "Tjänsten %s startades utan problem.\n"
 
 #: net.rc:36
-msgid "The %s service failed to start.\n"
+#, fuzzy
+msgid "The %1 service failed to start.\n"
 msgstr "Tjänsten %s kunde inte starta.\n"
 
 #: net.rc:37
-msgid "The %s service is stopping.\n"
+#, fuzzy
+msgid "The %1 service is stopping.\n"
 msgstr "Tjänsten %s stoppas.\n"
 
 #: net.rc:38
-msgid "The %s service was stopped successfully.\n"
+#, fuzzy
+msgid "The %1 service was stopped successfully.\n"
 msgstr "Tjänsten %s har stoppats.\n"
 
 #: net.rc:39
-msgid "The %s service failed to stop.\n"
+#, fuzzy
+msgid "The %1 service failed to stop.\n"
 msgstr "Tjänsten %s kunde inte stoppas.\n"
 
 #: net.rc:41
@@ -8617,7 +8625,8 @@ msgstr ""
 "---------------------------------------------------------------\n"
 
 #: net.rc:43
-msgid "%s      %s      %s      Open resources: %lu\n"
+#, fuzzy
+msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Öppna resurser: %lu\n"
 
 #: net.rc:44
