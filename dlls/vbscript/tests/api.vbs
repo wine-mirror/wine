@@ -23,6 +23,9 @@ Dim x
 Class EmptyClass
 End Class
 
+Call ok(vbSunday = 1, "vbSunday = " & vbSunday)
+Call ok(getVT(vbSunday) = "VT_I2", "getVT(vbSunday) = " & getVT(vbSunday))
+
 Call ok(isObject(new EmptyClass), "isObject(new EmptyClass) is not true?")
 Set x = new EmptyClass
 Call ok(isObject(x), "isObject(x) is not true?")

@@ -75,6 +75,16 @@ static HRESULT return_bstr(VARIANT *res, const WCHAR *str)
     return S_OK;
 }
 
+static HRESULT return_short(VARIANT *res, short val)
+{
+    if(res) {
+        V_VT(res) = VT_I2;
+        V_I2(res) = val;
+    }
+
+    return S_OK;
+}
+
 static IUnknown *create_object(script_ctx_t *ctx, const WCHAR *progid)
 {
     IInternetHostSecurityManager *secmgr = NULL;
@@ -897,8 +907,8 @@ static HRESULT Global_vbUseSystemDayOfWeek(vbdisp_t *This, VARIANT *arg, unsigne
 
 static HRESULT Global_vbSunday(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return return_short(res, 1);
 }
 
 static HRESULT Global_vbMonday(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
