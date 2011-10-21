@@ -125,9 +125,6 @@ static const char pssetfont[] = /* fontname, xx_scale, xy_scale, yx_scale, yy_sc
 static const char pssetline[] = /* width, join, endcap */
 "%d setlinewidth %u setlinejoin %u setlinecap\n";
 
-static const char pssetdash[] = /* dash, offset */
-"[%s] %d setdash\n";
-
 static const char pssetgray[] = /* gray */
 "%.2f setgray\n";
 
@@ -556,16 +553,21 @@ BOOL PSDRV_WriteSetPen(PHYSDEV dev)
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     char buf[256];
+    DWORD i, pos;
 
     sprintf(buf, pssetline, physDev->pen.width, physDev->pen.join, physDev->pen.endcap);
     PSDRV_WriteSpool(dev, buf, strlen(buf));
 
-    if(physDev->pen.dash) {
-        sprintf(buf, pssetdash, physDev->pen.dash, 0);
+    if (physDev->pen.dash_len)
+    {
+        for (i = pos = 0; i < physDev->pen.dash_len; i++)
+            pos += sprintf( buf + pos, " %u", physDev->pen.dash[i] );
+        buf[0] = '[';
+        sprintf(buf + pos, "] %u setdash\n", 0);
     }
     else
-        sprintf(buf, pssetdash, "", 0);
-   
+        sprintf(buf, "[] %u setdash\n", 0);
+
    PSDRV_WriteSpool(dev, buf, strlen(buf));
 	
    return TRUE;

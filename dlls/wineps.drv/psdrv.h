@@ -329,12 +329,15 @@ typedef struct {
     BOOL		set;
 } PSBRUSH;
 
+#define MAX_DASHLEN 16
+
 typedef struct {
     INT                 style;
     INT                 width;
     BYTE                join;
     BYTE                endcap;
-    const char*		dash;
+    DWORD               dash[MAX_DASHLEN];
+    DWORD               dash_len;
     PSCOLOR		color;
     BOOL		set;
 } PSPEN;
