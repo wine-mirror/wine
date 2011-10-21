@@ -417,6 +417,9 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids,
         if(*def_index == (UINT)-1 && devices[i] == default_id)
             *def_index = *num;
 
+        TRACE("device %u: id %s key %u%s\n", *num, debugstr_w((*ids)[*num]),
+              (unsigned int)*(*keys)[*num], (*def_index == *num) ? " (default)" : "");
+
         (*num)++;
     }
 
@@ -433,7 +436,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(AudioDeviceID *adevid, IMMDevice *dev,
 {
     ACImpl *This;
 
-    TRACE("%p %d %p\n", dev, dataflow, out);
+    TRACE("%u %p %d %p\n", (unsigned int)*adevid, dev, dataflow, out);
 
     This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ACImpl));
     if(!This)
