@@ -325,7 +325,6 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids,
         AudioBufferList *buffers;
         CFStringRef name;
         SIZE_T len;
-        char nameA[256];
         int j;
 
         addr.mSelector = kAudioDevicePropertyStreamConfiguration;
@@ -384,18 +383,10 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids,
             continue;
         }
 
-        if(!CFStringGetCString(name, nameA, sizeof(nameA),
-                    kCFStringEncodingUTF8)){
-            WARN("Error converting string to UTF8\n");
-            CFRelease(name);
-            continue;
-        }
-
-        CFRelease(name);
-
-        len = MultiByteToWideChar(CP_UNIXCP, 0, nameA, -1, NULL, 0);
+        len = CFStringGetLength(name) + 1;
         (*ids)[*num] = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         if(!(*ids)[*num]){
+            CFRelease(name);
             HeapFree(GetProcessHeap(), 0, devices);
             for(j = 0; j < *num; ++j){
                 HeapFree(GetProcessHeap(), 0, (*ids)[j]);
@@ -405,7 +396,9 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids,
             HeapFree(GetProcessHeap(), 0, *keys);
             return E_OUTOFMEMORY;
         }
-        MultiByteToWideChar(CP_UNIXCP, 0, nameA, -1, (*ids)[*num], len);
+        CFStringGetCharacters(name, CFRangeMake(0, len - 1), (UniChar*)(*ids)[*num]);
+        ((*ids)[*num])[len - 1] = 0;
+        CFRelease(name);
 
         (*keys)[*num] = HeapAlloc(GetProcessHeap(), 0, sizeof(AudioDeviceID));
         if(!(*keys)[*num]){
