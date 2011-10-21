@@ -2382,8 +2382,9 @@ BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar,
                                    LPABC abc )
 {
     DC *dc = get_dc_ptr(hdc);
+    PHYSDEV dev;
     unsigned int i;
-    BOOL ret = FALSE;
+    BOOL ret;
 
     if (!dc) return FALSE;
 
@@ -2393,11 +2394,8 @@ BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar,
         return FALSE;
     }
 
-    if(dc->gdiFont)
-        ret = WineEngGetCharABCWidths( dc->gdiFont, firstChar, lastChar, abc );
-    else
-        FIXME(": stub\n");
-
+    dev = GET_DC_PHYSDEV( dc, pGetCharABCWidths );
+    ret = dev->funcs->pGetCharABCWidths( dev, firstChar, lastChar, abc );
     if (ret)
     {
         /* convert device units to logical */
@@ -2406,7 +2404,6 @@ BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar,
             abc->abcB = INTERNAL_XDSTOWS(dc, abc->abcB);
             abc->abcC = INTERNAL_XDSTOWS(dc, abc->abcC);
 	}
-        ret = TRUE;
     }
 
     release_dc_ptr( dc );
