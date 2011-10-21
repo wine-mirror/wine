@@ -25,6 +25,35 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
+
+static DWORD get_user_dashes( char *res, const DWORD *style, DWORD len )
+{
+    DWORD i, pos, dashes[MAX_DASHLEN];
+
+    len = min( len, MAX_DASHLEN );
+    memcpy( dashes, style, len * sizeof(DWORD) );
+    for (i = pos = 0; i < len; i++)
+    {
+        if (!dashes[i])  /* get rid of 0 entry */
+        {
+            if (i < len - 1)
+            {
+                i++;
+                if (pos) dashes[pos - 1] += dashes[i];
+                else dashes[len - 1] += dashes[i];
+            }
+            else if (pos)
+            {
+                dashes[0] += dashes[pos - 1];
+                pos--;
+            }
+        }
+        else dashes[pos++] = dashes[i];
+    }
+    for (i = 0; i < pos; i++) res[i] = min( dashes[i], 255 );
+    return pos;
+}
+
 /***********************************************************************
  *           SelectPen   (X11DRV.@)
  */
@@ -106,18 +135,18 @@ HPEN X11DRV_SelectPen( PHYSDEV dev, HPEN hpen )
             memcpy(physDev->pen.dashes, PEN_alternate, physDev->pen.dash_len);
             break;
       case PS_USERSTYLE:
-            physDev->pen.dash_len = min(elp->elpNumEntries, MAX_DASHLEN);
-            for(i = 0; i < physDev->pen.dash_len ; i++)
-                physDev->pen.dashes[i] = min(elp->elpStyleEntry[i], 255);
+            physDev->pen.dash_len = get_user_dashes( physDev->pen.dashes,
+                                                     elp->elpStyleEntry, elp->elpNumEntries );
             break;
       default:
         physDev->pen.dash_len = 0;
         break;
     }
-    if(physDev->pen.ext && physDev->pen.dash_len &&
-        (logpen.lopnStyle & PS_STYLE_MASK) != PS_ALTERNATE)
+    if(physDev->pen.ext && physDev->pen.dash_len && physDev->pen.width &&
+       (logpen.lopnStyle & PS_STYLE_MASK) != PS_USERSTYLE &&
+       (logpen.lopnStyle & PS_STYLE_MASK) != PS_ALTERNATE)
         for(i = 0; i < physDev->pen.dash_len; i++)
-            physDev->pen.dashes[i] *= (physDev->pen.width ? physDev->pen.width : 1);
+            physDev->pen.dashes[i] = min( physDev->pen.dashes[i] * physDev->pen.width, 255 );
 
     HeapFree( GetProcessHeap(), 0, elp );
 
