@@ -37,10 +37,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(hlink);
 /* known flags */
 #define HLINK_SAVE_ALL (HLINK_SAVE_TARGET_FRAME_PRESENT|HLINK_SAVE_FRIENDLY_PRESENT|HLINK_SAVE_LOCATION_PRESENT|0x04|HLINK_SAVE_MONIKER_IS_ABSOLUTE|HLINK_SAVE_MONIKER_PRESENT)
 
-static const IHlinkVtbl              hlvt;
-static const IPersistStreamVtbl      psvt;
-static const IDataObjectVtbl         dovt;
-
 typedef struct
 {
     IHlink              IHlink_iface;
@@ -107,30 +103,6 @@ static HRESULT __GetMoniker(HlinkImpl* This, IMoniker** moniker,
     if (*moniker)
         IMoniker_AddRef(*moniker);
 
-    return S_OK;
-}
-
-HRESULT WINAPI HLink_Constructor(IUnknown *pUnkOuter, REFIID riid,
-        LPVOID *ppv)
-{
-    HlinkImpl * hl;
-
-    TRACE("unkOut=%p riid=%s\n", pUnkOuter, debugstr_guid(riid));
-    *ppv = NULL;
-
-    if (pUnkOuter)
-        return CLASS_E_NOAGGREGATION;
-
-    hl = heap_alloc_zero(sizeof(HlinkImpl));
-    if (!hl)
-        return E_OUTOFMEMORY;
-
-    hl->ref = 1;
-    hl->IHlink_iface.lpVtbl = &hlvt;
-    hl->IPersistStream_iface.lpVtbl = &psvt;
-    hl->IDataObject_iface.lpVtbl = &dovt;
-
-    *ppv = hl;
     return S_OK;
 }
 
@@ -942,3 +914,26 @@ static const IPersistStreamVtbl psvt =
     IPersistStream_fnSave,
     IPersistStream_fnGetSizeMax,
 };
+
+HRESULT WINAPI HLink_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv)
+{
+    HlinkImpl * hl;
+
+    TRACE("unkOut=%p riid=%s\n", pUnkOuter, debugstr_guid(riid));
+    *ppv = NULL;
+
+    if (pUnkOuter)
+        return CLASS_E_NOAGGREGATION;
+
+    hl = heap_alloc_zero(sizeof(HlinkImpl));
+    if (!hl)
+        return E_OUTOFMEMORY;
+
+    hl->ref = 1;
+    hl->IHlink_iface.lpVtbl = &hlvt;
+    hl->IPersistStream_iface.lpVtbl = &psvt;
+    hl->IDataObject_iface.lpVtbl = &dovt;
+
+    *ppv = hl;
+    return S_OK;
+}
