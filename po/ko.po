@@ -7640,8 +7640,9 @@ msgstr ""
 "아직 구현되지 않았습니다\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:302
-msgid "%s: File Not Found\n"
+#: attrib.rc:28
+#, fuzzy
+msgid "%1: File Not Found\n"
 msgstr "%s :파일을 찾을 수 없습니다\n"
 
 #: attrib.rc:47
@@ -8318,6 +8319,10 @@ msgstr "인수가 없습니다\n"
 #: cmd.rc:301
 msgid "Syntax error\n"
 msgstr "문법 오류\n"
+
+#: cmd.rc:302
+msgid "%s: File Not Found\n"
+msgstr "%s :파일을 찾을 수 없습니다\n"
 
 #: cmd.rc:303
 msgid "No help available for %s\n"

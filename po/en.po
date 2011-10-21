@@ -7574,9 +7574,9 @@ msgstr ""
 "Not Yet Implemented\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:302
-msgid "%s: File Not Found\n"
-msgstr "%s: File Not Found\n"
+#: attrib.rc:28
+msgid "%1: File Not Found\n"
+msgstr "%1: File Not Found\n"
 
 #: attrib.rc:47
 msgid ""
@@ -8209,6 +8209,10 @@ msgstr "Argument missing\n"
 #: cmd.rc:301
 msgid "Syntax error\n"
 msgstr "Syntax error\n"
+
+#: cmd.rc:302
+msgid "%s: File Not Found\n"
+msgstr "%s: File Not Found\n"
 
 #: cmd.rc:303
 msgid "No help available for %s\n"

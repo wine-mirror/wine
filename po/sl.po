@@ -7710,9 +7710,9 @@ msgstr ""
 "Ni še podprto\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:302
+#: attrib.rc:28
 #, fuzzy
-msgid "%s: File Not Found\n"
+msgid "%1: File Not Found\n"
 msgstr "%s : datoteke ni mogoče najti\n"
 
 #: attrib.rc:47
@@ -8362,6 +8362,11 @@ msgstr "Argument manjka\n"
 #: cmd.rc:301
 msgid "Syntax error\n"
 msgstr "Skladenjska napaka\n"
+
+#: cmd.rc:302
+#, fuzzy
+msgid "%s: File Not Found\n"
+msgstr "%s : datoteke ni mogoče najti\n"
 
 #: cmd.rc:303
 msgid "No help available for %s\n"

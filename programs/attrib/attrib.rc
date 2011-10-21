@@ -25,7 +25,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 STRINGTABLE
 {
     STRING_NYI, "Not Yet Implemented\n\n"
-    STRING_FILENOTFOUND, "%s: File Not Found\n"
+    STRING_FILENOTFOUND, "%1: File Not Found\n"
     STRING_HELP,
 "ATTRIB - Displays or changes file attributes.\n\
 \n\

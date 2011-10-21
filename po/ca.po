@@ -7711,8 +7711,9 @@ msgstr ""
 "Encara no Implementat\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:302
-msgid "%s: File Not Found\n"
+#: attrib.rc:28
+#, fuzzy
+msgid "%1: File Not Found\n"
 msgstr "%s: Fitxer No Trobat\n"
 
 #: attrib.rc:47
@@ -8410,6 +8411,10 @@ msgstr "Falta la paràmetre\n"
 #: cmd.rc:301
 msgid "Syntax error\n"
 msgstr "Error de sintaxi\n"
+
+#: cmd.rc:302
+msgid "%s: File Not Found\n"
+msgstr "%s: Fitxer No Trobat\n"
 
 #: cmd.rc:303
 msgid "No help available for %s\n"

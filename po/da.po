@@ -7902,8 +7902,9 @@ msgstr ""
 "Ikke implementeret endnu\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:302
-msgid "%s: File Not Found\n"
+#: attrib.rc:28
+#, fuzzy
+msgid "%1: File Not Found\n"
 msgstr "%s : Filen ikke fundet\n"
 
 #: attrib.rc:47
@@ -8534,6 +8535,10 @@ msgstr "Argument mangler\n"
 #: cmd.rc:301
 msgid "Syntax error\n"
 msgstr "Syntaks fejl\n"
+
+#: cmd.rc:302
+msgid "%s: File Not Found\n"
+msgstr "%s : Filen ikke fundet\n"
 
 #: cmd.rc:303
 msgid "No help available for %s\n"

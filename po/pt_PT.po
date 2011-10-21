@@ -7987,9 +7987,10 @@ msgid ""
 "\n"
 msgstr ""
 
-#: attrib.rc:28 cmd.rc:302
-msgid "%s: File Not Found\n"
-msgstr ""
+#: attrib.rc:28
+#, fuzzy
+msgid "%1: File Not Found\n"
+msgstr "Ficheiro não encontrado\n"
 
 #: attrib.rc:47
 msgid ""
@@ -8644,6 +8645,10 @@ msgstr ""
 
 #: cmd.rc:301
 msgid "Syntax error\n"
+msgstr ""
+
+#: cmd.rc:302
+msgid "%s: File Not Found\n"
 msgstr ""
 
 #: cmd.rc:303

@@ -7700,8 +7700,9 @@ msgstr ""
 "Non ancora implementato\n"
 "\n"
 
-#: attrib.rc:28 cmd.rc:302
-msgid "%s: File Not Found\n"
+#: attrib.rc:28
+#, fuzzy
+msgid "%1: File Not Found\n"
 msgstr "%s : File non trovato\n"
 
 #: attrib.rc:47
@@ -8402,6 +8403,10 @@ msgstr "Manca un parametro\n"
 #: cmd.rc:301
 msgid "Syntax error\n"
 msgstr "Errore di sintassi\n"
+
+#: cmd.rc:302
+msgid "%s: File Not Found\n"
+msgstr "%s : File non trovato\n"
 
 #: cmd.rc:303
 msgid "No help available for %s\n"

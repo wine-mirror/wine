@@ -45,7 +45,7 @@ static WCHAR *ATTRIB_LoadMessage(UINT id) {
  *  and hence required WriteConsoleW to output it, however if file i/o is
  *  redirected, it needs to be WriteFile'd using OEM (not ANSI) format
  * ========================================================================= */
-static int ATTRIB_wprintf(const WCHAR *format, ...) {
+static int __cdecl ATTRIB_wprintf(const WCHAR *format, ...) {
 
     static WCHAR *output_bufW = NULL;
     static char  *output_bufA = NULL;
@@ -53,7 +53,7 @@ static int ATTRIB_wprintf(const WCHAR *format, ...) {
     static BOOL  traceOutput  = FALSE;
 #define MAX_WRITECONSOLE_SIZE 65535
 
-    va_list parms;
+    __ms_va_list parms;
     DWORD   nOut;
     int len;
     DWORD   res = 0;
@@ -71,11 +71,13 @@ static int ATTRIB_wprintf(const WCHAR *format, ...) {
         return 0;
     }
 
-    va_start(parms, format);
-    len = vsnprintfW(output_bufW, MAX_WRITECONSOLE_SIZE/sizeof(WCHAR), format, parms);
-    va_end(parms);
-    if (len < 0) {
-        WINE_FIXME("String too long.\n");
+    __ms_va_start(parms, format);
+    SetLastError(NO_ERROR);
+    len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, format, 0, 0, output_bufW,
+                   MAX_WRITECONSOLE_SIZE/sizeof(*output_bufW), &parms);
+    __ms_va_end(parms);
+    if (len == 0 && GetLastError() != NO_ERROR) {
+        WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
         return 0;
     }
 
@@ -178,7 +180,7 @@ int wmain(int argc, WCHAR *argv[])
                     fd.dwFileAttributes |= FILE_ATTRIBUTE_NORMAL;
                 SetFileAttributesW(name, fd.dwFileAttributes);
             } else {
-                static const WCHAR fmt[] = {'%','s',' ',' ',' ','%','s','\n','\0'};
+                static const WCHAR fmt[] = {'%','1',' ',' ',' ','%','2','\n','\0'};
                 if (fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) {
                     flags[0] = 'H';
                 }
