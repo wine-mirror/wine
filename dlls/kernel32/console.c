@@ -1448,16 +1448,16 @@ static  BOOL    start_console_renderer_helper(const char* appname, STARTUPINFOA*
                        NULL, NULL, si, &pi))
     {
         HANDLE  wh[2];
-        DWORD   ret;
+        DWORD   res;
 
         wh[0] = hEvent;
         wh[1] = pi.hProcess;
-        ret = WaitForMultipleObjects(2, wh, FALSE, INFINITE);
+        res = WaitForMultipleObjects(2, wh, FALSE, INFINITE);
 
         CloseHandle(pi.hThread);
         CloseHandle(pi.hProcess);
 
-        if (ret != WAIT_OBJECT_0) return FALSE;
+        if (res != WAIT_OBJECT_0) return FALSE;
 
         TRACE("Started wineconsole pid=%08x tid=%08x\n",
               pi.dwProcessId, pi.dwThreadId);
