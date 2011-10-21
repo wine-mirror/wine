@@ -1136,14 +1136,14 @@ HWND WINAPI SHSetParentHwnd(HWND hWnd, HWND hWndParent)
   TRACE("%p, %p\n", hWnd, hWndParent);
 
   if(GetParent(hWnd) == hWndParent)
-    return 0;
+    return NULL;
 
   if(hWndParent)
-    SHSetWindowBits(hWnd, GWL_STYLE, WS_CHILD, WS_CHILD);
+    SHSetWindowBits(hWnd, GWL_STYLE, WS_CHILD | WS_POPUP, WS_CHILD);
   else
-    SHSetWindowBits(hWnd, GWL_STYLE, WS_POPUP, WS_POPUP);
+    SHSetWindowBits(hWnd, GWL_STYLE, WS_CHILD | WS_POPUP, WS_POPUP);
 
-  return SetParent(hWnd, hWndParent);
+  return hWndParent ? SetParent(hWnd, hWndParent) : NULL;
 }
 
 /*************************************************************************

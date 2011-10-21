@@ -67,6 +67,7 @@ static HRESULT (WINAPI *pSKGetValueW)(DWORD, LPCWSTR, LPCWSTR, DWORD*, void*, DW
 static HRESULT (WINAPI *pSKSetValueW)(DWORD, LPCWSTR, LPCWSTR, DWORD, void*, DWORD);
 static HRESULT (WINAPI *pSKDeleteValueW)(DWORD, LPCWSTR, LPCWSTR);
 static HRESULT (WINAPI *pSKAllocValueW)(DWORD, LPCWSTR, LPCWSTR, DWORD*, void**, DWORD*);
+static HWND    (WINAPI *pSHSetParentHwnd)(HWND, HWND);
 
 static HMODULE hmlang;
 static HRESULT (WINAPI *pLcidToRfc1766A)(LCID, LPSTR, INT);
@@ -2925,6 +2926,7 @@ static void init_pointers(void)
     MAKEFUNC(SHFreeShared, 10);
     MAKEFUNC(GetAcceptLanguagesA, 14);
     MAKEFUNC(SHSetWindowBits, 165);
+    MAKEFUNC(SHSetParentHwnd, 167);
     MAKEFUNC(ConnectToConnectionPoint, 168);
     MAKEFUNC(SHSearchMapInt, 198);
     MAKEFUNC(SHCreateWorkerWindowA, 257);
@@ -2947,6 +2949,88 @@ static void init_pointers(void)
     MAKEFUNC(SKDeleteValueW, 518);
     MAKEFUNC(SKAllocValueW, 519);
 #undef MAKEFUNC
+}
+
+static void test_SHSetParentHwnd(void)
+{
+    HWND hwnd, hwnd2, ret;
+    DWORD style;
+
+    if (!pSHSetParentHwnd)
+    {
+        win_skip("SHSetParentHwnd not available\n");
+        return;
+    }
+
+    hwnd = CreateWindowA("Button", "", WS_VISIBLE, 0, 0, 10, 10, NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "got %p\n", hwnd);
+
+    hwnd2 = CreateWindowA("Button", "", WS_VISIBLE | WS_CHILD, 0, 0, 10, 10, hwnd, NULL, NULL, NULL);
+    ok(hwnd2 != NULL, "got %p\n", hwnd2);
+
+    /* null params */
+    ret = pSHSetParentHwnd(NULL, NULL);
+    ok(ret == NULL, "got %p\n", ret);
+
+    /* set to no parent while already no parent present */
+    ret = GetParent(hwnd);
+    ok(ret == NULL, "got %p\n", ret);
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    ok((style & (WS_POPUP|WS_CHILD)) == 0, "got style 0x%08x\n", style);
+    ret = pSHSetParentHwnd(hwnd, NULL);
+    ok(ret == NULL, "got %p\n", ret);
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    ok((style & (WS_POPUP|WS_CHILD)) == 0, "got style 0x%08x\n", style);
+
+    /* reset to null parent from not null */
+    ret = GetParent(hwnd2);
+    ok(ret == hwnd, "got %p\n", ret);
+    style = GetWindowLongA(hwnd2, GWL_STYLE);
+    ok((style & (WS_POPUP|WS_CHILD)) == WS_CHILD, "got style 0x%08x\n", style);
+    ret = pSHSetParentHwnd(hwnd2, NULL);
+    ok(ret == NULL, "got %p\n", ret);
+    style = GetWindowLongA(hwnd2, GWL_STYLE);
+    ok((style & (WS_POPUP|WS_CHILD)) == WS_POPUP, "got style 0x%08x\n", style);
+    ret = GetParent(hwnd2);
+    ok(ret == NULL, "got %p\n", ret);
+
+    /* set parent back */
+    style = GetWindowLongA(hwnd2, GWL_STYLE);
+    SetWindowLongA(hwnd2, GWL_STYLE, style & ~(WS_CHILD|WS_POPUP));
+    style = GetWindowLongA(hwnd2, GWL_STYLE);
+    ok((style & (WS_CHILD|WS_POPUP)) == 0, "got 0x%08x\n", style);
+
+    ret = pSHSetParentHwnd(hwnd2, hwnd);
+    todo_wine ok(ret == NULL, "got %p\n", ret);
+
+    style = GetWindowLongA(hwnd2, GWL_STYLE);
+    ok((style & (WS_POPUP|WS_CHILD)) == WS_CHILD, "got style 0x%08x\n", style);
+    ret = GetParent(hwnd2);
+    ok(ret == hwnd, "got %p\n", ret);
+
+    /* try to set same parent again */
+    /* with WS_POPUP */
+    style = GetWindowLongA(hwnd2, GWL_STYLE);
+    SetWindowLongA(hwnd2, GWL_STYLE, style | WS_POPUP);
+    ret = pSHSetParentHwnd(hwnd2, hwnd);
+    todo_wine ok(ret == NULL, "got %p\n", ret);
+    style = GetWindowLongA(hwnd2, GWL_STYLE);
+    ok((style & (WS_CHILD|WS_POPUP)) == WS_CHILD, "got 0x%08x\n", style);
+    ret = GetParent(hwnd2);
+    ok(ret == hwnd, "got %p\n", ret);
+
+    /* without WS_POPUP */
+    style = GetWindowLongA(hwnd2, GWL_STYLE);
+    SetWindowLongA(hwnd2, GWL_STYLE, style | ~WS_POPUP);
+    ret = pSHSetParentHwnd(hwnd2, hwnd);
+    todo_wine ok(ret == hwnd, "got %p\n", ret);
+    style = GetWindowLongA(hwnd2, GWL_STYLE);
+    ok((style & (WS_CHILD|WS_POPUP)) == WS_CHILD, "got 0x%08x\n", style);
+    ret = GetParent(hwnd2);
+    ok(ret == hwnd, "got %p\n", ret);
+
+    DestroyWindow(hwnd);
+    DestroyWindow(hwnd2);
 }
 
 START_TEST(ordinal)
@@ -2988,6 +3072,7 @@ START_TEST(ordinal)
     test_SHGetIniString();
     test_SHSetIniString();
     test_SHGetShellKey();
+    test_SHSetParentHwnd();
 
     FreeLibrary(hshell32);
     FreeLibrary(hmlang);
