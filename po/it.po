@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-10-18 20:40+0200\n"
+"PO-Revision-Date: 2011-10-21 19:24+0200\n"
 "Last-Translator: Luca Bennati <lucak3@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Italian\n"
@@ -7701,9 +7701,8 @@ msgstr ""
 "\n"
 
 #: attrib.rc:28
-#, fuzzy
 msgid "%1: File Not Found\n"
-msgstr "%s : File non trovato\n"
+msgstr "%1 : File non trovato\n"
 
 #: attrib.rc:47
 msgid ""
@@ -8649,14 +8648,12 @@ msgstr ""
 "Dove 'servizio' è il nome del servizio da fermare.\n"
 
 #: net.rc:30
-#, fuzzy
 msgid "Stopping dependent service: %1\n"
-msgstr "Interrompendo il servizio dipendente: %s\n"
+msgstr "Interrompendo il servizio dipendente: %1\n"
 
 #: net.rc:31
-#, fuzzy
 msgid "Could not stop service %1\n"
-msgstr "Impossibile interrompere il servizio %s\n"
+msgstr "Impossibile interrompere il servizio %1\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
@@ -8668,34 +8665,28 @@ msgid "Could not get handle to service.\n"
 msgstr "Impossibile ottenere l'handle del servizio.\n"
 
 #: net.rc:34
-#, fuzzy
 msgid "The %1 service is starting.\n"
-msgstr "Il servizio %s sarà avviato.\n"
+msgstr "Il servizio %1 sarà avviato.\n"
 
 #: net.rc:35
-#, fuzzy
 msgid "The %1 service was started successfully.\n"
-msgstr "Il servizio %s è stato avviato con successo.\n"
+msgstr "Il servizio %1 è stato avviato con successo.\n"
 
 #: net.rc:36
-#, fuzzy
 msgid "The %1 service failed to start.\n"
-msgstr "Impossibile avviare il servizio %s.\n"
+msgstr "Impossibile avviare il servizio %1.\n"
 
 #: net.rc:37
-#, fuzzy
 msgid "The %1 service is stopping.\n"
-msgstr "Il servizio %s sarà fermato.\n"
+msgstr "Il servizio %1 sarà fermato.\n"
 
 #: net.rc:38
-#, fuzzy
 msgid "The %1 service was stopped successfully.\n"
-msgstr "Il servizio %s è stato fermato con successo.\n"
+msgstr "Il servizio %1 è stato fermato con successo.\n"
 
 #: net.rc:39
-#, fuzzy
 msgid "The %1 service failed to stop.\n"
-msgstr "Impossibile fermare il servizio %s.\n"
+msgstr "Impossibile fermare il servizio %1.\n"
 
 #: net.rc:41
 msgid "There are no entries in the list.\n"
@@ -8712,9 +8703,8 @@ msgstr ""
 "---------------------------------------------------------------\n"
 
 #: net.rc:43
-#, fuzzy
 msgid "%1      %2      %3      Open resources: %4!u!\n"
-msgstr "%s      %s      %s      Risorse aperte: %lu\n"
+msgstr "%1      %2      %3      Risorse aperte: %4!u!\n"
 
 #: net.rc:44
 msgid "OK"
@@ -10771,9 +10761,8 @@ msgstr ""
 "finestra"
 
 #: wineconsole.rc:34
-#, fuzzy
 msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
-msgstr "Il carattere è largo %ld pixel e alto %ld pixel"
+msgstr "Ogni carattere è largo %1!u! pixel e alto %2!u! pixel"
 
 #: wineconsole.rc:35
 msgid "This is a test"
@@ -10997,9 +10986,8 @@ msgid "Security"
 msgstr "Sicurezza"
 
 #: winefile.rc:120
-#, fuzzy
 msgid "%1 of %2 free"
-msgstr "liberi %s di %s"
+msgstr "liberi %1 di %2"
 
 #: winemine.rc:34
 msgid "&Game"
