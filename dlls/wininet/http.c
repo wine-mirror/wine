@@ -3989,7 +3989,7 @@ static void HTTP_InsertCookies(http_request_t *request)
     heap_free(cookies);
 }
 
-static WORD HTTP_ParseDay(LPCWSTR day)
+static WORD HTTP_ParseWkday(LPCWSTR day)
 {
     static const WCHAR days[7][4] = {{ 's','u','n',0 },
                                      { 'm','o','n',0 },
@@ -4107,7 +4107,7 @@ static BOOL HTTP_ParseDateAsAsctime(LPCWSTR value, FILETIME *ft)
          dayPtr - day < sizeof(day) / sizeof(day[0]) - 1; ptr++, dayPtr++)
         *dayPtr = *ptr;
     *dayPtr = 0;
-    st.wDayOfWeek = HTTP_ParseDay(day);
+    st.wDayOfWeek = HTTP_ParseWkday(day);
     if (st.wDayOfWeek >= 7)
     {
         ERR("unexpected weekday %s\n", debugstr_w(day));
@@ -4186,15 +4186,15 @@ static BOOL HTTP_ParseRfc1123Date(LPCWSTR value, FILETIME *ft)
         return FALSE;
     if (ptr - value != 3)
     {
-        ERR("unexpected weekday %s\n", debugstr_wn(value, ptr - value));
+        WARN("unexpected weekday %s\n", debugstr_wn(value, ptr - value));
         return FALSE;
     }
     memcpy(day, value, (ptr - value) * sizeof(WCHAR));
     day[3] = 0;
-    st.wDayOfWeek = HTTP_ParseDay(day);
+    st.wDayOfWeek = HTTP_ParseWkday(day);
     if (st.wDayOfWeek > 6)
     {
-        ERR("unexpected weekday %s\n", debugstr_wn(value, ptr - value));
+        WARN("unexpected weekday %s\n", debugstr_wn(value, ptr - value));
         return FALSE;
     }
     ptr++;
@@ -4205,7 +4205,7 @@ static BOOL HTTP_ParseRfc1123Date(LPCWSTR value, FILETIME *ft)
     num = strtoulW(ptr, &nextPtr, 10);
     if (!nextPtr || nextPtr <= ptr || !num || num > 31)
     {
-        ERR("unexpected day %s\n", debugstr_w(value));
+        WARN("unexpected day %s\n", debugstr_w(value));
         return FALSE;
     }
     ptr = nextPtr;
@@ -4222,7 +4222,7 @@ static BOOL HTTP_ParseRfc1123Date(LPCWSTR value, FILETIME *ft)
     st.wMonth = HTTP_ParseMonth(month);
     if (!st.wMonth || st.wMonth > 12)
     {
-        ERR("unexpected month %s\n", debugstr_w(month));
+        WARN("unexpected month %s\n", debugstr_w(month));
         return FALSE;
     }
 
@@ -4252,11 +4252,125 @@ static BOOL HTTP_ParseRfc1123Date(LPCWSTR value, FILETIME *ft)
     return SystemTimeToFileTime(&st, ft);
 }
 
-/* FIXME: only accepts dates in RFC 1123 format and asctime() format,
- * which may not be the only formats actually seen in the wild.
- * http://www.hackcraft.net/web/datetime/ suggests at least RFC 850 dates
- * should be accepted as well.
- */
+static WORD HTTP_ParseWeekday(LPCWSTR day)
+{
+    static const WCHAR days[7][10] = {{ 's','u','n','d','a','y',0 },
+                                     { 'm','o','n','d','a','y',0 },
+                                     { 't','u','e','s','d','a','y',0 },
+                                     { 'w','e','d','n','e','s','d','a','y',0 },
+                                     { 't','h','u','r','s','d','a','y',0 },
+                                     { 'f','r','i','d','a','y',0 },
+                                     { 's','a','t','u','r','d','a','y',0 }};
+    int i;
+    for (i = 0; i < sizeof(days)/sizeof(*days); i++)
+        if (!strcmpiW(day, days[i]))
+            return i;
+
+    /* Invalid */
+    return 7;
+}
+
+static BOOL HTTP_ParseRfc850Date(LPCWSTR value, FILETIME *ft)
+{
+    static const WCHAR gmt[]= { 'G','M','T',0 };
+    WCHAR *nextPtr, day[10], month[4], *monthPtr;
+    LPCWSTR ptr;
+    unsigned long num;
+    SYSTEMTIME st = { 0 };
+
+    ptr = strchrW(value, ',');
+    if (!ptr)
+        return FALSE;
+    if (ptr - value == 3)
+    {
+        memcpy(day, value, (ptr - value) * sizeof(WCHAR));
+        day[3] = 0;
+        st.wDayOfWeek = HTTP_ParseWkday(day);
+        if (st.wDayOfWeek > 6)
+        {
+            ERR("unexpected weekday %s\n", debugstr_wn(value, ptr - value));
+            return FALSE;
+        }
+    }
+    else if (ptr - value <= sizeof(day) / sizeof(day[0]))
+    {
+        memcpy(day, value, (ptr - value) * sizeof(WCHAR));
+        day[ptr - value + 1] = 0;
+        st.wDayOfWeek = HTTP_ParseWeekday(day);
+        if (st.wDayOfWeek > 6)
+        {
+            ERR("unexpected weekday %s\n", debugstr_wn(value, ptr - value));
+            return FALSE;
+        }
+    }
+    else
+    {
+        ERR("unexpected weekday %s\n", debugstr_wn(value, ptr - value));
+        return FALSE;
+    }
+    ptr++;
+
+    while (isspaceW(*ptr))
+        ptr++;
+
+    num = strtoulW(ptr, &nextPtr, 10);
+    if (!nextPtr || nextPtr <= ptr || !num || num > 31)
+    {
+        ERR("unexpected day %s\n", debugstr_w(value));
+        return FALSE;
+    }
+    ptr = nextPtr;
+    st.wDay = (WORD)num;
+
+    if (*ptr != '-')
+    {
+        ERR("unexpected month format %s\n", debugstr_w(ptr));
+        return FALSE;
+    }
+    ptr++;
+
+    for (monthPtr = month; *ptr != '-' &&
+         monthPtr - month < sizeof(month) / sizeof(month[0]) - 1;
+         monthPtr++, ptr++)
+        *monthPtr = *ptr;
+    *monthPtr = 0;
+    st.wMonth = HTTP_ParseMonth(month);
+    if (!st.wMonth || st.wMonth > 12)
+    {
+        ERR("unexpected month %s\n", debugstr_w(month));
+        return FALSE;
+    }
+
+    if (*ptr != '-')
+    {
+        ERR("unexpected year format %s\n", debugstr_w(ptr));
+        return FALSE;
+    }
+    ptr++;
+
+    num = strtoulW(ptr, &nextPtr, 10);
+    if (!nextPtr || nextPtr <= ptr || num < 1601 || num > 30827)
+    {
+        ERR("unexpected year %s\n", debugstr_w(value));
+        return FALSE;
+    }
+    ptr = nextPtr;
+    st.wYear = (WORD)num;
+
+    if (!HTTP_ParseTime(&st, &ptr))
+        return FALSE;
+
+    while (isspaceW(*ptr))
+        ptr++;
+
+    if (strcmpW(ptr, gmt))
+    {
+        ERR("unexpected time zone %s\n", debugstr_w(ptr));
+        return FALSE;
+    }
+    return SystemTimeToFileTime(&st, ft);
+}
+
 static BOOL HTTP_ParseDate(LPCWSTR value, FILETIME *ft)
 {
     static const WCHAR zero[] = { '0',0 };
@@ -4268,7 +4382,15 @@ static BOOL HTTP_ParseDate(LPCWSTR value, FILETIME *ft)
         ret = TRUE;
     }
     else if (strchrW(value, ','))
+    {
         ret = HTTP_ParseRfc1123Date(value, ft);
+        if (!ret)
+        {
+            ret = HTTP_ParseRfc850Date(value, ft);
+            if (!ret)
+                ERR("unexpected date format %s\n", debugstr_w(value));
+        }
+    }
     else
     {
         ret = HTTP_ParseDateAsAsctime(value, ft);
