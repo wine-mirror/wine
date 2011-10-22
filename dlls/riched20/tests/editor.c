@@ -6364,6 +6364,49 @@ static void test_format_rect(void)
        rc.top, rc.left, rc.bottom, rc.right,
        expected.top, expected.left, expected.bottom, expected.right);
 
+    /* Reset to default rect and check how the format rect adjusts to window
+     * resize and how it copes with very small windows */
+    SendMessageA(hwnd, EM_SETRECT, 0, (LPARAM)NULL);
+
+    MoveWindow(hwnd, 0, 0, 100, 30, FALSE);
+    GetClientRect(hwnd, &clientRect);
+
+    expected = clientRect;
+    expected.left += 1;
+    expected.right -= 1;
+    SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    ok(rc.top == expected.top && rc.left == expected.left &&
+       rc.bottom == expected.bottom && rc.right == expected.right,
+       "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
+       rc.top, rc.left, rc.bottom, rc.right,
+       expected.top, expected.left, expected.bottom, expected.right);
+
+    MoveWindow(hwnd, 0, 0, 0, 30, FALSE);
+    GetClientRect(hwnd, &clientRect);
+
+    expected = clientRect;
+    expected.left += 1;
+    expected.right -= 1;
+    SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    ok(rc.top == expected.top && rc.left == expected.left &&
+       rc.bottom == expected.bottom && rc.right == expected.right,
+       "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
+       rc.top, rc.left, rc.bottom, rc.right,
+       expected.top, expected.left, expected.bottom, expected.right);
+
+    MoveWindow(hwnd, 0, 0, 100, 0, FALSE);
+    GetClientRect(hwnd, &clientRect);
+
+    expected = clientRect;
+    expected.left += 1;
+    expected.right -= 1;
+    SendMessageA(hwnd, EM_GETRECT, 0, (LPARAM)&rc);
+    ok(rc.top == expected.top && rc.left == expected.left &&
+       rc.bottom == expected.bottom && rc.right == expected.right,
+       "rect a(t=%d, l=%d, b=%d, r=%d) != e(t=%d, l=%d, b=%d, r=%d)\n",
+       rc.top, rc.left, rc.bottom, rc.right,
+       expected.top, expected.left, expected.bottom, expected.right);
+
     DestroyWindow(hwnd);
 
     /* The extended window style affects the formatting rectangle. */
