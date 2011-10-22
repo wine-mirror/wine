@@ -31,6 +31,7 @@ struct enum_data {
     LPDIACTIONFORMAT lpdiaf;
     LPDIRECTINPUTDEVICE8 keyboard;
     LPDIRECTINPUTDEVICE8 mouse;
+    const char* username;
     int ndevices;
 };
 
@@ -156,6 +157,9 @@ static BOOL CALLBACK enumeration_callback(
     HRESULT hr;
     DIPROPDWORD dp;
     DIPROPRANGE dpr;
+    DIPROPSTRING dps;
+    WCHAR usernameW[MAX_PATH];
+    DWORD username_size = MAX_PATH;
     struct enum_data *data = pvRef;
     DWORD cnt;
     DIDEVICEOBJECTDATA buffer[5];
@@ -163,6 +167,15 @@ static BOOL CALLBACK enumeration_callback(
     if (!data) return DIENUM_CONTINUE;
 
     data->ndevices++;
+
+    /* Convert username to WCHAR */
+    if (data->username != NULL)
+    {
+        username_size = MultiByteToWideChar(CP_ACP, 0, data->username, -1, usernameW, 0);
+        MultiByteToWideChar(CP_ACP, 0, data->username, -1, usernameW, username_size);
+    }
+    else
+        GetUserNameW(usernameW, &username_size);
 
     /* collect the mouse and keyboard */
     if (IsEqualGUID(&lpddi->guidInstance, &GUID_SysKeyboard))
@@ -190,11 +203,22 @@ static BOOL CALLBACK enumeration_callback(
     hr = IDirectInputDevice8_Acquire(lpdid);
     ok (hr == DIERR_INVALIDPARAM, "Device was acquired before SetActionMap hr=%08x\n", hr);
 
-    hr = IDirectInputDevice8_SetActionMap(lpdid, data->lpdiaf, NULL, 0);
+    hr = IDirectInputDevice8_SetActionMap(lpdid, data->lpdiaf, data->username, 0);
     ok (SUCCEEDED(hr), "SetActionMap failed hr=%08x\n", hr);
 
     /* Some joysticks may have no suitable actions and thus should not be tested */
     if (hr == DI_NOEFFECT) return DIENUM_CONTINUE;
+
+    /* Test username after SetActionMap */
+    dps.diph.dwSize = sizeof(dps);
+    dps.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+    dps.diph.dwObj = 0;
+    dps.diph.dwHow  = DIPH_DEVICE;
+    dps.wsz[0] = '\0';
+
+    hr = IDirectInputDevice_GetProperty(lpdid, DIPROP_USERNAME, &dps.diph);
+    todo_wine ok (SUCCEEDED(hr), "GetProperty failed hr=%08x\n", hr);
+    todo_wine ok (!lstrcmpW(usernameW, dps.wsz), "Username not set correctly expected=%s, got=%s\n", wine_dbgstr_wn(usernameW, -1), wine_dbgstr_wn(dps.wsz, -1));
 
     /* Test buffer size */
     memset(&dp, 0, sizeof(dp));
@@ -245,7 +269,7 @@ static void test_action_mapping(void)
     HINSTANCE hinst = GetModuleHandle(NULL);
     LPDIRECTINPUT8 pDI = NULL;
     DIACTIONFORMAT af;
-    struct enum_data data =  {pDI, &af, NULL, NULL, 0};
+    struct enum_data data =  {pDI, &af, NULL, NULL, NULL, 0};
 
     hr = CoCreateInstance(&CLSID_DirectInput8, 0, 1, &IID_IDirectInput8A, (LPVOID*)&pDI);
     if (hr == DIERR_OLDDIRECTINPUTVERSION ||
@@ -279,6 +303,11 @@ static void test_action_mapping(void)
 
     /* This enumeration builds and sets the action map for all devices */
     hr = IDirectInput8_EnumDevicesBySemantics(pDI, 0, &af, enumeration_callback, &data, DIEDBSFL_ATTACHEDONLY);
+    ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed: hr=%08x\n", hr);
+
+    /* Repeat tests with a non NULL user */
+    data.username = "Ninja Brian";
+    hr = IDirectInput8_EnumDevicesBySemantics(pDI, NULL, &af, enumeration_callback, &data, DIEDBSFL_ATTACHEDONLY);
     ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed: hr=%08x\n", hr);
 
     if (data.keyboard != NULL)

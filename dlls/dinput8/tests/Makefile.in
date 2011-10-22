@@ -1,5 +1,5 @@
 TESTDLL   = dinput8.dll
-IMPORTS   = dinput8 ole32 user32
+IMPORTS   = dinput8 ole32 user32 advapi32
 
 C_SRCS = \
 	device.c \
