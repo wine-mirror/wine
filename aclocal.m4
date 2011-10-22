@@ -204,7 +204,7 @@ wine_fn_pot_rules ()
     ac_dir=$[1]
     ac_flags=$[2]
 
-    test "x$enable_maintainer_mode" = xyes || return
+    test "x$with_gettextpo" = xyes || return
 
     if wine_fn_has_flag mc $ac_flags
     then

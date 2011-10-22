@@ -46,7 +46,7 @@ AC_ARG_WITH(fontconfig,AS_HELP_STRING([--without-fontconfig],[do not use fontcon
             [if test "x$withval" = "xno"; then ac_cv_header_fontconfig_fontconfig_h=no; fi])
 AC_ARG_WITH(freetype,  AS_HELP_STRING([--without-freetype],[do not use the FreeType library]))
 AC_ARG_WITH(gettext,   AS_HELP_STRING([--without-gettext],[do not use gettext]))
-AC_ARG_WITH(gettextpo, AS_HELP_STRING([--without-gettextpo],[do not use the GetTextPO library]),
+AC_ARG_WITH(gettextpo, AS_HELP_STRING([--with-gettextpo],[use the GetTextPO library to rebuild po files]),
             [if test "x$withval" = "xno"; then ac_cv_header_gettext_po_h=no; fi])
 AC_ARG_WITH(gphoto,    AS_HELP_STRING([--without-gphoto],[do not use gphoto (Digital Camera support)]))
 AC_ARG_WITH(glu,       AS_HELP_STRING([--without-glu],[do not use the GLU library]),
@@ -1440,7 +1440,8 @@ then
                      [AC_DEFINE(HAVE_LIBGETTEXTPO,1,[Define to 1 if you have the `gettextpo' library (-lgettextpo).])
                       AC_SUBST(LIBGETTEXTPO,"-lgettextpo")])
     fi
-    WINE_WARNING_WITH(gettextpo,[test "x$LIBGETTEXTPO" = "x"],[GetText ${notice_platform}development files not found (or too old). Internationalization won't be fully supported.])
+    test "x$with_gettextpo" != xyes || WINE_NOTICE_WITH(gettextpo,[test "x$LIBGETTEXTPO" = "x"],
+          [GetText ${notice_platform}development files not found (or too old), po files can't be rebuilt.])
 fi
 
 dnl **** Check for gstreamer ****
@@ -3063,10 +3064,15 @@ then
 \$(srcdir)/include/config.h.in: include/stamp-h.in
 \$(srcdir)/include/stamp-h.in: configure.ac aclocal.m4
 	cd \$(srcdir) && autoheader --warnings=all
-	@echo timestamp > \$[@]
+	@echo timestamp > \$[@]])
+fi
 
-ALL_POT_FILES =$ALL_POT_FILES
-\$(LINGUAS:%=$srcdir/po/%.po): \$(srcdir)/po/wine.pot
+if test "x$with_gettextpo" = xyes
+then
+    test "$srcdir" = . || AC_MSG_ERROR([Rebuilding po files is not supported for out of tree builds.])
+    WINE_APPEND_RULE([ALL_MAKEFILE_DEPENDS],
+[ALL_POT_FILES =$ALL_POT_FILES
+\$(LINGUAS:%=po/%.po): \$(srcdir)/po/wine.pot
 	msgmerge -q \$[@] \$(srcdir)/po/wine.pot | msgattrib --no-obsolete -o \$[@].new && mv \$[@].new \$[@]
 \$(srcdir)/po/wine.pot: \$(ALL_POT_FILES)
 	msgcat -o \$[@] \$(ALL_POT_FILES)])

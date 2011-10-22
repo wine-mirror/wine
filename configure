@@ -1475,7 +1475,7 @@ Optional Packages:
   --without-fontconfig    do not use fontconfig
   --without-freetype      do not use the FreeType library
   --without-gettext       do not use gettext
-  --without-gettextpo     do not use the GetTextPO library
+  --with-gettextpo        use the GetTextPO library to rebuild po files
   --without-gphoto        do not use gphoto (Digital Camera support)
   --without-glu           do not use the GLU library
   --without-gnutls        do not use GnuTLS (schannel support)
@@ -10549,11 +10549,11 @@ $as_echo "#define HAVE_LIBGETTEXTPO 1" >>confdefs.h
 fi
 
     fi
-    if test "x$LIBGETTEXTPO" = "x"; then :
+    test "x$with_gettextpo" != xyes || if test "x$LIBGETTEXTPO" = "x"; then :
   case "x$with_gettextpo" in
-  x)   as_fn_append wine_warnings "|GetText ${notice_platform}development files not found (or too old). Internationalization won't be fully supported." ;;
+  x)   as_fn_append wine_notices "|GetText ${notice_platform}development files not found (or too old), po files can't be rebuilt." ;;
   xno) ;;
-  *)   as_fn_error $? "GetText ${notice_platform}development files not found (or too old). Internationalization won't be fully supported.
+  *)   as_fn_error $? "GetText ${notice_platform}development files not found (or too old), po files can't be rebuilt.
 This is an error since --with-gettextpo was requested." "$LINENO" 5 ;;
 esac
 fi
@@ -14294,7 +14294,7 @@ wine_fn_pot_rules ()
     ac_dir=$1
     ac_flags=$2
 
-    test "x$enable_maintainer_mode" = xyes || return
+    test "x$with_gettextpo" = xyes || return
 
     if wine_fn_has_flag mc $ac_flags
     then
@@ -15430,10 +15430,14 @@ then
 \$(srcdir)/include/config.h.in: include/stamp-h.in
 \$(srcdir)/include/stamp-h.in: configure.ac aclocal.m4
 	cd \$(srcdir) && autoheader --warnings=all
-	@echo timestamp > \$@
+	@echo timestamp > \$@"
+fi
 
-ALL_POT_FILES =$ALL_POT_FILES
-\$(LINGUAS:%=$srcdir/po/%.po): \$(srcdir)/po/wine.pot
+if test "x$with_gettextpo" = xyes
+then
+    test "$srcdir" = . || as_fn_error $? "Rebuilding po files is not supported for out of tree builds." "$LINENO" 5
+    wine_fn_append_rule ALL_MAKEFILE_DEPENDS "ALL_POT_FILES =$ALL_POT_FILES
+\$(LINGUAS:%=po/%.po): \$(srcdir)/po/wine.pot
 	msgmerge -q \$@ \$(srcdir)/po/wine.pot | msgattrib --no-obsolete -o \$@.new && mv \$@.new \$@
 \$(srcdir)/po/wine.pot: \$(ALL_POT_FILES)
 	msgcat -o \$@ \$(ALL_POT_FILES)"
