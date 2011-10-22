@@ -311,8 +311,11 @@ HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT 
 
     case VT_UNKNOWN:
     case VT_DISPATCH:
-        hr = IUnknown_QueryInterface(V_UNKNOWN(ref_child), &IID_IXMLDOMNode, (void**)&before);
-        if(FAILED(hr)) return hr;
+        if (V_UNKNOWN(ref_child))
+        {
+            hr = IUnknown_QueryInterface(V_UNKNOWN(ref_child), &IID_IXMLDOMNode, (void**)&before);
+            if(FAILED(hr)) return hr;
+        }
         break;
 
     default:

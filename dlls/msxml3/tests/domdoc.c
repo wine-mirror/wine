@@ -9341,11 +9341,31 @@ static void test_insertBefore(void)
     hr = IXMLDOMDocument_createElement(doc, _bstr_("elem3"), &elem3);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("elem3"), &elem3);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("elem4"), &elem4);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
     EXPECT_NO_CHILDREN(elem1);
     EXPECT_NO_CHILDREN(elem2);
     EXPECT_NO_CHILDREN(elem3);
 
     todo_wine EXPECT_REF(elem2, 2);
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = NULL;
+    node = NULL;
+    hr = IXMLDOMElement_insertBefore(elem1, (IXMLDOMNode*)elem4, v, &node);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(node == (void*)elem4, "got %p\n", node);
+
+    EXPECT_CHILDREN(elem1);
+    hr = IXMLDOMElement_removeChild(elem1, (IXMLDOMNode*)elem4, NULL);
+    EXPECT_HR(hr, S_OK);
+    IXMLDOMElement_Release(elem4);
+
+    EXPECT_NO_CHILDREN(elem1);
 
     V_VT(&v) = VT_NULL;
     node = NULL;
