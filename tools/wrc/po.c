@@ -393,20 +393,17 @@ static const struct
 
 #ifndef HAVE_LIBGETTEXTPO
 
-typedef void *po_file_t;
-
-static const char *get_msgstr( po_file_t po, const char *msgid, const char *context, int *found )
+static const char *get_msgstr( const char *msgid, const char *context, int *found )
 {
     if (context) (*found)++;
     return msgid;
 }
 
-static po_file_t read_po_file( const char *name )
+static void load_po_file( const char *name )
 {
-    return NULL;
 }
 
-static void po_file_free ( po_file_t po )
+static void free_po_file(void)
 {
 }
 
@@ -421,6 +418,8 @@ void write_po_files( const char *outname )
 }
 
 #else  /* HAVE_LIBGETTEXTPO */
+
+static po_file_t po_file;
 
 static void po_xerror( int severity, po_message_t message,
                        const char *filename, size_t lineno, size_t column,
@@ -474,13 +473,13 @@ static po_message_t find_message( po_file_t po, const char *msgid, const char *m
     return msg;
 }
 
-static const char *get_msgstr( po_file_t po, const char *msgid, const char *context, int *found )
+static const char *get_msgstr( const char *msgid, const char *context, int *found )
 {
     const char *ret = msgid;
     po_message_t msg;
     po_message_iterator_t iterator;
 
-    msg = find_message( po, msgid, context, &iterator );
+    msg = find_message( po_file, msgid, context, &iterator );
     if (msg && !po_message_is_fuzzy( msg ))
     {
         ret = po_message_msgstr( msg );
@@ -491,13 +490,16 @@ static const char *get_msgstr( po_file_t po, const char *msgid, const char *cont
     return ret;
 }
 
-static po_file_t read_po_file( const char *name )
+static void load_po_file( const char *name )
 {
-    po_file_t po;
-
-    if (!(po = po_file_read( name, &po_xerror_handler )))
+    if (!(po_file = po_file_read( name, &po_xerror_handler )))
         error( "cannot load po file '%s'\n", name );
-    return po;
+}
+
+static void free_po_file(void)
+{
+    po_file_free( po_file );
+    po_file = NULL;
 }
 
 static void add_po_string( po_file_t po, const string_t *msgid, const string_t *msgstr,
@@ -818,7 +820,7 @@ void write_po_files( const char *outname )
 
 #endif  /* HAVE_LIBGETTEXTPO */
 
-static string_t *translate_string( po_file_t po, string_t *str, int *found )
+static string_t *translate_string( string_t *str, int *found )
 {
     string_t *new;
     const char *transl;
@@ -830,7 +832,7 @@ static string_t *translate_string( po_file_t po, string_t *str, int *found )
 
     msgid = buffer;
     context = get_message_context( &msgid );
-    transl = get_msgstr( po, msgid, context, found );
+    transl = get_msgstr( msgid, context, found );
 
     new = xmalloc( sizeof(*new) );
     new->type = str_unicode;
@@ -844,7 +846,7 @@ static string_t *translate_string( po_file_t po, string_t *str, int *found )
     return new;
 }
 
-static control_t *translate_controls( po_file_t po, control_t *ctrl, int *found )
+static control_t *translate_controls( control_t *ctrl, int *found )
 {
     control_t *new, *head = NULL, *tail = NULL;
 
@@ -856,7 +858,7 @@ static control_t *translate_controls( po_file_t po, control_t *ctrl, int *found 
         {
             new->title = new_name_id();
             *new->title = *ctrl->title;
-            new->title->name.s_name = translate_string( po, ctrl->title->name.s_name, found );
+            new->title->name.s_name = translate_string( ctrl->title->name.s_name, found );
         }
         else new->title = dup_name_id( ctrl->title );
         new->ctlclass = dup_name_id( ctrl->ctlclass );
@@ -870,7 +872,7 @@ static control_t *translate_controls( po_file_t po, control_t *ctrl, int *found 
     return head;
 }
 
-static menu_item_t *translate_items( po_file_t po, menu_item_t *item, int *found )
+static menu_item_t *translate_items( menu_item_t *item, int *found )
 {
     menu_item_t *new, *head = NULL, *tail = NULL;
 
@@ -878,8 +880,8 @@ static menu_item_t *translate_items( po_file_t po, menu_item_t *item, int *found
     {
         new = xmalloc( sizeof(*new) );
         *new = *item;
-        if (item->name) new->name = translate_string( po, item->name, found );
-        if (item->popup) new->popup = translate_items( po, item->popup, found );
+        if (item->name) new->name = translate_string( item->name, found );
+        if (item->popup) new->popup = translate_items( item->popup, found );
         if (tail) tail->next = new;
         else head = new;
         new->next = NULL;
@@ -890,8 +892,7 @@ static menu_item_t *translate_items( po_file_t po, menu_item_t *item, int *found
     return head;
 }
 
-static stringtable_t *translate_stringtable( po_file_t po, stringtable_t *stt,
-                                             language_t *lang, int *found )
+static stringtable_t *translate_stringtable( stringtable_t *stt, language_t *lang, int *found )
 {
     stringtable_t *new, *head = NULL, *tail = NULL;
     int i;
@@ -906,7 +907,7 @@ static stringtable_t *translate_stringtable( po_file_t po, stringtable_t *stt,
         memcpy( new->entries, stt->entries, new->nentries * sizeof(*new->entries) );
         for (i = 0; i < stt->nentries; i++)
             if (stt->entries[i].str)
-                new->entries[i].str = translate_string( po, stt->entries[i].str, found );
+                new->entries[i].str = translate_string( stt->entries[i].str, found );
 
         if (tail) tail->next = new;
         else head = new;
@@ -918,19 +919,19 @@ static stringtable_t *translate_stringtable( po_file_t po, stringtable_t *stt,
     return head;
 }
 
-static void translate_dialog( po_file_t po, dialog_t *dlg, dialog_t *new, int *found )
+static void translate_dialog( dialog_t *dlg, dialog_t *new, int *found )
 {
-    if (dlg->title) new->title = translate_string( po, dlg->title, found );
+    if (dlg->title) new->title = translate_string( dlg->title, found );
     if (dlg->font)
     {
         new->font = xmalloc( sizeof(*dlg->font) );
         new->font = dlg->font;
-        new->font->name = translate_string( po, dlg->font->name, found );
+        new->font->name = translate_string( dlg->font->name, found );
     }
-    new->controls = translate_controls( po, dlg->controls, found );
+    new->controls = translate_controls( dlg->controls, found );
 }
 
-static void translate_resources( po_file_t po, language_t *lang )
+static void translate_resources( language_t *lang )
 {
     resource_t *res;
 
@@ -948,15 +949,15 @@ static void translate_resources( po_file_t po, language_t *lang )
             break;
         case res_dlg:
             new = dup_resource( res, lang );
-            translate_dialog( po, res->res.dlg, new->res.dlg, &found );
+            translate_dialog( res->res.dlg, new->res.dlg, &found );
             break;
         case res_men:
             new = dup_resource( res, lang );
-            new->res.men->items = translate_items( po, res->res.men->items, &found );
+            new->res.men->items = translate_items( res->res.men->items, &found );
             break;
         case res_stt:
             new = dup_resource( res, lang );
-            new->res.stt = translate_stringtable( po, res->res.stt, lang, &found );
+            new->res.stt = translate_stringtable( res->res.stt, lang, &found );
             break;
         case res_msg:
             /* FIXME */
@@ -978,7 +979,6 @@ static void translate_resources( po_file_t po, language_t *lang )
 void add_translations( const char *po_dir )
 {
     resource_t *res;
-    po_file_t po;
     char buffer[256];
     char *p, *tok, *name;
     unsigned int i;
@@ -1009,9 +1009,9 @@ void add_translations( const char *po_dir )
                 error( "unknown language '%s'\n", tok );
 
             name = strmake( "%s/%s.po", po_dir, tok );
-            po = read_po_file( name );
-            translate_resources( po, new_language(languages[i].id, languages[i].sub) );
-            po_file_free( po );
+            load_po_file( name );
+            translate_resources( new_language(languages[i].id, languages[i].sub) );
+            free_po_file();
             free( name );
         }
     }
