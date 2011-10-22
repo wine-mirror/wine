@@ -203,7 +203,7 @@ static HRESULT WINAPI CategoryMgr_FindClosestCategory ( ITfCategoryMgr *iface,
 {
     static const WCHAR fmt[] = { '%','s','\\','%','s','\\','C','a','t','e','g','o','r','y','\\','I','t','e','m','\\','%','s',0};
 
-    WCHAR fullkey[110];
+    WCHAR fullkey[120];
     WCHAR buf[39];
     HKEY key;
     HRESULT hr = S_FALSE;
