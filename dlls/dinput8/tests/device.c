@@ -239,29 +239,6 @@ static BOOL CALLBACK enumeration_callback(
     return DIENUM_CONTINUE;
 }
 
-/*  A simpler callback function used to count and check
-    the enumeration of devices.
-*/
-static BOOL CALLBACK counting_callback(
-    LPCDIDEVICEINSTANCE lpddi,
-    LPDIRECTINPUTDEVICE8 lpdid,
-    DWORD dwFlags,
-    DWORD dwRemaining,
-    LPVOID pvRef)
-{
-    struct enum_data *data = pvRef;
-    if (!data) return DIENUM_CONTINUE;
-
-    data->ndevices++;
-    if (IsEqualGUID(&lpddi->guidInstance, &GUID_SysKeyboard))
-        data->keyboard = lpdid;
-
-    if (IsEqualGUID(&lpddi->guidInstance, &GUID_SysMouse))
-        data->mouse = lpdid;
-
-    return DIENUM_CONTINUE;
-}
-
 static void test_action_mapping(void)
 {
     HRESULT hr;
@@ -269,7 +246,6 @@ static void test_action_mapping(void)
     LPDIRECTINPUT8 pDI = NULL;
     DIACTIONFORMAT af;
     struct enum_data data =  {pDI, &af, NULL, NULL, 0};
-    struct enum_data count = {pDI, &af, NULL, NULL, 0};
 
     hr = CoCreateInstance(&CLSID_DirectInput8, 0, 1, &IID_IDirectInput8A, (LPVOID*)&pDI);
     if (hr == DIERR_OLDDIRECTINPUTVERSION ||
@@ -301,42 +277,10 @@ static void test_action_mapping(void)
     af.dwGenre = 0x01000000; /* DIVIRTUAL_DRIVING_RACE */
     af.dwBufferSize = 32;
 
-    /* Test enumerating all attached and installed devices */
-    count.keyboard = NULL;
-    count.mouse = NULL;
-    count.ndevices = 0;
-    hr = IDirectInput8_EnumDevicesBySemantics(pDI, 0, &af, counting_callback, &count, DIEDBSFL_ATTACHEDONLY);
-    ok (count.ndevices > 0, "EnumDevicesBySemantics did not call the callback hr=%08x\n", hr);
-    ok (count.keyboard != NULL, "EnumDevicesBySemantics should enumerate the keyboard\n");
-    ok (count.mouse != NULL, "EnumDevicesBySemantics should enumerate the mouse\n");
-
-    /* Enumerate Force feedback devices. We should get no mouse nor keyboard */
-    count.keyboard = NULL;
-    count.mouse = NULL;
-    hr = IDirectInput8_EnumDevicesBySemantics(pDI, 0, &af, counting_callback, &count, DIEDBSFL_FORCEFEEDBACK);
-    ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr);
-    ok (count.keyboard == NULL, "Keyboard should not be enumerated when asking for forcefeedback\n");
-    ok (count.mouse == NULL, "Mouse should not be enumerated when asking for forcefeedback\n");
-
-    /* Enumerate available devices. That is devices with not owned by any user.
-       Before setting the action map for all devices we still have them available.
-    */
-    count.ndevices = 0;
-    hr = IDirectInput8_EnumDevicesBySemantics(pDI, 0, &af, counting_callback, &count, DIEDBSFL_AVAILABLEDEVICES);
-    ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr);
-    ok (count.ndevices > 0, "There should be devices available before action mapping available=%d\n", count.ndevices);
-
     /* This enumeration builds and sets the action map for all devices */
     hr = IDirectInput8_EnumDevicesBySemantics(pDI, 0, &af, enumeration_callback, &data, DIEDBSFL_ATTACHEDONLY);
     ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed: hr=%08x\n", hr);
 
-    /* After a successful action mapping we should have no devices available */
-    count.ndevices = 0;
-    hr = IDirectInput8_EnumDevicesBySemantics(pDI, 0, &af, counting_callback, &count, DIEDBSFL_AVAILABLEDEVICES);
-    ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr);
-    todo_wine ok (count.ndevices == 0, "No device should be available after action mapping available=%d\n", count.ndevices);
-
-    /* Use the devices we collect for some tests */
     if (data.keyboard != NULL)
     {
         /* Test keyboard BuildActionMap */
@@ -367,11 +311,6 @@ static void test_action_mapping(void)
 
         test_device_input(data.mouse, INPUT_MOUSE, MOUSEEVENTF_LEFTDOWN, 3);
     }
-
-    /* The call fails with a zeroed GUID */
-    memset(&af.guidActionMap, 0, sizeof(GUID));
-    hr = IDirectInput8_EnumDevicesBySemantics(pDI, 0, &af, enumeration_callback, 0, 0);
-    todo_wine ok(FAILED(hr), "EnumDevicesBySemantics succeeded with invalid GUID hr=%08x\n", hr);
 }
 
 START_TEST(device)

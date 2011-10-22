@@ -421,6 +421,160 @@ static void test_EnumDevices(void)
     IDirectInput8_Release(pDI);
 }
 
+struct enum_semantics_test
+{
+    unsigned int device_count;
+    BOOL mouse;
+    BOOL keyboard;
+    LPDIACTIONFORMAT lpdiaf;
+    const char* username;
+};
+
+static DIACTION actionMapping[]=
+{
+  /* axis */
+  { 0, 0x01008A01 /* DIAXIS_DRIVINGR_STEER */,      0, { "Steer" }   },
+  /* button */
+  { 1, 0x01000C01 /* DIBUTTON_DRIVINGR_SHIFTUP */,  0, { "Upshift" } },
+  /* keyboard key */
+  { 2, DIKEYBOARD_SPACE,                            0, { "Missile" } },
+  /* mouse button */
+  { 3, DIMOUSE_BUTTON0,                             0, { "Select" }  },
+  /* mouse axis */
+  { 4, DIMOUSE_YAXIS,                               0, { "Y Axis" }  }
+};
+
+static BOOL CALLBACK enum_semantics_callback(LPCDIDEVICEINSTANCE lpddi, IDirectInputDevice8A *lpdid, DWORD dwFlags, DWORD dwRemaining, void *context)
+{
+    struct enum_semantics_test *data = context;
+
+    if (context == NULL) return DIENUM_STOP;
+
+    data->device_count++;
+
+    if (IsEqualGUID(&lpddi->guidInstance, &GUID_SysKeyboard)) data->keyboard = TRUE;
+
+    if (IsEqualGUID(&lpddi->guidInstance, &GUID_SysMouse)) data->mouse = TRUE;
+
+    return DIENUM_CONTINUE;
+}
+
+static BOOL CALLBACK set_action_map_callback(LPCDIDEVICEINSTANCE lpddi, IDirectInputDevice8A *lpdid, DWORD dwFlags, DWORD dwRemaining, void *context)
+{
+    HRESULT hr;
+    struct enum_semantics_test *data = context;
+
+    /* Building and setting an action map */
+    /* It should not use any pre-stored mappings so we use DIDBAM_INITIALIZE */
+    hr = IDirectInputDevice8_BuildActionMap(lpdid, data->lpdiaf, NULL, DIDBAM_INITIALIZE);
+    ok (SUCCEEDED(hr), "BuildActionMap failed hr=%08x\n", hr);
+
+    hr = IDirectInputDevice8_SetActionMap(lpdid, data->lpdiaf, data->username, 0);
+    ok (SUCCEEDED(hr), "SetActionMap failed hr=%08x\n", hr);
+
+    return DIENUM_CONTINUE;
+}
+
+static void test_EnumDevicesBySemantics(void)
+{
+    IDirectInput8A *pDI;
+    HRESULT hr;
+    DIACTIONFORMATA diaf;
+    const GUID ACTION_MAPPING_GUID = { 0x1, 0x2, 0x3, { 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb } };
+    struct enum_semantics_test data = { 0, FALSE, FALSE, &diaf, NULL };
+    int device_total = 0;
+
+    hr = DirectInput8Create(hInstance, DIRECTINPUT_VERSION, &IID_IDirectInput8A, (void **)&pDI, NULL);
+    if (FAILED(hr))
+    {
+        win_skip("Failed to instantiate a IDirectInputA instance: 0x%08x\n", hr);
+        return;
+    }
+
+    memset (&diaf, 0, sizeof(diaf));
+    diaf.dwSize = sizeof(diaf);
+    diaf.dwActionSize = sizeof(DIACTION);
+    diaf.dwNumActions = sizeof(actionMapping) / sizeof(actionMapping[0]);
+    diaf.dwDataSize = 4 * diaf.dwNumActions;
+    diaf.rgoAction = actionMapping;
+    diaf.guidActionMap = ACTION_MAPPING_GUID;
+    diaf.dwGenre = 0x01000000; /* DIVIRTUAL_DRIVING_RACE */
+    diaf.dwBufferSize = 32;
+
+    /* Test enumerating all attached and installed devices */
+    data.keyboard = FALSE;
+    data.mouse = FALSE;
+    data.device_count = 0;
+    hr = IDirectInput8_EnumDevicesBySemantics(pDI, NULL, &diaf, enum_semantics_callback, &data, DIEDBSFL_ATTACHEDONLY);
+    ok (data.device_count > 0, "EnumDevicesBySemantics did not call the callback hr=%08x\n", hr);
+    ok (data.keyboard, "EnumDevicesBySemantics should enumerate the keyboard\n");
+    ok (data.mouse, "EnumDevicesBySemantics should enumerate the mouse\n");
+
+    /* Enumerate Force feedback devices. We should get no mouse nor keyboard */
+    data.keyboard = FALSE;
+    data.mouse = FALSE;
+    hr = IDirectInput8_EnumDevicesBySemantics(pDI, NULL, &diaf, enum_semantics_callback, &data, DIEDBSFL_FORCEFEEDBACK);
+    ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr);
+    ok (!data.keyboard, "Keyboard should not be enumerated when asking for forcefeedback\n");
+    ok (!data.mouse, "Mouse should not be enumerated when asking for forcefeedback\n");
+
+    /* Enumerate available devices. That is devices not owned by any user.
+       Before setting the action map for all devices we still have them available. */
+    data.device_count = 0;
+    hr = IDirectInput8_EnumDevicesBySemantics(pDI, NULL, &diaf, enum_semantics_callback, &data, DIEDBSFL_AVAILABLEDEVICES);
+    ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr);
+    ok (data.device_count > 0, "There should be devices available before action mapping available=%d\n", data.device_count);
+
+    /* Keep the device total */
+    device_total = data.device_count;
+
+    /* This enumeration builds and sets the action map for all devices with a NULL username */
+    hr = IDirectInput8_EnumDevicesBySemantics(pDI, NULL, &diaf, set_action_map_callback, &data, DIEDBSFL_ATTACHEDONLY);
+    ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed: hr=%08x\n", hr);
+
+    /* After a successful action mapping we should have no devices available */
+    data.device_count = 0;
+    hr = IDirectInput8_EnumDevicesBySemantics(pDI, NULL, &diaf, enum_semantics_callback, &data, DIEDBSFL_AVAILABLEDEVICES);
+    ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr);
+    todo_wine ok (data.device_count == 0, "No device should be available after action mapping available=%d\n", data.device_count);
+
+    /* Now we'll give all the devices to a specific user */
+    data.username = "Sh4d0w M4g3";
+    hr = IDirectInput8_EnumDevicesBySemantics(pDI, NULL, &diaf, set_action_map_callback, &data, DIEDBSFL_ATTACHEDONLY);
+    ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed: hr=%08x\n", hr);
+
+    /* Testing with the default user, DIEDBSFL_THISUSER has no effect */
+    data.device_count = 0;
+    hr = IDirectInput8_EnumDevicesBySemantics(pDI, NULL, &diaf, enum_semantics_callback, &data, DIEDBSFL_THISUSER);
+    ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr);
+    ok (data.device_count == device_total, "THISUSER has no effect with NULL username owned=%d, expected=%d\n", data.device_count, device_total);
+
+    /* Using an empty user string is the same as passing NULL, DIEDBSFL_THISUSER has no effect */
+    data.device_count = 0;
+    hr = IDirectInput8_EnumDevicesBySemantics(pDI, "", &diaf, enum_semantics_callback, &data, DIEDBSFL_THISUSER);
+    ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr);
+    ok (data.device_count == device_total, "THISUSER has no effect with \"\" as username owned=%d, expected=%d\n", data.device_count, device_total);
+
+    /* Testing with a user with no ownership of the devices */
+    data.device_count = 0;
+    hr = IDirectInput8_EnumDevicesBySemantics(pDI, "Ninja Brian", &diaf, enum_semantics_callback, &data, DIEDBSFL_THISUSER);
+    ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr);
+    todo_wine ok (data.device_count == 0, "This user should own no devices owned=%d\n", data.device_count);
+
+    /* Sh4d0w M4g3 has ownership of all devices */
+    data.device_count = 0;
+    hr = IDirectInput8_EnumDevicesBySemantics(pDI, "Sh4d0w M4g3", &diaf, enum_semantics_callback, &data, DIEDBSFL_THISUSER);
+    ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%08x\n", hr);
+    ok (data.device_count == device_total, "This user should own %d devices owned=%d\n", device_total, data.device_count);
+
+    /* The call fails with a zeroed GUID */
+    memset(&diaf.guidActionMap, 0, sizeof(GUID));
+    hr = IDirectInput8_EnumDevicesBySemantics(pDI, NULL, &diaf, enum_semantics_callback, NULL, 0);
+    todo_wine ok(FAILED(hr), "EnumDevicesBySemantics succeeded with invalid GUID hr=%08x\n", hr);
+
+    IDirectInput8_Release(pDI);
+}
+
 static void test_GetDeviceStatus(void)
 {
     IDirectInput8A *pDI;
@@ -529,6 +683,7 @@ START_TEST(dinput)
     test_QueryInterface();
     test_CreateDevice();
     test_EnumDevices();
+    test_EnumDevicesBySemantics();
     test_GetDeviceStatus();
     test_RunControlPanel();
     test_Initialize();
