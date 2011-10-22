@@ -24,7 +24,7 @@ IDL_GEN_C_SRCS  = $(IDL_C_SRCS:.idl=_c.c) $(IDL_I_SRCS:.idl=_i.c) \
 IDL_GEN_HEADERS = $(IDL_H_SRCS:.idl=.h) $(IDL_C_SRCS:.idl=.h) $(IDL_I_SRCS:.idl=.h) \
                   $(IDL_P_SRCS:.idl=.h) $(IDL_S_SRCS:.idl=.h)
 
-CLEAN_FILES   = *.o *.a *.so *.ln *.res *.fake *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej *.flc core
+CLEAN_FILES   = *.o *.a *.so *.mo *.ln *.res *.fake *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej *.flc core
 CLEAN_TARGETS = $(IDL_GEN_C_SRCS) $(IDL_GEN_HEADERS) $(IDL_TLB_SRCS:.idl=.tlb) $(IDL_P_SRCS:%=dlldata.c) \
                 $(BISON_SRCS:.y=.tab.c) $(BISON_SRCS:.y=.tab.h) $(LEX_SRCS:.l=.yy.c) \
                 $(PO_SRCS:%=rsrc.pot) $(MC_SRCS:%=msg.pot) $(XTEMPLATE_SRCS:.x=.h)
@@ -42,7 +42,7 @@ filter: dummy
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .res .idl .tlb .h .y .l .tab.c .tab.h .yy.c .ok .man.in .man _c.c _i.c _p.c _s.c _r.res _t.res .cross.o @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
+.SUFFIXES: .mc .rc .res .idl .tlb .h .y .l .tab.c .tab.h .yy.c .ok .man.in .man _c.c _i.c _p.c _s.c _r.res _t.res .cross.o .po .mo @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
@@ -106,6 +106,9 @@ filter: dummy
 
 .svg.bmp:
 	CONVERT="$(CONVERT)" ICOTOOL="$(ICOTOOL)" RSVG="$(RSVG)" $(BUILDIMAGE) $< $@
+
+.po.mo:
+	$(MSGFMT) -o $@ $<
 
 # Rules for IDL files
 

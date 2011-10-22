@@ -50,9 +50,11 @@ FONTFORGE       = @FONTFORGE@
 RSVG            = @RSVG@
 CONVERT         = @CONVERT@
 ICOTOOL         = @ICOTOOL@
+MSGFMT          = @MSGFMT@
 CROSSTARGET     = @CROSSTARGET@
 LINGUAS         = @LINGUAS@
 ALL_PO_FILES    = $(LINGUAS:%=@top_srcdir@/po/%.po)
+ALL_MO_FILES    = $(LINGUAS:%=@top_builddir@/po/%.mo)
 CROSSAR         = $(CROSSTARGET)-ar
 CROSSRANLIB     = $(CROSSTARGET)-ranlib
 MKINSTALLDIRS   = $(top_srcdir)/tools/mkinstalldirs -m 755

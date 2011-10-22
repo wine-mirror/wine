@@ -97,6 +97,7 @@ my @ignores = (
     "include/config.h",
     "include/stamp-h",
     "msg.pot",
+    "po/*.mo",
     "programs/winetest/build.nfo",
     "programs/winetest/build.rc",
     "rsrc.pot",

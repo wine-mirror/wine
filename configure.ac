@@ -45,6 +45,7 @@ AC_ARG_WITH(curses,    AS_HELP_STRING([--without-curses],[do not use (n)curses])
 AC_ARG_WITH(fontconfig,AS_HELP_STRING([--without-fontconfig],[do not use fontconfig]),
             [if test "x$withval" = "xno"; then ac_cv_header_fontconfig_fontconfig_h=no; fi])
 AC_ARG_WITH(freetype,  AS_HELP_STRING([--without-freetype],[do not use the FreeType library]))
+AC_ARG_WITH(gettext,   AS_HELP_STRING([--without-gettext],[do not use gettext]))
 AC_ARG_WITH(gettextpo, AS_HELP_STRING([--without-gettextpo],[do not use the GetTextPO library]),
             [if test "x$withval" = "xno"; then ac_cv_header_gettext_po_h=no; fi])
 AC_ARG_WITH(gphoto,    AS_HELP_STRING([--without-gphoto],[do not use gphoto (Digital Camera support)]))
@@ -280,7 +281,6 @@ then
   LINTFLAGS="$LINTFLAGS -errchk=%all,no%longptr64 -errhdr=%user -Ncheck=macro -Nlevel=4"
   dnl LINTFLAGS='-D_SIZE_T "-Dsize_t=unsigned long" -errchk=longptr64'
 fi
-AC_SUBST(LINT)
 AC_SUBST(LINTFLAGS)
 
 dnl Check for various programs
@@ -289,6 +289,7 @@ AC_CHECK_PROGS(PKG_CONFIG, pkg-config, false)
 AC_CHECK_PROGS(RSVG, rsvg, false)
 AC_CHECK_PROGS(CONVERT, convert, false)
 AC_CHECK_PROGS(ICOTOOL, icotool, false)
+AC_CHECK_PROGS(MSGFMT, msgfmt, false)
 
 if test "x$enable_maintainer_mode" != "xyes"
 then
@@ -348,7 +349,15 @@ else
     fi
   fi
 
+  dnl Maintainer mode requires gettext
+  with_gettext=yes
+  with_gettextpo=yes
+  AS_UNSET(ac_cv_header_gettext_po_h)
 fi
+
+test "x$with_gettext" != xno || MSGFMT=false
+WINE_WARNING_WITH(gettext,[test "$MSGFMT" = false],
+                  [gettext tools not found, translations won't be built.])
 
 dnl **** Check for some libraries ****
 
@@ -2328,6 +2337,7 @@ WINE_CONFIG_SYMLINK(fonts/marlett.ttf,,enable_fonts)
 WINE_CONFIG_SYMLINK(fonts/symbol.ttf,,enable_fonts)
 WINE_CONFIG_SYMLINK(fonts/tahoma.ttf,,enable_fonts)
 WINE_CONFIG_SYMLINK(fonts/tahomabd.ttf,,enable_fonts)
+WINE_CONFIG_SYMLINK(po/LINGUAS)
 WINE_CONFIG_SYMLINK(tools/l_intl.nls,,enable_tools)
 WINE_CONFIG_SYMLINK(wine,tools/winewrapper)
 WINE_CONFIG_SYMLINK(wine64,tools/winewrapper,enable_win64)
@@ -3056,11 +3066,15 @@ then
 	@echo timestamp > \$[@]
 
 ALL_POT_FILES =$ALL_POT_FILES
-all: \$(ALL_PO_FILES)
 \$(ALL_PO_FILES): \$(srcdir)/po/wine.pot
 	msgmerge -q \$[@] \$(srcdir)/po/wine.pot | msgattrib --no-obsolete -o \$[@].new && mv \$[@].new \$[@]
 \$(srcdir)/po/wine.pot: \$(ALL_POT_FILES)
 	msgcat -o \$[@] \$(ALL_POT_FILES)])
+fi
+
+if test "$MSGFMT" != false
+then
+    WINE_APPEND_RULE([ALL_MAKEFILE_DEPENDS],[__builddeps__: \$(ALL_MO_FILES)])
 fi
 
 if test "x$enable_tools" != xno
