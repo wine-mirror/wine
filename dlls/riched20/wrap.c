@@ -481,38 +481,28 @@ static int ME_GetParaLineSpace(ME_Context* c, ME_Paragraph* para)
 }
 
 static void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp) {
-  ME_DisplayItem *p, *pRow;
+  ME_DisplayItem *p;
 
   tp->member.para.nWidth = 0;
-  /* remove all items that will be reinserted by paragraph wrapper anyway */
+  /* remove row start items as they will be reinserted by the
+   * paragraph wrapper anyway */
   tp->member.para.nRows = 0;
-  for (p = tp->next; p!=tp->member.para.next_para; p = p->next) {
-    switch(p->type) {
-      case diStartRow:
-        pRow = p;
-        p = p->prev;
-        ME_Remove(pRow);
-        ME_DestroyDisplayItem(pRow);
-        break;
-      default:
-        break;
+  for (p = tp->next; p != tp->member.para.next_para; p = p->next) {
+    if (p->type == diStartRow) {
+      ME_DisplayItem *pRow = p;
+      p = p->prev;
+      ME_Remove(pRow);
+      ME_DestroyDisplayItem(pRow);
     }
   }
-  /* join runs that can be joined, set up flags */
-  for (p = tp->next; p!=tp->member.para.next_para; p = p->next) {
-    switch(p->type) {
-      case diStartRow: assert(0); break; /* should have deleted it */
-      case diRun:
-        while (p->next->type == diRun) { /* FIXME */
-          if (ME_CanJoinRuns(&p->member.run, &p->next->member.run)) {
-            ME_JoinRuns(c->editor, p);
-          }
-          else
-            break;
-        }
-        break;
-      default:
-        break;
+  /* join runs that can be joined */
+  for (p = tp->next; p != tp->member.para.next_para; p = p->next) {
+    assert(p->type != diStartRow); /* should have been deleted above */
+    if (p->type == diRun) {
+      while (p->next->type == diRun && /* FIXME */
+             ME_CanJoinRuns(&p->member.run, &p->next->member.run)) {
+        ME_JoinRuns(c->editor, p);
+      }
     }
   }
 }
