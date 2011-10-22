@@ -1526,7 +1526,7 @@ LRESULT CreateIRichEditOle(ME_TextEditor *editor, LPVOID *ppObj)
     return 1;
 }
 
-static void convert_sizel(ME_Context *c, const SIZEL* szl, SIZE* sz)
+static void convert_sizel(const ME_Context *c, const SIZEL* szl, SIZE* sz)
 {
   /* sizel is in .01 millimeters, sz in pixels */
   sz->cx = MulDiv(szl->cx, c->dpi.cx, 2540);
@@ -1538,7 +1538,7 @@ static void convert_sizel(ME_Context *c, const SIZEL* szl, SIZE* sz)
  *
  * Sets run extent for OLE objects.
  */
-void ME_GetOLEObjectSize(ME_Context *c, ME_Run *run, SIZE *pSize)
+void ME_GetOLEObjectSize(const ME_Context *c, ME_Run *run, SIZE *pSize)
 {
   IDataObject*  ido;
   FORMATETC     fmt;

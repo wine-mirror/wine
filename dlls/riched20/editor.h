@@ -214,8 +214,8 @@ void ME_UpdateRepaint(ME_TextEditor *editor, BOOL update_now) DECLSPEC_HIDDEN;
 void ME_EnsureVisible(ME_TextEditor *editor, ME_Cursor *pCursor) DECLSPEC_HIDDEN;
 void ME_InvalidateSelection(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 BOOL ME_SetZoom(ME_TextEditor *editor, int numerator, int denominator) DECLSPEC_HIDDEN;
-int  ME_twips2pointsX(ME_Context *c, int x) DECLSPEC_HIDDEN;
-int  ME_twips2pointsY(ME_Context *c, int y) DECLSPEC_HIDDEN;
+int  ME_twips2pointsX(const ME_Context *c, int x) DECLSPEC_HIDDEN;
+int  ME_twips2pointsY(const ME_Context *c, int y) DECLSPEC_HIDDEN;
 
 /* scroll functions in paint.c */
 
@@ -229,12 +229,12 @@ void ME_ScrollRight(ME_TextEditor *editor, int cx) DECLSPEC_HIDDEN;
 void ME_UpdateScrollBar(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 
 /* other functions in paint.c */
-int ME_GetParaBorderWidth(ME_Context *c, int flags) DECLSPEC_HIDDEN;
+int ME_GetParaBorderWidth(const ME_Context *c, int flags) DECLSPEC_HIDDEN;
 
 /* richole.c */
 LRESULT CreateIRichEditOle(ME_TextEditor *editor, LPVOID *) DECLSPEC_HIDDEN;
 void ME_DrawOLE(ME_Context *c, int x, int y, ME_Run* run, ME_Paragraph *para, BOOL selected) DECLSPEC_HIDDEN;
-void ME_GetOLEObjectSize(ME_Context *c, ME_Run *run, SIZE *pSize) DECLSPEC_HIDDEN;
+void ME_GetOLEObjectSize(const ME_Context *c, ME_Run *run, SIZE *pSize) DECLSPEC_HIDDEN;
 void ME_CopyReObject(REOBJECT* dst, const REOBJECT* src) DECLSPEC_HIDDEN;
 void ME_DeleteReObject(REOBJECT* reo) DECLSPEC_HIDDEN;
 

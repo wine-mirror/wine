@@ -169,7 +169,7 @@ ME_RewrapRepaint(ME_TextEditor *editor)
   ME_Repaint(editor);
 }
 
-int ME_twips2pointsX(ME_Context *c, int x)
+int ME_twips2pointsX(const ME_Context *c, int x)
 {
   if (c->editor->nZoomNumerator == 0)
     return x * c->dpi.cx / 1440;
@@ -177,7 +177,7 @@ int ME_twips2pointsX(ME_Context *c, int x)
     return x * c->dpi.cx * c->editor->nZoomNumerator / 1440 / c->editor->nZoomDenominator;
 }
 
-int ME_twips2pointsY(ME_Context *c, int y)
+int ME_twips2pointsY(const ME_Context *c, int y)
 {
   if (c->editor->nZoomNumerator == 0)
     return y * c->dpi.cy / 1440;
@@ -489,7 +489,7 @@ static const COLORREF pen_colors[16] = {
   /* Dark gray */       RGB(0x80, 0x80, 0x80),  /* Light gray */      RGB(0xc0, 0xc0, 0xc0),
 };
 
-static int ME_GetBorderPenWidth(ME_Context* c, int idx)
+static int ME_GetBorderPenWidth(const ME_Context* c, int idx)
 {
   int width = border_details[idx].width;
 
@@ -502,7 +502,7 @@ static int ME_GetBorderPenWidth(ME_Context* c, int idx)
   return width;
 }
 
-int ME_GetParaBorderWidth(ME_Context* c, int flags)
+int ME_GetParaBorderWidth(const ME_Context* c, int flags)
 {
   int idx = (flags >> 8) & 0xF;
   int width;
