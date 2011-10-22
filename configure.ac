@@ -3066,7 +3066,7 @@ then
 	@echo timestamp > \$[@]
 
 ALL_POT_FILES =$ALL_POT_FILES
-\$(ALL_PO_FILES): \$(srcdir)/po/wine.pot
+\$(LINGUAS:%=$srcdir/po/%.po): \$(srcdir)/po/wine.pot
 	msgmerge -q \$[@] \$(srcdir)/po/wine.pot | msgattrib --no-obsolete -o \$[@].new && mv \$[@].new \$[@]
 \$(srcdir)/po/wine.pot: \$(ALL_POT_FILES)
 	msgcat -o \$[@] \$(ALL_POT_FILES)])
@@ -3074,7 +3074,10 @@ fi
 
 if test "$MSGFMT" != false
 then
+    AC_SUBST([PORCFLAGS],["--po-dir=\$(top_builddir)/po"])
     WINE_APPEND_RULE([ALL_MAKEFILE_DEPENDS],[__builddeps__: \$(ALL_MO_FILES)])
+else
+    LINGUAS=
 fi
 
 if test "x$enable_tools" != xno

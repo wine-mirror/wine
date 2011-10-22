@@ -19,6 +19,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,6 +43,16 @@
 #include "wine/unicode.h"
 
 static resource_t *new_top, *new_tail;
+
+struct mo_file
+{
+    unsigned int magic;
+    unsigned int revision;
+    unsigned int count;
+    unsigned int msgid_off;
+    unsigned int msgstr_off;
+    /* ... rest of file data here */
+};
 
 static int is_english( const language_t *lan )
 {
@@ -393,20 +404,6 @@ static const struct
 
 #ifndef HAVE_LIBGETTEXTPO
 
-static const char *get_msgstr( const char *msgid, const char *context, int *found )
-{
-    if (context) (*found)++;
-    return msgid;
-}
-
-static void load_po_file( const char *name )
-{
-}
-
-static void free_po_file(void)
-{
-}
-
 void write_pot_file( const char *outname )
 {
     error( "PO files not supported in this wrc build\n" );
@@ -418,8 +415,6 @@ void write_po_files( const char *outname )
 }
 
 #else  /* HAVE_LIBGETTEXTPO */
-
-static po_file_t po_file;
 
 static void po_xerror( int severity, po_message_t message,
                        const char *filename, size_t lineno, size_t column,
@@ -471,35 +466,6 @@ static po_message_t find_message( po_file_t po, const char *msgid, const char *m
         if (!strcmp( context, msgctxt )) break;
     }
     return msg;
-}
-
-static const char *get_msgstr( const char *msgid, const char *context, int *found )
-{
-    const char *ret = msgid;
-    po_message_t msg;
-    po_message_iterator_t iterator;
-
-    msg = find_message( po_file, msgid, context, &iterator );
-    if (msg && !po_message_is_fuzzy( msg ))
-    {
-        ret = po_message_msgstr( msg );
-        if (!ret[0]) ret = msgid;  /* ignore empty strings */
-        else (*found)++;
-    }
-    po_message_iterator_free( iterator );
-    return ret;
-}
-
-static void load_po_file( const char *name )
-{
-    if (!(po_file = po_file_read( name, &po_xerror_handler )))
-        error( "cannot load po file '%s'\n", name );
-}
-
-static void free_po_file(void)
-{
-    po_file_free( po_file );
-    po_file = NULL;
 }
 
 static void add_po_string( po_file_t po, const string_t *msgid, const string_t *msgstr,
@@ -820,6 +786,108 @@ void write_po_files( const char *outname )
 
 #endif  /* HAVE_LIBGETTEXTPO */
 
+static struct mo_file *mo_file;
+
+static void byteswap( unsigned int *data, unsigned int count )
+{
+    unsigned int i;
+
+    for (i = 0; i < count; i++)
+        data[i] = data[i] >> 24 | (data[i] >> 8 & 0xff00) | (data[i] << 8 & 0xff0000) | data[i] << 24;
+}
+
+static void load_mo_file( const char *name )
+{
+    struct stat st;
+    int res, fd;
+
+    fd = open( name, O_RDONLY | O_BINARY );
+    if (fd == -1) fatal_perror( "Failed to open %s", name );
+    fstat( fd, &st );
+    mo_file = xmalloc( st.st_size );
+    res = read( fd, mo_file, st.st_size );
+    if (res == -1) fatal_perror( "Failed to read %s", name );
+    else if (res != st.st_size) error( "Failed to read %s\n", name );
+    close( fd );
+
+    /* sanity checks */
+
+    if (st.st_size < sizeof(*mo_file))
+        error( "%s is not a valid .mo file\n", name );
+    if (mo_file->magic == 0xde120495)
+        byteswap( &mo_file->revision, 4 );
+    else if (mo_file->magic != 0x950412de)
+        error( "%s is not a valid .mo file\n", name );
+    if ((mo_file->revision >> 16) > 1)
+        error( "%s: unsupported file version %x\n", name, mo_file->revision );
+    if (mo_file->msgid_off >= st.st_size ||
+        mo_file->msgstr_off >= st.st_size ||
+        st.st_size < sizeof(*mo_file) + 2 * 8 * mo_file->count)
+        error( "%s: corrupted file\n", name );
+
+    if (mo_file->magic == 0xde120495)
+    {
+        byteswap( (unsigned int *)((char *)mo_file + mo_file->msgid_off), 2 * mo_file->count );
+        byteswap( (unsigned int *)((char *)mo_file + mo_file->msgstr_off), 2 * mo_file->count );
+    }
+}
+
+static void free_mo_file(void)
+{
+    free( mo_file );
+    mo_file = NULL;
+}
+
+static inline const char *get_mo_msgid( int index )
+{
+    const char *base = (const char *)mo_file;
+    const unsigned int *offsets = (const unsigned int *)(base + mo_file->msgid_off);
+    return base + offsets[2 * index + 1];
+}
+
+static inline const char *get_mo_msgstr( int index )
+{
+    const char *base = (const char *)mo_file;
+    const unsigned int *offsets = (const unsigned int *)(base + mo_file->msgstr_off);
+    return base + offsets[2 * index + 1];
+}
+
+static const char *get_msgstr( const char *msgid, const char *context, int *found )
+{
+    int pos, res, min, max;
+    const char *ret = msgid;
+    char *id = NULL;
+
+    if (!mo_file)  /* strings containing a context still need to be transformed */
+    {
+        if (context) (*found)++;
+        return ret;
+    }
+
+    if (context) id = strmake( "%s%c%s", context, 4, msgid );
+    min = 0;
+    max = mo_file->count - 1;
+    while (min <= max)
+    {
+        pos = (min + max) / 2;
+        res = strcmp( get_mo_msgid(pos), msgid );
+        if (!res)
+        {
+            const char *str = get_mo_msgstr( pos );
+            if (str[0])  /* ignore empty strings */
+            {
+                ret = str;
+                (*found)++;
+            }
+            break;
+        }
+        if (res > 0) max = pos - 1;
+        else min = pos + 1;
+    }
+    free( id );
+    return ret;
+}
+
 static string_t *translate_string( string_t *str, int *found )
 {
     string_t *new;
@@ -988,6 +1056,12 @@ void add_translations( const char *po_dir )
     for (res = resource_top; res; res = res->next) if (is_english( res->lan )) break;
     if (!res) return;
 
+    if (!po_dir)  /* run through the translation process to remove msg contexts */
+    {
+        translate_resources( new_language( LANG_ENGLISH, SUBLANG_DEFAULT ));
+        goto done;
+    }
+
     new_top = new_tail = NULL;
 
     name = strmake( "%s/LINGUAS", po_dir );
@@ -1008,15 +1082,16 @@ void add_translations( const char *po_dir )
             if (i == sizeof(languages)/sizeof(languages[0]))
                 error( "unknown language '%s'\n", tok );
 
-            name = strmake( "%s/%s.po", po_dir, tok );
-            load_po_file( name );
+            name = strmake( "%s/%s.mo", po_dir, tok );
+            load_mo_file( name );
             translate_resources( new_language(languages[i].id, languages[i].sub) );
-            free_po_file();
+            free_mo_file();
             free( name );
         }
     }
     fclose( f );
 
+done:
     /* prepend the translated resources to the global list */
     if (new_tail)
     {

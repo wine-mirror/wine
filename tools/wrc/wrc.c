@@ -562,7 +562,7 @@ int main(int argc,char *argv[])
             output_name = NULL;
             exit(0);
 	}
-        if (po_dir) add_translations( po_dir );
+        add_translations( po_dir );
 
 	/* Convert the internal lists to binary data */
 	resources2res(resource_top);

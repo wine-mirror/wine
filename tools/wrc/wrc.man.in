@@ -108,9 +108,9 @@ Enable pedantic warnings. Notably redefinition of #define statements can
 be discovered with this option.
 .TP
 .I \fB\-\-po-dir=\fIdir\fR
-Enable the generation of resource translations based on po files
+Enable the generation of resource translations based on mo files
 loaded from the specified directory. That directory must follow the
-gettext convention, in particular in must contain one .po file for
+gettext convention, in particular in must contain one .mo file for
 each language, and a LINGUAS file listing the available languages.
 .TP
 .I \fB\-r\fR

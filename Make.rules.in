@@ -17,7 +17,7 @@ INCLUDES     = -I$(srcdir) -I. -I$(top_srcdir)/include -I$(top_builddir)/include
 ALLCFLAGS    = $(INCLUDES) $(DEFS) $(DLLFLAGS) $(EXTRACFLAGS) $(CPPFLAGS) $(CFLAGS) $(MODCFLAGS)
 ALLLINTFLAGS = $(INCLUDES) $(DEFS) $(LINTFLAGS)
 IDLFLAGS     = $(INCLUDES) $(DEFS) $(EXTRAIDLFLAGS)
-RCFLAGS      = --nostdinc --po-dir=$(top_srcdir)/po $(TARGETFLAGS) $(INCLUDES) $(DEFS) $(EXTRARCFLAGS)
+RCFLAGS      = --nostdinc $(PORCFLAGS) $(TARGETFLAGS) $(INCLUDES) $(DEFS) $(EXTRARCFLAGS)
 
 IDL_GEN_C_SRCS  = $(IDL_C_SRCS:.idl=_c.c) $(IDL_I_SRCS:.idl=_i.c) \
                   $(IDL_P_SRCS:.idl=_p.c) $(IDL_S_SRCS:.idl=_s.c)
@@ -189,9 +189,9 @@ rsrc.pot: $(WRC)
 msg.pot: $(WMC)
 	$(LDPATH) $(WMC) -O pot -o $@ $(MC_SRCS)
 
-$(MC_SRCS:.mc=.res): $(WMC) $(ALL_PO_FILES)
+$(MC_SRCS:.mc=.res): $(WMC) $(ALL_MO_FILES)
 $(RC_SRCS:.rc=.res): $(WRC)
-$(PO_SRCS:.rc=.res): $(ALL_PO_FILES)
+$(PO_SRCS:.rc=.res): $(ALL_MO_FILES)
 
 # Misc. rules
 
