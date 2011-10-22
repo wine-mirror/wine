@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-10-20 22:44+0300\n"
+"PO-Revision-Date: 2011-10-22 10:23+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -2971,7 +2971,7 @@ msgstr "Automatinis duomenų segmentas viršija 64k\n"
 
 #: winerror.mc:791
 msgid "Ring 2 segment must be movable\n"
-msgstr "Antro žiedo segmentas turi būti perkeliamas\n"
+msgstr "Antrojo žiedo segmentas turi būti perkeliamas\n"
 
 #: winerror.mc:796
 msgid "Relocation chain exceeds segment limit in %1\n"
@@ -2995,7 +2995,7 @@ msgstr "Failo vardas per ilgas\n"
 
 #: winerror.mc:821
 msgid "Ring 2 stack in use\n"
-msgstr "Antro žiedo dėklas naudojamas\n"
+msgstr "Antrojo žiedo dėklas naudojamas\n"
 
 #: winerror.mc:826
 msgid "Error in use of filename wildcards\n"
@@ -4513,7 +4513,7 @@ msgstr "Įvykių žurnalo failas pasikeitė\n"
 
 #: winerror.mc:2726
 msgid "Installer service failed.\n"
-msgstr "Diegimo programos tarnybos klaida\n"
+msgstr "Diegimo programos tarnybos klaida.\n"
 
 #: winerror.mc:2731
 msgid "Installation aborted by user\n"
@@ -7687,9 +7687,8 @@ msgstr ""
 "\n"
 
 #: attrib.rc:28
-#, fuzzy
 msgid "%1: File Not Found\n"
-msgstr "%s: failas nerastas\n"
+msgstr "%1: failas nerastas\n"
 
 #: attrib.rc:47
 msgid ""
@@ -7790,12 +7789,12 @@ msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
-"CD <direktorija> yra trumpa CHDIR versija. Pakeičia dabartinį\n"
+"CD <katalogas> yra trumpa CHDIR versija. Pakeičia dabartinį\n"
 "numatytą katalogą.\n"
 
 #: cmd.rc:41
 msgid "CHDIR <dir> changes the current default directory.\n"
-msgstr "CHDIR <direktorija> pakeičia dabartinį numatytą katalogą.\n"
+msgstr "CHDIR <katalogas> pakeičia dabartinį numatytą katalogą.\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
@@ -8609,14 +8608,12 @@ msgstr ""
 "Kur „tarnyba“ yra stabdomos tarnybos pavadinimas.\n"
 
 #: net.rc:30
-#, fuzzy
 msgid "Stopping dependent service: %1\n"
-msgstr "Stabdoma priklausoma tarnyba: %s\n"
+msgstr "Stabdoma priklausoma tarnyba: %1\n"
 
 #: net.rc:31
-#, fuzzy
 msgid "Could not stop service %1\n"
-msgstr "Nepavyko sustabdyti tarnybos %s\n"
+msgstr "Nepavyko sustabdyti tarnybos %1\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
@@ -8627,34 +8624,28 @@ msgid "Could not get handle to service.\n"
 msgstr "Nepavyko gauti tarnybos rodyklės.\n"
 
 #: net.rc:34
-#, fuzzy
 msgid "The %1 service is starting.\n"
-msgstr "Tarnyba %s yra paleidžiama.\n"
+msgstr "Tarnyba %1 yra paleidžiama.\n"
 
 #: net.rc:35
-#, fuzzy
 msgid "The %1 service was started successfully.\n"
-msgstr "Tarnyba %s sėkmingai paleista.\n"
+msgstr "Tarnyba %1 sėkmingai paleista.\n"
 
 #: net.rc:36
-#, fuzzy
 msgid "The %1 service failed to start.\n"
-msgstr "Tarnyba %s nepasileido.\n"
+msgstr "Tarnyba %1 nepasileido.\n"
 
 #: net.rc:37
-#, fuzzy
 msgid "The %1 service is stopping.\n"
-msgstr "Tarnyba %s yra stabdoma.\n"
+msgstr "Tarnyba %1 yra stabdoma.\n"
 
 #: net.rc:38
-#, fuzzy
 msgid "The %1 service was stopped successfully.\n"
-msgstr "Tarnyba %s sėkmingai sustabdyta.\n"
+msgstr "Tarnyba %1 sėkmingai sustabdyta.\n"
 
 #: net.rc:39
-#, fuzzy
 msgid "The %1 service failed to stop.\n"
-msgstr "Tarnyba %s nesustojo.\n"
+msgstr "Tarnyba %1 nesustojo.\n"
 
 #: net.rc:41
 msgid "There are no entries in the list.\n"
@@ -8671,9 +8662,8 @@ msgstr ""
 "---------------------------------------------------------------\n"
 
 #: net.rc:43
-#, fuzzy
 msgid "%1      %2      %3      Open resources: %4!u!\n"
-msgstr "%s      %s      %s      Atverti ištekliai: %lu\n"
+msgstr "%1      %2      %3      Atverti ištekliai: %4!u!\n"
 
 #: net.rc:44
 msgid "OK"
@@ -8835,7 +8825,7 @@ msgid ""
 "Do you want to create a new file?"
 msgstr ""
 "Failas „%s“\n"
-"neegzistuoja\n"
+"neegzistuoja.\n"
 "\n"
 "Ar norite sukurti naują failą?"
 
@@ -8846,7 +8836,7 @@ msgid ""
 "Would you like to save the changes?"
 msgstr ""
 "Failas „%s“\n"
-"buvo pakeistas\n"
+"buvo pakeistas.\n"
 "\n"
 "Ar norite išsaugoti pakeitimus?"
 
@@ -10227,7 +10217,7 @@ msgid ""
 "sure you want to change the priority class?"
 msgstr ""
 "ĮSPĖJIMAS: Šio proceso prioriteto klasės keitimas gali\n"
-"sukelti nepageidaujamų pasekmių, tarp jų sistemos nestabilumą\n"
+"sukelti nepageidaujamų pasekmių, tarp jų sistemos nestabilumą.\n"
 "Ar tikrai norite pakeisti prioriteto klasę?"
 
 #: taskmgr.rc:305
@@ -11034,7 +11024,7 @@ msgstr "&Visada viršuje"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr "&Apie Wine žinyną..."
+msgstr "&Apie Wine žinyną"
 
 #: winhlp32.rc:64
 msgid "Annotation..."
@@ -11353,7 +11343,7 @@ msgstr "Nepavyko paleisti Wordpad"
 
 #: xcopy.rc:27
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
-msgstr "Neteisingas parametrų skaičius - pagalba: xcopy /?\n"
+msgstr "Neteisingas parametrų skaičius – pagalba: xcopy /?\n"
 
 #: xcopy.rc:28
 msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
@@ -11365,11 +11355,11 @@ msgstr "Spauskite <įvesti> kopijavimui pradėti\n"
 
 #: xcopy.rc:30
 msgid "%1!d! file(s) would be copied\n"
-msgstr "bus nukopijuota failų: %1!d!\n"
+msgstr "Bus nukopijuota failų: %1!d!\n"
 
 #: xcopy.rc:31
 msgid "%1!d! file(s) copied\n"
-msgstr "nukopijuota failų: %1!d!\n"
+msgstr "Nukopijuota failų: %1!d!\n"
 
 #: xcopy.rc:34
 msgid ""
@@ -11399,7 +11389,7 @@ msgstr "Nepavyko atverti „%1“\n"
 
 #: xcopy.rc:39
 msgid "Failed during reading of '%1'\n"
-msgstr "Klaida skaitant „1“\n"
+msgstr "Klaida skaitant „%1“\n"
 
 #: xcopy.rc:43
 msgctxt "File key"
