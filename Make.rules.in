@@ -180,8 +180,6 @@ install install-lib install-dev uninstall::
 
 # Rules for resources
 
-all: @MAINTAINER_MODE@ $(PO_SRCS:%=rsrc.pot) $(MC_SRCS:%=msg.pot)
-
 rsrc.pot: $(WRC)
 	$(LDPATH) $(WRC) $(RCFLAGS) -O pot -o $@ $(PO_SRCS)
 

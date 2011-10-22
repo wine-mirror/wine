@@ -199,6 +199,31 @@ $ac_dir/__depend__: $ac_makedep dummy
 	@./config.status --file $ac_dir/Makefile:$ac_input && cd $ac_dir && \$(MAKE) depend"
 }
 
+wine_fn_pot_rules ()
+{
+    ac_dir=$[1]
+    ac_flags=$[2]
+
+    test "x$enable_maintainer_mode" = xyes || return
+
+    if wine_fn_has_flag mc $ac_flags
+    then
+        wine_fn_append_file ALL_POT_FILES $ac_dir/msg.pot
+        wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_dir/msg.pot: $ac_dir/Makefile dummy
+	@cd $ac_dir && \$(MAKE) msg.pot
+$ac_dir/msg.pot: tools/wmc include"
+    fi
+    if wine_fn_has_flag po $ac_flags
+    then
+        wine_fn_append_file ALL_POT_FILES $ac_dir/rsrc.pot
+        wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
+"$ac_dir/rsrc.pot: $ac_dir/Makefile dummy
+	@cd $ac_dir && \$(MAKE) rsrc.pot
+$ac_dir/srsrc.pot: tools/wrc include"
+    fi
+}
+
 wine_fn_config_makefile ()
 {
     ac_dir=$[1]
@@ -322,21 +347,7 @@ $ac_dir/__uninstall__::
             fi
         fi
 
-        if test "x$enable_maintainer_mode" = xyes
-        then
-            if wine_fn_has_flag mc $ac_flags
-            then
-                wine_fn_append_file ALL_POT_FILES $ac_dir/msg.pot
-                wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"$ac_dir/msg.pot: $ac_dir"
-            fi
-            if wine_fn_has_flag po $ac_flags
-            then
-                wine_fn_append_file ALL_POT_FILES $ac_dir/rsrc.pot
-                wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"$ac_dir/rsrc.pot: $ac_dir"
-            fi
-        fi])
+        wine_fn_pot_rules $ac_dir $ac_flags])
 
     if wine_fn_has_flag staticimplib $ac_flags
     then
@@ -432,21 +443,7 @@ wine_fn_config_program ()
     AS_VAR_IF([$ac_enable],[no],,[wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "$ac_dir: __builddeps__"
 
-    if test "x$enable_maintainer_mode" = xyes
-    then
-        if wine_fn_has_flag mc $ac_flags
-        then
-            wine_fn_append_file ALL_POT_FILES $ac_dir/msg.pot
-            wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"$ac_dir/msg.pot: $ac_dir"
-        fi
-        if wine_fn_has_flag po $ac_flags
-        then
-            wine_fn_append_file ALL_POT_FILES $ac_dir/rsrc.pot
-            wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
-"$ac_dir/rsrc.pot: $ac_dir"
-        fi
-    fi
+    wine_fn_pot_rules $ac_dir $ac_flags
 
     wine_fn_has_flag install $ac_flags || return
     wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
