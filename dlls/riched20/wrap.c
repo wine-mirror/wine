@@ -480,7 +480,42 @@ static int ME_GetParaLineSpace(ME_Context* c, ME_Paragraph* para)
     return sp * c->editor->nZoomNumerator / c->editor->nZoomDenominator;
 }
 
-static void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp);
+static void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp) {
+  ME_DisplayItem *p, *pRow;
+
+  tp->member.para.nWidth = 0;
+  /* remove all items that will be reinserted by paragraph wrapper anyway */
+  tp->member.para.nRows = 0;
+  for (p = tp->next; p!=tp->member.para.next_para; p = p->next) {
+    switch(p->type) {
+      case diStartRow:
+        pRow = p;
+        p = p->prev;
+        ME_Remove(pRow);
+        ME_DestroyDisplayItem(pRow);
+        break;
+      default:
+        break;
+    }
+  }
+  /* join runs that can be joined, set up flags */
+  for (p = tp->next; p!=tp->member.para.next_para; p = p->next) {
+    switch(p->type) {
+      case diStartRow: assert(0); break; /* should have deleted it */
+      case diRun:
+        while (p->next->type == diRun) { /* FIXME */
+          if (ME_CanJoinRuns(&p->member.run, &p->next->member.run)) {
+            ME_JoinRuns(c->editor, p);
+          }
+          else
+            break;
+        }
+        break;
+      default:
+        break;
+    }
+  }
+}
 
 static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp) {
   ME_DisplayItem *p;
@@ -556,44 +591,6 @@ static void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp) {
   tp->member.para.nFlags &= ~MEPF_REWRAP;
   tp->member.para.nHeight = wc.pt.y;
   tp->member.para.nRows = wc.nRow;
-}
-
-
-static void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp) {
-  ME_DisplayItem *p, *pRow;
-
-  tp->member.para.nWidth = 0;
-  /* remove all items that will be reinserted by paragraph wrapper anyway */
-  tp->member.para.nRows = 0;
-  for (p = tp->next; p!=tp->member.para.next_para; p = p->next) {
-    switch(p->type) {
-      case diStartRow:
-        pRow = p;
-        p = p->prev;
-        ME_Remove(pRow);
-        ME_DestroyDisplayItem(pRow);
-        break;
-      default:
-        break;
-    }
-  }
-  /* join runs that can be joined, set up flags */
-  for (p = tp->next; p!=tp->member.para.next_para; p = p->next) {
-    switch(p->type) {
-      case diStartRow: assert(0); break; /* should have deleted it */
-      case diRun:
-        while (p->next->type == diRun) { /* FIXME */
-          if (ME_CanJoinRuns(&p->member.run, &p->next->member.run)) {
-            ME_JoinRuns(c->editor, p);
-          }
-          else
-            break;
-        }
-        break;
-      default:
-        break;
-    }
-  }
 }
 
 BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
