@@ -345,7 +345,7 @@ static void *load_libglu(void)
         return NULL;
     }
 
-#define LOAD_FUNCPTR(f) if((p##f = (void*)wine_dlsym(handle, #f, NULL, 0)) == NULL) goto sym_not_found;
+#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(handle, #f, NULL, 0)) == NULL) goto sym_not_found;
 LOAD_FUNCPTR(gluNewTess)
 LOAD_FUNCPTR(gluDeleteTess)
 LOAD_FUNCPTR(gluTessBeginContour)
