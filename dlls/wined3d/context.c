@@ -1717,7 +1717,7 @@ static inline void set_blit_dimension(UINT width, UINT height) {
  *
  *****************************************************************************/
 /* Context activation is done by the caller. */
-static void SetupForBlit(struct wined3d_device *device, struct wined3d_context *context)
+static void SetupForBlit(const struct wined3d_device *device, struct wined3d_context *context)
 {
     int i;
     const struct wined3d_gl_info *gl_info = context->gl_info;
