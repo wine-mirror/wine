@@ -1216,3 +1216,16 @@ BOOL WINAPI IsCatalogFile(HANDLE hFile, WCHAR *pwszFileName)
         return FALSE;
     return IsEqualGUID(&guid, &catGUID);
 }
+
+/***********************************************************************
+ *              FindCertsByIssuer
+ */
+HRESULT WINAPI FindCertsByIssuer(PCERT_CHAIN pCertChains, DWORD *pcbCertChains,
+ DWORD *pcCertChains, BYTE* pbEncodedIssuerName, DWORD cbEncodedIssuerName,
+ LPCWSTR pwszPurpose, DWORD dwKeySpec)
+{
+    FIXME("(%p, %p, %p, %p, %d, %s, %d): stub\n", pCertChains, pcbCertChains,
+     pcCertChains, pbEncodedIssuerName, cbEncodedIssuerName,
+     debugstr_w(pwszPurpose), dwKeySpec);
+    return E_FAIL;
+}

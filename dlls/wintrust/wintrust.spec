@@ -45,7 +45,7 @@
 @ stdcall DriverCleanupPolicy(ptr)
 @ stdcall DriverFinalPolicy(ptr)
 @ stdcall DriverInitializePolicy(ptr)
-@ stub FindCertsByIssuer
+@ stdcall FindCertsByIssuer(ptr ptr ptr ptr long wstr long)
 @ stdcall GenericChainCertificateTrust(ptr)
 @ stdcall GenericChainFinalProv(ptr)
 @ stdcall HTTPSCertificateTrust(ptr)
