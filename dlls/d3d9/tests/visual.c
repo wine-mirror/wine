@@ -12644,7 +12644,7 @@ static void multisample_get_rtdata_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ff00, 0.0, 0);
     ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
     hr = IDirect3DDevice9_GetRenderTargetData(device, rt, readback);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetDepthStencilSurface(device, original_ds);
     ok(SUCCEEDED(hr), "Failed to set depth/stencil, hr %#x.\n", hr);

@@ -971,8 +971,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetRenderTargetData(IDirect3DDevice9E
     TRACE("iface %p, render_target %p, dst_surface %p.\n", iface, pRenderTarget, pDestSurface);
 
     wined3d_mutex_lock();
-    hr = wined3d_surface_bltfast(destSurface->wined3d_surface, 0, 0,
-            renderTarget->wined3d_surface, NULL, WINEDDBLTFAST_NOCOLORKEY);
+    hr = wined3d_surface_get_render_target_data(destSurface->wined3d_surface, renderTarget->wined3d_surface);
     wined3d_mutex_unlock();
 
     return hr;
