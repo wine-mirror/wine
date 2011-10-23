@@ -833,6 +833,12 @@ typedef struct _CTL_VERIFY_USAGE_STATUS {
 #define CERT_VERIFY_ALLOW_MORE_USAGE_FLAG   0x8
 #define CERT_VERIFY_UPDATED_CTL_FLAG        0x1
 
+typedef struct _CERT_CHAIN {
+    DWORD               cCerts;
+    PCERT_BLOB          certs;
+    CRYPT_KEY_PROV_INFO keyLocatorInfo;
+} CERT_CHAIN, *PCERT_CHAIN;
+
 typedef struct _CERT_REVOCATION_STATUS {
     DWORD cbSize;
     DWORD dwIndex;
@@ -4527,6 +4533,11 @@ BOOL WINAPI CryptRetrieveObjectByUrlW(LPCWSTR pszURL, LPCSTR pszObjectOid,
  HCRYPTASYNC hAsyncRetrieve, PCRYPT_CREDENTIALS pCredentials, LPVOID pvVerify,
  PCRYPT_RETRIEVE_AUX_INFO pAuxInfo);
 #define CryptRetrieveObjectByUrl WINELIB_NAME_AW(CryptRetrieveObjectByUrl)
+
+/* Not found in crypt32.dll but in softpub.dll */
+HRESULT WINAPI FindCertsByIssuer(PCERT_CHAIN pCertChains, DWORD *pcbCertChains,
+ DWORD *pcCertChains, BYTE* pbEncodedIssuerName, DWORD cbEncodedIssuerName,
+ LPCWSTR pwszPurpose, DWORD dwKeySpec);
 
 #ifdef __cplusplus
 }
