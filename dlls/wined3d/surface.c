@@ -5809,9 +5809,15 @@ static void surface_load_sysmem(struct wined3d_surface *surface,
         return;
     }
 
-    /* Note: It might be faster to download into a texture first. */
-    read_from_framebuffer(surface, rect, surface->resource.allocatedMemory,
-            wined3d_surface_get_pitch(surface));
+    if (surface->flags & SFLAG_INDRAWABLE)
+    {
+        read_from_framebuffer(surface, rect, surface->resource.allocatedMemory,
+                wined3d_surface_get_pitch(surface));
+        return;
+    }
+
+    FIXME("Can't load surface %p with location flags %#x into sysmem.\n",
+            surface, surface->flags & SFLAG_LOCATIONS);
 }
 
 static HRESULT surface_load_drawable(struct wined3d_surface *surface,
