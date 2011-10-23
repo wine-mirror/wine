@@ -1990,7 +1990,6 @@ struct wined3d_subresource_container
 struct wined3d_surface_ops
 {
     HRESULT (*surface_private_setup)(struct wined3d_surface *surface);
-    void (*surface_cleanup)(struct wined3d_surface *surface);
     void (*surface_realize_palette)(struct wined3d_surface *surface);
     HRESULT (*surface_draw_overlay)(struct wined3d_surface *surface);
     void (*surface_preload)(struct wined3d_surface *surface);

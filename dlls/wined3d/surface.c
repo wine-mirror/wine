@@ -1962,7 +1962,6 @@ static const struct wined3d_resource_ops surface_resource_ops =
 static const struct wined3d_surface_ops surface_ops =
 {
     surface_private_setup,
-    surface_cleanup,
     surface_realize_palette,
     surface_draw_overlay,
     surface_preload,
@@ -2013,39 +2012,6 @@ static HRESULT gdi_surface_private_setup(struct wined3d_surface *surface)
     surface->pow2Height = surface->resource.height;
 
     return WINED3D_OK;
-}
-
-static void surface_gdi_cleanup(struct wined3d_surface *surface)
-{
-    struct wined3d_surface *overlay, *cur;
-
-    TRACE("surface %p.\n", surface);
-
-    if (surface->flags & SFLAG_DIBSECTION)
-    {
-        /* Release the DC. */
-        SelectObject(surface->hDC, surface->dib.holdbitmap);
-        DeleteDC(surface->hDC);
-        /* Release the DIB section. */
-        DeleteObject(surface->dib.DIBsection);
-        surface->dib.bitmap_data = NULL;
-        surface->resource.allocatedMemory = NULL;
-    }
-
-    if (surface->flags & SFLAG_USERPTR)
-        wined3d_surface_set_mem(surface, NULL);
-    if (surface->overlay_dest)
-        list_remove(&surface->overlay_entry);
-
-    LIST_FOR_EACH_ENTRY_SAFE(overlay, cur, &surface->overlays, struct wined3d_surface, overlay_entry)
-    {
-        list_remove(&overlay->overlay_entry);
-        overlay->overlay_dest = NULL;
-    }
-
-    HeapFree(GetProcessHeap(), 0, surface->palette9);
-
-    resource_cleanup(&surface->resource);
 }
 
 static void gdi_surface_realize_palette(struct wined3d_surface *surface)
@@ -2155,7 +2121,6 @@ static HRESULT gdi_surface_getdc(struct wined3d_surface *surface)
 static const struct wined3d_surface_ops gdi_surface_ops =
 {
     gdi_surface_private_setup,
-    surface_gdi_cleanup,
     gdi_surface_realize_palette,
     gdi_surface_draw_overlay,
     gdi_surface_preload,
@@ -2915,7 +2880,7 @@ ULONG CDECL wined3d_surface_decref(struct wined3d_surface *surface)
 
     if (!refcount)
     {
-        surface->surface_ops->surface_cleanup(surface);
+        surface_cleanup(surface);
         surface->resource.parent_ops->wined3d_object_destroyed(surface->resource.parent);
 
         TRACE("Destroyed surface %p.\n", surface);
@@ -7214,7 +7179,7 @@ static HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE sur
     if (FAILED(hr))
     {
         ERR("Private setup failed, returning %#x\n", hr);
-        surface->surface_ops->surface_cleanup(surface);
+        surface_cleanup(surface);
         return hr;
     }
 
