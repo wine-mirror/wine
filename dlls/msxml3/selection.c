@@ -58,6 +58,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 int registerNamespaces(xmlXPathContextPtr ctxt);
 xmlChar* XSLPattern_to_XPath(xmlXPathContextPtr ctxt, xmlChar const* xslpat_str);
 
+typedef struct _enumvariant
+{
+    IEnumVARIANT IEnumVARIANT_iface;
+    LONG ref;
+
+    IXMLDOMSelection *selection;
+    BOOL own;
+} enumvariant;
+
 typedef struct _domselection
 {
     DispatchEx dispex;
@@ -66,12 +75,20 @@ typedef struct _domselection
     xmlNodePtr node;
     xmlXPathObjectPtr result;
     int resultPos;
+    IEnumVARIANT *enumvariant;
 } domselection;
 
 static inline domselection *impl_from_IXMLDOMSelection( IXMLDOMSelection *iface )
 {
     return CONTAINING_RECORD(iface, domselection, IXMLDOMSelection_iface);
 }
+
+static inline enumvariant *impl_from_IEnumVARIANT( IEnumVARIANT *iface )
+{
+    return CONTAINING_RECORD(iface, enumvariant, IEnumVARIANT_iface);
+}
+
+static HRESULT create_enumvariant(IXMLDOMSelection*, BOOL, IUnknown**);
 
 static HRESULT WINAPI domselection_QueryInterface(
     IXMLDOMSelection *iface,
@@ -91,7 +108,17 @@ static HRESULT WINAPI domselection_QueryInterface(
     {
         *ppvObject = &This->IXMLDOMSelection_iface;
     }
-    else if(dispex_query_interface(&This->dispex, riid, ppvObject))
+    else if (IsEqualGUID( riid, &IID_IEnumVARIANT ))
+    {
+        if (!This->enumvariant)
+        {
+            HRESULT hr = create_enumvariant(iface, FALSE, (IUnknown**)&This->enumvariant);
+            if (FAILED(hr)) return hr;
+        }
+
+        return IEnumVARIANT_QueryInterface(This->enumvariant, &IID_IEnumVARIANT, ppvObject);
+    }
+    else if (dispex_query_interface(&This->dispex, riid, ppvObject))
     {
         return *ppvObject ? S_OK : E_NOINTERFACE;
     }
@@ -127,6 +154,7 @@ static ULONG WINAPI domselection_Release(
     {
         xmlXPathFreeObject(This->result);
         xmldoc_release(This->node->doc);
+        if (This->enumvariant) IEnumVARIANT_Release(This->enumvariant);
         heap_free(This);
     }
 
@@ -293,8 +321,10 @@ static HRESULT WINAPI domselection_get__newEnum(
         IUnknown** ppUnk)
 {
     domselection *This = impl_from_IXMLDOMSelection( iface );
-    FIXME("(%p)->(%p)\n", This, ppUnk);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, ppUnk);
+
+    return create_enumvariant(iface, TRUE, ppUnk);
 }
 
 static HRESULT WINAPI domselection_get_expr(
@@ -424,6 +454,118 @@ static const struct IXMLDOMSelectionVtbl domselection_vtbl =
     domselection_getProperty,
     domselection_setProperty
 };
+
+/* IEnumVARIANT support */
+static HRESULT WINAPI enumvariant_QueryInterface(
+    IEnumVARIANT *iface,
+    REFIID riid,
+    void** ppvObject )
+{
+    enumvariant *This = impl_from_IEnumVARIANT( iface );
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
+
+    *ppvObject = NULL;
+
+    if ( IsEqualGUID( riid, &IID_IUnknown ) ||
+         IsEqualGUID( riid, &IID_IEnumVARIANT ))
+    {
+        *ppvObject = &This->IEnumVARIANT_iface;
+    }
+    else
+        return IXMLDOMSelection_QueryInterface(This->selection, riid, ppvObject);
+
+    IEnumVARIANT_AddRef( iface );
+
+    return S_OK;
+}
+
+static ULONG WINAPI enumvariant_AddRef(IEnumVARIANT *iface )
+{
+    enumvariant *This = impl_from_IEnumVARIANT( iface );
+    ULONG ref = InterlockedIncrement( &This->ref );
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI enumvariant_Release(IEnumVARIANT *iface )
+{
+    enumvariant *This = impl_from_IEnumVARIANT( iface );
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%d)\n", This, ref);
+    if ( ref == 0 )
+    {
+        if (This->own) IXMLDOMSelection_Release(This->selection);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI enumvariant_Next(
+    IEnumVARIANT *iface,
+    ULONG celt,
+    VARIANT *rgvar,
+    ULONG *pceltFetched)
+{
+    enumvariant *This = impl_from_IEnumVARIANT( iface );
+    FIXME("(%p)->(%u %p %p): stub\n", This, celt, rgvar, pceltFetched);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI enumvariant_Skip(
+    IEnumVARIANT *iface,
+    ULONG celt)
+{
+    enumvariant *This = impl_from_IEnumVARIANT( iface );
+    FIXME("(%p)->(%u): stub\n", This, celt);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI enumvariant_Reset(IEnumVARIANT *iface)
+{
+    enumvariant *This = impl_from_IEnumVARIANT( iface );
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI enumvariant_Clone(
+    IEnumVARIANT *iface, IEnumVARIANT **ppenum)
+{
+    enumvariant *This = impl_from_IEnumVARIANT( iface );
+    FIXME("(%p)->(%p): stub\n", This, ppenum);
+    return E_NOTIMPL;
+}
+
+static const struct IEnumVARIANTVtbl EnumVARIANTVtbl =
+{
+    enumvariant_QueryInterface,
+    enumvariant_AddRef,
+    enumvariant_Release,
+    enumvariant_Next,
+    enumvariant_Skip,
+    enumvariant_Reset,
+    enumvariant_Clone
+};
+
+static HRESULT create_enumvariant(IXMLDOMSelection *selection, BOOL own, IUnknown **penum)
+{
+    enumvariant *This;
+
+    This = heap_alloc(sizeof(enumvariant));
+    if (!This) return E_OUTOFMEMORY;
+
+    This->IEnumVARIANT_iface.lpVtbl = &EnumVARIANTVtbl;
+    This->ref = 0;
+    This->selection = selection;
+    This->own = own;
+
+    if (This->own)
+        IXMLDOMSelection_AddRef(selection);
+
+    return IEnumVARIANT_QueryInterface(&This->IEnumVARIANT_iface, &IID_IUnknown, (void**)penum);
+}
 
 static HRESULT domselection_get_dispid(IUnknown *iface, BSTR name, DWORD flags, DISPID *dispid)
 {
@@ -622,6 +764,7 @@ HRESULT create_selection(xmlNodePtr node, xmlChar* query, IXMLDOMNodeList **out)
     This->ref = 1;
     This->resultPos = 0;
     This->node = node;
+    This->enumvariant = NULL;
     xmldoc_add_ref(This->node->doc);
 
     ctxt->error = query_serror;
