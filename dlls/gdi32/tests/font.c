@@ -1133,6 +1133,39 @@ static void test_text_extents(void)
     ret = GetTextExtentExPointW(hdc, wt, -1, 0, NULL, NULL, &sz1);
     ok(ret == FALSE, "got %d\n", ret);
 
+    /* max_extent = 0 succeeds and returns zero */
+    fit1 = fit2 = -215;
+    ret = GetTextExtentExPointA(hdc, NULL, 0, 0, &fit1, NULL, &sz);
+    ok(ret == TRUE ||
+       broken(ret == FALSE), /* NT4, 2k */
+       "got %d\n", ret);
+    ok(fit1 == 0 ||
+       broken(fit1 == -215), /* NT4, 2k */
+       "fit = %d\n", fit1);
+    ret = GetTextExtentExPointW(hdc, NULL, 0, 0, &fit2, NULL, &sz1);
+    ok(ret == TRUE, "got %d\n", ret);
+    ok(fit2 == 0, "fit = %d\n", fit2);
+
+    /* max_extent = -1 is interpreted as a very large width that will
+     * definitely fit our three characters */
+    fit1 = fit2 = -215;
+    ret = GetTextExtentExPointA(hdc, "One", 3, -1, &fit1, NULL, &sz);
+    ok(ret == TRUE, "got %d\n", ret);
+    todo_wine ok(fit1 == 3, "fit = %d\n", fit1);
+    ret = GetTextExtentExPointW(hdc, wt, 3, -1, &fit2, NULL, &sz);
+    ok(ret == TRUE, "got %d\n", ret);
+    todo_wine ok(fit2 == 3, "fit = %d\n", fit2);
+
+    /* max_extent = -2 is interpreted similarly, but the Ansi version
+     * rejects it while the Unicode one accepts it */
+    fit1 = fit2 = -215;
+    ret = GetTextExtentExPointA(hdc, "One", 3, -2, &fit1, NULL, &sz);
+    todo_wine ok(ret == FALSE, "got %d\n", ret);
+    todo_wine ok(fit1 == -215, "fit = %d\n", fit1);
+    ret = GetTextExtentExPointW(hdc, wt, 3, -2, &fit2, NULL, &sz);
+    ok(ret == TRUE, "got %d\n", ret);
+    todo_wine ok(fit2 == 3, "fit = %d\n", fit2);
+
     hfont = SelectObject(hdc, hfont);
     DeleteObject(hfont);
     ReleaseDC(NULL, hdc);
