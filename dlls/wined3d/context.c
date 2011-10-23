@@ -1282,7 +1282,7 @@ static int context_choose_pixel_format(const struct wined3d_device *device, HDC 
 }
 
 /* GL locking is done by the caller */
-static void bind_dummy_textures(const struct wined3d_device *device, struct wined3d_context *context)
+static void bind_dummy_textures(const struct wined3d_device *device, const struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned int i, count = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers);
