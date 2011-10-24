@@ -39,13 +39,76 @@ static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawGammaControl(IDirectD
     return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawGammaControl_iface);
 }
 
-static HRESULT ddraw_surface_update_frontbuffer(IDirectDrawSurfaceImpl *surface, const RECT *rect)
+/* This is slow, of course. Also, in case of locks, we can't prevent other
+ * applications from drawing to the screen while we've locked the frontbuffer.
+ * We'd like to do this in wined3d instead, but for that to work wined3d needs
+ * to support windowless rendering first. */
+static HRESULT ddraw_surface_update_frontbuffer(IDirectDrawSurfaceImpl *surface, const RECT *rect, BOOL read)
 {
-    if (rect && (rect->right - rect->left <= 0 || rect->bottom - rect->top <= 0))
+    HDC surface_dc, screen_dc;
+    int x, y, w, h;
+    HRESULT hr;
+    BOOL ret;
+
+    if (!rect)
+    {
+        x = 0;
+        y = 0;
+        w = surface->surface_desc.dwWidth;
+        h = surface->surface_desc.dwHeight;
+    }
+    else
+    {
+        x = rect->left;
+        y = rect->top;
+        w = rect->right - rect->left;
+        h = rect->bottom - rect->top;
+    }
+
+    if (w <= 0 || h <= 0)
         return DD_OK;
 
-    return wined3d_surface_blt(surface->ddraw->wined3d_frontbuffer, rect,
-            surface->wined3d_surface, rect, 0, NULL, WINED3DTEXF_POINT);
+    if (surface->ddraw->swapchain_window)
+    {
+        /* Nothing to do, we control the frontbuffer, or at least the parts we
+         * care about. */
+        if (read)
+            return DD_OK;
+
+        return wined3d_surface_blt(surface->ddraw->wined3d_frontbuffer, rect,
+                surface->wined3d_surface, rect, 0, NULL, WINED3DTEXF_POINT);
+    }
+
+    if (FAILED(hr = wined3d_surface_getdc(surface->wined3d_surface, &surface_dc)))
+    {
+        ERR("Failed to get surface DC, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (!(screen_dc = GetDC(NULL)))
+    {
+        wined3d_surface_releasedc(surface->wined3d_surface, surface_dc);
+        ERR("Failed to get screen DC.\n");
+        return E_FAIL;
+    }
+
+    if (read)
+        ret = BitBlt(surface_dc, x, y, w, h,
+                screen_dc, x, y, SRCCOPY);
+    else
+        ret = BitBlt(screen_dc, x, y, w, h,
+                surface_dc, x, y, SRCCOPY);
+
+    ReleaseDC(NULL, screen_dc);
+    wined3d_surface_releasedc(surface->wined3d_surface, surface_dc);
+
+    if (!ret)
+    {
+        ERR("Failed to blit to/from screen.\n");
+        return E_FAIL;
+    }
+
+    return DD_OK;
 }
 
 /*****************************************************************************
@@ -857,7 +920,7 @@ static HRESULT surface_lock(IDirectDrawSurfaceImpl *This,
         RECT *Rect, DDSURFACEDESC2 *DDSD, DWORD Flags, HANDLE h)
 {
     WINED3DLOCKED_RECT LockedRect;
-    HRESULT hr;
+    HRESULT hr = DD_OK;
 
     TRACE("This %p, rect %s, surface_desc %p, flags %#x, h %p.\n",
             This, wine_dbgstr_rect(Rect), DDSD, Flags, h);
@@ -889,7 +952,10 @@ static HRESULT surface_lock(IDirectDrawSurfaceImpl *This,
         }
     }
 
-    hr = wined3d_surface_map(This->wined3d_surface, &LockedRect, Rect, Flags);
+    if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
+        hr = ddraw_surface_update_frontbuffer(This, Rect, TRUE);
+    if (SUCCEEDED(hr))
+        hr = wined3d_surface_map(This->wined3d_surface, &LockedRect, Rect, Flags);
     if (FAILED(hr))
     {
         LeaveCriticalSection(&ddraw_cs);
@@ -1061,7 +1127,7 @@ static HRESULT WINAPI ddraw_surface7_Unlock(IDirectDrawSurface7 *iface, RECT *pR
     if (SUCCEEDED(hr))
     {
         if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
-            hr = ddraw_surface_update_frontbuffer(This, &This->ddraw->primary_lock);
+            hr = ddraw_surface_update_frontbuffer(This, &This->ddraw->primary_lock, FALSE);
         This->surface_desc.lpSurface = NULL;
     }
     LeaveCriticalSection(&ddraw_cs);
@@ -1161,7 +1227,7 @@ static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDra
 
     hr = wined3d_surface_flip(This->wined3d_surface, Override->wined3d_surface, Flags);
     if (SUCCEEDED(hr) && This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
-        hr = ddraw_surface_update_frontbuffer(This, NULL);
+        hr = ddraw_surface_update_frontbuffer(This, NULL, FALSE);
 
     LeaveCriticalSection(&ddraw_cs);
     return hr;
@@ -1229,7 +1295,7 @@ static HRESULT WINAPI ddraw_surface7_Blt(IDirectDrawSurface7 *iface, RECT *DestR
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface7(iface);
     IDirectDrawSurfaceImpl *Src = unsafe_impl_from_IDirectDrawSurface7(SrcSurface);
-    HRESULT hr;
+    HRESULT hr = DD_OK;
 
     TRACE("iface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p.\n",
             iface, wine_dbgstr_rect(DestRect), SrcSurface, wine_dbgstr_rect(SrcRect), Flags, DDBltFx);
@@ -1259,10 +1325,13 @@ static HRESULT WINAPI ddraw_surface7_Blt(IDirectDrawSurface7 *iface, RECT *DestR
      * does, copy the struct, and replace the ddraw surfaces with the wined3d
      * surfaces. So far no blitting operations using surfaces in the bltfx
      * struct are supported anyway. */
-    hr = wined3d_surface_blt(This->wined3d_surface, DestRect, Src ? Src->wined3d_surface : NULL,
-            SrcRect, Flags, (WINEDDBLTFX *)DDBltFx, WINED3DTEXF_LINEAR);
+    if (Src && Src->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
+        hr = ddraw_surface_update_frontbuffer(Src, SrcRect, TRUE);
+    if (SUCCEEDED(hr))
+        hr = wined3d_surface_blt(This->wined3d_surface, DestRect, Src ? Src->wined3d_surface : NULL,
+                SrcRect, Flags, (WINEDDBLTFX *)DDBltFx, WINED3DTEXF_LINEAR);
     if (SUCCEEDED(hr) && (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER))
-        hr = ddraw_surface_update_frontbuffer(This, DestRect);
+        hr = ddraw_surface_update_frontbuffer(This, DestRect, FALSE);
 
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
@@ -1732,7 +1801,7 @@ static HRESULT WINAPI ddraw_surface1_AddOverlayDirtyRect(IDirectDrawSurface *ifa
 static HRESULT WINAPI ddraw_surface7_GetDC(IDirectDrawSurface7 *iface, HDC *hdc)
 {
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface7(iface);
-    HRESULT hr;
+    HRESULT hr = DD_OK;
 
     TRACE("iface %p, dc %p.\n", iface, hdc);
 
@@ -1740,7 +1809,10 @@ static HRESULT WINAPI ddraw_surface7_GetDC(IDirectDrawSurface7 *iface, HDC *hdc)
         return DDERR_INVALIDPARAMS;
 
     EnterCriticalSection(&ddraw_cs);
-    hr = wined3d_surface_getdc(This->wined3d_surface, hdc);
+    if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
+        hr = ddraw_surface_update_frontbuffer(This, NULL, TRUE);
+    if (SUCCEEDED(hr))
+        hr = wined3d_surface_getdc(This->wined3d_surface, hdc);
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
     {
@@ -1810,7 +1882,7 @@ static HRESULT WINAPI ddraw_surface7_ReleaseDC(IDirectDrawSurface7 *iface, HDC h
     EnterCriticalSection(&ddraw_cs);
     hr = wined3d_surface_releasedc(This->wined3d_surface, hdc);
     if (SUCCEEDED(hr) && (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER))
-        hr = ddraw_surface_update_frontbuffer(This, NULL);
+        hr = ddraw_surface_update_frontbuffer(This, NULL, FALSE);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -3624,7 +3696,7 @@ static HRESULT WINAPI ddraw_surface7_BltFast(IDirectDrawSurface7 *iface, DWORD d
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface7(iface);
     IDirectDrawSurfaceImpl *src = unsafe_impl_from_IDirectDrawSurface7(Source);
     DWORD src_w, src_h, dst_w, dst_h;
-    HRESULT hr;
+    HRESULT hr = DD_OK;
 
     TRACE("iface %p, dst_x %u, dst_y %u, src_surface %p, src_rect %s, flags %#x.\n",
             iface, dstx, dsty, Source, wine_dbgstr_rect(rsrc), trans);
@@ -3654,12 +3726,15 @@ static HRESULT WINAPI ddraw_surface7_BltFast(IDirectDrawSurface7 *iface, DWORD d
     }
 
     EnterCriticalSection(&ddraw_cs);
-    hr = wined3d_surface_bltfast(This->wined3d_surface, dstx, dsty,
-            src->wined3d_surface, rsrc, trans);
+    if (src->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
+        hr = ddraw_surface_update_frontbuffer(src, rsrc, TRUE);
+    if (SUCCEEDED(hr))
+        hr = wined3d_surface_bltfast(This->wined3d_surface, dstx, dsty,
+                src->wined3d_surface, rsrc, trans);
     if (SUCCEEDED(hr) && (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER))
     {
         RECT dst_rect = {dstx, dsty, dstx + src_w, dsty + src_h};
-        hr = ddraw_surface_update_frontbuffer(This, &dst_rect);
+        hr = ddraw_surface_update_frontbuffer(This, &dst_rect, FALSE);
     }
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
@@ -3838,9 +3913,15 @@ static HRESULT WINAPI ddraw_surface7_SetClipper(IDirectDrawSurface7 *iface,
         }
 
         if (clipWindow)
+        {
             wined3d_swapchain_set_window(This->ddraw->wined3d_swapchain, clipWindow);
+            This->ddraw->swapchain_window = clipWindow;
+        }
         else
+        {
             wined3d_swapchain_set_window(This->ddraw->wined3d_swapchain, This->ddraw->d3d_window);
+            This->ddraw->swapchain_window = This->ddraw->dest_window;
+        }
     }
 
     LeaveCriticalSection(&ddraw_cs);

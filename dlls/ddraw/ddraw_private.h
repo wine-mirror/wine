@@ -92,6 +92,7 @@ struct IDirectDrawImpl
     RECT primary_lock;
     struct wined3d_surface *wined3d_frontbuffer;
     struct wined3d_swapchain *wined3d_swapchain;
+    HWND swapchain_window;
 
     /* DirectDraw things, which are not handled by WineD3D */
     DWORD                   cooperative_level;
