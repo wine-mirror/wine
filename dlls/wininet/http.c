@@ -4292,7 +4292,7 @@ static BOOL HTTP_ParseRfc850Date(LPCWSTR value, FILETIME *ft)
             return FALSE;
         }
     }
-    else if (ptr - value <= sizeof(day) / sizeof(day[0]))
+    else if (ptr - value < sizeof(day) / sizeof(day[0]))
     {
         memcpy(day, value, (ptr - value) * sizeof(WCHAR));
         day[ptr - value + 1] = 0;
