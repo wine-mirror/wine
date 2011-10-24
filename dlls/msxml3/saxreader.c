@@ -92,6 +92,7 @@ typedef struct _saxreader
     BOOL isParsing;
     struct bstrpool pool;
     enum ReaderFeatures features;
+    MSXML_VERSION version;
 } saxreader;
 
 typedef struct _saxlocator
@@ -1155,6 +1156,13 @@ static void libxmlStartDocument(void *ctx)
     saxlocator *This = ctx;
     HRESULT hr;
 
+    if(This->saxreader->version >= MSXML6) {
+        xmlChar *end = (xmlChar*)This->pParserCtxt->input->cur;
+        while(end>This->pParserCtxt->input->base && *end!='>')
+            end--;
+        update_position(This, end);
+    }
+
     if(has_content_handler(This))
     {
         if(This->vbInterface)
@@ -1174,8 +1182,15 @@ static void libxmlEndDocument(void *ctx)
     saxlocator *This = ctx;
     HRESULT hr;
 
-    This->column = 0;
-    This->line = 0;
+    if(This->saxreader->version >= MSXML6) {
+        update_position(This, NULL);
+        if(This->column > 1)
+            This->line++;
+        This->column = 0;
+    } else {
+        This->column = 0;
+        This->line = 0;
+    }
 
     if(This->ret != S_OK) return;
 
@@ -1208,7 +1223,9 @@ static void libxmlStartElementNS(
     saxattributes *attr;
     int index;
 
-    if(*(This->pParserCtxt->input->cur) == '/')
+    if(This->saxreader->version >= MSXML6)
+        update_position(This, NULL);
+    else if(*(This->pParserCtxt->input->cur) == '/')
         update_position(This, (xmlChar*)This->pParserCtxt->input->cur+2);
     else
         update_position(This, (xmlChar*)This->pParserCtxt->input->cur+1);
@@ -1274,9 +1291,13 @@ static void libxmlEndElementNS(
     int nsNr, index;
 
     end = (xmlChar*)This->pParserCtxt->input->cur;
-    if(*(end-1) != '>' || *(end-2) != '/')
+    if(This->saxreader->version >= MSXML6) {
+        while(end>This->pParserCtxt->input->base && *end!='>')
+            end--;
+    } else if(*(end-1) != '>' || *(end-2) != '/') {
         while(end-2>=This->pParserCtxt->input->base
                 && *(end-2)!='<' && *(end-1)!='/') end--;
+    }
 
     update_position(This, end);
 
@@ -1361,6 +1382,18 @@ static void libxmlCharacters(
         }
 
         if(!lastEvent) *end = '\n';
+
+        if(This->saxreader->version >= MSXML6) {
+            update_position(This, end);
+            if(*end == '\n') {
+                This->line++;
+                This->column = 1;
+            } else
+                This->column++;
+
+            if(!lastEvent)
+                This->column = 0;
+        }
 
         Chars = pooled_bstr_from_xmlCharN(&This->saxreader->pool, cur, end-cur+1);
         if(This->vbInterface)
@@ -1905,7 +1938,7 @@ static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator, B
     locator->publicId = NULL;
     locator->systemId = NULL;
     locator->lastCur = NULL;
-    locator->line = 0;
+    locator->line = (reader->version>=MSXML6 ? 1 : 0);
     locator->column = 0;
     locator->ret = S_OK;
     locator->nsStackSize = 8;
@@ -3046,7 +3079,7 @@ static const struct ISAXXMLReaderVtbl isaxreader_vtbl =
     isaxxmlreader_parseURL
 };
 
-HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+HRESULT SAXXMLReader_create(MSXML_VERSION version, IUnknown *pUnkOuter, LPVOID *ppObj)
 {
     saxreader *reader;
 
@@ -3072,6 +3105,7 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     reader->pool.index = 0;
     reader->pool.len = 0;
     reader->features = Namespaces;
+    reader->version = version;
 
     memset(&reader->sax, 0, sizeof(xmlSAXHandler));
     reader->sax.initialized = XML_SAX2_MAGIC;
@@ -3095,7 +3129,7 @@ HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
 #else
 
-HRESULT SAXXMLReader_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+HRESULT SAXXMLReader_create(MSXML_VERSION version, IUnknown *pUnkOuter, LPVOID *ppObj)
 {
     MESSAGE("This program tried to use a SAX XML Reader object, but\n"
             "libxml2 support was not present at compile time.\n");

@@ -433,7 +433,7 @@ extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, B
 extern HRESULT DOMDocument_create(MSXML_VERSION, IUnknown*, void**) DECLSPEC_HIDDEN;
 extern HRESULT SchemaCache_create(MSXML_VERSION, IUnknown*, void**) DECLSPEC_HIDDEN;
 extern HRESULT XMLDocument_create(IUnknown*, void**) DECLSPEC_HIDDEN;
-extern HRESULT SAXXMLReader_create(IUnknown*, void**) DECLSPEC_HIDDEN;
+extern HRESULT SAXXMLReader_create(MSXML_VERSION, IUnknown*, void**) DECLSPEC_HIDDEN;
 extern HRESULT XMLHTTPRequest_create(IUnknown*, void **) DECLSPEC_HIDDEN;
 extern HRESULT XSLTemplate_create(IUnknown*, void**) DECLSPEC_HIDDEN;
 extern HRESULT MXWriter_create(MSXML_VERSION, IUnknown*, void**) DECLSPEC_HIDDEN;
