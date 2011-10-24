@@ -746,6 +746,7 @@ static HRESULT compile_dim_statement(compile_ctx_t *ctx, dim_statement_t *stat)
             return E_FAIL;
         }
 
+        ctx->func->var_cnt++;
         if(!dim_decl->next)
             break;
         dim_decl = dim_decl->next;
@@ -753,7 +754,6 @@ static HRESULT compile_dim_statement(compile_ctx_t *ctx, dim_statement_t *stat)
 
     dim_decl->next = ctx->dim_decls;
     ctx->dim_decls = stat->dim_decls;
-    ctx->func->var_cnt++;
     return S_OK;
 }
 

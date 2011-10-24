@@ -470,6 +470,7 @@ Sub TestSubLocalVal
     x = false
     Call ok(not x, "local x is not false?")
     Dim x
+    Dim a,b, c
 End Sub
 
 x = true
