@@ -203,32 +203,33 @@ void X11DRV_XF86VM_Init(void)
   /* see if XVidMode is available */
   wine_tsx11_lock();
   ok = pXF86VidModeQueryExtension(gdi_display, &xf86vm_event, &xf86vm_error);
-  if (ok)
-  {
-      X11DRV_expect_error(gdi_display, XVidModeErrorHandler, NULL);
-      ok = pXF86VidModeQueryVersion(gdi_display, &xf86vm_major, &xf86vm_minor);
-      if (X11DRV_check_error()) ok = FALSE;
-  }
-  if (ok)
-  {
-#ifdef X_XF86VidModeSetGammaRamp
-      if (xf86vm_major > 2 || (xf86vm_major == 2 && xf86vm_minor >= 1))
-      {
-          pXF86VidModeGetGammaRampSize(gdi_display, DefaultScreen(gdi_display),
-                                      &xf86vm_gammaramp_size);
-          if (xf86vm_gammaramp_size == 256)
-              xf86vm_use_gammaramp = TRUE;
-      }
-#endif /* X_XF86VidModeSetGammaRamp */
-
-      /* retrieve modes */
-      if (usexvidmode && root_window == DefaultRootWindow( gdi_display ))
-          ok = pXF86VidModeGetAllModeLines(gdi_display, DefaultScreen(gdi_display), &nmodes, &real_xf86vm_modes);
-      else
-          ok = FALSE; /* In desktop mode, do not switch resolution... But still use the Gamma ramp stuff */
-  }
   wine_tsx11_unlock();
   if (!ok) return;
+
+  X11DRV_expect_error(gdi_display, XVidModeErrorHandler, NULL);
+  ok = pXF86VidModeQueryVersion(gdi_display, &xf86vm_major, &xf86vm_minor);
+  if (X11DRV_check_error() || !ok) return;
+
+#ifdef X_XF86VidModeSetGammaRamp
+  if (xf86vm_major > 2 || (xf86vm_major == 2 && xf86vm_minor >= 1))
+  {
+      X11DRV_expect_error(gdi_display, XVidModeErrorHandler, NULL);
+      pXF86VidModeGetGammaRampSize(gdi_display, DefaultScreen(gdi_display),
+                                   &xf86vm_gammaramp_size);
+      if (X11DRV_check_error()) xf86vm_gammaramp_size = 0;
+      if (xf86vm_gammaramp_size == 256)
+          xf86vm_use_gammaramp = TRUE;
+  }
+#endif /* X_XF86VidModeSetGammaRamp */
+
+  /* retrieve modes */
+  if (usexvidmode && root_window == DefaultRootWindow( gdi_display ))
+  {
+      X11DRV_expect_error(gdi_display, XVidModeErrorHandler, NULL);
+      ok = pXF86VidModeGetAllModeLines(gdi_display, DefaultScreen(gdi_display), &nmodes, &real_xf86vm_modes);
+      if (X11DRV_check_error() || !ok) return;
+  }
+  else return; /* In desktop mode, do not switch resolution... But still use the Gamma ramp stuff */
 
   TRACE("XVidMode modes: count=%d\n", nmodes);
 
