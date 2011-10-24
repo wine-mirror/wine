@@ -369,7 +369,7 @@ static inline BOOL UNIXFS_is_pidl_of_type(LPCITEMIDLIST pIDL, SHCONTF fFilter) {
 static BOOL UNIXFS_get_unix_path(LPCWSTR pszDosPath, char *pszCanonicalPath)
 {
     char *pPathTail, *pElement, *pCanonicalTail, szPath[FILENAME_MAX], *pszUnixPath, has_failed = 0, mb_path[FILENAME_MAX];
-    WCHAR wszDrive[] = { '?', ':', '\\', 0 }, dospath[PATH_MAX], *dospath_end;
+    WCHAR wszDrive[] = { '?', ':', '\\', 0 }, dospath[MAX_PATH], *dospath_end;
     int cDriveSymlinkLen;
     void *redir;
 
