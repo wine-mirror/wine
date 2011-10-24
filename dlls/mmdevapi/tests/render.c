@@ -719,6 +719,7 @@ static void test_session(void)
     hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
             NULL, (void**)&ses1_ac1);
     ok(hr == S_OK, "Activation failed with %08x\n", hr);
+    if (FAILED(hr)) return;
 
     hr = IAudioClient_GetMixFormat(ses1_ac1, &pwfx);
     ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);
@@ -730,6 +731,11 @@ static void test_session(void)
     hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
             NULL, (void**)&ses1_ac2);
     ok(hr == S_OK, "Activation failed with %08x\n", hr);
+    if (FAILED(hr))
+    {
+        IAudioClient_Release(ses1_ac1);
+        return;
+    }
 
     hr = IAudioClient_Initialize(ses1_ac2, AUDCLNT_SHAREMODE_SHARED,
             0, 5000000, 0, pwfx, &ses1_guid);
