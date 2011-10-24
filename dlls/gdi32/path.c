@@ -4,6 +4,7 @@
  * Copyright 1997, 1998 Martin Boehme
  *                 1999 Huw D M Davies
  * Copyright 2005 Dmitry Timoshkov
+ * Copyright 2011 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -69,17 +70,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
  * PT_MOVETO. Note that this is not the same as the definition of a figure;
  * a figure can contain several strokes.
  *
- * I modified the drawing functions (MoveTo, LineTo etc.) to test whether
- * the path is open and to call the corresponding function in path.c if this
- * is the case. A more elegant approach would be to modify the function
- * pointers in the DC_FUNCTIONS structure; however, this would be a lot more
- * complex. Also, the performance degradation caused by my approach in the
- * case where no path is open is so small that it cannot be measured.
- *
  * Martin Boehme
  */
-
-/* FIXME: A lot of stuff isn't implemented yet. There is much more to come. */
 
 #define NUM_ENTRIES_INITIAL 16  /* Initial size of points / flags arrays  */
 #define GROW_FACTOR_NUMER    2  /* Numerator of grow factor for the array */
@@ -90,6 +82,25 @@ typedef struct tagFLOAT_POINT
 {
    double x, y;
 } FLOAT_POINT;
+
+
+struct path_physdev
+{
+    struct gdi_physdev dev;
+    GdiPath           *path;
+};
+
+static inline struct path_physdev *get_path_physdev( PHYSDEV dev )
+{
+    return (struct path_physdev *)dev;
+}
+
+static inline void pop_path_driver( DC *dc )
+{
+    PHYSDEV dev = pop_dc_driver( &dc->physDev );
+    assert( dev->funcs == &path_driver );
+    HeapFree( GetProcessHeap(), 0, dev );
+}
 
 
 /* Performs a world-to-viewport transformation on the specified point (which
@@ -217,6 +228,35 @@ static BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags)
     pPath->numEntriesUsed++;
 
     return TRUE;
+}
+
+/* PATH_AssignGdiPath
+ *
+ * Copies the GdiPath structure "pPathSrc" to "pPathDest". A deep copy is
+ * performed, i.e. the contents of the pPoints and pFlags arrays are copied,
+ * not just the pointers. Since this means that the arrays in pPathDest may
+ * need to be resized, pPathDest should have been initialized using
+ * PATH_InitGdiPath (in C++, this function would be an assignment operator,
+ * not a copy constructor).
+ * Returns TRUE if successful, else FALSE.
+ */
+static BOOL PATH_AssignGdiPath(GdiPath *pPathDest, const GdiPath *pPathSrc)
+{
+   /* Make sure destination arrays are big enough */
+   if(!PATH_ReserveEntries(pPathDest, pPathSrc->numEntriesUsed))
+      return FALSE;
+
+   /* Perform the copy operation */
+   memcpy(pPathDest->pPoints, pPathSrc->pPoints,
+      sizeof(POINT)*pPathSrc->numEntriesUsed);
+   memcpy(pPathDest->pFlags, pPathSrc->pFlags,
+      sizeof(BYTE)*pPathSrc->numEntriesUsed);
+
+   pPathDest->state=pPathSrc->state;
+   pPathDest->numEntriesUsed=pPathSrc->numEntriesUsed;
+   pPathDest->newStroke=pPathSrc->newStroke;
+
+   return TRUE;
 }
 
 /* PATH_CheckCorners
@@ -735,8 +775,62 @@ BOOL WINAPI SelectClipPath(HDC hdc, INT iMode)
 
 
 /***********************************************************************
- * Exported functions
+ *           pathdrv_AbortPath
  */
+static BOOL pathdrv_AbortPath( PHYSDEV dev )
+{
+    DC *dc = get_dc_ptr( dev->hdc );
+
+    if (!dc) return FALSE;
+    PATH_EmptyPath( &dc->path );
+    pop_path_driver( dc );
+    release_dc_ptr( dc );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           pathdrv_EndPath
+ */
+static BOOL pathdrv_EndPath( PHYSDEV dev )
+{
+    DC *dc = get_dc_ptr( dev->hdc );
+
+    if (!dc) return FALSE;
+    dc->path.state = PATH_Closed;
+    pop_path_driver( dc );
+    release_dc_ptr( dc );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           pathdrv_CreateDC
+ */
+static BOOL pathdrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
+                              LPCWSTR output, const DEVMODEW *devmode )
+{
+    struct path_physdev *physdev = HeapAlloc( GetProcessHeap(), 0, sizeof(*physdev) );
+    DC *dc;
+
+    if (!physdev) return FALSE;
+    dc = get_dc_ptr( (*dev)->hdc );
+    physdev->path = &dc->path;
+    push_dc_driver( dev, &physdev->dev, &path_driver );
+    release_dc_ptr( dc );
+    return TRUE;
+}
+
+
+/*************************************************************
+ *           pathdrv_DeleteDC
+ */
+static BOOL pathdrv_DeleteDC( PHYSDEV dev )
+{
+    assert( 0 );  /* should never be called */
+    return TRUE;
+}
+
 
 /* PATH_InitGdiPath
  *
@@ -765,35 +859,29 @@ void PATH_DestroyGdiPath(GdiPath *pPath)
    HeapFree( GetProcessHeap(), 0, pPath->pFlags );
 }
 
-/* PATH_AssignGdiPath
- *
- * Copies the GdiPath structure "pPathSrc" to "pPathDest". A deep copy is
- * performed, i.e. the contents of the pPoints and pFlags arrays are copied,
- * not just the pointers. Since this means that the arrays in pPathDest may
- * need to be resized, pPathDest should have been initialized using
- * PATH_InitGdiPath (in C++, this function would be an assignment operator,
- * not a copy constructor).
- * Returns TRUE if successful, else FALSE.
- */
-BOOL PATH_AssignGdiPath(GdiPath *pPathDest, const GdiPath *pPathSrc)
+BOOL PATH_SavePath( DC *dst, DC *src )
 {
-   assert(pPathDest!=NULL && pPathSrc!=NULL);
+    PATH_InitGdiPath( &dst->path );
+    return PATH_AssignGdiPath( &dst->path, &src->path );
+}
 
-   /* Make sure destination arrays are big enough */
-   if(!PATH_ReserveEntries(pPathDest, pPathSrc->numEntriesUsed))
-      return FALSE;
+BOOL PATH_RestorePath( DC *dst, DC *src )
+{
+    BOOL ret;
 
-   /* Perform the copy operation */
-   memcpy(pPathDest->pPoints, pPathSrc->pPoints,
-      sizeof(POINT)*pPathSrc->numEntriesUsed);
-   memcpy(pPathDest->pFlags, pPathSrc->pFlags,
-      sizeof(BYTE)*pPathSrc->numEntriesUsed);
-
-   pPathDest->state=pPathSrc->state;
-   pPathDest->numEntriesUsed=pPathSrc->numEntriesUsed;
-   pPathDest->newStroke=pPathSrc->newStroke;
-
-   return TRUE;
+    if (src->path.state == PATH_Open && dst->path.state != PATH_Open)
+    {
+        if (!path_driver.pCreateDC( &dst->physDev, NULL, NULL, NULL, NULL )) return FALSE;
+        ret = PATH_AssignGdiPath( &dst->path, &src->path );
+        if (!ret) pop_path_driver( dst );
+    }
+    else if (src->path.state != PATH_Open && dst->path.state == PATH_Open)
+    {
+        ret = PATH_AssignGdiPath( &dst->path, &src->path );
+        if (ret) pop_path_driver( dst );
+    }
+    else ret = PATH_AssignGdiPath( &dst->path, &src->path );
+    return ret;
 }
 
 /* PATH_MoveTo
@@ -2089,6 +2177,7 @@ BOOL nulldrv_BeginPath( PHYSDEV dev )
     /* If path is already open, do nothing */
     if (dc->path.state != PATH_Open)
     {
+        if (!path_driver.pCreateDC( &dc->physDev, NULL, NULL, NULL, NULL )) return FALSE;
         PATH_EmptyPath(&dc->path);
         dc->path.newStroke = TRUE;
         dc->path.state = PATH_Open;
@@ -2098,15 +2187,8 @@ BOOL nulldrv_BeginPath( PHYSDEV dev )
 
 BOOL nulldrv_EndPath( PHYSDEV dev )
 {
-    DC *dc = get_nulldrv_dc( dev );
-
-    if (dc->path.state != PATH_Open)
-    {
-        SetLastError( ERROR_CAN_NOT_COMPLETE );
-        return FALSE;
-    }
-    dc->path.state = PATH_Closed;
-    return TRUE;
+    SetLastError( ERROR_CAN_NOT_COMPLETE );
+    return FALSE;
 }
 
 BOOL nulldrv_AbortPath( PHYSDEV dev )
@@ -2222,3 +2304,140 @@ BOOL nulldrv_WidenPath( PHYSDEV dev )
     }
     return PATH_WidenPath( dc );
 }
+
+const struct gdi_dc_funcs path_driver =
+{
+    NULL,                               /* pAbortDoc */
+    pathdrv_AbortPath,                  /* pAbortPath */
+    NULL,                               /* pAlphaBlend */
+    NULL,                               /* pAngleArc */
+    NULL,                               /* pArc */
+    NULL,                               /* pArcTo */
+    NULL,                               /* pBeginPath */
+    NULL,                               /* pBlendImage */
+    NULL,                               /* pChoosePixelFormat */
+    NULL,                               /* pChord */
+    NULL,                               /* pCloseFigure */
+    NULL,                               /* pCreateBitmap */
+    NULL,                               /* pCreateCompatibleDC */
+    pathdrv_CreateDC,                   /* pCreateDC */
+    NULL,                               /* pCreateDIBSection */
+    NULL,                               /* pDeleteBitmap */
+    pathdrv_DeleteDC,                   /* pDeleteDC */
+    NULL,                               /* pDeleteObject */
+    NULL,                               /* pDescribePixelFormat */
+    NULL,                               /* pDeviceCapabilities */
+    NULL,                               /* pEllipse */
+    NULL,                               /* pEndDoc */
+    NULL,                               /* pEndPage */
+    pathdrv_EndPath,                    /* pEndPath */
+    NULL,                               /* pEnumFonts */
+    NULL,                               /* pEnumICMProfiles */
+    NULL,                               /* pExcludeClipRect */
+    NULL,                               /* pExtDeviceMode */
+    NULL,                               /* pExtEscape */
+    NULL,                               /* pExtFloodFill */
+    NULL,                               /* pExtSelectClipRgn */
+    NULL,                               /* pExtTextOut */
+    NULL,                               /* pFillPath */
+    NULL,                               /* pFillRgn */
+    NULL,                               /* pFlattenPath */
+    NULL,                               /* pFontIsLinked */
+    NULL,                               /* pFrameRgn */
+    NULL,                               /* pGdiComment */
+    NULL,                               /* pGdiRealizationInfo */
+    NULL,                               /* pGetCharABCWidths */
+    NULL,                               /* pGetCharABCWidthsI */
+    NULL,                               /* pGetCharWidth */
+    NULL,                               /* pGetDeviceCaps */
+    NULL,                               /* pGetDeviceGammaRamp */
+    NULL,                               /* pGetFontData */
+    NULL,                               /* pGetFontUnicodeRanges */
+    NULL,                               /* pGetGlyphIndices */
+    NULL,                               /* pGetGlyphOutline */
+    NULL,                               /* pGetICMProfile */
+    NULL,                               /* pGetImage */
+    NULL,                               /* pGetKerningPairs */
+    NULL,                               /* pGetNearestColor */
+    NULL,                               /* pGetOutlineTextMetrics */
+    NULL,                               /* pGetPixel */
+    NULL,                               /* pGetPixelFormat */
+    NULL,                               /* pGetSystemPaletteEntries */
+    NULL,                               /* pGetTextCharsetInfo */
+    NULL,                               /* pGetTextExtentExPoint */
+    NULL,                               /* pGetTextExtentExPointI */
+    NULL,                               /* pGetTextFace */
+    NULL,                               /* pGetTextMetrics */
+    NULL,                               /* pIntersectClipRect */
+    NULL,                               /* pInvertRgn */
+    NULL,                               /* pLineTo */
+    NULL,                               /* pModifyWorldTransform */
+    NULL,                               /* pMoveTo */
+    NULL,                               /* pOffsetClipRgn */
+    NULL,                               /* pOffsetViewportOrg */
+    NULL,                               /* pOffsetWindowOrg */
+    NULL,                               /* pPaintRgn */
+    NULL,                               /* pPatBlt */
+    NULL,                               /* pPie */
+    NULL,                               /* pPolyBezier */
+    NULL,                               /* pPolyBezierTo */
+    NULL,                               /* pPolyDraw */
+    NULL,                               /* pPolyPolygon */
+    NULL,                               /* pPolyPolyline */
+    NULL,                               /* pPolygon */
+    NULL,                               /* pPolyline */
+    NULL,                               /* pPolylineTo */
+    NULL,                               /* pPutImage */
+    NULL,                               /* pRealizeDefaultPalette */
+    NULL,                               /* pRealizePalette */
+    NULL,                               /* pRectangle */
+    NULL,                               /* pResetDC */
+    NULL,                               /* pRestoreDC */
+    NULL,                               /* pRoundRect */
+    NULL,                               /* pSaveDC */
+    NULL,                               /* pScaleViewportExt */
+    NULL,                               /* pScaleWindowExt */
+    NULL,                               /* pSelectBitmap */
+    NULL,                               /* pSelectBrush */
+    NULL,                               /* pSelectClipPath */
+    NULL,                               /* pSelectFont */
+    NULL,                               /* pSelectPalette */
+    NULL,                               /* pSelectPen */
+    NULL,                               /* pSetArcDirection */
+    NULL,                               /* pSetBkColor */
+    NULL,                               /* pSetBkMode */
+    NULL,                               /* pSetDCBrushColor */
+    NULL,                               /* pSetDCPenColor */
+    NULL,                               /* pSetDIBColorTable */
+    NULL,                               /* pSetDIBitsToDevice */
+    NULL,                               /* pSetDeviceClipping */
+    NULL,                               /* pSetDeviceGammaRamp */
+    NULL,                               /* pSetLayout */
+    NULL,                               /* pSetMapMode */
+    NULL,                               /* pSetMapperFlags */
+    NULL,                               /* pSetPixel */
+    NULL,                               /* pSetPixelFormat */
+    NULL,                               /* pSetPolyFillMode */
+    NULL,                               /* pSetROP2 */
+    NULL,                               /* pSetRelAbs */
+    NULL,                               /* pSetStretchBltMode */
+    NULL,                               /* pSetTextAlign */
+    NULL,                               /* pSetTextCharacterExtra */
+    NULL,                               /* pSetTextColor */
+    NULL,                               /* pSetTextJustification */
+    NULL,                               /* pSetViewportExt */
+    NULL,                               /* pSetViewportOrg */
+    NULL,                               /* pSetWindowExt */
+    NULL,                               /* pSetWindowOrg */
+    NULL,                               /* pSetWorldTransform */
+    NULL,                               /* pStartDoc */
+    NULL,                               /* pStartPage */
+    NULL,                               /* pStretchBlt */
+    NULL,                               /* pStretchDIBits */
+    NULL,                               /* pStrokeAndFillPath */
+    NULL,                               /* pStrokePath */
+    NULL,                               /* pSwapBuffers */
+    NULL,                               /* pUnrealizePalette */
+    NULL,                               /* pWidenPath */
+    /* OpenGL not supported */
+};

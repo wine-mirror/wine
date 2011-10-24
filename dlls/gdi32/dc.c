@@ -416,8 +416,6 @@ INT nulldrv_SaveDC( PHYSDEV dev )
     newdc->BoundsRect       = dc->BoundsRect;
     newdc->gdiFont          = dc->gdiFont;
 
-    PATH_InitGdiPath( &newdc->path );
-
     /* Get/SetDCState() don't change hVisRgn field ("Undoc. Windows" p.559). */
 
     newdc->hVisRgn      = 0;
@@ -437,7 +435,7 @@ INT nulldrv_SaveDC( PHYSDEV dev )
 
     /* don't bother recomputing hMetaClipRgn, we'll do that in SetDCState */
 
-    if (!PATH_AssignGdiPath( &newdc->path, &dc->path ))
+    if (!PATH_SavePath( newdc, dc ))
     {
         release_dc_ptr( dc );
         free_dc_state( newdc );
@@ -468,7 +466,7 @@ BOOL nulldrv_RestoreDC( PHYSDEV dev, INT level )
 
     /* restore the state */
 
-    if (!PATH_AssignGdiPath( &dc->path, &dcs->path )) return FALSE;
+    if (!PATH_RestorePath( dc, dcs )) return FALSE;
 
     dc->flags            = dcs->flags;
     dc->layout           = dcs->layout;
@@ -799,6 +797,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
         free_dc_state( dcs );
     }
 
+    AbortPath( hdc );
     SelectObject( hdc, GetStockObject(BLACK_PEN) );
     SelectObject( hdc, GetStockObject(WHITE_BRUSH) );
     SelectObject( hdc, GetStockObject(SYSTEM_FONT) );

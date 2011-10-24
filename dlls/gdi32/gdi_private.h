@@ -270,6 +270,7 @@ extern DWORD blend_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struc
 /* driver.c */
 extern const struct gdi_dc_funcs null_driver DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs dib_driver DECLSPEC_HIDDEN;
+extern const struct gdi_dc_funcs path_driver DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs *font_driver DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs *DRIVER_load_driver( LPCWSTR name ) DECLSPEC_HIDDEN;
 extern BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size ) DECLSPEC_HIDDEN;
@@ -321,7 +322,8 @@ extern METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mr, LPCVOID filename, BOO
 
 extern void PATH_InitGdiPath(GdiPath *pPath) DECLSPEC_HIDDEN;
 extern void PATH_DestroyGdiPath(GdiPath *pPath) DECLSPEC_HIDDEN;
-extern BOOL PATH_AssignGdiPath(GdiPath *pPathDest, const GdiPath *pPathSrc) DECLSPEC_HIDDEN;
+extern BOOL PATH_SavePath( DC *dst, DC *src ) DECLSPEC_HIDDEN;
+extern BOOL PATH_RestorePath( DC *dst, DC *src ) DECLSPEC_HIDDEN;
 
 extern BOOL PATH_MoveTo(DC *dc) DECLSPEC_HIDDEN;
 extern BOOL PATH_LineTo(DC *dc, INT x, INT y) DECLSPEC_HIDDEN;
