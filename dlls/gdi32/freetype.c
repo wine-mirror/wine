@@ -6240,6 +6240,8 @@ UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
 
     TRACE("font=%p\n", font);
 
+    if (!FT_IS_SCALABLE( font->ft_face )) return 0;
+
     GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
 
