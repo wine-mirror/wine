@@ -89,6 +89,7 @@ struct IDirectDrawImpl
     BOOL                    d3d_initialized;
 
     IDirectDrawSurfaceImpl *primary;
+    RECT primary_lock;
     struct wined3d_surface *wined3d_frontbuffer;
     struct wined3d_swapchain *wined3d_swapchain;
 

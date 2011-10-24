@@ -39,10 +39,13 @@ static inline IDirectDrawSurfaceImpl *impl_from_IDirectDrawGammaControl(IDirectD
     return CONTAINING_RECORD(iface, IDirectDrawSurfaceImpl, IDirectDrawGammaControl_iface);
 }
 
-static HRESULT ddraw_surface_update_frontbuffer(IDirectDrawSurfaceImpl *surface)
+static HRESULT ddraw_surface_update_frontbuffer(IDirectDrawSurfaceImpl *surface, const RECT *rect)
 {
-    return wined3d_surface_blt(surface->ddraw->wined3d_frontbuffer, NULL,
-            surface->wined3d_surface, NULL, 0, NULL, WINED3DTEXF_POINT);
+    if (rect && (rect->right - rect->left <= 0 || rect->bottom - rect->top <= 0))
+        return DD_OK;
+
+    return wined3d_surface_blt(surface->ddraw->wined3d_frontbuffer, rect,
+            surface->wined3d_surface, rect, 0, NULL, WINED3DTEXF_POINT);
 }
 
 /*****************************************************************************
@@ -903,6 +906,13 @@ static HRESULT surface_lock(IDirectDrawSurfaceImpl *This,
         }
     }
 
+    if (Flags & DDLOCK_READONLY)
+        memset(&This->ddraw->primary_lock, 0, sizeof(This->ddraw->primary_lock));
+    else if (Rect)
+        This->ddraw->primary_lock = *Rect;
+    else
+        SetRect(&This->ddraw->primary_lock, 0, 0, This->surface_desc.dwWidth, This->surface_desc.dwHeight);
+
     /* Override the memory area. The pitch should be set already. Strangely windows
      * does not set the LPSURFACE flag on locked surfaces !?!.
      * DDSD->dwFlags |= DDSD_LPSURFACE;
@@ -1051,7 +1061,7 @@ static HRESULT WINAPI ddraw_surface7_Unlock(IDirectDrawSurface7 *iface, RECT *pR
     if (SUCCEEDED(hr))
     {
         if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
-            hr = ddraw_surface_update_frontbuffer(This);
+            hr = ddraw_surface_update_frontbuffer(This, &This->ddraw->primary_lock);
         This->surface_desc.lpSurface = NULL;
     }
     LeaveCriticalSection(&ddraw_cs);
@@ -1151,7 +1161,7 @@ static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDra
 
     hr = wined3d_surface_flip(This->wined3d_surface, Override->wined3d_surface, Flags);
     if (SUCCEEDED(hr) && This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
-        hr = ddraw_surface_update_frontbuffer(This);
+        hr = ddraw_surface_update_frontbuffer(This, NULL);
 
     LeaveCriticalSection(&ddraw_cs);
     return hr;
@@ -1252,7 +1262,7 @@ static HRESULT WINAPI ddraw_surface7_Blt(IDirectDrawSurface7 *iface, RECT *DestR
     hr = wined3d_surface_blt(This->wined3d_surface, DestRect, Src ? Src->wined3d_surface : NULL,
             SrcRect, Flags, (WINEDDBLTFX *)DDBltFx, WINED3DTEXF_LINEAR);
     if (SUCCEEDED(hr) && (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER))
-        hr = ddraw_surface_update_frontbuffer(This);
+        hr = ddraw_surface_update_frontbuffer(This, DestRect);
 
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
@@ -1800,7 +1810,7 @@ static HRESULT WINAPI ddraw_surface7_ReleaseDC(IDirectDrawSurface7 *iface, HDC h
     EnterCriticalSection(&ddraw_cs);
     hr = wined3d_surface_releasedc(This->wined3d_surface, hdc);
     if (SUCCEEDED(hr) && (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER))
-        hr = ddraw_surface_update_frontbuffer(This);
+        hr = ddraw_surface_update_frontbuffer(This, NULL);
     LeaveCriticalSection(&ddraw_cs);
     return hr;
 }
@@ -3647,7 +3657,10 @@ static HRESULT WINAPI ddraw_surface7_BltFast(IDirectDrawSurface7 *iface, DWORD d
     hr = wined3d_surface_bltfast(This->wined3d_surface, dstx, dsty,
             src->wined3d_surface, rsrc, trans);
     if (SUCCEEDED(hr) && (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER))
-        hr = ddraw_surface_update_frontbuffer(This);
+    {
+        RECT dst_rect = {dstx, dsty, dstx + src_w, dsty + src_h};
+        hr = ddraw_surface_update_frontbuffer(This, &dst_rect);
+    }
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
     {
