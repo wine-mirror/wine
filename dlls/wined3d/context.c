@@ -2100,7 +2100,7 @@ static DWORD context_generate_rt_mask_no_fbo(const struct wined3d_device *device
 }
 
 /* Context activation is done by the caller. */
-void context_apply_blit_state(struct wined3d_context *context, struct wined3d_device *device)
+void context_apply_blit_state(struct wined3d_context *context, const struct wined3d_device *device)
 {
     struct wined3d_surface *rt = context->current_rt;
     DWORD rt_mask, old_mask;
