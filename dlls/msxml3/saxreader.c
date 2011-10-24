@@ -1458,6 +1458,9 @@ static void libxmlFatalError(void *ctx, const char *msg, ...)
     DWORD len;
     va_list args;
 
+    if(This->ret != S_OK)
+        return;
+
     va_start(args, msg);
     vsprintf(message, msg, args);
     va_end(args);
