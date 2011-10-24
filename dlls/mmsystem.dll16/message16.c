@@ -866,7 +866,7 @@ static LRESULT CALLBACK MMSYSTDRV_Callback3216(struct mmsystdrv_thunk* thunk, HD
         SetEvent((HANDLE)thunk->callback);
         break;
     default:
-        WARN("Unknown callback type %lx\n", thunk->flags & CALLBACK_TYPEMASK);
+        WARN("Unknown callback type %x\n", thunk->flags & CALLBACK_TYPEMASK);
         return FALSE;
     }
     TRACE("Done\n");

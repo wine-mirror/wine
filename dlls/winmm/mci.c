@@ -1695,9 +1695,8 @@ static	DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSW lpParms)
 #define WINE_MCIDRIVER_SUPP	(0xFFFF0000|MCI_OPEN_SHAREABLE|MCI_OPEN_ELEMENT| \
                          MCI_OPEN_ALIAS|MCI_OPEN_TYPE|MCI_OPEN_TYPE_ID| \
                          MCI_NOTIFY|MCI_WAIT)
-    if ((dwParam & ~WINE_MCIDRIVER_SUPP) != 0) {
-	FIXME("Unsupported yet dwFlags=%08lX\n", dwParam & ~WINE_MCIDRIVER_SUPP);
-    }
+    if ((dwParam & ~WINE_MCIDRIVER_SUPP) != 0)
+        FIXME("Unsupported yet dwFlags=%08X\n", dwParam & ~WINE_MCIDRIVER_SUPP);
 #undef WINE_MCIDRIVER_SUPP
 
     strDevTyp[0] = 0;

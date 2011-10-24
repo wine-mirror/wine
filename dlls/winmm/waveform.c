@@ -3775,8 +3775,7 @@ UINT WINAPI mixerGetLineInfoW(HMIXEROBJ hmix, LPMIXERLINEW lpmliW, DWORD fdwInfo
         return MIXERR_INVALLINE;
     }
 
-    TRACE("Returning INVALFLAG on these flags: %lx\n",
-            fdwInfo & MIXER_GETLINEINFOF_QUERYMASK);
+    TRACE("Returning INVALFLAG on these flags: %x\n", fdwInfo & MIXER_GETLINEINFOF_QUERYMASK);
     return MMSYSERR_INVALFLAG;
 }
 
