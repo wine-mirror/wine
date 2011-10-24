@@ -594,12 +594,13 @@ static void X11DRV_DIB_GetImageBits_1( int lines, BYTE *dstbits,
                 } else if (bmpImage->blue_mask==0x7c00) {
                     /* ==== bgr 555 bmp -> pal 1 dib ==== */
                     for (h=0; h<lines; h++) {
-                        WORD dstval;
+                        BYTE dstval;
                         srcpixel=srcbits;
                         dstbyte=dstbits;
                         dstval=0;
                         for (x=0; x<width; x++) {
-                            BYTE srcval;
+                            WORD srcval;
+
                             srcval=*srcpixel++;
                             dstval|=(X11DRV_DIB_GetNearestIndex
                                      (colors, 2,
