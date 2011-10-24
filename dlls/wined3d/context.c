@@ -2171,7 +2171,7 @@ static BOOL context_validate_rt_config(UINT rt_count,
 }
 
 /* Context activation is done by the caller. */
-BOOL context_apply_clear_state(struct wined3d_context *context, struct wined3d_device *device,
+BOOL context_apply_clear_state(struct wined3d_context *context, const struct wined3d_device *device,
         UINT rt_count, const struct wined3d_fb_state *fb)
 {
     DWORD rt_mask = 0, old_mask;
