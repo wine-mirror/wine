@@ -1170,7 +1170,7 @@ static void libxmlStartDocument(void *ctx)
         else
             hr = ISAXContentHandler_startDocument(This->saxreader->contentHandler);
 
-        if(hr != S_OK)
+        if(This->saxreader->version>=MSXML6 ? FAILED(hr) : hr!=S_OK)
             format_error_message_from_id(This, hr);
     }
 
@@ -1201,7 +1201,7 @@ static void libxmlEndDocument(void *ctx)
         else
             hr = ISAXContentHandler_endDocument(This->saxreader->contentHandler);
 
-        if(hr != S_OK)
+        if(This->saxreader->version>=MSXML6 ? FAILED(hr) : hr!=S_OK)
             format_error_message_from_id(This, hr);
     }
 }
@@ -1248,7 +1248,7 @@ static void libxmlStartElementNS(
                         Prefix, SysStringLen(Prefix),
                         Uri, SysStringLen(Uri));
 
-            if(hr != S_OK)
+            if(This->saxreader->version>=MSXML6 ? FAILED(hr) : hr!=S_OK)
             {
                 format_error_message_from_id(This, hr);
                 return;
@@ -1274,7 +1274,7 @@ static void libxmlStartElementNS(
         }
     }
 
-    if(hr != S_OK)
+    if(This->saxreader->version>=MSXML6 ? FAILED(hr) : hr!=S_OK)
         format_error_message_from_id(This, hr);
 }
 
@@ -1320,7 +1320,7 @@ static void libxmlEndElementNS(
                     LocalName, SysStringLen(LocalName),
                     QName, SysStringLen(QName));
 
-        if(hr != S_OK)
+        if(This->saxreader->version>=MSXML6 ? FAILED(hr) : hr!=S_OK)
         {
             format_error_message_from_id(This, hr);
             return;
@@ -1339,7 +1339,7 @@ static void libxmlEndElementNS(
                         This->saxreader->contentHandler,
                         Prefix, SysStringLen(Prefix));
 
-            if(hr != S_OK)
+            if(This->saxreader->version>=MSXML6 ? FAILED(hr) : hr!=S_OK)
             {
                 format_error_message_from_id(This, hr);
                 return;
@@ -1404,7 +1404,7 @@ static void libxmlCharacters(
                     This->saxreader->contentHandler,
                     Chars, SysStringLen(Chars));
 
-        if(hr != S_OK)
+        if(This->saxreader->version>=MSXML6 ? FAILED(hr) : hr!=S_OK)
         {
             format_error_message_from_id(This, hr);
             return;
