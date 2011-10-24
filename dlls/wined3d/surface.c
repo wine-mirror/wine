@@ -1730,6 +1730,26 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
         {
             TRACE("Color blit.\n");
 
+            /* Upload */
+            if ((src_surface->flags & SFLAG_INSYSMEM) && !(dst_surface->flags & SFLAG_INSYSMEM))
+            {
+                if (scale)
+                    TRACE("Not doing upload because of scaling.\n");
+                else if (convert)
+                    TRACE("Not doing upload because of format conversion.\n");
+                else
+                {
+                    POINT dst_point = {dst_rect.left, dst_rect.top};
+
+                    if (SUCCEEDED(surface_upload_from_surface(dst_surface, &dst_point, src_surface, &src_rect)))
+                    {
+                        if (!surface_is_offscreen(dst_surface))
+                            surface_load_location(dst_surface, dst_surface->draw_binding, NULL);
+                        return WINED3D_OK;
+                    }
+                }
+            }
+
             /* Use present for back -> front blits. The idea behind this is
              * that present is potentially faster than a blit, in particular
              * when FBO blits aren't available. Some ddraw applications like
@@ -2393,7 +2413,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
 /* This call just uploads data, the caller is responsible for binding the
  * correct texture. */
 /* Context activation is done by the caller. */
-void surface_upload_data(const struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
+static void surface_upload_data(const struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
         const struct wined3d_format *format, const RECT *src_rect, UINT src_w, const POINT *dst_point,
         BOOL srgb, const struct wined3d_bo_address *data)
 {
@@ -2497,6 +2517,120 @@ void surface_upload_data(const struct wined3d_surface *surface, const struct win
             context_surface_update(device->contexts[i], surface);
         }
     }
+}
+
+HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const POINT *dst_point,
+        struct wined3d_surface *src_surface, const RECT *src_rect)
+{
+    const struct wined3d_format *src_format;
+    const struct wined3d_format *dst_format;
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_context *context;
+    struct wined3d_bo_address data;
+    struct wined3d_format format;
+    UINT update_w, update_h;
+    CONVERT_TYPES convert;
+    UINT dst_w, dst_h;
+    UINT src_w, src_h;
+    POINT p;
+    RECT r;
+
+    TRACE("dst_surface %p, dst_point %s, src_surface %p, src_rect %s.\n",
+            dst_surface, wine_dbgstr_point(dst_point),
+            src_surface, wine_dbgstr_rect(src_rect));
+
+    src_format = src_surface->resource.format;
+    dst_format = dst_surface->resource.format;
+
+    if (src_format->id != dst_format->id)
+    {
+        WARN("Source and destination surfaces should have the same format.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if (!dst_point)
+    {
+        p.x = 0;
+        p.y = 0;
+        dst_point = &p;
+    }
+    else if (dst_point->x < 0 || dst_point->y < 0)
+    {
+        WARN("Invalid destination point.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if (!src_rect)
+    {
+        r.left = 0;
+        r.top = 0;
+        r.right = src_surface->resource.width;
+        r.bottom = src_surface->resource.height;
+        src_rect = &r;
+    }
+    else if (src_rect->left < 0 || src_rect->left >= src_rect->right
+            || src_rect->top < 0 || src_rect->top >= src_rect->bottom)
+    {
+        WARN("Invalid source rectangle.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    src_w = src_surface->resource.width;
+    src_h = src_surface->resource.height;
+
+    dst_w = dst_surface->resource.width;
+    dst_h = dst_surface->resource.height;
+
+    update_w = src_rect->right - src_rect->left;
+    update_h = src_rect->bottom - src_rect->top;
+
+    if (update_w > dst_w || dst_point->x > dst_w - update_w
+            || update_h > dst_h || dst_point->y > dst_h - update_h)
+    {
+        WARN("Destination out of bounds.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    /* NPOT block sizes would be silly. */
+    if ((src_format->flags & WINED3DFMT_FLAG_COMPRESSED)
+            && ((update_w & (src_format->block_width - 1) || update_h & (src_format->block_height - 1))
+            && (src_w != update_w || dst_w != update_w || src_h != update_h || dst_h != update_h)))
+    {
+        WARN("Update rect not block-aligned.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    /* This call loads the OpenGL surface directly, instead of copying the
+     * surface to the destination's sysmem copy. If surface conversion is
+     * needed, use BltFast instead to copy in sysmem and use regular surface
+     * loading. */
+    d3dfmt_get_conv(dst_surface, FALSE, TRUE, &format, &convert);
+    if (convert != NO_CONVERSION || format.convert)
+        return wined3d_surface_bltfast(dst_surface, dst_point->x, dst_point->y, src_surface, src_rect, 0);
+
+    context = context_acquire(dst_surface->resource.device, NULL);
+    gl_info = context->gl_info;
+
+    /* Only load the surface for partial updates. For newly allocated texture
+     * the texture wouldn't be the current location, and we'd upload zeroes
+     * just to overwrite them again. */
+    if (update_w == dst_w && update_h == dst_h)
+        surface_prepare_texture(dst_surface, context, FALSE);
+    else
+        surface_load_location(dst_surface, SFLAG_INTEXTURE, NULL);
+    surface_bind(dst_surface, context, FALSE);
+
+    data.buffer_object = src_surface->pbo;
+    data.addr = src_surface->resource.allocatedMemory;
+
+    surface_upload_data(dst_surface, gl_info, src_format, src_rect, src_w, dst_point, FALSE, &data);
+
+    invalidate_active_texture(dst_surface->resource.device, context);
+
+    context_release(context);
+
+    surface_modify_location(dst_surface, SFLAG_INTEXTURE, TRUE);
+    return WINED3D_OK;
 }
 
 /* This call just allocates the texture, the caller is responsible for binding

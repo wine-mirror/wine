@@ -1782,6 +1782,13 @@ static inline BOOL isStateDirty(const struct wined3d_context *context, DWORD sta
     return context->isStateDirty[idx] & (1 << shift);
 }
 
+static inline void invalidate_active_texture(const struct wined3d_device *device, struct wined3d_context *context)
+{
+    DWORD sampler = device->rev_tex_unit_map[context->active_texture];
+    if (sampler != WINED3D_UNMAPPED_STAGE)
+        context_invalidate_state(context, STATE_SAMPLER(sampler));
+}
+
 #define WINED3D_RESOURCE_ACCESS_GPU     0x1
 #define WINED3D_RESOURCE_ACCESS_CPU     0x2
 /* SCRATCH is mostly the same as CPU, but can't be used by the GPU at all,
@@ -2095,9 +2102,8 @@ void surface_set_texture_name(struct wined3d_surface *surface, GLuint name, BOOL
 void surface_set_texture_target(struct wined3d_surface *surface, GLenum target) DECLSPEC_HIDDEN;
 void surface_translate_drawable_coords(const struct wined3d_surface *surface, HWND window, RECT *rect) DECLSPEC_HIDDEN;
 void surface_update_draw_binding(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
-void surface_upload_data(const struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
-        const struct wined3d_format *format, const RECT *src_rect, UINT src_w, const POINT *dst_point,
-        BOOL srgb, const struct wined3d_bo_address *data) DECLSPEC_HIDDEN;
+HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const POINT *dst_point,
+        struct wined3d_surface *src_surface, const RECT *src_rect) DECLSPEC_HIDDEN;
 
 void get_drawable_size_swapchain(const struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
 void get_drawable_size_backbuffer(const struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
