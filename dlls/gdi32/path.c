@@ -2240,7 +2240,7 @@ BOOL nulldrv_FlattenPath( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
 
-    if (dc->path.state == PATH_Closed)
+    if (dc->path.state != PATH_Closed)
     {
         SetLastError( ERROR_CAN_NOT_COMPLETE );
         return FALSE;
@@ -2252,7 +2252,7 @@ BOOL nulldrv_WidenPath( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
 
-    if (dc->path.state == PATH_Open)
+    if (dc->path.state != PATH_Closed)
     {
         SetLastError( ERROR_CAN_NOT_COMPLETE );
         return FALSE;
