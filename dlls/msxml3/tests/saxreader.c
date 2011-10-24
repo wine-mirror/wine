@@ -81,7 +81,10 @@ typedef enum _CH {
     CH_CHARACTERS,
     CH_IGNORABLEWHITESPACE,
     CH_PROCESSINGINSTRUCTION,
-    CH_SKIPPEDENTITY
+    CH_SKIPPEDENTITY,
+    EH_ERROR,
+    EH_FATALERROR,
+    EG_IGNORABLEWARNING
 } CH;
 
 static const WCHAR szSimpleXML[] = {
@@ -125,6 +128,7 @@ typedef struct _contenthandlercheck {
     const char *arg1;
     const char *arg2;
     const char *arg3;
+    HRESULT ret;
 } content_handler_test;
 
 static content_handler_test contentHandlerTest1[] = {
@@ -162,6 +166,19 @@ static content_handler_test contentHandlerTest2[] = {
     { CH_CHARACTERS, 4, 27, "\n" },
     { CH_ENDELEMENT, 5, 3, "", "BankAccount", "BankAccount" },
     { CH_ENDDOCUMENT, 0, 0 },
+    { CH_ENDTEST }
+};
+
+static content_handler_test contentHandlerTestError[] = {
+    { CH_PUTDOCUMENTLOCATOR, 0, 0, NULL, NULL, NULL, E_FAIL },
+    { EH_FATALERROR, 0, 0, NULL, NULL, NULL, E_FAIL },
+    { CH_ENDTEST }
+};
+
+static content_handler_test contentHandlerTestCallbackResults[] = {
+    { CH_PUTDOCUMENTLOCATOR, 0, 0, NULL, NULL, NULL, S_FALSE },
+    { CH_STARTDOCUMENT, 0, 0, NULL, NULL, NULL, S_FALSE },
+    { EH_FATALERROR, 0, 0, NULL, NULL, NULL, S_FALSE },
     { CH_ENDTEST }
 };
 
@@ -248,8 +265,7 @@ static HRESULT WINAPI contentHandler_putDocumentLocator(
     locator = pLocator;
     test_locator(__LINE__, expectCall->line, expectCall->column);
 
-    expectCall++;
-    return S_OK;
+    return (expectCall++)->ret;
 }
 
 static HRESULT WINAPI contentHandler_startDocument(
@@ -260,8 +276,7 @@ static HRESULT WINAPI contentHandler_startDocument(
 
     test_locator(__LINE__, expectCall->line, expectCall->column);
 
-    expectCall++;
-    return S_OK;
+    return (expectCall++)->ret;
 }
 
 static HRESULT WINAPI contentHandler_endDocument(
@@ -272,8 +287,7 @@ static HRESULT WINAPI contentHandler_endDocument(
 
     test_locator(__LINE__, expectCall->line, expectCall->column);
 
-    expectCall++;
-    return S_OK;
+    return (expectCall++)->ret;
 }
 
 static HRESULT WINAPI contentHandler_startPrefixMapping(
@@ -290,8 +304,7 @@ static HRESULT WINAPI contentHandler_startPrefixMapping(
     test_saxstr(__LINE__, pUri, nUri, expectCall->arg2);
     test_locator(__LINE__, expectCall->line, expectCall->column);
 
-    expectCall++;
-    return S_OK;
+    return (expectCall++)->ret;
 }
 
 static HRESULT WINAPI contentHandler_endPrefixMapping(
@@ -305,8 +318,7 @@ static HRESULT WINAPI contentHandler_endPrefixMapping(
     test_saxstr(__LINE__, pPrefix, nPrefix, expectCall->arg1);
     test_locator(__LINE__, expectCall->line, expectCall->column);
 
-    expectCall++;
-    return S_OK;
+    return (expectCall++)->ret;
 }
 
 static HRESULT WINAPI contentHandler_startElement(
@@ -327,8 +339,7 @@ static HRESULT WINAPI contentHandler_startElement(
     test_saxstr(__LINE__, pQName, nQName, expectCall->arg3);
     test_locator(__LINE__, expectCall->line, expectCall->column);
 
-    expectCall++;
-    return S_OK;
+    return (expectCall++)->ret;
 }
 
 static HRESULT WINAPI contentHandler_endElement(
@@ -348,8 +359,7 @@ static HRESULT WINAPI contentHandler_endElement(
     test_saxstr(__LINE__, pQName, nQName, expectCall->arg3);
     test_locator(__LINE__, expectCall->line, expectCall->column);
 
-    expectCall++;
-    return S_OK;
+    return (expectCall++)->ret;
 }
 
 static HRESULT WINAPI contentHandler_characters(
@@ -363,8 +373,7 @@ static HRESULT WINAPI contentHandler_characters(
     test_saxstr(__LINE__, pChars, nChars, expectCall->arg1);
     test_locator(__LINE__, expectCall->line, expectCall->column);
 
-    expectCall++;
-    return S_OK;
+    return (expectCall++)->ret;
 }
 
 static HRESULT WINAPI contentHandler_ignorableWhitespace(
@@ -378,8 +387,7 @@ static HRESULT WINAPI contentHandler_ignorableWhitespace(
     test_saxstr(__LINE__, pChars, nChars, expectCall->arg1);
     test_locator(__LINE__, expectCall->line, expectCall->column);
 
-    expectCall++;
-    return S_OK;
+    return (expectCall++)->ret;
 }
 
 static HRESULT WINAPI contentHandler_processingInstruction(
@@ -396,8 +404,7 @@ static HRESULT WINAPI contentHandler_processingInstruction(
     test_saxstr(__LINE__, pData, nData, expectCall->arg2);
     test_locator(__LINE__, expectCall->line, expectCall->column);
 
-    expectCall++;
-    return S_OK;
+    return (expectCall++)->ret;
 }
 
 static HRESULT WINAPI contentHandler_skippedEntity(
@@ -411,8 +418,7 @@ static HRESULT WINAPI contentHandler_skippedEntity(
     test_saxstr(__LINE__, pName, nName, expectCall->arg1);
     test_locator(__LINE__, expectCall->line, expectCall->column);
 
-    expectCall++;
-    return S_OK;
+    return (expectCall++)->ret;
 }
 
 
@@ -473,6 +479,7 @@ static HRESULT WINAPI isaxerrorHandler_error(
         const WCHAR *pErrorMessage,
         HRESULT hrErrorCode)
 {
+    ok(0, "unexpected call\n");
     return S_OK;
 }
 
@@ -482,6 +489,12 @@ static HRESULT WINAPI isaxerrorHandler_fatalError(
         const WCHAR *pErrorMessage,
         HRESULT hrErrorCode)
 {
+    if(!test_expect_call(EH_FATALERROR))
+        return E_FAIL;
+
+    ok(hrErrorCode == expectCall->ret, "hrErrorCode = %x, expected %x\n", hrErrorCode, expectCall->ret);
+
+    expectCall++;
     return S_OK;
 }
 
@@ -491,6 +504,7 @@ static HRESULT WINAPI isaxerrorHanddler_ignorableWarning(
         const WCHAR *pErrorMessage,
         HRESULT hrErrorCode)
 {
+    ok(0, "unexpected call\n");
     return S_OK;
 }
 
@@ -1139,6 +1153,16 @@ static void test_saxreader(void)
     expectCall = contentHandlerTest1;
     hr = ISAXXMLReader_parseURL(reader, testXmlW);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    test_expect_call(CH_ENDTEST);
+
+    expectCall = contentHandlerTestError;
+    hr = ISAXXMLReader_parseURL(reader, testXmlW);
+    ok(hr == E_FAIL, "Expected E_FAIL, got %08x\n", hr);
+    test_expect_call(CH_ENDTEST);
+
+    expectCall = contentHandlerTestCallbackResults;
+    hr = ISAXXMLReader_parseURL(reader, testXmlW);
+    ok(hr == S_FALSE, "Expected S_FALSE, got %08x\n", hr);
     test_expect_call(CH_ENDTEST);
 
     DeleteFileA(testXmlA);
