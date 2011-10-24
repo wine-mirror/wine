@@ -1458,8 +1458,10 @@ static void libxmlFatalError(void *ctx, const char *msg, ...)
     DWORD len;
     va_list args;
 
-    if(This->ret != S_OK)
+    if(This->ret != S_OK) {
+        xmlStopParser(This->pParserCtxt);
         return;
+    }
 
     va_start(args, msg);
     vsprintf(message, msg, args);
@@ -1966,8 +1968,10 @@ static HRESULT internal_parseBuffer(saxreader *This, const char *buffer, int siz
     locator->pParserCtxt->userData = locator;
 
     This->isParsing = TRUE;
-    if(xmlParseDocument(locator->pParserCtxt) == -1) hr = E_FAIL;
-    else hr = locator->ret;
+    if(xmlParseDocument(locator->pParserCtxt)==-1 && locator->ret==S_OK)
+        hr = E_FAIL;
+    else
+        hr = locator->ret;
     This->isParsing = FALSE;
 
     if(locator->pParserCtxt)
@@ -2010,7 +2014,7 @@ static HRESULT internal_parseStream(saxreader *This, IStream *stream, BOOL vbInt
     if(dataRead != sizeof(data))
     {
         ret = xmlParseChunk(locator->pParserCtxt, data, 0, 1);
-        hr = ret != XML_ERR_OK ? E_FAIL : locator->ret;
+        hr = ret!=XML_ERR_OK && locator->ret==S_OK ? E_FAIL : locator->ret;
     }
     else
     {
@@ -2021,14 +2025,14 @@ static HRESULT internal_parseStream(saxreader *This, IStream *stream, BOOL vbInt
             if (FAILED(hr)) break;
 
             ret = xmlParseChunk(locator->pParserCtxt, data, dataRead, 0);
-            hr = ret != XML_ERR_OK ? E_FAIL : locator->ret;
+            hr = ret!=XML_ERR_OK && locator->ret==S_OK ? E_FAIL : locator->ret;
 
             if (hr != S_OK) break;
 
             if (dataRead != sizeof(data))
             {
                 ret = xmlParseChunk(locator->pParserCtxt, data, 0, 1);
-                hr = ret != XML_ERR_OK ? E_FAIL : locator->ret;
+                hr = ret!=XML_ERR_OK && locator->ret==S_OK ? E_FAIL : locator->ret;
                 break;
             }
         }
