@@ -467,7 +467,7 @@ static inline const CLSID* SchemaCache_version(MSXML_VERSION v)
 typedef struct bsc_t bsc_t;
 
 HRESULT bind_url(LPCWSTR, HRESULT (*onDataAvailable)(void*,char*,DWORD), void*, bsc_t**) DECLSPEC_HIDDEN;
-void detach_bsc(bsc_t*) DECLSPEC_HIDDEN;
+HRESULT detach_bsc(bsc_t*) DECLSPEC_HIDDEN;
 
 const char *debugstr_variant(const VARIANT*) DECLSPEC_HIDDEN;
 

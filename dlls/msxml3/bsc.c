@@ -53,6 +53,7 @@ struct bsc_t {
 
     IBinding *binding;
     IStream *memstream;
+    HRESULT hres;
 };
 
 static inline bsc_t *impl_from_IBindStatusCallback( IBindStatusCallback *iface )
@@ -173,7 +174,7 @@ static HRESULT WINAPI bsc_OnStopBinding(
             DWORD len = GlobalSize(hglobal);
             char *ptr = GlobalLock(hglobal);
 
-            hr = This->onDataAvailable(This->obj, ptr, len);
+            This->hres = hr = This->onDataAvailable(This->obj, ptr, len);
 
             GlobalUnlock(hglobal);
         }
@@ -281,6 +282,7 @@ HRESULT bind_url(LPCWSTR url, HRESULT (*onDataAvailable)(void*,char*,DWORD), voi
     bsc->onDataAvailable = onDataAvailable;
     bsc->binding = NULL;
     bsc->memstream = NULL;
+    bsc->hres = S_OK;
 
     hr = RegisterBindStatusCallback(pbc, &bsc->IBindStatusCallback_iface, NULL, 0);
     if(SUCCEEDED(hr))
@@ -309,11 +311,16 @@ HRESULT bind_url(LPCWSTR url, HRESULT (*onDataAvailable)(void*,char*,DWORD), voi
     return hr;
 }
 
-void detach_bsc(bsc_t *bsc)
+HRESULT detach_bsc(bsc_t *bsc)
 {
+    HRESULT hres;
+
     if(bsc->binding)
         IBinding_Abort(bsc->binding);
 
     bsc->obj = NULL;
+    hres = bsc->hres;
     IBindStatusCallback_Release(&bsc->IBindStatusCallback_iface);
+
+    return hres;
 }

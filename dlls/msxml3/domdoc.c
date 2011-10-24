@@ -2075,8 +2075,11 @@ static HRESULT doread( domdoc *This, LPWSTR filename )
     if(FAILED(hr))
         return hr;
 
-    if(This->bsc)
-        detach_bsc(This->bsc);
+    if(This->bsc) {
+        hr = detach_bsc(This->bsc);
+        if(FAILED(hr))
+            return hr;
+    }
 
     This->bsc = bsc;
     return S_OK;

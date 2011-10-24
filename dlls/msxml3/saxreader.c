@@ -2298,9 +2298,7 @@ static HRESULT internal_parseURL(
     if(FAILED(hr))
         return hr;
 
-    detach_bsc(bsc);
-
-    return S_OK;
+    return detach_bsc(bsc);
 }
 
 static HRESULT internal_putProperty(
