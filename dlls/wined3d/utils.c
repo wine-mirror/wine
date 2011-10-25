@@ -1105,6 +1105,8 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
             WARN("Format %s's sRGB format is not FBO attachable.\n", debug_d3dformat(format->id));
         }
     }
+    else if (status == GL_FRAMEBUFFER_COMPLETE)
+        format->flags |= WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB;
 
     glDeleteTextures(1, &tex);
 
