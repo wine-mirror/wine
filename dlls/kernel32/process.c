@@ -1252,7 +1252,7 @@ void CDECL __wine_kernel_init(void)
         args[0] = (DWORD_PTR)main_exe_name;
         FormatMessageW( FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ARGUMENT_ARRAY,
                         NULL, error, 0, msgW, sizeof(msgW)/sizeof(WCHAR), (__ms_va_list *)args );
-        WideCharToMultiByte( CP_ACP, 0, msgW, -1, msg, sizeof(msg), NULL, NULL );
+        WideCharToMultiByte( CP_UNIXCP, 0, msgW, -1, msg, sizeof(msg), NULL, NULL );
         MESSAGE( "wine: %s", msg );
         ExitProcess( error );
     }
