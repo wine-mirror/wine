@@ -4913,9 +4913,15 @@ static void shader_glsl_context_destroyed(void *shader_priv, const struct wined3
 
 static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct shader_caps *caps)
 {
+    if (gl_info->supported[EXT_GPU_SHADER4] && gl_info->supported[ARB_GEOMETRY_SHADER4]
+            && gl_info->glsl_version >= MAKEDWORD_VERSION(1, 50))
+    {
+        caps->VertexShaderVersion = 4;
+        caps->PixelShaderVersion = 4;
+    }
     /* ARB_shader_texture_lod or EXT_gpu_shader4 is required for the SM3
      * texldd and texldl instructions. */
-    if (gl_info->supported[ARB_SHADER_TEXTURE_LOD] || gl_info->supported[EXT_GPU_SHADER4])
+    else if (gl_info->supported[ARB_SHADER_TEXTURE_LOD] || gl_info->supported[EXT_GPU_SHADER4])
     {
         caps->VertexShaderVersion = 3;
         caps->PixelShaderVersion = 3;

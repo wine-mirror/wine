@@ -4750,7 +4750,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
      * are the same among all shader models. So to avoid code duplication set the shader version
      * specific, but otherwise constant caps here
      */
-    if (caps->VertexShaderVersion == 3)
+    if (caps->VertexShaderVersion >= 3)
     {
         /* Where possible set the caps based on OpenGL extensions and if they
          * aren't set (in case of software rendering) use the VS 3.0 from
@@ -4787,7 +4787,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
         caps->MaxVertexShader30InstructionSlots = 0;
     }
 
-    if (caps->PixelShaderVersion == 3)
+    if (caps->PixelShaderVersion >= 3)
     {
         /* Where possible set the caps based on OpenGL extensions and if they
          * aren't set (in case of software rendering) use the PS 3.0 from
