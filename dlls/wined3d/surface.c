@@ -6030,7 +6030,6 @@ static HRESULT surface_load_drawable(struct wined3d_surface *surface,
 static HRESULT surface_load_texture(struct wined3d_surface *surface,
         const struct wined3d_gl_info *gl_info, const RECT *rect, BOOL srgb)
 {
-    const DWORD attach_flags = WINED3DFMT_FLAG_FBO_ATTACHABLE | WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB;
     RECT src_rect = {0, 0, surface->resource.width, surface->resource.height};
     struct wined3d_device *device = surface->resource.device;
     struct wined3d_context *context;
@@ -6051,7 +6050,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     }
 
     if (surface->flags & (SFLAG_INSRGBTEX | SFLAG_INTEXTURE)
-            && (surface->resource.format->flags & attach_flags) == attach_flags
+            && (surface->resource.format->flags & WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB)
             && fbo_blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
                 NULL, surface->resource.usage, surface->resource.pool, surface->resource.format,
                 NULL, surface->resource.usage, surface->resource.pool, surface->resource.format))
@@ -6067,7 +6066,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     }
 
     if (surface->flags & (SFLAG_INRB_MULTISAMPLE | SFLAG_INRB_RESOLVED)
-            && (surface->resource.format->flags & attach_flags) == attach_flags
+            && (!srgb || (surface->resource.format->flags & WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB))
             && fbo_blit_supported(gl_info, WINED3D_BLIT_OP_COLOR_BLIT,
                 NULL, surface->resource.usage, surface->resource.pool, surface->resource.format,
                 NULL, surface->resource.usage, surface->resource.pool, surface->resource.format))
