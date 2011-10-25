@@ -260,7 +260,7 @@ static void test_get_shader_constant_table_ex(void)
 
     /* No CTAB data */
     hr = D3DXGetShaderConstantTableEx(simple_ps, 0, &constant_table);
-    ok(hr == D3DXERR_INVALIDDATA, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DXERR_INVALIDDATA);
+    ok(hr == D3DXERR_INVALIDDATA, "Got result %x, expected %x (D3DXERR_INVALIDDATA)\n", hr, D3DXERR_INVALIDDATA);
 
     /* With invalid CTAB data */
     hr = D3DXGetShaderConstantTableEx(shader_with_invalid_ctab, 0, &constant_table);
