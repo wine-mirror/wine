@@ -1559,6 +1559,7 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const DWORD *b
     struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
     const struct wined3d_shader_frontend *fe;
     HRESULT hr;
+    unsigned int backend_version;
 
     TRACE("shader %p, byte_code %p, output_signature %p, float_const_count %u.\n",
             shader, byte_code, output_signature, float_const_count);
@@ -1600,6 +1601,24 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const DWORD *b
     if (reg_maps->shader_version.major > max_version)
     {
         WARN("Shader version %d not supported by this D3D API version.\n", reg_maps->shader_version.major);
+        return WINED3DERR_INVALIDCALL;
+    }
+    switch (type)
+    {
+        case WINED3D_SHADER_TYPE_VERTEX:
+            backend_version = shader->device->vshader_version;
+            break;
+        case WINED3D_SHADER_TYPE_PIXEL:
+            backend_version = shader->device->pshader_version;
+            break;
+        default:
+            FIXME("No backend version-checking for this shader type\n");
+            backend_version = 0;
+    }
+    if (reg_maps->shader_version.major > backend_version)
+    {
+        WARN("Shader version %d.%d not supported by your GPU with the current shader backend.\n",
+                reg_maps->shader_version.major, reg_maps->shader_version.minor);
         return WINED3DERR_INVALIDCALL;
     }
 

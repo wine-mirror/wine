@@ -233,6 +233,14 @@ static void test_wrong_shader(IDirect3DDevice9 *device_ptr)
         0x0000ffff                                                              /* END                          */
     };
 
+    const DWORD vs_3_0[] = {
+        0xfffe0300,                                                             /* vs_3_0               */
+        0x0200001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0      */
+        0x0200001f, 0x80000000, 0xe00f0000,                                     /* dcl_position o0      */
+        0x02000001, 0xe00f0000, 0x90e40000,                                     /* mov o0, v0           */
+        0x0000ffff                                                              /* end                  */
+    };
+
 #if 0
 float4 main(const float4 color : COLOR) : SV_TARGET
 {
@@ -263,9 +271,10 @@ float4 main(const float4 color : COLOR) : SV_TARGET
         0x00000000, 0x00000000,
     };
 
-    IDirect3DVertexShader9 *vs;
-    IDirect3DPixelShader9 *ps;
+    IDirect3DVertexShader9 *vs = NULL;
+    IDirect3DPixelShader9 *ps = NULL;
     HRESULT hret;
+    D3DCAPS9 caps;
 
     hret = IDirect3DDevice9_CreateVertexShader(device_ptr, simple_ps, &vs);
     ok(hret == D3DERR_INVALIDCALL, "CreateVertexShader returned: hret 0x%x, shader_ptr %p.\n", hret, vs);
@@ -274,6 +283,15 @@ float4 main(const float4 color : COLOR) : SV_TARGET
 
     hret = IDirect3DDevice9_CreatePixelShader(device_ptr, ps_4_0, &ps);
     ok(hret == D3DERR_INVALIDCALL, "CreatePixelShader returned: hret 0x%x, shader_ptr %p.\n", hret, ps);
+
+    IDirect3DDevice9_GetDeviceCaps(device_ptr, &caps);
+    if (caps.VertexShaderVersion < D3DVS_VERSION(3, 0))
+    {
+        hret = IDirect3DDevice9_CreateVertexShader(device_ptr, vs_3_0, &vs);
+        ok(hret == D3DERR_INVALIDCALL, "CreateVertexShader returned: hret 0x%x, shader_ptr %p.\n", hret, vs);
+    }
+    else
+        skip("This GPU supports SM3, skipping unsupported shader test.\n");
 }
 
 START_TEST(shader)

@@ -1668,6 +1668,7 @@ struct wined3d_device
     const struct blit_shader *blitter;
 
     unsigned int max_ffp_textures;
+    DWORD vshader_version, pshader_version;
     DWORD d3d_vshader_constantF, d3d_pshader_constantF; /* Advertised d3d caps, not GL ones */
     DWORD vs_clipping;
 

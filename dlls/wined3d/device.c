@@ -5938,6 +5938,8 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
     if (device->shader_backend)
     {
         device->shader_backend->shader_get_caps(&adapter->gl_info, &shader_caps);
+        device->vshader_version = shader_caps.VertexShaderVersion;
+        device->pshader_version = shader_caps.PixelShaderVersion;
         device->d3d_vshader_constantF = shader_caps.MaxVertexShaderConst;
         device->d3d_pshader_constantF = shader_caps.MaxPixelShaderConst;
         device->vs_clipping = shader_caps.VSClipping;
