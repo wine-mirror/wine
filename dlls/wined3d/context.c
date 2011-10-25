@@ -2402,8 +2402,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
     return TRUE;
 }
 
-static void context_setup_target(struct wined3d_device *device,
-        struct wined3d_context *context, struct wined3d_surface *target)
+static void context_setup_target(struct wined3d_context *context, struct wined3d_surface *target)
 {
     BOOL old_render_offscreen = context->render_offscreen, render_offscreen;
 
@@ -2507,7 +2506,7 @@ struct wined3d_context *context_acquire(struct wined3d_device *device, struct wi
     }
 
     context_update_window(context);
-    context_setup_target(device, context, target);
+    context_setup_target(context, target);
     context_enter(context);
     if (!context->valid) return context;
 
