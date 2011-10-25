@@ -325,7 +325,8 @@ static HRESULT WINAPI IDirect3D9Impl_CheckDeviceFormatConversion(IDirect3D9Ex *i
 
 void filter_caps(D3DCAPS9* pCaps)
 {
-
+    DWORD ps_minor_version[] = {0, 4, 0, 0};
+    DWORD vs_minor_version[] = {0, 1, 0, 0};
     DWORD textureFilterCaps =
         D3DPTFILTERCAPS_MINFPOINT      | D3DPTFILTERCAPS_MINFLINEAR    | D3DPTFILTERCAPS_MINFANISOTROPIC |
         D3DPTFILTERCAPS_MINFPYRAMIDALQUAD                              | D3DPTFILTERCAPS_MINFGAUSSIANQUAD|
@@ -382,10 +383,21 @@ void filter_caps(D3DCAPS9* pCaps)
     pCaps->MaxVertexShaderConst = min(D3D9_MAX_VERTEX_SHADER_CONSTANTF, pCaps->MaxVertexShaderConst);
     pCaps->NumSimultaneousRTs = min(D3D9_MAX_SIMULTANEOUS_RENDERTARGETS, pCaps->NumSimultaneousRTs);
 
-    if (pCaps->PixelShaderVersion > D3DPS_VERSION(3,0))
+    if (pCaps->PixelShaderVersion > 3)
         pCaps->PixelShaderVersion = D3DPS_VERSION(3,0);
-    if (pCaps->VertexShaderVersion > D3DVS_VERSION(3,0))
+    else
+    {
+        DWORD major = pCaps->PixelShaderVersion;
+        pCaps->PixelShaderVersion = D3DPS_VERSION(major,ps_minor_version[major]);
+    }
+
+    if (pCaps->VertexShaderVersion > 3)
         pCaps->VertexShaderVersion = D3DVS_VERSION(3,0);
+    else
+    {
+        DWORD major = pCaps->VertexShaderVersion;
+        pCaps->VertexShaderVersion = D3DVS_VERSION(major,vs_minor_version[major]);
+    }
 }
 
 static HRESULT WINAPI IDirect3D9Impl_GetDeviceCaps(IDirect3D9Ex *iface, UINT Adapter,

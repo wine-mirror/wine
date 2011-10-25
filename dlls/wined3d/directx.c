@@ -4723,7 +4723,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
     if (vs_selected_mode == SHADER_NONE)
     {
         TRACE_(d3d_caps)("Vertex shader disabled in config, reporting version 0.0\n");
-        caps->VertexShaderVersion          = WINED3DVS_VERSION(0,0);
+        caps->VertexShaderVersion          = 0;
         caps->MaxVertexShaderConst         = 0;
     }
     else
@@ -4735,7 +4735,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
     if (ps_selected_mode == SHADER_NONE)
     {
         TRACE_(d3d_caps)("Pixel shader disabled in config, reporting version 0.0\n");
-        caps->PixelShaderVersion           = WINED3DPS_VERSION(0,0);
+        caps->PixelShaderVersion           = 0;
         caps->PixelShader1xMaxValue        = 0.0f;
     } else {
         caps->PixelShaderVersion           = shader_caps.PixelShaderVersion;
@@ -4750,7 +4750,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
      * are the same among all shader models. So to avoid code duplication set the shader version
      * specific, but otherwise constant caps here
      */
-    if (caps->VertexShaderVersion == WINED3DVS_VERSION(3,0))
+    if (caps->VertexShaderVersion == 3)
     {
         /* Where possible set the caps based on OpenGL extensions and if they
          * aren't set (in case of software rendering) use the VS 3.0 from
@@ -4766,7 +4766,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
         caps->MaxVShaderInstructionsExecuted    = 65535; /* VS 3.0 needs at least 65535, some cards even use 2^32-1 */
         caps->MaxVertexShader30InstructionSlots = max(512, adapter->gl_info.limits.arb_vs_instructions);
     }
-    else if (caps->VertexShaderVersion == WINED3DVS_VERSION(2,0))
+    else if (caps->VertexShaderVersion == 2)
     {
         caps->VS20Caps.Caps                     = 0;
         caps->VS20Caps.DynamicFlowControlDepth  = WINED3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH;
@@ -4787,7 +4787,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
         caps->MaxVertexShader30InstructionSlots = 0;
     }
 
-    if (caps->PixelShaderVersion == WINED3DPS_VERSION(3,0))
+    if (caps->PixelShaderVersion == 3)
     {
         /* Where possible set the caps based on OpenGL extensions and if they
          * aren't set (in case of software rendering) use the PS 3.0 from
@@ -4814,7 +4814,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
         caps->MaxPixelShader30InstructionSlots = max(WINED3DMIN30SHADERINSTRUCTIONS,
                 adapter->gl_info.limits.arb_ps_instructions);
     }
-    else if(caps->PixelShaderVersion == WINED3DPS_VERSION(2,0))
+    else if(caps->PixelShaderVersion == 2)
     {
         /* Below we assume PS2.0 specs, not extended 2.0a(GeforceFX)/2.0b(Radeon R3xx) ones */
         caps->PS20Caps.Caps                     = 0;
@@ -4839,7 +4839,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
         caps->MaxPixelShader30InstructionSlots  = 0;
     }
 
-    if (caps->VertexShaderVersion >= WINED3DVS_VERSION(2,0))
+    if (caps->VertexShaderVersion >= 2)
     {
         /* OpenGL supports all the formats below, perhaps not always
          * without conversion, but it supports them.

@@ -296,12 +296,14 @@ static HRESULT WINAPI IDirect3D8Impl_CheckDepthStencilMatch(IDirect3D8 *iface, U
 void fixup_caps(WINED3DCAPS *caps)
 {
     /* D3D8 doesn't support SM 2.0 or higher, so clamp to 1.x */
-    if (caps->PixelShaderVersion > D3DPS_VERSION(1,4)) {
+    if (caps->PixelShaderVersion)
         caps->PixelShaderVersion = D3DPS_VERSION(1,4);
-    }
-    if (caps->VertexShaderVersion > D3DVS_VERSION(1,1)) {
+    else
+        caps->PixelShaderVersion = D3DPS_VERSION(0,0);
+    if (caps->VertexShaderVersion)
         caps->VertexShaderVersion = D3DVS_VERSION(1,1);
-    }
+    else
+        caps->VertexShaderVersion = D3DVS_VERSION(0,0);
     caps->MaxVertexShaderConst = min(D3D8_MAX_VERTEX_SHADER_CONSTANTF, caps->MaxVertexShaderConst);
 
     caps->StencilCaps &= ~WINED3DSTENCILCAPS_TWOSIDED;

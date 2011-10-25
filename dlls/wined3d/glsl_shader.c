@@ -4917,13 +4917,13 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
      * texldd and texldl instructions. */
     if (gl_info->supported[ARB_SHADER_TEXTURE_LOD] || gl_info->supported[EXT_GPU_SHADER4])
     {
-        caps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
-        caps->PixelShaderVersion = WINED3DPS_VERSION(3,0);
+        caps->VertexShaderVersion = 3;
+        caps->PixelShaderVersion = 3;
     }
     else
     {
-        caps->VertexShaderVersion = WINED3DVS_VERSION(2,0);
-        caps->PixelShaderVersion = WINED3DPS_VERSION(2,0);
+        caps->VertexShaderVersion = 2;
+        caps->PixelShaderVersion = 2;
     }
 
     caps->MaxVertexShaderConst = gl_info->limits.glsl_vs_float_constants;
@@ -4945,10 +4945,10 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
 
     caps->VSClipping = TRUE;
 
-    TRACE_(d3d_caps)("Hardware vertex shader version %u.%u enabled (GLSL).\n",
-            (caps->VertexShaderVersion >> 8) & 0xff, caps->VertexShaderVersion & 0xff);
-    TRACE_(d3d_caps)("Hardware pixel shader version %u.%u enabled (GLSL).\n",
-            (caps->PixelShaderVersion >> 8) & 0xff, caps->PixelShaderVersion & 0xff);
+    TRACE_(d3d_caps)("Hardware vertex shader version %u enabled (GLSL).\n",
+            caps->VertexShaderVersion);
+    TRACE_(d3d_caps)("Hardware pixel shader version %u enabled (GLSL).\n",
+            caps->PixelShaderVersion);
 }
 
 static BOOL shader_glsl_color_fixup_supported(struct color_fixup_desc fixup)
