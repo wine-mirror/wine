@@ -325,7 +325,6 @@ extern void PATH_DestroyGdiPath(GdiPath *pPath) DECLSPEC_HIDDEN;
 extern BOOL PATH_SavePath( DC *dst, DC *src ) DECLSPEC_HIDDEN;
 extern BOOL PATH_RestorePath( DC *dst, DC *src ) DECLSPEC_HIDDEN;
 
-extern BOOL PATH_Rectangle(DC *dc, INT x1, INT y1, INT x2, INT y2) DECLSPEC_HIDDEN;
 extern BOOL PATH_ExtTextOut(DC *dc, INT x, INT y, UINT flags, const RECT *lprc,
                             LPCWSTR str, UINT count, const INT *dx) DECLSPEC_HIDDEN;
 extern BOOL PATH_Ellipse(DC *dc, INT x1, INT y1, INT x2, INT y2) DECLSPEC_HIDDEN;
@@ -339,7 +338,6 @@ extern BOOL PATH_Polyline(DC *dc, const POINT *pt, DWORD cbCount) DECLSPEC_HIDDE
 extern BOOL PATH_Polygon(DC *dc, const POINT *pt, DWORD cbCount) DECLSPEC_HIDDEN;
 extern BOOL PATH_PolyPolyline(DC *dc, const POINT *pt, const DWORD *counts, DWORD polylines) DECLSPEC_HIDDEN;
 extern BOOL PATH_PolyPolygon(DC *dc, const POINT *pt, const INT *counts, UINT polygons) DECLSPEC_HIDDEN;
-extern BOOL PATH_RoundRect(DC *dc, INT x1, INT y1, INT x2, INT y2, INT ell_width, INT ell_height) DECLSPEC_HIDDEN;
 
 /* painting.c */
 extern POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut ) DECLSPEC_HIDDEN;

@@ -273,9 +273,9 @@ static BOOL PATH_AssignGdiPath(GdiPath *pPathDest, const GdiPath *pPathSrc)
 
 /* PATH_CheckCorners
  *
- * Helper function for PATH_RoundRect() and PATH_Rectangle()
+ * Helper function for RoundRect() and Rectangle()
  */
-static BOOL PATH_CheckCorners(DC *dc, POINT corners[], INT x1, INT y1, INT x2, INT y2)
+static void PATH_CheckCorners( HDC hdc, POINT corners[], INT x1, INT y1, INT x2, INT y2 )
 {
     INT temp;
 
@@ -284,8 +284,7 @@ static BOOL PATH_CheckCorners(DC *dc, POINT corners[], INT x1, INT y1, INT x2, I
     corners[0].y=y1;
     corners[1].x=x2;
     corners[1].y=y2;
-    if(!LPtoDP(dc->hSelf, corners, 2))
-        return FALSE;
+    LPtoDP( hdc, corners, 2 );
 
     /* Make sure first corner is top left and second corner is bottom right */
     if(corners[0].x>corners[1].x)
@@ -302,13 +301,11 @@ static BOOL PATH_CheckCorners(DC *dc, POINT corners[], INT x1, INT y1, INT x2, I
     }
 
     /* In GM_COMPATIBLE, don't include bottom and right edges */
-    if(dc->GraphicsMode==GM_COMPATIBLE)
+    if (GetGraphicsMode( hdc ) == GM_COMPATIBLE)
     {
         corners[1].x--;
         corners[1].y--;
     }
-
-    return TRUE;
 }
 
 /* PATH_AddFlatBezier
@@ -926,115 +923,85 @@ static BOOL pathdrv_LineTo( PHYSDEV dev, INT x, INT y )
     return PATH_AddEntry(physdev->path, &point, PT_LINETO);
 }
 
-/* PATH_RoundRect
- *
- * Should be called when a call to RoundRect is performed on a DC that has
- * an open path. Returns TRUE if successful, else FALSE.
+
+/*************************************************************
+ *           pathdrv_RoundRect
  *
  * FIXME: it adds the same entries to the path as windows does, but there
  * is an error in the bezier drawing code so that there are small pixel-size
  * gaps when the resulting path is drawn by StrokePath()
  */
-BOOL PATH_RoundRect(DC *dc, INT x1, INT y1, INT x2, INT y2, INT ell_width, INT ell_height)
+static BOOL pathdrv_RoundRect( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2, INT ell_width, INT ell_height )
 {
-   GdiPath *pPath = &dc->path;
-   POINT corners[2], pointTemp;
-   FLOAT_POINT ellCorners[2];
+    struct path_physdev *physdev = get_path_physdev( dev );
+    POINT corners[2], pointTemp;
+    FLOAT_POINT ellCorners[2];
 
-   /* Check that path is open */
-   if(pPath->state!=PATH_Open)
-      return FALSE;
-
-   if(!PATH_CheckCorners(dc,corners,x1,y1,x2,y2))
-      return FALSE;
+    PATH_CheckCorners(dev->hdc,corners,x1,y1,x2,y2);
 
    /* Add points to the roundrect path */
    ellCorners[0].x = corners[1].x-ell_width;
    ellCorners[0].y = corners[0].y;
    ellCorners[1].x = corners[1].x;
    ellCorners[1].y = corners[0].y+ell_height;
-   if(!PATH_DoArcPart(pPath, ellCorners, 0, -M_PI_2, PT_MOVETO))
+   if(!PATH_DoArcPart(physdev->path, ellCorners, 0, -M_PI_2, PT_MOVETO))
       return FALSE;
    pointTemp.x = corners[0].x+ell_width/2;
    pointTemp.y = corners[0].y;
-   if(!PATH_AddEntry(pPath, &pointTemp, PT_LINETO))
+   if(!PATH_AddEntry(physdev->path, &pointTemp, PT_LINETO))
       return FALSE;
    ellCorners[0].x = corners[0].x;
    ellCorners[1].x = corners[0].x+ell_width;
-   if(!PATH_DoArcPart(pPath, ellCorners, -M_PI_2, -M_PI, FALSE))
+   if(!PATH_DoArcPart(physdev->path, ellCorners, -M_PI_2, -M_PI, FALSE))
       return FALSE;
    pointTemp.x = corners[0].x;
    pointTemp.y = corners[1].y-ell_height/2;
-   if(!PATH_AddEntry(pPath, &pointTemp, PT_LINETO))
+   if(!PATH_AddEntry(physdev->path, &pointTemp, PT_LINETO))
       return FALSE;
    ellCorners[0].y = corners[1].y-ell_height;
    ellCorners[1].y = corners[1].y;
-   if(!PATH_DoArcPart(pPath, ellCorners, M_PI, M_PI_2, FALSE))
+   if(!PATH_DoArcPart(physdev->path, ellCorners, M_PI, M_PI_2, FALSE))
       return FALSE;
    pointTemp.x = corners[1].x-ell_width/2;
    pointTemp.y = corners[1].y;
-   if(!PATH_AddEntry(pPath, &pointTemp, PT_LINETO))
+   if(!PATH_AddEntry(physdev->path, &pointTemp, PT_LINETO))
       return FALSE;
    ellCorners[0].x = corners[1].x-ell_width;
    ellCorners[1].x = corners[1].x;
-   if(!PATH_DoArcPart(pPath, ellCorners, M_PI_2, 0, FALSE))
+   if(!PATH_DoArcPart(physdev->path, ellCorners, M_PI_2, 0, FALSE))
       return FALSE;
 
    /* Close the roundrect figure */
-   if(!CloseFigure(dc->hSelf))
-      return FALSE;
-
-   return TRUE;
+   return CloseFigure( dev->hdc );
 }
 
-/* PATH_Rectangle
- *
- * Should be called when a call to Rectangle is performed on a DC that has
- * an open path. Returns TRUE if successful, else FALSE.
+
+/*************************************************************
+ *           pathdrv_Rectangle
  */
-BOOL PATH_Rectangle(DC *dc, INT x1, INT y1, INT x2, INT y2)
+static BOOL pathdrv_Rectangle( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
 {
-   GdiPath *pPath = &dc->path;
-   POINT corners[2], pointTemp;
+    struct path_physdev *physdev = get_path_physdev( dev );
+    POINT corners[2], pointTemp;
 
-   /* Check that path is open */
-   if(pPath->state!=PATH_Open)
-      return FALSE;
-
-   if(!PATH_CheckCorners(dc,corners,x1,y1,x2,y2))
-      return FALSE;
-
-   /* Close any previous figure */
-   if(!CloseFigure(dc->hSelf))
-   {
-      /* The CloseFigure call shouldn't have failed */
-      assert(FALSE);
-      return FALSE;
-   }
+    PATH_CheckCorners(dev->hdc,corners,x1,y1,x2,y2);
 
    /* Add four points to the path */
    pointTemp.x=corners[1].x;
    pointTemp.y=corners[0].y;
-   if(!PATH_AddEntry(pPath, &pointTemp, PT_MOVETO))
+   if(!PATH_AddEntry(physdev->path, &pointTemp, PT_MOVETO))
       return FALSE;
-   if(!PATH_AddEntry(pPath, corners, PT_LINETO))
+   if(!PATH_AddEntry(physdev->path, corners, PT_LINETO))
       return FALSE;
    pointTemp.x=corners[0].x;
    pointTemp.y=corners[1].y;
-   if(!PATH_AddEntry(pPath, &pointTemp, PT_LINETO))
+   if(!PATH_AddEntry(physdev->path, &pointTemp, PT_LINETO))
       return FALSE;
-   if(!PATH_AddEntry(pPath, corners+1, PT_LINETO))
+   if(!PATH_AddEntry(physdev->path, corners+1, PT_LINETO))
       return FALSE;
 
    /* Close the rectangle figure */
-   if(!CloseFigure(dc->hSelf))
-   {
-      /* The CloseFigure call shouldn't have failed */
-      assert(FALSE);
-      return FALSE;
-   }
-
-   return TRUE;
+   return CloseFigure( dev->hdc );
 }
 
 /* PATH_Ellipse
@@ -2373,10 +2340,10 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pPutImage */
     NULL,                               /* pRealizeDefaultPalette */
     NULL,                               /* pRealizePalette */
-    NULL,                               /* pRectangle */
+    pathdrv_Rectangle,                  /* pRectangle */
     NULL,                               /* pResetDC */
     NULL,                               /* pRestoreDC */
-    NULL,                               /* pRoundRect */
+    pathdrv_RoundRect,                  /* pRoundRect */
     NULL,                               /* pSaveDC */
     NULL,                               /* pScaleViewportExt */
     NULL,                               /* pScaleWindowExt */

@@ -422,14 +422,9 @@ BOOL WINAPI Rectangle( HDC hdc, INT left, INT top,
 
     if (dc)
     {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pRectangle );
         update_dc( dc );
-        if(PATH_IsPathOpen(dc->path))
-            ret = PATH_Rectangle(dc, left, top, right, bottom);
-        else
-        {
-            PHYSDEV physdev = GET_DC_PHYSDEV( dc, pRectangle );
-            ret = physdev->funcs->pRectangle( physdev, left, top, right, bottom );
-        }
+        ret = physdev->funcs->pRectangle( physdev, left, top, right, bottom );
         release_dc_ptr( dc );
     }
     return ret;
@@ -447,14 +442,9 @@ BOOL WINAPI RoundRect( HDC hdc, INT left, INT top, INT right,
 
     if (dc)
     {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pRoundRect );
         update_dc( dc );
-        if(PATH_IsPathOpen(dc->path))
-	    ret = PATH_RoundRect(dc,left,top,right,bottom,ell_width,ell_height);
-        else
-        {
-            PHYSDEV physdev = GET_DC_PHYSDEV( dc, pRoundRect );
-            ret = physdev->funcs->pRoundRect( physdev, left, top, right, bottom, ell_width, ell_height );
-        }
+        ret = physdev->funcs->pRoundRect( physdev, left, top, right, bottom, ell_width, ell_height );
         release_dc_ptr( dc );
     }
     return ret;
