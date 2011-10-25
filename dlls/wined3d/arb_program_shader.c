@@ -312,6 +312,10 @@ struct shader_arb_priv
 
     struct wine_rb_tree     signature_tree;
     DWORD ps_sig_number;
+
+    unsigned int highest_dirty_ps_const, highest_dirty_vs_const;
+    char *vshader_const_dirty, *pshader_const_dirty;
+    const struct wined3d_context *last_context;
 };
 
 /* GL locking for state handlers is done by the caller. */
@@ -633,14 +637,27 @@ static void shader_arb_load_constants(const struct wined3d_context *context, cha
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct shader_arb_priv *priv = device->shader_priv;
 
+    if (context != priv->last_context)
+    {
+        memset(priv->vshader_const_dirty, 1,
+                sizeof(*priv->vshader_const_dirty) * device->d3d_vshader_constantF);
+        priv->highest_dirty_vs_const = device->d3d_vshader_constantF;
+
+        memset(priv->pshader_const_dirty, 1,
+                sizeof(*priv->pshader_const_dirty) * device->d3d_pshader_constantF);
+        priv->highest_dirty_ps_const = device->d3d_pshader_constantF;
+
+        priv->last_context = context;
+    }
+
     if (useVertexShader)
     {
         struct wined3d_shader *vshader = state->vertex_shader;
         const struct arb_vs_compiled_shader *gl_shader = priv->compiled_vprog;
 
         /* Load DirectX 9 float constants for vertex shader */
-        device->highest_dirty_vs_const = shader_arb_load_constantsF(vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
-                device->highest_dirty_vs_const, state->vs_consts_f, context->vshader_const_dirty);
+        priv->highest_dirty_vs_const = shader_arb_load_constantsF(vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
+                priv->highest_dirty_vs_const, state->vs_consts_f, priv->vshader_const_dirty);
         shader_arb_vs_local_constants(gl_shader, context, state);
     }
 
@@ -651,8 +668,8 @@ static void shader_arb_load_constants(const struct wined3d_context *context, cha
         UINT rt_height = state->fb->render_targets[0]->resource.height;
 
         /* Load DirectX 9 float constants for pixel shader */
-        device->highest_dirty_ps_const = shader_arb_load_constantsF(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB,
-                device->highest_dirty_ps_const, state->ps_consts_f, context->pshader_const_dirty);
+        priv->highest_dirty_ps_const = shader_arb_load_constantsF(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB,
+                priv->highest_dirty_ps_const, state->ps_consts_f, priv->pshader_const_dirty);
         shader_arb_ps_local_constants(gl_shader, context, state, rt_height);
     }
 }
@@ -660,25 +677,27 @@ static void shader_arb_load_constants(const struct wined3d_context *context, cha
 static void shader_arb_update_float_vertex_constants(struct wined3d_device *device, UINT start, UINT count)
 {
     struct wined3d_context *context = context_get_current();
+    struct shader_arb_priv *priv = device->shader_priv;
 
     /* We don't want shader constant dirtification to be an O(contexts), so just dirtify the active
      * context. On a context switch the old context will be fully dirtified */
     if (!context || context->swapchain->device != device) return;
 
-    memset(context->vshader_const_dirty + start, 1, sizeof(*context->vshader_const_dirty) * count);
-    device->highest_dirty_vs_const = max(device->highest_dirty_vs_const, start + count);
+    memset(priv->vshader_const_dirty + start, 1, sizeof(*priv->vshader_const_dirty) * count);
+    priv->highest_dirty_vs_const = max(priv->highest_dirty_vs_const, start + count);
 }
 
 static void shader_arb_update_float_pixel_constants(struct wined3d_device *device, UINT start, UINT count)
 {
     struct wined3d_context *context = context_get_current();
+    struct shader_arb_priv *priv = device->shader_priv;
 
     /* We don't want shader constant dirtification to be an O(contexts), so just dirtify the active
      * context. On a context switch the old context will be fully dirtified */
     if (!context || context->swapchain->device != device) return;
 
-    memset(context->pshader_const_dirty + start, 1, sizeof(*context->pshader_const_dirty) * count);
-    device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, start + count);
+    memset(priv->pshader_const_dirty + start, 1, sizeof(*priv->pshader_const_dirty) * count);
+    priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, start + count);
 }
 
 static DWORD *local_const_mapping(const struct wined3d_shader *shader)
@@ -4602,10 +4621,10 @@ static void shader_arb_select(const struct wined3d_context *context, BOOL usePS,
         if (priv->last_ps_const_clamped != ((struct arb_pshader_private *)ps->backend_data)->clamp_consts)
         {
             priv->last_ps_const_clamped = ((struct arb_pshader_private *)ps->backend_data)->clamp_consts;
-            device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, 8);
+            priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, 8);
             for(i = 0; i < 8; i++)
             {
-                context->pshader_const_dirty[i] = 1;
+                priv->pshader_const_dirty[i] = 1;
             }
             /* Also takes care of loading local constants */
             shader_arb_load_constants(context, TRUE, FALSE);
@@ -4799,14 +4818,34 @@ static const struct wine_rb_functions sig_tree_functions =
 static HRESULT shader_arb_alloc(struct wined3d_device *device)
 {
     struct shader_arb_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*priv));
+
+    priv->vshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
+            sizeof(*priv->vshader_const_dirty) * device->d3d_vshader_constantF);
+    if (!priv->vshader_const_dirty)
+        goto fail;
+    memset(priv->vshader_const_dirty, 1,
+           sizeof(*priv->vshader_const_dirty) * device->d3d_vshader_constantF);
+
+    priv->pshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
+            sizeof(*priv->pshader_const_dirty) * device->d3d_pshader_constantF);
+    if (!priv->pshader_const_dirty)
+        goto fail;
+    memset(priv->pshader_const_dirty, 1,
+            sizeof(*priv->pshader_const_dirty) * device->d3d_pshader_constantF);
+
     if(wine_rb_init(&priv->signature_tree, &sig_tree_functions) == -1)
     {
         ERR("RB tree init failed\n");
-        HeapFree(GetProcessHeap(), 0, priv);
-        return E_OUTOFMEMORY;
+        goto fail;
     }
     device->shader_priv = priv;
     return WINED3D_OK;
+
+fail:
+    HeapFree(GetProcessHeap(), 0, priv->pshader_const_dirty);
+    HeapFree(GetProcessHeap(), 0, priv->vshader_const_dirty);
+    HeapFree(GetProcessHeap(), 0, priv);
+    return E_OUTOFMEMORY;
 }
 
 static void release_signature(struct wine_rb_entry *entry, void *context)
@@ -4846,12 +4885,17 @@ static void shader_arb_free(struct wined3d_device *device)
     LEAVE_GL();
 
     wine_rb_destroy(&priv->signature_tree, release_signature, NULL);
+    HeapFree(GetProcessHeap(), 0, priv->pshader_const_dirty);
+    HeapFree(GetProcessHeap(), 0, priv->vshader_const_dirty);
     HeapFree(GetProcessHeap(), 0, device->shader_priv);
 }
 
-static BOOL shader_arb_dirty_const(void)
+static void shader_arb_context_destroyed(void *shader_priv, const struct wined3d_context *context)
 {
-    return TRUE;
+    struct shader_arb_priv *priv = shader_priv;
+
+    if (priv->last_context == context)
+        priv->last_context = NULL;
 }
 
 static void shader_arb_get_caps(const struct wined3d_gl_info *gl_info, struct shader_caps *caps)
@@ -5481,7 +5525,7 @@ const struct wined3d_shader_backend_ops arb_program_shader_backend =
     shader_arb_destroy,
     shader_arb_alloc,
     shader_arb_free,
-    shader_arb_dirty_const,
+    shader_arb_context_destroyed,
     shader_arb_get_caps,
     shader_arb_color_fixup_supported,
 };
@@ -5612,10 +5656,13 @@ static void state_texfactor_arbfp(struct wined3d_context *context,
      * otherwise we'll overwrite application provided constants. */
     if (device->shader_backend == &arb_program_shader_backend)
     {
+        struct shader_arb_priv *priv;
+
         if (use_ps(state)) return;
 
-        context->pshader_const_dirty[ARB_FFP_CONST_TFACTOR] = 1;
-        device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_TFACTOR + 1);
+        priv = device->shader_priv;
+        priv->pshader_const_dirty[ARB_FFP_CONST_TFACTOR] = 1;
+        priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, ARB_FFP_CONST_TFACTOR + 1);
     }
 
     D3DCOLORTOGLFLOAT4(state->render_states[WINED3DRS_TEXTUREFACTOR], col);
@@ -5635,10 +5682,13 @@ static void state_arb_specularenable(struct wined3d_context *context,
      */
     if (device->shader_backend == &arb_program_shader_backend)
     {
+        struct shader_arb_priv *priv;
+
         if (use_ps(state)) return;
 
-        context->pshader_const_dirty[ARB_FFP_CONST_SPECULAR_ENABLE] = 1;
-        device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_SPECULAR_ENABLE + 1);
+        priv = device->shader_priv;
+        priv->pshader_const_dirty[ARB_FFP_CONST_SPECULAR_ENABLE] = 1;
+        priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, ARB_FFP_CONST_SPECULAR_ENABLE + 1);
     }
 
     if (state->render_states[WINED3DRS_SPECULARENABLE])
@@ -5676,9 +5726,12 @@ static void set_bumpmat_arbfp(struct wined3d_context *context, const struct wine
             /* Exit now, don't set the bumpmat below, otherwise we may overwrite pixel shader constants */
             return;
         }
-    } else if(device->shader_backend == &arb_program_shader_backend) {
-        context->pshader_const_dirty[ARB_FFP_CONST_BUMPMAT(stage)] = 1;
-        device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_BUMPMAT(stage) + 1);
+    }
+    else if (device->shader_backend == &arb_program_shader_backend)
+    {
+        struct shader_arb_priv *priv = device->shader_priv;
+        priv->pshader_const_dirty[ARB_FFP_CONST_BUMPMAT(stage)] = 1;
+        priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, ARB_FFP_CONST_BUMPMAT(stage) + 1);
     }
 
     mat[0][0] = *((float *)&state->texture_states[stage][WINED3DTSS_BUMPENVMAT00]);
@@ -5713,9 +5766,12 @@ static void tex_bumpenvlum_arbfp(struct wined3d_context *context,
             /* Exit now, don't set the bumpmat below, otherwise we may overwrite pixel shader constants */
             return;
         }
-    } else if(device->shader_backend == &arb_program_shader_backend) {
-        context->pshader_const_dirty[ARB_FFP_CONST_LUMINANCE(stage)] = 1;
-        device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_LUMINANCE(stage) + 1);
+    }
+    else if (device->shader_backend == &arb_program_shader_backend)
+    {
+        struct shader_arb_priv *priv = device->shader_priv;
+        priv->pshader_const_dirty[ARB_FFP_CONST_LUMINANCE(stage)] = 1;
+        priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, ARB_FFP_CONST_LUMINANCE(stage) + 1);
     }
 
     param[0] = *((float *)&state->texture_states[stage][WINED3DTSS_BUMPENVLSCALE]);

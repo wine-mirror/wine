@@ -1340,25 +1340,6 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         return NULL;
     }
 
-    if (device->shader_backend->shader_dirtifyable_constants())
-    {
-        /* Create the dirty constants array and initialize them to dirty */
-        ret->vshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
-                sizeof(*ret->vshader_const_dirty) * device->d3d_vshader_constantF);
-        if (!ret->vshader_const_dirty)
-            goto out;
-
-        ret->pshader_const_dirty = HeapAlloc(GetProcessHeap(), 0,
-                sizeof(*ret->pshader_const_dirty) * device->d3d_pshader_constantF);
-        if (!ret->pshader_const_dirty)
-            goto out;
-
-        memset(ret->vshader_const_dirty, 1,
-               sizeof(*ret->vshader_const_dirty) * device->d3d_vshader_constantF);
-        memset(ret->pshader_const_dirty, 1,
-                sizeof(*ret->pshader_const_dirty) * device->d3d_pshader_constantF);
-    }
-
     ret->blit_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
             gl_info->limits.buffers * sizeof(*ret->blit_targets));
     if (!ret->blit_targets)
@@ -1655,8 +1636,6 @@ out:
     HeapFree(GetProcessHeap(), 0, ret->free_occlusion_queries);
     HeapFree(GetProcessHeap(), 0, ret->draw_buffers);
     HeapFree(GetProcessHeap(), 0, ret->blit_targets);
-    HeapFree(GetProcessHeap(), 0, ret->pshader_const_dirty);
-    HeapFree(GetProcessHeap(), 0, ret->vshader_const_dirty);
     HeapFree(GetProcessHeap(), 0, ret);
     return NULL;
 }
@@ -1682,8 +1661,6 @@ void context_destroy(struct wined3d_device *device, struct wined3d_context *cont
 
     HeapFree(GetProcessHeap(), 0, context->draw_buffers);
     HeapFree(GetProcessHeap(), 0, context->blit_targets);
-    HeapFree(GetProcessHeap(), 0, context->vshader_const_dirty);
-    HeapFree(GetProcessHeap(), 0, context->pshader_const_dirty);
     device_context_remove(device, context);
     if (destroy) HeapFree(GetProcessHeap(), 0, context);
 }
@@ -2455,7 +2432,7 @@ static void context_setup_target(struct wined3d_context *context, struct wined3d
 }
 
 /* Do not call while under the GL lock. */
-struct wined3d_context *context_acquire(struct wined3d_device *device, struct wined3d_surface *target)
+struct wined3d_context *context_acquire(const struct wined3d_device *device, struct wined3d_surface *target)
 {
     struct wined3d_context *current_context = context_get_current();
     struct wined3d_context *context;
@@ -2521,19 +2498,6 @@ struct wined3d_context *context_acquire(struct wined3d_device *device, struct wi
             ENTER_GL();
             device->frag_pipe->enable_extension(!context->last_was_blit);
             LEAVE_GL();
-        }
-
-        if (context->vshader_const_dirty)
-        {
-            memset(context->vshader_const_dirty, 1,
-                    sizeof(*context->vshader_const_dirty) * device->d3d_vshader_constantF);
-            device->highest_dirty_vs_const = device->d3d_vshader_constantF;
-        }
-        if (context->pshader_const_dirty)
-        {
-            memset(context->pshader_const_dirty, 1,
-                   sizeof(*context->pshader_const_dirty) * device->d3d_pshader_constantF);
-            device->highest_dirty_ps_const = device->d3d_pshader_constantF;
         }
     }
     else if (context->restore_ctx)

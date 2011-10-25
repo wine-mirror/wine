@@ -4909,11 +4909,7 @@ static void shader_glsl_free(struct wined3d_device *device)
     device->shader_priv = NULL;
 }
 
-static BOOL shader_glsl_dirty_const(void)
-{
-    /* TODO: GL_EXT_bindable_uniform can be used to share constants across shaders */
-    return FALSE;
-}
+static void shader_glsl_context_destroyed(void *shader_priv, const struct wined3d_context *context) {}
 
 static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct shader_caps *caps)
 {
@@ -5109,7 +5105,7 @@ const struct wined3d_shader_backend_ops glsl_shader_backend =
     shader_glsl_destroy,
     shader_glsl_alloc,
     shader_glsl_free,
-    shader_glsl_dirty_const,
+    shader_glsl_context_destroyed,
     shader_glsl_get_caps,
     shader_glsl_color_fixup_supported,
 };

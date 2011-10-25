@@ -1351,8 +1351,6 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
 
     if (wined3d_settings.logo)
         device_load_logo(device, wined3d_settings.logo);
-    device->highest_dirty_ps_const = 0;
-    device->highest_dirty_vs_const = 0;
     return WINED3D_OK;
 
 err_out:

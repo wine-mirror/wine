@@ -1502,7 +1502,7 @@ static void shader_none_load_np2fixup_constants(void *shader_priv,
 static void shader_none_destroy(struct wined3d_shader *shader) {}
 static HRESULT shader_none_alloc(struct wined3d_device *device) {return WINED3D_OK;}
 static void shader_none_free(struct wined3d_device *device) {}
-static BOOL shader_none_dirty_const(void) {return FALSE;}
+static void shader_none_context_destroyed(void *shader_priv, const struct wined3d_context *context) {}
 
 static void shader_none_get_caps(const struct wined3d_gl_info *gl_info, struct shader_caps *caps)
 {
@@ -1547,7 +1547,7 @@ const struct wined3d_shader_backend_ops none_shader_backend =
     shader_none_destroy,
     shader_none_alloc,
     shader_none_free,
-    shader_none_dirty_const,
+    shader_none_context_destroyed,
     shader_none_get_caps,
     shader_none_color_fixup_supported,
 };

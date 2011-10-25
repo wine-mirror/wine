@@ -762,7 +762,7 @@ struct wined3d_shader_backend_ops
     void (*shader_destroy)(struct wined3d_shader *shader);
     HRESULT (*shader_alloc_private)(struct wined3d_device *device);
     void (*shader_free_private)(struct wined3d_device *device);
-    BOOL (*shader_dirtifyable_constants)(void);
+    void (*shader_context_destroyed)(void *shader_priv, const struct wined3d_context *context);
     void (*shader_get_caps)(const struct wined3d_gl_info *gl_info, struct shader_caps *caps);
     BOOL (*shader_color_fixup_supported)(struct color_fixup_desc fixup);
 };
@@ -1093,8 +1093,6 @@ struct wined3d_context
     DWORD active_texture;
     DWORD texture_type[MAX_COMBINED_SAMPLERS];
 
-    char                    *vshader_const_dirty, *pshader_const_dirty;
-
     /* The actual opengl context */
     UINT level;
     HGLRC restore_ctx;
@@ -1228,7 +1226,8 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
         struct wined3d_surface *src_surface, const RECT *src_rect,
         struct wined3d_surface *dst_surface, const RECT *dst_rect) DECLSPEC_HIDDEN;
 
-struct wined3d_context *context_acquire(struct wined3d_device *device, struct wined3d_surface *target) DECLSPEC_HIDDEN;
+struct wined3d_context *context_acquire(const struct wined3d_device *device,
+        struct wined3d_surface *target) DECLSPEC_HIDDEN;
 void context_alloc_event_query(struct wined3d_context *context,
         struct wined3d_event_query *query) DECLSPEC_HIDDEN;
 void context_alloc_occlusion_query(struct wined3d_context *context,
@@ -1705,7 +1704,6 @@ struct wined3d_device
 
     struct list             resources; /* a linked list to track resources created by the device */
     struct list             shaders;   /* a linked list to track shaders (pixel and vertex)      */
-    unsigned int            highest_dirty_ps_const, highest_dirty_vs_const;
 
     /* Render Target Support */
     DWORD valid_rt_mask;
