@@ -638,7 +638,7 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 					current_line->width -= piDx[prev];
 					prev--;
 				} while ( prev > 0 && current_line->width > fw);
-				if (prev==0)
+				if (prev<=0)
 					prev = 1;
 				HeapFree(GetProcessHeap(),0,piDx);
 			}
