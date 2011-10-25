@@ -106,15 +106,20 @@ static inline void pop_path_driver( DC *dc )
 /* Performs a world-to-viewport transformation on the specified point (which
  * is in floating point format).
  */
-static inline void INTERNAL_LPTODP_FLOAT(DC *dc, FLOAT_POINT *point)
+static inline void INTERNAL_LPTODP_FLOAT( HDC hdc, FLOAT_POINT *point, int count )
 {
+    DC *dc = get_dc_ptr( hdc );
     double x, y;
 
-    /* Perform the transformation */
-    x = point->x;
-    y = point->y;
-    point->x = x * dc->xformWorld2Vport.eM11 + y * dc->xformWorld2Vport.eM21 + dc->xformWorld2Vport.eDx;
-    point->y = x * dc->xformWorld2Vport.eM12 + y * dc->xformWorld2Vport.eM22 + dc->xformWorld2Vport.eDy;
+    while (count--)
+    {
+        x = point->x;
+        y = point->y;
+        point->x = x * dc->xformWorld2Vport.eM11 + y * dc->xformWorld2Vport.eM21 + dc->xformWorld2Vport.eDx;
+        point->y = x * dc->xformWorld2Vport.eM12 + y * dc->xformWorld2Vport.eM22 + dc->xformWorld2Vport.eDy;
+        point++;
+    }
+    release_dc_ptr( dc );
 }
 
 static inline INT int_from_fixed(FIXED f)
@@ -1004,17 +1009,6 @@ static BOOL pathdrv_Rectangle( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
    return CloseFigure( dev->hdc );
 }
 
-/* PATH_Ellipse
- *
- * Should be called when a call to Ellipse is performed on a DC that has
- * an open path. This adds four Bezier splines representing the ellipse
- * to the path. Returns TRUE if successful, else FALSE.
- */
-BOOL PATH_Ellipse(DC *dc, INT x1, INT y1, INT x2, INT y2)
-{
-   return( PATH_Arc(dc, x1, y1, x2, y2, x1, (y1+y2)/2, x1, (y1+y2)/2,0) &&
-           CloseFigure(dc->hSelf) );
-}
 
 /* PATH_Arc
  *
@@ -1026,24 +1020,19 @@ BOOL PATH_Ellipse(DC *dc, INT x1, INT y1, INT x2, INT y2)
  * of the arc before drawing the arc itself (arcto). Returns TRUE if successful,
  * else FALSE.
  */
-BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
-   INT xStart, INT yStart, INT xEnd, INT yEnd, INT lines)
+static BOOL PATH_Arc( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2,
+                      INT xStart, INT yStart, INT xEnd, INT yEnd, INT lines )
 {
-   GdiPath     *pPath = &dc->path;
-   double      angleStart, angleEnd, angleStartQuadrant, angleEndQuadrant=0.0;
+    struct path_physdev *physdev = get_path_physdev( dev );
+    double angleStart, angleEnd, angleStartQuadrant, angleEndQuadrant=0.0;
                /* Initialize angleEndQuadrant to silence gcc's warning */
-   double      x, y;
-   FLOAT_POINT corners[2], pointStart, pointEnd;
-   POINT       centre, pointCurPos;
-   BOOL      start, end;
-   INT       temp;
+    double x, y;
+    FLOAT_POINT corners[2], pointStart, pointEnd;
+    POINT centre;
+    BOOL start, end;
+    INT temp, direction = GetArcDirection(dev->hdc);
 
-   /* FIXME: This function should check for all possible error returns */
    /* FIXME: Do we have to respect newStroke? */
-
-   /* Check that path is open */
-   if(pPath->state!=PATH_Open)
-      return FALSE;
 
    /* Check for zero height / width */
    /* FIXME: Only in GM_COMPATIBLE? */
@@ -1059,10 +1048,9 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
    pointStart.y = yStart;
    pointEnd.x = xEnd;
    pointEnd.y = yEnd;
-   INTERNAL_LPTODP_FLOAT(dc, corners);
-   INTERNAL_LPTODP_FLOAT(dc, corners+1);
-   INTERNAL_LPTODP_FLOAT(dc, &pointStart);
-   INTERNAL_LPTODP_FLOAT(dc, &pointEnd);
+   INTERNAL_LPTODP_FLOAT(dev->hdc, corners, 2);
+   INTERNAL_LPTODP_FLOAT(dev->hdc, &pointStart, 1);
+   INTERNAL_LPTODP_FLOAT(dev->hdc, &pointEnd, 1);
 
    /* Make sure first corner is top left and second corner is bottom right */
    if(corners[0].x>corners[1].x)
@@ -1085,7 +1073,7 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
    angleEnd=atan2(y, x);
 
    /* Make sure the end angle is "on the right side" of the start angle */
-   if(dc->ArcDirection==AD_CLOCKWISE)
+   if (direction == AD_CLOCKWISE)
    {
       if(angleEnd<=angleStart)
       {
@@ -1103,23 +1091,14 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
    }
 
    /* In GM_COMPATIBLE, don't include bottom and right edges */
-   if(dc->GraphicsMode==GM_COMPATIBLE)
+   if (GetGraphicsMode(dev->hdc) == GM_COMPATIBLE)
    {
       corners[1].x--;
       corners[1].y--;
    }
 
    /* arcto: Add a PT_MOVETO only if this is the first entry in a stroke */
-   if(lines==-1 && pPath->newStroke)
-   {
-      pPath->newStroke=FALSE;
-      pointCurPos.x = dc->CursPosX;
-      pointCurPos.y = dc->CursPosY;
-      if(!LPtoDP(dc->hSelf, &pointCurPos, 1))
-         return FALSE;
-      if(!PATH_AddEntry(pPath, &pointCurPos, PT_MOVETO))
-         return FALSE;
-   }
+   if (lines==-1 && !start_new_stroke( physdev )) return FALSE;
 
    /* Add the arc to the path with one Bezier spline per quadrant that the
     * arc spans */
@@ -1131,7 +1110,7 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
       if(start)
       {
          angleStartQuadrant=angleStart;
-	 if(dc->ArcDirection==AD_CLOCKWISE)
+	 if (direction == AD_CLOCKWISE)
 	    angleEndQuadrant=(floor(angleStart/M_PI_2)+1.0)*M_PI_2;
 	 else
 	    angleEndQuadrant=(ceil(angleStart/M_PI_2)-1.0)*M_PI_2;
@@ -1139,17 +1118,15 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
       else
       {
 	 angleStartQuadrant=angleEndQuadrant;
-	 if(dc->ArcDirection==AD_CLOCKWISE)
+	 if (direction == AD_CLOCKWISE)
 	    angleEndQuadrant+=M_PI_2;
 	 else
 	    angleEndQuadrant-=M_PI_2;
       }
 
       /* Have we reached the last part of the arc? */
-      if((dc->ArcDirection==AD_CLOCKWISE &&
-         angleEnd<angleEndQuadrant) ||
-	 (dc->ArcDirection==AD_COUNTERCLOCKWISE &&
-	 angleEnd>angleEndQuadrant))
+      if((direction == AD_CLOCKWISE && angleEnd<angleEndQuadrant) ||
+	 (direction == AD_COUNTERCLOCKWISE && angleEnd>angleEndQuadrant))
       {
 	 /* Adjust the end angle for this quadrant */
          angleEndQuadrant=angleEnd;
@@ -1157,7 +1134,7 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
       }
 
       /* Add the Bezier spline to the path */
-      PATH_DoArcPart(pPath, corners, angleStartQuadrant, angleEndQuadrant,
+      PATH_DoArcPart(physdev->path, corners, angleStartQuadrant, angleEndQuadrant,
          start ? (lines==-1 ? PT_LINETO : PT_MOVETO) : FALSE);
       start=FALSE;
    }  while(!end);
@@ -1165,19 +1142,87 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
    /* chord: close figure. pie: add line and close figure */
    if(lines==1)
    {
-      if(!CloseFigure(dc->hSelf))
-         return FALSE;
+      return CloseFigure(dev->hdc);
    }
    else if(lines==2)
    {
       centre.x = (corners[0].x+corners[1].x)/2;
       centre.y = (corners[0].y+corners[1].y)/2;
-      if(!PATH_AddEntry(pPath, &centre, PT_LINETO | PT_CLOSEFIGURE))
+      if(!PATH_AddEntry(physdev->path, &centre, PT_LINETO | PT_CLOSEFIGURE))
          return FALSE;
    }
 
    return TRUE;
 }
+
+
+/*************************************************************
+ *           pathdrv_AngleArc
+ */
+static BOOL pathdrv_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLOAT eStartAngle, FLOAT eSweepAngle)
+{
+    INT x1, y1, x2, y2, arcdir;
+    BOOL ret;
+
+    x1 = GDI_ROUND( x + cos(eStartAngle*M_PI/180) * radius );
+    y1 = GDI_ROUND( y - sin(eStartAngle*M_PI/180) * radius );
+    x2 = GDI_ROUND( x + cos((eStartAngle+eSweepAngle)*M_PI/180) * radius );
+    y2 = GDI_ROUND( y - sin((eStartAngle+eSweepAngle)*M_PI/180) * radius );
+    arcdir = SetArcDirection( dev->hdc, eSweepAngle >= 0 ? AD_COUNTERCLOCKWISE : AD_CLOCKWISE);
+    ret = PATH_Arc( dev, x-radius, y-radius, x+radius, y+radius, x1, y1, x2, y2, -1 );
+    SetArcDirection( dev->hdc, arcdir );
+    return ret;
+}
+
+
+/*************************************************************
+ *           pathdrv_Arc
+ */
+static BOOL pathdrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                         INT xstart, INT ystart, INT xend, INT yend )
+{
+    return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend, 0 );
+}
+
+
+/*************************************************************
+ *           pathdrv_ArcTo
+ */
+static BOOL pathdrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                           INT xstart, INT ystart, INT xend, INT yend )
+{
+    return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend, -1 );
+}
+
+
+/*************************************************************
+ *           pathdrv_Chord
+ */
+static BOOL pathdrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                           INT xstart, INT ystart, INT xend, INT yend )
+{
+    return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend, 1);
+}
+
+
+/*************************************************************
+ *           pathdrv_Pie
+ */
+static BOOL pathdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                         INT xstart, INT ystart, INT xend, INT yend )
+{
+    return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend, 2 );
+}
+
+
+/*************************************************************
+ *           pathdrv_Ellipse
+ */
+static BOOL pathdrv_Ellipse( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
+{
+    return PATH_Arc( dev, x1, y1, x2, y2, x1, (y1+y2)/2, x1, (y1+y2)/2, 0 ) && CloseFigure( dev->hdc );
+}
+
 
 BOOL PATH_PolyBezierTo(DC *dc, const POINT *pts, DWORD cbPoints)
 {
@@ -2260,13 +2305,13 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pAbortDoc */
     pathdrv_AbortPath,                  /* pAbortPath */
     NULL,                               /* pAlphaBlend */
-    NULL,                               /* pAngleArc */
-    NULL,                               /* pArc */
-    NULL,                               /* pArcTo */
+    pathdrv_AngleArc,                   /* pAngleArc */
+    pathdrv_Arc,                        /* pArc */
+    pathdrv_ArcTo,                      /* pArcTo */
     NULL,                               /* pBeginPath */
     NULL,                               /* pBlendImage */
     NULL,                               /* pChoosePixelFormat */
-    NULL,                               /* pChord */
+    pathdrv_Chord,                      /* pChord */
     NULL,                               /* pCloseFigure */
     NULL,                               /* pCreateBitmap */
     NULL,                               /* pCreateCompatibleDC */
@@ -2277,7 +2322,7 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pDeleteObject */
     NULL,                               /* pDescribePixelFormat */
     NULL,                               /* pDeviceCapabilities */
-    NULL,                               /* pEllipse */
+    pathdrv_Ellipse,                    /* pEllipse */
     NULL,                               /* pEndDoc */
     NULL,                               /* pEndPage */
     pathdrv_EndPath,                    /* pEndPath */
@@ -2328,7 +2373,7 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pOffsetWindowOrg */
     NULL,                               /* pPaintRgn */
     NULL,                               /* pPatBlt */
-    NULL,                               /* pPie */
+    pathdrv_Pie,                        /* pPie */
     NULL,                               /* pPolyBezier */
     NULL,                               /* pPolyBezierTo */
     NULL,                               /* pPolyDraw */

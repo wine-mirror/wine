@@ -287,14 +287,9 @@ BOOL WINAPI Arc( HDC hdc, INT left, INT top, INT right,
 
     if (dc)
     {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pArc );
         update_dc( dc );
-        if(PATH_IsPathOpen(dc->path))
-            ret = PATH_Arc(dc, left, top, right, bottom, xstart, ystart, xend, yend,0);
-        else
-        {
-            PHYSDEV physdev = GET_DC_PHYSDEV( dc, pArc );
-            ret = physdev->funcs->pArc( physdev, left, top, right, bottom, xstart, ystart, xend, yend );
-        }
+        ret = physdev->funcs->pArc( physdev, left, top, right, bottom, xstart, ystart, xend, yend );
         release_dc_ptr( dc );
     }
     return ret;
@@ -316,18 +311,15 @@ BOOL WINAPI ArcTo( HDC hdc,
         xcenter = right > left ? left+xradius : right+xradius,
         ycenter = bottom > top ? top+yradius : bottom+yradius,
         angle;
+    PHYSDEV physdev;
     BOOL result;
     DC * dc = get_dc_ptr( hdc );
     if(!dc) return FALSE;
 
     update_dc( dc );
-    if(PATH_IsPathOpen(dc->path))
-        result = PATH_Arc(dc,left,top,right,bottom,xstart,ystart,xend,yend,-1);
-    else
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pArcTo );
-        result = physdev->funcs->pArcTo( physdev, left, top, right, bottom, xstart, ystart, xend, yend );
-    }
+    physdev = GET_DC_PHYSDEV( dc, pArcTo );
+    result = physdev->funcs->pArcTo( physdev, left, top, right, bottom, xstart, ystart, xend, yend );
+
     if (result) {
         angle = atan2(((yend-ycenter)/height),
                       ((xend-xcenter)/width));
@@ -346,18 +338,14 @@ BOOL WINAPI Pie( HDC hdc, INT left, INT top,
                      INT right, INT bottom, INT xstart, INT ystart,
                      INT xend, INT yend )
 {
-    BOOL ret = FALSE;
+    BOOL ret;
+    PHYSDEV physdev;
     DC * dc = get_dc_ptr( hdc );
     if (!dc) return FALSE;
 
     update_dc( dc );
-    if(PATH_IsPathOpen(dc->path))
-        ret = PATH_Arc(dc,left,top,right,bottom,xstart,ystart,xend,yend,2);
-    else
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPie );
-        ret = physdev->funcs->pPie( physdev, left, top, right, bottom, xstart, ystart, xend, yend );
-    }
+    physdev = GET_DC_PHYSDEV( dc, pPie );
+    ret = physdev->funcs->pPie( physdev, left, top, right, bottom, xstart, ystart, xend, yend );
     release_dc_ptr( dc );
     return ret;
 }
@@ -370,18 +358,14 @@ BOOL WINAPI Chord( HDC hdc, INT left, INT top,
                        INT right, INT bottom, INT xstart, INT ystart,
                        INT xend, INT yend )
 {
-    BOOL ret = FALSE;
+    BOOL ret;
+    PHYSDEV physdev;
     DC * dc = get_dc_ptr( hdc );
     if (!dc) return FALSE;
 
     update_dc( dc );
-    if(PATH_IsPathOpen(dc->path))
-	ret = PATH_Arc(dc,left,top,right,bottom,xstart,ystart,xend,yend,1);
-    else
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pChord );
-        ret = physdev->funcs->pChord( physdev, left, top, right, bottom, xstart, ystart, xend, yend );
-    }
+    physdev = GET_DC_PHYSDEV( dc, pChord );
+    ret = physdev->funcs->pChord( physdev, left, top, right, bottom, xstart, ystart, xend, yend );
     release_dc_ptr( dc );
     return ret;
 }
@@ -393,19 +377,14 @@ BOOL WINAPI Chord( HDC hdc, INT left, INT top,
 BOOL WINAPI Ellipse( HDC hdc, INT left, INT top,
                          INT right, INT bottom )
 {
-    BOOL ret = FALSE;
+    BOOL ret;
+    PHYSDEV physdev;
     DC * dc = get_dc_ptr( hdc );
     if (!dc) return FALSE;
 
     update_dc( dc );
-    if(PATH_IsPathOpen(dc->path))
-	ret = PATH_Ellipse(dc,left,top,right,bottom);
-    else
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pEllipse );
-        ret = physdev->funcs->pEllipse( physdev, left, top, right, bottom );
-    }
-
+    physdev = GET_DC_PHYSDEV( dc, pEllipse );
+    ret = physdev->funcs->pEllipse( physdev, left, top, right, bottom );
     release_dc_ptr( dc );
     return ret;
 }
@@ -966,7 +945,7 @@ BOOL WINAPI PolyBezierTo( HDC hdc, const POINT* lppt, DWORD cPoints )
  */
 BOOL WINAPI AngleArc(HDC hdc, INT x, INT y, DWORD dwRadius, FLOAT eStartAngle, FLOAT eSweepAngle)
 {
-    INT x1,y1,x2,y2, arcdir;
+    PHYSDEV physdev;
     BOOL result;
     DC *dc;
 
@@ -976,28 +955,13 @@ BOOL WINAPI AngleArc(HDC hdc, INT x, INT y, DWORD dwRadius, FLOAT eStartAngle, F
     dc = get_dc_ptr( hdc );
     if(!dc) return FALSE;
 
-    /* Calculate the end point */
-    x2 = GDI_ROUND( x + cos((eStartAngle+eSweepAngle)*M_PI/180) * dwRadius );
-    y2 = GDI_ROUND( y - sin((eStartAngle+eSweepAngle)*M_PI/180) * dwRadius );
-
     update_dc( dc );
-    if(!PATH_IsPathOpen(dc->path))
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pAngleArc );
-        result = physdev->funcs->pAngleArc( physdev, x, y, dwRadius, eStartAngle, eSweepAngle );
-    }
-    else { /* do it using ArcTo */
-        x1 = GDI_ROUND( x + cos(eStartAngle*M_PI/180) * dwRadius );
-        y1 = GDI_ROUND( y - sin(eStartAngle*M_PI/180) * dwRadius );
+    physdev = GET_DC_PHYSDEV( dc, pAngleArc );
+    result = physdev->funcs->pAngleArc( physdev, x, y, dwRadius, eStartAngle, eSweepAngle );
 
-        arcdir = SetArcDirection( hdc, eSweepAngle >= 0 ? AD_COUNTERCLOCKWISE : AD_CLOCKWISE);
-        result = ArcTo( hdc, x-dwRadius, y-dwRadius, x+dwRadius, y+dwRadius,
-                        x1, y1, x2, y2 );
-        SetArcDirection( hdc, arcdir );
-    }
     if (result) {
-        dc->CursPosX = x2;
-        dc->CursPosY = y2;
+        dc->CursPosX = GDI_ROUND( x + cos((eStartAngle+eSweepAngle)*M_PI/180) * dwRadius );
+        dc->CursPosY = GDI_ROUND( y - sin((eStartAngle+eSweepAngle)*M_PI/180) * dwRadius );
     }
     release_dc_ptr( dc );
     return result;
