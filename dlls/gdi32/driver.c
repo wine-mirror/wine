@@ -1225,6 +1225,7 @@ INT WINAPI ExtEscape( HDC hdc, INT nEscape, INT cbInput, LPCSTR lpszInData,
     if (dc)
     {
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pExtEscape );
+        update_dc( dc );
         ret = physdev->funcs->pExtEscape( physdev, nEscape, cbInput, lpszInData, cbOutput, lpszOutData );
         release_dc_ptr( dc );
     }
