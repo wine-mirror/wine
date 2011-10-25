@@ -32,6 +32,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 #define EXPR_NEWREF  0x0002
 #define EXPR_STRREF  0x0004
 
+struct _return_type_t {
+    enum{
+        RT_NORMAL,
+        RT_RETURN,
+        RT_BREAK,
+        RT_CONTINUE
+    } type;
+    jsexcept_t ei;
+};
+
 static inline HRESULT stat_eval(script_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
 {
     return stat->eval(ctx, stat, rt, ret);

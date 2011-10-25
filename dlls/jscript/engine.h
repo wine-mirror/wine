@@ -156,15 +156,7 @@ typedef struct _variable_declaration_t {
     struct _variable_declaration_t *next;
 } variable_declaration_t;
 
-typedef struct {
-    enum{
-        RT_NORMAL,
-        RT_RETURN,
-        RT_BREAK,
-        RT_CONTINUE
-    } type;
-    jsexcept_t ei;
-} return_type_t;
+typedef struct _return_type_t return_type_t;
 
 typedef HRESULT (*statement_eval_t)(script_ctx_t*,statement_t*,return_type_t*,VARIANT*);
 
