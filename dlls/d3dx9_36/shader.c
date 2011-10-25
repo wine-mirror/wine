@@ -153,6 +153,9 @@ HRESULT WINAPI D3DXFindShaderComment(CONST DWORD* byte_code, DWORD fourcc, LPCVO
 
     TRACE("(%p, %x, %p, %p)\n", byte_code, fourcc, data, size);
 
+    if (data) *data = NULL;
+    if (size) *size = 0;
+
     if (!byte_code)
         return D3DERR_INVALIDCALL;
 

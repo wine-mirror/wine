@@ -215,23 +215,31 @@ static void test_get_shader_version(void)
 static void test_find_shader_comment(void)
 {
     HRESULT hr;
-    LPCVOID data;
-    UINT size;
+    LPCVOID data = (LPVOID)0xdeadbeef;
+    UINT size = 100;
 
     hr = D3DXFindShaderComment(NULL, MAKEFOURCC('C','T','A','B'), &data, &size);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(!data, "Got %p, expected NULL\n", data);
+    ok(!size, "Got %u, expected 0\n", size);
 
     hr = D3DXFindShaderComment(shader_with_ctab, MAKEFOURCC('C','T','A','B'), NULL, &size);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(size == 28, "Got %u, expected 28\n", size);
 
     hr = D3DXFindShaderComment(shader_with_ctab, MAKEFOURCC('C','T','A','B'), &data, NULL);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(data == (LPCVOID)(shader_with_ctab + 6), "Got result %p, expected %p\n", data, shader_with_ctab + 6);
 
     hr = D3DXFindShaderComment(shader_with_ctab, 0, &data, &size);
     ok(hr == S_FALSE, "Got result %x, expected 1 (S_FALSE)\n", hr);
+    ok(!data, "Got %p, expected NULL\n", data);
+    ok(!size, "Got %u, expected 0\n", size);
 
     hr = D3DXFindShaderComment(shader_with_ctab, MAKEFOURCC('X','X','X','X'), &data, &size);
     ok(hr == S_FALSE, "Got result %x, expected 1 (S_FALSE)\n", hr);
+    ok(!data, "Got %p, expected NULL\n", data);
+    ok(!size, "Got %u, expected 0\n", size);
 
     hr = D3DXFindShaderComment(shader_with_ctab, MAKEFOURCC('C','T','A','B'), &data, &size);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
