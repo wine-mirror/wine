@@ -777,13 +777,9 @@ BOOL WINAPI Polygon( HDC hdc, const POINT* pt, INT count )
 
     if (dc)
     {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPolygon );
         update_dc( dc );
-        if (PATH_IsPathOpen(dc->path)) ret = PATH_Polygon(dc, pt, count);
-        else
-        {
-            PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPolygon );
-            ret = physdev->funcs->pPolygon( physdev, pt, count );
-        }
+        ret = physdev->funcs->pPolygon( physdev, pt, count );
         release_dc_ptr( dc );
     }
     return ret;
@@ -801,13 +797,9 @@ BOOL WINAPI PolyPolygon( HDC hdc, const POINT* pt, const INT* counts,
 
     if (dc)
     {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPolyPolygon );
         update_dc( dc );
-        if (PATH_IsPathOpen(dc->path)) ret = PATH_PolyPolygon(dc, pt, counts, polygons);
-        else
-        {
-            PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPolyPolygon );
-            ret = physdev->funcs->pPolyPolygon( physdev, pt, counts, polygons );
-        }
+        ret = physdev->funcs->pPolyPolygon( physdev, pt, counts, polygons );
         release_dc_ptr( dc );
     }
     return ret;

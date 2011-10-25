@@ -1373,51 +1373,47 @@ BOOL PATH_PolylineTo(DC *dc, const POINT *pts, DWORD cbPoints)
 }
 
 
-BOOL PATH_Polygon(DC *dc, const POINT *pts, DWORD cbPoints)
+/*************************************************************
+ *           pathdrv_Polygon
+ */
+static BOOL pathdrv_Polygon( PHYSDEV dev, const POINT *pts, INT cbPoints )
 {
-   GdiPath     *pPath = &dc->path;
-   POINT       pt;
-   UINT        i;
+    struct path_physdev *physdev = get_path_physdev( dev );
+    POINT pt;
+    INT i;
 
-   /* Check that path is open */
-   if(pPath->state!=PATH_Open)
-      return FALSE;
-
-   for(i = 0; i < cbPoints; i++) {
-       pt = pts[i];
-       if(!LPtoDP(dc->hSelf, &pt, 1))
-	   return FALSE;
-       PATH_AddEntry(pPath, &pt, (i == 0) ? PT_MOVETO :
-		     ((i == cbPoints-1) ? PT_LINETO | PT_CLOSEFIGURE :
-		      PT_LINETO));
-   }
-   return TRUE;
+    for(i = 0; i < cbPoints; i++) {
+        pt = pts[i];
+        LPtoDP( dev->hdc, &pt, 1 );
+        PATH_AddEntry(physdev->path, &pt, (i == 0) ? PT_MOVETO :
+                      ((i == cbPoints-1) ? PT_LINETO | PT_CLOSEFIGURE :
+                       PT_LINETO));
+    }
+    return TRUE;
 }
 
-BOOL PATH_PolyPolygon( DC *dc, const POINT* pts, const INT* counts,
-		       UINT polygons )
+
+/*************************************************************
+ *           pathdrv_PolyPolygon
+ */
+static BOOL pathdrv_PolyPolygon( PHYSDEV dev, const POINT* pts, const INT* counts, UINT polygons )
 {
-   GdiPath     *pPath = &dc->path;
-   POINT       pt, startpt;
-   UINT        poly, i;
-   INT         point;
+    struct path_physdev *physdev = get_path_physdev( dev );
+    POINT pt, startpt;
+    UINT poly, i;
+    INT point;
 
-   /* Check that path is open */
-   if(pPath->state!=PATH_Open)
-      return FALSE;
-
-   for(i = 0, poly = 0; poly < polygons; poly++) {
-       for(point = 0; point < counts[poly]; point++, i++) {
-	   pt = pts[i];
-	   if(!LPtoDP(dc->hSelf, &pt, 1))
-	       return FALSE;
-	   if(point == 0) startpt = pt;
-	   PATH_AddEntry(pPath, &pt, (point == 0) ? PT_MOVETO : PT_LINETO);
-       }
-       /* win98 adds an extra line to close the figure for some reason */
-       PATH_AddEntry(pPath, &startpt, PT_LINETO | PT_CLOSEFIGURE);
-   }
-   return TRUE;
+    for(i = 0, poly = 0; poly < polygons; poly++) {
+        for(point = 0; point < counts[poly]; point++, i++) {
+            pt = pts[i];
+            LPtoDP( dev->hdc, &pt, 1 );
+            if(point == 0) startpt = pt;
+            PATH_AddEntry(physdev->path, &pt, (point == 0) ? PT_MOVETO : PT_LINETO);
+        }
+        /* win98 adds an extra line to close the figure for some reason */
+        PATH_AddEntry(physdev->path, &startpt, PT_LINETO | PT_CLOSEFIGURE);
+    }
+    return TRUE;
 }
 
 BOOL PATH_PolyPolyline( DC *dc, const POINT* pts, const DWORD* counts,
@@ -2362,9 +2358,9 @@ const struct gdi_dc_funcs path_driver =
     pathdrv_PolyBezier,                 /* pPolyBezier */
     pathdrv_PolyBezierTo,               /* pPolyBezierTo */
     pathdrv_PolyDraw,                   /* pPolyDraw */
-    NULL,                               /* pPolyPolygon */
+    pathdrv_PolyPolygon,                /* pPolyPolygon */
     NULL,                               /* pPolyPolyline */
-    NULL,                               /* pPolygon */
+    pathdrv_Polygon,                    /* pPolygon */
     NULL,                               /* pPolyline */
     NULL,                               /* pPolylineTo */
     NULL,                               /* pPutImage */
