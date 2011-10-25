@@ -2094,6 +2094,11 @@ done:
         int underlineWidth, strikeoutWidth;
         UINT size = GetOutlineTextMetricsW(hdc, 0, NULL);
         OUTLINETEXTMETRICW* otm = NULL;
+        POINT pts[5];
+        HPEN hpen = SelectObject(hdc, GetStockObject(NULL_PEN));
+        HBRUSH hbrush = CreateSolidBrush(GetTextColor(hdc));
+
+        hbrush = SelectObject(hdc, hbrush);
 
         if(!size)
         {
@@ -2113,86 +2118,42 @@ done:
             HeapFree(GetProcessHeap(), 0, otm);
         }
 
-        if (PATH_IsPathOpen(dc->path))
+
+        if (lf.lfUnderline)
         {
-            POINT pts[5];
-            HPEN hpen;
-            HBRUSH hbrush = CreateSolidBrush(GetTextColor(hdc));
-
-            hbrush = SelectObject(hdc, hbrush);
-            hpen = SelectObject(hdc, GetStockObject(NULL_PEN));
-
-            if (lf.lfUnderline)
-            {
-                pts[0].x = x - underlinePos * sinEsc;
-                pts[0].y = y - underlinePos * cosEsc;
-                pts[1].x = x + width.x - underlinePos * sinEsc;
-                pts[1].y = y + width.y - underlinePos * cosEsc;
-                pts[2].x = pts[1].x + underlineWidth * sinEsc;
-                pts[2].y = pts[1].y + underlineWidth * cosEsc;
-                pts[3].x = pts[0].x + underlineWidth * sinEsc;
-                pts[3].y = pts[0].y + underlineWidth * cosEsc;
-                pts[4].x = pts[0].x;
-                pts[4].y = pts[0].y;
-                DPtoLP(hdc, pts, 5);
-                Polygon(hdc, pts, 5);
-            }
-
-            if (lf.lfStrikeOut)
-            {
-                pts[0].x = x - strikeoutPos * sinEsc;
-                pts[0].y = y - strikeoutPos * cosEsc;
-                pts[1].x = x + width.x - strikeoutPos * sinEsc;
-                pts[1].y = y + width.y - strikeoutPos * cosEsc;
-                pts[2].x = pts[1].x + strikeoutWidth * sinEsc;
-                pts[2].y = pts[1].y + strikeoutWidth * cosEsc;
-                pts[3].x = pts[0].x + strikeoutWidth * sinEsc;
-                pts[3].y = pts[0].y + strikeoutWidth * cosEsc;
-                pts[4].x = pts[0].x;
-                pts[4].y = pts[0].y;
-                DPtoLP(hdc, pts, 5);
-                Polygon(hdc, pts, 5);
-            }
-
-            SelectObject(hdc, hpen);
-            hbrush = SelectObject(hdc, hbrush);
-            DeleteObject(hbrush);
+            pts[0].x = x - underlinePos * sinEsc;
+            pts[0].y = y - underlinePos * cosEsc;
+            pts[1].x = x + width.x - underlinePos * sinEsc;
+            pts[1].y = y + width.y - underlinePos * cosEsc;
+            pts[2].x = pts[1].x + underlineWidth * sinEsc;
+            pts[2].y = pts[1].y + underlineWidth * cosEsc;
+            pts[3].x = pts[0].x + underlineWidth * sinEsc;
+            pts[3].y = pts[0].y + underlineWidth * cosEsc;
+            pts[4].x = pts[0].x;
+            pts[4].y = pts[0].y;
+            DPtoLP(hdc, pts, 5);
+            Polygon(hdc, pts, 5);
         }
-        else
+
+        if (lf.lfStrikeOut)
         {
-            POINT pts[2], oldpt;
-            HPEN hpen;
-
-            if (lf.lfUnderline)
-            {
-                hpen = CreatePen(PS_SOLID, underlineWidth, GetTextColor(hdc));
-                hpen = SelectObject(hdc, hpen);
-                pts[0].x = x;
-                pts[0].y = y;
-                pts[1].x = x + width.x;
-                pts[1].y = y + width.y;
-                DPtoLP(hdc, pts, 2);
-                MoveToEx(hdc, pts[0].x - underlinePos * sinEsc, pts[0].y - underlinePos * cosEsc, &oldpt);
-                LineTo(hdc, pts[1].x - underlinePos * sinEsc, pts[1].y - underlinePos * cosEsc);
-                MoveToEx(hdc, oldpt.x, oldpt.y, NULL);
-                DeleteObject(SelectObject(hdc, hpen));
-            }
-
-            if (lf.lfStrikeOut)
-            {
-                hpen = CreatePen(PS_SOLID, strikeoutWidth, GetTextColor(hdc));
-                hpen = SelectObject(hdc, hpen);
-                pts[0].x = x;
-                pts[0].y = y;
-                pts[1].x = x + width.x;
-                pts[1].y = y + width.y;
-                DPtoLP(hdc, pts, 2);
-                MoveToEx(hdc, pts[0].x - strikeoutPos * sinEsc, pts[0].y - strikeoutPos * cosEsc, &oldpt);
-                LineTo(hdc, pts[1].x - strikeoutPos * sinEsc, pts[1].y - strikeoutPos * cosEsc);
-                MoveToEx(hdc, oldpt.x, oldpt.y, NULL);
-                DeleteObject(SelectObject(hdc, hpen));
-            }
+            pts[0].x = x - strikeoutPos * sinEsc;
+            pts[0].y = y - strikeoutPos * cosEsc;
+            pts[1].x = x + width.x - strikeoutPos * sinEsc;
+            pts[1].y = y + width.y - strikeoutPos * cosEsc;
+            pts[2].x = pts[1].x + strikeoutWidth * sinEsc;
+            pts[2].y = pts[1].y + strikeoutWidth * cosEsc;
+            pts[3].x = pts[0].x + strikeoutWidth * sinEsc;
+            pts[3].y = pts[0].y + strikeoutWidth * cosEsc;
+            pts[4].x = pts[0].x;
+            pts[4].y = pts[0].y;
+            DPtoLP(hdc, pts, 5);
+            Polygon(hdc, pts, 5);
         }
+
+        SelectObject(hdc, hpen);
+        hbrush = SelectObject(hdc, hbrush);
+        DeleteObject(hbrush);
     }
 
     return ret;
