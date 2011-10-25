@@ -353,6 +353,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     struct wined3d *wined3d;
     void *layer_base;
     HRESULT hr;
+    WINED3DCAPS caps;
 
     device->IWineDXGIDevice_iface.lpVtbl = &dxgi_device_vtbl;
     device->refcount = 1;
@@ -398,6 +399,16 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     wined3d_device_parent = IWineDXGIDeviceParent_get_wined3d_device_parent(dxgi_device_parent);
 
     FIXME("Ignoring adapter type.\n");
+
+    hr = wined3d_get_device_caps(wined3d, adapter_ordinal, WINED3DDEVTYPE_HAL, &caps);
+    if (FAILED(hr) || caps.VertexShaderVersion < 4 || caps.PixelShaderVersion < 4)
+    {
+        WARN("Direct3D 10 is not supported on this GPU with the current shader backend.\n");
+        if (SUCCEEDED(hr))
+            hr = E_FAIL;
+        goto fail;
+    }
+
     EnterCriticalSection(&dxgi_cs);
     hr = wined3d_device_create(wined3d, adapter_ordinal, WINED3DDEVTYPE_HAL, NULL, 0, 4,
             wined3d_device_parent, &device->wined3d_device);
