@@ -1470,9 +1470,9 @@ static void PATH_BezierTo(GdiPath *pPath, POINT *lppt, INT n)
     }
 }
 
-static BOOL PATH_add_outline(DC *dc, INT x, INT y, TTPOLYGONHEADER *header, DWORD size)
+static BOOL PATH_add_outline(struct path_physdev *physdev, INT x, INT y,
+                             TTPOLYGONHEADER *header, DWORD size)
 {
-    GdiPath *pPath = &dc->path;
     TTPOLYGONHEADER *start;
     POINT pt;
 
@@ -1490,7 +1490,7 @@ static BOOL PATH_add_outline(DC *dc, INT x, INT y, TTPOLYGONHEADER *header, DWOR
 
         pt.x = x + int_from_fixed(header->pfxStart.x);
         pt.y = y - int_from_fixed(header->pfxStart.y);
-        PATH_AddEntry(pPath, &pt, PT_MOVETO);
+        PATH_AddEntry(physdev->path, &pt, PT_MOVETO);
 
         curve = (TTPOLYCURVE *)(header + 1);
 
@@ -1508,7 +1508,7 @@ static BOOL PATH_add_outline(DC *dc, INT x, INT y, TTPOLYGONHEADER *header, DWOR
                 {
                     pt.x = x + int_from_fixed(curve->apfx[i].x);
                     pt.y = y - int_from_fixed(curve->apfx[i].y);
-                    PATH_AddEntry(pPath, &pt, PT_LINETO);
+                    PATH_AddEntry(physdev->path, &pt, PT_LINETO);
                 }
                 break;
             }
@@ -1533,7 +1533,7 @@ static BOOL PATH_add_outline(DC *dc, INT x, INT y, TTPOLYGONHEADER *header, DWOR
                     pts[i + 1].y = y - int_from_fixed(curve->apfx[i].y);
                 }
 
-                PATH_BezierTo(pPath, pts, curve->cpfx + 1);
+                PATH_BezierTo(physdev->path, pts, curve->cpfx + 1);
 
                 HeapFree(GetProcessHeap(), 0, pts);
                 break;
@@ -1550,21 +1550,18 @@ static BOOL PATH_add_outline(DC *dc, INT x, INT y, TTPOLYGONHEADER *header, DWOR
         header = (TTPOLYGONHEADER *)((char *)header + header->cb);
     }
 
-    return CloseFigure(dc->hSelf);
+    return CloseFigure(physdev->dev.hdc);
 }
 
-/**********************************************************************
- *      PATH_ExtTextOut
+/*************************************************************
+ *           pathdrv_ExtTextOut
  */
-BOOL PATH_ExtTextOut(DC *dc, INT x, INT y, UINT flags, const RECT *lprc,
-                     LPCWSTR str, UINT count, const INT *dx)
+static BOOL pathdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *lprc,
+                                LPCWSTR str, UINT count, const INT *dx )
 {
+    struct path_physdev *physdev = get_path_physdev( dev );
     unsigned int idx;
-    HDC hdc = dc->hSelf;
     POINT offset = {0, 0};
-
-    TRACE("%p, %d, %d, %08x, %s, %s, %d, %p)\n", hdc, x, y, flags,
-	  wine_dbgstr_rect(lprc), debugstr_wn(str, count), count, dx);
 
     if (!count) return TRUE;
 
@@ -1575,7 +1572,8 @@ BOOL PATH_ExtTextOut(DC *dc, INT x, INT y, UINT flags, const RECT *lprc,
         DWORD dwSize;
         void *outline;
 
-        dwSize = GetGlyphOutlineW(hdc, str[idx], GGO_GLYPH_INDEX | GGO_NATIVE, &gm, 0, NULL, &identity);
+        dwSize = GetGlyphOutlineW(dev->hdc, str[idx], GGO_GLYPH_INDEX | GGO_NATIVE,
+                                  &gm, 0, NULL, &identity);
         if (dwSize == GDI_ERROR) return FALSE;
 
         /* add outline only if char is printable */
@@ -1584,9 +1582,10 @@ BOOL PATH_ExtTextOut(DC *dc, INT x, INT y, UINT flags, const RECT *lprc,
             outline = HeapAlloc(GetProcessHeap(), 0, dwSize);
             if (!outline) return FALSE;
 
-            GetGlyphOutlineW(hdc, str[idx], GGO_GLYPH_INDEX | GGO_NATIVE, &gm, dwSize, outline, &identity);
+            GetGlyphOutlineW(dev->hdc, str[idx], GGO_GLYPH_INDEX | GGO_NATIVE,
+                             &gm, dwSize, outline, &identity);
 
-            PATH_add_outline(dc, x + offset.x, y + offset.y, outline, dwSize);
+            PATH_add_outline(physdev, x + offset.x, y + offset.y, outline, dwSize);
 
             HeapFree(GetProcessHeap(), 0, outline);
         }
@@ -2300,7 +2299,7 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pExtEscape */
     NULL,                               /* pExtFloodFill */
     NULL,                               /* pExtSelectClipRgn */
-    NULL,                               /* pExtTextOut */
+    pathdrv_ExtTextOut,                 /* pExtTextOut */
     NULL,                               /* pFillPath */
     NULL,                               /* pFillRgn */
     NULL,                               /* pFlattenPath */

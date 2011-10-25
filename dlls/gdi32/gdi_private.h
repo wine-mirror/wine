@@ -314,19 +314,10 @@ extern METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mr, LPCVOID filename, BOO
 
 /* path.c */
 
-#define PATH_IsPathOpen(path) ((path).state==PATH_Open)
-/* Returns TRUE if the specified path is in the open state, i.e. in the
- * state where points will be added to the path, or FALSE otherwise. This
- * function is implemented as a macro for performance reasons.
- */
-
 extern void PATH_InitGdiPath(GdiPath *pPath) DECLSPEC_HIDDEN;
 extern void PATH_DestroyGdiPath(GdiPath *pPath) DECLSPEC_HIDDEN;
 extern BOOL PATH_SavePath( DC *dst, DC *src ) DECLSPEC_HIDDEN;
 extern BOOL PATH_RestorePath( DC *dst, DC *src ) DECLSPEC_HIDDEN;
-
-extern BOOL PATH_ExtTextOut(DC *dc, INT x, INT y, UINT flags, const RECT *lprc,
-                            LPCWSTR str, UINT count, const INT *dx) DECLSPEC_HIDDEN;
 
 /* painting.c */
 extern POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut ) DECLSPEC_HIDDEN;

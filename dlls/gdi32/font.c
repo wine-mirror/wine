@@ -1822,7 +1822,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         if(rc.top > rc.bottom) {INT tmp = rc.top; rc.top = rc.bottom; rc.bottom = tmp;}
     }
 
-    if ((flags & ETO_OPAQUE) && !PATH_IsPathOpen(dc->path))
+    if (flags & ETO_OPAQUE)
         physdev->funcs->pExtTextOut( physdev, 0, 0, ETO_OPAQUE, &rc, NULL, 0, NULL );
 
     if(count == 0)
@@ -1963,7 +1963,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         break;
     }
 
-    if (GetBkMode(hdc) != TRANSPARENT && !PATH_IsPathOpen(dc->path))
+    if (GetBkMode(hdc) != TRANSPARENT)
     {
         if(!((flags & ETO_CLIPPED) && (flags & ETO_OPAQUE)))
         {
@@ -2030,15 +2030,10 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
                 }
                 if(span)
                 {
-                    if (PATH_IsPathOpen(dc->path))
-                        ret = PATH_ExtTextOut(dc, x + offsets[i - span].x, y + offsets[i - span].y,
-                                              (flags & ~ETO_OPAQUE) | ETO_GLYPH_INDEX, &rc,
-                                              glyphs, span, deltas ? (INT*)(deltas + (i - span)) : NULL);
-                    else
-                        physdev->funcs->pExtTextOut( physdev, x + offsets[i - span].x,
-                                                     y + offsets[i - span].y,
-                                                     (flags & ~ETO_OPAQUE) | ETO_GLYPH_INDEX, &rc, glyphs,
-                                                     span, deltas ? (INT*)(deltas + (i - span)) : NULL);
+                    physdev->funcs->pExtTextOut( physdev, x + offsets[i - span].x,
+                                                 y + offsets[i - span].y,
+                                                 (flags & ~ETO_OPAQUE) | ETO_GLYPH_INDEX, &rc, glyphs,
+                                                 span, deltas ? (INT*)(deltas + (i - span)) : NULL);
                     span = 0;
                 }
                 SelectObject(hdc, cur_font);
@@ -2047,16 +2042,10 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
 
             if(i == count - 1)
             {
-                if (PATH_IsPathOpen(dc->path))
-                    ret = PATH_ExtTextOut(dc, x + (offsets ? offsets[count - span].x : 0),
-                                          y + (offsets ? offsets[count - span].y : 0),
-                                          (flags & ~ETO_OPAQUE) | ETO_GLYPH_INDEX, &rc,
-                                          glyphs, span, deltas ? (INT*)(deltas + (count - span)) : NULL);
-                else
-                    ret = physdev->funcs->pExtTextOut(physdev, x + (offsets ? offsets[count - span].x : 0),
-                                                      y + (offsets ? offsets[count - span].y : 0),
-                                                      (flags & ~ETO_OPAQUE) | ETO_GLYPH_INDEX, &rc, glyphs,
-                                                      span, deltas ? (INT*)(deltas + (count - span)) : NULL);
+                ret = physdev->funcs->pExtTextOut(physdev, x + (offsets ? offsets[count - span].x : 0),
+                                                  y + (offsets ? offsets[count - span].y : 0),
+                                                  (flags & ~ETO_OPAQUE) | ETO_GLYPH_INDEX, &rc, glyphs,
+                                                  span, deltas ? (INT*)(deltas + (count - span)) : NULL);
                 SelectObject(hdc, orig_font);
                 HeapFree(GetProcessHeap(), 0, offsets);
            }
@@ -2070,13 +2059,8 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
             GetGlyphIndicesW(hdc, reordered_str, count, glyphs, 0);
             flags |= ETO_GLYPH_INDEX;
         }
-
-        if (PATH_IsPathOpen(dc->path))
-            ret = PATH_ExtTextOut(dc, x, y, (flags & ~ETO_OPAQUE), &rc,
-                                  glyphs ? glyphs : reordered_str, count, (INT*)deltas);
-        else
-            ret = physdev->funcs->pExtTextOut( physdev, x, y, (flags & ~ETO_OPAQUE), &rc,
-                                               glyphs ? glyphs : reordered_str, count, (INT*)deltas );
+        ret = physdev->funcs->pExtTextOut( physdev, x, y, (flags & ~ETO_OPAQUE), &rc,
+                                           glyphs ? glyphs : reordered_str, count, (INT*)deltas );
     }
 
 done:
