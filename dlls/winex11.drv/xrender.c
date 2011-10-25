@@ -3149,10 +3149,10 @@ void X11DRV_XRender_Finalize(void)
 void X11DRV_XRender_CopyBrush(X11DRV_PDEVICE *physDev, X_PHYSBITMAP *physBitmap, int width, int height)
 {
     wine_tsx11_lock();
-    physDev->brush.pixmap = XCreatePixmap(gdi_display, root_window, width, height, physBitmap->pixmap_depth);
+    physDev->brush.pixmap = XCreatePixmap(gdi_display, root_window, width, height, physBitmap->depth);
 
     XCopyArea( gdi_display, physBitmap->pixmap, physDev->brush.pixmap,
-               get_bitmap_gc(physBitmap->pixmap_depth), 0, 0, width, height, 0, 0 );
+               get_bitmap_gc(physBitmap->depth), 0, 0, width, height, 0, 0 );
     wine_tsx11_unlock();
 }
 
