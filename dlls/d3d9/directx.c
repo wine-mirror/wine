@@ -381,6 +381,11 @@ void filter_caps(D3DCAPS9* pCaps)
 
     pCaps->MaxVertexShaderConst = min(D3D9_MAX_VERTEX_SHADER_CONSTANTF, pCaps->MaxVertexShaderConst);
     pCaps->NumSimultaneousRTs = min(D3D9_MAX_SIMULTANEOUS_RENDERTARGETS, pCaps->NumSimultaneousRTs);
+
+    if (pCaps->PixelShaderVersion > D3DPS_VERSION(3,0))
+        pCaps->PixelShaderVersion = D3DPS_VERSION(3,0);
+    if (pCaps->VertexShaderVersion > D3DVS_VERSION(3,0))
+        pCaps->VertexShaderVersion = D3DVS_VERSION(3,0);
 }
 
 static HRESULT WINAPI IDirect3D9Impl_GetDeviceCaps(IDirect3D9Ex *iface, UINT Adapter,
