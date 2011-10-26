@@ -121,6 +121,11 @@ static const CHAR szTestXML[] =
 "   <Name>Captain Ahab</Name>\n"
 "</BankAccount>\n";
 
+static const CHAR szTestAttributes[] =
+"<?xml version=\"1.0\" ?>\n"
+"<document xmlns:test=\"prefix_test\" xmlns=\"prefix\" test:arg1=\"arg1\" arg2=\"arg2\">\n"
+"</document>\n";
+
 typedef struct _contenthandlercheck {
     CH id;
     int line;
@@ -199,6 +204,34 @@ static content_handler_test contentHandlerTestCallbackResult6[] = {
     { CH_CHARACTERS, 4, 29, 5, 1, "\n", NULL, NULL, S_FALSE },
     { CH_ENDELEMENT, 5, 3, 5, 14, "", "BankAccount", "BankAccount", S_FALSE },
     { CH_ENDDOCUMENT, 0, 0, 6, 0, NULL, NULL, NULL, S_FALSE },
+    { CH_ENDTEST }
+};
+
+static content_handler_test contentHandlerTestAttributes[] = {
+    { CH_PUTDOCUMENTLOCATOR, 0, 0, 1, 0 },
+    { CH_STARTDOCUMENT, 0, 0, 1, 22 },
+    { CH_STARTPREFIXMAPPING, 2, 80, 2, 79, "test", "prefix_test" },
+    { CH_STARTPREFIXMAPPING, 2, 80, 2, 79, "", "prefix" },
+    { CH_STARTELEMENT, 2, 80, 2, 79, "prefix", "document", "document" },
+    { CH_CHARACTERS, 2, 80, 3, 1, "\n" },
+    { CH_ENDELEMENT, 3, 3, 3, 11, "prefix", "document", "document" },
+    { CH_ENDPREFIXMAPPING, 3, 3, 3, 11, "" },
+    { CH_ENDPREFIXMAPPING, 3, 3, 3, 11, "test" },
+    { CH_ENDDOCUMENT, 0, 0, 4, 0 },
+    { CH_ENDTEST }
+};
+
+static content_handler_test contentHandlerTestAttributes6[] = {
+    { CH_PUTDOCUMENTLOCATOR, 0, 0, 1, 0 },
+    { CH_STARTDOCUMENT, 0, 0, 1, 22 },
+    { CH_STARTPREFIXMAPPING, 2, 80, 2, 79, "test", "prefix_test" },
+    { CH_STARTPREFIXMAPPING, 2, 80, 2, 79, "", "prefix" },
+    { CH_STARTELEMENT, 2, 80, 2, 79, "prefix", "document", "document" },
+    { CH_CHARACTERS, 2, 80, 3, 1, "\n" },
+    { CH_ENDELEMENT, 3, 3, 3, 11, "prefix", "document", "document" },
+    { CH_ENDPREFIXMAPPING, 3, 3, 3, 11, "test" },
+    { CH_ENDPREFIXMAPPING, 3, 3, 3, 11, "" },
+    { CH_ENDDOCUMENT, 0, 0, 4, 0 },
     { CH_ENDTEST }
 };
 
@@ -321,7 +354,7 @@ static HRESULT WINAPI contentHandler_startPrefixMapping(
         const WCHAR *pUri,
         int nUri)
 {
-    if(!test_expect_call(CH_ENDDOCUMENT))
+    if(!test_expect_call(CH_STARTPREFIXMAPPING))
         return E_FAIL;
 
     test_saxstr(__LINE__, pPrefix, nPrefix, expectCall->arg1);
@@ -357,6 +390,9 @@ static HRESULT WINAPI contentHandler_startElement(
         int nQName,
         ISAXAttributes *pAttr)
 {
+    int len;
+    HRESULT hres;
+
     if(!test_expect_call(CH_STARTELEMENT))
         return E_FAIL;
 
@@ -365,6 +401,79 @@ static HRESULT WINAPI contentHandler_startElement(
     test_saxstr(__LINE__, pQName, nQName, expectCall->arg3);
     test_locator(__LINE__, msxml_version>=6 ? expectCall->line_v6 : expectCall->line,
             msxml_version>=6 ? expectCall->column_v6 : expectCall->column);
+
+    if(expectCall == contentHandlerTestAttributes+4) {
+        int i;
+        /* msxml3 returns attributes and namespaces in the input order */
+        hres = ISAXAttributes_getLength(pAttr, &len);
+        ok(hres == S_OK, "getLength returned %x\n", hres);
+        ok(len == 4, "Incorrect number of attributes: %d\n", len);
+        ok(msxml_version < 6, "wrong msxml_version: %d\n", msxml_version);
+
+        for(i=0; i<len; i++) {
+            hres = ISAXAttributes_getName(pAttr, i, &pNamespaceUri, &nNamespaceUri,
+                    &pLocalName, &nLocalName, &pQName, &nQName);
+            ok(hres == S_OK, "getName returned %x\n", hres);
+
+            if(nQName == 4) {
+                todo_wine ok(i==3, "Incorrect attributes order\n");
+                test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "");
+                test_saxstr(__LINE__, pLocalName, nLocalName, "arg2");
+                test_saxstr(__LINE__, pQName, nQName, "arg2");
+            } else if(nQName == 5) {
+                todo_wine ok(i==1, "Incorrect attributes order\n");
+                test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "");
+                test_saxstr(__LINE__, pLocalName, nLocalName, "");
+                test_saxstr(__LINE__, pQName, nQName, "xmlns");
+            } else if(nQName == 9) {
+                todo_wine ok(i==2, "Incorrect attributes order\n");
+                test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "prefix_test");
+                test_saxstr(__LINE__, pLocalName, nLocalName, "arg1");
+                test_saxstr(__LINE__, pQName, nQName, "test:arg1");
+            } else if(nQName == 10) {
+                todo_wine ok(i==0, "Incorrect attributes order\n");
+                test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "");
+                test_saxstr(__LINE__, pLocalName, nLocalName, "");
+                test_saxstr(__LINE__, pQName, nQName, "xmlns:test");
+            } else {
+                ok(0, "Unexpected attribute\n");
+            }
+        }
+    } else if(expectCall == contentHandlerTestAttributes6+4) {
+        /* msxml6 returns attributes first and then namespaces */
+        hres = ISAXAttributes_getLength(pAttr, &len);
+        ok(hres == S_OK, "getLength returned %x\n", hres);
+        ok(len == 4, "Incorrect number of attributes: %d\n", len);
+        ok(msxml_version >= 6, "wrong msxml_version: %d\n", msxml_version);
+
+        hres = ISAXAttributes_getName(pAttr, 0, &pNamespaceUri, &nNamespaceUri,
+                &pLocalName, &nLocalName, &pQName, &nQName);
+        ok(hres == S_OK, "getName returned %x\n", hres);
+        test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "prefix_test");
+        test_saxstr(__LINE__, pLocalName, nLocalName, "arg1");
+        test_saxstr(__LINE__, pQName, nQName, "test:arg1");
+
+        hres = ISAXAttributes_getName(pAttr, 1, &pNamespaceUri, &nNamespaceUri,
+                &pLocalName, &nLocalName, &pQName, &nQName);
+        ok(hres == S_OK, "getName returned %x\n", hres);
+        test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "");
+        test_saxstr(__LINE__, pLocalName, nLocalName, "arg2");
+        test_saxstr(__LINE__, pQName, nQName, "arg2");
+
+        hres = ISAXAttributes_getName(pAttr, 2, &pNamespaceUri, &nNamespaceUri,
+                &pLocalName, &nLocalName, &pQName, &nQName);
+        ok(hres == S_OK, "getName returned %x\n", hres);
+        test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "http://www.w3.org/2000/xmlns/");
+        test_saxstr(__LINE__, pLocalName, nLocalName, "");
+        test_saxstr(__LINE__, pQName, nQName, "xmlns:test");
+
+        hres = ISAXAttributes_getName(pAttr, 3, &pNamespaceUri, &nNamespaceUri,
+                &pLocalName, &nLocalName, &pQName, &nQName);
+        ok(hres == S_OK, "getName returned %x\n", hres);
+        test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "http://www.w3.org/2000/xmlns/");
+        test_saxstr(__LINE__, pLocalName, nLocalName, "");
+        test_saxstr(__LINE__, pQName, nQName, "xmlns");
+    }
 
     return (expectCall++)->ret;
 }
@@ -1176,6 +1285,25 @@ static void test_saxreader(int version)
     V_UNKNOWN(&var) = (IUnknown*)iStream;
 
     expectCall = contentHandlerTest1;
+    hr = ISAXXMLReader_parse(reader, var);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    test_expect_call(CH_ENDTEST);
+
+    IStream_Release(iStream);
+
+    CreateStreamOnHGlobal(NULL, TRUE, &iStream);
+    liSize.QuadPart = strlen(szTestAttributes);
+    IStream_SetSize(iStream, liSize);
+    IStream_Write(iStream, szTestAttributes, strlen(szTestAttributes), &bytesWritten);
+    liPos.QuadPart = 0;
+    IStream_Seek(iStream, liPos, STREAM_SEEK_SET, NULL);
+    V_VT(&var) = VT_UNKNOWN|VT_DISPATCH;
+    V_UNKNOWN(&var) = (IUnknown*)iStream;
+
+    if(version >= 6)
+        expectCall = contentHandlerTestAttributes6;
+    else
+        expectCall = contentHandlerTestAttributes;
     hr = ISAXXMLReader_parse(reader, var);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     test_expect_call(CH_ENDTEST);
