@@ -1224,75 +1224,60 @@ static BOOL pathdrv_Ellipse( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
 }
 
 
-BOOL PATH_PolyBezierTo(DC *dc, const POINT *pts, DWORD cbPoints)
-{
-   GdiPath     *pPath = &dc->path;
-   POINT       pt;
-   UINT        i;
-
-   /* Check that path is open */
-   if(pPath->state!=PATH_Open)
-      return FALSE;
-
-   /* Add a PT_MOVETO if necessary */
-   if(pPath->newStroke)
-   {
-      pPath->newStroke=FALSE;
-      pt.x = dc->CursPosX;
-      pt.y = dc->CursPosY;
-      if(!LPtoDP(dc->hSelf, &pt, 1))
-         return FALSE;
-      if(!PATH_AddEntry(pPath, &pt, PT_MOVETO))
-         return FALSE;
-   }
-
-   for(i = 0; i < cbPoints; i++) {
-       pt = pts[i];
-       if(!LPtoDP(dc->hSelf, &pt, 1))
-	   return FALSE;
-       PATH_AddEntry(pPath, &pt, PT_BEZIERTO);
-   }
-   return TRUE;
-}
-
-BOOL PATH_PolyBezier(DC *dc, const POINT *pts, DWORD cbPoints)
-{
-   GdiPath     *pPath = &dc->path;
-   POINT       pt;
-   UINT        i;
-
-   /* Check that path is open */
-   if(pPath->state!=PATH_Open)
-      return FALSE;
-
-   for(i = 0; i < cbPoints; i++) {
-       pt = pts[i];
-       if(!LPtoDP(dc->hSelf, &pt, 1))
-	   return FALSE;
-       PATH_AddEntry(pPath, &pt, (i == 0) ? PT_MOVETO : PT_BEZIERTO);
-   }
-   return TRUE;
-}
-
-/* PATH_PolyDraw
- *
- * Should be called when a call to PolyDraw is performed on a DC that has
- * an open path. Returns TRUE if successful, else FALSE.
+/*************************************************************
+ *           pathdrv_PolyBezierTo
  */
-BOOL PATH_PolyDraw(DC *dc, const POINT *pts, const BYTE *types,
-    DWORD cbPoints)
+static BOOL pathdrv_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD cbPoints )
 {
-    GdiPath     *pPath = &dc->path;
+    struct path_physdev *physdev = get_path_physdev( dev );
+    POINT pt;
+    UINT i;
+
+    if (!start_new_stroke( physdev )) return FALSE;
+
+    for(i = 0; i < cbPoints; i++) {
+        pt = pts[i];
+        LPtoDP( dev->hdc, &pt, 1 );
+        PATH_AddEntry(physdev->path, &pt, PT_BEZIERTO);
+    }
+    return TRUE;
+}
+
+
+/*************************************************************
+ *           pathdrv_PolyBezier
+ */
+static BOOL pathdrv_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD cbPoints )
+{
+    struct path_physdev *physdev = get_path_physdev( dev );
+    POINT pt;
+    UINT i;
+
+    for(i = 0; i < cbPoints; i++) {
+        pt = pts[i];
+        LPtoDP( dev->hdc, &pt, 1 );
+        PATH_AddEntry(physdev->path, &pt, (i == 0) ? PT_MOVETO : PT_BEZIERTO);
+    }
+    return TRUE;
+}
+
+
+/*************************************************************
+ *           pathdrv_PolyDraw
+ */
+static BOOL pathdrv_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *types, DWORD cbPoints )
+{
+    struct path_physdev *physdev = get_path_physdev( dev );
     POINT lastmove, orig_pos;
     INT i;
 
-    GetCurrentPositionEx( dc->hSelf, &orig_pos );
+    GetCurrentPositionEx( dev->hdc, &orig_pos );
     lastmove = orig_pos;
 
-    for(i = pPath->numEntriesUsed - 1; i >= 0; i--){
-        if(pPath->pFlags[i] == PT_MOVETO){
-            lastmove = pPath->pPoints[i];
-            DPtoLP(dc->hSelf, &lastmove, 1);
+    for(i = physdev->path->numEntriesUsed - 1; i >= 0; i--){
+        if(physdev->path->pFlags[i] == PT_MOVETO){
+            lastmove = physdev->path->pPoints[i];
+            DPtoLP(dev->hdc, &lastmove, 1);
             break;
         }
     }
@@ -1302,17 +1287,17 @@ BOOL PATH_PolyDraw(DC *dc, const POINT *pts, const BYTE *types,
         switch (types[i])
         {
         case PT_MOVETO:
-            MoveToEx( dc->hSelf, pts[i].x, pts[i].y, NULL );
+            MoveToEx( dev->hdc, pts[i].x, pts[i].y, NULL );
             break;
         case PT_LINETO:
         case PT_LINETO | PT_CLOSEFIGURE:
-            LineTo( dc->hSelf, pts[i].x, pts[i].y );
+            LineTo( dev->hdc, pts[i].x, pts[i].y );
             break;
         case PT_BEZIERTO:
             if ((i + 2 < cbPoints) && (types[i + 1] == PT_BEZIERTO) &&
                 (types[i + 2] & ~PT_CLOSEFIGURE) == PT_BEZIERTO)
             {
-                PolyBezierTo( dc->hSelf, &pts[i], 3 );
+                PolyBezierTo( dev->hdc, &pts[i], 3 );
                 i += 2;
                 break;
             }
@@ -1322,14 +1307,14 @@ BOOL PATH_PolyDraw(DC *dc, const POINT *pts, const BYTE *types,
             {
                 if (!(types[i - 1] & PT_CLOSEFIGURE)) lastmove = pts[i - 1];
                 if (lastmove.x != orig_pos.x || lastmove.y != orig_pos.y)
-                    MoveToEx( dc->hSelf, orig_pos.x, orig_pos.y, NULL );
+                    MoveToEx( dev->hdc, orig_pos.x, orig_pos.y, NULL );
             }
             return FALSE;
         }
 
         if(types[i] & PT_CLOSEFIGURE){
-            pPath->pFlags[pPath->numEntriesUsed-1] |= PT_CLOSEFIGURE;
-            MoveToEx( dc->hSelf, lastmove.x, lastmove.y, NULL );
+            physdev->path->pFlags[physdev->path->numEntriesUsed-1] |= PT_CLOSEFIGURE;
+            MoveToEx( dev->hdc, lastmove.x, lastmove.y, NULL );
         }
     }
 
@@ -2374,9 +2359,9 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pPaintRgn */
     NULL,                               /* pPatBlt */
     pathdrv_Pie,                        /* pPie */
-    NULL,                               /* pPolyBezier */
-    NULL,                               /* pPolyBezierTo */
-    NULL,                               /* pPolyDraw */
+    pathdrv_PolyBezier,                 /* pPolyBezier */
+    pathdrv_PolyBezierTo,               /* pPolyBezierTo */
+    pathdrv_PolyDraw,                   /* pPolyDraw */
     NULL,                               /* pPolyPolygon */
     NULL,                               /* pPolyPolyline */
     NULL,                               /* pPolygon */

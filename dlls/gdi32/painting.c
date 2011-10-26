@@ -881,7 +881,8 @@ BOOL WINAPI FloodFill( HDC hdc, INT x, INT y, COLORREF color )
  */
 BOOL WINAPI PolyBezier( HDC hdc, const POINT* lppt, DWORD cPoints )
 {
-    BOOL ret = FALSE;
+    PHYSDEV physdev;
+    BOOL ret;
     DC * dc;
 
     /* cPoints must be 3 * n + 1 (where n>=1) */
@@ -891,12 +892,8 @@ BOOL WINAPI PolyBezier( HDC hdc, const POINT* lppt, DWORD cPoints )
     if(!dc) return FALSE;
 
     update_dc( dc );
-    if(PATH_IsPathOpen(dc->path)) ret = PATH_PolyBezier(dc, lppt, cPoints);
-    else
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPolyBezier );
-        ret = physdev->funcs->pPolyBezier( physdev, lppt, cPoints );
-    }
+    physdev = GET_DC_PHYSDEV( dc, pPolyBezier );
+    ret = physdev->funcs->pPolyBezier( physdev, lppt, cPoints );
     release_dc_ptr( dc );
     return ret;
 }
@@ -917,7 +914,8 @@ BOOL WINAPI PolyBezier( HDC hdc, const POINT* lppt, DWORD cPoints )
 BOOL WINAPI PolyBezierTo( HDC hdc, const POINT* lppt, DWORD cPoints )
 {
     DC * dc;
-    BOOL ret = FALSE;
+    BOOL ret;
+    PHYSDEV physdev;
 
     /* cbPoints must be 3 * n (where n>=1) */
     if (!cPoints || (cPoints % 3) != 0) return FALSE;
@@ -926,12 +924,9 @@ BOOL WINAPI PolyBezierTo( HDC hdc, const POINT* lppt, DWORD cPoints )
     if(!dc) return FALSE;
 
     update_dc( dc );
-    if(PATH_IsPathOpen(dc->path)) ret = PATH_PolyBezierTo(dc, lppt, cPoints);
-    else
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPolyBezierTo );
-        ret = physdev->funcs->pPolyBezierTo( physdev, lppt, cPoints );
-    }
+    physdev = GET_DC_PHYSDEV( dc, pPolyBezierTo );
+    ret = physdev->funcs->pPolyBezierTo( physdev, lppt, cPoints );
+
     if(ret) {
         dc->CursPosX = lppt[cPoints-1].x;
         dc->CursPosY = lppt[cPoints-1].y;
@@ -974,17 +969,14 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
                        DWORD cCount)
 {
     DC *dc = get_dc_ptr( hdc );
-    BOOL result = FALSE;
+    PHYSDEV physdev;
+    BOOL result;
 
     if(!dc) return FALSE;
 
     update_dc( dc );
-    if( PATH_IsPathOpen( dc->path ) ) result = PATH_PolyDraw(dc, lppt, lpbTypes, cCount);
-    else
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPolyDraw );
-        result = physdev->funcs->pPolyDraw( physdev, lppt, lpbTypes, cCount );
-    }
+    physdev = GET_DC_PHYSDEV( dc, pPolyDraw );
+    result = physdev->funcs->pPolyDraw( physdev, lppt, lpbTypes, cCount );
     release_dc_ptr( dc );
     return result;
 }
