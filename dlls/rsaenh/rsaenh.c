@@ -2731,11 +2731,27 @@ static BOOL import_private_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
         return FALSE;
     }
 
-    if ((dwDataLen < sizeof(BLOBHEADER) + sizeof(RSAPUBKEY)) ||
-        (pRSAPubKey->magic != RSAENH_MAGIC_RSA2) ||
-        (dwDataLen < sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) +
+    if ((dwDataLen < sizeof(BLOBHEADER) + sizeof(RSAPUBKEY)))
+    {
+        ERR("datalen %d not long enough for a BLOBHEADER + RSAPUBKEY\n",
+            dwDataLen);
+        SetLastError(NTE_BAD_DATA);
+        return FALSE;
+    }
+    if (pRSAPubKey->magic != RSAENH_MAGIC_RSA2)
+    {
+        ERR("unexpected magic %08x\n", pRSAPubKey->magic);
+        SetLastError(NTE_BAD_DATA);
+        return FALSE;
+    }
+    if ((dwDataLen < sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) +
             (2 * pRSAPubKey->bitlen >> 3) + (5 * ((pRSAPubKey->bitlen+8)>>4))))
     {
+        DWORD expectedLen = sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) +
+            (2 * pRSAPubKey->bitlen >> 3) + (5 * ((pRSAPubKey->bitlen+8)>>4));
+
+        ERR("blob too short for pub key: expect %d, got %d\n",
+            expectedLen, dwDataLen);
         SetLastError(NTE_BAD_DATA);
         return FALSE;
     }
