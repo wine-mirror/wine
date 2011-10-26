@@ -1088,13 +1088,16 @@ static const struct ISAXAttributesVtbl isaxattributes_vtbl =
     isaxattributes_getValueFromQName
 };
 
-static HRESULT SAXAttributes_create(saxattributes **attr,
+static HRESULT SAXAttributes_create(saxattributes **attr, MSXML_VERSION version,
         int nb_namespaces, const xmlChar **xmlNamespaces,
         int nb_attributes, const xmlChar **xmlAttributes)
 {
     saxattributes *attributes;
     int index;
     static const xmlChar xmlns[] = "xmlns";
+    static const WCHAR xmlnsW[] = { 'x','m','l','n','s',0 };
+    static const WCHAR w3xmlns[] = { 'h','t','t','p',':','/','/', 'w','w','w','.','w','3','.',
+        'o','r','g','/','2','0','0','0','/','x','m','l','n','s','/',0 };
 
     attributes = heap_alloc(sizeof(*attributes));
     if(!attributes)
@@ -1124,23 +1127,26 @@ static HRESULT SAXAttributes_create(saxattributes **attr,
 
     for(index=0; index<nb_namespaces; index++)
     {
-        attributes->szLocalname[index] = SysAllocStringLen(NULL, 0);
-        attributes->szURI[index] = SysAllocStringLen(NULL, 0);
-        attributes->szValue[index] = bstr_from_xmlChar(xmlNamespaces[2*index+1]);
-        attributes->szQName[index] = QName_from_xmlChar(xmlns, xmlNamespaces[2*index]);
+        attributes->szLocalname[nb_attributes+index] = SysAllocStringLen(NULL, 0);
+        if(version >= MSXML6)
+            attributes->szURI[nb_attributes+index] = SysAllocString(w3xmlns);
+        else
+            attributes->szURI[nb_attributes+index] = SysAllocStringLen(NULL, 0);
+        attributes->szValue[nb_attributes+index] = bstr_from_xmlChar(xmlNamespaces[2*index+1]);
+        if(!xmlNamespaces[2*index])
+            attributes->szQName[nb_attributes+index] = SysAllocString(xmlnsW);
+        else
+            attributes->szQName[nb_attributes+index] = QName_from_xmlChar(xmlns, xmlNamespaces[2*index]);
     }
 
     for(index=0; index<nb_attributes; index++)
     {
-        attributes->szLocalname[nb_namespaces+index] =
-            bstr_from_xmlChar(xmlAttributes[index*5]);
-        attributes->szURI[nb_namespaces+index] =
-            bstr_from_xmlChar(xmlAttributes[index*5+2]);
-        attributes->szValue[nb_namespaces+index] =
-            bstr_from_xmlCharN(xmlAttributes[index*5+3],
-                    xmlAttributes[index*5+4]-xmlAttributes[index*5+3]);
-        attributes->szQName[nb_namespaces+index] =
-            QName_from_xmlChar(xmlAttributes[index*5+1], xmlAttributes[index*5]);
+        attributes->szLocalname[index] = bstr_from_xmlChar(xmlAttributes[index*5]);
+        attributes->szURI[index] = bstr_from_xmlChar(xmlAttributes[index*5+2]);
+        attributes->szValue[index] = bstr_from_xmlCharN(xmlAttributes[index*5+3],
+                xmlAttributes[index*5+4]-xmlAttributes[index*5+3]);
+        attributes->szQName[index] = QName_from_xmlChar(xmlAttributes[index*5+1],
+                xmlAttributes[index*5]);
     }
 
     *attr = attributes;
@@ -1259,7 +1265,8 @@ static void libxmlStartElementNS(
         LocalName = pooled_bstr_from_xmlChar(&This->saxreader->pool, localname);
         QName = pooled_QName_from_xmlChar(&This->saxreader->pool, prefix, localname);
 
-        hr = SAXAttributes_create(&attr, nb_namespaces, namespaces, nb_attributes, attributes);
+        hr = SAXAttributes_create(&attr, This->saxreader->version,
+                nb_namespaces, namespaces, nb_attributes, attributes);
         if(hr == S_OK)
         {
             if(This->vbInterface)
@@ -1326,25 +1333,49 @@ static void libxmlEndElementNS(
             return;
         }
 
-        for(index=This->pParserCtxt->nsNr-2;
-                index>=This->pParserCtxt->nsNr-nsNr*2; index-=2)
+        if(This->saxreader->version >= MSXML6)
         {
-            Prefix = pooled_bstr_from_xmlChar(&This->saxreader->pool, This->pParserCtxt->nsTab[index]);
-
-            if(This->vbInterface)
-                hr = IVBSAXContentHandler_endPrefixMapping(
-                        This->saxreader->vbcontentHandler, &Prefix);
-            else
-                hr = ISAXContentHandler_endPrefixMapping(
-                        This->saxreader->contentHandler,
-                        Prefix, SysStringLen(Prefix));
-
-            if(This->saxreader->version>=MSXML6 ? FAILED(hr) : hr!=S_OK)
+            for(index=This->pParserCtxt->nsNr-nsNr*2;
+                    index<This->pParserCtxt->nsNr; index+=2)
             {
-                format_error_message_from_id(This, hr);
-                return;
-            }
+                Prefix = pooled_bstr_from_xmlChar(&This->saxreader->pool, This->pParserCtxt->nsTab[index]);
 
+                if(This->vbInterface)
+                    hr = IVBSAXContentHandler_endPrefixMapping(
+                            This->saxreader->vbcontentHandler, &Prefix);
+                else
+                    hr = ISAXContentHandler_endPrefixMapping(
+                            This->saxreader->contentHandler,
+                            Prefix, SysStringLen(Prefix));
+
+                if(FAILED(hr))
+                {
+                    format_error_message_from_id(This, hr);
+                    return;
+                }
+            }
+        }
+        else
+        {
+            for(index=This->pParserCtxt->nsNr-2;
+                    index>=This->pParserCtxt->nsNr-nsNr*2; index-=2)
+            {
+                Prefix = pooled_bstr_from_xmlChar(&This->saxreader->pool, This->pParserCtxt->nsTab[index]);
+
+                if(This->vbInterface)
+                    hr = IVBSAXContentHandler_endPrefixMapping(
+                            This->saxreader->vbcontentHandler, &Prefix);
+                else
+                    hr = ISAXContentHandler_endPrefixMapping(
+                            This->saxreader->contentHandler,
+                            Prefix, SysStringLen(Prefix));
+
+                if(hr != S_OK)
+                {
+                    format_error_message_from_id(This, hr);
+                    return;
+                }
+            }
         }
     }
 
