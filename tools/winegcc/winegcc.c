@@ -648,16 +648,17 @@ static const char *mingw_unicode_hack( struct options *opts )
     char *main_stub = get_temp_file( opts->output_name, ".c" );
 
     create_file( main_stub, 0644,
-                 "#include <stdarg.h>\n"
-                 "#include <windef.h>\n"
-                 "#include <winbase.h>\n"
+                 "typedef unsigned short wchar_t;\n"
+                 "extern void * __stdcall LoadLibraryA(const char *);\n"
+                 "extern void * __stdcall GetProcAddress(void *,const char *);\n"
+                 "extern int wmain( int argc, wchar_t *argv[] );\n\n"
                  "int main( int argc, char *argv[] )\n{\n"
                  "    int wargc;\n"
                  "    wchar_t **wargv, **wenv;\n"
-                 "    HMODULE msvcrt = LoadLibraryA( \"msvcrt.dll\" );\n"
-                 "    void __cdecl (*__wgetmainargs)(int *argc, wchar_t** *wargv, wchar_t** *wenvp, int expand_wildcards,\n"
-                 "                                   int *new_mode) = (void *)GetProcAddress( msvcrt, \"__wgetmainargs\" );\n"
-                 "    __wgetmainargs( &wargc, &wargv, &wenv, 0, NULL );\n"
+                 "    void *msvcrt = LoadLibraryA( \"msvcrt.dll\" );\n"
+                 "    void (*__wgetmainargs)(int *argc, wchar_t** *wargv, wchar_t** *wenvp, int expand_wildcards,\n"
+                 "                           int *new_mode) = GetProcAddress( msvcrt, \"__wgetmainargs\" );\n"
+                 "    __wgetmainargs( &wargc, &wargv, &wenv, 0, 0 );\n"
                  "    return wmain( wargc, wargv );\n}\n" );
     return compile_to_object( opts, main_stub, NULL );
 }
