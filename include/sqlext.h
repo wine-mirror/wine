@@ -53,17 +53,17 @@ extern "C" {
 #endif
 
 #if (ODBCVER >= 0x0300)
-#define SQL_CP_OFF							0UL
-#define SQL_CP_ONE_PER_DRIVER				1UL
-#define SQL_CP_ONE_PER_HENV					2UL
+#define SQL_CP_OFF                      __MSABI_LONG(0U)
+#define SQL_CP_ONE_PER_DRIVER           __MSABI_LONG(1U)
+#define SQL_CP_ONE_PER_HENV             __MSABI_LONG(2U)
 #define SQL_CP_DEFAULT						SQL_CP_OFF
 
-#define SQL_CP_STRICT_MATCH					0UL
-#define SQL_CP_RELAXED_MATCH				1UL
+#define SQL_CP_STRICT_MATCH             __MSABI_LONG(0U)
+#define SQL_CP_RELAXED_MATCH            __MSABI_LONG(1U)
 #define SQL_CP_MATCH_DEFAULT				SQL_CP_STRICT_MATCH
 
-#define SQL_OV_ODBC2						2UL
-#define	SQL_OV_ODBC3						3UL
+#define SQL_OV_ODBC2                    __MSABI_LONG(2U)
+#define SQL_OV_ODBC3                    __MSABI_LONG(3U)
 #endif
 
 #define SQL_ACCESS_MODE                 101
@@ -113,40 +113,40 @@ extern "C" {
 #define SQL_CONN_OPT_MIN                SQL_ACCESS_MODE
 #endif
 
-#define SQL_MODE_READ_WRITE             0UL
-#define SQL_MODE_READ_ONLY              1UL
+#define SQL_MODE_READ_WRITE             __MSABI_LONG(0U)
+#define SQL_MODE_READ_ONLY              __MSABI_LONG(1U)
 #define SQL_MODE_DEFAULT                SQL_MODE_READ_WRITE
 
-#define SQL_AUTOCOMMIT_OFF              0UL
-#define SQL_AUTOCOMMIT_ON               1UL
+#define SQL_AUTOCOMMIT_OFF              __MSABI_LONG(0U)
+#define SQL_AUTOCOMMIT_ON               __MSABI_LONG(1U)
 #define SQL_AUTOCOMMIT_DEFAULT          SQL_AUTOCOMMIT_ON
 
-#define SQL_LOGIN_TIMEOUT_DEFAULT       15UL
+#define SQL_LOGIN_TIMEOUT_DEFAULT       __MSABI_LONG(15U)
 
-#define SQL_OPT_TRACE_OFF               0UL
-#define SQL_OPT_TRACE_ON                1UL
+#define SQL_OPT_TRACE_OFF               __MSABI_LONG(0U)
+#define SQL_OPT_TRACE_ON                __MSABI_LONG(1U)
 #define SQL_OPT_TRACE_DEFAULT           SQL_OPT_TRACE_OFF
 #define SQL_OPT_TRACE_FILE_DEFAULT      "\\SQL.LOG"
 
-#define SQL_CUR_USE_IF_NEEDED           0UL
-#define SQL_CUR_USE_ODBC                1UL
-#define SQL_CUR_USE_DRIVER              2UL
+#define SQL_CUR_USE_IF_NEEDED           __MSABI_LONG(0U)
+#define SQL_CUR_USE_ODBC                __MSABI_LONG(1U)
+#define SQL_CUR_USE_DRIVER              __MSABI_LONG(2U)
 #define SQL_CUR_DEFAULT                 SQL_CUR_USE_DRIVER
 
 #if (ODBCVER >= 0x0300)
-#define SQL_DB_RETURN_TO_POOL			0UL
-#define SQL_DB_DISCONNECT				1UL
+#define SQL_DB_RETURN_TO_POOL           __MSABI_LONG(0U)
+#define SQL_DB_DISCONNECT               __MSABI_LONG(1U)
 #define SQL_DB_DEFAULT					SQL_DB_RETURN_TO_POOL
 
-#define SQL_DTC_DONE					0L
+#define SQL_DTC_DONE                    __MSABI_LONG(0)
 #endif
 
-#define SQL_CD_TRUE					1L
-#define SQL_CD_FALSE					0L
+#define SQL_CD_TRUE                     __MSABI_LONG(1)
+#define SQL_CD_FALSE                    __MSABI_LONG(0)
 
 #if (ODBCVER >= 0x0351)
-#define SQL_AA_TRUE					1L
-#define SQL_AA_FALSE					0L
+#define SQL_AA_TRUE                     __MSABI_LONG(1)
+#define SQL_AA_FALSE                    __MSABI_LONG(0)
 #endif
 
 #define SQL_QUERY_TIMEOUT		0
@@ -212,25 +212,25 @@ extern "C" {
 #endif
 
 #if (ODBCVER >= 0x0300)
-#define SQL_PARAM_BIND_BY_COLUMN			0UL
+#define SQL_PARAM_BIND_BY_COLUMN        __MSABI_LONG(0U)
 #define SQL_PARAM_BIND_TYPE_DEFAULT			SQL_PARAM_BIND_BY_COLUMN
 #endif
 
-#define SQL_QUERY_TIMEOUT_DEFAULT       0UL
+#define SQL_QUERY_TIMEOUT_DEFAULT       __MSABI_LONG(0U)
 
-#define SQL_MAX_ROWS_DEFAULT            0UL
+#define SQL_MAX_ROWS_DEFAULT            __MSABI_LONG(0U)
 
-#define SQL_NOSCAN_OFF                  0UL
-#define SQL_NOSCAN_ON                   1UL
+#define SQL_NOSCAN_OFF                  __MSABI_LONG(0U)
+#define SQL_NOSCAN_ON                   __MSABI_LONG(1U)
 #define SQL_NOSCAN_DEFAULT              SQL_NOSCAN_OFF
 
-#define SQL_MAX_LENGTH_DEFAULT          0UL
+#define SQL_MAX_LENGTH_DEFAULT          __MSABI_LONG(0U)
 
-#define SQL_ASYNC_ENABLE_OFF			0UL
-#define SQL_ASYNC_ENABLE_ON				1UL
+#define SQL_ASYNC_ENABLE_OFF            __MSABI_LONG(0U)
+#define SQL_ASYNC_ENABLE_ON             __MSABI_LONG(1U)
 #define SQL_ASYNC_ENABLE_DEFAULT        SQL_ASYNC_ENABLE_OFF
 
-#define SQL_BIND_BY_COLUMN              0UL
+#define SQL_BIND_BY_COLUMN              __MSABI_LONG(0U)
 #define SQL_BIND_TYPE_DEFAULT           SQL_BIND_BY_COLUMN
 
 #define SQL_CONCUR_READ_ONLY            1
@@ -239,31 +239,31 @@ extern "C" {
 #define SQL_CONCUR_VALUES               4
 #define SQL_CONCUR_DEFAULT              SQL_CONCUR_READ_ONLY
 
-#define SQL_CURSOR_FORWARD_ONLY         0UL
-#define SQL_CURSOR_KEYSET_DRIVEN        1UL
-#define SQL_CURSOR_DYNAMIC              2UL
-#define SQL_CURSOR_STATIC               3UL
+#define SQL_CURSOR_FORWARD_ONLY         __MSABI_LONG(0U)
+#define SQL_CURSOR_KEYSET_DRIVEN        __MSABI_LONG(1U)
+#define SQL_CURSOR_DYNAMIC              __MSABI_LONG(2U)
+#define SQL_CURSOR_STATIC               __MSABI_LONG(3U)
 #define SQL_CURSOR_TYPE_DEFAULT         SQL_CURSOR_FORWARD_ONLY
 
-#define SQL_ROWSET_SIZE_DEFAULT         1UL
+#define SQL_ROWSET_SIZE_DEFAULT         __MSABI_LONG(1U)
 
-#define SQL_KEYSET_SIZE_DEFAULT         0UL
+#define SQL_KEYSET_SIZE_DEFAULT         __MSABI_LONG(0U)
 
-#define SQL_SC_NON_UNIQUE               0UL
-#define SQL_SC_TRY_UNIQUE               1UL
-#define SQL_SC_UNIQUE                   2UL
+#define SQL_SC_NON_UNIQUE               __MSABI_LONG(0U)
+#define SQL_SC_TRY_UNIQUE               __MSABI_LONG(1U)
+#define SQL_SC_UNIQUE                   __MSABI_LONG(2U)
 
-#define SQL_RD_OFF                      0UL
-#define SQL_RD_ON                       1UL
+#define SQL_RD_OFF                      __MSABI_LONG(0U)
+#define SQL_RD_ON                       __MSABI_LONG(1U)
 #define SQL_RD_DEFAULT                  SQL_RD_ON
 
-#define SQL_UB_OFF                      0UL
-#define	SQL_UB_ON			01UL
+#define SQL_UB_OFF                      __MSABI_LONG(0U)
+#define SQL_UB_ON                       __MSABI_LONG(1U)
 #define SQL_UB_DEFAULT                  SQL_UB_OFF
 
 #if (ODBCVER >= 0x0300)
 #define SQL_UB_FIXED					SQL_UB_ON
-#define SQL_UB_VARIABLE					2UL
+#define SQL_UB_VARIABLE                 __MSABI_LONG(2U)
 #endif
 
 #if (ODBCVER >= 0x0300)
@@ -469,7 +469,7 @@ extern "C" {
 #define SQL_LEN_BINARY_ATTR(length)	 (-(length)+SQL_LEN_BINARY_ATTR_OFFSET)
 
 #define SQL_PARAM_TYPE_DEFAULT           SQL_PARAM_INPUT_OUTPUT
-#define SQL_SETPARAM_VALUE_MAX           (-1L)
+#define SQL_SETPARAM_VALUE_MAX           (__MSABI_LONG(-1))
 
 #define SQL_COLUMN_COUNT                0
 #define SQL_COLUMN_NAME                 1
@@ -720,221 +720,221 @@ extern "C" {
 
 #if (ODBCVER >= 0x0300)
 
-#define	SQL_AT_ADD_COLUMN_SINGLE				0x00000020L
-#define	SQL_AT_ADD_COLUMN_DEFAULT				0x00000040L
-#define	SQL_AT_ADD_COLUMN_COLLATION				0x00000080L
-#define	SQL_AT_SET_COLUMN_DEFAULT				0x00000100L
-#define	SQL_AT_DROP_COLUMN_DEFAULT				0x00000200L
-#define	SQL_AT_DROP_COLUMN_CASCADE				0x00000400L
-#define	SQL_AT_DROP_COLUMN_RESTRICT				0x00000800L
-#define SQL_AT_ADD_TABLE_CONSTRAINT				0x00001000L
-#define SQL_AT_DROP_TABLE_CONSTRAINT_CASCADE			0x00002000L
-#define SQL_AT_DROP_TABLE_CONSTRAINT_RESTRICT			0x00004000L
-#define SQL_AT_CONSTRAINT_NAME_DEFINITION			0x00008000L
-#define SQL_AT_CONSTRAINT_INITIALLY_DEFERRED			0x00010000L
-#define SQL_AT_CONSTRAINT_INITIALLY_IMMEDIATE			0x00020000L
-#define SQL_AT_CONSTRAINT_DEFERRABLE				0x00040000L
-#define SQL_AT_CONSTRAINT_NON_DEFERRABLE			0x00080000L
+#define SQL_AT_ADD_COLUMN_SINGLE                        __MSABI_LONG(0x00000020)
+#define SQL_AT_ADD_COLUMN_DEFAULT                       __MSABI_LONG(0x00000040)
+#define SQL_AT_ADD_COLUMN_COLLATION                     __MSABI_LONG(0x00000080)
+#define SQL_AT_SET_COLUMN_DEFAULT                       __MSABI_LONG(0x00000100)
+#define SQL_AT_DROP_COLUMN_DEFAULT                      __MSABI_LONG(0x00000200)
+#define SQL_AT_DROP_COLUMN_CASCADE                      __MSABI_LONG(0x00000400)
+#define SQL_AT_DROP_COLUMN_RESTRICT                     __MSABI_LONG(0x00000800)
+#define SQL_AT_ADD_TABLE_CONSTRAINT                     __MSABI_LONG(0x00001000)
+#define SQL_AT_DROP_TABLE_CONSTRAINT_CASCADE            __MSABI_LONG(0x00002000)
+#define SQL_AT_DROP_TABLE_CONSTRAINT_RESTRICT           __MSABI_LONG(0x00004000)
+#define SQL_AT_CONSTRAINT_NAME_DEFINITION               __MSABI_LONG(0x00008000)
+#define SQL_AT_CONSTRAINT_INITIALLY_DEFERRED            __MSABI_LONG(0x00010000)
+#define SQL_AT_CONSTRAINT_INITIALLY_IMMEDIATE           __MSABI_LONG(0x00020000)
+#define SQL_AT_CONSTRAINT_DEFERRABLE                    __MSABI_LONG(0x00040000)
+#define SQL_AT_CONSTRAINT_NON_DEFERRABLE                __MSABI_LONG(0x00080000)
 #endif
 
-#define SQL_CVT_CHAR                        0x00000001L
-#define SQL_CVT_NUMERIC                     0x00000002L
-#define SQL_CVT_DECIMAL                     0x00000004L
-#define SQL_CVT_INTEGER                     0x00000008L
-#define SQL_CVT_SMALLINT                    0x00000010L
-#define SQL_CVT_FLOAT                       0x00000020L
-#define SQL_CVT_REAL                        0x00000040L
-#define SQL_CVT_DOUBLE                      0x00000080L
-#define SQL_CVT_VARCHAR                     0x00000100L
-#define SQL_CVT_LONGVARCHAR                 0x00000200L
-#define SQL_CVT_BINARY                      0x00000400L
-#define SQL_CVT_VARBINARY                   0x00000800L
-#define SQL_CVT_BIT                         0x00001000L
-#define SQL_CVT_TINYINT                     0x00002000L
-#define SQL_CVT_BIGINT                      0x00004000L
-#define SQL_CVT_DATE                        0x00008000L
-#define SQL_CVT_TIME                        0x00010000L
-#define SQL_CVT_TIMESTAMP                   0x00020000L
-#define SQL_CVT_LONGVARBINARY               0x00040000L
+#define SQL_CVT_CHAR                    __MSABI_LONG(0x00000001)
+#define SQL_CVT_NUMERIC                 __MSABI_LONG(0x00000002)
+#define SQL_CVT_DECIMAL                 __MSABI_LONG(0x00000004)
+#define SQL_CVT_INTEGER                 __MSABI_LONG(0x00000008)
+#define SQL_CVT_SMALLINT                __MSABI_LONG(0x00000010)
+#define SQL_CVT_FLOAT                   __MSABI_LONG(0x00000020)
+#define SQL_CVT_REAL                    __MSABI_LONG(0x00000040)
+#define SQL_CVT_DOUBLE                  __MSABI_LONG(0x00000080)
+#define SQL_CVT_VARCHAR                 __MSABI_LONG(0x00000100)
+#define SQL_CVT_LONGVARCHAR             __MSABI_LONG(0x00000200)
+#define SQL_CVT_BINARY                  __MSABI_LONG(0x00000400)
+#define SQL_CVT_VARBINARY               __MSABI_LONG(0x00000800)
+#define SQL_CVT_BIT                     __MSABI_LONG(0x00001000)
+#define SQL_CVT_TINYINT                 __MSABI_LONG(0x00002000)
+#define SQL_CVT_BIGINT                  __MSABI_LONG(0x00004000)
+#define SQL_CVT_DATE                    __MSABI_LONG(0x00008000)
+#define SQL_CVT_TIME                    __MSABI_LONG(0x00010000)
+#define SQL_CVT_TIMESTAMP               __MSABI_LONG(0x00020000)
+#define SQL_CVT_LONGVARBINARY           __MSABI_LONG(0x00040000)
 #if (ODBCVER >= 0x0300)
-#define SQL_CVT_INTERVAL_YEAR_MONTH	0x00080000L
-#define SQL_CVT_INTERVAL_DAY_TIME	0x00100000L
-#define	SQL_CVT_WCHAR			0x00200000L
-#define	SQL_CVT_WLONGVARCHAR		0x00400000L
-#define	SQL_CVT_WVARCHAR		0x00800000L
+#define SQL_CVT_INTERVAL_YEAR_MONTH     __MSABI_LONG(0x00080000)
+#define SQL_CVT_INTERVAL_DAY_TIME       __MSABI_LONG(0x00100000)
+#define SQL_CVT_WCHAR                   __MSABI_LONG(0x00200000)
+#define SQL_CVT_WLONGVARCHAR            __MSABI_LONG(0x00400000)
+#define SQL_CVT_WVARCHAR                __MSABI_LONG(0x00800000)
 
 #endif
 
 
-#define SQL_FN_CVT_CONVERT		0x00000001L
+#define SQL_FN_CVT_CONVERT              __MSABI_LONG(0x00000001)
 #if (ODBCVER >= 0x0300)
-#define SQL_FN_CVT_CAST			0x00000002L
+#define SQL_FN_CVT_CAST                 __MSABI_LONG(0x00000002)
 #endif
 
-#define SQL_FN_STR_CONCAT                   0x00000001L
-#define SQL_FN_STR_INSERT                   0x00000002L
-#define SQL_FN_STR_LEFT                     0x00000004L
-#define SQL_FN_STR_LTRIM                    0x00000008L
-#define SQL_FN_STR_LENGTH                   0x00000010L
-#define SQL_FN_STR_LOCATE                   0x00000020L
-#define SQL_FN_STR_LCASE                    0x00000040L
-#define SQL_FN_STR_REPEAT                   0x00000080L
-#define SQL_FN_STR_REPLACE                  0x00000100L
-#define SQL_FN_STR_RIGHT                    0x00000200L
-#define SQL_FN_STR_RTRIM                    0x00000400L
-#define SQL_FN_STR_SUBSTRING                0x00000800L
-#define SQL_FN_STR_UCASE                    0x00001000L
-#define SQL_FN_STR_ASCII                    0x00002000L
-#define SQL_FN_STR_CHAR                     0x00004000L
-#define SQL_FN_STR_DIFFERENCE               0x00008000L
-#define SQL_FN_STR_LOCATE_2                 0x00010000L
-#define SQL_FN_STR_SOUNDEX                  0x00020000L
-#define SQL_FN_STR_SPACE                    0x00040000L
+#define SQL_FN_STR_CONCAT               __MSABI_LONG(0x00000001)
+#define SQL_FN_STR_INSERT               __MSABI_LONG(0x00000002)
+#define SQL_FN_STR_LEFT                 __MSABI_LONG(0x00000004)
+#define SQL_FN_STR_LTRIM                __MSABI_LONG(0x00000008)
+#define SQL_FN_STR_LENGTH               __MSABI_LONG(0x00000010)
+#define SQL_FN_STR_LOCATE               __MSABI_LONG(0x00000020)
+#define SQL_FN_STR_LCASE                __MSABI_LONG(0x00000040)
+#define SQL_FN_STR_REPEAT               __MSABI_LONG(0x00000080)
+#define SQL_FN_STR_REPLACE              __MSABI_LONG(0x00000100)
+#define SQL_FN_STR_RIGHT                __MSABI_LONG(0x00000200)
+#define SQL_FN_STR_RTRIM                __MSABI_LONG(0x00000400)
+#define SQL_FN_STR_SUBSTRING            __MSABI_LONG(0x00000800)
+#define SQL_FN_STR_UCASE                __MSABI_LONG(0x00001000)
+#define SQL_FN_STR_ASCII                __MSABI_LONG(0x00002000)
+#define SQL_FN_STR_CHAR                 __MSABI_LONG(0x00004000)
+#define SQL_FN_STR_DIFFERENCE           __MSABI_LONG(0x00008000)
+#define SQL_FN_STR_LOCATE_2             __MSABI_LONG(0x00010000)
+#define SQL_FN_STR_SOUNDEX              __MSABI_LONG(0x00020000)
+#define SQL_FN_STR_SPACE                __MSABI_LONG(0x00040000)
 #if (ODBCVER >= 0x0300)
-#define SQL_FN_STR_BIT_LENGTH			0x00080000L
-#define SQL_FN_STR_CHAR_LENGTH			0x00100000L
-#define SQL_FN_STR_CHARACTER_LENGTH		0x00200000L
-#define SQL_FN_STR_OCTET_LENGTH			0x00400000L
-#define SQL_FN_STR_POSITION			0x00800000L
-#endif
-
-#if (ODBCVER >= 0x0300)
-#define SQL_SSF_CONVERT					0x00000001L
-#define SQL_SSF_LOWER					0x00000002L
-#define SQL_SSF_UPPER					0x00000004L
-#define SQL_SSF_SUBSTRING				0x00000008L
-#define SQL_SSF_TRANSLATE				0x00000010L
-#define SQL_SSF_TRIM_BOTH				0x00000020L
-#define SQL_SSF_TRIM_LEADING				0x00000040L
-#define SQL_SSF_TRIM_TRAILING				0x00000080L
-#endif
-
-#define SQL_FN_NUM_ABS                      0x00000001L
-#define SQL_FN_NUM_ACOS                     0x00000002L
-#define SQL_FN_NUM_ASIN                     0x00000004L
-#define SQL_FN_NUM_ATAN                     0x00000008L
-#define SQL_FN_NUM_ATAN2                    0x00000010L
-#define SQL_FN_NUM_CEILING                  0x00000020L
-#define SQL_FN_NUM_COS                      0x00000040L
-#define SQL_FN_NUM_COT                      0x00000080L
-#define SQL_FN_NUM_EXP                      0x00000100L
-#define SQL_FN_NUM_FLOOR                    0x00000200L
-#define SQL_FN_NUM_LOG                      0x00000400L
-#define SQL_FN_NUM_MOD                      0x00000800L
-#define SQL_FN_NUM_SIGN                     0x00001000L
-#define SQL_FN_NUM_SIN                      0x00002000L
-#define SQL_FN_NUM_SQRT                     0x00004000L
-#define SQL_FN_NUM_TAN                      0x00008000L
-#define SQL_FN_NUM_PI                       0x00010000L
-#define SQL_FN_NUM_RAND                     0x00020000L
-#define SQL_FN_NUM_DEGREES                  0x00040000L
-#define SQL_FN_NUM_LOG10                    0x00080000L
-#define SQL_FN_NUM_POWER                    0x00100000L
-#define SQL_FN_NUM_RADIANS                  0x00200000L
-#define SQL_FN_NUM_ROUND                    0x00400000L
-#define SQL_FN_NUM_TRUNCATE                 0x00800000L
-
-#if (ODBCVER >= 0x0300)
-#define SQL_SNVF_BIT_LENGTH				0x00000001L
-#define SQL_SNVF_CHAR_LENGTH				0x00000002L
-#define SQL_SNVF_CHARACTER_LENGTH			0x00000004L
-#define SQL_SNVF_EXTRACT				0x00000008L
-#define SQL_SNVF_OCTET_LENGTH				0x00000010L
-#define SQL_SNVF_POSITION				0x00000020L
-#endif
-
-#define SQL_FN_TD_NOW                       0x00000001L
-#define SQL_FN_TD_CURDATE                   0x00000002L
-#define SQL_FN_TD_DAYOFMONTH                0x00000004L
-#define SQL_FN_TD_DAYOFWEEK                 0x00000008L
-#define SQL_FN_TD_DAYOFYEAR                 0x00000010L
-#define SQL_FN_TD_MONTH                     0x00000020L
-#define SQL_FN_TD_QUARTER                   0x00000040L
-#define SQL_FN_TD_WEEK                      0x00000080L
-#define SQL_FN_TD_YEAR                      0x00000100L
-#define SQL_FN_TD_CURTIME                   0x00000200L
-#define SQL_FN_TD_HOUR                      0x00000400L
-#define SQL_FN_TD_MINUTE                    0x00000800L
-#define SQL_FN_TD_SECOND                    0x00001000L
-#define SQL_FN_TD_TIMESTAMPADD              0x00002000L
-#define SQL_FN_TD_TIMESTAMPDIFF             0x00004000L
-#define SQL_FN_TD_DAYNAME                   0x00008000L
-#define SQL_FN_TD_MONTHNAME                 0x00010000L
-#if (ODBCVER >= 0x0300)
-#define SQL_FN_TD_CURRENT_DATE				0x00020000L
-#define SQL_FN_TD_CURRENT_TIME				0x00040000L
-#define SQL_FN_TD_CURRENT_TIMESTAMP			0x00080000L
-#define SQL_FN_TD_EXTRACT				0x00100000L
+#define SQL_FN_STR_BIT_LENGTH           __MSABI_LONG(0x00080000)
+#define SQL_FN_STR_CHAR_LENGTH          __MSABI_LONG(0x00100000)
+#define SQL_FN_STR_CHARACTER_LENGTH     __MSABI_LONG(0x00200000)
+#define SQL_FN_STR_OCTET_LENGTH         __MSABI_LONG(0x00400000)
+#define SQL_FN_STR_POSITION             __MSABI_LONG(0x00800000)
 #endif
 
 #if (ODBCVER >= 0x0300)
-#define SQL_SDF_CURRENT_DATE				0x00000001L
-#define SQL_SDF_CURRENT_TIME				0x00000002L
-#define SQL_SDF_CURRENT_TIMESTAMP			0x00000004L
+#define SQL_SSF_CONVERT                 __MSABI_LONG(0x00000001)
+#define SQL_SSF_LOWER                   __MSABI_LONG(0x00000002)
+#define SQL_SSF_UPPER                   __MSABI_LONG(0x00000004)
+#define SQL_SSF_SUBSTRING               __MSABI_LONG(0x00000008)
+#define SQL_SSF_TRANSLATE               __MSABI_LONG(0x00000010)
+#define SQL_SSF_TRIM_BOTH               __MSABI_LONG(0x00000020)
+#define SQL_SSF_TRIM_LEADING            __MSABI_LONG(0x00000040)
+#define SQL_SSF_TRIM_TRAILING           __MSABI_LONG(0x00000080)
 #endif
 
-#define SQL_FN_SYS_USERNAME                 0x00000001L
-#define SQL_FN_SYS_DBNAME                   0x00000002L
-#define SQL_FN_SYS_IFNULL                   0x00000004L
-
-#define SQL_FN_TSI_FRAC_SECOND              0x00000001L
-#define SQL_FN_TSI_SECOND                   0x00000002L
-#define SQL_FN_TSI_MINUTE                   0x00000004L
-#define SQL_FN_TSI_HOUR                     0x00000008L
-#define SQL_FN_TSI_DAY                      0x00000010L
-#define SQL_FN_TSI_WEEK                     0x00000020L
-#define SQL_FN_TSI_MONTH                    0x00000040L
-#define SQL_FN_TSI_QUARTER                  0x00000080L
-#define SQL_FN_TSI_YEAR                     0x00000100L
+#define SQL_FN_NUM_ABS                  __MSABI_LONG(0x00000001)
+#define SQL_FN_NUM_ACOS                 __MSABI_LONG(0x00000002)
+#define SQL_FN_NUM_ASIN                 __MSABI_LONG(0x00000004)
+#define SQL_FN_NUM_ATAN                 __MSABI_LONG(0x00000008)
+#define SQL_FN_NUM_ATAN2                __MSABI_LONG(0x00000010)
+#define SQL_FN_NUM_CEILING              __MSABI_LONG(0x00000020)
+#define SQL_FN_NUM_COS                  __MSABI_LONG(0x00000040)
+#define SQL_FN_NUM_COT                  __MSABI_LONG(0x00000080)
+#define SQL_FN_NUM_EXP                  __MSABI_LONG(0x00000100)
+#define SQL_FN_NUM_FLOOR                __MSABI_LONG(0x00000200)
+#define SQL_FN_NUM_LOG                  __MSABI_LONG(0x00000400)
+#define SQL_FN_NUM_MOD                  __MSABI_LONG(0x00000800)
+#define SQL_FN_NUM_SIGN                 __MSABI_LONG(0x00001000)
+#define SQL_FN_NUM_SIN                  __MSABI_LONG(0x00002000)
+#define SQL_FN_NUM_SQRT                 __MSABI_LONG(0x00004000)
+#define SQL_FN_NUM_TAN                  __MSABI_LONG(0x00008000)
+#define SQL_FN_NUM_PI                   __MSABI_LONG(0x00010000)
+#define SQL_FN_NUM_RAND                 __MSABI_LONG(0x00020000)
+#define SQL_FN_NUM_DEGREES              __MSABI_LONG(0x00040000)
+#define SQL_FN_NUM_LOG10                __MSABI_LONG(0x00080000)
+#define SQL_FN_NUM_POWER                __MSABI_LONG(0x00100000)
+#define SQL_FN_NUM_RADIANS              __MSABI_LONG(0x00200000)
+#define SQL_FN_NUM_ROUND                __MSABI_LONG(0x00400000)
+#define SQL_FN_NUM_TRUNCATE             __MSABI_LONG(0x00800000)
 
 #if (ODBCVER >= 0x0300)
-#define SQL_CA1_NEXT					0x00000001L
-#define SQL_CA1_ABSOLUTE				0x00000002L
-#define SQL_CA1_RELATIVE				0x00000004L
-#define SQL_CA1_BOOKMARK				0x00000008L
+#define SQL_SNVF_BIT_LENGTH             __MSABI_LONG(0x00000001)
+#define SQL_SNVF_CHAR_LENGTH            __MSABI_LONG(0x00000002)
+#define SQL_SNVF_CHARACTER_LENGTH       __MSABI_LONG(0x00000004)
+#define SQL_SNVF_EXTRACT                __MSABI_LONG(0x00000008)
+#define SQL_SNVF_OCTET_LENGTH           __MSABI_LONG(0x00000010)
+#define SQL_SNVF_POSITION               __MSABI_LONG(0x00000020)
+#endif
 
-#define SQL_CA1_LOCK_NO_CHANGE				0x00000040L
-#define SQL_CA1_LOCK_EXCLUSIVE				0x00000080L
-#define SQL_CA1_LOCK_UNLOCK				0x00000100L
-
-#define SQL_CA1_POS_POSITION				0x00000200L
-#define SQL_CA1_POS_UPDATE				0x00000400L
-#define SQL_CA1_POS_DELETE				0x00000800L
-#define SQL_CA1_POS_REFRESH				0x00001000L
-
-#define SQL_CA1_POSITIONED_UPDATE			0x00002000L
-#define SQL_CA1_POSITIONED_DELETE			0x00004000L
-#define SQL_CA1_SELECT_FOR_UPDATE			0x00008000L
-
-#define SQL_CA1_BULK_ADD			0x00010000L
-#define SQL_CA1_BULK_UPDATE_BY_BOOKMARK		0x00020000L
-#define SQL_CA1_BULK_DELETE_BY_BOOKMARK		0x00040000L
-#define SQL_CA1_BULK_FETCH_BY_BOOKMARK		0x00080000L
+#define SQL_FN_TD_NOW                   __MSABI_LONG(0x00000001)
+#define SQL_FN_TD_CURDATE               __MSABI_LONG(0x00000002)
+#define SQL_FN_TD_DAYOFMONTH            __MSABI_LONG(0x00000004)
+#define SQL_FN_TD_DAYOFWEEK             __MSABI_LONG(0x00000008)
+#define SQL_FN_TD_DAYOFYEAR             __MSABI_LONG(0x00000010)
+#define SQL_FN_TD_MONTH                 __MSABI_LONG(0x00000020)
+#define SQL_FN_TD_QUARTER               __MSABI_LONG(0x00000040)
+#define SQL_FN_TD_WEEK                  __MSABI_LONG(0x00000080)
+#define SQL_FN_TD_YEAR                  __MSABI_LONG(0x00000100)
+#define SQL_FN_TD_CURTIME               __MSABI_LONG(0x00000200)
+#define SQL_FN_TD_HOUR                  __MSABI_LONG(0x00000400)
+#define SQL_FN_TD_MINUTE                __MSABI_LONG(0x00000800)
+#define SQL_FN_TD_SECOND                __MSABI_LONG(0x00001000)
+#define SQL_FN_TD_TIMESTAMPADD          __MSABI_LONG(0x00002000)
+#define SQL_FN_TD_TIMESTAMPDIFF         __MSABI_LONG(0x00004000)
+#define SQL_FN_TD_DAYNAME               __MSABI_LONG(0x00008000)
+#define SQL_FN_TD_MONTHNAME             __MSABI_LONG(0x00010000)
+#if (ODBCVER >= 0x0300)
+#define SQL_FN_TD_CURRENT_DATE          __MSABI_LONG(0x00020000)
+#define SQL_FN_TD_CURRENT_TIME          __MSABI_LONG(0x00040000)
+#define SQL_FN_TD_CURRENT_TIMESTAMP     __MSABI_LONG(0x00080000)
+#define SQL_FN_TD_EXTRACT               __MSABI_LONG(0x00100000)
 #endif
 
 #if (ODBCVER >= 0x0300)
-#define SQL_CA2_READ_ONLY_CONCURRENCY		0x00000001L
-#define SQL_CA2_LOCK_CONCURRENCY		0x00000002L
-#define SQL_CA2_OPT_ROWVER_CONCURRENCY		0x00000004L
-#define SQL_CA2_OPT_VALUES_CONCURRENCY		0x00000008L
+#define SQL_SDF_CURRENT_DATE            __MSABI_LONG(0x00000001)
+#define SQL_SDF_CURRENT_TIME            __MSABI_LONG(0x00000002)
+#define SQL_SDF_CURRENT_TIMESTAMP       __MSABI_LONG(0x00000004)
+#endif
 
-#define SQL_CA2_SENSITIVITY_ADDITIONS		0x00000010L
-#define SQL_CA2_SENSITIVITY_DELETIONS		0x00000020L
-#define SQL_CA2_SENSITIVITY_UPDATES		0x00000040L
+#define SQL_FN_SYS_USERNAME             __MSABI_LONG(0x00000001)
+#define SQL_FN_SYS_DBNAME               __MSABI_LONG(0x00000002)
+#define SQL_FN_SYS_IFNULL               __MSABI_LONG(0x00000004)
 
-#define SQL_CA2_MAX_ROWS_SELECT			0x00000080L
-#define SQL_CA2_MAX_ROWS_INSERT			0x00000100L
-#define SQL_CA2_MAX_ROWS_DELETE			0x00000200L
-#define SQL_CA2_MAX_ROWS_UPDATE			0x00000400L
-#define SQL_CA2_MAX_ROWS_CATALOG		0x00000800L
+#define SQL_FN_TSI_FRAC_SECOND          __MSABI_LONG(0x00000001)
+#define SQL_FN_TSI_SECOND               __MSABI_LONG(0x00000002)
+#define SQL_FN_TSI_MINUTE               __MSABI_LONG(0x00000004)
+#define SQL_FN_TSI_HOUR                 __MSABI_LONG(0x00000008)
+#define SQL_FN_TSI_DAY                  __MSABI_LONG(0x00000010)
+#define SQL_FN_TSI_WEEK                 __MSABI_LONG(0x00000020)
+#define SQL_FN_TSI_MONTH                __MSABI_LONG(0x00000040)
+#define SQL_FN_TSI_QUARTER              __MSABI_LONG(0x00000080)
+#define SQL_FN_TSI_YEAR                 __MSABI_LONG(0x00000100)
+
+#if (ODBCVER >= 0x0300)
+#define SQL_CA1_NEXT                    __MSABI_LONG(0x00000001)
+#define SQL_CA1_ABSOLUTE                __MSABI_LONG(0x00000002)
+#define SQL_CA1_RELATIVE                __MSABI_LONG(0x00000004)
+#define SQL_CA1_BOOKMARK                __MSABI_LONG(0x00000008)
+
+#define SQL_CA1_LOCK_NO_CHANGE          __MSABI_LONG(0x00000040)
+#define SQL_CA1_LOCK_EXCLUSIVE          __MSABI_LONG(0x00000080)
+#define SQL_CA1_LOCK_UNLOCK             __MSABI_LONG(0x00000100)
+
+#define SQL_CA1_POS_POSITION            __MSABI_LONG(0x00000200)
+#define SQL_CA1_POS_UPDATE              __MSABI_LONG(0x00000400)
+#define SQL_CA1_POS_DELETE              __MSABI_LONG(0x00000800)
+#define SQL_CA1_POS_REFRESH             __MSABI_LONG(0x00001000)
+
+#define SQL_CA1_POSITIONED_UPDATE       __MSABI_LONG(0x00002000)
+#define SQL_CA1_POSITIONED_DELETE       __MSABI_LONG(0x00004000)
+#define SQL_CA1_SELECT_FOR_UPDATE       __MSABI_LONG(0x00008000)
+
+#define SQL_CA1_BULK_ADD                __MSABI_LONG(0x00010000)
+#define SQL_CA1_BULK_UPDATE_BY_BOOKMARK __MSABI_LONG(0x00020000)
+#define SQL_CA1_BULK_DELETE_BY_BOOKMARK __MSABI_LONG(0x00040000)
+#define SQL_CA1_BULK_FETCH_BY_BOOKMARK  __MSABI_LONG(0x00080000)
+#endif
+
+#if (ODBCVER >= 0x0300)
+#define SQL_CA2_READ_ONLY_CONCURRENCY   __MSABI_LONG(0x00000001)
+#define SQL_CA2_LOCK_CONCURRENCY        __MSABI_LONG(0x00000002)
+#define SQL_CA2_OPT_ROWVER_CONCURRENCY  __MSABI_LONG(0x00000004)
+#define SQL_CA2_OPT_VALUES_CONCURRENCY  __MSABI_LONG(0x00000008)
+
+#define SQL_CA2_SENSITIVITY_ADDITIONS   __MSABI_LONG(0x00000010)
+#define SQL_CA2_SENSITIVITY_DELETIONS   __MSABI_LONG(0x00000020)
+#define SQL_CA2_SENSITIVITY_UPDATES     __MSABI_LONG(0x00000040)
+
+#define SQL_CA2_MAX_ROWS_SELECT         __MSABI_LONG(0x00000080)
+#define SQL_CA2_MAX_ROWS_INSERT         __MSABI_LONG(0x00000100)
+#define SQL_CA2_MAX_ROWS_DELETE         __MSABI_LONG(0x00000200)
+#define SQL_CA2_MAX_ROWS_UPDATE         __MSABI_LONG(0x00000400)
+#define SQL_CA2_MAX_ROWS_CATALOG        __MSABI_LONG(0x00000800)
 #define SQL_CA2_MAX_ROWS_AFFECTS_ALL		(SQL_CA2_MAX_ROWS_SELECT | SQL_CA2_MAX_ROWS_INSERT | SQL_CA2_MAX_ROWS_DELETE | SQL_CA2_MAX_ROWS_UPDATE | SQL_CA2_MAX_ROWS_CATALOG)
 
-#define SQL_CA2_CRC_EXACT			0x00001000L
-#define SQL_CA2_CRC_APPROXIMATE			0x00002000L
+#define SQL_CA2_CRC_EXACT               __MSABI_LONG(0x00001000)
+#define SQL_CA2_CRC_APPROXIMATE         __MSABI_LONG(0x00002000)
 
-#define SQL_CA2_SIMULATE_NON_UNIQUE		0x00004000L
-#define SQL_CA2_SIMULATE_TRY_UNIQUE		0x00008000L
-#define SQL_CA2_SIMULATE_UNIQUE			0x00010000L
+#define SQL_CA2_SIMULATE_NON_UNIQUE     __MSABI_LONG(0x00004000)
+#define SQL_CA2_SIMULATE_TRY_UNIQUE     __MSABI_LONG(0x00008000)
+#define SQL_CA2_SIMULATE_UNIQUE         __MSABI_LONG(0x00010000)
 #endif
 
 #define SQL_OAC_NONE                        0x0000
@@ -951,13 +951,13 @@ extern "C" {
 #define SQL_CB_NULL                         0x0000
 #define SQL_CB_NON_NULL                     0x0001
 
-#define SQL_SO_FORWARD_ONLY                 0x00000001L
-#define SQL_SO_KEYSET_DRIVEN                0x00000002L
-#define SQL_SO_DYNAMIC                      0x00000004L
-#define SQL_SO_MIXED                        0x00000008L
-#define SQL_SO_STATIC                       0x00000010L
+#define SQL_SO_FORWARD_ONLY             __MSABI_LONG(0x00000001)
+#define SQL_SO_KEYSET_DRIVEN            __MSABI_LONG(0x00000002)
+#define SQL_SO_DYNAMIC                  __MSABI_LONG(0x00000004)
+#define SQL_SO_MIXED                    __MSABI_LONG(0x00000008)
+#define SQL_SO_STATIC                   __MSABI_LONG(0x00000010)
 
-#define SQL_FD_FETCH_BOOKMARK               0x00000080L
+#define SQL_FD_FETCH_BOOKMARK           __MSABI_LONG(0x00000080)
 
 #define SQL_CN_NONE                         0x0000
 #define SQL_CN_DIFFERENT                    0x0001
@@ -974,12 +974,12 @@ extern "C" {
 #define SQL_FILE_QUALIFIER                  0x0002
 #define SQL_FILE_CATALOG		SQL_FILE_QUALIFIER
 
-#define SQL_GD_BLOCK                        0x00000004L
-#define SQL_GD_BOUND                        0x00000008L
+#define SQL_GD_BLOCK                    __MSABI_LONG(0x00000004)
+#define SQL_GD_BOUND                    __MSABI_LONG(0x00000008)
 
-#define SQL_PS_POSITIONED_DELETE            0x00000001L
-#define SQL_PS_POSITIONED_UPDATE            0x00000002L
-#define SQL_PS_SELECT_FOR_UPDATE            0x00000004L
+#define SQL_PS_POSITIONED_DELETE        __MSABI_LONG(0x00000001)
+#define SQL_PS_POSITIONED_UPDATE        __MSABI_LONG(0x00000002)
+#define SQL_PS_SELECT_FOR_UPDATE        __MSABI_LONG(0x00000004)
 
 #define SQL_GB_NOT_SUPPORTED                0x0000
 #define SQL_GB_GROUP_BY_EQUALS_SELECT       0x0001
@@ -990,11 +990,11 @@ extern "C" {
 
 #endif
 
-#define SQL_OU_DML_STATEMENTS               0x00000001L
-#define SQL_OU_PROCEDURE_INVOCATION         0x00000002L
-#define SQL_OU_TABLE_DEFINITION             0x00000004L
-#define SQL_OU_INDEX_DEFINITION             0x00000008L
-#define SQL_OU_PRIVILEGE_DEFINITION         0x00000010L
+#define SQL_OU_DML_STATEMENTS           __MSABI_LONG(0x00000001)
+#define SQL_OU_PROCEDURE_INVOCATION     __MSABI_LONG(0x00000002)
+#define SQL_OU_TABLE_DEFINITION         __MSABI_LONG(0x00000004)
+#define SQL_OU_INDEX_DEFINITION         __MSABI_LONG(0x00000008)
+#define SQL_OU_PRIVILEGE_DEFINITION     __MSABI_LONG(0x00000010)
 
 #if (ODBCVER >= 0x0300)
 #define SQL_SU_DML_STATEMENTS			SQL_OU_DML_STATEMENTS
@@ -1004,11 +1004,11 @@ extern "C" {
 #define SQL_SU_PRIVILEGE_DEFINITION		SQL_OU_PRIVILEGE_DEFINITION
 #endif
 
-#define SQL_QU_DML_STATEMENTS               0x00000001L
-#define SQL_QU_PROCEDURE_INVOCATION         0x00000002L
-#define SQL_QU_TABLE_DEFINITION             0x00000004L
-#define SQL_QU_INDEX_DEFINITION             0x00000008L
-#define SQL_QU_PRIVILEGE_DEFINITION         0x00000010L
+#define SQL_QU_DML_STATEMENTS           __MSABI_LONG(0x00000001)
+#define SQL_QU_PROCEDURE_INVOCATION     __MSABI_LONG(0x00000002)
+#define SQL_QU_TABLE_DEFINITION         __MSABI_LONG(0x00000004)
+#define SQL_QU_INDEX_DEFINITION         __MSABI_LONG(0x00000008)
+#define SQL_QU_PRIVILEGE_DEFINITION     __MSABI_LONG(0x00000010)
 
 #if (ODBCVER >= 0x0300)
 #define SQL_CU_DML_STATEMENTS			SQL_QU_DML_STATEMENTS
@@ -1018,75 +1018,75 @@ extern "C" {
 #define SQL_CU_PRIVILEGE_DEFINITION		SQL_QU_PRIVILEGE_DEFINITION
 #endif
 
-#define SQL_SQ_COMPARISON                   0x00000001L
-#define SQL_SQ_EXISTS                       0x00000002L
-#define SQL_SQ_IN                           0x00000004L
-#define SQL_SQ_QUANTIFIED                   0x00000008L
-#define SQL_SQ_CORRELATED_SUBQUERIES        0x00000010L
+#define SQL_SQ_COMPARISON               __MSABI_LONG(0x00000001)
+#define SQL_SQ_EXISTS                   __MSABI_LONG(0x00000002)
+#define SQL_SQ_IN                       __MSABI_LONG(0x00000004)
+#define SQL_SQ_QUANTIFIED               __MSABI_LONG(0x00000008)
+#define SQL_SQ_CORRELATED_SUBQUERIES    __MSABI_LONG(0x00000010)
 
-#define SQL_U_UNION                         0x00000001L
-#define SQL_U_UNION_ALL                     0x00000002L
+#define SQL_U_UNION                     __MSABI_LONG(0x00000001)
+#define SQL_U_UNION_ALL                 __MSABI_LONG(0x00000002)
 
-#define SQL_BP_CLOSE                        0x00000001L
-#define SQL_BP_DELETE                       0x00000002L
-#define SQL_BP_DROP                         0x00000004L
-#define SQL_BP_TRANSACTION                  0x00000008L
-#define SQL_BP_UPDATE                       0x00000010L
-#define SQL_BP_OTHER_HSTMT                  0x00000020L
-#define SQL_BP_SCROLL                       0x00000040L
+#define SQL_BP_CLOSE                    __MSABI_LONG(0x00000001)
+#define SQL_BP_DELETE                   __MSABI_LONG(0x00000002)
+#define SQL_BP_DROP                     __MSABI_LONG(0x00000004)
+#define SQL_BP_TRANSACTION              __MSABI_LONG(0x00000008)
+#define SQL_BP_UPDATE                   __MSABI_LONG(0x00000010)
+#define SQL_BP_OTHER_HSTMT              __MSABI_LONG(0x00000020)
+#define SQL_BP_SCROLL                   __MSABI_LONG(0x00000040)
 
-#define SQL_SS_ADDITIONS                    0x00000001L
-#define SQL_SS_DELETIONS                    0x00000002L
-#define SQL_SS_UPDATES                      0x00000004L
+#define SQL_SS_ADDITIONS                __MSABI_LONG(0x00000001)
+#define SQL_SS_DELETIONS                __MSABI_LONG(0x00000002)
+#define SQL_SS_UPDATES                  __MSABI_LONG(0x00000004)
 
-#define	SQL_CV_CREATE_VIEW					0x00000001L
-#define	SQL_CV_CHECK_OPTION					0x00000002L
-#define	SQL_CV_CASCADED						0x00000004L
-#define	SQL_CV_LOCAL						0x00000008L
+#define SQL_CV_CREATE_VIEW              __MSABI_LONG(0x00000001)
+#define SQL_CV_CHECK_OPTION             __MSABI_LONG(0x00000002)
+#define SQL_CV_CASCADED                 __MSABI_LONG(0x00000004)
+#define SQL_CV_LOCAL                    __MSABI_LONG(0x00000008)
 
-#define SQL_LCK_NO_CHANGE                   0x00000001L
-#define SQL_LCK_EXCLUSIVE                   0x00000002L
-#define SQL_LCK_UNLOCK                      0x00000004L
+#define SQL_LCK_NO_CHANGE               __MSABI_LONG(0x00000001)
+#define SQL_LCK_EXCLUSIVE               __MSABI_LONG(0x00000002)
+#define SQL_LCK_UNLOCK                  __MSABI_LONG(0x00000004)
 
-#define SQL_POS_POSITION                    0x00000001L
-#define SQL_POS_REFRESH                     0x00000002L
-#define SQL_POS_UPDATE                      0x00000004L
-#define SQL_POS_DELETE                      0x00000008L
-#define SQL_POS_ADD                         0x00000010L
+#define SQL_POS_POSITION                __MSABI_LONG(0x00000001)
+#define SQL_POS_REFRESH                 __MSABI_LONG(0x00000002)
+#define SQL_POS_UPDATE                  __MSABI_LONG(0x00000004)
+#define SQL_POS_DELETE                  __MSABI_LONG(0x00000008)
+#define SQL_POS_ADD                     __MSABI_LONG(0x00000010)
 
 #define SQL_QL_START                        0x0001
 #define SQL_QL_END                          0x0002
 
 #if (ODBCVER >= 0x0300)
-#define SQL_AF_AVG						0x00000001L
-#define SQL_AF_COUNT					0x00000002L
-#define SQL_AF_MAX						0x00000004L
-#define SQL_AF_MIN						0x00000008L
-#define SQL_AF_SUM						0x00000010L
-#define SQL_AF_DISTINCT					0x00000020L
-#define SQL_AF_ALL						0x00000040L
+#define SQL_AF_AVG                      __MSABI_LONG(0x00000001)
+#define SQL_AF_COUNT                    __MSABI_LONG(0x00000002)
+#define SQL_AF_MAX                      __MSABI_LONG(0x00000004)
+#define SQL_AF_MIN                      __MSABI_LONG(0x00000008)
+#define SQL_AF_SUM                      __MSABI_LONG(0x00000010)
+#define SQL_AF_DISTINCT                 __MSABI_LONG(0x00000020)
+#define SQL_AF_ALL                      __MSABI_LONG(0x00000040)
 
-#define	SQL_SC_SQL92_ENTRY				0x00000001L
-#define	SQL_SC_FIPS127_2_TRANSITIONAL	0x00000002L
-#define	SQL_SC_SQL92_INTERMEDIATE		0x00000004L
-#define	SQL_SC_SQL92_FULL				0x00000008L
+#define SQL_SC_SQL92_ENTRY              __MSABI_LONG(0x00000001)
+#define SQL_SC_FIPS127_2_TRANSITIONAL   __MSABI_LONG(0x00000002)
+#define SQL_SC_SQL92_INTERMEDIATE       __MSABI_LONG(0x00000004)
+#define SQL_SC_SQL92_FULL               __MSABI_LONG(0x00000008)
 
-#define SQL_DL_SQL92_DATE						0x00000001L
-#define SQL_DL_SQL92_TIME						0x00000002L
-#define SQL_DL_SQL92_TIMESTAMP					0x00000004L
-#define SQL_DL_SQL92_INTERVAL_YEAR				0x00000008L
-#define SQL_DL_SQL92_INTERVAL_MONTH				0x00000010L
-#define SQL_DL_SQL92_INTERVAL_DAY				0x00000020L
-#define SQL_DL_SQL92_INTERVAL_HOUR				0x00000040L
-#define	SQL_DL_SQL92_INTERVAL_MINUTE			0x00000080L
-#define SQL_DL_SQL92_INTERVAL_SECOND			0x00000100L
-#define SQL_DL_SQL92_INTERVAL_YEAR_TO_MONTH		0x00000200L
-#define SQL_DL_SQL92_INTERVAL_DAY_TO_HOUR		0x00000400L
-#define SQL_DL_SQL92_INTERVAL_DAY_TO_MINUTE		0x00000800L
-#define SQL_DL_SQL92_INTERVAL_DAY_TO_SECOND		0x00001000L
-#define SQL_DL_SQL92_INTERVAL_HOUR_TO_MINUTE	0x00002000L
-#define SQL_DL_SQL92_INTERVAL_HOUR_TO_SECOND	0x00004000L
-#define SQL_DL_SQL92_INTERVAL_MINUTE_TO_SECOND	0x00008000L
+#define SQL_DL_SQL92_DATE               __MSABI_LONG(0x00000001)
+#define SQL_DL_SQL92_TIME               __MSABI_LONG(0x00000002)
+#define SQL_DL_SQL92_TIMESTAMP          __MSABI_LONG(0x00000004)
+#define SQL_DL_SQL92_INTERVAL_YEAR      __MSABI_LONG(0x00000008)
+#define SQL_DL_SQL92_INTERVAL_MONTH     __MSABI_LONG(0x00000010)
+#define SQL_DL_SQL92_INTERVAL_DAY       __MSABI_LONG(0x00000020)
+#define SQL_DL_SQL92_INTERVAL_HOUR      __MSABI_LONG(0x00000040)
+#define SQL_DL_SQL92_INTERVAL_MINUTE    __MSABI_LONG(0x00000080)
+#define SQL_DL_SQL92_INTERVAL_SECOND    __MSABI_LONG(0x00000100)
+#define SQL_DL_SQL92_INTERVAL_YEAR_TO_MONTH     __MSABI_LONG(0x00000200)
+#define SQL_DL_SQL92_INTERVAL_DAY_TO_HOUR       __MSABI_LONG(0x00000400)
+#define SQL_DL_SQL92_INTERVAL_DAY_TO_MINUTE     __MSABI_LONG(0x00000800)
+#define SQL_DL_SQL92_INTERVAL_DAY_TO_SECOND     __MSABI_LONG(0x00001000)
+#define SQL_DL_SQL92_INTERVAL_HOUR_TO_MINUTE    __MSABI_LONG(0x00002000)
+#define SQL_DL_SQL92_INTERVAL_HOUR_TO_SECOND    __MSABI_LONG(0x00004000)
+#define SQL_DL_SQL92_INTERVAL_MINUTE_TO_SECOND  __MSABI_LONG(0x00008000)
 
 #define SQL_CL_START						SQL_QL_START
 #define SQL_CL_END							SQL_QL_END
@@ -1095,10 +1095,10 @@ extern "C" {
 #define	SQL_BRC_EXPLICIT			0x0000002
 #define	SQL_BRC_ROLLED_UP			0x0000004
 
-#define SQL_BS_SELECT_EXPLICIT				0x00000001L
-#define SQL_BS_ROW_COUNT_EXPLICIT			0x00000002L
-#define SQL_BS_SELECT_PROC					0x00000004L
-#define SQL_BS_ROW_COUNT_PROC				0x00000008L
+#define SQL_BS_SELECT_EXPLICIT          __MSABI_LONG(0x00000001)
+#define SQL_BS_ROW_COUNT_EXPLICIT       __MSABI_LONG(0x00000002)
+#define SQL_BS_SELECT_PROC              __MSABI_LONG(0x00000004)
+#define SQL_BS_ROW_COUNT_PROC           __MSABI_LONG(0x00000008)
 
 #define SQL_PARC_BATCH		1
 #define SQL_PARC_NO_BATCH	2
@@ -1107,213 +1107,213 @@ extern "C" {
 #define SQL_PAS_NO_BATCH			2
 #define SQL_PAS_NO_SELECT			3
 
-#define SQL_IK_NONE							0x00000000L
-#define SQL_IK_ASC							0x00000001L
-#define SQL_IK_DESC							0x00000002L
+#define SQL_IK_NONE                     __MSABI_LONG(0x00000000)
+#define SQL_IK_ASC                      __MSABI_LONG(0x00000001)
+#define SQL_IK_DESC                     __MSABI_LONG(0x00000002)
 #define SQL_IK_ALL							(SQL_IK_ASC | SQL_IK_DESC)
 
-#define SQL_ISV_ASSERTIONS					0x00000001L
-#define SQL_ISV_CHARACTER_SETS				0x00000002L
-#define SQL_ISV_CHECK_CONSTRAINTS			0x00000004L
-#define SQL_ISV_COLLATIONS					0x00000008L
-#define SQL_ISV_COLUMN_DOMAIN_USAGE			0x00000010L
-#define SQL_ISV_COLUMN_PRIVILEGES			0x00000020L
-#define SQL_ISV_COLUMNS						0x00000040L
-#define SQL_ISV_CONSTRAINT_COLUMN_USAGE		0x00000080L
-#define SQL_ISV_CONSTRAINT_TABLE_USAGE		0x00000100L
-#define SQL_ISV_DOMAIN_CONSTRAINTS			0x00000200L
-#define SQL_ISV_DOMAINS						0x00000400L
-#define SQL_ISV_KEY_COLUMN_USAGE			0x00000800L
-#define SQL_ISV_REFERENTIAL_CONSTRAINTS		0x00001000L
-#define SQL_ISV_SCHEMATA					0x00002000L
-#define SQL_ISV_SQL_LANGUAGES				0x00004000L
-#define	SQL_ISV_TABLE_CONSTRAINTS			0x00008000L
-#define SQL_ISV_TABLE_PRIVILEGES			0x00010000L
-#define SQL_ISV_TABLES						0x00020000L
-#define SQL_ISV_TRANSLATIONS				0x00040000L
-#define SQL_ISV_USAGE_PRIVILEGES			0x00080000L
-#define SQL_ISV_VIEW_COLUMN_USAGE			0x00100000L
-#define SQL_ISV_VIEW_TABLE_USAGE			0x00200000L
-#define SQL_ISV_VIEWS						0x00400000L
+#define SQL_ISV_ASSERTIONS              __MSABI_LONG(0x00000001)
+#define SQL_ISV_CHARACTER_SETS          __MSABI_LONG(0x00000002)
+#define SQL_ISV_CHECK_CONSTRAINTS       __MSABI_LONG(0x00000004)
+#define SQL_ISV_COLLATIONS              __MSABI_LONG(0x00000008)
+#define SQL_ISV_COLUMN_DOMAIN_USAGE     __MSABI_LONG(0x00000010)
+#define SQL_ISV_COLUMN_PRIVILEGES       __MSABI_LONG(0x00000020)
+#define SQL_ISV_COLUMNS                 __MSABI_LONG(0x00000040)
+#define SQL_ISV_CONSTRAINT_COLUMN_USAGE __MSABI_LONG(0x00000080)
+#define SQL_ISV_CONSTRAINT_TABLE_USAGE  __MSABI_LONG(0x00000100)
+#define SQL_ISV_DOMAIN_CONSTRAINTS      __MSABI_LONG(0x00000200)
+#define SQL_ISV_DOMAINS                 __MSABI_LONG(0x00000400)
+#define SQL_ISV_KEY_COLUMN_USAGE        __MSABI_LONG(0x00000800)
+#define SQL_ISV_REFERENTIAL_CONSTRAINTS __MSABI_LONG(0x00001000)
+#define SQL_ISV_SCHEMATA                __MSABI_LONG(0x00002000)
+#define SQL_ISV_SQL_LANGUAGES           __MSABI_LONG(0x00004000)
+#define SQL_ISV_TABLE_CONSTRAINTS       __MSABI_LONG(0x00008000)
+#define SQL_ISV_TABLE_PRIVILEGES        __MSABI_LONG(0x00010000)
+#define SQL_ISV_TABLES                  __MSABI_LONG(0x00020000)
+#define SQL_ISV_TRANSLATIONS            __MSABI_LONG(0x00040000)
+#define SQL_ISV_USAGE_PRIVILEGES        __MSABI_LONG(0x00080000)
+#define SQL_ISV_VIEW_COLUMN_USAGE       __MSABI_LONG(0x00100000)
+#define SQL_ISV_VIEW_TABLE_USAGE        __MSABI_LONG(0x00200000)
+#define SQL_ISV_VIEWS                   __MSABI_LONG(0x00400000)
 
 #define	SQL_AM_NONE			0
 #define	SQL_AM_CONNECTION	1
 #define	SQL_AM_STATEMENT	2
 
-#define SQL_AD_CONSTRAINT_NAME_DEFINITION			0x00000001L
-#define	SQL_AD_ADD_DOMAIN_CONSTRAINT	 			0x00000002L
-#define	SQL_AD_DROP_DOMAIN_CONSTRAINT	 			0x00000004L
-#define	SQL_AD_ADD_DOMAIN_DEFAULT   	 			0x00000008L
-#define	SQL_AD_DROP_DOMAIN_DEFAULT   	 			0x00000010L
-#define SQL_AD_ADD_CONSTRAINT_INITIALLY_DEFERRED	0x00000020L
-#define SQL_AD_ADD_CONSTRAINT_INITIALLY_IMMEDIATE	0x00000040L
-#define SQL_AD_ADD_CONSTRAINT_DEFERRABLE			0x00000080L
-#define SQL_AD_ADD_CONSTRAINT_NON_DEFERRABLE		0x00000100L
+#define SQL_AD_CONSTRAINT_NAME_DEFINITION               __MSABI_LONG(0x00000001)
+#define SQL_AD_ADD_DOMAIN_CONSTRAINT                    __MSABI_LONG(0x00000002)
+#define SQL_AD_DROP_DOMAIN_CONSTRAINT                   __MSABI_LONG(0x00000004)
+#define SQL_AD_ADD_DOMAIN_DEFAULT                       __MSABI_LONG(0x00000008)
+#define SQL_AD_DROP_DOMAIN_DEFAULT                      __MSABI_LONG(0x00000010)
+#define SQL_AD_ADD_CONSTRAINT_INITIALLY_DEFERRED        __MSABI_LONG(0x00000020)
+#define SQL_AD_ADD_CONSTRAINT_INITIALLY_IMMEDIATE       __MSABI_LONG(0x00000040)
+#define SQL_AD_ADD_CONSTRAINT_DEFERRABLE                __MSABI_LONG(0x00000080)
+#define SQL_AD_ADD_CONSTRAINT_NON_DEFERRABLE            __MSABI_LONG(0x00000100)
 
-#define	SQL_CS_CREATE_SCHEMA				0x00000001L
-#define	SQL_CS_AUTHORIZATION				0x00000002L
-#define	SQL_CS_DEFAULT_CHARACTER_SET		0x00000004L
+#define SQL_CS_CREATE_SCHEMA            __MSABI_LONG(0x00000001)
+#define SQL_CS_AUTHORIZATION            __MSABI_LONG(0x00000002)
+#define SQL_CS_DEFAULT_CHARACTER_SET    __MSABI_LONG(0x00000004)
 
-#define	SQL_CTR_CREATE_TRANSLATION			0x00000001L
+#define SQL_CTR_CREATE_TRANSLATION      __MSABI_LONG(0x00000001)
 
-#define	SQL_CA_CREATE_ASSERTION					0x00000001L
-#define	SQL_CA_CONSTRAINT_INITIALLY_DEFERRED	0x00000010L
-#define	SQL_CA_CONSTRAINT_INITIALLY_IMMEDIATE	0x00000020L
-#define	SQL_CA_CONSTRAINT_DEFERRABLE			0x00000040L
-#define	SQL_CA_CONSTRAINT_NON_DEFERRABLE		0x00000080L
+#define SQL_CA_CREATE_ASSERTION                 __MSABI_LONG(0x00000001)
+#define SQL_CA_CONSTRAINT_INITIALLY_DEFERRED    __MSABI_LONG(0x00000010)
+#define SQL_CA_CONSTRAINT_INITIALLY_IMMEDIATE   __MSABI_LONG(0x00000020)
+#define SQL_CA_CONSTRAINT_DEFERRABLE            __MSABI_LONG(0x00000040)
+#define SQL_CA_CONSTRAINT_NON_DEFERRABLE        __MSABI_LONG(0x00000080)
 
-#define	SQL_CCS_CREATE_CHARACTER_SET		0x00000001L
-#define	SQL_CCS_COLLATE_CLAUSE				0x00000002L
-#define	SQL_CCS_LIMITED_COLLATION			0x00000004L
+#define SQL_CCS_CREATE_CHARACTER_SET    __MSABI_LONG(0x00000001)
+#define SQL_CCS_COLLATE_CLAUSE          __MSABI_LONG(0x00000002)
+#define SQL_CCS_LIMITED_COLLATION       __MSABI_LONG(0x00000004)
 
-#define	SQL_CCOL_CREATE_COLLATION			0x00000001L
+#define SQL_CCOL_CREATE_COLLATION       __MSABI_LONG(0x00000001)
 
-#define	SQL_CDO_CREATE_DOMAIN					0x00000001L
-#define	SQL_CDO_DEFAULT							0x00000002L
-#define	SQL_CDO_CONSTRAINT						0x00000004L
-#define	SQL_CDO_COLLATION						0x00000008L
-#define SQL_CDO_CONSTRAINT_NAME_DEFINITION		0x00000010L
-#define SQL_CDO_CONSTRAINT_INITIALLY_DEFERRED	0x00000020L
-#define SQL_CDO_CONSTRAINT_INITIALLY_IMMEDIATE	0x00000040L
-#define SQL_CDO_CONSTRAINT_DEFERRABLE			0x00000080L
-#define SQL_CDO_CONSTRAINT_NON_DEFERRABLE		0x00000100L
+#define SQL_CDO_CREATE_DOMAIN                   __MSABI_LONG(0x00000001)
+#define SQL_CDO_DEFAULT                         __MSABI_LONG(0x00000002)
+#define SQL_CDO_CONSTRAINT                      __MSABI_LONG(0x00000004)
+#define SQL_CDO_COLLATION                       __MSABI_LONG(0x00000008)
+#define SQL_CDO_CONSTRAINT_NAME_DEFINITION      __MSABI_LONG(0x00000010)
+#define SQL_CDO_CONSTRAINT_INITIALLY_DEFERRED   __MSABI_LONG(0x00000020)
+#define SQL_CDO_CONSTRAINT_INITIALLY_IMMEDIATE  __MSABI_LONG(0x00000040)
+#define SQL_CDO_CONSTRAINT_DEFERRABLE           __MSABI_LONG(0x00000080)
+#define SQL_CDO_CONSTRAINT_NON_DEFERRABLE       __MSABI_LONG(0x00000100)
 
-#define	SQL_CT_CREATE_TABLE						0x00000001L
-#define	SQL_CT_COMMIT_PRESERVE					0x00000002L
-#define	SQL_CT_COMMIT_DELETE					0x00000004L
-#define	SQL_CT_GLOBAL_TEMPORARY					0x00000008L
-#define	SQL_CT_LOCAL_TEMPORARY					0x00000010L
-#define	SQL_CT_CONSTRAINT_INITIALLY_DEFERRED	0x00000020L
-#define	SQL_CT_CONSTRAINT_INITIALLY_IMMEDIATE	0x00000040L
-#define	SQL_CT_CONSTRAINT_DEFERRABLE			0x00000080L
-#define	SQL_CT_CONSTRAINT_NON_DEFERRABLE		0x00000100L
-#define SQL_CT_COLUMN_CONSTRAINT				0x00000200L
-#define SQL_CT_COLUMN_DEFAULT					0x00000400L
-#define SQL_CT_COLUMN_COLLATION					0x00000800L
-#define SQL_CT_TABLE_CONSTRAINT					0x00001000L
-#define SQL_CT_CONSTRAINT_NAME_DEFINITION		0x00002000L
+#define SQL_CT_CREATE_TABLE                     __MSABI_LONG(0x00000001)
+#define SQL_CT_COMMIT_PRESERVE                  __MSABI_LONG(0x00000002)
+#define SQL_CT_COMMIT_DELETE                    __MSABI_LONG(0x00000004)
+#define SQL_CT_GLOBAL_TEMPORARY                 __MSABI_LONG(0x00000008)
+#define SQL_CT_LOCAL_TEMPORARY                  __MSABI_LONG(0x00000010)
+#define SQL_CT_CONSTRAINT_INITIALLY_DEFERRED    __MSABI_LONG(0x00000020)
+#define SQL_CT_CONSTRAINT_INITIALLY_IMMEDIATE   __MSABI_LONG(0x00000040)
+#define SQL_CT_CONSTRAINT_DEFERRABLE            __MSABI_LONG(0x00000080)
+#define SQL_CT_CONSTRAINT_NON_DEFERRABLE        __MSABI_LONG(0x00000100)
+#define SQL_CT_COLUMN_CONSTRAINT                __MSABI_LONG(0x00000200)
+#define SQL_CT_COLUMN_DEFAULT                   __MSABI_LONG(0x00000400)
+#define SQL_CT_COLUMN_COLLATION                 __MSABI_LONG(0x00000800)
+#define SQL_CT_TABLE_CONSTRAINT                 __MSABI_LONG(0x00001000)
+#define SQL_CT_CONSTRAINT_NAME_DEFINITION       __MSABI_LONG(0x00002000)
 
-#define SQL_DI_CREATE_INDEX						0x00000001L
-#define SQL_DI_DROP_INDEX						0x00000002L
+#define SQL_DI_CREATE_INDEX             __MSABI_LONG(0x00000001)
+#define SQL_DI_DROP_INDEX               __MSABI_LONG(0x00000002)
 
-#define	SQL_DC_DROP_COLLATION					0x00000001L
+#define SQL_DC_DROP_COLLATION           __MSABI_LONG(0x00000001)
 
-#define	SQL_DD_DROP_DOMAIN						0x00000001L
-#define	SQL_DD_RESTRICT							0x00000002L
-#define	SQL_DD_CASCADE							0x00000004L
+#define SQL_DD_DROP_DOMAIN              __MSABI_LONG(0x00000001)
+#define SQL_DD_RESTRICT                 __MSABI_LONG(0x00000002)
+#define SQL_DD_CASCADE                  __MSABI_LONG(0x00000004)
 
-#define	SQL_DS_DROP_SCHEMA						0x00000001L
-#define SQL_DS_RESTRICT							0x00000002L
-#define	SQL_DS_CASCADE							0x00000004L
+#define SQL_DS_DROP_SCHEMA              __MSABI_LONG(0x00000001)
+#define SQL_DS_RESTRICT                 __MSABI_LONG(0x00000002)
+#define SQL_DS_CASCADE                  __MSABI_LONG(0x00000004)
 
-#define	SQL_DCS_DROP_CHARACTER_SET				0x00000001L
+#define SQL_DCS_DROP_CHARACTER_SET      __MSABI_LONG(0x00000001)
 
-#define	SQL_DA_DROP_ASSERTION					0x00000001L
+#define SQL_DA_DROP_ASSERTION           __MSABI_LONG(0x00000001)
 
-#define	SQL_DT_DROP_TABLE						0x00000001L
-#define	SQL_DT_RESTRICT							0x00000002L
-#define	SQL_DT_CASCADE							0x00000004L
+#define SQL_DT_DROP_TABLE               __MSABI_LONG(0x00000001)
+#define SQL_DT_RESTRICT                 __MSABI_LONG(0x00000002)
+#define SQL_DT_CASCADE                  __MSABI_LONG(0x00000004)
 
-#define	SQL_DTR_DROP_TRANSLATION				0x00000001L
+#define SQL_DTR_DROP_TRANSLATION        __MSABI_LONG(0x00000001)
 
-#define	SQL_DV_DROP_VIEW						0x00000001L
-#define	SQL_DV_RESTRICT							0x00000002L
-#define	SQL_DV_CASCADE							0x00000004L
+#define SQL_DV_DROP_VIEW                __MSABI_LONG(0x00000001)
+#define SQL_DV_RESTRICT                 __MSABI_LONG(0x00000002)
+#define SQL_DV_CASCADE                  __MSABI_LONG(0x00000004)
 
-#define	SQL_IS_INSERT_LITERALS					0x00000001L
-#define SQL_IS_INSERT_SEARCHED					0x00000002L
-#define SQL_IS_SELECT_INTO						0x00000004L
+#define SQL_IS_INSERT_LITERALS          __MSABI_LONG(0x00000001)
+#define SQL_IS_INSERT_SEARCHED          __MSABI_LONG(0x00000002)
+#define SQL_IS_SELECT_INTO              __MSABI_LONG(0x00000004)
 
-#define SQL_OIC_CORE							1UL
-#define SQL_OIC_LEVEL1							2UL
-#define SQL_OIC_LEVEL2							3UL
+#define SQL_OIC_CORE                    __MSABI_LONG(1U)
+#define SQL_OIC_LEVEL1                  __MSABI_LONG(2U)
+#define SQL_OIC_LEVEL2                  __MSABI_LONG(3U)
 
-#define SQL_SFKD_CASCADE						0x00000001L
-#define SQL_SFKD_NO_ACTION						0x00000002L
-#define SQL_SFKD_SET_DEFAULT					0x00000004L
-#define SQL_SFKD_SET_NULL						0x00000008L
+#define SQL_SFKD_CASCADE                __MSABI_LONG(0x00000001)
+#define SQL_SFKD_NO_ACTION              __MSABI_LONG(0x00000002)
+#define SQL_SFKD_SET_DEFAULT            __MSABI_LONG(0x00000004)
+#define SQL_SFKD_SET_NULL               __MSABI_LONG(0x00000008)
 
-#define SQL_SFKU_CASCADE						0x00000001L
-#define SQL_SFKU_NO_ACTION						0x00000002L
-#define SQL_SFKU_SET_DEFAULT					0x00000004L
-#define SQL_SFKU_SET_NULL						0x00000008L
+#define SQL_SFKU_CASCADE                __MSABI_LONG(0x00000001)
+#define SQL_SFKU_NO_ACTION              __MSABI_LONG(0x00000002)
+#define SQL_SFKU_SET_DEFAULT            __MSABI_LONG(0x00000004)
+#define SQL_SFKU_SET_NULL               __MSABI_LONG(0x00000008)
 
-#define SQL_SG_USAGE_ON_DOMAIN					0x00000001L
-#define SQL_SG_USAGE_ON_CHARACTER_SET			0x00000002L
-#define SQL_SG_USAGE_ON_COLLATION				0x00000004L
-#define SQL_SG_USAGE_ON_TRANSLATION				0x00000008L
-#define SQL_SG_WITH_GRANT_OPTION				0x00000010L
-#define SQL_SG_DELETE_TABLE						0x00000020L
-#define SQL_SG_INSERT_TABLE						0x00000040L
-#define SQL_SG_INSERT_COLUMN					0x00000080L
-#define SQL_SG_REFERENCES_TABLE					0x00000100L
-#define SQL_SG_REFERENCES_COLUMN				0x00000200L
-#define SQL_SG_SELECT_TABLE						0x00000400L
-#define SQL_SG_UPDATE_TABLE						0x00000800L
-#define SQL_SG_UPDATE_COLUMN					0x00001000L
+#define SQL_SG_USAGE_ON_DOMAIN          __MSABI_LONG(0x00000001)
+#define SQL_SG_USAGE_ON_CHARACTER_SET   __MSABI_LONG(0x00000002)
+#define SQL_SG_USAGE_ON_COLLATION       __MSABI_LONG(0x00000004)
+#define SQL_SG_USAGE_ON_TRANSLATION     __MSABI_LONG(0x00000008)
+#define SQL_SG_WITH_GRANT_OPTION        __MSABI_LONG(0x00000010)
+#define SQL_SG_DELETE_TABLE             __MSABI_LONG(0x00000020)
+#define SQL_SG_INSERT_TABLE             __MSABI_LONG(0x00000040)
+#define SQL_SG_INSERT_COLUMN            __MSABI_LONG(0x00000080)
+#define SQL_SG_REFERENCES_TABLE         __MSABI_LONG(0x00000100)
+#define SQL_SG_REFERENCES_COLUMN        __MSABI_LONG(0x00000200)
+#define SQL_SG_SELECT_TABLE             __MSABI_LONG(0x00000400)
+#define SQL_SG_UPDATE_TABLE             __MSABI_LONG(0x00000800)
+#define SQL_SG_UPDATE_COLUMN            __MSABI_LONG(0x00001000)
 
-#define SQL_SP_EXISTS							0x00000001L
-#define SQL_SP_ISNOTNULL						0x00000002L
-#define SQL_SP_ISNULL							0x00000004L
-#define SQL_SP_MATCH_FULL						0x00000008L
-#define SQL_SP_MATCH_PARTIAL					0x00000010L
-#define SQL_SP_MATCH_UNIQUE_FULL				0x00000020L
-#define SQL_SP_MATCH_UNIQUE_PARTIAL				0x00000040L
-#define SQL_SP_OVERLAPS							0x00000080L
-#define SQL_SP_UNIQUE							0x00000100L
-#define SQL_SP_LIKE								0x00000200L
-#define SQL_SP_IN								0x00000400L
-#define SQL_SP_BETWEEN							0x00000800L
-#define SQL_SP_COMPARISON						0x00001000L
-#define SQL_SP_QUANTIFIED_COMPARISON			0x00002000L
+#define SQL_SP_EXISTS                   __MSABI_LONG(0x00000001)
+#define SQL_SP_ISNOTNULL                __MSABI_LONG(0x00000002)
+#define SQL_SP_ISNULL                   __MSABI_LONG(0x00000004)
+#define SQL_SP_MATCH_FULL               __MSABI_LONG(0x00000008)
+#define SQL_SP_MATCH_PARTIAL            __MSABI_LONG(0x00000010)
+#define SQL_SP_MATCH_UNIQUE_FULL        __MSABI_LONG(0x00000020)
+#define SQL_SP_MATCH_UNIQUE_PARTIAL     __MSABI_LONG(0x00000040)
+#define SQL_SP_OVERLAPS                 __MSABI_LONG(0x00000080)
+#define SQL_SP_UNIQUE                   __MSABI_LONG(0x00000100)
+#define SQL_SP_LIKE                     __MSABI_LONG(0x00000200)
+#define SQL_SP_IN                       __MSABI_LONG(0x00000400)
+#define SQL_SP_BETWEEN                  __MSABI_LONG(0x00000800)
+#define SQL_SP_COMPARISON               __MSABI_LONG(0x00001000)
+#define SQL_SP_QUANTIFIED_COMPARISON    __MSABI_LONG(0x00002000)
 
-#define SQL_SRJO_CORRESPONDING_CLAUSE			0x00000001L
-#define SQL_SRJO_CROSS_JOIN						0x00000002L
-#define SQL_SRJO_EXCEPT_JOIN					0x00000004L
-#define SQL_SRJO_FULL_OUTER_JOIN				0x00000008L
-#define SQL_SRJO_INNER_JOIN						0x00000010L
-#define SQL_SRJO_INTERSECT_JOIN					0x00000020L
-#define SQL_SRJO_LEFT_OUTER_JOIN				0x00000040L
-#define SQL_SRJO_NATURAL_JOIN					0x00000080L
-#define SQL_SRJO_RIGHT_OUTER_JOIN				0x00000100L
-#define SQL_SRJO_UNION_JOIN						0x00000200L
+#define SQL_SRJO_CORRESPONDING_CLAUSE   __MSABI_LONG(0x00000001)
+#define SQL_SRJO_CROSS_JOIN             __MSABI_LONG(0x00000002)
+#define SQL_SRJO_EXCEPT_JOIN            __MSABI_LONG(0x00000004)
+#define SQL_SRJO_FULL_OUTER_JOIN        __MSABI_LONG(0x00000008)
+#define SQL_SRJO_INNER_JOIN             __MSABI_LONG(0x00000010)
+#define SQL_SRJO_INTERSECT_JOIN         __MSABI_LONG(0x00000020)
+#define SQL_SRJO_LEFT_OUTER_JOIN        __MSABI_LONG(0x00000040)
+#define SQL_SRJO_NATURAL_JOIN           __MSABI_LONG(0x00000080)
+#define SQL_SRJO_RIGHT_OUTER_JOIN       __MSABI_LONG(0x00000100)
+#define SQL_SRJO_UNION_JOIN             __MSABI_LONG(0x00000200)
 
-#define SQL_SR_USAGE_ON_DOMAIN					0x00000001L
-#define SQL_SR_USAGE_ON_CHARACTER_SET			0x00000002L
-#define SQL_SR_USAGE_ON_COLLATION				0x00000004L
-#define SQL_SR_USAGE_ON_TRANSLATION				0x00000008L
-#define SQL_SR_GRANT_OPTION_FOR					0x00000010L
-#define SQL_SR_CASCADE							0x00000020L
-#define SQL_SR_RESTRICT							0x00000040L
-#define SQL_SR_DELETE_TABLE						0x00000080L
-#define SQL_SR_INSERT_TABLE						0x00000100L
-#define SQL_SR_INSERT_COLUMN					0x00000200L
-#define SQL_SR_REFERENCES_TABLE					0x00000400L
-#define SQL_SR_REFERENCES_COLUMN				0x00000800L
-#define SQL_SR_SELECT_TABLE						0x00001000L
-#define SQL_SR_UPDATE_TABLE						0x00002000L
-#define SQL_SR_UPDATE_COLUMN					0x00004000L
+#define SQL_SR_USAGE_ON_DOMAIN          __MSABI_LONG(0x00000001)
+#define SQL_SR_USAGE_ON_CHARACTER_SET   __MSABI_LONG(0x00000002)
+#define SQL_SR_USAGE_ON_COLLATION       __MSABI_LONG(0x00000004)
+#define SQL_SR_USAGE_ON_TRANSLATION     __MSABI_LONG(0x00000008)
+#define SQL_SR_GRANT_OPTION_FOR         __MSABI_LONG(0x00000010)
+#define SQL_SR_CASCADE                  __MSABI_LONG(0x00000020)
+#define SQL_SR_RESTRICT                 __MSABI_LONG(0x00000040)
+#define SQL_SR_DELETE_TABLE             __MSABI_LONG(0x00000080)
+#define SQL_SR_INSERT_TABLE             __MSABI_LONG(0x00000100)
+#define SQL_SR_INSERT_COLUMN            __MSABI_LONG(0x00000200)
+#define SQL_SR_REFERENCES_TABLE         __MSABI_LONG(0x00000400)
+#define SQL_SR_REFERENCES_COLUMN        __MSABI_LONG(0x00000800)
+#define SQL_SR_SELECT_TABLE             __MSABI_LONG(0x00001000)
+#define SQL_SR_UPDATE_TABLE             __MSABI_LONG(0x00002000)
+#define SQL_SR_UPDATE_COLUMN            __MSABI_LONG(0x00004000)
 
-#define SQL_SRVC_VALUE_EXPRESSION				0x00000001L
-#define SQL_SRVC_NULL							0x00000002L
-#define SQL_SRVC_DEFAULT						0x00000004L
-#define SQL_SRVC_ROW_SUBQUERY					0x00000008L
+#define SQL_SRVC_VALUE_EXPRESSION       __MSABI_LONG(0x00000001)
+#define SQL_SRVC_NULL                   __MSABI_LONG(0x00000002)
+#define SQL_SRVC_DEFAULT                __MSABI_LONG(0x00000004)
+#define SQL_SRVC_ROW_SUBQUERY           __MSABI_LONG(0x00000008)
 
-#define SQL_SVE_CASE							0x00000001L
-#define SQL_SVE_CAST							0x00000002L
-#define SQL_SVE_COALESCE						0x00000004L
-#define SQL_SVE_NULLIF							0x00000008L
+#define SQL_SVE_CASE                    __MSABI_LONG(0x00000001)
+#define SQL_SVE_CAST                    __MSABI_LONG(0x00000002)
+#define SQL_SVE_COALESCE                __MSABI_LONG(0x00000004)
+#define SQL_SVE_NULLIF                  __MSABI_LONG(0x00000008)
 
-#define SQL_SCC_XOPEN_CLI_VERSION1				0x00000001L
-#define SQL_SCC_ISO92_CLI						0x00000002L
+#define SQL_SCC_XOPEN_CLI_VERSION1      __MSABI_LONG(0x00000001)
+#define SQL_SCC_ISO92_CLI               __MSABI_LONG(0x00000002)
 
 #define SQL_US_UNION							SQL_U_UNION
 #define SQL_US_UNION_ALL						SQL_U_UNION_ALL
 
 #endif
 
-#define SQL_DTC_ENLIST_EXPENSIVE				0x00000001L
-#define SQL_DTC_UNENLIST_EXPENSIVE				0x00000002L
+#define SQL_DTC_ENLIST_EXPENSIVE        __MSABI_LONG(0x00000001)
+#define SQL_DTC_UNENLIST_EXPENSIVE      __MSABI_LONG(0x00000002)
 
 #if (ODBCVER >= 0x0300)
 #define SQL_FETCH_FIRST_USER				31
@@ -1621,10 +1621,10 @@ SQLRETURN WINAPI  SQLAllocHandleStd(
 #define SQL_CR_CLOSE                    SQL_CB_CLOSE
 #define SQL_CC_PRESERVE                 SQL_CB_PRESERVE
 #define SQL_CR_PRESERVE                 SQL_CB_PRESERVE
-#define SQL_SCROLL_FORWARD_ONLY         0L
-#define SQL_SCROLL_KEYSET_DRIVEN        (-1L)
-#define SQL_SCROLL_DYNAMIC              (-2L)
-#define SQL_SCROLL_STATIC               (-3L)
+#define SQL_SCROLL_FORWARD_ONLY         __MSABI_LONG(0)
+#define SQL_SCROLL_KEYSET_DRIVEN        (__MSABI_LONG(-1))
+#define SQL_SCROLL_DYNAMIC              (__MSABI_LONG(-2))
+#define SQL_SCROLL_STATIC               (__MSABI_LONG(-3))
 
 SQLRETURN WINAPI  SQLSetScrollOptions(
     SQLHSTMT           hstmt,
@@ -1639,15 +1639,15 @@ RETCODE	 TraceCloseLogFile(void);
 VOID	 TraceReturn(RETCODE,RETCODE);
 DWORD	 TraceVersion(void);
 
-/*#define TRACE_ON		0x00000001L*/
-#define TRACE_VS_EVENT_ON	0x00000002L
+/*#define TRACE_ON                      __MSABI_LONG(0x00000001)*/
+#define TRACE_VS_EVENT_ON               __MSABI_LONG(0x00000002)
 
 RETCODE	TraceVSControl(DWORD);
 
-#define ODBC_VS_FLAG_UNICODE_ARG	0x00000001L
-#define	ODBC_VS_FLAG_UNICODE_COR	0x00000002L
-#define ODBC_VS_FLAG_RETCODE		0x00000004L
-#define ODBC_VS_FLAG_STOP		0x00000008L
+#define ODBC_VS_FLAG_UNICODE_ARG        __MSABI_LONG(0x00000001)
+#define ODBC_VS_FLAG_UNICODE_COR        __MSABI_LONG(0x00000002)
+#define ODBC_VS_FLAG_RETCODE            __MSABI_LONG(0x00000004)
+#define ODBC_VS_FLAG_STOP               __MSABI_LONG(0x00000008)
 
 typedef struct tagODBC_VS_ARGS {
 	const GUID	*pguidEvent;
