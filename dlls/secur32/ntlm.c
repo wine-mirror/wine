@@ -34,6 +34,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntlm);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #define NTLM_MAX_BUF 1904
 #define MIN_NTLM_AUTH_MAJOR_VERSION 3
@@ -2051,14 +2052,13 @@ void SECUR32_initNTLMSP(void)
     }
     else
     {
-        ERR("%s was not found or is outdated. "
-            "Make sure that ntlm_auth >= %d.%d.%d is in your path.\n",
-            ntlm_auth,
-	    MIN_NTLM_AUTH_MAJOR_VERSION,
-	    MIN_NTLM_AUTH_MINOR_VERSION,
-	    MIN_NTLM_AUTH_MICRO_VERSION);
-        ERR("Usually, you can find it in the winbind package of your "
-            "distribution.\n");
+        ERR_(winediag)("%s was not found or is outdated. "
+                       "Make sure that ntlm_auth >= %d.%d.%d is in your path. "
+                       "Usually, you can find it in the winbind package of your distribution.\n",
+                       ntlm_auth,
+                       MIN_NTLM_AUTH_MAJOR_VERSION,
+                       MIN_NTLM_AUTH_MINOR_VERSION,
+                       MIN_NTLM_AUTH_MICRO_VERSION);
 
     }
     cleanup_helper(helper);
