@@ -230,6 +230,18 @@ static BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags)
     return TRUE;
 }
 
+/* start a new path stroke if necessary */
+static BOOL start_new_stroke( struct path_physdev *physdev )
+{
+    POINT pos;
+
+    if (!physdev->path->newStroke) return TRUE;
+    physdev->path->newStroke = FALSE;
+    GetCurrentPositionEx( physdev->dev.hdc, &pos );
+    LPtoDP( physdev->dev.hdc, &pos, 1 );
+    return PATH_AddEntry( physdev->path, &pos, PT_MOVETO );
+}
+
 /* PATH_AssignGdiPath
  *
  * Copies the GdiPath structure "pPathSrc" to "pPathDest". A deep copy is
@@ -902,24 +914,15 @@ static BOOL pathdrv_MoveTo( PHYSDEV dev, INT x, INT y )
 static BOOL pathdrv_LineTo( PHYSDEV dev, INT x, INT y )
 {
     struct path_physdev *physdev = get_path_physdev( dev );
-    POINT point, pointCurPos;
+    POINT point;
 
     /* Convert point to device coordinates */
     point.x = x;
     point.y = y;
     LPtoDP( dev->hdc, &point, 1 );
 
-    /* Add a PT_MOVETO if necessary */
-    if(physdev->path->newStroke)
-    {
-        physdev->path->newStroke = FALSE;
-        GetCurrentPositionEx( dev->hdc, &pointCurPos );
-        LPtoDP( dev->hdc, &pointCurPos, 1 );
-        if(!PATH_AddEntry(physdev->path, &pointCurPos, PT_MOVETO))
-            return FALSE;
-    }
+    if (!start_new_stroke( physdev )) return FALSE;
 
-    /* Add a PT_LINETO entry */
     return PATH_AddEntry(physdev->path, &point, PT_LINETO);
 }
 
