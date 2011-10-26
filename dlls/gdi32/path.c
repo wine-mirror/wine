@@ -92,19 +92,6 @@ typedef struct tagFLOAT_POINT
 } FLOAT_POINT;
 
 
-static BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags);
-static BOOL PATH_PathToRegion(GdiPath *pPath, INT nPolyFillMode,
-   HRGN *pHrgn);
-static void   PATH_EmptyPath(GdiPath *pPath);
-static BOOL PATH_ReserveEntries(GdiPath *pPath, INT numEntries);
-static BOOL PATH_DoArcPart(GdiPath *pPath, FLOAT_POINT corners[],
-   double angleStart, double angleEnd, BYTE startEntryType);
-static void PATH_ScaleNormalizedPoint(FLOAT_POINT corners[], double x,
-   double y, POINT *pPoint);
-static void PATH_NormalizePoint(FLOAT_POINT corners[], const FLOAT_POINT
-   *pPoint, double *pX, double *pY);
-static BOOL PATH_CheckCorners(DC *dc, POINT corners[], INT x1, INT y1, INT x2, INT y2);
-
 /* Performs a world-to-viewport transformation on the specified point (which
  * is in floating point format).
  */
@@ -115,12 +102,363 @@ static inline void INTERNAL_LPTODP_FLOAT(DC *dc, FLOAT_POINT *point)
     /* Perform the transformation */
     x = point->x;
     y = point->y;
-    point->x = x * dc->xformWorld2Vport.eM11 +
-               y * dc->xformWorld2Vport.eM21 +
-               dc->xformWorld2Vport.eDx;
-    point->y = x * dc->xformWorld2Vport.eM12 +
-               y * dc->xformWorld2Vport.eM22 +
-               dc->xformWorld2Vport.eDy;
+    point->x = x * dc->xformWorld2Vport.eM11 + y * dc->xformWorld2Vport.eM21 + dc->xformWorld2Vport.eDx;
+    point->y = x * dc->xformWorld2Vport.eM12 + y * dc->xformWorld2Vport.eM22 + dc->xformWorld2Vport.eDy;
+}
+
+static inline INT int_from_fixed(FIXED f)
+{
+    return (f.fract >= 0x8000) ? (f.value + 1) : f.value;
+}
+
+
+/* PATH_EmptyPath
+ *
+ * Removes all entries from the path and sets the path state to PATH_Null.
+ */
+static void PATH_EmptyPath(GdiPath *pPath)
+{
+    pPath->state=PATH_Null;
+    pPath->numEntriesUsed=0;
+}
+
+/* PATH_ReserveEntries
+ *
+ * Ensures that at least "numEntries" entries (for points and flags) have
+ * been allocated; allocates larger arrays and copies the existing entries
+ * to those arrays, if necessary. Returns TRUE if successful, else FALSE.
+ */
+static BOOL PATH_ReserveEntries(GdiPath *pPath, INT numEntries)
+{
+    INT   numEntriesToAllocate;
+    POINT *pPointsNew;
+    BYTE    *pFlagsNew;
+
+    assert(numEntries>=0);
+
+    /* Do we have to allocate more memory? */
+    if(numEntries > pPath->numEntriesAllocated)
+    {
+        /* Find number of entries to allocate. We let the size of the array
+         * grow exponentially, since that will guarantee linear time
+         * complexity. */
+        if(pPath->numEntriesAllocated)
+        {
+            numEntriesToAllocate=pPath->numEntriesAllocated;
+            while(numEntriesToAllocate<numEntries)
+                numEntriesToAllocate=numEntriesToAllocate*GROW_FACTOR_NUMER/
+                    GROW_FACTOR_DENOM;
+        }
+        else
+            numEntriesToAllocate=numEntries;
+
+        /* Allocate new arrays */
+        pPointsNew=HeapAlloc( GetProcessHeap(), 0, numEntriesToAllocate * sizeof(POINT) );
+        if(!pPointsNew)
+            return FALSE;
+        pFlagsNew=HeapAlloc( GetProcessHeap(), 0, numEntriesToAllocate * sizeof(BYTE) );
+        if(!pFlagsNew)
+        {
+            HeapFree( GetProcessHeap(), 0, pPointsNew );
+            return FALSE;
+        }
+
+        /* Copy old arrays to new arrays and discard old arrays */
+        if(pPath->pPoints)
+        {
+            assert(pPath->pFlags);
+
+            memcpy(pPointsNew, pPath->pPoints,
+                   sizeof(POINT)*pPath->numEntriesUsed);
+            memcpy(pFlagsNew, pPath->pFlags,
+                   sizeof(BYTE)*pPath->numEntriesUsed);
+
+            HeapFree( GetProcessHeap(), 0, pPath->pPoints );
+            HeapFree( GetProcessHeap(), 0, pPath->pFlags );
+        }
+        pPath->pPoints=pPointsNew;
+        pPath->pFlags=pFlagsNew;
+        pPath->numEntriesAllocated=numEntriesToAllocate;
+    }
+
+    return TRUE;
+}
+
+/* PATH_AddEntry
+ *
+ * Adds an entry to the path. For "flags", pass either PT_MOVETO, PT_LINETO
+ * or PT_BEZIERTO, optionally ORed with PT_CLOSEFIGURE. Returns TRUE if
+ * successful, FALSE otherwise (e.g. if not enough memory was available).
+ */
+static BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags)
+{
+    /* FIXME: If newStroke is true, perhaps we want to check that we're
+     * getting a PT_MOVETO
+     */
+    TRACE("(%d,%d) - %d\n", pPoint->x, pPoint->y, flags);
+
+    /* Check that path is open */
+    if(pPath->state!=PATH_Open)
+        return FALSE;
+
+    /* Reserve enough memory for an extra path entry */
+    if(!PATH_ReserveEntries(pPath, pPath->numEntriesUsed+1))
+        return FALSE;
+
+    /* Store information in path entry */
+    pPath->pPoints[pPath->numEntriesUsed]=*pPoint;
+    pPath->pFlags[pPath->numEntriesUsed]=flags;
+
+    /* If this is PT_CLOSEFIGURE, we have to start a new stroke next time */
+    if((flags & PT_CLOSEFIGURE) == PT_CLOSEFIGURE)
+        pPath->newStroke=TRUE;
+
+    /* Increment entry count */
+    pPath->numEntriesUsed++;
+
+    return TRUE;
+}
+
+/* PATH_CheckCorners
+ *
+ * Helper function for PATH_RoundRect() and PATH_Rectangle()
+ */
+static BOOL PATH_CheckCorners(DC *dc, POINT corners[], INT x1, INT y1, INT x2, INT y2)
+{
+    INT temp;
+
+    /* Convert points to device coordinates */
+    corners[0].x=x1;
+    corners[0].y=y1;
+    corners[1].x=x2;
+    corners[1].y=y2;
+    if(!LPtoDP(dc->hSelf, corners, 2))
+        return FALSE;
+
+    /* Make sure first corner is top left and second corner is bottom right */
+    if(corners[0].x>corners[1].x)
+    {
+        temp=corners[0].x;
+        corners[0].x=corners[1].x;
+        corners[1].x=temp;
+    }
+    if(corners[0].y>corners[1].y)
+    {
+        temp=corners[0].y;
+        corners[0].y=corners[1].y;
+        corners[1].y=temp;
+    }
+
+    /* In GM_COMPATIBLE, don't include bottom and right edges */
+    if(dc->GraphicsMode==GM_COMPATIBLE)
+    {
+        corners[1].x--;
+        corners[1].y--;
+    }
+
+    return TRUE;
+}
+
+/* PATH_AddFlatBezier
+ */
+static BOOL PATH_AddFlatBezier(GdiPath *pPath, POINT *pt, BOOL closed)
+{
+    POINT *pts;
+    INT no, i;
+
+    pts = GDI_Bezier( pt, 4, &no );
+    if(!pts) return FALSE;
+
+    for(i = 1; i < no; i++)
+        PATH_AddEntry(pPath, &pts[i], (i == no-1 && closed) ? PT_LINETO | PT_CLOSEFIGURE : PT_LINETO);
+    HeapFree( GetProcessHeap(), 0, pts );
+    return TRUE;
+}
+
+/* PATH_FlattenPath
+ *
+ * Replaces Beziers with line segments
+ *
+ */
+static BOOL PATH_FlattenPath(GdiPath *pPath)
+{
+    GdiPath newPath;
+    INT srcpt;
+
+    memset(&newPath, 0, sizeof(newPath));
+    newPath.state = PATH_Open;
+    for(srcpt = 0; srcpt < pPath->numEntriesUsed; srcpt++) {
+        switch(pPath->pFlags[srcpt] & ~PT_CLOSEFIGURE) {
+	case PT_MOVETO:
+	case PT_LINETO:
+	    PATH_AddEntry(&newPath, &pPath->pPoints[srcpt],
+			  pPath->pFlags[srcpt]);
+	    break;
+	case PT_BEZIERTO:
+            PATH_AddFlatBezier(&newPath, &pPath->pPoints[srcpt-1],
+                               pPath->pFlags[srcpt+2] & PT_CLOSEFIGURE);
+	    srcpt += 2;
+	    break;
+	}
+    }
+    newPath.state = PATH_Closed;
+    PATH_AssignGdiPath(pPath, &newPath);
+    PATH_DestroyGdiPath(&newPath);
+    return TRUE;
+}
+
+/* PATH_PathToRegion
+ *
+ * Creates a region from the specified path using the specified polygon
+ * filling mode. The path is left unchanged. A handle to the region that
+ * was created is stored in *pHrgn. If successful, TRUE is returned; if an
+ * error occurs, SetLastError is called with the appropriate value and
+ * FALSE is returned.
+ */
+static BOOL PATH_PathToRegion(GdiPath *pPath, INT nPolyFillMode,
+   HRGN *pHrgn)
+{
+    int    numStrokes, iStroke, i;
+    INT  *pNumPointsInStroke;
+    HRGN hrgn;
+
+    PATH_FlattenPath(pPath);
+
+    /* FIXME: What happens when number of points is zero? */
+
+    /* First pass: Find out how many strokes there are in the path */
+    /* FIXME: We could eliminate this with some bookkeeping in GdiPath */
+    numStrokes=0;
+    for(i=0; i<pPath->numEntriesUsed; i++)
+        if((pPath->pFlags[i] & ~PT_CLOSEFIGURE) == PT_MOVETO)
+            numStrokes++;
+
+    /* Allocate memory for number-of-points-in-stroke array */
+    pNumPointsInStroke=HeapAlloc( GetProcessHeap(), 0, sizeof(int) * numStrokes );
+    if(!pNumPointsInStroke)
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return FALSE;
+    }
+
+    /* Second pass: remember number of points in each polygon */
+    iStroke=-1;  /* Will get incremented to 0 at beginning of first stroke */
+    for(i=0; i<pPath->numEntriesUsed; i++)
+    {
+        /* Is this the beginning of a new stroke? */
+        if((pPath->pFlags[i] & ~PT_CLOSEFIGURE) == PT_MOVETO)
+        {
+            iStroke++;
+            pNumPointsInStroke[iStroke]=0;
+        }
+
+        pNumPointsInStroke[iStroke]++;
+    }
+
+    /* Create a region from the strokes */
+    hrgn=CreatePolyPolygonRgn(pPath->pPoints, pNumPointsInStroke,
+                              numStrokes, nPolyFillMode);
+
+    /* Free memory for number-of-points-in-stroke array */
+    HeapFree( GetProcessHeap(), 0, pNumPointsInStroke );
+
+    if(hrgn==NULL)
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return FALSE;
+    }
+
+    /* Success! */
+    *pHrgn=hrgn;
+    return TRUE;
+}
+
+/* PATH_ScaleNormalizedPoint
+ *
+ * Scales a normalized point (x, y) with respect to the box whose corners are
+ * passed in "corners". The point is stored in "*pPoint". The normalized
+ * coordinates (-1.0, -1.0) correspond to corners[0], the coordinates
+ * (1.0, 1.0) correspond to corners[1].
+ */
+static void PATH_ScaleNormalizedPoint(FLOAT_POINT corners[], double x,
+   double y, POINT *pPoint)
+{
+    pPoint->x=GDI_ROUND( (double)corners[0].x + (double)(corners[1].x-corners[0].x)*0.5*(x+1.0) );
+    pPoint->y=GDI_ROUND( (double)corners[0].y + (double)(corners[1].y-corners[0].y)*0.5*(y+1.0) );
+}
+
+/* PATH_NormalizePoint
+ *
+ * Normalizes a point with respect to the box whose corners are passed in
+ * "corners". The normalized coordinates are stored in "*pX" and "*pY".
+ */
+static void PATH_NormalizePoint(FLOAT_POINT corners[],
+   const FLOAT_POINT *pPoint,
+   double *pX, double *pY)
+{
+    *pX=(double)(pPoint->x-corners[0].x)/(double)(corners[1].x-corners[0].x) * 2.0 - 1.0;
+    *pY=(double)(pPoint->y-corners[0].y)/(double)(corners[1].y-corners[0].y) * 2.0 - 1.0;
+}
+
+/* PATH_DoArcPart
+ *
+ * Creates a Bezier spline that corresponds to part of an arc and appends the
+ * corresponding points to the path. The start and end angles are passed in
+ * "angleStart" and "angleEnd"; these angles should span a quarter circle
+ * at most. If "startEntryType" is non-zero, an entry of that type for the first
+ * control point is added to the path; otherwise, it is assumed that the current
+ * position is equal to the first control point.
+ */
+static BOOL PATH_DoArcPart(GdiPath *pPath, FLOAT_POINT corners[],
+   double angleStart, double angleEnd, BYTE startEntryType)
+{
+    double  halfAngle, a;
+    double  xNorm[4], yNorm[4];
+    POINT point;
+    int     i;
+
+    assert(fabs(angleEnd-angleStart)<=M_PI_2);
+
+    /* FIXME: Is there an easier way of computing this? */
+
+    /* Compute control points */
+    halfAngle=(angleEnd-angleStart)/2.0;
+    if(fabs(halfAngle)>1e-8)
+    {
+        a=4.0/3.0*(1-cos(halfAngle))/sin(halfAngle);
+        xNorm[0]=cos(angleStart);
+        yNorm[0]=sin(angleStart);
+        xNorm[1]=xNorm[0] - a*yNorm[0];
+        yNorm[1]=yNorm[0] + a*xNorm[0];
+        xNorm[3]=cos(angleEnd);
+        yNorm[3]=sin(angleEnd);
+        xNorm[2]=xNorm[3] + a*yNorm[3];
+        yNorm[2]=yNorm[3] - a*xNorm[3];
+    }
+    else
+        for(i=0; i<4; i++)
+        {
+            xNorm[i]=cos(angleStart);
+            yNorm[i]=sin(angleStart);
+        }
+
+    /* Add starting point to path if desired */
+    if(startEntryType)
+    {
+        PATH_ScaleNormalizedPoint(corners, xNorm[0], yNorm[0], &point);
+        if(!PATH_AddEntry(pPath, &point, startEntryType))
+            return FALSE;
+    }
+
+    /* Add remaining control points */
+    for(i=1; i<4; i++)
+    {
+        PATH_ScaleNormalizedPoint(corners, xNorm[i], yNorm[i], &point);
+        if(!PATH_AddEntry(pPath, &point, PT_BEZIERTO))
+            return FALSE;
+    }
+
+    return TRUE;
 }
 
 
@@ -1041,172 +1379,6 @@ BOOL PATH_PolyPolyline( DC *dc, const POINT* pts, const DWORD* counts,
    return TRUE;
 }
 
-/***********************************************************************
- * Internal functions
- */
-
-/* PATH_CheckCorners
- *
- * Helper function for PATH_RoundRect() and PATH_Rectangle()
- */
-static BOOL PATH_CheckCorners(DC *dc, POINT corners[], INT x1, INT y1, INT x2, INT y2)
-{
-   INT temp;
-
-   /* Convert points to device coordinates */
-   corners[0].x=x1;
-   corners[0].y=y1;
-   corners[1].x=x2;
-   corners[1].y=y2;
-   if(!LPtoDP(dc->hSelf, corners, 2))
-      return FALSE;
-
-   /* Make sure first corner is top left and second corner is bottom right */
-   if(corners[0].x>corners[1].x)
-   {
-      temp=corners[0].x;
-      corners[0].x=corners[1].x;
-      corners[1].x=temp;
-   }
-   if(corners[0].y>corners[1].y)
-   {
-      temp=corners[0].y;
-      corners[0].y=corners[1].y;
-      corners[1].y=temp;
-   }
-
-   /* In GM_COMPATIBLE, don't include bottom and right edges */
-   if(dc->GraphicsMode==GM_COMPATIBLE)
-   {
-      corners[1].x--;
-      corners[1].y--;
-   }
-
-   return TRUE;
-}
-
-/* PATH_AddFlatBezier
- */
-static BOOL PATH_AddFlatBezier(GdiPath *pPath, POINT *pt, BOOL closed)
-{
-    POINT *pts;
-    INT no, i;
-
-    pts = GDI_Bezier( pt, 4, &no );
-    if(!pts) return FALSE;
-
-    for(i = 1; i < no; i++)
-        PATH_AddEntry(pPath, &pts[i],
-	    (i == no-1 && closed) ? PT_LINETO | PT_CLOSEFIGURE : PT_LINETO);
-    HeapFree( GetProcessHeap(), 0, pts );
-    return TRUE;
-}
-
-/* PATH_FlattenPath
- *
- * Replaces Beziers with line segments
- *
- */
-static BOOL PATH_FlattenPath(GdiPath *pPath)
-{
-    GdiPath newPath;
-    INT srcpt;
-
-    memset(&newPath, 0, sizeof(newPath));
-    newPath.state = PATH_Open;
-    for(srcpt = 0; srcpt < pPath->numEntriesUsed; srcpt++) {
-        switch(pPath->pFlags[srcpt] & ~PT_CLOSEFIGURE) {
-	case PT_MOVETO:
-	case PT_LINETO:
-	    PATH_AddEntry(&newPath, &pPath->pPoints[srcpt],
-			  pPath->pFlags[srcpt]);
-	    break;
-	case PT_BEZIERTO:
-	  PATH_AddFlatBezier(&newPath, &pPath->pPoints[srcpt-1],
-			     pPath->pFlags[srcpt+2] & PT_CLOSEFIGURE);
-	    srcpt += 2;
-	    break;
-	}
-    }
-    newPath.state = PATH_Closed;
-    PATH_AssignGdiPath(pPath, &newPath);
-    PATH_DestroyGdiPath(&newPath);
-    return TRUE;
-}
-
-/* PATH_PathToRegion
- *
- * Creates a region from the specified path using the specified polygon
- * filling mode. The path is left unchanged. A handle to the region that
- * was created is stored in *pHrgn. If successful, TRUE is returned; if an
- * error occurs, SetLastError is called with the appropriate value and
- * FALSE is returned.
- */
-static BOOL PATH_PathToRegion(GdiPath *pPath, INT nPolyFillMode,
-   HRGN *pHrgn)
-{
-   int    numStrokes, iStroke, i;
-   INT  *pNumPointsInStroke;
-   HRGN hrgn;
-
-   assert(pPath!=NULL);
-   assert(pHrgn!=NULL);
-
-   PATH_FlattenPath(pPath);
-
-   /* FIXME: What happens when number of points is zero? */
-
-   /* First pass: Find out how many strokes there are in the path */
-   /* FIXME: We could eliminate this with some bookkeeping in GdiPath */
-   numStrokes=0;
-   for(i=0; i<pPath->numEntriesUsed; i++)
-      if((pPath->pFlags[i] & ~PT_CLOSEFIGURE) == PT_MOVETO)
-         numStrokes++;
-
-   /* Allocate memory for number-of-points-in-stroke array */
-   pNumPointsInStroke=HeapAlloc( GetProcessHeap(), 0, sizeof(int) * numStrokes );
-   if(!pNumPointsInStroke)
-   {
-      SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-      return FALSE;
-   }
-
-   /* Second pass: remember number of points in each polygon */
-   iStroke=-1;  /* Will get incremented to 0 at beginning of first stroke */
-   for(i=0; i<pPath->numEntriesUsed; i++)
-   {
-      /* Is this the beginning of a new stroke? */
-      if((pPath->pFlags[i] & ~PT_CLOSEFIGURE) == PT_MOVETO)
-      {
-         iStroke++;
-	 pNumPointsInStroke[iStroke]=0;
-      }
-
-      pNumPointsInStroke[iStroke]++;
-   }
-
-   /* Create a region from the strokes */
-   hrgn=CreatePolyPolygonRgn(pPath->pPoints, pNumPointsInStroke,
-      numStrokes, nPolyFillMode);
-
-   /* Free memory for number-of-points-in-stroke array */
-   HeapFree( GetProcessHeap(), 0, pNumPointsInStroke );
-
-   if(hrgn==NULL)
-   {
-      SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-      return FALSE;
-   }
-
-   /* Success! */
-   *pHrgn=hrgn;
-   return TRUE;
-}
-
-static inline INT int_from_fixed(FIXED f)
-{
-    return (f.fract >= 0x8000) ? (f.value + 1) : f.value;
-}
 
 /**********************************************************************
  *      PATH_BezierTo
@@ -1391,210 +1563,6 @@ BOOL PATH_ExtTextOut(DC *dc, INT x, INT y, UINT flags, const RECT *lprc,
         }
     }
     return TRUE;
-}
-
-/* PATH_EmptyPath
- *
- * Removes all entries from the path and sets the path state to PATH_Null.
- */
-static void PATH_EmptyPath(GdiPath *pPath)
-{
-   assert(pPath!=NULL);
-
-   pPath->state=PATH_Null;
-   pPath->numEntriesUsed=0;
-}
-
-/* PATH_AddEntry
- *
- * Adds an entry to the path. For "flags", pass either PT_MOVETO, PT_LINETO
- * or PT_BEZIERTO, optionally ORed with PT_CLOSEFIGURE. Returns TRUE if
- * successful, FALSE otherwise (e.g. if not enough memory was available).
- */
-static BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags)
-{
-   assert(pPath!=NULL);
-
-   /* FIXME: If newStroke is true, perhaps we want to check that we're
-    * getting a PT_MOVETO
-    */
-   TRACE("(%d,%d) - %d\n", pPoint->x, pPoint->y, flags);
-
-   /* Check that path is open */
-   if(pPath->state!=PATH_Open)
-      return FALSE;
-
-   /* Reserve enough memory for an extra path entry */
-   if(!PATH_ReserveEntries(pPath, pPath->numEntriesUsed+1))
-      return FALSE;
-
-   /* Store information in path entry */
-   pPath->pPoints[pPath->numEntriesUsed]=*pPoint;
-   pPath->pFlags[pPath->numEntriesUsed]=flags;
-
-   /* If this is PT_CLOSEFIGURE, we have to start a new stroke next time */
-   if((flags & PT_CLOSEFIGURE) == PT_CLOSEFIGURE)
-      pPath->newStroke=TRUE;
-
-   /* Increment entry count */
-   pPath->numEntriesUsed++;
-
-   return TRUE;
-}
-
-/* PATH_ReserveEntries
- *
- * Ensures that at least "numEntries" entries (for points and flags) have
- * been allocated; allocates larger arrays and copies the existing entries
- * to those arrays, if necessary. Returns TRUE if successful, else FALSE.
- */
-static BOOL PATH_ReserveEntries(GdiPath *pPath, INT numEntries)
-{
-   INT   numEntriesToAllocate;
-   POINT *pPointsNew;
-   BYTE    *pFlagsNew;
-
-   assert(pPath!=NULL);
-   assert(numEntries>=0);
-
-   /* Do we have to allocate more memory? */
-   if(numEntries > pPath->numEntriesAllocated)
-   {
-      /* Find number of entries to allocate. We let the size of the array
-       * grow exponentially, since that will guarantee linear time
-       * complexity. */
-      if(pPath->numEntriesAllocated)
-      {
-	 numEntriesToAllocate=pPath->numEntriesAllocated;
-	 while(numEntriesToAllocate<numEntries)
-	    numEntriesToAllocate=numEntriesToAllocate*GROW_FACTOR_NUMER/
-	       GROW_FACTOR_DENOM;
-      }
-      else
-         numEntriesToAllocate=numEntries;
-
-      /* Allocate new arrays */
-      pPointsNew=HeapAlloc( GetProcessHeap(), 0, numEntriesToAllocate * sizeof(POINT) );
-      if(!pPointsNew)
-         return FALSE;
-      pFlagsNew=HeapAlloc( GetProcessHeap(), 0, numEntriesToAllocate * sizeof(BYTE) );
-      if(!pFlagsNew)
-      {
-         HeapFree( GetProcessHeap(), 0, pPointsNew );
-	 return FALSE;
-      }
-
-      /* Copy old arrays to new arrays and discard old arrays */
-      if(pPath->pPoints)
-      {
-         assert(pPath->pFlags);
-
-	 memcpy(pPointsNew, pPath->pPoints,
-	     sizeof(POINT)*pPath->numEntriesUsed);
-	 memcpy(pFlagsNew, pPath->pFlags,
-	     sizeof(BYTE)*pPath->numEntriesUsed);
-
-	 HeapFree( GetProcessHeap(), 0, pPath->pPoints );
-	 HeapFree( GetProcessHeap(), 0, pPath->pFlags );
-      }
-      pPath->pPoints=pPointsNew;
-      pPath->pFlags=pFlagsNew;
-      pPath->numEntriesAllocated=numEntriesToAllocate;
-   }
-
-   return TRUE;
-}
-
-/* PATH_DoArcPart
- *
- * Creates a Bezier spline that corresponds to part of an arc and appends the
- * corresponding points to the path. The start and end angles are passed in
- * "angleStart" and "angleEnd"; these angles should span a quarter circle
- * at most. If "startEntryType" is non-zero, an entry of that type for the first
- * control point is added to the path; otherwise, it is assumed that the current
- * position is equal to the first control point.
- */
-static BOOL PATH_DoArcPart(GdiPath *pPath, FLOAT_POINT corners[],
-   double angleStart, double angleEnd, BYTE startEntryType)
-{
-   double  halfAngle, a;
-   double  xNorm[4], yNorm[4];
-   POINT point;
-   int     i;
-
-   assert(fabs(angleEnd-angleStart)<=M_PI_2);
-
-   /* FIXME: Is there an easier way of computing this? */
-
-   /* Compute control points */
-   halfAngle=(angleEnd-angleStart)/2.0;
-   if(fabs(halfAngle)>1e-8)
-   {
-      a=4.0/3.0*(1-cos(halfAngle))/sin(halfAngle);
-      xNorm[0]=cos(angleStart);
-      yNorm[0]=sin(angleStart);
-      xNorm[1]=xNorm[0] - a*yNorm[0];
-      yNorm[1]=yNorm[0] + a*xNorm[0];
-      xNorm[3]=cos(angleEnd);
-      yNorm[3]=sin(angleEnd);
-      xNorm[2]=xNorm[3] + a*yNorm[3];
-      yNorm[2]=yNorm[3] - a*xNorm[3];
-   }
-   else
-      for(i=0; i<4; i++)
-      {
-	 xNorm[i]=cos(angleStart);
-	 yNorm[i]=sin(angleStart);
-      }
-
-   /* Add starting point to path if desired */
-   if(startEntryType)
-   {
-      PATH_ScaleNormalizedPoint(corners, xNorm[0], yNorm[0], &point);
-      if(!PATH_AddEntry(pPath, &point, startEntryType))
-         return FALSE;
-   }
-
-   /* Add remaining control points */
-   for(i=1; i<4; i++)
-   {
-      PATH_ScaleNormalizedPoint(corners, xNorm[i], yNorm[i], &point);
-      if(!PATH_AddEntry(pPath, &point, PT_BEZIERTO))
-         return FALSE;
-   }
-
-   return TRUE;
-}
-
-/* PATH_ScaleNormalizedPoint
- *
- * Scales a normalized point (x, y) with respect to the box whose corners are
- * passed in "corners". The point is stored in "*pPoint". The normalized
- * coordinates (-1.0, -1.0) correspond to corners[0], the coordinates
- * (1.0, 1.0) correspond to corners[1].
- */
-static void PATH_ScaleNormalizedPoint(FLOAT_POINT corners[], double x,
-   double y, POINT *pPoint)
-{
-   pPoint->x=GDI_ROUND( (double)corners[0].x +
-      (double)(corners[1].x-corners[0].x)*0.5*(x+1.0) );
-   pPoint->y=GDI_ROUND( (double)corners[0].y +
-      (double)(corners[1].y-corners[0].y)*0.5*(y+1.0) );
-}
-
-/* PATH_NormalizePoint
- *
- * Normalizes a point with respect to the box whose corners are passed in
- * "corners". The normalized coordinates are stored in "*pX" and "*pY".
- */
-static void PATH_NormalizePoint(FLOAT_POINT corners[],
-   const FLOAT_POINT *pPoint,
-   double *pX, double *pY)
-{
-   *pX=(double)(pPoint->x-corners[0].x)/(double)(corners[1].x-corners[0].x) *
-      2.0 - 1.0;
-   *pY=(double)(pPoint->y-corners[0].y)/(double)(corners[1].y-corners[0].y) *
-      2.0 - 1.0;
 }
 
 
