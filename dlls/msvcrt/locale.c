@@ -842,7 +842,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
         }
     }
 
-    _setmbcp_l(loc->locinfo->lc_id[MSVCRT_LC_CTYPE].wCodePage, loc->mbcinfo);
+    _setmbcp_l(loc->locinfo->lc_id[MSVCRT_LC_CTYPE].wCodePage, lcid[MSVCRT_LC_CTYPE], loc->mbcinfo);
 
     if(lcid[MSVCRT_LC_MONETARY] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_MONETARY)) {
         if(update_threadlocinfo_category(lcid[MSVCRT_LC_MONETARY], loc, MSVCRT_LC_MONETARY)) {

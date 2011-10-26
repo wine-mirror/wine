@@ -184,7 +184,7 @@ int* CDECL ___mb_cur_max_l_func(MSVCRT__locale_t locale)
 /*********************************************************************
  * INTERNAL: _setmbcp_l
  */
-int _setmbcp_l(int cp, MSVCRT_pthreadmbcinfo mbcinfo)
+int _setmbcp_l(int cp, LCID lcid, MSVCRT_pthreadmbcinfo mbcinfo)
 {
   const char format[] = ".%d";
 
@@ -222,8 +222,13 @@ int _setmbcp_l(int cp, MSVCRT_pthreadmbcinfo mbcinfo)
       break;
   }
 
-  sprintf(bufA, format, newcp);
-  mbcinfo->mblcid = MSVCRT_locale_to_LCID(bufA);
+  if(lcid == -1) {
+    sprintf(bufA, format, newcp);
+    mbcinfo->mblcid = MSVCRT_locale_to_LCID(bufA);
+  } else {
+    mbcinfo->mblcid = lcid;
+  }
+
   if(mbcinfo->mblcid == -1)
   {
     WARN("Can't assign LCID to codepage (%d)\n", mbcinfo->mblcid);
@@ -347,7 +352,7 @@ int _setmbcp_l(int cp, MSVCRT_pthreadmbcinfo mbcinfo)
  */
 int CDECL _setmbcp(int cp)
 {
-    return _setmbcp_l(cp, NULL);
+    return _setmbcp_l(cp, -1, NULL);
 }
 
 /*********************************************************************

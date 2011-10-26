@@ -888,7 +888,7 @@ MSVCRT_pthreadmbcinfo get_mbcinfo(void);
 void __cdecl MSVCRT__free_locale(MSVCRT__locale_t);
 void free_locinfo(MSVCRT_pthreadlocinfo);
 void free_mbcinfo(MSVCRT_pthreadmbcinfo);
-int _setmbcp_l(int, MSVCRT_pthreadmbcinfo);
+int _setmbcp_l(int, LCID, MSVCRT_pthreadmbcinfo);
 
 #ifndef __WINE_MSVCRT_TEST
 int            __cdecl MSVCRT__write(int,const void*,unsigned int);
