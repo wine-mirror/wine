@@ -2012,7 +2012,6 @@ struct wined3d_surface
     const struct wined3d_surface_ops *surface_ops;
     struct wined3d_subresource_container container;
     struct wined3d_palette *palette; /* D3D7 style palette handling */
-    PALETTEENTRY              *palette9; /* D3D8/9 style palette handling */
     DWORD draw_binding;
 
     DWORD flags;

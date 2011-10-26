@@ -117,8 +117,6 @@ static void surface_cleanup(struct wined3d_surface *surface)
         overlay->overlay_dest = NULL;
     }
 
-    HeapFree(GetProcessHeap(), 0, surface->palette9);
-
     resource_cleanup(&surface->resource);
 }
 
