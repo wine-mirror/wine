@@ -884,25 +884,15 @@ BOOL PATH_RestorePath( DC *dst, DC *src )
     return ret;
 }
 
-/* PATH_MoveTo
- *
- * Should be called when a MoveTo is performed on a DC that has an
- * open path. This starts a new stroke. Returns TRUE if successful, else
- * FALSE.
+
+/*************************************************************
+ *           pathdrv_MoveTo
  */
-BOOL PATH_MoveTo(DC *dc)
+static BOOL pathdrv_MoveTo( PHYSDEV dev, INT x, INT y )
 {
-   GdiPath *pPath = &dc->path;
-
-   /* Check that path is open */
-   if(pPath->state!=PATH_Open)
-      /* FIXME: Do we have to call SetLastError? */
-      return FALSE;
-
-   /* Start a new stroke */
-   pPath->newStroke=TRUE;
-
-   return TRUE;
+    struct path_physdev *physdev = get_path_physdev( dev );
+    physdev->path->newStroke = TRUE;
+    return TRUE;
 }
 
 /* PATH_LineTo
@@ -2372,7 +2362,7 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pInvertRgn */
     NULL,                               /* pLineTo */
     NULL,                               /* pModifyWorldTransform */
-    NULL,                               /* pMoveTo */
+    pathdrv_MoveTo,                     /* pMoveTo */
     NULL,                               /* pOffsetClipRgn */
     NULL,                               /* pOffsetViewportOrg */
     NULL,                               /* pOffsetWindowOrg */

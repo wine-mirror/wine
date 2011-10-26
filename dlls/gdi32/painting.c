@@ -258,7 +258,8 @@ BOOL WINAPI LineTo( HDC hdc, INT x, INT y )
  */
 BOOL WINAPI MoveToEx( HDC hdc, INT x, INT y, LPPOINT pt )
 {
-    BOOL ret = TRUE;
+    BOOL ret;
+    PHYSDEV physdev;
     DC * dc = get_dc_ptr( hdc );
 
     if(!dc) return FALSE;
@@ -270,12 +271,8 @@ BOOL WINAPI MoveToEx( HDC hdc, INT x, INT y, LPPOINT pt )
     dc->CursPosX = x;
     dc->CursPosY = y;
 
-    if(PATH_IsPathOpen(dc->path)) ret = PATH_MoveTo(dc);
-    else
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pMoveTo );
-        ret = physdev->funcs->pMoveTo( physdev, x, y );
-    }
+    physdev = GET_DC_PHYSDEV( dc, pMoveTo );
+    ret = physdev->funcs->pMoveTo( physdev, x, y );
     release_dc_ptr( dc );
     return ret;
 }

@@ -325,7 +325,6 @@ extern void PATH_DestroyGdiPath(GdiPath *pPath) DECLSPEC_HIDDEN;
 extern BOOL PATH_SavePath( DC *dst, DC *src ) DECLSPEC_HIDDEN;
 extern BOOL PATH_RestorePath( DC *dst, DC *src ) DECLSPEC_HIDDEN;
 
-extern BOOL PATH_MoveTo(DC *dc) DECLSPEC_HIDDEN;
 extern BOOL PATH_LineTo(DC *dc, INT x, INT y) DECLSPEC_HIDDEN;
 extern BOOL PATH_Rectangle(DC *dc, INT x1, INT y1, INT x2, INT y2) DECLSPEC_HIDDEN;
 extern BOOL PATH_ExtTextOut(DC *dc, INT x, INT y, UINT flags, const RECT *lprc,
