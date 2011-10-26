@@ -1171,7 +1171,7 @@ static void wined3d_surface_depth_blt_fbo(const struct wined3d_device *device, s
 
 /* Blit between surface locations. Onscreen on different swapchains is not supported.
  * Depth / stencil is not supported. */
-static void surface_blt_fbo(struct wined3d_device *device, const WINED3DTEXTUREFILTERTYPE filter,
+static void surface_blt_fbo(const struct wined3d_device *device, const WINED3DTEXTUREFILTERTYPE filter,
         struct wined3d_surface *src_surface, DWORD src_location, const RECT *src_rect_in,
         struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect_in)
 {
