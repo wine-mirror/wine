@@ -232,18 +232,15 @@ BOOL nulldrv_PolylineTo( PHYSDEV dev, const POINT *points, INT count )
 BOOL WINAPI LineTo( HDC hdc, INT x, INT y )
 {
     DC * dc = get_dc_ptr( hdc );
+    PHYSDEV physdev;
     BOOL ret;
 
     if(!dc) return FALSE;
 
     update_dc( dc );
-    if(PATH_IsPathOpen(dc->path))
-        ret = PATH_LineTo(dc, x, y);
-    else
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pLineTo );
-        ret = physdev->funcs->pLineTo( physdev, x, y );
-    }
+    physdev = GET_DC_PHYSDEV( dc, pLineTo );
+    ret = physdev->funcs->pLineTo( physdev, x, y );
+
     if(ret) {
         dc->CursPosX = x;
         dc->CursPosY = y;

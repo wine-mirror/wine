@@ -895,42 +895,32 @@ static BOOL pathdrv_MoveTo( PHYSDEV dev, INT x, INT y )
     return TRUE;
 }
 
-/* PATH_LineTo
- *
- * Should be called when a LineTo is performed on a DC that has an
- * open path. This adds a PT_LINETO entry to the path (and possibly
- * a PT_MOVETO entry, if this is the first LineTo in a stroke).
- * Returns TRUE if successful, else FALSE.
+
+/*************************************************************
+ *           pathdrv_LineTo
  */
-BOOL PATH_LineTo(DC *dc, INT x, INT y)
+static BOOL pathdrv_LineTo( PHYSDEV dev, INT x, INT y )
 {
-   GdiPath *pPath = &dc->path;
-   POINT point, pointCurPos;
+    struct path_physdev *physdev = get_path_physdev( dev );
+    POINT point, pointCurPos;
 
-   /* Check that path is open */
-   if(pPath->state!=PATH_Open)
-      return FALSE;
+    /* Convert point to device coordinates */
+    point.x = x;
+    point.y = y;
+    LPtoDP( dev->hdc, &point, 1 );
 
-   /* Convert point to device coordinates */
-   point.x=x;
-   point.y=y;
-   if(!LPtoDP(dc->hSelf, &point, 1))
-      return FALSE;
+    /* Add a PT_MOVETO if necessary */
+    if(physdev->path->newStroke)
+    {
+        physdev->path->newStroke = FALSE;
+        GetCurrentPositionEx( dev->hdc, &pointCurPos );
+        LPtoDP( dev->hdc, &pointCurPos, 1 );
+        if(!PATH_AddEntry(physdev->path, &pointCurPos, PT_MOVETO))
+            return FALSE;
+    }
 
-   /* Add a PT_MOVETO if necessary */
-   if(pPath->newStroke)
-   {
-      pPath->newStroke=FALSE;
-      pointCurPos.x = dc->CursPosX;
-      pointCurPos.y = dc->CursPosY;
-      if(!LPtoDP(dc->hSelf, &pointCurPos, 1))
-         return FALSE;
-      if(!PATH_AddEntry(pPath, &pointCurPos, PT_MOVETO))
-         return FALSE;
-   }
-
-   /* Add a PT_LINETO entry */
-   return PATH_AddEntry(pPath, &point, PT_LINETO);
+    /* Add a PT_LINETO entry */
+    return PATH_AddEntry(physdev->path, &point, PT_LINETO);
 }
 
 /* PATH_RoundRect
@@ -2360,7 +2350,7 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pGetTextMetrics */
     NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
-    NULL,                               /* pLineTo */
+    pathdrv_LineTo,                     /* pLineTo */
     NULL,                               /* pModifyWorldTransform */
     pathdrv_MoveTo,                     /* pMoveTo */
     NULL,                               /* pOffsetClipRgn */
