@@ -3115,9 +3115,19 @@ static void init_font_list(void)
                 ptr = valueA;
                 while (ptr)
                 {
+                    const char* home;
                     LPSTR next = strchr( ptr, ':' );
                     if (next) *next++ = 0;
-                    ReadFontDir( ptr, TRUE );
+                    if (ptr[0] == '~' && ptr[1] == '/' && (home = getenv( "HOME" )) &&
+                        (unixname = HeapAlloc( GetProcessHeap(), 0, strlen(ptr) + strlen(home) )))
+                    {
+                        strcpy( unixname, home );
+                        strcat( unixname, ptr + 1 );
+                        ReadFontDir( unixname, TRUE );
+                        HeapFree( GetProcessHeap(), 0, unixname );
+                    }
+                    else
+                        ReadFontDir( ptr, TRUE );
                     ptr = next;
                 }
                 HeapFree( GetProcessHeap(), 0, valueA );
