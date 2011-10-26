@@ -39,19 +39,19 @@
 /*****************************************************************************
  * Behavior Flags for IDirect3D8::CreateDevice
  */
-#define D3DCREATE_FPU_PRESERVE                  0x00000002L
-#define D3DCREATE_MULTITHREADED                 0x00000004L
-#define D3DCREATE_PUREDEVICE                    0x00000010L
-#define D3DCREATE_SOFTWARE_VERTEXPROCESSING     0x00000020L
-#define D3DCREATE_HARDWARE_VERTEXPROCESSING     0x00000040L
-#define D3DCREATE_MIXED_VERTEXPROCESSING        0x00000080L
-#define D3DCREATE_DISABLE_DRIVER_MANAGEMENT     0x00000100L
-#define D3DCREATE_ADAPTERGROUP_DEVICE           0x00000200L
+#define D3DCREATE_FPU_PRESERVE                  __MSABI_LONG(0x00000002)
+#define D3DCREATE_MULTITHREADED                 __MSABI_LONG(0x00000004)
+#define D3DCREATE_PUREDEVICE                    __MSABI_LONG(0x00000010)
+#define D3DCREATE_SOFTWARE_VERTEXPROCESSING     __MSABI_LONG(0x00000020)
+#define D3DCREATE_HARDWARE_VERTEXPROCESSING     __MSABI_LONG(0x00000040)
+#define D3DCREATE_MIXED_VERTEXPROCESSING        __MSABI_LONG(0x00000080)
+#define D3DCREATE_DISABLE_DRIVER_MANAGEMENT     __MSABI_LONG(0x00000100)
+#define D3DCREATE_ADAPTERGROUP_DEVICE           __MSABI_LONG(0x00000200)
 
 /*****************************************************************************
  * Flags for SetPrivateData
  */
-#define D3DSPD_IUNKNOWN                         0x00000001L
+#define D3DSPD_IUNKNOWN                         __MSABI_LONG(0x00000001)
 
 
 /*****************************************************************************
@@ -59,10 +59,10 @@
  */
 #define D3D_SDK_VERSION                         32
 #define D3DADAPTER_DEFAULT                      0
-#define D3DENUM_NO_WHQL_LEVEL                   0x00000002L
-#define D3DPRESENT_BACK_BUFFERS_MAX             3L
-#define D3DSGR_NO_CALIBRATION                   0x00000000L
-#define D3DSGR_CALIBRATE                        0x00000001L
+#define D3DENUM_NO_WHQL_LEVEL                   __MSABI_LONG(0x00000002)
+#define D3DPRESENT_BACK_BUFFERS_MAX             __MSABI_LONG(3)
+#define D3DSGR_NO_CALIBRATION                   __MSABI_LONG(0x00000000)
+#define D3DSGR_CALIBRATE                        __MSABI_LONG(0x00000001)
 
 #define _FACD3D  0x876
 #define MAKE_D3DHRESULT( code )                 MAKE_HRESULT( 1, _FACD3D, code )
