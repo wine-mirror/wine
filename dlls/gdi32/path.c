@@ -683,7 +683,7 @@ HRGN WINAPI PathToRegion(HDC hdc)
    return hrgnRval;
 }
 
-static BOOL PATH_FillPath(DC *dc, GdiPath *pPath)
+static BOOL PATH_FillPath( HDC hdc, GdiPath *pPath )
 {
    INT   mapMode, graphicsMode;
    SIZE  ptViewportExt, ptWindowExt;
@@ -692,7 +692,7 @@ static BOOL PATH_FillPath(DC *dc, GdiPath *pPath)
    HRGN  hrgn;
 
    /* Construct a region from the path and fill it */
-   if(PATH_PathToRegion(pPath, dc->polyFillMode, &hrgn))
+   if(PATH_PathToRegion(pPath, GetPolyFillMode(hdc), &hrgn))
    {
       /* Since PaintRgn interprets the region as being in logical coordinates
        * but the points we store for the path are already in device
@@ -703,11 +703,11 @@ static BOOL PATH_FillPath(DC *dc, GdiPath *pPath)
        */
 
       /* Save the information about the old mapping mode */
-      mapMode=GetMapMode(dc->hSelf);
-      GetViewportExtEx(dc->hSelf, &ptViewportExt);
-      GetViewportOrgEx(dc->hSelf, &ptViewportOrg);
-      GetWindowExtEx(dc->hSelf, &ptWindowExt);
-      GetWindowOrgEx(dc->hSelf, &ptWindowOrg);
+      mapMode=GetMapMode(hdc);
+      GetViewportExtEx(hdc, &ptViewportExt);
+      GetViewportOrgEx(hdc, &ptViewportOrg);
+      GetWindowExtEx(hdc, &ptWindowExt);
+      GetWindowOrgEx(hdc, &ptWindowOrg);
 
       /* Save world transform
        * NB: The Windows documentation on world transforms would lead one to
@@ -715,32 +715,32 @@ static BOOL PATH_FillPath(DC *dc, GdiPath *pPath)
        * tests show that resetting the graphics mode to GM_COMPATIBLE does
        * not reset the world transform.
        */
-      GetWorldTransform(dc->hSelf, &xform);
+      GetWorldTransform(hdc, &xform);
 
       /* Set MM_TEXT */
-      SetMapMode(dc->hSelf, MM_TEXT);
-      SetViewportOrgEx(dc->hSelf, 0, 0, NULL);
-      SetWindowOrgEx(dc->hSelf, 0, 0, NULL);
-      graphicsMode=GetGraphicsMode(dc->hSelf);
-      SetGraphicsMode(dc->hSelf, GM_ADVANCED);
-      ModifyWorldTransform(dc->hSelf, &xform, MWT_IDENTITY);
-      SetGraphicsMode(dc->hSelf, graphicsMode);
+      SetMapMode(hdc, MM_TEXT);
+      SetViewportOrgEx(hdc, 0, 0, NULL);
+      SetWindowOrgEx(hdc, 0, 0, NULL);
+      graphicsMode=GetGraphicsMode(hdc);
+      SetGraphicsMode(hdc, GM_ADVANCED);
+      ModifyWorldTransform(hdc, &xform, MWT_IDENTITY);
+      SetGraphicsMode(hdc, graphicsMode);
 
       /* Paint the region */
-      PaintRgn(dc->hSelf, hrgn);
+      PaintRgn(hdc, hrgn);
       DeleteObject(hrgn);
       /* Restore the old mapping mode */
-      SetMapMode(dc->hSelf, mapMode);
-      SetViewportExtEx(dc->hSelf, ptViewportExt.cx, ptViewportExt.cy, NULL);
-      SetViewportOrgEx(dc->hSelf, ptViewportOrg.x, ptViewportOrg.y, NULL);
-      SetWindowExtEx(dc->hSelf, ptWindowExt.cx, ptWindowExt.cy, NULL);
-      SetWindowOrgEx(dc->hSelf, ptWindowOrg.x, ptWindowOrg.y, NULL);
+      SetMapMode(hdc, mapMode);
+      SetViewportExtEx(hdc, ptViewportExt.cx, ptViewportExt.cy, NULL);
+      SetViewportOrgEx(hdc, ptViewportOrg.x, ptViewportOrg.y, NULL);
+      SetWindowExtEx(hdc, ptWindowExt.cx, ptWindowExt.cy, NULL);
+      SetWindowOrgEx(hdc, ptWindowOrg.x, ptWindowOrg.y, NULL);
 
       /* Go to GM_ADVANCED temporarily to restore the world transform */
-      graphicsMode=GetGraphicsMode(dc->hSelf);
-      SetGraphicsMode(dc->hSelf, GM_ADVANCED);
-      SetWorldTransform(dc->hSelf, &xform);
-      SetGraphicsMode(dc->hSelf, graphicsMode);
+      graphicsMode=GetGraphicsMode(hdc);
+      SetGraphicsMode(hdc, GM_ADVANCED);
+      SetWorldTransform(hdc, &xform);
+      SetGraphicsMode(hdc, graphicsMode);
       return TRUE;
    }
    return FALSE;
@@ -1630,7 +1630,7 @@ BOOL WINAPI FlattenPath(HDC hdc)
 }
 
 
-static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
+static BOOL PATH_StrokePath( HDC hdc, GdiPath *pPath )
 {
     INT i, nLinePts, nAlloc;
     POINT *pLinePts;
@@ -1641,21 +1641,21 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
     BOOL ret = TRUE;
 
     /* Save the mapping mode info */
-    mapMode=GetMapMode(dc->hSelf);
-    GetViewportExtEx(dc->hSelf, &szViewportExt);
-    GetViewportOrgEx(dc->hSelf, &ptViewportOrg);
-    GetWindowExtEx(dc->hSelf, &szWindowExt);
-    GetWindowOrgEx(dc->hSelf, &ptWindowOrg);
-    GetWorldTransform(dc->hSelf, &xform);
+    mapMode=GetMapMode(hdc);
+    GetViewportExtEx(hdc, &szViewportExt);
+    GetViewportOrgEx(hdc, &ptViewportOrg);
+    GetWindowExtEx(hdc, &szWindowExt);
+    GetWindowOrgEx(hdc, &ptWindowOrg);
+    GetWorldTransform(hdc, &xform);
 
     /* Set MM_TEXT */
-    SetMapMode(dc->hSelf, MM_TEXT);
-    SetViewportOrgEx(dc->hSelf, 0, 0, NULL);
-    SetWindowOrgEx(dc->hSelf, 0, 0, NULL);
-    graphicsMode=GetGraphicsMode(dc->hSelf);
-    SetGraphicsMode(dc->hSelf, GM_ADVANCED);
-    ModifyWorldTransform(dc->hSelf, &xform, MWT_IDENTITY);
-    SetGraphicsMode(dc->hSelf, graphicsMode);
+    SetMapMode(hdc, MM_TEXT);
+    SetViewportOrgEx(hdc, 0, 0, NULL);
+    SetWindowOrgEx(hdc, 0, 0, NULL);
+    graphicsMode=GetGraphicsMode(hdc);
+    SetGraphicsMode(hdc, GM_ADVANCED);
+    ModifyWorldTransform(hdc, &xform, MWT_IDENTITY);
+    SetGraphicsMode(hdc, graphicsMode);
 
     /* Allocate enough memory for the worst case without beziers (one PT_MOVETO
      * and the rest PT_LINETO with PT_CLOSEFIGURE at the end) plus some buffer 
@@ -1678,7 +1678,7 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
             TRACE("Got PT_MOVETO (%d, %d)\n",
 		  pPath->pPoints[i].x, pPath->pPoints[i].y);
 	    if(nLinePts >= 2)
-	        Polyline(dc->hSelf, pLinePts, nLinePts);
+	        Polyline(hdc, pLinePts, nLinePts);
 	    nLinePts = 0;
 	    pLinePts[nLinePts++] = pPath->pPoints[i];
 	    break;
@@ -1724,23 +1724,23 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
 	    pLinePts[nLinePts++] = pLinePts[0];
     }
     if(nLinePts >= 2)
-        Polyline(dc->hSelf, pLinePts, nLinePts);
+        Polyline(hdc, pLinePts, nLinePts);
 
  end:
     HeapFree(GetProcessHeap(), 0, pLinePts);
 
     /* Restore the old mapping mode */
-    SetMapMode(dc->hSelf, mapMode);
-    SetWindowExtEx(dc->hSelf, szWindowExt.cx, szWindowExt.cy, NULL);
-    SetWindowOrgEx(dc->hSelf, ptWindowOrg.x, ptWindowOrg.y, NULL);
-    SetViewportExtEx(dc->hSelf, szViewportExt.cx, szViewportExt.cy, NULL);
-    SetViewportOrgEx(dc->hSelf, ptViewportOrg.x, ptViewportOrg.y, NULL);
+    SetMapMode(hdc, mapMode);
+    SetWindowExtEx(hdc, szWindowExt.cx, szWindowExt.cy, NULL);
+    SetWindowOrgEx(hdc, ptWindowOrg.x, ptWindowOrg.y, NULL);
+    SetViewportExtEx(hdc, szViewportExt.cx, szViewportExt.cy, NULL);
+    SetViewportOrgEx(hdc, ptViewportOrg.x, ptViewportOrg.y, NULL);
 
     /* Go to GM_ADVANCED temporarily to restore the world transform */
-    graphicsMode=GetGraphicsMode(dc->hSelf);
-    SetGraphicsMode(dc->hSelf, GM_ADVANCED);
-    SetWorldTransform(dc->hSelf, &xform);
-    SetGraphicsMode(dc->hSelf, graphicsMode);
+    graphicsMode=GetGraphicsMode(hdc);
+    SetGraphicsMode(hdc, GM_ADVANCED);
+    SetWorldTransform(hdc, &xform);
+    SetGraphicsMode(hdc, graphicsMode);
 
     /* If we've moved the current point then get its new position
        which will be in device (MM_TEXT) co-ords, convert it to
@@ -1750,9 +1750,9 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
     */
     if(i > 0) {
         POINT pt;
-        GetCurrentPositionEx(dc->hSelf, &pt);
-        DPtoLP(dc->hSelf, &pt, 1);
-        MoveToEx(dc->hSelf, pt.x, pt.y, NULL);
+        GetCurrentPositionEx(hdc, &pt);
+        DPtoLP(hdc, &pt, 1);
+        MoveToEx(hdc, pt.x, pt.y, NULL);
     }
 
     return ret;
@@ -2207,7 +2207,7 @@ BOOL nulldrv_FillPath( PHYSDEV dev )
         SetLastError( ERROR_CAN_NOT_COMPLETE );
         return FALSE;
     }
-    if (!PATH_FillPath( dc, &dc->path )) return FALSE;
+    if (!PATH_FillPath( dev->hdc, &dc->path )) return FALSE;
     /* FIXME: Should the path be emptied even if conversion failed? */
     PATH_EmptyPath( &dc->path );
     return TRUE;
@@ -2222,8 +2222,8 @@ BOOL nulldrv_StrokeAndFillPath( PHYSDEV dev )
         SetLastError( ERROR_CAN_NOT_COMPLETE );
         return FALSE;
     }
-    if (!PATH_FillPath( dc, &dc->path )) return FALSE;
-    if (!PATH_StrokePath( dc, &dc->path )) return FALSE;
+    if (!PATH_FillPath( dev->hdc, &dc->path )) return FALSE;
+    if (!PATH_StrokePath( dev->hdc, &dc->path )) return FALSE;
     PATH_EmptyPath( &dc->path );
     return TRUE;
 }
@@ -2237,7 +2237,7 @@ BOOL nulldrv_StrokePath( PHYSDEV dev )
         SetLastError( ERROR_CAN_NOT_COMPLETE );
         return FALSE;
     }
-    if (!PATH_StrokePath( dc, &dc->path )) return FALSE;
+    if (!PATH_StrokePath( dev->hdc, &dc->path )) return FALSE;
     PATH_EmptyPath( &dc->path );
     return TRUE;
 }
