@@ -2157,6 +2157,7 @@ static void test_commandline(void)
     LPWSTR *args = (LPWSTR*)0xdeadcafe, pbuf;
     INT numargs = -1;
     size_t buflen;
+    DWORD lerror;
 
     wsprintfW(cmdline,fmt1,one,two,three,four);
     args=CommandLineToArgvW(cmdline,&numargs);
@@ -2170,6 +2171,15 @@ static void test_commandline(void)
     ok(lstrcmpW(args[1],two)==0,"arg1 is not as expected\n");
     ok(lstrcmpW(args[2],three)==0,"arg2 is not as expected\n");
     ok(lstrcmpW(args[3],four)==0,"arg3 is not as expected\n");
+
+    SetLastError(0xdeadbeef);
+    args=CommandLineToArgvW(cmdline,NULL);
+    lerror=GetLastError();
+    ok(args == NULL && lerror == ERROR_INVALID_PARAMETER, "expected NULL with ERROR_INVALID_PARAMETER got %p with %d\n",args,lerror);
+    SetLastError(0xdeadbeef);
+    args=CommandLineToArgvW(NULL,NULL);
+    lerror=GetLastError();
+    ok(args == NULL && lerror == ERROR_INVALID_PARAMETER, "expected NULL with ERROR_INVALID_PARAMETER got %p with %d\n",args,lerror);
 
     wsprintfW(cmdline,fmt2,one,two,three,four);
     args=CommandLineToArgvW(cmdline,&numargs);

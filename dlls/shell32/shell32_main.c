@@ -92,6 +92,12 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
     LPWSTR cmdline;
     int in_quotes,bcount;
 
+    if(!numargs)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
     if (*lpCmdline==0)
     {
         /* Return the path to the executable */
@@ -113,8 +119,7 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
             LocalFree( argv );
         }
         argv[0]=(LPWSTR)(argv+1);
-        if (numargs)
-            *numargs=1;
+        *numargs=1;
 
         return argv;
     }
@@ -228,8 +233,7 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
         *d='\0';
         argv[argc++]=arg;
     }
-    if (numargs)
-        *numargs=argc;
+    *numargs=argc;
 
     return argv;
 }
