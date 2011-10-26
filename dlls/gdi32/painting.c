@@ -728,13 +728,9 @@ BOOL WINAPI Polyline( HDC hdc, const POINT* pt, INT count )
 
     if (dc)
     {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPolyline );
         update_dc( dc );
-        if (PATH_IsPathOpen(dc->path)) ret = PATH_Polyline(dc, pt, count);
-        else
-        {
-            PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPolyline );
-            ret = physdev->funcs->pPolyline( physdev, pt, count );
-        }
+        ret = physdev->funcs->pPolyline( physdev, pt, count );
         release_dc_ptr( dc );
     }
     return ret;
@@ -746,17 +742,15 @@ BOOL WINAPI Polyline( HDC hdc, const POINT* pt, INT count )
 BOOL WINAPI PolylineTo( HDC hdc, const POINT* pt, DWORD cCount )
 {
     DC * dc = get_dc_ptr( hdc );
-    BOOL ret = FALSE;
+    PHYSDEV physdev;
+    BOOL ret;
 
     if(!dc) return FALSE;
 
     update_dc( dc );
-    if(PATH_IsPathOpen(dc->path)) ret = PATH_PolylineTo(dc, pt, cCount);
-    else
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPolylineTo );
-        ret = physdev->funcs->pPolylineTo( physdev, pt, cCount );
-    }
+    physdev = GET_DC_PHYSDEV( dc, pPolylineTo );
+    ret = physdev->funcs->pPolylineTo( physdev, pt, cCount );
+
     if (ret && cCount)
     {
         dc->CursPosX = pt[cCount-1].x;
@@ -816,13 +810,9 @@ BOOL WINAPI PolyPolyline( HDC hdc, const POINT* pt, const DWORD* counts,
 
     if (dc)
     {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPolyPolyline );
         update_dc( dc );
-        if (PATH_IsPathOpen(dc->path)) ret = PATH_PolyPolyline(dc, pt, counts, polylines);
-        else
-        {
-            PHYSDEV physdev = GET_DC_PHYSDEV( dc, pPolyPolyline );
-            ret = physdev->funcs->pPolyPolyline( physdev, pt, counts, polylines );
-        }
+        ret = physdev->funcs->pPolyPolyline( physdev, pt, counts, polylines );
         release_dc_ptr( dc );
     }
     return ret;

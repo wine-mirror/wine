@@ -1321,55 +1321,43 @@ static BOOL pathdrv_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *types, 
     return TRUE;
 }
 
-BOOL PATH_Polyline(DC *dc, const POINT *pts, DWORD cbPoints)
+
+/*************************************************************
+ *           pathdrv_Polyline
+ */
+static BOOL pathdrv_Polyline( PHYSDEV dev, const POINT *pts, INT cbPoints )
 {
-   GdiPath     *pPath = &dc->path;
-   POINT       pt;
-   UINT        i;
+    struct path_physdev *physdev = get_path_physdev( dev );
+    POINT pt;
+    INT i;
 
-   /* Check that path is open */
-   if(pPath->state!=PATH_Open)
-      return FALSE;
-
-   for(i = 0; i < cbPoints; i++) {
-       pt = pts[i];
-       if(!LPtoDP(dc->hSelf, &pt, 1))
-	   return FALSE;
-       PATH_AddEntry(pPath, &pt, (i == 0) ? PT_MOVETO : PT_LINETO);
-   }
-   return TRUE;
+    for(i = 0; i < cbPoints; i++) {
+        pt = pts[i];
+        LPtoDP( dev->hdc, &pt, 1 );
+        PATH_AddEntry(physdev->path, &pt, (i == 0) ? PT_MOVETO : PT_LINETO);
+    }
+    return TRUE;
 }
 
-BOOL PATH_PolylineTo(DC *dc, const POINT *pts, DWORD cbPoints)
+
+/*************************************************************
+ *           pathdrv_PolylineTo
+ */
+static BOOL pathdrv_PolylineTo( PHYSDEV dev, const POINT *pts, INT cbPoints )
 {
-   GdiPath     *pPath = &dc->path;
-   POINT       pt;
-   UINT        i;
+    struct path_physdev *physdev = get_path_physdev( dev );
+    POINT pt;
+    INT i;
 
-   /* Check that path is open */
-   if(pPath->state!=PATH_Open)
-      return FALSE;
+    if (!start_new_stroke( physdev )) return FALSE;
 
-   /* Add a PT_MOVETO if necessary */
-   if(pPath->newStroke)
-   {
-      pPath->newStroke=FALSE;
-      pt.x = dc->CursPosX;
-      pt.y = dc->CursPosY;
-      if(!LPtoDP(dc->hSelf, &pt, 1))
-         return FALSE;
-      if(!PATH_AddEntry(pPath, &pt, PT_MOVETO))
-         return FALSE;
-   }
+    for(i = 0; i < cbPoints; i++) {
+        pt = pts[i];
+        LPtoDP( dev->hdc, &pt, 1 );
+        PATH_AddEntry(physdev->path, &pt, PT_LINETO);
+    }
 
-   for(i = 0; i < cbPoints; i++) {
-       pt = pts[i];
-       if(!LPtoDP(dc->hSelf, &pt, 1))
-	   return FALSE;
-       PATH_AddEntry(pPath, &pt, PT_LINETO);
-   }
-
-   return TRUE;
+    return TRUE;
 }
 
 
@@ -1416,26 +1404,24 @@ static BOOL pathdrv_PolyPolygon( PHYSDEV dev, const POINT* pts, const INT* count
     return TRUE;
 }
 
-BOOL PATH_PolyPolyline( DC *dc, const POINT* pts, const DWORD* counts,
-			DWORD polylines )
+
+/*************************************************************
+ *           pathdrv_PolyPolyline
+ */
+static BOOL pathdrv_PolyPolyline( PHYSDEV dev, const POINT* pts, const DWORD* counts, DWORD polylines )
 {
-   GdiPath     *pPath = &dc->path;
-   POINT       pt;
-   UINT        poly, point, i;
+    struct path_physdev *physdev = get_path_physdev( dev );
+    POINT pt;
+    UINT poly, point, i;
 
-   /* Check that path is open */
-   if(pPath->state!=PATH_Open)
-      return FALSE;
-
-   for(i = 0, poly = 0; poly < polylines; poly++) {
-       for(point = 0; point < counts[poly]; point++, i++) {
-	   pt = pts[i];
-	   if(!LPtoDP(dc->hSelf, &pt, 1))
-	       return FALSE;
-	   PATH_AddEntry(pPath, &pt, (point == 0) ? PT_MOVETO : PT_LINETO);
-       }
-   }
-   return TRUE;
+    for(i = 0, poly = 0; poly < polylines; poly++) {
+        for(point = 0; point < counts[poly]; point++, i++) {
+            pt = pts[i];
+            LPtoDP( dev->hdc, &pt, 1 );
+            PATH_AddEntry(physdev->path, &pt, (point == 0) ? PT_MOVETO : PT_LINETO);
+        }
+    }
+    return TRUE;
 }
 
 
@@ -2359,10 +2345,10 @@ const struct gdi_dc_funcs path_driver =
     pathdrv_PolyBezierTo,               /* pPolyBezierTo */
     pathdrv_PolyDraw,                   /* pPolyDraw */
     pathdrv_PolyPolygon,                /* pPolyPolygon */
-    NULL,                               /* pPolyPolyline */
+    pathdrv_PolyPolyline,               /* pPolyPolyline */
     pathdrv_Polygon,                    /* pPolygon */
-    NULL,                               /* pPolyline */
-    NULL,                               /* pPolylineTo */
+    pathdrv_Polyline,                   /* pPolyline */
+    pathdrv_PolylineTo,                 /* pPolylineTo */
     NULL,                               /* pPutImage */
     NULL,                               /* pRealizeDefaultPalette */
     NULL,                               /* pRealizePalette */

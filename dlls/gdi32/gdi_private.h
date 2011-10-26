@@ -327,9 +327,6 @@ extern BOOL PATH_RestorePath( DC *dst, DC *src ) DECLSPEC_HIDDEN;
 
 extern BOOL PATH_ExtTextOut(DC *dc, INT x, INT y, UINT flags, const RECT *lprc,
                             LPCWSTR str, UINT count, const INT *dx) DECLSPEC_HIDDEN;
-extern BOOL PATH_PolylineTo(DC *dc, const POINT *pt, DWORD cbCount) DECLSPEC_HIDDEN;
-extern BOOL PATH_Polyline(DC *dc, const POINT *pt, DWORD cbCount) DECLSPEC_HIDDEN;
-extern BOOL PATH_PolyPolyline(DC *dc, const POINT *pt, const DWORD *counts, DWORD polylines) DECLSPEC_HIDDEN;
 
 /* painting.c */
 extern POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut ) DECLSPEC_HIDDEN;
