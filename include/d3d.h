@@ -183,15 +183,15 @@ typedef struct IDirect3DVertexBuffer7 *LPDIRECT3DVERTEXBUFFER7;
 /* ********************************************************************
    Enums
    ******************************************************************** */
-#define D3DNEXT_NEXT 0x01l
-#define D3DNEXT_HEAD 0x02l
-#define D3DNEXT_TAIL 0x04l
+#define D3DNEXT_NEXT __MSABI_LONG(0x01)
+#define D3DNEXT_HEAD __MSABI_LONG(0x02)
+#define D3DNEXT_TAIL __MSABI_LONG(0x04)
 
-#define D3DDP_WAIT               0x00000001l
-#define D3DDP_OUTOFORDER         0x00000002l
-#define D3DDP_DONOTCLIP          0x00000004l
-#define D3DDP_DONOTUPDATEEXTENTS 0x00000008l
-#define D3DDP_DONOTLIGHT         0x00000010l
+#define D3DDP_WAIT               __MSABI_LONG(0x00000001)
+#define D3DDP_OUTOFORDER         __MSABI_LONG(0x00000002)
+#define D3DDP_DONOTCLIP          __MSABI_LONG(0x00000004)
+#define D3DDP_DONOTUPDATEEXTENTS __MSABI_LONG(0x00000008)
+#define D3DDP_DONOTLIGHT         __MSABI_LONG(0x00000010)
 
 /* ********************************************************************
    Types and structures

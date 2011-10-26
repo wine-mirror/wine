@@ -38,17 +38,17 @@
 /*****************************************************************************
  * Behavior Flags for IDirect3D8::CreateDevice
  */
-#define D3DCREATE_FPU_PRESERVE                  0x00000002L
-#define D3DCREATE_MULTITHREADED                 0x00000004L
-#define D3DCREATE_PUREDEVICE                    0x00000010L
-#define D3DCREATE_SOFTWARE_VERTEXPROCESSING     0x00000020L
-#define D3DCREATE_HARDWARE_VERTEXPROCESSING     0x00000040L
-#define D3DCREATE_MIXED_VERTEXPROCESSING        0x00000080L
+#define D3DCREATE_FPU_PRESERVE                  __MSABI_LONG(0x00000002)
+#define D3DCREATE_MULTITHREADED                 __MSABI_LONG(0x00000004)
+#define D3DCREATE_PUREDEVICE                    __MSABI_LONG(0x00000010)
+#define D3DCREATE_SOFTWARE_VERTEXPROCESSING     __MSABI_LONG(0x00000020)
+#define D3DCREATE_HARDWARE_VERTEXPROCESSING     __MSABI_LONG(0x00000040)
+#define D3DCREATE_MIXED_VERTEXPROCESSING        __MSABI_LONG(0x00000080)
 
 /*****************************************************************************
  * Flags for SetPrivateData
  */
-#define D3DSPD_IUNKNOWN                         0x00000001L
+#define D3DSPD_IUNKNOWN                         __MSABI_LONG(0x00000001)
 
 /*****************************************************************************
  * #defines and error codes
