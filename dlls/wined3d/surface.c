@@ -1075,7 +1075,7 @@ static BOOL surface_is_full_rect(const struct wined3d_surface *surface, const RE
     return TRUE;
 }
 
-static void wined3d_surface_depth_blt_fbo(struct wined3d_device *device, struct wined3d_surface *src_surface,
+static void wined3d_surface_depth_blt_fbo(const struct wined3d_device *device, struct wined3d_surface *src_surface,
         const RECT *src_rect, struct wined3d_surface *dst_surface, const RECT *dst_rect)
 {
     const struct wined3d_gl_info *gl_info;
