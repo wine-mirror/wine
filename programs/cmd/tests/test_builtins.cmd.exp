@@ -792,6 +792,8 @@ localval
 9009
 1
 errorlevel just right, good
+errorlevel with leading zero just right, good
+errorlevel with negative number OK
 abc0def@or_broken@abc1def
 errorlevel zero, good@or_broken@errorlevel nonzero, bad
 7 should be 7

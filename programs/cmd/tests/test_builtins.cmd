@@ -1485,10 +1485,16 @@ call :setError 1
 echo %ErrorLevel%
 if errorlevel 2 echo errorlevel too high, bad
 if errorlevel 1 echo errorlevel just right, good
+if errorlevel 01 echo errorlevel with leading zero just right, good
+if errorlevel -1 echo errorlevel with negative number OK
+if errorlevel 0x1 echo hexa should not be recognized!
+if errorlevel 1a echo invalid error level recognized!
 call :setError 0
 echo abc%ErrorLevel%def
 if errorlevel 1 echo errorlevel nonzero, bad
 if not errorlevel 1 echo errorlevel zero, good
+if not errorlevel 0x1 echo hexa should not be recognized!
+if not errorlevel 1a echo invalid error level recognized!
 rem Now verify that setting a real variable hides its magic variable
 set errorlevel=7
 echo %ErrorLevel% should be 7

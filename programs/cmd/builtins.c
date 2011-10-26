@@ -1513,7 +1513,14 @@ void WCMD_if (WCHAR *p, CMD_LIST **cmdList) {
   WINE_TRACE("Condition: %s\n", wine_dbgstr_w(condition));
 
   if (!lstrcmpiW (condition, errlvlW)) {
-    test = (errorlevel >= atoiW(WCMD_parameter(p, 1+negate, NULL, NULL)));
+    WCHAR *param = WCMD_parameter(p, 1+negate, NULL, NULL);
+    WCHAR *endptr;
+    long int param_int = strtolW(param, &endptr, 10);
+    if (*endptr) {
+      WCMD_output_stderr(WCMD_LoadMessage(WCMD_SYNTAXERR));
+      return;
+    }
+    test = ((long int)errorlevel >= param_int);
     WCMD_parameter(p, 2+negate, &command, NULL);
   }
   else if (!lstrcmpiW (condition, existW)) {
