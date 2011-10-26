@@ -1199,63 +1199,58 @@ BOOL PATH_PolyBezier(DC *dc, const POINT *pts, DWORD cbPoints)
 BOOL PATH_PolyDraw(DC *dc, const POINT *pts, const BYTE *types,
     DWORD cbPoints)
 {
-        GdiPath     *pPath = &dc->path;
-        POINT       lastmove, orig_pos;
-        INT         i;
+    GdiPath     *pPath = &dc->path;
+    POINT lastmove, orig_pos;
+    INT i;
 
-        lastmove.x = orig_pos.x = dc->CursPosX;
-        lastmove.y = orig_pos.y = dc->CursPosY;
+    GetCurrentPositionEx( dc->hSelf, &orig_pos );
+    lastmove = orig_pos;
 
-        for(i = pPath->numEntriesUsed - 1; i >= 0; i--){
-            if(pPath->pFlags[i] == PT_MOVETO){
-                lastmove.x = pPath->pPoints[i].x;
-                lastmove.y = pPath->pPoints[i].y;
-                if(!DPtoLP(dc->hSelf, &lastmove, 1))
-                    return FALSE;
+    for(i = pPath->numEntriesUsed - 1; i >= 0; i--){
+        if(pPath->pFlags[i] == PT_MOVETO){
+            lastmove = pPath->pPoints[i];
+            DPtoLP(dc->hSelf, &lastmove, 1);
+            break;
+        }
+    }
+
+    for(i = 0; i < cbPoints; i++)
+    {
+        switch (types[i])
+        {
+        case PT_MOVETO:
+            MoveToEx( dc->hSelf, pts[i].x, pts[i].y, NULL );
+            break;
+        case PT_LINETO:
+        case PT_LINETO | PT_CLOSEFIGURE:
+            LineTo( dc->hSelf, pts[i].x, pts[i].y );
+            break;
+        case PT_BEZIERTO:
+            if ((i + 2 < cbPoints) && (types[i + 1] == PT_BEZIERTO) &&
+                (types[i + 2] & ~PT_CLOSEFIGURE) == PT_BEZIERTO)
+            {
+                PolyBezierTo( dc->hSelf, &pts[i], 3 );
+                i += 2;
                 break;
             }
+            /* fall through */
+        default:
+            if (i)  /* restore original position */
+            {
+                if (!(types[i - 1] & PT_CLOSEFIGURE)) lastmove = pts[i - 1];
+                if (lastmove.x != orig_pos.x || lastmove.y != orig_pos.y)
+                    MoveToEx( dc->hSelf, orig_pos.x, orig_pos.y, NULL );
+            }
+            return FALSE;
         }
 
-        for(i = 0; i < cbPoints; i++){
-            if(types[i] == PT_MOVETO){
-                pPath->newStroke = TRUE;
-                lastmove.x = pts[i].x;
-                lastmove.y = pts[i].y;
-            }
-            else if((types[i] & ~PT_CLOSEFIGURE) == PT_LINETO){
-                PATH_LineTo(dc, pts[i].x, pts[i].y);
-            }
-            else if(types[i] == PT_BEZIERTO){
-                if(!((i + 2 < cbPoints) && (types[i + 1] == PT_BEZIERTO)
-                    && ((types[i + 2] & ~PT_CLOSEFIGURE) == PT_BEZIERTO)))
-                    goto err;
-                PATH_PolyBezierTo(dc, &(pts[i]), 3);
-                i += 2;
-            }
-            else
-                goto err;
-
-            dc->CursPosX = pts[i].x;
-            dc->CursPosY = pts[i].y;
-
-            if(types[i] & PT_CLOSEFIGURE){
-                pPath->pFlags[pPath->numEntriesUsed-1] |= PT_CLOSEFIGURE;
-                pPath->newStroke = TRUE;
-                dc->CursPosX = lastmove.x;
-                dc->CursPosY = lastmove.y;
-            }
+        if(types[i] & PT_CLOSEFIGURE){
+            pPath->pFlags[pPath->numEntriesUsed-1] |= PT_CLOSEFIGURE;
+            MoveToEx( dc->hSelf, lastmove.x, lastmove.y, NULL );
         }
+    }
 
-        return TRUE;
-
-err:
-        if((dc->CursPosX != orig_pos.x) || (dc->CursPosY != orig_pos.y)){
-            pPath->newStroke = TRUE;
-            dc->CursPosX = orig_pos.x;
-            dc->CursPosY = orig_pos.y;
-        }
-
-        return FALSE;
+    return TRUE;
 }
 
 BOOL PATH_Polyline(DC *dc, const POINT *pts, DWORD cbPoints)
