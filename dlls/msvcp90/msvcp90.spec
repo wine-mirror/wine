@@ -5121,7 +5121,7 @@
 @ cdecl -arch=win64 ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@_K0AEBV12@@Z(ptr long long ptr) basic_string_char_replace
 @ thiscall -arch=win32 ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0PBD@Z(ptr ptr ptr ptr ptr str) basic_string_char_replace_iter_cstr
 @ cdecl -arch=win64 ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@_K0PEBD0@Z(ptr long long ptr long) basic_string_char_replace_cstr_len
-@ thiscall -arch=win32 ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0PBDI@Z(ptr ptr ptr ptr ptr str long)basic_string_char_replace_iter_cstr_len
+@ thiscall -arch=win32 ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0PBDI@Z(ptr ptr ptr ptr ptr str long) basic_string_char_replace_iter_cstr_len
 @ cdecl -arch=win64 ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@_K0PEBD@Z(ptr long long ptr) basic_string_char_replace_cstr
 @ stub -arch=win32 ?replace@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAV12@IIABV12@@Z
 @ stub -arch=win64 ?replace@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAAAEAV12@V?$_String_const_iterator@GU?$char_traits@G@std@@V?$allocator@G@2@@2@000@Z
