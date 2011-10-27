@@ -5891,14 +5891,16 @@ static void test_publish_assemblies(void)
     RegCloseKey(hkey);
 
     res = RegOpenKeyA(HKEY_CURRENT_USER, path_win32, &hkey);
-    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    CHECK_REG_STR(hkey, name_win32, "rcHQPHq?CA@Uv-XqMI1e>}NJjwR'%D9v1p!v{WV(%");
+    ok(res == ERROR_SUCCESS || res == ERROR_FILE_NOT_FOUND /* win2k without sxs support */,
+       "Expected ERROR_SUCCESS, got %d\n", res);
+    if (res == ERROR_SUCCESS) CHECK_REG_STR(hkey, name_win32, "rcHQPHq?CA@Uv-XqMI1e>}NJjwR'%D9v1p!v{WV(%");
     RegCloseKey(hkey);
 
     path = (is_wow64 || is_64bit) ? path_win32_local_wow64 : path_win32_local;
     res = RegOpenKeyA(HKEY_CURRENT_USER, path, &hkey);
-    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    CHECK_REG_STR(hkey, name_win32_local, "rcHQPHq?CA@Uv-XqMI1e>C)Uvlj*53A)u(QQ9=)X!");
+    ok(res == ERROR_SUCCESS || res == ERROR_FILE_NOT_FOUND /* win2k without sxs support */,
+       "Expected ERROR_SUCCESS, got %d\n", res);
+    if (res == ERROR_SUCCESS) CHECK_REG_STR(hkey, name_win32_local, "rcHQPHq?CA@Uv-XqMI1e>C)Uvlj*53A)u(QQ9=)X!");
     RegCloseKey(hkey);
 
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
@@ -5952,14 +5954,16 @@ static void test_publish_assemblies(void)
     RegCloseKey(hkey);
 
     res = RegOpenKeyExA(HKEY_CLASSES_ROOT, classes_path_win32, 0, access, &hkey);
-    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    CHECK_REG_STR(hkey, name_win32, "rcHQPHq?CA@Uv-XqMI1e>}NJjwR'%D9v1p!v{WV(%");
+    ok(res == ERROR_SUCCESS || res == ERROR_FILE_NOT_FOUND /* win2k without sxs support */,
+       "Expected ERROR_SUCCESS, got %d\n", res);
+    if (res == ERROR_SUCCESS) CHECK_REG_STR(hkey, name_win32, "rcHQPHq?CA@Uv-XqMI1e>}NJjwR'%D9v1p!v{WV(%");
     RegCloseKey(hkey);
 
     path = (is_wow64 || is_64bit) ? classes_path_win32_local_wow64 : classes_path_win32_local;
     res = RegOpenKeyExA(HKEY_CLASSES_ROOT, path, 0, access, &hkey);
-    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    CHECK_REG_STR(hkey, name_win32_local, "rcHQPHq?CA@Uv-XqMI1e>C)Uvlj*53A)u(QQ9=)X!");
+    ok(res == ERROR_SUCCESS || res == ERROR_FILE_NOT_FOUND /* win2k without sxs support */,
+       "Expected ERROR_SUCCESS, got %d\n", res);
+    if (res == ERROR_SUCCESS) CHECK_REG_STR(hkey, name_win32_local, "rcHQPHq?CA@Uv-XqMI1e>C)Uvlj*53A)u(QQ9=)X!");
     RegCloseKey(hkey);
 
     r = MsiInstallProductA(msifile, "REMOVE=ALL ALLUSERS=1");
