@@ -602,15 +602,20 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 		if (!(es->style & ES_AUTOHSCROLL)) {
 		   if (current_line->width > fw) {
 
-			INT prev;
+			INT prev, next;
 			int w;
 			const SIZE *sz;
+			float d;
 
 			prev = current_line->net_length - 1;
 			w = current_line->net_length;
+			d = (float)current_line->width/(float)fw;
+			if (d > 1.2) d -= 0.2;
+			next = prev/d;
+			if (next >= prev) next = prev-1;
 			do {
 				prev = EDIT_CallWordBreakProc(es, current_position - es->text,
-						prev-1, current_line->net_length, WB_LEFT);
+						next, current_line->net_length, WB_LEFT);
 				current_line->net_length = prev;
 				EDIT_InvalidateUniscribeData_linedef(current_line);
 				EDIT_UpdateUniscribeData_linedef(es, NULL, current_line);
@@ -619,6 +624,7 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 					current_line->width = sz->cx;
 				else
 					prev = 0;
+				next = prev - 1;
 			} while (prev && current_line->width > fw);
 			current_line->net_length = w;
 
