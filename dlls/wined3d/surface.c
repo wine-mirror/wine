@@ -5324,7 +5324,7 @@ void surface_translate_drawable_coords(const struct wined3d_surface *surface, HW
     rect->bottom = drawable_height - rect->bottom;
 }
 
-static void surface_blt_to_drawable(struct wined3d_device *device,
+static void surface_blt_to_drawable(const struct wined3d_device *device,
         WINED3DTEXTUREFILTERTYPE filter, BOOL color_key,
         struct wined3d_surface *src_surface, const RECT *src_rect_in,
         struct wined3d_surface *dst_surface, const RECT *dst_rect_in)
