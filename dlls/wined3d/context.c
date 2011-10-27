@@ -1151,8 +1151,8 @@ static int context_choose_pixel_format(const struct wined3d_device *device, HDC 
         { FALSE, FALSE, FALSE },
     };
 
-    int i = 0;
-    int nCfgs = device->adapter->nCfgs;
+    unsigned int cfg_count = device->adapter->cfg_count;
+    unsigned int i;
 
     TRACE("device %p, dc %p, color_format %s, ds_format %s, aux_buffers %#x, find_compatible %#x.\n",
             device, hdc, debug_d3dformat(color_format->id), debug_d3dformat(ds_format->id),
@@ -1169,7 +1169,7 @@ static int context_choose_pixel_format(const struct wined3d_device *device, HDC 
 
     for (matchtry = 0; matchtry < (sizeof(matches) / sizeof(*matches)) && !iPixelFormat; ++matchtry)
     {
-        for (i = 0; i < nCfgs; ++i)
+        for (i = 0; i < cfg_count; ++i)
         {
             const struct wined3d_pixel_format *cfg = &device->adapter->cfgs[i];
             BOOL exactDepthMatch = TRUE;

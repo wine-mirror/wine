@@ -3164,7 +3164,7 @@ HRESULT CDECL wined3d_check_depth_stencil_match(const struct wined3d *wined3d,
         unsigned int i;
 
         cfgs = adapter->cfgs;
-        cfg_count = adapter->nCfgs;
+        cfg_count = adapter->cfg_count;
         for (i = 0; i < cfg_count; ++i)
         {
             if (wined3d_check_pixel_format_color(&adapter->gl_info, &cfgs[i], rt_format)
@@ -3234,8 +3234,6 @@ static BOOL CheckBumpMapCapability(const struct wined3d_adapter *adapter, const 
 static BOOL CheckDepthStencilCapability(const struct wined3d_adapter *adapter,
         const struct wined3d_format *display_format, const struct wined3d_format *ds_format)
 {
-    int it=0;
-
     /* Only allow depth/stencil formats */
     if (!(ds_format->depth_size || ds_format->stencil_size)) return FALSE;
 
@@ -3258,10 +3256,12 @@ static BOOL CheckDepthStencilCapability(const struct wined3d_adapter *adapter,
     }
     else
     {
+        unsigned int i;
+
         /* Walk through all WGL pixel formats to find a match */
-        for (it = 0; it < adapter->nCfgs; ++it)
+        for (i = 0; i < adapter->cfg_count; ++i)
         {
-            const struct wined3d_pixel_format *cfg = &adapter->cfgs[it];
+            const struct wined3d_pixel_format *cfg = &adapter->cfgs[i];
             if (wined3d_check_pixel_format_color(&adapter->gl_info, cfg, display_format)
                     && wined3d_check_pixel_format_depth(&adapter->gl_info, cfg, ds_format))
                 return TRUE;
@@ -3290,7 +3290,7 @@ static BOOL CheckRenderTargetCapability(const struct wined3d_adapter *adapter,
         BYTE AdapterRed, AdapterGreen, AdapterBlue, AdapterAlpha, AdapterTotalSize;
         BYTE CheckRed, CheckGreen, CheckBlue, CheckAlpha, CheckTotalSize;
         const struct wined3d_pixel_format *cfgs = adapter->cfgs;
-        int it;
+        unsigned int i;
 
         getColorBits(adapter_format, &AdapterRed, &AdapterGreen, &AdapterBlue, &AdapterAlpha, &AdapterTotalSize);
         getColorBits(check_format, &CheckRed, &CheckGreen, &CheckBlue, &CheckAlpha, &CheckTotalSize);
@@ -3304,13 +3304,13 @@ static BOOL CheckRenderTargetCapability(const struct wined3d_adapter *adapter,
 
         /* Check if there is a WGL pixel format matching the requirements, the format should also be window
          * drawable (not offscreen; e.g. Nvidia offers R5G6B5 for pbuffers even when X is running at 24bit) */
-        for (it = 0; it < adapter->nCfgs; ++it)
+        for (i = 0; i < adapter->cfg_count; ++i)
         {
-            if (cfgs[it].windowDrawable
-                    && wined3d_check_pixel_format_color(&adapter->gl_info, &cfgs[it], check_format))
+            if (cfgs[i].windowDrawable
+                    && wined3d_check_pixel_format_color(&adapter->gl_info, &cfgs[i], check_format))
             {
                 TRACE_(d3d_caps)("Pixel format %d is compatible with format %s.\n",
-                        cfgs[it].iPixelFormat, debug_d3dformat(check_format->id));
+                        cfgs[i].iPixelFormat, debug_d3dformat(check_format->id));
                 return TRUE;
             }
         }
@@ -5289,15 +5289,17 @@ static BOOL InitAdapters(struct wined3d *wined3d)
 
         if (gl_info->supported[WGL_ARB_PIXEL_FORMAT])
         {
+            GLint cfg_count;
             int attribute;
             int attribs[11];
             int values[11];
             int nAttribs = 0;
 
             attribute = WGL_NUMBER_PIXEL_FORMATS_ARB;
-            GL_EXTCALL(wglGetPixelFormatAttribivARB(hdc, 0, 0, 1, &attribute, &adapter->nCfgs));
+            GL_EXTCALL(wglGetPixelFormatAttribivARB(hdc, 0, 0, 1, &attribute, &cfg_count));
+            adapter->cfg_count = cfg_count;
 
-            adapter->cfgs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, adapter->nCfgs * sizeof(*adapter->cfgs));
+            adapter->cfgs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, adapter->cfg_count * sizeof(*adapter->cfgs));
             cfgs = adapter->cfgs;
             attribs[nAttribs++] = WGL_RED_BITS_ARB;
             attribs[nAttribs++] = WGL_GREEN_BITS_ARB;
@@ -5311,7 +5313,7 @@ static BOOL InitAdapters(struct wined3d *wined3d)
             attribs[nAttribs++] = WGL_DOUBLE_BUFFER_ARB;
             attribs[nAttribs++] = WGL_AUX_BUFFERS_ARB;
 
-            for (iPixelFormat=1; iPixelFormat <= adapter->nCfgs; ++iPixelFormat)
+            for (iPixelFormat=1; iPixelFormat <= adapter->cfg_count; ++iPixelFormat)
             {
                 res = GL_EXTCALL(wglGetPixelFormatAttribivARB(hdc, iPixelFormat, 0, nAttribs, attribs, values));
 
@@ -5358,7 +5360,7 @@ static BOOL InitAdapters(struct wined3d *wined3d)
         {
             int nCfgs = DescribePixelFormat(hdc, 0, 0, 0);
             adapter->cfgs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nCfgs * sizeof(*adapter->cfgs));
-            adapter->nCfgs = 0; /* We won't accept all formats e.g. software accelerated ones will be skipped */
+            adapter->cfg_count = 0; /* We won't accept all formats e.g. software accelerated ones will be skipped */
 
             cfgs = adapter->cfgs;
             for(iPixelFormat=1; iPixelFormat<=nCfgs; iPixelFormat++)
@@ -5399,11 +5401,13 @@ static BOOL InitAdapters(struct wined3d *wined3d)
                         cfgs->redSize, cfgs->greenSize, cfgs->blueSize, cfgs->alphaSize,
                         cfgs->depthSize, cfgs->stencilSize, cfgs->windowDrawable);
                 cfgs++;
-                adapter->nCfgs++;
+                adapter->cfg_count++;
             }
 
-            /* Yikes we haven't found any suitable formats. This should only happen in case of GDI software rendering which we can't use anyway as its 3D functionality is very, very limited */
-            if(!adapter->nCfgs)
+            /* We haven't found any suitable formats. This should only happen
+             * in case of GDI software rendering, which is pretty useless
+             * anyway. */
+            if (!adapter->cfg_count)
             {
                 ERR("Disabling Direct3D because no hardware accelerated pixel formats have been found!\n");
 
@@ -5423,7 +5427,7 @@ static BOOL InitAdapters(struct wined3d *wined3d)
          * Mark an adapter with this broken stencil behavior.
          */
         adapter->brokenStencil = TRUE;
-        for (i = 0, cfgs = adapter->cfgs; i < adapter->nCfgs; ++i)
+        for (i = 0, cfgs = adapter->cfgs; i < adapter->cfg_count; ++i)
         {
             /* Nearly all drivers offer depth formats without stencil, only on i915 this if-statement won't be entered. */
             if(cfgs[i].depthSize && !cfgs[i].stencilSize) {
