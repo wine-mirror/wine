@@ -110,6 +110,7 @@ DC *alloc_dc_ptr( WORD magic )
     dc->hDevice             = 0;
     dc->hPalette            = GetStockObject( DEFAULT_PALETTE );
     dc->gdiFont             = 0;
+    dc->path                = NULL;
     dc->font_code_page      = CP_ACP;
     dc->ROPmode             = R2_COPYPEN;
     dc->polyFillMode        = ALTERNATE;
@@ -146,7 +147,6 @@ DC *alloc_dc_ptr( WORD magic )
     dc->BoundsRect.top      = 0;
     dc->BoundsRect.right    = 0;
     dc->BoundsRect.bottom   = 0;
-    PATH_InitGdiPath(&dc->path);
 
     if (!(dc->hSelf = alloc_gdi_handle( &dc->header, magic, &dc_funcs )))
     {
@@ -174,7 +174,7 @@ static void free_dc_state( DC *dc )
     if (dc->hMetaRgn) DeleteObject( dc->hMetaRgn );
     if (dc->hMetaClipRgn) DeleteObject( dc->hMetaClipRgn );
     if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
-    PATH_DestroyGdiPath( &dc->path );
+    if (dc->path) free_gdi_path( dc->path );
     HeapFree( GetProcessHeap(), 0, dc );
 }
 

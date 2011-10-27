@@ -72,27 +72,6 @@ typedef struct tagGDIOBJHDR
     struct hdc_list *hdcs;
 } GDIOBJHDR;
 
-/* It should not be necessary to access the contents of the GdiPath
- * structure directly; if you find that the exported functions don't
- * allow you to do what you want, then please place a new exported
- * function that does this job in path.c.
- */
-typedef enum tagGdiPathState
-{
-   PATH_Null,
-   PATH_Open,
-   PATH_Closed
-} GdiPathState;
-
-typedef struct gdi_path
-{
-   GdiPathState state;
-   POINT      *pPoints;
-   BYTE         *pFlags;
-   int          numEntriesUsed, numEntriesAllocated;
-   BOOL       newStroke;
-} GdiPath;
-
 typedef struct tagGdiFont GdiFont;
 
 typedef struct tagDC
@@ -137,7 +116,7 @@ typedef struct tagDC
     HPALETTE      hPalette;
 
     GdiFont      *gdiFont;
-    GdiPath       path;
+    struct gdi_path *path;
 
     UINT          font_code_page;
     WORD          ROPmode;
@@ -320,8 +299,7 @@ extern METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mr, LPCVOID filename, BOO
 
 /* path.c */
 
-extern void PATH_InitGdiPath(GdiPath *pPath) DECLSPEC_HIDDEN;
-extern void PATH_DestroyGdiPath(GdiPath *pPath) DECLSPEC_HIDDEN;
+extern void free_gdi_path( struct gdi_path *path ) DECLSPEC_HIDDEN;
 extern BOOL PATH_SavePath( DC *dst, DC *src ) DECLSPEC_HIDDEN;
 extern BOOL PATH_RestorePath( DC *dst, DC *src ) DECLSPEC_HIDDEN;
 

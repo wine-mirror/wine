@@ -81,11 +81,26 @@ typedef struct tagFLOAT_POINT
    double x, y;
 } FLOAT_POINT;
 
+typedef enum
+{
+    PATH_Null,
+    PATH_Open,
+    PATH_Closed
+} GdiPathState;
+
+typedef struct gdi_path
+{
+    GdiPathState state;
+    POINT       *pPoints;
+    BYTE        *pFlags;
+    int          numEntriesUsed, numEntriesAllocated;
+    BOOL         newStroke;
+} GdiPath;
 
 struct path_physdev
 {
     struct gdi_physdev dev;
-    GdiPath           *path;
+    struct gdi_path   *path;
 };
 
 static inline struct path_physdev *get_path_physdev( PHYSDEV dev )
@@ -100,7 +115,7 @@ static inline void pop_path_driver( DC *dc )
     HeapFree( GetProcessHeap(), 0, dev );
 }
 
-static void free_gdi_path( struct gdi_path *path )
+void free_gdi_path( struct gdi_path *path )
 {
     HeapFree( GetProcessHeap(), 0, path->pPoints );
     HeapFree( GetProcessHeap(), 0, path->pFlags );
@@ -131,6 +146,31 @@ static struct gdi_path *alloc_gdi_path(void)
     return path;
 }
 
+static struct gdi_path *copy_gdi_path( const struct gdi_path *src_path )
+{
+    struct gdi_path *path = HeapAlloc( GetProcessHeap(), 0, sizeof(*path) );
+
+    if (!path)
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return NULL;
+    }
+    path->state = src_path->state;
+    path->numEntriesUsed = path->numEntriesAllocated = src_path->numEntriesUsed;
+    path->newStroke = src_path->newStroke;
+    path->pPoints = HeapAlloc( GetProcessHeap(), 0, path->numEntriesUsed * sizeof(*path->pPoints) );
+    path->pFlags = HeapAlloc( GetProcessHeap(), 0, path->numEntriesUsed * sizeof(*path->pFlags) );
+    if (!path->pPoints || !path->pFlags)
+    {
+        free_gdi_path( path );
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return NULL;
+    }
+    memcpy( path->pPoints, src_path->pPoints, path->numEntriesUsed * sizeof(*path->pPoints) );
+    memcpy( path->pFlags, src_path->pFlags, path->numEntriesUsed * sizeof(*path->pFlags) );
+    return path;
+}
+
 /* Performs a world-to-viewport transformation on the specified point (which
  * is in floating point format).
  */
@@ -155,16 +195,6 @@ static inline INT int_from_fixed(FIXED f)
     return (f.fract >= 0x8000) ? (f.value + 1) : f.value;
 }
 
-
-/* PATH_EmptyPath
- *
- * Removes all entries from the path and sets the path state to PATH_Null.
- */
-static void PATH_EmptyPath(GdiPath *pPath)
-{
-    pPath->state=PATH_Null;
-    pPath->numEntriesUsed=0;
-}
 
 /* PATH_ReserveEntries
  *
@@ -260,35 +290,6 @@ static BOOL start_new_stroke( struct path_physdev *physdev )
     path->newStroke = FALSE;
     GetCurrentPositionEx( physdev->dev.hdc, &pos );
     return add_log_points( physdev, &pos, 1, PT_MOVETO ) != NULL;
-}
-
-/* PATH_AssignGdiPath
- *
- * Copies the GdiPath structure "pPathSrc" to "pPathDest". A deep copy is
- * performed, i.e. the contents of the pPoints and pFlags arrays are copied,
- * not just the pointers. Since this means that the arrays in pPathDest may
- * need to be resized, pPathDest should have been initialized using
- * PATH_InitGdiPath (in C++, this function would be an assignment operator,
- * not a copy constructor).
- * Returns TRUE if successful, else FALSE.
- */
-static BOOL PATH_AssignGdiPath(GdiPath *pPathDest, const GdiPath *pPathSrc)
-{
-   /* Make sure destination arrays are big enough */
-   if(!PATH_ReserveEntries(pPathDest, pPathSrc->numEntriesUsed))
-      return FALSE;
-
-   /* Perform the copy operation */
-   memcpy(pPathDest->pPoints, pPathSrc->pPoints,
-      sizeof(POINT)*pPathSrc->numEntriesUsed);
-   memcpy(pPathDest->pFlags, pPathSrc->pFlags,
-      sizeof(BYTE)*pPathSrc->numEntriesUsed);
-
-   pPathDest->state=pPathSrc->state;
-   pPathDest->numEntriesUsed=pPathSrc->numEntriesUsed;
-   pPathDest->newStroke=pPathSrc->newStroke;
-
-   return TRUE;
 }
 
 /* PATH_CheckCorners
@@ -622,10 +623,10 @@ INT WINAPI GetPath(HDC hdc, LPPOINT pPoints, LPBYTE pTypes,
 
    if(!dc) return -1;
 
-   pPath = &dc->path;
+   pPath = dc->path;
 
    /* Check that path is closed */
-   if(pPath->state!=PATH_Closed)
+   if(!pPath || pPath->state != PATH_Closed)
    {
       SetLastError(ERROR_CAN_NOT_COMPLETE);
       goto done;
@@ -669,22 +670,22 @@ INT WINAPI GetPath(HDC hdc, LPPOINT pPoints, LPBYTE pTypes,
  */
 HRGN WINAPI PathToRegion(HDC hdc)
 {
-   GdiPath *pPath;
    HRGN  hrgnRval = 0;
    DC *dc = get_dc_ptr( hdc );
 
    /* Get pointer to path */
    if(!dc) return 0;
 
-    pPath = &dc->path;
-
    /* Check that path is closed */
-   if(pPath->state!=PATH_Closed) SetLastError(ERROR_CAN_NOT_COMPLETE);
+   if (!dc->path || dc->path->state != PATH_Closed) SetLastError(ERROR_CAN_NOT_COMPLETE);
    else
    {
-       /* FIXME: Should we empty the path even if conversion failed? */
-       hrgnRval = PATH_PathToRegion(pPath, GetPolyFillMode(hdc));
-       if (hrgnRval) PATH_EmptyPath(pPath);
+       if ((hrgnRval = PATH_PathToRegion(dc->path, GetPolyFillMode(hdc))))
+       {
+           /* FIXME: Should we empty the path even if conversion failed? */
+           free_gdi_path( dc->path );
+           dc->path = NULL;
+       }
    }
    release_dc_ptr( dc );
    return hrgnRval;
@@ -813,7 +814,8 @@ static BOOL pathdrv_AbortPath( PHYSDEV dev )
     DC *dc = get_dc_ptr( dev->hdc );
 
     if (!dc) return FALSE;
-    PATH_EmptyPath( &dc->path );
+    free_gdi_path( dc->path );
+    dc->path = NULL;
     pop_path_driver( dc );
     release_dc_ptr( dc );
     return TRUE;
@@ -828,7 +830,7 @@ static BOOL pathdrv_EndPath( PHYSDEV dev )
     DC *dc = get_dc_ptr( dev->hdc );
 
     if (!dc) return FALSE;
-    dc->path.state = PATH_Closed;
+    dc->path->state = PATH_Closed;
     pop_path_driver( dc );
     release_dc_ptr( dc );
     return TRUE;
@@ -846,7 +848,6 @@ static BOOL pathdrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
 
     if (!physdev) return FALSE;
     dc = get_dc_ptr( (*dev)->hdc );
-    physdev->path = &dc->path;
     push_dc_driver( dev, &physdev->dev, &path_driver );
     release_dc_ptr( dc );
     return TRUE;
@@ -863,56 +864,36 @@ static BOOL pathdrv_DeleteDC( PHYSDEV dev )
 }
 
 
-/* PATH_InitGdiPath
- *
- * Initializes the GdiPath structure.
- */
-void PATH_InitGdiPath(GdiPath *pPath)
-{
-   assert(pPath!=NULL);
-
-   pPath->state=PATH_Null;
-   pPath->pPoints=NULL;
-   pPath->pFlags=NULL;
-   pPath->numEntriesUsed=0;
-   pPath->numEntriesAllocated=0;
-}
-
-/* PATH_DestroyGdiPath
- *
- * Destroys a GdiPath structure (frees the memory in the arrays).
- */
-void PATH_DestroyGdiPath(GdiPath *pPath)
-{
-   assert(pPath!=NULL);
-
-   HeapFree( GetProcessHeap(), 0, pPath->pPoints );
-   HeapFree( GetProcessHeap(), 0, pPath->pFlags );
-}
-
 BOOL PATH_SavePath( DC *dst, DC *src )
 {
-    PATH_InitGdiPath( &dst->path );
-    return PATH_AssignGdiPath( &dst->path, &src->path );
+    if (src->path)
+    {
+        if (!(dst->path = copy_gdi_path( src->path ))) return FALSE;
+    }
+    else dst->path = NULL;
+    return TRUE;
 }
 
 BOOL PATH_RestorePath( DC *dst, DC *src )
 {
-    BOOL ret;
+    struct path_physdev *physdev;
 
-    if (src->path.state == PATH_Open && dst->path.state != PATH_Open)
+    if (src->path && src->path->state == PATH_Open)
     {
-        if (!path_driver.pCreateDC( &dst->physDev, NULL, NULL, NULL, NULL )) return FALSE;
-        ret = PATH_AssignGdiPath( &dst->path, &src->path );
-        if (!ret) pop_path_driver( dst );
+        if (!dst->path || dst->path->state != PATH_Open)
+        {
+            if (!path_driver.pCreateDC( &dst->physDev, NULL, NULL, NULL, NULL )) return FALSE;
+        }
+        physdev = get_path_physdev( dst->physDev );
+        assert( physdev->dev.funcs == &path_driver );
+        physdev->path = src->path;
     }
-    else if (src->path.state != PATH_Open && dst->path.state == PATH_Open)
-    {
-        ret = PATH_AssignGdiPath( &dst->path, &src->path );
-        if (ret) pop_path_driver( dst );
-    }
-    else ret = PATH_AssignGdiPath( &dst->path, &src->path );
-    return ret;
+    else if (dst->path && dst->path->state == PATH_Open) pop_path_driver( dst );
+
+    if (dst->path) free_gdi_path( dst->path );
+    dst->path = src->path;
+    src->path = NULL;
+    return TRUE;
 }
 
 
@@ -1797,7 +1778,7 @@ static struct gdi_path *PATH_WidenPath(DC *dc)
         return NULL;
     }
 
-    if (!(flat_path = PATH_FlattenPath( &dc->path ))) return NULL;
+    if (!(flat_path = PATH_FlattenPath( dc->path ))) return NULL;
 
     penWidthIn = penWidth / 2;
     penWidthOut = penWidth / 2;
@@ -2113,11 +2094,19 @@ BOOL WINAPI WidenPath(HDC hdc)
 BOOL nulldrv_BeginPath( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
+    struct path_physdev *physdev;
+    struct gdi_path *path = alloc_gdi_path();
 
-    if (!path_driver.pCreateDC( &dc->physDev, NULL, NULL, NULL, NULL )) return FALSE;
-    PATH_EmptyPath(&dc->path);
-    dc->path.newStroke = TRUE;
-    dc->path.state = PATH_Open;
+    if (!path) return FALSE;
+    if (!path_driver.pCreateDC( &dc->physDev, NULL, NULL, NULL, NULL ))
+    {
+        free_gdi_path( path );
+        return FALSE;
+    }
+    physdev = get_path_physdev( dc->physDev );
+    physdev->path = path;
+    if (dc->path) free_gdi_path( dc->path );
+    dc->path = path;
     return TRUE;
 }
 
@@ -2131,7 +2120,8 @@ BOOL nulldrv_AbortPath( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
 
-    PATH_EmptyPath( &dc->path );
+    if (dc->path) free_gdi_path( dc->path );
+    dc->path = NULL;
     return TRUE;
 }
 
@@ -2147,14 +2137,18 @@ BOOL nulldrv_SelectClipPath( PHYSDEV dev, INT mode )
     HRGN hrgn;
     DC *dc = get_nulldrv_dc( dev );
 
-    if (dc->path.state != PATH_Closed)
+    if (!dc->path || dc->path->state != PATH_Closed)
     {
         SetLastError( ERROR_CAN_NOT_COMPLETE );
         return FALSE;
     }
-    if (!(hrgn = PATH_PathToRegion( &dc->path, GetPolyFillMode(dev->hdc)))) return FALSE;
+    if (!(hrgn = PATH_PathToRegion( dc->path, GetPolyFillMode(dev->hdc)))) return FALSE;
     ret = ExtSelectClipRgn( dev->hdc, hrgn, mode ) != ERROR;
-    if (ret) PATH_EmptyPath( &dc->path );
+    if (ret)
+    {
+        free_gdi_path( dc->path );
+        dc->path = NULL;
+    }
     /* FIXME: Should this function delete the path even if it failed? */
     DeleteObject( hrgn );
     return ret;
@@ -2164,14 +2158,15 @@ BOOL nulldrv_FillPath( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
 
-    if (dc->path.state != PATH_Closed)
+    if (!dc->path || dc->path->state != PATH_Closed)
     {
         SetLastError( ERROR_CAN_NOT_COMPLETE );
         return FALSE;
     }
-    if (!PATH_FillPath( dev->hdc, &dc->path )) return FALSE;
+    if (!PATH_FillPath( dev->hdc, dc->path )) return FALSE;
     /* FIXME: Should the path be emptied even if conversion failed? */
-    PATH_EmptyPath( &dc->path );
+    free_gdi_path( dc->path );
+    dc->path = NULL;
     return TRUE;
 }
 
@@ -2179,14 +2174,15 @@ BOOL nulldrv_StrokeAndFillPath( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
 
-    if (dc->path.state != PATH_Closed)
+    if (!dc->path || dc->path->state != PATH_Closed)
     {
         SetLastError( ERROR_CAN_NOT_COMPLETE );
         return FALSE;
     }
-    if (!PATH_FillPath( dev->hdc, &dc->path )) return FALSE;
-    if (!PATH_StrokePath( dev->hdc, &dc->path )) return FALSE;
-    PATH_EmptyPath( &dc->path );
+    if (!PATH_FillPath( dev->hdc, dc->path )) return FALSE;
+    if (!PATH_StrokePath( dev->hdc, dc->path )) return FALSE;
+    free_gdi_path( dc->path );
+    dc->path = NULL;
     return TRUE;
 }
 
@@ -2194,13 +2190,14 @@ BOOL nulldrv_StrokePath( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
 
-    if (dc->path.state != PATH_Closed)
+    if (!dc->path || dc->path->state != PATH_Closed)
     {
         SetLastError( ERROR_CAN_NOT_COMPLETE );
         return FALSE;
     }
-    if (!PATH_StrokePath( dev->hdc, &dc->path )) return FALSE;
-    PATH_EmptyPath( &dc->path );
+    if (!PATH_StrokePath( dev->hdc, dc->path )) return FALSE;
+    free_gdi_path( dc->path );
+    dc->path = NULL;
     return TRUE;
 }
 
@@ -2209,14 +2206,14 @@ BOOL nulldrv_FlattenPath( PHYSDEV dev )
     DC *dc = get_nulldrv_dc( dev );
     struct gdi_path *path;
 
-    if (dc->path.state != PATH_Closed)
+    if (!dc->path || dc->path->state != PATH_Closed)
     {
         SetLastError( ERROR_CAN_NOT_COMPLETE );
         return FALSE;
     }
-    if (!(path = PATH_FlattenPath( &dc->path ))) return FALSE;
-    PATH_AssignGdiPath( &dc->path, path );
-    free_gdi_path( path );
+    if (!(path = PATH_FlattenPath( dc->path ))) return FALSE;
+    free_gdi_path( dc->path );
+    dc->path = path;
     return TRUE;
 }
 
@@ -2225,14 +2222,14 @@ BOOL nulldrv_WidenPath( PHYSDEV dev )
     DC *dc = get_nulldrv_dc( dev );
     struct gdi_path *path;
 
-    if (dc->path.state != PATH_Closed)
+    if (!dc->path || dc->path->state != PATH_Closed)
     {
         SetLastError( ERROR_CAN_NOT_COMPLETE );
         return FALSE;
     }
     if (!(path = PATH_WidenPath( dc ))) return FALSE;
-    PATH_AssignGdiPath( &dc->path, path );
-    free_gdi_path( path );
+    free_gdi_path( dc->path );
+    dc->path = path;
     return TRUE;
 }
 
