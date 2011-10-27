@@ -9792,7 +9792,7 @@ static void test_clone_mesh(void)
         for (j = 0; tc[i].new_declaration[j].Stream != 0xFF; j++)
         {
             ok(memcmp(&tc[i].new_declaration[j], &new_declaration[j], sizeof(*new_declaration)) == 0,
-               "Test case %d failed. Declaration element %d did not match.", i, j);
+               "Test case %d failed. Declaration element %d did not match.\n", i, j);
         }
 
         /* Check declaration length */
