@@ -972,12 +972,15 @@ static HRESULT surface_lock(IDirectDrawSurfaceImpl *This,
         }
     }
 
-    if (Flags & DDLOCK_READONLY)
-        memset(&This->ddraw->primary_lock, 0, sizeof(This->ddraw->primary_lock));
-    else if (Rect)
-        This->ddraw->primary_lock = *Rect;
-    else
-        SetRect(&This->ddraw->primary_lock, 0, 0, This->surface_desc.dwWidth, This->surface_desc.dwHeight);
+    if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
+    {
+        if (Flags & DDLOCK_READONLY)
+            memset(&This->ddraw->primary_lock, 0, sizeof(This->ddraw->primary_lock));
+        else if (Rect)
+            This->ddraw->primary_lock = *Rect;
+        else
+            SetRect(&This->ddraw->primary_lock, 0, 0, This->surface_desc.dwWidth, This->surface_desc.dwHeight);
+    }
 
     /* Override the memory area. The pitch should be set already. Strangely windows
      * does not set the LPSURFACE flag on locked surfaces !?!.
