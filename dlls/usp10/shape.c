@@ -3213,6 +3213,9 @@ static void ShapeCharGlyphProp_Tibet( HDC hdc, ScriptCache* psc, SCRIPT_ANALYSIS
 static void ShapeCharGlyphProp_BaseIndic( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp, lexical_function lexical)
 {
     int i,k;
+    IndicSyllable *syllables = NULL;
+    int syllable_count = 0;
+    BOOL modern = get_GSUB_Indic2(psa, psc);
 
     for (i = 0; i < cGlyphs; i++)
     {
@@ -3257,7 +3260,25 @@ static void ShapeCharGlyphProp_BaseIndic( HDC hdc, ScriptCache *psc, SCRIPT_ANAL
                     break;
             }
     }
+
+    Indic_ParseSyllables( hdc, psa, psc, pwcChars, cChars, &syllables, &syllable_count, lexical, modern);
+
+    for (i = 0; i < syllable_count; i++)
+    {
+        int j;
+        WORD g = pwLogClust[syllables[i].start];
+        for (j = syllables[i].start+1; j <= syllables[i].end; j++)
+        {
+            if (pwLogClust[j] != g)
+            {
+                pGlyphProp[pwLogClust[j]].sva.fClusterStart = 0;
+                pwLogClust[j] = g;
+            }
+        }
+    }
+
     UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
+    HeapFree(GetProcessHeap(), 0, syllables);
 }
 
 static void ShapeCharGlyphProp_Devanagari( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD *pwLogClust, SCRIPT_CHARPROP *pCharProp, SCRIPT_GLYPHPROP *pGlyphProp )

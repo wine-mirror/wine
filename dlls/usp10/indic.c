@@ -71,7 +71,8 @@ static void debug_output_string(LPCWSTR str, int cChar, lexical_function f)
 static inline BOOL is_matra( int type )
 {
     return (type == lex_Matra_above || type == lex_Matra_below ||
-            type == lex_Matra_pre || type == lex_Matra_post);
+            type == lex_Matra_pre || type == lex_Matra_post ||
+            type == lex_Composed_Vowel);
 }
 
 static inline BOOL is_joiner( int type )
@@ -207,7 +208,7 @@ static INT Indic_process_next_syllable( LPCWSTR input, INT cChar, INT start, INT
     return parse_consonant_syllable(input, cChar, start, main, next, lex);
 }
 
-static BOOL Consonent_is_post_base_form(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPWSTR pwChar, IndicSyllable *s, lexical_function lexical, BOOL modern)
+static BOOL Consonent_is_post_base_form(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPCWSTR pwChar, IndicSyllable *s, lexical_function lexical, BOOL modern)
 {
     if (is_consonant(lexical(pwChar[s->base])) && s->base > s->start && lexical(pwChar[s->base-1]) == lex_Halant)
     {
@@ -224,7 +225,7 @@ static BOOL Consonent_is_post_base_form(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCac
     return FALSE;
 }
 
-static BOOL Consonent_is_below_base_form(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPWSTR pwChar, IndicSyllable *s, lexical_function lexical, BOOL modern)
+static BOOL Consonent_is_below_base_form(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPCWSTR pwChar, IndicSyllable *s, lexical_function lexical, BOOL modern)
 {
     if (is_consonant(lexical(pwChar[s->base])) && s->base > s->start && lexical(pwChar[s->base-1]) == lex_Halant)
     {
@@ -241,7 +242,7 @@ static BOOL Consonent_is_below_base_form(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCa
     return FALSE;
 }
 
-static BOOL Consonent_is_pre_base_form(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPWSTR pwChar, IndicSyllable *s, lexical_function lexical, BOOL modern)
+static BOOL Consonent_is_pre_base_form(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPCWSTR pwChar, IndicSyllable *s, lexical_function lexical, BOOL modern)
 {
     if (is_consonant(lexical(pwChar[s->base])) && s->base > s->start && lexical(pwChar[s->base-1]) == lex_Halant)
     {
@@ -258,14 +259,14 @@ static BOOL Consonent_is_pre_base_form(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCach
     return FALSE;
 }
 
-static BOOL Consonent_is_ralf(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPWSTR pwChar, IndicSyllable *s, lexical_function lexical)
+static BOOL Consonent_is_ralf(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPCWSTR pwChar, IndicSyllable *s, lexical_function lexical)
 {
     if ((lexical(pwChar[s->start])==lex_Ra) && s->end > s->start && lexical(pwChar[s->start+1]) == lex_Halant)
         return (SHAPE_does_GSUB_feature_apply_to_chars(hdc, psa, psc, &pwChar[s->start], 1, 2, "rphf") > 0);
     return FALSE;
 }
 
-static int FindBaseConsonant(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPWSTR input, IndicSyllable *s, lexical_function lex, BOOL modern)
+static int FindBaseConsonant(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPCWSTR input, IndicSyllable *s, lexical_function lex, BOOL modern)
 {
     int i;
     BOOL blwf = FALSE;
@@ -313,7 +314,7 @@ static int FindBaseConsonant(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LP
     return s->base;
 }
 
-void Indic_ReorderCharacters( HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPWSTR input, int cChar, IndicSyllable **syllables, int *syllable_count, lexical_function lex, reorder_function reorder_f, BOOL modern)
+void Indic_ParseSyllables( HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPCWSTR input, const int cChar, IndicSyllable **syllables, int *syllable_count, lexical_function lex, BOOL modern)
 {
     int index = 0;
     int next = 0;
@@ -321,7 +322,7 @@ void Indic_ReorderCharacters( HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, L
 
     *syllable_count = 0;
 
-    if (!lex || ! reorder_f)
+    if (!lex)
     {
         ERR("Failure to have required functions\n");
         return;
@@ -349,7 +350,6 @@ void Indic_ReorderCharacters( HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, L
             (*syllables)[*syllable_count].pref = -1;
             (*syllables)[*syllable_count].end = next-1;
             FindBaseConsonant(hdc, psa, psc, input, &(*syllables)[*syllable_count], lex, modern);
-            reorder_f(input, &(*syllables)[*syllable_count], lex);
             index = next;
             *syllable_count = (*syllable_count)+1;
         }
@@ -360,4 +360,19 @@ void Indic_ReorderCharacters( HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, L
         }
     }
     TRACE("Processed %i of %i characters into %i syllables\n",index,cChar,*syllable_count);
+}
+
+void Indic_ReorderCharacters( HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPWSTR input, int cChar, IndicSyllable **syllables, int *syllable_count, lexical_function lex, reorder_function reorder_f, BOOL modern)
+{
+    int i;
+
+    if (!reorder_f)
+    {
+        ERR("Failure to have required functions\n");
+        return;
+    }
+
+    Indic_ParseSyllables(hdc, psa, psc, input, cChar, syllables, syllable_count, lex, modern);
+    for (i = 0; i < *syllable_count; i++)
+        reorder_f(input, &(*syllables)[i], lex);
 }
