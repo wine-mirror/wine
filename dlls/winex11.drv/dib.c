@@ -3849,7 +3849,6 @@ static XImage *X11DRV_XShmCreateImage( int width, int height, int bpp,
     }
     return image;
 }
-#endif /* HAVE_LIBXXSHM */
 
 static Bool X11DRV_DIB_QueryXShm( Bool *pixmaps )
 {
@@ -3858,17 +3857,16 @@ static Bool X11DRV_DIB_QueryXShm( Bool *pixmaps )
 
     if (!initialized)
     {
-#ifdef HAVE_LIBXXSHM
         int major, minor;
 
         have_xshm = XShmQueryVersion( gdi_display, &major, &minor, &have_xshm_pixmaps );
-#endif
         initialized = TRUE;
     }
 
     *pixmaps = have_xshm_pixmaps;
     return have_xshm;
 }
+#endif /* HAVE_LIBXXSHM */
 
 /***********************************************************************
  *           X11DRV_CreateDIBSection   (X11DRV.@)
