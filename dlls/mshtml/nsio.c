@@ -2492,11 +2492,7 @@ static nsresult NSAPI nsURL_GetFileExtension(nsIURL *iface, nsACString *aFileExt
 
     TRACE("(%p)->(%p)\n", This, aFileExtension);
 
-    if(This->nsurl)
-        return nsIURL_GetFileExtension(This->nsurl, aFileExtension);
-
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    return get_uri_string(This, Uri_PROPERTY_EXTENSION, aFileExtension);
 }
 
 static nsresult NSAPI nsURL_SetFileExtension(nsIURL *iface, const nsACString *aFileExtension)
