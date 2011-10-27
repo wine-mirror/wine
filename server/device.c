@@ -32,6 +32,7 @@
 #include "file.h"
 #include "handle.h"
 #include "request.h"
+#include "process.h"
 
 struct ioctl_call
 {
@@ -510,6 +511,8 @@ DECL_HANDLER(get_next_device_request)
         ioctl = LIST_ENTRY( ptr, struct ioctl_call, mgr_entry );
         reply->code = ioctl->code;
         reply->user_ptr = ioctl->device->user_ptr;
+        reply->client_pid = get_process_id( ioctl->thread->process );
+        reply->client_tid = get_thread_id( ioctl->thread );
         reply->in_size = ioctl->in_size;
         reply->out_size = ioctl->out_size;
         if (ioctl->in_size > get_reply_max_size()) set_error( STATUS_BUFFER_OVERFLOW );

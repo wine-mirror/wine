@@ -3203,6 +3203,8 @@ enum coords_relative
     obj_handle_t next;            /* handle to the next ioctl */
     ioctl_code_t code;            /* ioctl code */
     client_ptr_t user_ptr;        /* opaque ptr for the device */
+    process_id_t client_pid;      /* pid of process calling ioctl */
+    thread_id_t  client_tid;      /* tid of thread calling ioctl */
     data_size_t  in_size;         /* total needed input size */
     data_size_t  out_size;        /* needed output size */
     VARARG(next_data,bytes);      /* input data of the next ioctl */

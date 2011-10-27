@@ -68,6 +68,13 @@ struct IrpInstance
     IRP *irp;
 };
 
+/* tid of the thread running client request */
+static DWORD request_thread;
+
+/* pid/tid of the client thread */
+static DWORD client_tid;
+static DWORD client_pid;
+
 #ifdef __i386__
 #define DEFINE_FASTCALL1_ENTRYPOINT( name ) \
     __ASM_STDCALL_FUNC( name, 4, \
@@ -197,6 +204,8 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
     ULONG in_size = 4096, out_size = 0;
     HANDLE handles[2];
 
+    request_thread = GetCurrentThreadId();
+
     if (!(in_buff = HeapAlloc( GetProcessHeap(), 0, in_size )))
     {
         ERR( "failed to allocate buffer\n" );
@@ -217,11 +226,13 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
             wine_server_set_reply( req, in_buff, in_size );
             if (!(status = wine_server_call( req )))
             {
-                code     = reply->code;
-                ioctl    = reply->next;
-                device   = wine_server_get_ptr( reply->user_ptr );
-                in_size  = reply->in_size;
-                out_size = reply->out_size;
+                code       = reply->code;
+                ioctl      = reply->next;
+                device     = wine_server_get_ptr( reply->user_ptr );
+                client_tid = reply->client_pid;
+                client_pid = reply->client_tid;
+                in_size    = reply->in_size;
+                out_size   = reply->out_size;
             }
             else
             {
@@ -1465,7 +1476,9 @@ NTSTATUS WINAPI PsCreateSystemThread(PHANDLE ThreadHandle, ULONG DesiredAccess,
  */
 HANDLE WINAPI PsGetCurrentProcessId(void)
 {
-    return UlongToHandle(GetCurrentProcessId());  /* FIXME: not quite right... */
+    if (GetCurrentThreadId() == request_thread)
+        return UlongToHandle(client_pid);
+    return UlongToHandle(GetCurrentProcessId());
 }
 
 
@@ -1474,7 +1487,9 @@ HANDLE WINAPI PsGetCurrentProcessId(void)
  */
 HANDLE WINAPI PsGetCurrentThreadId(void)
 {
-    return UlongToHandle(GetCurrentThreadId());  /* FIXME: not quite right... */
+    if (GetCurrentThreadId() == request_thread)
+        return UlongToHandle(client_tid);
+    return UlongToHandle(GetCurrentThreadId());
 }
 
 

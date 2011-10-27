@@ -3731,6 +3731,8 @@ static void dump_get_next_device_request_reply( const struct get_next_device_req
     fprintf( stderr, " next=%04x", req->next );
     dump_ioctl_code( ", code=", &req->code );
     dump_uint64( ", user_ptr=", &req->user_ptr );
+    fprintf( stderr, ", client_pid=%04x", req->client_pid );
+    fprintf( stderr, ", client_tid=%04x", req->client_tid );
     fprintf( stderr, ", in_size=%u", req->in_size );
     fprintf( stderr, ", out_size=%u", req->out_size );
     dump_varargs_bytes( ", next_data=", cur_size );

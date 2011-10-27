@@ -4613,6 +4613,8 @@ struct get_next_device_request_reply
     obj_handle_t next;
     ioctl_code_t code;
     client_ptr_t user_ptr;
+    process_id_t client_pid;
+    thread_id_t  client_tid;
     data_size_t  in_size;
     data_size_t  out_size;
     /* VARARG(next_data,bytes); */
@@ -5637,6 +5639,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 427
+#define SERVER_PROTOCOL_VERSION 428
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
