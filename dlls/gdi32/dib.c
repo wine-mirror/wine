@@ -184,6 +184,7 @@ static BOOL bitmapinfo_from_user_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *
     {
         /* bitfields are always at bmiColors even in larger structures */
         memcpy( dst->bmiColors, info->bmiColors, 3 * sizeof(DWORD) );
+        dst->bmiHeader.biClrUsed = 0;
     }
     else if (colors)
     {
@@ -497,7 +498,7 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
     if (clip) OffsetRgn( clip, dst.x - src.x, dst.y - src.y );
 
     dev = GET_DC_PHYSDEV( dc, pPutImage );
-    memcpy( dst_info, src_info, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
+    copy_bitmapinfo( dst_info, src_info );
     err = dev->funcs->pPutImage( dev, 0, clip, dst_info, &src_bits, &src, &dst, rop );
     if (err == ERROR_BAD_FORMAT)
     {
@@ -523,7 +524,7 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
 
     if (err == ERROR_TRANSFORM_NOT_SUPPORTED)
     {
-        memcpy( src_info, dst_info, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
+        copy_bitmapinfo( src_info, dst_info );
         err = stretch_bits( src_info, &src, dst_info, &dst, &src_bits, GetStretchBltMode( dev->hdc ) );
         if (!err) err = dev->funcs->pPutImage( dev, 0, NULL, dst_info, &src_bits, &src, &dst, rop );
     }
@@ -678,7 +679,7 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
     dst.width  = dst.visrect.right - dst.visrect.left;
     dst.height = dst.visrect.bottom - dst.visrect.top;
 
-    memcpy( dst_info, src_info, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
+    copy_bitmapinfo( dst_info, src_info );
 
     err = funcs->pPutImage( NULL, hbitmap, clip, dst_info, &src_bits, &src, &dst, 0 );
     if (err == ERROR_BAD_FORMAT)
@@ -809,7 +810,7 @@ INT nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWOR
     if (clip) OffsetRgn( clip, dst.x - src.x, dst.y - src.y );
 
     dev = GET_DC_PHYSDEV( dc, pPutImage );
-    memcpy( dst_info, src_info, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
+    copy_bitmapinfo( dst_info, src_info );
     err = dev->funcs->pPutImage( dev, 0, clip, dst_info, &src_bits, &src, &dst, SRCCOPY );
     if (err == ERROR_BAD_FORMAT)
     {

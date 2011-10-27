@@ -245,7 +245,7 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     if (err) return FALSE;
 
     dst_dev = GET_DC_PHYSDEV( dc_dst, pPutImage );
-    memcpy( dst_info, src_info, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
+    copy_bitmapinfo( dst_info, src_info );
     err = dst_dev->funcs->pPutImage( dst_dev, 0, 0, dst_info, &bits, src, dst, rop );
     if (err == ERROR_BAD_FORMAT)
     {
@@ -288,7 +288,7 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     if (err == ERROR_TRANSFORM_NOT_SUPPORTED &&
         ((src->width != dst->width) || (src->height != dst->height)))
     {
-        memcpy( src_info, dst_info, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
+        copy_bitmapinfo( src_info, dst_info );
         err = stretch_bits( src_info, src, dst_info, dst, &bits, GetStretchBltMode( dst_dev->hdc ));
         if (!err) err = dst_dev->funcs->pPutImage( dst_dev, 0, 0, dst_info, &bits, src, dst, rop );
     }
@@ -316,7 +316,7 @@ BOOL nulldrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     if (err) goto done;
 
     dst_dev = GET_DC_PHYSDEV( dc_dst, pBlendImage );
-    memcpy( dst_info, src_info, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
+    copy_bitmapinfo( dst_info, src_info );
     err = dst_dev->funcs->pBlendImage( dst_dev, dst_info, &bits, src, dst, func );
     if (err == ERROR_BAD_FORMAT)
     {
@@ -341,7 +341,7 @@ BOOL nulldrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     if (err == ERROR_TRANSFORM_NOT_SUPPORTED &&
         ((src->width != dst->width) || (src->height != dst->height)))
     {
-        memcpy( src_info, dst_info, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ));
+        copy_bitmapinfo( src_info, dst_info );
         err = stretch_bits( src_info, src, dst_info, dst, &bits, COLORONCOLOR );
         if (!err) err = dst_dev->funcs->pBlendImage( dst_dev, dst_info, &bits, src, dst, func );
     }

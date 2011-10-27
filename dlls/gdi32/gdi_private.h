@@ -482,6 +482,13 @@ static inline int get_dib_num_of_colors( const BITMAPINFO *info )
     return info->bmiHeader.biBitCount > 8 ? 0 : 1 << info->bmiHeader.biBitCount;
 }
 
+static inline void copy_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *src )
+{
+    unsigned int size = FIELD_OFFSET( BITMAPINFO, bmiColors[get_dib_num_of_colors( src )] );
+    if (src->bmiHeader.biCompression == BI_BITFIELDS) size += 3 * sizeof(DWORD);
+    memcpy( dst, src, size );
+}
+
 static inline const struct gdi_dc_funcs *get_bitmap_funcs( const BITMAPOBJ *bitmap )
 {
     if( bitmap->dib ) return &dib_driver;
