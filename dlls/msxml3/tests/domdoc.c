@@ -6995,19 +6995,22 @@ static void test_testTransforms(void)
 
 static void test_Namespaces(void)
 {
+    static const CHAR szNamespacesXML[] =
+        "<?xml version=\"1.0\"?>\n"
+        "<XMI xmi.version=\"1.1\" xmlns:Model=\"http://omg.org/mof.Model/1.3\">"
+        "  <XMI.content>"
+        "    <Model:Package name=\"WinePackage\" />"
+        "  </XMI.content>"
+        "</XMI>";
+
     IXMLDOMDocument *doc;
-    IXMLDOMNode *pNode;
+    IXMLDOMElement *elem;
+    IXMLDOMNode *node;
     IXMLDOMNode *pNode2 = NULL;
     VARIANT_BOOL bSucc;
+    VARIANT var;
     HRESULT hr;
     BSTR str;
-    static  const CHAR szNamespacesXML[] =
-"<?xml version=\"1.0\"?>\n"
-"<XMI xmi.version=\"1.1\" xmlns:Model=\"http://omg.org/mof.Model/1.3\">"
-"  <XMI.content>"
-"    <Model:Package name=\"WinePackage\" />"
-"  </XMI.content>"
-"</XMI>";
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
@@ -7016,11 +7019,11 @@ static void test_Namespaces(void)
     ok(hr == S_OK, "ret %08x\n", hr );
     ok(bSucc == VARIANT_TRUE, "Expected VARIANT_TRUE got VARIANT_FALSE\n");
 
-    hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("//XMI.content"), &pNode );
+    hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("//XMI.content"), &node );
     ok(hr == S_OK, "ret %08x\n", hr );
     if(hr == S_OK)
     {
-        hr = IXMLDOMNode_get_firstChild( pNode, &pNode2 );
+        hr = IXMLDOMNode_get_firstChild( node, &pNode2 );
         ok( hr == S_OK, "ret %08x\n", hr );
         ok( pNode2 != NULL, "pNode2 == NULL\n");
 
@@ -7050,9 +7053,83 @@ static void test_Namespaces(void)
         SysFreeString(str);
 
         IXMLDOMNode_Release(pNode2);
-        IXMLDOMNode_Release(pNode);
+        IXMLDOMNode_Release(node);
     }
 
+    IXMLDOMDocument_Release(doc);
+
+    /* create on element and try to alter namespace after that */
+    doc = create_document(&IID_IXMLDOMDocument);
+    if (!doc) return;
+
+    V_VT(&var) = VT_I2;
+    V_I2(&var) = NODE_ELEMENT;
+
+    hr = IXMLDOMDocument_createNode(doc, var, _bstr_("ns:elem"), _bstr_("ns/uri"), &node);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument_appendChild(doc, node, NULL);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &elem);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = _bstr_("ns/uri2");
+
+    hr = IXMLDOMElement_setAttribute(elem, _bstr_("xmlns:ns"), var);
+    EXPECT_HR(hr, E_INVALIDARG);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = _bstr_("ns/uri");
+
+    hr = IXMLDOMElement_setAttribute(elem, _bstr_("xmlns:ns"), var);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMElement_get_xml(elem, &str);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(str, _bstr_("<ns:elem xmlns:ns=\"ns/uri\"/>")), "got element %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    IXMLDOMElement_Release(elem);
+    IXMLDOMDocument_Release(doc);
+
+    /* create on element and try to alter namespace after that */
+    doc = create_document_version(60, &IID_IXMLDOMDocument);
+    if (!doc) return;
+
+    V_VT(&var) = VT_I2;
+    V_I2(&var) = NODE_ELEMENT;
+
+    hr = IXMLDOMDocument_createNode(doc, var, _bstr_("ns:elem"), _bstr_("ns/uri"), &node);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument_appendChild(doc, node, NULL);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &elem);
+    EXPECT_HR(hr, S_OK);
+
+    /* try same prefix, different uri */
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = _bstr_("ns/uri2");
+
+    hr = IXMLDOMElement_setAttribute(elem, _bstr_("xmlns:ns"), var);
+    EXPECT_HR(hr, E_INVALIDARG);
+
+    /* try same prefix and uri */
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = _bstr_("ns/uri");
+
+    hr = IXMLDOMElement_setAttribute(elem, _bstr_("xmlns:ns"), var);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMElement_get_xml(elem, &str);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(str, _bstr_("<ns:elem xmlns:ns=\"ns/uri\"/>")), "got element %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    IXMLDOMElement_Release(elem);
     IXMLDOMDocument_Release(doc);
 
     free_bstrs();

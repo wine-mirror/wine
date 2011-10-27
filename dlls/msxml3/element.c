@@ -1097,8 +1097,8 @@ static HRESULT WINAPI domelem_setAttribute(
     BSTR name, VARIANT value)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
+    xmlChar *xml_name, *xml_value, *local, *prefix;
     xmlNodePtr element;
-    xmlChar *xml_name, *xml_value;
     HRESULT hr;
     VARIANT var;
 
@@ -1119,7 +1119,23 @@ static HRESULT WINAPI domelem_setAttribute(
     xml_name = xmlchar_from_wchar( name );
     xml_value = xmlchar_from_wchar( V_BSTR(&var) );
 
-    if(!xmlSetNsProp(element, NULL,  xml_name, xml_value))
+    if ((local = xmlSplitQName2(xml_name, &prefix)))
+    {
+        static const xmlChar* xmlnsA = (const xmlChar*)"xmlns";
+        xmlNsPtr ns = NULL;
+
+        /* it's not allowed to modify existing namespace definition */
+        if (xmlStrEqual(prefix, xmlnsA))
+            ns = xmlSearchNs(element->doc, element, local);
+
+        xmlFree(prefix);
+        xmlFree(local);
+
+        if (ns)
+            return xmlStrEqual(ns->href, xml_value) ? S_OK : E_INVALIDARG;
+    }
+
+    if (!xmlSetNsProp(element, NULL, xml_name, xml_value))
         hr = E_FAIL;
 
     heap_free(xml_value);
