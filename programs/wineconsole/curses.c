@@ -985,6 +985,7 @@ static void WCCURSES_DeleteBackend(struct inner_data* data)
         WaitForSingleObject( PRIVATE(data)->input_thread, INFINITE );
         CloseHandle( PRIVATE(data)->input_thread );
     }
+    PRIVATE(data)->lock.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&PRIVATE(data)->lock);
 
     delwin(PRIVATE(data)->pad);
@@ -1103,6 +1104,7 @@ enum init_return WCCURSES_InitBackend(struct inner_data* data)
     }
 #endif
     InitializeCriticalSection(&PRIVATE(data)->lock);
+    PRIVATE(data)->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": curses");
 
     return init_success;
 }
