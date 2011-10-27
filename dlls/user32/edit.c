@@ -1069,11 +1069,16 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
 		EDIT_UpdateUniscribeData(es, NULL, 0);
 		if (es->x_offset)
 		{
-			if (es->x_offset>= get_text_length(es))
+			if (es->x_offset >= get_text_length(es))
 			{
-				const SIZE *size;
-				size = ScriptString_pSize(es->ssa);
-				xoff = size->cx;
+				if (es->ssa)
+				{
+					const SIZE *size;
+					size = ScriptString_pSize(es->ssa);
+					xoff = size->cx;
+				}
+				else
+					xoff = 0;
 			}
 			ScriptStringCPtoX(es->ssa, es->x_offset, FALSE, &xoff);
 		}
@@ -1081,9 +1086,14 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
 		{
 			if (index >= get_text_length(es))
 			{
-				const SIZE *size;
-				size = ScriptString_pSize(es->ssa);
-				xi = size->cx;
+				if (es->ssa)
+				{
+					const SIZE *size;
+					size = ScriptString_pSize(es->ssa);
+					xi = size->cx;
+				}
+				else
+					xi = 0;
 			}
 			else
 				ScriptStringCPtoX(es->ssa, index, FALSE, &xi);
