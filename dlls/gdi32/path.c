@@ -225,11 +225,6 @@ static BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags)
     pPath->pPoints[pPath->numEntriesUsed]=*pPoint;
     pPath->pFlags[pPath->numEntriesUsed]=flags;
 
-    /* If this is PT_CLOSEFIGURE, we have to start a new stroke next time */
-    if((flags & PT_CLOSEFIGURE) == PT_CLOSEFIGURE)
-        pPath->newStroke=TRUE;
-
-    /* Increment entry count */
     pPath->numEntriesUsed++;
 
     return TRUE;
@@ -256,9 +251,13 @@ static BYTE *add_log_points( struct path_physdev *physdev, const POINT *points, 
 static BOOL start_new_stroke( struct path_physdev *physdev )
 {
     POINT pos;
+    GdiPath *path = physdev->path;
 
-    if (!physdev->path->newStroke) return TRUE;
-    physdev->path->newStroke = FALSE;
+    if (!path->newStroke && path->numEntriesUsed &&
+        !(path->pFlags[path->numEntriesUsed - 1] & PT_CLOSEFIGURE))
+        return TRUE;
+
+    path->newStroke = FALSE;
     GetCurrentPositionEx( physdev->dev.hdc, &pos );
     return add_log_points( physdev, &pos, 1, PT_MOVETO ) != NULL;
 }
@@ -1359,7 +1358,6 @@ static BOOL pathdrv_Polygon( PHYSDEV dev, const POINT *pts, INT cbPoints )
     if (!type) return FALSE;
     if (cbPoints) type[0] = PT_MOVETO;
     if (cbPoints > 1) type[cbPoints - 1] = PT_LINETO | PT_CLOSEFIGURE;
-    physdev->path->newStroke = TRUE;
     return TRUE;
 }
 
@@ -1381,7 +1379,6 @@ static BOOL pathdrv_PolyPolygon( PHYSDEV dev, const POINT* pts, const INT* count
         add_log_points( physdev, pts, 1, PT_LINETO | PT_CLOSEFIGURE );
         pts += counts[poly];
     }
-    physdev->path->newStroke = TRUE;
     return TRUE;
 }
 
@@ -2152,11 +2149,7 @@ BOOL nulldrv_CloseFigure( PHYSDEV dev )
     }
     /* Set PT_CLOSEFIGURE on the last entry and start a new stroke */
     /* It is not necessary to draw a line, PT_CLOSEFIGURE is a virtual closing line itself */
-    if (dc->path.numEntriesUsed)
-    {
-        dc->path.pFlags[dc->path.numEntriesUsed - 1] |= PT_CLOSEFIGURE;
-        dc->path.newStroke = TRUE;
-    }
+    if (dc->path.numEntriesUsed) dc->path.pFlags[dc->path.numEntriesUsed - 1] |= PT_CLOSEFIGURE;
     return TRUE;
 }
 
