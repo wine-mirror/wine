@@ -42,9 +42,10 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
-WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #ifdef SONAME_LIBGL
+
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #undef APIENTRY
 #undef CALLBACK
