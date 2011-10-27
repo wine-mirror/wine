@@ -405,6 +405,7 @@ static DWORD scmdatabase_create(struct scmdatabase **db)
     list_init(&(*db)->services);
 
     InitializeCriticalSection(&(*db)->cs);
+    (*db)->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": scmdatabase");
 
     err = RegCreateKeyExW(HKEY_LOCAL_MACHINE, SZ_SERVICES_KEY, 0, NULL,
                           REG_OPTION_NON_VOLATILE, MAXIMUM_ALLOWED, NULL,
@@ -418,6 +419,7 @@ static DWORD scmdatabase_create(struct scmdatabase **db)
 static void scmdatabase_destroy(struct scmdatabase *db)
 {
     RegCloseKey(db->root_key);
+    db->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&db->cs);
     HeapFree(GetProcessHeap(), 0, db);
 }
