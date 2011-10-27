@@ -5649,8 +5649,10 @@ static UINT ITERATE_StartService(MSIRECORD *rec, LPVOID param)
     SC_HANDLE scm = NULL, service = NULL;
     LPCWSTR component, *vector = NULL;
     LPWSTR name, args, display_name = NULL;
-    DWORD event, numargs, len;
+    DWORD event, numargs, len, wait, dummy;
     UINT r = ERROR_FUNCTION_FAILED;
+    SERVICE_STATUS_PROCESS status;
+    ULONGLONG start_time;
 
     component = MSI_RecordGetString(rec, 6);
     comp = msi_get_loaded_component(package, component);
@@ -5667,6 +5669,7 @@ static UINT ITERATE_StartService(MSIRECORD *rec, LPVOID param)
     deformat_string(package, MSI_RecordGetString(rec, 2), &name);
     deformat_string(package, MSI_RecordGetString(rec, 4), &args);
     event = MSI_RecordGetInteger(rec, 3);
+    wait = MSI_RecordGetInteger(rec, 5);
 
     if (!(event & msidbServiceControlEventStart))
     {
@@ -5689,7 +5692,7 @@ static UINT ITERATE_StartService(MSIRECORD *rec, LPVOID param)
             GetServiceDisplayNameW( scm, name, display_name, &len );
     }
 
-    service = OpenServiceW(scm, name, SERVICE_START);
+    service = OpenServiceW(scm, name, SERVICE_START|SERVICE_QUERY_STATUS);
     if (!service)
     {
         ERR("Failed to open service %s (%u)\n", debugstr_w(name), GetLastError());
@@ -5706,6 +5709,33 @@ static UINT ITERATE_StartService(MSIRECORD *rec, LPVOID param)
     }
 
     r = ERROR_SUCCESS;
+    if (wait)
+    {
+        /* wait for at most 30 seconds for the service to be up and running */
+        if (!QueryServiceStatusEx(service, SC_STATUS_PROCESS_INFO,
+            (BYTE *)&status, sizeof(SERVICE_STATUS_PROCESS), &dummy))
+        {
+            TRACE("failed to query service status (%u)\n", GetLastError());
+            goto done;
+        }
+        start_time = GetTickCount64();
+        while (status.dwCurrentState == SERVICE_START_PENDING)
+        {
+            if (GetTickCount64() - start_time > 30000) break;
+            Sleep(1000);
+            if (!QueryServiceStatusEx(service, SC_STATUS_PROCESS_INFO,
+                (BYTE *)&status, sizeof(SERVICE_STATUS_PROCESS), &dummy))
+            {
+                TRACE("failed to query service status (%u)\n", GetLastError());
+                goto done;
+            }
+        }
+        if (status.dwCurrentState != SERVICE_RUNNING)
+        {
+            WARN("service failed to start %u\n", status.dwCurrentState);
+            r = ERROR_FUNCTION_FAILED;
+        }
+    }
 
 done:
     uirow = MSI_CreateRecord( 2 );
