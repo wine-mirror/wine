@@ -4802,7 +4802,7 @@ static void test_start_services(void)
     ret = StartService(service, 0, NULL);
     if (!ret && (error = GetLastError()) != ERROR_SERVICE_ALREADY_RUNNING)
     {
-        skip("Terminal service not available, skipping test\n");
+        skip("Spooler service not available, skipping test\n");
         CloseServiceHandle(service);
         CloseServiceHandle(scm);
         return;
