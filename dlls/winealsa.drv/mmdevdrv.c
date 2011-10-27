@@ -142,6 +142,13 @@ typedef struct _SessionMgr {
 static HANDLE g_timer_q;
 
 static CRITICAL_SECTION g_sessions_lock;
+static CRITICAL_SECTION_DEBUG g_sessions_lock_debug =
+{
+    0, 0, &g_sessions_lock,
+    { &g_sessions_lock_debug.ProcessLocksList, &g_sessions_lock_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": g_sessions_lock") }
+};
+static CRITICAL_SECTION g_sessions_lock = { &g_sessions_lock_debug, -1, 0, 0, 0, 0 };
 static struct list g_sessions = LIST_INIT(g_sessions);
 
 static const WCHAR defaultW[] = {'d','e','f','a','u','l','t',0};
@@ -216,8 +223,6 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
         g_timer_q = CreateTimerQueue();
         if(!g_timer_q)
             return FALSE;
-
-        InitializeCriticalSection(&g_sessions_lock);
     }
 
     return TRUE;
@@ -586,6 +591,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(const char *key, IMMDevice *dev,
     }
 
     InitializeCriticalSection(&This->lock);
+    This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ACImpl.lock");
 
     This->parent = dev;
     IMMDevice_AddRef(This->parent);
@@ -632,6 +638,7 @@ static ULONG WINAPI AudioClient_Release(IAudioClient *iface)
     if(!ref){
         IAudioClient_Stop(iface);
         IMMDevice_Release(This->parent);
+        This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
         snd_pcm_drop(This->pcm_handle);
         snd_pcm_close(This->pcm_handle);
@@ -744,6 +751,7 @@ static AudioSession *create_session(const GUID *guid, IMMDevice *device,
     list_add_head(&g_sessions, &ret->entry);
 
     InitializeCriticalSection(&ret->lock);
+    ret->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": AudioSession.lock");
 
     session_init_vols(ret, num_channels);
 
