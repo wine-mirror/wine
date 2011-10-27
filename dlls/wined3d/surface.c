@@ -2412,14 +2412,14 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
  * correct texture. */
 /* Context activation is done by the caller. */
 static void surface_upload_data(const struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
-        const struct wined3d_format *format, const RECT *src_rect, UINT src_w, const POINT *dst_point,
+        const struct wined3d_format *format, const RECT *src_rect, UINT src_pitch, const POINT *dst_point,
         BOOL srgb, const struct wined3d_bo_address *data)
 {
     UINT update_w = src_rect->right - src_rect->left;
     UINT update_h = src_rect->bottom - src_rect->top;
 
-    TRACE("surface %p, gl_info %p, format %s, src_rect %s, src_w %u, dst_point %p, srgb %#x, data {%#x:%p}.\n",
-            surface, gl_info, debug_d3dformat(format->id), wine_dbgstr_rect(src_rect), src_w,
+    TRACE("surface %p, gl_info %p, format %s, src_rect %s, src_pitch %u, dst_point %s, srgb %#x, data {%#x:%p}.\n",
+            surface, gl_info, debug_d3dformat(format->id), wine_dbgstr_rect(src_rect), src_pitch,
             wine_dbgstr_point(dst_point), srgb, data->buffer_object, data->addr);
 
     if (format->heightscale != 1.0f && format->heightscale != 0.0f)
@@ -2437,7 +2437,6 @@ static void surface_upload_data(const struct wined3d_surface *surface, const str
     {
         UINT row_length = wined3d_format_calculate_size(format, 1, update_w, 1);
         UINT row_count = (update_h + format->block_height - 1) / format->block_height;
-        UINT src_pitch = wined3d_format_calculate_size(format, 1, src_w, 1);
         const BYTE *addr = data->addr;
         GLenum internal;
 
@@ -2480,14 +2479,14 @@ static void surface_upload_data(const struct wined3d_surface *surface, const str
     {
         const BYTE *addr = data->addr;
 
-        addr += src_rect->top * src_w * format->byte_count;
+        addr += src_rect->top * src_pitch;
         addr += src_rect->left * format->byte_count;
 
         TRACE("glTexSubImage2D, target %#x, level %d, x %d, y %d, w %d, h %d, format %#x, type %#x, addr %p.\n",
                 surface->texture_target, surface->texture_level, dst_point->x, dst_point->y,
                 update_w, update_h, format->glFormat, format->glType, addr);
 
-        glPixelStorei(GL_UNPACK_ROW_LENGTH, src_w);
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, src_pitch / format->byte_count);
         glTexSubImage2D(surface->texture_target, surface->texture_level, dst_point->x, dst_point->y,
                 update_w, update_h, format->glFormat, format->glType, addr);
         glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
@@ -2530,6 +2529,7 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
     CONVERT_TYPES convert;
     UINT dst_w, dst_h;
     UINT src_w, src_h;
+    UINT src_pitch;
     POINT p;
     RECT r;
 
@@ -2620,8 +2620,9 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
 
     data.buffer_object = src_surface->pbo;
     data.addr = src_surface->resource.allocatedMemory;
+    src_pitch = wined3d_surface_get_pitch(src_surface);
 
-    surface_upload_data(dst_surface, gl_info, src_format, src_rect, src_w, dst_point, FALSE, &data);
+    surface_upload_data(dst_surface, gl_info, src_format, src_rect, src_pitch, dst_point, FALSE, &data);
 
     invalidate_active_texture(dst_surface->resource.device, context);
 
@@ -6177,7 +6178,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
 
     data.buffer_object = surface->flags & SFLAG_PBO ? surface->pbo : 0;
     data.addr = mem;
-    surface_upload_data(surface, gl_info, &format, &src_rect, width, &dst_point, srgb, &data);
+    surface_upload_data(surface, gl_info, &format, &src_rect, src_pitch, &dst_point, srgb, &data);
 
     context_release(context);
 
