@@ -6499,6 +6499,20 @@ fi
     then
         SECURITYLIB="-framework Security -framework CoreFoundation"
 
+                ac_save_LIBS="$LIBS"
+        LIBS="$LIBS $SECURITYLIB"
+        for ac_func in SSLCopyPeerCertificates
+do :
+  ac_fn_c_check_func "$LINENO" "SSLCopyPeerCertificates" "ac_cv_func_SSLCopyPeerCertificates"
+if test "x$ac_cv_func_SSLCopyPeerCertificates" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SSLCOPYPEERCERTIFICATES 1
+_ACEOF
+
+fi
+done
+
+        LIBS="$ac_save_LIBS"
         with_gnutls=${with_gnutls:-no}
     fi
     if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes" -a "$ac_cv_header_AudioUnit_AudioUnit_h" = "yes"

@@ -720,6 +720,11 @@ case $host_os in
     if test "$ac_cv_header_Security_Security_h" = "yes"
     then
         AC_SUBST(SECURITYLIB,"-framework Security -framework CoreFoundation")
+        dnl Check for the SSLCopyPeerCertificates function
+        ac_save_LIBS="$LIBS"
+        LIBS="$LIBS $SECURITYLIB"
+        AC_CHECK_FUNCS(SSLCopyPeerCertificates)
+        LIBS="$ac_save_LIBS"
         with_gnutls=${with_gnutls:-no}
     fi
     if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes" -a "$ac_cv_header_AudioUnit_AudioUnit_h" = "yes"

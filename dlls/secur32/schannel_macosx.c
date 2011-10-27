@@ -670,6 +670,13 @@ SECURITY_STATUS schan_imp_get_connection_info(schan_imp_session session,
     return SEC_E_OK;
 }
 
+#ifndef HAVE_SSLCOPYPEERCERTIFICATES
+static void schan_imp_cf_release(const void *arg, void *ctx)
+{
+    CFRelease(arg);
+}
+#endif
+
 SECURITY_STATUS schan_imp_get_session_peer_certificate(schan_imp_session session,
                                                        PCCERT_CONTEXT *cert)
 {
@@ -680,7 +687,11 @@ SECURITY_STATUS schan_imp_get_session_peer_certificate(schan_imp_session session
 
     TRACE("(%p/%p, %p)\n", s, s->context, cert);
 
+#ifdef HAVE_SSLCOPYPEERCERTIFICATES
     status = SSLCopyPeerCertificates(s->context, &certs);
+#else
+    status = SSLGetPeerCertificates(s->context, &certs);
+#endif
     if (status == noErr && certs)
     {
         SecCertificateRef mac_cert;
@@ -702,6 +713,11 @@ SECURITY_STATUS schan_imp_get_session_peer_certificate(schan_imp_session session
         }
         else
             WARN("Couldn't extract certificate data\n");
+#ifndef HAVE_SSLCOPYPEERCERTIFICATES
+        /* This is why SSLGetPeerCertificates was deprecated */
+        CFArrayApplyFunction(certs, CFRangeMake(0, CFArrayGetCount(certs)),
+                             schan_imp_cf_release, NULL);
+#endif
         CFRelease(certs);
     }
     else
