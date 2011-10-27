@@ -36,7 +36,7 @@ void wined3d_event_query_destroy(struct wined3d_event_query *query)
 }
 
 static enum wined3d_event_query_result wined3d_event_query_test(const struct wined3d_event_query *query,
-        struct wined3d_device *device)
+        const struct wined3d_device *device)
 {
     struct wined3d_context *context;
     const struct wined3d_gl_info *gl_info;
