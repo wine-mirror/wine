@@ -305,25 +305,7 @@ static void set_reg_device(HWND hDlg, int dlgitem, const WCHAR *key_name)
 
 static void test_sound(void)
 {
-    BOOL (WINAPI *pPlaySoundW)(const WCHAR *, HMODULE, DWORD);
-    HMODULE winmm;
-
-    static const WCHAR winmmW[] = {'w','i','n','m','m','.','d','l','l',0};
-
-    winmm = LoadLibraryW(winmmW);
-    if(!winmm){
-        WINE_ERR("LoadLibrary failed: %u\n", GetLastError());
-        return;
-    }
-
-    pPlaySoundW = (void*)GetProcAddress(winmm, "PlaySoundW");
-    if(!pPlaySoundW){
-        WINE_ERR("GetProcAddress failed: %u\n", GetLastError());
-        FreeLibrary(winmm);
-        return;
-    }
-
-    if(!pPlaySoundW(MAKEINTRESOURCEW(IDW_TESTSOUND), NULL, SND_RESOURCE | SND_SYNC)){
+    if(!PlaySoundW(MAKEINTRESOURCEW(IDW_TESTSOUND), NULL, SND_RESOURCE | SND_SYNC)){
         WCHAR error_str[256], title_str[256];
 
         LoadStringW(GetModuleHandle(NULL), IDS_AUDIO_TEST_FAILED,
@@ -333,8 +315,6 @@ static void test_sound(void)
 
         MessageBoxW(NULL, error_str, title_str, MB_OK | MB_ICONERROR);
     }
-
-    FreeLibrary(winmm);
 }
 
 INT_PTR CALLBACK
