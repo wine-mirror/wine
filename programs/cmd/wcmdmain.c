@@ -278,14 +278,12 @@ static void WCMD_output_asis_handle (DWORD std_handle, const WCHAR *message) {
         ptr++;
       };
       if (*ptr == '\n') ptr++;
-      WCMD_output_asis_len(message, (ptr) ? ptr - message : strlenW(message), handle);
-      if (ptr) {
-        numChars = 0;
-        if (++line_count >= max_height - 1) {
-          line_count = 0;
-          WCMD_output_asis_len(pagedMessage, strlenW(pagedMessage), handle);
-          WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string)/sizeof(WCHAR), &count);
-        }
+      WCMD_output_asis_len(message, ptr - message, handle);
+      numChars = 0;
+      if (++line_count >= max_height - 1) {
+        line_count = 0;
+        WCMD_output_asis_len(pagedMessage, strlenW(pagedMessage), handle);
+        WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string)/sizeof(WCHAR), &count);
       }
     } while (((message = ptr) != NULL) && (*ptr));
   } else {
