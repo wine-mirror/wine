@@ -452,7 +452,7 @@ static INT PSDRV_GetDeviceCaps( PHYSDEV dev, INT cap )
     case DESKTOPVERTRES:
         return physDev->vertRes;
     case BITSPIXEL:
-        return (physDev->pi->ppd->ColorDevice != CD_False) ? 8 : 1;
+        return (physDev->pi->ppd->ColorDevice != CD_False) ? 32 : 1;
     case PLANES:
         return 1;
     case NUMBRUSHES:
@@ -464,7 +464,7 @@ static INT PSDRV_GetDeviceCaps( PHYSDEV dev, INT cap )
     case NUMFONTS:
         return 39;
     case NUMCOLORS:
-        return (physDev->pi->ppd->ColorDevice != CD_False) ? 256 : -1;
+        return -1;
     case PDEVICESIZE:
         return sizeof(PSDRV_PDEVICE);
     case CURVECAPS:
