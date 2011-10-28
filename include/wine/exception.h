@@ -69,6 +69,10 @@ extern "C" {
  * -- AJ
  */
 
+#ifndef __GNUC__
+#define __attribute__(x) /* nothing */
+#endif
+
 /* Define this if you want to use your compiler built-in __try/__except support.
  * This is only useful when compiling to a native Windows binary, as the built-in
  * compiler exceptions will most certainly not work under Winelib.
@@ -83,10 +87,6 @@ extern "C" {
 #define __EXCEPT_ALL __except(EXCEPTION_EXECUTE_HANDLER)
 
 #else  /* USE_COMPILER_EXCEPTIONS */
-
-#ifndef __GNUC__
-#define __attribute__(x) /* nothing */
-#endif
 
 #if defined(__MINGW32__) || defined(__CYGWIN__)
 #define sigjmp_buf jmp_buf

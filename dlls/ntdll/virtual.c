@@ -1651,7 +1651,7 @@ BOOL virtual_check_buffer_for_read( const void *ptr, SIZE_T size )
     __TRY
     {
         volatile const char *p = ptr;
-        char dummy;
+        char dummy __attribute__((unused));
         SIZE_T count = size;
 
         while (count > page_size)

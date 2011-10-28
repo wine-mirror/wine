@@ -650,7 +650,7 @@ BOOL WINAPI IsBadReadPtr( LPCVOID ptr, UINT size )
     __TRY
     {
         volatile const char *p = ptr;
-        char dummy;
+        char dummy __attribute__((unused));
         UINT count = size;
 
         while (count > page_size)
