@@ -804,6 +804,16 @@ BOOL WINAPI SelectClipPath(HDC hdc, INT iMode)
 
 
 /***********************************************************************
+ *           pathdrv_BeginPath
+ */
+static BOOL pathdrv_BeginPath( PHYSDEV dev )
+{
+    /* path already open, nothing to do */
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           pathdrv_AbortPath
  */
 static BOOL pathdrv_AbortPath( PHYSDEV dev )
@@ -1588,6 +1598,21 @@ static BOOL pathdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const REC
 }
 
 
+/*************************************************************
+ *           pathdrv_CloseFigure
+ */
+static BOOL pathdrv_CloseFigure( PHYSDEV dev )
+{
+    struct path_physdev *physdev = get_path_physdev( dev );
+
+    /* Set PT_CLOSEFIGURE on the last entry and start a new stroke */
+    /* It is not necessary to draw a line, PT_CLOSEFIGURE is a virtual closing line itself */
+    if (physdev->path->numEntriesUsed)
+        physdev->path->pFlags[physdev->path->numEntriesUsed - 1] |= PT_CLOSEFIGURE;
+    return TRUE;
+}
+
+
 /*******************************************************************
  *      FlattenPath [GDI32.@]
  *
@@ -2113,14 +2138,10 @@ BOOL nulldrv_BeginPath( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
 
-    /* If path is already open, do nothing */
-    if (dc->path.state != PATH_Open)
-    {
-        if (!path_driver.pCreateDC( &dc->physDev, NULL, NULL, NULL, NULL )) return FALSE;
-        PATH_EmptyPath(&dc->path);
-        dc->path.newStroke = TRUE;
-        dc->path.state = PATH_Open;
-    }
+    if (!path_driver.pCreateDC( &dc->physDev, NULL, NULL, NULL, NULL )) return FALSE;
+    PATH_EmptyPath(&dc->path);
+    dc->path.newStroke = TRUE;
+    dc->path.state = PATH_Open;
     return TRUE;
 }
 
@@ -2140,17 +2161,8 @@ BOOL nulldrv_AbortPath( PHYSDEV dev )
 
 BOOL nulldrv_CloseFigure( PHYSDEV dev )
 {
-    DC *dc = get_nulldrv_dc( dev );
-
-    if (dc->path.state != PATH_Open)
-    {
-        SetLastError( ERROR_CAN_NOT_COMPLETE );
-        return FALSE;
-    }
-    /* Set PT_CLOSEFIGURE on the last entry and start a new stroke */
-    /* It is not necessary to draw a line, PT_CLOSEFIGURE is a virtual closing line itself */
-    if (dc->path.numEntriesUsed) dc->path.pFlags[dc->path.numEntriesUsed - 1] |= PT_CLOSEFIGURE;
-    return TRUE;
+    SetLastError( ERROR_CAN_NOT_COMPLETE );
+    return FALSE;
 }
 
 BOOL nulldrv_SelectClipPath( PHYSDEV dev, INT mode )
@@ -2248,11 +2260,11 @@ const struct gdi_dc_funcs path_driver =
     pathdrv_AngleArc,                   /* pAngleArc */
     pathdrv_Arc,                        /* pArc */
     pathdrv_ArcTo,                      /* pArcTo */
-    NULL,                               /* pBeginPath */
+    pathdrv_BeginPath,                  /* pBeginPath */
     NULL,                               /* pBlendImage */
     NULL,                               /* pChoosePixelFormat */
     pathdrv_Chord,                      /* pChord */
-    NULL,                               /* pCloseFigure */
+    pathdrv_CloseFigure,                /* pCloseFigure */
     NULL,                               /* pCreateBitmap */
     NULL,                               /* pCreateCompatibleDC */
     pathdrv_CreateDC,                   /* pCreateDC */
