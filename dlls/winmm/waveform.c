@@ -1247,7 +1247,7 @@ static WAVEHDR *WOD_MarkDoneHeaders(WINMM_Device *device)
         return NULL;
     }
 
-    clock_frames = (clock_pos / (double)clock_freq) * device->samples_per_sec;
+    clock_frames = (clock_pos * device->samples_per_sec) / clock_freq;
 
     nloops = device->loop_counter;
     while(queue &&
