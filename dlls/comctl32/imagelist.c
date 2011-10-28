@@ -1226,6 +1226,14 @@ static BOOL alpha_blend_image( HIMAGELIST himl, HDC dest_dc, int dest_x, int des
         /* generate alpha channel from the mask */
         info->bmiHeader.biBitCount = 1;
         info->bmiHeader.biSizeImage = width_bytes * cy;
+        info->bmiColors[0].rgbRed      = 0;
+        info->bmiColors[0].rgbGreen    = 0;
+        info->bmiColors[0].rgbBlue     = 0;
+        info->bmiColors[0].rgbReserved = 0;
+        info->bmiColors[1].rgbRed      = 0xff;
+        info->bmiColors[1].rgbGreen    = 0xff;
+        info->bmiColors[1].rgbBlue     = 0xff;
+        info->bmiColors[1].rgbReserved = 0;
         if (!(mask = CreateDIBSection( himl->hdcMask, info, DIB_RGB_COLORS, &mask_bits, 0, 0 )))
             goto done;
         SelectObject( hdc, mask );
