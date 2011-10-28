@@ -1436,7 +1436,7 @@ if exist foo.cmd (
 
 echo ------------ Testing setlocal/endlocal ------------
 call :setError 0
-rem Note: setlocal EnableDelayedExtension already tested in the variable delayed expansion test section
+rem Note: setlocal EnableDelayedExpansion already tested in the variable delayed expansion test section
 mkdir foobar & cd foobar
 echo ...enable/disable extensions
 setlocal DisableEXTensions
