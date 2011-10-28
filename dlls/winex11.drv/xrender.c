@@ -952,11 +952,18 @@ static int GetCacheEntry( HDC hdc, LFANDSIZE *plfsz )
 #ifdef SONAME_LIBFONTCONFIG
         if (fontconfig_installed)
         {
-            FcPattern *match, *pattern = pFcPatternCreate();
+            FcPattern *match, *pattern;
             FcResult result;
             char family[LF_FACESIZE * 4];
 
+#if defined(__i386__) && defined(__GNUC__)
+            /* fontconfig generates floating point exceptions, mask them */
+            WORD cw, default_cw = 0x37f;
+            __asm__ __volatile__("fnstcw %0; fldcw %1" : "=m" (cw) : "m" (default_cw));
+#endif
+
             WideCharToMultiByte( CP_UTF8, 0, plfsz->lf.lfFaceName, -1, family, sizeof(family), NULL, NULL );
+            pattern = pFcPatternCreate();
             pFcPatternAddString( pattern, FC_FAMILY, (FcChar8 *)family );
             if (plfsz->lf.lfWeight != FW_DONTCARE)
             {
@@ -1007,6 +1014,10 @@ static int GetCacheEntry( HDC hdc, LFANDSIZE *plfsz )
                 pFcPatternDestroy( match );
             }
             pFcPatternDestroy( pattern );
+
+#if defined(__i386__) && defined(__GNUC__)
+            __asm__ __volatile__("fnclex; fldcw %0" : : "m" (cw));
+#endif
         }
 #endif  /* SONAME_LIBFONTCONFIG */
 
