@@ -680,7 +680,7 @@ BOOL PSDRV_WriteRGBQUAD(PHYSDEV dev, const RGBQUAD *rgb, int number)
     int i;
 
     ptr = buf;
-    for(i = 0; i < number; i++)
+    for(i = 0; i < number; i++, rgb++)
         ptr += sprintf(ptr, "%02x%02x%02x%c", rgb->rgbRed, rgb->rgbGreen, rgb->rgbBlue,
                        ((i & 0x7) == 0x7) || (i == number - 1) ? '\n' : ' ');
 
