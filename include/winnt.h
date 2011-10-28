@@ -3412,7 +3412,7 @@ typedef struct _IMAGE_RELOCATION
 #define IMAGE_REL_PPC_BRNTAKEN          0x0400
 #define IMAGE_REL_PPC_TOCDEFN           0x0800
 
-/* SH3 ? relocation type */
+/* SH3 relocation types */
 #define IMAGE_REL_SH3_ABSOLUTE          0x0000
 #define IMAGE_REL_SH3_DIRECT16          0x0001
 #define IMAGE_REL_SH3_DIRECT          0x0002
@@ -3433,7 +3433,7 @@ typedef struct _IMAGE_RELOCATION
 #define IMAGE_REL_SH3_GPREL4_LONG       0x0011
 #define IMAGE_REL_SH3_TOKEN             0x0012
 
-/* ARM (Archimedes?) relocation types */
+/* ARM relocation types */
 #define IMAGE_REL_ARM_ABSOLUTE		0x0000
 #define IMAGE_REL_ARM_ADDR		0x0001
 #define IMAGE_REL_ARM_ADDR32NB		0x0002
