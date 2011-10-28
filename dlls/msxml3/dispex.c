@@ -658,4 +658,5 @@ void init_dispex(DispatchEx *dispex, IUnknown *outer, dispex_static_data_t *data
     dispex->IDispatchEx_iface.lpVtbl = &DispatchExVtbl;
     dispex->outer = outer;
     dispex->data = data;
+    dispex->dynamic_data = NULL;
 }
