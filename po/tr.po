@@ -2618,7 +2618,7 @@ msgstr ""
 
 #: winerror.mc:281
 #, fuzzy
-msgid "Print cancelled\n"
+msgid "Print canceled\n"
 msgstr "Kullanıcı İptal Etti"
 
 #: winerror.mc:286
@@ -3125,7 +3125,7 @@ msgstr "Kullanılabilir değil; "
 
 #: winerror.mc:886
 #, fuzzy
-msgid "Session cancelled\n"
+msgid "Session canceled\n"
 msgstr "Kullanıcı İptal Etti"
 
 #: winerror.mc:891
@@ -3857,8 +3857,9 @@ msgid "No network\n"
 msgstr ""
 
 #: winerror.mc:1746
-msgid "Operation cancelled by user\n"
-msgstr ""
+#, fuzzy
+msgid "Operation canceled by user\n"
+msgstr "Yeni bir program çalıştırır"
 
 #: winerror.mc:1751
 msgid "File has a user-mapped section\n"
@@ -5368,8 +5369,9 @@ msgid "No interfaces\n"
 msgstr ""
 
 #: winerror.mc:3501
-msgid "RPC call cancelled\n"
-msgstr ""
+#, fuzzy
+msgid "RPC call canceled\n"
+msgstr "Kullanıcı İptal Etti"
 
 #: winerror.mc:3506
 #, fuzzy
@@ -5405,8 +5407,9 @@ msgid "Security package error\n"
 msgstr ""
 
 #: winerror.mc:3541
-msgid "Thread not cancelled\n"
-msgstr ""
+#, fuzzy
+msgid "Thread not canceled\n"
+msgstr "Kullanıcı İptal Etti"
 
 #: winerror.mc:3546
 #, fuzzy

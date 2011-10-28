@@ -2498,7 +2498,7 @@ msgid "No spool space\n"
 msgstr ""
 
 #: winerror.mc:281
-msgid "Print cancelled\n"
+msgid "Print canceled\n"
 msgstr ""
 
 #: winerror.mc:286
@@ -2974,7 +2974,7 @@ msgid "More data available\n"
 msgstr ""
 
 #: winerror.mc:886
-msgid "Session cancelled\n"
+msgid "Session canceled\n"
 msgstr ""
 
 #: winerror.mc:891
@@ -3658,7 +3658,7 @@ msgid "No network\n"
 msgstr ""
 
 #: winerror.mc:1746
-msgid "Operation cancelled by user\n"
+msgid "Operation canceled by user\n"
 msgstr ""
 
 #: winerror.mc:1751
@@ -5054,7 +5054,7 @@ msgid "No interfaces\n"
 msgstr ""
 
 #: winerror.mc:3501
-msgid "RPC call cancelled\n"
+msgid "RPC call canceled\n"
 msgstr ""
 
 #: winerror.mc:3506
@@ -5086,7 +5086,7 @@ msgid "Security package error\n"
 msgstr ""
 
 #: winerror.mc:3541
-msgid "Thread not cancelled\n"
+msgid "Thread not canceled\n"
 msgstr ""
 
 #: winerror.mc:3546

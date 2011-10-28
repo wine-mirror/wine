@@ -2573,7 +2573,7 @@ msgid "No spool space\n"
 msgstr "Brak miejsca spool\n"
 
 #: winerror.mc:281
-msgid "Print cancelled\n"
+msgid "Print canceled\n"
 msgstr "Drukowanie anulowane\n"
 
 #: winerror.mc:286
@@ -3049,7 +3049,7 @@ msgid "More data available\n"
 msgstr "Więcej danych jest dostępnych\n"
 
 #: winerror.mc:886
-msgid "Session cancelled\n"
+msgid "Session canceled\n"
 msgstr "Sesja anulowana\n"
 
 #: winerror.mc:891
@@ -3733,7 +3733,7 @@ msgid "No network\n"
 msgstr "Brak sieci\n"
 
 #: winerror.mc:1746
-msgid "Operation cancelled by user\n"
+msgid "Operation canceled by user\n"
 msgstr "Operacja anulowana przez użytkownika\n"
 
 #: winerror.mc:1751
@@ -5129,7 +5129,7 @@ msgid "No interfaces\n"
 msgstr "Brak interfejsów\n"
 
 #: winerror.mc:3501
-msgid "RPC call cancelled\n"
+msgid "RPC call canceled\n"
 msgstr "Wywołanie RPC anulowane\n"
 
 #: winerror.mc:3506
@@ -5161,7 +5161,7 @@ msgid "Security package error\n"
 msgstr "Błąd pakietu zabezpieczeń\n"
 
 #: winerror.mc:3541
-msgid "Thread not cancelled\n"
+msgid "Thread not canceled\n"
 msgstr "Wątek nie anulowany\n"
 
 #: winerror.mc:3546

@@ -2611,8 +2611,9 @@ msgid "No spool space\n"
 msgstr ""
 
 #: winerror.mc:281
-msgid "Print cancelled\n"
-msgstr ""
+#, fuzzy
+msgid "Print canceled\n"
+msgstr "刪除"
 
 #: winerror.mc:286
 #, fuzzy
@@ -3121,8 +3122,9 @@ msgid "More data available\n"
 msgstr "不可用; "
 
 #: winerror.mc:886
-msgid "Session cancelled\n"
-msgstr ""
+#, fuzzy
+msgid "Session canceled\n"
+msgstr "Wine地雷"
 
 #: winerror.mc:891
 msgid "Invalid extended attribute name\n"
@@ -3839,7 +3841,7 @@ msgid "No network\n"
 msgstr ""
 
 #: winerror.mc:1746
-msgid "Operation cancelled by user\n"
+msgid "Operation canceled by user\n"
 msgstr ""
 
 #: winerror.mc:1751
@@ -5322,7 +5324,7 @@ msgid "No interfaces\n"
 msgstr "界面"
 
 #: winerror.mc:3501
-msgid "RPC call cancelled\n"
+msgid "RPC call canceled\n"
 msgstr ""
 
 #: winerror.mc:3506
@@ -5354,8 +5356,9 @@ msgid "Security package error\n"
 msgstr ""
 
 #: winerror.mc:3541
-msgid "Thread not cancelled\n"
-msgstr ""
+#, fuzzy
+msgid "Thread not canceled\n"
+msgstr "找不到檔案"
 
 #: winerror.mc:3546
 #, fuzzy

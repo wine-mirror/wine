@@ -2601,8 +2601,9 @@ msgid "No spool space\n"
 msgstr ""
 
 #: winerror.mc:281
-msgid "Print cancelled\n"
-msgstr ""
+#, fuzzy
+msgid "Print canceled\n"
+msgstr "Poistoaika"
 
 #: winerror.mc:286
 #, fuzzy
@@ -3097,8 +3098,9 @@ msgid "More data available\n"
 msgstr "Ei saatavilla; "
 
 #: winerror.mc:886
-msgid "Session cancelled\n"
-msgstr ""
+#, fuzzy
+msgid "Session canceled\n"
+msgstr "Avaa tiedosto"
 
 #: winerror.mc:891
 msgid "Invalid extended attribute name\n"
@@ -3804,8 +3806,9 @@ msgid "No network\n"
 msgstr ""
 
 #: winerror.mc:1746
-msgid "Operation cancelled by user\n"
-msgstr ""
+#, fuzzy
+msgid "Operation canceled by user\n"
+msgstr "Käyttäjän keskeyttämä; "
 
 #: winerror.mc:1751
 msgid "File has a user-mapped section\n"
@@ -5257,7 +5260,7 @@ msgid "No interfaces\n"
 msgstr ""
 
 #: winerror.mc:3501
-msgid "RPC call cancelled\n"
+msgid "RPC call canceled\n"
 msgstr ""
 
 #: winerror.mc:3506
@@ -5290,8 +5293,9 @@ msgid "Security package error\n"
 msgstr ""
 
 #: winerror.mc:3541
-msgid "Thread not cancelled\n"
-msgstr ""
+#, fuzzy
+msgid "Thread not canceled\n"
+msgstr "Tiedostoa ei löydy"
 
 #: winerror.mc:3546
 msgid "Invalid handle operation\n"

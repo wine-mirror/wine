@@ -276,7 +276,7 @@ No spool space
 MessageId=63
 SymbolicName=ERROR_PRINT_CANCELLED
 Language=ENU
-Print cancelled
+Print canceled
 .
 MessageId=64
 SymbolicName=ERROR_NETNAME_DELETED
@@ -881,7 +881,7 @@ More data available
 MessageId=240
 SymbolicName=ERROR_VC_DISCONNECTED
 Language=ENU
-Session cancelled
+Session canceled
 .
 MessageId=254
 SymbolicName=ERROR_INVALID_EA_NAME
@@ -1741,7 +1741,7 @@ No network
 MessageId=1223
 SymbolicName=ERROR_CANCELLED
 Language=ENU
-Operation cancelled by user
+Operation canceled by user
 .
 MessageId=1224
 SymbolicName=ERROR_USER_MAPPED_FILE
@@ -3496,7 +3496,7 @@ No interfaces
 MessageId=1818
 SymbolicName=RPC_S_CALL_CANCELLED
 Language=ENU
-RPC call cancelled
+RPC call canceled
 .
 MessageId=1819
 SymbolicName=RPC_S_BINDING_INCOMPLETE
@@ -3536,7 +3536,7 @@ Security package error
 MessageId=1826
 SymbolicName=RPC_S_NOT_CANCELLED
 Language=ENU
-Thread not cancelled
+Thread not canceled
 .
 MessageId=1827
 SymbolicName=RPC_X_INVALID_ES_ACTION
