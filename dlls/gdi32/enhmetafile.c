@@ -945,7 +945,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
 	(handletable->objectHandle)[pPen->ihPen] =
 	  ExtCreatePen(pPen->elp.elpPenStyle, pPen->elp.elpWidth, &lb,
-		       pPen->elp.elpNumEntries, pPen->elp.elpStyleEntry);
+                       pPen->elp.elpNumEntries, pPen->elp.elpNumEntries ? pPen->elp.elpStyleEntry : NULL);
 	break;
       }
     case EMR_CREATEBRUSHINDIRECT:
