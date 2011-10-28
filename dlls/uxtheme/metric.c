@@ -87,7 +87,7 @@ COLORREF WINAPI GetThemeSysColor(HTHEME hTheme, int iColorID)
                 SetLastError(hr);
        }
     }
-    return GetSysColor(iColorID - TMT_FIRSTCOLOR);
+    return GetSysColor(iColorID);
 }
 
 /***********************************************************************
