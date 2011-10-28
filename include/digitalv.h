@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 
-#define MCI_TEST                            0x00000020
+#define MCI_TEST                            __MSABI_LONG(0x00000020)
 
 /* Message values */
 
@@ -55,27 +55,27 @@ extern "C" {
 
 /* These identifiers are used only by device drivers */
 
-#define MCI_ON_S                            0x00008000
-#define MCI_OFF_S                           0x00008001
-#define MCI_DGV_FILE_S                      0x00008002
-#define MCI_DGV_INPUT_S                     0x00008003
+#define MCI_ON_S                            __MSABI_LONG(0x00008000)
+#define MCI_OFF_S                           __MSABI_LONG(0x00008001)
+#define MCI_DGV_FILE_S                      __MSABI_LONG(0x00008002)
+#define MCI_DGV_INPUT_S                     __MSABI_LONG(0x00008003)
 
-#define MCI_DGV_FILE_MODE_SAVING_S          0x00008004
-#define MCI_DGV_FILE_MODE_LOADING_S         0x00008005
-#define MCI_DGV_FILE_MODE_EDITING_S         0x00008006
-#define MCI_DGV_FILE_MODE_IDLE_S            0x00008007
+#define MCI_DGV_FILE_MODE_SAVING_S          __MSABI_LONG(0x00008004)
+#define MCI_DGV_FILE_MODE_LOADING_S         __MSABI_LONG(0x00008005)
+#define MCI_DGV_FILE_MODE_EDITING_S         __MSABI_LONG(0x00008006)
+#define MCI_DGV_FILE_MODE_IDLE_S            __MSABI_LONG(0x00008007)
 
-#define MCI_DGV_SETVIDEO_SRC_NTSC_S         0x00008010
-#define MCI_DGV_SETVIDEO_SRC_RGB_S          0x00008011
-#define MCI_DGV_SETVIDEO_SRC_SVIDEO_S       0x00008012
-#define MCI_DGV_SETVIDEO_SRC_PAL_S          0x00008013
-#define MCI_DGV_SETVIDEO_SRC_SECAM_S        0x00008014
-#define MCI_DGV_SETVIDEO_SRC_GENERIC_S      0x00008015
+#define MCI_DGV_SETVIDEO_SRC_NTSC_S         __MSABI_LONG(0x00008010)
+#define MCI_DGV_SETVIDEO_SRC_RGB_S          __MSABI_LONG(0x00008011)
+#define MCI_DGV_SETVIDEO_SRC_SVIDEO_S       __MSABI_LONG(0x00008012)
+#define MCI_DGV_SETVIDEO_SRC_PAL_S          __MSABI_LONG(0x00008013)
+#define MCI_DGV_SETVIDEO_SRC_SECAM_S        __MSABI_LONG(0x00008014)
+#define MCI_DGV_SETVIDEO_SRC_GENERIC_S      __MSABI_LONG(0x00008015)
 
-#define MCI_DGV_SETAUDIO_SRC_LEFT_S         0x00008020
-#define MCI_DGV_SETAUDIO_SRC_RIGHT_S        0x00008021
-#define MCI_DGV_SETAUDIO_SRC_AVERAGE_S      0x00008022
-#define MCI_DGV_SETAUDIO_SRC_STEREO_S       0x00008023
+#define MCI_DGV_SETAUDIO_SRC_LEFT_S         __MSABI_LONG(0x00008020)
+#define MCI_DGV_SETAUDIO_SRC_RIGHT_S        __MSABI_LONG(0x00008021)
+#define MCI_DGV_SETAUDIO_SRC_AVERAGE_S      __MSABI_LONG(0x00008022)
+#define MCI_DGV_SETAUDIO_SRC_STEREO_S       __MSABI_LONG(0x00008023)
 
 /* Window message for signal notification */
 
@@ -94,367 +94,367 @@ extern "C" {
 
 /* defines for monitor methods */
 
-#define MCI_DGV_METHOD_PRE                  0x0000a000
-#define MCI_DGV_METHOD_POST                 0x0000a001
-#define MCI_DGV_METHOD_DIRECT               0x0000a002
+#define MCI_DGV_METHOD_PRE                  __MSABI_LONG(0x0000a000)
+#define MCI_DGV_METHOD_POST                 __MSABI_LONG(0x0000a001)
+#define MCI_DGV_METHOD_DIRECT               __MSABI_LONG(0x0000a002)
 
 /* defines for known file formats */
 
-#define MCI_DGV_FF_AVSS                     0x00004000
-#define MCI_DGV_FF_AVI                      0x00004001
-#define MCI_DGV_FF_DIB                      0x00004002
-#define MCI_DGV_FF_RDIB                     0x00004003
-#define MCI_DGV_FF_JPEG                     0x00004004
-#define MCI_DGV_FF_RJPEG                    0x00004005
-#define MCI_DGV_FF_JFIF                     0x00004006
-#define MCI_DGV_FF_MPEG                     0x00004007
+#define MCI_DGV_FF_AVSS                     __MSABI_LONG(0x00004000)
+#define MCI_DGV_FF_AVI                      __MSABI_LONG(0x00004001)
+#define MCI_DGV_FF_DIB                      __MSABI_LONG(0x00004002)
+#define MCI_DGV_FF_RDIB                     __MSABI_LONG(0x00004003)
+#define MCI_DGV_FF_JPEG                     __MSABI_LONG(0x00004004)
+#define MCI_DGV_FF_RJPEG                    __MSABI_LONG(0x00004005)
+#define MCI_DGV_FF_JFIF                     __MSABI_LONG(0x00004006)
+#define MCI_DGV_FF_MPEG                     __MSABI_LONG(0x00004007)
 
 /* values for dwItem field of MCI_CAPABILITY_PARMS structure */
 
-#define MCI_DGV_GETDEVCAPS_CAN_LOCK         0x00004000
-#define MCI_DGV_GETDEVCAPS_CAN_STRETCH      0x00004001
-#define MCI_DGV_GETDEVCAPS_CAN_FREEZE       0x00004002
-#define MCI_DGV_GETDEVCAPS_MAX_WINDOWS      0x00004003
-#define MCI_DGV_GETDEVCAPS_CAN_REVERSE      0x00004004
-#define MCI_DGV_GETDEVCAPS_HAS_STILL        0x00004005
-#define MCI_DGV_GETDEVCAPS_PALETTES         0x00004006
-#define MCI_DGV_GETDEVCAPS_CAN_STR_IN       0x00004008
-#define MCI_DGV_GETDEVCAPS_CAN_TEST         0x00004009
-#define MCI_DGV_GETDEVCAPS_MAXIMUM_RATE     0x0000400a
-#define MCI_DGV_GETDEVCAPS_MINIMUM_RATE     0x0000400b
+#define MCI_DGV_GETDEVCAPS_CAN_LOCK         __MSABI_LONG(0x00004000)
+#define MCI_DGV_GETDEVCAPS_CAN_STRETCH      __MSABI_LONG(0x00004001)
+#define MCI_DGV_GETDEVCAPS_CAN_FREEZE       __MSABI_LONG(0x00004002)
+#define MCI_DGV_GETDEVCAPS_MAX_WINDOWS      __MSABI_LONG(0x00004003)
+#define MCI_DGV_GETDEVCAPS_CAN_REVERSE      __MSABI_LONG(0x00004004)
+#define MCI_DGV_GETDEVCAPS_HAS_STILL        __MSABI_LONG(0x00004005)
+#define MCI_DGV_GETDEVCAPS_PALETTES         __MSABI_LONG(0x00004006)
+#define MCI_DGV_GETDEVCAPS_CAN_STR_IN       __MSABI_LONG(0x00004008)
+#define MCI_DGV_GETDEVCAPS_CAN_TEST         __MSABI_LONG(0x00004009)
+#define MCI_DGV_GETDEVCAPS_MAXIMUM_RATE     __MSABI_LONG(0x0000400a)
+#define MCI_DGV_GETDEVCAPS_MINIMUM_RATE     __MSABI_LONG(0x0000400b)
 
 /* flags for dwFlags parameter of MCI_CAPTURE command message */
 
-#define MCI_DGV_CAPTURE_AS                  0x00010000
-#define MCI_DGV_CAPTURE_AT                  0x00020000
+#define MCI_DGV_CAPTURE_AS                  __MSABI_LONG(0x00010000)
+#define MCI_DGV_CAPTURE_AT                  __MSABI_LONG(0x00020000)
 
 /* flags for dwFlags parameter of MCI_COPY command message */
 
-#define MCI_DGV_COPY_AT                     0x00010000
-#define MCI_DGV_COPY_AUDIO_STREAM           0x00020000
-#define MCI_DGV_COPY_VIDEO_STREAM           0x00040000
+#define MCI_DGV_COPY_AT                     __MSABI_LONG(0x00010000)
+#define MCI_DGV_COPY_AUDIO_STREAM           __MSABI_LONG(0x00020000)
+#define MCI_DGV_COPY_VIDEO_STREAM           __MSABI_LONG(0x00040000)
 
 /* flags for dwFlags parameter of MCI_CUE command message */
 
-#define MCI_DGV_CUE_INPUT                   0x00010000
-#define MCI_DGV_CUE_OUTPUT                  0x00020000
-#define MCI_DGV_CUE_NOSHOW                  0x00040000
+#define MCI_DGV_CUE_INPUT                   __MSABI_LONG(0x00010000)
+#define MCI_DGV_CUE_OUTPUT                  __MSABI_LONG(0x00020000)
+#define MCI_DGV_CUE_NOSHOW                  __MSABI_LONG(0x00040000)
 
 /* flags for dwFlags parameter of MCI_CUT command message */
 
-#define MCI_DGV_CUT_AT                      0x00010000
-#define MCI_DGV_CUT_AUDIO_STREAM            0x00020000
-#define MCI_DGV_CUT_VIDEO_STREAM            0x00040000
+#define MCI_DGV_CUT_AT                      __MSABI_LONG(0x00010000)
+#define MCI_DGV_CUT_AUDIO_STREAM            __MSABI_LONG(0x00020000)
+#define MCI_DGV_CUT_VIDEO_STREAM            __MSABI_LONG(0x00040000)
 
 /* flags for dwFlags parameter of MCI_DELETE command message */
 
-#define MCI_DGV_DELETE_AT                   0x00010000
-#define MCI_DGV_DELETE_AUDIO_STREAM         0x00020000
-#define MCI_DGV_DELETE_VIDEO_STREAM         0x00040000
+#define MCI_DGV_DELETE_AT                   __MSABI_LONG(0x00010000)
+#define MCI_DGV_DELETE_AUDIO_STREAM         __MSABI_LONG(0x00020000)
+#define MCI_DGV_DELETE_VIDEO_STREAM         __MSABI_LONG(0x00040000)
 
 /* flags for dwFlags parameter of MCI_FREEZE command message */
 
-#define MCI_DGV_FREEZE_AT                   0x00010000
-#define MCI_DGV_FREEZE_OUTSIDE              0x00020000
+#define MCI_DGV_FREEZE_AT                   __MSABI_LONG(0x00010000)
+#define MCI_DGV_FREEZE_OUTSIDE              __MSABI_LONG(0x00020000)
 
 /* flags for dwFlags parameter of MCI_INFO command message */
 
-#define MCI_DGV_INFO_TEXT                   0x00010000
-#define MCI_DGV_INFO_ITEM                   0x00020000
+#define MCI_DGV_INFO_TEXT                   __MSABI_LONG(0x00010000)
+#define MCI_DGV_INFO_ITEM                   __MSABI_LONG(0x00020000)
 
 /* values for dwItem field of MCI_DGV_INFO_PARMS structure */
 
-#define MCI_INFO_VERSION                    0x00000400
+#define MCI_INFO_VERSION                    __MSABI_LONG(0x00000400)
 
-#define MCI_DGV_INFO_USAGE                  0x00004000
-#define MCI_DGV_INFO_AUDIO_QUALITY          0x00004001
-#define MCI_DGV_INFO_STILL_QUALITY          0x00004002
-#define MCI_DGV_INFO_VIDEO_QUALITY          0x00004003
-#define MCI_DGV_INFO_AUDIO_ALG              0x00004004
-#define MCI_DGV_INFO_STILL_ALG              0x00004005
-#define MCI_DGV_INFO_VIDEO_ALG              0x00004006
+#define MCI_DGV_INFO_USAGE                  __MSABI_LONG(0x00004000)
+#define MCI_DGV_INFO_AUDIO_QUALITY          __MSABI_LONG(0x00004001)
+#define MCI_DGV_INFO_STILL_QUALITY          __MSABI_LONG(0x00004002)
+#define MCI_DGV_INFO_VIDEO_QUALITY          __MSABI_LONG(0x00004003)
+#define MCI_DGV_INFO_AUDIO_ALG              __MSABI_LONG(0x00004004)
+#define MCI_DGV_INFO_STILL_ALG              __MSABI_LONG(0x00004005)
+#define MCI_DGV_INFO_VIDEO_ALG              __MSABI_LONG(0x00004006)
 
 /* flags for dwFlags parameter of MCI_LIST command message */
 
-#define MCI_DGV_LIST_ITEM                   0x00010000
-#define MCI_DGV_LIST_COUNT                  0x00020000
-#define MCI_DGV_LIST_NUMBER                 0x00040000
-#define MCI_DGV_LIST_ALG                    0x00080000
+#define MCI_DGV_LIST_ITEM                   __MSABI_LONG(0x00010000)
+#define MCI_DGV_LIST_COUNT                  __MSABI_LONG(0x00020000)
+#define MCI_DGV_LIST_NUMBER                 __MSABI_LONG(0x00040000)
+#define MCI_DGV_LIST_ALG                    __MSABI_LONG(0x00080000)
 
 /* values for dwItem field of MCI_DGV_LIST_PARMS structure */
 
-#define MCI_DGV_LIST_AUDIO_ALG              0x00004000
-#define MCI_DGV_LIST_AUDIO_QUALITY          0x00004001
-#define MCI_DGV_LIST_AUDIO_STREAM           0x00004002
-#define MCI_DGV_LIST_STILL_ALG              0x00004003
-#define MCI_DGV_LIST_STILL_QUALITY          0x00004004
-#define MCI_DGV_LIST_VIDEO_ALG              0x00004005
-#define MCI_DGV_LIST_VIDEO_QUALITY          0x00004006
-#define MCI_DGV_LIST_VIDEO_STREAM           0x00004007
-#define MCI_DGV_LIST_VIDEO_SOURCE           0x00004008
+#define MCI_DGV_LIST_AUDIO_ALG              __MSABI_LONG(0x00004000)
+#define MCI_DGV_LIST_AUDIO_QUALITY          __MSABI_LONG(0x00004001)
+#define MCI_DGV_LIST_AUDIO_STREAM           __MSABI_LONG(0x00004002)
+#define MCI_DGV_LIST_STILL_ALG              __MSABI_LONG(0x00004003)
+#define MCI_DGV_LIST_STILL_QUALITY          __MSABI_LONG(0x00004004)
+#define MCI_DGV_LIST_VIDEO_ALG              __MSABI_LONG(0x00004005)
+#define MCI_DGV_LIST_VIDEO_QUALITY          __MSABI_LONG(0x00004006)
+#define MCI_DGV_LIST_VIDEO_STREAM           __MSABI_LONG(0x00004007)
+#define MCI_DGV_LIST_VIDEO_SOURCE           __MSABI_LONG(0x00004008)
 
 
 /* flags for dwFlags parameter of MCI_MONITOR command message */
 
-#define MCI_DGV_MONITOR_METHOD              0x00010000
-#define MCI_DGV_MONITOR_SOURCE              0x00020000
+#define MCI_DGV_MONITOR_METHOD              __MSABI_LONG(0x00010000)
+#define MCI_DGV_MONITOR_SOURCE              __MSABI_LONG(0x00020000)
 
 /* values for dwSource parameter of the MCI_DGV_MONITOR_PARMS structure */
 
-#define MCI_DGV_MONITOR_INPUT               0x00004000
-#define MCI_DGV_MONITOR_FILE                0x00004001
+#define MCI_DGV_MONITOR_INPUT               __MSABI_LONG(0x00004000)
+#define MCI_DGV_MONITOR_FILE                __MSABI_LONG(0x00004001)
 
 /* flags for dwFlags parameter of MCI_OPEN command message */
 
-#define MCI_DGV_OPEN_WS                     0x00010000
-#define MCI_DGV_OPEN_PARENT                 0x00020000
-#define MCI_DGV_OPEN_NOSTATIC               0x00040000
-#define MCI_DGV_OPEN_16BIT                  0x00080000
-#define MCI_DGV_OPEN_32BIT                  0x00100000
+#define MCI_DGV_OPEN_WS                     __MSABI_LONG(0x00010000)
+#define MCI_DGV_OPEN_PARENT                 __MSABI_LONG(0x00020000)
+#define MCI_DGV_OPEN_NOSTATIC               __MSABI_LONG(0x00040000)
+#define MCI_DGV_OPEN_16BIT                  __MSABI_LONG(0x00080000)
+#define MCI_DGV_OPEN_32BIT                  __MSABI_LONG(0x00100000)
 
 /* flags for dwFlags parameter of MCI_PASTE command message */
 
-#define MCI_DGV_PASTE_AT                    0x00010000
-#define MCI_DGV_PASTE_AUDIO_STREAM          0x00020000
-#define MCI_DGV_PASTE_VIDEO_STREAM          0x00040000
-#define MCI_DGV_PASTE_INSERT                0x00080000
-#define MCI_DGV_PASTE_OVERWRITE             0x00100000
+#define MCI_DGV_PASTE_AT                    __MSABI_LONG(0x00010000)
+#define MCI_DGV_PASTE_AUDIO_STREAM          __MSABI_LONG(0x00020000)
+#define MCI_DGV_PASTE_VIDEO_STREAM          __MSABI_LONG(0x00040000)
+#define MCI_DGV_PASTE_INSERT                __MSABI_LONG(0x00080000)
+#define MCI_DGV_PASTE_OVERWRITE             __MSABI_LONG(0x00100000)
 
 /* flags for dwFlags parameter of MCI_PLAY command message */
 
-#define MCI_DGV_PLAY_REPEAT                 0x00010000
-#define MCI_DGV_PLAY_REVERSE                0x00020000
+#define MCI_DGV_PLAY_REPEAT                 __MSABI_LONG(0x00010000)
+#define MCI_DGV_PLAY_REVERSE                __MSABI_LONG(0x00020000)
 
 /* flags for dwFlags parameter of MCI_PUT command message */
 
-#define MCI_DGV_RECT                        0x00010000
-#define MCI_DGV_PUT_SOURCE                  0x00020000
-#define MCI_DGV_PUT_DESTINATION             0x00040000
-#define MCI_DGV_PUT_FRAME                   0x00080000
-#define MCI_DGV_PUT_VIDEO                   0x00100000
-#define MCI_DGV_PUT_WINDOW                  0x00200000
-#define MCI_DGV_PUT_CLIENT                  0x00400000
+#define MCI_DGV_RECT                        __MSABI_LONG(0x00010000)
+#define MCI_DGV_PUT_SOURCE                  __MSABI_LONG(0x00020000)
+#define MCI_DGV_PUT_DESTINATION             __MSABI_LONG(0x00040000)
+#define MCI_DGV_PUT_FRAME                   __MSABI_LONG(0x00080000)
+#define MCI_DGV_PUT_VIDEO                   __MSABI_LONG(0x00100000)
+#define MCI_DGV_PUT_WINDOW                  __MSABI_LONG(0x00200000)
+#define MCI_DGV_PUT_CLIENT                  __MSABI_LONG(0x00400000)
 
 /* flags for dwFlags parameter of MCI_QUALITY command message */
 
-#define MCI_QUALITY_ITEM                    0x00010000
-#define MCI_QUALITY_NAME                    0x00020000
-#define MCI_QUALITY_ALG                     0x00040000
-#define MCI_QUALITY_DIALOG                  0x00080000
-#define MCI_QUALITY_HANDLE                  0x00100000
+#define MCI_QUALITY_ITEM                    __MSABI_LONG(0x00010000)
+#define MCI_QUALITY_NAME                    __MSABI_LONG(0x00020000)
+#define MCI_QUALITY_ALG                     __MSABI_LONG(0x00040000)
+#define MCI_QUALITY_DIALOG                  __MSABI_LONG(0x00080000)
+#define MCI_QUALITY_HANDLE                  __MSABI_LONG(0x00100000)
 
 /* values for dwItem field of MCI_QUALITY_PARMS structure */
 
-#define MCI_QUALITY_ITEM_AUDIO              0x00004000
-#define MCI_QUALITY_ITEM_STILL              0x00004001
-#define MCI_QUALITY_ITEM_VIDEO              0x00004002
+#define MCI_QUALITY_ITEM_AUDIO              __MSABI_LONG(0x00004000)
+#define MCI_QUALITY_ITEM_STILL              __MSABI_LONG(0x00004001)
+#define MCI_QUALITY_ITEM_VIDEO              __MSABI_LONG(0x00004002)
 
 /* flags for dwFlags parameter of MCI_REALIZE command message */
 
-#define MCI_DGV_REALIZE_NORM                0x00010000
-#define MCI_DGV_REALIZE_BKGD                0x00020000
+#define MCI_DGV_REALIZE_NORM                __MSABI_LONG(0x00010000)
+#define MCI_DGV_REALIZE_BKGD                __MSABI_LONG(0x00020000)
 
 /* flags for dwFlags parameter of MCI_RECORD command message */
 
-#define MCI_DGV_RECORD_HOLD                 0x00020000
-#define MCI_DGV_RECORD_AUDIO_STREAM         0x00040000
-#define MCI_DGV_RECORD_VIDEO_STREAM         0x00080000
+#define MCI_DGV_RECORD_HOLD                 __MSABI_LONG(0x00020000)
+#define MCI_DGV_RECORD_AUDIO_STREAM         __MSABI_LONG(0x00040000)
+#define MCI_DGV_RECORD_VIDEO_STREAM         __MSABI_LONG(0x00080000)
 
 /* flags for dwFlags parameters of MCI_RESERVE command message */
 
-#define MCI_DGV_RESERVE_IN                  0x00010000
-#define MCI_DGV_RESERVE_SIZE                0x00020000
+#define MCI_DGV_RESERVE_IN                  __MSABI_LONG(0x00010000)
+#define MCI_DGV_RESERVE_SIZE                __MSABI_LONG(0x00020000)
 
 /* flags for dwFlags parameter of MCI_RESTORE command message */
 
-#define MCI_DGV_RESTORE_FROM                0x00010000
-#define MCI_DGV_RESTORE_AT                  0x00020000
+#define MCI_DGV_RESTORE_FROM                __MSABI_LONG(0x00010000)
+#define MCI_DGV_RESTORE_AT                  __MSABI_LONG(0x00020000)
 
 /* flags for dwFlags parameters of MCI_SAVE command message */
 
-#define MCI_DGV_SAVE_ABORT                  0x00020000
-#define MCI_DGV_SAVE_KEEPRESERVE            0x00040000
+#define MCI_DGV_SAVE_ABORT                  __MSABI_LONG(0x00020000)
+#define MCI_DGV_SAVE_KEEPRESERVE            __MSABI_LONG(0x00040000)
 
 /* flags for dwFlags parameters of MCI_SET command message */
 
-#define MCI_DGV_SET_SEEK_EXACTLY            0x00010000
-#define MCI_DGV_SET_SPEED                   0x00020000
-#define MCI_DGV_SET_STILL                   0x00040000
-#define MCI_DGV_SET_FILEFORMAT              0x00080000
+#define MCI_DGV_SET_SEEK_EXACTLY            __MSABI_LONG(0x00010000)
+#define MCI_DGV_SET_SPEED                   __MSABI_LONG(0x00020000)
+#define MCI_DGV_SET_STILL                   __MSABI_LONG(0x00040000)
+#define MCI_DGV_SET_FILEFORMAT              __MSABI_LONG(0x00080000)
 
 /* flags for the dwFlags parameter of MCI_SETAUDIO command message */
 
-#define MCI_DGV_SETAUDIO_OVER               0x00010000
-#define MCI_DGV_SETAUDIO_CLOCKTIME          0x00020000
-#define MCI_DGV_SETAUDIO_ALG                0x00040000
-#define MCI_DGV_SETAUDIO_QUALITY            0x00080000
-#define MCI_DGV_SETAUDIO_RECORD             0x00100000
-#define MCI_DGV_SETAUDIO_LEFT               0x00200000
-#define MCI_DGV_SETAUDIO_RIGHT              0x00400000
-#define MCI_DGV_SETAUDIO_ITEM               0x00800000
-#define MCI_DGV_SETAUDIO_VALUE              0x01000000
-#define MCI_DGV_SETAUDIO_INPUT              0x02000000
-#define MCI_DGV_SETAUDIO_OUTPUT             0x04000000
+#define MCI_DGV_SETAUDIO_OVER               __MSABI_LONG(0x00010000)
+#define MCI_DGV_SETAUDIO_CLOCKTIME          __MSABI_LONG(0x00020000)
+#define MCI_DGV_SETAUDIO_ALG                __MSABI_LONG(0x00040000)
+#define MCI_DGV_SETAUDIO_QUALITY            __MSABI_LONG(0x00080000)
+#define MCI_DGV_SETAUDIO_RECORD             __MSABI_LONG(0x00100000)
+#define MCI_DGV_SETAUDIO_LEFT               __MSABI_LONG(0x00200000)
+#define MCI_DGV_SETAUDIO_RIGHT              __MSABI_LONG(0x00400000)
+#define MCI_DGV_SETAUDIO_ITEM               __MSABI_LONG(0x00800000)
+#define MCI_DGV_SETAUDIO_VALUE              __MSABI_LONG(0x01000000)
+#define MCI_DGV_SETAUDIO_INPUT              __MSABI_LONG(0x02000000)
+#define MCI_DGV_SETAUDIO_OUTPUT             __MSABI_LONG(0x04000000)
 
 /* values for the dwItem parameter of MCI_DGV_SETAUDIO_PARMS */
 
-#define MCI_DGV_SETAUDIO_TREBLE             0x00004000
-#define MCI_DGV_SETAUDIO_BASS               0x00004001
-#define MCI_DGV_SETAUDIO_VOLUME             0x00004002
-#define MCI_DGV_SETAUDIO_STREAM             0x00004003
-#define MCI_DGV_SETAUDIO_SOURCE             0x00004004
-#define MCI_DGV_SETAUDIO_SAMPLESPERSEC      0x00004005
-#define MCI_DGV_SETAUDIO_AVGBYTESPERSEC     0x00004006
-#define MCI_DGV_SETAUDIO_BLOCKALIGN         0x00004007
-#define MCI_DGV_SETAUDIO_BITSPERSAMPLE      0x00004008
+#define MCI_DGV_SETAUDIO_TREBLE             __MSABI_LONG(0x00004000)
+#define MCI_DGV_SETAUDIO_BASS               __MSABI_LONG(0x00004001)
+#define MCI_DGV_SETAUDIO_VOLUME             __MSABI_LONG(0x00004002)
+#define MCI_DGV_SETAUDIO_STREAM             __MSABI_LONG(0x00004003)
+#define MCI_DGV_SETAUDIO_SOURCE             __MSABI_LONG(0x00004004)
+#define MCI_DGV_SETAUDIO_SAMPLESPERSEC      __MSABI_LONG(0x00004005)
+#define MCI_DGV_SETAUDIO_AVGBYTESPERSEC     __MSABI_LONG(0x00004006)
+#define MCI_DGV_SETAUDIO_BLOCKALIGN         __MSABI_LONG(0x00004007)
+#define MCI_DGV_SETAUDIO_BITSPERSAMPLE      __MSABI_LONG(0x00004008)
 
 /* values for the dwValue parameter of MCI_DGV_SETAUDIO_PARMS
    used with MCI_DGV_SETAUDIO_SOURCE */
 
-#define MCI_DGV_SETAUDIO_SOURCE_STEREO      0x00000000
-#define MCI_DGV_SETAUDIO_SOURCE_LEFT        0x00000001
-#define MCI_DGV_SETAUDIO_SOURCE_RIGHT       0x00000002
-#define MCI_DGV_SETAUDIO_SOURCE_AVERAGE     0x00004000
+#define MCI_DGV_SETAUDIO_SOURCE_STEREO      __MSABI_LONG(0x00000000)
+#define MCI_DGV_SETAUDIO_SOURCE_LEFT        __MSABI_LONG(0x00000001)
+#define MCI_DGV_SETAUDIO_SOURCE_RIGHT       __MSABI_LONG(0x00000002)
+#define MCI_DGV_SETAUDIO_SOURCE_AVERAGE     __MSABI_LONG(0x00004000)
 
 /* flags for the dwFlags parameter of MCI_SETVIDEO command */
 
-#define MCI_DGV_SETVIDEO_QUALITY            0x00010000
-#define MCI_DGV_SETVIDEO_ALG                0x00020000
-#define MCI_DGV_SETVIDEO_CLOCKTIME          0x00040000
-#define MCI_DGV_SETVIDEO_SRC_NUMBER         0x00080000
-#define MCI_DGV_SETVIDEO_ITEM               0x00100000
-#define MCI_DGV_SETVIDEO_OVER               0x00200000
-#define MCI_DGV_SETVIDEO_RECORD             0x00400000
-#define MCI_DGV_SETVIDEO_STILL              0x00800000
-#define MCI_DGV_SETVIDEO_VALUE              0x01000000
-#define MCI_DGV_SETVIDEO_INPUT              0x02000000
-#define MCI_DGV_SETVIDEO_OUTPUT             0x04000000
+#define MCI_DGV_SETVIDEO_QUALITY            __MSABI_LONG(0x00010000)
+#define MCI_DGV_SETVIDEO_ALG                __MSABI_LONG(0x00020000)
+#define MCI_DGV_SETVIDEO_CLOCKTIME          __MSABI_LONG(0x00040000)
+#define MCI_DGV_SETVIDEO_SRC_NUMBER         __MSABI_LONG(0x00080000)
+#define MCI_DGV_SETVIDEO_ITEM               __MSABI_LONG(0x00100000)
+#define MCI_DGV_SETVIDEO_OVER               __MSABI_LONG(0x00200000)
+#define MCI_DGV_SETVIDEO_RECORD             __MSABI_LONG(0x00400000)
+#define MCI_DGV_SETVIDEO_STILL              __MSABI_LONG(0x00800000)
+#define MCI_DGV_SETVIDEO_VALUE              __MSABI_LONG(0x01000000)
+#define MCI_DGV_SETVIDEO_INPUT              __MSABI_LONG(0x02000000)
+#define MCI_DGV_SETVIDEO_OUTPUT             __MSABI_LONG(0x04000000)
 
 /* values for the dwTo field of MCI_SETVIDEO_PARMS
    used with MCI_DGV_SETVIDEO_SOURCE */
 
-#define MCI_DGV_SETVIDEO_SRC_NTSC           0x00004000
-#define MCI_DGV_SETVIDEO_SRC_RGB            0x00004001
-#define MCI_DGV_SETVIDEO_SRC_SVIDEO         0x00004002
-#define MCI_DGV_SETVIDEO_SRC_PAL            0x00004003
-#define MCI_DGV_SETVIDEO_SRC_SECAM          0x00004004
-#define MCI_DGV_SETVIDEO_SRC_GENERIC        0x00004005
+#define MCI_DGV_SETVIDEO_SRC_NTSC           __MSABI_LONG(0x00004000)
+#define MCI_DGV_SETVIDEO_SRC_RGB            __MSABI_LONG(0x00004001)
+#define MCI_DGV_SETVIDEO_SRC_SVIDEO         __MSABI_LONG(0x00004002)
+#define MCI_DGV_SETVIDEO_SRC_PAL            __MSABI_LONG(0x00004003)
+#define MCI_DGV_SETVIDEO_SRC_SECAM          __MSABI_LONG(0x00004004)
+#define MCI_DGV_SETVIDEO_SRC_GENERIC        __MSABI_LONG(0x00004005)
 
 /* values for the dwItem field of MCI_SETVIDEO_PARMS */
 
-#define MCI_DGV_SETVIDEO_BRIGHTNESS         0x00004000
-#define MCI_DGV_SETVIDEO_COLOR              0x00004001
-#define MCI_DGV_SETVIDEO_CONTRAST           0x00004002
-#define MCI_DGV_SETVIDEO_TINT               0x00004003
-#define MCI_DGV_SETVIDEO_SHARPNESS          0x00004004
-#define MCI_DGV_SETVIDEO_GAMMA              0x00004005
-#define MCI_DGV_SETVIDEO_STREAM             0x00004006
-#define MCI_DGV_SETVIDEO_PALHANDLE          0x00004007
-#define MCI_DGV_SETVIDEO_FRAME_RATE         0x00004008
-#define MCI_DGV_SETVIDEO_SOURCE             0x00004009
-#define MCI_DGV_SETVIDEO_KEY_INDEX          0x0000400a
-#define MCI_DGV_SETVIDEO_KEY_COLOR          0x0000400b
-#define MCI_DGV_SETVIDEO_BITSPERPEL         0x0000400c
+#define MCI_DGV_SETVIDEO_BRIGHTNESS         __MSABI_LONG(0x00004000)
+#define MCI_DGV_SETVIDEO_COLOR              __MSABI_LONG(0x00004001)
+#define MCI_DGV_SETVIDEO_CONTRAST           __MSABI_LONG(0x00004002)
+#define MCI_DGV_SETVIDEO_TINT               __MSABI_LONG(0x00004003)
+#define MCI_DGV_SETVIDEO_SHARPNESS          __MSABI_LONG(0x00004004)
+#define MCI_DGV_SETVIDEO_GAMMA              __MSABI_LONG(0x00004005)
+#define MCI_DGV_SETVIDEO_STREAM             __MSABI_LONG(0x00004006)
+#define MCI_DGV_SETVIDEO_PALHANDLE          __MSABI_LONG(0x00004007)
+#define MCI_DGV_SETVIDEO_FRAME_RATE         __MSABI_LONG(0x00004008)
+#define MCI_DGV_SETVIDEO_SOURCE             __MSABI_LONG(0x00004009)
+#define MCI_DGV_SETVIDEO_KEY_INDEX          __MSABI_LONG(0x0000400a)
+#define MCI_DGV_SETVIDEO_KEY_COLOR          __MSABI_LONG(0x0000400b)
+#define MCI_DGV_SETVIDEO_BITSPERPEL         __MSABI_LONG(0x0000400c)
 
 /* flags for the dwFlags parameter of MCI_SIGNAL */
 
-#define MCI_DGV_SIGNAL_AT                   0x00010000
-#define MCI_DGV_SIGNAL_EVERY                0x00020000
-#define MCI_DGV_SIGNAL_USERVAL              0x00040000
-#define MCI_DGV_SIGNAL_CANCEL               0x00080000
-#define MCI_DGV_SIGNAL_POSITION             0x00100000
+#define MCI_DGV_SIGNAL_AT                   __MSABI_LONG(0x00010000)
+#define MCI_DGV_SIGNAL_EVERY                __MSABI_LONG(0x00020000)
+#define MCI_DGV_SIGNAL_USERVAL              __MSABI_LONG(0x00040000)
+#define MCI_DGV_SIGNAL_CANCEL               __MSABI_LONG(0x00080000)
+#define MCI_DGV_SIGNAL_POSITION             __MSABI_LONG(0x00100000)
 
 /* flags for the dwFlags parameter of MCI_STATUS command */
 
-#define MCI_DGV_STATUS_NOMINAL              0x00020000
-#define MCI_DGV_STATUS_REFERENCE            0x00040000
-#define MCI_DGV_STATUS_LEFT                 0x00080000
-#define MCI_DGV_STATUS_RIGHT                0x00100000
-#define MCI_DGV_STATUS_DISKSPACE            0x00200000
-#define MCI_DGV_STATUS_INPUT                0x00400000
-#define MCI_DGV_STATUS_OUTPUT               0x00800000
-#define MCI_DGV_STATUS_RECORD               0x01000000
+#define MCI_DGV_STATUS_NOMINAL              __MSABI_LONG(0x00020000)
+#define MCI_DGV_STATUS_REFERENCE            __MSABI_LONG(0x00040000)
+#define MCI_DGV_STATUS_LEFT                 __MSABI_LONG(0x00080000)
+#define MCI_DGV_STATUS_RIGHT                __MSABI_LONG(0x00100000)
+#define MCI_DGV_STATUS_DISKSPACE            __MSABI_LONG(0x00200000)
+#define MCI_DGV_STATUS_INPUT                __MSABI_LONG(0x00400000)
+#define MCI_DGV_STATUS_OUTPUT               __MSABI_LONG(0x00800000)
+#define MCI_DGV_STATUS_RECORD               __MSABI_LONG(0x01000000)
 
 /* values for dwItem field of MCI_STATUS_PARMS structure */
 
-#define MCI_DGV_STATUS_AUDIO_INPUT          0x00004000
-#define MCI_DGV_STATUS_HWND                 0x00004001
-#define MCI_DGV_STATUS_SPEED                0x00004003
-#define MCI_DGV_STATUS_HPAL                 0x00004004
-#define MCI_DGV_STATUS_BRIGHTNESS           0x00004005
-#define MCI_DGV_STATUS_COLOR                0x00004006
-#define MCI_DGV_STATUS_CONTRAST             0x00004007
-#define MCI_DGV_STATUS_FILEFORMAT           0x00004008
-#define MCI_DGV_STATUS_AUDIO_SOURCE         0x00004009
-#define MCI_DGV_STATUS_GAMMA                0x0000400a
-#define MCI_DGV_STATUS_MONITOR              0x0000400b
-#define MCI_DGV_STATUS_MONITOR_METHOD       0x0000400c
-#define MCI_DGV_STATUS_FRAME_RATE           0x0000400e
-#define MCI_DGV_STATUS_BASS                 0x0000400f
-#define MCI_DGV_STATUS_SIZE                 0x00004010
-#define MCI_DGV_STATUS_SEEK_EXACTLY         0x00004011
-#define MCI_DGV_STATUS_SHARPNESS            0x00004012
-#define MCI_DGV_STATUS_SMPTE                0x00004013
-#define MCI_DGV_STATUS_AUDIO                0x00004014
-#define MCI_DGV_STATUS_TINT                 0x00004015
-#define MCI_DGV_STATUS_TREBLE               0x00004016
-#define MCI_DGV_STATUS_UNSAVED              0x00004017
-#define MCI_DGV_STATUS_VIDEO                0x00004018
-#define MCI_DGV_STATUS_VOLUME               0x00004019
-#define MCI_DGV_STATUS_AUDIO_RECORD         0x0000401a
-#define MCI_DGV_STATUS_VIDEO_SOURCE         0x0000401b
-#define MCI_DGV_STATUS_VIDEO_RECORD         0x0000401c
-#define MCI_DGV_STATUS_STILL_FILEFORMAT     0x0000401d
-#define MCI_DGV_STATUS_VIDEO_SRC_NUM        0x0000401e
-#define MCI_DGV_STATUS_FILE_MODE            0x0000401f
-#define MCI_DGV_STATUS_FILE_COMPLETION      0x00004020
-#define MCI_DGV_STATUS_WINDOW_VISIBLE       0x00004021
-#define MCI_DGV_STATUS_WINDOW_MINIMIZED     0x00004022
-#define MCI_DGV_STATUS_WINDOW_MAXIMIZED     0x00004023
-#define MCI_DGV_STATUS_KEY_INDEX            0x00004024
-#define MCI_DGV_STATUS_KEY_COLOR            0x00004025
-#define MCI_DGV_STATUS_PAUSE_MODE           0x00004026
-#define MCI_DGV_STATUS_SAMPLESPERSEC        0x00004027
-#define MCI_DGV_STATUS_AVGBYTESPERSEC       0x00004028
-#define MCI_DGV_STATUS_BLOCKALIGN           0x00004029
-#define MCI_DGV_STATUS_BITSPERSAMPLE        0x0000402a
-#define MCI_DGV_STATUS_BITSPERPEL           0x0000402b
-#define MCI_DGV_STATUS_FORWARD              0x0000402c
-#define MCI_DGV_STATUS_AUDIO_STREAM         0x0000402d
-#define MCI_DGV_STATUS_VIDEO_STREAM         0x0000402e
+#define MCI_DGV_STATUS_AUDIO_INPUT          __MSABI_LONG(0x00004000)
+#define MCI_DGV_STATUS_HWND                 __MSABI_LONG(0x00004001)
+#define MCI_DGV_STATUS_SPEED                __MSABI_LONG(0x00004003)
+#define MCI_DGV_STATUS_HPAL                 __MSABI_LONG(0x00004004)
+#define MCI_DGV_STATUS_BRIGHTNESS           __MSABI_LONG(0x00004005)
+#define MCI_DGV_STATUS_COLOR                __MSABI_LONG(0x00004006)
+#define MCI_DGV_STATUS_CONTRAST             __MSABI_LONG(0x00004007)
+#define MCI_DGV_STATUS_FILEFORMAT           __MSABI_LONG(0x00004008)
+#define MCI_DGV_STATUS_AUDIO_SOURCE         __MSABI_LONG(0x00004009)
+#define MCI_DGV_STATUS_GAMMA                __MSABI_LONG(0x0000400a)
+#define MCI_DGV_STATUS_MONITOR              __MSABI_LONG(0x0000400b)
+#define MCI_DGV_STATUS_MONITOR_METHOD       __MSABI_LONG(0x0000400c)
+#define MCI_DGV_STATUS_FRAME_RATE           __MSABI_LONG(0x0000400e)
+#define MCI_DGV_STATUS_BASS                 __MSABI_LONG(0x0000400f)
+#define MCI_DGV_STATUS_SIZE                 __MSABI_LONG(0x00004010)
+#define MCI_DGV_STATUS_SEEK_EXACTLY         __MSABI_LONG(0x00004011)
+#define MCI_DGV_STATUS_SHARPNESS            __MSABI_LONG(0x00004012)
+#define MCI_DGV_STATUS_SMPTE                __MSABI_LONG(0x00004013)
+#define MCI_DGV_STATUS_AUDIO                __MSABI_LONG(0x00004014)
+#define MCI_DGV_STATUS_TINT                 __MSABI_LONG(0x00004015)
+#define MCI_DGV_STATUS_TREBLE               __MSABI_LONG(0x00004016)
+#define MCI_DGV_STATUS_UNSAVED              __MSABI_LONG(0x00004017)
+#define MCI_DGV_STATUS_VIDEO                __MSABI_LONG(0x00004018)
+#define MCI_DGV_STATUS_VOLUME               __MSABI_LONG(0x00004019)
+#define MCI_DGV_STATUS_AUDIO_RECORD         __MSABI_LONG(0x0000401a)
+#define MCI_DGV_STATUS_VIDEO_SOURCE         __MSABI_LONG(0x0000401b)
+#define MCI_DGV_STATUS_VIDEO_RECORD         __MSABI_LONG(0x0000401c)
+#define MCI_DGV_STATUS_STILL_FILEFORMAT     __MSABI_LONG(0x0000401d)
+#define MCI_DGV_STATUS_VIDEO_SRC_NUM        __MSABI_LONG(0x0000401e)
+#define MCI_DGV_STATUS_FILE_MODE            __MSABI_LONG(0x0000401f)
+#define MCI_DGV_STATUS_FILE_COMPLETION      __MSABI_LONG(0x00004020)
+#define MCI_DGV_STATUS_WINDOW_VISIBLE       __MSABI_LONG(0x00004021)
+#define MCI_DGV_STATUS_WINDOW_MINIMIZED     __MSABI_LONG(0x00004022)
+#define MCI_DGV_STATUS_WINDOW_MAXIMIZED     __MSABI_LONG(0x00004023)
+#define MCI_DGV_STATUS_KEY_INDEX            __MSABI_LONG(0x00004024)
+#define MCI_DGV_STATUS_KEY_COLOR            __MSABI_LONG(0x00004025)
+#define MCI_DGV_STATUS_PAUSE_MODE           __MSABI_LONG(0x00004026)
+#define MCI_DGV_STATUS_SAMPLESPERSEC        __MSABI_LONG(0x00004027)
+#define MCI_DGV_STATUS_AVGBYTESPERSEC       __MSABI_LONG(0x00004028)
+#define MCI_DGV_STATUS_BLOCKALIGN           __MSABI_LONG(0x00004029)
+#define MCI_DGV_STATUS_BITSPERSAMPLE        __MSABI_LONG(0x0000402a)
+#define MCI_DGV_STATUS_BITSPERPEL           __MSABI_LONG(0x0000402b)
+#define MCI_DGV_STATUS_FORWARD              __MSABI_LONG(0x0000402c)
+#define MCI_DGV_STATUS_AUDIO_STREAM         __MSABI_LONG(0x0000402d)
+#define MCI_DGV_STATUS_VIDEO_STREAM         __MSABI_LONG(0x0000402e)
 
 /* flags for dwFlags parameter of MCI_STEP command message */
 
-#define MCI_DGV_STEP_REVERSE                0x00010000
-#define MCI_DGV_STEP_FRAMES                 0x00020000
+#define MCI_DGV_STEP_REVERSE                __MSABI_LONG(0x00010000)
+#define MCI_DGV_STEP_FRAMES                 __MSABI_LONG(0x00020000)
 
 /* flags for dwFlags parameter of MCI_STOP command message */
 
-#define MCI_DGV_STOP_HOLD                   0x00010000
+#define MCI_DGV_STOP_HOLD                   __MSABI_LONG(0x00010000)
 
 /* flags for dwFlags parameter of MCI_UPDATE command message */
 
-#define MCI_DGV_UPDATE_HDC                  0x00020000
-#define MCI_DGV_UPDATE_PAINT                0x00040000
+#define MCI_DGV_UPDATE_HDC                  __MSABI_LONG(0x00020000)
+#define MCI_DGV_UPDATE_PAINT                __MSABI_LONG(0x00040000)
 
 /* flags for dwFlags parameter of MCI_WHERE command message */
 
-#define MCI_DGV_WHERE_SOURCE                0x00020000
-#define MCI_DGV_WHERE_DESTINATION           0x00040000
-#define MCI_DGV_WHERE_FRAME                 0x00080000
-#define MCI_DGV_WHERE_VIDEO                 0x00100000
-#define MCI_DGV_WHERE_WINDOW                0x00200000
-#define MCI_DGV_WHERE_MAX                   0x00400000
+#define MCI_DGV_WHERE_SOURCE                __MSABI_LONG(0x00020000)
+#define MCI_DGV_WHERE_DESTINATION           __MSABI_LONG(0x00040000)
+#define MCI_DGV_WHERE_FRAME                 __MSABI_LONG(0x00080000)
+#define MCI_DGV_WHERE_VIDEO                 __MSABI_LONG(0x00100000)
+#define MCI_DGV_WHERE_WINDOW                __MSABI_LONG(0x00200000)
+#define MCI_DGV_WHERE_MAX                   __MSABI_LONG(0x00400000)
 
 /* flags for dwFlags parameter of MCI_WINDOW command message */
 
-#define MCI_DGV_WINDOW_HWND                 0x00010000
-#define MCI_DGV_WINDOW_STATE                0x00040000
-#define MCI_DGV_WINDOW_TEXT                 0x00080000
+#define MCI_DGV_WINDOW_HWND                 __MSABI_LONG(0x00010000)
+#define MCI_DGV_WINDOW_STATE                __MSABI_LONG(0x00040000)
+#define MCI_DGV_WINDOW_TEXT                 __MSABI_LONG(0x00080000)
 
 /* flags for hWnd parameter of MCI_DGV_WINDOW_PARMS parameter block */
 
-#define MCI_DGV_WINDOW_DEFAULT              0x00000000
+#define MCI_DGV_WINDOW_DEFAULT              __MSABI_LONG(0x00000000)
 
 /* parameter block for MCI_WHERE, MCI_PUT, MCI_FREEZE, MCI_UNFREEZE cmds */
 
