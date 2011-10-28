@@ -744,11 +744,11 @@ msgstr "Country/Region"
 
 #: crypt32.rc:72
 msgid "Organization"
-msgstr "Organization"
+msgstr "Organisation"
 
 #: crypt32.rc:73
 msgid "Organizational Unit"
-msgstr "Organizational Unit"
+msgstr "Organisational Unit"
 
 #: crypt32.rc:74
 msgid "Common Name"
@@ -800,7 +800,7 @@ msgstr "Cross CA Version"
 
 #: crypt32.rc:86
 msgid "Serialized Signature Serial Number"
-msgstr "Serialized Signature Serial Number"
+msgstr "Serialised Signature Serial Number"
 
 #: crypt32.rc:87
 msgid "Principal Name"
@@ -812,7 +812,7 @@ msgstr "Windows Product Update"
 
 #: crypt32.rc:89
 msgid "Enrollment Name Value Pair"
-msgstr "Enrollment Name Value Pair"
+msgstr "Enrolment Name Value Pair"
 
 #: crypt32.rc:90
 msgid "OS Version"
@@ -820,7 +820,7 @@ msgstr "OS Version"
 
 #: crypt32.rc:91
 msgid "Enrollment CSP"
-msgstr "Enrollment CSP"
+msgstr "Enrolment CSP"
 
 #: crypt32.rc:92
 msgid "CRL Number"
@@ -1068,11 +1068,11 @@ msgstr "Embedded Windows System Component Verification"
 
 #: crypt32.rc:153 cryptui.rc:140
 msgid "Key Pack Licenses"
-msgstr "Key Pack Licenses"
+msgstr "Key Pack Licences"
 
 #: crypt32.rc:154 cryptui.rc:141
 msgid "License Server Verification"
-msgstr "License Server Verification"
+msgstr "Licence Server Verification"
 
 #: crypt32.rc:155 cryptui.rc:143
 msgid "Smart Card Logon"
@@ -1415,7 +1415,7 @@ msgstr "Notice Reference"
 
 #: cryptdlg.rc:35
 msgid "Organization="
-msgstr "Organization="
+msgstr "Organisation="
 
 #: cryptdlg.rc:36
 msgid "Notice Number="
@@ -1647,7 +1647,7 @@ msgstr ""
 
 #: cryptui.rc:82
 msgid "The file format is not recognized.  Please select another file."
-msgstr ""
+msgstr "The file format is not recognised.  Please select another file."
 
 #: cryptui.rc:83
 msgid "Could not open "
@@ -3507,7 +3507,7 @@ msgstr ""
 
 #: winerror.mc:1546
 msgid "The device needs reinitialization\n"
-msgstr ""
+msgstr "The device needs reinitialisation\n"
 
 #: winerror.mc:1551
 msgid "The device requires cleaning\n"
@@ -6622,7 +6622,7 @@ msgstr ""
 
 #: shell32.rc:266
 msgid "Wine License"
-msgstr "Wine License"
+msgstr "Wine Licence"
 
 #: shell32.rc:155
 msgid "Trash"
@@ -6662,11 +6662,11 @@ msgstr ""
 
 #: user32.rc:30 user32.rc:43
 msgid "Mi&nimize"
-msgstr ""
+msgstr "Mi&nimise"
 
 #: user32.rc:31 user32.rc:44 taskmgr.rc:83 taskmgr.rc:99 taskmgr.rc:126
 msgid "Ma&ximize"
-msgstr ""
+msgstr "Ma&ximise"
 
 #: user32.rc:33
 msgid "&Close\tAlt-F4"
@@ -6852,11 +6852,11 @@ msgstr ""
 
 #: winmm.rc:57
 msgid "The driver cannot recognize the specified command parameter."
-msgstr "The driver cannot recognize the specified command parameter."
+msgstr "The driver cannot recognise the specified command parameter."
 
 #: winmm.rc:58
 msgid "The driver cannot recognize the specified command."
-msgstr "The driver cannot recognize the specified command."
+msgstr "The driver cannot recognise the specified command."
 
 #: winmm.rc:59
 msgid ""
@@ -6868,7 +6868,7 @@ msgstr ""
 
 #: winmm.rc:60
 msgid "The specified device is not open or is not recognized by MCI."
-msgstr "The specified device is not open or is not recognized by MCI."
+msgstr "The specified device is not open or is not recognised by MCI."
 
 #: winmm.rc:61
 msgid ""
@@ -7217,7 +7217,7 @@ msgid ""
 "The device you are trying to play to cannot recognize the current file "
 "format."
 msgstr ""
-"The device you are trying to play to cannot recognize the current file "
+"The device you are trying to play to cannot recognise the current file "
 "format."
 
 #: winmm.rc:116
@@ -8015,6 +8015,8 @@ msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
 msgstr ""
+"ENDLOCAL ends localisation of environment changes in a batch file\n"
+"which were introduced by a preceding SETLOCAL.\n"
 
 #: cmd.rc:217
 msgid ""
@@ -8025,6 +8027,12 @@ msgid ""
 "file, whichever comes first), at which point the previous environment\n"
 "settings are restored.\n"
 msgstr ""
+"SETLOCAL starts localisation of environment changes in a batch file.\n"
+"\n"
+"Environment changes done after a SETLOCAL are local to the batch file, and\n"
+"are preserved until the next ENDLOCAL is encountered (or at the end of the\n"
+"file, whichever comes first), at which point the previous environment\n"
+"settings are restored.\n"
 
 #: cmd.rc:220
 msgid ""
@@ -8143,7 +8151,7 @@ msgstr ""
 "DEL (ERASE)\tDelete a file or set of files\n"
 "DIR\t\tList the contents of a directory\n"
 "ECHO\t\tCopy text directly to the console output\n"
-"ENDLOCAL\tEnd localization of environment changes in a batch file\n"
+"ENDLOCAL\tEnd localisation of environment changes in a batch file\n"
 "FTYPE\t\tShow or modify open commands associated with file types\n"
 "HELP\t\tShow brief help details on a topic\n"
 "MD (MKDIR)\tCreate a subdirectory\n"
@@ -9010,7 +9018,7 @@ msgstr ""
 
 #: progman.rc:43
 msgid "&Minimize on run"
-msgstr ""
+msgstr "&Minimise on run"
 
 #: progman.rc:44 winefile.rc:73
 msgid "&Save settings on exit"
@@ -9456,14 +9464,14 @@ msgstr ""
 "start [options] document_filename\n"
 "\n"
 "Options:\n"
-"/M[inimized] Start the program minimized.\n"
-"/MAX[imized] Start the program maximized.\n"
-"/R[estored]  Start the program normally (neither minimized nor maximized).\n"
+"/M[inimised] Start the program minimised.\n"
+"/MAX[imised] Start the program maximised.\n"
+"/R[estored]  Start the program normally (neither minimised nor maximised).\n"
 "/W[ait]      Wait for started program to finish, then exit with its exit "
 "code.\n"
 "/Unix        Use a Unix filename and start the file like windows explorer.\n"
 "/ProgIDOpen  Open a document using the following progID.\n"
-"/L           Show end-user license.\n"
+"/L           Show end-user licence.\n"
 "/?           Display this help and exit.\n"
 "\n"
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
@@ -9589,11 +9597,11 @@ msgstr ""
 
 #: taskmgr.rc:45
 msgid "&Minimize On Use"
-msgstr ""
+msgstr "&Minimise On Use"
 
 #: taskmgr.rc:47
 msgid "&Hide When Minimized"
-msgstr ""
+msgstr "&Hide When Minimised"
 
 #: taskmgr.rc:49 taskmgr.rc:257
 msgid "&Show 16-bit tasks"
@@ -9653,7 +9661,7 @@ msgstr ""
 
 #: taskmgr.rc:82 taskmgr.rc:98 taskmgr.rc:125
 msgid "&Minimize"
-msgstr ""
+msgstr "&Minimise"
 
 #: taskmgr.rc:84 taskmgr.rc:100 taskmgr.rc:127
 msgid "&Cascade"
@@ -9729,15 +9737,15 @@ msgstr ""
 
 #: taskmgr.rc:188
 msgid "Task Manager remains in front of all other windows unless minimized"
-msgstr ""
+msgstr "Task Manager remains in front of all other windows unless minimised"
 
 #: taskmgr.rc:190
 msgid "Task Manager is minimized when a SwitchTo operation is performed"
-msgstr ""
+msgstr "Task Manager is minimised when a SwitchTo operation is performed"
 
 #: taskmgr.rc:191
 msgid "Hide the Task Manager when it is minimized"
-msgstr ""
+msgstr "Hide the Task Manager when it is minimised"
 
 #: taskmgr.rc:192
 msgid "Force Task Manager to update now, regardless of Update Speed setting"
@@ -9781,11 +9789,11 @@ msgstr ""
 
 #: taskmgr.rc:207
 msgid "Minimizes the windows"
-msgstr ""
+msgstr "Minimises the windows"
 
 #: taskmgr.rc:208
 msgid "Maximizes the windows"
-msgstr ""
+msgstr "Maximises the windows"
 
 #: taskmgr.rc:209
 msgid "Cascades the windows diagonally on the desktop"
@@ -10503,7 +10511,7 @@ msgstr ""
 
 #: wineconsole.rc:43
 msgid "wineconsole: Unrecognized command line option\n"
-msgstr ""
+msgstr "wineconsole: Unrecognised command line option\n"
 
 #: wineconsole.rc:44
 msgid "Starts a program in a Wine console\n"
