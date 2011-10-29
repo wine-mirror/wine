@@ -236,7 +236,7 @@
 @ stub ShowCertificate
 @ stub ShowClientAuthCerts
 @ stub ShowSecurityInfo
-@ stub ShowX509EncodedCertificate
+@ stdcall ShowX509EncodedCertificate(ptr ptr long)
 @ stdcall UnlockUrlCacheEntryFile(str long) UnlockUrlCacheEntryFileA
 @ stdcall UnlockUrlCacheEntryFileA(str long)
 @ stdcall UnlockUrlCacheEntryFileW(wstr long)

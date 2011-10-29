@@ -6071,3 +6071,12 @@ BOOL WINAPI InternetShowSecurityInfoByURLW(LPCWSTR url, HWND window)
    FIXME("stub: %s %p\n", debugstr_w(url), window);
    return FALSE;
 }
+
+/***********************************************************************
+ *           ShowX509EncodedCertificate (@)
+ */
+DWORD WINAPI ShowX509EncodedCertificate(HWND parent, LPBYTE cert, DWORD len)
+{
+   FIXME("stub: %p %p %u\n", parent, cert, len);
+   return ERROR_CALL_NOT_IMPLEMENTED;
+}
