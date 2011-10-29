@@ -120,30 +120,30 @@ void WCMD_batch (WCHAR *file, WCHAR *command, int called, WCHAR *startLabel, HAN
  *  s     [I] input string, non NULL
  *  n     [I] # of the (possibly double quotes-delimited) parameter to return
  *            Starts at 0
- *  where [O] if non NULL, pointer to the start of the nth parameter in s,
+ *  start [O] if non NULL, pointer to the start of the nth parameter in s,
  *            potentially a " character
  *  end   [O] if non NULL, pointer to the last char of
  *            the nth parameter in s, potentially a " character
  *
  * RETURNS
  *  Success: Returns the nth delimited parameter found in s.
- *           *where points to the start of the param, possibly a starting
+ *           *start points to the start of the param, possibly a starting
  *           double quotes character
  *  Failure: Returns an empty string if the param is not found.
- *           *where is set to NULL
+ *           *start is set to NULL
  *
  * NOTES
  *  Return value is stored in static storage, hence is overwritten
  *  after each call.
  *  Doesn't include any potentially delimiting double quotes
  */
-WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where, WCHAR **end) {
+WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, WCHAR **end) {
     int curParamNb = 0;
     static WCHAR param[MAX_PATH];
     WCHAR *p = s, *q;
     BOOL quotesDelimited;
 
-    if (where != NULL) *where = NULL;
+    if (start != NULL) *start = NULL;
     if (end != NULL) *end = NULL;
     param[0] = '\0';
     while (TRUE) {
@@ -152,7 +152,7 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **where, WCHAR **end) {
         if (*p == '\0') return param;
 
         quotesDelimited = (*p == '"');
-        if (where != NULL && curParamNb == n) *where = p;
+        if (start != NULL && curParamNb == n) *start = p;
 
         if (quotesDelimited) {
             q = ++p;
