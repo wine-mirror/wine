@@ -10984,6 +10984,25 @@ msgstr "註釋(&A)..."
 msgid "Copy"
 msgstr "複製(&C)"
 
+#: winhlp32.rc:97
+#, fuzzy
+msgid "Index"
+msgstr "內容(&C)"
+
+#: winhlp32.rc:105
+#, fuzzy
+msgid "Search"
+msgstr "搜尋(&S)"
+
+#: winhlp32.rc:107
+#, fuzzy
+msgid "Not implemented yet"
+msgstr ""
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"此功能未實現\n"
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"未實現"
+
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine 幫助"

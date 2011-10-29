@@ -11167,6 +11167,18 @@ msgstr "הערות..."
 msgid "Copy"
 msgstr "העתקה"
 
+#: winhlp32.rc:97
+msgid "Index"
+msgstr "מפתח"
+
+#: winhlp32.rc:105
+msgid "Search"
+msgstr "חיפוש"
+
+#: winhlp32.rc:107
+msgid "Not implemented yet"
+msgstr "לא מוטמע עדיין"
+
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "העזרה של Wine"

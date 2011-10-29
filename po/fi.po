@@ -10873,6 +10873,21 @@ msgstr "&Huomautus..."
 msgid "Copy"
 msgstr "Ko&pioi"
 
+#: winhlp32.rc:97
+#, fuzzy
+msgid "Index"
+msgstr "&Sisällys"
+
+#: winhlp32.rc:105
+#, fuzzy
+msgid "Search"
+msgstr "&Etsi"
+
+#: winhlp32.rc:107
+#, fuzzy
+msgid "Not implemented yet"
+msgstr "Ei käytettävissä"
+
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine Ohje"

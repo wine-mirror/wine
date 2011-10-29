@@ -10402,6 +10402,18 @@ msgstr ""
 msgid "Copy"
 msgstr ""
 
+#: winhlp32.rc:97
+msgid "Index"
+msgstr ""
+
+#: winhlp32.rc:105
+msgid "Search"
+msgstr ""
+
+#: winhlp32.rc:107
+msgid "Not implemented yet"
+msgstr ""
+
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr ""

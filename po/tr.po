@@ -11325,6 +11325,29 @@ msgstr ""
 msgid "Copy"
 msgstr "K&opyala"
 
+#: winhlp32.rc:97
+#, fuzzy
+msgid "Index"
+msgstr "&İçindekiler"
+
+#: winhlp32.rc:105
+#, fuzzy
+msgid "Search"
+msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Ara\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Bul"
+
+#: winhlp32.rc:107
+#, fuzzy
+msgid "Not implemented yet"
+msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"Henüz Tanımlanmadı\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"Henüz tamamlanmadı"
+
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine Yardım"

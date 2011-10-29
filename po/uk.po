@@ -11009,6 +11009,18 @@ msgstr "Замітки..."
 msgid "Copy"
 msgstr "Копіювати"
 
+#: winhlp32.rc:97
+msgid "Index"
+msgstr "Вказівник"
+
+#: winhlp32.rc:105
+msgid "Search"
+msgstr "Пошук"
+
+#: winhlp32.rc:107
+msgid "Not implemented yet"
+msgstr "Ще не впроваджено"
+
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Довідка Wine"

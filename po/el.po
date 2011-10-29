@@ -10571,6 +10571,20 @@ msgstr ""
 msgid "Copy"
 msgstr ""
 
+#: winhlp32.rc:97
+msgid "Index"
+msgstr ""
+
+#: winhlp32.rc:105
+#, fuzzy
+msgid "Search"
+msgstr "&Αναζήτηση"
+
+#: winhlp32.rc:107
+#, fuzzy
+msgid "Not implemented yet"
+msgstr "Το αρχείο δε βρέθηκε"
+
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr ""

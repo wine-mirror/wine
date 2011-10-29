@@ -10939,6 +10939,18 @@ msgstr "注释..."
 msgid "Copy"
 msgstr "复制"
 
+#: winhlp32.rc:97
+msgid "Index"
+msgstr "索引"
+
+#: winhlp32.rc:105
+msgid "Search"
+msgstr "搜索"
+
+#: winhlp32.rc:107
+msgid "Not implemented yet"
+msgstr "尚未实现"
+
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine 帮助"

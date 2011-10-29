@@ -10735,6 +10735,21 @@ msgstr "&Анотирай..."
 msgid "Copy"
 msgstr "&Копирай"
 
+#: winhlp32.rc:97
+#, fuzzy
+msgid "Index"
+msgstr "&Съдържание"
+
+#: winhlp32.rc:105
+#, fuzzy
+msgid "Search"
+msgstr "&Търсене"
+
+#: winhlp32.rc:107
+#, fuzzy
+msgid "Not implemented yet"
+msgstr "Не е реализирано"
+
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine Помощ"

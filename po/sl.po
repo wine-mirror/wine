@@ -11085,6 +11085,18 @@ msgstr "Zabeležka ..."
 msgid "Copy"
 msgstr "Kopiraj"
 
+#: winhlp32.rc:97
+msgid "Index"
+msgstr "Indeks"
+
+#: winhlp32.rc:105
+msgid "Search"
+msgstr "Iskanje"
+
+#: winhlp32.rc:107
+msgid "Not implemented yet"
+msgstr "Ni (še) na voljo"
+
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine pomoč"

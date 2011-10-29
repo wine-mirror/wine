@@ -11208,6 +11208,29 @@ msgstr "P&oznamenat si..."
 msgid "Copy"
 msgstr "&Kopírovat"
 
+#: winhlp32.rc:97
+#, fuzzy
+msgid "Index"
+msgstr "&Obsah"
+
+#: winhlp32.rc:105
+#, fuzzy
+msgid "Search"
+msgstr ""
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"&Hledat\n"
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"&Hledání"
+
+#: winhlp32.rc:107
+#, fuzzy
+msgid "Not implemented yet"
+msgstr ""
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"Není podporováno\n"
+"#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
+"Není implementováno"
+
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Nápověda Wine"

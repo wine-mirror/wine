@@ -11033,6 +11033,18 @@ msgstr "Заметки..."
 msgid "Copy"
 msgstr "Копировать"
 
+#: winhlp32.rc:97
+msgid "Index"
+msgstr "Указатель"
+
+#: winhlp32.rc:105
+msgid "Search"
+msgstr "Поиск"
+
+#: winhlp32.rc:107
+msgid "Not implemented yet"
+msgstr "Не реализовано"
+
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Справка Wine"

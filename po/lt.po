@@ -11034,6 +11034,18 @@ msgstr "Komentuoti..."
 msgid "Copy"
 msgstr "Kopijuoti"
 
+#: winhlp32.rc:97
+msgid "Index"
+msgstr "Indeksas"
+
+#: winhlp32.rc:105
+msgid "Search"
+msgstr "Paieška"
+
+#: winhlp32.rc:107
+msgid "Not implemented yet"
+msgstr "Dar nerealizuota"
+
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine žinynas"

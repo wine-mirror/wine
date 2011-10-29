@@ -11342,6 +11342,18 @@ msgstr "Kommentar..."
 msgid "Copy"
 msgstr "Kopier"
 
+#: winhlp32.rc:97
+msgid "Index"
+msgstr "Innhold"
+
+#: winhlp32.rc:105
+msgid "Search"
+msgstr "Søk"
+
+#: winhlp32.rc:107
+msgid "Not implemented yet"
+msgstr "Ikke laget ennå"
+
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Hjelp"

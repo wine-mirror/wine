@@ -10980,6 +10980,18 @@ msgstr "주석..."
 msgid "Copy"
 msgstr "복사"
 
+#: winhlp32.rc:97
+msgid "Index"
+msgstr "인덱스"
+
+#: winhlp32.rc:105
+msgid "Search"
+msgstr "찾기"
+
+#: winhlp32.rc:107
+msgid "Not implemented yet"
+msgstr "아직 구현되지 않음"
+
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine 도움말"

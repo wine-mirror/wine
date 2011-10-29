@@ -10589,6 +10589,20 @@ msgstr ""
 msgid "Copy"
 msgstr ""
 
+#: winhlp32.rc:97
+msgid "Index"
+msgstr ""
+
+#: winhlp32.rc:105
+#, fuzzy
+msgid "Search"
+msgstr "คันหา"
+
+#: winhlp32.rc:107
+#, fuzzy
+msgid "Not implemented yet"
+msgstr "ไม่พบแฟ้ม"
+
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr ""

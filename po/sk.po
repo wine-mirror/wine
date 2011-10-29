@@ -10592,6 +10592,20 @@ msgstr "&Skomentovať..."
 msgid "Copy"
 msgstr "Kopí&rovať..."
 
+#: winhlp32.rc:97
+#, fuzzy
+msgid "Index"
+msgstr "&Obsah"
+
+#: winhlp32.rc:105
+msgid "Search"
+msgstr ""
+
+#: winhlp32.rc:107
+#, fuzzy
+msgid "Not implemented yet"
+msgstr "Neimplementované"
+
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine Pomoc"

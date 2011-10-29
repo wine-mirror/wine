@@ -11020,6 +11020,18 @@ msgstr "コメント..."
 msgid "Copy"
 msgstr "コピー"
 
+#: winhlp32.rc:97
+msgid "Index"
+msgstr "索引"
+
+#: winhlp32.rc:105
+msgid "Search"
+msgstr "検索"
+
+#: winhlp32.rc:107
+msgid "Not implemented yet"
+msgstr "未実装"
+
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Wine ヘルプ"

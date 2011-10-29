@@ -10546,6 +10546,21 @@ msgstr "&Sicrîre..."
 msgid "Copy"
 msgstr "&Copyî..."
 
+#: winhlp32.rc:97
+#, fuzzy
+msgid "Index"
+msgstr "Å&dvins"
+
+#: winhlp32.rc:105
+#, fuzzy
+msgid "Search"
+msgstr "C&werî"
+
+#: winhlp32.rc:107
+#, fuzzy
+msgid "Not implemented yet"
+msgstr "Nén co possibe"
+
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Aidance di Wine"

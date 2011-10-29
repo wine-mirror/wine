@@ -11442,6 +11442,18 @@ msgstr "Anotação..."
 msgid "Copy"
 msgstr "Copiar"
 
+#: winhlp32.rc:97
+msgid "Index"
+msgstr "Índice"
+
+#: winhlp32.rc:105
+msgid "Search"
+msgstr "Procura"
+
+#: winhlp32.rc:107
+msgid "Not implemented yet"
+msgstr "Ainda não implementado"
+
 #: winhlp32.rc:78
 msgid "Wine Help"
 msgstr "Ajuda Wine"
