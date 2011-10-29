@@ -155,6 +155,7 @@ static ULONG WINAPI domselection_Release(
         xmlXPathFreeObject(This->result);
         xmldoc_release(This->node->doc);
         if (This->enumvariant) IEnumVARIANT_Release(This->enumvariant);
+        release_dispex(&This->dispex);
         heap_free(This);
     }
 
@@ -756,8 +757,9 @@ HRESULT create_selection(xmlNodePtr node, xmlChar* query, IXMLDOMNodeList **out)
     *out = NULL;
     if (!This || !ctxt || !query)
     {
-        hr = E_OUTOFMEMORY;
-        goto cleanup;
+        xmlXPathFreeContext(ctxt);
+        heap_free(This);
+        return E_OUTOFMEMORY;
     }
 
     This->IXMLDOMSelection_iface.lpVtbl = &domselection_vtbl;
@@ -765,6 +767,7 @@ HRESULT create_selection(xmlNodePtr node, xmlChar* query, IXMLDOMNodeList **out)
     This->resultPos = 0;
     This->node = node;
     This->enumvariant = NULL;
+    init_dispex(&This->dispex, (IUnknown*)&This->IXMLDOMSelection_iface, &domselection_dispex);
     xmldoc_add_ref(This->node->doc);
 
     ctxt->error = query_serror;
@@ -803,8 +806,6 @@ HRESULT create_selection(xmlNodePtr node, xmlChar* query, IXMLDOMNodeList **out)
         hr = E_FAIL;
         goto cleanup;
     }
-
-    init_dispex(&This->dispex, (IUnknown*)&This->IXMLDOMSelection_iface, &domselection_dispex);
 
     *out = (IXMLDOMNodeList*)&This->IXMLDOMSelection_iface;
     hr = S_OK;

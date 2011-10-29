@@ -156,6 +156,7 @@ typedef struct {
 extern HINSTANCE MSXML_hInstance DECLSPEC_HIDDEN;
 
 void init_dispex(DispatchEx*,IUnknown*,dispex_static_data_t*) DECLSPEC_HIDDEN;
+void release_dispex(DispatchEx*) DECLSPEC_HIDDEN;
 BOOL dispex_query_interface(DispatchEx*,REFIID,void**) DECLSPEC_HIDDEN;
 
 /* memory allocation functions */

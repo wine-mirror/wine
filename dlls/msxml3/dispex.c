@@ -653,6 +653,22 @@ BOOL dispex_query_interface(DispatchEx *This, REFIID riid, void **ppv)
     return TRUE;
 }
 
+void release_dispex(DispatchEx *This)
+{
+    dynamic_prop_t *prop;
+
+    if(!This->dynamic_data)
+        return;
+
+    for(prop = This->dynamic_data->props; prop < This->dynamic_data->props + This->dynamic_data->prop_cnt; prop++) {
+        VariantClear(&prop->var);
+        heap_free(prop->name);
+    }
+
+    heap_free(This->dynamic_data->props);
+    heap_free(This->dynamic_data);
+}
+
 void init_dispex(DispatchEx *dispex, IUnknown *outer, dispex_static_data_t *data)
 {
     dispex->IDispatchEx_iface.lpVtbl = &DispatchExVtbl;

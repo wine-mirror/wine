@@ -1110,6 +1110,7 @@ void destroy_xmlnode(xmlnode *This)
 {
     if(This->node)
         xmldoc_release(This->node->doc);
+    release_dispex(&This->dispex);
 }
 
 void init_xmlnode(xmlnode *This, xmlNodePtr node, IXMLDOMNode *node_iface, dispex_static_data_t *dispex_data)
@@ -1121,10 +1122,7 @@ void init_xmlnode(xmlnode *This, xmlNodePtr node, IXMLDOMNode *node_iface, dispe
     This->iface = node_iface;
     This->parent = NULL;
 
-    if(dispex_data)
-        init_dispex(&This->dispex, (IUnknown*)This->iface, dispex_data);
-    else
-        This->dispex.outer = NULL;
+    init_dispex(&This->dispex, dispex_data ? (IUnknown*)This->iface : NULL, dispex_data);
 }
 
 typedef struct {
