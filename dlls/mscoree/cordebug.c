@@ -45,6 +45,104 @@ static inline CorDebug *impl_from_ICorDebug( ICorDebug *iface )
     return CONTAINING_RECORD(iface, CorDebug, ICorDebug_iface);
 }
 
+static inline CorDebug *impl_from_ICorDebugProcessEnum( ICorDebugProcessEnum *iface )
+{
+    return CONTAINING_RECORD(iface, CorDebug, ICorDebugProcessEnum_iface);
+}
+
+static HRESULT WINAPI process_enum_QueryInterface(ICorDebugProcessEnum *iface, REFIID riid, void **ppvObject)
+{
+    CorDebug *This = impl_from_ICorDebugProcessEnum(iface);
+
+    TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
+
+    if ( IsEqualGUID( riid, &IID_ICorDebugProcessEnum ) ||
+         IsEqualGUID( riid, &IID_ICorDebugEnum ) ||
+         IsEqualGUID( riid, &IID_IUnknown ) )
+    {
+        *ppvObject = &This->ICorDebugProcessEnum_iface;
+    }
+    else
+    {
+        FIXME("Unsupported interface %s\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    ICorDebug_AddRef(iface);
+
+    return S_OK;
+}
+
+static ULONG WINAPI process_enum_AddRef(ICorDebugProcessEnum *iface)
+{
+    CorDebug *This = impl_from_ICorDebugProcessEnum(iface);
+    TRACE("%p ref=%u\n", This, This->ref);
+
+    return ICorDebug_AddRef(&This->ICorDebug_iface);
+}
+
+static ULONG WINAPI process_enum_Release(ICorDebugProcessEnum *iface)
+{
+    CorDebug *This = impl_from_ICorDebugProcessEnum(iface);
+    TRACE("%p ref=%u\n", This, This->ref);
+
+    return ICorDebug_Release(&This->ICorDebug_iface);
+}
+
+static HRESULT WINAPI process_enum_Skip(ICorDebugProcessEnum *iface, ULONG celt)
+{
+    CorDebug *This = impl_from_ICorDebugProcessEnum(iface);
+    FIXME("stub %p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI process_enum_Reset(ICorDebugProcessEnum *iface)
+{
+    CorDebug *This = impl_from_ICorDebugProcessEnum(iface);
+    FIXME("stub %p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI process_enum_Clone(ICorDebugProcessEnum *iface, ICorDebugEnum **ppEnum)
+{
+    CorDebug *This = impl_from_ICorDebugProcessEnum(iface);
+    FIXME("stub %p %p\n", This, ppEnum);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI process_enum_GetCount(ICorDebugProcessEnum *iface, ULONG *pcelt)
+{
+    CorDebug *This = impl_from_ICorDebugProcessEnum(iface);
+    TRACE("stub %p %p\n", This, pcelt);
+
+    if(!pcelt)
+        return E_INVALIDARG;
+
+    *pcelt = list_count(&This->processes);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI process_enum_Next(ICorDebugProcessEnum *iface, ULONG celt,
+            ICorDebugProcess * processes[], ULONG *pceltFetched)
+{
+    CorDebug *This = impl_from_ICorDebugProcessEnum(iface);
+    FIXME("stub %p %d %p %p\n", This, celt, processes, pceltFetched);
+    return E_NOTIMPL;
+}
+
+static const struct ICorDebugProcessEnumVtbl processenum_vtbl =
+{
+    process_enum_QueryInterface,
+    process_enum_AddRef,
+    process_enum_Release,
+    process_enum_Skip,
+    process_enum_Reset,
+    process_enum_Clone,
+    process_enum_GetCount,
+    process_enum_Next
+};
+
 /*** IUnknown methods ***/
 static HRESULT WINAPI CorDebug_QueryInterface(ICorDebug *iface, REFIID riid, void **ppvObject)
 {
@@ -82,11 +180,21 @@ static ULONG WINAPI CorDebug_Release(ICorDebug *iface)
 {
     CorDebug *This = impl_from_ICorDebug( iface );
     ULONG ref = InterlockedDecrement(&This->ref);
+    struct CorProcess *cursor, *cursor2;
 
     TRACE("%p ref=%u\n", This, ref);
 
     if (ref == 0)
     {
+        LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &This->processes, struct CorProcess, entry)
+        {
+            if(cursor->pProcess)
+                ICorDebugProcess_Release(cursor->pProcess);
+
+            list_remove(&cursor->entry);
+            HeapFree(GetProcessHeap(), 0, cursor);
+        }
+
         if(This->runtimehost)
             ICLRRuntimeHost_Release(This->runtimehost);
 
@@ -183,8 +291,15 @@ static HRESULT WINAPI CorDebug_DebugActiveProcess(ICorDebug *iface, DWORD id, BO
 static HRESULT WINAPI CorDebug_EnumerateProcesses( ICorDebug *iface, ICorDebugProcessEnum **ppProcess)
 {
     CorDebug *This = impl_from_ICorDebug( iface );
-    FIXME("stub %p %p\n", This, ppProcess);
-    return E_NOTIMPL;
+    TRACE("stub %p %p\n", This, ppProcess);
+
+    if(!ppProcess)
+        return E_INVALIDARG;
+
+    *ppProcess = &This->ICorDebugProcessEnum_iface;
+    ICorDebugProcessEnum_AddRef(*ppProcess);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI CorDebug_GetProcess(ICorDebug *iface, DWORD dwProcessId, ICorDebugProcess **ppProcess)
@@ -227,10 +342,13 @@ HRESULT CorDebug_Create(ICLRRuntimeHost *runtimehost, IUnknown** ppUnk)
         return E_OUTOFMEMORY;
 
     This->ICorDebug_iface.lpVtbl = &cordebug_vtbl;
+    This->ICorDebugProcessEnum_iface.lpVtbl = &processenum_vtbl;
     This->ref = 1;
     This->pCallback = NULL;
     This->pCallback2 = NULL;
     This->runtimehost = runtimehost;
+
+    list_init(&This->processes);
 
     if(This->runtimehost)
         ICLRRuntimeHost_AddRef(This->runtimehost);

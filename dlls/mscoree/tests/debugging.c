@@ -418,6 +418,29 @@ static BOOL init_functionpointers(void)
     return TRUE;
 }
 
+#define check_process_enum(core, e) _check_process_enum(__LINE__, core, e)
+static void _check_process_enum(unsigned line, ICorDebug *pCorDebug, ULONG nExpected)
+{
+    HRESULT hr;
+    ICorDebugProcessEnum *pProcessEnum = NULL;
+
+    hr = ICorDebug_EnumerateProcesses(pCorDebug, NULL);
+    ok_(__FILE__,line) (hr == E_INVALIDARG, "expected E_INVALIDARG got %08x\n", hr);
+
+    hr = ICorDebug_EnumerateProcesses(pCorDebug, &pProcessEnum);
+    ok_(__FILE__,line) (hr == S_OK, "expected S_OK got %08x\n", hr);
+    if(hr == S_OK)
+    {
+        ULONG cnt;
+
+        hr = ICorDebugProcessEnum_GetCount(pProcessEnum, &cnt);
+        ok_(__FILE__,line) (hr == S_OK, "expected S_OK got %08x\n", hr);
+        ok_(__FILE__,line) (cnt == nExpected, "expected %d got %d\n", nExpected, cnt);
+
+        ICorDebugProcessEnum_Release(pProcessEnum);
+    }
+}
+
 static void test_createDebugger(void)
 {
     HRESULT hr;
@@ -455,6 +478,9 @@ static void test_createDebugger(void)
 
                 hr = ICorDebug_SetManagedHandler(pCorDebug, &ManagedCallback);
                 ok(hr == S_OK, "expected S_OK got %08x\n", hr);
+
+                /* We should have no processes */
+                check_process_enum(pCorDebug, 0);
             }
 
             ICorDebug_Release(pCorDebug);

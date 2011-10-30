@@ -72,9 +72,16 @@ struct RuntimeHost
     LONG ref;
 };
 
+typedef struct CorProcess
+{
+    struct list entry;
+    ICorDebugProcess *pProcess;
+} CorProcess;
+
 typedef struct CorDebug
 {
     ICorDebug ICorDebug_iface;
+    ICorDebugProcessEnum ICorDebugProcessEnum_iface;
     LONG ref;
 
     ICLRRuntimeHost *runtimehost;
@@ -82,6 +89,9 @@ typedef struct CorDebug
     /* ICorDebug Callback */
     ICorDebugManagedCallback *pCallback;
     ICorDebugManagedCallback2 *pCallback2;
+
+    /* Debug Processes */
+    struct list processes;
 } CorDebug;
 
 extern HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
