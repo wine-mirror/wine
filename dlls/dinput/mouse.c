@@ -666,7 +666,7 @@ static HRESULT WINAPI SysMouseWImpl_GetCapabilities(LPDIRECTINPUTDEVICE8W iface,
     }
 
     devcaps.dwSize = lpDIDevCaps->dwSize;
-    devcaps.dwFlags = DIDC_ATTACHED;
+    devcaps.dwFlags = DIDC_ATTACHED | DIDC_EMULATED;
     if (This->base.dinput->dwVersion >= 0x0800)
 	devcaps.dwDevType = DI8DEVTYPE_MOUSE | (DI8DEVTYPEMOUSE_TRADITIONAL << 8);
     else

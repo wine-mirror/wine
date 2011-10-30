@@ -373,7 +373,7 @@ static HRESULT WINAPI SysKeyboardWImpl_GetCapabilities(LPDIRECTINPUTDEVICE8W ifa
     }
 
     devcaps.dwSize = lpDIDevCaps->dwSize;
-    devcaps.dwFlags = DIDC_ATTACHED;
+    devcaps.dwFlags = DIDC_ATTACHED | DIDC_EMULATED;
     if (This->base.dinput->dwVersion >= 0x0800)
 	devcaps.dwDevType = DI8DEVTYPE_KEYBOARD | (DI8DEVTYPEKEYBOARD_UNKNOWN << 8);
     else
