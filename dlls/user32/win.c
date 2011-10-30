@@ -1085,7 +1085,7 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
      WS_MINIMIZEBOX | \
      WS_MAXIMIZEBOX)
 
-    if(style & ~DUMPED_STYLES) TRACE(" %08lx", style & ~DUMPED_STYLES);
+    if(style & ~DUMPED_STYLES) TRACE(" %08x", style & ~DUMPED_STYLES);
     TRACE("\n");
 #undef DUMPED_STYLES
 
@@ -1131,7 +1131,7 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
      WS_EX_LAYERED | \
      WS_EX_LAYOUTRTL)
 
-    if(exstyle & ~DUMPED_EX_STYLES) TRACE(" %08lx", exstyle & ~DUMPED_EX_STYLES);
+    if(exstyle & ~DUMPED_EX_STYLES) TRACE(" %08x", exstyle & ~DUMPED_EX_STYLES);
     TRACE("\n");
 #undef DUMPED_EX_STYLES
 }

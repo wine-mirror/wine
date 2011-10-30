@@ -777,35 +777,35 @@ typedef struct tagWINDOWPLACEMENT
 #define DLGWINDOWEXTRA      30
 
 /* Button control styles */
-#define BS_PUSHBUTTON          0x00000000L
-#define BS_DEFPUSHBUTTON       0x00000001L
-#define BS_CHECKBOX            0x00000002L
-#define BS_AUTOCHECKBOX        0x00000003L
-#define BS_RADIOBUTTON         0x00000004L
-#define BS_3STATE              0x00000005L
-#define BS_AUTO3STATE          0x00000006L
-#define BS_GROUPBOX            0x00000007L
-#define BS_USERBUTTON          0x00000008L
-#define BS_AUTORADIOBUTTON     0x00000009L
-#define BS_PUSHBOX             0x0000000AL
-#define BS_OWNERDRAW           0x0000000BL
-#define BS_TYPEMASK            0x0000000FL
-#define BS_LEFTTEXT            0x00000020L
+#define BS_PUSHBUTTON          __MSABI_LONG(0x00000000)
+#define BS_DEFPUSHBUTTON       __MSABI_LONG(0x00000001)
+#define BS_CHECKBOX            __MSABI_LONG(0x00000002)
+#define BS_AUTOCHECKBOX        __MSABI_LONG(0x00000003)
+#define BS_RADIOBUTTON         __MSABI_LONG(0x00000004)
+#define BS_3STATE              __MSABI_LONG(0x00000005)
+#define BS_AUTO3STATE          __MSABI_LONG(0x00000006)
+#define BS_GROUPBOX            __MSABI_LONG(0x00000007)
+#define BS_USERBUTTON          __MSABI_LONG(0x00000008)
+#define BS_AUTORADIOBUTTON     __MSABI_LONG(0x00000009)
+#define BS_PUSHBOX             __MSABI_LONG(0x0000000A)
+#define BS_OWNERDRAW           __MSABI_LONG(0x0000000B)
+#define BS_TYPEMASK            __MSABI_LONG(0x0000000F)
+#define BS_LEFTTEXT            __MSABI_LONG(0x00000020)
 #define BS_RIGHTBUTTON         BS_LEFTTEXT
 
-#define BS_TEXT                0x00000000L
-#define BS_ICON                0x00000040L
-#define BS_BITMAP              0x00000080L
-#define BS_LEFT                0x00000100L
-#define BS_RIGHT               0x00000200L
-#define BS_CENTER              0x00000300L
-#define BS_TOP                 0x00000400L
-#define BS_BOTTOM              0x00000800L
-#define BS_VCENTER             0x00000C00L
-#define BS_PUSHLIKE            0x00001000L
-#define BS_MULTILINE           0x00002000L
-#define BS_NOTIFY              0x00004000L
-#define BS_FLAT                0x00008000L
+#define BS_TEXT                __MSABI_LONG(0x00000000)
+#define BS_ICON                __MSABI_LONG(0x00000040)
+#define BS_BITMAP              __MSABI_LONG(0x00000080)
+#define BS_LEFT                __MSABI_LONG(0x00000100)
+#define BS_RIGHT               __MSABI_LONG(0x00000200)
+#define BS_CENTER              __MSABI_LONG(0x00000300)
+#define BS_TOP                 __MSABI_LONG(0x00000400)
+#define BS_BOTTOM              __MSABI_LONG(0x00000800)
+#define BS_VCENTER             __MSABI_LONG(0x00000C00)
+#define BS_PUSHLIKE            __MSABI_LONG(0x00001000)
+#define BS_MULTILINE           __MSABI_LONG(0x00002000)
+#define BS_NOTIFY              __MSABI_LONG(0x00004000)
+#define BS_FLAT                __MSABI_LONG(0x00008000)
 
   /* Dialog styles */
 #define DS_ABSALIGN		0x0001
@@ -1883,12 +1883,12 @@ typedef struct
 #define CS_DROPSHADOW       0x00020000
 #endif /* NOWINSTYLES */
 
-#define PRF_CHECKVISIBLE    0x00000001L
-#define PRF_NONCLIENT       0x00000002L
-#define PRF_CLIENT          0x00000004L
-#define PRF_ERASEBKGND      0x00000008L
-#define PRF_CHILDREN        0x00000010L
-#define PRF_OWNED           0x00000020L
+#define PRF_CHECKVISIBLE    __MSABI_LONG(0x00000001)
+#define PRF_NONCLIENT       __MSABI_LONG(0x00000002)
+#define PRF_CLIENT          __MSABI_LONG(0x00000004)
+#define PRF_ERASEBKGND      __MSABI_LONG(0x00000008)
+#define PRF_CHILDREN        __MSABI_LONG(0x00000010)
+#define PRF_OWNED           __MSABI_LONG(0x00000020)
 
   /* Offsets for GetClassLong() and GetClassWord() */
 #if !defined _WIN64 && !defined __WINESRC__
@@ -2416,16 +2416,16 @@ typedef PVOID *LPMENUTEMPLATE;
 
 /* Scrollbar styles */
 #ifndef NOWINSTYLES
-#define SBS_HORZ                    0x0000L
-#define SBS_VERT                    0x0001L
-#define SBS_TOPALIGN                0x0002L
-#define SBS_LEFTALIGN               0x0002L
-#define SBS_BOTTOMALIGN             0x0004L
-#define SBS_RIGHTALIGN              0x0004L
-#define SBS_SIZEBOXTOPLEFTALIGN     0x0002L
-#define SBS_SIZEBOXBOTTOMRIGHTALIGN 0x0004L
-#define SBS_SIZEBOX                 0x0008L
-#define SBS_SIZEGRIP                0x0010L
+#define SBS_HORZ                    __MSABI_LONG(0x0000)
+#define SBS_VERT                    __MSABI_LONG(0x0001)
+#define SBS_TOPALIGN                __MSABI_LONG(0x0002)
+#define SBS_LEFTALIGN               __MSABI_LONG(0x0002)
+#define SBS_BOTTOMALIGN             __MSABI_LONG(0x0004)
+#define SBS_RIGHTALIGN              __MSABI_LONG(0x0004)
+#define SBS_SIZEBOXTOPLEFTALIGN     __MSABI_LONG(0x0002)
+#define SBS_SIZEBOXBOTTOMRIGHTALIGN __MSABI_LONG(0x0004)
+#define SBS_SIZEBOX                 __MSABI_LONG(0x0008)
+#define SBS_SIZEGRIP                __MSABI_LONG(0x0010)
 #endif /* NOWINSTYLES */
 
 /* EnableScrollBar() flags */
@@ -2473,39 +2473,39 @@ typedef PVOID *LPMENUTEMPLATE;
 #define BST_FOCUS            0x0008
 
 /* Static Control Styles */
-#define SS_LEFT             0x00000000L
-#define SS_CENTER           0x00000001L
-#define SS_RIGHT            0x00000002L
-#define SS_ICON             0x00000003L
-#define SS_BLACKRECT        0x00000004L
-#define SS_GRAYRECT         0x00000005L
-#define SS_WHITERECT        0x00000006L
-#define SS_BLACKFRAME       0x00000007L
-#define SS_GRAYFRAME        0x00000008L
-#define SS_WHITEFRAME       0x00000009L
-#define SS_USERITEM         0x0000000AL
-#define SS_SIMPLE           0x0000000BL
-#define SS_LEFTNOWORDWRAP   0x0000000CL
-#define SS_OWNERDRAW        0x0000000DL
-#define SS_BITMAP           0x0000000EL
-#define SS_ENHMETAFILE      0x0000000FL
-#define SS_ETCHEDHORZ       0x00000010L
-#define SS_ETCHEDVERT       0x00000011L
-#define SS_ETCHEDFRAME      0x00000012L
-#define SS_TYPEMASK         0x0000001FL
+#define SS_LEFT             __MSABI_LONG(0x00000000)
+#define SS_CENTER           __MSABI_LONG(0x00000001)
+#define SS_RIGHT            __MSABI_LONG(0x00000002)
+#define SS_ICON             __MSABI_LONG(0x00000003)
+#define SS_BLACKRECT        __MSABI_LONG(0x00000004)
+#define SS_GRAYRECT         __MSABI_LONG(0x00000005)
+#define SS_WHITERECT        __MSABI_LONG(0x00000006)
+#define SS_BLACKFRAME       __MSABI_LONG(0x00000007)
+#define SS_GRAYFRAME        __MSABI_LONG(0x00000008)
+#define SS_WHITEFRAME       __MSABI_LONG(0x00000009)
+#define SS_USERITEM         __MSABI_LONG(0x0000000A)
+#define SS_SIMPLE           __MSABI_LONG(0x0000000B)
+#define SS_LEFTNOWORDWRAP   __MSABI_LONG(0x0000000C)
+#define SS_OWNERDRAW        __MSABI_LONG(0x0000000D)
+#define SS_BITMAP           __MSABI_LONG(0x0000000E)
+#define SS_ENHMETAFILE      __MSABI_LONG(0x0000000F)
+#define SS_ETCHEDHORZ       __MSABI_LONG(0x00000010)
+#define SS_ETCHEDVERT       __MSABI_LONG(0x00000011)
+#define SS_ETCHEDFRAME      __MSABI_LONG(0x00000012)
+#define SS_TYPEMASK         __MSABI_LONG(0x0000001F)
 
-#define SS_REALSIZECONTROL  0x00000040L
-#define SS_NOPREFIX         0x00000080L
-#define SS_NOTIFY           0x00000100L
-#define SS_CENTERIMAGE      0x00000200L
-#define SS_RIGHTJUST        0x00000400L
-#define SS_REALSIZEIMAGE    0x00000800L
-#define SS_SUNKEN           0x00001000L
-#define SS_EDITCONTROL      0x00002000L
-#define SS_ENDELLIPSIS      0x00004000L
-#define SS_PATHELLIPSIS     0x00008000L
-#define SS_WORDELLIPSIS     0x0000C000L
-#define SS_ELLIPSISMASK     0x0000C000L
+#define SS_REALSIZECONTROL  __MSABI_LONG(0x00000040)
+#define SS_NOPREFIX         __MSABI_LONG(0x00000080)
+#define SS_NOTIFY           __MSABI_LONG(0x00000100)
+#define SS_CENTERIMAGE      __MSABI_LONG(0x00000200)
+#define SS_RIGHTJUST        __MSABI_LONG(0x00000400)
+#define SS_REALSIZEIMAGE    __MSABI_LONG(0x00000800)
+#define SS_SUNKEN           __MSABI_LONG(0x00001000)
+#define SS_EDITCONTROL      __MSABI_LONG(0x00002000)
+#define SS_ENDELLIPSIS      __MSABI_LONG(0x00004000)
+#define SS_PATHELLIPSIS     __MSABI_LONG(0x00008000)
+#define SS_WORDELLIPSIS     __MSABI_LONG(0x0000C000)
+#define SS_ELLIPSISMASK     __MSABI_LONG(0x0000C000)
 
 /* Static Control Messages */
 #define STM_SETICON       0x0170
@@ -2645,24 +2645,24 @@ typedef struct tagSCROLLBARINFO
 #define LB_ERR              (-1)
 #define LB_ERRSPACE         (-2)
 
-#define LB_CTLCODE          0L
+#define LB_CTLCODE          __MSABI_LONG(0)
 
 /* Combo box styles */
 #ifndef NOWINSTYLES
-#define CBS_SIMPLE            0x0001L
-#define CBS_DROPDOWN          0x0002L
-#define CBS_DROPDOWNLIST      0x0003L
-#define CBS_OWNERDRAWFIXED    0x0010L
-#define CBS_OWNERDRAWVARIABLE 0x0020L
-#define CBS_AUTOHSCROLL       0x0040L
-#define CBS_OEMCONVERT        0x0080L
-#define CBS_SORT              0x0100L
-#define CBS_HASSTRINGS        0x0200L
-#define CBS_NOINTEGRALHEIGHT  0x0400L
-#define CBS_DISABLENOSCROLL   0x0800L
+#define CBS_SIMPLE            __MSABI_LONG(0x0001)
+#define CBS_DROPDOWN          __MSABI_LONG(0x0002)
+#define CBS_DROPDOWNLIST      __MSABI_LONG(0x0003)
+#define CBS_OWNERDRAWFIXED    __MSABI_LONG(0x0010)
+#define CBS_OWNERDRAWVARIABLE __MSABI_LONG(0x0020)
+#define CBS_AUTOHSCROLL       __MSABI_LONG(0x0040)
+#define CBS_OEMCONVERT        __MSABI_LONG(0x0080)
+#define CBS_SORT              __MSABI_LONG(0x0100)
+#define CBS_HASSTRINGS        __MSABI_LONG(0x0200)
+#define CBS_NOINTEGRALHEIGHT  __MSABI_LONG(0x0400)
+#define CBS_DISABLENOSCROLL   __MSABI_LONG(0x0800)
 
-#define CBS_UPPERCASE	      0x2000L
-#define CBS_LOWERCASE	      0x4000L
+#define CBS_UPPERCASE         __MSABI_LONG(0x2000)
+#define CBS_LOWERCASE         __MSABI_LONG(0x4000)
 #endif /* NOWINSTYLES */
 
 /* Combo box messages */
@@ -3292,19 +3292,19 @@ typedef struct tagUPDATELAYEREDWINDOWINFO
 
 #endif /* defined(_WINGDI_) && !defined(NOGDI) */
 
-#define ARW_BOTTOMLEFT              0x0000L
-#define ARW_BOTTOMRIGHT             0x0001L
-#define ARW_TOPLEFT                 0x0002L
-#define ARW_TOPRIGHT                0x0003L
-#define ARW_STARTMASK               0x0003L
-#define ARW_STARTRIGHT              0x0001L
-#define ARW_STARTTOP                0x0002L
+#define ARW_BOTTOMLEFT              __MSABI_LONG(0x0000)
+#define ARW_BOTTOMRIGHT             __MSABI_LONG(0x0001)
+#define ARW_TOPLEFT                 __MSABI_LONG(0x0002)
+#define ARW_TOPRIGHT                __MSABI_LONG(0x0003)
+#define ARW_STARTMASK               __MSABI_LONG(0x0003)
+#define ARW_STARTRIGHT              __MSABI_LONG(0x0001)
+#define ARW_STARTTOP                __MSABI_LONG(0x0002)
 
-#define ARW_LEFT                    0x0000L
-#define ARW_RIGHT                   0x0000L
-#define ARW_UP                      0x0004L
-#define ARW_DOWN                    0x0004L
-#define ARW_HIDE                    0x0008L
+#define ARW_LEFT                    __MSABI_LONG(0x0000)
+#define ARW_RIGHT                   __MSABI_LONG(0x0000)
+#define ARW_UP                      __MSABI_LONG(0x0004)
+#define ARW_DOWN                    __MSABI_LONG(0x0004)
+#define ARW_HIDE                    __MSABI_LONG(0x0008)
 
 typedef struct tagMINIMIZEDMETRICS {
     UINT cbSize;
@@ -3317,26 +3317,26 @@ typedef struct tagMINIMIZEDMETRICS {
 #ifndef NOWINSTYLES
 
 /* Window Styles */
-#define WS_OVERLAPPED    0x00000000L
-#define WS_POPUP         0x80000000L
-#define WS_CHILD         0x40000000L
-#define WS_MINIMIZE      0x20000000L
-#define WS_VISIBLE       0x10000000L
-#define WS_DISABLED      0x08000000L
-#define WS_CLIPSIBLINGS  0x04000000L
-#define WS_CLIPCHILDREN  0x02000000L
-#define WS_MAXIMIZE      0x01000000L
-#define WS_CAPTION       0x00C00000L
-#define WS_BORDER        0x00800000L
-#define WS_DLGFRAME      0x00400000L
-#define WS_VSCROLL       0x00200000L
-#define WS_HSCROLL       0x00100000L
-#define WS_SYSMENU       0x00080000L
-#define WS_THICKFRAME    0x00040000L
-#define WS_GROUP         0x00020000L
-#define WS_TABSTOP       0x00010000L
-#define WS_MINIMIZEBOX   0x00020000L
-#define WS_MAXIMIZEBOX   0x00010000L
+#define WS_OVERLAPPED    __MSABI_LONG(0x00000000)
+#define WS_POPUP         __MSABI_LONG(0x80000000)
+#define WS_CHILD         __MSABI_LONG(0x40000000)
+#define WS_MINIMIZE      __MSABI_LONG(0x20000000)
+#define WS_VISIBLE       __MSABI_LONG(0x10000000)
+#define WS_DISABLED      __MSABI_LONG(0x08000000)
+#define WS_CLIPSIBLINGS  __MSABI_LONG(0x04000000)
+#define WS_CLIPCHILDREN  __MSABI_LONG(0x02000000)
+#define WS_MAXIMIZE      __MSABI_LONG(0x01000000)
+#define WS_CAPTION       __MSABI_LONG(0x00C00000)
+#define WS_BORDER        __MSABI_LONG(0x00800000)
+#define WS_DLGFRAME      __MSABI_LONG(0x00400000)
+#define WS_VSCROLL       __MSABI_LONG(0x00200000)
+#define WS_HSCROLL       __MSABI_LONG(0x00100000)
+#define WS_SYSMENU       __MSABI_LONG(0x00080000)
+#define WS_THICKFRAME    __MSABI_LONG(0x00040000)
+#define WS_GROUP         __MSABI_LONG(0x00020000)
+#define WS_TABSTOP       __MSABI_LONG(0x00010000)
+#define WS_MINIMIZEBOX   __MSABI_LONG(0x00020000)
+#define WS_MAXIMIZEBOX   __MSABI_LONG(0x00010000)
 #define WS_TILED         WS_OVERLAPPED
 #define WS_ICONIC        WS_MINIMIZE
 #define WS_SIZEBOX       WS_THICKFRAME
@@ -3346,31 +3346,31 @@ typedef struct tagMINIMIZEDMETRICS {
 #define WS_TILEDWINDOW (WS_OVERLAPPEDWINDOW)
 
 /* Window extended styles */
-#define WS_EX_DLGMODALFRAME    0x00000001L
-#define WS_EX_DRAGDETECT       0x00000002L
-#define WS_EX_NOPARENTNOTIFY   0x00000004L
-#define WS_EX_TOPMOST          0x00000008L
-#define WS_EX_ACCEPTFILES      0x00000010L
-#define WS_EX_TRANSPARENT      0x00000020L
-#define WS_EX_MDICHILD         0x00000040L
-#define WS_EX_TOOLWINDOW       0x00000080L
-#define WS_EX_WINDOWEDGE       0x00000100L
-#define WS_EX_CLIENTEDGE       0x00000200L
-#define WS_EX_CONTEXTHELP      0x00000400L
-#define WS_EX_RIGHT            0x00001000L
-#define WS_EX_LEFT             0x00000000L
-#define WS_EX_RTLREADING       0x00002000L
-#define WS_EX_LTRREADING       0x00000000L
-#define WS_EX_LEFTSCROLLBAR    0x00004000L
-#define WS_EX_RIGHTSCROLLBAR   0x00000000L
-#define WS_EX_CONTROLPARENT    0x00010000L
-#define WS_EX_STATICEDGE       0x00020000L
-#define WS_EX_APPWINDOW        0x00040000L
-#define WS_EX_LAYERED          0x00080000L
-#define WS_EX_NOINHERITLAYOUT  0x00100000L
-#define WS_EX_LAYOUTRTL        0x00400000L
-#define WS_EX_COMPOSITED       0x02000000L
-#define WS_EX_NOACTIVATE       0x08000000L
+#define WS_EX_DLGMODALFRAME    __MSABI_LONG(0x00000001)
+#define WS_EX_DRAGDETECT       __MSABI_LONG(0x00000002)
+#define WS_EX_NOPARENTNOTIFY   __MSABI_LONG(0x00000004)
+#define WS_EX_TOPMOST          __MSABI_LONG(0x00000008)
+#define WS_EX_ACCEPTFILES      __MSABI_LONG(0x00000010)
+#define WS_EX_TRANSPARENT      __MSABI_LONG(0x00000020)
+#define WS_EX_MDICHILD         __MSABI_LONG(0x00000040)
+#define WS_EX_TOOLWINDOW       __MSABI_LONG(0x00000080)
+#define WS_EX_WINDOWEDGE       __MSABI_LONG(0x00000100)
+#define WS_EX_CLIENTEDGE       __MSABI_LONG(0x00000200)
+#define WS_EX_CONTEXTHELP      __MSABI_LONG(0x00000400)
+#define WS_EX_RIGHT            __MSABI_LONG(0x00001000)
+#define WS_EX_LEFT             __MSABI_LONG(0x00000000)
+#define WS_EX_RTLREADING       __MSABI_LONG(0x00002000)
+#define WS_EX_LTRREADING       __MSABI_LONG(0x00000000)
+#define WS_EX_LEFTSCROLLBAR    __MSABI_LONG(0x00004000)
+#define WS_EX_RIGHTSCROLLBAR   __MSABI_LONG(0x00000000)
+#define WS_EX_CONTROLPARENT    __MSABI_LONG(0x00010000)
+#define WS_EX_STATICEDGE       __MSABI_LONG(0x00020000)
+#define WS_EX_APPWINDOW        __MSABI_LONG(0x00040000)
+#define WS_EX_LAYERED          __MSABI_LONG(0x00080000)
+#define WS_EX_NOINHERITLAYOUT  __MSABI_LONG(0x00100000)
+#define WS_EX_LAYOUTRTL        __MSABI_LONG(0x00400000)
+#define WS_EX_COMPOSITED       __MSABI_LONG(0x02000000)
+#define WS_EX_NOACTIVATE       __MSABI_LONG(0x08000000)
 
 #define WS_EX_OVERLAPPEDWINDOW (WS_EX_WINDOWEDGE|WS_EX_CLIENTEDGE)
 #define WS_EX_PALETTEWINDOW    (WS_EX_WINDOWEDGE|WS_EX_TOOLWINDOW|WS_EX_TOPMOST)
@@ -3559,13 +3559,13 @@ typedef struct {
 #define MFT_MENUBARBREAK   MF_MENUBARBREAK
 #define MFT_MENUBREAK      MF_MENUBREAK
 #define MFT_OWNERDRAW      MF_OWNERDRAW
-#define MFT_RADIOCHECK     0x00000200L
+#define MFT_RADIOCHECK     __MSABI_LONG(0x00000200)
 #define MFT_SEPARATOR      MF_SEPARATOR
-#define MFT_RIGHTORDER     0x00002000L
+#define MFT_RIGHTORDER     __MSABI_LONG(0x00002000)
 #define MFT_RIGHTJUSTIFY   MF_RIGHTJUSTIFY
 
 /* Flags for extended menu item states.  */
-#define MFS_GRAYED          0x00000003L
+#define MFS_GRAYED          __MSABI_LONG(0x00000003)
 #define MFS_DISABLED        MFS_GRAYED
 #define MFS_CHECKED         MF_CHECKED
 #define MFS_HILITE          MF_HILITE
@@ -3573,16 +3573,16 @@ typedef struct {
 #define MFS_UNCHECKED       MF_UNCHECKED
 #define MFS_UNHILITE        MF_UNHILITE
 #define MFS_DEFAULT         MF_DEFAULT
-#define MFS_MASK            0x0000108BL
-#define MFS_HOTTRACKDRAWN   0x10000000L
-#define MFS_CACHEDBMP       0x20000000L
-#define MFS_BOTTOMGAPDROP   0x40000000L
-#define MFS_TOPGAPDROP      0x80000000L
-#define MFS_GAPDROP         0xC0000000L
+#define MFS_MASK            __MSABI_LONG(0x0000108B)
+#define MFS_HOTTRACKDRAWN   __MSABI_LONG(0x10000000)
+#define MFS_CACHEDBMP       __MSABI_LONG(0x20000000)
+#define MFS_BOTTOMGAPDROP   __MSABI_LONG(0x40000000)
+#define MFS_TOPGAPDROP      __MSABI_LONG(0x80000000)
+#define MFS_GAPDROP         __MSABI_LONG(0xC0000000)
 
 /* for GetMenuDefaultItem */
-#define GMDI_USEDISABLED    0x0001L
-#define GMDI_GOINTOPOPUPS   0x0002L
+#define GMDI_USEDISABLED    __MSABI_LONG(0x0001)
+#define GMDI_GOINTOPOPUPS   __MSABI_LONG(0x0002)
 
 /* DrawText() flags */
 #define DT_TOP                  0x00000000

@@ -3642,7 +3642,7 @@ static LRESULT WINAPI StyleCheckProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
                 ok(!(lpcs->dwExStyle & WS_EX_WINDOWEDGE), "Window shouldn't have WS_EX_WINDOWEDGE style\n");
 
             ok((lpss->styleOld & ~WS_EX_WINDOWEDGE) == (lpcs->dwExStyle & ~WS_EX_WINDOWEDGE),
-                "Ex style (0x%08lx) should match what the caller passed to CreateWindowEx (0x%08lx)\n",
+                "Ex style (0x%08x) should match what the caller passed to CreateWindowEx (0x%08x)\n",
                 (lpss->styleOld & ~WS_EX_WINDOWEDGE), (lpcs->dwExStyle & ~WS_EX_WINDOWEDGE));
 
             ok(lpss->styleNew == lpcs->style,
