@@ -380,7 +380,6 @@ BOOL PSDRV_PolyPolygon( PHYSDEV dev, const POINT* pts, const INT* counts, UINT p
     PSDRV_WriteSpool(dev, "%PolyPolygon\n",13);
     PSDRV_SetPen(dev);
     PSDRV_SetClip(dev);
-    PSDRV_WriteNewPath(dev);
 
     for(polygon = 0; polygon < polygons; polygon++) {
         PSDRV_WriteMoveTo(dev, pt->x, pt->y);
@@ -461,11 +460,11 @@ BOOL PSDRV_PaintRgn( PHYSDEV dev, HRGN hrgn )
     LPtoDP(dev->hdc, (POINT*)rgndata->Buffer, rgndata->rdh.nCount * 2);
 
     PSDRV_SetClip(dev);
-    PSDRV_WriteNewPath(dev);
     for(i = 0, pRect = (RECT*)rgndata->Buffer; i < rgndata->rdh.nCount; i++, pRect++)
         PSDRV_WriteRectangle(dev, pRect->left, pRect->top, pRect->right - pRect->left, pRect->bottom - pRect->top);
 
     PSDRV_Brush(dev, 0);
+    PSDRV_WriteNewPath(dev);
     PSDRV_ResetClip(dev);
 
  end:
