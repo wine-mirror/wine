@@ -3700,6 +3700,8 @@ static HRESULT WINAPI ddraw_surface7_BltFast(IDirectDrawSurface7 *iface, DWORD d
     IDirectDrawSurfaceImpl *src = unsafe_impl_from_IDirectDrawSurface7(Source);
     DWORD src_w, src_h, dst_w, dst_h;
     HRESULT hr = DD_OK;
+    DWORD flags = 0;
+    RECT dst_rect;
 
     TRACE("iface %p, dst_x %u, dst_y %u, src_surface %p, src_rect %s, flags %#x.\n",
             iface, dstx, dsty, Source, wine_dbgstr_rect(rsrc), trans);
@@ -3728,17 +3730,24 @@ static HRESULT WINAPI ddraw_surface7_BltFast(IDirectDrawSurface7 *iface, DWORD d
         return DDERR_INVALIDRECT;
     }
 
+    SetRect(&dst_rect, dstx, dsty, dstx + src_w, dsty + src_h);
+    if (trans & DDBLTFAST_SRCCOLORKEY)
+        flags |= WINEDDBLT_KEYSRC;
+    if (trans & DDBLTFAST_DESTCOLORKEY)
+        flags |= WINEDDBLT_KEYDEST;
+    if (trans & DDBLTFAST_WAIT)
+        flags |= WINEDDBLT_WAIT;
+    if (trans & DDBLTFAST_DONOTWAIT)
+        flags |= WINEDDBLT_DONOTWAIT;
+
     EnterCriticalSection(&ddraw_cs);
     if (src->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
         hr = ddraw_surface_update_frontbuffer(src, rsrc, TRUE);
     if (SUCCEEDED(hr))
-        hr = wined3d_surface_bltfast(This->wined3d_surface, dstx, dsty,
-                src->wined3d_surface, rsrc, trans);
+        hr = wined3d_surface_blt(This->wined3d_surface, &dst_rect,
+                src->wined3d_surface, rsrc, flags, NULL, WINED3DTEXF_POINT);
     if (SUCCEEDED(hr) && (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER))
-    {
-        RECT dst_rect = {dstx, dsty, dstx + src_w, dsty + src_h};
         hr = ddraw_surface_update_frontbuffer(This, &dst_rect, FALSE);
-    }
     LeaveCriticalSection(&ddraw_cs);
     switch(hr)
     {
