@@ -45,16 +45,15 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 WINE_DECLARE_DEBUG_CHANNEL(opengl);
 
-typedef struct wine_wgl_s {
-    PROC WINAPI  (*p_wglGetProcAddress)(LPCSTR  lpszProc);
-
-    void WINAPI  (*p_wglGetIntegerv)(GLenum pname, GLint* params);
-    void WINAPI  (*p_wglFinish)(void);
-    void WINAPI  (*p_wglFlush)(void);
-} wine_wgl_t;
-
-/** global wgl object */
-static wine_wgl_t wine_wgl;
+static struct
+{
+    PROC  (WINAPI *p_wglGetProcAddress)(LPCSTR  lpszProc);
+    BOOL  (WINAPI *p_wglMakeCurrent)(HDC hdc, HGLRC hglrc);
+    HGLRC (WINAPI *p_wglCreateContext)(HDC hdc);
+    void  (WINAPI *p_wglGetIntegerv)(GLenum pname, GLint* params);
+    void  (WINAPI *p_wglFinish)(void);
+    void  (WINAPI *p_wglFlush)(void);
+} wine_wgl;
 
 #ifdef SONAME_LIBGLU
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f;
@@ -115,6 +114,22 @@ void enter_gl(void)
 }
 
 const GLubyte * WINAPI wine_glGetString( GLenum name );
+
+/***********************************************************************
+ *		wglMakeCurrent (OPENGL32.@)
+ */
+BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
+{
+  return wine_wgl.p_wglMakeCurrent(hdc, hglrc);
+}
+
+/***********************************************************************
+ *		wglCreateContext (OPENGL32.@)
+ */
+HGLRC WINAPI wglCreateContext(HDC hdc)
+{
+  return wine_wgl.p_wglCreateContext(hdc);
+}
 
 /***********************************************************************
  *		wglCreateLayerContext (OPENGL32.@)
@@ -720,6 +735,8 @@ static BOOL process_attach(void)
   wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod_x11, "wine_tsx11_unlock" );
 
   wine_wgl.p_wglGetProcAddress = (void *)GetProcAddress(mod_gdi32, "wglGetProcAddress");
+  wine_wgl.p_wglMakeCurrent = (void *)GetProcAddress(mod_gdi32, "wglMakeCurrent");
+  wine_wgl.p_wglCreateContext = (void *)GetProcAddress(mod_gdi32, "wglCreateContext");
 
   /* Interal WGL function */
   wine_wgl.p_wglGetIntegerv = (void *)wine_wgl.p_wglGetProcAddress("wglGetIntegerv");
