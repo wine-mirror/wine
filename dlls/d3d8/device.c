@@ -931,6 +931,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(IDirect3DDevice8 *iface,
     enum wined3d_format_id srcFormat, destFormat;
     struct wined3d_resource_desc wined3d_desc;
     struct wined3d_resource *wined3d_resource;
+    UINT src_w, src_h;
 
     TRACE("iface %p, src_surface %p, src_rects %p, rect_count %u, dst_surface %p, dst_points %p.\n",
             iface, pSourceSurface, pSourceRects, cRects, pDestinationSurface, pDestPoints);
@@ -942,6 +943,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(IDirect3DDevice8 *iface,
     wined3d_resource = wined3d_surface_get_resource(Source->wined3d_surface);
     wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
     srcFormat = wined3d_desc.format;
+    src_w = wined3d_desc.width;
+    src_h = wined3d_desc.height;
 
     wined3d_resource = wined3d_surface_get_resource(Dest->wined3d_surface);
     wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
@@ -964,8 +967,9 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(IDirect3DDevice8 *iface,
     /* Quick if complete copy ... */
     if (!cRects && !pSourceRects && !pDestPoints)
     {
-        wined3d_surface_bltfast(Dest->wined3d_surface, 0, 0,
-                Source->wined3d_surface, NULL, WINEDDBLTFAST_NOCOLORKEY);
+        RECT rect = {0, 0, src_w, src_h};
+        wined3d_surface_blt(Dest->wined3d_surface, &rect,
+                Source->wined3d_surface, &rect, 0, NULL, WINED3DTEXF_POINT);
     }
     else
     {
@@ -975,16 +979,25 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(IDirect3DDevice8 *iface,
         {
             for (i = 0; i < cRects; ++i)
             {
-                wined3d_surface_bltfast(Dest->wined3d_surface, pDestPoints[i].x, pDestPoints[i].y,
-                        Source->wined3d_surface, &pSourceRects[i], WINEDDBLTFAST_NOCOLORKEY);
+                UINT w = pSourceRects[i].right - pSourceRects[i].left;
+                UINT h = pSourceRects[i].bottom - pSourceRects[i].top;
+                RECT dst_rect = {pDestPoints[i].x, pDestPoints[i].y,
+                        pDestPoints[i].x + w, pDestPoints[i].y + h};
+
+                wined3d_surface_blt(Dest->wined3d_surface, &dst_rect,
+                        Source->wined3d_surface, &pSourceRects[i], 0, NULL, WINED3DTEXF_POINT);
             }
         }
         else
         {
             for (i = 0; i < cRects; ++i)
             {
-                wined3d_surface_bltfast(Dest->wined3d_surface, 0, 0,
-                        Source->wined3d_surface, &pSourceRects[i], WINEDDBLTFAST_NOCOLORKEY);
+                UINT w = pSourceRects[i].right - pSourceRects[i].left;
+                UINT h = pSourceRects[i].bottom - pSourceRects[i].top;
+                RECT dst_rect = {0, 0, w, h};
+
+                wined3d_surface_blt(Dest->wined3d_surface, &dst_rect,
+                        Source->wined3d_surface, &pSourceRects[i], 0, NULL, WINED3DTEXF_POINT);
             }
         }
     }
