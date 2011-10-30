@@ -5942,12 +5942,11 @@ static void copy_mipmap_chain(IDirect3DDeviceImpl *device,
     IDirectDrawSurface7 *temp;
     DDSURFACEDESC2 ddsd;
     POINT point;
-    RECT rect;
+    RECT src_rect;
     HRESULT hr;
     IDirectDrawPalette *pal = NULL, *pal_src = NULL;
     DWORD ckeyflag;
     DDCOLORKEY ddckey;
-    BOOL palette_missing = FALSE;
 
     /* Copy palette, if possible. */
     IDirectDrawSurface7_GetPalette(&src->IDirectDrawSurface7_iface, &pal_src);
@@ -5959,12 +5958,6 @@ static void copy_mipmap_chain(IDirect3DDeviceImpl *device,
 
         IDirectDrawPalette_GetEntries(pal_src, 0, 0, 256, palent);
         IDirectDrawPalette_SetEntries(pal, 0, 0, 256, palent);
-    }
-
-    if (dest->surface_desc.u4.ddpfPixelFormat.dwFlags & (DDPF_PALETTEINDEXED1 | DDPF_PALETTEINDEXED2 |
-            DDPF_PALETTEINDEXED4 | DDPF_PALETTEINDEXED8 | DDPF_PALETTEINDEXEDTO8) && !pal)
-    {
-        palette_missing = TRUE;
     }
 
     if (pal) IDirectDrawPalette_Release(pal);
@@ -5985,28 +5978,20 @@ static void copy_mipmap_chain(IDirect3DDeviceImpl *device,
     dest_level = dest;
 
     point = *DestPoint;
-    rect = *SrcRect;
+    src_rect = *SrcRect;
 
     for (;src_level && dest_level;)
     {
         if (src_level->surface_desc.dwWidth == dest_level->surface_desc.dwWidth &&
             src_level->surface_desc.dwHeight == dest_level->surface_desc.dwHeight)
         {
-            /* Try UpdateSurface that may perform a more direct OpenGL
-             * loading. But skip this if destination is paletted texture and
-             * has no palette. Some games like Sacrifice set palette after
-             * Load, and it is a waste of effort to try to load texture
-             * without palette and generates warnings in wined3d. */
-            if (!palette_missing)
-                hr = wined3d_device_update_surface(device->wined3d_device, src_level->wined3d_surface,
-                        &rect, dest_level->wined3d_surface, &point);
+            UINT src_w = src_rect.right - src_rect.left;
+            UINT src_h = src_rect.bottom - src_rect.top;
+            RECT dst_rect = {point.x, point.y, point.x + src_w, point.y + src_h};
 
-            if (palette_missing || FAILED(hr))
-            {
-                /* UpdateSurface may fail e.g. if dest is in system memory. Fall back to BltFast that is less strict. */
-                wined3d_surface_bltfast(dest_level->wined3d_surface, point.x, point.y,
-                        src_level->wined3d_surface, &rect, 0);
-            }
+            if (FAILED(hr = wined3d_surface_blt(dest_level->wined3d_surface, &dst_rect,
+                    src_level->wined3d_surface, &src_rect, 0, NULL, WINED3DTEXF_POINT)))
+                ERR("Blit failed, hr %#x.\n", hr);
 
             ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
             ddsd.ddsCaps.dwCaps2 = DDSCAPS2_MIPMAPSUBLEVEL;
@@ -6028,10 +6013,10 @@ static void copy_mipmap_chain(IDirect3DDeviceImpl *device,
         point.x /= 2;
         point.y /= 2;
 
-        rect.top /= 2;
-        rect.left /= 2;
-        rect.right = (rect.right + 1) / 2;
-        rect.bottom = (rect.bottom + 1) / 2;
+        src_rect.top /= 2;
+        src_rect.left /= 2;
+        src_rect.right = (src_rect.right + 1) / 2;
+        src_rect.bottom = (src_rect.bottom + 1) / 2;
     }
 
     if (src_level && src_level != src) IDirectDrawSurface7_Release(&src_level->IDirectDrawSurface7_iface);
