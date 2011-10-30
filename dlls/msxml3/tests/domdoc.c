@@ -1728,6 +1728,15 @@ SZ_EMAIL_DTD
 "   <attachment id=\"patch1\">0001-msxml3-tests-DTD-validation.patch</attachment>"
 "</email>";
 
+static const char xpath_simple_list[] =
+"<?xml version=\"1.0\"?>"
+"<root>"
+"   <a/>"
+"   <b/>"
+"   <c/>"
+"   <d/>"
+"</root>";
+
 static const WCHAR szNonExistentFile[] = {
     'c', ':', '\\', 'N', 'o', 'n', 'e', 'x', 'i', 's', 't', 'e', 'n', 't', '.', 'x', 'm', 'l', 0
 };
@@ -10043,11 +10052,16 @@ static void test_selection(void)
 {
     IXMLDOMSelection *selection, *selection2;
     IEnumVARIANT *enum1, *enum2, *enum3;
-    IDispatch *disp;
     IXMLDOMNodeList *list;
     IXMLDOMDocument *doc;
+    IXMLDOMNode *node;
+    IDispatch *disp;
     VARIANT_BOOL b;
     HRESULT hr;
+    VARIANT v;
+    BSTR name;
+    ULONG ret;
+    LONG len;
 
     doc = create_document(&IID_IXMLDOMDocument);
 
@@ -10150,7 +10164,86 @@ static void test_selection(void)
 
     IXMLDOMNodeList_Release(list);
 
+    /* test if IEnumVARIANT touches selection context */
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(xpath_simple_list), &b);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument_selectNodes(doc, _bstr_("root/*"), &list);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMNodeList_QueryInterface(list, &IID_IXMLDOMSelection, (void**)&selection);
+    EXPECT_HR(hr, S_OK);
+
+    len = 0;
+    hr = IXMLDOMSelection_get_length(selection, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(len == 4, "got %d\n", len);
+
+    enum1 = NULL;
+    hr = IXMLDOMSelection_get__newEnum(selection, (IUnknown**)&enum1);
+    EXPECT_HR(hr, S_OK);
+
+    /* no-op if zero count */
+    V_VT(&v) = VT_I2;
+    hr = IEnumVARIANT_Next(enum1, 0, &v, NULL);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&v) == VT_I2, "got var type %d\n", V_VT(&v));
+
+    /* positive count, null array pointer */
+    hr = IEnumVARIANT_Next(enum1, 1, NULL, NULL);
+    EXPECT_HR(hr, E_INVALIDARG);
+
+    ret = 1;
+    hr = IEnumVARIANT_Next(enum1, 1, NULL, &ret);
+    EXPECT_HR(hr, E_INVALIDARG);
+    ok(ret == 0, "got %d\n", ret);
+
+    V_VT(&v) = VT_I2;
+    hr = IEnumVARIANT_Next(enum1, 1, &v, NULL);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&v) == VT_DISPATCH, "got var type %d\n", V_VT(&v));
+
+    hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IXMLDOMNode, (void**)&node);
+    EXPECT_HR(hr, S_OK);
+    hr = IXMLDOMNode_get_nodeName(node, &name);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(name, _bstr_("a")), "got node name %s\n", wine_dbgstr_w(name));
+    SysFreeString(name);
+    IXMLDOMNode_Release(node);
+    VariantClear(&v);
+
+    /* list cursor is updated */
+    hr = IXMLDOMSelection_nextNode(selection, &node);
+    EXPECT_HR(hr, S_OK);
+    hr = IXMLDOMNode_get_nodeName(node, &name);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(name, _bstr_("c")), "got node name %s\n", wine_dbgstr_w(name));
+    IXMLDOMNode_Release(node);
+
+    V_VT(&v) = VT_I2;
+    hr = IEnumVARIANT_Next(enum1, 1, &v, NULL);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&v) == VT_DISPATCH, "got var type %d\n", V_VT(&v));
+    hr = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IXMLDOMNode, (void**)&node);
+    EXPECT_HR(hr, S_OK);
+    hr = IXMLDOMNode_get_nodeName(node, &name);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(name, _bstr_("b")), "got node name %s\n", wine_dbgstr_w(name));
+    SysFreeString(name);
+    IXMLDOMNode_Release(node);
+    VariantClear(&v);
+
+    hr = IXMLDOMSelection_nextNode(selection, &node);
+    EXPECT_HR(hr, S_OK);
+    hr = IXMLDOMNode_get_nodeName(node, &name);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(name, _bstr_("d")), "got node name %s\n", wine_dbgstr_w(name));
+    IXMLDOMNode_Release(node);
+
+    IXMLDOMSelection_Release(selection);
+    IXMLDOMNodeList_Release(list);
     IXMLDOMDocument_Release(doc);
+
     free_bstrs();
 }
 
