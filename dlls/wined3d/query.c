@@ -179,7 +179,7 @@ enum wined3d_event_query_result wined3d_event_query_finish(const struct wined3d_
     return ret;
 }
 
-void wined3d_event_query_issue(struct wined3d_event_query *query, struct wined3d_device *device)
+void wined3d_event_query_issue(struct wined3d_event_query *query, const struct wined3d_device *device)
 {
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
