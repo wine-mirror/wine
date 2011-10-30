@@ -543,11 +543,11 @@ static HRESULT map_security_uri_to_zone(IUri *uri, DWORD *zone)
         else
             path_start = path;
 
-        if(((ptr = strchrW(path_start, '\\')) || (ptr = strchrW(path_start, '/'))) && ptr-path_start < sizeof(root)/sizeof(WCHAR)) {
+        if((ptr = strchrW(path_start, ':')) && ptr-path_start+1 < sizeof(root)/sizeof(WCHAR)) {
             UINT type;
 
-            memcpy(root, path_start, (ptr-path_start)*sizeof(WCHAR));
-            root[ptr-path_start] = 0;
+            memcpy(root, path_start, (ptr-path_start+1)*sizeof(WCHAR));
+            root[ptr-path_start+1] = 0;
 
             type = GetDriveTypeW(root);
 

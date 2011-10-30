@@ -103,6 +103,8 @@ static const WCHAR url12[] = {'f','i','l','e',':','/','/','/','c',':','/','I','n
 static const WCHAR url13[] = {'h','t','t','p',':','g','o','o','g','l','e','.','c','o','m',0};
 static const WCHAR url14[] = {'z','i','p',':','t','e','s','t','i','n','g','.','c','o','m','/','t','e','s','t','i','n','g',0};
 static const WCHAR url15[] = {'h','t','t','p',':','/','/','g','o','o','g','l','e','.','c','o','m','.','u','k',0};
+static const WCHAR url16[] = {'f','i','l','e',':','/','/','/','c',':',0};
+static const WCHAR url17[] = {'f','i','l','e',':','/','/','/','c',':','c','\\',0};
 
 static const WCHAR url4e[] = {'f','i','l','e',':','s','o','m','e',' ','f','i','l','e',
         '.','j','p','g',0};
@@ -157,7 +159,9 @@ static struct secmgr_test {
     {url6, 3,   S_OK, sizeof(secid6), secid6, S_OK},
     {url7, 3,   S_OK, sizeof(secid7), secid7, S_OK},
     {url11,0,   S_OK, sizeof(secid1), secid1, S_OK},
-    {url12,0,   S_OK, sizeof(secid1), secid1, S_OK}
+    {url12,0,   S_OK, sizeof(secid1), secid1, S_OK},
+    {url16,0,   S_OK, sizeof(secid1), secid1, S_OK},
+    {url17,0,   S_OK, sizeof(secid1), secid1, S_OK}
 };
 
 static int strcmp_w(const WCHAR *str1, const WCHAR *str2)
