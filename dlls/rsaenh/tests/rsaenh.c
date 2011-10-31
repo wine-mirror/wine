@@ -1573,7 +1573,6 @@ static void test_import_private(void)
     for (; dwLen < sizeof(abPlainPrivateKey); dwLen++)
     {
         result = CryptImportKey(hProv, abPlainPrivateKey, dwLen, 0, 0, &hKeyExchangeKey);
-        todo_wine
         ok(result, "CryptImportKey failed at size %d: %d (%08x)\n", dwLen,
            GetLastError(), GetLastError());
         if (result)

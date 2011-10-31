@@ -98,7 +98,7 @@ BOOL import_public_key_impl(CONST BYTE *pbSrc, KEY_CONTEXT *pKeyContext, DWORD d
 BOOL export_private_key_impl(BYTE *pbDest, const KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,
                              DWORD *pdwPubExp) DECLSPEC_HIDDEN;
 BOOL import_private_key_impl(CONST BYTE* pbSrc, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen, 
-                             DWORD dwPubExp) DECLSPEC_HIDDEN;
+                             DWORD dwDataLen, DWORD dwPubExp) DECLSPEC_HIDDEN;
 
 BOOL gen_rand_impl(BYTE *pbBuffer, DWORD dwLen) DECLSPEC_HIDDEN;
 

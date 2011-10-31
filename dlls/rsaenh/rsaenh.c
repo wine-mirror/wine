@@ -2745,10 +2745,10 @@ static BOOL import_private_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
         return FALSE;
     }
     if ((dwDataLen < sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) +
-            (2 * pRSAPubKey->bitlen >> 3) + (5 * ((pRSAPubKey->bitlen+8)>>4))))
+            (pRSAPubKey->bitlen >> 3) + (5 * ((pRSAPubKey->bitlen+8)>>4))))
     {
         DWORD expectedLen = sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) +
-            (2 * pRSAPubKey->bitlen >> 3) + (5 * ((pRSAPubKey->bitlen+8)>>4));
+            (pRSAPubKey->bitlen >> 3) + (5 * ((pRSAPubKey->bitlen+8)>>4));
 
         ERR("blob too short for pub key: expect %d, got %d\n",
             expectedLen, dwDataLen);
@@ -2760,7 +2760,7 @@ static BOOL import_private_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
     if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE) return FALSE;
     setup_key(pCryptKey);
     ret = import_private_key_impl((CONST BYTE*)(pRSAPubKey+1), &pCryptKey->context,
-                                   pRSAPubKey->bitlen/8, pRSAPubKey->pubexp);
+                                   pRSAPubKey->bitlen/8, dwDataLen, pRSAPubKey->pubexp);
     if (ret) {
         if (dwFlags & CRYPT_EXPORTABLE)
             pCryptKey->dwPermissions |= CRYPT_EXPORT;
