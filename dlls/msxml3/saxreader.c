@@ -122,6 +122,7 @@ typedef struct _saxlocator
         BSTR uri;
     } *nsStack;
 
+    BSTR namespaceUri;
     int attributesSize;
     int nb_attributes;
     struct _attributes
@@ -1086,8 +1087,6 @@ static HRESULT SAXAttributes_populate(saxlocator *locator,
 {
     static const xmlChar xmlns[] = "xmlns";
     static const WCHAR xmlnsW[] = { 'x','m','l','n','s',0 };
-    static const WCHAR w3xmlns[] = { 'h','t','t','p',':','/','/', 'w','w','w','.','w','3','.',
-        'o','r','g','/','2','0','0','0','/','x','m','l','n','s','/',0 };
 
     struct _attributes *attrs;
     int index;
@@ -1111,10 +1110,7 @@ static HRESULT SAXAttributes_populate(saxlocator *locator,
     for(index=0; index<nb_namespaces; index++)
     {
         attrs[nb_attributes+index].szLocalname = SysAllocStringLen(NULL, 0);
-        if(locator->saxreader->version >= MSXML6)
-            attrs[nb_attributes+index].szURI = SysAllocString(w3xmlns);
-        else
-            attrs[nb_attributes+index].szURI = SysAllocStringLen(NULL, 0);
+        attrs[nb_attributes+index].szURI = locator->namespaceUri;
         attrs[nb_attributes+index].szValue = bstr_from_xmlChar(xmlNamespaces[2*index+1]);
         if(!xmlNamespaces[2*index])
             attrs[nb_attributes+index].szQName = SysAllocString(xmlnsW);
@@ -1125,7 +1121,7 @@ static HRESULT SAXAttributes_populate(saxlocator *locator,
     for(index=0; index<nb_attributes; index++)
     {
         attrs[index].szLocalname = bstr_from_xmlChar(xmlAttributes[index*5]);
-        attrs[index].szURI = bstr_from_xmlChar(xmlAttributes[index*5+2]);
+        attrs[index].szURI = namespaceFind(locator, xmlAttributes[index*5+2]);
         attrs[index].szValue = bstr_from_xmlCharN(xmlAttributes[index*5+3],
                 xmlAttributes[index*5+4]-xmlAttributes[index*5+3]);
         attrs[index].szQName = QName_from_xmlChar(xmlAttributes[index*5+1],
@@ -1878,6 +1874,7 @@ static ULONG WINAPI isaxlocator_Release(
 
         SysFreeString(This->publicId);
         SysFreeString(This->systemId);
+        SysFreeString(This->namespaceUri);
         while(This->nsStackLast)
             namespacePop(This);
         heap_free(This->nsStack);
@@ -1885,7 +1882,6 @@ static ULONG WINAPI isaxlocator_Release(
         for(index=0; index<This->nb_attributes; index++)
         {
             SysFreeString(This->attributes[index].szLocalname);
-            SysFreeString(This->attributes[index].szURI);
             SysFreeString(This->attributes[index].szValue);
             SysFreeString(This->attributes[index].szQName);
         }
@@ -1976,6 +1972,9 @@ static const struct ISAXLocatorVtbl isaxlocator_vtbl =
 
 static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator, BOOL vbInterface)
 {
+    static const WCHAR w3xmlns[] = { 'h','t','t','p',':','/','/', 'w','w','w','.','w','3','.',
+        'o','r','g','/','2','0','0','0','/','x','m','l','n','s','/',0 };
+
     saxlocator *locator;
 
     locator = heap_alloc( sizeof (*locator) );
@@ -1999,12 +1998,23 @@ static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator, B
     locator->line = (reader->version>=MSXML6 ? 1 : 0);
     locator->column = 0;
     locator->ret = S_OK;
+    if(locator->saxreader->version >= MSXML6)
+        locator->namespaceUri = SysAllocString(w3xmlns);
+    else
+        locator->namespaceUri = SysAllocStringLen(NULL, 0);
+    if(!locator->namespaceUri)
+    {
+        ISAXXMLReader_Release(&reader->ISAXXMLReader_iface);
+        heap_free(locator);
+        return E_OUTOFMEMORY;
+    }
     locator->nsStackSize = 8;
     locator->nsStackLast = 0;
     locator->nsStack = heap_alloc(sizeof(struct nsstack)*locator->nsStackSize);
     if(!locator->nsStack)
     {
         ISAXXMLReader_Release(&reader->ISAXXMLReader_iface);
+        SysFreeString(locator->namespaceUri);
         heap_free(locator);
         return E_OUTOFMEMORY;
     }
@@ -2015,6 +2025,7 @@ static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator, B
     if(!locator->attributes)
     {
         ISAXXMLReader_Release(&reader->ISAXXMLReader_iface);
+        SysFreeString(locator->namespaceUri);
         heap_free(locator->nsStack);
         heap_free(locator);
         return E_OUTOFMEMORY;
