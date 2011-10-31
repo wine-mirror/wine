@@ -313,6 +313,20 @@ static HRESULT namespacePop(saxlocator *locator)
     return S_OK;
 }
 
+static BSTR namespaceFind(saxlocator *locator, const xmlChar *ptr)
+{
+    int i;
+
+    for(i=locator->nsStackLast-1; i>=0; i--)
+    {
+        if(ptr == locator->nsStack[i].ptr)
+            return locator->nsStack[i].uri;
+    }
+
+    ERR("namespace not found\n");
+    return NULL;
+}
+
 static BOOL bstr_pool_insert(struct bstrpool *pool, BSTR pool_entry)
 {
     if (!pool->pool)
@@ -1188,7 +1202,7 @@ static void libxmlStartElementNS(
         int nb_defaulted,
         const xmlChar **attributes)
 {
-    BSTR NamespaceUri, LocalName, QName, Prefix, Uri;
+    BSTR NamespaceUri, LocalName, QName;
     saxlocator *This = ctx;
     HRESULT hr;
     int index;
@@ -1214,18 +1228,18 @@ static void libxmlStartElementNS(
     {
         for(index=0; index<nb_namespaces; index++)
         {
-            Prefix = pooled_bstr_from_xmlChar(&This->saxreader->pool, namespaces[2*index]);
-            Uri = pooled_bstr_from_xmlChar(&This->saxreader->pool, namespaces[2*index+1]);
-
             if(This->vbInterface)
                 hr = IVBSAXContentHandler_startPrefixMapping(
                         This->saxreader->vbcontentHandler,
-                        &Prefix, &Uri);
+                        &This->nsStack[This->nsStackLast-nb_namespaces+index].prefix,
+                        &This->nsStack[This->nsStackLast-nb_namespaces+index].uri);
             else
                 hr = ISAXContentHandler_startPrefixMapping(
                         This->saxreader->contentHandler,
-                        Prefix, SysStringLen(Prefix),
-                        Uri, SysStringLen(Uri));
+                        This->nsStack[This->nsStackLast-nb_namespaces+index].prefix,
+                        SysStringLen(This->nsStack[This->nsStackLast-nb_namespaces+index].prefix),
+                        This->nsStack[This->nsStackLast-nb_namespaces+index].uri,
+                        SysStringLen(This->nsStack[This->nsStackLast-nb_namespaces+index].uri));
 
             if(This->saxreader->version>=MSXML6 ? FAILED(hr) : hr!=S_OK)
             {
@@ -1234,7 +1248,7 @@ static void libxmlStartElementNS(
             }
         }
 
-        NamespaceUri = pooled_bstr_from_xmlChar(&This->saxreader->pool, URI);
+        NamespaceUri = namespaceFind(This, URI);
         LocalName = pooled_bstr_from_xmlChar(&This->saxreader->pool, localname);
         QName = pooled_QName_from_xmlChar(&This->saxreader->pool, prefix, localname);
 
@@ -1280,7 +1294,7 @@ static void libxmlEndElementNS(
 
     if(has_content_handler(This))
     {
-        NamespaceUri = pooled_bstr_from_xmlChar(&This->saxreader->pool, URI);
+        NamespaceUri = namespaceFind(This, URI);
         LocalName = pooled_bstr_from_xmlChar(&This->saxreader->pool, localname);
         QName = pooled_QName_from_xmlChar(&This->saxreader->pool, prefix, localname);
 
