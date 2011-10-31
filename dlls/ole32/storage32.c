@@ -1302,7 +1302,7 @@ static HRESULT StorageImpl_CreateDirEntry(
      * memset the empty entry in order to initialize the unused newly
      * created entries
      */
-    memset(&emptyData, 0, RAW_DIRENTRY_SIZE);
+    memset(emptyData, 0, RAW_DIRENTRY_SIZE);
 
     /*
      * initialize them
@@ -1347,7 +1347,7 @@ static HRESULT StorageImpl_DestroyDirEntry(
   BYTE emptyData[RAW_DIRENTRY_SIZE];
   StorageImpl *storage = (StorageImpl*)base;
 
-  memset(&emptyData, 0, RAW_DIRENTRY_SIZE);
+  memset(emptyData, 0, RAW_DIRENTRY_SIZE);
 
   hr = StorageImpl_WriteRawDirEntry(storage, index, emptyData);
 
