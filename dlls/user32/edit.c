@@ -2136,10 +2136,10 @@ static INT EDIT_PaintText(EDITSTATE *es, HDC dc, INT x, INT y, INT line, INT col
  */
 static void EDIT_PaintLine(EDITSTATE *es, HDC dc, INT line, BOOL rev)
 {
-	INT s;
-	INT e;
-	INT li;
-	INT ll;
+	INT s = 0;
+	INT e = 0;
+	INT li = 0;
+	INT ll = 0;
 	INT x;
 	INT y;
 	LRESULT pos;
@@ -2185,12 +2185,16 @@ static void EDIT_PaintLine(EDITSTATE *es, HDC dc, INT line, BOOL rev)
 		x += es->format_rect.left;
 	}
 
-	li = EDIT_EM_LineIndex(es, line);
-	ll = EDIT_EM_LineLength(es, li);
-	s = min(es->selection_start, es->selection_end);
-	e = max(es->selection_start, es->selection_end);
-	s = min(li + ll, max(li, s));
-	e = min(li + ll, max(li, e));
+	if (rev)
+	{
+		li = EDIT_EM_LineIndex(es, line);
+		ll = EDIT_EM_LineLength(es, li);
+		s = min(es->selection_start, es->selection_end);
+		e = max(es->selection_start, es->selection_end);
+		s = min(li + ll, max(li, s));
+		e = min(li + ll, max(li, e));
+	}
+
 	if (ssa)
 		ScriptStringOut(ssa, x, y, 0, &es->format_rect, s - li, e - li, FALSE);
 	else if (rev && (s != e) &&
