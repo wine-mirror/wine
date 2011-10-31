@@ -850,7 +850,7 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pExtFloodFill */
     NULL,                               /* pExtSelectClipRgn */
     PSDRV_ExtTextOut,                   /* pExtTextOut */
-    NULL,                               /* pFillPath */
+    PSDRV_FillPath,                     /* pFillPath */
     NULL,                               /* pFillRgn */
     NULL,                               /* pFlattenPath */
     NULL,                               /* pFontIsLinked */
@@ -945,8 +945,8 @@ static const struct gdi_dc_funcs psdrv_funcs =
     PSDRV_StartPage,                    /* pStartPage */
     NULL,                               /* pStretchBlt */
     NULL,                               /* pStretchDIBits */
-    NULL,                               /* pStrokeAndFillPath */
-    NULL,                               /* pStrokePath */
+    PSDRV_StrokeAndFillPath,            /* pStrokeAndFillPath */
+    PSDRV_StrokePath,                   /* pStrokePath */
     NULL,                               /* pSwapBuffers */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */

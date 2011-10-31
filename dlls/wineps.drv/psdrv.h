@@ -433,6 +433,7 @@ extern INT PSDRV_ExtEscape( PHYSDEV dev, INT nEscape, INT cbInput, LPCVOID in_da
                             INT cbOutput, LPVOID out_data ) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
                               const RECT *lprect, LPCWSTR str, UINT count, const INT *lpDx ) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_FillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_GetCharWidth(PHYSDEV dev, UINT firstChar, UINT lastChar, LPINT buffer) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_GetTextExtentExPoint(PHYSDEV dev, LPCWSTR str, INT count,
                                        INT maxExt, LPINT lpnFit, LPINT alpDx, LPSIZE size) DECLSPEC_HIDDEN;
@@ -464,6 +465,8 @@ extern COLORREF PSDRV_SetDCPenColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDD
 extern COLORREF PSDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color ) DECLSPEC_HIDDEN;
 extern COLORREF PSDRV_SetTextColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern INT PSDRV_StartDoc( PHYSDEV dev, const DOCINFOW *doc ) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_StrokeAndFillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_StrokePath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 
 extern void PSDRV_MergeDevmodes(PSDRV_DEVMODEA *dm1, PSDRV_DEVMODEA *dm2,
 			 PRINTERINFO *pi) DECLSPEC_HIDDEN;

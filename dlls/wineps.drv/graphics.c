@@ -525,3 +525,74 @@ BOOL PSDRV_PaintRgn( PHYSDEV dev, HRGN hrgn )
     HeapFree(GetProcessHeap(), 0, rgndata);
     return TRUE;
 }
+
+static BOOL paint_path( PHYSDEV dev, BOOL stroke, BOOL fill )
+{
+    POINT *points;
+    BYTE *types;
+    BOOL ret = FALSE;
+    int i, size = GetPath( dev->hdc, NULL, NULL, 0 );
+
+    if (size == -1) return FALSE;
+    if (!size) return TRUE;
+    points = HeapAlloc( GetProcessHeap(), 0, size * sizeof(*points) );
+    types = HeapAlloc( GetProcessHeap(), 0, size * sizeof(*types) );
+    if (!points || !types) goto done;
+    if (GetPath( dev->hdc, points, types, size ) == -1) goto done;
+
+    if (fill) PSDRV_SetPen(dev);
+    PSDRV_SetClip(dev);
+    for (i = 0; i < size; i++)
+    {
+        switch (types[i] & ~PT_CLOSEFIGURE)
+        {
+        case PT_MOVETO:
+            PSDRV_WriteMoveTo( dev, points[i].x, points[i].y );
+            break;
+        case PT_LINETO:
+        case PT_LINETO | PT_CLOSEFIGURE:
+            PSDRV_WriteLineTo( dev, points[i].x, points[i].y );
+            if (types[i] & PT_CLOSEFIGURE) PSDRV_WriteClosePath( dev );
+            break;
+        case PT_BEZIERTO:
+        case PT_BEZIERTO | PT_CLOSEFIGURE:
+            PSDRV_WriteCurveTo( dev, points + i );
+            if (types[i] & PT_CLOSEFIGURE) PSDRV_WriteClosePath( dev );
+            i += 2;
+            break;
+        }
+    }
+    if (fill) PSDRV_Brush( dev, GetPolyFillMode(dev->hdc) == ALTERNATE );
+    if (stroke) PSDRV_DrawLine(dev);
+    else PSDRV_WriteNewPath(dev);
+    PSDRV_ResetClip(dev);
+
+done:
+    HeapFree( GetProcessHeap(), 0, points );
+    HeapFree( GetProcessHeap(), 0, types );
+    return ret;
+}
+
+/***********************************************************************
+ *           PSDRV_FillPath
+ */
+BOOL PSDRV_FillPath( PHYSDEV dev )
+{
+    return paint_path( dev, FALSE, TRUE );
+}
+
+/***********************************************************************
+ *           PSDRV_StrokeAndFillPath
+ */
+BOOL PSDRV_StrokeAndFillPath( PHYSDEV dev )
+{
+    return paint_path( dev, TRUE, TRUE );
+}
+
+/***********************************************************************
+ *           PSDRV_StrokePath
+ */
+BOOL PSDRV_StrokePath( PHYSDEV dev )
+{
+    return paint_path( dev, TRUE, FALSE );
+}
