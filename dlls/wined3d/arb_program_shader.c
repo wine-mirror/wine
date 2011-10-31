@@ -368,7 +368,7 @@ static unsigned int reserved_vs_const(const struct arb_vshader_private *shader_d
 static unsigned int shader_arb_load_constantsF(struct wined3d_shader *shader, const struct wined3d_gl_info *gl_info,
         GLuint target_type, unsigned int max_constants, const float *constants, char *dirty_consts)
 {
-    local_constant* lconst;
+    struct wined3d_shader_lconst *lconst;
     DWORD i, j;
     unsigned int ret;
 
@@ -458,7 +458,7 @@ static unsigned int shader_arb_load_constantsF(struct wined3d_shader *shader, co
     {
         if (TRACE_ON(d3d_shader))
         {
-            LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, local_constant, entry)
+            LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, struct wined3d_shader_lconst, entry)
             {
                 GLfloat* values = (GLfloat*)lconst->value;
                 TRACE_(d3d_constants)("Loading local constants %i: %f, %f, %f, %f\n", lconst->idx,
@@ -467,7 +467,7 @@ static unsigned int shader_arb_load_constantsF(struct wined3d_shader *shader, co
         }
         /* Immediate constants are clamped for 1.X shaders at loading times */
         ret = 0;
-        LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, local_constant, entry)
+        LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, struct wined3d_shader_lconst, entry)
         {
             dirty_consts[lconst->idx] = 1; /* Dirtify so the non-immediate constant overwrites it next time */
             ret = max(ret, lconst->idx + 1);
@@ -702,9 +702,9 @@ static void shader_arb_update_float_pixel_constants(struct wined3d_device *devic
 
 static DWORD *local_const_mapping(const struct wined3d_shader *shader)
 {
+    const struct wined3d_shader_lconst *lconst;
     DWORD *ret;
     DWORD idx = 0;
-    const local_constant *lconst;
 
     if (shader->load_local_constsF || list_empty(&shader->constantsF))
         return NULL;
@@ -716,7 +716,7 @@ static DWORD *local_const_mapping(const struct wined3d_shader *shader)
         return NULL;
     }
 
-    LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, local_constant, entry)
+    LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, struct wined3d_shader_lconst, entry)
     {
         ret[lconst->idx] = idx++;
     }
@@ -731,8 +731,8 @@ static DWORD shader_generate_arb_declarations(struct wined3d_shader *shader,
 {
     DWORD i, next_local = 0;
     char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
+    const struct wined3d_shader_lconst *lconst;
     unsigned max_constantsF;
-    const local_constant *lconst;
     DWORD map;
 
     /* In pixel shaders, all private constants are program local, we don't need anything
@@ -825,7 +825,7 @@ static DWORD shader_generate_arb_declarations(struct wined3d_shader *shader,
      */
     if (lconst_map)
     {
-        LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, local_constant, entry)
+        LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, struct wined3d_shader_lconst, entry)
         {
             shader_addline(buffer, "PARAM C%u = program.local[%u];\n", lconst->idx,
                            lconst_map[lconst->idx]);
@@ -3429,9 +3429,9 @@ static void arbfp_add_sRGB_correction(struct wined3d_shader_buffer *buffer, cons
 
 static const DWORD *find_loop_control_values(const struct wined3d_shader *shader, DWORD idx)
 {
-    const local_constant *constant;
+    const struct wined3d_shader_lconst *constant;
 
-    LIST_FOR_EACH_ENTRY(constant, &shader->constantsI, local_constant, entry)
+    LIST_FOR_EACH_ENTRY(constant, &shader->constantsI, struct wined3d_shader_lconst, entry)
     {
         if (constant->idx == idx)
         {
@@ -3521,8 +3521,8 @@ static GLuint shader_arb_generate_pshader(struct wined3d_shader *shader,
         const struct arb_ps_compile_args *args, struct arb_ps_compiled_shader *compiled)
 {
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
+    const struct wined3d_shader_lconst *lconst;
     const DWORD *function = shader->function;
-    const local_constant *lconst;
     GLuint retval;
     char fragcolor[16];
     DWORD *lconst_map = local_const_mapping(shader), next_local;
@@ -3848,7 +3848,7 @@ static GLuint shader_arb_generate_pshader(struct wined3d_shader *shader,
     /* Load immediate constants */
     if (lconst_map)
     {
-        LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, local_constant, entry)
+        LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, struct wined3d_shader_lconst, entry)
         {
             const float *value = (const float *)lconst->value;
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, lconst_map[lconst->idx], value));
@@ -4108,8 +4108,8 @@ static GLuint shader_arb_generate_vshader(struct wined3d_shader *shader,
 {
     const struct arb_vshader_private *shader_data = shader->backend_data;
     const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
+    const struct wined3d_shader_lconst *lconst;
     const DWORD *function = shader->function;
-    const local_constant *lconst;
     GLuint ret;
     DWORD next_local, *lconst_map = local_const_mapping(shader);
     struct shader_arb_ctx_priv priv_ctx;
@@ -4255,7 +4255,7 @@ static GLuint shader_arb_generate_vshader(struct wined3d_shader *shader,
         /* Load immediate constants */
         if (lconst_map)
         {
-            LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, local_constant, entry)
+            LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, struct wined3d_shader_lconst, entry)
             {
                 const float *value = (const float *)lconst->value;
                 GL_EXTCALL(glProgramLocalParameter4fvARB(GL_VERTEX_PROGRAM_ARB, lconst_map[lconst->idx], value));
@@ -5130,15 +5130,15 @@ static BOOL get_bool_const(const struct wined3d_shader_instruction *ins,
 {
     const struct wined3d_shader_reg_maps *reg_maps = ins->ctx->reg_maps;
     BOOL vshader = shader_is_vshader_version(reg_maps->shader_version.type);
+    const struct wined3d_shader_lconst *constant;
     WORD bools = 0;
     WORD flag = (1 << idx);
-    const local_constant *constant;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
 
     if (reg_maps->local_bool_consts & flag)
     {
         /* What good is a if(bool) with a hardcoded local constant? I don't know, but handle it */
-        LIST_FOR_EACH_ENTRY(constant, &shader->constantsB, local_constant, entry)
+        LIST_FOR_EACH_ENTRY(constant, &shader->constantsB, struct wined3d_shader_lconst, entry)
         {
             if (constant->idx == idx)
             {
@@ -5166,9 +5166,9 @@ static void get_loop_control_const(const struct wined3d_shader_instruction *ins,
      * type specific compile args. */
     if (reg_maps->local_int_consts & (1 << idx))
     {
-        const local_constant *constant;
+        const struct wined3d_shader_lconst *constant;
 
-        LIST_FOR_EACH_ENTRY(constant, &shader->constantsI, local_constant, entry)
+        LIST_FOR_EACH_ENTRY(constant, &shader->constantsI, struct wined3d_shader_lconst, entry)
         {
             if (constant->idx == idx)
             {

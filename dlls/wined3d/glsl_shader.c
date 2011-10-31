@@ -517,7 +517,7 @@ static void shader_glsl_load_constantsF(const struct wined3d_shader *shader, con
         const float *constants, const GLint *constant_locations, const struct constant_heap *heap,
         unsigned char *stack, UINT version)
 {
-    const local_constant *lconst;
+    const struct wined3d_shader_lconst *lconst;
 
     /* 1.X pshaders have the constants clamped to [-1;1] implicitly. */
     if (shader->reg_maps.shader_version.major == 1
@@ -533,7 +533,7 @@ static void shader_glsl_load_constantsF(const struct wined3d_shader *shader, con
     }
 
     /* Immediate constants are clamped to [-1;1] at shader creation time if needed */
-    LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, local_constant, entry)
+    LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, struct wined3d_shader_lconst, entry)
     {
         GLint location = constant_locations[lconst->idx];
         /* We found this uniform name in the program - go ahead and send the data */
@@ -566,7 +566,7 @@ static void shader_glsl_load_constantsI(const struct wined3d_shader *shader, con
     ptr = list_head(&shader->constantsI);
     while (ptr)
     {
-        const struct local_constant *lconst = LIST_ENTRY(ptr, const struct local_constant, entry);
+        const struct wined3d_shader_lconst *lconst = LIST_ENTRY(ptr, const struct wined3d_shader_lconst, entry);
         unsigned int idx = lconst->idx;
         const GLint *values = (const GLint *)lconst->value;
 
@@ -636,7 +636,7 @@ static void shader_glsl_load_constantsB(const struct wined3d_shader *shader, con
     ptr = list_head(&shader->constantsB);
     while (ptr)
     {
-        const struct local_constant *lconst = LIST_ENTRY(ptr, const struct local_constant, entry);
+        const struct wined3d_shader_lconst *lconst = LIST_ENTRY(ptr, const struct wined3d_shader_lconst, entry);
         unsigned int idx = lconst->idx;
         const GLint *values = (const GLint *)lconst->value;
 
@@ -901,7 +901,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_fb_state *fb = &shader->device->fb;
     unsigned int i, extra_constants_needed = 0;
-    const local_constant *lconst;
+    const struct wined3d_shader_lconst *lconst;
     DWORD map;
 
     /* There are some minor differences between pixel and vertex shaders */
@@ -1179,7 +1179,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
      */
     if (!shader->load_local_constsF)
     {
-        LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, local_constant, entry)
+        LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, struct wined3d_shader_lconst, entry)
         {
             shader_addline(buffer, "uniform vec4 %cLC%u;\n", prefix, lconst->idx);
         }
@@ -2826,9 +2826,9 @@ static void shader_glsl_loop(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_shader_loop_state *loop_state = ins->ctx->loop_state;
     const struct wined3d_shader *shader = ins->ctx->shader;
+    const struct wined3d_shader_lconst *constant;
     struct glsl_src_param src1_param;
     const DWORD *control_values = NULL;
-    const local_constant *constant;
 
     shader_glsl_add_src_param(ins, &ins->src[1], WINED3DSP_WRITEMASK_ALL, &src1_param);
 
@@ -2839,7 +2839,7 @@ static void shader_glsl_loop(const struct wined3d_shader_instruction *ins)
      */
     if (ins->src[1].reg.type == WINED3DSPR_CONSTINT)
     {
-        LIST_FOR_EACH_ENTRY(constant, &shader->constantsI, local_constant, entry)
+        LIST_FOR_EACH_ENTRY(constant, &shader->constantsI, struct wined3d_shader_lconst, entry)
         {
             if (constant->idx == ins->src[1].reg.idx)
             {
@@ -2911,14 +2911,14 @@ static void shader_glsl_rep(const struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_shader *shader = ins->ctx->shader;
     struct wined3d_shader_loop_state *loop_state = ins->ctx->loop_state;
+    const struct wined3d_shader_lconst *constant;
     struct glsl_src_param src0_param;
     const DWORD *control_values = NULL;
-    const local_constant *constant;
 
     /* Try to hardcode local values to help the GLSL compiler to unroll and optimize the loop */
     if (ins->src[0].reg.type == WINED3DSPR_CONSTINT)
     {
-        LIST_FOR_EACH_ENTRY(constant, &shader->constantsI, local_constant, entry)
+        LIST_FOR_EACH_ENTRY(constant, &shader->constantsI, struct wined3d_shader_lconst, entry)
         {
             if (constant->idx == ins->src[0].reg.idx)
             {
@@ -3950,12 +3950,12 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
 static void hardcode_local_constants(const struct wined3d_shader *shader,
         const struct wined3d_gl_info *gl_info, GLhandleARB programId, char prefix)
 {
-    const local_constant *lconst;
+    const struct wined3d_shader_lconst *lconst;
     GLint tmp_loc;
     const float *value;
     char glsl_name[8];
 
-    LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, local_constant, entry)
+    LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, struct wined3d_shader_lconst, entry)
     {
         value = (const float *)lconst->value;
         snprintf(glsl_name, sizeof(glsl_name), "%cLC%u", prefix, lconst->idx);

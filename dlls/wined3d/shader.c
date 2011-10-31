@@ -327,13 +327,13 @@ static unsigned int shader_get_float_offset(WINED3DSHADER_PARAM_REGISTER_TYPE re
 
 static void shader_delete_constant_list(struct list *clist)
 {
-    struct local_constant *constant;
+    struct wined3d_shader_lconst *constant;
     struct list *ptr;
 
     ptr = list_head(clist);
     while (ptr)
     {
-        constant = LIST_ENTRY(ptr, struct local_constant, entry);
+        constant = LIST_ENTRY(ptr, struct wined3d_shader_lconst, entry);
         ptr = list_next(clist, ptr);
         HeapFree(GetProcessHeap(), 0, constant);
     }
@@ -530,7 +530,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             struct wined3d_shader_src_param rel_addr;
             struct wined3d_shader_dst_param dst;
 
-            local_constant *lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
+            struct wined3d_shader_lconst *lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(*lconst));
             if (!lconst) return E_OUTOFMEMORY;
 
             fe->shader_read_dst_param(fe_data, &ptr, &dst, &rel_addr);
@@ -560,7 +560,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             struct wined3d_shader_src_param rel_addr;
             struct wined3d_shader_dst_param dst;
 
-            local_constant *lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
+            struct wined3d_shader_lconst *lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(*lconst));
             if (!lconst) return E_OUTOFMEMORY;
 
             fe->shader_read_dst_param(fe_data, &ptr, &dst, &rel_addr);
@@ -577,7 +577,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             struct wined3d_shader_src_param rel_addr;
             struct wined3d_shader_dst_param dst;
 
-            local_constant *lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
+            struct wined3d_shader_lconst *lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(*lconst));
             if (!lconst) return E_OUTOFMEMORY;
 
             fe->shader_read_dst_param(fe_data, &ptr, &dst, &rel_addr);
@@ -1705,7 +1705,7 @@ HRESULT CDECL wined3d_shader_set_local_constants_float(struct wined3d_shader *sh
 
     for (i = start_idx; i < end_idx; ++i)
     {
-        struct local_constant *lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
+        struct wined3d_shader_lconst *lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(*lconst));
         if (!lconst)
             return E_OUTOFMEMORY;
 

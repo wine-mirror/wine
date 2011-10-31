@@ -2539,11 +2539,12 @@ unsigned int count_bits(unsigned int mask) DECLSPEC_HIDDEN;
 
 void select_shader_mode(const struct wined3d_gl_info *gl_info, int *ps_selected, int *vs_selected) DECLSPEC_HIDDEN;
 
-typedef struct local_constant {
+struct wined3d_shader_lconst
+{
     struct list entry;
     unsigned int idx;
     DWORD value[4];
-} local_constant;
+};
 
 struct wined3d_shader_limits
 {
@@ -2711,12 +2712,12 @@ static inline void shader_get_position_fixup(const struct wined3d_context *conte
 
 static inline BOOL shader_constant_is_local(const struct wined3d_shader *shader, DWORD reg)
 {
-    struct local_constant *lconst;
+    struct wined3d_shader_lconst *lconst;
 
     if (shader->load_local_constsF)
         return FALSE;
 
-    LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, local_constant, entry)
+    LIST_FOR_EACH_ENTRY(lconst, &shader->constantsF, struct wined3d_shader_lconst, entry)
     {
         if (lconst->idx == reg)
             return TRUE;
