@@ -563,7 +563,7 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
     protect_base = thunk_list;
     protect_size *= sizeof(*thunk_list);
     NtProtectVirtualMemory( NtCurrentProcess(), &protect_base,
-                            &protect_size, PAGE_WRITECOPY, &protect_old );
+                            &protect_size, PAGE_READWRITE, &protect_old );
 
     imp_mod = wmImp->ldr.BaseAddress;
     exports = RtlImageDirectoryEntryToData( imp_mod, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size );
