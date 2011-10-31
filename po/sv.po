@@ -10320,6 +10320,38 @@ msgstr "&Ner"
 msgid "Regular Metafile Viewer"
 msgstr ""
 
+#: wineboot.rc:28
+msgid "Waiting for Program"
+msgstr "Väntar på program"
+
+#: wineboot.rc:31
+msgid "Cancel"
+msgstr "Avbryt"
+
+#: wineboot.rc:32
+msgid "Terminate Process"
+msgstr "Avsluta process"
+
+#: wineboot.rc:33
+msgid ""
+"A simulated log-off or shutdown is in progress, but this program isn't "
+"responding.\n"
+"\n"
+"If you terminate the process you may lose all unsaved data."
+msgstr ""
+"En simulerad avloggning eller avstängning pågår, men det här programmet "
+"svarar inte.\n"
+"\n"
+"Om du avslutar processen kan du förlora allt osparat data."
+
+#: wineboot.rc:39
+msgid "Wine"
+msgstr "Wine"
+
+#: wineboot.rc:43
+msgid "The Wine configuration in %s is being updated, please wait..."
+msgstr "Wine-inställningarna i %s uppdateras, var god vänta..."
+
 #: winecfg.rc:31
 msgid "Libraries"
 msgstr "Bibliotek"

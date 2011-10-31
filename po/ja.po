@@ -10323,6 +10323,40 @@ msgstr "下(&D)"
 msgid "Regular Metafile Viewer"
 msgstr "標準メタファイル ビュアー"
 
+#: wineboot.rc:28
+msgid "Waiting for Program"
+msgstr "待機中"
+
+#: wineboot.rc:31
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: wineboot.rc:32
+msgid "Terminate Process"
+msgstr "プロセスの終了"
+
+#: wineboot.rc:33
+msgid ""
+"A simulated log-off or shutdown is in progress, but this program isn't "
+"responding.\n"
+"\n"
+"If you terminate the process you may lose all unsaved data."
+msgstr ""
+"ログオフおよび、再起動のプロセスをシミュレートしていますが、プログラムは反応"
+"していません。\n"
+"\n"
+"プロセスを終了させると、保存していないデータは全て失われます。"
+
+#: wineboot.rc:39
+msgid "Wine"
+msgstr "Wine"
+
+#: wineboot.rc:43
+msgid "The Wine configuration in %s is being updated, please wait..."
+msgstr ""
+"%s にある Wine 設定を更新しています。\n"
+"しばらくお待ちください…。"
+
 #: winecfg.rc:31
 msgid "Libraries"
 msgstr "ライブラリ"

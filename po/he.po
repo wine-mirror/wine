@@ -10397,6 +10397,37 @@ msgstr "למ&טה"
 msgid "Regular Metafile Viewer"
 msgstr "מציג קובצי על רגיל"
 
+#: wineboot.rc:28
+msgid "Waiting for Program"
+msgstr "בהמתנה לתכנה"
+
+#: wineboot.rc:31
+msgid "Cancel"
+msgstr "ביטול"
+
+#: wineboot.rc:32
+msgid "Terminate Process"
+msgstr "חיסול התהליך"
+
+#: wineboot.rc:33
+msgid ""
+"A simulated log-off or shutdown is in progress, but this program isn't "
+"responding.\n"
+"\n"
+"If you terminate the process you may lose all unsaved data."
+msgstr ""
+"מתבצעת הדמייה של ניתוק או כיבוי, אך תכנית זו אינה מגיבה.\n"
+"\n"
+"אם התהליך יחוסל יתכן שכל הנתונים שלא נשמרו ילכו לאיבוד."
+
+#: wineboot.rc:39
+msgid "Wine"
+msgstr "Wine"
+
+#: wineboot.rc:43
+msgid "The Wine configuration in %s is being updated, please wait..."
+msgstr "התצורה של wine שב־%s מתעדכנת, נא להמתין..."
+
 #: winecfg.rc:31
 #, fuzzy
 msgid "Libraries"

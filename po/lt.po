@@ -10343,6 +10343,37 @@ msgstr "&Aukštyn"
 msgid "Regular Metafile Viewer"
 msgstr "Įprastinė metafailų žiūryklė"
 
+#: wineboot.rc:28
+msgid "Waiting for Program"
+msgstr "Laukiama programos"
+
+#: wineboot.rc:31
+msgid "Cancel"
+msgstr "Atsisakyti"
+
+#: wineboot.rc:32
+msgid "Terminate Process"
+msgstr "Nutraukti procesą"
+
+#: wineboot.rc:33
+msgid ""
+"A simulated log-off or shutdown is in progress, but this program isn't "
+"responding.\n"
+"\n"
+"If you terminate the process you may lose all unsaved data."
+msgstr ""
+"Vyksta simuliuotas atsijungimas ar stabdymas, bet ši programa neatsako.\n"
+"\n"
+"Jei nutrauksite procesą, tai galite prarasti visus neišsaugotus duomenis."
+
+#: wineboot.rc:39
+msgid "Wine"
+msgstr "Wine"
+
+#: wineboot.rc:43
+msgid "The Wine configuration in %s is being updated, please wait..."
+msgstr "Wine konfigūracija (%s) yra atnaujinama, prašome palaukti..."
+
 #: winecfg.rc:31
 msgid "Libraries"
 msgstr "Bibliotekos"

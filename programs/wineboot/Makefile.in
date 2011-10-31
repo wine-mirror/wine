@@ -8,28 +8,8 @@ C_SRCS = \
 	shutdown.c \
 	wineboot.c
 
-RC_SRCS = \
-	wineboot_Da.rc \
-	wineboot_De.rc \
-	wineboot_En.rc \
-	wineboot_Es.rc \
-	wineboot_Fr.rc \
-	wineboot_He.rc \
-	wineboot_It.rc \
-	wineboot_Ja.rc \
-	wineboot_Ko.rc \
-	wineboot_Lt.rc \
-	wineboot_Nl.rc \
-	wineboot_No.rc \
-	wineboot_Pl.rc \
-	wineboot_Pt.rc \
-	wineboot_Ro.rc \
-	wineboot_Ru.rc \
-	wineboot_Si.rc \
-	wineboot_Sr.rc \
-	wineboot_Sv.rc \
-	wineboot_Uk.rc \
-	wineboot_Zh.rc
+RC_SRCS = wineboot.rc
+PO_SRCS = wineboot.rc
 
 MANPAGE = wineboot.man
 

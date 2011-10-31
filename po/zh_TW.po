@@ -10258,6 +10258,37 @@ msgstr "下(&D)"
 msgid "Regular Metafile Viewer"
 msgstr "普通 Metafile 閱讀器"
 
+#: wineboot.rc:28
+msgid "Waiting for Program"
+msgstr "等候程式"
+
+#: wineboot.rc:31
+msgid "Cancel"
+msgstr "取消"
+
+#: wineboot.rc:32
+msgid "Terminate Process"
+msgstr "中斷"
+
+#: wineboot.rc:33
+msgid ""
+"A simulated log-off or shutdown is in progress, but this program isn't "
+"responding.\n"
+"\n"
+"If you terminate the process you may lose all unsaved data."
+msgstr ""
+"正在模擬關機，但此程序沒有反應。\n"
+"\n"
+"如果您中斷程式，可能會遺失尚未儲存的資料。"
+
+#: wineboot.rc:39
+msgid "Wine"
+msgstr "Wine"
+
+#: wineboot.rc:43
+msgid "The Wine configuration in %s is being updated, please wait..."
+msgstr "正在更新 %s 的 Wine 設定，請稍候……"
+
 #: winecfg.rc:31
 msgid "Libraries"
 msgstr "函式庫"

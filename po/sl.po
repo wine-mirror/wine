@@ -10372,6 +10372,38 @@ msgstr "Navz&dol"
 msgid "Regular Metafile Viewer"
 msgstr "Program za ogled slik Metafile"
 
+#: wineboot.rc:28
+msgid "Waiting for Program"
+msgstr "Čakam na konec programa"
+
+#: wineboot.rc:31
+msgid "Cancel"
+msgstr "Prekliči"
+
+#: wineboot.rc:32
+msgid "Terminate Process"
+msgstr "Končaj program"
+
+#: wineboot.rc:33
+#, fuzzy
+msgid ""
+"A simulated log-off or shutdown is in progress, but this program isn't "
+"responding.\n"
+"\n"
+"If you terminate the process you may lose all unsaved data."
+msgstr ""
+"Izvajam simulirano odjavo oziroma izklop, vendar se program ne odziva.\n"
+"\n"
+"Če se odločite za končanje programa, lahko izgubite neshranjene podatke."
+
+#: wineboot.rc:39
+msgid "Wine"
+msgstr "Wine"
+
+#: wineboot.rc:43
+msgid "The Wine configuration in %s is being updated, please wait..."
+msgstr "Konfiguracija programa Wine v %s se posodablja, prosimo počkajte ..."
+
 #: winecfg.rc:31
 msgid "Libraries"
 msgstr "Knjižnice"

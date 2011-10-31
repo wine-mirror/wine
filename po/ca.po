@@ -10409,6 +10409,38 @@ msgstr "A &Baix"
 msgid "Regular Metafile Viewer"
 msgstr "Visualitzador de Metafitxers Regular"
 
+#: wineboot.rc:28
+#, fuzzy
+msgid "Waiting for Program"
+msgstr "No Disposat a Realitzar"
+
+#: wineboot.rc:31
+#, fuzzy
+msgid "Cancel"
+msgstr "Cancel·lant..."
+
+#: wineboot.rc:32
+#, fuzzy
+msgid "Terminate Process"
+msgstr "No es pot Terminar el Procès"
+
+#: wineboot.rc:33
+msgid ""
+"A simulated log-off or shutdown is in progress, but this program isn't "
+"responding.\n"
+"\n"
+"If you terminate the process you may lose all unsaved data."
+msgstr ""
+
+#: wineboot.rc:39
+#, fuzzy
+msgid "Wine"
+msgstr "Ajuda de Wine"
+
+#: wineboot.rc:43
+msgid "The Wine configuration in %s is being updated, please wait..."
+msgstr ""
+
 #: winecfg.rc:31
 msgid "Libraries"
 msgstr "Biblioteques"

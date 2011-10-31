@@ -10288,6 +10288,40 @@ msgstr "아래(&D)"
 msgid "Regular Metafile Viewer"
 msgstr "정규 메타파일 보기"
 
+#: wineboot.rc:28
+msgid "Waiting for Program"
+msgstr "프로그램 대기중"
+
+#: wineboot.rc:31
+msgid "Cancel"
+msgstr "취소"
+
+#: wineboot.rc:32
+msgid "Terminate Process"
+msgstr "프로세스 끝내기"
+
+#: wineboot.rc:33
+msgid ""
+"A simulated log-off or shutdown is in progress, but this program isn't "
+"responding.\n"
+"\n"
+"If you terminate the process you may lose all unsaved data."
+msgstr ""
+"이 프로세스에 로그 오프나 종료를 시도했으나, 이 프로그램은 아무런 반응이 없습"
+"니다.\n"
+"\n"
+"만약 당신이 이 프로세스를 끝낸다면 저장 하지 않은 모든 데이터를 잃어버릴 것입"
+"니다."
+
+#: wineboot.rc:39
+msgid "Wine"
+msgstr "Wine"
+
+#: wineboot.rc:43
+msgid "The Wine configuration in %s is being updated, please wait..."
+msgstr ""
+"Wine 설정  %s 이 업데이트되는 중입니다,  잠시만 기다려주시기 바랍니다..."
+
 #: winecfg.rc:31
 msgid "Libraries"
 msgstr "라이브러리"

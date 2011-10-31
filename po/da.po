@@ -10595,6 +10595,37 @@ msgstr "Ne&d"
 msgid "Regular Metafile Viewer"
 msgstr "Normal metafil-fremviser"
 
+#: wineboot.rc:28
+msgid "Waiting for Program"
+msgstr "Venter på program"
+
+#: wineboot.rc:31
+msgid "Cancel"
+msgstr "Annuller"
+
+#: wineboot.rc:32
+msgid "Terminate Process"
+msgstr "Afslut program"
+
+#: wineboot.rc:33
+msgid ""
+"A simulated log-off or shutdown is in progress, but this program isn't "
+"responding.\n"
+"\n"
+"If you terminate the process you may lose all unsaved data."
+msgstr ""
+"En simuleret genstart er igang, men dette program svarer ikke.\n"
+"\n"
+"Hvis du afslutter programmet kan du miste de data der ikke er gemt."
+
+#: wineboot.rc:39
+msgid "Wine"
+msgstr "Wine"
+
+#: wineboot.rc:43
+msgid "The Wine configuration in %s is being updated, please wait..."
+msgstr "Wine konfigurationen i %s, er ved at blive opdateret, vent venligst..."
+
 #: winecfg.rc:31
 msgid "Libraries"
 msgstr "Biblioteker"

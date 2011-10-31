@@ -10481,6 +10481,38 @@ msgstr "O&mlaag"
 msgid "Regular Metafile Viewer"
 msgstr "Algemene Metafile weergave"
 
+#: wineboot.rc:28
+msgid "Waiting for Program"
+msgstr "Wachtend op Programma"
+
+#: wineboot.rc:31
+msgid "Cancel"
+msgstr "Annuleren"
+
+#: wineboot.rc:32
+msgid "Terminate Process"
+msgstr "Beëindig Proces"
+
+#: wineboot.rc:33
+msgid ""
+"A simulated log-off or shutdown is in progress, but this program isn't "
+"responding.\n"
+"\n"
+"If you terminate the process you may lose all unsaved data."
+msgstr ""
+"Een gesimuleerde uitlog- of afsluitactie is bezig, maar dit programma "
+"reageert niet.\n"
+"\n"
+"Als u het proces beëindigt kunt u alle niet-opgeslagen data verliezen."
+
+#: wineboot.rc:39
+msgid "Wine"
+msgstr "Wine"
+
+#: wineboot.rc:43
+msgid "The Wine configuration in %s is being updated, please wait..."
+msgstr "De Wine configuratie in %s wordt bijgewerkt, even geduld a.u.b. ..."
+
 #: winecfg.rc:31
 msgid "Libraries"
 msgstr "Bibliotheken"

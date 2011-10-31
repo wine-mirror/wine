@@ -10336,6 +10336,40 @@ msgstr "В&низ"
 msgid "Regular Metafile Viewer"
 msgstr "Просмотрщик обычных метафайлов"
 
+#: wineboot.rc:28
+msgid "Waiting for Program"
+msgstr "Ожидание программы"
+
+#: wineboot.rc:31
+msgid "Cancel"
+msgstr "Отмена"
+
+#: wineboot.rc:32
+msgid "Terminate Process"
+msgstr "Завершить Процесс"
+
+#: wineboot.rc:33
+msgid ""
+"A simulated log-off or shutdown is in progress, but this program isn't "
+"responding.\n"
+"\n"
+"If you terminate the process you may lose all unsaved data."
+msgstr ""
+"Происходит смена пользователя или выключение, но эта программа не отвечает.\n"
+"\n"
+"Если закрыть программу прямо сейчас, то можно потерять все несохранённые "
+"данные."
+
+#: wineboot.rc:39
+msgid "Wine"
+msgstr "Wine"
+
+#: wineboot.rc:43
+msgid "The Wine configuration in %s is being updated, please wait..."
+msgstr ""
+"Обновление конфигурации Wine %s,\n"
+"пожалуйста подождите..."
+
 #: winecfg.rc:31
 msgid "Libraries"
 msgstr "Библиотеки"

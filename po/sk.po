@@ -9910,6 +9910,36 @@ msgstr ""
 msgid "Regular Metafile Viewer"
 msgstr ""
 
+#: wineboot.rc:28
+msgid "Waiting for Program"
+msgstr ""
+
+#: wineboot.rc:31
+msgid "Cancel"
+msgstr ""
+
+#: wineboot.rc:32
+#, fuzzy
+msgid "Terminate Process"
+msgstr "&Vlastnosti"
+
+#: wineboot.rc:33
+msgid ""
+"A simulated log-off or shutdown is in progress, but this program isn't "
+"responding.\n"
+"\n"
+"If you terminate the process you may lose all unsaved data."
+msgstr ""
+
+#: wineboot.rc:39
+#, fuzzy
+msgid "Wine"
+msgstr "Wine Pomoc"
+
+#: wineboot.rc:43
+msgid "The Wine configuration in %s is being updated, please wait..."
+msgstr ""
+
 #: winecfg.rc:31
 msgid "Libraries"
 msgstr ""

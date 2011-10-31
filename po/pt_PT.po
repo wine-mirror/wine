@@ -10720,6 +10720,39 @@ msgstr "A&baixo"
 msgid "Regular Metafile Viewer"
 msgstr "Visualizador Regular de Ficheiros Meta"
 
+#: wineboot.rc:28
+msgid "Waiting for Program"
+msgstr "À espera do programa"
+
+#: wineboot.rc:31
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: wineboot.rc:32
+msgid "Terminate Process"
+msgstr "Terminar Processo"
+
+#: wineboot.rc:33
+msgid ""
+"A simulated log-off or shutdown is in progress, but this program isn't "
+"responding.\n"
+"\n"
+"If you terminate the process you may lose all unsaved data."
+msgstr ""
+"Um encerramento ou término de sessão simulado está em curso, mas este "
+"programa não está a responder.\n"
+"\n"
+"Se terminar o processo pode perder todos os dados não guardados."
+
+#: wineboot.rc:39
+msgid "Wine"
+msgstr "Wine"
+
+#: wineboot.rc:43
+msgid "The Wine configuration in %s is being updated, please wait..."
+msgstr ""
+"A configuração do Wine em %s está a ser actualizada, por favor aguarde..."
+
 #: winecfg.rc:31
 msgid "Libraries"
 msgstr "Bibliotecas"

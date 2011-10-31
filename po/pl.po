@@ -10327,6 +10327,38 @@ msgstr "Przesuń w &dół"
 msgid "Regular Metafile Viewer"
 msgstr "Podgląd plików WMF (Regular Metafile)"
 
+#: wineboot.rc:28
+msgid "Waiting for Program"
+msgstr "Czekanie na program"
+
+#: wineboot.rc:31
+msgid "Cancel"
+msgstr "Anuluj"
+
+#: wineboot.rc:32
+msgid "Terminate Process"
+msgstr "Zakończ proces"
+
+#: wineboot.rc:33
+msgid ""
+"A simulated log-off or shutdown is in progress, but this program isn't "
+"responding.\n"
+"\n"
+"If you terminate the process you may lose all unsaved data."
+msgstr ""
+"Trwa symulowanie wylogowania i restartu systemu, ale ten program nie "
+"odpowiada.\n"
+"\n"
+"Jeżeli zakończysz jego proces, możesz stracić niezapisane dane."
+
+#: wineboot.rc:39
+msgid "Wine"
+msgstr "Wine"
+
+#: wineboot.rc:43
+msgid "The Wine configuration in %s is being updated, please wait..."
+msgstr "Konfiguracja Wine w %s jest właśnie aktualizowana, proszę czekać..."
+
 #: winecfg.rc:31
 msgid "Libraries"
 msgstr "Biblioteki"

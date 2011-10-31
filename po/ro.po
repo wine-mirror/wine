@@ -10935,6 +10935,37 @@ msgstr "&Jos"
 msgid "Regular Metafile Viewer"
 msgstr "Vizualizator de fișiere metafile normale"
 
+#: wineboot.rc:28
+msgid "Waiting for Program"
+msgstr "Așteptare program"
+
+#: wineboot.rc:31
+msgid "Cancel"
+msgstr "Renunță"
+
+#: wineboot.rc:32
+msgid "Terminate Process"
+msgstr "Termină procesul"
+
+#: wineboot.rc:33
+msgid ""
+"A simulated log-off or shutdown is in progress, but this program isn't "
+"responding.\n"
+"\n"
+"If you terminate the process you may lose all unsaved data."
+msgstr ""
+"O ieșire sau oprire simulată este în curs dar acest proces nu răspunde.\n"
+"\n"
+"Prin terminarea acestui proces se pot pierde datele nesalvate."
+
+#: wineboot.rc:39
+msgid "Wine"
+msgstr "Wine"
+
+#: wineboot.rc:43
+msgid "The Wine configuration in %s is being updated, please wait..."
+msgstr "Actualizez configurația Wine în %s, așteptați..."
+
 #: winecfg.rc:31
 msgid "Libraries"
 msgstr "Librării"

@@ -10266,6 +10266,38 @@ msgstr ""
 msgid "Regular Metafile Viewer"
 msgstr ""
 
+#: wineboot.rc:28
+msgid "Waiting for Program"
+msgstr "Чекање програма"
+
+#: wineboot.rc:31
+msgid "Cancel"
+msgstr "Откажи"
+
+#: wineboot.rc:32
+msgid "Terminate Process"
+msgstr "Окончај процес"
+
+#: wineboot.rc:33
+msgid ""
+"A simulated log-off or shutdown is in progress, but this program isn't "
+"responding.\n"
+"\n"
+"If you terminate the process you may lose all unsaved data."
+msgstr ""
+"Опонашање одјаве или гашења рачунара је у току, али овај програм не "
+"одговара.\n"
+"\n"
+"Ако окончате процес, све несачуване радње ће бити изгубљене."
+
+#: wineboot.rc:39
+msgid "Wine"
+msgstr "Wine"
+
+#: wineboot.rc:43
+msgid "The Wine configuration in %s is being updated, please wait..."
+msgstr "Wine поставке у %s се ажурирају. Молимо, сачекајте..."
+
 #: winecfg.rc:31
 msgid "Libraries"
 msgstr ""
