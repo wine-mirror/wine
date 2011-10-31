@@ -88,7 +88,7 @@ Fixed_IEnumPins_QueryInterface(IEnumPins *iface, REFIID riid, void **ppvObject)
     if (IsEqualIID(riid, &IID_IUnknown) ||
         IsEqualIID(riid, &IID_IEnumPins)) {
 	Fixed_IEnumPins_AddRef(iface);
-        *ppvObject = &(This->pins);
+        *ppvObject = This->pins;
         return S_OK;
     }
     *ppvObject = NULL;
