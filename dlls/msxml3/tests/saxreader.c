@@ -123,7 +123,7 @@ static const CHAR szTestXML[] =
 
 static const CHAR szTestAttributes[] =
 "<?xml version=\"1.0\" ?>\n"
-"<document xmlns:test=\"prefix_test\" xmlns=\"prefix\" test:arg1=\"arg1\" arg2=\"arg2\">\n"
+"<document xmlns:test=\"prefix_test\" xmlns=\"prefix\" test:arg1=\"arg1\" arg2=\"arg2\" test:ar3=\"arg3\">\n"
 "<node1 xmlns:p=\"test\" />"
 "</document>\n";
 
@@ -211,10 +211,10 @@ static content_handler_test contentHandlerTestCallbackResult6[] = {
 static content_handler_test contentHandlerTestAttributes[] = {
     { CH_PUTDOCUMENTLOCATOR, 0, 0, 1, 0 },
     { CH_STARTDOCUMENT, 0, 0, 1, 22 },
-    { CH_STARTPREFIXMAPPING, 2, 80, 2, 79, "test", "prefix_test" },
-    { CH_STARTPREFIXMAPPING, 2, 80, 2, 79, "", "prefix" },
-    { CH_STARTELEMENT, 2, 80, 2, 79, "prefix", "document", "document" },
-    { CH_CHARACTERS, 2, 80, 3, 1, "\n" },
+    { CH_STARTPREFIXMAPPING, 2, 96, 2, 95, "test", "prefix_test" },
+    { CH_STARTPREFIXMAPPING, 2, 96, 2, 95, "", "prefix" },
+    { CH_STARTELEMENT, 2, 96, 2, 95, "prefix", "document", "document" },
+    { CH_CHARACTERS, 2, 96, 3, 1, "\n" },
     { CH_STARTPREFIXMAPPING, 3, 25, 3, 24, "p", "test" },
     { CH_STARTELEMENT, 3, 25, 3, 24, "prefix", "node1", "node1" },
     { CH_ENDELEMENT, 3, 25, 3, 24, "prefix", "node1", "node1" },
@@ -229,10 +229,10 @@ static content_handler_test contentHandlerTestAttributes[] = {
 static content_handler_test contentHandlerTestAttributes6[] = {
     { CH_PUTDOCUMENTLOCATOR, 0, 0, 1, 0 },
     { CH_STARTDOCUMENT, 0, 0, 1, 22 },
-    { CH_STARTPREFIXMAPPING, 2, 80, 2, 79, "test", "prefix_test" },
-    { CH_STARTPREFIXMAPPING, 2, 80, 2, 79, "", "prefix" },
-    { CH_STARTELEMENT, 2, 80, 2, 79, "prefix", "document", "document" },
-    { CH_CHARACTERS, 2, 80, 3, 1, "\n" },
+    { CH_STARTPREFIXMAPPING, 2, 96, 2, 95, "test", "prefix_test" },
+    { CH_STARTPREFIXMAPPING, 2, 96, 2, 95, "", "prefix" },
+    { CH_STARTELEMENT, 2, 96, 2, 95, "prefix", "document", "document" },
+    { CH_CHARACTERS, 2, 96, 3, 1, "\n" },
     { CH_STARTPREFIXMAPPING, 3, 25, 3, 24, "p", "test" },
     { CH_STARTELEMENT, 3, 25, 3, 24, "prefix", "node1", "node1" },
     { CH_ENDELEMENT, 3, 25, 3, 24, "prefix", "node1", "node1" },
@@ -427,11 +427,12 @@ static HRESULT WINAPI contentHandler_startElement(
     ok(test_attr_ptr == pAttr, "Multiple ISAXAttributes instances are used (%p %p)\n", test_attr_ptr, pAttr);
 
     if(expectCall == contentHandlerTestAttributes+4) {
+        const WCHAR *uri_ptr = NULL;
         int i;
         /* msxml3 returns attributes and namespaces in the input order */
         hres = ISAXAttributes_getLength(pAttr, &len);
         ok(hres == S_OK, "getLength returned %x\n", hres);
-        ok(len == 4, "Incorrect number of attributes: %d\n", len);
+        ok(len == 5, "Incorrect number of attributes: %d\n", len);
         ok(msxml_version < 6, "wrong msxml_version: %d\n", msxml_version);
 
         for(i=0; i<len; i++) {
@@ -449,11 +450,18 @@ static HRESULT WINAPI contentHandler_startElement(
                 test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "");
                 test_saxstr(__LINE__, pLocalName, nLocalName, "");
                 test_saxstr(__LINE__, pQName, nQName, "xmlns");
+            } else if(nQName == 8) {
+                todo_wine ok(i==4, "Incorrect attributes order\n");
+                test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "prefix_test");
+                test_saxstr(__LINE__, pLocalName, nLocalName, "ar3");
+                test_saxstr(__LINE__, pQName, nQName, "test:ar3");
+                ok(uri_ptr == pNamespaceUri, "Incorrect NamespaceUri pointer\n");
             } else if(nQName == 9) {
                 todo_wine ok(i==2, "Incorrect attributes order\n");
                 test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "prefix_test");
                 test_saxstr(__LINE__, pLocalName, nLocalName, "arg1");
                 test_saxstr(__LINE__, pQName, nQName, "test:arg1");
+                uri_ptr = pNamespaceUri;
             } else if(nQName == 10) {
                 todo_wine ok(i==0, "Incorrect attributes order\n");
                 test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "");
@@ -464,10 +472,12 @@ static HRESULT WINAPI contentHandler_startElement(
             }
         }
     } else if(expectCall == contentHandlerTestAttributes6+4) {
+        const WCHAR *uri_ptr;
+
         /* msxml6 returns attributes first and then namespaces */
         hres = ISAXAttributes_getLength(pAttr, &len);
         ok(hres == S_OK, "getLength returned %x\n", hres);
-        ok(len == 4, "Incorrect number of attributes: %d\n", len);
+        ok(len == 5, "Incorrect number of attributes: %d\n", len);
         ok(msxml_version >= 6, "wrong msxml_version: %d\n", msxml_version);
 
         hres = ISAXAttributes_getName(pAttr, 0, &pNamespaceUri, &nNamespaceUri,
@@ -476,6 +486,7 @@ static HRESULT WINAPI contentHandler_startElement(
         test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "prefix_test");
         test_saxstr(__LINE__, pLocalName, nLocalName, "arg1");
         test_saxstr(__LINE__, pQName, nQName, "test:arg1");
+        uri_ptr = pNamespaceUri;
 
         hres = ISAXAttributes_getName(pAttr, 1, &pNamespaceUri, &nNamespaceUri,
                 &pLocalName, &nLocalName, &pQName, &nQName);
@@ -487,11 +498,19 @@ static HRESULT WINAPI contentHandler_startElement(
         hres = ISAXAttributes_getName(pAttr, 2, &pNamespaceUri, &nNamespaceUri,
                 &pLocalName, &nLocalName, &pQName, &nQName);
         ok(hres == S_OK, "getName returned %x\n", hres);
+        test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "prefix_test");
+        test_saxstr(__LINE__, pLocalName, nLocalName, "ar3");
+        test_saxstr(__LINE__, pQName, nQName, "test:ar3");
+        ok(uri_ptr == pNamespaceUri, "Incorrect NamespaceUri pointer\n");
+
+        hres = ISAXAttributes_getName(pAttr, 3, &pNamespaceUri, &nNamespaceUri,
+                &pLocalName, &nLocalName, &pQName, &nQName);
+        ok(hres == S_OK, "getName returned %x\n", hres);
         test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "http://www.w3.org/2000/xmlns/");
         test_saxstr(__LINE__, pLocalName, nLocalName, "");
         test_saxstr(__LINE__, pQName, nQName, "xmlns:test");
 
-        hres = ISAXAttributes_getName(pAttr, 3, &pNamespaceUri, &nNamespaceUri,
+        hres = ISAXAttributes_getName(pAttr, 4, &pNamespaceUri, &nNamespaceUri,
                 &pLocalName, &nLocalName, &pQName, &nQName);
         ok(hres == S_OK, "getName returned %x\n", hres);
         test_saxstr(__LINE__, pNamespaceUri, nNamespaceUri, "http://www.w3.org/2000/xmlns/");
