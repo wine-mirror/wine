@@ -1472,16 +1472,8 @@ static void test_VirtualProtect(void)
         }
         else
         {
-            /* FIXME: remove the condition below once Wine is fixed */
-            if ((td[i].prot_set == PAGE_WRITECOPY) || (td[i].prot_set == PAGE_EXECUTE_WRITECOPY))
-            todo_wine {
             ok(!ret, "%d: VirtualProtect should fail\n", i);
             ok(GetLastError() == ERROR_INVALID_PARAMETER, "%d: expected ERROR_INVALID_PARAMETER, got %d\n", i, GetLastError());
-            }
-            else {
-            ok(!ret, "%d: VirtualProtect should fail\n", i);
-            ok(GetLastError() == ERROR_INVALID_PARAMETER, "%d: expected ERROR_INVALID_PARAMETER, got %d\n", i, GetLastError());
-            }
         }
 
         old_prot = 0xdeadbeef;
@@ -1491,13 +1483,7 @@ static void test_VirtualProtect(void)
         if (td[i].prot_get)
             ok(old_prot == td[i].prot_get, "%d: got %#x != expected %#x\n", i, old_prot, td[i].prot_get);
         else
-        {
-            /* FIXME: remove the condition below once Wine is fixed */
-            if ((td[i].prot_set == PAGE_WRITECOPY) || (td[i].prot_set == PAGE_EXECUTE_WRITECOPY))
-            todo_wine ok(old_prot == PAGE_NOACCESS, "%d: got %#x != expected PAGE_NOACCESS\n", i, old_prot);
-            else
             ok(old_prot == PAGE_NOACCESS, "%d: got %#x != expected PAGE_NOACCESS\n", i, old_prot);
-        }
     }
 
     exec_prot = 0;
@@ -1521,10 +1507,8 @@ static void test_VirtualProtect(void)
             {
                 if (prot & (PAGE_WRITECOPY | PAGE_EXECUTE_WRITECOPY))
                 {
-                    todo_wine {
                     ok(!ret, "VirtualProtect(%02x) should fail\n", prot);
                     ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-                    }
                 }
                 else
                     ok(ret, "VirtualProtect(%02x) error %d\n", prot, GetLastError());

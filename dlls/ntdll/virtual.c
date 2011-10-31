@@ -2088,6 +2088,7 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
     size = ROUND_SIZE( addr, size );
     base = ROUND_ADDR( addr, page_mask );
     if ((status = get_vprot_flags( new_prot, &new_vprot ))) return status;
+    if (new_vprot & VPROT_WRITECOPY) return STATUS_INVALID_PAGE_PROTECTION;
     new_vprot |= VPROT_COMMITTED;
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
