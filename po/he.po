@@ -8725,9 +8725,9 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Open resources: %lu\n"
 
-#: net.rc:44
+#: net.rc:44 winemine.rc:68 winemine.rc:78 winemine.rc:92
 msgid "OK"
-msgstr ""
+msgstr "אישור"
 
 #: net.rc:45
 msgid "Paused"
@@ -10401,7 +10401,7 @@ msgstr "מציג קובצי על רגיל"
 msgid "Waiting for Program"
 msgstr "בהמתנה לתכנה"
 
-#: wineboot.rc:31
+#: wineboot.rc:31 winemine.rc:93
 msgid "Cancel"
 msgstr "ביטול"
 
@@ -11133,6 +11133,47 @@ msgstr "&שיאים"
 #: winemine.rc:49
 msgid "&About WineMine"
 msgstr "על &אודות שולה המוקשים"
+
+#: winemine.rc:56 winemine.rc:58
+msgid "Fastest Times"
+msgstr "שיאים"
+
+#: winemine.rc:59
+msgid "Beginner"
+msgstr "מתחילים"
+
+#: winemine.rc:60
+msgid "Advanced"
+msgstr "מתקדמים"
+
+#: winemine.rc:61
+msgid "Expert"
+msgstr "מומחים"
+
+#: winemine.rc:74
+msgid "Congratulations!"
+msgstr "כל הכבוד!"
+
+#: winemine.rc:76
+msgid "Please enter your name"
+msgstr "נא להזין את שמך"
+
+#: winemine.rc:84
+msgid "Custom Game"
+msgstr "משחק בהתאמה אישית"
+
+#: winemine.rc:86
+msgid "Rows"
+msgstr "שורות"
+
+#: winemine.rc:87
+#, fuzzy
+msgid "Columns"
+msgstr "&עמודה"
+
+#: winemine.rc:88
+msgid "Mines"
+msgstr "מוקשים"
 
 #: winemine.rc:27
 msgid "WineMine"

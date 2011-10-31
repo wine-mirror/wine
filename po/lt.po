@@ -8665,7 +8665,7 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%1      %2      %3      Atverti ištekliai: %4!u!\n"
 
-#: net.rc:44
+#: net.rc:44 winemine.rc:68 winemine.rc:78 winemine.rc:92
 msgid "OK"
 msgstr "Gerai"
 
@@ -10347,7 +10347,7 @@ msgstr "Įprastinė metafailų žiūryklė"
 msgid "Waiting for Program"
 msgstr "Laukiama programos"
 
-#: wineboot.rc:31
+#: wineboot.rc:31 winemine.rc:93
 msgid "Cancel"
 msgstr "Atsisakyti"
 
@@ -11000,6 +11000,47 @@ msgstr "&Geriausi laikai"
 #: winemine.rc:49
 msgid "&About WineMine"
 msgstr "&Apie Wine minas"
+
+#: winemine.rc:56 winemine.rc:58
+msgid "Fastest Times"
+msgstr "Geriausi laikai"
+
+#: winemine.rc:59
+msgid "Beginner"
+msgstr "Pradedantis"
+
+#: winemine.rc:60
+msgid "Advanced"
+msgstr "Pažengęs"
+
+#: winemine.rc:61
+msgid "Expert"
+msgstr "Ekspertas"
+
+#: winemine.rc:74
+msgid "Congratulations!"
+msgstr "Sveikiname!"
+
+#: winemine.rc:76
+msgid "Please enter your name"
+msgstr "Įveskite savo vardą"
+
+#: winemine.rc:84
+msgid "Custom Game"
+msgstr "Pasirinktas žaidimas"
+
+#: winemine.rc:86
+msgid "Rows"
+msgstr "Eilutės"
+
+#: winemine.rc:87
+#, fuzzy
+msgid "Columns"
+msgstr "&stulpelį"
+
+#: winemine.rc:88
+msgid "Mines"
+msgstr "Minos"
 
 #: winemine.rc:27
 msgid "WineMine"

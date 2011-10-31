@@ -7,32 +7,7 @@ C_SRCS = \
 	dialog.c \
 	main.c
 
-RC_SRCS = \
-	Cs.rc \
-	Da.rc \
-	De.rc \
-	En.rc \
-	Es.rc \
-	Fi.rc \
-	Fr.rc \
-	He.rc \
-	It.rc \
-	Ja.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	No.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Si.rc \
-	Sv.rc \
-	Tr.rc \
-	Uk.rc \
-	Zh.rc \
-	winemine.rc
-
+RC_SRCS = winemine.rc
 PO_SRCS = winemine.rc
 
 MANPAGE = winemine.man

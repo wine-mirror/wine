@@ -9169,9 +9169,9 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Resurse deschise: %lu\n"
 
-#: net.rc:44
+#: net.rc:44 winemine.rc:68 winemine.rc:78 winemine.rc:92
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: net.rc:45
 #, fuzzy
@@ -10939,7 +10939,7 @@ msgstr "Vizualizator de fișiere metafile normale"
 msgid "Waiting for Program"
 msgstr "Așteptare program"
 
-#: wineboot.rc:31
+#: wineboot.rc:31 winemine.rc:93
 msgid "Cancel"
 msgstr "Renunță"
 
@@ -11626,6 +11626,47 @@ msgstr "&Scoruri maxime"
 #, fuzzy
 msgid "&About WineMine"
 msgstr "Des&pre Wine"
+
+#: winemine.rc:56 winemine.rc:58
+msgid "Fastest Times"
+msgstr "Scoruri maxime"
+
+#: winemine.rc:59
+msgid "Beginner"
+msgstr "&Începător"
+
+#: winemine.rc:60
+msgid "Advanced"
+msgstr "Avansat"
+
+#: winemine.rc:61
+msgid "Expert"
+msgstr "Expert"
+
+#: winemine.rc:74
+msgid "Congratulations!"
+msgstr "Felicitări!"
+
+#: winemine.rc:76
+msgid "Please enter your name"
+msgstr "Scrieţi-vă numele"
+
+#: winemine.rc:84
+msgid "Custom Game"
+msgstr "Joc personalizat"
+
+#: winemine.rc:86
+msgid "Rows"
+msgstr "Linii"
+
+#: winemine.rc:87
+#, fuzzy
+msgid "Columns"
+msgstr "&Coloană"
+
+#: winemine.rc:88
+msgid "Mines"
+msgstr "Mine"
 
 #: winemine.rc:27
 msgid "WineMine"

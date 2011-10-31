@@ -8629,7 +8629,7 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      열린 리소스: %lu\n"
 
-#: net.rc:44
+#: net.rc:44 winemine.rc:68 winemine.rc:78 winemine.rc:92
 msgid "OK"
 msgstr "확인"
 
@@ -10292,7 +10292,7 @@ msgstr "정규 메타파일 보기"
 msgid "Waiting for Program"
 msgstr "프로그램 대기중"
 
-#: wineboot.rc:31
+#: wineboot.rc:31 winemine.rc:93
 msgid "Cancel"
 msgstr "취소"
 
@@ -10949,6 +10949,47 @@ msgstr "가장 빠른 시간(&F)"
 #: winemine.rc:49
 msgid "&About WineMine"
 msgstr "WINE지뢰찾기 정보(&A)"
+
+#: winemine.rc:56 winemine.rc:58
+msgid "Fastest Times"
+msgstr "최단 시간"
+
+#: winemine.rc:59
+msgid "Beginner"
+msgstr "초보자"
+
+#: winemine.rc:60
+msgid "Advanced"
+msgstr "중급자"
+
+#: winemine.rc:61
+msgid "Expert"
+msgstr "전문가"
+
+#: winemine.rc:74
+msgid "Congratulations!"
+msgstr "축하합니다!"
+
+#: winemine.rc:76
+msgid "Please enter your name"
+msgstr "당신의 이름을 적어주세요"
+
+#: winemine.rc:84
+msgid "Custom Game"
+msgstr "게임 사용자 정의 "
+
+#: winemine.rc:86
+msgid "Rows"
+msgstr "가로줄"
+
+#: winemine.rc:87
+#, fuzzy
+msgid "Columns"
+msgstr "세로줄(&C)"
+
+#: winemine.rc:88
+msgid "Mines"
+msgstr "지뢰"
 
 #: winemine.rc:27
 msgid "WineMine"

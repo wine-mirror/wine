@@ -8581,9 +8581,9 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
-#: net.rc:44
+#: net.rc:44 winemine.rc:68 winemine.rc:78 winemine.rc:92
 msgid "OK"
-msgstr ""
+msgstr "確定"
 
 #: net.rc:45
 #, fuzzy
@@ -10262,7 +10262,7 @@ msgstr "普通 Metafile 閱讀器"
 msgid "Waiting for Program"
 msgstr "等候程式"
 
-#: wineboot.rc:31
+#: wineboot.rc:31 winemine.rc:93
 msgid "Cancel"
 msgstr "取消"
 
@@ -10947,6 +10947,47 @@ msgstr "最快時間(&F)"
 #, fuzzy
 msgid "&About WineMine"
 msgstr "關於 Wine(&A)"
+
+#: winemine.rc:56 winemine.rc:58
+msgid "Fastest Times"
+msgstr "最快時間"
+
+#: winemine.rc:59
+msgid "Beginner"
+msgstr "初學者"
+
+#: winemine.rc:60
+msgid "Advanced"
+msgstr "高級"
+
+#: winemine.rc:61
+msgid "Expert"
+msgstr "專家"
+
+#: winemine.rc:74
+msgid "Congratulations!"
+msgstr "祝賀!"
+
+#: winemine.rc:76
+msgid "Please enter your name"
+msgstr "請輸入你的名字"
+
+#: winemine.rc:84
+msgid "Custom Game"
+msgstr "自定義遊戲"
+
+#: winemine.rc:86
+msgid "Rows"
+msgstr "行"
+
+#: winemine.rc:87
+#, fuzzy
+msgid "Columns"
+msgstr "列(&O)"
+
+#: winemine.rc:88
+msgid "Mines"
+msgstr "地雷"
 
 #: winemine.rc:27
 msgid "WineMine"

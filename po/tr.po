@@ -8893,9 +8893,9 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
-#: net.rc:44
+#: net.rc:44 winemine.rc:68 winemine.rc:78 winemine.rc:92
 msgid "OK"
-msgstr ""
+msgstr "Tamam"
 
 #: net.rc:45
 #, fuzzy
@@ -10623,10 +10623,9 @@ msgstr ""
 msgid "Waiting for Program"
 msgstr "Yürütmeye İsteksiz"
 
-#: wineboot.rc:31
-#, fuzzy
+#: wineboot.rc:31 winemine.rc:93
 msgid "Cancel"
-msgstr "Kuruluyor..."
+msgstr "İptal"
 
 #: wineboot.rc:32
 #, fuzzy
@@ -11290,6 +11289,47 @@ msgstr "&En Kısa Süreler"
 #, fuzzy
 msgid "&About WineMine"
 msgstr "&Wine Hakkında"
+
+#: winemine.rc:56 winemine.rc:58
+msgid "Fastest Times"
+msgstr "En Kısa Süreler"
+
+#: winemine.rc:59
+msgid "Beginner"
+msgstr "Acemi"
+
+#: winemine.rc:60
+msgid "Advanced"
+msgstr "Gelişmiş"
+
+#: winemine.rc:61
+msgid "Expert"
+msgstr "Uzman"
+
+#: winemine.rc:74
+msgid "Congratulations!"
+msgstr "Tebrikler!"
+
+#: winemine.rc:76
+msgid "Please enter your name"
+msgstr "Lütfen adınızı girin"
+
+#: winemine.rc:84
+msgid "Custom Game"
+msgstr "Özel Oyun"
+
+#: winemine.rc:86
+msgid "Rows"
+msgstr "Satırlar"
+
+#: winemine.rc:87
+#, fuzzy
+msgid "Columns"
+msgstr "&Sütun"
+
+#: winemine.rc:88
+msgid "Mines"
+msgstr "Mayınlar"
 
 #: winemine.rc:27
 msgid "WineMine"

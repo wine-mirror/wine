@@ -8706,7 +8706,7 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%1      %2      %3      Risorse aperte: %4!u!\n"
 
-#: net.rc:44
+#: net.rc:44 winemine.rc:68 winemine.rc:78 winemine.rc:92
 msgid "OK"
 msgstr "Ok"
 
@@ -10399,7 +10399,7 @@ msgstr "Visualizzatore di Metafile Regolari"
 msgid "Waiting for Program"
 msgstr "In attesa del programma"
 
-#: wineboot.rc:31
+#: wineboot.rc:31 winemine.rc:93
 msgid "Cancel"
 msgstr "Annulla"
 
@@ -11057,6 +11057,47 @@ msgstr "&Tempi migliori"
 #: winemine.rc:49
 msgid "&About WineMine"
 msgstr "&Informazioni su WineMine"
+
+#: winemine.rc:56 winemine.rc:58
+msgid "Fastest Times"
+msgstr "Tempi migliori"
+
+#: winemine.rc:59
+msgid "Beginner"
+msgstr "Principiante"
+
+#: winemine.rc:60
+msgid "Advanced"
+msgstr "Avanzato"
+
+#: winemine.rc:61
+msgid "Expert"
+msgstr "Esperto"
+
+#: winemine.rc:74
+msgid "Congratulations!"
+msgstr "Congratulazioni!"
+
+#: winemine.rc:76
+msgid "Please enter your name"
+msgstr "Inserisci il tuo nome"
+
+#: winemine.rc:84
+msgid "Custom Game"
+msgstr "Gioco personalizzato"
+
+#: winemine.rc:86
+msgid "Rows"
+msgstr "Righe"
+
+#: winemine.rc:87
+#, fuzzy
+msgid "Columns"
+msgstr "C&olonna"
+
+#: winemine.rc:88
+msgid "Mines"
+msgstr "Mine"
 
 #: winemine.rc:27
 msgid "WineMine"

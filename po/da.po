@@ -8839,9 +8839,9 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Åbne resourser: %lu\n"
 
-#: net.rc:44
+#: net.rc:44 winemine.rc:68 winemine.rc:78 winemine.rc:92
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: net.rc:45
 #, fuzzy
@@ -10599,7 +10599,7 @@ msgstr "Normal metafil-fremviser"
 msgid "Waiting for Program"
 msgstr "Venter på program"
 
-#: wineboot.rc:31
+#: wineboot.rc:31 winemine.rc:93
 msgid "Cancel"
 msgstr "Annuller"
 
@@ -11274,6 +11274,47 @@ msgstr "&Bedste tider"
 #, fuzzy
 msgid "&About WineMine"
 msgstr "&Om Wine"
+
+#: winemine.rc:56 winemine.rc:58
+msgid "Fastest Times"
+msgstr "Bedste tider"
+
+#: winemine.rc:59
+msgid "Beginner"
+msgstr "Nybegynder"
+
+#: winemine.rc:60
+msgid "Advanced"
+msgstr "Avanceret"
+
+#: winemine.rc:61
+msgid "Expert"
+msgstr "Ekspert"
+
+#: winemine.rc:74
+msgid "Congratulations!"
+msgstr "Tillykke!"
+
+#: winemine.rc:76
+msgid "Please enter your name"
+msgstr "Indtast dit navn"
+
+#: winemine.rc:84
+msgid "Custom Game"
+msgstr "Brugerdefineret spil"
+
+#: winemine.rc:86
+msgid "Rows"
+msgstr "Rækker"
+
+#: winemine.rc:87
+#, fuzzy
+msgid "Columns"
+msgstr "&Kolone"
+
+#: winemine.rc:88
+msgid "Mines"
+msgstr "Miner"
 
 #: winemine.rc:27
 msgid "WineMine"

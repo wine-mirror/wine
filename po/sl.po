@@ -8668,9 +8668,9 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Odprta sredstva: %lu\n"
 
-#: net.rc:44
+#: net.rc:44 winemine.rc:68 winemine.rc:78 winemine.rc:92
 msgid "OK"
-msgstr ""
+msgstr "V redu"
 
 #: net.rc:45
 #, fuzzy
@@ -10376,7 +10376,7 @@ msgstr "Program za ogled slik Metafile"
 msgid "Waiting for Program"
 msgstr "Čakam na konec programa"
 
-#: wineboot.rc:31
+#: wineboot.rc:31 winemine.rc:93
 msgid "Cancel"
 msgstr "Prekliči"
 
@@ -11051,6 +11051,47 @@ msgstr "&Najboljši časi ..."
 #, fuzzy
 msgid "&About WineMine"
 msgstr "&O Wine"
+
+#: winemine.rc:56 winemine.rc:58
+msgid "Fastest Times"
+msgstr "Najboljši časi"
+
+#: winemine.rc:59
+msgid "Beginner"
+msgstr "Začetnik"
+
+#: winemine.rc:60
+msgid "Advanced"
+msgstr "Napreden"
+
+#: winemine.rc:61
+msgid "Expert"
+msgstr "Strokovnjak"
+
+#: winemine.rc:74
+msgid "Congratulations!"
+msgstr "Čestitamo!"
+
+#: winemine.rc:76
+msgid "Please enter your name"
+msgstr "Vnesite svoje ime"
+
+#: winemine.rc:84
+msgid "Custom Game"
+msgstr "Poljubna igra"
+
+#: winemine.rc:86
+msgid "Rows"
+msgstr "Vrstice"
+
+#: winemine.rc:87
+#, fuzzy
+msgid "Columns"
+msgstr "&Stoplec"
+
+#: winemine.rc:88
+msgid "Mines"
+msgstr "Mine"
 
 #: winemine.rc:27
 msgid "WineMine"

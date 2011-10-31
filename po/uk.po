@@ -8625,9 +8625,9 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Відкритих ресурсів: %lu\n"
 
-#: net.rc:44
+#: net.rc:44 winemine.rc:68 winemine.rc:78 winemine.rc:92
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: net.rc:45
 #, fuzzy
@@ -10312,7 +10312,7 @@ msgstr "Переглядач звичайних метафайлів"
 msgid "Waiting for Program"
 msgstr "Очікування програми"
 
-#: wineboot.rc:31
+#: wineboot.rc:31 winemine.rc:93
 msgid "Cancel"
 msgstr "Скасувати"
 
@@ -10975,6 +10975,47 @@ msgstr "&Кращі Часи"
 #: winemine.rc:49
 msgid "&About WineMine"
 msgstr "&Про WineMine"
+
+#: winemine.rc:56 winemine.rc:58
+msgid "Fastest Times"
+msgstr "Кращий час"
+
+#: winemine.rc:59
+msgid "Beginner"
+msgstr "Новачок"
+
+#: winemine.rc:60
+msgid "Advanced"
+msgstr "Майстер"
+
+#: winemine.rc:61
+msgid "Expert"
+msgstr "Експерт"
+
+#: winemine.rc:74
+msgid "Congratulations!"
+msgstr "Вітання!"
+
+#: winemine.rc:76
+msgid "Please enter your name"
+msgstr "Введіть ваше ім'я"
+
+#: winemine.rc:84
+msgid "Custom Game"
+msgstr "Свої параметри"
+
+#: winemine.rc:86
+msgid "Rows"
+msgstr "Рядків"
+
+#: winemine.rc:87
+#, fuzzy
+msgid "Columns"
+msgstr "&Стовпчик"
+
+#: winemine.rc:88
+msgid "Mines"
+msgstr "Мін"
 
 #: winemine.rc:27
 msgid "WineMine"

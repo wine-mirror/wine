@@ -8180,7 +8180,7 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
-#: net.rc:44
+#: net.rc:44 winemine.rc:68 winemine.rc:78 winemine.rc:92
 msgid "OK"
 msgstr ""
 
@@ -9771,7 +9771,7 @@ msgstr ""
 msgid "Waiting for Program"
 msgstr ""
 
-#: wineboot.rc:31
+#: wineboot.rc:31 winemine.rc:93
 msgid "Cancel"
 msgstr ""
 
@@ -10400,6 +10400,46 @@ msgstr ""
 #, fuzzy
 msgid "&About WineMine"
 msgstr "ਘੜੀ ਬਾਰੇ(&A)..."
+
+#: winemine.rc:56 winemine.rc:58
+msgid "Fastest Times"
+msgstr ""
+
+#: winemine.rc:59
+msgid "Beginner"
+msgstr ""
+
+#: winemine.rc:60
+msgid "Advanced"
+msgstr ""
+
+#: winemine.rc:61
+msgid "Expert"
+msgstr ""
+
+#: winemine.rc:74
+msgid "Congratulations!"
+msgstr ""
+
+#: winemine.rc:76
+msgid "Please enter your name"
+msgstr ""
+
+#: winemine.rc:84
+msgid "Custom Game"
+msgstr ""
+
+#: winemine.rc:86
+msgid "Rows"
+msgstr ""
+
+#: winemine.rc:87
+msgid "Columns"
+msgstr ""
+
+#: winemine.rc:88
+msgid "Mines"
+msgstr ""
 
 #: winemine.rc:27
 msgid "WineMine"

@@ -8629,9 +8629,9 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Öppna resurser: %lu\n"
 
-#: net.rc:44
+#: net.rc:44 winemine.rc:68 winemine.rc:78 winemine.rc:92
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: net.rc:45
 #, fuzzy
@@ -10324,7 +10324,7 @@ msgstr ""
 msgid "Waiting for Program"
 msgstr "Väntar på program"
 
-#: wineboot.rc:31
+#: wineboot.rc:31 winemine.rc:93
 msgid "Cancel"
 msgstr "Avbryt"
 
@@ -10993,6 +10993,47 @@ msgstr "Snabbaste &tider"
 #: winemine.rc:49
 msgid "&About WineMine"
 msgstr "&Om Minor"
+
+#: winemine.rc:56 winemine.rc:58
+msgid "Fastest Times"
+msgstr "Snabbaste tider"
+
+#: winemine.rc:59
+msgid "Beginner"
+msgstr "Nybörjare"
+
+#: winemine.rc:60
+msgid "Advanced"
+msgstr "Avancerad"
+
+#: winemine.rc:61
+msgid "Expert"
+msgstr "Expert"
+
+#: winemine.rc:74
+msgid "Congratulations!"
+msgstr "Gratulerar!"
+
+#: winemine.rc:76
+msgid "Please enter your name"
+msgstr "Ange ditt namn"
+
+#: winemine.rc:84
+msgid "Custom Game"
+msgstr "Anpassat spel"
+
+#: winemine.rc:86
+msgid "Rows"
+msgstr "Rader"
+
+#: winemine.rc:87
+#, fuzzy
+msgid "Columns"
+msgstr "&Kolumn"
+
+#: winemine.rc:88
+msgid "Mines"
+msgstr "Minor"
 
 #: winemine.rc:27
 msgid "WineMine"

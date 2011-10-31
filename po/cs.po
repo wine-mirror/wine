@@ -8774,9 +8774,9 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
-#: net.rc:44
+#: net.rc:44 winemine.rc:68 winemine.rc:78 winemine.rc:92
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: net.rc:45
 #, fuzzy
@@ -10492,9 +10492,9 @@ msgstr "Obyčejný prohlížeč metasouborů"
 msgid "Waiting for Program"
 msgstr ""
 
-#: wineboot.rc:31
+#: wineboot.rc:31 winemine.rc:93
 msgid "Cancel"
-msgstr ""
+msgstr "Storno"
 
 #: wineboot.rc:32
 #, fuzzy
@@ -11170,6 +11170,46 @@ msgstr "Ne&jlepší časy"
 #, fuzzy
 msgid "&About WineMine"
 msgstr "&O Wine"
+
+#: winemine.rc:56 winemine.rc:58
+msgid "Fastest Times"
+msgstr "Nejlepší časy"
+
+#: winemine.rc:59
+msgid "Beginner"
+msgstr "Začátečník"
+
+#: winemine.rc:60
+msgid "Advanced"
+msgstr "Pokročilý"
+
+#: winemine.rc:61
+msgid "Expert"
+msgstr "Expert"
+
+#: winemine.rc:74
+msgid "Congratulations!"
+msgstr "Gratulujeme !"
+
+#: winemine.rc:76
+msgid "Please enter your name"
+msgstr "Prosím, zadejte své jméno"
+
+#: winemine.rc:84
+msgid "Custom Game"
+msgstr "Vlastní hra"
+
+#: winemine.rc:86
+msgid "Rows"
+msgstr "Řádky"
+
+#: winemine.rc:87
+msgid "Columns"
+msgstr ""
+
+#: winemine.rc:88
+msgid "Mines"
+msgstr "Miny"
 
 #: winemine.rc:27
 msgid "WineMine"
