@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-10-21 19:24+0200\n"
+"PO-Revision-Date: 2011-10-31 19:18+0100\n"
 "Last-Translator: Luca Bennati <lucak3@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Italian\n"
@@ -349,7 +349,7 @@ msgid ""
 "Margins overlap or fall outside Paper boundaries.\n"
 "Please reenter margins."
 msgstr ""
-"I margini si sovrappongono o si trovano oltre il limite della carta.\n"
+"I margini si sovrappongono o si trovano oltre il limite del foglio.\n"
 "Per favore ridefinire i margini."
 
 #: comdlg32.rc:74
@@ -8829,7 +8829,7 @@ msgstr "&Note a piè di pagina:"
 
 #: notepad.rc:112
 msgid "&Margins (millimeters):"
-msgstr "&Margini:"
+msgstr "&Margini (millimetri):"
 
 #: notepad.rc:113
 msgid "&Left:"
@@ -11127,9 +11127,8 @@ msgid "Rows"
 msgstr "Righe"
 
 #: winemine.rc:87
-#, fuzzy
 msgid "Columns"
-msgstr "C&olonna"
+msgstr "Colonne"
 
 #: winemine.rc:88
 msgid "Mines"
