@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-11-07 22:04+0300\n"
+"PO-Revision-Date: 2011-11-26 17:27+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -383,13 +383,12 @@ msgid "Unreadable Entry"
 msgstr "Neperskaitomas įrašas"
 
 #: comdlg32.rc:68
-#, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "Ši reikšmė nepatenka į puslapių rėžį.\n"
-"Prašome įvesti reikšmę tarp %d ir %d."
+"Prašome įvesti reikšmę tarp %1!d! ir %2!d!."
 
 #: comdlg32.rc:70
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -449,9 +448,8 @@ msgstr ""
 "Prašome įdiegti spausdintuvą ir pakartoti."
 
 #: comdlg32.rc:151
-#, fuzzy
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr "Pasirinkite šrifto dydį tarp %d ir %d taškų."
+msgstr "Pasirinkite šrifto dydį tarp %1!d! ir %2!d! taškų."
 
 #: comdlg32.rc:152 ieframe.rc:32
 msgid "&Save"
@@ -1646,9 +1644,8 @@ msgid "Public key"
 msgstr "Viešasis raktas"
 
 #: cryptui.rc:58
-#, fuzzy
 msgid "%1 (%2!d! bits)"
-msgstr "%s (%d bitai)"
+msgstr "%1 (%2!d! bitai)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
@@ -2097,9 +2094,8 @@ msgid "Regional Setting"
 msgstr "Regiono nuostatos"
 
 #: dxdiagn.rc:26
-#, fuzzy
 msgid "%1!u!MB used, %2!u!MB available"
-msgstr "%u MB sunaudota, %u MB laisva"
+msgstr "%1!u! MB sunaudota, %2!u!MB MB laisva"
 
 #: gdi32.rc:25
 msgid "Western"
@@ -6254,9 +6250,8 @@ msgid "us"
 msgstr "µs"
 
 #: setupapi.rc:28
-#, fuzzy
 msgid "The file '%1' on %2 is needed"
-msgstr "Reikalingas failas „%s“ esantis %s"
+msgstr "Reikalingas failas „%1“ esantis %2"
 
 #: setupapi.rc:29 ipconfig.rc:31
 msgid "Unknown"
@@ -8928,9 +8923,8 @@ msgstr ""
 "Klaida: nurodytas nežinomas arba netinkamas komandinės eilutės parametras\n"
 
 #: ipconfig.rc:29
-#, fuzzy
 msgid "%1 adapter %2\n"
-msgstr "%s adapteris %s\n"
+msgstr "%1 adapteris %2\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
@@ -9318,7 +9312,6 @@ msgid "Unicode (UTF-8)"
 msgstr "Unikodas (UTF-8)"
 
 #: notepad.rc:99
-#, fuzzy
 msgid ""
 "%1\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -9327,10 +9320,10 @@ msgid ""
 "one of the Unicode options in the Encoding drop down list.\n"
 "Continue?"
 msgstr ""
-"%s\n"
-"Šiame faile yra unikodo ženklų, kurie bus prarasti, jei išsaugosite failą %s "
-"koduotėje.\n"
-"Norėdami išsaugoti šiuos ženklus, spauskite „Atsisakyti“ ir pasirinkite "
+"%1\n"
+"Šiame faile yra unikodo ženklų, kurie bus prarasti,\n"
+"jei išsaugosite failą %2 koduotėje.\n"
+"Norėdami išsaugoti šiuos ženklus, spauskite „Atsisakyti“ ir pasirinkite\n"
 "vieną iš unikodo nuostatų koduotės išskleidžiamajame sąraše.\n"
 "Tęsti?"
 
@@ -9664,9 +9657,8 @@ msgid "bytes"
 msgstr "baitai"
 
 #: oleview.rc:148
-#, fuzzy
 msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
-msgstr "LoadTypeLib( %s ) nepavyko ($%x)"
+msgstr "LoadTypeLib( %1 ) nepavyko ($%2!x!)"
 
 #: oleview.rc:149
 msgid "Inherited Interfaces"
@@ -10428,52 +10420,45 @@ msgid "Error: One of options /im or /pid must be specified.\n"
 msgstr "Klaida: viena iš parinkčių /im arba /pid privalo būti nurodyta.\n"
 
 #: taskkill.rc:31
-#, fuzzy
 msgid "Error: Option %1 expects a command line parameter.\n"
-msgstr "Klaida: parinkčiai %s reikalingas komandos eilutės parametras.\n"
+msgstr "Klaida: parinkčiai %1 reikalingas komandos eilutės parametras.\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
 msgstr "Klaida: parinktys /im ir /pid yra nesuderinamos.\n"
 
 #: taskkill.rc:33
-#, fuzzy
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
 msgstr ""
-"Užvėrimo pranešimas nusiųstas aukščiausiojo lygio proceso, kurio PID %u, "
+"Užvėrimo pranešimas nusiųstas aukščiausiojo lygio proceso, kurio PID %1!u!, "
 "langams.\n"
 
 #: taskkill.rc:34
-#, fuzzy
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 msgstr ""
-"Užvėrimo pranešimas nusiųstas aukščiausiojo lygio proceso „%s“, kurio PID "
-"%u, langams.\n"
+"Užvėrimo pranešimas nusiųstas aukščiausiojo lygio proceso „%1“, kurio PID %2!"
+"u!, langams.\n"
 
 #: taskkill.rc:35
-#, fuzzy
 msgid "Process with PID %1!u! was forcibly terminated.\n"
-msgstr "Procesas, kurio PID %u, buvo priverstinai nutrauktas.\n"
+msgstr "Procesas, kurio PID %1!u!, buvo priverstinai nutrauktas.\n"
 
 #: taskkill.rc:36
-#, fuzzy
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
-msgstr "Procesas „%s“, kurio PID %u, buvo priverstinai nutrauktas.\n"
+msgstr "Procesas „%1“, kurio PID %2!u!, buvo priverstinai nutrauktas.\n"
 
 #: taskkill.rc:37
-#, fuzzy
 msgid "Error: Could not find process \"%1\".\n"
-msgstr "Klaida: nepavyko rasti proceso „%s“.\n"
+msgstr "Klaida: nepavyko rasti proceso „%1“.\n"
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
 msgstr "Klaida: nepavyko gauti procesų sąrašo.\n"
 
 #: taskkill.rc:39
-#, fuzzy
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr "Klaida: nepavyko nutraukti proceso „%s“.\n"
+msgstr "Klaida: nepavyko nutraukti proceso „%1“.\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
@@ -11144,9 +11129,8 @@ msgid "Processes: %d"
 msgstr "Procesai: %d"
 
 #: taskmgr.rc:267
-#, fuzzy
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
-msgstr "Atminties naudojimas: %dK / %dK"
+msgstr "Atminties naudojimas: %1!u! kB / %2!u! kB"
 
 #: taskmgr.rc:272
 msgid "Image Name"
@@ -12471,17 +12455,17 @@ msgstr "%1 iš %2 laisva"
 #: winefile.rc:121
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr ""
+msgstr "kB"
 
 #: winefile.rc:122
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr ""
+msgstr "MB"
 
 #: winefile.rc:123
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr ""
+msgstr "GB"
 
 #: winemine.rc:34
 msgid "&Game"
