@@ -1874,10 +1874,10 @@ DWORD WINAPI UnDecorateSymbolName(PCSTR DecoratedName, PSTR UnDecoratedName,
 }
 
 /******************************************************************
- *		SymMatchString (DBGHELP.@)
+ *		SymMatchStringA (DBGHELP.@)
  *
  */
-BOOL WINAPI SymMatchString(PCSTR string, PCSTR re, BOOL _case)
+BOOL WINAPI SymMatchStringA(PCSTR string, PCSTR re, BOOL _case)
 {
     regex_t     preg;
     BOOL        ret;

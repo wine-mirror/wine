@@ -137,8 +137,8 @@
 @ stdcall SymLoadModuleExW(long long wstr wstr int64 long ptr long)
 @ stdcall SymMatchFileName(str str ptr ptr)
 @ stdcall SymMatchFileNameW(wstr wstr ptr ptr)
-@ stdcall SymMatchString(str str long)
-@ stub SymMatchStringA
+@ stdcall SymMatchString(str str long) SymMatchStringA
+@ stdcall SymMatchStringA(str str long)
 @ stub SymMatchStringW
 @ stub SymNext
 @ stub SymNextW
