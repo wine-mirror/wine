@@ -24,3 +24,10 @@
     uuid(25e609e4-b259-11cf-bfc7-444553540000)
 ]
 coclass DirectInput8 { interface IDirectInput8; }
+
+[
+    helpstring("DirectInputDevice8 Object"),
+    threading(both),
+    uuid(25e609e5-b259-11cf-bfc7-444553540000)
+]
+coclass DirectInputDevice { interface IDirectInputDevice8; }
