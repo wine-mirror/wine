@@ -1891,6 +1891,35 @@ BOOL WINAPI SymMatchStringA(PCSTR string, PCSTR re, BOOL _case)
 }
 
 /******************************************************************
+ *		SymMatchStringW (DBGHELP.@)
+ *
+ * FIXME: SymMatchStringA should convert and pass the strings to SymMatchStringW,
+ *        but that needs a unicode RE library.
+ */
+BOOL WINAPI SymMatchStringW(PCWSTR string, PCWSTR re, BOOL _case)
+{
+    BOOL ret;
+    LPSTR s, r;
+    DWORD len;
+
+    TRACE("%s %s %c\n", debugstr_w(string), debugstr_w(re), _case ? 'Y' : 'N');
+
+    len = WideCharToMultiByte( CP_ACP, 0, string, -1, NULL, 0, NULL, NULL );
+    s = HeapAlloc( GetProcessHeap(), 0, len );
+    WideCharToMultiByte( CP_ACP, 0, string, -1, s, len, NULL, NULL );
+
+    len = WideCharToMultiByte( CP_ACP, 0, re, -1, NULL, 0, NULL, NULL );
+    r = HeapAlloc( GetProcessHeap(), 0, len );
+    WideCharToMultiByte( CP_ACP, 0, re, -1, r, len, NULL, NULL );
+
+    ret = SymMatchStringA(s, r, _case);
+
+    HeapFree( GetProcessHeap(), 0, r );
+    HeapFree( GetProcessHeap(), 0, s );
+    return ret;
+}
+
+/******************************************************************
  *		SymSearch (DBGHELP.@)
  */
 BOOL WINAPI SymSearch(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index,

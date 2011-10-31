@@ -139,7 +139,7 @@
 @ stdcall SymMatchFileNameW(wstr wstr ptr ptr)
 @ stdcall SymMatchString(str str long) SymMatchStringA
 @ stdcall SymMatchStringA(str str long)
-@ stub SymMatchStringW
+@ stdcall SymMatchStringW(wstr wstr long)
 @ stub SymNext
 @ stub SymNextW
 @ stub SymPrev
