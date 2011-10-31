@@ -76,9 +76,9 @@ static inline void buffer_clear_dirty_areas(struct wined3d_buffer *This)
     This->modified_areas = 0;
 }
 
-static inline BOOL buffer_is_dirty(struct wined3d_buffer *This)
+static BOOL buffer_is_dirty(const struct wined3d_buffer *buffer)
 {
-    return !!This->modified_areas;
+    return !!buffer->modified_areas;
 }
 
 static inline BOOL buffer_is_fully_dirty(struct wined3d_buffer *This)
