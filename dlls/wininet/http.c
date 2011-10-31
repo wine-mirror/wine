@@ -65,6 +65,8 @@
 #include "shlwapi.h"
 #include "sspi.h"
 #include "wincrypt.h"
+#include "winuser.h"
+#include "cryptuiapi.h"
 
 #include "internet.h"
 #include "wine/debug.h"
@@ -6077,6 +6079,24 @@ BOOL WINAPI InternetShowSecurityInfoByURLW(LPCWSTR url, HWND window)
  */
 DWORD WINAPI ShowX509EncodedCertificate(HWND parent, LPBYTE cert, DWORD len)
 {
-   FIXME("stub: %p %p %u\n", parent, cert, len);
-   return ERROR_CALL_NOT_IMPLEMENTED;
+    PCCERT_CONTEXT certContext = CertCreateCertificateContext(X509_ASN_ENCODING,
+        cert, len);
+    DWORD ret;
+
+    if (certContext)
+    {
+        CRYPTUI_VIEWCERTIFICATE_STRUCTW view;
+
+        memset(&view, 0, sizeof(view));
+        view.hwndParent = parent;
+        view.pCertContext = certContext;
+        if (CryptUIDlgViewCertificateW(&view, NULL))
+            ret = ERROR_SUCCESS;
+        else
+            ret = GetLastError();
+        CertFreeCertificateContext(certContext);
+    }
+    else
+        ret = GetLastError();
+    return ret;
 }

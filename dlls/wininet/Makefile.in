@@ -2,7 +2,7 @@ EXTRADEFS = -D_WINX32_
 MODULE    = wininet.dll
 IMPORTLIB = wininet
 IMPORTS   = mpr shlwapi shell32 user32 advapi32
-DELAYIMPORTS = secur32 crypt32
+DELAYIMPORTS = secur32 crypt32 cryptui
 EXTRALIBS = @SOCKETLIBS@ @ZLIB@
 
 C_SRCS = \
