@@ -81,16 +81,14 @@ static BOOL buffer_is_dirty(const struct wined3d_buffer *buffer)
     return !!buffer->modified_areas;
 }
 
-static inline BOOL buffer_is_fully_dirty(struct wined3d_buffer *This)
+static BOOL buffer_is_fully_dirty(const struct wined3d_buffer *buffer)
 {
     unsigned int i;
 
-    for(i = 0; i < This->modified_areas; i++)
+    for (i = 0; i < buffer->modified_areas; ++i)
     {
-        if (!This->maps[i].offset && This->maps[i].size == This->resource.size)
-        {
+        if (!buffer->maps[i].offset && buffer->maps[i].size == buffer->resource.size)
             return TRUE;
-        }
     }
     return FALSE;
 }
