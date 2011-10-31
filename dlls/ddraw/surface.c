@@ -5273,6 +5273,9 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
     if (desc->ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
         usage |= WINED3DUSAGE_DEPTHSTENCIL;
 
+    if (desc->ddsCaps.dwCaps & DDSCAPS_OWNDC)
+        usage |= WINED3DUSAGE_OWNDC;
+
     if (desc->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)
     {
         pool = WINED3DPOOL_SYSTEMMEM;

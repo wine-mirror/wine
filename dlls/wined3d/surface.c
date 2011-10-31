@@ -7305,6 +7305,17 @@ static HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE sur
         return hr;
     }
 
+    /* Similar to lockable rendertargets above, creating the DIB section
+     * during surface initialization prevents the sysmem pointer from changing
+     * after a wined3d_surface_getdc() call. */
+    if ((usage & WINED3DUSAGE_OWNDC) && !surface->hDC
+            && SUCCEEDED(surface_create_dib_section(surface)))
+    {
+        HeapFree(GetProcessHeap(), 0, surface->resource.heapMemory);
+        surface->resource.heapMemory = NULL;
+        surface->resource.allocatedMemory = surface->dib.bitmap_data;
+    }
+
     return hr;
 }
 
