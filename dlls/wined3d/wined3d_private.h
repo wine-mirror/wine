@@ -2079,6 +2079,8 @@ static inline GLuint surface_get_texture_name(const struct wined3d_surface *surf
 
 void surface_add_dirty_rect(struct wined3d_surface *surface, const WINED3DBOX *dirty_rect) DECLSPEC_HIDDEN;
 void surface_bind(struct wined3d_surface *surface, struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
+HRESULT surface_bltfast(struct wined3d_surface *dst_surface, DWORD dst_x, DWORD dst_y,
+        struct wined3d_surface *src_surface, const RECT *src_rect_in, DWORD flags) DECLSPEC_HIDDEN;
 HRESULT surface_color_fill(struct wined3d_surface *s, const RECT *rect, const WINED3DCOLORVALUE *color) DECLSPEC_HIDDEN;
 GLenum surface_get_gl_buffer(const struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 BOOL surface_init_sysmem(struct wined3d_surface *surface) DECLSPEC_HIDDEN;

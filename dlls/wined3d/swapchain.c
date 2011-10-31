@@ -161,7 +161,7 @@ HRESULT CDECL wined3d_swapchain_get_front_buffer_data(const struct wined3d_swapc
     if (swapchain->presentParms.Windowed)
         MapWindowPoints(swapchain->win_handle, NULL, &offset, 1);
 
-    wined3d_surface_bltfast(dst_surface, offset.x, offset.y, swapchain->front_buffer, NULL, 0);
+    surface_bltfast(dst_surface, offset.x, offset.y, swapchain->front_buffer, NULL, 0);
 
     return WINED3D_OK;
 }
@@ -476,8 +476,8 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
     if (swapchain->device->logo_surface)
     {
         /* Blit the logo into the upper left corner of the drawable. */
-        wined3d_surface_bltfast(swapchain->back_buffers[0], 0, 0,
-                swapchain->device->logo_surface, NULL, WINEDDBLTFAST_SRCCOLORKEY);
+        surface_bltfast(swapchain->back_buffers[0], 0, 0,
+                swapchain->device->logo_surface, NULL, WINEDDBLT_KEYSRC);
     }
 
     TRACE("Presenting HDC %p.\n", context->hdc);

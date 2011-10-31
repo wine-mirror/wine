@@ -1285,13 +1285,6 @@ enum wined3d_sysval_semantic
 #define WINEDDBLT_DEPTHFILL                                     0x02000000
 #define WINEDDBLT_DONOTWAIT                                     0x08000000
 
-/* dwTrans for BltFast */
-#define WINEDDBLTFAST_NOCOLORKEY                                0x00000000
-#define WINEDDBLTFAST_SRCCOLORKEY                               0x00000001
-#define WINEDDBLTFAST_DESTCOLORKEY                              0x00000002
-#define WINEDDBLTFAST_WAIT                                      0x00000010
-#define WINEDDBLTFAST_DONOTWAIT                                 0x00000020
-
 /* DDSURFACEDESC.dwFlags */
 #define WINEDDSD_CAPS                                           0x00000001
 #define WINEDDSD_HEIGHT                                         0x00000002
@@ -2412,8 +2405,6 @@ ULONG __cdecl wined3d_stateblock_incref(struct wined3d_stateblock *stateblock);
 HRESULT __cdecl wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect,
         struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
         const WINEDDBLTFX *blt_fx, WINED3DTEXTUREFILTERTYPE filter);
-HRESULT __cdecl wined3d_surface_bltfast(struct wined3d_surface *dst_surface, DWORD dst_x, DWORD dst_y,
-        struct wined3d_surface *src_surface, const RECT *src_rect, DWORD trans);
 HRESULT __cdecl wined3d_surface_create(struct wined3d_device *device, UINT width, UINT height,
         enum wined3d_format_id format_id, BOOL lockable, BOOL discard, UINT level, DWORD usage, WINED3DPOOL pool,
         WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, WINED3DSURFTYPE surface_type,

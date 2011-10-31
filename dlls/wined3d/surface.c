@@ -1816,14 +1816,13 @@ cpu:
 }
 
 /* Do not call while under the GL lock. */
-HRESULT CDECL wined3d_surface_bltfast(struct wined3d_surface *dst_surface, DWORD dst_x, DWORD dst_y,
-        struct wined3d_surface *src_surface, const RECT *src_rect_in, DWORD trans)
+HRESULT surface_bltfast(struct wined3d_surface *dst_surface, DWORD dst_x, DWORD dst_y,
+        struct wined3d_surface *src_surface, const RECT *src_rect_in, DWORD flags)
 {
     RECT src_rect, dst_rect;
-    DWORD flags = 0;
 
-    TRACE("dst_surface %p, dst_x %u, dst_y %u, src_surface %p, src_rect_in %s, trans %#x.\n",
-            dst_surface, dst_x, dst_y, src_surface, wine_dbgstr_rect(src_rect_in), trans);
+    TRACE("dst_surface %p, dst_x %u, dst_y %u, src_surface %p, src_rect_in %s, flags %#x.\n",
+            dst_surface, dst_x, dst_y, src_surface, wine_dbgstr_rect(src_rect_in), flags);
 
     surface_get_rect(src_surface, src_rect_in, &src_rect);
 
@@ -1831,15 +1830,6 @@ HRESULT CDECL wined3d_surface_bltfast(struct wined3d_surface *dst_surface, DWORD
     dst_rect.top = dst_y;
     dst_rect.right = dst_x + src_rect.right - src_rect.left;
     dst_rect.bottom = dst_y + src_rect.bottom - src_rect.top;
-
-    if (trans & WINEDDBLTFAST_SRCCOLORKEY)
-        flags |= WINEDDBLT_KEYSRC;
-    if (trans & WINEDDBLTFAST_DESTCOLORKEY)
-        flags |= WINEDDBLT_KEYDEST;
-    if (trans & WINEDDBLTFAST_WAIT)
-        flags |= WINEDDBLT_WAIT;
-    if (trans & WINEDDBLTFAST_DONOTWAIT)
-        flags |= WINEDDBLT_DONOTWAIT;
 
     return wined3d_surface_blt(dst_surface, &dst_rect, src_surface, &src_rect, flags, NULL, WINED3DTEXF_POINT);
 }
@@ -2604,7 +2594,7 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
      * loading. */
     d3dfmt_get_conv(dst_surface, FALSE, TRUE, &format, &convert);
     if (convert != NO_CONVERSION || format.convert)
-        return wined3d_surface_bltfast(dst_surface, dst_point->x, dst_point->y, src_surface, src_rect, 0);
+        return surface_bltfast(dst_surface, dst_point->x, dst_point->y, src_surface, src_rect, 0);
 
     context = context_acquire(dst_surface->resource.device, NULL);
     gl_info = context->gl_info;
