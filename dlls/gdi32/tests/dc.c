@@ -28,6 +28,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winspool.h"
 #include "winerror.h"
 
 static DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
@@ -783,6 +784,101 @@ done:
     ReleaseDC(NULL, hdc);
 }
 
+static HDC create_printer_dc(void)
+{
+    char buffer[260];
+    DWORD len;
+    PRINTER_INFO_2A *pbuf = NULL;
+    DRIVER_INFO_3A *dbuf = NULL;
+    HANDLE hprn = 0;
+    HDC hdc = 0;
+    HMODULE winspool = LoadLibraryA( "winspool.drv" );
+    BOOL (WINAPI *pOpenPrinterA)(LPSTR, HANDLE *, LPPRINTER_DEFAULTSA);
+    BOOL (WINAPI *pGetDefaultPrinterA)(LPSTR, LPDWORD);
+    BOOL (WINAPI *pGetPrinterA)(HANDLE, DWORD, LPBYTE, DWORD, LPDWORD);
+    BOOL (WINAPI *pGetPrinterDriverA)(HANDLE, LPSTR, DWORD, LPBYTE, DWORD, LPDWORD);
+    BOOL (WINAPI *pClosePrinter)(HANDLE);
+
+    pGetDefaultPrinterA = (void *)GetProcAddress( winspool, "GetDefaultPrinterA" );
+    pOpenPrinterA = (void *)GetProcAddress( winspool, "OpenPrinterA" );
+    pGetPrinterA = (void *)GetProcAddress( winspool, "GetPrinterA" );
+    pGetPrinterDriverA = (void *)GetProcAddress( winspool, "GetPrinterDriverA" );
+    pClosePrinter = (void *)GetProcAddress( winspool, "ClosePrinter" );
+
+    if (!pGetDefaultPrinterA || !pOpenPrinterA || !pGetPrinterA || !pGetPrinterDriverA || !pClosePrinter)
+        goto done;
+
+    len = sizeof(buffer);
+    if (!pGetDefaultPrinterA( buffer, &len )) goto done;
+    if (!pOpenPrinterA( buffer, &hprn, NULL )) goto done;
+
+    pGetPrinterA( hprn, 2, NULL, 0, &len );
+    pbuf = HeapAlloc( GetProcessHeap(), 0, len );
+    if (!pGetPrinterA( hprn, 2, (LPBYTE)pbuf, len, &len )) goto done;
+
+    pGetPrinterDriverA( hprn, NULL, 3, NULL, 0, &len );
+    dbuf = HeapAlloc( GetProcessHeap(), 0, len );
+    if (!pGetPrinterDriverA( hprn, NULL, 3, (LPBYTE)dbuf, len, &len )) goto done;
+
+    hdc = CreateDCA( dbuf->pDriverPath, pbuf->pPrinterName, pbuf->pPortName, pbuf->pDevMode );
+    trace( "hdc %p for driver '%s' printer '%s' port '%s'\n", hdc,
+           dbuf->pDriverPath, pbuf->pPrinterName, pbuf->pPortName );
+done:
+    HeapFree( GetProcessHeap(), 0, dbuf );
+    HeapFree( GetProcessHeap(), 0, pbuf );
+    if (hprn) pClosePrinter( hprn );
+    if (winspool) FreeLibrary( winspool );
+    if (!hdc) skip( "could not create a DC for the default printer\n" );
+    return hdc;
+}
+
+static void test_printer_dc(void)
+{
+    HDC memdc, display_memdc;
+    HBITMAP orig, bmp;
+    DWORD ret;
+    HDC hdc = create_printer_dc();
+
+    if (!hdc) return;
+
+    memdc = CreateCompatibleDC( hdc );
+    display_memdc = CreateCompatibleDC( 0 );
+
+    ok( memdc != NULL, "CreateCompatibleDC failed for printer\n" );
+    ok( display_memdc != NULL, "CreateCompatibleDC failed for screen\n" );
+
+    ret = GetDeviceCaps( hdc, TECHNOLOGY );
+    ok( ret == DT_RASPRINTER, "wrong type %u\n", ret );
+
+    ret = GetDeviceCaps( memdc, TECHNOLOGY );
+    ok( ret == DT_RASPRINTER, "wrong type %u\n", ret );
+
+    ret = GetDeviceCaps( display_memdc, TECHNOLOGY );
+    ok( ret == DT_RASDISPLAY, "wrong type %u\n", ret );
+
+    bmp = CreateBitmap( 100, 100, 1, GetDeviceCaps( hdc, BITSPIXEL ), NULL );
+    orig = SelectObject( memdc, bmp );
+    ok( orig != NULL, "SelectObject failed\n" );
+    ok( BitBlt( hdc, 10, 10, 20, 20, memdc, 0, 0, SRCCOPY ), "BitBlt failed\n" );
+
+    ok( !SelectObject( display_memdc, bmp ), "SelectObject succeeded\n" );
+    SelectObject( memdc, orig );
+    DeleteObject( bmp );
+
+    bmp = CreateBitmap( 100, 100, 1, 1, NULL );
+    orig = SelectObject( display_memdc, bmp );
+    ok( orig != NULL, "SelectObject failed\n" );
+    ok( !SelectObject( memdc, bmp ), "SelectObject succeeded\n" );
+    ok( BitBlt( hdc, 10, 10, 20, 20, display_memdc, 0, 0, SRCCOPY ), "BitBlt failed\n" );
+    ok( BitBlt( memdc, 10, 10, 20, 20, display_memdc, 0, 0, SRCCOPY ), "BitBlt failed\n" );
+    ok( BitBlt( display_memdc, 10, 10, 20, 20, memdc, 0, 0, SRCCOPY ), "BitBlt failed\n" );
+
+    DeleteDC( memdc );
+    DeleteDC( display_memdc );
+    DeleteDC( hdc );
+    DeleteObject( bmp );
+}
+
 START_TEST(dc)
 {
     pSetLayout = (void *)GetProcAddress( GetModuleHandle("gdi32.dll"), "SetLayout");
@@ -795,4 +891,5 @@ START_TEST(dc)
     test_boundsrect();
     test_desktop_colorres();
     test_gamma();
+    test_printer_dc();
 }
