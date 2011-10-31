@@ -404,6 +404,14 @@ static BOOL dibdrv_DeleteDC( PHYSDEV dev )
 }
 
 /***********************************************************************
+ *           dibdrv_DeleteBitmap
+ */
+static BOOL dibdrv_DeleteBitmap( HBITMAP bitmap )
+{
+    return TRUE;
+}
+
+/***********************************************************************
  *           dibdrv_SelectBitmap
  */
 static HBITMAP dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
@@ -414,7 +422,6 @@ static HBITMAP dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
     TRACE("(%p, %p)\n", dev, bitmap);
 
     if (!bmp) return 0;
-    assert(bmp->dib);
 
     free_dib_info(&pdev->dib);
     pdev->defer = 0;
@@ -533,7 +540,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pCreateCompatibleDC */
     dibdrv_CreateDC,                    /* pCreateDC */
     NULL,                               /* pCreateDIBSection */
-    NULL,                               /* pDeleteBitmap */
+    dibdrv_DeleteBitmap,                /* pDeleteBitmap */
     dibdrv_DeleteDC,                    /* pDeleteDC */
     NULL,                               /* pDeleteObject */
     NULL,                               /* pDescribePixelFormat */

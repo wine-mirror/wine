@@ -609,11 +609,7 @@ BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, PHYSDEV physdev )
                     set_initial_bitmap_bits( hbitmap, bitmap );
                 }
             }
-            else
-            {
-                WARN( "Trying to select bitmap %p in DC that doesn't support it\n", hbitmap );
-                ret = FALSE;
-            }
+            else bitmap->funcs = &dib_driver;  /* use the DIB driver to emulate DDB support */
         }
         else
         {
@@ -666,7 +662,8 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
     if(old_physdev == dc->dibdrv)
         old_physdev = pop_dc_driver( &dc->physDev );
 
-    if(bitmap->dib)
+    physdev = GET_DC_PHYSDEV( dc, pSelectBitmap );
+    if (bitmap->dib || physdev->funcs == &null_driver)
     {
         physdev = dc->dibdrv;
         if (physdev) push_dc_driver( &dc->physDev, physdev, physdev->funcs );
@@ -676,8 +673,6 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
             dc->dibdrv = physdev = dc->physDev;
         }
     }
-    else
-        physdev = GET_DC_PHYSDEV( dc, pSelectBitmap );
 
     if (!BITMAP_SetOwnerDC( handle, physdev ))
     {
