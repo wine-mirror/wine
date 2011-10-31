@@ -24,6 +24,11 @@
 #include <winsmcrd.h>
 #include <scarderr.h>
 
+/* Valid scopes for contexts */
+#define SCARD_SCOPE_USER     0
+#define SCARD_SCOPE_TERMINAL 1
+#define SCARD_SCOPE_SYSTEM   2
+
 #ifndef _LPCBYTE_DEFINED
 #define _LPCBYTE_DEFINED
 typedef const BYTE *LPCBYTE;
