@@ -64,6 +64,11 @@ static int is_rtl_language( const language_t *lan )
     return lan->id == LANG_ARABIC || lan->id == LANG_HEBREW || lan->id == LANG_PERSIAN;
 }
 
+static int uses_larger_font( const language_t *lan )
+{
+    return lan->id == LANG_CHINESE || lan->id == LANG_JAPANESE || lan->id == LANG_KOREAN;
+}
+
 static version_t *get_dup_version( language_t *lang )
 {
     /* English "translations" take precedence over the original rc contents */
@@ -659,7 +664,6 @@ static void add_pot_dialog( po_file_t po, const resource_t *res )
     const dialog_t *dlg = res->res.dlg;
 
     if (dlg->title) add_po_string( po, dlg->title, NULL, NULL );
-    if (dlg->font) add_po_string( po, dlg->font->name, NULL, NULL );
     add_pot_dialog_controls( po, dlg->controls );
 }
 
@@ -703,6 +707,7 @@ static void compare_dialogs( const dialog_t *english_dlg, const dialog_t *dlg )
             font = convert_msgid_ascii( dlg->font->name, 0 );
             size = dlg->font->size;
         }
+        if (uses_larger_font( dlg->lvc.language )) english_size++;
 
         if (!english_font || !font || strcasecmp( english_font, font ) || english_size != size)
             warning( "%s: dialog %s doesn't have the same font (%s %u vs %s %u)\n",
@@ -757,8 +762,6 @@ static void add_po_dialog( const resource_t *english, const resource_t *res )
 
     if (english_dlg->title && dlg->title)
         add_po_string( po, english_dlg->title, dlg->title, dlg->lvc.language );
-    if (english_dlg->font && dlg->font)
-        add_po_string( po, english_dlg->font->name, dlg->font->name, dlg->lvc.language );
     add_po_dialog_controls( po, english_dlg->controls, dlg->controls, dlg->lvc.language );
 }
 
@@ -1079,8 +1082,9 @@ static void translate_dialog( dialog_t *dlg, dialog_t *new, int *found )
     if (dlg->font)
     {
         new->font = xmalloc( sizeof(*dlg->font) );
-        new->font = dlg->font;
-        new->font->name = translate_string( dlg->font->name, found );
+        *new->font = *dlg->font;
+        if (uses_larger_font( new->lvc.language )) new->font->size++;
+        new->font->name = convert_string( dlg->font->name, str_unicode, 1252 );
     }
     new->controls = translate_controls( dlg->controls, found );
 }
