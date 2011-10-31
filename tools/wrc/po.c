@@ -59,6 +59,11 @@ static int is_english( const language_t *lan )
     return lan->id == LANG_ENGLISH && lan->sub == SUBLANG_DEFAULT;
 }
 
+static int is_rtl_language( const language_t *lan )
+{
+    return lan->id == LANG_ARABIC || lan->id == LANG_HEBREW || lan->id == LANG_PERSIAN;
+}
+
 static version_t *get_dup_version( language_t *lang )
 {
     /* English "translations" take precedence over the original rc contents */
@@ -674,6 +679,8 @@ static void compare_dialogs( const dialog_t *english_dlg, const dialog_t *dlg )
     if (dlg->gotexstyle) exstyle = dlg->exstyle->or_mask;
     if (english_dlg->gotstyle) english_style = english_dlg->style->or_mask;
     if (english_dlg->gotexstyle) english_exstyle = english_dlg->exstyle->or_mask;
+    if (is_rtl_language( dlg->lvc.language )) english_exstyle |= WS_EX_LAYOUTRTL;
+
     if (english_style != style)
         warning( "%s: dialog %s doesn't have the same style (%08x vs %08x)\n",
                  get_language_name( dlg->lvc.language ), title, style, english_style );
@@ -1061,6 +1068,14 @@ static stringtable_t *translate_stringtable( stringtable_t *stt, language_t *lan
 static void translate_dialog( dialog_t *dlg, dialog_t *new, int *found )
 {
     if (dlg->title) new->title = translate_string( dlg->title, found );
+    if (is_rtl_language( new->lvc.language ))
+    {
+        new->gotexstyle = TRUE;
+        if (dlg->gotexstyle)
+            new->exstyle = new_style( dlg->exstyle->or_mask | WS_EX_LAYOUTRTL, dlg->exstyle->and_mask );
+        else
+            new->exstyle = new_style( WS_EX_LAYOUTRTL, 0 );
+    }
     if (dlg->font)
     {
         new->font = xmalloc( sizeof(*dlg->font) );
