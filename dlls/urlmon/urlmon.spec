@@ -27,7 +27,7 @@
 @ stdcall CoInternetParseIUri(ptr long long wstr long ptr long)
 @ stdcall CoInternetQueryInfo(ptr long long ptr long ptr long)
 @ stdcall CoInternetSetFeatureEnabled(long long long)
-@ stub CompareSecurityIds
+@ stdcall CompareSecurityIds(ptr long ptr long long)
 @ stub CopyBindInfo
 @ stdcall CopyStgMedium(ptr ptr)
 @ stdcall CreateAsyncBindCtx(long ptr ptr ptr)

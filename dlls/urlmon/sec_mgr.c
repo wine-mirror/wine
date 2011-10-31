@@ -2066,3 +2066,12 @@ HRESULT WINAPI CoInternetGetSecurityUrlEx(IUri *pUri, IUri **ppSecUri, PSUACTION
     CoTaskMemFree(ret_url);
     return hres;
 }
+
+/********************************************************************
+ *      CompareSecurityIds (URLMON.@)
+ */
+HRESULT WINAPI CompareSecurityIds(BYTE *secid1, DWORD size1, BYTE *secid2, DWORD size2, DWORD reserved)
+{
+    FIXME("(%p %d %p %d %x)\n", secid1, size1, secid2, size2, reserved);
+    return E_NOTIMPL;
+}
