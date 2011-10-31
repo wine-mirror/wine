@@ -1420,7 +1420,7 @@ static GpStatus get_region_scans_data(GpRegion *region, GpMatrix *matrix, LPRGND
                     (*data)->rdh.rcBound.left = (*data)->rdh.rcBound.top = -0x400000;
                     (*data)->rdh.rcBound.right = (*data)->rdh.rcBound.bottom = 0x400000;
 
-                    memcpy(&(*data)->Buffer, &(*data)->rdh.rcBound, sizeof(RECT));
+                    memcpy((*data)->Buffer, &(*data)->rdh.rcBound, sizeof(RECT));
                 }
                 else
                     stat = OutOfMemory;
@@ -1469,7 +1469,7 @@ GpStatus WINGDIPAPI GdipGetRegionScansI(GpRegion *region, GpRect *scans, INT *co
     if (stat == Ok)
     {
         *count = data->rdh.nCount;
-        rects = (RECT*)&data->Buffer;
+        rects = (RECT*)data->Buffer;
 
         if (scans)
         {
@@ -1503,7 +1503,7 @@ GpStatus WINGDIPAPI GdipGetRegionScans(GpRegion *region, GpRectF *scans, INT *co
     if (stat == Ok)
     {
         *count = data->rdh.nCount;
-        rects = (RECT*)&data->Buffer;
+        rects = (RECT*)data->Buffer;
 
         if (scans)
         {
