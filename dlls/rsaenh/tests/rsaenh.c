@@ -1516,7 +1516,9 @@ static void test_import_private(void)
         0x40, 0x64, 0x28, 0xe8, 0x8a, 0xe7, 0xa4, 0xd4,
         0x1c, 0xfd, 0xde, 0x71
     };
-            
+    BLOBHEADER *blobHeader = (BLOBHEADER *)abPlainPrivateKey;
+    RSAPUBKEY *rsaPubKey = (RSAPUBKEY *)(blobHeader+1);
+
     dwLen = (DWORD)sizeof(abPlainPrivateKey);
     result = CryptImportKey(hProv, abPlainPrivateKey, dwLen, 0, 0, &hKeyExchangeKey);
     if (!result) {
@@ -1561,6 +1563,22 @@ static void test_import_private(void)
 
     CryptDestroyKey(hSessionKey);
     CryptDestroyKey(hKeyExchangeKey);
+
+    /* Test importing a private key with a buffer that's smaller than the
+     * actual buffer.  The private exponent can be omitted, its length is
+     * inferred from the passed-in length parameter.
+     */
+    dwLen = sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) +
+        rsaPubKey->bitlen / 8 + 5 * rsaPubKey->bitlen / 16;
+    for (; dwLen < sizeof(abPlainPrivateKey); dwLen++)
+    {
+        result = CryptImportKey(hProv, abPlainPrivateKey, dwLen, 0, 0, &hKeyExchangeKey);
+        todo_wine
+        ok(result, "CryptImportKey failed at size %d: %d (%08x)\n", dwLen,
+           GetLastError(), GetLastError());
+        if (result)
+            CryptDestroyKey(hKeyExchangeKey);
+    }
 }
 
 static void test_verify_signature(void) {
