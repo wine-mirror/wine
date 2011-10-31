@@ -5471,7 +5471,7 @@ static BOOL show_import_ui(DWORD dwFlags, HWND hwndParent,
     data.autoDest = TRUE;
     data.success = TRUE;
 
-    memset(&pages, 0, sizeof(pages));
+    memset(pages, 0, sizeof(pages));
 
     pages[nPages].dwSize = sizeof(pages[0]);
     pages[nPages].hInstance = hInstance;
@@ -6884,7 +6884,7 @@ static BOOL show_export_ui(DWORD dwFlags, HWND hwndParent,
     data.file = INVALID_HANDLE_VALUE;
     data.success = FALSE;
 
-    memset(&pages, 0, sizeof(pages));
+    memset(pages, 0, sizeof(pages));
 
     pages[nPages].dwSize = sizeof(pages[0]);
     pages[nPages].hInstance = hInstance;
