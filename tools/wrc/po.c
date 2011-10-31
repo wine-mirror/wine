@@ -559,22 +559,22 @@ static po_file_t get_po_file( const language_t *lang )
     return po_file->po;
 }
 
-static char *get_po_file_name( const language_t *lang )
+static const char *get_language_name( const language_t *lang )
 {
+    static char name[20];
     unsigned int i;
-    char name[40];
+
+    for (i = 0; i < sizeof(languages)/sizeof(languages[0]); i++)
+        if (languages[i].id == lang->id && languages[i].sub == lang->sub)
+            return languages[i].name;
 
     sprintf( name, "%02x-%02x", lang->id, lang->sub );
-    for (i = 0; i < sizeof(languages)/sizeof(languages[0]); i++)
-    {
-        if (languages[i].id == lang->id && languages[i].sub == lang->sub)
-        {
-            strcpy( name, languages[i].name );
-            break;
-        }
-    }
-    strcat( name, ".po" );
-    return xstrdup( name );
+    return name;
+}
+
+static char *get_po_file_name( const language_t *lang )
+{
+    return strmake( "%s.po", get_language_name( lang ) );
 }
 
 static unsigned int flush_po_files( const char *output_name )
@@ -658,6 +658,75 @@ static void add_pot_dialog( po_file_t po, const resource_t *res )
     add_pot_dialog_controls( po, dlg->controls );
 }
 
+static void compare_dialogs( const dialog_t *english_dlg, const dialog_t *dlg )
+{
+    const control_t *english_ctrl, *ctrl;
+    unsigned int style = 0, exstyle = 0, english_style = 0, english_exstyle = 0;
+    char *name;
+    char *title = english_dlg->title ? convert_msgid_ascii( english_dlg->title, 0 ) : xstrdup("??");
+
+    if (english_dlg->width != dlg->width || english_dlg->height != dlg->height)
+        warning( "%s: dialog %s doesn't have the same size (%d,%d vs %d,%d)\n",
+                 get_language_name( dlg->lvc.language ), title, dlg->width, dlg->height,
+                 english_dlg->width, english_dlg->height );
+
+    if (dlg->gotstyle) style = dlg->style->or_mask;
+    if (dlg->gotexstyle) exstyle = dlg->exstyle->or_mask;
+    if (english_dlg->gotstyle) english_style = english_dlg->style->or_mask;
+    if (english_dlg->gotexstyle) english_exstyle = english_dlg->exstyle->or_mask;
+    if (english_style != style)
+        warning( "%s: dialog %s doesn't have the same style (%08x vs %08x)\n",
+                 get_language_name( dlg->lvc.language ), title, style, english_style );
+    if (english_exstyle != exstyle)
+        warning( "%s: dialog %s doesn't have the same exstyle (%08x vs %08x)\n",
+                 get_language_name( dlg->lvc.language ), title, exstyle, english_exstyle );
+
+    if (english_dlg->font || dlg->font)
+    {
+        int size = 0, english_size = 0;
+        char *font = NULL, *english_font = NULL;
+
+        if (english_dlg->font)
+        {
+            english_font = convert_msgid_ascii( english_dlg->font->name, 0 );
+            english_size = english_dlg->font->size;
+        }
+        if (dlg->font)
+        {
+            font = convert_msgid_ascii( dlg->font->name, 0 );
+            size = dlg->font->size;
+        }
+
+        if (!english_font || !font || strcasecmp( english_font, font ) || english_size != size)
+            warning( "%s: dialog %s doesn't have the same font (%s %u vs %s %u)\n",
+                     get_language_name(dlg->lvc.language), title,
+                     english_font ? english_font : "default", english_size,
+                     font ? font : "default", size );
+        free( font );
+        free( english_font );
+    }
+    english_ctrl = english_dlg->controls;
+    ctrl = dlg->controls;
+    for ( ; english_ctrl && ctrl; ctrl = ctrl->next, english_ctrl = english_ctrl->next )
+    {
+        if (control_has_title( english_ctrl ))
+            name = convert_msgid_ascii( english_ctrl->title->name.s_name, 0 );
+        else
+            name = strmake( "%d", ctrl->id );
+
+        if (english_ctrl->width != ctrl->width || english_ctrl->height != ctrl->height)
+            warning( "%s: dialog %s control %s doesn't have the same size (%d,%d vs %d,%d)\n",
+                     get_language_name( dlg->lvc.language ), title, name,
+                     ctrl->width, ctrl->height, english_ctrl->width, english_ctrl->height );
+        if (english_ctrl->x != ctrl->x || english_ctrl->y != ctrl->y)
+            warning( "%s: dialog %s control %s doesn't have the same position (%d,%d vs %d,%d)\n",
+                     get_language_name( dlg->lvc.language ), title, name,
+                     ctrl->x, ctrl->y, english_ctrl->x, english_ctrl->y );
+        free( name );
+    }
+    free( title );
+}
+
 static void add_po_dialog_controls( po_file_t po, const control_t *english_ctrl,
                                     const control_t *ctrl, const language_t *lang )
 {
@@ -676,6 +745,8 @@ static void add_po_dialog( const resource_t *english, const resource_t *res )
     const dialog_t *english_dlg = english->res.dlg;
     const dialog_t *dlg = res->res.dlg;
     po_file_t po = get_po_file( dlg->lvc.language );
+
+    compare_dialogs( english_dlg, dlg );
 
     if (english_dlg->title && dlg->title)
         add_po_string( po, english_dlg->title, dlg->title, dlg->lvc.language );
