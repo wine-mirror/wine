@@ -1350,7 +1350,7 @@ static void init_toolbar(FileDialogImpl *This, HWND hwnd)
     button[1].dwData = 0;
     button[1].iString = 0;
 
-    SendMessageW(htoolbar, TB_ADDBUTTONSW, 2, (LPARAM)&button);
+    SendMessageW(htoolbar, TB_ADDBUTTONSW, 2, (LPARAM)button);
     SendMessageW(htoolbar, TB_SETBUTTONSIZE, 0, MAKELPARAM(24,24));
     SendMessageW(htoolbar, TB_AUTOSIZE, 0, 0);
 }
