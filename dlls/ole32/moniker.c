@@ -168,7 +168,7 @@ static HRESULT create_stream_on_mip_ro(const InterfaceData *mip, IStream **strea
     return CreateStreamOnHGlobal(hglobal, TRUE, stream);
 }
 
-static inline void rot_entry_delete(struct rot_entry *rot_entry)
+static void rot_entry_delete(struct rot_entry *rot_entry)
 {
     if (rot_entry->cookie)
     {
