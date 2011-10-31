@@ -4385,3 +4385,9 @@ BOOL WINAPI InternetQueryFortezzaStatus(DWORD *a, DWORD_PTR b)
     FIXME("(%p, %08lx) stub\n", a, b);
     return 0;
 }
+
+DWORD WINAPI ShowClientAuthCerts(HWND parent)
+{
+    FIXME("%p: stub\n", parent);
+    return 0;
+}

@@ -234,7 +234,7 @@
 @ stdcall SetUrlCacheGroupAttributeW(int64 long long ptr ptr)
 @ stub SetUrlCacheHeaderData
 @ stub ShowCertificate
-@ stub ShowClientAuthCerts
+@ stdcall ShowClientAuthCerts(ptr)
 @ stub ShowSecurityInfo
 @ stdcall ShowX509EncodedCertificate(ptr ptr long)
 @ stdcall UnlockUrlCacheEntryFile(str long) UnlockUrlCacheEntryFileA
