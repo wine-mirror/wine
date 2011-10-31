@@ -364,6 +364,8 @@ extern BOOL nulldrv_FrameRgn( PHYSDEV dev, HRGN rgn, HBRUSH brush, INT width, IN
 extern LONG nulldrv_GetBitmapBits( HBITMAP bitmap, void *bits, LONG size ) DECLSPEC_HIDDEN;
 extern DWORD nulldrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info, struct gdi_image_bits *bits, struct bitblt_coords *src ) DECLSPEC_HIDDEN;
 extern COLORREF nulldrv_GetNearestColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
+                                  void * grad_array, ULONG ngrad, ULONG mode ) DECLSPEC_HIDDEN;
 extern INT  nulldrv_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL nulldrv_InvertRgn( PHYSDEV dev, HRGN rgn ) DECLSPEC_HIDDEN;
 extern BOOL nulldrv_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, DWORD mode ) DECLSPEC_HIDDEN;

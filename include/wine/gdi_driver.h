@@ -115,6 +115,7 @@ struct gdi_dc_funcs
     BOOL     (*pGetTextExtentExPointI)(PHYSDEV,const WORD*,INT,INT,LPINT,LPINT,LPSIZE);
     INT      (*pGetTextFace)(PHYSDEV,INT,LPWSTR);
     BOOL     (*pGetTextMetrics)(PHYSDEV,TEXTMETRICW*);
+    BOOL     (*pGradientFill)(PHYSDEV,TRIVERTEX*,ULONG,void*,ULONG,ULONG);
     INT      (*pIntersectClipRect)(PHYSDEV,INT,INT,INT,INT);
     BOOL     (*pInvertRgn)(PHYSDEV,HRGN);
     BOOL     (*pLineTo)(PHYSDEV,INT,INT);
@@ -203,7 +204,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 16
+#define WINE_GDI_DRIVER_VERSION 17
 
 static inline PHYSDEV get_physdev_entry_point( PHYSDEV dev, size_t offset )
 {

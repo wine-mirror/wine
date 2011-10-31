@@ -3071,6 +3071,7 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pGetTextExtentExPointI */
     NULL,                               /* pGetTextFace */
     NULL,                               /* pGetTextMetrics */
+    NULL,                               /* pGradientFill */
     NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
     NULL,                               /* pLineTo */

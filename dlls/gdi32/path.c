@@ -2315,6 +2315,7 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pGetTextExtentExPointI */
     NULL,                               /* pGetTextFace */
     NULL,                               /* pGetTextMetrics */
+    NULL,                               /* pGradientFill */
     NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
     pathdrv_LineTo,                     /* pLineTo */

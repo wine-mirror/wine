@@ -879,6 +879,7 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pGetTextExtentExPointI */
     NULL,                               /* pGetTextFace */
     PSDRV_GetTextMetrics,               /* pGetTextMetrics */
+    NULL,                               /* pGradientFill */
     NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
     PSDRV_LineTo,                       /* pLineTo */

@@ -796,6 +796,7 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_GetTextExtentExPointI,      /* pGetTextExtentExPointI */
     nulldrv_GetTextFace,                /* pGetTextFace */
     nulldrv_GetTextMetrics,             /* pGetTextMetrics */
+    nulldrv_GradientFill,               /* pGradientFill */
     nulldrv_IntersectClipRect,          /* pIntersectClipRect */
     nulldrv_InvertRgn,                  /* pInvertRgn */
     nulldrv_LineTo,                     /* pLineTo */

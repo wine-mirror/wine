@@ -7183,6 +7183,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     freetype_GetTextExtentExPointI,     /* pGetTextExtentExPointI */
     freetype_GetTextFace,               /* pGetTextFace */
     freetype_GetTextMetrics,            /* pGetTextMetrics */
+    NULL,                               /* pGradientFill */
     NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
     NULL,                               /* pLineTo */
