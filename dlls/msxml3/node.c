@@ -113,10 +113,7 @@ BOOL node_query_interface(xmlnode *This, REFIID riid, void **ppv)
         return TRUE;
     }
 
-    if(This->dispex.outer)
-        return dispex_query_interface(&This->dispex, riid, ppv);
-
-    return FALSE;
+    return dispex_query_interface(&This->dispex, riid, ppv);
 }
 
 xmlnode *get_node_obj(IXMLDOMNode *node)
@@ -1122,7 +1119,7 @@ void init_xmlnode(xmlnode *This, xmlNodePtr node, IXMLDOMNode *node_iface, dispe
     This->iface = node_iface;
     This->parent = NULL;
 
-    init_dispex(&This->dispex, dispex_data ? (IUnknown*)This->iface : NULL, dispex_data);
+    init_dispex(&This->dispex, (IUnknown*)This->iface, dispex_data);
 }
 
 typedef struct {

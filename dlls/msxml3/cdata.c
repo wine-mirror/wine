@@ -905,6 +905,18 @@ static const struct IXMLDOMCDATASectionVtbl domcdata_vtbl =
     domcdata_splitText
 };
 
+static const tid_t domcdata_iface_tids[] = {
+    IXMLDOMCDATASection_tid,
+    0
+};
+
+static dispex_static_data_t domcdata_dispex = {
+    NULL,
+    IXMLDOMCDATASection_tid,
+    NULL,
+    domcdata_iface_tids
+};
+
 IUnknown* create_cdata( xmlNodePtr text )
 {
     domcdata *This;
@@ -916,7 +928,7 @@ IUnknown* create_cdata( xmlNodePtr text )
     This->IXMLDOMCDATASection_iface.lpVtbl = &domcdata_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, text, (IXMLDOMNode*)&This->IXMLDOMCDATASection_iface, NULL);
+    init_xmlnode(&This->node, text, (IXMLDOMNode*)&This->IXMLDOMCDATASection_iface, &domcdata_dispex);
 
     return (IUnknown*)&This->IXMLDOMCDATASection_iface;
 }

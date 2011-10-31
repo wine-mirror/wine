@@ -47,7 +47,6 @@
 #include "shlwapi.h"
 #include "ocidl.h"
 #include "objsafe.h"
-#include "dispex.h"
 
 #include "wine/debug.h"
 #include "wine/list.h"

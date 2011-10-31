@@ -606,6 +606,18 @@ static const struct IXMLDOMDocumentFragmentVtbl domfrag_vtbl =
     domfrag_transformNodeToObject
 };
 
+static const tid_t domfrag_iface_tids[] = {
+    IXMLDOMDocumentFragment_tid,
+    0
+};
+
+static dispex_static_data_t domfrag_dispex = {
+    NULL,
+    IXMLDOMDocumentFragment_tid,
+    NULL,
+    domfrag_iface_tids
+};
+
 IUnknown* create_doc_fragment( xmlNodePtr fragment )
 {
     domfrag *This;
@@ -617,7 +629,7 @@ IUnknown* create_doc_fragment( xmlNodePtr fragment )
     This->IXMLDOMDocumentFragment_iface.lpVtbl = &domfrag_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, fragment, (IXMLDOMNode*)&This->IXMLDOMDocumentFragment_iface, NULL);
+    init_xmlnode(&This->node, fragment, (IXMLDOMNode*)&This->IXMLDOMDocumentFragment_iface, &domfrag_dispex);
 
     return (IUnknown*)&This->IXMLDOMDocumentFragment_iface;
 }

@@ -855,6 +855,18 @@ static const struct IXMLDOMCommentVtbl domcomment_vtbl =
     domcomment_replaceData
 };
 
+static const tid_t domcomment_iface_tids[] = {
+    IXMLDOMComment_tid,
+    0
+};
+
+static dispex_static_data_t domcomment_dispex = {
+    NULL,
+    IXMLDOMComment_tid,
+    NULL,
+    domcomment_iface_tids
+};
+
 IUnknown* create_comment( xmlNodePtr comment )
 {
     domcomment *This;
@@ -866,7 +878,7 @@ IUnknown* create_comment( xmlNodePtr comment )
     This->IXMLDOMComment_iface.lpVtbl = &domcomment_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, comment, (IXMLDOMNode*)&This->IXMLDOMComment_iface, NULL);
+    init_xmlnode(&This->node, comment, (IXMLDOMNode*)&This->IXMLDOMComment_iface, &domcomment_dispex);
 
     return (IUnknown*)&This->IXMLDOMComment_iface;
 }

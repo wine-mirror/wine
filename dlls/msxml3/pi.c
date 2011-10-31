@@ -705,6 +705,18 @@ static const struct IXMLDOMProcessingInstructionVtbl dom_pi_vtbl =
     dom_pi_put_data
 };
 
+static const tid_t dompi_iface_tids[] = {
+    IXMLDOMProcessingInstruction_tid,
+    0
+};
+
+static dispex_static_data_t dompi_dispex = {
+    NULL,
+    IXMLDOMProcessingInstruction_tid,
+    NULL,
+    dompi_iface_tids
+};
+
 IUnknown* create_pi( xmlNodePtr pi )
 {
     dom_pi *This;
@@ -716,7 +728,7 @@ IUnknown* create_pi( xmlNodePtr pi )
     This->IXMLDOMProcessingInstruction_iface.lpVtbl = &dom_pi_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, pi, (IXMLDOMNode*)&This->IXMLDOMProcessingInstruction_iface, NULL);
+    init_xmlnode(&This->node, pi, (IXMLDOMNode*)&This->IXMLDOMProcessingInstruction_iface, &dompi_dispex);
 
     return (IUnknown*)&This->IXMLDOMProcessingInstruction_iface;
 }

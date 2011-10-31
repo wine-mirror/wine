@@ -654,6 +654,18 @@ static const struct IXMLDOMAttributeVtbl domattr_vtbl =
     domattr_put_value
 };
 
+static const tid_t domattr_iface_tids[] = {
+    IXMLDOMAttribute_tid,
+    0
+};
+
+static dispex_static_data_t domattr_dispex = {
+    NULL,
+    IXMLDOMAttribute_tid,
+    NULL,
+    domattr_iface_tids
+};
+
 IUnknown* create_attribute( xmlNodePtr attribute )
 {
     domattr *This;
@@ -665,7 +677,7 @@ IUnknown* create_attribute( xmlNodePtr attribute )
     This->IXMLDOMAttribute_iface.lpVtbl = &domattr_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, attribute, (IXMLDOMNode*)&This->IXMLDOMAttribute_iface, NULL);
+    init_xmlnode(&This->node, attribute, (IXMLDOMNode*)&This->IXMLDOMAttribute_iface, &domattr_dispex);
 
     return (IUnknown*)&This->IXMLDOMAttribute_iface;
 }

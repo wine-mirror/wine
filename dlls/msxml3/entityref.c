@@ -600,6 +600,18 @@ static const struct IXMLDOMEntityReferenceVtbl entityref_vtbl =
     entityref_transformNodeToObject,
 };
 
+static const tid_t domentityref_iface_tids[] = {
+    IXMLDOMEntityReference_tid,
+    0
+};
+
+static dispex_static_data_t domentityref_dispex = {
+    NULL,
+    IXMLDOMEntityReference_tid,
+    NULL,
+    domentityref_iface_tids
+};
+
 IUnknown* create_doc_entity_ref( xmlNodePtr entity )
 {
     entityref *This;
@@ -611,7 +623,7 @@ IUnknown* create_doc_entity_ref( xmlNodePtr entity )
     This->IXMLDOMEntityReference_iface.lpVtbl = &entityref_vtbl;
     This->ref = 1;
 
-    init_xmlnode(&This->node, entity, (IXMLDOMNode*)&This->IXMLDOMEntityReference_iface, NULL);
+    init_xmlnode(&This->node, entity, (IXMLDOMNode*)&This->IXMLDOMEntityReference_iface, &domentityref_dispex);
 
     return (IUnknown*)&This->IXMLDOMEntityReference_iface;
 }
