@@ -1229,12 +1229,12 @@ static void libxmlStartElementNS(
     saxattributes *attr;
     int index;
 
-    if(This->saxreader->version >= MSXML6)
-        update_position(This, NULL);
-    else if(*(This->pParserCtxt->input->cur) == '/')
-        update_position(This, (xmlChar*)This->pParserCtxt->input->cur+2);
-    else
-        update_position(This, (xmlChar*)This->pParserCtxt->input->cur+1);
+    index = 0;
+    if(*(This->pParserCtxt->input->cur) == '/')
+        index++;
+    if(This->saxreader->version < MSXML6)
+        index++;
+    update_position(This, (xmlChar*)This->pParserCtxt->input->cur+index);
 
     hr = namespacePush(This, nb_namespaces);
     if(hr==S_OK && has_content_handler(This))
