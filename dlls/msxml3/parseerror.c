@@ -60,7 +60,9 @@ static HRESULT WINAPI parseError_QueryInterface(
     REFIID riid,
     void** ppvObject )
 {
-    TRACE("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppvObject);
+    parse_error_t *This = impl_from_IXMLDOMParseError( iface );
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
 
     if ( IsEqualGUID( riid, &IID_IUnknown ) ||
          IsEqualGUID( riid, &IID_IDispatch ) ||
@@ -85,7 +87,7 @@ static ULONG WINAPI parseError_AddRef(
 {
     parse_error_t *This = impl_from_IXMLDOMParseError( iface );
     ULONG ref = InterlockedIncrement( &This->ref );
-    TRACE("(%p) ref now %d\n", This, ref);
+    TRACE("(%p)->(%d)\n", This, ref);
     return ref;
 }
 
@@ -93,10 +95,9 @@ static ULONG WINAPI parseError_Release(
     IXMLDOMParseError *iface )
 {
     parse_error_t *This = impl_from_IXMLDOMParseError( iface );
-    ULONG ref;
+    ULONG ref = InterlockedDecrement( &This->ref );
 
-    ref = InterlockedDecrement( &This->ref );
-    TRACE("(%p) ref now %d\n", This, ref);
+    TRACE("(%p)->(%d)\n", This, ref);
     if ( ref == 0 )
     {
         SysFreeString(This->url);
