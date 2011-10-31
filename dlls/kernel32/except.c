@@ -412,7 +412,7 @@ static inline BOOL check_resource_write( void *addr )
         return FALSE;
     if (addr < rsrc || (char *)addr >= (char *)rsrc + size) return FALSE;
     TRACE( "Broken app is writing to the resource data, enabling work-around\n" );
-    VirtualProtect( rsrc, size, PAGE_WRITECOPY, NULL );
+    VirtualProtect( rsrc, size, PAGE_READWRITE, NULL );
     return TRUE;
 }
 
