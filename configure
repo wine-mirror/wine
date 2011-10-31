@@ -14755,6 +14755,7 @@ wine_fn_config_dll advpack enable_advpack implib
 wine_fn_config_test dlls/advpack/tests advpack_test
 wine_fn_config_dll amstream enable_amstream
 wine_fn_config_test dlls/amstream/tests amstream_test
+wine_fn_config_dll apphelp enable_apphelp
 wine_fn_config_dll appwiz.cpl enable_appwiz_cpl po
 wine_fn_config_dll atl enable_atl implib
 wine_fn_config_test dlls/atl/tests atl_test
