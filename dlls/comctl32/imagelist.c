@@ -3594,7 +3594,7 @@ static const IImageListVtbl ImageListImpl_Vtbl = {
     ImageListImpl_GetOverlayImage
 };
 
-static inline BOOL is_valid(HIMAGELIST himl)
+static BOOL is_valid(HIMAGELIST himl)
 {
     BOOL valid;
     __TRY
