@@ -219,6 +219,13 @@ BOOL init_dib_info_from_bitmapobj(dib_info *dib, BITMAPOBJ *bmp, enum dib_info_f
         BITMAPINFO *info = (BITMAPINFO *)buffer;
 
         get_ddb_bitmapinfo( bmp, info );
+        if (!bmp->bitmap.bmBits)
+        {
+            int width_bytes = get_dib_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
+            bmp->bitmap.bmBits = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                            bmp->bitmap.bmHeight * width_bytes );
+            if (!bmp->bitmap.bmBits) return FALSE;
+        }
         return init_dib_info_from_bitmapinfo( dib, info, bmp->bitmap.bmBits,
                                               flags | private_color_table );
     }

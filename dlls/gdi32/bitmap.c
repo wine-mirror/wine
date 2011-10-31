@@ -53,57 +53,15 @@ static const struct gdi_obj_funcs bitmap_funcs =
 DWORD nulldrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
                         struct gdi_image_bits *bits, struct bitblt_coords *src )
 {
-    BITMAPOBJ *bmp;
-    DWORD ret;
-
     if (!hbitmap) return ERROR_NOT_SUPPORTED;
-    if (!(bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP ))) return ERROR_INVALID_HANDLE;
-
-    if (bmp->bitmap.bmBits || !bits)
-    {
-        ret = dib_driver.pGetImage( 0, hbitmap, info, bits, src );
-    }
-    else if (!(ret = dib_driver.pGetImage( 0, hbitmap, info, NULL, src )))
-    {
-        info->bmiHeader.biHeight = -(src->visrect.bottom - src->visrect.top);
-        info->bmiHeader.biSizeImage = get_dib_image_size( info );
-
-        /* make the source rectangle relative to the returned bits */
-        src->y -= src->visrect.top;
-        offset_rect( &src->visrect, 0, -src->visrect.top );
-
-        /* return all-zero bits */
-        bits->ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, info->bmiHeader.biSizeImage );
-        bits->is_copy = TRUE;
-        bits->free = free_heap_bits;
-    }
-    GDI_ReleaseObj( hbitmap );
-    return ret;
+    return dib_driver.pGetImage( 0, hbitmap, info, bits, src );
 }
 
 DWORD nulldrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info,
                         const struct gdi_image_bits *bits, struct bitblt_coords *src,
                         struct bitblt_coords *dst, DWORD rop )
 {
-    BITMAPOBJ *bmp;
-
     if (!hbitmap) return ERROR_SUCCESS;
-
-    if (bits)
-    {
-        if (!(bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP ))) return ERROR_INVALID_HANDLE;
-        if (!bmp->bitmap.bmBits)
-        {
-            int width_bytes = get_dib_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
-            if (!(bmp->bitmap.bmBits = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                                  bmp->bitmap.bmHeight * width_bytes )))
-            {
-                GDI_ReleaseObj( hbitmap );
-                return ERROR_OUTOFMEMORY;
-            }
-        }
-        GDI_ReleaseObj( hbitmap );
-    }
     return dib_driver.pPutImage( NULL, hbitmap, clip, info, bits, src, dst, rop );
 }
 
@@ -348,11 +306,12 @@ BOOL get_bitmap_image( HBITMAP hbitmap, BITMAPINFO *info, struct gdi_image_bits 
 
     if (bmp)
     {
+        const struct gdi_dc_funcs *funcs = get_bitmap_funcs( bmp );
         src.visrect.left   = src.x = 0;
         src.visrect.top    = src.y = 0;
         src.visrect.right  = src.width = bmp->bitmap.bmWidth;
         src.visrect.bottom = src.height = bmp->bitmap.bmHeight;
-        ret = !bmp->funcs->pGetImage( NULL, hbitmap, info, bits, &src );
+        ret = !funcs->pGetImage( NULL, hbitmap, info, bits, &src );
         GDI_ReleaseObj( hbitmap );
     }
     return ret;
