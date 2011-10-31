@@ -2376,16 +2376,11 @@ msgstr "Favor&ite"
 msgid "&Add to Favorites..."
 msgstr "Adaugă la &favorite..."
 
-#: ieframe.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 oleview.rc:69
-#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
-#: winhlp32.rc:53 wordpad.rc:91
-#, fuzzy
+#: ieframe.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 notepad.rc:124
+#: oleview.rc:69 progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85
+#: winemine.rc:48 winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
-msgstr ""
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"&Ajutor\n"
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"A&jutor"
+msgstr "&Ajutor"
 
 #: ieframe.rc:57
 #, fuzzy
@@ -9169,7 +9164,7 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Resurse deschise: %lu\n"
 
-#: net.rc:44 winemine.rc:68 winemine.rc:78 winemine.rc:92
+#: net.rc:44 notepad.rc:122 winemine.rc:68 winemine.rc:78 winemine.rc:92
 msgid "OK"
 msgstr "OK"
 
@@ -9309,6 +9304,46 @@ msgstr "&Conținut"
 #: notepad.rc:59
 msgid "&About Notepad"
 msgstr "&Despre notepad"
+
+#: notepad.rc:105
+msgid "Page Setup"
+msgstr "Setare pagină"
+
+#: notepad.rc:107
+msgid "&Header:"
+msgstr "Colon&titlu:"
+
+#: notepad.rc:109
+msgid "&Footer:"
+msgstr "&Coloncifru:"
+
+#: notepad.rc:112
+msgid "&Margins (millimeters):"
+msgstr "&Margini (milimetri):"
+
+#: notepad.rc:113
+msgid "&Left:"
+msgstr "&Stânga:"
+
+#: notepad.rc:115
+msgid "&Top:"
+msgstr "S&us:"
+
+#: notepad.rc:117
+msgid "&Right:"
+msgstr "&Dreapta:"
+
+#: notepad.rc:119
+msgid "&Bottom:"
+msgstr "&Jos:"
+
+#: notepad.rc:123 wineboot.rc:31 winemine.rc:93
+msgid "Cancel"
+msgstr "Renunță"
+
+#: notepad.rc:131
+msgid "Encoding:"
+msgstr "Codificare:"
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -10938,10 +10973,6 @@ msgstr "Vizualizator de fișiere metafile normale"
 #: wineboot.rc:28
 msgid "Waiting for Program"
 msgstr "Așteptare program"
-
-#: wineboot.rc:31 winemine.rc:93
-msgid "Cancel"
-msgstr "Renunță"
 
 #: wineboot.rc:32
 msgid "Terminate Process"

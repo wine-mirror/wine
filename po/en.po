@@ -2130,9 +2130,9 @@ msgstr "&Favourites"
 msgid "&Add to Favorites..."
 msgstr "&Add to Favourites..."
 
-#: ieframe.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 oleview.rc:69
-#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
-#: winhlp32.rc:53 wordpad.rc:91
+#: ieframe.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 notepad.rc:124
+#: oleview.rc:69 progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85
+#: winemine.rc:48 winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "&Help"
 
@@ -8506,7 +8506,7 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%1      %2      %3      Open resources: %4!u!\n"
 
-#: net.rc:44 winemine.rc:68 winemine.rc:78 winemine.rc:92
+#: net.rc:44 notepad.rc:122 winemine.rc:68 winemine.rc:78 winemine.rc:92
 msgid "OK"
 msgstr ""
 
@@ -8614,6 +8614,46 @@ msgstr "&Contents\tF1"
 #: notepad.rc:59
 msgid "&About Notepad"
 msgstr ""
+
+#: notepad.rc:105
+msgid "Page Setup"
+msgstr "Page Setup"
+
+#: notepad.rc:107
+msgid "&Header:"
+msgstr ""
+
+#: notepad.rc:109
+msgid "&Footer:"
+msgstr ""
+
+#: notepad.rc:112
+msgid "&Margins (millimeters):"
+msgstr ""
+
+#: notepad.rc:113
+msgid "&Left:"
+msgstr "&Left:"
+
+#: notepad.rc:115
+msgid "&Top:"
+msgstr ""
+
+#: notepad.rc:117
+msgid "&Right:"
+msgstr "&Right:"
+
+#: notepad.rc:119
+msgid "&Bottom:"
+msgstr "&Bottom:"
+
+#: notepad.rc:123 wineboot.rc:31 winemine.rc:93
+msgid "Cancel"
+msgstr "Cancel"
+
+#: notepad.rc:131
+msgid "Encoding:"
+msgstr "Encoding:"
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -10146,10 +10186,6 @@ msgstr ""
 #: wineboot.rc:28
 msgid "Waiting for Program"
 msgstr "Waiting for Program"
-
-#: wineboot.rc:31 winemine.rc:93
-msgid "Cancel"
-msgstr "Cancel"
 
 #: wineboot.rc:32
 msgid "Terminate Process"

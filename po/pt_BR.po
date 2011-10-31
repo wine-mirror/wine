@@ -2322,16 +2322,11 @@ msgstr "&Favoritos"
 msgid "&Add to Favorites..."
 msgstr "&Adicionar aos Favoritos..."
 
-#: ieframe.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 oleview.rc:69
-#: progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
-#: winhlp32.rc:53 wordpad.rc:91
-#, fuzzy
+#: ieframe.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 notepad.rc:124
+#: oleview.rc:69 progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85
+#: winemine.rc:48 winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
-msgstr ""
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"&Ajuda\n"
-"#-#-#-#-#  pt_BR.po (Wine)  #-#-#-#-#\n"
-"A&juda"
+msgstr "&Ajuda"
 
 #: ieframe.rc:57
 #, fuzzy
@@ -8937,7 +8932,7 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Recursos disponíveis: %lu\n"
 
-#: net.rc:44 winemine.rc:68 winemine.rc:78 winemine.rc:92
+#: net.rc:44 notepad.rc:122 winemine.rc:68 winemine.rc:78 winemine.rc:92
 msgid "OK"
 msgstr "OK"
 
@@ -9082,6 +9077,46 @@ msgstr "&Conteúdo"
 #: notepad.rc:59
 msgid "&About Notepad"
 msgstr "&Sobre o Notepad"
+
+#: notepad.rc:105
+msgid "Page Setup"
+msgstr "Configurar página"
+
+#: notepad.rc:107
+msgid "&Header:"
+msgstr "&Cabeçalho:"
+
+#: notepad.rc:109
+msgid "&Footer:"
+msgstr "&Rodapé:"
+
+#: notepad.rc:112
+msgid "&Margins (millimeters):"
+msgstr "&Margens (milímetros):"
+
+#: notepad.rc:113
+msgid "&Left:"
+msgstr "&Esquerda:"
+
+#: notepad.rc:115
+msgid "&Top:"
+msgstr "&Superior:"
+
+#: notepad.rc:117
+msgid "&Right:"
+msgstr "&Direita:"
+
+#: notepad.rc:119
+msgid "&Bottom:"
+msgstr "&Inferior:"
+
+#: notepad.rc:123 wineboot.rc:31 winemine.rc:93
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: notepad.rc:131
+msgid "Encoding:"
+msgstr "Codificação:"
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -10708,10 +10743,6 @@ msgstr "Visualizador Regular de Metafiles"
 #: wineboot.rc:28
 msgid "Waiting for Program"
 msgstr "Esperando o programa"
-
-#: wineboot.rc:31 winemine.rc:93
-msgid "Cancel"
-msgstr "Cancelar"
 
 #: wineboot.rc:32
 msgid "Terminate Process"

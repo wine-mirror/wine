@@ -9,40 +9,7 @@ C_SRCS = \
 	dialog.c \
 	main.c
 
-RC_SRCS = \
-	Ar.rc \
-	Bg.rc \
-	Cs.rc \
-	Da.rc \
-	De.rc \
-	En.rc \
-	Eo.rc \
-	Es.rc \
-	Fa.rc \
-	Fi.rc \
-	Fr.rc \
-	He.rc \
-	Hu.rc \
-	It.rc \
-	Ja.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	No.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Si.rc \
-	Sr.rc \
-	Sv.rc \
-	Th.rc \
-	Tr.rc \
-	Uk.rc \
-	Wa.rc \
-	Zh.rc \
-	notepad.rc
-
+RC_SRCS = notepad.rc
 PO_SRCS = notepad.rc
 
 MANPAGE = notepad.man
