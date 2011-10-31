@@ -442,6 +442,8 @@ extern BOOL PSDRV_PaintRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_PatBlt(PHYSDEV dev, struct bitblt_coords *dst, DWORD dwRop) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                        INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD count ) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD count ) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_PolyPolygon( PHYSDEV dev, const POINT* pts, const INT* counts, UINT polygons ) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_PolyPolyline( PHYSDEV dev, const POINT* pts, const DWORD* counts, DWORD polylines ) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count ) DECLSPEC_HIDDEN;
@@ -502,6 +504,7 @@ extern BOOL PSDRV_WriteGlyphShow(PHYSDEV dev, LPCSTR g_name) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteSetPen(PHYSDEV dev) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteArc(PHYSDEV dev, INT x, INT y, INT w, INT h,
 			     double ang1, double ang2) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteCurveTo(PHYSDEV dev, POINT pts[3]) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteSetColor(PHYSDEV dev, PSCOLOR *color) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteSetBrush(PHYSDEV dev) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteFill(PHYSDEV dev) DECLSPEC_HIDDEN;

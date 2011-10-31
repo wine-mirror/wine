@@ -411,6 +411,60 @@ BOOL PSDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
 
 
 /***********************************************************************
+ *           PSDRV_PolyBezier
+ */
+BOOL PSDRV_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD count )
+{
+    DWORD i;
+    POINT *dev_pts;
+
+    TRACE("\n");
+
+    if (!(dev_pts = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*dev_pts) ))) return FALSE;
+    memcpy( dev_pts, pts, count * sizeof(*dev_pts) );
+    LPtoDP( dev->hdc, dev_pts, count );
+
+    PSDRV_WriteSpool(dev, "%PolyBezier\n",12);
+    PSDRV_SetPen(dev);
+    PSDRV_SetClip(dev);
+    PSDRV_WriteMoveTo(dev, dev_pts[0].x, dev_pts[0].y );
+    for (i = 1; i < count; i += 3) PSDRV_WriteCurveTo( dev, dev_pts + i );
+    PSDRV_DrawLine(dev);
+    PSDRV_ResetClip(dev);
+    HeapFree( GetProcessHeap(), 0, dev_pts );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           PSDRV_PolyBezierTo
+ */
+BOOL PSDRV_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD count )
+{
+    DWORD i;
+    POINT *dev_pts;
+
+    TRACE("\n");
+
+    count++;  /* add initial position */
+    if (!(dev_pts = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*dev_pts) ))) return FALSE;
+    GetCurrentPositionEx( dev->hdc, dev_pts );
+    memcpy( dev_pts + 1, pts, (count - 1) * sizeof(*dev_pts) );
+    LPtoDP( dev->hdc, dev_pts, count );
+
+    PSDRV_WriteSpool(dev, "%PolyBezier\n",12);
+    PSDRV_SetPen(dev);
+    PSDRV_SetClip(dev);
+    PSDRV_WriteMoveTo(dev, dev_pts[0].x, dev_pts[0].y );
+    for (i = 1; i < count; i += 3) PSDRV_WriteCurveTo( dev, dev_pts + i );
+    PSDRV_DrawLine(dev);
+    PSDRV_ResetClip(dev);
+    HeapFree( GetProcessHeap(), 0, dev_pts );
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           PSDRV_SetPixel
  */
 COLORREF PSDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )

@@ -138,6 +138,9 @@ static const char psarc[] = /* x, y, w, h, ang1, ang2 */
 "0 0 0.5 %.1f %.1f arc\n"
 "tmpmtrx setmatrix\n";
 
+static const char pscurveto[] = /* x1, y1, x2, y2, x3, y3 */
+"%d %d %d %d %d %d curveto\n";
+
 static const char psgsave[] =
 "gsave\n";
 
@@ -498,6 +501,14 @@ BOOL PSDRV_WriteArc(PHYSDEV dev, INT x, INT y, INT w, INT h, double ang1,
     push_lc_numeric("C");
     sprintf(buf, psarc, x, y, w, h, -ang2, -ang1);
     pop_lc_numeric();
+    return PSDRV_WriteSpool(dev, buf, strlen(buf));
+}
+
+BOOL PSDRV_WriteCurveTo(PHYSDEV dev, POINT pts[3])
+{
+    char buf[256];
+
+    sprintf(buf, pscurveto, pts[0].x, pts[0].y, pts[1].x, pts[1].y, pts[2].x, pts[2].y );
     return PSDRV_WriteSpool(dev, buf, strlen(buf));
 }
 

@@ -890,8 +890,8 @@ static const struct gdi_dc_funcs psdrv_funcs =
     PSDRV_PaintRgn,                     /* pPaintRgn */
     PSDRV_PatBlt,                       /* pPatBlt */
     PSDRV_Pie,                          /* pPie */
-    NULL,                               /* pPolyBezier */
-    NULL,                               /* pPolyBezierTo */
+    PSDRV_PolyBezier,                   /* pPolyBezier */
+    PSDRV_PolyBezierTo,                 /* pPolyBezierTo */
     NULL,                               /* pPolyDraw */
     PSDRV_PolyPolygon,                  /* pPolyPolygon */
     PSDRV_PolyPolyline,                 /* pPolyPolyline */
