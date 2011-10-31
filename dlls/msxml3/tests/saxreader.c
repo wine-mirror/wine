@@ -124,6 +124,7 @@ static const CHAR szTestXML[] =
 static const CHAR szTestAttributes[] =
 "<?xml version=\"1.0\" ?>\n"
 "<document xmlns:test=\"prefix_test\" xmlns=\"prefix\" test:arg1=\"arg1\" arg2=\"arg2\">\n"
+"<node1 xmlns:p=\"test\" />"
 "</document>\n";
 
 typedef struct _contenthandlercheck {
@@ -214,9 +215,13 @@ static content_handler_test contentHandlerTestAttributes[] = {
     { CH_STARTPREFIXMAPPING, 2, 80, 2, 79, "", "prefix" },
     { CH_STARTELEMENT, 2, 80, 2, 79, "prefix", "document", "document" },
     { CH_CHARACTERS, 2, 80, 3, 1, "\n" },
-    { CH_ENDELEMENT, 3, 3, 3, 11, "prefix", "document", "document" },
-    { CH_ENDPREFIXMAPPING, 3, 3, 3, 11, "" },
-    { CH_ENDPREFIXMAPPING, 3, 3, 3, 11, "test" },
+    { CH_STARTPREFIXMAPPING, 3, 25, 3, 24, "p", "test" },
+    { CH_STARTELEMENT, 3, 25, 3, 24, "prefix", "node1", "node1" },
+    { CH_ENDELEMENT, 3, 25, 3, 24, "prefix", "node1", "node1" },
+    { CH_ENDPREFIXMAPPING, 3, 25, 3, 24, "p" },
+    { CH_ENDELEMENT, 3, 27, 3, 35, "prefix", "document", "document" },
+    { CH_ENDPREFIXMAPPING, 3, 27, 3, 35, "" },
+    { CH_ENDPREFIXMAPPING, 3, 27, 3, 35, "test" },
     { CH_ENDDOCUMENT, 0, 0, 4, 0 },
     { CH_ENDTEST }
 };
@@ -228,9 +233,13 @@ static content_handler_test contentHandlerTestAttributes6[] = {
     { CH_STARTPREFIXMAPPING, 2, 80, 2, 79, "", "prefix" },
     { CH_STARTELEMENT, 2, 80, 2, 79, "prefix", "document", "document" },
     { CH_CHARACTERS, 2, 80, 3, 1, "\n" },
-    { CH_ENDELEMENT, 3, 3, 3, 11, "prefix", "document", "document" },
-    { CH_ENDPREFIXMAPPING, 3, 3, 3, 11, "test" },
-    { CH_ENDPREFIXMAPPING, 3, 3, 3, 11, "" },
+    { CH_STARTPREFIXMAPPING, 3, 25, 3, 24, "p", "test" },
+    { CH_STARTELEMENT, 3, 25, 3, 24, "prefix", "node1", "node1" },
+    { CH_ENDELEMENT, 3, 25, 3, 24, "prefix", "node1", "node1" },
+    { CH_ENDPREFIXMAPPING, 3, 25, 3, 24, "p" },
+    { CH_ENDELEMENT, 3, 27, 3, 35, "prefix", "document", "document" },
+    { CH_ENDPREFIXMAPPING, 3, 27, 3, 35, "test" },
+    { CH_ENDPREFIXMAPPING, 3, 27, 3, 35, "" },
     { CH_ENDDOCUMENT, 0, 0, 4, 0 },
     { CH_ENDTEST }
 };
@@ -313,6 +322,9 @@ static HRESULT WINAPI contentHandler_putDocumentLocator(
         ISAXContentHandler* iface,
         ISAXLocator *pLocator)
 {
+    ISAXAttributes *attr;
+    HRESULT hres;
+
     if(!test_expect_call(CH_PUTDOCUMENTLOCATOR))
         return E_FAIL;
 
@@ -320,15 +332,23 @@ static HRESULT WINAPI contentHandler_putDocumentLocator(
     test_locator(__LINE__, msxml_version>=6 ? expectCall->line_v6 : expectCall->line,
             msxml_version>=6 ? expectCall->column_v6 : expectCall->column);
 
+    if(msxml_version >= 6) {
+        hres = ISAXLocator_QueryInterface(pLocator, &IID_ISAXAttributes, (void**)&attr);
+        ok(hres == S_OK, "QueryInterface failed: %x\n", hres);
+        ISAXAttributes_Release(attr);
+    }
+
     return (expectCall++)->ret;
 }
 
+static ISAXAttributes *test_attr_ptr;
 static HRESULT WINAPI contentHandler_startDocument(
         ISAXContentHandler* iface)
 {
     if(!test_expect_call(CH_STARTDOCUMENT))
         return E_FAIL;
 
+    test_attr_ptr = NULL;
     test_locator(__LINE__, msxml_version>=6 ? expectCall->line_v6 : expectCall->line,
             msxml_version>=6 ? expectCall->column_v6 : expectCall->column);
 
@@ -401,6 +421,10 @@ static HRESULT WINAPI contentHandler_startElement(
     test_saxstr(__LINE__, pQName, nQName, expectCall->arg3);
     test_locator(__LINE__, msxml_version>=6 ? expectCall->line_v6 : expectCall->line,
             msxml_version>=6 ? expectCall->column_v6 : expectCall->column);
+
+    if(!test_attr_ptr)
+        test_attr_ptr = pAttr;
+    ok(test_attr_ptr == pAttr, "Multiple ISAXAttributes instances are used (%p %p)\n", test_attr_ptr, pAttr);
 
     if(expectCall == contentHandlerTestAttributes+4) {
         int i;
