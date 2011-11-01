@@ -304,7 +304,7 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
         hr = E_FAIL;
         goto end;
     }
-    ppng_set_error_fn(This->png_ptr, &jmpbuf, user_error_fn, user_warning_fn);
+    ppng_set_error_fn(This->png_ptr, jmpbuf, user_error_fn, user_warning_fn);
 
     /* seek to the start of the stream */
     seek.QuadPart = 0;
@@ -1015,7 +1015,7 @@ static HRESULT WINAPI PngFrameEncode_WritePixels(IWICBitmapFrameEncode *iface,
         HeapFree(GetProcessHeap(), 0, row_pointers);
         return E_FAIL;
     }
-    ppng_set_error_fn(This->png_ptr, &jmpbuf, user_error_fn, user_warning_fn);
+    ppng_set_error_fn(This->png_ptr, jmpbuf, user_error_fn, user_warning_fn);
 
     if (!This->info_written)
     {
@@ -1153,7 +1153,7 @@ static HRESULT WINAPI PngFrameEncode_Commit(IWICBitmapFrameEncode *iface)
         LeaveCriticalSection(&This->lock);
         return E_FAIL;
     }
-    ppng_set_error_fn(This->png_ptr, &jmpbuf, user_error_fn, user_warning_fn);
+    ppng_set_error_fn(This->png_ptr, jmpbuf, user_error_fn, user_warning_fn);
 
     ppng_write_end(This->png_ptr, This->info_ptr);
 
@@ -1305,7 +1305,7 @@ static HRESULT WINAPI PngEncoder_Initialize(IWICBitmapEncoder *iface,
         LeaveCriticalSection(&This->lock);
         return E_FAIL;
     }
-    ppng_set_error_fn(This->png_ptr, &jmpbuf, user_error_fn, user_warning_fn);
+    ppng_set_error_fn(This->png_ptr, jmpbuf, user_error_fn, user_warning_fn);
 
     /* set up custom i/o handling */
     ppng_set_write_fn(This->png_ptr, This, user_write_data, user_flush);

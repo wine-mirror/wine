@@ -284,7 +284,7 @@ static HRESULT WINAPI JpegDecoder_Initialize(IWICBitmapDecoder *iface, IStream *
 
     This->cinfo.err = &This->jerr;
 
-    This->cinfo.client_data = &jmpbuf;
+    This->cinfo.client_data = jmpbuf;
 
     if (setjmp(jmpbuf))
     {
@@ -576,7 +576,7 @@ static HRESULT WINAPI JpegDecoder_Frame_CopyPixels(IWICBitmapFrameDecode *iface,
         }
     }
 
-    This->cinfo.client_data = &jmpbuf;
+    This->cinfo.client_data = jmpbuf;
 
     if (setjmp(jmpbuf))
     {
