@@ -3888,56 +3888,48 @@ static void transform_projection(struct wined3d_context *context, const struct w
 {
     glMatrixMode(GL_PROJECTION);
     checkGLcall("glMatrixMode(GL_PROJECTION)");
-    glLoadIdentity();
-    checkGLcall("glLoadIdentity");
+
+    /* There are a couple of additional things we have to take into account
+     * here besides the projection transformation itself:
+     *   - We need to flip along the y-axis in case of offscreen rendering.
+     *   - OpenGL Z range is {-Wc,...,Wc} while D3D Z range is {0,...,Wc}.
+     *   - D3D coordinates refer to pixel centers while GL coordinates refer
+     *     to pixel corners.
+     *   - D3D has a top-left filling convention. We need to maintain this
+     *     even after the y-flip mentioned above.
+     * In order to handle the last two points, we translate by
+     * (63.0 / 128.0) / VPw and (63.0 / 128.0) / VPh. This is equivalent to
+     * translating slightly less than half a pixel. We want the difference to
+     * be large enough that it doesn't get lost due to rounding inside the
+     * driver, but small enough to prevent it from interfering with any
+     * anti-aliasing. */
 
     if (context->last_was_rhw)
     {
+        /* Transform D3D RHW coordinates to OpenGL clip coordinates. */
         double x = state->viewport.X;
         double y = state->viewport.Y;
         double w = state->viewport.Width;
         double h = state->viewport.Height;
-
-        TRACE("Calling glOrtho with x %.8e, y %.8e, w %.8e, h %.8e.\n", x, y, w, h);
-        if (context->render_offscreen)
-            glOrtho(x, x + w, -y, -y - h, 0.0, -1.0);
-        else
-            glOrtho(x, x + w, y + h, y, 0.0, -1.0);
-        checkGLcall("glOrtho");
-
-        /* D3D texture coordinates are flipped compared to OpenGL ones, so
-         * render everything upside down when rendering offscreen. */
-        if (context->render_offscreen)
+        double x_scale = 2.0 / w;
+        double x_offset = ((63.0 / 64.0) - (2.0 * x) - w) / w;
+        double y_scale = context->render_offscreen ? 2.0 / h : 2.0 / -h;
+        double y_offset = context->render_offscreen
+                ? ((63.0 / 64.0) - (2.0 * y) - h) / h
+                : ((63.0 / 64.0) - (2.0 * y) - h) / -h;
+        const GLdouble projection[] =
         {
-            glScalef(1.0f, -1.0f, 1.0f);
-            checkGLcall("glScalef");
-        }
+             x_scale,      0.0,  0.0, 0.0,
+                 0.0,  y_scale,  0.0, 0.0,
+                 0.0,      0.0,  2.0, 0.0,
+            x_offset, y_offset, -1.0, 1.0,
+        };
 
-        /* Window Coord 0 is the middle of the first pixel, so translate by 1/2 pixels */
-        glTranslatef(63.0f / 128.0f, 63.0f / 128.0f, 0.0f);
-        checkGLcall("glTranslatef(63.0f / 128.0f, 63.0f / 128.0f, 0.0f)");
+        glLoadMatrixd(projection);
+        checkGLcall("glLoadMatrixd");
     }
     else
     {
-        /* The rule is that the window coordinate 0 does not correspond to the
-            beginning of the first pixel, but the center of the first pixel.
-            As a consequence if you want to correctly draw one line exactly from
-            the left to the right end of the viewport (with all matrices set to
-            be identity), the x coords of both ends of the line would be not
-            -1 and 1 respectively but (-1-1/viewport_widh) and (1-1/viewport_width)
-            instead.
-
-            1.0 / Width is used because the coord range goes from -1.0 to 1.0, then we
-            divide by the Width/Height, so we need the half range(1.0) to translate by
-            half a pixel.
-
-            The other fun is that d3d's output z range after the transformation is [0;1],
-            but opengl's is [-1;1]. Since the z buffer is in range [0;1] for both, gl
-            scales [-1;1] to [0;1]. This would mean that we end up in [0.5;1] and loose a lot
-            of Z buffer precision and the clear values do not match in the z test. Thus scale
-            [0;1] to [-1;1], so when gl undoes that we utilize the full z range
-         */
-
         /*
          * Careful with the order of operations here, we're essentially working backwards:
          * x = x + 1/w;
@@ -3955,18 +3947,13 @@ static void transform_projection(struct wined3d_context *context, const struct w
          * glTranslatef(1/w, -flip/h, -1.0)
          * glScalef(1.0, flip, 2.0);
          */
-
-        /* Translate by slightly less than a half pixel to force a top-left
-         * filling convention. We want the difference to be large enough that
-         * it doesn't get lost due to rounding inside the driver, but small
-         * enough to prevent it from interfering with any anti-aliasing. */
         GLfloat xoffset = (63.0f / 64.0f) / state->viewport.Width;
         GLfloat yoffset = -(63.0f / 64.0f) / state->viewport.Height;
 
+        glLoadIdentity();
+        checkGLcall("glLoadIdentity");
         if (context->render_offscreen)
         {
-            /* D3D texture coordinates are flipped compared to OpenGL ones, so
-             * render everything upside down when rendering offscreen. */
             glTranslatef(xoffset, -yoffset, -1.0f);
             checkGLcall("glTranslatef(xoffset, -yoffset, -1.0f)");
             glScalef(1.0f, -1.0f, 2.0f);
