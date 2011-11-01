@@ -1758,7 +1758,7 @@ static BOOL create_fake_dll( LPCSTR filename )
 #elif defined __sparc__
     nt->FileHeader.Machine = IMAGE_FILE_MACHINE_SPARC;
 #elif defined __arm__
-    nt->FileHeader.Machine = IMAGE_FILE_MACHINE_ARM;
+    nt->FileHeader.Machine = IMAGE_FILE_MACHINE_ARMV7;
 #else
 # error You must specify the machine type
 #endif
