@@ -1055,7 +1055,8 @@ static NTSTATUS check_architecture( const IMAGE_NT_HEADERS *nt )
         return STATUS_INVALID_IMAGE_FORMAT;
     }
 #elif defined(__arm__) && !defined(__ARMEB__)
-    if (nt->FileHeader.Machine == IMAGE_FILE_MACHINE_ARM ||
+    if (nt->FileHeader.Machine == IMAGE_FILE_MACHINE_ARMV7 ||
+        nt->FileHeader.Machine == IMAGE_FILE_MACHINE_ARM ||
         nt->FileHeader.Machine == IMAGE_FILE_MACHINE_THUMB)
         return STATUS_SUCCESS;
 #endif
@@ -1074,6 +1075,7 @@ static NTSTATUS check_architecture( const IMAGE_NT_HEADERS *nt )
         case IMAGE_FILE_MACHINE_ALPHA64: arch = "Alpha-64"; break;
         case IMAGE_FILE_MACHINE_AMD64:   arch = "AMD-64"; break;
         case IMAGE_FILE_MACHINE_ARM:     arch = "ARM"; break;
+        case IMAGE_FILE_MACHINE_ARMV7:   arch = "ARMv7"; break;
         case IMAGE_FILE_MACHINE_THUMB:   arch = "ARM Thumb"; break;
         case IMAGE_FILE_MACHINE_SPARC:   arch = "SPARC"; break;
         default: arch = wine_dbg_sprintf( "Unknown-%04x", nt->FileHeader.Machine ); break;
