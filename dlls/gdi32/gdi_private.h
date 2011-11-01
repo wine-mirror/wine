@@ -233,6 +233,8 @@ extern BOOL get_bitmap_image( HBITMAP hbitmap, BITMAPINFO *info, struct gdi_imag
 extern HBITMAP BITMAP_CopyBitmap( HBITMAP hbitmap ) DECLSPEC_HIDDEN;
 extern BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, PHYSDEV physdev ) DECLSPEC_HIDDEN;
 
+extern BOOL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void **bits, UINT *usage ) DECLSPEC_HIDDEN;
+
 /* clipping.c */
 extern int get_clip_box( DC *dc, RECT *rect ) DECLSPEC_HIDDEN;
 extern void CLIPPING_UpdateGCRegion( DC * dc ) DECLSPEC_HIDDEN;

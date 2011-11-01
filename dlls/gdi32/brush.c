@@ -90,6 +90,35 @@ static BOOL store_bitmap_bits( BRUSHOBJ *brush, BITMAPOBJ *bmp )
     return TRUE;
 }
 
+BOOL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void **bits, UINT *usage )
+{
+    BRUSHOBJ *brush;
+    BOOL ret = FALSE;
+
+    if (!(brush = GDI_GetObjPtr( handle, OBJ_BRUSH ))) return FALSE;
+
+    if (!brush->info)
+    {
+        BITMAPOBJ *bmp = GDI_GetObjPtr( brush->bitmap, OBJ_BITMAP );
+
+        if (bmp)
+        {
+            store_bitmap_bits( brush, bmp );
+            GDI_ReleaseObj( brush->bitmap );
+        }
+    }
+    if (brush->info)
+    {
+        memcpy( info, brush->info, bitmap_info_size( brush->info, brush->usage ));
+        *bits = brush->bits.ptr;
+        *usage = brush->usage;
+        ret = TRUE;
+    }
+    GDI_ReleaseObj( handle );
+    return ret;
+}
+
+
 /***********************************************************************
  *           CreateBrushIndirect    (GDI32.@)
  *
