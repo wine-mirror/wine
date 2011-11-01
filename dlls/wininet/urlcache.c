@@ -3925,3 +3925,13 @@ BOOL WINAPI IncrementUrlCacheHeaderData(DWORD index, LPDWORD data)
     FIXME("(%u, %p)\n", index, data);
     return FALSE;
 }
+
+/***********************************************************************
+ *           RunOnceUrlCache (WININET.@)
+ */
+
+DWORD WINAPI RunOnceUrlCache(HWND hwnd, HINSTANCE hinst, LPSTR cmd, int cmdshow)
+{
+    FIXME("(%p, %p, %s, %d): stub\n", hwnd, hinst, debugstr_a(cmd), cmdshow);
+    return 0;
+}

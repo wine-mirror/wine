@@ -222,7 +222,7 @@
 @ stdcall RetrieveUrlCacheEntryFileW(wstr ptr ptr long)
 @ stdcall RetrieveUrlCacheEntryStreamA(str ptr ptr long long)
 @ stdcall RetrieveUrlCacheEntryStreamW(wstr ptr ptr long long)
-@ stub RunOnceUrlCache
+@ stdcall RunOnceUrlCache(ptr ptr str long)
 @ stdcall SetUrlCacheConfigInfoA(ptr long)
 @ stdcall SetUrlCacheConfigInfoW(ptr long)
 @ stdcall SetUrlCacheEntryGroup(str long int64 ptr long ptr) SetUrlCacheEntryGroupA
