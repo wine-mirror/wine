@@ -934,7 +934,7 @@ void CDECL wined3d_buffer_preload(struct wined3d_buffer *buffer)
     context_release(context);
 }
 
-static DWORD buffer_sanitize_flags(struct wined3d_buffer *buffer, DWORD flags)
+static DWORD buffer_sanitize_flags(const struct wined3d_buffer *buffer, DWORD flags)
 {
     /* Not all flags make sense together, but Windows never returns an error. Catch the
      * cases that could cause issues */
