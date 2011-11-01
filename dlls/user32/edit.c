@@ -783,12 +783,13 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
  */
 static void EDIT_CalcLineWidth_SL(EDITSTATE *es)
 {
-	const SIZE *size;
-
 	EDIT_UpdateUniscribeData(es, NULL, 0);
-	size = ScriptString_pSize(es->ssa);
-	if (size)
+	if (es->ssa)
+	{
+		const SIZE *size;
+		size = ScriptString_pSize(es->ssa);
 		es->text_width = size->cx;
+	}
 	else
 		es->text_width = 0;
 }
@@ -884,8 +885,9 @@ static INT EDIT_CharFromPos(EDITSTATE *es, INT x, INT y, LPBOOL after_wrap)
 		{
 			if (x)
 			{
-				const SIZE *size;
-				size = ScriptString_pSize(es->ssa);
+				const SIZE *size = NULL;
+				if (es->ssa)
+					size = ScriptString_pSize(es->ssa);
 				if (!size)
 					index = 0;
 				else if (x > size->cx)
