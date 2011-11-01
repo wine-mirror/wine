@@ -2630,6 +2630,10 @@ ShellLink_SetSite( IObjectWithSite *iface, IUnknown *punk )
 
     if ( punk )
         IUnknown_AddRef( punk );
+
+    if( This->site )
+        IUnknown_Release( This->site );
+
     This->site = punk;
 
     return S_OK;
