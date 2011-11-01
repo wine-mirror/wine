@@ -153,12 +153,12 @@ static BOOL matching_mount_point( const struct mount_point *mount, const MOUNTMG
 }
 
 /* implementation of IOCTL_MOUNTMGR_QUERY_POINTS */
-static NTSTATUS query_mount_points( const void *in_buff, SIZE_T insize,
-                                    void *out_buff, SIZE_T outsize, IO_STATUS_BLOCK *iosb )
+static NTSTATUS query_mount_points( void *buff, SIZE_T insize,
+                                    SIZE_T outsize, IO_STATUS_BLOCK *iosb )
 {
     UINT count, pos, size;
-    const MOUNTMGR_MOUNT_POINT *input = in_buff;
-    MOUNTMGR_MOUNT_POINTS *info = out_buff;
+    MOUNTMGR_MOUNT_POINT *input = buff;
+    MOUNTMGR_MOUNT_POINTS *info;
     struct mount_point *mount;
 
     /* sanity checks */
@@ -185,10 +185,17 @@ static NTSTATUS query_mount_points( const void *in_buff, SIZE_T insize,
 
     if (size > outsize)
     {
+        info = buff;
         if (size >= sizeof(info->Size)) info->Size = size;
         iosb->Information = sizeof(info->Size);
         return STATUS_MORE_ENTRIES;
     }
+
+    input = HeapAlloc( GetProcessHeap(), 0, insize );
+    if (!input)
+        return STATUS_NO_MEMORY;
+    memcpy( input, buff, insize );
+    info = buff;
 
     info->NumberOfMountPoints = count;
     count = 0;
@@ -198,23 +205,24 @@ static NTSTATUS query_mount_points( const void *in_buff, SIZE_T insize,
 
         info->MountPoints[count].DeviceNameOffset = pos;
         info->MountPoints[count].DeviceNameLength = mount->name.Length;
-        memcpy( (char *)out_buff + pos, mount->name.Buffer, mount->name.Length );
+        memcpy( (char *)buff + pos, mount->name.Buffer, mount->name.Length );
         pos += mount->name.Length;
 
         info->MountPoints[count].SymbolicLinkNameOffset = pos;
         info->MountPoints[count].SymbolicLinkNameLength = mount->link.Length;
-        memcpy( (char *)out_buff + pos, mount->link.Buffer, mount->link.Length );
+        memcpy( (char *)buff + pos, mount->link.Buffer, mount->link.Length );
         pos += mount->link.Length;
 
         info->MountPoints[count].UniqueIdOffset = pos;
         info->MountPoints[count].UniqueIdLength = mount->id_len;
-        memcpy( (char *)out_buff + pos, mount->id, mount->id_len );
+        memcpy( (char *)buff + pos, mount->id, mount->id_len );
         pos += mount->id_len;
         pos = (pos + sizeof(WCHAR) - 1) & ~(sizeof(WCHAR) - 1);
         count++;
     }
     info->Size = pos;
     iosb->Information = pos;
+    HeapFree( GetProcessHeap(), 0, input );
     return STATUS_SUCCESS;
 }
 
@@ -271,11 +279,11 @@ static NTSTATUS define_unix_drive( const void *in_buff, SIZE_T insize )
 }
 
 /* implementation of IOCTL_MOUNTMGR_QUERY_UNIX_DRIVE */
-static NTSTATUS query_unix_drive( const void *in_buff, SIZE_T insize,
-                                  void *out_buff, SIZE_T outsize, IO_STATUS_BLOCK *iosb )
+static NTSTATUS query_unix_drive( void *buff, SIZE_T insize,
+                                  SIZE_T outsize, IO_STATUS_BLOCK *iosb )
 {
-    const struct mountmgr_unix_drive *input = in_buff;
-    struct mountmgr_unix_drive *output = out_buff;
+    const struct mountmgr_unix_drive *input = buff;
+    struct mountmgr_unix_drive *output = NULL;
     char *device, *mount_point;
     int letter = tolowerW( input->letter );
     NTSTATUS status;
@@ -301,6 +309,9 @@ static NTSTATUS query_unix_drive( const void *in_buff, SIZE_T insize,
     size = sizeof(*output);
     if (device) size += strlen(device) + 1;
     if (mount_point) size += strlen(mount_point) + 1;
+
+    input = NULL;
+    output = buff;
 
     if (size > outsize)
     {
@@ -364,9 +375,8 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
     case IOCTL_MOUNTMGR_QUERY_POINTS:
         if (irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(MOUNTMGR_MOUNT_POINT))
             return STATUS_INVALID_PARAMETER;
-        irp->IoStatus.u.Status = query_mount_points( irpsp->Parameters.DeviceIoControl.Type3InputBuffer,
+        irp->IoStatus.u.Status = query_mount_points( irp->AssociatedIrp.SystemBuffer,
                                                      irpsp->Parameters.DeviceIoControl.InputBufferLength,
-                                                     irp->MdlAddress->StartVa,
                                                      irpsp->Parameters.DeviceIoControl.OutputBufferLength,
                                                      &irp->IoStatus );
         break;
@@ -374,15 +384,14 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
         if (irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct mountmgr_unix_drive))
             return STATUS_INVALID_PARAMETER;
         irp->IoStatus.Information = 0;
-        irp->IoStatus.u.Status = define_unix_drive( irpsp->Parameters.DeviceIoControl.Type3InputBuffer,
+        irp->IoStatus.u.Status = define_unix_drive( irp->AssociatedIrp.SystemBuffer,
                                                     irpsp->Parameters.DeviceIoControl.InputBufferLength );
         break;
     case IOCTL_MOUNTMGR_QUERY_UNIX_DRIVE:
         if (irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct mountmgr_unix_drive))
             return STATUS_INVALID_PARAMETER;
-        irp->IoStatus.u.Status = query_unix_drive( irpsp->Parameters.DeviceIoControl.Type3InputBuffer,
+        irp->IoStatus.u.Status = query_unix_drive( irp->AssociatedIrp.SystemBuffer,
                                                    irpsp->Parameters.DeviceIoControl.InputBufferLength,
-                                                   irp->MdlAddress->StartVa,
                                                    irpsp->Parameters.DeviceIoControl.OutputBufferLength,
                                                    &irp->IoStatus );
         break;

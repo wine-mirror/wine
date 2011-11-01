@@ -32,6 +32,7 @@
 #include "windef.h"
 #include "winternl.h"
 #include "excpt.h"
+#include "winioctl.h"
 #include "ddk/ntddk.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
@@ -151,7 +152,13 @@ static NTSTATUS process_ioctl( DEVICE_OBJECT *device, ULONG code, void *in_buff,
     memset( &mdl, 0x77, sizeof(mdl) );
 
     irp.RequestorMode = UserMode;
-    irp.AssociatedIrp.SystemBuffer = in_buff;
+    if ((code & 3) == METHOD_BUFFERED)
+    {
+        irp.AssociatedIrp.SystemBuffer = HeapAlloc( GetProcessHeap(), 0, max( in_size, *out_size ) );
+        if (!irp.AssociatedIrp.SystemBuffer)
+            return STATUS_NO_MEMORY;
+        memcpy( irp.AssociatedIrp.SystemBuffer, in_buff, in_size );
+    }
     irp.UserBuffer = out_buff;
     irp.MdlAddress = &mdl;
     irp.Tail.Overlay.s.u2.CurrentStackLocation = &irpsp;
@@ -186,6 +193,11 @@ static NTSTATUS process_ioctl( DEVICE_OBJECT *device, ULONG code, void *in_buff,
                  GetCurrentThreadId(), dispatch, device, &irp, status );
 
     *out_size = (irp.IoStatus.u.Status >= 0) ? irp.IoStatus.Information : 0;
+    if ((code & 3) == METHOD_BUFFERED)
+    {
+        memcpy( out_buff, irp.AssociatedIrp.SystemBuffer, *out_size );
+        HeapFree( GetProcessHeap(), 0, irp.AssociatedIrp.SystemBuffer );
+    }
     return irp.IoStatus.u.Status;
 }
 

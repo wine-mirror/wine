@@ -890,7 +890,7 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
         info.TracksPerCylinder = 255;
         info.SectorsPerTrack = 63;
         info.BytesPerSector = 512;
-        memcpy( irp->MdlAddress->StartVa, &info, len );
+        memcpy( irp->AssociatedIrp.SystemBuffer, &info, len );
         irp->IoStatus.Information = len;
         irp->IoStatus.u.Status = STATUS_SUCCESS;
         break;
@@ -910,7 +910,7 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
         info.DiskSize.QuadPart = info.Geometry.Cylinders.QuadPart * info.Geometry.TracksPerCylinder *
                                  info.Geometry.SectorsPerTrack * info.Geometry.BytesPerSector;
         info.Data[0]  = 0;
-        memcpy( irp->MdlAddress->StartVa, &info, len );
+        memcpy( irp->AssociatedIrp.SystemBuffer, &info, len );
         irp->IoStatus.Information = len;
         irp->IoStatus.u.Status = STATUS_SUCCESS;
         break;
@@ -919,7 +919,7 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
     {
         DWORD len = min( sizeof(dev->devnum), irpsp->Parameters.DeviceIoControl.OutputBufferLength );
 
-        memcpy( irp->MdlAddress->StartVa, &dev->devnum, len );
+        memcpy( irp->AssociatedIrp.SystemBuffer, &dev->devnum, len );
         irp->IoStatus.Information = len;
         irp->IoStatus.u.Status = STATUS_SUCCESS;
         break;
@@ -932,7 +932,7 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
         DWORD len = min( 32, irpsp->Parameters.DeviceIoControl.OutputBufferLength );
 
         FIXME( "returning zero-filled buffer for IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS\n" );
-        memset( irp->MdlAddress->StartVa, 0, len );
+        memset( irp->AssociatedIrp.SystemBuffer, 0, len );
         irp->IoStatus.Information = len;
         irp->IoStatus.u.Status = STATUS_SUCCESS;
         break;
