@@ -540,11 +540,11 @@ static BOOL paint_path( PHYSDEV dev, BOOL stroke, BOOL fill )
     if (!points || !types) goto done;
     if (GetPath( dev->hdc, points, types, size ) == -1) goto done;
 
-    if (fill) PSDRV_SetPen(dev);
+    if (stroke) PSDRV_SetPen(dev);
     PSDRV_SetClip(dev);
     for (i = 0; i < size; i++)
     {
-        switch (types[i] & ~PT_CLOSEFIGURE)
+        switch (types[i])
         {
         case PT_MOVETO:
             PSDRV_WriteMoveTo( dev, points[i].x, points[i].y );
