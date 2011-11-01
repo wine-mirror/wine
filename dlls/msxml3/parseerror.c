@@ -44,6 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 typedef struct
 {
+    DispatchEx dispex;
     IXMLDOMParseError IXMLDOMParseError_iface;
     LONG ref;
     LONG code, line, linepos, filepos;
@@ -69,6 +70,10 @@ static HRESULT WINAPI parseError_QueryInterface(
          IsEqualGUID( riid, &IID_IXMLDOMParseError ) )
     {
         *ppvObject = iface;
+    }
+    else if (dispex_query_interface(&This->dispex, riid, ppvObject))
+    {
+        return *ppvObject ? S_OK : E_NOINTERFACE;
     }
     else
     {
@@ -103,6 +108,7 @@ static ULONG WINAPI parseError_Release(
         SysFreeString(This->url);
         SysFreeString(This->reason);
         SysFreeString(This->srcText);
+        release_dispex(&This->dispex);
         heap_free( This );
     }
 
@@ -289,6 +295,18 @@ static const struct IXMLDOMParseErrorVtbl parseError_vtbl =
     parseError_get_filepos
 };
 
+static const tid_t parseError_iface_tids[] = {
+    IXMLDOMParseError_tid,
+    0
+};
+
+static dispex_static_data_t parseError_dispex = {
+    NULL,
+    IXMLDOMParseError_tid,
+    NULL,
+    parseError_iface_tids
+};
+
 IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, BSTR srcText,
                                       LONG line, LONG linepos, LONG filepos )
 {
@@ -308,6 +326,8 @@ IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, BSTR src
     This->line = line;
     This->linepos = linepos;
     This->filepos = filepos;
+
+    init_dispex(&This->dispex, (IUnknown*)&This->IXMLDOMParseError_iface, &parseError_dispex);
 
     return &This->IXMLDOMParseError_iface;
 }

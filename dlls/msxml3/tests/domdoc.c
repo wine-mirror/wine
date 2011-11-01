@@ -10627,6 +10627,7 @@ static void test_dispex(void)
 {
     const DOMNodeType *type = dispex_types_test;
     IXMLDOMNodeList *node_list;
+    IXMLDOMParseError *error;
     IXMLDOMDocument *doc;
     IUnknown *unk;
     HRESULT hr;
@@ -10662,6 +10663,14 @@ static void test_dispex(void)
     test_domobj_dispex(unk);
     IUnknown_Release(unk);
     IXMLDOMNodeList_Release(node_list);
+
+    /* IXMLDOMParseError */
+    hr = IXMLDOMDocument_get_parseError(doc, &error);
+    EXPECT_HR(hr, S_OK);
+    IXMLDOMParseError_QueryInterface(error, &IID_IUnknown, (void**)&unk);
+    test_domobj_dispex(unk);
+    IUnknown_Release(unk);
+    IXMLDOMParseError_Release(error);
 
     IXMLDOMDocument_Release(doc);
     free_bstrs();
