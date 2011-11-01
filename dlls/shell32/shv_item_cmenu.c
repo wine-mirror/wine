@@ -418,8 +418,8 @@ static void DoOpenProperties(ItemCmImpl *This, HWND hwnd)
 	psh.u3.phpage = hpages;
 	psh.u2.nStartPage = 0;
 
-	_ILSimpleGetTextW(This->apidl[0], (LPVOID)&wszFilename, MAX_PATH);
-	psh.pszCaption = (LPCWSTR)&wszFilename;
+	_ILSimpleGetTextW(This->apidl[0], (LPVOID)wszFilename, MAX_PATH);
+	psh.pszCaption = (LPCWSTR)wszFilename;
 
 	/* Find out where to look for the shell extensions */
 	if (_ILIsValue(This->apidl[0]))
