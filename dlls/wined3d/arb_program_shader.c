@@ -365,8 +365,9 @@ static unsigned int reserved_vs_const(const struct arb_vshader_private *shader_d
  *  or GL_FRAGMENT_PROGRAM_ARB (for pixel shaders)
  */
 /* GL locking is done by the caller */
-static unsigned int shader_arb_load_constantsF(struct wined3d_shader *shader, const struct wined3d_gl_info *gl_info,
-        GLuint target_type, unsigned int max_constants, const float *constants, char *dirty_consts)
+static unsigned int shader_arb_load_constantsF(const struct wined3d_shader *shader,
+        const struct wined3d_gl_info *gl_info, GLuint target_type, unsigned int max_constants,
+        const float *constants, char *dirty_consts)
 {
     struct wined3d_shader_lconst *lconst;
     DWORD i, j;
