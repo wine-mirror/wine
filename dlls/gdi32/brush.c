@@ -108,11 +108,17 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
 
     switch (ptr->logbrush.lbStyle)
     {
+    case BS_SOLID:
+    case BS_HOLLOW:
+    case BS_HATCHED:
+        break;
+
     case BS_PATTERN8X8:
         ptr->logbrush.lbStyle = BS_PATTERN;
         /* fall through */
     case BS_PATTERN:
         ptr->logbrush.lbHatch = (ULONG_PTR)BITMAP_CopyBitmap( (HBITMAP) ptr->logbrush.lbHatch );
+        ptr->logbrush.lbColor = 0;
         if (!ptr->logbrush.lbHatch) goto error;
         break;
 
@@ -123,7 +129,6 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
         if (!ptr->logbrush.lbHatch) goto error;
         break;
 
-    case BS_DIBPATTERN8X8:
     case BS_DIBPATTERN:
        {
             BITMAPINFO* bmi;
@@ -137,9 +142,12 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
             break;
        }
 
+    case BS_DIBPATTERN8X8:
+    case BS_MONOPATTERN:
+    case BS_INDEXED:
     default:
-        if(ptr->logbrush.lbStyle > BS_MONOPATTERN) goto error;
-        break;
+        WARN( "invalid brush style %u\n", ptr->logbrush.lbStyle );
+        goto error;
     }
 
     if ((hbrush = alloc_gdi_handle( &ptr->header, OBJ_BRUSH, &brush_funcs )))

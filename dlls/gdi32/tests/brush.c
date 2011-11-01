@@ -78,8 +78,143 @@ static void test_solidbrush(void)
            "GetObject succeeded on a deleted %s brush\n", stock[i].name);
     }
 }
- 
+
+static void test_pattern_brush(void)
+{
+    char buffer[sizeof(BITMAPINFOHEADER) + 2 * sizeof(RGBQUAD) + 32 * 32 / 8];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
+    HBRUSH brush;
+    HBITMAP bitmap;
+    LOGBRUSH br;
+    INT ret;
+    void *bits;
+    DIBSECTION dib;
+    HGLOBAL mem;
+
+    bitmap = CreateBitmap( 20, 20, 1, 1, NULL );
+    ok( bitmap != NULL, "CreateBitmap failed\n" );
+    brush = CreatePatternBrush( bitmap );
+    ok( brush != NULL, "CreatePatternBrush failed\n" );
+    memset( &br, 0x55, sizeof(br) );
+    ret = GetObjectW( brush, sizeof(br), &br );
+    ok( ret == sizeof(br), "wrong size %u\n", ret );
+    ok( br.lbStyle == BS_PATTERN, "wrong style %u\n", br.lbStyle );
+    ok( br.lbColor == 0, "wrong color %u\n", br.lbColor );
+    todo_wine ok( (HBITMAP)br.lbHatch == bitmap, "wrong handle %p/%p\n", (HBITMAP)br.lbHatch, bitmap );
+    DeleteObject( brush );
+
+    br.lbStyle = BS_PATTERN8X8;
+    br.lbColor = 0x12345;
+    br.lbHatch = (ULONG_PTR)bitmap;
+    brush = CreateBrushIndirect( &br );
+    ok( brush != NULL, "CreatePatternBrush failed\n" );
+    memset( &br, 0x55, sizeof(br) );
+    ret = GetObjectW( brush, sizeof(br), &br );
+    ok( ret == sizeof(br), "wrong size %u\n", ret );
+    ok( br.lbStyle == BS_PATTERN, "wrong style %u\n", br.lbStyle );
+    ok( br.lbColor == 0, "wrong color %u\n", br.lbColor );
+    todo_wine ok( (HBITMAP)br.lbHatch == bitmap, "wrong handle %p/%p\n", (HBITMAP)br.lbHatch, bitmap );
+    ret = GetObjectW( bitmap, sizeof(dib), &dib );
+    ok( ret == sizeof(dib.dsBm), "wrong size %u\n", ret );
+    DeleteObject( bitmap );
+    ret = GetObjectW( bitmap, sizeof(dib), &dib );
+    ok( ret == 0, "wrong size %u\n", ret );
+    DeleteObject( brush );
+
+    memset( info, 0, sizeof(buffer) );
+    info->bmiHeader.biSize = sizeof(info->bmiHeader);
+    info->bmiHeader.biHeight = 32;
+    info->bmiHeader.biWidth = 32;
+    info->bmiHeader.biBitCount = 1;
+    info->bmiHeader.biPlanes = 1;
+    info->bmiHeader.biCompression = BI_RGB;
+    bitmap = CreateDIBSection( 0, info, DIB_RGB_COLORS, (void**)&bits, NULL, 0 );
+    ok( bitmap != NULL, "CreateDIBSection failed\n" );
+
+    /* MSDN says a DIB section is not allowed, but it works fine */
+    brush = CreatePatternBrush( bitmap );
+    ok( brush != NULL, "CreatePatternBrush failed\n" );
+    memset( &br, 0x55, sizeof(br) );
+    ret = GetObjectW( brush, sizeof(br), &br );
+    ok( ret == sizeof(br), "wrong size %u\n", ret );
+    ok( br.lbStyle == BS_PATTERN, "wrong style %u\n", br.lbStyle );
+    ok( br.lbColor == 0, "wrong color %u\n", br.lbColor );
+    todo_wine ok( (HBITMAP)br.lbHatch == bitmap, "wrong handle %p/%p\n", (HBITMAP)br.lbHatch, bitmap );
+    ret = GetObjectW( bitmap, sizeof(dib), &dib );
+    ok( ret == sizeof(dib), "wrong size %u\n", ret );
+    DeleteObject( brush );
+    DeleteObject( bitmap );
+
+    brush = CreateDIBPatternBrushPt( info, DIB_RGB_COLORS );
+    ok( brush != NULL, "CreatePatternBrush failed\n" );
+    memset( &br, 0x55, sizeof(br) );
+    ret = GetObjectW( brush, sizeof(br), &br );
+    ok( ret == sizeof(br), "wrong size %u\n", ret );
+    ok( br.lbStyle == BS_DIBPATTERN, "wrong style %u\n", br.lbStyle );
+    ok( br.lbColor == 0, "wrong color %u\n", br.lbColor );
+    todo_wine ok( (BITMAPINFO *)br.lbHatch == info || broken(!br.lbHatch), /* nt4 */
+        "wrong handle %p/%p\n", (BITMAPINFO *)br.lbHatch, info );
+    DeleteObject( brush );
+
+    br.lbStyle = BS_DIBPATTERNPT;
+    br.lbColor = DIB_PAL_COLORS;
+    br.lbHatch = (ULONG_PTR)info;
+    brush = CreateBrushIndirect( &br );
+    ok( brush != NULL, "CreatePatternBrush failed\n" );
+    memset( &br, 0x55, sizeof(br) );
+    ret = GetObjectW( brush, sizeof(br), &br );
+    ok( ret == sizeof(br), "wrong size %u\n", ret );
+    ok( br.lbStyle == BS_DIBPATTERN, "wrong style %u\n", br.lbStyle );
+    todo_wine ok( br.lbColor == 0, "wrong color %u\n", br.lbColor );
+    todo_wine ok( (BITMAPINFO *)br.lbHatch == info || broken(!br.lbHatch), /* nt4 */
+        "wrong handle %p/%p\n", (BITMAPINFO *)br.lbHatch, info );
+
+    mem = GlobalAlloc( GMEM_MOVEABLE, sizeof(buffer) );
+    memcpy( GlobalLock( mem ), buffer, sizeof(buffer) );
+
+    br.lbStyle = BS_DIBPATTERN;
+    br.lbColor = DIB_PAL_COLORS;
+    br.lbHatch = (ULONG_PTR)mem;
+    brush = CreateBrushIndirect( &br );
+    ok( brush != NULL, "CreatePatternBrush failed\n" );
+    memset( &br, 0x55, sizeof(br) );
+    ret = GetObjectW( brush, sizeof(br), &br );
+    ok( ret == sizeof(br), "wrong size %u\n", ret );
+    ok( br.lbStyle == BS_DIBPATTERN, "wrong style %u\n", br.lbStyle );
+    todo_wine ok( br.lbColor == 0, "wrong color %u\n", br.lbColor );
+    ok( (HGLOBAL)br.lbHatch != mem, "wrong handle %p/%p\n", (HGLOBAL)br.lbHatch, mem );
+    bits = GlobalLock( mem );
+    todo_wine ok( (HGLOBAL)br.lbHatch == bits || broken(!br.lbHatch), /* nt4 */
+        "wrong handle %p/%p\n", (HGLOBAL)br.lbHatch, bits );
+    ret = GlobalFlags( mem );
+    ok( ret == 2, "wrong flags %x\n", ret );
+    DeleteObject( brush );
+    ret = GlobalFlags( mem );
+    ok( ret == 2, "wrong flags %x\n", ret );
+
+    br.lbStyle = BS_DIBPATTERN8X8;
+    br.lbColor = DIB_RGB_COLORS;
+    br.lbHatch = (ULONG_PTR)mem;
+    brush = CreateBrushIndirect( &br );
+    ok( !brush, "CreatePatternBrush succeeded\n" );
+
+    br.lbStyle = BS_MONOPATTERN;
+    br.lbColor = DIB_RGB_COLORS;
+    br.lbHatch = (ULONG_PTR)mem;
+    brush = CreateBrushIndirect( &br );
+    ok( !brush, "CreatePatternBrush succeeded\n" );
+
+    br.lbStyle = BS_INDEXED;
+    br.lbColor = DIB_RGB_COLORS;
+    br.lbHatch = (ULONG_PTR)mem;
+    brush = CreateBrushIndirect( &br );
+    ok( !brush, "CreatePatternBrush succeeded\n" );
+
+    GlobalFree( mem );
+}
+
 START_TEST(brush)
 {
     test_solidbrush();
+    test_pattern_brush();
 }
