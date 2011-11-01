@@ -600,7 +600,7 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 /* Line breaks just look back from the end and find the next break and try that. */
 
 		if (!(es->style & ES_AUTOHSCROLL)) {
-		   if (current_line->width > fw) {
+		   if (current_line->width > fw && fw > es->char_width) {
 
 			INT prev, next;
 			int w;
