@@ -66,7 +66,7 @@ msgstr "Programy (*.exe)"
 msgid "All files (*.*)"
 msgstr "Wszystkie pliki (*.*)"
 
-#: appwiz.rc:42
+#: appwiz.rc:42 wordpad.rc:245
 msgid "&Remove"
 msgstr "&Usuń..."
 
@@ -6250,7 +6250,7 @@ msgstr "Szereguj i&kony"
 msgid "Paste as Link"
 msgstr "Wklej &skrót"
 
-#: shell32.rc:64
+#: shell32.rc:64 wordpad.rc:210
 msgid "New"
 msgstr "&Nowy"
 
@@ -8652,7 +8652,8 @@ msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Otwarte zasoby: %lu\n"
 
 #: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -8794,6 +8795,7 @@ msgid "&Bottom:"
 msgstr "&Dolny:"
 
 #: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
+#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Anuluj"
 
@@ -8977,7 +8979,7 @@ msgstr "Tryb &eksperta"
 msgid "&Hidden component categories"
 msgstr "&Ukryte kategorie komponentów"
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68
+#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68 wordpad.rc:261
 msgid "&Toolbar"
 msgstr "Pasek &narzędzi"
 
@@ -11300,15 +11302,15 @@ msgstr "Format aka&pitu"
 msgid "&Get text"
 msgstr "&Pobierz tekst"
 
-#: wordpad.rc:69
+#: wordpad.rc:69 wordpad.rc:262
 msgid "&Formatbar"
 msgstr "P&asek formatu"
 
-#: wordpad.rc:70
+#: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "&Linijka"
 
-#: wordpad.rc:71
+#: wordpad.rc:71 wordpad.rc:264
 msgid "&Statusbar"
 msgstr "&Pasek stanu"
 
@@ -11360,6 +11362,78 @@ msgstr "Wine Wordpad - &informacje"
 msgid "Automatic"
 msgstr "Automatycznie"
 
+#: wordpad.rc:199
+msgid "Date and time"
+msgstr "Data i godzina"
+
+#: wordpad.rc:202
+msgid "Available formats"
+msgstr "Dostępne formaty"
+
+#: wordpad.rc:213
+msgid "New document type"
+msgstr "Typ nowego dokumentu"
+
+#: wordpad.rc:221
+msgid "Paragraph format"
+msgstr "Format akapitu"
+
+#: wordpad.rc:224
+msgid "Indentation"
+msgstr "Wcięcia"
+
+#: wordpad.rc:225 wordpad.rc:148
+msgid "Left"
+msgstr "Do lewej"
+
+#: wordpad.rc:227 wordpad.rc:149
+msgid "Right"
+msgstr "Do prawej"
+
+#: wordpad.rc:229
+msgid "First line"
+msgstr "Pierwszy wiersz"
+
+#: wordpad.rc:231
+msgid "Alignment"
+msgstr "Wyrównanie"
+
+#: wordpad.rc:239
+msgid "Tabs"
+msgstr "Tabulatory"
+
+#: wordpad.rc:242
+msgid "Tab stops"
+msgstr "Pozycje tabulatorów"
+
+#: wordpad.rc:244
+msgid "&Add"
+msgstr "&Dodaj"
+
+#: wordpad.rc:248
+msgid "Remove al&l"
+msgstr "Usuń &wszystkie"
+
+#: wordpad.rc:256
+msgid "Line wrapping"
+msgstr "Zawijanie wierszy"
+
+#: wordpad.rc:257
+msgid "&No line wrapping"
+msgstr "Bez zawijania wierszy"
+
+#: wordpad.rc:258
+msgid "Wrap text by the &window border"
+msgstr "Zawijaj do &brzegu okna"
+
+#: wordpad.rc:259
+msgid "Wrap text by the &margin"
+msgstr "Zawijaj do &marginesu"
+
+#: wordpad.rc:260
+msgid "Toolbars"
+msgstr "Paski narzędzi"
+
 #: wordpad.rc:136
 msgid "All documents (*.*)"
 msgstr "Wszystkie dokumenty (*.*)"
@@ -11391,14 +11465,6 @@ msgstr "Dokument tekstowy Unicode"
 #: wordpad.rc:143
 msgid "Printer files (*.prn)"
 msgstr "Pliki drukarki (*.prn)"
-
-#: wordpad.rc:148
-msgid "Left"
-msgstr "Do lewej"
-
-#: wordpad.rc:149
-msgid "Right"
-msgstr "Do prawej"
 
 #: wordpad.rc:150
 msgid "Center"

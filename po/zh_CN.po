@@ -62,10 +62,9 @@ msgstr "程序 (*.exe)"
 msgid "All files (*.*)"
 msgstr "所有文件 (*.*)"
 
-#: appwiz.rc:42
-#, fuzzy
+#: appwiz.rc:42 wordpad.rc:245
 msgid "&Remove"
-msgstr "删除 (&R)..."
+msgstr "删除(&R)"
 
 #: appwiz.rc:43
 #, fuzzy
@@ -6458,7 +6457,7 @@ msgstr "对齐图标"
 msgid "Paste as Link"
 msgstr "粘贴快捷方式"
 
-#: shell32.rc:64
+#: shell32.rc:64 wordpad.rc:210
 msgid "New"
 msgstr "新建"
 
@@ -8542,7 +8541,8 @@ msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
 #: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "确定"
 
@@ -8705,6 +8705,7 @@ msgid "&Bottom:"
 msgstr "下(&B)："
 
 #: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
+#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "取消"
 
@@ -8889,14 +8890,9 @@ msgstr "专家模式(&E)"
 msgid "&Hidden component categories"
 msgstr "隐藏部件分类(&H)"
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68
-#, fuzzy
+#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68 wordpad.rc:261
 msgid "&Toolbar"
-msgstr ""
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"工具条(&T)\n"
-"#-#-#-#-#  zh_CN.po (Wine)  #-#-#-#-#\n"
-"工具栏(&T)"
+msgstr "工具栏(&T)"
 
 #: oleview.rc:65 oleview.rc:87 winefile.rc:68
 msgid "&Status Bar"
@@ -11217,15 +11213,15 @@ msgstr "段落格式(&H)"
 msgid "&Get text"
 msgstr "获取文字(&G)"
 
-#: wordpad.rc:69
+#: wordpad.rc:69 wordpad.rc:262
 msgid "&Formatbar"
 msgstr "格式工具栏(&F)"
 
-#: wordpad.rc:70
+#: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "标尺(&R)"
 
-#: wordpad.rc:71
+#: wordpad.rc:71 wordpad.rc:264
 msgid "&Statusbar"
 msgstr "状态栏(&S)"
 
@@ -11278,6 +11274,78 @@ msgstr "关于 &Wine 写字板"
 msgid "Automatic"
 msgstr "自动"
 
+#: wordpad.rc:199
+msgid "Date and time"
+msgstr "日期和时间"
+
+#: wordpad.rc:202
+msgid "Available formats"
+msgstr "可选格式"
+
+#: wordpad.rc:213
+msgid "New document type"
+msgstr "新文件类型"
+
+#: wordpad.rc:221
+msgid "Paragraph format"
+msgstr "段落格式"
+
+#: wordpad.rc:224
+msgid "Indentation"
+msgstr "缩进"
+
+#: wordpad.rc:225 wordpad.rc:148
+msgid "Left"
+msgstr "左"
+
+#: wordpad.rc:227 wordpad.rc:149
+msgid "Right"
+msgstr "右"
+
+#: wordpad.rc:229
+msgid "First line"
+msgstr "首行"
+
+#: wordpad.rc:231
+msgid "Alignment"
+msgstr "对齐"
+
+#: wordpad.rc:239
+msgid "Tabs"
+msgstr "制表位"
+
+#: wordpad.rc:242
+msgid "Tab stops"
+msgstr "制表位宽度"
+
+#: wordpad.rc:244
+msgid "&Add"
+msgstr "添加(&A)"
+
+#: wordpad.rc:248
+msgid "Remove al&l"
+msgstr "全部删除(&R)"
+
+#: wordpad.rc:256
+msgid "Line wrapping"
+msgstr "自动换行"
+
+#: wordpad.rc:257
+msgid "&No line wrapping"
+msgstr "不要自动换行"
+
+#: wordpad.rc:258
+msgid "Wrap text by the &window border"
+msgstr "按窗口宽度(&W)"
+
+#: wordpad.rc:259
+msgid "Wrap text by the &margin"
+msgstr "按纸张宽度(&M)"
+
+#: wordpad.rc:260
+msgid "Toolbars"
+msgstr "工具栏"
+
 #: wordpad.rc:136
 msgid "All documents (*.*)"
 msgstr "所有文件 (*.*)"
@@ -11310,14 +11378,6 @@ msgstr "Unicode 文本文件"
 #, fuzzy
 msgid "Printer files (*.prn)"
 msgstr "打印文件 (*.PRN)"
-
-#: wordpad.rc:148
-msgid "Left"
-msgstr "左"
-
-#: wordpad.rc:149
-msgid "Right"
-msgstr "右"
 
 #: wordpad.rc:150
 msgid "Center"

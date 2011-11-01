@@ -67,7 +67,7 @@ msgstr "תכניות (‎*.exe)"
 msgid "All files (*.*)"
 msgstr "כל הקבצים (*.*)"
 
-#: appwiz.rc:42
+#: appwiz.rc:42 wordpad.rc:245
 msgid "&Remove"
 msgstr "ה&סרה"
 
@@ -6458,7 +6458,7 @@ msgstr "יישור הסמלים בשורות"
 msgid "Paste as Link"
 msgstr "הדבקה כקישור"
 
-#: shell32.rc:64
+#: shell32.rc:64 wordpad.rc:210
 msgid "New"
 msgstr "חדש"
 
@@ -8727,7 +8727,8 @@ msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Open resources: %lu\n"
 
 #: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "אישור"
 
@@ -8871,6 +8872,7 @@ msgid "&Bottom:"
 msgstr "&תחתונים:"
 
 #: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
+#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "ביטול"
 
@@ -9057,7 +9059,7 @@ msgstr "מצב &מומחה"
 msgid "&Hidden component categories"
 msgstr "קטגוריות רכיבים מו&סתרות"
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68
+#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68 wordpad.rc:261
 msgid "&Toolbar"
 msgstr "סרגל &כלים"
 
@@ -11445,15 +11447,15 @@ msgstr "עיצוב ה&פסקה"
 msgid "&Get text"
 msgstr "&קבלת טקסט"
 
-#: wordpad.rc:69
+#: wordpad.rc:69 wordpad.rc:262
 msgid "&Formatbar"
 msgstr "סרגל &עיצוב"
 
-#: wordpad.rc:70
+#: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "סרגל &מדידה"
 
-#: wordpad.rc:71
+#: wordpad.rc:71 wordpad.rc:264
 msgid "&Statusbar"
 msgstr "&שורת מצב"
 
@@ -11505,6 +11507,78 @@ msgstr "על &אודות כתבן Wine"
 msgid "Automatic"
 msgstr "אוטומטי"
 
+#: wordpad.rc:199
+msgid "Date and time"
+msgstr "תאריך ושעה"
+
+#: wordpad.rc:202
+msgid "Available formats"
+msgstr "התבניות הזמינות"
+
+#: wordpad.rc:213
+msgid "New document type"
+msgstr "סוג מסמך חדש"
+
+#: wordpad.rc:221
+msgid "Paragraph format"
+msgstr "עיצוב פסקה"
+
+#: wordpad.rc:224
+msgid "Indentation"
+msgstr "הזחה"
+
+#: wordpad.rc:225 wordpad.rc:148
+msgid "Left"
+msgstr "שמאל"
+
+#: wordpad.rc:227 wordpad.rc:149
+msgid "Right"
+msgstr "ימין"
+
+#: wordpad.rc:229
+msgid "First line"
+msgstr "שורה ראשונה"
+
+#: wordpad.rc:231
+msgid "Alignment"
+msgstr "יישור"
+
+#: wordpad.rc:239
+msgid "Tabs"
+msgstr "טאבים"
+
+#: wordpad.rc:242
+msgid "Tab stops"
+msgstr "טאבי עצירה"
+
+#: wordpad.rc:244
+msgid "&Add"
+msgstr "הו&ספה"
+
+#: wordpad.rc:248
+msgid "Remove al&l"
+msgstr "הסרת ה&כול"
+
+#: wordpad.rc:256
+msgid "Line wrapping"
+msgstr "גלישת שורות"
+
+#: wordpad.rc:257
+msgid "&No line wrapping"
+msgstr "&ללא גלישת שורות"
+
+#: wordpad.rc:258
+msgid "Wrap text by the &window border"
+msgstr "גלישת הטקסט לפי &גבול החלון"
+
+#: wordpad.rc:259
+msgid "Wrap text by the &margin"
+msgstr "גלישת הטקסט לפי ה&שוליים"
+
+#: wordpad.rc:260
+msgid "Toolbars"
+msgstr "סרגלי כלים"
+
 #: wordpad.rc:136
 msgid "All documents (*.*)"
 msgstr "כל המסמכים (*.*)"
@@ -11537,14 +11611,6 @@ msgstr "מסמך טקסט יוניקוד"
 #, fuzzy
 msgid "Printer files (*.prn)"
 msgstr "קובצי מדפסת (‎*.PRN)"
-
-#: wordpad.rc:148
-msgid "Left"
-msgstr "שמאל"
-
-#: wordpad.rc:149
-msgid "Right"
-msgstr "ימין"
 
 #: wordpad.rc:150
 msgid "Center"

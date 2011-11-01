@@ -69,7 +69,7 @@ msgstr "Programlar"
 msgid "All files (*.*)"
 msgstr "Tüm dosyalar (*.*)"
 
-#: appwiz.rc:42
+#: appwiz.rc:42 wordpad.rc:245
 #, fuzzy
 msgid "&Remove"
 msgstr "Paylaşımı S&il..."
@@ -6519,7 +6519,7 @@ msgstr "Izgaraya Uydur"
 msgid "Paste as Link"
 msgstr "Kısayol Yapıştır"
 
-#: shell32.rc:64
+#: shell32.rc:64 wordpad.rc:210
 msgid "New"
 msgstr "Yeni"
 
@@ -8895,7 +8895,8 @@ msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
 #: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "Tamam"
 
@@ -9058,6 +9059,7 @@ msgid "&Bottom:"
 msgstr "A&lt:"
 
 #: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
+#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "İptal"
 
@@ -9248,7 +9250,7 @@ msgstr "&Uzman"
 msgid "&Hidden component categories"
 msgstr ""
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68
+#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68 wordpad.rc:261
 #, fuzzy
 msgid "&Toolbar"
 msgstr ""
@@ -11619,15 +11621,15 @@ msgstr "Paragra&f biçimi"
 msgid "&Get text"
 msgstr "&Metni al"
 
-#: wordpad.rc:69
+#: wordpad.rc:69 wordpad.rc:262
 msgid "&Formatbar"
 msgstr ""
 
-#: wordpad.rc:70
+#: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr ""
 
-#: wordpad.rc:71
+#: wordpad.rc:71 wordpad.rc:264
 msgid "&Statusbar"
 msgstr ""
 
@@ -11680,6 +11682,93 @@ msgstr ""
 msgid "Automatic"
 msgstr ""
 
+#: wordpad.rc:199
+#, fuzzy
+msgid "Date and time"
+msgstr "Silinme tarihi"
+
+#: wordpad.rc:202
+#, fuzzy
+msgid "Available formats"
+msgstr "&Biçim"
+
+#: wordpad.rc:213
+#, fuzzy
+msgid "New document type"
+msgstr "Metin Dosyaları (*.txt)"
+
+#: wordpad.rc:221
+#, fuzzy
+msgid "Paragraph format"
+msgstr "Paragra&f biçimi"
+
+#: wordpad.rc:224
+#, fuzzy
+msgid "Indentation"
+msgstr "Bilgi"
+
+#: wordpad.rc:225 wordpad.rc:148
+#, fuzzy
+msgid "Left"
+msgstr "S&ol"
+
+#: wordpad.rc:227 wordpad.rc:149
+#, fuzzy
+msgid "Right"
+msgstr "S&ağ"
+
+#: wordpad.rc:229
+msgid "First line"
+msgstr ""
+
+#: wordpad.rc:231
+msgid "Alignment"
+msgstr ""
+
+#: wordpad.rc:239
+msgid "Tabs"
+msgstr ""
+
+#: wordpad.rc:242
+msgid "Tab stops"
+msgstr ""
+
+#: wordpad.rc:244
+msgid "&Add"
+msgstr ""
+
+#: wordpad.rc:248
+#, fuzzy
+msgid "Remove al&l"
+msgstr "Paylaşımı S&il..."
+
+#: wordpad.rc:256
+#, fuzzy
+msgid "Line wrapping"
+msgstr "Sürücü Eşleme"
+
+#: wordpad.rc:257
+#, fuzzy
+msgid "&No line wrapping"
+msgstr "Sürücü Eşleme"
+
+#: wordpad.rc:258
+msgid "Wrap text by the &window border"
+msgstr ""
+
+#: wordpad.rc:259
+msgid "Wrap text by the &margin"
+msgstr ""
+
+#: wordpad.rc:260
+#, fuzzy
+msgid "Toolbars"
+msgstr ""
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Araç Çubuğu\n"
+"#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
+"&Toolbar"
+
 #: wordpad.rc:136
 #, fuzzy
 msgid "All documents (*.*)"
@@ -11714,16 +11803,6 @@ msgstr ""
 #, fuzzy
 msgid "Printer files (*.prn)"
 msgstr "Metin Dosyaları (*.txt)"
-
-#: wordpad.rc:148
-#, fuzzy
-msgid "Left"
-msgstr "S&ol"
-
-#: wordpad.rc:149
-#, fuzzy
-msgid "Right"
-msgstr "S&ağ"
 
 #: wordpad.rc:150
 msgid "Center"

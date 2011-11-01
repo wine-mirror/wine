@@ -66,7 +66,7 @@ msgstr "Programs (*.exe)"
 msgid "All files (*.*)"
 msgstr "All files (*.*)"
 
-#: appwiz.rc:42
+#: appwiz.rc:42 wordpad.rc:245
 msgid "&Remove"
 msgstr "&Remove"
 
@@ -6242,7 +6242,7 @@ msgstr "Line up Icons"
 msgid "Paste as Link"
 msgstr "Paste as Link"
 
-#: shell32.rc:64
+#: shell32.rc:64 wordpad.rc:210
 msgid "New"
 msgstr "New"
 
@@ -8655,7 +8655,8 @@ msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%1      %2      %3      Open resources: %4!u!\n"
 
 #: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -8797,6 +8798,7 @@ msgid "&Bottom:"
 msgstr "&Bottom:"
 
 #: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
+#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Cancel"
 
@@ -8980,7 +8982,7 @@ msgstr "&Expert mode"
 msgid "&Hidden component categories"
 msgstr "&Hidden component categories"
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68
+#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68 wordpad.rc:261
 msgid "&Toolbar"
 msgstr "&Toolbar"
 
@@ -11289,15 +11291,15 @@ msgstr "Paragrap&h format"
 msgid "&Get text"
 msgstr "&Get text"
 
-#: wordpad.rc:69
+#: wordpad.rc:69 wordpad.rc:262
 msgid "&Formatbar"
 msgstr "&Formatbar"
 
-#: wordpad.rc:70
+#: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "&Ruler"
 
-#: wordpad.rc:71
+#: wordpad.rc:71 wordpad.rc:264
 msgid "&Statusbar"
 msgstr "&Statusbar"
 
@@ -11349,6 +11351,78 @@ msgstr "&About Wine Wordpad"
 msgid "Automatic"
 msgstr "Automatic"
 
+#: wordpad.rc:199
+msgid "Date and time"
+msgstr "Date and time"
+
+#: wordpad.rc:202
+msgid "Available formats"
+msgstr "Available formats"
+
+#: wordpad.rc:213
+msgid "New document type"
+msgstr "New document type"
+
+#: wordpad.rc:221
+msgid "Paragraph format"
+msgstr "Paragraph format"
+
+#: wordpad.rc:224
+msgid "Indentation"
+msgstr "Indentation"
+
+#: wordpad.rc:225 wordpad.rc:148
+msgid "Left"
+msgstr "Left"
+
+#: wordpad.rc:227 wordpad.rc:149
+msgid "Right"
+msgstr "Right"
+
+#: wordpad.rc:229
+msgid "First line"
+msgstr "First line"
+
+#: wordpad.rc:231
+msgid "Alignment"
+msgstr "Alignment"
+
+#: wordpad.rc:239
+msgid "Tabs"
+msgstr "Tabs"
+
+#: wordpad.rc:242
+msgid "Tab stops"
+msgstr "Tab stops"
+
+#: wordpad.rc:244
+msgid "&Add"
+msgstr "&Add"
+
+#: wordpad.rc:248
+msgid "Remove al&l"
+msgstr "Remove al&l"
+
+#: wordpad.rc:256
+msgid "Line wrapping"
+msgstr "Line wrapping"
+
+#: wordpad.rc:257
+msgid "&No line wrapping"
+msgstr "&No line wrapping"
+
+#: wordpad.rc:258
+msgid "Wrap text by the &window border"
+msgstr "Wrap text by the &window border"
+
+#: wordpad.rc:259
+msgid "Wrap text by the &margin"
+msgstr "Wrap text by the &margin"
+
+#: wordpad.rc:260
+msgid "Toolbars"
+msgstr "Toolbars"
+
 #: wordpad.rc:136
 msgid "All documents (*.*)"
 msgstr "All documents (*.*)"
@@ -11380,14 +11454,6 @@ msgstr "Unicode text document"
 #: wordpad.rc:143
 msgid "Printer files (*.prn)"
 msgstr "Printer files (*.prn)"
-
-#: wordpad.rc:148
-msgid "Left"
-msgstr "Left"
-
-#: wordpad.rc:149
-msgid "Right"
-msgstr "Right"
 
 #: wordpad.rc:150
 msgid "Center"

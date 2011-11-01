@@ -66,7 +66,7 @@ msgstr ""
 msgid "All files (*.*)"
 msgstr "Kaikki tiedostot (*.*)"
 
-#: appwiz.rc:42
+#: appwiz.rc:42 wordpad.rc:245
 #, fuzzy
 msgid "&Remove"
 msgstr "&Huomautus..."
@@ -6414,7 +6414,7 @@ msgstr "Järjestä kuvakkeet riviin"
 msgid "Paste as Link"
 msgstr "Liitä linkiksi"
 
-#: shell32.rc:64
+#: shell32.rc:64 wordpad.rc:210
 msgid "New"
 msgstr "Uusi"
 
@@ -8501,7 +8501,8 @@ msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
 #: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -8652,6 +8653,7 @@ msgid "&Bottom:"
 msgstr "&Ala:"
 
 #: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
+#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Peruuta"
 
@@ -8847,7 +8849,7 @@ msgstr "&Expertti"
 msgid "&Hidden component categories"
 msgstr ""
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68
+#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68 wordpad.rc:261
 msgid "&Toolbar"
 msgstr ""
 
@@ -11164,15 +11166,15 @@ msgstr ""
 msgid "&Get text"
 msgstr ""
 
-#: wordpad.rc:69
+#: wordpad.rc:69 wordpad.rc:262
 msgid "&Formatbar"
 msgstr ""
 
-#: wordpad.rc:70
+#: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr ""
 
-#: wordpad.rc:71
+#: wordpad.rc:71 wordpad.rc:264
 msgid "&Statusbar"
 msgstr ""
 
@@ -11236,6 +11238,88 @@ msgstr "T&ietoja..."
 msgid "Automatic"
 msgstr ""
 
+#: wordpad.rc:199
+#, fuzzy
+msgid "Date and time"
+msgstr "Poistoaika"
+
+#: wordpad.rc:202
+#, fuzzy
+msgid "Available formats"
+msgstr "&Eteenpäin"
+
+#: wordpad.rc:213
+#, fuzzy
+msgid "New document type"
+msgstr "HTML Dokumentti"
+
+#: wordpad.rc:221
+#, fuzzy
+msgid "Paragraph format"
+msgstr "&Etsi..."
+
+#: wordpad.rc:224
+#, fuzzy
+msgid "Indentation"
+msgstr "&Huomautus..."
+
+#: wordpad.rc:225 wordpad.rc:148
+#, fuzzy
+msgid "Left"
+msgstr "Vasen Reuna"
+
+#: wordpad.rc:227 wordpad.rc:149
+#, fuzzy
+msgid "Right"
+msgstr "Oikea Reuna"
+
+#: wordpad.rc:229
+msgid "First line"
+msgstr ""
+
+#: wordpad.rc:231
+msgid "Alignment"
+msgstr ""
+
+#: wordpad.rc:239
+#, fuzzy
+msgid "Tabs"
+msgstr "Talleta &nimellä..."
+
+#: wordpad.rc:242
+msgid "Tab stops"
+msgstr ""
+
+#: wordpad.rc:244
+msgid "&Add"
+msgstr ""
+
+#: wordpad.rc:248
+#, fuzzy
+msgid "Remove al&l"
+msgstr "&Huomautus..."
+
+#: wordpad.rc:256
+msgid "Line wrapping"
+msgstr ""
+
+#: wordpad.rc:257
+msgid "&No line wrapping"
+msgstr ""
+
+#: wordpad.rc:258
+msgid "Wrap text by the &window border"
+msgstr ""
+
+#: wordpad.rc:259
+msgid "Wrap text by the &margin"
+msgstr ""
+
+#: wordpad.rc:260
+#, fuzzy
+msgid "Toolbars"
+msgstr "Vieritä Tänne"
+
 #: wordpad.rc:136
 #, fuzzy
 msgid "All documents (*.*)"
@@ -11270,16 +11354,6 @@ msgstr ""
 #, fuzzy
 msgid "Printer files (*.prn)"
 msgstr "Teksti tiedostot (*.txt)"
-
-#: wordpad.rc:148
-#, fuzzy
-msgid "Left"
-msgstr "Vasen Reuna"
-
-#: wordpad.rc:149
-#, fuzzy
-msgid "Right"
-msgstr "Oikea Reuna"
 
 #: wordpad.rc:150
 msgid "Center"

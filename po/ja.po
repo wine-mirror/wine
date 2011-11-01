@@ -66,7 +66,7 @@ msgstr "プログラム(*.exe)"
 msgid "All files (*.*)"
 msgstr "すべてのファイル (*.*)"
 
-#: appwiz.rc:42
+#: appwiz.rc:42 wordpad.rc:245
 msgid "&Remove"
 msgstr "削除(&R)"
 
@@ -6235,7 +6235,7 @@ msgstr "等間隔に整列"
 msgid "Paste as Link"
 msgstr "ショートカットの貼り付け"
 
-#: shell32.rc:64
+#: shell32.rc:64 wordpad.rc:210
 msgid "New"
 msgstr "新規作成"
 
@@ -8649,7 +8649,8 @@ msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s       %s      リソース数: %lu\n"
 
 #: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "正常"
 
@@ -8791,6 +8792,7 @@ msgid "&Bottom:"
 msgstr "下(&B):"
 
 #: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
+#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "キャンセル"
 
@@ -8978,7 +8980,7 @@ msgstr "上級モード(&E)"
 msgid "&Hidden component categories"
 msgstr "隠されたコンポーネントのカテゴリ(&H)"
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68
+#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68 wordpad.rc:261
 msgid "&Toolbar"
 msgstr "ツール バー(&T)"
 
@@ -11301,15 +11303,15 @@ msgstr ""
 msgid "&Get text"
 msgstr ""
 
-#: wordpad.rc:69
+#: wordpad.rc:69 wordpad.rc:262
 msgid "&Formatbar"
 msgstr "書式バー(&F)"
 
-#: wordpad.rc:70
+#: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "ルーラー(&R)"
 
-#: wordpad.rc:71
+#: wordpad.rc:71 wordpad.rc:264
 msgid "&Statusbar"
 msgstr "ステータス バー(&S)"
 
@@ -11361,6 +11363,78 @@ msgstr "Wine Wordpadについて(&A)"
 msgid "Automatic"
 msgstr "自動"
 
+#: wordpad.rc:199
+msgid "Date and time"
+msgstr "日付と時刻"
+
+#: wordpad.rc:202
+msgid "Available formats"
+msgstr "利用できる形式"
+
+#: wordpad.rc:213
+msgid "New document type"
+msgstr "新しい文書形式"
+
+#: wordpad.rc:221
+msgid "Paragraph format"
+msgstr "段落の設定"
+
+#: wordpad.rc:224
+msgid "Indentation"
+msgstr "インデント"
+
+#: wordpad.rc:225 wordpad.rc:148
+msgid "Left"
+msgstr "左"
+
+#: wordpad.rc:227 wordpad.rc:149
+msgid "Right"
+msgstr "右"
+
+#: wordpad.rc:229
+msgid "First line"
+msgstr "最初の行(&F)"
+
+#: wordpad.rc:231
+msgid "Alignment"
+msgstr "整列(&A)"
+
+#: wordpad.rc:239
+msgid "Tabs"
+msgstr "タブの設定"
+
+#: wordpad.rc:242
+msgid "Tab stops"
+msgstr "タブの停止位置(&T)"
+
+#: wordpad.rc:244
+msgid "&Add"
+msgstr "追加(&A)"
+
+#: wordpad.rc:248
+msgid "Remove al&l"
+msgstr "すべて削除(&L)"
+
+#: wordpad.rc:256
+msgid "Line wrapping"
+msgstr "行の折り返し"
+
+#: wordpad.rc:257
+msgid "&No line wrapping"
+msgstr "折り返ししない"
+
+#: wordpad.rc:258
+msgid "Wrap text by the &window border"
+msgstr "ウィンドウの境界で折り返す(&W)"
+
+#: wordpad.rc:259
+msgid "Wrap text by the &margin"
+msgstr "マージンで折り返す(&M)"
+
+#: wordpad.rc:260
+msgid "Toolbars"
+msgstr "ツールバー"
+
 #: wordpad.rc:136
 msgid "All documents (*.*)"
 msgstr "すべてのファイル (*.*)"
@@ -11392,14 +11466,6 @@ msgstr "Unicodeテキスト文書"
 #: wordpad.rc:143
 msgid "Printer files (*.prn)"
 msgstr "プリンタ ファイル (*.prn)"
-
-#: wordpad.rc:148
-msgid "Left"
-msgstr "左"
-
-#: wordpad.rc:149
-msgid "Right"
-msgstr "右"
 
 #: wordpad.rc:150
 msgid "Center"

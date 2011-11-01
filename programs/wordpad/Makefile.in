@@ -12,25 +12,7 @@ C_SRCS = \
 	wordpad.c
 
 RC_SRCS = \
-	Da.rc \
-	De.rc \
 	En.rc \
-	Fr.rc \
-	He.rc \
-	It.rc \
-	Ja.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	No.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Si.rc \
-	Sv.rc \
-	Uk.rc \
-	Zh.rc \
 	wordpad.rc
 
 PO_SRCS = wordpad.rc

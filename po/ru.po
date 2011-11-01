@@ -65,7 +65,7 @@ msgstr "Программы (*.exe)"
 msgid "All files (*.*)"
 msgstr "Все файлы (*.*)"
 
-#: appwiz.rc:42
+#: appwiz.rc:42 wordpad.rc:245
 msgid "&Remove"
 msgstr "&Удалить"
 
@@ -6237,7 +6237,7 @@ msgstr "В&ыровнять значки"
 msgid "Paste as Link"
 msgstr "Вставить &ярлык"
 
-#: shell32.rc:64
+#: shell32.rc:64 wordpad.rc:210
 msgid "New"
 msgstr "Создать"
 
@@ -8666,7 +8666,8 @@ msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s         %s      Открытых ресурсов: %lu\n"
 
 #: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "ОК"
 
@@ -8808,6 +8809,7 @@ msgid "&Bottom:"
 msgstr "&Нижнее:"
 
 #: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
+#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Отмена"
 
@@ -8994,7 +8996,7 @@ msgstr "&Режим эксперта"
 msgid "&Hidden component categories"
 msgstr "&Скрытые категории компонентов"
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68
+#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68 wordpad.rc:261
 msgid "&Toolbar"
 msgstr "Панель &инструментов"
 
@@ -11314,15 +11316,15 @@ msgstr "Формат &абзаца"
 msgid "&Get text"
 msgstr "П&олучить текст"
 
-#: wordpad.rc:69
+#: wordpad.rc:69 wordpad.rc:262
 msgid "&Formatbar"
 msgstr "П&анель форматирования"
 
-#: wordpad.rc:70
+#: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "&Линейка"
 
-#: wordpad.rc:71
+#: wordpad.rc:71 wordpad.rc:264
 msgid "&Statusbar"
 msgstr "&Строка состояния"
 
@@ -11374,6 +11376,78 @@ msgstr "&О Wine Wordpad"
 msgid "Automatic"
 msgstr "Автоматически"
 
+#: wordpad.rc:199
+msgid "Date and time"
+msgstr "Дата и время"
+
+#: wordpad.rc:202
+msgid "Available formats"
+msgstr "Доступные форматы"
+
+#: wordpad.rc:213
+msgid "New document type"
+msgstr "Тип создаваемого документа"
+
+#: wordpad.rc:221
+msgid "Paragraph format"
+msgstr "Абзац"
+
+#: wordpad.rc:224
+msgid "Indentation"
+msgstr "Отступ"
+
+#: wordpad.rc:225 wordpad.rc:148
+msgid "Left"
+msgstr "По левому краю"
+
+#: wordpad.rc:227 wordpad.rc:149
+msgid "Right"
+msgstr "По правому краю"
+
+#: wordpad.rc:229
+msgid "First line"
+msgstr "Первая строка"
+
+#: wordpad.rc:231
+msgid "Alignment"
+msgstr "Выравнивание"
+
+#: wordpad.rc:239
+msgid "Tabs"
+msgstr "Табуляция"
+
+#: wordpad.rc:242
+msgid "Tab stops"
+msgstr "Позиции табуляции"
+
+#: wordpad.rc:244
+msgid "&Add"
+msgstr "&Установить"
+
+#: wordpad.rc:248
+msgid "Remove al&l"
+msgstr "Очистить &все"
+
+#: wordpad.rc:256
+msgid "Line wrapping"
+msgstr "Перенос по словам"
+
+#: wordpad.rc:257
+msgid "&No line wrapping"
+msgstr "Не переносить"
+
+#: wordpad.rc:258
+msgid "Wrap text by the &window border"
+msgstr "В границах &окна"
+
+#: wordpad.rc:259
+msgid "Wrap text by the &margin"
+msgstr "В границах &полей"
+
+#: wordpad.rc:260
+msgid "Toolbars"
+msgstr "Панели"
+
 #: wordpad.rc:136
 msgid "All documents (*.*)"
 msgstr "Все документы (*.*)"
@@ -11406,14 +11480,6 @@ msgstr "Документ в формате Unicode"
 #, fuzzy
 msgid "Printer files (*.prn)"
 msgstr "Файлы принтера (*.PRN)"
-
-#: wordpad.rc:148
-msgid "Left"
-msgstr "По левому краю"
-
-#: wordpad.rc:149
-msgid "Right"
-msgstr "По правому краю"
 
 #: wordpad.rc:150
 msgid "Center"

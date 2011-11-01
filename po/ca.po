@@ -66,7 +66,7 @@ msgstr "Programas (*.exe)"
 msgid "All files (*.*)"
 msgstr "Tots els fitxers (*.*)"
 
-#: appwiz.rc:42
+#: appwiz.rc:42 wordpad.rc:245
 msgid "&Remove"
 msgstr "T&reu"
 
@@ -6254,7 +6254,7 @@ msgstr "Alinea Icones"
 msgid "Paste as Link"
 msgstr "Enganxa com Enllaç"
 
-#: shell32.rc:64
+#: shell32.rc:64 wordpad.rc:210
 msgid "New"
 msgstr "Nou"
 
@@ -8727,7 +8727,8 @@ msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Recursos oberts: %lu\n"
 
 #: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "D'acord"
 
@@ -8873,6 +8874,7 @@ msgid "&Bottom:"
 msgstr "Abaix"
 
 #: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
+#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 #, fuzzy
 msgid "Cancel"
 msgstr "Cancel·lant..."
@@ -9059,7 +9061,7 @@ msgstr "Mode &expert"
 msgid "&Hidden component categories"
 msgstr "Categories &ocultes de component"
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68
+#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68 wordpad.rc:261
 msgid "&Toolbar"
 msgstr "Barra d'&Eines"
 
@@ -11405,15 +11407,15 @@ msgstr "Format de paragra&f"
 msgid "&Get text"
 msgstr "&Obté text"
 
-#: wordpad.rc:69
+#: wordpad.rc:69 wordpad.rc:262
 msgid "&Formatbar"
 msgstr "Barra de %format"
 
-#: wordpad.rc:70
+#: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "&Regle"
 
-#: wordpad.rc:71
+#: wordpad.rc:71 wordpad.rc:264
 msgid "&Statusbar"
 msgstr "Barra d'E&stat"
 
@@ -11465,6 +11467,88 @@ msgstr "&Quant a Wine Wordpad..."
 msgid "Automatic"
 msgstr "Automàtic"
 
+#: wordpad.rc:199
+#, fuzzy
+msgid "Date and time"
+msgstr "&Data i hora..."
+
+#: wordpad.rc:202
+#, fuzzy
+msgid "Available formats"
+msgstr "Disponible"
+
+#: wordpad.rc:213
+#, fuzzy
+msgid "New document type"
+msgstr "Document de text"
+
+#: wordpad.rc:221
+#, fuzzy
+msgid "Paragraph format"
+msgstr "Format de paragra&f"
+
+#: wordpad.rc:224
+#, fuzzy
+msgid "Indentation"
+msgstr "Implementació"
+
+#: wordpad.rc:225 wordpad.rc:148
+msgid "Left"
+msgstr "Esquerra"
+
+#: wordpad.rc:227 wordpad.rc:149
+msgid "Right"
+msgstr "Dreta"
+
+#: wordpad.rc:229
+msgid "First line"
+msgstr ""
+
+#: wordpad.rc:231
+msgid "Alignment"
+msgstr ""
+
+#: wordpad.rc:239
+#, fuzzy
+msgid "Tabs"
+msgstr "&Tabuladors..."
+
+#: wordpad.rc:242
+msgid "Tab stops"
+msgstr ""
+
+#: wordpad.rc:244
+msgid "&Add"
+msgstr ""
+
+#: wordpad.rc:248
+#, fuzzy
+msgid "Remove al&l"
+msgstr "T&reu"
+
+#: wordpad.rc:256
+#, fuzzy
+msgid "Line wrapping"
+msgstr "Mapa d'Unitat"
+
+#: wordpad.rc:257
+#, fuzzy
+msgid "&No line wrapping"
+msgstr "Mappings de Política"
+
+#: wordpad.rc:258
+msgid "Wrap text by the &window border"
+msgstr ""
+
+#: wordpad.rc:259
+msgid "Wrap text by the &margin"
+msgstr ""
+
+#: wordpad.rc:260
+#, fuzzy
+msgid "Toolbars"
+msgstr "Barras d'eines"
+
 #: wordpad.rc:136
 msgid "All documents (*.*)"
 msgstr "Tots els documents (*.*)"
@@ -11496,14 +11580,6 @@ msgstr "Document de text Unicode"
 #: wordpad.rc:143
 msgid "Printer files (*.prn)"
 msgstr "Fitxers d'impressora (*.prn)"
-
-#: wordpad.rc:148
-msgid "Left"
-msgstr "Esquerra"
-
-#: wordpad.rc:149
-msgid "Right"
-msgstr "Dreta"
 
 #: wordpad.rc:150
 msgid "Center"

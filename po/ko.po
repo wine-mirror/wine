@@ -66,7 +66,7 @@ msgstr "프로그램 (*.exe)"
 msgid "All files (*.*)"
 msgstr "모든 파일 (*.*)"
 
-#: appwiz.rc:42
+#: appwiz.rc:42 wordpad.rc:245
 msgid "&Remove"
 msgstr "제거(&R)"
 
@@ -6232,7 +6232,7 @@ msgstr "아이콘 정렬"
 msgid "Paste as Link"
 msgstr "링크로 붙여넣기"
 
-#: shell32.rc:64
+#: shell32.rc:64 wordpad.rc:210
 msgid "New"
 msgstr "새 작업"
 
@@ -8631,7 +8631,8 @@ msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      열린 리소스: %lu\n"
 
 #: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "확인"
 
@@ -8773,6 +8774,7 @@ msgid "&Bottom:"
 msgstr "아래(&B):"
 
 #: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
+#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "취소"
 
@@ -8958,7 +8960,7 @@ msgstr "전문가 모드(&E)"
 msgid "&Hidden component categories"
 msgstr "컴포넌트 분류 숨기기(&H)"
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68
+#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68 wordpad.rc:261
 msgid "&Toolbar"
 msgstr "도구바(&T)"
 
@@ -11262,15 +11264,15 @@ msgstr "단락 형식(&H)"
 msgid "&Get text"
 msgstr "문자열 얻기(&G)"
 
-#: wordpad.rc:69
+#: wordpad.rc:69 wordpad.rc:262
 msgid "&Formatbar"
 msgstr "형식바(&F)"
 
-#: wordpad.rc:70
+#: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "눈금바(&R)"
 
-#: wordpad.rc:71
+#: wordpad.rc:71 wordpad.rc:264
 msgid "&Statusbar"
 msgstr "상태바(&S)"
 
@@ -11322,6 +11324,78 @@ msgstr "Wine 워드패드에 관하여(&A)"
 msgid "Automatic"
 msgstr "자동"
 
+#: wordpad.rc:199
+msgid "Date and time"
+msgstr "날짜와 시간"
+
+#: wordpad.rc:202
+msgid "Available formats"
+msgstr "가능한 형식"
+
+#: wordpad.rc:213
+msgid "New document type"
+msgstr "새 문서 형식"
+
+#: wordpad.rc:221
+msgid "Paragraph format"
+msgstr "단락 형식"
+
+#: wordpad.rc:224
+msgid "Indentation"
+msgstr "들여쓰기"
+
+#: wordpad.rc:225 wordpad.rc:148
+msgid "Left"
+msgstr "왼쪽"
+
+#: wordpad.rc:227 wordpad.rc:149
+msgid "Right"
+msgstr "오른쪽"
+
+#: wordpad.rc:229
+msgid "First line"
+msgstr "첫째 줄"
+
+#: wordpad.rc:231
+msgid "Alignment"
+msgstr "정렬"
+
+#: wordpad.rc:239
+msgid "Tabs"
+msgstr "탭"
+
+#: wordpad.rc:242
+msgid "Tab stops"
+msgstr "탭 정지"
+
+#: wordpad.rc:244
+msgid "&Add"
+msgstr "더하기(&A)"
+
+#: wordpad.rc:248
+msgid "Remove al&l"
+msgstr "모두 지우기(&L)"
+
+#: wordpad.rc:256
+msgid "Line wrapping"
+msgstr "줄 넘기기"
+
+#: wordpad.rc:257
+msgid "&No line wrapping"
+msgstr "줄넘기지 않음"
+
+#: wordpad.rc:258
+msgid "Wrap text by the &window border"
+msgstr "창 가장자리서  글 넘기기(&W)"
+
+#: wordpad.rc:259
+msgid "Wrap text by the &margin"
+msgstr "가장자리에서 줄 넘기기(&M)"
+
+#: wordpad.rc:260
+msgid "Toolbars"
+msgstr " 도구바"
+
 #: wordpad.rc:136
 msgid "All documents (*.*)"
 msgstr "모든 문서 (*.*)"
@@ -11353,14 +11427,6 @@ msgstr "유니코드 텍스트 문서"
 #: wordpad.rc:143
 msgid "Printer files (*.prn)"
 msgstr "프린터 파일들 (*.prn)"
-
-#: wordpad.rc:148
-msgid "Left"
-msgstr "왼쪽"
-
-#: wordpad.rc:149
-msgid "Right"
-msgstr "오른쪽"
 
 #: wordpad.rc:150
 msgid "Center"

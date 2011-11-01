@@ -72,7 +72,7 @@ msgstr ""
 "#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
 "Összes fájl (*.*)"
 
-#: appwiz.rc:42
+#: appwiz.rc:42 wordpad.rc:245
 #, fuzzy
 msgid "&Remove"
 msgstr "&Eltávolítás..."
@@ -6599,7 +6599,7 @@ msgstr "Ikonok igazítása"
 msgid "Paste as Link"
 msgstr "Beillesztés linkként"
 
-#: shell32.rc:64
+#: shell32.rc:64 wordpad.rc:210
 msgid "New"
 msgstr "Új"
 
@@ -8703,7 +8703,8 @@ msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
 #: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -8881,6 +8882,7 @@ msgid "&Bottom:"
 msgstr "&Alsó:"
 
 #: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
+#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Mégse"
 
@@ -9069,7 +9071,7 @@ msgstr ""
 msgid "&Hidden component categories"
 msgstr ""
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68
+#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68 wordpad.rc:261
 #, fuzzy
 msgid "&Toolbar"
 msgstr ""
@@ -11434,15 +11436,15 @@ msgstr "&Bekezdés formátum"
 msgid "&Get text"
 msgstr "Sz&övegszerzés"
 
-#: wordpad.rc:69
+#: wordpad.rc:69 wordpad.rc:262
 msgid "&Formatbar"
 msgstr ""
 
-#: wordpad.rc:70
+#: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr ""
 
-#: wordpad.rc:71
+#: wordpad.rc:71 wordpad.rc:264
 msgid "&Statusbar"
 msgstr ""
 
@@ -11496,6 +11498,93 @@ msgstr ""
 msgid "Automatic"
 msgstr "Automatikus elrendezés"
 
+#: wordpad.rc:199
+#, fuzzy
+msgid "Date and time"
+msgstr "Törlési dátum"
+
+#: wordpad.rc:202
+#, fuzzy
+msgid "Available formats"
+msgstr "Elérhető"
+
+#: wordpad.rc:213
+#, fuzzy
+msgid "New document type"
+msgstr "dokumentum"
+
+#: wordpad.rc:221
+#, fuzzy
+msgid "Paragraph format"
+msgstr "&Bekezdés formátum"
+
+#: wordpad.rc:224
+#, fuzzy
+msgid "Indentation"
+msgstr "&Jegyzet..."
+
+#: wordpad.rc:225 wordpad.rc:148
+#, fuzzy
+msgid "Left"
+msgstr "Bal széle"
+
+#: wordpad.rc:227 wordpad.rc:149
+#, fuzzy
+msgid "Right"
+msgstr "Jobb széle"
+
+#: wordpad.rc:229
+msgid "First line"
+msgstr ""
+
+#: wordpad.rc:231
+msgid "Alignment"
+msgstr ""
+
+#: wordpad.rc:239
+msgid "Tabs"
+msgstr ""
+
+#: wordpad.rc:242
+msgid "Tab stops"
+msgstr ""
+
+#: wordpad.rc:244
+msgid "&Add"
+msgstr ""
+
+#: wordpad.rc:248
+#, fuzzy
+msgid "Remove al&l"
+msgstr "&Eltávolítás..."
+
+#: wordpad.rc:256
+#, fuzzy
+msgid "Line wrapping"
+msgstr "Időbélyegzés"
+
+#: wordpad.rc:257
+#, fuzzy
+msgid "&No line wrapping"
+msgstr "Szabály hozzárendelések"
+
+#: wordpad.rc:258
+msgid "Wrap text by the &window border"
+msgstr ""
+
+#: wordpad.rc:259
+msgid "Wrap text by the &margin"
+msgstr ""
+
+#: wordpad.rc:260
+#, fuzzy
+msgid "Toolbars"
+msgstr ""
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"&Eszköztár\n"
+"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
+"&Toolbar"
+
 #: wordpad.rc:136
 #, fuzzy
 msgid "All documents (*.*)"
@@ -11530,16 +11619,6 @@ msgstr ""
 #, fuzzy
 msgid "Printer files (*.prn)"
 msgstr "Szövegfájlok (*.txt)"
-
-#: wordpad.rc:148
-#, fuzzy
-msgid "Left"
-msgstr "Bal széle"
-
-#: wordpad.rc:149
-#, fuzzy
-msgid "Right"
-msgstr "Jobb széle"
 
 #: wordpad.rc:150
 msgid "Center"

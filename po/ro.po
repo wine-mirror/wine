@@ -65,10 +65,9 @@ msgstr "Programe (*.exe)"
 msgid "All files (*.*)"
 msgstr "Toate fișierele (*.*)"
 
-#: appwiz.rc:42
-#, fuzzy
+#: appwiz.rc:42 wordpad.rc:245
 msgid "&Remove"
-msgstr "&Sterge..."
+msgstr "&Elimină"
 
 #: appwiz.rc:43
 #, fuzzy
@@ -6737,7 +6736,7 @@ msgstr "Aliniază pictogramele"
 msgid "Paste as Link"
 msgstr "Inserează ca link"
 
-#: shell32.rc:64
+#: shell32.rc:64 wordpad.rc:210
 msgid "New"
 msgstr "Nou"
 
@@ -9166,7 +9165,8 @@ msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Resurse deschise: %lu\n"
 
 #: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -9340,6 +9340,7 @@ msgid "&Bottom:"
 msgstr "&Jos:"
 
 #: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
+#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Renunță"
 
@@ -9540,14 +9541,9 @@ msgstr "Mod &expert"
 msgid "&Hidden component categories"
 msgstr "Categorii de componente asc&unse"
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68
-#, fuzzy
+#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68 wordpad.rc:261
 msgid "&Toolbar"
-msgstr ""
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Bara de unel&te\n"
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Bara de instrumen&te"
+msgstr "Bara de unel&te"
 
 #: oleview.rc:65 oleview.rc:87 winefile.rc:68
 msgid "&Status Bar"
@@ -11934,15 +11930,15 @@ msgstr "Format &paragraf"
 msgid "&Get text"
 msgstr "Extra&ge textul"
 
-#: wordpad.rc:69
+#: wordpad.rc:69 wordpad.rc:262
 msgid "&Formatbar"
 msgstr "Bara de &format"
 
-#: wordpad.rc:70
+#: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "&Riglă"
 
-#: wordpad.rc:71
+#: wordpad.rc:71 wordpad.rc:264
 msgid "&Statusbar"
 msgstr "Bară de &stare"
 
@@ -11995,6 +11991,78 @@ msgstr "&Despre Wine Wordpad"
 msgid "Automatic"
 msgstr ""
 
+#: wordpad.rc:199
+msgid "Date and time"
+msgstr "Data și ora"
+
+#: wordpad.rc:202
+msgid "Available formats"
+msgstr "Formate disponibile"
+
+#: wordpad.rc:213
+msgid "New document type"
+msgstr "Nou tip de document"
+
+#: wordpad.rc:221
+msgid "Paragraph format"
+msgstr "Format paragraf"
+
+#: wordpad.rc:224
+msgid "Indentation"
+msgstr "Indentare"
+
+#: wordpad.rc:225 wordpad.rc:148
+msgid "Left"
+msgstr "Stânga"
+
+#: wordpad.rc:227 wordpad.rc:149
+msgid "Right"
+msgstr "Dreapta"
+
+#: wordpad.rc:229
+msgid "First line"
+msgstr "Primul rând"
+
+#: wordpad.rc:231
+msgid "Alignment"
+msgstr "Aliniere"
+
+#: wordpad.rc:239
+msgid "Tabs"
+msgstr "Taburi"
+
+#: wordpad.rc:242
+msgid "Tab stops"
+msgstr "Spațiere tab"
+
+#: wordpad.rc:244
+msgid "&Add"
+msgstr "&Adaugă"
+
+#: wordpad.rc:248
+msgid "Remove al&l"
+msgstr "E&limină tot"
+
+#: wordpad.rc:256
+msgid "Line wrapping"
+msgstr "Despărțire rânduri"
+
+#: wordpad.rc:257
+msgid "&No line wrapping"
+msgstr "Fără desparțire râ&nduri"
+
+#: wordpad.rc:258
+msgid "Wrap text by the &window border"
+msgstr "Încadrează textul în chenarul &ferestrei"
+
+#: wordpad.rc:259
+msgid "Wrap text by the &margin"
+msgstr "Încadrează textul în limitele ri&glei"
+
+#: wordpad.rc:260
+msgid "Toolbars"
+msgstr "Bare de unelte"
+
 #: wordpad.rc:136
 msgid "All documents (*.*)"
 msgstr "Toate documentele (*.*)"
@@ -12027,14 +12095,6 @@ msgstr "Document text unicode"
 #, fuzzy
 msgid "Printer files (*.prn)"
 msgstr "Fișiere de imprimat (*.PRN)"
-
-#: wordpad.rc:148
-msgid "Left"
-msgstr "Stânga"
-
-#: wordpad.rc:149
-msgid "Right"
-msgstr "Dreapta"
 
 #: wordpad.rc:150
 msgid "Center"

@@ -66,10 +66,9 @@ msgstr "Program (*.exe)"
 msgid "All files (*.*)"
 msgstr "Alla filer (*.*)"
 
-#: appwiz.rc:42
-#, fuzzy
+#: appwiz.rc:42 wordpad.rc:245
 msgid "&Remove"
-msgstr "&Ta bort..."
+msgstr "Ta &bort"
 
 #: appwiz.rc:43
 #, fuzzy
@@ -6245,7 +6244,7 @@ msgstr "Rada upp ikoner"
 msgid "Paste as Link"
 msgstr "Klistra in som genväg"
 
-#: shell32.rc:64
+#: shell32.rc:64 wordpad.rc:210
 msgid "New"
 msgstr "Ny"
 
@@ -8631,7 +8630,8 @@ msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Öppna resurser: %lu\n"
 
 #: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -8779,6 +8779,7 @@ msgid "&Bottom:"
 msgstr "&Under:"
 
 #: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
+#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Avbryt"
 
@@ -8969,7 +8970,7 @@ msgstr "&Expertläge"
 msgid "&Hidden component categories"
 msgstr "&Dolda komponentkategorier"
 
-#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68
+#: oleview.rc:64 oleview.rc:86 winefile.rc:66 wordpad.rc:68 wordpad.rc:261
 msgid "&Toolbar"
 msgstr "&Verktygsfält"
 
@@ -11305,15 +11306,15 @@ msgstr "Stycke&format"
 msgid "&Get text"
 msgstr "&Hämta text"
 
-#: wordpad.rc:69
+#: wordpad.rc:69 wordpad.rc:262
 msgid "&Formatbar"
 msgstr "&Formatfält"
 
-#: wordpad.rc:70
+#: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
 msgstr "&Linjal"
 
-#: wordpad.rc:71
+#: wordpad.rc:71 wordpad.rc:264
 msgid "&Statusbar"
 msgstr "&Statusfält"
 
@@ -11365,6 +11366,78 @@ msgstr "&Om Wine Wordpad"
 msgid "Automatic"
 msgstr "Automatic"
 
+#: wordpad.rc:199
+msgid "Date and time"
+msgstr "Datum och tid"
+
+#: wordpad.rc:202
+msgid "Available formats"
+msgstr "Tillgängliga format"
+
+#: wordpad.rc:213
+msgid "New document type"
+msgstr "Ny dokumenttyp"
+
+#: wordpad.rc:221
+msgid "Paragraph format"
+msgstr "Formatera stycke"
+
+#: wordpad.rc:224
+msgid "Indentation"
+msgstr "Indrag"
+
+#: wordpad.rc:225 wordpad.rc:148
+msgid "Left"
+msgstr "Vänsterställt"
+
+#: wordpad.rc:227 wordpad.rc:149
+msgid "Right"
+msgstr "Högerställt"
+
+#: wordpad.rc:229
+msgid "First line"
+msgstr "Första rad"
+
+#: wordpad.rc:231
+msgid "Alignment"
+msgstr "Justering"
+
+#: wordpad.rc:239
+msgid "Tabs"
+msgstr "Tabulatorer"
+
+#: wordpad.rc:242
+msgid "Tab stops"
+msgstr "Tabbstopp"
+
+#: wordpad.rc:244
+msgid "&Add"
+msgstr "Lägg &till"
+
+#: wordpad.rc:248
+msgid "Remove al&l"
+msgstr "Ta bort a&lla"
+
+#: wordpad.rc:256
+msgid "Line wrapping"
+msgstr "Radbrytning"
+
+#: wordpad.rc:257
+msgid "&No line wrapping"
+msgstr "&Ingen radbrytning"
+
+#: wordpad.rc:258
+msgid "Wrap text by the &window border"
+msgstr "&Bryt text vid fönsterkanten"
+
+#: wordpad.rc:259
+msgid "Wrap text by the &margin"
+msgstr "Bryt text vid &marginalen"
+
+#: wordpad.rc:260
+msgid "Toolbars"
+msgstr "Verktygsrader"
+
 #: wordpad.rc:136
 msgid "All documents (*.*)"
 msgstr "Alla filer (*.*)"
@@ -11397,14 +11470,6 @@ msgstr "Textdokument (Unicode)"
 #, fuzzy
 msgid "Printer files (*.prn)"
 msgstr "Skrivarfiler (*.PRN)"
-
-#: wordpad.rc:148
-msgid "Left"
-msgstr "Vänsterställt"
-
-#: wordpad.rc:149
-msgid "Right"
-msgstr "Högerställt"
 
 #: wordpad.rc:150
 msgid "Center"
