@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-10-01 18:05+0200\n"
+"PO-Revision-Date: 2011-11-01 14:03+0100\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -5916,17 +5916,12 @@ msgstr "Als Desktopelement einrichten..."
 
 #: shdoclc.rc:46 shdoclc.rc:95 shdoclc.rc:117 user32.rc:62
 msgid "Select &All"
-msgstr "&Alles markieren"
+msgstr "Alles &markieren"
 
 #: shdoclc.rc:47 shdoclc.rc:79 shdoclc.rc:92 shdoclc.rc:132 shdoclc.rc:159
 #: shdoclc.rc:183 user32.rc:59 wineconsole.rc:30 wordpad.rc:103
-#, fuzzy
 msgid "&Paste"
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"E&infügen\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"&Einfügen"
+msgstr "E&infügen"
 
 #: shdoclc.rc:49
 msgid "Create Shor&tcut"
@@ -5966,7 +5961,7 @@ msgstr "&Drucke Ziel"
 
 #: shdoclc.rc:68 shdoclc.rc:151 shdoclc.rc:175
 msgid "S&how Picture"
-msgstr "Zeige B&ild"
+msgstr "Zeige Bi&ld"
 
 #: shdoclc.rc:69 shdoclc.rc:176
 msgid "&Save Picture As..."
@@ -5994,13 +5989,8 @@ msgstr "Als Desktopelement einrichten..."
 
 #: shdoclc.rc:76 shdoclc.rc:90 shdoclc.rc:114 shdoclc.rc:156 shdoclc.rc:180
 #: user32.rc:57 wordpad.rc:101
-#, fuzzy
 msgid "Cu&t"
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"Aus&schneiden\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"&Ausschneiden"
+msgstr "&Ausschneiden"
 
 #: shdoclc.rc:77 shdoclc.rc:91 shdoclc.rc:115 shdoclc.rc:130 shdoclc.rc:157
 #: shdoclc.rc:181 shell32.rc:99 user32.rc:58 wineconsole.rc:29 winhlp32.rc:37
@@ -6070,7 +6060,7 @@ msgstr "Im &neuen Fenster öffnen"
 
 #: shdoclc.rc:129
 msgid "Cut"
-msgstr "Aus&schneiden"
+msgstr "Ausschneiden"
 
 #: shdoclc.rc:152
 msgid "&Save Video As..."
@@ -6748,9 +6738,8 @@ msgid "Trash"
 msgstr "Papierkorb"
 
 #: shlwapi.rc:27
-#, fuzzy
 msgid "%d bytes"
-msgstr "%ld Bytes"
+msgstr "%d Bytes"
 
 #: shlwapi.rc:28
 msgctxt "time unit: hours"
@@ -7726,9 +7715,8 @@ msgstr ""
 "\n"
 
 #: attrib.rc:28
-#, fuzzy
 msgid "%1: File Not Found\n"
-msgstr "%s : Datei nicht gefunden\n"
+msgstr "%1 : Datei nicht gefunden\n"
 
 #: attrib.rc:47
 msgid ""
@@ -8525,9 +8513,8 @@ msgid "PATH not found\n"
 msgstr "PATH nicht gefunden\n"
 
 #: cmd.rc:321
-#, fuzzy
 msgid "Press any key to continue... "
-msgstr "Drücken Sie die Eingabetaste um fortzufahren: "
+msgstr "Drücken Sie eine Taste um fortzufahren... "
 
 #: cmd.rc:322
 msgid "Wine Command Prompt"
@@ -8686,14 +8673,12 @@ msgstr ""
 "Der angegebene Dienst wird gestoppt.\n"
 
 #: net.rc:30
-#, fuzzy
 msgid "Stopping dependent service: %1\n"
-msgstr "Stoppe den abbhängigen Dienst: %s\n"
+msgstr "Stoppe den abbhängigen Dienst: %1\n"
 
 #: net.rc:31
-#, fuzzy
 msgid "Could not stop service %1\n"
-msgstr "Konnte den Dienst nicht stoppen %s\n"
+msgstr "Konnte den Dienst nicht stoppen %1\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
@@ -8704,34 +8689,28 @@ msgid "Could not get handle to service.\n"
 msgstr "Konnte den Zeiger zum Dienst nicht bekommen.\n"
 
 #: net.rc:34
-#, fuzzy
 msgid "The %1 service is starting.\n"
-msgstr "Der %s Dienst startet.\n"
+msgstr "Der %1 Dienst startet.\n"
 
 #: net.rc:35
-#, fuzzy
 msgid "The %1 service was started successfully.\n"
-msgstr "Der %s Dienst wurde erfolgreich gestartet.\n"
+msgstr "Der %1 Dienst wurde erfolgreich gestartet.\n"
 
 #: net.rc:36
-#, fuzzy
 msgid "The %1 service failed to start.\n"
-msgstr "Der Start des %s Dienstes ist fehlgeschlagen.\n"
+msgstr "Der Start des %1 Dienstes ist fehlgeschlagen.\n"
 
 #: net.rc:37
-#, fuzzy
 msgid "The %1 service is stopping.\n"
-msgstr "Der %s Dienst wird gestoppt.\n"
+msgstr "Der %1 Dienst wird gestoppt.\n"
 
 #: net.rc:38
-#, fuzzy
 msgid "The %1 service was stopped successfully.\n"
-msgstr "Der %s Dienst wurde erfolgreich beendet.\n"
+msgstr "Der %1 Dienst wurde erfolgreich beendet.\n"
 
 #: net.rc:39
-#, fuzzy
 msgid "The %1 service failed to stop.\n"
-msgstr "Der %s Dienst konnte nicht beendet werden.\n"
+msgstr "Der %1 Dienst konnte nicht beendet werden.\n"
 
 #: net.rc:41
 msgid "There are no entries in the list.\n"
@@ -8748,9 +8727,8 @@ msgstr ""
 "---------------------------------------------------------------\n"
 
 #: net.rc:43
-#, fuzzy
 msgid "%1      %2      %3      Open resources: %4!u!\n"
-msgstr "%s      %s      %s      Offene Ressourcen: %lu\n"
+msgstr "%1      %2      %3      Offene Ressourcen: %4!u!\n"
 
 #: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winefile.rc:131
 #: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
@@ -9090,13 +9068,8 @@ msgid "&Toolbar"
 msgstr "&Symbolleiste"
 
 #: oleview.rc:65 oleview.rc:87 winefile.rc:68
-#, fuzzy
 msgid "&Status Bar"
-msgstr ""
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"&Statusleiste\n"
-"#-#-#-#-#  de.po (Wine)  #-#-#-#-#\n"
-"S&tatusleiste"
+msgstr "S&tatusleiste"
 
 #: oleview.rc:67 regedit.rc:69 winefile.rc:82
 msgid "&Refresh\tF5"
@@ -10663,14 +10636,12 @@ msgid "(None)"
 msgstr "(Kein)"
 
 #: winecfg.rc:89
-#, fuzzy
 msgid "Audio test failed!"
-msgstr "Festplattenreset fehlgeschlagen\n"
+msgstr "Festplattenreset fehlgeschlagen!"
 
 #: winecfg.rc:91
-#, fuzzy
 msgid "(System default)"
-msgstr "System Ordner"
+msgstr "(System Ordner)"
 
 #: winecfg.rc:51
 msgid ""
@@ -10958,9 +10929,8 @@ msgid "Screen buffer size must be greater or equal to the window's one"
 msgstr "Die Bildschirmgröße muß größer oder gleich der des Fensters sein"
 
 #: wineconsole.rc:34
-#, fuzzy
 msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
-msgstr "Jeder Buchstabe ist %ld Pixel breit und %ld Pixel hoch"
+msgstr "Jeder Buchstabe ist %1!u! Pixel breit und %2!u! Pixel hoch"
 
 #: wineconsole.rc:35
 msgid "This is a test"
@@ -11276,9 +11246,8 @@ msgid "Security"
 msgstr "Sicherheit"
 
 #: winefile.rc:120
-#, fuzzy
 msgid "%1 of %2 free"
-msgstr "%s von %s frei"
+msgstr "%1 von %2 frei"
 
 #: winemine.rc:34
 msgid "&Game"
@@ -11349,9 +11318,8 @@ msgid "Rows"
 msgstr "Reihen"
 
 #: winemine.rc:87
-#, fuzzy
 msgid "Columns"
-msgstr "&Spalte"
+msgstr "Spalten"
 
 #: winemine.rc:88
 msgid "Mines"
@@ -11813,59 +11781,50 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "Falsche Parameteranzahl -  xcopy /? zeigt Hilfe an\n"
 
 #: xcopy.rc:28
-#, fuzzy
 msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
-msgstr "Unbekannter Parameter '%s' - xcopy /? zeigt Hilfe an\n"
+msgstr "Unbekannter Parameter '%1' - xcopy /? zeigt die Hilfe an\n"
 
 #: xcopy.rc:29
 msgid "Press <enter> to begin copying\n"
 msgstr "Eingabetaste betätigen, um mit dem Kopieren zu beginnen\n"
 
 #: xcopy.rc:30
-#, fuzzy
 msgid "%1!d! file(s) would be copied\n"
-msgstr "%d Datei(en) würden kopiert\n"
+msgstr "%1!d! Datei(en) würden kopiert werden\n"
 
 #: xcopy.rc:31
-#, fuzzy
 msgid "%1!d! file(s) copied\n"
-msgstr "%d Datei(en) kopiert\n"
+msgstr "%1!d! Datei(en) kopiert\n"
 
 #: xcopy.rc:34
-#, fuzzy
 msgid ""
 "Is '%1' a filename or directory\n"
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
-"Ist '%s' eine Datei oder ein Verzeichnis\n"
+"Ist '%1' eine Datei oder ein Verzeichnis\n"
 "am Zielsort?\n"
 "(D - Datei, V - Verzeichnis)\n"
 
 #: xcopy.rc:35
-#, fuzzy
 msgid "%1? (Yes|No)\n"
-msgstr "%s? (Ja|Nein)\n"
+msgstr "%1? (Ja|Nein)\n"
 
 #: xcopy.rc:36
-#, fuzzy
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr "%s überschreiben? (Ja|Nein|Alle)\n"
+msgstr "%1 überschreiben? (Ja|Nein|Alle)\n"
 
 #: xcopy.rc:37
-#, fuzzy
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr "Kopieren von '%s' nach '%s' fehlgeschlagen. Fehlernummer: %d\n"
+msgstr "Kopieren von '%1' nach '%2' fehlgeschlagen. Fehlernummer: %3!d!\n"
 
 #: xcopy.rc:38
-#, fuzzy
 msgid "Failed to open '%1'\n"
-msgstr "'%s' konnte nicht geöffnet werden\n"
+msgstr "'%1' konnte nicht geöffnet werden\n"
 
 #: xcopy.rc:39
-#, fuzzy
 msgid "Failed during reading of '%1'\n"
-msgstr "Fehler beim Lesen von '%s'\n"
+msgstr "Fehler beim Lesen von '%1'\n"
 
 #: xcopy.rc:43
 msgctxt "File key"
