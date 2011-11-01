@@ -1752,6 +1752,8 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
 
     TRACE("%x\n", eMessageType);
 
+    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_FATALEXIT)
+        log_type |= INSTALLLOGMODE_FATALEXIT;
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ERROR)
         log_type |= INSTALLLOGMODE_ERROR;
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_WARNING)
@@ -1760,6 +1762,10 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
         log_type |= INSTALLLOGMODE_USER;
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_INFO)
         log_type |= INSTALLLOGMODE_INFO;
+    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_RESOLVESOURCE)
+        log_type |= INSTALLLOGMODE_RESOLVESOURCE;
+    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_OUTOFDISKSPACE)
+        log_type |= INSTALLLOGMODE_OUTOFDISKSPACE;
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_COMMONDATA)
         log_type |= INSTALLLOGMODE_COMMONDATA;
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ACTIONSTART)
@@ -1768,6 +1774,12 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
         log_type |= INSTALLLOGMODE_ACTIONDATA;
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_PROGRESS)
         log_type |= INSTALLLOGMODE_PROGRESS;
+    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_INITIALIZE)
+        log_type |= INSTALLLOGMODE_INITIALIZE;
+    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_TERMINATE)
+        log_type |= INSTALLLOGMODE_TERMINATE;
+    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_SHOWDIALOG)
+        log_type |= INSTALLLOGMODE_SHOWDIALOG;
 
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ACTIONSTART)
     {
