@@ -243,7 +243,7 @@ static int be_arm_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
 
 struct backend_cpu be_arm =
 {
-    IMAGE_FILE_MACHINE_ARM,
+    IMAGE_FILE_MACHINE_ARMV7,
     4,
     be_cpu_linearize,
     be_cpu_build_addr,
