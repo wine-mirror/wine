@@ -132,86 +132,54 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
 	    index = 0;
       }
       break;
-    case BS_DIBPATTERN:
-      {
-	EMRCREATEDIBPATTERNBRUSHPT *emr;
-	DWORD bmSize, biSize, size;
-	BITMAPINFO *info = (BITMAPINFO *)logbrush.lbHatch;
-
-	if (info->bmiHeader.biCompression)
-            bmSize = info->bmiHeader.biSizeImage;
-        else
-	    bmSize = get_dib_image_size( info );
-	biSize = bitmap_info_size(info, LOWORD(logbrush.lbColor));
-	size = sizeof(EMRCREATEDIBPATTERNBRUSHPT) + biSize + bmSize;
-	emr = HeapAlloc( GetProcessHeap(), 0, size );
-	if(!emr) break;
-	emr->emr.iType = EMR_CREATEDIBPATTERNBRUSHPT;
-	emr->emr.nSize = size;
-	emr->ihBrush = index = EMFDRV_AddHandle( dev, hBrush );
-	emr->iUsage = LOWORD(logbrush.lbColor);
-	emr->offBmi = sizeof(EMRCREATEDIBPATTERNBRUSHPT);
-	emr->cbBmi = biSize;
-	emr->offBits = sizeof(EMRCREATEDIBPATTERNBRUSHPT) + biSize;
-	emr->cbBits = bmSize;
-	memcpy((char *)emr + sizeof(EMRCREATEDIBPATTERNBRUSHPT), info,
-	       biSize + bmSize );
-
-	if(!EMFDRV_WriteRecord( dev, &emr->emr ))
-	    index = 0;
-	HeapFree( GetProcessHeap(), 0, emr );
-      }
-      break;
-
     case BS_PATTERN:
+    case BS_DIBPATTERN:
       {
         EMRCREATEDIBPATTERNBRUSHPT *emr;
         char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
-        BITMAPINFO *dst_info, *src_info = (BITMAPINFO *)buffer;
-        struct gdi_image_bits bits;
-        DWORD size;
+        BITMAPINFO *info = (BITMAPINFO *)buffer;
+        DWORD info_size, image_size;
+        void *bits;
+        UINT usage;
 
-        if (!get_bitmap_image( (HANDLE)logbrush.lbHatch, src_info, &bits )) break;
-        if (src_info->bmiHeader.biBitCount != 1)
+        if (!get_brush_bitmap_info( hBrush, info, &bits, &usage )) break;
+        info_size = bitmap_info_size( info, usage );
+        image_size = get_dib_image_size( info );
+
+        emr = HeapAlloc( GetProcessHeap(), 0, sizeof(EMRCREATEDIBPATTERNBRUSHPT)+info_size+image_size );
+        if(!emr) break;
+
+        if (logbrush.lbStyle == BS_PATTERN && info->bmiHeader.biBitCount == 1)
         {
-            FIXME("Trying to create a color pattern brush\n");
-            if (bits.free) bits.free( &bits );
-            break;
+            /* Presumably to reduce the size of the written EMF, MS supports an
+             * undocumented iUsage value of 2, indicating a mono bitmap without the
+             * 8 byte 2 entry black/white palette. Stupidly, they could have saved
+             * over 20 bytes more by also ignoring the BITMAPINFO fields that are
+             * irrelevant/constant for monochrome bitmaps.
+             * FIXME: It may be that the DIB functions themselves accept this value.
+             */
+            emr->emr.iType = EMR_CREATEMONOBRUSH;
+            usage = DIB_PAL_MONO;
+            /* FIXME: There is an extra DWORD written by native before the BMI.
+             *        Not sure what its meant to contain.
+             */
+            emr->offBmi = sizeof( EMRCREATEDIBPATTERNBRUSHPT ) + sizeof(DWORD);
+            emr->cbBmi = sizeof( BITMAPINFOHEADER );
         }
-
-        /* FIXME: There is an extra DWORD written by native before the BMI.
-         *        Not sure what its meant to contain.
-         */
-        size = sizeof(EMRCREATEDIBPATTERNBRUSHPT) + sizeof(DWORD) +
-            sizeof(BITMAPINFOHEADER) + src_info->bmiHeader.biSizeImage;
-
-        emr = HeapAlloc( GetProcessHeap(), 0, size );
-        if(!emr)
+        else
         {
-            if (bits.free) bits.free( &bits );
-            break;
+            emr->emr.iType = EMR_CREATEDIBPATTERNBRUSHPT;
+            emr->offBmi = sizeof( EMRCREATEDIBPATTERNBRUSHPT );
+            emr->cbBmi = info_size;
         }
-
-        dst_info = (BITMAPINFO *)((LPBYTE)(emr + 1) + sizeof(DWORD));
-        dst_info->bmiHeader = src_info->bmiHeader;
-        memcpy( &dst_info->bmiHeader + 1, bits.ptr, dst_info->bmiHeader.biSizeImage );
-        if (bits.free) bits.free( &bits );
-
-        emr->emr.iType = EMR_CREATEMONOBRUSH;
-        emr->emr.nSize = size;
+        emr->emr.nSize = emr->offBits + emr->cbBits;
         emr->ihBrush = index = EMFDRV_AddHandle( dev, hBrush );
-        /* Presumably to reduce the size of the written EMF, MS supports an
-         * undocumented iUsage value of 2, indicating a mono bitmap without the
-         * 8 byte 2 entry black/white palette. Stupidly, they could have saved
-         * over 20 bytes more by also ignoring the BITMAPINFO fields that are
-         * irrelevant/constant for monochrome bitmaps.
-         * FIXME: It may be that the DIB functions themselves accept this value.
-         */
-        emr->iUsage = DIB_PAL_MONO;
-        emr->offBmi = (LPBYTE)dst_info - (LPBYTE)emr;
-        emr->cbBmi = sizeof( BITMAPINFOHEADER );
+        emr->iUsage = usage;
         emr->offBits = emr->offBmi + emr->cbBmi;
-        emr->cbBits = dst_info->bmiHeader.biSizeImage;
+        emr->cbBits = image_size;
+
+        memcpy( (BYTE *)emr + emr->offBmi, info, emr->cbBmi );
+        memcpy( (BYTE *)emr + emr->offBits, bits, emr->cbBits );
 
         if(!EMFDRV_WriteRecord( dev, &emr->emr ))
             index = 0;
