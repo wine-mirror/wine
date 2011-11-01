@@ -2546,7 +2546,7 @@ static BOOL crypt_export_plaintext_key(CRYPTKEY *pCryptKey, BYTE *pbData,
         pBlobHeader->aiKeyAlg = pCryptKey->aiAlgid;
 
         *pKeyLen = pCryptKey->dwKeyLen;
-        memcpy(pbKey, &pCryptKey->abKeyValue, pCryptKey->dwKeyLen);
+        memcpy(pbKey, pCryptKey->abKeyValue, pCryptKey->dwKeyLen);
     }
     *pdwDataLen = dwDataLen;
     return TRUE;
