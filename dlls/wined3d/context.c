@@ -1666,13 +1666,20 @@ void context_destroy(struct wined3d_device *device, struct wined3d_context *cont
 }
 
 /* GL locking is done by the caller */
-static inline void set_blit_dimension(UINT width, UINT height) {
+static void set_blit_dimension(UINT width, UINT height)
+{
+    const GLdouble projection[] =
+    {
+        2.0 / width,          0.0,  0.0, 0.0,
+                0.0, 2.0 / height,  0.0, 0.0,
+                0.0,          0.0,  2.0, 0.0,
+               -1.0,         -1.0, -1.0, 1.0,
+    };
+
     glMatrixMode(GL_PROJECTION);
     checkGLcall("glMatrixMode(GL_PROJECTION)");
-    glLoadIdentity();
-    checkGLcall("glLoadIdentity()");
-    glOrtho(0, width, 0, height, 0.0, -1.0);
-    checkGLcall("glOrtho");
+    glLoadMatrixd(projection);
+    checkGLcall("glLoadMatrixd");
     glViewport(0, 0, width, height);
     checkGLcall("glViewport");
 }
