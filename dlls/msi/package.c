@@ -1766,9 +1766,8 @@ INT MSI_ProcessMessage( MSIPACKAGE *package, INSTALLMESSAGE eMessageType, MSIREC
         log_type |= INSTALLLOGMODE_ACTIONSTART;
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ACTIONDATA)
         log_type |= INSTALLLOGMODE_ACTIONDATA;
-    /* just a guess */
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_PROGRESS)
-        log_type |= 0x800;
+        log_type |= INSTALLLOGMODE_PROGRESS;
 
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ACTIONSTART)
     {
