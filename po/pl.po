@@ -6312,7 +6312,7 @@ msgstr "Typ"
 msgid "Modified"
 msgstr "Zmodyfikowany"
 
-#: shell32.rc:138 winefile.rc:117
+#: shell32.rc:138 winefile.rc:175 winefile.rc:117
 msgid "Attributes"
 msgstr "Atrybuty"
 
@@ -8651,9 +8651,9 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Otwarte zasoby: %lu\n"
 
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
-#: wordpad.rc:246
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winefile.rc:131
+#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
+#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -8794,8 +8794,9 @@ msgstr "P&rawy:"
 msgid "&Bottom:"
 msgstr "&Dolny:"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
-#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winefile.rc:132
+#: winefile.rc:155 winefile.rc:185 winemine.rc:93 wordpad.rc:205
+#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Anuluj"
 
@@ -11009,6 +11010,98 @@ msgstr "&Sąsiadująco w poziomie\tCtrl+F4"
 #: winefile.rc:87
 msgid "&About Wine File Manager"
 msgstr "Menadżer plików Wine - i&nformacje"
+
+#: winefile.rc:125
+msgid "Select destination"
+msgstr "Wybór celu"
+
+#: winefile.rc:133
+msgid "&Browse..."
+msgstr "&Przeglądaj"
+
+#: winefile.rc:138
+msgid "By File Type"
+msgstr "Według typu pliku"
+
+#: winefile.rc:141
+msgid "&Name:"
+msgstr "&Nazwa:"
+
+#: winefile.rc:143
+msgid "File Type"
+msgstr "Wyświetl pliki typu"
+
+#: winefile.rc:144
+msgid "&Directories"
+msgstr "&Katalogi"
+
+#: winefile.rc:146
+msgid "&Programs"
+msgstr "&Programy"
+
+#: winefile.rc:148
+msgid "Docu&ments"
+msgstr "Doku&menty"
+
+#: winefile.rc:150
+msgid "&Other files"
+msgstr "&Inne pliki"
+
+#: winefile.rc:152
+msgid "Show Hidden/&System Files"
+msgstr "Pokaż pliki ukryte i &systemowe"
+
+#: winefile.rc:160
+msgid "Properties for %s"
+msgstr "Właściwości: %s"
+
+#: winefile.rc:163
+msgid "&File Name:"
+msgstr "&Nazwa pliku:"
+
+#: winefile.rc:165
+msgid "Full &Path:"
+msgstr "&Pełna ścieżka:"
+
+#: winefile.rc:167
+msgid "Last Change:"
+msgstr "&Ostatnio modyfikowany:"
+
+#: winefile.rc:169
+msgid "Version:"
+msgstr "&Wersja:"
+
+#: winefile.rc:171
+msgid "Cop&yright:"
+msgstr "Prawa a&utorskie:"
+
+#: winefile.rc:173
+msgid "Size:"
+msgstr "Wie&lkość:"
+
+#: winefile.rc:176
+msgid "&Read Only"
+msgstr "Tylko do &odczytu"
+
+#: winefile.rc:177
+msgid "H&idden"
+msgstr "&Ukryty"
+
+#: winefile.rc:178
+msgid "&Archive"
+msgstr "&Archiwalny"
+
+#: winefile.rc:179
+msgid "&System"
+msgstr "&Systemowy"
+
+#: winefile.rc:180
+msgid "&Compressed"
+msgstr "S&kompresowany"
+
+#: winefile.rc:181
+msgid "&Version Information"
+msgstr "We&rsja"
 
 #: winefile.rc:93
 msgid "Applying font settings"

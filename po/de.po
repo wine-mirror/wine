@@ -6317,7 +6317,7 @@ msgstr "Typ"
 msgid "Modified"
 msgstr "Geändert"
 
-#: shell32.rc:138 winefile.rc:117
+#: shell32.rc:138 winefile.rc:175 winefile.rc:117
 msgid "Attributes"
 msgstr "Attribute"
 
@@ -8752,9 +8752,9 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Offene Ressourcen: %lu\n"
 
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
-#: wordpad.rc:246
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winefile.rc:131
+#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
+#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -8895,8 +8895,9 @@ msgstr "&Rechts:"
 msgid "&Bottom:"
 msgstr "&Unten:"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
-#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winefile.rc:132
+#: winefile.rc:155 winefile.rc:185 winemine.rc:93 wordpad.rc:205
+#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -11133,6 +11134,98 @@ msgstr "&Nebeneinander\tUmschalt+F4"
 #: winefile.rc:87
 msgid "&About Wine File Manager"
 msgstr "&Info über Wine Dateimanager"
+
+#: winefile.rc:125
+msgid "Select destination"
+msgstr "Ziel auswählen"
+
+#: winefile.rc:133
+msgid "&Browse..."
+msgstr "&Durchsuchen"
+
+#: winefile.rc:138
+msgid "By File Type"
+msgstr "Angaben auswählen"
+
+#: winefile.rc:141
+msgid "&Name:"
+msgstr "&Name:"
+
+#: winefile.rc:143
+msgid "File Type"
+msgstr "Dateityp"
+
+#: winefile.rc:144
+msgid "&Directories"
+msgstr "&Verzeichnisse"
+
+#: winefile.rc:146
+msgid "&Programs"
+msgstr "&Programme"
+
+#: winefile.rc:148
+msgid "Docu&ments"
+msgstr "&Dokumente"
+
+#: winefile.rc:150
+msgid "&Other files"
+msgstr "&Andere Dateien"
+
+#: winefile.rc:152
+msgid "Show Hidden/&System Files"
+msgstr "Vers&teckte/Systemdateien anzeigen"
+
+#: winefile.rc:160
+msgid "Properties for %s"
+msgstr "Eigenschaften für %s"
+
+#: winefile.rc:163
+msgid "&File Name:"
+msgstr "&Dateiname:"
+
+#: winefile.rc:165
+msgid "Full &Path:"
+msgstr "&Pfad:"
+
+#: winefile.rc:167
+msgid "Last Change:"
+msgstr "Letzte &Änderung:"
+
+#: winefile.rc:169
+msgid "Version:"
+msgstr "&Version:"
+
+#: winefile.rc:171
+msgid "Cop&yright:"
+msgstr "&Copyright:"
+
+#: winefile.rc:173
+msgid "Size:"
+msgstr "&Größe:"
+
+#: winefile.rc:176
+msgid "&Read Only"
+msgstr "&Schreibgeschützt"
+
+#: winefile.rc:177
+msgid "H&idden"
+msgstr "&Versteckt"
+
+#: winefile.rc:178
+msgid "&Archive"
+msgstr "&Archiv"
+
+#: winefile.rc:179
+msgid "&System"
+msgstr "Sys&tem"
+
+#: winefile.rc:180
+msgid "&Compressed"
+msgstr "&Komprimiert"
+
+#: winefile.rc:181
+msgid "&Version Information"
+msgstr "&Versionsinformationen"
 
 #: winefile.rc:93
 msgid "Applying font settings"

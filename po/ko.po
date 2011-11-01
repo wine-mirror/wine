@@ -6294,7 +6294,7 @@ msgstr "종류"
 msgid "Modified"
 msgstr "수정날짜"
 
-#: shell32.rc:138 winefile.rc:117
+#: shell32.rc:138 winefile.rc:175 winefile.rc:117
 msgid "Attributes"
 msgstr "속성"
 
@@ -8630,9 +8630,9 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      열린 리소스: %lu\n"
 
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
-#: wordpad.rc:246
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winefile.rc:131
+#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
+#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "확인"
 
@@ -8773,8 +8773,9 @@ msgstr "오른쪽(&R):"
 msgid "&Bottom:"
 msgstr "아래(&B):"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
-#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winefile.rc:132
+#: winefile.rc:155 winefile.rc:185 winemine.rc:93 wordpad.rc:205
+#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "취소"
 
@@ -10973,6 +10974,98 @@ msgstr "세로 바둑판식 정렬(&V)\tCtrl+F4"
 #: winefile.rc:87
 msgid "&About Wine File Manager"
 msgstr "Wine 파일 관리자 정보(&A)"
+
+#: winefile.rc:125
+msgid "Select destination"
+msgstr "목적지 선택"
+
+#: winefile.rc:133
+msgid "&Browse..."
+msgstr "찾기(&B)"
+
+#: winefile.rc:138
+msgid "By File Type"
+msgstr "파일 타입으로"
+
+#: winefile.rc:141
+msgid "&Name:"
+msgstr "이름(&N):"
+
+#: winefile.rc:143
+msgid "File Type"
+msgstr "파일 타입"
+
+#: winefile.rc:144
+msgid "&Directories"
+msgstr "디렉토리(&D)"
+
+#: winefile.rc:146
+msgid "&Programs"
+msgstr "풀그림(&P)"
+
+#: winefile.rc:148
+msgid "Docu&ments"
+msgstr "문서파일(&M)"
+
+#: winefile.rc:150
+msgid "&Other files"
+msgstr "다른 파일(&O)"
+
+#: winefile.rc:152
+msgid "Show Hidden/&System Files"
+msgstr "숨김/시스템 파일 보여주기(&S)"
+
+#: winefile.rc:160
+msgid "Properties for %s"
+msgstr "%s 속성"
+
+#: winefile.rc:163
+msgid "&File Name:"
+msgstr "파일 이름(&F):"
+
+#: winefile.rc:165
+msgid "Full &Path:"
+msgstr "완전한 경로(&P):"
+
+#: winefile.rc:167
+msgid "Last Change:"
+msgstr "마지막 변화:"
+
+#: winefile.rc:169
+msgid "Version:"
+msgstr "버젼:"
+
+#: winefile.rc:171
+msgid "Cop&yright:"
+msgstr "저작권(&Y):"
+
+#: winefile.rc:173
+msgid "Size:"
+msgstr "크기:"
+
+#: winefile.rc:176
+msgid "&Read Only"
+msgstr "읽기 전용(&R)"
+
+#: winefile.rc:177
+msgid "H&idden"
+msgstr "숨김(&I)"
+
+#: winefile.rc:178
+msgid "&Archive"
+msgstr "아카이브(&A)"
+
+#: winefile.rc:179
+msgid "&System"
+msgstr "시스템(&S)"
+
+#: winefile.rc:180
+msgid "&Compressed"
+msgstr "압축(&C)"
+
+#: winefile.rc:181
+msgid "&Version Information"
+msgstr "버젼 정보(&V)"
 
 #: winefile.rc:93
 msgid "Applying font settings"

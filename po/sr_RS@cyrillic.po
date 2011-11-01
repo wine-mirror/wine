@@ -6575,7 +6575,7 @@ msgstr "Врста"
 msgid "Modified"
 msgstr "Измењено"
 
-#: shell32.rc:138 winefile.rc:117
+#: shell32.rc:138 winefile.rc:175 winefile.rc:117
 msgid "Attributes"
 msgstr "Особине"
 
@@ -8587,9 +8587,9 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
-#: wordpad.rc:246
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winefile.rc:131
+#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
+#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "У реду"
 
@@ -8740,8 +8740,9 @@ msgstr "&Десно:"
 msgid "&Bottom:"
 msgstr "&Дно:"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
-#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winefile.rc:132
+#: winefile.rc:155 winefile.rc:185 winemine.rc:93 wordpad.rc:205
+#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Откажи"
 
@@ -10964,6 +10965,122 @@ msgstr "Изабери &све\tCtrl+A"
 #, fuzzy
 msgid "&About Wine File Manager"
 msgstr "&О Бележници"
+
+#: winefile.rc:125
+#, fuzzy
+msgid "Select destination"
+msgstr "Изабери &све"
+
+#: winefile.rc:133
+#, fuzzy
+msgid "&Browse..."
+msgstr ""
+"#-#-#-#-#  sr_RS@cyrillic.po (Wine)  #-#-#-#-#\n"
+"Потражи\n"
+"#-#-#-#-#  sr_RS@cyrillic.po (Wine)  #-#-#-#-#\n"
+"Разгледај"
+
+#: winefile.rc:138
+#, fuzzy
+msgid "By File Type"
+msgstr "По &врсти"
+
+#: winefile.rc:141
+#, fuzzy
+msgid "&Name:"
+msgstr ""
+"#-#-#-#-#  sr_RS@cyrillic.po (Wine)  #-#-#-#-#\n"
+"Име\n"
+"#-#-#-#-#  sr_RS@cyrillic.po (Wine)  #-#-#-#-#\n"
+"Назив"
+
+#: winefile.rc:143
+#, fuzzy
+msgid "File Type"
+msgstr "Датотека"
+
+#: winefile.rc:144
+msgid "&Directories"
+msgstr ""
+
+#: winefile.rc:146
+#, fuzzy
+msgid "&Programs"
+msgstr "Програми"
+
+#: winefile.rc:148
+#, fuzzy
+msgid "Docu&ments"
+msgstr "Документи"
+
+#: winefile.rc:150
+msgid "&Other files"
+msgstr ""
+
+#: winefile.rc:152
+msgid "Show Hidden/&System Files"
+msgstr ""
+
+#: winefile.rc:160
+#, fuzzy
+msgid "Properties for %s"
+msgstr "Својства"
+
+#: winefile.rc:163
+#, fuzzy
+msgid "&File Name:"
+msgstr "&Датотека"
+
+#: winefile.rc:165
+msgid "Full &Path:"
+msgstr ""
+
+#: winefile.rc:167
+msgid "Last Change:"
+msgstr ""
+
+#: winefile.rc:169
+#, fuzzy
+msgid "Version:"
+msgstr "Издање"
+
+#: winefile.rc:171
+#, fuzzy
+msgid "Cop&yright:"
+msgstr "&Десно:"
+
+#: winefile.rc:173
+#, fuzzy
+msgid "Size:"
+msgstr "Величина"
+
+#: winefile.rc:176
+#, fuzzy
+msgid "&Read Only"
+msgstr "Спремно"
+
+#: winefile.rc:177
+msgid "H&idden"
+msgstr ""
+
+#: winefile.rc:178
+msgid "&Archive"
+msgstr ""
+
+#: winefile.rc:179
+#, fuzzy
+msgid "&System"
+msgstr "&Налепи\tCtrl+V"
+
+#: winefile.rc:180
+#, fuzzy
+msgid "&Compressed"
+msgstr "несажето"
+
+#: winefile.rc:181
+#, fuzzy
+msgid "&Version Information"
+msgstr "Подаци"
 
 #: winefile.rc:93
 msgid "Applying font settings"

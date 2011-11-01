@@ -6483,7 +6483,7 @@ msgstr "Tyyppi"
 msgid "Modified"
 msgstr "Muokattu"
 
-#: shell32.rc:138 winefile.rc:117
+#: shell32.rc:138 winefile.rc:175 winefile.rc:117
 msgid "Attributes"
 msgstr "Ominaisuudet"
 
@@ -8500,9 +8500,9 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
-#: wordpad.rc:246
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winefile.rc:131
+#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
+#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -8652,8 +8652,9 @@ msgstr "&Oikea:"
 msgid "&Bottom:"
 msgstr "&Ala:"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
-#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winefile.rc:132
+#: winefile.rc:155 winefile.rc:185 winemine.rc:93 wordpad.rc:205
+#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Peruuta"
 
@@ -10861,6 +10862,116 @@ msgstr "&Valitse kaikki"
 #: winefile.rc:87
 msgid "&About Wine File Manager"
 msgstr ""
+
+#: winefile.rc:125
+#, fuzzy
+msgid "Select destination"
+msgstr "&Valitse Kaikki"
+
+#: winefile.rc:133
+#, fuzzy
+msgid "&Browse..."
+msgstr "Selaa"
+
+#: winefile.rc:138
+#, fuzzy
+msgid "By File Type"
+msgstr "&Tyypin mukaan"
+
+#: winefile.rc:141
+#, fuzzy
+msgid "&Name:"
+msgstr "Nimi"
+
+#: winefile.rc:143
+#, fuzzy
+msgid "File Type"
+msgstr "Tiedosto"
+
+#: winefile.rc:144
+msgid "&Directories"
+msgstr ""
+
+#: winefile.rc:146
+#, fuzzy
+msgid "&Programs"
+msgstr "Ohjelmatiedostot"
+
+#: winefile.rc:148
+#, fuzzy
+msgid "Docu&ments"
+msgstr "Tiedostot"
+
+#: winefile.rc:150
+msgid "&Other files"
+msgstr ""
+
+#: winefile.rc:152
+msgid "Show Hidden/&System Files"
+msgstr ""
+
+#: winefile.rc:160
+#, fuzzy
+msgid "Properties for %s"
+msgstr "Ominaisuudet"
+
+#: winefile.rc:163
+#, fuzzy
+msgid "&File Name:"
+msgstr "&Tiedosto"
+
+#: winefile.rc:165
+msgid "Full &Path:"
+msgstr ""
+
+#: winefile.rc:167
+msgid "Last Change:"
+msgstr ""
+
+#: winefile.rc:169
+msgid "Version:"
+msgstr ""
+
+#: winefile.rc:171
+#, fuzzy
+msgid "Cop&yright:"
+msgstr "&Oikea:"
+
+#: winefile.rc:173
+#, fuzzy
+msgid "Size:"
+msgstr "Koko"
+
+#: winefile.rc:176
+#, fuzzy
+msgid "&Read Only"
+msgstr "Valmis"
+
+#: winefile.rc:177
+msgid "H&idden"
+msgstr ""
+
+#: winefile.rc:178
+msgid "&Archive"
+msgstr ""
+
+#: winefile.rc:179
+#, fuzzy
+msgid "&System"
+msgstr "L&iitä\tCtrl+V"
+
+#: winefile.rc:180
+msgid "&Compressed"
+msgstr ""
+
+#: winefile.rc:181
+#, fuzzy
+msgid "&Version Information"
+msgstr ""
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"Tiedoitus\n"
+"#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
+"Tietoja"
 
 #: winefile.rc:93
 msgid "Applying font settings"

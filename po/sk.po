@@ -6313,7 +6313,7 @@ msgstr "Typ"
 msgid "Modified"
 msgstr "Modifikovaný"
 
-#: shell32.rc:138 winefile.rc:117
+#: shell32.rc:138 winefile.rc:175 winefile.rc:117
 msgid "Attributes"
 msgstr "Atribúty"
 
@@ -8307,9 +8307,9 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
-#: wordpad.rc:246
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winefile.rc:131
+#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
+#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr ""
 
@@ -8452,8 +8452,9 @@ msgstr ""
 msgid "&Bottom:"
 msgstr ""
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
-#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winefile.rc:132
+#: winefile.rc:155 winefile.rc:185 winemine.rc:93 wordpad.rc:205
+#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr ""
 
@@ -10579,6 +10580,116 @@ msgstr ""
 #: winefile.rc:87
 msgid "&About Wine File Manager"
 msgstr ""
+
+#: winefile.rc:125
+msgid "Select destination"
+msgstr ""
+
+#: winefile.rc:133
+msgid "&Browse..."
+msgstr ""
+
+#: winefile.rc:138
+#, fuzzy
+msgid "By File Type"
+msgstr "Typ"
+
+#: winefile.rc:141
+msgid "&Name:"
+msgstr ""
+
+#: winefile.rc:143
+#, fuzzy
+msgid "File Type"
+msgstr "Súbor"
+
+#: winefile.rc:144
+msgid "&Directories"
+msgstr ""
+
+#: winefile.rc:146
+#, fuzzy
+msgid "&Programs"
+msgstr ""
+"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
+"&Vlastnosti\n"
+"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
+"&Properties"
+
+#: winefile.rc:148
+#, fuzzy
+msgid "Docu&ments"
+msgstr "Moje dokumenty"
+
+#: winefile.rc:150
+msgid "&Other files"
+msgstr ""
+
+#: winefile.rc:152
+msgid "Show Hidden/&System Files"
+msgstr ""
+
+#: winefile.rc:160
+#, fuzzy
+msgid "Properties for %s"
+msgstr ""
+"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
+"&Vlastnosti\n"
+"#-#-#-#-#  sk.po (Wine)  #-#-#-#-#\n"
+"&Properties"
+
+#: winefile.rc:163
+#, fuzzy
+msgid "&File Name:"
+msgstr "&Súbor"
+
+#: winefile.rc:165
+msgid "Full &Path:"
+msgstr ""
+
+#: winefile.rc:167
+msgid "Last Change:"
+msgstr ""
+
+#: winefile.rc:169
+msgid "Version:"
+msgstr ""
+
+#: winefile.rc:171
+msgid "Cop&yright:"
+msgstr ""
+
+#: winefile.rc:173
+#, fuzzy
+msgid "Size:"
+msgstr "Veľkosť"
+
+#: winefile.rc:176
+#, fuzzy
+msgid "&Read Only"
+msgstr "Pripravená"
+
+#: winefile.rc:177
+msgid "H&idden"
+msgstr ""
+
+#: winefile.rc:178
+msgid "&Archive"
+msgstr ""
+
+#: winefile.rc:179
+#, fuzzy
+msgid "&System"
+msgstr "Systémová cesta"
+
+#: winefile.rc:180
+msgid "&Compressed"
+msgstr ""
+
+#: winefile.rc:181
+#, fuzzy
+msgid "&Version Information"
+msgstr "Informácie"
 
 #: winefile.rc:93
 msgid "Applying font settings"

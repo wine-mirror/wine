@@ -8,27 +8,7 @@ C_SRCS = \
 	winefile.c
 
 RC_SRCS = \
-	Cs.rc \
-	Da.rc \
-	De.rc \
 	En.rc \
-	Es.rc \
-	Fr.rc \
-	He.rc \
-	It.rc \
-	Ja.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	No.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Si.rc \
-	Sv.rc \
-	Tr.rc \
-	Uk.rc \
 	winefile.rc
 
 PO_SRCS = winefile.rc

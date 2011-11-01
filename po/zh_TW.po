@@ -6547,7 +6547,7 @@ msgstr "類型"
 msgid "Modified"
 msgstr "已修改"
 
-#: shell32.rc:138 winefile.rc:117
+#: shell32.rc:138 winefile.rc:175 winefile.rc:117
 msgid "Attributes"
 msgstr "屬性"
 
@@ -8581,9 +8581,9 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
-#: wordpad.rc:246
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winefile.rc:131
+#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
+#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "確定"
 
@@ -8740,8 +8740,9 @@ msgstr "右(&R):"
 msgid "&Bottom:"
 msgstr "下(&B):"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
-#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winefile.rc:132
+#: winefile.rc:155 winefile.rc:185 winemine.rc:93 wordpad.rc:205
+#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "取消"
 
@@ -10955,6 +10956,118 @@ msgstr "垂直平鋪(&)\tCtrl+F4"
 #, fuzzy
 msgid "&About Wine File Manager"
 msgstr "&關於 Winefile..."
+
+#: winefile.rc:125
+#, fuzzy
+msgid "Select destination"
+msgstr "選擇資訊(&I)"
+
+#: winefile.rc:133
+#, fuzzy
+msgid "&Browse..."
+msgstr "瀏覽"
+
+#: winefile.rc:138
+#, fuzzy
+msgid "By File Type"
+msgstr "類型"
+
+#: winefile.rc:141
+#, fuzzy
+msgid "&Name:"
+msgstr "檔案名稱(&N)"
+
+#: winefile.rc:143
+#, fuzzy
+msgid "File Type"
+msgstr "檔案"
+
+#: winefile.rc:144
+msgid "&Directories"
+msgstr ""
+
+#: winefile.rc:146
+#, fuzzy
+msgid "&Programs"
+msgstr "程式"
+
+#: winefile.rc:148
+#, fuzzy
+msgid "Docu&ments"
+msgstr "我的檔案"
+
+#: winefile.rc:150
+msgid "&Other files"
+msgstr ""
+
+#: winefile.rc:152
+msgid "Show Hidden/&System Files"
+msgstr ""
+
+#: winefile.rc:160
+#, fuzzy
+msgid "Properties for %s"
+msgstr "屬性(&P)"
+
+#: winefile.rc:163
+#, fuzzy
+msgid "&File Name:"
+msgstr "電腦名稱(&M):"
+
+#: winefile.rc:165
+msgid "Full &Path:"
+msgstr ""
+
+#: winefile.rc:167
+msgid "Last Change:"
+msgstr ""
+
+#: winefile.rc:169
+#, fuzzy
+msgid "Version:"
+msgstr "版本"
+
+#: winefile.rc:171
+#, fuzzy
+msgid "Cop&yright:"
+msgstr "右(&R):"
+
+#: winefile.rc:173
+#, fuzzy
+msgid "Size:"
+msgstr "大小"
+
+#: winefile.rc:176
+#, fuzzy
+msgid "&Read Only"
+msgstr "唯讀(&0))"
+
+#: winefile.rc:177
+msgid "H&idden"
+msgstr ""
+
+#: winefile.rc:178
+msgid "&Archive"
+msgstr ""
+
+#: winefile.rc:179
+#, fuzzy
+msgid "&System"
+msgstr "系統(&S)\tCtrl+1"
+
+#: winefile.rc:180
+#, fuzzy
+msgid "&Compressed"
+msgstr "未壓縮"
+
+#: winefile.rc:181
+#, fuzzy
+msgid "&Version Information"
+msgstr ""
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"信息\n"
+"#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
+"資訊"
 
 #: winefile.rc:93
 msgid "Applying font settings"

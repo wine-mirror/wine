@@ -6813,7 +6813,7 @@ msgstr "Tip"
 msgid "Modified"
 msgstr "Modificat"
 
-#: shell32.rc:138 winefile.rc:117
+#: shell32.rc:138 winefile.rc:175 winefile.rc:117
 msgid "Attributes"
 msgstr "Atribute"
 
@@ -9164,9 +9164,9 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Resurse deschise: %lu\n"
 
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
-#: wordpad.rc:246
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winefile.rc:131
+#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
+#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -9339,8 +9339,9 @@ msgstr "&Dreapta:"
 msgid "&Bottom:"
 msgstr "&Jos:"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
-#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winefile.rc:132
+#: winefile.rc:155 winefile.rc:185 winemine.rc:93 wordpad.rc:205
+#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Renunță"
 
@@ -11636,6 +11637,98 @@ msgstr "Mozaic &vertical\tCtrl+F4"
 #, fuzzy
 msgid "&About Wine File Manager"
 msgstr "Administrator Wine File"
+
+#: winefile.rc:125
+msgid "Select destination"
+msgstr "Selectare destinație"
+
+#: winefile.rc:133
+msgid "&Browse..."
+msgstr "Navi&gare"
+
+#: winefile.rc:138
+msgid "By File Type"
+msgstr "După tipul de fișier"
+
+#: winefile.rc:141
+msgid "&Name:"
+msgstr "&Nume:"
+
+#: winefile.rc:143
+msgid "File Type"
+msgstr "Tip fișier"
+
+#: winefile.rc:144
+msgid "&Directories"
+msgstr "&Directoare"
+
+#: winefile.rc:146
+msgid "&Programs"
+msgstr "&Programe"
+
+#: winefile.rc:148
+msgid "Docu&ments"
+msgstr "Docu&mente"
+
+#: winefile.rc:150
+msgid "&Other files"
+msgstr "&Alte fișiere"
+
+#: winefile.rc:152
+msgid "Show Hidden/&System Files"
+msgstr "Arată fișierele ascunse/de &sistem"
+
+#: winefile.rc:160
+msgid "Properties for %s"
+msgstr "Proprietăți pentru %s"
+
+#: winefile.rc:163
+msgid "&File Name:"
+msgstr "Nume &fișier:"
+
+#: winefile.rc:165
+msgid "Full &Path:"
+msgstr "Calea com&pletă:"
+
+#: winefile.rc:167
+msgid "Last Change:"
+msgstr "Ultima modificare:"
+
+#: winefile.rc:169
+msgid "Version:"
+msgstr "Versiune:"
+
+#: winefile.rc:171
+msgid "Cop&yright:"
+msgstr "Drep&t de autor:"
+
+#: winefile.rc:173
+msgid "Size:"
+msgstr "Dimensiune:"
+
+#: winefile.rc:176
+msgid "&Read Only"
+msgstr "Doar citi&re"
+
+#: winefile.rc:177
+msgid "H&idden"
+msgstr "Ascu&ns"
+
+#: winefile.rc:178
+msgid "&Archive"
+msgstr "&Arhivă"
+
+#: winefile.rc:179
+msgid "&System"
+msgstr "&Sistem"
+
+#: winefile.rc:180
+msgid "&Compressed"
+msgstr "&Comprimat"
+
+#: winefile.rc:181
+msgid "&Version Information"
+msgstr "Informații despre &versiune"
 
 #: winefile.rc:93
 msgid "Applying font settings"
