@@ -305,7 +305,7 @@ static void set_reg_device(HWND hDlg, int dlgitem, const WCHAR *key_name)
 
 static void test_sound(void)
 {
-    if(!PlaySoundW(MAKEINTRESOURCEW(IDW_TESTSOUND), NULL, SND_RESOURCE | SND_SYNC)){
+    if(!PlaySoundW(MAKEINTRESOURCEW(IDW_TESTSOUND), NULL, SND_RESOURCE | SND_ASYNC)){
         WCHAR error_str[256], title_str[256];
 
         LoadStringW(GetModuleHandle(NULL), IDS_AUDIO_TEST_FAILED,
