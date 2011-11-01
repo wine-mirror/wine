@@ -374,7 +374,10 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
     {
     case IOCTL_MOUNTMGR_QUERY_POINTS:
         if (irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(MOUNTMGR_MOUNT_POINT))
-            return STATUS_INVALID_PARAMETER;
+        {
+            irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+            break;
+        }
         irp->IoStatus.u.Status = query_mount_points( irp->AssociatedIrp.SystemBuffer,
                                                      irpsp->Parameters.DeviceIoControl.InputBufferLength,
                                                      irpsp->Parameters.DeviceIoControl.OutputBufferLength,
@@ -382,14 +385,20 @@ static NTSTATUS WINAPI mountmgr_ioctl( DEVICE_OBJECT *device, IRP *irp )
         break;
     case IOCTL_MOUNTMGR_DEFINE_UNIX_DRIVE:
         if (irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct mountmgr_unix_drive))
-            return STATUS_INVALID_PARAMETER;
+        {
+            irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+            break;
+        }
         irp->IoStatus.Information = 0;
         irp->IoStatus.u.Status = define_unix_drive( irp->AssociatedIrp.SystemBuffer,
                                                     irpsp->Parameters.DeviceIoControl.InputBufferLength );
         break;
     case IOCTL_MOUNTMGR_QUERY_UNIX_DRIVE:
         if (irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(struct mountmgr_unix_drive))
-            return STATUS_INVALID_PARAMETER;
+        {
+            irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+            break;
+        }
         irp->IoStatus.u.Status = query_unix_drive( irp->AssociatedIrp.SystemBuffer,
                                                    irpsp->Parameters.DeviceIoControl.InputBufferLength,
                                                    irpsp->Parameters.DeviceIoControl.OutputBufferLength,
