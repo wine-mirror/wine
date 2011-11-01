@@ -1055,8 +1055,10 @@ static NTSTATUS check_architecture( const IMAGE_NT_HEADERS *nt )
         return STATUS_INVALID_IMAGE_FORMAT;
     }
 #elif defined(__arm__) && !defined(__ARMEB__)
-    if (nt->FileHeader.Machine == IMAGE_FILE_MACHINE_ARMV7 ||
-        nt->FileHeader.Machine == IMAGE_FILE_MACHINE_ARM ||
+    if (nt->FileHeader.Machine == IMAGE_FILE_MACHINE_ARM ||
+#if defined(__ARM_ARCH_7__) || defined(__ARM_ARCH_7A__) || defined(__ARM_ARCH_7R__)
+        nt->FileHeader.Machine == IMAGE_FILE_MACHINE_ARMV7 ||
+#endif
         nt->FileHeader.Machine == IMAGE_FILE_MACHINE_THUMB)
         return STATUS_SUCCESS;
 #endif
