@@ -2169,7 +2169,8 @@ msgstr "&Podgląd wydruku..."
 msgid "&Properties"
 msgstr "Właś&ciwości"
 
-#: ieframe.rc:40 oleview.rc:80 taskmgr.rc:139
+#: ieframe.rc:40 oleview.rc:80 oleview.rc:185 oleview.rc:198 oleview.rc:210
+#: taskmgr.rc:139
 msgid "&Close"
 msgstr "&Zamknij"
 
@@ -8650,7 +8651,8 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Otwarte zasoby: %lu\n"
 
-#: net.rc:44 notepad.rc:122 winemine.rc:68 winemine.rc:78 winemine.rc:92
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92
 msgid "OK"
 msgstr "OK"
 
@@ -8791,7 +8793,7 @@ msgstr "P&rawy:"
 msgid "&Bottom:"
 msgstr "&Dolny:"
 
-#: notepad.rc:123 wineboot.rc:31 winemine.rc:93
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
 msgid "Cancel"
 msgstr "Anuluj"
 
@@ -8998,6 +9000,78 @@ msgstr "Z&apisz jako..."
 #: oleview.rc:84
 msgid "&Group by type kind"
 msgstr "&Grupuj według rodzaju"
+
+#: oleview.rc:154
+msgid "Connect to another machine"
+msgstr "Połącz z innym komputerem"
+
+#: oleview.rc:157
+msgid "&Machine name:"
+msgstr "&Nazwa komputera:"
+
+#: oleview.rc:165
+msgid "System Configuration"
+msgstr "Konfiguracja systemu"
+
+#: oleview.rc:168
+msgid "System Settings"
+msgstr "Ustawienia systemu"
+
+#: oleview.rc:169
+msgid "&Enable Distributed COM"
+msgstr "Włącz &Distributed COM"
+
+#: oleview.rc:170
+msgid "Enable &Remote Connections (Win95 only)"
+msgstr "Włącz &zadalne połączenia (tylko Win95)"
+
+#: oleview.rc:171
+msgid ""
+"These settings change only registry values.\n"
+"They have no effect on Wine performance."
+msgstr ""
+"Te ustawienia zmieniają tylko wartości w rejestrze. Nie mają wpływu na "
+"zachowanie Wine."
+
+#: oleview.rc:178
+msgid "Default Interface Viewer"
+msgstr "Standardowa przeglądarka interfejsu"
+
+#: oleview.rc:181
+msgid "Interface"
+msgstr "Interfejs"
+
+#: oleview.rc:183
+msgid "IID:"
+msgstr "IID:"
+
+#: oleview.rc:186
+msgid "&View Type Info"
+msgstr "&Wyświetl TypeInfo"
+
+#: oleview.rc:191
+msgid "IPersist Interface Viewer"
+msgstr "Przeglądarka interfejsu IPersist"
+
+#: oleview.rc:194 oleview.rc:206
+msgid "Class Name:"
+msgstr "Nazwa klasy:"
+
+#: oleview.rc:196 oleview.rc:208
+msgid "CLSID:"
+msgstr "CLSID:"
+
+#: oleview.rc:203
+msgid "IPersistStream Interface Viewer"
+msgstr "Przeglądarka interfejsu IPersistStream"
+
+#: oleview.rc:211
+msgid "&IsDirty"
+msgstr "&IsDirty"
+
+#: oleview.rc:213
+msgid "&GetSizeMax"
+msgstr "&GetSizeMax"
 
 #: oleview.rc:93 oleview.rc:94
 msgid "OleView"

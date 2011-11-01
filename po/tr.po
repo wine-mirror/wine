@@ -2180,7 +2180,8 @@ msgstr ""
 "#-#-#-#-#  tr.po (Wine)  #-#-#-#-#\n"
 "Ö&zellikler"
 
-#: ieframe.rc:40 oleview.rc:80 taskmgr.rc:139
+#: ieframe.rc:40 oleview.rc:80 oleview.rc:185 oleview.rc:198 oleview.rc:210
+#: taskmgr.rc:139
 msgid "&Close"
 msgstr "&Kapat"
 
@@ -8893,7 +8894,8 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
-#: net.rc:44 notepad.rc:122 winemine.rc:68 winemine.rc:78 winemine.rc:92
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92
 msgid "OK"
 msgstr "Tamam"
 
@@ -9055,7 +9057,7 @@ msgstr "S&ağ:"
 msgid "&Bottom:"
 msgstr "A&lt:"
 
-#: notepad.rc:123 wineboot.rc:31 winemine.rc:93
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
 msgid "Cancel"
 msgstr "İptal"
 
@@ -9281,6 +9283,82 @@ msgstr "&Farklı Kaydet..."
 #: oleview.rc:84
 msgid "&Group by type kind"
 msgstr ""
+
+#: oleview.rc:154
+msgid "Connect to another machine"
+msgstr ""
+
+#: oleview.rc:157
+msgid "&Machine name:"
+msgstr ""
+
+#: oleview.rc:165
+#, fuzzy
+msgid "System Configuration"
+msgstr "&Onaylama..."
+
+#: oleview.rc:168
+#, fuzzy
+msgid "System Settings"
+msgstr "Öntanımlı Ayarlar"
+
+#: oleview.rc:169
+msgid "&Enable Distributed COM"
+msgstr ""
+
+#: oleview.rc:170
+msgid "Enable &Remote Connections (Win95 only)"
+msgstr ""
+
+#: oleview.rc:171
+msgid ""
+"These settings change only registry values.\n"
+"They have no effect on Wine performance."
+msgstr ""
+
+#: oleview.rc:178
+#, fuzzy
+msgid "Default Interface Viewer"
+msgstr "Öntanımlı yazıcı; "
+
+#: oleview.rc:181
+#, fuzzy
+msgid "Interface"
+msgstr "Dosya bulunamadı"
+
+#: oleview.rc:183
+msgid "IID:"
+msgstr ""
+
+#: oleview.rc:186
+#, fuzzy
+msgid "&View Type Info"
+msgstr "Bilgi"
+
+#: oleview.rc:191
+msgid "IPersist Interface Viewer"
+msgstr ""
+
+#: oleview.rc:194 oleview.rc:206
+msgid "Class Name:"
+msgstr ""
+
+#: oleview.rc:196 oleview.rc:208
+msgid "CLSID:"
+msgstr ""
+
+#: oleview.rc:203
+msgid "IPersistStream Interface Viewer"
+msgstr ""
+
+#: oleview.rc:211
+msgid "&IsDirty"
+msgstr ""
+
+#: oleview.rc:213
+#, fuzzy
+msgid "&GetSizeMax"
+msgstr "&Boyutlandır"
 
 #: oleview.rc:93 oleview.rc:94
 #, fuzzy

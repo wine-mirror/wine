@@ -2160,7 +2160,8 @@ msgstr "인쇄 미리보기(&W)..."
 msgid "&Properties"
 msgstr "등록 정보(&P)"
 
-#: ieframe.rc:40 oleview.rc:80 taskmgr.rc:139
+#: ieframe.rc:40 oleview.rc:80 oleview.rc:185 oleview.rc:198 oleview.rc:210
+#: taskmgr.rc:139
 msgid "&Close"
 msgstr "닫기(&C)"
 
@@ -8629,7 +8630,8 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      열린 리소스: %lu\n"
 
-#: net.rc:44 notepad.rc:122 winemine.rc:68 winemine.rc:78 winemine.rc:92
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92
 msgid "OK"
 msgstr "확인"
 
@@ -8770,7 +8772,7 @@ msgstr "오른쪽(&R):"
 msgid "&Bottom:"
 msgstr "아래(&B):"
 
-#: notepad.rc:123 wineboot.rc:31 winemine.rc:93
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
 msgid "Cancel"
 msgstr "취소"
 
@@ -8979,6 +8981,78 @@ msgstr "다른 이름으로 저장(&S)..."
 #: oleview.rc:84
 msgid "&Group by type kind"
 msgstr "타입 종류에 따라 구분(&G)"
+
+#: oleview.rc:154
+msgid "Connect to another machine"
+msgstr "다른 머신(machine)에 접속"
+
+#: oleview.rc:157
+msgid "&Machine name:"
+msgstr "머신(&Machine) 이름:"
+
+#: oleview.rc:165
+msgid "System Configuration"
+msgstr "시스템 설정"
+
+#: oleview.rc:168
+msgid "System Settings"
+msgstr "시스템 셋팅"
+
+#: oleview.rc:169
+msgid "&Enable Distributed COM"
+msgstr "DCOM 허용(&E)"
+
+#: oleview.rc:170
+msgid "Enable &Remote Connections (Win95 only)"
+msgstr "원격 연결 허용(&R) (Win95만 해당)"
+
+#: oleview.rc:171
+msgid ""
+"These settings change only registry values.\n"
+"They have no effect on Wine performance."
+msgstr ""
+"이 셋팅은 오직 레지스트리 값만 바꿉니다.\n"
+"WIne의 성능에는 아무 영향을 안 미칩니다."
+
+#: oleview.rc:178
+msgid "Default Interface Viewer"
+msgstr "기본 인터페이스 보기"
+
+#: oleview.rc:181
+msgid "Interface"
+msgstr "인터페이스"
+
+#: oleview.rc:183
+msgid "IID:"
+msgstr "IID:"
+
+#: oleview.rc:186
+msgid "&View Type Info"
+msgstr "타입 정보 보기(&V)"
+
+#: oleview.rc:191
+msgid "IPersist Interface Viewer"
+msgstr "IPersist 인터페이스 보기"
+
+#: oleview.rc:194 oleview.rc:206
+msgid "Class Name:"
+msgstr "클래스 이름:"
+
+#: oleview.rc:196 oleview.rc:208
+msgid "CLSID:"
+msgstr "CLSID:"
+
+#: oleview.rc:203
+msgid "IPersistStream Interface Viewer"
+msgstr "IPersistStream 인터페이스 보기"
+
+#: oleview.rc:211
+msgid "&IsDirty"
+msgstr "&IsDirty"
+
+#: oleview.rc:213
+msgid "&GetSizeMax"
+msgstr "&GetSizeMax"
 
 #: oleview.rc:93 oleview.rc:94
 msgid "OleView"

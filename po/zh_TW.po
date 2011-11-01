@@ -2176,7 +2176,8 @@ msgstr "列印預覽(&W)..."
 msgid "&Properties"
 msgstr "屬性(&P)"
 
-#: ieframe.rc:40 oleview.rc:80 taskmgr.rc:139
+#: ieframe.rc:40 oleview.rc:80 oleview.rc:185 oleview.rc:198 oleview.rc:210
+#: taskmgr.rc:139
 msgid "&Close"
 msgstr "關閉(&C)"
 
@@ -8581,7 +8582,8 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
-#: net.rc:44 notepad.rc:122 winemine.rc:68 winemine.rc:78 winemine.rc:92
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92
 msgid "OK"
 msgstr "確定"
 
@@ -8738,7 +8740,7 @@ msgstr "右(&R):"
 msgid "&Bottom:"
 msgstr "下(&B):"
 
-#: notepad.rc:123 wineboot.rc:31 winemine.rc:93
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winemine.rc:93
 msgid "Cancel"
 msgstr "取消"
 
@@ -8955,6 +8957,78 @@ msgstr "另存為(&S)..."
 #: oleview.rc:84
 msgid "&Group by type kind"
 msgstr "按類型分組(&G)"
+
+#: oleview.rc:154
+msgid "Connect to another machine"
+msgstr "連接到另外一台電腦"
+
+#: oleview.rc:157
+msgid "&Machine name:"
+msgstr "電腦名稱(&M):"
+
+#: oleview.rc:165
+msgid "System Configuration"
+msgstr "系統設定"
+
+#: oleview.rc:168
+msgid "System Settings"
+msgstr "系統設定"
+
+#: oleview.rc:169
+msgid "&Enable Distributed COM"
+msgstr "啟用分佈式CO&M"
+
+#: oleview.rc:170
+msgid "Enable &Remote Connections (Win95 only)"
+msgstr "啟用遠程連接(限&Win95)"
+
+#: oleview.rc:171
+msgid ""
+"These settings change only registry values.\n"
+"They have no effect on Wine performance."
+msgstr ""
+"這些設定只改變註冊表值.\n"
+"它對Wine的性能沒有影響."
+
+#: oleview.rc:178
+msgid "Default Interface Viewer"
+msgstr "默認界面查看器"
+
+#: oleview.rc:181
+msgid "Interface"
+msgstr "界面"
+
+#: oleview.rc:183
+msgid "IID:"
+msgstr "IID:"
+
+#: oleview.rc:186
+msgid "&View Type Info"
+msgstr "查看類型資訊(&V)"
+
+#: oleview.rc:191
+msgid "IPersist Interface Viewer"
+msgstr "IPersist 界面查看器"
+
+#: oleview.rc:194 oleview.rc:206
+msgid "Class Name:"
+msgstr "類別名稱:"
+
+#: oleview.rc:196 oleview.rc:208
+msgid "CLSID:"
+msgstr "CLSID:"
+
+#: oleview.rc:203
+msgid "IPersistStream Interface Viewer"
+msgstr "IPersistStream 界面查看器"
+
+#: oleview.rc:211
+msgid "&IsDirty"
+msgstr "已修改(&I)"
+
+#: oleview.rc:213
+msgid "&GetSizeMax"
+msgstr "獲取最大(&G)"
 
 #: oleview.rc:93 oleview.rc:94
 msgid "OleView"

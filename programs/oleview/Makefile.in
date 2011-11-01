@@ -11,27 +11,7 @@ C_SRCS = \
 	tree.c \
 	typelib.c
 
-RC_SRCS = \
-	Da.rc \
-	De.rc \
-	En.rc \
-	Fr.rc \
-	He.rc \
-	It.rc \
-	Ja.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	No.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Sv.rc \
-	Uk.rc \
-	Zh.rc \
-	oleview.rc
-
+RC_SRCS = oleview.rc
 PO_SRCS = oleview.rc
 
 @MAKE_PROG_RULES@
