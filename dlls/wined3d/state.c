@@ -3930,39 +3930,21 @@ static void transform_projection(struct wined3d_context *context, const struct w
     }
     else
     {
-        /*
-         * Careful with the order of operations here, we're essentially working backwards:
-         * x = x + 1/w;
-         * y = (y - 1/h) * flip;
-         * z = z * 2 - 1;
-         *
-         * Becomes:
-         * glTranslatef(0.0, 0.0, -1.0);
-         * glScalef(1.0, 1.0, 2.0);
-         *
-         * glScalef(1.0, flip, 1.0);
-         * glTranslatef(1/w, -1/h, 0.0);
-         *
-         * This is equivalent to:
-         * glTranslatef(1/w, -flip/h, -1.0)
-         * glScalef(1.0, flip, 2.0);
-         */
-        GLfloat xoffset = (63.0f / 64.0f) / state->viewport.Width;
-        GLfloat yoffset = -(63.0f / 64.0f) / state->viewport.Height;
-
-        glLoadIdentity();
-        checkGLcall("glLoadIdentity");
-        if (context->render_offscreen)
+        double y_scale = context->render_offscreen ? -1.0 : 1.0;
+        double x_offset = (63.0 / 64.0) / state->viewport.Width;
+        double y_offset = context->render_offscreen
+                ? (63.0 / 64.0) / state->viewport.Height
+                : -(63.0 / 64.0) / state->viewport.Height;
+        const GLdouble projection[] =
         {
-            glTranslatef(xoffset, -yoffset, -1.0f);
-            checkGLcall("glTranslatef(xoffset, -yoffset, -1.0f)");
-            glScalef(1.0f, -1.0f, 2.0f);
-        } else {
-            glTranslatef(xoffset, yoffset, -1.0f);
-            checkGLcall("glTranslatef(xoffset, yoffset, -1.0f)");
-            glScalef(1.0f, 1.0f, 2.0f);
-        }
-        checkGLcall("glScalef");
+                 1.0,      0.0,  0.0, 0.0,
+                 0.0,  y_scale,  0.0, 0.0,
+                 0.0,      0.0,  2.0, 0.0,
+            x_offset, y_offset, -1.0, 1.0,
+        };
+
+        glLoadMatrixd(projection);
+        checkGLcall("glLoadMatrixd");
 
         glMultMatrixf(&state->transforms[WINED3DTS_PROJECTION].u.m[0][0]);
         checkGLcall("glLoadMatrixf");
