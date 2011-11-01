@@ -10103,6 +10103,11 @@ static void test_installprops(void)
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
     trace("PackageCode = %s\n", buf);
 
+    size = MAX_PATH;
+    r = MsiGetProperty(hpkg, "ComputerName", buf, &size);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", r);
+    trace("ComputerName = %s\n", buf);
+
     langid = GetUserDefaultLangID();
     sprintf(path, "%d", langid);
 

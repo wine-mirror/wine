@@ -751,14 +751,13 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     static const WCHAR szNetHoodFolder[] = {'N','e','t','H','o','o','d','F','o','l','d','e','r',0};
     static const WCHAR szPrintHoodFolder[] = {'P','r','i','n','t','H','o','o','d','F','o','l','d','e','r',0};
     static const WCHAR szRecentFolder[] = {'R','e','c','e','n','t','F','o','l','d','e','r',0};
+    static const WCHAR szComputerName[] = {'C','o','m','p','u','t','e','r','N','a','m','e',0};
 
     /*
      * Other things that probably should be set:
      *
-     * ComputerName VirtualMemory
-     * ShellAdvSupport DefaultUIFont PackagecodeChanging
-     * CaptionHeight BorderTop BorderSide TextHeight
-     * RedirectedDllSupport
+     * VirtualMemory ShellAdvSupport DefaultUIFont PackagecodeChanging
+     * CaptionHeight BorderTop BorderSide TextHeight RedirectedDllSupport
      */
 
     SHGetFolderPathW(NULL, CSIDL_COMMON_APPDATA, NULL, 0, pth);
@@ -1012,6 +1011,17 @@ static VOID set_installer_properties(MSIPACKAGE *package)
             if (GetUserNameW( username, &len ))
                 msi_set_property( package->db, szLogonUser, username );
             msi_free( username );
+        }
+    }
+    len = 0;
+    if (!GetComputerNameW( NULL, &len ) && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    {
+        WCHAR *computername;
+        if ((computername = msi_alloc( len * sizeof(WCHAR) )))
+        {
+            if (GetComputerNameW( computername, &len ))
+                msi_set_property( package->db, szComputerName, computername );
+            msi_free( computername );
         }
     }
 }
