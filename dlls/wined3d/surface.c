@@ -2588,13 +2588,13 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
         return WINED3DERR_INVALIDCALL;
     }
 
-    /* This call loads the OpenGL surface directly, instead of copying the
-     * surface to the destination's sysmem copy. If surface conversion is
-     * needed, use BltFast instead to copy in sysmem and use regular surface
-     * loading. */
+    /* Use wined3d_surface_blt() instead of uploading directly if we need conversion. */
     d3dfmt_get_conv(dst_surface, FALSE, TRUE, &format, &convert);
     if (convert != NO_CONVERSION || format.convert)
-        return surface_bltfast(dst_surface, dst_point->x, dst_point->y, src_surface, src_rect, 0);
+    {
+        RECT dst_rect = {dst_point->x,  dst_point->y, dst_point->x + update_w, dst_point->y + update_h};
+        return wined3d_surface_blt(dst_surface, &dst_rect, src_surface, src_rect, 0, NULL, WINED3DTEXF_POINT);
+    }
 
     context = context_acquire(dst_surface->resource.device, NULL);
     gl_info = context->gl_info;
