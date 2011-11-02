@@ -3846,7 +3846,7 @@ HRESULT create_regexp(script_ctx_t *ctx, const WCHAR *exp, int len, DWORD flags,
     RegExpInstance *regexp;
     HRESULT hres;
 
-    TRACE("%s %x\n", debugstr_w(exp), flags);
+    TRACE("%s %x\n", debugstr_wn(exp, len), flags);
 
     hres = alloc_regexp(ctx, NULL, &regexp);
     if(FAILED(hres))
