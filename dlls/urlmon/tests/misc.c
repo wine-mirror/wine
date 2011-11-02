@@ -733,6 +733,31 @@ static void test_FindMimeFromData(void)
     ok(!lstrcmpW(mime, mimeTextPlain), "wrong mime: %s\n", wine_dbgstr_w(mime));
     CoTaskMemFree(mime);
 
+    hres = pFindMimeFromData(NULL, url1, NULL, 0, NULL, 0, &mime, 0);
+    ok(hres == S_OK, "FindMimeFromData failed: %08x, expected S_OK\n", hres);
+    ok(!lstrcmpW(mime, mimeTextHtml), "wrong mime: %s\n", wine_dbgstr_w(mime));
+    CoTaskMemFree(mime);
+
+    hres = pFindMimeFromData(NULL, url1, NULL, sizeof(data1), NULL, 0, &mime, 0);
+    ok(hres == S_OK, "FindMimeFromData failed: %08x, expected S_OK\n", hres);
+    ok(!lstrcmpW(mime, mimeTextHtml), "wrong mime: %s\n", wine_dbgstr_w(mime));
+    CoTaskMemFree(mime);
+
+    hres = pFindMimeFromData(NULL, url1, 0, 0, NULL, 0, &mime, 0);
+    ok(hres == S_OK, "FindMimeFromData failed: %08x, expected S_OK\n", hres);
+    ok(!lstrcmpW(mime, mimeTextHtml), "wrong mime: %s\n", wine_dbgstr_w(mime));
+    CoTaskMemFree(mime);
+
+    hres = pFindMimeFromData(NULL, url1, 0, sizeof(data1), NULL, 0, &mime, 0);
+    ok(hres == S_OK, "FindMimeFromData failed: %08x, expected S_OK\n", hres);
+    ok(!lstrcmpW(mime, mimeTextHtml), "wrong mime: %s\n", wine_dbgstr_w(mime));
+    CoTaskMemFree(mime);
+
+    hres = pFindMimeFromData(NULL, url1, data1, sizeof(data1), NULL, 0, &mime, 0);
+    ok(hres == S_OK, "FindMimeFromData failed: %08x, expected S_OK\n", hres);
+    ok(!lstrcmpW(mime, mimeTextPlain), "wrong mime: %s\n", wine_dbgstr_w(mime));
+    CoTaskMemFree(mime);
+
     hres = pFindMimeFromData(NULL, NULL, NULL, 0, NULL, 0, &mime, 0);
     ok(hres == E_INVALIDARG, "FindMimeFromData failed: %08x, excepted E_INVALIDARG\n", hres);
 
