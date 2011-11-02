@@ -106,11 +106,18 @@ static const HRESULT SetCoop_real_window[16] =  {
     E_INVALIDARG, E_NOTIMPL,    S_OK,         E_INVALIDARG,
     E_INVALIDARG, E_INVALIDARG, E_INVALIDARG, E_INVALIDARG};
 
+static const HRESULT SetCoop_child_window[16] =  {
+    E_INVALIDARG, E_INVALIDARG, E_INVALIDARG, E_INVALIDARG,
+    E_INVALIDARG, E_HANDLE,     E_HANDLE,     E_INVALIDARG,
+    E_INVALIDARG, E_HANDLE,     E_HANDLE,     E_INVALIDARG,
+    E_INVALIDARG, E_INVALIDARG, E_INVALIDARG, E_INVALIDARG};
+
 static void test_set_coop(LPDIRECTINPUT pDI, HWND hwnd)
 {
     HRESULT hr;
     LPDIRECTINPUTDEVICE pKeyboard = NULL;
     int i;
+    HWND child;
 
     hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &pKeyboard, NULL);
     ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
@@ -127,6 +134,17 @@ static void test_set_coop(LPDIRECTINPUT pDI, HWND hwnd)
         ok(hr == SetCoop_real_window[i], "SetCooperativeLevel(hwnd, %d): %08x\n", i, hr);
     }
 
+    child = CreateWindow("static", "Title", WS_CHILD | WS_VISIBLE,
+                         10, 10, 50, 50, hwnd, NULL, NULL, NULL);
+    ok(child != NULL, "err: %d\n", GetLastError());
+
+    for (i=0; i<16; i++)
+    {
+        hr = IDirectInputDevice_SetCooperativeLevel(pKeyboard, child, i);
+        ok(hr == SetCoop_child_window[i], "SetCooperativeLevel(child, %d): %08x\n", i, hr);
+    }
+
+    DestroyWindow(child);
     if (pKeyboard) IUnknown_Release(pKeyboard);
 }
 

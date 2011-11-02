@@ -882,6 +882,8 @@ HRESULT WINAPI IDirectInputDevice2WImpl_SetCooperativeLevel(LPDIRECTINPUTDEVICE8
         (dwflags & (DISCL_FOREGROUND | DISCL_BACKGROUND)) == (DISCL_FOREGROUND | DISCL_BACKGROUND))
         return DIERR_INVALIDPARAM;
 
+    if (hwnd && GetWindowLongW(hwnd, GWL_STYLE) & WS_CHILD) return E_HANDLE;
+
     if (dwflags == (DISCL_NONEXCLUSIVE | DISCL_BACKGROUND))
         hwnd = GetDesktopWindow();
 
