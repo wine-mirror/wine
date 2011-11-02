@@ -154,16 +154,23 @@ HRESULT CDECL wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
 HRESULT CDECL wined3d_swapchain_get_front_buffer_data(const struct wined3d_swapchain *swapchain,
         struct wined3d_surface *dst_surface)
 {
-    POINT offset = {0, 0};
+    struct wined3d_surface *src_surface;
+    RECT src_rect, dst_rect;
 
     TRACE("swapchain %p, dst_surface %p.\n", swapchain, dst_surface);
 
+    src_surface = swapchain->front_buffer;
+    SetRect(&src_rect, 0, 0, src_surface->resource.width, src_surface->resource.height);
+    dst_rect = src_rect;
+
     if (swapchain->presentParms.Windowed)
-        MapWindowPoints(swapchain->win_handle, NULL, &offset, 1);
+    {
+        MapWindowPoints(swapchain->win_handle, NULL, (POINT *)&dst_rect, 2);
+        FIXME("Using destination rect %s in windowed mode, this is likely wrong.\n",
+                wine_dbgstr_rect(&dst_rect));
+    }
 
-    surface_bltfast(dst_surface, offset.x, offset.y, swapchain->front_buffer, NULL, 0);
-
-    return WINED3D_OK;
+    return wined3d_surface_blt(dst_surface, &dst_rect, src_surface, &src_rect, 0, NULL, WINED3DTEXF_POINT);
 }
 
 HRESULT CDECL wined3d_swapchain_get_back_buffer(const struct wined3d_swapchain *swapchain,
