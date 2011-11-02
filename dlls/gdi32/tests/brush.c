@@ -213,8 +213,85 @@ static void test_pattern_brush(void)
     GlobalFree( mem );
 }
 
+static void test_palette_brush(void)
+{
+    char buffer[sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD) + 16 * 16];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
+    WORD *indices = (WORD *)info->bmiColors;
+    char pal_buffer[sizeof(LOGPALETTE) + 256 * sizeof(PALETTEENTRY)];
+    LOGPALETTE *pal = (LOGPALETTE *)pal_buffer;
+    HDC hdc = CreateCompatibleDC( 0 );
+    DWORD *dib_bits;
+    HBITMAP dib;
+    HBRUSH brush;
+    int i;
+    HPALETTE palette, palette2;
+
+    memset( info, 0, sizeof(*info) );
+    info->bmiHeader.biSize        = sizeof(info->bmiHeader);
+    info->bmiHeader.biWidth       = 16;
+    info->bmiHeader.biHeight      = 16;
+    info->bmiHeader.biPlanes      = 1;
+    info->bmiHeader.biBitCount    = 32;
+    info->bmiHeader.biCompression = BI_RGB;
+    dib = CreateDIBSection( NULL, info, DIB_RGB_COLORS, (void**)&dib_bits, NULL, 0 );
+    ok( dib != NULL, "CreateDIBSection failed\n" );
+
+    info->bmiHeader.biBitCount = 8;
+    for (i = 0; i < 256; i++) indices[i] = 255 - i;
+    for (i = 0; i < 256; i++) ((BYTE *)(indices + 256))[i] = i;
+    brush = CreateDIBPatternBrushPt( info, DIB_PAL_COLORS );
+    ok( brush != NULL, "CreateDIBPatternBrushPt failed\n" );
+
+    pal->palVersion = 0x300;
+    pal->palNumEntries = 256;
+    for (i = 0; i < 256; i++)
+    {
+        pal->palPalEntry[i].peRed = i * 2;
+        pal->palPalEntry[i].peGreen = i * 2;
+        pal->palPalEntry[i].peBlue = i * 2;
+        pal->palPalEntry[i].peFlags = 0;
+    }
+    palette = CreatePalette( pal );
+
+    ok( SelectObject( hdc, dib ) != NULL, "SelectObject failed\n" );
+    ok( SelectPalette( hdc, palette, 0 ) != NULL, "SelectPalette failed\n" );
+    ok( SelectObject( hdc, brush ) != NULL, "SelectObject failed\n" );
+    memset( dib_bits, 0xaa, 16 * 16 * 4 );
+    PatBlt( hdc, 0, 0, 16, 16, PATCOPY );
+    for (i = 0; i < 256; i++)
+    {
+        DWORD expect = (pal->palPalEntry[255 - i].peRed << 16 |
+                        pal->palPalEntry[255 - i].peGreen << 8 |
+                        pal->palPalEntry[255 - i].peBlue);
+        ok( dib_bits[i] == expect, "wrong bits %x/%x at %u,%u\n", dib_bits[i], expect, i % 16, i / 16 );
+    }
+
+    for (i = 0; i < 256; i++) pal->palPalEntry[i].peRed = i * 3;
+    palette2 = CreatePalette( pal );
+    ok( SelectPalette( hdc, palette2, 0 ) != NULL, "SelectPalette failed\n" );
+    memset( dib_bits, 0xaa, 16 * 16 * 4 );
+    PatBlt( hdc, 0, 0, 16, 16, PATCOPY );
+    for (i = 0; i < 256; i++)
+    {
+        DWORD expect = (pal->palPalEntry[255 - i].peRed << 16 |
+                        pal->palPalEntry[255 - i].peGreen << 8 |
+                        pal->palPalEntry[255 - i].peBlue);
+        if (expect)
+            todo_wine ok( dib_bits[i] == expect, "wrong bits %x/%x at %u,%u\n", dib_bits[i], expect, i % 16, i / 16 );
+        else
+            ok( dib_bits[i] == expect, "wrong bits %x/%x at %u,%u\n", dib_bits[i], expect, i % 16, i / 16 );
+    }
+    DeleteDC( hdc );
+    DeleteObject( dib );
+    DeleteObject( brush );
+    DeleteObject( palette );
+    DeleteObject( palette2 );
+}
+
 START_TEST(brush)
 {
     test_solidbrush();
     test_pattern_brush();
+    test_palette_brush();
 }
