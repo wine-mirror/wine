@@ -528,7 +528,7 @@ BOOL DoScannerUI(void)
 
     hdc = GetDC(0);
 
-    memset(&psp,0,sizeof(psp));
+    memset(psp,0,sizeof(psp));
     rc = psane_control_option(activeDS.deviceHandle, 0, SANE_ACTION_GET_VALUE,
             &optcount, NULL);
     if (rc != SANE_STATUS_GOOD)
@@ -585,7 +585,7 @@ BOOL DoScannerUI(void)
     psh.pszCaption = szCaption;
     psh.nPages = page_count;
     psh.u2.nStartPage = 0;
-    psh.u3.ppsp = (LPCPROPSHEETPAGEW) &psp;
+    psh.u3.ppsp = (LPCPROPSHEETPAGEW)psp;
     psh.pfnCallback = PropSheetProc;
 
     psrc = PropertySheetW(&psh);
