@@ -1812,7 +1812,7 @@ static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buff
             if (res > 0 && (single_entry || io->Information + max_dir_info_size(class) > length))
             {
                 lseek( fd, (unsigned long)restart_pos, SEEK_SET );
-                size = (char *)de - data;
+                size = (char *)de + de->d_reclen - data;
                 io->Information = restart_info_pos;
                 last_info = restart_last_info;
                 goto restart;
