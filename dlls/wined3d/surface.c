@@ -1815,25 +1815,6 @@ cpu:
     return surface_cpu_blt(dst_surface, &dst_rect, src_surface, &src_rect, flags, fx, filter);
 }
 
-/* Do not call while under the GL lock. */
-HRESULT surface_bltfast(struct wined3d_surface *dst_surface, DWORD dst_x, DWORD dst_y,
-        struct wined3d_surface *src_surface, const RECT *src_rect_in, DWORD flags)
-{
-    RECT src_rect, dst_rect;
-
-    TRACE("dst_surface %p, dst_x %u, dst_y %u, src_surface %p, src_rect_in %s, flags %#x.\n",
-            dst_surface, dst_x, dst_y, src_surface, wine_dbgstr_rect(src_rect_in), flags);
-
-    surface_get_rect(src_surface, src_rect_in, &src_rect);
-
-    dst_rect.left = dst_x;
-    dst_rect.top = dst_y;
-    dst_rect.right = dst_x + src_rect.right - src_rect.left;
-    dst_rect.bottom = dst_y + src_rect.bottom - src_rect.top;
-
-    return wined3d_surface_blt(dst_surface, &dst_rect, src_surface, &src_rect, flags, NULL, WINED3DTEXF_POINT);
-}
-
 HRESULT CDECL wined3d_surface_get_render_target_data(struct wined3d_surface *surface,
         struct wined3d_surface *render_target)
 {

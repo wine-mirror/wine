@@ -482,9 +482,12 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
 
     if (swapchain->device->logo_surface)
     {
+        struct wined3d_surface *src_surface = swapchain->device->logo_surface;
+        RECT rect = {0, 0, src_surface->resource.width, src_surface->resource.height};
+
         /* Blit the logo into the upper left corner of the drawable. */
-        surface_bltfast(swapchain->back_buffers[0], 0, 0,
-                swapchain->device->logo_surface, NULL, WINEDDBLT_KEYSRC);
+        wined3d_surface_blt(swapchain->back_buffers[0], &rect, src_surface, &rect,
+                 WINEDDBLT_KEYSRC, NULL, WINED3DTEXF_POINT);
     }
 
     TRACE("Presenting HDC %p.\n", context->hdc);
