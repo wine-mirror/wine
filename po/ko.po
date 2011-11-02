@@ -6740,7 +6740,7 @@ msgstr "복원(&R)"
 msgid "&Move"
 msgstr "이동(&M)"
 
-#: user32.rc:29 user32.rc:42
+#: user32.rc:29 user32.rc:42 wineconsole.rc:89
 msgid "&Size"
 msgstr "크기 변경(&S)"
 
@@ -8630,9 +8630,10 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      열린 리소스: %lu\n"
 
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winefile.rc:131
-#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
-#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 wineconsole.rc:131
+#: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "확인"
 
@@ -8773,9 +8774,9 @@ msgstr "오른쪽(&R):"
 msgid "&Bottom:"
 msgstr "아래(&B):"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winefile.rc:132
-#: winefile.rc:155 winefile.rc:185 winemine.rc:93 wordpad.rc:205
-#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "취소"
 
@@ -10762,6 +10763,126 @@ msgstr "메뉴 하이라이트"
 #: winecfg.rc:127
 msgid "Menu Bar"
 msgstr "메뉴바"
+
+#: wineconsole.rc:57
+msgid " Options "
+msgstr " 옵션 "
+
+#: wineconsole.rc:60
+msgid "Cursor size"
+msgstr "커서 크기"
+
+#: wineconsole.rc:61
+msgid "&Small"
+msgstr "작게(&S)"
+
+#: wineconsole.rc:62
+msgid "&Medium"
+msgstr "중간(&M)"
+
+#: wineconsole.rc:63
+msgid "&Large"
+msgstr "크게(&L)"
+
+#: wineconsole.rc:65
+msgid "Control"
+msgstr "컨트롤"
+
+#: wineconsole.rc:66
+msgid "Popup menu"
+msgstr "팝업 메뉴"
+
+#: wineconsole.rc:67
+msgid "&Control"
+msgstr "컨트롤(&C)"
+
+#: wineconsole.rc:68
+msgid "S&hift"
+msgstr "쉬프트(&H)"
+
+#: wineconsole.rc:69
+msgid "Quick edit"
+msgstr "빠른 편집"
+
+#: wineconsole.rc:70
+msgid "&enable"
+msgstr "가능(&E)"
+
+#: wineconsole.rc:72
+msgid "Command history"
+msgstr "명령 히스토리"
+
+#: wineconsole.rc:73
+msgid "&Number of recalled commands :"
+msgstr "다시 부르는 명령의 갯수(&N):"
+
+#: wineconsole.rc:76
+msgid "&Remove doubles"
+msgstr "두번  제거(&R)"
+
+#: wineconsole.rc:81
+msgid " Font "
+msgstr " 글꼴 "
+
+#: wineconsole.rc:84
+msgid "&Font"
+msgstr "글꼴(&F)"
+
+#: wineconsole.rc:86
+msgid "&Color"
+msgstr "색상(&C)"
+
+#: wineconsole.rc:97
+msgid " Configuration "
+msgstr " 설정 "
+
+#: wineconsole.rc:100
+msgid "Buffer zone"
+msgstr "버퍼 존"
+
+#: wineconsole.rc:101
+msgid "&Width :"
+msgstr "너비(&W) :"
+
+#: wineconsole.rc:104
+msgid "&Height :"
+msgstr "높이(&H) :"
+
+#: wineconsole.rc:108
+msgid "Window size"
+msgstr "창 크기"
+
+#: wineconsole.rc:109
+msgid "W&idth :"
+msgstr "너비(&I) :"
+
+#: wineconsole.rc:112
+msgid "H&eight :"
+msgstr "높이(&E) :"
+
+#: wineconsole.rc:116
+msgid "End of program"
+msgstr "풀그림의 끝"
+
+#: wineconsole.rc:117
+msgid "&Close console"
+msgstr "콘솔 닫기(&C)"
+
+#: wineconsole.rc:119
+msgid "Edition"
+msgstr "에디션"
+
+#: wineconsole.rc:125
+msgid "Console parameters"
+msgstr " 콘솔 매개변수"
+
+#: wineconsole.rc:128
+msgid "Retain these settings for later sessions"
+msgstr "나중의 세션을 위해 설정 보존"
+
+#: wineconsole.rc:129
+msgid "Modify only current session"
+msgstr "오직 현재의 세션만 변경"
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"

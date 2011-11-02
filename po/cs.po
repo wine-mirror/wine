@@ -6943,7 +6943,7 @@ msgstr "&Obnov"
 msgid "&Move"
 msgstr "Pře&suň"
 
-#: user32.rc:29 user32.rc:42
+#: user32.rc:29 user32.rc:42 wineconsole.rc:89
 msgid "&Size"
 msgstr "&Změň velikost"
 
@@ -8778,9 +8778,10 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winefile.rc:131
-#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
-#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 wineconsole.rc:131
+#: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -8932,9 +8933,9 @@ msgstr "P&ravý:"
 msgid "&Bottom:"
 msgstr "&Dolní:"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winefile.rc:132
-#: winefile.rc:155 winefile.rc:185 winemine.rc:93 wordpad.rc:205
-#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Storno"
 
@@ -10993,6 +10994,126 @@ msgstr ""
 #, fuzzy
 msgid "Menu Bar"
 msgstr "Pozadí menu"
+
+#: wineconsole.rc:57
+msgid " Options "
+msgstr " Volby "
+
+#: wineconsole.rc:60
+msgid "Cursor size"
+msgstr "Velikost kurzoru"
+
+#: wineconsole.rc:61
+msgid "&Small"
+msgstr "M&alý"
+
+#: wineconsole.rc:62
+msgid "&Medium"
+msgstr "&Střední"
+
+#: wineconsole.rc:63
+msgid "&Large"
+msgstr "Ve&lký"
+
+#: wineconsole.rc:65
+msgid "Control"
+msgstr "Řízení"
+
+#: wineconsole.rc:66
+msgid "Popup menu"
+msgstr "Popup menu"
+
+#: wineconsole.rc:67
+msgid "&Control"
+msgstr "&Ctrl"
+
+#: wineconsole.rc:68
+msgid "S&hift"
+msgstr "S&hift"
+
+#: wineconsole.rc:69
+msgid "Quick edit"
+msgstr "Quick edit mód"
+
+#: wineconsole.rc:70
+msgid "&enable"
+msgstr "P&ovolit"
+
+#: wineconsole.rc:72
+msgid "Command history"
+msgstr "Historie příkazů"
+
+#: wineconsole.rc:73
+msgid "&Number of recalled commands :"
+msgstr "&Počet znovuvolaných příkazů :"
+
+#: wineconsole.rc:76
+msgid "&Remove doubles"
+msgstr "Odst&ranit duplicity"
+
+#: wineconsole.rc:81
+msgid " Font "
+msgstr " Písmo "
+
+#: wineconsole.rc:84
+msgid "&Font"
+msgstr "&Písmo"
+
+#: wineconsole.rc:86
+msgid "&Color"
+msgstr "&Barva"
+
+#: wineconsole.rc:97
+msgid " Configuration "
+msgstr " Nastavení "
+
+#: wineconsole.rc:100
+msgid "Buffer zone"
+msgstr "Oblast zásobníku"
+
+#: wineconsole.rc:101
+msgid "&Width :"
+msgstr "Šíř&ka :"
+
+#: wineconsole.rc:104
+msgid "&Height :"
+msgstr "&Výška :"
+
+#: wineconsole.rc:108
+msgid "Window size"
+msgstr "Velikost okna"
+
+#: wineconsole.rc:109
+msgid "W&idth :"
+msgstr "Šíř&ka :"
+
+#: wineconsole.rc:112
+msgid "H&eight :"
+msgstr "Výšk&a :"
+
+#: wineconsole.rc:116
+msgid "End of program"
+msgstr "Konec programu"
+
+#: wineconsole.rc:117
+msgid "&Close console"
+msgstr "Uzavřít &konzoli"
+
+#: wineconsole.rc:119
+msgid "Edition"
+msgstr "Edice"
+
+#: wineconsole.rc:125
+msgid "Console parameters"
+msgstr "Parametry konzole"
+
+#: wineconsole.rc:128
+msgid "Retain these settings for later sessions"
+msgstr "Zachovat tyto změny pro další sezení"
+
+#: wineconsole.rc:129
+msgid "Modify only current session"
+msgstr "Upravit pouze současné sezení"
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"

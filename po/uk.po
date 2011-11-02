@@ -6767,7 +6767,7 @@ msgstr "&Відновити"
 msgid "&Move"
 msgstr "&Пересунути"
 
-#: user32.rc:29 user32.rc:42
+#: user32.rc:29 user32.rc:42 wineconsole.rc:89
 msgid "&Size"
 msgstr "Роз&мір"
 
@@ -8626,9 +8626,10 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Відкритих ресурсів: %lu\n"
 
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winefile.rc:131
-#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
-#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 wineconsole.rc:131
+#: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -8773,9 +8774,9 @@ msgstr "&Праве:"
 msgid "&Bottom:"
 msgstr "&Нижнє:"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winefile.rc:132
-#: winefile.rc:155 winefile.rc:185 winemine.rc:93 wordpad.rc:205
-#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Скасувати"
 
@@ -10783,6 +10784,126 @@ msgstr "Меню - підсвічування"
 #: winecfg.rc:127
 msgid "Menu Bar"
 msgstr "Рядок меню"
+
+#: wineconsole.rc:57
+msgid " Options "
+msgstr " Параметри "
+
+#: wineconsole.rc:60
+msgid "Cursor size"
+msgstr "Розмір курсора"
+
+#: wineconsole.rc:61
+msgid "&Small"
+msgstr "&Малий"
+
+#: wineconsole.rc:62
+msgid "&Medium"
+msgstr "&Середній"
+
+#: wineconsole.rc:63
+msgid "&Large"
+msgstr "&Великий"
+
+#: wineconsole.rc:65
+msgid "Control"
+msgstr "Керування"
+
+#: wineconsole.rc:66
+msgid "Popup menu"
+msgstr "Сплив. меню"
+
+#: wineconsole.rc:67
+msgid "&Control"
+msgstr "&Control"
+
+#: wineconsole.rc:68
+msgid "S&hift"
+msgstr "S&hift"
+
+#: wineconsole.rc:69
+msgid "Quick edit"
+msgstr "Швидке редагув."
+
+#: wineconsole.rc:70
+msgid "&enable"
+msgstr "вв&імкнути"
+
+#: wineconsole.rc:72
+msgid "Command history"
+msgstr "Історія команд"
+
+#: wineconsole.rc:73
+msgid "&Number of recalled commands :"
+msgstr "&Кількість нагаданих команд :"
+
+#: wineconsole.rc:76
+msgid "&Remove doubles"
+msgstr "Видаляти &повтори"
+
+#: wineconsole.rc:81
+msgid " Font "
+msgstr " Шрифт "
+
+#: wineconsole.rc:84
+msgid "&Font"
+msgstr "&Шрифт"
+
+#: wineconsole.rc:86
+msgid "&Color"
+msgstr "&Колір"
+
+#: wineconsole.rc:97
+msgid " Configuration "
+msgstr " Конфігурація "
+
+#: wineconsole.rc:100
+msgid "Buffer zone"
+msgstr "Зона буфера"
+
+#: wineconsole.rc:101
+msgid "&Width :"
+msgstr "&Ширина :"
+
+#: wineconsole.rc:104
+msgid "&Height :"
+msgstr "&Висота :"
+
+#: wineconsole.rc:108
+msgid "Window size"
+msgstr "Розмір вікна"
+
+#: wineconsole.rc:109
+msgid "W&idth :"
+msgstr "Ш&ирина :"
+
+#: wineconsole.rc:112
+msgid "H&eight :"
+msgstr "Висо&та :"
+
+#: wineconsole.rc:116
+msgid "End of program"
+msgstr "Завершення програми"
+
+#: wineconsole.rc:117
+msgid "&Close console"
+msgstr "&Закрити консоль"
+
+#: wineconsole.rc:119
+msgid "Edition"
+msgstr "Випуск"
+
+#: wineconsole.rc:125
+msgid "Console parameters"
+msgstr "Параметри консолі"
+
+#: wineconsole.rc:128
+msgid "Retain these settings for later sessions"
+msgstr "Зберегти ці налаштування для наступних сесій"
+
+#: wineconsole.rc:129
+msgid "Modify only current session"
+msgstr "Змінювати лише поточну сесію"
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"

@@ -6768,7 +6768,7 @@ msgstr "&Restaura"
 msgid "&Move"
 msgstr "&Mou"
 
-#: user32.rc:29 user32.rc:42
+#: user32.rc:29 user32.rc:42 wineconsole.rc:89
 msgid "&Size"
 msgstr "&Mida"
 
@@ -8726,9 +8726,10 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Recursos oberts: %lu\n"
 
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winefile.rc:131
-#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
-#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 wineconsole.rc:131
+#: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "D'acord"
 
@@ -8873,9 +8874,9 @@ msgstr "Al D&reta"
 msgid "&Bottom:"
 msgstr "Abaix"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winefile.rc:132
-#: winefile.rc:155 winefile.rc:185 winemine.rc:93 wordpad.rc:205
-#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 #, fuzzy
 msgid "Cancel"
 msgstr "Cancel·lant..."
@@ -10892,6 +10893,147 @@ msgstr "Menú--Ressalt"
 #: winecfg.rc:127
 msgid "Menu Bar"
 msgstr "Menú--Barra"
+
+#: wineconsole.rc:57
+#, fuzzy
+msgid " Options "
+msgstr "Opcions"
+
+#: wineconsole.rc:60
+msgid "Cursor size"
+msgstr ""
+
+#: wineconsole.rc:61
+#, fuzzy
+msgid "&Small"
+msgstr "Petit"
+
+#: wineconsole.rc:62
+#, fuzzy
+msgid "&Medium"
+msgstr "Medio"
+
+#: wineconsole.rc:63
+#, fuzzy
+msgid "&Large"
+msgstr "Gran"
+
+#: wineconsole.rc:65
+#, fuzzy
+msgid "Control"
+msgstr "Afegeix Control"
+
+#: wineconsole.rc:66
+#, fuzzy
+msgid "Popup menu"
+msgstr "menú emergent"
+
+#: wineconsole.rc:67
+#, fuzzy
+msgid "&Control"
+msgstr "Afegeix Control"
+
+#: wineconsole.rc:68
+msgid "S&hift"
+msgstr ""
+
+#: wineconsole.rc:69
+msgid "Quick edit"
+msgstr ""
+
+#: wineconsole.rc:70
+#, fuzzy
+msgid "&enable"
+msgstr "&Taula"
+
+#: wineconsole.rc:72
+msgid "Command history"
+msgstr ""
+
+#: wineconsole.rc:73
+msgid "&Number of recalled commands :"
+msgstr ""
+
+#: wineconsole.rc:76
+#, fuzzy
+msgid "&Remove doubles"
+msgstr "T&reu"
+
+#: wineconsole.rc:81
+#, fuzzy
+msgid " Font "
+msgstr "Fonts"
+
+#: wineconsole.rc:84
+#, fuzzy
+msgid "&Font"
+msgstr "Fonts"
+
+#: wineconsole.rc:86
+#, fuzzy
+msgid "&Color"
+msgstr "&Columna"
+
+#: wineconsole.rc:97
+#, fuzzy
+msgid " Configuration "
+msgstr "Error de configuració"
+
+#: wineconsole.rc:100
+#, fuzzy
+msgid "Buffer zone"
+msgstr "Desbordament de memòria intermèdia\n"
+
+#: wineconsole.rc:101
+msgid "&Width :"
+msgstr ""
+
+#: wineconsole.rc:104
+#, fuzzy
+msgid "&Height :"
+msgstr "Al D&reta"
+
+#: wineconsole.rc:108
+#, fuzzy
+msgid "Window size"
+msgstr "&Finestres"
+
+#: wineconsole.rc:109
+msgid "W&idth :"
+msgstr ""
+
+#: wineconsole.rc:112
+#, fuzzy
+msgid "H&eight :"
+msgstr "Al D&reta"
+
+#: wineconsole.rc:116
+#, fuzzy
+msgid "End of program"
+msgstr "Executa un nou programa"
+
+#: wineconsole.rc:117
+#, fuzzy
+msgid "&Close console"
+msgstr "Tanca la finestra"
+
+#: wineconsole.rc:119
+#, fuzzy
+msgid "Edition"
+msgstr "&Edita"
+
+#: wineconsole.rc:125
+#, fuzzy
+msgid "Console parameters"
+msgstr "Paràmetre invàlid\n"
+
+#: wineconsole.rc:128
+msgid "Retain these settings for later sessions"
+msgstr ""
+
+#: wineconsole.rc:129
+msgid "Modify only current session"
+msgstr ""
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"

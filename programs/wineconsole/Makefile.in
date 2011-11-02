@@ -11,33 +11,7 @@ C_SRCS = \
 	user.c \
 	wineconsole.c
 
-RC_SRCS = \
-	wineconsole.rc \
-	wineconsole_Cs.rc \
-	wineconsole_Da.rc \
-	wineconsole_De.rc \
-	wineconsole_En.rc \
-	wineconsole_Eo.rc \
-	wineconsole_Es.rc \
-	wineconsole_Fr.rc \
-	wineconsole_He.rc \
-	wineconsole_Hu.rc \
-	wineconsole_It.rc \
-	wineconsole_Ja.rc \
-	wineconsole_Ko.rc \
-	wineconsole_Lt.rc \
-	wineconsole_Nl.rc \
-	wineconsole_No.rc \
-	wineconsole_Pl.rc \
-	wineconsole_Pt.rc \
-	wineconsole_Ro.rc \
-	wineconsole_Ru.rc \
-	wineconsole_Si.rc \
-	wineconsole_Sv.rc \
-	wineconsole_Tr.rc \
-	wineconsole_Uk.rc \
-	wineconsole_Zh.rc
-
+RC_SRCS = wineconsole.rc
 PO_SRCS = wineconsole.rc
 
 MANPAGE = wineconsole.man

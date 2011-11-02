@@ -6760,7 +6760,7 @@ msgstr "&Atkurti"
 msgid "&Move"
 msgstr "Pe&rkelti"
 
-#: user32.rc:29 user32.rc:42
+#: user32.rc:29 user32.rc:42 wineconsole.rc:89
 msgid "&Size"
 msgstr "D&ydis"
 
@@ -8666,9 +8666,10 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%1      %2      %3      Atverti ištekliai: %4!u!\n"
 
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winefile.rc:131
-#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
-#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 wineconsole.rc:131
+#: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "Gerai"
 
@@ -8809,9 +8810,9 @@ msgstr "&Dešinėje:"
 msgid "&Bottom:"
 msgstr "&Apatinė:"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winefile.rc:132
-#: winefile.rc:155 winefile.rc:185 winemine.rc:93 wordpad.rc:205
-#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Atsisakyti"
 
@@ -10813,6 +10814,126 @@ msgstr "Meniu paryškinimas"
 #: winecfg.rc:127
 msgid "Menu Bar"
 msgstr "Meniu juosta"
+
+#: wineconsole.rc:57
+msgid " Options "
+msgstr " Parinktys "
+
+#: wineconsole.rc:60
+msgid "Cursor size"
+msgstr "Žymeklio dydis"
+
+#: wineconsole.rc:61
+msgid "&Small"
+msgstr "&Mažas"
+
+#: wineconsole.rc:62
+msgid "&Medium"
+msgstr "&Vidutinis"
+
+#: wineconsole.rc:63
+msgid "&Large"
+msgstr "&Didelis"
+
+#: wineconsole.rc:65
+msgid "Control"
+msgstr "Valdymas"
+
+#: wineconsole.rc:66
+msgid "Popup menu"
+msgstr "Iškylantis meniu"
+
+#: wineconsole.rc:67
+msgid "&Control"
+msgstr "&Control"
+
+#: wineconsole.rc:68
+msgid "S&hift"
+msgstr "S&hift"
+
+#: wineconsole.rc:69
+msgid "Quick edit"
+msgstr "Greitas redagavimas"
+
+#: wineconsole.rc:70
+msgid "&enable"
+msgstr "įjun&gti"
+
+#: wineconsole.rc:72
+msgid "Command history"
+msgstr "Komandų istorija"
+
+#: wineconsole.rc:73
+msgid "&Number of recalled commands :"
+msgstr "Prisimintų &komandų skaičius:"
+
+#: wineconsole.rc:76
+msgid "&Remove doubles"
+msgstr "&Šalinti vienodas"
+
+#: wineconsole.rc:81
+msgid " Font "
+msgstr " Šriftas "
+
+#: wineconsole.rc:84
+msgid "&Font"
+msgstr "&Šriftas"
+
+#: wineconsole.rc:86
+msgid "&Color"
+msgstr "&Spalva"
+
+#: wineconsole.rc:97
+msgid " Configuration "
+msgstr " Konfigūracija "
+
+#: wineconsole.rc:100
+msgid "Buffer zone"
+msgstr "Buferio dydis"
+
+#: wineconsole.rc:101
+msgid "&Width :"
+msgstr "&Plotis:"
+
+#: wineconsole.rc:104
+msgid "&Height :"
+msgstr "&Aukštis:"
+
+#: wineconsole.rc:108
+msgid "Window size"
+msgstr "Lango dydis"
+
+#: wineconsole.rc:109
+msgid "W&idth :"
+msgstr "P&lotis:"
+
+#: wineconsole.rc:112
+msgid "H&eight :"
+msgstr "A&ukštis:"
+
+#: wineconsole.rc:116
+msgid "End of program"
+msgstr "Programos pabaiga"
+
+#: wineconsole.rc:117
+msgid "&Close console"
+msgstr "Už&daryti pultą"
+
+#: wineconsole.rc:119
+msgid "Edition"
+msgstr "Laida"
+
+#: wineconsole.rc:125
+msgid "Console parameters"
+msgstr "Pulto parametrai"
+
+#: wineconsole.rc:128
+msgid "Retain these settings for later sessions"
+msgstr "Išsaugoti vėlesniems seansams"
+
+#: wineconsole.rc:129
+msgid "Modify only current session"
+msgstr "Keisti tik dabartinį seansą"
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"

@@ -7041,7 +7041,7 @@ msgstr "&Restaurar"
 msgid "&Move"
 msgstr "&Mover"
 
-#: user32.rc:29 user32.rc:42
+#: user32.rc:29 user32.rc:42 wineconsole.rc:89
 msgid "&Size"
 msgstr "&Tamanho"
 
@@ -8941,9 +8941,10 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Recursos disponíveis: %lu\n"
 
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winefile.rc:131
-#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
-#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 wineconsole.rc:131
+#: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -9126,9 +9127,9 @@ msgstr "&Direita:"
 msgid "&Bottom:"
 msgstr "&Inferior:"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winefile.rc:132
-#: winefile.rc:155 winefile.rc:185 winemine.rc:93 wordpad.rc:205
-#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -11199,6 +11200,126 @@ msgstr ""
 #: winecfg.rc:127
 msgid "Menu Bar"
 msgstr ""
+
+#: wineconsole.rc:57
+msgid " Options "
+msgstr " Opções "
+
+#: wineconsole.rc:60
+msgid "Cursor size"
+msgstr "Cursor"
+
+#: wineconsole.rc:61
+msgid "&Small"
+msgstr "&Pequeno"
+
+#: wineconsole.rc:62
+msgid "&Medium"
+msgstr "&Médio"
+
+#: wineconsole.rc:63
+msgid "&Large"
+msgstr "&Grande"
+
+#: wineconsole.rc:65
+msgid "Control"
+msgstr "Controlo"
+
+#: wineconsole.rc:66
+msgid "Popup menu"
+msgstr "Popup Menu"
+
+#: wineconsole.rc:67
+msgid "&Control"
+msgstr "&Controlo"
+
+#: wineconsole.rc:68
+msgid "S&hift"
+msgstr "&Rotação"
+
+#: wineconsole.rc:69
+msgid "Quick edit"
+msgstr "Edição rápida"
+
+#: wineconsole.rc:70
+msgid "&enable"
+msgstr "&Activado"
+
+#: wineconsole.rc:72
+msgid "Command history"
+msgstr "Histórico de comandos"
+
+#: wineconsole.rc:73
+msgid "&Number of recalled commands :"
+msgstr "&Número de comandos rechamados :"
+
+#: wineconsole.rc:76
+msgid "&Remove doubles"
+msgstr "&Remover duplicados"
+
+#: wineconsole.rc:81
+msgid " Font "
+msgstr "Tipo de Letra"
+
+#: wineconsole.rc:84
+msgid "&Font"
+msgstr "&Tipo de Letra"
+
+#: wineconsole.rc:86
+msgid "&Color"
+msgstr "&Cores"
+
+#: wineconsole.rc:97
+msgid " Configuration "
+msgstr " Configuração "
+
+#: wineconsole.rc:100
+msgid "Buffer zone"
+msgstr "Zona do 'buffer'"
+
+#: wineconsole.rc:101
+msgid "&Width :"
+msgstr "&Largura :"
+
+#: wineconsole.rc:104
+msgid "&Height :"
+msgstr "&Altura :"
+
+#: wineconsole.rc:108
+msgid "Window size"
+msgstr "Tamanho da janela"
+
+#: wineconsole.rc:109
+msgid "W&idth :"
+msgstr "L&argura :"
+
+#: wineconsole.rc:112
+msgid "H&eight :"
+msgstr "A&ltura :"
+
+#: wineconsole.rc:116
+msgid "End of program"
+msgstr "Finalizar programa"
+
+#: wineconsole.rc:117
+msgid "&Close console"
+msgstr "&Fechar consola"
+
+#: wineconsole.rc:119
+msgid "Edition"
+msgstr "Edição"
+
+#: wineconsole.rc:125
+msgid "Console parameters"
+msgstr "Parâmetros da consola"
+
+#: wineconsole.rc:128
+msgid "Retain these settings for later sessions"
+msgstr "Manter configurações nas sessões seguintes"
+
+#: wineconsole.rc:129
+msgid "Modify only current session"
+msgstr "Modificar apenas a sessão actual"
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"

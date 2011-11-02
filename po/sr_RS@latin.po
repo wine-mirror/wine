@@ -7074,7 +7074,7 @@ msgstr "&Povrati"
 msgid "&Move"
 msgstr "Pr&emesti"
 
-#: user32.rc:29 user32.rc:42
+#: user32.rc:29 user32.rc:42 wineconsole.rc:89
 msgid "&Size"
 msgstr "&Veličina"
 
@@ -8638,9 +8638,10 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 winefile.rc:131
-#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
-#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 wineconsole.rc:131
+#: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "U redu"
 
@@ -8796,9 +8797,9 @@ msgstr "&Desno:"
 msgid "&Bottom:"
 msgstr "&Dno:"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31 winefile.rc:132
-#: winefile.rc:155 winefile.rc:185 winemine.rc:93 wordpad.rc:205
-#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Otkaži"
 
@@ -10847,6 +10848,150 @@ msgstr "Meni osvetljenog"
 #: winecfg.rc:127
 msgid "Menu Bar"
 msgstr "Meni Bar"
+
+#: wineconsole.rc:57
+#, fuzzy
+msgid " Options "
+msgstr "Opcije"
+
+#: wineconsole.rc:60
+msgid "Cursor size"
+msgstr ""
+
+#: wineconsole.rc:61
+#, fuzzy
+msgid "&Small"
+msgstr "Mali"
+
+#: wineconsole.rc:62
+msgid "&Medium"
+msgstr ""
+
+#: wineconsole.rc:63
+#, fuzzy
+msgid "&Large"
+msgstr "Veliki"
+
+#: wineconsole.rc:65
+#, fuzzy
+msgid "Control"
+msgstr "Dodaj kontrolu"
+
+#: wineconsole.rc:66
+#, fuzzy
+msgid "Popup menu"
+msgstr "iskačući meni"
+
+#: wineconsole.rc:67
+#, fuzzy
+msgid "&Control"
+msgstr "Dodaj kontrolu"
+
+#: wineconsole.rc:68
+msgid "S&hift"
+msgstr ""
+
+#: wineconsole.rc:69
+msgid "Quick edit"
+msgstr ""
+
+#: wineconsole.rc:70
+#, fuzzy
+msgid "&enable"
+msgstr "&Tabela"
+
+#: wineconsole.rc:72
+msgid "Command history"
+msgstr ""
+
+#: wineconsole.rc:73
+msgid "&Number of recalled commands :"
+msgstr ""
+
+#: wineconsole.rc:76
+#, fuzzy
+msgid "&Remove doubles"
+msgstr "&Ukloni..."
+
+#: wineconsole.rc:81
+#, fuzzy
+msgid " Font "
+msgstr "Fontovi"
+
+#: wineconsole.rc:84
+#, fuzzy
+msgid "&Font"
+msgstr "Fontovi"
+
+#: wineconsole.rc:86
+#, fuzzy
+msgid "&Color"
+msgstr "&Kolona"
+
+#: wineconsole.rc:97
+#, fuzzy
+msgid " Configuration "
+msgstr "Greška u radnjama"
+
+#: wineconsole.rc:100
+msgid "Buffer zone"
+msgstr ""
+
+#: wineconsole.rc:101
+msgid "&Width :"
+msgstr ""
+
+#: wineconsole.rc:104
+#, fuzzy
+msgid "&Height :"
+msgstr "&Desno:"
+
+#: wineconsole.rc:108
+#, fuzzy
+msgid "Window size"
+msgstr "Text Prozora"
+
+#: wineconsole.rc:109
+msgid "W&idth :"
+msgstr ""
+
+#: wineconsole.rc:112
+#, fuzzy
+msgid "H&eight :"
+msgstr "&Desno:"
+
+#: wineconsole.rc:116
+#, fuzzy
+msgid "End of program"
+msgstr "Čekanje programa"
+
+#: wineconsole.rc:117
+#, fuzzy
+msgid "&Close console"
+msgstr "prozor"
+
+#: wineconsole.rc:119
+#, fuzzy
+msgid "Edition"
+msgstr ""
+"#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
+"&Uređivanje\n"
+"#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
+"&Izmeni"
+
+#: wineconsole.rc:125
+#, fuzzy
+msgid "Console parameters"
+msgstr ""
+"Greška: uneseni su nepoznati ili neispravni parametri naredbene linije\n"
+
+#: wineconsole.rc:128
+msgid "Retain these settings for later sessions"
+msgstr ""
+
+#: wineconsole.rc:129
+msgid "Modify only current session"
+msgstr ""
 
 #: wineconsole.rc:26
 #, fuzzy
