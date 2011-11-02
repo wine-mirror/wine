@@ -53,21 +53,6 @@ static const struct gdi_obj_funcs brush_funcs =
     BRUSH_DeleteObject   /* pDeleteObject */
 };
 
-static void *dib_copy(const BITMAPINFO *info, UINT coloruse)
-{
-    BITMAPINFO  *newInfo;
-    INT         size;
-
-    if (info->bmiHeader.biCompression != BI_RGB && info->bmiHeader.biCompression != BI_BITFIELDS)
-        size = info->bmiHeader.biSizeImage;
-    else
-        size = get_dib_image_size(info);
-    size += bitmap_info_size( info, coloruse );
-
-    if ((newInfo = HeapAlloc( GetProcessHeap(), 0, size ))) memcpy( newInfo, info, size );
-    return newInfo;
-}
-
 
 /***********************************************************************
  *           CreateBrushIndirect    (GDI32.@)
@@ -117,8 +102,8 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
 
     case BS_DIBPATTERNPT:
         ptr->logbrush.lbStyle = BS_DIBPATTERN;
-        ptr->logbrush.lbHatch = (ULONG_PTR)dib_copy( (BITMAPINFO *) ptr->logbrush.lbHatch,
-                                                     ptr->logbrush.lbColor);
+        ptr->logbrush.lbHatch = (ULONG_PTR)copy_packed_dib( (BITMAPINFO *) ptr->logbrush.lbHatch,
+                                                            ptr->logbrush.lbColor );
         if (!ptr->logbrush.lbHatch) goto error;
         break;
 
@@ -129,7 +114,7 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
 
             ptr->logbrush.lbStyle = BS_DIBPATTERN;
             if (!(bmi = GlobalLock( h ))) goto error;
-            ptr->logbrush.lbHatch = (ULONG_PTR)dib_copy( bmi, ptr->logbrush.lbColor);
+            ptr->logbrush.lbHatch = (ULONG_PTR)copy_packed_dib( bmi, ptr->logbrush.lbColor );
             GlobalUnlock( h );
             if (!ptr->logbrush.lbHatch) goto error;
             break;

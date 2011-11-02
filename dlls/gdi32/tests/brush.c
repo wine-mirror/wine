@@ -192,6 +192,16 @@ static void test_pattern_brush(void)
     ret = GlobalFlags( mem );
     ok( ret == 2, "wrong flags %x\n", ret );
 
+    info->bmiHeader.biBitCount = 8;
+    info->bmiHeader.biCompression = BI_RLE8;
+    brush = CreateDIBPatternBrushPt( info, DIB_RGB_COLORS );
+    ok( !brush, "CreateDIBPatternBrushPt succeeded\n" );
+
+    info->bmiHeader.biBitCount = 4;
+    info->bmiHeader.biCompression = BI_RLE4;
+    brush = CreateDIBPatternBrushPt( info, DIB_RGB_COLORS );
+    ok( !brush, "CreateDIBPatternBrushPt succeeded\n" );
+
     br.lbStyle = BS_DIBPATTERN8X8;
     br.lbColor = DIB_RGB_COLORS;
     br.lbHatch = (ULONG_PTR)mem;

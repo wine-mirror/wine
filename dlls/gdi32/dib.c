@@ -1113,6 +1113,23 @@ void get_ddb_bitmapinfo( BITMAPOBJ *bmp, BITMAPINFO *info )
     if (info->bmiHeader.biBitCount <= 8) fill_default_color_table( info );
 }
 
+BITMAPINFO *copy_packed_dib( const BITMAPINFO *src_info, UINT usage )
+{
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *ret, *info = (BITMAPINFO *)buffer;
+    int info_size, image_size;
+
+    if (!bitmapinfo_from_user_bitmapinfo( info, src_info, usage, FALSE )) return NULL;
+
+    info_size = bitmap_info_size( info, usage );
+    image_size = get_dib_image_size( info );
+    if ((ret = HeapAlloc( GetProcessHeap(), 0, info_size + image_size )))
+    {
+        memcpy( ret, info, info_size );
+        memcpy( (char *)ret + info_size, (char *)src_info + bitmap_info_size(src_info,usage), image_size );
+    }
+    return ret;
+}
 
 /******************************************************************************
  * GetDIBits [GDI32.@]
