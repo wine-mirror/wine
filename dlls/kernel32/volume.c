@@ -572,6 +572,8 @@ static void VOLUME_GetSuperblockLabel( const UNICODE_STRING *device, HANDLE hand
 static DWORD VOLUME_GetSuperblockSerial( const UNICODE_STRING *device, HANDLE handle,
                                          enum fs_type type, const BYTE *superblock )
 {
+    BYTE block[BLOCK_SIZE];
+
     switch(type)
     {
     case FS_ERROR:
@@ -584,13 +586,9 @@ static DWORD VOLUME_GetSuperblockSerial( const UNICODE_STRING *device, HANDLE ha
         return GETLONG( superblock, 0x33 );
     case FS_UDF:
         {
-            BYTE block[BLOCK_SIZE];
-
             if (!VOLUME_ReadCDBlock(handle, block, 257*BLOCK_SIZE))
                 break;
-
             superblock = block;
-
             /* fallthrough */
         }
     case FS_ISO9660:
