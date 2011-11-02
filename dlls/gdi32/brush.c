@@ -34,8 +34,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 /* GDI logical brush object */
 typedef struct
 {
-    GDIOBJHDR header;
-    LOGBRUSH  logbrush;
+    GDIOBJHDR             header;
+    LOGBRUSH              logbrush;
+    HBITMAP               bitmap;   /* bitmap handle for DDB pattern brushes */
+    BITMAPINFO           *info;     /* DIB info for pattern brushes */
+    struct gdi_image_bits bits;     /* DIB bits for pattern brushes */
+    UINT                  usage;    /* color usage for DIB info */
 } BRUSHOBJ;
 
 #define NB_HATCH_STYLES  6
@@ -77,12 +81,11 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
 {
     BRUSHOBJ * ptr;
     HBRUSH hbrush;
+    HGLOBAL hmem = 0;
 
-    if (!(ptr = HeapAlloc( GetProcessHeap(), 0, sizeof(*ptr) ))) return 0;
+    if (!(ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ptr) ))) return 0;
 
-    ptr->logbrush.lbStyle = brush->lbStyle;
-    ptr->logbrush.lbColor = brush->lbColor;
-    ptr->logbrush.lbHatch = brush->lbHatch;
+    ptr->logbrush = *brush;
 
     switch (ptr->logbrush.lbStyle)
     {
@@ -95,30 +98,25 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
         ptr->logbrush.lbStyle = BS_PATTERN;
         /* fall through */
     case BS_PATTERN:
-        ptr->logbrush.lbHatch = (ULONG_PTR)BITMAP_CopyBitmap( (HBITMAP) ptr->logbrush.lbHatch );
+        ptr->bitmap = BITMAP_CopyBitmap( (HBITMAP)ptr->logbrush.lbHatch );
+        if (!ptr->bitmap) goto error;
+        ptr->logbrush.lbHatch = (ULONG_PTR)ptr->bitmap;
         ptr->logbrush.lbColor = 0;
-        if (!ptr->logbrush.lbHatch) goto error;
-        break;
-
-    case BS_DIBPATTERNPT:
-        ptr->logbrush.lbStyle = BS_DIBPATTERN;
-        ptr->logbrush.lbHatch = (ULONG_PTR)copy_packed_dib( (BITMAPINFO *) ptr->logbrush.lbHatch,
-                                                            ptr->logbrush.lbColor );
-        if (!ptr->logbrush.lbHatch) goto error;
         break;
 
     case BS_DIBPATTERN:
-       {
-            BITMAPINFO* bmi;
-            HGLOBAL h = (HGLOBAL)ptr->logbrush.lbHatch;
-
-            ptr->logbrush.lbStyle = BS_DIBPATTERN;
-            if (!(bmi = GlobalLock( h ))) goto error;
-            ptr->logbrush.lbHatch = (ULONG_PTR)copy_packed_dib( bmi, ptr->logbrush.lbColor );
-            GlobalUnlock( h );
-            if (!ptr->logbrush.lbHatch) goto error;
-            break;
-       }
+        hmem = (HGLOBAL)ptr->logbrush.lbHatch;
+        if (!(ptr->logbrush.lbHatch = (ULONG_PTR)GlobalLock( hmem ))) goto error;
+        /* fall through */
+    case BS_DIBPATTERNPT:
+        ptr->usage = ptr->logbrush.lbColor;
+        ptr->info = copy_packed_dib( (BITMAPINFO *)ptr->logbrush.lbHatch, ptr->usage );
+        if (hmem) GlobalUnlock( hmem );
+        if (!ptr->info) goto error;
+        ptr->bits.ptr = (char *)ptr->info + bitmap_info_size( ptr->info, ptr->usage );
+        ptr->logbrush.lbStyle = BS_DIBPATTERN;
+        ptr->logbrush.lbHatch = (ULONG_PTR)ptr->info;
+        break;
 
     case BS_DIBPATTERN8X8:
     case BS_MONOPATTERN:
@@ -135,13 +133,8 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
     }
 
  error:
-    if (ptr->logbrush.lbHatch)
-    {
-        if (ptr->logbrush.lbStyle == BS_PATTERN)
-            DeleteObject( (HGDIOBJ)ptr->logbrush.lbHatch );
-        else if (ptr->logbrush.lbStyle == BS_DIBPATTERN)
-            HeapFree( GetProcessHeap(), 0, (void *)ptr->logbrush.lbHatch );
-    }
+    if (ptr->bitmap) DeleteObject( ptr->bitmap );
+    HeapFree( GetProcessHeap(), 0, ptr->info );
     HeapFree( GetProcessHeap(), 0, ptr );
     return 0;
 }
@@ -411,15 +404,9 @@ static BOOL BRUSH_DeleteObject( HGDIOBJ handle )
     BRUSHOBJ *brush = free_gdi_handle( handle );
 
     if (!brush) return FALSE;
-    switch(brush->logbrush.lbStyle)
-    {
-      case BS_PATTERN:
-	  DeleteObject( (HGDIOBJ)brush->logbrush.lbHatch );
-	  break;
-      case BS_DIBPATTERN:
-	  HeapFree( GetProcessHeap(), 0, (void *)brush->logbrush.lbHatch );
-	  break;
-    }
+    if (brush->bits.free) brush->bits.free( &brush->bits );
+    if (brush->bitmap) DeleteObject( brush->bitmap );
+    HeapFree( GetProcessHeap(), 0, brush->info );
     return HeapFree( GetProcessHeap(), 0, brush );
 }
 
