@@ -1704,7 +1704,7 @@ msgstr "자동으로 프로그램에 의해 결정"
 msgid "File"
 msgstr "파일"
 
-#: cryptui.rc:89
+#: cryptui.rc:89 inetcpl.rc:105
 msgid "Content"
 msgstr "내용"
 
@@ -2212,6 +2212,132 @@ msgstr "인쇄..."
 #: ieframe.rc:73
 msgid "Address"
 msgstr "주소"
+
+#: inetcpl.rc:43
+msgid "General"
+msgstr "일반"
+
+#: inetcpl.rc:46
+msgid " Home page "
+msgstr " 홈 페이지 "
+
+#: inetcpl.rc:47
+msgid "You can choose the address that will be used as your home page."
+msgstr "홈페이지로 사용할 주소를 선택할 수 있습니다."
+
+#: inetcpl.rc:50
+msgid "&Current page"
+msgstr "현재 페이지(&C)"
+
+#: inetcpl.rc:51
+msgid "&Default page"
+msgstr "기본 페이지(&D)"
+
+#: inetcpl.rc:52
+msgid "&Blank page"
+msgstr "빈 페이지(&B)"
+
+#: inetcpl.rc:53
+msgid " Browsing history "
+msgstr " 방문 기록 "
+
+#: inetcpl.rc:54
+msgid "You can delete cached pages, cookies and other data."
+msgstr "당신은 캐시된 페이지,쿠키나 다른 데이터를 지울 수 있습니다."
+
+#: inetcpl.rc:56
+msgid "Delete &files..."
+msgstr "파일들 지우기(&F)..."
+
+#: inetcpl.rc:57
+msgid "&Settings..."
+msgstr "설정(&S)..."
+
+#: inetcpl.rc:65
+msgid "Delete browsing history"
+msgstr "방문 기록 지우기"
+
+#: inetcpl.rc:68
+msgid ""
+"Temporary internet files\n"
+"Cached copies of webpages, images and certificates."
+msgstr ""
+"임시 인터넷 파일\n"
+"웹페이지의 캐시된 복사본,그림 그리고 인증서."
+
+#: inetcpl.rc:70
+msgid ""
+"Cookies\n"
+"Files saved on your computer by websites, which store things like user "
+"preferences and login information."
+msgstr ""
+"쿠키\n"
+"이 파일은 웹사이트에 위해 사용자 환경설정이나 로그인 정보같은 것을 당신의 컴"
+"퓨터에 저장하는데 사용됩니다. ."
+
+#: inetcpl.rc:72
+msgid ""
+"History\n"
+"List of websites you have accessed."
+msgstr ""
+"방문기록\n"
+"당신이 방문한 웹사이트의 목록."
+
+#: inetcpl.rc:74
+msgid ""
+"Form data\n"
+"Usernames and other information you have entered into forms."
+msgstr ""
+"폼 정보\n"
+"당신이 정보 폼에 입력한 사용자 이름과 다른 정보."
+
+#: inetcpl.rc:76
+msgid ""
+"Passwords\n"
+"Saved passwords you have entered into forms."
+msgstr ""
+"암호\n"
+"당신이 폼에 입력한 저장된 암호."
+
+#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+msgid "Cancel"
+msgstr "취소"
+
+#: inetcpl.rc:79 progman.rc:64
+msgid "Delete"
+msgstr "지우기"
+
+#: inetcpl.rc:87 winefile.rc:118
+msgid "Security"
+msgstr "보안"
+
+#: inetcpl.rc:90
+msgid "Listview"
+msgstr "목록보기"
+
+#: inetcpl.rc:95
+msgid "trackbar"
+msgstr "트랙바"
+
+#: inetcpl.rc:108
+msgid " Certificates "
+msgstr " 인증서 "
+
+#: inetcpl.rc:109
+msgid ""
+"Certificates are used for your personal identification and to identify "
+"certificate authorities and publishers."
+msgstr " 인증서는 당신의 개인 식별과 인증기관과 게시자 식별에 사용됩니다."
+
+#: inetcpl.rc:111
+msgid "Certificates..."
+msgstr "인증서..."
+
+#: inetcpl.rc:112
+msgid "Publishers..."
+msgstr "발행자..."
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -8774,12 +8900,6 @@ msgstr "오른쪽(&R):"
 msgid "&Bottom:"
 msgstr "아래(&B):"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
-#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
-msgid "Cancel"
-msgstr "취소"
-
 #: notepad.rc:131
 #, fuzzy
 msgid "Encoding:"
@@ -9306,10 +9426,6 @@ msgstr "프로그램 관리자 정보(&A)"
 #: progman.rc:60
 msgid "Program Manager"
 msgstr "풀그림 관리자"
-
-#: progman.rc:64
-msgid "Delete"
-msgstr "지우기"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
@@ -11231,10 +11347,6 @@ msgstr "분(MDate)"
 #: winefile.rc:115
 msgid "Index/Inode"
 msgstr "인덱스/아이노드"
-
-#: winefile.rc:118
-msgid "Security"
-msgstr "보안"
 
 #: winefile.rc:120
 #, fuzzy

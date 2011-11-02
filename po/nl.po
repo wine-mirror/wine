@@ -1720,7 +1720,7 @@ msgstr "Automatisch bepaald door het programma"
 msgid "File"
 msgstr "Bestand"
 
-#: cryptui.rc:89
+#: cryptui.rc:89 inetcpl.rc:105
 msgid "Content"
 msgstr "Inhoud"
 
@@ -2243,6 +2243,125 @@ msgstr "Afdrukken..."
 #: ieframe.rc:73
 msgid "Address"
 msgstr "Adres"
+
+#: inetcpl.rc:43
+msgid "General"
+msgstr "Algemeen"
+
+#: inetcpl.rc:46
+msgid " Home page "
+msgstr " Startpagina "
+
+#: inetcpl.rc:47
+msgid "You can choose the address that will be used as your home page."
+msgstr "Hier kunt u het adres kiezen dat gebruikt wordt als uw startpagina."
+
+#: inetcpl.rc:50
+msgid "&Current page"
+msgstr "&Huidige pagina"
+
+#: inetcpl.rc:51
+msgid "&Default page"
+msgstr "&Standaardpagina"
+
+#: inetcpl.rc:52
+msgid "&Blank page"
+msgstr "&Lege pagina"
+
+#: inetcpl.rc:53
+msgid " Browsing history "
+msgstr " Browsing history "
+
+#: inetcpl.rc:54
+msgid "You can delete cached pages, cookies and other data."
+msgstr "You can delete cached pages, cookies and other data."
+
+#: inetcpl.rc:56
+msgid "Delete &files..."
+msgstr "Delete &files..."
+
+#: inetcpl.rc:57
+msgid "&Settings..."
+msgstr "&Settings..."
+
+#: inetcpl.rc:65
+#, fuzzy
+msgid "Delete browsing history"
+msgstr " Browsing history "
+
+#: inetcpl.rc:68
+msgid ""
+"Temporary internet files\n"
+"Cached copies of webpages, images and certificates."
+msgstr ""
+
+#: inetcpl.rc:70
+msgid ""
+"Cookies\n"
+"Files saved on your computer by websites, which store things like user "
+"preferences and login information."
+msgstr ""
+
+#: inetcpl.rc:72
+msgid ""
+"History\n"
+"List of websites you have accessed."
+msgstr ""
+
+#: inetcpl.rc:74
+msgid ""
+"Form data\n"
+"Usernames and other information you have entered into forms."
+msgstr ""
+
+#: inetcpl.rc:76
+msgid ""
+"Passwords\n"
+"Saved passwords you have entered into forms."
+msgstr ""
+
+#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+msgid "Cancel"
+msgstr "Annuleren"
+
+#: inetcpl.rc:79 progman.rc:64
+msgid "Delete"
+msgstr "Verwijderen"
+
+#: inetcpl.rc:87 winefile.rc:118
+msgid "Security"
+msgstr "Beveiliging"
+
+#: inetcpl.rc:90
+#, fuzzy
+msgid "Listview"
+msgstr "Lijst"
+
+#: inetcpl.rc:95
+msgid "trackbar"
+msgstr ""
+
+#: inetcpl.rc:108
+msgid " Certificates "
+msgstr " Certificaten "
+
+#: inetcpl.rc:109
+msgid ""
+"Certificates are used for your personal identification and to identify "
+"certificate authorities and publishers."
+msgstr ""
+"Certificaten worden gebruikt voor uw persoonlijke identificatie en om "
+"certificaat-autoriteiten en uitgevers te identificeren."
+
+#: inetcpl.rc:111
+msgid "Certificates..."
+msgstr "Certificaten..."
+
+#: inetcpl.rc:112
+msgid "Publishers..."
+msgstr "Uitgevers..."
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -8921,12 +9040,6 @@ msgstr "&Rechts:"
 msgid "&Bottom:"
 msgstr "&Onder:"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
-#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
-msgid "Cancel"
-msgstr "Annuleren"
-
 #: notepad.rc:131
 msgid "Encoding:"
 msgstr "Codering:"
@@ -9468,10 +9581,6 @@ msgstr "Programmabeheer"
 #: progman.rc:60
 msgid "Program Manager"
 msgstr "Programmabeheer"
-
-#: progman.rc:64
-msgid "Delete"
-msgstr "Verwijderen"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
@@ -11442,10 +11551,6 @@ msgstr "MDatum"
 #: winefile.rc:115
 msgid "Index/Inode"
 msgstr "Index/Inode"
-
-#: winefile.rc:118
-msgid "Security"
-msgstr "Beveiliging"
 
 #: winefile.rc:120
 #, fuzzy

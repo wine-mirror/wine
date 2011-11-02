@@ -1709,7 +1709,7 @@ msgstr "Автоматично визначено програмою"
 msgid "File"
 msgstr "Файл"
 
-#: cryptui.rc:89
+#: cryptui.rc:89 inetcpl.rc:105
 msgid "Content"
 msgstr "Вміст"
 
@@ -2222,6 +2222,125 @@ msgstr "Друк..."
 #: ieframe.rc:73
 msgid "Address"
 msgstr "Адреса"
+
+#: inetcpl.rc:43
+msgid "General"
+msgstr "Загальні"
+
+#: inetcpl.rc:46
+msgid " Home page "
+msgstr " Домашня сторінка "
+
+#: inetcpl.rc:47
+msgid "You can choose the address that will be used as your home page."
+msgstr "Ви можете вказати адресу, що буде використана як домашня сторінка."
+
+#: inetcpl.rc:50
+msgid "&Current page"
+msgstr "&Поточна сторінка"
+
+#: inetcpl.rc:51
+msgid "&Default page"
+msgstr "&За замовчуванням"
+
+#: inetcpl.rc:52
+msgid "&Blank page"
+msgstr "По&рожня сторінка"
+
+#: inetcpl.rc:53
+msgid " Browsing history "
+msgstr " Browsing history "
+
+#: inetcpl.rc:54
+msgid "You can delete cached pages, cookies and other data."
+msgstr "You can delete cached pages, cookies and other data."
+
+#: inetcpl.rc:56
+msgid "Delete &files..."
+msgstr "Delete &files..."
+
+#: inetcpl.rc:57
+msgid "&Settings..."
+msgstr "&Settings..."
+
+#: inetcpl.rc:65
+#, fuzzy
+msgid "Delete browsing history"
+msgstr " Browsing history "
+
+#: inetcpl.rc:68
+msgid ""
+"Temporary internet files\n"
+"Cached copies of webpages, images and certificates."
+msgstr ""
+
+#: inetcpl.rc:70
+msgid ""
+"Cookies\n"
+"Files saved on your computer by websites, which store things like user "
+"preferences and login information."
+msgstr ""
+
+#: inetcpl.rc:72
+msgid ""
+"History\n"
+"List of websites you have accessed."
+msgstr ""
+
+#: inetcpl.rc:74
+msgid ""
+"Form data\n"
+"Usernames and other information you have entered into forms."
+msgstr ""
+
+#: inetcpl.rc:76
+msgid ""
+"Passwords\n"
+"Saved passwords you have entered into forms."
+msgstr ""
+
+#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+msgid "Cancel"
+msgstr "Скасувати"
+
+#: inetcpl.rc:79 progman.rc:64
+msgid "Delete"
+msgstr "Видалити"
+
+#: inetcpl.rc:87 winefile.rc:118
+msgid "Security"
+msgstr "Безпека"
+
+#: inetcpl.rc:90
+#, fuzzy
+msgid "Listview"
+msgstr "Список"
+
+#: inetcpl.rc:95
+msgid "trackbar"
+msgstr ""
+
+#: inetcpl.rc:108
+msgid " Certificates "
+msgstr " Сертифікати "
+
+#: inetcpl.rc:109
+msgid ""
+"Certificates are used for your personal identification and to identify "
+"certificate authorities and publishers."
+msgstr ""
+"Сертифікати використовуються для вашої ідентифікації та для ідентифікації "
+"органів сертифікації та видавців."
+
+#: inetcpl.rc:111
+msgid "Certificates..."
+msgstr "Сертифікати..."
+
+#: inetcpl.rc:112
+msgid "Publishers..."
+msgstr "Видавці..."
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -8774,12 +8893,6 @@ msgstr "&Праве:"
 msgid "&Bottom:"
 msgstr "&Нижнє:"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
-#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
-msgid "Cancel"
-msgstr "Скасувати"
-
 #: notepad.rc:131
 msgid "Encoding:"
 msgstr "Кодування:"
@@ -9311,10 +9424,6 @@ msgstr "&Про Диспетчер програм"
 #: progman.rc:60
 msgid "Program Manager"
 msgstr "Диспетчер програм"
-
-#: progman.rc:64
-msgid "Delete"
-msgstr "Видалити"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
@@ -11256,10 +11365,6 @@ msgstr "Дата останньої зміни"
 #: winefile.rc:115
 msgid "Index/Inode"
 msgstr ""
-
-#: winefile.rc:118
-msgid "Security"
-msgstr "Безпека"
 
 #: winefile.rc:120
 #, fuzzy

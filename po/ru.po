@@ -1702,7 +1702,7 @@ msgstr "Автоматически определяется программой
 msgid "File"
 msgstr "Имя"
 
-#: cryptui.rc:89
+#: cryptui.rc:89 inetcpl.rc:105
 msgid "Content"
 msgstr "Содержание"
 
@@ -2214,6 +2214,136 @@ msgstr "Печать..."
 #: ieframe.rc:73
 msgid "Address"
 msgstr "Адрес"
+
+#: inetcpl.rc:43
+msgid "General"
+msgstr "Общие"
+
+#: inetcpl.rc:46
+msgid " Home page "
+msgstr " Домашняя страница "
+
+#: inetcpl.rc:47
+msgid "You can choose the address that will be used as your home page."
+msgstr "Укажите адрес для вашей домашней страницы:"
+
+#: inetcpl.rc:50
+msgid "&Current page"
+msgstr "&Текущая страница"
+
+#: inetcpl.rc:51
+msgid "&Default page"
+msgstr "&По умолчанию"
+
+#: inetcpl.rc:52
+msgid "&Blank page"
+msgstr "Пу&стая страница"
+
+#: inetcpl.rc:53
+msgid " Browsing history "
+msgstr " История использования браузера "
+
+#: inetcpl.rc:54
+msgid "You can delete cached pages, cookies and other data."
+msgstr ""
+"Вы можете удалить кэшированные страницы, файлы cookies и другие данные."
+
+#: inetcpl.rc:56
+msgid "Delete &files..."
+msgstr "Удалить &файлы..."
+
+#: inetcpl.rc:57
+msgid "&Settings..."
+msgstr "&Настройки..."
+
+#: inetcpl.rc:65
+msgid "Delete browsing history"
+msgstr "Очистка истории"
+
+#: inetcpl.rc:68
+msgid ""
+"Temporary internet files\n"
+"Cached copies of webpages, images and certificates."
+msgstr ""
+"Временные файлы\n"
+"Кэшированные копии страниц, изображений и сертификатов."
+
+#: inetcpl.rc:70
+msgid ""
+"Cookies\n"
+"Files saved on your computer by websites, which store things like user "
+"preferences and login information."
+msgstr ""
+"Файлы cookies\n"
+"Файлы, сохранённые на вашем компьютере, могут содержать пользовательские "
+"настройки и информацию для авторизации."
+
+#: inetcpl.rc:72
+msgid ""
+"History\n"
+"List of websites you have accessed."
+msgstr ""
+"История\n"
+"Перечень сайтов, к которым осуществлялся доступ."
+
+#: inetcpl.rc:74
+msgid ""
+"Form data\n"
+"Usernames and other information you have entered into forms."
+msgstr ""
+"Данные веб-форм\n"
+"Имена пользователя и другая информация, которая использовалась при "
+"заполнении форм."
+
+#: inetcpl.rc:76
+msgid ""
+"Passwords\n"
+"Saved passwords you have entered into forms."
+msgstr ""
+"Пароли\n"
+"Сохранённые пароли, которые были указаны в веб-формах."
+
+#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+msgid "Cancel"
+msgstr "Отмена"
+
+#: inetcpl.rc:79 progman.rc:64
+msgid "Delete"
+msgstr "Удалить"
+
+#: inetcpl.rc:87 winefile.rc:118
+msgid "Security"
+msgstr "Безопасность"
+
+#: inetcpl.rc:90
+msgid "Listview"
+msgstr "Listview"
+
+#: inetcpl.rc:95
+msgid "trackbar"
+msgstr "trackbar"
+
+#: inetcpl.rc:108
+msgid " Certificates "
+msgstr " Сертификаты "
+
+#: inetcpl.rc:109
+msgid ""
+"Certificates are used for your personal identification and to identify "
+"certificate authorities and publishers."
+msgstr ""
+"Сертификаты используются для идентификации личности, а также для проверки "
+"подлинности центров сертификации и издателей."
+
+#: inetcpl.rc:111
+msgid "Certificates..."
+msgstr "Сертификаты..."
+
+#: inetcpl.rc:112
+msgid "Publishers..."
+msgstr "Издатели..."
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -8809,12 +8939,6 @@ msgstr "&Правое:"
 msgid "&Bottom:"
 msgstr "&Нижнее:"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
-#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
-msgid "Cancel"
-msgstr "Отмена"
-
 #: notepad.rc:131
 msgid "Encoding:"
 msgstr "Кодировка:"
@@ -9344,10 +9468,6 @@ msgstr "&О диспетчере программ"
 #: progman.rc:60
 msgid "Program Manager"
 msgstr "Диспетчер программ"
-
-#: progman.rc:64
-msgid "Delete"
-msgstr "Удалить"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
@@ -11283,10 +11403,6 @@ msgstr "Дата последнего изменения"
 #: winefile.rc:115
 msgid "Index/Inode"
 msgstr "Индекс/дескриптор"
-
-#: winefile.rc:118
-msgid "Security"
-msgstr "Безопасность"
 
 #: winefile.rc:120
 #, fuzzy

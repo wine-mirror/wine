@@ -1805,7 +1805,7 @@ msgstr "Bestemt av proggramet"
 msgid "File"
 msgstr "Fil"
 
-#: cryptui.rc:89
+#: cryptui.rc:89 inetcpl.rc:105
 msgid "Content"
 msgstr "Innhold"
 
@@ -2350,6 +2350,132 @@ msgstr "Skriv ut..."
 #, fuzzy
 msgid "Address"
 msgstr "IP-adresse="
+
+#: inetcpl.rc:43
+#, fuzzy
+msgid "General"
+msgstr "Generell feil\n"
+
+#: inetcpl.rc:46
+#, fuzzy
+msgid " Home page "
+msgstr "Én side"
+
+#: inetcpl.rc:47
+msgid "You can choose the address that will be used as your home page."
+msgstr ""
+
+#: inetcpl.rc:50
+#, fuzzy
+msgid "&Current page"
+msgstr "Neste side"
+
+#: inetcpl.rc:51
+#, fuzzy
+msgid "&Default page"
+msgstr "(Standard)"
+
+#: inetcpl.rc:52
+#, fuzzy
+msgid "&Blank page"
+msgstr "Én side"
+
+#: inetcpl.rc:53
+#, fuzzy
+msgid " Browsing history "
+msgstr "Kommandohistorikk"
+
+#: inetcpl.rc:54
+msgid "You can delete cached pages, cookies and other data."
+msgstr ""
+
+#: inetcpl.rc:56
+msgid "Delete &files..."
+msgstr ""
+
+#: inetcpl.rc:57
+#, fuzzy
+msgid "&Settings..."
+msgstr "&Alternativer..."
+
+#: inetcpl.rc:65
+msgid "Delete browsing history"
+msgstr ""
+
+#: inetcpl.rc:68
+msgid ""
+"Temporary internet files\n"
+"Cached copies of webpages, images and certificates."
+msgstr ""
+
+#: inetcpl.rc:70
+msgid ""
+"Cookies\n"
+"Files saved on your computer by websites, which store things like user "
+"preferences and login information."
+msgstr ""
+
+#: inetcpl.rc:72
+msgid ""
+"History\n"
+"List of websites you have accessed."
+msgstr ""
+
+#: inetcpl.rc:74
+msgid ""
+"Form data\n"
+"Usernames and other information you have entered into forms."
+msgstr ""
+
+#: inetcpl.rc:76
+msgid ""
+"Passwords\n"
+"Saved passwords you have entered into forms."
+msgstr ""
+
+#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+msgid "Cancel"
+msgstr "Avbryt"
+
+#: inetcpl.rc:79 progman.rc:64
+msgid "Delete"
+msgstr "Slett"
+
+#: inetcpl.rc:87 winefile.rc:118
+msgid "Security"
+msgstr "Sikkerhet"
+
+#: inetcpl.rc:90
+#, fuzzy
+msgid "Listview"
+msgstr "Liste"
+
+#: inetcpl.rc:95
+msgid "trackbar"
+msgstr ""
+
+#: inetcpl.rc:108
+#, fuzzy
+msgid " Certificates "
+msgstr "Sertifikater"
+
+#: inetcpl.rc:109
+msgid ""
+"Certificates are used for your personal identification and to identify "
+"certificate authorities and publishers."
+msgstr ""
+
+#: inetcpl.rc:111
+#, fuzzy
+msgid "Certificates..."
+msgstr "Sertifikater"
+
+#: inetcpl.rc:112
+#, fuzzy
+msgid "Publishers..."
+msgstr "Utgiver"
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -9047,12 +9173,6 @@ msgstr "Høy&re:"
 msgid "&Bottom:"
 msgstr "&Bunn:"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
-#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
-msgid "Cancel"
-msgstr "Avbryt"
-
 #: notepad.rc:131
 msgid "Encoding:"
 msgstr "Tegnkoding:"
@@ -9599,10 +9719,6 @@ msgstr "Programbehandling"
 #: progman.rc:60
 msgid "Program Manager"
 msgstr "Programbehandling"
-
-#: progman.rc:64
-msgid "Delete"
-msgstr "Slett"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
@@ -11576,10 +11692,6 @@ msgstr "M-dato"
 #: winefile.rc:115
 msgid "Index/Inode"
 msgstr "Indeks/Inode"
-
-#: winefile.rc:118
-msgid "Security"
-msgstr "Sikkerhet"
 
 #: winefile.rc:120
 #, fuzzy

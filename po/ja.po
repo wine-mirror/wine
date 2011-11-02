@@ -1704,7 +1704,7 @@ msgstr "プログラムで自動的に決定する"
 msgid "File"
 msgstr "ファイル"
 
-#: cryptui.rc:89
+#: cryptui.rc:89 inetcpl.rc:105
 msgid "Content"
 msgstr "コンテンツ"
 
@@ -2211,6 +2211,123 @@ msgstr "印刷..."
 #: ieframe.rc:73
 msgid "Address"
 msgstr "アドレス"
+
+#: inetcpl.rc:43
+msgid "General"
+msgstr "全般"
+
+#: inetcpl.rc:46
+msgid " Home page "
+msgstr " ホーム ページ "
+
+#: inetcpl.rc:47
+msgid "You can choose the address that will be used as your home page."
+msgstr "ホーム ページとして使われるアドレスを選べます。"
+
+#: inetcpl.rc:50
+msgid "&Current page"
+msgstr "現在のページ(&C)"
+
+#: inetcpl.rc:51
+msgid "&Default page"
+msgstr "デフォルト(&D)"
+
+#: inetcpl.rc:52
+msgid "&Blank page"
+msgstr "空白(&B)"
+
+#: inetcpl.rc:53
+msgid " Browsing history "
+msgstr " 閲覧履歴 "
+
+#: inetcpl.rc:54
+msgid "You can delete cached pages, cookies and other data."
+msgstr "キャッシュされたページやクッキー、その他のデータを削除できます。"
+
+#: inetcpl.rc:56
+msgid "Delete &files..."
+msgstr "ファイルを削除(&F)..."
+
+#: inetcpl.rc:57
+msgid "&Settings..."
+msgstr "設定(&S)..."
+
+#: inetcpl.rc:65
+#, fuzzy
+msgid "Delete browsing history"
+msgstr " 閲覧履歴 "
+
+#: inetcpl.rc:68
+msgid ""
+"Temporary internet files\n"
+"Cached copies of webpages, images and certificates."
+msgstr ""
+
+#: inetcpl.rc:70
+msgid ""
+"Cookies\n"
+"Files saved on your computer by websites, which store things like user "
+"preferences and login information."
+msgstr ""
+
+#: inetcpl.rc:72
+msgid ""
+"History\n"
+"List of websites you have accessed."
+msgstr ""
+
+#: inetcpl.rc:74
+msgid ""
+"Form data\n"
+"Usernames and other information you have entered into forms."
+msgstr ""
+
+#: inetcpl.rc:76
+msgid ""
+"Passwords\n"
+"Saved passwords you have entered into forms."
+msgstr ""
+
+#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: inetcpl.rc:79 progman.rc:64
+msgid "Delete"
+msgstr "削除"
+
+#: inetcpl.rc:87 winefile.rc:118
+msgid "Security"
+msgstr "セキュリティ"
+
+#: inetcpl.rc:90
+#, fuzzy
+msgid "Listview"
+msgstr "一覧"
+
+#: inetcpl.rc:95
+msgid "trackbar"
+msgstr ""
+
+#: inetcpl.rc:108
+msgid " Certificates "
+msgstr " 証明書 "
+
+#: inetcpl.rc:109
+msgid ""
+"Certificates are used for your personal identification and to identify "
+"certificate authorities and publishers."
+msgstr "証明書は個人認証、証明書の権限と発行元を確認するために使われます。"
+
+#: inetcpl.rc:111
+msgid "Certificates..."
+msgstr "証明書..."
+
+#: inetcpl.rc:112
+msgid "Publishers..."
+msgstr "発行元..."
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -8792,12 +8909,6 @@ msgstr "右(&R):"
 msgid "&Bottom:"
 msgstr "下(&B):"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
-#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
-msgid "Cancel"
-msgstr "キャンセル"
-
 #: notepad.rc:131
 msgid "Encoding:"
 msgstr "文字コード:"
@@ -9326,10 +9437,6 @@ msgstr "バージョン情報(&A)"
 #: progman.rc:60
 msgid "Program Manager"
 msgstr "プログラム マネージャ"
-
-#: progman.rc:64
-msgid "Delete"
-msgstr "削除"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
@@ -11270,10 +11377,6 @@ msgstr "変更日"
 #: winefile.rc:115
 msgid "Index/Inode"
 msgstr "Index/Inode"
-
-#: winefile.rc:118
-msgid "Security"
-msgstr "セキュリティ"
 
 #: winefile.rc:120
 #, fuzzy

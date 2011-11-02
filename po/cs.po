@@ -1730,7 +1730,7 @@ msgstr ""
 msgid "File"
 msgstr "Název"
 
-#: cryptui.rc:89
+#: cryptui.rc:89 inetcpl.rc:105
 #, fuzzy
 msgid "Content"
 msgstr "&Obsah"
@@ -2253,6 +2253,127 @@ msgstr "Tisk"
 
 #: ieframe.rc:73
 msgid "Address"
+msgstr ""
+
+#: inetcpl.rc:43
+msgid "General"
+msgstr ""
+
+#: inetcpl.rc:46
+msgid " Home page "
+msgstr ""
+
+#: inetcpl.rc:47
+msgid "You can choose the address that will be used as your home page."
+msgstr ""
+
+#: inetcpl.rc:50
+msgid "&Current page"
+msgstr ""
+
+#: inetcpl.rc:51
+#, fuzzy
+msgid "&Default page"
+msgstr "Standardní nastavení"
+
+#: inetcpl.rc:52
+msgid "&Blank page"
+msgstr ""
+
+#: inetcpl.rc:53
+#, fuzzy
+msgid " Browsing history "
+msgstr "Historie příkazů"
+
+#: inetcpl.rc:54
+msgid "You can delete cached pages, cookies and other data."
+msgstr ""
+
+#: inetcpl.rc:56
+msgid "Delete &files..."
+msgstr ""
+
+#: inetcpl.rc:57
+#, fuzzy
+msgid "&Settings..."
+msgstr "&Nastavení"
+
+#: inetcpl.rc:65
+msgid "Delete browsing history"
+msgstr ""
+
+#: inetcpl.rc:68
+msgid ""
+"Temporary internet files\n"
+"Cached copies of webpages, images and certificates."
+msgstr ""
+
+#: inetcpl.rc:70
+msgid ""
+"Cookies\n"
+"Files saved on your computer by websites, which store things like user "
+"preferences and login information."
+msgstr ""
+
+#: inetcpl.rc:72
+msgid ""
+"History\n"
+"List of websites you have accessed."
+msgstr ""
+
+#: inetcpl.rc:74
+msgid ""
+"Form data\n"
+"Usernames and other information you have entered into forms."
+msgstr ""
+
+#: inetcpl.rc:76
+msgid ""
+"Passwords\n"
+"Saved passwords you have entered into forms."
+msgstr ""
+
+#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+msgid "Cancel"
+msgstr "Storno"
+
+#: inetcpl.rc:79 progman.rc:64
+msgid "Delete"
+msgstr "Smazat"
+
+#: inetcpl.rc:87 winefile.rc:118
+msgid "Security"
+msgstr "Zabezpečení"
+
+#: inetcpl.rc:90
+#, fuzzy
+msgid "Listview"
+msgstr "Výpis"
+
+#: inetcpl.rc:95
+msgid "trackbar"
+msgstr ""
+
+#: inetcpl.rc:108
+#, fuzzy
+msgid " Certificates "
+msgstr "&Vlastnosti"
+
+#: inetcpl.rc:109
+msgid ""
+"Certificates are used for your personal identification and to identify "
+"certificate authorities and publishers."
+msgstr ""
+
+#: inetcpl.rc:111
+#, fuzzy
+msgid "Certificates..."
+msgstr "&Vlastnosti"
+
+#: inetcpl.rc:112
+msgid "Publishers..."
 msgstr ""
 
 #: inetcpl.rc:28
@@ -8933,12 +9054,6 @@ msgstr "P&ravý:"
 msgid "&Bottom:"
 msgstr "&Dolní:"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
-#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
-msgid "Cancel"
-msgstr "Storno"
-
 #: notepad.rc:131
 msgid "Encoding:"
 msgstr ""
@@ -9502,10 +9617,6 @@ msgstr "Program manager"
 #: progman.rc:60
 msgid "Program Manager"
 msgstr "Program manager"
-
-#: progman.rc:64
-msgid "Delete"
-msgstr "Smazat"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
@@ -11469,10 +11580,6 @@ msgstr "Datum poslední modifikace"
 #: winefile.rc:115
 msgid "Index/Inode"
 msgstr ""
-
-#: winefile.rc:118
-msgid "Security"
-msgstr "Zabezpečení"
 
 #: winefile.rc:120
 #, fuzzy

@@ -1702,7 +1702,7 @@ msgstr "Automatisch ausgewählt"
 msgid "File"
 msgstr "Datei"
 
-#: cryptui.rc:89
+#: cryptui.rc:89 inetcpl.rc:105
 msgid "Content"
 msgstr "Inhalt"
 
@@ -2216,6 +2216,135 @@ msgstr "Drucken..."
 #: ieframe.rc:73
 msgid "Address"
 msgstr "Adresse"
+
+#: inetcpl.rc:43
+msgid "General"
+msgstr "Allgemein"
+
+#: inetcpl.rc:46
+msgid " Home page "
+msgstr " Startseite "
+
+#: inetcpl.rc:47
+msgid "You can choose the address that will be used as your home page."
+msgstr "Sie können eine Addresse wählen, die als Startseite verwendet wird."
+
+#: inetcpl.rc:50
+msgid "&Current page"
+msgstr "A&ktuelle Seite"
+
+#: inetcpl.rc:51
+msgid "&Default page"
+msgstr "&Standardseite"
+
+#: inetcpl.rc:52
+msgid "&Blank page"
+msgstr "&Leere Seite"
+
+#: inetcpl.rc:53
+msgid " Browsing history "
+msgstr " Browserverlauf "
+
+#: inetcpl.rc:54
+msgid "You can delete cached pages, cookies and other data."
+msgstr "Sie können temporäre Dateien, Cookies und andere Daten löschen."
+
+#: inetcpl.rc:56
+msgid "Delete &files..."
+msgstr "&Daten löschen..."
+
+#: inetcpl.rc:57
+msgid "&Settings..."
+msgstr "&Einstellungen..."
+
+#: inetcpl.rc:65
+msgid "Delete browsing history"
+msgstr "Gespeicherte Browserdaten löchen"
+
+#: inetcpl.rc:68
+msgid ""
+"Temporary internet files\n"
+"Cached copies of webpages, images and certificates."
+msgstr ""
+"&Temporäre Inernetdateien\n"
+"Zwischengespeicherte Kopien von Webseiten, Bildern und Zertifikaten."
+
+#: inetcpl.rc:70
+msgid ""
+"Cookies\n"
+"Files saved on your computer by websites, which store things like user "
+"preferences and login information."
+msgstr ""
+"&Cookies\n"
+"Von Webseiten auf ihrem Computer gespeicherte Dateien, die "
+"Benutzereinstellungen oder Anmeldeinformationen enthalten."
+
+#: inetcpl.rc:72
+msgid ""
+"History\n"
+"List of websites you have accessed."
+msgstr ""
+"&Verlauf\n"
+"Liste von Webseiten, die Sie aufgerufen haben."
+
+#: inetcpl.rc:74
+msgid ""
+"Form data\n"
+"Usernames and other information you have entered into forms."
+msgstr ""
+"&Formulardaten\n"
+"Benutzernamen und andere Informationen, die Sie in Formulare eingegeben "
+"haben."
+
+#: inetcpl.rc:76
+msgid ""
+"Passwords\n"
+"Saved passwords you have entered into forms."
+msgstr ""
+"&Kennwörter\n"
+"Gespeicherte Kennwörter, die Sie in Formulare eingegeben haben."
+
+#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: inetcpl.rc:79 progman.rc:64
+msgid "Delete"
+msgstr "Löschen"
+
+#: inetcpl.rc:87 winefile.rc:118
+msgid "Security"
+msgstr "Sicherheit"
+
+#: inetcpl.rc:90
+msgid "Listview"
+msgstr "Listview"
+
+#: inetcpl.rc:95
+msgid "trackbar"
+msgstr "trackbar"
+
+#: inetcpl.rc:108
+msgid " Certificates "
+msgstr " Zertifikate "
+
+#: inetcpl.rc:109
+msgid ""
+"Certificates are used for your personal identification and to identify "
+"certificate authorities and publishers."
+msgstr ""
+"Zertifikate werden benutzt, um sich persönlich, Zertifizierungsstellen und "
+"Herausgeber von Zertifikaten zu identifizieren."
+
+#: inetcpl.rc:111
+msgid "Certificates..."
+msgstr "Zertifikate..."
+
+#: inetcpl.rc:112
+msgid "Publishers..."
+msgstr "Herausgeber..."
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -8874,12 +9003,6 @@ msgstr "&Rechts:"
 msgid "&Bottom:"
 msgstr "&Unten:"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
-#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
-msgid "Cancel"
-msgstr "Abbrechen"
-
 #: notepad.rc:131
 msgid "Encoding:"
 msgstr "Kodierung:"
@@ -9410,10 +9533,6 @@ msgstr "Ü&ber Programm-Manager"
 #: progman.rc:60
 msgid "Program Manager"
 msgstr "Programm-Manager"
-
-#: progman.rc:64
-msgid "Delete"
-msgstr "Löschen"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
@@ -11361,10 +11480,6 @@ msgstr "ÄDatum"
 #: winefile.rc:115
 msgid "Index/Inode"
 msgstr "Index/Inode"
-
-#: winefile.rc:118
-msgid "Security"
-msgstr "Sicherheit"
 
 #: winefile.rc:120
 msgid "%1 of %2 free"

@@ -8,24 +8,7 @@ C_SRCS = \
 	inetcpl.c \
 	security.c
 
-RC_SRCS = \
-	cpl_De.rc \
-	cpl_En.rc \
-	cpl_Fr.rc \
-	cpl_He.rc \
-	cpl_It.rc \
-	cpl_Ja.rc \
-	cpl_Ko.rc \
-	cpl_Lt.rc \
-	cpl_Nl.rc \
-	cpl_Pl.rc \
-	cpl_Pt.rc \
-	cpl_Ru.rc \
-	cpl_Sr.rc \
-	cpl_Sv.rc \
-	cpl_Uk.rc \
-	inetcpl.rc
-
+RC_SRCS = inetcpl.rc
 PO_SRCS = inetcpl.rc
 
 SVG_SRCS = \

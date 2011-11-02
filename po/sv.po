@@ -1713,7 +1713,7 @@ msgstr "Automatiskt bestämt av programmet"
 msgid "File"
 msgstr "Fil"
 
-#: cryptui.rc:89
+#: cryptui.rc:89 inetcpl.rc:105
 msgid "Content"
 msgstr "Innehåll"
 
@@ -2233,6 +2233,125 @@ msgstr "Skriv ut..."
 #: ieframe.rc:73
 msgid "Address"
 msgstr "Adress"
+
+#: inetcpl.rc:43
+msgid "General"
+msgstr "Allmänt"
+
+#: inetcpl.rc:46
+msgid " Home page "
+msgstr " Startsida "
+
+#: inetcpl.rc:47
+msgid "You can choose the address that will be used as your home page."
+msgstr "Du kan välja vilken adress som ska användas som startsida."
+
+#: inetcpl.rc:50
+msgid "&Current page"
+msgstr "&Aktuell sida"
+
+#: inetcpl.rc:51
+msgid "&Default page"
+msgstr "För&vald sida"
+
+#: inetcpl.rc:52
+msgid "&Blank page"
+msgstr "&Blank sida"
+
+#: inetcpl.rc:53
+msgid " Browsing history "
+msgstr " Bläddringshistorik "
+
+#: inetcpl.rc:54
+msgid "You can delete cached pages, cookies and other data."
+msgstr "Du kan ta bort cachade sidor, kakor och annan data."
+
+#: inetcpl.rc:56
+msgid "Delete &files..."
+msgstr "Ta bort &filer..."
+
+#: inetcpl.rc:57
+msgid "&Settings..."
+msgstr "&Inställningar..."
+
+#: inetcpl.rc:65
+#, fuzzy
+msgid "Delete browsing history"
+msgstr " Bläddringshistorik "
+
+#: inetcpl.rc:68
+msgid ""
+"Temporary internet files\n"
+"Cached copies of webpages, images and certificates."
+msgstr ""
+
+#: inetcpl.rc:70
+msgid ""
+"Cookies\n"
+"Files saved on your computer by websites, which store things like user "
+"preferences and login information."
+msgstr ""
+
+#: inetcpl.rc:72
+msgid ""
+"History\n"
+"List of websites you have accessed."
+msgstr ""
+
+#: inetcpl.rc:74
+msgid ""
+"Form data\n"
+"Usernames and other information you have entered into forms."
+msgstr ""
+
+#: inetcpl.rc:76
+msgid ""
+"Passwords\n"
+"Saved passwords you have entered into forms."
+msgstr ""
+
+#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+msgid "Cancel"
+msgstr "Avbryt"
+
+#: inetcpl.rc:79 progman.rc:64
+msgid "Delete"
+msgstr "Ta bort"
+
+#: inetcpl.rc:87 winefile.rc:118
+msgid "Security"
+msgstr "Säkerhet"
+
+#: inetcpl.rc:90
+#, fuzzy
+msgid "Listview"
+msgstr "Lista"
+
+#: inetcpl.rc:95
+msgid "trackbar"
+msgstr ""
+
+#: inetcpl.rc:108
+msgid " Certificates "
+msgstr " Certifikat "
+
+#: inetcpl.rc:109
+msgid ""
+"Certificates are used for your personal identification and to identify "
+"certificate authorities and publishers."
+msgstr ""
+"Certifikat används för din personliga identifikation samt för att "
+"identifiera certifikats-auktoriteter och -utgivare."
+
+#: inetcpl.rc:111
+msgid "Certificates..."
+msgstr "Certifikat..."
+
+#: inetcpl.rc:112
+msgid "Publishers..."
+msgstr "Utgivare..."
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -8779,12 +8898,6 @@ msgstr "&Höger:"
 msgid "&Bottom:"
 msgstr "&Under:"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
-#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
-msgid "Cancel"
-msgstr "Avbryt"
-
 #: notepad.rc:131
 msgid "Encoding:"
 msgstr "Kodning:"
@@ -9322,10 +9435,6 @@ msgstr "&Om programhanteraren"
 #: progman.rc:60
 msgid "Program Manager"
 msgstr "Programhanteraren"
-
-#: progman.rc:64
-msgid "Delete"
-msgstr "Ta bort"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
@@ -11273,10 +11382,6 @@ msgstr "MDatum"
 #: winefile.rc:115
 msgid "Index/Inode"
 msgstr "Index/Inode"
-
-#: winefile.rc:118
-msgid "Security"
-msgstr "Säkerhet"
 
 #: winefile.rc:120
 #, fuzzy

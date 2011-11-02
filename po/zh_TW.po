@@ -1724,7 +1724,7 @@ msgstr ""
 msgid "File"
 msgstr "檔案"
 
-#: cryptui.rc:89
+#: cryptui.rc:89 inetcpl.rc:105
 #, fuzzy
 msgid "Content"
 msgstr "內容(&C)"
@@ -2236,6 +2236,132 @@ msgstr "列印"
 #: ieframe.rc:73
 msgid "Address"
 msgstr ""
+
+#: inetcpl.rc:43
+msgid "General"
+msgstr ""
+
+#: inetcpl.rc:46
+#, fuzzy
+msgid " Home page "
+msgstr "單頁"
+
+#: inetcpl.rc:47
+msgid "You can choose the address that will be used as your home page."
+msgstr ""
+
+#: inetcpl.rc:50
+#, fuzzy
+msgid "&Current page"
+msgstr "下一頁"
+
+#: inetcpl.rc:51
+#, fuzzy
+msgid "&Default page"
+msgstr "(默認)"
+
+#: inetcpl.rc:52
+#, fuzzy
+msgid "&Blank page"
+msgstr "單頁"
+
+#: inetcpl.rc:53
+#, fuzzy
+msgid " Browsing history "
+msgstr "歷史指令"
+
+#: inetcpl.rc:54
+msgid "You can delete cached pages, cookies and other data."
+msgstr ""
+
+#: inetcpl.rc:56
+msgid "Delete &files..."
+msgstr ""
+
+#: inetcpl.rc:57
+#, fuzzy
+msgid "&Settings..."
+msgstr "選項(&O)..."
+
+#: inetcpl.rc:65
+msgid "Delete browsing history"
+msgstr ""
+
+#: inetcpl.rc:68
+msgid ""
+"Temporary internet files\n"
+"Cached copies of webpages, images and certificates."
+msgstr ""
+
+#: inetcpl.rc:70
+msgid ""
+"Cookies\n"
+"Files saved on your computer by websites, which store things like user "
+"preferences and login information."
+msgstr ""
+
+#: inetcpl.rc:72
+msgid ""
+"History\n"
+"List of websites you have accessed."
+msgstr ""
+
+#: inetcpl.rc:74
+msgid ""
+"Form data\n"
+"Usernames and other information you have entered into forms."
+msgstr ""
+
+#: inetcpl.rc:76
+msgid ""
+"Passwords\n"
+"Saved passwords you have entered into forms."
+msgstr ""
+
+#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+msgid "Cancel"
+msgstr "取消"
+
+#: inetcpl.rc:79 progman.rc:64
+msgid "Delete"
+msgstr "刪除"
+
+#: inetcpl.rc:87 winefile.rc:118
+#, fuzzy
+msgid "Security"
+msgstr "安全(&S)"
+
+#: inetcpl.rc:90
+#, fuzzy
+msgid "Listview"
+msgstr "清單"
+
+#: inetcpl.rc:95
+msgid "trackbar"
+msgstr ""
+
+#: inetcpl.rc:108
+#, fuzzy
+msgid " Certificates "
+msgstr "格屬性(&C)"
+
+#: inetcpl.rc:109
+msgid ""
+"Certificates are used for your personal identification and to identify "
+"certificate authorities and publishers."
+msgstr ""
+
+#: inetcpl.rc:111
+#, fuzzy
+msgid "Certificates..."
+msgstr "格屬性(&C)"
+
+#: inetcpl.rc:112
+#, fuzzy
+msgid "Publishers..."
+msgstr "生產商"
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -8744,12 +8870,6 @@ msgstr "右(&R):"
 msgid "&Bottom:"
 msgstr "下(&B):"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
-#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
-msgid "Cancel"
-msgstr "取消"
-
 #: notepad.rc:131
 #, fuzzy
 msgid "Encoding:"
@@ -9295,10 +9415,6 @@ msgstr "程式管理器"
 #: progman.rc:60
 msgid "Program Manager"
 msgstr "程式管理器"
-
-#: progman.rc:64
-msgid "Delete"
-msgstr "刪除"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
@@ -11244,11 +11360,6 @@ msgstr "日期(&D)"
 #: winefile.rc:115
 msgid "Index/Inode"
 msgstr ""
-
-#: winefile.rc:118
-#, fuzzy
-msgid "Security"
-msgstr "安全(&S)"
 
 #: winefile.rc:120
 msgid "%1 of %2 free"

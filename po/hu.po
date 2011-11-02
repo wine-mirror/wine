@@ -1764,7 +1764,7 @@ msgstr ""
 msgid "File"
 msgstr "Fájl"
 
-#: cryptui.rc:89
+#: cryptui.rc:89 inetcpl.rc:105
 #, fuzzy
 msgid "Content"
 msgstr "&Tartalom"
@@ -2304,6 +2304,130 @@ msgstr "Nyomtatás"
 #, fuzzy
 msgid "Address"
 msgstr "IP cím="
+
+#: inetcpl.rc:43
+msgid "General"
+msgstr ""
+
+#: inetcpl.rc:46
+msgid " Home page "
+msgstr ""
+
+#: inetcpl.rc:47
+msgid "You can choose the address that will be used as your home page."
+msgstr ""
+
+#: inetcpl.rc:50
+#, fuzzy
+msgid "&Current page"
+msgstr "tulajdonságlap"
+
+#: inetcpl.rc:51
+#, fuzzy
+msgid "&Default page"
+msgstr "Ala&pértékek"
+
+#: inetcpl.rc:52
+msgid "&Blank page"
+msgstr ""
+
+#: inetcpl.rc:53
+#, fuzzy
+msgid " Browsing history "
+msgstr "Parancs előzmény"
+
+#: inetcpl.rc:54
+msgid "You can delete cached pages, cookies and other data."
+msgstr ""
+
+#: inetcpl.rc:56
+msgid "Delete &files..."
+msgstr ""
+
+#: inetcpl.rc:57
+#, fuzzy
+msgid "&Settings..."
+msgstr "Mentés má&sként..."
+
+#: inetcpl.rc:65
+msgid "Delete browsing history"
+msgstr ""
+
+#: inetcpl.rc:68
+msgid ""
+"Temporary internet files\n"
+"Cached copies of webpages, images and certificates."
+msgstr ""
+
+#: inetcpl.rc:70
+msgid ""
+"Cookies\n"
+"Files saved on your computer by websites, which store things like user "
+"preferences and login information."
+msgstr ""
+
+#: inetcpl.rc:72
+msgid ""
+"History\n"
+"List of websites you have accessed."
+msgstr ""
+
+#: inetcpl.rc:74
+msgid ""
+"Form data\n"
+"Usernames and other information you have entered into forms."
+msgstr ""
+
+#: inetcpl.rc:76
+msgid ""
+"Passwords\n"
+"Saved passwords you have entered into forms."
+msgstr ""
+
+#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+msgid "Cancel"
+msgstr "Mégse"
+
+#: inetcpl.rc:79 progman.rc:64
+msgid "Delete"
+msgstr "Törlés"
+
+#: inetcpl.rc:87 winefile.rc:118
+#, fuzzy
+msgid "Security"
+msgstr "&Biztonság"
+
+#: inetcpl.rc:90
+#, fuzzy
+msgid "Listview"
+msgstr "Lista"
+
+#: inetcpl.rc:95
+msgid "trackbar"
+msgstr ""
+
+#: inetcpl.rc:108
+#, fuzzy
+msgid " Certificates "
+msgstr "Tanusítvány beszerzés"
+
+#: inetcpl.rc:109
+msgid ""
+"Certificates are used for your personal identification and to identify "
+"certificate authorities and publishers."
+msgstr ""
+
+#: inetcpl.rc:111
+#, fuzzy
+msgid "Certificates..."
+msgstr "Tanusítvány beszerzés"
+
+#: inetcpl.rc:112
+#, fuzzy
+msgid "Publishers..."
+msgstr "Kiadó"
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -8885,12 +9009,6 @@ msgstr "&Jobb:"
 msgid "&Bottom:"
 msgstr "&Alsó:"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
-#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
-msgid "Cancel"
-msgstr "Mégse"
-
 #: notepad.rc:131
 #, fuzzy
 msgid "Encoding:"
@@ -9466,10 +9584,6 @@ msgstr "Programkezelő"
 #: progman.rc:60
 msgid "Program Manager"
 msgstr "Programkezelő"
-
-#: progman.rc:64
-msgid "Delete"
-msgstr "Törlés"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
@@ -11413,11 +11527,6 @@ msgstr "&Dátum"
 #: winefile.rc:115
 msgid "Index/Inode"
 msgstr ""
-
-#: winefile.rc:118
-#, fuzzy
-msgid "Security"
-msgstr "&Biztonság"
 
 #: winefile.rc:120
 msgid "%1 of %2 free"

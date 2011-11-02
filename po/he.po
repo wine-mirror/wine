@@ -1700,7 +1700,7 @@ msgstr "נקבע אוטומטית על ידי התכנית"
 msgid "File"
 msgstr "קובץ"
 
-#: cryptui.rc:89
+#: cryptui.rc:89 inetcpl.rc:105
 msgid "Content"
 msgstr "תוכן"
 
@@ -2187,6 +2187,123 @@ msgstr "הדפסה..."
 #: ieframe.rc:73
 msgid "Address"
 msgstr "כתובת"
+
+#: inetcpl.rc:43
+msgid "General"
+msgstr "כללי"
+
+#: inetcpl.rc:46
+msgid " Home page "
+msgstr " דף הבית "
+
+#: inetcpl.rc:47
+msgid "You can choose the address that will be used as your home page."
+msgstr "באפשרותך לבחור את הכתובת שתשמש כדף הבית שלך."
+
+#: inetcpl.rc:50
+msgid "&Current page"
+msgstr "העמוד ה&נוכחי"
+
+#: inetcpl.rc:51
+msgid "&Default page"
+msgstr "עמוד &בררת המחדל"
+
+#: inetcpl.rc:52
+msgid "&Blank page"
+msgstr "עמוד &ריק"
+
+#: inetcpl.rc:53
+msgid " Browsing history "
+msgstr " Browsing history "
+
+#: inetcpl.rc:54
+msgid "You can delete cached pages, cookies and other data."
+msgstr "You can delete cached pages, cookies and other data."
+
+#: inetcpl.rc:56
+msgid "Delete &files..."
+msgstr "Delete &files..."
+
+#: inetcpl.rc:57
+msgid "&Settings..."
+msgstr "&Settings..."
+
+#: inetcpl.rc:65
+#, fuzzy
+msgid "Delete browsing history"
+msgstr " Browsing history "
+
+#: inetcpl.rc:68
+msgid ""
+"Temporary internet files\n"
+"Cached copies of webpages, images and certificates."
+msgstr ""
+
+#: inetcpl.rc:70
+msgid ""
+"Cookies\n"
+"Files saved on your computer by websites, which store things like user "
+"preferences and login information."
+msgstr ""
+
+#: inetcpl.rc:72
+msgid ""
+"History\n"
+"List of websites you have accessed."
+msgstr ""
+
+#: inetcpl.rc:74
+msgid ""
+"Form data\n"
+"Usernames and other information you have entered into forms."
+msgstr ""
+
+#: inetcpl.rc:76
+msgid ""
+"Passwords\n"
+"Saved passwords you have entered into forms."
+msgstr ""
+
+#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+msgid "Cancel"
+msgstr "ביטול"
+
+#: inetcpl.rc:79 progman.rc:64
+msgid "Delete"
+msgstr "מחיקה"
+
+#: inetcpl.rc:87 winefile.rc:118
+msgid "Security"
+msgstr "אבטחה"
+
+#: inetcpl.rc:90
+#, fuzzy
+msgid "Listview"
+msgstr "רשימה"
+
+#: inetcpl.rc:95
+msgid "trackbar"
+msgstr ""
+
+#: inetcpl.rc:108
+msgid " Certificates "
+msgstr " אישורים "
+
+#: inetcpl.rc:109
+msgid ""
+"Certificates are used for your personal identification and to identify "
+"certificate authorities and publishers."
+msgstr "אישורים משמשים כדי לזהות אותך וגם כדי לזהות רשויות ומפיצים."
+
+#: inetcpl.rc:111
+msgid "Certificates..."
+msgstr "אישורים..."
+
+#: inetcpl.rc:112
+msgid "Publishers..."
+msgstr "מפיצים..."
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -8876,12 +8993,6 @@ msgstr "&ימניים:"
 msgid "&Bottom:"
 msgstr "&תחתונים:"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
-#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
-msgid "Cancel"
-msgstr "ביטול"
-
 #: notepad.rc:131
 msgid "Encoding:"
 msgstr "קידוד:"
@@ -9412,10 +9523,6 @@ msgstr "על &אודות מנהל התכניות"
 #: progman.rc:60
 msgid "Program Manager"
 msgstr "מנהל התכניות"
-
-#: progman.rc:64
-msgid "Delete"
-msgstr "מחיקה"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
@@ -11418,10 +11525,6 @@ msgstr "ת.שינוי"
 #: winefile.rc:115
 msgid "Index/Inode"
 msgstr "מפתח/Inode"
-
-#: winefile.rc:118
-msgid "Security"
-msgstr "אבטחה"
 
 #: winefile.rc:120
 #, fuzzy

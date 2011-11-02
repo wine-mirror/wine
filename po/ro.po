@@ -1864,7 +1864,7 @@ msgstr "Determinat automat de către program"
 msgid "File"
 msgstr "Fișier"
 
-#: cryptui.rc:89
+#: cryptui.rc:89 inetcpl.rc:105
 msgid "Content"
 msgstr "Conținut"
 
@@ -2401,6 +2401,131 @@ msgstr "Tipărește..."
 #, fuzzy
 msgid "Address"
 msgstr "Adresa IP="
+
+#: inetcpl.rc:43
+msgid "General"
+msgstr ""
+
+#: inetcpl.rc:46
+#, fuzzy
+msgid " Home page "
+msgstr "O pagină"
+
+#: inetcpl.rc:47
+msgid "You can choose the address that will be used as your home page."
+msgstr ""
+
+#: inetcpl.rc:50
+#, fuzzy
+msgid "&Current page"
+msgstr "Pagina următoare"
+
+#: inetcpl.rc:51
+#, fuzzy
+msgid "&Default page"
+msgstr "(Implicit)"
+
+#: inetcpl.rc:52
+#, fuzzy
+msgid "&Blank page"
+msgstr "O pagină"
+
+#: inetcpl.rc:53
+#, fuzzy
+msgid " Browsing history "
+msgstr "Istoric comenzi"
+
+#: inetcpl.rc:54
+msgid "You can delete cached pages, cookies and other data."
+msgstr ""
+
+#: inetcpl.rc:56
+msgid "Delete &files..."
+msgstr ""
+
+#: inetcpl.rc:57
+#, fuzzy
+msgid "&Settings..."
+msgstr "&Opțiuni..."
+
+#: inetcpl.rc:65
+msgid "Delete browsing history"
+msgstr ""
+
+#: inetcpl.rc:68
+msgid ""
+"Temporary internet files\n"
+"Cached copies of webpages, images and certificates."
+msgstr ""
+
+#: inetcpl.rc:70
+msgid ""
+"Cookies\n"
+"Files saved on your computer by websites, which store things like user "
+"preferences and login information."
+msgstr ""
+
+#: inetcpl.rc:72
+msgid ""
+"History\n"
+"List of websites you have accessed."
+msgstr ""
+
+#: inetcpl.rc:74
+msgid ""
+"Form data\n"
+"Usernames and other information you have entered into forms."
+msgstr ""
+
+#: inetcpl.rc:76
+msgid ""
+"Passwords\n"
+"Saved passwords you have entered into forms."
+msgstr ""
+
+#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+msgid "Cancel"
+msgstr "Renunță"
+
+#: inetcpl.rc:79 progman.rc:64
+msgid "Delete"
+msgstr "Șterge"
+
+#: inetcpl.rc:87 winefile.rc:118
+msgid "Security"
+msgstr "Securitate"
+
+#: inetcpl.rc:90
+#, fuzzy
+msgid "Listview"
+msgstr "Listă"
+
+#: inetcpl.rc:95
+msgid "trackbar"
+msgstr ""
+
+#: inetcpl.rc:108
+#, fuzzy
+msgid " Certificates "
+msgstr "Certificate"
+
+#: inetcpl.rc:109
+msgid ""
+"Certificates are used for your personal identification and to identify "
+"certificate authorities and publishers."
+msgstr ""
+
+#: inetcpl.rc:111
+#, fuzzy
+msgid "Certificates..."
+msgstr "Certificate"
+
+#: inetcpl.rc:112
+#, fuzzy
+msgid "Publishers..."
+msgstr "Emitent"
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -9343,12 +9468,6 @@ msgstr "&Dreapta:"
 msgid "&Bottom:"
 msgstr "&Jos:"
 
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
-#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
-msgid "Cancel"
-msgstr "Renunță"
-
 #: notepad.rc:131
 msgid "Encoding:"
 msgstr "Codificare:"
@@ -9909,10 +10028,6 @@ msgstr "Administrator programe"
 #: progman.rc:60
 msgid "Program Manager"
 msgstr "Administrator programe"
-
-#: progman.rc:64
-msgid "Delete"
-msgstr "Șterge"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
@@ -11897,10 +12012,6 @@ msgstr "Ultima modificare"
 #: winefile.rc:115
 msgid "Index/Inode"
 msgstr "Index/Inode"
-
-#: winefile.rc:118
-msgid "Security"
-msgstr "Securitate"
 
 #: winefile.rc:120
 #, fuzzy
