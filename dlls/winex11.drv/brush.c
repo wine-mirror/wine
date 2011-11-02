@@ -280,7 +280,8 @@ static BOOL BRUSH_SelectDIBPatternBrush( X11DRV_PDEVICE *physDev, const BITMAPIN
 /***********************************************************************
  *           SelectBrush   (X11DRV.@)
  */
-HBRUSH X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
+HBRUSH X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
+                           const BITMAPINFO *info, void *bits, UINT usage )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     LOGBRUSH logbrush;

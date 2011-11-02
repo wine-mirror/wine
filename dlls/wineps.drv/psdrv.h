@@ -455,8 +455,8 @@ extern DWORD PSDRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO
 extern BOOL PSDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
                              INT bottom, INT ell_width, INT ell_height ) DECLSPEC_HIDDEN;
-extern HBRUSH PSDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush ) DECLSPEC_HIDDEN;
-extern HBRUSH PSDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush ) DECLSPEC_HIDDEN;
+extern HBRUSH PSDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
+                                  const BITMAPINFO *info, void *bits, UINT usage ) DECLSPEC_HIDDEN;
 extern HFONT PSDRV_SelectFont( PHYSDEV dev, HFONT hfont ) DECLSPEC_HIDDEN;
 extern HPEN PSDRV_SelectPen( PHYSDEV dev, HPEN hpen ) DECLSPEC_HIDDEN;
 extern COLORREF PSDRV_SetBkColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;

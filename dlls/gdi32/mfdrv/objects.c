@@ -270,7 +270,8 @@ done:
 /***********************************************************************
  *           MFDRV_SelectBrush
  */
-HBRUSH MFDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
+HBRUSH MFDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
+                          const BITMAPINFO *info, void *bits, UINT usage )
 {
     INT16 index;
 

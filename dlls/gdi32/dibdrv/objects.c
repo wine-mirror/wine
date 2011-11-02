@@ -1336,7 +1336,8 @@ void update_brush_rop( dibdrv_physdev *pdev, INT rop )
 /***********************************************************************
  *           dibdrv_SelectBrush
  */
-HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
+HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
+                           const BITMAPINFO *info, void *bits, UINT usage )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectBrush );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
@@ -1420,7 +1421,7 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
         break;
     }
 
-    return next->funcs->pSelectBrush( next, hbrush );
+    return next->funcs->pSelectBrush( next, hbrush, bitmap, info, bits, usage );
 }
 
 /***********************************************************************

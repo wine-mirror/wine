@@ -534,7 +534,8 @@ static HBITMAP nulldrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
     return bitmap;
 }
 
-static HBRUSH nulldrv_SelectBrush( PHYSDEV dev, HBRUSH brush )
+static HBRUSH nulldrv_SelectBrush( PHYSDEV dev, HBRUSH brush, HBITMAP bitmap,
+                                   const BITMAPINFO *info, void *bits, UINT usage )
 {
     return brush;
 }

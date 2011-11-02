@@ -146,7 +146,7 @@ struct gdi_dc_funcs
     BOOL     (*pScaleViewportExtEx)(PHYSDEV,INT,INT,INT,INT,SIZE*);
     BOOL     (*pScaleWindowExtEx)(PHYSDEV,INT,INT,INT,INT,SIZE*);
     HBITMAP  (*pSelectBitmap)(PHYSDEV,HBITMAP);
-    HBRUSH   (*pSelectBrush)(PHYSDEV,HBRUSH);
+    HBRUSH   (*pSelectBrush)(PHYSDEV,HBRUSH,HBITMAP,const BITMAPINFO*,void*,UINT);
     BOOL     (*pSelectClipPath)(PHYSDEV,INT);
     HFONT    (*pSelectFont)(PHYSDEV,HFONT);
     HPALETTE (*pSelectPalette)(PHYSDEV,HPALETTE,BOOL);
@@ -204,7 +204,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 17
+#define WINE_GDI_DRIVER_VERSION 18
 
 static inline PHYSDEV get_physdev_entry_point( PHYSDEV dev, size_t offset )
 {

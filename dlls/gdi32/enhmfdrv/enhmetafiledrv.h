@@ -108,7 +108,8 @@ extern BOOL     EMFDRV_ScaleViewportExtEx( PHYSDEV dev, INT xNum, INT xDenom,
 extern BOOL     EMFDRV_ScaleWindowExtEx( PHYSDEV dev, INT xNum, INT xDenom,
                                          INT yNum, INT yDenom, SIZE *size ) DECLSPEC_HIDDEN;
 extern HBITMAP  EMFDRV_SelectBitmap( PHYSDEV dev, HBITMAP handle ) DECLSPEC_HIDDEN;
-extern HBRUSH   EMFDRV_SelectBrush( PHYSDEV dev, HBRUSH handle ) DECLSPEC_HIDDEN;
+extern HBRUSH   EMFDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
+                                    const BITMAPINFO *info, void *bits, UINT usage ) DECLSPEC_HIDDEN;
 extern BOOL     EMFDRV_SelectClipPath( PHYSDEV dev, INT iMode ) DECLSPEC_HIDDEN;
 extern HFONT    EMFDRV_SelectFont( PHYSDEV dev, HFONT handle ) DECLSPEC_HIDDEN;
 extern HPEN     EMFDRV_SelectPen( PHYSDEV dev, HPEN handle ) DECLSPEC_HIDDEN;

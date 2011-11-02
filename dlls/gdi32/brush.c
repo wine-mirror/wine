@@ -365,6 +365,10 @@ static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc )
     if ((brush = GDI_GetObjPtr( handle, OBJ_BRUSH )))
     {
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSelectBrush );
+        HBITMAP bitmap = brush->bitmap;
+        BITMAPINFO *info = brush->info;
+        void *bits = brush->bits.ptr;
+        UINT usage = brush->usage;
 
         if (brush->logbrush.lbStyle == BS_PATTERN)
         {
@@ -380,7 +384,7 @@ static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc )
         GDI_inc_ref_count( handle );
         GDI_ReleaseObj( handle );
 
-        if (!physdev->funcs->pSelectBrush( physdev, handle ))
+        if (!physdev->funcs->pSelectBrush( physdev, handle, bitmap, info, bits, usage ))
         {
             GDI_dec_ref_count( handle );
         }
