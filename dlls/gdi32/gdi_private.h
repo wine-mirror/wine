@@ -229,7 +229,6 @@ extern DWORD stretch_bits( const BITMAPINFO *src_info, struct bitblt_coords *src
                            struct gdi_image_bits *bits, int mode ) DECLSPEC_HIDDEN;
 
 /* bitmap.c */
-extern BOOL get_bitmap_image( HBITMAP hbitmap, BITMAPINFO *info, struct gdi_image_bits *bits ) DECLSPEC_HIDDEN;
 extern HBITMAP BITMAP_CopyBitmap( HBITMAP hbitmap ) DECLSPEC_HIDDEN;
 extern BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, PHYSDEV physdev ) DECLSPEC_HIDDEN;
 
