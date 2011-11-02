@@ -180,20 +180,13 @@ static ULONG WINAPI CorDebug_Release(ICorDebug *iface)
 {
     CorDebug *This = impl_from_ICorDebug( iface );
     ULONG ref = InterlockedDecrement(&This->ref);
-    struct CorProcess *cursor, *cursor2;
 
     TRACE("%p ref=%u\n", This, ref);
 
     if (ref == 0)
     {
-        LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &This->processes, struct CorProcess, entry)
-        {
-            if(cursor->pProcess)
-                ICorDebugProcess_Release(cursor->pProcess);
-
-            list_remove(&cursor->entry);
-            HeapFree(GetProcessHeap(), 0, cursor);
-        }
+        if(!list_empty(&This->processes))
+            ERR("Processes haven't been removed Correctly\n");
 
         if(This->runtimehost)
             ICLRRuntimeHost_Release(This->runtimehost);
@@ -220,8 +213,19 @@ static HRESULT WINAPI CorDebug_Initialize(ICorDebug *iface)
 
 static HRESULT WINAPI CorDebug_Terminate(ICorDebug *iface)
 {
+    struct CorProcess *cursor, *cursor2;
     CorDebug *This = impl_from_ICorDebug( iface );
     FIXME("stub %p\n", This);
+
+    LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &This->processes, struct CorProcess, entry)
+    {
+        if(cursor->pProcess)
+            ICorDebugProcess_Release(cursor->pProcess);
+
+        list_remove(&cursor->entry);
+        HeapFree(GetProcessHeap(), 0, cursor);
+    }
+
     return E_NOTIMPL;
 }
 
