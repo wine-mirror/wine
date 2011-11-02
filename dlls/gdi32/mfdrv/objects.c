@@ -232,10 +232,9 @@ INT16 MFDRV_CreateBrushIndirect(PHYSDEV dev, HBRUSH hBrush )
 
     case BS_DIBPATTERN:
         {
-	      BITMAPINFO *info;
+              BITMAPINFO *info = (BITMAPINFO *)logbrush.lbHatch;
 	      DWORD bmSize, biSize;
 
-	      info = GlobalLock( (HGLOBAL)logbrush.lbHatch );
 	      if (info->bmiHeader.biCompression)
 		  bmSize = info->bmiHeader.biSizeImage;
 	      else
@@ -253,7 +252,6 @@ INT16 MFDRV_CreateBrushIndirect(PHYSDEV dev, HBRUSH hBrush )
 	      *(mr->rdParm) = logbrush.lbStyle;
 	      *(mr->rdParm + 1) = LOWORD(logbrush.lbColor);
 	      memcpy(mr->rdParm + 2, info, biSize + bmSize);
-              GlobalUnlock( (HGLOBAL)logbrush.lbHatch );
 	      break;
 	}
 	default:

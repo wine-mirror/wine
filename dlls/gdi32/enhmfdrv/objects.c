@@ -136,7 +136,7 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
       {
 	EMRCREATEDIBPATTERNBRUSHPT *emr;
 	DWORD bmSize, biSize, size;
-	BITMAPINFO *info = GlobalLock( (HGLOBAL)logbrush.lbHatch );
+	BITMAPINFO *info = (BITMAPINFO *)logbrush.lbHatch;
 
 	if (info->bmiHeader.biCompression)
             bmSize = info->bmiHeader.biSizeImage;
@@ -160,7 +160,6 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
 	if(!EMFDRV_WriteRecord( dev, &emr->emr ))
 	    index = 0;
 	HeapFree( GetProcessHeap(), 0, emr );
-	GlobalUnlock( (HGLOBAL)logbrush.lbHatch );
       }
       break;
 

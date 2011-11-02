@@ -254,11 +254,10 @@ static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 /***********************************************************************
  *           BRUSH_SelectDIBPatternBrush
  */
-static BOOL BRUSH_SelectDIBPatternBrush( X11DRV_PDEVICE *physDev, HGLOBAL mem )
+static BOOL BRUSH_SelectDIBPatternBrush( X11DRV_PDEVICE *physDev, const BITMAPINFO *info )
 {
     BOOL ret;
     HDC memdc;
-    BITMAPINFO *info = GlobalLock( mem );
     HBITMAP bitmap = CreateDIBitmap( physDev->dev.hdc, &info->bmiHeader, CBM_INIT,
                                      (LPBYTE)info + bitmap_info_size( info, DIB_RGB_COLORS ),
                                      info, DIB_RGB_COLORS );
@@ -274,7 +273,6 @@ static BOOL BRUSH_SelectDIBPatternBrush( X11DRV_PDEVICE *physDev, HGLOBAL mem )
         physBitmap->pixmap = 0;  /* so it doesn't get freed */
     }
     DeleteObject( bitmap );
-    GlobalUnlock( mem );
     return ret;
 }
 
@@ -330,7 +328,7 @@ HBRUSH X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
 
       case BS_DIBPATTERN:
 	TRACE("BS_DIBPATTERN\n");
-	if (!BRUSH_SelectDIBPatternBrush( physDev, (HGLOBAL)logbrush.lbHatch )) return 0;
+	if (!BRUSH_SelectDIBPatternBrush( physDev, (BITMAPINFO *)logbrush.lbHatch )) return 0;
 	break;
     }
     return hbrush;

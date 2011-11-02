@@ -1372,13 +1372,12 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
 
     case BS_DIBPATTERN:
     {
-        BITMAPINFOHEADER *bi = GlobalLock((HGLOBAL)logbrush.lbHatch);
+        BITMAPINFOHEADER *bi = (BITMAPINFOHEADER *)logbrush.lbHatch;
         dib_info orig_dib;
         WORD usage = LOWORD(logbrush.lbColor);
         HPALETTE pal = (usage == DIB_PAL_COLORS) ? GetCurrentObject(dev->hdc, OBJ_PAL) : NULL;
         RECT rect;
 
-        if(!bi) return NULL;
         if(init_dib_info_from_packed(&orig_dib, bi, usage, pal))
         {
             copy_dib_color_info(&pdev->brush_dib, &pdev->dib);
@@ -1402,7 +1401,6 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
             pdev->defer &= ~DEFER_BRUSH;
             free_dib_info(&orig_dib);
         }
-        GlobalUnlock((HGLOBAL)logbrush.lbHatch);
         break;
     }
 

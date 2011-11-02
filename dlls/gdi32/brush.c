@@ -53,10 +53,9 @@ static const struct gdi_obj_funcs brush_funcs =
     BRUSH_DeleteObject   /* pDeleteObject */
 };
 
-static HGLOBAL dib_copy(const BITMAPINFO *info, UINT coloruse)
+static void *dib_copy(const BITMAPINFO *info, UINT coloruse)
 {
     BITMAPINFO  *newInfo;
-    HGLOBAL     hmem;
     INT         size;
 
     if (info->bmiHeader.biCompression != BI_RGB && info->bmiHeader.biCompression != BI_BITFIELDS)
@@ -65,14 +64,8 @@ static HGLOBAL dib_copy(const BITMAPINFO *info, UINT coloruse)
         size = get_dib_image_size(info);
     size += bitmap_info_size( info, coloruse );
 
-    if (!(hmem = GlobalAlloc( GMEM_MOVEABLE, size )))
-    {
-        return 0;
-    }
-    newInfo = GlobalLock( hmem );
-    memcpy( newInfo, info, size );
-    GlobalUnlock( hmem );
-    return hmem;
+    if ((newInfo = HeapAlloc( GetProcessHeap(), 0, size ))) memcpy( newInfo, info, size );
+    return newInfo;
 }
 
 
@@ -162,7 +155,7 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
         if (ptr->logbrush.lbStyle == BS_PATTERN)
             DeleteObject( (HGDIOBJ)ptr->logbrush.lbHatch );
         else if (ptr->logbrush.lbStyle == BS_DIBPATTERN)
-            GlobalFree( (HGLOBAL)ptr->logbrush.lbHatch );
+            HeapFree( GetProcessHeap(), 0, (void *)ptr->logbrush.lbHatch );
     }
     HeapFree( GetProcessHeap(), 0, ptr );
     return 0;
@@ -439,7 +432,7 @@ static BOOL BRUSH_DeleteObject( HGDIOBJ handle )
 	  DeleteObject( (HGDIOBJ)brush->logbrush.lbHatch );
 	  break;
       case BS_DIBPATTERN:
-	  GlobalFree( (HGLOBAL)brush->logbrush.lbHatch );
+	  HeapFree( GetProcessHeap(), 0, (void *)brush->logbrush.lbHatch );
 	  break;
     }
     return HeapFree( GetProcessHeap(), 0, brush );

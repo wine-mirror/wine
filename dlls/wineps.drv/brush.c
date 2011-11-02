@@ -255,7 +255,7 @@ BOOL PSDRV_Brush(PHYSDEV dev, BOOL EO)
 
     case BS_DIBPATTERN:
         {
-	    BITMAPINFO *bmi = GlobalLock( (HGLOBAL)logbrush.lbHatch );
+	    BITMAPINFO *bmi = (BITMAPINFO *)logbrush.lbHatch;
 	    UINT usage = logbrush.lbColor;
 	    TRACE("size %dx%dx%d\n", bmi->bmiHeader.biWidth,
 		  bmi->bmiHeader.biHeight, bmi->bmiHeader.biBitCount);
@@ -268,7 +268,6 @@ BOOL PSDRV_Brush(PHYSDEV dev, BOOL EO)
 	        FIXME("Trying to set a pattern brush on a level 1 printer\n");
 		ret = FALSE;
 	    }
-	    GlobalUnlock( (HGLOBAL)logbrush.lbHatch );
 	}
 	break;
 
