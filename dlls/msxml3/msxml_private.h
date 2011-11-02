@@ -38,6 +38,7 @@ typedef enum {
 
 /* typelibs */
 typedef enum tid_t {
+    NULL_tid,
     IXMLDOMAttribute_tid,
     IXMLDOMCDATASection_tid,
     IXMLDOMComment_tid,

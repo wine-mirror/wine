@@ -78,6 +78,7 @@ static ITypeLib *typelib;
 static ITypeInfo *typeinfos[LAST_tid];
 
 static REFIID tid_ids[] = {
+    &IID_NULL,
     &IID_IXMLDOMAttribute,
     &IID_IXMLDOMCDATASection,
     &IID_IXMLDOMComment,
