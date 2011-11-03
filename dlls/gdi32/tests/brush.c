@@ -100,7 +100,7 @@ static void test_pattern_brush(void)
     ok( ret == sizeof(br), "wrong size %u\n", ret );
     ok( br.lbStyle == BS_PATTERN, "wrong style %u\n", br.lbStyle );
     ok( br.lbColor == 0, "wrong color %u\n", br.lbColor );
-    todo_wine ok( (HBITMAP)br.lbHatch == bitmap, "wrong handle %p/%p\n", (HBITMAP)br.lbHatch, bitmap );
+    ok( (HBITMAP)br.lbHatch == bitmap, "wrong handle %p/%p\n", (HBITMAP)br.lbHatch, bitmap );
     DeleteObject( brush );
 
     br.lbStyle = BS_PATTERN8X8;
@@ -113,7 +113,7 @@ static void test_pattern_brush(void)
     ok( ret == sizeof(br), "wrong size %u\n", ret );
     ok( br.lbStyle == BS_PATTERN, "wrong style %u\n", br.lbStyle );
     ok( br.lbColor == 0, "wrong color %u\n", br.lbColor );
-    todo_wine ok( (HBITMAP)br.lbHatch == bitmap, "wrong handle %p/%p\n", (HBITMAP)br.lbHatch, bitmap );
+    ok( (HBITMAP)br.lbHatch == bitmap, "wrong handle %p/%p\n", (HBITMAP)br.lbHatch, bitmap );
     ret = GetObjectW( bitmap, sizeof(dib), &dib );
     ok( ret == sizeof(dib.dsBm), "wrong size %u\n", ret );
     DeleteObject( bitmap );
@@ -139,7 +139,7 @@ static void test_pattern_brush(void)
     ok( ret == sizeof(br), "wrong size %u\n", ret );
     ok( br.lbStyle == BS_PATTERN, "wrong style %u\n", br.lbStyle );
     ok( br.lbColor == 0, "wrong color %u\n", br.lbColor );
-    todo_wine ok( (HBITMAP)br.lbHatch == bitmap, "wrong handle %p/%p\n", (HBITMAP)br.lbHatch, bitmap );
+    ok( (HBITMAP)br.lbHatch == bitmap, "wrong handle %p/%p\n", (HBITMAP)br.lbHatch, bitmap );
     ret = GetObjectW( bitmap, sizeof(dib), &dib );
     ok( ret == sizeof(dib), "wrong size %u\n", ret );
     DeleteObject( brush );
@@ -152,7 +152,7 @@ static void test_pattern_brush(void)
     ok( ret == sizeof(br), "wrong size %u\n", ret );
     ok( br.lbStyle == BS_DIBPATTERN, "wrong style %u\n", br.lbStyle );
     ok( br.lbColor == 0, "wrong color %u\n", br.lbColor );
-    todo_wine ok( (BITMAPINFO *)br.lbHatch == info || broken(!br.lbHatch), /* nt4 */
+    ok( (BITMAPINFO *)br.lbHatch == info || broken(!br.lbHatch), /* nt4 */
         "wrong handle %p/%p\n", (BITMAPINFO *)br.lbHatch, info );
     DeleteObject( brush );
 
@@ -165,8 +165,8 @@ static void test_pattern_brush(void)
     ret = GetObjectW( brush, sizeof(br), &br );
     ok( ret == sizeof(br), "wrong size %u\n", ret );
     ok( br.lbStyle == BS_DIBPATTERN, "wrong style %u\n", br.lbStyle );
-    todo_wine ok( br.lbColor == 0, "wrong color %u\n", br.lbColor );
-    todo_wine ok( (BITMAPINFO *)br.lbHatch == info || broken(!br.lbHatch), /* nt4 */
+    ok( br.lbColor == 0, "wrong color %u\n", br.lbColor );
+    ok( (BITMAPINFO *)br.lbHatch == info || broken(!br.lbHatch), /* nt4 */
         "wrong handle %p/%p\n", (BITMAPINFO *)br.lbHatch, info );
 
     mem = GlobalAlloc( GMEM_MOVEABLE, sizeof(buffer) );
@@ -181,10 +181,10 @@ static void test_pattern_brush(void)
     ret = GetObjectW( brush, sizeof(br), &br );
     ok( ret == sizeof(br), "wrong size %u\n", ret );
     ok( br.lbStyle == BS_DIBPATTERN, "wrong style %u\n", br.lbStyle );
-    todo_wine ok( br.lbColor == 0, "wrong color %u\n", br.lbColor );
+    ok( br.lbColor == 0, "wrong color %u\n", br.lbColor );
     ok( (HGLOBAL)br.lbHatch != mem, "wrong handle %p/%p\n", (HGLOBAL)br.lbHatch, mem );
     bits = GlobalLock( mem );
-    todo_wine ok( (HGLOBAL)br.lbHatch == bits || broken(!br.lbHatch), /* nt4 */
+    ok( (HGLOBAL)br.lbHatch == bits || broken(!br.lbHatch), /* nt4 */
         "wrong handle %p/%p\n", (HGLOBAL)br.lbHatch, bits );
     ret = GlobalFlags( mem );
     ok( ret == 2, "wrong flags %x\n", ret );

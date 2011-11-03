@@ -161,7 +161,6 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
     case BS_PATTERN:
         ptr->bitmap = BITMAP_CopyBitmap( (HBITMAP)ptr->logbrush.lbHatch );
         if (!ptr->bitmap) goto error;
-        ptr->logbrush.lbHatch = (ULONG_PTR)ptr->bitmap;
         ptr->logbrush.lbColor = 0;
         break;
 
@@ -176,7 +175,7 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
         if (!ptr->info) goto error;
         ptr->bits.ptr = (char *)ptr->info + bitmap_info_size( ptr->info, ptr->usage );
         ptr->logbrush.lbStyle = BS_DIBPATTERN;
-        ptr->logbrush.lbHatch = (ULONG_PTR)ptr->info;
+        ptr->logbrush.lbColor = 0;
         break;
 
     case BS_DIBPATTERN8X8:
@@ -446,7 +445,7 @@ static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc )
             if(pattern_dev == dc->dibdrv)
                 pattern_dev = GET_NEXT_PHYSDEV( physdev, pSelectBrush );
 
-            BITMAP_SetOwnerDC( (HBITMAP)brush->logbrush.lbHatch, pattern_dev );
+            BITMAP_SetOwnerDC( bitmap, pattern_dev );
         }
 
         info   = brush->info;
