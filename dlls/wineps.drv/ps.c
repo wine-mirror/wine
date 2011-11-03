@@ -843,73 +843,24 @@ BOOL PSDRV_WriteRectClip2(PHYSDEV dev, CHAR *pszArrayName)
     return PSDRV_WriteSpool(dev, buf, strlen(buf));
 }
 
-BOOL PSDRV_WritePatternDict(PHYSDEV dev, BITMAP *bm, BYTE *bits)
+BOOL PSDRV_WriteDIBPatternDict(PHYSDEV dev, const BITMAPINFO *bmi, BYTE *bits, UINT usage)
 {
     static const char mypat[] = "/mypat\n";
     static const char do_pattern[] = "<<\n /PaintType 1\n /PatternType 1\n /TilingType 1\n "
       "/BBox [0 0 %d %d]\n /XStep %d\n /YStep %d\n /PaintProc {\n  begin\n  0 0 translate\n"
       "  %d %d scale\n  mypat image\n  end\n }\n>>\n matrix makepattern setpattern\n";
-
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     char *buf, *ptr;
     INT w, h, x, y, w_mult, h_mult;
     COLORREF map[2];
 
-    w = bm->bmWidth & ~0x7;
-    h = bm->bmHeight & ~0x7;
-
-    buf = HeapAlloc(PSDRV_Heap, 0, sizeof(do_pattern) + 100);
-    ptr = buf;
-    for(y = h-1; y >= 0; y--) {
-        for(x = 0; x < w/8; x++) {
-	    sprintf(ptr, "%02x", *(bits + x/8 + y * bm->bmWidthBytes));
-	    ptr += 2;
-	}
-    }
-    PSDRV_WriteSpool(dev, mypat, sizeof(mypat) - 1);
-    PSDRV_WriteImageDict(dev, 1, 8, 8, buf, FALSE);
-    PSDRV_WriteSpool(dev, "def\n", 4);
-
-    PSDRV_WriteIndexColorSpaceBegin(dev, 1);
-    map[0] = GetTextColor( dev->hdc );
-    map[1] = GetBkColor( dev->hdc );
-    PSDRV_WriteRGB(dev, map, 2);
-    PSDRV_WriteIndexColorSpaceEnd(dev);
-
-    /* Windows seems to scale patterns so that a one pixel corresponds to 1/300" */
-    w_mult = (physDev->logPixelsX + 150) / 300;
-    h_mult = (physDev->logPixelsY + 150) / 300;
-    sprintf(buf, do_pattern, w * w_mult, h * h_mult, w * w_mult, h * h_mult, w * w_mult, h * h_mult);
-    PSDRV_WriteSpool(dev,  buf, strlen(buf));
-
-    HeapFree(PSDRV_Heap, 0, buf);
-    return TRUE;
-}
-
-BOOL PSDRV_WriteDIBPatternDict(PHYSDEV dev, BITMAPINFO *bmi, UINT usage)
-{
-    static const char mypat[] = "/mypat\n";
-    static const char do_pattern[] = "<<\n /PaintType 1\n /PatternType 1\n /TilingType 1\n "
-      "/BBox [0 0 %d %d]\n /XStep %d\n /YStep %d\n /PaintProc {\n  begin\n  0 0 translate\n"
-      "  %d %d scale\n  mypat image\n  end\n }\n>>\n matrix makepattern setpattern\n";
-    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
-    char *buf, *ptr;
-    BYTE *bits;
-    INT w, h, x, y, colours, w_mult, h_mult;
-    COLORREF map[2];
+    TRACE( "size %dx%dx%d\n",
+           bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight, bmi->bmiHeader.biBitCount);
 
     if(bmi->bmiHeader.biBitCount != 1) {
         FIXME("dib depth %d not supported\n", bmi->bmiHeader.biBitCount);
 	return FALSE;
     }
-
-    bits = (LPBYTE)bmi + bmi->bmiHeader.biSize;
-    colours = bmi->bmiHeader.biClrUsed;
-    if (colours > 256) colours = 256;
-    if(!colours && bmi->bmiHeader.biBitCount <= 8)
-        colours = 1 << bmi->bmiHeader.biBitCount;
-    bits += colours * ((usage == DIB_RGB_COLORS) ?
-		       sizeof(RGBQUAD) : sizeof(WORD));
 
     w = bmi->bmiHeader.biWidth & ~0x7;
     h = bmi->bmiHeader.biHeight & ~0x7;

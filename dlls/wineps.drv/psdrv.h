@@ -327,6 +327,9 @@ typedef struct {
 typedef struct {
     PSCOLOR		color;
     BOOL		set;
+    const BITMAPINFO   *info;
+    void               *bits;
+    UINT                usage;
 } PSBRUSH;
 
 #define MAX_DASHLEN 16
@@ -531,8 +534,7 @@ extern BOOL PSDRV_WriteImage(PHYSDEV dev, WORD depth, INT xDst, INT yDst,
 extern BOOL PSDRV_WriteBytes(PHYSDEV dev, const BYTE *bytes, DWORD number) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteData(PHYSDEV dev, const BYTE *byte, DWORD number) DECLSPEC_HIDDEN;
 extern DWORD PSDRV_WriteSpool(PHYSDEV dev, LPCSTR lpData, DWORD cch) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WritePatternDict(PHYSDEV dev, BITMAP *bm, BYTE *bits) DECLSPEC_HIDDEN;
-extern BOOL PSDRV_WriteDIBPatternDict(PHYSDEV dev, BITMAPINFO *bmi, UINT usage) DECLSPEC_HIDDEN;
+extern BOOL PSDRV_WriteDIBPatternDict(PHYSDEV dev, const BITMAPINFO *bmi, BYTE *bits, UINT usage) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteArrayPut(PHYSDEV dev, CHAR *pszArrayName, INT nIndex, LONG lCoord) DECLSPEC_HIDDEN;
 extern BOOL PSDRV_WriteArrayDef(PHYSDEV dev, CHAR *pszArrayName, INT nSize) DECLSPEC_HIDDEN;
 
