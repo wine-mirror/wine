@@ -2004,7 +2004,6 @@ struct wined3d_surface_ops
     void (*surface_preload)(struct wined3d_surface *surface);
     void (*surface_map)(struct wined3d_surface *surface, const RECT *rect, DWORD flags);
     void (*surface_unmap)(struct wined3d_surface *surface);
-    HRESULT (*surface_getdc)(struct wined3d_surface *surface);
 };
 
 struct wined3d_surface

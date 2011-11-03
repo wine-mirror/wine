@@ -1029,43 +1029,6 @@ done:
         surface->surface_ops->surface_draw_overlay(surface);
 }
 
-static HRESULT surface_getdc(struct wined3d_surface *surface)
-{
-    WINED3DLOCKED_RECT lock;
-    HRESULT hr;
-
-    TRACE("surface %p.\n", surface);
-
-    /* Create a DIB section if there isn't a dc yet. */
-    if (!surface->hDC)
-    {
-        if (surface->flags & SFLAG_CLIENT)
-        {
-            surface_load_location(surface, SFLAG_INSYSMEM, NULL);
-            surface_release_client_storage(surface);
-        }
-        hr = surface_create_dib_section(surface);
-        if (FAILED(hr))
-            return WINED3DERR_INVALIDCALL;
-
-        /* Use the DIB section from now on if we are not using a PBO. */
-        if (!(surface->flags & SFLAG_PBO))
-            surface->resource.allocatedMemory = surface->dib.bitmap_data;
-    }
-
-    /* Map the surface. */
-    hr = wined3d_surface_map(surface, &lock, NULL, 0);
-    if (FAILED(hr))
-        ERR("Map failed, hr %#x.\n", hr);
-
-    /* Sync the DIB with the PBO. This can't be done earlier because Map()
-     * activates the allocatedMemory. */
-    if (surface->flags & SFLAG_PBO)
-        memcpy(surface->dib.bitmap_data, surface->resource.allocatedMemory, surface->resource.size);
-
-    return hr;
-}
-
 static BOOL surface_is_full_rect(const struct wined3d_surface *surface, const RECT *r)
 {
     if ((r->left && r->right) || abs(r->right - r->left) != surface->resource.width)
@@ -1956,7 +1919,6 @@ static const struct wined3d_surface_ops surface_ops =
     surface_preload,
     surface_map,
     surface_unmap,
-    surface_getdc,
 };
 
 /*****************************************************************************
@@ -2085,28 +2047,6 @@ static void gdi_surface_unmap(struct wined3d_surface *surface)
     memset(&surface->lockedRect, 0, sizeof(RECT));
 }
 
-static HRESULT gdi_surface_getdc(struct wined3d_surface *surface)
-{
-    WINED3DLOCKED_RECT lock;
-    HRESULT hr;
-
-    TRACE("surface %p.\n", surface);
-
-    /* Should have a DIB section already. */
-    if (!(surface->flags & SFLAG_DIBSECTION))
-    {
-        WARN("DC not supported on this surface\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    /* Map the surface. */
-    hr = wined3d_surface_map(surface, &lock, NULL, 0);
-    if (FAILED(hr))
-        ERR("Map failed, hr %#x.\n", hr);
-
-    return hr;
-}
-
 static const struct wined3d_surface_ops gdi_surface_ops =
 {
     gdi_surface_private_setup,
@@ -2115,7 +2055,6 @@ static const struct wined3d_surface_ops gdi_surface_ops =
     gdi_surface_preload,
     gdi_surface_map,
     gdi_surface_unmap,
-    gdi_surface_getdc,
 };
 
 void surface_set_texture_name(struct wined3d_surface *surface, GLuint new_name, BOOL srgb)
@@ -3862,6 +3801,7 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
 
 HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
 {
+    WINED3DLOCKED_RECT lock;
     HRESULT hr;
 
     TRACE("surface %p, dc %p.\n", surface, dc);
@@ -3880,9 +3820,35 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
     if (surface->flags & SFLAG_LOCKED)
         return WINED3DERR_INVALIDCALL;
 
-    hr = surface->surface_ops->surface_getdc(surface);
+    /* Create a DIB section if there isn't a dc yet. */
+    if (!surface->hDC)
+    {
+        if (surface->flags & SFLAG_CLIENT)
+        {
+            surface_load_location(surface, SFLAG_INSYSMEM, NULL);
+            surface_release_client_storage(surface);
+        }
+        hr = surface_create_dib_section(surface);
+        if (FAILED(hr))
+            return WINED3DERR_INVALIDCALL;
+
+        /* Use the DIB section from now on if we are not using a PBO. */
+        if (!(surface->flags & SFLAG_PBO))
+            surface->resource.allocatedMemory = surface->dib.bitmap_data;
+    }
+
+    /* Map the surface. */
+    hr = wined3d_surface_map(surface, &lock, NULL, 0);
     if (FAILED(hr))
+    {
+        ERR("Map failed, hr %#x.\n", hr);
         return hr;
+    }
+
+    /* Sync the DIB with the PBO. This can't be done earlier because Map()
+     * activates the allocatedMemory. */
+    if (surface->flags & SFLAG_PBO)
+        memcpy(surface->dib.bitmap_data, surface->resource.allocatedMemory, surface->resource.size);
 
     if (surface->resource.format->id == WINED3DFMT_P8_UINT
             || surface->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM)
