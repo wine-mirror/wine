@@ -229,8 +229,6 @@ extern DWORD stretch_bits( const BITMAPINFO *src_info, struct bitblt_coords *src
                            struct gdi_image_bits *bits, int mode ) DECLSPEC_HIDDEN;
 
 /* bitmap.c */
-extern void get_ddb_bitmapinfo( BITMAPOBJ *bmp, BITMAPINFO *info ) DECLSPEC_HIDDEN;
-extern BITMAPINFO *copy_packed_dib( const BITMAPINFO *src_info, UINT usage ) DECLSPEC_HIDDEN;
 extern BOOL get_bitmap_image( HBITMAP hbitmap, BITMAPINFO *info, struct gdi_image_bits *bits ) DECLSPEC_HIDDEN;
 extern HBITMAP BITMAP_CopyBitmap( HBITMAP hbitmap ) DECLSPEC_HIDDEN;
 extern BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, PHYSDEV physdev ) DECLSPEC_HIDDEN;
@@ -258,6 +256,9 @@ extern void DC_UpdateXforms( DC * dc ) DECLSPEC_HIDDEN;
 
 /* dib.c */
 extern int bitmap_info_size( const BITMAPINFO * info, WORD coloruse ) DECLSPEC_HIDDEN;
+extern void fill_default_color_table( BITMAPINFO *info ) DECLSPEC_HIDDEN;
+extern void get_ddb_bitmapinfo( BITMAPOBJ *bmp, BITMAPINFO *info ) DECLSPEC_HIDDEN;
+extern BITMAPINFO *copy_packed_dib( const BITMAPINFO *src_info, UINT usage ) DECLSPEC_HIDDEN;
 extern DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bitblt_coords *src,
                                  const BITMAPINFO *dst_info, void *dst_bits, BOOL add_alpha ) DECLSPEC_HIDDEN;
 

@@ -58,6 +58,38 @@ static const struct gdi_obj_funcs brush_funcs =
 };
 
 
+/* fetch the contents of the brush bitmap and cache them in the brush object */
+static BOOL store_bitmap_bits( BRUSHOBJ *brush, BITMAPOBJ *bmp )
+{
+    const struct gdi_dc_funcs *funcs = get_bitmap_funcs( bmp );
+    struct gdi_image_bits bits;
+    struct bitblt_coords src;
+    BITMAPINFO *info;
+
+    if (!(info = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ))))
+        return FALSE;
+
+    src.visrect.left   = src.x = 0;
+    src.visrect.top    = src.y = 0;
+    src.visrect.right  = src.width = bmp->bitmap.bmWidth;
+    src.visrect.bottom = src.height = bmp->bitmap.bmHeight;
+    if (funcs->pGetImage( NULL, brush->bitmap, info, &bits, &src ))
+    {
+        HeapFree( GetProcessHeap(), 0, info );
+        return FALSE;
+    }
+
+    if (info->bmiHeader.biBitCount <= 8 && !info->bmiHeader.biClrUsed) fill_default_color_table( info );
+
+    /* release the unneeded space */
+    HeapReAlloc( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY, info,
+                 bitmap_info_size( info, DIB_RGB_COLORS ));
+    brush->info  = info;
+    brush->bits  = bits;
+    brush->usage = DIB_RGB_COLORS;
+    return TRUE;
+}
+
 /***********************************************************************
  *           CreateBrushIndirect    (GDI32.@)
  *
@@ -366,10 +398,17 @@ static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc )
     {
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSelectBrush );
         HBITMAP bitmap = brush->bitmap;
-        BITMAPINFO *info = brush->info;
-        void *bits = brush->bits.ptr;
-        UINT usage = brush->usage;
+        BITMAPINFO *info;
+        void *bits;
+        UINT usage;
 
+        if (bitmap && !brush->info)
+        {
+            BITMAPOBJ *bmp = GDI_GetObjPtr( bitmap, OBJ_BITMAP );
+            /* fetch the bitmap bits if we are selecting into a different type of DC */
+            if (bmp && bmp->funcs != physdev->funcs) store_bitmap_bits( brush, bmp );
+            GDI_ReleaseObj( bitmap );
+        }
         if (brush->logbrush.lbStyle == BS_PATTERN)
         {
             PHYSDEV pattern_dev = physdev;
@@ -381,6 +420,9 @@ static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc )
             BITMAP_SetOwnerDC( (HBITMAP)brush->logbrush.lbHatch, pattern_dev );
         }
 
+        info   = brush->info;
+        bits   = brush->bits.ptr;
+        usage  = brush->usage;
         GDI_inc_ref_count( handle );
         GDI_ReleaseObj( handle );
 

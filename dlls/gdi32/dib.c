@@ -1058,7 +1058,7 @@ static void copy_color_info(BITMAPINFO *dst, const BITMAPINFO *src, UINT colorus
     }
 }
 
-static void fill_default_color_table( BITMAPINFO *info )
+void fill_default_color_table( BITMAPINFO *info )
 {
     int i;
 
