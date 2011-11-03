@@ -725,10 +725,10 @@ static DWORD *local_const_mapping(const struct wined3d_shader *shader)
 }
 
 /* Generate the variable & register declarations for the ARB_vertex_program output target */
-static DWORD shader_generate_arb_declarations(struct wined3d_shader *shader,
+static DWORD shader_generate_arb_declarations(const struct wined3d_shader *shader,
         const struct wined3d_shader_reg_maps *reg_maps, struct wined3d_shader_buffer *buffer,
-        const struct wined3d_gl_info *gl_info, DWORD *lconst_map,
-        DWORD *num_clipplanes, struct shader_arb_ctx_priv *ctx)
+        const struct wined3d_gl_info *gl_info, const DWORD *lconst_map,
+        DWORD *num_clipplanes, const struct shader_arb_ctx_priv *ctx)
 {
     DWORD i, next_local = 0;
     char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
