@@ -4103,7 +4103,7 @@ static void init_output_registers(const struct wined3d_shader *shader, DWORD sig
 }
 
 /* GL locking is done by the caller */
-static GLuint shader_arb_generate_vshader(struct wined3d_shader *shader,
+static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
         const struct wined3d_gl_info *gl_info, struct wined3d_shader_buffer *buffer,
         const struct arb_vs_compile_args *args, struct arb_vs_compiled_shader *compiled)
 {
