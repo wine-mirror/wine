@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-10-15 21:53+0200\n"
+"PO-Revision-Date: 2011-11-03 18:10+0100\n"
 "Last-Translator: Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: Polish\n"
@@ -39,7 +39,7 @@ msgstr ""
 
 #: appwiz.rc:33
 msgid "Not specified"
-msgstr "Nie określone"
+msgstr "Nieokreślone"
 
 #: appwiz.rc:35 shell32.rc:141 shell32.rc:251 regedit.rc:122 winefile.rc:110
 msgid "Name"
@@ -258,7 +258,7 @@ msgstr "Pogrubiony"
 
 #: comdlg32.rc:125
 msgid "Italic"
-msgstr "Kusywa"
+msgstr "Kursywa"
 
 #: comdlg32.rc:126
 msgid "Bold Italic"
@@ -290,7 +290,7 @@ msgstr "Purpurowy"
 
 #: comdlg32.rc:137 wordpad.rc:120
 msgid "Teal"
-msgstr "Zielonomodry"
+msgstr "Zielono-modry"
 
 #: comdlg32.rc:138 wordpad.rc:121
 msgid "Gray"
@@ -579,7 +579,7 @@ msgid ""
 msgstr ""
 "Włączony tryb Caps Lock może spowodować, że wpiszesz hasło niepoprawnie.\n"
 "\n"
-"Naciśnik klawisz Caps Lock key na klawiaturze, aby go wyłączyć\n"
+"Naciśnij klawisz Caps Lock na klawiaturze, aby go wyłączyć\n"
 "przed wprowadzeniem hasła."
 
 #: credui.rc:31
@@ -861,7 +861,7 @@ msgstr "Wystawianie punktu dystrybucji"
 
 #: crypt32.rc:95
 msgid "Freshest CRL"
-msgstr "Njanowsza lista CRL"
+msgstr "Najnowsza lista CRL"
 
 #: crypt32.rc:96
 msgid "Name Constraints"
@@ -941,7 +941,7 @@ msgstr "Szyfrowany certyfikat PKCS 7"
 
 #: crypt32.rc:115
 msgid "Previous CA Certificate Hash"
-msgstr "Hash certyfiaktu poprzedniego urzędu certyfikującego"
+msgstr "Hash certyfikatu poprzedniego urzędu certyfikującego"
 
 #: crypt32.rc:116
 msgid "Virtual Base CRL Number"
@@ -985,19 +985,19 @@ msgstr "Zasada wymuszania łańcucha certyfikatów"
 
 #: crypt32.rc:126
 msgid "Transaction Id"
-msgstr "ID transakcji"
+msgstr "Identyfikator transakcji"
 
 #: crypt32.rc:127
 msgid "Sender Nonce"
-msgstr ""
+msgstr "Zmienna losowa nadawcy"
 
 #: crypt32.rc:128
 msgid "Recipient Nonce"
-msgstr ""
+msgstr "Zmienna losowa adresata"
 
 #: crypt32.rc:129
 msgid "Reg Info"
-msgstr ""
+msgstr "Informacje o rejestrze"
 
 #: crypt32.rc:130
 msgid "Get Certificate"
@@ -1013,7 +1013,7 @@ msgstr "Cofnij żądanie"
 
 #: crypt32.rc:133
 msgid "Query Pending"
-msgstr ""
+msgstr "Kwerenda oczekująca"
 
 #: crypt32.rc:134 cryptui.rc:92
 msgid "Certificate Trust List"
@@ -2324,13 +2324,12 @@ msgid "Security"
 msgstr "Prawa dostępu"
 
 #: inetcpl.rc:90
-#, fuzzy
 msgid "Listview"
-msgstr "Lista"
+msgstr "Widok listy"
 
 #: inetcpl.rc:95
 msgid "trackbar"
-msgstr ""
+msgstr "pasek śledzenia"
 
 #: inetcpl.rc:108
 msgid " Certificates "
@@ -2660,7 +2659,7 @@ msgstr "Zdalna maszyna nie nasłuchuje\n"
 
 #: winerror.mc:226
 msgid "Duplicate network name\n"
-msgstr "Zduplikowana nazwa sieci\n"
+msgstr "Powielona nazwa sieci\n"
 
 #: winerror.mc:231
 msgid "Bad network path\n"
@@ -2740,7 +2739,7 @@ msgstr "Żądanie nie zaakceptowane\n"
 
 #: winerror.mc:326
 msgid "Redirector paused\n"
-msgstr "Przekierowywacz wstrzymany\n"
+msgstr "Przekierowywanie wstrzymane\n"
 
 #: winerror.mc:331
 msgid "File exists\n"
@@ -3012,11 +3011,11 @@ msgstr "Niepoprawna ścieżka\n"
 
 #: winerror.mc:676
 msgid "Signal pending\n"
-msgstr "Sygnał w toku\n"
+msgstr "Sygnał oczekuje\n"
 
 #: winerror.mc:681
 msgid "Max system-wide thread count reached\n"
-msgstr "Max syste-mwide thread count reached\n"
+msgstr "Osiągnięto ogólnosystemową maksymalną liczbę licznika wątków\n"
 
 #: winerror.mc:686
 msgid "Lock failed\n"
@@ -3112,7 +3111,7 @@ msgstr "Łańcuch przemieszczenia przekracza granicę segmentu w %1\n"
 
 #: winerror.mc:801
 msgid "Infinite loop in relocation chain in %1\n"
-msgstr "Nieskończona pętla w łańcuchu przemieszczeniowym w %1\n"
+msgstr "Nieskończona pętla w łańcuchu relokacji w %1\n"
 
 #: winerror.mc:806
 msgid "Environment variable not found\n"
@@ -3132,7 +3131,7 @@ msgstr "Stos Ring'u 2 w użyciu\n"
 
 #: winerror.mc:826
 msgid "Error in use of filename wildcards\n"
-msgstr "Błąd w użyciu wildcard'ów w nazwie pliku\n"
+msgstr "Błąd w użyciu znaków wieloznacznych w nazwie pliku\n"
 
 #: winerror.mc:831
 msgid "Invalid signal number\n"
@@ -3452,7 +3451,7 @@ msgstr "Zalogowanie usługi nieudane\n"
 
 #: winerror.mc:1226
 msgid "Service start-hang\n"
-msgstr "Start-zawiszenie się usługi\n"
+msgstr "Zawieszenie uruchamiania się usługi\n"
 
 #: winerror.mc:1231
 msgid "Invalid service lock\n"
@@ -3484,7 +3483,7 @@ msgstr "Usługa nie wystartowała od czasu ostatniego uruchomienia\n"
 
 #: winerror.mc:1266
 msgid "Duplicate service name\n"
-msgstr "Zduplikowana nazwa usługi\n"
+msgstr "Powielona nazwa usługi\n"
 
 #: winerror.mc:1271
 msgid "Different service account\n"
@@ -3612,7 +3611,7 @@ msgstr "Rejestry dyskietki niespójne\n"
 
 #: winerror.mc:1426
 msgid "Hard disk recalibrate failed\n"
-msgstr "Rekalibracja dysku twardego nieudana\n"
+msgstr "Nieudana ponowna kalibracja dysku twardego\n"
 
 #: winerror.mc:1431
 msgid "Hard disk operation failed\n"
@@ -3708,7 +3707,7 @@ msgstr "Magazyn nie istnieje\n"
 
 #: winerror.mc:1546
 msgid "The device needs reinitialization\n"
-msgstr "Urządzenie potrzebuje reinitializacji\n"
+msgstr "Urządzenie potrzebuje ponownej inicjalizacji\n"
 
 #: winerror.mc:1551
 msgid "The device requires cleaning\n"
@@ -3784,7 +3783,7 @@ msgstr "Połączenie niedostępne\n"
 
 #: winerror.mc:1641
 msgid "Device already remembered\n"
-msgstr "Urządzenie już jest przeczłonkowane\n"
+msgstr "Urządzenie już jest zapamiętane\n"
 
 #: winerror.mc:1646
 msgid "No network or bad path\n"
@@ -3856,7 +3855,7 @@ msgstr "Limit zdalnych sesji przekroczony\n"
 
 #: winerror.mc:1736
 msgid "Duplicate domain or workgroup name\n"
-msgstr "Zduplikowana nazwa domeny lub grupy roboczej\n"
+msgstr "Powielona nazwa domeny lub grupy roboczej\n"
 
 #: winerror.mc:1741
 msgid "No network\n"
@@ -3960,7 +3959,7 @@ msgstr "Kontynuacja w toku\n"
 
 #: winerror.mc:1866
 msgid "Already initialised\n"
-msgstr "Już jest zainicjalizowane\n"
+msgstr "Już jest zainicjowane\n"
 
 #: winerror.mc:1871
 msgid "No more local devices\n"
@@ -4312,7 +4311,7 @@ msgstr "Logowanie nie przyznane\n"
 
 #: winerror.mc:2306
 msgid "Too many secrets\n"
-msgstr "Zbyt dużo secretów\n"
+msgstr "Zbyt dużo danych poufnych\n"
 
 #: winerror.mc:2311
 msgid "Secret too long\n"
@@ -4392,7 +4391,7 @@ msgstr "Niepoprawny uchwyt kursora\n"
 
 #: winerror.mc:2411
 msgid "Invalid accelerator table handle\n"
-msgstr ""
+msgstr "Niepoprawny uchwyt akceleratora tabeli\n"
 
 #: winerror.mc:2416
 msgid "Invalid hook handle\n"
@@ -4572,7 +4571,7 @@ msgstr "Brak pasków przewijania\n"
 
 #: winerror.mc:2636
 msgid "Invalid scrollbar range\n"
-msgstr "Niepoprawny zakres scrollbar'a\n"
+msgstr "Niepoprawny zakres paska przewijania\n"
 
 #: winerror.mc:2641
 msgid "Invalid ShowWin command\n"
@@ -4592,7 +4591,7 @@ msgstr "Brak stronicowanych zasobów systemowych\n"
 
 #: winerror.mc:2661
 msgid "No working set quota\n"
-msgstr ""
+msgstr "Brak przydziału zestawu roboczego\n"
 
 #: winerror.mc:2666
 msgid "No page file quota\n"
@@ -4768,7 +4767,7 @@ msgstr "Utworzenie zakończone niepowodzeniem\n"
 
 #: winerror.mc:2881
 msgid "Temporary directory not writable\n"
-msgstr "Katalog tymczasowy niezapisywalny\n"
+msgstr "Katalog tymczasowy jest nie do zapisu\n"
 
 #: winerror.mc:2886
 msgid "Installation platform not supported\n"
@@ -4796,7 +4795,7 @@ msgstr "Inna wersja jest już zainstalowana\n"
 
 #: winerror.mc:2916
 msgid "Invalid command line\n"
-msgstr "Niepoprawne polecenie lini komend\n"
+msgstr "Nieprawidłowy wiersz poleceń\n"
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed\n"
@@ -4952,7 +4951,7 @@ msgstr "Brak adresu sieciowego\n"
 
 #: winerror.mc:3116
 msgid "Duplicate endpoint\n"
-msgstr "Zduplikowany punkt końcowy\n"
+msgstr "Powielony punkt końcowy\n"
 
 #: winerror.mc:3121
 msgid "Unknown authentication type\n"
@@ -5032,11 +5031,11 @@ msgstr "Nie znaleziono interfejsu\n"
 
 #: winerror.mc:3216
 msgid "Entry already exists\n"
-msgstr "Entry już istnieje\n"
+msgstr "Wpis już istnieje\n"
 
 #: winerror.mc:3221
 msgid "Entry not found\n"
-msgstr "Nie znaleziono entry\n"
+msgstr "Nie znaleziono wpisu\n"
 
 #: winerror.mc:3226
 msgid "Name service unavailable\n"
@@ -5080,7 +5079,7 @@ msgstr "Zmiennoprzecinkowe przepełnienie górne\n"
 
 #: winerror.mc:3276
 msgid "No more entries\n"
-msgstr "Nie ma więcej entry\n"
+msgstr "Nie ma więcej wpisów\n"
 
 #: winerror.mc:3281
 msgid "Character translation table open failed\n"
@@ -5164,7 +5163,7 @@ msgstr "Konto wygasło\n"
 
 #: winerror.mc:3381
 msgid "Redirector has open handles\n"
-msgstr "Przekierowywacz ma otwarte uchwyty\n"
+msgstr "Przekierowywanie ma otwarte uchwyty\n"
 
 #: winerror.mc:3386
 msgid "Printer driver already installed\n"
@@ -5324,7 +5323,7 @@ msgstr "Nie znaleziono członka grupy\n"
 
 #: winerror.mc:3581
 msgid "Can't create endpoint mapper DB\n"
-msgstr ""
+msgstr "Nie można utworzyć bazy danych mapowania punktu końcowego\n"
 
 #: winerror.mc:3586
 msgid "Invalid object\n"
@@ -5388,7 +5387,7 @@ msgstr "Niepoprawny asynchroniczny uchwyt RPC\n"
 
 #: winerror.mc:3661
 msgid "Invalid asynchronous RPC call\n"
-msgstr "Niepoprawe asynchroniczne wywołanie RPC\n"
+msgstr "Niepoprawne asynchroniczne wywołanie RPC\n"
 
 #: winerror.mc:3666
 msgid "RPC pipe closed\n"
@@ -5580,15 +5579,15 @@ msgstr ""
 
 #: msi.rc:57
 msgid "enter which folder contains %s"
-msgstr "wprowadź siceżkę do folderu zawierającego '%s'"
+msgstr "podaj, który folder zawiera '%s'"
 
 #: msi.rc:58
 msgid "install source for feature missing"
-msgstr "źródło danych zawierające żądanę funkcję jest niedostępne"
+msgstr "brakuje źródła danych dla funkcji"
 
 #: msi.rc:59
 msgid "network drive for feature missing"
-msgstr "dysk siecowy zawierający żądaną funckje jest niedostępny"
+msgstr "brakuje dysku sieciowego dla funkcji"
 
 #: msi.rc:60
 msgid "feature from:"
@@ -5596,11 +5595,11 @@ msgstr "funkcja z:"
 
 #: msi.rc:61
 msgid "choose which folder contains %s"
-msgstr "wybierz folder zawierający '%s'"
+msgstr "wybierz, który katalog zawiera '%s'"
 
 #: msrle32.rc:28
 msgid "Wine MS-RLE video codec"
-msgstr "Kodek Wine MS-RLE"
+msgstr "Kodek wideo Wine MS-RLE"
 
 #: msrle32.rc:29
 msgid ""
@@ -5612,7 +5611,7 @@ msgstr ""
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
-msgstr "Pełne ramki (bez kompresji)"
+msgstr "Pełne klatki (bez kompresji)"
 
 #: msvidc32.rc:26
 msgid "Wine Video 1 video codec"
@@ -6143,7 +6142,7 @@ msgstr "Właś&ciwości"
 
 #: shdoclc.rc:88 user32.rc:55
 msgid "&Undo"
-msgstr "&Confij"
+msgstr "&Cofnij"
 
 #: shdoclc.rc:93 shell32.rc:102 user32.rc:60
 msgid "&Delete"
@@ -6382,7 +6381,7 @@ msgstr "Wklej &skrót"
 
 #: shell32.rc:64 wordpad.rc:210
 msgid "New"
-msgstr "&Nowy"
+msgstr "Nowy"
 
 #: shell32.rc:66
 msgid "New &Folder"
@@ -6870,9 +6869,8 @@ msgid "Trash"
 msgstr "Kosz"
 
 #: shlwapi.rc:27
-#, fuzzy
 msgid "%d bytes"
-msgstr "%ld bajtów"
+msgstr "%d bajtów"
 
 #: shlwapi.rc:28
 msgctxt "time unit: hours"
@@ -7827,9 +7825,8 @@ msgstr ""
 "\n"
 
 #: attrib.rc:28
-#, fuzzy
 msgid "%1: File Not Found\n"
-msgstr "%s : Plik nie znaleziony\n"
+msgstr "%1: Nie znaleziono pliku\n"
 
 #: attrib.rc:47
 msgid ""
@@ -7852,6 +7849,26 @@ msgid ""
 "  /S  Processes matching files in the current folder and all subfolders.\n"
 "  /D  Processes folders as well.\n"
 msgstr ""
+"ATTRIB - Wyświetla lub zmienia atrybuty pliku.\n"
+"\n"
+"Składnia:\n"
+"ATTRIB [+R | -R] [+A | -A ] [+S | -S] [+H | -H] [dysk:][ścieżka]"
+"[nazwapliku]\n"
+"       [/S [/D]]\n"
+"\n"
+"Gdzie:\n"
+"\n"
+"  +   Ustawia atrybut.\n"
+"  -   Czyści atrybut.\n"
+"  R   Atrybut tylko do odczytu.\n"
+"  A   Atrybut pliku archiwum.\n"
+"  S   Atrybut pliku systemowego.\n"
+"  H   Atrybut pliku ukrytego.\n"
+"  [dysk:][ścieżka][nazwapliku]\n"
+"      Określa plik lub pliki do przetworzenia przez attrib.\n"
+"  /S  Przetwarza pasujące pliki w bieżącym katalogu i wszystkich "
+"podkatalogach.\n"
+"  /D  Przetwarza także katalogi.\n"
 
 #: clock.rc:29
 msgid "Ana&log"
@@ -8272,6 +8289,8 @@ msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
 msgstr ""
+"ENDLOCAL kończy zmiany ustawień regionalnych środowiska w pliku wsadowym,\n"
+"które zostały wprowadzone przez poprzedzające SETLOCAL.\n"
 
 #: cmd.rc:217
 msgid ""
@@ -8282,6 +8301,13 @@ msgid ""
 "file, whichever comes first), at which point the previous environment\n"
 "settings are restored.\n"
 msgstr ""
+"SETLOCAL rozpoczyna zmiany ustawień regionalnych środowiska w pliku "
+"wsadowym.\n"
+"\n"
+"Zmiany środowiska dokonane po SETLOCAL są lokalne dla pliku wsadowego\n"
+"i są ważne do wystąpienia ENDLOCAL (lub na końcu pliku\n"
+"cokolwiek nastąpi pierwsze), przy którym zostają przywrócone poprzednie "
+"ustawienia środowiska.\n"
 
 #: cmd.rc:220
 msgid ""
@@ -8310,6 +8336,15 @@ msgid ""
 "Specifying no file type after the equal sign removes the current "
 "association, if any.\n"
 msgstr ""
+"ASSOC pokazuje lub modyfikuje skojarzenia rozszerzenia pliku\n"
+"\n"
+"Składnia: ASSOC [.ext[=[fileType]]]\n"
+"\n"
+"ASSOC bez parametrów wyświetla obecne skojarzenia pliku.\n"
+"Jeżeli użyte tylko z jednym rozszerzeniem pliku, to pokazuje obecne "
+"skojarzenie.\n"
+"Nie określanie typu pliku po znaku równości usuwa obecne skojarzenie, jeśli "
+"jakiekolwiek istnieje.\n"
 
 #: cmd.rc:242
 msgid ""
@@ -8324,6 +8359,16 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string "
 "associated to the specified file type.\n"
 msgstr ""
+"FTYPE pokazuje lub modyfikuje polecenia otwarcia skojarzone z typami plików\n"
+"\n"
+"Składnia: FTYPE [fileType[=[openCommand]]]\n"
+"\n"
+"Bez parametrów, pokazuje typy plików, dla który są obecnie określone "
+"polecenia otwarcia.\n"
+"Jeżeli użyte tylko z jednym typem pliku, to pokazuje jego skojarzone "
+"polecenie otwarcia, jeśli jakiekolwiek istnieje.\n"
+"Nie określanie polecenia otwarcia po znaku równości usuwa ciąg znaków "
+"polecenia skojarzony z określonym typem pliku.\n"
 
 #: cmd.rc:244
 msgid "MORE displays output of files or piped input in pages.\n"
@@ -8336,7 +8381,7 @@ msgid ""
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
 "CHOICE wyświetla tekst i czeka, aż Użytkownik\n"
-"naciśnie dozwolony Przycisk z zaznaczalnej listy.\n"
+"naciśnie dozwolony Przycisk z wybieralnej listy.\n"
 "CHOICE jest używany głównie do budowania menu wyboru w plikach typu bat.\n"
 
 #: cmd.rc:252
@@ -8715,14 +8760,12 @@ msgstr ""
 "Gdzie 'usługa' jest nazwą usługi do zatrzymania.\n"
 
 #: net.rc:30
-#, fuzzy
 msgid "Stopping dependent service: %1\n"
-msgstr "Zatrzymuję serwis: %s\n"
+msgstr "Zatrzymywanie zależnej usługi: %1\n"
 
 #: net.rc:31
-#, fuzzy
 msgid "Could not stop service %1\n"
-msgstr "Nie udało się zatrzymać serwisu %s\n"
+msgstr "Nie można zatrzymać usługi %1\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
@@ -8733,34 +8776,28 @@ msgid "Could not get handle to service.\n"
 msgstr "Nie udało się uzyskać uchwytu do serwisu.\n"
 
 #: net.rc:34
-#, fuzzy
 msgid "The %1 service is starting.\n"
-msgstr "Serwis %s jest uruchamiany...\n"
+msgstr "Usługa %1 jest uruchamiana.\n"
 
 #: net.rc:35
-#, fuzzy
 msgid "The %1 service was started successfully.\n"
-msgstr "Serwis %s został pomyślnie uruchamiany.\n"
+msgstr "Pomyślne uruchomienie usługi %1.\n"
 
 #: net.rc:36
-#, fuzzy
 msgid "The %1 service failed to start.\n"
-msgstr "Uruchomienie serwisu %s nie powiodło się.\n"
+msgstr "Nieudane uruchomienie usługi %1.\n"
 
 #: net.rc:37
-#, fuzzy
 msgid "The %1 service is stopping.\n"
-msgstr "Serwis %s jest zatrzymywany...\n"
+msgstr "Usługa %1 jest zatrzymywana.\n"
 
 #: net.rc:38
-#, fuzzy
 msgid "The %1 service was stopped successfully.\n"
-msgstr "Serwis %s został pomyślnie zatrzymany.\n"
+msgstr "Pomyślne zatrzymanie usługi %1.\n"
 
 #: net.rc:39
-#, fuzzy
 msgid "The %1 service failed to stop.\n"
-msgstr "Zatrzymanie serwisu %s nie powiodło się.\n"
+msgstr "Nieudane zatrzymanie usługi %1.\n"
 
 #: net.rc:41
 msgid "There are no entries in the list.\n"
@@ -8777,9 +8814,8 @@ msgstr ""
 "---------------------------------------------------------------\n"
 
 #: net.rc:43
-#, fuzzy
 msgid "%1      %2      %3      Open resources: %4!u!\n"
-msgstr "%s      %s      %s      Otwarte zasoby: %lu\n"
+msgstr "%1      %2      %3      Otwarte zasoby: %4!u!\n"
 
 #: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 wineconsole.rc:131
 #: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:68
@@ -9059,11 +9095,11 @@ msgstr "Flagi &CoCreateInstance"
 
 #: oleview.rc:41
 msgid "&In-process server"
-msgstr ""
+msgstr "&W procesie serwera"
 
 #: oleview.rc:42
 msgid "In-process &handler"
-msgstr ""
+msgstr "Uc&hwyt w procesie"
 
 #: oleview.rc:43
 msgid "&Local server"
@@ -9289,11 +9325,11 @@ msgstr ""
 
 #: oleview.rc:113
 msgid "Ask for an in-process server when calling CoGetClassObject"
-msgstr ""
+msgstr "Zapytaj o serwer w procesie przy wywoływaniu CoGetClassObject"
 
 #: oleview.rc:114
 msgid "Ask for an in-process handler when calling CoGetClassObject"
-msgstr ""
+msgstr "Zapytaj o uchwyt w procesie przy wywoływaniu CoGetClassObject"
 
 #: oleview.rc:115
 msgid "Ask for a local server when calling CoGetClassObject"
@@ -9309,7 +9345,7 @@ msgstr "Klasy obiektów"
 
 #: oleview.rc:129
 msgid "Grouped by Component Category"
-msgstr "Zgrupowane wedłów kategorii komponentów"
+msgstr "Zgrupowane według kategorii komponentów"
 
 #: oleview.rc:130
 msgid "OLE 1.0 Objects"
@@ -9562,7 +9598,7 @@ msgstr "Błąd: System nie mógł znaleźć podanej wartości lub klucza rejestr
 
 #: regedit.rc:31
 msgid "&Registry"
-msgstr "&Rejest"
+msgstr "&Rejestr"
 
 #: regedit.rc:33
 msgid "&Import Registry File..."
@@ -10405,7 +10441,7 @@ msgstr "Liczba dojść"
 
 #: taskmgr.rc:291
 msgid "Threads"
-msgstr "Liczba wątków"
+msgstr "Wątki"
 
 #: taskmgr.rc:292
 msgid "GDI Objects"
@@ -11077,9 +11113,8 @@ msgid "Screen buffer size must be greater or equal to the window's one"
 msgstr "Wielkość bufora ekranu musi być większa niż wielkość bufora okna."
 
 #: wineconsole.rc:34
-#, fuzzy
 msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
-msgstr "Każdy znak ma szerokość %ld i wysokość %ld punktów"
+msgstr "Każdy znak jest szeroki na %1!u! piksele i wysoki na %2!u! piksele"
 
 #: wineconsole.rc:35
 msgid "This is a test"
@@ -11389,9 +11424,8 @@ msgid "Index/Inode"
 msgstr "Indeks/inode"
 
 #: winefile.rc:120
-#, fuzzy
 msgid "%1 of %2 free"
-msgstr "%s z %s wolne"
+msgstr "%1 z %2 wolnych"
 
 #: winemine.rc:34
 msgid "&Game"
@@ -11462,9 +11496,8 @@ msgid "Rows"
 msgstr "Wiersze"
 
 #: winemine.rc:87
-#, fuzzy
 msgid "Columns"
-msgstr "K&olumna"
+msgstr "Kolumny"
 
 #: winemine.rc:88
 msgid "Mines"
@@ -11606,7 +11639,7 @@ msgstr "Tylko do &odczytu"
 
 #: wordpad.rc:55
 msgid "&Modified"
-msgstr "&Zmodifykowany"
+msgstr "&Zmodyfikowany"
 
 #: wordpad.rc:57
 msgid "E&xtras"
@@ -11925,59 +11958,50 @@ msgstr ""
 "Niewłaściwa liczba parametrów - uruchom xcopy /? aby wyświetlić pomoc\n"
 
 #: xcopy.rc:28
-#, fuzzy
 msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
-msgstr "Nieznany parameter '%s' -  uruchom xcopy /? aby wyświetlić pomoc\n"
+msgstr "Nieprawidłowy parametr '%1' -  Użyj xcopy /? aby uzyskać pomoc\n"
 
 #: xcopy.rc:29
 msgid "Press <enter> to begin copying\n"
 msgstr "Naciśnij <enter> aby rozpocząć kopiowanie\n"
 
 #: xcopy.rc:30
-#, fuzzy
 msgid "%1!d! file(s) would be copied\n"
-msgstr "%d plik(ów) zostałoby skopiowanych\n"
+msgstr "Nie można było skopiować %1!d! pliku(ów)\n"
 
 #: xcopy.rc:31
-#, fuzzy
 msgid "%1!d! file(s) copied\n"
-msgstr "%d plik(ów) skopiowanych\n"
+msgstr "Skopiowano %1!d! plik(ów)\n"
 
 #: xcopy.rc:34
-#, fuzzy
 msgid ""
 "Is '%1' a filename or directory\n"
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
-"Czy '%s' jest nazwą pliku czy katalogu\n"
-"docelowego?\n"
-"(P - plik, K - katalog)\n"
+"'%1' jest nazwą pliku czy katalogiem\n"
+"w celu?\n"
+"(F - Plik, D - Katalog)\n"
 
 #: xcopy.rc:35
-#, fuzzy
 msgid "%1? (Yes|No)\n"
-msgstr "%s? (Tak|Nie)\n"
+msgstr "%1? (Tak|Nie)\n"
 
 #: xcopy.rc:36
-#, fuzzy
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr "Zastąpić %s? (Tak|Nie|Wszystkie)\n"
+msgstr "Czy zastąpić %1? (Tak|Nie|Wszystkie)\n"
 
 #: xcopy.rc:37
-#, fuzzy
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr "Kopiowanie '%s' do '%s' nie powiodło się - kod błędu %d\n"
+msgstr "Nieudane kopiowanie '%1' do '%2' z kodem błędu %3!d!\n"
 
 #: xcopy.rc:38
-#, fuzzy
 msgid "Failed to open '%1'\n"
-msgstr "Nieudane otwarcie '%s'\n"
+msgstr "Nieudane otwarcie '%1'\n"
 
 #: xcopy.rc:39
-#, fuzzy
 msgid "Failed during reading of '%1'\n"
-msgstr "Błąd podczas czytania '%s'\n"
+msgstr "Nieudany odczyt '%1'\n"
 
 #: xcopy.rc:43
 msgctxt "File key"
