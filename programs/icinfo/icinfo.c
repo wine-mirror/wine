@@ -23,15 +23,21 @@
 #include "vfw.h"
 
 
-int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
+int main(int argc, char* argv[])
 {
-    int n=0,doabout=0,doconfigure=0;
+    int i, n=0,doabout=0,doconfigure=0;
     char	buf[128],type[5],handler[5];
 
-    if (strstr(cmdline,"-about"))
-    	doabout = 1;
-    if (strstr(cmdline,"-configure"))
-    	doconfigure = 1;
+    for (i = 1; i < argc; i++) {
+        if (!strcmp(argv[i], "-about"))
+            doabout = 1;
+        else if (!strcmp(argv[i], "-configure"))
+            doconfigure = 1;
+        else {
+            printf("Unknown option: %s\n", argv[i]);
+            return -1;
+        }
+    }
 
     printf("Currently installed Video Compressors:\n");
     while (1) {
