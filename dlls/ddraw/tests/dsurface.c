@@ -1452,37 +1452,79 @@ static void AttachmentTest7(void)
         ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
         if (SUCCEEDED(hr))
         {
-            /* DeleteAttachedSurface */
+            hr = IDirectDrawSurface7_QueryInterface(surface1, &IID_IDirectDrawSurface, (void **)&surface1v1);
+            ok(hr == DD_OK, "IDirectDrawSurface7_QueryInterface returned %08x\n", hr);
+            hr = IDirectDrawSurface7_QueryInterface(surface2, &IID_IDirectDrawSurface, (void **)&surface2v1);
+            ok(hr == DD_OK, "IDirectDrawSurface7_QueryInterface returned %08x\n", hr);
+
+            /* DeleteAttachedSurface when attaching via IDirectDrawSurface7 */
             hr = IDirectDrawSurface7_AddAttachedSurface(surface1, surface2);
             ok(hr == DD_OK, "AddAttachedSurface returned %08x\n", hr);
             if (SUCCEEDED(hr))
             {
                 ref = getRefcount((IUnknown *)surface2);
                 ok(ref == 2, "Got refcount %d, expected 2\n", ref);
-                hr = IDirectDrawSurface7_QueryInterface(surface1, &IID_IDirectDrawSurface, (void **)&surface1v1);
-                ok(hr == DD_OK, "IDirectDrawSurface7_QueryInterface returned %08x\n", hr);
-                hr = IDirectDrawSurface7_QueryInterface(surface2, &IID_IDirectDrawSurface, (void **)&surface2v1);
-                ok(hr == DD_OK, "IDirectDrawSurface7_QueryInterface returned %08x\n", hr);
+                ref = getRefcount((IUnknown *)surface2v1);
+                ok(ref == 1, "Got refcount %d, expected 1\n", ref);
+
+                /* Try reattach */
+                hr = IDirectDrawSurface7_AddAttachedSurface(surface1, surface2);
+                ok(hr == DDERR_SURFACEALREADYATTACHED, "AddAttachedSurface returned %08x\n", hr);
+
+                /* Attachment / detachment on another interface */
+                hr = IDirectDrawSurface_AddAttachedSurface(surface1v1, surface2v1);
+                todo_wine ok(hr == DDERR_CANNOTATTACHSURFACE, "AddAttachedSurface returned %08x\n", hr);
                 hr = IDirectDrawSurface_DeleteAttachedSurface(surface1v1, 0, surface2v1);
                 ok(hr == DDERR_SURFACENOTATTACHED, "DeleteAttachedSurface returned %08x\n", hr);
-                if (surface2v1 != NULL) IDirectDrawSurface_Release(surface2v1);
-                if (surface1v1 != NULL) IDirectDrawSurface_Release(surface1v1);
+
+                /* Attaching while already attached to other surface */
+                hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface3, NULL);
+                ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
+                if (SUCCEEDED(hr))
+                {
+                    hr = IDirectDrawSurface7_AddAttachedSurface(surface3, surface2);
+                    todo_wine ok(hr == DD_OK, "AddAttachedSurface returned %08x\n", hr);
+                    if (SUCCEEDED(hr))
+                    {
+                        hr = IDirectDrawSurface7_DeleteAttachedSurface(surface3, 0, surface2);
+                        ok(hr == DD_OK, "DeleteAttachedSurface returned %08x\n", hr);
+                    }
+                    IDirectDrawSurface7_Release(surface3);
+                }
+
                 hr = IDirectDrawSurface7_DeleteAttachedSurface(surface1, 0, surface2);
                 ok(hr == DD_OK, "DeleteAttachedSurface returned %08x\n", hr);
                 ref = getRefcount((IUnknown *)surface2);
                 ok(ref == 1, "Got refcount %d, expected 1\n", ref);
+                ref = getRefcount((IUnknown *)surface2v1);
+                ok(ref == 1, "Got refcount %d, expected 1\n", ref);
             }
 
-            /* Automatic detachment on release */
-            hr = IDirectDrawSurface7_AddAttachedSurface(surface1, surface2);
+            /* DeleteAttachedSurface when attaching via IDirectDrawSurface */
+            hr = IDirectDrawSurface_AddAttachedSurface(surface1v1, surface2v1);
             ok(hr == DD_OK, "AddAttachedSurface returned %08x\n", hr);
-            ref = getRefcount((IUnknown *)surface2);
-            ok(ref == 2, "Got refcount %d, expected 2\n", ref);
+            if (SUCCEEDED(hr))
+            {
+                hr = IDirectDrawSurface7_DeleteAttachedSurface(surface1, 0, surface2);
+                ok(hr == DDERR_SURFACENOTATTACHED, "DeleteAttachedSurface returned %08x\n", hr);
+                hr = IDirectDrawSurface_DeleteAttachedSurface(surface1v1, 0, surface2v1);
+                ok(hr == DD_OK, "DeleteAttachedSurface returned %08x\n", hr);
+            }
+            ref = IDirectDrawSurface7_Release(surface2);
+            ok(!ref, "Got refcount %d, expected 0\n", ref);
             ref = IDirectDrawSurface7_Release(surface1);
             ok(!ref, "Got refcount %d, expected 0\n", ref);
-            ref = getRefcount((IUnknown *)surface2);
+
+            /* Automatic detachment on release */
+            hr = IDirectDrawSurface_AddAttachedSurface(surface1v1, surface2v1);
+            ok(hr == DD_OK, "AddAttachedSurface returned %08x\n", hr);
+            ref = getRefcount((IUnknown *)surface2v1);
+            ok(ref == 2, "Got refcount %d, expected 2\n", ref);
+            ref = IDirectDrawSurface_Release(surface1v1);
+            ok(!ref, "Got refcount %d, expected 0\n", ref);
+            ref = getRefcount((IUnknown *)surface2v1);
             ok(ref == 1, "Got refcount %d, expected 1\n", ref);
-            ref = IDirectDrawSurface7_Release(surface2);
+            ref = IDirectDrawSurface_Release(surface2v1);
             ok(!ref, "Got refcount %d, expected 0\n", ref);
         }
         else
@@ -1736,10 +1778,30 @@ static void AttachmentTest(void)
             {
                 ref = getRefcount((IUnknown *)surface2);
                 ok(ref == 2, "Got refcount %d, expected 2\n", ref);
+
+                /* Try reattach */
+                hr = IDirectDrawSurface_AddAttachedSurface(surface1, surface2);
+                ok(hr == DDERR_SURFACEALREADYATTACHED, "AddAttachedSurface returned %08x\n", hr);
+
+                /* Attaching while already attached to other surface */
+                hr = IDirectDraw_CreateSurface(lpDD, &ddsd, &surface3, NULL);
+                ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
+                if (SUCCEEDED(hr))
+                {
+                    hr = IDirectDrawSurface_AddAttachedSurface(surface3, surface2);
+                    todo_wine ok(hr == DD_OK, "AddAttachedSurface returned %08x\n", hr);
+                    if (SUCCEEDED(hr))
+                    {
+                        hr = IDirectDrawSurface_DeleteAttachedSurface(surface3, 0, surface2);
+                        ok(hr == DD_OK, "DeleteAttachedSurface returned %08x\n", hr);
+                    }
+                    IDirectDrawSurface_Release(surface3);
+                }
+
                 hr = IDirectDrawSurface_DeleteAttachedSurface(surface1, 0, surface2);
                 ok(hr == DD_OK, "DeleteAttachedSurface returned %08x\n", hr);
                 ref = getRefcount((IUnknown *)surface2);
-                ok(ref == 1, "Got refcount %d, expected 1\n", ref);
+                ok(ref == 1, "Got refcount %d, expected 2\n", ref);
             }
 
             /* Automatic detachment on release */
