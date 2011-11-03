@@ -3517,7 +3517,7 @@ static void init_ps_input(const struct wined3d_shader *shader,
 }
 
 /* GL locking is done by the caller */
-static GLuint shader_arb_generate_pshader(struct wined3d_shader *shader,
+static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
         const struct wined3d_gl_info *gl_info, struct wined3d_shader_buffer *buffer,
         const struct arb_ps_compile_args *args, struct arb_ps_compiled_shader *compiled)
 {
