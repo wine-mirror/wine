@@ -323,8 +323,8 @@ static HRESULT WINAPI HTMLWindow2_item(IHTMLWindow2 *iface, VARIANT *pvarIndex, 
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
     nsIDOMWindowCollection *nsFrames;
-    HTMLWindow *window;
-    HRESULT hres;
+    HTMLWindow *window = NULL;
+    HRESULT hres = S_OK;
     nsresult nsres;
 
     TRACE("(%p)->(%p %p)\n", This, pvarIndex, pvarResult);
@@ -335,29 +335,28 @@ static HRESULT WINAPI HTMLWindow2_item(IHTMLWindow2 *iface, VARIANT *pvarIndex, 
         return E_FAIL;
     }
 
-    if(V_VT(pvarIndex) == VT_I4) {
+    switch(V_VT(pvarIndex)) {
+    case VT_I4: {
         int index = V_I4(pvarIndex);
         TRACE("Getting index %d\n", index);
-        if(index < 0) {
-            hres = DISP_E_MEMBERNOTFOUND;
-            goto cleanup;
-        }
+        if(index < 0)
+            break;
         hres = get_frame_by_index(nsFrames, index, &window);
-        if(FAILED(hres))
-            goto cleanup;
-    }else if(V_VT(pvarIndex) == VT_UINT) {
+        break;
+    }
+    case VT_UINT: {
         unsigned int index = V_UINT(pvarIndex);
         TRACE("Getting index %u\n", index);
         hres = get_frame_by_index(nsFrames, index, &window);
-        if(FAILED(hres))
-            goto cleanup;
-    }else if(V_VT(pvarIndex) == VT_BSTR) {
+        break;
+    }
+    case VT_BSTR: {
         BSTR str = V_BSTR(pvarIndex);
         PRUint32 length, i;
 
         TRACE("Getting name %s\n", wine_dbgstr_w(str));
 
-        nsres = nsIDOMWindowCollection_GetLength(nsFrames, &length);
+        nsIDOMWindowCollection_GetLength(nsFrames, &length);
 
         window = NULL;
         for(i = 0; i < length && !window; ++i) {
@@ -369,7 +368,7 @@ static HRESULT WINAPI HTMLWindow2_item(IHTMLWindow2 *iface, VARIANT *pvarIndex, 
             if(NS_FAILED(nsres)) {
                 FIXME("nsIDOMWindowCollection_Item failed: 0x%08x\n", nsres);
                 hres = E_FAIL;
-                goto cleanup;
+                break;
             }
 
             cur_window = nswindow_to_window(nsWindow);
@@ -379,7 +378,7 @@ static HRESULT WINAPI HTMLWindow2_item(IHTMLWindow2 *iface, VARIANT *pvarIndex, 
             hres = IHTMLElement_get_id(&cur_window->frame_element->element.IHTMLElement_iface, &id);
             if(FAILED(hres)) {
                 FIXME("IHTMLElement_get_id failed: 0x%08x\n", hres);
-                goto cleanup;
+                break;
             }
 
             if(!strcmpW(id, str))
@@ -387,26 +386,22 @@ static HRESULT WINAPI HTMLWindow2_item(IHTMLWindow2 *iface, VARIANT *pvarIndex, 
 
             SysFreeString(id);
         }
-
-        if(!window) {
-            hres = DISP_E_MEMBERNOTFOUND;
-            goto cleanup;
-        }
-    }else {
-        hres = E_INVALIDARG;
-        goto cleanup;
+        break;
     }
+    default:
+        hres = E_INVALIDARG;
+    }
+
+    nsIDOMWindowCollection_Release(nsFrames);
+    if(FAILED(hres))
+        return hres;
+    if(!window)
+        return DISP_E_MEMBERNOTFOUND;
 
     IHTMLWindow2_AddRef(&window->IHTMLWindow2_iface);
     V_VT(pvarResult) = VT_DISPATCH;
     V_DISPATCH(pvarResult) = (IDispatch*)window;
-
-    hres = S_OK;
-
-cleanup:
-    nsIDOMWindowCollection_Release(nsFrames);
-
-    return hres;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow2_get_length(IHTMLWindow2 *iface, LONG *p)
