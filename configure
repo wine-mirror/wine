@@ -14913,7 +14913,7 @@ wine_fn_config_dll fwpuclnt enable_fwpuclnt
 wine_fn_config_dll gameux enable_gameux
 wine_fn_config_test dlls/gameux/tests gameux_test
 wine_fn_config_dll gdi.exe16 enable_win16
-wine_fn_config_dll gdi32 enable_gdi32 implib
+wine_fn_config_dll gdi32 enable_gdi32 implib,po
 wine_fn_config_test dlls/gdi32/tests gdi32_test
 wine_fn_config_dll gdiplus enable_gdiplus implib
 wine_fn_config_test dlls/gdiplus/tests gdiplus_test

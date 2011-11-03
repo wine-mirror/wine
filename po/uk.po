@@ -2038,6 +2038,76 @@ msgstr "Регіональні Налаштування"
 msgid "%uMB used, %uMB available"
 msgstr "%uМБ використано, %uМБ доступно"
 
+#: gdi32.rc:25
+msgid "Western"
+msgstr ""
+
+#: gdi32.rc:26
+msgid "Central European"
+msgstr ""
+
+#: gdi32.rc:27
+msgid "Cyrillic"
+msgstr ""
+
+#: gdi32.rc:28
+#, fuzzy
+msgid "Greek"
+msgstr "Зелений"
+
+#: gdi32.rc:29
+msgid "Turkish"
+msgstr ""
+
+#: gdi32.rc:30
+msgid "Hebrew"
+msgstr ""
+
+#: gdi32.rc:31
+msgid "Arabic"
+msgstr ""
+
+#: gdi32.rc:32
+msgid "Baltic"
+msgstr ""
+
+#: gdi32.rc:33
+msgid "Vietnamese"
+msgstr ""
+
+#: gdi32.rc:34
+msgid "Thai"
+msgstr ""
+
+#: gdi32.rc:35
+#, fuzzy
+msgid "Japanese"
+msgstr "сектор"
+
+#: gdi32.rc:36
+msgid "CHINESE_GB2312"
+msgstr ""
+
+#: gdi32.rc:37
+msgid "Hangul"
+msgstr ""
+
+#: gdi32.rc:38
+msgid "CHINESE_BIG5"
+msgstr ""
+
+#: gdi32.rc:39
+msgid "Hangul(Johab)"
+msgstr ""
+
+#: gdi32.rc:40
+msgid "Symbol"
+msgstr ""
+
+#: gdi32.rc:41
+msgid "OEM/DOS"
+msgstr ""
+
 #: hhctrl.rc:56
 msgid "S&ync"
 msgstr "Син&х"

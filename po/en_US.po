@@ -2033,6 +2033,74 @@ msgstr "Regional Setting"
 msgid "%uMB used, %uMB available"
 msgstr "%uMB used, %uMB available"
 
+#: gdi32.rc:25
+msgid "Western"
+msgstr "Western"
+
+#: gdi32.rc:26
+msgid "Central European"
+msgstr "Central European"
+
+#: gdi32.rc:27
+msgid "Cyrillic"
+msgstr "Cyrillic"
+
+#: gdi32.rc:28
+msgid "Greek"
+msgstr "Greek"
+
+#: gdi32.rc:29
+msgid "Turkish"
+msgstr "Turkish"
+
+#: gdi32.rc:30
+msgid "Hebrew"
+msgstr "Hebrew"
+
+#: gdi32.rc:31
+msgid "Arabic"
+msgstr "Arabic"
+
+#: gdi32.rc:32
+msgid "Baltic"
+msgstr "Baltic"
+
+#: gdi32.rc:33
+msgid "Vietnamese"
+msgstr "Vietnamese"
+
+#: gdi32.rc:34
+msgid "Thai"
+msgstr "Thai"
+
+#: gdi32.rc:35
+msgid "Japanese"
+msgstr "Japanese"
+
+#: gdi32.rc:36
+msgid "CHINESE_GB2312"
+msgstr "CHINESE_GB2312"
+
+#: gdi32.rc:37
+msgid "Hangul"
+msgstr "Hangul"
+
+#: gdi32.rc:38
+msgid "CHINESE_BIG5"
+msgstr "CHINESE_BIG5"
+
+#: gdi32.rc:39
+msgid "Hangul(Johab)"
+msgstr "Hangul(Johab)"
+
+#: gdi32.rc:40
+msgid "Symbol"
+msgstr "Symbol"
+
+#: gdi32.rc:41
+msgid "OEM/DOS"
+msgstr "OEM/DOS"
+
 #: hhctrl.rc:56
 msgid "S&ync"
 msgstr "S&ync"
