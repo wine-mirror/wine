@@ -1,6 +1,6 @@
 EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 MODULE    = icinfo.exe
-APPMODE   = -mconsole
+APPMODE   = -mconsole -municode
 IMPORTS   = msvfw32
 
 C_SRCS = icinfo.c

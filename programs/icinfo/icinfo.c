@@ -18,28 +18,88 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <wine/unicode.h>
 #include "windows.h"
 #include "mmsystem.h"
 #include "vfw.h"
 
+static int mywprintf(const WCHAR *format, ...)
+{
+    static char output_bufA[65536];
+    static WCHAR output_bufW[sizeof(output_bufA) / sizeof(WCHAR)];
+    va_list             parms;
+    DWORD               nOut;
+    int                 len;
+    BOOL                res = FALSE;
+    HANDLE              hout = GetStdHandle(STD_OUTPUT_HANDLE);
 
-int main(int argc, char* argv[])
+    va_start(parms, format);
+    len = vsnprintfW(output_bufW, sizeof(output_bufW), format, parms);
+    va_end(parms);
+    if (len < 0)
+    {
+        /* String too long */
+        return 0;
+    }
+
+    /* Try to write as unicode whenever we think it's a console */
+    if (((DWORD_PTR)hout & 3) == 3)
+    {
+        res = WriteConsoleW(hout, output_bufW, len, &nOut, NULL);
+    }
+    else
+    {
+        BOOL    usedDefaultChar = FALSE;
+        DWORD   convertedChars;
+
+        /* Convert to OEM, then output */
+        convertedChars = WideCharToMultiByte(GetConsoleOutputCP(), 0, output_bufW, len,
+                                             output_bufA, sizeof(output_bufA),
+                                             "?", &usedDefaultChar);
+        res = WriteFile(hout, output_bufA, convertedChars, &nOut, FALSE);
+    }
+
+    return res ? nOut : 0;
+}
+
+int wmain(int argc, WCHAR* argv[])
 {
     int i, n=0,doabout=0,doconfigure=0;
-    char	buf[128],type[5],handler[5];
+
+    static const WCHAR header[] = {'C','u','r','r','e','n','t','l','y',' ','i','n','s','t','a','l','l','e','d',' ',
+                                   'V','i','d','e','o',' ','C','o','m','p','r','e','s','s','o','r','s',':','\n',0};
+    static const WCHAR close_flags[] = {')','\n',0};
+    static const WCHAR s_fmt[] = {'%','s',0};
+    static const WCHAR sspc_fmt[] = {'%','s',' ',0};
+    static const WCHAR fcc_fmt[] = {'%','c','%','c','%','c','%','c','.','%','c','%','c','%','c','%','c',':',' ','%','s','\n',0};
+    static const WCHAR desc_fmt[] = {'\t','s','z','D','e','s','c','r','i','p','t','i','o','n',':',' ','%','s','\n',0};
+    static const WCHAR flags_fmt[] = {'\t','d','w','F','l','a','g','s',':',' ','0','x','%','0','8','x',' ','(',0};
+    static const WCHAR version_fmt[] = {'\t','d','w','V','e','r','s','i','o','n',':',' ','0','x','%','0','8','x','\n',0};
+    static const WCHAR versicm_fmt[] = {'\t','d','w','V','e','r','s','i','o','n','I','C','M',':',' ','0','x','%','0','8','x','\n',0};
+    static const WCHAR VIDCF_QUALITY_W[] = {'V','I','D','C','F','_','Q','U','A','L','I','T','Y',0};
+    static const WCHAR VIDCF_CRUNCH_W[] = {'V','I','D','C','F','_','C','R','U','N','C','H',0};
+    static const WCHAR VIDCF_TEMPORAL_W[] = {'V','I','D','C','F','_','T','E','M','P','O','R','A','L',0};
+    static const WCHAR VIDCF_COMPRESSFRAMES_W[] = {'V','I','D','C','F','_','C','O','M','P','R','E','S','S','F','R','A','M','E','S',0};
+    static const WCHAR VIDCF_DRAW_W[] = {'V','I','D','C','F','_','D','R','A','W',0};
+    static const WCHAR VIDCF_FASTTEMPORALC_W[] = {'V','I','D','C','F','_','F','A','S','T','T','E','M','P','O','R','A','L','C',0};
+    static const WCHAR VIDCF_FASTTEMPORALD_W[] = {'V','I','D','C','F','_','F','A','S','T','T','E','M','P','O','R','A','L','D',0};
+    static const WCHAR VIDCF_QUALITYTIME_W[] = {'V','I','D','C','F','_','Q','U','A','L','I','T','Y','T','I','M','E',0};
+    static const WCHAR about[] = {'-','a','b','o','u','t','\0'};
+    static const WCHAR configure[] = {'-','c','o','n','f','i','g','u','r','e','\0'};
+    static const WCHAR unk_opt_fmt[] = {'U','n','k','n','o','w','n',' ','o','p','t','i','o','n',':',' ','%','s','\n',0};
 
     for (i = 1; i < argc; i++) {
-        if (!strcmp(argv[i], "-about"))
+        if (!strcmpW(argv[i], about))
             doabout = 1;
-        else if (!strcmp(argv[i], "-configure"))
+        else if (!strcmpW(argv[i], configure))
             doconfigure = 1;
         else {
-            printf("Unknown option: %s\n", argv[i]);
+            mywprintf(unk_opt_fmt, argv[i]);
             return -1;
         }
     }
 
-    printf("Currently installed Video Compressors:\n");
+    mywprintf(s_fmt, header);
     while (1) {
     	ICINFO	ii;
 	HIC	hic;
@@ -53,28 +113,26 @@ int main(int argc, char* argv[])
 	    ICClose(hic);
 	    continue;
 	}
-#define w2s(w,s) WideCharToMultiByte(0,0,w,-1,s,128,0,NULL)
 
-	w2s(ii.szName,buf);
-	memcpy(type,&(ii.fccType),4);type[4]='\0';
-	memcpy(handler,&(ii.fccHandler),4);handler[4]='\0';
-	printf("%s.%s: %s\n",type,handler,buf);
-	printf("\tdwFlags: 0x%08x (",ii.dwFlags);
-#define XX(x) if (ii.dwFlags & x) printf(#x" ");
-	XX(VIDCF_QUALITY);
-	XX(VIDCF_CRUNCH);
-	XX(VIDCF_TEMPORAL);
-	XX(VIDCF_COMPRESSFRAMES);
-	XX(VIDCF_DRAW);
-	XX(VIDCF_FASTTEMPORALC);
-	XX(VIDCF_FASTTEMPORALD);
-	XX(VIDCF_QUALITYTIME);
-#undef XX
-	printf(")\n");
-	printf("\tdwVersion: 0x%08x\n",ii.dwVersion);
-	printf("\tdwVersionICM: 0x%08x\n",ii.dwVersionICM);
-	w2s(ii.szDescription,buf);
-	printf("\tszDescription: %s\n",buf);
+	mywprintf(fcc_fmt,
+                  LOBYTE(ii.fccType),LOBYTE(ii.fccType>>8),LOBYTE(ii.fccType>>16),LOBYTE(ii.fccType>>24),
+                  LOBYTE(ii.fccHandler),LOBYTE(ii.fccHandler>>8),LOBYTE(ii.fccHandler>>16),LOBYTE(ii.fccHandler>>24),
+                  ii.szName);
+	mywprintf(flags_fmt,ii.dwFlags);
+
+	if (ii.dwFlags & VIDCF_QUALITY) mywprintf(sspc_fmt, VIDCF_QUALITY_W);
+	if (ii.dwFlags & VIDCF_CRUNCH) mywprintf(sspc_fmt, VIDCF_CRUNCH_W);
+	if (ii.dwFlags & VIDCF_TEMPORAL) mywprintf(sspc_fmt, VIDCF_TEMPORAL_W);
+	if (ii.dwFlags & VIDCF_COMPRESSFRAMES) mywprintf(sspc_fmt, VIDCF_COMPRESSFRAMES_W);
+	if (ii.dwFlags & VIDCF_DRAW) mywprintf(sspc_fmt, VIDCF_DRAW_W);
+	if (ii.dwFlags & VIDCF_FASTTEMPORALC) mywprintf(sspc_fmt, VIDCF_FASTTEMPORALC_W);
+	if (ii.dwFlags & VIDCF_FASTTEMPORALD) mywprintf(sspc_fmt, VIDCF_FASTTEMPORALD_W);
+	if (ii.dwFlags & VIDCF_QUALITYTIME) mywprintf(sspc_fmt, VIDCF_QUALITYTIME_W);
+
+	mywprintf(s_fmt, close_flags);
+	mywprintf(version_fmt,ii.dwVersion);
+	mywprintf(versicm_fmt,ii.dwVersionICM);
+	mywprintf(desc_fmt,ii.szDescription);
 	if (doabout) ICAbout(hic,0);
 	if (doconfigure && ICQueryConfigure(hic))
 		ICConfigure(hic,0);
