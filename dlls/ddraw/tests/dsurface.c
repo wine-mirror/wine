@@ -1427,15 +1427,18 @@ static void AttachmentTest7(void)
     ddsd.dwHeight = 64;
     ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE;
     U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
-    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8 | DDPF_RGB;
-    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 8;
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB; /* D3DFMT_R5G6B5 */
+    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 16;
+    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0xF800;
+    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x07E0;
+    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x001F;
 
     memset(&ddsd2, 0, sizeof(ddsd2));
     ddsd2.dwSize = sizeof(ddsd2);
     ddsd2.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
     ddsd2.dwWidth = ddsd.dwWidth;
     ddsd2.dwHeight = ddsd.dwHeight;
-    ddsd2.ddsCaps.dwCaps = DDSCAPS_3DDEVICE | DDSCAPS_ZBUFFER;
+    ddsd2.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
     U4(ddsd2).ddpfPixelFormat.dwSize = sizeof(U4(ddsd2).ddpfPixelFormat);
     U4(ddsd2).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
     U1(U4(ddsd2).ddpfPixelFormat).dwZBufferBitDepth = 16;
@@ -1701,15 +1704,18 @@ static void AttachmentTest(void)
     ddsd.dwHeight = 64;
     ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE;
     U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
-    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8 | DDPF_RGB;
-    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 8;
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB; /* D3DFMT_R5G6B5 */
+    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 16;
+    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0xF800;
+    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x07E0;
+    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x001F;
 
     memset(&ddsd2, 0, sizeof(ddsd2));
     ddsd2.dwSize = sizeof(ddsd2);
     ddsd2.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
     ddsd2.dwWidth = ddsd.dwWidth;
     ddsd2.dwHeight = ddsd.dwHeight;
-    ddsd2.ddsCaps.dwCaps = DDSCAPS_3DDEVICE | DDSCAPS_ZBUFFER;
+    ddsd2.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
     U4(ddsd2).ddpfPixelFormat.dwSize = sizeof(U4(ddsd2).ddpfPixelFormat);
     U4(ddsd2).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
     U1(U4(ddsd2).ddpfPixelFormat).dwZBufferBitDepth = 16;
