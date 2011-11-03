@@ -267,6 +267,7 @@ extern void X11DRV_FONT_Init( int log_pixels_x, int log_pixels_y ) DECLSPEC_HIDD
 extern void X11DRV_XInput2_Init(void) DECLSPEC_HIDDEN;
 
 extern int bitmap_info_size( const BITMAPINFO * info, WORD coloruse ) DECLSPEC_HIDDEN;
+extern HBITMAP create_brush_bitmap( X11DRV_PDEVICE *physDev, const BITMAPINFO *info, void *bits, UINT usage ) DECLSPEC_HIDDEN;
 extern XImage *X11DRV_DIB_CreateXImage( int width, int height, int depth ) DECLSPEC_HIDDEN;
 extern void X11DRV_DIB_DestroyXImage( XImage *image ) DECLSPEC_HIDDEN;
 extern HGLOBAL X11DRV_DIB_CreateDIBFromBitmap(HDC hdc, HBITMAP hBmp) DECLSPEC_HIDDEN;
@@ -304,7 +305,6 @@ extern int client_side_antialias_with_render DECLSPEC_HIDDEN;
 extern int using_client_side_fonts DECLSPEC_HIDDEN;
 extern const struct gdi_dc_funcs *X11DRV_XRender_Init(void) DECLSPEC_HIDDEN;
 extern void X11DRV_XRender_Finalize(void) DECLSPEC_HIDDEN;
-extern void X11DRV_XRender_CopyBrush(X11DRV_PDEVICE *physDev, X_PHYSBITMAP *physBitmap, int width, int height) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel, const DIBSECTION *dib) DECLSPEC_HIDDEN;
 
 extern Drawable get_glxdrawable(X11DRV_PDEVICE *physDev) DECLSPEC_HIDDEN;

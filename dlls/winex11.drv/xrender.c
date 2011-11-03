@@ -544,6 +544,22 @@ static enum wxr_format get_xrender_format_from_bitmapinfo( const BITMAPINFO *inf
     return WXR_INVALID_FORMAT;
 }
 
+static enum wxr_format get_bitmap_format( int bpp )
+{
+    enum wxr_format format = WXR_INVALID_FORMAT;
+
+    if (bpp == screen_bpp)
+    {
+        switch (bpp)
+        {
+        case 16: format = WXR_FORMAT_R5G6B5; break;
+        case 24: format = WXR_FORMAT_R8G8B8; break;
+        case 32: format = WXR_FORMAT_A8R8G8B8; break;
+        }
+    }
+    return format;
+}
+
 /* Set the x/y scaling and x/y offsets in the transformation matrix of the source picture */
 static void set_xrender_transformation(Picture src_pict, double xscale, double yscale, int xoffset, int yoffset)
 {
@@ -1264,20 +1280,13 @@ static INT xrenderdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID 
  */
 static BOOL xrenderdrv_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap )
 {
-    enum wxr_format format = WXR_INVALID_FORMAT;
+    enum wxr_format format;
     BITMAP bitmap;
 
     if (!GetObjectW( hbitmap, sizeof(bitmap), &bitmap )) return FALSE;
 
-    if (bitmap.bmPlanes == 1 && bitmap.bmBitsPixel == screen_bpp)
-    {
-        switch (bitmap.bmBitsPixel)
-        {
-        case 16: format = WXR_FORMAT_R5G6B5; break;
-        case 24: format = WXR_FORMAT_R8G8B8; break;
-        case 32: format = WXR_FORMAT_A8R8G8B8; break;
-        }
-    }
+    if (bitmap.bmPlanes != 1) return FALSE;
+    format = get_bitmap_format( bitmap.bmBitsPixel );
 
     if (pict_formats[format])
         return X11DRV_create_phys_bitmap( hbitmap, &bitmap, pict_formats[format]->depth,
@@ -2971,42 +2980,72 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     return TRUE;
 }
 
-
-void X11DRV_XRender_CopyBrush(X11DRV_PDEVICE *physDev, X_PHYSBITMAP *physBitmap, int width, int height)
+/***********************************************************************
+ *           xrenderdrv_SelectBrush
+ */
+static HBRUSH xrenderdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
+                                      const BITMAPINFO *info, void *bits, UINT usage )
 {
-    /* At depths >1, the depth of physBitmap and physDev might not be the same e.g. the physbitmap might be a 16-bit DIB while the physdev uses 24-bit */
-    int depth = physBitmap->depth == 1 ? 1 : physDev->depth;
-    enum wxr_format src_format = get_xrender_format_from_color_shifts(physBitmap->depth, &physBitmap->color_shifts);
-    enum wxr_format dst_format = get_xrender_format_from_color_shifts(physDev->depth, physDev->color_shifts);
+    struct xrender_physdev *physdev = get_xrender_dev( dev );
+    X_PHYSBITMAP *physbitmap;
+    enum wxr_format format;
+    BOOL delete_bitmap = FALSE;
+    BITMAP bm;
+    Pixmap pixmap;
+    Picture src_pict, dst_pict;
+    XRenderPictureAttributes pa;
+
+    if (!X11DRV_XRender_Installed) goto x11drv_fallback;
+    if (!bitmap && !info) goto x11drv_fallback;
+    if (physdev->format == WXR_FORMAT_MONO) goto x11drv_fallback;
+
+    if (!bitmap || !(physbitmap = X11DRV_get_phys_bitmap( bitmap )))
+    {
+        format = get_bitmap_format( info->bmiHeader.biBitCount );
+        if (format == physdev->format || !pict_formats[format]) goto x11drv_fallback;
+        if (!(bitmap = create_brush_bitmap( physdev->x11dev, info, bits, usage ))) return 0;
+        physbitmap = X11DRV_get_phys_bitmap( bitmap );
+        delete_bitmap = TRUE;
+    }
+    else
+    {
+        format = get_xrender_format_from_color_shifts( physbitmap->depth, &physbitmap->color_shifts );
+        if (format == WXR_FORMAT_MONO || format == physdev->format || !pict_formats[format])
+            goto x11drv_fallback;
+    }
+
+    GetObjectW( bitmap, sizeof(bm), &bm );
+
+    X11DRV_DIB_Lock( physbitmap, DIB_Status_GdiMod );
 
     wine_tsx11_lock();
-    physDev->brush.pixmap = XCreatePixmap(gdi_display, root_window, width, height, depth);
+    pixmap = XCreatePixmap( gdi_display, root_window, bm.bmWidth, bm.bmHeight,
+                            physdev->pict_format->depth );
 
-    /* Use XCopyArea when the physBitmap and brush.pixmap have the same format. */
-    if( (physBitmap->depth == 1) || (!X11DRV_XRender_Installed && physDev->depth == physBitmap->depth) ||
-        (src_format == dst_format) )
-    {
-        XCopyArea( gdi_display, physBitmap->pixmap, physDev->brush.pixmap,
-                   get_bitmap_gc(physBitmap->depth), 0, 0, width, height, 0, 0 );
-    }
-    else /* We need depth conversion */
-    {
-        Picture src_pict, dst_pict;
-        XRenderPictureAttributes pa;
-        pa.subwindow_mode = IncludeInferiors;
-        pa.repeat = RepeatNone;
+    pa.repeat = RepeatNone;
+    src_pict = pXRenderCreatePicture(gdi_display, physbitmap->pixmap, pict_formats[format], CPRepeat, &pa);
+    dst_pict = pXRenderCreatePicture(gdi_display, pixmap, physdev->pict_format, CPRepeat, &pa);
 
-        src_pict = pXRenderCreatePicture(gdi_display, physBitmap->pixmap,
-                                         pict_formats[src_format], CPSubwindowMode|CPRepeat, &pa);
-        dst_pict = pXRenderCreatePicture(gdi_display, physDev->brush.pixmap,
-                                         pict_formats[dst_format], CPSubwindowMode|CPRepeat, &pa);
+    xrender_blit( PictOpSrc, src_pict, 0, dst_pict, 0, 0, 0, 0, 1.0, 1.0, bm.bmWidth, bm.bmHeight );
+    pXRenderFreePicture( gdi_display, src_pict );
+    pXRenderFreePicture( gdi_display, dst_pict );
 
-        xrender_blit(PictOpSrc, src_pict, 0, dst_pict, 0, 0, 0, 0, 1.0, 1.0, width, height);
-        pXRenderFreePicture(gdi_display, src_pict);
-        pXRenderFreePicture(gdi_display, dst_pict);
-    }
+    if (physdev->x11dev->brush.pixmap) XFreePixmap( gdi_display, physdev->x11dev->brush.pixmap );
+    physdev->x11dev->brush.pixmap = pixmap;
+    physdev->x11dev->brush.fillStyle = FillTiled;
+    physdev->x11dev->brush.pixel = 0;  /* ignored */
     wine_tsx11_unlock();
+
+    X11DRV_DIB_Unlock( physbitmap, TRUE );
+    if (delete_bitmap) DeleteObject( bitmap );
+    return hbrush;
+
+x11drv_fallback:
+    if (delete_bitmap) DeleteObject( bitmap );
+    dev = GET_NEXT_PHYSDEV( dev, pSelectBrush );
+    return dev->funcs->pSelectBrush( dev, hbrush, bitmap, info, bits, usage );
 }
+
 
 static const struct gdi_dc_funcs xrender_funcs =
 {
@@ -3102,7 +3141,7 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pScaleViewportExt */
     NULL,                               /* pScaleWindowExt */
     xrenderdrv_SelectBitmap,            /* pSelectBitmap */
-    NULL,                               /* pSelectBrush */
+    xrenderdrv_SelectBrush,             /* pSelectBrush */
     NULL,                               /* pSelectClipPath */
     xrenderdrv_SelectFont,              /* pSelectFont */
     NULL,                               /* pSelectPalette */
@@ -3156,16 +3195,6 @@ const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
 
 void X11DRV_XRender_Finalize(void)
 {
-}
-
-void X11DRV_XRender_CopyBrush(X11DRV_PDEVICE *physDev, X_PHYSBITMAP *physBitmap, int width, int height)
-{
-    wine_tsx11_lock();
-    physDev->brush.pixmap = XCreatePixmap(gdi_display, root_window, width, height, physBitmap->depth);
-
-    XCopyArea( gdi_display, physBitmap->pixmap, physDev->brush.pixmap,
-               get_bitmap_gc(physBitmap->depth), 0, 0, width, height, 0, 0 );
-    wine_tsx11_unlock();
 }
 
 BOOL X11DRV_XRender_SetPhysBitmapDepth(X_PHYSBITMAP *physBitmap, int bits_pixel, const DIBSECTION *dib)

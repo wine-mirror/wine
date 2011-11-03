@@ -217,29 +217,27 @@ static void BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, 
 
     X11DRV_DIB_Lock( physBitmap, DIB_Status_GdiMod );
 
-    if (physDev->brush.pixmap)
-    {
-        wine_tsx11_lock();
-        XFreePixmap( gdi_display, physDev->brush.pixmap );
-        wine_tsx11_unlock();
-    }
+    wine_tsx11_lock();
+
+    if (physDev->brush.pixmap) XFreePixmap( gdi_display, physDev->brush.pixmap );
 
     if ((physDev->depth == 1) && (physBitmap->depth != 1))
     {
-        wine_tsx11_lock();
         /* Special case: a color pattern on a monochrome DC */
         physDev->brush.pixmap = XCreatePixmap( gdi_display, root_window,
                                                bitmap.bmWidth, bitmap.bmHeight, 1);
         /* FIXME: should probably convert to monochrome instead */
         XCopyPlane( gdi_display, physBitmap->pixmap, physDev->brush.pixmap,
                     get_bitmap_gc(1), 0, 0, bitmap.bmWidth, bitmap.bmHeight, 0, 0, 1 );
-        wine_tsx11_unlock();
     }
     else
     {
-        /* XRender is needed because of possible depth conversion */
-        X11DRV_XRender_CopyBrush(physDev, physBitmap, bitmap.bmWidth, bitmap.bmHeight);
+        physDev->brush.pixmap = XCreatePixmap( gdi_display, root_window,
+                                               bitmap.bmWidth, bitmap.bmHeight, physBitmap->depth );
+        XCopyArea( gdi_display, physBitmap->pixmap, physDev->brush.pixmap,
+                   get_bitmap_gc(physBitmap->depth), 0, 0, bitmap.bmWidth, bitmap.bmHeight, 0, 0 );
     }
+    wine_tsx11_unlock();
 
     X11DRV_DIB_Unlock( physBitmap, TRUE );
 
