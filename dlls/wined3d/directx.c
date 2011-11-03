@@ -607,6 +607,12 @@ static BOOL match_dx10_capable(const struct wined3d_gl_info *gl_info, const char
     return gl_info->limits.glsl_varyings > 44;
 }
 
+static BOOL match_not_dx10_capable(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
+        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
+{
+    return !match_dx10_capable(gl_info, gl_renderer, gl_vendor, card_vendor, device);
+}
+
 /* A GL context is provided by the caller */
 static BOOL match_allows_spec_alpha(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
         enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
@@ -780,16 +786,6 @@ static BOOL match_fglrx(const struct wined3d_gl_info *gl_info, const char *gl_re
     return gl_vendor == GL_VENDOR_FGLRX;
 }
 
-static BOOL match_limited_vtf(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
-{
-    /* Nvidia GeForce 6xxx and 7xxx support accelerated VTF only on a few
-       selected texture formats. As they are apparently the only DX9 class GPUs
-       supporting VTF, the check can be very simple. */
-    return gl_info->limits.vertex_samplers &&
-            !match_dx10_capable(gl_info, gl_renderer, gl_vendor, card_vendor, device);
-}
-
 static void quirk_arb_constants(struct wined3d_gl_info *gl_info)
 {
     TRACE_(d3d_caps)("Using ARB vs constant limit(=%u) for GLSL.\n", gl_info->limits.arb_vs_native_constants);
@@ -912,9 +908,14 @@ static void quirk_infolog_spam(struct wined3d_gl_info *gl_info)
     gl_info->quirks |= WINED3D_QUIRK_INFO_LOG_SPAM;
 }
 
-static void quirk_limited_vtf(struct wined3d_gl_info *gl_info)
+static void quirk_limited_tex_filtering(struct wined3d_gl_info *gl_info)
 {
-    gl_info->quirks |= WINED3D_QUIRK_LIMITED_VTF;
+    /* Nvidia GeForce 6xxx and 7xxx support accelerated VTF only on a few
+       selected texture formats. They are apparently the only DX9 class GPUs
+       supporting VTF.
+       Also, DX9-era GPUs are somewhat limited with float textures
+       filtering and blending. */
+    gl_info->quirks |= WINED3D_QUIRK_LIMITED_TEX_FILTERING;
 }
 
 struct driver_quirk
@@ -1007,9 +1008,9 @@ static const struct driver_quirk quirk_table[] =
         "Not printing GLSL infolog"
     },
     {
-        match_limited_vtf,
-        quirk_limited_vtf,
-        "Vertex textures support is limited"
+        match_not_dx10_capable,
+        quirk_limited_tex_filtering,
+        "Texture filtering, blending and VTF support is limited"
     },
 };
 
@@ -3281,7 +3282,9 @@ static BOOL CheckDepthStencilCapability(const struct wined3d_adapter *adapter,
 static BOOL CheckFilterCapability(const struct wined3d_adapter *adapter, const struct wined3d_format *format)
 {
     /* The flags entry of a format contains the filtering capability */
-    if (format->flags & WINED3DFMT_FLAG_FILTERING) return TRUE;
+    if ((format->flags & WINED3DFMT_FLAG_FILTERING)
+            || !(adapter->gl_info.quirks & WINED3D_QUIRK_LIMITED_TEX_FILTERING))
+        return TRUE;
 
     return FALSE;
 }
@@ -3720,7 +3723,7 @@ static BOOL CheckVertexTextureCapability(const struct wined3d_adapter *adapter,
         case WINED3DFMT_R32_FLOAT:
             return TRUE;
         default:
-            return !(gl_info->quirks & WINED3D_QUIRK_LIMITED_VTF);
+            return !(gl_info->quirks & WINED3D_QUIRK_LIMITED_TEX_FILTERING);
     }
 }
 
