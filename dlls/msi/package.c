@@ -1014,7 +1014,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
         }
     }
     len = 0;
-    if (!GetComputerNameW( NULL, &len ) && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    if (!GetComputerNameW( NULL, &len ) && GetLastError() == ERROR_BUFFER_OVERFLOW)
     {
         WCHAR *computername;
         if ((computername = msi_alloc( len * sizeof(WCHAR) )))
