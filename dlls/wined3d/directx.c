@@ -1186,6 +1186,7 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6410D,        "AMD Radeon HD 6410D",              DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6550D,        "AMD Radeon HD 6550D",              DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6600,         "AMD Radeon HD 6600 Series",        DRIVER_AMD_R600,         1024},
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6600M,        "AMD Radeon HD 6600M Series",       DRIVER_AMD_R600,         512 },
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6800,         "AMD Radeon HD 6800 Series",        DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6900,         "AMD Radeon HD 6900 Series",        DRIVER_AMD_R600,         2048},
     /* Intel cards */
@@ -1708,6 +1709,17 @@ static enum wined3d_pci_device select_card_amd_binary(const struct wined3d_gl_in
         }
         cards[] =
         {
+            /* Northern Islands */
+            {"HD 6900", CARD_AMD_RADEON_HD6900},
+            {"HD 6800", CARD_AMD_RADEON_HD6800},
+            {"HD 6630M",CARD_AMD_RADEON_HD6600M},
+            {"HD 6600M",CARD_AMD_RADEON_HD6600M},
+            {"HD 6600", CARD_AMD_RADEON_HD6600},
+            {"HD 6500M",CARD_AMD_RADEON_HD6600M},
+            {"HD 6500", CARD_AMD_RADEON_HD6600},
+            {"HD 6400", CARD_AMD_RADEON_HD6400},
+            {"HD 6300", CARD_AMD_RADEON_HD6300},
+            {"HD 6200", CARD_AMD_RADEON_HD6300},
             /* Evergreen */
             {"HD 5870", CARD_AMD_RADEON_HD5800},    /* Radeon EG CYPRESS PRO */
             {"HD 5850", CARD_AMD_RADEON_HD5800},    /* Radeon EG CYPRESS XT */
