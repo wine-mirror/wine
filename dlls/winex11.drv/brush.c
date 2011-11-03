@@ -209,14 +209,20 @@ static void BRUSH_SelectSolidBrush( X11DRV_PDEVICE *physDev, COLORREF color )
 /***********************************************************************
  *           BRUSH_SelectPatternBrush
  */
-static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
+static void BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, X_PHYSBITMAP *physBitmap )
 {
     BITMAP bitmap;
-    X_PHYSBITMAP *physBitmap = X11DRV_get_phys_bitmap( hbitmap );
 
-    if (!physBitmap || !GetObjectW( hbitmap, sizeof(bitmap), &bitmap )) return FALSE;
+    GetObjectW( hbitmap, sizeof(bitmap), &bitmap );
 
     X11DRV_DIB_Lock( physBitmap, DIB_Status_GdiMod );
+
+    if (physDev->brush.pixmap)
+    {
+        wine_tsx11_lock();
+        XFreePixmap( gdi_display, physDev->brush.pixmap );
+        wine_tsx11_unlock();
+    }
 
     if ((physDev->depth == 1) && (physBitmap->depth != 1))
     {
@@ -247,33 +253,26 @@ static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 	physDev->brush.fillStyle = FillOpaqueStippled;
 	physDev->brush.pixel = -1;  /* Special case (see DC_SetupGCForBrush) */
     }
-    return TRUE;
 }
 
-
-/***********************************************************************
- *           BRUSH_SelectDIBPatternBrush
- */
-static BOOL BRUSH_SelectDIBPatternBrush( X11DRV_PDEVICE *physDev, const BITMAPINFO *info )
+/* create a bitmap appropriate for the given DIB pattern brush */
+HBITMAP create_brush_bitmap( X11DRV_PDEVICE *physDev, const BITMAPINFO *info, void *bits, UINT usage )
 {
-    BOOL ret;
     HDC memdc;
-    HBITMAP bitmap = CreateDIBitmap( physDev->dev.hdc, &info->bmiHeader, CBM_INIT,
-                                     (LPBYTE)info + bitmap_info_size( info, DIB_RGB_COLORS ),
-                                     info, DIB_RGB_COLORS );
+    int bpp = screen_bpp;
+    HBITMAP bitmap;
+
+    if (physDev->depth == 1 || info->bmiHeader.biBitCount == 1) bpp = 1;
+    bitmap = CreateBitmap( info->bmiHeader.biWidth, abs(info->bmiHeader.biHeight), 1, bpp, NULL );
+    if (!bitmap) return 0;
 
     /* make sure it's owned by x11drv */
     memdc = CreateCompatibleDC( physDev->dev.hdc );
     SelectObject( memdc, bitmap );
     DeleteDC( memdc );
 
-    if ((ret = BRUSH_SelectPatternBrush( physDev, bitmap )))
-    {
-        X_PHYSBITMAP *physBitmap = X11DRV_get_phys_bitmap( bitmap );
-        physBitmap->pixmap = 0;  /* so it doesn't get freed */
-    }
-    DeleteObject( bitmap );
-    return ret;
+    SetDIBits( physDev->dev.hdc, bitmap, 0, abs(info->bmiHeader.biHeight), bits, info, usage );
+    return bitmap;
 }
 
 
@@ -285,6 +284,24 @@ HBRUSH X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     LOGBRUSH logbrush;
+
+    if (bitmap || info)  /* pattern brush */
+    {
+        X_PHYSBITMAP *physbitmap;
+        BOOL delete_bitmap = FALSE;
+
+        if (!bitmap || !(physbitmap = X11DRV_get_phys_bitmap( bitmap )))
+        {
+            if (!(bitmap = create_brush_bitmap( physDev, info, bits, usage ))) return 0;
+            physbitmap = X11DRV_get_phys_bitmap( bitmap );
+            delete_bitmap = TRUE;
+        }
+        BRUSH_SelectPatternBrush( physDev, bitmap, physbitmap );
+        TRACE("BS_PATTERN\n");
+        physDev->brush.style = BS_PATTERN;
+        if (delete_bitmap) DeleteObject( bitmap );
+        return hbrush;
+    }
 
     if (!GetObjectA( hbrush, sizeof(logbrush), &logbrush )) return 0;
 
@@ -320,16 +337,6 @@ HBRUSH X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
                                                        HatchBrushes[logbrush.lbHatch], 8, 8 );
         wine_tsx11_unlock();
 	physDev->brush.fillStyle = FillStippled;
-	break;
-
-      case BS_PATTERN:
-	TRACE("BS_PATTERN\n");
-	if (!BRUSH_SelectPatternBrush( physDev, (HBITMAP)logbrush.lbHatch )) return 0;
-	break;
-
-      case BS_DIBPATTERN:
-	TRACE("BS_DIBPATTERN\n");
-	if (!BRUSH_SelectDIBPatternBrush( physDev, (BITMAPINFO *)logbrush.lbHatch )) return 0;
 	break;
     }
     return hbrush;
