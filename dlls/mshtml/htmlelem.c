@@ -1038,7 +1038,7 @@ static HRESULT WINAPI HTMLElement_put_innerHTML(IHTMLElement *iface, BSTR v)
     nsAString_InitDepend(&html_str, v);
     nsres = nsIDOMNSHTMLElement_SetInnerHTML(nselem, &html_str);
     nsAString_Finish(&html_str);
-
+    nsIDOMNSHTMLElement_Release(nselem);
     if(NS_FAILED(nsres)) {
         FIXME("SetInnerHtml failed %08x\n", nsres);
         return E_FAIL;
@@ -1069,6 +1069,7 @@ static HRESULT WINAPI HTMLElement_get_innerHTML(IHTMLElement *iface, BSTR *p)
 
     nsAString_Init(&html_str, NULL);
     nsres = nsIDOMNSHTMLElement_GetInnerHTML(nselem, &html_str);
+    nsIDOMNSHTMLElement_Release(nselem);
     if(NS_SUCCEEDED(nsres)) {
         const PRUnichar *html;
 
