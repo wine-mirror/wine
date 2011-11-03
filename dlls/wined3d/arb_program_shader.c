@@ -4485,7 +4485,7 @@ static void find_arb_ps_compile_args(const struct wined3d_state *state,
     int_skip = ~shader->reg_maps.integer_constants | shader->reg_maps.local_int_consts;
     if (int_skip == 0xffff || gl_info->supported[NV_FRAGMENT_PROGRAM_OPTION])
     {
-        memset(&args->loop_ctrl, 0, sizeof(args->loop_ctrl));
+        memset(args->loop_ctrl, 0, sizeof(args->loop_ctrl));
         return;
     }
 
@@ -4561,7 +4561,7 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
     /* This is about flow control, not clipping. */
     if (int_skip == 0xffff || gl_info->supported[NV_VERTEX_PROGRAM2_OPTION])
     {
-        memset(&args->loop_ctrl, 0, sizeof(args->loop_ctrl));
+        memset(args->loop_ctrl, 0, sizeof(args->loop_ctrl));
         return;
     }
 
