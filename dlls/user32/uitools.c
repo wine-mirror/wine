@@ -792,6 +792,8 @@ static BOOL UITOOLS95_DFC_ButtonRadio(HDC dc, LPRECT r, UINT uFlags)
 
     if((uFlags & 0xff) == DFCS_BUTTONRADIOIMAGE)
         FillRect(dc, r, GetStockObject(BLACK_BRUSH));
+    else if((uFlags & 0xff) == DFCS_BUTTONRADIOMASK)
+        FillRect(dc, r, GetStockObject(WHITE_BRUSH));
 
     xc = myr.left + SmallDiam - SmallDiam/2;
     yc = myr.top  + SmallDiam - SmallDiam/2;
