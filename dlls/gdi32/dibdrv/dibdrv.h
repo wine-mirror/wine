@@ -195,7 +195,7 @@ extern void reset_dash_origin(dibdrv_physdev *pdev) DECLSPEC_HIDDEN;
 extern BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD *bit_fields,
                           RGBQUAD *color_table, int color_table_size, void *bits,
                           enum dib_info_flags flags) DECLSPEC_HIDDEN;
-extern BOOL init_dib_info_from_packed(dib_info *dib, const BITMAPINFOHEADER *bi, WORD usage, HPALETTE pal) DECLSPEC_HIDDEN;
+extern BOOL init_dib_info_from_brush(dib_info *dib, const BITMAPINFO *bi, void *bits, UINT usage, HPALETTE pal) DECLSPEC_HIDDEN;
 extern BOOL init_dib_info_from_bitmapinfo(dib_info *dib, const BITMAPINFO *info, void *bits,
                                           enum dib_info_flags flags) DECLSPEC_HIDDEN;
 extern BOOL init_dib_info_from_bitmapobj(dib_info *dib, BITMAPOBJ *bmp, enum dib_info_flags flags) DECLSPEC_HIDDEN;

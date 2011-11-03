@@ -1345,6 +1345,53 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
 
     TRACE("(%p, %p)\n", dev, hbrush);
 
+    if (bitmap || info)  /* pattern brush */
+    {
+        dib_info orig_dib;
+        HPALETTE pal = (usage == DIB_PAL_COLORS) ? GetCurrentObject(dev->hdc, OBJ_PAL) : NULL;
+        RECT rect;
+        BOOL ret;
+
+        if (!info)
+        {
+            BITMAPOBJ *bmp = GDI_GetObjPtr( bitmap, OBJ_BITMAP );
+
+            if (!bmp) return 0;
+            ret = init_dib_info_from_bitmapobj( &orig_dib, bmp, 0 );
+            GDI_ReleaseObj( bitmap );
+        }
+        else ret = init_dib_info_from_brush( &orig_dib, info, bits, usage, pal );
+
+        if (!ret) return 0;
+
+        if (usage == DIB_PAL_COLORS) FIXME( "DIB_PAL_COLORS brush not handled correctly\n");
+
+        free_pattern_brush( pdev );
+        copy_dib_color_info(&pdev->brush_dib, &pdev->dib);
+
+        pdev->brush_dib.height = orig_dib.height;
+        pdev->brush_dib.width  = orig_dib.width;
+        pdev->brush_dib.stride = get_dib_stride( pdev->brush_dib.width, pdev->brush_dib.bit_count );
+
+        pdev->brush_dib.bits.param   = NULL;
+        pdev->brush_dib.bits.ptr     = HeapAlloc( GetProcessHeap(), 0,
+                                                  pdev->brush_dib.height * pdev->brush_dib.stride );
+        pdev->brush_dib.bits.is_copy = TRUE;
+        pdev->brush_dib.bits.free    = free_heap_bits;
+
+        rect.left = rect.top = 0;
+        rect.right = orig_dib.width;
+        rect.bottom = orig_dib.height;
+
+        pdev->brush_dib.funcs->convert_to(&pdev->brush_dib, &orig_dib, &rect);
+        pdev->brush_rects = pattern_brush;
+        pdev->brush_style = BS_DIBPATTERN;
+        pdev->defer &= ~DEFER_BRUSH;
+        free_dib_info(&orig_dib);
+
+        return next->funcs->pSelectBrush( next, hbrush, bitmap, info, bits, usage );
+    }
+
     if (!GetObjectW( hbrush, sizeof(logbrush), &logbrush )) return 0;
 
     if (hbrush == GetStockObject( DC_BRUSH ))
@@ -1371,42 +1418,7 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
         pdev->defer &= ~DEFER_BRUSH;
         break;
 
-    case BS_DIBPATTERN:
-    {
-        BITMAPINFOHEADER *bi = (BITMAPINFOHEADER *)logbrush.lbHatch;
-        dib_info orig_dib;
-        WORD usage = LOWORD(logbrush.lbColor);
-        HPALETTE pal = (usage == DIB_PAL_COLORS) ? GetCurrentObject(dev->hdc, OBJ_PAL) : NULL;
-        RECT rect;
-
-        if(init_dib_info_from_packed(&orig_dib, bi, usage, pal))
-        {
-            copy_dib_color_info(&pdev->brush_dib, &pdev->dib);
-
-            pdev->brush_dib.height = orig_dib.height;
-            pdev->brush_dib.width  = orig_dib.width;
-            pdev->brush_dib.stride = get_dib_stride( pdev->brush_dib.width, pdev->brush_dib.bit_count );
-
-            pdev->brush_dib.bits.param   = NULL;
-            pdev->brush_dib.bits.ptr     = HeapAlloc( GetProcessHeap(), 0,
-                                                      pdev->brush_dib.height * pdev->brush_dib.stride );
-            pdev->brush_dib.bits.is_copy = TRUE;
-            pdev->brush_dib.bits.free    = free_heap_bits;
-
-            rect.left = rect.top = 0;
-            rect.right = orig_dib.width;
-            rect.bottom = orig_dib.height;
-
-            pdev->brush_dib.funcs->convert_to(&pdev->brush_dib, &orig_dib, &rect);
-            pdev->brush_rects = pattern_brush;
-            pdev->defer &= ~DEFER_BRUSH;
-            free_dib_info(&orig_dib);
-        }
-        break;
-    }
-
     case BS_HATCHED:
-    {
         if(logbrush.lbHatch > HS_DIAGCROSS) return 0;
         pdev->brush_hatch = logbrush.lbHatch;
         pdev->brush_colorref = logbrush.lbColor;
@@ -1415,10 +1427,9 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
         pdev->brush_rects = pattern_brush;
         pdev->defer &= ~DEFER_BRUSH;
         break;
-    }
 
     default:
-        break;
+        return 0;
     }
 
     return next->funcs->pSelectBrush( next, hbrush, bitmap, info, bits, usage );
