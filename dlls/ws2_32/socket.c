@@ -2784,7 +2784,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
                             &src->dev[i].daddr,
                             sizeof(dst->Device[i].irdaDeviceID) ) ;
                     memcpy( dst->Device[i].irdaDeviceName,
-                            &src->dev[i].info,
+                            src->dev[i].info,
                             sizeof(dst->Device[i].irdaDeviceName) ) ;
                     memcpy( &dst->Device[i].irdaDeviceHints1,
                             &src->dev[i].hints[0],
