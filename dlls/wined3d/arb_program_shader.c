@@ -3927,7 +3927,7 @@ static DWORD find_input_signature(struct shader_arb_priv *priv, const struct win
     return found_sig->idx;
 }
 
-static void init_output_registers(struct wined3d_shader *shader, DWORD sig_num,
+static void init_output_registers(const struct wined3d_shader *shader, DWORD sig_num,
         struct shader_arb_ctx_priv *priv_ctx, struct arb_vs_compiled_shader *compiled)
 {
     unsigned int i, j;
