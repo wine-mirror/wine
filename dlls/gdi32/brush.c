@@ -90,6 +90,44 @@ static BOOL store_bitmap_bits( BRUSHOBJ *brush, BITMAPOBJ *bmp )
     return TRUE;
 }
 
+static BOOL copy_bitmap( BRUSHOBJ *brush, HBITMAP bitmap )
+{
+    BITMAPINFO *info;
+    BITMAPOBJ *bmp = GDI_GetObjPtr( bitmap, OBJ_BITMAP );
+
+    if (!bmp) return FALSE;
+
+    if (!bmp->dib)
+    {
+        GDI_ReleaseObj( bitmap );
+        brush->bitmap = BITMAP_CopyBitmap( bitmap );
+        return brush->bitmap != 0;
+    }
+
+    info = HeapAlloc( GetProcessHeap(), 0,
+                      bitmap_info_size( (BITMAPINFO *)&bmp->dib->dsBmih, DIB_RGB_COLORS ));
+    if (!info) goto done;
+    info->bmiHeader = bmp->dib->dsBmih;
+    if (bmp->dib->dsBmih.biCompression == BI_BITFIELDS)
+        memcpy( &info->bmiHeader + 1, bmp->dib->dsBitfields, sizeof(bmp->dib->dsBitfields) );
+    else if (bmp->nb_colors)
+        memcpy( &info->bmiHeader + 1, bmp->color_table, bmp->nb_colors * sizeof(RGBQUAD) );
+    if (!(brush->bits.ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( info ))))
+    {
+        HeapFree( GetProcessHeap(), 0, info );
+        goto done;
+    }
+    memcpy( brush->bits.ptr, bmp->dib->dsBm.bmBits, get_dib_image_size( info ));
+    brush->bits.is_copy = TRUE;
+    brush->bits.free = free_heap_bits;
+    brush->info = info;
+    brush->usage = DIB_RGB_COLORS;
+
+done:
+    GDI_ReleaseObj( bitmap );
+    return brush->info != NULL;
+}
+
 BOOL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void **bits, UINT *usage )
 {
     BRUSHOBJ *brush;
@@ -159,8 +197,7 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
         ptr->logbrush.lbStyle = BS_PATTERN;
         /* fall through */
     case BS_PATTERN:
-        ptr->bitmap = BITMAP_CopyBitmap( (HBITMAP)ptr->logbrush.lbHatch );
-        if (!ptr->bitmap) goto error;
+        if (!copy_bitmap( ptr, (HBITMAP)ptr->logbrush.lbHatch )) goto error;
         ptr->logbrush.lbColor = 0;
         break;
 
