@@ -1932,6 +1932,9 @@ static enum wined3d_pci_device select_card_amd_mesa(const struct wined3d_gl_info
     }
 
     d3d_level = d3d_level_from_gl_info(gl_info);
+    if (d3d_level >= 10)
+        return CARD_AMD_RADEON_HD2600;
+
     if (d3d_level >= 9)
     {
         static const struct
@@ -1966,6 +1969,8 @@ static enum wined3d_pci_device select_card_amd_mesa(const struct wined3d_gl_info
             if (strstr(gl_renderer, cards[i].renderer))
                 return cards[i].id;
         }
+
+        return CARD_AMD_RADEON_9500;
     }
 
     if (d3d_level >= 8)
