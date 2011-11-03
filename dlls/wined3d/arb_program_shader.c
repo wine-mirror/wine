@@ -7270,14 +7270,29 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info, enum win
 }
 
 HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
-        struct wined3d_surface *src_surface, const RECT *src_rect,
+        struct wined3d_surface *src_surface, const RECT *src_rect_in,
         struct wined3d_surface *dst_surface, const RECT *dst_rect_in)
 {
     struct wined3d_context *context;
+    RECT src_rect = *src_rect_in;
     RECT dst_rect = *dst_rect_in;
 
     /* Now load the surface */
-    surface_internal_preload(src_surface, SRGB_RGB);
+    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
+            && (src_surface->flags & (SFLAG_INTEXTURE | SFLAG_INDRAWABLE)) == SFLAG_INDRAWABLE)
+    {
+        /* Without FBO blits transfering from the drawable to the texture is
+         * expensive, because we have to flip the data in sysmem. Since we can
+         * flip in the blitter, we don't actually need that flip anyway. So we
+         * use the surface's texture as scratch texture, and flip the source
+         * rectangle instead. */
+        surface_load_fb_texture(src_surface, FALSE);
+
+        src_rect.top = src_surface->resource.height - src_rect.top;
+        src_rect.bottom = src_surface->resource.height - src_rect.bottom;
+    }
+    else
+        surface_internal_preload(src_surface, SRGB_RGB);
 
     /* Activate the destination context, set it up for blitting */
     context = context_acquire(device, dst_surface);
@@ -7291,7 +7306,7 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
     ENTER_GL();
 
     /* Draw a textured quad */
-    draw_textured_quad(src_surface, context, src_rect, &dst_rect, filter);
+    draw_textured_quad(src_surface, context, &src_rect, &dst_rect, filter);
 
     LEAVE_GL();
 

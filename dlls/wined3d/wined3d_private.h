@@ -2088,6 +2088,7 @@ BOOL surface_is_offscreen(const struct wined3d_surface *surface) DECLSPEC_HIDDEN
 HRESULT surface_load(struct wined3d_surface *surface, BOOL srgb) DECLSPEC_HIDDEN;
 void surface_load_ds_location(struct wined3d_surface *surface,
         struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
+void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb) DECLSPEC_HIDDEN;
 HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location, const RECT *rect) DECLSPEC_HIDDEN;
 void surface_modify_ds_location(struct wined3d_surface *surface, DWORD location, UINT w, UINT h) DECLSPEC_HIDDEN;
 void surface_modify_location(struct wined3d_surface *surface, DWORD location, BOOL persistent) DECLSPEC_HIDDEN;

@@ -4310,25 +4310,14 @@ static void read_from_framebuffer(struct wined3d_surface *surface, const RECT *r
     }
 }
 
-/* Read the framebuffer contents into a texture */
-static void read_from_framebuffer_texture(struct wined3d_surface *surface, BOOL srgb)
+/* Read the framebuffer contents into a texture. Note that this function
+ * doesn't do any kind of flipping. Using this on an onscreen surface will
+ * result in a flipped D3D texture. */
+void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb)
 {
     struct wined3d_device *device = surface->resource.device;
     struct wined3d_context *context;
 
-    if (!surface_is_offscreen(surface))
-    {
-        /* We would need to flip onscreen surfaces, but there's no efficient
-         * way to do that here. It makes more sense for the caller to
-         * explicitly go through sysmem. */
-        ERR("Not supported for onscreen targets.\n");
-        return;
-    }
-
-    /* Activate the surface to read from. In some situations it isn't the currently active target(e.g. backbuffer
-     * locking during offscreen rendering). RESOURCELOAD is ok because glCopyTexSubImage2D isn't affected by any
-     * states in the stateblock, and no driver was found yet that had bugs in that regard.
-     */
     context = context_acquire(device, surface);
     device_invalidate_state(device, STATE_FRAMEBUFFER);
 
@@ -4339,7 +4328,10 @@ static void read_from_framebuffer_texture(struct wined3d_surface *surface, BOOL 
 
     ENTER_GL();
 
-    glReadBuffer(device->offscreenBuffer);
+    if (surface_is_offscreen(surface))
+        glReadBuffer(device->offscreenBuffer);
+    else
+        glReadBuffer(surface_get_gl_buffer(surface));
     checkGLcall("glReadBuffer");
 
     glCopyTexSubImage2D(surface->texture_target, surface->texture_level,
@@ -6037,7 +6029,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
             && surface_is_offscreen(surface)
             && (surface->flags & SFLAG_INDRAWABLE))
     {
-        read_from_framebuffer_texture(surface, srgb);
+        surface_load_fb_texture(surface, srgb);
 
         return WINED3D_OK;
     }
