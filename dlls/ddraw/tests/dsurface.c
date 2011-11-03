@@ -1239,7 +1239,9 @@ static void AttachmentTest7(void)
     HRESULT hr;
     IDirectDraw7 *dd7;
     IDirectDrawSurface7 *surface1, *surface2, *surface3, *surface4;
+    IDirectDrawSurface *surface1v1, *surface2v1;
     DDSURFACEDESC2 ddsd, ddsd2;
+    DWORD ref;
     UINT num;
     DDSCAPS2 caps = {DDSCAPS_TEXTURE, 0, 0, 0}, caps2 = {DDSCAPS_BACKBUFFER,0,0,0};
     HWND window = CreateWindow( "static", "ddraw_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
@@ -1417,6 +1419,73 @@ static void AttachmentTest7(void)
     IDirectDrawSurface7_Release(surface2);
     IDirectDrawSurface7_Release(surface1);
 
+    /* Test DeleteAttachedSurface and automatic detachment of attached surfaces on release */
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    ddsd.dwWidth = 64;
+    ddsd.dwHeight = 64;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE;
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8 | DDPF_RGB;
+    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 8;
+
+    memset(&ddsd2, 0, sizeof(ddsd2));
+    ddsd2.dwSize = sizeof(ddsd2);
+    ddsd2.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    ddsd2.dwWidth = ddsd.dwWidth;
+    ddsd2.dwHeight = ddsd.dwHeight;
+    ddsd2.ddsCaps.dwCaps = DDSCAPS_3DDEVICE | DDSCAPS_ZBUFFER;
+    U4(ddsd2).ddpfPixelFormat.dwSize = sizeof(U4(ddsd2).ddpfPixelFormat);
+    U4(ddsd2).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+    U1(U4(ddsd2).ddpfPixelFormat).dwZBufferBitDepth = 16;
+    U3(U4(ddsd2).ddpfPixelFormat).dwZBitMask = 0x0000FFFF;
+
+    hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface1, NULL);
+    ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IDirectDraw7_CreateSurface(dd7, &ddsd2, &surface2, NULL);
+        ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            /* DeleteAttachedSurface */
+            hr = IDirectDrawSurface7_AddAttachedSurface(surface1, surface2);
+            ok(hr == DD_OK, "AddAttachedSurface returned %08x\n", hr);
+            if (SUCCEEDED(hr))
+            {
+                ref = getRefcount((IUnknown *)surface2);
+                ok(ref == 2, "Got refcount %d, expected 2\n", ref);
+                hr = IDirectDrawSurface7_QueryInterface(surface1, &IID_IDirectDrawSurface, (void **)&surface1v1);
+                ok(hr == DD_OK, "IDirectDrawSurface7_QueryInterface returned %08x\n", hr);
+                hr = IDirectDrawSurface7_QueryInterface(surface2, &IID_IDirectDrawSurface, (void **)&surface2v1);
+                ok(hr == DD_OK, "IDirectDrawSurface7_QueryInterface returned %08x\n", hr);
+                hr = IDirectDrawSurface_DeleteAttachedSurface(surface1v1, 0, surface2v1);
+                ok(hr == DDERR_SURFACENOTATTACHED, "DeleteAttachedSurface returned %08x\n", hr);
+                if (surface2v1 != NULL) IDirectDrawSurface_Release(surface2v1);
+                if (surface1v1 != NULL) IDirectDrawSurface_Release(surface1v1);
+                hr = IDirectDrawSurface7_DeleteAttachedSurface(surface1, 0, surface2);
+                ok(hr == DD_OK, "DeleteAttachedSurface returned %08x\n", hr);
+                ref = getRefcount((IUnknown *)surface2);
+                ok(ref == 1, "Got refcount %d, expected 1\n", ref);
+            }
+
+            /* Automatic detachment on release */
+            hr = IDirectDrawSurface7_AddAttachedSurface(surface1, surface2);
+            ok(hr == DD_OK, "AddAttachedSurface returned %08x\n", hr);
+            ref = getRefcount((IUnknown *)surface2);
+            ok(ref == 2, "Got refcount %d, expected 2\n", ref);
+            ref = IDirectDrawSurface7_Release(surface1);
+            ok(!ref, "Got refcount %d, expected 0\n", ref);
+            ref = getRefcount((IUnknown *)surface2);
+            ok(ref == 1, "Got refcount %d, expected 1\n", ref);
+            ref = IDirectDrawSurface7_Release(surface2);
+            ok(!ref, "Got refcount %d, expected 0\n", ref);
+        }
+        else
+            IDirectDrawSurface7_Release(surface1);
+    }
+
     hr =IDirectDraw7_SetCooperativeLevel(dd7, NULL, DDSCL_NORMAL);
     ok(hr == DD_OK, "SetCooperativeLevel returned %08x\n", hr);
     IDirectDraw7_Release(dd7);
@@ -1426,7 +1495,8 @@ static void AttachmentTest(void)
 {
     HRESULT hr;
     IDirectDrawSurface *surface1, *surface2, *surface3, *surface4;
-    DDSURFACEDESC ddsd;
+    DDSURFACEDESC ddsd, ddsd2;
+    DWORD ref;
     DDSCAPS caps = {DDSCAPS_TEXTURE};
     BOOL refrast = FALSE;
     HWND window = CreateWindow( "static", "ddraw_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
@@ -1622,6 +1692,65 @@ static void AttachmentTest(void)
     IDirectDrawSurface_Release(surface3);
     IDirectDrawSurface_Release(surface2);
     IDirectDrawSurface_Release(surface1);
+
+    /* Test DeleteAttachedSurface and automatic detachment of attached surfaces on release */
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    ddsd.dwWidth = 64;
+    ddsd.dwHeight = 64;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE;
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8 | DDPF_RGB;
+    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 8;
+
+    memset(&ddsd2, 0, sizeof(ddsd2));
+    ddsd2.dwSize = sizeof(ddsd2);
+    ddsd2.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    ddsd2.dwWidth = ddsd.dwWidth;
+    ddsd2.dwHeight = ddsd.dwHeight;
+    ddsd2.ddsCaps.dwCaps = DDSCAPS_3DDEVICE | DDSCAPS_ZBUFFER;
+    U4(ddsd2).ddpfPixelFormat.dwSize = sizeof(U4(ddsd2).ddpfPixelFormat);
+    U4(ddsd2).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+    U1(U4(ddsd2).ddpfPixelFormat).dwZBufferBitDepth = 16;
+    U3(U4(ddsd2).ddpfPixelFormat).dwZBitMask = 0x0000FFFF;
+
+    hr = IDirectDraw_CreateSurface(lpDD, (DDSURFACEDESC *)&ddsd, &surface1, NULL);
+    ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IDirectDraw_CreateSurface(lpDD, (DDSURFACEDESC *)&ddsd2, &surface2, NULL);
+        ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            /* DeleteAttachedSurface */
+            hr = IDirectDrawSurface_AddAttachedSurface(surface1, surface2);
+            ok(hr == DD_OK, "AddAttachedSurface returned %08x\n", hr);
+            if (SUCCEEDED(hr))
+            {
+                ref = getRefcount((IUnknown *)surface2);
+                ok(ref == 2, "Got refcount %d, expected 2\n", ref);
+                hr = IDirectDrawSurface_DeleteAttachedSurface(surface1, 0, surface2);
+                ok(hr == DD_OK, "DeleteAttachedSurface returned %08x\n", hr);
+                ref = getRefcount((IUnknown *)surface2);
+                ok(ref == 1, "Got refcount %d, expected 1\n", ref);
+            }
+
+            /* Automatic detachment on release */
+            hr = IDirectDrawSurface_AddAttachedSurface(surface1, surface2);
+            ok(hr == DD_OK, "AddAttachedSurface returned %08x\n", hr);
+            ref = getRefcount((IUnknown *)surface2);
+            ok(ref == 2, "Got refcount %d, expected 2\n", ref);
+            ref = IDirectDrawSurface_Release(surface1);
+            ok(!ref, "Got refcount %d, expected 0\n", ref);
+            ref = getRefcount((IUnknown *)surface2);
+            ok(ref == 1, "Got refcount %d, expected 1\n", ref);
+            ref = IDirectDrawSurface_Release(surface2);
+            ok(!ref, "Got refcount %d, expected 0\n", ref);
+        }
+        else
+            IDirectDrawSurface_Release(surface1);
+    }
 
     hr =IDirectDraw_SetCooperativeLevel(lpDD, NULL, DDSCL_NORMAL);
     ok(hr == DD_OK, "SetCooperativeLevel returned %08x\n", hr);
