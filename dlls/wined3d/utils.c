@@ -1053,9 +1053,13 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
         }
     }
 
-    if (status == GL_FRAMEBUFFER_COMPLETE && format->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING)
+    if (status == GL_FRAMEBUFFER_COMPLETE && ((format->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING)
+            || !(gl_info->quirks & WINED3D_QUIRK_LIMITED_TEX_FILTERING)))
     {
-        GLuint rb;
+        GLuint rb, tex2;
+        DWORD readback[16 * 16], color;
+        BYTE r, a;
+        BOOL match = TRUE;
 
         if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT]
                 || gl_info->supported[EXT_PACKED_DEPTH_STENCIL])
@@ -1069,6 +1073,7 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
         }
 
         glEnable(GL_BLEND);
+        glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
         if (glGetError() == GL_INVALID_FRAMEBUFFER_OPERATION)
         {
@@ -1076,6 +1081,65 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
             TRACE("Format doesn't support post-pixelshader blending.\n");
             format->flags &= ~WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING;
         }
+
+        glViewport(0, 0, 16, 16);
+        glDisable(GL_LIGHTING);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        /* Draw a full-black quad */
+        glBegin(GL_TRIANGLE_STRIP);
+        glColor4ub(0x00, 0x00, 0x00, 0xff);
+        glVertex3f(-1.0f, -1.0f, 0.0f);
+        glColor4ub(0x00, 0x00, 0x00, 0xff);
+        glVertex3f(1.0f, -1.0f, 0.0f);
+        glColor4ub(0x00, 0x00, 0x00, 0xff);
+        glVertex3f(-1.0f, 1.0f, 0.0f);
+        glColor4ub(0x00, 0x00, 0x00, 0xff);
+        glVertex3f(1.0f, 1.0f, 0.0f);
+        glEnd();
+
+        /* Draw a half-transparent red quad */
+        glBegin(GL_TRIANGLE_STRIP);
+        glColor4ub(0xff, 0x00, 0x00, 0x80);
+        glVertex3f(-1.0f, -1.0f, 0.0f);
+        glColor4ub(0xff, 0x00, 0x00, 0x80);
+        glVertex3f(1.0f, -1.0f, 0.0f);
+        glColor4ub(0xff, 0x00, 0x00, 0x80);
+        glVertex3f(-1.0f, 1.0f, 0.0f);
+        glColor4ub(0xff, 0x00, 0x00, 0x80);
+        glVertex3f(1.0f, 1.0f, 0.0f);
+        glEnd();
+
+        glGenTextures(1, &tex2);
+        glBindTexture(GL_TEXTURE_2D, tex2);
+
+        glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 0, 0, 16, 16, 0);
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, readback);
+        checkGLcall("Post-pixelshader blending check");
+
+        color = readback[7 * 16 + 7];
+        a = color >> 24;
+        r = (color & 0x00ff0000) >> 16;
+
+        if (format->red_mask && (r < 0x7b || r > 0x84))
+            match = FALSE;
+        /* If the alpha component is more than 1 bit */
+        else if ((format->alpha_mask & (format->alpha_mask - 1)) && (a < 0x9f || a > 0xdf))
+            match = FALSE;
+        if (!match)
+        {
+            TRACE("Format doesn't support post-pixelshader blending.\n");
+            TRACE("Color output: %#x\n", color);
+            format->flags &= ~WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING;
+        }
+
+        glBindTexture(GL_TEXTURE_2D, tex);
+        glDeleteTextures(1, &tex2);
 
         if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT]
                 || gl_info->supported[EXT_PACKED_DEPTH_STENCIL])
@@ -1125,6 +1189,8 @@ static void init_format_fbo_compat_info(struct wined3d_gl_info *gl_info)
 
         gl_info->fbo_ops.glGenFramebuffers(1, &fbo);
         gl_info->fbo_ops.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        glDrawBuffer(GL_COLOR_ATTACHMENT0);
+        glReadBuffer(GL_COLOR_ATTACHMENT0);
 
         LEAVE_GL();
     }
