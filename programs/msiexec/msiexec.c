@@ -471,12 +471,12 @@ static void process_args( WCHAR *cmdline, int *pargc, WCHAR ***pargv )
 	*pargv = argv;
 }
 
-static BOOL process_args_from_reg( LPWSTR ident, int *pargc, WCHAR ***pargv )
+static BOOL process_args_from_reg( const WCHAR *ident, int *pargc, WCHAR ***pargv )
 {
 	LONG r;
-	HKEY hkey = 0, hkeyArgs = 0;
+	HKEY hkey;
 	DWORD sz = 0, type = 0;
-	LPWSTR buf = NULL;
+	WCHAR *buf;
 	BOOL ret = FALSE;
 
 	r = RegOpenKeyW(HKEY_LOCAL_MACHINE, InstallRunOnce, &hkey);
@@ -485,8 +485,15 @@ static BOOL process_args_from_reg( LPWSTR ident, int *pargc, WCHAR ***pargv )
 	r = RegQueryValueExW(hkey, ident, 0, &type, 0, &sz);
 	if(r == ERROR_SUCCESS && type == REG_SZ)
 	{
-		buf = HeapAlloc(GetProcessHeap(), 0, sz);
-		r = RegQueryValueExW(hkey, ident, 0, &type, (LPBYTE)buf, &sz);
+		int len = lstrlenW( *pargv[0] );
+		if (!(buf = HeapAlloc( GetProcessHeap(), 0, sz + (len + 1) * sizeof(WCHAR) )))
+		{
+			RegCloseKey( hkey );
+			return FALSE;
+		}
+		memcpy( buf, *pargv[0], len * sizeof(WCHAR) );
+		buf[len++] = ' ';
+		r = RegQueryValueExW(hkey, ident, 0, &type, (LPBYTE)(buf + len), &sz);
 		if( r == ERROR_SUCCESS )
 		{
 			process_args(buf, pargc, pargv);
@@ -494,7 +501,7 @@ static BOOL process_args_from_reg( LPWSTR ident, int *pargc, WCHAR ***pargv )
 		}
 		HeapFree(GetProcessHeap(), 0, buf);
 	}
-	RegCloseKey(hkeyArgs);
+	RegCloseKey(hkey);
 	return ret;
 }
 
