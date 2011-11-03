@@ -42,6 +42,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
 #define GDI_HEAP_SIZE 0xffe0
 
+HMODULE gdi32_module = 0;
+
 /***********************************************************************
  *          GDI stock objects
  */
@@ -578,6 +580,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 
     if (reason != DLL_PROCESS_ATTACH) return TRUE;
 
+    gdi32_module = inst;
     DisableThreadLibraryCalls( inst );
     WineEngInit();
 

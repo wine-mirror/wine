@@ -89,6 +89,8 @@
 #include "wine/debug.h"
 #include "wine/list.h"
 
+#include "resource.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(font);
 
 #ifdef HAVE_FREETYPE
@@ -354,7 +356,7 @@ typedef struct {
 struct enum_charset_element {
     DWORD mask;
     DWORD charset;
-    LPCWSTR name;
+    WCHAR name[LF_FACESIZE];
 };
 
 struct enum_charset_list {
@@ -437,6 +439,7 @@ static const WCHAR liberation_mono[] = {'L','i','b','e','r','a','t','i','o','n',
 static const WCHAR liberation_sans[] = {'L','i','b','e','r','a','t','i','o','n',' ','S','a','n','s',0};
 static const WCHAR liberation_serif[] = {'L','i','b','e','r','a','t','i','o','n',' ','S','e','r','i','f',0};
 static const WCHAR times_new_roman[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n',0};
+static const WCHAR SymbolW[] = {'S','y','m','b','o','l','\0'};
 
 static const WCHAR *default_serif_list[] =
 {
@@ -460,48 +463,6 @@ static const WCHAR *default_sans_list[] =
     liberation_sans,
     bitstream_vera_sans,
     NULL
-};
-
-
-static const WCHAR ArabicW[] = {'A','r','a','b','i','c','\0'};
-static const WCHAR BalticW[] = {'B','a','l','t','i','c','\0'};
-static const WCHAR CHINESE_BIG5W[] = {'C','H','I','N','E','S','E','_','B','I','G','5','\0'};
-static const WCHAR CHINESE_GB2312W[] = {'C','H','I','N','E','S','E','_','G','B','2','3','1','2','\0'};
-static const WCHAR Central_EuropeanW[] = {'C','e','n','t','r','a','l',' ',
-				    'E','u','r','o','p','e','a','n','\0'};
-static const WCHAR CyrillicW[] = {'C','y','r','i','l','l','i','c','\0'};
-static const WCHAR GreekW[] = {'G','r','e','e','k','\0'};
-static const WCHAR HangulW[] = {'H','a','n','g','u','l','\0'};
-static const WCHAR Hangul_Johab_W[] = {'H','a','n','g','u','l','(','J','o','h','a','b',')','\0'};
-static const WCHAR HebrewW[] = {'H','e','b','r','e','w','\0'};
-static const WCHAR JapaneseW[] = {'J','a','p','a','n','e','s','e','\0'};
-static const WCHAR SymbolW[] = {'S','y','m','b','o','l','\0'};
-static const WCHAR ThaiW[] = {'T','h','a','i','\0'};
-static const WCHAR TurkishW[] = {'T','u','r','k','i','s','h','\0'};
-static const WCHAR VietnameseW[] = {'V','i','e','t','n','a','m','e','s','e','\0'};
-static const WCHAR WesternW[] = {'W','e','s','t','e','r','n','\0'};
-static const WCHAR OEM_DOSW[] = {'O','E','M','/','D','O','S','\0'};
-
-static const WCHAR * const ElfScriptsW[32] = { /* these are in the order of the fsCsb[0] bits */
-    WesternW, /*00*/
-    Central_EuropeanW,
-    CyrillicW,
-    GreekW,
-    TurkishW,
-    HebrewW,
-    ArabicW,
-    BalticW,
-    VietnameseW, /*08*/
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, /*15*/
-    ThaiW,
-    JapaneseW,
-    CHINESE_GB2312W,
-    HangulW,
-    CHINESE_BIG5W,
-    Hangul_Johab_W,
-    NULL, NULL, /*23*/
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    SymbolW /*31*/
 };
 
 typedef struct {
@@ -4384,6 +4345,30 @@ BOOL WineEngDestroyFontInstance(HFONT handle)
     return ret;
 }
 
+static INT load_script_name( UINT id, WCHAR buffer[LF_FACESIZE] )
+{
+    HRSRC rsrc;
+    HGLOBAL hMem;
+    WCHAR *p;
+    int i;
+
+    id += IDS_FIRST_SCRIPT;
+    rsrc = FindResourceW( gdi32_module, (LPCWSTR)(ULONG_PTR)((id >> 4) + 1), (LPCWSTR)6 /*RT_STRING*/ );
+    if (!rsrc) return 0;
+    hMem = LoadResource( gdi32_module, rsrc );
+    if (!hMem) return 0;
+
+    p = LockResource( hMem );
+    id &= 0x000f;
+    while (id--) p += *p + 1;
+
+    i = min(LF_FACESIZE - 1, *p);
+    memcpy(buffer, p + 1, i * sizeof(WCHAR));
+    buffer[i] = 0;
+    return i;
+}
+
+
 /***************************************************
  * create_enum_charset_list
  *
@@ -4400,7 +4385,7 @@ static DWORD create_enum_charset_list(DWORD charset, struct enum_charset_list *l
         csi.fs.fsCsb[0] != 0) {
         list->element[n].mask    = csi.fs.fsCsb[0];
         list->element[n].charset = csi.ciCharset;
-        list->element[n].name    = ElfScriptsW[ffs(csi.fs.fsCsb[0]) - 1];
+        load_script_name( ffs(csi.fs.fsCsb[0]) - 1, list->element[n].name );
         n++;
     }
     else { /* charset is DEFAULT_CHARSET or invalid. */
@@ -4412,7 +4397,7 @@ static DWORD create_enum_charset_list(DWORD charset, struct enum_charset_list *l
             csi.fs.fsCsb[0] != 0) {
             list->element[n].mask    = csi.fs.fsCsb[0];
             list->element[n].charset = csi.ciCharset;
-            list->element[n].name    = ElfScriptsW[ffs(csi.fs.fsCsb[0]) - 1];
+            load_script_name( ffs(csi.fs.fsCsb[0]) - 1, list->element[n].name );
             n++;
         }
 
@@ -4428,7 +4413,7 @@ static DWORD create_enum_charset_list(DWORD charset, struct enum_charset_list *l
 
             list->element[n].mask    = fs.fsCsb[0];
             list->element[n].charset = csi.ciCharset;
-            list->element[n].name    = ElfScriptsW[i];
+            load_script_name( i, list->element[n].name );
             n++;
         }
     }
@@ -4602,15 +4587,14 @@ static BOOL enum_face_charsets(Face *face, struct enum_charset_list *list,
     for(i = 0; i < list->total; i++) {
         if(!face->scalable && face->fs.fsCsb[0] == 0) { /* OEM bitmap */
             elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet = OEM_CHARSET;
-            strcpyW(elf.elfScript, OEM_DOSW);
+            load_script_name( IDS_OEM_DOS, elf.elfScript );
             i = 32; /* break out of loop */
         } else if(!(face->fs.fsCsb[0] & list->element[i].mask))
             continue;
         else {
             elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet = list->element[i].charset;
-            if(list->element[i].name)
-                strcpyW(elf.elfScript, list->element[i].name);
-            else
+            strcpyW(elf.elfScript, list->element[i].name);
+            if (!elf.elfScript[0])
                 FIXME("Unknown elfscript for bit %d\n", ffs(list->element[i].mask) - 1);
         }
         TRACE("enuming face %s full %s style %s charset = %d type %d script %s it %d weight %d ntmflags %08x\n",

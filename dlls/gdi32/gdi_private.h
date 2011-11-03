@@ -503,4 +503,6 @@ static inline const struct gdi_dc_funcs *get_bitmap_funcs( const BITMAPOBJ *bitm
 
 extern void free_heap_bits( struct gdi_image_bits *bits ) DECLSPEC_HIDDEN;
 
+extern HMODULE gdi32_module DECLSPEC_HIDDEN;
+
 #endif /* __WINE_GDI_PRIVATE_H */
