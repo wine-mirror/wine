@@ -574,8 +574,6 @@ static void set_initial_bitmap_bits( HBITMAP hbitmap, BITMAPOBJ *bmp )
 
     get_ddb_bitmapinfo( bmp, info );
     SetDIBits( 0, hbitmap, 0, bmp->bitmap.bmHeight, bmp->bitmap.bmBits, info, DIB_RGB_COLORS );
-    HeapFree( GetProcessHeap(), 0, bmp->bitmap.bmBits );
-    bmp->bitmap.bmBits = NULL;
 }
 
 /***********************************************************************
