@@ -14324,7 +14324,7 @@ $ac_dir/msg.pot: tools/wmc include"
         wine_fn_append_rule ALL_MAKEFILE_DEPENDS \
 "$ac_dir/rsrc.pot: $ac_dir/Makefile dummy
 	@cd $ac_dir && \$(MAKE) rsrc.pot
-$ac_dir/srsrc.pot: tools/wrc include"
+$ac_dir/rsrc.pot: tools/wrc include"
     fi
 }
 
