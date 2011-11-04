@@ -185,13 +185,10 @@ static HRESULT WINAPI domselection_GetTypeInfo(
     ITypeInfo** ppTInfo )
 {
     domselection *This = impl_from_IXMLDOMSelection( iface );
-    HRESULT hr;
 
     TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
 
-    hr = get_typeinfo(IXMLDOMSelection_tid, ppTInfo);
-
-    return hr;
+    return get_typeinfo(IXMLDOMSelection_tid, ppTInfo);
 }
 
 static HRESULT WINAPI domselection_GetIDsOfNames(
@@ -606,16 +603,12 @@ static HRESULT create_enumvariant(IXMLDOMSelection *selection, BOOL own, IUnknow
 
 static HRESULT domselection_get_dispid(IUnknown *iface, BSTR name, DWORD flags, DISPID *dispid)
 {
-    domselection *This = impl_from_IXMLDOMSelection( (IXMLDOMSelection*)iface );
     WCHAR *ptr;
     int idx = 0;
 
     for(ptr = name; *ptr && isdigitW(*ptr); ptr++)
         idx = idx*10 + (*ptr-'0');
     if(*ptr)
-        return DISP_E_UNKNOWNNAME;
-
-    if(idx >= xmlXPathNodeSetGetLength(This->result->nodesetval))
         return DISP_E_UNKNOWNNAME;
 
     *dispid = DISPID_DOM_COLLECTION_BASE + idx;

@@ -9999,10 +9999,12 @@ static void test_selection(void)
     IEnumVARIANT *enum1, *enum2, *enum3;
     IXMLDOMNodeList *list;
     IXMLDOMDocument *doc;
+    IDispatchEx *dispex;
     IXMLDOMNode *node;
     IDispatch *disp;
     VARIANT_BOOL b;
     HRESULT hr;
+    DISPID did;
     VARIANT v;
     BSTR name;
     ULONG ret;
@@ -10019,6 +10021,22 @@ static void test_selection(void)
     hr = IXMLDOMNodeList_QueryInterface(list, &IID_IXMLDOMSelection, (void**)&selection);
     EXPECT_HR(hr, S_OK);
     IXMLDOMSelection_Release(selection);
+
+    /* collection disp id */
+    hr = IXMLDOMSelection_QueryInterface(selection, &IID_IDispatchEx, (void**)&dispex);
+    EXPECT_HR(hr, S_OK);
+    did = 0;
+    hr = IDispatchEx_GetDispID(dispex, _bstr_("0"), 0, &did);
+    EXPECT_HR(hr, S_OK);
+    ok(did == DISPID_DOM_COLLECTION_BASE, "got %d\n", did);
+    len = 0;
+    hr = IXMLDOMSelection_get_length(selection, &len);
+    EXPECT_HR(hr, S_OK);
+    ok(len == 1, "got %d\n", len);
+    hr = IDispatchEx_GetDispID(dispex, _bstr_("10"), 0, &did);
+    EXPECT_HR(hr, S_OK);
+    ok(did == DISPID_DOM_COLLECTION_BASE+10, "got %d\n", did);
+    IDispatchEx_Release(dispex);
 
     /* IEnumVARIANT tests */
     enum1 = NULL;
