@@ -23,6 +23,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(apphelp);
 
+/* FIXME: don't know where to place that enum */
+typedef enum _PATH_TYPE {
+    DOS_PATH,
+    NT_PATH
+} PATH_TYPE;
+
+/* FIXME: don't know where to place that typedef */
+typedef HANDLE PDB;
+
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
     TRACE("%p, %u, %p\n", hinst, reason, reserved);
@@ -44,4 +53,11 @@ BOOL WINAPI ApphelpCheckInstallShieldPackage( void* ptr, LPCWSTR path )
 {
     FIXME("stub: %p %s\n", ptr, debugstr_w(path));
     return TRUE;
+}
+
+PDB WINAPI SdbCreateDatabase( LPCWSTR path, PATH_TYPE type )
+{
+    FIXME("stub: %s %u\n", debugstr_w(path), type);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
 }

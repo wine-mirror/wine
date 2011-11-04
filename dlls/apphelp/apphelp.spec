@@ -26,7 +26,7 @@
 @ stub SdbCloseDatabaseWrite
 @ stub SdbCloseLocalDatabase
 @ stub SdbCommitIndexes
-@ stub SdbCreateDatabase
+@ stdcall SdbCreateDatabase(wstr long)
 @ stub SdbCreateHelpCenterURL
 @ stub SdbCreateMsiTransformFile
 @ stub SdbDeclareIndex
