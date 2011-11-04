@@ -55,6 +55,12 @@ BOOL WINAPI ApphelpCheckInstallShieldPackage( void* ptr, LPCWSTR path )
     return TRUE;
 }
 
+BOOL WINAPI ApphelpCheckMsiPackage( void* ptr, LPCWSTR path )
+{
+    FIXME("stub: %p %s\n", ptr, debugstr_w(path));
+    return TRUE;
+}
+
 PDB WINAPI SdbCreateDatabase( LPCWSTR path, PATH_TYPE type )
 {
     FIXME("stub: %s %u\n", debugstr_w(path), type);

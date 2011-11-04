@@ -1,7 +1,7 @@
 @ stub AllowPermLayer
 @ stub ApphelpCheckExe
 @ stdcall ApphelpCheckInstallShieldPackage(ptr wstr)
-@ stub ApphelpCheckMsiPackage
+@ stdcall ApphelpCheckMsiPackage(ptr wstr)
 @ stub ApphelpCheckRunApp
 @ stub ApphelpCheckRunAppEx
 @ stub ApphelpCheckShellObject
