@@ -81,9 +81,9 @@ static HRESULT WINAPI xmldoc_QueryInterface(IXMLDocument *iface, REFIID riid, vo
 
     TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
 
-    if (IsEqualGUID(riid, &IID_IUnknown) ||
-        IsEqualGUID(riid, &IID_IXMLDocument) ||
-        IsEqualGUID(riid, &IID_IXMLDOMDocument))
+    if (IsEqualGUID(riid, &IID_IUnknown)  ||
+        IsEqualGUID(riid, &IID_IDispatch) ||
+        IsEqualGUID(riid, &IID_IXMLDocument))
     {
         *ppvObject = iface;
     }
@@ -107,18 +107,18 @@ static HRESULT WINAPI xmldoc_QueryInterface(IXMLDocument *iface, REFIID riid, vo
 static ULONG WINAPI xmldoc_AddRef(IXMLDocument *iface)
 {
     xmldoc *This = impl_from_IXMLDocument(iface);
-    TRACE("%p\n", This);
-    return InterlockedIncrement(&This->ref);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
 }
 
 static ULONG WINAPI xmldoc_Release(IXMLDocument *iface)
 {
     xmldoc *This = impl_from_IXMLDocument(iface);
-    LONG ref;
+    LONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("%p\n", This);
+    TRACE("(%p)->(%d)\n", This, ref);
 
-    ref = InterlockedDecrement(&This->ref);
     if (ref == 0)
     {
         xmlFreeDoc(This->xmldoc);
@@ -144,13 +144,10 @@ static HRESULT WINAPI xmldoc_GetTypeInfo(IXMLDocument *iface, UINT iTInfo,
                                          LCID lcid, ITypeInfo** ppTInfo)
 {
     xmldoc *This = impl_from_IXMLDocument(iface);
-    HRESULT hr;
 
     TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
 
-    hr = get_typeinfo(IXMLDocument_tid, ppTInfo);
-
-    return hr;
+    return get_typeinfo(IXMLDocument_tid, ppTInfo);
 }
 
 static HRESULT WINAPI xmldoc_GetIDsOfNames(IXMLDocument *iface, REFIID riid,

@@ -24,9 +24,13 @@
 #include "windows.h"
 #include "ole2.h"
 #include "msxml2.h"
+#include "msxml2did.h"
 #include "ocidl.h"
 
 #include "wine/test.h"
+
+#define EXPECT_HR(hr,hr_exp) \
+    ok(hr == hr_exp, "got 0x%08x, expected 0x%08x\n", hr, hr_exp)
 
 /* Deprecated Error Code */
 #define XML_E_INVALIDATROOTLEVEL    0xc00ce556
@@ -48,25 +52,6 @@ static void create_xml_file(LPCSTR filename)
     WriteFile(hf, data, sizeof(data) - 1, &dwNumberOfBytesWritten, NULL);
     CloseHandle(hf);
 }
-
-/*
-static void create_xml_file(LPCSTR filename)
-{
-    DWORD dwNumberOfBytesWritten;
-    HANDLE hf = CreateFile(filename, GENERIC_WRITE, 0, NULL,
-                           CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-
-    static const char data[] =
-        "<?xml version=\"1.0\" ?>\n"
-        "<BankAccount>\n"
-        "  <Number>1234</Number>\n"
-        "  <Name>Captain Ahab</Name>\n"
-        "</BankAccount>\n";
-
-    WriteFile(hf, data, sizeof(data) - 1, &dwNumberOfBytesWritten, NULL);
-    CloseHandle(hf);
-}
-*/
 
 static void create_stream_on_file(IStream **stream, LPCSTR path)
 {
@@ -97,16 +82,18 @@ static void create_stream_on_file(IStream **stream, LPCSTR path)
 
 static void test_xmldoc(void)
 {
-    HRESULT hr;
-    IXMLDocument *doc = NULL;
     IXMLElement *element = NULL, *child = NULL, *value = NULL;
     IXMLElementCollection *collection = NULL, *inner = NULL;
     IPersistStreamInit *psi = NULL;
+    IXMLDocument *doc = NULL;
     IStream *stream = NULL;
-    CHAR path[MAX_PATH];
-    LONG type, num_child;
     VARIANT vIndex, vName;
-    BSTR name = NULL;
+    LONG type, num_child;
+    CHAR path[MAX_PATH];
+    IDispatch *disp;
+    ITypeInfo *ti;
+    HRESULT hr;
+    BSTR name;
 
     static const WCHAR szBankAccount[] = {'B','A','N','K','A','C','C','O','U','N','T',0};
     static const WCHAR szNumber[] = {'N','U','M','B','E','R',0};
@@ -114,16 +101,36 @@ static void test_xmldoc(void)
     static const WCHAR szName[] = {'N','A','M','E',0};
     static const WCHAR szNameVal[] = {'C','a','p','t','a','i','n',' ','A','h','a','b',0};
     static const WCHAR szVersion[] = {'1','.','0',0};
+    static const WCHAR rootW[] = {'r','o','o','t',0};
 
     hr = CoCreateInstance(&CLSID_XMLDocument, NULL, CLSCTX_INPROC_SERVER,
-                          &IID_IXMLDocument, (LPVOID*)&doc);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+                          &IID_IXMLDocument, (void**)&doc);
+    EXPECT_HR(hr, S_OK);
+
+    /* IDispatch */
+    hr = IXMLDocument_QueryInterface(doc, &IID_IDispatch, (void**)&disp);
+    EXPECT_HR(hr, S_OK);
+
+    /* just to make sure we're on right type data */
+    hr = IDispatch_GetTypeInfo(disp, 0, 0, &ti);
+    EXPECT_HR(hr, S_OK);
+    name = NULL;
+    hr = ITypeInfo_GetDocumentation(ti, DISPID_XMLDOCUMENT_ROOT, &name, NULL, NULL, NULL);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(name, rootW), "got name %s\n", wine_dbgstr_w(name));
+    SysFreeString(name);
+
+    ITypeInfo_Release(ti);
+    IDispatch_Release(disp);
+
+    hr = IXMLDocument_QueryInterface(doc, &IID_IXMLDOMDocument, (void**)&disp);
+    EXPECT_HR(hr, E_NOINTERFACE);
 
     create_xml_file("bank.xml");
     GetFullPathNameA("bank.xml", MAX_PATH, path, NULL);
     create_stream_on_file(&stream, path);
 
-    hr = IXMLDocument_QueryInterface(doc, &IID_IPersistStreamInit, (LPVOID *)&psi);
+    hr = IXMLDocument_QueryInterface(doc, &IID_IPersistStreamInit, (void**)&psi);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(psi != NULL, "Expected non-NULL psi\n");
 
@@ -142,6 +149,7 @@ static void test_xmldoc(void)
     hr = IXMLDocument_get_version(doc, NULL);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
 
+    name = NULL;
     hr = IXMLDocument_get_version(doc, &name);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(!lstrcmpW(name, szVersion), "Expected 1.0, got %s\n", wine_dbgstr_w(name));

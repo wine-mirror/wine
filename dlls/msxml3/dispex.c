@@ -45,6 +45,23 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
+enum lib_version_t
+{
+    LibXml = 0,
+    LibXml2,
+    LibXml_Last
+};
+
+typedef struct {
+    REFIID iid;
+    enum lib_version_t lib;
+} tid_id_t;
+
+typedef struct {
+    REFIID iid;
+    unsigned short major;
+} lib_id_t;
+
 typedef struct {
     DISPID id;
     BSTR name;
@@ -74,74 +91,85 @@ struct dispex_dynamic_data_t {
 #define DISPID_DYNPROP_MAX  0x5fffffff
 
 static struct list dispex_data_list = LIST_INIT(dispex_data_list);
-static ITypeLib *typelib;
+static ITypeLib *typelib[LibXml_Last];
 static ITypeInfo *typeinfos[LAST_tid];
 
-static REFIID tid_ids[] = {
-    &IID_NULL,
-    &IID_IXMLDOMAttribute,
-    &IID_IXMLDOMCDATASection,
-    &IID_IXMLDOMComment,
-    &IID_IXMLDOMDocument,
-    &IID_IXMLDOMDocument2,
-    &IID_IXMLDOMDocumentFragment,
-    &IID_IXMLDOMDocumentType,
-    &IID_IXMLDOMElement,
-    &IID_IXMLDOMEntityReference,
-    &IID_IXMLDOMImplementation,
-    &IID_IXMLDOMNamedNodeMap,
-    &IID_IXMLDOMNode,
-    &IID_IXMLDOMNodeList,
-    &IID_IXMLDOMParseError,
-    &IID_IXMLDOMProcessingInstruction,
-    &IID_IXMLDOMSchemaCollection,
-    &IID_IXMLDOMSelection,
-    &IID_IXMLDOMText,
-    &IID_IXMLElement,
-    &IID_IXMLDOMDocument,
-    &IID_IXMLHTTPRequest,
-    &IID_IXSLProcessor,
-    &IID_IXSLTemplate,
-    &IID_IVBSAXAttributes,
-    &IID_IVBSAXContentHandler,
-    &IID_IVBSAXDeclHandler,
-    &IID_IVBSAXDTDHandler,
-    &IID_IVBSAXEntityResolver,
-    &IID_IVBSAXErrorHandler,
-    &IID_IVBSAXLexicalHandler,
-    &IID_IVBSAXLocator,
-    &IID_IVBSAXXMLFilter,
-    &IID_IVBSAXXMLReader,
-    &IID_IMXAttributes,
-    &IID_IMXReaderControl,
-    &IID_IMXWriter,
-    &IID_IVBMXNamespaceManager
+/* indexed with lib_version_t values */
+static lib_id_t lib_ids[] = {
+    { &LIBID_MSXML,  2 },
+    { &LIBID_MSXML2, 3 }
+};
+
+static tid_id_t tid_ids[] = {
+    { &IID_NULL, LibXml_Last },
+    { &IID_IXMLDOMAttribute, LibXml2 },
+    { &IID_IXMLDOMCDATASection, LibXml2 },
+    { &IID_IXMLDOMComment, LibXml2 },
+    { &IID_IXMLDOMDocument, LibXml2 },
+    { &IID_IXMLDOMDocument2, LibXml2 },
+    { &IID_IXMLDOMDocumentFragment, LibXml2 },
+    { &IID_IXMLDOMDocumentType, LibXml2 },
+    { &IID_IXMLDOMElement, LibXml2 },
+    { &IID_IXMLDOMEntityReference, LibXml2 },
+    { &IID_IXMLDOMImplementation, LibXml2 },
+    { &IID_IXMLDOMNamedNodeMap, LibXml2 },
+    { &IID_IXMLDOMNode, LibXml2 },
+    { &IID_IXMLDOMNodeList, LibXml2 },
+    { &IID_IXMLDOMParseError, LibXml2 },
+    { &IID_IXMLDOMProcessingInstruction, LibXml2 },
+    { &IID_IXMLDOMSchemaCollection, LibXml2 },
+    { &IID_IXMLDOMSelection, LibXml2 },
+    { &IID_IXMLDOMText, LibXml2 },
+    { &IID_IXMLElement, LibXml },
+    { &IID_IXMLDocument, LibXml },
+    { &IID_IXMLHTTPRequest, LibXml2 },
+    { &IID_IXSLProcessor, LibXml2 },
+    { &IID_IXSLTemplate, LibXml2 },
+    { &IID_IVBSAXAttributes, LibXml2 },
+    { &IID_IVBSAXContentHandler, LibXml2 },
+    { &IID_IVBSAXDeclHandler, LibXml2 },
+    { &IID_IVBSAXDTDHandler, LibXml2 },
+    { &IID_IVBSAXEntityResolver, LibXml2 },
+    { &IID_IVBSAXErrorHandler, LibXml2 },
+    { &IID_IVBSAXLexicalHandler, LibXml2 },
+    { &IID_IVBSAXLocator, LibXml2 },
+    { &IID_IVBSAXXMLFilter, LibXml2 },
+    { &IID_IVBSAXXMLReader, LibXml2 },
+    { &IID_IMXAttributes, LibXml2 },
+    { &IID_IMXReaderControl, LibXml2 },
+    { &IID_IMXWriter, LibXml2 },
+    { &IID_IVBMXNamespaceManager, LibXml2 }
 };
 
 HRESULT get_typeinfo(enum tid_t tid, ITypeInfo **typeinfo)
 {
+    unsigned lib = tid_ids[tid].lib;
     HRESULT hres;
 
-    if(!typelib) {
+    if(!typelib[lib]) {
         ITypeLib *tl;
 
-        hres = LoadRegTypeLib(&LIBID_MSXML2, 3, 0, LOCALE_SYSTEM_DEFAULT, &tl);
+        hres = LoadRegTypeLib(lib_ids[lib].iid, lib_ids[lib].major, 0, LOCALE_SYSTEM_DEFAULT, &tl);
         if(FAILED(hres)) {
             ERR("LoadRegTypeLib failed: %08x\n", hres);
             return hres;
         }
 
-        if(InterlockedCompareExchangePointer((void**)&typelib, tl, NULL))
+        if(InterlockedCompareExchangePointer((void**)&typelib[lib], tl, NULL))
             ITypeLib_Release(tl);
     }
 
     if(!typeinfos[tid]) {
         ITypeInfo *ti;
 
-        hres = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &ti);
+        hres = ITypeLib_GetTypeInfoOfGuid(typelib[lib], tid_ids[tid].iid, &ti);
         if(FAILED(hres)) {
-            ERR("GetTypeInfoOfGuid failed: %08x\n", hres);
-            return hres;
+            /* try harder with typelib from msxml.dll */
+            hres = ITypeLib_GetTypeInfoOfGuid(typelib[LibXml], tid_ids[tid].iid, &ti);
+            if(FAILED(hres)) {
+                ERR("GetTypeInfoOfGuid failed: %08x\n", hres);
+                return hres;
+            }
         }
 
         if(InterlockedCompareExchangePointer((void**)(typeinfos+tid), ti, NULL))
@@ -171,14 +199,13 @@ void release_typelib(void)
         heap_free(iter);
     }
 
-    if(!typelib)
-        return;
-
     for(i=0; i < sizeof(typeinfos)/sizeof(*typeinfos); i++)
         if(typeinfos[i])
             ITypeInfo_Release(typeinfos[i]);
 
-    ITypeLib_Release(typelib);
+    for(i=0; i < sizeof(typelib)/sizeof(*typelib); i++)
+        if(typelib[i])
+            ITypeLib_Release(typelib[i]);
 }
 
 static void add_func_info(dispex_data_t *data, DWORD *size, tid_t tid, DISPID id, ITypeInfo *dti)
@@ -555,7 +582,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         return hres;
     }
 
-    hres = IUnknown_QueryInterface(This->outer, tid_ids[data->funcs[n].tid], (void**)&unk);
+    hres = IUnknown_QueryInterface(This->outer, tid_ids[data->funcs[n].tid].iid, (void**)&unk);
     if(FAILED(hres)) {
         ERR("Could not get iface: %08x\n", hres);
         return E_FAIL;
