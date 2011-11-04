@@ -244,27 +244,27 @@ BOOL nulldrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     release_dc_ptr( dc_src );
     if (err) return FALSE;
 
+    /* 1-bpp source without a color table uses the destination DC colors */
+    if (src_info->bmiHeader.biBitCount == 1 && !src_info->bmiHeader.biClrUsed)
+    {
+        COLORREF color = GetTextColor( dst_dev->hdc );
+        src_info->bmiColors[0].rgbRed      = GetRValue( color );
+        src_info->bmiColors[0].rgbGreen    = GetGValue( color );
+        src_info->bmiColors[0].rgbBlue     = GetBValue( color );
+        src_info->bmiColors[0].rgbReserved = 0;
+        color = GetBkColor( dst_dev->hdc );
+        src_info->bmiColors[1].rgbRed      = GetRValue( color );
+        src_info->bmiColors[1].rgbGreen    = GetGValue( color );
+        src_info->bmiColors[1].rgbBlue     = GetBValue( color );
+        src_info->bmiColors[1].rgbReserved = 0;
+        src_info->bmiHeader.biClrUsed = 2;
+    }
+
     dst_dev = GET_DC_PHYSDEV( dc_dst, pPutImage );
     copy_bitmapinfo( dst_info, src_info );
     err = dst_dev->funcs->pPutImage( dst_dev, 0, 0, dst_info, &bits, src, dst, rop );
     if (err == ERROR_BAD_FORMAT)
     {
-        /* 1-bpp source without a color table uses the destination DC colors */
-        if (src_info->bmiHeader.biBitCount == 1 && !src_info->bmiHeader.biClrUsed)
-        {
-            COLORREF color = GetTextColor( dst_dev->hdc );
-            src_info->bmiColors[0].rgbRed      = GetRValue( color );
-            src_info->bmiColors[0].rgbGreen    = GetGValue( color );
-            src_info->bmiColors[0].rgbBlue     = GetBValue( color );
-            src_info->bmiColors[0].rgbReserved = 0;
-            color = GetBkColor( dst_dev->hdc );
-            src_info->bmiColors[1].rgbRed      = GetRValue( color );
-            src_info->bmiColors[1].rgbGreen    = GetGValue( color );
-            src_info->bmiColors[1].rgbBlue     = GetBValue( color );
-            src_info->bmiColors[1].rgbReserved = 0;
-            src_info->bmiHeader.biClrUsed = 2;
-        }
-
         /* 1-bpp destination without a color table requires a fake 1-entry table
          * that contains only the background color */
         if (dst_info->bmiHeader.biBitCount == 1 && !dst_info->bmiHeader.biClrUsed)
