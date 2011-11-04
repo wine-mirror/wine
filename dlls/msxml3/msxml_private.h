@@ -130,9 +130,6 @@ extern void release_typelib(void) DECLSPEC_HIDDEN;
 typedef struct dispex_data_t dispex_data_t;
 typedef struct dispex_dynamic_data_t dispex_dynamic_data_t;
 
-#define MSXML_DISPID_CUSTOM_MIN 0x60000000
-#define MSXML_DISPID_CUSTOM_MAX 0x6fffffff
-
 typedef struct {
     HRESULT (*get_dispid)(IUnknown*,BSTR,DWORD,DISPID*);
     HRESULT (*invoke)(IUnknown*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*);

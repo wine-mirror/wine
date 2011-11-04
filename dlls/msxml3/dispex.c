@@ -326,11 +326,6 @@ static dispex_data_t *get_dispex_data(DispatchEx *This)
     return This->data->data;
 }
 
-static inline BOOL is_custom_dispid(DISPID id)
-{
-    return MSXML_DISPID_CUSTOM_MIN <= id && id <= MSXML_DISPID_CUSTOM_MAX;
-}
-
 static inline BOOL is_dynamic_dispid(DISPID id)
 {
     return DISPID_DYNPROP_0 <= id && id <= DISPID_DYNPROP_MAX;
@@ -523,8 +518,10 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 
     TRACE("(%p)->(%x %x %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
-    if(is_custom_dispid(id) && This->data->vtbl && This->data->vtbl->invoke)
-        return This->data->vtbl->invoke(This->outer, id, lcid, wFlags, pdp, pvarRes, pei);
+    if(This->data->vtbl && This->data->vtbl->invoke) {
+        hres = This->data->vtbl->invoke(This->outer, id, lcid, wFlags, pdp, pvarRes, pei);
+        if (hres != DISP_E_UNKNOWNNAME) return hres;
+    }
 
     if(wFlags == DISPATCH_CONSTRUCT) {
         FIXME("DISPATCH_CONSTRUCT not implemented\n");

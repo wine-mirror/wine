@@ -1731,7 +1731,7 @@ SZ_EMAIL_DTD
 static const char xpath_simple_list[] =
 "<?xml version=\"1.0\"?>"
 "<root>"
-"   <a/>"
+"   <a attr1=\"1\" attr2=\"2\" />"
 "   <b/>"
 "   <c/>"
 "   <d/>"
@@ -10628,9 +10628,15 @@ static void test_dispex(void)
     const DOMNodeType *type = dispex_types_test;
     IXMLDOMNodeList *node_list;
     IXMLDOMParseError *error;
+    IXMLDOMNamedNodeMap *map;
     IXMLDOMDocument *doc;
+    IXMLDOMElement *elem;
+    IDispatchEx *dispex;
+    IXMLDOMNode *node;
+    VARIANT_BOOL b;
     IUnknown *unk;
     HRESULT hr;
+    DISPID did;
 
     doc = create_document(&IID_IXMLDOMDocument);
 
@@ -10671,6 +10677,58 @@ static void test_dispex(void)
     test_domobj_dispex(unk);
     IUnknown_Release(unk);
     IXMLDOMParseError_Release(error);
+
+    /* IXMLDOMNamedNodeMap */
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(xpath_simple_list), &b);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument_selectNodes(doc, _bstr_("root/a"), &node_list);
+    EXPECT_HR(hr, S_OK);
+    hr = IXMLDOMNodeList_get_item(node_list, 0, &node);
+    EXPECT_HR(hr, S_OK);
+    IXMLDOMNodeList_Release(node_list);
+
+    hr = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMElement, (void**)&elem);
+    EXPECT_HR(hr, S_OK);
+    IXMLDOMNode_Release(node);
+    hr = IXMLDOMElement_get_attributes(elem, &map);
+    EXPECT_HR(hr, S_OK);
+    IXMLDOMNamedNodeMap_QueryInterface(map, &IID_IUnknown, (void**)&unk);
+    test_domobj_dispex(unk);
+    IUnknown_Release(unk);
+    /* collection dispex test */
+    hr = IXMLDOMNamedNodeMap_QueryInterface(map, &IID_IDispatchEx, (void**)&dispex);
+    EXPECT_HR(hr, S_OK);
+    did = 0;
+    hr = IDispatchEx_GetDispID(dispex, _bstr_("0"), 0, &did);
+    EXPECT_HR(hr, S_OK);
+    ok(did == DISPID_DOM_COLLECTION_BASE, "got 0x%08x\n", did);
+    IDispatchEx_Release(dispex);
+
+    hr = IXMLDOMDocument_selectNodes(doc, _bstr_("root/b"), &node_list);
+    EXPECT_HR(hr, S_OK);
+    hr = IXMLDOMNodeList_get_item(node_list, 0, &node);
+    EXPECT_HR(hr, S_OK);
+    IXMLDOMNodeList_Release(node_list);
+    hr = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMElement, (void**)&elem);
+    EXPECT_HR(hr, S_OK);
+    IXMLDOMNode_Release(node);
+    hr = IXMLDOMElement_get_attributes(elem, &map);
+    EXPECT_HR(hr, S_OK);
+    /* collection dispex test, empty collection */
+    hr = IXMLDOMNamedNodeMap_QueryInterface(map, &IID_IDispatchEx, (void**)&dispex);
+    EXPECT_HR(hr, S_OK);
+    did = 0;
+    hr = IDispatchEx_GetDispID(dispex, _bstr_("0"), 0, &did);
+    EXPECT_HR(hr, S_OK);
+    ok(did == DISPID_DOM_COLLECTION_BASE, "got 0x%08x\n", did);
+    hr = IDispatchEx_GetDispID(dispex, _bstr_("1"), 0, &did);
+    EXPECT_HR(hr, S_OK);
+    ok(did == DISPID_DOM_COLLECTION_BASE+1, "got 0x%08x\n", did);
+    IDispatchEx_Release(dispex);
+
+    IXMLDOMNamedNodeMap_Release(map);
+    IXMLDOMElement_Release(elem);
 
     IXMLDOMDocument_Release(doc);
     free_bstrs();

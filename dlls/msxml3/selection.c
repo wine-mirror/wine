@@ -37,6 +37,7 @@
 #include "winuser.h"
 #include "ole2.h"
 #include "msxml6.h"
+#include "msxml2did.h"
 
 #include "msxml_private.h"
 
@@ -617,7 +618,7 @@ static HRESULT domselection_get_dispid(IUnknown *iface, BSTR name, DWORD flags, 
     if(idx >= xmlXPathNodeSetGetLength(This->result->nodesetval))
         return DISP_E_UNKNOWNNAME;
 
-    *dispid = MSXML_DISPID_CUSTOM_MIN + idx;
+    *dispid = DISPID_DOM_COLLECTION_BASE + idx;
     TRACE("ret %x\n", *dispid);
     return S_OK;
 }
@@ -632,13 +633,16 @@ static HRESULT domselection_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD f
     V_VT(res) = VT_DISPATCH;
     V_DISPATCH(res) = NULL;
 
+    if (id < DISPID_DOM_COLLECTION_BASE || id > DISPID_DOM_COLLECTION_MAX)
+        return DISP_E_UNKNOWNNAME;
+
     switch(flags)
     {
         case INVOKE_PROPERTYGET:
         {
             IXMLDOMNode *disp = NULL;
 
-            domselection_get_item(&This->IXMLDOMSelection_iface, id - MSXML_DISPID_CUSTOM_MIN, &disp);
+            domselection_get_item(&This->IXMLDOMSelection_iface, id - DISPID_DOM_COLLECTION_BASE, &disp);
             V_DISPATCH(res) = (IDispatch*)disp;
             break;
         }

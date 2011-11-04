@@ -34,6 +34,7 @@
 #include "winnls.h"
 #include "ole2.h"
 #include "msxml6.h"
+#include "msxml2did.h"
 
 #include "msxml_private.h"
 
@@ -45,6 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 typedef struct _xmlnodemap
 {
+    DispatchEx dispex;
     IXMLDOMNamedNodeMap IXMLDOMNamedNodeMap_iface;
     ISupportErrorInfo ISupportErrorInfo_iface;
     LONG ref;
@@ -75,6 +77,10 @@ static HRESULT WINAPI xmlnodemap_QueryInterface(
         IsEqualGUID( riid, &IID_IXMLDOMNamedNodeMap ) )
     {
         *ppvObject = iface;
+    }
+    else if (dispex_query_interface(&This->dispex, riid, ppvObject))
+    {
+        return *ppvObject ? S_OK : E_NOINTERFACE;
     }
     else if( IsEqualGUID( riid, &IID_ISupportErrorInfo ))
     {
@@ -111,6 +117,7 @@ static ULONG WINAPI xmlnodemap_Release(
     if ( ref == 0 )
     {
         xmldoc_release( This->node->doc );
+        release_dispex(&This->dispex);
         heap_free( This );
     }
 
@@ -516,23 +523,92 @@ static const struct ISupportErrorInfoVtbl support_error_vtbl =
     support_error_InterfaceSupportsErrorInfo
 };
 
+static HRESULT xmlnodemap_get_dispid(IUnknown *iface, BSTR name, DWORD flags, DISPID *dispid)
+{
+    WCHAR *ptr;
+    int idx = 0;
+
+    for(ptr = name; *ptr && isdigitW(*ptr); ptr++)
+        idx = idx*10 + (*ptr-'0');
+    if(*ptr)
+        return DISP_E_UNKNOWNNAME;
+
+    *dispid = DISPID_DOM_COLLECTION_BASE + idx;
+    TRACE("ret %x\n", *dispid);
+    return S_OK;
+}
+
+static HRESULT xmlnodemap_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+        VARIANT *res, EXCEPINFO *ei)
+{
+    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( (IXMLDOMNamedNodeMap*)iface );
+
+    TRACE("(%p)->(%x %x %x %p %p %p)\n", This, id, lcid, flags, params, res, ei);
+
+    V_VT(res) = VT_DISPATCH;
+    V_DISPATCH(res) = NULL;
+
+    if (id < DISPID_DOM_COLLECTION_BASE || id > DISPID_DOM_COLLECTION_MAX)
+        return DISP_E_UNKNOWNNAME;
+
+    switch(flags)
+    {
+        case INVOKE_PROPERTYGET:
+        {
+            IXMLDOMNode *disp = NULL;
+
+            IXMLDOMNamedNodeMap_get_item(&This->IXMLDOMNamedNodeMap_iface, id - DISPID_DOM_COLLECTION_BASE, &disp);
+            V_DISPATCH(res) = (IDispatch*)disp;
+            break;
+        }
+        default:
+        {
+            FIXME("unimplemented flags %x\n", flags);
+            break;
+        }
+    }
+
+    TRACE("ret %p\n", V_DISPATCH(res));
+
+    return S_OK;
+}
+
+static const dispex_static_data_vtbl_t xmlnodemap_dispex_vtbl = {
+    xmlnodemap_get_dispid,
+    xmlnodemap_invoke
+};
+
+static const tid_t xmlnodemap_iface_tids[] = {
+    IXMLDOMNamedNodeMap_tid,
+    0
+};
+
+static dispex_static_data_t xmlnodemap_dispex = {
+    &xmlnodemap_dispex_vtbl,
+    IXMLDOMNamedNodeMap_tid,
+    NULL,
+    xmlnodemap_iface_tids
+};
+
 IXMLDOMNamedNodeMap *create_nodemap( const xmlNodePtr node )
 {
-    xmlnodemap *nodemap;
+    xmlnodemap *This;
 
-    nodemap = heap_alloc( sizeof *nodemap );
-    if ( !nodemap )
+    This = heap_alloc( sizeof *This );
+    if ( !This )
         return NULL;
 
-    nodemap->IXMLDOMNamedNodeMap_iface.lpVtbl = &xmlnodemap_vtbl;
-    nodemap->ISupportErrorInfo_iface.lpVtbl = &support_error_vtbl;
-    nodemap->node = node;
-    nodemap->ref = 1;
-    nodemap->iterator = 0;
+    This->IXMLDOMNamedNodeMap_iface.lpVtbl = &xmlnodemap_vtbl;
+    This->ISupportErrorInfo_iface.lpVtbl = &support_error_vtbl;
+    This->node = node;
+    This->ref = 1;
+    This->iterator = 0;
+
+    init_dispex(&This->dispex, (IUnknown*)&This->IXMLDOMNamedNodeMap_iface, &xmlnodemap_dispex);
 
     xmldoc_add_ref(node->doc);
 
-    return &nodemap->IXMLDOMNamedNodeMap_iface;
+    return &This->IXMLDOMNamedNodeMap_iface;
 }
 
 #endif
