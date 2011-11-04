@@ -243,8 +243,14 @@ static HRESULT WINAPI parseError_get_srcText(
     BSTR *srcText )
 {
     parse_error_t *This = impl_from_IXMLDOMParseError( iface );
-    FIXME("(%p)->(%p)\n", This, srcText);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, srcText);
+
+    if (!srcText) return E_INVALIDARG;
+
+    *srcText = SysAllocString(This->srcText);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI parseError_get_line(

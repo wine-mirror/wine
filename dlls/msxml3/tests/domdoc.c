@@ -10767,7 +10767,7 @@ static void test_parseerror(void)
     EXPECT_HR(hr, E_INVALIDARG);
 
     hr = IXMLDOMParseError_get_srcText(error, NULL);
-    todo_wine EXPECT_HR(hr, E_INVALIDARG);
+    EXPECT_HR(hr, E_INVALIDARG);
 
     hr = IXMLDOMParseError_get_linepos(error, NULL);
     EXPECT_HR(hr, E_INVALIDARG);
