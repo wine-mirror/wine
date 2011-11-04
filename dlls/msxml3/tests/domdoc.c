@@ -10752,6 +10752,31 @@ static void test_dispex(void)
     free_bstrs();
 }
 
+static void test_parseerror(void)
+{
+    IXMLDOMParseError *error;
+    IXMLDOMDocument *doc;
+    HRESULT hr;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_get_parseError(doc, &error);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMParseError_get_line(error, NULL);
+    EXPECT_HR(hr, E_INVALIDARG);
+
+    hr = IXMLDOMParseError_get_srcText(error, NULL);
+    todo_wine EXPECT_HR(hr, E_INVALIDARG);
+
+    hr = IXMLDOMParseError_get_linepos(error, NULL);
+    EXPECT_HR(hr, E_INVALIDARG);
+
+    IXMLDOMParseError_Release(error);
+
+    IXMLDOMDocument_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -10824,6 +10849,7 @@ START_TEST(domdoc)
     test_selection();
     test_load();
     test_dispex();
+    test_parseerror();
 
     test_xsltemplate();
 

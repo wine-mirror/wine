@@ -135,13 +135,10 @@ static HRESULT WINAPI parseError_GetTypeInfo(
     ITypeInfo** ppTInfo )
 {
     parse_error_t *This = impl_from_IXMLDOMParseError( iface );
-    HRESULT hr;
 
     TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
 
-    hr = get_typeinfo(IXMLDOMParseError_tid, ppTInfo);
-
-    return hr;
+    return get_typeinfo(IXMLDOMParseError_tid, ppTInfo);
 }
 
 static HRESULT WINAPI parseError_GetIDsOfNames(
@@ -255,8 +252,13 @@ static HRESULT WINAPI parseError_get_line(
     LONG *line )
 {
     parse_error_t *This = impl_from_IXMLDOMParseError( iface );
-    FIXME("(%p)->(%p)\n", This, line);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p): stub\n", This, line);
+
+    if (!line) return E_INVALIDARG;
+
+    *line = This->line;
+    return S_OK;
 }
 
 static HRESULT WINAPI parseError_get_linepos(
@@ -264,8 +266,13 @@ static HRESULT WINAPI parseError_get_linepos(
     LONG *linepos )
 {
     parse_error_t *This = impl_from_IXMLDOMParseError( iface );
-    FIXME("(%p)->(%p)\n", This, linepos);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, linepos);
+
+    if (!linepos) return E_INVALIDARG;
+
+    *linepos = This->linepos;
+    return S_OK;
 }
 
 static HRESULT WINAPI parseError_get_filepos(
