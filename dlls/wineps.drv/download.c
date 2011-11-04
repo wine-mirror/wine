@@ -274,6 +274,7 @@ BOOL PSDRV_WriteSetDownloadFont(PHYSDEV dev)
 
     if(GetGraphicsMode(dev->hdc) == GM_COMPATIBLE)
     {
+        if (xform.eM22 < 0) physDev->font.escapement = -physDev->font.escapement;
         xform.eM11 = xform.eM22 = fabs(xform.eM22);
         xform.eM21 = xform.eM12 = 0;
     }
