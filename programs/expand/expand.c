@@ -105,7 +105,6 @@ int main(int argc, char *argv[])
         switch (comp)
         {
         case FILE_COMPRESSION_MSZIP:
-        {
             outfile_basename[0] = 0;
             if (!SetupIterateCabinetA( infile, 0, set_outfile, outfile_basename ))
             {
@@ -116,17 +115,12 @@ int main(int argc, char *argv[])
             *basename_index = 0;
             strcat( outfile, outfile_basename );
             break;
-        }
         case FILE_COMPRESSION_WINLZA:
-        {
             GetExpandedNameA( infile, outfile_basename );
             break;
-        }
         default:
-        {
             fprintf( stderr, "%s: can't determine original\n", argv[0] );
             return 1;
-        }
         }
     }
     else
@@ -141,14 +135,12 @@ int main(int argc, char *argv[])
     switch (comp)
     {
     case FILE_COMPRESSION_MSZIP:
-    {
         if (!SetupIterateCabinetA( infile, 0, extract_callback, outfile ))
         {
             fprintf( stderr, "%s: cabinet extraction failed\n", argv[0] );
             return 1;
         }
         break;
-    }
     case FILE_COMPRESSION_WINLZA:
     {
         INT hin, hout;
@@ -179,14 +171,12 @@ int main(int argc, char *argv[])
         break;
     }
     default:
-    {
         if (!CopyFileA( infile, outfile, FALSE ))
         {
             fprintf( stderr, "%s: CopyFileA failed\n", argv[0] );
             return 1;
         }
         break;
-    }
     }
     return ret;
 }
