@@ -402,7 +402,7 @@ static UINT nulldrv_GetOutlineTextMetrics( PHYSDEV dev, UINT size, LPOUTLINETEXT
 
 static COLORREF nulldrv_GetPixel( PHYSDEV dev, INT x, INT y )
 {
-    return 0;
+    return CLR_INVALID;
 }
 
 static INT nulldrv_GetPixelFormat( PHYSDEV dev )

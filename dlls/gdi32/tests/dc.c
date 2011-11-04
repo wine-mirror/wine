@@ -873,6 +873,9 @@ static void test_printer_dc(void)
     ok( BitBlt( memdc, 10, 10, 20, 20, display_memdc, 0, 0, SRCCOPY ), "BitBlt failed\n" );
     ok( BitBlt( display_memdc, 10, 10, 20, 20, memdc, 0, 0, SRCCOPY ), "BitBlt failed\n" );
 
+    ret = GetPixel( hdc, 0, 0 );
+    ok( ret == CLR_INVALID, "wrong pixel value %x\n", ret );
+
     DeleteDC( memdc );
     DeleteDC( display_memdc );
     DeleteDC( hdc );
