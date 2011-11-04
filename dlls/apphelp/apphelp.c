@@ -39,3 +39,9 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     }
     return TRUE;
 }
+
+BOOL WINAPI ApphelpCheckInstallShieldPackage( void* ptr, LPCWSTR path )
+{
+    FIXME("stub: %p %s\n", ptr, debugstr_w(path));
+    return TRUE;
+}
