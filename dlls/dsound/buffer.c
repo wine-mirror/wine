@@ -296,7 +296,6 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFrequency(IDirectSoundBuffer8 *i
 		This->freqAdjust = ((DWORD64)This->freq << DSOUND_FREQSHIFT) / This->device->pwfx->nSamplesPerSec;
 		This->nAvgBytesPerSec = freq * This->pwfx->nBlockAlign;
 		DSOUND_RecalcFormat(This);
-		DSOUND_MixToTemporary(This, 0, This->buflen, FALSE);
 	}
 
 	RtlReleaseResource(&This->lock);
@@ -577,7 +576,6 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetCurrentPosition(IDirectSoundBuff
 
 	/* position HW buffer if applicable, else just start mixing from new location instead */
 	if (oldpos != newpos)
-		/* FIXME: Perhaps add a call to DSOUND_MixToTemporary here? Not sure it's needed */
 		This->buf_mixpos = DSOUND_secpos_to_bufpos(This, newpos, 0, NULL);
 
 	RtlReleaseResource(&This->lock);
@@ -667,11 +665,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(IDirectSoundBuffer8 *iface, 
                         {
 			    if(x1 + (DWORD_PTR)p1 - (DWORD_PTR)iter->buffer->memory > iter->buflen)
 			      hres = DSERR_INVALIDPARAM;
-			    else
-			      DSOUND_MixToTemporary(iter, (DWORD_PTR)p1 - (DWORD_PTR)iter->buffer->memory, x1, FALSE);
                         }
-			if (x2)
-				DSOUND_MixToTemporary(iter, 0, x2, FALSE);
 			RtlReleaseResource(&iter->lock);
 		}
 		RtlReleaseResource(&This->device->buffer_list_lock);
@@ -1034,7 +1028,6 @@ void secondarybuffer_destroy(IDirectSoundBufferImpl *This)
         HeapFree(GetProcessHeap(), 0, This->buffer);
     }
 
-    HeapFree(GetProcessHeap(), 0, This->tmp_buffer);
     HeapFree(GetProcessHeap(), 0, This->notifies);
     HeapFree(GetProcessHeap(), 0, This->pwfx);
     HeapFree(GetProcessHeap(), 0, This);
@@ -1110,9 +1103,7 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     dsb->device = device;
     dsb->ds3db = NULL;
     dsb->iks = NULL; /* FIXME? */
-    dsb->tmp_buffer = NULL;
     DSOUND_RecalcFormat(dsb);
-    DSOUND_MixToTemporary(dsb, 0, dsb->buflen, FALSE);
 
     RtlInitializeResource(&dsb->lock);
 
@@ -1120,7 +1111,6 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
     hres = DirectSoundDevice_AddBuffer(device, dsb);
     if (hres != DS_OK) {
         RtlDeleteResource(&dsb->lock);
-        HeapFree(GetProcessHeap(),0,dsb->tmp_buffer);
         list_remove(&dsb->entry);
         dsb->buffer->ref--;
         HeapFree(GetProcessHeap(),0,dsb->pwfx);

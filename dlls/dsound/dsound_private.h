@@ -175,15 +175,14 @@ struct IDirectSoundBufferImpl
     RTL_RWLOCK                  lock;
     PWAVEFORMATEX               pwfx;
     BufferMemory*               buffer;
-    LPBYTE                      tmp_buffer;
     DWORD                       playflags,state,leadin;
     DWORD                       writelead,buflen;
     DWORD                       nAvgBytesPerSec;
-    DWORD                       freq, tmp_buffer_len, max_buffer_len;
+    DWORD                       freq, tmp_buffer_len;
     DSVOLUMEPAN                 volpan;
     DSBUFFERDESC                dsbd;
     /* used for frequency conversion (PerfectPitch) */
-    ULONG                       freqneeded, freqAdjust, freqAcc, freqAccNext, resampleinmixer;
+    ULONG                       freqneeded, freqAdjust, freqAcc, freqAccNext;
     /* used for mixing */
     DWORD                       primary_mixpos, buf_mixpos, sec_mixpos;
 
@@ -351,7 +350,6 @@ void DSOUND_CheckEvent(const IDirectSoundBufferImpl *dsb, DWORD playpos, int len
 void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan) DECLSPEC_HIDDEN;
 void DSOUND_AmpFactorToVolPan(PDSVOLUMEPAN volpan) DECLSPEC_HIDDEN;
 void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb) DECLSPEC_HIDDEN;
-void DSOUND_MixToTemporary(const IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD mixlen, BOOL inmixer) DECLSPEC_HIDDEN;
 DWORD DSOUND_secpos_to_bufpos(const IDirectSoundBufferImpl *dsb, DWORD secpos, DWORD secmixpos, DWORD* overshot) DECLSPEC_HIDDEN;
 
 void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2) DECLSPEC_HIDDEN;

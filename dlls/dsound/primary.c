@@ -511,7 +511,6 @@ opened:
 
 			(*dsb)->freqAdjust = ((DWORD64)(*dsb)->freq << DSOUND_FREQSHIFT) / device->pwfx->nSamplesPerSec;
 			DSOUND_RecalcFormat((*dsb));
-			DSOUND_MixToTemporary((*dsb), 0, (*dsb)->buflen, FALSE);
 			(*dsb)->primary_mixpos = 0;
 
 			RtlReleaseResource(&(*dsb)->lock);

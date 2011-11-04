@@ -288,7 +288,6 @@ if(0)
 		/* FIXME: replace following line with correct frequency setting ! */
 		dsb->freq = flFreq;
 		DSOUND_RecalcFormat(dsb);
-		DSOUND_MixToTemporary(dsb, 0, dsb->buflen, FALSE);
 	}
 }
 	

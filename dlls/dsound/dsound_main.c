@@ -104,7 +104,6 @@ WCHAR wine_vxd_drv[] = { 'w','i','n','e','m','m','.','v','x','d', 0 };
 /* All default settings, you most likely don't want to touch these, see wiki on UsefulRegistryKeys */
 int ds_hel_buflen = 32768 * 2;
 int ds_snd_queue_max = 10;
-int ds_snd_shadow_maxsize = 2;
 int ds_default_sample_rate = 44100;
 int ds_default_bits_per_sample = 16;
 static HINSTANCE instance;
@@ -162,8 +161,6 @@ void setup_dsound_options(void)
     if (!get_config_key( hkey, appkey, "SndQueueMax", buffer, MAX_PATH ))
         ds_snd_queue_max = atoi(buffer);
 
-    if (!get_config_key( hkey, appkey, "MaxShadowSize", buffer, MAX_PATH ))
-        ds_snd_shadow_maxsize = atoi(buffer);
 
     if (!get_config_key( hkey, appkey, "DefaultSampleRate", buffer, MAX_PATH ))
         ds_default_sample_rate = atoi(buffer);
@@ -178,7 +175,6 @@ void setup_dsound_options(void)
     TRACE("ds_snd_queue_max = %d\n", ds_snd_queue_max);
     TRACE("ds_default_sample_rate = %d\n", ds_default_sample_rate);
     TRACE("ds_default_bits_per_sample = %d\n", ds_default_bits_per_sample);
-    TRACE("ds_snd_shadow_maxsize = %d\n", ds_snd_shadow_maxsize);
 }
 
 static const char * get_device_id(LPCGUID pGuid)
