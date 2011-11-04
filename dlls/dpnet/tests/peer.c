@@ -130,8 +130,10 @@ static void test_get_sp_caps(void)
     hr = IDirectPlay8Peer_GetSPCaps(peer, &CLSID_DP8SP_TCPIP, &caps, 0);
     ok(hr == DPN_OK, "GetSPCaps failed with %x\n", hr);
 
-    ok(caps.dwFlags == (DPNSPCAPS_SUPPORTSDPNSRV | DPNSPCAPS_SUPPORTSBROADCAST | DPNSPCAPS_SUPPORTSALLADAPTERS |
-                        DPNSPCAPS_SUPPORTSTHREADPOOL), "unexpected flags %x\n", caps.dwFlags);
+    ok((caps.dwFlags &
+        (DPNSPCAPS_SUPPORTSDPNSRV | DPNSPCAPS_SUPPORTSBROADCAST | DPNSPCAPS_SUPPORTSALLADAPTERS)) ==
+       (DPNSPCAPS_SUPPORTSDPNSRV | DPNSPCAPS_SUPPORTSBROADCAST | DPNSPCAPS_SUPPORTSALLADAPTERS),
+       "unexpected flags %x\n", caps.dwFlags);
     ok(caps.dwNumThreads >= 3, "got %d\n", caps.dwNumThreads);
     ok(caps.dwDefaultEnumCount == 5, "expected 5, got %d\n", caps.dwDefaultEnumCount);
     ok(caps.dwDefaultEnumRetryInterval == 1500, "expected 1500, got %d\n", caps.dwDefaultEnumRetryInterval);
