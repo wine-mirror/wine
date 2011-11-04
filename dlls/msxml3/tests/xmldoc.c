@@ -852,8 +852,10 @@ static void test_xmlelem(void)
     IXMLElementCollection *children;
     VARIANT vType, vName;
     VARIANT vIndex, vValue;
-    BSTR str, val;
+    BSTR str, val, name;
     LONG type, num_child;
+    IDispatch *disp;
+    ITypeInfo *ti;
 
     static const WCHAR propName[] = {'p','r','o','p',0};
     static const WCHAR propVal[] = {'v','a','l',0};
@@ -864,17 +866,33 @@ static void test_xmlelem(void)
 
     hr = CoCreateInstance(&CLSID_XMLDocument, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IXMLDocument, (LPVOID*)&doc);
-    ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", hr);
+    EXPECT_HR(hr, S_OK);
 
     V_VT(&vType) = VT_I4;
     V_I4(&vType) = XMLELEMTYPE_ELEMENT;
     V_VT(&vName) = VT_NULL;
     hr = IXMLDocument_createElement(doc, vType, vName, &element);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
     ok(element != NULL, "Expected non-NULL element\n");
 
+    /* test for IDispatch */
+    disp = NULL;
+    hr = IXMLElement_QueryInterface(element, &IID_IDispatch, (void**)&disp);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IDispatch_GetTypeInfo(disp, 0, 0, &ti);
+    EXPECT_HR(hr, S_OK);
+
+    name = NULL;
+    hr = ITypeInfo_GetDocumentation(ti, DISPID_XMLELEMENT_TAGNAME, &name, NULL, NULL, NULL);
+    EXPECT_HR(hr, S_OK);
+    SysFreeString(name);
+
+    ITypeInfo_Release(ti);
+    IDispatch_Release(disp);
+
     hr = IXMLElement_get_tagName(element, &str);
-    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
     ok(lstrlenW(str) == 0, "Expected empty tag name\n");
     SysFreeString(str);
 

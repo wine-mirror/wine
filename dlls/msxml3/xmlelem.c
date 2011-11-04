@@ -67,7 +67,8 @@ static HRESULT WINAPI xmlelem_QueryInterface(IXMLElement *iface, REFIID riid, vo
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
 
-    if (IsEqualGUID(riid, &IID_IUnknown) ||
+    if (IsEqualGUID(riid, &IID_IUnknown)  ||
+        IsEqualGUID(riid, &IID_IDispatch) ||
         IsEqualGUID(riid, &IID_IXMLElement))
     {
         *ppvObject = iface;
