@@ -300,7 +300,7 @@ void CDECL MSVCRT_exit(int exitcode)
 {
   HMODULE hmscoree;
   static const WCHAR mscoreeW[] = {'m','s','c','o','r','e','e',0};
-  void WINAPI (*pCorExitProcess)(int);
+  void (WINAPI *pCorExitProcess)(int);
 
   TRACE("(%d)\n",exitcode);
   MSVCRT__cexit();
