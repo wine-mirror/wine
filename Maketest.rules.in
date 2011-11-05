@@ -45,7 +45,7 @@ $(WINETEST_RES): $(WINETEST_EXE)
 testlist.c: Makefile.in $(MAKECTESTS)
 	$(MAKECTESTS) -o $@ $(C_SRCS)
 
-testlist.o: testlist.c $(top_srcdir)/include/wine/test.h
+testlist.o testlist.cross.o: testlist.c $(top_srcdir)/include/wine/test.h
 
 # Rules for testing
 
