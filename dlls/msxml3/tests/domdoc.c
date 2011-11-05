@@ -1737,6 +1737,15 @@ static const char xpath_simple_list[] =
 "   <d/>"
 "</root>";
 
+static const char* leading_spaces[] = {
+    "\n<?xml version=\"1.0\"?><root/>",
+    " <?xml version=\"1.0\"?><root/>",
+    "\t<?xml version=\"1.0\"?><root/>",
+    "\r\n<?xml version=\"1.0\"?><root/>",
+    "\r<?xml version=\"1.0\"?><root/>",
+    0
+};
+
 static const WCHAR szNonExistentFile[] = {
     'c', ':', '\\', 'N', 'o', 'n', 'e', 'x', 'i', 's', 't', 'e', 'n', 't', '.', 'x', 'm', 'l', 0
 };
@@ -1999,7 +2008,7 @@ static char *list_to_string(IXMLDOMNodeList *list)
 
 static void test_domdoc( void )
 {
-    HRESULT r;
+    HRESULT r, hr;
     IXMLDOMDocument *doc;
     IXMLDOMParseError *error;
     IXMLDOMElement *element = NULL;
@@ -2016,6 +2025,7 @@ static void test_domdoc( void )
     LONG code;
     LONG nLength = 0;
     WCHAR buff[100];
+    const char **ptr;
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
@@ -2027,13 +2037,26 @@ if (0)
 }
 
     /* try some stupid things */
-    r = IXMLDOMDocument_loadXML( doc, NULL, NULL );
-    ok( r == S_FALSE, "loadXML succeeded\n");
+    hr = IXMLDOMDocument_loadXML( doc, NULL, NULL );
+    EXPECT_HR(hr, S_FALSE);
 
     b = VARIANT_TRUE;
-    r = IXMLDOMDocument_loadXML( doc, NULL, &b );
-    ok( r == S_FALSE, "loadXML succeeded\n");
+    hr = IXMLDOMDocument_loadXML( doc, NULL, &b );
+    EXPECT_HR(hr, S_FALSE);
     ok( b == VARIANT_FALSE, "failed to load XML string\n");
+
+    /* load document with leading spaces */
+    ptr = leading_spaces;
+    while (*ptr)
+    {
+        b = VARIANT_TRUE;
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = _bstr_(*ptr);
+        hr = IXMLDOMDocument_load( doc, var, &b);
+        EXPECT_HR(hr, S_FALSE);
+        ok( b == VARIANT_FALSE, "got %x\n", b);
+        ptr++;
+    }
 
     /* try to load a document from a nonexistent file */
     b = VARIANT_TRUE;
