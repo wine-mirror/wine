@@ -61,7 +61,7 @@ void* __thiscall MSVCP_allocator_char_copy_ctor(void *this, const void *copy)
 
 /* ??4?$allocator@D@std@@QAEAAV01@ABV01@@Z */
 /* ??4?$allocator@D@std@@QEAAAEAV01@AEBV01@@Z */
-DEFINE_THISCALL_WRAPPER(MSVCP_allocator_char_assign, 8);
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_char_assign, 8)
 void* __thiscall MSVCP_allocator_char_assign(void *this, const void *assign)
 {
     return this;
@@ -69,7 +69,7 @@ void* __thiscall MSVCP_allocator_char_assign(void *this, const void *assign)
 
 /* ?deallocate@?$allocator@D@std@@QAEXPADI@Z */
 /* ?deallocate@?$allocator@D@std@@QEAAXPEAD_K@Z */
-DEFINE_THISCALL_WRAPPER(MSVCP_allocator_char_deallocate, 12);
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_char_deallocate, 12)
 void __thiscall MSVCP_allocator_char_deallocate(void *this, char *ptr, MSVCP_size_t size)
 {
     MSVCRT_operator_delete(ptr);
@@ -77,7 +77,7 @@ void __thiscall MSVCP_allocator_char_deallocate(void *this, char *ptr, MSVCP_siz
 
 /* ?allocate@?$allocator@D@std@@QAEPADI@Z */
 /* ?allocate@?$allocator@D@std@@QEAAPEAD_K@Z */
-DEFINE_THISCALL_WRAPPER(MSVCP_allocator_char_allocate, 8);
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_char_allocate, 8)
 char* __thiscall MSVCP_allocator_char_allocate(void *this, MSVCP_size_t count)
 {
     return MSVCRT_operator_new(sizeof(char[count]));
@@ -85,7 +85,7 @@ char* __thiscall MSVCP_allocator_char_allocate(void *this, MSVCP_size_t count)
 
 /* ?allocate@?$allocator@D@std@@QAEPADIPBX@Z */
 /* ?allocate@?$allocator@D@std@@QEAAPEAD_KPEBX@Z */
-DEFINE_THISCALL_WRAPPER(MSVCP_allocator_char_allocate_hint, 12);
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_char_allocate_hint, 12)
 char* __thiscall MSVCP_allocator_char_allocate_hint(void *this,
         MSVCP_size_t count, const void *hint)
 {
@@ -95,7 +95,7 @@ char* __thiscall MSVCP_allocator_char_allocate_hint(void *this,
 
 /* ?construct@?$allocator@D@std@@QAEXPADABD@Z */
 /* ?construct@?$allocator@D@std@@QEAAXPEADAEBD@Z */
-DEFINE_THISCALL_WRAPPER(MSVCP_allocator_char_construct, 12);
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_char_construct, 12)
 void __thiscall MSVCP_allocator_char_construct(void *this, char *ptr, const char *val)
 {
     *ptr = *val;
@@ -103,14 +103,14 @@ void __thiscall MSVCP_allocator_char_construct(void *this, char *ptr, const char
 
 /* ?destroy@?$allocator@D@std@@QAEXPAD@Z */
 /* ?destroy@?$allocator@D@std@@QEAAXPEAD@Z */
-DEFINE_THISCALL_WRAPPER(MSVCP_allocator_char_destroy, 8);
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_char_destroy, 8)
 void __thiscall MSVCP_allocator_char_destroy(void *this, char *ptr)
 {
 }
 
 /* ?max_size@?$allocator@D@std@@QBEIXZ */
 /* ?max_size@?$allocator@D@std@@QEBA_KXZ */
-DEFINE_THISCALL_WRAPPER(MSVCP_allocator_char_max_size, 4);
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_char_max_size, 4)
 MSVCP_size_t __thiscall MSVCP_allocator_char_max_size(void *this)
 {
     return UINT_MAX/sizeof(char);
@@ -315,7 +315,7 @@ MSVCP_size_t __thiscall MSVCP_allocator_short_max_size(void *this)
 /* allocator<void> */
 /* ??0?$allocator@X@std@@QAE@XZ */
 /* ??0?$allocator@X@std@@QEAA@XZ */
-DEFINE_THISCALL_WRAPPER(MSVCP_allocator_void_ctor, 4);
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_void_ctor, 4)
 void* __thiscall MSVCP_allocator_void_ctor(void *this)
 {
     return this;
@@ -323,7 +323,7 @@ void* __thiscall MSVCP_allocator_void_ctor(void *this)
 
 /* ??0?$allocator@X@std@@QAE@ABV01@@Z */
 /* ??0?$allocator@X@std@@QEAA@AEBV01@@Z */
-DEFINE_THISCALL_WRAPPER(MSVCP_allocator_void_copy_ctor, 8);
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_void_copy_ctor, 8)
 void* __thiscall MSVCP_allocator_void_copy_ctor(void *this, void *copy)
 {
     return this;
@@ -331,7 +331,7 @@ void* __thiscall MSVCP_allocator_void_copy_ctor(void *this, void *copy)
 
 /* ??4?$allocator@X@std@@QAEAAV01@ABV01@@Z */
 /* ??4?$allocator@X@std@@QEAAAEAV01@AEBV01@@Z */
-DEFINE_THISCALL_WRAPPER(MSVCP_allocator_void_assign, 8);
+DEFINE_THISCALL_WRAPPER(MSVCP_allocator_void_assign, 8)
 void* __thiscall MSVCP_allocator_void_assign(void *this, void *assign)
 {
     return this;

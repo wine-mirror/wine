@@ -73,7 +73,7 @@ extern void* (__cdecl *MSVCRT_set_new_handler)(void*);
             "\t.globl " __ASM_NAME("MSVCP_" #name "_vtable") "\n" \
             __ASM_NAME("MSVCP_" #name "_vtable") ":\n" \
             "\t.quad " THISCALL_NAME(MSVCP_ ## name ## _vector_dtor) "\n" \
-            funcs "\n\t.text");
+            funcs "\n\t.text")
 
 #else
 
@@ -84,7 +84,7 @@ extern void* (__cdecl *MSVCRT_set_new_handler)(void*);
             "\t.globl " __ASM_NAME("MSVCP_" #name "_vtable") "\n" \
             __ASM_NAME("MSVCP_" #name "_vtable") ":\n" \
             "\t.long " THISCALL_NAME(MSVCP_ ## name ## _vector_dtor) "\n" \
-            funcs "\n\t.text");
+            funcs "\n\t.text")
 
 #endif /* _WIN64 */
 

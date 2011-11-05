@@ -688,11 +688,11 @@ static const cxx_exception_type invalid_argument_cxx_type = {
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
-    __ASM_EXCEPTION_VTABLE(bad_alloc)
-    __ASM_EXCEPTION_STRING_VTABLE(logic_error)
-    __ASM_EXCEPTION_STRING_VTABLE(length_error)
-    __ASM_EXCEPTION_STRING_VTABLE(out_of_range)
-    __ASM_EXCEPTION_STRING_VTABLE(invalid_argument)
+    __ASM_EXCEPTION_VTABLE(bad_alloc);
+    __ASM_EXCEPTION_STRING_VTABLE(logic_error);
+    __ASM_EXCEPTION_STRING_VTABLE(length_error);
+    __ASM_EXCEPTION_STRING_VTABLE(out_of_range);
+    __ASM_EXCEPTION_STRING_VTABLE(invalid_argument);
 #ifndef __GNUC__
 }
 #endif
