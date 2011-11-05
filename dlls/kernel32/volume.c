@@ -585,12 +585,10 @@ static DWORD VOLUME_GetSuperblockSerial( const UNICODE_STRING *device, HANDLE ha
     case FS_FAT32:
         return GETLONG( superblock, 0x33 );
     case FS_UDF:
-        {
-            if (!VOLUME_ReadCDBlock(handle, block, 257*BLOCK_SIZE))
-                break;
-            superblock = block;
-            /* fallthrough */
-        }
+        if (!VOLUME_ReadCDBlock(handle, block, 257*BLOCK_SIZE))
+            break;
+        superblock = block;
+        /* fallthrough */
     case FS_ISO9660:
         {
             BYTE sum[4];
