@@ -448,11 +448,40 @@ static HRESULT WINAPI domattr_get_definition(
 
 static HRESULT WINAPI domattr_get_nodeTypedValue(
     IXMLDOMAttribute *iface,
-    VARIANT* var1)
+    VARIANT* value)
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    FIXME("(%p)->(%p)\n", This, var1);
-    return return_null_var(var1);
+    IXMLDOMDocument *doc;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, value);
+
+    hr = IXMLDOMAttribute_get_ownerDocument(iface, &doc);
+    if (hr == S_OK)
+    {
+        IXMLDOMDocument2 *doc2;
+
+        hr = IXMLDOMDocument_QueryInterface(doc, &IID_IXMLDOMDocument2, (void**)&doc2);
+        IXMLDOMDocument_Release(doc);
+
+        if (hr == S_OK)
+        {
+            VARIANT schemas;
+
+            hr = IXMLDOMDocument2_get_schemas(doc2, &schemas);
+            IXMLDOMDocument2_Release(doc2);
+
+            if (hr != S_OK)
+                return IXMLDOMAttribute_get_value(iface, value);
+            else
+            {
+                FIXME("need to query schema for attribute type\n");
+                VariantClear(&schemas);
+            }
+        }
+    }
+
+    return return_null_var(value);
 }
 
 static HRESULT WINAPI domattr_put_nodeTypedValue(
