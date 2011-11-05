@@ -1973,7 +1973,7 @@ static const SecPkgInfoA infoA = {
 
 #define NEGO_COMMENT { 'M', 'i', 'c', 'r', 'o', 's', 'o', 'f', 't', ' ', \
     'P', 'a', 'c', 'k', 'a', 'g', 'e', ' ', \
-    'N', 'e', 'g', 'o', 't', 'i', 'a', 't', 'o', 'r', 0};
+    'N', 'e', 'g', 'o', 't', 'i', 'a', 't', 'o', 'r', 0}
 
 static CHAR nego_comment_A[] = NEGO_COMMENT;
 static WCHAR nego_comment_W[] = NEGO_COMMENT;
