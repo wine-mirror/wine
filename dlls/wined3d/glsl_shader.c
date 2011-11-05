@@ -426,11 +426,9 @@ static inline void walk_constant_heap(const struct wined3d_gl_info *gl_info, con
             }
 
             case HEAP_NODE_POP:
-            {
                 heap_idx >>= 1;
                 --stack_idx;
                 break;
-            }
         }
     }
     checkGLcall("walk_constant_heap()");
@@ -501,11 +499,9 @@ static inline void walk_constant_heap_clamped(const struct wined3d_gl_info *gl_i
             }
 
             case HEAP_NODE_POP:
-            {
                 heap_idx >>= 1;
                 --stack_idx;
                 break;
-            }
         }
     }
     checkGLcall("walk_constant_heap_clamped()");
