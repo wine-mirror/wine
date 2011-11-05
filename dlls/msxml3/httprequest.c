@@ -607,13 +607,10 @@ static HRESULT WINAPI httprequest_GetTypeInfo(IXMLHTTPRequest *iface, UINT iTInf
         LCID lcid, ITypeInfo **ppTInfo)
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
-    HRESULT hr;
 
     TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
 
-    hr = get_typeinfo(IXMLHTTPRequest_tid, ppTInfo);
-
-    return hr;
+    return get_typeinfo(IXMLHTTPRequest_tid, ppTInfo);
 }
 
 static HRESULT WINAPI httprequest_GetIDsOfNames(IXMLHTTPRequest *iface, REFIID riid,

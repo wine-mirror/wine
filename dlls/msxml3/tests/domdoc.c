@@ -10671,6 +10671,7 @@ static void test_dispex(void)
     IXMLDOMParseError *error;
     IXMLDOMNamedNodeMap *map;
     IXMLDOMDocument *doc;
+    IXMLHTTPRequest *req;
     IXMLDOMElement *elem;
     IDispatchEx *dispex;
     IXMLDOMNode *node;
@@ -10772,6 +10773,17 @@ static void test_dispex(void)
     IXMLDOMElement_Release(elem);
 
     IXMLDOMDocument_Release(doc);
+
+    /* IXMLHTTPRequest */
+    hr = CoCreateInstance(&CLSID_XMLHTTPRequest, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IXMLHttpRequest, (void**)&req);
+    if (hr == S_OK)
+    {
+        hr = IXMLHTTPRequest_QueryInterface(req, &IID_IDispatchEx, (void**)&dispex);
+        EXPECT_HR(hr, E_NOINTERFACE);
+        IXMLHTTPRequest_Release(req);
+    }
+
     free_bstrs();
 }
 
