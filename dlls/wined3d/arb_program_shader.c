@@ -6932,7 +6932,7 @@ static GLuint gen_p8_shader(struct arbfp_blit_priv *priv,
 }
 
 /* Context activation is done by the caller. */
-static void upload_palette(struct wined3d_surface *surface, struct wined3d_context *context)
+static void upload_palette(const struct wined3d_surface *surface, struct wined3d_context *context)
 {
     BYTE table[256][4];
     struct wined3d_device *device = surface->resource.device;
