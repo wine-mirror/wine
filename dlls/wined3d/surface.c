@@ -1019,7 +1019,7 @@ static void surface_unmap(struct wined3d_surface *surface)
 done:
     /* Overlays have to be redrawn manually after changes with the GL implementation */
     if (surface->overlay_dest)
-        surface->surface_ops->surface_draw_overlay(surface);
+        surface_draw_overlay(surface);
 }
 
 static BOOL surface_is_full_rect(const struct wined3d_surface *surface, const RECT *r)
@@ -1908,7 +1908,6 @@ static const struct wined3d_surface_ops surface_ops =
 {
     surface_private_setup,
     surface_realize_palette,
-    surface_draw_overlay,
     surface_map,
     surface_unmap,
 };
@@ -1995,12 +1994,6 @@ static void gdi_surface_realize_palette(struct wined3d_surface *surface)
     }
 }
 
-static HRESULT gdi_surface_draw_overlay(struct wined3d_surface *surface)
-{
-    FIXME("GDI surfaces can't draw overlays yet.\n");
-    return E_FAIL;
-}
-
 static void gdi_surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD flags)
 {
     TRACE("surface %p, rect %s, flags %#x.\n",
@@ -2036,7 +2029,6 @@ static const struct wined3d_surface_ops gdi_surface_ops =
 {
     gdi_surface_private_setup,
     gdi_surface_realize_palette,
-    gdi_surface_draw_overlay,
     gdi_surface_map,
     gdi_surface_unmap,
 };
@@ -3216,7 +3208,7 @@ HRESULT CDECL wined3d_surface_set_overlay_position(struct wined3d_surface *surfa
     surface->overlay_destrect.right = x + w;
     surface->overlay_destrect.bottom = y + h;
 
-    surface->surface_ops->surface_draw_overlay(surface);
+    surface_draw_overlay(surface);
 
     return WINED3D_OK;
 }
@@ -3326,7 +3318,7 @@ HRESULT CDECL wined3d_surface_update_overlay(struct wined3d_surface *surface, co
         surface->overlay_dest = NULL;
     }
 
-    surface->surface_ops->surface_draw_overlay(surface);
+    surface_draw_overlay(surface);
 
     return WINED3D_OK;
 }
@@ -3941,7 +3933,7 @@ HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined
 
     /* Update overlays if they're visible. */
     if ((surface->resource.usage & WINED3DUSAGE_OVERLAY) && surface->overlay_dest)
-        return surface->surface_ops->surface_draw_overlay(surface);
+        return surface_draw_overlay(surface);
 
     return WINED3D_OK;
 }
@@ -5794,7 +5786,7 @@ void surface_modify_location(struct wined3d_surface *surface, DWORD location, BO
         {
             LIST_FOR_EACH_ENTRY(overlay, &surface->overlays, struct wined3d_surface, overlay_entry)
             {
-                overlay->surface_ops->surface_draw_overlay(overlay);
+                surface_draw_overlay(overlay);
             }
         }
     }
