@@ -3053,14 +3053,14 @@ static INT CALLBACK ranges_cmp(LPVOID range1, LPVOID range2, LPARAM flags)
     return cmp;
 }
 
-#define ranges_check(ranges, desc) if (TRACE_ON(listview)) ranges_assert(ranges, desc, __FUNCTION__, __LINE__)
+#define ranges_check(ranges, desc) if (TRACE_ON(listview)) ranges_assert(ranges, desc, __FILE__, __LINE__)
 
-static void ranges_assert(RANGES ranges, LPCSTR desc, const char *func, int line)
+static void ranges_assert(RANGES ranges, LPCSTR desc, const char *file, int line)
 {
     INT i;
     RANGE *prev, *curr;
     
-    TRACE("*** Checking %s:%d:%s ***\n", func, line, desc);
+    TRACE("*** Checking %s:%d:%s ***\n", file, line, desc);
     assert (ranges);
     assert (DPA_GetPtrCount(ranges->hdpa) >= 0);
     ranges_dump(ranges);
