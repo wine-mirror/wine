@@ -1745,12 +1745,12 @@ static void AttachmentTest(void)
     ddsd.dwWidth = 64;
     ddsd.dwHeight = 64;
     ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE;
-    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
-    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB; /* D3DFMT_R5G6B5 */
-    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 16;
-    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0xF800;
-    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x07E0;
-    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x001F;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB; /* D3DFMT_R5G6B5 */
+    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 16;
+    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0xF800;
+    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x07E0;
+    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x001F;
 
     memset(&ddsd2, 0, sizeof(ddsd2));
     ddsd2.dwSize = sizeof(ddsd2);
@@ -1758,10 +1758,10 @@ static void AttachmentTest(void)
     ddsd2.dwWidth = ddsd.dwWidth;
     ddsd2.dwHeight = ddsd.dwHeight;
     ddsd2.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
-    U4(ddsd2).ddpfPixelFormat.dwSize = sizeof(U4(ddsd2).ddpfPixelFormat);
-    U4(ddsd2).ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
-    U1(U4(ddsd2).ddpfPixelFormat).dwZBufferBitDepth = 16;
-    U3(U4(ddsd2).ddpfPixelFormat).dwZBitMask = 0x0000FFFF;
+    ddsd2.ddpfPixelFormat.dwSize = sizeof(ddsd2.ddpfPixelFormat);
+    ddsd2.ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+    U1(ddsd2.ddpfPixelFormat).dwZBufferBitDepth = 16;
+    U3(ddsd2.ddpfPixelFormat).dwZBitMask = 0x0000FFFF;
 
     hr = IDirectDraw_CreateSurface(lpDD, (DDSURFACEDESC *)&ddsd, &surface1, NULL);
     ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
