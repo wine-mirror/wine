@@ -849,13 +849,6 @@ static HRESULT surface_draw_overlay(struct wined3d_surface *surface)
     return hr;
 }
 
-static void surface_preload(struct wined3d_surface *surface)
-{
-    TRACE("surface %p.\n", surface);
-
-    surface_internal_preload(surface, SRGB_ANY);
-}
-
 static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD flags)
 {
     struct wined3d_device *device = surface->resource.device;
@@ -1916,7 +1909,6 @@ static const struct wined3d_surface_ops surface_ops =
     surface_private_setup,
     surface_realize_palette,
     surface_draw_overlay,
-    surface_preload,
     surface_map,
     surface_unmap,
 };
@@ -2009,13 +2001,6 @@ static HRESULT gdi_surface_draw_overlay(struct wined3d_surface *surface)
     return E_FAIL;
 }
 
-static void gdi_surface_preload(struct wined3d_surface *surface)
-{
-    TRACE("surface %p.\n", surface);
-
-    ERR("Preloading GDI surfaces is not supported.\n");
-}
-
 static void gdi_surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD flags)
 {
     TRACE("surface %p, rect %s, flags %#x.\n",
@@ -2052,7 +2037,6 @@ static const struct wined3d_surface_ops gdi_surface_ops =
     gdi_surface_private_setup,
     gdi_surface_realize_palette,
     gdi_surface_draw_overlay,
-    gdi_surface_preload,
     gdi_surface_map,
     gdi_surface_unmap,
 };
@@ -2947,7 +2931,13 @@ void CDECL wined3d_surface_preload(struct wined3d_surface *surface)
 {
     TRACE("surface %p.\n", surface);
 
-    surface->surface_ops->surface_preload(surface);
+    if (!surface->resource.device->d3d_initialized)
+    {
+        ERR("D3D not initialized.\n");
+        return;
+    }
+
+    surface_internal_preload(surface, SRGB_ANY);
 }
 
 void * CDECL wined3d_surface_get_parent(const struct wined3d_surface *surface)
