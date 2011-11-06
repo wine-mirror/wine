@@ -6838,9 +6838,8 @@ msgid "Trash"
 msgstr "휴지통"
 
 #: shlwapi.rc:27
-#, fuzzy
 msgid "%d bytes"
-msgstr "%ld 바이트"
+msgstr "%d 바이트"
 
 #: shlwapi.rc:28
 msgctxt "time unit: hours"
@@ -7768,9 +7767,8 @@ msgstr ""
 "\n"
 
 #: attrib.rc:28
-#, fuzzy
 msgid "%1: File Not Found\n"
-msgstr "%s :파일을 찾을 수 없습니다\n"
+msgstr "%1 :파일을 찾을 수 없습니다\n"
 
 #: attrib.rc:47
 msgid ""
@@ -8690,14 +8688,12 @@ msgstr ""
 "'서비스'는  정지할 서비스의 이름입니다.\n"
 
 #: net.rc:30
-#, fuzzy
 msgid "Stopping dependent service: %1\n"
-msgstr "종속된 서비스 정지중: %s\n"
+msgstr "종속된 서비스 정지중: %1\n"
 
 #: net.rc:31
-#, fuzzy
 msgid "Could not stop service %1\n"
-msgstr "%s 서비스를 정지할 수 없습니다\n"
+msgstr "%1 서비스를 정지할 수 없음\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
@@ -8708,34 +8704,28 @@ msgid "Could not get handle to service.\n"
 msgstr "서비스 핸들을 얻을 수 없습니다.\n"
 
 #: net.rc:34
-#, fuzzy
 msgid "The %1 service is starting.\n"
-msgstr "%s 서비스는 시작중.\n"
+msgstr "%1 서비스는 시작중입니다.\n"
 
 #: net.rc:35
-#, fuzzy
 msgid "The %1 service was started successfully.\n"
-msgstr "%s 서비스 시작 성공.\n"
+msgstr "%1 서비스 시작 성공했습니다.\n"
 
 #: net.rc:36
-#, fuzzy
 msgid "The %1 service failed to start.\n"
-msgstr "%s 서비스 시작 실패.\n"
+msgstr "%1 서비스 시작 실패했습니다.\n"
 
 #: net.rc:37
-#, fuzzy
 msgid "The %1 service is stopping.\n"
-msgstr "%s  서비스 정지.\n"
+msgstr "%1 서비스는 정지하는 중입니다.\n"
 
 #: net.rc:38
-#, fuzzy
 msgid "The %1 service was stopped successfully.\n"
-msgstr "%s 서비스 정지 성공.\n"
+msgstr "%1 서비스 정지 성공했습니다.\n"
 
 #: net.rc:39
-#, fuzzy
 msgid "The %1 service failed to stop.\n"
-msgstr "%s 서비스 정지 실패.\n"
+msgstr "%1 서비스 정지 실패했습니다.\n"
 
 #: net.rc:41
 msgid "There are no entries in the list.\n"
@@ -8752,9 +8742,8 @@ msgstr ""
 "---------------------------------------------------------------\n"
 
 #: net.rc:43
-#, fuzzy
 msgid "%1      %2      %3      Open resources: %4!u!\n"
-msgstr "%s      %s      %s      열린 리소스: %lu\n"
+msgstr "%1      %2      %3      열린 리소스: %4!u!\n"
 
 #: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 wineconsole.rc:131
 #: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:68
@@ -8901,9 +8890,8 @@ msgid "&Bottom:"
 msgstr "아래(&B):"
 
 #: notepad.rc:131
-#, fuzzy
 msgid "Encoding:"
-msgstr "인코딩(&E)"
+msgstr "인코딩:"
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -8931,7 +8919,7 @@ msgstr "제목 없음"
 
 #: notepad.rc:76
 msgid "Text files (*.txt)"
-msgstr "텍스트 문서 (*.txt)"
+msgstr "텍스트 파일 (*.txt)"
 
 #: notepad.rc:79
 msgid ""
@@ -11037,9 +11025,8 @@ msgid "Screen buffer size must be greater or equal to the window's one"
 msgstr "스크린 버퍼 크기는 반드시 창보다 같거나 커야합니다."
 
 #: wineconsole.rc:34
-#, fuzzy
 msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
-msgstr "각각의 글자는 %ld  픽셀 너비에 %ld 픽셀 높이를 가집니다"
+msgstr "각각의 글자는 %1!u!  픽셀 너비에 %2!u! 픽셀 높이를 가집니다"
 
 #: wineconsole.rc:35
 msgid "This is a test"
@@ -11349,9 +11336,8 @@ msgid "Index/Inode"
 msgstr "인덱스/아이노드"
 
 #: winefile.rc:120
-#, fuzzy
 msgid "%1 of %2 free"
-msgstr "%s of %s 사용가능"
+msgstr "%1 의 %2 사용가능"
 
 #: winemine.rc:34
 msgid "&Game"
@@ -11422,9 +11408,8 @@ msgid "Rows"
 msgstr "가로줄"
 
 #: winemine.rc:87
-#, fuzzy
 msgid "Columns"
-msgstr "세로줄(&C)"
+msgstr "세로줄"
 
 #: winemine.rc:88
 msgid "Mines"
@@ -11882,59 +11867,50 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "올바르지 않은 매개변수의 갯수 - xcopy /?로 도움말을 보시오\n"
 
 #: xcopy.rc:28
-#, fuzzy
 msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
-msgstr "올바르지 않은 매개변수 '%s' -  xcopy /?로 도움말을 보시오\n"
+msgstr "올바르지 않은 매개변수 '%1' -  xcopy /?로 도움말을 보시오\n"
 
 #: xcopy.rc:29
 msgid "Press <enter> to begin copying\n"
 msgstr "<enter> 를 누르면 복사가 시작될 것입니다\n"
 
 #: xcopy.rc:30
-#, fuzzy
 msgid "%1!d! file(s) would be copied\n"
-msgstr "%d 파일이 복사될 것입니다\n"
+msgstr "%1!d! 파일이 복사될 것입니다\n"
 
 #: xcopy.rc:31
-#, fuzzy
 msgid "%1!d! file(s) copied\n"
-msgstr "%d 파일이 복사되었습니다\n"
+msgstr "%1!d! 파일이 복사되었습니다\n"
 
 #: xcopy.rc:34
-#, fuzzy
 msgid ""
 "Is '%1' a filename or directory\n"
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
-"'%s'이 복사할 파일이나 디렉토리?\n"
+"'%1'이 복사할 파일이나 디렉토리\n"
 "입니까?\n"
 "(F - 파일, D - 디렉토리)\n"
 
 #: xcopy.rc:35
-#, fuzzy
 msgid "%1? (Yes|No)\n"
-msgstr "%s? (예|아니오)\n"
+msgstr "%1? (예|아니오)\n"
 
 #: xcopy.rc:36
-#, fuzzy
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr "%s를 덮어쓰겠습니까? (예|아니오|모두)\n"
+msgstr "%1를 덮어쓰겠습니까? (예|아니오|모두)\n"
 
 #: xcopy.rc:37
-#, fuzzy
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr "r/c %d로 '%s'를 '%s'로 복사 실패 \n"
+msgstr "r/c %3!d!로 '%1'를 '%2'로 복사 실패 \n"
 
 #: xcopy.rc:38
-#, fuzzy
 msgid "Failed to open '%1'\n"
-msgstr "'%s' 열기 실패\n"
+msgstr "'%1' 열기 실패\n"
 
 #: xcopy.rc:39
-#, fuzzy
 msgid "Failed during reading of '%1'\n"
-msgstr "'%s를 읽지 못했습니다'\n"
+msgstr "'%1를 읽지 못했습니다'\n"
 
 #: xcopy.rc:43
 msgctxt "File key"
