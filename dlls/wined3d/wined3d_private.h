@@ -1201,7 +1201,7 @@ struct blit_shader
 {
     HRESULT (*alloc_private)(struct wined3d_device *device);
     void (*free_private)(struct wined3d_device *device);
-    HRESULT (*set_shader)(void *blit_priv, struct wined3d_context *context, struct wined3d_surface *surface);
+    HRESULT (*set_shader)(void *blit_priv, struct wined3d_context *context, const struct wined3d_surface *surface);
     void (*unset_shader)(const struct wined3d_gl_info *gl_info);
     BOOL (*blit_supported)(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
             const RECT *src_rect, DWORD src_usage, WINED3DPOOL src_pool, const struct wined3d_format *src_format,

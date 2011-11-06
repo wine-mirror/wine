@@ -7121,7 +7121,7 @@ static GLuint gen_yuv_shader(struct arbfp_blit_priv *priv, const struct wined3d_
 }
 
 /* Context activation is done by the caller. */
-static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, struct wined3d_surface *surface)
+static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, const struct wined3d_surface *surface)
 {
     GLenum shader;
     float size[4] = {(float) surface->pow2Width, (float) surface->pow2Height, 1.0f, 1.0f};

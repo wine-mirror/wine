@@ -6260,7 +6260,7 @@ static void ffp_blit_p8_upload_palette(const struct wined3d_surface *surface, co
 }
 
 /* Context activation is done by the caller. */
-static HRESULT ffp_blit_set(void *blit_priv, struct wined3d_context *context, struct wined3d_surface *surface)
+static HRESULT ffp_blit_set(void *blit_priv, struct wined3d_context *context, const struct wined3d_surface *surface)
 {
     enum complex_fixup fixup = get_complex_fixup(surface->resource.format->color_fixup);
 
@@ -6409,7 +6409,7 @@ static void cpu_blit_free(struct wined3d_device *device)
 }
 
 /* Context activation is done by the caller. */
-static HRESULT cpu_blit_set(void *blit_priv, struct wined3d_context *context, struct wined3d_surface *surface)
+static HRESULT cpu_blit_set(void *blit_priv, struct wined3d_context *context, const struct wined3d_surface *surface)
 {
     return WINED3D_OK;
 }
