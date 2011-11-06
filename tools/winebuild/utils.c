@@ -358,7 +358,15 @@ struct strarray *get_as_command(void)
             strarray_add( args, "-arch", (force_pointer_size == 8) ? "x86_64" : "i386", NULL );
             break;
         default:
-            strarray_add_one( args, (force_pointer_size == 8) ? "--64" : "--32" );
+            switch(target_cpu)
+            {
+            case CPU_POWERPC:
+                strarray_add_one( args, (force_pointer_size == 8) ? "-a64" : "-a32" );
+                break;
+            default:
+                strarray_add_one( args, (force_pointer_size == 8) ? "--64" : "--32" );
+                break;
+            }
             break;
         }
     }
@@ -389,7 +397,15 @@ struct strarray *get_ld_command(void)
             strarray_add( args, "-m", (force_pointer_size == 8) ? "elf_x86_64_fbsd" : "elf_i386_fbsd", NULL );
             break;
         default:
-            strarray_add( args, "-m", (force_pointer_size == 8) ? "elf_x86_64" : "elf_i386", NULL );
+            switch(target_cpu)
+            {
+            case CPU_POWERPC:
+                strarray_add( args, "-m", (force_pointer_size == 8) ? "elf64ppc" : "elf32ppc", NULL );
+                break;
+            default:
+                strarray_add( args, "-m", (force_pointer_size == 8) ? "elf_x86_64" : "elf_i386", NULL );
+                break;
+            }
             break;
         }
     }
