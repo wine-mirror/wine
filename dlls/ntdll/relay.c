@@ -37,9 +37,10 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(relay);
-WINE_DECLARE_DEBUG_CHANNEL(timestamp);
 
 #if defined(__i386__) || defined(__x86_64__)
+
+WINE_DECLARE_DEBUG_CHANNEL(timestamp);
 
 struct relay_descr  /* descriptor for a module */
 {
