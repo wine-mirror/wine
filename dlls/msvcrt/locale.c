@@ -330,7 +330,7 @@ static BOOL update_threadlocinfo_category(LCID lcid, MSVCRT__locale_t loc, int c
     len += GetLocaleInfoA(lcid, LOCALE_IDEFAULTANSICODEPAGE
             |LOCALE_NOUSEROVERRIDE, &buf[len], 256-len);
 
-    loc->locinfo->lc_category[category].locale = MSVCRT_malloc(sizeof(char[len]));
+    loc->locinfo->lc_category[category].locale = MSVCRT_malloc(len);
     loc->locinfo->lc_category[category].refcount = MSVCRT_malloc(sizeof(int));
     if(!loc->locinfo->lc_category[category].locale
             || !loc->locinfo->lc_category[category].refcount) {
@@ -340,7 +340,7 @@ static BOOL update_threadlocinfo_category(LCID lcid, MSVCRT__locale_t loc, int c
         loc->locinfo->lc_category[category].refcount = NULL;
         return TRUE;
     }
-    memcpy(loc->locinfo->lc_category[category].locale, buf, sizeof(char[len]));
+    memcpy(loc->locinfo->lc_category[category].locale, buf, len);
     *loc->locinfo->lc_category[category].refcount = 1;
 
     return FALSE;
@@ -862,8 +862,8 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
 
         i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SINTLSYMBOL
                 |LOCALE_NOUSEROVERRIDE, buf, 256);
-        if(i && (loc->locinfo->lconv->int_curr_symbol = MSVCRT_malloc(sizeof(char[i]))))
-            memcpy(loc->locinfo->lconv->int_curr_symbol, buf, sizeof(char[i]));
+        if(i && (loc->locinfo->lconv->int_curr_symbol = MSVCRT_malloc(i)))
+            memcpy(loc->locinfo->lconv->int_curr_symbol, buf, i);
         else {
             MSVCRT__free_locale(loc);
             return NULL;
@@ -871,8 +871,8 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
 
         i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SCURRENCY
                 |LOCALE_NOUSEROVERRIDE, buf, 256);
-        if(i && (loc->locinfo->lconv->currency_symbol = MSVCRT_malloc(sizeof(char[i]))))
-            memcpy(loc->locinfo->lconv->currency_symbol, buf, sizeof(char[i]));
+        if(i && (loc->locinfo->lconv->currency_symbol = MSVCRT_malloc(i)))
+            memcpy(loc->locinfo->lconv->currency_symbol, buf, i);
         else {
             MSVCRT__free_locale(loc);
             return NULL;
@@ -880,8 +880,8 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
 
         i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SMONDECIMALSEP
                 |LOCALE_NOUSEROVERRIDE, buf, 256);
-        if(i && (loc->locinfo->lconv->mon_decimal_point = MSVCRT_malloc(sizeof(char[i]))))
-            memcpy(loc->locinfo->lconv->mon_decimal_point, buf, sizeof(char[i]));
+        if(i && (loc->locinfo->lconv->mon_decimal_point = MSVCRT_malloc(i)))
+            memcpy(loc->locinfo->lconv->mon_decimal_point, buf, i);
         else {
             MSVCRT__free_locale(loc);
             return NULL;
@@ -889,8 +889,8 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
 
         i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SMONTHOUSANDSEP
                 |LOCALE_NOUSEROVERRIDE, buf, 256);
-        if(i && (loc->locinfo->lconv->mon_thousands_sep = MSVCRT_malloc(sizeof(char[i]))))
-            memcpy(loc->locinfo->lconv->mon_thousands_sep, buf, sizeof(char[i]));
+        if(i && (loc->locinfo->lconv->mon_thousands_sep = MSVCRT_malloc(i)))
+            memcpy(loc->locinfo->lconv->mon_thousands_sep, buf, i);
         else {
             MSVCRT__free_locale(loc);
             return NULL;
@@ -900,7 +900,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
                 |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i>1)
             i = i/2 + (buf[i-2]=='0'?0:1);
-        if(i && (loc->locinfo->lconv->mon_grouping = MSVCRT_malloc(sizeof(char[i])))) {
+        if(i && (loc->locinfo->lconv->mon_grouping = MSVCRT_malloc(i))) {
             for(i=0; buf[i+1]==';'; i+=2)
                 loc->locinfo->lconv->mon_grouping[i/2] = buf[i]-'0';
             loc->locinfo->lconv->mon_grouping[i/2] = buf[i]-'0';
@@ -913,8 +913,8 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
 
         i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SPOSITIVESIGN
                 |LOCALE_NOUSEROVERRIDE, buf, 256);
-        if(i && (loc->locinfo->lconv->positive_sign = MSVCRT_malloc(sizeof(char[i]))))
-            memcpy(loc->locinfo->lconv->positive_sign, buf, sizeof(char[i]));
+        if(i && (loc->locinfo->lconv->positive_sign = MSVCRT_malloc(i)))
+            memcpy(loc->locinfo->lconv->positive_sign, buf, i);
         else {
             MSVCRT__free_locale(loc);
             return NULL;
@@ -922,8 +922,8 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
 
         i = GetLocaleInfoA(lcid[MSVCRT_LC_MONETARY], LOCALE_SNEGATIVESIGN
                 |LOCALE_NOUSEROVERRIDE, buf, 256);
-        if(i && (loc->locinfo->lconv->negative_sign = MSVCRT_malloc(sizeof(char[i]))))
-            memcpy(loc->locinfo->lconv->negative_sign, buf, sizeof(char[i]));
+        if(i && (loc->locinfo->lconv->negative_sign = MSVCRT_malloc(i)))
+            memcpy(loc->locinfo->lconv->negative_sign, buf, i);
         else {
             MSVCRT__free_locale(loc);
             return NULL;
@@ -1047,8 +1047,8 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
 
         i = GetLocaleInfoA(lcid[MSVCRT_LC_NUMERIC], LOCALE_SDECIMAL
                 |LOCALE_NOUSEROVERRIDE, buf, 256);
-        if(i && (loc->locinfo->lconv->decimal_point = MSVCRT_malloc(sizeof(char[i]))))
-            memcpy(loc->locinfo->lconv->decimal_point, buf, sizeof(char[i]));
+        if(i && (loc->locinfo->lconv->decimal_point = MSVCRT_malloc(i)))
+            memcpy(loc->locinfo->lconv->decimal_point, buf, i);
         else {
             MSVCRT__free_locale(loc);
             return NULL;
@@ -1056,8 +1056,8 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
 
         i = GetLocaleInfoA(lcid[MSVCRT_LC_NUMERIC], LOCALE_STHOUSAND
                 |LOCALE_NOUSEROVERRIDE, buf, 256);
-        if(i && (loc->locinfo->lconv->thousands_sep = MSVCRT_malloc(sizeof(char[i]))))
-            memcpy(loc->locinfo->lconv->thousands_sep, buf, sizeof(char[i]));
+        if(i && (loc->locinfo->lconv->thousands_sep = MSVCRT_malloc(i)))
+            memcpy(loc->locinfo->lconv->thousands_sep, buf, i);
         else {
             MSVCRT__free_locale(loc);
             return NULL;
@@ -1067,7 +1067,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
                 |LOCALE_NOUSEROVERRIDE, buf, 256);
         if(i>1)
             i = i/2 + (buf[i-2]=='0'?0:1);
-        if(i && (loc->locinfo->lconv->grouping = MSVCRT_malloc(sizeof(char[i])))) {
+        if(i && (loc->locinfo->lconv->grouping = MSVCRT_malloc(i))) {
             for(i=0; buf[i+1]==';'; i+=2)
                 loc->locinfo->lconv->grouping[i/2] = buf[i]-'0';
             loc->locinfo->lconv->grouping[i/2] = buf[i]-'0';
