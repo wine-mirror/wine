@@ -627,10 +627,10 @@ static void WCMD_dir_trailer(WCHAR drive) {
  *
  */
 
-void WCMD_directory (WCHAR *cmd) {
-
+void WCMD_directory (WCHAR *cmd)
+{
   WCHAR path[MAX_PATH], cwd[MAX_PATH];
-  int status;
+  DWORD status;
   CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
   WCHAR *p;
   WCHAR string[MAXSTRING];

@@ -1323,9 +1323,9 @@ static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
  *	Simple on-line help. Help text is stored in the resource file.
  */
 
-void WCMD_give_help (const WCHAR *command) {
-
-  int i;
+void WCMD_give_help (const WCHAR *command)
+{
+  size_t i;
 
   command = WCMD_skip_leading_spaces((WCHAR*) command);
   if (strlenW(command) == 0) {
@@ -1630,7 +1630,7 @@ void WCMD_move (void)
     if (GetFileAttributesW(dest) != INVALID_FILE_ATTRIBUTES) {
       BOOL force = FALSE;
       WCHAR copycmd[MAXSTRING];
-      int len;
+      DWORD len;
 
       /* /-Y has the highest priority, then /Y and finally the COPYCMD env. variable */
       if (strstrW (quals, parmNoY))

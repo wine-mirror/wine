@@ -186,12 +186,12 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, WCHAR **end) {
  *       NULL on error or EOF
  */
 
-WCHAR *WCMD_fgets(WCHAR *buf, int noChars, HANDLE h)
+WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
 {
   DWORD charsRead;
   BOOL status;
   LARGE_INTEGER filepos;
-  int i;
+  DWORD i;
 
   /* We can't use the native f* functions because of the filename syntax differences
      between DOS and Unix. Also need to lose the LF (or CRLF) from the line. */

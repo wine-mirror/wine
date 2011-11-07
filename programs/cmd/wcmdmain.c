@@ -123,8 +123,8 @@ static char *get_file_buffer(void)
  *  and hence required WriteConsoleW to output it, however if file i/o is
  *  redirected, it needs to be WriteFile'd using OEM (not ANSI) format
  */
-static void WCMD_output_asis_len(const WCHAR *message, int len, HANDLE device) {
-
+static void WCMD_output_asis_len(const WCHAR *message, DWORD len, HANDLE device)
+{
     DWORD   nOut= 0;
     DWORD   res = 0;
 
@@ -169,7 +169,7 @@ void WCMD_output (const WCHAR *format, ...) {
 
   va_list ap;
   WCHAR string[1024];
-  int ret;
+  DWORD ret;
 
   va_start(ap,format);
   ret = vsnprintfW(string, sizeof(string)/sizeof(WCHAR), format, ap);
@@ -191,7 +191,7 @@ void WCMD_output_stderr (const WCHAR *format, ...) {
 
   va_list ap;
   WCHAR string[1024];
-  int ret;
+  DWORD ret;
 
   va_start(ap,format);
   ret = vsnprintfW(string, sizeof(string)/sizeof(WCHAR), format, ap);
