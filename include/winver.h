@@ -1,4 +1,4 @@
-/* Definitions for the VERsion infolibrary (VER.DLL)
+/* Definitions for the VERsion info library (VER.DLL)
  *
  * Copyright 1996 Marcus Meissner
  *
@@ -25,7 +25,7 @@ extern "C" {
 #endif /* defined(__cplusplus) */
 
 /* resource ids for different version infos */
-#define	VS_FILE_INFO		16
+#define	VS_FILE_INFO		RT_VERSION
 #define	VS_VERSION_INFO		1
 #define	VS_USER_DEFINED		100
 
@@ -49,6 +49,7 @@ extern "C" {
 #define VOS_OS216               __MSABI_LONG(0x00020000)
 #define VOS_OS232               __MSABI_LONG(0x00030000)
 #define VOS_NT                  __MSABI_LONG(0x00040000)
+#define VOS_WINCE               __MSABI_LONG(0x00050000)
 
 /* minor os version */
 #define VOS__BASE               __MSABI_LONG(0x00000000)
@@ -128,6 +129,8 @@ extern "C" {
 #define VIF_CANNOTREADSRC       __MSABI_LONG(0x00010000)
 #define VIF_CANNOTREADDST       __MSABI_LONG(0x00020000)
 #define VIF_BUFFTOOSMALL        __MSABI_LONG(0x00040000)
+#define VIF_CANNOTLOADLZ32      __MSABI_LONG(0x00080000)
+#define VIF_CANNOTLOADCABINET   __MSABI_LONG(0x00100000)
 
 typedef struct tagVS_FIXEDFILEINFO {
 	DWORD   dwSignature;
@@ -168,8 +171,12 @@ DWORD       WINAPI GetFileVersionInfoSizeW(LPCWSTR,LPDWORD);
 BOOL        WINAPI GetFileVersionInfoA(LPCSTR,DWORD,DWORD,LPVOID);
 BOOL        WINAPI GetFileVersionInfoW(LPCWSTR,DWORD,DWORD,LPVOID);
 #define     GetFileVersionInfo WINELIB_NAME_AW(GetFileVersionInfo)
-
-/* 20 GETFILEVERSIONINFORAW */
+DWORD       WINAPI GetFileVersionInfoSizeExA(DWORD,LPCSTR,LPDWORD);
+DWORD       WINAPI GetFileVersionInfoSizeExW(DWORD,LPCWSTR,LPDWORD);
+#define     GetFileVersionInfoSizeEx WINELIB_NAME_AW(GetFileVersionInfoSizeEx)
+BOOL        WINAPI GetFileVersionInfoExA(DWORD,LPCSTR,DWORD,DWORD,LPVOID);
+BOOL        WINAPI GetFileVersionInfoExW(DWORD,LPCWSTR,DWORD,DWORD,LPVOID);
+#define     GetFileVersionInfoEx WINELIB_NAME_AW(GetFileVersionInfoEx)
 
 #endif /* RC_INVOKED */
 
