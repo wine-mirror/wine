@@ -132,16 +132,12 @@ case $host in
     then
       CC="$CC -m64"
       CXX="$CXX -m64"
-      LD="${LD:-ld} -arch x86_64"
-      AS="${AS:-as} -arch x86_64"
       host_cpu="x86_64"
       notice_platform="64-bit "
       AC_SUBST(TARGETFLAGS,"-m64")
     else
       CC="$CC -m32"
       CXX="$CXX -m32"
-      LD="${LD:-ld} -arch i386"
-      AS="${AS:-as} -arch i386"
       host_cpu="i386"
       notice_platform="32-bit "
       AC_SUBST(TARGETFLAGS,"-m32")
@@ -157,8 +153,6 @@ case $host in
       AC_LINK_IFELSE([AC_LANG_PROGRAM()],AC_MSG_RESULT([yes]),
                      [AC_MSG_RESULT([no])
                       AC_MSG_ERROR([Cannot build a 32-bit program, you need to install 32-bit development libraries.])])
-      LD="${LD:-ld} -m elf_i386"
-      AS="${AS:-as} --32"
       host_cpu="i386"
       notice_platform="32-bit "
       AC_SUBST(TARGETFLAGS,"-m32")

@@ -4043,8 +4043,6 @@ case $host in
     then
       CC="$CC -m64"
       CXX="$CXX -m64"
-      LD="${LD:-ld} -arch x86_64"
-      AS="${AS:-as} -arch x86_64"
       host_cpu="x86_64"
       notice_platform="64-bit "
       TARGETFLAGS="-m64"
@@ -4052,8 +4050,6 @@ case $host in
     else
       CC="$CC -m32"
       CXX="$CXX -m32"
-      LD="${LD:-ld} -arch i386"
-      AS="${AS:-as} -arch i386"
       host_cpu="i386"
       notice_platform="32-bit "
       TARGETFLAGS="-m32"
@@ -4090,8 +4086,6 @@ $as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-      LD="${LD:-ld} -m elf_i386"
-      AS="${AS:-as} --32"
       host_cpu="i386"
       notice_platform="32-bit "
       TARGETFLAGS="-m32"
