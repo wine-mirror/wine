@@ -506,6 +506,7 @@ SRCDIR_INCLUDES = \
 	uxtheme.h \
 	vdmdbg.h \
 	ver.h \
+	verrsrc.h \
 	vfw.h \
 	vfwmsgs.h \
 	vmrender.idl \
