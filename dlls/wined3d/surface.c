@@ -4800,14 +4800,6 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back)
         back->pbo = tmp_pbo;
     }
 
-    /* client_memory should not be different, but just in case */
-    {
-        BOOL tmp;
-        tmp = front->dib.client_memory;
-        front->dib.client_memory = back->dib.client_memory;
-        back->dib.client_memory = tmp;
-    }
-
     /* Flip the opengl texture */
     {
         GLuint tmp;

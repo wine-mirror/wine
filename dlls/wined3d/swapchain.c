@@ -787,14 +787,6 @@ static HRESULT swapchain_gdi_present(struct wined3d_swapchain *swapchain, const 
             ERR("GDI Surface %p has heap memory allocated.\n", back);
     }
 
-    /* Client_memory should not be different, but just in case. */
-    {
-        BOOL tmp;
-        tmp = front->dib.client_memory;
-        front->dib.client_memory = back->dib.client_memory;
-        back->dib.client_memory = tmp;
-    }
-
     /* FPS support */
     if (TRACE_ON(fps))
     {
