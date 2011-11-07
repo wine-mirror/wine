@@ -1806,6 +1806,7 @@ static void test_ITEMIDLIST_format(void) {
             cbOffset <= pidlFile->mkid.cb - sizeof(struct FileStructW))
         {
             struct FileStructW *pFileStructW = (struct FileStructW *)(((LPBYTE)pidlFile)+cbOffset);
+            WCHAR *name = pFileStructW->wszName;
 
             ok(pidlFile->mkid.cb == cbOffset + pFileStructW->cbLen,
                 "FileStructW's offset and length should add up to the PIDL's length!\n");
@@ -1842,9 +1843,9 @@ static void test_ITEMIDLIST_format(void) {
                     /* TODO: Perform check for date being within one day.*/
                 }
 
-                ok (!lstrcmpW(wszFile[i], pFileStructW->wszName) ||
-                    !lstrcmpW(wszFile[i], (WCHAR *)(pFileStructW->abFooBar2 + 22)) || /* Vista */
-                    !lstrcmpW(wszFile[i], (WCHAR *)(pFileStructW->abFooBar2 + 26)), /* Win7 */
+                ok (!lstrcmpW(wszFile[i], name) ||
+                    !lstrcmpW(wszFile[i], name + 9) || /* Vista */
+                    !lstrcmpW(wszFile[i], name + 11), /* Win7 */
                     "The filename should be stored in unicode at this position!\n");
             }
         }
