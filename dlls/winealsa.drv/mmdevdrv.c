@@ -219,12 +219,19 @@ static inline SessionMgr *impl_from_IAudioSessionManager2(IAudioSessionManager2 
 
 BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
 {
-    if(reason == DLL_PROCESS_ATTACH){
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
         g_timer_q = CreateTimerQueue();
         if(!g_timer_q)
             return FALSE;
-    }
+        break;
 
+    case DLL_PROCESS_DETACH:
+        g_sessions_lock.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&g_sessions_lock);
+        break;
+    }
     return TRUE;
 }
 
