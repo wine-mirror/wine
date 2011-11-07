@@ -65,6 +65,7 @@ struct gdi_dc_funcs
     INT      (*pChoosePixelFormat)(PHYSDEV,const PIXELFORMATDESCRIPTOR *);
     BOOL     (*pChord)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
     BOOL     (*pCloseFigure)(PHYSDEV);
+    BOOL     (*pCopyBitmap)(HBITMAP,HBITMAP);
     BOOL     (*pCreateBitmap)(PHYSDEV,HBITMAP);
     BOOL     (*pCreateCompatibleDC)(PHYSDEV,PHYSDEV*);
     BOOL     (*pCreateDC)(PHYSDEV*,LPCWSTR,LPCWSTR,LPCWSTR,const DEVMODEW*);
@@ -204,7 +205,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 18
+#define WINE_GDI_DRIVER_VERSION 19
 
 static inline PHYSDEV get_physdev_entry_point( PHYSDEV dev, size_t offset )
 {

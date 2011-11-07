@@ -523,6 +523,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pChoosePixelFormat */
     NULL,                               /* pChord */
     NULL,                               /* pCloseFigure */
+    NULL,                               /* pCopyBitmap */
     NULL,                               /* pCreateBitmap */
     NULL,                               /* pCreateCompatibleDC */
     dibdrv_CreateDC,                    /* pCreateDC */

@@ -3060,6 +3060,7 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pChoosePixelFormat */
     NULL,                               /* pChord */
     NULL,                               /* pCloseFigure */
+    NULL,                               /* pCopyBitmap */
     xrenderdrv_CreateBitmap,            /* pCreateBitmap */
     xrenderdrv_CreateCompatibleDC,      /* pCreateCompatibleDC */
     xrenderdrv_CreateDC,                /* pCreateDC */

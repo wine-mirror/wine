@@ -209,6 +209,11 @@ static BOOL nulldrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom
     return TRUE;
 }
 
+static BOOL nulldrv_CopyBitmap( HBITMAP src, HBITMAP dst )
+{
+    return TRUE;
+}
+
 static BOOL nulldrv_CreateBitmap( PHYSDEV dev, HBITMAP bitmap )
 {
     return TRUE;
@@ -747,6 +752,7 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_ChoosePixelFormat,          /* pChoosePixelFormat */
     nulldrv_Chord,                      /* pChord */
     nulldrv_CloseFigure,                /* pCloseFigure */
+    nulldrv_CopyBitmap,                 /* pCopyBitmap */
     nulldrv_CreateBitmap,               /* pCreateBitmap */
     nulldrv_CreateCompatibleDC,         /* pCreateCompatibleDC */
     nulldrv_CreateDC,                   /* pCreateDC */
