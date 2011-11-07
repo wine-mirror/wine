@@ -138,8 +138,6 @@ DWORD DSOUND_secpos_to_bufpos(const IDirectSoundBufferImpl *dsb, DWORD secpos, D
 }
 
 /** Convert a resampled pointer that fits for primary to a 'native' sample pointer
- * freqAccNext is used here rather than freqAcc: In case the app wants to fill up to
- * the play position it won't overwrite it
  */
 static DWORD DSOUND_bufpos_to_secpos(const IDirectSoundBufferImpl *dsb, DWORD bufpos)
 {
@@ -148,12 +146,15 @@ static DWORD DSOUND_bufpos_to_secpos(const IDirectSoundBufferImpl *dsb, DWORD bu
 	DWORD64 acc;
 
 	framelen = bufpos/oAdv;
-	acc = framelen * (DWORD64)dsb->freqAdjust + (DWORD64)dsb->freqAccNext;
+	acc = framelen * (DWORD64)dsb->freqAdjust + (DWORD64)dsb->freqAcc;
 	acc = acc >> DSOUND_FREQSHIFT;
 	pos = (DWORD)acc * iAdv;
-	if (pos >= dsb->buflen)
-		/* Because of differences between freqAcc and freqAccNext, this might happen */
+	if (pos >= dsb->buflen) {
+		/* FIXME: can this happen at all? */
+		ERR("pos >= dsb->buflen: %d >= %d, capping\n", pos, dsb->buflen);
 		pos = dsb->buflen - iAdv;
+	}
+
 	TRACE("Converted %d/%d to %d/%d\n", bufpos, dsb->tmp_buffer_len, pos, dsb->buflen);
 	return pos;
 }
@@ -334,41 +335,32 @@ static inline DWORD DSOUND_BufPtrDiff(DWORD buflen, DWORD ptr1, DWORD ptr2)
  *
  * NOTE: writepos + len <= buflen. When called by mixer, MixOne makes sure of this.
  */
-static void DSOUND_MixToTemporary(const IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD len)
+static void DSOUND_MixToTemporary(const IDirectSoundBufferImpl *dsb, DWORD tmp_len)
 {
 	INT	size;
-	BYTE	*ibp, *obp, *obp_begin;
+	BYTE	*ibp, *obp;
 	INT	iAdvance = dsb->pwfx->nBlockAlign;
 	INT	oAdvance = dsb->device->pwfx->nBlockAlign;
-	DWORD freqAcc, overshot, maxlen;
+	DWORD freqAcc;
 
-	assert(writepos + len <= dsb->buflen);
-	if (writepos + len < dsb->buflen)
-		len += dsb->pwfx->nBlockAlign;
-
-	maxlen = DSOUND_secpos_to_bufpos(dsb, len, 0, NULL);
-
-	ibp = dsb->buffer->memory + writepos;
-	if (dsb->device->tmp_buffer_len < maxlen || !dsb->device->tmp_buffer)
+	ibp = dsb->buffer->memory + dsb->sec_mixpos;
+	if (dsb->device->tmp_buffer_len < tmp_len || !dsb->device->tmp_buffer)
 	{
-		dsb->device->tmp_buffer_len = maxlen;
+		dsb->device->tmp_buffer_len = tmp_len;
 		if (dsb->device->tmp_buffer)
-			dsb->device->tmp_buffer = HeapReAlloc(GetProcessHeap(), 0, dsb->device->tmp_buffer, maxlen);
+			dsb->device->tmp_buffer = HeapReAlloc(GetProcessHeap(), 0, dsb->device->tmp_buffer, tmp_len);
 		else
-			dsb->device->tmp_buffer = HeapAlloc(GetProcessHeap(), 0, maxlen);
-		obp_begin = dsb->device->tmp_buffer;
+			dsb->device->tmp_buffer = HeapAlloc(GetProcessHeap(), 0, tmp_len);
 	}
-	else
-		obp_begin = dsb->device->tmp_buffer;
+	obp = dsb->device->tmp_buffer;
 
 	TRACE("(%p, %p)\n", dsb, ibp);
-	size = len / iAdvance;
+	size = tmp_len / oAdvance;
 
 	/* Check for same sample rate */
 	if (dsb->freq == dsb->device->pwfx->nSamplesPerSec) {
 		TRACE("(%p) Same sample rate %d = primary %d\n", dsb,
 			dsb->freq, dsb->device->pwfx->nSamplesPerSec);
-		obp = obp_begin;
 
 		cp_fields(dsb, ibp, obp, iAdvance, oAdvance, size, 0, 1 << DSOUND_FREQSHIFT);
 		return;
@@ -377,22 +369,7 @@ static void DSOUND_MixToTemporary(const IDirectSoundBufferImpl *dsb, DWORD write
 	/* Mix in different sample rates */
 	TRACE("(%p) Adjusting frequency: %d -> %d\n", dsb, dsb->freq, dsb->device->pwfx->nSamplesPerSec);
 
-	DSOUND_secpos_to_bufpos(dsb, writepos, dsb->sec_mixpos, &freqAcc);
-	overshot = freqAcc >> DSOUND_FREQSHIFT;
-	if (overshot)
-	{
-		if (overshot >= size)
-			return;
-		size -= overshot;
-		writepos += overshot * iAdvance;
-		if (writepos >= dsb->buflen)
-			return;
-		ibp = dsb->buffer->memory + writepos;
-		freqAcc &= (1 << DSOUND_FREQSHIFT) - 1;
-		TRACE("Overshot: %d, freqAcc: %04x\n", overshot, freqAcc);
-	}
-
-	obp = obp_begin;
+	DSOUND_secpos_to_bufpos(dsb, dsb->sec_mixpos, dsb->sec_mixpos, &freqAcc);
 
 	/* FIXME: Small problem here when we're overwriting buf_mixpos, it then STILL uses old freqAcc, not sure if it matters or not */
 	cp_fields(dsb, ibp, obp, iAdvance, oAdvance, size, freqAcc, dsb->freqAdjust);
@@ -497,7 +474,7 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 	}
 
 	/* Resample buffer to temporary buffer specifically allocated for this purpose, if needed */
-	DSOUND_MixToTemporary(dsb, dsb->sec_mixpos, DSOUND_bufpos_to_secpos(dsb, dsb->buf_mixpos+len) - dsb->sec_mixpos);
+	DSOUND_MixToTemporary(dsb, len);
 	ibuf = dsb->device->tmp_buffer;
 
 	/* Apply volume if needed */

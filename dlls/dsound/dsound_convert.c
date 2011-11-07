@@ -66,8 +66,8 @@ static inline void src_advance(const void **src, UINT stride, INT *count, UINT *
         ULONG adv = (*freqAcc >> DSOUND_FREQSHIFT);
         *freqAcc &= (1 << DSOUND_FREQSHIFT) - 1;
         *(const char **)src += adv * stride;
-        *count -= adv;
     }
+    *count -= 1;
 }
 
 static void convert_8_to_8 (const void *src, void *dst, UINT src_stride,
