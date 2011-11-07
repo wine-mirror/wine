@@ -241,7 +241,7 @@ static inline void stateblock_set_bits(DWORD *map, UINT map_size)
 }
 
 /* Set all members of a stateblock savedstate to the given value */
-static void stateblock_savedstates_set_all(SAVEDSTATES *states, DWORD vs_consts, DWORD ps_consts)
+static void stateblock_savedstates_set_all(struct wined3d_saved_states *states, DWORD vs_consts, DWORD ps_consts)
 {
     unsigned int i;
 
@@ -274,7 +274,7 @@ static void stateblock_savedstates_set_all(SAVEDSTATES *states, DWORD vs_consts,
     memset(states->vertexShaderConstantsF, TRUE, sizeof(BOOL) * vs_consts);
 }
 
-static void stateblock_savedstates_set_pixel(SAVEDSTATES *states, const DWORD num_constants)
+static void stateblock_savedstates_set_pixel(struct wined3d_saved_states *states, const DWORD num_constants)
 {
     DWORD texture_mask = 0;
     WORD sampler_mask = 0;
@@ -300,7 +300,7 @@ static void stateblock_savedstates_set_pixel(SAVEDSTATES *states, const DWORD nu
     memset(states->pixelShaderConstantsF, TRUE, sizeof(BOOL) * num_constants);
 }
 
-static void stateblock_savedstates_set_vertex(SAVEDSTATES *states, const DWORD num_constants)
+static void stateblock_savedstates_set_vertex(struct wined3d_saved_states *states, const DWORD num_constants)
 {
     DWORD texture_mask = 0;
     WORD sampler_mask = 0;

@@ -2205,10 +2205,8 @@ struct wined3d_vertex_declaration
     BOOL                    half_float_conv_needed;
 };
 
-/* Internal state Block for Begin/End/Capture/Create/Apply info  */
-/*   Note: Very long winded but gl Lists are not flexible enough */
-/*   to resolve everything we need, so doing it manually for now */
-typedef struct SAVEDSTATES {
+struct wined3d_saved_states
+{
     DWORD transform[(HIGHEST_TRANSFORMSTATE >> 5) + 1];
     WORD streamSource;                          /* MAX_STREAMS, 16 */
     WORD streamFreq;                            /* MAX_STREAMS, 16 */
@@ -2232,7 +2230,7 @@ typedef struct SAVEDSTATES {
     DWORD vertexShader : 1;
     DWORD scissorRect : 1;
     DWORD padding : 4;
-} SAVEDSTATES;
+};
 
 struct StageState {
     DWORD stage;
@@ -2298,7 +2296,7 @@ struct wined3d_stateblock
     WINED3DSTATEBLOCKTYPE     blockType;
 
     /* Array indicating whether things have been set or changed */
-    SAVEDSTATES               changed;
+    struct wined3d_saved_states changed;
     struct wined3d_state state;
 
     /* Contained state management */
