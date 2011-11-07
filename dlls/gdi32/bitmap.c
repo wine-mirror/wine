@@ -65,6 +65,27 @@ DWORD nulldrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *inf
     return dib_driver.pPutImage( NULL, hbitmap, clip, info, bits, src, dst, rop );
 }
 
+BOOL nulldrv_CopyBitmap( HBITMAP src, HBITMAP dst )
+{
+    BOOL ret = TRUE;
+    BITMAPOBJ *src_bmp = GDI_GetObjPtr( src, OBJ_BITMAP );
+
+    if (!src_bmp) return FALSE;
+    if (src_bmp->bitmap.bmBits)
+    {
+        BITMAPOBJ *dst_bmp = GDI_GetObjPtr( dst, OBJ_BITMAP );
+        int stride = get_dib_stride( dst_bmp->bitmap.bmWidth, dst_bmp->bitmap.bmBitsPixel );
+        dst_bmp->bitmap.bmBits = HeapAlloc( GetProcessHeap(), 0, dst_bmp->bitmap.bmHeight * stride );
+        if (dst_bmp->bitmap.bmBits)
+            memcpy( dst_bmp->bitmap.bmBits, src_bmp->bitmap.bmBits, dst_bmp->bitmap.bmHeight * stride );
+        else
+            ret = FALSE;
+        GDI_ReleaseObj( dst );
+    }
+    GDI_ReleaseObj( src );
+    return ret;
+}
+
 
 /******************************************************************************
  * CreateBitmap [GDI32.@]

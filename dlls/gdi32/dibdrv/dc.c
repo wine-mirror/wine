@@ -391,6 +391,14 @@ static BOOL dibdrv_DeleteDC( PHYSDEV dev )
 }
 
 /***********************************************************************
+ *           dibdrv_CopyBitmap
+ */
+static BOOL dibdrv_CopyBitmap( HBITMAP src, HBITMAP dst )
+{
+    return nulldrv_CopyBitmap( src, dst );
+}
+
+/***********************************************************************
  *           dibdrv_DeleteBitmap
  */
 static BOOL dibdrv_DeleteBitmap( HBITMAP bitmap )
@@ -523,7 +531,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pChoosePixelFormat */
     NULL,                               /* pChord */
     NULL,                               /* pCloseFigure */
-    NULL,                               /* pCopyBitmap */
+    dibdrv_CopyBitmap,                  /* pCopyBitmap */
     NULL,                               /* pCreateBitmap */
     NULL,                               /* pCreateCompatibleDC */
     dibdrv_CreateDC,                    /* pCreateDC */

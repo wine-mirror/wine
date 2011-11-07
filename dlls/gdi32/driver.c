@@ -209,11 +209,6 @@ static BOOL nulldrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom
     return TRUE;
 }
 
-static BOOL nulldrv_CopyBitmap( HBITMAP src, HBITMAP dst )
-{
-    return TRUE;
-}
-
 static BOOL nulldrv_CreateBitmap( PHYSDEV dev, HBITMAP bitmap )
 {
     return TRUE;
