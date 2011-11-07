@@ -3096,7 +3096,7 @@ DWORD CDECL wined3d_surface_get_pitch(const struct wined3d_surface *surface)
 
     TRACE("surface %p.\n", surface);
 
-    if ((format->flags & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_BLOCKS)
+    if (format->flags & WINED3DFMT_FLAG_BLOCKS)
     {
         /* Since compressed formats are block based, pitch means the amount of
          * bytes to the next row of block rather than the next row of pixels. */
@@ -3743,7 +3743,10 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
 
     surface->surface_ops->surface_map(surface, rect, flags);
 
-    locked_rect->Pitch = wined3d_surface_get_pitch(surface);
+    if (format->flags & WINED3DFMT_FLAG_BROKEN_PITCH)
+        locked_rect->Pitch = surface->resource.width * format->byte_count;
+    else
+        locked_rect->Pitch = wined3d_surface_get_pitch(surface);
 
     if (!rect)
     {
