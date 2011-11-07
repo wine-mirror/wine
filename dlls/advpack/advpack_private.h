@@ -21,7 +21,7 @@
 #ifndef __ADVPACK_PRIVATE_H
 #define __ADVPACK_PRIVATE_H
 
-HRESULT do_ocx_reg(HMODULE hocx, BOOL do_reg) DECLSPEC_HIDDEN;
+HRESULT do_ocx_reg(HMODULE hocx, BOOL do_reg, const WCHAR *flags, const WCHAR *param) DECLSPEC_HIDDEN;
 LPWSTR get_parameter(LPWSTR *params, WCHAR separator) DECLSPEC_HIDDEN;
 void set_ldids(HINF hInf, LPCWSTR pszInstallSection, LPCWSTR pszWorkingDir) DECLSPEC_HIDDEN;
 
