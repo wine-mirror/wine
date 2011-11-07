@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-10-02 17:22+0900\n"
+"PO-Revision-Date: 2011-11-05 21:36+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Japanese\n"
@@ -2323,15 +2323,16 @@ msgid "&Settings..."
 msgstr "設定(&S)..."
 
 #: inetcpl.rc:65
-#, fuzzy
 msgid "Delete browsing history"
-msgstr " 閲覧履歴 "
+msgstr "閲覧履歴の削除"
 
 #: inetcpl.rc:68
 msgid ""
 "Temporary internet files\n"
 "Cached copies of webpages, images and certificates."
 msgstr ""
+"インターネット一時ファイル\n"
+"キャッシュされたウェブページや画像、証明書です。"
 
 #: inetcpl.rc:70
 msgid ""
@@ -2339,24 +2340,33 @@ msgid ""
 "Files saved on your computer by websites, which store things like user "
 "preferences and login information."
 msgstr ""
+"クッキー\n"
+"ウェブサイトによってコンピュータ上に保存されたファイルで、ユーザー設定やログ"
+"イン情報のようなものが保管されています。"
 
 #: inetcpl.rc:72
 msgid ""
 "History\n"
 "List of websites you have accessed."
 msgstr ""
+"履歴\n"
+"アクセスしたウェブサイトの一覧です。"
 
 #: inetcpl.rc:74
 msgid ""
 "Form data\n"
 "Usernames and other information you have entered into forms."
 msgstr ""
+"フォーム データ\n"
+"ユーザ名やフォームに入力した情報です。"
 
 #: inetcpl.rc:76
 msgid ""
 "Passwords\n"
 "Saved passwords you have entered into forms."
 msgstr ""
+"パスワード\n"
+"フォームに入力した保存されたパスワードです。"
 
 #: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
 #: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
@@ -2373,9 +2383,8 @@ msgid "Security"
 msgstr "セキュリティ"
 
 #: inetcpl.rc:90
-#, fuzzy
 msgid "Listview"
-msgstr "一覧"
+msgstr ""
 
 #: inetcpl.rc:95
 msgid "trackbar"
@@ -6882,6 +6891,19 @@ msgid ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
+"Wine はフリーソフトウェアです。あなたはこれを、フリーソフトウェア財団によって"
+"発行されたGNU 劣等一般公衆利用許諾契約書(バージョン2.1 か、希望によってはそれ"
+"以降のバージョンのうちどれか)の定める条件の下で再頒布または改変することができ"
+"ます。\n"
+"\n"
+"Wine は有用であることを願って頒布されますが、*全くの無保証* です。商業可能性"
+"の保証や特定の目的への適合性は、言外に示されたものも含め全く存在しません。詳"
+"しくはGNU 劣等一般公衆利用許諾契約書をご覧ください。\n"
+"\n"
+"あなたは Wine と共に、GNU 劣等一般公衆利用許諾契約書の複製物を一部受け取った"
+"はずです。もし受け取っていなければ、フリーソフトウェア財団まで請求してくださ"
+"い(宛先は the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, "
+"Boston, MA 02110-1301, USA)。"
 
 #: shell32.rc:266
 msgid "Wine License"
@@ -6892,9 +6914,8 @@ msgid "Trash"
 msgstr "ごみ箱"
 
 #: shlwapi.rc:27
-#, fuzzy
 msgid "%d bytes"
-msgstr "%ld バイト"
+msgstr "%d バイト"
 
 #: shlwapi.rc:28
 msgctxt "time unit: hours"
@@ -7836,9 +7857,8 @@ msgstr ""
 "\n"
 
 #: attrib.rc:28
-#, fuzzy
 msgid "%1: File Not Found\n"
-msgstr "%s: ファイルが見つかりません\n"
+msgstr "%1: ファイルが見つかりません\n"
 
 #: attrib.rc:47
 msgid ""
@@ -8129,17 +8149,16 @@ msgstr ""
 "PATH %PATH%;c:\\temp\n"
 
 #: cmd.rc:128
-#, fuzzy
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
 "It is mainly useful in batch files to allow the user to read the output\n"
 "of a previous command before it scrolls off the screen.\n"
 msgstr ""
-"PAUSE は画面に「続けるにはリターンキーを押して下さい」と\n"
-"表示し、ユーザがリターンキーを押すのを待機します。これは\n"
-"主にバッチファイル中で実行されたコマンドの結果がスクロー\n"
-"ルする前にユーザが読めるようにしたい場合に有用です。\n"
+"PAUSE は画面にキーを押してくださいとメッセージを表示します。\n"
+"\n"
+"これは主にバッチファイル中で実行されたコマンドの結果がスクロールする前\n"
+"にユーザが読めるようにしたい場合に有用です。\n"
 
 #: cmd.rc:149
 msgid ""
@@ -8405,7 +8424,6 @@ msgstr ""
 "ます。\n"
 
 #: cmd.rc:289
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -8465,6 +8483,7 @@ msgstr ""
 "MORE\t\t出力をページ区切りで表示\n"
 "MOVE\t\tファイルまたはディレクトリツリーを移動\n"
 "PATH\t\tパスを表示または設定\n"
+"PAUSE\t\tバッチファイルの実行を一時停止\n"
 "POPD\t\tPUSHDで最後に保存したディレクトリに変更\n"
 "PROMPT\t\tコマンドプロンプトを変更\n"
 "PUSHD\t\t現在のディレクトリを保存し、新ディレクトリに変更\n"
@@ -8511,7 +8530,7 @@ msgstr "上書き %s"
 
 #: cmd.rc:297
 msgid "More..."
-msgstr ""
+msgstr "続ける..."
 
 #: cmd.rc:298
 msgid "Line in Batch processing possibly truncated. Using:\n"
@@ -8609,9 +8628,8 @@ msgid "PATH not found\n"
 msgstr "PATH が見つかりません\n"
 
 #: cmd.rc:321
-#, fuzzy
 msgid "Press any key to continue... "
-msgstr "続けるにはリターンキーを押して下さい: "
+msgstr "続けるには何かキーを押して下さい... "
 
 #: cmd.rc:322
 msgid "Wine Command Prompt"
@@ -8769,14 +8787,12 @@ msgstr ""
 "'サービス'は停止するサービスの名前です。\n"
 
 #: net.rc:30
-#, fuzzy
 msgid "Stopping dependent service: %1\n"
-msgstr "依存するサービスを停止中: %s\n"
+msgstr "依存するサービスを停止中: %1\n"
 
 #: net.rc:31
-#, fuzzy
 msgid "Could not stop service %1\n"
-msgstr "サービス %s を停止できませんでした。\n"
+msgstr "サービス %1 を停止できませんでした。\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
@@ -8787,34 +8803,28 @@ msgid "Could not get handle to service.\n"
 msgstr "サービスのハンドルを取得できませんでした。\n"
 
 #: net.rc:34
-#, fuzzy
 msgid "The %1 service is starting.\n"
-msgstr "%s サービスを開始しています。\n"
+msgstr "%1 サービスを開始しています。\n"
 
 #: net.rc:35
-#, fuzzy
 msgid "The %1 service was started successfully.\n"
-msgstr "%s サービスを起動しました。\n"
+msgstr "%1 サービスを起動しました。\n"
 
 #: net.rc:36
-#, fuzzy
 msgid "The %1 service failed to start.\n"
-msgstr "%s サービスの起動に失敗しました。\n"
+msgstr "%1 サービスの起動に失敗しました。\n"
 
 #: net.rc:37
-#, fuzzy
 msgid "The %1 service is stopping.\n"
-msgstr "%s サービスを停止中です。\n"
+msgstr "%1 サービスを停止中です。\n"
 
 #: net.rc:38
-#, fuzzy
 msgid "The %1 service was stopped successfully.\n"
-msgstr "%s サービスは停止しました。\n"
+msgstr "%1 サービスは停止しました。\n"
 
 #: net.rc:39
-#, fuzzy
 msgid "The %1 service failed to stop.\n"
-msgstr "%s サービスの停止に失敗しました。\n"
+msgstr "%1 サービスの停止に失敗しました。\n"
 
 #: net.rc:41
 msgid "There are no entries in the list.\n"
@@ -8831,16 +8841,15 @@ msgstr ""
 "---------------------------------------------------------------\n"
 
 #: net.rc:43
-#, fuzzy
 msgid "%1      %2      %3      Open resources: %4!u!\n"
-msgstr "%s      %s       %s      リソース数: %lu\n"
+msgstr "%1      %2       %3      リソース数: %4!u!\n"
 
 #: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 wineconsole.rc:131
 #: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:68
 #: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
 #: wordpad.rc:246
 msgid "OK"
-msgstr "正常"
+msgstr "OK"
 
 #: net.rc:45
 msgid "Paused"
@@ -9966,7 +9975,7 @@ msgstr ""
 "め全く存在しません。詳しくはGNU 劣等一般公衆利用許諾契約書をご覧くださ\n"
 "い。\n"
 "\n"
-"あなたはこのライブラリと共に、GNU 劣等一般公衆利用許諾契約書の複製物を\n"
+"あなたはこのプログラムと共に、GNU 劣等一般公衆利用許諾契約書の複製物を\n"
 "一部受け取ったはずです。もし受け取っていなければ、フリーソフトウェア財\n"
 "団まで請求してください(宛先は the Free Software Foundation, Inc.,\n"
 "51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA)。\n"
@@ -10714,21 +10723,19 @@ msgstr "Wine設定 %s用"
 
 #: winecfg.rc:87
 msgid "Selected driver: %s"
-msgstr ""
+msgstr "選択されたドライバ: %s"
 
 #: winecfg.rc:88
 msgid "(None)"
-msgstr "なし"
+msgstr "(なし)"
 
 #: winecfg.rc:89
-#, fuzzy
 msgid "Audio test failed!"
-msgstr "ハード ディスク リセットが失敗しました。\n"
+msgstr "オーディオ テストに失敗!"
 
 #: winecfg.rc:91
-#, fuzzy
 msgid "(System default)"
-msgstr "システム パス"
+msgstr "(システム デフォルト)"
 
 #: winecfg.rc:51
 msgid ""
@@ -11137,9 +11144,8 @@ msgstr ""
 "スクリーン バッファ サイズはウィンドウ バッファ サイズ以上にしてください。"
 
 #: wineconsole.rc:34
-#, fuzzy
 msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
-msgstr "それぞれの文字は %ld ピクセルの幅 %ld ピクセルの高さ"
+msgstr "それぞれの文字は %1!u! ピクセルの幅、%2!u! ピクセルの高さ"
 
 #: wineconsole.rc:35
 msgid "This is a test"
@@ -11449,9 +11455,8 @@ msgid "Index/Inode"
 msgstr "Index/Inode"
 
 #: winefile.rc:120
-#, fuzzy
 msgid "%1 of %2 free"
-msgstr "%s の空き (全容量 %s)"
+msgstr "全 %2 中、%1 の空き"
 
 #: winemine.rc:34
 msgid "&Game"
@@ -11522,9 +11527,8 @@ msgid "Rows"
 msgstr "Rows"
 
 #: winemine.rc:87
-#, fuzzy
 msgid "Columns"
-msgstr "列(&C)"
+msgstr "Columns"
 
 #: winemine.rc:88
 msgid "Mines"
@@ -11982,59 +11986,50 @@ msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr "パラメータの数が違います。xcopy /? で使い方を表示します\n"
 
 #: xcopy.rc:28
-#, fuzzy
 msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
-msgstr "無効なパラメータ '%s' です。xcopy /? で使い方を表示します\n"
+msgstr "無効なパラメータ '%1' です。xcopy /? で使い方を表示します\n"
 
 #: xcopy.rc:29
 msgid "Press <enter> to begin copying\n"
 msgstr "コピーを開始するには <enter> を押してください\n"
 
 #: xcopy.rc:30
-#, fuzzy
 msgid "%1!d! file(s) would be copied\n"
-msgstr "%d ファイルがコピーされる見込みです。\n"
+msgstr "%1!d! ファイルがコピーされる見込みです。\n"
 
 #: xcopy.rc:31
-#, fuzzy
 msgid "%1!d! file(s) copied\n"
-msgstr "%d ファイルをコピーしました\n"
+msgstr "%1!d! ファイルをコピーしました\n"
 
 #: xcopy.rc:34
-#, fuzzy
 msgid ""
 "Is '%1' a filename or directory\n"
 "on the target?\n"
 "(F - File, D - Directory)\n"
 msgstr ""
-"送り先の '%s' はファイル名ですか、\n"
+"送り先の '%1' はファイル名ですか、\n"
 "ディレクトリですか?\n"
 "(F - ファイル、D - ディレクトリ)\n"
 
 #: xcopy.rc:35
-#, fuzzy
 msgid "%1? (Yes|No)\n"
-msgstr "%s? (Yes|No)\n"
+msgstr "%1? (Yes|No)\n"
 
 #: xcopy.rc:36
-#, fuzzy
 msgid "Overwrite %1? (Yes|No|All)\n"
-msgstr "%s を上書きしますか? (Yes|No|All)\n"
+msgstr "%1 を上書きしますか? (Yes|No|All)\n"
 
 #: xcopy.rc:37
-#, fuzzy
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr "'%s' から '%s' へのコピーは失敗しました。戻り値 %d\n"
+msgstr "'%1' から '%2' へのコピーは失敗しました。戻り値 %d\n"
 
 #: xcopy.rc:38
-#, fuzzy
 msgid "Failed to open '%1'\n"
-msgstr "'%s' を開けません\n"
+msgstr "'%1' を開けません\n"
 
 #: xcopy.rc:39
-#, fuzzy
 msgid "Failed during reading of '%1'\n"
-msgstr "'%s' の読み込み中に失敗しました\n"
+msgstr "'%1' の読み込み中に失敗しました\n"
 
 #: xcopy.rc:43
 msgctxt "File key"
