@@ -126,6 +126,7 @@ LONG CoreAudio_MIDIInit(void)
     if (MIDIIn_NumDevs > 0)
     {
         InitializeCriticalSection(&midiInLock);
+        midiInLock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": midiInLock");
         MIDIInThreadPortName = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("MIDIInThreadPortName.%u"), getpid());
         CreateThread(NULL, 0, MIDIIn_MessageThread, NULL, 0, NULL);
 
@@ -207,6 +208,7 @@ LONG CoreAudio_MIDIRelease(void)
         CFMessagePortSendRequest(messagePort, 1, NULL, 0.0, 0.0, NULL, NULL);
         CFRelease(messagePort);
 
+        midiInLock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&midiInLock);
     }
 

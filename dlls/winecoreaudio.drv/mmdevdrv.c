@@ -172,6 +172,13 @@ typedef struct _SessionMgr {
 static HANDLE g_timer_q;
 
 static CRITICAL_SECTION g_sessions_lock;
+static CRITICAL_SECTION_DEBUG g_sessions_lock_debug =
+{
+    0, 0, &g_sessions_lock,
+    { &g_sessions_lock_debug.ProcessLocksList, &g_sessions_lock_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": g_sessions_lock") }
+};
+static CRITICAL_SECTION g_sessions_lock = { &g_sessions_lock_debug, -1, 0, 0, 0, 0 };
 static struct list g_sessions = LIST_INIT(g_sessions);
 
 static HRESULT AudioClock_GetPosition_nolock(ACImpl *This, UINT64 *pos,
@@ -231,14 +238,19 @@ static inline SessionMgr *impl_from_IAudioSessionManager2(IAudioSessionManager2 
 
 BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
 {
-    if(reason == DLL_PROCESS_ATTACH){
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
         g_timer_q = CreateTimerQueue();
         if(!g_timer_q)
             return FALSE;
+        break;
 
-        InitializeCriticalSection(&g_sessions_lock);
+    case DLL_PROCESS_DETACH:
+        g_sessions_lock.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&g_sessions_lock);
+        break;
     }
-
     return TRUE;
 }
 
@@ -777,6 +789,7 @@ static AudioSession *create_session(const GUID *guid, IMMDevice *device,
     list_add_head(&g_sessions, &ret->entry);
 
     InitializeCriticalSection(&ret->lock);
+    ret->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": AudioSession.lock");
 
     session_init_vols(ret, num_channels);
 
