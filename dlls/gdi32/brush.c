@@ -488,16 +488,6 @@ static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc )
             if (bmp && bmp->funcs != physdev->funcs) store_bitmap_bits( brush, bmp );
             GDI_ReleaseObj( bitmap );
         }
-        if (brush->logbrush.lbStyle == BS_PATTERN)
-        {
-            PHYSDEV pattern_dev = physdev;
-            /* FIXME: This will go away once the dib driver implements
-               pattern brushes */
-            if(pattern_dev == dc->dibdrv)
-                pattern_dev = GET_NEXT_PHYSDEV( physdev, pSelectBrush );
-
-            BITMAP_SetOwnerDC( bitmap, pattern_dev );
-        }
 
         info   = brush->info;
         bits   = brush->bits.ptr;

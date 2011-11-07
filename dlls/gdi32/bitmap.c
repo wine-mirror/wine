@@ -530,7 +530,7 @@ static void set_initial_bitmap_bits( HBITMAP hbitmap, BITMAPOBJ *bmp )
  * bitmap is selected into a device to initialize the bitmap function
  * table.
  */
-BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, PHYSDEV physdev )
+static BOOL BITMAP_SetOwnerDC( HBITMAP hbitmap, PHYSDEV physdev )
 {
     BITMAPOBJ *bitmap;
     BOOL ret = TRUE;
