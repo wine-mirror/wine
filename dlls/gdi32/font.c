@@ -2095,20 +2095,23 @@ done:
         {
             otm = HeapAlloc(GetProcessHeap(), 0, size);
             GetOutlineTextMetricsW(hdc, size, otm);
-            underlinePos = otm->otmsUnderscorePosition;
-            underlineWidth = otm->otmsUnderscoreSize;
-            strikeoutPos = otm->otmsStrikeoutPosition;
-            strikeoutWidth = otm->otmsStrikeoutSize;
+            underlinePos = abs( INTERNAL_YWSTODS( dc, otm->otmsUnderscorePosition ));
+            if (otm->otmsUnderscorePosition < 0) underlinePos = -underlinePos;
+            underlineWidth = abs( INTERNAL_YWSTODS( dc, otm->otmsUnderscoreSize ));
+            if (otm->otmsUnderscoreSize < 0) underlineWidth = -underlineWidth;
+            strikeoutPos = abs( INTERNAL_YWSTODS( dc, otm->otmsStrikeoutPosition ));
+            if (otm->otmsStrikeoutPosition < 0) strikeoutPos = -strikeoutPos;
+            strikeoutWidth = abs( INTERNAL_YWSTODS( dc, otm->otmsStrikeoutSize ));
             HeapFree(GetProcessHeap(), 0, otm);
         }
 
 
         if (lf.lfUnderline)
         {
-            pts[0].x = x - underlinePos * sinEsc;
-            pts[0].y = y - underlinePos * cosEsc;
-            pts[1].x = x + width.x - underlinePos * sinEsc;
-            pts[1].y = y + width.y - underlinePos * cosEsc;
+            pts[0].x = x - (underlinePos + underlineWidth / 2) * sinEsc;
+            pts[0].y = y - (underlinePos + underlineWidth / 2) * cosEsc;
+            pts[1].x = x + width.x - (underlinePos + underlineWidth / 2) * sinEsc;
+            pts[1].y = y + width.y - (underlinePos + underlineWidth / 2) * cosEsc;
             pts[2].x = pts[1].x + underlineWidth * sinEsc;
             pts[2].y = pts[1].y + underlineWidth * cosEsc;
             pts[3].x = pts[0].x + underlineWidth * sinEsc;
@@ -2121,10 +2124,10 @@ done:
 
         if (lf.lfStrikeOut)
         {
-            pts[0].x = x - strikeoutPos * sinEsc;
-            pts[0].y = y - strikeoutPos * cosEsc;
-            pts[1].x = x + width.x - strikeoutPos * sinEsc;
-            pts[1].y = y + width.y - strikeoutPos * cosEsc;
+            pts[0].x = x - (strikeoutPos + strikeoutWidth / 2) * sinEsc;
+            pts[0].y = y - (strikeoutPos + strikeoutWidth / 2) * cosEsc;
+            pts[1].x = x + width.x - (strikeoutPos + strikeoutWidth / 2) * sinEsc;
+            pts[1].y = y + width.y - (strikeoutPos + strikeoutWidth / 2) * cosEsc;
             pts[2].x = pts[1].x + strikeoutWidth * sinEsc;
             pts[2].y = pts[1].y + strikeoutWidth * cosEsc;
             pts[3].x = pts[0].x + strikeoutWidth * sinEsc;
