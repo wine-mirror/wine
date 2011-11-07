@@ -538,6 +538,7 @@ SRCDIR_INCLUDES = \
 	winnls.h \
 	winnls32.h \
 	winnt.h \
+	winnt.rh \
 	winperf.h \
 	winreg.h \
 	winresrc.h \
