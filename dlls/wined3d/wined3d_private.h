@@ -1949,7 +1949,6 @@ typedef struct wineD3DSurface_DIB {
     HBITMAP DIBsection;
     void* bitmap_data;
     UINT bitmap_size;
-    HGDIOBJ holdbitmap;
     BOOL client_memory;
 } wineD3DSurface_DIB;
 

@@ -97,10 +97,7 @@ static void surface_cleanup(struct wined3d_surface *surface)
 
     if (surface->flags & SFLAG_DIBSECTION)
     {
-        /* Release the DC. */
-        SelectObject(surface->hDC, surface->dib.holdbitmap);
         DeleteDC(surface->hDC);
-        /* Release the DIB section. */
         DeleteObject(surface->dib.DIBsection);
         surface->dib.bitmap_data = NULL;
         surface->resource.allocatedMemory = NULL;
@@ -511,7 +508,7 @@ static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
 
     /* Now allocate a DC. */
     surface->hDC = CreateCompatibleDC(0);
-    surface->dib.holdbitmap = SelectObject(surface->hDC, surface->dib.DIBsection);
+    SelectObject(surface->hDC, surface->dib.DIBsection);
     TRACE("Using wined3d palette %p.\n", surface->palette);
     SelectPalette(surface->hDC, surface->palette ? surface->palette->hpal : 0, FALSE);
 
@@ -3139,9 +3136,7 @@ HRESULT CDECL wined3d_surface_set_mem(struct wined3d_surface *surface, void *mem
         /* Do I have to copy the old surface content? */
         if (surface->flags & SFLAG_DIBSECTION)
         {
-            SelectObject(surface->hDC, surface->dib.holdbitmap);
             DeleteDC(surface->hDC);
-            /* Release the DIB section. */
             DeleteObject(surface->dib.DIBsection);
             surface->dib.bitmap_data = NULL;
             surface->resource.allocatedMemory = NULL;

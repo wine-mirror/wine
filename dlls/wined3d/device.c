@@ -5220,10 +5220,7 @@ static HRESULT updateSurfaceDesc(struct wined3d_surface *surface,
     /* Reallocate proper memory for the front and back buffer and adjust their sizes */
     if (surface->flags & SFLAG_DIBSECTION)
     {
-        /* Release the DC */
-        SelectObject(surface->hDC, surface->dib.holdbitmap);
         DeleteDC(surface->hDC);
-        /* Release the DIB section */
         DeleteObject(surface->dib.DIBsection);
         surface->dib.bitmap_data = NULL;
         surface->resource.allocatedMemory = NULL;
