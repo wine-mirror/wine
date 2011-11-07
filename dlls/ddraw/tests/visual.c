@@ -1493,13 +1493,13 @@ static void D3D1_TextureMapBlendTest(void)
     ok(hr == D3D_OK, "IDirect3DExecuteBuffer_SetExecuteData failed with %08x\n", hr);
 
     hr = IDirect3DDevice_BeginScene(Direct3DDevice1);
-    ok(hr == D3D_OK, "IDirect3DDevice3_BeginScene failed with %08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice_BeginScene failed with %08x\n", hr);
 
     if (SUCCEEDED(hr)) {
         hr = IDirect3DDevice_Execute(Direct3DDevice1, ExecuteBuffer, Viewport, D3DEXECUTE_UNCLIPPED);
         ok(hr == D3D_OK, "IDirect3DDevice_Execute failed, hr = %08x\n", hr);
         hr = IDirect3DDevice_EndScene(Direct3DDevice1);
-        ok(hr == D3D_OK, "IDirect3DDevice3_EndScene failed, hr = %08x\n", hr);
+        ok(hr == D3D_OK, "IDirect3DDevice_EndScene failed, hr = %08x\n", hr);
     }
 
     color = D3D1_getPixelColor(DirectDraw1, Surface1, 5, 5);
@@ -1614,13 +1614,13 @@ static void D3D1_TextureMapBlendTest(void)
     ok(hr == D3D_OK, "IDirect3DExecuteBuffer_SetExecuteData failed with %08x\n", hr);
 
     hr = IDirect3DDevice_BeginScene(Direct3DDevice1);
-    ok(hr == D3D_OK, "IDirect3DDevice3_BeginScene failed with %08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice_BeginScene failed with %08x\n", hr);
 
     if (SUCCEEDED(hr)) {
         hr = IDirect3DDevice_Execute(Direct3DDevice1, ExecuteBuffer, Viewport, D3DEXECUTE_UNCLIPPED);
         ok(hr == D3D_OK, "IDirect3DDevice_Execute failed, hr = %08x\n", hr);
         hr = IDirect3DDevice_EndScene(Direct3DDevice1);
-        ok(hr == D3D_OK, "IDirect3DDevice3_EndScene failed, hr = %08x\n", hr);
+        ok(hr == D3D_OK, "IDirect3DDevice_EndScene failed, hr = %08x\n", hr);
     }
 
     color = D3D1_getPixelColor(DirectDraw1, Surface1, 5, 5);
@@ -1736,13 +1736,13 @@ static void D3D1_TextureMapBlendTest(void)
     ok(hr == D3D_OK, "IDirect3DExecuteBuffer_SetExecuteData failed with %08x\n", hr);
 
     hr = IDirect3DDevice_BeginScene(Direct3DDevice1);
-    ok(hr == D3D_OK, "IDirect3DDevice3_BeginScene failed with %08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice_BeginScene failed with %08x\n", hr);
 
     if (SUCCEEDED(hr)) {
         hr = IDirect3DDevice_Execute(Direct3DDevice1, ExecuteBuffer, Viewport, D3DEXECUTE_UNCLIPPED);
         ok(hr == D3D_OK, "IDirect3DDevice_Execute failed, hr = %08x\n", hr);
         hr = IDirect3DDevice_EndScene(Direct3DDevice1);
-        ok(hr == D3D_OK, "IDirect3DDevice3_EndScene failed, hr = %08x\n", hr);
+        ok(hr == D3D_OK, "IDirect3DDevice_EndScene failed, hr = %08x\n", hr);
     }
 
     color = D3D1_getPixelColor(DirectDraw1, Surface1, 5, 5);
@@ -1862,13 +1862,13 @@ static void D3D1_TextureMapBlendTest(void)
     ok(hr == D3D_OK, "IDirect3DExecuteBuffer_SetExecuteData failed with %08x\n", hr);
 
     hr = IDirect3DDevice_BeginScene(Direct3DDevice1);
-    ok(hr == D3D_OK, "IDirect3DDevice3_BeginScene failed with %08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice_BeginScene failed with %08x\n", hr);
 
     if (SUCCEEDED(hr)) {
         hr = IDirect3DDevice_Execute(Direct3DDevice1, ExecuteBuffer, Viewport, D3DEXECUTE_UNCLIPPED);
         ok(hr == D3D_OK, "IDirect3DDevice_Execute failed, hr = %08x\n", hr);
         hr = IDirect3DDevice_EndScene(Direct3DDevice1);
-        ok(hr == D3D_OK, "IDirect3DDevice3_EndScene failed, hr = %08x\n", hr);
+        ok(hr == D3D_OK, "IDirect3DDevice_EndScene failed, hr = %08x\n", hr);
     }
 
     color = D3D1_getPixelColor(DirectDraw1, Surface1, 5, 5);
@@ -2000,13 +2000,13 @@ static void D3D1_TextureMapBlendTest(void)
         ok(hr == D3D_OK, "IDirect3DExecuteBuffer_SetExecuteData failed with %08x\n", hr);
 
         hr = IDirect3DDevice_BeginScene(Direct3DDevice1);
-        ok(hr == D3D_OK, "IDirect3DDevice3_BeginScene failed with %08x\n", hr);
+        ok(hr == D3D_OK, "IDirect3DDevice_BeginScene failed with %08x\n", hr);
 
         if (SUCCEEDED(hr)) {
             hr = IDirect3DDevice_Execute(Direct3DDevice1, ExecuteBuffer, Viewport, D3DEXECUTE_UNCLIPPED);
             ok(hr == D3D_OK, "IDirect3DDevice_Execute failed, hr = %08x\n", hr);
             hr = IDirect3DDevice_EndScene(Direct3DDevice1);
-            ok(hr == D3D_OK, "IDirect3DDevice3_EndScene failed, hr = %08x\n", hr);
+            ok(hr == D3D_OK, "IDirect3DDevice_EndScene failed, hr = %08x\n", hr);
         }
 
         color = D3D1_getPixelColor(DirectDraw1, Surface1, 5, 5);
@@ -2090,7 +2090,7 @@ static void D3D1_ViewportClearTest(void)
     ok(hr == D3D_OK, "IDirect3DViewport_SetBackground failed: %08x\n", hr);
 
     hr = IDirect3DDevice_BeginScene(Direct3DDevice1);
-    ok(hr == D3D_OK, "IDirect3DDevice3_BeginScene failed with %08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice_BeginScene failed with %08x\n", hr);
 
     if (SUCCEEDED(hr)) {
         D3DRECT rect;
@@ -2112,7 +2112,7 @@ static void D3D1_ViewportClearTest(void)
         ok(hr == D3D_OK, "IDirect3DViewport_Clear failed: %08x\n", hr);
 
         hr = IDirect3DDevice_EndScene(Direct3DDevice1);
-        ok(hr == D3D_OK, "IDirect3DDevice3_EndScene failed, hr = %08x\n", hr);
+        ok(hr == D3D_OK, "IDirect3DDevice_EndScene failed, hr = %08x\n", hr);
         }
 
     color = D3D1_getPixelColor(DirectDraw1, Surface1, 5, 5);
