@@ -1942,14 +1942,12 @@ void volume_add_dirty_box(struct wined3d_volume *volume, const WINED3DBOX *dirty
 void volume_load(const struct wined3d_volume *volume, struct wined3d_context *context, UINT level, BOOL srgb_mode) DECLSPEC_HIDDEN;
 void volume_set_container(struct wined3d_volume *volume, struct wined3d_texture *container) DECLSPEC_HIDDEN;
 
-/*****************************************************************************
- * Structure for DIB Surfaces (GetDC and GDI surfaces)
- */
-typedef struct wineD3DSurface_DIB {
+struct wined3d_surface_dib
+{
     HBITMAP DIBsection;
-    void* bitmap_data;
+    void *bitmap_data;
     UINT bitmap_size;
-} wineD3DSurface_DIB;
+};
 
 struct wined3d_renderbuffer_entry
 {
@@ -2035,7 +2033,7 @@ struct wined3d_surface
 #define MAXLOCKCOUNT          50 /* After this amount of locks do not free the sysmem copy */
 
     /* For GetDC */
-    wineD3DSurface_DIB        dib;
+    struct wined3d_surface_dib dib;
     HDC                       hDC;
 
     /* Color keys for DDraw */
