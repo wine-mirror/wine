@@ -1276,6 +1276,14 @@ static INT xrenderdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID 
 }
 
 /****************************************************************************
+ *	  xrenderdrv_CopyBitmap
+ */
+static BOOL xrenderdrv_CopyBitmap( HBITMAP src, HBITMAP dst )
+{
+    return X11DRV_CopyBitmap( src, dst );
+}
+
+/****************************************************************************
  *	  xrenderdrv_CreateBitmap
  */
 static BOOL xrenderdrv_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap )
@@ -3060,7 +3068,7 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pChoosePixelFormat */
     NULL,                               /* pChord */
     NULL,                               /* pCloseFigure */
-    NULL,                               /* pCopyBitmap */
+    xrenderdrv_CopyBitmap,              /* pCopyBitmap */
     xrenderdrv_CreateBitmap,            /* pCreateBitmap */
     xrenderdrv_CreateCompatibleDC,      /* pCreateCompatibleDC */
     xrenderdrv_CreateDC,                /* pCreateDC */

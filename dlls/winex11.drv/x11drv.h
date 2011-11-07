@@ -181,6 +181,7 @@ extern BOOL X11DRV_Arc( PHYSDEV dev, INT left, INT top, INT right,
                         INT bottom, INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                           INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
+extern BOOL X11DRV_CopyBitmap( HBITMAP src, HBITMAP dst ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap ) DECLSPEC_HIDDEN;
 extern HBITMAP X11DRV_CreateDIBSection( PHYSDEV dev, HBITMAP hbitmap,
                                         BITMAPINFO *bmi, UINT usage ) DECLSPEC_HIDDEN;

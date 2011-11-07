@@ -199,6 +199,42 @@ BOOL X11DRV_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap )
 }
 
 
+/****************************************************************************
+ *	  CopyBitmap   (X11DRV.@)
+ */
+BOOL X11DRV_CopyBitmap( HBITMAP src, HBITMAP dst )
+{
+    X_PHYSBITMAP *phys_src, *phys_dst;
+    BITMAP bitmap;
+
+    if (!(phys_src = X11DRV_get_phys_bitmap( src ))) return FALSE;
+    if (!GetObjectW( dst, sizeof(bitmap), &bitmap )) return FALSE;
+
+    TRACE("%p->%p %dx%d %d bpp\n", src, dst, bitmap.bmWidth, bitmap.bmHeight, bitmap.bmBitsPixel);
+
+    if (!(phys_dst = X11DRV_init_phys_bitmap( dst ))) return FALSE;
+
+    phys_dst->depth = phys_src->depth;
+    phys_dst->trueColor = phys_src->trueColor;
+    if (phys_dst->trueColor) phys_dst->color_shifts = phys_src->color_shifts;
+
+    wine_tsx11_lock();
+    phys_dst->pixmap = XCreatePixmap( gdi_display, root_window,
+                                      bitmap.bmWidth, bitmap.bmHeight, phys_dst->depth );
+    XCopyArea( gdi_display, phys_src->pixmap, phys_dst->pixmap,
+               get_bitmap_gc(phys_dst->depth), 0, 0, bitmap.bmWidth, bitmap.bmHeight, 0, 0 );
+    wine_tsx11_unlock();
+
+    if (!phys_dst->pixmap)
+    {
+        WARN("Can't create Pixmap\n");
+        HeapFree( GetProcessHeap(), 0, phys_dst );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
 /***********************************************************************
  *           DeleteBitmap   (X11DRV.@)
  */

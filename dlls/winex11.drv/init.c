@@ -476,7 +476,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_ChoosePixelFormat,           /* pChoosePixelFormat */
     X11DRV_Chord,                       /* pChord */
     NULL,                               /* pCloseFigure */
-    NULL,                               /* pCopyBitmap */
+    X11DRV_CopyBitmap,                  /* pCopyBitmap */
     X11DRV_CreateBitmap,                /* pCreateBitmap */
     X11DRV_CreateCompatibleDC,          /* pCreateCompatibleDC */
     X11DRV_CreateDC,                    /* pCreateDC */
