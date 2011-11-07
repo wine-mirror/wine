@@ -99,8 +99,22 @@ static BOOL copy_bitmap( BRUSHOBJ *brush, HBITMAP bitmap )
 
     if (!bmp->dib)
     {
+        if ((brush->bitmap = CreateBitmap( bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
+                                           bmp->bitmap.bmPlanes, bmp->bitmap.bmBitsPixel, NULL )))
+        {
+            if (bmp->funcs->pCopyBitmap( bitmap, brush->bitmap ))
+            {
+                BITMAPOBJ *copy = GDI_GetObjPtr( brush->bitmap, OBJ_BITMAP );
+                copy->funcs = bmp->funcs;
+                GDI_ReleaseObj( copy );
+            }
+            else
+            {
+                DeleteObject( brush->bitmap );
+                brush->bitmap = 0;
+            }
+        }
         GDI_ReleaseObj( bitmap );
-        brush->bitmap = BITMAP_CopyBitmap( bitmap );
         return brush->bitmap != 0;
     }
 
