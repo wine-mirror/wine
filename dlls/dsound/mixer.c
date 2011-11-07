@@ -200,10 +200,8 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 	dsb->freqAcc = dsb->freqAccNext = 0;
 	dsb->freqneeded = needresample;
 
-	if (ieee)
-		dsb->convert = convertbpp[4][dsb->device->pwfx->wBitsPerSample/8 - 1];
-	else
-		dsb->convert = convertbpp[dsb->pwfx->wBitsPerSample/8 - 1][dsb->device->pwfx->wBitsPerSample/8 - 1];
+	dsb->get = ieee ? getbpp[4] : getbpp[dsb->pwfx->wBitsPerSample/8 - 1];
+	dsb->put = putbpp[dsb->device->pwfx->wBitsPerSample/8 - 1];
 
 	if (needremix)
 	{
@@ -274,37 +272,47 @@ void DSOUND_CheckEvent(const IDirectSoundBufferImpl *dsb, DWORD playpos, int len
  * Copy a single frame from the given input buffer to the given output buffer.
  * Translate 8 <-> 16 bits and mono <-> stereo
  */
-static inline void cp_fields(const IDirectSoundBufferImpl *dsb, const BYTE *ibuf, BYTE *obuf,
+static inline void cp_fields(const IDirectSoundBufferImpl *dsb, const BYTE *ibuf,
         UINT istride, UINT ostride, UINT count, UINT freqAcc, UINT adj)
 {
     DirectSoundDevice *device = dsb->device;
-    INT istep = dsb->pwfx->wBitsPerSample / 8, ostep = device->pwfx->wBitsPerSample / 8;
+    float value;
+    ULONG adv;
+    DWORD ipos = dsb->sec_mixpos, opos = 0;
 
-    if (device->pwfx->nChannels == dsb->pwfx->nChannels ||
-        (device->pwfx->nChannels == 2 && dsb->pwfx->nChannels == 6) ||
-        (device->pwfx->nChannels == 8 && dsb->pwfx->nChannels == 2) ||
-        (device->pwfx->nChannels == 6 && dsb->pwfx->nChannels == 2)) {
-        dsb->convert(ibuf, obuf, istride, ostride, count, freqAcc, adj);
-        if (device->pwfx->nChannels == 2 || dsb->pwfx->nChannels == 2)
-            dsb->convert(ibuf + istep, obuf + ostep, istride, ostride, count, freqAcc, adj);
-        return;
+    while (count-- > 0) {
+        if (device->pwfx->nChannels == dsb->pwfx->nChannels ||
+                (device->pwfx->nChannels == 2 && dsb->pwfx->nChannels == 6) ||
+                (device->pwfx->nChannels == 8 && dsb->pwfx->nChannels == 2) ||
+                (device->pwfx->nChannels == 6 && dsb->pwfx->nChannels == 2)) {
+            value = dsb->get(dsb, ipos, 0);
+            dsb->put(dsb, opos, 0, value);
+            if (device->pwfx->nChannels == 2 || dsb->pwfx->nChannels == 2) {
+                value = dsb->get(dsb, ipos, 1);
+                dsb->put(dsb, opos, 1, value);
+            }
+        }
+
+        if (device->pwfx->nChannels == 1 && dsb->pwfx->nChannels == 2)
+        {
+            float val = (dsb->get(dsb, ipos, 0) + dsb->get(dsb, ipos, 1)) / 2.;
+
+            dsb->put(dsb, opos, 0, val);
+        }
+
+        if (device->pwfx->nChannels == 2 && dsb->pwfx->nChannels == 1)
+        {
+            value = dsb->get(dsb, ipos, 0);
+            dsb->put(dsb, opos, 0, value);
+            dsb->put(dsb, opos, 1, value);
+        }
+
+        freqAcc += adj;
+        adv = (freqAcc >> DSOUND_FREQSHIFT);
+        freqAcc &= (1 << DSOUND_FREQSHIFT) - 1;
+        ipos += adv * istride;
+        opos += ostride;
     }
-
-    if (device->pwfx->nChannels == 1 && dsb->pwfx->nChannels == 2)
-    {
-        dsb->convert(ibuf, obuf, istride, ostride, count, freqAcc, adj);
-        return;
-    }
-
-    if (device->pwfx->nChannels == 2 && dsb->pwfx->nChannels == 1)
-    {
-        dsb->convert(ibuf, obuf, istride, ostride, count, freqAcc, adj);
-        dsb->convert(ibuf, obuf + ostep, istride, ostride, count, freqAcc, adj);
-        return;
-    }
-
-    WARN("Unable to remap channels: device=%u, buffer=%u\n", device->pwfx->nChannels,
-            dsb->pwfx->nChannels);
 }
 
 /**
@@ -338,7 +346,7 @@ static inline DWORD DSOUND_BufPtrDiff(DWORD buflen, DWORD ptr1, DWORD ptr2)
 static void DSOUND_MixToTemporary(const IDirectSoundBufferImpl *dsb, DWORD tmp_len)
 {
 	INT	size;
-	BYTE	*ibp, *obp;
+	BYTE	*ibp;
 	INT	iAdvance = dsb->pwfx->nBlockAlign;
 	INT	oAdvance = dsb->device->pwfx->nBlockAlign;
 	DWORD freqAcc;
@@ -352,7 +360,6 @@ static void DSOUND_MixToTemporary(const IDirectSoundBufferImpl *dsb, DWORD tmp_l
 		else
 			dsb->device->tmp_buffer = HeapAlloc(GetProcessHeap(), 0, tmp_len);
 	}
-	obp = dsb->device->tmp_buffer;
 
 	TRACE("(%p, %p)\n", dsb, ibp);
 	size = tmp_len / oAdvance;
@@ -362,7 +369,7 @@ static void DSOUND_MixToTemporary(const IDirectSoundBufferImpl *dsb, DWORD tmp_l
 		TRACE("(%p) Same sample rate %d = primary %d\n", dsb,
 			dsb->freq, dsb->device->pwfx->nSamplesPerSec);
 
-		cp_fields(dsb, ibp, obp, iAdvance, oAdvance, size, 0, 1 << DSOUND_FREQSHIFT);
+		cp_fields(dsb, ibp, iAdvance, oAdvance, size, 0, 1 << DSOUND_FREQSHIFT);
 		return;
 	}
 
@@ -372,7 +379,7 @@ static void DSOUND_MixToTemporary(const IDirectSoundBufferImpl *dsb, DWORD tmp_l
 	DSOUND_secpos_to_bufpos(dsb, dsb->sec_mixpos, dsb->sec_mixpos, &freqAcc);
 
 	/* FIXME: Small problem here when we're overwriting buf_mixpos, it then STILL uses old freqAcc, not sure if it matters or not */
-	cp_fields(dsb, ibp, obp, iAdvance, oAdvance, size, freqAcc, dsb->freqAdjust);
+	cp_fields(dsb, ibp, iAdvance, oAdvance, size, freqAcc, dsb->freqAdjust);
 }
 
 /** Apply volume to the given soundbuffer from (primary) position writepos and length len

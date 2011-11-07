@@ -52,8 +52,10 @@ typedef struct DirectSoundDevice             DirectSoundDevice;
 typedef struct DirectSoundCaptureDevice      DirectSoundCaptureDevice;
 
 /* dsound_convert.h */
-typedef void (*bitsconvertfunc)(const void *, void *, UINT, UINT, INT, UINT, UINT);
-extern const bitsconvertfunc convertbpp[5][4] DECLSPEC_HIDDEN;
+typedef float (*bitsgetfunc)(const IDirectSoundBufferImpl *, DWORD, DWORD);
+typedef void (*bitsputfunc)(const IDirectSoundBufferImpl *, DWORD, DWORD, float);
+extern const bitsgetfunc getbpp[5] DECLSPEC_HIDDEN;
+extern const bitsputfunc putbpp[4] DECLSPEC_HIDDEN;
 typedef void (*mixfunc)(const void *, void *, unsigned);
 extern const mixfunc mixfunctions[4] DECLSPEC_HIDDEN;
 typedef void (*normfunc)(const void *, void *, unsigned);
@@ -190,8 +192,10 @@ struct IDirectSoundBufferImpl
     DS3DBUFFER                  ds3db_ds3db;
     LONG                        ds3db_lVolume;
     BOOL                        ds3db_need_recalc;
-    /* IKsPropertySet fields */
-    bitsconvertfunc convert;
+    /* Used for bit depth conversion */
+    bitsgetfunc get;
+    bitsputfunc put;
+
     struct list entry;
 };
 
