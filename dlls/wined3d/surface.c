@@ -868,11 +868,7 @@ static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD
                 && rect->right == surface->resource.width
                 && rect->bottom == surface->resource.height)
             pass_rect = NULL;
-
-        if (!(wined3d_settings.rendertargetlock_mode == RTL_DISABLE
-                && ((surface->container.type == WINED3D_CONTAINER_SWAPCHAIN)
-                || surface == device->fb.render_targets[0])))
-            surface_load_location(surface, SFLAG_INSYSMEM, pass_rect);
+        surface_load_location(surface, SFLAG_INSYSMEM, pass_rect);
     }
 
     if (surface->flags & SFLAG_PBO)
@@ -964,17 +960,6 @@ static void surface_unmap(struct wined3d_surface *surface)
     if (surface->container.type == WINED3D_CONTAINER_SWAPCHAIN
             || (device->fb.render_targets && surface == device->fb.render_targets[0]))
     {
-        if (wined3d_settings.rendertargetlock_mode == RTL_DISABLE)
-        {
-            static BOOL warned = FALSE;
-            if (!warned)
-            {
-                ERR("The application tries to write to the render target, but render target locking is disabled.\n");
-                warned = TRUE;
-            }
-            goto done;
-        }
-
         if (!surface->dirtyRect.left && !surface->dirtyRect.top
                 && surface->dirtyRect.right == surface->resource.width
                 && surface->dirtyRect.bottom == surface->resource.height)
@@ -4012,15 +3997,6 @@ static void read_from_framebuffer(struct wined3d_surface *surface, const RECT *r
     GLint rowLen = 0;
     GLint skipPix = 0;
     GLint skipRow = 0;
-
-    if(wined3d_settings.rendertargetlock_mode == RTL_DISABLE) {
-        static BOOL warned = FALSE;
-        if(!warned) {
-            ERR("The application tries to lock the render target, but render target locking is disabled\n");
-            warned = TRUE;
-        }
-        return;
-    }
 
     context = context_acquire(device, surface);
     context_apply_blit_state(context, device);

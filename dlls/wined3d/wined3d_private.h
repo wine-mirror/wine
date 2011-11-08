@@ -246,7 +246,6 @@ static inline float float_24_to_32(DWORD in)
 #define SHADER_ATI  3
 #define SHADER_NONE 4
 
-#define RTL_DISABLE   -1
 #define RTL_READDRAW   1
 #define RTL_READTEX    2
 

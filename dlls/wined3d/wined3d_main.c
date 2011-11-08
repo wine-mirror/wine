@@ -260,12 +260,7 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
         }
         if ( !get_config_key( hkey, appkey, "RenderTargetLockMode", buffer, size) )
         {
-            if (!strcmp(buffer,"disabled"))
-            {
-                TRACE("Disabling render target locking\n");
-                wined3d_settings.rendertargetlock_mode = RTL_DISABLE;
-            }
-            else if (!strcmp(buffer,"readdraw"))
+            if (!strcmp(buffer,"readdraw"))
             {
                 TRACE("Using glReadPixels for render target reading and glDrawPixels for writing\n");
                 wined3d_settings.rendertargetlock_mode = RTL_READDRAW;
