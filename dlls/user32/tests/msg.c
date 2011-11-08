@@ -13024,6 +13024,7 @@ static void test_keyflags(void)
     test_window = CreateWindowEx(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                            100, 100, 200, 200, 0, 0, 0, NULL);
 
+    flush_events();
     flush_sequence();
 
     /* keyup without a keydown */
