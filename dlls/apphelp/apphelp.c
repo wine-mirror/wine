@@ -67,3 +67,9 @@ PDB WINAPI SdbCreateDatabase( LPCWSTR path, PATH_TYPE type )
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return NULL;
 }
+
+BOOL WINAPI ApphelpCheckShellObject( REFCLSID clsid, BOOL shim, ULONGLONG *flags )
+{
+    FIXME("stub: %s %p\n", debugstr_guid(clsid), flags );
+    return TRUE;
+}
