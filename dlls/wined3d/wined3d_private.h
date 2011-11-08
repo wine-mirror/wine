@@ -277,14 +277,14 @@ struct wined3d_settings
 
 extern struct wined3d_settings wined3d_settings DECLSPEC_HIDDEN;
 
-typedef enum _WINED3DSAMPLER_TEXTURE_TYPE
+enum wined3d_sampler_texture_type
 {
     WINED3DSTT_UNKNOWN = 0,
     WINED3DSTT_1D = 1,
     WINED3DSTT_2D = 2,
     WINED3DSTT_CUBE = 3,
     WINED3DSTT_VOLUME = 4,
-} WINED3DSAMPLER_TEXTURE_TYPE;
+};
 
 typedef enum _WINED3DSHADER_PARAM_REGISTER_TYPE
 {
@@ -544,7 +544,7 @@ struct wined3d_shader_reg_maps
     WORD local_int_consts;                  /* MAX_CONST_I, 16 */
     WORD local_bool_consts;                 /* MAX_CONST_B, 16 */
 
-    WINED3DSAMPLER_TEXTURE_TYPE sampler_type[max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS)];
+    enum wined3d_sampler_texture_type sampler_type[max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS)];
     BYTE bumpmat;                           /* MAX_TEXTURES, 8 */
     BYTE luminanceparams;                   /* MAX_TEXTURES, 8 */
 
@@ -637,7 +637,7 @@ struct wined3d_shader_semantic
 {
     WINED3DDECLUSAGE usage;
     UINT usage_idx;
-    WINED3DSAMPLER_TEXTURE_TYPE sampler_type;
+    enum wined3d_sampler_texture_type sampler_type;
     struct wined3d_shader_dst_param reg;
 };
 

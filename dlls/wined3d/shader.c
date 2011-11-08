@@ -2157,7 +2157,7 @@ static HRESULT pixelshader_init(struct wined3d_shader *shader, struct wined3d_de
 
 void pixelshader_update_samplers(struct wined3d_shader_reg_maps *reg_maps, struct wined3d_texture * const *textures)
 {
-    WINED3DSAMPLER_TEXTURE_TYPE *sampler_type = reg_maps->sampler_type;
+    enum wined3d_sampler_texture_type *sampler_type = reg_maps->sampler_type;
     unsigned int i;
 
     if (reg_maps->shader_version.major != 1) return;

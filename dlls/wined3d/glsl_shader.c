@@ -1652,7 +1652,7 @@ static inline const char *shader_get_comp_op(DWORD op)
 static void shader_glsl_get_sample_function(const struct wined3d_shader_context *ctx,
         DWORD sampler_idx, DWORD flags, struct glsl_sample_function *sample_function)
 {
-    WINED3DSAMPLER_TEXTURE_TYPE sampler_type = ctx->reg_maps->sampler_type[sampler_idx];
+    enum wined3d_sampler_texture_type sampler_type = ctx->reg_maps->sampler_type[sampler_idx];
     const struct wined3d_gl_info *gl_info = ctx->gl_info;
     BOOL shadow = shader_is_pshader_version(ctx->reg_maps->shader_version.type)
             && (((const struct shader_glsl_ctx_priv *)ctx->backend_data)->cur_ps_args->shadow & (1 << sampler_idx));
@@ -3036,7 +3036,7 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
         const struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
         DWORD flags = (priv->cur_ps_args->tex_transform >> sampler_idx * WINED3D_PSARGS_TEXTRANSFORM_SHIFT)
                 & WINED3D_PSARGS_TEXTRANSFORM_MASK;
-        WINED3DSAMPLER_TEXTURE_TYPE sampler_type = ins->ctx->reg_maps->sampler_type[sampler_idx];
+        enum wined3d_sampler_texture_type sampler_type = ins->ctx->reg_maps->sampler_type[sampler_idx];
 
         /* Projected cube textures don't make a lot of sense, the resulting coordinates stay the same. */
         if (flags & WINED3D_PSARGS_PROJECTED && sampler_type != WINED3DSTT_CUBE) {

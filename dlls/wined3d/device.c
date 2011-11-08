@@ -2898,7 +2898,7 @@ static void device_map_fixed_function_samplers(struct wined3d_device *device, co
 
 static void device_map_psamplers(struct wined3d_device *device, const struct wined3d_gl_info *gl_info)
 {
-    const WINED3DSAMPLER_TEXTURE_TYPE *sampler_type =
+    const enum wined3d_sampler_texture_type *sampler_type =
             device->stateBlock->state.pixel_shader->reg_maps.sampler_type;
     unsigned int i;
 
@@ -2915,8 +2915,8 @@ static void device_map_psamplers(struct wined3d_device *device, const struct win
 }
 
 static BOOL device_unit_free_for_vs(const struct wined3d_device *device,
-        const WINED3DSAMPLER_TEXTURE_TYPE *pshader_sampler_tokens,
-        const WINED3DSAMPLER_TEXTURE_TYPE *vshader_sampler_tokens, DWORD unit)
+        const enum wined3d_sampler_texture_type *pshader_sampler_tokens,
+        const enum wined3d_sampler_texture_type *vshader_sampler_tokens, DWORD unit)
 {
     DWORD current_mapping = device->rev_tex_unit_map[unit];
 
@@ -2941,9 +2941,9 @@ static BOOL device_unit_free_for_vs(const struct wined3d_device *device,
 
 static void device_map_vsamplers(struct wined3d_device *device, BOOL ps, const struct wined3d_gl_info *gl_info)
 {
-    const WINED3DSAMPLER_TEXTURE_TYPE *vshader_sampler_type =
+    const enum wined3d_sampler_texture_type *vshader_sampler_type =
             device->stateBlock->state.vertex_shader->reg_maps.sampler_type;
-    const WINED3DSAMPLER_TEXTURE_TYPE *pshader_sampler_type = NULL;
+    const enum wined3d_sampler_texture_type *pshader_sampler_type = NULL;
     int start = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers) - 1;
     int i;
 
