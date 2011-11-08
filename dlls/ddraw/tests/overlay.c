@@ -194,10 +194,10 @@ static void yv12_test(void)
 {
     HRESULT hr;
     DDSURFACEDESC2 desc;
-    IDirectDrawSurface7 *surface;
+    IDirectDrawSurface7 *surface, *dst;
     char *base;
     RECT rect = {13, 17, 14, 18};
-    unsigned int offset;
+    unsigned int offset, y;
 
     surface = create_overlay(256, 256, MAKEFOURCC('Y','V','1','2'));
     if(!surface) {
@@ -220,7 +220,23 @@ static void yv12_test(void)
     /* The overlay pitch seems to have 256 byte alignment */
     ok((U1(desc).lPitch & 0xff) == 0, "Expected 256 byte aligned pitch, got %u\n", U1(desc).lPitch);
 
+    /* Fill the surface with some data for the blit test */
     base = desc.lpSurface;
+    /* Luminance */
+    for (y = 0; y < desc.dwHeight; y++)
+    {
+        memset(base + desc.lPitch * y, 0x10, desc.dwWidth);
+    }
+    /* V */
+    for (; y < desc.dwHeight + desc.dwHeight / 4; y++)
+    {
+        memset(base + desc.lPitch * y, 0x20, desc.dwWidth);
+    }
+    /* U */
+    for (; y < desc.dwHeight + desc.dwHeight / 2; y++)
+    {
+        memset(base + desc.lPitch * y, 0x30, desc.dwWidth);
+    }
 
     hr = IDirectDrawSurface7_Unlock(surface, NULL);
     ok(hr == DD_OK, "IDirectDrawSurface7_Unlock returned 0x%08x, expected DD_OK\n", hr);
@@ -237,6 +253,35 @@ static void yv12_test(void)
     hr = IDirectDrawSurface7_Unlock(surface, NULL);
     ok(hr == DD_OK, "IDirectDrawSurface7_Unlock returned 0x%08x, expected DD_OK\n", hr);
 
+    dst = create_overlay(256, 256, MAKEFOURCC('Y','V','1','2'));
+    if (!dst)
+    {
+        /* Windows XP with a Radeon X1600 GPU refuses to create a second overlay surface,
+         * DDERR_NOOVERLAYHW, making the blit tests moot */
+        skip("Could not create a second YV12 surface, skipping blit test\n");
+        goto cleanup;
+    }
+
+    hr = IDirectDrawSurface7_Blt(dst, NULL, surface, NULL, 0, NULL);
+    ok(hr == DD_OK, "IDirectDrawSurface7_Blt returned 0x%08x, expected DD_OK\n", hr);
+
+    memset(&desc, 0, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    hr = IDirectDrawSurface7_Lock(dst, NULL, &desc, 0, NULL);
+    ok(hr == DD_OK, "IDirectDrawSurface7_Lock returned 0x%08x, expected DD_OK\n", hr);
+
+    base = desc.lpSurface;
+    ok(base[0] == 0x10, "Y data is 0x%02x, expected 0x10\n", base[0]);
+    base += desc.dwHeight * desc.lPitch;
+    todo_wine ok(base[0] == 0x20, "V data is 0x%02x, expected 0x20\n", base[0]);
+    base += desc.dwHeight / 4 * desc.lPitch;
+    todo_wine ok(base[0] == 0x30, "U data is 0x%02x, expected 0x30\n", base[0]);
+
+    hr = IDirectDrawSurface7_Unlock(dst, NULL);
+    ok(hr == DD_OK, "IDirectDrawSurface7_Unlock returned 0x%08x, expected DD_OK\n", hr);
+
+    IDirectDrawSurface7_Release(dst);
+cleanup:
     IDirectDrawSurface7_Release(surface);
 }
 
