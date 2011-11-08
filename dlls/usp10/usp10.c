@@ -494,6 +494,10 @@ static WORD get_char_script( WCHAR ch)
     if (ch == 0xc || ch == 0x20 || ch == 0x202f)
         return Script_CR;
 
+    /* These chars are itemized as Punctuation by Windows */
+    if (ch == 0x2212 || ch == 0x2044 || ch == 0x00a0)
+        return Script_Punctuation;
+
     GetStringTypeW(CT_CTYPE1, &ch, 1, &type);
 
     if (type == 0)
