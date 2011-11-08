@@ -806,10 +806,34 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
         }
         else
         {
-            if (!psControl->fMergeNeutralItems)
+            BOOL inNumber = FALSE;
+            static WCHAR math_punc[] = {'#','$','%','+',',','-','.','/',':',0x2212, 0x2044, 0x00a0,0};
+
+            strength = heap_alloc_zero(cInChars * sizeof(WORD));
+            if (!strength)
             {
-                strength = heap_alloc_zero(cInChars * sizeof(WORD));
-                BIDI_GetStrengths(pwcInChars, cInChars, psControl, strength);
+                heap_free(levels);
+                return E_OUTOFMEMORY;
+            }
+            BIDI_GetStrengths(pwcInChars, cInChars, psControl, strength);
+
+            /* Script_Numeric and select puncuation at level 0 get bumped to level 2 */
+            for (i = 0; i < cInChars; i++)
+            {
+                if ((levels[i] == 0 || (odd(psState->uBidiLevel) && levels[i] == psState->uBidiLevel+1)) && inNumber && strchrW(math_punc,pwcInChars[i]))
+                    levels[i] = 2;
+                else if ((levels[i] == 0 || (odd(psState->uBidiLevel) && levels[i] == psState->uBidiLevel+1)) && get_char_script(pwcInChars[i]) == Script_Numeric)
+                {
+                    levels[i] = 2;
+                    inNumber = TRUE;
+                }
+                else
+                    inNumber = FALSE;
+            }
+            if (psControl->fMergeNeutralItems)
+            {
+                HeapFree(GetProcessHeap(),0,strength);
+                strength = NULL;
             }
         }
     }
