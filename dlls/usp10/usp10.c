@@ -814,7 +814,7 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
         }
     }
 
-    while ((pwcInChars[cnt] == Numeric_space || pwcInChars[cnt] == ZWJ || pwcInChars[cnt] == ZWNJ) && cnt < cInChars)
+    while ((!levels || (levels && levels[cnt+1] == levels[0])) && (pwcInChars[cnt] == Numeric_space || pwcInChars[cnt] == ZWJ || pwcInChars[cnt] == ZWNJ) && cnt < cInChars)
         cnt++;
 
     if (cnt == cInChars) /* All Spaces */
@@ -858,9 +858,9 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
         else if (levels)
         {
             int j = 1;
-            while (cnt + j < cInChars - 1 && (pwcInChars[cnt+j] == Numeric_space || pwcInChars[cnt+j] == ZWJ || pwcInChars[cnt+j] == ZWNJ))
+            while (cnt + j < cInChars - 1 && (pwcInChars[cnt+j] == Numeric_space || pwcInChars[cnt+j] == ZWJ || pwcInChars[cnt+j] == ZWNJ) && levels[cnt] == levels[cnt+j])
                 j++;
-            if (cnt + j < cInChars)
+            if (cnt + j < cInChars && levels[cnt] == levels[cnt+j])
                 New_Script = get_char_script(pwcInChars[cnt+j]);
             else
                 New_Script = get_char_script(pwcInChars[cnt]);
