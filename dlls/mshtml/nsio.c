@@ -2289,12 +2289,8 @@ static nsresult NSAPI nsURI_GetAsciiHost(nsIURL *iface, nsACString *aAsciiHost)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
 
-    TRACE("(%p)->(%p)\n", This, aAsciiHost);
+    WARN("(%p)->(%p) FIXME: Use Uri_PUNYCODE_IDN_HOST flag\n", This, aAsciiHost);
 
-    if(This->nsuri)
-        return nsIURI_GetAsciiHost(This->nsuri, aAsciiHost);
-
-    WARN("Use Uri_PUNYCODE_IDN_HOST flag\n");
     return get_uri_string(This, Uri_PROPERTY_HOST, aAsciiHost);
 }
 
