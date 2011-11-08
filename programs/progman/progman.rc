@@ -88,3 +88,130 @@ ACCEL ACCELERATORS
 VK_F1,     PM_CONTENTS, VIRTKEY
 VK_RETURN, PM_ATTRIBUTES, VIRTKEY, ALT
 }
+
+/* Dialog `New' */
+
+DIALOG_NEW DIALOG 0, 0, 170, 65
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+FONT 8, "MS Shell Dlg"
+CAPTION "New"
+{
+RADIOBUTTON   "",                 PM_NEW_GROUP,    10, 15,  10, 15
+LTEXT         "Program &group",   -1,    20, 18,  80, 15
+RADIOBUTTON   "",                 PM_NEW_PROGRAM,  10, 35,  10, 15
+LTEXT         "&Program", -1,  20, 38,  80, 15
+DEFPUSHBUTTON "OK",          IDOK,           105,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancel",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Help",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
+}
+
+/* Dialog `Move' */
+
+DIALOG_MOVE DIALOG 0, 0, 250, 65
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+FONT 8, "MS Shell Dlg"
+CAPTION "Move Program"
+{
+LTEXT         "Move program:",    -1,            5,  5,  90, 15
+LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
+LTEXT         "From group:", -1,            5, 13,  90, 15
+LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
+LTEXT         "&To group:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
+DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancel",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Help",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+}
+
+/* Dialog `Copy' */
+
+DIALOG_COPY DIALOG 0, 0, 250, 65
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+FONT 8, "MS Shell Dlg"
+CAPTION "Copy Program"
+{
+LTEXT         "Copy program:",    -1,            5,  5,  90, 15
+LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
+LTEXT         "From group:", -1,            5, 13,  90, 15
+LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
+LTEXT         "&To group:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
+DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancel",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Help",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+}
+
+/* Dialog `Group attributes' */
+
+DIALOG_GROUP DIALOG 0, 0, 250, 65
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+FONT 8, "MS Shell Dlg"
+CAPTION "Program Group Attributes"
+{
+LTEXT     "&Description:", PM_DESCRIPTION_TXT,   5, 18,  60, 15
+EDITTEXT                            PM_DESCRIPTION,       70, 18,  110, 15, WS_TABSTOP
+LTEXT     "&Group file:",        PM_FILE_TXT,          5, 38,  60, 15
+EDITTEXT                            PM_FILE,              70, 38,  110, 15, WS_TABSTOP
+DEFPUSHBUTTON "OK",            IDOK,                185,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancel",        IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Help",          PM_HELP,             185, 45,  60, 15, WS_TABSTOP
+}
+
+/* Dialog `Program attributes' */
+
+DIALOG_PROGRAM DIALOG 0, 0, 275, 105
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+FONT 8, "MS Shell Dlg"
+CAPTION "Program Attributes"
+{
+LTEXT         "&Description:",  PM_DESCRIPTION_TXT,   5, 10,  75, 10
+EDITTEXT                                   PM_DESCRIPTION,       95, 10,  90, 15, WS_TABSTOP
+LTEXT         "&Command line:", PM_COMMAND_LINE_TXT,  5, 25,  75, 10
+EDITTEXT                                   PM_COMMAND_LINE,      95, 25,  90, 15, WS_TABSTOP
+LTEXT         "&Working directory:",    PM_DIRECTORY_TXT,     5, 40,  75, 10
+EDITTEXT                                   PM_DIRECTORY,         95, 40,  90, 15, WS_TABSTOP
+LTEXT         "&Key combination:",      PM_HOT_KEY_TXT,       5, 55,  75, 10
+EDITTEXT                                   PM_HOT_KEY,           95, 55,  90, 15, WS_TABSTOP
+ICON          "",                          PM_ICON,              20, 70
+CHECKBOX      "&Minimize at launch",       PM_SYMBOL,            95, 75,  90, 10, WS_TABSTOP
+DEFPUSHBUTTON "OK",                   IDOK,                200,  5,  70, 15, WS_TABSTOP
+PUSHBUTTON    "Cancel",               IDCANCEL,            200, 25,  70, 15, WS_TABSTOP
+PUSHBUTTON    "&Browse...",               PM_BROWSE,           200, 45,  70, 15, WS_TABSTOP
+PUSHBUTTON    "Change &icon...", PM_OTHER_SYMBOL,     200, 65,  70, 15, WS_TABSTOP
+PUSHBUTTON    "&Help",                 PM_HELP,             200, 85,  70, 15, WS_TABSTOP
+}
+
+/* Dialog `Symbol' */
+
+DIALOG_SYMBOL DIALOG 0, 0, 240, 85
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+FONT 8, "MS Shell Dlg"
+CAPTION "Change Icon"
+{
+LTEXT     "&Filename:",    PM_ICON_FILE_TXT,    5, 15,  60, 10
+EDITTEXT                         PM_ICON_FILE,       65, 15,  105, 15, WS_TABSTOP
+LTEXT     "Current &icon:", PM_SYMBOL_LIST_TXT,  5, 30, 60, 10
+COMBOBOX                         PM_SYMBOL_LIST,      5, 40, 60, 50,
+   CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_OWNERDRAWFIXED | WS_TABSTOP
+DEFPUSHBUTTON "OK",         IDOK,              175,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancel",     IDCANCEL,          175, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Browse...",    PM_BROWSE,         175, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Help",       PM_HELP,           175, 65,  60, 15, WS_TABSTOP
+}
+
+/* Dialog `Execute' */
+
+DIALOG_EXECUTE DIALOG 0, 0, 200, 85
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+FONT 8, "MS Shell Dlg"
+CAPTION "Execute Program"
+{
+LTEXT     "&Command line:", -1,   05, 15, 120, 10
+EDITTEXT                               PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
+CHECKBOX      "",                      PM_SYMBOL,  05, 45,  10, 10, WS_TABSTOP
+LTEXT         "&Minimize at launch",   -1,   20, 45, 120, 10
+DEFPUSHBUTTON "OK",               IDOK,      135,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancel",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Browse...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Help",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
+}

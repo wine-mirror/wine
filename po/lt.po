@@ -2268,8 +2268,9 @@ msgid "&Add to Favorites..."
 msgstr "Į&rašyti į adresyną..."
 
 #: ieframe.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 notepad.rc:124
-#: oleview.rc:69 progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85
-#: winemine.rc:48 winhlp32.rc:53 wordpad.rc:91
+#: oleview.rc:69 progman.rc:52 progman.rc:105 progman.rc:123 progman.rc:141
+#: progman.rc:157 progman.rc:181 progman.rc:199 progman.rc:216 regedit.rc:76
+#: taskmgr.rc:87 winefile.rc:85 winemine.rc:48 winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "&Žinynas"
 
@@ -2378,11 +2379,12 @@ msgstr ""
 "Slaptažodžiai\n"
 "Išsaugoti slaptažodžiai, kuriuos įvedėte į formas."
 
-#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 regedit.rc:245
-#: regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311
-#: wineboot.rc:31 wineconsole.rc:132 winefile.rc:132 winefile.rc:155
-#: winefile.rc:185 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
-#: wordpad.rc:247
+#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104
+#: progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197
+#: progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285
+#: regedit.rc:298 regedit.rc:311 wineboot.rc:31 wineconsole.rc:132
+#: winefile.rc:132 winefile.rc:155 winefile.rc:185 winemine.rc:93
+#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Atsisakyti"
 
@@ -6447,7 +6449,7 @@ msgstr "Sulygiuoti piktogramas"
 msgid "Paste as Link"
 msgstr "Įdėti kaip nuorodą"
 
-#: shell32.rc:64 wordpad.rc:210
+#: shell32.rc:64 progman.rc:97 wordpad.rc:210
 msgid "New"
 msgstr "Naujas"
 
@@ -8866,11 +8868,12 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%1      %2      %3      Atverti ištekliai: %4!u!\n"
 
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 regedit.rc:244
-#: regedit.rc:255 regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310
-#: wineconsole.rc:131 winefile.rc:131 winefile.rc:154 winefile.rc:184
-#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
-#: wordpad.rc:233 wordpad.rc:246
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
+#: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
+#: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
+#: regedit.rc:297 regedit.rc:310 wineconsole.rc:131 winefile.rc:131
+#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
+#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "Gerai"
 
@@ -9533,6 +9536,94 @@ msgstr "&Išdėstyti piktogramas"
 #: progman.rc:54
 msgid "&About Program Manager"
 msgstr "&Apie Programų tvarkytuvę"
+
+#: progman.rc:100
+msgid "Program &group"
+msgstr "Programų &grupė"
+
+#: progman.rc:102
+msgid "&Program"
+msgstr "&Programa"
+
+#: progman.rc:113
+msgid "Move Program"
+msgstr "Perkelti programą"
+
+#: progman.rc:115
+msgid "Move program:"
+msgstr "Perkelti programą:"
+
+#: progman.rc:117 progman.rc:135
+msgid "From group:"
+msgstr "Iš grupės:"
+
+#: progman.rc:119 progman.rc:137
+msgid "&To group:"
+msgstr "&Į grupę:"
+
+#: progman.rc:131
+msgid "Copy Program"
+msgstr "Kopijuoti programą"
+
+#: progman.rc:133
+msgid "Copy program:"
+msgstr "Kopijuoti programą:"
+
+#: progman.rc:149
+msgid "Program Group Attributes"
+msgstr "Programų grupės atributai"
+
+#: progman.rc:151 progman.rc:167
+msgid "&Description:"
+msgstr "&Aprašas:"
+
+#: progman.rc:153
+msgid "&Group file:"
+msgstr "&Grupės failas:"
+
+#: progman.rc:165
+msgid "Program Attributes"
+msgstr "Programos atributai"
+
+#: progman.rc:169 progman.rc:209
+msgid "&Command line:"
+msgstr "Komandos &eilutė:"
+
+#: progman.rc:171
+msgid "&Working directory:"
+msgstr "&Veikiamasis katalogas:"
+
+#: progman.rc:173
+msgid "&Key combination:"
+msgstr "&Klavišų kombinacija:"
+
+#: progman.rc:176 progman.rc:212
+msgid "&Minimize at launch"
+msgstr "&Suskleisti paleidus"
+
+#: progman.rc:179 progman.rc:198 progman.rc:215 winefile.rc:133
+msgid "&Browse..."
+msgstr "&Parinkti"
+
+#: progman.rc:180
+msgid "Change &icon..."
+msgstr "Keisti &piktogramą..."
+
+#: progman.rc:189
+msgid "Change Icon"
+msgstr "Keisti piktogramą"
+
+#: progman.rc:191
+msgid "&Filename:"
+msgstr "&Failas:"
+
+#: progman.rc:193
+msgid "Current &icon:"
+msgstr "Dabartinė &piktograma:"
+
+#: progman.rc:207
+msgid "Execute Program"
+msgstr "Vykdyti programą"
 
 #: progman.rc:60
 msgid "Program Manager"
@@ -11429,10 +11520,6 @@ msgstr "&Apie Wine failų tvarkytuvę"
 #: winefile.rc:125
 msgid "Select destination"
 msgstr "Išrinkite paskirtį"
-
-#: winefile.rc:133
-msgid "&Browse..."
-msgstr "&Parinkti"
 
 #: winefile.rc:138
 msgid "By File Type"

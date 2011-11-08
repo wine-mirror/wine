@@ -2229,8 +2229,9 @@ msgid "&Add to Favorites..."
 msgstr ""
 
 #: ieframe.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 notepad.rc:124
-#: oleview.rc:69 progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85
-#: winemine.rc:48 winhlp32.rc:53 wordpad.rc:91
+#: oleview.rc:69 progman.rc:52 progman.rc:105 progman.rc:123 progman.rc:141
+#: progman.rc:157 progman.rc:181 progman.rc:199 progman.rc:216 regedit.rc:76
+#: taskmgr.rc:87 winefile.rc:85 winemine.rc:48 winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "&کمک"
 
@@ -2329,11 +2330,12 @@ msgid ""
 "Saved passwords you have entered into forms."
 msgstr ""
 
-#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 regedit.rc:245
-#: regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311
-#: wineboot.rc:31 wineconsole.rc:132 winefile.rc:132 winefile.rc:155
-#: winefile.rc:185 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
-#: wordpad.rc:247
+#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104
+#: progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197
+#: progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285
+#: regedit.rc:298 regedit.rc:311 wineboot.rc:31 wineconsole.rc:132
+#: winefile.rc:132 winefile.rc:155 winefile.rc:185 winemine.rc:93
+#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "انصراف"
 
@@ -6395,7 +6397,7 @@ msgstr ""
 msgid "Paste as Link"
 msgstr ""
 
-#: shell32.rc:64 wordpad.rc:210
+#: shell32.rc:64 progman.rc:97 wordpad.rc:210
 msgid "New"
 msgstr ""
 
@@ -8464,11 +8466,12 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 regedit.rc:244
-#: regedit.rc:255 regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310
-#: wineconsole.rc:131 winefile.rc:131 winefile.rc:154 winefile.rc:184
-#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
-#: wordpad.rc:233 wordpad.rc:246
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
+#: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
+#: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
+#: regedit.rc:297 regedit.rc:310 wineconsole.rc:131 winefile.rc:131
+#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
+#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "قبول"
 
@@ -9142,6 +9145,95 @@ msgstr ""
 #, fuzzy
 msgid "&About Program Manager"
 msgstr "&درباره نت‌پد"
+
+#: progman.rc:100
+msgid "Program &group"
+msgstr ""
+
+#: progman.rc:102
+msgid "&Program"
+msgstr ""
+
+#: progman.rc:113
+msgid "Move Program"
+msgstr ""
+
+#: progman.rc:115
+msgid "Move program:"
+msgstr ""
+
+#: progman.rc:117 progman.rc:135
+msgid "From group:"
+msgstr ""
+
+#: progman.rc:119 progman.rc:137
+msgid "&To group:"
+msgstr ""
+
+#: progman.rc:131
+msgid "Copy Program"
+msgstr ""
+
+#: progman.rc:133
+msgid "Copy program:"
+msgstr ""
+
+#: progman.rc:149
+msgid "Program Group Attributes"
+msgstr ""
+
+#: progman.rc:151 progman.rc:167
+msgid "&Description:"
+msgstr ""
+
+#: progman.rc:153
+msgid "&Group file:"
+msgstr ""
+
+#: progman.rc:165
+msgid "Program Attributes"
+msgstr ""
+
+#: progman.rc:169 progman.rc:209
+msgid "&Command line:"
+msgstr ""
+
+#: progman.rc:171
+msgid "&Working directory:"
+msgstr ""
+
+#: progman.rc:173
+msgid "&Key combination:"
+msgstr ""
+
+#: progman.rc:176 progman.rc:212
+msgid "&Minimize at launch"
+msgstr ""
+
+#: progman.rc:179 progman.rc:198 progman.rc:215 winefile.rc:133
+msgid "&Browse..."
+msgstr ""
+
+#: progman.rc:180
+msgid "Change &icon..."
+msgstr ""
+
+#: progman.rc:189
+msgid "Change Icon"
+msgstr ""
+
+#: progman.rc:191
+#, fuzzy
+msgid "&Filename:"
+msgstr "&پرونده"
+
+#: progman.rc:193
+msgid "Current &icon:"
+msgstr ""
+
+#: progman.rc:207
+msgid "Execute Program"
+msgstr ""
 
 #: progman.rc:60
 msgid "Program Manager"
@@ -10972,10 +11064,6 @@ msgstr "&درباره نت‌پد"
 #, fuzzy
 msgid "Select destination"
 msgstr "انتخاب &همه\tCtrl+A"
-
-#: winefile.rc:133
-msgid "&Browse..."
-msgstr ""
 
 #: winefile.rc:138
 msgid "By File Type"

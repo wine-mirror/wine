@@ -2261,8 +2261,9 @@ msgid "&Add to Favorites..."
 msgstr "즐겨찾기 추가(&A)..."
 
 #: ieframe.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 notepad.rc:124
-#: oleview.rc:69 progman.rc:52 regedit.rc:76 taskmgr.rc:87 winefile.rc:85
-#: winemine.rc:48 winhlp32.rc:53 wordpad.rc:91
+#: oleview.rc:69 progman.rc:52 progman.rc:105 progman.rc:123 progman.rc:141
+#: progman.rc:157 progman.rc:181 progman.rc:199 progman.rc:216 regedit.rc:76
+#: taskmgr.rc:87 winefile.rc:85 winemine.rc:48 winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "도움말(&H)"
 
@@ -2369,11 +2370,12 @@ msgstr ""
 "암호\n"
 "당신이 폼에 입력한 저장된 암호."
 
-#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 regedit.rc:245
-#: regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311
-#: wineboot.rc:31 wineconsole.rc:132 winefile.rc:132 winefile.rc:155
-#: winefile.rc:185 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
-#: wordpad.rc:247
+#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104
+#: progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197
+#: progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285
+#: regedit.rc:298 regedit.rc:311 wineboot.rc:31 wineconsole.rc:132
+#: winefile.rc:132 winefile.rc:155 winefile.rc:185 winemine.rc:93
+#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "취소"
 
@@ -6430,7 +6432,7 @@ msgstr "아이콘 정렬"
 msgid "Paste as Link"
 msgstr "링크로 붙여넣기"
 
-#: shell32.rc:64 wordpad.rc:210
+#: shell32.rc:64 progman.rc:97 wordpad.rc:210
 msgid "New"
 msgstr "새 작업"
 
@@ -8817,11 +8819,12 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%1      %2      %3      열린 리소스: %4!u!\n"
 
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 regedit.rc:244
-#: regedit.rc:255 regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310
-#: wineconsole.rc:131 winefile.rc:131 winefile.rc:154 winefile.rc:184
-#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
-#: wordpad.rc:233 wordpad.rc:246
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
+#: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
+#: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
+#: regedit.rc:297 regedit.rc:310 wineconsole.rc:131 winefile.rc:131
+#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
+#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "확인"
 
@@ -9483,6 +9486,94 @@ msgstr "아이콘 정렬(&A)"
 #: progman.rc:54
 msgid "&About Program Manager"
 msgstr "프로그램 관리자 정보(&A)"
+
+#: progman.rc:100
+msgid "Program &group"
+msgstr "풀그림 그룹(&G)"
+
+#: progman.rc:102
+msgid "&Program"
+msgstr "풀그림(&P)"
+
+#: progman.rc:113
+msgid "Move Program"
+msgstr "풀그림 이동"
+
+#: progman.rc:115
+msgid "Move program:"
+msgstr "풀그림 이동:"
+
+#: progman.rc:117 progman.rc:135
+msgid "From group:"
+msgstr "대상 그룹:"
+
+#: progman.rc:119 progman.rc:137
+msgid "&To group:"
+msgstr "목적 그룹(&T):"
+
+#: progman.rc:131
+msgid "Copy Program"
+msgstr "풀그림 복사"
+
+#: progman.rc:133
+msgid "Copy program:"
+msgstr "풀그림 복사:"
+
+#: progman.rc:149
+msgid "Program Group Attributes"
+msgstr "풀그림 그룹 속성"
+
+#: progman.rc:151 progman.rc:167
+msgid "&Description:"
+msgstr "설명(&D):"
+
+#: progman.rc:153
+msgid "&Group file:"
+msgstr "그룹 파일(&G):"
+
+#: progman.rc:165
+msgid "Program Attributes"
+msgstr "풀그림 속성"
+
+#: progman.rc:169 progman.rc:209
+msgid "&Command line:"
+msgstr "명령 라인(&C):"
+
+#: progman.rc:171
+msgid "&Working directory:"
+msgstr "작업 디렉토리(&W):"
+
+#: progman.rc:173
+msgid "&Key combination:"
+msgstr "단축키 지정(&K):"
+
+#: progman.rc:176 progman.rc:212
+msgid "&Minimize at launch"
+msgstr "실행시 최소화(&M)"
+
+#: progman.rc:179 progman.rc:198 progman.rc:215 winefile.rc:133
+msgid "&Browse..."
+msgstr "찾기(&B)"
+
+#: progman.rc:180
+msgid "Change &icon..."
+msgstr "아이콘 바꾸기(&I)..."
+
+#: progman.rc:189
+msgid "Change Icon"
+msgstr "아이콘 바꾸기"
+
+#: progman.rc:191
+msgid "&Filename:"
+msgstr "파일이름(&F):"
+
+#: progman.rc:193
+msgid "Current &icon:"
+msgstr "현재 아이콘(&I):"
+
+#: progman.rc:207
+msgid "Execute Program"
+msgstr "풀그림 실행"
 
 #: progman.rc:60
 msgid "Program Manager"
@@ -11363,10 +11454,6 @@ msgstr "Wine 파일 관리자 정보(&A)"
 #: winefile.rc:125
 msgid "Select destination"
 msgstr "목적지 선택"
-
-#: winefile.rc:133
-msgid "&Browse..."
-msgstr "찾기(&B)"
 
 #: winefile.rc:138
 msgid "By File Type"
