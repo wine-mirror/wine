@@ -3719,15 +3719,11 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         if ((rect->left & width_mask) || (rect->right & width_mask)
                 || (rect->top & height_mask) || (rect->bottom & height_mask))
         {
-            switch (surface->resource.pool)
-            {
-                case WINED3DPOOL_DEFAULT:
-                    WARN("Partial block lock with WINED3DPOOL_DEFAULT\n");
-                    return WINED3DERR_INVALIDCALL;
+            WARN("Map rect %s is misaligned for %ux%u blocks.\n",
+                    wine_dbgstr_rect(rect), format->block_width, format->block_height);
 
-                default:
-                    FIXME("Partial block lock with %s\n", debug_d3dpool(surface->resource.pool));
-            }
+            if (surface->resource.pool == WINED3DPOOL_DEFAULT)
+                return WINED3DERR_INVALIDCALL;
         }
     }
 
