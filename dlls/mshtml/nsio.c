@@ -2333,13 +2333,11 @@ static nsresult NSAPI nsURL_GetParam(nsIURL *iface, nsACString *aParam)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
 
-    TRACE("(%p)->(%p)\n", This, aParam);
+    WARN("(%p)->(%p)\n", This, aParam);
 
-    if(This->nsurl)
-        return nsIURL_GetParam(This->nsurl, aParam);
-
-    FIXME("default action not implemented\n");
-    return NS_ERROR_NOT_IMPLEMENTED;
+    /* This is a leftover of ';' special handling in URLs. It will be removed from Gecko soon */
+    nsACString_SetData(aParam, "");
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURL_SetParam(nsIURL *iface, const nsACString *aParam)
