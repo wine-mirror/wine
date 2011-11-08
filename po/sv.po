@@ -132,7 +132,7 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Ingen"
 
-#: comctl32.rc:28 wordpad.rc:169
+#: comctl32.rc:28 regedit.rc:234 wordpad.rc:169
 msgid "Close"
 msgstr "Stäng"
 
@@ -2380,9 +2380,11 @@ msgid ""
 "Saved passwords you have entered into forms."
 msgstr ""
 
-#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
-#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 regedit.rc:245
+#: regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311
+#: wineboot.rc:31 wineconsole.rc:132 winefile.rc:132 winefile.rc:155
+#: winefile.rc:185 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
+#: wordpad.rc:247
 msgid "Cancel"
 msgstr "Avbryt"
 
@@ -8818,10 +8820,11 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%s      %s      %s      Öppna resurser: %lu\n"
 
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 wineconsole.rc:131
-#: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
-#: wordpad.rc:246
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 regedit.rc:244
+#: regedit.rc:255 regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310
+#: wineconsole.rc:131 winefile.rc:131 winefile.rc:154 winefile.rc:184
+#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
+#: wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -9697,6 +9700,94 @@ msgstr "Ändra binärt data"
 #: regedit.rc:109
 msgid "&Export..."
 msgstr "&Exportera..."
+
+#: regedit.rc:215
+msgid "Export registry"
+msgstr "&Exportera register"
+
+#: regedit.rc:216
+msgid "&All"
+msgstr "&Allt"
+
+#: regedit.rc:217
+msgid "S&elected branch:"
+msgstr "&Markerad del:"
+
+#: regedit.rc:223 regedit.rc:233
+msgid "Find"
+msgstr "Sök"
+
+#: regedit.rc:226
+msgid "Find:"
+msgstr "Sök:"
+
+#: regedit.rc:228
+msgid "Find in:"
+msgstr "Sök i:"
+
+#: regedit.rc:229
+msgid "Keys"
+msgstr "Nycklar"
+
+#: regedit.rc:230
+msgid "Value names"
+msgstr "Värdenamn"
+
+#: regedit.rc:231
+msgid "Value content"
+msgstr "Värdeinnehåll"
+
+#: regedit.rc:232
+msgid "Whole string only"
+msgstr "Enbart hela strängar"
+
+#: regedit.rc:239
+msgid "Add Favorite"
+msgstr "Lägg till favorit"
+
+#: regedit.rc:242 regedit.rc:253
+msgid "Name:"
+msgstr "Namn:"
+
+#: regedit.rc:250
+msgid "Remove Favorite"
+msgstr "Ta bort favorit"
+
+#: regedit.rc:261
+msgid "Edit String"
+msgstr "Redigera sträng"
+
+#: regedit.rc:264 regedit.rc:277 regedit.rc:293 regedit.rc:306
+msgid "Value name:"
+msgstr "Värdenamn:"
+
+#: regedit.rc:266 regedit.rc:279 regedit.rc:295 regedit.rc:308
+msgid "Value data:"
+msgstr "Värdedata:"
+
+#: regedit.rc:274
+msgid "Edit DWORD"
+msgstr "Redigera DWORD"
+
+#: regedit.rc:281
+msgid "Base"
+msgstr "Bas"
+
+#: regedit.rc:282
+msgid "Hexadecimal"
+msgstr "Hexadecimal"
+
+#: regedit.rc:283
+msgid "Decimal"
+msgstr "Decimal"
+
+#: regedit.rc:290
+msgid "Edit Binary"
+msgstr "Redigera binär"
+
+#: regedit.rc:303
+msgid "Edit Multi String"
+msgstr "Redigera flersträng"
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"

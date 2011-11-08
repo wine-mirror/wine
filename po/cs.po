@@ -142,7 +142,7 @@ msgstr ""
 "#-#-#-#-#  cs.po (Wine)  #-#-#-#-#\n"
 "Žádný"
 
-#: comctl32.rc:28 wordpad.rc:169
+#: comctl32.rc:28 regedit.rc:234 wordpad.rc:169
 msgid "Close"
 msgstr "Zavřít"
 
@@ -2402,9 +2402,11 @@ msgid ""
 "Saved passwords you have entered into forms."
 msgstr ""
 
-#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
-#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 regedit.rc:245
+#: regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311
+#: wineboot.rc:31 wineconsole.rc:132 winefile.rc:132 winefile.rc:155
+#: winefile.rc:185 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
+#: wordpad.rc:247
 msgid "Cancel"
 msgstr "Storno"
 
@@ -8968,10 +8970,11 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 wineconsole.rc:131
-#: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
-#: wordpad.rc:246
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 regedit.rc:244
+#: regedit.rc:255 regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310
+#: wineconsole.rc:131 winefile.rc:131 winefile.rc:154 winefile.rc:184
+#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
+#: wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -9883,6 +9886,102 @@ msgstr "Upravit binární data"
 #: regedit.rc:109
 msgid "&Export..."
 msgstr ""
+
+#: regedit.rc:215
+#, fuzzy
+msgid "Export registry"
+msgstr "&Exportovat soubor registru..."
+
+#: regedit.rc:216
+msgid "&All"
+msgstr ""
+
+#: regedit.rc:217
+msgid "S&elected branch:"
+msgstr ""
+
+#: regedit.rc:223 regedit.rc:233
+msgid "Find"
+msgstr ""
+
+#: regedit.rc:226
+msgid "Find:"
+msgstr ""
+
+#: regedit.rc:228
+msgid "Find in:"
+msgstr ""
+
+#: regedit.rc:229
+msgid "Keys"
+msgstr ""
+
+#: regedit.rc:230
+#, fuzzy
+msgid "Value names"
+msgstr "Název:"
+
+#: regedit.rc:231
+#, fuzzy
+msgid "Value content"
+msgstr "Název:"
+
+#: regedit.rc:232
+msgid "Whole string only"
+msgstr ""
+
+#: regedit.rc:239
+#, fuzzy
+msgid "Add Favorite"
+msgstr "Oblí&bené"
+
+#: regedit.rc:242 regedit.rc:253
+#, fuzzy
+msgid "Name:"
+msgstr "&Jméno"
+
+#: regedit.rc:250
+#, fuzzy
+msgid "Remove Favorite"
+msgstr "Odeb&rat oblíbené..."
+
+#: regedit.rc:261
+msgid "Edit String"
+msgstr "Úprava řetězce"
+
+#: regedit.rc:264 regedit.rc:277 regedit.rc:293 regedit.rc:306
+msgid "Value name:"
+msgstr "Název:"
+
+#: regedit.rc:266 regedit.rc:279 regedit.rc:295 regedit.rc:308
+msgid "Value data:"
+msgstr "Obsah:"
+
+#: regedit.rc:274
+msgid "Edit DWORD"
+msgstr "Úprava DWORD"
+
+#: regedit.rc:281
+msgid "Base"
+msgstr "Základ"
+
+#: regedit.rc:282
+msgid "Hexadecimal"
+msgstr "šestnáctkový"
+
+#: regedit.rc:283
+msgid "Decimal"
+msgstr "Desitkový"
+
+#: regedit.rc:290
+#, fuzzy
+msgid "Edit Binary"
+msgstr "Edice"
+
+#: regedit.rc:303
+#, fuzzy
+msgid "Edit Multi String"
+msgstr "Úprava řetězce"
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"

@@ -142,7 +142,7 @@ msgstr ""
 "#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
 "Semmi"
 
-#: comctl32.rc:28 wordpad.rc:169
+#: comctl32.rc:28 regedit.rc:234 wordpad.rc:169
 msgid "Close"
 msgstr "Bezárás"
 
@@ -2454,9 +2454,11 @@ msgid ""
 "Saved passwords you have entered into forms."
 msgstr ""
 
-#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 wineboot.rc:31
-#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 regedit.rc:245
+#: regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311
+#: wineboot.rc:31 wineconsole.rc:132 winefile.rc:132 winefile.rc:155
+#: winefile.rc:185 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
+#: wordpad.rc:247
 msgid "Cancel"
 msgstr "Mégse"
 
@@ -8899,10 +8901,11 @@ msgstr ""
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
 
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 wineconsole.rc:131
-#: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
-#: wordpad.rc:246
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 regedit.rc:244
+#: regedit.rc:255 regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310
+#: wineconsole.rc:131 winefile.rc:131 winefile.rc:154 winefile.rc:184
+#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
+#: wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -9850,6 +9853,96 @@ msgstr ""
 "&Betűtípus...\n"
 "#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
 "&Font..."
+
+#: regedit.rc:215
+#, fuzzy
+msgid "Export registry"
+msgstr "Regisztrációs adatbázis fájl &exportálása..."
+
+#: regedit.rc:216
+msgid "&All"
+msgstr ""
+
+#: regedit.rc:217
+msgid "S&elected branch:"
+msgstr ""
+
+#: regedit.rc:223 regedit.rc:233
+msgid "Find"
+msgstr "Keresés"
+
+#: regedit.rc:226
+msgid "Find:"
+msgstr "Keresés:"
+
+#: regedit.rc:228
+msgid "Find in:"
+msgstr "Keresés itt:"
+
+#: regedit.rc:229
+msgid "Keys"
+msgstr "Kulcsok"
+
+#: regedit.rc:230
+msgid "Value names"
+msgstr "Érték nevek"
+
+#: regedit.rc:231
+msgid "Value content"
+msgstr "Érték tartalmak"
+
+#: regedit.rc:232
+msgid "Whole string only"
+msgstr "Csak teljes szöveg"
+
+#: regedit.rc:239
+msgid "Add Favorite"
+msgstr "Kedvenc hozzáadása"
+
+#: regedit.rc:242 regedit.rc:253
+msgid "Name:"
+msgstr "Név:"
+
+#: regedit.rc:250
+msgid "Remove Favorite"
+msgstr "Kedvenc törlése"
+
+#: regedit.rc:261
+msgid "Edit String"
+msgstr "Sztring szerkesztése"
+
+#: regedit.rc:264 regedit.rc:277 regedit.rc:293 regedit.rc:306
+msgid "Value name:"
+msgstr "Érték neve:"
+
+#: regedit.rc:266 regedit.rc:279 regedit.rc:295 regedit.rc:308
+msgid "Value data:"
+msgstr "Érték adat:"
+
+#: regedit.rc:274
+msgid "Edit DWORD"
+msgstr "DWORD szerkesztése"
+
+#: regedit.rc:281
+msgid "Base"
+msgstr "Alap"
+
+#: regedit.rc:282
+msgid "Hexadecimal"
+msgstr "Hexadecimális"
+
+#: regedit.rc:283
+msgid "Decimal"
+msgstr "Decimális"
+
+#: regedit.rc:290
+msgid "Edit Binary"
+msgstr "Bináris szerkesztése"
+
+#: regedit.rc:303
+#, fuzzy
+msgid "Edit Multi String"
+msgstr "Sztring szerkesztése"
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"

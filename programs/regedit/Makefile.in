@@ -19,30 +19,7 @@ C_SRCS = \
 	treeview.c
 
 RC_SRCS = \
-	Bg.rc \
-	Cs.rc \
-	Da.rc \
-	De.rc \
 	En.rc \
-	Es.rc \
-	Fr.rc \
-	He.rc \
-	Hu.rc \
-	It.rc \
-	Ja.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	No.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Si.rc \
-	Sv.rc \
-	Tr.rc \
-	Uk.rc \
-	Zh.rc \
 	regedit.rc
 
 PO_SRCS = regedit.rc
