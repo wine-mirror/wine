@@ -1,0 +1,213 @@
+/*
+ * Copyright 2011 Vincent Povirk for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "wincodec.idl";
+
+typedef enum WICPersistOptions {
+    WICPersistOptionsDefault = 0x00000000,
+    WICPersistOptionsLittleEndian = 0x00000001,
+    WICPersistOptionsBigEndian = 0x00000002,
+    WICPersistOptionsStrictFormat = 0x00000004,
+    WICPersistOptionsNoCacheStream = 0x00000008,
+    WICPersistOptionsMask = 0x0000FFFF
+} WICPersistOptions;
+
+typedef enum WICMetadataCreationOptions {
+    WICMetadataCreationDefault = 0x00000000,
+    WICMetadataCreationAllowUnknown = WICMetadataCreationDefault,
+    WICMetadataCreationFailUnknown = 0x00010000,
+    WICMetadataCreationMask = 0xFFFF0000
+} WICMetadataCreationOptions;
+
+[
+    object,
+    uuid(aba958bf-c672-44d1-8d61-ce6df2e682c2)
+]
+interface IWICMetadataHandlerInfo : IWICComponentInfo
+{
+    HRESULT GetMetadataFormat(
+        [out] GUID *pguidMetadataFormat);
+
+    HRESULT GetContainerFormats(
+        [in] UINT cContainerFormats,
+        [in, out, unique, size_is(cContainerFormats)] GUID *pguidContainerFormats,
+        [out] UINT *pcchActual);
+
+    HRESULT GetDeviceManufacturer(
+        [in] UINT cchDeviceManufacturer,
+        [in, out, unique, size_is(cchDeviceManufacturer)] WCHAR *wzDeviceManufacturer,
+        [out] UINT *pcchActual);
+
+    HRESULT GetDeviceModels(
+        [in] UINT cchDeviceModels,
+        [in, out, unique, size_is(cchDeviceModels)] WCHAR *wzDeviceModels,
+        [out] UINT *pcchActual);
+
+    HRESULT DoesRequireFullStream(
+        [out] BOOL *pfRequiresFullStream);
+
+    HRESULT DoesSupportPadding(
+        [out] BOOL *pfSupportsPadding);
+
+    HRESULT DoesRequireFixedSize(
+        [out] BOOL *pfFixedSize);
+}
+
+[
+    object,
+    uuid(9204fe99-d8fc-4fd5-a001-9536b067a899)
+]
+interface IWICMetadataReader : IUnknown
+{
+    HRESULT GetMetadataFormat(
+        [out] GUID *pguidMetadataFormat);
+
+    HRESULT GetMetadataHandlerInfo(
+        [out] IWICMetadataHandlerInfo **ppIHandler);
+
+    HRESULT GetCount(
+        [out] UINT *pcCount);
+
+    HRESULT GetValueByIndex(
+        [in] UINT nIndex,
+        [in, out, unique] PROPVARIANT *pvarSchema,
+        [in, out, unique] PROPVARIANT *pvarId,
+        [in, out, unique] PROPVARIANT *pvarValue);
+
+    HRESULT GetValue(
+        [in] const PROPVARIANT *pvarSchema,
+        [in] const PROPVARIANT *pvarId,
+        [in, out, unique] const PROPVARIANT *pvarValue);
+
+    HRESULT GetEnumerator(
+        [out] IWICEnumMetadataItem **ppIEnumMetadata);
+}
+
+[
+    object,
+    uuid(f7836e16-3be0-470b-86bb-160d0aecd7de)
+]
+interface IWICMetadataWriter : IWICMetadataReader
+{
+    HRESULT SetValue(
+        [in, unique] const PROPVARIANT *pvarSchema,
+        [in] const PROPVARIANT *pvarId,
+        [in] const PROPVARIANT *pvarValue);
+
+    HRESULT SetValueByIndex(
+        [in] UINT nIndex,
+        [in, unique] const PROPVARIANT *pvarSchema,
+        [in] const PROPVARIANT *pvarId,
+        [in] const PROPVARIANT *pvarValue);
+
+    HRESULT RemoveValue(
+        [in, unique] const PROPVARIANT *pvarSchema,
+        [in] const PROPVARIANT *pvarId);
+
+    HRESULT RemoveValueByIndex(
+        [in] UINT nIndex);
+}
+
+[
+    object,
+    uuid(feaa2a8d-b3f3-43e4-b25c-d1de990a1ae1)
+]
+interface IWICMetadataBlockReader : IUnknown
+{
+    HRESULT GetContainerFormat(
+        [out] GUID *pguidContainerFormat);
+
+    HRESULT GetCount(
+        [out] UINT *pcCount);
+
+    HRESULT GetReaderByIndex(
+        [in] UINT nIndex,
+        [out] IWICMetadataReader **ppIMetadataReader);
+
+    HRESULT GetEnumerator(
+        [out] IEnumUnknown **ppIEnumMetadata);
+}
+
+[
+    object,
+    uuid(08fb9676-b444-41e8-8dbe-6a53a542bff1)
+]
+interface IWICMetadataBlockWriter : IWICMetadataBlockReader
+{
+    HRESULT InitializeFromBlockReader(
+        [in] IWICMetadataBlockReader *pIMDBlockReader);
+
+    HRESULT GetWriterByIndex(
+        [in] UINT nIndex,
+        [out] IWICMetadataWriter **ppIMetadataWriter);
+
+    HRESULT AddWriter(
+        [in] IWICMetadataWriter *pIMetadataWriter);
+
+    HRESULT SetWriterByIndex(
+        [in] UINT nIndex,
+        [in] IWICMetadataWriter *pIMetadataWriter);
+
+    HRESULT RemoveWriterByIndex(
+        [in] UINT nIndex);
+}
+
+[
+    object,
+    uuid(412d0c3a-9650-44fa-af5b-dd2a06c8e8fb)
+]
+interface IWICComponentFactory : IWICImagingFactory
+{
+    HRESULT CreateMetadataReader(
+        [in] REFGUID guidMetadataFormat,
+        [in, unique] const GUID *pguidVendor,
+        [in] DWORD dwOptions,
+        [in] IStream *pIStream,
+        [out] IWICMetadataReader **ppIReader);
+
+    HRESULT CreateMetadataReaderFromContainer(
+        [in] REFGUID guidMetadataFormat,
+        [in, unique] const GUID *pguidVendor,
+        [in] DWORD dwOptions,
+        [in] IStream *pIStream,
+        [out] IWICMetadataReader **ppIReader);
+
+    HRESULT CreateMetadataWriter(
+        [in] REFGUID guidMetadataFormat,
+        [in, unique] const GUID *pguidVendor,
+        [in] DWORD dwMetadataOptions,
+        [out] IWICMetadataWriter **ppIWriter);
+
+    HRESULT CreateMetadataWriterFromReader(
+        [in] IWICMetadataReader *pIReader,
+        [in, unique] const GUID *pguidVendor,
+        [out] IWICMetadataWriter **ppIWriter);
+
+    HRESULT CreateQueryReaderFromBlockReader(
+        [in] IWICMetadataBlockReader *pIBlockReader,
+        [out] IWICMetadataQueryReader **ppIQueryReader);
+
+    HRESULT CreateQueryWriterFromBlockWriter(
+        [in] IWICMetadataBlockWriter *pIBlockWriter,
+        [out] IWICMetadataQueryWriter **ppIQueryWriter);
+
+    HRESULT CreateEncoderPropertyBag(
+        [in, unique, size_is(cCount)] PROPBAG2 *ppropOptions,
+        [in] UINT cCount,
+        [out] IPropertyBag2 **ppIPropertyBag);
+}

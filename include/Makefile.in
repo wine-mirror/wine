@@ -100,6 +100,7 @@ PUBLIC_IDL_H_SRCS = \
 	wia_lh.idl \
 	wia_xp.idl \
 	wincodec.idl \
+	wincodecsdk.idl \
 	wine/itss.idl \
 	wine/svcctl.idl \
 	winsxs.idl \

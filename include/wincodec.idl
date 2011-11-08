@@ -900,6 +900,29 @@ interface IWICImagingFactory : IUnknown
         [out] IWICMetadataQueryWriter **ppIQueryWriter);
 }
 
+[
+    local,
+    object,
+    uuid(dc2bb46d-3f07-481e-8625-220c4aedbb33)
+]
+interface IWICEnumMetadataItem : IUnknown
+{
+    HRESULT Next(
+        [in] ULONG celt,
+        [in, out, unique, size_is(celt)] PROPVARIANT *rgeltSchema,
+        [in, out, size_is(celt)] PROPVARIANT *rgeltId,
+        [in, out, optional, size_is(celt)] PROPVARIANT *rgeltValue,
+        [out, optional] ULONG *pceltFetched);
+
+    HRESULT Skip(
+        [in] ULONG celt);
+
+    HRESULT Reset();
+
+    HRESULT Clone(
+        [out] IWICEnumMetadataItem **ppIEnumMetadataItem);
+}
+
 cpp_quote("HRESULT WINAPI WICConvertBitmapSource(REFWICPixelFormatGUID dstFormat, IWICBitmapSource *pISrc, IWICBitmapSource **ppIDst);")
 
 cpp_quote("DEFINE_GUID(CLSID_WICBmpDecoder, 0x6b462062,0x7cbf,0x400d,0x9f,0xdb,0x81,0x3d,0xd1,0x0f,0x27,0x78);")
