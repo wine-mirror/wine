@@ -744,7 +744,7 @@ GpStatus WINGDIPAPI GdipAddPathPie(GpPath *path, REAL x, REAL y, REAL width, REA
 
     arc2polybezier(ptf, x, y, width, height, startAngle, sweepAngle);
 
-    status = GdipAddPathLine(path, (width - x)/2, (height - y)/2, ptf[0].X, ptf[0].Y);
+    status = GdipAddPathLine(path, x + width/2, y + height/2, ptf[0].X, ptf[0].Y);
     if(status != Ok){
         GdipFree(ptf);
         return status;
