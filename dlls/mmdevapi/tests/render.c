@@ -530,6 +530,8 @@ static void test_padding(void)
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED,
             0, 5000000, 0, pwfx, NULL);
     ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+    if(hr != S_OK)
+        return;
 
     hr = IAudioClient_GetDevicePeriod(ac, &defp, &minp);
     ok(hr == S_OK, "GetDevicePeriod failed: %08x\n", hr);
@@ -1396,6 +1398,8 @@ static void test_session_creation(void)
             NULL, (void**)&ac);
     ok((hr == S_OK)^(ac == NULL), "Activate %08x &out pointer\n", hr);
     ok(hr == S_OK, "Activation failed with %08x\n", hr);
+    if(hr != S_OK)
+        return;
 
     hr = IAudioClient_GetMixFormat(ac, &fmt);
     ok(hr == S_OK, "GetMixFormat failed: %08x\n", hr);

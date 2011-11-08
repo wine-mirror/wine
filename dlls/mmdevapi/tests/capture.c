@@ -330,6 +330,8 @@ static void test_streamvolume(void)
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000,
             0, fmt, NULL);
     ok(hr == S_OK, "Initialize failed: %08x\n", hr);
+    if(hr != S_OK)
+        return;
 
     hr = IAudioClient_GetService(ac, &IID_IAudioStreamVolume, (void**)&asv);
     ok(hr == S_OK, "GetService failed: %08x\n", hr);
@@ -430,6 +432,8 @@ static void test_channelvolume(void)
 
     hr = IAudioClient_GetService(ac, &IID_IChannelAudioVolume, (void**)&acv);
     ok(hr == S_OK, "GetService failed: %08x\n", hr);
+    if(hr != S_OK)
+        return;
 
     hr = IChannelAudioVolume_GetChannelCount(acv, NULL);
     ok(hr == NULL_PTR_ERR, "GetChannelCount gave wrong error: %08x\n", hr);
@@ -530,6 +534,8 @@ static void test_simplevolume(void)
 
     hr = IAudioClient_GetService(ac, &IID_ISimpleAudioVolume, (void**)&sav);
     ok(hr == S_OK, "GetService failed: %08x\n", hr);
+    if(hr != S_OK)
+        return;
 
     hr = ISimpleAudioVolume_GetMasterVolume(sav, NULL);
     ok(hr == NULL_PTR_ERR, "GetMasterVolume gave wrong error: %08x\n", hr);
@@ -621,6 +627,8 @@ static void test_volume_dependence(void)
 
     hr = IAudioClient_GetService(ac, &IID_IAudioStreamVolume, (void**)&asv);
     ok(hr == S_OK, "GetService (AudioStreamVolume) failed: %08x\n", hr);
+    if(hr != S_OK)
+        return;
 
     hr = IAudioStreamVolume_SetChannelVolume(asv, 0, 0.2f);
     ok(hr == S_OK, "ASV_SetChannelVolume failed: %08x\n", hr);
