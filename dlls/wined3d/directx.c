@@ -5260,7 +5260,6 @@ static BOOL InitAdapters(struct wined3d *wined3d)
         struct wined3d_pixel_format *cfgs;
         int iPixelFormat;
         int res;
-        int i;
         DISPLAY_DEVICEW DisplayDevice;
         HDC hdc;
 
@@ -5436,25 +5435,6 @@ static BOOL InitAdapters(struct wined3d *wined3d)
                 WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
                 HeapFree(GetProcessHeap(), 0, adapter->cfgs);
                 goto nogl_adapter;
-            }
-        }
-
-        /* D16, D24X8 and D24S8 are common depth / depth+stencil formats. All drivers support them though this doesn't
-         * mean that the format is offered in hardware. For instance Geforce8 cards don't have offer D16 in hardware
-         * but just fake it using D24(X8?) which is fine. D3D also allows that.
-         * Some display drivers (i915 on Linux) only report mixed depth+stencil formats like D24S8. MSDN clearly mentions
-         * that only on lockable formats (e.g. D16_locked) the bit order is guaranteed and that on other formats the
-         * driver is allowed to consume more bits EXCEPT for stencil bits.
-         *
-         * Mark an adapter with this broken stencil behavior.
-         */
-        adapter->brokenStencil = TRUE;
-        for (i = 0, cfgs = adapter->cfgs; i < adapter->cfg_count; ++i)
-        {
-            /* Nearly all drivers offer depth formats without stencil, only on i915 this if-statement won't be entered. */
-            if(cfgs[i].depthSize && !cfgs[i].stencilSize) {
-                adapter->brokenStencil = FALSE;
-                break;
             }
         }
 

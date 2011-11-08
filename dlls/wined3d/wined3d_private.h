@@ -1527,7 +1527,6 @@ struct wined3d_adapter
     WCHAR                   DeviceName[CCHDEVICENAME]; /* DeviceName for use with e.g. ChangeDisplaySettings */
     unsigned int cfg_count;
     struct wined3d_pixel_format *cfgs;
-    BOOL                    brokenStencil; /* Set on cards which only offer mixed depth+stencil */
     unsigned int            TextureRam; /* Amount of texture memory both video ram + AGP/TurboCache/HyperMemory/.. */
     unsigned int            UsedTextureRam;
     LUID luid;

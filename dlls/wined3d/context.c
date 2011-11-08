@@ -1124,33 +1124,9 @@ static int context_choose_pixel_format(const struct wined3d_device *device, HDC 
         BOOL auxBuffers, BOOL findCompatible)
 {
     int iPixelFormat=0;
-    unsigned int matchtry;
     BYTE redBits, greenBits, blueBits, alphaBits, colorBits;
     BYTE depthBits=0, stencilBits=0;
-
-    static const struct
-    {
-        BOOL require_aux;
-        BOOL exact_alpha;
-        BOOL exact_color;
-    }
-    matches[] =
-    {
-        /* First, try without alpha match buffers. MacOS supports aux buffers only
-         * on A8R8G8B8, and we prefer better offscreen rendering over an alpha match.
-         * Then try without aux buffers - this is the most common cause for not
-         * finding a pixel format. Also some drivers(the open source ones)
-         * only offer 32 bit ARB pixel formats. First try without an exact alpha
-         * match, then try without an exact alpha and color match.
-         */
-        { TRUE,  TRUE,  TRUE  },
-        { TRUE,  FALSE, TRUE  },
-        { FALSE, TRUE,  TRUE  },
-        { FALSE, FALSE, TRUE  },
-        { TRUE,  FALSE, FALSE },
-        { FALSE, FALSE, FALSE },
-    };
-
+    unsigned int current_value;
     unsigned int cfg_count = device->adapter->cfg_count;
     unsigned int i;
 
@@ -1167,84 +1143,56 @@ static int context_choose_pixel_format(const struct wined3d_device *device, HDC 
 
     getDepthStencilBits(ds_format, &depthBits, &stencilBits);
 
-    for (matchtry = 0; matchtry < (sizeof(matches) / sizeof(*matches)) && !iPixelFormat; ++matchtry)
+    current_value = 0;
+    for (i = 0; i < cfg_count; ++i)
     {
-        for (i = 0; i < cfg_count; ++i)
+        const struct wined3d_pixel_format *cfg = &device->adapter->cfgs[i];
+        unsigned int value;
+
+        /* For now only accept RGBA formats. Perhaps some day we will
+         * allow floating point formats for pbuffers. */
+        if (cfg->iPixelType != WGL_TYPE_RGBA_ARB)
+            continue;
+        /* In window mode we need a window drawable format and double buffering. */
+        if (!(cfg->windowDrawable && cfg->doubleBuffer))
+            continue;
+        if (cfg->redSize < redBits)
+            continue;
+        if (cfg->greenSize < greenBits)
+            continue;
+        if (cfg->blueSize < blueBits)
+            continue;
+        if (cfg->alphaSize < alphaBits)
+            continue;
+        if (cfg->depthSize < depthBits)
+            continue;
+        if (stencilBits && cfg->stencilSize != stencilBits)
+            continue;
+        /* Check multisampling support. */
+        if (cfg->numSamples)
+            continue;
+
+        value = 1;
+        /* We try to locate a format which matches our requirements exactly. In case of
+         * depth it is no problem to emulate 16-bit using e.g. 24-bit, so accept that. */
+        if (cfg->depthSize == depthBits)
+            value += 1;
+        if (cfg->stencilSize == stencilBits)
+            value += 2;
+        if (cfg->alphaSize == alphaBits)
+            value += 4;
+        /* We like to have aux buffers in backbuffer mode */
+        if (auxBuffers && cfg->auxBuffers)
+            value += 8;
+        if (cfg->redSize == redBits
+                && cfg->greenSize == greenBits
+                && cfg->blueSize == blueBits)
+            value += 16;
+
+        if (value > current_value)
         {
-            const struct wined3d_pixel_format *cfg = &device->adapter->cfgs[i];
-            BOOL exactDepthMatch = TRUE;
-
-            /* For now only accept RGBA formats. Perhaps some day we will
-             * allow floating point formats for pbuffers. */
-            if(cfg->iPixelType != WGL_TYPE_RGBA_ARB)
-                continue;
-
-            /* In window mode we need a window drawable format and double buffering. */
-            if(!(cfg->windowDrawable && cfg->doubleBuffer))
-                continue;
-
-            /* We like to have aux buffers in backbuffer mode */
-            if(auxBuffers && !cfg->auxBuffers && matches[matchtry].require_aux)
-                continue;
-
-            if(matches[matchtry].exact_color) {
-                if(cfg->redSize != redBits)
-                    continue;
-                if(cfg->greenSize != greenBits)
-                    continue;
-                if(cfg->blueSize != blueBits)
-                    continue;
-            } else {
-                if(cfg->redSize < redBits)
-                    continue;
-                if(cfg->greenSize < greenBits)
-                    continue;
-                if(cfg->blueSize < blueBits)
-                    continue;
-            }
-            if(matches[matchtry].exact_alpha) {
-                if(cfg->alphaSize != alphaBits)
-                    continue;
-            } else {
-                if(cfg->alphaSize < alphaBits)
-                    continue;
-            }
-
-            /* We try to locate a format which matches our requirements exactly. In case of
-             * depth it is no problem to emulate 16-bit using e.g. 24-bit, so accept that. */
-            if(cfg->depthSize < depthBits)
-                continue;
-            else if(cfg->depthSize > depthBits)
-                exactDepthMatch = FALSE;
-
-            /* In all cases make sure the number of stencil bits matches our requirements
-             * even when we don't need stencil because it could affect performance EXCEPT
-             * on cards which don't offer depth formats without stencil like the i915 drivers
-             * on Linux. */
-            if (stencilBits != cfg->stencilSize
-                    && !(device->adapter->brokenStencil && stencilBits <= cfg->stencilSize))
-                continue;
-
-            /* Check multisampling support */
-            if (cfg->numSamples)
-                continue;
-
-            /* When we have passed all the checks then we have found a format which matches our
-             * requirements. Note that we only check for a limit number of capabilities right now,
-             * so there can easily be a dozen of pixel formats which appear to be the 'same' but
-             * can still differ in things like multisampling, stereo, SRGB and other flags.
-             */
-
-            /* Exit the loop as we have found a format :) */
-            if(exactDepthMatch) {
-                iPixelFormat = cfg->iPixelFormat;
-                break;
-            } else if(!iPixelFormat) {
-                /* In the end we might end up with a format which doesn't exactly match our depth
-                 * requirements. Accept the first format we found because formats with higher iPixelFormat
-                 * values tend to have more extended capabilities (e.g. multisampling) which we don't need. */
-                iPixelFormat = cfg->iPixelFormat;
-            }
+            iPixelFormat = cfg->iPixelFormat;
+            current_value = value;
         }
     }
 
