@@ -856,7 +856,10 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
             int j = 1;
             while (cnt + j < cInChars - 1 && (pwcInChars[cnt+j] == Numeric_space || pwcInChars[cnt+j] == ZWJ || pwcInChars[cnt+j] == ZWNJ))
                 j++;
-            New_Script = get_char_script(pwcInChars[cnt+j]);
+            if (cnt + j < cInChars)
+                New_Script = get_char_script(pwcInChars[cnt+j]);
+            else
+                New_Script = get_char_script(pwcInChars[cnt]);
         }
 
         if ((levels && (levels[cnt] != pItems[index].a.s.uBidiLevel || (strength && (strength[cnt] != str)))) || (New_Script != -1 && New_Script != pItems[index].a.eScript) || New_Script == Script_Control)
