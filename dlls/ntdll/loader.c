@@ -242,7 +242,7 @@ static ULONG_PTR allocate_stub( const char *dll, const char *name )
     {
         SIZE_T size = MAX_SIZE;
         if (NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&stubs, 0, &size,
-                                     MEM_COMMIT, PAGE_EXECUTE_WRITECOPY ) != STATUS_SUCCESS)
+                                     MEM_COMMIT, PAGE_EXECUTE_READWRITE ) != STATUS_SUCCESS)
             return 0xdeadbeef;
     }
     stub = &stubs[nb_stubs++];
