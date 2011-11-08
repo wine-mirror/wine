@@ -1870,6 +1870,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
     if (is_beyond_limit( 0, size, working_set_limit )) return STATUS_WORKING_SET_LIMIT_RANGE;
 
     if ((status = get_vprot_flags( protect, &vprot ))) return status;
+    if (vprot & VPROT_WRITECOPY) return STATUS_INVALID_PAGE_PROTECTION;
     vprot |= VPROT_VALLOC;
     if (type & MEM_COMMIT) vprot |= VPROT_COMMITTED;
 

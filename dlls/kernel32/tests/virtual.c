@@ -1523,6 +1523,85 @@ static void test_VirtualProtect(void)
     VirtualFree(base, 0, MEM_FREE);
 }
 
+static void test_VirtualAlloc_protection(void)
+{
+    static const struct test_data
+    {
+        DWORD prot;
+        BOOL success;
+    } td[] =
+    {
+        { 0, FALSE }, /* 0x00 */
+        { PAGE_NOACCESS, TRUE }, /* 0x01 */
+        { PAGE_READONLY, TRUE }, /* 0x02 */
+        { PAGE_READONLY | PAGE_NOACCESS, FALSE }, /* 0x03 */
+        { PAGE_READWRITE, TRUE }, /* 0x04 */
+        { PAGE_READWRITE | PAGE_NOACCESS, FALSE }, /* 0x05 */
+        { PAGE_READWRITE | PAGE_READONLY, FALSE }, /* 0x06 */
+        { PAGE_READWRITE | PAGE_READONLY | PAGE_NOACCESS, FALSE }, /* 0x07 */
+        { PAGE_WRITECOPY, FALSE }, /* 0x08 */
+        { PAGE_WRITECOPY | PAGE_NOACCESS, FALSE }, /* 0x09 */
+        { PAGE_WRITECOPY | PAGE_READONLY, FALSE }, /* 0x0a */
+        { PAGE_WRITECOPY | PAGE_NOACCESS | PAGE_READONLY, FALSE }, /* 0x0b */
+        { PAGE_WRITECOPY | PAGE_READWRITE, FALSE }, /* 0x0c */
+        { PAGE_WRITECOPY | PAGE_READWRITE | PAGE_NOACCESS, FALSE }, /* 0x0d */
+        { PAGE_WRITECOPY | PAGE_READWRITE | PAGE_READONLY, FALSE }, /* 0x0e */
+        { PAGE_WRITECOPY | PAGE_READWRITE | PAGE_READONLY | PAGE_NOACCESS, FALSE }, /* 0x0f */
+
+        { PAGE_EXECUTE, TRUE }, /* 0x10 */
+        { PAGE_EXECUTE_READ, TRUE }, /* 0x20 */
+        { PAGE_EXECUTE_READ | PAGE_EXECUTE, FALSE }, /* 0x30 */
+        { PAGE_EXECUTE_READWRITE, TRUE }, /* 0x40 */
+        { PAGE_EXECUTE_READWRITE | PAGE_EXECUTE, FALSE }, /* 0x50 */
+        { PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_READ, FALSE }, /* 0x60 */
+        { PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_READ | PAGE_EXECUTE, FALSE }, /* 0x70 */
+        { PAGE_EXECUTE_WRITECOPY, FALSE }, /* 0x80 */
+        { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE, FALSE }, /* 0x90 */
+        { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE_READ, FALSE }, /* 0xa0 */
+        { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE_READ | PAGE_EXECUTE, FALSE }, /* 0xb0 */
+        { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE_READWRITE, FALSE }, /* 0xc0 */
+        { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE, FALSE }, /* 0xd0 */
+        { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_READ, FALSE }, /* 0xe0 */
+        { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_READ | PAGE_EXECUTE, FALSE } /* 0xf0 */
+    };
+    char *base;
+    DWORD ret, i;
+    MEMORY_BASIC_INFORMATION info;
+    SYSTEM_INFO si;
+
+    GetSystemInfo(&si);
+    trace("system page size %#x\n", si.dwPageSize);
+
+    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    {
+        SetLastError(0xdeadbeef);
+        base = VirtualAlloc(0, si.dwPageSize, MEM_RESERVE | MEM_COMMIT, td[i].prot);
+
+        if (td[i].success)
+        {
+            ok(base != NULL, "%d: VirtualAlloc failed %d\n", i, GetLastError());
+
+            SetLastError(0xdeadbeef);
+            ret = VirtualQuery(base, &info, sizeof(info));
+            ok(ret, "VirtualQuery failed %d\n", GetLastError());
+            ok(info.BaseAddress == base, "%d: got %p != expected %p\n", i, info.BaseAddress, base);
+            ok(info.RegionSize == si.dwPageSize, "%d: got %#lx != expected %#x\n", i, info.RegionSize, si.dwPageSize);
+            ok(info.Protect == td[i].prot, "%d: got %#x != expected %#x\n", i, info.Protect, td[i].prot);
+            ok(info.AllocationBase == base, "%d: %p != %p\n", i, info.AllocationBase, base);
+            ok(info.AllocationProtect == td[i].prot, "%d: %#x != %#x\n", i, info.AllocationProtect, td[i].prot);
+            ok(info.State == MEM_COMMIT, "%d: %#x != MEM_COMMIT\n", i, info.State);
+            ok(info.Type == MEM_PRIVATE, "%d: %#x != MEM_PRIVATE\n", i, info.Type);
+
+            VirtualFree(base, 0, MEM_FREE);
+        }
+        else
+        {
+            ok(!base, "%d: VirtualAlloc should fail\n", i);
+            ok(GetLastError() == ERROR_INVALID_PARAMETER, "%d: expected ERROR_INVALID_PARAMETER, got %d\n", i, GetLastError());
+        }
+    }
+}
+
 START_TEST(virtual)
 {
     int argc;
@@ -1558,6 +1637,7 @@ START_TEST(virtual)
     pResetWriteWatch = (void *) GetProcAddress(hkernel32, "ResetWriteWatch");
     pNtAreMappedFilesTheSame = (void *)GetProcAddress( GetModuleHandle("ntdll.dll"),
                                                        "NtAreMappedFilesTheSame" );
+    test_VirtualAlloc_protection();
     test_VirtualProtect();
     test_VirtualAllocEx();
     test_VirtualAlloc();
