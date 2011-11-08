@@ -1634,17 +1634,18 @@ static void shader_glsl_add_instruction_modifiers(const struct wined3d_shader_in
     }
 }
 
-static inline const char *shader_get_comp_op(DWORD op)
+static const char *shader_glsl_get_rel_op(enum wined3d_shader_rel_op op)
 {
-    switch (op) {
-        case COMPARISON_GT: return ">";
-        case COMPARISON_EQ: return "==";
-        case COMPARISON_GE: return ">=";
-        case COMPARISON_LT: return "<";
-        case COMPARISON_NE: return "!=";
-        case COMPARISON_LE: return "<=";
+    switch (op)
+    {
+        case WINED3D_SHADER_REL_OP_GT: return ">";
+        case WINED3D_SHADER_REL_OP_EQ: return "==";
+        case WINED3D_SHADER_REL_OP_GE: return ">=";
+        case WINED3D_SHADER_REL_OP_LT: return "<";
+        case WINED3D_SHADER_REL_OP_NE: return "!=";
+        case WINED3D_SHADER_REL_OP_LE: return "<=";
         default:
-            FIXME("Unrecognized comparison value: %u\n", op);
+            FIXME("Unrecognized operator %#x.\n", op);
             return "(\?\?)";
     }
 }
@@ -2958,7 +2959,7 @@ static void shader_glsl_ifc(const struct wined3d_shader_instruction *ins)
     shader_glsl_add_src_param(ins, &ins->src[1], WINED3DSP_WRITEMASK_0, &src1_param);
 
     shader_addline(ins->ctx->buffer, "if (%s %s %s) {\n",
-            src0_param.param_str, shader_get_comp_op(ins->flags), src1_param.param_str);
+            src0_param.param_str, shader_glsl_get_rel_op(ins->flags), src1_param.param_str);
 }
 
 static void shader_glsl_else(const struct wined3d_shader_instruction *ins)
@@ -2981,7 +2982,7 @@ static void shader_glsl_breakc(const struct wined3d_shader_instruction *ins)
     shader_glsl_add_src_param(ins, &ins->src[1], WINED3DSP_WRITEMASK_0, &src1_param);
 
     shader_addline(ins->ctx->buffer, "if (%s %s %s) break;\n",
-            src0_param.param_str, shader_get_comp_op(ins->flags), src1_param.param_str);
+            src0_param.param_str, shader_glsl_get_rel_op(ins->flags), src1_param.param_str);
 }
 
 static void shader_glsl_label(const struct wined3d_shader_instruction *ins)

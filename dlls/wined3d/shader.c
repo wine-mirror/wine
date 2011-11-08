@@ -1439,12 +1439,12 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
             {
                 switch (ins.flags)
                 {
-                    case COMPARISON_GT: TRACE("_gt"); break;
-                    case COMPARISON_EQ: TRACE("_eq"); break;
-                    case COMPARISON_GE: TRACE("_ge"); break;
-                    case COMPARISON_LT: TRACE("_lt"); break;
-                    case COMPARISON_NE: TRACE("_ne"); break;
-                    case COMPARISON_LE: TRACE("_le"); break;
+                    case WINED3D_SHADER_REL_OP_GT: TRACE("_gt"); break;
+                    case WINED3D_SHADER_REL_OP_EQ: TRACE("_eq"); break;
+                    case WINED3D_SHADER_REL_OP_GE: TRACE("_ge"); break;
+                    case WINED3D_SHADER_REL_OP_LT: TRACE("_lt"); break;
+                    case WINED3D_SHADER_REL_OP_NE: TRACE("_ne"); break;
+                    case WINED3D_SHADER_REL_OP_LE: TRACE("_le"); break;
                     default: TRACE("_(%u)", ins.flags);
                 }
             }

@@ -2943,34 +2943,34 @@ static void shader_hw_break(const struct wined3d_shader_instruction *ins)
     }
 }
 
-static const char *get_compare(COMPARISON_TYPE flags)
+static const char *get_compare(enum wined3d_shader_rel_op op)
 {
-    switch (flags)
+    switch (op)
     {
-        case COMPARISON_GT: return "GT";
-        case COMPARISON_EQ: return "EQ";
-        case COMPARISON_GE: return "GE";
-        case COMPARISON_LT: return "LT";
-        case COMPARISON_NE: return "NE";
-        case COMPARISON_LE: return "LE";
+        case WINED3D_SHADER_REL_OP_GT: return "GT";
+        case WINED3D_SHADER_REL_OP_EQ: return "EQ";
+        case WINED3D_SHADER_REL_OP_GE: return "GE";
+        case WINED3D_SHADER_REL_OP_LT: return "LT";
+        case WINED3D_SHADER_REL_OP_NE: return "NE";
+        case WINED3D_SHADER_REL_OP_LE: return "LE";
         default:
-            FIXME("Unrecognized comparison value: %u\n", flags);
+            FIXME("Unrecognized operator %#x.\n", op);
             return "(\?\?)";
     }
 }
 
-static COMPARISON_TYPE invert_compare(COMPARISON_TYPE flags)
+static enum wined3d_shader_rel_op invert_compare(enum wined3d_shader_rel_op op)
 {
-    switch (flags)
+    switch (op)
     {
-        case COMPARISON_GT: return COMPARISON_LE;
-        case COMPARISON_EQ: return COMPARISON_NE;
-        case COMPARISON_GE: return COMPARISON_LT;
-        case COMPARISON_LT: return COMPARISON_GE;
-        case COMPARISON_NE: return COMPARISON_EQ;
-        case COMPARISON_LE: return COMPARISON_GT;
+        case WINED3D_SHADER_REL_OP_GT: return WINED3D_SHADER_REL_OP_LE;
+        case WINED3D_SHADER_REL_OP_EQ: return WINED3D_SHADER_REL_OP_NE;
+        case WINED3D_SHADER_REL_OP_GE: return WINED3D_SHADER_REL_OP_LT;
+        case WINED3D_SHADER_REL_OP_LT: return WINED3D_SHADER_REL_OP_GE;
+        case WINED3D_SHADER_REL_OP_NE: return WINED3D_SHADER_REL_OP_EQ;
+        case WINED3D_SHADER_REL_OP_LE: return WINED3D_SHADER_REL_OP_GT;
         default:
-            FIXME("Unrecognized comparison value: %u\n", flags);
+            FIXME("Unrecognized operator %#x.\n", op);
             return -1;
     }
 }
