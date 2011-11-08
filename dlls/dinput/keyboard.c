@@ -410,12 +410,14 @@ SysKeyboardAImpl_GetObjectInfo(
 	DWORD dwHow)
 {
     HRESULT res;
+    LONG scan;
 
     res = IDirectInputDevice2AImpl_GetObjectInfo(iface, pdidoi, dwObj, dwHow);
     if (res != DI_OK) return res;
 
-    if (!GetKeyNameTextA((DIDFT_GETINSTANCE(pdidoi->dwType) & 0x80) << 17 |
-                         (DIDFT_GETINSTANCE(pdidoi->dwType) & 0x7f) << 16,
+    scan = DIDFT_GETINSTANCE(pdidoi->dwType);
+    if (scan == DIK_PAUSE || scan == DIK_NUMLOCK) scan ^= 0x80;
+    if (!GetKeyNameTextA((scan & 0x80) << 17 | (scan & 0x7f) << 16,
                          pdidoi->tszName, sizeof(pdidoi->tszName)))
         return DIERR_OBJECTNOTFOUND;
 
@@ -429,14 +431,15 @@ static HRESULT WINAPI SysKeyboardWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface
 						     DWORD dwHow)
 {
     HRESULT res;
+    LONG scan;
 
     res = IDirectInputDevice2WImpl_GetObjectInfo(iface, pdidoi, dwObj, dwHow);
     if (res != DI_OK) return res;
 
-    if (!GetKeyNameTextW((DIDFT_GETINSTANCE(pdidoi->dwType) & 0x80) << 17 |
-                         (DIDFT_GETINSTANCE(pdidoi->dwType) & 0x7f) << 16,
-                         pdidoi->tszName,
-                         sizeof(pdidoi->tszName)/sizeof(pdidoi->tszName[0])))
+    scan = DIDFT_GETINSTANCE(pdidoi->dwType);
+    if (scan == DIK_PAUSE || scan == DIK_NUMLOCK) scan ^= 0x80;
+    if (!GetKeyNameTextW((scan & 0x80) << 17 | (scan & 0x7f) << 16,
+                         pdidoi->tszName, sizeof(pdidoi->tszName)))
         return DIERR_OBJECTNOTFOUND;
 
     _dump_OBJECTINSTANCEW(pdidoi);
