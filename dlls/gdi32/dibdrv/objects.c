@@ -1246,6 +1246,30 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev)
     return ret;
 }
 
+static void select_pattern_brush( dibdrv_physdev *pdev, dib_info *pattern )
+{
+    RECT rect;
+
+    free_pattern_brush( pdev );
+    copy_dib_color_info(&pdev->brush_dib, &pdev->dib);
+
+    pdev->brush_dib.height = pattern->height;
+    pdev->brush_dib.width  = pattern->width;
+    pdev->brush_dib.stride = get_dib_stride( pdev->brush_dib.width, pdev->brush_dib.bit_count );
+
+    pdev->brush_dib.bits.param   = NULL;
+    pdev->brush_dib.bits.ptr     = HeapAlloc( GetProcessHeap(), 0,
+                                              pdev->brush_dib.height * pdev->brush_dib.stride );
+    pdev->brush_dib.bits.is_copy = TRUE;
+    pdev->brush_dib.bits.free    = free_heap_bits;
+
+    rect.left = rect.top = 0;
+    rect.right = pattern->width;
+    rect.bottom = pattern->height;
+
+    pdev->brush_dib.funcs->convert_to(&pdev->brush_dib, pattern, &rect);
+}
+
 /**********************************************************************
  *             pattern_brush
  *
@@ -1263,6 +1287,16 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RE
         switch(pdev->brush_style)
         {
         case BS_DIBPATTERN:
+            if (pdev->brush_pattern_usage == DIB_PAL_COLORS)
+            {
+                dib_info pattern;
+                HPALETTE pal = GetCurrentObject( pdev->dev.hdc, OBJ_PAL );
+                if (!init_dib_info_from_brush( &pattern, pdev->brush_pattern_info,
+                                               pdev->brush_pattern_bits, DIB_PAL_COLORS, pal ))
+                    return FALSE;
+                select_pattern_brush( pdev, &pattern );
+                free_dib_info( &pattern );
+            }
             if(!create_pattern_brush_bits(pdev))
                 return FALSE;
             break;
@@ -1317,6 +1351,11 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RE
         }
     }
     release_wine_region( region );
+
+    /* we need to recompute the bits each time for DIB_PAL_COLORS */
+    if (pdev->brush_style == BS_DIBPATTERN && pdev->brush_pattern_usage == DIB_PAL_COLORS)
+        free_pattern_brush_bits( pdev );
+
     return TRUE;
 }
 
@@ -1347,9 +1386,7 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
 
     if (bitmap || info)  /* pattern brush */
     {
-        dib_info orig_dib;
-        HPALETTE pal = (usage == DIB_PAL_COLORS) ? GetCurrentObject(dev->hdc, OBJ_PAL) : NULL;
-        RECT rect;
+        dib_info pattern;
         BOOL ret;
 
         if (!info)
@@ -1357,37 +1394,30 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
             BITMAPOBJ *bmp = GDI_GetObjPtr( bitmap, OBJ_BITMAP );
 
             if (!bmp) return 0;
-            ret = init_dib_info_from_bitmapobj( &orig_dib, bmp, 0 );
+            ret = init_dib_info_from_bitmapobj( &pattern, bmp, 0 );
             GDI_ReleaseObj( bitmap );
+            if (!ret) return 0;
+            select_pattern_brush( pdev, &pattern );
+            free_dib_info( &pattern );
         }
-        else ret = init_dib_info_from_brush( &orig_dib, info, bits, usage, pal );
+        else if (usage != DIB_PAL_COLORS)
+        {
+            if (!init_dib_info_from_brush( &pattern, info, bits, DIB_RGB_COLORS, 0 )) return 0;
+            select_pattern_brush( pdev, &pattern );
+            free_dib_info( &pattern );
+        }
+        else
+        {
+            /* brush is actually selected only when it's used */
+            free_pattern_brush( pdev );
+        }
 
-        if (!ret) return 0;
-
-        if (usage == DIB_PAL_COLORS) FIXME( "DIB_PAL_COLORS brush not handled correctly\n");
-
-        free_pattern_brush( pdev );
-        copy_dib_color_info(&pdev->brush_dib, &pdev->dib);
-
-        pdev->brush_dib.height = orig_dib.height;
-        pdev->brush_dib.width  = orig_dib.width;
-        pdev->brush_dib.stride = get_dib_stride( pdev->brush_dib.width, pdev->brush_dib.bit_count );
-
-        pdev->brush_dib.bits.param   = NULL;
-        pdev->brush_dib.bits.ptr     = HeapAlloc( GetProcessHeap(), 0,
-                                                  pdev->brush_dib.height * pdev->brush_dib.stride );
-        pdev->brush_dib.bits.is_copy = TRUE;
-        pdev->brush_dib.bits.free    = free_heap_bits;
-
-        rect.left = rect.top = 0;
-        rect.right = orig_dib.width;
-        rect.bottom = orig_dib.height;
-
-        pdev->brush_dib.funcs->convert_to(&pdev->brush_dib, &orig_dib, &rect);
         pdev->brush_rects = pattern_brush;
         pdev->brush_style = BS_DIBPATTERN;
+        pdev->brush_pattern_info = info;
+        pdev->brush_pattern_bits = bits;
+        pdev->brush_pattern_usage = usage;
         pdev->defer &= ~DEFER_BRUSH;
-        free_dib_info(&orig_dib);
 
         return next->funcs->pSelectBrush( next, hbrush, bitmap, info, bits, usage );
     }

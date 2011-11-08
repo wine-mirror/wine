@@ -288,7 +288,7 @@ static void test_palette_brush(void)
                         pal->palPalEntry[255 - i].peGreen << 8 |
                         pal->palPalEntry[255 - i].peBlue);
         if (expect)
-            todo_wine ok( dib_bits[i] == expect, "wrong bits %x/%x at %u,%u\n", dib_bits[i], expect, i % 16, i / 16 );
+            ok( dib_bits[i] == expect, "wrong bits %x/%x at %u,%u\n", dib_bits[i], expect, i % 16, i / 16 );
         else
             ok( dib_bits[i] == expect, "wrong bits %x/%x at %u,%u\n", dib_bits[i], expect, i % 16, i / 16 );
     }

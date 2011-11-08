@@ -90,6 +90,9 @@ typedef struct dibdrv_physdev
     DWORD brush_color, brush_and, brush_xor;
     dib_info brush_dib;
     void *brush_and_bits, *brush_xor_bits;
+    const BITMAPINFO *brush_pattern_info;
+    void *brush_pattern_bits;
+    UINT brush_pattern_usage;
     BOOL   (* brush_rects)(struct dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects, HRGN clip);
 
     /* background */
