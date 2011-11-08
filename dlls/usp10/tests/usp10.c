@@ -843,6 +843,16 @@ static void test_ScriptShapeOpenType(HDC hdc)
                             {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
                             {1,{{SCRIPT_JUSTIFY_NONE,0,0,0,0,0},0}} };
 
+    /* Kannada */
+    static const WCHAR test_kannada[] = {0x0c95, 0x0ca8, 0x0ccd, 0x0ca8, 0x0ca1};
+    static const shapeTest_char kannada_c[] = {{0,{0,0}},{1,{0,0}},{1,{0,0}},{1,{0,0}},{3,{0,0}}};
+    static const shapeTest_glyph kannada_g[] = {
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,0,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,1,0,0,0,0},0}},
+                            {1,{{SCRIPT_JUSTIFY_NONE,0,0,0,0,0},0}} };
+
     if (!pScriptItemizeOpenType || !pScriptShapeOpenType)
     {
         win_skip("ScriptShapeOpenType not available on this platform\n");
@@ -1000,6 +1010,14 @@ static void test_ScriptShapeOpenType(HDC hdc)
     if (hfont != NULL)
     {
         test_shape_ok_valid(test_valid, hdc, test_malayalam, 6, &Control, &State, 0, 6, malayalam_c, malayalam_g);
+        SelectObject(hdc, hfont_orig);
+        DeleteObject(hfont);
+    }
+
+    test_valid = find_font_for_range(hdc, "Tunga", 22, test_kannada[0], &hfont, &hfont_orig);
+    if (hfont != NULL)
+    {
+        test_shape_ok_valid(test_valid, hdc, test_kannada, 5, &Control, &State, 0, 4, kannada_c, kannada_g);
         SelectObject(hdc, hfont_orig);
         DeleteObject(hfont);
     }
