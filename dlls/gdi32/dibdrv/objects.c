@@ -1246,6 +1246,27 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev)
     return ret;
 }
 
+static BOOL matching_pattern_format( dib_info *dib, dib_info *pattern )
+{
+    if (dib->bit_count != pattern->bit_count) return FALSE;
+    if (dib->stride != pattern->stride) return FALSE;
+
+    switch (dib->bit_count)
+    {
+    case 1:
+    case 4:
+    case 8:
+        if (dib->color_table_size != pattern->color_table_size) return FALSE;
+        return !memcmp( dib->color_table, pattern->color_table, dib->color_table_size * sizeof(RGBQUAD) );
+    case 16:
+    case 32:
+        return (dib->red_mask == pattern->red_mask &&
+                dib->green_mask == pattern->green_mask &&
+                dib->blue_mask == pattern->blue_mask);
+    }
+    return TRUE;
+}
+
 static void select_pattern_brush( dibdrv_physdev *pdev, dib_info *pattern )
 {
     RECT rect;
@@ -1257,7 +1278,14 @@ static void select_pattern_brush( dibdrv_physdev *pdev, dib_info *pattern )
     pdev->brush_dib.width  = pattern->width;
     pdev->brush_dib.stride = get_dib_stride( pdev->brush_dib.width, pdev->brush_dib.bit_count );
 
-    pdev->brush_dib.bits.param   = NULL;
+    if (matching_pattern_format( &pdev->brush_dib, pattern ))
+    {
+        pdev->brush_dib.bits.ptr     = pattern->bits.ptr;
+        pdev->brush_dib.bits.is_copy = FALSE;
+        pdev->brush_dib.bits.free    = NULL;
+        return;
+    }
+
     pdev->brush_dib.bits.ptr     = HeapAlloc( GetProcessHeap(), 0,
                                               pdev->brush_dib.height * pdev->brush_dib.stride );
     pdev->brush_dib.bits.is_copy = TRUE;
