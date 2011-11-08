@@ -1248,6 +1248,7 @@ void WINAPI InstallHinfSectionW( HWND hwnd, HINSTANCE handle, LPCWSTR cmdline, I
     /* FIXME: should check the mode and maybe reboot */
     /* there isn't much point in doing that since we */
     /* don't yet handle deferred file copies anyway. */
+    if (mode & 7) TRACE( "should consider reboot, mode %u\n", mode );
 }
 
 
