@@ -475,7 +475,7 @@ static INT wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec, __ms_va_list a
         case WPR_STRING:
             {
                 LPCSTR ptr = argData.lpcstr_view;
-                for (i = 0; i < len; i++) *p++ = (WCHAR)*ptr++;
+                for (i = 0; i < len; i++) *p++ = (BYTE)*ptr++;
             }
             break;
         case WPR_WSTRING:
@@ -501,7 +501,7 @@ static INT wvsnprintfW( LPWSTR buffer, UINT maxlen, LPCWSTR spec, __ms_va_list a
             /* fall through */
         case WPR_UNSIGNED:
             for (i = len; i < format.precision; i++, maxlen--) *p++ = '0';
-            for (i = sign; i < len; i++) *p++ = (WCHAR)number[i];
+            for (i = sign; i < len; i++) *p++ = (BYTE)number[i];
             break;
         case WPR_UNKNOWN:
             continue;
