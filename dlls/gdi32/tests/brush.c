@@ -287,10 +287,7 @@ static void test_palette_brush(void)
         DWORD expect = (pal->palPalEntry[255 - i].peRed << 16 |
                         pal->palPalEntry[255 - i].peGreen << 8 |
                         pal->palPalEntry[255 - i].peBlue);
-        if (expect)
-            ok( dib_bits[i] == expect, "wrong bits %x/%x at %u,%u\n", dib_bits[i], expect, i % 16, i / 16 );
-        else
-            ok( dib_bits[i] == expect, "wrong bits %x/%x at %u,%u\n", dib_bits[i], expect, i % 16, i / 16 );
+        ok( dib_bits[i] == expect, "wrong bits %x/%x at %u,%u\n", dib_bits[i], expect, i % 16, i / 16 );
     }
     DeleteDC( hdc );
     DeleteObject( dib );
