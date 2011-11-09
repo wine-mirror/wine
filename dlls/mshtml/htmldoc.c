@@ -813,9 +813,9 @@ static HRESULT document_write(HTMLDocument *This, SAFEARRAY *psarray, BOOL ln)
         if(V_VT(var+i) == VT_BSTR) {
             nsAString_SetData(&nsstr, V_BSTR(var+i));
             if(!ln || i != argc-1)
-                nsres = nsIDOMHTMLDocument_Write(This->doc_node->nsdoc, &nsstr);
+                nsres = nsIDOMHTMLDocument_Write(This->doc_node->nsdoc, &nsstr, NULL /* FIXME! */);
             else
-                nsres = nsIDOMHTMLDocument_Writeln(This->doc_node->nsdoc, &nsstr);
+                nsres = nsIDOMHTMLDocument_Writeln(This->doc_node->nsdoc, &nsstr, NULL /* FIXME! */);
             if(NS_FAILED(nsres))
                 ERR("Write failed: %08x\n", nsres);
         }else {
@@ -851,6 +851,7 @@ static HRESULT WINAPI HTMLDocument_open(IHTMLDocument2 *iface, BSTR url, VARIANT
                         VARIANT features, VARIANT replace, IDispatch **pomWindowResult)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
+    nsISupports *tmp;
     nsresult nsres;
 
     static const WCHAR text_htmlW[] = {'t','e','x','t','/','h','t','m','l',0};
@@ -867,11 +868,14 @@ static HRESULT WINAPI HTMLDocument_open(IHTMLDocument2 *iface, BSTR url, VARIANT
        || V_VT(&features) != VT_ERROR || V_VT(&replace) != VT_ERROR)
         FIXME("unsupported args\n");
 
-    nsres = nsIDOMHTMLDocument_Open(This->doc_node->nsdoc);
+    nsres = nsIDOMHTMLDocument_Open(This->doc_node->nsdoc, NULL, NULL, NULL, NULL, 0, &tmp);
     if(NS_FAILED(nsres)) {
         ERR("Open failed: %08x\n", nsres);
         return E_FAIL;
     }
+
+    if(tmp)
+        nsISupports_Release(tmp);
 
     *pomWindowResult = (IDispatch*)&This->window->IHTMLWindow2_iface;
     IHTMLWindow2_AddRef(&This->window->IHTMLWindow2_iface);
@@ -902,19 +906,11 @@ static HRESULT WINAPI HTMLDocument_close(IHTMLDocument2 *iface)
 static HRESULT WINAPI HTMLDocument_clear(IHTMLDocument2 *iface)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    nsIDOMNSHTMLDocument *nsdoc;
     nsresult nsres;
 
     TRACE("(%p)\n", This);
 
-    nsres = nsIDOMHTMLDocument_QueryInterface(This->doc_node->nsdoc, &IID_nsIDOMNSHTMLDocument, (void**)&nsdoc);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMNSHTMLDocument iface: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    nsres = nsIDOMNSHTMLDocument_Clear(nsdoc);
-    nsIDOMNSHTMLDocument_Release(nsdoc);
+    nsres = nsIDOMHTMLDocument_Clear(This->doc_node->nsdoc);
     if(NS_FAILED(nsres)) {
         ERR("Clear failed: %08x\n", nsres);
         return E_FAIL;
@@ -1297,7 +1293,6 @@ static HRESULT WINAPI HTMLDocument_elementFromPoint(IHTMLDocument2 *iface, LONG 
                                                         IHTMLElement **elementHit)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    nsIDOMNSDocument *nsdoc;
     nsIDOMElement *nselem;
     HTMLDOMNode *node;
     nsresult nsres;
@@ -1305,14 +1300,7 @@ static HRESULT WINAPI HTMLDocument_elementFromPoint(IHTMLDocument2 *iface, LONG 
 
     TRACE("(%p)->(%d %d %p)\n", This, x, y, elementHit);
 
-    nsres = nsIDOMHTMLDocument_QueryInterface(This->doc_node->nsdoc, &IID_nsIDOMNSDocument, (void**)&nsdoc);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMNSDocument iface: %08x\n", nsres);
-        return E_FAIL;
-    }
-
-    nsres = nsIDOMNSDocument_ElementFromPoint(nsdoc, x, y, &nselem);
-    nsIDOMNSDocument_Release(nsdoc);
+    nsres = nsIDOMHTMLDocument_ElementFromPoint(This->doc_node->nsdoc, x, y, &nselem);
     if(NS_FAILED(nsres)) {
         ERR("ElementFromPoint failed: %08x\n", nsres);
         return E_FAIL;
@@ -1347,7 +1335,6 @@ static HRESULT WINAPI HTMLDocument_get_styleSheets(IHTMLDocument2 *iface,
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
     nsIDOMStyleSheetList *nsstylelist;
-    nsIDOMDocumentStyle *nsdocstyle;
     nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -1359,16 +1346,14 @@ static HRESULT WINAPI HTMLDocument_get_styleSheets(IHTMLDocument2 *iface,
         return E_UNEXPECTED;
     }
 
-    nsIDOMHTMLDocument_QueryInterface(This->doc_node->nsdoc, &IID_nsIDOMDocumentStyle, (void**)&nsdocstyle);
-    nsres = nsIDOMDocumentStyle_GetStyleSheets(nsdocstyle, &nsstylelist);
-    nsIDOMDocumentStyle_Release(nsdocstyle);
+    nsres = nsIDOMHTMLDocument_GetStyleSheets(This->doc_node->nsdoc, &nsstylelist);
     if(NS_FAILED(nsres)) {
         ERR("GetStyleSheets failed: %08x\n", nsres);
         return E_FAIL;
     }
 
     *p = HTMLStyleSheetsCollection_Create(nsstylelist);
-    nsIDOMDocumentStyle_Release(nsstylelist);
+    nsIDOMStyleSheetList_Release(nsstylelist);
 
     return S_OK;
 }

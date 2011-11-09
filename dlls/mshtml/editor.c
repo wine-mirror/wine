@@ -182,7 +182,6 @@ static void set_ns_align(HTMLDocument *This, const char *align_str)
 static DWORD query_align_status(HTMLDocument *This, const WCHAR *align)
 {
     DWORD ret = OLECMDF_SUPPORTED | OLECMDF_ENABLED;
-    nsIDOMNSHTMLDocument *nsdoc;
     nsAString justify_str;
     PRBool b;
     nsresult nsres;
@@ -190,21 +189,12 @@ static DWORD query_align_status(HTMLDocument *This, const WCHAR *align)
     if(This->doc_obj->usermode != EDITMODE || This->window->readystate < READYSTATE_INTERACTIVE)
         return OLECMDF_SUPPORTED;
 
-
-    nsres = nsIDOMHTMLDocument_QueryInterface(This->doc_node->nsdoc, &IID_nsIDOMNSHTMLDocument,
-            (void**)&nsdoc);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMNSHTMLDocument iface: %08x\n", nsres);
-        return 0;
-    }
-
     nsAString_Init(&justify_str, align);
-    nsres = nsIDOMNSHTMLDocument_QueryCommandState(nsdoc, &justify_str, &b);
+    nsres = nsIDOMHTMLDocument_QueryCommandState(This->doc_node->nsdoc, &justify_str, &b);
     nsAString_Finish(&justify_str);
     if(NS_SUCCEEDED(nsres) && b)
         ret |= OLECMDF_LATCHED;
 
-    nsIDOMNSHTMLDocument_Release(nsdoc);
     return ret;
 }
 

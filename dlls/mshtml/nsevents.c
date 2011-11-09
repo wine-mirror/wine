@@ -330,7 +330,7 @@ static void init_event(nsIDOMEventTarget *target, const PRUnichar *type,
     nsresult nsres;
 
     nsAString_InitDepend(&type_str, type);
-    nsres = nsIDOMEventTarget_AddEventListener(target, &type_str, listener, capture);
+    nsres = nsIDOMEventTarget_AddEventListener(target, &type_str, listener, capture, FALSE, 1);
     nsAString_Finish(&type_str);
     if(NS_FAILED(nsres))
         ERR("AddEventTarget failed: %08x\n", nsres);

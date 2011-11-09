@@ -2307,6 +2307,22 @@ static nsresult NSAPI nsURI_GetOriginCharset(nsIURL *iface, nsACString *aOriginC
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
+static nsresult NSAPI nsURI_GetSpecIgnoringRef(nsIURL *iface, nsACString *aSpecIgnoringRef)
+{
+    nsWineURI *This = impl_from_nsIURL(iface);
+
+    FIXME("(%p)->(%p)\n", This, aSpecIgnoringRef);
+
+    return nsIURL_GetSpec(&This->nsIURL_iface, aSpecIgnoringRef);
+}
+
+static nsresult NSAPI nsURI_GetHasRef(nsIURL *iface, PRBool *aHasRef)
+{
+    nsWineURI *This = impl_from_nsIURL(iface);
+    FIXME("(%p)->(%p)\n", This, aHasRef);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
 static nsresult NSAPI nsURL_GetFilePath(nsIURL *iface, nsACString *aFilePath)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
@@ -2553,17 +2569,19 @@ static const nsIURLVtbl nsURLVtbl = {
     nsURI_SetPort,
     nsURI_GetPath,
     nsURI_SetPath,
-    nsURL_GetRef,
-    nsURL_SetRef,
     nsURI_Equals,
-    nsURI_EqualsExceptRef,
     nsURI_SchemeIs,
     nsURI_Clone,
-    nsURI_CloneIgnoreRef,
     nsURI_Resolve,
     nsURI_GetAsciiSpec,
     nsURI_GetAsciiHost,
     nsURI_GetOriginCharset,
+    nsURL_GetRef,
+    nsURL_SetRef,
+    nsURI_EqualsExceptRef,
+    nsURI_CloneIgnoreRef,
+    nsURI_GetSpecIgnoringRef,
+    nsURI_GetHasRef,
     nsURL_GetFilePath,
     nsURL_SetFilePath,
     nsURL_GetParam,

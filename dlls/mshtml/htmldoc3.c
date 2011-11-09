@@ -507,28 +507,18 @@ static HRESULT WINAPI HTMLDocument3_getElementById(IHTMLDocument3 *iface, BSTR v
 
 
     if(nsnode_by_name && nsnode_by_id) {
-        nsIDOM3Node *node3;
         PRUint16 pos;
 
-        nsres = nsIDOMNode_QueryInterface(nsnode_by_name, &IID_nsIDOM3Node, (void**)&node3);
+        nsres = nsIDOMNode_CompareDocumentPosition(nsnode_by_name, nsnode_by_id, &pos);
         if(NS_FAILED(nsres)) {
-            FIXME("failed to get nsIDOM3Node interface: 0x%08x\n", nsres);
-            nsIDOMNode_Release(nsnode_by_name);
-            nsIDOMNode_Release(nsnode_by_id);
-            return E_FAIL;
-        }
-
-        nsres = nsIDOM3Node_CompareDocumentPosition(node3, nsnode_by_id, &pos);
-        nsIDOM3Node_Release(node3);
-        if(NS_FAILED(nsres)) {
-            FIXME("nsIDOM3Node_CompareDocumentPosition failed: 0x%08x\n", nsres);
+            FIXME("CompareDocumentPosition failed: 0x%08x\n", nsres);
             nsIDOMNode_Release(nsnode_by_name);
             nsIDOMNode_Release(nsnode_by_id);
             return E_FAIL;
         }
 
         TRACE("CompareDocumentPosition gave: 0x%x\n", pos);
-        if(pos & PRECEDING || pos & CONTAINS) {
+        if(pos & (DOCUMENT_POSITION_PRECEDING | DOCUMENT_POSITION_CONTAINS)) {
             nsnode = nsnode_by_id;
             nsIDOMNode_Release(nsnode_by_name);
         }else {
