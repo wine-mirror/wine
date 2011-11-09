@@ -557,6 +557,22 @@ static void test_ImmIsUIMessage(void)
     }
 }
 
+static void test_ImmGetContext(void)
+{
+    HIMC himc;
+    DWORD err;
+
+    SetLastError(0xdeadbeef);
+    himc = ImmGetContext((HWND)0xffffffff);
+    err = GetLastError();
+    ok(himc == NULL, "ImmGetContext succeeded\n");
+    ok(err == ERROR_INVALID_WINDOW_HANDLE, "got %u\n", err);
+
+    himc = ImmGetContext(hwnd);
+    ok(himc != NULL, "ImmGetContext failed\n");
+    ok(ImmReleaseContext(hwnd, himc), "ImmReleaseContext failed\n");
+}
+
 START_TEST(imm32) {
     if (init())
     {
@@ -567,6 +583,7 @@ START_TEST(imm32) {
         test_ImmAssociateContextEx();
         test_ImmThreads();
         test_ImmIsUIMessage();
+        test_ImmGetContext();
     }
     cleanup();
 }

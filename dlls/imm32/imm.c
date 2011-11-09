@@ -1360,9 +1360,15 @@ BOOL WINAPI ImmGetCompositionWindow(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm)
  */
 HIMC WINAPI ImmGetContext(HWND hWnd)
 {
-    HIMC rc = NULL;
+    HIMC rc;
 
     TRACE("%p\n", hWnd);
+
+    if (!IsWindow(hWnd))
+    {
+        SetLastError(ERROR_INVALID_WINDOW_HANDLE);
+        return NULL;
+    }
     if (!IMM_GetThreadData()->defaultContext)
         IMM_GetThreadData()->defaultContext = ImmCreateContext();
 
