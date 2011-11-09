@@ -548,10 +548,10 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
         if (!clip_hwnd) return;
         if (thread_data->clip_window != window) return;
         if (InterlockedExchangePointer( (void **)&cursor_window, clip_hwnd ) != clip_hwnd ||
-            GetTickCount() - last_cursor_change > 100)
+            input->u.mi.time - last_cursor_change > 100)
         {
             sync_window_cursor( window );
-            last_cursor_change = GetTickCount();
+            last_cursor_change = input->u.mi.time;
         }
         input->u.mi.dx += clip_rect.left;
         input->u.mi.dy += clip_rect.top;
@@ -578,10 +578,10 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
     MapWindowPoints( hwnd, 0, &pt, 1 );
 
     if (InterlockedExchangePointer( (void **)&cursor_window, hwnd ) != hwnd ||
-        GetTickCount() - last_cursor_change > 100)
+        input->u.mi.time - last_cursor_change > 100)
     {
         sync_window_cursor( data->whole_window );
-        last_cursor_change = GetTickCount();
+        last_cursor_change = input->u.mi.time;
     }
 
     if (hwnd != GetDesktopWindow())
