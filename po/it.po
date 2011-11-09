@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-10-31 19:18+0100\n"
+"PO-Revision-Date: 2011-11-09 10:22+0100\n"
 "Last-Translator: Luca Bennati <lucak3@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Italian\n"
@@ -246,7 +246,7 @@ msgstr "Dettagli"
 
 #: comdlg32.rc:59
 msgid "Browse to Desktop"
-msgstr "Vai al desktop"
+msgstr "Vai alla Scrivania"
 
 #: comdlg32.rc:123
 msgid "Regular"
@@ -1010,7 +1010,7 @@ msgstr "Ottieni CRL"
 
 #: crypt32.rc:132
 msgid "Revoke Request"
-msgstr "Revoca richiesta"
+msgstr "Richiesta di revoca"
 
 #: crypt32.rc:133
 msgid "Query Pending"
@@ -2040,73 +2040,71 @@ msgstr "%uMB usati, %uMB disponibili"
 
 #: gdi32.rc:25
 msgid "Western"
-msgstr ""
+msgstr "Ovest"
 
 #: gdi32.rc:26
 msgid "Central European"
-msgstr ""
+msgstr "Europeo centrale"
 
 #: gdi32.rc:27
 msgid "Cyrillic"
-msgstr ""
+msgstr "Cirillico"
 
 #: gdi32.rc:28
-#, fuzzy
 msgid "Greek"
-msgstr "Verde"
+msgstr "Greco"
 
 #: gdi32.rc:29
 msgid "Turkish"
-msgstr ""
+msgstr "Turco"
 
 #: gdi32.rc:30
 msgid "Hebrew"
-msgstr ""
+msgstr "Ebreo"
 
 #: gdi32.rc:31
 msgid "Arabic"
-msgstr ""
+msgstr "Arabo"
 
 #: gdi32.rc:32
 msgid "Baltic"
-msgstr ""
+msgstr "Baltico"
 
 #: gdi32.rc:33
 msgid "Vietnamese"
-msgstr ""
+msgstr "Vietnamita"
 
 #: gdi32.rc:34
 msgid "Thai"
-msgstr ""
+msgstr "Thai"
 
 #: gdi32.rc:35
-#, fuzzy
 msgid "Japanese"
-msgstr "pannello"
+msgstr "Giapponese"
 
 #: gdi32.rc:36
 msgid "CHINESE_GB2312"
-msgstr ""
+msgstr "CHINESE_GB2312"
 
 #: gdi32.rc:37
 msgid "Hangul"
-msgstr ""
+msgstr "Hangul"
 
 #: gdi32.rc:38
 msgid "CHINESE_BIG5"
-msgstr ""
+msgstr "CHINESE_BIG5"
 
 #: gdi32.rc:39
 msgid "Hangul(Johab)"
-msgstr ""
+msgstr "Hangul (Johab)"
 
 #: gdi32.rc:40
 msgid "Symbol"
-msgstr ""
+msgstr "Symbol"
 
 #: gdi32.rc:41
 msgid "OEM/DOS"
-msgstr ""
+msgstr "OEM/DOS"
 
 #: hhctrl.rc:56
 msgid "S&ync"
@@ -2284,7 +2282,7 @@ msgstr "&Informazioni su Internet Explorer..."
 #: ieframe.rc:67
 msgctxt "home page"
 msgid "Home"
-msgstr "Inizio"
+msgstr "Pagina iniziale"
 
 #: ieframe.rc:68 winhlp32.rc:66
 msgid "Print..."
@@ -6119,7 +6117,7 @@ msgstr "&Copia sfondo"
 
 #: shdoclc.rc:44
 msgid "Set as &Desktop Item"
-msgstr "Aggiungi come &oggetto del Desktop"
+msgstr "Aggiungi come &oggetto della Scrivania"
 
 #: shdoclc.rc:46 shdoclc.rc:95 shdoclc.rc:117 user32.rc:62
 msgid "Select &All"
@@ -6192,7 +6190,7 @@ msgstr "Im&posta come sfondo"
 
 #: shdoclc.rc:74 shdoclc.rc:154 shdoclc.rc:178
 msgid "Set as &Desktop Item..."
-msgstr "Aggiungi come &oggetto del Desktop..."
+msgstr "Aggiungi come &oggetto della Scrivania..."
 
 #: shdoclc.rc:76 shdoclc.rc:90 shdoclc.rc:114 shdoclc.rc:156 shdoclc.rc:180
 #: user32.rc:57 wordpad.rc:101
@@ -9636,7 +9634,7 @@ msgstr "&Linea di comando:"
 
 #: progman.rc:171
 msgid "&Working directory:"
-msgstr "&Directory di &lavoro:"
+msgstr "Cartella di &lavoro:"
 
 #: progman.rc:173
 msgid "&Key combination:"
@@ -10510,11 +10508,11 @@ msgstr "Non si aggiorna automaticamente"
 
 #: taskmgr.rc:205
 msgid "Tiles the windows horizontally on the desktop"
-msgstr "Affianca le finestre orizzontalmente sul desktop"
+msgstr "Affianca le finestre orizzontalmente sulla scrivania "
 
 #: taskmgr.rc:206
 msgid "Tiles the windows vertically on the desktop"
-msgstr "Affianca le finestre verticalmente sul desktop"
+msgstr "Affianca le finestre verticalmente sulla scrivania "
 
 #: taskmgr.rc:207
 msgid "Minimizes the windows"
@@ -10526,7 +10524,7 @@ msgstr "Massimizza le finestre"
 
 #: taskmgr.rc:209
 msgid "Cascades the windows diagonally on the desktop"
-msgstr "Impila le finestre diagonalmente sul desktop"
+msgstr "Impila le finestre diagonalmente sulla scrivania"
 
 #: taskmgr.rc:210
 msgid "Brings the window front, but does not switch to it"
@@ -10942,7 +10940,7 @@ msgstr "Grafica"
 
 #: winecfg.rc:38
 msgid "Desktop Integration"
-msgstr "Integrazione del desktop"
+msgstr "Integrazione della Scrivania"
 
 #: winecfg.rc:39
 msgid "Audio"
@@ -11125,11 +11123,11 @@ msgstr "Controlli - Testo"
 
 #: winecfg.rc:99
 msgid "Menu Background"
-msgstr "Menu - Sfondo"
+msgstr "Menù - Sfondo"
 
 #: winecfg.rc:100
 msgid "Menu Text"
-msgstr "Menu - Testo"
+msgstr "Menù - Testo"
 
 #: winecfg.rc:101
 msgid "Scrollbar"
@@ -11233,11 +11231,11 @@ msgstr "Titolo inattivo - Gradiente della barra"
 
 #: winecfg.rc:126
 msgid "Menu Highlight"
-msgstr "Menu - Selezione"
+msgstr "Menù - Selezione"
 
 #: winecfg.rc:127
 msgid "Menu Bar"
-msgstr "Menu - Barra"
+msgstr "Menù - Barra"
 
 #: wineconsole.rc:57
 msgid " Options "
@@ -11265,7 +11263,7 @@ msgstr "Controlli"
 
 #: wineconsole.rc:66
 msgid "Popup menu"
-msgstr "Menu a comparsa"
+msgstr "Menù a comparsa"
 
 #: wineconsole.rc:67
 msgid "&Control"
@@ -11281,7 +11279,7 @@ msgstr "Modifica rapida"
 
 #: wineconsole.rc:70
 msgid "&enable"
-msgstr "&Abilita"
+msgstr "&abilita"
 
 #: wineconsole.rc:72
 msgid "Command history"
@@ -11313,7 +11311,7 @@ msgstr " Configurazione "
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
-msgstr "Buffer"
+msgstr "Zona del buffer"
 
 #: wineconsole.rc:101
 msgid "&Width :"
@@ -11325,7 +11323,7 @@ msgstr "&Altezza:"
 
 #: wineconsole.rc:108
 msgid "Window size"
-msgstr "Dimensione finestra"
+msgstr "Dimensione della finestra"
 
 #: wineconsole.rc:109
 msgid "W&idth :"
