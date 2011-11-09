@@ -2,4 +2,6 @@ MODULE    = scrrun.dll
 
 C_SRCS = scrrun.c
 
+RC_SRCS = scrrun.rc
+
 @MAKE_DLL_RULES@
