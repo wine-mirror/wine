@@ -9896,6 +9896,33 @@ static void test_clone_mesh(void)
         mesh_clone = NULL;
     }
 
+    /* The following test shows that it is not possible to share a vertex buffer
+     * with D3DXMESH_VB_SHARE and change the vertex declaration at the same
+     * time. It reuses the test data from test 2.
+     */
+    hr = init_test_mesh(tc[2].num_faces, tc[2].num_vertices,
+                        tc[2].create_options,
+                        tc[2].declaration,
+                        test_context->device, &mesh,
+                        tc[2].vertices, tc[2].vertex_size,
+                        tc[2].indices, tc[2].attributes);
+    if (FAILED(hr))
+    {
+        skip("Couldn't initialize test mesh for D3DXMESH_VB_SHARE case."
+             " Got %x expected D3D_OK\n", hr);
+        goto cleanup;
+    }
+
+    hr = mesh->lpVtbl->CloneMesh(mesh, tc[2].create_options | D3DXMESH_VB_SHARE,
+                                 tc[2].new_declaration, test_context->device,
+                                 &mesh_clone);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "CloneMesh D3DXMESH_VB_SHARE with new"
+                 " declaration. Got %x, expected D3DERR_INVALIDCALL\n",
+                 hr);
+    mesh->lpVtbl->Release(mesh);
+    mesh = NULL;
+    mesh_clone = NULL;
+
 cleanup:
     if (vertices) mesh->lpVtbl->UnlockVertexBuffer(mesh);
     if (mesh) mesh->lpVtbl->Release(mesh);
