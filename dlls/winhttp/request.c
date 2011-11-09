@@ -2931,9 +2931,9 @@ static HRESULT WINAPI winhttp_request_Send(
         LeaveCriticalSection( &request->cs );
         return S_OK;
     }
+    request->data = body;
     if (request->wait) /* async request */
     {
-        request->data = body;
         if (!(request->thread = CreateThread( NULL, 0, send_and_receive_proc, request, 0, NULL )))
         {
             LeaveCriticalSection( &request->cs );
