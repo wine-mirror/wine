@@ -1387,9 +1387,7 @@ void X11DRV_MotionNotify( HWND hwnd, XEvent *xev )
     if (!hwnd)
     {
         struct x11drv_thread_data *thread_data = x11drv_thread_data();
-        if (event->time - thread_data->last_motion_notify < 1000) return;
         if (thread_data->warp_serial && (long)(event->serial - thread_data->warp_serial) < 0) return;
-        thread_data->last_motion_notify = event->time;
     }
 
     send_mouse_input( hwnd, event->window, event->state, &input );
