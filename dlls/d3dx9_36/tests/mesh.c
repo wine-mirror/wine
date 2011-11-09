@@ -9916,9 +9916,9 @@ static void test_clone_mesh(void)
     hr = mesh->lpVtbl->CloneMesh(mesh, tc[2].create_options | D3DXMESH_VB_SHARE,
                                  tc[2].new_declaration, test_context->device,
                                  &mesh_clone);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "CloneMesh D3DXMESH_VB_SHARE with new"
-                 " declaration. Got %x, expected D3DERR_INVALIDCALL\n",
-                 hr);
+    ok(hr == D3DERR_INVALIDCALL, "CloneMesh D3DXMESH_VB_SHARE with new"
+       " declaration. Got %x, expected D3DERR_INVALIDCALL\n",
+       hr);
     mesh->lpVtbl->Release(mesh);
     mesh = NULL;
     mesh_clone = NULL;

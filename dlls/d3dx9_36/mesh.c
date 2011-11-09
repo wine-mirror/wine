@@ -707,7 +707,10 @@ static HRESULT WINAPI ID3DXMeshImpl_CloneMesh(ID3DXMesh *iface, DWORD options, C
     same_declaration = declaration_equals(declaration, orig_declaration);
 
     if (options & D3DXMESH_VB_SHARE) {
-        if (!same_declaration) goto error;
+        if (!same_declaration) {
+            hr = D3DERR_INVALIDCALL;
+            goto error;
+        }
         IDirect3DVertexBuffer9_AddRef(This->vertex_buffer);
         /* FIXME: refactor to avoid creating a new vertex buffer */
         IDirect3DVertexBuffer9_Release(cloned_this->vertex_buffer);
