@@ -2841,6 +2841,25 @@ error:
     return HRESULT_FROM_WIN32( err );
 }
 
+static DWORD request_set_parameters( struct winhttp_request *request )
+{
+    if (!WinHttpSetOption( request->hrequest, WINHTTP_OPTION_PROXY, &request->proxy,
+                           sizeof(request->proxy) )) return get_last_error();
+
+    if (!WinHttpSetOption( request->hrequest, WINHTTP_OPTION_AUTOLOGON_POLICY, &request->logon_policy,
+                           sizeof(request->logon_policy) )) return get_last_error();
+
+    if (!WinHttpSetOption( request->hrequest, WINHTTP_OPTION_DISABLE_FEATURE, &request->disable_feature,
+                           sizeof(request->disable_feature) )) return get_last_error();
+
+    if (!WinHttpSetTimeouts( request->hrequest,
+                             request->resolve_timeout,
+                             request->connect_timeout,
+                             request->send_timeout,
+                             request->receive_timeout )) return get_last_error();
+    return ERROR_SUCCESS;
+}
+
 static HRESULT request_send( struct winhttp_request *request )
 {
     SAFEARRAY *sa = NULL;
@@ -2851,28 +2870,7 @@ static HRESULT request_send( struct winhttp_request *request )
     BOOL ret;
     DWORD err;
 
-    if (!WinHttpSetOption( request->hrequest, WINHTTP_OPTION_PROXY, &request->proxy, sizeof(request->proxy) ))
-    {
-        return HRESULT_FROM_WIN32( get_last_error() );
-    }
-    if (!WinHttpSetOption( request->hrequest, WINHTTP_OPTION_AUTOLOGON_POLICY, &request->logon_policy,
-                           sizeof(request->logon_policy) ))
-    {
-        return HRESULT_FROM_WIN32( get_last_error() );
-    }
-    if (!WinHttpSetOption( request->hrequest, WINHTTP_OPTION_DISABLE_FEATURE, &request->disable_feature,
-                           sizeof(request->disable_feature) ))
-    {
-        return HRESULT_FROM_WIN32( get_last_error() );
-    }
-    if (!WinHttpSetTimeouts( request->hrequest,
-                             request->resolve_timeout,
-                             request->connect_timeout,
-                             request->send_timeout,
-                             request->receive_timeout ))
-    {
-        return HRESULT_FROM_WIN32( get_last_error() );
-    }
+    if ((err = request_set_parameters( request ))) return HRESULT_FROM_WIN32( err );
     VariantInit( &data );
     if (strcmpW( request->verb, getW ) && VariantChangeType( &data, &request->data, 0, VT_ARRAY|VT_UI1 ) == S_OK)
     {
