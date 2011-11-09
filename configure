@@ -15138,6 +15138,7 @@ wine_fn_config_dll scarddlg enable_scarddlg
 wine_fn_config_dll sccbase enable_sccbase
 wine_fn_config_dll schannel enable_schannel
 wine_fn_config_test dlls/schannel/tests schannel_test
+wine_fn_config_dll scrrun enable_scrrun
 wine_fn_config_dll secur32 enable_secur32 implib
 wine_fn_config_test dlls/secur32/tests secur32_test
 wine_fn_config_dll security enable_security
