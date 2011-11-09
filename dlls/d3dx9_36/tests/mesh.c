@@ -9267,6 +9267,17 @@ static void test_clone_mesh(void)
         {{ 1.0f,  0.0f,  0.f}, {0.099976f, 0.199951f, 0.099976f, 0.199951f}},
     };
     const UINT exp_vertex_size35 = sizeof(*exp_vertices35);
+    /* Test 36. Check that vertex buffer sharing is ok. */
+    const struct vertex_pn vertices36[] =
+    {
+        {{ 0.0f,  3.0f,  0.f}, up},
+        {{ 2.0f,  3.0f,  0.f}, up},
+        {{ 0.0f,  0.0f,  0.f}, up},
+    };
+    const UINT num_vertices36 = ARRAY_SIZE(vertices36);
+    const UINT num_faces36 = ARRAY_SIZE(vertices36) / VERTS_PER_FACE;
+    const UINT vertex_size36 = sizeof(*vertices36);
+    const DWORD clone_options36 = options | D3DXMESH_VB_SHARE;
     /* Common mesh data */
     ID3DXMesh *mesh = NULL;
     ID3DXMesh *mesh_clone = NULL;
@@ -9278,7 +9289,8 @@ static void test_clone_mesh(void)
         const UINT num_vertices;
         const UINT num_faces;
         const UINT vertex_size;
-        const DWORD options;
+        const DWORD create_options;
+        const DWORD clone_options;
         D3DVERTEXELEMENT9 *declaration;
         D3DVERTEXELEMENT9 *new_declaration;
         const BYTE *exp_vertices;
@@ -9294,6 +9306,7 @@ static void test_clone_mesh(void)
             num_faces0,
             vertex_size0,
             options,
+            options,
             declaration_pn,
             declaration_pn,
             (BYTE*)vertices0,
@@ -9306,6 +9319,7 @@ static void test_clone_mesh(void)
             num_vertices0,
             num_faces0,
             vertex_size0,
+            options_16bit,
             options_16bit,
             declaration_pn,
             declaration_pn,
@@ -9320,6 +9334,7 @@ static void test_clone_mesh(void)
             num_faces0,
             vertex_size0,
             options,
+            options,
             declaration_pn,
             declaration_pntc,
             (BYTE*)exp_vertices2,
@@ -9332,6 +9347,7 @@ static void test_clone_mesh(void)
             num_vertices0,
             num_faces0,
             vertex_size0,
+            options,
             options,
             declaration_pn,
             declaration_ptcn,
@@ -9346,6 +9362,7 @@ static void test_clone_mesh(void)
             num_faces4,
             vertex_size4,
             options,
+            options,
             declaration_ptc,
             declaration_ptc_float16_2,
             (BYTE*)exp_vertices4,
@@ -9358,6 +9375,7 @@ static void test_clone_mesh(void)
             num_vertices5,
             num_faces5,
             vertex_size5,
+            options,
             options,
             declaration_ptc,
             declaration_ptc_float16_4,
@@ -9372,6 +9390,7 @@ static void test_clone_mesh(void)
             num_faces6,
             vertex_size6,
             options,
+            options,
             declaration_ptc,
             declaration_ptc_float1,
             (BYTE*)exp_vertices6,
@@ -9384,6 +9403,7 @@ static void test_clone_mesh(void)
             num_vertices7,
             num_faces7,
             vertex_size7,
+            options,
             options,
             declaration_ptc,
             declaration_ptc_float3,
@@ -9398,6 +9418,7 @@ static void test_clone_mesh(void)
             num_faces8,
             vertex_size8,
             options,
+            options,
             declaration_ptc,
             declaration_ptc_float4,
             (BYTE*)exp_vertices8,
@@ -9410,6 +9431,7 @@ static void test_clone_mesh(void)
             num_vertices9,
             num_faces9,
             vertex_size9,
+            options,
             options,
             declaration_ptc,
             declaration_ptc_d3dcolor,
@@ -9424,6 +9446,7 @@ static void test_clone_mesh(void)
             num_faces10,
             vertex_size10,
             options,
+            options,
             declaration_ptc,
             declaration_ptc_ubyte4,
             (BYTE*)exp_vertices10,
@@ -9436,6 +9459,7 @@ static void test_clone_mesh(void)
             num_vertices11,
             num_faces11,
             vertex_size11,
+            options,
             options,
             declaration_ptc,
             declaration_ptc_short2,
@@ -9450,6 +9474,7 @@ static void test_clone_mesh(void)
             num_faces12,
             vertex_size12,
             options,
+            options,
             declaration_ptc,
             declaration_ptc_short4,
             (BYTE*)exp_vertices12,
@@ -9462,6 +9487,7 @@ static void test_clone_mesh(void)
             num_vertices13,
             num_faces13,
             vertex_size13,
+            options,
             options,
             declaration_ptc,
             declaration_ptc_ubyte4n,
@@ -9476,6 +9502,7 @@ static void test_clone_mesh(void)
             num_faces14,
             vertex_size14,
             options,
+            options,
             declaration_ptc,
             declaration_ptc_short2n,
             (BYTE*)exp_vertices14,
@@ -9488,6 +9515,7 @@ static void test_clone_mesh(void)
             num_vertices15,
             num_faces15,
             vertex_size15,
+            options,
             options,
             declaration_ptc,
             declaration_ptc_short4n,
@@ -9502,6 +9530,7 @@ static void test_clone_mesh(void)
             num_faces16,
             vertex_size16,
             options,
+            options,
             declaration_ptc,
             declaration_ptc_ushort2n,
             (BYTE*)exp_vertices16,
@@ -9514,6 +9543,7 @@ static void test_clone_mesh(void)
             num_vertices17,
             num_faces17,
             vertex_size17,
+            options,
             options,
             declaration_ptc,
             declaration_ptc_ushort4n,
@@ -9528,6 +9558,7 @@ static void test_clone_mesh(void)
             num_faces18,
             vertex_size18,
             options,
+            options,
             declaration_ptc,
             declaration_ptc_float16_2_partialu,
             (BYTE*)exp_vertices18,
@@ -9540,6 +9571,7 @@ static void test_clone_mesh(void)
             num_vertices19,
             num_faces19,
             vertex_size19,
+            options,
             options,
             declaration_pntc,
             declaration_pntc1,
@@ -9554,6 +9586,7 @@ static void test_clone_mesh(void)
             num_faces20,
             vertex_size20,
             options,
+            options,
             declaration_pntc1,
             declaration_pntc,
             (BYTE*)exp_vertices20,
@@ -9566,6 +9599,7 @@ static void test_clone_mesh(void)
             num_vertices21,
             num_faces21,
             vertex_size21,
+            options,
             options,
             declaration_ptc_float1,
             declaration_ptc,
@@ -9580,6 +9614,7 @@ static void test_clone_mesh(void)
             num_faces22,
             vertex_size22,
             options,
+            options,
             declaration_ptc_float1,
             declaration_ptc_float3,
             (BYTE*)exp_vertices22,
@@ -9592,6 +9627,7 @@ static void test_clone_mesh(void)
             num_vertices23,
             num_faces23,
             vertex_size23,
+            options,
             options,
             declaration_ptc_float1,
             declaration_ptc_float4,
@@ -9606,6 +9642,7 @@ static void test_clone_mesh(void)
             num_faces24,
             vertex_size24,
             options,
+            options,
             declaration_ptc_float1,
             declaration_ptc_d3dcolor,
             (BYTE*)exp_vertices24,
@@ -9618,6 +9655,7 @@ static void test_clone_mesh(void)
             num_vertices25,
             num_faces25,
             vertex_size25,
+            options,
             options,
             declaration_ptc_float1,
             declaration_ptc_ubyte4,
@@ -9632,6 +9670,7 @@ static void test_clone_mesh(void)
             num_faces26,
             vertex_size26,
             options,
+            options,
             declaration_ptc_float4,
             declaration_ptc_d3dcolor,
             (BYTE*)exp_vertices26,
@@ -9644,6 +9683,7 @@ static void test_clone_mesh(void)
             num_vertices27,
             num_faces27,
             vertex_size27,
+            options,
             options,
             declaration_ptc_d3dcolor,
             declaration_ptc_float4,
@@ -9658,6 +9698,7 @@ static void test_clone_mesh(void)
             num_faces28,
             vertex_size28,
             options,
+            options,
             declaration_ptc_ubyte4,
             declaration_ptc_float4,
             (BYTE*)exp_vertices28,
@@ -9670,6 +9711,7 @@ static void test_clone_mesh(void)
             num_vertices29,
             num_faces29,
             vertex_size29,
+            options,
             options,
             declaration_ptc_short2,
             declaration_ptc_float4,
@@ -9684,6 +9726,7 @@ static void test_clone_mesh(void)
             num_faces30,
             vertex_size30,
             options,
+            options,
             declaration_ptc_short4,
             declaration_ptc_float4,
             (BYTE*)exp_vertices30,
@@ -9696,6 +9739,7 @@ static void test_clone_mesh(void)
             num_vertices31,
             num_faces31,
             vertex_size31,
+            options,
             options,
             declaration_ptc_ubyte4n,
             declaration_ptc_float4,
@@ -9710,6 +9754,7 @@ static void test_clone_mesh(void)
             num_faces32,
             vertex_size32,
             options,
+            options,
             declaration_ptc_short2n,
             declaration_ptc_float4,
             (BYTE*)exp_vertices32,
@@ -9722,6 +9767,7 @@ static void test_clone_mesh(void)
             num_vertices33,
             num_faces33,
             vertex_size33,
+            options,
             options,
             declaration_ptc_short4n,
             declaration_ptc_float4,
@@ -9736,6 +9782,7 @@ static void test_clone_mesh(void)
             num_faces34,
             vertex_size34,
             options,
+            options,
             declaration_ptc_float16_2,
             declaration_ptc_float4,
             (BYTE*)exp_vertices34,
@@ -9749,10 +9796,25 @@ static void test_clone_mesh(void)
             num_faces35,
             vertex_size35,
             options,
+            options,
             declaration_ptc_float16_4,
             declaration_ptc_float4,
             (BYTE*)exp_vertices35,
             exp_vertex_size35
+        },
+        {
+            (BYTE*)vertices36,
+            NULL,
+            NULL,
+            num_vertices36,
+            num_faces36,
+            vertex_size36,
+            options,
+            clone_options36,
+            declaration_pn,
+            declaration_pn,
+            (BYTE*)vertices36,
+            vertex_size36
         },
     };
 
@@ -9771,7 +9833,7 @@ static void test_clone_mesh(void)
         UINT exp_new_decl_size, new_decl_size;
 
         hr = init_test_mesh(tc[i].num_faces, tc[i].num_vertices,
-                              tc[i].options,
+                              tc[i].create_options,
                               tc[i].declaration,
                               test_context->device, &mesh,
                               tc[i].vertices, tc[i].vertex_size,
@@ -9782,7 +9844,7 @@ static void test_clone_mesh(void)
             goto cleanup;
         }
 
-        hr = mesh->lpVtbl->CloneMesh(mesh, tc[i].options, tc[i].new_declaration,
+        hr = mesh->lpVtbl->CloneMesh(mesh, tc[i].clone_options, tc[i].new_declaration,
                                      test_context->device, &mesh_clone);
         ok(hr == D3D_OK, "CloneMesh test case %d failed. Got %x\n, expected D3D_OK\n", i, hr);
 
