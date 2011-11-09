@@ -420,6 +420,7 @@ static BOOL grab_clipping_window( const RECT *clip, BOOL only_with_xinput )
     }
     clip_rect = *clip;
     if (!data->clip_hwnd) sync_window_cursor( clip_window );
+    InterlockedExchangePointer( (void **)&cursor_window, msg_hwnd );
     data->clip_hwnd = msg_hwnd;
     SendMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, (LPARAM)msg_hwnd );
     return TRUE;
@@ -542,9 +543,16 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
     if (!hwnd)
     {
         struct x11drv_thread_data *thread_data = x11drv_thread_data();
+        HWND clip_hwnd = thread_data->clip_hwnd;
 
-        if (!thread_data->clip_hwnd) return;
+        if (!clip_hwnd) return;
         if (thread_data->clip_window != window) return;
+        if (InterlockedExchangePointer( (void **)&cursor_window, clip_hwnd ) != clip_hwnd ||
+            GetTickCount() - last_cursor_change > 100)
+        {
+            sync_window_cursor( window );
+            last_cursor_change = GetTickCount();
+        }
         input->u.mi.dx += clip_rect.left;
         input->u.mi.dy += clip_rect.top;
         __wine_send_input( hwnd, input );
@@ -1215,8 +1223,7 @@ void CDECL X11DRV_SetCursor( HCURSOR handle )
         GetTickCount() - last_cursor_change > 100)
     {
         last_cursor_change = GetTickCount();
-        if (clipping_cursor) set_window_cursor( init_clip_window(), handle );
-        else if (cursor_window) SendNotifyMessageW( cursor_window, WM_X11DRV_SET_CURSOR, 0, (LPARAM)handle );
+        if (cursor_window) SendNotifyMessageW( cursor_window, WM_X11DRV_SET_CURSOR, 0, (LPARAM)handle );
     }
 }
 

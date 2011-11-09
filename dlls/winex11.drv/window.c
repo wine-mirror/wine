@@ -2699,6 +2699,8 @@ LRESULT CDECL X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
     case WM_X11DRV_SET_CURSOR:
         if ((data = X11DRV_get_win_data( hwnd )) && data->whole_window)
             set_window_cursor( data->whole_window, (HCURSOR)lp );
+        else if (hwnd == x11drv_thread_data()->clip_hwnd)
+            set_window_cursor( x11drv_thread_data()->clip_window, (HCURSOR)lp );
         return 0;
     case WM_X11DRV_CLIP_CURSOR:
         return clip_cursor_notify( hwnd, (HWND)lp );
