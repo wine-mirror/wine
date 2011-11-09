@@ -106,7 +106,7 @@ static ULONG WINAPI IDirectDrawClipperImpl_Release(IDirectDrawClipper *iface)
 }
 
 /*****************************************************************************
- * IDirectDrawClipper::SetHwnd
+ * IDirectDrawClipper::SetHWnd
  *
  * Assigns a hWnd to the clipper interface.
  *
@@ -120,7 +120,7 @@ static ULONG WINAPI IDirectDrawClipperImpl_Release(IDirectDrawClipper *iface)
  *
  *****************************************************************************/
 
-static HRESULT WINAPI IDirectDrawClipperImpl_SetHwnd(IDirectDrawClipper *iface, DWORD dwFlags,
+static HRESULT WINAPI IDirectDrawClipperImpl_SetHWnd(IDirectDrawClipper *iface, DWORD dwFlags,
         HWND hWnd)
 {
     IDirectDrawClipperImpl *This = impl_from_IDirectDrawClipper(iface);
@@ -200,9 +200,9 @@ static HRESULT WINAPI IDirectDrawClipperImpl_SetClipList(IDirectDrawClipper *ifa
 }
 
 /*****************************************************************************
- * IDirectDrawClipper::GetHwnd
+ * IDirectDrawClipper::GetHWnd
  *
- * Returns the hwnd assigned with SetHwnd
+ * Returns the hwnd assigned with SetHWnd
  *
  * Arguments:
  *  hWndPtr: Address to store the HWND at
@@ -292,7 +292,7 @@ static const struct IDirectDrawClipperVtbl ddraw_clipper_vtbl =
     IDirectDrawClipperImpl_Initialize,
     IDirectDrawClipperImpl_IsClipListChanged,
     IDirectDrawClipperImpl_SetClipList,
-    IDirectDrawClipperImpl_SetHwnd
+    IDirectDrawClipperImpl_SetHWnd
 };
 
 HRESULT ddraw_clipper_init(IDirectDrawClipperImpl *clipper)
