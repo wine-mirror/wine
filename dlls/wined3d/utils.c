@@ -1061,7 +1061,9 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
     }
 
     if (status == GL_FRAMEBUFFER_COMPLETE && ((format->flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING)
-            || !(gl_info->quirks & WINED3D_QUIRK_LIMITED_TEX_FILTERING)))
+            || !(gl_info->quirks & WINED3D_QUIRK_LIMITED_TEX_FILTERING))
+            && format->id != WINED3DFMT_NULL && format->id != WINED3DFMT_P8_UINT
+            && format->glFormat != GL_LUMINANCE && format->glFormat != GL_LUMINANCE_ALPHA)
     {
         GLuint rb, tex2;
         DWORD readback[16 * 16], color;
