@@ -74,19 +74,6 @@ static const WCHAR mshtml_keyW[] =
 static HWND install_dialog = NULL;
 static LPWSTR url = NULL;
 
-static inline char *heap_strdupWtoA(LPCWSTR str)
-{
-    char *ret = NULL;
-
-    if(str) {
-        DWORD size = WideCharToMultiByte(CP_ACP, 0, str, -1, NULL, 0, NULL, NULL);
-        ret = heap_alloc(size);
-        WideCharToMultiByte(CP_ACP, 0, str, -1, ret, size, NULL, NULL);
-    }
-
-    return ret;
-}
-
 /* SHA definitions are copied from advapi32. They aren't available in headers. */
 
 typedef struct {
