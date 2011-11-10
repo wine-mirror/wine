@@ -68,12 +68,17 @@ static BOOL use_gecko_script(HTMLWindow *window)
 
 void set_current_mon(HTMLWindow *This, IMoniker *mon)
 {
-    WCHAR *url;
+    IUriContainer *uri_container;
     HRESULT hres;
 
     if(This->mon) {
         IMoniker_Release(This->mon);
         This->mon = NULL;
+    }
+
+    if(This->uri) {
+        IUri_Release(This->uri);
+        This->uri = NULL;
     }
 
     if(This->url) {
@@ -87,12 +92,36 @@ void set_current_mon(HTMLWindow *This, IMoniker *mon)
     IMoniker_AddRef(mon);
     This->mon = mon;
 
-    hres = IMoniker_GetDisplayName(mon, NULL, NULL, &url);
+    hres = IMoniker_QueryInterface(mon, &IID_IUriContainer, (void**)&uri_container);
     if(SUCCEEDED(hres)) {
-        This->url = SysAllocString(url);
-        CoTaskMemFree(url);
-    }else {
-        WARN("GetDisplayName failed: %08x\n", hres);
+        hres = IUriContainer_GetIUri(uri_container, &This->uri);
+        IUriContainer_Release(uri_container);
+        if(hres != S_OK) {
+            WARN("GetIUri failed: %08x\n", hres);
+            This->uri = NULL;
+        }
+    }
+
+    if(!This->uri) {
+        WCHAR *url;
+
+        hres = IMoniker_GetDisplayName(mon, NULL, NULL, &url);
+        if(SUCCEEDED(hres)) {
+            hres = CreateUri(url, 0, 0, &This->uri);
+            if(FAILED(hres)) {
+                WARN("CrateUri failed: %08x\n", hres);
+                This->url = SysAllocString(url);
+            }
+            CoTaskMemFree(url);
+        }else {
+            WARN("GetDisplayName failed: %08x\n", hres);
+        }
+    }
+
+    if(!This->url && This->uri) {
+        hres = IUri_GetDisplayUri(This->uri, &This->url);
+        if(FAILED(hres))
+            WARN("GetDisplayUri failed: %08x\n", hres);
     }
 
     set_script_mode(This, use_gecko_script(This) ? SCRIPTMODE_GECKO : SCRIPTMODE_ACTIVESCRIPT);
