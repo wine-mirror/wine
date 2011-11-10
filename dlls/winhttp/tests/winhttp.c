@@ -2111,17 +2111,22 @@ static void test_IWinHttpRequest(void)
     static const WCHAR passwordW[] = {'p','a','s','s','w','o','r','d',0};
     static const WCHAR url1W[] = {'h','t','t','p',':','/','/','w','i','n','e','h','q','.','o','r','g',0};
     static const WCHAR url2W[] = {'w','i','n','e','h','q','.','o','r','g',0};
+    static const WCHAR url3W[] = {'h','t','t','p',':','/','/','c','r','o','s','s','o','v','e','r','.',
+                                  'c','o','d','e','w','e','a','v','e','r','s','.','c','o','m','/',
+                                  'p','o','s','t','t','e','s','t','.','p','h','p',0};
     static const WCHAR method1W[] = {'G','E','T',0};
     static const WCHAR method2W[] = {'I','N','V','A','L','I','D',0};
+    static const WCHAR method3W[] = {'P','O','S','T',0};
     static const WCHAR proxy_serverW[] = {'p','r','o','x','y','s','e','r','v','e','r',0};
     static const WCHAR bypas_listW[] = {'b','y','p','a','s','s','l','i','s','t',0};
     static const WCHAR connectionW[] = {'C','o','n','n','e','c','t','i','o','n',0};
     static const WCHAR dateW[] = {'D','a','t','e',0};
+    static const WCHAR test_dataW[] = {'t','e','s','t','d','a','t','a',128,0};
     HRESULT hr;
     IWinHttpRequest *req;
     BSTR method, url, username, password, response = NULL, status_text = NULL, headers = NULL;
     BSTR date, today, connection, value = NULL;
-    VARIANT async, empty, timeout, body, proxy_server, bypass_list;
+    VARIANT async, empty, timeout, body, proxy_server, bypass_list, data;
     VARIANT_BOOL succeeded;
     LONG status;
     WCHAR todayW[WINHTTP_TIME_FORMAT_BUFSIZE];
@@ -2139,6 +2144,20 @@ static void test_IWinHttpRequest(void)
 
     V_VT( &async ) = VT_BOOL;
     V_BOOL( &async ) = VARIANT_FALSE;
+
+    method = SysAllocString( method3W );
+    url = SysAllocString( url3W );
+    hr = IWinHttpRequest_Open( req, method, url, async );
+    ok( hr == S_OK, "got %08x\n", hr );
+    SysFreeString( method );
+    SysFreeString( url );
+
+    V_VT( &data ) = VT_BSTR;
+    V_BSTR( &data ) = SysAllocString( test_dataW );
+    hr = IWinHttpRequest_Send( req, data );
+    ok( hr == S_OK || broken(hr == HRESULT_FROM_WIN32(ERROR_WINHTTP_INVALID_SERVER_RESPONSE)),
+        "got %08x\n", hr );
+    SysFreeString( V_BSTR( &data ) );
 
     hr = IWinHttpRequest_Open( req, NULL, NULL, empty );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );

@@ -2217,6 +2217,7 @@ static void free_request( struct winhttp_request *request )
     heap_free( (WCHAR *)request->proxy.lpszProxyBypass );
     heap_free( request->buffer );
     heap_free( request->verb );
+    VariantClear( &request->data );
 }
 
 static ULONG WINAPI winhttp_request_Release(
@@ -2860,6 +2861,20 @@ static DWORD request_set_parameters( struct winhttp_request *request )
     return ERROR_SUCCESS;
 }
 
+static void request_set_utf8_content_type( struct winhttp_request *request )
+{
+    static const WCHAR fmtW[] = {'%','s',':',' ','%','s',0};
+    static const WCHAR text_plainW[] = {'t','e','x','t','/','p','l','a','i','n',0};
+    static const WCHAR charset_utf8W[] = {'c','h','a','r','s','e','t','=','u','t','f','-','8',0};
+    WCHAR headerW[64];
+    int len;
+
+    len = sprintfW( headerW, fmtW, attr_content_type, text_plainW );
+    WinHttpAddRequestHeaders( request->hrequest, headerW, len, WINHTTP_ADDREQ_FLAG_ADD_IF_NEW );
+    len = sprintfW( headerW, fmtW, attr_content_type, charset_utf8W );
+    WinHttpAddRequestHeaders( request->hrequest, headerW, len, WINHTTP_ADDREQ_FLAG_COALESCE_WITH_SEMICOLON );
+}
+
 static HRESULT request_send( struct winhttp_request *request )
 {
     SAFEARRAY *sa = NULL;
@@ -2871,24 +2886,47 @@ static HRESULT request_send( struct winhttp_request *request )
     DWORD err;
 
     if ((err = request_set_parameters( request ))) return HRESULT_FROM_WIN32( err );
-    VariantInit( &data );
-    if (strcmpW( request->verb, getW ) && VariantChangeType( &data, &request->data, 0, VT_ARRAY|VT_UI1 ) == S_OK)
+    if (strcmpW( request->verb, getW ))
     {
-        SAFEARRAY *sa = V_ARRAY( &data );
-        if ((hr = SafeArrayAccessData( sa, (void **)&ptr )) != S_OK) return hr;
-        if ((hr = SafeArrayGetUBound( sa, 1, &size ) != S_OK))
+        VariantInit( &data );
+        if (V_VT( &request->data ) == VT_BSTR)
         {
-            SafeArrayUnaccessData( sa );
-            return hr;
+            UINT i, cp = CP_ACP;
+            const WCHAR *str = V_BSTR( &request->data );
+            int len = strlenW( str );
+
+            for (i = 0; i < len; i++)
+            {
+                if (str[i] > 127)
+                {
+                    cp = CP_UTF8;
+                    break;
+                }
+            }
+            size = WideCharToMultiByte( cp, 0, str, len, NULL, 0, NULL, NULL );
+            if (!(ptr = heap_alloc( size ))) return E_OUTOFMEMORY;
+            WideCharToMultiByte( cp, 0, str, len, ptr, size, NULL, NULL );
+            if (cp == CP_UTF8) request_set_utf8_content_type( request );
         }
-        size++;
+        else if (VariantChangeType( &data, &request->data, 0, VT_ARRAY|VT_UI1 ) == S_OK)
+        {
+            sa = V_ARRAY( &data );
+            if ((hr = SafeArrayAccessData( sa, (void **)&ptr )) != S_OK) return hr;
+            if ((hr = SafeArrayGetUBound( sa, 1, &size ) != S_OK))
+            {
+                SafeArrayUnaccessData( sa );
+                return hr;
+            }
+            size++;
+        }
     }
     wait_set_status_callback( request, WINHTTP_CALLBACK_STATUS_REQUEST_SENT );
     if (!(ret = WinHttpSendRequest( request->hrequest, NULL, 0, ptr, size, size, 0 )))
     {
         err = get_last_error();
     }
-    if (sa && (hr = SafeArrayUnaccessData( sa )) != S_OK) return hr;
+    if (!sa) heap_free( ptr );
+    else if ((hr = SafeArrayUnaccessData( sa )) != S_OK) return hr;
     if (!ret) return HRESULT_FROM_WIN32( err );
     if ((err = wait_for_completion( request ))) return HRESULT_FROM_WIN32( err );
 
@@ -2914,7 +2952,7 @@ static HRESULT WINAPI winhttp_request_Send(
     VARIANT body )
 {
     struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
-    HRESULT hr = S_OK;
+    HRESULT hr;
 
     TRACE("%p, %s\n", request, debugstr_variant(&body));
 
@@ -2929,7 +2967,9 @@ static HRESULT WINAPI winhttp_request_Send(
         LeaveCriticalSection( &request->cs );
         return S_OK;
     }
-    request->data = body;
+    VariantClear( &request->data );
+    if ((hr = VariantCopyInd( &request->data, &body )) != S_OK) return hr;
+
     if (request->wait) /* async request */
     {
         if (!(request->thread = CreateThread( NULL, 0, send_and_receive_proc, request, 0, NULL )))
