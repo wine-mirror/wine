@@ -37,7 +37,7 @@ typedef HANDLE HLINEAPP, *LPHLINEAPP;
 typedef HANDLE HPHONE, *LPHPHONE;
 typedef HANDLE HPHONEAPP, *LPHPHONEAPP;
 
-#define TAPIERR_REQUESTFAILED            -16L
+#define TAPIERR_REQUESTFAILED          __MSABI_LONG(-16)
 #define LINEERR_ALLOCATED              0x80000001
 #define LINEERR_BADDEVICEID            0x80000002
 #define LINEERR_BEARERMODEUNAVAIL      0x80000003
@@ -196,34 +196,34 @@ typedef HANDLE HPHONEAPP, *LPHPHONEAPP;
 
 /* tapi callback messages */
 
-#define LINE_ADDRESSSTATE              0L
-#define LINE_CALLINFO                  1L
-#define LINE_CALLSTATE                 2L
-#define LINE_CLOSE                     3L
-#define LINE_DEVSPECIFIC               4L
-#define LINE_DEVSPECIFICFEATURE        5L
-#define LINE_GATHERDIGITS              6L
-#define LINE_GENERATE                  7L
-#define LINE_LINEDEVSTATE              8L
-#define LINE_MONITORDIGITS             9L
-#define LINE_MONITORMEDIA             10L
-#define LINE_MONITORTONE              11L
-#define LINE_REPLY                    12L
-#define LINE_REQUEST                  13L
-#define PHONE_BUTTON                  14L
-#define PHONE_CLOSE                   15L
-#define PHONE_DEVSPECIFIC             16L
-#define PHONE_REPLY                   17L
-#define PHONE_STATE                   18L
-#define LINE_CREATE                   19L
-#define PHONE_CREATE                  20L
+#define LINE_ADDRESSSTATE             __MSABI_LONG(0)
+#define LINE_CALLINFO                 __MSABI_LONG(1)
+#define LINE_CALLSTATE                __MSABI_LONG(2)
+#define LINE_CLOSE                    __MSABI_LONG(3)
+#define LINE_DEVSPECIFIC              __MSABI_LONG(4)
+#define LINE_DEVSPECIFICFEATURE       __MSABI_LONG(5)
+#define LINE_GATHERDIGITS             __MSABI_LONG(6)
+#define LINE_GENERATE                 __MSABI_LONG(7)
+#define LINE_LINEDEVSTATE             __MSABI_LONG(8)
+#define LINE_MONITORDIGITS            __MSABI_LONG(9)
+#define LINE_MONITORMEDIA             __MSABI_LONG(10)
+#define LINE_MONITORTONE              __MSABI_LONG(11)
+#define LINE_REPLY                    __MSABI_LONG(12)
+#define LINE_REQUEST                  __MSABI_LONG(13)
+#define PHONE_BUTTON                  __MSABI_LONG(14)
+#define PHONE_CLOSE                   __MSABI_LONG(15)
+#define PHONE_DEVSPECIFIC             __MSABI_LONG(16)
+#define PHONE_REPLY                   __MSABI_LONG(17)
+#define PHONE_STATE                   __MSABI_LONG(18)
+#define LINE_CREATE                   __MSABI_LONG(19)
+#define PHONE_CREATE                  __MSABI_LONG(20)
 
-#define LINE_AGENTSPECIFIC            21L
-#define LINE_AGENTSTATUS              22L
-#define LINE_APPNEWCALL               23L
-#define LINE_PROXYREQUEST             24L
-#define LINE_REMOVE                   25L
-#define PHONE_REMOVE                  26L
+#define LINE_AGENTSPECIFIC            __MSABI_LONG(21)
+#define LINE_AGENTSTATUS              __MSABI_LONG(22)
+#define LINE_APPNEWCALL               __MSABI_LONG(23)
+#define LINE_PROXYREQUEST             __MSABI_LONG(24)
+#define LINE_REMOVE                   __MSABI_LONG(25)
+#define PHONE_REMOVE                  __MSABI_LONG(26)
 /* these are used as Param1 of line_callstate messages */
 #define LINECALLSTATE_IDLE            0x00000001
 #define LINECALLSTATE_OFFERING        0x00000002
