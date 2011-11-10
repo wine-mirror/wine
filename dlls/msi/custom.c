@@ -308,6 +308,7 @@ static UINT custom_get_process_return( HANDLE process )
     DWORD rc = 0;
 
     GetExitCodeProcess( process, &rc );
+    TRACE("exit code is %u\n", rc);
     if (rc != 0)
         return ERROR_FUNCTION_FAILED;
     return ERROR_SUCCESS;
