@@ -867,7 +867,7 @@ BOOL WINAPI StrToIntExA(LPCSTR lpszStr, DWORD dwFlags, LPINT lpiRet)
   }
   if (dwFlags > STIF_SUPPORT_HEX)
   {
-    WARN("Unknown flags (%08lX)!\n", dwFlags & ~STIF_SUPPORT_HEX);
+    WARN("Unknown flags (%08X)!\n", dwFlags & ~STIF_SUPPORT_HEX);
   }
 
   /* Skip leading space, '+', '-' */
@@ -937,7 +937,7 @@ BOOL WINAPI StrToIntExW(LPCWSTR lpszStr, DWORD dwFlags, LPINT lpiRet)
   }
   if (dwFlags > STIF_SUPPORT_HEX)
   {
-    WARN("Unknown flags (%08lX)!\n", dwFlags & ~STIF_SUPPORT_HEX);
+    WARN("Unknown flags (%08X)!\n", dwFlags & ~STIF_SUPPORT_HEX);
   }
 
   /* Skip leading space, '+', '-' */
