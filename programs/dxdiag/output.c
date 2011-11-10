@@ -109,9 +109,7 @@ static BOOL output_text_field(HANDLE hFile, const char *field_name, DWORD field_
     ptr += sprintf(ptr, sprintf_fmt, field_name);
 
     ptr += WideCharToMultiByte(CP_ACP, 0, value, value_lenW, ptr, value_lenA, NULL, NULL);
-
     memcpy(ptr, crlf, sizeof(crlf));
-    ptr += sizeof(crlf);
 
     return WriteFile(hFile, output_buffer, total_len, NULL, NULL);
 }
