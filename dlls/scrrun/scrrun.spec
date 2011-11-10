@@ -1,6 +1,6 @@
 @ stub DLLGetDocumentation
 @ stub DllCanUnloadNow
 @ stub DllGetClassObject
-@ stub DllRegisterServer
-@ stub DllUnregisterServer
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()
 @ stub DoOpenPipeStream

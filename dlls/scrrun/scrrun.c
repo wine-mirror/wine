@@ -41,3 +41,21 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     }
     return TRUE;
 }
+
+/***********************************************************************
+ *      DllRegisterServer (scrrun.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    FIXME("\n");
+    return S_OK;
+}
+
+/***********************************************************************
+ *      DllUnregisterServer (scrrun.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    FIXME("\n");
+    return S_OK;
+}
