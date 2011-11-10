@@ -32,6 +32,9 @@
 #include "shlguid.h"
 #include "idispids.h"
 
+#define NO_SHLWAPI_REG
+#include "shlwapi.h"
+
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
@@ -50,10 +53,8 @@ typedef struct {
 
 static BOOL use_gecko_script(HTMLWindow *window)
 {
-    DWORD zone;
+    DWORD zone, scheme;
     HRESULT hres;
-
-    static const WCHAR aboutW[] = {'a','b','o','u','t',':'};
 
     hres = IInternetSecurityManager_MapUrlToZone(window->secmgr, window->url, &zone, 0);
     if(FAILED(hres)) {
@@ -62,8 +63,11 @@ static BOOL use_gecko_script(HTMLWindow *window)
     }
 
     TRACE("zone %d\n", zone);
-    return zone != URLZONE_LOCAL_MACHINE && zone != URLZONE_TRUSTED
-        && strncmpiW(aboutW, window->url, sizeof(aboutW)/sizeof(WCHAR));
+    if(zone == URLZONE_LOCAL_MACHINE || zone == URLZONE_TRUSTED || !window->uri)
+        return FALSE;
+
+    hres = IUri_GetScheme(window->uri, &scheme);
+    return FAILED(hres) || scheme != URL_SCHEME_ABOUT;
 }
 
 void set_current_mon(HTMLWindow *This, IMoniker *mon)
