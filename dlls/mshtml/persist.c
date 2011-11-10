@@ -68,6 +68,7 @@ static BOOL use_gecko_script(HTMLWindow *window)
 
 void set_current_mon(HTMLWindow *This, IMoniker *mon)
 {
+    WCHAR *url;
     HRESULT hres;
 
     if(This->mon) {
@@ -76,7 +77,7 @@ void set_current_mon(HTMLWindow *This, IMoniker *mon)
     }
 
     if(This->url) {
-        CoTaskMemFree(This->url);
+        SysFreeString(This->url);
         This->url = NULL;
     }
 
@@ -86,9 +87,13 @@ void set_current_mon(HTMLWindow *This, IMoniker *mon)
     IMoniker_AddRef(mon);
     This->mon = mon;
 
-    hres = IMoniker_GetDisplayName(mon, NULL, NULL, &This->url);
-    if(FAILED(hres))
+    hres = IMoniker_GetDisplayName(mon, NULL, NULL, &url);
+    if(SUCCEEDED(hres)) {
+        This->url = SysAllocString(url);
+        CoTaskMemFree(url);
+    }else {
         WARN("GetDisplayName failed: %08x\n", hres);
+    }
 
     set_script_mode(This, use_gecko_script(This) ? SCRIPTMODE_GECKO : SCRIPTMODE_ACTIVESCRIPT);
 }

@@ -308,7 +308,7 @@ struct HTMLWindow {
 
     nsChannelBSC *bscallback;
     IMoniker *mon;
-    LPOLESTR url;
+    BSTR url;
 
     IHTMLEventObj *event;
 

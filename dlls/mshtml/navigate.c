@@ -1261,7 +1261,7 @@ static void handle_navigation_error(nsChannelBSC *This, DWORD result)
     SAFEARRAYBOUND bound;
     VARIANT var, varOut;
     LONG ind;
-    BSTR url, unk;
+    BSTR unk;
     HRESULT hres;
 
     if(!This->window)
@@ -1296,8 +1296,7 @@ static void handle_navigation_error(nsChannelBSC *This, DWORD result)
 
     ind = 1;
     V_VT(&var) = VT_BSTR;
-    url = SysAllocString(This->window->url);
-    V_BSTR(&var) = url;
+    V_BSTR(&var) = This->window->url;
     SafeArrayPutElement(sa, &ind, &var);
 
     ind = 3;
@@ -1338,7 +1337,6 @@ static void handle_navigation_error(nsChannelBSC *This, DWORD result)
     V_BOOL(&varOut) = VARIANT_TRUE;
     IOleCommandTarget_Exec(olecmd, &CGID_DocHostCmdPriv, 1, 0, &var, FAILED(hres)?NULL:&varOut);
 
-    SysFreeString(url);
     SysFreeString(unk);
     SafeArrayDestroy(sa);
     IOleCommandTarget_Release(olecmd);
