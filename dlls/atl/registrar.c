@@ -844,8 +844,6 @@ HRESULT WINAPI AtlModuleUpdateRegistryFromResourceD(_ATL_MODULEW* pM, LPCOLESTR 
     return do_register_dll_server(pReg, module_name, lpszRes, bRegister, pMapEntries);
 }
 
-static const WCHAR regtypeW[] = {'W','I','N','E','_','R','E','G','I','S','T','R','Y',0};
-
 /***********************************************************************
  *              DllRegisterServer (ATL.@)
  */
