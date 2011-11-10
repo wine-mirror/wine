@@ -2427,6 +2427,7 @@ static nsresult NSAPI nsURL_GetDirectory(nsIURL *iface, nsACString *aDirectory)
     SysFreeString(path);
     TRACE("ret %s\n", debugstr_a(dir));
     nsACString_SetData(aDirectory, dir ? dir : "");
+    heap_free(dir);
     return NS_OK;
 }
 
