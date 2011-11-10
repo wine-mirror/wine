@@ -45,10 +45,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(service);
 
-static const WCHAR szServiceManagerKey[] = { 'S','y','s','t','e','m','\\',
-      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-      'S','e','r','v','i','c','e','s',0 };
-
 void  __RPC_FAR * __RPC_USER MIDL_user_allocate(SIZE_T len)
 {
     return HeapAlloc(GetProcessHeap(), 0, len);
