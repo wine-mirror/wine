@@ -3786,8 +3786,16 @@ void msi_dialog_check_messages( HANDLE handle )
     /* in threads other than the UI thread, block */
     if( uiThreadId != GetCurrentThreadId() )
     {
-        if( handle )
-            MsgWaitForMultipleObjectsEx( 1, &handle, INFINITE, 0, 0 );
+        if (!handle) return;
+        while (MsgWaitForMultipleObjectsEx( 1, &handle, INFINITE, QS_ALLINPUT, 0 ) == WAIT_OBJECT_0 + 1)
+        {
+            MSG msg;
+            while (PeekMessageW( &msg, NULL, 0, 0, PM_REMOVE ))
+            {
+                TranslateMessage( &msg );
+                DispatchMessageW( &msg );
+            }
+        }
         return;
     }
 
