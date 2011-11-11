@@ -854,6 +854,35 @@ BOOL WCMD_delete (WCHAR *command) {
     return foundAny;
 }
 
+/*
+ * WCMD_strtrim
+ *
+ * Returns a trimmed version of s with all leading and trailing whitespace removed
+ * Pre: s non NULL
+ *
+ */
+static WCHAR *WCMD_strtrim(const WCHAR *s)
+{
+    DWORD len = strlenW(s);
+    const WCHAR *start = s;
+    WCHAR* result;
+
+    if (!(result = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR))))
+        return NULL;
+
+    while (isspaceW(*start)) start++;
+    if (*start) {
+        const WCHAR *end = s + len - 1;
+        while (end > start && isspaceW(*end)) end--;
+        memcpy(result, start, (end - start + 2) * sizeof(WCHAR));
+        result[end - start + 1] = '\0';
+    } else {
+        result[0] = '\0';
+    }
+
+    return result;
+}
+
 /****************************************************************************
  * WCMD_echo
  *
@@ -861,33 +890,36 @@ BOOL WCMD_delete (WCHAR *command) {
  * in DOS (try typing "ECHO ON AGAIN" for an example).
  */
 
-void WCMD_echo (const WCHAR *command) {
-
+void WCMD_echo (const WCHAR *command)
+{
   int count;
   const WCHAR *origcommand = command;
+  WCHAR *trimmed;
 
   if (   command[0]==' ' || command[0]=='\t' || command[0]=='.'
       || command[0]==':' || command[0]==';')
     command++;
 
-  count = strlenW(command);
+  trimmed = WCMD_strtrim(command);
+  if (!trimmed) return;
+
+  count = strlenW(trimmed);
   if (count == 0 && origcommand[0]!='.' && origcommand[0]!=':'
                  && origcommand[0]!=';') {
     if (echo_mode) WCMD_output (WCMD_LoadMessage(WCMD_ECHOPROMPT), onW);
     else WCMD_output (WCMD_LoadMessage(WCMD_ECHOPROMPT), offW);
     return;
   }
-  if (lstrcmpiW(command, onW) == 0) {
-    echo_mode = TRUE;
-    return;
-  }
-  if (lstrcmpiW(command, offW) == 0) {
-    echo_mode = FALSE;
-    return;
-  }
-  WCMD_output_asis (command);
-  WCMD_output (newline);
 
+  if (lstrcmpiW(trimmed, onW) == 0)
+    echo_mode = TRUE;
+  else if (lstrcmpiW(trimmed, offW) == 0)
+    echo_mode = FALSE;
+  else {
+    WCMD_output_asis (command);
+    WCMD_output (newline);
+  }
+  HeapFree(GetProcessHeap(), 0, trimmed);
 }
 
 /**************************************************************************

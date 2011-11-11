@@ -26,8 +26,10 @@ echo@tab@word@tab@@space@
 echo @tab@word
 echo  @tab@word
 echo@tab@@tab@word
+echo @tab@ on @space@
 
 @echo off
+echo off@tab@@space@
 echo ------------ Testing 'echo' [OFF] --------------
 echo word
 echo 'singlequotedword'

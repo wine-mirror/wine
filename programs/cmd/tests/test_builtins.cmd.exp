@@ -74,6 +74,8 @@ word
 
 @pwd@>echo@tab@@tab@word@space@
 @tab@word
+
+@pwd@>echo @tab@ on @space@@space@
 ------------ Testing 'echo' [OFF] --------------
 word
 'singlequotedword'
