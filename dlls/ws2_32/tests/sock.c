@@ -4152,6 +4152,7 @@ static void test_GetAddrInfoW(void)
     static const WCHAR port[] = {'8','0',0};
     static const WCHAR empty[] = {0};
     static const WCHAR localhost[] = {'l','o','c','a','l','h','o','s','t',0};
+    static const WCHAR zero[] = {'0',0};
 
     int ret;
     ADDRINFOW *result, hint;
@@ -4169,6 +4170,24 @@ static void test_GetAddrInfoW(void)
 
     result = NULL;
     ret = pGetAddrInfoW(empty, NULL, NULL, &result);
+    todo_wine
+    {
+    ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
+    ok(result != NULL, "GetAddrInfoW failed\n");
+    }
+    pFreeAddrInfoW(result);
+
+    result = NULL;
+    ret = pGetAddrInfoW(NULL, zero, NULL, &result);
+    todo_wine
+    {
+    ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
+    ok(result != NULL, "GetAddrInfoW failed\n");
+    }
+    pFreeAddrInfoW(result);
+
+    result = NULL;
+    ret = pGetAddrInfoW(empty, zero, NULL, &result);
     todo_wine
     {
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
