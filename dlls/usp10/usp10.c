@@ -114,6 +114,31 @@ static const scriptRange scriptRanges[] = {
     { Script_Latin,      0x1e00, 0x1eff, 0, 0},
     /* Greek Extended: U+1F00–U+1FFF */
     { Script_Greek,      0x1f00, 0x1fff, 0, 0},
+    /* General Punctuation: U+2000 –U+206f */
+    /* Superscripts and Subscripts : U+2070 –U+209f */
+    /* Currency Symbols : U+20a0 –U+20cf */
+    { Script_Latin,      0x2000, 0x20cf, 0, 0},
+    /* Letterlike Symbols : U+2100 –U+214f */
+    /* Number Forms : U+2150 –U+218f */
+    /* Arrows : U+2190 –U+21ff */
+    /* Mathematical Operators : U+2200 –U+22ff */
+    /* Miscellaneous Technical : U+2300 –U+23ff */
+    /* Control Pictures : U+2400 –U+243f */
+    /* Optical Character Recognition : U+2440 –U+245f */
+    /* Enclosed Alphanumerics : U+2460 –U+24ff */
+    /* Box Drawing : U+2500 –U+25ff */
+    /* Block Elements : U+2580 –U+259f */
+    /* Geometric Shapes : U+25a0 –U+25ff */
+    /* Miscellaneous Symbols : U+2600 –U+26ff */
+    /* Dingbats : U+2700 –U+27bf */
+    /* Miscellaneous Mathematical Symbols-A : U+27c0 –U+27ef */
+    /* Supplemental Arrows-A : U+27f0 –U+27ff */
+    { Script_Latin,      0x2100, 0x27ff, 0, 0},
+    /* Supplemental Arrows-B : U+2900 –U+297f */
+    /* Miscellaneous Mathematical Symbols-B : U+2980 –U+29ff */
+    /* Supplemental Mathematical Operators : U+2a00 –U+2aff */
+    /* Miscellaneous Symbols and Arrows : U+2b00 –U+2bff */
+    { Script_Latin,      0x2900, 0x2bff, 0, 0},
     /* Latin Extended-C: U+2C60–U+2C7F */
     { Script_Latin,      0x2c60, 0x2c7f, 0, 0},
     /* Georgian: U+2D00–U+2D2F */
