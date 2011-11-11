@@ -945,6 +945,24 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
                 This->hw_params, &alsa_period_us, NULL)) < 0)
         WARN("Unable to set period time near %u: %d (%s)\n", alsa_period_us,
                 err, snd_strerror(err));
+    /* ALSA updates the output variable alsa_period_us */
+
+    This->mmdev_period_frames = MulDiv(fmt->nSamplesPerSec,
+            This->mmdev_period_rt, 10000000);
+
+    This->bufsize_frames = MulDiv(duration, fmt->nSamplesPerSec, 10000000);
+
+    /* Buffer 4 ALSA periods if large enough, else 4 mmdevapi periods */
+    This->alsa_bufsize_frames = This->mmdev_period_frames * 4;
+    if(err < 0 || alsa_period_us < period / 10)
+        err = snd_pcm_hw_params_set_buffer_size_near(This->pcm_handle,
+                This->hw_params, &This->alsa_bufsize_frames);
+    else{
+        unsigned int periods = 4;
+        err = snd_pcm_hw_params_set_periods_near(This->pcm_handle, This->hw_params, &periods, NULL);
+    }
+    if(err < 0)
+        WARN("Unable to set buffer size: %d (%s)\n", err, snd_strerror(err));
 
     if((err = snd_pcm_hw_params(This->pcm_handle, This->hw_params)) < 0){
         WARN("Unable to set hw params: %d (%s)\n", err, snd_strerror(err));
@@ -1008,12 +1026,10 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
     /* Check if the ALSA buffer is so small that it will run out before
      * the next MMDevAPI period tick occurs. Allow a little wiggle room
      * with 120% of the period time. */
-    This->mmdev_period_frames = (fmt->nSamplesPerSec * This->mmdev_period_rt) / 10000000.;
     if(This->alsa_bufsize_frames < 1.2 * This->mmdev_period_frames)
-        FIXME("ALSA buffer time is smaller than our period time. Expect underruns. (%lu < %u)\n",
+        FIXME("ALSA buffer time is too small. Expect underruns. (%lu < %u * 1.2)\n",
                 This->alsa_bufsize_frames, This->mmdev_period_frames);
 
-    This->bufsize_frames = ceil((duration / 10000000.) * fmt->nSamplesPerSec);
     This->local_buffer = HeapAlloc(GetProcessHeap(), 0,
             This->bufsize_frames * fmt->nBlockAlign);
     if(!This->local_buffer){
