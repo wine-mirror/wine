@@ -227,7 +227,7 @@
 @ stdcall GetProfileStringW(wstr wstr wstr ptr long)
 @ stdcall GetPropA(long str)
 @ stdcall GetPropW(long wstr)
-@ stub GetRoleTextW
+@ stdcall GetRoleTextW(long ptr long)
 @ stdcall GetSaveFileNamePreviewW(ptr)
 @ stdcall GetSaveFileNameW(ptr)
 @ stdcall GetShortPathNameW(wstr ptr long)
