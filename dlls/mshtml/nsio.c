@@ -949,6 +949,13 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     if(!ensure_uri(This->uri))
         return NS_ERROR_FAILURE;
 
+    if(TRACE_ON(mshtml)) {
+        BSTR uri_str;
+        IUri_GetDisplayUri(This->uri->uri, &uri_str);
+        TRACE("opening %s\n", debugstr_w(uri_str));
+        SysFreeString(uri_str);
+    }
+
     if(This->uri->is_doc_uri) {
         window = get_channel_window(This);
         if(window) {
