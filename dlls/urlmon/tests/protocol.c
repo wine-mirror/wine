@@ -701,7 +701,7 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         ok(szStatusText != NULL, "szStatusText == NULL\n");
         if(szStatusText) {
             if(tested_protocol == BIND_TEST)
-                ok(szStatusText == expect_wsz, "unexpected szStatusText\n");
+                ok(!lstrcmpW(szStatusText, expect_wsz), "unexpected szStatusText %s\n", wine_dbgstr_w(szStatusText));
             else if (http_post_test)
                 ok(lstrlenW(text_plain) <= lstrlenW(szStatusText) &&
                    !memcmp(szStatusText, text_plain, lstrlenW(text_plain)*sizeof(WCHAR)),
@@ -785,8 +785,9 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         ok(!szStatusText, "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
         break;
     case BINDSTATUS_PROXYDETECTING:
-        CHECK_EXPECT(ReportProgress_PROXYDETECTING);
-        SET_EXPECT(ReportProgress_CONNECTING);
+        if(!called_ReportProgress_PROXYDETECTING)
+            SET_EXPECT(ReportProgress_CONNECTING);
+        CHECK_EXPECT2(ReportProgress_PROXYDETECTING);
         ok(!szStatusText, "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
         break;
     case BINDSTATUS_LOADINGMIMEHANDLER:
