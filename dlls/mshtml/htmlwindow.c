@@ -1960,7 +1960,7 @@ static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface,
         return hres;
     }
 
-    prepare_for_binding(&This->doc_obj->basedoc, mon, NULL, TRUE);
+    prepare_for_binding(&This->doc_obj->basedoc, mon, TRUE);
 
     hres = IUri_GetScheme(uri, &scheme);
 

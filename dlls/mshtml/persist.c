@@ -232,7 +232,7 @@ static void set_downloading_task_destr(task_t *_task)
     heap_free(task);
 }
 
-void prepare_for_binding(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BOOL navigated_binding)
+void prepare_for_binding(HTMLDocument *This, IMoniker *mon, BOOL navigated_binding)
 {
     HRESULT hres;
 
@@ -485,7 +485,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         }
     }
 
-    prepare_for_binding(This, pimkName, pibc, FALSE);
+    prepare_for_binding(This, pimkName, FALSE);
     hres = set_moniker(This, pimkName, pibc, NULL, TRUE);
     if(FAILED(hres))
         return hres;
@@ -756,7 +756,7 @@ static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, LPSTREAM
         return hres;
     }
 
-    prepare_for_binding(This, mon, NULL, FALSE);
+    prepare_for_binding(This, mon, FALSE);
     hres = set_moniker(This, mon, NULL, NULL, TRUE);
     IMoniker_Release(mon);
     if(FAILED(hres))
@@ -815,7 +815,7 @@ static HRESULT WINAPI PersistStreamInit_InitNew(IPersistStreamInit *iface)
         return hres;
     }
 
-    prepare_for_binding(This, mon, NULL, FALSE);
+    prepare_for_binding(This, mon, FALSE);
     hres = set_moniker(This, mon, NULL, NULL, FALSE);
     IMoniker_Release(mon);
     if(FAILED(hres))

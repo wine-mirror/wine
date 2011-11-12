@@ -106,7 +106,7 @@ HRESULT hlink_frame_navigate(HTMLDocument*,LPCWSTR,nsChannel*,DWORD,BOOL*) DECLS
 HRESULT create_doc_uri(HTMLWindow*,WCHAR*,nsWineURI**) DECLSPEC_HIDDEN;
 HRESULT load_nsuri(HTMLWindow*,nsWineURI*,nsChannelBSC*,DWORD) DECLSPEC_HIDDEN;
 HRESULT set_moniker(HTMLDocument*,IMoniker*,IBindCtx*,nsChannelBSC*,BOOL) DECLSPEC_HIDDEN;
-void prepare_for_binding(HTMLDocument*,IMoniker*,IBindCtx*,BOOL) DECLSPEC_HIDDEN;
+void prepare_for_binding(HTMLDocument*,IMoniker*,BOOL) DECLSPEC_HIDDEN;
 
 HRESULT create_channelbsc(IMoniker*,WCHAR*,BYTE*,DWORD,nsChannelBSC**) DECLSPEC_HIDDEN;
 HRESULT channelbsc_load_stream(nsChannelBSC*,IStream*) DECLSPEC_HIDDEN;
