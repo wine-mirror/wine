@@ -49,6 +49,8 @@ typedef struct _dom_pi
     LONG ref;
 } dom_pi;
 
+static const struct nodemap_funcs dom_pi_attr_map;
+
 static inline dom_pi *impl_from_IXMLDOMProcessingInstruction( IXMLDOMProcessingInstruction *iface )
 {
     return CONTAINING_RECORD(iface, dom_pi, IXMLDOMProcessingInstruction_iface);
@@ -128,13 +130,10 @@ static HRESULT WINAPI dom_pi_GetTypeInfo(
     ITypeInfo** ppTInfo )
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    HRESULT hr;
 
     TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
 
-    hr = get_typeinfo(IXMLDOMProcessingInstruction_tid, ppTInfo);
-
-    return hr;
+    return get_typeinfo(IXMLDOMProcessingInstruction_tid, ppTInfo);
 }
 
 static HRESULT WINAPI dom_pi_GetIDsOfNames(
@@ -334,7 +333,7 @@ static HRESULT WINAPI dom_pi_get_attributes(
     if (!strcmpW(name, xmlW))
     {
         FIXME("created dummy map for <?xml ?>\n");
-        *map = create_nodemap(This->node.node);
+        *map = create_nodemap(This->node.node, &dom_pi_attr_map);
         SysFreeString(name);
         return S_OK;
     }
@@ -703,6 +702,68 @@ static const struct IXMLDOMProcessingInstructionVtbl dom_pi_vtbl =
     dom_pi_get_target,
     dom_pi_get_data,
     dom_pi_put_data
+};
+
+static HRESULT dom_pi_get_qualified_item(const xmlNodePtr node, BSTR name, BSTR uri,
+    IXMLDOMNode **item)
+{
+    FIXME("(%p)->(%s %s %p): stub\n", node, debugstr_w(name), debugstr_w(uri), item);
+    return E_NOTIMPL;
+}
+
+static HRESULT dom_pi_get_named_item(const xmlNodePtr node, BSTR name, IXMLDOMNode **item)
+{
+    FIXME("(%p)->(%s %p): stub\n", node, debugstr_w(name), item );
+    return E_NOTIMPL;
+}
+
+static HRESULT dom_pi_set_named_item(xmlNodePtr node, IXMLDOMNode *newItem, IXMLDOMNode **namedItem)
+{
+    FIXME("(%p)->(%p %p): stub\n", node, newItem, namedItem );
+    return E_NOTIMPL;
+}
+
+static HRESULT dom_pi_remove_qualified_item(xmlNodePtr node, BSTR name, BSTR uri, IXMLDOMNode **item)
+{
+    FIXME("(%p)->(%s %s %p): stub\n", node, debugstr_w(name), debugstr_w(uri), item);
+    return E_NOTIMPL;
+}
+
+static HRESULT dom_pi_remove_named_item(xmlNodePtr node, BSTR name, IXMLDOMNode **item)
+{
+    FIXME("(%p)->(%s %p): stub\n", node, debugstr_w(name), item);
+    return E_NOTIMPL;
+}
+
+static HRESULT dom_pi_get_item(const xmlNodePtr node, LONG index, IXMLDOMNode **item)
+{
+    FIXME("(%p)->(%d %p): stub\n", node, index, item);
+    return E_NOTIMPL;
+}
+
+static HRESULT dom_pi_get_length(const xmlNodePtr node, LONG *length)
+{
+    FIXME("(%p)->(%p): stub\n", node, length);
+
+    *length = 0;
+    return S_OK;
+}
+
+static HRESULT dom_pi_next_node(const xmlNodePtr node, LONG *iter, IXMLDOMNode **nextNode)
+{
+    FIXME("(%p)->(%d %p): stub\n", node, *iter, nextNode);
+    return E_NOTIMPL;
+}
+
+static const struct nodemap_funcs dom_pi_attr_map = {
+    dom_pi_get_named_item,
+    dom_pi_set_named_item,
+    dom_pi_remove_named_item,
+    dom_pi_get_item,
+    dom_pi_get_length,
+    dom_pi_get_qualified_item,
+    dom_pi_remove_qualified_item,
+    dom_pi_next_node
 };
 
 static const tid_t dompi_iface_tids[] = {

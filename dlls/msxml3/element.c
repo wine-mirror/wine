@@ -53,6 +53,8 @@ typedef struct _domelem
     LONG ref;
 } domelem;
 
+static const struct nodemap_funcs domelem_attr_map;
+
 static inline domelem *impl_from_IXMLDOMElement( IXMLDOMElement *iface )
 {
     return CONTAINING_RECORD(iface, domelem, IXMLDOMElement_iface);
@@ -320,7 +322,7 @@ static HRESULT WINAPI domelem_get_attributes(
 
     TRACE("(%p)->(%p)\n", This, map);
 
-    *map = create_nodemap(This->node.node);
+    *map = create_nodemap(This->node.node, &domelem_attr_map);
     return S_OK;
 }
 
@@ -1380,6 +1382,265 @@ static const struct IXMLDOMElementVtbl domelem_vtbl =
     domelem_removeAttributeNode,
     domelem_getElementsByTagName,
     domelem_normalize,
+};
+
+static HRESULT domelem_get_qualified_item(const xmlNodePtr node, BSTR name, BSTR uri,
+    IXMLDOMNode **item)
+{
+    xmlAttrPtr attr;
+    xmlChar *nameA;
+    xmlChar *href;
+
+    TRACE("(%p)->(%s %s %p)\n", node, debugstr_w(name), debugstr_w(uri), item);
+
+    if (!name || !item) return E_INVALIDARG;
+
+    if (uri && *uri)
+    {
+        href = xmlchar_from_wchar(uri);
+        if (!href) return E_OUTOFMEMORY;
+    }
+    else
+        href = NULL;
+
+    nameA = xmlchar_from_wchar(name);
+    if (!nameA)
+    {
+        heap_free(href);
+        return E_OUTOFMEMORY;
+    }
+
+    attr = xmlHasNsProp(node, nameA, href);
+
+    heap_free(nameA);
+    heap_free(href);
+
+    if (!attr)
+    {
+        *item = NULL;
+        return S_FALSE;
+    }
+
+    *item = create_node((xmlNodePtr)attr);
+
+    return S_OK;
+}
+
+static HRESULT domelem_get_named_item(const xmlNodePtr node, BSTR name, IXMLDOMNode **item)
+{
+    xmlChar *nameA, *local, *prefix;
+    BSTR uriW, localW;
+    xmlNsPtr ns;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s %p)\n", node, debugstr_w(name), item );
+
+    nameA = xmlchar_from_wchar(name);
+    local = xmlSplitQName2(nameA, &prefix);
+    heap_free(nameA);
+
+    if (!local)
+        return domelem_get_qualified_item(node, name, NULL, item);
+
+    /* try to get namespace uri for supplied qualified name */
+    ns = xmlSearchNs(node->doc, node, prefix);
+
+    xmlFree(prefix);
+
+    if (!ns)
+    {
+        xmlFree(local);
+        if (item) *item = NULL;
+        return item ? S_FALSE : E_INVALIDARG;
+    }
+
+    uriW = bstr_from_xmlChar(ns->href);
+    localW = bstr_from_xmlChar(local);
+    xmlFree(local);
+
+    TRACE("got qualified node %s, uri=%s\n", debugstr_w(localW), debugstr_w(uriW));
+
+    hr = domelem_get_qualified_item(node, localW, uriW, item);
+
+    SysFreeString(localW);
+    SysFreeString(uriW);
+
+    return hr;
+}
+
+static HRESULT domelem_set_named_item(xmlNodePtr node, IXMLDOMNode *newItem, IXMLDOMNode **namedItem)
+{
+    xmlNodePtr nodeNew;
+    xmlnode *ThisNew;
+
+    TRACE("(%p)->(%p %p)\n", node, newItem, namedItem );
+
+    if(!newItem)
+        return E_INVALIDARG;
+
+    if(namedItem) *namedItem = NULL;
+
+    /* Must be an Attribute */
+    ThisNew = get_node_obj( newItem );
+    if(!ThisNew) return E_FAIL;
+
+    if(ThisNew->node->type != XML_ATTRIBUTE_NODE)
+        return E_FAIL;
+
+    if(!ThisNew->node->parent)
+        if(xmldoc_remove_orphan(ThisNew->node->doc, ThisNew->node) != S_OK)
+            WARN("%p is not an orphan of %p\n", ThisNew->node, ThisNew->node->doc);
+
+    nodeNew = xmlAddChild(node, ThisNew->node);
+
+    if(namedItem)
+        *namedItem = create_node( nodeNew );
+    return S_OK;
+}
+
+static HRESULT domelem_remove_qualified_item(xmlNodePtr node, BSTR name, BSTR uri, IXMLDOMNode **item)
+{
+    xmlChar *nameA, *href;
+    xmlAttrPtr attr;
+
+    TRACE("(%p)->(%s %s %p)\n", node, debugstr_w(name), debugstr_w(uri), item);
+
+    if (!name) return E_INVALIDARG;
+
+    if (uri && *uri)
+    {
+        href = xmlchar_from_wchar(uri);
+        if (!href) return E_OUTOFMEMORY;
+    }
+    else
+        href = NULL;
+
+    nameA = xmlchar_from_wchar(name);
+    if (!nameA)
+    {
+        heap_free(href);
+        return E_OUTOFMEMORY;
+    }
+
+    attr = xmlHasNsProp(node, nameA, href);
+
+    heap_free(nameA);
+    heap_free(href);
+
+    if (!attr)
+    {
+        if (item) *item = NULL;
+        return S_FALSE;
+    }
+
+    if (item)
+    {
+        xmlUnlinkNode( (xmlNodePtr) attr );
+        xmldoc_add_orphan( attr->doc, (xmlNodePtr) attr );
+        *item = create_node( (xmlNodePtr) attr );
+    }
+    else
+    {
+        if (xmlRemoveProp(attr) == -1)
+            ERR("xmlRemoveProp failed\n");
+    }
+
+    return S_OK;
+}
+
+static HRESULT domelem_remove_named_item(xmlNodePtr node, BSTR name, IXMLDOMNode **item)
+{
+    TRACE("(%p)->(%s %p)\n", node, debugstr_w(name), item);
+    return domelem_remove_qualified_item(node, name, NULL, item);
+}
+
+static HRESULT domelem_get_item(const xmlNodePtr node, LONG index, IXMLDOMNode **item)
+{
+    xmlAttrPtr curr;
+    LONG attrIndex;
+
+    TRACE("(%p)->(%d %p)\n", node, index, item);
+
+    *item = NULL;
+
+    if (index < 0)
+        return S_FALSE;
+
+    curr = node->properties;
+
+    for (attrIndex = 0; attrIndex < index; attrIndex++) {
+        if (curr->next == NULL)
+            return S_FALSE;
+        else
+            curr = curr->next;
+    }
+
+    *item = create_node( (xmlNodePtr) curr );
+
+    return S_OK;
+}
+
+static HRESULT domelem_get_length(const xmlNodePtr node, LONG *length)
+{
+    xmlAttrPtr first;
+    xmlAttrPtr curr;
+    LONG attrCount;
+
+    TRACE("(%p)->(%p)\n", node, length);
+
+    if( !length )
+        return E_INVALIDARG;
+
+    first = node->properties;
+    if (first == NULL) {
+	*length = 0;
+	return S_OK;
+    }
+
+    curr = first;
+    attrCount = 1;
+    while (curr->next) {
+        attrCount++;
+        curr = curr->next;
+    }
+    *length = attrCount;
+
+    return S_OK;
+}
+
+static HRESULT domelem_next_node(const xmlNodePtr node, LONG *iter, IXMLDOMNode **nextNode)
+{
+    xmlAttrPtr curr;
+    LONG i;
+
+    TRACE("(%p)->(%d: %p)\n", node, *iter, nextNode);
+
+    *nextNode = NULL;
+
+    curr = node->properties;
+
+    for (i = 0; i < *iter; i++) {
+        if (curr->next == NULL)
+            return S_FALSE;
+        else
+            curr = curr->next;
+    }
+
+    (*iter)++;
+    *nextNode = create_node((xmlNodePtr)curr);
+
+    return S_OK;
+}
+
+static const struct nodemap_funcs domelem_attr_map = {
+    domelem_get_named_item,
+    domelem_set_named_item,
+    domelem_remove_named_item,
+    domelem_get_item,
+    domelem_get_length,
+    domelem_get_qualified_item,
+    domelem_remove_qualified_item,
+    domelem_next_node
 };
 
 static const tid_t domelem_iface_tids[] = {

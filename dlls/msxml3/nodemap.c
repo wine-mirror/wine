@@ -53,6 +53,8 @@ typedef struct _xmlnodemap
 
     xmlNodePtr node;
     LONG iterator;
+
+    const struct nodemap_funcs *funcs;
 } xmlnodemap;
 
 static inline xmlnodemap *impl_from_IXMLDOMNamedNodeMap( IXMLDOMNamedNodeMap *iface )
@@ -202,44 +204,10 @@ static HRESULT WINAPI xmlnodemap_getNamedItem(
     IXMLDOMNode** item)
 {
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
-    xmlChar *nameA, *local, *prefix;
-    BSTR uriW, localW;
-    xmlNsPtr ns;
-    HRESULT hr;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(name), item );
 
-    nameA = xmlchar_from_wchar(name);
-    local = xmlSplitQName2(nameA, &prefix);
-    heap_free(nameA);
-
-    if (!local)
-        return IXMLDOMNamedNodeMap_getQualifiedItem(iface, name, NULL, item);
-
-    /* try to get namespace uri for supplied qualified name */
-    ns = xmlSearchNs(This->node->doc, This->node, prefix);
-
-    xmlFree(prefix);
-
-    if (!ns)
-    {
-        xmlFree(local);
-        if (item) *item = NULL;
-        return item ? S_FALSE : E_INVALIDARG;
-    }
-
-    uriW = bstr_from_xmlChar(ns->href);
-    localW = bstr_from_xmlChar(local);
-    xmlFree(local);
-
-    TRACE("got qualified node %s, uri=%s\n", debugstr_w(localW), debugstr_w(uriW));
-
-    hr = IXMLDOMNamedNodeMap_getQualifiedItem(iface, localW, uriW, item);
-
-    SysFreeString(localW);
-    SysFreeString(uriW);
-
-    return hr;
+    return This->funcs->get_named_item(This->node, name, item);
 }
 
 static HRESULT WINAPI xmlnodemap_setNamedItem(
@@ -248,32 +216,10 @@ static HRESULT WINAPI xmlnodemap_setNamedItem(
     IXMLDOMNode** namedItem)
 {
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
-    xmlNodePtr nodeNew;
-    xmlnode *ThisNew;
 
     TRACE("(%p)->(%p %p)\n", This, newItem, namedItem );
 
-    if(!newItem)
-        return E_INVALIDARG;
-
-    if(namedItem) *namedItem = NULL;
-
-    /* Must be an Attribute */
-    ThisNew = get_node_obj( newItem );
-    if(!ThisNew) return E_FAIL;
-
-    if(ThisNew->node->type != XML_ATTRIBUTE_NODE)
-        return E_FAIL;
-
-    if(!ThisNew->node->parent)
-        if(xmldoc_remove_orphan(ThisNew->node->doc, ThisNew->node) != S_OK)
-            WARN("%p is not an orphan of %p\n", ThisNew->node, ThisNew->node->doc);
-
-    nodeNew = xmlAddChild(This->node, ThisNew->node);
-
-    if(namedItem)
-        *namedItem = create_node( nodeNew );
-    return S_OK;
+    return This->funcs->set_named_item(This->node, newItem, namedItem);
 }
 
 static HRESULT WINAPI xmlnodemap_removeNamedItem(
@@ -282,172 +228,59 @@ static HRESULT WINAPI xmlnodemap_removeNamedItem(
     IXMLDOMNode** namedItem)
 {
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
+
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(name), namedItem );
-    return IXMLDOMNamedNodeMap_removeQualifiedItem(iface, name, NULL, namedItem);
+
+    return This->funcs->remove_named_item(This->node, name, namedItem);
 }
 
 static HRESULT WINAPI xmlnodemap_get_item(
     IXMLDOMNamedNodeMap *iface,
     LONG index,
-    IXMLDOMNode** listItem)
+    IXMLDOMNode** item)
 {
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
-    xmlAttrPtr curr;
-    LONG attrIndex;
 
-    TRACE("(%p)->(%d %p)\n", This, index, listItem);
+    TRACE("(%p)->(%d %p)\n", This, index, item);
 
-    *listItem = NULL;
-
-    if (index < 0)
-        return S_FALSE;
-
-    curr = This->node->properties;
-
-    for (attrIndex = 0; attrIndex < index; attrIndex++) {
-        if (curr->next == NULL)
-            return S_FALSE;
-        else
-            curr = curr->next;
-    }
-    
-    *listItem = create_node( (xmlNodePtr) curr );
-
-    return S_OK;
+    return This->funcs->get_item(This->node, index, item);
 }
 
 static HRESULT WINAPI xmlnodemap_get_length(
     IXMLDOMNamedNodeMap *iface,
-    LONG *listLength)
+    LONG *length)
 {
-    xmlAttrPtr first;
-    xmlAttrPtr curr;
-    LONG attrCount;
-
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
 
-    TRACE("(%p)->(%p)\n", This, listLength);
+    TRACE("(%p)->(%p)\n", This, length);
 
-    if( !listLength )
-        return E_INVALIDARG;
-
-    first = This->node->properties;
-    if (first == NULL) {
-	*listLength = 0;
-	return S_OK;
-    }
-
-    curr = first;
-    attrCount = 1;
-    while (curr->next) {
-        attrCount++;
-        curr = curr->next;
-    }
-    *listLength = attrCount;
- 
-    return S_OK;
+    return This->funcs->get_length(This->node, length);
 }
 
 static HRESULT WINAPI xmlnodemap_getQualifiedItem(
     IXMLDOMNamedNodeMap *iface,
     BSTR baseName,
     BSTR namespaceURI,
-    IXMLDOMNode** qualifiedItem)
+    IXMLDOMNode** item)
 {
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
-    xmlAttrPtr attr;
-    xmlChar *href;
-    xmlChar *name;
 
-    TRACE("(%p)->(%s %s %p)\n", This, debugstr_w(baseName), debugstr_w(namespaceURI), qualifiedItem);
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_w(baseName), debugstr_w(namespaceURI), item);
 
-    if (!baseName || !qualifiedItem) return E_INVALIDARG;
-
-    if (namespaceURI && *namespaceURI)
-    {
-        href = xmlchar_from_wchar(namespaceURI);
-        if (!href) return E_OUTOFMEMORY;
-    }
-    else
-        href = NULL;
-
-    name = xmlchar_from_wchar(baseName);
-    if (!name)
-    {
-        heap_free(href);
-        return E_OUTOFMEMORY;
-    }
-
-    attr = xmlHasNsProp(This->node, name, href);
-
-    heap_free(name);
-    heap_free(href);
-
-    if (!attr)
-    {
-        *qualifiedItem = NULL;
-        return S_FALSE;
-    }
-
-    *qualifiedItem = create_node((xmlNodePtr)attr);
-
-    return S_OK;
+    return This->funcs->get_qualified_item(This->node, baseName, namespaceURI, item);
 }
 
 static HRESULT WINAPI xmlnodemap_removeQualifiedItem(
     IXMLDOMNamedNodeMap *iface,
     BSTR baseName,
     BSTR namespaceURI,
-    IXMLDOMNode** qualifiedItem)
+    IXMLDOMNode** item)
 {
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
-    xmlAttrPtr attr;
-    xmlChar *name;
-    xmlChar *href;
 
-    TRACE("(%p)->(%s %s %p)\n", This, debugstr_w(baseName), debugstr_w(namespaceURI), qualifiedItem);
+    ERR("(%p)->(%s %s %p)\n", This, debugstr_w(baseName), debugstr_w(namespaceURI), item);
 
-    if (!baseName) return E_INVALIDARG;
-
-    if (namespaceURI && *namespaceURI)
-    {
-        href = xmlchar_from_wchar(namespaceURI);
-        if (!href) return E_OUTOFMEMORY;
-    }
-    else
-        href = NULL;
-
-    name = xmlchar_from_wchar(baseName);
-    if (!name)
-    {
-        heap_free(href);
-        return E_OUTOFMEMORY;
-    }
-
-    attr = xmlHasNsProp( This->node, name, href );
-
-    heap_free(name);
-    heap_free(href);
-
-    if ( !attr )
-    {
-        if (qualifiedItem) *qualifiedItem = NULL;
-        return S_FALSE;
-    }
-
-    if ( qualifiedItem )
-    {
-        xmlUnlinkNode( (xmlNodePtr) attr );
-        xmldoc_add_orphan( attr->doc, (xmlNodePtr) attr );
-        *qualifiedItem = create_node( (xmlNodePtr) attr );
-    }
-    else
-    {
-        if (xmlRemoveProp(attr) == -1)
-            ERR("xmlRemoveProp failed\n");
-    }
-
-    return S_OK;
+    return This->funcs->remove_qualified_item(This->node, baseName, namespaceURI, item);
 }
 
 static HRESULT WINAPI xmlnodemap_nextNode(
@@ -455,27 +288,10 @@ static HRESULT WINAPI xmlnodemap_nextNode(
     IXMLDOMNode** nextItem)
 {
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
-    xmlAttrPtr curr;
-    LONG attrIndex;
 
     TRACE("(%p)->(%p: %d)\n", This, nextItem, This->iterator);
 
-    *nextItem = NULL;
-
-    curr = This->node->properties;
-
-    for (attrIndex = 0; attrIndex < This->iterator; attrIndex++) {
-        if (curr->next == NULL)
-            return S_FALSE;
-        else
-            curr = curr->next;
-    }
-
-    This->iterator++;
-
-    *nextItem = create_node( (xmlNodePtr) curr );
-
-    return S_OK;
+    return This->funcs->next_node(This->node, &This->iterator, nextItem);
 }
 
 static HRESULT WINAPI xmlnodemap_reset(
@@ -626,7 +442,7 @@ static dispex_static_data_t xmlnodemap_dispex = {
     xmlnodemap_iface_tids
 };
 
-IXMLDOMNamedNodeMap *create_nodemap( const xmlNodePtr node )
+IXMLDOMNamedNodeMap *create_nodemap(xmlNodePtr node, const struct nodemap_funcs *funcs)
 {
     xmlnodemap *This;
 
@@ -639,6 +455,7 @@ IXMLDOMNamedNodeMap *create_nodemap( const xmlNodePtr node )
     This->node = node;
     This->ref = 1;
     This->iterator = 0;
+    This->funcs = funcs;
 
     init_dispex(&This->dispex, (IUnknown*)&This->IXMLDOMNamedNodeMap_iface, &xmlnodemap_dispex);
 

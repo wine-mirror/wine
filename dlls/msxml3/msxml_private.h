@@ -228,6 +228,28 @@ static inline xmlNodePtr wine_xmlFirstElementChild(xmlNodePtr parent)
 #define xmlFirstElementChild wine_xmlFirstElementChild
 #endif
 
+/* IXMLDOMNode Internal Structure */
+typedef struct _xmlnode
+{
+    DispatchEx   dispex;
+    IXMLDOMNode *iface;
+    IXMLDOMNode *parent;
+    xmlNodePtr   node;
+} xmlnode;
+
+/* IXMLDOMNamedNodeMap custom function table */
+struct nodemap_funcs
+{
+    HRESULT (*get_named_item)(const xmlNodePtr,BSTR,IXMLDOMNode**);
+    HRESULT (*set_named_item)(xmlNodePtr,IXMLDOMNode*,IXMLDOMNode**);
+    HRESULT (*remove_named_item)(xmlNodePtr,BSTR,IXMLDOMNode**);
+    HRESULT (*get_item)(xmlNodePtr,LONG,IXMLDOMNode**);
+    HRESULT (*get_length)(xmlNodePtr,LONG*);
+    HRESULT (*get_qualified_item)(const xmlNodePtr,BSTR,BSTR,IXMLDOMNode**);
+    HRESULT (*remove_qualified_item)(xmlNodePtr,BSTR,BSTR,IXMLDOMNode**);
+    HRESULT (*next_node)(const xmlNodePtr,LONG*,IXMLDOMNode**);
+};
+
 /* constructors */
 extern IUnknown         *create_domdoc( xmlNodePtr ) DECLSPEC_HIDDEN;
 extern IUnknown         *create_xmldoc( void ) DECLSPEC_HIDDEN;
@@ -239,7 +261,7 @@ extern IUnknown         *create_pi( xmlNodePtr ) DECLSPEC_HIDDEN;
 extern IUnknown         *create_comment( xmlNodePtr ) DECLSPEC_HIDDEN;
 extern IUnknown         *create_cdata( xmlNodePtr ) DECLSPEC_HIDDEN;
 extern IXMLDOMNodeList  *create_children_nodelist( xmlNodePtr ) DECLSPEC_HIDDEN;
-extern IXMLDOMNamedNodeMap *create_nodemap( const xmlNodePtr ) DECLSPEC_HIDDEN;
+extern IXMLDOMNamedNodeMap *create_nodemap( xmlNodePtr, const struct nodemap_funcs* ) DECLSPEC_HIDDEN;
 extern IUnknown         *create_doc_Implementation(void) DECLSPEC_HIDDEN;
 extern IUnknown         *create_doc_fragment( xmlNodePtr ) DECLSPEC_HIDDEN;
 extern IUnknown         *create_doc_entity_ref( xmlNodePtr ) DECLSPEC_HIDDEN;
@@ -281,15 +303,6 @@ extern void wineXmlCallbackError(char const* caller, xmlErrorPtr err) DECLSPEC_H
 extern BOOL is_preserving_whitespace(xmlNodePtr node) DECLSPEC_HIDDEN;
 extern BOOL is_xpathmode(const xmlDocPtr doc) DECLSPEC_HIDDEN;
 extern void set_xpathmode(xmlDocPtr doc, BOOL xpath) DECLSPEC_HIDDEN;
-
-/* IXMLDOMNode Internal Structure */
-typedef struct _xmlnode
-{
-    DispatchEx   dispex;
-    IXMLDOMNode *iface;
-    IXMLDOMNode *parent;
-    xmlNodePtr   node;
-} xmlnode;
 
 extern void init_xmlnode(xmlnode*,xmlNodePtr,IXMLDOMNode*,dispex_static_data_t*) DECLSPEC_HIDDEN;
 extern void destroy_xmlnode(xmlnode*) DECLSPEC_HIDDEN;
