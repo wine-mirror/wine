@@ -991,16 +991,16 @@ static inline D3DXVECTOR2* D3DXVec2Lerp(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv
 static inline D3DXVECTOR2* D3DXVec2Maximize(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2)
 {
     if ( !pout || !pv1 || !pv2) return NULL;
-    pout->x = max(pv1->x , pv2->x);
-    pout->y = max(pv1->y , pv2->y);
+    pout->x = pv1->x > pv2->x ? pv1->x : pv2->x;
+    pout->y = pv1->y > pv2->y ? pv1->y : pv2->y;
     return pout;
 }
 
 static inline D3DXVECTOR2* D3DXVec2Minimize(D3DXVECTOR2 *pout, CONST D3DXVECTOR2 *pv1, CONST D3DXVECTOR2 *pv2)
 {
     if ( !pout || !pv1 || !pv2) return NULL;
-    pout->x = min(pv1->x , pv2->x);
-    pout->y = min(pv1->y , pv2->y);
+    pout->x = pv1->x < pv2->x ? pv1->x : pv2->x;
+    pout->y = pv1->y < pv2->y ? pv1->y : pv2->y;
     return pout;
 }
 
@@ -1070,18 +1070,18 @@ static inline D3DXVECTOR3* D3DXVec3Lerp(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv
 static inline D3DXVECTOR3* D3DXVec3Maximize(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv1, CONST D3DXVECTOR3 *pv2)
 {
     if ( !pout || !pv1 || !pv2) return NULL;
-    pout->x = max(pv1->x , pv2->x);
-    pout->y = max(pv1->y , pv2->y);
-    pout->z = max(pv1->z , pv2->z);
+    pout->x = pv1->x > pv2->x ? pv1->x : pv2->x;
+    pout->y = pv1->y > pv2->y ? pv1->y : pv2->y;
+    pout->z = pv1->z > pv2->z ? pv1->z : pv2->z;
     return pout;
 }
 
 static inline D3DXVECTOR3* D3DXVec3Minimize(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 *pv1, CONST D3DXVECTOR3 *pv2)
 {
     if ( !pout || !pv1 || !pv2) return NULL;
-    pout->x = min(pv1->x , pv2->x);
-    pout->y = min(pv1->y , pv2->y);
-    pout->z = min(pv1->z , pv2->z);
+    pout->x = pv1->x < pv2->x ? pv1->x : pv2->x;
+    pout->y = pv1->y < pv2->y ? pv1->y : pv2->y;
+    pout->z = pv1->z < pv2->z ? pv1->z : pv2->z;
     return pout;
 }
 
@@ -1146,20 +1146,20 @@ static inline D3DXVECTOR4* D3DXVec4Lerp(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv
 static inline D3DXVECTOR4* D3DXVec4Maximize(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv1, CONST D3DXVECTOR4 *pv2)
 {
     if ( !pout || !pv1 || !pv2) return NULL;
-    pout->x = max(pv1->x , pv2->x);
-    pout->y = max(pv1->y , pv2->y);
-    pout->z = max(pv1->z , pv2->z);
-    pout->w = max(pv1->w , pv2->w);
+    pout->x = pv1->x > pv2->x ? pv1->x : pv2->x;
+    pout->y = pv1->y > pv2->y ? pv1->y : pv2->y;
+    pout->z = pv1->z > pv2->z ? pv1->z : pv2->z;
+    pout->w = pv1->w > pv2->w ? pv1->w : pv2->w;
     return pout;
 }
 
 static inline D3DXVECTOR4* D3DXVec4Minimize(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv1, CONST D3DXVECTOR4 *pv2)
 {
     if ( !pout || !pv1 || !pv2) return NULL;
-    pout->x = min(pv1->x , pv2->x);
-    pout->y = min(pv1->y , pv2->y);
-    pout->z = min(pv1->z , pv2->z);
-    pout->w = min(pv1->w , pv2->w);
+    pout->x = pv1->x < pv2->x ? pv1->x : pv2->x;
+    pout->y = pv1->y < pv2->y ? pv1->y : pv2->y;
+    pout->z = pv1->z < pv2->z ? pv1->z : pv2->z;
+    pout->w = pv1->w < pv2->w ? pv1->w : pv2->w;
     return pout;
 }
 
