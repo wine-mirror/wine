@@ -18,14 +18,11 @@
 
 #define NONAMELESSUNION
 
-#include "wine/debug.h"
 #include "wine/unicode.h"
 #include "objbase.h"
 #include "dinput_private.h"
 #include "device_private.h"
 #include "resource.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 typedef struct {
     int nobjects;
