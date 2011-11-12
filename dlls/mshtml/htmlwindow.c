@@ -2034,7 +2034,7 @@ static HRESULT WINAPI HTMLPrivateWindow_FindWindowByName(IHTMLPrivateWindow *ifa
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLPrivateWindow_GetAddressBar(IHTMLPrivateWindow *iface, BSTR *url)
+static HRESULT WINAPI HTMLPrivateWindow_GetAddressBarUrl(IHTMLPrivateWindow *iface, BSTR *url)
 {
     HTMLWindow *This = impl_from_IHTMLPrivateWindow(iface);
     TRACE("(%p)->(%p)\n", This, url);
@@ -2055,7 +2055,7 @@ static const IHTMLPrivateWindowVtbl HTMLPrivateWindowVtbl = {
     HTMLPrivateWindow_SetPICSTarget,
     HTMLPrivateWindow_PICSComplete,
     HTMLPrivateWindow_FindWindowByName,
-    HTMLPrivateWindow_GetAddressBar
+    HTMLPrivateWindow_GetAddressBarUrl
 };
 
 static inline HTMLWindow *impl_from_IDispatchEx(IDispatchEx *iface)
