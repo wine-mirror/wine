@@ -4206,7 +4206,7 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
 {
     Uri *This = impl_from_IUri(iface);
     HRESULT hres;
-    TRACE("(%p)->(%d %p %x)\n", This, uriProp, pbstrProperty, dwFlags);
+    TRACE("(%p %s)->(%d %p %x)\n", This, debugstr_w(This->canon_uri), uriProp, pbstrProperty, dwFlags);
 
     if(!pbstrProperty)
         return E_POINTER;
@@ -4496,7 +4496,7 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
 {
     Uri *This = impl_from_IUri(iface);
     HRESULT hres;
-    TRACE("(%p)->(%d %p %x)\n", This, uriProp, pcchProperty, dwFlags);
+    TRACE("(%p %s)->(%d %p %x)\n", This, debugstr_w(This->canon_uri), uriProp, pcchProperty, dwFlags);
 
     if(!pcchProperty)
         return E_INVALIDARG;
@@ -4631,7 +4631,7 @@ static HRESULT WINAPI Uri_GetPropertyDWORD(IUri *iface, Uri_PROPERTY uriProp, DW
     Uri *This = impl_from_IUri(iface);
     HRESULT hres;
 
-    TRACE("(%p)->(%d %p %x)\n", This, uriProp, pcchProperty, dwFlags);
+    TRACE("(%p %s)->(%d %p %x)\n", This, debugstr_w(This->canon_uri), uriProp, pcchProperty, dwFlags);
 
     if(!pcchProperty)
         return E_INVALIDARG;
@@ -4681,7 +4681,8 @@ static HRESULT WINAPI Uri_GetPropertyDWORD(IUri *iface, Uri_PROPERTY uriProp, DW
 static HRESULT WINAPI Uri_HasProperty(IUri *iface, Uri_PROPERTY uriProp, BOOL *pfHasProperty)
 {
     Uri *This = impl_from_IUri(iface);
-    TRACE("(%p)->(%d %p)\n", This, uriProp, pfHasProperty);
+
+    TRACE("(%p %s)->(%d %p)\n", This, debugstr_w(This->canon_uri), uriProp, pfHasProperty);
 
     if(!pfHasProperty)
         return E_INVALIDARG;
@@ -4872,7 +4873,7 @@ static HRESULT WINAPI Uri_GetZone(IUri *iface, DWORD *pdwZone)
 static HRESULT WINAPI Uri_GetProperties(IUri *iface, DWORD *pdwProperties)
 {
     Uri *This = impl_from_IUri(iface);
-    TRACE("(%p)->(%p)\n", This, pdwProperties);
+    TRACE("(%p %s)->(%p)\n", This, debugstr_w(This->canon_uri), pdwProperties);
 
     if(!pdwProperties)
         return E_INVALIDARG;
@@ -4922,7 +4923,7 @@ static HRESULT WINAPI Uri_IsEqual(IUri *iface, IUri *pUri, BOOL *pfEqual)
     Uri *This = impl_from_IUri(iface);
     Uri *other;
 
-    TRACE("(%p)->(%p %p)\n", This, pUri, pfEqual);
+    TRACE("(%p %s)->(%p %p)\n", This, debugstr_w(This->canon_uri), pUri, pfEqual);
 
     if(!pfEqual)
         return E_POINTER;
@@ -4935,9 +4936,10 @@ static HRESULT WINAPI Uri_IsEqual(IUri *iface, IUri *pUri, BOOL *pfEqual)
     }
 
     /* Try to convert it to a Uri (allows for a more simple comparison). */
-    if((other = get_uri_obj(pUri)))
+    if((other = get_uri_obj(pUri))) {
+        TRACE("comparing to %s\n", debugstr_w(other->canon_uri));
         *pfEqual = are_equal_simple(This, other);
-    else {
+    }else {
         /* Do it the hard way. */
         FIXME("(%p)->(%p %p) No support for unknown IUri's yet.\n", iface, pUri, pfEqual);
         return E_NOTIMPL;
