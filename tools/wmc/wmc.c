@@ -164,7 +164,7 @@ int main(int argc,char *argv[])
 
 	/* First rebuild the commandline to put in destination */
 	/* Could be done through env[], but not all OS-es support it */
-	cmdlen = 4; /* for "wmc " */
+	cmdlen = 5; /* for "wmc " and \0 */
 	for(i = 1; i < argc; i++)
 		cmdlen += strlen(argv[i]) + 1;
 	cmdline = xmalloc(cmdlen);
