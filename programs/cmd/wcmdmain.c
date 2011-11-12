@@ -90,7 +90,7 @@ int defaultColor = 7;
 BOOL echo_mode = TRUE;
 static int opt_c, opt_k, opt_s;
 const WCHAR newline[] = {'\r','\n','\0'};
-static const WCHAR equalsW[] = {'=','\0'};
+const WCHAR space[]   = {' ','\0'};
 static const WCHAR closeBW[] = {')','\0'};
 WCHAR anykey[100];
 WCHAR version_string[100];
@@ -747,7 +747,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start,
 
     /* search and replace manipulation */
     } else {
-      WCHAR *equalspos = strstrW(colonpos, equalsW);
+      WCHAR *equalspos = strstrW(colonpos, equalW);
       WCHAR *replacewith = equalspos+1;
       WCHAR *found       = NULL;
       WCHAR *searchIn;
@@ -1084,7 +1084,6 @@ void WCMD_run_program (WCHAR *command, int called) {
     WCHAR  thisDir[MAX_PATH] = {'\0'};
     WCHAR *pos               = NULL;
     BOOL  found             = FALSE;
-    static const WCHAR slashW[] = {'\\','\0'};
 
     /* Work on the first directory on the search path */
     pos = strchrW(pathposn, ';');
@@ -1332,7 +1331,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
       /* According to MSDN CreateProcess docs, special env vars record
          the current directory on each drive, in the form =C:
          so see if one specified, and if so go back to it             */
-      strcpyW(envvar, equalsW);
+      strcpyW(envvar, equalW);
       strcatW(envvar, cmd);
       if (GetEnvironmentVariableW(envvar, dir, MAX_PATH) == 0) {
         static const WCHAR fmt[] = {'%','s','\\','\0'};
@@ -1835,7 +1834,6 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
     if (context) handleExpansion(extraSpace, FALSE, NULL, NULL);
     /* Show prompt before batch line IF echo is on and in batch program */
     if (context && echo_mode && extraSpace[0] && (extraSpace[0] != '@')) {
-      static const WCHAR spc[]={' ','\0'};
       static const WCHAR echoDot[] = {'e','c','h','o','.'};
       static const WCHAR echoCol[] = {'e','c','h','o',':'};
       const DWORD len = sizeof(echoDot)/sizeof(echoDot[0]);
@@ -1850,7 +1848,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
           && CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
                          extraSpace, min_len, echoCol, len) != CSTR_EQUAL)
       {
-          WCMD_output_asis(spc);
+          WCMD_output_asis(space);
       }
       WCMD_output_asis(newline);
     }

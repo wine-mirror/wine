@@ -220,6 +220,13 @@ extern const WCHAR externals[NUM_EXTERNALS][10];
 
 /* Some standard messages */
 extern const WCHAR newline[];
+extern const WCHAR space[];
+extern const WCHAR nullW[];
+extern const WCHAR dotW[];
+extern const WCHAR dotdotW[];
+extern const WCHAR starW[];
+extern const WCHAR slashW[];
+extern const WCHAR equalW[];
 extern WCHAR anykey[];
 extern WCHAR version_string[];
 

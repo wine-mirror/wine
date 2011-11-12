@@ -317,7 +317,6 @@ void WCMD_HandleTildaModifiers(WCHAR **start, const WCHAR *forVariable,
   static const WCHAR validmodifiers[NUMMODIFIERS] = {
         '~', 'f', 'd', 'p', 'n', 'x', 's', 'a', 't', 'z', '$'
   };
-  static const WCHAR space[] = {' ', '\0'};
 
   WIN32_FILE_ATTRIBUTE_DATA fileInfo;
   WCHAR  outputparam[MAX_PATH];

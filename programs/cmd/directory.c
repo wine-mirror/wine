@@ -59,13 +59,6 @@ static BOOL orderReverse, orderGroupDirs, orderGroupDirsReverse, orderByCol;
 static BOOL paged_mode, recurse, wide, bare, lower, shortname, usernames, separator;
 static ULONG showattrs, attrsbits;
 
-static const WCHAR dotW[]    = {'.','\0'};
-static const WCHAR dotdotW[] = {'.','.','\0'};
-static const WCHAR starW[]   = {'*','\0'};
-static const WCHAR slashW[]  = {'\\','\0'};
-static const WCHAR emptyW[]  = {'\0'};
-static const WCHAR spaceW[]  = {' ','\0'};
-
 /*****************************************************************************
  * WCMD_strrev
  *
@@ -432,14 +425,14 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
 
             /* Note: WCMD_output uses wvsprintf which does not allow %*
                  so manually pad with spaces to appropriate width       */
-            strcpyW(temp, emptyW);
+            strcpyW(temp, nullW);
             while (padding > 0) {
-                strcatW(&temp[toWrite], spaceW);
+                strcatW(&temp[toWrite], space);
                 toWrite++;
                 if (toWrite > 99) {
                     WCMD_output(temp);
                     toWrite = 0;
-                    strcpyW(temp, emptyW);
+                    strcpyW(temp, nullW);
                 }
                 padding--;
             }
@@ -457,7 +450,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
         } else {
            if (!((strcmpW((fd+i)->cFileName, dotW) == 0) ||
                  (strcmpW((fd+i)->cFileName, dotdotW) == 0))) {
-              WCMD_output (fmt5, recurse?inputparms->dirName:emptyW, (fd+i)->cFileName);
+              WCMD_output (fmt5, recurse?inputparms->dirName:nullW, (fd+i)->cFileName);
            } else {
               addNewLine = FALSE;
            }
@@ -475,7 +468,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
            if (usernames) WCMD_output (fmt3, username);
            WCMD_output(fmt4,(fd+i)->cFileName);
         } else {
-           WCMD_output (fmt5, recurse?inputparms->dirName:emptyW, (fd+i)->cFileName);
+           WCMD_output (fmt5, recurse?inputparms->dirName:nullW, (fd+i)->cFileName);
         }
       }
      }

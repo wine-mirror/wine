@@ -58,17 +58,17 @@ extern DWORD errorlevel;
 
 static BOOL verify_mode = FALSE;
 
-static const WCHAR dotW[]    = {'.','\0'};
-static const WCHAR dotdotW[] = {'.','.','\0'};
-static const WCHAR slashW[]  = {'\\','\0'};
-static const WCHAR starW[]   = {'*','\0'};
-static const WCHAR equalW[]  = {'=','\0'};
+const WCHAR dotW[]    = {'.','\0'};
+const WCHAR dotdotW[] = {'.','.','\0'};
+const WCHAR nullW[]   = {'\0'};
+const WCHAR starW[]   = {'*','\0'};
+const WCHAR slashW[]  = {'\\','\0'};
+const WCHAR equalW[]  = {'=','\0'};
 static const WCHAR fslashW[] = {'/','\0'};
 static const WCHAR onW[]  = {'O','N','\0'};
 static const WCHAR offW[] = {'O','F','F','\0'};
 static const WCHAR parmY[] = {'/','Y','\0'};
 static const WCHAR parmNoY[] = {'/','-','Y','\0'};
-static const WCHAR nullW[] = {'\0'};
 
 /**************************************************************************
  * WCMD_ask_confirm
