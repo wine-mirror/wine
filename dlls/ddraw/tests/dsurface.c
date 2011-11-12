@@ -4535,13 +4535,13 @@ static BOOL fourcc_supported(DWORD fourcc, DWORD caps)
     IDirectDrawSurface *surface;
 
     reset_ddsd(&ddsd);
-    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
     ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
     ddsd.dwWidth = 4;
     ddsd.dwHeight = 4;
     ddsd.ddsCaps.dwCaps = caps;
-    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_FOURCC;
-    U4(ddsd).ddpfPixelFormat.dwFourCC = fourcc;
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_FOURCC;
+    ddsd.ddpfPixelFormat.dwFourCC = fourcc;
     hr = IDirectDraw_CreateSurface(lpDD, &ddsd, &surface, NULL);
     if (FAILED(hr))
     {
