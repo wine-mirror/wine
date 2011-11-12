@@ -98,7 +98,6 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
     HTMLDocument *This = impl_from_IOleObject(iface);
     IOleCommandTarget *cmdtrg = NULL;
     IOleWindow *ole_window;
-    IServiceProvider *sp;
     BOOL hostui_setup;
     VARIANT silent;
     HWND hwnd;
@@ -132,25 +131,6 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
 
     IOleClientSite_AddRef(pClientSite);
     This->doc_obj->client = pClientSite;
-
-    hres = IOleClientSite_QueryInterface(pClientSite, &IID_IServiceProvider, (void**)&sp);
-    if(SUCCEEDED(hres)) {
-        IBrowserService *browser_service;
-        IDocObjectService *doc_object_service;
-
-        hres = IServiceProvider_QueryService(sp, &IID_IShellBrowser,
-                &IID_IBrowserService, (void**)&browser_service);
-        if(SUCCEEDED(hres)) {
-            hres = IBrowserService_QueryInterface(browser_service,
-                    &IID_IDocObjectService, (void**)&doc_object_service);
-            if(SUCCEEDED(hres))
-                This->doc_obj->doc_object_service = doc_object_service;
-
-            IBrowserService_Release(browser_service);
-        }
-
-        IServiceProvider_Release(sp);
-    }
 
     hostui_setup = This->doc_obj->hostui_setup;
 
@@ -222,9 +202,29 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
         OLECMD cmd = {OLECMDID_SETPROGRESSTEXT, 0};
 
         if(!hostui_setup) {
+            IServiceProvider *sp;
+
             V_VT(&var) = VT_UNKNOWN;
             V_UNKNOWN(&var) = (IUnknown*)&This->window->IHTMLWindow2_iface;
             IOleCommandTarget_Exec(cmdtrg, &CGID_DocHostCmdPriv, DOCHOST_DOCCANNAVIGATE, 0, &var, NULL);
+
+            hres = IOleClientSite_QueryInterface(pClientSite, &IID_IServiceProvider, (void**)&sp);
+            if(SUCCEEDED(hres)) {
+                IDocObjectService *doc_object_service;
+                IBrowserService *browser_service;
+
+                hres = IServiceProvider_QueryService(sp, &IID_IShellBrowser,
+                        &IID_IBrowserService, (void**)&browser_service);
+                if(SUCCEEDED(hres)) {
+                    hres = IBrowserService_QueryInterface(browser_service,
+                            &IID_IDocObjectService, (void**)&doc_object_service);
+                    if(SUCCEEDED(hres))
+                        This->doc_obj->doc_object_service = doc_object_service;
+                    IBrowserService_Release(browser_service);
+                }
+
+                IServiceProvider_Release(sp);
+            }
         }
 
         IOleCommandTarget_QueryStatus(cmdtrg, NULL, 1, &cmd, NULL);
