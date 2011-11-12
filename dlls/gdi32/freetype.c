@@ -4588,7 +4588,7 @@ static BOOL enum_face_charsets(Face *face, struct enum_charset_list *list,
         if(!face->scalable && face->fs.fsCsb[0] == 0) { /* OEM bitmap */
             elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet = OEM_CHARSET;
             load_script_name( IDS_OEM_DOS, elf.elfScript );
-            i = 32; /* break out of loop */
+            i = list->total; /* break out of loop after enumeration */
         } else if(!(face->fs.fsCsb[0] & list->element[i].mask))
             continue;
         else {
@@ -4600,7 +4600,7 @@ static BOOL enum_face_charsets(Face *face, struct enum_charset_list *list,
         TRACE("enuming face %s full %s style %s charset = %d type %d script %s it %d weight %d ntmflags %08x\n",
               debugstr_w(elf.elfLogFont.lfFaceName),
               debugstr_w(elf.elfFullName), debugstr_w(elf.elfStyle),
-              list->element[i].charset, type, debugstr_w(elf.elfScript),
+              elf.elfLogFont.lfCharSet, type, debugstr_w(elf.elfScript),
               elf.elfLogFont.lfItalic, elf.elfLogFont.lfWeight,
               ntm.ntmTm.ntmFlags);
         /* release section before callback (FIXME) */
