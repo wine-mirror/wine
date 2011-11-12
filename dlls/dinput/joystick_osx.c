@@ -79,9 +79,9 @@
 #include "device_private.h"
 #include "joystick_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dinput);
-
 #ifdef HAVE_IOHIDMANAGERCREATE
+
+WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 static IOHIDManagerRef gIOHIDManagerRef = NULL;
 static CFArrayRef gCollections = NULL;
