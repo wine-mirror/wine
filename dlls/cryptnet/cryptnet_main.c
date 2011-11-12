@@ -60,8 +60,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 static const WCHAR cryptNet[] = { 'c','r','y','p','t','n','e','t','.',
    'd','l','l',0 };
-static const WCHAR ldapProvOpenStore[] = { 'L','d','a','p','P','r','o','v',
-   'O','p','e','S','t','o','r','e',0 };
 
 /***********************************************************************
  *    DllRegisterServer (CRYPTNET.@)
