@@ -1746,6 +1746,12 @@ static const char* leading_spaces[] = {
     0
 };
 
+static const char default_ns_doc[] = {
+    "<?xml version=\"1.0\"?>"
+    "<a xmlns:ns=\"nshref\" xml:lang=\"ru\" ns:b=\"b attr\" xml:c=\"c attr\" "
+    "    d=\"d attr\" />"
+};
+
 static const WCHAR szNonExistentFile[] = {
     'c', ':', '\\', 'N', 'o', 'n', 'e', 'x', 'i', 's', 't', 'e', 'n', 't', '.', 'x', 'm', 'l', 0
 };
@@ -7973,63 +7979,135 @@ static void test_splitText(void)
     free_bstrs();
 }
 
+typedef struct {
+    const char *name;
+    const char *uri;
+    HRESULT hr;
+} ns_item_t;
+
+/* default_ns_doc used */
+static const ns_item_t qualified_item_tests[] = {
+    { "xml:lang", NULL, S_FALSE },
+    { "xml:lang", "http://www.w3.org/XML/1998/namespace", S_FALSE },
+    { "lang", "http://www.w3.org/XML/1998/namespace", S_OK },
+    { "ns:b", NULL, S_FALSE },
+    { "ns:b", "nshref", S_FALSE },
+    { "b", "nshref", S_OK },
+    { "d", NULL, S_OK },
+    { NULL }
+};
+
+static const ns_item_t named_item_tests[] = {
+    { "xml:lang", NULL, S_OK },
+    { "lang", NULL, S_FALSE },
+    { "ns:b", NULL, S_OK },
+    { "b", NULL, S_FALSE },
+    { "d", NULL, S_OK },
+    { NULL }
+};
+
 static void test_getQualifiedItem(void)
 {
-    IXMLDOMDocument *doc;
-    IXMLDOMElement *element;
     IXMLDOMNode *pr_node, *node;
     IXMLDOMNodeList *root_list;
     IXMLDOMNamedNodeMap *map;
+    IXMLDOMElement *element;
+    const ns_item_t* ptr;
+    IXMLDOMDocument *doc;
     VARIANT_BOOL b;
+    HRESULT hr;
     BSTR str;
     LONG len;
-    HRESULT hr;
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
     str = SysAllocString( szComplete4 );
     hr = IXMLDOMDocument_loadXML( doc, str, &b );
-    ok( hr == S_OK, "loadXML failed\n");
+    EXPECT_HR(hr, S_OK);
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
     SysFreeString( str );
 
     hr = IXMLDOMDocument_get_documentElement(doc, &element);
-    ok( hr == S_OK, "ret %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
 
     hr = IXMLDOMElement_get_childNodes(element, &root_list);
-    ok( hr == S_OK, "ret %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
 
     hr = IXMLDOMNodeList_get_item(root_list, 1, &pr_node);
-    ok( hr == S_OK, "ret %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
     IXMLDOMNodeList_Release(root_list);
 
     hr = IXMLDOMNode_get_attributes(pr_node, &map);
-    ok( hr == S_OK, "ret %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
     IXMLDOMNode_Release(pr_node);
 
+    len = 0;
     hr = IXMLDOMNamedNodeMap_get_length(map, &len);
-    ok( hr == S_OK, "ret %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
     ok( len == 3, "length %d\n", len);
 
     hr = IXMLDOMNamedNodeMap_getQualifiedItem(map, NULL, NULL, NULL);
-    ok( hr == E_INVALIDARG, "ret %08x\n", hr);
+    EXPECT_HR(hr, E_INVALIDARG);
 
     node = (void*)0xdeadbeef;
     hr = IXMLDOMNamedNodeMap_getQualifiedItem(map, NULL, NULL, &node);
-    ok( hr == E_INVALIDARG, "ret %08x\n", hr);
+    EXPECT_HR(hr, E_INVALIDARG);
     ok( node == (void*)0xdeadbeef, "got %p\n", node);
 
     hr = IXMLDOMNamedNodeMap_getQualifiedItem(map, _bstr_("id"), NULL, NULL);
-    ok( hr == E_INVALIDARG, "ret %08x\n", hr);
+    EXPECT_HR(hr, E_INVALIDARG);
 
     hr = IXMLDOMNamedNodeMap_getQualifiedItem(map, _bstr_("id"), NULL, &node);
-    ok( hr == S_OK, "ret %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
+
+    IXMLDOMNode_Release(node);
+    IXMLDOMNamedNodeMap_Release(map);
+    IXMLDOMElement_Release(element);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(default_ns_doc), &b);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("a"), &node);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMElement, (void**)&element);
+    EXPECT_HR(hr, S_OK);
     IXMLDOMNode_Release(node);
 
-    IXMLDOMNamedNodeMap_Release( map );
-    IXMLDOMElement_Release( element );
-    IXMLDOMDocument_Release( doc );
+    hr = IXMLDOMElement_get_attributes(element, &map);
+    EXPECT_HR(hr, S_OK);
+
+    ptr = qualified_item_tests;
+    while (ptr->name)
+    {
+       node = (void*)0xdeadbeef;
+       hr = IXMLDOMNamedNodeMap_getQualifiedItem(map, _bstr_(ptr->name), _bstr_(ptr->uri), &node);
+       ok(hr == ptr->hr, "%s, %s: got 0x%08x, expected 0x%08x\n", ptr->name, ptr->uri, hr, ptr->hr);
+       if (hr == S_OK)
+           IXMLDOMNode_Release(node);
+       else
+           ok(node == NULL, "%s, %s: got %p\n", ptr->name, ptr->uri, node);
+       ptr++;
+    }
+
+    ptr = named_item_tests;
+    while (ptr->name)
+    {
+       node = (void*)0xdeadbeef;
+       hr = IXMLDOMNamedNodeMap_getNamedItem(map, _bstr_(ptr->name), &node);
+       ok(hr == ptr->hr, "%s: got 0x%08x, expected 0x%08x\n", ptr->name, hr, ptr->hr);
+       if (hr == S_OK)
+           IXMLDOMNode_Release(node);
+       else
+           ok(node == NULL, "%s: got %p\n", ptr->name, node);
+       ptr++;
+    }
+
+    IXMLDOMNamedNodeMap_Release(map);
+
+    IXMLDOMElement_Release(element);
+    IXMLDOMDocument_Release(doc);
     free_bstrs();
 }
 

@@ -199,11 +199,47 @@ static HRESULT WINAPI xmlnodemap_Invoke(
 static HRESULT WINAPI xmlnodemap_getNamedItem(
     IXMLDOMNamedNodeMap *iface,
     BSTR name,
-    IXMLDOMNode** namedItem)
+    IXMLDOMNode** item)
 {
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
-    TRACE("(%p)->(%s %p)\n", This, debugstr_w(name), namedItem );
-    return IXMLDOMNamedNodeMap_getQualifiedItem(iface, name, NULL, namedItem);
+    xmlChar *nameA, *local, *prefix;
+    BSTR uriW, localW;
+    xmlNsPtr ns;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(name), item );
+
+    nameA = xmlchar_from_wchar(name);
+    local = xmlSplitQName2(nameA, &prefix);
+    heap_free(nameA);
+
+    if (!local)
+        return IXMLDOMNamedNodeMap_getQualifiedItem(iface, name, NULL, item);
+
+    /* try to get namespace uri for supplied qualified name */
+    ns = xmlSearchNs(This->node->doc, This->node, prefix);
+
+    xmlFree(prefix);
+
+    if (!ns)
+    {
+        xmlFree(local);
+        if (item) *item = NULL;
+        return item ? S_FALSE : E_INVALIDARG;
+    }
+
+    uriW = bstr_from_xmlChar(ns->href);
+    localW = bstr_from_xmlChar(local);
+    xmlFree(local);
+
+    TRACE("got qualified node %s, uri=%s\n", debugstr_w(localW), debugstr_w(uriW));
+
+    hr = IXMLDOMNamedNodeMap_getQualifiedItem(iface, localW, uriW, item);
+
+    SysFreeString(localW);
+    SysFreeString(uriW);
+
+    return hr;
 }
 
 static HRESULT WINAPI xmlnodemap_setNamedItem(
