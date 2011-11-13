@@ -1746,6 +1746,15 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
         bytesWritten = count + sizeof cf_hdr;
         break;
     }
+    case VT_CLSID:
+    {
+        CLSID temp;
+
+        StorageUtl_WriteGUID((BYTE *)&temp, 0, var->u.puuid);
+        hr = IStream_Write(This->stm, &temp, sizeof(temp), &count);
+        bytesWritten = count;
+        break;
+    }
     default:
         FIXME("unsupported type: %d\n", var->vt);
         return STG_E_INVALIDPARAMETER;
