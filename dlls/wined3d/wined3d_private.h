@@ -1841,7 +1841,8 @@ void resource_unload(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 /* Tests show that the start address of resources is 32 byte aligned */
 #define RESOURCE_ALIGNMENT 16
 
-typedef enum winetexturestates {
+enum wined3d_texture_state
+{
     WINED3DTEXSTA_ADDRESSU       = 0,
     WINED3DTEXSTA_ADDRESSV       = 1,
     WINED3DTEXSTA_ADDRESSW       = 2,
@@ -1854,7 +1855,7 @@ typedef enum winetexturestates {
     WINED3DTEXSTA_SRGBTEXTURE    = 9,
     WINED3DTEXSTA_SHADOW         = 10,
     MAX_WINETEXTURESTATES        = 11,
-} winetexturestates;
+};
 
 enum WINED3DSRGB
 {
