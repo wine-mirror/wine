@@ -3277,6 +3277,25 @@ MSVCRT_FILE* CDECL MSVCRT__wfreopen(const MSVCRT_wchar_t *path, const MSVCRT_wch
 }
 
 /*********************************************************************
+ *      _wfreopen_s (MSVCRT.@)
+ */
+int CDECL MSVCRT__wfreopen_s(MSVCRT_FILE** pFile,
+        const MSVCRT_wchar_t *path, const MSVCRT_wchar_t *mode, MSVCRT_FILE* file)
+{
+    if (!MSVCRT_CHECK_PMT(pFile != NULL) || !MSVCRT_CHECK_PMT(path != NULL) ||
+        !MSVCRT_CHECK_PMT(mode != NULL) || !MSVCRT_CHECK_PMT(file != NULL)) {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    *pFile = MSVCRT__wfreopen(path, mode, file);
+
+    if(!*pFile)
+        return *MSVCRT__errno();
+    return 0;
+}
+
+/*********************************************************************
  *      freopen (MSVCRT.@)
  *
  */

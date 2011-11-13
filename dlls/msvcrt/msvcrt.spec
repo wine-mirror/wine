@@ -1133,7 +1133,7 @@
 @ cdecl _wfopen(wstr wstr) MSVCRT__wfopen
 @ cdecl _wfopen_s(ptr wstr wstr) MSVCRT__wfopen_s
 @ cdecl _wfreopen(wstr wstr ptr) MSVCRT__wfreopen
-# stub _wfreopen_s(ptr wstr wstr ptr)
+@ cdecl _wfreopen_s(ptr wstr wstr ptr) MSVCRT__wfreopen_s
 @ cdecl _wfsopen(wstr wstr long) MSVCRT__wfsopen
 @ cdecl _wfullpath(ptr wstr long)
 # stub _wfullpath_dbg(ptr wstr long long str long)
