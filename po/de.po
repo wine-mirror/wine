@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-11-01 14:03+0100\n"
+"PO-Revision-Date: 2011-11-12 17:21+0100\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -2034,73 +2034,71 @@ msgstr "%uMB benutzt, %uMB verfügbar"
 
 #: gdi32.rc:25
 msgid "Western"
-msgstr ""
+msgstr "Westlich"
 
 #: gdi32.rc:26
 msgid "Central European"
-msgstr ""
+msgstr "Mitteleuropäisch"
 
 #: gdi32.rc:27
 msgid "Cyrillic"
-msgstr ""
+msgstr "Kyrillisch"
 
 #: gdi32.rc:28
-#, fuzzy
 msgid "Greek"
-msgstr "Grün"
+msgstr "Griechisch"
 
 #: gdi32.rc:29
 msgid "Turkish"
-msgstr ""
+msgstr "Türkisch"
 
 #: gdi32.rc:30
 msgid "Hebrew"
-msgstr ""
+msgstr "Hebräisch"
 
 #: gdi32.rc:31
 msgid "Arabic"
-msgstr ""
+msgstr "Arabisch"
 
 #: gdi32.rc:32
 msgid "Baltic"
-msgstr ""
+msgstr "Baltisch"
 
 #: gdi32.rc:33
 msgid "Vietnamese"
-msgstr ""
+msgstr "Vietnamesisch"
 
 #: gdi32.rc:34
 msgid "Thai"
-msgstr ""
+msgstr "Thailändisch"
 
 #: gdi32.rc:35
-#, fuzzy
 msgid "Japanese"
-msgstr "Ausschnitt"
+msgstr "Japanisch"
 
 #: gdi32.rc:36
 msgid "CHINESE_GB2312"
-msgstr ""
+msgstr "CHINESE_GB2312"
 
 #: gdi32.rc:37
 msgid "Hangul"
-msgstr ""
+msgstr "Koreanisch"
 
 #: gdi32.rc:38
 msgid "CHINESE_BIG5"
-msgstr ""
+msgstr "CHINESE_BIG5"
 
 #: gdi32.rc:39
 msgid "Hangul(Johab)"
-msgstr ""
+msgstr "Koreanisch(Johab)"
 
 #: gdi32.rc:40
 msgid "Symbol"
-msgstr ""
+msgstr "Symbol"
 
 #: gdi32.rc:41
 msgid "OEM/DOS"
-msgstr ""
+msgstr "OEM/DOS"
 
 #: hhctrl.rc:56
 msgid "S&ync"
@@ -11013,7 +11011,7 @@ msgstr "Festplattenreset fehlgeschlagen!"
 
 #: winecfg.rc:91
 msgid "(System default)"
-msgstr "(System Ordner)"
+msgstr "(System Standard)"
 
 #: winecfg.rc:51
 msgid ""
