@@ -670,6 +670,102 @@ DWORD getInterfaceEntryByName(const char *name, PMIB_IFROW entry)
   return ret;
 }
 
+static DWORD getIPAddrRowByName(PMIB_IPADDRROW ipAddrRow, const char *ifName,
+ const struct sockaddr *sa)
+{
+  DWORD ret, bcast;
+
+  ret = getInterfaceIndexByName(ifName, &ipAddrRow->dwIndex);
+  memcpy(&ipAddrRow->dwAddr, sa->sa_data + 2, sizeof(DWORD));
+  ipAddrRow->dwMask = getInterfaceMaskByName(ifName);
+  /* the dwBCastAddr member isn't the broadcast address, it indicates whether
+   * the interface uses the 1's broadcast address (1) or the 0's broadcast
+   * address (0).
+   */
+  bcast = getInterfaceBCastAddrByName(ifName);
+  ipAddrRow->dwBCastAddr = (bcast & ipAddrRow->dwMask) ? 1 : 0;
+  /* FIXME: hardcoded reasm size, not sure where to get it */
+  ipAddrRow->dwReasmSize = 65535;
+  ipAddrRow->unused1 = 0;
+  ipAddrRow->wType = 0;
+  return ret;
+}
+
+#ifdef HAVE_IFADDRS_H
+
+/* Counts the IPv4 addresses in the system using the return value from
+ * getifaddrs, returning the count.
+ */
+static DWORD countIPv4Addresses(struct ifaddrs *ifa)
+{
+  DWORD numAddresses = 0;
+
+  for (; ifa; ifa = ifa->ifa_next)
+    if (ifa->ifa_addr && ifa->ifa_addr->sa_family == AF_INET)
+      numAddresses++;
+  return numAddresses;
+}
+
+DWORD getNumIPAddresses(void)
+{
+  DWORD numAddresses = 0;
+  struct ifaddrs *ifa;
+
+  if (!getifaddrs(&ifa))
+  {
+    numAddresses = countIPv4Addresses(ifa);
+    freeifaddrs(ifa);
+  }
+  return numAddresses;
+}
+
+DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags)
+{
+  DWORD ret;
+
+  if (!ppIpAddrTable)
+    ret = ERROR_INVALID_PARAMETER;
+  else
+  {
+    struct ifaddrs *ifa;
+
+    if (!getifaddrs(&ifa))
+    {
+      DWORD size = sizeof(MIB_IPADDRTABLE);
+      DWORD numAddresses = countIPv4Addresses(ifa);
+
+      if (numAddresses > 1)
+        size += (numAddresses - 1) * sizeof(MIB_IPADDRROW);
+      *ppIpAddrTable = HeapAlloc(heap, flags, size);
+      if (*ppIpAddrTable)
+      {
+        DWORD i = 0;
+        struct ifaddrs *ifp;
+
+        ret = NO_ERROR;
+        (*ppIpAddrTable)->dwNumEntries = numAddresses;
+        for (ifp = ifa; !ret && ifp; ifp = ifp->ifa_next)
+        {
+          if (!ifp->ifa_addr || ifp->ifa_addr->sa_family != AF_INET)
+            continue;
+
+          ret = getIPAddrRowByName(&(*ppIpAddrTable)->table[i], ifp->ifa_name,
+           ifp->ifa_addr);
+          i++;
+        }
+      }
+      else
+        ret = ERROR_OUTOFMEMORY;
+      freeifaddrs(ifa);
+    }
+    else
+      ret = ERROR_INVALID_PARAMETER;
+  }
+  return ret;
+}
+
+#else
+
 /* Enumerates the IP addresses in the system using SIOCGIFCONF, returning
  * the count to you in *pcAddresses.  It also returns to you the struct ifconf
  * used by the call to ioctl, so that you may process the addresses further.
@@ -763,7 +859,7 @@ DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags)
         size += (numAddresses - 1) * sizeof(MIB_IPADDRROW);
       *ppIpAddrTable = HeapAlloc(heap, flags, size);
       if (*ppIpAddrTable) {
-        DWORD i = 0, bcast;
+        DWORD i = 0;
         caddr_t ifPtr;
 
         ret = NO_ERROR;
@@ -777,24 +873,8 @@ DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags)
           if (ifr->ifr_addr.sa_family != AF_INET)
              continue;
 
-          ret = getInterfaceIndexByName(ifr->ifr_name,
-           &(*ppIpAddrTable)->table[i].dwIndex);
-          memcpy(&(*ppIpAddrTable)->table[i].dwAddr, ifr->ifr_addr.sa_data + 2,
-           sizeof(DWORD));
-          (*ppIpAddrTable)->table[i].dwMask =
-           getInterfaceMaskByName(ifr->ifr_name);
-          /* the dwBCastAddr member isn't the broadcast address, it indicates
-           * whether the interface uses the 1's broadcast address (1) or the
-           * 0's broadcast address (0).
-           */
-          bcast = getInterfaceBCastAddrByName(ifr->ifr_name);
-          (*ppIpAddrTable)->table[i].dwBCastAddr =
-           (bcast & (*ppIpAddrTable)->table[i].dwMask) ? 1 : 0;
-          /* FIXME: hardcoded reasm size, not sure where to get it */
-          (*ppIpAddrTable)->table[i].dwReasmSize = 65535;
-
-          (*ppIpAddrTable)->table[i].unused1 = 0;
-          (*ppIpAddrTable)->table[i].wType = 0;
+          ret = getIPAddrRowByName(&(*ppIpAddrTable)->table[i], ifr->ifr_name,
+           &ifr->ifr_addr);
           i++;
         }
       }
@@ -805,6 +885,8 @@ DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags)
   }
   return ret;
 }
+
+#endif
 
 #ifdef HAVE_IFADDRS_H
 ULONG v6addressesFromIndex(DWORD index, SOCKET_ADDRESS **addrs, ULONG *num_addrs)
