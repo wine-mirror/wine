@@ -2108,7 +2108,7 @@ INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackW(
 DWORD WINAPI InternetSetFilePointer(HINTERNET hFile, LONG lDistanceToMove,
     PVOID pReserved, DWORD dwMoveContext, DWORD_PTR dwContext)
 {
-    FIXME("stub\n");
+    FIXME("(%p %d %p %d %lx): stub\n", hFile, lDistanceToMove, pReserved, dwMoveContext, dwContext);
     return FALSE;
 }
 
