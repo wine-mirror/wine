@@ -1,4 +1,4 @@
-/* Copyright (C) 2003,2006 Juan Lang
+/* Copyright (C) 2003,2006,2011 Juan Lang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -13,18 +13,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
- *
- * Implementation notes
- * FIXME:
- * - I don't support IPv6 addresses here, since SIOCGIFCONF can't return them
- *
- * There are three implemented methods for determining the MAC address of an
- * interface:
- * - a specific IOCTL (Linux)
- * - looking in the ARP cache (at least Solaris)
- * - using the sysctl interface (FreeBSD and Mac OS X)
- * Solaris and some others have SIOCGENADDR, but I haven't gotten that to work
- * on the Solaris boxes at SourceForge's compile farm, whereas SIOCGARP does.
  */
 
 #include "config.h"
