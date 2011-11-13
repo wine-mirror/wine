@@ -286,7 +286,7 @@ enum wined3d_sampler_texture_type
     WINED3DSTT_VOLUME = 4,
 };
 
-typedef enum _WINED3DSHADER_PARAM_REGISTER_TYPE
+enum wined3d_shader_register_type
 {
     WINED3DSPR_TEMP = 0,
     WINED3DSPR_INPUT = 1,
@@ -314,7 +314,7 @@ typedef enum _WINED3DSHADER_PARAM_REGISTER_TYPE
     WINED3DSPR_CONSTBUFFER,
     WINED3DSPR_NULL,
     WINED3DSPR_RESOURCE,
-} WINED3DSHADER_PARAM_REGISTER_TYPE;
+};
 
 enum wined3d_immconst_type
 {
@@ -597,7 +597,7 @@ struct wined3d_shader_context
 
 struct wined3d_shader_register
 {
-    WINED3DSHADER_PARAM_REGISTER_TYPE type;
+    enum wined3d_shader_register_type type;
     UINT idx;
     UINT array_idx;
     const struct wined3d_shader_src_param *rel_addr;

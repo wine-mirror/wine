@@ -127,7 +127,7 @@ struct wined3d_sm4_opcode_info
 struct sysval_map
 {
     enum wined3d_sysval_semantic sysval;
-    WINED3DSHADER_PARAM_REGISTER_TYPE register_type;
+    enum wined3d_shader_register_type register_type;
     UINT register_idx;
 };
 
@@ -173,7 +173,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM4_OP_UTOF,       WINED3DSIH_UTOF,        1,  1},
 };
 
-static const WINED3DSHADER_PARAM_REGISTER_TYPE register_type_table[] =
+static const enum wined3d_shader_register_type register_type_table[] =
 {
     /* WINED3D_SM4_RT_TEMP */           WINED3DSPR_TEMP,
     /* WINED3D_SM4_RT_INPUT */          WINED3DSPR_INPUT,

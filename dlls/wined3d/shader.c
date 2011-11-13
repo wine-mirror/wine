@@ -311,7 +311,7 @@ static void shader_init(struct wined3d_shader *shader, struct wined3d_device *de
 
 /* Convert floating point offset relative to a register file to an absolute
  * offset for float constants. */
-static unsigned int shader_get_float_offset(WINED3DSHADER_PARAM_REGISTER_TYPE register_type, UINT register_idx)
+static unsigned int shader_get_float_offset(enum wined3d_shader_register_type register_type, UINT register_idx)
 {
     switch (register_type)
     {
