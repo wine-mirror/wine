@@ -714,6 +714,7 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_device *device = context->swapchain->device;
     struct wined3d_stateblock *stateBlock = device->stateBlock;
+    const struct wined3d_state *state = &stateBlock->state;
     struct shader_glsl_priv *priv = device->shader_priv;
     float position_fixup[4];
 
@@ -731,40 +732,40 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
 
     if (useVertexShader)
     {
-        const struct wined3d_shader *vshader = stateBlock->state.vertex_shader;
+        const struct wined3d_shader *vshader = state->vertex_shader;
 
         /* Load DirectX 9 float constants/uniforms for vertex shader */
-        shader_glsl_load_constantsF(vshader, gl_info, stateBlock->state.vs_consts_f,
+        shader_glsl_load_constantsF(vshader, gl_info, state->vs_consts_f,
                 prog->vuniformF_locations, &priv->vconst_heap, priv->stack, constant_version);
 
         /* Load DirectX 9 integer constants/uniforms for vertex shader */
-        shader_glsl_load_constantsI(vshader, gl_info, prog->vuniformI_locations, stateBlock->state.vs_consts_i,
+        shader_glsl_load_constantsI(vshader, gl_info, prog->vuniformI_locations, state->vs_consts_i,
                 stateBlock->changed.vertexShaderConstantsI & vshader->reg_maps.integer_constants);
 
         /* Load DirectX 9 boolean constants/uniforms for vertex shader */
-        shader_glsl_load_constantsB(vshader, gl_info, programId, stateBlock->state.vs_consts_b,
+        shader_glsl_load_constantsB(vshader, gl_info, programId, state->vs_consts_b,
                 stateBlock->changed.vertexShaderConstantsB & vshader->reg_maps.boolean_constants);
 
         /* Upload the position fixup params */
-        shader_get_position_fixup(context, &stateBlock->state, position_fixup);
+        shader_get_position_fixup(context, state, position_fixup);
         GL_EXTCALL(glUniform4fvARB(prog->posFixup_location, 1, position_fixup));
         checkGLcall("glUniform4fvARB");
     }
 
     if (usePixelShader)
     {
-        const struct wined3d_shader *pshader = stateBlock->state.pixel_shader;
+        const struct wined3d_shader *pshader = state->pixel_shader;
 
         /* Load DirectX 9 float constants/uniforms for pixel shader */
-        shader_glsl_load_constantsF(pshader, gl_info, stateBlock->state.ps_consts_f,
+        shader_glsl_load_constantsF(pshader, gl_info, state->ps_consts_f,
                 prog->puniformF_locations, &priv->pconst_heap, priv->stack, constant_version);
 
         /* Load DirectX 9 integer constants/uniforms for pixel shader */
-        shader_glsl_load_constantsI(pshader, gl_info, prog->puniformI_locations, stateBlock->state.ps_consts_i,
+        shader_glsl_load_constantsI(pshader, gl_info, prog->puniformI_locations, state->ps_consts_i,
                 stateBlock->changed.pixelShaderConstantsI & pshader->reg_maps.integer_constants);
 
         /* Load DirectX 9 boolean constants/uniforms for pixel shader */
-        shader_glsl_load_constantsB(pshader, gl_info, programId, stateBlock->state.ps_consts_b,
+        shader_glsl_load_constantsB(pshader, gl_info, programId, state->ps_consts_b,
                 stateBlock->changed.pixelShaderConstantsB & pshader->reg_maps.boolean_constants);
 
         /* Upload the environment bump map matrix if needed. The needsbumpmat member specifies the texture stage to load the matrix from.
@@ -775,7 +776,7 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
 
             if(prog->bumpenvmat_location[i] == -1) continue;
 
-            data = (const float *)&stateBlock->state.texture_states[i][WINED3DTSS_BUMPENVMAT00];
+            data = (const float *)&state->texture_states[i][WINED3DTSS_BUMPENVMAT00];
             GL_EXTCALL(glUniformMatrix2fvARB(prog->bumpenvmat_location[i], 1, 0, data));
             checkGLcall("glUniformMatrix2fvARB");
 
@@ -784,8 +785,8 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
              * needsbumpmat check. */
             if (prog->luminancescale_location[i] != -1)
             {
-                const GLfloat *scale = (const GLfloat *)&stateBlock->state.texture_states[i][WINED3DTSS_BUMPENVLSCALE];
-                const GLfloat *offset = (const GLfloat *)&stateBlock->state.texture_states[i][WINED3DTSS_BUMPENVLOFFSET];
+                const GLfloat *scale = (const GLfloat *)&state->texture_states[i][WINED3DTSS_BUMPENVLSCALE];
+                const GLfloat *offset = (const GLfloat *)&state->texture_states[i][WINED3DTSS_BUMPENVLOFFSET];
 
                 GL_EXTCALL(glUniform1fvARB(prog->luminancescale_location[i], 1, scale));
                 checkGLcall("glUniform1fvARB");
