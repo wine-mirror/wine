@@ -39,17 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 /* The configured default surface */
 WINED3DSURFTYPE DefaultSurfaceType = SURFACE_OPENGL;
 
-/* DDraw list and critical section */
 static struct list global_ddraw_list = LIST_INIT(global_ddraw_list);
-
-static CRITICAL_SECTION_DEBUG ddraw_cs_debug =
-{
-    0, 0, &ddraw_cs,
-    { &ddraw_cs_debug.ProcessLocksList,
-    &ddraw_cs_debug.ProcessLocksList },
-    0, 0, { (DWORD_PTR)(__FILE__ ": ddraw_cs") }
-};
-CRITICAL_SECTION ddraw_cs = { &ddraw_cs_debug, -1, 0, 0, 0, 0 };
 
 static HINSTANCE instance;
 
@@ -272,9 +262,9 @@ DirectDrawCreate(GUID *GUID,
     TRACE("driver_guid %s, ddraw %p, outer_unknown %p.\n",
             debugstr_guid(GUID), DD, UnkOuter);
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
     hr = DDRAW_Create(GUID, (void **) DD, UnkOuter, &IID_IDirectDraw);
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))
     {
@@ -309,9 +299,9 @@ DirectDrawCreateEx(GUID *guid,
     if (!IsEqualGUID(iid, &IID_IDirectDraw7))
         return DDERR_INVALIDPARAMS;
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
     hr = DDRAW_Create(guid, dd, UnkOuter, iid);
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))
     {
@@ -466,9 +456,10 @@ CF_CreateDirectDraw(IUnknown* UnkOuter, REFIID iid,
 
     TRACE("outer_unknown %p, riid %s, object %p.\n", UnkOuter, debugstr_guid(iid), obj);
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
     hr = DDRAW_Create(NULL, obj, UnkOuter, iid);
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -495,18 +486,19 @@ CF_CreateDirectDrawClipper(IUnknown* UnkOuter, REFIID riid,
 
     TRACE("outer_unknown %p, riid %s, object %p.\n", UnkOuter, debugstr_guid(riid), obj);
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
     hr = DirectDrawCreateClipper(0, &Clip, UnkOuter);
     if (hr != DD_OK)
     {
-        LeaveCriticalSection(&ddraw_cs);
+        wined3d_mutex_unlock();
         return hr;
     }
 
     hr = IDirectDrawClipper_QueryInterface(Clip, riid, obj);
     IDirectDrawClipper_Release(Clip);
 
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 

@@ -96,10 +96,10 @@ static ULONG WINAPI IDirectDrawClipperImpl_Release(IDirectDrawClipper *iface)
 
     if (ref == 0)
     {
-        EnterCriticalSection(&ddraw_cs);
+        wined3d_mutex_lock();
         wined3d_clipper_decref(This->wineD3DClipper);
+        wined3d_mutex_unlock();
         HeapFree(GetProcessHeap(), 0, This);
-        LeaveCriticalSection(&ddraw_cs);
         return 0;
     }
     else return ref;
@@ -128,9 +128,10 @@ static HRESULT WINAPI IDirectDrawClipperImpl_SetHWnd(IDirectDrawClipper *iface, 
 
     TRACE("iface %p, flags %#x, window %p.\n", iface, dwFlags, hWnd);
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
     hr = wined3d_clipper_set_window(This->wineD3DClipper, dwFlags, hWnd);
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
+
     switch(hr)
     {
         case WINED3DERR_INVALIDCALL:        return DDERR_INVALIDPARAMS;
@@ -165,9 +166,10 @@ static HRESULT WINAPI IDirectDrawClipperImpl_GetClipList(IDirectDrawClipper *ifa
     TRACE("iface %p, rect %s, clip_list %p, clip_list_size %p.\n",
             iface, wine_dbgstr_rect(lpRect), lpClipList, lpdwSize);
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
     hr = wined3d_clipper_get_clip_list(This->wineD3DClipper, lpRect, lpClipList, lpdwSize);
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -193,9 +195,10 @@ static HRESULT WINAPI IDirectDrawClipperImpl_SetClipList(IDirectDrawClipper *ifa
 
     TRACE("iface %p, clip_list %p, flags %#x.\n", iface, lprgn, dwFlag);
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
     hr = wined3d_clipper_set_clip_list(This->wineD3DClipper, lprgn, dwFlag);
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -217,9 +220,10 @@ static HRESULT WINAPI IDirectDrawClipperImpl_GetHWnd(IDirectDrawClipper *iface, 
 
     TRACE("iface %p, window %p.\n", iface, hWndPtr);
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
     hr = wined3d_clipper_get_window(This->wineD3DClipper, hWndPtr);
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -244,16 +248,16 @@ static HRESULT WINAPI IDirectDrawClipperImpl_Initialize(IDirectDrawClipper *ifac
 
     TRACE("iface %p, ddraw %p, flags %#x.\n", iface, ddraw, dwFlags);
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
     if (This->initialized)
     {
-        LeaveCriticalSection(&ddraw_cs);
+        wined3d_mutex_unlock();
         return DDERR_ALREADYINITIALIZED;
     }
 
     This->initialized = TRUE;
+    wined3d_mutex_unlock();
 
-    LeaveCriticalSection(&ddraw_cs);
     return DD_OK;
 }
 

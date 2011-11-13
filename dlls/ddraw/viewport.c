@@ -245,7 +245,8 @@ IDirect3DViewportImpl_GetViewport(IDirect3DViewport3 *iface,
 
     TRACE("iface %p, data %p.\n", iface, lpData);
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
+
     dwSize = lpData->dwSize;
     memset(lpData, 0, dwSize);
     if (!This->use_vp2)
@@ -271,7 +272,8 @@ IDirect3DViewportImpl_GetViewport(IDirect3DViewport3 *iface,
         TRACE("  returning D3DVIEWPORT :\n");
         _dump_D3DVIEWPORT(lpData);
     }
-    LeaveCriticalSection(&ddraw_cs);
+
+    wined3d_mutex_unlock();
 
     return DD_OK;
 }
@@ -304,7 +306,8 @@ IDirect3DViewportImpl_SetViewport(IDirect3DViewport3 *iface,
         _dump_D3DVIEWPORT(lpData);
     }
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
+
     This->use_vp2 = 0;
     memset(&(This->viewports.vp1), 0, sizeof(This->viewports.vp1));
     memcpy(&(This->viewports.vp1), lpData, lpData->dwSize);
@@ -324,7 +327,8 @@ IDirect3DViewportImpl_SetViewport(IDirect3DViewport3 *iface,
             IDirect3DViewport3_Release(current_viewport);
         }
     }
-    LeaveCriticalSection(&ddraw_cs);
+
+    wined3d_mutex_unlock();
 
     return DD_OK;
 }
@@ -391,7 +395,7 @@ IDirect3DViewportImpl_TransformVertices(IDirect3DViewport3 *iface,
     }
 
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
     wined3d_device_get_transform(This->active_device->wined3d_device,
             D3DTRANSFORMSTATE_VIEW, (WINED3DMATRIX *)&view_mat);
     wined3d_device_get_transform(This->active_device->wined3d_device,
@@ -476,7 +480,7 @@ IDirect3DViewportImpl_TransformVertices(IDirect3DViewport3 *iface,
     {
         *lpOffScreen = 0;
     }
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
 
     TRACE("All done\n");
     return DD_OK;
@@ -525,13 +529,13 @@ IDirect3DViewportImpl_SetBackground(IDirect3DViewport3 *iface,
 
     TRACE("iface %p, material %#x.\n", iface, hMat);
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
 
     if (!hMat)
     {
         This->background = NULL;
         TRACE("Setting background to NULL\n");
-        LeaveCriticalSection(&ddraw_cs);
+        wined3d_mutex_unlock();
         return D3D_OK;
     }
 
@@ -539,7 +543,7 @@ IDirect3DViewportImpl_SetBackground(IDirect3DViewport3 *iface,
     if (!m)
     {
         WARN("Invalid material handle.\n");
-        LeaveCriticalSection(&ddraw_cs);
+        wined3d_mutex_unlock();
         return DDERR_INVALIDPARAMS;
     }
 
@@ -548,7 +552,8 @@ IDirect3DViewportImpl_SetBackground(IDirect3DViewport3 *iface,
             m->mat.u.diffuse.u3.b, m->mat.u.diffuse.u4.a);
     This->background = m;
 
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
+
     return D3D_OK;
 }
 
@@ -574,7 +579,7 @@ IDirect3DViewportImpl_GetBackground(IDirect3DViewport3 *iface,
 
     TRACE("iface %p, material %p, valid %p.\n", iface, lphMat, lpValid);
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
     if(lpValid)
     {
         *lpValid = This->background != NULL;
@@ -590,7 +595,7 @@ IDirect3DViewportImpl_GetBackground(IDirect3DViewport3 *iface,
             *lphMat = 0;
         }
     }
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
 
     return D3D_OK;
 }
@@ -674,7 +679,8 @@ static HRESULT WINAPI IDirect3DViewportImpl_Clear(IDirect3DViewport3 *iface,
     }
     d3d_device3 = &This->active_device->IDirect3DDevice3_iface;
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
+
     if (dwFlags & D3DCLEAR_TARGET) {
         if (This->background == NULL) {
             ERR(" Trying to clear the color buffer without background material !\n");
@@ -702,7 +708,8 @@ static HRESULT WINAPI IDirect3DViewportImpl_Clear(IDirect3DViewport3 *iface,
         IDirect3DViewport3_Release(current_viewport);
     }
 
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -730,10 +737,11 @@ static HRESULT WINAPI IDirect3DViewportImpl_AddLight(IDirect3DViewport3 *iface,
 
     TRACE("iface %p, light %p.\n", iface, lpDirect3DLight);
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
+
     if (This->num_lights >= 8)
     {
-        LeaveCriticalSection(&ddraw_cs);
+        wined3d_mutex_unlock();
         return DDERR_INVALIDPARAMS;
     }
 
@@ -758,7 +766,8 @@ static HRESULT WINAPI IDirect3DViewportImpl_AddLight(IDirect3DViewport3 *iface,
     if (This->active_device)
         light_activate(lpDirect3DLightImpl);
 
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
+
     return D3D_OK;
 }
 
@@ -783,12 +792,12 @@ static HRESULT WINAPI IDirect3DViewportImpl_DeleteLight(IDirect3DViewport3 *ifac
 
     TRACE("iface %p, light %p.\n", iface, lpDirect3DLight);
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
 
     if (l->active_viewport != This)
     {
         WARN("Light %p active viewport is %p.\n", l, l->active_viewport);
-        LeaveCriticalSection(&ddraw_cs);
+        wined3d_mutex_unlock();
         return DDERR_INVALIDPARAMS;
     }
 
@@ -799,7 +808,7 @@ static HRESULT WINAPI IDirect3DViewportImpl_DeleteLight(IDirect3DViewport3 *ifac
     --This->num_lights;
     This->map_lights &= ~(1 << l->dwLightIndex);
 
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
 
     return D3D_OK;
 }
@@ -831,7 +840,7 @@ static HRESULT WINAPI IDirect3DViewportImpl_NextLight(IDirect3DViewport3 *iface,
     if (!lplpDirect3DLight)
         return DDERR_INVALIDPARAMS;
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
 
     switch (dwFlags)
     {
@@ -872,7 +881,7 @@ static HRESULT WINAPI IDirect3DViewportImpl_NextLight(IDirect3DViewport3 *iface,
         hr = DDERR_INVALIDPARAMS;
     }
 
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -906,7 +915,7 @@ IDirect3DViewportImpl_GetViewport2(IDirect3DViewport3 *iface,
 
     TRACE("iface %p, data %p.\n", iface, lpData);
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
     dwSize = lpData->dwSize;
     memset(lpData, 0, dwSize);
     if (This->use_vp2)
@@ -933,7 +942,8 @@ IDirect3DViewportImpl_GetViewport2(IDirect3DViewport3 *iface,
         _dump_D3DVIEWPORT2(lpData);
     }
 
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
+
     return D3D_OK;
 }
 
@@ -964,7 +974,8 @@ IDirect3DViewportImpl_SetViewport2(IDirect3DViewport3 *iface,
         _dump_D3DVIEWPORT2(lpData);
     }
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
+
     This->use_vp2 = 1;
     memset(&(This->viewports.vp2), 0, sizeof(This->viewports.vp2));
     memcpy(&(This->viewports.vp2), lpData, lpData->dwSize);
@@ -978,7 +989,8 @@ IDirect3DViewportImpl_SetViewport2(IDirect3DViewport3 *iface,
             IDirect3DViewport3_Release(current_viewport);
         }
     }
-    LeaveCriticalSection(&ddraw_cs);
+
+    wined3d_mutex_unlock();
 
     return D3D_OK;
 }
@@ -1064,10 +1076,11 @@ IDirect3DViewportImpl_Clear2(IDirect3DViewport3 *iface,
     TRACE("iface %p, rect_count %u, rects %p, flags %#x, color 0x%08x, depth %.8e, stencil %u.\n",
             iface, dwCount, lpRects, dwFlags, dwColor, dvZ, dwStencil);
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
+
     if (This->active_device == NULL) {
         ERR(" Trying to clear a viewport not attached to a device !\n");
-        LeaveCriticalSection(&ddraw_cs);
+        wined3d_mutex_unlock();
         return D3DERR_VIEWPORTHASNODEVICE;
     }
     d3d_device3 = &This->active_device->IDirect3DDevice3_iface;
@@ -1083,7 +1096,9 @@ IDirect3DViewportImpl_Clear2(IDirect3DViewport3 *iface,
         viewport_activate(vp, TRUE);
         IDirect3DViewport3_Release(current_viewport);
     }
-    LeaveCriticalSection(&ddraw_cs);
+
+    wined3d_mutex_unlock();
+
     return hr;
 }
 

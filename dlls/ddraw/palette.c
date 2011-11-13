@@ -97,13 +97,14 @@ IDirectDrawPaletteImpl_Release(IDirectDrawPalette *iface)
 
     if (ref == 0)
     {
-        EnterCriticalSection(&ddraw_cs);
+        wined3d_mutex_lock();
         wined3d_palette_decref(This->wineD3DPalette);
         if(This->ifaceToRelease)
         {
             IUnknown_Release(This->ifaceToRelease);
         }
-        LeaveCriticalSection(&ddraw_cs);
+        wined3d_mutex_unlock();
+
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -159,9 +160,9 @@ IDirectDrawPaletteImpl_GetCaps(IDirectDrawPalette *iface,
 
     TRACE("iface %p, caps %p.\n", iface, Caps);
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
     *Caps = wined3d_palette_get_flags(This->wineD3DPalette);
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
 
     return D3D_OK;
 }
@@ -200,9 +201,10 @@ IDirectDrawPaletteImpl_SetEntries(IDirectDrawPalette *iface,
     if(!PalEnt)
         return DDERR_INVALIDPARAMS;
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
     hr = wined3d_palette_set_entries(This->wineD3DPalette, Flags, Start, Count, PalEnt);
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 
@@ -239,9 +241,10 @@ IDirectDrawPaletteImpl_GetEntries(IDirectDrawPalette *iface,
     if(!PalEnt)
         return DDERR_INVALIDPARAMS;
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
     hr = wined3d_palette_get_entries(This->wineD3DPalette, Flags, Start, Count, PalEnt);
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
+
     return hr;
 }
 

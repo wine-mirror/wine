@@ -142,9 +142,9 @@ static ULONG WINAPI IDirect3DMaterialImpl_Release(IDirect3DMaterial3 *iface)
     {
         if(This->Handle)
         {
-            EnterCriticalSection(&ddraw_cs);
+            wined3d_mutex_lock();
             ddraw_free_handle(&This->ddraw->d3ddevice->handle_table, This->Handle - 1, DDRAW_HANDLE_MATERIAL);
-            LeaveCriticalSection(&ddraw_cs);
+            wined3d_mutex_unlock();
         }
 
         HeapFree(GetProcessHeap(), 0, This);
@@ -236,10 +236,10 @@ static HRESULT WINAPI IDirect3DMaterialImpl_SetMaterial(IDirect3DMaterial3 *ifac
         dump_material(lpMat);
 
     /* Stores the material */
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
     memset(&This->mat, 0, sizeof(This->mat));
     memcpy(&This->mat, lpMat, lpMat->dwSize);
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
 
     return DD_OK;
 }
@@ -271,10 +271,10 @@ static HRESULT WINAPI IDirect3DMaterialImpl_GetMaterial(IDirect3DMaterial3 *ifac
     }
 
     /* Copies the material structure */
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
     dwSize = lpMat->dwSize;
     memcpy(lpMat, &This->mat, dwSize);
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
 
     return DD_OK;
 }
@@ -302,7 +302,7 @@ static HRESULT WINAPI IDirect3DMaterialImpl_GetHandle(IDirect3DMaterial3 *iface,
 
     TRACE("iface %p, device %p, handle %p.\n", iface, device, handle);
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
     This->active_device = device_impl;
     if(!This->Handle)
     {
@@ -310,7 +310,7 @@ static HRESULT WINAPI IDirect3DMaterialImpl_GetHandle(IDirect3DMaterial3 *iface,
         if (h == DDRAW_INVALID_HANDLE)
         {
             ERR("Failed to allocate a material handle.\n");
-            LeaveCriticalSection(&ddraw_cs);
+            wined3d_mutex_unlock();
             return DDERR_INVALIDPARAMS;   /* Unchecked */
         }
 
@@ -318,7 +318,7 @@ static HRESULT WINAPI IDirect3DMaterialImpl_GetHandle(IDirect3DMaterial3 *iface,
     }
     *handle = This->Handle;
     TRACE(" returning handle %08x.\n", *handle);
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
 
     return D3D_OK;
 }

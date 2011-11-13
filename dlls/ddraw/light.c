@@ -224,11 +224,12 @@ static HRESULT WINAPI IDirect3DLightImpl_SetLight(IDirect3DLight *iface, D3DLIGH
     light7->dvTheta        = lpLight->dvTheta;
     light7->dvPhi          = lpLight->dvPhi;
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
     memcpy(&This->light, lpLight, lpLight->dwSize);
     if (This->light.dwFlags & D3DLIGHT_ACTIVE)
         light_update(This);
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
+
     return D3D_OK;
 }
 
@@ -256,9 +257,9 @@ static HRESULT WINAPI IDirect3DLightImpl_GetLight(IDirect3DLight *iface, D3DLIGH
         dump_light(&This->light);
     }
 
-    EnterCriticalSection(&ddraw_cs);
+    wined3d_mutex_lock();
     memcpy(lpLight, &This->light, lpLight->dwSize);
-    LeaveCriticalSection(&ddraw_cs);
+    wined3d_mutex_unlock();
 
     return DD_OK;
 }

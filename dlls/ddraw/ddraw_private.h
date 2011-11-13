@@ -52,9 +52,6 @@ typedef struct IDirect3DMaterialImpl      IDirect3DMaterialImpl;
 typedef struct IDirect3DExecuteBufferImpl IDirect3DExecuteBufferImpl;
 typedef struct IDirect3DVertexBufferImpl  IDirect3DVertexBufferImpl;
 
-/* Global critical section */
-extern CRITICAL_SECTION ddraw_cs DECLSPEC_HIDDEN;
-
 extern DWORD force_refresh_rate DECLSPEC_HIDDEN;
 
 /*****************************************************************************
