@@ -2026,77 +2026,75 @@ msgstr "지역 설정"
 
 #: dxdiagn.rc:26
 msgid "%uMB used, %uMB available"
-msgstr "%uMB 사용됨, %uMB 가능함"
+msgstr "%uMB 사용됨, %uMB 사용 가능함"
 
 #: gdi32.rc:25
 msgid "Western"
-msgstr ""
+msgstr "서"
 
 #: gdi32.rc:26
 msgid "Central European"
-msgstr ""
+msgstr "중부 유럽"
 
 #: gdi32.rc:27
 msgid "Cyrillic"
-msgstr ""
+msgstr "키릴문자"
 
 #: gdi32.rc:28
-#, fuzzy
 msgid "Greek"
-msgstr "녹색"
+msgstr "그리스어"
 
 #: gdi32.rc:29
 msgid "Turkish"
-msgstr ""
+msgstr "터키어"
 
 #: gdi32.rc:30
 msgid "Hebrew"
-msgstr ""
+msgstr "히브리어"
 
 #: gdi32.rc:31
 msgid "Arabic"
-msgstr ""
+msgstr "아랍어"
 
 #: gdi32.rc:32
 msgid "Baltic"
-msgstr ""
+msgstr "발트어"
 
 #: gdi32.rc:33
 msgid "Vietnamese"
-msgstr ""
+msgstr "베트남어"
 
 #: gdi32.rc:34
 msgid "Thai"
-msgstr ""
+msgstr "타이어"
 
 #: gdi32.rc:35
-#, fuzzy
 msgid "Japanese"
-msgstr "틀"
+msgstr "일본"
 
 #: gdi32.rc:36
 msgid "CHINESE_GB2312"
-msgstr ""
+msgstr "중국어 GB2312"
 
 #: gdi32.rc:37
 msgid "Hangul"
-msgstr ""
+msgstr "한글"
 
 #: gdi32.rc:38
 msgid "CHINESE_BIG5"
-msgstr ""
+msgstr "중국어 BIG5"
 
 #: gdi32.rc:39
 msgid "Hangul(Johab)"
-msgstr ""
+msgstr "한글(조합)"
 
 #: gdi32.rc:40
 msgid "Symbol"
-msgstr ""
+msgstr "기호"
 
 #: gdi32.rc:41
 msgid "OEM/DOS"
-msgstr ""
+msgstr "OEM/도"
 
 #: hhctrl.rc:56
 msgid "S&ync"
