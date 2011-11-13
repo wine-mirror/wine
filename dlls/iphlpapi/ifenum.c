@@ -764,6 +764,69 @@ DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags)
   return ret;
 }
 
+ULONG v6addressesFromIndex(DWORD index, SOCKET_ADDRESS **addrs, ULONG *num_addrs)
+{
+  struct ifaddrs *ifa;
+  ULONG ret;
+
+  if (!getifaddrs(&ifa))
+  {
+    struct ifaddrs *p;
+    ULONG n;
+    char name[IFNAMSIZ];
+
+    getInterfaceNameByIndex(index, name);
+    for (p = ifa, n = 0; p; p = p->ifa_next)
+      if (p->ifa_addr && p->ifa_addr->sa_family == AF_INET6 &&
+          !strcmp(name, p->ifa_name))
+        n++;
+    if (n)
+    {
+      *addrs = HeapAlloc(GetProcessHeap(), 0, n * (sizeof(SOCKET_ADDRESS) +
+                         sizeof(struct WS_sockaddr_in6)));
+      if (*addrs)
+      {
+        struct WS_sockaddr_in6 *next_addr = (struct WS_sockaddr_in6 *)(
+            (BYTE *)*addrs + n * sizeof(SOCKET_ADDRESS));
+
+        for (p = ifa, n = 0; p; p = p->ifa_next)
+        {
+          if (p->ifa_addr && p->ifa_addr->sa_family == AF_INET6 &&
+              !strcmp(name, p->ifa_name))
+          {
+            struct sockaddr_in6 *addr = (struct sockaddr_in6 *)p->ifa_addr;
+
+            next_addr->sin6_family = WS_AF_INET6;
+            next_addr->sin6_port = addr->sin6_port;
+            next_addr->sin6_flowinfo = addr->sin6_flowinfo;
+            memcpy(&next_addr->sin6_addr, &addr->sin6_addr,
+             sizeof(next_addr->sin6_addr));
+            next_addr->sin6_scope_id = addr->sin6_scope_id;
+            (*addrs)[n].lpSockaddr = (LPSOCKADDR)next_addr;
+            (*addrs)[n].iSockaddrLength = sizeof(struct WS_sockaddr_in6);
+            next_addr++;
+            n++;
+          }
+        }
+        *num_addrs = n;
+        ret = ERROR_SUCCESS;
+      }
+      else
+        ret = ERROR_OUTOFMEMORY;
+    }
+    else
+    {
+      *addrs = NULL;
+      *num_addrs = 0;
+      ret = ERROR_SUCCESS;
+    }
+    freeifaddrs(ifa);
+  }
+  else
+    ret = ERROR_NO_DATA;
+  return ret;
+}
+
 #else
 
 /* Enumerates the IP addresses in the system using SIOCGIFCONF, returning
@@ -886,78 +949,13 @@ DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags)
   return ret;
 }
 
-#endif
-
-#ifdef HAVE_IFADDRS_H
-ULONG v6addressesFromIndex(DWORD index, SOCKET_ADDRESS **addrs, ULONG *num_addrs)
-{
-  struct ifaddrs *ifa;
-  ULONG ret;
-
-  if (!getifaddrs(&ifa))
-  {
-    struct ifaddrs *p;
-    ULONG n;
-    char name[IFNAMSIZ];
-
-    getInterfaceNameByIndex(index, name);
-    for (p = ifa, n = 0; p; p = p->ifa_next)
-      if (p->ifa_addr && p->ifa_addr->sa_family == AF_INET6 &&
-          !strcmp(name, p->ifa_name))
-        n++;
-    if (n)
-    {
-      *addrs = HeapAlloc(GetProcessHeap(), 0, n * (sizeof(SOCKET_ADDRESS) +
-                         sizeof(struct WS_sockaddr_in6)));
-      if (*addrs)
-      {
-        struct WS_sockaddr_in6 *next_addr = (struct WS_sockaddr_in6 *)(
-            (BYTE *)*addrs + n * sizeof(SOCKET_ADDRESS));
-
-        for (p = ifa, n = 0; p; p = p->ifa_next)
-        {
-          if (p->ifa_addr && p->ifa_addr->sa_family == AF_INET6 &&
-              !strcmp(name, p->ifa_name))
-          {
-            struct sockaddr_in6 *addr = (struct sockaddr_in6 *)p->ifa_addr;
-
-            next_addr->sin6_family = WS_AF_INET6;
-            next_addr->sin6_port = addr->sin6_port;
-            next_addr->sin6_flowinfo = addr->sin6_flowinfo;
-            memcpy(&next_addr->sin6_addr, &addr->sin6_addr,
-             sizeof(next_addr->sin6_addr));
-            next_addr->sin6_scope_id = addr->sin6_scope_id;
-            (*addrs)[n].lpSockaddr = (LPSOCKADDR)next_addr;
-            (*addrs)[n].iSockaddrLength = sizeof(struct WS_sockaddr_in6);
-            next_addr++;
-            n++;
-          }
-        }
-        *num_addrs = n;
-        ret = ERROR_SUCCESS;
-      }
-      else
-        ret = ERROR_OUTOFMEMORY;
-    }
-    else
-    {
-      *addrs = NULL;
-      *num_addrs = 0;
-      ret = ERROR_SUCCESS;
-    }
-    freeifaddrs(ifa);
-  }
-  else
-    ret = ERROR_NO_DATA;
-  return ret;
-}
-#else
 ULONG v6addressesFromIndex(DWORD index, SOCKET_ADDRESS **addrs, ULONG *num_addrs)
 {
   *addrs = NULL;
   *num_addrs = 0;
   return ERROR_SUCCESS;
 }
+
 #endif
 
 char *toIPAddressString(unsigned int addr, char string[16])
