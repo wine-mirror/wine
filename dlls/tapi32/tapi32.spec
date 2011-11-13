@@ -160,6 +160,7 @@
 @ stdcall phoneShutdown(long)
 @ stdcall tapiGetLocationInfo(str str) tapiGetLocationInfoA
 @ stdcall tapiGetLocationInfoA(str str)
+@ stdcall tapiGetLocationInfoW(wstr wstr)
 @ stub    tapiRequestDrop
 @ stdcall tapiRequestMakeCall(str str str str) tapiRequestMakeCallA
 @ stdcall tapiRequestMakeCallA(str str str str)
