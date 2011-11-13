@@ -1326,7 +1326,7 @@
 @ stub fread_s
 @ cdecl free(ptr) msvcrt.free
 @ cdecl freopen(str str ptr) msvcrt.freopen
-@ stub freopen_s
+@ cdecl freopen_s(ptr str str ptr) msvcrt.freopen_s
 @ cdecl frexp(double ptr) msvcrt.frexp
 @ varargs fscanf(ptr str) msvcrt.fscanf
 @ varargs fscanf_s(ptr str) msvcrt.fscanf_s

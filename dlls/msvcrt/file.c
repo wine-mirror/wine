@@ -3300,6 +3300,25 @@ MSVCRT_FILE* CDECL MSVCRT_freopen(const char *path, const char *mode, MSVCRT_FIL
 }
 
 /*********************************************************************
+ *      freopen_s (MSVCRT.@)
+ */
+int CDECL MSVCRT_freopen_s(MSVCRT_FILE** pFile,
+        const char *path, const char *mode, MSVCRT_FILE* file)
+{
+    if (!MSVCRT_CHECK_PMT(pFile != NULL) || !MSVCRT_CHECK_PMT(path != NULL) ||
+        !MSVCRT_CHECK_PMT(mode != NULL) || !MSVCRT_CHECK_PMT(file != NULL)) {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    *pFile = MSVCRT_freopen(path, mode, file);
+
+    if(!*pFile)
+        return *MSVCRT__errno();
+    return 0;
+}
+
+/*********************************************************************
  *		fsetpos (MSVCRT.@)
  */
 int CDECL MSVCRT_fsetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)

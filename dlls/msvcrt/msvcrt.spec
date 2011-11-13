@@ -1269,7 +1269,7 @@
 @ cdecl fread(ptr long long ptr) MSVCRT_fread
 @ cdecl free(ptr) MSVCRT_free
 @ cdecl freopen(str str ptr) MSVCRT_freopen
-# stub freopen_s(ptr str str ptr)
+@ cdecl freopen_s(ptr str str ptr) MSVCRT_freopen_s
 @ cdecl frexp(double ptr) MSVCRT_frexp
 @ cdecl -arch=x86_64 frexpf(float ptr) MSVCRT_frexpf
 @ varargs fscanf(ptr str) MSVCRT_fscanf
