@@ -248,8 +248,8 @@ CAPTION "정보"
 FONT 9, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "확인", IDOK, 72, 96, 50, 14
- LTEXT "공통 대화상자 테스트 지그 액서사이저, 버젼 1.20", -1, 13, 36, 168, 15
- LTEXT "(c) 1999-2000, Eric Williams.  Rights are as granted under the WINE license.  코드를 숨기기 않는다면... 나누자!", -1, 18, 60, 157, 24
+ LTEXT "공통 대화상자 시험 지그 운동기, 버젼 1.20", -1, 13, 36, 168, 15
+ LTEXT "(c) 1999-2000, Eric Williams.  WINE 라이센스 아래 권리가 부여됩니다.  코드를 숨기기 않는다면... 나누자!", -1, 18, 60, 157, 24
  ICON "AboutIcon", -1, 84, 12, 18, 20
 }
 
@@ -259,13 +259,13 @@ CAPTION "사용법"
 FONT 9, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "확인", IDOK, 70, 276, 50, 14
- LTEXT "공통 대화상자 테스트 지그 액서사이저, 버젼 1.20", -1, 13, 48, 168, 12
- LTEXT "This tool tests COMMDLG for Wine.", -1, 12, 72, 168, 12
- LTEXT "Flags are specified in the Flags menu.", -1, 12, 96, 168, 12
- LTEXT "Color dialog changes background color.", -1, 12, 120, 168, 12
- LTEXT "Font dialog changes all fonts, and font color if CF_EFFECTS is selected.", -1, 12, 144, 168, 24
- LTEXT "Upper left hand corner indicate full pathname and title of the last successful Open or Save.", -1, 12, 180, 168, 24
- LTEXT "(c) 1999-2000, Eric Williams.  Rights are as granted under the WINE license.  코드를 숨기지 않는다면... 나누자!", -1, 12, 228, 168, 36
+ LTEXT "공통 대화상자 시험 지그 운동기, 버젼 1.20", -1, 13, 48, 168, 12
+ LTEXT "이 도구는 Wine의 공용대화상자를 시험합니다.", -1, 12, 72, 168, 12
+ LTEXT "플래그는 플래그 메뉴에서 지정됩니다.", -1, 12, 96, 168, 12
+ LTEXT "색상 대화상자는 배경 색상을 바꿉니다.", -1, 12, 120, 168, 12
+ LTEXT "글꼴 대화상자는 모든 글꼴을 바꾸고, 만약 CF_EFFECTS가 선택되어있다면 글꼴 색상도 바꿀수 있습니다.", -1, 12, 144, 168, 24
+ LTEXT "위쪽 왼쪽 구석에 마지막으로 성공한 열거나 저장한 완전한 경로명과 제목을 표시합니다.", -1, 12, 180, 168, 24
+ LTEXT "(c) 1999-2000, Eric Williams.  WINE 라이센스 아래 권리가 부여됩니다.  코드를 숨기지 않는다면... 나누자!", -1, 12, 228, 168, 36
  ICON "AboutIcon", -1, 86, 12, 18, 20
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 216, 168, 2
 }
@@ -288,13 +288,13 @@ BEGIN
   AUTORADIOBUTTON "세로(&P)", rad1, 16, 170, 52, 12, BS_AUTORADIOBUTTON
   AUTORADIOBUTTON "가로(&L)", rad2, 16, 190, 52, 12, BS_AUTORADIOBUTTON
   GROUPBOX "가장자리", grp4, 80, 156, 152, 56, BS_GROUPBOX
-  LTEXT "왼쪽(&E):", stc15, 85, 172, 24, 8
-  EDITTEXT edt4, 111, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
-  LTEXT "오른쪽(&R):", stc16, 155, 172, 31, 8
-  EDITTEXT edt6, 187, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  LTEXT "왼쪽(&E):", stc15, 82, 173, 30, 8
+  EDITTEXT edt4, 111, 173, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  LTEXT "오른쪽(&R):", stc16, 151, 173, 36, 8
+  EDITTEXT edt6, 187, 173, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
   LTEXT "위(&O):", stc17, 88, 192, 21, 8
   EDITTEXT edt5, 111, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
-  LTEXT "아래(&B):", stc18, 159, 192, 23, 8
+  LTEXT "아래(&B):", stc18, 153, 192, 30, 8
   EDITTEXT edt7, 187, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
   DEFPUSHBUTTON "확인", IDOK, 71, 220, 50, 14, BS_PUSHBUTTON
   PUSHBUTTON "취소", IDCANCEL, 126, 220, 50, 14
