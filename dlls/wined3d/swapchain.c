@@ -677,6 +677,9 @@ void x11_copy_to_screen(const struct wined3d_swapchain *swapchain, const RECT *r
     if (!(front->resource.usage & WINED3DUSAGE_RENDERTARGET))
         return;
 
+    if (front->flags & SFLAG_LOCKED)
+        ERR("Trying to blit a mapped surface.\n");
+
     TRACE("Copying surface %p to screen.\n", front);
 
     src_dc = front->hDC;
@@ -690,48 +693,13 @@ void x11_copy_to_screen(const struct wined3d_swapchain *swapchain, const RECT *r
 
     TRACE("offset %s.\n", wine_dbgstr_point(&offset));
 
-#if 0
-    /* FIXME: This doesn't work... if users really want to run
-     * X in 8bpp, then we need to call directly into display.drv
-     * (or Wine's equivalent), and force a private colormap
-     * without default entries. */
-    if (front->palette)
-    {
-        SelectPalette(dst_dc, front->palette->hpal, FALSE);
-        RealizePalette(dst_dc); /* sends messages => deadlocks */
-    }
-#endif
-
     draw_rect.left = 0;
     draw_rect.right = front->resource.width;
     draw_rect.top = 0;
     draw_rect.bottom = front->resource.height;
 
-#if 0
-    /* TODO: Support clippers. */
-    if (front->clipper)
-    {
-        RECT xrc;
-        HWND hwnd = front->clipper->hWnd;
-        if (hwnd && GetClientRect(hwnd,&xrc))
-        {
-            OffsetRect(&xrc, offset.x, offset.y);
-            IntersectRect(&draw_rect, &draw_rect, &xrc);
-        }
-    }
-#endif
-
-    if (!rect)
-    {
-        /* Only use this if the caller did not pass a rectangle, since
-         * due to double locking this could be the wrong one... */
-        if (front->lockedRect.left != front->lockedRect.right)
-            IntersectRect(&draw_rect, &draw_rect, &front->lockedRect);
-    }
-    else
-    {
+    if (rect)
         IntersectRect(&draw_rect, &draw_rect, rect);
-    }
 
     BitBlt(dst_dc, draw_rect.left - offset.x, draw_rect.top - offset.y,
             draw_rect.right - draw_rect.left, draw_rect.bottom - draw_rect.top,
