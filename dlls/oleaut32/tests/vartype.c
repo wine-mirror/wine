@@ -5152,7 +5152,7 @@ static void test_VarBstrCmp(void)
     SysFreeString(bstr);
 
     bstr = SysAllocStringByteLen(sbchr0, sizeof(sbchr0));
-    bstr2 = SysAllocStringByteLen(sbchr0, sizeof(sbchr00));
+    bstr2 = SysAllocStringByteLen(sbchr00, sizeof(sbchr00));
     VARBSTRCMP(bstr,bstrempty,0,VARCMP_GT);
     VARBSTRCMP(bstrempty,bstr,0,VARCMP_LT);
     VARBSTRCMP(bstr2,bstrempty,0,VARCMP_GT);
@@ -5171,7 +5171,7 @@ static void test_VarBstrCmp(void)
     SysFreeString(bstr);
 
     bstr = SysAllocStringByteLen(sbchr0, sizeof(sbchr0));
-    bstr2 = SysAllocStringByteLen(sbchr0, sizeof(sbchr00));
+    bstr2 = SysAllocStringByteLen(sbchr00, sizeof(sbchr00));
     VARBSTRCMP(bstr,bstrempty,0,VARCMP_GT);
     VARBSTRCMP(bstrempty,bstr,0,VARCMP_LT);
     VARBSTRCMP(bstr2,bstrempty,0,VARCMP_GT);
