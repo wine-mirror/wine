@@ -104,6 +104,8 @@ static ULONG WINAPI MimeInternat_Release( IMimeInternational *iface )
             list_remove(&charset->entry);
             HeapFree(GetProcessHeap(), 0, charset);
         }
+        This->cs.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&This->cs);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -527,6 +529,7 @@ HRESULT MimeInternational_Construct(IMimeInternational **internat)
     global_internat->IMimeInternational_iface.lpVtbl = &mime_internat_vtbl;
     global_internat->refs = 0;
     InitializeCriticalSection(&global_internat->cs);
+    global_internat->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": global_internat.cs");
 
     list_init(&global_internat->charsets);
     global_internat->next_charset_handle = 0;
