@@ -324,7 +324,7 @@ enum wined3d_immconst_type
 
 #define WINED3DSP_NOSWIZZLE (0 | (1 << 2) | (2 << 4) | (3 << 6))
 
-typedef enum _WINED3DSHADER_PARAM_SRCMOD_TYPE
+enum wined3d_shader_src_modifier
 {
     WINED3DSPSM_NONE = 0,
     WINED3DSPSM_NEG = 1,
@@ -340,7 +340,7 @@ typedef enum _WINED3DSHADER_PARAM_SRCMOD_TYPE
     WINED3DSPSM_ABS = 11,
     WINED3DSPSM_ABSNEG = 12,
     WINED3DSPSM_NOT = 13,
-} WINED3DSHADER_PARAM_SRCMOD_TYPE;
+};
 
 #define WINED3DSP_WRITEMASK_0   0x1 /* .x r */
 #define WINED3DSP_WRITEMASK_1   0x2 /* .y g */
@@ -617,7 +617,7 @@ struct wined3d_shader_src_param
 {
     struct wined3d_shader_register reg;
     DWORD swizzle;
-    DWORD modifiers;
+    enum wined3d_shader_src_modifier modifiers;
 };
 
 struct wined3d_shader_instruction

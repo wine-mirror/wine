@@ -1099,7 +1099,7 @@ void shader_dump_dst_param(const struct wined3d_shader_dst_param *param,
 void shader_dump_src_param(const struct wined3d_shader_src_param *param,
         const struct wined3d_shader_version *shader_version)
 {
-    DWORD src_modifier = param->modifiers;
+    enum wined3d_shader_src_modifier src_modifier = param->modifiers;
     DWORD swizzle = param->swizzle;
 
     if (src_modifier == WINED3DSPSM_NEG

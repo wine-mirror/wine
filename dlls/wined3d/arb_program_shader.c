@@ -1951,8 +1951,9 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
     }
     else if (shader_version < WINED3D_SHADER_VERSION(2,0))
     {
-        DWORD src_mod = ins->src[0].modifiers;
-        if (src_mod == WINED3DSPSM_DZ) {
+        enum wined3d_shader_src_modifier src_mod = ins->src[0].modifiers;
+        if (src_mod == WINED3DSPSM_DZ)
+        {
             /* TXP cannot handle DZ natively, so move the z coordinate to .w. reg_coord is a read-only
              * varying register, so we need a temp reg
              */

@@ -1234,7 +1234,8 @@ static const char * const shift_glsl_tab[] = {
 };
 
 /* Generate a GLSL parameter that does the input modifier computation and return the input register/mask to use */
-static void shader_glsl_gen_modifier(DWORD src_modifier, const char *in_reg, const char *in_regswizzle, char *out_str)
+static void shader_glsl_gen_modifier(enum wined3d_shader_src_modifier src_modifier,
+        const char *in_reg, const char *in_regswizzle, char *out_str)
 {
     out_str[0] = 0;
 
@@ -3054,7 +3055,7 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
     }
     else if (shader_version < WINED3D_SHADER_VERSION(2,0))
     {
-        DWORD src_mod = ins->src[0].modifiers;
+        enum wined3d_shader_src_modifier src_mod = ins->src[0].modifiers;
 
         if (src_mod == WINED3DSPSM_DZ) {
             sample_flags |= WINED3D_GLSL_SAMPLE_PROJECTED;
@@ -3187,9 +3188,11 @@ static void shader_glsl_texcoord(const struct wined3d_shader_instruction *ins)
         shader_glsl_get_write_mask(&ins->dst[0], dst_mask);
         shader_addline(buffer, "clamp(gl_TexCoord[%u], 0.0, 1.0)%s);\n",
                 ins->dst[0].reg.idx, dst_mask);
-    } else {
+    }
+    else
+    {
+        enum wined3d_shader_src_modifier src_mod = ins->src[0].modifiers;
         DWORD reg = ins->src[0].reg.idx;
-        DWORD src_mod = ins->src[0].modifiers;
         char dst_swizzle[6];
 
         shader_glsl_get_swizzle(&ins->src[0], FALSE, write_mask, dst_swizzle);
