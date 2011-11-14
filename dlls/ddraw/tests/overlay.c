@@ -263,22 +263,27 @@ static void yv12_test(void)
     }
 
     hr = IDirectDrawSurface7_Blt(dst, NULL, surface, NULL, 0, NULL);
-    ok(hr == DD_OK, "IDirectDrawSurface7_Blt returned 0x%08x, expected DD_OK\n", hr);
+    /* VMware rejects YV12 blits. This behavior has not been seen on real hardware yet, so mark it broken */
+    ok(hr == DD_OK || broken(hr == E_NOTIMPL),
+            "IDirectDrawSurface7_Blt returned 0x%08x, expected DD_OK\n", hr);
 
-    memset(&desc, 0, sizeof(desc));
-    desc.dwSize = sizeof(desc);
-    hr = IDirectDrawSurface7_Lock(dst, NULL, &desc, 0, NULL);
-    ok(hr == DD_OK, "IDirectDrawSurface7_Lock returned 0x%08x, expected DD_OK\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        memset(&desc, 0, sizeof(desc));
+        desc.dwSize = sizeof(desc);
+        hr = IDirectDrawSurface7_Lock(dst, NULL, &desc, 0, NULL);
+        ok(hr == DD_OK, "IDirectDrawSurface7_Lock returned 0x%08x, expected DD_OK\n", hr);
 
-    base = desc.lpSurface;
-    ok(base[0] == 0x10, "Y data is 0x%02x, expected 0x10\n", base[0]);
-    base += desc.dwHeight * desc.lPitch;
-    todo_wine ok(base[0] == 0x20, "V data is 0x%02x, expected 0x20\n", base[0]);
-    base += desc.dwHeight / 4 * desc.lPitch;
-    todo_wine ok(base[0] == 0x30, "U data is 0x%02x, expected 0x30\n", base[0]);
+        base = desc.lpSurface;
+        ok(base[0] == 0x10, "Y data is 0x%02x, expected 0x10\n", base[0]);
+        base += desc.dwHeight * desc.lPitch;
+        todo_wine ok(base[0] == 0x20, "V data is 0x%02x, expected 0x20\n", base[0]);
+        base += desc.dwHeight / 4 * desc.lPitch;
+        todo_wine ok(base[0] == 0x30, "U data is 0x%02x, expected 0x30\n", base[0]);
 
-    hr = IDirectDrawSurface7_Unlock(dst, NULL);
-    ok(hr == DD_OK, "IDirectDrawSurface7_Unlock returned 0x%08x, expected DD_OK\n", hr);
+        hr = IDirectDrawSurface7_Unlock(dst, NULL);
+        ok(hr == DD_OK, "IDirectDrawSurface7_Unlock returned 0x%08x, expected DD_OK\n", hr);
+    }
 
     IDirectDrawSurface7_Release(dst);
 cleanup:
