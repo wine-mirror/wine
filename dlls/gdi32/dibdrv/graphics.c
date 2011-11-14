@@ -122,14 +122,141 @@ static inline void get_text_bkgnd_masks( const dibdrv_physdev *pdev, rop_mask *m
     }
 }
 
+static void draw_glyph( dibdrv_physdev *pdev, const POINT *origin, const GLYPHMETRICS *metrics,
+                        const struct gdi_image_bits *image )
+{
+    const WINEREGION *clip = get_wine_region( pdev->clip );
+    int i;
+    RECT rect, clipped_rect;
+    POINT src_origin;
+    static dib_info glyph_dib;
+
+    glyph_dib.bit_count = 8;
+    glyph_dib.width     = metrics->gmBlackBoxX;
+    glyph_dib.height    = metrics->gmBlackBoxY;
+    glyph_dib.stride    = get_dib_stride( metrics->gmBlackBoxX, 8 );
+    glyph_dib.bits      = *image;
+
+    rect.left   = origin->x  + metrics->gmptGlyphOrigin.x;
+    rect.top    = origin->y  - metrics->gmptGlyphOrigin.y;
+    rect.right  = rect.left  + metrics->gmBlackBoxX;
+    rect.bottom = rect.top   + metrics->gmBlackBoxY;
+
+    for (i = 0; i < clip->numRects; i++)
+    {
+        if (intersect_rect( &clipped_rect, &rect, clip->rects + i ))
+        {
+            src_origin.x = clipped_rect.left - rect.left;
+            src_origin.y = clipped_rect.top  - rect.top;
+
+            pdev->dib.funcs->draw_glyph( &pdev->dib, &clipped_rect, &glyph_dib, &src_origin,
+                                         pdev->text_color, pdev->glyph_intensities );
+        }
+    }
+
+    release_wine_region( pdev->clip );
+}
+
+static inline UINT get_aa_flags( dibdrv_physdev *pdev )
+{
+    LOGFONTW lf;
+
+    if (pdev->dib.bit_count <= 8) return GGO_BITMAP;
+
+    GetObjectW( GetCurrentObject( pdev->dev.hdc, OBJ_FONT ), sizeof(lf), &lf );
+    if (lf.lfQuality == NONANTIALIASED_QUALITY) return GGO_BITMAP;
+
+    /* FIXME, check gasp and user prefs */
+    return GGO_GRAY4_BITMAP;
+}
+
+static const BYTE masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
+static const int padding[4] = {0, 3, 2, 1};
+
+/***********************************************************************
+ *         get_glyph_bitmap
+ *
+ * Retrieve a 17-level bitmap for the appropiate glyph.
+ *
+ * For non-antialiased bitmaps convert them to the 17-level format
+ * using only values 0 or 16.
+ */
+static DWORD get_glyph_bitmap( dibdrv_physdev *pdev, UINT index, GLYPHMETRICS *metrics,
+                               struct gdi_image_bits *image )
+{
+    UINT aa_flags = get_aa_flags( pdev ), ggo_flags = aa_flags | GGO_GLYPH_INDEX;
+    static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
+    UINT indices[3] = {0, 0, 0x20};
+    int i, x, y;
+    DWORD ret, size;
+    BYTE *buf, *dst, *src;
+    int pad, stride;
+
+    image->ptr = NULL;
+    image->is_copy = FALSE;
+    image->free = free_heap_bits;
+    image->param = NULL;
+
+    indices[0] = index;
+
+    for (i = 0; i < sizeof(indices) / sizeof(indices[0]); index = indices[++i])
+    {
+        ret = GetGlyphOutlineW( pdev->dev.hdc, index, ggo_flags, metrics, 0, NULL, &identity );
+        if (ret != GDI_ERROR) break;
+    }
+
+    if (ret == GDI_ERROR) return ERROR_NOT_FOUND;
+    if (!ret) return ERROR_SUCCESS; /* empty glyph */
+
+    /* We'll convert non-antialiased 1-bpp bitmaps to 8-bpp, so these sizes relate to 8-bpp */
+    pad = padding[ metrics->gmBlackBoxX % 4 ];
+    stride = get_dib_stride( metrics->gmBlackBoxX, 8 );
+    size = metrics->gmBlackBoxY * stride;
+
+    buf = HeapAlloc( GetProcessHeap(), 0, size );
+    if (!buf) return ERROR_OUTOFMEMORY;
+
+    ret = GetGlyphOutlineW( pdev->dev.hdc, index, ggo_flags, metrics, size, buf, &identity );
+    if (ret == GDI_ERROR)
+    {
+        HeapFree( GetProcessHeap(), 0, buf );
+        return ERROR_NOT_FOUND;
+    }
+
+    if (aa_flags == GGO_BITMAP)
+    {
+        for (y = metrics->gmBlackBoxY - 1; y >= 0; y--)
+        {
+            src = buf + y * get_dib_stride( metrics->gmBlackBoxX, 1 );
+            dst = buf + y * stride;
+
+            if (pad) memset( dst + metrics->gmBlackBoxX, 0, pad );
+
+            for (x = metrics->gmBlackBoxX - 1; x >= 0; x--)
+                dst[x] = (src[x / 8] & masks[x % 8]) ? 0x10 : 0;
+        }
+    }
+    else if (pad)
+    {
+        for (y = 0, dst = buf; y < metrics->gmBlackBoxY; y++, dst += stride)
+            memset( dst + metrics->gmBlackBoxX, 0, pad );
+    }
+
+    image->ptr = buf;
+    return ERROR_SUCCESS;
+}
+
 /***********************************************************************
  *           dibdrv_ExtTextOut
  */
 BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
                         const RECT *rect, LPCWSTR str, UINT count, const INT *dx )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pExtTextOut );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+    UINT i;
+    POINT origin;
+    DWORD err;
+    HRGN saved_clip = NULL;
 
     if (flags & ETO_OPAQUE)
     {
@@ -140,8 +267,45 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 
     if (count == 0) return TRUE;
 
-    flags &= ~ETO_OPAQUE;
-    return next->funcs->pExtTextOut( next, x, y, flags, rect, str, count, dx );
+    if (flags & ETO_CLIPPED)
+    {
+        HRGN clip = CreateRectRgnIndirect( rect );
+        saved_clip = add_extra_clipping_region( pdev, clip );
+        DeleteObject( clip );
+    }
+
+    origin.x = x;
+    origin.y = y;
+    for (i = 0; i < count; i++)
+    {
+        GLYPHMETRICS metrics;
+        struct gdi_image_bits image;
+
+        err = get_glyph_bitmap( pdev, (UINT)str[i], &metrics, &image );
+        if (err) continue;
+
+        if (image.ptr) draw_glyph( pdev, &origin, &metrics, &image );
+        if (image.free) image.free( &image );
+
+        if (dx)
+        {
+            if (flags & ETO_PDY)
+            {
+                origin.x += dx[ i * 2 ];
+                origin.y += dx[ i * 2 + 1];
+            }
+            else
+                origin.x += dx[ i ];
+        }
+        else
+        {
+            origin.x += metrics.gmCellIncX;
+            origin.y += metrics.gmCellIncY;
+        }
+    }
+
+    restore_clipping_region( pdev, saved_clip );
+    return TRUE;
 }
 
 /***********************************************************************
