@@ -56,6 +56,53 @@ static RECT get_device_rect( HDC hdc, int left, int top, int right, int bottom, 
     return rect;
 }
 
+/* Intensities of the 17 glyph levels when drawn with text component of 0xff on a
+   black bkgnd.  [A log-log plot of these data gives: y = 77.05 * x^0.4315]. */
+static const BYTE ramp[17] =
+{
+    0,    0x4d, 0x68, 0x7c,
+    0x8c, 0x9a, 0xa7, 0xb2,
+    0xbd, 0xc7, 0xd0, 0xd9,
+    0xe1, 0xe9, 0xf0, 0xf8,
+    0xff
+};
+
+/* For a give text-color component and a glyph level, calculate the
+   range of dst intensities, the min/max corresponding to 0/0xff bkgnd
+   components respectively.
+
+   The minimum is a linear interpolation between 0 and the value in
+   the ramp table.
+
+   The maximum is a linear interpolation between the value from the
+   ramp table read in reverse and 0xff.
+
+   To find the resulting pixel intensity, we note that if the text and
+   bkgnd intensities are the same then the result must be that
+   intensity.  Otherwise we linearly interpolate between either the
+   min or the max value and this intermediate value depending on which
+   side of the inequality we lie.
+*/
+
+static inline void get_range( BYTE aa, DWORD text_comp, BYTE *min_comp, BYTE *max_comp )
+{
+    *min_comp = (ramp[aa] * text_comp) / 0xff;
+    *max_comp = ramp[16 - aa] + ((0xff - ramp[16 - aa]) * text_comp) / 0xff;
+}
+
+void update_aa_ranges( dibdrv_physdev *pdev )
+{
+    int i;
+    COLORREF text = pdev->dib.funcs->pixel_to_colorref( &pdev->dib, pdev->text_color );
+
+    for (i = 0; i < 17; i++)
+    {
+        get_range( i, GetRValue(text), &pdev->glyph_intensities[i].r_min, &pdev->glyph_intensities[i].r_max );
+        get_range( i, GetGValue(text), &pdev->glyph_intensities[i].g_min, &pdev->glyph_intensities[i].g_max );
+        get_range( i, GetBValue(text), &pdev->glyph_intensities[i].b_min, &pdev->glyph_intensities[i].b_max );
+    }
+}
+
 /**********************************************************************
  *                 get_text_bkgnd_masks
  *

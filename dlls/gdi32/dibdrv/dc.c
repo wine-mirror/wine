@@ -528,6 +528,7 @@ static COLORREF dibdrv_SetTextColor( PHYSDEV dev, COLORREF color )
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
 
     pdev->text_color = get_pixel_color( pdev, color, TRUE );
+    update_aa_ranges( pdev );
 
     return next->funcs->pSetTextColor( next, color );
 }

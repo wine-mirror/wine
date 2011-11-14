@@ -67,6 +67,13 @@ typedef struct
     void *xor;
 } rop_mask_bits;
 
+struct intensity_range
+{
+    BYTE r_min, r_max;
+    BYTE g_min, g_max;
+    BYTE b_min, b_max;
+};
+
 typedef struct dibdrv_physdev
 {
     struct gdi_physdev dev;
@@ -100,6 +107,7 @@ typedef struct dibdrv_physdev
 
     /* text */
     DWORD text_color;
+    struct intensity_range glyph_intensities[17];
 } dibdrv_physdev;
 
 #define DEFER_FORMAT     1
@@ -218,6 +226,7 @@ extern HRGN add_extra_clipping_region( dibdrv_physdev *pdev, HRGN rgn ) DECLSPEC
 extern void restore_clipping_region( dibdrv_physdev *pdev, HRGN rgn ) DECLSPEC_HIDDEN;
 extern int clip_line(const POINT *start, const POINT *end, const RECT *clip,
                      const bres_params *params, POINT *pt1, POINT *pt2) DECLSPEC_HIDDEN;
+extern void update_aa_ranges( dibdrv_physdev *pdev ) DECLSPEC_HIDDEN;
 
 static inline BOOL defer_pen(dibdrv_physdev *pdev)
 {
