@@ -122,6 +122,9 @@ typedef int (*lexical_function)(WCHAR c);
 typedef void (*reorder_function)(LPWSTR pwChar, IndicSyllable *syllable, lexical_function lex);
 
 #define odd(x) ((x) & 1)
+#define BIDI_STRONG  1
+#define BIDI_WEAK    2
+#define BIDI_NEUTRAL 0
 
 BOOL BIDI_DetermineLevels( LPCWSTR lpString, INT uCount, const SCRIPT_STATE *s,
                 const SCRIPT_CONTROL *c, WORD *lpOutLevels ) DECLSPEC_HIDDEN;

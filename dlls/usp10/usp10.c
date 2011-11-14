@@ -805,6 +805,7 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
     WORD  *levels = NULL;
     WORD  *strength = NULL;
     WORD  baselevel = 0;
+    BOOL  new_run;
 
     TRACE("%s,%d,%d,%p,%p,%p,%p\n", debugstr_wn(pwcInChars, cInChars), cInChars, cMaxItems, 
           psControl, psState, pItems, pcItems);
@@ -876,10 +877,13 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
     pItems[index].a = scriptInformation[get_char_script(pwcInChars[cnt])].a;
     pScriptTags[index] = scriptInformation[get_char_script(pwcInChars[cnt])].scriptTag;
 
-    if (strength)
+    if (strength && strength[cnt] == BIDI_STRONG)
         str = strength[cnt];
+    else if (strength)
+        str = strength[0];
 
     cnt = 0;
+
     if (levels)
     {
         pItems[index].a.fRTL = odd(levels[cnt]);
@@ -899,9 +903,6 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
 
     for (cnt=1; cnt < cInChars; cnt++)
     {
-        if (levels && (levels[cnt] == pItems[index].a.s.uBidiLevel && (!strength || (strength[cnt] == 0 || strength[cnt] == str))))
-            continue;
-
         if(pwcInChars[cnt] != Numeric_space && pwcInChars[cnt] != ZWJ && pwcInChars[cnt] != ZWNJ)
             New_Script = get_char_script(pwcInChars[cnt]);
         else if (levels)
@@ -915,16 +916,43 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
                 New_Script = get_char_script(pwcInChars[cnt]);
         }
 
-        if ((levels && (levels[cnt] != pItems[index].a.s.uBidiLevel || (strength && (strength[cnt] != str)))) || (New_Script != -1 && New_Script != pItems[index].a.eScript) || New_Script == Script_Control)
+        new_run = FALSE;
+        /* merge space strengths*/
+        if (strength && strength[cnt] == BIDI_STRONG && str != BIDI_STRONG && New_Script == pItems[index].a.eScript)
+            str = BIDI_STRONG;
+
+        if (strength && strength[cnt] == BIDI_NEUTRAL && str == BIDI_STRONG && pwcInChars[cnt] != Numeric_space && New_Script == pItems[index].a.eScript)
+            str = BIDI_NEUTRAL;
+
+        /* changes in level */
+        if (levels && (levels[cnt] != pItems[index].a.s.uBidiLevel))
+        {
+            TRACE("Level break(%i/%i)\n",pItems[index].a.s.uBidiLevel,levels[cnt]);
+            new_run = TRUE;
+        }
+        /* changes in strength */
+        else if (strength && pwcInChars[cnt] != Numeric_space && str != strength[cnt])
+        {
+            TRACE("Strength break (%i/%i)\n",str,strength[cnt]);
+            new_run = TRUE;
+        }
+        /* changes in script */
+        else if ((!levels) && (((pwcInChars[cnt] != Numeric_space) && (New_Script != -1) && (New_Script != pItems[index].a.eScript)) || (New_Script == Script_Control)))
+        {
+            TRACE("Script break(%i/%i)\n",pItems[index].a.eScript,New_Script);
+            new_run = TRUE;
+        }
+
+        if (new_run)
         {
             TRACE("New_Level = %i, New_Strength = %i, New_Script=%d, eScript=%d\n", levels?levels[cnt]:-1, strength?strength[cnt]:str, New_Script, pItems[index].a.eScript);
-
-            if (strength && strength[cnt] != 0)
-                str = strength[cnt];
 
             index++;
             if  (index+1 > cMaxItems)
                 return E_OUTOFMEMORY;
+
+            if (strength)
+                str = strength[cnt];
 
             pItems[index].iCharPos = cnt;
             memset(&pItems[index].a, 0, sizeof(SCRIPT_ANALYSIS));

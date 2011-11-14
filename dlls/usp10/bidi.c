@@ -901,7 +901,7 @@ BOOL BIDI_GetStrengths(LPCWSTR lpString, INT uCount, const SCRIPT_CONTROL *c,
             case AL:
             case RLE:
             case RLO:
-                lpStrength[i] = 1;
+                lpStrength[i] = BIDI_STRONG;
                 break;
             case PDF:
             case EN:
@@ -910,10 +910,14 @@ BOOL BIDI_GetStrengths(LPCWSTR lpString, INT uCount, const SCRIPT_CONTROL *c,
             case AN:
             case CS:
             case BN:
-                lpStrength[i] = 2;
+                lpStrength[i] = BIDI_WEAK;
                 break;
+            case B:
+            case S:
+            case WS:
+            case ON:
             default: /* Neutrals and NSM */
-                lpStrength[i] = 0;
+                lpStrength[i] = BIDI_NEUTRAL;
         }
     }
     return TRUE;
