@@ -163,6 +163,8 @@ typedef struct primitive_funcs
                                     const POINT *origin, int rop2, int overlap);
     void             (* blend_rect)(const dib_info *dst, const RECT *rc, const dib_info *src,
                                     const POINT *origin, BLENDFUNCTION blend);
+    void             (* draw_glyph)(const dib_info *dst, const RECT *rc, const dib_info *glyph,
+                                    const POINT *origin, DWORD text_pixel, const struct intensity_range *ranges);
     DWORD             (* get_pixel)(const dib_info *dib, const POINT *pt);
     DWORD     (* colorref_to_pixel)(const dib_info *dib, COLORREF color);
     COLORREF  (* pixel_to_colorref)(const dib_info *dib, DWORD pixel);

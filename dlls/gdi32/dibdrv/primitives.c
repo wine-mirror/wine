@@ -3756,6 +3756,243 @@ static void blend_rect_null(const dib_info *dst, const RECT *rc,
 {
 }
 
+static inline BYTE aa_color( BYTE dst, BYTE text, BYTE min_comp, BYTE max_comp )
+{
+    if (dst == text) return dst;
+
+    if (dst > text)
+    {
+        DWORD diff = dst - text;
+        DWORD range = max_comp - text;
+        dst = text + (diff * range ) / (0xff - text);
+        return dst;
+    }
+    else
+    {
+        DWORD diff = text - dst;
+        DWORD range = text - min_comp;
+        dst = text - (diff * range) / text;
+        return dst;
+    }
+}
+
+static inline DWORD aa_rgb( BYTE r_dst, BYTE g_dst, BYTE b_dst, DWORD text, const struct intensity_range *range )
+{
+    return (aa_color( b_dst, text,       range->b_min, range->b_max )      |
+            aa_color( g_dst, text >> 8,  range->g_min, range->g_max ) << 8 |
+            aa_color( r_dst, text >> 16, range->r_min, range->r_max ) << 16);
+}
+
+static void draw_glyph_8888( const dib_info *dib, const RECT *rect, const dib_info *glyph,
+                             const POINT *origin, DWORD text_pixel, const struct intensity_range *ranges )
+{
+    DWORD *dst_ptr = get_pixel_ptr_32( dib, rect->left, rect->top );
+    const BYTE *glyph_ptr = get_pixel_ptr_8( glyph, origin->x, origin->y );
+    int x, y;
+
+    for (y = rect->top; y < rect->bottom; y++)
+    {
+        for (x = 0; x < rect->right - rect->left; x++)
+        {
+            if (glyph_ptr[x] <= 1) continue;
+            if (glyph_ptr[x] >= 16) { dst_ptr[x] = text_pixel; continue; }
+            dst_ptr[x] = aa_rgb( dst_ptr[x] >> 16, dst_ptr[x] >> 8, dst_ptr[x], text_pixel, ranges + glyph_ptr[x] );
+        }
+        dst_ptr += dib->stride / 4;
+        glyph_ptr += glyph->stride;
+    }
+}
+
+static void draw_glyph_32( const dib_info *dib, const RECT *rect, const dib_info *glyph,
+                           const POINT *origin, DWORD text_pixel, const struct intensity_range *ranges )
+{
+    DWORD *dst_ptr = get_pixel_ptr_32( dib, rect->left, rect->top );
+    const BYTE *glyph_ptr = get_pixel_ptr_8( glyph, origin->x, origin->y );
+    int x, y;
+    DWORD text, val;
+
+    text = get_field( text_pixel, dib->red_shift,   dib->red_len ) << 16 |
+           get_field( text_pixel, dib->green_shift, dib->green_len ) << 8 |
+           get_field( text_pixel, dib->blue_shift,  dib->blue_len );
+
+    for (y = rect->top; y < rect->bottom; y++)
+    {
+        for (x = 0; x < rect->right - rect->left; x++)
+        {
+            if (glyph_ptr[x] <= 1) continue;
+            if (glyph_ptr[x] >= 16) { dst_ptr[x] = text_pixel; continue; }
+            val = aa_rgb( get_field(dst_ptr[x], dib->red_shift,   dib->red_len),
+                          get_field(dst_ptr[x], dib->green_shift, dib->green_len),
+                          get_field(dst_ptr[x], dib->blue_shift,  dib->blue_len),
+                          text, ranges + glyph_ptr[x] );
+            dst_ptr[x] = (put_field( val >> 16, dib->red_shift,   dib->red_len )   |
+                          put_field( val >> 8,  dib->green_shift, dib->green_len ) |
+                          put_field( val,       dib->blue_shift,  dib->blue_len ));
+        }
+        dst_ptr += dib->stride / 4;
+        glyph_ptr += glyph->stride;
+    }
+}
+
+static void draw_glyph_24( const dib_info *dib, const RECT *rect, const dib_info *glyph,
+                           const POINT *origin, DWORD text_pixel, const struct intensity_range *ranges )
+{
+    BYTE *dst_ptr = get_pixel_ptr_24( dib, rect->left, rect->top );
+    const BYTE *glyph_ptr = get_pixel_ptr_8( glyph, origin->x, origin->y );
+    int x, y;
+    DWORD val;
+
+    for (y = rect->top; y < rect->bottom; y++)
+    {
+        for (x = 0; x < rect->right - rect->left; x++)
+        {
+            if (glyph_ptr[x] <= 1) continue;
+            if (glyph_ptr[x] >= 16)
+                val = text_pixel;
+            else
+                val = aa_rgb( dst_ptr[x * 3 + 2], dst_ptr[x * 3 + 1], dst_ptr[x * 3],
+                              text_pixel, ranges + glyph_ptr[x] );
+            dst_ptr[x * 3]     = val;
+            dst_ptr[x * 3 + 1] = val >> 8;
+            dst_ptr[x * 3 + 2] = val >> 16;
+        }
+        dst_ptr += dib->stride;
+        glyph_ptr += glyph->stride;
+    }
+}
+
+static void draw_glyph_555( const dib_info *dib, const RECT *rect, const dib_info *glyph,
+                            const POINT *origin, DWORD text_pixel, const struct intensity_range *ranges )
+{
+    WORD *dst_ptr = get_pixel_ptr_16( dib, rect->left, rect->top );
+    const BYTE *glyph_ptr = get_pixel_ptr_8( glyph, origin->x, origin->y );
+    int x, y;
+    DWORD text, val;
+
+    text = ((text_pixel << 9) & 0xf80000) | ((text_pixel << 4) & 0x070000) |
+           ((text_pixel << 6) & 0x00f800) | ((text_pixel << 1) & 0x000700) |
+           ((text_pixel << 3) & 0x0000f8) | ((text_pixel >> 2) & 0x000007);
+
+    for (y = rect->top; y < rect->bottom; y++)
+    {
+        for (x = 0; x < rect->right - rect->left; x++)
+        {
+            if (glyph_ptr[x] <= 1) continue;
+            if (glyph_ptr[x] >= 16) { dst_ptr[x] = text_pixel; continue; }
+            val = aa_rgb( ((dst_ptr[x] >> 7) & 0xf8) | ((dst_ptr[x] >> 12) & 0x07),
+                          ((dst_ptr[x] >> 2) & 0xf8) | ((dst_ptr[x] >>  7) & 0x07),
+                          ((dst_ptr[x] << 3) & 0xf8) | ((dst_ptr[x] >>  2) & 0x07),
+                          text, ranges + glyph_ptr[x] );
+            dst_ptr[x] = ((val >> 9) & 0x7c00) | ((val >> 6) & 0x03e0) | ((val >> 3) & 0x001f);
+        }
+        dst_ptr += dib->stride / 2;
+        glyph_ptr += glyph->stride;
+    }
+}
+
+static void draw_glyph_16( const dib_info *dib, const RECT *rect, const dib_info *glyph,
+                           const POINT *origin, DWORD text_pixel, const struct intensity_range *ranges )
+{
+    WORD *dst_ptr = get_pixel_ptr_16( dib, rect->left, rect->top );
+    const BYTE *glyph_ptr = get_pixel_ptr_8( glyph, origin->x, origin->y );
+    int x, y;
+    DWORD text, val;
+
+    text = get_field( text_pixel, dib->red_shift,   dib->red_len ) << 16 |
+           get_field( text_pixel, dib->green_shift, dib->green_len ) << 8 |
+           get_field( text_pixel, dib->blue_shift,  dib->blue_len );
+
+    for (y = rect->top; y < rect->bottom; y++)
+    {
+        for (x = 0; x < rect->right - rect->left; x++)
+        {
+            if (glyph_ptr[x] <= 1) continue;
+            if (glyph_ptr[x] >= 16) { dst_ptr[x] = text_pixel; continue; }
+            val = aa_rgb( get_field(dst_ptr[x], dib->red_shift,   dib->red_len),
+                          get_field(dst_ptr[x], dib->green_shift, dib->green_len),
+                          get_field(dst_ptr[x], dib->blue_shift,  dib->blue_len),
+                          text, ranges + glyph_ptr[x] );
+            dst_ptr[x] = (put_field( val >> 16, dib->red_shift,   dib->red_len )   |
+                          put_field( val >> 8,  dib->green_shift, dib->green_len ) |
+                          put_field( val,       dib->blue_shift,  dib->blue_len ));
+        }
+        dst_ptr += dib->stride / 2;
+        glyph_ptr += glyph->stride;
+    }
+}
+
+static void draw_glyph_8( const dib_info *dib, const RECT *rect, const dib_info *glyph,
+                          const POINT *origin, DWORD text_pixel, const struct intensity_range *ranges )
+{
+    BYTE *dst_ptr = get_pixel_ptr_8( dib, rect->left, rect->top );
+    const BYTE *glyph_ptr = get_pixel_ptr_8( glyph, origin->x, origin->y );
+    int x, y;
+
+    for (y = rect->top; y < rect->bottom; y++)
+    {
+        for (x = 0; x < rect->right - rect->left; x++)
+        {
+            /* no antialiasing, glyph should only contain 0 or 16. */
+            if (glyph_ptr[x] >= 16)
+                dst_ptr[x] = text_pixel;
+        }
+        dst_ptr += dib->stride;
+        glyph_ptr += glyph->stride;
+    }
+}
+
+static void draw_glyph_4( const dib_info *dib, const RECT *rect, const dib_info *glyph,
+                          const POINT *origin, DWORD text_pixel, const struct intensity_range *ranges )
+{
+    BYTE *dst_ptr = get_pixel_ptr_4( dib, 0, rect->top );
+    const BYTE *glyph_ptr = get_pixel_ptr_8( glyph, origin->x - rect->left, origin->y );
+    int x, y;
+
+    for (y = rect->top; y < rect->bottom; y++)
+    {
+        for (x = rect->left; x < rect->right; x++)
+        {
+            /* no antialiasing, glyph should only contain 0 or 16. */
+            if (glyph_ptr[x] >= 16)
+            {
+                if (x & 1)
+                    dst_ptr[x / 2] = text_pixel | (dst_ptr[x / 2] & 0xf0);
+                else
+                    dst_ptr[x / 2] = (text_pixel << 4) | (dst_ptr[x / 2] & 0x0f);
+            }
+        }
+        dst_ptr += dib->stride;
+        glyph_ptr += glyph->stride;
+    }
+}
+
+static void draw_glyph_1( const dib_info *dib, const RECT *rect, const dib_info *glyph,
+                          const POINT *origin, DWORD text_pixel, const struct intensity_range *ranges )
+{
+    BYTE *dst_ptr = get_pixel_ptr_1( dib, 0, rect->top );
+    const BYTE *glyph_ptr = get_pixel_ptr_8( glyph, origin->x - rect->left, origin->y );
+    int x, y;
+    BYTE text = (text_pixel & 1) ? 0xff : 0;
+
+    for (y = rect->top; y < rect->bottom; y++)
+    {
+        for (x = rect->left; x < rect->right; x++)
+        {
+            /* no antialiasing, glyph should only contain 0 or 16. */
+            if (glyph_ptr[x] >= 16)
+                dst_ptr[x / 8] = (dst_ptr[x / 8] & ~pixel_masks_1[x % 8]) | (text & pixel_masks_1[x % 8]);
+        }
+        dst_ptr += dib->stride;
+        glyph_ptr += glyph->stride;
+    }
+}
+
+static void draw_glyph_null( const dib_info *dib, const RECT *rect, const dib_info *glyph,
+                             const POINT *origin, DWORD text_pixel, const struct intensity_range *ranges )
+{
+    return;
+}
+
 static BOOL create_rop_masks_32(const dib_info *dib, const dib_info *hatch, const rop_mask *fg, const rop_mask *bg, rop_mask_bits *bits)
 {
     BYTE *hatch_start = get_pixel_ptr_1(hatch, 0, 0), *hatch_ptr;
@@ -4395,6 +4632,7 @@ const primitive_funcs funcs_8888 =
     pattern_rects_32,
     copy_rect_32,
     blend_rect_8888,
+    draw_glyph_8888,
     get_pixel_32,
     colorref_to_pixel_888,
     pixel_to_colorref_888,
@@ -4410,6 +4648,7 @@ const primitive_funcs funcs_32 =
     pattern_rects_32,
     copy_rect_32,
     blend_rect_32,
+    draw_glyph_32,
     get_pixel_32,
     colorref_to_pixel_masks,
     pixel_to_colorref_masks,
@@ -4425,6 +4664,7 @@ const primitive_funcs funcs_24 =
     pattern_rects_24,
     copy_rect_24,
     blend_rect_24,
+    draw_glyph_24,
     get_pixel_24,
     colorref_to_pixel_888,
     pixel_to_colorref_888,
@@ -4440,6 +4680,7 @@ const primitive_funcs funcs_555 =
     pattern_rects_16,
     copy_rect_16,
     blend_rect_555,
+    draw_glyph_555,
     get_pixel_16,
     colorref_to_pixel_555,
     pixel_to_colorref_555,
@@ -4455,6 +4696,7 @@ const primitive_funcs funcs_16 =
     pattern_rects_16,
     copy_rect_16,
     blend_rect_16,
+    draw_glyph_16,
     get_pixel_16,
     colorref_to_pixel_masks,
     pixel_to_colorref_masks,
@@ -4470,6 +4712,7 @@ const primitive_funcs funcs_8 =
     pattern_rects_8,
     copy_rect_8,
     blend_rect_8,
+    draw_glyph_8,
     get_pixel_8,
     colorref_to_pixel_colortable,
     pixel_to_colorref_colortable,
@@ -4485,6 +4728,7 @@ const primitive_funcs funcs_4 =
     pattern_rects_4,
     copy_rect_4,
     blend_rect_4,
+    draw_glyph_4,
     get_pixel_4,
     colorref_to_pixel_colortable,
     pixel_to_colorref_colortable,
@@ -4500,6 +4744,7 @@ const primitive_funcs funcs_1 =
     pattern_rects_1,
     copy_rect_1,
     blend_rect_1,
+    draw_glyph_1,
     get_pixel_1,
     colorref_to_pixel_colortable,
     pixel_to_colorref_colortable,
@@ -4515,6 +4760,7 @@ const primitive_funcs funcs_null =
     pattern_rects_null,
     copy_rect_null,
     blend_rect_null,
+    draw_glyph_null,
     get_pixel_null,
     colorref_to_pixel_null,
     pixel_to_colorref_null,
