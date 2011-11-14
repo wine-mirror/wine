@@ -602,7 +602,10 @@ static BOOL image_pjpeg_filter(const BYTE *b, DWORD size)
 
 static BOOL image_tiff_filter(const BYTE *b, DWORD size)
 {
-    return size > 2 && b[0] == 0x4d && b[1] == 0x4d;
+    static const BYTE magic1[] = {0x4d,0x4d,0x00,0x2a};
+    static const BYTE magic2[] = {0x49,0x49,0x2a,0xff};
+
+    return size >= 4 && (!memcmp(b, magic1, 4) || !memcmp(b, magic2, 4));
 }
 
 static BOOL image_xpng_filter(const BYTE *b, DWORD size)

@@ -515,7 +515,7 @@ static BYTE data35[] = {0x89,'P','N','G',0x0d,0x0a,0x1a,0x0a,'x','x','x','x',0};
 static BYTE data36[] = {0x89,'P','N','G',0x0d,0x0a,0x1a,'x','x'};
 static BYTE data37[] = {0x89,'P','N','G',0x0d,0x0a,0x1a,0x0a,'<','h','t','m','l','>'};
 static BYTE data38[] = {0x00,0x89,'P','N','G',0x0d,0x0a,0x1a,0x0a,'x'};
-static BYTE data39[] = {0x4d,0x4d,0x00,0x2a};
+static BYTE data39[] = {0x4d,0x4d,0x00,0x2a,0xff};
 static BYTE data40[] = {0x4d,0x4d,0x00,0x2a,'<','h','t','m','l','>',0};
 static BYTE data41[] = {0x4d,0x4d,0xff};
 static BYTE data42[] = {0x4d,0x4d};
@@ -562,11 +562,12 @@ static BYTE data82[] = {'.','s','n','d',0};
 static BYTE data83[] = {'.','s','n','d'};
 static BYTE data84[] = {'.','s','n','d',0,'<','h','t','m','l','>',1,1};
 static BYTE data85[] = {'.','S','N','D',0};
+static BYTE data86[] = {0x49,0x49,0x2a,0xff};
 
 static const struct {
     BYTE *data;
     DWORD size;
-    LPCWSTR mime, mime_alt;
+    LPCWSTR mime, mime_alt, broken_mime;
 } mime_tests2[] = {
     {data1, sizeof(data1), mimeTextPlain},
     {data2, sizeof(data2), mimeAppOctetStream},
@@ -608,7 +609,7 @@ static const struct {
     {data38, sizeof(data38), mimeAppOctetStream},
     {data39, sizeof(data39), mimeImageTiff},
     {data40, sizeof(data40), mimeTextHtml, mimeImageTiff /* IE8 */},
-    {data41, sizeof(data41), mimeImageTiff},
+    {data41, sizeof(data41), mimeTextPlain, NULL, mimeImageTiff},
     {data42, sizeof(data42), mimeTextPlain},
     {data43, sizeof(data43), mimeAppOctetStream},
     {data44, sizeof(data44), mimeVideoAvi},
@@ -652,13 +653,15 @@ static const struct {
     {data82, sizeof(data82), mimeAudioBasic},
     {data83, sizeof(data83), mimeTextPlain},
     {data84, sizeof(data84), mimeTextHtml, mimeAudioBasic /* IE8 */},
-    {data85, sizeof(data85), mimeTextPlain}
+    {data85, sizeof(data85), mimeTextPlain},
+    {data86, sizeof(data86), mimeImageTiff, NULL, mimeTextPlain}
 };
 
 static void test_FindMimeFromData(void)
 {
     HRESULT hres;
     LPWSTR mime;
+    BYTE b;
     int i;
 
     for(i=0; i<sizeof(mime_tests)/sizeof(mime_tests[0]); i++) {
@@ -692,8 +695,12 @@ static void test_FindMimeFromData(void)
         hres = pFindMimeFromData(NULL, NULL, mime_tests2[i].data, mime_tests2[i].size,
                 NULL, 0, &mime, 0);
         ok(hres == S_OK, "[%d] FindMimeFromData failed: %08x\n", i, hres);
-        ok(!lstrcmpW(mime, mime_tests2[i].mime), "[%d] wrong mime: %s\n", i, wine_dbgstr_w(mime));
+        b = !lstrcmpW(mime, mime_tests2[i].mime);
+        ok(b || broken(mime_tests2[i].broken_mime && !lstrcmpW(mime, mime_tests2[i].broken_mime)),
+            "[%d] wrong mime: %s\n", i, wine_dbgstr_w(mime));
         CoTaskMemFree(mime);
+        if(!b)
+            continue;
 
         hres = pFindMimeFromData(NULL, NULL, mime_tests2[i].data, mime_tests2[i].size,
                 mimeTextHtml, 0, &mime, 0);
