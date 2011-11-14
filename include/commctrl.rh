@@ -16,15 +16,27 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/* Macro to deal with LP64 <=> LLP64 differences in numeric constants with 'l' modifier */
+#ifndef __MSABI_LONG
+# if defined(_MSC_VER) || defined(__MINGW32__) || defined(__CYGWIN__)
+#  define __MSABI_LONG(x)         x ## l
+# else
+#  define __MSABI_LONG(x)         x
+# endif
+#endif
+
 /* Header Control */
-#define HDS_HORZ        0x0000
-#define HDS_BUTTONS     0x0002
-#define HDS_HOTTRACK    0x0004
-#define HDS_HIDDEN      0x0008
-#define HDS_DRAGDROP    0x0040
-#define HDS_FULLDRAG    0x0080
-#define HDS_FILTERBAR   0x0100
-#define HDS_FLAT        0x0200
+#define HDS_HORZ            0x0000
+#define HDS_BUTTONS         0x0002
+#define HDS_HOTTRACK        0x0004
+#define HDS_HIDDEN          0x0008
+#define HDS_DRAGDROP        0x0040
+#define HDS_FULLDRAG        0x0080
+#define HDS_FILTERBAR       0x0100
+#define HDS_FLAT            0x0200
+#define HDS_CHECKBOXES      0x0400
+#define HDS_NOSIZING        0x0800
+#define HDS_OVERFLOW        0x1000
 
 /* Rebar Control */
 #define RBS_TOOLTIPS        0x0100
@@ -36,13 +48,14 @@
 #define RBS_VERTICALGRIPPER 0x4000
 #define RBS_DBLCLKTOGGLE    0x8000
 
-/*Tool tips */
+/* Tool tips */
 #define TTS_ALWAYSTIP       0x01
 #define TTS_NOPREFIX        0x02
 #define TTS_NOANIMATE       0x10
 #define TTS_NOFADE          0x20
 #define TTS_BALLOON         0x40
 #define TTS_CLOSE           0x80
+#define TTS_USEVISUALSTYLE  0x100
 
 /* Statusbar Control */
 #define SBARS_SIZEGRIP      0x0100
@@ -50,13 +63,13 @@
 #define SBT_TOOLTIPS        0x0800
 
 /* Toolbar Control */
-#define TBS_BOTTOM          0x0000
-#define TBS_HORZ            0x0000
-#define TBS_RIGHT           0x0000
 #define TBS_AUTOTICKS       0x0001
 #define TBS_VERT            0x0002
-#define TBS_LEFT            0x0004
+#define TBS_HORZ            0x0000
 #define TBS_TOP             0x0004
+#define TBS_BOTTOM          0x0000
+#define TBS_LEFT            0x0004
+#define TBS_RIGHT           0x0000
 #define TBS_BOTH            0x0008
 #define TBS_NOTICKS         0x0010
 #define TBS_ENABLESELRANGE  0x0020
@@ -80,22 +93,23 @@
 /* Progressbar Control */
 #define PBS_SMOOTH          0x01
 #define PBS_VERTICAL        0x04
+#define PBS_MARQUEE         0x08
+#define PBS_SMOOTHREVERSE   0x10
 
 /* Common Control Styles */
-#define CCS_TOP             0x00000001L
-#define CCS_NOMOVE          0x00000002L
-#define CCS_BOTTOM          0x00000003L
-#define CCS_NORESIZE        0x00000004L
-#define CCS_NOPARENTALIGN   0x00000008L
-#define CCS_ADJUSTABLE      0x00000020L
-#define CCS_NODIVIDER       0x00000040L
-#define CCS_VERT            0x00000080L
+#define CCS_TOP             __MSABI_LONG(0x00000001)
+#define CCS_NOMOVEY         __MSABI_LONG(0x00000002)
+#define CCS_BOTTOM          __MSABI_LONG(0x00000003)
+#define CCS_NORESIZE        __MSABI_LONG(0x00000004)
+#define CCS_NOPARENTALIGN   __MSABI_LONG(0x00000008)
+#define CCS_ADJUSTABLE      __MSABI_LONG(0x00000020)
+#define CCS_NODIVIDER       __MSABI_LONG(0x00000040)
+#define CCS_VERT            __MSABI_LONG(0x00000080)
 #define CCS_LEFT            (CCS_VERT | CCS_TOP)
 #define CCS_RIGHT           (CCS_VERT | CCS_BOTTOM)
 #define CCS_NOMOVEX         (CCS_VERT | CCS_NOMOVEY)
 
 /* Listview Control */
-#define LVS_ALIGNTOP        0x0000
 #define LVS_ICON            0x0000
 #define LVS_REPORT          0x0001
 #define LVS_SMALLICON       0x0002
@@ -109,14 +123,15 @@
 #define LVS_NOLABELWRAP     0x0080
 #define LVS_AUTOARRANGE     0x0100
 #define LVS_EDITLABELS      0x0200
-#define LVS_OWNERDRAWFIXED  0x0400
-#define LVS_ALIGNLEFT       0x0800
-#define LVS_ALIGNMASK       0x0c00
 #define LVS_OWNERDATA       0x1000
 #define LVS_NOSCROLL        0x2000
+#define LVS_TYPESTYLEMASK   0xfc00
+#define LVS_ALIGNTOP        0x0000
+#define LVS_ALIGNLEFT       0x0800
+#define LVS_ALIGNMASK       0x0c00
+#define LVS_OWNERDRAWFIXED  0x0400
 #define LVS_NOCOLUMNHEADER  0x4000
 #define LVS_NOSORTHEADER    0x8000
-#define LVS_TYPESTYLEMASK   0xfc00
 
 /* Treeview Control */
 #define TVS_HASBUTTONS      0x0001
@@ -137,49 +152,49 @@
 #define TVS_NOHSCROLL       0x8000
 
 /* Tab Control */
-#define TCS_RIGHTJUSTIFY        0x0000
-#define TCS_SINGLELINE          0x0000
-#define TCS_TABS                0x0000
-#define TCS_SCROLLOPPOSITE      0x0001
-#define TCS_BOTTOM              0x0002
-#define TCS_RIGHT               0x0002
-#define TCS_MULTISELECT         0x0004
-#define TCS_FLATBUTTONS         0x0008
-#define TCS_FORCEICONLEFT       0x0010
-#define TCS_FORCELABELLEFT      0x0020
-#define TCS_HOTTRACK            0x0040
-#define TCS_VERTICAL            0x0080
-#define TCS_BUTTONS             0x0100
-#define TCS_MULTILINE           0x0200
-#define TCS_FIXEDWIDTH          0x0400
-#define TCS_RAGGEDRIGHT         0x0800
-#define TCS_FOCUSONBUTTONDOWN   0x1000
-#define TCS_OWNERDRAWFIXED      0x2000
-#define TCS_TOOLTIPS            0x4000
-#define TCS_FOCUSNEVER          0x8000
+#define TCS_SCROLLOPPOSITE  0x0001   /* assumes multiline tab */
+#define TCS_BOTTOM          0x0002
+#define TCS_RIGHT           0x0002
+#define TCS_MULTISELECT     0x0004  /* allow multi-select in button mode */
+#define TCS_FLATBUTTONS     0x0008
+#define TCS_FORCEICONLEFT   0x0010
+#define TCS_FORCELABELLEFT  0x0020
+#define TCS_HOTTRACK        0x0040
+#define TCS_VERTICAL        0x0080
+#define TCS_TABS            0x0000
+#define TCS_BUTTONS         0x0100
+#define TCS_SINGLELINE      0x0000
+#define TCS_MULTILINE       0x0200
+#define TCS_RIGHTJUSTIFY    0x0000
+#define TCS_FIXEDWIDTH      0x0400
+#define TCS_RAGGEDRIGHT     0x0800
+#define TCS_FOCUSONBUTTONDOWN 0x1000
+#define TCS_OWNERDRAWFIXED  0x2000
+#define TCS_TOOLTIPS        0x4000
+#define TCS_FOCUSNEVER      0x8000
 
 /* Animate Control */
 #define ACS_CENTER          0x0001
 #define ACS_TRANSPARENT     0x0002
 #define ACS_AUTOPLAY        0x0004
-#define ACS_TIMER           0x0008
+#define ACS_TIMER           0x0008  /* no threads, just timers */
 
 /* Month Calendar Control */
 #define MCS_DAYSTATE        0x0001
 #define MCS_MULTISELECT     0x0002
 #define MCS_WEEKNUMBERS     0x0004
-#define MCS_NOTODAYCIRCLE   0x0008
 #define MCS_NOTODAY         0x0010
+#define MCS_NOTODAYCIRCLE   0x0008
+#define MCS_NOTRAILINGDATES 0x0040
 
 /* Datetime Control */
-#define DTS_SHORTDATEFORMAT        0x0000
-#define DTS_UPDOWN                 0x0001
-#define DTS_SHOWNONE               0x0002
-#define DTS_LONGDATEFORMAT         0x0004
-#define DTS_TIMEFORMAT             0x0009
-#define DTS_SHORTDATECENTURYFORMAT 0x000C
-#define DTS_APPCANPARSE            0x0010
-#define DTS_RIGHTALIGN             0x0020
+#define DTS_SHORTDATEFORMAT 0x0000
+#define DTS_UPDOWN          0x0001
+#define DTS_SHOWNONE        0x0002
+#define DTS_LONGDATEFORMAT  0x0004
+#define DTS_TIMEFORMAT      0x0009
+#define DTS_APPCANPARSE     0x0010
+#define DTS_RIGHTALIGN      0x0020
 
 /* Pager Control */
 #define PGS_VERT            0x00000000

@@ -22,6 +22,7 @@
 #define __WINE_COMMCTRL_H
 
 #include <prsht.h>
+#include <commctrl.rh>
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,20 +66,6 @@ VOID WINAPI InitMUILanguage (LANGID uiLang);
 #define ICC_NATIVEFNTCTL_CLASS 0x00002000  /* native font control ???*/
 #define ICC_STANDARD_CLASSES   0x00004000
 #define ICC_LINK_CLASS         0x00008000
-
-
-/* common control styles */
-#define CCS_TOP             __MSABI_LONG(0x00000001)
-#define CCS_NOMOVEY         __MSABI_LONG(0x00000002)
-#define CCS_BOTTOM          __MSABI_LONG(0x00000003)
-#define CCS_NORESIZE        __MSABI_LONG(0x00000004)
-#define CCS_NOPARENTALIGN   __MSABI_LONG(0x00000008)
-#define CCS_ADJUSTABLE      __MSABI_LONG(0x00000020)
-#define CCS_NODIVIDER       __MSABI_LONG(0x00000040)
-#define CCS_VERT            __MSABI_LONG(0x00000080)
-#define CCS_LEFT            (CCS_VERT|CCS_TOP)
-#define CCS_RIGHT           (CCS_VERT|CCS_BOTTOM)
-#define CCS_NOMOVEX         (CCS_VERT|CCS_NOMOVEY)
 
 
 /* common control shared messages */
@@ -296,10 +283,7 @@ static const WCHAR STATUSCLASSNAMEW[] = { 'm','s','c','t','l','s','_',
 #define SBT_NOBORDERS		0x0100
 #define SBT_POPOUT		0x0200
 #define SBT_RTLREADING		0x0400  /* not supported */
-#define SBT_TOOLTIPS		0x0800
 #define SBT_OWNERDRAW		0x1000
-
-#define SBARS_SIZEGRIP		0x0100
 
 #define SB_SIMPLEID		0x00ff
 
@@ -413,15 +397,6 @@ typedef struct _UDACCEL
 #define UD_MAXVAL          0x7fff
 #define UD_MINVAL          0x8001
 
-#define UDS_WRAP           0x0001
-#define UDS_SETBUDDYINT    0x0002
-#define UDS_ALIGNRIGHT     0x0004
-#define UDS_ALIGNLEFT      0x0008
-#define UDS_AUTOBUDDY      0x0010
-#define UDS_ARROWKEYS      0x0020
-#define UDS_HORZ           0x0040
-#define UDS_NOTHOUSANDS    0x0080
-#define UDS_HOTTRACK       0x0100
 
 #define UDN_FIRST          (0U-721)
 #define UDN_LAST           (0U-740)
@@ -490,10 +465,6 @@ static const WCHAR PROGRESS_CLASSW[] = { 'm','s','c','t','l','s','_',
 #define PBM_GETSTATE        (WM_USER+17)
 #define PBM_SETBKCOLOR      CCM_SETBKCOLOR
 
-#define PBS_SMOOTH          0x01
-#define PBS_VERTICAL        0x04
-#define PBS_MARQUEE         0x08
-#define PBS_SMOOTHREVERSE   0x10
 
 #define PBST_NORMAL         1
 #define PBST_ERROR          2
@@ -738,17 +709,6 @@ static const WCHAR WC_HEADERW[] = { 'S','y','s','H','e','a','d','e','r','3','2',
 #endif
 #define WC_HEADER		WINELIB_NAME_AW(WC_HEADER)
 
-#define HDS_HORZ                0x0000
-#define HDS_BUTTONS             0x0002
-#define HDS_HOTTRACK            0x0004
-#define HDS_HIDDEN              0x0008
-#define HDS_DRAGDROP            0x0040
-#define HDS_FULLDRAG            0x0080
-#define HDS_FILTERBAR           0x0100
-#define HDS_FLAT                0x0200
-#define HDS_CHECKBOXES          0x0400
-#define HDS_NOSIZING            0x0800
-#define HDS_OVERFLOW            0x1000
 
 #define HDI_WIDTH               0x0001
 #define HDI_HEIGHT              HDI_WIDTH
@@ -1655,13 +1615,6 @@ static const WCHAR TOOLTIPS_CLASSW[] = { 't','o','o','l','t','i','p','s','_',
 
 #define INFOTIPSIZE             1024
 
-#define TTS_ALWAYSTIP           0x01
-#define TTS_NOPREFIX            0x02
-#define TTS_NOANIMATE           0x10
-#define TTS_NOFADE              0x20
-#define TTS_BALLOON             0x40
-#define TTS_CLOSE               0x80
-#define TTS_USEVISUALSTYLE      0x100
 
 #define TTF_IDISHWND            0x0001
 #define TTF_CENTERTIP           0x0002
@@ -1870,14 +1823,6 @@ static const WCHAR REBARCLASSNAMEW[] = { 'R','e','B','a','r',
 #endif
 #define REBARCLASSNAME          WINELIB_NAME_AW(REBARCLASSNAME)
 
-#define RBS_TOOLTIPS            0x0100
-#define RBS_VARHEIGHT           0x0200
-#define RBS_BANDBORDERS         0x0400
-#define RBS_FIXEDORDER          0x0800
-#define RBS_REGISTERDROP        0x1000
-#define RBS_AUTOSIZE            0x2000
-#define RBS_VERTICALGRIPPER     0x4000
-#define RBS_DBLCLKTOGGLE        0x8000
 
 #define RBIM_IMAGELIST          0x00000001
 
@@ -2127,21 +2072,6 @@ static const WCHAR TRACKBAR_CLASSW[] = { 'm','s','c','t','l','s','_',
 #endif
 #define TRACKBAR_CLASS  WINELIB_NAME_AW(TRACKBAR_CLASS)
 
-#define TBS_AUTOTICKS           0x0001
-#define TBS_VERT                0x0002
-#define TBS_HORZ                0x0000
-#define TBS_TOP                 0x0004
-#define TBS_BOTTOM              0x0000
-#define TBS_LEFT                0x0004
-#define TBS_RIGHT               0x0000
-#define TBS_BOTH                0x0008
-#define TBS_NOTICKS             0x0010
-#define TBS_ENABLESELRANGE      0x0020
-#define TBS_FIXEDLENGTH         0x0040
-#define TBS_NOTHUMB             0x0080
-#define TBS_TOOLTIPS            0x0100
-#define TBS_REVERSED		0x0200
-#define TBS_DOWNISLEFT		0x0400
 
 #define TBTS_TOP                0
 #define TBTS_LEFT               1
@@ -2211,10 +2141,6 @@ static const WCHAR WC_PAGESCROLLERW[] = { 'S','y','s','P','a','g','e','r',0 };
 #endif
 #define WC_PAGESCROLLER  WINELIB_NAME_AW(WC_PAGESCROLLER)
 
-#define PGS_VERT                0x00000000
-#define PGS_HORZ                0x00000001
-#define PGS_AUTOSCROLL          0x00000002
-#define PGS_DRAGNDROP           0x00000004
 
 #define PGF_INVISIBLE           0
 #define PGF_NORMAL              1
@@ -2469,23 +2395,6 @@ static const WCHAR WC_TREEVIEWW[] = { 'S','y','s',
 #define TVHT_BELOW            0x0200
 #define TVHT_TORIGHT          0x0400
 #define TVHT_TOLEFT           0x0800
-
-#define TVS_HASBUTTONS        0x0001
-#define TVS_HASLINES          0x0002
-#define TVS_LINESATROOT       0x0004
-#define TVS_EDITLABELS        0x0008
-#define TVS_DISABLEDRAGDROP   0x0010
-#define TVS_SHOWSELALWAYS     0x0020
-#define TVS_RTLREADING        0x0040
-#define TVS_NOTOOLTIPS        0x0080
-#define TVS_CHECKBOXES        0x0100
-#define TVS_TRACKSELECT       0x0200
-#define TVS_SINGLEEXPAND      0x0400
-#define TVS_INFOTIP           0x0800
-#define TVS_FULLROWSELECT     0x1000
-#define TVS_NOSCROLL          0x2000
-#define TVS_NONEVENHEIGHT     0x4000
-#define TVS_NOHSCROLL         0x8000
 
 #define TVS_SHAREDIMAGELISTS  0x0000
 #define TVS_PRIVATEIMAGELISTS 0x0400
@@ -2970,28 +2879,6 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVSCW_AUTOSIZE -1
 #define LVSCW_AUTOSIZE_USEHEADER -2
 
-#define LVS_ICON                0x0000
-#define LVS_REPORT              0x0001
-#define LVS_SMALLICON           0x0002
-#define LVS_LIST                0x0003
-#define LVS_TYPEMASK            0x0003
-#define LVS_SINGLESEL           0x0004
-#define LVS_SHOWSELALWAYS       0x0008
-#define LVS_SORTASCENDING       0x0010
-#define LVS_SORTDESCENDING      0x0020
-#define LVS_SHAREIMAGELISTS     0x0040
-#define LVS_NOLABELWRAP         0x0080
-#define LVS_AUTOARRANGE         0x0100
-#define LVS_EDITLABELS          0x0200
-#define LVS_OWNERDATA           0x1000
-#define LVS_NOSCROLL            0x2000
-#define LVS_TYPESTYLEMASK       0xfc00
-#define LVS_ALIGNTOP            0x0000
-#define LVS_ALIGNLEFT           0x0800
-#define LVS_ALIGNMASK           0x0c00
-#define LVS_OWNERDRAWFIXED      0x0400
-#define LVS_NOCOLUMNHEADER      0x4000
-#define LVS_NOSORTHEADER        0x8000
 
 #define LVS_EX_GRIDLINES        0x0001
 #define LVS_EX_SUBITEMIMAGES    0x0002
@@ -4102,26 +3989,6 @@ static const WCHAR WC_TABCONTROLW[] = { 'S','y','s',
 #define WC_TABCONTROL		WINELIB_NAME_AW(WC_TABCONTROL)
 
 /* tab control styles */
-#define TCS_SCROLLOPPOSITE      0x0001   /* assumes multiline tab */
-#define TCS_BOTTOM              0x0002
-#define TCS_RIGHT               0x0002
-#define TCS_MULTISELECT         0x0004  /* allow multi-select in button mode */
-#define TCS_FLATBUTTONS         0x0008
-#define TCS_FORCEICONLEFT       0x0010
-#define TCS_FORCELABELLEFT      0x0020
-#define TCS_HOTTRACK            0x0040
-#define TCS_VERTICAL            0x0080
-#define TCS_TABS                0x0000
-#define TCS_BUTTONS             0x0100
-#define TCS_SINGLELINE          0x0000
-#define TCS_MULTILINE           0x0200
-#define TCS_RIGHTJUSTIFY        0x0000
-#define TCS_FIXEDWIDTH          0x0400
-#define TCS_RAGGEDRIGHT         0x0800
-#define TCS_FOCUSONBUTTONDOWN   0x1000
-#define TCS_OWNERDRAWFIXED      0x2000
-#define TCS_TOOLTIPS            0x4000
-#define TCS_FOCUSNEVER          0x8000
 #define TCS_EX_FLATSEPARATORS   0x00000001  /* to be used with */
 #define TCS_EX_REGISTERDROP     0x00000002  /* TCM_SETEXTENDEDSTYLE */
 
@@ -4539,10 +4406,6 @@ static const WCHAR ANIMATE_CLASSW[] = { 'S','y','s',
 #endif
 #define ANIMATE_CLASS           WINELIB_NAME_AW(ANIMATE_CLASS)
 
-#define ACS_CENTER              0x0001
-#define ACS_TRANSPARENT         0x0002
-#define ACS_AUTOPLAY            0x0004
-#define ACS_TIMER               0x0008  /* no threads, just timers */
 
 #define ACM_OPENA               (WM_USER+100)
 #define ACM_OPENW               (WM_USER+103)
@@ -4639,12 +4502,6 @@ static const WCHAR WC_NATIVEFONTCTLW[] = { 'N','a','t','i','v','e',
 #endif
 #define WC_NATIVEFONTCTL	WINELIB_NAME_AW(WC_NATIVEFONTCTL)
 
-#define NFS_EDIT		0x0001
-#define NFS_STATIC		0x0002
-#define NFS_LISTCOMBO		0x0004
-#define NFS_BUTTON		0x0008
-#define NFS_ALL			0x0010
-
 
 /**************************************************************************
  * Month calendar control
@@ -4710,12 +4567,6 @@ static const WCHAR MONTHCAL_CLASSW[] = { 'S','y','s',
 #define MCSC_MONTHBK      4
 #define MCSC_TRAILINGTEXT 5
 
-#define MCS_DAYSTATE           0x0001
-#define MCS_MULTISELECT        0x0002
-#define MCS_WEEKNUMBERS        0x0004
-#define MCS_NOTODAY            0x0010
-#define MCS_NOTODAYCIRCLE      0x0008
-#define MCS_NOTRAILINGDATES    0x0040
 
 #define MCHT_TITLE             0x00010000
 #define MCHT_CALENDAR          0x00020000
@@ -4883,13 +4734,6 @@ static const WCHAR DATETIMEPICK_CLASSW[] = { 'S','y','s',
 #define DTN_FORMAT          WINELIB_NAME_AW(DTN_FORMAT)
 #define DTN_FORMATQUERY     WINELIB_NAME_AW(DTN_FORMATQUERY)
 
-#define DTS_SHORTDATEFORMAT 0x0000
-#define DTS_UPDOWN          0x0001
-#define DTS_SHOWNONE        0x0002
-#define DTS_LONGDATEFORMAT  0x0004
-#define DTS_TIMEFORMAT      0x0009
-#define DTS_APPCANPARSE     0x0010
-#define DTS_RIGHTALIGN      0x0020
 
 typedef struct tagNMDATETIMECHANGE
 {
