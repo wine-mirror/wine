@@ -319,6 +319,7 @@ static void update_fg_colors( dibdrv_physdev *pdev )
 {
     pdev->pen_color   = get_pixel_color( pdev, pdev->pen_colorref,   TRUE );
     pdev->brush_color = get_pixel_color( pdev, pdev->brush_colorref, TRUE );
+    pdev->text_color  = get_pixel_color( pdev, GetTextColor( pdev->dev.hdc ), TRUE );
 }
 
 static void update_masks( dibdrv_physdev *pdev, INT rop )
@@ -518,6 +519,19 @@ static INT dibdrv_SetROP2( PHYSDEV dev, INT rop )
     return next->funcs->pSetROP2( next, rop );
 }
 
+/***********************************************************************
+ *           dibdrv_SetTextColor
+ */
+static COLORREF dibdrv_SetTextColor( PHYSDEV dev, COLORREF color )
+{
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetTextColor );
+    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+
+    pdev->text_color = get_pixel_color( pdev, color, TRUE );
+
+    return next->funcs->pSetTextColor( next, color );
+}
+
 const struct gdi_dc_funcs dib_driver =
 {
     NULL,                               /* pAbortDoc */
@@ -638,7 +652,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pSetStretchBltMode */
     NULL,                               /* pSetTextAlign */
     NULL,                               /* pSetTextCharacterExtra */
-    NULL,                               /* pSetTextColor */
+    dibdrv_SetTextColor,                /* pSetTextColor */
     NULL,                               /* pSetTextJustification */
     NULL,                               /* pSetViewportExt */
     NULL,                               /* pSetViewportOrg */

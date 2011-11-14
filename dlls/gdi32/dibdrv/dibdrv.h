@@ -97,6 +97,9 @@ typedef struct dibdrv_physdev
 
     /* background */
     DWORD bkgnd_color, bkgnd_and, bkgnd_xor;
+
+    /* text */
+    DWORD text_color;
 } dibdrv_physdev;
 
 #define DEFER_FORMAT     1
