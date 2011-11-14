@@ -348,13 +348,13 @@ enum wined3d_shader_src_modifier
 #define WINED3DSP_WRITEMASK_3   0x8 /* .w a */
 #define WINED3DSP_WRITEMASK_ALL 0xf /* all */
 
-typedef enum _WINED3DSHADER_PARAM_DSTMOD_TYPE
+enum wined3d_shader_dst_modifier
 {
     WINED3DSPDM_NONE = 0,
     WINED3DSPDM_SATURATE = 1,
     WINED3DSPDM_PARTIALPRECISION = 2,
     WINED3DSPDM_MSAMPCENTROID = 4,
-} WINED3DSHADER_PARAM_DSTMOD_TYPE;
+};
 
 /* Undocumented opcode control to identify projective texture lookups in ps 2.0 and later */
 #define WINED3DSI_TEXLD_PROJECT 1
