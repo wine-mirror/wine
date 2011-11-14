@@ -19,7 +19,7 @@
 @ stub D3D10PreprocessShader
 @ stdcall D3D10ReflectShader(ptr long ptr)
 @ stub D3D10RegisterLayers
-@ stub D3D10StateBlockMaskDifference
+@ stdcall D3D10StateBlockMaskDifference(ptr ptr ptr)
 @ stub D3D10StateBlockMaskDisableAll
 @ stub D3D10StateBlockMaskDisableCapture
 @ stub D3D10StateBlockMaskEnableAll

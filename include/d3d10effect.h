@@ -804,6 +804,9 @@ HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT fl
 HRESULT WINAPI D3D10CreateStateBlock(ID3D10Device *device,
         D3D10_STATE_BLOCK_MASK *mask, ID3D10StateBlock **stateblock);
 
+HRESULT WINAPI D3D10StateBlockMaskDifference(D3D10_STATE_BLOCK_MASK *mask_x,
+        D3D10_STATE_BLOCK_MASK *mask_y, D3D10_STATE_BLOCK_MASK *result);
+
 #ifdef __cplusplus
 }
 #endif

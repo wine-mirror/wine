@@ -64,6 +64,32 @@ static void test_device_interfaces(ID3D10Device *device)
     ok(SUCCEEDED(hr), "ID3D10Device does not implement IDXGIDevice (%#x)\n", hr);
 }
 
+static void test_stateblock_mask(void)
+{
+    D3D10_STATE_BLOCK_MASK mask_x, mask_y, result;
+    HRESULT hr;
+
+    memset(&mask_x, 0, sizeof(mask_x));
+    memset(&mask_y, 0, sizeof(mask_y));
+    memset(&result, 0, sizeof(result));
+
+    mask_x.VS = 0x33;
+    mask_y.VS = 0x55;
+    mask_x.Predication = 0x99;
+    mask_y.Predication = 0xaa;
+
+    hr = D3D10StateBlockMaskDifference(&mask_x, &mask_y, &result);
+    ok(SUCCEEDED(hr), "D3D10StateBlockMaskDifference failed, hr %#x.\n", hr);
+    ok(result.VS == 0x66, "Got unexpected result.VS %#x.\n", result.VS);
+    ok(result.Predication == 0x33, "Got unexpected result.Predication %#x.\n", result.Predication);
+    hr = D3D10StateBlockMaskDifference(NULL, &mask_y, &result);
+    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    hr = D3D10StateBlockMaskDifference(&mask_x, NULL, &result);
+    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    hr = D3D10StateBlockMaskDifference(&mask_x, &mask_y, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+}
+
 START_TEST(device)
 {
     ID3D10Device *device;
@@ -77,6 +103,7 @@ START_TEST(device)
     }
 
     test_device_interfaces(device);
+    test_stateblock_mask();
 
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left\n", refcount);

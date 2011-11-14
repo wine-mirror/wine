@@ -143,3 +143,26 @@ HRESULT WINAPI D3D10CreateStateBlock(ID3D10Device *device,
 
     return S_OK;
 }
+
+HRESULT WINAPI D3D10StateBlockMaskDifference(D3D10_STATE_BLOCK_MASK *mask_x,
+        D3D10_STATE_BLOCK_MASK *mask_y, D3D10_STATE_BLOCK_MASK *result)
+{
+    UINT count = sizeof(*result) / sizeof(DWORD);
+    UINT i;
+
+    TRACE("mask_x %p, mask_y %p, result %p.\n", mask_x, mask_y, result);
+
+    if (!mask_x || !mask_y || !result)
+        return E_INVALIDARG;
+
+    for (i = 0; i < count; ++i)
+    {
+        ((DWORD *)result)[i] = ((DWORD *)mask_x)[i] ^ ((DWORD *)mask_y)[i];
+    }
+    for (i = count * sizeof(DWORD); i < sizeof(*result); ++i)
+    {
+        ((BYTE *)result)[i] = ((BYTE *)mask_x)[i] ^ ((BYTE *)mask_y)[i];
+    }
+
+    return S_OK;
+}
