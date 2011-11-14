@@ -346,6 +346,7 @@ static ULONG WINAPI BindProtocol_Release(IInternetProtocolEx *iface)
 
         if(This->notif_hwnd)
             release_notif_hwnd(This->notif_hwnd);
+        This->section.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->section);
 
         heap_free(This->mime);
@@ -1314,6 +1315,7 @@ HRESULT create_binding_protocol(BOOL from_urlmon, BindProtocol **protocol)
     ret->notif_hwnd = get_notif_hwnd();
     ret->protocol_handler = &ret->default_protocol_handler.IInternetProtocol_iface;
     InitializeCriticalSection(&ret->section);
+    ret->section.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": BindProtocol.section");
 
     URLMON_LockModule();
 
