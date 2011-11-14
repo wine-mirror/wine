@@ -802,8 +802,10 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
 
     int   cnt = 0, index = 0, str = 0;
     int   New_Script = -1;
+    int   i;
     WORD  *levels = NULL;
     WORD  *strength = NULL;
+    WORD  *scripts = NULL;
     WORD  baselevel = 0;
     BOOL  new_run;
 
@@ -813,12 +815,21 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
     if (!pwcInChars || !cInChars || !pItems || cMaxItems < 2)
         return E_INVALIDARG;
 
+    scripts = heap_alloc(cInChars * sizeof(WORD));
+    if (!scripts)
+        return E_OUTOFMEMORY;
+
+    for (i = 0; i < cInChars; i++)
+        scripts[i] = get_char_script(pwcInChars[i]);
+
     if (psState && psControl)
     {
-        int i;
         levels = heap_alloc_zero(cInChars * sizeof(WORD));
         if (!levels)
+        {
+            heap_free(scripts);
             return E_OUTOFMEMORY;
+        }
 
         BIDI_DetermineLevels(pwcInChars, cInChars, psState, psControl, levels);
         baselevel = levels[0];
@@ -838,6 +849,7 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
             strength = heap_alloc_zero(cInChars * sizeof(WORD));
             if (!strength)
             {
+                heap_free(scripts);
                 heap_free(levels);
                 return E_OUTOFMEMORY;
             }
@@ -848,7 +860,7 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
             {
                 if ((levels[i] == 0 || (odd(psState->uBidiLevel) && levels[i] == psState->uBidiLevel+1)) && inNumber && strchrW(math_punc,pwcInChars[i]))
                     levels[i] = 2;
-                else if ((levels[i] == 0 || (odd(psState->uBidiLevel) && levels[i] == psState->uBidiLevel+1)) && get_char_script(pwcInChars[i]) == Script_Numeric)
+                else if ((levels[i] == 0 || (odd(psState->uBidiLevel) && levels[i] == psState->uBidiLevel+1)) && scripts[i] == Script_Numeric)
                 {
                     levels[i] = 2;
                     inNumber = TRUE;
@@ -870,12 +882,12 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
     if (cnt == cInChars) /* All Spaces */
     {
         cnt = 0;
-        New_Script = get_char_script(pwcInChars[cnt]);
+        New_Script = scripts[cnt];
     }
 
     pItems[index].iCharPos = 0;
-    pItems[index].a = scriptInformation[get_char_script(pwcInChars[cnt])].a;
-    pScriptTags[index] = scriptInformation[get_char_script(pwcInChars[cnt])].scriptTag;
+    pItems[index].a = scriptInformation[scripts[cnt]].a;
+    pScriptTags[index] = scriptInformation[scripts[cnt]].scriptTag;
 
     if (strength && strength[cnt] == BIDI_STRONG)
         str = strength[cnt];
@@ -904,16 +916,16 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
     for (cnt=1; cnt < cInChars; cnt++)
     {
         if(pwcInChars[cnt] != Numeric_space && pwcInChars[cnt] != ZWJ && pwcInChars[cnt] != ZWNJ)
-            New_Script = get_char_script(pwcInChars[cnt]);
+            New_Script = scripts[cnt];
         else if (levels)
         {
             int j = 1;
             while (cnt + j < cInChars - 1 && (pwcInChars[cnt+j] == Numeric_space || pwcInChars[cnt+j] == ZWJ || pwcInChars[cnt+j] == ZWNJ) && levels[cnt] == levels[cnt+j])
                 j++;
             if (cnt + j < cInChars && levels[cnt] == levels[cnt+j])
-                New_Script = get_char_script(pwcInChars[cnt+j]);
+                New_Script = scripts[cnt+j];
             else
-                New_Script = get_char_script(pwcInChars[cnt]);
+                New_Script = scripts[cnt];
         }
 
         new_run = FALSE;
@@ -992,6 +1004,7 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
     pItems[index].iCharPos = cnt;         /* the last item contains the ptr to the lastchar */
     heap_free(levels);
     heap_free(strength);
+    heap_free(scripts);
     return S_OK;
 }
 
