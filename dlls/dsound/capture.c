@@ -1027,6 +1027,7 @@ static HRESULT DirectSoundCaptureDevice_Initialize(
     hr = IMMDevice_Activate(mmdevice, &IID_IAudioClient,
             CLSCTX_INPROC_SERVER, NULL, (void**)&client);
     if(FAILED(hr)){
+        device->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&device->lock);
         HeapFree(GetProcessHeap(), 0, device);
         LeaveCriticalSection(&DSOUND_capturers_lock);
