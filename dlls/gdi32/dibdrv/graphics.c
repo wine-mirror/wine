@@ -56,6 +56,47 @@ static RECT get_device_rect( HDC hdc, int left, int top, int right, int bottom, 
     return rect;
 }
 
+/**********************************************************************
+ *                 get_text_bkgnd_masks
+ *
+ * See the comment above get_pen_bkgnd_masks
+ */
+static inline void get_text_bkgnd_masks( const dibdrv_physdev *pdev, rop_mask *mask )
+{
+    mask->and = 0;
+
+    if (pdev->dib.bit_count != 1)
+        mask->xor = pdev->bkgnd_color;
+    else
+    {
+        mask->xor = ~pdev->text_color;
+        if (GetTextColor( pdev->dev.hdc ) == GetBkColor( pdev->dev.hdc ))
+            mask->xor = pdev->text_color;
+    }
+}
+
+/***********************************************************************
+ *           dibdrv_ExtTextOut
+ */
+BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
+                        const RECT *rect, LPCWSTR str, UINT count, const INT *dx )
+{
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pExtTextOut );
+    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+
+    if (flags & ETO_OPAQUE)
+    {
+        rop_mask bkgnd_color;
+        get_text_bkgnd_masks( pdev, &bkgnd_color );
+        solid_rects( &pdev->dib, 1, rect, &bkgnd_color, pdev->clip );
+    }
+
+    if (count == 0) return TRUE;
+
+    flags &= ~ETO_OPAQUE;
+    return next->funcs->pExtTextOut( next, x, y, flags, rect, str, count, dx );
+}
+
 /***********************************************************************
  *           dibdrv_GetPixel
  */

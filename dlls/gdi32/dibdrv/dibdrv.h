@@ -110,6 +110,8 @@ extern BOOL     dibdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
                                    PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION blend ) DECLSPEC_HIDDEN;
 extern DWORD    dibdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_bits *bits,
                                    struct bitblt_coords *src, struct bitblt_coords *dst, BLENDFUNCTION func ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
+                                   const RECT *rect, LPCWSTR str, UINT count, const INT *dx ) DECLSPEC_HIDDEN;
 extern DWORD    dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
                                  struct gdi_image_bits *bits, struct bitblt_coords *src ) DECLSPEC_HIDDEN;
 extern COLORREF dibdrv_GetPixel( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
