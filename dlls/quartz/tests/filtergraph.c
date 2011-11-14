@@ -1094,6 +1094,7 @@ static HRESULT createtestfilter(const CLSID* pClsid, const TestFilterPinData *pi
     pTestFilter->IBaseFilter_iface.lpVtbl = &TestFilter_Vtbl;
     pTestFilter->refCount = 1;
     InitializeCriticalSection(&pTestFilter->csFilter);
+    pTestFilter->csFilter.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": TestFilterImpl.csFilter");
     pTestFilter->state = State_Stopped;
 
     ZeroMemory(&pTestFilter->filterInfo, sizeof(FILTER_INFO));
@@ -1148,6 +1149,7 @@ static HRESULT createtestfilter(const CLSID* pClsid, const TestFilterPinData *pi
         }
     }
     CoTaskMemFree(pTestFilter->ppPins);
+    pTestFilter->csFilter.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&pTestFilter->csFilter);
     CoTaskMemFree(pTestFilter);
 
@@ -1211,6 +1213,7 @@ static ULONG WINAPI TestFilter_Release(IBaseFilter * iface)
 
         CoTaskMemFree(This->ppPins);
 
+        This->csFilter.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->csFilter);
 
         CoTaskMemFree(This);
