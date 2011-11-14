@@ -99,8 +99,6 @@ struct IDirectMusicLoaderImpl {
 	struct list *pObjects;
 	/* settings for certain object classes */
 	struct list *pClassSettings;
-	/* critical section */
-	CRITICAL_SECTION CritSect;
 };
 
 /* contained object entry */
