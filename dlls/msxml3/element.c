@@ -1171,39 +1171,60 @@ static HRESULT WINAPI domelem_getAttributeNode(
     BSTR p, IXMLDOMAttribute** attributeNode )
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    xmlChar *xml_name;
+    xmlChar *local, *prefix, *nameA;
+    HRESULT hr = S_FALSE;
     xmlNodePtr element;
     xmlAttrPtr attr;
-    IUnknown *unk;
-    HRESULT hr = S_FALSE;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(p), attributeNode);
 
-    if(!attributeNode)
+    element = get_element( This );
+    if (!element) return E_FAIL;
+
+    if (attributeNode) *attributeNode = NULL;
+
+    nameA = xmlchar_from_wchar(p);
+    if (!xmlValidateNameValue(nameA))
+    {
+        heap_free(nameA);
         return E_FAIL;
+    }
+
+    if (!attributeNode)
+    {
+        heap_free(nameA);
+        return S_FALSE;
+    }
 
     *attributeNode = NULL;
 
-    element = get_element( This );
-    if ( !element )
-        return E_FAIL;
+    local = xmlSplitQName2(nameA, &prefix);
 
-    xml_name = xmlchar_from_wchar(p);
-
-    if(!xmlValidateNameValue(xml_name))
+    if (local)
     {
-        heap_free(xml_name);
-        return E_FAIL;
+        /* try to get namespace for supplied qualified name */
+        xmlNsPtr ns = xmlSearchNs(element->doc, element, prefix);
+        xmlFree(prefix);
+
+        attr = xmlHasNsProp(element, local, ns ? ns->href : NULL);
+        xmlFree(local);
+    }
+    else
+    {
+        attr = xmlHasProp(element, nameA);
+        /* attribute has attached namespace and we requested non-qualified
+           name - it's a failure case */
+        if (attr && attr->ns) attr = NULL;
     }
 
-    attr = xmlHasProp(element, xml_name);
-    if(attr) {
-        unk = create_attribute((xmlNodePtr)attr);
+    heap_free(nameA);
+
+    if (attr)
+    {
+        IUnknown *unk = create_attribute((xmlNodePtr)attr);
         hr = IUnknown_QueryInterface(unk, &IID_IXMLDOMAttribute, (void**)attributeNode);
         IUnknown_Release(unk);
     }
-
-    heap_free(xml_name);
 
     return hr;
 }

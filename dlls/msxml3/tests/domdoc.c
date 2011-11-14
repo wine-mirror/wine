@@ -1393,9 +1393,9 @@ static const CHAR szNonUnicodeXML[] =
 "<?xml version='1.0' encoding='Windows-1252'?>\n"
 "<open></open>\n";
 
-static const CHAR szExampleXML[] =
+static const char szExampleXML[] =
 "<?xml version='1.0' encoding='utf-8'?>\n"
-"<root xmlns:foo='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'>\n"
+"<root xmlns:foo='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29' a=\"attr a\" foo:b=\"attr b\" >\n"
 "    <elem>\n"
 "        <a>A1 field</a>\n"
 "        <b>B1 field</b>\n"
@@ -1752,10 +1752,10 @@ static const char default_ns_doc[] = {
     "    d=\"d attr\" />"
 };
 
-static const WCHAR szNonExistentFile[] = {
+static const WCHAR nonexistent_fileW[] = {
     'c', ':', '\\', 'N', 'o', 'n', 'e', 'x', 'i', 's', 't', 'e', 'n', 't', '.', 'x', 'm', 'l', 0
 };
-static const WCHAR szNonExistentAttribute[] = {
+static const WCHAR nonexistent_attrW[] = {
     'n','o','n','E','x','i','s','i','t','i','n','g','A','t','t','r','i','b','u','t','e',0
 };
 static const WCHAR szDocument[] = {
@@ -2066,7 +2066,7 @@ if (0)
 
     /* try to load a document from a nonexistent file */
     b = VARIANT_TRUE;
-    str = SysAllocString( szNonExistentFile );
+    str = SysAllocString( nonexistent_fileW );
     VariantInit(&var);
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = str;
@@ -2776,29 +2776,13 @@ static void test_domnode( void )
         ok( !lstrcmpW( str, szlc ), "incorrect nodeName\n");
         SysFreeString( str );
 
-        str = SysAllocString( szNonExistentFile );	
+        str = SysAllocString( nonexistent_fileW );
         V_VT(&var) = VT_I4;
         V_I4(&var) = 0x1234;
         r = IXMLDOMElement_getAttribute( element, str, &var );
         ok( r == E_FAIL, "getAttribute ret %08x\n", r );
         ok( V_VT(&var) == VT_NULL || V_VT(&var) == VT_EMPTY, "vt = %x\n", V_VT(&var));
         VariantClear(&var);
-
-        r = IXMLDOMElement_getAttributeNode( element, str, NULL);
-        ok( r == E_FAIL, "getAttributeNode ret %08x\n", r );
-
-        attr = (IXMLDOMAttribute*)0xdeadbeef;
-        r = IXMLDOMElement_getAttributeNode( element, str, &attr);
-        ok( r == E_FAIL, "getAttributeNode ret %08x\n", r );
-        ok( attr == NULL, "getAttributeNode ret %p, expected NULL\n", attr );
-        SysFreeString( str );
-
-        attr = (IXMLDOMAttribute*)0xdeadbeef;
-        str = SysAllocString( szNonExistentAttribute );
-        r = IXMLDOMElement_getAttributeNode( element, str, &attr);
-        ok( r == S_FALSE, "getAttributeNode ret %08x\n", r );
-        ok( attr == NULL, "getAttributeNode ret %p, expected NULL\n", attr );
-        SysFreeString( str );
 
         str = SysAllocString( szdl );	
         V_VT(&var) = VT_I4;
@@ -10662,6 +10646,59 @@ static void test_parseerror(void)
     IXMLDOMDocument_Release(doc);
 }
 
+static void test_getAttributeNode(void)
+{
+    IXMLDOMAttribute *attr;
+    IXMLDOMDocument *doc;
+    IXMLDOMElement *elem;
+    VARIANT_BOOL v;
+    HRESULT hr;
+    BSTR str;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(szExampleXML), &v);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &elem);
+    EXPECT_HR(hr, S_OK);
+
+    str = SysAllocString(nonexistent_fileW);
+    hr = IXMLDOMElement_getAttributeNode(elem, str, NULL);
+    EXPECT_HR(hr, E_FAIL);
+
+    attr = (IXMLDOMAttribute*)0xdeadbeef;
+    hr = IXMLDOMElement_getAttributeNode(elem, str, &attr);
+    EXPECT_HR(hr, E_FAIL);
+    ok(attr == NULL, "got %p\n", attr);
+    SysFreeString(str);
+
+    str = SysAllocString(nonexistent_attrW);
+    hr = IXMLDOMElement_getAttributeNode(elem, str, NULL);
+    EXPECT_HR(hr, S_FALSE);
+
+    attr = (IXMLDOMAttribute*)0xdeadbeef;
+    hr = IXMLDOMElement_getAttributeNode(elem, str, &attr);
+    EXPECT_HR(hr, S_FALSE);
+    ok(attr == NULL, "got %p\n", attr);
+    SysFreeString(str);
+
+    hr = IXMLDOMElement_getAttributeNode(elem, _bstr_("foo:b"), &attr);
+    EXPECT_HR(hr, S_OK);
+    IXMLDOMAttribute_Release(attr);
+
+    hr = IXMLDOMElement_getAttributeNode(elem, _bstr_("b"), &attr);
+    EXPECT_HR(hr, S_FALSE);
+
+    hr = IXMLDOMElement_getAttributeNode(elem, _bstr_("a"), &attr);
+    EXPECT_HR(hr, S_OK);
+    IXMLDOMAttribute_Release(attr);
+
+    IXMLDOMElement_Release(elem);
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -10735,6 +10772,7 @@ START_TEST(domdoc)
     test_load();
     test_dispex();
     test_parseerror();
+    test_getAttributeNode();
 
     test_xsltemplate();
 
