@@ -127,6 +127,7 @@ HRESULT WINAPI OutputQueue_Destroy(OutputQueue *pOutputQueue)
     SetEvent(pOutputQueue->hProcessQueue);
     LeaveCriticalSection(&pOutputQueue->csQueue);
 
+    pOutputQueue->csQueue.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&pOutputQueue->csQueue);
     CloseHandle(pOutputQueue->hProcessQueue);
 
