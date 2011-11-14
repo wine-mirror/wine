@@ -179,6 +179,7 @@ static	DWORD	MCICDA_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
     modp->wCustomCommandTable = MCI_NO_COMMAND_TABLE;
     modp->wType = MCI_DEVTYPE_CD_AUDIO;
     InitializeCriticalSection(&wmcda->cs);
+    wmcda->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": WINE_MCICDAUDIO.cs");
     return modp->wDeviceID;
 }
 
@@ -190,6 +191,7 @@ static	DWORD	MCICDA_drvClose(DWORD dwDevID)
     WINE_MCICDAUDIO*  wmcda = (WINE_MCICDAUDIO*)mciGetDriverData(dwDevID);
 
     if (wmcda) {
+	wmcda->cs.DebugInfo->Spare[0] = 0;
 	DeleteCriticalSection(&wmcda->cs);
 	HeapFree(GetProcessHeap(), 0, wmcda);
 	mciSetDriverData(dwDevID, 0);
