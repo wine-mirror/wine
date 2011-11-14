@@ -379,7 +379,10 @@ static int msvcrt_init_fp(MSVCRT_FILE* file, int fd, unsigned stream_flags)
   file->_flag = stream_flags;
 
   if(file<MSVCRT__iob || file>=MSVCRT__iob+_IOB_ENTRIES)
+  {
       InitializeCriticalSection(&((file_crit*)file)->crit);
+      ((file_crit*)file)->crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": file_crit.crit");
+  }
 
   TRACE(":got FILE* (%p)\n",file);
   return 0;
@@ -2608,7 +2611,10 @@ int CDECL MSVCRT_fclose(MSVCRT_FILE* file)
   file->_flag = 0;
   MSVCRT__unlock_file(file);
   if(file<MSVCRT__iob || file>=MSVCRT__iob+_IOB_ENTRIES)
+  {
+      ((file_crit*)file)->crit.DebugInfo->Spare[0] = 0;
       DeleteCriticalSection(&((file_crit*)file)->crit);
+  }
 
   if(file == msvcrt_get_file(MSVCRT_stream_idx-1)) {
     while(MSVCRT_stream_idx>3 && !file->_flag) {
