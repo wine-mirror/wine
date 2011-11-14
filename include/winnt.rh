@@ -343,7 +343,13 @@
 #define SUBLANG_SERBIAN_CROATIA            0x01
 #define SUBLANG_SERBIAN_LATIN              0x02
 #define SUBLANG_SERBIAN_CYRILLIC           0x03
+#define SUBLANG_SERBIAN_SERBIA_LATIN       0x09
+#define SUBLANG_SERBIAN_SERBIA_CYRILLIC    0x0a
+#define SUBLANG_SERBIAN_MONTENEGRO_LATIN   0x0b
+#define SUBLANG_SERBIAN_MONTENEGRO_CYRILLIC 0x0c
+#define SUBLANG_SINDHI_INDIA               0x01
 #define SUBLANG_SINDHI_AFGHANISTAN         0x02
+#define SUBLANG_SINDHI_PAKISTAN            SUBLANG_SINDHI_AFGHANISTAN
 #define SUBLANG_SINHALESE_SRI_LANKA        0x01
 #define SUBLANG_SLOVAK_SLOVAKIA            0x01
 #define SUBLANG_SLOVENIAN_SLOVENIA         0x01
@@ -429,9 +435,20 @@
  */
 
 #define SORT_DEFAULT                     0x0
+#define SORT_INVARIANT_MATH              0x1
 #define SORT_JAPANESE_XJIS               0x0
 #define SORT_JAPANESE_UNICODE            0x1
+#define SORT_JAPANESE_RADICALSTROKE      0x4
 #define SORT_CHINESE_BIG5                0x0
+#define SORT_CHINESE_PRCP                0x0
 #define SORT_CHINESE_UNICODE             0x1
+#define SORT_CHINESE_PRC                 0x2
+#define SORT_CHINESE_BOPOMOFO            0x3
+#define SORT_CHINESE_RADICALSTROKE       0x4
 #define SORT_KOREAN_KSC                  0x0
 #define SORT_KOREAN_UNICODE              0x1
+#define SORT_GERMAN_PHONE_BOOK           0x1
+#define SORT_HUNGARIAN_DEFAULT           0x0
+#define SORT_HUNGARIAN_TECHNICAL         0x1
+#define SORT_GEORGIAN_TRADITIONAL        0x0
+#define SORT_GEORGIAN_MODERN             0x1
