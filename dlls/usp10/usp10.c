@@ -814,6 +814,7 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
     WORD  baselevel = 0;
     BOOL  new_run;
     WORD  last_indic = -1;
+    WORD layoutRTL = 0;
 
     TRACE("%s,%d,%d,%p,%p,%p,%p\n", debugstr_wn(pwcInChars, cInChars), cInChars, cMaxItems, 
           psControl, psState, pItems, pcItems);
@@ -948,12 +949,14 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
 
     if (levels)
     {
+        layoutRTL = (psState->uBidiLevel || odd(levels[cnt]))?1:0;
         pItems[index].a.fRTL = odd(levels[cnt]);
-        pItems[index].a.fLayoutRTL = odd(levels[cnt]);
+        pItems[index].a.fLayoutRTL = layoutRTL;
         pItems[index].a.s.uBidiLevel = levels[cnt];
     }
     else if (!pItems[index].a.s.uBidiLevel)
     {
+        layoutRTL = (odd(baselevel))?1:0;
         pItems[index].a.s.uBidiLevel = baselevel;
         pItems[index].a.fLayoutRTL = odd(baselevel);
         pItems[index].a.fRTL = odd(baselevel);
@@ -1005,6 +1008,12 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
             new_run = TRUE;
         }
 
+        if (!new_run && strength && str == BIDI_STRONG)
+        {
+            layoutRTL = odd(levels[cnt])?1:0;
+            pItems[index].a.fLayoutRTL = layoutRTL;
+        }
+
         if (new_run)
         {
             TRACE("New_Level = %i, New_Strength = %i, New_Script=%d, eScript=%d\n", levels?levels[cnt]:-1, strength?strength[cnt]:str, New_Script, pItems[index].a.eScript);
@@ -1023,14 +1032,18 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
             pScriptTags[index] = scriptInformation[New_Script].scriptTag;
             if (levels)
             {
+                if (levels[cnt] == 0)
+                    layoutRTL = 0;
+                else
+                    layoutRTL = (layoutRTL || odd(levels[cnt]))?1:0;
                 pItems[index].a.fRTL = odd(levels[cnt]);
-                pItems[index].a.fLayoutRTL = odd(levels[cnt]);
+                pItems[index].a.fLayoutRTL = layoutRTL;
                 pItems[index].a.s.uBidiLevel = levels[cnt];
             }
             else if (!pItems[index].a.s.uBidiLevel)
             {
                 pItems[index].a.s.uBidiLevel = baselevel;
-                pItems[index].a.fLayoutRTL = odd(baselevel);
+                pItems[index].a.fLayoutRTL = layoutRTL;
                 pItems[index].a.fRTL = odd(baselevel);
             }
 
