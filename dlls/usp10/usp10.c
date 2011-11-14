@@ -870,8 +870,41 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
             }
             if (psControl->fMergeNeutralItems)
             {
-                HeapFree(GetProcessHeap(),0,strength);
-                strength = NULL;
+                /* Merge the neutrals */
+                for (i = 0; i < cInChars; i++)
+                {
+                    if (strength[i] == BIDI_NEUTRAL || strength[i] == BIDI_WEAK)
+                    {
+                        int j;
+                        for (j = i; j > 0; j--)
+                        {
+                            if (levels[i] != levels[j])
+                                break;
+                            if ((strength[j] == BIDI_STRONG) || (strength[i] == BIDI_NEUTRAL && strength[j] == BIDI_WEAK))
+                            {
+                                scripts[i] = scripts[j];
+                                strength[i] = strength[j];
+                                break;
+                            }
+                        }
+                    }
+                    /* Try going the other way */
+                    if (strength[i] == BIDI_NEUTRAL || strength[i] == BIDI_WEAK)
+                    {
+                        int j;
+                        for (j = i; j < cInChars; j++)
+                        {
+                            if (levels[i] != levels[j])
+                                break;
+                            if ((strength[j] == BIDI_STRONG) || (strength[i] == BIDI_NEUTRAL && strength[j] == BIDI_WEAK))
+                            {
+                                scripts[i] = scripts[j];
+                                strength[i] = strength[j];
+                                break;
+                            }
+                        }
+                    }
+                }
             }
         }
     }
