@@ -778,12 +778,31 @@ DECLARE_INTERFACE(ID3D10EffectPass)
 };
 #undef INTERFACE
 
+DEFINE_GUID(IID_ID3D10StateBlock, 0x0803425a, 0x57f5, 0x4dd6, 0x94, 0x65, 0xa8, 0x75, 0x70, 0x83, 0x4a, 0x08);
+
+#define INTERFACE ID3D10StateBlock
+DECLARE_INTERFACE_(ID3D10StateBlock, IUnknown)
+{
+    /* IUnknown methods */
+    STDMETHOD(QueryInterface)(THIS_ REFIID iid, void **object) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* ID3D10StateBlock methods */
+    STDMETHOD(Capture)(THIS) PURE;
+    STDMETHOD(Apply)(THIS) PURE;
+    STDMETHOD(ReleaseAllDeviceObjects)(THIS) PURE;
+    STDMETHOD(GetDevice)(THIS_ ID3D10Device **device) PURE;
+};
+#undef INTERFACE
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT flags,
         ID3D10Device *device, ID3D10EffectPool *effect_pool, ID3D10Effect **effect);
+HRESULT WINAPI D3D10CreateStateBlock(ID3D10Device *device,
+        D3D10_STATE_BLOCK_MASK *mask, ID3D10StateBlock **stateblock);
 
 #ifdef __cplusplus
 }
