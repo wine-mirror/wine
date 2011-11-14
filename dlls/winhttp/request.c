@@ -2233,6 +2233,7 @@ static ULONG WINAPI winhttp_request_Release(
         cancel_request( request );
         free_request( request );
         LeaveCriticalSection( &request->cs );
+        request->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection( &request->cs );
         heap_free( request );
     }
@@ -3387,6 +3388,7 @@ HRESULT WinHttpRequest_create( IUnknown *unknown, void **obj )
     request->proxy.lpszProxy = NULL;
     request->proxy.lpszProxyBypass = NULL;
     InitializeCriticalSection( &request->cs );
+    request->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": winhttp_request.cs");
 
     *obj = &request->IWinHttpRequest_iface;
     TRACE("returning iface %p\n", *obj);

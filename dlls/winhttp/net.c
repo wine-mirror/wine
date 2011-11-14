@@ -539,7 +539,11 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
         LeaveCriticalSection( &init_ssl_cs );
         return FALSE;
     }
-    for (i = 0; i < num_ssl_locks; i++) InitializeCriticalSection( &ssl_locks[i] );
+    for (i = 0; i < num_ssl_locks; i++)
+    {
+        InitializeCriticalSection( &ssl_locks[i] );
+        ssl_locks[i].DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ssl_locks");
+    }
     pCRYPTO_set_locking_callback(ssl_lock_callback);
 
     LeaveCriticalSection( &init_ssl_cs );
@@ -568,7 +572,11 @@ void netconn_unload( void )
     if (ssl_locks)
     {
         int i;
-        for (i = 0; i < num_ssl_locks; i++) DeleteCriticalSection( &ssl_locks[i] );
+        for (i = 0; i < num_ssl_locks; i++)
+        {
+            ssl_locks[i].DebugInfo->Spare[0] = 0;
+            DeleteCriticalSection( &ssl_locks[i] );
+        }
         HeapFree( GetProcessHeap(), 0, ssl_locks );
     }
 #endif
