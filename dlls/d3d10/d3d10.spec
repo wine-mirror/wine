@@ -5,7 +5,7 @@
 @ stdcall D3D10CreateDeviceAndSwapChain(ptr long ptr long long ptr ptr ptr)
 @ stdcall D3D10CreateEffectFromMemory(ptr long long ptr ptr ptr)
 @ stub D3D10CreateEffectPoolFromMemory
-@ stub D3D10CreateStateBlock
+@ stdcall D3D10CreateStateBlock(ptr ptr ptr)
 @ stub D3D10DisassembleEffect
 @ stub D3D10DisassembleShader
 @ stdcall D3D10GetGeometryShaderProfile(ptr)

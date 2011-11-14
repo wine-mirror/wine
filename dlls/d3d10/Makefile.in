@@ -6,6 +6,7 @@ C_SRCS = \
 	d3d10_main.c \
 	effect.c \
 	shader.c \
+	stateblock.c \
 	utils.c
 
 RC_SRCS = version.rc
