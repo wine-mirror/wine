@@ -1863,6 +1863,7 @@ static ULONG RpcHttpAsyncData_Release(RpcHttpAsyncData *data)
         TRACE("destroying async data %p\n", data);
         CloseHandle(data->completion_event);
         HeapFree(GetProcessHeap(), 0, data->inet_buffers.lpvBuffer);
+        data->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&data->cs);
         HeapFree(GetProcessHeap(), 0, data);
     }
@@ -1906,6 +1907,7 @@ static RpcConnection *rpcrt4_ncacn_http_alloc(void)
     httpc->async_data->inet_buffers.lpvBuffer = NULL;
     httpc->async_data->destination_buffer = NULL;
     InitializeCriticalSection(&httpc->async_data->cs);
+    httpc->async_data->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": RpcHttpAsyncData.cs");
     return &httpc->common;
 }
 

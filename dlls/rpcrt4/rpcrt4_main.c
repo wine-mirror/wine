@@ -127,6 +127,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             list_remove(&tdata->entry);
             LeaveCriticalSection(&threaddata_cs);
 
+            tdata->cs.DebugInfo->Spare[0] = 0;
             DeleteCriticalSection(&tdata->cs);
             if (tdata->connection)
                 ERR("tdata->connection should be NULL but is still set to %p\n", tdata->connection);
@@ -888,6 +889,7 @@ static struct threaddata *get_or_create_threaddata(void)
         if (!tdata) return NULL;
 
         InitializeCriticalSection(&tdata->cs);
+        tdata->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": threaddata.cs");
         tdata->thread_id = GetCurrentThreadId();
 
         EnterCriticalSection(&threaddata_cs);

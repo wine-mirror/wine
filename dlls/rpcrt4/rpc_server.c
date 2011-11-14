@@ -931,6 +931,7 @@ static RPC_STATUS alloc_serverprotoseq(UINT MaxCalls, const char *Protseq, RpcSe
   (*ps)->MaxCalls = 0;
   (*ps)->conn = NULL;
   InitializeCriticalSection(&(*ps)->cs);
+  (*ps)->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": RpcServerProtseq.cs");
   (*ps)->is_listening = FALSE;
   (*ps)->mgr_mutex = NULL;
   (*ps)->server_ready_event = NULL;
@@ -946,6 +947,7 @@ static RPC_STATUS alloc_serverprotoseq(UINT MaxCalls, const char *Protseq, RpcSe
 static void destroy_serverprotoseq(RpcServerProtseq *ps)
 {
     RPCRT4_strfree(ps->Protseq);
+    ps->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&ps->cs);
     CloseHandle(ps->mgr_mutex);
     CloseHandle(ps->server_ready_event);

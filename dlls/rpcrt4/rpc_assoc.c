@@ -74,6 +74,7 @@ static RPC_STATUS RpcAssoc_Alloc(LPCSTR Protseq, LPCSTR NetworkAddr,
     list_init(&assoc->free_connection_pool);
     list_init(&assoc->context_handle_list);
     InitializeCriticalSection(&assoc->cs);
+    assoc->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": RpcAssoc.cs");
     assoc->Protseq = RPCRT4_strdupA(Protseq);
     assoc->NetworkAddr = RPCRT4_strdupA(NetworkAddr);
     assoc->Endpoint = RPCRT4_strdupA(Endpoint);
@@ -213,6 +214,7 @@ ULONG RpcAssoc_Release(RpcAssoc *assoc)
         HeapFree(GetProcessHeap(), 0, assoc->NetworkAddr);
         HeapFree(GetProcessHeap(), 0, assoc->Protseq);
 
+        assoc->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&assoc->cs);
 
         HeapFree(GetProcessHeap(), 0, assoc);
