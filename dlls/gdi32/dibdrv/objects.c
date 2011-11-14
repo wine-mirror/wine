@@ -1094,52 +1094,45 @@ COLORREF dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
     return next->funcs->pSetDCPenColor( next, color );
 }
 
-/**********************************************************************
- *             solid_brush
- *
- * Fill a number of rectangles with the solid brush
- * FIXME: Should we insist l < r && t < b?  Currently we assume this.
- */
-static BOOL solid_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects, HRGN region)
+void solid_rects( dib_info *dib, int num, const RECT *rects, const rop_mask *color, HRGN region )
 {
     int i, j;
-    const WINEREGION *clip = get_wine_region( region );
+    const WINEREGION *clip;
 
-    if (!clip)
+    if (!region)
     {
-        dib->funcs->solid_rects( dib, num, rects, pdev->brush_and, pdev->brush_xor );
-        return TRUE;
+        dib->funcs->solid_rects( dib, num, rects, color->and, color->xor );
+        return;
     }
+
+    clip = get_wine_region( region );
 
     for(i = 0; i < num; i++)
     {
         for(j = 0; j < clip->numRects; j++)
         {
-            RECT rect = rects[i];
+            RECT clipped_rect;
 
-            /* Optimize unclipped case */
-            if(clip->rects[j].top <= rect.top && clip->rects[j].bottom >= rect.bottom &&
-               clip->rects[j].left <= rect.left && clip->rects[j].right >= rect.right)
-            {
-                dib->funcs->solid_rects( dib, 1, &rect, pdev->brush_and, pdev->brush_xor );
-                break;
-            }
-
-            if(clip->rects[j].top >= rect.bottom) break;
-            if(clip->rects[j].bottom <= rect.top) continue;
-
-            if(clip->rects[j].right > rect.left && clip->rects[j].left < rect.right)
-            {
-                rect.left   = max(rect.left,   clip->rects[j].left);
-                rect.top    = max(rect.top,    clip->rects[j].top);
-                rect.right  = min(rect.right,  clip->rects[j].right);
-                rect.bottom = min(rect.bottom, clip->rects[j].bottom);
-
-                dib->funcs->solid_rects( dib, 1, &rect, pdev->brush_and, pdev->brush_xor );
-            }
+            if (intersect_rect( &clipped_rect, rects + i, clip->rects + j ))
+                dib->funcs->solid_rects( dib, 1, &clipped_rect, color->and, color->xor );
         }
     }
     release_wine_region( region );
+}
+
+/**********************************************************************
+ *             solid_brush
+ *
+ * Fill a number of rectangles with the solid brush
+ */
+static BOOL solid_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects, HRGN region)
+{
+    rop_mask brush_color;
+
+    brush_color.and = pdev->brush_and;
+    brush_color.xor = pdev->brush_xor;
+
+    solid_rects( dib, num, rects, &brush_color, region );
     return TRUE;
 }
 

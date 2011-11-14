@@ -211,6 +211,7 @@ extern void copy_dib_color_info(dib_info *dst, const dib_info *src) DECLSPEC_HID
 extern BOOL convert_dib(dib_info *dst, const dib_info *src) DECLSPEC_HIDDEN;
 extern DWORD get_pixel_color(dibdrv_physdev *pdev, COLORREF color, BOOL mono_fixup) DECLSPEC_HIDDEN;
 extern BOOL brush_rects( dibdrv_physdev *pdev, int num, const RECT *rects ) DECLSPEC_HIDDEN;
+extern void solid_rects( dib_info *dib, int num, const RECT *rects, const rop_mask *color, HRGN region ) DECLSPEC_HIDDEN;
 extern HRGN add_extra_clipping_region( dibdrv_physdev *pdev, HRGN rgn ) DECLSPEC_HIDDEN;
 extern void restore_clipping_region( dibdrv_physdev *pdev, HRGN rgn ) DECLSPEC_HIDDEN;
 extern int clip_line(const POINT *start, const POINT *end, const RECT *clip,
