@@ -2021,6 +2021,187 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     DeleteObject(solid_pen);
 }
 
+static const BYTE ramp[17] =
+{
+    0,    0x4d, 0x68, 0x7c,
+    0x8c, 0x9a, 0xa7, 0xb2,
+    0xbd, 0xc7, 0xd0, 0xd9,
+    0xe1, 0xe9, 0xf0, 0xf8,
+    0xff
+};
+
+static inline void get_range(BYTE alpha, DWORD text_comp, BYTE *min_comp, BYTE *max_comp)
+{
+    *min_comp = (ramp[alpha] * text_comp) / 0xff;
+    *max_comp = ramp[16 - alpha] + ((0xff - ramp[16 - alpha]) * text_comp) / 0xff;
+}
+
+static inline BYTE aa_comp(BYTE dst, BYTE text, BYTE alpha)
+{
+    BYTE min_comp, max_comp;
+
+    if (alpha == 16)  return text;
+    if (alpha <= 1)   return dst;
+    if (text == dst)  return dst;
+
+    get_range( alpha, text, &min_comp, &max_comp );
+
+    if (dst > text)
+    {
+        DWORD diff = dst - text;
+        DWORD range = max_comp - text;
+        dst = text + (diff * range ) / (0xff - text);
+        return dst;
+    }
+    else
+    {
+        DWORD diff = text - dst;
+        DWORD range = text - min_comp ;
+        dst = text - (diff * range) / text;
+        return dst;
+    }
+}
+
+static inline COLORREF aa_colorref( COLORREF dst, COLORREF text, BYTE glyph )
+{
+    COLORREF ret;
+
+    ret = RGB( aa_comp( GetRValue(dst), GetRValue(text), glyph ),
+               aa_comp( GetGValue(dst), GetGValue(text), glyph ),
+               aa_comp( GetBValue(dst), GetBValue(text), glyph ) );
+    return ret;
+}
+
+static const BYTE masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
+
+static void draw_text_2( HDC hdc, BITMAPINFO *bmi, BYTE *bits, BOOL aa )
+{
+    DWORD dib_size = get_dib_size(bmi), ret;
+    LOGFONT lf;
+    HFONT font;
+    GLYPHMETRICS gm;
+    BYTE g_buf[10000];
+    int i, stride, x, y;
+    static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
+    char *eto_hash = NULL, *diy_hash = NULL;
+    static const char *str = "Hello Wine";
+    POINT origin, g_org;
+    static const BYTE vals[4] = { 0x00, 0x00, 0x00, 0x00 };
+    TEXTMETRIC tm;
+    COLORREF text_color;
+
+    for(i = 0; i < dib_size; i++)
+        bits[i] = vals[i % 4];
+
+    memset( &lf, 0, sizeof(lf) );
+    strcpy( lf.lfFaceName, "Tahoma" );
+    lf.lfHeight = 24;
+    lf.lfQuality = aa ? ANTIALIASED_QUALITY : NONANTIALIASED_QUALITY;
+
+    font = CreateFontIndirect( &lf );
+    font = SelectObject( hdc, font );
+
+    GetTextMetrics( hdc, &tm );
+    if (!(tm.tmPitchAndFamily & TMPF_VECTOR))
+    {
+        skip( "skipping as a bitmap font has been selected for Tahoma.\n" );
+        DeleteObject( SelectObject( hdc, font ) );
+        return;
+    }
+
+    SetTextColor( hdc, RGB(0xff, 0x00, 0x00) );
+    SetTextAlign( hdc, TA_BASELINE );
+    SetBkMode( hdc, TRANSPARENT );
+    origin.x = 10;
+    origin.y = 100;
+
+    ExtTextOut( hdc, origin.x, origin.y, 0, NULL, str, strlen(str), NULL );
+    eto_hash = hash_dib( bmi, bits );
+
+    for(i = 0; i < dib_size; i++)
+        bits[i] = vals[i % 4];
+
+    if (bmi->bmiHeader.biBitCount <= 8) aa = FALSE;
+
+    text_color = GetTextColor( hdc );
+    for (i = 0; i < strlen(str); i++)
+    {
+        DWORD ggo_flags = aa ? GGO_GRAY4_BITMAP : GGO_BITMAP;
+
+        ret = GetGlyphOutline( hdc, str[i], ggo_flags, &gm, 0, NULL, &identity );
+
+        if (ret == GDI_ERROR) continue;
+
+        if (ret) GetGlyphOutline( hdc, str[i], ggo_flags, &gm, sizeof(g_buf), g_buf, &identity );
+
+        g_org.x = origin.x + gm.gmptGlyphOrigin.x;
+        g_org.y = origin.y - gm.gmptGlyphOrigin.y;
+
+        origin.x += gm.gmCellIncX;
+        origin.y += gm.gmCellIncY;
+
+        if (!ret) continue;
+
+        if (aa)
+        {
+            stride = (gm.gmBlackBoxX + 3) & ~3;
+
+            for (y = 0; y < gm.gmBlackBoxY; y++)
+            {
+                BYTE *g_ptr = g_buf + y * stride;
+                COLORREF val;
+
+                for (x = 0; x < gm.gmBlackBoxX; x++)
+                {
+                    if (g_ptr[x] <= 1) continue;
+                    if (g_ptr[x] >= 16) val = text_color;
+                    else
+                    {
+                        val = GetPixel( hdc, g_org.x + x, g_org.y + y );
+                        val = aa_colorref( val, text_color, g_ptr[x] );
+                    }
+                    SetPixel( hdc, g_org.x + x, g_org.y + y, val );
+                }
+            }
+        }
+        else
+        {
+            stride = ((gm.gmBlackBoxX + 31) >> 3) & ~3;
+
+            for (y = 0; y < gm.gmBlackBoxY; y++)
+            {
+                BYTE *g_ptr = g_buf + y * stride;
+                for (x = 0; x < gm.gmBlackBoxX; x++)
+                {
+                    if (g_ptr[x / 8] & masks[x % 8])
+                        SetPixel( hdc, g_org.x + x, g_org.y + y, text_color );
+                }
+            }
+        }
+    }
+
+    diy_hash = hash_dib( bmi, bits );
+    ok( !strcmp( eto_hash, diy_hash ), "hash mismatch - aa %d\n", aa );
+
+    HeapFree( GetProcessHeap(), 0, diy_hash );
+    HeapFree( GetProcessHeap(), 0, eto_hash );
+
+    font = SelectObject( hdc, font );
+    DeleteObject( font );
+}
+
+static void draw_text( HDC hdc, BITMAPINFO *bmi, BYTE *bits )
+{
+    draw_text_2( hdc, bmi, bits, FALSE );
+
+    /* Rounding errors make these cases hard to test */
+    if ((bmi->bmiHeader.biCompression == BI_BITFIELDS && ((DWORD*)bmi->bmiColors)[0] == 0x3f000) ||
+        (bmi->bmiHeader.biBitCount == 16))
+        return;
+
+    draw_text_2( hdc, bmi, bits, TRUE );
+}
+
 static void test_simple_graphics(void)
 {
     char bmibuf[sizeof(BITMAPINFO) + 256 * sizeof(RGBQUAD)];
@@ -2061,6 +2242,7 @@ static void test_simple_graphics(void)
     dst_format = "8888";
     sha1 = sha1_graphics_a8r8g8b8;
     draw_graphics(mem_dc, bmi, bits, &sha1);
+    draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
     DeleteObject(dib);
@@ -2086,6 +2268,7 @@ static void test_simple_graphics(void)
     dst_format = "8888 - bitfields";
     sha1 = sha1_graphics_a8r8g8b8;
     draw_graphics(mem_dc, bmi, bits, &sha1);
+    draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
     DeleteObject(dib);
@@ -2111,6 +2294,7 @@ static void test_simple_graphics(void)
     dst_format = "a8b8g8r8";
     sha1 = sha1_graphics_a8b8g8r8;
     draw_graphics(mem_dc, bmi, bits, &sha1);
+    draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
     DeleteObject(dib);
@@ -2136,6 +2320,7 @@ static void test_simple_graphics(void)
     dst_format = "r10g10b10";
     sha1 = sha1_graphics_r10g10b10;
     draw_graphics(mem_dc, bmi, bits, &sha1);
+    draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
     DeleteObject(dib);
@@ -2161,6 +2346,7 @@ static void test_simple_graphics(void)
     dst_format = "r6g6b6";
     sha1 = sha1_graphics_r6g6b6;
     draw_graphics(mem_dc, bmi, bits, &sha1);
+    draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
     DeleteObject(dib);
@@ -2177,6 +2363,7 @@ static void test_simple_graphics(void)
     dst_format = "24";
     sha1 = sha1_graphics_24;
     draw_graphics(mem_dc, bmi, bits, &sha1);
+    draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
     DeleteObject(dib);
@@ -2199,6 +2386,7 @@ static void test_simple_graphics(void)
     dst_format = "r5g5b5";
     sha1 = sha1_graphics_r5g5b5;
     draw_graphics(mem_dc, bmi, bits, &sha1);
+    draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
     DeleteObject(dib);
@@ -2223,6 +2411,7 @@ static void test_simple_graphics(void)
     dst_format = "r4g4b4";
     sha1 = sha1_graphics_r4g4b4;
     draw_graphics(mem_dc, bmi, bits, &sha1);
+    draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
     DeleteObject(dib);
@@ -2246,6 +2435,7 @@ static void test_simple_graphics(void)
     dst_format = "8 color";
     sha1 = sha1_graphics_8_color;
     draw_graphics(mem_dc, bmi, bits, &sha1);
+    draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
     DeleteObject(dib);
@@ -2265,6 +2455,7 @@ static void test_simple_graphics(void)
     dst_format = "8 grayscale";
     sha1 = sha1_graphics_8_grayscale;
     draw_graphics(mem_dc, bmi, bits, &sha1);
+    draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
     DeleteObject(dib);
@@ -2298,6 +2489,7 @@ static void test_simple_graphics(void)
     dst_format = "8";
     sha1 = sha1_graphics_8;
     draw_graphics(mem_dc, bmi, bits, &sha1);
+    draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
     DeleteObject(dib);
@@ -2314,6 +2506,7 @@ static void test_simple_graphics(void)
     dst_format = "4";
     sha1 = sha1_graphics_4;
     draw_graphics(mem_dc, bmi, bits, &sha1);
+    draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
     DeleteObject(dib);
@@ -2331,6 +2524,7 @@ static void test_simple_graphics(void)
     dst_format = "4 grayscale";
     sha1 = sha1_graphics_4_grayscale;
     draw_graphics(mem_dc, bmi, bits, &sha1);
+    draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
     DeleteObject(dib);
@@ -2355,6 +2549,7 @@ static void test_simple_graphics(void)
     dst_format = "1";
     sha1 = sha1_graphics_1;
     draw_graphics(mem_dc, bmi, bits, &sha1);
+    draw_text(mem_dc, bmi, bits);
 
     SelectObject(mem_dc, orig_bm);
     DeleteObject(dib);
