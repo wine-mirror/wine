@@ -30,6 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(qmgr);
 
 static void BackgroundCopyJobDestructor(BackgroundCopyJobImpl *This)
 {
+    This->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->cs);
     HeapFree(GetProcessHeap(), 0, This->displayName);
     HeapFree(GetProcessHeap(), 0, This);
@@ -577,6 +578,8 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type,
 
     This->lpVtbl = &BITS_IBackgroundCopyJob_Vtbl;
     InitializeCriticalSection(&This->cs);
+    This->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": BackgroundCopyJobImpl.cs");
+
     This->ref = 1;
     This->type = type;
 
@@ -584,6 +587,7 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type,
     This->displayName = HeapAlloc(GetProcessHeap(), 0, n);
     if (!This->displayName)
     {
+        This->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->cs);
         HeapFree(GetProcessHeap(), 0, This);
         return E_OUTOFMEMORY;
@@ -593,6 +597,7 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type,
     hr = CoCreateGuid(&This->jobId);
     if (FAILED(hr))
     {
+        This->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->cs);
         HeapFree(GetProcessHeap(), 0, This->displayName);
         HeapFree(GetProcessHeap(), 0, This);
