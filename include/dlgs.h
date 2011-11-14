@@ -210,5 +210,15 @@
 #define COLORMGMTDLGORD		1551
 #define NEWFILEOPENV2ORD	1552
 #define NEWFILEOPENV3ORD	1553
+#define NEWFORMATDLGWITHLINK	1591
+#define IDC_MANAGE_LINK		1592
+
+typedef struct tagCRGB
+{
+    BYTE bRed;
+    BYTE bGreen;
+    BYTE bBlue;
+    BYTE bExtra;
+} CRGB;
 
 #endif  /* #ifdef __WINE_DLGS_H */
