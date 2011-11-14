@@ -859,7 +859,10 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
             for (i = 0; i < cInChars; i++)
             {
                 if ((levels[i] == 0 || (odd(psState->uBidiLevel) && levels[i] == psState->uBidiLevel+1)) && inNumber && strchrW(math_punc,pwcInChars[i]))
+                {
+                    scripts[i] = Script_Numeric;
                     levels[i] = 2;
+                }
                 else if ((levels[i] == 0 || (odd(psState->uBidiLevel) && levels[i] == psState->uBidiLevel+1)) && scripts[i] == Script_Numeric)
                 {
                     levels[i] = 2;
@@ -982,7 +985,7 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
             new_run = TRUE;
         }
         /* changes in script */
-        else if ((!levels) && (((pwcInChars[cnt] != Numeric_space) && (New_Script != -1) && (New_Script != pItems[index].a.eScript)) || (New_Script == Script_Control)))
+        else if (((pwcInChars[cnt] != Numeric_space) && (New_Script != -1) && (New_Script != pItems[index].a.eScript)) || (New_Script == Script_Control))
         {
             TRACE("Script break(%i/%i)\n",pItems[index].a.eScript,New_Script);
             new_run = TRUE;
