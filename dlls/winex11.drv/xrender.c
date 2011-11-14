@@ -1964,22 +1964,6 @@ static int XRenderErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
     return 1;
 }
 
-/********************************************************************
- *                   is_dib_with_colortable
- *
- * Return TRUE if physdev is backed by a dibsection with <= 8 bits per pixel
- */
-static inline BOOL is_dib_with_colortable( X11DRV_PDEVICE *physDev )
-{
-    DIBSECTION dib;
-
-    if( physDev->bitmap && GetObjectW( physDev->bitmap->hbitmap, sizeof(dib), &dib ) == sizeof(dib) &&
-        dib.dsBmih.biBitCount <= 8 )
-        return TRUE;
-
-    return FALSE;
-}
-
 /***********************************************************************
  *           xrenderdrv_ExtTextOut
  */
@@ -1993,7 +1977,6 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     BOOL retv = FALSE;
     int textPixel, backgroundPixel;
     RGNDATA *saved_region = NULL;
-    BOOL disable_antialias = FALSE;
     AA_Type aa_type = AA_None;
     unsigned int idx;
     Picture tile_pict = 0;
@@ -2002,12 +1985,6 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     {
         dev = GET_NEXT_PHYSDEV( dev, pExtTextOut );
         return dev->funcs->pExtTextOut( dev, x, y, flags, lprect, wstr, count, lpDx );
-    }
-
-    if(is_dib_with_colortable( physdev->x11dev ))
-    {
-        TRACE("Disabling antialiasing\n");
-        disable_antialias = TRUE;
     }
 
     xgcval.function = GXcopy;
@@ -2051,16 +2028,14 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     EnterCriticalSection(&xrender_cs);
 
     entry = glyphsetCache + physdev->cache_index;
-    if( disable_antialias == FALSE )
-        aa_type = entry->aa_default;
+    aa_type = entry->aa_default;
     formatEntry = entry->format[aa_type];
 
     for(idx = 0; idx < count; idx++) {
         if( !formatEntry ) {
 	    UploadGlyph(physdev, wstr[idx], aa_type);
             /* re-evaluate antialias since aa_default may have changed */
-            if( disable_antialias == FALSE )
-                aa_type = entry->aa_default;
+            aa_type = entry->aa_default;
             formatEntry = entry->format[aa_type];
         } else if( wstr[idx] >= formatEntry->nrealized || formatEntry->realized[wstr[idx]] == FALSE) {
 	    UploadGlyph(physdev, wstr[idx], aa_type);
