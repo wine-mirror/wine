@@ -34,17 +34,7 @@ extern "C" {
 #define WINUSERAPI DECLSPEC_IMPORT
 #endif
 
-#define WM_DDE_INITIATE   0x3E0
-#define WM_DDE_TERMINATE  0x3E1
-#define WM_DDE_ADVISE	  0x3E2
-#define WM_DDE_UNADVISE   0x3E3
-#define WM_DDE_ACK	  0x3E4
-#define WM_DDE_DATA	  0x3E5
-#define WM_DDE_REQUEST	  0x3E6
-#define WM_DDE_POKE	  0x3E7
-#define WM_DDE_EXECUTE	  0x3E8
-#define WM_DDE_LAST	  WM_DDE_EXECUTE
-#define WM_DDE_FIRST	  WM_DDE_INITIATE
+#include <dde.rh>
 
 /* DDEACK: wStatus in WM_DDE_ACK message */
 typedef struct

@@ -203,6 +203,7 @@ SRCDIR_INCLUDES = \
 	dciddi.h \
 	dciman.h \
 	dde.h \
+	dde.rh \
 	ddeml.h \
 	ddk/compstui.h \
 	ddk/hidsdi.h \

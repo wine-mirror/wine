@@ -1,5 +1,8 @@
 /*
- * Copyright (C) 2002 Alexandre Julliard
+ * Copyright 1995, Technion, Israel Institute of Technology
+ * Electrical Eng, Software Lab.
+ * Author:    Michael Veksler.
+ * Purpose:   dde declarations
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,30 +19,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef _WINRESRC_
-#define _WINRESRC_
-
-#ifndef WINVER
-#define WINVER 0x0500
-#endif
-
-#ifndef _WIN32_IE
-#define _WIN32_IE 0x0501
-#endif
-
-#ifndef _WIN32_WINDOWS
-#define _WIN32_WINDOWS 0x0410
-#endif
-
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0500
-#endif
-
-#include <winuser.rh>
-#include <commctrl.rh>
-#include <dde.rh>
-#include <winnt.rh>
-#include <dlgs.h>
-#include <winver.h>
-
-#endif /* _WINRESRC_ */
+#define WM_DDE_INITIATE   0x3E0
+#define WM_DDE_TERMINATE  0x3E1
+#define WM_DDE_ADVISE	  0x3E2
+#define WM_DDE_UNADVISE   0x3E3
+#define WM_DDE_ACK	  0x3E4
+#define WM_DDE_DATA	  0x3E5
+#define WM_DDE_REQUEST	  0x3E6
+#define WM_DDE_POKE	  0x3E7
+#define WM_DDE_EXECUTE	  0x3E8
+#define WM_DDE_LAST	  WM_DDE_EXECUTE
+#define WM_DDE_FIRST	  WM_DDE_INITIATE
