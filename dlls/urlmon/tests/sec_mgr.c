@@ -423,8 +423,8 @@ static void test_SecurityManager(void)
     ok(size == sizeof(secid10) ||
        size == sizeof(secid10_2), /* win2k3 */
        "size=%d\n", size);
-    ok(!memcmp(buf, secid10, size) ||
-       !memcmp(buf, secid10_2, size), /* win2k3 */
+    ok(!memcmp(buf, secid10, sizeof(secid10)) ||
+       !memcmp(buf, secid10_2, sizeof(secid10_2)), /* win2k3 */
        "wrong secid\n");
 
     zone = 100;
