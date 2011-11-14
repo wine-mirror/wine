@@ -144,6 +144,37 @@ HRESULT WINAPI D3D10CreateStateBlock(ID3D10Device *device,
     return S_OK;
 }
 
+static HRESULT stateblock_mask_clear_bits(BYTE *field, UINT field_size, UINT start_bit, UINT count)
+{
+    UINT end_bit = start_bit + count;
+    BYTE start_mask = 0x7f >> (~start_bit & 7);
+    BYTE end_mask = 0xff << (end_bit & 7);
+    UINT start_idx = start_bit >> 3;
+    UINT end_idx = end_bit >> 3;
+
+    if (start_bit >= field_size || field_size - start_bit < count)
+        return E_INVALIDARG;
+
+    if (start_idx == end_idx)
+    {
+        field[start_idx] &= start_mask | end_mask;
+        return S_OK;
+    }
+
+    if (start_bit & 7)
+    {
+        field[start_idx] &= start_mask;
+        ++start_idx;
+    }
+
+    memset(&field[start_idx], 0, end_idx - start_idx);
+
+    if (end_bit & 7)
+        field[end_idx] &= end_mask;
+
+    return S_OK;
+}
+
 HRESULT WINAPI D3D10StateBlockMaskDifference(D3D10_STATE_BLOCK_MASK *mask_x,
         D3D10_STATE_BLOCK_MASK *mask_y, D3D10_STATE_BLOCK_MASK *result)
 {
@@ -177,4 +208,79 @@ HRESULT WINAPI D3D10StateBlockMaskDisableAll(D3D10_STATE_BLOCK_MASK *mask)
     memset(mask, 0, sizeof(*mask));
 
     return S_OK;
+}
+
+HRESULT WINAPI D3D10StateBlockMaskDisableCapture(D3D10_STATE_BLOCK_MASK *mask,
+        D3D10_DEVICE_STATE_TYPES state_type, UINT start_idx, UINT count)
+{
+    TRACE("mask %p state_type %s, start_idx %u, count %u.\n",
+            mask, debug_d3d10_device_state_types(state_type), start_idx, count);
+
+    if (!mask)
+        return E_INVALIDARG;
+
+    switch (state_type)
+    {
+        case D3D10_DST_SO_BUFFERS:
+            return stateblock_mask_clear_bits(&mask->SOBuffers, 1, start_idx, count);
+        case D3D10_DST_OM_RENDER_TARGETS:
+            return stateblock_mask_clear_bits(&mask->OMRenderTargets, 1, start_idx, count);
+        case D3D10_DST_DEPTH_STENCIL_STATE:
+            return stateblock_mask_clear_bits(&mask->OMDepthStencilState, 1, start_idx, count);
+        case D3D10_DST_BLEND_STATE:
+            return stateblock_mask_clear_bits(&mask->OMBlendState, 1, start_idx, count);
+        case D3D10_DST_VS:
+            return stateblock_mask_clear_bits(&mask->VS, 1, start_idx, count);
+        case D3D10_DST_VS_SAMPLERS:
+            return stateblock_mask_clear_bits(mask->VSSamplers,
+                    D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT, start_idx, count);
+        case D3D10_DST_VS_SHADER_RESOURCES:
+            return stateblock_mask_clear_bits(mask->VSShaderResources,
+                    D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, start_idx, count);
+        case D3D10_DST_VS_CONSTANT_BUFFERS:
+            return stateblock_mask_clear_bits(mask->VSConstantBuffers,
+                    D3D10_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, start_idx, count);
+        case D3D10_DST_GS:
+            return stateblock_mask_clear_bits(&mask->GS, 1, start_idx, count);
+        case D3D10_DST_GS_SAMPLERS:
+            return stateblock_mask_clear_bits(mask->GSSamplers,
+                    D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT, start_idx, count);
+        case D3D10_DST_GS_SHADER_RESOURCES:
+            return stateblock_mask_clear_bits(mask->GSShaderResources,
+                    D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, start_idx, count);
+        case D3D10_DST_GS_CONSTANT_BUFFERS:
+            return stateblock_mask_clear_bits(mask->GSConstantBuffers,
+                    D3D10_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, start_idx, count);
+        case D3D10_DST_PS:
+            return stateblock_mask_clear_bits(&mask->PS, 1, start_idx, count);
+        case D3D10_DST_PS_SAMPLERS:
+            return stateblock_mask_clear_bits(mask->PSSamplers,
+                    D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT, start_idx, count);
+        case D3D10_DST_PS_SHADER_RESOURCES:
+            return stateblock_mask_clear_bits(mask->PSShaderResources,
+                    D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, start_idx, count);
+        case D3D10_DST_PS_CONSTANT_BUFFERS:
+            return stateblock_mask_clear_bits(mask->PSConstantBuffers,
+                    D3D10_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, start_idx, count);
+        case D3D10_DST_IA_VERTEX_BUFFERS:
+            return stateblock_mask_clear_bits(mask->IAVertexBuffers,
+                    D3D10_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT, start_idx, count);
+        case D3D10_DST_IA_INDEX_BUFFER:
+            return stateblock_mask_clear_bits(&mask->IAIndexBuffer, 1, start_idx, count);
+        case D3D10_DST_IA_INPUT_LAYOUT:
+            return stateblock_mask_clear_bits(&mask->IAInputLayout, 1, start_idx, count);
+        case D3D10_DST_IA_PRIMITIVE_TOPOLOGY:
+            return stateblock_mask_clear_bits(&mask->IAPrimitiveTopology, 1, start_idx, count);
+        case D3D10_DST_RS_VIEWPORTS:
+            return stateblock_mask_clear_bits(&mask->RSViewports, 1, start_idx, count);
+        case D3D10_DST_RS_SCISSOR_RECTS:
+            return stateblock_mask_clear_bits(&mask->RSScissorRects, 1, start_idx, count);
+        case D3D10_DST_RS_RASTERIZER_STATE:
+            return stateblock_mask_clear_bits(&mask->RSRasterizerState, 1, start_idx, count);
+        case D3D10_DST_PREDICATION:
+            return stateblock_mask_clear_bits(&mask->Predication, 1, start_idx, count);
+        default:
+            FIXME("Unhandled state_type %#x.\n", state_type);
+            return E_INVALIDARG;
+    }
 }

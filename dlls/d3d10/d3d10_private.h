@@ -41,6 +41,7 @@
 const char *debug_d3d10_driver_type(D3D10_DRIVER_TYPE driver_type) DECLSPEC_HIDDEN;
 const char *debug_d3d10_shader_variable_class(D3D10_SHADER_VARIABLE_CLASS c) DECLSPEC_HIDDEN;
 const char *debug_d3d10_shader_variable_type(D3D10_SHADER_VARIABLE_TYPE t) DECLSPEC_HIDDEN;
+const char *debug_d3d10_device_state_types(D3D10_DEVICE_STATE_TYPES t) DECLSPEC_HIDDEN;
 
 void *d3d10_rb_alloc(size_t size) DECLSPEC_HIDDEN;
 void *d3d10_rb_realloc(void *ptr, size_t size) DECLSPEC_HIDDEN;

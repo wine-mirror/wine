@@ -21,7 +21,7 @@
 @ stub D3D10RegisterLayers
 @ stdcall D3D10StateBlockMaskDifference(ptr ptr ptr)
 @ stdcall D3D10StateBlockMaskDisableAll(ptr)
-@ stub D3D10StateBlockMaskDisableCapture
+@ stdcall D3D10StateBlockMaskDisableCapture(ptr long long long)
 @ stub D3D10StateBlockMaskEnableAll
 @ stub D3D10StateBlockMaskEnableCapture
 @ stub D3D10StateBlockMaskGetSetting

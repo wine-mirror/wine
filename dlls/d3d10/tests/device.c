@@ -66,8 +66,34 @@ static void test_device_interfaces(ID3D10Device *device)
 
 static void test_stateblock_mask(void)
 {
+    static const struct
+    {
+        UINT start_idx;
+        UINT count;
+        BYTE expected[5];
+    }
+    capture_test[] =
+    {
+        { 8,  4, {0xff, 0xf0, 0xff, 0xff, 0xff}},
+        { 9,  4, {0xff, 0xe1, 0xff, 0xff, 0xff}},
+        {10,  4, {0xff, 0xc3, 0xff, 0xff, 0xff}},
+        {11,  4, {0xff, 0x87, 0xff, 0xff, 0xff}},
+        {12,  4, {0xff, 0x0f, 0xff, 0xff, 0xff}},
+        {13,  4, {0xff, 0x1f, 0xfe, 0xff, 0xff}},
+        {14,  4, {0xff, 0x3f, 0xfc, 0xff, 0xff}},
+        {15,  4, {0xff, 0x7f, 0xf8, 0xff, 0xff}},
+        { 8, 12, {0xff, 0x00, 0xf0, 0xff, 0xff}},
+        { 9, 12, {0xff, 0x01, 0xe0, 0xff, 0xff}},
+        {10, 12, {0xff, 0x03, 0xc0, 0xff, 0xff}},
+        {11, 12, {0xff, 0x07, 0x80, 0xff, 0xff}},
+        {12, 12, {0xff, 0x0f, 0x00, 0xff, 0xff}},
+        {13, 12, {0xff, 0x1f, 0x00, 0xfe, 0xff}},
+        {14, 12, {0xff, 0x3f, 0x00, 0xfc, 0xff}},
+        {15, 12, {0xff, 0x7f, 0x00, 0xf8, 0xff}},
+    };
     D3D10_STATE_BLOCK_MASK mask_x, mask_y, result;
     HRESULT hr;
+    UINT i;
 
     memset(&mask_x, 0, sizeof(mask_x));
     memset(&mask_y, 0, sizeof(mask_y));
@@ -96,6 +122,30 @@ static void test_stateblock_mask(void)
     ok(!result.Predication, "Got unexpected result.Predication %#x.\n", result.Predication);
     hr = D3D10StateBlockMaskDisableAll(NULL);
     ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+
+    result.VS = 0xff;
+    hr = D3D10StateBlockMaskDisableCapture(&result, D3D10_DST_VS, 0, 1);
+    ok(SUCCEEDED(hr), "D3D10StateBlockMaskDisableCapture failed, hr %#x.\n", hr);
+    ok(result.VS == 0xfe, "Got unexpected result.VS %#x.\n", result.VS);
+    hr = D3D10StateBlockMaskDisableCapture(&result, D3D10_DST_VS, 0, 4);
+    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    hr = D3D10StateBlockMaskDisableCapture(&result, D3D10_DST_VS, 1, 1);
+    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    hr = D3D10StateBlockMaskDisableCapture(NULL, D3D10_DST_VS, 0, 1);
+    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    for (i = 0; i < sizeof(capture_test) / sizeof(*capture_test); ++i)
+    {
+        memset(&result, 0xff, sizeof(result));
+        hr = D3D10StateBlockMaskDisableCapture(&result, D3D10_DST_VS_SHADER_RESOURCES,
+                capture_test[i].start_idx, capture_test[i].count);
+        ok(SUCCEEDED(hr), "D3D10StateBlockMaskDisableCapture failed, hr %#x.\n", hr);
+
+        ok(!memcmp(result.VSShaderResources, capture_test[i].expected, 5),
+                "Got unexpect result.VSShaderResources[0..4] {%#x, %#x, %#x, %#x, %#x} for test %u.\n",
+                result.VSShaderResources[0], result.VSShaderResources[1],
+                result.VSShaderResources[2], result.VSShaderResources[3],
+                result.VSShaderResources[4], i);
+    }
 }
 
 START_TEST(device)
