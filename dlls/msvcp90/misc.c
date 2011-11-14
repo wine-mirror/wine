@@ -100,7 +100,7 @@ void __cdecl _Lockit_init(int locktype) {
 /* ?_Lockit_dtor@_Lockit@std@@SAXH@Z */
 void __cdecl _Lockit_free(int locktype)
 {
-    lockit_cs[locktype].DebugInfo->Spare[0] = (DWORD_PTR)0;
+    lockit_cs[locktype].DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&lockit_cs[locktype]);
 }
 
