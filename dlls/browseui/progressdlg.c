@@ -260,6 +260,8 @@ static void ProgressDialog_Destructor(ProgressDialog *This)
     heap_free(This->cancelMsg);
     heap_free(This->title);
     heap_free(This);
+    This->cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&This->cs);
     BROWSEUI_refCount--;
 }
 
@@ -503,6 +505,7 @@ HRESULT ProgressDialog_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     This->IProgressDialog_iface.lpVtbl = &ProgressDialogVtbl;
     This->refCount = 1;
     InitializeCriticalSection(&This->cs);
+    This->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ProgressDialog.cs");
 
     TRACE("returning %p\n", This);
     *ppOut = (IUnknown *)This;

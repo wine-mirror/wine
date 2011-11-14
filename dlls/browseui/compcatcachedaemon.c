@@ -57,6 +57,7 @@ static inline CompCatCacheDaemon *impl_from_IRunnableTask(IRunnableTask *iface)
 static void CompCatCacheDaemon_Destructor(CompCatCacheDaemon *This)
 {
     TRACE("destroying %p\n", This);
+    This->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->cs);
     heap_free(This);
     BROWSEUI_refCount--;
@@ -154,6 +155,7 @@ HRESULT CompCatCacheDaemon_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     This->IRunnableTask_iface.lpVtbl = &CompCatCacheDaemonVtbl;
     This->refCount = 1;
     InitializeCriticalSection(&This->cs);
+    This->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": CompCatCacheDaemon.cs");
 
     TRACE("returning %p\n", This);
     *ppOut = (IUnknown *)This;
