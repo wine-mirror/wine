@@ -44,6 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 typedef struct _domimpl
 {
+    DispatchEx dispex;
     IXMLDOMImplementation IXMLDOMImplementation_iface;
     LONG ref;
 } domimpl;
@@ -66,6 +67,10 @@ static HRESULT WINAPI dimimpl_QueryInterface(
          IsEqualGUID( riid, &IID_IUnknown ) )
     {
         *ppvObject = iface;
+    }
+    else if (dispex_query_interface(&This->dispex, riid, ppvObject))
+    {
+        return *ppvObject ? S_OK : E_NOINTERFACE;
     }
     else
     {
@@ -97,6 +102,7 @@ static ULONG WINAPI dimimpl_Release(
     TRACE("(%p)->(%d)\n", This, ref);
     if ( ref == 0 )
     {
+        release_dispex(&This->dispex);
         heap_free( This );
     }
 
@@ -122,13 +128,10 @@ static HRESULT WINAPI dimimpl_GetTypeInfo(
     ITypeInfo** ppTInfo )
 {
     domimpl *This = impl_from_IXMLDOMImplementation( iface );
-    HRESULT hr;
 
     TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
 
-    hr = get_typeinfo(IXMLDOMImplementation_tid, ppTInfo);
-
-    return hr;
+    return get_typeinfo(IXMLDOMImplementation_tid, ppTInfo);
 }
 
 static HRESULT WINAPI dimimpl_GetIDsOfNames(
@@ -220,6 +223,18 @@ static const struct IXMLDOMImplementationVtbl dimimpl_vtbl =
     dimimpl_hasFeature
 };
 
+static const tid_t dimimpl_iface_tids[] = {
+    IXMLDOMImplementation_tid,
+    0
+};
+
+static dispex_static_data_t dimimpl_dispex = {
+    NULL,
+    IXMLDOMImplementation_tid,
+    NULL,
+    dimimpl_iface_tids
+};
+
 IUnknown* create_doc_Implementation(void)
 {
     domimpl *This;
@@ -230,6 +245,7 @@ IUnknown* create_doc_Implementation(void)
 
     This->IXMLDOMImplementation_iface.lpVtbl = &dimimpl_vtbl;
     This->ref = 1;
+    init_dispex(&This->dispex, (IUnknown*)&This->IXMLDOMImplementation_iface, &dimimpl_dispex);
 
     return (IUnknown*)&This->IXMLDOMImplementation_iface;
 }

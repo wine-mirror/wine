@@ -10507,6 +10507,7 @@ static const DOMNodeType dispex_types_test[] =
 static void test_dispex(void)
 {
     const DOMNodeType *type = dispex_types_test;
+    IXMLDOMImplementation *impl;
     IXMLDOMNodeList *node_list;
     IXMLDOMParseError *error;
     IXMLDOMNamedNodeMap *map;
@@ -10611,6 +10612,15 @@ static void test_dispex(void)
 
     IXMLDOMNamedNodeMap_Release(map);
     IXMLDOMElement_Release(elem);
+
+    /* IXMLDOMImplementation */
+    hr = IXMLDOMDocument_get_implementation(doc, &impl);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMImplementation_QueryInterface(impl, &IID_IDispatchEx, (void**)&dispex);
+    EXPECT_HR(hr, S_OK);
+    IDispatchEx_Release(dispex);
+    IXMLDOMImplementation_Release(impl);
 
     IXMLDOMDocument_Release(doc);
 
