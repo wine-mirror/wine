@@ -6,6 +6,7 @@ C_SRCS = \
 	converter.c \
 	icoformat.c \
 	info.c \
+	metadata.c \
 	palette.c \
 	stream.c
 

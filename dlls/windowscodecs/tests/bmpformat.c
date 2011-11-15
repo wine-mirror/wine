@@ -25,6 +25,7 @@
 #include "initguid.h"
 #include "objbase.h"
 #include "wincodec.h"
+#include "wincodecsdk.h"
 #include "wine/test.h"
 
 static const char testbmp_24bpp[] = {
