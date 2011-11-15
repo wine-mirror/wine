@@ -2358,14 +2358,14 @@ static BOOL HLPFILE_Uncompress_Phrases40(HLPFILE* hlpfile)
     INT dec_size, cpr_size;
     BYTE *buf_idx, *end_idx;
     BYTE *buf_phs, *end_phs;
-    LONG* ptr, mask = 0;
+    ULONG* ptr, mask = 0;
     unsigned int i;
     unsigned short bc, n;
 
     if (!HLPFILE_FindSubFile(hlpfile, "|PhrIndex", &buf_idx, &end_idx) ||
         !HLPFILE_FindSubFile(hlpfile, "|PhrImage", &buf_phs, &end_phs)) return FALSE;
 
-    ptr = (LONG*)(buf_idx + 9 + 28);
+    ptr = (ULONG*)(buf_idx + 9 + 28);
     bc = GET_USHORT(buf_idx, 9 + 24) & 0x0F;
     num = hlpfile->num_phrases = GET_USHORT(buf_idx, 9 + 4);
 
@@ -2400,9 +2400,10 @@ static BOOL HLPFILE_Uncompress_Phrases40(HLPFILE* hlpfile)
         return FALSE;
     }
 
-#define getbit() (ptr += (mask < 0), mask = mask*2 + (mask<=0), (*ptr & mask) != 0)
+#define getbit() ((mask <<= 1) ? (*ptr & mask) != 0: (*++ptr & (mask=1)) != 0)
 
     hlpfile->phrases_offsets[0] = 0;
+    ptr--; /* as we'll first increment ptr because mask is 0 on first getbit() call */
     for (i = 0; i < num; i++)
     {
         for (n = 1; getbit(); n += 1 << bc);
