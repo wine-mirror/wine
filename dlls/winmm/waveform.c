@@ -140,6 +140,13 @@ static UINT g_inmmdevices_count;
 static IMMDeviceEnumerator *g_devenum;
 
 static CRITICAL_SECTION g_devthread_lock;
+static CRITICAL_SECTION_DEBUG g_devthread_lock_debug =
+{
+    0, 0, &g_devthread_lock,
+    { &g_devthread_lock_debug.ProcessLocksList, &g_devthread_lock_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": g_devthread_lock") }
+};
+static CRITICAL_SECTION g_devthread_lock = { &g_devthread_lock_debug, -1, 0, 0, 0, 0 };
 static HANDLE g_devices_thread;
 static HWND g_devices_hwnd;
 
@@ -167,10 +174,10 @@ static LRESULT WOD_Close(HWAVEOUT hwave);
 static LRESULT WID_Open(WINMM_OpenInfo *info);
 static LRESULT WID_Close(HWAVEIN hwave);
 
-BOOL WINMM_InitWaveform(void)
+void WINMM_DeleteWaveform(void)
 {
-    InitializeCriticalSection(&g_devthread_lock);
-    return TRUE;
+    /* FIXME: Free g_(in,out)_mmdevices? */
+    DeleteCriticalSection(&g_devthread_lock);
 }
 
 static inline HWAVE WINMM_MakeHWAVE(UINT mmdevice, BOOL is_out, UINT device)
@@ -193,6 +200,8 @@ static void WINMM_InitDevice(WINMM_Device *device,
         WINMM_MMDevice *parent, HWAVE hwave)
 {
     InitializeCriticalSection(&device->lock);
+    device->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": WINMM_Device.lock");
+
     device->handle = hwave;
     device->parent = parent;
 }
@@ -449,6 +458,7 @@ static HRESULT WINMM_InitMMDevice(EDataFlow flow, IMMDevice *device,
     CoCreateGuid(&dev->session);
 
     InitializeCriticalSection(&dev->lock);
+    dev->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": WINMM_Device.lock");
 
     return S_OK;
 }

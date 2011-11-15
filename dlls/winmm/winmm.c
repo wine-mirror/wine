@@ -79,7 +79,7 @@ static	BOOL	WINMM_CreateIData(HINSTANCE hInstDLL)
 {
     hWinMM32Instance = hInstDLL;
     psLastEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-    return WINMM_InitWaveform();
+    return TRUE;
 }
 
 /**************************************************************************
@@ -89,8 +89,7 @@ static	void WINMM_DeleteIData(void)
 {
     TIME_MMTimeStop();
 
-    /* FIXME: should also free content and resources allocated
-     * inside WINMM_IData */
+    WINMM_DeleteWaveform();
     CloseHandle(psLastEvent);
     DeleteCriticalSection(&WINMM_cs);
 }
