@@ -128,12 +128,33 @@ xmlnode *get_node_obj(IXMLDOMNode *node)
 
 HRESULT node_get_nodeName(xmlnode *This, BSTR *name)
 {
+    BSTR prefix, base;
+    HRESULT hr;
+
     if (!name)
         return E_INVALIDARG;
 
-    *name = bstr_from_xmlChar(This->node->name);
-    if (!*name)
-        return S_FALSE;
+    hr = node_get_base_name(This, &base);
+    if (hr != S_OK) return hr;
+
+    hr = node_get_prefix(This, &prefix);
+    if (hr == S_OK)
+    {
+        static const WCHAR colW = ':';
+        WCHAR *ptr;
+
+        /* +1 for ':' */
+        ptr = *name = SysAllocStringLen(NULL, SysStringLen(base) + SysStringLen(prefix) + 1);
+        memcpy(ptr, prefix, SysStringByteLen(prefix));
+        ptr += SysStringLen(prefix);
+        memcpy(ptr++, &colW, sizeof(WCHAR));
+        memcpy(ptr, base, SysStringByteLen(base));
+
+        SysFreeString(base);
+        SysFreeString(prefix);
+    }
+    else
+        *name = base;
 
     return S_OK;
 }

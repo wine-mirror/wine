@@ -7009,7 +7009,7 @@ static void test_namespaces(void)
 
         hr = IXMLDOMNode_get_nodeName(node2, &str);
         EXPECT_HR(hr, S_OK);
-        todo_wine ok(!lstrcmpW( str, _bstr_("Model:Package")), "got %s\n", wine_dbgstr_w(str));
+        ok(!lstrcmpW( str, _bstr_("Model:Package")), "got %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         /* Test get_namespaceURI */
@@ -7030,7 +7030,7 @@ static void test_namespaces(void)
 
         hr = IXMLDOMAttribute_get_nodeName(attr, &str);
         EXPECT_HR(hr, S_OK);
-        todo_wine ok(!lstrcmpW( str, _bstr_("Model:name2")), "got %s\n", wine_dbgstr_w(str));
+        ok(!lstrcmpW( str, _bstr_("Model:name2")), "got %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         hr = IXMLDOMAttribute_get_prefix(attr, &str);
