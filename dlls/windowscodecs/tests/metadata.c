@@ -163,24 +163,39 @@ static void test_metadata_tEXt(void)
     IWICMetadataReader *reader;
     IWICEnumMetadataItem *enumerator;
     PROPVARIANT schema, id, value;
-    ULONG items_returned;
+    ULONG items_returned, count;
+    GUID format;
+
+    PropVariantInit(&schema);
+    PropVariantInit(&id);
+    PropVariantInit(&value);
 
     hr = CoCreateInstance(&CLSID_WICPngTextMetadataReader, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICMetadataReader, (void**)&reader);
     todo_wine ok(hr == S_OK, "CoCreateInstance failed, hr=%x\n", hr);
     if (FAILED(hr)) return;
 
+    hr = IWICMetadataReader_GetCount(reader, NULL);
+    ok(hr == E_INVALIDARG, "GetCount failed, hr=%x\n", hr);
+
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "GetCount failed, hr=%x\n", hr);
+    ok(count == 0, "unexpected count %i\n", count);
+
     load_stream((IUnknown*)reader, metadata_tEXt, sizeof(metadata_tEXt));
+
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "GetCount failed, hr=%x\n", hr);
+    ok(count == 1, "unexpected count %i\n", count);
+
+    hr = IWICMetadataReader_GetEnumerator(reader, NULL);
+    ok(hr == E_INVALIDARG, "GetEnumerator failed, hr=%x\n", hr);
 
     hr = IWICMetadataReader_GetEnumerator(reader, &enumerator);
     ok(hr == S_OK, "GetEnumerator failed, hr=%x\n", hr);
 
     if (SUCCEEDED(hr))
     {
-        PropVariantInit(&schema);
-        PropVariantInit(&id);
-        PropVariantInit(&value);
-
         hr = IWICEnumMetadataItem_Next(enumerator, 1, &schema, &id, &value, &items_returned);
         ok(hr == S_OK, "Next failed, hr=%x\n", hr);
         ok(items_returned == 1, "unexpected item count %i\n", items_returned);
@@ -204,6 +219,58 @@ static void test_metadata_tEXt(void)
 
         IWICEnumMetadataItem_Release(enumerator);
     }
+
+    hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+    ok(hr == S_OK, "GetMetadataFormat failed, hr=%x\n", hr);
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatChunktEXt), "unexpected format %s\n", debugstr_guid(&format));
+
+    hr = IWICMetadataReader_GetMetadataFormat(reader, NULL);
+    ok(hr == E_INVALIDARG, "GetMetadataFormat failed, hr=%x\n", hr);
+
+    id.vt = VT_LPSTR;
+    id.pszVal = CoTaskMemAlloc(strlen("winetest") + 1);
+    strcpy(id.pszVal, "winetest");
+
+    hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
+    ok(hr == S_OK, "GetValue failed, hr=%x\n", hr);
+
+    hr = IWICMetadataReader_GetValue(reader, &schema, NULL, &value);
+    ok(hr == E_INVALIDARG, "GetValue failed, hr=%x\n", hr);
+
+    hr = IWICMetadataReader_GetValue(reader, &schema, &id, &value);
+    ok(hr == S_OK, "GetValue failed, hr=%x\n", hr);
+    ok(value.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
+    ok(!strcmp(value.pszVal, "value"), "unexpected value: %s\n", id.pszVal);
+    PropVariantClear(&value);
+
+    strcpy(id.pszVal, "test");
+
+    hr = IWICMetadataReader_GetValue(reader, &schema, &id, &value);
+    ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "GetValue failed, hr=%x\n", hr);
+
+    PropVariantClear(&id);
+
+    hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, NULL, NULL);
+    ok(hr == S_OK, "GetValueByIndex failed, hr=%x\n", hr);
+
+    hr = IWICMetadataReader_GetValueByIndex(reader, 0, &schema, NULL, NULL);
+    ok(hr == S_OK, "GetValueByIndex failed, hr=%x\n", hr);
+    ok(schema.vt == VT_EMPTY, "unexpected vt: %i\n", schema.vt);
+
+    hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, &id, NULL);
+    ok(hr == S_OK, "GetValueByIndex failed, hr=%x\n", hr);
+    ok(id.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
+    ok(!strcmp(id.pszVal, "winetest"), "unexpected id: %s\n", id.pszVal);
+    PropVariantClear(&id);
+
+    hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, NULL, &value);
+    ok(hr == S_OK, "GetValueByIndex failed, hr=%x\n", hr);
+    ok(value.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
+    ok(!strcmp(value.pszVal, "value"), "unexpected value: %s\n", id.pszVal);
+    PropVariantClear(&value);
+
+    hr = IWICMetadataReader_GetValueByIndex(reader, 1, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "GetValueByIndex failed, hr=%x\n", hr);
 
     IWICMetadataReader_Release(reader);
 }
