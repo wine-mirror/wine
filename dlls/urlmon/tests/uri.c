@@ -4316,7 +4316,32 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_WILDCARD,S_OK,FALSE},
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
-    }
+    },
+    {   "mk:@MSITSTORE:C:\\Some\\Bogus\\Path.chm::/subdir/file.txt",0,S_OK,FALSE,
+        {
+            {"mk:@MSITSTORE:C:\\Some\\Bogus\\Path.chm::/subdir/file.txt",S_OK},
+            {"",S_FALSE},
+            {"mk:@MSITSTORE:C:\\Some\\Bogus\\Path.chm::/subdir/file.txt",S_OK},
+            {"",S_FALSE},
+            {".txt",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"@MSITSTORE:C:\\Some\\Bogus\\Path.chm::/subdir/file.txt",S_OK},
+            {"@MSITSTORE:C:\\Some\\Bogus\\Path.chm::/subdir/file.txt",S_OK},
+            {"",S_FALSE},
+            {"mk:@MSITSTORE:C:\\Some\\Bogus\\Path.chm::/subdir/file.txt",S_OK},
+            {"mk",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_MK,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
 };
 
 typedef struct _invalid_uri {
@@ -6334,6 +6359,87 @@ static const uri_combine_test uri_combine_tests[] = {
             {Uri_HOST_DNS,S_OK},
             {80,S_OK},
             {URL_SCHEME_HTTP,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "mk:@MSITSTORE:C:\\Some\\Bogus\\Path.chm::/subdir\\file.txt",0,
+        "relative/path.txt",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,FALSE,
+        {
+            {"mk:@MSITSTORE:C:\\Some\\Bogus\\Path.chm::/subdir/relative/path.txt",S_OK},
+            {"",S_FALSE},
+            {"mk:@MSITSTORE:C:\\Some\\Bogus\\Path.chm::/subdir/relative/path.txt",S_OK},
+            {"",S_FALSE},
+            {".txt",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"@MSITSTORE:C:\\Some\\Bogus\\Path.chm::/subdir/relative/path.txt",S_OK},
+            {"@MSITSTORE:C:\\Some\\Bogus\\Path.chm::/subdir/relative/path.txt",S_OK},
+            {"",S_FALSE},
+            {"mk:@MSITSTORE:C:\\Some\\Bogus\\Path.chm::/subdir/relative/path.txt",S_OK},
+            {"mk",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_MK,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "mk:@MSITSTORE:C:\\Some\\Bogus\\Path.chm::\\subdir\\file.txt",0,
+        "relative/path.txt",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,FALSE,
+        {
+            {"mk:@MSITSTORE:C:\\Some\\Bogus\\Path.chm::/subdir/relative/path.txt",S_OK},
+            {"",S_FALSE},
+            {"mk:@MSITSTORE:C:\\Some\\Bogus\\Path.chm::/subdir/relative/path.txt",S_OK},
+            {"",S_FALSE},
+            {".txt",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"@MSITSTORE:C:\\Some\\Bogus\\Path.chm::/subdir/relative/path.txt",S_OK},
+            {"@MSITSTORE:C:\\Some\\Bogus\\Path.chm::/subdir/relative/path.txt",S_OK},
+            {"",S_FALSE},
+            {"mk:@MSITSTORE:C:\\Some\\Bogus\\Path.chm::/subdir/relative/path.txt",S_OK},
+            {"mk",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_MK,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "mk:@MSITSTORE:C:/Some\\Bogus/Path.chm::/subdir\\file.txt",0,
+        "relative\\path.txt",Uri_CREATE_ALLOW_RELATIVE,
+        0,S_OK,FALSE,
+        {
+            {"mk:@MSITSTORE:C:/Some\\Bogus/Path.chm::/subdir/relative/path.txt",S_OK},
+            {"",S_FALSE},
+            {"mk:@MSITSTORE:C:/Some\\Bogus/Path.chm::/subdir/relative/path.txt",S_OK},
+            {"",S_FALSE},
+            {".txt",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"@MSITSTORE:C:/Some\\Bogus/Path.chm::/subdir/relative/path.txt",S_OK},
+            {"@MSITSTORE:C:/Some\\Bogus/Path.chm::/subdir/relative/path.txt",S_OK},
+            {"",S_FALSE},
+            {"mk:@MSITSTORE:C:/Some\\Bogus/Path.chm::/subdir/relative/path.txt",S_OK},
+            {"mk",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_MK,S_OK},
             {URLZONE_INVALID,E_NOTIMPL}
         }
     }

@@ -3086,6 +3086,7 @@ static BOOL canonicalize_path_opaque(const parse_data *data, Uri *uri, DWORD fla
     const WCHAR *ptr;
     const BOOL known_scheme = data->scheme_type != URL_SCHEME_UNKNOWN;
     const BOOL is_file = data->scheme_type == URL_SCHEME_FILE;
+    const BOOL is_mk = data->scheme_type == URL_SCHEME_MK;
 
     if(!data->path) {
         uri->path_start = -1;
@@ -3094,6 +3095,12 @@ static BOOL canonicalize_path_opaque(const parse_data *data, Uri *uri, DWORD fla
     }
 
     uri->path_start = uri->canon_len;
+
+    if(is_mk){
+        /* hijack this flag for SCHEME_MK to tell the function when to start
+         * converting slashes */
+        flags |= Uri_CREATE_FILE_USE_DOS_PATH;
+    }
 
     /* For javascript: URIs, simply copy path part without any canonicalization */
     if(data->scheme_type == URL_SCHEME_JAVASCRIPT) {
@@ -3137,13 +3144,15 @@ static BOOL canonicalize_path_opaque(const parse_data *data, Uri *uri, DWORD fla
             ++uri->canon_len;
             do_default_action = FALSE;
         } else if(*ptr == '\\') {
-            if(is_file && !(flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
+            if((data->is_relative || is_mk || is_file) && !(flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
                 /* Convert to a '/'. */
                 if(!computeOnly)
                     uri->canon_uri[uri->canon_len] = '/';
                 ++uri->canon_len;
                 do_default_action = FALSE;
             }
+        } else if(is_mk && *ptr == ':' && ptr + 1 < data->path + data->path_len && *(ptr + 1) == ':') {
+            flags &= ~Uri_CREATE_FILE_USE_DOS_PATH;
         } else if(known_scheme && !is_unreserved(*ptr) && !is_reserved(*ptr) &&
                   !(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS)) {
             if(!(is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH))) {
@@ -3161,7 +3170,7 @@ static BOOL canonicalize_path_opaque(const parse_data *data, Uri *uri, DWORD fla
         }
     }
 
-    if(data->scheme_type == URL_SCHEME_MK && !computeOnly && !(flags & Uri_CREATE_NO_CANONICALIZE)) {
+    if(is_mk && !computeOnly && !(flags & Uri_CREATE_NO_CANONICALIZE)) {
         DWORD new_len = remove_dot_segments(uri->canon_uri + uri->path_start,
                                             uri->canon_len - uri->path_start);
         uri->canon_len = uri->path_start + new_len;
@@ -5165,7 +5174,7 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
     memset(&data, 0, sizeof(parse_data));
     data.uri = ret->raw_uri;
 
-    /* Validate and parse the URI into it's components. */
+    /* Validate and parse the URI into its components. */
     if(!parse_uri(&data, dwFlags)) {
         /* Encountered an unsupported or invalid URI */
         IUri_Release(&ret->IUri_iface);
