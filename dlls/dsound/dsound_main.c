@@ -67,15 +67,36 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
 struct list DSOUND_renderers = LIST_INIT(DSOUND_renderers);
 CRITICAL_SECTION DSOUND_renderers_lock;
+static CRITICAL_SECTION_DEBUG DSOUND_renderers_lock_debug =
+{
+    0, 0, &DSOUND_renderers_lock,
+    { &DSOUND_renderers_lock_debug.ProcessLocksList, &DSOUND_renderers_lock_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": DSOUND_renderers_lock") }
+};
+CRITICAL_SECTION DSOUND_renderers_lock = { &DSOUND_renderers_lock_debug, -1, 0, 0, 0, 0 };
 
 struct list DSOUND_capturers = LIST_INIT(DSOUND_capturers);
 CRITICAL_SECTION DSOUND_capturers_lock;
+static CRITICAL_SECTION_DEBUG DSOUND_capturers_lock_debug =
+{
+    0, 0, &DSOUND_capturers_lock,
+    { &DSOUND_capturers_lock_debug.ProcessLocksList, &DSOUND_capturers_lock_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": DSOUND_capturers_lock") }
+};
+CRITICAL_SECTION DSOUND_capturers_lock = { &DSOUND_capturers_lock_debug, -1, 0, 0, 0, 0 };
 
 GUID                    DSOUND_renderer_guids[MAXWAVEDRIVERS];
 GUID                    DSOUND_capture_guids[MAXWAVEDRIVERS];
 
 static IMMDeviceEnumerator *g_devenum;
 static CRITICAL_SECTION g_devenum_lock;
+static CRITICAL_SECTION_DEBUG g_devenum_lock_debug =
+{
+    0, 0, &g_devenum_lock,
+    { &g_devenum_lock_debug.ProcessLocksList, &g_devenum_lock_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": g_devenum_lock") }
+};
+static CRITICAL_SECTION g_devenum_lock = { &g_devenum_lock_debug, -1, 0, 0, 0, 0 };
 static HANDLE g_devenum_thread;
 
 WCHAR wine_vxd_drv[] = { 'w','i','n','e','m','m','.','v','x','d', 0 };
@@ -867,12 +888,12 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
         DisableThreadLibraryCalls(hInstDLL);
         /* Increase refcount on dsound by 1 */
         GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)hInstDLL, &hInstDLL);
-        InitializeCriticalSection(&DSOUND_renderers_lock);
-        InitializeCriticalSection(&DSOUND_capturers_lock);
-        InitializeCriticalSection(&g_devenum_lock);
         break;
     case DLL_PROCESS_DETACH:
         TRACE("DLL_PROCESS_DETACH\n");
+        DeleteCriticalSection(&DSOUND_renderers_lock);
+        DeleteCriticalSection(&DSOUND_capturers_lock);
+        DeleteCriticalSection(&g_devenum_lock);
         break;
     default:
         TRACE("UNKNOWN REASON\n");
