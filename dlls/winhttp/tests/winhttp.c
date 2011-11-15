@@ -2518,6 +2518,44 @@ static void test_IWinHttpRequest(void)
     CoUninitialize();
 }
 
+static void test_WinHttpDetectAutoProxyConfigUrl(void)
+{
+    BOOL ret;
+    WCHAR *url;
+    DWORD error;
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpDetectAutoProxyConfigUrl( 0, NULL );
+    error = GetLastError();
+    ok( !ret, "expected failure\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+
+    url = NULL;
+    SetLastError(0xdeadbeef);
+    ret = WinHttpDetectAutoProxyConfigUrl( 0, &url );
+    error = GetLastError();
+    ok( !ret, "expected failure\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpDetectAutoProxyConfigUrl( WINHTTP_AUTO_DETECT_TYPE_DNS_A, NULL );
+    error = GetLastError();
+    ok( !ret, "expected failure\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+
+    url = NULL;
+    SetLastError(0xdeadbeef);
+    ret = WinHttpDetectAutoProxyConfigUrl( WINHTTP_AUTO_DETECT_TYPE_DNS_A, &url );
+    error = GetLastError();
+    if (!ret)
+        ok( error == ERROR_WINHTTP_AUTODETECTION_FAILED, "got %u\n", error );
+    else
+    {
+        trace("%s\n", wine_dbgstr_w(url));
+        GlobalFree( url );
+    }
+}
+
 START_TEST (winhttp)
 {
     static const WCHAR basicW[] = {'/','b','a','s','i','c',0};
@@ -2540,6 +2578,7 @@ START_TEST (winhttp)
     test_resolve_timeout();
     test_credentials();
     test_IWinHttpRequest();
+    test_WinHttpDetectAutoProxyConfigUrl();
 
     si.event = CreateEvent(NULL, 0, 0, NULL);
     si.port = 7532;

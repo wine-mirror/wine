@@ -1113,15 +1113,116 @@ BOOL WINAPI WinHttpSetOption( HINTERNET handle, DWORD option, LPVOID buffer, DWO
     return ret;
 }
 
+static char *get_computer_name( COMPUTER_NAME_FORMAT format )
+{
+    char *ret;
+    DWORD size = 0;
+
+    GetComputerNameExA( format, NULL, &size );
+    if (GetLastError() != ERROR_MORE_DATA) return NULL;
+    if (!(ret = heap_alloc( size ))) return NULL;
+    if (!GetComputerNameExA( format, ret, &size ))
+    {
+        heap_free( ret );
+        return NULL;
+    }
+    return ret;
+}
+
+static BOOL is_domain_suffix( const char *domain, const char *suffix )
+{
+    int len_domain = strlen( domain ), len_suffix = strlen( suffix );
+
+    if (len_suffix > len_domain) return FALSE;
+    if (!strcasecmp( domain + len_domain - len_suffix, suffix )) return TRUE;
+    return FALSE;
+}
+
+static WCHAR *build_wpad_url( const struct addrinfo *ai )
+{
+    static const WCHAR fmtW[] =
+        {'h','t','t','p',':','/','/','%','u','.','%','u','.','%','u','.','%','u',
+         '/','w','p','a','d','.','d','a','t',0};
+    struct sockaddr_in *addr;
+    WCHAR *ret;
+
+    while (ai && ai->ai_family != AF_INET) ai = ai->ai_next;
+    if (!ai) return NULL;
+
+    if (!(ret = GlobalAlloc( 0, sizeof(fmtW) + 12 * sizeof(WCHAR) ))) return NULL;
+    addr = (struct sockaddr_in *)ai->ai_addr;
+    sprintfW( ret, fmtW,
+              (unsigned int)(ntohl( addr->sin_addr.s_addr ) >> 24 & 0xff),
+              (unsigned int)(ntohl( addr->sin_addr.s_addr ) >> 16 & 0xff),
+              (unsigned int)(ntohl( addr->sin_addr.s_addr ) >> 8 & 0xff),
+              (unsigned int)(ntohl( addr->sin_addr.s_addr ) & 0xff) );
+    return ret;
+}
+
 /***********************************************************************
  *          WinHttpDetectAutoProxyConfigUrl (winhttp.@)
  */
 BOOL WINAPI WinHttpDetectAutoProxyConfigUrl( DWORD flags, LPWSTR *url )
 {
-    FIXME("0x%08x, %p\n", flags, url);
+    BOOL ret = FALSE;
 
-    set_last_error( ERROR_WINHTTP_AUTODETECTION_FAILED );
-    return FALSE;
+    TRACE("0x%08x, %p\n", flags, url);
+
+    if (!flags || !url)
+    {
+        set_last_error( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (flags & WINHTTP_AUTO_DETECT_TYPE_DHCP) FIXME("discovery via DHCP not supported\n");
+    if (flags & WINHTTP_AUTO_DETECT_TYPE_DNS_A)
+    {
+#ifdef HAVE_GETADDRINFO
+        char *fqdn, *domain, *p;
+
+        if (!(fqdn = get_computer_name( ComputerNamePhysicalDnsFullyQualified ))) return FALSE;
+        if (!(domain = get_computer_name( ComputerNamePhysicalDnsDomain )))
+        {
+            heap_free( fqdn );
+            return FALSE;
+        }
+        p = fqdn;
+        while ((p = strchr( p, '.' )) && is_domain_suffix( p + 1, domain ))
+        {
+            struct addrinfo *ai;
+            char *name;
+            int res;
+
+            if (!(name = heap_alloc( sizeof("wpad") + strlen(p) )))
+            {
+                heap_free( fqdn );
+                heap_free( domain );
+                return FALSE;
+            }
+            strcpy( name, "wpad" );
+            strcat( name, p );
+            res = getaddrinfo( name, NULL, NULL, &ai );
+            heap_free( name );
+            if (!res)
+            {
+                *url = build_wpad_url( ai );
+                freeaddrinfo( ai );
+                if (*url)
+                {
+                    TRACE("returning %s\n", debugstr_w(*url));
+                    ret = TRUE;
+                    break;
+                }
+            }
+            p++;
+        }
+        heap_free( domain );
+        heap_free( fqdn );
+#else
+    FIXME("getaddrinfo not found at build time\n");
+#endif
+    }
+    if (!ret) set_last_error( ERROR_WINHTTP_AUTODETECTION_FAILED );
+    return ret;
 }
 
 static const WCHAR Connections[] = {
