@@ -49,6 +49,7 @@ typedef struct {
 
 /* allocator class */
 typedef struct {
+    char empty_struct;
 } allocator;
 
 /* char_traits<char> */
@@ -652,7 +653,7 @@ MSVCP_size_t __cdecl MSVCP_basic_string_char_Pdif(String_iterator_char i1, Strin
 DEFINE_THISCALL_WRAPPER_RETPTR(basic_string_char_get_allocator, 4)
 allocator __thiscall basic_string_char_get_allocator(const basic_string_char *this)
 {
-    allocator ret;
+    allocator ret = {0};
     TRACE("%p\n", this);
     return ret;
 }
@@ -2316,7 +2317,7 @@ MSVCP_size_t __cdecl MSVCP_basic_string_wchar_Pdif(String_iterator_wchar i1, Str
 DEFINE_THISCALL_WRAPPER(basic_string_wchar_get_allocator, 4)
 allocator __thiscall basic_string_wchar_get_allocator(const basic_string_wchar *this)
 {
-    allocator ret;
+    allocator ret = {0};
     TRACE("%p\n", this);
     return ret;
 }
