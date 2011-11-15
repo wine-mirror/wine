@@ -758,6 +758,10 @@ void open_master_socket(void)
     assert( sizeof(union generic_request) == sizeof(struct request_max_size) );
     assert( sizeof(union generic_reply) == sizeof(struct request_max_size) );
 
+    /* make sure the stdio fds are open */
+    fd = open( "/dev/null", O_RDWR );
+    while (fd >= 0 && fd <= 2) fd = dup( fd );
+
     if (!server_dir) fatal_error( "directory %s cannot be accessed\n", config_dir );
     if (chdir( config_dir ) == -1) fatal_perror( "chdir to %s", config_dir );
     if ((config_dir_fd = open( ".", O_RDONLY )) == -1) fatal_perror( "open %s", config_dir );
@@ -777,12 +781,8 @@ void open_master_socket(void)
             acquire_lock();
 
             /* close stdin and stdout */
-            if ((fd = open( "/dev/null", O_RDWR )) != -1)
-            {
-                dup2( fd, 0 );
-                dup2( fd, 1 );
-                close( fd );
-            }
+            dup2( fd, 0 );
+            dup2( fd, 1 );
 
             /* signal parent */
             dummy = 0;
@@ -813,6 +813,7 @@ void open_master_socket(void)
 
     /* init the process tracing mechanism */
     init_tracing_mechanism();
+    close( fd );
 }
 
 /* master socket timer expiration handler */
