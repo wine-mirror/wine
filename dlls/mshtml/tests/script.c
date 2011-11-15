@@ -2115,7 +2115,6 @@ static HRESULT WINAPI ActiveScriptParse_ParseScriptText(IActiveScriptParse *ifac
         LPCOLESTR pstrDelimiter, CTXARG_T dwSourceContextCookie, ULONG ulStartingLine,
         DWORD dwFlags, VARIANT *pvarResult, EXCEPINFO *pexcepinfo)
 {
-    ok(!punkContext, "punkContext = %p\n", punkContext);
     ok(pvarResult != NULL, "pvarResult == NULL\n");
     ok(pexcepinfo != NULL, "pexcepinfo == NULL\n");
 
@@ -2185,7 +2184,7 @@ static HRESULT WINAPI ActiveScript_QueryInterface(IActiveScript *iface, REFIID r
     if(IsEqualGUID(&IID_IActiveScriptDebug, riid))
         return E_NOINTERFACE;
 
-    ok(0, "unexpected riid %s\n", debugstr_guid(riid));
+    trace("QI(%s)\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }
 
