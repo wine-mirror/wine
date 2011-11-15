@@ -247,7 +247,6 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
         break;
 
     case DLL_PROCESS_DETACH:
-        g_sessions_lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&g_sessions_lock);
         break;
     }
