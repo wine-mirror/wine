@@ -1283,7 +1283,7 @@ static BOOL primary_render_target_is_p8(const struct wined3d_device *device)
 }
 
 static BOOL surface_convert_color_to_float(const struct wined3d_surface *surface,
-        DWORD color, WINED3DCOLORVALUE *float_color)
+        DWORD color, struct wined3d_color *float_color)
 {
     const struct wined3d_format *format = surface->resource.format;
     const struct wined3d_device *device = surface->resource.device;
@@ -1652,7 +1652,7 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
 
         if (flags & WINEDDBLT_COLORFILL)
         {
-            WINED3DCOLORVALUE color;
+            struct wined3d_color color;
 
             TRACE("Color fill.\n");
 
@@ -5290,7 +5290,7 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
 }
 
 /* Do not call while under the GL lock. */
-HRESULT surface_color_fill(struct wined3d_surface *s, const RECT *rect, const WINED3DCOLORVALUE *color)
+HRESULT surface_color_fill(struct wined3d_surface *s, const RECT *rect, const struct wined3d_color *color)
 {
     struct wined3d_device *device = s->resource.device;
     const struct blit_shader *blitter;
@@ -6330,7 +6330,7 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
 
 /* Do not call while under the GL lock. */
 static HRESULT ffp_blit_color_fill(struct wined3d_device *device, struct wined3d_surface *dst_surface,
-        const RECT *dst_rect, const WINED3DCOLORVALUE *color)
+        const RECT *dst_rect, const struct wined3d_color *color)
 {
     const RECT draw_rect = {0, 0, dst_surface->resource.width, dst_surface->resource.height};
     struct wined3d_fb_state fb = {&dst_surface, NULL};
@@ -7057,7 +7057,7 @@ release:
 
 /* Do not call while under the GL lock. */
 static HRESULT cpu_blit_color_fill(struct wined3d_device *device, struct wined3d_surface *dst_surface,
-        const RECT *dst_rect, const WINED3DCOLORVALUE *color)
+        const RECT *dst_rect, const struct wined3d_color *color)
 {
     static const RECT src_rect;
     WINEDDBLTFX BltFx;

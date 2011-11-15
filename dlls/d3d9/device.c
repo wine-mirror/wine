@@ -1015,7 +1015,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_StretchRect(IDirect3DDevice9Ex *iface
 static HRESULT WINAPI IDirect3DDevice9Impl_ColorFill(IDirect3DDevice9Ex *iface,
         IDirect3DSurface9 *pSurface, const RECT *pRect, D3DCOLOR color)
 {
-    const WINED3DCOLORVALUE c =
+    const struct wined3d_color c =
     {
         ((color >> 16) & 0xff) / 255.0f,
         ((color >>  8) & 0xff) / 255.0f,

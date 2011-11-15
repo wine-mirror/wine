@@ -645,7 +645,7 @@ static void prepare_ds_clear(struct wined3d_surface *ds, struct wined3d_context 
 
 /* Do not call while under the GL lock. */
 HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count, const struct wined3d_fb_state *fb,
-        UINT rect_count, const RECT *rects, const RECT *draw_rect, DWORD flags, const WINED3DCOLORVALUE *color,
+        UINT rect_count, const RECT *rects, const RECT *draw_rect, DWORD flags, const struct wined3d_color *color,
         float depth, DWORD stencil)
 {
     const RECT *clear_rect = (rect_count > 0 && rects) ? (const RECT *)rects : NULL;
@@ -956,7 +956,7 @@ static void device_load_logo(struct wined3d_device *device, const char *filename
     }
     else
     {
-        const WINED3DCOLORVALUE c = {1.0f, 1.0f, 1.0f, 1.0f};
+        const struct wined3d_color c = {1.0f, 1.0f, 1.0f, 1.0f};
         /* Fill the surface with a white color to show that wined3d is there */
         wined3d_device_color_fill(device, device->logo_surface, NULL, &c);
     }
@@ -4027,7 +4027,7 @@ HRESULT CDECL wined3d_device_present(const struct wined3d_device *device, const 
 HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_count,
         const RECT *rects, DWORD flags, WINED3DCOLOR color, float depth, DWORD stencil)
 {
-    const WINED3DCOLORVALUE c = {D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color)};
+    const struct wined3d_color c = {D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color)};
     RECT draw_rect;
 
     TRACE("device %p, rect_count %u, rects %p, flags %#x, color 0x%08x, depth %.8e, stencil %u.\n",
@@ -4780,7 +4780,7 @@ HRESULT CDECL wined3d_device_delete_patch(struct wined3d_device *device, UINT ha
 
 /* Do not call while under the GL lock. */
 HRESULT CDECL wined3d_device_color_fill(struct wined3d_device *device,
-        struct wined3d_surface *surface, const RECT *rect, const WINED3DCOLORVALUE *color)
+        struct wined3d_surface *surface, const RECT *rect, const struct wined3d_color *color)
 {
     RECT r;
 
@@ -4805,7 +4805,7 @@ HRESULT CDECL wined3d_device_color_fill(struct wined3d_device *device,
 
 /* Do not call while under the GL lock. */
 void CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *device,
-        struct wined3d_rendertarget_view *rendertarget_view, const WINED3DCOLORVALUE *color)
+        struct wined3d_rendertarget_view *rendertarget_view, const struct wined3d_color *color)
 {
     struct wined3d_resource *resource;
     HRESULT hr;

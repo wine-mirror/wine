@@ -1519,13 +1519,13 @@ typedef struct _WINED3DDISPLAYMODE
     enum wined3d_format_id Format;
 } WINED3DDISPLAYMODE;
 
-typedef struct _WINED3DCOLORVALUE
+struct wined3d_color
 {
     float r;
     float g;
     float b;
     float a;
-} WINED3DCOLORVALUE;
+};
 
 typedef struct _WINED3DVECTOR
 {
@@ -1552,9 +1552,9 @@ typedef struct _WINED3DMATRIX
 typedef struct _WINED3DLIGHT
 {
     WINED3DLIGHTTYPE Type;
-    WINED3DCOLORVALUE Diffuse;
-    WINED3DCOLORVALUE Specular;
-    WINED3DCOLORVALUE Ambient;
+    struct wined3d_color Diffuse;
+    struct wined3d_color Specular;
+    struct wined3d_color Ambient;
     WINED3DVECTOR Position;
     WINED3DVECTOR Direction;
     float Range;
@@ -1568,10 +1568,10 @@ typedef struct _WINED3DLIGHT
 
 typedef struct _WINED3DMATERIAL
 {
-    WINED3DCOLORVALUE Diffuse;
-    WINED3DCOLORVALUE Ambient;
-    WINED3DCOLORVALUE Specular;
-    WINED3DCOLORVALUE Emissive;
+    struct wined3d_color Diffuse;
+    struct wined3d_color Ambient;
+    struct wined3d_color Specular;
+    struct wined3d_color Emissive;
     float Power;
 } WINED3DMATERIAL;
 
@@ -2170,9 +2170,9 @@ HRESULT __cdecl wined3d_device_begin_stateblock(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_clear(struct wined3d_device *device, DWORD rect_count, const RECT *rects, DWORD flags,
         WINED3DCOLOR color, float z, DWORD stencil);
 void __cdecl wined3d_device_clear_rendertarget_view(struct wined3d_device *device,
-        struct wined3d_rendertarget_view *rendertarget_view, const WINED3DCOLORVALUE *color);
+        struct wined3d_rendertarget_view *rendertarget_view, const struct wined3d_color *color);
 HRESULT __cdecl wined3d_device_color_fill(struct wined3d_device *device, struct wined3d_surface *surface,
-        const RECT *rect, const WINED3DCOLORVALUE *color);
+        const RECT *rect, const struct wined3d_color *color);
 HRESULT __cdecl wined3d_device_create(struct wined3d *wined3d, UINT adapter_idx,
         WINED3DDEVTYPE device_type, HWND focus_window, DWORD behaviour_flags, BYTE surface_alignment,
         struct wined3d_device_parent *device_parent, struct wined3d_device **device);

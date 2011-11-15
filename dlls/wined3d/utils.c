@@ -2708,7 +2708,7 @@ BOOL getDepthStencilBits(const struct wined3d_format *format, BYTE *depthSize, B
 /* Note: It's the caller's responsibility to ensure values can be expressed
  * in the requested format. UNORM formats for example can only express values
  * in the range 0.0f -> 1.0f. */
-DWORD wined3d_format_convert_from_float(const struct wined3d_surface *surface, const WINED3DCOLORVALUE *color)
+DWORD wined3d_format_convert_from_float(const struct wined3d_surface *surface, const struct wined3d_color *color)
 {
     static const struct
     {

@@ -7327,7 +7327,7 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
 
 /* Do not call while under the GL lock. */
 static HRESULT arbfp_blit_color_fill(struct wined3d_device *device, struct wined3d_surface *dst_surface,
-        const RECT *dst_rect, const WINED3DCOLORVALUE *color)
+        const RECT *dst_rect, const struct wined3d_color *color)
 {
     FIXME("Color filling not implemented by arbfp_blit\n");
     return WINED3DERR_INVALIDCALL;
