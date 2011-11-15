@@ -110,7 +110,7 @@ static void set_status_text(BindStatusCallback *This, LPCWSTR str)
         IOleInPlaceFrame_SetStatusText(This->doc_host->frame, str);
 }
 
-static HRESULT set_dochost_url(DocHost *This, const WCHAR *url)
+HRESULT set_dochost_url(DocHost *This, const WCHAR *url)
 {
     WCHAR *new_url;
 
