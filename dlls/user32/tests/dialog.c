@@ -33,6 +33,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#define WINVER 0x0600 /* For NONCLIENTMETRICS with padding */
+
 #include "wine/test.h"
 #include "windef.h"
 #include "winbase.h"
@@ -1058,10 +1060,49 @@ static INT_PTR CALLBACK TestReturnKeyDlgProc (HWND hDlg, UINT uiMsg,
     return FALSE;
 }
 
+static INT_PTR CALLBACK TestControlStyleDlgProc(HWND hdlg, UINT msg,
+                                                WPARAM wparam, LPARAM lparam)
+{
+    HWND control;
+    DWORD style, exstyle;
+    char buf[256];
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        control = GetDlgItem(hdlg, 7);
+        ok(control != 0, "dialog control with id 7 not found\n");
+        style = GetWindowLong(control, GWL_STYLE);
+        ok(style == (WS_CHILD|WS_VISIBLE), "expected WS_CHILD|WS_VISIBLE, got %#x\n", style);
+        exstyle = GetWindowLong(control, GWL_EXSTYLE);
+        ok(exstyle == (WS_EX_NOPARENTNOTIFY|WS_EX_TRANSPARENT|WS_EX_CLIENTEDGE), "expected WS_EX_NOPARENTNOTIFY|WS_EX_TRANSPARENT|WS_EX_CLIENTEDGE, got %#x\n", exstyle);
+        buf[0] = 0;
+        GetWindowText(control, buf, sizeof(buf));
+        ok(lstrcmp(buf, "bump7") == 0,  "expected bump7, got %s\n", buf);
+
+        control = GetDlgItem(hdlg, 8);
+        ok(control != 0, "dialog control with id 8 not found\n");
+        style = GetWindowLong(control, GWL_STYLE);
+        ok(style == (WS_CHILD|WS_VISIBLE), "expected WS_CHILD|WS_VISIBLE, got %#x\n", style);
+        exstyle = GetWindowLong(control, GWL_EXSTYLE);
+        ok(exstyle == (WS_EX_NOPARENTNOTIFY|WS_EX_TRANSPARENT), "expected WS_EX_NOPARENTNOTIFY|WS_EX_TRANSPARENT, got %#x\n", exstyle);
+        buf[0] = 0;
+        GetWindowText(control, buf, sizeof(buf));
+        ok(lstrcmp(buf, "bump8") == 0,  "expected bump8, got %s\n", buf);
+
+        EndDialog(hdlg, -7);
+        return TRUE;
+    }
+    return FALSE;
+}
+
 static void test_DialogBoxParamA(void)
 {
     INT_PTR ret;
     HWND hwnd_invalid = (HWND)0x4444;
+
+    ret = DialogBoxParamA(GetModuleHandle(0), "TEST_DLG_CHILD_POPUP", 0, TestControlStyleDlgProc, 0);
+    ok(ret == -7, "expected -7, got %ld\n", ret);
 
     SetLastError(0xdeadbeef);
     ret = DialogBoxParamA(GetModuleHandle(NULL), "IDD_DIALOG" , hwnd_invalid, 0 , 0);

@@ -263,7 +263,9 @@ static BOOL DIALOG_CreateControls32( HWND hwnd, LPCSTR template, const DLG_TEMPL
     {
         template = (LPCSTR)DIALOG_GetControl32( (const WORD *)template, &info,
                                                 dlgTemplate->dialogEx );
-        /* Is this it? */
+        info.style &= ~WS_POPUP;
+        info.style |= WS_CHILD;
+
         if (info.style & WS_BORDER)
         {
             info.style &= ~WS_BORDER;
