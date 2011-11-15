@@ -480,7 +480,7 @@
 @ cdecl __unDNameEx(ptr str long ptr ptr ptr long) msvcrt.__unDNameEx
 @ stub __unDNameHelper
 @ extern __unguarded_readlc_active msvcrt.__unguarded_readlc_active
-@ stub __vswprintf_l
+@ cdecl __vswprintf_l(ptr wstr ptr ptr) msvcrt._vswprintf_l
 @ extern __wargv msvcrt.__wargv
 @ cdecl __wcserror(wstr) msvcrt.__wcserror
 @ cdecl __wcserror_s(ptr long wstr) msvcrt.__wcserror_s

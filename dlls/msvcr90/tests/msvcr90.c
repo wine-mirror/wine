@@ -98,6 +98,8 @@ static int* (__cdecl *p_fpecode)(void);
 static int (__cdecl *p_configthreadlocale)(int);
 static void* (__cdecl *p_get_terminate)(void);
 static void* (__cdecl *p_get_unexpected)(void);
+static int (__cdecl *p__vswprintf_l)(wchar_t*, const wchar_t*, _locale_t, __ms_va_list);
+static int (__cdecl *p_vswprintf_l)(wchar_t*, const wchar_t*, _locale_t, __ms_va_list);
 
 
 /* type info */
@@ -264,6 +266,8 @@ static BOOL init(void)
     SET(p_configthreadlocale, "_configthreadlocale");
     SET(p_get_terminate, "_get_terminate");
     SET(p_get_unexpected, "_get_unexpected");
+    SET(p__vswprintf_l, "__vswprintf_l");
+    SET(p_vswprintf_l, "_vswprintf_l");
     if (sizeof(void *) == 8)
     {
         SET(p_type_info_name_internal_method, "?_name_internal_method@type_info@@QEBAPEBDPEAU__type_info_node@@@Z");
@@ -981,6 +985,46 @@ static void test_getptd(void)
     ok(p_get_unexpected() == ptd->unexpected_handler, "ptd->unexpected_handler != _get_unexpected()\n");
 }
 
+static int __cdecl __vswprintf_l_wrapper(wchar_t *buf,
+        const wchar_t *format, _locale_t locale, ...)
+{
+    int ret;
+    __ms_va_list valist;
+    __ms_va_start(valist, locale);
+    ret = p__vswprintf_l(buf, format, locale, valist);
+    __ms_va_end(valist);
+    return ret;
+}
+
+static int __cdecl _vswprintf_l_wrapper(wchar_t *buf,
+        const wchar_t *format, _locale_t locale, ...)
+{
+    int ret;
+    __ms_va_list valist;
+    __ms_va_start(valist, locale);
+    ret = p_vswprintf_l(buf, format, locale, valist);
+    __ms_va_end(valist);
+    return ret;
+}
+
+static void test__vswprintf_l(void)
+{
+    static const wchar_t format[] = {'t','e','s','t',0};
+
+    wchar_t buf[32];
+    int ret;
+
+    ret = __vswprintf_l_wrapper(buf, format, NULL);
+    ok(ret == 4, "ret = %d\n", ret);
+    ok(!memcmp(buf, format, sizeof(format)), "buf = %s, expected %s\n",
+            wine_dbgstr_w(buf), wine_dbgstr_w(format));
+
+    ret = _vswprintf_l_wrapper(buf, format, NULL);
+    ok(ret == 4, "ret = %d\n", ret);
+    ok(!memcmp(buf, format, sizeof(format)), "buf = %s, expected %s\n",
+            wine_dbgstr_w(buf), wine_dbgstr_w(format));
+}
+
 START_TEST(msvcr90)
 {
     if(!init())
@@ -1001,4 +1045,5 @@ START_TEST(msvcr90)
     test__realloc_crt();
     test_typeinfo();
     test_getptd();
+    test__vswprintf_l();
 }
