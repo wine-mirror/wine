@@ -1766,6 +1766,45 @@ static void navigate_task_destr(task_t *_task)
     heap_free(task);
 }
 
+static HRESULT navigate_fragment(HTMLWindow *window, IUri *uri)
+{
+    nsIDOMLocation *nslocation;
+    nsAString nsfrag_str;
+    BSTR frag;
+    nsresult nsres;
+    HRESULT hres;
+
+    set_current_uri(window, uri);
+
+    nsres = nsIDOMWindow_GetLocation(window->nswindow, &nslocation);
+    if(FAILED(nsres) || !nslocation)
+        return E_FAIL;
+
+    hres = IUri_GetFragment(uri, &frag);
+    if(FAILED(hres)) {
+        nsIDOMLocation_Release(nslocation);
+        return hres;
+    }
+
+    nsAString_InitDepend(&nsfrag_str, frag);
+    nsres = nsIDOMLocation_SetHash(nslocation, &nsfrag_str);
+    nsAString_Finish(&nsfrag_str);
+    nsIDOMLocation_Release(nslocation);
+    SysFreeString(frag);
+    if(NS_FAILED(nsres)) {
+        ERR("SetHash failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    if(window->doc_obj->doc_object_service) {
+        IDocObjectService_FireNavigateComplete2(window->doc_obj->doc_object_service, &window->IHTMLWindow2_iface, 0x10);
+        IDocObjectService_FireDocumentComplete(window->doc_obj->doc_object_service, &window->IHTMLWindow2_iface, 0);
+
+    }
+
+    return S_OK;
+}
+
 HRESULT super_navigate(HTMLWindow *window, IUri *uri, const WCHAR *headers, BYTE *post_data, DWORD post_data_size)
 {
     nsChannelBSC *bsc;
@@ -1794,6 +1833,11 @@ HRESULT super_navigate(HTMLWindow *window, IUri *uri, const WCHAR *headers, BYTE
                 SysFreeString(url_str);
             }
         }
+    }
+
+    if(window->uri && compare_ignoring_frag(window->uri, uri)) {
+        TRACE("fragment navigate\n");
+        return navigate_fragment(window, uri);
     }
 
     hres = CreateURLMonikerEx2(NULL, uri, &mon, URL_MK_UNIFORM);

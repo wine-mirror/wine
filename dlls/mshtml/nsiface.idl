@@ -130,7 +130,6 @@ typedef nsISupports nsIDOMMediaList;
 typedef nsISupports nsIDOMHTMLTableCaptionElement;
 typedef nsISupports nsIDOMHTMLTableSectionElement;
 typedef nsISupports nsIDOMClientRectList;
-typedef nsISupports nsIDOMLocation;
 typedef nsISupports nsINode;
 typedef nsISupports nsIStyleSheet;
 typedef nsISupports nsIStyleRule;
@@ -552,6 +551,35 @@ interface nsIChannelEventSink : nsISupports
 
     nsresult AsyncOnChannelRedirect(nsIChannel *oldChannel, nsIChannel *newChannel, PRUint32 flags,
                                     nsIAsyncVerifyRedirectCallback *callback);
+}
+
+[
+    object,
+    uuid(a6cf906d-15b3-11d2-932e-00805f8add32),
+    local
+]
+interface nsIDOMLocation : nsISupports
+{
+    nsresult GetHash(nsAString *aHash);
+    nsresult SetHash(const nsAString *aHash);
+    nsresult GetHost(nsAString *aHost);
+    nsresult SetHost(const nsAString *aHost);
+    nsresult GetHostname(nsAString *aHostname);
+    nsresult SetHostname(const nsAString *aHostname);
+    nsresult GetHref(nsAString *aHref);
+    nsresult SetHref(const nsAString *aHref);
+    nsresult GetPathname(nsAString *aPathname);
+    nsresult SetPathname(const nsAString *aPathname);
+    nsresult GetPort(nsAString *aPort);
+    nsresult SetPort(const nsAString *aPort);
+    nsresult GetProtocol(nsAString *aProtocol);
+    nsresult SetProtocol(const nsAString *aProtocol);
+    nsresult GetSearch(nsAString *aSearch);
+    nsresult SetSearch(const nsAString *aSearch);
+    nsresult Reload(PRBool forceget);
+    nsresult Replace(const nsAString *url);
+    nsresult Assign(const nsAString *url);
+    nsresult ToString(nsAString *_retval);
 }
 
 [

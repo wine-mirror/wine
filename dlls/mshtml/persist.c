@@ -70,7 +70,7 @@ static BOOL use_gecko_script(HTMLWindow *window)
     return FAILED(hres) || scheme != URL_SCHEME_ABOUT;
 }
 
-static void set_current_uri(HTMLWindow *window, IUri *uri)
+void set_current_uri(HTMLWindow *window, IUri *uri)
 {
     if(window->uri) {
         IUri_Release(window->uri);

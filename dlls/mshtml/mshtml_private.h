@@ -671,6 +671,7 @@ void release_nsio(void) DECLSPEC_HIDDEN;
 BOOL is_gecko_path(const char*) DECLSPEC_HIDDEN;
 
 HRESULT nsuri_to_url(LPCWSTR,BOOL,BSTR*) DECLSPEC_HIDDEN;
+BOOL compare_ignoring_frag(IUri*,IUri*) DECLSPEC_HIDDEN;
 
 HRESULT navigate_url(HTMLWindow*,const WCHAR*,const WCHAR*) DECLSPEC_HIDDEN;
 HRESULT set_frame_doc(HTMLFrameBase*,nsIDOMDocument*) DECLSPEC_HIDDEN;
@@ -700,6 +701,7 @@ nsresult get_nsinterface(nsISupports*,REFIID,void**) DECLSPEC_HIDDEN;
 
 void set_window_bscallback(HTMLWindow*,nsChannelBSC*) DECLSPEC_HIDDEN;
 void set_current_mon(HTMLWindow*,IMoniker*) DECLSPEC_HIDDEN;
+void set_current_uri(HTMLWindow*,IUri*) DECLSPEC_HIDDEN;
 HRESULT start_binding(HTMLWindow*,HTMLDocumentNode*,BSCallback*,IBindCtx*) DECLSPEC_HIDDEN;
 HRESULT async_start_doc_binding(HTMLWindow*,nsChannelBSC*) DECLSPEC_HIDDEN;
 void abort_document_bindings(HTMLDocumentNode*) DECLSPEC_HIDDEN;
