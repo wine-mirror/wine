@@ -772,6 +772,11 @@ HRESULT WINAPI ScriptApplyDigitSubstitution(const SCRIPT_DIGITSUBSTITUTE *sds,
     }
 }
 
+static inline BOOL is_indic(WORD script)
+{
+    return (script >= Script_Devanagari && script <= Script_Malayalam_Numeric);
+}
+
 /***********************************************************************
  *      ScriptItemizeOpenType (USP10.@)
  *
@@ -808,6 +813,7 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
     WORD  *scripts = NULL;
     WORD  baselevel = 0;
     BOOL  new_run;
+    WORD  last_indic = -1;
 
     TRACE("%s,%d,%d,%p,%p,%p,%p\n", debugstr_wn(pwcInChars, cInChars), cInChars, cMaxItems, 
           psControl, psState, pItems, pcItems);
@@ -820,7 +826,15 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
         return E_OUTOFMEMORY;
 
     for (i = 0; i < cInChars; i++)
+    {
         scripts[i] = get_char_script(pwcInChars[i]);
+        /* Devanagari danda (U+0964) and double danda (U+0965) are used for
+           all Indic scripts */
+        if ((pwcInChars[i] == 0x964 || pwcInChars[i] ==0x965) && last_indic > 0)
+            scripts[i] = last_indic;
+        else if (is_indic(scripts[i]))
+            last_indic = scripts[i];
+    }
 
     if (psState && psControl)
     {
