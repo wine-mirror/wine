@@ -50,8 +50,6 @@ static const IID IID_nsWineURI =
 static nsIIOService *nsio = NULL;
 static nsINetUtil *net_util;
 
-static const WCHAR about_blankW[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
-
 static const char *request_method_strings[] = {"GET", "PUT", "POST"};
 
 struct  nsWineURI {
