@@ -119,7 +119,7 @@ HRESULT DSOUND_ReopenDevice(DirectSoundDevice *device, BOOL forcewave)
 
     hres = IAudioClient_Initialize(device->client,
             AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_NOPERSIST,
-            prebuf_rt, 50000, device->pwfx, NULL);
+            prebuf_rt, 0, device->pwfx, NULL);
     if(FAILED(hres)){
         IAudioClient_Release(device->client);
         device->client = NULL;
