@@ -414,7 +414,7 @@ static BOOL append_complex_glyph(HDC hdc, const BYTE *data, glyph_outline *outli
     const BYTE *ptr = data;
     WORD flags, index;
     short arg1, arg2;
-    WORD scale_xx = 1, scale_xy = 0, scale_yx = 0, scale_yy = 1;
+    WORD scale_xx = 1 << 14, scale_xy = 0, scale_yx = 0, scale_yy = 1 << 14;
     WORD start_pt, end_pt;
 
     ptr += 10;
@@ -459,6 +459,11 @@ static BOOL append_complex_glyph(HDC hdc, const BYTE *data, glyph_outline *outli
             scale_yy = get_be_word(ptr);
             ptr += 2;
         }
+
+        if ((flags & (WE_HAVE_A_SCALE | WE_HAVE_AN_X_AND_Y_SCALE | WE_HAVE_A_TWO_BY_TWO)) &&
+            (scale_xx != 1 << 14 || scale_yy != 1 << 14 || scale_xy || scale_yx))
+            FIXME( "unhandled scaling %x,%x,%x,%x of glyph %x\n",
+                   scale_xx, scale_xy, scale_yx, scale_yy, index );
 
         start_pt = pts_in_outline(outline);
         append_glyph_outline(hdc, index, outline);
