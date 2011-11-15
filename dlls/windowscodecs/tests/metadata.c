@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdio.h>
 #include <stdarg.h>
 #include <math.h>
 
@@ -47,17 +48,31 @@ static const char metadata_tEXt[] = {
     0x3f,0x64,0x19,0xf3 /* chunk CRC */
 };
 
-static void load_stream(IUnknown *reader, const char *data, int data_size)
+static const char *debugstr_guid(REFIID riid)
+{
+    static char buf[50];
+
+    if(!riid)
+        return "(null)";
+
+    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
+            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
+            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
+
+    return buf;
+}
+
+static IStream *create_stream(const char *data, int data_size)
 {
     HRESULT hr;
-    IWICPersistStream *persist;
     IStream *stream;
     HGLOBAL hdata;
     void *locked_data;
 
     hdata = GlobalAlloc(GMEM_MOVEABLE, data_size);
     ok(hdata != 0, "GlobalAlloc failed\n");
-    if (!hdata) return;
+    if (!hdata) return NULL;
 
     locked_data = GlobalLock(hdata);
     memcpy(locked_data, data, data_size);
@@ -65,7 +80,19 @@ static void load_stream(IUnknown *reader, const char *data, int data_size)
 
     hr = CreateStreamOnHGlobal(hdata, TRUE, &stream);
     ok(hr == S_OK, "CreateStreamOnHGlobal failed, hr=%x\n", hr);
-    if (FAILED(hr)) return;
+
+    return stream;
+}
+
+static void load_stream(IUnknown *reader, const char *data, int data_size)
+{
+    HRESULT hr;
+    IWICPersistStream *persist;
+    IStream *stream;
+
+    stream = create_stream(data, data_size);
+    if (!stream)
+        return;
 
     hr = IUnknown_QueryInterface(reader, &IID_IWICPersistStream, (void**)&persist);
     ok(hr == S_OK, "QueryInterface failed, hr=%x\n", hr);
@@ -181,12 +208,70 @@ static void test_metadata_tEXt(void)
     IWICMetadataReader_Release(reader);
 }
 
+static void test_create_reader(void)
+{
+    HRESULT hr;
+    IWICComponentFactory *factory;
+    IStream *stream;
+    IWICMetadataReader *reader;
+    UINT count=0;
+    GUID format;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICComponentFactory, (void**)&factory);
+    todo_wine ok(hr == S_OK, "CoCreateInstance failed, hr=%x\n", hr);
+    if (FAILED(hr)) return;
+
+    stream = create_stream(metadata_tEXt, sizeof(metadata_tEXt));
+
+    hr = IWICComponentFactory_CreateMetadataReaderFromContainer(factory,
+        &GUID_ContainerFormatPng, NULL, WICPersistOptionsDefault,
+        stream, &reader);
+    ok(hr == S_OK, "CreateMetadataReaderFromContainer failed, hr=%x\n", hr);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICMetadataReader_GetCount(reader, &count);
+        ok(hr == S_OK, "GetCount failed, hr=%x\n", hr);
+        ok(count == 1, "unexpected count %i\n", count);
+
+        hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+        ok(hr == S_OK, "GetMetadataFormat failed, hr=%x\n", hr);
+        ok(IsEqualGUID(&format, &GUID_MetadataFormatChunktEXt), "unexpected format %s\n", debugstr_guid(&format));
+
+        IWICMetadataReader_Release(reader);
+    }
+
+    hr = IWICComponentFactory_CreateMetadataReaderFromContainer(factory,
+        &GUID_ContainerFormatWmp, NULL, WICPersistOptionsDefault,
+        stream, &reader);
+    ok(hr == S_OK, "CreateMetadataReaderFromContainer failed, hr=%x\n", hr);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICMetadataReader_GetCount(reader, &count);
+        ok(hr == S_OK, "GetCount failed, hr=%x\n", hr);
+        ok(count == 1, "unexpected count %i\n", count);
+
+        hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+        ok(hr == S_OK, "GetMetadataFormat failed, hr=%x\n", hr);
+        ok(IsEqualGUID(&format, &GUID_MetadataFormatUnknown), "unexpected format %s\n", debugstr_guid(&format));
+
+        IWICMetadataReader_Release(reader);
+    }
+
+    IStream_Release(stream);
+
+    IWICComponentFactory_Release(factory);
+}
+
 START_TEST(metadata)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     test_metadata_unknown();
     test_metadata_tEXt();
+    test_create_reader();
 
     CoUninitialize();
 }
