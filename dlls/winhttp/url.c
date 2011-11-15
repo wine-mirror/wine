@@ -38,7 +38,7 @@ static BOOL set_component( WCHAR **str, DWORD *str_len, WCHAR *value, DWORD len,
 {
     if (!*str)
     {
-        if (len && (flags & ICU_DECODE))
+        if (len && *str_len && (flags & ICU_DECODE))
         {
             set_last_error( ERROR_INVALID_PARAMETER );
             return FALSE;
