@@ -672,18 +672,17 @@ static HRESULT WINAPI ClServiceProvider_QueryService(IServiceProvider *iface, RE
     }
 
     if(IsEqualGUID(&IID_IShellBrowser, guidService)) {
-        IShellBrowser *sb;
-        HRESULT hres;
-
         TRACE("(%p)->(IID_IShellBrowser %s %p)\n", This, debugstr_guid(riid), ppv);
 
-        hres = ShellBrowser_Create(&sb);
-        if(FAILED(hres))
-            return hres;
+        if(!This->browser_service) {
+            HRESULT hres;
 
-        hres = IShellBrowser_QueryInterface(sb, riid, ppv);
-        IShellBrowser_Release(sb);
-        return hres;
+            hres = create_browser_service(This, &This->browser_service);
+            if(FAILED(hres))
+                return hres;
+        }
+
+        return IShellBrowser_QueryInterface(&This->browser_service->IShellBrowser_iface, riid, ppv);
     }
 
     FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
@@ -710,6 +709,8 @@ void DocHost_ClientSite_Init(DocHost *This)
 
 void DocHost_ClientSite_Release(DocHost *This)
 {
+    if(This->browser_service)
+        detach_browser_service(This->browser_service);
     if(This->view)
         IOleDocumentView_Release(This->view);
 }

@@ -18,22 +18,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "ieframe.h"
+#include <assert.h>
 
-#include "shdeprecated.h"
-#include "docobjectservice.h"
+#include "ieframe.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ieframe);
-
-typedef struct {
-    IShellBrowser IShellBrowser_iface;
-    IBrowserService IBrowserService_iface;
-    IDocObjectService IDocObjectService_iface;
-
-    LONG ref;
-} ShellBrowser;
 
 static inline ShellBrowser *impl_from_IShellBrowser(IShellBrowser *iface)
 {
@@ -77,16 +68,18 @@ static ULONG WINAPI ShellBrowser_AddRef(
     return ref;
 }
 
-static ULONG WINAPI ShellBrowser_Release(
-        IShellBrowser* iface)
+static ULONG WINAPI ShellBrowser_Release(IShellBrowser* iface)
 {
     ShellBrowser *This = impl_from_IShellBrowser(iface);
     LONG ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        assert(!This->doc_host);
         heap_free(This);
+    }
+
     return ref;
 }
 
@@ -759,7 +752,7 @@ static const IDocObjectServiceVtbl DocObjectServiceVtbl = {
     DocObjectService_IsErrorUrl
 };
 
-HRESULT ShellBrowser_Create(IShellBrowser **ppv)
+HRESULT create_browser_service(DocHost *doc_host, ShellBrowser **ret)
 {
     ShellBrowser *sb;
 
@@ -772,7 +765,14 @@ HRESULT ShellBrowser_Create(IShellBrowser **ppv)
     sb->IDocObjectService_iface.lpVtbl = &DocObjectServiceVtbl;
 
     sb->ref = 1;
+    sb->doc_host = doc_host;
 
-    *ppv = &sb->IShellBrowser_iface;
+    *ret = sb;
     return S_OK;
+}
+
+void detach_browser_service(ShellBrowser *sb)
+{
+    sb->doc_host = NULL;
+    IShellBrowser_Release(&sb->IShellBrowser_iface);
 }

@@ -35,6 +35,8 @@
 #include "exdisp.h"
 #include "hlink.h"
 #include "htiframe.h"
+#include "shdeprecated.h"
+#include "docobjectservice.h"
 
 #include "wine/unicode.h"
 #include "wine/list.h"
@@ -70,6 +72,16 @@ typedef struct _task_header_t {
     task_proc_t proc;
     task_destr_t destr;
 } task_header_t;
+
+typedef struct {
+    IShellBrowser IShellBrowser_iface;
+    IBrowserService IBrowserService_iface;
+    IDocObjectService IDocObjectService_iface;
+
+    LONG ref;
+
+    DocHost *doc_host;
+}  ShellBrowser;
 
 typedef struct _IDocHostContainerVtbl
 {
@@ -122,6 +134,8 @@ struct DocHost {
     READYSTATE doc_state;
     DWORD prop_notif_cookie;
     BOOL is_prop_notif;
+
+    ShellBrowser *browser_service;
 
     ConnectionPointContainer cps;
 };
@@ -213,7 +227,8 @@ void release_dochost_client(DocHost*) DECLSPEC_HIDDEN;
 void HlinkFrame_Init(HlinkFrame*,IUnknown*,DocHost*) DECLSPEC_HIDDEN;
 BOOL HlinkFrame_QI(HlinkFrame*,REFIID,void**) DECLSPEC_HIDDEN;
 
-HRESULT ShellBrowser_Create(IShellBrowser**) DECLSPEC_HIDDEN;
+HRESULT create_browser_service(DocHost*,ShellBrowser**) DECLSPEC_HIDDEN;
+void detach_browser_service(ShellBrowser*) DECLSPEC_HIDDEN;
 
 void ConnectionPointContainer_Init(ConnectionPointContainer*,IUnknown*) DECLSPEC_HIDDEN;
 void ConnectionPointContainer_Destroy(ConnectionPointContainer*) DECLSPEC_HIDDEN;

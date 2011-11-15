@@ -23,7 +23,6 @@
 
 #include "exdispid.h"
 #include "mshtml.h"
-#include "shdeprecated.h"
 
 #include "wine/debug.h"
 
