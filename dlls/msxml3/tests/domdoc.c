@@ -6960,21 +6960,21 @@ static void test_testTransforms(void)
     free_bstrs();
 }
 
-static void test_Namespaces(void)
+static void test_namespaces(void)
 {
-    static const CHAR szNamespacesXML[] =
+    static const CHAR namespaces_xmlA[] =
         "<?xml version=\"1.0\"?>\n"
         "<XMI xmi.version=\"1.1\" xmlns:Model=\"http://omg.org/mof.Model/1.3\">"
         "  <XMI.content>"
-        "    <Model:Package name=\"WinePackage\" />"
+        "    <Model:Package name=\"WinePackage\" Model:name2=\"name2 attr\" />"
         "  </XMI.content>"
         "</XMI>";
 
     IXMLDOMDocument *doc;
     IXMLDOMElement *elem;
     IXMLDOMNode *node;
-    IXMLDOMNode *pNode2 = NULL;
-    VARIANT_BOOL bSucc;
+
+    VARIANT_BOOL b;
     VARIANT var;
     HRESULT hr;
     BSTR str;
@@ -6982,44 +6982,66 @@ static void test_Namespaces(void)
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    hr = IXMLDOMDocument_loadXML(doc, _bstr_(szNamespacesXML), &bSucc);
-    ok(hr == S_OK, "ret %08x\n", hr );
-    ok(bSucc == VARIANT_TRUE, "Expected VARIANT_TRUE got VARIANT_FALSE\n");
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(namespaces_xmlA), &b);
+    EXPECT_HR(hr, S_OK);
+    ok(b == VARIANT_TRUE, "got %d\n", b);
 
     hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("//XMI.content"), &node );
-    ok(hr == S_OK, "ret %08x\n", hr );
+    EXPECT_HR(hr, S_OK);
     if(hr == S_OK)
     {
-        hr = IXMLDOMNode_get_firstChild( node, &pNode2 );
-        ok( hr == S_OK, "ret %08x\n", hr );
-        ok( pNode2 != NULL, "pNode2 == NULL\n");
+        IXMLDOMAttribute *attr;
+        IXMLDOMNode *node2;
+
+        hr = IXMLDOMNode_get_firstChild(node, &node2);
+        EXPECT_HR(hr, S_OK);
+        ok(node2 != NULL, "got %p\n", node2);
 
         /* Test get_prefix */
-        hr = IXMLDOMNode_get_prefix(pNode2, NULL);
-        ok( hr == E_INVALIDARG, "ret %08x\n", hr );
+        hr = IXMLDOMNode_get_prefix(node2, NULL);
+        EXPECT_HR(hr, E_INVALIDARG);
         /* NOTE: Need to test that arg2 gets cleared on Error. */
 
-        hr = IXMLDOMNode_get_prefix(pNode2, &str);
-        ok( hr == S_OK, "ret %08x\n", hr );
-        ok( !lstrcmpW( str, _bstr_("Model")), "incorrect prefix string\n");
+        hr = IXMLDOMNode_get_prefix(node2, &str);
+        EXPECT_HR(hr, S_OK);
+        ok( !lstrcmpW( str, _bstr_("Model")), "got %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
-        hr = IXMLDOMNode_get_nodeName(pNode2, &str);
-        ok( hr == S_OK, "ret %08x\n", hr );
-        todo_wine ok( !lstrcmpW( str, _bstr_("Model:Package")), "incorrect nodeName string\n");
+        hr = IXMLDOMNode_get_nodeName(node2, &str);
+        EXPECT_HR(hr, S_OK);
+        todo_wine ok(!lstrcmpW( str, _bstr_("Model:Package")), "got %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         /* Test get_namespaceURI */
-        hr = IXMLDOMNode_get_namespaceURI(pNode2, NULL);
-        ok( hr == E_INVALIDARG, "ret %08x\n", hr );
+        hr = IXMLDOMNode_get_namespaceURI(node2, NULL);
+        EXPECT_HR(hr, E_INVALIDARG);
         /* NOTE: Need to test that arg2 gets cleared on Error. */
 
-        hr = IXMLDOMNode_get_namespaceURI(pNode2, &str);
-        ok( hr == S_OK, "ret %08x\n", hr );
-        ok( !lstrcmpW( str, _bstr_("http://omg.org/mof.Model/1.3")), "incorrect namespaceURI string\n");
+        hr = IXMLDOMNode_get_namespaceURI(node2, &str);
+        EXPECT_HR(hr, S_OK);
+        ok(!lstrcmpW( str, _bstr_("http://omg.org/mof.Model/1.3")), "got %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
-        IXMLDOMNode_Release(pNode2);
+        hr = IXMLDOMNode_QueryInterface(node2, &IID_IXMLDOMElement, (void**)&elem);
+        EXPECT_HR(hr, S_OK);
+
+        hr = IXMLDOMElement_getAttributeNode(elem, _bstr_("Model:name2"), &attr);
+        EXPECT_HR(hr, S_OK);
+
+        hr = IXMLDOMAttribute_get_nodeName(attr, &str);
+        EXPECT_HR(hr, S_OK);
+        todo_wine ok(!lstrcmpW( str, _bstr_("Model:name2")), "got %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        hr = IXMLDOMAttribute_get_prefix(attr, &str);
+        EXPECT_HR(hr, S_OK);
+        ok(!lstrcmpW( str, _bstr_("Model")), "got %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        IXMLDOMAttribute_Release(attr);
+        IXMLDOMElement_Release(elem);
+
+        IXMLDOMNode_Release(node2);
         IXMLDOMNode_Release(node);
     }
 
@@ -8579,6 +8601,10 @@ todo_wine {
     free_bstrs();
 }
 
+static const char get_prefix_doc[] =
+    "<?xml version=\"1.0\" ?>"
+    "<a xmlns:ns1=\"ns1 href\" />";
+
 static void test_get_prefix(void)
 {
     IXMLDOMDocumentFragment *fragment;
@@ -8586,6 +8612,7 @@ static void test_get_prefix(void)
     IXMLDOMElement *element;
     IXMLDOMComment *comment;
     IXMLDOMDocument *doc;
+    VARIANT_BOOL b;
     HRESULT hr;
     BSTR str;
 
@@ -8671,6 +8698,24 @@ static void test_get_prefix(void)
     ok( str == 0, "got %p\n", str);
 
     IXMLDOMElement_Release(element);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(get_prefix_doc), &b);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    EXPECT_HR(hr, S_OK);
+
+    str = (void*)0xdeadbeef;
+    hr = IXMLDOMElement_get_prefix(element, &str);
+    EXPECT_HR(hr, S_FALSE);
+    ok(str == NULL, "got %p\n", str);
+
+    str = (void*)0xdeadbeef;
+    hr = IXMLDOMElement_get_namespaceURI(element, &str);
+todo_wine {
+    EXPECT_HR(hr, S_FALSE);
+    ok(str == NULL, "got %s\n", wine_dbgstr_w(str));
+}
 
     IXMLDOMDocument_Release(doc);
     free_bstrs();
@@ -10741,7 +10786,7 @@ START_TEST(domdoc)
     test_nodeTypeTests();
     test_save();
     test_testTransforms();
-    test_Namespaces();
+    test_namespaces();
     test_FormattingXML();
     test_nodeTypedValue();
     test_TransformWithLoadingLocalFile();

@@ -531,8 +531,8 @@ static HRESULT WINAPI entityref_get_prefix(
     BSTR* prefix)
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    TRACE("(%p)->(%p)\n", This, prefix);
-    return node_get_prefix( &This->node, prefix );
+    FIXME("(%p)->(%p): stub\n", This, prefix);
+    return return_null_bstr( prefix );
 }
 
 static HRESULT WINAPI entityref_get_baseName(

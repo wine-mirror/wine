@@ -1074,17 +1074,14 @@ HRESULT node_get_namespaceURI(xmlnode *This, BSTR *namespaceURI)
 
 HRESULT node_get_prefix(xmlnode *This, BSTR *prefix)
 {
-    xmlNsPtr *ns;
+    xmlNsPtr ns = This->node->ns;
 
     if (!prefix) return E_INVALIDARG;
 
     *prefix = NULL;
 
-    if ((ns = xmlGetNsList(This->node->doc, This->node)))
-    {
-        if (ns[0]->prefix) *prefix = bstr_from_xmlChar( ns[0]->prefix );
-        xmlFree(ns);
-    }
+    if (ns && ns->prefix)
+        *prefix = bstr_from_xmlChar(ns->prefix);
 
     TRACE("prefix: %s\n", debugstr_w(*prefix));
 
