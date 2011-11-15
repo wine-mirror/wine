@@ -22,7 +22,7 @@
 @ stdcall D3D10StateBlockMaskDifference(ptr ptr ptr)
 @ stdcall D3D10StateBlockMaskDisableAll(ptr)
 @ stdcall D3D10StateBlockMaskDisableCapture(ptr long long long)
-@ stub D3D10StateBlockMaskEnableAll
+@ stdcall D3D10StateBlockMaskEnableAll(ptr)
 @ stub D3D10StateBlockMaskEnableCapture
 @ stub D3D10StateBlockMaskGetSetting
 @ stub D3D10StateBlockMaskIntersect

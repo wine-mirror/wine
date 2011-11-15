@@ -284,3 +284,15 @@ HRESULT WINAPI D3D10StateBlockMaskDisableCapture(D3D10_STATE_BLOCK_MASK *mask,
             return E_INVALIDARG;
     }
 }
+
+HRESULT WINAPI D3D10StateBlockMaskEnableAll(D3D10_STATE_BLOCK_MASK *mask)
+{
+    TRACE("mask %p.\n", mask);
+
+    if (!mask)
+        return E_INVALIDARG;
+
+    memset(mask, 0xff, sizeof(*mask));
+
+    return S_OK;
+}

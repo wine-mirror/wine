@@ -123,6 +123,14 @@ static void test_stateblock_mask(void)
     hr = D3D10StateBlockMaskDisableAll(NULL);
     ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
 
+    memset(&result, 0, sizeof(result));
+    hr = D3D10StateBlockMaskEnableAll(&result);
+    ok(SUCCEEDED(hr), "D3D10StateBlockMaskEnableAll failed, hr %#x.\n", hr);
+    ok(result.VS == 0xff, "Got unexpected result.VS %#x.\n", result.VS);
+    ok(result.Predication == 0xff, "Got unexpected result.Predication %#x.\n", result.Predication);
+    hr = D3D10StateBlockMaskEnableAll(NULL);
+    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+
     result.VS = 0xff;
     hr = D3D10StateBlockMaskDisableCapture(&result, D3D10_DST_VS, 0, 1);
     ok(SUCCEEDED(hr), "D3D10StateBlockMaskDisableCapture failed, hr %#x.\n", hr);
