@@ -170,6 +170,10 @@ static BOOL WININET_GetAuthRealm( HINTERNET hRequest, LPWSTR szBuf, DWORD sz, BO
     return TRUE;
 }
 
+/* These two are not defined in the public headers */
+extern DWORD WINAPI WNetCachePassword(LPSTR,WORD,LPSTR,WORD,BYTE,WORD);
+extern DWORD WINAPI WNetGetCachedPassword(LPSTR,WORD,LPSTR,LPWORD,BYTE);
+
 /***********************************************************************
  *         WININET_GetSetPassword
  */
