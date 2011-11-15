@@ -1938,7 +1938,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetMatrixArray(ID3DXBaseEffect *iface,
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
     struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
-    TRACE("iface %p, parameter %p, matrix %p\n", This, parameter, matrix);
+    TRACE("iface %p, parameter %p, matrix %p, count %u\n", This, parameter, matrix, count);
 
     if (!count) return D3D_OK;
 
