@@ -32,30 +32,33 @@ static inline ShellBrowser *impl_from_IShellBrowser(IShellBrowser *iface)
     return CONTAINING_RECORD(iface, ShellBrowser, IShellBrowser_iface);
 }
 
-static HRESULT WINAPI ShellBrowser_QueryInterface(
-        IShellBrowser* iface,
-        REFIID riid,
-        void **ppvObject)
+static HRESULT WINAPI ShellBrowser_QueryInterface(IShellBrowser* iface, REFIID riid, void **ppv)
 {
     ShellBrowser *This = impl_from_IShellBrowser(iface);
-    *ppvObject = NULL;
 
-    if(IsEqualGUID(&IID_IShellBrowser, riid) || IsEqualGUID(&IID_IOleWindow, riid)
-        || IsEqualGUID(&IID_IUnknown, riid))
-        *ppvObject = &This->IShellBrowser_iface;
-    else if(IsEqualGUID(&IID_IBrowserService, riid))
-        *ppvObject = &This->IBrowserService_iface;
-    else if(IsEqualGUID(&IID_IDocObjectService, riid))
-        *ppvObject = &This->IDocObjectService_iface;
-
-    if(*ppvObject) {
-        TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
-        IUnknown_AddRef((IUnknown*)*ppvObject);
-        return S_OK;
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IShellBrowser_iface;
+    }else if(IsEqualGUID(&IID_IOleWindow, riid)) {
+        TRACE("(%p)->(IID_IOleWindow %p)\n", This, ppv);
+        *ppv = &This->IShellBrowser_iface;
+    }else if(IsEqualGUID(&IID_IShellBrowser, riid)) {
+        TRACE("(%p)->(IID_IShellBrowser %p)\n", This, ppv);
+        *ppv = &This->IShellBrowser_iface;
+    }else if(IsEqualGUID(&IID_IBrowserService, riid)) {
+        TRACE("(%p)->(IID_IBrowserService %p)\n", This, ppv);
+        *ppv = &This->IBrowserService_iface;
+    }else if(IsEqualGUID(&IID_IDocObjectService, riid)) {
+        TRACE("(%p)->(IID_IDocObjectService %p)\n", This, ppv);
+        *ppv = &This->IDocObjectService_iface;
+    }else {
+        FIXME("%p %s %p\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
     }
 
-    FIXME("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
 }
 
 static ULONG WINAPI ShellBrowser_AddRef(
