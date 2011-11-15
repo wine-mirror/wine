@@ -112,7 +112,6 @@ DEFINE_EXPECT(UnlockRequest);
 DEFINE_EXPECT(Abort);
 DEFINE_EXPECT(MimeFilter_CreateInstance);
 DEFINE_EXPECT(MimeFilter_Start);
-DEFINE_EXPECT(MimeFilter_ReportProgress);
 DEFINE_EXPECT(MimeFilter_ReportData);
 DEFINE_EXPECT(MimeFilter_ReportResult);
 DEFINE_EXPECT(MimeFilter_Terminate);
@@ -1043,7 +1042,20 @@ static HRESULT WINAPI MimeProtocolSink_Switch(IInternetProtocolSink *iface, PROT
 static HRESULT WINAPI MimeProtocolSink_ReportProgress(IInternetProtocolSink *iface, ULONG ulStatusCode,
         LPCWSTR szStatusText)
 {
-    CHECK_EXPECT(MimeFilter_ReportProgress);
+    switch(ulStatusCode) {
+    case BINDSTATUS_LOADINGMIMEHANDLER:
+        /*
+         * IE9 for some reason (bug?) calls this on mime handler's protocol sink instead of the
+         * main protocol sink. We check ReportProgress_LOADINGMIMEHANDLER both here and in
+         * ProtocolSink_ReportProgress to workaround it.
+         */
+        CHECK_EXPECT(ReportProgress_LOADINGMIMEHANDLER);
+        ok(!szStatusText, "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
+        break;
+    default:
+        ok(0, "Unexpected status code %d\n", ulStatusCode);
+    }
+
     return S_OK;
 }
 
@@ -1742,6 +1754,7 @@ static HRESULT WINAPI ProtocolEmul_Continue(IInternetProtocolEx *iface,
         if(pr == 200) {
             if(!mimefilter_test)
                 SET_EXPECT(Read); /* checked in BINDSTATUS_MIMETYPEAVAILABLE or ReportData */
+            SET_EXPECT(GetBindInfo);
             SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
         }
         if(pr >= 200)
@@ -1759,6 +1772,7 @@ static HRESULT WINAPI ProtocolEmul_Continue(IInternetProtocolEx *iface,
         if(!short_read && pr < 200)
             CHECK_CALLED(Read);
         if(pr == 200) {
+            CLEAR_CALLED(GetBindInfo); /* IE9 */
             CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
         }
     }else {
@@ -1816,6 +1830,7 @@ static HRESULT WINAPI ProtocolEmul_Read(IInternetProtocolEx *iface, void *pv,
         prot_state = 4;
         if(short_read) {
             SET_EXPECT(Read2); /* checked in BINDSTATUS_MIMETYPEAVAILABLE */
+            SET_EXPECT(GetBindInfo);
             SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
         }
         if(mimefilter_test)
@@ -1827,8 +1842,10 @@ static HRESULT WINAPI ProtocolEmul_Read(IInternetProtocolEx *iface, void *pv,
                 BSCF_LASTDATANOTIFICATION|BSCF_INTERMEDIATEDATANOTIFICATION, 0, 0);
         read_report_data--;
         ok(hres == S_OK, "ReportData failed: %08x\n", hres);
-        if(short_read)
+        if(short_read) {
+            CLEAR_CALLED(GetBindInfo); /* IE9 */
             CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
+        }
         if(mimefilter_test)
             CHECK_CALLED(MimeFilter_ReportData);
         else if(direct_read)
