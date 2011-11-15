@@ -34,7 +34,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(wintab32);
 HWND hwndDefault = NULL;
 static const WCHAR
   WC_TABLETCLASSNAME[] = {'W','i','n','e','T','a','b','l','e','t','C','l','a','s','s',0};
-CRITICAL_SECTION csTablet;
+static CRITICAL_SECTION_DEBUG csTablet_debug =
+{
+    0, 0, &csTablet,
+    { &csTablet_debug.ProcessLocksList, &csTablet_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": csTablet") }
+};
+CRITICAL_SECTION csTablet = { &csTablet_debug, -1, 0, 0, 0, 0 };
 
 int  (CDECL *pLoadTabletInfo)(HWND hwnddefault) = NULL;
 int  (CDECL *pGetCurrentPacket)(LPWTPACKET packet) = NULL;
@@ -74,8 +80,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
         case DLL_PROCESS_ATTACH:
             TRACE("Initialization\n");
             DisableThreadLibraryCalls(hInstDLL);
-            InitializeCriticalSection(&csTablet);
-            csTablet.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": csTablet");
             hx11drv = GetModuleHandleA("winex11.drv");
             if (hx11drv)
             {
@@ -98,7 +102,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
                 hwndDefault = 0;
             }
             TABLET_Unregister();
-            csTablet.DebugInfo->Spare[0] = 0;
             DeleteCriticalSection(&csTablet);
             break;
     }
