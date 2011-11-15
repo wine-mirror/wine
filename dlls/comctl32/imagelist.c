@@ -2090,26 +2090,23 @@ ImageList_Merge (HIMAGELIST himl1, INT i1, HIMAGELIST himl2, INT i2,
 
 
 /* helper for ImageList_Read, see comments below */
-static BOOL _read_bitmap(HDC hdcIml, LPSTREAM pstm)
+static void *read_bitmap(LPSTREAM pstm, BITMAPINFO *bmi)
 {
     BITMAPFILEHEADER	bmfh;
     int bitsperpixel, palspace;
-    char bmi_buf[sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * 256];
-    LPBITMAPINFO bmi = (LPBITMAPINFO)bmi_buf;
-    int                result = FALSE;
-    LPBYTE             bits = NULL;
+    void *bits;
 
     if (FAILED(IStream_Read ( pstm, &bmfh, sizeof(bmfh), NULL)))
-        return FALSE;
+        return NULL;
 
     if (bmfh.bfType != (('M'<<8)|'B'))
-        return FALSE;
+        return NULL;
 
     if (FAILED(IStream_Read ( pstm, &bmi->bmiHeader, sizeof(bmi->bmiHeader), NULL)))
-        return FALSE;
+        return NULL;
 
     if ((bmi->bmiHeader.biSize != sizeof(bmi->bmiHeader)))
-        return FALSE;
+        return NULL;
 
     TRACE("width %u, height %u, planes %u, bpp %u\n",
           bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight,
@@ -2125,23 +2122,17 @@ static BOOL _read_bitmap(HDC hdcIml, LPSTREAM pstm)
 
     /* read the palette right after the end of the bitmapinfoheader */
     if (palspace && FAILED(IStream_Read(pstm, bmi->bmiColors, palspace, NULL)))
-	goto error;
+        return NULL;
 
     bits = Alloc(bmi->bmiHeader.biSizeImage);
-    if (!bits)
-        goto error;
+    if (!bits) return NULL;
+
     if (FAILED(IStream_Read(pstm, bits, bmi->bmiHeader.biSizeImage, NULL)))
-        goto error;
-
-    if (!StretchDIBits(hdcIml, 0, 0, bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight,
-                  0, 0, bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight,
-                  bits, bmi, DIB_RGB_COLORS, SRCCOPY))
-        goto error;
-    result = TRUE;
-
-error:
-    Free(bits);
-    return result;
+    {
+        Free(bits);
+        return NULL;
+    }
+    return bits;
 }
 
 /*************************************************************************
@@ -2177,6 +2168,11 @@ error:
  */
 HIMAGELIST WINAPI ImageList_Read (LPSTREAM pstm)
 {
+    char image_buf[sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * 256];
+    char mask_buf[sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * 256];
+    BITMAPINFO *image_info = (BITMAPINFO *)image_buf;
+    BITMAPINFO *mask_info = (BITMAPINFO *)mask_buf;
+    void *image_bits, *mask_bits = NULL;
     ILHEAD	ilHead;
     HIMAGELIST	himl;
     int		i;
@@ -2197,19 +2193,56 @@ HIMAGELIST WINAPI ImageList_Read (LPSTREAM pstm)
     if (!himl)
 	return NULL;
 
-    if (!_read_bitmap(himl->hdcImage, pstm))
+    if (!(image_bits = read_bitmap(pstm, image_info)))
     {
 	WARN("failed to read bitmap from stream\n");
 	return NULL;
     }
     if (ilHead.flags & ILC_MASK)
     {
-        if (!_read_bitmap(himl->hdcMask, pstm))
+        if (!(mask_bits = read_bitmap(pstm, mask_info)))
         {
             WARN("failed to read mask bitmap from stream\n");
 	    return NULL;
 	}
     }
+    else mask_info = NULL;
+
+    if (himl->has_alpha && image_info->bmiHeader.biBitCount == 32)
+    {
+        DWORD *ptr = image_bits;
+        BYTE *mask_ptr = mask_bits;
+        int stride = himl->cy * image_info->bmiHeader.biWidth;
+
+        if (image_info->bmiHeader.biHeight > 0)  /* bottom-up */
+        {
+            ptr += (imagelist_height( ilHead.cCurImage ) - 1) * stride;
+            mask_ptr += (imagelist_height( ilHead.cCurImage ) - 1) * stride / 8;
+            stride = -stride;
+            image_info->bmiHeader.biHeight = himl->cy;
+        }
+        else image_info->bmiHeader.biHeight = -himl->cy;
+
+        for (i = 0; i < ilHead.cCurImage; i += TILE_COUNT)
+        {
+            add_dib_bits( himl, i, min( ilHead.cCurImage - i, TILE_COUNT ),
+                          himl->cx, himl->cy, image_info, mask_info, ptr, mask_ptr );
+            ptr += stride;
+            mask_ptr += stride / 8;
+        }
+    }
+    else
+    {
+        StretchDIBits( himl->hdcImage, 0, 0, image_info->bmiHeader.biWidth, image_info->bmiHeader.biHeight,
+                       0, 0, image_info->bmiHeader.biWidth, image_info->bmiHeader.biHeight,
+                       image_bits, image_info, DIB_RGB_COLORS, SRCCOPY);
+        if (mask_info)
+            StretchDIBits( himl->hdcMask, 0, 0, mask_info->bmiHeader.biWidth, mask_info->bmiHeader.biHeight,
+                           0, 0, mask_info->bmiHeader.biWidth, mask_info->bmiHeader.biHeight,
+                           mask_bits, mask_info, DIB_RGB_COLORS, SRCCOPY);
+    }
+    Free( image_bits );
+    Free( mask_bits );
 
     himl->cCurImage = ilHead.cCurImage;
     himl->cMaxImage = ilHead.cMaxImage;
