@@ -1199,6 +1199,7 @@ void CDECL wined3d_device_release_focus_window(struct wined3d_device *device)
 HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
         WINED3DPRESENT_PARAMETERS *present_parameters)
 {
+    static const struct wined3d_color black = {0.0f, 0.0f, 0.0f, 0.0f};
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_swapchain *swapchain = NULL;
     struct wined3d_context *context;
@@ -1345,7 +1346,7 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     /* Clear the screen */
     wined3d_device_clear(device, 0, NULL, WINED3DCLEAR_TARGET
             | (present_parameters->EnableAutoDepthStencil ? WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL : 0),
-            0x00, 1.0f, 0);
+            &black, 1.0f, 0);
 
     device->d3d_initialized = TRUE;
 
@@ -4025,13 +4026,12 @@ HRESULT CDECL wined3d_device_present(const struct wined3d_device *device, const 
 
 /* Do not call while under the GL lock. */
 HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_count,
-        const RECT *rects, DWORD flags, WINED3DCOLOR color, float depth, DWORD stencil)
+        const RECT *rects, DWORD flags, const struct wined3d_color *color, float depth, DWORD stencil)
 {
-    const struct wined3d_color c = {D3DCOLOR_R(color), D3DCOLOR_G(color), D3DCOLOR_B(color), D3DCOLOR_A(color)};
     RECT draw_rect;
 
-    TRACE("device %p, rect_count %u, rects %p, flags %#x, color 0x%08x, depth %.8e, stencil %u.\n",
-            device, rect_count, rects, flags, color, depth, stencil);
+    TRACE("device %p, rect_count %u, rects %p, flags %#x, color {%.8e, %.8e, %.8e, %.8e}, depth %.8e, stencil %u.\n",
+            device, rect_count, rects, flags, color->r, color->g, color->b, color->a, depth, stencil);
 
     if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
     {
@@ -4057,7 +4057,7 @@ HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_cou
 
     return device_clear_render_targets(device, device->adapter->gl_info.limits.buffers,
             &device->fb, rect_count, rects,
-            &draw_rect, flags, &c, depth, stencil);
+            &draw_rect, flags, color, depth, stencil);
 }
 
 void CDECL wined3d_device_set_primitive_type(struct wined3d_device *device,

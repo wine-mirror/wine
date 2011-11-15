@@ -65,8 +65,6 @@
 #define WINEDDERR_NOCLIPLIST                                    MAKE_WINED3DHRESULT(205)
 #define WINEDDERR_OVERLAYNOTVISIBLE                             MAKE_WINED3DHRESULT(577)
 
-typedef DWORD WINED3DCOLOR;
-
 typedef enum _WINED3DLIGHTTYPE
 {
     WINED3DLIGHT_POINT                      = 1,
@@ -2168,7 +2166,7 @@ HRESULT __cdecl wined3d_device_acquire_focus_window(struct wined3d_device *devic
 HRESULT __cdecl wined3d_device_begin_scene(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_begin_stateblock(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_clear(struct wined3d_device *device, DWORD rect_count, const RECT *rects, DWORD flags,
-        WINED3DCOLOR color, float z, DWORD stencil);
+        const struct wined3d_color *color, float z, DWORD stencil);
 void __cdecl wined3d_device_clear_rendertarget_view(struct wined3d_device *device,
         struct wined3d_rendertarget_view *rendertarget_view, const struct wined3d_color *color);
 HRESULT __cdecl wined3d_device_color_fill(struct wined3d_device *device, struct wined3d_surface *surface,

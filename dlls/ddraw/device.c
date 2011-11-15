@@ -5065,23 +5065,24 @@ static HRESULT WINAPI IDirect3DDeviceImpl_3_ValidateDevice(IDirect3DDevice3 *ifa
  *  For details, see IWineD3DDevice::Clear
  *
  *****************************************************************************/
-static HRESULT
-IDirect3DDeviceImpl_7_Clear(IDirect3DDevice7 *iface,
-                            DWORD Count,
-                            D3DRECT *Rects,
-                            DWORD Flags,
-                            D3DCOLOR Color,
-                            D3DVALUE Z,
-                            DWORD Stencil)
+static HRESULT IDirect3DDeviceImpl_7_Clear(IDirect3DDevice7 *iface, DWORD count,
+        D3DRECT *rects, DWORD flags, D3DCOLOR color, D3DVALUE z, DWORD stencil)
 {
+    const struct wined3d_color c =
+    {
+        ((color >> 16) & 0xff) / 255.0f,
+        ((color >>  8) & 0xff) / 255.0f,
+        (color & 0xff) / 255.0f,
+        ((color >> 24) & 0xff) / 255.0f,
+    };
     IDirect3DDeviceImpl *This = impl_from_IDirect3DDevice7(iface);
     HRESULT hr;
 
     TRACE("iface %p, count %u, rects %p, flags %#x, color 0x%08x, z %.8e, stencil %#x.\n",
-            iface, Count, Rects, Flags, Color, Z, Stencil);
+            iface, count, rects, flags, color, z, stencil);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_clear(This->wined3d_device, Count, (RECT *)Rects, Flags, Color, Z, Stencil);
+    hr = wined3d_device_clear(This->wined3d_device, count, (RECT *)rects, flags, &c, z, stencil);
     wined3d_mutex_unlock();
 
     return hr;

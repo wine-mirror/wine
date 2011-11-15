@@ -591,10 +591,12 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
      * (The Max Payne bug has been confirmed on Windows with the debug runtime) */
     if (FALSE && swapchain->presentParms.SwapEffect == WINED3DSWAPEFFECT_DISCARD)
     {
+        static const struct wined3d_color cyan = {0.0f, 1.0f, 1.0f, 1.0f};
+
         TRACE("Clearing the color buffer with cyan color\n");
 
         wined3d_device_clear(swapchain->device, 0, NULL,
-                WINED3DCLEAR_TARGET, 0xff00ffff, 1.0f, 0);
+                WINED3DCLEAR_TARGET, &cyan, 1.0f, 0);
     }
 
     if (!swapchain->render_to_fbo && ((swapchain->front_buffer->flags & SFLAG_INSYSMEM)

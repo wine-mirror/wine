@@ -1218,18 +1218,24 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3DDevice9Impl_EndScene(IDirect3DD
     return hr;
 }
 
-static HRESULT WINAPI IDirect3DDevice9Impl_Clear(IDirect3DDevice9Ex *iface, DWORD Count,
-        const D3DRECT *pRects, DWORD Flags, D3DCOLOR Color, float Z, DWORD Stencil)
+static HRESULT WINAPI IDirect3DDevice9Impl_Clear(IDirect3DDevice9Ex *iface, DWORD rect_count,
+        const D3DRECT *rects, DWORD flags, D3DCOLOR color, float z, DWORD stencil)
 {
+    const struct wined3d_color c =
+    {
+        ((color >> 16) & 0xff) / 255.0f,
+        ((color >>  8) & 0xff) / 255.0f,
+        (color & 0xff) / 255.0f,
+        ((color >> 24) & 0xff) / 255.0f,
+    };
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
     HRESULT hr;
 
     TRACE("iface %p, rect_count %u, rects %p, flags %#x, color 0x%08x, z %.8e, stencil %u.\n",
-            iface, Count, pRects, Flags, Color, Z, Stencil);
+            iface, rect_count, rects, flags, color, z, stencil);
 
-    /* Note: D3DRECT is compatible with WINED3DRECT */
     wined3d_mutex_lock();
-    hr = wined3d_device_clear(This->wined3d_device, Count, (const RECT *)pRects, Flags, Color, Z, Stencil);
+    hr = wined3d_device_clear(This->wined3d_device, rect_count, (const RECT *)rects, flags, &c, z, stencil);
     wined3d_mutex_unlock();
 
     return hr;
