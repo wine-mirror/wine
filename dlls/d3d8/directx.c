@@ -229,14 +229,6 @@ static HRESULT WINAPI IDirect3D8Impl_CheckDeviceFormat(LPDIRECT3D8 iface, UINT A
     TRACE("iface %p, adapter %u, device_type %#x, adapter_format %#x, usage %#x, resource_type %#x, format %#x.\n",
             iface, Adapter, DeviceType, AdapterFormat, Usage, RType, CheckFormat);
 
-    if(CheckFormat == D3DFMT_R8G8B8)
-    {
-        /* See comment in dlls/d3d9/directx.c, IDirect3D9Impl_CheckDeviceFormat for details */
-        WARN("D3DFMT_R8G8B8 is not available on windows, returning D3DERR_NOTAVAILABLE\n");
-        return D3DERR_NOTAVAILABLE;
-    }
-
-
     switch(RType) {
         case D3DRTYPE_VERTEXBUFFER:
         case D3DRTYPE_INDEXBUFFER:
