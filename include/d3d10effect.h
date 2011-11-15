@@ -806,6 +806,7 @@ HRESULT WINAPI D3D10CreateStateBlock(ID3D10Device *device,
 
 HRESULT WINAPI D3D10StateBlockMaskDifference(D3D10_STATE_BLOCK_MASK *mask_x,
         D3D10_STATE_BLOCK_MASK *mask_y, D3D10_STATE_BLOCK_MASK *result);
+HRESULT WINAPI D3D10StateBlockMaskDisableAll(D3D10_STATE_BLOCK_MASK *mask);
 
 #ifdef __cplusplus
 }

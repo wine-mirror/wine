@@ -166,3 +166,15 @@ HRESULT WINAPI D3D10StateBlockMaskDifference(D3D10_STATE_BLOCK_MASK *mask_x,
 
     return S_OK;
 }
+
+HRESULT WINAPI D3D10StateBlockMaskDisableAll(D3D10_STATE_BLOCK_MASK *mask)
+{
+    TRACE("mask %p.\n", mask);
+
+    if (!mask)
+        return E_INVALIDARG;
+
+    memset(mask, 0, sizeof(*mask));
+
+    return S_OK;
+}
