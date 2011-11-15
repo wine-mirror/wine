@@ -1027,6 +1027,7 @@ BOOL context_set_current(struct wined3d_context *ctx)
         {
             TRACE("Switching away from destroyed context %p.\n", old);
             context_destroy_gl_resources(old);
+            HeapFree(GetProcessHeap(), 0, (void *)old->gl_info);
             HeapFree(GetProcessHeap(), 0, old);
         }
         else
@@ -1603,6 +1604,11 @@ void context_destroy(struct wined3d_device *device, struct wined3d_context *cont
     }
     else
     {
+        /* Make a copy of gl_info for context_destroy_gl_resources use, the one
+           in wined3d_adapter may go away in the meantime */
+        struct wined3d_gl_info *gl_info = HeapAlloc(GetProcessHeap(), 0, sizeof(*gl_info));
+        *gl_info = *context->gl_info;
+        context->gl_info = gl_info;
         context->destroyed = 1;
         destroy = FALSE;
     }
