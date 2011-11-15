@@ -1806,137 +1806,30 @@ static ULONG WINAPI HTMLPrivateWindow_Release(IHTMLPrivateWindow *iface)
     return IHTMLWindow2_Release(&This->IHTMLWindow2_iface);
 }
 
-typedef struct {
-    task_t header;
-    HTMLWindow *window;
-    IUri *uri;
-} navigate_javascript_task_t;
-
-static void navigate_javascript_proc(task_t *_task)
-{
-    navigate_javascript_task_t *task = (navigate_javascript_task_t*)_task;
-    HTMLWindow *window = task->window;
-    VARIANT v;
-    BSTR code;
-    HRESULT hres;
-
-    static const WCHAR jscriptW[] = {'j','s','c','r','i','p','t',0};
-
-    task->window->readystate = READYSTATE_COMPLETE;
-
-    hres = IUri_GetPath(task->uri, &code);
-    if(FAILED(hres))
-        return;
-
-    set_download_state(window->doc_obj, 1);
-
-    V_VT(&v) = VT_EMPTY;
-    hres = exec_script(window, code, jscriptW, &v);
-    SysFreeString(code);
-    if(SUCCEEDED(hres) && V_VT(&v) != VT_EMPTY) {
-        FIXME("javascirpt URL returned %s\n", debugstr_variant(&v));
-        VariantClear(&v);
-    }
-
-    if(window->doc_obj->view_sink)
-        IAdviseSink_OnViewChange(window->doc_obj->view_sink, DVASPECT_CONTENT, -1);
-
-    set_download_state(window->doc_obj, 0);
-}
-
-static void navigate_javascript_task_destr(task_t *_task)
-{
-    navigate_javascript_task_t *task = (navigate_javascript_task_t*)_task;
-
-    IUri_Release(task->uri);
-    heap_free(task);
-}
-
-typedef struct {
-    task_t header;
-    HTMLWindow *window;
-    nsChannelBSC *bscallback;
-    IMoniker *mon;
-} navigate_task_t;
-
-static void navigate_proc(task_t *_task)
-{
-    navigate_task_t *task = (navigate_task_t*)_task;
-    HRESULT hres;
-
-    hres = set_moniker(&task->window->doc_obj->basedoc, task->mon, NULL, task->bscallback, TRUE);
-    if(SUCCEEDED(hres))
-        hres = start_binding(task->window, NULL, (BSCallback*)task->bscallback, NULL);
-
-}
-
-static void navigate_task_destr(task_t *_task)
-{
-    navigate_task_t *task = (navigate_task_t*)_task;
-
-    IUnknown_Release((IUnknown*)task->bscallback);
-    IMoniker_Release(task->mon);
-    heap_free(task);
-}
-
 static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface, BSTR url, BSTR arg2, BSTR arg3,
         BSTR arg4, VARIANT *post_data_var, VARIANT *headers_var, ULONG flags)
 {
     HTMLWindow *This = impl_from_IHTMLPrivateWindow(iface);
+    OLECHAR *translated_url = NULL;
     DWORD post_data_size = 0;
     BYTE *post_data = NULL;
     WCHAR *headers = NULL;
-    nsChannelBSC *bsc;
-    IMoniker *mon;
-    DWORD scheme;
-    BSTR new_url;
     IUri *uri;
     HRESULT hres;
 
     TRACE("(%p)->(%s %s %s %s %s %s %x)\n", This, debugstr_w(url), debugstr_w(arg2), debugstr_w(arg3), debugstr_w(arg4),
           debugstr_variant(post_data_var), debugstr_variant(headers_var), flags);
 
-    new_url = url;
     if(This->doc_obj->hostui) {
-        OLECHAR *translated_url = NULL;
-
         hres = IDocHostUIHandler_TranslateUrl(This->doc_obj->hostui, 0, url, &translated_url);
-        if(hres == S_OK && translated_url) {
-            new_url = SysAllocString(translated_url);
-            CoTaskMemFree(translated_url);
-        }
+        if(hres != S_OK)
+            translated_url = NULL;
     }
 
-    if(This->doc_obj->client) {
-        IOleCommandTarget *cmdtrg;
-
-        hres = IOleClientSite_QueryInterface(This->doc_obj->client, &IID_IOleCommandTarget, (void**)&cmdtrg);
-        if(SUCCEEDED(hres)) {
-            VARIANT in, out;
-
-            V_VT(&in) = VT_BSTR;
-            V_BSTR(&in) = new_url;
-            V_VT(&out) = VT_BOOL;
-            V_BOOL(&out) = VARIANT_TRUE;
-            hres = IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 67, 0, &in, &out);
-            IOleCommandTarget_Release(cmdtrg);
-            if(SUCCEEDED(hres))
-                VariantClear(&out);
-        }
-    }
-
-    hres = CreateUri(new_url, 0, 0, &uri);
-    if(new_url != url)
-        SysFreeString(new_url);
+    hres = CreateUri(translated_url ? translated_url : url, 0, 0, &uri);
+    CoTaskMemFree(translated_url);
     if(FAILED(hres))
         return hres;
-
-    hres = CreateURLMonikerEx2(NULL, uri, &mon, URL_MK_UNIFORM);
-    if(FAILED(hres))
-        return hres;
-
-    /* FIXME: Why not set_ready_state? */
-    This->readystate = READYSTATE_UNINITIALIZED;
 
     if(post_data_var) {
         if(V_VT(post_data_var) == (VT_ARRAY|VT_UI1)) {
@@ -1952,58 +1845,12 @@ static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface,
         headers = V_BSTR(headers_var);
     }
 
-    hres = create_channelbsc(mon, headers, post_data, post_data_size, &bsc);
+    hres = super_navigate(This, uri, headers, post_data, post_data_size);
+    IUri_Release(uri);
     if(post_data)
         SafeArrayUnaccessData(V_ARRAY(post_data_var));
-    if(FAILED(hres)) {
-        IMoniker_Release(mon);
-        return hres;
-    }
 
-    prepare_for_binding(&This->doc_obj->basedoc, mon, TRUE);
-
-    hres = IUri_GetScheme(uri, &scheme);
-
-    if(scheme != URL_SCHEME_JAVASCRIPT) {
-        navigate_task_t *task;
-
-        IUri_Release(uri);
-
-        task = heap_alloc(sizeof(*task));
-        if(!task) {
-            IUnknown_Release((IUnknown*)bsc);
-            IMoniker_Release(mon);
-            return E_OUTOFMEMORY;
-        }
-
-        task->window = This;
-        task->bscallback = bsc;
-        task->mon = mon;
-        push_task(&task->header, navigate_proc, navigate_task_destr, This->task_magic);
-
-        /* Silently and repeated when real loading starts? */
-        This->readystate = READYSTATE_LOADING;
-    }else {
-        navigate_javascript_task_t *task;
-
-        IUnknown_Release((IUnknown*)bsc);
-        IMoniker_Release(mon);
-
-        task = heap_alloc(sizeof(*task));
-        if(!task) {
-            IUri_Release(uri);
-            return E_OUTOFMEMORY;
-        }
-
-        task->window = This;
-        task->uri = uri;
-        push_task(&task->header, navigate_javascript_proc, navigate_javascript_task_destr, This->task_magic);
-
-        /* Why silently? */
-        This->readystate = READYSTATE_COMPLETE;
-    }
-
-    return S_OK;
+    return hres;
 }
 
 static HRESULT WINAPI HTMLPrivateWindow_GetPendingUrl(IHTMLPrivateWindow *iface, BSTR *url)

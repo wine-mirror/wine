@@ -1531,7 +1531,7 @@ static const BSCallbackVtbl nsChannelBSCVtbl = {
     nsChannelBSC_beginning_transaction
 };
 
-HRESULT create_channelbsc(IMoniker *mon, WCHAR *headers, BYTE *post_data, DWORD post_data_size, nsChannelBSC **retval)
+HRESULT create_channelbsc(IMoniker *mon, const WCHAR *headers, BYTE *post_data, DWORD post_data_size, nsChannelBSC **retval)
 {
     nsChannelBSC *ret;
 
@@ -1608,6 +1608,8 @@ static void start_doc_binding_task_destr(task_t *_task)
 HRESULT async_start_doc_binding(HTMLWindow *window, nsChannelBSC *bscallback)
 {
     start_doc_binding_task_t *task;
+
+    TRACE("%p\n", bscallback);
 
     task = heap_alloc(sizeof(start_doc_binding_task_t));
     if(!task)
@@ -1690,6 +1692,164 @@ void channelbsc_set_channel(nsChannelBSC *This, nsChannel *channel, nsIStreamLis
         if(FAILED(hres))
             WARN("parse_headers failed: %08x\n", hres);
     }
+}
+
+typedef struct {
+    task_t header;
+    HTMLWindow *window;
+    IUri *uri;
+} navigate_javascript_task_t;
+
+static void navigate_javascript_proc(task_t *_task)
+{
+    navigate_javascript_task_t *task = (navigate_javascript_task_t*)_task;
+    HTMLWindow *window = task->window;
+    VARIANT v;
+    BSTR code;
+    HRESULT hres;
+
+    static const WCHAR jscriptW[] = {'j','s','c','r','i','p','t',0};
+
+    task->window->readystate = READYSTATE_COMPLETE;
+
+    hres = IUri_GetPath(task->uri, &code);
+    if(FAILED(hres))
+        return;
+
+    set_download_state(window->doc_obj, 1);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = exec_script(window, code, jscriptW, &v);
+    SysFreeString(code);
+    if(SUCCEEDED(hres) && V_VT(&v) != VT_EMPTY) {
+        FIXME("javascirpt URL returned %s\n", debugstr_variant(&v));
+        VariantClear(&v);
+    }
+
+    if(window->doc_obj->view_sink)
+        IAdviseSink_OnViewChange(window->doc_obj->view_sink, DVASPECT_CONTENT, -1);
+
+    set_download_state(window->doc_obj, 0);
+}
+
+static void navigate_javascript_task_destr(task_t *_task)
+{
+    navigate_javascript_task_t *task = (navigate_javascript_task_t*)_task;
+
+    IUri_Release(task->uri);
+    heap_free(task);
+}
+
+typedef struct {
+    task_t header;
+    HTMLWindow *window;
+    nsChannelBSC *bscallback;
+    IMoniker *mon;
+} navigate_task_t;
+
+static void navigate_proc(task_t *_task)
+{
+    navigate_task_t *task = (navigate_task_t*)_task;
+    HRESULT hres;
+
+    hres = set_moniker(&task->window->doc_obj->basedoc, task->mon, NULL, task->bscallback, TRUE);
+    if(SUCCEEDED(hres))
+        start_binding(task->window, NULL, (BSCallback*)task->bscallback, NULL);
+}
+
+static void navigate_task_destr(task_t *_task)
+{
+    navigate_task_t *task = (navigate_task_t*)_task;
+
+    IUnknown_Release((IUnknown*)task->bscallback);
+    IMoniker_Release(task->mon);
+    heap_free(task);
+}
+
+HRESULT super_navigate(HTMLWindow *window, IUri *uri, const WCHAR *headers, BYTE *post_data, DWORD post_data_size)
+{
+    nsChannelBSC *bsc;
+    IMoniker *mon;
+    DWORD scheme;
+    HRESULT hres;
+
+    if(window->doc_obj->client) {
+        IOleCommandTarget *cmdtrg;
+
+        hres = IOleClientSite_QueryInterface(window->doc_obj->client, &IID_IOleCommandTarget, (void**)&cmdtrg);
+        if(SUCCEEDED(hres)) {
+            VARIANT in, out;
+            BSTR url_str;
+
+            hres = IUri_GetDisplayUri(uri, &url_str);
+            if(SUCCEEDED(hres)) {
+                V_VT(&in) = VT_BSTR;
+                V_BSTR(&in) = url_str;
+                V_VT(&out) = VT_BOOL;
+                V_BOOL(&out) = VARIANT_TRUE;
+                hres = IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 67, 0, &in, &out);
+                IOleCommandTarget_Release(cmdtrg);
+                if(SUCCEEDED(hres))
+                    VariantClear(&out);
+                SysFreeString(url_str);
+            }
+        }
+    }
+
+    hres = CreateURLMonikerEx2(NULL, uri, &mon, URL_MK_UNIFORM);
+    if(FAILED(hres))
+        return hres;
+
+    /* FIXME: Why not set_ready_state? */
+    window->readystate = READYSTATE_UNINITIALIZED;
+
+    hres = create_channelbsc(mon, headers, post_data, post_data_size, &bsc);
+    if(FAILED(hres)) {
+        IMoniker_Release(mon);
+        return hres;
+    }
+
+    prepare_for_binding(&window->doc_obj->basedoc, mon, TRUE);
+
+    hres = IUri_GetScheme(uri, &scheme);
+
+    if(scheme != URL_SCHEME_JAVASCRIPT) {
+        navigate_task_t *task;
+
+        task = heap_alloc(sizeof(*task));
+        if(!task) {
+            IUnknown_Release((IUnknown*)bsc);
+            IMoniker_Release(mon);
+            return E_OUTOFMEMORY;
+        }
+
+        task->window = window;
+        task->bscallback = bsc;
+        task->mon = mon;
+        push_task(&task->header, navigate_proc, navigate_task_destr, window->task_magic);
+
+        /* Silently and repeated when real loading starts? */
+        window->readystate = READYSTATE_LOADING;
+    }else {
+        navigate_javascript_task_t *task;
+
+        IUnknown_Release((IUnknown*)bsc);
+        IMoniker_Release(mon);
+
+        task = heap_alloc(sizeof(*task));
+        if(!task)
+            return E_OUTOFMEMORY;
+
+        IUri_AddRef(uri);
+        task->window = window;
+        task->uri = uri;
+        push_task(&task->header, navigate_javascript_proc, navigate_javascript_task_destr, window->task_magic);
+
+        /* Why silently? */
+        window->readystate = READYSTATE_COMPLETE;
+    }
+
+    return S_OK;
 }
 
 HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url, nsChannel *nschannel, DWORD hlnf, BOOL *cancel)
