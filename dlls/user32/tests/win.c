@@ -3710,7 +3710,7 @@ static void check_window_style(DWORD dwStyleIn, DWORD dwExStyleIn, DWORD dwStyle
     dwActualStyle = GetWindowLong(hwnd, GWL_STYLE);
     dwActualExStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
     /* WS_CLIPSIBLINGS can't be reset on top-level windows */
-    if (dwStyleIn & WS_CHILD) dwStyleOut = dwStyleIn;
+    if ((dwStyleIn & (WS_CHILD|WS_POPUP)) == WS_CHILD) dwStyleOut = dwStyleIn;
     else dwStyleOut = dwStyleIn | WS_CLIPSIBLINGS;
     /* WS_EX_WINDOWEDGE can't always be changed */
     if ((dwExStyleIn & WS_EX_DLGMODALFRAME) || (dwStyleIn & WS_THICKFRAME))
@@ -3735,6 +3735,9 @@ static void test_window_styles(void)
     check_window_style(0, 0, WS_CLIPSIBLINGS|WS_CAPTION, WS_EX_WINDOWEDGE);
     check_window_style(WS_OVERLAPPEDWINDOW, 0, WS_CLIPSIBLINGS|WS_OVERLAPPEDWINDOW, WS_EX_WINDOWEDGE);
     check_window_style(WS_CHILD, 0, WS_CHILD, 0);
+    check_window_style(WS_CHILD|WS_POPUP, 0, WS_CHILD|WS_POPUP|WS_CLIPSIBLINGS, 0);
+    check_window_style(WS_CHILD|WS_POPUP, WS_EX_APPWINDOW, WS_CHILD|WS_POPUP|WS_CLIPSIBLINGS, WS_EX_APPWINDOW);
+    check_window_style(WS_CHILD|WS_POPUP, WS_EX_WINDOWEDGE, WS_CHILD|WS_POPUP|WS_CLIPSIBLINGS, 0);
     check_window_style(WS_CHILD, WS_EX_WINDOWEDGE, WS_CHILD, 0);
     check_window_style(0, WS_EX_TOOLWINDOW, WS_CLIPSIBLINGS|WS_CAPTION, WS_EX_WINDOWEDGE|WS_EX_TOOLWINDOW);
     check_window_style(WS_POPUP, 0, WS_POPUP|WS_CLIPSIBLINGS, 0);
