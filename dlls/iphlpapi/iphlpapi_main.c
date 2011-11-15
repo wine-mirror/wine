@@ -770,12 +770,10 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, DWORD index,
             ret = AllocateAndGetIpForwardTableFromStack(&routeTable, FALSE,
                                                         GetProcessHeap(), 0);
             if (!ret)
-            {
                 num_v4_gateways = count_v4_gateways(index, routeTable);
-                if (!(flags & GAA_FLAG_SKIP_UNICAST))
-                    ret = v6addressesFromIndex(index, &v6addrs, &num_v6addrs);
-            }
         }
+        if (!ret && !(flags & GAA_FLAG_SKIP_UNICAST))
+            ret = v6addressesFromIndex(index, &v6addrs, &num_v6addrs);
     }
     else
     {
