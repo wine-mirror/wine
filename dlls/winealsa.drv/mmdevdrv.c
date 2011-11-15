@@ -1718,14 +1718,9 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
         return S_FALSE;
     }
 
-    if(snd_pcm_drop(This->pcm_handle) < 0)
-        WARN("snd_pcm_drop failed\n");
-
-    if(snd_pcm_reset(This->pcm_handle) < 0)
-        WARN("snd_pcm_reset failed\n");
-
-    if(snd_pcm_prepare(This->pcm_handle) < 0)
-        WARN("snd_pcm_prepare failed\n");
+    /* Stop without losing written frames or position.
+     * snd_pcm_pause would be appropriate but is unsupported by dmix.
+     * snd_pcm_drain yields EAGAIN in NONBLOCK mode, except with Pulse. */
 
     event = CreateEventW(NULL, TRUE, FALSE, NULL);
     wait = !DeleteTimerQueueTimer(g_timer_q, This->timer, event);
