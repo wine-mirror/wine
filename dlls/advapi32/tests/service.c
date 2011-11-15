@@ -33,7 +33,7 @@
 #include "wine/test.h"
 
 static const CHAR spooler[] = "Spooler"; /* Should be available on all platforms */
-static const CHAR* selfname;
+static CHAR selfname[MAX_PATH];
 
 static BOOL (WINAPI *pChangeServiceConfig2A)(SC_HANDLE,DWORD,LPVOID);
 static BOOL (WINAPI *pEnumServicesStatusExA)(SC_HANDLE, SC_ENUM_TYPE, DWORD,
@@ -2315,7 +2315,7 @@ START_TEST(service)
     char** myARGV;
 
     myARGC = winetest_get_mainargs(&myARGV);
-    selfname = myARGV[0];
+    GetFullPathNameA(myARGV[0], sizeof(selfname), selfname, NULL);
     if (myARGC >= 3)
     {
         if (strcmp(myARGV[2], "sleep") == 0)
