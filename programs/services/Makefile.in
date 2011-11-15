@@ -1,7 +1,7 @@
 EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 MODULE    = services.exe
 APPMODE   = -mconsole
-IMPORTS   = rpcrt4 advapi32
+IMPORTS   = rpcrt4 advapi32 userenv
 
 C_SRCS = \
 	rpc.c \

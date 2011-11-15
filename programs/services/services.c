@@ -24,6 +24,7 @@
 #include <windows.h>
 #include <winsvc.h>
 #include <rpc.h>
+#include <userenv.h>
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -40,6 +41,7 @@ struct scmdatabase *active_database;
 
 DWORD service_pipe_timeout = 10000;
 DWORD service_kill_timeout = 20000;
+static void *env = NULL;
 
 static const int is_win64 = (sizeof(void *) > sizeof(int));
 
@@ -581,6 +583,17 @@ static DWORD service_start_process(struct service_entry *service_entry, HANDLE *
 
     service_lock_exclusive(service_entry);
 
+    if (!env)
+    {
+        HANDLE htok;
+
+        if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY|TOKEN_DUPLICATE, &htok))
+            CreateEnvironmentBlock(&env, htok, FALSE);
+
+        if (!env)
+            WINE_ERR("failed to create services environment\n");
+    }
+
     size = ExpandEnvironmentStringsW(service_entry->config.lpBinaryPathName,NULL,0);
     path = HeapAlloc(GetProcessHeap(),0,size*sizeof(WCHAR));
     if (!path)
@@ -632,7 +645,7 @@ static DWORD service_start_process(struct service_entry *service_entry, HANDLE *
 
     service_unlock(service_entry);
 
-    r = CreateProcessW(NULL, path, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    r = CreateProcessW(NULL, path, NULL, NULL, FALSE, CREATE_UNICODE_ENVIRONMENT, env, NULL, &si, &pi);
     HeapFree(GetProcessHeap(),0,path);
     if (!r)
     {
@@ -867,5 +880,7 @@ int main(int argc, char *argv[])
         RPC_MainLoop();
     }
     scmdatabase_destroy(active_database);
+    if (env)
+        DestroyEnvironmentBlock(env);
     return err;
 }
