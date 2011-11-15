@@ -238,18 +238,6 @@ static HRESULT WINAPI IDirect3D9Impl_CheckDeviceFormat(IDirect3D9Ex *iface, UINT
     TRACE("iface %p, adapter %u, device_type %#x, adapter_format %#x, usage %#x, resource_type %#x, format %#x.\n",
             iface, Adapter, DeviceType, AdapterFormat, Usage, RType, CheckFormat);
 
-    /* This format is nothing special and it is supported perfectly.
-     * However, ati and nvidia driver on windows do not mark this format as
-     * supported (tested with the dxCapsViewer) and pretending to
-     * support this format uncovers a bug in Battlefield 1942 (fonts are missing)
-     * So do the same as Windows drivers and pretend not to support it on dx8 and 9
-     */
-    if(CheckFormat == D3DFMT_R8G8B8)
-    {
-        WARN("D3DFMT_R8G8B8 is not available on windows, returning D3DERR_NOTAVAILABLE\n");
-        return D3DERR_NOTAVAILABLE;
-    }
-
     switch(RType) {
         case D3DRTYPE_VERTEXBUFFER:
         case D3DRTYPE_INDEXBUFFER:
