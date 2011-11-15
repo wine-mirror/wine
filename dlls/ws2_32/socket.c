@@ -4785,6 +4785,22 @@ static int convert_eai_u2w(int unixret) {
     return unixret;
 }
 
+static char *get_hostname(void)
+{
+    char *ret;
+    DWORD size = 0;
+
+    GetComputerNameExA( ComputerNamePhysicalDnsHostname, NULL, &size );
+    if (GetLastError() != ERROR_MORE_DATA) return NULL;
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, size ))) return NULL;
+    if (!GetComputerNameExA( ComputerNamePhysicalDnsHostname, ret, &size ))
+    {
+        HeapFree( GetProcessHeap(), 0, ret );
+        return NULL;
+    }
+    return ret;
+}
+
 /***********************************************************************
  *		getaddrinfo		(WS2_32.@)
  */
@@ -4794,17 +4810,19 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
     struct addrinfo *unixaires = NULL;
     int   result;
     struct addrinfo unixhints, *punixhints = NULL;
-    CHAR *node = NULL, *serv = NULL;
+    char *hostname = NULL;
+    const char *node;
 
-    if (nodename)
-        if (!(node = strdup_lower(nodename))) return WSA_NOT_ENOUGH_MEMORY;
+    if (!nodename && !servname) return WSAHOST_NOT_FOUND;
 
-    if (servname) {
-        if (!(serv = strdup_lower(servname))) {
-            HeapFree(GetProcessHeap(), 0, node);
-            return WSA_NOT_ENOUGH_MEMORY;
-        }
-    }
+    if (!nodename)
+        node = "localhost";
+    else if (!nodename[0])
+        node = hostname = get_hostname();
+    else
+        node = nodename;
+
+    if (!node) return WSA_NOT_ENOUGH_MEMORY;
 
     if (hints) {
         punixhints = &unixhints;
@@ -4826,12 +4844,10 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
     }
 
     /* getaddrinfo(3) is thread safe, no need to wrap in CS */
-    result = getaddrinfo(nodename, servname, punixhints, &unixaires);
+    result = getaddrinfo(node, servname, punixhints, &unixaires);
 
     TRACE("%s, %s %p -> %p %d\n", debugstr_a(nodename), debugstr_a(servname), hints, res, result);
-
-    HeapFree(GetProcessHeap(), 0, node);
-    HeapFree(GetProcessHeap(), 0, serv);
+    HeapFree(GetProcessHeap(), 0, hostname);
 
     if (!result) {
         struct addrinfo *xuai = unixaires;
@@ -4991,15 +5007,15 @@ static struct WS_addrinfo *addrinfo_WtoA(const struct WS_addrinfoW *ai)
 int WINAPI GetAddrInfoW(LPCWSTR nodename, LPCWSTR servname, const ADDRINFOW *hints, PADDRINFOW *res)
 {
     int ret, len;
-    char *nodenameA, *servnameA = NULL;
+    char *nodenameA = NULL, *servnameA = NULL;
     struct WS_addrinfo *resA, *hintsA = NULL;
 
-    if (!nodename) return WSAHOST_NOT_FOUND;
-
-    len = WideCharToMultiByte(CP_ACP, 0, nodename, -1, NULL, 0, NULL, NULL);
-    if (!(nodenameA = HeapAlloc(GetProcessHeap(), 0, len))) return EAI_MEMORY;
-    WideCharToMultiByte(CP_ACP, 0, nodename, -1, nodenameA, len, NULL, NULL);
-
+    if (nodename)
+    {
+        len = WideCharToMultiByte(CP_ACP, 0, nodename, -1, NULL, 0, NULL, NULL);
+        if (!(nodenameA = HeapAlloc(GetProcessHeap(), 0, len))) return EAI_MEMORY;
+        WideCharToMultiByte(CP_ACP, 0, nodename, -1, nodenameA, len, NULL, NULL);
+    }
     if (servname)
     {
         len = WideCharToMultiByte(CP_ACP, 0, servname, -1, NULL, 0, NULL, NULL);
