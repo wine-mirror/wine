@@ -83,6 +83,13 @@ static void SECUR32_freeProviders(void);
  */
 
 static CRITICAL_SECTION cs;
+static CRITICAL_SECTION_DEBUG cs_debug =
+{
+    0, 0, &cs,
+    { &cs_debug.ProcessLocksList, &cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": cs") }
+};
+static CRITICAL_SECTION cs = { &cs_debug, -1, 0, 0, 0, 0 };
 static SecurePackageTable *packageTable = NULL;
 static SecureProviderTable *providerTable = NULL;
 
@@ -553,8 +560,6 @@ static void SECUR32_initializeProviders(void)
     LSTATUS apiRet;
 
     TRACE("\n");
-    InitializeCriticalSection(&cs);
-    cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": cs");
     /* First load built-in providers */
     SECUR32_initSchannelSP();
     SECUR32_initNTLMSP();
@@ -703,7 +708,6 @@ static void SECUR32_freeProviders(void)
     }
 
     LeaveCriticalSection(&cs);
-    cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&cs);
 }
 
