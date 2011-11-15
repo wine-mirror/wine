@@ -169,6 +169,23 @@ interface IWICMetadataBlockWriter : IWICMetadataBlockReader
 
 [
     object,
+    uuid(00675040-6908-45f8-86a3-49c7dfd6d9ad)
+]
+interface IWICPersistStream : IPersistStream
+{
+    HRESULT LoadEx(
+        [in, unique] IStream *pIStream,
+        [in, unique] const GUID *pguidPreferredVendor,
+        [in] DWORD dwPersistOptions);
+
+    HRESULT SaveEx(
+        [in] IStream *pIStream,
+        [in] DWORD dwPersistOptions,
+        [in] BOOL fClearDirty);
+}
+
+[
+    object,
     uuid(412d0c3a-9650-44fa-af5b-dd2a06c8e8fb)
 ]
 interface IWICComponentFactory : IWICImagingFactory
