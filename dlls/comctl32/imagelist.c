@@ -114,6 +114,17 @@ static inline void imagelist_get_bitmap_size( HIMAGELIST himl, UINT count, SIZE 
     sz->cy = imagelist_height( count ) * himl->cy;
 }
 
+static inline int get_dib_stride( int width, int bpp )
+{
+    return ((width * bpp + 31) >> 3) & ~3;
+}
+
+static inline int get_dib_image_size( const BITMAPINFO *info )
+{
+    return get_dib_stride( info->bmiHeader.biWidth, info->bmiHeader.biBitCount )
+        * abs( info->bmiHeader.biHeight );
+}
+
 /*
  * imagelist_copy_images()
  *
@@ -139,6 +150,56 @@ static inline void imagelist_copy_images( HIMAGELIST himl, HDC hdcSrc, HDC hdcDe
     }
 }
 
+static void add_dib_bits( HIMAGELIST himl, int pos, int count, int width, int height,
+                          BITMAPINFO *info, BITMAPINFO *mask_info, DWORD *bits, BYTE *mask_bits )
+{
+    int i, j, n;
+    POINT pt;
+    int stride = info->bmiHeader.biWidth;
+    int mask_stride = (info->bmiHeader.biWidth + 31) / 32 * 4;
+
+    for (n = 0; n < count; n++)
+    {
+        int has_alpha = 0;
+
+        imagelist_point_from_index( himl, pos + n, &pt );
+
+        /* check if bitmap has an alpha channel */
+        for (i = 0; i < height && !has_alpha; i++)
+            for (j = n * width; j < (n + 1) * width; j++)
+                if ((has_alpha = ((bits[i * stride + j] & 0xff000000) != 0))) break;
+
+        if (!has_alpha)  /* generate alpha channel from the mask */
+        {
+            for (i = 0; i < height; i++)
+                for (j = n * width; j < (n + 1) * width; j++)
+                    if (!mask_info || !((mask_bits[i * mask_stride + j / 8] << (j % 8)) & 0x80))
+                        bits[i * stride + j] |= 0xff000000;
+                    else
+                        bits[i * stride + j] = 0;
+        }
+        else
+        {
+            himl->has_alpha[pos + n] = 1;
+
+            if (mask_info && himl->hbmMask)  /* generate the mask from the alpha channel */
+            {
+                for (i = 0; i < height; i++)
+                    for (j = n * width; j < (n + 1) * width; j++)
+                        if ((bits[i * stride + j] >> 24) > 25) /* more than 10% alpha */
+                            mask_bits[i * mask_stride + j / 8] &= ~(0x80 >> (j % 8));
+                        else
+                            mask_bits[i * mask_stride + j / 8] |= 0x80 >> (j % 8);
+            }
+        }
+        StretchDIBits( himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy,
+                       n * width, 0, width, height, bits, info, DIB_RGB_COLORS, SRCCOPY );
+        if (mask_info)
+            StretchDIBits( himl->hdcMask, pt.x, pt.y, himl->cx, himl->cy,
+                           n * width, 0, width, height, mask_bits, mask_info, DIB_RGB_COLORS, SRCCOPY );
+    }
+}
+
 /* add images with an alpha channel when the image list is 32 bpp */
 static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
                             int width, int height, HBITMAP hbmImage, HBITMAP hbmMask )
@@ -148,8 +209,6 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
     BITMAPINFO *info, *mask_info = NULL;
     DWORD *bits = NULL;
     BYTE *mask_bits = NULL;
-    int i, j, n;
-    POINT pt;
     DWORD mask_width;
 
     if (!GetObjectW( hbmImage, sizeof(bm), &bm )) return FALSE;
@@ -188,46 +247,7 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
         if (!GetDIBits( hdc, hbmMask, 0, height, mask_bits, mask_info, DIB_RGB_COLORS )) goto done;
     }
 
-    for (n = 0; n < count; n++)
-    {
-        int has_alpha = 0;
-
-        imagelist_point_from_index( himl, pos + n, &pt );
-
-        /* check if bitmap has an alpha channel */
-        for (i = 0; i < height && !has_alpha; i++)
-            for (j = n * width; j < (n + 1) * width; j++)
-                if ((has_alpha = ((bits[i * bm.bmWidth + j] & 0xff000000) != 0))) break;
-
-        if (!has_alpha)  /* generate alpha channel from the mask */
-        {
-            for (i = 0; i < height; i++)
-                for (j = n * width; j < (n + 1) * width; j++)
-                    if (!mask_bits || !((mask_bits[i * mask_width + j / 8] << (j % 8)) & 0x80))
-                        bits[i * bm.bmWidth + j] |= 0xff000000;
-                    else
-                        bits[i * bm.bmWidth + j] = 0;
-        }
-        else
-        {
-            himl->has_alpha[pos + n] = 1;
-
-            if (mask_info && himl->hbmMask)  /* generate the mask from the alpha channel */
-            {
-                for (i = 0; i < height; i++)
-                    for (j = n * width; j < (n + 1) * width; j++)
-                        if ((bits[i * bm.bmWidth + j] >> 24) > 25) /* more than 10% alpha */
-                            mask_bits[i * mask_width + j / 8] &= ~(0x80 >> (j % 8));
-                        else
-                            mask_bits[i * mask_width + j / 8] |= 0x80 >> (j % 8);
-            }
-        }
-        StretchDIBits( himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy,
-                       n * width, 0, width, height, bits, info, DIB_RGB_COLORS, SRCCOPY );
-        if (mask_info)
-            StretchDIBits( himl->hdcMask, pt.x, pt.y, himl->cx, himl->cy,
-                           n * width, 0, width, height, mask_bits, mask_info, DIB_RGB_COLORS, SRCCOPY );
-    }
+    add_dib_bits( himl, pos, count, width, height, info, mask_info, bits, mask_bits );
     ret = TRUE;
 
 done:
@@ -2069,17 +2089,6 @@ ImageList_Merge (HIMAGELIST himl1, INT i1, HIMAGELIST himl2, INT i2,
 }
 
 
-/***********************************************************************
- *           DIB_GetDIBImageBytes
- *
- * Return the number of bytes used to hold the image in a DIB bitmap.
- */
-static int DIB_GetDIBImageBytes( int width, int height, int depth )
-{
-    return (((width * depth + 31) / 8) & ~3) * abs( height );
-}
-
-
 /* helper for ImageList_Read, see comments below */
 static BOOL _read_bitmap(HDC hdcIml, LPSTREAM pstm)
 {
@@ -2112,7 +2121,7 @@ static BOOL _read_bitmap(HDC hdcIml, LPSTREAM pstm)
     else
         palspace = 0;
 
-    bmi->bmiHeader.biSizeImage = DIB_GetDIBImageBytes(bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight, bitsperpixel);
+    bmi->bmiHeader.biSizeImage = get_dib_image_size( bmi );
 
     /* read the palette right after the end of the bitmapinfoheader */
     if (palspace && FAILED(IStream_Read(pstm, bmi->bmiColors, palspace, NULL)))
@@ -2902,7 +2911,7 @@ _write_bitmap(HBITMAP hBitmap, LPSTREAM pstm)
         return FALSE;
 
     bitCount = bm.bmBitsPixel == 1 ? 1 : 24;
-    sizeImage = DIB_GetDIBImageBytes(bm.bmWidth, bm.bmHeight, bitCount);
+    sizeImage = get_dib_stride(bm.bmWidth, bitCount) * bm.bmHeight;
 
     totalSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
     if(bitCount != 24)
