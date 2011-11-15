@@ -2411,8 +2411,20 @@ static nsresult NSAPI nsURI_GetSpecIgnoringRef(nsIURL *iface, nsACString *aSpecI
 static nsresult NSAPI nsURI_GetHasRef(nsIURL *iface, PRBool *aHasRef)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
-    FIXME("(%p)->(%p)\n", This, aHasRef);
-    return NS_ERROR_NOT_IMPLEMENTED;
+    BOOL b;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, aHasRef);
+
+    if(!ensure_uri(This))
+        return NS_ERROR_UNEXPECTED;
+
+    hres = IUri_HasProperty(This->uri, Uri_PROPERTY_FRAGMENT, &b);
+    if(FAILED(hres))
+        return NS_ERROR_FAILURE;
+
+    *aHasRef = b;
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURL_GetFilePath(nsIURL *iface, nsACString *aFilePath)
