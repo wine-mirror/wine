@@ -37,21 +37,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
 static const WCHAR DllW[] = { 'D','l','l',0 };
 
-static void init_oid_info(void);
-static void free_function_sets(void);
-static void free_oid_info(void);
-
-void crypt_oid_init(void)
-{
-    init_oid_info();
-}
-
-void crypt_oid_free(void)
-{
-    free_function_sets();
-    free_oid_info();
-}
-
 static CRITICAL_SECTION funcSetCS;
 static CRITICAL_SECTION_DEBUG funcSetCSDebug =
 {
@@ -1617,4 +1602,15 @@ DWORD WINAPI CertOIDToAlgId(LPCSTR pszObjId)
     else
         ret = 0;
     return ret;
+}
+
+void crypt_oid_init(void)
+{
+    init_oid_info();
+}
+
+void crypt_oid_free(void)
+{
+    free_function_sets();
+    free_oid_info();
 }
