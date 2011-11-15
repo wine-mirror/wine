@@ -3406,7 +3406,9 @@ static BOOL CheckTextureCapability(const struct wined3d_adapter *adapter, const 
         /*****
          *  supported: RGB(A) formats
          */
-        case WINED3DFMT_B8G8R8_UNORM: /* Enable for dx7, blacklisted for 8 and 9 above */
+        case WINED3DFMT_B8G8R8_UNORM:
+            TRACE_(d3d_caps)("[FAILED] - Not enumerated on Windows\n");
+            return FALSE;
         case WINED3DFMT_B8G8R8A8_UNORM:
         case WINED3DFMT_B8G8R8X8_UNORM:
         case WINED3DFMT_B5G6R5_UNORM:
@@ -3677,6 +3679,8 @@ static BOOL CheckSurfaceCapability(const struct wined3d_adapter *adapter,
         switch (check_format->id)
         {
             case WINED3DFMT_B8G8R8_UNORM:
+                TRACE_(d3d_caps)("[FAILED] - Not enumerated on Windows\n");
+                return FALSE;
             case WINED3DFMT_B8G8R8A8_UNORM:
             case WINED3DFMT_B8G8R8X8_UNORM:
             case WINED3DFMT_B5G6R5_UNORM:
