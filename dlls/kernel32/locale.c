@@ -62,12 +62,6 @@ static const union cptable *oem_cptable;
 static const union cptable *mac_cptable;
 static const union cptable *unix_cptable;  /* NULL if UTF8 */
 
-static const WCHAR szNlsKeyName[] = {
-    'M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
-    'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-    'C','o','n','t','r','o','l','\\','N','l','s','\0'
-};
-
 static const WCHAR szLocaleKeyName[] = {
     'M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
