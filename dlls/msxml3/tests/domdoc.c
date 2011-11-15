@@ -1351,24 +1351,23 @@ static const WCHAR szComplete3[] = {
     'v','e','r','s','i','o','n','=','\'','1','.','0','\'','?','>','\n',
     '<','a','>','<','/','a','>','\n',0
 };
-static const WCHAR szComplete4[] = {
-    '<','?','x','m','l',' ','v','e','r','s','i','o','n','=','\'','1','.','0','\'','?','>','\n',
-    '<','l','c',' ','d','l','=','\'','s','t','r','1','\'','>','\n',
-        '<','b','s',' ','v','r','=','\'','s','t','r','2','\'',' ','s','z','=','\'','1','2','3','4','\'','>',
-            'f','n','1','.','t','x','t','\n',
-        '<','/','b','s','>','\n',
-        '<','p','r',' ','i','d','=','\'','s','t','r','3','\'',' ','v','r','=','\'','1','.','2','.','3','\'',' ',
-                    'p','n','=','\'','w','i','n','e',' ','2','0','0','5','0','8','0','4','\'','>','\n',
-            'f','n','2','.','t','x','t','\n',
-        '<','/','p','r','>','\n',
-        '<','e','m','p','t','y','>','<','/','e','m','p','t','y','>','\n',
-        '<','f','o','>','\n',
-            '<','b','a','>','\n',
-                'f','1','\n',
-            '<','/','b','a','>','\n',
-        '<','/','f','o','>','\n',
-    '<','/','l','c','>','\n',0
-};
+static const char complete4A[] =
+    "<?xml version=\'1.0\'?>\n"
+    "<lc dl=\'str1\'>\n"
+        "<bs vr=\'str2\' sz=\'1234\'>"
+            "fn1.txt\n"
+        "</bs>\n"
+        "<pr id=\'str3\' vr=\'1.2.3\' pn=\'wine 20050804\'>\n"
+            "fn2.txt\n"
+        "</pr>\n"
+        "<empty></empty>\n"
+        "<fo>\n"
+            "<ba>\n"
+                "f1\n"
+            "</ba>\n"
+        "</fo>\n"
+    "</lc>\n";
+
 static const WCHAR szComplete5[] = {
     '<','S',':','s','e','a','r','c','h',' ','x','m','l','n','s',':','D','=','"','D','A','V',':','"',' ',
     'x','m','l','n','s',':','C','=','"','u','r','n',':','s','c','h','e','m','a','s','-','m','i','c','r','o','s','o','f','t','-','c','o','m',':','o','f','f','i','c','e',':','c','l','i','p','g','a','l','l','e','r','y','"',
@@ -2200,11 +2199,9 @@ if (0)
 
     /* try something a little more complicated */
     b = FALSE;
-    str = SysAllocString( szComplete4 );
-    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    r = IXMLDOMDocument_loadXML( doc, _bstr_(complete4A), &b );
     ok( r == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString( str );
 
     r = IXMLDOMDocument_get_parseError( doc, &error );
     ok( r == S_OK, "returns %08x\n", r );
@@ -2722,11 +2719,9 @@ static void test_domnode( void )
     if (!doc) return;
 
     b = FALSE;
-    str = SysAllocString( szComplete4 );
-    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    r = IXMLDOMDocument_loadXML( doc, _bstr_(complete4A), &b );
     ok( r == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString( str );
 
     EXPECT_CHILDREN(doc);
 
@@ -2853,7 +2848,7 @@ todo_wine
         ok( r == E_INVALIDARG, "getNamedItem should return E_INVALIDARG\n");
         SysFreeString( str );
 
-        /* something that isn't in szComplete4 */
+        /* something that isn't in complete4A */
         str = SysAllocString( szOpen );
         node = (IXMLDOMNode *) 1;
         r = IXMLDOMNamedNodeMap_getNamedItem( map, str, &node );
@@ -3109,12 +3104,13 @@ todo_wine
     if (element)
         IXMLDOMElement_Release( element );
     ok(IXMLDOMDocument_Release( doc ) == 0, "document is not destroyed\n");
+
+    free_bstrs();
 }
 
 static void test_refs(void)
 {
     HRESULT r;
-    BSTR str;
     VARIANT_BOOL b;
     IXMLDOMDocument *doc;
     IXMLDOMElement *element = NULL;
@@ -3133,11 +3129,9 @@ static void test_refs(void)
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    str = SysAllocString( szComplete4 );
-    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    r = IXMLDOMDocument_loadXML( doc, _bstr_(complete4A), &b );
     ok( r == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString( str );
 
     EXPECT_REF(doc, 1);
     IXMLDOMDocument_AddRef( doc );
@@ -3209,6 +3203,8 @@ static void test_refs(void)
     todo_wine EXPECT_REF(element, 2);
 
     IXMLDOMElement_Release( element );
+
+    free_bstrs();
 }
 
 static void test_create(void)
@@ -3675,11 +3671,9 @@ static void test_getElementsByTagName(void)
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    str = SysAllocString( szComplete4 );
-    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    r = IXMLDOMDocument_loadXML( doc, _bstr_(complete4A), &b );
     ok( r == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString( str );
 
     str = SysAllocString( szstar );
 
@@ -3770,6 +3764,8 @@ static void test_getElementsByTagName(void)
     IXMLDOMElement_Release(elem);
 
     IXMLDOMDocument_Release( doc );
+
+    free_bstrs();
 }
 
 static void test_get_text(void)
@@ -3787,11 +3783,9 @@ static void test_get_text(void)
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    str = SysAllocString( szComplete4 );
-    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    r = IXMLDOMDocument_loadXML( doc, _bstr_(complete4A), &b );
     ok( r == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString( str );
 
     str = SysAllocString( szbs );
     r = IXMLDOMDocument_getElementsByTagName( doc, str, &node_list );
@@ -3864,6 +3858,8 @@ static void test_get_text(void)
     IXMLDOMNamedNodeMap_Release( node_map );
     IXMLDOMNode_Release( node );
     IXMLDOMDocument_Release( doc );
+
+    free_bstrs();
 }
 
 static void test_get_childNodes(void)
@@ -3880,11 +3876,9 @@ static void test_get_childNodes(void)
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    str = SysAllocString( szComplete4 );
-    hr = IXMLDOMDocument_loadXML( doc, str, &b );
+    hr = IXMLDOMDocument_loadXML( doc, _bstr_(complete4A), &b );
     EXPECT_HR(hr, S_OK);
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString( str );
 
     hr = IXMLDOMDocument_get_documentElement( doc, &element );
     EXPECT_HR(hr, S_OK);
@@ -3953,11 +3947,9 @@ static void test_get_firstChild(void)
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    str = SysAllocString( szComplete4 );
-    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    r = IXMLDOMDocument_loadXML( doc, _bstr_(complete4A), &b );
     ok( r == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString( str );
 
     r = IXMLDOMDocument_get_firstChild( doc, &node );
     ok( r == S_OK, "ret %08x\n", r);
@@ -3970,6 +3962,8 @@ static void test_get_firstChild(void)
     SysFreeString(str);
     IXMLDOMNode_Release( node );
     IXMLDOMDocument_Release( doc );
+
+    free_bstrs();
 }
 
 static void test_get_lastChild(void)
@@ -3985,11 +3979,9 @@ static void test_get_lastChild(void)
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    str = SysAllocString( szComplete4 );
-    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    r = IXMLDOMDocument_loadXML( doc, _bstr_(complete4A), &b );
     ok( r == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString( str );
 
     r = IXMLDOMDocument_get_lastChild( doc, &node );
     ok( r == S_OK, "ret %08x\n", r);
@@ -4012,12 +4004,13 @@ static void test_get_lastChild(void)
     IXMLDOMNode_Release( child );
     IXMLDOMNode_Release( node );
     IXMLDOMDocument_Release( doc );
+
+    free_bstrs();
 }
 
 static void test_removeChild(void)
 {
     HRESULT r;
-    BSTR str;
     VARIANT_BOOL b;
     IXMLDOMDocument *doc;
     IXMLDOMElement *element, *lc_element;
@@ -4027,11 +4020,9 @@ static void test_removeChild(void)
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    str = SysAllocString( szComplete4 );
-    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    r = IXMLDOMDocument_loadXML( doc, _bstr_(complete4A), &b );
     ok( r == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString( str );
 
     r = IXMLDOMDocument_get_documentElement( doc, &element );
     ok( r == S_OK, "ret %08x\n", r);
@@ -4113,12 +4104,13 @@ static void test_removeChild(void)
     IXMLDOMNodeList_Release( root_list );
     IXMLDOMElement_Release( element );
     IXMLDOMDocument_Release( doc );
+
+    free_bstrs();
 }
 
 static void test_replaceChild(void)
 {
     HRESULT r;
-    BSTR str;
     VARIANT_BOOL b;
     IXMLDOMDocument *doc;
     IXMLDOMElement *element, *ba_element;
@@ -4130,11 +4122,9 @@ static void test_replaceChild(void)
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    str = SysAllocString( szComplete4 );
-    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    r = IXMLDOMDocument_loadXML( doc, _bstr_(complete4A), &b );
     ok( r == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString( str );
 
     r = IXMLDOMDocument_get_documentElement( doc, &element );
     ok( r == S_OK, "ret %08x\n", r);
@@ -4227,6 +4217,8 @@ static void test_replaceChild(void)
     IXMLDOMNodeList_Release( root_list );
     IXMLDOMElement_Release( element );
     IXMLDOMDocument_Release( doc );
+
+    free_bstrs();
 }
 
 static void test_removeNamedItem(void)
@@ -4244,11 +4236,9 @@ static void test_removeNamedItem(void)
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    str = SysAllocString( szComplete4 );
-    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    r = IXMLDOMDocument_loadXML( doc, _bstr_(complete4A), &b );
     ok( r == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString( str );
 
     r = IXMLDOMDocument_get_documentElement( doc, &element );
     ok( r == S_OK, "ret %08x\n", r);
@@ -4310,6 +4300,8 @@ static void test_removeNamedItem(void)
     IXMLDOMNodeList_Release( root_list );
     IXMLDOMElement_Release( element );
     IXMLDOMDocument_Release( doc );
+
+    free_bstrs();
 }
 
 #define test_IObjectSafety_set(p, r, r2, s, m, e, e2) _test_IObjectSafety_set(__LINE__,p, r, r2, s, m, e, e2)
@@ -4762,7 +4754,6 @@ static void test_IXMLDOMDocument2(void)
     VARIANT var;
     HRESULT r;
     LONG res;
-    BSTR str;
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
@@ -4795,11 +4786,9 @@ static void test_IXMLDOMDocument2(void)
         IXMLDOMParseError_Release(err);
     }
 
-    str = SysAllocString( szComplete4 );
-    r = IXMLDOMDocument_loadXML( doc2, str, &b );
+    r = IXMLDOMDocument_loadXML( doc2, _bstr_(complete4A), &b );
     ok( r == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString( str );
 
     ole_check(IXMLDOMDocument2_get_readyState(doc, &res));
     ok(res == READYSTATE_COMPLETE, "expected READYSTATE_COMPLETE (4), got %i\n", res);
@@ -5438,15 +5427,12 @@ static void test_cloneNode(void )
     IXMLDOMNode *node_clone;
     IXMLDOMNode *node_first;
     HRESULT hr;
-    BSTR str;
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    str = SysAllocString( szComplete4 );
-    ole_check(IXMLDOMDocument_loadXML(doc, str, &b));
+    ole_check(IXMLDOMDocument_loadXML(doc, _bstr_(complete4A), &b));
     ok(b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString(str);
 
     hr = IXMLDOMNode_selectSingleNode(doc, _bstr_("lc/pr"), &node);
     ok( hr == S_OK, "ret %08x\n", hr );
@@ -8022,17 +8008,14 @@ static void test_getQualifiedItem(void)
     IXMLDOMDocument *doc;
     VARIANT_BOOL b;
     HRESULT hr;
-    BSTR str;
     LONG len;
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    str = SysAllocString( szComplete4 );
-    hr = IXMLDOMDocument_loadXML( doc, str, &b );
+    hr = IXMLDOMDocument_loadXML( doc, _bstr_(complete4A), &b );
     EXPECT_HR(hr, S_OK);
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString( str );
 
     hr = IXMLDOMDocument_get_documentElement(doc, &element);
     EXPECT_HR(hr, S_OK);
@@ -8125,18 +8108,15 @@ static void test_removeQualifiedItem(void)
     IXMLDOMNodeList *root_list;
     IXMLDOMNamedNodeMap *map;
     VARIANT_BOOL b;
-    BSTR str;
     LONG len;
     HRESULT hr;
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    str = SysAllocString( szComplete4 );
-    hr = IXMLDOMDocument_loadXML( doc, str, &b );
+    hr = IXMLDOMDocument_loadXML( doc, _bstr_(complete4A), &b );
     ok( hr == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString( str );
 
     hr = IXMLDOMDocument_get_documentElement(doc, &element);
     ok( hr == S_OK, "ret %08x\n", hr);
@@ -8268,7 +8248,6 @@ static void test_get_ownerDocument(void)
     IXMLDOMSchemaCollection *cache;
     VARIANT_BOOL b;
     VARIANT var;
-    BSTR str;
 
     doc = create_document(&IID_IXMLDOMDocument2);
     cache = create_cache(&IID_IXMLDOMSchemaCollection);
@@ -8281,10 +8260,8 @@ static void test_get_ownerDocument(void)
 
     VariantInit(&var);
 
-    str = SysAllocString(szComplete4);
-    ole_check(IXMLDOMDocument_loadXML(doc, str, &b));
+    ole_check(IXMLDOMDocument_loadXML(doc, _bstr_(complete4A), &b));
     ok(b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString(str);
 
     check_default_props(doc);
 
@@ -8307,10 +8284,8 @@ static void test_get_ownerDocument(void)
     ok(doc1 != doc2, "got %p, expected %p. original %p\n", doc2, doc1, doc);
 
     /* reload */
-    str = SysAllocString(szComplete4);
-    ole_check(IXMLDOMDocument2_loadXML(doc, str, &b));
+    ole_check(IXMLDOMDocument2_loadXML(doc, _bstr_(complete4A), &b));
     ok(b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString(str);
 
     /* properties retained even after reload */
     check_set_props(doc);
@@ -8351,11 +8326,9 @@ static void test_setAttributeNode(void)
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    str = SysAllocString( szComplete4 );
-    hr = IXMLDOMDocument2_loadXML( doc, str, &b );
+    hr = IXMLDOMDocument2_loadXML( doc, _bstr_(complete4A), &b );
     ok( hr == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString( str );
 
     hr = IXMLDOMDocument_get_documentElement(doc, &elem);
     ok( hr == S_OK, "got 0x%08x\n", hr);
@@ -8416,11 +8389,9 @@ static void test_setAttributeNode(void)
     /* add attribute already attached to another document */
     doc2 = create_document(&IID_IXMLDOMDocument);
 
-    str = SysAllocString( szComplete4 );
-    hr = IXMLDOMDocument_loadXML( doc2, str, &b );
+    hr = IXMLDOMDocument_loadXML( doc2, _bstr_(complete4A), &b );
     ok( hr == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString( str );
 
     hr = IXMLDOMDocument_get_documentElement(doc2, &elem);
     ok( hr == S_OK, "got 0x%08x\n", hr);
@@ -8485,6 +8456,7 @@ static void test_setAttributeNode(void)
     IXMLDOMAttribute_Release(attr);
     IXMLDOMDocument_Release(doc2);
     IXMLDOMDocument_Release(doc);
+    free_bstrs();
 }
 
 static void test_put_dataType(void)
@@ -8493,16 +8465,13 @@ static void test_put_dataType(void)
     IXMLDOMDocument *doc;
     VARIANT_BOOL b;
     HRESULT hr;
-    BSTR str;
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    str = SysAllocString( szComplete4 );
-    hr = IXMLDOMDocument_loadXML( doc, str, &b );
+    hr = IXMLDOMDocument_loadXML( doc, _bstr_(complete4A), &b );
     ok( hr == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString( str );
 
     hr = IXMLDOMDocument_createCDATASection(doc, _bstr_("test"), &cdata);
     ok( hr == S_OK, "got 0x%08x\n", hr);
@@ -8727,7 +8696,6 @@ static void test_selectSingleNode(void)
     VARIANT_BOOL b;
     HRESULT hr;
     LONG len;
-    BSTR str;
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
@@ -8738,11 +8706,9 @@ static void test_selectSingleNode(void)
     hr = IXMLDOMDocument_selectNodes(doc, NULL, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
-    str = SysAllocString( szComplete4 );
-    hr = IXMLDOMDocument_loadXML( doc, str, &b );
+    hr = IXMLDOMDocument_loadXML( doc, _bstr_(complete4A), &b );
     ok( hr == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
-    SysFreeString( str );
 
     hr = IXMLDOMDocument_selectSingleNode(doc, NULL, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
@@ -9691,10 +9657,8 @@ static void test_get_attributes(void)
 
     doc = create_document(&IID_IXMLDOMDocument);
 
-    str = SysAllocString( szComplete4 );
-    hr = IXMLDOMDocument_loadXML(doc, str, &b);
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(complete4A), &b);
     ok(hr == S_OK, "got %08x\n", hr);
-    SysFreeString(str);
 
     hr = IXMLDOMDocument_get_attributes(doc, NULL);
     ok(hr == E_INVALIDARG, "got %08x\n", hr);
