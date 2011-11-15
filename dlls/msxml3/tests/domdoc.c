@@ -8712,10 +8712,8 @@ static void test_get_prefix(void)
 
     str = (void*)0xdeadbeef;
     hr = IXMLDOMElement_get_namespaceURI(element, &str);
-todo_wine {
     EXPECT_HR(hr, S_FALSE);
     ok(str == NULL, "got %s\n", wine_dbgstr_w(str));
-}
 
     IXMLDOMDocument_Release(doc);
     free_bstrs();

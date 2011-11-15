@@ -1054,18 +1054,15 @@ HRESULT node_select_singlenode(const xmlnode *This, BSTR query, IXMLDOMNode **no
 
 HRESULT node_get_namespaceURI(xmlnode *This, BSTR *namespaceURI)
 {
-    xmlNsPtr *ns;
+    xmlNsPtr ns = This->node->ns;
 
     if(!namespaceURI)
         return E_INVALIDARG;
 
     *namespaceURI = NULL;
 
-    if ((ns = xmlGetNsList(This->node->doc, This->node)))
-    {
-        if (ns[0]->href) *namespaceURI = bstr_from_xmlChar( ns[0]->href );
-        xmlFree(ns);
-    }
+    if (ns && ns->href)
+        *namespaceURI = bstr_from_xmlChar(ns->href);
 
     TRACE("uri: %s\n", debugstr_w(*namespaceURI));
 
