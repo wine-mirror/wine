@@ -144,7 +144,7 @@ static void test_open_svc(void)
     /* Proper SCM handle but different access rights */
     scm_handle = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT);
     SetLastError(0xdeadbeef);
-    svc_handle = OpenServiceA(scm_handle, "Spooler", GENERIC_WRITE);
+    svc_handle = OpenServiceA(scm_handle, spooler, GENERIC_WRITE);
     if (!svc_handle && (GetLastError() == ERROR_ACCESS_DENIED))
         skip("Not enough rights to get a handle to the service\n");
     else
