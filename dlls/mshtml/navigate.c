@@ -1944,6 +1944,26 @@ HRESULT navigate_url(HTMLWindow *window, const WCHAR *new_url, const WCHAR *base
         }
     }
 
+    if(window->doc_obj->is_webbrowser && window->doc_obj && window == window->doc_obj->basedoc.window) {
+        BOOL cancel = FALSE;
+        IUri *uri;
+
+        hres = IDocObjectService_FireBeforeNavigate2(window->doc_obj->doc_object_service, NULL, url, 0x40,
+                NULL, NULL, 0, NULL, TRUE, &cancel);
+        if(SUCCEEDED(hres) && cancel) {
+            TRACE("Navigation canceled\n");
+            return S_OK;
+        }
+
+        hres = CreateUri(url, 0, 0, &uri);
+        if(FAILED(hres))
+            return hres;
+
+        hres = super_navigate(window, uri, NULL, NULL, 0);
+        IUri_Release(uri);
+        return hres;
+    }
+
     if(window->doc_obj && window == window->doc_obj->basedoc.window) {
         BOOL cancel;
 

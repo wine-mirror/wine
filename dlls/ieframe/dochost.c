@@ -192,12 +192,13 @@ void set_doc_state(DocHost *This, READYSTATE doc_state)
 
 static void update_ready_state(DocHost *This, READYSTATE ready_state)
 {
-    if(ready_state > READYSTATE_LOADING && This->doc_state <= READYSTATE_LOADING)
+    if(ready_state > READYSTATE_LOADING && This->doc_state <= READYSTATE_LOADING && !This->browser_service /* FIXME */)
         notif_complete(This, DISPID_NAVIGATECOMPLETE2);
 
     if(ready_state == READYSTATE_COMPLETE && This->doc_state < READYSTATE_COMPLETE) {
         set_doc_state(This, READYSTATE_COMPLETE);
-        notif_complete(This, DISPID_DOCUMENTCOMPLETE);
+        if(!This->browser_service) /* FIXME: Not fully correct */
+            notif_complete(This, DISPID_DOCUMENTCOMPLETE);
     }else {
         set_doc_state(This, ready_state);
     }
@@ -844,7 +845,7 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
         if(ready_state == READYSTATE_COMPLETE && !This->doc_navigate)
             advise_prop_notif(This, FALSE);
 
-        push_ready_state_task(This, ready_state);
+        update_ready_state(This, ready_state);
         break;
     }
     default:

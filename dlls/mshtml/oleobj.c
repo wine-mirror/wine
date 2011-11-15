@@ -125,6 +125,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
     }
 
     memset(&This->doc_obj->hostinfo, 0, sizeof(DOCHOSTUIINFO));
+    This->doc_obj->is_webbrowser = FALSE;
 
     if(!pClientSite)
         return S_OK;
@@ -212,14 +213,27 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
             if(SUCCEEDED(hres)) {
                 IDocObjectService *doc_object_service;
                 IBrowserService *browser_service;
+                IWebBrowser2 *wb;
 
                 hres = IServiceProvider_QueryService(sp, &IID_IShellBrowser,
                         &IID_IBrowserService, (void**)&browser_service);
                 if(SUCCEEDED(hres)) {
                     hres = IBrowserService_QueryInterface(browser_service,
                             &IID_IDocObjectService, (void**)&doc_object_service);
-                    if(SUCCEEDED(hres))
+                    if(SUCCEEDED(hres)) {
                         This->doc_obj->doc_object_service = doc_object_service;
+
+                        /*
+                         * Some embedding routines, esp. in regards to use of IDocObjectService, differ if
+                         * embedder supports IWebBrowserApp.
+                         */
+                        hres = IServiceProvider_QueryService(sp, &IID_IWebBrowserApp, &IID_IWebBrowser2, (void**)&wb);
+                        if(SUCCEEDED(hres)) {
+                            This->doc_obj->is_webbrowser = TRUE;
+                            IWebBrowser2_Release(wb);
+                        }
+                    }
+
                     IBrowserService_Release(browser_service);
                 }
 

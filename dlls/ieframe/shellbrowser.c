@@ -787,8 +787,42 @@ static HRESULT WINAPI DocObjectService_FireDocumentComplete(
         DWORD dwFlags)
 {
     ShellBrowser *This = impl_from_IDocObjectService(iface);
-    FIXME("%p %p %x\n", This, pHTMLWindow, dwFlags);
-    return E_NOTIMPL;
+    IHTMLPrivateWindow *priv_window;
+    VARIANTARG params[2];
+    DISPPARAMS dp = {params, NULL, 2, 0};
+    VARIANT url_var;
+    BSTR url;
+    HRESULT hres;
+
+    TRACE("%p %p %x\n", This, pHTMLWindow, dwFlags);
+
+    hres = IHTMLWindow2_QueryInterface(pHTMLWindow, &IID_IHTMLPrivateWindow, (void**)&priv_window);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IHTMLPrivateWindow_GetAddressBarUrl(priv_window, &url);
+    IHTMLPrivateWindow_Release(priv_window);
+    if(FAILED(hres))
+        return hres;
+
+    TRACE("got URL %s\n", debugstr_w(url));
+
+    V_VT(params) = (VT_BYREF|VT_VARIANT);
+    V_BYREF(params) = &url;
+
+    V_VT(params+1) = VT_DISPATCH;
+    V_DISPATCH(params+1) = This->doc_host->disp;
+
+    V_VT(&url_var) = VT_BSTR;
+    V_BSTR(&url_var) = url;
+
+    TRACE(">>>\n");
+    call_sink(This->doc_host->cps.wbe2, DISPID_DOCUMENTCOMPLETE, &dp);
+    TRACE("<<<\n");
+
+    SysFreeString(url);
+    This->doc_host->busy = VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI DocObjectService_UpdateDesktopComponent(
