@@ -156,7 +156,7 @@ static DWORD calc_arg_size(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
             size = sizeof(void *);
             break;
         }
-        size = calc_arg_size(pStubMsg, &pFormat[2] + *(WORD *)&pFormat[2]);
+        size = calc_arg_size(pStubMsg, &pFormat[2] + *(const SHORT*)&pFormat[2]);
         break;
     case RPC_FC_STRUCT:
     case RPC_FC_PSTRUCT:
