@@ -86,6 +86,33 @@ static BOOL ensure_uri(nsWineURI *This)
     return TRUE;
 }
 
+static IUri *get_uri_nofrag(IUri *uri)
+{
+    IUriBuilder *uri_builder;
+    IUri *ret;
+    BOOL b;
+    HRESULT hres;
+
+    hres = IUri_HasProperty(uri, Uri_PROPERTY_FRAGMENT, &b);
+    if(SUCCEEDED(hres) && !b) {
+        IUri_AddRef(uri);
+        return uri;
+    }
+
+    hres = CreateIUriBuilder(uri, 0, 0, &uri_builder);
+    if(FAILED(hres))
+        return NULL;
+
+    hres = IUriBuilder_RemoveProperties(uri_builder, Uri_HAS_FRAGMENT);
+    if(SUCCEEDED(hres))
+        hres = IUriBuilder_CreateUriSimple(uri_builder, 0, 0, &ret);
+    IUriBuilder_Release(uri_builder);
+    if(FAILED(hres))
+        return NULL;
+
+    return ret;
+}
+
 static nsresult create_nsuri(IUri*,nsIURI*,HTMLWindow*,NSContainer*,nsWineURI**);
 
 static const char *debugstr_nsacstr(const nsACString *nsstr)
@@ -2232,13 +2259,6 @@ static nsresult NSAPI nsURI_Clone(nsIURL *iface, nsIURI **_retval)
     return NS_OK;
 }
 
-static nsresult NSAPI nsURI_CloneIgnoreRef(nsIURL *iface, nsIURI **_retval)
-{
-    nsWineURI *This = impl_from_nsIURL(iface);
-    FIXME("(%p)->(%p)\n", This, _retval);
-    return nsIURL_Clone(&This->nsIURL_iface, _retval);
-}
-
 static nsresult NSAPI nsURI_Resolve(nsIURL *iface, const nsACString *aRelativePath,
         nsACString *_retval)
 {
@@ -2312,6 +2332,33 @@ static nsresult NSAPI nsURI_GetOriginCharset(nsIURL *iface, nsACString *aOriginC
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsURI_CloneIgnoreRef(nsIURL *iface, nsIURI **_retval)
+{
+    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *wine_uri;
+    IUri *uri;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, _retval);
+
+    if(!ensure_uri(This))
+        return NS_ERROR_UNEXPECTED;
+
+    uri = get_uri_nofrag(This->uri);
+    if(!uri)
+        return NS_ERROR_FAILURE;
+
+    nsres = create_nsuri(uri, NULL, This->window_ref ? This->window_ref->window : NULL, This->container, &wine_uri);
+    IUri_Release(uri);
+    if(NS_FAILED(nsres)) {
+        WARN("create_nsuri failed: %08x\n", nsres);
+        return nsres;
+    }
+
+    *_retval = (nsIURI*)&wine_uri->nsIURL_iface;
+    return NS_OK;
 }
 
 static nsresult NSAPI nsURI_GetSpecIgnoringRef(nsIURL *iface, nsACString *aSpecIgnoringRef)
