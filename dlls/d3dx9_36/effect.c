@@ -2146,7 +2146,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetTexture(ID3DXBaseEffect *iface, D3D
 
     TRACE("iface %p, parameter %p, texture %p\n", This, parameter, texture);
 
-    if (texture && param && !param->element_count &&
+    if (param && !param->element_count &&
             (param->type == D3DXPT_TEXTURE || param->type == D3DXPT_TEXTURE1D
             || param->type == D3DXPT_TEXTURE2D || param->type ==  D3DXPT_TEXTURE3D
             || param->type == D3DXPT_TEXTURECUBE))
