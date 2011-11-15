@@ -113,6 +113,25 @@ static IUri *get_uri_nofrag(IUri *uri)
     return ret;
 }
 
+static BOOL compare_ignoring_frag(IUri *uri1, IUri *uri2)
+{
+    IUri *uri_nofrag1, *uri_nofrag2;
+    BOOL ret = FALSE;
+
+    uri_nofrag1 = get_uri_nofrag(uri1);
+    if(!uri_nofrag1)
+        return FALSE;
+
+    uri_nofrag2 = get_uri_nofrag(uri2);
+    if(uri_nofrag2) {
+        IUri_IsEqual(uri_nofrag1, uri_nofrag2, &ret);
+        IUri_Release(uri_nofrag2);
+    }
+
+    IUri_Release(uri_nofrag1);
+    return ret;
+}
+
 static nsresult create_nsuri(IUri*,nsIURI*,HTMLWindow*,NSContainer*,nsWineURI**);
 
 static const char *debugstr_nsacstr(const nsACString *nsstr)
@@ -2200,13 +2219,6 @@ static nsresult NSAPI nsURI_Equals(nsIURL *iface, nsIURI *other, PRBool *_retval
     return nsres;
 }
 
-static nsresult NSAPI nsURI_EqualsExceptRef(nsIURL *iface, nsIURI *other, PRBool *_retval)
-{
-    nsWineURI *This = impl_from_nsIURL(iface);
-    FIXME("(%p)->(%p %p)\n", This, other, _retval);
-    return nsIURL_Equals(&This->nsIURL_iface, other, _retval);
-}
-
 static nsresult NSAPI nsURI_SchemeIs(nsIURL *iface, const char *scheme, PRBool *_retval)
 {
     nsWineURI *This = impl_from_nsIURL(iface);
@@ -2332,6 +2344,32 @@ static nsresult NSAPI nsURI_GetOriginCharset(nsIURL *iface, nsACString *aOriginC
 
     FIXME("default action not implemented\n");
     return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsURI_EqualsExceptRef(nsIURL *iface, nsIURI *other, PRBool *_retval)
+{
+    nsWineURI *This = impl_from_nsIURL(iface);
+    nsWineURI *other_obj;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p %p)\n", This, other, _retval);
+
+    nsres = nsIURI_QueryInterface(other, &IID_nsWineURI, (void**)&other_obj);
+    if(NS_FAILED(nsres)) {
+        TRACE("Could not get nsWineURI interface\n");
+        *_retval = FALSE;
+        return NS_OK;
+    }
+
+    if(ensure_uri(This) && ensure_uri(other_obj)) {
+        *_retval = compare_ignoring_frag(This->uri, other_obj->uri);
+        nsres = NS_OK;
+    }else {
+        nsres = NS_ERROR_UNEXPECTED;
+    }
+
+    nsIURI_Release(&other_obj->nsIURL_iface);
+    return nsres;
 }
 
 static nsresult NSAPI nsURI_CloneIgnoreRef(nsIURL *iface, nsIURI **_retval)
