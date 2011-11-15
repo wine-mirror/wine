@@ -1640,7 +1640,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetBool(ID3DXBaseEffect *iface, D3DXHA
 
     TRACE("iface %p, parameter %p, b %p\n", This, parameter, b);
 
-    if (b && param && !param->element_count && param->class == D3DXPC_SCALAR)
+    if (b && param && !param->element_count && param->rows == 1 && param->columns == 1)
     {
         *b = get_bool(param->data);
         TRACE("Returning %s\n", *b ? "TRUE" : "FALSE");
@@ -1703,7 +1703,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetInt(ID3DXBaseEffect *iface, D3DXHAN
 
     TRACE("iface %p, parameter %p, n %p\n", This, parameter, n);
 
-    if (n && param && !param->element_count && param->class == D3DXPC_SCALAR)
+    if (n && param && !param->element_count && param->columns == 1 && param->rows == 1)
     {
         *n = get_int(param->type, param->data);
         TRACE("Returning %i\n", *n);
@@ -1766,7 +1766,7 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetFloat(ID3DXBaseEffect *iface, D3DXH
 
     TRACE("iface %p, parameter %p, f %p\n", This, parameter, f);
 
-    if (f && param && !param->element_count && param->class == D3DXPC_SCALAR)
+    if (f && param && !param->element_count && param->columns == 1 && param->rows == 1)
     {
         *f = get_float(param->type, (DWORD *)param->data);
         TRACE("Returning %f\n", *f);
