@@ -35,10 +35,11 @@
 #define expect_env(EXPECTED,GOT,VAR) ok((GOT)==(EXPECTED), "Expected %d, got %d for %s (%d)\n", (EXPECTED), (GOT), (VAR), j)
 #define expect_gle(EXPECTED) ok(GetLastError() == (EXPECTED), "Expected %d, got %d\n", (EXPECTED), GetLastError())
 
+static BOOL (WINAPI *pIsWow64Process)(HANDLE,PBOOL);
+
 struct profile_item
 {
     const char * name;
-    const int todo[4];
 };
 
 /* Helper function for retrieving environment variables */
@@ -74,38 +75,46 @@ static BOOL get_env(const WCHAR * env, const char * var, char ** result)
 
 static void test_create_env(void)
 {
-    BOOL r;
+    BOOL r, is_wow64 = FALSE;
     HANDLE htok;
     WCHAR * env[4];
-    char * st;
+    char * st, systemroot[100];
     int i, j;
 
     static const struct profile_item common_vars[] = {
-        { "ComSpec", { 1, 1, 0, 0 } },
-        { "COMPUTERNAME", { 1, 1, 1, 1 } },
-        { "NUMBER_OF_PROCESSORS", { 1, 1, 0, 0 } },
-        { "OS", { 1, 1, 0, 0 } },
-        { "PROCESSOR_ARCHITECTURE", { 1, 1, 0, 0 } },
-        { "PROCESSOR_IDENTIFIER", { 1, 1, 0, 0 } },
-        { "PROCESSOR_LEVEL", { 1, 1, 0, 0 } },
-        { "PROCESSOR_REVISION", { 1, 1, 0, 0 } },
-        { "SystemDrive", { 1, 1, 0, 0 } },
-        { "SystemRoot", { 1, 1, 0, 0 } },
-        { "windir", { 1, 1, 0, 0 } }
+        { "ComSpec" },
+        { "COMPUTERNAME" },
+        { "NUMBER_OF_PROCESSORS" },
+        { "OS" },
+        { "PROCESSOR_ARCHITECTURE" },
+        { "PROCESSOR_IDENTIFIER" },
+        { "PROCESSOR_LEVEL" },
+        { "PROCESSOR_REVISION" },
+        { "SystemDrive" },
+        { "SystemRoot" },
+        { "windir" }
     };
     static const struct profile_item common_post_nt4_vars[] = {
-        { "ALLUSERSPROFILE", { 1, 1, 0, 0 } },
-        { "TEMP", { 1, 1, 0, 0 } },
-        { "TMP", { 1, 1, 0, 0 } },
-        { "CommonProgramFiles", { 1, 1, 0, 0 } },
-        { "ProgramFiles", { 1, 1, 0, 0 } }
+        { "ALLUSERSPROFILE" },
+        { "TEMP" },
+        { "TMP" },
+        { "CommonProgramFiles" },
+        { "ProgramFiles" },
+        { "PATH" },
+        { "USERPROFILE" }
     };
-    static const struct profile_item htok_vars[] = {
-        { "PATH", { 1, 1, 0, 0 } },
-        { "USERPROFILE", { 1, 1, 0, 0 } }
+    static const struct profile_item common_win64_vars[] = {
+        { "ProgramW6432" },
+        { "CommonProgramW6432" }
     };
 
     r = SetEnvironmentVariableA("WINE_XYZZY", "ZZYZX");
+    expect(TRUE, r);
+
+    r = GetEnvironmentVariableA("SystemRoot", systemroot, sizeof(systemroot));
+    ok(r != 0, "GetEnvironmentVariable failed (%d)\n", GetLastError());
+
+    r = SetEnvironmentVariableA("SystemRoot", "overwrite");
     expect(TRUE, r);
 
     if (0)
@@ -137,16 +146,23 @@ static void test_create_env(void)
     r = CreateEnvironmentBlock((LPVOID) &env[3], htok, TRUE);
     expect(TRUE, r);
 
+    r = SetEnvironmentVariableA("SystemRoot", systemroot);
+    expect(TRUE, r);
+
+    for(i=0; i<4; i++)
+    {
+        r = get_env(env[i], "SystemRoot", &st);
+        ok(!strcmp(st, "SystemRoot=overwrite"), "%s\n", st);
+        expect(TRUE, r);
+    }
+
     /* Test for common environment variables (NT4 and higher) */
     for (i = 0; i < sizeof(common_vars)/sizeof(common_vars[0]); i++)
     {
         for (j = 0; j < 4; j++)
         {
             r = get_env(env[j], common_vars[i].name, &st);
-            if (common_vars[i].todo[j])
-                todo_wine expect_env(TRUE, r, common_vars[i].name);
-            else
-                expect_env(TRUE, r, common_vars[i].name);
+            expect_env(TRUE, r, common_vars[i].name);
             if (r) HeapFree(GetProcessHeap(), 0, st);
         }
     }
@@ -163,26 +179,24 @@ static void test_create_env(void)
             for (j = 0; j < 4; j++)
             {
                 r = get_env(env[j], common_post_nt4_vars[i].name, &st);
-                if (common_post_nt4_vars[i].todo[j])
-                    todo_wine expect_env(TRUE, r, common_post_nt4_vars[i].name);
-                else
-                    expect_env(TRUE, r, common_post_nt4_vars[i].name);
+                expect_env(TRUE, r, common_post_nt4_vars[i].name);
                 if (r) HeapFree(GetProcessHeap(), 0, st);
             }
         }
     }
 
-    /* Test for environment variables with values that depends on htok */
-    for (i = 0; i < sizeof(htok_vars)/sizeof(htok_vars[0]); i++)
+    if(pIsWow64Process)
+        pIsWow64Process(GetCurrentProcess(), &is_wow64);
+    if (sizeof(void*)==8 || is_wow64)
     {
-        for (j = 0; j < 4; j++)
+        for (i = 0; i < sizeof(common_win64_vars)/sizeof(common_win64_vars[0]); i++)
         {
-            r = get_env(env[j], htok_vars[i].name, &st);
-            if (htok_vars[i].todo[j])
-                todo_wine expect_env(TRUE, r, htok_vars[i].name);
-            else
-                expect_env(TRUE, r, htok_vars[i].name);
-            if (r) HeapFree(GetProcessHeap(), 0, st);
+            for (j=0; j<4; j++)
+            {
+                r = get_env(env[j], common_win64_vars[i].name, &st);
+                ok(r || broken(!r)/* Vista,2k3,XP */, "Expected 1, got 0 for %s\n", common_win64_vars[i].name);
+                if (r) HeapFree(GetProcessHeap(), 0, st);
+            }
         }
     }
 
@@ -388,6 +402,8 @@ static void test_get_user_profile_dir(void)
 
 START_TEST(userenv)
 {
+    pIsWow64Process = (void*)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process");
+
     test_create_env();
     test_get_profiles_dir();
     test_get_user_profile_dir();
