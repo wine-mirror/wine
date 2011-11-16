@@ -927,7 +927,13 @@ static IPropertyNotifySink PropertyNotifySink = { &PropertyNotifySinkVtbl };
 
 static HRESULT WINAPI Stream_QueryInterface(IStream *iface, REFIID riid, void **ppv)
 {
-    ok(0, "unexpected call\n");
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_ISequentialStream, riid) || IsEqualGUID(&IID_IStream, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call %s\n", debugstr_guid(riid));
+    *ppv = NULL;
     return E_NOINTERFACE;
 }
 
@@ -1318,7 +1324,7 @@ static HRESULT WINAPI Moniker_BindToStorage(IMoniker *iface, IBindCtx *pbc, IMon
 
     hres = IBindStatusCallback_GetBindInfo(callback, &bindf, &bindinfo);
     ok(hres == S_OK, "GetBindInfo failed: %08x\n", hres);
-    ok(bindf == (BINDF_PULLDATA|BINDF_ASYNCSTORAGE|BINDF_ASYNCHRONOUS), "bindf = %08x\n", bindf);
+    ok((bindf & ~BINDF_HYPERLINK /* IE9 */) == (BINDF_PULLDATA|BINDF_ASYNCSTORAGE|BINDF_ASYNCHRONOUS), "bindf = %08x\n", bindf);
     ok(bindinfo.cbSize == sizeof(bindinfo), "bindinfo.cbSize=%d\n", bindinfo.cbSize);
     ok(bindinfo.szExtraInfo == NULL, "bindinfo.szExtraInfo=%p\n", bindinfo.szExtraInfo);
     /* TODO: test stgmedData */
@@ -2687,6 +2693,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             test_readyState(NULL);
             return S_OK;
         case OLECMDID_UPDATETRAVELENTRY_DATARECOVERY:
+        case 6058:
             return E_FAIL; /* FIXME */
         default:
             ok(0, "unexpected command %d\n", nCmdID);
@@ -3668,6 +3675,12 @@ static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid
 {
     *ppv = NULL;
 
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IWebBrowser, riid)
+            || IsEqualGUID(&IID_IWebBrowserApp, riid) || IsEqualGUID(&IID_IWebBrowser2, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
     if(IsEqualGUID(riid, &IID_IOleObject))
         return E_NOINTERFACE; /* TODO */
 
@@ -4513,8 +4526,6 @@ static void _test_readyState(unsigned line, IUnknown *unk)
     hres = IHTMLDocument2_get_readyState(htmldoc, &state);
     ok(hres == S_OK, "get_ReadyState failed: %08x\n", hres);
 
-    trace("STATE %s\n", wine_dbgstr_w(state));
-
     if(!strcmp_wa(state, "interactive") && load_state == LD_LOADING)
         load_state = LD_INTERACTIVE;
 
@@ -4556,8 +4567,6 @@ static void _test_readyState(unsigned line, IUnknown *unk)
 
     ok_(__FILE__,line) (V_VT(&out) == VT_I4, "V_VT(out)=%d\n", V_VT(&out));
     ok_(__FILE__,line) (V_I4(&out) == load_state%5, "VT_I4(out)=%d, expected %d\n", V_I4(&out), load_state%5);
-
-    trace("READY STATE %d\n", V_I4(&out));
 
     test_doscroll((IUnknown*)htmldoc);
 
@@ -4722,7 +4731,7 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
         CHECK_CALLED(Invoke_AMBIENT_SILENT);
         CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
         CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
-        CHECK_CALLED(Invoke_AMBIENT_PALETTE);
+        CLEAR_CALLED(Invoke_AMBIENT_PALETTE); /* not called on IE9 */
         CHECK_CALLED(GetOptionKeyPath);
         CHECK_CALLED(GetOverrideKeyPath);
         CHECK_CALLED(GetWindow);
@@ -5705,7 +5714,7 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
         CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED); 
         CHECK_CALLED(Invoke_AMBIENT_SILENT);
         CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
-        CHECK_CALLED(Invoke_AMBIENT_PALETTE);
+        CLEAR_CALLED(Invoke_AMBIENT_PALETTE); /* not called on IE9 */
         todo_wine CHECK_CALLED(GetTravelLog);
 
         set_clientsite = TRUE;
@@ -5761,7 +5770,7 @@ static void test_OnAmbientPropertyChange(IHTMLDocument2 *doc)
     SET_EXPECT(Invoke_AMBIENT_PALETTE);
     hres = IOleControl_OnAmbientPropertyChange(control, DISPID_AMBIENT_PALETTE);
     ok(hres == S_OK, "OnAmbientChange failed: %08x\n", hres);
-    CHECK_CALLED(Invoke_AMBIENT_PALETTE);
+    CLEAR_CALLED(Invoke_AMBIENT_PALETTE); /* not called on IE9 */
 
     IOleControl_Release(control);
 }
@@ -6857,7 +6866,7 @@ static void test_UIActivate(BOOL do_load, BOOL use_ipsex, BOOL use_ipsw)
     CHECK_CALLED(Invoke_AMBIENT_SILENT);
     CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
-    CHECK_CALLED(Invoke_AMBIENT_PALETTE);
+    CLEAR_CALLED(Invoke_AMBIENT_PALETTE); /* not called on IE9 */
     CHECK_CALLED(GetOptionKeyPath);
     CHECK_CALLED(GetOverrideKeyPath);
     CHECK_CALLED(GetWindow);
