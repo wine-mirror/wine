@@ -2116,7 +2116,7 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
 
         width = bmpXor.bmWidth;
         height = bmpXor.bmHeight;
-        if (bmpXor.bmPlanes * bmpXor.bmBitsPixel != 1)
+        if (bmpXor.bmPlanes * bmpXor.bmBitsPixel != 1 || bmpAnd.bmPlanes * bmpAnd.bmBitsPixel != 1)
         {
             color = CreateCompatibleBitmap( screen_dc, width, height );
             mask = CreateBitmap( width, height, 1, 1, NULL );
