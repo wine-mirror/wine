@@ -4418,91 +4418,89 @@ static const invalid_uri invalid_uri_tests[] = {
 typedef struct _uri_equality {
     const char* a;
     DWORD       create_flags_a;
-    BOOL        create_todo_a;
     const char* b;
     DWORD       create_flags_b;
-    BOOL        create_todo_b;
     BOOL        equal;
     BOOL        todo;
 } uri_equality;
 
 static const uri_equality equality_tests[] = {
     {
-        "HTTP://www.winehq.org/test dir/./",0,FALSE,
-        "http://www.winehq.org/test dir/../test dir/",0,FALSE,
-        TRUE, FALSE
+        "HTTP://www.winehq.org/test dir/./",0,
+        "http://www.winehq.org/test dir/../test dir/",0,
+        TRUE
     },
     {
         /* http://www.winehq.org/test%20dir */
-        "http://%77%77%77%2E%77%69%6E%65%68%71%2E%6F%72%67/%74%65%73%74%20%64%69%72",0,FALSE,
-        "http://www.winehq.org/test dir",0,FALSE,
-        TRUE, FALSE
+        "http://%77%77%77%2E%77%69%6E%65%68%71%2E%6F%72%67/%74%65%73%74%20%64%69%72",0,
+        "http://www.winehq.org/test dir",0,
+        TRUE
     },
     {
-        "c:\\test.mp3",Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME,FALSE,
-        "file:///c:/test.mp3",0,FALSE,
-        TRUE, FALSE
+        "c:\\test.mp3",Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME,
+        "file:///c:/test.mp3",0,
+        TRUE
     },
     {
-        "ftp://ftp.winehq.org/",0,FALSE,
-        "ftp://ftp.winehq.org",0,FALSE,
-        TRUE, FALSE
+        "ftp://ftp.winehq.org/",0,
+        "ftp://ftp.winehq.org",0,
+        TRUE
     },
     {
-        "ftp://ftp.winehq.org/test/test2/../../testB/",0,FALSE,
-        "ftp://ftp.winehq.org/t%45stB/",0,FALSE,
-        FALSE, FALSE
+        "ftp://ftp.winehq.org/test/test2/../../testB/",0,
+        "ftp://ftp.winehq.org/t%45stB/",0,
+        FALSE
     },
     {
-        "http://google.com/TEST",0,FALSE,
-        "http://google.com/test",0,FALSE,
-        FALSE, FALSE
+        "http://google.com/TEST",0,
+        "http://google.com/test",0,
+        FALSE
     },
     {
-        "http://GOOGLE.com/",0,FALSE,
-        "http://google.com/",0,FALSE,
-        TRUE, FALSE
+        "http://GOOGLE.com/",0,
+        "http://google.com/",0,
+        TRUE
     },
     /* Performs case insensitive compare of host names (for known scheme types). */
     {
-        "ftp://GOOGLE.com/",Uri_CREATE_NO_CANONICALIZE,FALSE,
-        "ftp://google.com/",0,FALSE,
-        TRUE, FALSE
+        "ftp://GOOGLE.com/",Uri_CREATE_NO_CANONICALIZE,
+        "ftp://google.com/",0,
+        TRUE
     },
     {
-        "zip://GOOGLE.com/",0,FALSE,
-        "zip://google.com/",0,FALSE,
-        FALSE, FALSE
+        "zip://GOOGLE.com/",0,
+        "zip://google.com/",0,
+        FALSE
     },
     {
-        "file:///c:/TEST/TeST/",0,FALSE,
-        "file:///c:/test/test/",0,FALSE,
-        TRUE, FALSE
+        "file:///c:/TEST/TeST/",0,
+        "file:///c:/test/test/",0,
+        TRUE
     },
     {
-        "file:///server/TEST",0,FALSE,
-        "file:///SERVER/TEST",0,FALSE,
-        TRUE, FALSE
+        "file:///server/TEST",0,
+        "file:///SERVER/TEST",0,
+        TRUE
     },
     {
-        "http://google.com",Uri_CREATE_NO_CANONICALIZE,FALSE,
-        "http://google.com/",0,FALSE,
-        TRUE, FALSE
+        "http://google.com",Uri_CREATE_NO_CANONICALIZE,
+        "http://google.com/",0,
+        TRUE
     },
     {
-        "ftp://google.com:21/",0,FALSE,
-        "ftp://google.com/",0,FALSE,
-        TRUE, FALSE
+        "ftp://google.com:21/",0,
+        "ftp://google.com/",0,
+        TRUE
     },
     {
-        "http://google.com:80/",Uri_CREATE_NO_CANONICALIZE,FALSE,
-        "http://google.com/",0,FALSE,
-        TRUE, FALSE
+        "http://google.com:80/",Uri_CREATE_NO_CANONICALIZE,
+        "http://google.com/",0,
+        TRUE
     },
     {
-        "http://google.com:70/",0,FALSE,
-        "http://google.com:71/",0,FALSE,
-        FALSE, FALSE
+        "http://google.com:70/",0,
+        "http://google.com:71/",0,
+        FALSE
     }
 };
 
@@ -7625,27 +7623,28 @@ static void test_IUri_HasProperty(void) {
 
 static void test_IUri_IsEqual(void) {
     IUri *uriA, *uriB;
-    HRESULT hrA, hrB;
+    BOOL equal;
+    HRESULT hres;
     DWORD i;
 
     uriA = uriB = NULL;
 
     /* Make sure IsEqual handles invalid args correctly. */
-    hrA = pCreateUri(http_urlW, 0, 0, &uriA);
-    hrB = pCreateUri(http_urlW, 0, 0, &uriB);
-    ok(hrA == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hrA, S_OK);
-    ok(hrB == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hrB, S_OK);
-    if(SUCCEEDED(hrA) && SUCCEEDED(hrB)) {
-        BOOL equal = -1;
-        hrA = IUri_IsEqual(uriA, NULL, &equal);
-        ok(hrA == S_OK, "Error: IsEqual returned 0x%08x, expected 0x%08x.\n", hrA, S_OK);
-        ok(equal == FALSE, "Error: Expected equal to be FALSE, but was %d instead.\n", equal);
+    hres = pCreateUri(http_urlW, 0, 0, &uriA);
+    ok(hres == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hres, S_OK);
+    hres = pCreateUri(http_urlW, 0, 0, &uriB);
+    ok(hres == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x.\n", hres, S_OK);
 
-        hrA = IUri_IsEqual(uriA, uriB, NULL);
-        ok(hrA == E_POINTER, "Error: IsEqual returned 0x%08x, expected 0x%08x.\n", hrA, E_POINTER);
-    }
-    if(uriA) IUri_Release(uriA);
-    if(uriB) IUri_Release(uriB);
+    equal = -1;
+    hres = IUri_IsEqual(uriA, NULL, &equal);
+    ok(hres == S_OK, "Error: IsEqual returned 0x%08x, expected 0x%08x.\n", hres, S_OK);
+    ok(!equal, "Error: Expected equal to be FALSE, but was %d instead.\n", equal);
+
+    hres = IUri_IsEqual(uriA, uriB, NULL);
+    ok(hres == E_POINTER, "Error: IsEqual returned 0x%08x, expected 0x%08x.\n", hres, E_POINTER);
+
+    IUri_Release(uriA);
+    IUri_Release(uriB);
 
     for(i = 0; i < sizeof(equality_tests)/sizeof(equality_tests[0]); ++i) {
         uri_equality test = equality_tests[i];
@@ -7656,44 +7655,20 @@ static void test_IUri_IsEqual(void) {
         uriA_W = a2w(test.a);
         uriB_W = a2w(test.b);
 
-        hrA = pCreateUri(uriA_W, test.create_flags_a, 0, &uriA);
-        if(test.create_todo_a) {
-            todo_wine {
-                ok(hrA == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x on equality_tests[%d].a\n",
-                        hrA, S_OK, i);
-            }
+        hres = pCreateUri(uriA_W, test.create_flags_a, 0, &uriA);
+        ok(hres == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x on equality_tests[%d].a\n", hres, S_OK, i);
+
+        hres = pCreateUri(uriB_W, test.create_flags_b, 0, &uriB);
+        ok(hres == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x on equality_tests[%d].b\n", hres, S_OK, i);
+
+        equal = -1;
+        hres = IUri_IsEqual(uriA, uriB, &equal);
+        if(test.todo) todo_wine {
+            ok(hres == S_OK, "Error: IsEqual returned 0x%08x, expected 0x%08x on equality_tests[%d].\n", hres, S_OK, i);
+            ok(equal == test.equal, "Error: Expected the comparison to be %d on equality_tests[%d].\n", test.equal, i);
         } else {
-            ok(hrA == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x on equality_tests[%d].a\n",
-                    hrA, S_OK, i);
-        }
-
-        hrB = pCreateUri(uriB_W, test.create_flags_b, 0, &uriB);
-        if(test.create_todo_b) {
-            todo_wine {
-                ok(hrB == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x on equality_tests[%d].b\n",
-                        hrB, S_OK, i);
-            }
-        } else {
-            ok(hrB == S_OK, "Error: CreateUri returned 0x%08x, expected 0x%08x on equality_tests[%d].b\n",
-                    hrB, S_OK, i);
-        }
-
-        if(SUCCEEDED(hrA) && SUCCEEDED(hrB)) {
-            BOOL equal = -1;
-
-            hrA = IUri_IsEqual(uriA, uriB, &equal);
-            if(test.todo) {
-                todo_wine {
-                    ok(hrA == S_OK, "Error: IsEqual returned 0x%08x, expected 0x%08x on equality_tests[%d].\n",
-                            hrA, S_OK, i);
-                }
-                todo_wine {
-                    ok(equal == test.equal, "Error: Expected the comparison to be %d on equality_tests[%d].\n", test.equal, i);
-                }
-            } else {
-                ok(hrA == S_OK, "Error: IsEqual returned 0x%08x, expected 0x%08x on equality_tests[%d].\n", hrA, S_OK, i);
-                ok(equal == test.equal, "Error: Expected the comparison to be %d on equality_tests[%d].\n", test.equal, i);
-            }
+            ok(hres == S_OK, "Error: IsEqual returned 0x%08x, expected 0x%08x on equality_tests[%d].\n", hres, S_OK, i);
+            ok(equal == test.equal, "Error: Expected the comparison to be %d on equality_tests[%d].\n", test.equal, i);
         }
         if(uriA) IUri_Release(uriA);
         if(uriB) IUri_Release(uriB);
