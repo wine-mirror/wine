@@ -1234,15 +1234,18 @@ static const WCHAR Connections[] = {
     'C','o','n','n','e','c','t','i','o','n','s',0 };
 static const WCHAR WinHttpSettings[] = {
     'W','i','n','H','t','t','p','S','e','t','t','i','n','g','s',0 };
-static const DWORD WINHTTPSETTINGS_MAGIC = 0x18;
-static const DWORD WINHTTP_PROXY_TYPE_DIRECT = 1;
-static const DWORD WINHTTP_PROXY_TYPE_PROXY = 2;
+static const DWORD WINHTTP_SETTINGS_MAGIC = 0x18;
+static const DWORD WININET_SETTINGS_MAGIC = 0x46;
+static const DWORD PROXY_TYPE_DIRECT         = 1;
+static const DWORD PROXY_TYPE_PROXY          = 2;
+static const DWORD PROXY_USE_PAC_SCRIPT      = 4;
+static const DWORD PROXY_AUTODETECT_SETTINGS = 8;
 
-struct winhttp_settings_header
+struct connection_settings_header
 {
     DWORD magic;
     DWORD unknown; /* always zero? */
-    DWORD flags;   /* one of WINHTTP_PROXY_TYPE_* */
+    DWORD flags;   /* one or more of PROXY_* */
 };
 
 static inline void copy_char_to_wchar_sz(const BYTE *src, DWORD len, WCHAR *dst)
@@ -1273,22 +1276,22 @@ BOOL WINAPI WinHttpGetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
 
         l = RegQueryValueExW( key, WinHttpSettings, NULL, &type, NULL, &size );
         if (!l && type == REG_BINARY &&
-            size >= sizeof(struct winhttp_settings_header) + 2 * sizeof(DWORD))
+            size >= sizeof(struct connection_settings_header) + 2 * sizeof(DWORD))
         {
             BYTE *buf = heap_alloc( size );
 
             if (buf)
             {
-                struct winhttp_settings_header *hdr =
-                    (struct winhttp_settings_header *)buf;
+                struct connection_settings_header *hdr =
+                    (struct connection_settings_header *)buf;
                 DWORD *len = (DWORD *)(hdr + 1);
 
                 l = RegQueryValueExW( key, WinHttpSettings, NULL, NULL, buf,
                     &size );
-                if (!l && hdr->magic == WINHTTPSETTINGS_MAGIC &&
+                if (!l && hdr->magic == WINHTTP_SETTINGS_MAGIC &&
                     hdr->unknown == 0)
                 {
-                    if (hdr->flags & WINHTTP_PROXY_TYPE_PROXY)
+                    if (hdr->flags & PROXY_TYPE_PROXY)
                     {
                        BOOL sane = FALSE;
                        LPWSTR proxy = NULL;
@@ -1394,6 +1397,13 @@ BOOL WINAPI WinHttpGetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
  */
 BOOL WINAPI WinHttpGetIEProxyConfigForCurrentUser( WINHTTP_CURRENT_USER_IE_PROXY_CONFIG *config )
 {
+    static const WCHAR settingsW[] =
+        {'D','e','f','a','u','l','t','C','o','n','n','e','c','t','i','o','n','S','e','t','t','i','n','g','s',0};
+    HKEY hkey = NULL;
+    struct connection_settings_header *hdr = NULL;
+    DWORD type, offset, len, size = 0;
+    BOOL ret = FALSE;
+
     TRACE("%p\n", config);
 
     if (!config)
@@ -1401,16 +1411,67 @@ BOOL WINAPI WinHttpGetIEProxyConfigForCurrentUser( WINHTTP_CURRENT_USER_IE_PROXY
         set_last_error( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
+    memset( config, 0, sizeof(*config) );
+    config->fAutoDetect = TRUE;
 
-    /* FIXME: read from HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings */
+    if (RegOpenKeyExW( HKEY_CURRENT_USER, Connections, 0, KEY_READ, &hkey ) ||
+        RegQueryValueExW( hkey, settingsW, NULL, &type, NULL, &size ) ||
+        type != REG_BINARY || size < sizeof(struct connection_settings_header))
+    {
+        ret = TRUE;
+        goto done;
+    }
+    if (!(hdr = heap_alloc( size ))) goto done;
+    if (RegQueryValueExW( hkey, settingsW, NULL, &type, (BYTE *)hdr, &size ) ||
+        hdr->magic != WININET_SETTINGS_MAGIC)
+    {
+        ret = TRUE;
+        goto done;
+    }
 
-    FIXME("returning no proxy used\n");
-    config->fAutoDetect       = FALSE;
-    config->lpszAutoConfigUrl = NULL;
-    config->lpszProxy         = NULL;
-    config->lpszProxyBypass   = NULL;
+    config->fAutoDetect = (hdr->flags & PROXY_AUTODETECT_SETTINGS) != 0;
+    offset = sizeof(*hdr);
+    if (offset + sizeof(DWORD) > size) goto done;
+    len = *(DWORD *)((char *)hdr + offset);
+    offset += sizeof(DWORD);
+    if (len && hdr->flags & PROXY_TYPE_PROXY)
+    {
+        if (!(config->lpszProxy = GlobalAlloc( 0, (len + 1) * sizeof(WCHAR) ))) goto done;
+        copy_char_to_wchar_sz( (const BYTE *)hdr + offset , len, config->lpszProxy );
+    }
+    offset += len;
+    if (offset + sizeof(DWORD) > size) goto done;
+    len = *(DWORD *)((char *)hdr + offset);
+    offset += sizeof(DWORD);
+    if (len && (hdr->flags & PROXY_TYPE_PROXY))
+    {
+        if (!(config->lpszProxyBypass = GlobalAlloc( 0, (len + 1) * sizeof(WCHAR) ))) goto done;
+        copy_char_to_wchar_sz( (const BYTE *)hdr + offset , len, config->lpszProxyBypass );
+    }
+    offset += len;
+    if (offset + sizeof(DWORD) > size) goto done;
+    len = *(DWORD *)((char *)hdr + offset);
+    offset += sizeof(DWORD);
+    if (len && (hdr->flags & PROXY_USE_PAC_SCRIPT))
+    {
+        if (!(config->lpszAutoConfigUrl = GlobalAlloc( 0, (len + 1) * sizeof(WCHAR) ))) goto done;
+        copy_char_to_wchar_sz( (const BYTE *)hdr + offset , len, config->lpszAutoConfigUrl );
+    }
+    ret = TRUE;
 
-    return TRUE;
+done:
+    RegCloseKey( hkey );
+    heap_free( hdr );
+    if (!ret)
+    {
+        heap_free( config->lpszAutoConfigUrl );
+        config->lpszAutoConfigUrl = NULL;
+        heap_free( config->lpszProxy );
+        config->lpszProxy = NULL;
+        heap_free( config->lpszProxyBypass );
+        config->lpszProxyBypass = NULL;
+    }
+    return ret;
 }
 
 /***********************************************************************
@@ -1478,7 +1539,7 @@ BOOL WINAPI WinHttpSetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
         KEY_WRITE, NULL, &key, NULL );
     if (!l)
     {
-        DWORD size = sizeof(struct winhttp_settings_header) + 2 * sizeof(DWORD);
+        DWORD size = sizeof(struct connection_settings_header) + 2 * sizeof(DWORD);
         BYTE *buf;
 
         if (info->dwAccessType == WINHTTP_ACCESS_TYPE_NAMED_PROXY)
@@ -1490,17 +1551,17 @@ BOOL WINAPI WinHttpSetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
         buf = heap_alloc( size );
         if (buf)
         {
-            struct winhttp_settings_header *hdr =
-                (struct winhttp_settings_header *)buf;
+            struct connection_settings_header *hdr =
+                (struct connection_settings_header *)buf;
             DWORD *len = (DWORD *)(hdr + 1);
 
-            hdr->magic = WINHTTPSETTINGS_MAGIC;
+            hdr->magic = WINHTTP_SETTINGS_MAGIC;
             hdr->unknown = 0;
             if (info->dwAccessType == WINHTTP_ACCESS_TYPE_NAMED_PROXY)
             {
                 BYTE *dst;
 
-                hdr->flags = WINHTTP_PROXY_TYPE_PROXY;
+                hdr->flags = PROXY_TYPE_PROXY;
                 *len++ = strlenW( info->lpszProxy );
                 for (dst = (BYTE *)len, src = info->lpszProxy; *src;
                     src++, dst++)
@@ -1518,7 +1579,7 @@ BOOL WINAPI WinHttpSetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
             }
             else
             {
-                hdr->flags = WINHTTP_PROXY_TYPE_DIRECT;
+                hdr->flags = PROXY_TYPE_DIRECT;
                 *len++ = 0;
                 *len++ = 0;
             }

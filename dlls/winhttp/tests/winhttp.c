@@ -2556,6 +2556,31 @@ static void test_WinHttpDetectAutoProxyConfigUrl(void)
     }
 }
 
+static void test_WinHttpGetIEProxyConfigForCurrentUser(void)
+{
+    BOOL ret;
+    DWORD error;
+    WINHTTP_CURRENT_USER_IE_PROXY_CONFIG cfg;
+
+    memset( &cfg, 0, sizeof(cfg) );
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpGetIEProxyConfigForCurrentUser( NULL );
+    error = GetLastError();
+    ok( !ret, "expected failure\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+
+    ret = WinHttpGetIEProxyConfigForCurrentUser( &cfg );
+    ok( ret, "expected success\n" );
+    trace("%d\n", cfg.fAutoDetect);
+    trace("%s\n", wine_dbgstr_w(cfg.lpszAutoConfigUrl));
+    trace("%s\n", wine_dbgstr_w(cfg.lpszProxy));
+    trace("%s\n", wine_dbgstr_w(cfg.lpszProxyBypass));
+    GlobalFree( cfg.lpszAutoConfigUrl );
+    GlobalFree( cfg.lpszProxy );
+    GlobalFree( cfg.lpszProxyBypass );
+}
+
 START_TEST (winhttp)
 {
     static const WCHAR basicW[] = {'/','b','a','s','i','c',0};
@@ -2579,6 +2604,7 @@ START_TEST (winhttp)
     test_credentials();
     test_IWinHttpRequest();
     test_WinHttpDetectAutoProxyConfigUrl();
+    test_WinHttpGetIEProxyConfigForCurrentUser();
 
     si.event = CreateEvent(NULL, 0, 0, NULL);
     si.port = 7532;
