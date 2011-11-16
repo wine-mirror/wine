@@ -616,6 +616,7 @@ void crypt_sip_free(void)
         FreeLibrary(prov->info.hSIP);
         CryptMemFree(prov);
     }
+    DeleteCriticalSection(&providers_cs);
 }
 
 /* Loads the SIP for pgSubject into the global cache.  Returns FALSE if the

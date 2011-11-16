@@ -92,6 +92,7 @@ static void free_function_sets(void)
         DeleteCriticalSection(&setCursor->cs);
         CryptMemFree(setCursor);
     }
+    DeleteCriticalSection(&funcSetCS);
 }
 
 /* There is no free function associated with this; therefore, the sets are
@@ -1461,6 +1462,7 @@ static void free_oid_info(void)
         list_remove(&info->entry);
         CryptMemFree(info);
     }
+    DeleteCriticalSection(&oidInfoCS);
 }
 
 /***********************************************************************
