@@ -3168,12 +3168,12 @@
 @ cdecl -arch=win64 ?construct@?$allocator@G@std@@QEAAXPEAGAEBG@Z(ptr ptr ptr) MSVCP_allocator_short_construct
 @ thiscall -arch=win32 ?construct@?$allocator@_W@std@@QAEXPA_WAB_W@Z(ptr ptr ptr) MSVCP_allocator_wchar_construct
 @ cdecl -arch=win64 ?construct@?$allocator@_W@std@@QEAAXPEA_WAEB_W@Z(ptr ptr ptr) MSVCP_allocator_wchar_construct
-@ stub -arch=win32 ?copy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPADII@Z
-@ stub -arch=win64 ?copy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEAD_K1@Z
+@ thiscall -arch=win32 ?copy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPADII@Z(ptr ptr long long) basic_string_char_copy
+@ cdecl -arch=win64 ?copy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEAD_K1@Z(ptr ptr long long) basic_string_char_copy
 @ stub -arch=win32 ?copy@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIPAGII@Z
 @ stub -arch=win64 ?copy@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBA_KPEAG_K1@Z
-@ stub -arch=win32 ?copy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPA_WII@Z
-@ stub -arch=win64 ?copy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEA_W_K1@Z
+@ thiscall -arch=win32 ?copy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIPA_WII@Z(ptr ptr long long) basic_string_wchar_copy
+@ cdecl -arch=win64 ?copy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA_KPEA_W_K1@Z(ptr ptr long long) basic_string_wchar_copy
 @ cdecl -arch=win32 ?copy@?$char_traits@D@std@@SAPADPADPBDI@Z(ptr ptr long) MSVCP_char_traits_char_copy
 @ cdecl -arch=win64 ?copy@?$char_traits@D@std@@SAPEADPEADPEBD_K@Z(ptr ptr long) MSVCP_char_traits_char_copy
 @ cdecl -arch=win32 ?copy@?$char_traits@G@std@@SAPAGPAGPBGI@Z(ptr ptr long) MSVCP_char_traits_short_copy
