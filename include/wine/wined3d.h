@@ -1525,12 +1525,12 @@ struct wined3d_color
     float a;
 };
 
-typedef struct _WINED3DVECTOR
+struct wined3d_vec3
 {
     float x;
     float y;
     float z;
-} WINED3DVECTOR;
+};
 
 typedef struct _WINED3DMATRIX
 {
@@ -1553,8 +1553,8 @@ typedef struct _WINED3DLIGHT
     struct wined3d_color Diffuse;
     struct wined3d_color Specular;
     struct wined3d_color Ambient;
-    WINED3DVECTOR Position;
-    WINED3DVECTOR Direction;
+    struct wined3d_vec3 Position;
+    struct wined3d_vec3 Direction;
     float Range;
     float Falloff;
     float Attenuation0;
