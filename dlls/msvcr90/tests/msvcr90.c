@@ -100,6 +100,15 @@ static void* (__cdecl *p_get_terminate)(void);
 static void* (__cdecl *p_get_unexpected)(void);
 static int (__cdecl *p__vswprintf_l)(wchar_t*, const wchar_t*, _locale_t, __ms_va_list);
 static int (__cdecl *p_vswprintf_l)(wchar_t*, const wchar_t*, _locale_t, __ms_va_list);
+static FILE* (__cdecl *p_fopen)(const char*, const char*);
+static int (__cdecl *p_fclose)(FILE*);
+static int (__cdecl *p_unlink)(const char*);
+static void (__cdecl *p_lock_file)(FILE*);
+static void (__cdecl *p_unlock_file)(FILE*);
+static int (__cdecl *p_fileno)(FILE*);
+static int (__cdecl *p_feof)(FILE*);
+static int (__cdecl *p_ferror)(FILE*);
+static int (__cdecl *p_flsbuf)(int, FILE*);
 
 
 /* type info */
@@ -268,6 +277,15 @@ static BOOL init(void)
     SET(p_get_unexpected, "_get_unexpected");
     SET(p__vswprintf_l, "__vswprintf_l");
     SET(p_vswprintf_l, "_vswprintf_l");
+    SET(p_fopen, "fopen");
+    SET(p_fclose, "fclose");
+    SET(p_unlink, "_unlink");
+    SET(p_lock_file, "_lock_file");
+    SET(p_unlock_file, "_unlock_file");
+    SET(p_fileno, "_fileno");
+    SET(p_feof, "feof");
+    SET(p_ferror, "ferror");
+    SET(p_flsbuf, "_flsbuf");
     if (sizeof(void *) == 8)
     {
         SET(p_type_info_name_internal_method, "?_name_internal_method@type_info@@QEBAPEBDPEAU__type_info_node@@@Z");
@@ -1025,6 +1043,100 @@ static void test__vswprintf_l(void)
             wine_dbgstr_w(buf), wine_dbgstr_w(format));
 }
 
+struct block_file_arg
+{
+    FILE *read;
+    FILE *write;
+    HANDLE blocked;
+};
+
+static DWORD WINAPI block_file(void *arg)
+{
+    struct block_file_arg *files = arg;
+
+    p_lock_file(files->read);
+    p_lock_file(files->write);
+    SetEvent(files->blocked);
+    WaitForSingleObject(files->blocked, INFINITE);
+    p_unlock_file(files->read);
+    p_unlock_file(files->write);
+    return 0;
+}
+
+static void test_nonblocking_file_access(void)
+{
+    HANDLE thread;
+    struct block_file_arg arg;
+    FILE *filer, *filew;
+    int ret;
+
+    if(!p_lock_file || !p_unlock_file) {
+        win_skip("_lock_file not available\n");
+        return;
+    }
+
+    filew = p_fopen("test_file", "w");
+    ok(filew != NULL, "unable to create test file\n");
+    if(!filew)
+        return;
+    filer = p_fopen("test_file", "r");
+    ok(filer != NULL, "unable to open test file\n");
+    if(!filer) {
+        p_fclose(filew);
+        p_unlink("test_file");
+        return;
+    }
+
+    arg.read = filer;
+    arg.write = filew;
+    arg.blocked = CreateEvent(NULL, FALSE, FALSE, NULL);
+    ok(arg.blocked != NULL, "CreateEvent failed\n");
+    if(!arg.blocked) {
+        p_fclose(filer);
+        p_fclose(filew);
+        p_unlink("test_file");
+        return;
+    }
+    thread = CreateThread(NULL, 0, block_file, (void*)&arg, 0, NULL);
+    ok(thread != NULL, "CreateThread failed\n");
+    if(!thread) {
+        CloseHandle(arg.blocked);
+        p_fclose(filer);
+        p_fclose(filew);
+        p_unlink("test_file");
+        return;
+    }
+    WaitForSingleObject(arg.blocked, INFINITE);
+
+    ret = p_fileno(filer);
+    ok(ret, "_fileno(filer) returned %d\n", ret);
+    ret = p_fileno(filew);
+    ok(ret, "_fileno(filew) returned %d\n", ret);
+
+    ret = p_feof(filer);
+    ok(ret==0, "feof(filer) returned %d\n", ret);
+    ret = p_feof(filew);
+    ok(ret==0, "feof(filew) returned %d\n", ret);
+
+    ret = p_ferror(filer);
+    ok(ret==0, "ferror(filer) returned %d\n", ret);
+    ret = p_ferror(filew);
+    ok(ret==0, "ferror(filew) returned %d\n", ret);
+
+    ret = p_flsbuf('a', filer);
+    ok(ret==-1, "_flsbuf(filer) returned %d\n", ret);
+    ret = p_flsbuf('a', filew);
+    ok(ret=='a', "_flsbuf(filew) returned %d\n", ret);
+
+    SetEvent(arg.blocked);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(arg.blocked);
+    CloseHandle(thread);
+    p_fclose(filer);
+    p_fclose(filew);
+    p_unlink("test_file");
+}
+
 START_TEST(msvcr90)
 {
     if(!init())
@@ -1046,4 +1158,5 @@ START_TEST(msvcr90)
     test_typeinfo();
     test_getptd();
     test__vswprintf_l();
+    test_nonblocking_file_access();
 }
