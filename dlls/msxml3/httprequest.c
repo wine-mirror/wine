@@ -706,6 +706,7 @@ static HRESULT WINAPI httprequest_open(IXMLHTTPRequest *iface, BSTR method, BSTR
     if (hr == S_OK)
         This->user = V_BSTR(&str);
 
+    VariantInit(&str);
     hr = VariantChangeType(&str, &password, 0, VT_BSTR);
     if (hr == S_OK)
         This->password = V_BSTR(&str);
