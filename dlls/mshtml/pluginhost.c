@@ -186,6 +186,7 @@ static void activate_plugin(PluginHost *host)
     IClientSecurity *client_security;
     IQuickActivate *quick_activate;
     IOleCommandTarget *cmdtrg;
+    IViewObjectEx *view_obj;
     IOleObject *ole_obj;
     IDispatchEx *dispex;
     IDispatch *disp;
@@ -211,22 +212,57 @@ static void activate_plugin(PluginHost *host)
         QACONTAINER container = {sizeof(container)};
         QACONTROL control = {sizeof(control)};
 
+        TRACE("Using IQuickActivate\n");
+
         container.pClientSite = &host->IOleClientSite_iface;
         container.dwAmbientFlags = QACONTAINER_SUPPORTSMNEMONICS|QACONTAINER_MESSAGEREFLECT|QACONTAINER_USERMODE;
         container.pAdviseSink = &host->IAdviseSinkEx_iface;
         container.pPropertyNotifySink = &host->IPropertyNotifySink_iface;
 
         hres = IQuickActivate_QuickActivate(quick_activate, &container, &control);
+        IQuickActivate_Release(quick_activate);
         if(FAILED(hres))
             FIXME("QuickActivate failed: %08x\n", hres);
+
+        load_plugin(host);
     }else {
-        FIXME("No IQuickActivate\n");
-        return;
+        DWORD status = 0;
+
+        hres = IUnknown_QueryInterface(host->plugin_unk, &IID_IOleObject, (void**)&ole_obj);
+        if(FAILED(hres)) {
+            FIXME("Plugin does not support IOleObject\n");
+            return;
+        }
+
+        hres = IOleObject_GetMiscStatus(ole_obj, DVASPECT_CONTENT, &status);
+        TRACE("GetMiscStatus returned %08x %x\n", hres, status);
+
+        hres = IOleObject_SetClientSite(ole_obj, &host->IOleClientSite_iface);
+        IOleObject_Release(ole_obj);
+        if(FAILED(hres)) {
+            FIXME("SetClientSite failed: %08x\n", hres);
+            return;
+        }
+
+        load_plugin(host);
+
+        hres = IUnknown_QueryInterface(host->plugin_unk, &IID_IViewObjectEx, (void**)&view_obj);
+        if(SUCCEEDED(hres)) {
+            DWORD view_status = 0;
+
+            hres = IViewObjectEx_SetAdvise(view_obj, DVASPECT_CONTENT, 0, (IAdviseSink*)&host->IAdviseSinkEx_iface);
+            if(FAILED(hres))
+                WARN("SetAdvise failed: %08x\n", hres);
+
+            hres = IViewObjectEx_GetViewStatus(view_obj, &view_status);
+            IViewObjectEx_Release(view_obj);
+            TRACE("GetViewStatus returned %08x %x\n", hres, view_status);
+        }
     }
 
-    load_plugin(host);
+    update_readystate(host);
 
-    /* NOTE: Native QIs for IViewObjectEx, IActiveScript, an undocumented IID, IOleControl and IRunnableObject */
+    /* NOTE: Native QIs for IActiveScript, an undocumented IID, IOleControl and IRunnableObject */
 
     hres = IUnknown_QueryInterface(host->plugin_unk, &IID_IDispatchEx, (void**)&dispex);
     if(SUCCEEDED(hres)) {
