@@ -928,7 +928,8 @@ BOOL WINAPI EndDialog( HWND hwnd, INT_PTR retval )
     dlgInfo->flags |= DF_END;
     wasEnabled = (dlgInfo->flags & DF_OWNERENABLED);
 
-    if (wasEnabled && (owner = GetWindow( hwnd, GW_OWNER )))
+    owner = GetWindow( hwnd, GW_OWNER );
+    if (wasEnabled && owner)
         DIALOG_EnableOwner( owner );
 
     /* Windows sets the focus to the dialog itself in EndDialog */
@@ -942,7 +943,16 @@ BOOL WINAPI EndDialog( HWND hwnd, INT_PTR retval )
     SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE
                  | SWP_NOZORDER | SWP_NOACTIVATE | SWP_HIDEWINDOW);
 
-    if (hwnd == GetActiveWindow()) WINPOS_ActivateOtherWindow( hwnd );
+    if (hwnd == GetActiveWindow())
+    {
+        /* If this dialog was given an owner then set the focus to that owner
+           even when the owner is disabled (normally when a window closes any
+           disabled windows cannot receive the focus). */
+        if (owner)
+            SetForegroundWindow( owner );
+        else
+            WINPOS_ActivateOtherWindow( hwnd );
+    }
 
     /* unblock dialog loop */
     PostMessageA(hwnd, WM_NULL, 0, 0);

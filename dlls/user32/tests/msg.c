@@ -11256,6 +11256,52 @@ static void test_dialog_messages(void)
     UnregisterClass(cls.lpszClassName, cls.hInstance);
 }
 
+static void test_EndDialog(void)
+{
+    HWND hparent, hother, hactive, hdlg;
+    WNDCLASS cls;
+
+    hparent = CreateWindowExA(0, "TestParentClass", "Test parent",
+                              WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_DISABLED,
+                              100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (hparent != 0, "Failed to create parent window\n");
+
+    hother = CreateWindowExA(0, "TestParentClass", "Test parent 2",
+                              WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                              100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (hother != 0, "Failed to create parent window\n");
+
+    ok(GetClassInfo(0, "#32770", &cls), "GetClassInfo failed\n");
+    cls.lpszClassName = "MyDialogClass";
+    cls.hInstance = GetModuleHandle(0);
+    /* need a cast since a dlgproc is used as a wndproc */
+    cls.lpfnWndProc = (WNDPROC)test_dlg_proc;
+    if (!RegisterClass(&cls)) assert(0);
+
+    flush_sequence();
+    SetForegroundWindow(hother);
+    hactive = GetForegroundWindow();
+    ok(hother == hactive, "Wrong window has focus (%p != %p)\n", hother, hactive);
+
+    /* create a dialog where the parent is disabled, this parent should still
+       receive the focus when the dialog exits (even though "normally" a
+       disabled window should not receive the focus) */
+    hdlg = CreateDialogParam(0, "CLASS_TEST_DIALOG_2", hparent, test_dlg_proc, 0);
+    ok(IsWindow(hdlg), "CreateDialogParam failed\n");
+    SetForegroundWindow(hdlg);
+    hactive = GetForegroundWindow();
+    ok(hdlg == hactive, "Wrong window has focus (%p != %p)\n", hdlg, hactive);
+    EndDialog(hdlg, 0);
+    hactive = GetForegroundWindow();
+    ok(hparent == hactive, "Wrong window has focus (parent != active) (active: %p, parent: %p, dlg: %p, other: %p)\n", hactive, hparent, hdlg, hother);
+    DestroyWindow(hdlg);
+    flush_sequence();
+
+    DestroyWindow( hother );
+    DestroyWindow( hparent );
+    UnregisterClass(cls.lpszClassName, cls.hInstance);
+}
+
 static void test_nullCallback(void)
 {
     HWND hwnd;
@@ -13573,6 +13619,7 @@ START_TEST(msg)
     test_SetWindowRgn();
     test_sys_menu();
     test_dialog_messages();
+    test_EndDialog();
     test_nullCallback();
     test_dbcs_wm_char();
     test_menu_messages();
