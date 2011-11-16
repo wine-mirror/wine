@@ -112,3 +112,4 @@ HRESULT super_navigate(HTMLWindow*,IUri*,const WCHAR*,BYTE*,DWORD) DECLSPEC_HIDD
 HRESULT create_channelbsc(IMoniker*,const WCHAR*,BYTE*,DWORD,nsChannelBSC**) DECLSPEC_HIDDEN;
 HRESULT channelbsc_load_stream(nsChannelBSC*,IStream*) DECLSPEC_HIDDEN;
 void channelbsc_set_channel(nsChannelBSC*,nsChannel*,nsIStreamListener*,nsISupports*) DECLSPEC_HIDDEN;
+IUri *nsuri_get_uri(nsWineURI*);

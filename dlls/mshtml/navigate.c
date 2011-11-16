@@ -1134,6 +1134,17 @@ static nsresult NSAPI nsAsyncVerifyRedirectCallback_AsyncOnChannelRedirect(nsIAs
             ERR("AddRequest failed: %08x\n", nsres);
     }
 
+    if(This->bsc->window) {
+        IUri *uri = nsuri_get_uri(This->nschannel->uri);
+
+        if(uri) {
+            set_current_uri(This->bsc->window, uri);
+            IUri_Release(uri);
+        }else {
+            WARN("Could not get IUri from nsWineURI\n");
+        }
+    }
+
     return NS_OK;
 }
 

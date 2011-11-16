@@ -84,6 +84,15 @@ static BOOL ensure_uri(nsWineURI *This)
     return TRUE;
 }
 
+IUri *nsuri_get_uri(nsWineURI *nsuri)
+{
+    if(!ensure_uri(nsuri))
+        return NULL;
+
+    IUri_AddRef(nsuri->uri);
+    return nsuri->uri;
+}
+
 static IUri *get_uri_nofrag(IUri *uri)
 {
     IUriBuilder *uri_builder;
