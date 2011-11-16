@@ -5289,9 +5289,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     }
 
     if(ft_face->glyph->format != ft_glyph_format_outline &&
-       (format == GGO_NATIVE || format == GGO_BEZIER ||
-        format == GGO_GRAY2_BITMAP || format == GGO_GRAY4_BITMAP ||
-        format == GGO_GRAY8_BITMAP))
+       (format == GGO_NATIVE || format == GGO_BEZIER))
     {
         TRACE("loaded a bitmap\n");
 	return GDI_ERROR;
@@ -5369,7 +5367,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
             memset( buf, 0, needed );
             while(h--) {
                 for(x = 0; x < pitch && x < ft_face->glyph->bitmap.width; x++)
-                    if (src[x / 8] & (1 << ( (7 - (x % 8))))) dst[x] = 0xff;
+                    if (src[x / 8] & (1 << ( (7 - (x % 8))))) dst[x] = max_level;
                 src += ft_face->glyph->bitmap.pitch;
                 dst += pitch;
             }
