@@ -646,6 +646,7 @@ static void _test_event_obj(unsigned line, const char *type, const xy_test_t *xy
     _test_event_screenx(line, event, -10);
     _test_event_screeny(line, event, -10);
 
+    V_VT(&v) = VT_NULL;
     hres = IHTMLEventObj_get_returnValue(event, &v);
     ok_(__FILE__,line)(hres == S_OK, "get_returnValue failed: %08x\n", hres);
     ok_(__FILE__,line)(V_VT(&v) == VT_EMPTY, "V_VT(returnValue) = %d\n", V_VT(&v));
