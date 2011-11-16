@@ -308,6 +308,12 @@ static inline DWORD get_octant_mask(int dx, int dy)
     return 1 << (get_octant_number(dx, dy) - 1);
 }
 
+static inline int get_bias( DWORD mask )
+{
+    /* Octants 3, 5, 6 and 8 take a bias */
+    return (mask & 0xb4) ? 1 : 0;
+}
+
 static void solid_pen_line_callback(dibdrv_physdev *pdev, INT x, INT y)
 {
     RECT rect;
@@ -653,8 +659,7 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
         params.dx = abs(dx);
         params.dy = abs(dy);
         params.octant = get_octant_mask(dx, dy);
-        /* Octants 3, 5, 6 and 8 take a bias */
-        params.bias = (params.octant & 0xb4) ? 1 : 0;
+        params.bias   = get_bias(params.octant);
 
         for(i = 0; i < clip->numRects; i++)
         {
@@ -926,8 +931,7 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
         params.dx = abs(dx);
         params.dy = abs(dy);
         params.octant = get_octant_mask(dx, dy);
-        /* Octants 3, 5, 6 and 8 take a bias */
-        params.bias = (params.octant & 0xb4) ? 1 : 0;
+        params.bias   = get_bias(params.octant);
 
         for(i = 0; i < clip->numRects; i++)
         {
