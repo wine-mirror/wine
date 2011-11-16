@@ -1161,7 +1161,7 @@ static Cursor create_cursor( HANDLE handle )
 #endif
 
     GetObjectW( info.hbmMask, sizeof(bm), &bm );
-    if (!info.hbmColor) bm.bmHeight /= 2;
+    if (!info.hbmColor) bm.bmHeight = max( 1, bm.bmHeight / 2 );
 
     /* make sure hotspot is valid */
     if (info.xHotspot >= bm.bmWidth || info.yHotspot >= bm.bmHeight)
