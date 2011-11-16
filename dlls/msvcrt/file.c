@@ -128,6 +128,13 @@ static const ULONGLONG WCCOM = TOUL('c') << 32 | TOUL('o') << 16 | TOUL('m');
  * protection, rather than locking the whole table for every change.
  */
 static CRITICAL_SECTION MSVCRT_file_cs;
+static CRITICAL_SECTION_DEBUG MSVCRT_file_cs_debug =
+{
+    0, 0, &MSVCRT_file_cs,
+    { &MSVCRT_file_cs_debug.ProcessLocksList, &MSVCRT_file_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": MSVCRT_file_cs") }
+};
+static CRITICAL_SECTION MSVCRT_file_cs = { &MSVCRT_file_cs_debug, -1, 0, 0, 0, 0 };
 #define LOCK_FILES()    do { EnterCriticalSection(&MSVCRT_file_cs); } while (0)
 #define UNLOCK_FILES()  do { LeaveCriticalSection(&MSVCRT_file_cs); } while (0)
 
@@ -440,8 +447,6 @@ void msvcrt_init_io(void)
   int           i;
   ioinfo        *fdinfo;
 
-  InitializeCriticalSection(&MSVCRT_file_cs);
-  MSVCRT_file_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": MSVCRT_file_cs");
   GetStartupInfoA(&si);
   if (si.cbReserved2 >= sizeof(unsigned int) && si.lpReserved2 != NULL)
   {
@@ -983,7 +988,6 @@ void msvcrt_free_io(void)
     for(i=0; i<sizeof(MSVCRT_fstream)/sizeof(MSVCRT_fstream[0]); i++)
         MSVCRT_free(MSVCRT_fstream[i]);
 
-    MSVCRT_file_cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&MSVCRT_file_cs);
 }
 
