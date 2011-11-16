@@ -484,7 +484,10 @@ static DWORD init_openssl(void)
         return ERROR_OUTOFMEMORY;
 
     for(i = 0; i < num_ssl_locks; i++)
+    {
         InitializeCriticalSection(&ssl_locks[i]);
+        ssl_locks[i].DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": ssl_locks");
+    }
     pCRYPTO_set_locking_callback(ssl_lock_callback);
 
     return ERROR_SUCCESS;
@@ -578,7 +581,11 @@ void NETCON_unload(void)
     if (ssl_locks)
     {
         int i;
-        for (i = 0; i < num_ssl_locks; i++) DeleteCriticalSection(&ssl_locks[i]);
+        for (i = 0; i < num_ssl_locks; i++)
+        {
+            ssl_locks[i].DebugInfo->Spare[0] = 0;
+            DeleteCriticalSection(&ssl_locks[i]);
+        }
         heap_free(ssl_locks);
     }
 #endif

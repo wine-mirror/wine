@@ -1825,6 +1825,7 @@ static void HTTPREQ_Destroy(object_header_t *hdr)
     }
     heap_free(request->cacheFile);
 
+    request->read_section.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &request->read_section );
     WININET_Release(&request->session->hdr);
 
@@ -3047,6 +3048,7 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
     request->data_stream = &request->netconn_stream.data_stream;
 
     InitializeCriticalSection( &request->read_section );
+    request->read_section.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": http_request_t.read_section");
 
     WININET_AddRef( &session->hdr );
     request->session = session;
