@@ -160,7 +160,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *ifa
 
     for (i = 0; i < *mode_count; ++i)
     {
-        WINED3DDISPLAYMODE mode;
+        struct wined3d_display_mode mode;
         HRESULT hr;
 
         hr = wined3d_enum_adapter_modes(wined3d, This->adapter->ordinal, wined3d_format, i, &mode);
@@ -172,9 +172,9 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *ifa
             return hr;
         }
 
-        desc[i].Width = mode.Width;
-        desc[i].Height = mode.Height;
-        desc[i].RefreshRate.Numerator = mode.RefreshRate;
+        desc[i].Width = mode.width;
+        desc[i].Height = mode.height;
+        desc[i].RefreshRate.Numerator = mode.refresh_rate;
         desc[i].RefreshRate.Denominator = 1;
         desc[i].Format = format;
         desc[i].ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED; /* FIXME */

@@ -1586,16 +1586,16 @@ void CDECL wined3d_device_set_multithreaded(struct wined3d_device *device)
 }
 
 HRESULT CDECL wined3d_device_set_display_mode(struct wined3d_device *device,
-        UINT swapchain_idx, const WINED3DDISPLAYMODE *mode)
+        UINT swapchain_idx, const struct wined3d_display_mode *mode)
 {
     struct wined3d_adapter *adapter = device->adapter;
-    const struct wined3d_format *format = wined3d_get_format(&adapter->gl_info, mode->Format);
+    const struct wined3d_format *format = wined3d_get_format(&adapter->gl_info, mode->format_id);
     DEVMODEW devmode;
     LONG ret;
     RECT clip_rc;
 
     TRACE("device %p, swapchain_idx %u, mode %p (%ux%u@%u %s).\n", device, swapchain_idx, mode,
-            mode->Width, mode->Height, mode->RefreshRate, debug_d3dformat(mode->Format));
+            mode->width, mode->height, mode->refresh_rate, debug_d3dformat(mode->format_id));
 
     /* Resize the screen even without a window:
      * The app could have unset it with SetCooperativeLevel, but not called
@@ -1607,16 +1607,16 @@ HRESULT CDECL wined3d_device_set_display_mode(struct wined3d_device *device,
     devmode.dmSize = sizeof(devmode);
     devmode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
     devmode.dmBitsPerPel = format->byte_count * CHAR_BIT;
-    devmode.dmPelsWidth = mode->Width;
-    devmode.dmPelsHeight = mode->Height;
+    devmode.dmPelsWidth = mode->width;
+    devmode.dmPelsHeight = mode->height;
 
-    devmode.dmDisplayFrequency = mode->RefreshRate;
-    if (mode->RefreshRate)
+    devmode.dmDisplayFrequency = mode->refresh_rate;
+    if (mode->refresh_rate)
         devmode.dmFields |= DM_DISPLAYFREQUENCY;
 
     /* Only change the mode if necessary */
-    if (adapter->screen_size.cx == mode->Width && adapter->screen_size.cy == mode->Height
-            && adapter->screen_format == mode->Format && !mode->RefreshRate)
+    if (adapter->screen_size.cx == mode->width && adapter->screen_size.cy == mode->height
+            && adapter->screen_format == mode->format_id && !mode->refresh_rate)
         return WINED3D_OK;
 
     ret = ChangeDisplaySettingsExW(NULL, &devmode, NULL, CDS_FULLSCREEN, NULL);
@@ -1635,12 +1635,12 @@ HRESULT CDECL wined3d_device_set_display_mode(struct wined3d_device *device,
     }
 
     /* Store the new values */
-    adapter->screen_size.cx = mode->Width;
-    adapter->screen_size.cy = mode->Height;
-    adapter->screen_format = mode->Format;
+    adapter->screen_size.cx = mode->width;
+    adapter->screen_size.cy = mode->height;
+    adapter->screen_format = mode->format_id;
 
     /* And finally clip mouse to our screen */
-    SetRect(&clip_rc, 0, 0, mode->Width, mode->Height);
+    SetRect(&clip_rc, 0, 0, mode->width, mode->height);
     ClipCursor(&clip_rc);
 
     return WINED3D_OK;
@@ -3882,7 +3882,7 @@ HRESULT CDECL wined3d_device_get_device_caps(const struct wined3d_device *device
 }
 
 HRESULT CDECL wined3d_device_get_display_mode(const struct wined3d_device *device,
-        UINT swapchain_idx, WINED3DDISPLAYMODE *mode)
+        UINT swapchain_idx, struct wined3d_display_mode *mode)
 {
     struct wined3d_swapchain *swapchain;
     HRESULT hr;
@@ -3909,10 +3909,10 @@ HRESULT CDECL wined3d_device_get_display_mode(const struct wined3d_device *devic
          *
          * Also don't relay to the swapchain because with ddraw it's possible
          * that there isn't a swapchain at all. */
-        mode->Width = adapter->screen_size.cx;
-        mode->Height = adapter->screen_size.cy;
-        mode->Format = adapter->screen_format;
-        mode->RefreshRate = 0;
+        mode->width = adapter->screen_size.cx;
+        mode->height = adapter->screen_size.cy;
+        mode->format_id = adapter->screen_format;
+        mode->refresh_rate = 0;
         hr = WINED3D_OK;
     }
 
@@ -5269,8 +5269,8 @@ static HRESULT updateSurfaceDesc(struct wined3d_surface *surface,
 
 static BOOL is_display_mode_supported(const struct wined3d_device *device, const WINED3DPRESENT_PARAMETERS *pp)
 {
+    struct wined3d_display_mode m;
     UINT i, count;
-    WINED3DDISPLAYMODE m;
     HRESULT hr;
 
     /* All Windowed modes are supported, as is leaving the current mode */
@@ -5285,7 +5285,7 @@ static BOOL is_display_mode_supported(const struct wined3d_device *device, const
         hr = wined3d_enum_adapter_modes(device->wined3d, device->adapter->ordinal, WINED3DFMT_UNKNOWN, i, &m);
         if (FAILED(hr))
             ERR("Failed to enumerate adapter mode.\n");
-        if (m.Width == pp->BackBufferWidth && m.Height == pp->BackBufferHeight)
+        if (m.width == pp->BackBufferWidth && m.height == pp->BackBufferHeight)
             /* Mode found, it is supported. */
             return TRUE;
     }
@@ -5416,9 +5416,9 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 {
     struct wined3d_resource *resource, *cursor;
     struct wined3d_swapchain *swapchain;
+    struct wined3d_display_mode mode;
     BOOL DisplayModeChanged = FALSE;
     BOOL update_desc = FALSE;
-    WINED3DDISPLAYMODE mode;
     unsigned int i;
     HRESULT hr;
 
@@ -5544,17 +5544,17 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
     if (present_parameters->Windowed)
     {
-        mode.Width = swapchain->orig_width;
-        mode.Height = swapchain->orig_height;
-        mode.RefreshRate = 0;
-        mode.Format = swapchain->presentParms.BackBufferFormat;
+        mode.width = swapchain->orig_width;
+        mode.height = swapchain->orig_height;
+        mode.refresh_rate = 0;
+        mode.format_id = swapchain->presentParms.BackBufferFormat;
     }
     else
     {
-        mode.Width = present_parameters->BackBufferWidth;
-        mode.Height = present_parameters->BackBufferHeight;
-        mode.RefreshRate = present_parameters->FullScreen_RefreshRateInHz;
-        mode.Format = swapchain->presentParms.BackBufferFormat;
+        mode.width = present_parameters->BackBufferWidth;
+        mode.height = present_parameters->BackBufferHeight;
+        mode.refresh_rate = present_parameters->FullScreen_RefreshRateInHz;
+        mode.format_id = swapchain->presentParms.BackBufferFormat;
     }
 
     /* Should Width == 800 && Height == 0 set 800x600? */
@@ -5893,9 +5893,9 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
 {
     struct wined3d_adapter *adapter = &wined3d->adapters[adapter_idx];
     const struct fragment_pipeline *fragment_pipeline;
+    struct wined3d_display_mode mode;
     struct shader_caps shader_caps;
     struct fragment_caps ffp_caps;
-    WINED3DDISPLAYMODE mode;
     unsigned int i;
     HRESULT hr;
 
@@ -5916,9 +5916,9 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
         wined3d_decref(device->wined3d);
         return hr;
     }
-    adapter->screen_size.cx = mode.Width;
-    adapter->screen_size.cy = mode.Height;
-    adapter->screen_format = mode.Format;
+    adapter->screen_size.cx = mode.width;
+    adapter->screen_size.cy = mode.height;
+    adapter->screen_format = mode.format_id;
 
     /* Save the creation parameters. */
     device->createParms.AdapterOrdinal = adapter_idx;

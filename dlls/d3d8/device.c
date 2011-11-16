@@ -422,7 +422,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetDisplayMode(IDirect3DDevice8 *ifac
     TRACE("iface %p, mode %p.\n", iface, pMode);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_display_mode(This->wined3d_device, 0, (WINED3DDISPLAYMODE *)pMode);
+    hr = wined3d_device_get_display_mode(This->wined3d_device, 0, (struct wined3d_display_mode *)pMode);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr)) pMode->Format = d3dformat_from_wined3dformat(pMode->Format);

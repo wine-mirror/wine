@@ -2903,7 +2903,7 @@ UINT CDECL wined3d_get_adapter_mode_count(const struct wined3d *wined3d, UINT ad
 
 /* Note: dx9 supplies a format. Calls from d3d8 supply WINED3DFMT_UNKNOWN */
 HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT adapter_idx,
-        enum wined3d_format_id format_id, UINT mode_idx, WINED3DDISPLAYMODE *mode)
+        enum wined3d_format_id format_id, UINT mode_idx, struct wined3d_display_mode *mode)
 {
     TRACE_(d3d_caps)("wined3d %p, adapter_idx %u, format %s, mode_idx %u, mode %p.\n",
             wined3d, adapter_idx, debug_d3dformat(format_id), mode_idx, mode);
@@ -2954,16 +2954,16 @@ HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT ada
         /* Now get the display mode via the calculated index */
         if (EnumDisplaySettingsExW(NULL, ModeIdx, &DevModeW, 0))
         {
-            mode->Width = DevModeW.dmPelsWidth;
-            mode->Height = DevModeW.dmPelsHeight;
-            mode->RefreshRate = DEFAULT_REFRESH_RATE;
+            mode->width = DevModeW.dmPelsWidth;
+            mode->height = DevModeW.dmPelsHeight;
+            mode->refresh_rate = DEFAULT_REFRESH_RATE;
             if (DevModeW.dmFields & DM_DISPLAYFREQUENCY)
-                mode->RefreshRate = DevModeW.dmDisplayFrequency;
+                mode->refresh_rate = DevModeW.dmDisplayFrequency;
 
             if (format_id == WINED3DFMT_UNKNOWN)
-                mode->Format = pixelformat_for_depth(DevModeW.dmBitsPerPel);
+                mode->format_id = pixelformat_for_depth(DevModeW.dmBitsPerPel);
             else
-                mode->Format = format_id;
+                mode->format_id = format_id;
         }
         else
         {
@@ -2972,8 +2972,8 @@ HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT ada
         }
 
         TRACE_(d3d_caps)("W %d H %d rr %d fmt (%x - %s) bpp %u\n",
-                mode->Width, mode->Height, mode->RefreshRate, mode->Format,
-                debug_d3dformat(mode->Format), DevModeW.dmBitsPerPel);
+                mode->width, mode->height, mode->refresh_rate, mode->format_id,
+                debug_d3dformat(mode->format_id), DevModeW.dmBitsPerPel);
     }
     else
     {
@@ -2984,7 +2984,7 @@ HRESULT CDECL wined3d_enum_adapter_modes(const struct wined3d *wined3d, UINT ada
 }
 
 HRESULT CDECL wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UINT adapter_idx,
-        WINED3DDISPLAYMODE *mode)
+        struct wined3d_display_mode *mode)
 {
     TRACE("wined3d %p, adapter_idx %u, display_mode %p.\n", wined3d, adapter_idx, mode);
 
@@ -3000,21 +3000,21 @@ HRESULT CDECL wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UI
         DevModeW.dmSize = sizeof(DevModeW);
 
         EnumDisplaySettingsExW(NULL, ENUM_CURRENT_SETTINGS, &DevModeW, 0);
-        mode->Width = DevModeW.dmPelsWidth;
-        mode->Height = DevModeW.dmPelsHeight;
+        mode->width = DevModeW.dmPelsWidth;
+        mode->height = DevModeW.dmPelsHeight;
         bpp = DevModeW.dmBitsPerPel;
-        mode->RefreshRate = DEFAULT_REFRESH_RATE;
-        if (DevModeW.dmFields&DM_DISPLAYFREQUENCY)
-            mode->RefreshRate = DevModeW.dmDisplayFrequency;
-        mode->Format = pixelformat_for_depth(bpp);
+        mode->refresh_rate = DEFAULT_REFRESH_RATE;
+        if (DevModeW.dmFields & DM_DISPLAYFREQUENCY)
+            mode->refresh_rate = DevModeW.dmDisplayFrequency;
+        mode->format_id = pixelformat_for_depth(bpp);
     }
     else
     {
         FIXME_(d3d_caps)("Adapter not primary display\n");
     }
 
-    TRACE_(d3d_caps)("returning w:%d, h:%d, ref:%d, fmt:%s\n", mode->Width,
-          mode->Height, mode->RefreshRate, debug_d3dformat(mode->Format));
+    TRACE_(d3d_caps)("returning w:%d, h:%d, ref:%d, fmt:%s\n", mode->width,
+          mode->height, mode->refresh_rate, debug_d3dformat(mode->format_id));
     return WINED3D_OK;
 }
 

@@ -29,7 +29,7 @@ WINE_DECLARE_DEBUG_CHANNEL(fps);
 /* Do not call while under the GL lock. */
 static void swapchain_cleanup(struct wined3d_swapchain *swapchain)
 {
-    WINED3DDISPLAYMODE mode;
+    struct wined3d_display_mode mode;
     UINT i;
 
     TRACE("Destroying swapchain %p.\n", swapchain);
@@ -74,10 +74,10 @@ static void swapchain_cleanup(struct wined3d_swapchain *swapchain)
      * orig_height will be equal to the modes in the presentation params. */
     if (!swapchain->presentParms.Windowed && swapchain->presentParms.AutoRestoreDisplayMode)
     {
-        mode.Width = swapchain->orig_width;
-        mode.Height = swapchain->orig_height;
-        mode.RefreshRate = 0;
-        mode.Format = swapchain->orig_fmt;
+        mode.width = swapchain->orig_width;
+        mode.height = swapchain->orig_height;
+        mode.refresh_rate = 0;
+        mode.format_id = swapchain->orig_fmt;
         wined3d_device_set_display_mode(swapchain->device, 0, &mode);
     }
 
@@ -221,7 +221,8 @@ HRESULT CDECL wined3d_swapchain_get_raster_status(const struct wined3d_swapchain
     return WINED3DERR_INVALIDCALL;
 }
 
-HRESULT CDECL wined3d_swapchain_get_display_mode(const struct wined3d_swapchain *swapchain, WINED3DDISPLAYMODE *mode)
+HRESULT CDECL wined3d_swapchain_get_display_mode(const struct wined3d_swapchain *swapchain,
+        struct wined3d_display_mode *mode)
 {
     HRESULT hr;
 
@@ -230,7 +231,7 @@ HRESULT CDECL wined3d_swapchain_get_display_mode(const struct wined3d_swapchain 
     hr = wined3d_get_adapter_display_mode(swapchain->device->wined3d, swapchain->device->adapter->ordinal, mode);
 
     TRACE("Returning w %u, h %u, refresh rate %u, format %s.\n",
-            mode->Width, mode->Height, mode->RefreshRate, debug_d3dformat(mode->Format));
+            mode->width, mode->height, mode->refresh_rate, debug_d3dformat(mode->format_id));
 
     return hr;
 }
@@ -828,8 +829,8 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTY
 {
     const struct wined3d_adapter *adapter = device->adapter;
     const struct wined3d_format *format;
+    struct wined3d_display_mode mode;
     BOOL displaymode_set = FALSE;
-    WINED3DDISPLAYMODE mode;
     RECT client_rect;
     HWND window;
     HRESULT hr;
@@ -873,10 +874,10 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTY
     swapchain->device_window = window;
 
     wined3d_get_adapter_display_mode(device->wined3d, adapter->ordinal, &mode);
-    swapchain->orig_width = mode.Width;
-    swapchain->orig_height = mode.Height;
-    swapchain->orig_fmt = mode.Format;
-    format = wined3d_get_format(&adapter->gl_info, mode.Format);
+    swapchain->orig_width = mode.width;
+    swapchain->orig_height = mode.height;
+    swapchain->orig_fmt = mode.format_id;
+    format = wined3d_get_format(&adapter->gl_info, mode.format_id);
 
     GetClientRect(window, &client_rect);
     if (present_parameters->Windowed
@@ -929,13 +930,13 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTY
 
     if (!present_parameters->Windowed)
     {
-        WINED3DDISPLAYMODE mode;
+        struct wined3d_display_mode mode;
 
         /* Change the display settings */
-        mode.Width = present_parameters->BackBufferWidth;
-        mode.Height = present_parameters->BackBufferHeight;
-        mode.Format = present_parameters->BackBufferFormat;
-        mode.RefreshRate = present_parameters->FullScreen_RefreshRateInHz;
+        mode.width = present_parameters->BackBufferWidth;
+        mode.height = present_parameters->BackBufferHeight;
+        mode.format_id = present_parameters->BackBufferFormat;
+        mode.refresh_rate = present_parameters->FullScreen_RefreshRateInHz;
 
         hr = wined3d_device_set_display_mode(device, 0, &mode);
         if (FAILED(hr))

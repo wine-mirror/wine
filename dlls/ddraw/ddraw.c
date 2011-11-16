@@ -739,11 +739,11 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
 
         if (cooplevel & DDSCL_FULLSCREEN)
         {
-            WINED3DDISPLAYMODE display_mode;
+            struct wined3d_display_mode display_mode;
 
             wined3d_get_adapter_display_mode(This->wineD3D, WINED3DADAPTER_DEFAULT, &display_mode);
             wined3d_device_setup_fullscreen_window(This->wined3d_device, hwnd,
-                    display_mode.Width, display_mode.Height);
+                    display_mode.width, display_mode.height);
         }
     }
 
@@ -847,8 +847,8 @@ static HRESULT WINAPI ddraw1_SetCooperativeLevel(IDirectDraw *iface, HWND window
 static HRESULT ddraw_set_display_mode(IDirectDrawImpl *ddraw, DWORD Width, DWORD Height,
         DWORD BPP, DWORD RefreshRate, DWORD Flags)
 {
+    struct wined3d_display_mode mode;
     enum wined3d_format_id format;
-    WINED3DDISPLAYMODE Mode;
     HRESULT hr;
 
     TRACE("ddraw %p, width %u, height %u, bpp %u, refresh_rate %u, flags %#x.\n", ddraw, Width,
@@ -873,14 +873,14 @@ static HRESULT ddraw_set_display_mode(IDirectDrawImpl *ddraw, DWORD Width, DWORD
         default: format = WINED3DFMT_UNKNOWN;          break;
     }
 
-    if (FAILED(hr = wined3d_device_get_display_mode(ddraw->wined3d_device, 0, &Mode)))
+    if (FAILED(hr = wined3d_device_get_display_mode(ddraw->wined3d_device, 0, &mode)))
     {
         ERR("Failed to get current display mode, hr %#x.\n", hr);
     }
-    else if (Mode.Width == Width
-            && Mode.Height == Height
-            && Mode.Format == format
-            && Mode.RefreshRate == RefreshRate)
+    else if (mode.width == Width
+            && mode.height == Height
+            && mode.format_id == format
+            && mode.refresh_rate == RefreshRate)
     {
         TRACE("Skipping redundant mode setting call.\n");
         wined3d_mutex_unlock();
@@ -896,10 +896,10 @@ static HRESULT ddraw_set_display_mode(IDirectDrawImpl *ddraw, DWORD Width, DWORD
      * depends on this
      */
 
-    Mode.Width = Width;
-    Mode.Height = Height;
-    Mode.RefreshRate = RefreshRate;
-    Mode.Format = format;
+    mode.width = Width;
+    mode.height = Height;
+    mode.refresh_rate = RefreshRate;
+    mode.format_id = format;
 
     /* TODO: The possible return values from msdn suggest that
      * the screen mode can't be changed if a surface is locked
@@ -907,7 +907,7 @@ static HRESULT ddraw_set_display_mode(IDirectDrawImpl *ddraw, DWORD Width, DWORD
      */
 
     /* TODO: Lose the primary surface */
-    hr = wined3d_device_set_display_mode(ddraw->wined3d_device, 0, &Mode);
+    hr = wined3d_device_set_display_mode(ddraw->wined3d_device, 0, &mode);
 
     if (ddraw->cooperative_level & DDSCL_EXCLUSIVE)
         SetWindowPos(ddraw->dest_window, HWND_TOP, 0, 0, Width, Height, SWP_SHOWWINDOW | SWP_NOACTIVATE);
@@ -1239,8 +1239,8 @@ static HRESULT WINAPI ddraw1_Compact(IDirectDraw *iface)
 static HRESULT WINAPI ddraw7_GetDisplayMode(IDirectDraw7 *iface, DDSURFACEDESC2 *DDSD)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw7(iface);
+    struct wined3d_display_mode mode;
     HRESULT hr;
-    WINED3DDISPLAYMODE Mode;
     DWORD Size;
 
     TRACE("iface %p, surface_desc %p.\n", iface, DDSD);
@@ -1255,7 +1255,7 @@ static HRESULT WINAPI ddraw7_GetDisplayMode(IDirectDraw7 *iface, DDSURFACEDESC2 
 
     /* The necessary members of LPDDSURFACEDESC and LPDDSURFACEDESC2 are equal,
      * so one method can be used for all versions (Hopefully) */
-    hr = wined3d_device_get_display_mode(This->wined3d_device, 0, &Mode);
+    hr = wined3d_device_get_display_mode(This->wined3d_device, 0, &mode);
     if (FAILED(hr))
     {
         ERR(" (%p) IWineD3DDevice::GetDisplayMode returned %08x\n", This, hr);
@@ -1268,13 +1268,13 @@ static HRESULT WINAPI ddraw7_GetDisplayMode(IDirectDraw7 *iface, DDSURFACEDESC2 
 
     DDSD->dwSize = Size;
     DDSD->dwFlags |= DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_PITCH | DDSD_REFRESHRATE;
-    DDSD->dwWidth = Mode.Width;
-    DDSD->dwHeight = Mode.Height;
+    DDSD->dwWidth = mode.width;
+    DDSD->dwHeight = mode.height;
     DDSD->u2.dwRefreshRate = 60;
     DDSD->ddsCaps.dwCaps = 0;
     DDSD->u4.ddpfPixelFormat.dwSize = sizeof(DDSD->u4.ddpfPixelFormat);
-    PixelFormat_WineD3DtoDD(&DDSD->u4.ddpfPixelFormat, Mode.Format);
-    DDSD->u1.lPitch = Mode.Width * DDSD->u4.ddpfPixelFormat.u1.dwRGBBitCount / 8;
+    PixelFormat_WineD3DtoDD(&DDSD->u4.ddpfPixelFormat, mode.format_id);
+    DDSD->u1.lPitch = mode.width * DDSD->u4.ddpfPixelFormat.u1.dwRGBBitCount / 8;
 
     if(TRACE_ON(ddraw))
     {
@@ -1342,20 +1342,20 @@ static HRESULT WINAPI ddraw7_GetFourCCCodes(IDirectDraw7 *iface, DWORD *NumCodes
         WINED3DFMT_DXT1, WINED3DFMT_DXT2, WINED3DFMT_DXT3, WINED3DFMT_DXT4, WINED3DFMT_DXT5,
         WINED3DFMT_ATI2N, WINED3DFMT_NVHU, WINED3DFMT_NVHS
     };
+    struct wined3d_display_mode mode;
     DWORD count = 0, i, outsize;
     HRESULT hr;
-    WINED3DDISPLAYMODE d3ddm;
 
     TRACE("iface %p, codes_count %p, codes %p.\n", iface, NumCodes, Codes);
 
-    wined3d_device_get_display_mode(This->wined3d_device, 0, &d3ddm);
+    wined3d_device_get_display_mode(This->wined3d_device, 0, &mode);
 
     outsize = NumCodes && Codes ? *NumCodes : 0;
 
     for (i = 0; i < (sizeof(formats) / sizeof(formats[0])); ++i)
     {
         hr = wined3d_check_device_format(This->wineD3D, WINED3DADAPTER_DEFAULT, WINED3DDEVTYPE_HAL,
-                d3ddm.Format, 0, WINED3DRTYPE_SURFACE, formats[i], DefaultSurfaceType);
+                mode.format_id, 0, WINED3DRTYPE_SURFACE, formats[i], DefaultSurfaceType);
         if (SUCCEEDED(hr))
         {
             if (count < outsize)
@@ -1776,9 +1776,9 @@ static HRESULT WINAPI ddraw1_WaitForVerticalBlank(IDirectDraw *iface, DWORD flag
 static HRESULT WINAPI ddraw7_GetScanLine(IDirectDraw7 *iface, DWORD *Scanline)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw7(iface);
+    struct wined3d_display_mode mode;
     static DWORD cur_scanline;
     static BOOL hide = FALSE;
-    WINED3DDISPLAYMODE Mode;
 
     TRACE("iface %p, line %p.\n", iface, Scanline);
 
@@ -1790,14 +1790,14 @@ static HRESULT WINAPI ddraw7_GetScanLine(IDirectDraw7 *iface, DWORD *Scanline)
     }
 
     wined3d_mutex_lock();
-    wined3d_device_get_display_mode(This->wined3d_device, 0, &Mode);
+    wined3d_device_get_display_mode(This->wined3d_device, 0, &mode);
     wined3d_mutex_unlock();
 
     /* Fake the line sweeping of the monitor */
     /* FIXME: We should synchronize with a source to keep the refresh rate */
     *Scanline = cur_scanline++;
     /* Assume 20 scan lines in the vertical blank */
-    if (cur_scanline >= Mode.Height + 20)
+    if (cur_scanline >= mode.height + 20)
         cur_scanline = 0;
 
     return DD_OK;
@@ -1999,10 +1999,10 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
         DDSURFACEDESC2 *DDSD, void *Context, LPDDENUMMODESCALLBACK2 cb)
 {
     IDirectDrawImpl *This = impl_from_IDirectDraw7(iface);
+    struct wined3d_display_mode *enum_modes = NULL;
+    struct wined3d_display_mode mode;
     unsigned int modenum, fmt;
-    WINED3DDISPLAYMODE mode;
     DDSURFACEDESC2 callback_sd;
-    WINED3DDISPLAYMODE *enum_modes = NULL;
     unsigned enum_mode_count = 0, enum_mode_array_size = 0;
     DDPIXELFORMAT pixelformat;
 
@@ -2023,7 +2023,7 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
     if(!(Flags & DDEDM_REFRESHRATES))
     {
         enum_mode_array_size = 16;
-        enum_modes = HeapAlloc(GetProcessHeap(), 0, sizeof(WINED3DDISPLAYMODE) * enum_mode_array_size);
+        enum_modes = HeapAlloc(GetProcessHeap(), 0, sizeof(*enum_modes) * enum_mode_array_size);
         if (!enum_modes)
         {
             ERR("Out of memory\n");
@@ -2039,14 +2039,18 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
         while (wined3d_enum_adapter_modes(This->wineD3D, WINED3DADAPTER_DEFAULT,
                 checkFormatList[fmt], modenum++, &mode) == WINED3D_OK)
         {
-            PixelFormat_WineD3DtoDD(&pixelformat, mode.Format);
-            if(DDSD)
+            PixelFormat_WineD3DtoDD(&pixelformat, mode.format_id);
+            if (DDSD)
             {
-                if(DDSD->dwFlags & DDSD_WIDTH && mode.Width != DDSD->dwWidth) continue;
-                if(DDSD->dwFlags & DDSD_HEIGHT && mode.Height != DDSD->dwHeight) continue;
-                if(DDSD->dwFlags & DDSD_REFRESHRATE && mode.RefreshRate != DDSD->u2.dwRefreshRate) continue;
-                if (DDSD->dwFlags & DDSD_PIXELFORMAT &&
-                        pixelformat.u1.dwRGBBitCount != DDSD->u4.ddpfPixelFormat.u1.dwRGBBitCount) continue;
+                if (DDSD->dwFlags & DDSD_WIDTH && mode.width != DDSD->dwWidth)
+                    continue;
+                if (DDSD->dwFlags & DDSD_HEIGHT && mode.height != DDSD->dwHeight)
+                    continue;
+                if (DDSD->dwFlags & DDSD_REFRESHRATE && mode.refresh_rate != DDSD->u2.dwRefreshRate)
+                    continue;
+                if (DDSD->dwFlags & DDSD_PIXELFORMAT
+                        && pixelformat.u1.dwRGBBitCount != DDSD->u4.ddpfPixelFormat.u1.dwRGBBitCount)
+                    continue;
             }
 
             if(!(Flags & DDEDM_REFRESHRATES))
@@ -2060,8 +2064,8 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
 
                 for (i = 0; i < enum_mode_count; i++)
                 {
-                    if(enum_modes[i].Width == mode.Width && enum_modes[i].Height == mode.Height &&
-                       enum_modes[i].Format == mode.Format)
+                    if (enum_modes[i].width == mode.width && enum_modes[i].height == mode.height
+                            && enum_modes[i].format_id == mode.format_id)
                     {
                         found = TRUE;
                         break;
@@ -2076,18 +2080,16 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
             callback_sd.u4.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
 
             callback_sd.dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT|DDSD_PITCH|DDSD_REFRESHRATE;
-            if(Flags & DDEDM_REFRESHRATES)
-            {
-                callback_sd.u2.dwRefreshRate = mode.RefreshRate;
-            }
+            if (Flags & DDEDM_REFRESHRATES)
+                callback_sd.u2.dwRefreshRate = mode.refresh_rate;
 
-            callback_sd.dwWidth = mode.Width;
-            callback_sd.dwHeight = mode.Height;
+            callback_sd.dwWidth = mode.width;
+            callback_sd.dwHeight = mode.height;
 
             callback_sd.u4.ddpfPixelFormat=pixelformat;
 
             /* Calc pitch and DWORD align like MSDN says */
-            callback_sd.u1.lPitch = (callback_sd.u4.ddpfPixelFormat.u1.dwRGBBitCount / 8) * mode.Width;
+            callback_sd.u1.lPitch = (callback_sd.u4.ddpfPixelFormat.u1.dwRGBBitCount / 8) * mode.width;
             callback_sd.u1.lPitch = (callback_sd.u1.lPitch + 3) & ~3;
 
             TRACE("Enumerating %dx%dx%d @%d\n", callback_sd.dwWidth, callback_sd.dwHeight, callback_sd.u4.ddpfPixelFormat.u1.dwRGBBitCount,
@@ -2105,11 +2107,11 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
             {
                 if (enum_mode_count == enum_mode_array_size)
                 {
-                    WINED3DDISPLAYMODE *new_enum_modes;
+                    struct wined3d_display_mode *new_enum_modes;
 
                     enum_mode_array_size *= 2;
-                    new_enum_modes = HeapReAlloc(GetProcessHeap(), 0, enum_modes, sizeof(WINED3DDISPLAYMODE) * enum_mode_array_size);
-
+                    new_enum_modes = HeapReAlloc(GetProcessHeap(), 0, enum_modes,
+                            sizeof(*new_enum_modes) * enum_mode_array_size);
                     if (!new_enum_modes)
                     {
                         ERR("Out of memory\n");
@@ -2596,7 +2598,7 @@ static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSurface
 {
     WINED3DPRESENT_PARAMETERS presentation_parameters;
     IDirectDrawSurfaceImpl *target = surface;
-    WINED3DDISPLAYMODE mode;
+    struct wined3d_display_mode mode;
     HRESULT hr = WINED3D_OK;
 
     /* FIXME: wined3d_get_adapter_display_mode() would be more appropriate
@@ -2617,9 +2619,9 @@ static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSurface
     }
 
     memset(&presentation_parameters, 0, sizeof(presentation_parameters));
-    presentation_parameters.BackBufferWidth = mode.Width;
-    presentation_parameters.BackBufferHeight = mode.Height;
-    presentation_parameters.BackBufferFormat = mode.Format;
+    presentation_parameters.BackBufferWidth = mode.width;
+    presentation_parameters.BackBufferHeight = mode.height;
+    presentation_parameters.BackBufferFormat = mode.format_id;
     presentation_parameters.SwapEffect = WINED3DSWAPEFFECT_COPY;
     presentation_parameters.hDeviceWindow = ddraw->dest_window;
     presentation_parameters.Windowed = !(ddraw->cooperative_level & DDSCL_FULLSCREEN);
@@ -2739,10 +2741,10 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
         IDirectDrawSurfaceImpl **Surf, IUnknown *UnkOuter, UINT version)
 {
     IDirectDrawSurfaceImpl *object = NULL;
+    struct wined3d_display_mode mode;
     HRESULT hr;
     LONG extra_surfaces = 0;
     DDSURFACEDESC2 desc2;
-    WINED3DDISPLAYMODE Mode;
     const DWORD sysvidmem = DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY;
 
     TRACE("ddraw %p, surface_desc %p, surface %p, outer_unknown %p.\n", ddraw, DDSD, Surf, UnkOuter);
@@ -2850,34 +2852,34 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
     desc2.u4.ddpfPixelFormat.dwSize=sizeof(DDPIXELFORMAT); /* Just to be sure */
 
     /* Get the video mode from WineD3D - we will need it */
-    hr = wined3d_device_get_display_mode(ddraw->wined3d_device, 0, &Mode);
+    hr = wined3d_device_get_display_mode(ddraw->wined3d_device, 0, &mode);
     if (FAILED(hr))
     {
         ERR("Failed to read display mode from wined3d\n");
         switch(ddraw->orig_bpp)
         {
             case 8:
-                Mode.Format = WINED3DFMT_P8_UINT;
+                mode.format_id = WINED3DFMT_P8_UINT;
                 break;
 
             case 15:
-                Mode.Format = WINED3DFMT_B5G5R5X1_UNORM;
+                mode.format_id = WINED3DFMT_B5G5R5X1_UNORM;
                 break;
 
             case 16:
-                Mode.Format = WINED3DFMT_B5G6R5_UNORM;
+                mode.format_id = WINED3DFMT_B5G6R5_UNORM;
                 break;
 
             case 24:
-                Mode.Format = WINED3DFMT_B8G8R8_UNORM;
+                mode.format_id = WINED3DFMT_B8G8R8_UNORM;
                 break;
 
             case 32:
-                Mode.Format = WINED3DFMT_B8G8R8X8_UNORM;
+                mode.format_id = WINED3DFMT_B8G8R8X8_UNORM;
                 break;
         }
-        Mode.Width = ddraw->orig_width;
-        Mode.Height = ddraw->orig_height;
+        mode.width = ddraw->orig_width;
+        mode.height = ddraw->orig_height;
     }
 
     /* No pixelformat given? Use the current screen format */
@@ -2886,7 +2888,7 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
         desc2.dwFlags |= DDSD_PIXELFORMAT;
         desc2.u4.ddpfPixelFormat.dwSize=sizeof(DDPIXELFORMAT);
 
-        PixelFormat_WineD3DtoDD(&desc2.u4.ddpfPixelFormat, Mode.Format);
+        PixelFormat_WineD3DtoDD(&desc2.u4.ddpfPixelFormat, mode.format_id);
     }
 
     /* No Width or no Height? Use the original screen size
@@ -2904,8 +2906,8 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
         }
 
         desc2.dwFlags |= DDSD_WIDTH | DDSD_HEIGHT;
-        desc2.dwWidth = Mode.Width;
-        desc2.dwHeight = Mode.Height;
+        desc2.dwWidth = mode.width;
+        desc2.dwHeight = mode.height;
     }
 
     if (!desc2.dwWidth || !desc2.dwHeight)
@@ -4544,7 +4546,7 @@ static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device
         LPD3DENUMPIXELFORMATSCALLBACK callback, void *context)
 {
     IDirectDrawImpl *This = impl_from_IDirect3D7(iface);
-    WINED3DDISPLAYMODE d3ddm;
+    struct wined3d_display_mode mode;
     WINED3DDEVTYPE type;
     unsigned int i;
     HRESULT hr;
@@ -4602,11 +4604,11 @@ static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device
      * not like that we'll have to find some workaround, like iterating over
      * all imaginable formats and collecting all the depth stencil formats we
      * can get. */
-    hr = wined3d_device_get_display_mode(This->wined3d_device, 0, &d3ddm);
+    hr = wined3d_device_get_display_mode(This->wined3d_device, 0, &mode);
 
     for (i = 0; i < (sizeof(formats) / sizeof(*formats)); ++i)
     {
-        hr = wined3d_check_device_format(This->wineD3D, WINED3DADAPTER_DEFAULT, type, d3ddm.Format,
+        hr = wined3d_check_device_format(This->wineD3D, WINED3DADAPTER_DEFAULT, type, mode.format_id,
                 WINED3DUSAGE_DEPTHSTENCIL, WINED3DRTYPE_SURFACE, formats[i], SURFACE_OPENGL);
         if (SUCCEEDED(hr))
         {
@@ -4631,7 +4633,7 @@ static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device
      * while others used dwZBufferBitDepth=32. In either case the pitch matches a 32 bits per
      * pixel format, so we use dwZBufferBitDepth=32. Some games expect 24. Windows Vista and
      * newer enumerate both versions, so we do the same(bug 22434) */
-    hr = wined3d_check_device_format(This->wineD3D, WINED3DADAPTER_DEFAULT, type, d3ddm.Format,
+    hr = wined3d_check_device_format(This->wineD3D, WINED3DADAPTER_DEFAULT, type, mode.format_id,
             WINED3DUSAGE_DEPTHSTENCIL, WINED3DRTYPE_SURFACE, WINED3DFMT_X8D24_UNORM, SURFACE_OPENGL);
     if (SUCCEEDED(hr))
     {

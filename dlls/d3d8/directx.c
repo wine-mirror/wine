@@ -175,7 +175,8 @@ static HRESULT WINAPI IDirect3D8Impl_EnumAdapterModes(LPDIRECT3D8 iface, UINT Ad
             iface, Adapter, Mode, pMode);
 
     wined3d_mutex_lock();
-    hr = wined3d_enum_adapter_modes(This->WineD3D, Adapter, WINED3DFMT_UNKNOWN, Mode, (WINED3DDISPLAYMODE *)pMode);
+    hr = wined3d_enum_adapter_modes(This->WineD3D, Adapter, WINED3DFMT_UNKNOWN,
+            Mode, (struct wined3d_display_mode *)pMode);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr)) pMode->Format = d3dformat_from_wined3dformat(pMode->Format);
@@ -193,7 +194,7 @@ static HRESULT WINAPI IDirect3D8Impl_GetAdapterDisplayMode(LPDIRECT3D8 iface, UI
             iface, Adapter, pMode);
 
     wined3d_mutex_lock();
-    hr = wined3d_get_adapter_display_mode(This->WineD3D, Adapter, (WINED3DDISPLAYMODE *)pMode);
+    hr = wined3d_get_adapter_display_mode(This->WineD3D, Adapter, (struct wined3d_display_mode *)pMode);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr)) pMode->Format = d3dformat_from_wined3dformat(pMode->Format);
