@@ -2133,12 +2133,12 @@
 @ stub -arch=win64 ?_Clog_func@std@@YAAEAV?$basic_ostream@DU?$char_traits@D@std@@@1@XZ
 @ stub -arch=win64 ?_Cm@?5???$log@M@std@@YA?AV?$complex@M@1@AEBV21@@Z@4MB
 @ stub -arch=win64 ?_Cm@?5???$log@N@std@@YA?AV?$complex@N@1@AEBV21@@Z@4NB
-@ stub -arch=win32 ?_Copy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IAEXII@Z
-@ stub -arch=win64 ?_Copy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IEAAX_K0@Z
+@ thiscall -arch=win32 ?_Copy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IAEXII@Z(ptr long long) basic_string_char__Copy
+@ cdecl -arch=win64 ?_Copy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IEAAX_K0@Z(ptr long long) basic_string_char__Copy
 @ stub -arch=win32 ?_Copy@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@IAEXII@Z
 @ stub -arch=win64 ?_Copy@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@IEAAX_K0@Z
-@ stub -arch=win32 ?_Copy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IAEXII@Z
-@ stub -arch=win64 ?_Copy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IEAAX_K0@Z
+@ thiscall -arch=win32 ?_Copy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IAEXII@Z(ptr long long) basic_string_wchar__Copy
+@ cdecl -arch=win64 ?_Copy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IEAAX_K0@Z(ptr long long) basic_string_wchar__Copy
 @ thiscall -arch=win32 ?_Copy_s@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPADIII@Z(ptr ptr long long long) MSVCP_basic_string_char_Copy_s
 @ cdecl -arch=win64 ?_Copy_s@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEAD_K11@Z(ptr ptr long long long) MSVCP_basic_string_char_Copy_s
 @ stub -arch=win32 ?_Copy_s@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIPAGIII@Z

@@ -634,6 +634,19 @@ MSVCP_bool __thiscall basic_string_char_grow(
     return (new_size>0);
 }
 
+/* ?_Copy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IAEXII@Z */
+/* ?_Copy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IEAAX_K0@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_char__Copy, 12)
+void __thiscall basic_string_char__Copy(basic_string_char *this,
+        MSVCP_size_t new_size, MSVCP_size_t copy_len)
+{
+    TRACE("%p %lu %lu\n", this, new_size, copy_len);
+
+    if(!basic_string_char_grow(this, new_size, FALSE))
+        return;
+    basic_string_char_eos(this, copy_len);
+}
+
 /* ?_Pdif@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@KAIV?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0@Z */
 /* ?_Pdif@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@KA_KV?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0@Z */
 MSVCP_size_t __cdecl MSVCP_basic_string_char_Pdif(String_iterator_char i1, String_iterator_char i2)
@@ -2296,6 +2309,19 @@ MSVCP_bool __thiscall basic_string_wchar_grow(
         basic_string_wchar_eos(this, 0);
 
     return (new_size>0);
+}
+
+/* ?_Copy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IAEXII@Z */
+/* ?_Copy@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IEAAX_K0@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar__Copy, 12)
+void __thiscall basic_string_wchar__Copy(basic_string_wchar *this,
+        MSVCP_size_t new_size, MSVCP_size_t copy_len)
+{
+    TRACE("%p %lu %lu\n", this, new_size, copy_len);
+
+    if(!basic_string_wchar_grow(this, new_size, FALSE))
+        return;
+    basic_string_wchar_eos(this, copy_len);
 }
 
 /* ?_Pdif@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@KAIV?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0@Z */
