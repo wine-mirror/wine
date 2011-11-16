@@ -5038,6 +5038,17 @@ static inline BOOL is_identity_MAT2(const MAT2 *matrix)
     return !memcmp(matrix, &identity, sizeof(MAT2));
 }
 
+static inline BYTE get_max_level( UINT format )
+{
+    switch( format )
+    {
+    case GGO_GRAY2_BITMAP: return 4;
+    case GGO_GRAY4_BITMAP: return 16;
+    case GGO_GRAY8_BITMAP: return 64;
+    }
+    return 255;
+}
+
 static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
                                LPGLYPHMETRICS lpgm, DWORD buflen, LPVOID buf,
                                const MAT2* lpmat)
@@ -5337,7 +5348,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     case GGO_GRAY8_BITMAP:
     case WINE_GGO_GRAY16_BITMAP:
       {
-	unsigned int mult, row, col;
+	unsigned int max_level, row, col;
 	BYTE *start, *ptr;
 
         width = lpgm->gmBlackBoxX;
@@ -5346,6 +5357,8 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 	needed = pitch * height;
 
 	if(!buf || !buflen) break;
+
+        max_level = get_max_level( format );
 
 	switch(ft_face->glyph->format) {
 	case ft_glyph_format_bitmap:
@@ -5379,29 +5392,22 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 
             pFT_Outline_Get_Bitmap(library, &ft_face->glyph->outline, &ft_bitmap);
 
-            if(format == GGO_GRAY2_BITMAP)
-                mult = 4;
-            else if(format == GGO_GRAY4_BITMAP)
-                mult = 16;
-            else if(format == GGO_GRAY8_BITMAP)
-                mult = 64;
-            else /* format == WINE_GGO_GRAY16_BITMAP */
-                return needed;
-            break;
+            if (max_level != 255)
+            {
+                for (row = 0, start = buf; row < height; row++)
+                {
+                    for (col = 0, ptr = start; col < width; col++, ptr++)
+                        *ptr = (((int)*ptr) * max_level + 128) / 256;
+                    start += pitch;
+                }
+            }
+            return needed;
           }
+
         default:
             FIXME("loaded glyph format %x\n", ft_face->glyph->format);
             return GDI_ERROR;
         }
-
-	start = buf;
-	for(row = 0; row < height; row++) {
-	    ptr = start;
-	    for(col = 0; col < width; col++, ptr++) {
-	        *ptr = (((int)*ptr) * mult + 128) / 256;
-	    }
-	    start += pitch;
-	}
 	break;
       }
 
