@@ -97,20 +97,6 @@ static const struct dinput_device *dinput_devices[] =
 
 static HINSTANCE DINPUT_instance = NULL;
 
-BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserv)
-{
-    switch(reason)
-    {
-      case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls(inst);
-        DINPUT_instance = inst;
-        break;
-      case DLL_PROCESS_DETACH:
-        break;
-    }
-    return TRUE;
-}
-
 static BOOL check_hook_thread(void);
 static CRITICAL_SECTION dinput_hook_crit;
 static struct list direct_input_list = LIST_INIT( direct_input_list );
@@ -1442,4 +1428,19 @@ void check_dinput_hooks(LPDIRECTINPUTDEVICE8W iface)
     PostThreadMessageW( hook_thread_id, WM_USER+0x10, 1, 0 );
 
     LeaveCriticalSection(&dinput_hook_crit);
+}
+
+BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserv)
+{
+    switch(reason)
+    {
+      case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(inst);
+        DINPUT_instance = inst;
+        break;
+      case DLL_PROCESS_DETACH:
+        DeleteCriticalSection(&dinput_hook_crit);
+        break;
+    }
+    return TRUE;
 }
