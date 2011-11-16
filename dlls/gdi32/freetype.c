@@ -5049,6 +5049,8 @@ static inline BYTE get_max_level( UINT format )
     return 255;
 }
 
+static const BYTE masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
+
 static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
                                LPGLYPHMETRICS lpgm, DWORD buflen, LPVOID buf,
                                const MAT2* lpmat)
@@ -5367,7 +5369,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
             memset( buf, 0, needed );
             while(h--) {
                 for(x = 0; x < pitch && x < ft_face->glyph->bitmap.width; x++)
-                    if (src[x / 8] & (1 << ( (7 - (x % 8))))) dst[x] = max_level;
+                    if (src[x / 8] & masks[x % 8]) dst[x] = max_level;
                 src += ft_face->glyph->bitmap.pitch;
                 dst += pitch;
             }
@@ -5439,7 +5441,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
             {
                 for (x = 0; x < width && x < ft_face->glyph->bitmap.width; x++)
                 {
-                    if ( src[x / 8] & (1 << ( (7 - (x % 8)))) )
+                    if ( src[x / 8] & masks[x % 8] )
                         ((unsigned int *)dst)[x] = ~0u;
                 }
                 src += src_pitch;
