@@ -5525,6 +5525,70 @@ static const uri_builder_test uri_builder_tests[] = {
         0,INET_E_INVALID_URL,FALSE,
         0,INET_E_INVALID_URL,FALSE,
         0,0,0,INET_E_INVALID_URL,FALSE
+    },
+    {   "file:///c:/dir/file.html",0,S_OK,FALSE,
+        {
+            {TRUE,NULL,NULL,Uri_PROPERTY_FRAGMENT,S_OK},
+        },
+        {FALSE},
+        0,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,0,0,S_OK,FALSE,
+        {
+            {"file:///c:/dir/file.html",S_OK},
+            {"",S_FALSE},
+            {"file:///c:/dir/file.html",S_OK},
+            {"",S_FALSE},
+            {".html",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"/c:/dir/file.html",S_OK},
+            {"/c:/dir/file.html",S_OK},
+            {"",S_FALSE},
+            {"file:///c:/dir/file.html",S_OK},
+            {"file",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_FILE,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
+    },
+    {   "file:///c:/dir/file.html",0,S_OK,FALSE,
+        {
+            {TRUE,"#",NULL,Uri_PROPERTY_FRAGMENT,S_OK},
+        },
+        {FALSE},
+        0,S_OK,FALSE,
+        0,S_OK,FALSE,
+        0,0,0,S_OK,FALSE,
+        {
+            {"file:///c:/dir/file.html#",S_OK},
+            {"",S_FALSE},
+            {"file:///c:/dir/file.html#",S_OK},
+            {"",S_FALSE},
+            {".html",S_OK},
+            {"#",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE},
+            {"/c:/dir/file.html",S_OK},
+            {"/c:/dir/file.html",S_OK},
+            {"",S_FALSE},
+            {"file:///c:/dir/file.html#",S_OK},
+            {"file",S_OK},
+            {"",S_FALSE},
+            {"",S_FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK},
+            {0,S_FALSE},
+            {URL_SCHEME_FILE,S_OK},
+            {URLZONE_INVALID,E_NOTIMPL}
+        }
     }
 };
 

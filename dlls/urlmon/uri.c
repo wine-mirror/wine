@@ -3941,7 +3941,8 @@ static HRESULT validate_components(const UriBuilder *builder, parse_data *data, 
 
     /* The URI is opaque if it doesn't have an authority component. */
     if(!data->is_relative)
-        data->is_opaque = !data->username && !data->password && !data->host && !data->has_port;
+        data->is_opaque = !data->username && !data->password && !data->host && !data->has_port
+            && data->scheme_type != URL_SCHEME_FILE;
     else
         data->is_opaque = !data->host && !data->has_port;
 
