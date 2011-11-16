@@ -796,7 +796,10 @@ CreateMappedBitmap (HINSTANCE hInstance, INT_PTR idBitmap, UINT wFlags,
         nColorTableSize = (1 << lpBitmap->biBitCount);
     else
         nColorTableSize = 0;
-    nSize = lpBitmap->biSize + nColorTableSize * sizeof(RGBQUAD);
+    nSize = lpBitmap->biSize;
+    if (nSize == sizeof(BITMAPINFOHEADER) && lpBitmap->biCompression == BI_BITFIELDS)
+        nSize += 3 * sizeof(DWORD);
+    nSize += nColorTableSize * sizeof(RGBQUAD);
     lpBitmapInfo = GlobalAlloc (GMEM_FIXED, nSize);
     if (lpBitmapInfo == NULL)
 	return 0;
