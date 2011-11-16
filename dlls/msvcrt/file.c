@@ -3062,8 +3062,45 @@ int CDECL MSVCRT__wfopen_s(MSVCRT_FILE** pFile, const MSVCRT_wchar_t *filename,
     return 0;
 }
 
-/* MSVCRT_fputc calls MSVCRT__flsbuf which calls MSVCRT_fputc */
-int CDECL MSVCRT__flsbuf(int c, MSVCRT_FILE* file);
+/*********************************************************************
+ *		_flsbuf (MSVCRT.@)
+ */
+int CDECL MSVCRT__flsbuf(int c, MSVCRT_FILE* file)
+{
+    /* Flush output buffer */
+    if(file->_bufsiz == 0 && !(file->_flag & MSVCRT__IONBF)) {
+        msvcrt_alloc_buffer(file);
+    }
+    if(!(file->_flag & MSVCRT__IOWRT)) {
+        if(file->_flag & MSVCRT__IORW)
+            file->_flag |= MSVCRT__IOWRT;
+        else
+            return MSVCRT_EOF;
+    }
+    if(file->_bufsiz) {
+        int res = 0;
+
+        if(file->_cnt == 0)
+            res = msvcrt_flush_buffer(file);
+        if(!res) {
+            *file->_ptr++ = c;
+            file->_cnt--;
+            res = msvcrt_flush_buffer(file);
+        }
+
+        return res ? res : c&0xff;
+    } else {
+        unsigned char cc=c;
+        int len;
+        /* set _cnt to 0 for unbuffered FILEs */
+        file->_cnt = 0;
+        len = MSVCRT__write(file->_file, &cc, 1);
+        if (len == 1)
+            return c & 0xff;
+        file->_flag |= MSVCRT__IOERR;
+        return MSVCRT_EOF;
+    }
+}
 
 /*********************************************************************
  *		fputc (MSVCRT.@)
@@ -3091,39 +3128,6 @@ int CDECL MSVCRT_fputc(int c, MSVCRT_FILE* file)
     MSVCRT__unlock_file(file);
     return res;
   }
-}
-
-/*********************************************************************
- *		_flsbuf (MSVCRT.@)
- */
-int CDECL MSVCRT__flsbuf(int c, MSVCRT_FILE* file)
-{
-    /* Flush output buffer */
-    if(file->_bufsiz == 0 && !(file->_flag & MSVCRT__IONBF)) {
-        msvcrt_alloc_buffer(file);
-    }
-    if(!(file->_flag & MSVCRT__IOWRT)) {
-        if(file->_flag & MSVCRT__IORW)
-            file->_flag |= MSVCRT__IOWRT;
-        else
-            return MSVCRT_EOF;
-    }
-    if(file->_bufsiz) {
-        int res=msvcrt_flush_buffer(file);
-        if(!res)
-            res = MSVCRT_fputc(c, file);
-        return res;
-    } else {
-        unsigned char cc=c;
-        int len;
-        /* set _cnt to 0 for unbuffered FILEs */
-        file->_cnt = 0;
-        len = MSVCRT__write(file->_file, &cc, 1);
-        if (len == 1)
-            return c & 0xff;
-        file->_flag |= MSVCRT__IOERR;
-        return MSVCRT_EOF;
-    }
 }
 
 /*********************************************************************
