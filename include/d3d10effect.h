@@ -842,6 +842,8 @@ HRESULT WINAPI D3D10StateBlockMaskEnableCapture(D3D10_STATE_BLOCK_MASK *mask,
         D3D10_DEVICE_STATE_TYPES state_type, UINT start_idx, UINT count);
 BOOL WINAPI D3D10StateBlockMaskGetSetting(D3D10_STATE_BLOCK_MASK *mask,
         D3D10_DEVICE_STATE_TYPES state_type, UINT idx);
+HRESULT WINAPI D3D10StateBlockMaskIntersect(D3D10_STATE_BLOCK_MASK *mask_x,
+        D3D10_STATE_BLOCK_MASK *mask_y, D3D10_STATE_BLOCK_MASK *result);
 
 #ifdef __cplusplus
 }
