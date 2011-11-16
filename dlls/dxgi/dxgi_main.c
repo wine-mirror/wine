@@ -39,7 +39,6 @@ struct dxgi_main
     HMODULE d3d10core;
     struct dxgi_device_layer *device_layers;
     UINT layer_count;
-    LONG refcount;
 };
 static struct dxgi_main dxgi_main;
 
@@ -65,11 +64,10 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     {
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls(hInstDLL);
-            ++dxgi_main.refcount;
             break;
 
         case DLL_PROCESS_DETACH:
-            if (!--dxgi_main.refcount) dxgi_main_cleanup();
+            dxgi_main_cleanup();
             break;
     }
 
