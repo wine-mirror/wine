@@ -1211,7 +1211,7 @@ static LPDLGTEMPLATEW AX_ConvertDialogTemplate(LPCDLGTEMPLATEW src_tmpl)
         src += strlenW(src) + 1; /* title */
         if ( GET_WORD(tmp) == '{' ) /* all this mess created because of this line */
         {
-            static const WCHAR AtlAxWin[9]={'A','t','l','A','x','W','i','n',0};
+            static const WCHAR AtlAxWin[] = {'A','t','l','A','x','W','i','n', 0};
             PUT_BLOCK(AtlAxWin, sizeof(AtlAxWin)/sizeof(WCHAR));
             PUT_BLOCK(tmp, strlenW(tmp)+1);
         } else
