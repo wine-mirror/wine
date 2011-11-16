@@ -65,19 +65,21 @@ static CRITICAL_SECTION csPendingCredentials = { &critsect_debug, -1, 0, 0, 0, 0
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
+    struct pending_credentials *entry, *cursor2;
     TRACE("(0x%p, %d, %p)\n",hinstDLL,fdwReason,lpvReserved);
 
-    if (fdwReason == DLL_WINE_PREATTACH) return FALSE;	/* prefer native version */
-
-    if (fdwReason == DLL_PROCESS_ATTACH)
+    switch (fdwReason)
     {
+    case DLL_WINE_PREATTACH:
+        return FALSE;	/* prefer native version */
+
+    case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hinstDLL);
         hinstCredUI = hinstDLL;
         InitCommonControls();
-    }
-    else if (fdwReason == DLL_PROCESS_DETACH)
-    {
-        struct pending_credentials *entry, *cursor2;
+        break;
+
+    case DLL_PROCESS_DETACH:
         LIST_FOR_EACH_ENTRY_SAFE(entry, cursor2, &pending_credentials_list, struct pending_credentials, entry)
         {
             list_remove(&entry->entry);
@@ -88,6 +90,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             HeapFree(GetProcessHeap(), 0, entry->pszPassword);
             HeapFree(GetProcessHeap(), 0, entry);
         }
+        DeleteCriticalSection(&csPendingCredentials);
+        break;
     }
 
     return TRUE;
