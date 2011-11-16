@@ -2925,14 +2925,18 @@ static HRESULT request_send( struct winhttp_request *request )
     if (!(ret = WinHttpSendRequest( request->hrequest, NULL, 0, ptr, size, size, 0 )))
     {
         err = get_last_error();
+        goto error;
     }
-    if (!sa) heap_free( ptr );
-    else if ((hr = SafeArrayUnaccessData( sa )) != S_OK) return hr;
-    if (!ret) return HRESULT_FROM_WIN32( err );
-    if ((err = wait_for_completion( request ))) return HRESULT_FROM_WIN32( err );
-
+    if ((err = wait_for_completion( request ))) goto error;
+    if (sa) SafeArrayUnaccessData( sa );
+    else heap_free( ptr );
     request->state = REQUEST_STATE_SENT;
     return S_OK;
+
+error:
+    if (sa) SafeArrayUnaccessData( sa );
+    else heap_free( ptr );
+    return HRESULT_FROM_WIN32( err );
 }
 
 static HRESULT request_send_and_receive( struct winhttp_request *request )
