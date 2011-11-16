@@ -211,6 +211,8 @@ static DWORD calc_arg_size(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
         break;
     default:
         FIXME("Unhandled type %02x\n", *pFormat);
+        /* fallthrough */
+    case RPC_FC_IP:
         size = sizeof(void *);
         break;
     }
