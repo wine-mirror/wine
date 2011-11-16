@@ -54,6 +54,7 @@ static void dxgi_main_cleanup(void)
     dxgi_main.d3d10core = NULL;
 
     LeaveCriticalSection(&dxgi_cs);
+    DeleteCriticalSection(&dxgi_cs);
 }
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
