@@ -94,6 +94,7 @@ static void test_stateblock_mask(void)
     };
     D3D10_STATE_BLOCK_MASK mask_x, mask_y, result;
     HRESULT hr;
+    BOOL ret;
     UINT i;
 
     memset(&mask_x, 0, sizeof(mask_x));
@@ -176,6 +177,27 @@ static void test_stateblock_mask(void)
                 result.VSShaderResources[2], result.VSShaderResources[3],
                 result.VSShaderResources[4], i);
     }
+
+    result.VS = 0xff;
+    ret = D3D10StateBlockMaskGetSetting(&result, D3D10_DST_VS, 0);
+    ok(ret == 1, "Got unexpected ret %#x.\n", ret);
+    ret = D3D10StateBlockMaskGetSetting(&result, D3D10_DST_VS, 1);
+    ok(!ret, "Got unexpected ret %#x.\n", ret);
+    result.VS = 0xfe;
+    ret = D3D10StateBlockMaskGetSetting(&result, D3D10_DST_VS, 0);
+    ok(!ret, "Got unexpected ret %#x.\n", ret);
+    result.VS = 0;
+    ret = D3D10StateBlockMaskGetSetting(&result, D3D10_DST_VS, 0);
+    ok(!ret, "Got unexpected ret %#x.\n", ret);
+    memset(&result, 0xff, sizeof(result));
+    ret = D3D10StateBlockMaskGetSetting(&result, D3D10_DST_VS_SHADER_RESOURCES, 3);
+    ok(ret == 8, "Got unexpected ret %#x.\n", ret);
+    ret = D3D10StateBlockMaskGetSetting(&result, D3D10_DST_VS_SHADER_RESOURCES,
+            D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
+    ok(!ret, "Got unexpected ret %#x.\n", ret);
+    memset(&result, 0, sizeof(result));
+    ret = D3D10StateBlockMaskGetSetting(&result, D3D10_DST_VS_SHADER_RESOURCES, 3);
+    ok(!ret, "Got unexpected ret %#x.\n", ret);
 }
 
 START_TEST(device)

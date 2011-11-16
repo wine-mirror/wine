@@ -840,6 +840,8 @@ HRESULT WINAPI D3D10StateBlockMaskDisableCapture(D3D10_STATE_BLOCK_MASK *mask,
 HRESULT WINAPI D3D10StateBlockMaskEnableAll(D3D10_STATE_BLOCK_MASK *mask);
 HRESULT WINAPI D3D10StateBlockMaskEnableCapture(D3D10_STATE_BLOCK_MASK *mask,
         D3D10_DEVICE_STATE_TYPES state_type, UINT start_idx, UINT count);
+BOOL WINAPI D3D10StateBlockMaskGetSetting(D3D10_STATE_BLOCK_MASK *mask,
+        D3D10_DEVICE_STATE_TYPES state_type, UINT idx);
 
 #ifdef __cplusplus
 }
