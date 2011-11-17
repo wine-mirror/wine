@@ -1385,13 +1385,16 @@ IDirect3DDeviceImpl_1_SetMatrix(IDirect3DDevice *iface,
     *m = *D3DMatrix;
 
     if (D3DMatHandle == This->world)
-        wined3d_device_set_transform(This->wined3d_device, WINED3DTS_WORLDMATRIX(0), (WINED3DMATRIX *)D3DMatrix);
+        wined3d_device_set_transform(This->wined3d_device,
+                WINED3DTS_WORLDMATRIX(0), (struct wined3d_matrix *)D3DMatrix);
 
     if (D3DMatHandle == This->view)
-        wined3d_device_set_transform(This->wined3d_device, WINED3DTS_VIEW, (WINED3DMATRIX *)D3DMatrix);
+        wined3d_device_set_transform(This->wined3d_device,
+                WINED3DTS_VIEW, (struct wined3d_matrix *)D3DMatrix);
 
     if (D3DMatHandle == This->proj)
-        wined3d_device_set_transform(This->wined3d_device, WINED3DTS_PROJECTION, (WINED3DMATRIX *)D3DMatrix);
+        wined3d_device_set_transform(This->wined3d_device,
+                WINED3DTS_PROJECTION, (struct wined3d_matrix *)D3DMatrix);
 
     wined3d_mutex_unlock();
 
@@ -3198,9 +3201,9 @@ IDirect3DDeviceImpl_7_SetTransform(IDirect3DDevice7 *iface,
     if (!Matrix)
         return DDERR_INVALIDPARAMS;
 
-    /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
+    /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
     wined3d_mutex_lock();
-    hr = wined3d_device_set_transform(This->wined3d_device, type, (WINED3DMATRIX *)Matrix);
+    hr = wined3d_device_set_transform(This->wined3d_device, type, (struct wined3d_matrix *)Matrix);
     wined3d_mutex_unlock();
 
     return hr;
@@ -3289,9 +3292,9 @@ IDirect3DDeviceImpl_7_GetTransform(IDirect3DDevice7 *iface,
     if(!Matrix)
         return DDERR_INVALIDPARAMS;
 
-    /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
+    /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
     wined3d_mutex_lock();
-    hr = wined3d_device_get_transform(This->wined3d_device, type, (WINED3DMATRIX *)Matrix);
+    hr = wined3d_device_get_transform(This->wined3d_device, type, (struct wined3d_matrix *)Matrix);
     wined3d_mutex_unlock();
 
     return hr;
@@ -3378,10 +3381,10 @@ IDirect3DDeviceImpl_7_MultiplyTransform(IDirect3DDevice7 *iface,
         default:                        type = TransformStateType;
     }
 
-    /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
+    /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
     wined3d_mutex_lock();
     hr = wined3d_device_multiply_transform(This->wined3d_device,
-            type, (WINED3DMATRIX *)D3DMatrix);
+            type, (struct wined3d_matrix *)D3DMatrix);
     wined3d_mutex_unlock();
 
     return hr;

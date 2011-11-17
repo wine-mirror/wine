@@ -1532,7 +1532,7 @@ struct wined3d_vec3
     float z;
 };
 
-typedef struct _WINED3DMATRIX
+struct wined3d_matrix
 {
     union
     {
@@ -1545,7 +1545,7 @@ typedef struct _WINED3DMATRIX
         } DUMMYSTRUCTNAME;
         float m[4][4];
     } DUMMYUNIONNAME;
-} WINED3DMATRIX;
+};
 
 typedef struct _WINED3DLIGHT
 {
@@ -2251,7 +2251,7 @@ HRESULT __cdecl wined3d_device_get_texture(const struct wined3d_device *device,
 HRESULT __cdecl wined3d_device_get_texture_stage_state(const struct wined3d_device *device,
         UINT stage, WINED3DTEXTURESTAGESTATETYPE state, DWORD *value);
 HRESULT __cdecl wined3d_device_get_transform(const struct wined3d_device *device,
-        WINED3DTRANSFORMSTATETYPE state, WINED3DMATRIX *matrix);
+        WINED3DTRANSFORMSTATETYPE state, struct wined3d_matrix *matrix);
 HRESULT __cdecl wined3d_device_get_vertex_declaration(const struct wined3d_device *device,
         struct wined3d_vertex_declaration **declaration);
 struct wined3d_shader * __cdecl wined3d_device_get_vertex_shader(const struct wined3d_device *device);
@@ -2267,7 +2267,7 @@ ULONG __cdecl wined3d_device_incref(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_init_3d(struct wined3d_device *device, WINED3DPRESENT_PARAMETERS *present_parameters);
 HRESULT __cdecl wined3d_device_init_gdi(struct wined3d_device *device, WINED3DPRESENT_PARAMETERS *present_parameters);
 HRESULT __cdecl wined3d_device_multiply_transform(struct wined3d_device *device,
-        WINED3DTRANSFORMSTATETYPE state, const WINED3DMATRIX *matrix);
+        WINED3DTRANSFORMSTATETYPE state, const struct wined3d_matrix *matrix);
 HRESULT __cdecl wined3d_device_present(const struct wined3d_device *device, const RECT *src_rect,
         const RECT *dst_rect, HWND dst_window_override, const RGNDATA *dirty_region);
 HRESULT __cdecl wined3d_device_process_vertices(struct wined3d_device *device,
@@ -2320,7 +2320,7 @@ HRESULT __cdecl wined3d_device_set_texture(struct wined3d_device *device, UINT s
 HRESULT __cdecl wined3d_device_set_texture_stage_state(struct wined3d_device *device,
         UINT stage, WINED3DTEXTURESTAGESTATETYPE state, DWORD value);
 HRESULT __cdecl wined3d_device_set_transform(struct wined3d_device *device,
-        WINED3DTRANSFORMSTATETYPE state, const WINED3DMATRIX *matrix);
+        WINED3DTRANSFORMSTATETYPE state, const struct wined3d_matrix *matrix);
 HRESULT __cdecl wined3d_device_set_vertex_declaration(struct wined3d_device *device,
         struct wined3d_vertex_declaration *declaration);
 HRESULT __cdecl wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader);

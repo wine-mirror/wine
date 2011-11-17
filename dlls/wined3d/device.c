@@ -1816,7 +1816,7 @@ HRESULT CDECL wined3d_device_get_stream_source_freq(const struct wined3d_device 
 }
 
 HRESULT CDECL wined3d_device_set_transform(struct wined3d_device *device,
-        WINED3DTRANSFORMSTATETYPE d3dts, const WINED3DMATRIX *matrix)
+        WINED3DTRANSFORMSTATETYPE d3dts, const struct wined3d_matrix *matrix)
 {
     TRACE("device %p, state %s, matrix %p.\n",
             device, debug_d3dtstype(d3dts), matrix);
@@ -1861,7 +1861,7 @@ HRESULT CDECL wined3d_device_set_transform(struct wined3d_device *device,
 }
 
 HRESULT CDECL wined3d_device_get_transform(const struct wined3d_device *device,
-        WINED3DTRANSFORMSTATETYPE state, WINED3DMATRIX *matrix)
+        WINED3DTRANSFORMSTATETYPE state, struct wined3d_matrix *matrix)
 {
     TRACE("device %p, state %s, matrix %p.\n", device, debug_d3dtstype(state), matrix);
 
@@ -1871,10 +1871,10 @@ HRESULT CDECL wined3d_device_get_transform(const struct wined3d_device *device,
 }
 
 HRESULT CDECL wined3d_device_multiply_transform(struct wined3d_device *device,
-        WINED3DTRANSFORMSTATETYPE state, const WINED3DMATRIX *matrix)
+        WINED3DTRANSFORMSTATETYPE state, const struct wined3d_matrix *matrix)
 {
-    const WINED3DMATRIX *mat = NULL;
-    WINED3DMATRIX temp;
+    const struct wined3d_matrix *mat = NULL;
+    struct wined3d_matrix temp;
 
     TRACE("device %p, state %s, matrix %p.\n", device, debug_d3dtstype(state), matrix);
 
@@ -3199,9 +3199,9 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     char *dest_ptr, *dest_conv = NULL, *dest_conv_addr = NULL;
+    struct wined3d_matrix mat, proj_mat, view_mat, world_mat;
     unsigned int i;
     WINED3DVIEWPORT vp;
-    WINED3DMATRIX mat, proj_mat, view_mat, world_mat;
     BOOL doClip;
     DWORD numTextures;
 

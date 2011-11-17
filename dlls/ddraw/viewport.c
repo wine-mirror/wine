@@ -397,11 +397,11 @@ IDirect3DViewportImpl_TransformVertices(IDirect3DViewport3 *iface,
 
     wined3d_mutex_lock();
     wined3d_device_get_transform(This->active_device->wined3d_device,
-            D3DTRANSFORMSTATE_VIEW, (WINED3DMATRIX *)&view_mat);
+            D3DTRANSFORMSTATE_VIEW, (struct wined3d_matrix *)&view_mat);
     wined3d_device_get_transform(This->active_device->wined3d_device,
-            D3DTRANSFORMSTATE_PROJECTION, (WINED3DMATRIX *)&proj_mat);
+            D3DTRANSFORMSTATE_PROJECTION, (struct wined3d_matrix *)&proj_mat);
     wined3d_device_get_transform(This->active_device->wined3d_device,
-            WINED3DTS_WORLDMATRIX(0), (WINED3DMATRIX *)&world_mat);
+            WINED3DTS_WORLDMATRIX(0), (struct wined3d_matrix *)&world_mat);
     multiply_matrix(&mat,&view_mat,&world_mat);
     multiply_matrix(&mat,&proj_mat,&mat);
 

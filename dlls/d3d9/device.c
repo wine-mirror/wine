@@ -1249,9 +1249,9 @@ static HRESULT WINAPI IDirect3DDevice9Impl_SetTransform(IDirect3DDevice9Ex *ifac
 
     TRACE("iface %p, state %#x, matrix %p.\n", iface, State, lpMatrix);
 
-    /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
+    /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
     wined3d_mutex_lock();
-    hr = wined3d_device_set_transform(This->wined3d_device, State, (const WINED3DMATRIX *)lpMatrix);
+    hr = wined3d_device_set_transform(This->wined3d_device, State, (const struct wined3d_matrix *)lpMatrix);
     wined3d_mutex_unlock();
 
     return hr;
@@ -1265,9 +1265,9 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetTransform(IDirect3DDevice9Ex *ifac
 
     TRACE("iface %p, state %#x, matrix %p.\n", iface, State, pMatrix);
 
-    /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
+    /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
     wined3d_mutex_lock();
-    hr = wined3d_device_get_transform(This->wined3d_device, State, (WINED3DMATRIX *)pMatrix);
+    hr = wined3d_device_get_transform(This->wined3d_device, State, (struct wined3d_matrix *)pMatrix);
     wined3d_mutex_unlock();
 
     return hr;
@@ -1281,9 +1281,9 @@ static HRESULT WINAPI IDirect3DDevice9Impl_MultiplyTransform(IDirect3DDevice9Ex 
 
     TRACE("iface %p, state %#x, matrix %p.\n", iface, State, pMatrix);
 
-    /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
+    /* Note: D3DMATRIX is compatible with struct wined3d_matrix. */
     wined3d_mutex_lock();
-    hr = wined3d_device_multiply_transform(This->wined3d_device, State, (const WINED3DMATRIX *)pMatrix);
+    hr = wined3d_device_multiply_transform(This->wined3d_device, State, (const struct wined3d_matrix *)pMatrix);
     wined3d_mutex_unlock();
 
     return hr;

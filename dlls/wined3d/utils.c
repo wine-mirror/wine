@@ -2814,8 +2814,10 @@ enum wined3d_format_id pixelformat_for_depth(DWORD depth)
     }
 }
 
-void multiply_matrix(WINED3DMATRIX *dest, const WINED3DMATRIX *src1, const WINED3DMATRIX *src2) {
-    WINED3DMATRIX temp;
+void multiply_matrix(struct wined3d_matrix *dest, const struct wined3d_matrix *src1,
+        const struct wined3d_matrix *src2)
+{
+    struct wined3d_matrix temp;
 
     /* Now do the multiplication 'by hand'.
        I know that all this could be optimised, but this will be done later :-) */

@@ -2274,7 +2274,7 @@ struct wined3d_state
     DWORD texture_states[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
     DWORD lowest_disabled_stage;
 
-    WINED3DMATRIX transforms[HIGHEST_TRANSFORMSTATE + 1];
+    struct wined3d_matrix transforms[HIGHEST_TRANSFORMSTATE + 1];
     double clip_planes[MAX_CLIPPLANES][4];
     WINED3DMATERIAL material;
     WINED3DVIEWPORT viewport;
@@ -2525,7 +2525,8 @@ BOOL getDepthStencilBits(const struct wined3d_format *format,
         BYTE *depthSize, BYTE *stencilSize) DECLSPEC_HIDDEN;
 
 /* Math utils */
-void multiply_matrix(WINED3DMATRIX *dest, const WINED3DMATRIX *src1, const WINED3DMATRIX *src2) DECLSPEC_HIDDEN;
+void multiply_matrix(struct wined3d_matrix *dest, const struct wined3d_matrix *src1,
+        const struct wined3d_matrix *src2) DECLSPEC_HIDDEN;
 UINT wined3d_log2i(UINT32 x) DECLSPEC_HIDDEN;
 unsigned int count_bits(unsigned int mask) DECLSPEC_HIDDEN;
 
