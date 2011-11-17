@@ -579,6 +579,10 @@ void netconn_unload( void )
         }
         HeapFree( GetProcessHeap(), 0, ssl_locks );
     }
+    DeleteCriticalSection(&init_ssl_cs);
+#endif
+#ifndef HAVE_GETADDRINFO
+    DeleteCriticalSection(&cs_gethostbyname);
 #endif
 }
 
