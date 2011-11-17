@@ -7010,6 +7010,30 @@ msgstr "Ошибка"
 msgid "&More Windows..."
 msgstr "&Ещё окна..."
 
+#: wineps.rc:25
+msgid "Paper"
+msgstr "Бумага"
+
+#: wineps.rc:28
+msgid "Paper Si&ze:"
+msgstr "&Размер бумаги:"
+
+#: wineps.rc:31
+msgid "Orientation"
+msgstr "Ориентация"
+
+#: wineps.rc:32
+msgid "&Portrait"
+msgstr "&Книжная"
+
+#: wineps.rc:34
+msgid "&Landscape"
+msgstr "&Альбомная"
+
+#: wineps.rc:36
+msgid "Duplex:"
+msgstr "Двухсторонняя печать:"
+
 #: wininet.rc:25
 msgid "LAN Connection"
 msgstr "Сетевое подключение"

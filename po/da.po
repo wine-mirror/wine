@@ -7238,6 +7238,30 @@ msgstr "Fejl"
 msgid "&More Windows..."
 msgstr "&Flere vinduer..."
 
+#: wineps.rc:25
+msgid "Paper"
+msgstr "Papir"
+
+#: wineps.rc:28
+msgid "Paper Si&ze:"
+msgstr "&Papirstørrelse:"
+
+#: wineps.rc:31
+msgid "Orientation"
+msgstr "Retning"
+
+#: wineps.rc:32
+msgid "&Portrait"
+msgstr "&Portræt"
+
+#: wineps.rc:34
+msgid "&Landscape"
+msgstr "&Landskab"
+
+#: wineps.rc:36
+msgid "Duplex:"
+msgstr "Retninger:"
+
 #: wininet.rc:25
 msgid "LAN Connection"
 msgstr "Lokal netværksforbindelse"

@@ -15236,7 +15236,7 @@ wine_fn_config_dll winejoystick.drv enable_winejoystick_drv
 wine_fn_config_dll winemapi enable_winemapi
 wine_fn_config_dll winemp3.acm enable_winemp3_acm
 wine_fn_config_dll wineoss.drv enable_wineoss_drv
-wine_fn_config_dll wineps.drv enable_wineps_drv install-lib
+wine_fn_config_dll wineps.drv enable_wineps_drv install-lib,po
 wine_fn_config_dll wineps16.drv16 enable_win16
 wine_fn_config_dll wineqtdecoder enable_wineqtdecoder
 wine_fn_config_dll winequartz.drv enable_winequartz_drv

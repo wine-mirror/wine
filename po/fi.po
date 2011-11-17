@@ -7199,6 +7199,32 @@ msgstr "Virhe"
 msgid "&More Windows..."
 msgstr "&Lisää ikkunoita..."
 
+#: wineps.rc:25
+#, fuzzy
+msgid "Paper"
+msgstr "Paperitukos; "
+
+#: wineps.rc:28
+msgid "Paper Si&ze:"
+msgstr ""
+
+#: wineps.rc:31
+#, fuzzy
+msgid "Orientation"
+msgstr "&Huomautus..."
+
+#: wineps.rc:32
+msgid "&Portrait"
+msgstr ""
+
+#: wineps.rc:34
+msgid "&Landscape"
+msgstr ""
+
+#: wineps.rc:36
+msgid "Duplex:"
+msgstr ""
+
 #: wininet.rc:25
 msgid "LAN Connection"
 msgstr "Lähiverkkoyhteys"

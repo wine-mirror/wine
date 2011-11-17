@@ -7276,6 +7276,32 @@ msgstr "Грешка"
 msgid "&More Windows..."
 msgstr "&Више прозора..."
 
+#: wineps.rc:25
+#, fuzzy
+msgid "Paper"
+msgstr "Улаз за папир; "
+
+#: wineps.rc:28
+msgid "Paper Si&ze:"
+msgstr ""
+
+#: wineps.rc:31
+#, fuzzy
+msgid "Orientation"
+msgstr "Подаци"
+
+#: wineps.rc:32
+msgid "&Portrait"
+msgstr ""
+
+#: wineps.rc:34
+msgid "&Landscape"
+msgstr ""
+
+#: wineps.rc:36
+msgid "Duplex:"
+msgstr ""
+
 #: wininet.rc:25
 msgid "LAN Connection"
 msgstr "LAN веза"

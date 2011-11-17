@@ -7004,6 +7004,30 @@ msgstr "エラー"
 msgid "&More Windows..."
 msgstr ""
 
+#: wineps.rc:25
+msgid "Paper"
+msgstr "用紙"
+
+#: wineps.rc:28
+msgid "Paper Si&ze:"
+msgstr "用紙サイズ(&z):"
+
+#: wineps.rc:31
+msgid "Orientation"
+msgstr "方向"
+
+#: wineps.rc:32
+msgid "&Portrait"
+msgstr "縦(&P)"
+
+#: wineps.rc:34
+msgid "&Landscape"
+msgstr "横(&L)"
+
+#: wineps.rc:36
+msgid "Duplex:"
+msgstr "両面印刷:"
+
 #: wininet.rc:25
 msgid "LAN Connection"
 msgstr "LAN 接続"

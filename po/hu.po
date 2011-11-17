@@ -7398,6 +7398,30 @@ msgstr "Hiba"
 msgid "&More Windows..."
 msgstr "&További ablakok..."
 
+#: wineps.rc:25
+msgid "Paper"
+msgstr "Papír"
+
+#: wineps.rc:28
+msgid "Paper Si&ze:"
+msgstr "Papír &méret:"
+
+#: wineps.rc:31
+msgid "Orientation"
+msgstr "Írásirány"
+
+#: wineps.rc:32
+msgid "&Portrait"
+msgstr "&Függőleges"
+
+#: wineps.rc:34
+msgid "&Landscape"
+msgstr "&Vízszintes"
+
+#: wineps.rc:36
+msgid "Duplex:"
+msgstr "Duplex:"
+
 #: wininet.rc:25
 msgid "LAN Connection"
 msgstr "LAN kapcsolat"

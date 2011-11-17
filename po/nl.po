@@ -7128,6 +7128,30 @@ msgstr "Fout"
 msgid "&More Windows..."
 msgstr "Ov&erige vensters..."
 
+#: wineps.rc:25
+msgid "Paper"
+msgstr "Papier"
+
+#: wineps.rc:28
+msgid "Paper Si&ze:"
+msgstr "Papier&formaat:"
+
+#: wineps.rc:31
+msgid "Orientation"
+msgstr "Oriëntatie"
+
+#: wineps.rc:32
+msgid "&Portrait"
+msgstr "&Staand"
+
+#: wineps.rc:34
+msgid "&Landscape"
+msgstr "&Liggend"
+
+#: wineps.rc:36
+msgid "Duplex:"
+msgstr "Dubbelzijdig:"
+
 #: wininet.rc:25
 msgid "LAN Connection"
 msgstr "LAN Verbinding"

@@ -7200,6 +7200,30 @@ msgstr "Chyba"
 msgid "&More Windows..."
 msgstr "&Konec Windows..."
 
+#: wineps.rc:25
+msgid "Paper"
+msgstr "Papír"
+
+#: wineps.rc:28
+msgid "Paper Si&ze:"
+msgstr "&Velikost papíru:"
+
+#: wineps.rc:31
+msgid "Orientation"
+msgstr "Orientace"
+
+#: wineps.rc:32
+msgid "&Portrait"
+msgstr "&Na výšku"
+
+#: wineps.rc:34
+msgid "&Landscape"
+msgstr "N&a šířku"
+
+#: wineps.rc:36
+msgid "Duplex:"
+msgstr "Oboustranně:"
+
 #: wininet.rc:25
 msgid "LAN Connection"
 msgstr ""

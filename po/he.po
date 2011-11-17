@@ -7226,6 +7226,30 @@ msgstr "שגיאה"
 msgid "&More Windows..."
 msgstr "חלונות &נוספים..."
 
+#: wineps.rc:25
+msgid "Paper"
+msgstr "נייר"
+
+#: wineps.rc:28
+msgid "Paper Si&ze:"
+msgstr "גודל ה&נייר:"
+
+#: wineps.rc:31
+msgid "Orientation"
+msgstr "כיווניות"
+
+#: wineps.rc:32
+msgid "&Portrait"
+msgstr "ל&אורך"
+
+#: wineps.rc:34
+msgid "&Landscape"
+msgstr "ל&רוחב"
+
+#: wineps.rc:36
+msgid "Duplex:"
+msgstr "דו־צדדי:"
+
 #: wininet.rc:25
 msgid "LAN Connection"
 msgstr "חיבור רשת מקומית"

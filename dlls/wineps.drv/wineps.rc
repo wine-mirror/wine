@@ -1,5 +1,5 @@
 /*
- * Copyright 2001 Marcus Meissner
+ * Copyright 2000 Huw D M Davies
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,24 +18,22 @@
 
 #include "psdlg.h"
 
-#pragma code_page(65001)
-
-LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 PAPER DIALOG 5, 43, 227, 215
 STYLE  WS_POPUP | WS_CAPTION | WS_CLIPSIBLINGS | WS_VISIBLE
-CAPTION "Papier"
+CAPTION "Paper"
 FONT 8, "MS Shell Dlg"
 {
- LTEXT "&Papiergröße:", -1, 10, 6, 100, 8
- LISTBOX IDD_PAPERS, 10, 15, 200, 45, LBS_STANDARD | LBS_HASSTRINGS |
+ LTEXT "Paper Si&ze:", -1, 10, 6, 200, 8
+ LISTBOX IDD_PAPERS, 10, 18, 200, 60, LBS_STANDARD | LBS_HASSTRINGS |
 	 WS_TABSTOP
- GROUPBOX "Ausrichtung", -1, 10, 80, 200, 50
- CONTROL "&Hochformat", IDD_ORIENT_PORTRAIT, "Button", BS_AUTORADIOBUTTON |
-	WS_TABSTOP, 20, 90, 60, 10
- CONTROL "&Querformat", IDD_ORIENT_LANDSCAPE, "Button", BS_AUTORADIOBUTTON,
-	 20, 110, 60, 10
- LTEXT "Duplex:", IDD_DUPLEX_NAME, 10, 140, 100, 8 
- COMBOBOX IDD_DUPLEX, 10, 151, 200, 20, CBS_DROPDOWNLIST | CBS_HASSTRINGS |
+ GROUPBOX "Orientation", -1, 10, 80, 200, 50
+ CONTROL "&Portrait", IDD_ORIENT_PORTRAIT, "Button", BS_AUTORADIOBUTTON |
+	WS_TABSTOP, 20, 93, 180, 10
+ CONTROL "&Landscape", IDD_ORIENT_LANDSCAPE, "Button", BS_AUTORADIOBUTTON,
+	 20, 110, 180, 10
+ LTEXT "Duplex:", IDD_DUPLEX_NAME, 10, 140, 200, 8 
+ COMBOBOX IDD_DUPLEX, 10, 151, 200, 40, CBS_DROPDOWNLIST | CBS_HASSTRINGS |
         WS_TABSTOP
 }

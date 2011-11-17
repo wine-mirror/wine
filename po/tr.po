@@ -7297,6 +7297,30 @@ msgstr "Hata"
 msgid "&More Windows..."
 msgstr "&Daha Fazla Pencere..."
 
+#: wineps.rc:25
+msgid "Paper"
+msgstr "Kağıt"
+
+#: wineps.rc:28
+msgid "Paper Si&ze:"
+msgstr "Kağıt &Boyutu:"
+
+#: wineps.rc:31
+msgid "Orientation"
+msgstr "Hizalama"
+
+#: wineps.rc:32
+msgid "&Portrait"
+msgstr "&Düşey"
+
+#: wineps.rc:34
+msgid "&Landscape"
+msgstr "&Yatay"
+
+#: wineps.rc:36
+msgid "Duplex:"
+msgstr "Çift Yönlü:"
+
 #: wininet.rc:25
 msgid "LAN Connection"
 msgstr "LAN Bağlantısı"

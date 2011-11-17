@@ -7057,6 +7057,30 @@ msgstr "Napaka"
 msgid "&More Windows..."
 msgstr "&Več oken ..."
 
+#: wineps.rc:25
+msgid "Paper"
+msgstr "Papir"
+
+#: wineps.rc:28
+msgid "Paper Si&ze:"
+msgstr "Veli&kost papirja:"
+
+#: wineps.rc:31
+msgid "Orientation"
+msgstr "Usmerjenost"
+
+#: wineps.rc:32
+msgid "&Portrait"
+msgstr "P&okončna"
+
+#: wineps.rc:34
+msgid "&Landscape"
+msgstr "L&ežeča"
+
+#: wineps.rc:36
+msgid "Duplex:"
+msgstr "Duplex:"
+
 #: wininet.rc:25
 msgid "LAN Connection"
 msgstr "Povezava LAN"

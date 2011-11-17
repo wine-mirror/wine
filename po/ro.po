@@ -7543,6 +7543,30 @@ msgstr "Eroare"
 msgid "&More Windows..."
 msgstr "&Mai multe ferestre..."
 
+#: wineps.rc:25
+msgid "Paper"
+msgstr "Hârtie"
+
+#: wineps.rc:28
+msgid "Paper Si&ze:"
+msgstr "&Mărimea foii:"
+
+#: wineps.rc:31
+msgid "Orientation"
+msgstr "Orientare"
+
+#: wineps.rc:32
+msgid "&Portrait"
+msgstr "P&ortret"
+
+#: wineps.rc:34
+msgid "&Landscape"
+msgstr "&Peisaj"
+
+#: wineps.rc:36
+msgid "Duplex:"
+msgstr "Duplex:"
+
 #: wininet.rc:25
 msgid "LAN Connection"
 msgstr "Conexiune LAN"

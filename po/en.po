@@ -6903,6 +6903,30 @@ msgstr "Error"
 msgid "&More Windows..."
 msgstr "&More Windows..."
 
+#: wineps.rc:25
+msgid "Paper"
+msgstr ""
+
+#: wineps.rc:28
+msgid "Paper Si&ze:"
+msgstr ""
+
+#: wineps.rc:31
+msgid "Orientation"
+msgstr "Orientation"
+
+#: wineps.rc:32
+msgid "&Portrait"
+msgstr ""
+
+#: wineps.rc:34
+msgid "&Landscape"
+msgstr ""
+
+#: wineps.rc:36
+msgid "Duplex:"
+msgstr ""
+
 #: wininet.rc:25
 msgid "LAN Connection"
 msgstr ""

@@ -7281,6 +7281,30 @@ msgstr "Erro"
 msgid "&More Windows..."
 msgstr "&Mais Janelas..."
 
+#: wineps.rc:25
+msgid "Paper"
+msgstr "Papel"
+
+#: wineps.rc:28
+msgid "Paper Si&ze:"
+msgstr "&Tamanho do papel:"
+
+#: wineps.rc:31
+msgid "Orientation"
+msgstr "Orientação"
+
+#: wineps.rc:32
+msgid "&Portrait"
+msgstr "&Retrato"
+
+#: wineps.rc:34
+msgid "&Landscape"
+msgstr "&Paisagem"
+
+#: wineps.rc:36
+msgid "Duplex:"
+msgstr "Duplex:"
+
 #: wininet.rc:25
 msgid "LAN Connection"
 msgstr "Conexão LAN"

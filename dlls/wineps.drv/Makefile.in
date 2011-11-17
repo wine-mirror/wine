@@ -62,32 +62,8 @@ C_SRCS = \
 	type1afm.c \
 	type42.c
 
-RC_SRCS = \
-	wps_Bg.rc \
-	wps_Cs.rc \
-	wps_Da.rc \
-	wps_De.rc \
-	wps_En.rc \
-	wps_Es.rc \
-	wps_Fr.rc \
-	wps_He.rc \
-	wps_Hu.rc \
-	wps_It.rc \
-	wps_Ja.rc \
-	wps_Ko.rc \
-	wps_Lt.rc \
-	wps_Nl.rc \
-	wps_No.rc \
-	wps_Pl.rc \
-	wps_Pt.rc \
-	wps_Ro.rc \
-	wps_Ru.rc \
-	wps_Si.rc \
-	wps_Sk.rc \
-	wps_Sv.rc \
-	wps_Tr.rc \
-	wps_Uk.rc \
-	wps_Zh.rc
+PO_SRCS = wineps.rc
+RC_SRCS = wineps.rc
 
 EXTRASUBDIRS = data
 

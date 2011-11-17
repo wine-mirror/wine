@@ -7021,6 +7021,30 @@ msgstr "Fel"
 msgid "&More Windows..."
 msgstr "&Fler fönster..."
 
+#: wineps.rc:25
+msgid "Paper"
+msgstr "Papper"
+
+#: wineps.rc:28
+msgid "Paper Si&ze:"
+msgstr "Papperssto&rlek:"
+
+#: wineps.rc:31
+msgid "Orientation"
+msgstr "Orientering"
+
+#: wineps.rc:32
+msgid "&Portrait"
+msgstr "&Stående"
+
+#: wineps.rc:34
+msgid "&Landscape"
+msgstr "&Liggande"
+
+#: wineps.rc:36
+msgid "Duplex:"
+msgstr "Dubbelsidig:"
+
 #: wininet.rc:25
 msgid "LAN Connection"
 msgstr "LAN-anslutning"

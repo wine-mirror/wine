@@ -7021,6 +7021,30 @@ msgstr "Klaida"
 msgid "&More Windows..."
 msgstr "&Daugiau langų..."
 
+#: wineps.rc:25
+msgid "Paper"
+msgstr "Popierius"
+
+#: wineps.rc:28
+msgid "Paper Si&ze:"
+msgstr "Popieriaus &dydis:"
+
+#: wineps.rc:31
+msgid "Orientation"
+msgstr "Padėtis"
+
+#: wineps.rc:32
+msgid "&Portrait"
+msgstr "&Stačias"
+
+#: wineps.rc:34
+msgid "&Landscape"
+msgstr "&Gulsčias"
+
+#: wineps.rc:36
+msgid "Duplex:"
+msgstr "Dvigubas:"
+
 #: wininet.rc:25
 msgid "LAN Connection"
 msgstr "Vietinio tinklo ryšys"

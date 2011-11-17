@@ -6996,6 +6996,30 @@ msgstr "오류"
 msgid "&More Windows..."
 msgstr "더 많은 창들(&M)..."
 
+#: wineps.rc:25
+msgid "Paper"
+msgstr "종이"
+
+#: wineps.rc:28
+msgid "Paper Si&ze:"
+msgstr "종이 크기(&Z):"
+
+#: wineps.rc:31
+msgid "Orientation"
+msgstr "방향"
+
+#: wineps.rc:32
+msgid "&Portrait"
+msgstr "세로(&P)"
+
+#: wineps.rc:34
+msgid "&Landscape"
+msgstr "가로(&L)"
+
+#: wineps.rc:36
+msgid "Duplex:"
+msgstr "양방향 통신:"
+
 #: wininet.rc:25
 msgid "LAN Connection"
 msgstr "랜 연결"

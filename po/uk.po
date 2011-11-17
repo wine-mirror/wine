@@ -7019,6 +7019,30 @@ msgstr "Помилка"
 msgid "&More Windows..."
 msgstr "&Ще вікна..."
 
+#: wineps.rc:25
+msgid "Paper"
+msgstr "Папір"
+
+#: wineps.rc:28
+msgid "Paper Si&ze:"
+msgstr "&Розмір паперу:"
+
+#: wineps.rc:31
+msgid "Orientation"
+msgstr "Орієнтація"
+
+#: wineps.rc:32
+msgid "&Portrait"
+msgstr "&Книжкова"
+
+#: wineps.rc:34
+msgid "&Landscape"
+msgstr "&Альбомна"
+
+#: wineps.rc:36
+msgid "Duplex:"
+msgstr "Duplex:"
+
 #: wininet.rc:25
 msgid "LAN Connection"
 msgstr "Підключення по локальній мережі"

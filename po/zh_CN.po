@@ -7234,6 +7234,30 @@ msgstr "错误"
 msgid "&More Windows..."
 msgstr "更多窗口(&M)..."
 
+#: wineps.rc:25
+msgid "Paper"
+msgstr "纸张"
+
+#: wineps.rc:28
+msgid "Paper Si&ze:"
+msgstr "纸张大小(&Z):"
+
+#: wineps.rc:31
+msgid "Orientation"
+msgstr "方向"
+
+#: wineps.rc:32
+msgid "&Portrait"
+msgstr "纵向(&P)"
+
+#: wineps.rc:34
+msgid "&Landscape"
+msgstr "横向(&L)"
+
+#: wineps.rc:36
+msgid "Duplex:"
+msgstr "双面:"
+
 #: wininet.rc:25
 msgid "LAN Connection"
 msgstr "局域网连接"

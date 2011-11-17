@@ -6944,6 +6944,31 @@ msgstr ""
 msgid "&More Windows..."
 msgstr "Å dfait di &Wine..."
 
+#: wineps.rc:25
+msgid "Paper"
+msgstr ""
+
+#: wineps.rc:28
+msgid "Paper Si&ze:"
+msgstr ""
+
+#: wineps.rc:31
+#, fuzzy
+msgid "Orientation"
+msgstr "&Sicrîre..."
+
+#: wineps.rc:32
+msgid "&Portrait"
+msgstr ""
+
+#: wineps.rc:34
+msgid "&Landscape"
+msgstr ""
+
+#: wineps.rc:36
+msgid "Duplex:"
+msgstr ""
+
 #: wininet.rc:25
 msgid "LAN Connection"
 msgstr ""
