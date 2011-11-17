@@ -905,6 +905,8 @@ void close_gecko(void)
 
     /* Gecko doesn't really support being unloaded */
     /* if (hXPCOM) FreeLibrary(hXPCOM); */
+
+    DeleteCriticalSection(&cs_load_gecko);
 }
 
 BOOL is_gecko_path(const char *path)

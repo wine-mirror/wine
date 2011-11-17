@@ -31,6 +31,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+static CRITICAL_SECTION cs_dispex_static_data;
+static CRITICAL_SECTION_DEBUG cs_dispex_static_data_dbg =
+{
+    0, 0, &cs_dispex_static_data,
+    { &cs_dispex_static_data_dbg.ProcessLocksList, &cs_dispex_static_data_dbg.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": dispex_static_data") }
+};
+static CRITICAL_SECTION cs_dispex_static_data = { &cs_dispex_static_data_dbg, -1, 0, 0, 0, 0 };
+
+
 static const WCHAR objectW[] = {'[','o','b','j','e','c','t',']',0};
 
 typedef struct {
@@ -155,6 +165,7 @@ void release_typelib(void)
             ITypeInfo_Release(typeinfos[i]);
 
     ITypeLib_Release(typelib);
+    DeleteCriticalSection(&cs_dispex_static_data);
 }
 
 HRESULT get_htmldoc_classinfo(ITypeInfo **typeinfo)
@@ -319,16 +330,6 @@ HRESULT get_dispids(tid_t tid, DWORD *ret_size, DISPID **ret)
     *ret = ids;
     return S_OK;
 }
-
-static CRITICAL_SECTION cs_dispex_static_data;
-static CRITICAL_SECTION_DEBUG cs_dispex_static_data_dbg =
-{
-    0, 0, &cs_dispex_static_data,
-    { &cs_dispex_static_data_dbg.ProcessLocksList, &cs_dispex_static_data_dbg.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": dispex_static_data") }
-};
-static CRITICAL_SECTION cs_dispex_static_data = { &cs_dispex_static_data_dbg, -1, 0, 0, 0, 0 };
-
 
 static dispex_data_t *get_dispex_data(DispatchEx *This)
 {
