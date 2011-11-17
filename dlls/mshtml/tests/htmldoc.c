@@ -1290,7 +1290,7 @@ static void continue_binding(IBindStatusCallback *callback)
     SET_EXPECT(GetBindResult);
     hres = IBindStatusCallback_OnStopBinding(callback, S_OK, NULL);
     ok(hres == S_OK, "OnStopBinding failed: %08x\n", hres);
-    SET_CALLED(GetBindResult); /* IE7 */
+    CLEAR_CALLED(GetBindResult); /* IE7 */
 
     IBindStatusCallback_Release(callback);
 }
@@ -2792,6 +2792,10 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
 
             return E_NOTIMPL;
 
+        case 143: /* TODO */
+        case 144: /* TODO */
+            return E_NOTIMPL;
+
         default:
             ok(0, "unexpected command %d\n", nCmdID);
             return E_FAIL;
@@ -2885,6 +2889,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             CHECK_EXPECT2(Exec_Explorer_69);
             ok(pvaIn == NULL, "pvaIn != NULL\n");
             ok(pvaOut != NULL, "pvaOut == NULL\n");
+            return E_NOTIMPL;
+        case 109: /* TODO */
             return E_NOTIMPL;
         default:
             ok(0, "unexpected cmd %d of CGID_Explorer\n", nCmdID);
@@ -3667,7 +3673,6 @@ static HRESULT browserservice_qi(REFIID riid, void **ppv)
     }
 
     *ppv = NULL;
-    trace("BrowserService QI %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -4732,7 +4737,7 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
         CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
         CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
         CLEAR_CALLED(Invoke_AMBIENT_PALETTE); /* not called on IE9 */
-        CHECK_CALLED(GetOptionKeyPath);
+        CLEAR_CALLED(GetOptionKeyPath); /* not called on some IE9 */
         CHECK_CALLED(GetOverrideKeyPath);
         CHECK_CALLED(GetWindow);
         CHECK_CALLED(Exec_DOCCANNAVIGATE);
@@ -4752,7 +4757,7 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
     SET_CALLED(Exec_ShellDocView_84);
     if(mon == &Moniker)
         CHECK_CALLED(BindToStorage);
-    SET_CALLED(SetActiveObject); /* FIXME */
+    CLEAR_CALLED(SetActiveObject); /* FIXME */
     if(set_clientsite) {
         CHECK_CALLED(Invoke_AMBIENT_SILENT);
         CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
@@ -4826,7 +4831,7 @@ static void test_download(DWORD flags)
     SET_EXPECT(Frame_EnableModeless_TRUE); /* IE7 */
     SET_EXPECT(EnableModeless_FALSE); /* IE7 */
     SET_EXPECT(Frame_EnableModeless_FALSE); /* IE7 */
-    if(nav_url && !is_js)
+    if((nav_url && !is_js) || (flags & (DWL_CSS|DWL_HTTP)))
         SET_EXPECT(Exec_ShellDocView_37);
     if(flags & DWL_HTTP) {
         SET_EXPECT(OnChanged_1012);
@@ -4909,6 +4914,8 @@ static void test_download(DWORD flags)
     SET_CALLED(Frame_EnableModeless_FALSE); /* IE7 */
     if(nav_url && !is_js)
         todo_wine CHECK_CALLED(Exec_ShellDocView_37);
+    else if(flags & (DWL_CSS|DWL_HTTP))
+        CLEAR_CALLED(Exec_ShellDocView_37); /* Called by IE9 */
     if(flags & DWL_HTTP)  {
         todo_wine CHECK_CALLED(OnChanged_1012);
         todo_wine CHECK_CALLED(Exec_HTTPEQUIV);
@@ -5656,8 +5663,10 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
         else
             ok(!clientsite, "clientsite != NULL\n");
 
+        SET_EXPECT(GetOverrideKeyPath);
         hres = IOleObject_SetClientSite(oleobj, NULL);
         ok(hres == S_OK, "SetClientSite failed: %08x\n", hres);
+        CLEAR_CALLED(GetOverrideKeyPath); /* IE9 sometimes calls it */
 
         set_clientsite = FALSE;
     }
@@ -5692,6 +5701,7 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
         SET_EXPECT(Invoke_AMBIENT_SILENT);
         SET_EXPECT(Invoke_AMBIENT_USERAGENT);
         SET_EXPECT(Invoke_AMBIENT_PALETTE);
+        SET_EXPECT(GetOverrideKeyPath);
         SET_EXPECT(GetTravelLog);
 
         hres = IOleObject_SetClientSite(oleobj, &ClientSite);
@@ -5700,7 +5710,7 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
         if(expect_uihandler_iface)
             CHECK_CALLED(GetHostInfo);
         if(flags & CLIENTSITE_EXPECTPATH) {
-            CHECK_CALLED(GetOptionKeyPath);
+            CLEAR_CALLED(GetOptionKeyPath); /* not called on some IE9 */
             CHECK_CALLED(GetOverrideKeyPath);
         }
         CHECK_CALLED(GetWindow);
@@ -5715,6 +5725,7 @@ static void test_ClientSite(IOleObject *oleobj, DWORD flags)
         CHECK_CALLED(Invoke_AMBIENT_SILENT);
         CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
         CLEAR_CALLED(Invoke_AMBIENT_PALETTE); /* not called on IE9 */
+        CLEAR_CALLED(GetOverrideKeyPath); /* Called by IE9 */
         todo_wine CHECK_CALLED(GetTravelLog);
 
         set_clientsite = TRUE;
@@ -5922,6 +5933,7 @@ static void test_InPlaceDeactivate(IHTMLDocument2 *doc, BOOL expect_call)
         return;
 
     if(expect_call) {
+        SET_EXPECT(SetStatusText);
         SET_EXPECT(OnFocus_FALSE);
         if(ipsex)
             SET_EXPECT(OnInPlaceDeactivateEx);
@@ -5931,6 +5943,7 @@ static void test_InPlaceDeactivate(IHTMLDocument2 *doc, BOOL expect_call)
     hres = IOleInPlaceObjectWindowless_InPlaceDeactivate(windowlessobj);
     ok(hres == S_OK, "InPlaceDeactivate failed: %08x\n", hres);
     if(expect_call) {
+        CLEAR_CALLED(SetStatusText); /* Called by IE9 */
         CHECK_CALLED(OnFocus_FALSE);
         if(ipsex)
             CHECK_CALLED(OnInPlaceDeactivateEx);
@@ -6867,7 +6880,7 @@ static void test_UIActivate(BOOL do_load, BOOL use_ipsex, BOOL use_ipsw)
     CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
     CLEAR_CALLED(Invoke_AMBIENT_PALETTE); /* not called on IE9 */
-    CHECK_CALLED(GetOptionKeyPath);
+    CLEAR_CALLED(GetOptionKeyPath); /* not called on some IE9 */
     CHECK_CALLED(GetOverrideKeyPath);
     CHECK_CALLED(GetWindow);
     CHECK_CALLED(Exec_DOCCANNAVIGATE);
@@ -6945,6 +6958,7 @@ static void test_UIActivate(BOOL do_load, BOOL use_ipsex, BOOL use_ipsw)
     ok(inplacesite != NULL, "inplacesite = NULL\n");
     IOleInPlaceSite_Release(inplacesite);
 
+    SET_EXPECT(SetStatusText);
     SET_EXPECT(OnFocus_FALSE);
     if(use_ipsex)
         SET_EXPECT(OnInPlaceDeactivateEx);
@@ -6953,6 +6967,7 @@ static void test_UIActivate(BOOL do_load, BOOL use_ipsex, BOOL use_ipsw)
 
     test_CloseView();
 
+    CLEAR_CALLED(SetStatusText); /* Called by IE9 */
     CHECK_CALLED(OnFocus_FALSE);
     if(use_ipsex)
         CHECK_CALLED(OnInPlaceDeactivateEx);
