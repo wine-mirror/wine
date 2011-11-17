@@ -25,29 +25,7 @@ C_SRCS = \
 	taskmgr.c \
 	trayicon.c
 
-RC_SRCS = \
-	Da.rc \
-	De.rc \
-	En.rc \
-	Fr.rc \
-	He.rc \
-	It.rc \
-	Ja.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	No.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Si.rc \
-	Sv.rc \
-	Tr.rc \
-	Uk.rc \
-	Zh.rc \
-	taskmgr.rc
-
+RC_SRCS = taskmgr.rc
 PO_SRCS = taskmgr.rc
 
 SVG_SRCS = \

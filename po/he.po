@@ -130,7 +130,7 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "ללא"
 
-#: comctl32.rc:28 regedit.rc:234 wordpad.rc:169
+#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 wordpad.rc:169
 msgid "Close"
 msgstr "סגירה"
 
@@ -1327,9 +1327,9 @@ msgstr ""
 msgid "Financial Information="
 msgstr ""
 
-#: crypt32.rc:219
+#: crypt32.rc:219 taskmgr.rc:401
 msgid "Available"
-msgstr ""
+msgstr "זמין"
 
 #: crypt32.rc:220
 msgid "Not Available"
@@ -2337,9 +2337,9 @@ msgstr ""
 #: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104
 #: progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197
 #: progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285
-#: regedit.rc:298 regedit.rc:311 wineboot.rc:31 wineconsole.rc:132
-#: winefile.rc:132 winefile.rc:155 winefile.rc:185 winemine.rc:93
-#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: regedit.rc:298 regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "ביטול"
 
@@ -8923,9 +8923,10 @@ msgstr "%s      %s      %s      Open resources: %lu\n"
 #: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
 #: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
 #: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
-#: regedit.rc:297 regedit.rc:310 wineconsole.rc:131 winefile.rc:131
-#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
-#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521
+#: wineconsole.rc:131 winefile.rc:131 winefile.rc:154 winefile.rc:184
+#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
+#: wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "אישור"
 
@@ -10400,11 +10401,11 @@ msgstr "&קידום לחזית"
 msgid "&About Task Manager"
 msgstr "על &אודות מנהל המשימות"
 
-#: taskmgr.rc:120
+#: taskmgr.rc:120 taskmgr.rc:356
 msgid "&Switch To"
 msgstr "מע&בר אל"
 
-#: taskmgr.rc:129
+#: taskmgr.rc:129 taskmgr.rc:357
 msgid "&End Task"
 msgstr "&סיום המשימה"
 
@@ -10412,7 +10413,7 @@ msgstr "&סיום המשימה"
 msgid "&Go To Process"
 msgstr "מעבר ל&תהליך"
 
-#: taskmgr.rc:149
+#: taskmgr.rc:149 taskmgr.rc:367
 msgid "&End Process"
 msgstr "&סיום תהליך"
 
@@ -10450,9 +10451,344 @@ msgstr "הגדרת &קירבה..."
 msgid "Edit Debug &Channels..."
 msgstr "עריכת &ערוצי ניפוי שגיאות..."
 
-#: taskmgr.rc:180 taskmgr.rc:181
+#: taskmgr.rc:342 taskmgr.rc:180 taskmgr.rc:181
 msgid "Task Manager"
 msgstr "מנהל המשימות"
+
+#: taskmgr.rc:346
+msgid "Tab1"
+msgstr "Tab1"
+
+#: taskmgr.rc:353 taskmgr.rc:364 taskmgr.rc:435
+msgid "List2"
+msgstr "List2"
+
+#: taskmgr.rc:355
+msgid "&New Task..."
+msgstr "&משימה חדשה..."
+
+#: taskmgr.rc:368
+msgid "&Show processes from all users"
+msgstr "הצגת תהליכים מ&כל המשתמשים"
+
+#: taskmgr.rc:376
+msgid "CPU Usage"
+msgstr "שימוש במעבד"
+
+#: taskmgr.rc:377
+msgid "MEM Usage"
+msgstr "שימוש בזיכרון"
+
+#: taskmgr.rc:378
+msgid "Totals"
+msgstr "סיכומים"
+
+#: taskmgr.rc:379
+msgid "Commit Charge (K)"
+msgstr "ניצולת הדפדוף המרבית (ק׳)"
+
+#: taskmgr.rc:380
+msgid "Physical Memory (K)"
+msgstr "זיכרון פיזי (ק׳)"
+
+#: taskmgr.rc:381
+msgid "Kernel Memory (K)"
+msgstr "זיכרון קרנל (ק׳)"
+
+#: taskmgr.rc:382 taskmgr.rc:290
+msgid "Handles"
+msgstr "מזהים ייחודיים"
+
+#: taskmgr.rc:383 taskmgr.rc:291
+msgid "Threads"
+msgstr "תת־תהליכים"
+
+#: taskmgr.rc:384 taskmgr.rc:263
+msgid "Processes"
+msgstr "תהליכים"
+
+#: taskmgr.rc:391 taskmgr.rc:400 taskmgr.rc:409
+msgid "Total"
+msgstr "סך הכול"
+
+#: taskmgr.rc:392
+msgid "Limit"
+msgstr "מגבלה"
+
+#: taskmgr.rc:393
+msgid "Peak"
+msgstr "שיא"
+
+#: taskmgr.rc:402
+msgid "System Cache"
+msgstr "מטמון המערכת"
+
+#: taskmgr.rc:410
+msgid "Paged"
+msgstr "בדפדוף"
+
+#: taskmgr.rc:411
+msgid "Nonpaged"
+msgstr "מחוץ לדפדוף"
+
+#: taskmgr.rc:418
+msgid "CPU Usage History"
+msgstr "היסטוריית השימוש במעבד"
+
+#: taskmgr.rc:419
+msgid "Memory Usage History"
+msgstr "היסטוריית השימוש בזיכרון"
+
+#: taskmgr.rc:432 taskmgr.rc:327
+msgid "Debug Channels"
+msgstr "ערוצי ניפוי"
+
+#: taskmgr.rc:443
+msgid "Processor Affinity"
+msgstr "קירבה למעבדים"
+
+#: taskmgr.rc:448
+msgid ""
+"The Processor Affinity setting controls which CPUs the process will be "
+"allowed to execute on."
+msgstr "הגדרות הקירבה למעבדים שולטים על אילו מעבדים יורשה התהליך לרוץ."
+
+#: taskmgr.rc:450
+msgid "CPU 0"
+msgstr "מעבד 0"
+
+#: taskmgr.rc:452
+msgid "CPU 1"
+msgstr "מעבד 1"
+
+#: taskmgr.rc:454
+msgid "CPU 2"
+msgstr "מעבד 2"
+
+#: taskmgr.rc:456
+msgid "CPU 3"
+msgstr "מעבד 3"
+
+#: taskmgr.rc:458
+msgid "CPU 4"
+msgstr "מעבד 4"
+
+#: taskmgr.rc:460
+msgid "CPU 5"
+msgstr "מעבד 5"
+
+#: taskmgr.rc:462
+msgid "CPU 6"
+msgstr "מעבד 6"
+
+#: taskmgr.rc:464
+msgid "CPU 7"
+msgstr "מעבד 7"
+
+#: taskmgr.rc:466
+msgid "CPU 8"
+msgstr "מעבד 8"
+
+#: taskmgr.rc:468
+msgid "CPU 9"
+msgstr "מעבד 9"
+
+#: taskmgr.rc:470
+msgid "CPU 10"
+msgstr "מעבד 10"
+
+#: taskmgr.rc:472
+msgid "CPU 11"
+msgstr "מעבד 11"
+
+#: taskmgr.rc:474
+msgid "CPU 12"
+msgstr "מעבד 12"
+
+#: taskmgr.rc:476
+msgid "CPU 13"
+msgstr "מעבד 13"
+
+#: taskmgr.rc:478
+msgid "CPU 14"
+msgstr "מעבד 14"
+
+#: taskmgr.rc:480
+msgid "CPU 15"
+msgstr "מעבד 15"
+
+#: taskmgr.rc:482
+msgid "CPU 16"
+msgstr "מעבד 16"
+
+#: taskmgr.rc:484
+msgid "CPU 17"
+msgstr "מעבד 17"
+
+#: taskmgr.rc:486
+msgid "CPU 18"
+msgstr "מעבד 18"
+
+#: taskmgr.rc:488
+msgid "CPU 19"
+msgstr "מעבד 19"
+
+#: taskmgr.rc:490
+msgid "CPU 20"
+msgstr "מעבד 20"
+
+#: taskmgr.rc:492
+msgid "CPU 21"
+msgstr "מעבד 21"
+
+#: taskmgr.rc:494
+msgid "CPU 22"
+msgstr "מעבד 22"
+
+#: taskmgr.rc:496
+msgid "CPU 23"
+msgstr "מעבד 23"
+
+#: taskmgr.rc:498
+msgid "CPU 24"
+msgstr "מעבד 24"
+
+#: taskmgr.rc:500
+msgid "CPU 25"
+msgstr "מעבד 25"
+
+#: taskmgr.rc:502
+msgid "CPU 26"
+msgstr "מעבד 26"
+
+#: taskmgr.rc:504
+msgid "CPU 27"
+msgstr "מעבד 27"
+
+#: taskmgr.rc:506
+msgid "CPU 28"
+msgstr "מעבד 28"
+
+#: taskmgr.rc:508
+msgid "CPU 29"
+msgstr "מעבד 29"
+
+#: taskmgr.rc:510
+msgid "CPU 30"
+msgstr "מעבד 30"
+
+#: taskmgr.rc:512
+msgid "CPU 31"
+msgstr "מעבד 31"
+
+#: taskmgr.rc:518
+msgid "Select Columns"
+msgstr "בחירת עמודות"
+
+#: taskmgr.rc:523
+msgid ""
+"Select the columns that will appear on the Process page of the Task Manager."
+msgstr "נא לבחור את העמודות שיופיעו בעמוד התהליכים במנהל המשימות."
+
+#: taskmgr.rc:525
+msgid "&Image Name"
+msgstr "שם ה&תמונה"
+
+#: taskmgr.rc:527
+msgid "&PID (Process Identifier)"
+msgstr "מזהה התהליך (&PID)"
+
+#: taskmgr.rc:529
+msgid "&CPU Usage"
+msgstr "&שימוש במעבד"
+
+#: taskmgr.rc:531
+msgid "CPU Tim&e"
+msgstr "&זמן המעבד"
+
+#: taskmgr.rc:533
+msgid "&Memory Usage"
+msgstr "שימוש ב&זיכרון"
+
+#: taskmgr.rc:535
+msgid "Memory Usage &Delta"
+msgstr "שי&נוי השימוש בזיכרון"
+
+#: taskmgr.rc:537
+msgid "Pea&k Memory Usage"
+msgstr "ש&יא השימוש בזיכרון"
+
+#: taskmgr.rc:539
+msgid "Page &Faults"
+msgstr "כש&לי דפדוף"
+
+#: taskmgr.rc:541
+msgid "&USER Objects"
+msgstr "&עצמים של USER"
+
+#: taskmgr.rc:543 taskmgr.rc:281
+msgid "I/O Reads"
+msgstr "קלט/פלט קריאות"
+
+#: taskmgr.rc:545 taskmgr.rc:282
+msgid "I/O Read Bytes"
+msgstr "קלט/פלט בתים שנקראו"
+
+#: taskmgr.rc:547
+msgid "&Session ID"
+msgstr "מזהה ה&פעלה"
+
+#: taskmgr.rc:549
+msgid "User &Name"
+msgstr "&שם משתמש"
+
+#: taskmgr.rc:551
+msgid "Page F&aults Delta"
+msgstr "שי&נוי בכשלי הדפדוף"
+
+#: taskmgr.rc:553
+msgid "&Virtual Memory Size"
+msgstr "גודל הזיכרון ה&ווירטואלי"
+
+#: taskmgr.rc:555
+msgid "Pa&ged Pool"
+msgstr "מ&אגר בדפדוף"
+
+#: taskmgr.rc:557
+msgid "N&on-paged Pool"
+msgstr "מאגר מחו&ץ לדפדוף"
+
+#: taskmgr.rc:559
+msgid "Base P&riority"
+msgstr "עדיפות &בסיס"
+
+#: taskmgr.rc:561
+msgid "&Handle Count"
+msgstr "&ספירת מזהים ייחודיים"
+
+#: taskmgr.rc:563
+msgid "&Thread Count"
+msgstr "ספירת תת־תהלי&כים"
+
+#: taskmgr.rc:565 taskmgr.rc:292
+msgid "GDI Objects"
+msgstr "עצמי GDI"
+
+#: taskmgr.rc:567 taskmgr.rc:293
+msgid "I/O Writes"
+msgstr "כתיבות קלט/פלט"
+
+#: taskmgr.rc:569 taskmgr.rc:294
+msgid "I/O Write Bytes"
+msgstr "קלט/פלט בתים שנכתבו"
+
+#: taskmgr.rc:571 taskmgr.rc:295
+msgid "I/O Other"
+msgstr "קלט/פלט אחר"
+
+#: taskmgr.rc:573 taskmgr.rc:296
+msgid "I/O Other Bytes"
+msgstr "קלט/פלט בתים אחר"
 
 #: taskmgr.rc:182
 msgid "Create New Task"
@@ -10622,10 +10958,6 @@ msgstr "הגדרת התהליך למחלקת עדיפות נמוכה (LOW)"
 msgid "Controls Debug Channels"
 msgstr "שליטה בערוצי ניפוי השגיאות"
 
-#: taskmgr.rc:263
-msgid "Processes"
-msgstr "תהליכים"
-
 #: taskmgr.rc:264
 msgid "Performance"
 msgstr "ביצועים"
@@ -10678,14 +11010,6 @@ msgstr "כשלי דפדוף"
 msgid "USER Objects"
 msgstr "עצמי USER"
 
-#: taskmgr.rc:281
-msgid "I/O Reads"
-msgstr "קלט/פלט קריאות"
-
-#: taskmgr.rc:282
-msgid "I/O Read Bytes"
-msgstr "קלט/פלט בתים שנקראו"
-
 #: taskmgr.rc:283
 msgid "Session ID"
 msgstr "מזהה הפעלה"
@@ -10713,34 +11037,6 @@ msgstr "מאגר מחוץ לקובץ הדפדוף"
 #: taskmgr.rc:289
 msgid "Base Pri"
 msgstr "עדיפות בסיס"
-
-#: taskmgr.rc:290
-msgid "Handles"
-msgstr "מזהים ייחודיים"
-
-#: taskmgr.rc:291
-msgid "Threads"
-msgstr "תת־תהליכים"
-
-#: taskmgr.rc:292
-msgid "GDI Objects"
-msgstr "עצמי GDI"
-
-#: taskmgr.rc:293
-msgid "I/O Writes"
-msgstr "כתיבות קלט/פלט"
-
-#: taskmgr.rc:294
-msgid "I/O Write Bytes"
-msgstr "קלט/פלט בתים שנכתבו"
-
-#: taskmgr.rc:295
-msgid "I/O Other"
-msgstr "קלט/פלט אחר"
-
-#: taskmgr.rc:296
-msgid "I/O Other Bytes"
-msgstr "קלט/פלט בתים אחר"
 
 #: taskmgr.rc:301
 msgid "Task Manager Warning"
@@ -10815,10 +11111,6 @@ msgstr "פעיל"
 #: taskmgr.rc:325
 msgid "Task"
 msgstr "משימה"
-
-#: taskmgr.rc:327
-msgid "Debug Channels"
-msgstr "ערוצי ניפוי"
 
 #: taskmgr.rc:328
 msgid "Fixme"

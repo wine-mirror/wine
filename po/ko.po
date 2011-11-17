@@ -131,7 +131,7 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "없음"
 
-#: comctl32.rc:28 regedit.rc:234 wordpad.rc:169
+#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 wordpad.rc:169
 msgid "Close"
 msgstr "닫기"
 
@@ -1325,7 +1325,7 @@ msgstr "인증서 유지"
 msgid "Financial Information="
 msgstr "재무 정보="
 
-#: crypt32.rc:219
+#: crypt32.rc:219 taskmgr.rc:401
 msgid "Available"
 msgstr "가능함"
 
@@ -2371,9 +2371,9 @@ msgstr ""
 #: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104
 #: progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197
 #: progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285
-#: regedit.rc:298 regedit.rc:311 wineboot.rc:31 wineconsole.rc:132
-#: winefile.rc:132 winefile.rc:155 winefile.rc:185 winemine.rc:93
-#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: regedit.rc:298 regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "취소"
 
@@ -8820,9 +8820,10 @@ msgstr "%1      %2      %3      열린 리소스: %4!u!\n"
 #: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
 #: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
 #: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
-#: regedit.rc:297 regedit.rc:310 wineconsole.rc:131 winefile.rc:131
-#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
-#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521
+#: wineconsole.rc:131 winefile.rc:131 winefile.rc:154 winefile.rc:184
+#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
+#: wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "확인"
 
@@ -10284,11 +10285,11 @@ msgstr "앞으로 가져오기(&B)"
 msgid "&About Task Manager"
 msgstr "작업관리자에 관하여(&A)"
 
-#: taskmgr.rc:120
+#: taskmgr.rc:120 taskmgr.rc:356
 msgid "&Switch To"
 msgstr "전환(&S)"
 
-#: taskmgr.rc:129
+#: taskmgr.rc:129 taskmgr.rc:357
 msgid "&End Task"
 msgstr "작업 끝(&E)"
 
@@ -10296,7 +10297,7 @@ msgstr "작업 끝(&E)"
 msgid "&Go To Process"
 msgstr "프로세스로 가기(&G)"
 
-#: taskmgr.rc:149
+#: taskmgr.rc:149 taskmgr.rc:367
 msgid "&End Process"
 msgstr "작업 끝(&E)"
 
@@ -10332,9 +10333,344 @@ msgstr "선호도 설정(&A)..."
 msgid "Edit Debug &Channels..."
 msgstr "디버그 채널 편집(&C)..."
 
-#: taskmgr.rc:180 taskmgr.rc:181
+#: taskmgr.rc:342 taskmgr.rc:180 taskmgr.rc:181
 msgid "Task Manager"
 msgstr "작업 관리자"
+
+#: taskmgr.rc:346
+msgid "Tab1"
+msgstr "Tab1"
+
+#: taskmgr.rc:353 taskmgr.rc:364 taskmgr.rc:435
+msgid "List2"
+msgstr "List2"
+
+#: taskmgr.rc:355
+msgid "&New Task..."
+msgstr "새 작업(&N)..."
+
+#: taskmgr.rc:368
+msgid "&Show processes from all users"
+msgstr "모든 사용자의 작업 보여주기(&S)"
+
+#: taskmgr.rc:376
+msgid "CPU Usage"
+msgstr "CPU 사용"
+
+#: taskmgr.rc:377
+msgid "MEM Usage"
+msgstr "MEM 사용"
+
+#: taskmgr.rc:378
+msgid "Totals"
+msgstr "합계"
+
+#: taskmgr.rc:379
+msgid "Commit Charge (K)"
+msgstr "가상 메모리 (K)"
+
+#: taskmgr.rc:380
+msgid "Physical Memory (K)"
+msgstr "물리적 메모리 (K)"
+
+#: taskmgr.rc:381
+msgid "Kernel Memory (K)"
+msgstr "커널 메모리 (K)"
+
+#: taskmgr.rc:382 taskmgr.rc:290
+msgid "Handles"
+msgstr "핸들"
+
+#: taskmgr.rc:383 taskmgr.rc:291
+msgid "Threads"
+msgstr "쓰레드"
+
+#: taskmgr.rc:384 taskmgr.rc:263
+msgid "Processes"
+msgstr "작업"
+
+#: taskmgr.rc:391 taskmgr.rc:400 taskmgr.rc:409
+msgid "Total"
+msgstr "합계"
+
+#: taskmgr.rc:392
+msgid "Limit"
+msgstr "제한"
+
+#: taskmgr.rc:393
+msgid "Peak"
+msgstr "피크"
+
+#: taskmgr.rc:402
+msgid "System Cache"
+msgstr "시스템 캐쉬"
+
+#: taskmgr.rc:410
+msgid "Paged"
+msgstr "페이지된"
+
+#: taskmgr.rc:411
+msgid "Nonpaged"
+msgstr "페이지안된"
+
+#: taskmgr.rc:418
+msgid "CPU Usage History"
+msgstr "CPU 사용 기록"
+
+#: taskmgr.rc:419
+msgid "Memory Usage History"
+msgstr "메모리 사용 보여주기"
+
+#: taskmgr.rc:432 taskmgr.rc:327
+msgid "Debug Channels"
+msgstr "디버그 채널"
+
+#: taskmgr.rc:443
+msgid "Processor Affinity"
+msgstr "프로세서 친화도"
+
+#: taskmgr.rc:448
+msgid ""
+"The Processor Affinity setting controls which CPUs the process will be "
+"allowed to execute on."
+msgstr "프로세서 친화도 설정은 어떤 CPU가 프로세스를 실행시킬 지를 제어한다."
+
+#: taskmgr.rc:450
+msgid "CPU 0"
+msgstr "CPU 0"
+
+#: taskmgr.rc:452
+msgid "CPU 1"
+msgstr "CPU 1"
+
+#: taskmgr.rc:454
+msgid "CPU 2"
+msgstr "CPU 2"
+
+#: taskmgr.rc:456
+msgid "CPU 3"
+msgstr "CPU 3"
+
+#: taskmgr.rc:458
+msgid "CPU 4"
+msgstr "CPU 4"
+
+#: taskmgr.rc:460
+msgid "CPU 5"
+msgstr "CPU 5"
+
+#: taskmgr.rc:462
+msgid "CPU 6"
+msgstr "CPU 6"
+
+#: taskmgr.rc:464
+msgid "CPU 7"
+msgstr "CPU 7"
+
+#: taskmgr.rc:466
+msgid "CPU 8"
+msgstr "CPU 8"
+
+#: taskmgr.rc:468
+msgid "CPU 9"
+msgstr "CPU 9"
+
+#: taskmgr.rc:470
+msgid "CPU 10"
+msgstr "CPU 10"
+
+#: taskmgr.rc:472
+msgid "CPU 11"
+msgstr "CPU 11"
+
+#: taskmgr.rc:474
+msgid "CPU 12"
+msgstr "CPU 12"
+
+#: taskmgr.rc:476
+msgid "CPU 13"
+msgstr "CPU 13"
+
+#: taskmgr.rc:478
+msgid "CPU 14"
+msgstr "CPU 14"
+
+#: taskmgr.rc:480
+msgid "CPU 15"
+msgstr "CPU 15"
+
+#: taskmgr.rc:482
+msgid "CPU 16"
+msgstr "CPU 16"
+
+#: taskmgr.rc:484
+msgid "CPU 17"
+msgstr "CPU 17"
+
+#: taskmgr.rc:486
+msgid "CPU 18"
+msgstr "CPU 18"
+
+#: taskmgr.rc:488
+msgid "CPU 19"
+msgstr "CPU 19"
+
+#: taskmgr.rc:490
+msgid "CPU 20"
+msgstr "CPU 20"
+
+#: taskmgr.rc:492
+msgid "CPU 21"
+msgstr "CPU 21"
+
+#: taskmgr.rc:494
+msgid "CPU 22"
+msgstr "CPU 22"
+
+#: taskmgr.rc:496
+msgid "CPU 23"
+msgstr "CPU 23"
+
+#: taskmgr.rc:498
+msgid "CPU 24"
+msgstr "CPU 24"
+
+#: taskmgr.rc:500
+msgid "CPU 25"
+msgstr "CPU 25"
+
+#: taskmgr.rc:502
+msgid "CPU 26"
+msgstr "CPU 26"
+
+#: taskmgr.rc:504
+msgid "CPU 27"
+msgstr "CPU 27"
+
+#: taskmgr.rc:506
+msgid "CPU 28"
+msgstr "CPU 28"
+
+#: taskmgr.rc:508
+msgid "CPU 29"
+msgstr "CPU 29"
+
+#: taskmgr.rc:510
+msgid "CPU 30"
+msgstr "CPU 30"
+
+#: taskmgr.rc:512
+msgid "CPU 31"
+msgstr "CPU 31"
+
+#: taskmgr.rc:518
+msgid "Select Columns"
+msgstr "세로줄 선택"
+
+#: taskmgr.rc:523
+msgid ""
+"Select the columns that will appear on the Process page of the Task Manager."
+msgstr "세로줄 선택은 작업 관리자의 작업 페이지에 나타날것입니다."
+
+#: taskmgr.rc:525
+msgid "&Image Name"
+msgstr "이미지 이름(&I)"
+
+#: taskmgr.rc:527
+msgid "&PID (Process Identifier)"
+msgstr "&PID (작업 식별자)"
+
+#: taskmgr.rc:529
+msgid "&CPU Usage"
+msgstr "&CPU 사용"
+
+#: taskmgr.rc:531
+msgid "CPU Tim&e"
+msgstr "CPU 시간(&e)"
+
+#: taskmgr.rc:533
+msgid "&Memory Usage"
+msgstr "메모리 사용(&M)"
+
+#: taskmgr.rc:535
+msgid "Memory Usage &Delta"
+msgstr "메모리 사용 델타(&D)"
+
+#: taskmgr.rc:537
+msgid "Pea&k Memory Usage"
+msgstr "피크 메모리 사용(&k)"
+
+#: taskmgr.rc:539
+msgid "Page &Faults"
+msgstr "페이지 실패(&F)"
+
+#: taskmgr.rc:541
+msgid "&USER Objects"
+msgstr "사용자 객체(&U)"
+
+#: taskmgr.rc:543 taskmgr.rc:281
+msgid "I/O Reads"
+msgstr "I/O 읽기"
+
+#: taskmgr.rc:545 taskmgr.rc:282
+msgid "I/O Read Bytes"
+msgstr "I/O 읽은 바이트"
+
+#: taskmgr.rc:547
+msgid "&Session ID"
+msgstr "세션 ID(&S)"
+
+#: taskmgr.rc:549
+msgid "User &Name"
+msgstr "사용자 이름(&N)"
+
+#: taskmgr.rc:551
+msgid "Page F&aults Delta"
+msgstr "페이지 실패 델타(&a)"
+
+#: taskmgr.rc:553
+msgid "&Virtual Memory Size"
+msgstr "가상 메모리 크기(&V)"
+
+#: taskmgr.rc:555
+msgid "Pa&ged Pool"
+msgstr "페이지 풀(&g)"
+
+#: taskmgr.rc:557
+msgid "N&on-paged Pool"
+msgstr "비 페이지 풀(&o)"
+
+#: taskmgr.rc:559
+msgid "Base P&riority"
+msgstr "기본 우선권(&r)"
+
+#: taskmgr.rc:561
+msgid "&Handle Count"
+msgstr "핸들 카운트(&H)"
+
+#: taskmgr.rc:563
+msgid "&Thread Count"
+msgstr "쓰레드 카운트(&T)"
+
+#: taskmgr.rc:565 taskmgr.rc:292
+msgid "GDI Objects"
+msgstr "GDI 객체"
+
+#: taskmgr.rc:567 taskmgr.rc:293
+msgid "I/O Writes"
+msgstr "I/O 쓰기"
+
+#: taskmgr.rc:569 taskmgr.rc:294
+msgid "I/O Write Bytes"
+msgstr "I/O 쓴 바이트"
+
+#: taskmgr.rc:571 taskmgr.rc:295
+msgid "I/O Other"
+msgstr "I/O 기타"
+
+#: taskmgr.rc:573 taskmgr.rc:296
+msgid "I/O Other Bytes"
+msgstr "I/O 기타 바이트"
 
 #: taskmgr.rc:182
 msgid "Create New Task"
@@ -10504,10 +10840,6 @@ msgstr "작업을 낮은 순위 클래스로 설정"
 msgid "Controls Debug Channels"
 msgstr "디버그 채널 제어"
 
-#: taskmgr.rc:263
-msgid "Processes"
-msgstr "작업"
-
 #: taskmgr.rc:264
 msgid "Performance"
 msgstr "퍼포먼스"
@@ -10560,14 +10892,6 @@ msgstr "페이지 실패"
 msgid "USER Objects"
 msgstr "사용자 객체"
 
-#: taskmgr.rc:281
-msgid "I/O Reads"
-msgstr "I/O 읽기"
-
-#: taskmgr.rc:282
-msgid "I/O Read Bytes"
-msgstr "I/O 읽은 바이트"
-
 #: taskmgr.rc:283
 msgid "Session ID"
 msgstr "세션 ID"
@@ -10595,34 +10919,6 @@ msgstr "NP 풀"
 #: taskmgr.rc:289
 msgid "Base Pri"
 msgstr "기본 Pri"
-
-#: taskmgr.rc:290
-msgid "Handles"
-msgstr "핸들"
-
-#: taskmgr.rc:291
-msgid "Threads"
-msgstr "쓰레드"
-
-#: taskmgr.rc:292
-msgid "GDI Objects"
-msgstr "GDI 객체"
-
-#: taskmgr.rc:293
-msgid "I/O Writes"
-msgstr "I/O 쓰기"
-
-#: taskmgr.rc:294
-msgid "I/O Write Bytes"
-msgstr "I/O 쓴 바이트"
-
-#: taskmgr.rc:295
-msgid "I/O Other"
-msgstr "I/O 기타"
-
-#: taskmgr.rc:296
-msgid "I/O Other Bytes"
-msgstr "I/O 기타 바이트"
 
 #: taskmgr.rc:301
 msgid "Task Manager Warning"
@@ -10699,10 +10995,6 @@ msgstr "실행중"
 #: taskmgr.rc:325
 msgid "Task"
 msgstr "태스크"
-
-#: taskmgr.rc:327
-msgid "Debug Channels"
-msgstr "디버그 채널"
 
 #: taskmgr.rc:328
 msgid "Fixme"

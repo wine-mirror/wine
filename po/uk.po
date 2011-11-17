@@ -129,7 +129,7 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Немає"
 
-#: comctl32.rc:28 regedit.rc:234 wordpad.rc:169
+#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 wordpad.rc:169
 msgid "Close"
 msgstr "Закрити"
 
@@ -1328,7 +1328,7 @@ msgstr "Призупинення сертифікату"
 msgid "Financial Information="
 msgstr "Фінансові Дані="
 
-#: crypt32.rc:219
+#: crypt32.rc:219 taskmgr.rc:401
 msgid "Available"
 msgstr "Доступно"
 
@@ -2373,9 +2373,9 @@ msgstr ""
 #: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104
 #: progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197
 #: progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285
-#: regedit.rc:298 regedit.rc:311 wineboot.rc:31 wineconsole.rc:132
-#: winefile.rc:132 winefile.rc:155 winefile.rc:185 winemine.rc:93
-#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: regedit.rc:298 regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Скасувати"
 
@@ -8822,9 +8822,10 @@ msgstr "%s      %s      %s      Відкритих ресурсів: %lu\n"
 #: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
 #: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
 #: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
-#: regedit.rc:297 regedit.rc:310 wineconsole.rc:131 winefile.rc:131
-#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
-#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521
+#: wineconsole.rc:131 winefile.rc:131 winefile.rc:154 winefile.rc:184
+#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
+#: wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -10305,11 +10306,11 @@ msgstr "&На передній план"
 msgid "&About Task Manager"
 msgstr "&Про програму"
 
-#: taskmgr.rc:120
+#: taskmgr.rc:120 taskmgr.rc:356
 msgid "&Switch To"
 msgstr "&Переключитись"
 
-#: taskmgr.rc:129
+#: taskmgr.rc:129 taskmgr.rc:357
 msgid "&End Task"
 msgstr "&Зняти завдання"
 
@@ -10317,7 +10318,7 @@ msgstr "&Зняти завдання"
 msgid "&Go To Process"
 msgstr "Йти &до процесу"
 
-#: taskmgr.rc:149
+#: taskmgr.rc:149 taskmgr.rc:367
 msgid "&End Process"
 msgstr "&Завершити процес"
 
@@ -10355,9 +10356,347 @@ msgstr "Задати &відповідність..."
 msgid "Edit Debug &Channels..."
 msgstr "Змінити &канали налагодження..."
 
-#: taskmgr.rc:180 taskmgr.rc:181
+#: taskmgr.rc:342 taskmgr.rc:180 taskmgr.rc:181
 msgid "Task Manager"
 msgstr "Диспетчер завдань"
+
+#: taskmgr.rc:346
+msgid "Tab1"
+msgstr "Tab1"
+
+#: taskmgr.rc:353 taskmgr.rc:364 taskmgr.rc:435
+msgid "List2"
+msgstr "List2"
+
+#: taskmgr.rc:355
+msgid "&New Task..."
+msgstr "&Нове завдання..."
+
+#: taskmgr.rc:368
+msgid "&Show processes from all users"
+msgstr "&Показувати процеси всіх користувачів"
+
+#: taskmgr.rc:376
+msgid "CPU Usage"
+msgstr "Викорис. ЦП"
+
+#: taskmgr.rc:377
+msgid "MEM Usage"
+msgstr "Викорис. пам'яті"
+
+#: taskmgr.rc:378
+msgid "Totals"
+msgstr "Всього"
+
+#: taskmgr.rc:379
+msgid "Commit Charge (K)"
+msgstr "Виділення пам'яті (K)"
+
+#: taskmgr.rc:380
+msgid "Physical Memory (K)"
+msgstr "Фізична пам'ять (K)"
+
+#: taskmgr.rc:381
+msgid "Kernel Memory (K)"
+msgstr "Пам'ять ядра (K)"
+
+#: taskmgr.rc:382 taskmgr.rc:290
+msgid "Handles"
+msgstr "Дескрип."
+
+#: taskmgr.rc:383 taskmgr.rc:291
+msgid "Threads"
+msgstr "Потоків"
+
+#: taskmgr.rc:384 taskmgr.rc:263
+msgid "Processes"
+msgstr "Процеси"
+
+#: taskmgr.rc:391 taskmgr.rc:400 taskmgr.rc:409
+msgid "Total"
+msgstr "Всього"
+
+#: taskmgr.rc:392
+msgid "Limit"
+msgstr "Межа"
+
+#: taskmgr.rc:393
+msgid "Peak"
+msgstr "Пік"
+
+#: taskmgr.rc:402
+msgid "System Cache"
+msgstr "Системний кеш"
+
+#: taskmgr.rc:410
+msgid "Paged"
+msgstr "Вивантажувана"
+
+#: taskmgr.rc:411
+msgid "Nonpaged"
+msgstr "Невивантажувана"
+
+#: taskmgr.rc:418
+msgid "CPU Usage History"
+msgstr "Історія використання ЦП"
+
+#: taskmgr.rc:419
+msgid "Memory Usage History"
+msgstr "Історія використання пам'яті"
+
+#: taskmgr.rc:432 taskmgr.rc:327
+msgid "Debug Channels"
+msgstr "Канали налагодження"
+
+#: taskmgr.rc:443
+msgid "Processor Affinity"
+msgstr "Відповідність процесорів"
+
+#: taskmgr.rc:448
+msgid ""
+"The Processor Affinity setting controls which CPUs the process will be "
+"allowed to execute on."
+msgstr ""
+"Відповідність процесорів визначає, на якому ЦП дозволено виконувати процес."
+
+#: taskmgr.rc:450
+msgid "CPU 0"
+msgstr "ЦП 0"
+
+#: taskmgr.rc:452
+msgid "CPU 1"
+msgstr "ЦП 1"
+
+#: taskmgr.rc:454
+msgid "CPU 2"
+msgstr "ЦП 2"
+
+#: taskmgr.rc:456
+msgid "CPU 3"
+msgstr "ЦП 3"
+
+#: taskmgr.rc:458
+msgid "CPU 4"
+msgstr "ЦП 4"
+
+#: taskmgr.rc:460
+msgid "CPU 5"
+msgstr "ЦП 5"
+
+#: taskmgr.rc:462
+msgid "CPU 6"
+msgstr "ЦП 6"
+
+#: taskmgr.rc:464
+msgid "CPU 7"
+msgstr "ЦП 7"
+
+#: taskmgr.rc:466
+msgid "CPU 8"
+msgstr "ЦП 8"
+
+#: taskmgr.rc:468
+msgid "CPU 9"
+msgstr "ЦП 9"
+
+#: taskmgr.rc:470
+msgid "CPU 10"
+msgstr "ЦП 10"
+
+#: taskmgr.rc:472
+msgid "CPU 11"
+msgstr "ЦП 11"
+
+#: taskmgr.rc:474
+msgid "CPU 12"
+msgstr "ЦП 12"
+
+#: taskmgr.rc:476
+msgid "CPU 13"
+msgstr "ЦП 13"
+
+#: taskmgr.rc:478
+msgid "CPU 14"
+msgstr "ЦП 14"
+
+#: taskmgr.rc:480
+msgid "CPU 15"
+msgstr "ЦП 15"
+
+#: taskmgr.rc:482
+msgid "CPU 16"
+msgstr "ЦП 16"
+
+#: taskmgr.rc:484
+msgid "CPU 17"
+msgstr "ЦП 17"
+
+#: taskmgr.rc:486
+msgid "CPU 18"
+msgstr "ЦП 18"
+
+#: taskmgr.rc:488
+msgid "CPU 19"
+msgstr "ЦП 19"
+
+#: taskmgr.rc:490
+msgid "CPU 20"
+msgstr "ЦП 20"
+
+#: taskmgr.rc:492
+msgid "CPU 21"
+msgstr "ЦП 21"
+
+#: taskmgr.rc:494
+msgid "CPU 22"
+msgstr "ЦП 22"
+
+#: taskmgr.rc:496
+msgid "CPU 23"
+msgstr "ЦП 23"
+
+#: taskmgr.rc:498
+msgid "CPU 24"
+msgstr "ЦП 24"
+
+#: taskmgr.rc:500
+msgid "CPU 25"
+msgstr "ЦП 25"
+
+#: taskmgr.rc:502
+msgid "CPU 26"
+msgstr "ЦП 26"
+
+#: taskmgr.rc:504
+msgid "CPU 27"
+msgstr "ЦП 27"
+
+#: taskmgr.rc:506
+msgid "CPU 28"
+msgstr "ЦП 28"
+
+#: taskmgr.rc:508
+msgid "CPU 29"
+msgstr "ЦП 29"
+
+#: taskmgr.rc:510
+msgid "CPU 30"
+msgstr "ЦП 30"
+
+#: taskmgr.rc:512
+msgid "CPU 31"
+msgstr "ЦП 31"
+
+#: taskmgr.rc:518
+msgid "Select Columns"
+msgstr "Вибір стовпців"
+
+#: taskmgr.rc:523
+msgid ""
+"Select the columns that will appear on the Process page of the Task Manager."
+msgstr ""
+"Виберіть стовпці, які будуть показані на сторінці процесів Диспетчера "
+"завдань."
+
+#: taskmgr.rc:525
+msgid "&Image Name"
+msgstr "&Ім'я образу"
+
+#: taskmgr.rc:527
+msgid "&PID (Process Identifier)"
+msgstr "&PID (Ідентиф. процесу)"
+
+#: taskmgr.rc:529
+msgid "&CPU Usage"
+msgstr "&Використання ЦП"
+
+#: taskmgr.rc:531
+msgid "CPU Tim&e"
+msgstr "&Час ЦП"
+
+#: taskmgr.rc:533
+msgid "&Memory Usage"
+msgstr "&Пам'ять - використання"
+
+#: taskmgr.rc:535
+msgid "Memory Usage &Delta"
+msgstr "Пам'ять - змі&на"
+
+#: taskmgr.rc:537
+msgid "Pea&k Memory Usage"
+msgstr "Пам'ять - &максимум"
+
+#: taskmgr.rc:539
+msgid "Page &Faults"
+msgstr "П&омилок сторінки"
+
+#: taskmgr.rc:541
+msgid "&USER Objects"
+msgstr "О&б'єкти USER"
+
+#: taskmgr.rc:543 taskmgr.rc:281
+msgid "I/O Reads"
+msgstr "Кількість читань"
+
+#: taskmgr.rc:545 taskmgr.rc:282
+msgid "I/O Read Bytes"
+msgstr "Прочитано байтів"
+
+#: taskmgr.rc:547
+msgid "&Session ID"
+msgstr "Код се&ансу"
+
+#: taskmgr.rc:549
+msgid "User &Name"
+msgstr "Ім'&я користувача"
+
+#: taskmgr.rc:551
+msgid "Page F&aults Delta"
+msgstr "Помилок &сторінки - зміна"
+
+#: taskmgr.rc:553
+msgid "&Virtual Memory Size"
+msgstr "Об'єм віртуальної пам'яті"
+
+#: taskmgr.rc:555
+msgid "Pa&ged Pool"
+msgstr "Виванта&жуваний пул"
+
+#: taskmgr.rc:557
+msgid "N&on-paged Pool"
+msgstr "Невив&антажуваний пул"
+
+#: taskmgr.rc:559
+msgid "Base P&riority"
+msgstr "Базови&й пріоритет"
+
+#: taskmgr.rc:561
+msgid "&Handle Count"
+msgstr "Лічильник &дескрипторів"
+
+#: taskmgr.rc:563
+msgid "&Thread Count"
+msgstr "&Лічильник потоків"
+
+#: taskmgr.rc:565 taskmgr.rc:292
+msgid "GDI Objects"
+msgstr "Об'єкти GDI"
+
+#: taskmgr.rc:567 taskmgr.rc:293
+msgid "I/O Writes"
+msgstr "Кількість записів"
+
+#: taskmgr.rc:569 taskmgr.rc:294
+msgid "I/O Write Bytes"
+msgstr "Записано байт"
+
+#: taskmgr.rc:571 taskmgr.rc:295
+msgid "I/O Other"
+msgstr "Інший ввід-вивід"
+
+#: taskmgr.rc:573 taskmgr.rc:296
+msgid "I/O Other Bytes"
+msgstr "Інших байтів при вводі-виводі"
 
 #: taskmgr.rc:182
 msgid "Create New Task"
@@ -10530,10 +10869,6 @@ msgstr "Установлює клас пріоритету НИЗЬКИЙ для
 msgid "Controls Debug Channels"
 msgstr "Керує каналами налагодження"
 
-#: taskmgr.rc:263
-msgid "Processes"
-msgstr "Процеси"
-
 #: taskmgr.rc:264
 msgid "Performance"
 msgstr "Швидкодія"
@@ -10586,14 +10921,6 @@ msgstr "Помил. стор."
 msgid "USER Objects"
 msgstr "Об'єкти USER"
 
-#: taskmgr.rc:281
-msgid "I/O Reads"
-msgstr "Кількість читань"
-
-#: taskmgr.rc:282
-msgid "I/O Read Bytes"
-msgstr "Прочитано байтів"
-
 #: taskmgr.rc:283
 msgid "Session ID"
 msgstr "Код сеансу"
@@ -10621,34 +10948,6 @@ msgstr "Невивант. пул"
 #: taskmgr.rc:289
 msgid "Base Pri"
 msgstr "Баз. пріор."
-
-#: taskmgr.rc:290
-msgid "Handles"
-msgstr "Дескрип."
-
-#: taskmgr.rc:291
-msgid "Threads"
-msgstr "Потоків"
-
-#: taskmgr.rc:292
-msgid "GDI Objects"
-msgstr "Об'єкти GDI"
-
-#: taskmgr.rc:293
-msgid "I/O Writes"
-msgstr "Кількість записів"
-
-#: taskmgr.rc:294
-msgid "I/O Write Bytes"
-msgstr "Записано байт"
-
-#: taskmgr.rc:295
-msgid "I/O Other"
-msgstr "Інший ввід-вивід"
-
-#: taskmgr.rc:296
-msgid "I/O Other Bytes"
-msgstr "Інших байтів при вводі-виводі"
 
 #: taskmgr.rc:301
 msgid "Task Manager Warning"
@@ -10725,10 +11024,6 @@ msgstr "Виконується"
 #: taskmgr.rc:325
 msgid "Task"
 msgstr "Завдання"
-
-#: taskmgr.rc:327
-msgid "Debug Channels"
-msgstr "Канали налагодження"
 
 #: taskmgr.rc:328
 msgid "Fixme"

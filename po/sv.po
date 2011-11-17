@@ -132,7 +132,7 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Ingen"
 
-#: comctl32.rc:28 regedit.rc:234 wordpad.rc:169
+#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 wordpad.rc:169
 msgid "Close"
 msgstr "Stäng"
 
@@ -1333,7 +1333,7 @@ msgstr "Certifikat temporärt återkallat"
 msgid "Financial Information="
 msgstr "Finansiell information="
 
-#: crypt32.rc:219
+#: crypt32.rc:219 taskmgr.rc:401
 msgid "Available"
 msgstr "Tillgänglig"
 
@@ -2384,9 +2384,9 @@ msgstr ""
 #: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104
 #: progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197
 #: progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285
-#: regedit.rc:298 regedit.rc:311 wineboot.rc:31 wineconsole.rc:132
-#: winefile.rc:132 winefile.rc:155 winefile.rc:185 winemine.rc:93
-#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: regedit.rc:298 regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Avbryt"
 
@@ -8825,9 +8825,10 @@ msgstr "%s      %s      %s      Öppna resurser: %lu\n"
 #: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
 #: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
 #: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
-#: regedit.rc:297 regedit.rc:310 wineconsole.rc:131 winefile.rc:131
-#: winefile.rc:154 winefile.rc:184 winemine.rc:68 winemine.rc:78
-#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521
+#: wineconsole.rc:131 winefile.rc:131 winefile.rc:154 winefile.rc:184
+#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
+#: wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -10320,11 +10321,11 @@ msgstr "V&isa överst"
 msgid "&About Task Manager"
 msgstr "&Om Aktivitetshanteraren"
 
-#: taskmgr.rc:120
+#: taskmgr.rc:120 taskmgr.rc:356
 msgid "&Switch To"
 msgstr "B&yt till"
 
-#: taskmgr.rc:129
+#: taskmgr.rc:129 taskmgr.rc:357
 msgid "&End Task"
 msgstr "Avsluta aktivit&et"
 
@@ -10332,7 +10333,7 @@ msgstr "Avsluta aktivit&et"
 msgid "&Go To Process"
 msgstr "&Gå till process"
 
-#: taskmgr.rc:149
+#: taskmgr.rc:149 taskmgr.rc:367
 msgid "&End Process"
 msgstr "Avsluta proc&ess"
 
@@ -10370,9 +10371,346 @@ msgstr "Ställ in &släktskap..."
 msgid "Edit Debug &Channels..."
 msgstr "&Redigera felsökningskanaler..."
 
-#: taskmgr.rc:180 taskmgr.rc:181
+#: taskmgr.rc:342 taskmgr.rc:180 taskmgr.rc:181
 msgid "Task Manager"
 msgstr "Aktivitetshanteraren"
+
+#: taskmgr.rc:346
+msgid "Tab1"
+msgstr "Tab1"
+
+#: taskmgr.rc:353 taskmgr.rc:364 taskmgr.rc:435
+msgid "List2"
+msgstr "List2"
+
+#: taskmgr.rc:355
+msgid "&New Task..."
+msgstr "&Ny aktivitet..."
+
+#: taskmgr.rc:368
+msgid "&Show processes from all users"
+msgstr "Vi&sa processer från alla användare"
+
+#: taskmgr.rc:376
+msgid "CPU Usage"
+msgstr "CPU-användning"
+
+#: taskmgr.rc:377
+msgid "MEM Usage"
+msgstr "MEM-användning"
+
+#: taskmgr.rc:378
+msgid "Totals"
+msgstr "Totalt"
+
+#: taskmgr.rc:379
+msgid "Commit Charge (K)"
+msgstr "Virtuellt minne (K)"
+
+#: taskmgr.rc:380
+msgid "Physical Memory (K)"
+msgstr "Fysiskt minne (K)"
+
+#: taskmgr.rc:381
+msgid "Kernel Memory (K)"
+msgstr "Kernelminne (K)"
+
+#: taskmgr.rc:382 taskmgr.rc:290
+msgid "Handles"
+msgstr "Referenser"
+
+#: taskmgr.rc:383 taskmgr.rc:291
+msgid "Threads"
+msgstr "Trådar"
+
+#: taskmgr.rc:384 taskmgr.rc:263
+msgid "Processes"
+msgstr "Processer"
+
+#: taskmgr.rc:391 taskmgr.rc:400 taskmgr.rc:409
+msgid "Total"
+msgstr "Totalt"
+
+#: taskmgr.rc:392
+msgid "Limit"
+msgstr "Gräns"
+
+#: taskmgr.rc:393
+msgid "Peak"
+msgstr "Topp"
+
+#: taskmgr.rc:402
+msgid "System Cache"
+msgstr "Systemcache"
+
+#: taskmgr.rc:410
+msgid "Paged"
+msgstr "Växlat"
+
+#: taskmgr.rc:411
+msgid "Nonpaged"
+msgstr "Oväxlat"
+
+#: taskmgr.rc:418
+msgid "CPU Usage History"
+msgstr "Historik för CPU-användning"
+
+#: taskmgr.rc:419
+msgid "Memory Usage History"
+msgstr "Historik för MEM-användning"
+
+#: taskmgr.rc:432 taskmgr.rc:327
+msgid "Debug Channels"
+msgstr "Felsökningskanaler"
+
+#: taskmgr.rc:443
+msgid "Processor Affinity"
+msgstr "Process-släktskap"
+
+#: taskmgr.rc:448
+msgid ""
+"The Processor Affinity setting controls which CPUs the process will be "
+"allowed to execute on."
+msgstr ""
+"Inställningen för process-släktskap bestämmer vilka processorer processen "
+"tillåts köra på."
+
+#: taskmgr.rc:450
+msgid "CPU 0"
+msgstr "CPU 0"
+
+#: taskmgr.rc:452
+msgid "CPU 1"
+msgstr "CPU 1"
+
+#: taskmgr.rc:454
+msgid "CPU 2"
+msgstr "CPU 2"
+
+#: taskmgr.rc:456
+msgid "CPU 3"
+msgstr "CPU 3"
+
+#: taskmgr.rc:458
+msgid "CPU 4"
+msgstr "CPU 4"
+
+#: taskmgr.rc:460
+msgid "CPU 5"
+msgstr "CPU 5"
+
+#: taskmgr.rc:462
+msgid "CPU 6"
+msgstr "CPU 6"
+
+#: taskmgr.rc:464
+msgid "CPU 7"
+msgstr "CPU 7"
+
+#: taskmgr.rc:466
+msgid "CPU 8"
+msgstr "CPU 8"
+
+#: taskmgr.rc:468
+msgid "CPU 9"
+msgstr "CPU 9"
+
+#: taskmgr.rc:470
+msgid "CPU 10"
+msgstr "CPU 10"
+
+#: taskmgr.rc:472
+msgid "CPU 11"
+msgstr "CPU 11"
+
+#: taskmgr.rc:474
+msgid "CPU 12"
+msgstr "CPU 12"
+
+#: taskmgr.rc:476
+msgid "CPU 13"
+msgstr "CPU 13"
+
+#: taskmgr.rc:478
+msgid "CPU 14"
+msgstr "CPU 14"
+
+#: taskmgr.rc:480
+msgid "CPU 15"
+msgstr "CPU 15"
+
+#: taskmgr.rc:482
+msgid "CPU 16"
+msgstr "CPU 16"
+
+#: taskmgr.rc:484
+msgid "CPU 17"
+msgstr "CPU 17"
+
+#: taskmgr.rc:486
+msgid "CPU 18"
+msgstr "CPU 18"
+
+#: taskmgr.rc:488
+msgid "CPU 19"
+msgstr "CPU 19"
+
+#: taskmgr.rc:490
+msgid "CPU 20"
+msgstr "CPU 20"
+
+#: taskmgr.rc:492
+msgid "CPU 21"
+msgstr "CPU 21"
+
+#: taskmgr.rc:494
+msgid "CPU 22"
+msgstr "CPU 22"
+
+#: taskmgr.rc:496
+msgid "CPU 23"
+msgstr "CPU 23"
+
+#: taskmgr.rc:498
+msgid "CPU 24"
+msgstr "CPU 24"
+
+#: taskmgr.rc:500
+msgid "CPU 25"
+msgstr "CPU 25"
+
+#: taskmgr.rc:502
+msgid "CPU 26"
+msgstr "CPU 26"
+
+#: taskmgr.rc:504
+msgid "CPU 27"
+msgstr "CPU 27"
+
+#: taskmgr.rc:506
+msgid "CPU 28"
+msgstr "CPU 28"
+
+#: taskmgr.rc:508
+msgid "CPU 29"
+msgstr "CPU 29"
+
+#: taskmgr.rc:510
+msgid "CPU 30"
+msgstr "CPU 30"
+
+#: taskmgr.rc:512
+msgid "CPU 31"
+msgstr "CPU 31"
+
+#: taskmgr.rc:518
+msgid "Select Columns"
+msgstr "Välj kolumner"
+
+#: taskmgr.rc:523
+msgid ""
+"Select the columns that will appear on the Process page of the Task Manager."
+msgstr "Välj kolumner att visas på processidan i aktivitetshanteraren."
+
+#: taskmgr.rc:525
+msgid "&Image Name"
+msgstr "&Image name"
+
+#: taskmgr.rc:527
+msgid "&PID (Process Identifier)"
+msgstr "&PID (Processidentifierare)"
+
+#: taskmgr.rc:529
+msgid "&CPU Usage"
+msgstr "&CPU-användning"
+
+#: taskmgr.rc:531
+msgid "CPU Tim&e"
+msgstr "CPU-&tid"
+
+#: taskmgr.rc:533
+msgid "&Memory Usage"
+msgstr "&Minnesanvändning"
+
+#: taskmgr.rc:535
+msgid "Memory Usage &Delta"
+msgstr "Minnesanvändnings-&delta"
+
+#: taskmgr.rc:537
+msgid "Pea&k Memory Usage"
+msgstr "H&ögsta minnesanvändning"
+
+#: taskmgr.rc:539
+msgid "Page &Faults"
+msgstr "Sid&fel"
+
+#: taskmgr.rc:541
+msgid "&USER Objects"
+msgstr "Anv&ändarobjekt"
+
+#: taskmgr.rc:543 taskmgr.rc:281
+msgid "I/O Reads"
+msgstr "I/O-läsningar"
+
+#: taskmgr.rc:545 taskmgr.rc:282
+msgid "I/O Read Bytes"
+msgstr "I/O byte lästa"
+
+#: taskmgr.rc:547
+msgid "&Session ID"
+msgstr "&Sessions-ID"
+
+#: taskmgr.rc:549
+msgid "User &Name"
+msgstr "A&nvändare"
+
+#: taskmgr.rc:551
+msgid "Page F&aults Delta"
+msgstr "Sidfelsdelt&a"
+
+#: taskmgr.rc:553
+msgid "&Virtual Memory Size"
+msgstr "&Virtuell minnesstorlek"
+
+#: taskmgr.rc:555
+msgid "Pa&ged Pool"
+msgstr "Pa&ged pool"
+
+#: taskmgr.rc:557
+msgid "N&on-paged Pool"
+msgstr "Väx&lat minne"
+
+#: taskmgr.rc:559
+msgid "Base P&riority"
+msgstr "Bas-p&rio"
+
+#: taskmgr.rc:561
+msgid "&Handle Count"
+msgstr "Antal r&eferenser"
+
+#: taskmgr.rc:563
+msgid "&Thread Count"
+msgstr "Antal tr&ådar"
+
+#: taskmgr.rc:565 taskmgr.rc:292
+msgid "GDI Objects"
+msgstr "GDI-objekt"
+
+#: taskmgr.rc:567 taskmgr.rc:293
+msgid "I/O Writes"
+msgstr "I/O-skrivningar"
+
+#: taskmgr.rc:569 taskmgr.rc:294
+msgid "I/O Write Bytes"
+msgstr "I/O byte skrivna"
+
+#: taskmgr.rc:571 taskmgr.rc:295
+msgid "I/O Other"
+msgstr "I/O övrigt"
+
+#: taskmgr.rc:573 taskmgr.rc:296
+msgid "I/O Other Bytes"
+msgstr "I/O byte övrigt"
 
 #: taskmgr.rc:182
 msgid "Create New Task"
@@ -10543,10 +10881,6 @@ msgstr "Ger processen låg prioritet"
 msgid "Controls Debug Channels"
 msgstr "Ställer in felsökningskanaler"
 
-#: taskmgr.rc:263
-msgid "Processes"
-msgstr "Processer"
-
 #: taskmgr.rc:264
 msgid "Performance"
 msgstr "Prestanda"
@@ -10599,14 +10933,6 @@ msgstr "Sidfel"
 msgid "USER Objects"
 msgstr "Användarobjekt"
 
-#: taskmgr.rc:281
-msgid "I/O Reads"
-msgstr "I/O-läsningar"
-
-#: taskmgr.rc:282
-msgid "I/O Read Bytes"
-msgstr "I/O byte lästa"
-
 #: taskmgr.rc:283
 msgid "Session ID"
 msgstr "Sessions-ID"
@@ -10634,34 +10960,6 @@ msgstr "Oväxlat minne"
 #: taskmgr.rc:289
 msgid "Base Pri"
 msgstr "Bas-prio"
-
-#: taskmgr.rc:290
-msgid "Handles"
-msgstr "Referenser"
-
-#: taskmgr.rc:291
-msgid "Threads"
-msgstr "Trådar"
-
-#: taskmgr.rc:292
-msgid "GDI Objects"
-msgstr "GDI-objekt"
-
-#: taskmgr.rc:293
-msgid "I/O Writes"
-msgstr "I/O-skrivningar"
-
-#: taskmgr.rc:294
-msgid "I/O Write Bytes"
-msgstr "I/O byte skrivna"
-
-#: taskmgr.rc:295
-msgid "I/O Other"
-msgstr "I/O övrigt"
-
-#: taskmgr.rc:296
-msgid "I/O Other Bytes"
-msgstr "I/O byte övrigt"
 
 #: taskmgr.rc:301
 msgid "Task Manager Warning"
@@ -10738,10 +11036,6 @@ msgstr "Kör"
 #: taskmgr.rc:325
 msgid "Task"
 msgstr "Aktivitet"
-
-#: taskmgr.rc:327
-msgid "Debug Channels"
-msgstr "Felsökningskanaler"
 
 #: taskmgr.rc:328
 msgid "Fixme"
