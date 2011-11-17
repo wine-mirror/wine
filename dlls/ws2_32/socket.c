@@ -866,6 +866,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
         break;
     case DLL_PROCESS_DETACH:
         free_per_thread_data();
+        DeleteCriticalSection(&csWSgetXXXbyYYY);
         num_startup = 0;
         break;
     case DLL_THREAD_DETACH:
