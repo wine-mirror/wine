@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
 #include "gdi_private.h"
 #include "dibdrv.h"
 
@@ -90,17 +91,22 @@ static inline void get_range( BYTE aa, DWORD text_comp, BYTE *min_comp, BYTE *ma
     *max_comp = ramp[16 - aa] + ((0xff - ramp[16 - aa]) * text_comp) / 0xff;
 }
 
-void update_aa_ranges( dibdrv_physdev *pdev )
+static inline void get_aa_ranges( COLORREF col, struct intensity_range intensities[17] )
 {
     int i;
-    COLORREF text = pdev->dib.funcs->pixel_to_colorref( &pdev->dib, pdev->text_color );
 
     for (i = 0; i < 17; i++)
     {
-        get_range( i, GetRValue(text), &pdev->glyph_intensities[i].r_min, &pdev->glyph_intensities[i].r_max );
-        get_range( i, GetGValue(text), &pdev->glyph_intensities[i].g_min, &pdev->glyph_intensities[i].g_max );
-        get_range( i, GetBValue(text), &pdev->glyph_intensities[i].b_min, &pdev->glyph_intensities[i].b_max );
+        get_range( i, GetRValue(col), &intensities[i].r_min, &intensities[i].r_max );
+        get_range( i, GetGValue(col), &intensities[i].g_min, &intensities[i].g_max );
+        get_range( i, GetBValue(col), &intensities[i].b_min, &intensities[i].b_max );
     }
+}
+
+void update_aa_ranges( dibdrv_physdev *pdev )
+{
+    COLORREF text = pdev->dib.funcs->pixel_to_colorref( &pdev->dib, pdev->text_color );
+    get_aa_ranges( text, pdev->glyph_intensities );
 }
 
 /**********************************************************************
@@ -168,7 +174,7 @@ static const int padding[4] = {0, 3, 2, 1};
  * For non-antialiased bitmaps convert them to the 17-level format
  * using only values 0 or 16.
  */
-static DWORD get_glyph_bitmap( dibdrv_physdev *pdev, UINT index, UINT aa_flags, GLYPHMETRICS *metrics,
+static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT aa_flags, GLYPHMETRICS *metrics,
                                struct gdi_image_bits *image )
 {
     UINT ggo_flags = aa_flags | GGO_GLYPH_INDEX;
@@ -188,7 +194,7 @@ static DWORD get_glyph_bitmap( dibdrv_physdev *pdev, UINT index, UINT aa_flags, 
 
     for (i = 0; i < sizeof(indices) / sizeof(indices[0]); index = indices[++i])
     {
-        ret = GetGlyphOutlineW( pdev->dev.hdc, index, ggo_flags, metrics, 0, NULL, &identity );
+        ret = GetGlyphOutlineW( hdc, index, ggo_flags, metrics, 0, NULL, &identity );
         if (ret != GDI_ERROR) break;
     }
 
@@ -203,7 +209,7 @@ static DWORD get_glyph_bitmap( dibdrv_physdev *pdev, UINT index, UINT aa_flags, 
     buf = HeapAlloc( GetProcessHeap(), 0, size );
     if (!buf) return ERROR_OUTOFMEMORY;
 
-    ret = GetGlyphOutlineW( pdev->dev.hdc, index, ggo_flags, metrics, size, buf, &identity );
+    ret = GetGlyphOutlineW( hdc, index, ggo_flags, metrics, size, buf, &identity );
     if (ret == GDI_ERROR)
     {
         HeapFree( GetProcessHeap(), 0, buf );
@@ -231,6 +237,95 @@ static DWORD get_glyph_bitmap( dibdrv_physdev *pdev, UINT index, UINT aa_flags, 
 
     image->ptr = buf;
     return ERROR_SUCCESS;
+}
+
+BOOL render_aa_text_bitmapinfo( HDC hdc, BITMAPINFO *info, struct gdi_image_bits *bits,
+                                struct bitblt_coords *src, INT x, INT y, UINT flags,
+                                UINT aa_flags, LPCWSTR str, UINT count, const INT *dx )
+{
+    dib_info dib;
+    UINT i;
+    DWORD err;
+    BOOL got_pixel;
+    COLORREF fg, bg;
+    DWORD fg_pixel, bg_pixel;
+    struct intensity_range glyph_intensities[17];
+
+    assert( info->bmiHeader.biBitCount > 8 ); /* mono and indexed formats don't support anti-aliasing */
+
+    if (!init_dib_info_from_bitmapinfo( &dib, info, bits->ptr, 0 )) return FALSE;
+
+    fg = make_rgb_colorref( hdc, &dib, GetTextColor( hdc ), &got_pixel, &fg_pixel);
+    if (!got_pixel) fg_pixel = dib.funcs->colorref_to_pixel( &dib, fg );
+
+    get_aa_ranges( fg, glyph_intensities );
+
+    if (flags & ETO_OPAQUE)
+    {
+        rop_mask bkgnd_color;
+
+        bg = make_rgb_colorref( hdc, &dib, GetBkColor( hdc ), &got_pixel, &bg_pixel);
+        if (!got_pixel) bg_pixel = dib.funcs->colorref_to_pixel( &dib, bg );
+
+        bkgnd_color.and = 0;
+        bkgnd_color.xor = bg_pixel;
+        solid_rects( &dib, 1, &src->visrect, &bkgnd_color, 0 );
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        GLYPHMETRICS metrics;
+        struct gdi_image_bits image;
+
+        err = get_glyph_bitmap( hdc, (UINT)str[i], aa_flags, &metrics, &image );
+        if (err) continue;
+
+        if (image.ptr)
+        {
+            RECT rect, clipped_rect;
+            POINT src_origin;
+            dib_info glyph_dib;
+
+            glyph_dib.bit_count = 8;
+            glyph_dib.width     = metrics.gmBlackBoxX;
+            glyph_dib.height    = metrics.gmBlackBoxY;
+            glyph_dib.stride    = get_dib_stride( metrics.gmBlackBoxX, 8 );
+            glyph_dib.bits      = image;
+
+            rect.left   = x + metrics.gmptGlyphOrigin.x;
+            rect.top    = y - metrics.gmptGlyphOrigin.y;
+            rect.right  = rect.left + metrics.gmBlackBoxX;
+            rect.bottom = rect.top  + metrics.gmBlackBoxY;
+
+            if (intersect_rect( &clipped_rect, &rect, &src->visrect ))
+            {
+                src_origin.x = clipped_rect.left - rect.left;
+                src_origin.y = clipped_rect.top  - rect.top;
+
+                dib.funcs->draw_glyph( &dib, &clipped_rect, &glyph_dib, &src_origin,
+                                       fg_pixel, glyph_intensities );
+            }
+        }
+        if (image.free) image.free( &image );
+
+        if (dx)
+        {
+            if (flags & ETO_PDY)
+            {
+                x += dx[ i * 2 ];
+                y += dx[ i * 2 + 1];
+            }
+            else
+                x += dx[ i ];
+        }
+        else
+        {
+            x += metrics.gmCellIncX;
+            y += metrics.gmCellIncY;
+        }
+    }
+    free_dib_info( &dib );
+    return TRUE;
 }
 
 /***********************************************************************
@@ -269,7 +364,7 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         GLYPHMETRICS metrics;
         struct gdi_image_bits image;
 
-        err = get_glyph_bitmap( pdev, (UINT)str[i], aa_flags, &metrics, &image );
+        err = get_glyph_bitmap( dev->hdc, (UINT)str[i], aa_flags, &metrics, &image );
         if (err) continue;
 
         if (image.ptr) draw_glyph( pdev, &origin, &metrics, &image );

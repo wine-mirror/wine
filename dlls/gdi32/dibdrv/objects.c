@@ -123,12 +123,11 @@ static inline BOOL rgbquad_equal(const RGBQUAD *a, const RGBQUAD *b)
     return FALSE;
 }
 
-static COLORREF make_rgb_colorref( dibdrv_physdev *pdev, COLORREF color,
-                                   BOOL *got_pixel, DWORD *pixel )
+COLORREF make_rgb_colorref( HDC hdc, dib_info *dib, COLORREF color, BOOL *got_pixel, DWORD *pixel )
 {
     BYTE type = color >> 24;
     WORD index = LOWORD( color );
-    HPALETTE pal = GetCurrentObject( pdev->dev.hdc, OBJ_PAL );
+    HPALETTE pal = GetCurrentObject( hdc, OBJ_PAL );
     PALETTEENTRY pal_ent;
 
     *pixel = 0;
@@ -143,13 +142,13 @@ static COLORREF make_rgb_colorref( dibdrv_physdev *pdev, COLORREF color,
         *pixel = 0;
         color = RGB(0, 0, 0);
 
-        if (pdev->dib.bit_count <= 8 && index < (1 << pdev->dib.bit_count))
+        if (dib->bit_count <= 8 && index < (1 << dib->bit_count))
         {
             *pixel = index;
-            if (index < pdev->dib.color_table_size)
-                color = RGB( pdev->dib.color_table[index].rgbRed,
-                             pdev->dib.color_table[index].rgbGreen,
-                             pdev->dib.color_table[index].rgbBlue );
+            if (index < dib->color_table_size)
+                color = RGB( dib->color_table[index].rgbRed,
+                             dib->color_table[index].rgbGreen,
+                             dib->color_table[index].rgbBlue );
         }
         break;
 
@@ -187,7 +186,7 @@ DWORD get_pixel_color( dibdrv_physdev *pdev, COLORREF color, BOOL mono_fixup )
     DWORD pixel;
     COLORREF rgb_ref;
 
-    rgb_ref = make_rgb_colorref( pdev, color, &got_pixel, &pixel );
+    rgb_ref = make_rgb_colorref( pdev->dev.hdc, &pdev->dib, color, &got_pixel, &pixel );
     if (got_pixel) return pixel;
 
     if (pdev->dib.bit_count != 1 || !mono_fixup)

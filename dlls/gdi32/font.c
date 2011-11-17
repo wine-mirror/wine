@@ -23,6 +23,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <limits.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1669,6 +1670,44 @@ static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT aa_flags,
 }
 
 /* helper for nulldrv_ExtTextOut */
+static RECT get_total_extents( HDC hdc, INT x, INT y, UINT flags, UINT aa_flags,
+                               LPCWSTR str, UINT count, const INT *dx )
+{
+    int i;
+    RECT rect;
+
+    rect.left = rect.top = INT_MAX;
+    rect.right = rect.bottom = INT_MIN;
+    for (i = 0; i < count; i++)
+    {
+        GLYPHMETRICS metrics;
+
+        if (get_glyph_bitmap( hdc, (UINT)str[i], aa_flags, &metrics, NULL )) continue;
+
+        rect.left = min( rect.left, x + metrics.gmptGlyphOrigin.x );
+        rect.top = min( rect.top, y - metrics.gmptGlyphOrigin.y );
+        rect.right = max( rect.right, x + metrics.gmptGlyphOrigin.x + (int)metrics.gmBlackBoxX );
+        rect.bottom = max( rect.bottom, y - metrics.gmptGlyphOrigin.y + (int)metrics.gmBlackBoxY );
+
+        if (dx)
+        {
+            if (flags & ETO_PDY)
+            {
+                x += dx[ i * 2 ];
+                y += dx[ i * 2 + 1];
+            }
+            else x += dx[ i ];
+        }
+        else
+        {
+            x += metrics.gmCellIncX;
+            y += metrics.gmCellIncY;
+        }
+    }
+    return rect;
+}
+
+/* helper for nulldrv_ExtTextOut */
 static void draw_glyph( HDC hdc, INT origin_x, INT origin_y, const GLYPHMETRICS *metrics,
                         const struct gdi_image_bits *image, const RECT *clip )
 {
@@ -1718,7 +1757,8 @@ static void draw_glyph( HDC hdc, INT origin_x, INT origin_y, const GLYPHMETRICS 
 BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect,
                          LPCWSTR str, UINT count, const INT *dx )
 {
-    UINT i;
+    DC *dc = get_nulldrv_dc( dev );
+    UINT aa_flags, i;
     DWORD err;
     HGDIOBJ orig;
     HPEN pen;
@@ -1739,6 +1779,85 @@ BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect
     }
 
     if (!count) return TRUE;
+
+    aa_flags = get_font_aa_flags( dev->hdc );
+
+    if (aa_flags != GGO_BITMAP)
+    {
+        char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+        BITMAPINFO *info = (BITMAPINFO *)buffer;
+        struct gdi_image_bits bits;
+        struct bitblt_coords src, dst;
+        PHYSDEV dst_dev;
+        RECT clip;
+
+        dst_dev = GET_DC_PHYSDEV( dc, pPutImage );
+        src.visrect = get_total_extents( dev->hdc, x, y, flags, aa_flags, str, count, dx );
+        if (flags & ETO_CLIPPED) intersect_rect( &src.visrect, &src.visrect, rect );
+        if (get_clip_box( dc, &clip )) intersect_rect( &src.visrect, &src.visrect, &clip );
+        if (is_rect_empty( &src.visrect )) return TRUE;
+
+        /* FIXME: check for ETO_OPAQUE and avoid GetImage */
+        src.x = src.visrect.left;
+        src.y = src.visrect.top;
+        src.width = src.visrect.right - src.visrect.left;
+        src.height = src.visrect.bottom - src.visrect.top;
+        dst = src;
+        if ((flags & ETO_OPAQUE) && (src.visrect.left >= rect->left) && (src.visrect.top >= rect->top) &&
+            (src.visrect.right <= rect->right) && (src.visrect.bottom <= rect->bottom))
+        {
+            /* we can avoid the GetImage, just query the needed format */
+            memset( &info->bmiHeader, 0, sizeof(info->bmiHeader) );
+            info->bmiHeader.biSize   = sizeof(info->bmiHeader);
+            info->bmiHeader.biWidth  = src.width;
+            info->bmiHeader.biHeight = -src.height;
+            err = dst_dev->funcs->pPutImage( dst_dev, 0, 0, info, NULL, NULL, NULL, 0 );
+            if (!err || err == ERROR_BAD_FORMAT)
+            {
+                /* make the source rectangle relative to the source bits */
+                src.x = src.y = 0;
+                src.visrect.left = src.visrect.top = 0;
+                src.visrect.right = src.width;
+                src.visrect.bottom = src.height;
+
+                bits.ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( info ));
+                if (!bits.ptr) return ERROR_OUTOFMEMORY;
+                bits.is_copy = TRUE;
+                bits.free = free_heap_bits;
+                err = ERROR_SUCCESS;
+            }
+        }
+        else
+        {
+            PHYSDEV src_dev = GET_DC_PHYSDEV( dc, pGetImage );
+            err = src_dev->funcs->pGetImage( src_dev, 0, info, &bits, &src );
+            if (!err && !bits.is_copy)
+            {
+                void *ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( info ));
+                if (!ptr)
+                {
+                    if (bits.free) bits.free( &bits );
+                    return ERROR_OUTOFMEMORY;
+                }
+                memcpy( ptr, bits.ptr, get_dib_image_size( info ));
+                if (bits.free) bits.free( &bits );
+                bits.ptr = ptr;
+                bits.is_copy = TRUE;
+                bits.free = free_heap_bits;
+            }
+        }
+        if (!err)
+        {
+            /* make x,y relative to the image bits */
+            x += src.visrect.left - dst.visrect.left;
+            y += src.visrect.top - dst.visrect.top;
+            render_aa_text_bitmapinfo( dev->hdc, info, &bits, &src, x, y, flags,
+                                       aa_flags, str, count, dx );
+            err = dst_dev->funcs->pPutImage( dst_dev, 0, 0, info, &bits, &src, &dst, SRCCOPY );
+            if (bits.free) bits.free( &bits );
+            return !err;
+        }
+    }
 
     pen = CreatePen( PS_SOLID, 1, GetTextColor(dev->hdc) );
     orig = SelectObject( dev->hdc, pen );
