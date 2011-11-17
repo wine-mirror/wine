@@ -129,7 +129,7 @@ static void draw_glyph( dibdrv_physdev *pdev, const POINT *origin, const GLYPHME
     int i;
     RECT rect, clipped_rect;
     POINT src_origin;
-    static dib_info glyph_dib;
+    dib_info glyph_dib;
 
     glyph_dib.bit_count = 8;
     glyph_dib.width     = metrics->gmBlackBoxX;
