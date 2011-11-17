@@ -452,7 +452,7 @@ void ddraw_destroy_swapchain(IDirectDrawImpl *ddraw)
         wined3d_device_uninit_gdi(ddraw->wined3d_device);
     }
 
-    ddraw->swapchain_window = NULL;
+    ddraw_set_swapchain_window(ddraw, NULL);
 
     TRACE("Swapchain destroyed.\n");
 }
@@ -2655,7 +2655,7 @@ static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSurface
     }
 
     if (SUCCEEDED(hr))
-        ddraw->swapchain_window = ddraw->dest_window;
+        ddraw_set_swapchain_window(ddraw, ddraw->dest_window);
 
     return hr;
 }

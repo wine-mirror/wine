@@ -3952,12 +3952,12 @@ static HRESULT WINAPI ddraw_surface7_SetClipper(IDirectDrawSurface7 *iface,
         if (clipWindow)
         {
             wined3d_swapchain_set_window(This->ddraw->wined3d_swapchain, clipWindow);
-            This->ddraw->swapchain_window = clipWindow;
+            ddraw_set_swapchain_window(This->ddraw, clipWindow);
         }
         else
         {
             wined3d_swapchain_set_window(This->ddraw->wined3d_swapchain, This->ddraw->d3d_window);
-            This->ddraw->swapchain_window = This->ddraw->dest_window;
+            ddraw_set_swapchain_window(This->ddraw, This->ddraw->dest_window);
         }
     }
 

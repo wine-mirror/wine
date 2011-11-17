@@ -128,6 +128,13 @@ struct IDirectDrawImpl
 HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type) DECLSPEC_HIDDEN;
 void ddraw_destroy_swapchain(IDirectDrawImpl *ddraw) DECLSPEC_HIDDEN;
 
+static inline void ddraw_set_swapchain_window(struct IDirectDrawImpl *ddraw, HWND window)
+{
+    if (window == GetDesktopWindow())
+        window = NULL;
+    ddraw->swapchain_window = window;
+}
+
 /* Utility functions */
 void DDRAW_Convert_DDSCAPS_1_To_2(const DDSCAPS *pIn, DDSCAPS2 *pOut) DECLSPEC_HIDDEN;
 void DDRAW_Convert_DDDEVICEIDENTIFIER_2_To_1(const DDDEVICEIDENTIFIER2 *pIn, DDDEVICEIDENTIFIER *pOut) DECLSPEC_HIDDEN;
