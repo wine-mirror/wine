@@ -777,6 +777,35 @@ static inline BOOL is_indic(WORD script)
     return (script >= Script_Devanagari && script <= Script_Malayalam_Numeric);
 }
 
+static inline WORD base_indic(WORD script)
+{
+    switch (script)
+    {
+        case Script_Devanagari:
+        case Script_Devanagari_Numeric: return Script_Devanagari;
+        case Script_Bengali:
+        case Script_Bengali_Numeric:
+        case Script_Bengali_Currency: return Script_Bengali;
+        case Script_Gurmukhi:
+        case Script_Gurmukhi_Numeric: return Script_Gurmukhi;
+        case Script_Gujarati:
+        case Script_Gujarati_Numeric:
+        case Script_Gujarati_Currency: return Script_Gujarati;
+        case Script_Oriya:
+        case Script_Oriya_Numeric: return Script_Oriya;
+        case Script_Tamil:
+        case Script_Tamil_Numeric: return Script_Tamil;
+        case Script_Telugu:
+        case Script_Telugu_Numeric: return Script_Telugu;
+        case Script_Kannada:
+        case Script_Kannada_Numeric: return Script_Kannada;
+        case Script_Malayalam:
+        case Script_Malayalam_Numeric: return Script_Malayalam;
+        default:
+            return -1;
+    };
+}
+
 /***********************************************************************
  *      ScriptItemizeOpenType (USP10.@)
  *
@@ -834,7 +863,7 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
         if ((pwcInChars[i] == 0x964 || pwcInChars[i] ==0x965) && last_indic > 0)
             scripts[i] = last_indic;
         else if (is_indic(scripts[i]))
-            last_indic = scripts[i];
+            last_indic = base_indic(scripts[i]);
     }
 
     if (psState && psControl)
