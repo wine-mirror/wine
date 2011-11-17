@@ -851,7 +851,7 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
         for (i = 0; i < cInChars; i++)
             if (levels[i]!=levels[0])
                 break;
-        if (i >= cInChars && !odd(baselevel))
+        if (i >= cInChars && !odd(baselevel) && !odd(psState->uBidiLevel))
         {
             heap_free(levels);
             levels = NULL;
