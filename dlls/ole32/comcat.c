@@ -635,7 +635,7 @@ static HRESULT WINAPI COMCAT_ICatInformation_EnumImplCategoriesOfClass(
     REFCLSID rclsid,
     LPENUMCATID *ppenumCATID)
 {
-    static const WCHAR postfix[24] = { '\\', 'I', 'm', 'p', 'l', 'e', 'm', 'e',
+    static const WCHAR postfix[] = { '\\', 'I', 'm', 'p', 'l', 'e', 'm', 'e',
 			  'n', 't', 'e', 'd', ' ', 'C', 'a', 't',
 			  'e', 'g', 'o', 'r', 'i', 'e', 's', 0 };
 
@@ -657,7 +657,7 @@ static HRESULT WINAPI COMCAT_ICatInformation_EnumReqCategoriesOfClass(
     REFCLSID rclsid,
     LPENUMCATID *ppenumCATID)
 {
-    static const WCHAR postfix[21] = { '\\', 'R', 'e', 'q', 'u', 'i', 'r', 'e',
+    static const WCHAR postfix[] = { '\\', 'R', 'e', 'q', 'u', 'i', 'r', 'e',
 			  'd', ' ', 'C', 'a', 't', 'e', 'g', 'o',
 			  'r', 'i', 'e', 's', 0 };
 
