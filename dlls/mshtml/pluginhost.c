@@ -1281,6 +1281,7 @@ void detach_plugin_host(PluginHost *host)
     }
 
     list_remove(&host->entry);
+    list_init(&host->entry);
     host->doc = NULL;
 }
 
