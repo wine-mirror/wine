@@ -1607,6 +1607,156 @@ BOOL WINAPI GetCharWidth32A( HDC hdc, UINT firstChar, UINT lastChar,
 }
 
 
+/* helper for nulldrv_ExtTextOut */
+static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT aa_flags,
+                               GLYPHMETRICS *metrics, struct gdi_image_bits *image )
+{
+    UINT ggo_flags = aa_flags | GGO_GLYPH_INDEX;
+    static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
+    UINT indices[3] = {0, 0, 0x20};
+    int i;
+    DWORD ret, size;
+    int stride;
+
+    indices[0] = index;
+
+    for (i = 0; i < sizeof(indices) / sizeof(indices[0]); index = indices[++i])
+    {
+        ret = GetGlyphOutlineW( hdc, index, ggo_flags, metrics, 0, NULL, &identity );
+        if (ret != GDI_ERROR) break;
+    }
+
+    if (ret == GDI_ERROR) return ERROR_NOT_FOUND;
+    if (!image) return ERROR_SUCCESS;
+
+    image->ptr = NULL;
+    image->free = NULL;
+    if (!ret) return ERROR_SUCCESS; /* empty glyph */
+
+    stride = get_dib_stride( metrics->gmBlackBoxX, 1 );
+    size = metrics->gmBlackBoxY * stride;
+
+    if (!(image->ptr = HeapAlloc( GetProcessHeap(), 0, size ))) return ERROR_OUTOFMEMORY;
+    image->is_copy = TRUE;
+    image->free = free_heap_bits;
+
+    ret = GetGlyphOutlineW( hdc, index, ggo_flags, metrics, size, image->ptr, &identity );
+    if (ret == GDI_ERROR)
+    {
+        HeapFree( GetProcessHeap(), 0, image->ptr );
+        return ERROR_NOT_FOUND;
+    }
+    return ERROR_SUCCESS;
+}
+
+/* helper for nulldrv_ExtTextOut */
+static void draw_glyph( HDC hdc, INT origin_x, INT origin_y, const GLYPHMETRICS *metrics,
+                        const struct gdi_image_bits *image, const RECT *clip )
+{
+    static const BYTE masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
+    UINT x, y, i, count;
+    BYTE *ptr = image->ptr;
+    int stride = get_dib_stride( metrics->gmBlackBoxX, 1 );
+    POINT *pts;
+    RECT rect, clipped_rect;
+
+    rect.left   = origin_x  + metrics->gmptGlyphOrigin.x;
+    rect.top    = origin_y  - metrics->gmptGlyphOrigin.y;
+    rect.right  = rect.left + metrics->gmBlackBoxX;
+    rect.bottom = rect.top  + metrics->gmBlackBoxY;
+    if (!clip) clipped_rect = rect;
+    else if (!intersect_rect( &clipped_rect, &rect, clip )) return;
+
+    pts = HeapAlloc( GetProcessHeap(), 0,
+                     max(2,metrics->gmBlackBoxX) * metrics->gmBlackBoxY * sizeof(*pts) );
+    if (!pts) return;
+
+    count = 0;
+    ptr += (clipped_rect.top - rect.top) * stride;
+    for (y = clipped_rect.top; y < clipped_rect.bottom; y++, ptr += stride)
+    {
+        for (x = clipped_rect.left - rect.left; x < clipped_rect.right - rect.left; x++)
+        {
+            while (x < clipped_rect.right - rect.left && !(ptr[x / 8] & masks[x % 8])) x++;
+            pts[count].x = rect.left + x;
+            while (x < clipped_rect.right - rect.left && (ptr[x / 8] & masks[x % 8])) x++;
+            pts[count + 1].x = rect.left + x;
+            if (pts[count + 1].x > pts[count].x)
+            {
+                pts[count].y = pts[count + 1].y = y;
+                count += 2;
+            }
+        }
+    }
+    DPtoLP( hdc, pts, count );
+    for (i = 0; i < count; i += 2) Polyline( hdc, pts + i, 2 );
+    HeapFree( GetProcessHeap(), 0, pts );
+}
+
+/***********************************************************************
+ *           nulldrv_ExtTextOut
+ */
+BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect,
+                         LPCWSTR str, UINT count, const INT *dx )
+{
+    UINT i;
+    DWORD err;
+    HGDIOBJ orig;
+    HPEN pen;
+
+    if (flags & ETO_OPAQUE)
+    {
+        RECT rc = *rect;
+        HBRUSH brush = CreateSolidBrush( GetNearestColor( dev->hdc, GetBkColor(dev->hdc) ));
+
+        if (brush)
+        {
+            orig = SelectObject( dev->hdc, brush );
+            DPtoLP( dev->hdc, (POINT *)&rc, 2 );
+            PatBlt( dev->hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
+            SelectObject( dev->hdc, orig );
+            DeleteObject( brush );
+        }
+    }
+
+    if (!count) return TRUE;
+
+    pen = CreatePen( PS_SOLID, 1, GetTextColor(dev->hdc) );
+    orig = SelectObject( dev->hdc, pen );
+
+    for (i = 0; i < count; i++)
+    {
+        GLYPHMETRICS metrics;
+        struct gdi_image_bits image;
+
+        err = get_glyph_bitmap( dev->hdc, (UINT)str[i], GGO_BITMAP, &metrics, &image );
+        if (err) continue;
+
+        if (image.ptr) draw_glyph( dev->hdc, x, y, &metrics, &image, (flags & ETO_CLIPPED) ? rect : NULL );
+        if (image.free) image.free( &image );
+
+        if (dx)
+        {
+            if (flags & ETO_PDY)
+            {
+                x += dx[ i * 2 ];
+                y += dx[ i * 2 + 1];
+            }
+            else x += dx[ i ];
+        }
+        else
+        {
+            x += metrics.gmCellIncX;
+            y += metrics.gmCellIncY;
+        }
+    }
+
+    SelectObject( dev->hdc, orig );
+    DeleteObject( pen );
+    return TRUE;
+}
+
+
 /***********************************************************************
  *           ExtTextOutA    (GDI32.@)
  *

@@ -358,6 +358,8 @@ extern BOOL nulldrv_CopyBitmap( HBITMAP src, HBITMAP dst ) DECLSPEC_HIDDEN;
 extern BOOL nulldrv_EndPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern INT  nulldrv_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
 extern INT  nulldrv_ExtSelectClipRgn( PHYSDEV dev, HRGN rgn, INT mode ) DECLSPEC_HIDDEN;
+extern BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect,
+                                LPCWSTR str, UINT count, const INT *dx ) DECLSPEC_HIDDEN;
 extern BOOL nulldrv_FillPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL nulldrv_FillRgn( PHYSDEV dev, HRGN rgn, HBRUSH brush ) DECLSPEC_HIDDEN;
 extern BOOL nulldrv_FlattenPath( PHYSDEV dev ) DECLSPEC_HIDDEN;

@@ -301,12 +301,6 @@ static BOOL nulldrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UIN
     return TRUE;
 }
 
-static BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect,
-                                LPCWSTR str, UINT count, const INT *dx )
-{
-    return TRUE;
-}
-
 static BOOL nulldrv_FontIsLinked( PHYSDEV dev )
 {
     return FALSE;
