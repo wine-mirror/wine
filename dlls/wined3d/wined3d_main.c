@@ -382,6 +382,8 @@ static BOOL wined3d_dll_destroy(HINSTANCE hInstDLL)
     HeapFree(GetProcessHeap(), 0, wined3d_settings.logo);
     UnregisterClassA(WINED3D_OPENGL_WINDOW_CLASS_NAME, hInstDLL);
 
+    DeleteCriticalSection(&wined3d_wndproc_cs);
+    DeleteCriticalSection(&wined3d_cs);
     return TRUE;
 }
 
