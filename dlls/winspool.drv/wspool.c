@@ -114,6 +114,7 @@ static void unload_backend(void)
     backend = NULL;
     FreeLibrary(hlocalspl);
     LeaveCriticalSection(&backend_cs);
+    DeleteCriticalSection(&backend_cs);
 }
 
 
