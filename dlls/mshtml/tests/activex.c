@@ -83,10 +83,19 @@ DEFINE_EXPECT(SetObjectRects);
 DEFINE_EXPECT(InPlaceDeactivate);
 DEFINE_EXPECT(UIDeactivate);
 DEFINE_EXPECT(QueryService_TestActiveX);
+DEFINE_EXPECT(GetMiscStatus);
+DEFINE_EXPECT(SetAdvise);
+DEFINE_EXPECT(GetViewStatus);
 
 #define DISPID_SCRIPTPROP 1000
 
+enum {
+    TEST_FLASH,
+    TEST_NOQUICKACT
+};
+
 static HWND container_hwnd, plugin_hwnd;
+static int plugin_behavior;
 
 #define TESTACTIVEX_CLSID "{178fc163-f585-4e24-9c13-4bb7f6680746}"
 
@@ -703,8 +712,13 @@ static HRESULT WINAPI ViewObjectEx_Unfreeze(IViewObjectEx *iface, DWORD dwFreeze
 
 static HRESULT WINAPI ViewObjectEx_SetAdvise(IViewObjectEx *iface, DWORD aspects, DWORD advf, IAdviseSink *pAdvSink)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(SetAdvise);
+
+    ok(aspects == DVASPECT_CONTENT, "aspects = %x\n", aspects);
+    ok(!advf, "advf = %x\n", advf);
+    ok(pAdvSink != NULL, "pAdvSink = NULL\n");
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ViewObjectEx_GetAdvise(IViewObjectEx *iface, DWORD *pAspects, DWORD *pAdvf, IAdviseSink **ppAdvSink)
@@ -727,8 +741,10 @@ static HRESULT WINAPI ViewObjectEx_GetRect(IViewObjectEx *iface, DWORD dwAspect,
 
 static HRESULT WINAPI ViewObjectEx_GetViewStatus(IViewObjectEx *iface, DWORD *pdwStatus)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(GetViewStatus);
+
+    *pdwStatus = VIEWSTATUS_OPAQUE|VIEWSTATUS_SOLIDBKGND;
+    return S_OK;
 }
 
 static HRESULT WINAPI ViewObjectEx_QueryHitPoint(IViewObjectEx *iface, DWORD dwAspect, LPCRECT pRectBounds, POINT ptlLoc,
@@ -795,7 +811,10 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
     }
 
     CHECK_EXPECT(SetClientSite);
-    return E_NOTIMPL;
+
+    IOleClientSite_AddRef(pClientSite);
+    client_site = pClientSite;
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_GetClientSite(IOleObject *iface, IOleClientSite **ppClientSite)
@@ -981,8 +1000,12 @@ static HRESULT WINAPI OleObject_EnumAdvise(IOleObject *iface, IEnumSTATDATA **pp
 
 static HRESULT WINAPI OleObject_GetMiscStatus(IOleObject *iface, DWORD dwAspect, DWORD *pdwStatus)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(GetMiscStatus);
+    ok(dwAspect == DVASPECT_CONTENT, "dwAspect = %d\n", dwAspect);
+    ok(pdwStatus != NULL, "pdwStatus == NULL\n");
+    *pdwStatus = OLEMISC_SETCLIENTSITEFIRST|OLEMISC_ACTIVATEWHENVISIBLE
+        |OLEMISC_INSIDEOUT|OLEMISC_CANTLINKINSIDE|OLEMISC_RECOMPOSEONRESIZE;
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_SetColorScheme(IOleObject *iface, LOGPALETTE *pLogpal)
@@ -1124,42 +1147,26 @@ static HRESULT ax_qi(REFIID riid, void **ppv)
 {
     if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IOleControl)) {
         *ppv = &OleControl;
-        return S_OK;
-    }
-
-    if(IsEqualGUID(riid, &IID_IQuickActivate)) {
-        *ppv = &QuickActivate;
-        return S_OK;
-    }
-
-    if(IsEqualGUID(riid, &IID_IPersistPropertyBag)) {
-        *ppv = &PersistPropertyBag;
-        return S_OK;
-    }
-
-    if(IsEqualGUID(riid, &IID_IDispatch)) {
+    }else if(IsEqualGUID(riid, &IID_IQuickActivate)) {
+        *ppv = plugin_behavior == TEST_NOQUICKACT ? NULL : &QuickActivate;
+    }else if(IsEqualGUID(riid, &IID_IPersistPropertyBag)) {
+        *ppv = plugin_behavior == TEST_NOQUICKACT ? NULL : &PersistPropertyBag;
+    }else if(IsEqualGUID(riid, &IID_IDispatch)) {
         *ppv = &Dispatch;
-        return S_OK;
-    }
-
-    if(IsEqualGUID(riid, &IID_IViewObject) || IsEqualGUID(riid, &IID_IViewObject2) || IsEqualGUID(riid, &IID_IViewObjectEx)) {
+    }else if(IsEqualGUID(riid, &IID_IViewObject) || IsEqualGUID(riid, &IID_IViewObject2)
+            || IsEqualGUID(riid, &IID_IViewObjectEx)) {
         *ppv = &ViewObjectEx;
-        return S_OK;
-    }
-
-    if(IsEqualGUID(riid, &IID_IOleObject)) {
+    }else if(IsEqualGUID(riid, &IID_IOleObject)) {
         *ppv = &OleObject;
-        return S_OK;
-    }
-
-    if(IsEqualGUID(riid, &IID_IOleWindow) || IsEqualGUID(riid, &IID_IOleInPlaceObject)
+    }else  if(IsEqualGUID(riid, &IID_IOleWindow) || IsEqualGUID(riid, &IID_IOleInPlaceObject)
        || IsEqualGUID(&IID_IOleInPlaceObjectWindowless, riid)) {
         *ppv = &OleInPlaceObjectWindowless;
-        return S_OK;
+    }else {
+        trace("QI %s\n", debugstr_guid(riid));
+        *ppv = NULL;
     }
 
-    *ppv = NULL;
-    return E_NOINTERFACE;
+    return *ppv ? S_OK : E_NOINTERFACE;
 }
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
@@ -1949,9 +1956,11 @@ static void release_doc(IHTMLDocument2 *doc)
     }
 }
 
-static void test_object_ax(void)
+static void test_flash_ax(void)
 {
     IHTMLDocument2 *doc;
+
+    plugin_behavior = TEST_FLASH;
 
     /*
      * We pump messages until both document is loaded and plugin instance is created.
@@ -2004,6 +2013,51 @@ static void test_object_ax(void)
     CHECK_CALLED(Invoke_ENABLED);
     todo_wine
     CHECK_CALLED(Invoke_VALID);
+    CHECK_CALLED(InPlaceDeactivate);
+    CHECK_CALLED(Close);
+    CHECK_CALLED(SetClientSite_NULL);
+}
+
+static void test_noquickact_ax(void)
+{
+    IHTMLDocument2 *doc;
+
+    plugin_behavior = TEST_NOQUICKACT;
+
+    SET_EXPECT(CreateInstance);
+    SET_EXPECT(FreezeEvents_TRUE);
+    SET_EXPECT(GetMiscStatus);
+    SET_EXPECT(SetClientSite);
+    SET_EXPECT(SetAdvise);
+    SET_EXPECT(GetViewStatus);
+    SET_EXPECT(FreezeEvents_FALSE);
+    SET_EXPECT(Invoke_READYSTATE);
+    SET_EXPECT(SetExtent);
+    SET_EXPECT(GetExtent);
+    SET_EXPECT(DoVerb);
+
+    doc = create_doc(object_ax_str, &called_CreateInstance);
+
+    CHECK_CALLED(CreateInstance);
+    todo_wine CHECK_CALLED(FreezeEvents_TRUE);
+    CHECK_CALLED(GetMiscStatus);
+    CHECK_CALLED(SetClientSite);
+    CHECK_CALLED(SetAdvise);
+    CHECK_CALLED(GetViewStatus);
+    todo_wine CHECK_CALLED(FreezeEvents_FALSE);
+    CHECK_CALLED(Invoke_READYSTATE);
+    todo_wine CHECK_CALLED(SetExtent);
+    todo_wine CHECK_CALLED(GetExtent);
+    CHECK_CALLED(DoVerb);
+
+    /* Set in DoVerb */
+    CHECK_CALLED(InPlaceObject_GetWindow);
+    CHECK_CALLED(SetObjectRects);
+
+    SET_EXPECT(InPlaceDeactivate);
+    SET_EXPECT(Close);
+    SET_EXPECT(SetClientSite_NULL);
+    release_doc(doc);
     CHECK_CALLED(InPlaceDeactivate);
     CHECK_CALLED(Close);
     CHECK_CALLED(SetClientSite_NULL);
@@ -2121,7 +2175,10 @@ START_TEST(activex)
     ShowWindow(container_hwnd, SW_SHOW);
 
     if(register_activex()) {
-        test_object_ax();
+        trace("Testing emulated flash embedding...\n");
+        test_flash_ax();
+        trace("Testing plugin without IQuickActivate iface...\n");
+        test_noquickact_ax();
         init_registry(FALSE);
     }else {
         skip("Could not register ActiveX\n");
