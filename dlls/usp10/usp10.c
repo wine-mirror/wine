@@ -949,7 +949,10 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
 
     if (levels)
     {
-        layoutRTL = (psState->uBidiLevel || odd(levels[cnt]))?1:0;
+        if (strength[cnt] == BIDI_STRONG)
+            layoutRTL = (odd(levels[cnt]))?1:0;
+        else
+            layoutRTL = (psState->uBidiLevel || odd(levels[cnt]))?1:0;
         pItems[index].a.fRTL = odd(levels[cnt]);
         pItems[index].a.fLayoutRTL = layoutRTL;
         pItems[index].a.s.uBidiLevel = levels[cnt];
