@@ -2416,23 +2416,23 @@ msgstr "Especifique a URL que você deseja abrir no Internet Explorer"
 msgid "Open:"
 msgstr "Abrir:"
 
-#: ieframe.rc:84 net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172
-#: progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177
-#: progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268
-#: regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521
-#: wineconsole.rc:131 winefile.rc:131 winefile.rc:154 winefile.rc:184
-#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
-#: wordpad.rc:233 wordpad.rc:246
+#: ieframe.rc:84 winspool.rc:39 net.rc:44 notepad.rc:122 oleview.rc:159
+#: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
+#: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
+#: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
+#: taskmgr.rc:521 wineconsole.rc:131 winefile.rc:131 winefile.rc:154
+#: winefile.rc:184 winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204
+#: wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
-#: ieframe.rc:85 inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173
-#: progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178
-#: progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269
-#: regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522
-#: wineboot.rc:31 wineconsole.rc:132 winefile.rc:132 winefile.rc:155
-#: winefile.rc:185 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
-#: wordpad.rc:247
+#: ieframe.rc:85 inetcpl.rc:78 winspool.rc:40 notepad.rc:123 oleview.rc:160
+#: oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156
+#: progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256
+#: regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447
+#: taskmgr.rc:522 wineboot.rc:31 wineconsole.rc:132 winefile.rc:132
+#: winefile.rc:155 winefile.rc:185 winemine.rc:93 wordpad.rc:205
+#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -7934,6 +7934,14 @@ msgid ""
 msgstr ""
 "Não é possível gravar no arquivo especificado. Certifique-se que você possui "
 "espaço em disco suficiente ou que ainda esteja conectado na rede."
+
+#: winspool.rc:34
+msgid "Print to File"
+msgstr "Imprimir para Arquivo"
+
+#: winspool.rc:37
+msgid "&Output File Name:"
+msgstr "&Nome do Arquivo de Destino:"
 
 #: winspool.rc:28
 msgid "The output file already exists.  Click OK to overwrite."
