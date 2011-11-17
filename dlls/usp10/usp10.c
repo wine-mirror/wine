@@ -103,7 +103,7 @@ static const scriptRange scriptRanges[] = {
     /* Lao: U+0E80–U+0EFF */
     { Script_Lao,       0xe80,  0xeff,  Script_Lao_Numeric, 0},
     /* Tibetan: U+0F00–U+0FFF */
-    { Script_Tibetan,   0xf00,  0xfff,  Script_Tibetan_Numeric, 0},
+    { Script_Tibetan,   0xf00,  0xfff,  0, 0},
     /* Georgian: U+10A0–U+10FF */
     { Script_Georgian,   0x10a0,  0x10ff,  0, 0},
     /* Vedic Extensions: U+1CD0-U+1CFF */
