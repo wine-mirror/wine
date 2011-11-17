@@ -2269,6 +2269,38 @@ msgstr "도움말(&H)"
 msgid "&About Internet Explorer"
 msgstr "인터넷 익스플로어에 관하여(&A)..."
 
+#: ieframe.rc:78
+msgid "Open URL"
+msgstr "URL 열기"
+
+#: ieframe.rc:81
+msgid "Specify the URL you wish to open in Internet Explorer"
+msgstr "인터넷 익스플로어로 열 URL 지정"
+
+#: ieframe.rc:82
+msgid "Open:"
+msgstr "열기:"
+
+#: ieframe.rc:84 net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172
+#: progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177
+#: progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268
+#: regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521
+#: wineconsole.rc:131 winefile.rc:131 winefile.rc:154 winefile.rc:184
+#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
+#: wordpad.rc:233 wordpad.rc:246
+msgid "OK"
+msgstr "확인"
+
+#: ieframe.rc:85 inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173
+#: progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178
+#: progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269
+#: regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522
+#: wineboot.rc:31 wineconsole.rc:132 winefile.rc:132 winefile.rc:155
+#: winefile.rc:185 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
+#: wordpad.rc:247
+msgid "Cancel"
+msgstr "취소"
+
 #: ieframe.rc:67
 msgctxt "home page"
 msgid "Home"
@@ -2367,15 +2399,6 @@ msgid ""
 msgstr ""
 "암호\n"
 "당신이 폼에 입력한 저장된 암호."
-
-#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104
-#: progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197
-#: progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285
-#: regedit.rc:298 regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31
-#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
-msgid "Cancel"
-msgstr "취소"
 
 #: inetcpl.rc:79 progman.rc:64
 msgid "Delete"
@@ -8816,16 +8839,6 @@ msgstr ""
 #: net.rc:43
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr "%1      %2      %3      열린 리소스: %4!u!\n"
-
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
-#: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
-#: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
-#: regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521
-#: wineconsole.rc:131 winefile.rc:131 winefile.rc:154 winefile.rc:184
-#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
-#: wordpad.rc:233 wordpad.rc:246
-msgid "OK"
-msgstr "확인"
 
 #: net.rc:45
 msgid "Paused"

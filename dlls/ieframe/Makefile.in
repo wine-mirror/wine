@@ -21,27 +21,7 @@ C_SRCS = \
 	view.c \
 	webbrowser.c
 
-RC_SRCS = \
-	De.rc \
-	En.rc \
-	Es.rc \
-	Fr.rc \
-	He.rc \
-	It.rc \
-	Ja.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Si.rc \
-	Sr.rc \
-	Sv.rc \
-	Uk.rc \
-	ieframe.rc
-
+RC_SRCS = ieframe.rc
 PO_SRCS = ieframe.rc
 
 SVG_SRCS = \

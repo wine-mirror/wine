@@ -2293,6 +2293,40 @@ msgstr "帮助(&H)"
 msgid "&About Internet Explorer"
 msgstr "Wine Internet Explorer"
 
+#: ieframe.rc:78
+#, fuzzy
+msgid "Open URL"
+msgstr "打开链接(&O)"
+
+#: ieframe.rc:81
+msgid "Specify the URL you wish to open in Internet Explorer"
+msgstr ""
+
+#: ieframe.rc:82
+#, fuzzy
+msgid "Open:"
+msgstr "打开"
+
+#: ieframe.rc:84 net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172
+#: progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177
+#: progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268
+#: regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521
+#: wineconsole.rc:131 winefile.rc:131 winefile.rc:154 winefile.rc:184
+#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
+#: wordpad.rc:233 wordpad.rc:246
+msgid "OK"
+msgstr "确定"
+
+#: ieframe.rc:85 inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173
+#: progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178
+#: progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269
+#: regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522
+#: wineboot.rc:31 wineconsole.rc:132 winefile.rc:132 winefile.rc:155
+#: winefile.rc:185 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
+#: wordpad.rc:247
+msgid "Cancel"
+msgstr "取消"
+
 #: ieframe.rc:67
 #, fuzzy
 msgctxt "home page"
@@ -2387,15 +2421,6 @@ msgid ""
 "Passwords\n"
 "Saved passwords you have entered into forms."
 msgstr ""
-
-#: inetcpl.rc:78 notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104
-#: progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197
-#: progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285
-#: regedit.rc:298 regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31
-#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
-msgid "Cancel"
-msgstr "取消"
 
 #: inetcpl.rc:79 progman.rc:64
 msgid "Delete"
@@ -8742,16 +8767,6 @@ msgstr ""
 #: net.rc:43
 msgid "%1      %2      %3      Open resources: %4!u!\n"
 msgstr ""
-
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
-#: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
-#: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
-#: regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521
-#: wineconsole.rc:131 winefile.rc:131 winefile.rc:154 winefile.rc:184
-#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
-#: wordpad.rc:233 wordpad.rc:246
-msgid "OK"
-msgstr "确定"
 
 #: net.rc:45
 #, fuzzy
