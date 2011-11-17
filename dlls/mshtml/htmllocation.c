@@ -293,10 +293,10 @@ static HRESULT WINAPI HTMLLocation_get_protocol(IHTMLLocation *iface, BSTR *p)
         FIXME("Unexpected blank protocol\n");
         return E_NOTIMPL;
     }else {
-        WCHAR buf[url.dwSchemeLength + 1];
+        WCHAR *buf;
+        buf = *p = SysAllocStringLen(NULL, url.dwSchemeLength + 1);
         memcpy(buf, url.lpszScheme, url.dwSchemeLength * sizeof(WCHAR));
         buf[url.dwSchemeLength] = ':';
-        *p = SysAllocStringLen(buf, url.dwSchemeLength + 1);
     }
     if(!*p)
         return E_OUTOFMEMORY;
@@ -334,13 +334,13 @@ static HRESULT WINAPI HTMLLocation_get_host(IHTMLLocation *iface, BSTR *p)
     if(url.nPort) {
         /* <hostname>:<port> */
         const WCHAR format[] = {'%','u',0};
-        DWORD len = url.dwHostNameLength + 1 + 5 + 1;
-        WCHAR buf[len];
+        DWORD len = url.dwHostNameLength + 1 + 5;
+        WCHAR *buf;
 
+        buf = *p = SysAllocStringLen(NULL, len);
         memcpy(buf, url.lpszHostName, url.dwHostNameLength * sizeof(WCHAR));
         buf[url.dwHostNameLength] = ':';
         snprintfW(buf + url.dwHostNameLength + 1, 6, format, url.nPort);
-        *p = SysAllocString(buf);
     }else
         *p = SysAllocStringLen(url.lpszHostName, url.dwHostNameLength);
 
