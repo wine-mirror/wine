@@ -632,8 +632,7 @@ static void process_detach(void)
     /* cleanup XVidMode */
     X11DRV_XF86VM_Cleanup();
 #endif
-    if(using_client_side_fonts)
-        X11DRV_XRender_Finalize();
+    X11DRV_XRender_Finalize();
 
     /* cleanup GDI */
     X11DRV_GDI_Finalize();

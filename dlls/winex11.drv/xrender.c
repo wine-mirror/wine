@@ -44,6 +44,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(xrender);
 
 #ifdef SONAME_LIBXRENDER
 
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
+
 static BOOL X11DRV_XRender_Installed = FALSE;
 
 #include <X11/Xlib.h>
@@ -359,51 +361,51 @@ const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
 {
     int event_base, i;
 
-    if (client_side_with_render &&
-	(xrender_handle = wine_dlopen(SONAME_LIBXRENDER, RTLD_NOW, NULL, 0)))
-    {
+    using_client_side_fonts = client_side_with_render || client_side_with_core;
 
-#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(xrender_handle, #f, NULL, 0)) == NULL) goto sym_not_found;
-LOAD_FUNCPTR(XRenderAddGlyphs)
-LOAD_FUNCPTR(XRenderComposite)
-LOAD_FUNCPTR(XRenderCompositeText16)
-LOAD_FUNCPTR(XRenderCreateGlyphSet)
-LOAD_FUNCPTR(XRenderCreatePicture)
-LOAD_FUNCPTR(XRenderFillRectangle)
-LOAD_FUNCPTR(XRenderFindFormat)
-LOAD_FUNCPTR(XRenderFindVisualFormat)
-LOAD_FUNCPTR(XRenderFreeGlyphSet)
-LOAD_FUNCPTR(XRenderFreePicture)
-LOAD_FUNCPTR(XRenderSetPictureClipRectangles)
-LOAD_FUNCPTR(XRenderQueryExtension)
+    if (!client_side_with_render) return NULL;
+    if (!(xrender_handle = wine_dlopen(SONAME_LIBXRENDER, RTLD_NOW, NULL, 0))) return NULL;
+
+#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(xrender_handle, #f, NULL, 0)) == NULL) return NULL
+    LOAD_FUNCPTR(XRenderAddGlyphs);
+    LOAD_FUNCPTR(XRenderComposite);
+    LOAD_FUNCPTR(XRenderCompositeText16);
+    LOAD_FUNCPTR(XRenderCreateGlyphSet);
+    LOAD_FUNCPTR(XRenderCreatePicture);
+    LOAD_FUNCPTR(XRenderFillRectangle);
+    LOAD_FUNCPTR(XRenderFindFormat);
+    LOAD_FUNCPTR(XRenderFindVisualFormat);
+    LOAD_FUNCPTR(XRenderFreeGlyphSet);
+    LOAD_FUNCPTR(XRenderFreePicture);
+    LOAD_FUNCPTR(XRenderSetPictureClipRectangles);
+    LOAD_FUNCPTR(XRenderQueryExtension);
 #undef LOAD_FUNCPTR
 #ifdef HAVE_XRENDERSETPICTURETRANSFORM
-#define LOAD_OPTIONAL_FUNCPTR(f) p##f = wine_dlsym(xrender_handle, #f, NULL, 0);
-LOAD_OPTIONAL_FUNCPTR(XRenderSetPictureTransform)
+#define LOAD_OPTIONAL_FUNCPTR(f) p##f = wine_dlsym(xrender_handle, #f, NULL, 0)
+    LOAD_OPTIONAL_FUNCPTR(XRenderSetPictureTransform);
 #undef LOAD_OPTIONAL_FUNCPTR
 #endif
 
-        wine_tsx11_lock();
-        X11DRV_XRender_Installed = pXRenderQueryExtension(gdi_display, &event_base, &xrender_error_base);
-        wine_tsx11_unlock();
-        if(X11DRV_XRender_Installed) {
-            TRACE("Xrender is up and running error_base = %d\n", xrender_error_base);
-            if(!load_xrender_formats()) /* This fails in buggy versions of libXrender.so */
-            {
-                wine_tsx11_unlock();
-                WINE_MESSAGE(
-                    "Wine has detected that you probably have a buggy version\n"
-                    "of libXrender.so .  Because of this client side font rendering\n"
-                    "will be disabled.  Please upgrade this library.\n");
-                X11DRV_XRender_Installed = FALSE;
-                return NULL;
-            }
+    wine_tsx11_lock();
+    X11DRV_XRender_Installed = pXRenderQueryExtension(gdi_display, &event_base, &xrender_error_base);
+    wine_tsx11_unlock();
+    if (!X11DRV_XRender_Installed) return NULL;
 
-            if (!visual->red_mask || !visual->green_mask || !visual->blue_mask) {
-                WARN("one or more of the colour masks are 0, disabling XRENDER. Try running in 16-bit mode or higher.\n");
-                X11DRV_XRender_Installed = FALSE;
-            }
-        }
+    TRACE("Xrender is up and running error_base = %d\n", xrender_error_base);
+    if(!load_xrender_formats()) /* This fails in buggy versions of libXrender.so */
+    {
+        ERR_(winediag)("Wine has detected that you probably have a buggy version "
+                       "of libXrender.  Because of this client side font rendering "
+                       "will be disabled.  Please upgrade this library.\n");
+        X11DRV_XRender_Installed = FALSE;
+        return NULL;
+    }
+
+    if (!visual->red_mask || !visual->green_mask || !visual->blue_mask)
+    {
+        WARN("one or more of the colour masks are 0, disabling XRENDER. Try running in 16-bit mode or higher.\n");
+        X11DRV_XRender_Installed = FALSE;
+        return NULL;
     }
 
 #ifdef SONAME_LIBFONTCONFIG
@@ -428,32 +430,20 @@ LOAD_OPTIONAL_FUNCPTR(XRenderSetPictureTransform)
 #endif
 
 sym_not_found:
-    if(X11DRV_XRender_Installed || client_side_with_core)
-    {
-	glyphsetCache = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-				  sizeof(*glyphsetCache) * INIT_CACHE_SIZE);
+    glyphsetCache = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                              sizeof(*glyphsetCache) * INIT_CACHE_SIZE);
 
-	glyphsetCacheSize = INIT_CACHE_SIZE;
-	lastfree = 0;
-	for(i = 0; i < INIT_CACHE_SIZE; i++) {
-	  glyphsetCache[i].next = i + 1;
-	  glyphsetCache[i].count = -1;
-	}
-	glyphsetCache[i-1].next = -1;
-	using_client_side_fonts = 1;
-
-	if(!X11DRV_XRender_Installed) {
-	    TRACE("Xrender is not available on your XServer, client side rendering with the core protocol instead.\n");
-	    if(screen_depth <= 8 || !client_side_antialias_with_core)
-	        antialias = 0;
-	} else {
-	    if(screen_depth <= 8 || !client_side_antialias_with_render)
-	        antialias = 0;
-	}
-        return &xrender_funcs;
+    glyphsetCacheSize = INIT_CACHE_SIZE;
+    lastfree = 0;
+    for(i = 0; i < INIT_CACHE_SIZE; i++) {
+        glyphsetCache[i].next = i + 1;
+        glyphsetCache[i].count = -1;
     }
-    TRACE("Using X11 core fonts\n");
-    return NULL;
+    glyphsetCache[i-1].next = -1;
+
+    if(screen_depth <= 8 || !client_side_antialias_with_render) antialias = 0;
+
+    return &xrender_funcs;
 }
 
 /* Helper function to convert from a color packed in a 32-bit integer to a XRenderColor */
