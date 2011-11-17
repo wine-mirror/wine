@@ -336,6 +336,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
         break;
     case DLL_PROCESS_DETACH:
         USER_unload_driver();
+        DeleteCriticalSection(&user_section);
         break;
     }
     return ret;
