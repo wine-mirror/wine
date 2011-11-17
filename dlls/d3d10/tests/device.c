@@ -128,6 +128,17 @@ static void test_stateblock_mask(void)
     hr = D3D10StateBlockMaskIntersect(&mask_x, &mask_y, NULL);
     ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
 
+    hr = D3D10StateBlockMaskUnion(&mask_x, &mask_y, &result);
+    ok(SUCCEEDED(hr), "D3D10StateBlockMaskUnion failed, hr %#x.\n", hr);
+    ok(result.VS == 0x77, "Got unexpected result.VS %#x.\n", result.VS);
+    ok(result.Predication == 0xbb, "Got unexpected result.Predication %#x.\n", result.Predication);
+    hr = D3D10StateBlockMaskUnion(NULL, &mask_y, &result);
+    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    hr = D3D10StateBlockMaskUnion(&mask_x, NULL, &result);
+    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+    hr = D3D10StateBlockMaskUnion(&mask_x, &mask_y, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpect hr %#x.\n", hr);
+
     memset(&result, 0xff, sizeof(result));
     hr = D3D10StateBlockMaskDisableAll(&result);
     ok(SUCCEEDED(hr), "D3D10StateBlockMaskDisableAll failed, hr %#x.\n", hr);

@@ -26,4 +26,4 @@
 @ stdcall D3D10StateBlockMaskEnableCapture(ptr long long long)
 @ stdcall D3D10StateBlockMaskGetSetting(ptr long long)
 @ stdcall D3D10StateBlockMaskIntersect(ptr ptr ptr)
-@ stub D3D10StateBlockMaskUnion
+@ stdcall D3D10StateBlockMaskUnion(ptr ptr ptr)
