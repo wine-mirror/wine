@@ -85,12 +85,16 @@ static inline WCHAR *pdh_strdup_aw( const char *src )
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(0x%p, %d, %p)\n",hinstDLL,fdwReason,lpvReserved);
-
-    if (fdwReason == DLL_WINE_PREATTACH) return FALSE;    /* prefer native version */
-
-    if (fdwReason == DLL_PROCESS_ATTACH)
+    switch (fdwReason)
     {
-        DisableThreadLibraryCalls( hinstDLL );
+    case DLL_WINE_PREATTACH:
+        return FALSE;    /* prefer native version */
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(hinstDLL);
+        break;
+    case DLL_PROCESS_DETACH:
+        DeleteCriticalSection(&pdh_handle_cs);
+        break;
     }
 
     return TRUE;
