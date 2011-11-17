@@ -142,7 +142,6 @@ typedef struct
     XRenderPictFormat *font_format;
     int nrealized;
     BOOL *realized;
-    void **bitmaps;
     XGlyphInfo *gis;
 } gsCacheEntryFormat;
 
@@ -744,8 +743,8 @@ static int LookupEntry(LFANDSIZE *plfsz)
 
 static void FreeEntry(int entry)
 {
-    int i, format;
-  
+    int format;
+
     for(format = 0; format < AA_MAXVALUE; format++) {
         gsCacheEntryFormat * formatEntry;
 
@@ -763,12 +762,6 @@ static void FreeEntry(int entry)
         if(formatEntry->nrealized) {
             HeapFree(GetProcessHeap(), 0, formatEntry->realized);
             formatEntry->realized = NULL;
-            if(formatEntry->bitmaps) {
-                for(i = 0; i < formatEntry->nrealized; i++)
-                    HeapFree(GetProcessHeap(), 0, formatEntry->bitmaps[i]);
-                HeapFree(GetProcessHeap(), 0, formatEntry->bitmaps);
-                formatEntry->bitmaps = NULL;
-            }
             HeapFree(GetProcessHeap(), 0, formatEntry->gis);
             formatEntry->gis = NULL;
             formatEntry->nrealized = 0;
@@ -1484,17 +1477,6 @@ static void UploadGlyph(struct xrender_physdev *physDev, int glyph, AA_Type form
 				      HEAP_ZERO_MEMORY,
 				      formatEntry->nrealized * sizeof(BOOL));
 
-	if(!X11DRV_XRender_Installed) {
-	  if (formatEntry->bitmaps)
-	    formatEntry->bitmaps = HeapReAlloc(GetProcessHeap(),
-				      HEAP_ZERO_MEMORY,
-				      formatEntry->bitmaps,
-				      formatEntry->nrealized * sizeof(formatEntry->bitmaps[0]));
-	  else
-	    formatEntry->bitmaps = HeapAlloc(GetProcessHeap(),
-				      HEAP_ZERO_MEMORY,
-				      formatEntry->nrealized * sizeof(formatEntry->bitmaps[0]));
-        }
         if (formatEntry->gis)
 	    formatEntry->gis = HeapReAlloc(GetProcessHeap(),
 				   HEAP_ZERO_MEMORY,
@@ -1507,7 +1489,7 @@ static void UploadGlyph(struct xrender_physdev *physDev, int glyph, AA_Type form
     }
 
 
-    if(formatEntry->glyphset == 0 && X11DRV_XRender_Installed) {
+    if(formatEntry->glyphset == 0) {
         switch(format) {
             case AA_Grey:
                 wxr_format = WXR_FORMAT_GRAY;
@@ -1623,247 +1605,9 @@ static void UploadGlyph(struct xrender_physdev *physDev, int glyph, AA_Type form
                           buflen ? buf : zero, buflen ? buflen : sizeof(zero));
 	wine_tsx11_unlock();
 	HeapFree(GetProcessHeap(), 0, buf);
-    } else {
-        formatEntry->bitmaps[glyph] = buf;
     }
 
     formatEntry->gis[glyph] = gi;
-}
-
-static void SharpGlyphMono(struct xrender_physdev *physDev, INT x, INT y,
-			    void *bitmap, XGlyphInfo *gi)
-{
-    unsigned char   *srcLine = bitmap, *src;
-    unsigned char   bits, bitsMask;
-    int             width = gi->width;
-    int             stride = ((width + 31) & ~31) >> 3;
-    int             height = gi->height;
-    int             w;
-    int             xspan, lenspan;
-
-    TRACE("%d, %d\n", x, y);
-    x -= gi->x;
-    y -= gi->y;
-    while (height--)
-    {
-        src = srcLine;
-        srcLine += stride;
-        w = width;
-        
-        bitsMask = 0x80;    /* FreeType is always MSB first */
-        bits = *src++;
-        
-        xspan = x;
-        while (w)
-        {
-            if (bits & bitsMask)
-            {
-                lenspan = 0;
-                do
-                {
-                    lenspan++;
-                    if (lenspan == w)
-                        break;
-                    bitsMask = bitsMask >> 1;
-                    if (!bitsMask)
-                    {
-                        bits = *src++;
-                        bitsMask = 0x80;
-                    }
-                } while (bits & bitsMask);
-                XFillRectangle (gdi_display, physDev->x11dev->drawable,
-                                physDev->x11dev->gc, xspan, y, lenspan, 1);
-                xspan += lenspan;
-                w -= lenspan;
-            }
-            else
-            {
-                do
-                {
-                    w--;
-                    xspan++;
-                    if (!w)
-                        break;
-                    bitsMask = bitsMask >> 1;
-                    if (!bitsMask)
-                    {
-                        bits = *src++;
-                        bitsMask = 0x80;
-                    }
-                } while (!(bits & bitsMask));
-            }
-        }
-        y++;
-    }
-}
-
-static void SharpGlyphGray(struct xrender_physdev *physDev, INT x, INT y,
-			    void *bitmap, XGlyphInfo *gi)
-{
-    unsigned char   *srcLine = bitmap, *src, bits;
-    int             width = gi->width;
-    int             stride = ((width + 3) & ~3);
-    int             height = gi->height;
-    int             w;
-    int             xspan, lenspan;
-
-    x -= gi->x;
-    y -= gi->y;
-    while (height--)
-    {
-        src = srcLine;
-        srcLine += stride;
-        w = width;
-        
-        bits = *src++;
-        xspan = x;
-        while (w)
-        {
-            if (bits >= 0x80)
-            {
-                lenspan = 0;
-                do
-                {
-                    lenspan++;
-                    if (lenspan == w)
-                        break;
-                    bits = *src++;
-                } while (bits >= 0x80);
-                XFillRectangle (gdi_display, physDev->x11dev->drawable,
-                                physDev->x11dev->gc, xspan, y, lenspan, 1);
-                xspan += lenspan;
-                w -= lenspan;
-            }
-            else
-            {
-                do
-                {
-                    w--;
-                    xspan++;
-                    if (!w)
-                        break;
-                    bits = *src++;
-                } while (bits < 0x80);
-            }
-        }
-        y++;
-    }
-}
-
-
-static void ExamineBitfield (DWORD mask, int *shift, int *len)
-{
-    int s, l;
-
-    s = 0;
-    while ((mask & 1) == 0)
-    {
-        mask >>= 1;
-        s++;
-    }
-    l = 0;
-    while ((mask & 1) == 1)
-    {
-        mask >>= 1;
-        l++;
-    }
-    *shift = s;
-    *len = l;
-}
-
-static DWORD GetField (DWORD pixel, int shift, int len)
-{
-    pixel = pixel & (((1 << (len)) - 1) << shift);
-    pixel = pixel << (32 - (shift + len)) >> 24;
-    while (len < 8)
-    {
-        pixel |= (pixel >> len);
-        len <<= 1;
-    }
-    return pixel;
-}
-
-
-static DWORD PutField (DWORD pixel, int shift, int len)
-{
-    shift = shift - (8 - len);
-    if (len <= 8)
-        pixel &= (((1 << len) - 1) << (8 - len));
-    if (shift < 0)
-        pixel >>= -shift;
-    else
-        pixel <<= shift;
-    return pixel;
-}
-
-static void SmoothGlyphGray(XImage *image, int x, int y, void *bitmap, XGlyphInfo *gi,
-			    int color)
-{
-    int             r_shift, r_len;
-    int             g_shift, g_len;
-    int             b_shift, b_len;
-    BYTE            *maskLine, *mask, m;
-    int             maskStride;
-    DWORD           pixel;
-    int             width, height;
-    int             w, tx;
-    BYTE            src_r, src_g, src_b;
-
-    x -= gi->x;
-    y -= gi->y;
-    width = gi->width;
-    height = gi->height;
-
-    maskLine = bitmap;
-    maskStride = (width + 3) & ~3;
-
-    ExamineBitfield (image->red_mask, &r_shift, &r_len);
-    ExamineBitfield (image->green_mask, &g_shift, &g_len);
-    ExamineBitfield (image->blue_mask, &b_shift, &b_len);
-
-    src_r = GetField(color, r_shift, r_len);
-    src_g = GetField(color, g_shift, g_len);
-    src_b = GetField(color, b_shift, b_len);
-    
-    for(; height--; y++)
-    {
-        mask = maskLine;
-        maskLine += maskStride;
-        w = width;
-        tx = x;
-
-	if(y < 0) continue;
-	if(y >= image->height) break;
-
-        for(; w--; tx++)
-        {
-	    if(tx >= image->width) break;
-
-            m = *mask++;
-	    if(tx < 0) continue;
-
-	    if (m == 0xff)
-		XPutPixel (image, tx, y, color);
-	    else if (m)
-	    {
-	        BYTE r, g, b;
-
-		pixel = XGetPixel (image, tx, y);
-
-		r = GetField(pixel, r_shift, r_len);
-		r = ((BYTE)~m * (WORD)r + (BYTE)m * (WORD)src_r) >> 8;
-		g = GetField(pixel, g_shift, g_len);
-		g = ((BYTE)~m * (WORD)g + (BYTE)m * (WORD)src_g) >> 8;
-		b = GetField(pixel, b_shift, b_len);
-		b = ((BYTE)~m * (WORD)b + (BYTE)m * (WORD)src_b) >> 8;
-
-		pixel = (PutField (r, r_shift, r_len) |
-			 PutField (g, g_shift, g_len) |
-			 PutField (b, b_shift, b_len));
-		XPutPixel (image, tx, y, pixel);
-	    }
-        }
-    }
 }
 
 /*************************************************************
@@ -1960,11 +1704,6 @@ static Picture get_mask_pict( int alpha )
     return pict;
 }
 
-static int XRenderErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
-{
-    return 1;
-}
-
 /***********************************************************************
  *           xrenderdrv_ExtTextOut
  */
@@ -1975,14 +1714,16 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     XGCValues xgcval;
     gsCacheEntry *entry;
     gsCacheEntryFormat *formatEntry;
-    BOOL retv = FALSE;
     int textPixel, backgroundPixel;
-    RGNDATA *saved_region = NULL;
     AA_Type aa_type = AA_None;
     unsigned int idx;
-    Picture tile_pict = 0;
+    Picture pict, tile_pict = 0;
+    XGlyphElt16 *elts;
+    POINT offset, desired, current;
+    int render_op = PictOpOver;
+    XRenderColor col;
 
-    if (!physdev->x11dev->has_gdi_font)
+    if (!X11DRV_XRender_Installed || !physdev->x11dev->has_gdi_font)
     {
         dev = GET_NEXT_PHYSDEV( dev, pExtTextOut );
         return dev->funcs->pExtTextOut( dev, x, y, flags, lprect, wstr, count, lpDx );
@@ -2022,8 +1763,8 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 
     if(count == 0)
     {
-	retv = TRUE;
-        goto done_unlock;
+        X11DRV_UnlockDIBSection( physdev->x11dev, TRUE );
+        return TRUE;
     }
 
     EnterCriticalSection(&xrender_cs);
@@ -2046,255 +1787,77 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     {
         WARN("could not upload requested glyphs\n");
         LeaveCriticalSection(&xrender_cs);
-        goto done_unlock;
+        X11DRV_UnlockDIBSection( physdev->x11dev, TRUE );
+        return FALSE;
     }
 
     TRACE("Writing %s at %d,%d\n", debugstr_wn(wstr,count),
           physdev->x11dev->dc_rect.left + x, physdev->x11dev->dc_rect.top + y);
 
-    if(X11DRV_XRender_Installed)
+    elts = HeapAlloc(GetProcessHeap(), 0, sizeof(XGlyphElt16) * count);
+    pict = get_xrender_picture( physdev, 0, (flags & ETO_CLIPPED) ? lprect : NULL );
+
+    /* There's a bug in XRenderCompositeText that ignores the xDst and yDst parameters.
+       So we pass zeros to the function and move to our starting position using the first
+       element of the elts array. */
+
+    desired.x = physdev->x11dev->dc_rect.left + x;
+    desired.y = physdev->x11dev->dc_rect.top + y;
+    offset.x = offset.y = 0;
+    current.x = current.y = 0;
+
+    get_xrender_color(physdev->pict_format, physdev->x11dev->textPixel, &col);
+    tile_pict = get_tile_pict(physdev->format, &col);
+
+    /* FIXME the mapping of Text/BkColor onto 1 or 0 needs investigation.
+     */
+    if((physdev->format == WXR_FORMAT_MONO) && (textPixel == 0))
+        render_op = PictOpOutReverse; /* This gives us 'black' text */
+
+    for(idx = 0; idx < count; idx++)
     {
-        XGlyphElt16 *elts = HeapAlloc(GetProcessHeap(), 0, sizeof(XGlyphElt16) * count);
-        POINT offset = {0, 0};
-        POINT desired, current;
-        int render_op = PictOpOver;
-        Picture pict = get_xrender_picture( physdev, 0, (flags & ETO_CLIPPED) ? lprect : NULL );
-        XRenderColor col;
+        elts[idx].glyphset = formatEntry->glyphset;
+        elts[idx].chars = wstr + idx;
+        elts[idx].nchars = 1;
+        elts[idx].xOff = desired.x - current.x;
+        elts[idx].yOff = desired.y - current.y;
 
-        /* There's a bug in XRenderCompositeText that ignores the xDst and yDst parameters.
-           So we pass zeros to the function and move to our starting position using the first
-           element of the elts array. */
+        current.x += (elts[idx].xOff + formatEntry->gis[wstr[idx]].xOff);
+        current.y += (elts[idx].yOff + formatEntry->gis[wstr[idx]].yOff);
 
-        desired.x = physdev->x11dev->dc_rect.left + x;
-        desired.y = physdev->x11dev->dc_rect.top + y;
-        current.x = current.y = 0;
-
-        get_xrender_color(physdev->pict_format, physdev->x11dev->textPixel, &col);
-        tile_pict = get_tile_pict(physdev->format, &col);
-
-	/* FIXME the mapping of Text/BkColor onto 1 or 0 needs investigation.
-	 */
-	if((physdev->format == WXR_FORMAT_MONO) && (textPixel == 0))
-	    render_op = PictOpOutReverse; /* This gives us 'black' text */
-
-        for(idx = 0; idx < count; idx++)
+        if(!lpDx)
         {
-            elts[idx].glyphset = formatEntry->glyphset;
-            elts[idx].chars = wstr + idx;
-            elts[idx].nchars = 1;
-            elts[idx].xOff = desired.x - current.x;
-            elts[idx].yOff = desired.y - current.y;
-
-            current.x += (elts[idx].xOff + formatEntry->gis[wstr[idx]].xOff);
-            current.y += (elts[idx].yOff + formatEntry->gis[wstr[idx]].yOff);
-
-            if(!lpDx)
+            desired.x += formatEntry->gis[wstr[idx]].xOff;
+            desired.y += formatEntry->gis[wstr[idx]].yOff;
+        }
+        else
+        {
+            if(flags & ETO_PDY)
             {
-                desired.x += formatEntry->gis[wstr[idx]].xOff;
-                desired.y += formatEntry->gis[wstr[idx]].yOff;
+                offset.x += lpDx[idx * 2];
+                offset.y += lpDx[idx * 2 + 1];
             }
             else
-            {
-                if(flags & ETO_PDY)
-                {
-                    offset.x += lpDx[idx * 2];
-                    offset.y += lpDx[idx * 2 + 1];
-                }
-                else
-                    offset.x += lpDx[idx];
-                desired.x = physdev->x11dev->dc_rect.left + x + offset.x;
-                desired.y = physdev->x11dev->dc_rect.top  + y + offset.y;
-            }
+                offset.x += lpDx[idx];
+            desired.x = physdev->x11dev->dc_rect.left + x + offset.x;
+            desired.y = physdev->x11dev->dc_rect.top  + y + offset.y;
         }
-
-        wine_tsx11_lock();
-        /* Make sure we don't have any transforms set from a previous call */
-        set_xrender_transformation(pict, 1, 1, 0, 0);
-        pXRenderCompositeText16(gdi_display, render_op,
-                                tile_pict,
-                                pict,
-                                formatEntry->font_format,
-                                0, 0, 0, 0, elts, count);
-        wine_tsx11_unlock();
-        HeapFree(GetProcessHeap(), 0, elts);
-    } else {
-        POINT offset = {0, 0};
-
-        if (flags & ETO_CLIPPED)
-        {
-            HRGN clip_region = CreateRectRgnIndirect( lprect );
-            saved_region = add_extra_clipping_region( physdev->x11dev, clip_region );
-            DeleteObject( clip_region );
-        }
-
-        wine_tsx11_lock();
-	XSetForeground( gdi_display, physdev->x11dev->gc, textPixel );
-
-        if(aa_type == AA_None || physdev->x11dev->depth == 1)
-        {
-            void (* sharp_glyph_fn)(struct xrender_physdev *, INT, INT, void *, XGlyphInfo *);
-
-            if(aa_type == AA_None)
-                sharp_glyph_fn = SharpGlyphMono;
-            else
-                sharp_glyph_fn = SharpGlyphGray;
-
-	    for(idx = 0; idx < count; idx++) {
-                sharp_glyph_fn(physdev,
-                               physdev->x11dev->dc_rect.left + x + offset.x,
-                               physdev->x11dev->dc_rect.top  + y + offset.y,
-			       formatEntry->bitmaps[wstr[idx]],
-			       &formatEntry->gis[wstr[idx]]);
-                if(lpDx)
-                {
-                    if(flags & ETO_PDY)
-                    {
-                        offset.x += lpDx[idx * 2];
-                        offset.y += lpDx[idx * 2 + 1];
-                    }
-                    else
-                        offset.x += lpDx[idx];
-                }
-                else
-                {
-                    offset.x += formatEntry->gis[wstr[idx]].xOff;
-                    offset.y += formatEntry->gis[wstr[idx]].yOff;
-		}
-	    }
-	} else {
-	    XImage *image;
-	    int image_x, image_y, image_off_x, image_off_y, image_w, image_h;
-	    RECT extents = {0, 0, 0, 0};
-	    POINT cur = {0, 0};
-            int w = physdev->x11dev->drawable_rect.right - physdev->x11dev->drawable_rect.left;
-            int h = physdev->x11dev->drawable_rect.bottom - physdev->x11dev->drawable_rect.top;
-
-	    TRACE("drawable %dx%d\n", w, h);
-
-	    for(idx = 0; idx < count; idx++) {
-	        if(extents.left > cur.x - formatEntry->gis[wstr[idx]].x)
-		    extents.left = cur.x - formatEntry->gis[wstr[idx]].x;
-		if(extents.top > cur.y - formatEntry->gis[wstr[idx]].y)
-		    extents.top = cur.y - formatEntry->gis[wstr[idx]].y;
-		if(extents.right < cur.x - formatEntry->gis[wstr[idx]].x + formatEntry->gis[wstr[idx]].width)
-		    extents.right = cur.x - formatEntry->gis[wstr[idx]].x + formatEntry->gis[wstr[idx]].width;
-		if(extents.bottom < cur.y - formatEntry->gis[wstr[idx]].y + formatEntry->gis[wstr[idx]].height)
-		    extents.bottom = cur.y - formatEntry->gis[wstr[idx]].y + formatEntry->gis[wstr[idx]].height;
-
-                if(lpDx)
-                {
-                    if(flags & ETO_PDY)
-                    {
-                        cur.x += lpDx[idx * 2];
-                        cur.y += lpDx[idx * 2 + 1];
-                    }
-                    else
-                        cur.x += lpDx[idx];
-                }
-                else
-                {
-                    cur.x += formatEntry->gis[wstr[idx]].xOff;
-                    cur.y += formatEntry->gis[wstr[idx]].yOff;
-		}
-	    }
-	    TRACE("glyph extents %d,%d - %d,%d drawable x,y %d,%d\n", extents.left, extents.top,
-		  extents.right, extents.bottom, physdev->x11dev->dc_rect.left + x, physdev->x11dev->dc_rect.top + y);
-
-	    if(physdev->x11dev->dc_rect.left + x + extents.left >= 0) {
-	        image_x = physdev->x11dev->dc_rect.left + x + extents.left;
-		image_off_x = 0;
-	    } else {
-	        image_x = 0;
-		image_off_x = physdev->x11dev->dc_rect.left + x + extents.left;
-	    }
-	    if(physdev->x11dev->dc_rect.top + y + extents.top >= 0) {
-	        image_y = physdev->x11dev->dc_rect.top + y + extents.top;
-		image_off_y = 0;
-	    } else {
-	        image_y = 0;
-		image_off_y = physdev->x11dev->dc_rect.top + y + extents.top;
-	    }
-	    if(physdev->x11dev->dc_rect.left + x + extents.right < w)
-	        image_w = physdev->x11dev->dc_rect.left + x + extents.right - image_x;
-	    else
-	        image_w = w - image_x;
-	    if(physdev->x11dev->dc_rect.top + y + extents.bottom < h)
-	        image_h = physdev->x11dev->dc_rect.top + y + extents.bottom - image_y;
-	    else
-	        image_h = h - image_y;
-
-	    if(image_w <= 0 || image_h <= 0) goto no_image;
-
-	    X11DRV_expect_error(gdi_display, XRenderErrorHandler, NULL);
-	    image = XGetImage(gdi_display, physdev->x11dev->drawable,
-			      image_x, image_y, image_w, image_h,
-			      AllPlanes, ZPixmap);
-	    X11DRV_check_error();
-
-	    TRACE("XGetImage(%p, %x, %d, %d, %d, %d, %lx, %x) depth = %d rets %p\n",
-		  gdi_display, (int)physdev->x11dev->drawable, image_x, image_y,
-		  image_w, image_h, AllPlanes, ZPixmap,
-		  physdev->x11dev->depth, image);
-	    if(!image) {
-	        Pixmap xpm = XCreatePixmap(gdi_display, root_window, image_w, image_h,
-					   physdev->x11dev->depth);
-		GC gc;
-		XGCValues gcv;
-
-		gcv.graphics_exposures = False;
-		gc = XCreateGC(gdi_display, xpm, GCGraphicsExposures, &gcv);
-		XCopyArea(gdi_display, physdev->x11dev->drawable, xpm, gc, image_x, image_y,
-			  image_w, image_h, 0, 0);
-		XFreeGC(gdi_display, gc);
-		X11DRV_expect_error(gdi_display, XRenderErrorHandler, NULL);
-		image = XGetImage(gdi_display, xpm, 0, 0, image_w, image_h, AllPlanes,
-				  ZPixmap);
-		X11DRV_check_error();
-		XFreePixmap(gdi_display, xpm);
-	    }
-	    if(!image) goto no_image;
-
-	    image->red_mask = visual->red_mask;
-	    image->green_mask = visual->green_mask;
-	    image->blue_mask = visual->blue_mask;
-
-	    for(idx = 0; idx < count; idx++) {
-	        SmoothGlyphGray(image,
-                                offset.x + image_off_x - extents.left,
-                                offset.y + image_off_y - extents.top,
-				formatEntry->bitmaps[wstr[idx]],
-				&formatEntry->gis[wstr[idx]],
-				physdev->x11dev->textPixel);
-                if(lpDx)
-                {
-                    if(flags & ETO_PDY)
-                    {
-                        offset.x += lpDx[idx * 2];
-                        offset.y += lpDx[idx * 2 + 1];
-                    }
-                    else
-                        offset.x += lpDx[idx];
-                }
-                else
-                {
-                    offset.x += formatEntry->gis[wstr[idx]].xOff;
-                    offset.y += formatEntry->gis[wstr[idx]].yOff;
-                }
-	    }
-	    XPutImage(gdi_display, physdev->x11dev->drawable, physdev->x11dev->gc, image, 0, 0,
-		      image_x, image_y, image_w, image_h);
-	    XDestroyImage(image);
-	}
-    no_image:
-	wine_tsx11_unlock();
-        restore_clipping_region( physdev->x11dev, saved_region );
     }
-    LeaveCriticalSection(&xrender_cs);
-    retv = TRUE;
 
-done_unlock:
+    wine_tsx11_lock();
+    /* Make sure we don't have any transforms set from a previous call */
+    set_xrender_transformation(pict, 1, 1, 0, 0);
+    pXRenderCompositeText16(gdi_display, render_op,
+                            tile_pict,
+                            pict,
+                            formatEntry->font_format,
+                            0, 0, 0, 0, elts, count);
+    wine_tsx11_unlock();
+    HeapFree(GetProcessHeap(), 0, elts);
+
+    LeaveCriticalSection(&xrender_cs);
     X11DRV_UnlockDIBSection( physdev->x11dev, TRUE );
-    return retv;
+    return TRUE;
 }
 
 /* multiply the alpha channel of a picture */
