@@ -317,6 +317,8 @@ static BOOL DIALOG_CreateControls32( HWND hwnd, LPCSTR template, const DLG_TEMPL
         }
         if (!hwndCtrl)
         {
+            WARN("control %s %s creation failed\n", debugstr_w(info.className),
+                 debugstr_w(info.windowName));
             if (dlgTemplate->style & DS_NOFAILCREATE) continue;
             return FALSE;
         }
