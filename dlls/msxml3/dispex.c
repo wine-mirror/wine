@@ -45,6 +45,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
+static CRITICAL_SECTION cs_dispex_static_data;
+static CRITICAL_SECTION_DEBUG cs_dispex_static_data_dbg =
+{
+    0, 0, &cs_dispex_static_data,
+    { &cs_dispex_static_data_dbg.ProcessLocksList, &cs_dispex_static_data_dbg.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": dispex_static_data") }
+};
+static CRITICAL_SECTION cs_dispex_static_data = { &cs_dispex_static_data_dbg, -1, 0, 0, 0, 0 };
+
+
 enum lib_version_t
 {
     LibXml = 0,
@@ -206,6 +216,8 @@ void release_typelib(void)
     for(i=0; i < sizeof(typelib)/sizeof(*typelib); i++)
         if(typelib[i])
             ITypeLib_Release(typelib[i]);
+
+    DeleteCriticalSection(&cs_dispex_static_data);
 }
 
 static void add_func_info(dispex_data_t *data, DWORD *size, tid_t tid, DISPID id, ITypeInfo *dti)
@@ -300,16 +312,6 @@ static dispex_data_t *preprocess_dispex_data(DispatchEx *This)
     ITypeInfo_Release(dti);
     return data;
 }
-
-static CRITICAL_SECTION cs_dispex_static_data;
-static CRITICAL_SECTION_DEBUG cs_dispex_static_data_dbg =
-{
-    0, 0, &cs_dispex_static_data,
-    { &cs_dispex_static_data_dbg.ProcessLocksList, &cs_dispex_static_data_dbg.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": dispex_static_data") }
-};
-static CRITICAL_SECTION cs_dispex_static_data = { &cs_dispex_static_data_dbg, -1, 0, 0, 0, 0 };
-
 
 static dispex_data_t *get_dispex_data(DispatchEx *This)
 {
