@@ -2216,8 +2216,15 @@ static nsresult NSAPI nsURI_Equals(nsIURL *iface, nsIURI *other, PRBool *_retval
     }
 
     if(ensure_uri(This) && ensure_uri(other_obj)) {
-        hres = IUri_IsEqual(This->uri, other_obj->uri, _retval);
-        nsres = SUCCEEDED(hres) ? NS_OK : NS_ERROR_FAILURE;
+        BOOL b;
+
+        hres = IUri_IsEqual(This->uri, other_obj->uri, &b);
+        if(SUCCEEDED(hres)) {
+            *_retval = b;
+            nsres = NS_OK;
+        }else {
+            nsres = NS_ERROR_FAILURE;
+        }
     }else {
         nsres = NS_ERROR_UNEXPECTED;
     }
