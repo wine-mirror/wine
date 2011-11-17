@@ -1118,6 +1118,7 @@ void X11DRV_XRender_Finalize(void)
     for(i = mru; i >= 0; i = glyphsetCache[i].next)
 	FreeEntry(i);
     LeaveCriticalSection(&xrender_cs);
+    DeleteCriticalSection(&xrender_cs);
 }
 
 /**********************************************************************

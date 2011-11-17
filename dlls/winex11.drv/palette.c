@@ -275,6 +275,7 @@ void X11DRV_PALETTE_Cleanup(void)
 		  COLOR_gapFilled, 0);
       wine_tsx11_unlock();
   }
+  DeleteCriticalSection(&palette_cs);
 }
 
 /***********************************************************************
