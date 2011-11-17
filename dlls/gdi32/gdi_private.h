@@ -278,6 +278,9 @@ extern BOOL DRIVER_GetDriverName( LPCWSTR device, LPWSTR driver, DWORD size ) DE
 /* enhmetafile.c */
 extern HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk ) DECLSPEC_HIDDEN;
 
+/* font.c */
+extern UINT get_font_aa_flags( HDC hdc ) DECLSPEC_HIDDEN;
+
 /* freetype.c */
 
 /* Undocumented structure filled in by GdiRealizationInfo */

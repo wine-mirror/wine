@@ -258,6 +258,25 @@ static void FONT_NewTextMetricExWToA(const NEWTEXTMETRICEXW *ptmW, NEWTEXTMETRIC
 }
 
 
+UINT get_font_aa_flags( HDC hdc )
+{
+    LOGFONTW lf;
+
+    if (GetObjectType( hdc ) == OBJ_MEMDC)
+    {
+        BITMAP bm;
+        GetObjectW( GetCurrentObject( hdc, OBJ_BITMAP ), sizeof(bm), &bm );
+        if (bm.bmBitsPixel <= 8) return GGO_BITMAP;
+    }
+    else if (GetDeviceCaps( hdc, BITSPIXEL ) <= 8) return GGO_BITMAP;
+
+    GetObjectW( GetCurrentObject( hdc, OBJ_FONT ), sizeof(lf), &lf );
+    if (lf.lfQuality == NONANTIALIASED_QUALITY) return GGO_BITMAP;
+
+    /* FIXME, check gasp and user prefs */
+    return GGO_GRAY4_BITMAP;
+}
+
 /***********************************************************************
  *           GdiGetCodePage   (GDI32.@)
  */

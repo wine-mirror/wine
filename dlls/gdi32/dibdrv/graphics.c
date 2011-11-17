@@ -157,19 +157,6 @@ static void draw_glyph( dibdrv_physdev *pdev, const POINT *origin, const GLYPHME
     release_wine_region( pdev->clip );
 }
 
-static inline UINT get_aa_flags( dibdrv_physdev *pdev )
-{
-    LOGFONTW lf;
-
-    if (pdev->dib.bit_count <= 8) return GGO_BITMAP;
-
-    GetObjectW( GetCurrentObject( pdev->dev.hdc, OBJ_FONT ), sizeof(lf), &lf );
-    if (lf.lfQuality == NONANTIALIASED_QUALITY) return GGO_BITMAP;
-
-    /* FIXME, check gasp and user prefs */
-    return GGO_GRAY4_BITMAP;
-}
-
 static const BYTE masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
 static const int padding[4] = {0, 3, 2, 1};
 
@@ -181,10 +168,10 @@ static const int padding[4] = {0, 3, 2, 1};
  * For non-antialiased bitmaps convert them to the 17-level format
  * using only values 0 or 16.
  */
-static DWORD get_glyph_bitmap( dibdrv_physdev *pdev, UINT index, GLYPHMETRICS *metrics,
+static DWORD get_glyph_bitmap( dibdrv_physdev *pdev, UINT index, UINT aa_flags, GLYPHMETRICS *metrics,
                                struct gdi_image_bits *image )
 {
-    UINT aa_flags = get_aa_flags( pdev ), ggo_flags = aa_flags | GGO_GLYPH_INDEX;
+    UINT ggo_flags = aa_flags | GGO_GLYPH_INDEX;
     static const MAT2 identity = { {0,1}, {0,0}, {0,0}, {0,1} };
     UINT indices[3] = {0, 0, 0x20};
     int i, x, y;
@@ -253,7 +240,7 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
                         const RECT *rect, LPCWSTR str, UINT count, const INT *dx )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
-    UINT i;
+    UINT aa_flags, i;
     POINT origin;
     DWORD err;
     HRGN saved_clip = NULL;
@@ -274,6 +261,7 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         DeleteObject( clip );
     }
 
+    aa_flags = get_font_aa_flags( dev->hdc );
     origin.x = x;
     origin.y = y;
     for (i = 0; i < count; i++)
@@ -281,7 +269,7 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         GLYPHMETRICS metrics;
         struct gdi_image_bits image;
 
-        err = get_glyph_bitmap( pdev, (UINT)str[i], &metrics, &image );
+        err = get_glyph_bitmap( pdev, (UINT)str[i], aa_flags, &metrics, &image );
         if (err) continue;
 
         if (image.ptr) draw_glyph( pdev, &origin, &metrics, &image );
