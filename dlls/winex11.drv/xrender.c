@@ -2985,18 +2985,13 @@ static HBRUSH xrenderdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap
 
     if (!bitmap || !(physbitmap = X11DRV_get_phys_bitmap( bitmap )))
     {
-        format = get_bitmap_format( info->bmiHeader.biBitCount );
-        if (format == physdev->format || !pict_formats[format]) goto x11drv_fallback;
         if (!(bitmap = create_brush_bitmap( physdev->x11dev, info, bits, usage ))) return 0;
         physbitmap = X11DRV_get_phys_bitmap( bitmap );
         delete_bitmap = TRUE;
     }
-    else
-    {
-        format = get_xrender_format_from_color_shifts( physbitmap->depth, &physbitmap->color_shifts );
-        if (format == WXR_FORMAT_MONO || format == physdev->format || !pict_formats[format])
-            goto x11drv_fallback;
-    }
+
+    format = get_xrender_format_from_color_shifts( physbitmap->depth, &physbitmap->color_shifts );
+    if (format == WXR_FORMAT_MONO || !pict_formats[format]) goto x11drv_fallback;
 
     GetObjectW( bitmap, sizeof(bm), &bm );
 
