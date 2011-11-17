@@ -79,8 +79,8 @@ IPADDRESS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 static void IPADDRESS_UpdateText (const IPADDRESS_INFO *infoPtr)
 {
-    static const WCHAR zero[2] = {'0', 0};
-    static const WCHAR dot[2]  = {'.', 0};
+    static const WCHAR zero[] = {'0', 0};
+    static const WCHAR dot[]  = {'.', 0};
     WCHAR field[4];
     WCHAR ip[16];
     INT i;
