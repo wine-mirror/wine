@@ -308,6 +308,7 @@ static void COMPOBJ_DllList_Free(void)
         HeapFree(GetProcessHeap(), 0, entry);
     }
     LeaveCriticalSection(&csOpenDllList);
+    DeleteCriticalSection(&csOpenDllList);
 }
 
 /******************************************************************************
@@ -4286,6 +4287,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
         COMPOBJ_UninitProcess();
         RPC_UnregisterAllChannelHooks();
         COMPOBJ_DllList_Free();
+        DeleteCriticalSection(&csRegisteredClassList);
+        DeleteCriticalSection(&csApartment);
 	break;
 
     case DLL_THREAD_DETACH:

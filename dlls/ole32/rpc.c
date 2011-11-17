@@ -453,6 +453,8 @@ void RPC_UnregisterAllChannelHooks(void)
     LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &channel_hooks, struct channel_hook_entry, entry)
         HeapFree(GetProcessHeap(), 0, cursor);
     LeaveCriticalSection(&csChannelHook);
+    DeleteCriticalSection(&csChannelHook);
+    DeleteCriticalSection(&csRegIf);
 }
 
 /* RPC Channel Buffer Functions */
