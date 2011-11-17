@@ -140,6 +140,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     case DLL_PROCESS_DETACH:
         RPCRT4_destroy_all_protseqs();
         RPCRT4_ServerFreeAllRegisteredAuthInfo();
+        DeleteCriticalSection(&uuid_cs);
+        DeleteCriticalSection(&threaddata_cs);
         break;
     }
 

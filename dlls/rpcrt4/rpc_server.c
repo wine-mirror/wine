@@ -1078,6 +1078,8 @@ void RPCRT4_destroy_all_protseqs(void)
         destroy_serverprotoseq(cps);
     }
     LeaveCriticalSection(&server_cs);
+    DeleteCriticalSection(&server_cs);
+    DeleteCriticalSection(&listen_cs);
 }
 
 /***********************************************************************
@@ -1321,6 +1323,7 @@ void RPCRT4_ServerFreeAllRegisteredAuthInfo(void)
         HeapFree(GetProcessHeap(), 0, auth_info);
     }
     LeaveCriticalSection(&server_auth_info_cs);
+    DeleteCriticalSection(&server_auth_info_cs);
 }
 
 /***********************************************************************
