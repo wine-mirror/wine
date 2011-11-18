@@ -443,7 +443,18 @@ typedef enum {
      EXPR_ASSIGNMOD,
      EXPR_ASSIGNAND,
      EXPR_ASSIGNOR,
-     EXPR_ASSIGNXOR
+     EXPR_ASSIGNXOR,
+     EXPR_COND,
+     EXPR_ARRAY,
+     EXPR_MEMBER,
+     EXPR_NEW,
+     EXPR_CALL,
+     EXPR_THIS,
+     EXPR_FUNC,
+     EXPR_IDENT,
+     EXPR_ARRAYLIT,
+     EXPR_PROPVAL,
+     EXPR_LITERAL
 } expression_type_t;
 
 HRESULT function_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;

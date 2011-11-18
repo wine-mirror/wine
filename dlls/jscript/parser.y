@@ -123,6 +123,7 @@ static inline void pop_func(parser_ctx_t *ctx)
     ctx->func_stack = ctx->func_stack->next;
 }
 
+static void *new_expression(parser_ctx_t *ctx,expression_type_t,size_t);
 static expression_t *new_function_expression(parser_ctx_t*,const WCHAR*,parameter_list_t*,
         source_elements_t*,const WCHAR*,DWORD);
 static expression_t *new_binary_expression(parser_ctx_t*,expression_type_t,expression_t*,expression_t*);
@@ -132,7 +133,6 @@ static expression_t *new_array_expression(parser_ctx_t*,expression_t*,expression
 static expression_t *new_member_expression(parser_ctx_t*,expression_t*,const WCHAR*);
 static expression_t *new_new_expression(parser_ctx_t*,expression_t*,argument_list_t*);
 static expression_t *new_call_expression(parser_ctx_t*,expression_t*,argument_list_t*);
-static expression_t *new_this_expression(parser_ctx_t*);
 static expression_t *new_identifier_expression(parser_ctx_t*,const WCHAR*);
 static expression_t *new_literal_expression(parser_ctx_t*,literal_t*);
 static expression_t *new_array_literal_expression(parser_ctx_t*,element_list_t*,int);
@@ -740,7 +740,7 @@ ArgumentList
 
 /* ECMA-262 3rd Edition    11.1 */
 PrimaryExpression
-        : kTHIS                 { $$ = new_this_expression(ctx); }
+        : kTHIS                 { $$ = new_expression(ctx, EXPR_THIS, 0); }
         | tIdentifier           { $$ = new_identifier_expression(ctx, $1); }
         | Literal               { $$ = new_literal_expression(ctx, $1); }
         | ArrayLiteral          { $$ = $1; }
@@ -1281,9 +1281,8 @@ static parameter_list_t *parameter_list_add(parser_ctx_t *ctx, parameter_list_t 
 static expression_t *new_function_expression(parser_ctx_t *ctx, const WCHAR *identifier,
        parameter_list_t *parameter_list, source_elements_t *source_elements, const WCHAR *src_str, DWORD src_len)
 {
-    function_expression_t *ret = parser_alloc(ctx, sizeof(function_expression_t));
+    function_expression_t *ret = new_expression(ctx, EXPR_FUNC, sizeof(*ret));
 
-    ret->expr.eval = function_expression_eval;
     ret->identifier = identifier;
     ret->parameter_list = parameter_list ? parameter_list->head : NULL;
     ret->source_elements = source_elements;
@@ -1353,14 +1352,33 @@ static const expression_eval_t expression_eval_table[] = {
    assign_and_expression_eval,
    assign_or_expression_eval,
    assign_xor_expression_eval,
+   conditional_expression_eval,
+   array_expression_eval,
+   member_expression_eval,
+   new_expression_eval,
+   call_expression_eval,
+   this_expression_eval,
+   function_expression_eval,
+   identifier_expression_eval,
+   array_literal_expression_eval,
+   property_value_expression_eval,
+   literal_expression_eval
 };
+
+static void *new_expression(parser_ctx_t *ctx, expression_type_t type, size_t size)
+{
+    expression_t *ret = parser_alloc(ctx, size ? size : sizeof(*ret));
+
+    ret->eval = expression_eval_table[type];
+
+    return ret;
+}
 
 static expression_t *new_binary_expression(parser_ctx_t *ctx, expression_type_t type,
        expression_t *expression1, expression_t *expression2)
 {
-    binary_expression_t *ret = parser_alloc(ctx, sizeof(binary_expression_t));
+    binary_expression_t *ret = new_expression(ctx, type, sizeof(*ret));
 
-    ret->expr.eval = expression_eval_table[type];
     ret->expression1 = expression1;
     ret->expression2 = expression2;
 
@@ -1369,9 +1387,8 @@ static expression_t *new_binary_expression(parser_ctx_t *ctx, expression_type_t 
 
 static expression_t *new_unary_expression(parser_ctx_t *ctx, expression_type_t type, expression_t *expression)
 {
-    unary_expression_t *ret = parser_alloc(ctx, sizeof(unary_expression_t));
+    unary_expression_t *ret = new_expression(ctx, type, sizeof(*ret));
 
-    ret->expr.eval = expression_eval_table[type];
     ret->expression = expression;
 
     return &ret->expr;
@@ -1380,9 +1397,8 @@ static expression_t *new_unary_expression(parser_ctx_t *ctx, expression_type_t t
 static expression_t *new_conditional_expression(parser_ctx_t *ctx, expression_t *expression,
        expression_t *true_expression, expression_t *false_expression)
 {
-    conditional_expression_t *ret = parser_alloc(ctx, sizeof(conditional_expression_t));
+    conditional_expression_t *ret = new_expression(ctx, EXPR_COND, sizeof(*ret));
 
-    ret->expr.eval = conditional_expression_eval;
     ret->expression = expression;
     ret->true_expression = true_expression;
     ret->false_expression = false_expression;
@@ -1392,9 +1408,8 @@ static expression_t *new_conditional_expression(parser_ctx_t *ctx, expression_t 
 
 static expression_t *new_array_expression(parser_ctx_t *ctx, expression_t *member_expr, expression_t *expression)
 {
-    array_expression_t *ret = parser_alloc(ctx, sizeof(array_expression_t));
+    array_expression_t *ret = new_expression(ctx, EXPR_ARRAY, sizeof(*ret));
 
-    ret->expr.eval = array_expression_eval;
     ret->member_expr = member_expr;
     ret->expression = expression;
 
@@ -1403,9 +1418,8 @@ static expression_t *new_array_expression(parser_ctx_t *ctx, expression_t *membe
 
 static expression_t *new_member_expression(parser_ctx_t *ctx, expression_t *expression, const WCHAR *identifier)
 {
-    member_expression_t *ret = parser_alloc(ctx, sizeof(member_expression_t));
+    member_expression_t *ret = new_expression(ctx, EXPR_MEMBER, sizeof(*ret));
 
-    ret->expr.eval = member_expression_eval;
     ret->expression = expression;
     ret->identifier = identifier;
 
@@ -1414,9 +1428,8 @@ static expression_t *new_member_expression(parser_ctx_t *ctx, expression_t *expr
 
 static expression_t *new_new_expression(parser_ctx_t *ctx, expression_t *expression, argument_list_t *argument_list)
 {
-    call_expression_t *ret = parser_alloc(ctx, sizeof(call_expression_t));
+    call_expression_t *ret = new_expression(ctx, EXPR_NEW, sizeof(*ret));
 
-    ret->expr.eval = new_expression_eval;
     ret->expression = expression;
     ret->argument_list = argument_list ? argument_list->head : NULL;
 
@@ -1425,22 +1438,12 @@ static expression_t *new_new_expression(parser_ctx_t *ctx, expression_t *express
 
 static expression_t *new_call_expression(parser_ctx_t *ctx, expression_t *expression, argument_list_t *argument_list)
 {
-    call_expression_t *ret = parser_alloc(ctx, sizeof(call_expression_t));
+    call_expression_t *ret = new_expression(ctx, EXPR_CALL, sizeof(*ret));
 
-    ret->expr.eval = call_expression_eval;
     ret->expression = expression;
     ret->argument_list = argument_list ? argument_list->head : NULL;
 
     return &ret->expr;
-}
-
-static expression_t *new_this_expression(parser_ctx_t *ctx)
-{
-    expression_t *ret = parser_alloc(ctx, sizeof(expression_t));
-
-    ret->eval = this_expression_eval;
-
-    return ret;
 }
 
 static int parser_error(const char *str)
@@ -1464,9 +1467,8 @@ static BOOL explicit_error(parser_ctx_t *ctx, void *obj, WCHAR next)
 
 static expression_t *new_identifier_expression(parser_ctx_t *ctx, const WCHAR *identifier)
 {
-    identifier_expression_t *ret = parser_alloc(ctx, sizeof(identifier_expression_t));
+    identifier_expression_t *ret = new_expression(ctx, EXPR_IDENT, sizeof(*ret));
 
-    ret->expr.eval = identifier_expression_eval;
     ret->identifier = identifier;
 
     return &ret->expr;
@@ -1474,9 +1476,8 @@ static expression_t *new_identifier_expression(parser_ctx_t *ctx, const WCHAR *i
 
 static expression_t *new_array_literal_expression(parser_ctx_t *ctx, element_list_t *element_list, int length)
 {
-    array_literal_expression_t *ret = parser_alloc(ctx, sizeof(array_literal_expression_t));
+    array_literal_expression_t *ret = new_expression(ctx, EXPR_ARRAYLIT, sizeof(*ret));
 
-    ret->expr.eval = array_literal_expression_eval;
     ret->element_list = element_list ? element_list->head : NULL;
     ret->length = length;
 
@@ -1485,9 +1486,8 @@ static expression_t *new_array_literal_expression(parser_ctx_t *ctx, element_lis
 
 static expression_t *new_prop_and_value_expression(parser_ctx_t *ctx, property_list_t *property_list)
 {
-    property_value_expression_t *ret = parser_alloc(ctx, sizeof(property_value_expression_t));
+    property_value_expression_t *ret = new_expression(ctx, EXPR_PROPVAL, sizeof(*ret));
 
-    ret->expr.eval = property_value_expression_eval;
     ret->property_list = property_list ? property_list->head : NULL;
 
     return &ret->expr;
@@ -1495,9 +1495,8 @@ static expression_t *new_prop_and_value_expression(parser_ctx_t *ctx, property_l
 
 static expression_t *new_literal_expression(parser_ctx_t *ctx, literal_t *literal)
 {
-    literal_expression_t *ret = parser_alloc(ctx, sizeof(literal_expression_t));
+    literal_expression_t *ret = new_expression(ctx, EXPR_LITERAL, sizeof(*ret));
 
-    ret->expr.eval = literal_expression_eval;
     ret->literal = literal;
 
     return &ret->expr;
