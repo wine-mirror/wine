@@ -369,6 +369,27 @@ interface nsIURL : nsIURI
 
 [
     object,
+    uuid(321578d0-03c1-4d95-8821-021ac612d18d),
+    local
+]
+interface nsIMutable : nsISupports
+{
+    nsresult GetMutable(PRBool *aMutable);
+    nsresult SetMutable(PRBool aMutable);
+}
+
+[
+    object,
+    uuid(babd6cca-ebe7-4329-967c-d6b9e33caa81),
+    local
+]
+interface nsIStandardURL : nsIMutable
+{
+    nsresult Init(PRUint32 aUrlType, PRInt32 aDefaultPort, const nsACString *aSpec, const char *aOriginCharset, nsIURI *aBaseURI);
+}
+
+[
+    object,
     uuid(ef6bfbd2-fd46-48d8-96b7-9f8f0fd387fe),
     local
 ]

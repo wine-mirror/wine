@@ -54,6 +54,7 @@ static const char *request_method_strings[] = {"GET", "PUT", "POST"};
 
 struct  nsWineURI {
     nsIURL nsIURL_iface;
+    nsIStandardURL nsIStandardURL_iface;
 
     LONG ref;
 
@@ -348,6 +349,7 @@ static nsresult get_channel_http_header(struct list *headers, const nsACString *
     if(!data)
         return NS_ERROR_UNEXPECTED;
 
+    TRACE("%s -> %s\n", debugstr_a(header_namea), debugstr_a(data));
     nsACString_SetData(_retval, data);
     heap_free(data);
     return NS_OK;
@@ -1708,6 +1710,12 @@ static nsresult NSAPI nsURI_QueryInterface(nsIURL *iface, nsIIDRef riid, void **
     }else if(IsEqualGUID(&IID_nsIURL, riid)) {
         TRACE("(%p)->(IID_nsIURL %p)\n", This, result);
         *result = &This->nsIURL_iface;
+    }else if(IsEqualGUID(&IID_nsIMutable, riid)) {
+        TRACE("(%p)->(IID_nsIMutable %p)\n", This, result);
+        *result = &This->nsIStandardURL_iface;
+    }else if(IsEqualGUID(&IID_nsIStandardURL, riid)) {
+        TRACE("(%p)->(IID_nsIStandardURL %p)\n", This, result);
+        *result = &This->nsIStandardURL_iface;
     }else if(IsEqualGUID(&IID_nsWineURI, riid)) {
         TRACE("(%p)->(IID_nsWineURI %p)\n", This, result);
         *result = This;
@@ -2719,11 +2727,70 @@ static const nsIURLVtbl nsURLVtbl = {
     nsURL_GetRelativeSpec
 };
 
+static inline nsWineURI *impl_from_nsIStandardURL(nsIStandardURL *iface)
+{
+    return CONTAINING_RECORD(iface, nsWineURI, nsIStandardURL_iface);
+}
+
+static nsresult NSAPI nsStandardURL_QueryInterface(nsIStandardURL *iface, nsIIDRef riid,
+        void **result)
+{
+    nsWineURI *This = impl_from_nsIStandardURL(iface);
+    return nsIURL_QueryInterface(&This->nsIURL_iface, riid, result);
+}
+
+static nsrefcnt NSAPI nsStandardURL_AddRef(nsIStandardURL *iface)
+{
+    nsWineURI *This = impl_from_nsIStandardURL(iface);
+    return nsIURL_AddRef(&This->nsIURL_iface);
+}
+
+static nsrefcnt NSAPI nsStandardURL_Release(nsIStandardURL *iface)
+{
+    nsWineURI *This = impl_from_nsIStandardURL(iface);
+    return nsIURL_Release(&This->nsIURL_iface);
+}
+
+static nsresult NSAPI nsStandardURL_GetMutable(nsIStandardURL *iface, PRBool *aMutable)
+{
+    nsWineURI *This = impl_from_nsIStandardURL(iface);
+
+    TRACE("(%p)->(%p)\n", This, aMutable);
+
+    *aMutable = TRUE;
+    return NS_OK;
+}
+
+static nsresult NSAPI nsStandardURL_SetMutable(nsIStandardURL *iface, PRBool aMutable)
+{
+    nsWineURI *This = impl_from_nsIStandardURL(iface);
+    FIXME("(%p)->(%x)\n", This, aMutable);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static nsresult NSAPI nsStandardURL_Init(nsIStandardURL *iface, PRUint32 aUrlType, PRInt32 aDefaultPort,
+        const nsACString *aSpec, const char *aOriginCharset, nsIURI *aBaseURI)
+{
+    nsWineURI *This = impl_from_nsIStandardURL(iface);
+    FIXME("(%p)->(%d %d %s %s %p)\n", This, aUrlType, aDefaultPort, debugstr_nsacstr(aSpec), debugstr_a(aOriginCharset), aBaseURI);
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+static const nsIStandardURLVtbl nsStandardURLVtbl = {
+    nsStandardURL_QueryInterface,
+    nsStandardURL_AddRef,
+    nsStandardURL_Release,
+    nsStandardURL_GetMutable,
+    nsStandardURL_SetMutable,
+    nsStandardURL_Init
+};
+
 static nsresult create_nsuri(IUri *iuri, nsIURI *nsuri, HTMLWindow *window, NSContainer *container, nsWineURI **_retval)
 {
     nsWineURI *ret = heap_alloc_zero(sizeof(nsWineURI));
 
     ret->nsIURL_iface.lpVtbl = &nsURLVtbl;
+    ret->nsIStandardURL_iface.lpVtbl = &nsStandardURLVtbl;
     ret->ref = 1;
     ret->nsuri = nsuri;
 
