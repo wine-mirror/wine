@@ -432,6 +432,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
              */
             CHECK_EXPECT(Exec_IDM_STOP);
             return OLECMDERR_E_NOTSUPPORTED;
+        case 6058: /* TODO */
+            return E_NOTIMPL;
         default:
             ok(0, "unexpected nsCmdID %d\n", nCmdID);
         }
@@ -445,6 +447,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         case 67: /* TODO */
         case 69: /* TODO */
         case 101: /* TODO (IE8) */
+        case 109: /* TODO (IE9) */
             return E_FAIL;
         default:
             ok(0, "unexpected nCmdID %d\n", nCmdID);
@@ -1813,6 +1816,8 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client, BOOL stop_dow
         SET_EXPECT(Invoke_DOWNLOADCOMPLETE);
         if (use_container_olecmd) SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
         SET_EXPECT(Invoke_COMMANDSTATECHANGE);
+    }else {
+        SET_EXPECT(Invoke_STATUSTEXTCHANGE);
     }
 
     hres = IOleObject_SetClientSite(oleobj, client);
@@ -1827,7 +1832,9 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client, BOOL stop_dow
         todo_wine CHECK_CALLED(Invoke_DOWNLOADCOMPLETE);
         if (use_container_olecmd) todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
         todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE);
-   }
+    }else {
+        CLEAR_CALLED(Invoke_STATUSTEXTCHANGE); /* Called by IE9 */
+    }
 
     hres = IOleInPlaceObject_GetWindow(inplace, &hwnd);
     ok(hres == S_OK, "GetWindow failed: %08x\n", hres);
@@ -2461,8 +2468,8 @@ static void test_Navigate2(IUnknown *unk)
         CHECK_CALLED(GetHostInfo);
         CHECK_CALLED(Invoke_AMBIENT_DLCONTROL);
         CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
-        CHECK_CALLED(Invoke_AMBIENT_PALETTE);
-        CHECK_CALLED(GetOptionKeyPath);
+        CLEAR_CALLED(Invoke_AMBIENT_PALETTE); /* Not called by IE9 */
+        CLEAR_CALLED(GetOptionKeyPath);
         CHECK_CALLED(GetOverridesKeyPath);
         if (use_container_olecmd) todo_wine CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
         if (use_container_olecmd) todo_wine CHECK_CALLED(Exec_SETPROGRESSMAX);
@@ -2545,13 +2552,20 @@ static void test_ExecWB(IWebBrowser2 *webbrowser, BOOL use_custom_target, BOOL h
      * These tests show that QueryStatusWB uses a NULL pguidCmdGroup, since OLECMDID_STOP
      * succeeds (S_OK) and IDM_STOP does not (OLECMDERR_E_NOTSUPPORTED).
      */
-    if (use_custom_target)
+    if(use_custom_target) {
         SET_EXPECT(Exec_STOP);
+    }else if(has_document) {
+        SET_EXPECT(Invoke_STATUSTEXTCHANGE);
+        SET_EXPECT(SetStatusText);
+    }
     hres = IWebBrowser2_ExecWB(webbrowser, OLECMDID_STOP, OLECMDEXECOPT_DONTPROMPTUSER, 0, 0);
-    if (!use_custom_target && has_document)
+    if(!use_custom_target && has_document) {
         todo_wine ok(hres == olecmdid_state, "ExecWB failed: %08x %08x\n", hres, olecmdid_state);
-    else
+        CLEAR_CALLED(Invoke_STATUSTEXTCHANGE); /* Called by IE9 */
+        CLEAR_CALLED(SetStatusText); /* Called by IE9 */
+    }else {
         ok(hres == olecmdid_state, "ExecWB failed: %08x %08x\n", hres, olecmdid_state);
+    }
     if (use_custom_target)
         SET_EXPECT(Exec_IDM_STOP);
     hres = IWebBrowser2_ExecWB(webbrowser, IDM_STOP, OLECMDEXECOPT_DONTPROMPTUSER, 0, 0);
@@ -3037,6 +3051,7 @@ static void test_Close(IWebBrowser2 *wb, BOOL do_download)
     SET_EXPECT(OnUIDeactivate);
     SET_EXPECT(OnFocus);
     SET_EXPECT(OnInPlaceDeactivate);
+    SET_EXPECT(Invoke_STATUSTEXTCHANGE);
     if(!do_download) {
         SET_EXPECT(Invoke_COMMANDSTATECHANGE);
         SET_EXPECT(Invoke_DOWNLOADCOMPLETE);
@@ -3048,6 +3063,7 @@ static void test_Close(IWebBrowser2 *wb, BOOL do_download)
     CHECK_CALLED(OnUIDeactivate);
     todo_wine CHECK_CALLED(OnFocus);
     CHECK_CALLED(OnInPlaceDeactivate);
+    CLEAR_CALLED(Invoke_STATUSTEXTCHANGE); /* Called by IE9 */
     if(!do_download) {
         todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE);
         todo_wine CHECK_CALLED(Invoke_DOWNLOADCOMPLETE);
