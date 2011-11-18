@@ -25,7 +25,7 @@ msgstr ""
 "Pozwala na instalację nowego lub usunięcie już istniejącego oprogramowania z "
 "twojego komputera."
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:154 winecfg.rc:30
 msgid "Applications"
 msgstr "Aplikacje"
 
@@ -66,7 +66,7 @@ msgstr "Programy (*.exe)"
 msgid "All files (*.*)"
 msgstr "Wszystkie pliki (*.*)"
 
-#: appwiz.rc:42 wordpad.rc:245
+#: appwiz.rc:42 winecfg.rc:202 winecfg.rc:239 wordpad.rc:245
 msgid "&Remove"
 msgstr "&Usuń..."
 
@@ -2296,9 +2296,10 @@ msgstr "Otwórz:"
 #: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
 #: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
 #: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
-#: taskmgr.rc:521 wineconsole.rc:131 winefile.rc:131 winefile.rc:154
-#: winefile.rc:184 winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204
-#: wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
+#: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -2306,9 +2307,9 @@ msgstr "OK"
 #: oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156
 #: progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256
 #: regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447
-#: taskmgr.rc:522 wineboot.rc:31 wineconsole.rc:132 winefile.rc:132
-#: winefile.rc:155 winefile.rc:185 winemine.rc:93 wordpad.rc:205
-#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Anuluj"
 
@@ -2420,7 +2421,7 @@ msgstr "Usuń"
 msgid "Security"
 msgstr "Prawa dostępu"
 
-#: inetcpl.rc:90
+#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
 msgid "Listview"
 msgstr "Widok listy"
 
@@ -8007,7 +8008,7 @@ msgstr "Ana&logowy"
 msgid "Digi&tal"
 msgstr "C&yfrowy"
 
-#: clock.rc:32 notepad.rc:50 winefile.rc:64 wordpad.rc:81
+#: clock.rc:32 notepad.rc:50 winecfg.rc:300 winefile.rc:64 wordpad.rc:81
 msgid "&Font..."
 msgstr "&Czcionka..."
 
@@ -9669,7 +9670,7 @@ msgstr "&Skrót klawiszowy:"
 msgid "&Minimize at launch"
 msgstr "&Uruchom zminimalizowany"
 
-#: progman.rc:179 progman.rc:198 progman.rc:215 winefile.rc:133
+#: progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:245 winefile.rc:133
 msgid "&Browse..."
 msgstr "&Przeglądaj"
 
@@ -11221,6 +11222,290 @@ msgstr "Wine"
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr "Konfiguracja Wine w %s jest właśnie aktualizowana, proszę czekać..."
 
+#: winecfg.rc:138
+msgid ""
+"This program is free software; you can redistribute it and/or modify it "
+"under the terms of the GNU Lesser General Public License as published by the "
+"Free Software Foundation; either version 2.1 of the License, or (at your "
+"option) any later version."
+msgstr ""
+"Ta biblioteka jest wolnym oprogramowaniem; możesz ją rozpowszechniać i/lub "
+"modyfikować pod warunkami licencji GNU Lesser General Public License "
+"opublikowanej przez Free Software Foundation; licencji w wersji 2.1, lub "
+"(według własnego uznania) dowolnej późniejszej."
+
+#: winecfg.rc:140
+msgid " Windows Registration Information "
+msgstr " Informacje do rejestracji w Windows "
+
+#: winecfg.rc:141
+msgid "&Owner:"
+msgstr "Właściciel:"
+
+#: winecfg.rc:143
+msgid "Organi&zation:"
+msgstr "Organizacja:"
+
+#: winecfg.rc:151
+msgid " Application Settings "
+msgstr " Ustawienia aplikacji"
+
+#: winecfg.rc:152
+msgid ""
+"Wine can mimic different Windows versions for each application.  This tab is "
+"linked to the Libraries and Graphics tabs to allow you to change systemwide "
+"or per-application settings in those tabs as well."
+msgstr ""
+"Wine może udawać różne wersje Windows dla różnych aplikacji.  Wybór w tej "
+"zakładce jest powiązany z zakładkami Biblioteki i Grafika - ustawienia tam "
+"również dotyczą wszystkich aplikacji lub tylko wybranej."
+
+#: winecfg.rc:156
+msgid "&Add application..."
+msgstr "&Dodaj aplikację..."
+
+#: winecfg.rc:157
+msgid "&Remove application"
+msgstr "&Usuń aplikację"
+
+#: winecfg.rc:158
+msgid "&Windows Version:"
+msgstr "&Wersja Windows:"
+
+#: winecfg.rc:166
+msgid " Window Settings "
+msgstr " Ustawienia okna "
+
+#: winecfg.rc:167
+msgid "Automatically capture the &mouse in full-screen windows"
+msgstr "Automatycznie przechywć &mysz w oknach pełnoekranowych"
+
+#: winecfg.rc:168
+msgid "Allow the window manager to &decorate the windows"
+msgstr "Pozwól menedżerowi okien &dekorować okna"
+
+#: winecfg.rc:169
+msgid "Allow the &window manager to control the windows"
+msgstr "Pozwól menedżerowi okien &zarządzać oknami Wine"
+
+#: winecfg.rc:170
+msgid "&Emulate a virtual desktop"
+msgstr "Emuluj wirtualny &pulpit"
+
+#: winecfg.rc:172
+msgid "Desktop &size:"
+msgstr "&Rozmiar pulpitu:"
+
+#: winecfg.rc:177
+msgid " Direct3D "
+msgstr " Direct3D "
+
+#: winecfg.rc:178
+msgid "&Vertex Shader Support: "
+msgstr "Obsługa Vertex Shader: "
+
+#: winecfg.rc:180
+msgid "Allow &Pixel Shader (if supported by hardware)"
+msgstr "Obsługuj Pixel Shader (jeżeli są obsługiwane przez kartę graficzną)"
+
+#: winecfg.rc:182
+msgid " Screen &Resolution "
+msgstr " Rozdzielczość "
+
+#: winecfg.rc:185
+msgid "dpi"
+msgstr "dpi"
+
+#: winecfg.rc:186
+msgid "This is a sample text using 10 point Tahoma"
+msgstr "Oto przykład zastosowania 10-punktowej czcionki Tahoma"
+
+#: winecfg.rc:193
+msgid " DLL Overrides "
+msgstr " Reguły bibliotek DLL "
+
+#: winecfg.rc:194
+msgid ""
+"Dynamic Link Libraries can be specified individually to be either builtin "
+"(provided by Wine) or native (taken from Windows or provided by the "
+"application)."
+msgstr ""
+"Dla każdej biblioteki DLL można zdecydować czy należy użyć wersji wbudowanej "
+"(dostarczonej z Wine) czy natywnej (wziętej z Windows lub dostarczonej wraz "
+"z aplikacją)."
+
+#: winecfg.rc:196
+msgid "&New override for library:"
+msgstr "Nowa reguła dla biblioteki:"
+
+#: winecfg.rc:198 wordpad.rc:244
+msgid "&Add"
+msgstr "&Dodaj"
+
+#: winecfg.rc:199
+msgid "Existing &overrides:"
+msgstr "Istniejące reguły:"
+
+#: winecfg.rc:201
+msgid "&Edit..."
+msgstr "&Edycja"
+
+#: winecfg.rc:207
+msgid "Edit Override"
+msgstr "Edycja reguły"
+
+#: winecfg.rc:210
+msgid " Load Order "
+msgstr " Biblioteka "
+
+#: winecfg.rc:211
+msgid "&Builtin (Wine)"
+msgstr "Tylko &wbudowana (Wine)"
+
+#: winecfg.rc:212
+msgid "&Native (Windows)"
+msgstr "Tylko &natywna (Windows)"
+
+#: winecfg.rc:213
+msgid "Bui&ltin then Native"
+msgstr "Preferuj w&budowaną"
+
+#: winecfg.rc:214
+msgid "Nati&ve then Builtin"
+msgstr "Preferuj n&atywną"
+
+#: winecfg.rc:215
+msgid "&Disable"
+msgstr "&Wyłącz bibliotekę"
+
+#: winecfg.rc:222
+msgid "Select Drive Letter"
+msgstr "Wybierz literę napędu"
+
+#: winecfg.rc:234
+msgid " Drive &mappings "
+msgstr " Przyporządkowanie dysków "
+
+#: winecfg.rc:235
+msgid ""
+"Failed to connect to the mount manager, the drive configuration cannot be "
+"edited."
+msgstr ""
+"Nieudane połączenie z menedżerem montowania, konfiguracja napędu nie może "
+"być zmodyfikowana."
+
+#: winecfg.rc:238
+msgid "&Add..."
+msgstr "&Dodaj..."
+
+#: winecfg.rc:240
+msgid "Auto&detect"
+msgstr "Automatyczne wykrywanie"
+
+#: winecfg.rc:243
+msgid "&Path:"
+msgstr "&Ścieżka:"
+
+#: winecfg.rc:247
+msgid "&Type:"
+msgstr "&Typ:"
+
+#: winecfg.rc:250 winecfg.rc:35
+msgid "Show &Advanced"
+msgstr "Opcje zaawansowane >>"
+
+#: winecfg.rc:251
+msgid "De&vice:"
+msgstr "U&rządzenie:"
+
+#: winecfg.rc:253
+msgid "Bro&wse..."
+msgstr "Prze&glądaj..."
+
+#: winecfg.rc:255
+msgid "&Label:"
+msgstr "&Etykieta:"
+
+#: winecfg.rc:257
+msgid "S&erial:"
+msgstr "&Numer seryjny:"
+
+#: winecfg.rc:260
+msgid "Show &dot files"
+msgstr "Pokazuj pliki zaczynające się od kropki"
+
+#: winecfg.rc:267
+msgid " Driver Diagnostics "
+msgstr " Diagnostyka sterownika "
+
+#: winecfg.rc:269
+msgid " Defaults "
+msgstr " Domyślne "
+
+#: winecfg.rc:270
+msgid "Output device:"
+msgstr "Urządzenie wyjściowe:"
+
+#: winecfg.rc:271
+msgid "Voice output device:"
+msgstr "Urządzenie wyjściowe głosu:"
+
+#: winecfg.rc:272
+msgid "Input device:"
+msgstr "Urządzenie wejściowe:"
+
+#: winecfg.rc:273
+msgid "Voice input device:"
+msgstr "Urządzenie wejściowe głosu:"
+
+#: winecfg.rc:278
+msgid "&Test Sound"
+msgstr "Test dźwięku"
+
+#: winecfg.rc:285
+msgid " Appearance "
+msgstr " Wygląd "
+
+#: winecfg.rc:286
+msgid "&Theme:"
+msgstr "Motyw:"
+
+#: winecfg.rc:288
+msgid "&Install theme..."
+msgstr "Zainstaluj motyw..."
+
+#: winecfg.rc:289
+msgid "&Color:"
+msgstr "Kolor:"
+
+#: winecfg.rc:291
+msgid "&Size:"
+msgstr "Wielkość:"
+
+#: winecfg.rc:293
+msgid "It&em:"
+msgstr "Element:"
+
+#: winecfg.rc:295
+msgid "C&olor:"
+msgstr "Kolor:"
+
+#: winecfg.rc:297
+msgid "Si&ze:"
+msgstr "Wielkość:"
+
+#: winecfg.rc:301
+msgid " Fol&ders "
+msgstr " Foldery specjalne "
+
+#: winecfg.rc:304
+msgid "&Link to:"
+msgstr "Dowiązany do:"
+
+#: winecfg.rc:306
+msgid "B&rowse..."
+msgstr "Przeglądaj"
+
 #: winecfg.rc:31
 msgid "Libraries"
 msgstr "Biblioteki"
@@ -11232,10 +11517,6 @@ msgstr "Dyski"
 #: winecfg.rc:33
 msgid "Select the Unix target directory, please."
 msgstr "Proszę wybrać docelowy katalog Uniksowy."
-
-#: winecfg.rc:35
-msgid "Show &Advanced"
-msgstr "Opcje zaawansowane >>"
 
 #: winecfg.rc:34
 msgid "Hide &Advanced"
@@ -12383,10 +12664,6 @@ msgstr "Tabulatory"
 #: wordpad.rc:242
 msgid "Tab stops"
 msgstr "Pozycje tabulatorów"
-
-#: wordpad.rc:244
-msgid "&Add"
-msgstr "&Dodaj"
 
 #: wordpad.rc:248
 msgid "Remove al&l"

@@ -15,35 +15,7 @@ C_SRCS = \
 	winecfg.c \
 	x11drvdlg.c
 
-RC_SRCS = \
-	Bg.rc \
-	Ca.rc \
-	Cs.rc \
-	Da.rc \
-	De.rc \
-	En.rc \
-	Es.rc \
-	Fi.rc \
-	Fr.rc \
-	Hu.rc \
-	It.rc \
-	Ja.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	No.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Si.rc \
-	Sr.rc \
-	Sv.rc \
-	Tr.rc \
-	Uk.rc \
-	Zh.rc \
-	winecfg.rc
-
+RC_SRCS = winecfg.rc
 PO_SRCS = winecfg.rc
 
 MANPAGE = winecfg.man

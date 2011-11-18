@@ -25,7 +25,7 @@ msgstr ""
 "새 소프트웨어를 설치하거나,이미 설치된 소프트웨어를 당신의 컴퓨터에서 삭제 "
 "할 수 있습니다."
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:154 winecfg.rc:30
 msgid "Applications"
 msgstr "응용프로그램"
 
@@ -66,7 +66,7 @@ msgstr "프로그램 (*.exe)"
 msgid "All files (*.*)"
 msgstr "모든 파일 (*.*)"
 
-#: appwiz.rc:42 wordpad.rc:245
+#: appwiz.rc:42 winecfg.rc:202 winecfg.rc:239 wordpad.rc:245
 msgid "&Remove"
 msgstr "제거(&R)"
 
@@ -2285,9 +2285,10 @@ msgstr "열기:"
 #: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
 #: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
 #: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
-#: taskmgr.rc:521 wineconsole.rc:131 winefile.rc:131 winefile.rc:154
-#: winefile.rc:184 winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204
-#: wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
+#: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "확인"
 
@@ -2295,9 +2296,9 @@ msgstr "확인"
 #: oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156
 #: progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256
 #: regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447
-#: taskmgr.rc:522 wineboot.rc:31 wineconsole.rc:132 winefile.rc:132
-#: winefile.rc:155 winefile.rc:185 winemine.rc:93 wordpad.rc:205
-#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "취소"
 
@@ -2408,7 +2409,7 @@ msgstr "지우기"
 msgid "Security"
 msgstr "보안"
 
-#: inetcpl.rc:90
+#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
 msgid "Listview"
 msgstr "목록보기"
 
@@ -7945,7 +7946,7 @@ msgstr "아날로그(&L)"
 msgid "Digi&tal"
 msgstr "디지털(&T)"
 
-#: clock.rc:32 notepad.rc:50 winefile.rc:64 wordpad.rc:81
+#: clock.rc:32 notepad.rc:50 winecfg.rc:300 winefile.rc:64 wordpad.rc:81
 msgid "&Font..."
 msgstr "글꼴(&F)..."
 
@@ -9595,7 +9596,7 @@ msgstr "단축키 지정(&K):"
 msgid "&Minimize at launch"
 msgstr "실행시 최소화(&M)"
 
-#: progman.rc:179 progman.rc:198 progman.rc:215 winefile.rc:133
+#: progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:245 winefile.rc:133
 msgid "&Browse..."
 msgstr "찾기(&B)"
 
@@ -11128,6 +11129,288 @@ msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr ""
 "Wine 설정  %s 이 업데이트되는 중입니다,  잠시만 기다려주시기 바랍니다..."
 
+#: winecfg.rc:138
+msgid ""
+"This program is free software; you can redistribute it and/or modify it "
+"under the terms of the GNU Lesser General Public License as published by the "
+"Free Software Foundation; either version 2.1 of the License, or (at your "
+"option) any later version."
+msgstr ""
+"이 라이브러리는 자유 소프트웨어입니다. 당신은 자유 소프트웨어 재단(Free "
+"Software Foundation)에서 만든 GNU LGPL(Lesser General Public License) 아래에"
+"서 이 프로그램을 재배포 또는 수정할 수 있습니다. 라이센스의 버전은 2.1 또는 "
+"(선택적으로) 그 이후 버전을 따르면 됩니다."
+
+#: winecfg.rc:140
+msgid " Windows Registration Information "
+msgstr " 윈도우즈 등록 정보 "
+
+#: winecfg.rc:141
+msgid "&Owner:"
+msgstr "소유자(&O):"
+
+#: winecfg.rc:143
+msgid "Organi&zation:"
+msgstr "단체(&Z):"
+
+#: winecfg.rc:151
+msgid " Application Settings "
+msgstr " 어플리케이션 설정 "
+
+#: winecfg.rc:152
+msgid ""
+"Wine can mimic different Windows versions for each application.  This tab is "
+"linked to the Libraries and Graphics tabs to allow you to change systemwide "
+"or per-application settings in those tabs as well."
+msgstr ""
+"Wine은 각각의 프로그램에 대해서 다른 버전의 윈도우즈를 흉내낼 수 있습니다. "
+"이 탭은 라이브러리 탭, 그래픽 탭과 연결되어 있어서, 이들 탭을 이용하여 시스"
+"템 전체 또는 프로그램별로 설정이 가능합니다."
+
+#: winecfg.rc:156
+msgid "&Add application..."
+msgstr "어플리케이션 추가(&A)..."
+
+#: winecfg.rc:157
+msgid "&Remove application"
+msgstr "어플리케이션 제거(&R)"
+
+#: winecfg.rc:158
+msgid "&Windows Version:"
+msgstr "윈도우즈 버젼(&W):"
+
+#: winecfg.rc:166
+msgid " Window Settings "
+msgstr " 창 설정 "
+
+#: winecfg.rc:167
+msgid "Automatically capture the &mouse in full-screen windows"
+msgstr "전체 화면 창에서 자동으로 마우스 잡기(&M)"
+
+#: winecfg.rc:168
+msgid "Allow the window manager to &decorate the windows"
+msgstr "창관리자가 Wine창을 꾸미도록 함(&D)"
+
+#: winecfg.rc:169
+msgid "Allow the &window manager to control the windows"
+msgstr "창관리자가 Wine창을 관리하도록 함(&W)"
+
+#: winecfg.rc:170
+msgid "&Emulate a virtual desktop"
+msgstr "가상 데스크탑 흉내내기(&E)"
+
+#: winecfg.rc:172
+msgid "Desktop &size:"
+msgstr "데스크탑 크기(&S):"
+
+#: winecfg.rc:177
+msgid " Direct3D "
+msgstr " 다이렉트 3D "
+
+#: winecfg.rc:178
+msgid "&Vertex Shader Support: "
+msgstr "버텍스 쉐이더 지원(&V): "
+
+#: winecfg.rc:180
+msgid "Allow &Pixel Shader (if supported by hardware)"
+msgstr "(만약 하드웨어에서 지원할 경우 ) 픽셀 쉐이더 허용(&P)"
+
+#: winecfg.rc:182
+msgid " Screen &Resolution "
+msgstr " 화면 해상도(&R) "
+
+#: winecfg.rc:185
+msgid "dpi"
+msgstr "dpi"
+
+#: winecfg.rc:186
+msgid "This is a sample text using 10 point Tahoma"
+msgstr "This is a sample text using 10 point Tahoma"
+
+#: winecfg.rc:193
+msgid " DLL Overrides "
+msgstr " DLL 덮어쓰기 "
+
+#: winecfg.rc:194
+msgid ""
+"Dynamic Link Libraries can be specified individually to be either builtin "
+"(provided by Wine) or native (taken from Windows or provided by the "
+"application)."
+msgstr ""
+"동적 링크 라이브러리는 개별적으로 내장(Wine에 의해 제공)이나 네이티브(윈도우"
+"즈나 프로그램에 의해 제공)으로 지정될수 있습니다."
+
+#: winecfg.rc:196
+msgid "&New override for library:"
+msgstr "새로 덮어쓸 라이브러리(&N):"
+
+#: winecfg.rc:198 wordpad.rc:244
+msgid "&Add"
+msgstr "더하기(&A)"
+
+#: winecfg.rc:199
+msgid "Existing &overrides:"
+msgstr "현재 덮어쓰기 목록(&O):"
+
+#: winecfg.rc:201
+msgid "&Edit..."
+msgstr "고치기(&E)..."
+
+#: winecfg.rc:207
+msgid "Edit Override"
+msgstr "덮어쓰기 고치기"
+
+#: winecfg.rc:210
+msgid " Load Order "
+msgstr "불러오기 순서 "
+
+#: winecfg.rc:211
+msgid "&Builtin (Wine)"
+msgstr "내장(&B)(Wine)"
+
+#: winecfg.rc:212
+msgid "&Native (Windows)"
+msgstr "네이티브(&N)(Win)"
+
+#: winecfg.rc:213
+msgid "Bui&ltin then Native"
+msgstr "내장, 네이티브(&L)"
+
+#: winecfg.rc:214
+msgid "Nati&ve then Builtin"
+msgstr "네이티브, 내장(&V)"
+
+#: winecfg.rc:215
+msgid "&Disable"
+msgstr "사용하지 않음(&D)"
+
+#: winecfg.rc:222
+msgid "Select Drive Letter"
+msgstr "드라이브 문자 선택"
+
+#: winecfg.rc:234
+msgid " Drive &mappings "
+msgstr " 드라이브 연결(&M) "
+
+#: winecfg.rc:235
+msgid ""
+"Failed to connect to the mount manager, the drive configuration cannot be "
+"edited."
+msgstr ""
+"연결 관리자가 연결하는 데 실패함, 이 드라이브 설정을 수정될 수 없습니다."
+
+#: winecfg.rc:238
+msgid "&Add..."
+msgstr "추가(&A)..."
+
+#: winecfg.rc:240
+msgid "Auto&detect"
+msgstr "자동찾기(&D)"
+
+#: winecfg.rc:243
+msgid "&Path:"
+msgstr "경로(&P):"
+
+#: winecfg.rc:247
+msgid "&Type:"
+msgstr "형식(&T):"
+
+#: winecfg.rc:250 winecfg.rc:35
+msgid "Show &Advanced"
+msgstr "추가옵션 보이기(&A)"
+
+#: winecfg.rc:251
+msgid "De&vice:"
+msgstr "장치(&V):"
+
+#: winecfg.rc:253
+msgid "Bro&wse..."
+msgstr "찾아보기(&W)..."
+
+#: winecfg.rc:255
+msgid "&Label:"
+msgstr "라벨(&L):"
+
+#: winecfg.rc:257
+msgid "S&erial:"
+msgstr "시리얼(&E):"
+
+#: winecfg.rc:260
+msgid "Show &dot files"
+msgstr "숨은 파일 보이기(&D)"
+
+#: winecfg.rc:267
+msgid " Driver Diagnostics "
+msgstr " 드라이버 진단 "
+
+#: winecfg.rc:269
+msgid " Defaults "
+msgstr " 기본 "
+
+#: winecfg.rc:270
+msgid "Output device:"
+msgstr "출력 장치:"
+
+#: winecfg.rc:271
+msgid "Voice output device:"
+msgstr "음성 출력 장치:"
+
+#: winecfg.rc:272
+msgid "Input device:"
+msgstr "입력 장치:"
+
+#: winecfg.rc:273
+msgid "Voice input device:"
+msgstr "음성 입력 장치:"
+
+#: winecfg.rc:278
+msgid "&Test Sound"
+msgstr "소리 테스트(&T)"
+
+#: winecfg.rc:285
+msgid " Appearance "
+msgstr "외관 "
+
+#: winecfg.rc:286
+msgid "&Theme:"
+msgstr "테마(&T):"
+
+#: winecfg.rc:288
+msgid "&Install theme..."
+msgstr "테마 설치(&I)..."
+
+#: winecfg.rc:289
+msgid "&Color:"
+msgstr "색상(&C):"
+
+#: winecfg.rc:291
+msgid "&Size:"
+msgstr "크기(&S):"
+
+#: winecfg.rc:293
+msgid "It&em:"
+msgstr "목록(&E):"
+
+#: winecfg.rc:295
+msgid "C&olor:"
+msgstr "색상(&O):"
+
+#: winecfg.rc:297
+msgid "Si&ze:"
+msgstr "크기(&Z):"
+
+#: winecfg.rc:301
+msgid " Fol&ders "
+msgstr " 폴더(&D) "
+
+#: winecfg.rc:304
+msgid "&Link to:"
+msgstr "연결 위치(&L):"
+
+#: winecfg.rc:306
+msgid "B&rowse..."
+msgstr "찾기(&R)..."
+
 #: winecfg.rc:31
 msgid "Libraries"
 msgstr "라이브러리"
@@ -11139,10 +11422,6 @@ msgstr "드라이브"
 #: winecfg.rc:33
 msgid "Select the Unix target directory, please."
 msgstr "유닉스 목적 폴더를 선택하십시오."
-
-#: winecfg.rc:35
-msgid "Show &Advanced"
-msgstr "추가옵션 보이기(&A)"
 
 #: winecfg.rc:34
 msgid "Hide &Advanced"
@@ -12288,10 +12567,6 @@ msgstr "탭"
 #: wordpad.rc:242
 msgid "Tab stops"
 msgstr "탭 정지"
-
-#: wordpad.rc:244
-msgid "&Add"
-msgstr "더하기(&A)"
 
 #: wordpad.rc:248
 msgid "Remove al&l"

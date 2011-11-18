@@ -26,7 +26,7 @@ msgid ""
 msgstr ""
 "תכנית זו מאפשרת לך להתקין תכניות חדשות או להסיר תכניות קיימות מהמחשב שלך."
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:154 winecfg.rc:30
 msgid "Applications"
 msgstr "יישומים"
 
@@ -67,7 +67,7 @@ msgstr "תכניות (‎*.exe)"
 msgid "All files (*.*)"
 msgstr "כל הקבצים (*.*)"
 
-#: appwiz.rc:42 wordpad.rc:245
+#: appwiz.rc:42 winecfg.rc:202 winecfg.rc:239 wordpad.rc:245
 msgid "&Remove"
 msgstr "ה&סרה"
 
@@ -2261,9 +2261,10 @@ msgstr "פתיחה:"
 #: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
 #: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
 #: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
-#: taskmgr.rc:521 wineconsole.rc:131 winefile.rc:131 winefile.rc:154
-#: winefile.rc:184 winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204
-#: wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
+#: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "אישור"
 
@@ -2271,9 +2272,9 @@ msgstr "אישור"
 #: oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156
 #: progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256
 #: regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447
-#: taskmgr.rc:522 wineboot.rc:31 wineconsole.rc:132 winefile.rc:132
-#: winefile.rc:155 winefile.rc:185 winemine.rc:93 wordpad.rc:205
-#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "ביטול"
 
@@ -2374,7 +2375,7 @@ msgstr "מחיקה"
 msgid "Security"
 msgstr "אבטחה"
 
-#: inetcpl.rc:90
+#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
 #, fuzzy
 msgid "Listview"
 msgstr "רשימה"
@@ -8062,7 +8063,7 @@ msgstr "&אנלוגי"
 msgid "Digi&tal"
 msgstr "&דיגיטלי"
 
-#: clock.rc:32 notepad.rc:50 winefile.rc:64 wordpad.rc:81
+#: clock.rc:32 notepad.rc:50 winecfg.rc:300 winefile.rc:64 wordpad.rc:81
 msgid "&Font..."
 msgstr "&גופן..."
 
@@ -9705,7 +9706,7 @@ msgstr "&צירוף מקשים:"
 msgid "&Minimize at launch"
 msgstr "מ&זעור בעת ההפעלה"
 
-#: progman.rc:179 progman.rc:198 progman.rc:215 winefile.rc:133
+#: progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:245 winefile.rc:133
 msgid "&Browse..."
 msgstr "&עיון"
 
@@ -11241,6 +11242,315 @@ msgstr "Wine"
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr "התצורה של wine שב־%s מתעדכנת, נא להמתין..."
 
+#: winecfg.rc:138
+msgid ""
+"This program is free software; you can redistribute it and/or modify it "
+"under the terms of the GNU Lesser General Public License as published by the "
+"Free Software Foundation; either version 2.1 of the License, or (at your "
+"option) any later version."
+msgstr ""
+
+#: winecfg.rc:140
+#, fuzzy
+msgid " Windows Registration Information "
+msgstr "&פרטי הגרסה"
+
+#: winecfg.rc:141
+#, fuzzy
+msgid "&Owner:"
+msgstr "בעלים"
+
+#: winecfg.rc:143
+#, fuzzy
+msgid "Organi&zation:"
+msgstr "הנפשה"
+
+#: winecfg.rc:151
+#, fuzzy
+msgid " Application Settings "
+msgstr "יישומים"
+
+#: winecfg.rc:152
+msgid ""
+"Wine can mimic different Windows versions for each application.  This tab is "
+"linked to the Libraries and Graphics tabs to allow you to change systemwide "
+"or per-application settings in those tabs as well."
+msgstr ""
+
+#: winecfg.rc:156
+#, fuzzy
+msgid "&Add application..."
+msgstr "יישום"
+
+#: winecfg.rc:157
+#, fuzzy
+msgid "&Remove application"
+msgstr "יישום"
+
+#: winecfg.rc:158
+#, fuzzy
+msgid "&Windows Version:"
+msgstr "גודל החלון"
+
+#: winecfg.rc:166
+#, fuzzy
+msgid " Window Settings "
+msgstr "טקסט בחלון"
+
+#: winecfg.rc:167
+msgid "Automatically capture the &mouse in full-screen windows"
+msgstr ""
+
+#: winecfg.rc:168
+msgid "Allow the window manager to &decorate the windows"
+msgstr ""
+
+#: winecfg.rc:169
+msgid "Allow the &window manager to control the windows"
+msgstr ""
+
+#: winecfg.rc:170
+msgid "&Emulate a virtual desktop"
+msgstr ""
+
+#: winecfg.rc:172
+#, fuzzy
+msgid "Desktop &size:"
+msgstr "שולחן העבודה"
+
+#: winecfg.rc:177
+msgid " Direct3D "
+msgstr ""
+
+#: winecfg.rc:178
+msgid "&Vertex Shader Support: "
+msgstr ""
+
+#: winecfg.rc:180
+msgid "Allow &Pixel Shader (if supported by hardware)"
+msgstr ""
+
+#: winecfg.rc:182
+msgid " Screen &Resolution "
+msgstr ""
+
+#: winecfg.rc:185
+#, fuzzy
+msgid "dpi"
+msgstr "נק׳ לאינטש"
+
+#: winecfg.rc:186
+msgid "This is a sample text using 10 point Tahoma"
+msgstr ""
+
+#: winecfg.rc:193
+msgid " DLL Overrides "
+msgstr ""
+
+#: winecfg.rc:194
+msgid ""
+"Dynamic Link Libraries can be specified individually to be either builtin "
+"(provided by Wine) or native (taken from Windows or provided by the "
+"application)."
+msgstr ""
+
+#: winecfg.rc:196
+msgid "&New override for library:"
+msgstr ""
+
+#: winecfg.rc:198 wordpad.rc:244
+msgid "&Add"
+msgstr "הו&ספה"
+
+#: winecfg.rc:199
+msgid "Existing &overrides:"
+msgstr ""
+
+#: winecfg.rc:201
+#, fuzzy
+msgid "&Edit..."
+msgstr "&עריכה"
+
+#: winecfg.rc:207
+#, fuzzy
+msgid "Edit Override"
+msgstr "תצוגת ע&ריכה"
+
+#: winecfg.rc:210
+msgid " Load Order "
+msgstr ""
+
+#: winecfg.rc:211
+#, fuzzy
+msgid "&Builtin (Wine)"
+msgstr "על &אודות Wine"
+
+#: winecfg.rc:212
+#, fuzzy
+msgid "&Native (Windows)"
+msgstr "י&ציאה מ־Windows"
+
+#: winecfg.rc:213
+#, fuzzy
+msgid "Bui&ltin then Native"
+msgstr "מובנה, טבעי"
+
+#: winecfg.rc:214
+#, fuzzy
+msgid "Nati&ve then Builtin"
+msgstr "טבעי, מובנה"
+
+#: winecfg.rc:215
+#, fuzzy
+msgid "&Disable"
+msgstr "Table"
+
+#: winecfg.rc:222
+#, fuzzy
+msgid "Select Drive Letter"
+msgstr "טקסט הבחירה"
+
+#: winecfg.rc:234
+#, fuzzy
+msgid " Drive &mappings "
+msgstr "מיפוי כוננים"
+
+#: winecfg.rc:235
+msgid ""
+"Failed to connect to the mount manager, the drive configuration cannot be "
+"edited."
+msgstr ""
+
+#: winecfg.rc:238
+#, fuzzy
+msgid "&Add..."
+msgstr "הו&ספה"
+
+#: winecfg.rc:240
+#, fuzzy
+msgid "Auto&detect"
+msgstr "זיהוי אוטומטי"
+
+#: winecfg.rc:243
+#, fuzzy
+msgid "&Path:"
+msgstr "ה&נתיב המלא:"
+
+#: winecfg.rc:247
+#, fuzzy
+msgid "&Type:"
+msgstr "סוג"
+
+#: winecfg.rc:250 winecfg.rc:35
+#, fuzzy
+msgid "Show &Advanced"
+msgstr "הצגת אפשרויות מ&תקדמות"
+
+#: winecfg.rc:251
+msgid "De&vice:"
+msgstr ""
+
+#: winecfg.rc:253
+#, fuzzy
+msgid "Bro&wse..."
+msgstr "&עיון"
+
+#: winecfg.rc:255
+msgid "&Label:"
+msgstr ""
+
+#: winecfg.rc:257
+msgid "S&erial:"
+msgstr ""
+
+#: winecfg.rc:260
+#, fuzzy
+msgid "Show &dot files"
+msgstr "אין עוד קבצים\n"
+
+#: winecfg.rc:267
+#, fuzzy
+msgid " Driver Diagnostics "
+msgstr "כלי ניתוח ה־DirectX"
+
+#: winecfg.rc:269
+#, fuzzy
+msgid " Defaults "
+msgstr "הגדרת &בררות מחדל"
+
+#: winecfg.rc:270
+#, fuzzy
+msgid "Output device:"
+msgstr "שם קובץ ה&פלט:"
+
+#: winecfg.rc:271
+msgid "Voice output device:"
+msgstr ""
+
+#: winecfg.rc:272
+msgid "Input device:"
+msgstr ""
+
+#: winecfg.rc:273
+msgid "Voice input device:"
+msgstr ""
+
+#: winecfg.rc:278
+msgid "&Test Sound"
+msgstr ""
+
+#: winecfg.rc:285
+msgid " Appearance "
+msgstr ""
+
+#: winecfg.rc:286
+msgid "&Theme:"
+msgstr ""
+
+#: winecfg.rc:288
+#, fuzzy
+msgid "&Install theme..."
+msgstr "התקנה..."
+
+#: winecfg.rc:289
+#, fuzzy
+msgid "&Color:"
+msgstr "&צבע"
+
+#: winecfg.rc:291
+#, fuzzy
+msgid "&Size:"
+msgstr "ג&ודל"
+
+#: winecfg.rc:293
+msgid "It&em:"
+msgstr ""
+
+#: winecfg.rc:295
+#, fuzzy
+msgid "C&olor:"
+msgstr "&צבע"
+
+#: winecfg.rc:297
+#, fuzzy
+msgid "Si&ze:"
+msgstr "גודל ה&נייר:"
+
+#: winecfg.rc:301
+#, fuzzy
+msgid " Fol&ders "
+msgstr "תיקייה חדשה"
+
+#: winecfg.rc:304
+#, fuzzy
+msgid "&Link to:"
+msgstr "קישורים אל"
+
+#: winecfg.rc:306
+#, fuzzy
+msgid "B&rowse..."
+msgstr "&עיון"
+
 #: winecfg.rc:31
 #, fuzzy
 msgid "Libraries"
@@ -11255,11 +11565,6 @@ msgstr "כוננים"
 #, fuzzy
 msgid "Select the Unix target directory, please."
 msgstr "נא לבחור את תיקיית היעד בלינוקס בבקשה."
-
-#: winecfg.rc:35
-#, fuzzy
-msgid "Show &Advanced"
-msgstr "הצגת אפשרויות מ&תקדמות"
 
 #: winecfg.rc:34
 #, fuzzy
@@ -12480,10 +12785,6 @@ msgstr "טאבים"
 #: wordpad.rc:242
 msgid "Tab stops"
 msgstr "טאבי עצירה"
-
-#: wordpad.rc:244
-msgid "&Add"
-msgstr "הו&ספה"
 
 #: wordpad.rc:248
 msgid "Remove al&l"

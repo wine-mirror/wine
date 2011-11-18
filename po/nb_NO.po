@@ -23,7 +23,7 @@ msgid ""
 "computer."
 msgstr "Lar deg installere ny programvare eller fjerne installerte programmer."
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:154 winecfg.rc:30
 msgid "Applications"
 msgstr "Programmer"
 
@@ -64,7 +64,7 @@ msgstr "Programmer (*.exe)"
 msgid "All files (*.*)"
 msgstr "Alle filer (*.*)"
 
-#: appwiz.rc:42 wordpad.rc:245
+#: appwiz.rc:42 winecfg.rc:202 winecfg.rc:239 wordpad.rc:245
 msgid "&Remove"
 msgstr "&Fjern"
 
@@ -2425,9 +2425,10 @@ msgstr "Åpne"
 #: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
 #: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
 #: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
-#: taskmgr.rc:521 wineconsole.rc:131 winefile.rc:131 winefile.rc:154
-#: winefile.rc:184 winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204
-#: wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
+#: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -2435,9 +2436,9 @@ msgstr "OK"
 #: oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156
 #: progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256
 #: regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447
-#: taskmgr.rc:522 wineboot.rc:31 wineconsole.rc:132 winefile.rc:132
-#: winefile.rc:155 winefile.rc:185 winemine.rc:93 wordpad.rc:205
-#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Avbryt"
 
@@ -2546,10 +2547,9 @@ msgstr "Slett"
 msgid "Security"
 msgstr "Sikkerhet"
 
-#: inetcpl.rc:90
-#, fuzzy
+#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
 msgid "Listview"
-msgstr "Liste"
+msgstr "Listevisning"
 
 #: inetcpl.rc:95
 msgid "trackbar"
@@ -8235,14 +8235,9 @@ msgstr "Ana&log"
 msgid "Digi&tal"
 msgstr "Digi&tal"
 
-#: clock.rc:32 notepad.rc:50 winefile.rc:64 wordpad.rc:81
-#, fuzzy
+#: clock.rc:32 notepad.rc:50 winecfg.rc:300 winefile.rc:64 wordpad.rc:81
 msgid "&Font..."
-msgstr ""
-"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
-"Skri&ft...\n"
-"#-#-#-#-#  nb_NO.po (Wine)  #-#-#-#-#\n"
-"Skr&ift..."
+msgstr "Skrift"
 
 #: clock.rc:34
 msgid "&Without Titlebar"
@@ -9904,7 +9899,7 @@ msgstr "Nø&kkelkombinasjon:"
 msgid "&Minimize at launch"
 msgstr "&Minimer ved oppstart"
 
-#: progman.rc:179 progman.rc:198 progman.rc:215 winefile.rc:133
+#: progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:245 winefile.rc:133
 msgid "&Browse..."
 msgstr "&Bla"
 
@@ -11470,6 +11465,290 @@ msgstr "Wine"
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr "Vent mens Wine-oppsettet i «%s» blir oppdatert..."
 
+#: winecfg.rc:138
+msgid ""
+"This program is free software; you can redistribute it and/or modify it "
+"under the terms of the GNU Lesser General Public License as published by the "
+"Free Software Foundation; either version 2.1 of the License, or (at your "
+"option) any later version."
+msgstr ""
+"Dette biblioteket er fri programvarer; det kan redistribueres i henhold til "
+"vilkårene i GNU Lesser General Public License utgitt av «the Free Software "
+"Foundation», enten versjon 2.1 av denne Lisensen, eller (hvis du ønsker det) "
+"en nyere versjon."
+
+#: winecfg.rc:140
+msgid " Windows Registration Information "
+msgstr " Brukerinformasjon "
+
+#: winecfg.rc:141
+msgid "&Owner:"
+msgstr "Eier:"
+
+#: winecfg.rc:143
+msgid "Organi&zation:"
+msgstr "Organisasjon:"
+
+#: winecfg.rc:151
+msgid " Application Settings "
+msgstr " Programminnstillinger "
+
+#: winecfg.rc:152
+msgid ""
+"Wine can mimic different Windows versions for each application.  This tab is "
+"linked to the Libraries and Graphics tabs to allow you to change systemwide "
+"or per-application settings in those tabs as well."
+msgstr ""
+"Wine kan etterligne forskjellige Windows-versjoner for hvert program. Denne "
+"fanen er koblet med bibliotek- og grafikkfanene, sånn at du kan endre "
+"innstillinger for hele systemet eller enkelte programmer der også."
+
+#: winecfg.rc:156
+msgid "&Add application..."
+msgstr "Legg til progr&am..."
+
+#: winecfg.rc:157
+msgid "&Remove application"
+msgstr "Fje&rn program"
+
+#: winecfg.rc:158
+msgid "&Windows Version:"
+msgstr "&Windows-versjon:"
+
+#: winecfg.rc:166
+msgid " Window Settings "
+msgstr " Vinduinnstillinger "
+
+#: winecfg.rc:167
+msgid "Automatically capture the &mouse in full-screen windows"
+msgstr "Automatically capture the &mouse in full-screen windows"
+
+#: winecfg.rc:168
+msgid "Allow the window manager to &decorate the windows"
+msgstr "Tillat vindusbehandleren å &dekorere vinduer"
+
+#: winecfg.rc:169
+msgid "Allow the &window manager to control the windows"
+msgstr "Tillat vindusbehandleren å kontrollere vinduene"
+
+#: winecfg.rc:170
+msgid "&Emulate a virtual desktop"
+msgstr "Vis et virtuelt skrivebord"
+
+#: winecfg.rc:172
+msgid "Desktop &size:"
+msgstr "Størrelse:"
+
+#: winecfg.rc:177
+msgid " Direct3D "
+msgstr " Direct3D "
+
+#: winecfg.rc:178
+msgid "&Vertex Shader Support: "
+msgstr "Verteks-skyggelegging: "
+
+#: winecfg.rc:180
+msgid "Allow &Pixel Shader (if supported by hardware)"
+msgstr "Tillat piksel-skyggelegger (hvis maskinvaren støtter det)"
+
+#: winecfg.rc:182
+msgid " Screen &Resolution "
+msgstr " Skjermoppløsning (styrer skriftstørrelse) "
+
+#: winecfg.rc:185
+msgid "dpi"
+msgstr "dpi"
+
+#: winecfg.rc:186
+msgid "This is a sample text using 10 point Tahoma"
+msgstr "Forhåndsvisning av tekst med 10 punkters Tahoma"
+
+#: winecfg.rc:193
+msgid " DLL Overrides "
+msgstr " DLL-overstyring "
+
+#: winecfg.rc:194
+msgid ""
+"Dynamic Link Libraries can be specified individually to be either builtin "
+"(provided by Wine) or native (taken from Windows or provided by the "
+"application)."
+msgstr ""
+"Dynamisk koblede biblioteker kan oppgis individuelt til å være enten "
+"innebygget (fra Wine) eller innfødt (tatt fra Windows eller gitt av et "
+"program)."
+
+#: winecfg.rc:196
+msgid "&New override for library:"
+msgstr "Ny overstyring for bibliotek:"
+
+#: winecfg.rc:198 wordpad.rc:244
+msgid "&Add"
+msgstr "&Legg til"
+
+#: winecfg.rc:199
+msgid "Existing &overrides:"
+msgstr "Gjeldende overstyringer:"
+
+#: winecfg.rc:201
+msgid "&Edit..."
+msgstr "R&ediger"
+
+#: winecfg.rc:207
+msgid "Edit Override"
+msgstr "Rediger overstyring"
+
+#: winecfg.rc:210
+msgid " Load Order "
+msgstr " Lastingsrekkefølge "
+
+#: winecfg.rc:211
+msgid "&Builtin (Wine)"
+msgstr "Inne&bygget (Wine)"
+
+#: winecfg.rc:212
+msgid "&Native (Windows)"
+msgstr "I&nnfødt (Windows)"
+
+#: winecfg.rc:213
+msgid "Bui&ltin then Native"
+msgstr "&Innebygget så innfødt"
+
+#: winecfg.rc:214
+msgid "Nati&ve then Builtin"
+msgstr "Innfdø&dt så innebygget"
+
+#: winecfg.rc:215
+msgid "&Disable"
+msgstr "&Deaktiver"
+
+#: winecfg.rc:222
+msgid "Select Drive Letter"
+msgstr "Velg stasjonsbokstav"
+
+#: winecfg.rc:234
+msgid " Drive &mappings "
+msgstr " Stasjonkartlegging "
+
+#: winecfg.rc:235
+msgid ""
+"Failed to connect to the mount manager, the drive configuration cannot be "
+"edited."
+msgstr ""
+"Klarte ikke koble til monteringsbehandleren; diskstasjonene kan derfor ikke "
+"redigeres."
+
+#: winecfg.rc:238
+msgid "&Add..."
+msgstr "&Legg til..."
+
+#: winecfg.rc:240
+msgid "Auto&detect"
+msgstr "&Automatisk..."
+
+#: winecfg.rc:243
+msgid "&Path:"
+msgstr "&Sti:"
+
+#: winecfg.rc:247
+msgid "&Type:"
+msgstr "&Type:"
+
+#: winecfg.rc:250 winecfg.rc:35
+msgid "Show &Advanced"
+msgstr "Avansert visning"
+
+#: winecfg.rc:251
+msgid "De&vice:"
+msgstr "En&het:"
+
+#: winecfg.rc:253
+msgid "Bro&wse..."
+msgstr "&Bla..."
+
+#: winecfg.rc:255
+msgid "&Label:"
+msgstr "Vo&lumnavn:"
+
+#: winecfg.rc:257
+msgid "S&erial:"
+msgstr "S&erienummer:"
+
+#: winecfg.rc:260
+msgid "Show &dot files"
+msgstr "Vis .-filer"
+
+#: winecfg.rc:267
+msgid " Driver Diagnostics "
+msgstr " Driver Diagnostics "
+
+#: winecfg.rc:269
+msgid " Defaults "
+msgstr " Defaults "
+
+#: winecfg.rc:270
+msgid "Output device:"
+msgstr "Output device:"
+
+#: winecfg.rc:271
+msgid "Voice output device:"
+msgstr "Voice output device:"
+
+#: winecfg.rc:272
+msgid "Input device:"
+msgstr "Input device:"
+
+#: winecfg.rc:273
+msgid "Voice input device:"
+msgstr "Voice input device:"
+
+#: winecfg.rc:278
+msgid "&Test Sound"
+msgstr "&Test"
+
+#: winecfg.rc:285
+msgid " Appearance "
+msgstr " Utseende "
+
+#: winecfg.rc:286
+msgid "&Theme:"
+msgstr "Tema:"
+
+#: winecfg.rc:288
+msgid "&Install theme..."
+msgstr "Installer tema..."
+
+#: winecfg.rc:289
+msgid "&Color:"
+msgstr "Farge:"
+
+#: winecfg.rc:291
+msgid "&Size:"
+msgstr "Størrelse:"
+
+#: winecfg.rc:293
+msgid "It&em:"
+msgstr "Element:"
+
+#: winecfg.rc:295
+msgid "C&olor:"
+msgstr "Farge:"
+
+#: winecfg.rc:297
+msgid "Si&ze:"
+msgstr "Størrelse:"
+
+#: winecfg.rc:301
+msgid " Fol&ders "
+msgstr " Spesielle mapper "
+
+#: winecfg.rc:304
+msgid "&Link to:"
+msgstr "Pek til:"
+
+#: winecfg.rc:306
+msgid "B&rowse..."
+msgstr "Bla"
+
 #: winecfg.rc:31
 msgid "Libraries"
 msgstr "Biblioteker"
@@ -11482,10 +11761,6 @@ msgstr "Stasjoner"
 #, fuzzy
 msgid "Select the Unix target directory, please."
 msgstr "Velg Unix-målkatalogen."
-
-#: winecfg.rc:35
-msgid "Show &Advanced"
-msgstr "Avansert visning"
 
 #: winecfg.rc:34
 msgid "Hide &Advanced"
@@ -12659,10 +12934,6 @@ msgstr "Tabulatorer"
 #: wordpad.rc:242
 msgid "Tab stops"
 msgstr "Tabulatorstopp"
-
-#: wordpad.rc:244
-msgid "&Add"
-msgstr "&Legg til"
 
 #: wordpad.rc:248
 msgid "Remove al&l"

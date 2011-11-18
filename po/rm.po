@@ -23,7 +23,7 @@ msgid ""
 "computer."
 msgstr ""
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:154 winecfg.rc:30
 msgid "Applications"
 msgstr ""
 
@@ -62,7 +62,7 @@ msgstr ""
 msgid "All files (*.*)"
 msgstr "Tuot las datotecas (*.*)"
 
-#: appwiz.rc:42 wordpad.rc:245
+#: appwiz.rc:42 winecfg.rc:202 winecfg.rc:239 wordpad.rc:245
 #, fuzzy
 msgid "&Remove"
 msgstr "&Annotaziun..."
@@ -2246,9 +2246,10 @@ msgstr "&Rivir"
 #: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
 #: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
 #: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
-#: taskmgr.rc:521 wineconsole.rc:131 winefile.rc:131 winefile.rc:154
-#: winefile.rc:184 winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204
-#: wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
+#: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr ""
 
@@ -2256,9 +2257,9 @@ msgstr ""
 #: oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156
 #: progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256
 #: regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447
-#: taskmgr.rc:522 wineboot.rc:31 wineconsole.rc:132 winefile.rc:132
-#: winefile.rc:155 winefile.rc:185 winemine.rc:93 wordpad.rc:205
-#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
+#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr ""
 
@@ -2360,7 +2361,7 @@ msgstr ""
 msgid "Security"
 msgstr ""
 
-#: inetcpl.rc:90
+#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
 msgid "Listview"
 msgstr ""
 
@@ -7750,7 +7751,7 @@ msgstr ""
 msgid "Digi&tal"
 msgstr ""
 
-#: clock.rc:32 notepad.rc:50 winefile.rc:64 wordpad.rc:81
+#: clock.rc:32 notepad.rc:50 winecfg.rc:300 winefile.rc:64 wordpad.rc:81
 msgid "&Font..."
 msgstr ""
 
@@ -9181,7 +9182,7 @@ msgstr ""
 msgid "&Minimize at launch"
 msgstr ""
 
-#: progman.rc:179 progman.rc:198 progman.rc:215 winefile.rc:133
+#: progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:245 winefile.rc:133
 msgid "&Browse..."
 msgstr ""
 
@@ -10666,6 +10667,287 @@ msgstr "Wine ag�d"
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr ""
 
+#: winecfg.rc:138
+msgid ""
+"This program is free software; you can redistribute it and/or modify it "
+"under the terms of the GNU Lesser General Public License as published by the "
+"Free Software Foundation; either version 2.1 of the License, or (at your "
+"option) any later version."
+msgstr ""
+
+#: winecfg.rc:140
+#, fuzzy
+msgid " Windows Registration Information "
+msgstr "INFUORMAZIUN"
+
+#: winecfg.rc:141
+msgid "&Owner:"
+msgstr ""
+
+#: winecfg.rc:143
+#, fuzzy
+msgid "Organi&zation:"
+msgstr "INFUORMAZIUN"
+
+#: winecfg.rc:151
+msgid " Application Settings "
+msgstr ""
+
+#: winecfg.rc:152
+msgid ""
+"Wine can mimic different Windows versions for each application.  This tab is "
+"linked to the Libraries and Graphics tabs to allow you to change systemwide "
+"or per-application settings in those tabs as well."
+msgstr ""
+
+#: winecfg.rc:156
+#, fuzzy
+msgid "&Add application..."
+msgstr "&Options"
+
+#: winecfg.rc:157
+#, fuzzy
+msgid "&Remove application"
+msgstr "&Annotaziun..."
+
+#: winecfg.rc:158
+msgid "&Windows Version:"
+msgstr ""
+
+#: winecfg.rc:166
+msgid " Window Settings "
+msgstr ""
+
+#: winecfg.rc:167
+msgid "Automatically capture the &mouse in full-screen windows"
+msgstr ""
+
+#: winecfg.rc:168
+msgid "Allow the window manager to &decorate the windows"
+msgstr ""
+
+#: winecfg.rc:169
+msgid "Allow the &window manager to control the windows"
+msgstr ""
+
+#: winecfg.rc:170
+msgid "&Emulate a virtual desktop"
+msgstr ""
+
+#: winecfg.rc:172
+msgid "Desktop &size:"
+msgstr ""
+
+#: winecfg.rc:177
+msgid " Direct3D "
+msgstr ""
+
+#: winecfg.rc:178
+msgid "&Vertex Shader Support: "
+msgstr ""
+
+#: winecfg.rc:180
+msgid "Allow &Pixel Shader (if supported by hardware)"
+msgstr ""
+
+#: winecfg.rc:182
+msgid " Screen &Resolution "
+msgstr ""
+
+#: winecfg.rc:185
+msgid "dpi"
+msgstr ""
+
+#: winecfg.rc:186
+msgid "This is a sample text using 10 point Tahoma"
+msgstr ""
+
+#: winecfg.rc:193
+msgid " DLL Overrides "
+msgstr ""
+
+#: winecfg.rc:194
+msgid ""
+"Dynamic Link Libraries can be specified individually to be either builtin "
+"(provided by Wine) or native (taken from Windows or provided by the "
+"application)."
+msgstr ""
+
+#: winecfg.rc:196
+msgid "&New override for library:"
+msgstr ""
+
+#: winecfg.rc:198 wordpad.rc:244
+msgid "&Add"
+msgstr ""
+
+#: winecfg.rc:199
+msgid "Existing &overrides:"
+msgstr ""
+
+#: winecfg.rc:201
+#, fuzzy
+msgid "&Edit..."
+msgstr "&Lavurar"
+
+#: winecfg.rc:207
+#, fuzzy
+msgid "Edit Override"
+msgstr "&Lavurar"
+
+#: winecfg.rc:210
+msgid " Load Order "
+msgstr ""
+
+#: winecfg.rc:211
+#, fuzzy
+msgid "&Builtin (Wine)"
+msgstr "I&nfuormaziuns"
+
+#: winecfg.rc:212
+msgid "&Native (Windows)"
+msgstr ""
+
+#: winecfg.rc:213
+msgid "Bui&ltin then Native"
+msgstr ""
+
+#: winecfg.rc:214
+msgid "Nati&ve then Builtin"
+msgstr ""
+
+#: winecfg.rc:215
+msgid "&Disable"
+msgstr ""
+
+#: winecfg.rc:222
+msgid "Select Drive Letter"
+msgstr ""
+
+#: winecfg.rc:234
+msgid " Drive &mappings "
+msgstr ""
+
+#: winecfg.rc:235
+msgid ""
+"Failed to connect to the mount manager, the drive configuration cannot be "
+"edited."
+msgstr ""
+
+#: winecfg.rc:238
+msgid "&Add..."
+msgstr ""
+
+#: winecfg.rc:240
+msgid "Auto&detect"
+msgstr ""
+
+#: winecfg.rc:243
+msgid "&Path:"
+msgstr ""
+
+#: winecfg.rc:247
+msgid "&Type:"
+msgstr ""
+
+#: winecfg.rc:250 winecfg.rc:35
+msgid "Show &Advanced"
+msgstr ""
+
+#: winecfg.rc:251
+msgid "De&vice:"
+msgstr ""
+
+#: winecfg.rc:253
+msgid "Bro&wse..."
+msgstr ""
+
+#: winecfg.rc:255
+msgid "&Label:"
+msgstr ""
+
+#: winecfg.rc:257
+msgid "S&erial:"
+msgstr ""
+
+#: winecfg.rc:260
+msgid "Show &dot files"
+msgstr ""
+
+#: winecfg.rc:267
+msgid " Driver Diagnostics "
+msgstr ""
+
+#: winecfg.rc:269
+msgid " Defaults "
+msgstr ""
+
+#: winecfg.rc:270
+#, fuzzy
+msgid "Output device:"
+msgstr "&Datoteca"
+
+#: winecfg.rc:271
+msgid "Voice output device:"
+msgstr ""
+
+#: winecfg.rc:272
+msgid "Input device:"
+msgstr ""
+
+#: winecfg.rc:273
+msgid "Voice input device:"
+msgstr ""
+
+#: winecfg.rc:278
+msgid "&Test Sound"
+msgstr ""
+
+#: winecfg.rc:285
+msgid " Appearance "
+msgstr ""
+
+#: winecfg.rc:286
+msgid "&Theme:"
+msgstr ""
+
+#: winecfg.rc:288
+#, fuzzy
+msgid "&Install theme..."
+msgstr "&Annotaziun..."
+
+#: winecfg.rc:289
+msgid "&Color:"
+msgstr ""
+
+#: winecfg.rc:291
+msgid "&Size:"
+msgstr ""
+
+#: winecfg.rc:293
+msgid "It&em:"
+msgstr ""
+
+#: winecfg.rc:295
+msgid "C&olor:"
+msgstr ""
+
+#: winecfg.rc:297
+msgid "Si&ze:"
+msgstr ""
+
+#: winecfg.rc:301
+msgid " Fol&ders "
+msgstr ""
+
+#: winecfg.rc:304
+msgid "&Link to:"
+msgstr ""
+
+#: winecfg.rc:306
+msgid "B&rowse..."
+msgstr ""
+
 #: winecfg.rc:31
 msgid "Libraries"
 msgstr ""
@@ -10676,10 +10958,6 @@ msgstr ""
 
 #: winecfg.rc:33
 msgid "Select the Unix target directory, please."
-msgstr ""
-
-#: winecfg.rc:35
-msgid "Show &Advanced"
 msgstr ""
 
 #: winecfg.rc:34
@@ -11817,10 +12095,6 @@ msgstr ""
 
 #: wordpad.rc:242
 msgid "Tab stops"
-msgstr ""
-
-#: wordpad.rc:244
-msgid "&Add"
 msgstr ""
 
 #: wordpad.rc:248
