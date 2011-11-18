@@ -98,7 +98,10 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
     switch(expr->type) {
     case EXPR_EQEQ:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_eq2);
+    case EXPR_NOTEQEQ:
+        return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_neq2);
     default:
+        assert(expr->eval != compiled_expression_eval);
         return compile_interp_fallback(ctx, expr);
     }
 
