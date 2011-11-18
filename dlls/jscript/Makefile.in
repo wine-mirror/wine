@@ -5,6 +5,7 @@ C_SRCS = \
 	activex.c \
 	array.c \
 	bool.c \
+	compile.c \
 	date.c \
 	dispex.c \
 	engine.c \

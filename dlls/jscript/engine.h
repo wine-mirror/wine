@@ -18,6 +18,7 @@
 
 typedef struct _source_elements_t source_elements_t;
 typedef struct _function_expression_t function_expression_t;
+typedef struct _expression_t expression_t;
 
 typedef struct _function_declaration_t {
     function_expression_t *expr;
@@ -40,6 +41,42 @@ typedef struct _func_stack {
     struct _func_stack *next;
 } func_stack_t;
 
+#define OP_LIST                                   \
+    X(eq2, 1, 0)                                  \
+    X(tree, 1, ARG_EXPR)                          \
+    X(ret, 0, 0)
+
+typedef enum {
+#define X(x,a,b) OP_##x,
+OP_LIST
+#undef X
+    OP_LAST
+} jsop_t;
+
+typedef union {
+    expression_t *expr;
+} instr_arg_t;
+
+typedef enum {
+    ARG_NONE = 0,
+    ARG_EXPR
+} instr_arg_type_t;
+
+typedef struct {
+    jsop_t op;
+    instr_arg_t arg1;
+} instr_t;
+
+typedef struct {
+    instr_t *instrs;
+} bytecode_t;
+
+void release_bytecode(bytecode_t*);
+
+typedef struct _compiler_ctx_t compiler_ctx_t;
+
+void release_compiler(compiler_ctx_t*);
+
 typedef struct _parser_ctx_t {
     LONG ref;
 
@@ -57,6 +94,9 @@ typedef struct _parser_ctx_t {
     jsheap_t heap;
 
     func_stack_t *func_stack;
+
+    bytecode_t *code;
+    compiler_ctx_t *compiler;
 
     struct _parser_ctx_t *next;
 } parser_ctx_t;
@@ -103,6 +143,13 @@ struct _exec_ctx_t {
     jsdisp_t *var_disp;
     IDispatch *this_obj;
     BOOL is_global;
+
+    VARIANT *stack;
+    unsigned stack_size;
+    unsigned top;
+
+    unsigned ip;
+    jsexcept_t ei;
 };
 
 static inline void exec_addref(exec_ctx_t *ctx)
@@ -115,7 +162,6 @@ HRESULT create_exec_ctx(script_ctx_t*,IDispatch*,jsdisp_t*,scope_chain_t*,BOOL,e
 HRESULT exec_source(exec_ctx_t*,parser_ctx_t*,source_elements_t*,BOOL,jsexcept_t*,VARIANT*) DECLSPEC_HIDDEN;
 
 typedef struct _statement_t statement_t;
-typedef struct _expression_t expression_t;
 typedef struct _parameter_t parameter_t;
 
 HRESULT create_source_function(parser_ctx_t*,parameter_t*,source_elements_t*,scope_chain_t*,
@@ -357,6 +403,7 @@ typedef HRESULT (*expression_eval_t)(script_ctx_t*,expression_t*,DWORD,jsexcept_
 struct _expression_t {
     expression_type_t type;
     expression_eval_t eval;
+    unsigned instr_off;
 };
 
 struct _parameter_t {
@@ -493,7 +540,6 @@ HRESULT post_decrement_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcep
 HRESULT pre_increment_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT pre_decrement_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT equal_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
-HRESULT equal2_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT not_equal_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT not_equal2_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT less_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
@@ -517,3 +563,7 @@ HRESULT assign_mod_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*
 HRESULT assign_and_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT assign_or_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT assign_xor_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
+
+HRESULT compiled_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
+
+HRESULT compile_subscript(parser_ctx_t*,expression_t*,unsigned*) DECLSPEC_HIDDEN;

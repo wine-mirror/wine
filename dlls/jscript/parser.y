@@ -1328,7 +1328,7 @@ static const expression_eval_t expression_eval_table[] = {
    pre_increment_expression_eval,
    pre_decrement_expression_eval,
    equal_expression_eval,
-   equal2_expression_eval,
+   compiled_expression_eval,
    not_equal_expression_eval,
    not_equal2_expression_eval,
    less_expression_eval,
@@ -1574,6 +1574,10 @@ void parser_release(parser_ctx_t *ctx)
     if(--ctx->ref)
         return;
 
+    if(ctx->code)
+        release_bytecode(ctx->code);
+    if(ctx->compiler)
+        release_compiler(ctx->compiler);
     script_release(ctx->script);
     heap_free(ctx->begin);
     jsheap_free(&ctx->heap);

@@ -20,6 +20,7 @@
 #include "wine/port.h"
 
 #include <math.h>
+#include <assert.h>
 
 #include "jscript.h"
 #include "engine.h"
@@ -50,6 +51,51 @@ static inline HRESULT stat_eval(script_ctx_t *ctx, statement_t *stat, return_typ
 static inline HRESULT expr_eval(script_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
     return expr->eval(ctx, expr, flags, ei, ret);
+}
+
+static HRESULT stack_push(exec_ctx_t *ctx, VARIANT *v)
+{
+    if(!ctx->stack_size) {
+        ctx->stack = heap_alloc(16*sizeof(VARIANT));
+        if(!ctx->stack)
+            return E_OUTOFMEMORY;
+        ctx->stack_size = 16;
+    }else if(ctx->stack_size == ctx->top) {
+        VARIANT *new_stack;
+
+        new_stack = heap_realloc(ctx->stack, ctx->stack_size*2*sizeof(VARIANT));
+        if(!new_stack) {
+            VariantClear(v);
+            return E_OUTOFMEMORY;
+        }
+
+        ctx->stack = new_stack;
+        ctx->stack_size *= 2;
+    }
+
+    ctx->stack[ctx->top++] = *v;
+    return S_OK;
+}
+
+static HRESULT stack_push_bool(exec_ctx_t *ctx, BOOL b)
+{
+    VARIANT v;
+
+    V_VT(&v) = VT_BOOL;
+    V_BOOL(&v) = b ? VARIANT_TRUE : VARIANT_FALSE;
+    return stack_push(ctx, &v);
+}
+
+static inline VARIANT *stack_pop(exec_ctx_t *ctx)
+{
+    assert(ctx->top);
+    return ctx->stack + --ctx->top;
+}
+
+static void stack_popn(exec_ctx_t *ctx, unsigned n)
+{
+    while(n--)
+        VariantClear(stack_pop(ctx));
 }
 
 static void exprval_release(exprval_t *val)
@@ -231,6 +277,7 @@ void exec_release(exec_ctx_t *ctx)
         jsdisp_release(ctx->var_disp);
     if(ctx->this_obj)
         IDispatch_Release(ctx->this_obj);
+    heap_free(ctx->stack);
     heap_free(ctx);
 }
 
@@ -2773,26 +2820,24 @@ HRESULT equal_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flag
 }
 
 /* ECMA-262 3rd Edition    11.9.4 */
-HRESULT equal2_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+static HRESULT interp_eq2(exec_ctx_t *ctx)
 {
-    binary_expression_t *expr = (binary_expression_t*)_expr;
-    VARIANT rval, lval;
+    VARIANT *l, *r;
     BOOL b;
     HRESULT hres;
 
     TRACE("\n");
 
-    hres = get_binary_expr_values(ctx, expr, ei, &rval, &lval);
+    r = stack_pop(ctx);
+    l = stack_pop(ctx);
+
+    hres = equal2_values(r, l, &b);
+    VariantClear(l);
+    VariantClear(r);
     if(FAILED(hres))
         return hres;
 
-    hres = equal2_values(&rval, &lval, &b);
-    VariantClear(&lval);
-    VariantClear(&rval);
-    if(FAILED(hres))
-        return hres;
-
-    return return_bool(ret, b);
+    return stack_push_bool(ctx, b);
 }
 
 /* ECMA-262 3rd Edition    11.9.2 */
@@ -3260,4 +3305,96 @@ HRESULT assign_xor_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD
     TRACE("\n");
 
     return assign_oper_eval(ctx, expr->expression1, expr->expression2, xor_eval, ei, ret);
+}
+
+static HRESULT interp_ret(exec_ctx_t *ctx)
+{
+    TRACE("\n");
+
+    ctx->ip = -1;
+    return S_OK;
+}
+
+static HRESULT interp_tree(exec_ctx_t *ctx)
+{
+    instr_t *instr = ctx->parser->code->instrs+ctx->ip;
+    exprval_t val;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = expr_eval(ctx->parser->script, instr->arg1.expr, 0, &ctx->ei, &val);
+    if(FAILED(hres))
+        return hres;
+
+    hres = exprval_to_value(ctx->parser->script, &val, &ctx->ei, &v);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push(ctx, &v);
+}
+
+typedef HRESULT (*op_func_t)(exec_ctx_t*);
+
+static const op_func_t op_funcs[] = {
+#define X(x,a,b) interp_##x,
+OP_LIST
+#undef X
+};
+
+static const unsigned op_move[] = {
+#define X(a,x,b) x,
+OP_LIST
+#undef X
+};
+
+HRESULT interp_expression_eval(script_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+{
+    exec_ctx_t *exec_ctx = ctx->exec_ctx;
+    unsigned prev_ip, prev_top;
+    jsop_t op;
+    HRESULT hres = S_OK;
+
+    TRACE("\n");
+
+    prev_top = exec_ctx->top;
+    prev_ip = exec_ctx->ip;
+    exec_ctx->ip = expr->instr_off;
+
+    while(exec_ctx->ip != -1) {
+        op = exec_ctx->parser->code->instrs[exec_ctx->ip].op;
+        hres = op_funcs[op](exec_ctx);
+        if(FAILED(hres))
+            break;
+        exec_ctx->ip += op_move[op];
+    }
+
+    exec_ctx->ip = prev_ip;
+
+    if(FAILED(hres)) {
+        stack_popn(exec_ctx, exec_ctx->top-prev_top);
+        *ei = exec_ctx->ei;
+        memset(&exec_ctx->ei, 0, sizeof(exec_ctx->ei));
+        return hres;
+    }
+
+    assert(exec_ctx->top == prev_top+1);
+
+    ret->type = EXPRVAL_VARIANT;
+    ret->u.var = *stack_pop(exec_ctx);
+    return S_OK;
+}
+
+HRESULT compiled_expression_eval(script_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+{
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = compile_subscript(ctx->exec_ctx->parser, expr, &expr->instr_off);
+    if(FAILED(hres))
+        return hres;
+
+    return (expr->eval = interp_expression_eval)(ctx, expr, flags, ei, ret);
 }
