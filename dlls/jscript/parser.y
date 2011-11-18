@@ -1369,6 +1369,7 @@ static void *new_expression(parser_ctx_t *ctx, expression_type_t type, size_t si
 {
     expression_t *ret = parser_alloc(ctx, size ? size : sizeof(*ret));
 
+    ret->type = type;
     ret->eval = expression_eval_table[type];
 
     return ret;
