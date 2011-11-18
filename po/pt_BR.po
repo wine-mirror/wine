@@ -12576,13 +12576,14 @@ msgstr ""
 "desculpa pelo incômodo."
 
 #: winedbg.rc:53
+#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
-"may want to check http://appdb.winehq.org for tips about running this "
-"application.\n"
+"may want to check the <a href=\"http://appdb.winehq.org\">Application "
+"Database</a> for tips about running this application.\n"
 "\n"
 "If this problem is not present under Windows and has not been reported yet, "
-"you can report it at http://bugs.winehq.org."
+"you can <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a>."
 msgstr ""
 "Isto pode ter sido causado por um problema no programa ou no Wine. Pode-se "
 "visitar http://appdb.winehq.org para dicas de como rodar esta aplicativo.\n"

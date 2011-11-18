@@ -1,7 +1,7 @@
 MODULE    = winedbg.exe
 APPMODE   = -mconsole
 IMPORTS   = psapi dbghelp advapi32
-DELAYIMPORTS = user32 gdi32
+DELAYIMPORTS = shell32 comctl32 user32 gdi32
 EXTRALIBS = @LIBPOLL@
 EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 

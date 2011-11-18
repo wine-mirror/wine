@@ -21,6 +21,8 @@
 #include "debugger.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "commctrl.h"
+#include "shellapi.h"
 #include "psapi.h"
 
 #include "wine/debug.h"
@@ -108,6 +110,7 @@ static void set_message_with_filename(HWND hDlg)
 
 static INT_PTR WINAPI DlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    static const WCHAR openW[] = {'o','p','e','n',0};
     switch (msg)
     {
     case WM_INITDIALOG:
@@ -137,6 +140,17 @@ static INT_PTR WINAPI DlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 0, hwnd, NULL);
         return TRUE;
     }
+    case WM_NOTIFY:
+        switch (((NMHDR *)lParam)->code)
+        {
+        case NM_CLICK:
+        case NM_RETURN:
+            if (wParam == IDC_STATIC_TXT2)
+                ShellExecuteW( NULL, openW, ((NMLINK *)lParam)->item.szUrl, NULL, NULL, SW_SHOW );
+            break;
+        }
+        break;
+
     case WM_COMMAND:
         switch (LOWORD(wParam))
         {
@@ -154,6 +168,7 @@ static INT_PTR WINAPI DlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 BOOL display_crash_dialog(void)
 {
     static const WCHAR winedeviceW[] = {'w','i','n','e','d','e','v','i','c','e','.','e','x','e',0};
+    static const INITCOMMONCONTROLSEX init = { sizeof(init), ICC_LINK_CLASS };
 
     INT_PTR result;
     /* dbg_curr_process->handle is not set */
@@ -166,6 +181,7 @@ BOOL display_crash_dialog(void)
     g_ProgramName = get_program_name(hProcess);
     CloseHandle(hProcess);
     if (!strcmpW( g_ProgramName, winedeviceW )) return TRUE;
+    InitCommonControlsEx( &init );
     result = DialogBoxW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDD_CRASH_DLG), NULL, DlgProc);
     if (result == ID_DEBUG) {
         AllocConsole();
