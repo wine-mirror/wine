@@ -4753,7 +4753,7 @@ static void test_Load(IPersistMoniker *persist, IMoniker *mon)
     }
     CHECK_CALLED(OnChanged_READYSTATE);
     CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
-    SET_CALLED(IsSystemMoniker); /* IE7 */
+    CLEAR_CALLED(IsSystemMoniker); /* IE7 */
     SET_CALLED(Exec_ShellDocView_84);
     if(mon == &Moniker)
         CHECK_CALLED(BindToStorage);
@@ -4890,7 +4890,7 @@ static void test_download(DWORD flags)
     if(is_js)
         CHECK_CALLED(GetExternal);
     CHECK_CALLED(OnViewChange);
-    SET_CALLED(GetDropTarget);
+    CLEAR_CALLED(GetDropTarget);
     if(flags & DWL_TRYCSS)
         SET_CALLED(Exec_ShellDocView_84);
     if(flags & DWL_CSS) {
@@ -4919,33 +4919,30 @@ static void test_download(DWORD flags)
     if(flags & DWL_HTTP)  {
         todo_wine CHECK_CALLED(OnChanged_1012);
         todo_wine CHECK_CALLED(Exec_HTTPEQUIV);
-        if(support_wbapp)
-            CHECK_CALLED(Exec_SETTITLE);
-        else
-            todo_wine CHECK_CALLED(Exec_SETTITLE);
+        todo_wine CHECK_CALLED(Exec_SETTITLE);
     }
     if(!is_js) {
         CHECK_CALLED(OnChanged_1005);
         CHECK_CALLED(OnChanged_READYSTATE);
         CHECK_CALLED(Exec_SETPROGRESSPOS);
     }else {
-        SET_CALLED(OnChanged_READYSTATE); /* sometimes called */
+        CLEAR_CALLED(OnChanged_READYSTATE); /* sometimes called */
         todo_wine CHECK_CALLED(Exec_SETPROGRESSPOS);
     }
     if(!(flags & DWL_EMPTY))
         CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
-    SET_CALLED(Exec_ShellDocView_103);
-    SET_CALLED(Exec_ShellDocView_105);
-    SET_CALLED(Exec_ShellDocView_140);
+    CLEAR_CALLED(Exec_ShellDocView_103);
+    CLEAR_CALLED(Exec_ShellDocView_105);
+    CLEAR_CALLED(Exec_ShellDocView_140);
     if(!is_js) {
         CHECK_CALLED(Exec_MSHTML_PARSECOMPLETE);
         CHECK_CALLED(Exec_HTTPEQUIV_DONE);
     }
     SET_CALLED(SetStatusText);
     if(nav_url || support_wbapp) { /* avoiding race, FIXME: find better way */
-        SET_CALLED(UpdateUI);
-        SET_CALLED(Exec_UPDATECOMMANDS);
-        SET_CALLED(Exec_SETTITLE);
+        CLEAR_CALLED(UpdateUI);
+        CLEAR_CALLED(Exec_UPDATECOMMANDS);
+        CLEAR_CALLED(Exec_SETTITLE);
         todo_wine CHECK_CALLED_BROKEN(UpdateBackForwardState);
     }
     if(!is_js) {
@@ -5076,20 +5073,20 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *hre
             CHECK_CALLED(Navigate);
         }
     }else {
-        SET_CALLED(TranslateUrl);
+        CLEAR_CALLED(TranslateUrl);
         if(support_wbapp) {
-            SET_CALLED(FireBeforeNavigate2);
+            CLEAR_CALLED(FireBeforeNavigate2);
             SET_CALLED(Exec_ShellDocView_67);
             if(!is_hash) {
-                SET_CALLED(Invoke_AMBIENT_SILENT);
-                SET_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
-                SET_CALLED(Exec_ShellDocView_63);
+                CLEAR_CALLED(Invoke_AMBIENT_SILENT);
+                CLEAR_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+                CLEAR_CALLED(Exec_ShellDocView_63);
             }else {
-                SET_CALLED(FireNavigateComplete2);
-                SET_CALLED(FireDocumentComplete);
+                CLEAR_CALLED(FireNavigateComplete2);
+                CLEAR_CALLED(FireDocumentComplete);
             }
         }else {
-            SET_CALLED(Navigate);
+            CLEAR_CALLED(Navigate);
         }
     }
 
@@ -5493,7 +5490,7 @@ static void test_exec_editmode(IUnknown *unk, BOOL loaded)
     CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
     CHECK_CALLED(OnChanged_READYSTATE);
     CHECK_CALLED(Invoke_OnReadyStateChange_Loading);
-    SET_CALLED(IsSystemMoniker); /* IE7 */
+    CLEAR_CALLED(IsSystemMoniker); /* IE7 */
     SET_CALLED(Exec_ShellDocView_84);
     if(loaded)
         CHECK_CALLED(BindToStorage);
@@ -6788,7 +6785,7 @@ static void test_editing_mode(BOOL do_load)
 
     SET_EXPECT(SetStatusText); /* ignore race in native mshtml */
     test_timer(EXPECT_UPDATEUI);
-    SET_CALLED(SetStatusText);
+    CLEAR_CALLED(SetStatusText);
 
     test_MSHTML_QueryStatus(doc, OLECMDF_SUPPORTED|OLECMDF_ENABLED);
 
