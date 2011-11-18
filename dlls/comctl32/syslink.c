@@ -609,35 +609,26 @@ static PDOC_ITEM SYSLINK_GetPrevLink (const SYSLINK_INFO *infoPtr, PDOC_ITEM Cur
 static BOOL SYSLINK_WrapLine (LPWSTR Text, WCHAR BreakChar, int *LineLen,
                              int nFit, LPSIZE Extent)
 {
-    WCHAR *Current;
+    int i;
 
-    if(nFit == *LineLen)
-    {
-        return FALSE;
-    }
+    for (i = 0; i < nFit; i++) if (Text[i] == '\n') break;
 
-    *LineLen = nFit;
+    if (i == *LineLen) return FALSE;
 
-    Current = Text + nFit;
-    
     /* check if we're in the middle of a word */
-    if((*Current) != BreakChar)
+    if (Text[i] != '\n' && Text[i] != BreakChar)
     {
         /* search for the beginning of the word */
-        while(Current > Text && (*(Current - 1)) != BreakChar)
-        {
-            Current--;
-            (*LineLen)--;
-        }
-        
-        if((*LineLen) == 0)
+        while (i && Text[i - 1] != BreakChar) i--;
+
+        if (i == 0)
         {
             Extent->cx = 0;
             Extent->cy = 0;
+            i = max( nFit, 1 );
         }
-        return TRUE;
     }
-
+    *LineLen = i;
     return TRUE;
 }
 
@@ -652,6 +643,7 @@ static VOID SYSLINK_Render (const SYSLINK_INFO *infoPtr, HDC hdc, PRECT pRect)
     HGDIOBJ hOldFont;
     int x, y, LineHeight;
     SIZE szDoc;
+    TEXTMETRICW tm;
 
     szDoc.cx = szDoc.cy = 0;
 
@@ -668,8 +660,9 @@ static VOID SYSLINK_Render (const SYSLINK_INFO *infoPtr, HDC hdc, PRECT pRect)
     
     x = SL_LEFTMARGIN;
     y = SL_TOPMARGIN;
-    LineHeight = 0;
-    
+    GetTextMetricsW( hdc, &tm );
+    LineHeight = tm.tmHeight + tm.tmExternalLeading;
+
     for(Current = infoPtr->Items; Current != NULL; Current = Current->Next)
     {
         int n, nBlocks;
@@ -677,6 +670,7 @@ static VOID SYSLINK_Render (const SYSLINK_INFO *infoPtr, HDC hdc, PRECT pRect)
         PDOC_TEXTBLOCK bl, cbl;
         INT nFit;
         SIZE szDim;
+        int SkipChars = 0;
 
         if(Current->nText == 0)
         {
@@ -702,11 +696,15 @@ static VOID SYSLINK_Render (const SYSLINK_INFO *infoPtr, HDC hdc, PRECT pRect)
         
         while(n > 0)
         {
-            int SkipChars = 0;
-
             /* skip break characters unless they're the first of the doc item */
             if(tx != Current->Text || x == SL_LEFTMARGIN)
             {
+                if (n && *tx == '\n')
+                {
+                    tx++;
+                    SkipChars++;
+                    n--;
+                }
                 while(n > 0 && (*tx) == infoPtr->BreakChar)
                 {
                     tx++;
@@ -728,20 +726,10 @@ static VOID SYSLINK_Render (const SYSLINK_INFO *infoPtr, HDC hdc, PRECT pRect)
 
                     if(LineLen == 0)
                     {
-                        if(x > SL_LEFTMARGIN)
-                        {
-                            /* move one line down, the word didn't fit into the line */
-                            x = SL_LEFTMARGIN;
-                            y += LineHeight;
-                            LineHeight = 0;
-                            continue;
-                        }
-                        else
-                        {
-                            /* the word starts at the beginning of the line and doesn't
-                               fit into the line, so break it at the last character that fits */
-                            LineLen = max(nFit, 1);
-                        }
+                        /* move one line down, the word didn't fit into the line */
+                        x = SL_LEFTMARGIN;
+                        y += LineHeight;
+                        continue;
                     }
 
                     if(LineLen != n)
@@ -782,13 +770,10 @@ static VOID SYSLINK_Render (const SYSLINK_INFO *infoPtr, HDC hdc, PRECT pRect)
                     if(LineLen != 0)
                     {
                         x += szDim.cx;
-                        LineHeight = max(LineHeight, szDim.cy);
-
                         if(Wrap)
                         {
                             x = SL_LEFTMARGIN;
                             y += LineHeight;
-                            LineHeight = 0;
                         }
                     }
                 }
@@ -803,6 +788,7 @@ static VOID SYSLINK_Render (const SYSLINK_INFO *infoPtr, HDC hdc, PRECT pRect)
                 }
                 n -= LineLen;
                 tx += LineLen;
+                SkipChars = 0;
             }
             else
             {
