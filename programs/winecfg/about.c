@@ -116,12 +116,12 @@ AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 0, 0, 0, 0, FALSE, 0, 0, 0, 0, 0, 0, 0,
                 "Tahoma");
             SendMessage(hWnd, WM_SETFONT, (WPARAM)titleFont, TRUE);
+            SetWindowTextA(hWnd, PACKAGE_NAME);
         }
+        SetDlgItemTextA(hDlg, IDC_ABT_PANEL_TEXT, PACKAGE_VERSION);
 
         /* prepare the web link */
-        hWnd = GetDlgItem(hDlg, IDC_ABT_WEB_LINK);
-        if(hWnd)
-            SetWindowTextA(hWnd, "<a href=\"" PACKAGE_URL "\">" PACKAGE_URL "</a>");
+        SetDlgItemTextA(hDlg, IDC_ABT_WEB_LINK, "<a href=\"" PACKAGE_URL "\">" PACKAGE_URL "</a>");
 
         ReleaseDC(hDlg, hDC);
 

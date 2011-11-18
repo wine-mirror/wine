@@ -32,8 +32,8 @@ STYLE WS_CHILD
 FONT 8, "MS Shell Dlg"
 BEGIN
     CONTROL         "", IDC_ABT_PANEL, "STATIC", SS_OWNERDRAW, 0, 0, 260, 140
-    LTEXT           PACKAGE_NAME,IDC_ABT_TITLE_TEXT,105,30,55,30
-    LTEXT           PACKAGE_VERSION,IDC_ABT_PANEL_TEXT,160,43,140,8
+    LTEXT           "",IDC_ABT_TITLE_TEXT,105,30,55,30
+    LTEXT           "",IDC_ABT_PANEL_TEXT,160,43,140,8
     CONTROL         "",IDC_ABT_WEB_LINK,"SysLink", LWS_TRANSPARENT, 105,53,106,8
     LTEXT           "This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
                     IDC_ABT_LICENSE_TEXT,105,64,145,60
