@@ -1336,7 +1336,7 @@ static const expression_eval_t expression_eval_table[] = {
    greater_expression_eval,
    greatereq_expression_eval,
    binary_negation_expression_eval,
-   logical_negation_expression_eval,
+   compiled_expression_eval,
    left_shift_expression_eval,
    right_shift_expression_eval,
    right2_shift_expression_eval,

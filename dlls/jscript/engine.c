@@ -3050,25 +3050,21 @@ HRESULT binary_negation_expression_eval(script_ctx_t *ctx, expression_t *_expr, 
 }
 
 /* ECMA-262 3rd Edition    11.4.9 */
-HRESULT logical_negation_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+HRESULT interp_neg(exec_ctx_t *ctx)
 {
-    unary_expression_t *expr = (unary_expression_t*)_expr;
-    exprval_t exprval;
+    VARIANT *v;
     VARIANT_BOOL b;
     HRESULT hres;
 
     TRACE("\n");
 
-    hres = expr_eval(ctx, expr->expression, EXPR_NEWREF, ei, &exprval);
+    v = stack_pop(ctx);
+    hres = to_boolean(v, &b);
+    VariantClear(v);
     if(FAILED(hres))
         return hres;
 
-    hres = exprval_to_boolean(ctx, &exprval, ei, &b);
-    exprval_release(&exprval);
-    if(FAILED(hres))
-        return hres;
-
-    return return_bool(ret, !b);
+    return stack_push_bool(ctx, !b);
 }
 
 /* ECMA-262 3rd Edition    11.7.1 */

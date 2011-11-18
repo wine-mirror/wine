@@ -81,6 +81,17 @@ static HRESULT compile_binary_expression(compiler_ctx_t *ctx, binary_expression_
     return push_instr(ctx, op) == -1 ? E_OUTOFMEMORY : S_OK;
 }
 
+static HRESULT compile_unary_expression(compiler_ctx_t *ctx, unary_expression_t *expr, jsop_t op)
+{
+    HRESULT hres;
+
+    hres = compile_expression(ctx, expr->expression);
+    if(FAILED(hres))
+        return hres;
+
+    return push_instr(ctx, op) == -1 ? E_OUTOFMEMORY : S_OK;
+}
+
 static HRESULT compile_interp_fallback(compiler_ctx_t *ctx, expression_t *expr)
 {
     unsigned instr;
@@ -98,6 +109,8 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
     switch(expr->type) {
     case EXPR_EQEQ:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_eq2);
+    case EXPR_LOGNEG:
+        return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_neg);
     case EXPR_NOTEQEQ:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_neq2);
     default:

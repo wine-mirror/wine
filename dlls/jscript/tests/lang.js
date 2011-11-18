@@ -208,6 +208,9 @@ for(var iter in false)
 for(var iter in pureDisp)
     ok(false, "unexpected forin call in pureDisp object");
 
+tmp = new Object();
+ok(!tmp.nonexistent, "!tmp.nonexistent = " + !tmp.nonexistent);
+
 tmp = 0;
 if(true)
     tmp = 1;
