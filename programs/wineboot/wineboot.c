@@ -574,7 +574,7 @@ enum runkeys {
     RUNKEY_RUN, RUNKEY_RUNONCE, RUNKEY_RUNSERVICES, RUNKEY_RUNSERVICESONCE
 };
 
-const WCHAR runkeys_names[][30]=
+static const WCHAR runkeys_names[][30]=
 {
     {'R','u','n',0},
     {'R','u','n','O','n','c','e',0},
