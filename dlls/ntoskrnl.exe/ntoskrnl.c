@@ -159,6 +159,8 @@ static NTSTATUS process_ioctl( DEVICE_OBJECT *device, ULONG code, void *in_buff,
             return STATUS_NO_MEMORY;
         memcpy( irp.AssociatedIrp.SystemBuffer, in_buff, in_size );
     }
+    else
+        irp.AssociatedIrp.SystemBuffer = in_buff;
     irp.UserBuffer = out_buff;
     irp.MdlAddress = &mdl;
     irp.Tail.Overlay.s.u2.CurrentStackLocation = &irpsp;
