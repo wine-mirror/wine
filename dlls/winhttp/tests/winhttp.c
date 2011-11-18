@@ -2581,6 +2581,94 @@ static void test_WinHttpGetIEProxyConfigForCurrentUser(void)
     GlobalFree( cfg.lpszProxyBypass );
 }
 
+static void test_WinHttpGetProxyForUrl(void)
+{
+    static const WCHAR urlW[] = {'h','t','t','p',':','/','/','w','i','n','e','h','q','.','o','r','g',0};
+    static const WCHAR emptyW[] = {0};
+    BOOL ret;
+    DWORD error;
+    HINTERNET session;
+    WINHTTP_AUTOPROXY_OPTIONS options;
+    WINHTTP_PROXY_INFO info;
+
+    memset( &options, 0, sizeof(options) );
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpGetProxyForUrl( NULL, NULL, NULL, NULL );
+    error = GetLastError();
+    ok( !ret, "expected failure\n" );
+    ok( error == ERROR_INVALID_HANDLE, "got %u\n", error );
+
+    session = WinHttpOpen( test_useragent, 0, NULL, NULL, 0 );
+    ok( session != NULL, "failed to open session %u\n", GetLastError() );
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpGetProxyForUrl( session, NULL, NULL, NULL );
+    error = GetLastError();
+    ok( !ret, "expected failure\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpGetProxyForUrl( session, emptyW, NULL, NULL );
+    error = GetLastError();
+    ok( !ret, "expected failure\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpGetProxyForUrl( session, urlW, NULL, NULL );
+    error = GetLastError();
+    ok( !ret, "expected failure\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpGetProxyForUrl( session, urlW, &options, &info );
+    error = GetLastError();
+    ok( !ret, "expected failure\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+
+    options.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT;
+    options.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DNS_A;
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpGetProxyForUrl( session, urlW, &options, NULL );
+    error = GetLastError();
+    ok( !ret, "expected failure\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+
+    options.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT;
+    options.dwAutoDetectFlags = 0;
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpGetProxyForUrl( session, urlW, &options, &info );
+    error = GetLastError();
+    ok( !ret, "expected failure\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+
+    options.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT | WINHTTP_AUTOPROXY_CONFIG_URL;
+    options.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DNS_A;
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpGetProxyForUrl( session, urlW, &options, &info );
+    error = GetLastError();
+    ok( !ret, "expected failure\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+
+    options.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT;
+    options.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DNS_A;
+
+    memset( &info, 0, sizeof(info) );
+    ret = WinHttpGetProxyForUrl( session, urlW, &options, &info );
+    if (ret)
+    {
+        trace("%u\n", info.dwAccessType);
+        trace("%s\n", wine_dbgstr_w(info.lpszProxy));
+        trace("%s\n", wine_dbgstr_w(info.lpszProxyBypass));
+        GlobalFree( (WCHAR *)info.lpszProxy );
+        GlobalFree( (WCHAR *)info.lpszProxyBypass );
+    }
+    WinHttpCloseHandle( session );
+}
+
 START_TEST (winhttp)
 {
     static const WCHAR basicW[] = {'/','b','a','s','i','c',0};
@@ -2605,6 +2693,7 @@ START_TEST (winhttp)
     test_IWinHttpRequest();
     test_WinHttpDetectAutoProxyConfigUrl();
     test_WinHttpGetIEProxyConfigForCurrentUser();
+    test_WinHttpGetProxyForUrl();
 
     si.event = CreateEvent(NULL, 0, 0, NULL);
     si.port = 7532;

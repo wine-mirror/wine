@@ -28,6 +28,9 @@
 #include "winhttp.h"
 #include "wincrypt.h"
 #include "winreg.h"
+#define COBJMACROS
+#include "ole2.h"
+#include "activscp.h"
 
 #include "winhttp_private.h"
 
@@ -1474,16 +1477,324 @@ done:
     return ret;
 }
 
+static HRESULT WINAPI site_QueryInterface(
+    IActiveScriptSite *iface, REFIID riid, void **ppv )
+{
+    *ppv = NULL;
+
+    if (IsEqualGUID( &IID_IUnknown, riid ))
+        *ppv = iface;
+    else if (IsEqualGUID( &IID_IActiveScriptSite, riid ))
+        *ppv = iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef( (IUnknown *)*ppv );
+    return S_OK;
+}
+
+static ULONG WINAPI site_AddRef(
+    IActiveScriptSite *iface )
+{
+    return 2;
+}
+
+static ULONG WINAPI site_Release(
+    IActiveScriptSite *iface )
+{
+    return 1;
+}
+
+static HRESULT WINAPI site_GetLCID(
+    IActiveScriptSite *iface, LCID *lcid )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI site_GetItemInfo(
+    IActiveScriptSite *iface, LPCOLESTR name, DWORD mask,
+    IUnknown **item, ITypeInfo **type_info )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI site_GetDocVersionString(
+    IActiveScriptSite *iface, BSTR *version )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI site_OnScriptTerminate(
+    IActiveScriptSite *iface, const VARIANT *result, const EXCEPINFO *info )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI site_OnStateChange(
+    IActiveScriptSite *iface, SCRIPTSTATE state )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI site_OnScriptError(
+    IActiveScriptSite *iface, IActiveScriptError *error )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI site_OnEnterScript(
+    IActiveScriptSite *iface )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI site_OnLeaveScript(
+    IActiveScriptSite *iface )
+{
+    return E_NOTIMPL;
+}
+
+static const IActiveScriptSiteVtbl site_vtbl =
+{
+    site_QueryInterface,
+    site_AddRef,
+    site_Release,
+    site_GetLCID,
+    site_GetItemInfo,
+    site_GetDocVersionString,
+    site_OnScriptTerminate,
+    site_OnStateChange,
+    site_OnScriptError,
+    site_OnEnterScript,
+    site_OnLeaveScript
+};
+
+static IActiveScriptSite script_site = { &site_vtbl };
+
+static BOOL parse_script_result( VARIANT result, WINHTTP_PROXY_INFO *info )
+{
+    static const WCHAR proxyW[] = {'P','R','O','X','Y'};
+    const WCHAR *p;
+    WCHAR *q;
+    int len;
+
+    info->dwAccessType    = WINHTTP_ACCESS_TYPE_NO_PROXY;
+    info->lpszProxy       = NULL;
+    info->lpszProxyBypass = NULL;
+
+    if (V_VT( &result ) != VT_BSTR) return TRUE;
+    TRACE("%s\n", debugstr_w( V_BSTR( &result ) ));
+
+    p = V_BSTR( &result );
+    while (*p == ' ') p++;
+    len = strlenW( p );
+    if (len >= 5 && !memicmpW( p, proxyW, sizeof(proxyW)/sizeof(WCHAR) ))
+    {
+        p += 5;
+        while (*p == ' ') p++;
+        if (!*p || *p == ';') return TRUE;
+        if (!(info->lpszProxy = q = strdupW( p ))) return FALSE;
+        info->dwAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+        for (; *q; q++)
+        {
+            if (*q == ' ' || *q == ';')
+            {
+                *q = 0;
+                break;
+            }
+        }
+    }
+    return TRUE;
+}
+
+static BOOL run_script( const BSTR script, const WCHAR *url, WINHTTP_PROXY_INFO *info )
+{
+    static const WCHAR jscriptW[] = {'J','S','c','r','i','p','t',0};
+    static const WCHAR findproxyW[] = {'F','i','n','d','P','r','o','x','y','F','o','r','U','R','L',0};
+    IActiveScriptParse *parser = NULL;
+    IActiveScript *engine = NULL;
+    IDispatch *dispatch = NULL;
+    BOOL ret = FALSE;
+    CLSID clsid;
+    DISPID dispid;
+    BSTR func = NULL, hostname = NULL;
+    URL_COMPONENTSW uc;
+    VARIANT args[2], result;
+    DISPPARAMS params;
+    HRESULT hr, init;
+
+    memset( &uc, 0, sizeof(uc) );
+    uc.dwStructSize = sizeof(uc);
+    if (!WinHttpCrackUrl( url, 0, 0, &uc )) return FALSE;
+    if (!(hostname = SysAllocStringLen( NULL, uc.dwHostNameLength + 1 ))) return FALSE;
+    memcpy( hostname, uc.lpszHostName, uc.dwHostNameLength * sizeof(WCHAR) );
+    hostname[uc.dwHostNameLength] = 0;
+
+    init = CoInitialize( NULL );
+    CLSIDFromProgID( jscriptW, &clsid );
+    hr = CoCreateInstance( &clsid, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+                           &IID_IActiveScript, (void **)&engine );
+    if (hr != S_OK) goto done;
+
+    hr = IActiveScript_QueryInterface( engine, &IID_IActiveScriptParse, (void **)&parser );
+    if (hr != S_OK) goto done;
+
+    hr = IActiveScriptParse64_InitNew( parser );
+    if (hr != S_OK) goto done;
+
+    hr = IActiveScript_SetScriptSite( engine, &script_site );
+    if (hr != S_OK) goto done;
+
+    /* FIXME: make standard functions available to script */
+
+    hr = IActiveScriptParse64_ParseScriptText( parser, script, NULL, NULL, NULL, 0, 0, 0, NULL, NULL );
+    if (hr != S_OK) goto done;
+
+    hr = IActiveScript_SetScriptState( engine, SCRIPTSTATE_STARTED );
+    if (hr != S_OK) goto done;
+
+    hr = IActiveScript_GetScriptDispatch( engine, NULL, &dispatch );
+    if (hr != S_OK) goto done;
+
+    if (!(func = SysAllocString( findproxyW ))) goto done;
+    hr = IDispatch_GetIDsOfNames( dispatch, &IID_NULL, &func, 1, LOCALE_SYSTEM_DEFAULT, &dispid );
+    if (hr != S_OK) goto done;
+
+    V_VT( &args[0] ) = VT_BSTR;
+    V_BSTR( &args[0] ) = SysAllocString( url );
+    V_VT( &args[1] ) = VT_BSTR;
+    V_BSTR( &args[1] ) = hostname;
+
+    params.rgvarg = args;
+    params.rgdispidNamedArgs = NULL;
+    params.cArgs = 2;
+    params.cNamedArgs = 0;
+    hr = IDispatch_Invoke( dispatch, dispid, &IID_NULL, LOCALE_SYSTEM_DEFAULT, DISPATCH_METHOD,
+                           &params, &result, NULL, NULL );
+    VariantClear( &args[0] );
+    VariantClear( &args[1] );
+    if (hr != S_OK) goto done;
+
+    ret = parse_script_result( result, info );
+
+done:
+    SysFreeString( func );
+    if (dispatch) IDispatch_Release( dispatch );
+    if (parser) IUnknown_Release( parser );
+    if (engine) IActiveScript_Release( engine );
+    if (SUCCEEDED( init )) CoUninitialize();
+    if (!ret) set_last_error( ERROR_WINHTTP_BAD_AUTO_PROXY_SCRIPT );
+    return ret;
+}
+
+static BSTR download_script( HINTERNET ses, const WCHAR *url )
+{
+    static const WCHAR typeW[] = {'*','/','*',0};
+    static const WCHAR *acceptW[] = {typeW, NULL};
+    HINTERNET con, req = NULL;
+    WCHAR *hostname;
+    URL_COMPONENTSW uc;
+    DWORD size = 4096, offset, to_read, bytes_read, flags = 0;
+    char *tmp, *buffer = NULL;
+    BSTR script = NULL;
+    int len;
+
+    memset( &uc, 0, sizeof(uc) );
+    uc.dwStructSize = sizeof(uc);
+    if (!WinHttpCrackUrl( url, 0, 0, &uc )) return NULL;
+    if (!(hostname = heap_alloc( (uc.dwHostNameLength + 1) * sizeof(WCHAR) ))) return NULL;
+    memcpy( hostname, uc.lpszHostName, uc.dwHostNameLength * sizeof(WCHAR) );
+    hostname[uc.dwHostNameLength] = 0;
+
+    if (!(con = WinHttpConnect( ses, hostname, uc.nPort, 0 ))) goto done;
+    if (uc.nScheme == INTERNET_SCHEME_HTTPS) flags |= WINHTTP_FLAG_SECURE;
+    if (!(req = WinHttpOpenRequest( con, NULL, uc.lpszUrlPath, NULL, NULL, acceptW, flags ))) goto done;
+    if (!WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 )) goto done;
+    if (!(WinHttpReceiveResponse( req, 0 ))) goto done;
+
+    if (!(buffer = heap_alloc( size ))) goto done;
+    to_read = size;
+    offset = 0;
+    for (;;)
+    {
+        if (!WinHttpReadData( req, buffer + offset, to_read, &bytes_read )) goto done;
+        if (!bytes_read) break;
+        to_read -= bytes_read;
+        offset += bytes_read;
+        if (!to_read)
+        {
+            to_read = size;
+            size *= 2;
+            if (!(tmp = heap_realloc( buffer, size ))) goto done;
+            buffer = tmp;
+        }
+    }
+    len = MultiByteToWideChar( CP_ACP, 0, buffer, offset, NULL, 0 );
+    if (!(script = SysAllocStringLen( NULL, len ))) goto done;
+    MultiByteToWideChar( CP_ACP, 0, buffer, offset, script, len );
+    script[len] = 0;
+
+done:
+    WinHttpCloseHandle( req );
+    WinHttpCloseHandle( con );
+    heap_free( buffer );
+    heap_free( hostname );
+    if (!script) set_last_error( ERROR_WINHTTP_UNABLE_TO_DOWNLOAD_SCRIPT );
+    return script;
+}
+
 /***********************************************************************
  *          WinHttpGetProxyForUrl (winhttp.@)
  */
 BOOL WINAPI WinHttpGetProxyForUrl( HINTERNET hsession, LPCWSTR url, WINHTTP_AUTOPROXY_OPTIONS *options,
                                    WINHTTP_PROXY_INFO *info )
 {
-    FIXME("%p, %s, %p, %p\n", hsession, debugstr_w(url), options, info);
+    WCHAR *detected_pac_url = NULL;
+    const WCHAR *pac_url;
+    session_t *session;
+    BSTR script;
+    BOOL ret = FALSE;
 
-    set_last_error( ERROR_WINHTTP_AUTO_PROXY_SERVICE_ERROR );
-    return FALSE;
+    TRACE("%p, %s, %p, %p\n", hsession, debugstr_w(url), options, info);
+
+    if (!(session = (session_t *)grab_object( hsession )))
+    {
+        set_last_error( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    if (session->hdr.type != WINHTTP_HANDLE_TYPE_SESSION)
+    {
+        release_object( &session->hdr );
+        set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
+        return FALSE;
+    }
+    if (!url || !options || !info ||
+        !(options->dwFlags & (WINHTTP_AUTOPROXY_AUTO_DETECT|WINHTTP_AUTOPROXY_CONFIG_URL)) ||
+        ((options->dwFlags & WINHTTP_AUTOPROXY_AUTO_DETECT) && !options->dwAutoDetectFlags) ||
+        ((options->dwFlags & WINHTTP_AUTOPROXY_AUTO_DETECT) &&
+         (options->dwFlags & WINHTTP_AUTOPROXY_CONFIG_URL)))
+    {
+        release_object( &session->hdr );
+        set_last_error( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (options->dwFlags & WINHTTP_AUTOPROXY_AUTO_DETECT &&
+        !WinHttpDetectAutoProxyConfigUrl( options->dwAutoDetectFlags, &detected_pac_url ))
+    {
+        set_last_error( ERROR_WINHTTP_AUTO_PROXY_SERVICE_ERROR );
+        goto done;
+    }
+    if (options->dwFlags & WINHTTP_AUTOPROXY_CONFIG_URL) pac_url = options->lpszAutoConfigUrl;
+    else pac_url = detected_pac_url;
+
+    if (!(script = download_script( hsession, pac_url ))) goto done;
+    ret = run_script( script, url, info );
+    SysFreeString( script );
+
+done:
+    GlobalFree( detected_pac_url );
+    release_object( &session->hdr );
+    return ret;
 }
 
 /***********************************************************************
