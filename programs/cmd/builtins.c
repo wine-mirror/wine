@@ -41,10 +41,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
-static void WCMD_part_execute(CMD_LIST **commands, const WCHAR *firstcmd,
-                              const WCHAR *variable, const WCHAR *value,
-                              BOOL isIF, BOOL conditionTRUE);
-
 static struct env_stack *saved_environment;
 struct env_stack *pushd_directories;
 
@@ -922,6 +918,105 @@ void WCMD_echo (const WCHAR *command)
   HeapFree(GetProcessHeap(), 0, trimmed);
 }
 
+/*****************************************************************************
+ * WCMD_part_execute
+ *
+ * Execute a command, and any && or bracketed follow on to the command. The
+ * first command to be executed may not be at the front of the
+ * commands->thiscommand string (eg. it may point after a DO or ELSE)
+ */
+static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
+                              const WCHAR *variable, const WCHAR *value,
+                              BOOL isIF, BOOL conditionTRUE)
+{
+  CMD_LIST *curPosition = *cmdList;
+  int myDepth = (*cmdList)->bracketDepth;
+
+  WINE_TRACE("cmdList(%p), firstCmd(%p), with variable '%s'='%s', doIt(%d)\n",
+             cmdList, wine_dbgstr_w(firstcmd),
+             wine_dbgstr_w(variable), wine_dbgstr_w(value),
+             conditionTRUE);
+
+  /* Skip leading whitespace between condition and the command */
+  while (firstcmd && *firstcmd && (*firstcmd==' ' || *firstcmd=='\t')) firstcmd++;
+
+  /* Process the first command, if there is one */
+  if (conditionTRUE && firstcmd && *firstcmd) {
+    WCHAR *command = WCMD_strdupW(firstcmd);
+    WCMD_execute (firstcmd, (*cmdList)->redirects, variable, value, cmdList);
+    HeapFree(GetProcessHeap(), 0, command);
+  }
+
+
+  /* If it didn't move the position, step to next command */
+  if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
+
+  /* Process any other parts of the command */
+  if (*cmdList) {
+    BOOL processThese = TRUE;
+
+    if (isIF) processThese = conditionTRUE;
+
+    while (*cmdList) {
+      static const WCHAR ifElse[] = {'e','l','s','e'};
+
+      /* execute all appropriate commands */
+      curPosition = *cmdList;
+
+      WINE_TRACE("Processing cmdList(%p) - delim(%d) bd(%d / %d)\n",
+                 *cmdList,
+                 (*cmdList)->prevDelim,
+                 (*cmdList)->bracketDepth, myDepth);
+
+      /* Execute any statements appended to the line */
+      /* FIXME: Only if previous call worked for && or failed for || */
+      if ((*cmdList)->prevDelim == CMD_ONFAILURE ||
+          (*cmdList)->prevDelim == CMD_ONSUCCESS) {
+        if (processThese && (*cmdList)->command) {
+          WCMD_execute ((*cmdList)->command, (*cmdList)->redirects, variable,
+                        value, cmdList);
+        }
+        if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
+
+      /* Execute any appended to the statement with (...) */
+      } else if ((*cmdList)->bracketDepth > myDepth) {
+        if (processThese) {
+          *cmdList = WCMD_process_commands(*cmdList, TRUE, variable, value);
+          WINE_TRACE("Back from processing commands, (next = %p)\n", *cmdList);
+        }
+        if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
+
+      /* End of the command - does 'ELSE ' follow as the next command? */
+      } else {
+        if (isIF
+            && WCMD_keyword_ws_found(ifElse, sizeof(ifElse)/sizeof(ifElse[0]),
+                                     (*cmdList)->command)) {
+
+          /* Swap between if and else processing */
+          processThese = !processThese;
+
+          /* Process the ELSE part */
+          if (processThese) {
+            const int keyw_len = sizeof(ifElse)/sizeof(ifElse[0]) + 1;
+            WCHAR *cmd = ((*cmdList)->command) + keyw_len;
+
+            /* Skip leading whitespace between condition and the command */
+            while (*cmd && (*cmd==' ' || *cmd=='\t')) cmd++;
+            if (*cmd) {
+              WCMD_execute (cmd, (*cmdList)->redirects, variable, value, cmdList);
+            }
+          }
+          if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
+        } else {
+          WINE_TRACE("Found end of this IF statement (next = %p)\n", *cmdList);
+          break;
+        }
+      }
+    }
+  }
+  return;
+}
+
 /**************************************************************************
  * WCMD_for
  *
@@ -1247,106 +1342,6 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
      we need to step over the closing bracket                                  */
   *cmdList = cmdEnd;
   if (cmdEnd && cmdEnd->command == NULL) *cmdList = cmdEnd->nextcommand;
-}
-
-
-/*****************************************************************************
- * WCMD_part_execute
- *
- * Execute a command, and any && or bracketed follow on to the command. The
- * first command to be executed may not be at the front of the
- * commands->thiscommand string (eg. it may point after a DO or ELSE)
- */
-static void WCMD_part_execute(CMD_LIST **cmdList, const WCHAR *firstcmd,
-                              const WCHAR *variable, const WCHAR *value,
-                              BOOL isIF, BOOL conditionTRUE) {
-
-  CMD_LIST *curPosition = *cmdList;
-  int myDepth = (*cmdList)->bracketDepth;
-
-  WINE_TRACE("cmdList(%p), firstCmd(%p), with variable '%s'='%s', doIt(%d)\n",
-             cmdList, wine_dbgstr_w(firstcmd),
-             wine_dbgstr_w(variable), wine_dbgstr_w(value),
-             conditionTRUE);
-
-  /* Skip leading whitespace between condition and the command */
-  while (firstcmd && *firstcmd && (*firstcmd==' ' || *firstcmd=='\t')) firstcmd++;
-
-  /* Process the first command, if there is one */
-  if (conditionTRUE && firstcmd && *firstcmd) {
-    WCHAR *command = WCMD_strdupW(firstcmd);
-    WCMD_execute (firstcmd, (*cmdList)->redirects, variable, value, cmdList);
-    HeapFree(GetProcessHeap(), 0, command);
-  }
-
-
-  /* If it didn't move the position, step to next command */
-  if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
-
-  /* Process any other parts of the command */
-  if (*cmdList) {
-    BOOL processThese = TRUE;
-
-    if (isIF) processThese = conditionTRUE;
-
-    while (*cmdList) {
-      static const WCHAR ifElse[] = {'e','l','s','e'};
-
-      /* execute all appropriate commands */
-      curPosition = *cmdList;
-
-      WINE_TRACE("Processing cmdList(%p) - delim(%d) bd(%d / %d)\n",
-                 *cmdList,
-                 (*cmdList)->prevDelim,
-                 (*cmdList)->bracketDepth, myDepth);
-
-      /* Execute any statements appended to the line */
-      /* FIXME: Only if previous call worked for && or failed for || */
-      if ((*cmdList)->prevDelim == CMD_ONFAILURE ||
-          (*cmdList)->prevDelim == CMD_ONSUCCESS) {
-        if (processThese && (*cmdList)->command) {
-          WCMD_execute ((*cmdList)->command, (*cmdList)->redirects, variable,
-                        value, cmdList);
-        }
-        if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
-
-      /* Execute any appended to the statement with (...) */
-      } else if ((*cmdList)->bracketDepth > myDepth) {
-        if (processThese) {
-          *cmdList = WCMD_process_commands(*cmdList, TRUE, variable, value);
-          WINE_TRACE("Back from processing commands, (next = %p)\n", *cmdList);
-        }
-        if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
-
-      /* End of the command - does 'ELSE ' follow as the next command? */
-      } else {
-        if (isIF
-            && WCMD_keyword_ws_found(ifElse, sizeof(ifElse)/sizeof(ifElse[0]),
-                                     (*cmdList)->command)) {
-
-          /* Swap between if and else processing */
-          processThese = !processThese;
-
-          /* Process the ELSE part */
-          if (processThese) {
-            const int keyw_len = sizeof(ifElse)/sizeof(ifElse[0]) + 1;
-            WCHAR *cmd = ((*cmdList)->command) + keyw_len;
-
-            /* Skip leading whitespace between condition and the command */
-            while (*cmd && (*cmd==' ' || *cmd=='\t')) cmd++;
-            if (*cmd) {
-              WCMD_execute (cmd, (*cmdList)->redirects, variable, value, cmdList);
-            }
-          }
-          if (curPosition == *cmdList) *cmdList = (*cmdList)->nextcommand;
-        } else {
-          WINE_TRACE("Found end of this IF statement (next = %p)\n", *cmdList);
-          break;
-        }
-      }
-    }
-  }
-  return;
 }
 
 /**************************************************************************
