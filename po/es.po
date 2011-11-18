@@ -136,7 +136,7 @@ msgstr ""
 "#-#-#-#-#  es.po (Wine)  #-#-#-#-#\n"
 "Ninguno"
 
-#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 wordpad.rc:169
+#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54 wordpad.rc:169
 msgid "Close"
 msgstr "Cerrar"
 
@@ -12239,6 +12239,34 @@ msgstr ""
 "  wineconsole cmd\n"
 "Inicia el simbolo del sistema de Wine en una consola Wine\n"
 "\n"
+
+#: winedbg.rc:42
+msgid "Program Error"
+msgstr "Error del programa"
+
+#: winedbg.rc:47
+msgid ""
+"The program %s has encountered a serious problem and needs to close. We are "
+"sorry for the inconvenience."
+msgstr ""
+"El programa %s ha encontrado un serio problema y necesita cerrarse. Nos "
+"disculpamos por los inconvenientes."
+
+#: winedbg.rc:53
+msgid ""
+"This can be caused by a problem in the program or a deficiency in Wine. You "
+"may want to check http://appdb.winehq.org for tips about running this "
+"application.\n"
+"\n"
+"If this problem is not present under Windows and has not been reported yet, "
+"you can report it at http://bugs.winehq.org."
+msgstr ""
+"Esto puede ser causado por un problema en el programa o a una deficiencia en "
+"Wine. Quizá quieras verificar en http://appdb.winehq.org consejos sobre cómo "
+"ejecutar esta aplicación.\n"
+"\n"
+"Si este problema no esta presente en Windows y no ha sido reportado todavía, "
+"lo puedes reportar en http://bugs.winehq.org."
 
 #: winedbg.rc:35
 msgid "Wine program crash"

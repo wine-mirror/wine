@@ -133,7 +133,7 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Brez"
 
-#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 wordpad.rc:169
+#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54 wordpad.rc:169
 msgid "Close"
 msgstr "Zapri"
 
@@ -11803,6 +11803,33 @@ msgstr ""
 "  wineconsole cmd\n"
 "Zažene ukazni poziv Wine (cmd) v konzoli Wine.\n"
 "\n"
+
+#: winedbg.rc:42
+msgid "Program Error"
+msgstr "Napaka v programu"
+
+#: winedbg.rc:47
+msgid ""
+"The program %s has encountered a serious problem and needs to close. We are "
+"sorry for the inconvenience."
+msgstr ""
+"Program %s je naletel na resno napako in se mora zapreti. Žal nam je za "
+"nevšečnosti."
+
+#: winedbg.rc:53
+msgid ""
+"This can be caused by a problem in the program or a deficiency in Wine. You "
+"may want to check http://appdb.winehq.org for tips about running this "
+"application.\n"
+"\n"
+"If this problem is not present under Windows and has not been reported yet, "
+"you can report it at http://bugs.winehq.org."
+msgstr ""
+"Napako lahko povzroči problem v pogramu ali pomankljivost v Wine. Poglejte "
+"na http://appdb.winehq.org za nasvete glede poganjanjate aplikacije.\n"
+"\n"
+"Če ta težava ni prisotna na Windows sistemu in še ni bila prijavljena na "
+"http://bugs.winehq.org, prosim napišite prijavo."
 
 #: winedbg.rc:35
 msgid "Wine program crash"

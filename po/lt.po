@@ -133,7 +133,7 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Joks"
 
-#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 wordpad.rc:169
+#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54 wordpad.rc:169
 msgid "Close"
 msgstr "Užverti"
 
@@ -11757,6 +11757,34 @@ msgstr ""
 "  wineconsole cmd\n"
 "Paleidžia Wine komandų interpretatorių Wine pulte.\n"
 "\n"
+
+#: winedbg.rc:42
+msgid "Program Error"
+msgstr "Programos klaida"
+
+#: winedbg.rc:47
+msgid ""
+"The program %s has encountered a serious problem and needs to close. We are "
+"sorry for the inconvenience."
+msgstr ""
+"Programa %s susidūrė su rimta problema ir turi būti uždaryta. Atsiprašome "
+"dėl nepatogumų."
+
+#: winedbg.rc:53
+msgid ""
+"This can be caused by a problem in the program or a deficiency in Wine. You "
+"may want to check http://appdb.winehq.org for tips about running this "
+"application.\n"
+"\n"
+"If this problem is not present under Windows and has not been reported yet, "
+"you can report it at http://bugs.winehq.org."
+msgstr ""
+"Programos problemos ar Wine trūkumai gali būti to priežastimi. Jūs turbūt "
+"norėsite patikrinti http://appdb.winehq.org dėl patarimų apie šios programos "
+"vykdymą.\n"
+"\n"
+"Jei šios problemos nėra Windows sistemoje ir apie ją dar nebuvo pranešta, "
+"galite pranešti http://bugs.winehq.org."
 
 #: winedbg.rc:35
 msgid "Wine program crash"

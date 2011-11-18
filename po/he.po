@@ -130,7 +130,7 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "ללא"
 
-#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 wordpad.rc:169
+#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54 wordpad.rc:169
 msgid "Close"
 msgstr "סגירה"
 
@@ -11876,6 +11876,31 @@ msgstr ""
 "  wineconsole cmd\n"
 "Starts the Wine command prompt in a Wine console\n"
 "\n"
+
+#: winedbg.rc:42
+msgid "Program Error"
+msgstr "שגיאה בתכנית"
+
+#: winedbg.rc:47
+msgid ""
+"The program %s has encountered a serious problem and needs to close. We are "
+"sorry for the inconvenience."
+msgstr "התכנית %s נתקלה בשגיאה חמורה ועליה להיסגר. אנו מתנצלים על אי הנעימות."
+
+#: winedbg.rc:53
+msgid ""
+"This can be caused by a problem in the program or a deficiency in Wine. You "
+"may want to check http://appdb.winehq.org for tips about running this "
+"application.\n"
+"\n"
+"If this problem is not present under Windows and has not been reported yet, "
+"you can report it at http://bugs.winehq.org."
+msgstr ""
+"בעיה זו עלולה להיגרם עקב תקלה בתכנית או מחסור מסוים ב־Wine. אולי מוטב לפנות "
+"לכתובת http://appdb.winehq.org לקבלת עצות להרצת יישום זה.\n"
+"\n"
+"אם תקלה זו אינה קיימת בעת הרצת Windows ולא דווח עליה עדיין, ניתן לדווח עליה "
+"בכתובת http://bugs.winehq.org."
 
 #: winedbg.rc:35
 msgid "Wine program crash"

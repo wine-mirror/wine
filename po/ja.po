@@ -131,7 +131,7 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "なし"
 
-#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 wordpad.rc:169
+#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54 wordpad.rc:169
 msgid "Close"
 msgstr "閉じる"
 
@@ -11752,6 +11752,34 @@ msgstr ""
 "  wineconsole cmd\n"
 "Wine コマンド プロンプトを Wine コンソールで開始します。\n"
 "\n"
+
+#: winedbg.rc:42
+msgid "Program Error"
+msgstr "プログラム エラー"
+
+#: winedbg.rc:47
+msgid ""
+"The program %s has encountered a serious problem and needs to close. We are "
+"sorry for the inconvenience."
+msgstr ""
+"プログラム %s で重大な問題が発生したため、終了する必要があります。 ご不便をお"
+"かけし申し訳ありません。"
+
+#: winedbg.rc:53
+msgid ""
+"This can be caused by a problem in the program or a deficiency in Wine. You "
+"may want to check http://appdb.winehq.org for tips about running this "
+"application.\n"
+"\n"
+"If this problem is not present under Windows and has not been reported yet, "
+"you can report it at http://bugs.winehq.org."
+msgstr ""
+"これはプログラム内の問題や Wine の欠陥によって発生することがあります。 "
+"http://appdb.winehq.org で このアプリケーションを動作させるヒントを 確認する"
+"とよいでしょう。\n"
+"\n"
+"この問題が Windows 上で発生することがなく、まだ報告されていない場合は http://"
+"bugs.winehq.org でこの問題を報告できます。"
 
 #: winedbg.rc:35
 msgid "Wine program crash"

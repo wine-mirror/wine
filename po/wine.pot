@@ -122,7 +122,7 @@ msgctxt "hotkey"
 msgid "None"
 msgstr ""
 
-#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 wordpad.rc:169
+#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54 wordpad.rc:169
 msgid "Close"
 msgstr ""
 
@@ -11100,6 +11100,26 @@ msgid ""
 "  wineconsole cmd\n"
 "Starts the Wine command prompt in a Wine console.\n"
 "\n"
+msgstr ""
+
+#: winedbg.rc:42
+msgid "Program Error"
+msgstr ""
+
+#: winedbg.rc:47
+msgid ""
+"The program %s has encountered a serious problem and needs to close. We are "
+"sorry for the inconvenience."
+msgstr ""
+
+#: winedbg.rc:53
+msgid ""
+"This can be caused by a problem in the program or a deficiency in Wine. You "
+"may want to check http://appdb.winehq.org for tips about running this "
+"application.\n"
+"\n"
+"If this problem is not present under Windows and has not been reported yet, "
+"you can report it at http://bugs.winehq.org."
 msgstr ""
 
 #: winedbg.rc:35

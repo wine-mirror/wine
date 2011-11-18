@@ -135,7 +135,7 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Ништа"
 
-#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 wordpad.rc:169
+#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54 wordpad.rc:169
 msgid "Close"
 msgstr "Затвори"
 
@@ -11740,6 +11740,33 @@ msgid ""
 "Starts the Wine command prompt in a Wine console.\n"
 "\n"
 msgstr ""
+
+#: winedbg.rc:42
+msgid "Program Error"
+msgstr "Програмска грешка"
+
+#: winedbg.rc:47
+msgid ""
+"The program %s has encountered a serious problem and needs to close. We are "
+"sorry for the inconvenience."
+msgstr ""
+"Програм %s је наишао на озбиљан проблем и мора бити затворен. Извињавамо се "
+"због непријатности."
+
+#: winedbg.rc:53
+msgid ""
+"This can be caused by a problem in the program or a deficiency in Wine. You "
+"may want to check http://appdb.winehq.org for tips about running this "
+"application.\n"
+"\n"
+"If this problem is not present under Windows and has not been reported yet, "
+"you can report it at http://bugs.winehq.org."
+msgstr ""
+"Узрок овоме може бити проблем у програму или недостатак у Wine-у. Проверите "
+"http://appdb.winehq.org за савете о покретању овог програма.\n"
+"\n"
+"Ако овај проблем није присутан под Windows-ом и још увек није пријављен, "
+"пријавите га на http://bugs.winehq.org."
 
 #: winedbg.rc:35
 msgid "Wine program crash"

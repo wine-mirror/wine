@@ -129,7 +129,7 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Немає"
 
-#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 wordpad.rc:169
+#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54 wordpad.rc:169
 msgid "Close"
 msgstr "Закрити"
 
@@ -11720,6 +11720,34 @@ msgstr ""
 "  wineconsole cmd\n"
 "Запуск командного рядка Wine в консолі Wine\n"
 "\n"
+
+#: winedbg.rc:42
+msgid "Program Error"
+msgstr "Помилка програми"
+
+#: winedbg.rc:47
+msgid ""
+"The program %s has encountered a serious problem and needs to close. We are "
+"sorry for the inconvenience."
+msgstr ""
+"В програмі %s сталась серйозна помилка. Програма повинна бути закрита. "
+"Вибачте за незручності."
+
+#: winedbg.rc:53
+msgid ""
+"This can be caused by a problem in the program or a deficiency in Wine. You "
+"may want to check http://appdb.winehq.org for tips about running this "
+"application.\n"
+"\n"
+"If this problem is not present under Windows and has not been reported yet, "
+"you can report it at http://bugs.winehq.org."
+msgstr ""
+"Це могло бути викликане проблемою в програмі або недоробкою в Wine. Ви "
+"можете відвідати http://appdb.winehq.org та пошукати поради щодо запуску "
+"цієї програми.\n"
+"\n"
+"Якщо ця проблема не присутня під Windows і ще не була зареєстрована, ви "
+"можете повідомити про неї на http://bugs.winehq.org."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
