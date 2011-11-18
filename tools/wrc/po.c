@@ -951,7 +951,7 @@ static const char *get_msgstr( const char *msgid, const char *context, int *foun
     while (min <= max)
     {
         pos = (min + max) / 2;
-        res = strcmp( get_mo_msgid(pos), msgid );
+        res = strcmp( get_mo_msgid(pos), id ? id : msgid );
         if (!res)
         {
             const char *str = get_mo_msgstr( pos );
