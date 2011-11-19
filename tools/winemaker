@@ -1001,10 +1001,6 @@ sub source_scan_project_file($$$)
         }
     }
 
-    my @local_dlls=();
-    my @local_depends=();
-    my @exe_list=();
-
     # Create the target...
     my $target=[];
     target_init($target);
@@ -1012,13 +1008,10 @@ sub source_scan_project_file($$$)
     if ($prj_target_type!=$TT_DLL) {
         $prj_name=lc($prj_name.".exe");
         @$target[$T_TYPE]=$opt_target_type;
-        push @exe_list,$target;
         push @{@$target[$T_LDFLAGS]},(@$target[$T_TYPE] == $TT_CUIEXE ? "-mconsole" : "-mwindows");
     } else {
         $prj_name=lc($prj_name.".dll");
         @$target[$T_TYPE]=$TT_DLL;
-        push @local_depends,"$prj_name.so";
-        push @local_dlls,$prj_name;
         my $canon=canonize($prj_name);
         if (@$project_settings[$T_FLAGS] & $TF_HASDEF) {
             push @{@$target[$T_LDFLAGS]},("-shared","\$(${canon}_MODULE:.dll=.def)");
