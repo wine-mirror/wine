@@ -20,7 +20,7 @@ use strict;
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 #
 
-my $version="0.7.6";
+my $version="0.8.0";
 
 use Cwd;
 use File::Basename;
@@ -209,20 +209,24 @@ my $T_INCLUDE_PATH=11;
 my $T_LDFLAGS=12;
 
 ##
+# Flags for the archiver
+my $T_ARFLAGS=13;
+
+##
 # Same as T_INCLUDE_PATH but for the dll search path
-my $T_DLL_PATH=13;
+my $T_DLL_PATH=14;
 
 ##
 # The list of Windows dlls to import
-my $T_DLLS=14;
+my $T_DLLS=15;
 
 ##
 # Same as T_INCLUDE_PATH but for the library search path
-my $T_LIBRARY_PATH=15;
+my $T_LIBRARY_PATH=16;
 
 ##
 # The list of Unix libraries to link with
-my $T_LIBRARIES=16;
+my $T_LIBRARIES=17;
 
 
 # The following constants define the recognized types of target
@@ -245,6 +249,10 @@ my $TT_CUIEXE=2;
 ##
 # For dynamically linked libraries
 my $TT_DLL=3;
+
+##
+# For static libraries
+my $TT_LIB=4;
 
 
 # The following constants further refine how the target should be handled
@@ -289,6 +297,7 @@ sub target_init($)
   @$target[$T_DEFINES]=[];
   @$target[$T_INCLUDE_PATH]=[];
   @$target[$T_LDFLAGS]=[];
+  @$target[$T_ARFLAGS]=[];
   @$target[$T_DLL_PATH]=[];
   @$target[$T_DLLS]=[];
   @$target[$T_LIBRARY_PATH]=[];
@@ -600,6 +609,7 @@ sub source_scan_project_file($$$)
                     $prj_target_type=$TT_CUIEXE;
                 }elsif (/[[:space:]]0+x0*104$/) {
                     # Static Library
+                    $prj_target_type=$TT_LIB;
                 }
                 next;
             } elsif (/^# ADD CPP(.*)/ && $found_cfg==1) {
@@ -916,6 +926,8 @@ sub source_scan_project_file($$$)
                     $prj_target_type=$TT_GUIEXE; # Application
                 } elsif ($vc_configuration_attr->getValue==2) {
                     $prj_target_type=$TT_DLL; # Dynamic-Link Library
+                } elsif ($vc_configuration_attr->getValue==4) {
+                    $prj_target_type=$TT_LIB; # Static Library
                 }
             }
         }
@@ -1005,10 +1017,14 @@ sub source_scan_project_file($$$)
     my $target=[];
     target_init($target);
 
-    if ($prj_target_type!=$TT_DLL) {
+    if ($prj_target_type==$TT_GUIEXE or $prj_target_type==$TT_CUIEXE) {
         $prj_name=lc($prj_name.".exe");
         @$target[$T_TYPE]=$opt_target_type;
         push @{@$target[$T_LDFLAGS]},(@$target[$T_TYPE] == $TT_CUIEXE ? "-mconsole" : "-mwindows");
+    } elsif ($prj_target_type==$TT_LIB) {
+        $prj_name=lc("lib".$prj_name.".a");
+        @$target[$T_TYPE]=$TT_LIB;
+        push @{@$target[$T_ARFLAGS]},("rc");
     } else {
         $prj_name=lc($prj_name.".dll");
         @$target[$T_TYPE]=$TT_DLL;
@@ -2305,18 +2321,22 @@ sub generate_project_files($)
   my $project=$_[0];
   my $project_settings=@$project[$P_SETTINGS];
   my @dll_list=();
+  my @lib_list=();
   my @exe_list=();
 
   # Then sort the targets and separate the libraries from the programs
   foreach my $target (sort { @$a[$T_NAME] cmp @$b[$T_NAME] } @{@$project[$P_TARGETS]}) {
     if (@$target[$T_TYPE] == $TT_DLL) {
       push @dll_list,$target;
+    } elsif (@$target[$T_TYPE] == $TT_LIB) {
+      push @lib_list,$target;
     } else {
       push @exe_list,$target;
     }
   }
   @$project[$P_TARGETS]=[];
   push @{@$project[$P_TARGETS]}, @dll_list;
+  push @{@$project[$P_TARGETS]}, @lib_list;
   push @{@$project[$P_TARGETS]}, @exe_list;
 
   if (!open(FILEO,">@$project[$P_PATH]Makefile")) {
@@ -2344,6 +2364,10 @@ sub generate_project_files($)
   }
   if (@{@$project[$P_TARGETS]} > 0) {
     generate_list("DLLS",1,\@dll_list,sub
+		  {
+		    return @{$_[0]}[$T_NAME];
+		  });
+    generate_list("LIBS",1,\@lib_list,sub
 		  {
 		    return @{$_[0]}[$T_NAME];
 		  });
@@ -2391,6 +2415,7 @@ sub generate_project_files($)
       generate_list("${canon}_CXX_SRCS",1,@$target[$T_SOURCES_CXX]);
       generate_list("${canon}_RC_SRCS",1,@$target[$T_SOURCES_RC]);
       generate_list("${canon}_LDFLAGS",1,@$target[$T_LDFLAGS]);
+      generate_list("${canon}_ARFLAGS",1,@$target[$T_ARFLAGS]);
       generate_list("${canon}_DLL_PATH",1,@$target[$T_DLL_PATH]);
       generate_list("${canon}_DLLS",1,@$target[$T_DLLS]);
       generate_list("${canon}_LIBRARY_PATH",1,@$target[$T_LIBRARY_PATH]);
@@ -2433,6 +2458,7 @@ sub generate_project_files($)
   print FILEO "CC = winegcc\n";
   print FILEO "CXX = wineg++\n";
   print FILEO "RC = wrc\n";
+  print FILEO "AR = ar\n";
   print FILEO "\n\n";
 
   print FILEO "### Generic targets\n\n";
@@ -2441,7 +2467,7 @@ sub generate_project_files($)
     print FILEO " \$(SUBDIRS)";
   }
   if (@{@$project[$P_TARGETS]} > 0) {
-    print FILEO " \$(DLLS:%=%.so) \$(EXES)";
+    print FILEO " \$(DLLS:%=%.so) \$(LIBS) \$(EXES)";
   }
   print FILEO "\n\n";
   print FILEO "### Build rules\n";
@@ -2475,7 +2501,7 @@ sub generate_project_files($)
   print FILEO "\n";
   print FILEO "clean:: \$(SUBDIRS:%=%/__clean__) \$(EXTRASUBDIRS:%=%/__clean__)\n";
   print FILEO "\t\$(RM) \$(CLEAN_FILES) \$(RC_SRCS:.rc=.res) \$(C_SRCS:.c=.o) \$(CXX_SRCS:.cpp=.o)\n";
-  print FILEO "\t\$(RM) \$(DLLS:%=%.so) \$(EXES) \$(EXES:%=%.so)\n";
+  print FILEO "\t\$(RM) \$(DLLS:%=%.so) \$(LIBS) \$(EXES) \$(EXES:%=%.so)\n";
   print FILEO "\n";
   print FILEO "\$(SUBDIRS:%=%/__clean__): dummy\n";
   print FILEO "\tcd `dirname \$\@` && \$(MAKE) clean\n";
@@ -2498,12 +2524,17 @@ sub generate_project_files($)
       } else {
         print FILEO "\$(${canon}_MODULE): \$(${canon}_OBJS)\n";
       }
-      if (@{@$target[$T_SOURCES_CXX]} > 0 or @{@$project_settings[$T_SOURCES_CXX]} > 0) {
-        print FILEO "\t\$(CXX)";
+
+      if (@$target[$T_TYPE] == $TT_LIB) {
+        print FILEO "\t\$(AR) \$(${canon}_ARFLAGS) \$\@ \$(${canon}_OBJS)\n";
       } else {
-        print FILEO "\t\$(CC)";
+        if (@{@$target[$T_SOURCES_CXX]} > 0 or @{@$project_settings[$T_SOURCES_CXX]} > 0) {
+          print FILEO "\t\$(CXX)";
+        } else {
+          print FILEO "\t\$(CC)";
+        }
+        print FILEO " \$(${canon}_LDFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_LIBRARY_PATH) \$(DEFLIB) \$(${canon}_DLLS:%=-l%) \$(${canon}_LIBRARIES:%=-l%)\n";
       }
-      print FILEO " \$(${canon}_LDFLAGS) -o \$\@ \$(${canon}_OBJS) \$(${canon}_LIBRARY_PATH) \$(DEFLIB) \$(${canon}_DLLS:%=-l%) \$(${canon}_LIBRARIES:%=-l%)\n";
       print FILEO "\n\n";
     }
   }
