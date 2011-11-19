@@ -813,6 +813,7 @@ static const tid_t domdoc_se_tids[] = {
     IXMLDOMNode_tid,
     IXMLDOMDocument_tid,
     IXMLDOMDocument2_tid,
+    IXMLDOMDocument3_tid,
     0
 };
 
@@ -926,13 +927,10 @@ static HRESULT WINAPI domdoc_GetTypeInfo(
     UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    HRESULT hr;
 
     TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
 
-    hr = get_typeinfo(IXMLDOMDocument2_tid, ppTInfo);
-
-    return hr;
+    return get_typeinfo(IXMLDOMDocument3_tid, ppTInfo);
 }
 
 static HRESULT WINAPI domdoc_GetIDsOfNames(
@@ -953,7 +951,7 @@ static HRESULT WINAPI domdoc_GetIDsOfNames(
     if(!rgszNames || cNames == 0 || !rgDispId)
         return E_INVALIDARG;
 
-    hr = get_typeinfo(IXMLDOMDocument2_tid, &typeinfo);
+    hr = get_typeinfo(IXMLDOMDocument3_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
         hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
@@ -982,7 +980,7 @@ static HRESULT WINAPI domdoc_Invoke(
     TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
-    hr = get_typeinfo(IXMLDOMDocument2_tid, &typeinfo);
+    hr = get_typeinfo(IXMLDOMDocument3_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
         hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDOMDocument3_iface, dispIdMember, wFlags,
@@ -2378,7 +2376,7 @@ static HRESULT WINAPI domdoc_save(
     case VT_UNKNOWN:
         {
             IUnknown *pUnk = V_UNKNOWN(&destination);
-            IXMLDOMDocument2 *document;
+            IXMLDOMDocument3 *document;
             IStream *stream;
 
             ret = IUnknown_QueryInterface(pUnk, &IID_IXMLDOMDocument3, (void**)&document);
@@ -3011,7 +3009,7 @@ static HRESULT WINAPI domdoc_importNode(
     return E_NOTIMPL;
 }
 
-static const struct IXMLDOMDocument3Vtbl domdoc_vtbl =
+static const struct IXMLDOMDocument3Vtbl XMLDOMDocument3Vtbl =
 {
     domdoc_QueryInterface,
     domdoc_AddRef,
@@ -3412,14 +3410,13 @@ static const IObjectSafetyVtbl domdocObjectSafetyVtbl = {
 };
 
 static const tid_t domdoc_iface_tids[] = {
-    IXMLDOMNode_tid,
-    IXMLDOMDocument_tid,
-    IXMLDOMDocument2_tid,
+    IXMLDOMDocument3_tid,
     0
 };
+
 static dispex_static_data_t domdoc_dispex = {
     NULL,
-    IXMLDOMDocument2_tid,
+    IXMLDOMDocument3_tid,
     NULL,
     domdoc_iface_tids
 };
@@ -3432,7 +3429,7 @@ HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document)
     if( !doc )
         return E_OUTOFMEMORY;
 
-    doc->IXMLDOMDocument3_iface.lpVtbl = &domdoc_vtbl;
+    doc->IXMLDOMDocument3_iface.lpVtbl = &XMLDOMDocument3Vtbl;
     doc->IPersistStreamInit_iface.lpVtbl = &xmldoc_IPersistStreamInit_VTable;
     doc->IObjectWithSite_iface.lpVtbl = &domdocObjectSite;
     doc->IObjectSafety_iface.lpVtbl = &domdocObjectSafetyVtbl;

@@ -10712,7 +10712,7 @@ static const supporterror_t supporterror_test[] = {
 
 static void test_supporterrorinfo(void)
 {
-    static REFIID iids[3] = { &IID_IXMLDOMDocument, &IID_IXMLDOMDocument2 };
+    static REFIID iids[4] = { &IID_IXMLDOMDocument, &IID_IXMLDOMDocument2, &IID_IXMLDOMDocument3 };
     const supporterror_t *ptr = supporterror_test;
     ISupportErrorInfo *errorinfo, *info2;
     IXMLDOMDocument *doc;
