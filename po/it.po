@@ -10312,7 +10312,8 @@ msgid "Error: One of options /im or /pid must be specified.\n"
 msgstr "Errore: una delle opzioni /im o /pid deve essere specificata.\n"
 
 #: taskkill.rc:31
-msgid "Error: Option %s expects a command line parameter.\n"
+#, fuzzy
+msgid "Error: Option %1 expects a command line parameter.\n"
 msgstr "Errore: l'opzione %s richiede un parametro dalla riga di comando.\n"
 
 #: taskkill.rc:32
@@ -10320,28 +10321,33 @@ msgid "Error: Options /im and /pid are mutually exclusive.\n"
 msgstr "Errore: le opzioni /im e /pid si escludono mutualmente.\n"
 
 #: taskkill.rc:33
-msgid "Close message sent to top-level windows of process with PID %u.\n"
+#, fuzzy
+msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
 msgstr ""
 "Messaggio di chiusura mandato alle finestre top-level del processo con PID "
 "%u.\n"
 
 #: taskkill.rc:34
+#, fuzzy
 msgid ""
-"Close message sent to top-level windows of process \"%s\" with PID %u.\n"
+"Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 msgstr ""
 "Messaggio di chiusura mandato alle finestre top-level del processo \"%s\" "
 "con PID %u.\n"
 
 #: taskkill.rc:35
-msgid "Process with PID %u was forcibly terminated.\n"
+#, fuzzy
+msgid "Process with PID %1!u! was forcibly terminated.\n"
 msgstr "Il processo con PID %u è stato terminato forzatamente.\n"
 
 #: taskkill.rc:36
-msgid "Process \"%s\" with PID %u was forcibly terminated.\n"
+#, fuzzy
+msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
 msgstr "Il processo \"%s\" con PID %u è stato terminato forzatamente.\n"
 
 #: taskkill.rc:37
-msgid "Error: Could not find process \"%s\".\n"
+#, fuzzy
+msgid "Error: Could not find process \"%1\".\n"
 msgstr "Errore: processo non trovato \"%s\".\n"
 
 #: taskkill.rc:38
@@ -10349,7 +10355,8 @@ msgid "Error: Unable to enumerate the process list.\n"
 msgstr "Errore: impossibile elencare la lista dei processi.\n"
 
 #: taskkill.rc:39
-msgid "Error: Unable to terminate process \"%s\".\n"
+#, fuzzy
+msgid "Error: Unable to terminate process \"%1\".\n"
 msgstr "Errore: impossibile terminare il processo \"%s\".\n"
 
 #: taskkill.rc:40

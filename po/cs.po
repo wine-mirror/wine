@@ -10433,7 +10433,7 @@ msgid "Error: One of options /im or /pid must be specified.\n"
 msgstr ""
 
 #: taskkill.rc:31
-msgid "Error: Option %s expects a command line parameter.\n"
+msgid "Error: Option %1 expects a command line parameter.\n"
 msgstr ""
 
 #: taskkill.rc:32
@@ -10441,24 +10441,24 @@ msgid "Error: Options /im and /pid are mutually exclusive.\n"
 msgstr ""
 
 #: taskkill.rc:33
-msgid "Close message sent to top-level windows of process with PID %u.\n"
+msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
 msgstr ""
 
 #: taskkill.rc:34
 msgid ""
-"Close message sent to top-level windows of process \"%s\" with PID %u.\n"
+"Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 msgstr ""
 
 #: taskkill.rc:35
-msgid "Process with PID %u was forcibly terminated.\n"
+msgid "Process with PID %1!u! was forcibly terminated.\n"
 msgstr ""
 
 #: taskkill.rc:36
-msgid "Process \"%s\" with PID %u was forcibly terminated.\n"
+msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
 msgstr ""
 
 #: taskkill.rc:37
-msgid "Error: Could not find process \"%s\".\n"
+msgid "Error: Could not find process \"%1\".\n"
 msgstr ""
 
 #: taskkill.rc:38
@@ -10466,7 +10466,7 @@ msgid "Error: Unable to enumerate the process list.\n"
 msgstr ""
 
 #: taskkill.rc:39
-msgid "Error: Unable to terminate process \"%s\".\n"
+msgid "Error: Unable to terminate process \"%1\".\n"
 msgstr ""
 
 #: taskkill.rc:40

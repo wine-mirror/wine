@@ -10221,7 +10221,8 @@ msgid "Error: One of options /im or /pid must be specified.\n"
 msgstr "Помилка: Повинна бути вказана одна з опцій /im чи /pid.\n"
 
 #: taskkill.rc:31
-msgid "Error: Option %s expects a command line parameter.\n"
+#, fuzzy
+msgid "Error: Option %1 expects a command line parameter.\n"
 msgstr "Помилка: Опція %s очікує параметр командного рядка.\n"
 
 #: taskkill.rc:32
@@ -10229,27 +10230,32 @@ msgid "Error: Options /im and /pid are mutually exclusive.\n"
 msgstr "Помилка: Опції /im та /pid є взаємновиключними.\n"
 
 #: taskkill.rc:33
-msgid "Close message sent to top-level windows of process with PID %u.\n"
+#, fuzzy
+msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
 msgstr ""
 "Надіслано повідомлення закриття до вікон верхнього рівня процесу з PID %u.\n"
 
 #: taskkill.rc:34
+#, fuzzy
 msgid ""
-"Close message sent to top-level windows of process \"%s\" with PID %u.\n"
+"Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 msgstr ""
 "Надіслано повідомлення закриття до вікон верхнього рівня процесу \"%s\" з "
 "PID %u.\n"
 
 #: taskkill.rc:35
-msgid "Process with PID %u was forcibly terminated.\n"
+#, fuzzy
+msgid "Process with PID %1!u! was forcibly terminated.\n"
 msgstr "Процес з PID %u був завершений примусово.\n"
 
 #: taskkill.rc:36
-msgid "Process \"%s\" with PID %u was forcibly terminated.\n"
+#, fuzzy
+msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
 msgstr "Процес \"%s\" з PID %u був завершений примусово.\n"
 
 #: taskkill.rc:37
-msgid "Error: Could not find process \"%s\".\n"
+#, fuzzy
+msgid "Error: Could not find process \"%1\".\n"
 msgstr "Помилка: Не вдалось знайти процес \"%s\".\n"
 
 #: taskkill.rc:38
@@ -10257,7 +10263,8 @@ msgid "Error: Unable to enumerate the process list.\n"
 msgstr "Помилка: Неможливо перелічити список процесів.\n"
 
 #: taskkill.rc:39
-msgid "Error: Unable to terminate process \"%s\".\n"
+#, fuzzy
+msgid "Error: Unable to terminate process \"%1\".\n"
 msgstr "Помилка: Не вдається завершити процес \"%s\".\n"
 
 #: taskkill.rc:40

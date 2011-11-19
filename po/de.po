@@ -10336,7 +10336,8 @@ msgid "Error: One of options /im or /pid must be specified.\n"
 msgstr "Fehler: Nur eine der Optionen /im oder /pid dürfen angegeben werden.\n"
 
 #: taskkill.rc:31
-msgid "Error: Option %s expects a command line parameter.\n"
+#, fuzzy
+msgid "Error: Option %1 expects a command line parameter.\n"
 msgstr "Fehler: Option %s erwartet einen Kommandozeilenparameter.\n"
 
 #: taskkill.rc:32
@@ -10344,28 +10345,33 @@ msgid "Error: Options /im and /pid are mutually exclusive.\n"
 msgstr "Fehler: Optionen /im und /pid widersprechen sich.\n"
 
 #: taskkill.rc:33
-msgid "Close message sent to top-level windows of process with PID %u.\n"
+#, fuzzy
+msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
 msgstr ""
 "Ein Beendigungssignal wurde an die Top-Level Fenster des Prozesses mit der "
 "PID %u geschickt.\n"
 
 #: taskkill.rc:34
+#, fuzzy
 msgid ""
-"Close message sent to top-level windows of process \"%s\" with PID %u.\n"
+"Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 msgstr ""
 "Ein Beendigungssignal wurde an die Top-Level Fenster des Prozessess \"%s\" "
 "mit der PID %u geschickt.\n"
 
 #: taskkill.rc:35
-msgid "Process with PID %u was forcibly terminated.\n"
+#, fuzzy
+msgid "Process with PID %1!u! was forcibly terminated.\n"
 msgstr "Prozess mit der PID %u wurde zum beenden gezwungen.\n"
 
 #: taskkill.rc:36
-msgid "Process \"%s\" with PID %u was forcibly terminated.\n"
+#, fuzzy
+msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
 msgstr "Prozess \"%s\" mit der PID %u wurde zum beenden gezwungen.\n"
 
 #: taskkill.rc:37
-msgid "Error: Could not find process \"%s\".\n"
+#, fuzzy
+msgid "Error: Could not find process \"%1\".\n"
 msgstr "Fehler: Konnte Prozess \"%s\" nicht finden.\n"
 
 #: taskkill.rc:38
@@ -10373,7 +10379,8 @@ msgid "Error: Unable to enumerate the process list.\n"
 msgstr "Fehler: Konnte die Prozessliste nicht Enumerieren.\n"
 
 #: taskkill.rc:39
-msgid "Error: Unable to terminate process \"%s\".\n"
+#, fuzzy
+msgid "Error: Unable to terminate process \"%1\".\n"
 msgstr "Fehler: Konnte Prozess \"%s\" nicht beenden.\n"
 
 #: taskkill.rc:40
