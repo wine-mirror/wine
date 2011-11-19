@@ -870,9 +870,7 @@ static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument3 *iface, REFIID rii
     return S_OK;
 }
 
-
-static ULONG WINAPI domdoc_AddRef(
-     IXMLDOMDocument3 *iface )
+static ULONG WINAPI domdoc_AddRef( IXMLDOMDocument3 *iface )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
     ULONG ref = InterlockedIncrement( &This->ref );
@@ -880,9 +878,7 @@ static ULONG WINAPI domdoc_AddRef(
     return ref;
 }
 
-
-static ULONG WINAPI domdoc_Release(
-     IXMLDOMDocument3 *iface )
+static ULONG WINAPI domdoc_Release( IXMLDOMDocument3 *iface )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
     LONG ref = InterlockedDecrement( &This->ref );
@@ -914,12 +910,7 @@ static ULONG WINAPI domdoc_Release(
 static HRESULT WINAPI domdoc_GetTypeInfoCount( IXMLDOMDocument3 *iface, UINT* pctinfo )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-
-    TRACE("(%p)->(%p)\n", This, pctinfo);
-
-    *pctinfo = 1;
-
-    return S_OK;
+    return IDispatchEx_GetTypeInfoCount(&This->node.dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI domdoc_GetTypeInfo(
@@ -927,10 +918,7 @@ static HRESULT WINAPI domdoc_GetTypeInfo(
     UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
-
-    return get_typeinfo(IXMLDOMDocument3_tid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(&This->node.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI domdoc_GetIDsOfNames(
@@ -942,25 +930,9 @@ static HRESULT WINAPI domdoc_GetIDsOfNames(
     DISPID* rgDispId)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    ITypeInfo *typeinfo;
-    HRESULT hr;
-
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
-          lcid, rgDispId);
-
-    if(!rgszNames || cNames == 0 || !rgDispId)
-        return E_INVALIDARG;
-
-    hr = get_typeinfo(IXMLDOMDocument3_tid, &typeinfo);
-    if(SUCCEEDED(hr))
-    {
-        hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
-        ITypeInfo_Release(typeinfo);
-    }
-
-    return hr;
+    return IDispatchEx_GetIDsOfNames(&This->node.dispex.IDispatchEx_iface,
+        riid, rgszNames, cNames, lcid, rgDispId);
 }
-
 
 static HRESULT WINAPI domdoc_Invoke(
     IXMLDOMDocument3 *iface,
@@ -974,23 +946,9 @@ static HRESULT WINAPI domdoc_Invoke(
     UINT* puArgErr)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    ITypeInfo *typeinfo;
-    HRESULT hr;
-
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
-          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
-
-    hr = get_typeinfo(IXMLDOMDocument3_tid, &typeinfo);
-    if(SUCCEEDED(hr))
-    {
-        hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDOMDocument3_iface, dispIdMember, wFlags,
-                pDispParams, pVarResult, pExcepInfo, puArgErr);
-        ITypeInfo_Release(typeinfo);
-    }
-
-    return hr;
+    return IDispatchEx_Invoke(&This->node.dispex.IDispatchEx_iface,
+        dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
-
 
 static HRESULT WINAPI domdoc_get_nodeName(
     IXMLDOMDocument3 *iface,

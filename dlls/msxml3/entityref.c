@@ -124,11 +124,7 @@ static HRESULT WINAPI entityref_GetTypeInfoCount(
     UINT* pctinfo )
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    TRACE("(%p)->(%p)\n", This, pctinfo);
-
-    *pctinfo = 1;
-
-    return S_OK;
+    return IDispatchEx_GetTypeInfoCount(&This->node.dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI entityref_GetTypeInfo(
@@ -137,13 +133,8 @@ static HRESULT WINAPI entityref_GetTypeInfo(
     ITypeInfo** ppTInfo )
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    HRESULT hr;
-
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
-
-    hr = get_typeinfo(IXMLDOMEntityReference_tid, ppTInfo);
-
-    return hr;
+    return IDispatchEx_GetTypeInfo(&This->node.dispex.IDispatchEx_iface,
+        iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI entityref_GetIDsOfNames(
@@ -152,23 +143,8 @@ static HRESULT WINAPI entityref_GetIDsOfNames(
     UINT cNames, LCID lcid, DISPID* rgDispId )
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    ITypeInfo *typeinfo;
-    HRESULT hr;
-
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
-          lcid, rgDispId);
-
-    if(!rgszNames || cNames == 0 || !rgDispId)
-        return E_INVALIDARG;
-
-    hr = get_typeinfo(IXMLDOMEntityReference_tid, &typeinfo);
-    if(SUCCEEDED(hr))
-    {
-        hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
-        ITypeInfo_Release(typeinfo);
-    }
-
-    return hr;
+    return IDispatchEx_GetIDsOfNames(&This->node.dispex.IDispatchEx_iface,
+        riid, rgszNames, cNames, lcid, rgDispId);
 }
 
 static HRESULT WINAPI entityref_Invoke(
@@ -178,21 +154,8 @@ static HRESULT WINAPI entityref_Invoke(
     EXCEPINFO* pExcepInfo, UINT* puArgErr )
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-    ITypeInfo *typeinfo;
-    HRESULT hr;
-
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
-          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
-
-    hr = get_typeinfo(IXMLDOMEntityReference_tid, &typeinfo);
-    if(SUCCEEDED(hr))
-    {
-        hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDOMEntityReference_iface, dispIdMember, wFlags,
-                pDispParams, pVarResult, pExcepInfo, puArgErr);
-        ITypeInfo_Release(typeinfo);
-    }
-
-    return hr;
+    return IDispatchEx_Invoke(&This->node.dispex.IDispatchEx_iface,
+        dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI entityref_get_nodeName(
