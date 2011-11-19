@@ -2023,11 +2023,10 @@ static void test_domdoc( void )
     IXMLDOMAttribute *node_attr = NULL;
     IXMLDOMNode *nodeChild = NULL;
     IXMLDOMProcessingInstruction *nodePI = NULL;
-    ISupportErrorInfo *support_error = NULL;
     VARIANT_BOOL b;
     VARIANT var;
     BSTR str;
-    LONG code;
+    LONG code, ref;
     LONG nLength = 0;
     WCHAR buff[100];
     const char **ptr;
@@ -2667,17 +2666,8 @@ if (0)
         IXMLDOMProcessingInstruction_Release(nodePI);
     }
 
-    r = IXMLDOMDocument_QueryInterface( doc, &IID_ISupportErrorInfo, (void**)&support_error );
-    ok( r == S_OK, "ret %08x\n", r );
-    if(r == S_OK)
-    {
-        r = ISupportErrorInfo_InterfaceSupportsErrorInfo( support_error, &IID_IXMLDOMDocument );
-        todo_wine ok( r == S_OK, "ret %08x\n", r );
-        ISupportErrorInfo_Release( support_error );
-    }
-
-    r = IXMLDOMDocument_Release( doc );
-    ok( r == 0, "document ref count incorrect\n");
+    ref = IXMLDOMDocument_Release( doc );
+    ok( ref == 0, "got %d\n", ref);
 
     free_bstrs();
 }
@@ -2830,10 +2820,7 @@ static void test_domnode( void )
         ok( r == S_OK, "ret %08x\n", r );
 
         r = ISupportErrorInfo_InterfaceSupportsErrorInfo( support_error, &IID_IXMLDOMNamedNodeMap );
-todo_wine
-{
-        ok( r == S_OK, "ret %08x\n", r );
-}
+        todo_wine EXPECT_HR(r, S_OK);
         ISupportErrorInfo_Release( support_error );
 
         str = SysAllocString( szdl );
@@ -10706,6 +10693,105 @@ static void test_getAttributeNode(void)
     free_bstrs();
 }
 
+typedef struct {
+    DOMNodeType type;
+    const char *name;
+    REFIID iids[3];
+} supporterror_t;
+
+static const supporterror_t supporterror_test[] = {
+    { NODE_ELEMENT,                "element",   { &IID_IXMLDOMNode, &IID_IXMLDOMElement } },
+    { NODE_ATTRIBUTE,              "attribute", { &IID_IXMLDOMNode, &IID_IXMLDOMAttribute } },
+    { NODE_CDATA_SECTION,          "cdata",     { &IID_IXMLDOMNode, &IID_IXMLDOMCDATASection } },
+    { NODE_ENTITY_REFERENCE,       "entityref", { &IID_IXMLDOMNode, &IID_IXMLDOMEntityReference } },
+    { NODE_PROCESSING_INSTRUCTION, "pi",        { &IID_IXMLDOMNode, &IID_IXMLDOMProcessingInstruction } },
+    { NODE_COMMENT,                "comment",   { &IID_IXMLDOMNode, &IID_IXMLDOMComment } },
+    { NODE_DOCUMENT_FRAGMENT,      "fragment",  { &IID_IXMLDOMNode, &IID_IXMLDOMDocumentFragment } },
+    { NODE_INVALID }
+};
+
+static void test_supporterrorinfo(void)
+{
+    static REFIID iids[3] = { &IID_IXMLDOMDocument, &IID_IXMLDOMDocument2 };
+    const supporterror_t *ptr = supporterror_test;
+    ISupportErrorInfo *errorinfo, *info2;
+    IXMLDOMDocument *doc;
+    IUnknown *unk;
+    REFIID *iid;
+    HRESULT hr;
+
+    doc = create_document_version(60, &IID_IXMLDOMDocument3);
+    if (!doc) return;
+
+    EXPECT_REF(doc, 1);
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_ISupportErrorInfo, (void**)&errorinfo);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(doc, 1);
+    ISupportErrorInfo_AddRef(errorinfo);
+    EXPECT_REF(errorinfo, 2);
+    EXPECT_REF(doc, 1);
+    ISupportErrorInfo_Release(errorinfo);
+
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_ISupportErrorInfo, (void**)&info2);
+    EXPECT_HR(hr, S_OK);
+    ok(errorinfo != info2, "got %p, %p\n", info2, errorinfo);
+    ISupportErrorInfo_Release(info2);
+
+    iid = iids;
+    while (*iid)
+    {
+        hr = IXMLDOMDocument_QueryInterface(doc, *iid, (void**)&unk);
+        EXPECT_HR(hr, S_OK);
+        if (hr == S_OK)
+        {
+            hr = ISupportErrorInfo_InterfaceSupportsErrorInfo(errorinfo, *iid);
+            ok(hr == S_OK, "got 0x%08x for %s\n", hr, debugstr_guid(*iid));
+            IUnknown_Release(unk);
+        }
+
+        iid++;
+    }
+
+    ISupportErrorInfo_Release(errorinfo);
+
+    while (ptr->type != NODE_INVALID)
+    {
+        IXMLDOMNode *node;
+        VARIANT type;
+
+        V_VT(&type) = VT_I1;
+        V_I1(&type) = ptr->type;
+
+        hr = IXMLDOMDocument_createNode(doc, type, _bstr_(ptr->name), NULL, &node);
+        ok(hr == S_OK, "%d: got 0x%08x\n", ptr->type, hr);
+
+        hr = IXMLDOMNode_QueryInterface(node, &IID_ISupportErrorInfo, (void**)&errorinfo);
+        ok(hr == S_OK, "%d: got 0x%08x\n", ptr->type, hr);
+
+        iid = ptr->iids;
+
+        while (*iid)
+        {
+            hr = IXMLDOMNode_QueryInterface(node, *iid, (void**)&unk);
+            if (hr == S_OK)
+            {
+                hr = ISupportErrorInfo_InterfaceSupportsErrorInfo(errorinfo, *iid);
+                ok(hr == S_OK, "%d: got 0x%08x for %s\n", ptr->type, hr, debugstr_guid(*iid));
+                IUnknown_Release(unk);
+            }
+
+            iid++;
+        }
+
+        ISupportErrorInfo_Release(errorinfo);
+        IXMLDOMNode_Release(node);
+        ptr++;
+    }
+
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -10780,6 +10866,7 @@ START_TEST(domdoc)
     test_dispex();
     test_parseerror();
     test_getAttributeNode();
+    test_supporterrorinfo();
 
     test_xsltemplate();
 

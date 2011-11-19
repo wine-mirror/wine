@@ -123,7 +123,6 @@ struct domdoc
     IPersistStreamInit        IPersistStreamInit_iface;
     IObjectWithSite           IObjectWithSite_iface;
     IObjectSafety             IObjectSafety_iface;
-    ISupportErrorInfo         ISupportErrorInfo_iface;
     IConnectionPointContainer IConnectionPointContainer_iface;
     LONG ref;
     VARIANT_BOOL async;
@@ -652,11 +651,6 @@ static inline domdoc *impl_from_IObjectSafety(IObjectSafety *iface)
     return CONTAINING_RECORD(iface, domdoc, IObjectSafety_iface);
 }
 
-static inline domdoc *impl_from_ISupportErrorInfo(ISupportErrorInfo *iface)
-{
-    return CONTAINING_RECORD(iface, domdoc, ISupportErrorInfo_iface);
-}
-
 static inline domdoc *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
 {
     return CONTAINING_RECORD(iface, domdoc, IConnectionPointContainer_iface);
@@ -813,46 +807,15 @@ static const IPersistStreamInitVtbl xmldoc_IPersistStreamInit_VTable =
     domdoc_IPersistStreamInit_InitNew
 };
 
-/* ISupportErrorInfo interface */
-static HRESULT WINAPI support_error_QueryInterface(
-    ISupportErrorInfo *iface,
-    REFIID riid, void** ppvObj )
-{
-    domdoc *This = impl_from_ISupportErrorInfo(iface);
-    return IXMLDOMDocument3_QueryInterface(&This->IXMLDOMDocument3_iface, riid, ppvObj);
-}
+/* IXMLDOMDocument3 interface */
 
-static ULONG WINAPI support_error_AddRef(
-    ISupportErrorInfo *iface )
-{
-    domdoc *This = impl_from_ISupportErrorInfo(iface);
-    return IXMLDOMDocument3_AddRef(&This->IXMLDOMDocument3_iface);
-}
-
-static ULONG WINAPI support_error_Release(
-    ISupportErrorInfo *iface )
-{
-    domdoc *This = impl_from_ISupportErrorInfo(iface);
-    return IXMLDOMDocument3_Release(&This->IXMLDOMDocument3_iface);
-}
-
-static HRESULT WINAPI support_error_InterfaceSupportsErrorInfo(
-    ISupportErrorInfo *iface,
-    REFIID riid )
-{
-    FIXME("(%p)->(%s)\n", iface, debugstr_guid(riid));
-    return S_FALSE;
-}
-
-static const struct ISupportErrorInfoVtbl support_error_vtbl =
-{
-    support_error_QueryInterface,
-    support_error_AddRef,
-    support_error_Release,
-    support_error_InterfaceSupportsErrorInfo
+static const tid_t domdoc_se_tids[] = {
+    IXMLDOMNode_tid,
+    IXMLDOMDocument_tid,
+    IXMLDOMDocument2_tid,
+    0
 };
 
-/* IXMLDOMDocument2 interface */
 static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument3 *iface, REFIID riid, void** ppvObject )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
@@ -885,7 +848,7 @@ static HRESULT WINAPI domdoc_QueryInterface( IXMLDOMDocument3 *iface, REFIID rii
     }
     else if( IsEqualGUID( riid, &IID_ISupportErrorInfo ))
     {
-        *ppvObject = &This->ISupportErrorInfo_iface;
+        return node_create_supporterrorinfo(domdoc_se_tids, ppvObject);
     }
     else if(node_query_interface(&This->node, riid, ppvObject))
     {
@@ -3473,7 +3436,6 @@ HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document)
     doc->IPersistStreamInit_iface.lpVtbl = &xmldoc_IPersistStreamInit_VTable;
     doc->IObjectWithSite_iface.lpVtbl = &domdocObjectSite;
     doc->IObjectSafety_iface.lpVtbl = &domdocObjectSafetyVtbl;
-    doc->ISupportErrorInfo_iface.lpVtbl = &support_error_vtbl;
     doc->IConnectionPointContainer_iface.lpVtbl = &ConnectionPointContainerVtbl;
     doc->ref = 1;
     doc->async = VARIANT_TRUE;

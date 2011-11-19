@@ -116,6 +116,97 @@ BOOL node_query_interface(xmlnode *This, REFIID riid, void **ppv)
     return dispex_query_interface(&This->dispex, riid, ppv);
 }
 
+/* common ISupportErrorInfo implementation */
+typedef struct {
+   ISupportErrorInfo ISupportErrorInfo_iface;
+   LONG ref;
+
+   const tid_t* iids;
+} SupportErrorInfo;
+
+static inline SupportErrorInfo *impl_from_ISupportErrorInfo(ISupportErrorInfo *iface)
+{
+    return CONTAINING_RECORD(iface, SupportErrorInfo, ISupportErrorInfo_iface);
+}
+
+static HRESULT WINAPI SupportErrorInfo_QueryInterface(ISupportErrorInfo *iface, REFIID riid, void **obj)
+{
+    SupportErrorInfo *This = impl_from_ISupportErrorInfo(iface);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+
+    *obj = NULL;
+
+    if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_ISupportErrorInfo)) {
+        *obj = iface;
+        ISupportErrorInfo_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI SupportErrorInfo_AddRef(ISupportErrorInfo *iface)
+{
+    SupportErrorInfo *This = impl_from_ISupportErrorInfo(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref );
+    return ref;
+}
+
+static ULONG WINAPI SupportErrorInfo_Release(ISupportErrorInfo *iface)
+{
+    SupportErrorInfo *This = impl_from_ISupportErrorInfo(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    if (ref == 0)
+        heap_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI SupportErrorInfo_InterfaceSupportsErrorInfo(ISupportErrorInfo *iface, REFIID riid)
+{
+    SupportErrorInfo *This = impl_from_ISupportErrorInfo(iface);
+    enum tid_t const *tid;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_guid(riid));
+
+    tid = This->iids;
+    while (*tid)
+    {
+        if (IsEqualGUID(riid, get_riid_from_tid(*tid)))
+            return S_OK;
+        tid++;
+    }
+
+    return S_FALSE;
+}
+
+static const struct ISupportErrorInfoVtbl SupportErrorInfoVtbl = {
+    SupportErrorInfo_QueryInterface,
+    SupportErrorInfo_AddRef,
+    SupportErrorInfo_Release,
+    SupportErrorInfo_InterfaceSupportsErrorInfo
+};
+
+HRESULT node_create_supporterrorinfo(enum tid_t const *iids, void **obj)
+{
+    SupportErrorInfo *This;
+
+    This = heap_alloc(sizeof(*This));
+    if (!This) return E_OUTOFMEMORY;
+
+    This->ISupportErrorInfo_iface.lpVtbl = &SupportErrorInfoVtbl;
+    This->ref = 1;
+    This->iids = iids;
+
+    *obj = &This->ISupportErrorInfo_iface;
+
+    return S_OK;
+}
+
 xmlnode *get_node_obj(IXMLDOMNode *node)
 {
     xmlnode *obj = NULL;

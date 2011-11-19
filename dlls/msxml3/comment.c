@@ -49,6 +49,12 @@ typedef struct _domcomment
     LONG ref;
 } domcomment;
 
+static const tid_t domcomment_se_tids[] = {
+    IXMLDOMNode_tid,
+    IXMLDOMComment_tid,
+    0
+};
+
 static inline domcomment *impl_from_IXMLDOMComment( IXMLDOMComment *iface )
 {
     return CONTAINING_RECORD(iface, domcomment, IXMLDOMComment_iface);
@@ -73,6 +79,10 @@ static HRESULT WINAPI domcomment_QueryInterface(
     else if(node_query_interface(&This->node, riid, ppvObject))
     {
         return *ppvObject ? S_OK : E_NOINTERFACE;
+    }
+    else if(IsEqualGUID( riid, &IID_ISupportErrorInfo ))
+    {
+        return node_create_supporterrorinfo(domcomment_se_tids, ppvObject);
     }
     else
     {

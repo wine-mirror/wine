@@ -49,6 +49,12 @@ typedef struct _domcdata
     LONG ref;
 } domcdata;
 
+static const tid_t domcdata_se_tids[] = {
+    IXMLDOMNode_tid,
+    IXMLDOMCDATASection_tid,
+    0
+};
+
 static inline domcdata *impl_from_IXMLDOMCDATASection( IXMLDOMCDATASection *iface )
 {
     return CONTAINING_RECORD(iface, domcdata, IXMLDOMCDATASection_iface);
@@ -73,6 +79,10 @@ static HRESULT WINAPI domcdata_QueryInterface(
     else if(node_query_interface(&This->node, riid, ppvObject))
     {
         return *ppvObject ? S_OK : E_NOINTERFACE;
+    }
+    else if(IsEqualGUID( riid, &IID_ISupportErrorInfo ))
+    {
+        return node_create_supporterrorinfo(domcdata_se_tids, ppvObject);
     }
     else
     {

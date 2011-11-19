@@ -51,6 +51,12 @@ typedef struct _dom_pi
 
 static const struct nodemap_funcs dom_pi_attr_map;
 
+static const tid_t dompi_se_tids[] = {
+    IXMLDOMNode_tid,
+    IXMLDOMProcessingInstruction_tid,
+    0
+};
+
 static inline dom_pi *impl_from_IXMLDOMProcessingInstruction( IXMLDOMProcessingInstruction *iface )
 {
     return CONTAINING_RECORD(iface, dom_pi, IXMLDOMProcessingInstruction_iface);
@@ -74,6 +80,10 @@ static HRESULT WINAPI dom_pi_QueryInterface(
     else if(node_query_interface(&This->node, riid, ppvObject))
     {
         return *ppvObject ? S_OK : E_NOINTERFACE;
+    }
+    else if(IsEqualGUID( riid, &IID_ISupportErrorInfo ))
+    {
+        return node_create_supporterrorinfo(dompi_se_tids, ppvObject);
     }
     else
     {

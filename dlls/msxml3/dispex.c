@@ -151,9 +151,19 @@ static tid_id_t tid_ids[] = {
     { &IID_IVBMXNamespaceManager, LibXml2 }
 };
 
+inline REFIID get_riid_from_tid(tid_t tid)
+{
+    return tid_ids[tid].iid;
+}
+
+static inline unsigned get_libid_from_tid(tid_t tid)
+{
+    return tid_ids[tid].lib;
+}
+
 HRESULT get_typeinfo(enum tid_t tid, ITypeInfo **typeinfo)
 {
-    unsigned lib = tid_ids[tid].lib;
+    unsigned lib = get_libid_from_tid(tid);
     HRESULT hres;
 
     if(!typelib[lib]) {
@@ -172,10 +182,10 @@ HRESULT get_typeinfo(enum tid_t tid, ITypeInfo **typeinfo)
     if(!typeinfos[tid]) {
         ITypeInfo *ti;
 
-        hres = ITypeLib_GetTypeInfoOfGuid(typelib[lib], tid_ids[tid].iid, &ti);
+        hres = ITypeLib_GetTypeInfoOfGuid(typelib[lib], get_riid_from_tid(tid), &ti);
         if(FAILED(hres)) {
             /* try harder with typelib from msxml.dll */
-            hres = ITypeLib_GetTypeInfoOfGuid(typelib[LibXml], tid_ids[tid].iid, &ti);
+            hres = ITypeLib_GetTypeInfoOfGuid(typelib[LibXml], get_riid_from_tid(tid), &ti);
             if(FAILED(hres)) {
                 ERR("GetTypeInfoOfGuid failed: %08x\n", hres);
                 return hres;
@@ -581,7 +591,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         return hres;
     }
 
-    hres = IUnknown_QueryInterface(This->outer, tid_ids[data->funcs[n].tid].iid, (void**)&unk);
+    hres = IUnknown_QueryInterface(This->outer, get_riid_from_tid(data->funcs[n].tid), (void**)&unk);
     if(FAILED(hres)) {
         ERR("Could not get iface: %08x\n", hres);
         return E_FAIL;

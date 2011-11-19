@@ -50,6 +50,12 @@ typedef struct _domattr
     LONG ref;
 } domattr;
 
+static const tid_t domattr_se_tids[] = {
+    IXMLDOMNode_tid,
+    IXMLDOMAttribute_tid,
+    0
+};
+
 static inline domattr *impl_from_IXMLDOMAttribute( IXMLDOMAttribute *iface )
 {
     return CONTAINING_RECORD(iface, domattr, IXMLDOMAttribute_iface);
@@ -73,6 +79,10 @@ static HRESULT WINAPI domattr_QueryInterface(
     else if(node_query_interface(&This->node, riid, ppvObject))
     {
         return *ppvObject ? S_OK : E_NOINTERFACE;
+    }
+    else if(IsEqualGUID( riid, &IID_ISupportErrorInfo ))
+    {
+        return node_create_supporterrorinfo(domattr_se_tids, ppvObject);
     }
     else
     {

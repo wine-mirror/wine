@@ -55,6 +55,12 @@ typedef struct _domelem
 
 static const struct nodemap_funcs domelem_attr_map;
 
+static const tid_t domelem_se_tids[] = {
+    IXMLDOMNode_tid,
+    IXMLDOMElement_tid,
+    0
+};
+
 static inline domelem *impl_from_IXMLDOMElement( IXMLDOMElement *iface )
 {
     return CONTAINING_RECORD(iface, domelem, IXMLDOMElement_iface);
@@ -84,6 +90,10 @@ static HRESULT WINAPI domelem_QueryInterface(
     else if(node_query_interface(&This->node, riid, ppvObject))
     {
         return *ppvObject ? S_OK : E_NOINTERFACE;
+    }
+    else if(IsEqualGUID( riid, &IID_ISupportErrorInfo ))
+    {
+        return node_create_supporterrorinfo(domelem_se_tids, ppvObject);
     }
     else
     {

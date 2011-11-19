@@ -49,6 +49,12 @@ typedef struct _entityref
     LONG ref;
 } entityref;
 
+static const tid_t domentityref_se_tids[] = {
+    IXMLDOMNode_tid,
+    IXMLDOMEntityReference_tid,
+    0
+};
+
 static inline entityref *impl_from_IXMLDOMEntityReference( IXMLDOMEntityReference *iface )
 {
     return CONTAINING_RECORD(iface, entityref, IXMLDOMEntityReference_iface);
@@ -72,6 +78,10 @@ static HRESULT WINAPI entityref_QueryInterface(
     else if(node_query_interface(&This->node, riid, ppvObject))
     {
         return *ppvObject ? S_OK : E_NOINTERFACE;
+    }
+    else if (IsEqualGUID( riid, &IID_ISupportErrorInfo ))
+    {
+        return node_create_supporterrorinfo(domentityref_se_tids, ppvObject);
     }
     else
     {
