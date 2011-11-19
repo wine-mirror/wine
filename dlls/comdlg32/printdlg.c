@@ -543,9 +543,15 @@ static BOOL PRINTDLG_UpdatePrintDlgW(HWND hDlg,
 		nToPage < lppd->nMinPage || nToPage > lppd->nMaxPage) {
 	        WCHAR resourcestr[256];
 		WCHAR resultstr[256];
+                DWORD_PTR args[2];
 		LoadStringW(COMDLG32_hInstance, PD32_INVALID_PAGE_RANGE,
 			    resourcestr, 255);
-		wsprintfW(resultstr,resourcestr, lppd->nMinPage, lppd->nMaxPage);
+                args[0] = lppd->nMinPage;
+                args[1] = lppd->nMaxPage;
+                FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
+                               resourcestr, 0, 0, resultstr,
+                               sizeof(resultstr)/sizeof(*resultstr),
+                               (__ms_va_list*)args);
 		LoadStringW(COMDLG32_hInstance, PD32_PRINT_TITLE,
 			    resourcestr, 255);
 		MessageBoxW(hDlg, resultstr, resourcestr,

@@ -1055,8 +1055,13 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam, LPCHOOSEFO
         {
             WCHAR buffer[80];
             WCHAR format[80];
+            DWORD_PTR args[2];
             LoadStringW(COMDLG32_hInstance, IDS_FONT_SIZE, format, sizeof(format)/sizeof(WCHAR));
-            wsprintfW(buffer, format, lpcf->nSizeMin,lpcf->nSizeMax);
+            args[0] = lpcf->nSizeMin;
+            args[1] = lpcf->nSizeMax;
+            FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
+                           format, 0, 0, buffer, sizeof(buffer)/sizeof(*buffer),
+                           (__ms_va_list*)args);
             MessageBoxW(hDlg, buffer, NULL, MB_OK);
         }
         return(TRUE);

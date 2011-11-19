@@ -335,10 +335,10 @@ msgstr "Unreadable Entry"
 #: comdlg32.rc:68
 msgid ""
 "This value does not lie within the page range.\n"
-"Please enter a value between %d and %d."
+"Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "This value does not lie within the page range.\n"
-"Please enter a value between %d and %d."
+"Please enter a value between %1!d! and %2!d!."
 
 #: comdlg32.rc:70
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -397,8 +397,8 @@ msgstr ""
 "a document, you need to install a printer. Please install one and retry."
 
 #: comdlg32.rc:151
-msgid "Select a font size between %d and %d points."
-msgstr "Select a font size between %d and %d points."
+msgid "Select a font size between %1!d! and %2!d! points."
+msgstr "Select a font size between %1!d! and %2!d! points."
 
 #: comdlg32.rc:152 ieframe.rc:32
 msgid "&Save"

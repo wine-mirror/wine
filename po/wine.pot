@@ -320,7 +320,7 @@ msgstr ""
 #: comdlg32.rc:68
 msgid ""
 "This value does not lie within the page range.\n"
-"Please enter a value between %d and %d."
+"Please enter a value between %1!d! and %2!d!."
 msgstr ""
 
 #: comdlg32.rc:70
@@ -374,7 +374,7 @@ msgid ""
 msgstr ""
 
 #: comdlg32.rc:151
-msgid "Select a font size between %d and %d points."
+msgid "Select a font size between %1!d! and %2!d! points."
 msgstr ""
 
 #: comdlg32.rc:152 ieframe.rc:32

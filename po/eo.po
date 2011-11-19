@@ -345,9 +345,10 @@ msgid "Unreadable Entry"
 msgstr "Nelegebla Entry"
 
 #: comdlg32.rc:68
+#, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
-"Please enter a value between %d and %d."
+"Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "Æi tiu valoro ne estas en la paøo.\n"
 "Enigu valoron inter %d kaj %d."
@@ -411,7 +412,8 @@ msgstr ""
 "kaj reprovi."
 
 #: comdlg32.rc:151
-msgid "Select a font size between %d and %d points."
+#, fuzzy
+msgid "Select a font size between %1!d! and %2!d! points."
 msgstr "Elektu tiparan grandecvaloron inter %d kaj %d punktoj."
 
 #: comdlg32.rc:152 ieframe.rc:32

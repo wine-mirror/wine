@@ -65,7 +65,7 @@ STRINGTABLE
 
     PD32_VALUE_UREADABLE                  "Unreadable Entry"
     PD32_INVALID_PAGE_RANGE "This value does not lie within the page range.\n\
-Please enter a value between %d and %d."
+Please enter a value between %1!d! and %2!d!."
     PD32_FROM_NOT_ABOVE_TO                "The 'from' entry cannot exceed the \
 'to' entry."
     PD32_MARGINS_OVERLAP                  "Margins overlap or fall outside \
@@ -148,7 +148,7 @@ STRINGTABLE /* Color names */
 
 STRINGTABLE
 {
-    IDS_FONT_SIZE   "Select a font size between %d and %d points."
+    IDS_FONT_SIZE   "Select a font size between %1!d! and %2!d! points."
     IDS_SAVE_BUTTON "&Save"
     IDS_SAVE_IN     "Save &in:"
     IDS_SAVE        "Save"

@@ -352,9 +352,10 @@ msgid "Unreadable Entry"
 msgstr "Entrada Ilegível"
 
 #: comdlg32.rc:68
+#, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
-"Please enter a value between %d and %d."
+"Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "Este valor não se encaixa na faixa de páginas.\n"
 "Por favor indique um valor entre %d e %d."
@@ -423,7 +424,8 @@ msgstr ""
 "impressora. Por favor instale uma e tente novamente."
 
 #: comdlg32.rc:151
-msgid "Select a font size between %d and %d points."
+#, fuzzy
+msgid "Select a font size between %1!d! and %2!d! points."
 msgstr "Seleccione o tamanho do tipo de letra entre %d e %d pontos."
 
 #: comdlg32.rc:152 ieframe.rc:32

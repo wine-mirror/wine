@@ -339,9 +339,10 @@ msgid "Unreadable Entry"
 msgstr "数值不可读"
 
 #: comdlg32.rc:68
+#, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
-"Please enter a value between %d and %d."
+"Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "这个值不在页数范围内。\n"
 " 请输入一个 %d 和 %d 之间的数。"
@@ -407,7 +408,8 @@ msgid ""
 msgstr "在安装打印机后才能使用和打印机相关的功能。请安装后再试。"
 
 #: comdlg32.rc:151
-msgid "Select a font size between %d and %d points."
+#, fuzzy
+msgid "Select a font size between %1!d! and %2!d! points."
 msgstr "选择 %d 到 %d 之间的字号。"
 
 #: comdlg32.rc:152 ieframe.rc:32

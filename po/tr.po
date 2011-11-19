@@ -341,9 +341,10 @@ msgid "Unreadable Entry"
 msgstr "Okunamayan Giriş"
 
 #: comdlg32.rc:68
+#, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
-"Please enter a value between %d and %d."
+"Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "Bu değer sayfa aralığında değil.\n"
 "Lütfen %d ve %d değerleri arasında bir değer girin."
@@ -406,7 +407,8 @@ msgstr ""
 "yazıcı sürücüsü kurmalısınız. Lütfen bir tane kurun ve yeniden deneyin."
 
 #: comdlg32.rc:151
-msgid "Select a font size between %d and %d points."
+#, fuzzy
+msgid "Select a font size between %1!d! and %2!d! points."
 msgstr "%d ile %d arasında bir yazı tipi boyutu seçin."
 
 #: comdlg32.rc:152 ieframe.rc:32
