@@ -55,7 +55,7 @@ STRINGTABLE
     IDS_FIELD_VALID_TO "Valid to"
     IDS_FIELD_SUBJECT "Subject"
     IDS_FIELD_PUBLIC_KEY "Public key"
-    IDS_FIELD_PUBLIC_KEY_FORMAT "%s (%d bits)"
+    IDS_FIELD_PUBLIC_KEY_FORMAT "%1 (%2!d! bits)"
     IDS_PROP_HASH "SHA1 hash"
     IDS_PROP_ENHKEY_USAGE "Enhanced key usage (property)"
     IDS_PROP_FRIENDLY_NAME "Friendly name"

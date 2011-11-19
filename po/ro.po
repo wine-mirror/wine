@@ -1737,7 +1737,8 @@ msgid "Public key"
 msgstr "Cheie publică"
 
 #: cryptui.rc:58
-msgid "%s (%d bits)"
+#, fuzzy
+msgid "%1 (%2!d! bits)"
 msgstr "%s (%d biți)"
 
 #: cryptui.rc:59

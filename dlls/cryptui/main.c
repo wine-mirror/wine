@@ -2704,6 +2704,8 @@ static WCHAR *field_format_public_key(PCCERT_CONTEXT cert)
         if (LoadStringW(hInstance, IDS_FIELD_PUBLIC_KEY_FORMAT, fmt,
          sizeof(fmt) / sizeof(fmt[0])))
         {
+            DWORD len;
+
             /* Allocate the output buffer.  Use the number of bytes in the
              * public key as a conservative (high) estimate for the number of
              * digits in its output.
@@ -2713,14 +2715,18 @@ static WCHAR *field_format_public_key(PCCERT_CONTEXT cert)
              * good idea, but as this isn't a sentence fragment, it shouldn't
              * be word-order dependent.
              */
-            buf = HeapAlloc(GetProcessHeap(), 0,
-             (strlenW(fmt) + strlenW(oidInfo->pwszName) +
-             cert->pCertInfo->SubjectPublicKeyInfo.PublicKey.cbData * 8)
-             * sizeof(WCHAR));
+            len = strlenW(fmt) + strlenW(oidInfo->pwszName) +
+                cert->pCertInfo->SubjectPublicKeyInfo.PublicKey.cbData * 8;
+            buf = HeapAlloc(GetProcessHeap(), 0, len * sizeof(*buf));
             if (buf)
-                sprintfW(buf, fmt, oidInfo->pwszName,
-                 CertGetPublicKeyLength(X509_ASN_ENCODING,
-                  &cert->pCertInfo->SubjectPublicKeyInfo));
+            {
+                DWORD_PTR args[2];
+                args[0] = (DWORD_PTR)oidInfo->pwszName;
+                args[1] = CertGetPublicKeyLength(X509_ASN_ENCODING,
+                              &cert->pCertInfo->SubjectPublicKeyInfo);
+                FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
+                               fmt, 0, 0, buf, len, (__ms_va_list*)args);
+            }
         }
     }
     return buf;

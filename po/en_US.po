@@ -1578,8 +1578,8 @@ msgid "Public key"
 msgstr "Public key"
 
 #: cryptui.rc:58
-msgid "%s (%d bits)"
-msgstr "%s (%d bits)"
+msgid "%1 (%2!d! bits)"
+msgstr "%1 (%2!d! bits)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"

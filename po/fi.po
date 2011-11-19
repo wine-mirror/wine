@@ -1580,7 +1580,7 @@ msgid "Public key"
 msgstr ""
 
 #: cryptui.rc:58
-msgid "%s (%d bits)"
+msgid "%1 (%2!d! bits)"
 msgstr ""
 
 #: cryptui.rc:59

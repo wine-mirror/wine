@@ -1577,7 +1577,8 @@ msgid "Public key"
 msgstr "Öffentlicher Schlüssel"
 
 #: cryptui.rc:58
-msgid "%s (%d bits)"
+#, fuzzy
+msgid "%1 (%2!d! bits)"
 msgstr "%s (%d Bits)"
 
 #: cryptui.rc:59
