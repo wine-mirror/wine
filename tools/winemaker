@@ -589,16 +589,16 @@ sub source_scan_project_file($$$)
                 #print $prj_name;
                 next;
             } elsif (/^# TARGTYPE/) {
-                if (/[[:space:]]0x0101$/) {
+                if (/[[:space:]]0+x0*101$/) {
                     # Application
                     $prj_target_type=$TT_GUIEXE;
-                }elsif (/[[:space:]]0x0102$/) {
+                }elsif (/[[:space:]]0+x0*102$/) {
                     # Dynamic-Link Library
                     $prj_target_type=$TT_DLL;
-                }elsif (/[[:space:]]0x0103$/) {
+                }elsif (/[[:space:]]0+x0*103$/) {
                     # Console Application
                     $prj_target_type=$TT_CUIEXE;
-                }elsif (/[[:space:]]0x0104$/) {
+                }elsif (/[[:space:]]0+x0*104$/) {
                     # Static Library
                 }
                 next;
