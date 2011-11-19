@@ -8719,7 +8719,8 @@ msgid "Error: Unknown or invalid command line parameters specified\n"
 msgstr "오류: 알수 없거나 올바르지 않은 명령어 라인 매개변수가 지정됨\n"
 
 #: ipconfig.rc:29
-msgid "%s adapter %s\n"
+#, fuzzy
+msgid "%1 adapter %2\n"
 msgstr "%s 어댑터 %s\n"
 
 #: ipconfig.rc:30

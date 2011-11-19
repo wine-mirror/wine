@@ -8762,7 +8762,8 @@ msgid "Error: Unknown or invalid command line parameters specified\n"
 msgstr "Ошибка: Указаны неизвестные или неверные параметры командной строки\n"
 
 #: ipconfig.rc:29
-msgid "%s adapter %s\n"
+#, fuzzy
+msgid "%1 adapter %2\n"
 msgstr "%s адаптер %s\n"
 
 #: ipconfig.rc:30

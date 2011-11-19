@@ -8856,7 +8856,8 @@ msgstr ""
 "invalides\n"
 
 #: ipconfig.rc:29
-msgid "%s adapter %s\n"
+#, fuzzy
+msgid "%1 adapter %2\n"
 msgstr "Adaptateur %s %s\n"
 
 #: ipconfig.rc:30

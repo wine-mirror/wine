@@ -8700,7 +8700,8 @@ msgstr ""
 "Грешка: унесени су непознати или неисправни параметри наредбене линије\n"
 
 #: ipconfig.rc:29
-msgid "%s adapter %s\n"
+#, fuzzy
+msgid "%1 adapter %2\n"
 msgstr "%s адаптер %s\n"
 
 #: ipconfig.rc:30

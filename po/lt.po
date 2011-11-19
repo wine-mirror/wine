@@ -8770,7 +8770,8 @@ msgstr ""
 "Klaida: nurodytas nežinomas arba netinkamas komandinės eilutės parametras\n"
 
 #: ipconfig.rc:29
-msgid "%s adapter %s\n"
+#, fuzzy
+msgid "%1 adapter %2\n"
 msgstr "%s adapteris %s\n"
 
 #: ipconfig.rc:30

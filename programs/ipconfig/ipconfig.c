@@ -26,13 +26,14 @@
 
 #include "ipconfig.h"
 
-static int ipconfig_vprintfW(const WCHAR *msg, va_list va_args)
+static int ipconfig_vprintfW(const WCHAR *msg, __ms_va_list va_args)
 {
     int wlen;
     DWORD count, ret;
     WCHAR msg_buffer[8192];
 
-    wlen = vsprintfW(msg_buffer, msg, va_args);
+    wlen = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, msg, 0, 0, msg_buffer,
+                          sizeof(msg_buffer)/sizeof(*msg_buffer), &va_args);
 
     ret = WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), msg_buffer, wlen, &count, NULL);
     if (!ret)
@@ -59,37 +60,37 @@ static int ipconfig_vprintfW(const WCHAR *msg, va_list va_args)
     return count;
 }
 
-static int ipconfig_printfW(const WCHAR *msg, ...)
+static int CDECL ipconfig_printfW(const WCHAR *msg, ...)
 {
-    va_list va_args;
+    __ms_va_list va_args;
     int len;
 
-    va_start(va_args, msg);
+    __ms_va_start(va_args, msg);
     len = ipconfig_vprintfW(msg, va_args);
-    va_end(va_args);
+    __ms_va_end(va_args);
 
     return len;
 }
 
-static int ipconfig_message_printfW(int msg, ...)
+static int CDECL ipconfig_message_printfW(int msg, ...)
 {
-    va_list va_args;
+    __ms_va_list va_args;
     WCHAR msg_buffer[8192];
     int len;
 
     LoadStringW(GetModuleHandleW(NULL), msg, msg_buffer,
         sizeof(msg_buffer)/sizeof(WCHAR));
 
-    va_start(va_args, msg);
+    __ms_va_start(va_args, msg);
     len = ipconfig_vprintfW(msg_buffer, va_args);
-    va_end(va_args);
+    __ms_va_end(va_args);
 
     return len;
 }
 
 static int ipconfig_message(int msg)
 {
-    static const WCHAR formatW[] = {'%','s',0};
+    static const WCHAR formatW[] = {'%','1',0};
     WCHAR msg_buffer[8192];
 
     LoadStringW(GetModuleHandleW(NULL), msg, msg_buffer,
@@ -123,7 +124,7 @@ static const WCHAR *iftype_to_string(DWORD type)
 
 static void print_field(int msg, const WCHAR *value)
 {
-    static const WCHAR formatW[] = {' ',' ',' ',' ','%','s',':',' ','%','s','\n',0};
+    static const WCHAR formatW[] = {' ',' ',' ',' ','%','1',':',' ','%','2','\n',0};
 
     WCHAR field[] = {'.',' ','.',' ','.',' ','.',' ','.',' ','.',' ','.',' ','.',' ','.',
                      ' ','.',' ','.',' ','.',' ','.',' ','.',' ','.',' ','.',' ','.',' ',0};
@@ -141,7 +142,7 @@ static void print_value(const WCHAR *value)
                                     ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
                                     ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
                                     ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
-                                    '%','s','\n',0};
+                                    '%','1','\n',0};
 
     ipconfig_printfW(formatW, value);
 }

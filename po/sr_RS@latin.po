@@ -8741,7 +8741,7 @@ msgstr ""
 "Greška: uneseni su nepoznati ili neispravni parametri naredbene linije\n"
 
 #: ipconfig.rc:29
-msgid "%s adapter %s\n"
+msgid "%1 adapter %2\n"
 msgstr ""
 
 #: ipconfig.rc:30

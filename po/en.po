@@ -8604,8 +8604,8 @@ msgid "Error: Unknown or invalid command line parameters specified\n"
 msgstr "Error: Unknown or invalid command line parameters specified\n"
 
 #: ipconfig.rc:29
-msgid "%s adapter %s\n"
-msgstr "%s adapter %s\n"
+msgid "%1 adapter %2\n"
+msgstr "%1 adapter %2\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"

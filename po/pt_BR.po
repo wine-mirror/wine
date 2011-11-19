@@ -9026,7 +9026,7 @@ msgid "Error: Unknown or invalid command line parameters specified\n"
 msgstr ""
 
 #: ipconfig.rc:29
-msgid "%s adapter %s\n"
+msgid "%1 adapter %2\n"
 msgstr ""
 
 #: ipconfig.rc:30

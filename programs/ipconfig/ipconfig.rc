@@ -26,7 +26,7 @@ STRINGTABLE
 {
     STRING_USAGE, "Usage: ipconfig [ /? | /all ]\n"
     STRING_INVALID_CMDLINE, "Error: Unknown or invalid command line parameters specified\n"
-    STRING_ADAPTER_FRIENDLY, "%s adapter %s\n"
+    STRING_ADAPTER_FRIENDLY, "%1 adapter %2\n"
     STRING_ETHERNET, "Ethernet"
     STRING_UNKNOWN, "Unknown"
     STRING_CONN_DNS_SUFFIX, "Connection-specific DNS suffix"

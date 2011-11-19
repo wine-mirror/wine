@@ -8833,7 +8833,8 @@ msgid "Error: Unknown or invalid command line parameters specified\n"
 msgstr "Fehler: Unbekannte oder ungültige Kommandozeilenparameter angegeben\n"
 
 #: ipconfig.rc:29
-msgid "%s adapter %s\n"
+#, fuzzy
+msgid "%1 adapter %2\n"
 msgstr "%s Adapter %s\n"
 
 #: ipconfig.rc:30
