@@ -2751,21 +2751,34 @@ static int insert_entries(Pane* pane, Entry* dir, LPCWSTR pattern, int filter_fl
 
 static void format_bytes(LPWSTR buffer, LONGLONG bytes)
 {
-	static const WCHAR sFmtGB[] = {'%', '.', '1', 'f', ' ', 'G', 'B', '\0'};
-	static const WCHAR sFmtMB[] = {'%', '.', '1', 'f', ' ', 'M', 'B', '\0'};
-	static const WCHAR sFmtkB[] = {'%', '.', '1', 'f', ' ', 'k', 'B', '\0'};
-	static const WCHAR sFmtB[]  = {'%', 'u', 0};
+	static const WCHAR sFmtSmall[]  = {'%', 'u', 0};
+	static const WCHAR sFmtBig[] = {'%', '.', '1', 'f', ' ', '%', 's', '\0'};
 
-	float fBytes = (float)bytes;
-
-	if (bytes >= 1073741824)	/* 1 GB */
-		sprintfW(buffer, sFmtGB, fBytes/1073741824.f+.5f);
-	else if (bytes >= 1048576)	/* 1 MB */
-		sprintfW(buffer, sFmtMB, fBytes/1048576.f+.5f);
-	else if (bytes >= 1024)		/* 1 kB */
-		sprintfW(buffer, sFmtkB, fBytes/1024.f+.5f);
+	if (bytes < 1024)
+		sprintfW(buffer, sFmtSmall, (DWORD)bytes);
 	else
-		sprintfW(buffer, sFmtB, (DWORD)bytes);
+	{
+		WCHAR unit[64];
+		UINT resid;
+		float fBytes;
+		if (bytes >= 1073741824)	/* 1 GB */
+		{
+			fBytes = ((float)bytes)/1073741824.f+.5f;
+			resid = IDS_UNIT_GB;
+		}
+		else if (bytes >= 1048576)	/* 1 MB */
+		{
+			fBytes = ((float)bytes)/1048576.f+.5f;
+			resid = IDS_UNIT_MB;
+		}
+		else if (bytes >= 1024)		/* 1 kB */
+		{
+			fBytes = ((float)bytes)/1024.f+.5f;
+			resid = IDS_UNIT_KB;
+		}
+		LoadStringW(Globals.hInstance, resid, unit, sizeof(unit)/sizeof(*unit));
+		sprintfW(buffer, sFmtBig, fBytes, unit);
+	}
 }
 
 static void set_space_status(void)

@@ -2304,7 +2304,7 @@ msgstr "Avaa"
 #: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
 #: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
 #: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
-#: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:68
+#: winefile.rc:134 winefile.rc:157 winefile.rc:187 winemine.rc:68
 #: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
 #: wordpad.rc:246
 msgid "OK"
@@ -2315,7 +2315,7 @@ msgstr "OK"
 #: progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256
 #: regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447
 #: taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
-#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
 #: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Peruuta"
@@ -6712,7 +6712,7 @@ msgstr "Tyyppi"
 msgid "Modified"
 msgstr "Muokattu"
 
-#: shell32.rc:138 winefile.rc:175 winefile.rc:117
+#: shell32.rc:138 winefile.rc:178 winefile.rc:117
 msgid "Attributes"
 msgstr "Ominaisuudet"
 
@@ -9536,7 +9536,7 @@ msgstr ""
 msgid "&Minimize at launch"
 msgstr ""
 
-#: progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:245 winefile.rc:133
+#: progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:245 winefile.rc:136
 msgid "&Browse..."
 msgstr "&Selaa..."
 
@@ -12041,103 +12041,103 @@ msgstr "&Valitse kaikki"
 msgid "&About Wine File Manager"
 msgstr ""
 
-#: winefile.rc:125
+#: winefile.rc:128
 #, fuzzy
 msgid "Select destination"
 msgstr "&Valitse Kaikki"
 
-#: winefile.rc:138
+#: winefile.rc:141
 #, fuzzy
 msgid "By File Type"
 msgstr "&Tyypin mukaan"
 
-#: winefile.rc:141
+#: winefile.rc:144
 #, fuzzy
 msgid "&Name:"
 msgstr "Nimi"
 
-#: winefile.rc:143
+#: winefile.rc:146
 #, fuzzy
 msgid "File Type"
 msgstr "Tiedosto"
 
-#: winefile.rc:144
+#: winefile.rc:147
 msgid "&Directories"
 msgstr ""
 
-#: winefile.rc:146
+#: winefile.rc:149
 #, fuzzy
 msgid "&Programs"
 msgstr "Ohjelmatiedostot"
 
-#: winefile.rc:148
+#: winefile.rc:151
 #, fuzzy
 msgid "Docu&ments"
 msgstr "Tiedostot"
 
-#: winefile.rc:150
+#: winefile.rc:153
 msgid "&Other files"
 msgstr ""
 
-#: winefile.rc:152
+#: winefile.rc:155
 msgid "Show Hidden/&System Files"
 msgstr ""
 
-#: winefile.rc:160
+#: winefile.rc:163
 #, fuzzy
 msgid "Properties for %s"
 msgstr "Ominaisuudet"
 
-#: winefile.rc:163
+#: winefile.rc:166
 #, fuzzy
 msgid "&File Name:"
 msgstr "&Tiedosto"
 
-#: winefile.rc:165
+#: winefile.rc:168
 msgid "Full &Path:"
 msgstr ""
 
-#: winefile.rc:167
+#: winefile.rc:170
 msgid "Last Change:"
 msgstr ""
 
-#: winefile.rc:169
+#: winefile.rc:172
 msgid "Version:"
 msgstr ""
 
-#: winefile.rc:171
+#: winefile.rc:174
 #, fuzzy
 msgid "Cop&yright:"
 msgstr "&Oikea:"
 
-#: winefile.rc:173
+#: winefile.rc:176
 #, fuzzy
 msgid "Size:"
 msgstr "Koko"
 
-#: winefile.rc:176
+#: winefile.rc:179
 #, fuzzy
 msgid "&Read Only"
 msgstr "Valmis"
 
-#: winefile.rc:177
+#: winefile.rc:180
 msgid "H&idden"
 msgstr ""
 
-#: winefile.rc:178
+#: winefile.rc:181
 msgid "&Archive"
 msgstr ""
 
-#: winefile.rc:179
+#: winefile.rc:182
 #, fuzzy
 msgid "&System"
 msgstr "L&iitä\tCtrl+V"
 
-#: winefile.rc:180
+#: winefile.rc:183
 msgid "&Compressed"
 msgstr ""
 
-#: winefile.rc:181
+#: winefile.rc:184
 #, fuzzy
 msgid "&Version Information"
 msgstr ""
@@ -12196,6 +12196,21 @@ msgstr ""
 
 #: winefile.rc:120
 msgid "%1 of %2 free"
+msgstr ""
+
+#: winefile.rc:121
+msgctxt "unit kilobyte"
+msgid "kB"
+msgstr ""
+
+#: winefile.rc:122
+msgctxt "unit megabyte"
+msgid "MB"
+msgstr ""
+
+#: winefile.rc:123
+msgctxt "unit gigabyte"
+msgid "GB"
 msgstr ""
 
 #: winemine.rc:34

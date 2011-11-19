@@ -2290,7 +2290,7 @@ msgstr "Открыть:"
 #: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
 #: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
 #: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
-#: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:68
+#: winefile.rc:134 winefile.rc:157 winefile.rc:187 winemine.rc:68
 #: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
 #: wordpad.rc:246
 msgid "OK"
@@ -2301,7 +2301,7 @@ msgstr "ОК"
 #: progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256
 #: regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447
 #: taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
-#: wineconsole.rc:132 winefile.rc:132 winefile.rc:155 winefile.rc:185
+#: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
 #: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Отмена"
@@ -6527,7 +6527,7 @@ msgstr "Тип"
 msgid "Modified"
 msgstr "Изменён"
 
-#: shell32.rc:138 winefile.rc:175 winefile.rc:117
+#: shell32.rc:138 winefile.rc:178 winefile.rc:117
 msgid "Attributes"
 msgstr "Атрибуты"
 
@@ -9652,7 +9652,7 @@ msgstr "&Комбинация клавиш:"
 msgid "&Minimize at launch"
 msgstr "В виде &значка"
 
-#: progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:245 winefile.rc:133
+#: progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:245 winefile.rc:136
 msgid "&Browse..."
 msgstr "&Обзор"
 
@@ -12168,91 +12168,91 @@ msgstr "Окна с&лева направо\tCtrl+F4"
 msgid "&About Wine File Manager"
 msgstr "&О программе"
 
-#: winefile.rc:125
+#: winefile.rc:128
 msgid "Select destination"
 msgstr "Выберите путь назначения"
 
-#: winefile.rc:138
+#: winefile.rc:141
 msgid "By File Type"
 msgstr "По типу файлов"
 
-#: winefile.rc:141
+#: winefile.rc:144
 msgid "&Name:"
 msgstr "&Имя:"
 
-#: winefile.rc:143
+#: winefile.rc:146
 msgid "File Type"
 msgstr "Тип файла"
 
-#: winefile.rc:144
+#: winefile.rc:147
 msgid "&Directories"
 msgstr "&Каталоги"
 
-#: winefile.rc:146
+#: winefile.rc:149
 msgid "&Programs"
 msgstr "&Программы"
 
-#: winefile.rc:148
+#: winefile.rc:151
 msgid "Docu&ments"
 msgstr "&Документы"
 
-#: winefile.rc:150
+#: winefile.rc:153
 msgid "&Other files"
 msgstr "Другие &файлы"
 
-#: winefile.rc:152
+#: winefile.rc:155
 msgid "Show Hidden/&System Files"
 msgstr "Показать скрытые/&системные файлы"
 
-#: winefile.rc:160
+#: winefile.rc:163
 msgid "Properties for %s"
 msgstr "Свойства %s"
 
-#: winefile.rc:163
+#: winefile.rc:166
 msgid "&File Name:"
 msgstr "Имя &файла:"
 
-#: winefile.rc:165
+#: winefile.rc:168
 msgid "Full &Path:"
 msgstr "&Полный путь:"
 
-#: winefile.rc:167
+#: winefile.rc:170
 msgid "Last Change:"
 msgstr "Последнее изменение:"
 
-#: winefile.rc:169
+#: winefile.rc:172
 msgid "Version:"
 msgstr "Версия:"
 
-#: winefile.rc:171
+#: winefile.rc:174
 msgid "Cop&yright:"
 msgstr "Cop&yright:"
 
-#: winefile.rc:173
+#: winefile.rc:176
 msgid "Size:"
 msgstr "Размер:"
 
-#: winefile.rc:176
+#: winefile.rc:179
 msgid "&Read Only"
 msgstr "&Только для чтения"
 
-#: winefile.rc:177
+#: winefile.rc:180
 msgid "H&idden"
 msgstr "С&крытый"
 
-#: winefile.rc:178
+#: winefile.rc:181
 msgid "&Archive"
 msgstr "&Архивный"
 
-#: winefile.rc:179
+#: winefile.rc:182
 msgid "&System"
 msgstr "&Системный"
 
-#: winefile.rc:180
+#: winefile.rc:183
 msgid "&Compressed"
 msgstr "С&жатый"
 
-#: winefile.rc:181
+#: winefile.rc:184
 msgid "&Version Information"
 msgstr "&Информация о версии"
 
@@ -12304,6 +12304,21 @@ msgstr "Индекс/дескриптор"
 #, fuzzy
 msgid "%1 of %2 free"
 msgstr "%s из %s свободно"
+
+#: winefile.rc:121
+msgctxt "unit kilobyte"
+msgid "kB"
+msgstr ""
+
+#: winefile.rc:122
+msgctxt "unit megabyte"
+msgid "MB"
+msgstr ""
+
+#: winefile.rc:123
+msgctxt "unit gigabyte"
+msgid "GB"
+msgstr ""
 
 #: winemine.rc:34
 msgid "&Game"
