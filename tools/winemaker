@@ -604,7 +604,7 @@ sub source_scan_project_file($$$)
                 next;
             } elsif (/^# ADD CPP(.*)/ && $found_cfg==1) {
                 $prj_target_cflags=$1;
-                @prj_target_options=split(" /", $prj_target_cflags);
+                @prj_target_options=split(/\s+\//, $prj_target_cflags);
                 $prj_target_cflags="";
                 foreach ( @prj_target_options ) {
                     if ($_ eq "") {
@@ -736,7 +736,7 @@ sub source_scan_project_file($$$)
                 next;
             } elsif (/^# ADD LINK32(.*)/ && $found_cfg==1) {
                 $prj_target_ldflags=$1;
-                @prj_target_options=split(" /", $prj_target_ldflags);
+                @prj_target_options=split(/\s+\//, $prj_target_ldflags);
                 $prj_target_ldflags="";
                 $prj_target_libs=$prj_target_options[0];
                 $prj_target_libs=~s/\\/\//g;
