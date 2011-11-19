@@ -6313,7 +6313,8 @@ msgid "us"
 msgstr "מ״ש"
 
 #: setupapi.rc:28
-msgid "The file '%s' on %s is needed"
+#, fuzzy
+msgid "The file '%1' on %2 is needed"
 msgstr "הקובץ '%s' שב־%s דרוש"
 
 #: setupapi.rc:29 ipconfig.rc:31

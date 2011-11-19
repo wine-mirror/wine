@@ -6387,7 +6387,8 @@ msgid "us"
 msgstr "µs"
 
 #: setupapi.rc:28
-msgid "The file '%s' on %s is needed"
+#, fuzzy
+msgid "The file '%1' on %2 is needed"
 msgstr "„%s“ datoteka na %s je neophodna"
 
 #: setupapi.rc:29 ipconfig.rc:31

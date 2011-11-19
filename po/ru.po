@@ -6102,7 +6102,8 @@ msgid "us"
 msgstr "мкс"
 
 #: setupapi.rc:28
-msgid "The file '%s' on %s is needed"
+#, fuzzy
+msgid "The file '%1' on %2 is needed"
 msgstr "Файл '%s' на %s необходим"
 
 #: setupapi.rc:29 ipconfig.rc:31

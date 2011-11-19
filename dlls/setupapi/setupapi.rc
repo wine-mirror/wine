@@ -25,7 +25,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-        IDS_PROMPTDISK   "The file '%s' on %s is needed"
+        IDS_PROMPTDISK   "The file '%1' on %2 is needed"
         IDS_UNKNOWN      "Unknown"
         IDS_COPYFROM     "Copy files from:"
         IDS_INFO         "Type the path where the file is located, and then click OK."

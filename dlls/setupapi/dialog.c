@@ -51,9 +51,6 @@ struct promptdisk_params {
 */
 static void promptdisk_init(HWND hwnd, struct promptdisk_params *params)
 {
-    WCHAR format[256];
-    WCHAR message[256];
-
     SetWindowLongPtrW(hwnd, DWLP_USER, (LONG_PTR)params);
 
     if(params->DialogTitle)
@@ -63,20 +60,25 @@ static void promptdisk_init(HWND hwnd, struct promptdisk_params *params)
 
     if(!(params->DiskPromptStyle & IDF_OEMDISK))
     {
+        WCHAR message[256+2*MAX_PATH];
+        WCHAR format[256];
+        WCHAR unknown[256];
+        DWORD_PTR args[2];
         LoadStringW(SETUPAPI_hInstance, IDS_PROMPTDISK, format,
             sizeof(format)/sizeof(format[0]));
 
+        args[0] = (DWORD_PTR)params->FileSought;
         if(params->DiskName)
-            snprintfW(message, sizeof(message)/sizeof(message[0]), format,
-                params->FileSought, params->DiskName);
+            args[1] = (DWORD_PTR)params->DiskName;
         else
         {
-            WCHAR unknown[256];
             LoadStringW(SETUPAPI_hInstance, IDS_UNKNOWN, unknown,
                 sizeof(unknown)/sizeof(unknown[0]));
-            snprintfW(message, sizeof(message)/sizeof(message[0]), format,
-                params->FileSought, unknown);
+            args[1] = (DWORD_PTR)unknown;
         }
+        FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
+                       format, 0, 0, message, sizeof(message)/sizeof(*message),
+                       (__ms_va_list*)args);
         SetDlgItemTextW(hwnd, IDC_FILENEEDED, message);
 
         LoadStringW(SETUPAPI_hInstance, IDS_INFO, message,

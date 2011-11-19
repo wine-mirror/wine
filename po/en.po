@@ -6006,7 +6006,7 @@ msgid "us"
 msgstr "µs"
 
 #: setupapi.rc:28
-msgid "The file '%s' on %s is needed"
+msgid "The file '%1' on %2 is needed"
 msgstr ""
 
 #: setupapi.rc:29 ipconfig.rc:31
