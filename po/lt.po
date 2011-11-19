@@ -9504,7 +9504,8 @@ msgid "bytes"
 msgstr "baitai"
 
 #: oleview.rc:148
-msgid "LoadTypeLib( %s ) failed ($%x)"
+#, fuzzy
+msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
 msgstr "LoadTypeLib( %s ) nepavyko ($%x)"
 
 #: oleview.rc:149

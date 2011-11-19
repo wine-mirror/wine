@@ -9375,7 +9375,7 @@ msgid "bytes"
 msgstr "%ld tavua"
 
 #: oleview.rc:148
-msgid "LoadTypeLib( %s ) failed ($%x)"
+msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
 msgstr ""
 
 #: oleview.rc:149

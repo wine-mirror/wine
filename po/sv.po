@@ -9472,7 +9472,8 @@ msgid "bytes"
 msgstr "byte"
 
 #: oleview.rc:148
-msgid "LoadTypeLib( %s ) failed ($%x)"
+#, fuzzy
+msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
 msgstr "LoadTypeLib( %s ) misslyckades ($%x)"
 
 #: oleview.rc:149

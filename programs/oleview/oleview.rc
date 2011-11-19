@@ -145,7 +145,7 @@ STRINGTABLE
     IDS_FALSE,             "False"
     IDS_BYTES,             "bytes"
 
-    IDS_ERROR_LOADTYPELIB, "LoadTypeLib( %s ) failed ($%x)"
+    IDS_ERROR_LOADTYPELIB, "LoadTypeLib( %1 ) failed ($%2!x!)"
     IDS_INHERITINTERFACES, "Inherited Interfaces"
 }
 

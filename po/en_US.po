@@ -9486,8 +9486,8 @@ msgid "bytes"
 msgstr "bytes"
 
 #: oleview.rc:148
-msgid "LoadTypeLib( %s ) failed ($%x)"
-msgstr "LoadTypeLib( %s ) failed ($%x)"
+msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
+msgstr "LoadTypeLib( %1 ) failed ($%2!x!)"
 
 #: oleview.rc:149
 msgid "Inherited Interfaces"

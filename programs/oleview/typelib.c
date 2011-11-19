@@ -1198,10 +1198,14 @@ static int PopulateTree(void)
     {
         WCHAR wszMessage[MAX_LOAD_STRING];
         WCHAR wszError[MAX_LOAD_STRING];
+        DWORD_PTR args[2];
 
         LoadStringW(globals.hMainInst, IDS_ERROR_LOADTYPELIB,
                 wszError, sizeof(wszError)/sizeof(wszError[0]));
-        wsprintfW(wszMessage, wszError, typelib.wszFileName, hRes);
+        args[0] = (DWORD_PTR)typelib.wszFileName;
+        args[1] = hRes;
+        FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
+                       wszError, 0, 0, wszMessage, sizeof(wszMessage)/sizeof(*wszMessage), (__ms_va_list*)args);
         MessageBoxW(globals.hMainWnd, wszMessage, NULL, MB_OK|MB_ICONEXCLAMATION);
         return 1;
     }
