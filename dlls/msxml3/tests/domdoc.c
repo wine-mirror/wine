@@ -10531,6 +10531,27 @@ static void test_dispex(void)
     IUnknown_Release(unk);
     IXMLDOMNodeList_Release(node_list);
 
+    /* IXMLDOMNodeList for children list */
+    hr = IXMLDOMDocument_get_childNodes(doc, &node_list);
+    EXPECT_HR(hr, S_OK);
+    IXMLDOMNodeList_QueryInterface(node_list, &IID_IUnknown, (void**)&unk);
+    test_domobj_dispex(unk);
+    IUnknown_Release(unk);
+
+    /* collection dispex test, empty collection */
+    hr = IXMLDOMNodeList_QueryInterface(node_list, &IID_IDispatchEx, (void**)&dispex);
+    EXPECT_HR(hr, S_OK);
+    did = 0;
+    hr = IDispatchEx_GetDispID(dispex, _bstr_("0"), 0, &did);
+    EXPECT_HR(hr, S_OK);
+    ok(did == DISPID_DOM_COLLECTION_BASE, "got 0x%08x\n", did);
+    hr = IDispatchEx_GetDispID(dispex, _bstr_("1"), 0, &did);
+    EXPECT_HR(hr, S_OK);
+    ok(did == DISPID_DOM_COLLECTION_BASE+1, "got 0x%08x\n", did);
+    IDispatchEx_Release(dispex);
+
+    IXMLDOMNodeList_Release(node_list);
+
     /* IXMLDOMParseError */
     hr = IXMLDOMDocument_get_parseError(doc, &error);
     EXPECT_HR(hr, S_OK);

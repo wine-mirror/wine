@@ -600,7 +600,7 @@ static HRESULT domselection_invoke(IUnknown *iface, DISPID id, LCID lcid, WORD f
         {
             IXMLDOMNode *disp = NULL;
 
-            domselection_get_item(&This->IXMLDOMSelection_iface, id - DISPID_DOM_COLLECTION_BASE, &disp);
+            IXMLDOMSelection_get_item(&This->IXMLDOMSelection_iface, id - DISPID_DOM_COLLECTION_BASE, &disp);
             V_DISPATCH(res) = (IDispatch*)disp;
             break;
         }
