@@ -2002,7 +2002,8 @@ msgid "Regional Setting"
 msgstr "הגדרות אזוריות"
 
 #: dxdiagn.rc:26
-msgid "%uMB used, %uMB available"
+#, fuzzy
+msgid "%1!u!MB used, %2!u!MB available"
 msgstr "%u מ״ב בשימוש, %u מ״ב זמינים"
 
 #: gdi32.rc:25

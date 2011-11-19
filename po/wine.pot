@@ -1961,7 +1961,7 @@ msgid "Regional Setting"
 msgstr ""
 
 #: dxdiagn.rc:26
-msgid "%uMB used, %uMB available"
+msgid "%1!u!MB used, %2!u!MB available"
 msgstr ""
 
 #: gdi32.rc:25

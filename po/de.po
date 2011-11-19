@@ -2032,7 +2032,8 @@ msgid "Regional Setting"
 msgstr "Regionale Einstellungen"
 
 #: dxdiagn.rc:26
-msgid "%uMB used, %uMB available"
+#, fuzzy
+msgid "%1!u!MB used, %2!u!MB available"
 msgstr "%uMB benutzt, %uMB verfügbar"
 
 #: gdi32.rc:25

@@ -598,6 +598,7 @@ static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
     OSVERSIONINFOW info;
     DWORD count, usedpage_mb, availpage_mb;
     WCHAR buffer[MAX_PATH], computer_name[MAX_COMPUTERNAME_LENGTH + 1], print_buf[200], localized_pagefile_fmt[200];
+    DWORD_PTR args[2];
 
     hr = add_ui4_property(node, dwDirectXVersionMajor, 9);
     if (FAILED(hr))
@@ -678,7 +679,11 @@ static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
     usedpage_mb = (DWORD)((msex.ullTotalPageFile - msex.ullAvailPageFile) / (1024 * 1024));
     availpage_mb = (DWORD)(msex.ullAvailPageFile / (1024 * 1024));
     LoadStringW(dxdiagn_instance, IDS_PAGE_FILE_FORMAT, localized_pagefile_fmt, sizeof(localized_pagefile_fmt)/sizeof(WCHAR));
-    snprintfW(print_buf, sizeof(print_buf)/sizeof(WCHAR), localized_pagefile_fmt, usedpage_mb, availpage_mb);
+    args[0] = usedpage_mb;
+    args[1] = availpage_mb;
+    FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
+                   localized_pagefile_fmt, 0, 0, print_buf,
+                   sizeof(print_buf)/sizeof(*print_buf), (__ms_va_list*)args);
 
     hr = add_bstr_property(node, szPageFileLocalized, print_buf);
     if (FAILED(hr))

@@ -23,7 +23,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 STRINGTABLE
 {
     IDS_REGIONAL_SETTING    "Regional Setting"
-    IDS_PAGE_FILE_FORMAT    "%uMB used, %uMB available"
+    IDS_PAGE_FILE_FORMAT    "%1!u!MB used, %2!u!MB available"
 }
 
 #define WINE_FILEDESCRIPTION_STR "Wine DxDiag 8"
