@@ -64,6 +64,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_ENDIF         */ "endif",
     /* WINED3DSIH_ENDLOOP       */ "endloop",
     /* WINED3DSIH_ENDREP        */ "endrep",
+    /* WINED3DSIH_EQ            */ "eq",
     /* WINED3DSIH_EXP           */ "exp",
     /* WINED3DSIH_EXPP          */ "expp",
     /* WINED3DSIH_FRC           */ "frc",
