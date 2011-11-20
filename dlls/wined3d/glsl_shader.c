@@ -5048,6 +5048,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_RCP           */ shader_glsl_rcp,
     /* WINED3DSIH_REP           */ shader_glsl_rep,
     /* WINED3DSIH_RET           */ shader_glsl_ret,
+    /* WINED3DSIH_ROUND_NI      */ NULL,
     /* WINED3DSIH_RSQ           */ shader_glsl_rsq,
     /* WINED3DSIH_SAMPLE        */ NULL,
     /* WINED3DSIH_SAMPLE_GRAD   */ NULL,
