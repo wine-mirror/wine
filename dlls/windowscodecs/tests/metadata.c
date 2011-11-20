@@ -31,9 +31,9 @@
 #define expect_blob(propvar, data, length) do { \
     ok((propvar).vt == VT_BLOB, "unexpected vt: %i\n", (propvar).vt); \
     if ((propvar).vt == VT_BLOB) { \
-        ok((propvar).blob.cbSize == (length), "expected size %i, got %i\n", (length), (propvar).blob.cbSize); \
-        if ((propvar).blob.cbSize == (length)) { \
-            ok(!memcmp((propvar).blob.pBlobData, (data), (length)), "unexpected data\n"); \
+        ok(U(propvar).blob.cbSize == (length), "expected size %i, got %i\n", (length), U(propvar).blob.cbSize); \
+        if (U(propvar).blob.cbSize == (length)) { \
+            ok(!memcmp(U(propvar).blob.pBlobData, (data), (length)), "unexpected data\n"); \
         } \
     } \
 } while (0)
@@ -204,9 +204,9 @@ static void test_metadata_tEXt(void)
         {
             ok(schema.vt == VT_EMPTY, "unexpected vt: %i\n", schema.vt);
             ok(id.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
-            ok(!strcmp(id.pszVal, "winetest"), "unexpected id: %s\n", id.pszVal);
+            ok(!strcmp(U(id).pszVal, "winetest"), "unexpected id: %s\n", U(id).pszVal);
             ok(value.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
-            ok(!strcmp(value.pszVal, "value"), "unexpected value: %s\n", id.pszVal);
+            ok(!strcmp(U(value).pszVal, "value"), "unexpected value: %s\n", U(id).pszVal);
 
             PropVariantClear(&schema);
             PropVariantClear(&id);
@@ -228,8 +228,8 @@ static void test_metadata_tEXt(void)
     ok(hr == E_INVALIDARG, "GetMetadataFormat failed, hr=%x\n", hr);
 
     id.vt = VT_LPSTR;
-    id.pszVal = CoTaskMemAlloc(strlen("winetest") + 1);
-    strcpy(id.pszVal, "winetest");
+    U(id).pszVal = CoTaskMemAlloc(strlen("winetest") + 1);
+    strcpy(U(id).pszVal, "winetest");
 
     hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
     ok(hr == S_OK, "GetValue failed, hr=%x\n", hr);
@@ -240,10 +240,10 @@ static void test_metadata_tEXt(void)
     hr = IWICMetadataReader_GetValue(reader, &schema, &id, &value);
     ok(hr == S_OK, "GetValue failed, hr=%x\n", hr);
     ok(value.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
-    ok(!strcmp(value.pszVal, "value"), "unexpected value: %s\n", id.pszVal);
+    ok(!strcmp(U(value).pszVal, "value"), "unexpected value: %s\n", U(id).pszVal);
     PropVariantClear(&value);
 
-    strcpy(id.pszVal, "test");
+    strcpy(U(id).pszVal, "test");
 
     hr = IWICMetadataReader_GetValue(reader, &schema, &id, &value);
     ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "GetValue failed, hr=%x\n", hr);
@@ -260,13 +260,13 @@ static void test_metadata_tEXt(void)
     hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, &id, NULL);
     ok(hr == S_OK, "GetValueByIndex failed, hr=%x\n", hr);
     ok(id.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
-    ok(!strcmp(id.pszVal, "winetest"), "unexpected id: %s\n", id.pszVal);
+    ok(!strcmp(U(id).pszVal, "winetest"), "unexpected id: %s\n", U(id).pszVal);
     PropVariantClear(&id);
 
     hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, NULL, &value);
     ok(hr == S_OK, "GetValueByIndex failed, hr=%x\n", hr);
     ok(value.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
-    ok(!strcmp(value.pszVal, "value"), "unexpected value: %s\n", id.pszVal);
+    ok(!strcmp(U(value).pszVal, "value"), "unexpected value: %s\n", U(id).pszVal);
     PropVariantClear(&value);
 
     hr = IWICMetadataReader_GetValueByIndex(reader, 1, NULL, NULL, NULL);
