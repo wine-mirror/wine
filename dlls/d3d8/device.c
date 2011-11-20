@@ -1343,9 +1343,9 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetLight(IDirect3DDevice8 *iface, DWO
 
     TRACE("iface %p, index %u, light %p.\n", iface, Index, pLight);
 
-    /* Note: D3DLIGHT8 is compatible with WINED3DLIGHT */
+    /* Note: D3DLIGHT8 is compatible with struct wined3d_light. */
     wined3d_mutex_lock();
-    hr = wined3d_device_set_light(This->wined3d_device, Index, (const WINED3DLIGHT *)pLight);
+    hr = wined3d_device_set_light(This->wined3d_device, Index, (const struct wined3d_light *)pLight);
     wined3d_mutex_unlock();
 
     return hr;
@@ -1359,9 +1359,9 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetLight(IDirect3DDevice8 *iface, DWO
 
     TRACE("iface %p, index %u, light %p.\n", iface, Index, pLight);
 
-    /* Note: D3DLIGHT8 is compatible with WINED3DLIGHT */
+    /* Note: D3DLIGHT8 is compatible with struct wined3d_light. */
     wined3d_mutex_lock();
-    hr = wined3d_device_get_light(This->wined3d_device, Index, (WINED3DLIGHT *)pLight);
+    hr = wined3d_device_get_light(This->wined3d_device, Index, (struct wined3d_light *)pLight);
     wined3d_mutex_unlock();
 
     return hr;

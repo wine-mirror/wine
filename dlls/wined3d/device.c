@@ -33,9 +33,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
-/* Define the default light parameters as specified by MSDN */
-const WINED3DLIGHT WINED3D_default_light = {
-
+/* Define the default light parameters as specified by MSDN. */
+const struct wined3d_light WINED3D_default_light =
+{
     WINED3DLIGHT_DIRECTIONAL,   /* Type */
     { 1.0f, 1.0f, 1.0f, 0.0f }, /* Diffuse r,g,b,a */
     { 0.0f, 0.0f, 0.0f, 0.0f }, /* Specular r,g,b,a */
@@ -1902,7 +1902,8 @@ HRESULT CDECL wined3d_device_multiply_transform(struct wined3d_device *device,
  * stateblock problems. When capturing the state block, I duplicate the
  * hashmap, but when recording, just build a chain pretty much of commands to
  * be replayed. */
-HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device, UINT light_idx, const WINED3DLIGHT *light)
+HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
+        UINT light_idx, const struct wined3d_light *light)
 {
     UINT hash_idx = LIGHTMAP_HASHFUNC(light_idx);
     struct wined3d_light_info *object = NULL;
@@ -1916,7 +1917,7 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device, UINT light
     if (!light)
         return WINED3DERR_INVALIDCALL;
 
-    switch (light->Type)
+    switch (light->type)
     {
         case WINED3DLIGHT_POINT:
         case WINED3DLIGHT_SPOT:
@@ -1924,7 +1925,7 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device, UINT light
         case WINED3DLIGHT_GLSPOT:
             /* Incorrect attenuation values can cause the gl driver to crash.
              * Happens with Need for speed most wanted. */
-            if (light->Attenuation0 < 0.0f || light->Attenuation1 < 0.0f || light->Attenuation2 < 0.0f)
+            if (light->attenuation0 < 0.0f || light->attenuation1 < 0.0f || light->attenuation2 < 0.0f)
             {
                 WARN("Attenuation is negative, returning WINED3DERR_INVALIDCALL.\n");
                 return WINED3DERR_INVALIDCALL;
@@ -1964,25 +1965,25 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device, UINT light
 
     /* Initialize the object. */
     TRACE("Light %d setting to type %d, Diffuse(%f,%f,%f,%f), Specular(%f,%f,%f,%f), Ambient(%f,%f,%f,%f)\n",
-            light_idx, light->Type,
-            light->Diffuse.r, light->Diffuse.g, light->Diffuse.b, light->Diffuse.a,
-            light->Specular.r, light->Specular.g, light->Specular.b, light->Specular.a,
-            light->Ambient.r, light->Ambient.g, light->Ambient.b, light->Ambient.a);
-    TRACE("... Pos(%f,%f,%f), Dir(%f,%f,%f)\n", light->Position.x, light->Position.y, light->Position.z,
-            light->Direction.x, light->Direction.y, light->Direction.z);
+            light_idx, light->type,
+            light->diffuse.r, light->diffuse.g, light->diffuse.b, light->diffuse.a,
+            light->specular.r, light->specular.g, light->specular.b, light->specular.a,
+            light->ambient.r, light->ambient.g, light->ambient.b, light->ambient.a);
+    TRACE("... Pos(%f,%f,%f), Dir(%f,%f,%f)\n", light->position.x, light->position.y, light->position.z,
+            light->direction.x, light->direction.y, light->direction.z);
     TRACE("... Range(%f), Falloff(%f), Theta(%f), Phi(%f)\n",
-            light->Range, light->Falloff, light->Theta, light->Phi);
+            light->range, light->falloff, light->theta, light->phi);
 
     /* Save away the information. */
     object->OriginalParms = *light;
 
-    switch (light->Type)
+    switch (light->type)
     {
         case WINED3DLIGHT_POINT:
             /* Position */
-            object->lightPosn[0] = light->Position.x;
-            object->lightPosn[1] = light->Position.y;
-            object->lightPosn[2] = light->Position.z;
+            object->lightPosn[0] = light->position.x;
+            object->lightPosn[1] = light->position.y;
+            object->lightPosn[2] = light->position.z;
             object->lightPosn[3] = 1.0f;
             object->cutoff = 180.0f;
             /* FIXME: Range */
@@ -1990,9 +1991,9 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device, UINT light
 
         case WINED3DLIGHT_DIRECTIONAL:
             /* Direction */
-            object->lightPosn[0] = -light->Direction.x;
-            object->lightPosn[1] = -light->Direction.y;
-            object->lightPosn[2] = -light->Direction.z;
+            object->lightPosn[0] = -light->direction.x;
+            object->lightPosn[1] = -light->direction.y;
+            object->lightPosn[2] = -light->direction.z;
             object->lightPosn[3] = 0.0f;
             object->exponent = 0.0f;
             object->cutoff = 180.0f;
@@ -2000,15 +2001,15 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device, UINT light
 
         case WINED3DLIGHT_SPOT:
             /* Position */
-            object->lightPosn[0] = light->Position.x;
-            object->lightPosn[1] = light->Position.y;
-            object->lightPosn[2] = light->Position.z;
+            object->lightPosn[0] = light->position.x;
+            object->lightPosn[1] = light->position.y;
+            object->lightPosn[2] = light->position.z;
             object->lightPosn[3] = 1.0f;
 
             /* Direction */
-            object->lightDirn[0] = light->Direction.x;
-            object->lightDirn[1] = light->Direction.y;
-            object->lightDirn[2] = light->Direction.z;
+            object->lightDirn[0] = light->direction.x;
+            object->lightDirn[1] = light->direction.y;
+            object->lightDirn[2] = light->direction.z;
             object->lightDirn[3] = 1.0f;
 
             /* opengl-ish and d3d-ish spot lights use too different models
@@ -2017,7 +2018,7 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device, UINT light
              * roughly. However, spot lights are rather rarely used in games
              * (if ever used at all). Furthermore if still used, probably
              * nobody pays attention to such details. */
-            if (!light->Falloff)
+            if (!light->falloff)
             {
                 /* Falloff = 0 is easy, because d3d's and opengl's spot light
                  * equations have the falloff resp. exponent parameter as an
@@ -2028,7 +2029,7 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device, UINT light
             }
             else
             {
-                rho = light->Theta + (light->Phi - light->Theta) / (2 * light->Falloff);
+                rho = light->theta + (light->phi - light->theta) / (2 * light->falloff);
                 if (rho < 0.0001f)
                     rho = 0.0001f;
                 object->exponent = -0.3f / logf(cosf(rho / 2));
@@ -2037,12 +2038,12 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device, UINT light
             if (object->exponent > 128.0f)
                 object->exponent = 128.0f;
 
-            object->cutoff = (float)(light->Phi * 90 / M_PI);
+            object->cutoff = (float)(light->phi * 90 / M_PI);
             /* FIXME: Range */
             break;
 
         default:
-            FIXME("Unrecognized light type %#x.\n", light->Type);
+            FIXME("Unrecognized light type %#x.\n", light->type);
     }
 
     /* Update the live definitions if the light is currently assigned a glIndex. */
@@ -2052,7 +2053,8 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device, UINT light
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_light(const struct wined3d_device *device, UINT light_idx, WINED3DLIGHT *light)
+HRESULT CDECL wined3d_device_get_light(const struct wined3d_device *device,
+        UINT light_idx, struct wined3d_light *light)
 {
     UINT hash_idx = LIGHTMAP_HASHFUNC(light_idx);
     struct wined3d_light_info *light_info = NULL;

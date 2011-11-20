@@ -5374,8 +5374,8 @@ IDirect3DDeviceImpl_7_SetLight(IDirect3DDevice7 *iface,
     TRACE("iface %p, light_idx %u, light %p.\n", iface, LightIndex, Light);
 
     wined3d_mutex_lock();
-    /* Note: D3DLIGHT7 is compatible with WINED3DLIGHT */
-    hr = wined3d_device_set_light(This->wined3d_device, LightIndex, (WINED3DLIGHT *)Light);
+    /* Note: D3DLIGHT7 is compatible with struct wined3d_light. */
+    hr = wined3d_device_set_light(This->wined3d_device, LightIndex, (struct wined3d_light *)Light);
     wined3d_mutex_unlock();
 
     return hr_ddraw_from_wined3d(hr);
@@ -5429,8 +5429,8 @@ IDirect3DDeviceImpl_7_GetLight(IDirect3DDevice7 *iface,
     TRACE("iface %p, light_idx %u, light %p.\n", iface, LightIndex, Light);
 
     wined3d_mutex_lock();
-    /* Note: D3DLIGHT7 is compatible with WINED3DLIGHT */
-    rc =  wined3d_device_get_light(This->wined3d_device, LightIndex, (WINED3DLIGHT *)Light);
+    /* Note: D3DLIGHT7 is compatible with struct wined3d_light. */
+    rc =  wined3d_device_get_light(This->wined3d_device, LightIndex, (struct wined3d_light *)Light);
     wined3d_mutex_unlock();
 
     /* Translate the result. WineD3D returns other values than D3D7 */

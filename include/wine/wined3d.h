@@ -1547,22 +1547,22 @@ struct wined3d_matrix
     } DUMMYUNIONNAME;
 };
 
-typedef struct _WINED3DLIGHT
+struct wined3d_light
 {
-    WINED3DLIGHTTYPE Type;
-    struct wined3d_color Diffuse;
-    struct wined3d_color Specular;
-    struct wined3d_color Ambient;
-    struct wined3d_vec3 Position;
-    struct wined3d_vec3 Direction;
-    float Range;
-    float Falloff;
-    float Attenuation0;
-    float Attenuation1;
-    float Attenuation2;
-    float Theta;
-    float Phi;
-} WINED3DLIGHT;
+    WINED3DLIGHTTYPE type;
+    struct wined3d_color diffuse;
+    struct wined3d_color specular;
+    struct wined3d_color ambient;
+    struct wined3d_vec3 position;
+    struct wined3d_vec3 direction;
+    float range;
+    float falloff;
+    float attenuation0;
+    float attenuation1;
+    float attenuation2;
+    float theta;
+    float phi;
+};
 
 typedef struct _WINED3DMATERIAL
 {
@@ -2214,7 +2214,8 @@ void __cdecl wined3d_device_get_gamma_ramp(const struct wined3d_device *device,
         UINT swapchain_idx, WINED3DGAMMARAMP *ramp);
 HRESULT __cdecl wined3d_device_get_index_buffer(const struct wined3d_device *device,
         struct wined3d_buffer **index_buffer);
-HRESULT __cdecl wined3d_device_get_light(const struct wined3d_device *device, UINT light_idx, WINED3DLIGHT *light);
+HRESULT __cdecl wined3d_device_get_light(const struct wined3d_device *device,
+        UINT light_idx, struct wined3d_light *light);
 HRESULT __cdecl wined3d_device_get_light_enable(const struct wined3d_device *device, UINT light_idx, BOOL *enable);
 HRESULT __cdecl wined3d_device_get_material(const struct wined3d_device *device, WINED3DMATERIAL *material);
 float __cdecl wined3d_device_get_npatch_mode(const struct wined3d_device *device);
@@ -2292,7 +2293,8 @@ void __cdecl wined3d_device_set_gamma_ramp(const struct wined3d_device *device,
         UINT swapchain_idx, DWORD flags, const WINED3DGAMMARAMP *ramp);
 HRESULT __cdecl wined3d_device_set_index_buffer(struct wined3d_device *device,
         struct wined3d_buffer *index_buffer, enum wined3d_format_id format_id);
-HRESULT __cdecl wined3d_device_set_light(struct wined3d_device *device, UINT light_idx, const WINED3DLIGHT *light);
+HRESULT __cdecl wined3d_device_set_light(struct wined3d_device *device,
+        UINT light_idx, const struct wined3d_light *light);
 HRESULT __cdecl wined3d_device_set_light_enable(struct wined3d_device *device, UINT light_idx, BOOL enable);
 HRESULT __cdecl wined3d_device_set_material(struct wined3d_device *device, const WINED3DMATERIAL *material);
 void __cdecl wined3d_device_set_multithreaded(struct wined3d_device *device);

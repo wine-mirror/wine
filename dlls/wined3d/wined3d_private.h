@@ -1271,7 +1271,7 @@ void context_surface_update(struct wined3d_context *context, const struct wined3
  */
 struct wined3d_light_info
 {
-    WINED3DLIGHT OriginalParms; /* Note D3D8LIGHT == D3D9LIGHT */
+    struct wined3d_light OriginalParms; /* Note D3D8LIGHT == D3D9LIGHT */
     DWORD        OriginalIndex;
     LONG         glIndex;
     BOOL         enabled;
@@ -1286,7 +1286,7 @@ struct wined3d_light_info
 };
 
 /* The default light parameters */
-extern const WINED3DLIGHT WINED3D_default_light DECLSPEC_HIDDEN;
+extern const struct wined3d_light WINED3D_default_light DECLSPEC_HIDDEN;
 
 struct wined3d_pixel_format
 {

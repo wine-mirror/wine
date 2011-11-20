@@ -4647,41 +4647,41 @@ static void light(struct wined3d_context *context, const struct wined3d_state *s
         glLoadMatrixf(&state->transforms[WINED3DTS_VIEW].u.m[0][0]);
 
         /* Diffuse: */
-        colRGBA[0] = lightInfo->OriginalParms.Diffuse.r;
-        colRGBA[1] = lightInfo->OriginalParms.Diffuse.g;
-        colRGBA[2] = lightInfo->OriginalParms.Diffuse.b;
-        colRGBA[3] = lightInfo->OriginalParms.Diffuse.a;
+        colRGBA[0] = lightInfo->OriginalParms.diffuse.r;
+        colRGBA[1] = lightInfo->OriginalParms.diffuse.g;
+        colRGBA[2] = lightInfo->OriginalParms.diffuse.b;
+        colRGBA[3] = lightInfo->OriginalParms.diffuse.a;
         glLightfv(GL_LIGHT0 + Index, GL_DIFFUSE, colRGBA);
         checkGLcall("glLightfv");
 
         /* Specular */
-        colRGBA[0] = lightInfo->OriginalParms.Specular.r;
-        colRGBA[1] = lightInfo->OriginalParms.Specular.g;
-        colRGBA[2] = lightInfo->OriginalParms.Specular.b;
-        colRGBA[3] = lightInfo->OriginalParms.Specular.a;
+        colRGBA[0] = lightInfo->OriginalParms.specular.r;
+        colRGBA[1] = lightInfo->OriginalParms.specular.g;
+        colRGBA[2] = lightInfo->OriginalParms.specular.b;
+        colRGBA[3] = lightInfo->OriginalParms.specular.a;
         glLightfv(GL_LIGHT0 + Index, GL_SPECULAR, colRGBA);
         checkGLcall("glLightfv");
 
         /* Ambient */
-        colRGBA[0] = lightInfo->OriginalParms.Ambient.r;
-        colRGBA[1] = lightInfo->OriginalParms.Ambient.g;
-        colRGBA[2] = lightInfo->OriginalParms.Ambient.b;
-        colRGBA[3] = lightInfo->OriginalParms.Ambient.a;
+        colRGBA[0] = lightInfo->OriginalParms.ambient.r;
+        colRGBA[1] = lightInfo->OriginalParms.ambient.g;
+        colRGBA[2] = lightInfo->OriginalParms.ambient.b;
+        colRGBA[3] = lightInfo->OriginalParms.ambient.a;
         glLightfv(GL_LIGHT0 + Index, GL_AMBIENT, colRGBA);
         checkGLcall("glLightfv");
 
-        if ((lightInfo->OriginalParms.Range *lightInfo->OriginalParms.Range) >= FLT_MIN) {
-            quad_att = 1.4f/(lightInfo->OriginalParms.Range *lightInfo->OriginalParms.Range);
-        } else {
+        if ((lightInfo->OriginalParms.range * lightInfo->OriginalParms.range) >= FLT_MIN)
+            quad_att = 1.4f / (lightInfo->OriginalParms.range * lightInfo->OriginalParms.range);
+        else
             quad_att = 0.0f; /*  0 or  MAX?  (0 seems to be ok) */
-        }
 
         /* Do not assign attenuation values for lights that do not use them. D3D apps are free to pass any junk,
          * but gl drivers use them and may crash due to bad Attenuation values. Need for Speed most wanted sets
          * Attenuation0 to NaN and crashes in the gl lib
          */
 
-        switch (lightInfo->OriginalParms.Type) {
+        switch (lightInfo->OriginalParms.type)
+        {
             case WINED3DLIGHT_POINT:
                 /* Position */
                 glLightfv(GL_LIGHT0 + Index, GL_POSITION, &lightInfo->lightPosn[0]);
@@ -4689,11 +4689,12 @@ static void light(struct wined3d_context *context, const struct wined3d_state *s
                 glLightf(GL_LIGHT0 + Index, GL_SPOT_CUTOFF, lightInfo->cutoff);
                 checkGLcall("glLightf");
                 /* Attenuation - Are these right? guessing... */
-                glLightf(GL_LIGHT0 + Index, GL_CONSTANT_ATTENUATION,  lightInfo->OriginalParms.Attenuation0);
+                glLightf(GL_LIGHT0 + Index, GL_CONSTANT_ATTENUATION, lightInfo->OriginalParms.attenuation0);
                 checkGLcall("glLightf");
-                glLightf(GL_LIGHT0 + Index, GL_LINEAR_ATTENUATION,    lightInfo->OriginalParms.Attenuation1);
+                glLightf(GL_LIGHT0 + Index, GL_LINEAR_ATTENUATION, lightInfo->OriginalParms.attenuation1);
                 checkGLcall("glLightf");
-                if (quad_att < lightInfo->OriginalParms.Attenuation2) quad_att = lightInfo->OriginalParms.Attenuation2;
+                if (quad_att < lightInfo->OriginalParms.attenuation2)
+                    quad_att = lightInfo->OriginalParms.attenuation2;
                 glLightf(GL_LIGHT0 + Index, GL_QUADRATIC_ATTENUATION, quad_att);
                 checkGLcall("glLightf");
                 /* FIXME: Range */
@@ -4711,11 +4712,12 @@ static void light(struct wined3d_context *context, const struct wined3d_state *s
                 glLightf(GL_LIGHT0 + Index, GL_SPOT_CUTOFF, lightInfo->cutoff);
                 checkGLcall("glLightf");
                 /* Attenuation - Are these right? guessing... */
-                glLightf(GL_LIGHT0 + Index, GL_CONSTANT_ATTENUATION,  lightInfo->OriginalParms.Attenuation0);
+                glLightf(GL_LIGHT0 + Index, GL_CONSTANT_ATTENUATION, lightInfo->OriginalParms.attenuation0);
                 checkGLcall("glLightf");
-                glLightf(GL_LIGHT0 + Index, GL_LINEAR_ATTENUATION,    lightInfo->OriginalParms.Attenuation1);
+                glLightf(GL_LIGHT0 + Index, GL_LINEAR_ATTENUATION, lightInfo->OriginalParms.attenuation1);
                 checkGLcall("glLightf");
-                if (quad_att < lightInfo->OriginalParms.Attenuation2) quad_att = lightInfo->OriginalParms.Attenuation2;
+                if (quad_att < lightInfo->OriginalParms.attenuation2)
+                    quad_att = lightInfo->OriginalParms.attenuation2;
                 glLightf(GL_LIGHT0 + Index, GL_QUADRATIC_ATTENUATION, quad_att);
                 checkGLcall("glLightf");
                 /* FIXME: Range */
@@ -4732,7 +4734,7 @@ static void light(struct wined3d_context *context, const struct wined3d_state *s
                 break;
 
             default:
-                FIXME("Unrecognized light type %d\n", lightInfo->OriginalParms.Type);
+                FIXME("Unrecognized light type %#x.\n", lightInfo->OriginalParms.type);
         }
 
         /* Restore the modelview matrix */
