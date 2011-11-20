@@ -3133,7 +3133,14 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
            || (!oob && ioctl(fd, SIOCATMARK, &atmark ) == -1))
             status = (errno == EBADF) ? WSAENOTSOCK : wsaErrno();
         else
-            (*(WS_u_long *) out_buff) = oob | atmark;
+        {
+            /* The SIOCATMARK value read from ioctl() is reversed
+             * because BSD returns TRUE if it's in the OOB mark
+             * while Windows returns TRUE if there are NO OOB bytes.
+             */
+            (*(WS_u_long *) out_buff) = oob | !atmark;
+        }
+
         release_sock_fd( s, fd );
         break;
     }

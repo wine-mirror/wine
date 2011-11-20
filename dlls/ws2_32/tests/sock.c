@@ -506,7 +506,7 @@ static VOID WINAPI oob_server ( server_params *par )
 
     /* check atmark state */
     ioctlsocket ( mem->sock[0].s, SIOCATMARK, &atmark );
-    todo_wine ok ( atmark == 1, "oob_server (%x): unexpectedly at the OOB mark: %i\n", id, atmark );
+    ok ( atmark == 1, "oob_server (%x): unexpectedly at the OOB mark: %i\n", id, atmark );
 
     /* Receive normal data and check atmark state */
     n_recvd = do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, n_expected, par->buflen );
@@ -516,7 +516,7 @@ static VOID WINAPI oob_server ( server_params *par )
     ok ( pos == -1, "simple_server (%x): test pattern error: %d\n", id, pos);
 
     ioctlsocket ( mem->sock[0].s, SIOCATMARK, &atmark );
-    todo_wine ok ( atmark == 1, "oob_server (%x): unexpectedly at the OOB mark: %i\n", id, atmark );
+    ok ( atmark == 1, "oob_server (%x): unexpectedly at the OOB mark: %i\n", id, atmark );
 
     /* Receive a part of the out-of-band data and check atmark state */
     n_recvd = do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, 8, par->buflen );
@@ -525,13 +525,13 @@ static VOID WINAPI oob_server ( server_params *par )
     n_expected -= 8;
 
     ioctlsocket ( mem->sock[0].s, SIOCATMARK, &atmark );
-    ok ( atmark == 0, "oob_server (%x): not at the OOB mark: %i\n", id, atmark );
+    todo_wine ok ( atmark == 0, "oob_server (%x): not at the OOB mark: %i\n", id, atmark );
 
     /* Receive the rest of the out-of-band data and check atmark state */
     do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, n_expected, par->buflen );
 
     ioctlsocket ( mem->sock[0].s, SIOCATMARK, &atmark );
-    ok ( atmark == 0, "oob_server (%x): not at the OOB mark: %i\n", id, atmark );
+    todo_wine ok ( atmark == 0, "oob_server (%x): not at the OOB mark: %i\n", id, atmark );
 
     /* cleanup */
     wsa_ok ( closesocket ( mem->sock[0].s ),  0 ==, "oob_server (%x): closesocket error: %d\n" );
@@ -2970,7 +2970,7 @@ static void test_ioctlsocket(void)
 
     ret = ioctlsocket(sock, SIOCATMARK, &arg);
     ok(ret != SOCKET_ERROR, "ioctlsocket failed unexpectedly\n");
-    todo_wine ok(arg, "SIOCATMARK expected a non-zero value\n");
+    ok(arg, "SIOCATMARK expected a non-zero value\n");
 
     /* when SO_OOBINLINE is set SIOCATMARK must always return TRUE */
     optval = 1;
@@ -2987,7 +2987,7 @@ static void test_ioctlsocket(void)
     ok(ret != SOCKET_ERROR, "setsockopt failed unexpectedly\n");
     arg = 0;
     ret = ioctlsocket(sock, SIOCATMARK, &arg);
-    todo_wine ok(arg, "SIOCATMARK expected a non-zero value\n");
+    ok(arg, "SIOCATMARK expected a non-zero value\n");
 
     ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &arg, 0, NULL, 0, &arg, NULL, NULL);
     ok(ret == SOCKET_ERROR, "WSAIoctl succeeded unexpectedly\n");
