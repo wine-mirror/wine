@@ -1311,9 +1311,9 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetMaterial(IDirect3DDevice8 *iface,
 
     TRACE("iface %p, material %p.\n", iface, pMaterial);
 
-    /* Note: D3DMATERIAL8 is compatible with WINED3DMATERIAL */
+    /* Note: D3DMATERIAL8 is compatible with struct wined3d_material. */
     wined3d_mutex_lock();
-    hr = wined3d_device_set_material(This->wined3d_device, (const WINED3DMATERIAL *)pMaterial);
+    hr = wined3d_device_set_material(This->wined3d_device, (const struct wined3d_material *)pMaterial);
     wined3d_mutex_unlock();
 
     return hr;
@@ -1327,9 +1327,9 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetMaterial(IDirect3DDevice8 *iface,
 
     TRACE("iface %p, material %p.\n", iface, pMaterial);
 
-    /* Note: D3DMATERIAL8 is compatible with WINED3DMATERIAL */
+    /* Note: D3DMATERIAL8 is compatible with struct wined3d_material. */
     wined3d_mutex_lock();
-    hr = wined3d_device_get_material(This->wined3d_device, (WINED3DMATERIAL *)pMaterial);
+    hr = wined3d_device_get_material(This->wined3d_device, (struct wined3d_material *)pMaterial);
     wined3d_mutex_unlock();
 
     return hr;

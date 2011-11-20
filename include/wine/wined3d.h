@@ -1564,14 +1564,14 @@ struct wined3d_light
     float phi;
 };
 
-typedef struct _WINED3DMATERIAL
+struct wined3d_material
 {
-    struct wined3d_color Diffuse;
-    struct wined3d_color Ambient;
-    struct wined3d_color Specular;
-    struct wined3d_color Emissive;
-    float Power;
-} WINED3DMATERIAL;
+    struct wined3d_color diffuse;
+    struct wined3d_color ambient;
+    struct wined3d_color specular;
+    struct wined3d_color emissive;
+    float power;
+};
 
 typedef struct _WINED3DVIEWPORT
 {
@@ -2217,7 +2217,7 @@ HRESULT __cdecl wined3d_device_get_index_buffer(const struct wined3d_device *dev
 HRESULT __cdecl wined3d_device_get_light(const struct wined3d_device *device,
         UINT light_idx, struct wined3d_light *light);
 HRESULT __cdecl wined3d_device_get_light_enable(const struct wined3d_device *device, UINT light_idx, BOOL *enable);
-HRESULT __cdecl wined3d_device_get_material(const struct wined3d_device *device, WINED3DMATERIAL *material);
+HRESULT __cdecl wined3d_device_get_material(const struct wined3d_device *device, struct wined3d_material *material);
 float __cdecl wined3d_device_get_npatch_mode(const struct wined3d_device *device);
 struct wined3d_shader * __cdecl wined3d_device_get_pixel_shader(const struct wined3d_device *device);
 void __cdecl wined3d_device_get_primitive_type(const struct wined3d_device *device,
@@ -2296,7 +2296,7 @@ HRESULT __cdecl wined3d_device_set_index_buffer(struct wined3d_device *device,
 HRESULT __cdecl wined3d_device_set_light(struct wined3d_device *device,
         UINT light_idx, const struct wined3d_light *light);
 HRESULT __cdecl wined3d_device_set_light_enable(struct wined3d_device *device, UINT light_idx, BOOL enable);
-HRESULT __cdecl wined3d_device_set_material(struct wined3d_device *device, const WINED3DMATERIAL *material);
+HRESULT __cdecl wined3d_device_set_material(struct wined3d_device *device, const struct wined3d_material *material);
 void __cdecl wined3d_device_set_multithreaded(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_set_npatch_mode(struct wined3d_device *device, float segments);
 HRESULT __cdecl wined3d_device_set_pixel_shader(struct wined3d_device *device, struct wined3d_shader *shader);

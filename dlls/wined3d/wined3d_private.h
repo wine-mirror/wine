@@ -2279,7 +2279,7 @@ struct wined3d_state
 
     struct wined3d_matrix transforms[HIGHEST_TRANSFORMSTATE + 1];
     double clip_planes[MAX_CLIPPLANES][4];
-    WINED3DMATERIAL material;
+    struct wined3d_material material;
     WINED3DVIEWPORT viewport;
     RECT scissor_rect;
 

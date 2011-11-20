@@ -5265,8 +5265,8 @@ IDirect3DDeviceImpl_7_SetMaterial(IDirect3DDevice7 *iface,
     if (!Mat) return DDERR_INVALIDPARAMS;
 
     wined3d_mutex_lock();
-    /* Note: D3DMATERIAL7 is compatible with WINED3DMATERIAL */
-    hr = wined3d_device_set_material(This->wined3d_device, (WINED3DMATERIAL *)Mat);
+    /* Note: D3DMATERIAL7 is compatible with struct wined3d_material. */
+    hr = wined3d_device_set_material(This->wined3d_device, (struct wined3d_material *)Mat);
     wined3d_mutex_unlock();
 
     return hr_ddraw_from_wined3d(hr);
@@ -5319,8 +5319,8 @@ IDirect3DDeviceImpl_7_GetMaterial(IDirect3DDevice7 *iface,
     TRACE("iface %p, material %p.\n", iface, Mat);
 
     wined3d_mutex_lock();
-    /* Note: D3DMATERIAL7 is compatible with WINED3DMATERIAL */
-    hr = wined3d_device_get_material(This->wined3d_device, (WINED3DMATERIAL *)Mat);
+    /* Note: D3DMATERIAL7 is compatible with struct wined3d_material. */
+    hr = wined3d_device_get_material(This->wined3d_device, (struct wined3d_material *)Mat);
     wined3d_mutex_unlock();
 
     return hr_ddraw_from_wined3d(hr);

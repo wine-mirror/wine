@@ -2280,7 +2280,7 @@ HRESULT CDECL wined3d_device_get_clip_status(const struct wined3d_device *device
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_set_material(struct wined3d_device *device, const WINED3DMATERIAL *material)
+HRESULT CDECL wined3d_device_set_material(struct wined3d_device *device, const struct wined3d_material *material)
 {
     TRACE("device %p, material %p.\n", device, material);
 
@@ -2299,25 +2299,25 @@ HRESULT CDECL wined3d_device_set_material(struct wined3d_device *device, const W
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_material(const struct wined3d_device *device, WINED3DMATERIAL *material)
+HRESULT CDECL wined3d_device_get_material(const struct wined3d_device *device, struct wined3d_material *material)
 {
     TRACE("device %p, material %p.\n", device, material);
 
     *material = device->updateStateBlock->state.material;
 
-    TRACE("Diffuse {%.8e, %.8e, %.8e, %.8e}\n",
-            material->Diffuse.r, material->Diffuse.g,
-            material->Diffuse.b, material->Diffuse.a);
-    TRACE("Ambient {%.8e, %.8e, %.8e, %.8e}\n",
-            material->Ambient.r, material->Ambient.g,
-            material->Ambient.b, material->Ambient.a);
-    TRACE("Specular {%.8e, %.8e, %.8e, %.8e}\n",
-            material->Specular.r, material->Specular.g,
-            material->Specular.b, material->Specular.a);
-    TRACE("Emissive {%.8e, %.8e, %.8e, %.8e}\n",
-            material->Emissive.r, material->Emissive.g,
-            material->Emissive.b, material->Emissive.a);
-    TRACE("Power %.8e.\n", material->Power);
+    TRACE("diffuse {%.8e, %.8e, %.8e, %.8e}\n",
+            material->diffuse.r, material->diffuse.g,
+            material->diffuse.b, material->diffuse.a);
+    TRACE("ambient {%.8e, %.8e, %.8e, %.8e}\n",
+            material->ambient.r, material->ambient.g,
+            material->ambient.b, material->ambient.a);
+    TRACE("specular {%.8e, %.8e, %.8e, %.8e}\n",
+            material->specular.r, material->specular.g,
+            material->specular.b, material->specular.a);
+    TRACE("emissive {%.8e, %.8e, %.8e, %.8e}\n",
+            material->emissive.r, material->emissive.g,
+            material->emissive.b, material->emissive.a);
+    TRACE("power %.8e.\n", material->power);
 
     return WINED3D_OK;
 }

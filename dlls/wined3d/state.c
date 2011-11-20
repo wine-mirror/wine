@@ -656,10 +656,10 @@ static void state_specularenable(struct wined3d_context *context, const struct w
     TRACE("Setting specular enable state and materials\n");
     if (state->render_states[WINED3DRS_SPECULARENABLE])
     {
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float *)&state->material.Specular);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float *)&state->material.specular);
         checkGLcall("glMaterialfv");
 
-        if (state->material.Power > gl_info->limits.shininess)
+        if (state->material.power > gl_info->limits.shininess)
         {
             /* glMaterialf man page says that the material says that GL_SHININESS must be between 0.0
              * and 128.0, although in d3d neither -1 nor 129 produce an error. GL_NV_max_light_exponent
@@ -667,12 +667,12 @@ static void state_specularenable(struct wined3d_context *context, const struct w
              * value reported by the extension, otherwise 128. For values > gl_info->limits.shininess clamp
              * them, it should be safe to do so without major visual distortions.
              */
-            WARN("Material power = %.8e, limit %.8e\n", state->material.Power, gl_info->limits.shininess);
+            WARN("Material power = %.8e, limit %.8e\n", state->material.power, gl_info->limits.shininess);
             glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, gl_info->limits.shininess);
         }
         else
         {
-            glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, state->material.Power);
+            glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, state->material.power);
         }
         checkGLcall("glMaterialf(GL_SHININESS)");
 
@@ -716,24 +716,24 @@ static void state_specularenable(struct wined3d_context *context, const struct w
         }
     }
 
-    TRACE("Diffuse {%.8e, %.8e, %.8e, %.8e}\n",
-            state->material.Diffuse.r, state->material.Diffuse.g,
-            state->material.Diffuse.b, state->material.Diffuse.a);
-    TRACE("Ambient {%.8e, %.8e, %.8e, %.8e}\n",
-            state->material.Ambient.r, state->material.Ambient.g,
-            state->material.Ambient.b, state->material.Ambient.a);
-    TRACE("Specular {%.8e, %.8e, %.8e, %.8e}\n",
-            state->material.Specular.r, state->material.Specular.g,
-            state->material.Specular.b, state->material.Specular.a);
-    TRACE("Emissive {%.8e, %.8e, %.8e, %.8e}\n",
-            state->material.Emissive.r, state->material.Emissive.g,
-            state->material.Emissive.b, state->material.Emissive.a);
+    TRACE("diffuse {%.8e, %.8e, %.8e, %.8e}\n",
+            state->material.diffuse.r, state->material.diffuse.g,
+            state->material.diffuse.b, state->material.diffuse.a);
+    TRACE("ambient {%.8e, %.8e, %.8e, %.8e}\n",
+            state->material.ambient.r, state->material.ambient.g,
+            state->material.ambient.b, state->material.ambient.a);
+    TRACE("specular {%.8e, %.8e, %.8e, %.8e}\n",
+            state->material.specular.r, state->material.specular.g,
+            state->material.specular.b, state->material.specular.a);
+    TRACE("emissive {%.8e, %.8e, %.8e, %.8e}\n",
+            state->material.emissive.r, state->material.emissive.g,
+            state->material.emissive.b, state->material.emissive.a);
 
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float *)&state->material.Ambient);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float *)&state->material.ambient);
     checkGLcall("glMaterialfv(GL_AMBIENT)");
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float *)&state->material.Diffuse);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float *)&state->material.diffuse);
     checkGLcall("glMaterialfv(GL_DIFFUSE)");
-    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (float *)&state->material.Emissive);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (float *)&state->material.emissive);
     checkGLcall("glMaterialfv(GL_EMISSION)");
 }
 
@@ -1272,23 +1272,23 @@ static void state_colormat(struct wined3d_context *context, const struct wined3d
      * tracking with glColorMaterial, so apply those here. */
     switch (context->tracking_parm) {
         case GL_AMBIENT_AND_DIFFUSE:
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float *)&state->material.Ambient);
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float *)&state->material.Diffuse);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float *)&state->material.ambient);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float *)&state->material.diffuse);
             checkGLcall("glMaterialfv");
             break;
 
         case GL_DIFFUSE:
-            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float *)&state->material.Diffuse);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float *)&state->material.diffuse);
             checkGLcall("glMaterialfv");
             break;
 
         case GL_AMBIENT:
-            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float *)&state->material.Ambient);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float *)&state->material.ambient);
             checkGLcall("glMaterialfv");
             break;
 
         case GL_EMISSION:
-            glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (float *)&state->material.Emissive);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (float *)&state->material.emissive);
             checkGLcall("glMaterialfv");
             break;
 
@@ -1296,9 +1296,11 @@ static void state_colormat(struct wined3d_context *context, const struct wined3d
             /* Only change material color if specular is enabled, otherwise it is set to black */
             if (state->render_states[WINED3DRS_SPECULARENABLE])
             {
-                glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float *)&state->material.Specular);
+                glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float *)&state->material.specular);
                 checkGLcall("glMaterialfv");
-            } else {
+            }
+            else
+            {
                 static const GLfloat black[] = {0.0f, 0.0f, 0.0f, 0.0f};
                 glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &black[0]);
                 checkGLcall("glMaterialfv");
