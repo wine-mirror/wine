@@ -225,17 +225,17 @@ static void yv12_test(void)
     /* Luminance */
     for (y = 0; y < desc.dwHeight; y++)
     {
-        memset(base + desc.lPitch * y, 0x10, desc.dwWidth);
+        memset(base + U1(desc).lPitch * y, 0x10, desc.dwWidth);
     }
     /* V */
     for (; y < desc.dwHeight + desc.dwHeight / 4; y++)
     {
-        memset(base + desc.lPitch * y, 0x20, desc.dwWidth);
+        memset(base + U1(desc).lPitch * y, 0x20, desc.dwWidth);
     }
     /* U */
     for (; y < desc.dwHeight + desc.dwHeight / 2; y++)
     {
-        memset(base + desc.lPitch * y, 0x30, desc.dwWidth);
+        memset(base + U1(desc).lPitch * y, 0x30, desc.dwWidth);
     }
 
     hr = IDirectDrawSurface7_Unlock(surface, NULL);
@@ -276,9 +276,9 @@ static void yv12_test(void)
 
         base = desc.lpSurface;
         ok(base[0] == 0x10, "Y data is 0x%02x, expected 0x10\n", base[0]);
-        base += desc.dwHeight * desc.lPitch;
+        base += desc.dwHeight * U1(desc).lPitch;
         todo_wine ok(base[0] == 0x20, "V data is 0x%02x, expected 0x20\n", base[0]);
-        base += desc.dwHeight / 4 * desc.lPitch;
+        base += desc.dwHeight / 4 * U1(desc).lPitch;
         todo_wine ok(base[0] == 0x30, "U data is 0x%02x, expected 0x30\n", base[0]);
 
         hr = IDirectDrawSurface7_Unlock(dst, NULL);
