@@ -82,7 +82,8 @@
 #define GLYPH_MAX         65536
 
 typedef struct {
-    char    tag[4];
+    char    tag[5];
+    char    script[5];
     LPCVOID  feature;
 } LoadedFeature;
 

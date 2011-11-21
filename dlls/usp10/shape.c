@@ -1094,11 +1094,16 @@ static const char* get_opentype_script(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCach
 static LPCVOID load_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc, const char* feat)
 {
     const GSUB_Feature *feature;
+    const char* script;
     int i;
 
+    script = get_opentype_script(hdc,psa,psc,FALSE);
+
     for (i = 0; i <  psc->feature_count; i++)
-        if (strncmp(psc->features[i].tag,feat,4)==0)
+    {
+        if (strncmp(psc->features[i].tag,feat,4)==0 && strncmp(psc->features[i].script,script,4)==0)
             return psc->features[i].feature;
+    }
 
     feature = NULL;
 
@@ -1146,6 +1151,7 @@ static LPCVOID load_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc
         psc->features = HeapAlloc(GetProcessHeap(), 0, psc->feature_count * sizeof(LoadedFeature));
 
     lstrcpynA(psc->features[psc->feature_count - 1].tag, feat, 5);
+    lstrcpynA(psc->features[psc->feature_count - 1].script, script, 5);
     psc->features[psc->feature_count - 1].feature = feature;
     return feature;
 }
