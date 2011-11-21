@@ -57,6 +57,8 @@ static const scriptRange scriptRanges[] = {
     /* Latin Extended-B: U+0180–U+024F */
     /* IPA Extensions: U+0250–U+02AF */
     { Script_Latin,      0x00,   0x2af ,  Script_Numeric, Script_Punctuation},
+    /* Combining Diacritical Marks : U+0300–U+036F */
+    { Script_Diacritical,0x300,  0x36f,  0, 0},
     /* Greek: U+0370–U+03FF */
     { Script_Greek,      0x370,  0x3ff,  0, 0},
     /* Cyrillic: U+0400–U+04FF */
@@ -110,6 +112,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Devanagari, 0x1cd0, 0x1cff, Script_Devanagari_Numeric, 0},
     /* Phonetic Extensions: U+1D00–U+1DBF */
     { Script_Latin,      0x1d00, 0x1dbf, 0, 0},
+    /* Combining Diacritical Marks Supplement: U+1DC0–U+1DFF */
+    { Script_Diacritical,0x1dc0, 0x1dff, 0, 0},
     /* Latin Extended Additional: U+1E00–U+1EFF */
     { Script_Latin,      0x1e00, 0x1eff, 0, 0},
     /* Greek Extended: U+1F00–U+1FFF */
@@ -354,6 +358,10 @@ static const scriptData scriptInformation[] = {
      {LANG_MALAYALAM, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      MS_MAKE_TAG('m','l','y','m'),
      {'K','a','r','t','i','k','a',0}},
+    {{Script_Diacritical, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_ENGLISH, 0, 1, 0, 1, ANSI_CHARSET, 0, 0, 0, 0, 0, 1, 1, 0, 0},
+     0x00000000,
+     {0}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -379,7 +387,8 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[36].props, &scriptInformation[37].props,
     &scriptInformation[38].props, &scriptInformation[39].props,
     &scriptInformation[40].props, &scriptInformation[41].props,
-    &scriptInformation[42].props, &scriptInformation[43].props
+    &scriptInformation[42].props, &scriptInformation[43].props,
+    &scriptInformation[44].props
 };
 
 typedef struct {
@@ -870,6 +879,10 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
            Right-to-Left Mark U+200F) will force us into bidi mode */
         if (!forceLevels && pwcInChars[i] >= 0x200B && pwcInChars[i] <= 0x200F)
             forceLevels = TRUE;
+
+        /* Diacritical marks merge with other scripts */
+        if (scripts[i] == Script_Diacritical && i > 0)
+                scripts[i] = scripts[i-1];
     }
 
     for (i = 0; i < cInChars; i++)
@@ -926,6 +939,14 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
                 return E_OUTOFMEMORY;
             }
             BIDI_GetStrengths(pwcInChars, cInChars, psControl, strength);
+
+            /* We currently mis-level leading Diacriticals */
+            if (scripts[0] == Script_Diacritical)
+                for (i = 0; i < cInChars && scripts[0] == Script_Diacritical; i++)
+                {
+                    levels[i] = odd(levels[i])?levels[i]+1:levels[i];
+                    strength[i] = BIDI_STRONG;
+                }
 
             for (i = 0; i < cInChars; i++)
             {
