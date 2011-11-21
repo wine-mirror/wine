@@ -5082,6 +5082,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_TEXREG2AR     */ shader_glsl_texreg2ar,
     /* WINED3DSIH_TEXREG2GB     */ shader_glsl_texreg2gb,
     /* WINED3DSIH_TEXREG2RGB    */ shader_glsl_texreg2rgb,
+    /* WINED3DSIH_UDIV          */ NULL,
     /* WINED3DSIH_UTOF          */ NULL,
 };
 
