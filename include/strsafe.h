@@ -25,8 +25,8 @@
 /* Windows version includes this header. */
 /* #include <specstring.h> */
 
-#define STRSAFE_E_INSUFFICIENT_BUFFER   ((HRESULT)0x8007007AL)
-#define STRSAFE_E_INVALID_PARAM         ((HRESULT)0x80070075L)
-#define STRSAFE_E_END_OF_FILE           ((HRESULT)0x80070026L)
+#define STRSAFE_E_INSUFFICIENT_BUFFER   ((HRESULT)0x8007007A)
+#define STRSAFE_E_INVALID_PARAM         ((HRESULT)0x80070075)
+#define STRSAFE_E_END_OF_FILE           ((HRESULT)0x80070026)
 
 #endif

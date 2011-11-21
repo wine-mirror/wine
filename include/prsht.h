@@ -454,25 +454,25 @@ typedef struct _PSHNOTIFY
 	SNDMSG(hDlg, PSM_ADDPAGE, 0, (LPARAM)hpage)
 
 #define PropSheet_Changed(hDlg, hwnd) \
-	SNDMSG(hDlg, PSM_CHANGED, (WPARAM)hwnd, 0L)
+        SNDMSG(hDlg, PSM_CHANGED, (WPARAM)hwnd, 0)
 
 #define PropSheet_RestartWindows(hDlg) \
-	SNDMSG(hDlg, PSM_RESTARTWINDOWS, 0, 0L)
+        SNDMSG(hDlg, PSM_RESTARTWINDOWS, 0, 0)
 
 #define PropSheet_RebootSystem(hDlg) \
-	SNDMSG(hDlg, PSM_REBOOTSYSTEM, 0, 0L)
+        SNDMSG(hDlg, PSM_REBOOTSYSTEM, 0, 0)
 
 #define PropSheet_CancelToClose(hDlg) \
-	PostMessage(hDlg, PSM_CANCELTOCLOSE, 0, 0L)
+        PostMessage(hDlg, PSM_CANCELTOCLOSE, 0, 0)
 
 #define PropSheet_QuerySiblings(hDlg, wParam, lParam) \
 	SNDMSG(hDlg, PSM_QUERYSIBLINGS, wParam, lParam)
 
 #define PropSheet_UnChanged(hDlg, hwnd) \
-	SNDMSG(hDlg, PSM_UNCHANGED, (WPARAM)hwnd, 0L)
+        SNDMSG(hDlg, PSM_UNCHANGED, (WPARAM)hwnd, 0)
 
 #define PropSheet_Apply(hDlg) \
-	SNDMSG(hDlg, PSM_APPLY, 0, 0L)
+        SNDMSG(hDlg, PSM_APPLY, 0, 0)
 
 #define PropSheet_SetTitle(hDlg, wStyle, lpszText)\
 	SNDMSG(hDlg, PSM_SETTITLE, wStyle, (LPARAM)(LPCTSTR)lpszText)
@@ -496,7 +496,7 @@ typedef struct _PSHNOTIFY
 	(BOOL)SNDMSG(hDlg, PSM_ISDIALOGMESSAGE, 0, (LPARAM)pMsg)
 
 #define PropSheet_GetCurrentPageHwnd(hDlg) \
-	(HWND)SNDMSG(hDlg, PSM_GETCURRENTPAGEHWND, 0, 0L)
+        (HWND)SNDMSG(hDlg, PSM_GETCURRENTPAGEHWND, 0, 0)
 
 #define PropSheet_InsertPage(hDlg, index, hpage) \
         SNDMSG(hDlg, PSM_INSERTPAGE, (WPARAM)(index), (LPARAM)(hpage))
