@@ -46,6 +46,7 @@ typedef struct _func_stack {
     X(eq2, 1, 0)                                  \
     X(neg, 1, 0)                                  \
     X(neq2, 1, 0)                                 \
+    X(tonum, 1, 0)                                \
     X(tree, 1, ARG_EXPR)                          \
     X(ret, 0, 0)
 
@@ -537,7 +538,6 @@ HRESULT delete_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exp
 HRESULT void_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT typeof_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT minus_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
-HRESULT plus_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT post_increment_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT post_decrement_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT pre_increment_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
