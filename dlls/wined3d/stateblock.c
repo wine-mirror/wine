@@ -1304,12 +1304,12 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
         }
 
         /* Set the default viewport */
-        state->viewport.X = 0;
-        state->viewport.Y = 0;
-        state->viewport.Width = swapchain->presentParms.BackBufferWidth;
-        state->viewport.Height = swapchain->presentParms.BackBufferHeight;
-        state->viewport.MinZ = 0.0f;
-        state->viewport.MaxZ = 1.0f;
+        state->viewport.x = 0;
+        state->viewport.y = 0;
+        state->viewport.width = swapchain->presentParms.BackBufferWidth;
+        state->viewport.height = swapchain->presentParms.BackBufferHeight;
+        state->viewport.min_z = 0.0f;
+        state->viewport.max_z = 1.0f;
 
         wined3d_swapchain_decref(swapchain);
     }

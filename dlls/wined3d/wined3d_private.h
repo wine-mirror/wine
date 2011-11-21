@@ -2283,7 +2283,7 @@ struct wined3d_state
     struct wined3d_matrix transforms[HIGHEST_TRANSFORMSTATE + 1];
     double clip_planes[MAX_CLIPPLANES][4];
     struct wined3d_material material;
-    WINED3DVIEWPORT viewport;
+    struct wined3d_viewport viewport;
     RECT scissor_rect;
 
     /* Light hashmap . Collisions are handled using standard wine double linked lists */
@@ -2699,8 +2699,8 @@ static inline void shader_get_position_fixup(const struct wined3d_context *conte
 {
     position_fixup[0] = 1.0f;
     position_fixup[1] = 1.0f;
-    position_fixup[2] = (63.0f / 64.0f) / state->viewport.Width;
-    position_fixup[3] = -(63.0f / 64.0f) / state->viewport.Height;
+    position_fixup[2] = (63.0f / 64.0f) / state->viewport.width;
+    position_fixup[3] = -(63.0f / 64.0f) / state->viewport.height;
 
     if (context->render_offscreen)
     {

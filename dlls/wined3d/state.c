@@ -1444,8 +1444,8 @@ static void state_pscale(struct wined3d_context *context, const struct wined3d_s
 
     if (state->render_states[WINED3DRS_POINTSCALEENABLE])
     {
+        DWORD h = state->viewport.height;
         GLfloat scaleFactor;
-        DWORD h = state->viewport.Height;
 
         if (pointSize.f < gl_info->limits.pointsize_min)
         {
@@ -3909,10 +3909,10 @@ static void transform_projection(struct wined3d_context *context, const struct w
     if (context->last_was_rhw)
     {
         /* Transform D3D RHW coordinates to OpenGL clip coordinates. */
-        double x = state->viewport.X;
-        double y = state->viewport.Y;
-        double w = state->viewport.Width;
-        double h = state->viewport.Height;
+        double x = state->viewport.x;
+        double y = state->viewport.y;
+        double w = state->viewport.width;
+        double h = state->viewport.height;
         double x_scale = 2.0 / w;
         double x_offset = ((63.0 / 64.0) - (2.0 * x) - w) / w;
         double y_scale = context->render_offscreen ? 2.0 / h : 2.0 / -h;
@@ -3933,10 +3933,10 @@ static void transform_projection(struct wined3d_context *context, const struct w
     else
     {
         double y_scale = context->render_offscreen ? -1.0 : 1.0;
-        double x_offset = (63.0 / 64.0) / state->viewport.Width;
+        double x_offset = (63.0 / 64.0) / state->viewport.width;
         double y_offset = context->render_offscreen
-                ? (63.0 / 64.0) / state->viewport.Height
-                : -(63.0 / 64.0) / state->viewport.Height;
+                ? (63.0 / 64.0) / state->viewport.height
+                : -(63.0 / 64.0) / state->viewport.height;
         const GLdouble projection[] =
         {
                  1.0,      0.0,  0.0, 0.0,
@@ -4590,28 +4590,28 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
 static void viewport_miscpart(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_surface *target = state->fb->render_targets[0];
-    WINED3DVIEWPORT vp = state->viewport;
+    struct wined3d_viewport vp = state->viewport;
 
-    if (vp.Width > target->resource.width)
-        vp.Width = target->resource.width;
-    if (vp.Height > target->resource.height)
-        vp.Height = target->resource.height;
+    if (vp.width > target->resource.width)
+        vp.width = target->resource.width;
+    if (vp.height > target->resource.height)
+        vp.height = target->resource.height;
 
-    glDepthRange(vp.MinZ, vp.MaxZ);
+    glDepthRange(vp.min_z, vp.max_z);
     checkGLcall("glDepthRange");
     /* Note: GL requires lower left, DirectX supplies upper left. This is
      * reversed when using offscreen rendering. */
     if (context->render_offscreen)
     {
-        glViewport(vp.X, vp.Y, vp.Width, vp.Height);
+        glViewport(vp.x, vp.y, vp.width, vp.height);
     }
     else
     {
         UINT width, height;
 
         target->get_drawable_size(context, &width, &height);
-        glViewport(vp.X, (height - (vp.Y + vp.Height)),
-                vp.Width, vp.Height);
+        glViewport(vp.x, (height - (vp.y + vp.height)),
+                vp.width, vp.height);
     }
 
     checkGLcall("glViewport");

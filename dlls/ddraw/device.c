@@ -5151,9 +5151,9 @@ IDirect3DDeviceImpl_7_SetViewport(IDirect3DDevice7 *iface,
     if(!Data)
         return DDERR_INVALIDPARAMS;
 
-    /* Note: D3DVIEWPORT7 is compatible with WINED3DVIEWPORT */
+    /* Note: D3DVIEWPORT7 is compatible with struct wined3d_viewport. */
     wined3d_mutex_lock();
-    hr = wined3d_device_set_viewport(This->wined3d_device, (WINED3DVIEWPORT *)Data);
+    hr = wined3d_device_set_viewport(This->wined3d_device, (struct wined3d_viewport *)Data);
     wined3d_mutex_unlock();
 
     return hr;
@@ -5208,9 +5208,9 @@ IDirect3DDeviceImpl_7_GetViewport(IDirect3DDevice7 *iface,
     if(!Data)
         return DDERR_INVALIDPARAMS;
 
-    /* Note: D3DVIEWPORT7 is compatible with WINED3DVIEWPORT */
+    /* Note: D3DVIEWPORT7 is compatible with struct wined3d_viewport. */
     wined3d_mutex_lock();
-    hr = wined3d_device_get_viewport(This->wined3d_device, (WINED3DVIEWPORT *)Data);
+    hr = wined3d_device_get_viewport(This->wined3d_device, (struct wined3d_viewport *)Data);
     wined3d_mutex_unlock();
 
     return hr_ddraw_from_wined3d(hr);

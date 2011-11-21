@@ -1297,9 +1297,9 @@ static HRESULT WINAPI IDirect3DDevice9Impl_SetViewport(IDirect3DDevice9Ex *iface
 
     TRACE("iface %p, viewport %p.\n", iface, pViewport);
 
-    /* Note: D3DVIEWPORT9 is compatible with WINED3DVIEWPORT */
+    /* Note: D3DVIEWPORT9 is compatible with struct wined3d_viewport. */
     wined3d_mutex_lock();
-    hr = wined3d_device_set_viewport(This->wined3d_device, (const WINED3DVIEWPORT *)pViewport);
+    hr = wined3d_device_set_viewport(This->wined3d_device, (const struct wined3d_viewport *)pViewport);
     wined3d_mutex_unlock();
 
     return hr;
@@ -1313,9 +1313,9 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetViewport(IDirect3DDevice9Ex *iface
 
     TRACE("iface %p, viewport %p.\n", iface, pViewport);
 
-    /* Note: D3DVIEWPORT9 is compatible with WINED3DVIEWPORT */
+    /* Note: D3DVIEWPORT9 is compatible with struct wined3d_viewport. */
     wined3d_mutex_lock();
-    hr = wined3d_device_get_viewport(This->wined3d_device, (WINED3DVIEWPORT *)pViewport);
+    hr = wined3d_device_get_viewport(This->wined3d_device, (struct wined3d_viewport *)pViewport);
     wined3d_mutex_unlock();
 
     return hr;

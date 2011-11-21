@@ -2407,11 +2407,11 @@ INT CDECL wined3d_device_get_base_vertex_index(const struct wined3d_device *devi
     return device->stateBlock->state.base_vertex_index;
 }
 
-HRESULT CDECL wined3d_device_set_viewport(struct wined3d_device *device, const WINED3DVIEWPORT *viewport)
+HRESULT CDECL wined3d_device_set_viewport(struct wined3d_device *device, const struct wined3d_viewport *viewport)
 {
     TRACE("device %p, viewport %p.\n", device, viewport);
-    TRACE("x %u, y %u, w %u, h %u, minz %.8e, maxz %.8e.\n",
-          viewport->X, viewport->Y, viewport->Width, viewport->Height, viewport->MinZ, viewport->MaxZ);
+    TRACE("x %u, y %u, w %u, h %u, min_z %.8e, max_z %.8e.\n",
+          viewport->x, viewport->y, viewport->width, viewport->height, viewport->min_z, viewport->max_z);
 
     device->updateStateBlock->changed.viewport = TRUE;
     device->updateStateBlock->state.viewport = *viewport;
@@ -2428,7 +2428,7 @@ HRESULT CDECL wined3d_device_set_viewport(struct wined3d_device *device, const W
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_viewport(const struct wined3d_device *device, WINED3DVIEWPORT *viewport)
+HRESULT CDECL wined3d_device_get_viewport(const struct wined3d_device *device, struct wined3d_viewport *viewport)
 {
     TRACE("device %p, viewport %p.\n", device, viewport);
 
@@ -3202,8 +3202,8 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     char *dest_ptr, *dest_conv = NULL, *dest_conv_addr = NULL;
     struct wined3d_matrix mat, proj_mat, view_mat, world_mat;
+    struct wined3d_viewport vp;
     unsigned int i;
-    WINED3DVIEWPORT vp;
     BOOL doClip;
     DWORD numTextures;
 
@@ -3289,8 +3289,8 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
 
     /* Get the viewport */
     wined3d_device_get_viewport(device, &vp);
-    TRACE("Viewport: X=%d, Y=%d, Width=%d, Height=%d, MinZ=%f, MaxZ=%f\n",
-          vp.X, vp.Y, vp.Width, vp.Height, vp.MinZ, vp.MaxZ);
+    TRACE("viewport  x %u, y %u, width %u, height %u, min_z %.8e, max_z %.8e.\n",
+          vp.x, vp.y, vp.width, vp.height, vp.min_z, vp.max_z);
 
     multiply_matrix(&mat,&view_mat,&world_mat);
     multiply_matrix(&mat,&proj_mat,&mat);
@@ -3359,13 +3359,13 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
 
                 y *= -1;
 
-                x *= vp.Width / 2;
-                y *= vp.Height / 2;
-                z *= vp.MaxZ - vp.MinZ;
+                x *= vp.width / 2;
+                y *= vp.height / 2;
+                z *= vp.max_z - vp.min_z;
 
-                x += vp.Width / 2 + vp.X;
-                y += vp.Height / 2 + vp.Y;
-                z += vp.MinZ;
+                x += vp.width / 2 + vp.x;
+                y += vp.height / 2 + vp.y;
+                z += vp.min_z;
 
                 rhw = 1 / rhw;
             } else {
@@ -4912,18 +4912,18 @@ HRESULT CDECL wined3d_device_set_render_target(struct wined3d_device *device,
         /* Set the viewport and scissor rectangles, if requested. Tests show
          * that stateblock recording is ignored, the change goes directly
          * into the primary stateblock. */
-        device->stateBlock->state.viewport.Height = device->fb.render_targets[0]->resource.height;
-        device->stateBlock->state.viewport.Width  = device->fb.render_targets[0]->resource.width;
-        device->stateBlock->state.viewport.X      = 0;
-        device->stateBlock->state.viewport.Y      = 0;
-        device->stateBlock->state.viewport.MaxZ   = 1.0f;
-        device->stateBlock->state.viewport.MinZ   = 0.0f;
+        device->stateBlock->state.viewport.height = device->fb.render_targets[0]->resource.height;
+        device->stateBlock->state.viewport.width  = device->fb.render_targets[0]->resource.width;
+        device->stateBlock->state.viewport.x      = 0;
+        device->stateBlock->state.viewport.y      = 0;
+        device->stateBlock->state.viewport.max_z  = 1.0f;
+        device->stateBlock->state.viewport.min_z  = 0.0f;
         device_invalidate_state(device, STATE_VIEWPORT);
 
         device->stateBlock->state.scissor_rect.top = 0;
         device->stateBlock->state.scissor_rect.left = 0;
-        device->stateBlock->state.scissor_rect.right = device->stateBlock->state.viewport.Width;
-        device->stateBlock->state.scissor_rect.bottom = device->stateBlock->state.viewport.Height;
+        device->stateBlock->state.scissor_rect.right = device->stateBlock->state.viewport.width;
+        device->stateBlock->state.scissor_rect.bottom = device->stateBlock->state.viewport.height;
         device_invalidate_state(device, STATE_SCISSORRECT);
     }
 
