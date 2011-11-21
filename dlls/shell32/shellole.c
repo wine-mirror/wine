@@ -112,10 +112,10 @@ HRESULT WINAPI SHCoCreateInstance(
 	IID	iid;
 	const	CLSID * myclsid = clsid;
 	WCHAR	sKeyName[MAX_PATH];
-	const	WCHAR sCLSID[7] = {'C','L','S','I','D','\\','\0'};
+	static const WCHAR sCLSID[] = {'C','L','S','I','D','\\','\0'};
 	WCHAR	sClassID[60];
-	const WCHAR sInProcServer32[16] ={'\\','I','n','p','r','o','c','S','e','r','v','e','r','3','2','\0'};
-	const WCHAR sLoadWithoutCOM[15] ={'L','o','a','d','W','i','t','h','o','u','t','C','O','M','\0'};
+	static const WCHAR sInProcServer32[] = {'\\','I','n','p','r','o','c','S','e','r','v','e','r','3','2','\0'};
+	static const WCHAR sLoadWithoutCOM[] = {'L','o','a','d','W','i','t','h','o','u','t','C','O','M','\0'};
 	WCHAR	sDllPath[MAX_PATH];
 	HKEY	hKey = 0;
 	DWORD	dwSize;
