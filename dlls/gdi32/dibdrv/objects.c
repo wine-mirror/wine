@@ -545,44 +545,39 @@ int clip_line(const POINT *start, const POINT *end, const RECT *clip,
     }
 }
 
-static void bres_line_with_bias(INT x1, INT y1, INT x2, INT y2, const bres_params *params, INT err,
-                                BOOL last_pt, void (* callback)(dibdrv_physdev*,INT,INT), dibdrv_physdev *pdev)
+static void bres_line_with_bias(const POINT *start, const struct line_params *params,
+                                void (* callback)(dibdrv_physdev*,INT,INT), dibdrv_physdev *pdev)
 {
-    const int xadd = is_x_increasing(params->octant) ? 1 : -1;
-    const int yadd = is_y_increasing(params->octant) ? 1 : -1;
-    INT erradd;
+    POINT pt = *start;
+    int len = params->length, err = params->err_start;
 
-    if (is_xmajor(params->octant))  /* line is "more horizontal" */
+    if (params->x_major)
     {
-        erradd = 2*params->dy - 2*params->dx;
-        while(x1 != x2)
+        while(len--)
         {
-            callback(pdev, x1, y1);
+            callback(pdev, pt.x, pt.y);
             if (err + params->bias > 0)
             {
-                y1 += yadd;
-                err += erradd;
+                pt.y += params->y_inc;
+                err += params->err_add_1;
             }
-            else err += 2*params->dy;
-            x1 += xadd;
+            else err += params->err_add_2;
+            pt.x += params->x_inc;
         }
-        if(last_pt) callback(pdev, x1, y1);
     }
-    else   /* line is "more vertical" */
+    else
     {
-        erradd = 2*params->dx - 2*params->dy;
-        while(y1 != y2)
+        while(len--)
         {
-            callback(pdev, x1, y1);
+            callback(pdev, pt.x, pt.y);
             if (err + params->bias > 0)
             {
-                x1 += xadd;
-                err += erradd;
+                pt.x += params->x_inc;
+                err += params->err_add_1;
             }
-            else err += 2*params->dx;
-            y1 += yadd;
+            else err += params->err_add_2;
+            pt.y += params->y_inc;
         }
-        if(last_pt) callback(pdev, x1, y1);
     }
 }
 
@@ -651,38 +646,58 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
     }
     else
     {
-        bres_params params;
-        INT dx = end->x - start->x;
-        INT dy = end->y - start->y;
+        bres_params clip_params;
+        struct line_params line_params;
+        INT dx = end->x - start->x, dy = end->y - start->y;
+        INT abs_dx = abs(dx), abs_dy = abs(dy);
         INT i;
 
-        params.dx = abs(dx);
-        params.dy = abs(dy);
-        params.octant = get_octant_mask(dx, dy);
-        params.bias   = get_bias(params.octant);
+        clip_params.dx = abs_dx;
+        clip_params.dy = abs_dy;
+        clip_params.octant = get_octant_mask(dx, dy);
+        clip_params.bias   = get_bias( clip_params.octant );
+
+        line_params.bias    = clip_params.bias;
+        line_params.x_major = is_xmajor( clip_params.octant );
+        line_params.x_inc   = is_x_increasing( clip_params.octant ) ? 1 : -1;
+        line_params.y_inc   = is_y_increasing( clip_params.octant ) ? 1 : -1;
+
+        if (line_params.x_major)
+        {
+            line_params.err_add_1 = 2 * abs_dy - 2 * abs_dx;
+            line_params.err_add_2 = 2 * abs_dy;
+        }
+        else
+        {
+            line_params.err_add_1 = 2 * abs_dx - 2 * abs_dy;
+            line_params.err_add_2 = 2 * abs_dx;
+        }
 
         for(i = 0; i < clip->numRects; i++)
         {
             POINT clipped_start, clipped_end;
             int clip_status;
-            clip_status = clip_line(start, end, clip->rects + i, &params, &clipped_start, &clipped_end);
+            clip_status = clip_line(start, end, clip->rects + i, &clip_params, &clipped_start, &clipped_end);
 
             if(clip_status)
             {
                 int m = abs(clipped_start.x - start->x);
                 int n = abs(clipped_start.y - start->y);
-                int err;
-                BOOL last_pt = FALSE;
 
-                if(is_xmajor(params.octant))
-                    err = 2 * params.dy - params.dx + m * 2 * params.dy - n * 2 * params.dx;
+                if (line_params.x_major)
+                {
+                    line_params.err_start = 2 * abs_dy - abs_dx + m * 2 * abs_dy - n * 2 * abs_dx;
+                    line_params.length = abs( clipped_end.x - clipped_start.x ) + 1;
+                }
                 else
-                    err = 2 * params.dx - params.dy + n * 2 * params.dx - m * 2 * params.dy;
+                {
+                    line_params.err_start = 2 * abs_dx - abs_dy + n * 2 * abs_dx - m * 2 * abs_dy;
+                    line_params.length = abs( clipped_end.y - clipped_start.y ) + 1;
+                }
 
-                if(clip_status == 1 && (end->x != clipped_end.x || end->y != clipped_end.y)) last_pt = TRUE;
+                if (clipped_end.x == end->x && clipped_end.y == end->y) line_params.length--;
 
-                bres_line_with_bias(clipped_start.x, clipped_start.y, clipped_end.x, clipped_end.y, &params,
-                                    err, last_pt, solid_pen_line_callback, pdev);
+                bres_line_with_bias( &clipped_start, &line_params, solid_pen_line_callback, pdev );
 
                 if(clip_status == 2) break; /* completely unclipped, so we can finish */
             }
@@ -923,54 +938,70 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
     }
     else
     {
-        bres_params params;
-        INT dx = end->x - start->x;
-        INT dy = end->y - start->y;
+        bres_params clip_params;
+        struct line_params line_params;
+        INT dx = end->x - start->x, dy = end->y - start->y;
+        INT abs_dx = abs(dx), abs_dy = abs(dy);
         INT i;
 
-        params.dx = abs(dx);
-        params.dy = abs(dy);
-        params.octant = get_octant_mask(dx, dy);
-        params.bias   = get_bias(params.octant);
+        clip_params.dx = abs_dx;
+        clip_params.dy = abs_dy;
+        clip_params.octant = get_octant_mask(dx, dy);
+        clip_params.bias   = get_bias( clip_params.octant );
+
+        line_params.bias    = clip_params.bias;
+        line_params.x_major = is_xmajor( clip_params.octant );
+        line_params.x_inc   = is_x_increasing( clip_params.octant ) ? 1 : -1;
+        line_params.y_inc   = is_y_increasing( clip_params.octant ) ? 1 : -1;
+
+        if (line_params.x_major)
+        {
+            line_params.err_add_1 = 2 * abs_dy - 2 * abs_dx;
+            line_params.err_add_2 = 2 * abs_dy;
+        }
+        else
+        {
+            line_params.err_add_1 = 2 * abs_dx - 2 * abs_dy;
+            line_params.err_add_2 = 2 * abs_dx;
+        }
 
         for(i = 0; i < clip->numRects; i++)
         {
             POINT clipped_start, clipped_end;
             int clip_status;
-            clip_status = clip_line(start, end, clip->rects + i, &params, &clipped_start, &clipped_end);
+            clip_status = clip_line(start, end, clip->rects + i, &clip_params, &clipped_start, &clipped_end);
 
             if(clip_status)
             {
                 int m = abs(clipped_start.x - start->x);
                 int n = abs(clipped_start.y - start->y);
-                int err;
-                BOOL last_pt = FALSE;
 
                 pdev->dash_pos = start_pos;
 
-                if(is_xmajor(params.octant))
+                if (line_params.x_major)
                 {
-                    err = 2 * params.dy - params.dx + m * 2 * params.dy - n * 2 * params.dx;
+                    line_params.err_start = 2 * abs_dy - abs_dx + m * 2 * abs_dy - n * 2 * abs_dx;
+                    line_params.length = abs( clipped_end.x - clipped_start.x ) + 1;
                     skip_dash(pdev, m);
                 }
                 else
                 {
-                    err = 2 * params.dx - params.dy + n * 2 * params.dx - m * 2 * params.dy;
+                    line_params.err_start = 2 * abs_dx - abs_dy + n * 2 * abs_dx - m * 2 * abs_dy;
+                    line_params.length = abs( clipped_end.y - clipped_start.y ) + 1;
                     skip_dash(pdev, n);
                 }
-                if(clip_status == 1 && (end->x != clipped_end.x || end->y != clipped_end.y)) last_pt = TRUE;
+                if (clipped_end.x == end->x && clipped_end.y == end->y) line_params.length--;
 
-                bres_line_with_bias(clipped_start.x, clipped_start.y, clipped_end.x, clipped_end.y, &params,
-                                    err, last_pt, dashed_pen_line_callback, pdev);
+                bres_line_with_bias( &clipped_start, &line_params, dashed_pen_line_callback, pdev );
 
                 if(clip_status == 2) break; /* completely unclipped, so we can finish */
             }
         }
         pdev->dash_pos = start_pos;
-        if(is_xmajor(params.octant))
-            skip_dash(pdev, params.dx);
+        if(line_params.x_major)
+            skip_dash(pdev, abs_dx);
         else
-            skip_dash(pdev, params.dy);
+            skip_dash(pdev, abs_dy);
     }
 
     release_wine_region(pdev->clip);

@@ -147,6 +147,14 @@ static inline dibdrv_physdev *get_dibdrv_pdev( PHYSDEV dev )
     return (dibdrv_physdev *)dev;
 }
 
+struct line_params
+{
+    int err_start, err_add_1, err_add_2, bias;
+    unsigned int length;
+    int x_inc, y_inc;
+    BOOL x_major;
+};
+
 struct stretch_params
 {
     int err_start, err_add_1, err_add_2;
