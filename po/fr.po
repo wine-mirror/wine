@@ -2427,14 +2427,6 @@ msgstr "Supprimer"
 msgid "Security"
 msgstr "Sécurité"
 
-#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listview"
-
-#: inetcpl.rc:95
-msgid "trackbar"
-msgstr "trackbar"
-
 #: inetcpl.rc:108
 msgid " Certificates "
 msgstr " Certificats "
@@ -11501,6 +11493,10 @@ msgid ""
 msgstr ""
 "N'a pu se connecter au gestionnaire de montage : la configuration du lecteur "
 "n'a pu être éditée."
+
+#: winecfg.rc:236 winecfg.rc:302
+msgid "Listview"
+msgstr "Listview"
 
 #: winecfg.rc:238
 msgid "&Add..."

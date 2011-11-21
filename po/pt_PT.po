@@ -2592,14 +2592,6 @@ msgstr "Excluir"
 msgid "Security"
 msgstr "Segurança"
 
-#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listagem"
-
-#: inetcpl.rc:95
-msgid "trackbar"
-msgstr ""
-
 #: inetcpl.rc:108
 #, fuzzy
 msgid " Certificates "
@@ -11739,6 +11731,10 @@ msgid ""
 msgstr ""
 "Falhou a ligação ao gestor de unidades, a configuração da unidade não pode "
 "ser editada."
+
+#: winecfg.rc:236 winecfg.rc:302
+msgid "Listview"
+msgstr "Listagem"
 
 #: winecfg.rc:238
 msgid "&Add..."

@@ -2455,14 +2455,6 @@ msgstr "Eliminar"
 msgid "Security"
 msgstr "Seguridad"
 
-#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listview"
-
-#: inetcpl.rc:95
-msgid "trackbar"
-msgstr ""
-
 #: inetcpl.rc:108
 #, fuzzy
 msgid " Certificates "
@@ -11826,6 +11818,10 @@ msgid ""
 msgstr ""
 "Conexión fallida al gestor de montaje, la configuración de unidades no se "
 "puede editar."
+
+#: winecfg.rc:236 winecfg.rc:302
+msgid "Listview"
+msgstr "Listview"
 
 #: winecfg.rc:238
 msgid "&Add..."

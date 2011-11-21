@@ -2425,14 +2425,6 @@ msgstr "Usuń"
 msgid "Security"
 msgstr "Prawa dostępu"
 
-#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Widok listy"
-
-#: inetcpl.rc:95
-msgid "trackbar"
-msgstr "pasek śledzenia"
-
 #: inetcpl.rc:108
 msgid " Certificates "
 msgstr " Certyfikaty "
@@ -11407,6 +11399,10 @@ msgid ""
 msgstr ""
 "Nieudane połączenie z menedżerem montowania, konfiguracja napędu nie może "
 "być zmodyfikowana."
+
+#: winecfg.rc:236 winecfg.rc:302
+msgid "Listview"
+msgstr "Widok listy"
 
 #: winecfg.rc:238
 msgid "&Add..."

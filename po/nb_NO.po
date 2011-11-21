@@ -2550,14 +2550,6 @@ msgstr "Slett"
 msgid "Security"
 msgstr "Sikkerhet"
 
-#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listevisning"
-
-#: inetcpl.rc:95
-msgid "trackbar"
-msgstr ""
-
 #: inetcpl.rc:108
 #, fuzzy
 msgid " Certificates "
@@ -11642,6 +11634,10 @@ msgid ""
 msgstr ""
 "Klarte ikke koble til monteringsbehandleren; diskstasjonene kan derfor ikke "
 "redigeres."
+
+#: winecfg.rc:236 winecfg.rc:302
+msgid "Listview"
+msgstr "Listevisning"
 
 #: winecfg.rc:238
 msgid "&Add..."

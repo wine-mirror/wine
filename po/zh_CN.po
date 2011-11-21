@@ -2434,14 +2434,6 @@ msgstr "删除"
 msgid "Security"
 msgstr "安全(&S)"
 
-#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listview"
-
-#: inetcpl.rc:95
-msgid "trackbar"
-msgstr ""
-
 #: inetcpl.rc:108
 #, fuzzy
 msgid " Certificates "
@@ -11227,6 +11219,10 @@ msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
 msgstr "无法连接到挂载管理器。不能修改驱动器配置。"
+
+#: winecfg.rc:236 winecfg.rc:302
+msgid "Listview"
+msgstr "Listview"
 
 #: winecfg.rc:238
 msgid "&Add..."

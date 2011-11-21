@@ -2435,14 +2435,6 @@ msgstr "Verwijderen"
 msgid "Security"
 msgstr "Beveiliging"
 
-#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listview"
-
-#: inetcpl.rc:95
-msgid "trackbar"
-msgstr ""
-
 #: inetcpl.rc:108
 msgid " Certificates "
 msgstr " Certificaten "
@@ -11513,6 +11505,10 @@ msgid ""
 msgstr ""
 "Kon niet verbinden met de mount manager, de schijfconfiguratie kan niet "
 "worden bewerkt."
+
+#: winecfg.rc:236 winecfg.rc:302
+msgid "Listview"
+msgstr "Listview"
 
 #: winecfg.rc:238
 msgid "&Add..."

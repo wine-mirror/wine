@@ -2426,14 +2426,6 @@ msgstr "Ta bort"
 msgid "Security"
 msgstr "Säkerhet"
 
-#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listvy"
-
-#: inetcpl.rc:95
-msgid "trackbar"
-msgstr ""
-
 #: inetcpl.rc:108
 msgid " Certificates "
 msgstr " Certifikat "
@@ -11350,6 +11342,10 @@ msgid ""
 msgstr ""
 "Misslyckades med att ansluta till monteringshanteraren. "
 "Enhetskonfigurationen kan inte redigeras."
+
+#: winecfg.rc:236 winecfg.rc:302
+msgid "Listview"
+msgstr "Listvy"
 
 #: winecfg.rc:238
 msgid "&Add..."

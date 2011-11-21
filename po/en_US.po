@@ -2414,14 +2414,6 @@ msgstr "Delete"
 msgid "Security"
 msgstr "Security"
 
-#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listview"
-
-#: inetcpl.rc:95
-msgid "trackbar"
-msgstr "trackbar"
-
 #: inetcpl.rc:108
 msgid " Certificates "
 msgstr " Certificates "
@@ -11346,6 +11338,10 @@ msgid ""
 msgstr ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
+
+#: winecfg.rc:236 winecfg.rc:302
+msgid "Listview"
+msgstr "Listview"
 
 #: winecfg.rc:238
 msgid "&Add..."

@@ -2379,15 +2379,6 @@ msgstr "מחיקה"
 msgid "Security"
 msgstr "אבטחה"
 
-#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
-#, fuzzy
-msgid "Listview"
-msgstr "רשימה"
-
-#: inetcpl.rc:95
-msgid "trackbar"
-msgstr ""
-
 #: inetcpl.rc:108
 msgid " Certificates "
 msgstr " אישורים "
@@ -11434,6 +11425,11 @@ msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
 msgstr ""
+
+#: winecfg.rc:236 winecfg.rc:302
+#, fuzzy
+msgid "Listview"
+msgstr "רשימה"
 
 #: winecfg.rc:238
 #, fuzzy

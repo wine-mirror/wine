@@ -2418,14 +2418,6 @@ msgstr "Löschen"
 msgid "Security"
 msgstr "Sicherheit"
 
-#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listview"
-
-#: inetcpl.rc:95
-msgid "trackbar"
-msgstr "trackbar"
-
 #: inetcpl.rc:108
 msgid " Certificates "
 msgstr " Zertifikate "
@@ -11461,6 +11453,10 @@ msgid ""
 msgstr ""
 "Fehler beim Verbinden mit dem Mountmanager. Die Laufwerkskonfiguration kann "
 "nicht bearbeitet werden."
+
+#: winecfg.rc:236 winecfg.rc:302
+msgid "Listview"
+msgstr "Listview"
 
 #: winecfg.rc:238
 msgid "&Add..."

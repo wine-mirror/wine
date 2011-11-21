@@ -2435,14 +2435,6 @@ msgstr "Izbriši"
 msgid "Security"
 msgstr "Varnost"
 
-#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listview"
-
-#: inetcpl.rc:95
-msgid "trackbar"
-msgstr ""
-
 #: inetcpl.rc:108
 #, fuzzy
 msgid " Certificates "
@@ -11416,6 +11408,10 @@ msgid ""
 msgstr ""
 "Napaka pri povezovanju z upravljalnikom priklopov (mount manager); "
 "nastavitev pogonov ne bo mogoče urejati."
+
+#: winecfg.rc:236 winecfg.rc:302
+msgid "Listview"
+msgstr "Listview"
 
 #: winecfg.rc:238
 msgid "&Add..."

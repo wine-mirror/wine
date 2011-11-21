@@ -2413,14 +2413,6 @@ msgstr "지우기"
 msgid "Security"
 msgstr "보안"
 
-#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "목록보기"
-
-#: inetcpl.rc:95
-msgid "trackbar"
-msgstr "트랙바"
-
 #: inetcpl.rc:108
 msgid " Certificates "
 msgstr " 인증서 "
@@ -11312,6 +11304,10 @@ msgid ""
 "edited."
 msgstr ""
 "연결 관리자가 연결하는 데 실패함, 이 드라이브 설정을 수정될 수 없습니다."
+
+#: winecfg.rc:236 winecfg.rc:302
+msgid "Listview"
+msgstr "목록보기"
 
 #: winecfg.rc:238
 msgid "&Add..."

@@ -2443,14 +2443,6 @@ msgstr "&Izbriši"
 msgid "Security"
 msgstr ""
 
-#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listing"
-
-#: inetcpl.rc:95
-msgid "trackbar"
-msgstr ""
-
 #: inetcpl.rc:108
 msgid " Certificates "
 msgstr "Sertifikati"
@@ -11417,6 +11409,10 @@ msgid ""
 msgstr ""
 "Uspelo povezivanje sa mount menadžerom, disk konfiguracija se ne može "
 "izmeniti."
+
+#: winecfg.rc:236 winecfg.rc:302
+msgid "Listview"
+msgstr "Listing"
 
 #: winecfg.rc:238
 msgid "&Add..."

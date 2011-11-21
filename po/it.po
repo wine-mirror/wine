@@ -2423,14 +2423,6 @@ msgstr "Elimina"
 msgid "Security"
 msgstr "Sicurezza"
 
-#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listview"
-
-#: inetcpl.rc:95
-msgid "trackbar"
-msgstr "trackbar"
-
 #: inetcpl.rc:108
 msgid " Certificates "
 msgstr " Certificati "
@@ -11438,6 +11430,10 @@ msgid ""
 msgstr ""
 "Impossibile connettersi al gestore delle unità, la configurazione dell'unità "
 "non può essere modificata."
+
+#: winecfg.rc:236 winecfg.rc:302
+msgid "Listview"
+msgstr "Listview"
 
 #: winecfg.rc:238
 msgid "&Add..."

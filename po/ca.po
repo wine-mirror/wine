@@ -2424,14 +2424,6 @@ msgstr "Suprimeix"
 msgid "Security"
 msgstr "Seguritat"
 
-#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Vista de llista"
-
-#: inetcpl.rc:95
-msgid "trackbar"
-msgstr ""
-
 #: inetcpl.rc:108
 #, fuzzy
 msgid " Certificates "
@@ -11530,6 +11522,10 @@ msgid ""
 msgstr ""
 "S'ha fallat en connectar el gestor de muntatge, la configuraci d'unitat no "
 "es pot editor."
+
+#: winecfg.rc:236 winecfg.rc:302
+msgid "Listview"
+msgstr "Vista de llista"
 
 #: winecfg.rc:238
 msgid "&Add..."

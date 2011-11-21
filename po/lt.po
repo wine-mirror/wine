@@ -2424,14 +2424,6 @@ msgstr "Šalinti"
 msgid "Security"
 msgstr "Saugumas"
 
-#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listview"
-
-#: inetcpl.rc:95
-msgid "trackbar"
-msgstr "trackbar"
-
 #: inetcpl.rc:108
 msgid " Certificates "
 msgstr " Liudijimai "
@@ -11385,6 +11377,10 @@ msgid ""
 msgstr ""
 "Nepavyko prisijungti prie diskų tvarkytuvės, diskų konfigūracija negali būti "
 "redaguojama."
+
+#: winecfg.rc:236 winecfg.rc:302
+msgid "Listview"
+msgstr "Listview"
 
 #: winecfg.rc:238
 msgid "&Add..."

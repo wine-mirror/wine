@@ -2414,14 +2414,6 @@ msgstr "削除"
 msgid "Security"
 msgstr "セキュリティ"
 
-#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listview"
-
-#: inetcpl.rc:95
-msgid "trackbar"
-msgstr ""
-
 #: inetcpl.rc:108
 msgid " Certificates "
 msgstr " 証明書 "
@@ -11377,6 +11369,10 @@ msgid ""
 "edited."
 msgstr ""
 "マウントマネージャへの接続に失敗したため、ドライブ設定は変更できません。"
+
+#: winecfg.rc:236 winecfg.rc:302
+msgid "Listview"
+msgstr "Listview"
 
 #: winecfg.rc:238
 msgid "&Add..."

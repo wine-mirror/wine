@@ -2370,15 +2370,6 @@ msgstr "ลบ\tDel"
 msgid "Security"
 msgstr ""
 
-#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
-#, fuzzy
-msgid "Listview"
-msgstr "กําหนด"
-
-#: inetcpl.rc:95
-msgid "trackbar"
-msgstr ""
-
 #: inetcpl.rc:108
 #, fuzzy
 msgid " Certificates "
@@ -10947,6 +10938,11 @@ msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
 msgstr ""
+
+#: winecfg.rc:236 winecfg.rc:302
+#, fuzzy
+msgid "Listview"
+msgstr "กําหนด"
 
 #: winecfg.rc:238
 msgid "&Add..."

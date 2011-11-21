@@ -2419,14 +2419,6 @@ msgstr "Удалить"
 msgid "Security"
 msgstr "Безопасность"
 
-#: inetcpl.rc:90 winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listview"
-
-#: inetcpl.rc:95
-msgid "trackbar"
-msgstr "trackbar"
-
 #: inetcpl.rc:108
 msgid " Certificates "
 msgstr " Сертификаты "
@@ -11381,6 +11373,10 @@ msgid ""
 msgstr ""
 "Невозможно соединиться с mount manager! Конфигурация дисков не будет "
 "редактироваться."
+
+#: winecfg.rc:236 winecfg.rc:302
+msgid "Listview"
+msgstr "Listview"
 
 #: winecfg.rc:238
 msgid "&Add..."
