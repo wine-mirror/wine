@@ -1146,8 +1146,8 @@ static void test_wcsrchr(void)
 static void test_wcslwrupr(void)
 {
     static WCHAR teststringW[] = {'a','b','r','a','c','a','d','a','b','r','a',0};
-    static WCHAR emptyW[1] = {0};
-    static const WCHAR constemptyW[1] = {0};
+    static WCHAR emptyW[] = {0};
+    static const WCHAR constemptyW[] = {0};
 
     if (0) /* crashes on native */
     {
