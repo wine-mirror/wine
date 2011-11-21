@@ -866,6 +866,28 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
             last_indic = base_indic(scripts[i]);
     }
 
+    for (i = 0; i < cInChars; i++)
+    {
+        /* Joiners get merged preferencially right */
+        if (i > 0 && (pwcInChars[i] == ZWJ || pwcInChars[i] == ZWNJ))
+        {
+            int j;
+            if (i+1 == cInChars)
+                scripts[i] = scripts[i-1];
+            else
+            {
+                for (j = i+1; j < cInChars; j++)
+                {
+                    if (pwcInChars[j] != ZWJ && pwcInChars[j] != ZWNJ && pwcInChars[j] != Numeric_space)
+                    {
+                        scripts[i] = scripts[j];
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     if (psState && psControl)
     {
         levels = heap_alloc_zero(cInChars * sizeof(WORD));
@@ -899,9 +921,9 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
             }
             BIDI_GetStrengths(pwcInChars, cInChars, psControl, strength);
 
-            /* Script_Numeric and select puncuation at level 0 get bumped to level 2 */
             for (i = 0; i < cInChars; i++)
             {
+                /* Script_Numeric and select puncuation at level 0 get bumped to level 2 */
                 if ((levels[i] == 0 || (odd(psState->uBidiLevel) && levels[i] == psState->uBidiLevel+1)) && inNumber && strchrW(math_punc,pwcInChars[i]))
                 {
                     scripts[i] = Script_Numeric;
@@ -914,6 +936,21 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
                 }
                 else
                     inNumber = FALSE;
+
+                /* Joiners get merged preferencially right */
+                if (i > 0 && (pwcInChars[i] == ZWJ || pwcInChars[i] == ZWNJ))
+                {
+                    int j;
+                    if (i+1 == cInChars && levels[i-1] == levels[i])
+                        strength[i] = strength[i-1];
+                    else
+                        for (j = i+1; j < cInChars && levels[i] == levels[j]; j++)
+                            if (pwcInChars[j] != ZWJ && pwcInChars[j] != ZWNJ && pwcInChars[j] != Numeric_space)
+                            {
+                                strength[i] = strength[j];
+                                break;
+                            }
+                }
             }
             if (psControl->fMergeNeutralItems)
             {
@@ -956,7 +993,7 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
         }
     }
 
-    while ((!levels || (levels && levels[cnt+1] == levels[0])) && (pwcInChars[cnt] == Numeric_space || pwcInChars[cnt] == ZWJ || pwcInChars[cnt] == ZWNJ) && cnt < cInChars)
+    while ((!levels || (levels && levels[cnt+1] == levels[0])) && (pwcInChars[cnt] == Numeric_space) && cnt < cInChars)
         cnt++;
 
     if (cnt == cInChars) /* All Spaces */
@@ -1000,12 +1037,12 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
 
     for (cnt=1; cnt < cInChars; cnt++)
     {
-        if(pwcInChars[cnt] != Numeric_space && pwcInChars[cnt] != ZWJ && pwcInChars[cnt] != ZWNJ)
+        if(pwcInChars[cnt] != Numeric_space)
             New_Script = scripts[cnt];
         else if (levels)
         {
             int j = 1;
-            while (cnt + j < cInChars - 1 && (pwcInChars[cnt+j] == Numeric_space || pwcInChars[cnt+j] == ZWJ || pwcInChars[cnt+j] == ZWNJ) && levels[cnt] == levels[cnt+j])
+            while (cnt + j < cInChars - 1 && pwcInChars[cnt+j] == Numeric_space && levels[cnt] == levels[cnt+j])
                 j++;
             if (cnt + j < cInChars && levels[cnt] == levels[cnt+j])
                 New_Script = scripts[cnt+j];
