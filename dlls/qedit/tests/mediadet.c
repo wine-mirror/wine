@@ -19,6 +19,7 @@
  */
 
 #define COBJMACROS
+#define CONST_VTABLE
 
 #include "initguid.h"
 #include "ole2.h"
@@ -27,6 +28,47 @@
 #include "wine/test.h"
 #include "qedit.h"
 #include "rc.h"
+
+/* Outer IUnknown for COM aggregation tests */
+struct unk_impl {
+    IUnknown IUnknown_iface;
+    LONG ref;
+    IUnknown *inner_unk;
+};
+
+static inline struct unk_impl *impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct unk_impl, IUnknown_iface);
+}
+
+static HRESULT WINAPI unk_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    struct unk_impl *This = impl_from_IUnknown(iface);
+
+    return IUnknown_QueryInterface(This->inner_unk, riid, ppv);
+}
+
+static ULONG WINAPI unk_AddRef(IUnknown *iface)
+{
+    struct unk_impl *This = impl_from_IUnknown(iface);
+
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI unk_Release(IUnknown *iface)
+{
+    struct unk_impl *This = impl_from_IUnknown(iface);
+
+    return InterlockedDecrement(&This->ref);
+}
+
+static const IUnknownVtbl unk_vtbl =
+{
+    unk_QueryInterface,
+    unk_AddRef,
+    unk_Release
+};
+
 
 static WCHAR test_avi_filename[MAX_PATH];
 static WCHAR test_sound_avi_filename[MAX_PATH];
@@ -294,6 +336,31 @@ static void test_mediadet(void)
     DeleteFileW(test_sound_avi_filename);
 }
 
+static void test_samplegrabber(void)
+{
+    struct unk_impl unk_obj = {{&unk_vtbl}, 19, NULL};
+    ISampleGrabber *sg;
+    ULONG refcount;
+    HRESULT hr;
+
+    /* COM aggregation */
+    hr = CoCreateInstance(&CLSID_SampleGrabber, &unk_obj.IUnknown_iface, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void**)&unk_obj.inner_unk);
+    todo_wine ok(hr == S_OK, "CoCreateInstance failed: %08x\n", hr);
+    if (hr != S_OK) return;
+
+    hr = IUnknown_QueryInterface(unk_obj.inner_unk, &IID_ISampleGrabber, (void**)&sg);
+    ok(hr == S_OK, "QueryInterface for IID_ISampleGrabber failed: %08x\n", hr);
+    refcount = ISampleGrabber_AddRef(sg);
+    ok(refcount == unk_obj.ref, "SampleGrabber just pretends to support COM aggregation\n");
+    refcount = ISampleGrabber_Release(sg);
+    ok(refcount == unk_obj.ref, "SampleGrabber just pretends to support COM aggregation\n");
+    refcount = ISampleGrabber_Release(sg);
+    ok(refcount == 19, "Refcount should be back at 19 but is %u\n", refcount);
+
+    IUnknown_Release(unk_obj.inner_unk);
+}
+
 START_TEST(mediadet)
 {
     if (!init_tests())
@@ -304,5 +371,6 @@ START_TEST(mediadet)
 
     CoInitialize(NULL);
     test_mediadet();
+    test_samplegrabber();
     CoUninitialize();
 }
