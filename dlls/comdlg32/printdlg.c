@@ -2433,7 +2433,7 @@ static WCHAR get_decimal_sep(void)
 
     if(!sep)
     {
-        WCHAR buf[2] = {'.',0};
+        WCHAR buf[] = {'.', 0};
         GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, buf, sizeof(buf) / sizeof(buf[0]));
         sep = buf[0];
     }

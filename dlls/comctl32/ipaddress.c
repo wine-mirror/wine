@@ -339,7 +339,7 @@ static BOOL IPADDRESS_SetRange (IPADDRESS_INFO *infoPtr, int index, WORD range)
 
 static void IPADDRESS_ClearAddress (const IPADDRESS_INFO *infoPtr)
 {
-    WCHAR nil[1] = { 0 };
+    static const WCHAR nil[] = { 0 };
     int i;
 
     TRACE("\n");
