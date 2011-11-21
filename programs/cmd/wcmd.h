@@ -215,9 +215,6 @@ typedef struct _DIRECTORY_STACK
 /* Must be last in list */
 #define WCMD_EXIT     44
 
-#define NUM_EXTERNALS 2
-extern const WCHAR externals[NUM_EXTERNALS][10];
-
 /* Some standard messages */
 extern const WCHAR newline[];
 extern const WCHAR space[];

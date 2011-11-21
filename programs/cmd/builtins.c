@@ -41,18 +41,70 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
-static struct env_stack *saved_environment;
-struct env_stack *pushd_directories;
-
 extern HINSTANCE hinst;
-extern WCHAR inbuilt[][10];
 extern int defaultColor;
 extern BOOL echo_mode;
 extern WCHAR quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 extern BATCH_CONTEXT *context;
 extern DWORD errorlevel;
 
+static struct env_stack *saved_environment;
+struct env_stack *pushd_directories;
+
 static BOOL verify_mode = FALSE;
+
+const WCHAR inbuilt[][10] = {
+        {'C','A','L','L','\0'},
+        {'C','D','\0'},
+        {'C','H','D','I','R','\0'},
+        {'C','L','S','\0'},
+        {'C','O','P','Y','\0'},
+        {'C','T','T','Y','\0'},
+        {'D','A','T','E','\0'},
+        {'D','E','L','\0'},
+        {'D','I','R','\0'},
+        {'E','C','H','O','\0'},
+        {'E','R','A','S','E','\0'},
+        {'F','O','R','\0'},
+        {'G','O','T','O','\0'},
+        {'H','E','L','P','\0'},
+        {'I','F','\0'},
+        {'L','A','B','E','L','\0'},
+        {'M','D','\0'},
+        {'M','K','D','I','R','\0'},
+        {'M','O','V','E','\0'},
+        {'P','A','T','H','\0'},
+        {'P','A','U','S','E','\0'},
+        {'P','R','O','M','P','T','\0'},
+        {'R','E','M','\0'},
+        {'R','E','N','\0'},
+        {'R','E','N','A','M','E','\0'},
+        {'R','D','\0'},
+        {'R','M','D','I','R','\0'},
+        {'S','E','T','\0'},
+        {'S','H','I','F','T','\0'},
+        {'T','I','M','E','\0'},
+        {'T','I','T','L','E','\0'},
+        {'T','Y','P','E','\0'},
+        {'V','E','R','I','F','Y','\0'},
+        {'V','E','R','\0'},
+        {'V','O','L','\0'},
+        {'E','N','D','L','O','C','A','L','\0'},
+        {'S','E','T','L','O','C','A','L','\0'},
+        {'P','U','S','H','D','\0'},
+        {'P','O','P','D','\0'},
+        {'A','S','S','O','C','\0'},
+        {'C','O','L','O','R','\0'},
+        {'F','T','Y','P','E','\0'},
+        {'M','O','R','E','\0'},
+        {'C','H','O','I','C','E','\0'},
+        {'E','X','I','T','\0'}
+};
+
+static const WCHAR externals[][10] = {
+        {'A','T','T','R','I','B','\0'},
+        {'X','C','O','P','Y','\0'}
+};
 
 const WCHAR dotW[]    = {'.','\0'};
 const WCHAR dotdotW[] = {'.','.','\0'};
