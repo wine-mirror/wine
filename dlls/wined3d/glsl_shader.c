@@ -5085,6 +5085,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_UDIV          */ NULL,
     /* WINED3DSIH_USHR          */ NULL,
     /* WINED3DSIH_UTOF          */ NULL,
+    /* WINED3DSIH_XOR           */ NULL,
 };
 
 static void shader_glsl_handle_instruction(const struct wined3d_shader_instruction *ins) {

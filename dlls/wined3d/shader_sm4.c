@@ -97,6 +97,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM4_OP_UDIV         = 0x4e,
     WINED3D_SM4_OP_USHR         = 0x55,
     WINED3D_SM4_OP_UTOF         = 0x56,
+    WINED3D_SM4_OP_XOR          = 0x57,
 };
 
 enum wined3d_sm4_register_type
@@ -185,6 +186,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM4_OP_UDIV,       WINED3DSIH_UDIV,        2,  2},
     {WINED3D_SM4_OP_USHR,       WINED3DSIH_USHR,        1,  2},
     {WINED3D_SM4_OP_UTOF,       WINED3DSIH_UTOF,        1,  1},
+    {WINED3D_SM4_OP_XOR,        WINED3DSIH_XOR,         1,  2},
 };
 
 static const enum wined3d_shader_register_type register_type_table[] =
