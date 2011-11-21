@@ -2718,11 +2718,7 @@ static void test_decodeExtensions(DWORD dwEncoding)
         {
             ret = pCryptDecodeObjectEx(dwEncoding, X509_EXTENSIONS,
              exts[i].encoded, exts[i].encoded[1] + 2, 0, NULL, buf, &bufSize);
-            if (!i)
-                ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
-            else
-                todo_wine
-                ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
+            ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
             HeapFree(GetProcessHeap(), 0, buf);
         }
     }
@@ -3626,7 +3622,6 @@ static void test_decodeCRLDistPoints(DWORD dwEncoding)
         ret = pCryptDecodeObjectEx(dwEncoding, X509_CRL_DIST_POINTS,
          distPointWithUrlAndIssuer, distPointWithUrlAndIssuer[1] + 2, 0,
          NULL, buf, &size);
-        todo_wine
         ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
         HeapFree(GetProcessHeap(), 0, buf);
     }
@@ -4778,7 +4773,6 @@ static void test_decodeEnhancedKeyUsage(DWORD dwEncoding)
     {
         ret = pCryptDecodeObjectEx(dwEncoding, X509_ENHANCED_KEY_USAGE,
          encodedUsage, sizeof(encodedUsage), 0, NULL, buf, &size);
-        todo_wine
         ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
         HeapFree(GetProcessHeap(), 0, buf);
     }
@@ -5266,7 +5260,6 @@ static void test_decodeAuthorityInfoAccess(DWORD dwEncoding)
         ret = pCryptDecodeObjectEx(dwEncoding, X509_AUTHORITY_INFO_ACCESS,
          authorityInfoAccessWithUrlAndIPAddr,
          sizeof(authorityInfoAccessWithUrlAndIPAddr), 0, NULL, buf, &size);
-        todo_wine
         ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
         HeapFree(GetProcessHeap(), 0, buf);
     }
@@ -6231,7 +6224,6 @@ static void test_decodePKCSAttributes(DWORD dwEncoding)
     {
         ret = pCryptDecodeObjectEx(dwEncoding, PKCS_ATTRIBUTES,
          doublePKCSAttributes, sizeof(doublePKCSAttributes), 0, NULL, buf, &size);
-        todo_wine
         ok(ret, "CryptDecodeObjectEx failed: %x\n", GetLastError());
         HeapFree(GetProcessHeap(), 0, buf);
     }
@@ -6402,7 +6394,6 @@ static void test_decodePKCSSMimeCapabilities(DWORD dwEncoding)
         SetLastError(0xdeadbeef);
         ret = pCryptDecodeObjectEx(dwEncoding, PKCS_SMIME_CAPABILITIES,
          twoCapabilities, sizeof(twoCapabilities), 0, NULL, ptr, &size);
-        todo_wine
         ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
         HeapFree(GetProcessHeap(), 0, ptr);
     }
@@ -7576,7 +7567,6 @@ static void test_decodeCertPolicies(DWORD dwEncoding)
     {
         ret = pCryptDecodeObjectEx(dwEncoding, X509_CERT_POLICIES,
          twoPolicies, sizeof(twoPolicies), 0, NULL, info, &size);
-        todo_wine
         ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
         HeapFree(GetProcessHeap(), 0, info);
     }
@@ -7733,7 +7723,6 @@ static void test_decodeCertPolicyMappings(DWORD dwEncoding)
             ret = pCryptDecodeObjectEx(dwEncoding, mappingOids[i],
              policyMappingWithTwoMappings, sizeof(policyMappingWithTwoMappings), 0,
              NULL, info, &size);
-            todo_wine
             ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
             HeapFree(GetProcessHeap(), 0, info);
         }
