@@ -1150,7 +1150,7 @@ static void test_DialogBoxParamA(void)
 static void test_DisabledDialogTest(void)
 {
     g_terminated = FALSE;
-    DialogBoxParam(g_hinst, "IDD_DIALOG", NULL, (DLGPROC)disabled_test_proc, 0);
+    DialogBoxParam(g_hinst, "IDD_DIALOG", NULL, disabled_test_proc, 0);
     ok(FALSE == g_terminated, "dialog with disabled ok button has been terminated\n");
 }
 
