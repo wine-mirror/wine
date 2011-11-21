@@ -77,6 +77,7 @@ struct bstrpool
 
 typedef struct _saxreader
 {
+    DispatchEx dispex;
     IVBSAXXMLReader IVBSAXXMLReader_iface;
     ISAXXMLReader ISAXXMLReader_iface;
     LONG ref;
@@ -2605,6 +2606,10 @@ static HRESULT WINAPI saxxmlreader_QueryInterface(IVBSAXXMLReader* iface, REFIID
     {
         *ppvObject = &This->ISAXXMLReader_iface;
     }
+    else if (dispex_query_interface(&This->dispex, riid, ppvObject))
+    {
+        return *ppvObject ? S_OK : E_NOINTERFACE;
+    }
     else
     {
         FIXME("interface %s not implemented\n", debugstr_guid(riid));
@@ -2660,6 +2665,7 @@ static ULONG WINAPI saxxmlreader_Release(
 
         free_bstr_pool(&This->pool);
 
+        release_dispex(&This->dispex);
         heap_free( This );
     }
 
@@ -2669,12 +2675,7 @@ static ULONG WINAPI saxxmlreader_Release(
 static HRESULT WINAPI saxxmlreader_GetTypeInfoCount( IVBSAXXMLReader *iface, UINT* pctinfo )
 {
     saxreader *This = impl_from_IVBSAXXMLReader( iface );
-
-    TRACE("(%p)->(%p)\n", This, pctinfo);
-
-    *pctinfo = 1;
-
-    return S_OK;
+    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI saxxmlreader_GetTypeInfo(
@@ -2682,13 +2683,8 @@ static HRESULT WINAPI saxxmlreader_GetTypeInfo(
     UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo )
 {
     saxreader *This = impl_from_IVBSAXXMLReader( iface );
-    HRESULT hr;
-
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
-
-    hr = get_typeinfo(IVBSAXXMLReader_tid, ppTInfo);
-
-    return hr;
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface,
+        iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI saxxmlreader_GetIDsOfNames(
@@ -2700,23 +2696,8 @@ static HRESULT WINAPI saxxmlreader_GetIDsOfNames(
     DISPID* rgDispId)
 {
     saxreader *This = impl_from_IVBSAXXMLReader( iface );
-    ITypeInfo *typeinfo;
-    HRESULT hr;
-
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
-          lcid, rgDispId);
-
-    if(!rgszNames || cNames == 0 || !rgDispId)
-        return E_INVALIDARG;
-
-    hr = get_typeinfo(IVBSAXXMLReader_tid, &typeinfo);
-    if(SUCCEEDED(hr))
-    {
-        hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
-        ITypeInfo_Release(typeinfo);
-    }
-
-    return hr;
+    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface,
+        riid, rgszNames, cNames, lcid, rgDispId);
 }
 
 static HRESULT WINAPI saxxmlreader_Invoke(
@@ -2731,21 +2712,8 @@ static HRESULT WINAPI saxxmlreader_Invoke(
     UINT* puArgErr)
 {
     saxreader *This = impl_from_IVBSAXXMLReader( iface );
-    ITypeInfo *typeinfo;
-    HRESULT hr;
-
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
-          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
-
-    hr = get_typeinfo(IVBSAXXMLReader_tid, &typeinfo);
-    if(SUCCEEDED(hr))
-    {
-        hr = ITypeInfo_Invoke(typeinfo, &This->IVBSAXXMLReader_iface, dispIdMember, wFlags,
-                pDispParams, pVarResult, pExcepInfo, puArgErr);
-        ITypeInfo_Release(typeinfo);
-    }
-
-    return hr;
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface,
+        dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 /*** IVBSAXXMLReader methods ***/
@@ -3159,6 +3127,17 @@ static const struct ISAXXMLReaderVtbl isaxreader_vtbl =
     isaxxmlreader_parseURL
 };
 
+static const tid_t saxreader_iface_tids[] = {
+    IVBSAXXMLReader_tid,
+    0
+};
+static dispex_static_data_t saxreader_dispex = {
+    NULL,
+    IVBSAXXMLReader_tid,
+    NULL,
+    saxreader_iface_tids
+};
+
 HRESULT SAXXMLReader_create(MSXML_VERSION version, IUnknown *pUnkOuter, LPVOID *ppObj)
 {
     saxreader *reader;
@@ -3186,6 +3165,8 @@ HRESULT SAXXMLReader_create(MSXML_VERSION version, IUnknown *pUnkOuter, LPVOID *
     reader->pool.len = 0;
     reader->features = Namespaces;
     reader->version = version;
+
+    init_dispex(&reader->dispex, (IUnknown*)&reader->IVBSAXXMLReader_iface, &saxreader_dispex);
 
     memset(&reader->sax, 0, sizeof(xmlSAXHandler));
     reader->sax.initialized = XML_SAX2_MAGIC;

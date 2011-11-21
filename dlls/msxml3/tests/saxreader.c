@@ -28,7 +28,9 @@
 #include "windows.h"
 #include "ole2.h"
 #include "msxml2.h"
+#include "msxml2did.h"
 #include "ocidl.h"
+#include "dispex.h"
 
 #include "wine/test.h"
 
@@ -2596,6 +2598,80 @@ static void test_mxwriter_encoding(void)
     free_bstrs();
 }
 
+static void test_obj_dispex(IUnknown *obj)
+{
+    static const WCHAR starW[] = {'*',0};
+    DISPID dispid = DISPID_SAX_XMLREADER_GETFEATURE;
+    IDispatchEx *dispex;
+    IUnknown *unk;
+    DWORD props;
+    UINT ticnt;
+    HRESULT hr;
+    BSTR name;
+
+    hr = IUnknown_QueryInterface(obj, &IID_IDispatchEx, (void**)&dispex);
+    EXPECT_HR(hr, S_OK);
+    if (FAILED(hr)) return;
+
+    ticnt = 0;
+    hr = IDispatchEx_GetTypeInfoCount(dispex, &ticnt);
+    EXPECT_HR(hr, S_OK);
+    ok(ticnt == 1, "ticnt=%u\n", ticnt);
+
+    name = SysAllocString(starW);
+    hr = IDispatchEx_DeleteMemberByName(dispex, name, fdexNameCaseSensitive);
+    EXPECT_HR(hr, E_NOTIMPL);
+    SysFreeString(name);
+
+    hr = IDispatchEx_DeleteMemberByDispID(dispex, dispid);
+    EXPECT_HR(hr, E_NOTIMPL);
+
+    props = 0;
+    hr = IDispatchEx_GetMemberProperties(dispex, dispid, grfdexPropCanAll, &props);
+    EXPECT_HR(hr, E_NOTIMPL);
+    ok(props == 0, "expected 0 got %d\n", props);
+
+    hr = IDispatchEx_GetMemberName(dispex, dispid, &name);
+    EXPECT_HR(hr, E_NOTIMPL);
+    if (SUCCEEDED(hr)) SysFreeString(name);
+
+    hr = IDispatchEx_GetNextDispID(dispex, fdexEnumDefault, DISPID_SAX_XMLREADER_GETFEATURE, &dispid);
+    EXPECT_HR(hr, E_NOTIMPL);
+
+    hr = IDispatchEx_GetNameSpaceParent(dispex, &unk);
+    EXPECT_HR(hr, E_NOTIMPL);
+    if (hr == S_OK && unk) IUnknown_Release(unk);
+
+    IDispatchEx_Release(dispex);
+}
+
+static void test_dispex(void)
+{
+     IVBSAXXMLReader *vbreader;
+     ISAXXMLReader *reader;
+     IUnknown *unk;
+     HRESULT hr;
+
+     hr = CoCreateInstance(&CLSID_SAXXMLReader, NULL, CLSCTX_INPROC_SERVER,
+                &IID_ISAXXMLReader, (void**)&reader);
+     EXPECT_HR(hr, S_OK);
+
+     hr = ISAXXMLReader_QueryInterface(reader, &IID_IUnknown, (void**)&unk);
+     EXPECT_HR(hr, S_OK);
+     test_obj_dispex(unk);
+     IUnknown_Release(unk);
+
+     hr = ISAXXMLReader_QueryInterface(reader, &IID_IVBSAXXMLReader, (void**)&vbreader);
+     EXPECT_HR(hr, S_OK);
+     hr = IVBSAXXMLReader_QueryInterface(vbreader, &IID_IUnknown, (void**)&unk);
+     EXPECT_HR(hr, S_OK);
+     test_obj_dispex(unk);
+     IUnknown_Release(unk);
+     IVBSAXXMLReader_Release(vbreader);
+
+     ISAXXMLReader_Release(reader);
+}
+
 START_TEST(saxreader)
 {
     ISAXXMLReader *reader;
@@ -2621,6 +2697,7 @@ START_TEST(saxreader)
     test_saxreader_properties();
     test_saxreader_features();
     test_encoding();
+    test_dispex();
 
     /* MXXMLWriter tests */
     get_supported_mxwriter_data(msxmlsupported_data);
