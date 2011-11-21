@@ -107,6 +107,8 @@ static HRESULT compile_interp_fallback(compiler_ctx_t *ctx, expression_t *expr)
 static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
 {
     switch(expr->type) {
+    case EXPR_BITNEG:
+        return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_bneg);
     case EXPR_EQEQ:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_eq2);
     case EXPR_LOGNEG:
