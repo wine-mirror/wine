@@ -1661,9 +1661,9 @@ static BOOL run_script( const BSTR script, const WCHAR *url, WINHTTP_PROXY_INFO 
     if (hr != S_OK) goto done;
 
     V_VT( &args[0] ) = VT_BSTR;
-    V_BSTR( &args[0] ) = SysAllocString( url );
+    V_BSTR( &args[0] ) = hostname;
     V_VT( &args[1] ) = VT_BSTR;
-    V_BSTR( &args[1] ) = hostname;
+    V_BSTR( &args[1] ) = SysAllocString( url );
 
     params.rgvarg = args;
     params.rgdispidNamedArgs = NULL;
