@@ -28,7 +28,7 @@ STYLE DS_MODALFRAME | DS_SETFOREGROUND | DS_CENTER | WS_POPUP | WS_VISIBLE |
 CAPTION "Bestanden op de camera"
 FONT 8, "MS Sans Serif"
 BEGIN
-	CONTROL         "List1",IDC_LIST1,"SysListView32", LVS_ICON | WS_BORDER |
+	CONTROL         "",IDC_LIST1,"SysListView32", LVS_ICON | WS_BORDER |
 WS_TABSTOP,7,7,358,229
     DEFPUSHBUTTON   "Importeer geselecteerde bestanden",IDC_IMPORT,120,252,120,14
     PUSHBUTTON      "Voorbeeld",IDC_FETCH,7,252,48,14
