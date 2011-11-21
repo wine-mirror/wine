@@ -2216,8 +2216,8 @@ HIMAGELIST WINAPI ImageList_Read (LPSTREAM pstm)
 
         if (image_info->bmiHeader.biHeight > 0)  /* bottom-up */
         {
-            ptr += (imagelist_height( ilHead.cCurImage ) - 1) * stride;
-            mask_ptr += (imagelist_height( ilHead.cCurImage ) - 1) * stride / 8;
+            ptr += image_info->bmiHeader.biHeight * image_info->bmiHeader.biWidth - stride;
+            mask_ptr += (image_info->bmiHeader.biHeight * image_info->bmiHeader.biWidth - stride) / 8;
             stride = -stride;
             image_info->bmiHeader.biHeight = himl->cy;
         }
