@@ -107,9 +107,9 @@ typedef struct _TAPE_GET_STATISTICS {
     ULONG               Operation;
 } TAPE_GET_STATISTICS, *PTAPE_GET_STATISTICS;
 
-#define TAPE_RETURN_STATISTICS          0L
-#define TAPE_RETURN_ENV_INFO            1L
-#define TAPE_RESET_STATISTICS           2L
+#define TAPE_RETURN_STATISTICS          __MSABI_LONG(0)
+#define TAPE_RETURN_ENV_INFO            __MSABI_LONG(1)
+#define TAPE_RESET_STATISTICS           __MSABI_LONG(2)
 
 typedef enum _STORAGE_MEDIA_TYPE {
     /* see also defines in ntdddisk.h */

@@ -24,8 +24,8 @@ extern "C" {
 #endif
 
 /* Possible return values. */
-#define E_NONE                              0x0000L
-#define E_API_NOTIMPL                       0x0001L
+#define E_NONE                              __MSABI_LONG(0x0000)
+#define E_API_NOTIMPL                       __MSABI_LONG(0x0001)
 
 typedef ULONG (WINAPIV * READEMBEDPROC)(void*,void*,ULONG);
 typedef ULONG (WINAPIV * WRITEEMBEDPROC)(void*,void*,ULONG);

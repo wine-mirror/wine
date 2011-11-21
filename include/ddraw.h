@@ -252,12 +252,12 @@ typedef struct IDirectDrawGammaControl *LPDIRECTDRAWGAMMACONTROL;
 #define DDGBS_ISBLTDONE				0x00000002
 
 /* dwFlags for IDirectDrawSurface7::GetFlipStatus */
-#define DDGFS_CANFLIP		1L
-#define DDGFS_ISFLIPDONE	2L
+#define DDGFS_CANFLIP           __MSABI_LONG(1)
+#define DDGFS_ISFLIPDONE        __MSABI_LONG(2)
 
 /* dwFlags for IDirectDrawSurface7::SetPrivateData */
-#define DDSPD_IUNKNOWNPOINTER	1L
-#define DDSPD_VOLATILE		2L
+#define DDSPD_IUNKNOWNPOINTER   __MSABI_LONG(1)
+#define DDSPD_VOLATILE          __MSABI_LONG(2)
 
 /* DDSCAPS.dwCaps */
 /* reserved1, was 3d capable */
@@ -1086,8 +1086,8 @@ DECL_WINELIB_TYPE_AW(LPDIRECTDRAWENUMERATEEX)
 #define DDENUM_NONDISPLAYDEVICES	0x00000004
 
 /* flags for DirectDrawCreate or IDirectDraw::Initialize */
-#define DDCREATE_HARDWAREONLY	1L
-#define DDCREATE_EMULATIONONLY	2L
+#define DDCREATE_HARDWAREONLY   __MSABI_LONG(1)
+#define DDCREATE_EMULATIONONLY  __MSABI_LONG(2)
 
 typedef struct _DDBLTFX
 {

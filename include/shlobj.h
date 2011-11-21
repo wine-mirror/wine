@@ -95,9 +95,9 @@ BOOL         WINAPI ImportPrivacySettings(LPCWSTR, BOOL*, BOOL*);
 #define KF_FLAG_DONT_VERIFY         0x00004000
 #define KF_FLAG_CREATE              0x00008000
 
-#define SHFMT_ERROR     0xFFFFFFFFL  /* Error on last format, drive may be formattable */
-#define SHFMT_CANCEL    0xFFFFFFFEL  /* Last format was cancelled */
-#define SHFMT_NOFORMAT  0xFFFFFFFDL  /* Drive is not formattable */
+#define SHFMT_ERROR     __MSABI_LONG(0xFFFFFFFF)  /* Error on last format, drive may be formattable */
+#define SHFMT_CANCEL    __MSABI_LONG(0xFFFFFFFE)  /* Last format was cancelled */
+#define SHFMT_NOFORMAT  __MSABI_LONG(0xFFFFFFFD)  /* Drive is not formattable */
 
 /* SHFormatDrive flags */
 #define SHFMT_ID_DEFAULT	0xFFFF
@@ -705,9 +705,9 @@ DECLARE_INTERFACE_(IProgressDialog,IUnknown)
 /****************************************************************************
 * SHAddToRecentDocs API
 */
-#define SHARD_PIDL      0x00000001L
-#define SHARD_PATHA     0x00000002L
-#define SHARD_PATHW     0x00000003L
+#define SHARD_PIDL      __MSABI_LONG(0x00000001)
+#define SHARD_PATHA     __MSABI_LONG(0x00000002)
+#define SHARD_PATHW     __MSABI_LONG(0x00000003)
 #define SHARD_PATH WINELIB_NAME_AW(SHARD_PATH)
 
 void WINAPI SHAddToRecentDocs(UINT,LPCVOID);
@@ -1302,9 +1302,9 @@ typedef struct _SHChangeNotifyEntry
 #define SHCNE_ALLEVENTS		0x7FFFFFFF
 #define SHCNE_INTERRUPT		0x80000000
 
-#define SHCNEE_ORDERCHANGED	0x0002L
-#define SHCNEE_MSI_CHANGE	0x0004L
-#define SHCNEE_MSI_UNINSTALL	0x0005L
+#define SHCNEE_ORDERCHANGED     __MSABI_LONG(0x0002)
+#define SHCNEE_MSI_CHANGE       __MSABI_LONG(0x0004)
+#define SHCNEE_MSI_UNINSTALL    __MSABI_LONG(0x0005)
 
 #define SHCNF_IDLIST		0x0000
 #define SHCNF_PATHA		0x0001

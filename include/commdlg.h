@@ -312,31 +312,31 @@ DECL_WINELIB_TYPE_AW(LPCHOOSEFONT)
 #define CF_SCREENFONTS               0x00000001
 #define CF_PRINTERFONTS              0x00000002
 #define CF_BOTH                      (CF_SCREENFONTS | CF_PRINTERFONTS)
-#define CF_SHOWHELP                  0x00000004L
-#define CF_ENABLEHOOK                0x00000008L
-#define CF_ENABLETEMPLATE            0x00000010L
-#define CF_ENABLETEMPLATEHANDLE      0x00000020L
-#define CF_INITTOLOGFONTSTRUCT       0x00000040L
-#define CF_USESTYLE                  0x00000080L
-#define CF_EFFECTS                   0x00000100L
-#define CF_APPLY                     0x00000200L
-#define CF_ANSIONLY                  0x00000400L
+#define CF_SHOWHELP                  __MSABI_LONG(0x00000004)
+#define CF_ENABLEHOOK                __MSABI_LONG(0x00000008)
+#define CF_ENABLETEMPLATE            __MSABI_LONG(0x00000010)
+#define CF_ENABLETEMPLATEHANDLE      __MSABI_LONG(0x00000020)
+#define CF_INITTOLOGFONTSTRUCT       __MSABI_LONG(0x00000040)
+#define CF_USESTYLE                  __MSABI_LONG(0x00000080)
+#define CF_EFFECTS                   __MSABI_LONG(0x00000100)
+#define CF_APPLY                     __MSABI_LONG(0x00000200)
+#define CF_ANSIONLY                  __MSABI_LONG(0x00000400)
 #define CF_SCRIPTSONLY               CF_ANSIONLY
-#define CF_NOVECTORFONTS             0x00000800L
+#define CF_NOVECTORFONTS             __MSABI_LONG(0x00000800)
 #define CF_NOOEMFONTS                CF_NOVECTORFONTS
-#define CF_NOSIMULATIONS             0x00001000L
-#define CF_LIMITSIZE                 0x00002000L
-#define CF_FIXEDPITCHONLY            0x00004000L
-#define CF_WYSIWYG                   0x00008000L /* use with CF_SCREENFONTS & CF_PRINTERFONTS */
-#define CF_FORCEFONTEXIST            0x00010000L
-#define CF_SCALABLEONLY              0x00020000L
-#define CF_TTONLY                    0x00040000L
-#define CF_NOFACESEL                 0x00080000L
-#define CF_NOSTYLESEL                0x00100000L
-#define CF_NOSIZESEL                 0x00200000L
-#define CF_SELECTSCRIPT              0x00400000L
-#define CF_NOSCRIPTSEL               0x00800000L
-#define CF_NOVERTFONTS               0x01000000L
+#define CF_NOSIMULATIONS             __MSABI_LONG(0x00001000)
+#define CF_LIMITSIZE                 __MSABI_LONG(0x00002000)
+#define CF_FIXEDPITCHONLY            __MSABI_LONG(0x00004000)
+#define CF_WYSIWYG                   __MSABI_LONG(0x00008000) /* use with CF_SCREENFONTS & CF_PRINTERFONTS */
+#define CF_FORCEFONTEXIST            __MSABI_LONG(0x00010000)
+#define CF_SCALABLEONLY              __MSABI_LONG(0x00020000)
+#define CF_TTONLY                    __MSABI_LONG(0x00040000)
+#define CF_NOFACESEL                 __MSABI_LONG(0x00080000)
+#define CF_NOSTYLESEL                __MSABI_LONG(0x00100000)
+#define CF_NOSIZESEL                 __MSABI_LONG(0x00200000)
+#define CF_SELECTSCRIPT              __MSABI_LONG(0x00400000)
+#define CF_NOSCRIPTSEL               __MSABI_LONG(0x00800000)
+#define CF_NOVERTFONTS               __MSABI_LONG(0x01000000)
 
 #define SIMULATED_FONTTYPE      0x8000
 #define PRINTER_FONTTYPE        0x4000

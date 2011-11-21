@@ -35,14 +35,14 @@ extern "C" {
 #define E_DRAW                  VIEW_E_DRAW
 #define DATA_E_FORMATETC        DV_E_FORMATETC
 
-#define OLEIVERB_PRIMARY            (0L)
-#define OLEIVERB_SHOW               (-1L)
-#define OLEIVERB_OPEN               (-2L)
-#define OLEIVERB_HIDE               (-3L)
-#define OLEIVERB_UIACTIVATE         (-4L)
-#define OLEIVERB_INPLACEACTIVATE    (-5L)
-#define OLEIVERB_DISCARDUNDOSTATE   (-6L)
-#define OLEIVERB_PROPERTIES         (-7L)
+#define OLEIVERB_PRIMARY            (__MSABI_LONG(0))
+#define OLEIVERB_SHOW               (__MSABI_LONG(-1))
+#define OLEIVERB_OPEN               (__MSABI_LONG(-2))
+#define OLEIVERB_HIDE               (__MSABI_LONG(-3))
+#define OLEIVERB_UIACTIVATE         (__MSABI_LONG(-4))
+#define OLEIVERB_INPLACEACTIVATE    (__MSABI_LONG(-5))
+#define OLEIVERB_DISCARDUNDOSTATE   (__MSABI_LONG(-6))
+#define OLEIVERB_PROPERTIES         (__MSABI_LONG(-7))
 
 #define EMBDHLP_INPROC_HANDLER  0x00000000
 #define EMBDHLP_INPROC_SERVER   0x00000001
