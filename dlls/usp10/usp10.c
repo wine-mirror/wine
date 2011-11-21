@@ -362,6 +362,10 @@ static const scriptData scriptInformation[] = {
      {LANG_ENGLISH, 0, 1, 0, 1, ANSI_CHARSET, 0, 0, 0, 0, 0, 1, 1, 0, 0},
      0x00000000,
      {0}},
+    {{Script_Punctuation2, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_ENGLISH, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('l','a','t','n'),
+     {0}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -522,14 +526,19 @@ static WCHAR mirror_char( WCHAR ch )
 
 static WORD get_char_script( WCHAR ch)
 {
+    static const WCHAR latin_punc[] = {'#','$','&','\'',',',';','<','>','?','@','\\','^','_','`','{','|','}','~', 0x00a0, 0};
     WORD type = 0;
     int i;
 
     if (ch == 0xc || ch == 0x20 || ch == 0x202f)
         return Script_CR;
 
+    /* These punctuation are seperated out as Latin punctuation */
+    if (strchrW(latin_punc,ch))
+        return Script_Punctuation2;
+
     /* These chars are itemized as Punctuation by Windows */
-    if (ch == 0x2212 || ch == 0x2044 || ch == 0x00a0)
+    if (ch == 0x2212 || ch == 0x2044)
         return Script_Punctuation;
 
     GetStringTypeW(CT_CTYPE1, &ch, 1, &type);
