@@ -62,6 +62,7 @@ static inline BYTE *get_pixel_ptr_1(const dib_info *dib, int x, int y)
     return (BYTE*)dib->bits.ptr + y * dib->stride + x / 8;
 }
 
+static const BYTE pixel_masks_4[2] = {0xf0, 0x0f};
 static const BYTE pixel_masks_1[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
 
 static inline void do_rop_32(DWORD *ptr, DWORD and, DWORD xor)
@@ -417,6 +418,226 @@ static void solid_rects_1(const dib_info *dib, int num, const RECT *rc, DWORD an
 }
 
 static void solid_rects_null(const dib_info *dib, int num, const RECT *rc, DWORD and, DWORD xor)
+{
+    return;
+}
+
+static void solid_line_32(const dib_info *dib, const POINT *start, const struct line_params *params,
+                          DWORD and, DWORD xor)
+{
+    DWORD *ptr = get_pixel_ptr_32( dib, start->x, start->y );
+    int len = params->length, err = params->err_start;
+    int major_inc, minor_inc;
+
+    if (params->x_major)
+    {
+        major_inc = params->x_inc;
+        minor_inc = (dib->stride * params->y_inc) / 4;
+    }
+    else
+    {
+        major_inc = (dib->stride * params->y_inc) / 4;
+        minor_inc = params->x_inc;
+    }
+
+    while (len--)
+    {
+        do_rop_32( ptr, and, xor );
+        if (err + params->bias > 0)
+        {
+            ptr += minor_inc;
+            err += params->err_add_1;
+        }
+        else err += params->err_add_2;
+        ptr += major_inc;
+    }
+}
+
+static void solid_line_24(const dib_info *dib, const POINT *start, const struct line_params *params,
+                         DWORD and, DWORD xor)
+{
+    BYTE *ptr = get_pixel_ptr_24( dib, start->x, start->y );
+    int len = params->length, err = params->err_start;
+    int major_inc, minor_inc;
+
+    if (params->x_major)
+    {
+        major_inc = params->x_inc * 3;
+        minor_inc = dib->stride * params->y_inc;
+    }
+    else
+    {
+        major_inc = dib->stride * params->y_inc;
+        minor_inc = params->x_inc * 3;
+    }
+
+    while (len--)
+    {
+        do_rop_8( ptr,     and,       xor );
+        do_rop_8( ptr + 1, and >> 8,  xor >> 8 );
+        do_rop_8( ptr + 2, and >> 16, xor >> 16 );
+        if (err + params->bias > 0)
+        {
+            ptr += minor_inc;
+            err += params->err_add_1;
+        }
+        else err += params->err_add_2;
+        ptr += major_inc;
+    }
+}
+
+static void solid_line_16(const dib_info *dib, const POINT *start, const struct line_params *params,
+                          DWORD and, DWORD xor)
+{
+    WORD *ptr = get_pixel_ptr_16( dib, start->x, start->y );
+    int len = params->length, err = params->err_start;
+    int major_inc, minor_inc;
+
+    if (params->x_major)
+    {
+        major_inc = params->x_inc;
+        minor_inc = (dib->stride * params->y_inc) / 2;
+    }
+    else
+    {
+        major_inc = (dib->stride * params->y_inc) / 2;
+        minor_inc = params->x_inc;
+    }
+
+    while (len--)
+    {
+        do_rop_16( ptr, and, xor );
+        if (err + params->bias > 0)
+        {
+            ptr += minor_inc;
+            err += params->err_add_1;
+        }
+        else err += params->err_add_2;
+        ptr += major_inc;
+    }
+}
+
+static void solid_line_8(const dib_info *dib, const POINT *start, const struct line_params *params,
+                         DWORD and, DWORD xor)
+{
+    BYTE *ptr = get_pixel_ptr_8( dib, start->x, start->y );
+    int len = params->length, err = params->err_start;
+    int major_inc, minor_inc;
+
+    if (params->x_major)
+    {
+        major_inc = params->x_inc;
+        minor_inc = dib->stride * params->y_inc;
+    }
+    else
+    {
+        major_inc = dib->stride * params->y_inc;
+        minor_inc = params->x_inc;
+    }
+
+    while (len--)
+    {
+        do_rop_8( ptr, and, xor );
+        if (err + params->bias > 0)
+        {
+            ptr += minor_inc;
+            err += params->err_add_1;
+        }
+        else err += params->err_add_2;
+        ptr += major_inc;
+    }
+}
+
+static void solid_line_4(const dib_info *dib, const POINT *start, const struct line_params *params,
+                         DWORD and, DWORD xor)
+{
+    BYTE *ptr = get_pixel_ptr_4( dib, start->x, start->y );
+    int len = params->length, err = params->err_start;
+    int x = start->x;
+
+    and = (and & 0x0f) | ((and << 4) & 0xf0);
+    xor = (xor & 0x0f) | ((xor << 4) & 0xf0);
+
+    if (params->x_major)
+    {
+        while (len--)
+        {
+            do_rop_mask_8( ptr, and, xor, pixel_masks_4[ x % 2 ] );
+            if (err + params->bias > 0)
+            {
+                ptr += dib->stride * params->y_inc;
+                err += params->err_add_1;
+            }
+            else err += params->err_add_2;
+            if ((x / 2) != ((x + params->x_inc) / 2))
+                ptr += params->x_inc;
+            x += params->x_inc;
+        }
+    }
+    else
+    {
+        while (len--)
+        {
+            do_rop_mask_8( ptr, and, xor, pixel_masks_4[ x % 2 ] );
+            if (err + params->bias > 0)
+            {
+                if ((x / 2) != ((x + params->x_inc) / 2))
+                    ptr += params->x_inc;
+                x += params->x_inc;
+                err += params->err_add_1;
+            }
+            else err += params->err_add_2;
+            ptr += dib->stride * params->y_inc;
+        }
+    }
+}
+
+static void solid_line_1(const dib_info *dib, const POINT *start, const struct line_params *params,
+                         DWORD and, DWORD xor)
+{
+    BYTE *ptr = get_pixel_ptr_1( dib, start->x, start->y );
+    int len = params->length, err = params->err_start;
+    int x = start->x;
+
+    and = (and & 0x1) ? 0xff : 0;
+    xor = (xor & 0x1) ? 0xff : 0;
+
+    if (params->x_major)
+    {
+        while (len--)
+        {
+            do_rop_mask_8( ptr, and, xor, pixel_masks_1[ x % 8 ] );
+            if (err + params->bias > 0)
+            {
+                ptr += dib->stride * params->y_inc;
+                err += params->err_add_1;
+            }
+            else err += params->err_add_2;
+            if ((x / 8) != ((x + params->x_inc) / 8))
+                ptr += params->x_inc;
+            x += params->x_inc;
+        }
+    }
+    else
+    {
+        while (len--)
+        {
+            do_rop_mask_8( ptr, and, xor, pixel_masks_1[ x % 8 ] );
+            if (err + params->bias > 0)
+            {
+                if ((x / 8) != ((x + params->x_inc) / 8))
+                    ptr += params->x_inc;
+                x += params->x_inc;
+                err += params->err_add_1;
+            }
+            else err += params->err_add_2;
+            ptr += dib->stride * params->y_inc;
+        }
+    }
+}
+
+static void solid_line_null(const dib_info *dib, const POINT *start, const struct line_params *params,
+                            DWORD and, DWORD xor)
 {
     return;
 }
@@ -4629,6 +4850,7 @@ static void shrink_row_null(const dib_info *dst_dib, const POINT *dst_start,
 const primitive_funcs funcs_8888 =
 {
     solid_rects_32,
+    solid_line_32,
     pattern_rects_32,
     copy_rect_32,
     blend_rect_8888,
@@ -4645,6 +4867,7 @@ const primitive_funcs funcs_8888 =
 const primitive_funcs funcs_32 =
 {
     solid_rects_32,
+    solid_line_32,
     pattern_rects_32,
     copy_rect_32,
     blend_rect_32,
@@ -4661,6 +4884,7 @@ const primitive_funcs funcs_32 =
 const primitive_funcs funcs_24 =
 {
     solid_rects_24,
+    solid_line_24,
     pattern_rects_24,
     copy_rect_24,
     blend_rect_24,
@@ -4677,6 +4901,7 @@ const primitive_funcs funcs_24 =
 const primitive_funcs funcs_555 =
 {
     solid_rects_16,
+    solid_line_16,
     pattern_rects_16,
     copy_rect_16,
     blend_rect_555,
@@ -4693,6 +4918,7 @@ const primitive_funcs funcs_555 =
 const primitive_funcs funcs_16 =
 {
     solid_rects_16,
+    solid_line_16,
     pattern_rects_16,
     copy_rect_16,
     blend_rect_16,
@@ -4709,6 +4935,7 @@ const primitive_funcs funcs_16 =
 const primitive_funcs funcs_8 =
 {
     solid_rects_8,
+    solid_line_8,
     pattern_rects_8,
     copy_rect_8,
     blend_rect_8,
@@ -4725,6 +4952,7 @@ const primitive_funcs funcs_8 =
 const primitive_funcs funcs_4 =
 {
     solid_rects_4,
+    solid_line_4,
     pattern_rects_4,
     copy_rect_4,
     blend_rect_4,
@@ -4741,6 +4969,7 @@ const primitive_funcs funcs_4 =
 const primitive_funcs funcs_1 =
 {
     solid_rects_1,
+    solid_line_1,
     pattern_rects_1,
     copy_rect_1,
     blend_rect_1,
@@ -4757,6 +4986,7 @@ const primitive_funcs funcs_1 =
 const primitive_funcs funcs_null =
 {
     solid_rects_null,
+    solid_line_null,
     pattern_rects_null,
     copy_rect_null,
     blend_rect_null,

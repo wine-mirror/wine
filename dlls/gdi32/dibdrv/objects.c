@@ -314,18 +314,6 @@ static inline int get_bias( DWORD mask )
     return (mask & 0xb4) ? 1 : 0;
 }
 
-static void solid_pen_line_callback(dibdrv_physdev *pdev, INT x, INT y)
-{
-    RECT rect;
-
-    rect.left   = x;
-    rect.right  = x + 1;
-    rect.top    = y;
-    rect.bottom = y + 1;
-    pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, pdev->pen_and, pdev->pen_xor);
-    return;
-}
-
 #define OUT_LEFT    1
 #define OUT_RIGHT   2
 #define OUT_TOP     4
@@ -697,7 +685,8 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
 
                 if (clipped_end.x == end->x && clipped_end.y == end->y) line_params.length--;
 
-                bres_line_with_bias( &clipped_start, &line_params, solid_pen_line_callback, pdev );
+                pdev->dib.funcs->solid_line( &pdev->dib, &clipped_start, &line_params,
+                                             pdev->pen_and, pdev->pen_xor );
 
                 if(clip_status == 2) break; /* completely unclipped, so we can finish */
             }

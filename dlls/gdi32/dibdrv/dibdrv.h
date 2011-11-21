@@ -165,6 +165,8 @@ struct stretch_params
 typedef struct primitive_funcs
 {
     void            (* solid_rects)(const dib_info *dib, int num, const RECT *rc, DWORD and, DWORD xor);
+    void             (* solid_line)(const dib_info *dib, const POINT *start, const struct line_params *params,
+                                    DWORD and, DWORD xor);
     void          (* pattern_rects)(const dib_info *dib, int num, const RECT *rc, const POINT *orign,
                                     const dib_info *brush, void *and_bits, void *xor_bits);
     void              (* copy_rect)(const dib_info *dst, const RECT *rc, const dib_info *src,
