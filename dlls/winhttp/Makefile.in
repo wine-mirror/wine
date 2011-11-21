@@ -15,6 +15,6 @@ C_SRCS = \
 
 IDL_TLB_SRCS = winhttp_tlb.idl
 
-RC_SRCS = version.rc
+RC_SRCS = rsrc.rc
 
 @MAKE_DLL_RULES@

@@ -30,6 +30,7 @@
 #include "winreg.h"
 #define COBJMACROS
 #include "ole2.h"
+#include "dispex.h"
 #include "activscp.h"
 
 #include "winhttp_private.h"
@@ -40,6 +41,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(winhttp);
 #define DEFAULT_CONNECT_TIMEOUT     20000
 #define DEFAULT_SEND_TIMEOUT        30000
 #define DEFAULT_RECEIVE_TIMEOUT     30000
+
+static const WCHAR global_funcsW[] = {'g','l','o','b','a','l','_','f','u','n','c','s',0};
+static const WCHAR dns_resolveW[] = {'d','n','s','_','r','e','s','o','l','v','e',0};
 
 void set_last_error( DWORD error )
 {
@@ -1141,24 +1145,27 @@ static BOOL is_domain_suffix( const char *domain, const char *suffix )
     return FALSE;
 }
 
+static void printf_addr( const WCHAR *fmt, WCHAR *buf, struct sockaddr_in *addr )
+{
+    sprintfW( buf, fmt,
+              (unsigned int)(ntohl( addr->sin_addr.s_addr ) >> 24 & 0xff),
+              (unsigned int)(ntohl( addr->sin_addr.s_addr ) >> 16 & 0xff),
+              (unsigned int)(ntohl( addr->sin_addr.s_addr ) >> 8 & 0xff),
+              (unsigned int)(ntohl( addr->sin_addr.s_addr ) & 0xff) );
+}
+
 static WCHAR *build_wpad_url( const struct addrinfo *ai )
 {
     static const WCHAR fmtW[] =
         {'h','t','t','p',':','/','/','%','u','.','%','u','.','%','u','.','%','u',
          '/','w','p','a','d','.','d','a','t',0};
-    struct sockaddr_in *addr;
     WCHAR *ret;
 
     while (ai && ai->ai_family != AF_INET) ai = ai->ai_next;
     if (!ai) return NULL;
 
     if (!(ret = GlobalAlloc( 0, sizeof(fmtW) + 12 * sizeof(WCHAR) ))) return NULL;
-    addr = (struct sockaddr_in *)ai->ai_addr;
-    sprintfW( ret, fmtW,
-              (unsigned int)(ntohl( addr->sin_addr.s_addr ) >> 24 & 0xff),
-              (unsigned int)(ntohl( addr->sin_addr.s_addr ) >> 16 & 0xff),
-              (unsigned int)(ntohl( addr->sin_addr.s_addr ) >> 8 & 0xff),
-              (unsigned int)(ntohl( addr->sin_addr.s_addr ) & 0xff) );
+    printf_addr( fmtW, ret, (struct sockaddr_in *)ai->ai_addr );
     return ret;
 }
 
@@ -1477,6 +1484,178 @@ done:
     return ret;
 }
 
+static HRESULT WINAPI dispex_QueryInterface(
+    IDispatchEx *iface, REFIID riid, void **ppv )
+{
+    *ppv = NULL;
+
+    if (IsEqualGUID( riid, &IID_IUnknown )  ||
+        IsEqualGUID( riid, &IID_IDispatch ) ||
+        IsEqualGUID( riid, &IID_IDispatchEx ))
+        *ppv = iface;
+    else
+        return E_NOINTERFACE;
+
+    return S_OK;
+}
+
+static ULONG WINAPI dispex_AddRef(
+    IDispatchEx *iface )
+{
+    return 2;
+}
+
+static ULONG WINAPI dispex_Release(
+    IDispatchEx *iface )
+{
+    return 1;
+}
+
+static HRESULT WINAPI dispex_GetTypeInfoCount(
+    IDispatchEx *iface, UINT *info )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dispex_GetTypeInfo(
+    IDispatchEx *iface, UINT info, LCID lcid, ITypeInfo **type_info )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dispex_GetIDsOfNames(
+    IDispatchEx *iface, REFIID riid, LPOLESTR *names, UINT count, LCID lcid, DISPID *id )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dispex_Invoke(
+    IDispatchEx *iface, DISPID member, REFIID riid, LCID lcid, WORD flags,
+    DISPPARAMS *params, VARIANT *result, EXCEPINFO *excep, UINT *err )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dispex_DeleteMemberByName(
+    IDispatchEx *iface, BSTR name, DWORD flags )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dispex_DeleteMemberByDispID(
+    IDispatchEx *iface, DISPID id )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dispex_GetMemberProperties(
+    IDispatchEx *iface, DISPID id, DWORD flags_fetch, DWORD *flags )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dispex_GetMemberName(
+    IDispatchEx *iface, DISPID id, BSTR *name )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dispex_GetNextDispID(
+    IDispatchEx *iface, DWORD flags, DISPID id, DISPID *next )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dispex_GetNameSpaceParent(
+    IDispatchEx *iface, IUnknown **unk )
+{
+    return E_NOTIMPL;
+}
+
+#define DISPID_GLOBAL_DNSRESOLVE  0x1000
+
+static HRESULT WINAPI dispex_GetDispID(
+    IDispatchEx *iface, BSTR name, DWORD flags, DISPID *id )
+{
+    if (!strcmpW( name, dns_resolveW ))
+    {
+        *id = DISPID_GLOBAL_DNSRESOLVE;
+        return S_OK;
+    }
+    return DISP_E_UNKNOWNNAME;
+}
+
+static HRESULT dns_resolve( const WCHAR *hostname, VARIANT *result )
+{
+#ifdef HAVE_GETADDRINFO
+        static const WCHAR fmtW[] = {'%','u','.','%','u','.','%','u','.','%','u',0};
+        WCHAR addr[16];
+        struct addrinfo *ai, *elem;
+        char *hostnameA;
+        int res;
+
+        if (hostname[0])
+            hostnameA = strdupWA( hostname );
+        else
+            hostnameA = get_computer_name( ComputerNamePhysicalDnsFullyQualified );
+
+        if (!hostnameA) return E_OUTOFMEMORY;
+        res = getaddrinfo( hostnameA, NULL, NULL, &ai );
+        heap_free( hostnameA );
+        if (res) return S_FALSE;
+
+        elem = ai;
+        while (elem && elem->ai_family != AF_INET) elem = elem->ai_next;
+        if (!elem)
+        {
+            freeaddrinfo( ai );
+            return S_FALSE;
+        }
+        printf_addr( fmtW, addr, (struct sockaddr_in *)elem->ai_addr );
+        freeaddrinfo( ai );
+        V_VT( result ) = VT_BSTR;
+        V_BSTR( result ) = SysAllocString( addr );
+        return S_OK;
+#else
+        FIXME("getaddrinfo not found at build time\n");
+        return S_FALSE;
+#endif
+}
+
+static HRESULT WINAPI dispex_InvokeEx(
+    IDispatchEx *iface, DISPID id, LCID lcid, WORD flags, DISPPARAMS *params,
+    VARIANT *result, EXCEPINFO *exep, IServiceProvider *caller )
+{
+    if (id == DISPID_GLOBAL_DNSRESOLVE)
+    {
+        if (params->cArgs != 1) return DISP_E_BADPARAMCOUNT;
+        if (V_VT(&params->rgvarg[0]) != VT_BSTR) return DISP_E_BADVARTYPE;
+        return dns_resolve( V_BSTR(&params->rgvarg[0]), result );
+    }
+    return DISP_E_MEMBERNOTFOUND;
+}
+
+static const IDispatchExVtbl dispex_vtbl =
+{
+    dispex_QueryInterface,
+    dispex_AddRef,
+    dispex_Release,
+    dispex_GetTypeInfoCount,
+    dispex_GetTypeInfo,
+    dispex_GetIDsOfNames,
+    dispex_Invoke,
+    dispex_GetDispID,
+    dispex_InvokeEx,
+    dispex_DeleteMemberByName,
+    dispex_DeleteMemberByDispID,
+    dispex_GetMemberProperties,
+    dispex_GetMemberName,
+    dispex_GetNextDispID,
+    dispex_GetNameSpaceParent
+};
+
+static IDispatchEx global_dispex = { &dispex_vtbl };
+
 static HRESULT WINAPI site_QueryInterface(
     IActiveScriptSite *iface, REFIID riid, void **ppv )
 {
@@ -1515,6 +1694,11 @@ static HRESULT WINAPI site_GetItemInfo(
     IActiveScriptSite *iface, LPCOLESTR name, DWORD mask,
     IUnknown **item, ITypeInfo **type_info )
 {
+    if (!strcmpW( name, global_funcsW ) && mask == SCRIPTINFO_IUNKNOWN)
+    {
+        *item = (IUnknown *)&global_dispex;
+        return S_OK;
+    }
     return E_NOTIMPL;
 }
 
@@ -1607,6 +1791,28 @@ static BOOL parse_script_result( VARIANT result, WINHTTP_PROXY_INFO *info )
     return TRUE;
 }
 
+static BSTR include_pac_utils( BSTR script )
+{
+    static const WCHAR pacjsW[] = {'p','a','c','.','j','s',0};
+    HMODULE hmod = GetModuleHandleA( "winhttp.dll" );
+    HRSRC rsrc;
+    DWORD size;
+    const char *data;
+    BSTR ret;
+    int len;
+
+    if (!(rsrc = FindResourceW( hmod, pacjsW, (LPCWSTR)40 ))) return NULL;
+    size = SizeofResource( hmod, rsrc );
+    data = LoadResource( hmod, rsrc );
+
+    len = MultiByteToWideChar( CP_ACP, 0, data, size, NULL, 0 );
+    if (!(ret = SysAllocStringLen( NULL, len + SysStringLen( script ) + 1 ))) return NULL;
+    MultiByteToWideChar( CP_ACP, 0, data, size, ret, len );
+    ret[len] = 0;
+    strcatW( ret, script );
+    return ret;
+}
+
 static BOOL run_script( const BSTR script, const WCHAR *url, WINHTTP_PROXY_INFO *info )
 {
     static const WCHAR jscriptW[] = {'J','S','c','r','i','p','t',0};
@@ -1617,7 +1823,7 @@ static BOOL run_script( const BSTR script, const WCHAR *url, WINHTTP_PROXY_INFO 
     BOOL ret = FALSE;
     CLSID clsid;
     DISPID dispid;
-    BSTR func = NULL, hostname = NULL;
+    BSTR func = NULL, hostname = NULL, full_script = NULL;
     URL_COMPONENTSW uc;
     VARIANT args[2], result;
     DISPPARAMS params;
@@ -1645,9 +1851,12 @@ static BOOL run_script( const BSTR script, const WCHAR *url, WINHTTP_PROXY_INFO 
     hr = IActiveScript_SetScriptSite( engine, &script_site );
     if (hr != S_OK) goto done;
 
-    /* FIXME: make standard functions available to script */
+    hr = IActiveScript_AddNamedItem( engine, global_funcsW, SCRIPTITEM_GLOBALMEMBERS );
+    if (hr != S_OK) goto done;
 
-    hr = IActiveScriptParse64_ParseScriptText( parser, script, NULL, NULL, NULL, 0, 0, 0, NULL, NULL );
+    if (!(full_script = include_pac_utils( script ))) goto done;
+
+    hr = IActiveScriptParse64_ParseScriptText( parser, full_script, NULL, NULL, NULL, 0, 0, 0, NULL, NULL );
     if (hr != S_OK) goto done;
 
     hr = IActiveScript_SetScriptState( engine, SCRIPTSTATE_STARTED );
@@ -1672,11 +1881,15 @@ static BOOL run_script( const BSTR script, const WCHAR *url, WINHTTP_PROXY_INFO 
     hr = IDispatch_Invoke( dispatch, dispid, &IID_NULL, LOCALE_SYSTEM_DEFAULT, DISPATCH_METHOD,
                            &params, &result, NULL, NULL );
     VariantClear( &args[1] );
-    if (hr != S_OK) goto done;
-
+    if (hr != S_OK)
+    {
+        WARN("script failed 0x%08x\n", hr);
+        goto done;
+    }
     ret = parse_script_result( result, info );
 
 done:
+    SysFreeString( full_script );
     SysFreeString( hostname );
     SysFreeString( func );
     if (dispatch) IDispatch_Release( dispatch );
