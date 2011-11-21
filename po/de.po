@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-11-12 17:21+0100\n"
+"PO-Revision-Date: 2011-11-21 20:10+0100\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -331,13 +331,12 @@ msgid "Unreadable Entry"
 msgstr "Unlesbarer Eintrag"
 
 #: comdlg32.rc:68
-#, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "Dieser Wert liegt nicht auf der Seite.\n"
-"Bitte geben sie einen Wert zwischen %d und %d an."
+"Bitte geben sie einen Wert zwischen %1!d! und %2!d! an."
 
 #: comdlg32.rc:70
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -397,9 +396,8 @@ msgstr ""
 "installieren. Bitte führen Sie dies zuerst aus und versuchen Sie es erneut."
 
 #: comdlg32.rc:151
-#, fuzzy
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr "Wählen Sie eine Schriftgröße zwischen %d und %d Punkten aus."
+msgstr "Wählen Sie eine Schriftgröße zwischen %1!d! und %2!d! Punkten aus."
 
 #: comdlg32.rc:152 ieframe.rc:32
 msgid "&Save"
@@ -1579,9 +1577,8 @@ msgid "Public key"
 msgstr "Öffentlicher Schlüssel"
 
 #: cryptui.rc:58
-#, fuzzy
 msgid "%1 (%2!d! bits)"
-msgstr "%s (%d Bits)"
+msgstr "%1 (%2!d! Bits)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
@@ -2032,9 +2029,8 @@ msgid "Regional Setting"
 msgstr "Regionale Einstellungen"
 
 #: dxdiagn.rc:26
-#, fuzzy
 msgid "%1!u!MB used, %2!u!MB available"
-msgstr "%uMB benutzt, %uMB verfügbar"
+msgstr "%1!u!MB benutzt, %2!u!MB verfügbar"
 
 #: gdi32.rc:25
 msgid "Western"
@@ -6100,9 +6096,8 @@ msgid "us"
 msgstr "µs"
 
 #: setupapi.rc:28
-#, fuzzy
 msgid "The file '%1' on %2 is needed"
-msgstr "Die Datei '%s' von %s wird benötigt."
+msgstr "Die Datei '%1' von %2 wird benötigt."
 
 #: setupapi.rc:29 ipconfig.rc:31
 msgid "Unknown"
@@ -8270,22 +8265,20 @@ msgstr ""
 "PATH %PATH%;c:\\temp\n"
 
 #: cmd.rc:128
-#, fuzzy
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
 "It is mainly useful in batch files to allow the user to read the output\n"
 "of a previous command before it scrolls off the screen.\n"
 msgstr ""
-"PAUSE lässt eine Meldung auf dem Bildschirm erscheinen\n"
-"'Drücken Sie die Eingabetaste um fortzufahren' und wartet darauf, dass der\n"
-"Benutzer die Eingabetaste/Enter-Taste drückt. Es wird hauptsächlich in\n"
-"Batchdateien genutzt, um dem Beutzer zu erlauben, die Ausgabe eines "
-"vorherigen\n"
-"Befehls zu lesen, bevor es durch Scrollen vom Bildschirm verschwindet.\n"
+"PAUSE lässt eine Meldung auf dem Bildschirm erscheinen, die zum drücken "
+"einer Taste auffordert.\n"
+"\n"
+"Es wird hauptsächlich in Batchdateien genutzt, um dem Beutzer\n"
+"zu erlauben, die Ausgabe eines vorherigen Befehls zu lesen,\n"
+"bevor sie durch Scrollen vom Bildschirm verschwindet.\n"
 
 #: cmd.rc:149
-#, fuzzy
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -8310,7 +8303,7 @@ msgstr ""
 "PROMPT setzt den Befehlszeilenprompt.\n"
 "\n"
 "Die Zeichenkette, die dem PROMPT Befehl folgt (und dem Leerzeichen\n"
-"unmittelbar danach), erscheint am Zeilenanfang, wenn CMD auf die Eingabe\n"
+"unmittelbar danach), erscheint am Zeilenanfang, wenn cmd auf die Eingabe\n"
 "wartet.\n"
 "\n"
 "Die nachfolgenden Zeichen haben eine besondere Bedeutung:\n"
@@ -8320,17 +8313,14 @@ msgstr ""
 "$l    < Zeichen           $n    akutelles Laufwerk  $p    aktueller Pfad\n"
 "$q    Gleichheitszeichen  $t    aktuelle Zeit       $v    cmd Version\n"
 "\n"
-"Hinweis: Die Eingabe des PROMPT Befehls ohne eine Prompt-Zeichenkette, "
-"setzt\n"
-"den Prompt zu den Standardwert zurück, was das aktuelle Verzeichnis "
-"(inklusive\n"
-"dem aktuellen Laufwerksbuchstaben) gefolgt von einen Größerzeichen (>)\n"
-"(genau wie der PROMPT $p$g Befehl).\n"
+"Hinweis: Die Eingabe des PROMPT Befehls ohne eine Prompt-Zeichenkette,\n"
+"setzt den Prompt zu den Standardwert zurück, was das aktuelle Verzeichnis\n"
+"(inklusive dem aktuellen Laufwerksbuchstaben) gefolgt von\n"
+"einen Größerzeichen (>) ist (genau wie der PROMPT $p$g Befehl).\n"
 "\n"
 "Der Prompt kann auch geändert werden durch das Ändern der PROMPT\n"
-"Umgebungsvariable, so hat der Befehl 'SET PROMPT=text' die gleiche "
-"Auswirkung\n"
-"wie 'PROMPT text'.\n"
+"Umgebungsvariable, so hat der Befehl 'SET PROMPT=text' die gleiche\n"
+"Auswirkung wie 'PROMPT text'.\n"
 
 #: cmd.rc:153
 msgid ""
@@ -8564,7 +8554,6 @@ msgstr ""
 "Betriebssystem oder der Shell zurück, von der CMD gestart wurde.\n"
 
 #: cmd.rc:289
-#, fuzzy
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -8605,6 +8594,7 @@ msgid ""
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
 "In CMD eingebaute Befehle sind:\n"
+"ASSOC\t\tZeigt oder ändert Dateierweiterungs Zuordungen\n"
 "ATTRIB\t\tZeigt oder ändert die DOS Dateieigenschaften\n"
 "CALL\t\tRuft eine Batch-Datei innerhalb einer anderen auf\n"
 "CD (CHDIR)\tWechselt in ein Verzeichnis\n"
@@ -8617,11 +8607,14 @@ msgstr ""
 "DIR\t\tListet den Inhalt eines Verzeichnisses\n"
 "ECHO\t\tKopiert den Text direkt zur Konsolenausgabe\n"
 "ENDLOCAL\tBeendet die Begrenzung der Gültigkeit von Änderungen\n"
+"FTYPE\t\tZeigt oder ändert die Öffnen-Befehle zu Dateierweiterungs "
+"Zuordungen\n"
 "HELP\t\tZeigt detalierte Informationen zu einen Thema\n"
 "MD (MKDIR)\tErzeugt ein Unterverzeichnis\n"
 "MORE\t\tZeigt die Ausgabe seitenweise an\n"
 "MOVE\t\tBewegt eine oder mehrere Dateien oder einen Verzeichnisbaum\n"
 "PATH\t\tSetzt oder zeigt den Suchpfad an\n"
+"PAUSE\t\tDie Ausführung eine Stapelverarbeitungsdatei unterbrechen\n"
 "POPD\t\tStellt das letzte mit PUSHD gesicherte Verzeichnis wieder her\n"
 "PROMPT\t\tÄndert den Befehlszeilenprompt\n"
 "PUSHD\t\tWechselt in ein neues Verzeichnis und sichert das aktuelle\n"
@@ -8634,6 +8627,7 @@ msgstr ""
 "TYPE\t\tGibt den Inhalt einer Textdatei aus\n"
 "VER\t\tZeigt die aktuelle Version von CMD an\n"
 "VOL\t\tZeigt die Bezeichnung eines Laufwerkes an\n"
+"XCOPY\t\tKopiert Dateien oder Verzeichnisse an einen Zielort\n"
 "EXIT\t\tBeendet den CMD\n"
 "\n"
 "Geben Sie HELP <Befehl> ein, damit Sie weitere Informationen für einen der\n"
@@ -8827,9 +8821,8 @@ msgid "Error: Unknown or invalid command line parameters specified\n"
 msgstr "Fehler: Unbekannte oder ungültige Kommandozeilenparameter angegeben\n"
 
 #: ipconfig.rc:29
-#, fuzzy
 msgid "%1 adapter %2\n"
-msgstr "%s Adapter %s\n"
+msgstr "%1 Adapter %2\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
@@ -9566,9 +9559,8 @@ msgid "bytes"
 msgstr "Bytes"
 
 #: oleview.rc:148
-#, fuzzy
 msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
-msgstr "LoadTypeLib( %s ) fehlgeschlagen ($%x)"
+msgstr "LoadTypeLib( %1 ) fehlgeschlagen ($%2!x!)"
 
 #: oleview.rc:149
 msgid "Inherited Interfaces"
@@ -10334,52 +10326,45 @@ msgid "Error: One of options /im or /pid must be specified.\n"
 msgstr "Fehler: Nur eine der Optionen /im oder /pid dürfen angegeben werden.\n"
 
 #: taskkill.rc:31
-#, fuzzy
 msgid "Error: Option %1 expects a command line parameter.\n"
-msgstr "Fehler: Option %s erwartet einen Kommandozeilenparameter.\n"
+msgstr "Fehler: Option %1 erwartet einen Kommandozeilenparameter.\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
 msgstr "Fehler: Optionen /im und /pid widersprechen sich.\n"
 
 #: taskkill.rc:33
-#, fuzzy
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
 msgstr ""
 "Ein Beendigungssignal wurde an die Top-Level Fenster des Prozesses mit der "
-"PID %u geschickt.\n"
+"PID %1!u! geschickt.\n"
 
 #: taskkill.rc:34
-#, fuzzy
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 msgstr ""
-"Ein Beendigungssignal wurde an die Top-Level Fenster des Prozessess \"%s\" "
-"mit der PID %u geschickt.\n"
+"Ein Beendigungssignal wurde an die Top-Level Fenster des Prozessess \"%1\" "
+"mit der PID %2!u! geschickt.\n"
 
 #: taskkill.rc:35
-#, fuzzy
 msgid "Process with PID %1!u! was forcibly terminated.\n"
-msgstr "Prozess mit der PID %u wurde zum beenden gezwungen.\n"
+msgstr "Prozess mit der PID %1!u! wurde zum beenden gezwungen.\n"
 
 #: taskkill.rc:36
-#, fuzzy
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
-msgstr "Prozess \"%s\" mit der PID %u wurde zum beenden gezwungen.\n"
+msgstr "Prozess \"%1\" mit der PID %2!u! wurde zum beenden gezwungen.\n"
 
 #: taskkill.rc:37
-#, fuzzy
 msgid "Error: Could not find process \"%1\".\n"
-msgstr "Fehler: Konnte Prozess \"%s\" nicht finden.\n"
+msgstr "Fehler: Konnte Prozess \"%1\" nicht finden.\n"
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
 msgstr "Fehler: Konnte die Prozessliste nicht Enumerieren.\n"
 
 #: taskkill.rc:39
-#, fuzzy
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr "Fehler: Konnte Prozess \"%s\" nicht beenden.\n"
+msgstr "Fehler: Konnte Prozess \"%1\" nicht beenden.\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
@@ -12387,17 +12372,17 @@ msgstr "%1 von %2 frei"
 #: winefile.rc:121
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr ""
+msgstr "kB"
 
 #: winefile.rc:122
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr ""
+msgstr "MB"
 
 #: winefile.rc:123
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr ""
+msgstr "GB"
 
 #: winemine.rc:34
 msgid "&Game"
@@ -12983,7 +12968,6 @@ msgid "D"
 msgstr "V"
 
 #: xcopy.rc:77
-#, fuzzy
 msgid ""
 "XCOPY - Copies source files or directory trees to a destination.\n"
 "\n"
@@ -13018,7 +13002,7 @@ msgid ""
 "\t\tthan source.\n"
 "\n"
 msgstr ""
-"XCOPY - Kopiert Dateien oder Verzeichnisse an einen Zielort\n"
+"XCOPY - Kopiert Dateien oder Verzeichnisse an einen Zielort.\n"
 "\n"
 "Syntax:\n"
 "XCOPY Quelle [Ziel] [/I] [/S] [/Q] [/F] [/L] [/W] [/T] [/N] [/U]\n"
@@ -13028,24 +13012,24 @@ msgstr ""
 "\n"
 "[/I]  Behandle Ziel als Verzeichnisnamen, wenn es nicht existiert und\n"
 "\tmehrere Dateien kopiert werden.\n"
-"[/S]  Kopiere Verzeichnisse und Unterverzeichnisse\n"
-"[/E]  Kopiere Verzeichnisse und Unterverzeichnisse, auch leere\n"
-"[/Q]  Zeige die Dateinamen beim Kopieren nicht an\n"
-"[/F]  Zeige vollständige Dateinamen von Quelle und Ziel an\n"
-"[/L]  Simulation: Zeige die Namen der Datein, die kopiert würden\n"
-"[/W]  Wartet vor Beginn des Kopierens auf Bestätigung\n"
-"[/T]  Erzeuge eine leere Verzeichnisstruktur, ohne Dateien zu kopieren\n"
-"[/Y]  Keine Nachfrage vor dem Überschreiben von Dateien\n"
-"[/-Y] Nachrage vor dem Überschreiben von Dateien\n"
-"[/P]  Fragt für jede Quelldatei, ob sie kopiert werden soll\n"
-"[/N]  Kopiert die Dateien unter ihrem Kurznamen\n"
-"[/U]  Kopiert nur Dateien, die am Ziel bereits existieren\n"
-"[/R]  Überschreibt schreibgeschützte Dateien\n"
-"[/H]  Kopiere auch versteckte und Systemdateien\n"
-"[/C]  Nach Fehlern den Kopiervorgang fortsetzen\n"
-"[/A]  Nur Dateien mit Archivbit kopieren\n"
-"[/M]  Nur Dateien mit Archivbit kopieren, danach Archivbit löschen\n"
+"[/S]  Kopiere Verzeichnisse und Unterverzeichnisse.\n"
+"[/E]  Kopiere Verzeichnisse und Unterverzeichnisse, auch leere.\n"
+"[/Q]  Zeige die Dateinamen beim Kopieren nicht an.\n"
+"[/F]  Zeige vollständige Dateinamen von Quelle und Ziel an.\n"
+"[/L]  Simulation: Zeige die Namen der Datein, die kopiert würden.\n"
+"[/W]  Wartet vor Beginn des Kopierens auf Bestätigung.\n"
+"[/T]  Erzeuge eine leere Verzeichnisstruktur, ohne Dateien zu kopieren.\n"
+"[/Y]  Keine Nachfrage vor dem Überschreiben von Dateien.\n"
+"[/-Y] Nachrage vor dem Überschreiben von Dateien.\n"
+"[/P]  Fragt für jede Quelldatei, ob sie kopiert werden soll.\n"
+"[/N]  Kopiert die Dateien unter ihrem Kurznamen.\n"
+"[/U]  Kopiert nur Dateien, die am Ziel bereits existieren.\n"
+"[/R]  Überschreibt schreibgeschützte Dateien.\n"
+"[/H]  Kopiere auch versteckte und Systemdateien.\n"
+"[/C]  Nach Fehlern den Kopiervorgang fortsetzen.\n"
+"[/A]  Nur Dateien mit Archivbit kopieren.\n"
+"[/M]  Nur Dateien mit Archivbit kopieren, danach Archivbit löschen.\n"
 "[/D | /D:M-T-J] Kopiere neue Dateien und Dateien, die neuer als das\n"
 "\t\tangegebene Datum sind. Wird kein Datum angegegebn, werden nur\n"
-"\t\tQuelldateien kopiert, die neuer sind als die Zieldatei\n"
+"\t\tQuelldateien kopiert, die neuer sind als die Zieldatei.\n"
 "\n"
