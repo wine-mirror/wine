@@ -95,6 +95,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM4_OP_SQRT         = 0x4b,
     WINED3D_SM4_OP_SINCOS       = 0x4d,
     WINED3D_SM4_OP_UDIV         = 0x4e,
+    WINED3D_SM4_OP_USHR         = 0x55,
     WINED3D_SM4_OP_UTOF         = 0x56,
 };
 
@@ -182,6 +183,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM4_OP_SQRT,       WINED3DSIH_SQRT,        1,  1},
     {WINED3D_SM4_OP_SINCOS,     WINED3DSIH_SINCOS,      2,  1},
     {WINED3D_SM4_OP_UDIV,       WINED3DSIH_UDIV,        2,  2},
+    {WINED3D_SM4_OP_USHR,       WINED3DSIH_USHR,        1,  2},
     {WINED3D_SM4_OP_UTOF,       WINED3DSIH_UTOF,        1,  1},
 };
 
