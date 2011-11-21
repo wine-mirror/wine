@@ -291,6 +291,11 @@ static void test_ScriptItemize( void )
     static const itemTest t222[3] = {{{0,0,0,0,0},0,1,1,1,latn_tag,FALSE},{{0,0,0,0,0},3,1,1,1,0,FALSE},{{0,0,0,0,0},6,0,0,0,-1,FALSE}};
     static const itemTest t223[2] = {{{0,0,0,0,0},0,1,1,1,latn_tag,FALSE},{{0,0,0,0,0},6,0,0,0,-1,FALSE}};
 
+    /* Number 2*/
+    static const WCHAR test23[] = {'1','2','3',0x00b2,0x00b3,0x2070,0};
+    static const itemTest t231[3] = {{{0,0,0,0,0},0,0,0,0,0,FALSE},{{0,0,0,0,0},3,0,0,0,0,FALSE},{{0,0,0,0,0},6,0,0,0,-1,FALSE}};
+    static const itemTest t232[3] = {{{0,0,0,0,0},0,0,1,2,0,FALSE},{{0,0,0,0,0},3,0,1,2,0,FALSE},{{0,0,0,0,0},6,0,0,0,-1,FALSE}};
+
 
     SCRIPT_ITEM items[15];
     SCRIPT_CONTROL  Control;
@@ -347,6 +352,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test20,5,NULL,NULL,2,t201,FALSE,0);
     test_items_ok(test21,5,NULL,NULL,1,t211,FALSE,0);
     test_items_ok(test22,6,NULL,NULL,2,t221,FALSE,0);
+    test_items_ok(test23,6,NULL,NULL,2,t231,FALSE,0);
 
     State.uBidiLevel = 0;
     test_items_ok(test1,4,&Control,&State,1,t11,FALSE,0);
@@ -376,6 +382,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test20,5,&Control,&State,2,t201,FALSE,0);
     test_items_ok(test21,5,&Control,&State,1,t211,FALSE,0);
     test_items_ok(test22,6,&Control,&State,2,t221,FALSE,0);
+    test_items_ok(test23,6,&Control,&State,2,t231,FALSE,0);
 
     State.uBidiLevel = 1;
     test_items_ok(test1,4,&Control,&State,1,t12,FALSE,0);
@@ -405,6 +412,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test20,5,&Control,&State,2,t202,FALSE,0);
     test_items_ok(test21,5,&Control,&State,1,t211,FALSE,0);
     test_items_ok(test22,6,&Control,&State,2,t222,FALSE,1);
+    test_items_ok(test23,6,&Control,&State,2,t232,FALSE,0);
 
     State.uBidiLevel = 1;
     Control.fMergeNeutralItems = TRUE;
@@ -435,6 +443,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test20,5,&Control,&State,2,t202,FALSE,0);
     test_items_ok(test21,5,&Control,&State,1,t211,FALSE,0);
     test_items_ok(test22,6,&Control,&State,1,t223,FALSE,2);
+    test_items_ok(test23,6,&Control,&State,2,t232,FALSE,0);
 }
 
 static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,

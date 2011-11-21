@@ -52,11 +52,12 @@ typedef struct _scriptRange
 
 static const scriptRange scriptRanges[] = {
     /* Basic Latin: U+0000–U+007A */
+    { Script_Latin,      0x00,   0x07a ,  Script_Numeric, Script_Punctuation},
     /* Latin-1 Supplement: U+0080–U+00FF */
     /* Latin Extended-A: U+0100–U+017F */
     /* Latin Extended-B: U+0180–U+024F */
     /* IPA Extensions: U+0250–U+02AF */
-    { Script_Latin,      0x00,   0x2af ,  Script_Numeric, Script_Punctuation},
+    { Script_Latin,      0x80,   0x2af ,  Script_Numeric2, Script_Punctuation},
     /* Combining Diacritical Marks : U+0300–U+036F */
     { Script_Diacritical,0x300,  0x36f,  0, 0},
     /* Greek: U+0370–U+03FF */
@@ -119,9 +120,15 @@ static const scriptRange scriptRanges[] = {
     /* Greek Extended: U+1F00–U+1FFF */
     { Script_Greek,      0x1f00, 0x1fff, 0, 0},
     /* General Punctuation: U+2000 –U+206f */
+    { Script_Latin,      0x2000, 0x206f, 0, 0},
     /* Superscripts and Subscripts : U+2070 –U+209f */
     /* Currency Symbols : U+20a0 –U+20cf */
-    { Script_Latin,      0x2000, 0x20cf, 0, 0},
+    { Script_Numeric2,   0x2070, 0x2070, 0, 0},
+    { Script_Latin,      0x2071, 0x2073, 0, 0},
+    { Script_Numeric2,   0x2074, 0x2079, 0, 0},
+    { Script_Latin,      0x207a, 0x207f, 0, 0},
+    { Script_Numeric2,   0x2080, 0x2089, 0, 0},
+    { Script_Latin,      0x208a, 0x20cf, 0, 0},
     /* Letterlike Symbols : U+2100 –U+214f */
     /* Number Forms : U+2150 –U+218f */
     /* Arrows : U+2190 –U+21ff */
@@ -366,6 +373,10 @@ static const scriptData scriptInformation[] = {
      {LANG_ENGLISH, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      MS_MAKE_TAG('l','a','t','n'),
      {0}},
+    {{Script_Numeric2, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_ENGLISH, 1, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+     0x00000000,
+     {0}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -392,7 +403,7 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[38].props, &scriptInformation[39].props,
     &scriptInformation[40].props, &scriptInformation[41].props,
     &scriptInformation[42].props, &scriptInformation[43].props,
-    &scriptInformation[44].props
+    &scriptInformation[44].props, &scriptInformation[45].props
 };
 
 typedef struct {

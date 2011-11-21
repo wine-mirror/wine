@@ -74,6 +74,7 @@
 /* More supplemental */
 #define Script_Diacritical 44
 #define Script_Punctuation2 45
+#define Script_Numeric2 46
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)

@@ -584,6 +584,7 @@ static const ScriptShapeData ShapingData[] =
     {{ devanagari_features, 6}, required_telugu_features, "mlym", "mlm2", ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
     {{ standard_features, 2}, NULL, "" , "", NULL, NULL},
     {{ standard_features, 2}, NULL, "latn" , "", NULL, NULL},
+    {{ standard_features, 2}, NULL, "" , "", NULL, NULL},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
