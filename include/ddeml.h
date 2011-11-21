@@ -120,22 +120,22 @@ extern "C" {
 #define     CBF_SKIP_DISCONNECTS         0x00200000
 #define     CBF_SKIP_ALLNOTIFICATIONS    0x003c0000
 
-#define     CBR_BLOCK                    ((HDDEDATA)~0UL)
+#define     CBR_BLOCK                    ((HDDEDATA)-1)
 
 /*
  * Application command flags
  */
-#define     APPCMD_CLIENTONLY            0x00000010L
-#define     APPCMD_FILTERINITS           0x00000020L
-#define     APPCMD_MASK                  0x00000FF0L
+#define     APPCMD_CLIENTONLY            __MSABI_LONG(0x00000010)
+#define     APPCMD_FILTERINITS           __MSABI_LONG(0x00000020)
+#define     APPCMD_MASK                  __MSABI_LONG(0x00000FF0)
 
 /*
  * Application classification flags
  */
 
-#define     APPCLASS_STANDARD            0x00000000L
-#define     APPCLASS_MONITOR             0x00000001L
-#define     APPCLASS_MASK                0x0000000FL
+#define     APPCLASS_STANDARD            __MSABI_LONG(0x00000000)
+#define     APPCLASS_MONITOR             __MSABI_LONG(0x00000001)
+#define     APPCLASS_MASK                __MSABI_LONG(0x0000000F)
 
 /*
  * Callback filter flags for use with MONITOR apps - 0 implies no monitor
