@@ -844,6 +844,7 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
     BOOL  new_run;
     WORD  last_indic = -1;
     WORD layoutRTL = 0;
+    BOOL forceLevels = FALSE;
 
     TRACE("%s,%d,%d,%p,%p,%p,%p\n", debugstr_wn(pwcInChars, cInChars), cInChars, cMaxItems, 
           psControl, psState, pItems, pcItems);
@@ -864,6 +865,11 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
             scripts[i] = last_indic;
         else if (is_indic(scripts[i]))
             last_indic = base_indic(scripts[i]);
+
+        /* Some unicode points (Zero Width Space U+200B -
+           Right-to-Left Mark U+200F) will force us into bidi mode */
+        if (!forceLevels && pwcInChars[i] >= 0x200B && pwcInChars[i] <= 0x200F)
+            forceLevels = TRUE;
     }
 
     for (i = 0; i < cInChars; i++)
@@ -902,7 +908,7 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
         for (i = 0; i < cInChars; i++)
             if (levels[i]!=levels[0])
                 break;
-        if (i >= cInChars && !odd(baselevel) && !odd(psState->uBidiLevel))
+        if (i >= cInChars && !odd(baselevel) && !odd(psState->uBidiLevel) && !forceLevels)
         {
             heap_free(levels);
             levels = NULL;
