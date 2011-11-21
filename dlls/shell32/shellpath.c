@@ -669,37 +669,27 @@ BOOL WINAPI PathQualifyAW(LPCVOID pszPath)
 	return PathQualifyA(pszPath);
 }
 
-static BOOL PathResolveA(
-	LPSTR lpszPath,
-	LPCSTR *alpszPaths,
-	DWORD dwFlags)
+static BOOL PathResolveA(LPSTR path, LPCSTR *paths, DWORD flags)
 {
-	FIXME("(%s,%p,0x%08x),stub!\n",
-	  lpszPath, *alpszPaths, dwFlags);
-	return 0;
+    FIXME("(%s,%p,0x%08x),stub!\n", debugstr_a(path), paths, flags);
+    return FALSE;
 }
 
-static BOOL PathResolveW(
-	LPWSTR lpszPath,
-	LPCWSTR *alpszPaths,
-	DWORD dwFlags)
+static BOOL PathResolveW(LPWSTR path, LPCWSTR *paths, DWORD flags)
 {
-	FIXME("(%s,%p,0x%08x),stub!\n",
-	  debugstr_w(lpszPath), debugstr_w(*alpszPaths), dwFlags);
-	return 0;
+    FIXME("(%s,%p,0x%08x),stub!\n", debugstr_w(path), paths, flags);
+    return FALSE;
 }
 
 /*************************************************************************
  * PathResolve [SHELL32.51]
  */
-BOOL WINAPI PathResolveAW(
-	LPVOID lpszPath,
-	LPCVOID *alpszPaths,
-	DWORD dwFlags)
+BOOL WINAPI PathResolveAW(LPVOID path, LPCVOID *paths, DWORD flags)
 {
-	if (SHELL_OsIsUnicode())
-	  return PathResolveW(lpszPath, (LPCWSTR*)alpszPaths, dwFlags);
-	return PathResolveA(lpszPath, (LPCSTR*)alpszPaths, dwFlags);
+    if (SHELL_OsIsUnicode())
+        return PathResolveW(path, (LPCWSTR*)paths, flags);
+    else
+        return PathResolveA(path, (LPCSTR*)paths, flags);
 }
 
 /*************************************************************************
