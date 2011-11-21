@@ -773,7 +773,7 @@ found:
     if (!RegCreateKeyW( HKEY_LOCAL_MACHINE, drives_keyW, &hkey ))
     {
         const WCHAR *type_name = drive_types[type];
-        WCHAR name[3] = {'a',':',0};
+        WCHAR name[] = {'a',':',0};
 
         name[0] += drive->drive;
         if (!type_name[0] && type == DEVICE_HARDDISK) type_name = drive_types[DEVICE_FLOPPY];
@@ -826,7 +826,7 @@ NTSTATUS remove_dos_device( int letter, const char *udi )
         /* clear the registry key too */
         if (!RegOpenKeyW( HKEY_LOCAL_MACHINE, drives_keyW, &hkey ))
         {
-            WCHAR name[3] = {'a',':',0};
+            WCHAR name[] = {'a',':',0};
             name[0] += drive->drive;
             RegDeleteValueW( hkey, name );
             RegCloseKey( hkey );
