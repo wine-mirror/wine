@@ -1074,7 +1074,7 @@ int WINAPI PathParseIconLocationW(LPWSTR lpszPath)
  */
 BOOL WINAPI PathFileExistsDefExtW(LPWSTR lpszPath,DWORD dwWhich)
 {
-  static const WCHAR pszExts[7][5] = { { '.', 'p', 'i', 'f', 0},
+  static const WCHAR pszExts[][5]  = { { '.', 'p', 'i', 'f', 0},
                                        { '.', 'c', 'o', 'm', 0},
                                        { '.', 'e', 'x', 'e', 0},
                                        { '.', 'b', 'a', 't', 0},
