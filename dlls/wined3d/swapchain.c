@@ -254,7 +254,7 @@ HRESULT CDECL wined3d_swapchain_get_present_parameters(const struct wined3d_swap
 }
 
 HRESULT CDECL wined3d_swapchain_set_gamma_ramp(const struct wined3d_swapchain *swapchain,
-        DWORD flags, const WINED3DGAMMARAMP *ramp)
+        DWORD flags, const struct wined3d_gamma_ramp *ramp)
 {
     HDC dc;
 
@@ -271,7 +271,7 @@ HRESULT CDECL wined3d_swapchain_set_gamma_ramp(const struct wined3d_swapchain *s
 }
 
 HRESULT CDECL wined3d_swapchain_get_gamma_ramp(const struct wined3d_swapchain *swapchain,
-        WINED3DGAMMARAMP *ramp)
+        struct wined3d_gamma_ramp *ramp)
 {
     HDC dc;
 

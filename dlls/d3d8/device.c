@@ -661,9 +661,9 @@ static void WINAPI IDirect3DDevice8Impl_SetGammaRamp(IDirect3DDevice8 *iface, DW
 
     TRACE("iface %p, flags %#x, ramp %p.\n", iface, Flags, pRamp);
 
-    /* Note: D3DGAMMARAMP is compatible with WINED3DGAMMARAMP */
+    /* Note: D3DGAMMARAMP is compatible with struct wined3d_gamma_ramp. */
     wined3d_mutex_lock();
-    wined3d_device_set_gamma_ramp(This->wined3d_device, 0, Flags, (const WINED3DGAMMARAMP *)pRamp);
+    wined3d_device_set_gamma_ramp(This->wined3d_device, 0, Flags, (const struct wined3d_gamma_ramp *)pRamp);
     wined3d_mutex_unlock();
 }
 
@@ -673,9 +673,9 @@ static void WINAPI IDirect3DDevice8Impl_GetGammaRamp(IDirect3DDevice8 *iface, D3
 
     TRACE("iface %p, ramp %p.\n", iface, pRamp);
 
-    /* Note: D3DGAMMARAMP is compatible with WINED3DGAMMARAMP */
+    /* Note: D3DGAMMARAMP is compatible with struct wined3d_gamma_ramp. */
     wined3d_mutex_lock();
-    wined3d_device_get_gamma_ramp(This->wined3d_device, 0, (WINED3DGAMMARAMP *)pRamp);
+    wined3d_device_get_gamma_ramp(This->wined3d_device, 0, (struct wined3d_gamma_ramp *)pRamp);
     wined3d_mutex_unlock();
 }
 

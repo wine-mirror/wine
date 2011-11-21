@@ -2444,7 +2444,7 @@ struct wined3d_swapchain
     WINED3DPRESENT_PARAMETERS presentParms;
     DWORD orig_width, orig_height;
     enum wined3d_format_id orig_fmt;
-    WINED3DGAMMARAMP orig_gamma;
+    struct wined3d_gamma_ramp orig_gamma;
     BOOL render_to_fbo;
     const struct wined3d_format *ds_format;
 

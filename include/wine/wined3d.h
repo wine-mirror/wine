@@ -1583,12 +1583,12 @@ struct wined3d_viewport
     float max_z;
 };
 
-typedef struct _WINED3DGAMMARAMP
+struct wined3d_gamma_ramp
 {
     WORD red[256];
     WORD green[256];
     WORD blue[256];
-} WINED3DGAMMARAMP;
+};
 
 typedef struct _WINED3DLINEPATTERN
 {
@@ -2211,7 +2211,7 @@ HRESULT __cdecl wined3d_device_get_display_mode(const struct wined3d_device *dev
 HRESULT __cdecl wined3d_device_get_front_buffer_data(const struct wined3d_device *device,
         UINT swapchain_idx, struct wined3d_surface *dst_surface);
 void __cdecl wined3d_device_get_gamma_ramp(const struct wined3d_device *device,
-        UINT swapchain_idx, WINED3DGAMMARAMP *ramp);
+        UINT swapchain_idx, struct wined3d_gamma_ramp *ramp);
 HRESULT __cdecl wined3d_device_get_index_buffer(const struct wined3d_device *device,
         struct wined3d_buffer **index_buffer);
 HRESULT __cdecl wined3d_device_get_light(const struct wined3d_device *device,
@@ -2290,7 +2290,7 @@ HRESULT __cdecl wined3d_device_set_dialog_box_mode(struct wined3d_device *device
 HRESULT __cdecl wined3d_device_set_display_mode(struct wined3d_device *device,
         UINT swapchain_idx, const struct wined3d_display_mode *mode);
 void __cdecl wined3d_device_set_gamma_ramp(const struct wined3d_device *device,
-        UINT swapchain_idx, DWORD flags, const WINED3DGAMMARAMP *ramp);
+        UINT swapchain_idx, DWORD flags, const struct wined3d_gamma_ramp *ramp);
 HRESULT __cdecl wined3d_device_set_index_buffer(struct wined3d_device *device,
         struct wined3d_buffer *index_buffer, enum wined3d_format_id format_id);
 HRESULT __cdecl wined3d_device_set_light(struct wined3d_device *device,
@@ -2457,7 +2457,7 @@ HRESULT __cdecl wined3d_swapchain_get_display_mode(const struct wined3d_swapchai
 HRESULT __cdecl wined3d_swapchain_get_front_buffer_data(const struct wined3d_swapchain *swapchain,
         struct wined3d_surface *dst_surface);
 HRESULT __cdecl wined3d_swapchain_get_gamma_ramp(const struct wined3d_swapchain *swapchain,
-        WINED3DGAMMARAMP *ramp);
+        struct wined3d_gamma_ramp *ramp);
 void * __cdecl wined3d_swapchain_get_parent(const struct wined3d_swapchain *swapchain);
 HRESULT __cdecl wined3d_swapchain_get_present_parameters(const struct wined3d_swapchain *swapchain,
         WINED3DPRESENT_PARAMETERS *present_parameters);
@@ -2468,7 +2468,7 @@ HRESULT __cdecl wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
         const RECT *src_rect, const RECT *dst_rect, HWND dst_window_override,
         const RGNDATA *dirty_region, DWORD flags);
 HRESULT __cdecl wined3d_swapchain_set_gamma_ramp(const struct wined3d_swapchain *swapchain,
-        DWORD flags, const WINED3DGAMMARAMP *ramp);
+        DWORD flags, const struct wined3d_gamma_ramp *ramp);
 HRESULT __cdecl wined3d_swapchain_set_window(struct wined3d_swapchain *swapchain, HWND window);
 
 HRESULT __cdecl wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
