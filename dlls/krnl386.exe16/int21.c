@@ -336,7 +336,7 @@ static BYTE INT21_MapDrive( BYTE drive )
 {
     if (drive)
     {
-        WCHAR drivespec[3] = {'A', ':', 0};
+        WCHAR drivespec[] = {'A', ':', 0};
         UINT  drivetype;
 
         drivespec[0] += drive - 1;
@@ -359,7 +359,7 @@ static BYTE INT21_MapDrive( BYTE drive )
  */
 static void INT21_SetCurrentDrive( BYTE drive )
 {
-    WCHAR drivespec[3] = {'A', ':', 0};
+    WCHAR drivespec[] = {'A', ':', 0};
 
     drivespec[0] += drive;
 
@@ -2451,7 +2451,7 @@ static void INT21_Ioctl_Block( CONTEXT *context )
 {
     BYTE *dataptr;
     BYTE  drive = INT21_MapDrive( BL_reg(context) );
-    WCHAR drivespec[4] = {'A', ':', '\\', 0};
+    WCHAR drivespec[] = {'A', ':', '\\', 0};
     UINT  drivetype;
 
     drivespec[0] += drive;

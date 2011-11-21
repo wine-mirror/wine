@@ -71,7 +71,7 @@ BOOL DOSVM_RawWrite(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL 
  */
 void WINAPI DOSVM_Int26Handler( CONTEXT *context )
 {
-    WCHAR drivespec[4] = {'A', ':', '\\', 0};
+    WCHAR drivespec[] = {'A', ':', '\\', 0};
     BYTE *dataptr = CTX_SEG_OFF_TO_LIN( context, context->SegDs, context->Ebx );
     DWORD begin;
     DWORD length;
