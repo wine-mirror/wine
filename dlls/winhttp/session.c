@@ -1671,13 +1671,13 @@ static BOOL run_script( const BSTR script, const WCHAR *url, WINHTTP_PROXY_INFO 
     params.cNamedArgs = 0;
     hr = IDispatch_Invoke( dispatch, dispid, &IID_NULL, LOCALE_SYSTEM_DEFAULT, DISPATCH_METHOD,
                            &params, &result, NULL, NULL );
-    VariantClear( &args[0] );
     VariantClear( &args[1] );
     if (hr != S_OK) goto done;
 
     ret = parse_script_result( result, info );
 
 done:
+    SysFreeString( hostname );
     SysFreeString( func );
     if (dispatch) IDispatch_Release( dispatch );
     if (parser) IUnknown_Release( parser );
