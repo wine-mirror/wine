@@ -151,7 +151,7 @@ BEGIN
     GROUPBOX        " Application Settings ",IDC_STATIC, 8,4,244,210
     LTEXT           "Wine can mimic different Windows versions for each application.  This tab is linked to the Libraries and Graphics tabs to allow you to change systemwide or per-application settings in those tabs as well.",
                     IDC_STATIC,15,15,227,45
-    CONTROL         "Applications",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
+    CONTROL         "",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,60,230,110
     PUSHBUTTON	    "&Add application...",IDC_APP_ADDAPP, 15,174,112,14
     PUSHBUTTON	    "&Remove application",IDC_APP_REMOVEAPP, 133,174,112,14
@@ -182,7 +182,7 @@ BEGIN
     GROUPBOX    " Screen &Resolution ",IDC_STATIC,8,151,244,63
     CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
     EDITTEXT    IDC_RES_DPIEDIT,204,161,23,13,ES_NUMBER|WS_TABSTOP
-    LTEXT       "dpi",IDC_STATIC,233,163,12,8
+    LTEXT       "#msgctxt#unit: dots/inch#dpi",IDC_STATIC,233,163,12,8
     LTEXT       "This is a sample text using 10 point Tahoma",IDC_RES_FONT_PREVIEW,15,180,230,28
 END
 
@@ -233,7 +233,7 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Drive &mappings ",IDC_STATIC,8,4,244,195
     LTEXT           "Failed to connect to the mount manager, the drive configuration cannot be edited.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,190,76
-    CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+    CONTROL         "",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "&Add...",IDC_BUTTON_ADD,15,98,47,14
     PUSHBUTTON      "&Remove",IDC_BUTTON_REMOVE,66,98,47,14
@@ -299,7 +299,7 @@ BEGIN
     CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASS,UDS_SETBUDDYINT | WS_DISABLED,185,90,15,13
     PUSHBUTTON      "&Font...",IDC_SYSPARAM_FONT,200,90,45,13,WS_DISABLED
     GROUPBOX        " Fol&ders ",IDC_STATIC,8,114,244,100
-    CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+    CONTROL         "",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                      LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
     CONTROL         "&Link to:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,65,13
     EDITTEXT         IDC_EDIT_SFPATH,80,195,110,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED

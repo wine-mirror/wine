@@ -27,7 +27,7 @@ msgstr ""
 "Leidžia įdiegti naują programinę įrangą, ar pašalinti jau įdiegtą iš jūsų "
 "kompiuterio."
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:154 winecfg.rc:30
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
 msgstr "Programos"
 
@@ -6086,7 +6086,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34
+#: sane.rc:34 winecfg.rc:185
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "tašk./col."
@@ -11297,10 +11297,6 @@ msgstr "Leisti &Pixel Shader (jei palaiko aparatinė įranga)"
 msgid " Screen &Resolution "
 msgstr " Ekrano &skiriamoji geba "
 
-#: winecfg.rc:185
-msgid "dpi"
-msgstr "tašk./col."
-
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Tai yra pavyzdinis tekstas naudojantis 10 taškų Tahoma"
@@ -11377,10 +11373,6 @@ msgid ""
 msgstr ""
 "Nepavyko prisijungti prie diskų tvarkytuvės, diskų konfigūracija negali būti "
 "redaguojama."
-
-#: winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listview"
 
 #: winecfg.rc:238
 msgid "&Add..."

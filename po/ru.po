@@ -24,7 +24,7 @@ msgid ""
 msgstr ""
 "Установка нового программного обеспечения и удаление установленного ранее"
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:154 winecfg.rc:30
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
 msgstr "Приложения"
 
@@ -6079,7 +6079,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "бит"
 
-#: sane.rc:34
+#: sane.rc:34 winecfg.rc:185
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "точек на дюйм"
@@ -11293,10 +11293,6 @@ msgstr "Включить Pixel Shader (если поддерживается о�
 msgid " Screen &Resolution "
 msgstr " Разрешение экрана "
 
-#: winecfg.rc:185
-msgid "dpi"
-msgstr "dpi"
-
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Пример текста (This is a sample text). Шрифт Tahoma 10 пунктов."
@@ -11373,10 +11369,6 @@ msgid ""
 msgstr ""
 "Невозможно соединиться с mount manager! Конфигурация дисков не будет "
 "редактироваться."
-
-#: winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listview"
 
 #: winecfg.rc:238
 msgid "&Add..."

@@ -25,7 +25,7 @@ msgstr ""
 "새 소프트웨어를 설치하거나,이미 설치된 소프트웨어를 당신의 컴퓨터에서 삭제 "
 "할 수 있습니다."
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:154 winecfg.rc:30
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
 msgstr "응용프로그램"
 
@@ -6068,7 +6068,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "비트"
 
-#: sane.rc:34
+#: sane.rc:34 winecfg.rc:185
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "dpi"
@@ -11225,10 +11225,6 @@ msgstr "(만약 하드웨어에서 지원할 경우 ) 픽셀 쉐이더 허용(&P
 msgid " Screen &Resolution "
 msgstr " 화면 해상도(&R) "
 
-#: winecfg.rc:185
-msgid "dpi"
-msgstr "dpi"
-
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "This is a sample text using 10 point Tahoma"
@@ -11304,10 +11300,6 @@ msgid ""
 "edited."
 msgstr ""
 "연결 관리자가 연결하는 데 실패함, 이 드라이브 설정을 수정될 수 없습니다."
-
-#: winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "목록보기"
 
 #: winecfg.rc:238
 msgid "&Add..."

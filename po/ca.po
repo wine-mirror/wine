@@ -25,7 +25,7 @@ msgstr ""
 "Us permet instalar nou programari o treure programari existent del vostre "
 "ordinador."
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:154 winecfg.rc:30
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
 msgstr "Aplicacions"
 
@@ -6091,7 +6091,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34
+#: sane.rc:34 winecfg.rc:185
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "ppp"
@@ -11441,10 +11441,6 @@ msgstr " &Resoluci de la Pantalla "
 msgid " Screen &Resolution "
 msgstr ""
 
-#: winecfg.rc:185
-msgid "dpi"
-msgstr "Aquest s un text de mostra en Tahoma de 10 punts"
-
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr ""
@@ -11522,10 +11518,6 @@ msgid ""
 msgstr ""
 "S'ha fallat en connectar el gestor de muntatge, la configuraci d'unitat no "
 "es pot editor."
-
-#: winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Vista de llista"
 
 #: winecfg.rc:238
 msgid "&Add..."

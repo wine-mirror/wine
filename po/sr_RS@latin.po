@@ -23,7 +23,7 @@ msgid ""
 "computer."
 msgstr "Instaliranje novog programa ili brisanje postojećeg."
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:154 winecfg.rc:30
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
 msgstr "Aplikacije"
 
@@ -6363,7 +6363,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34
+#: sane.rc:34 winecfg.rc:185
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "tpi"
@@ -11329,10 +11329,6 @@ msgstr "Dozvoli &Pixel Shadere (ako podržava grafička)"
 msgid " Screen &Resolution "
 msgstr " Rezolucija &Ekrana "
 
-#: winecfg.rc:185
-msgid "dpi"
-msgstr "Tacke po inču"
-
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Ovo je osnovni tekst 10 Tahoma"
@@ -11409,10 +11405,6 @@ msgid ""
 msgstr ""
 "Uspelo povezivanje sa mount menadžerom, disk konfiguracija se ne može "
 "izmeniti."
-
-#: winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listing"
 
 #: winecfg.rc:238
 msgid "&Add..."

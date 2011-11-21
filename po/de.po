@@ -23,7 +23,7 @@ msgid ""
 "computer."
 msgstr "Erlaubt ihnen neue Software hinzuzufügen oder zu entfernen."
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:154 winecfg.rc:30
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
 msgstr "Anwendungen"
 
@@ -6084,7 +6084,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34
+#: sane.rc:34 winecfg.rc:185
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "dpi"
@@ -11372,10 +11372,6 @@ msgstr "&Pixel Shader aktivieren (wenn von Hardware unterstützt)"
 msgid " Screen &Resolution "
 msgstr " Bildschi&rmauflösung "
 
-#: winecfg.rc:185
-msgid "dpi"
-msgstr "dpi"
-
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Dies ist ein Beispieltext in 10 Punkt Tahoma"
@@ -11453,10 +11449,6 @@ msgid ""
 msgstr ""
 "Fehler beim Verbinden mit dem Mountmanager. Die Laufwerkskonfiguration kann "
 "nicht bearbeitet werden."
-
-#: winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listview"
 
 #: winecfg.rc:238
 msgid "&Add..."

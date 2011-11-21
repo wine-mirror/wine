@@ -23,7 +23,7 @@ msgid ""
 "computer."
 msgstr ""
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:154 winecfg.rc:30
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
 msgstr "Programy"
 
@@ -6234,7 +6234,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr ""
 
-#: sane.rc:34
+#: sane.rc:34 winecfg.rc:185
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr ""
@@ -11442,10 +11442,6 @@ msgstr "Povolit stínování pixelů (spoléhá se na hardware podporu)"
 msgid " Screen &Resolution "
 msgstr " Screen &Resolution "
 
-#: winecfg.rc:185
-msgid "dpi"
-msgstr "dpi"
-
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "This is a sample text using 10 point Tahoma"
@@ -11523,10 +11519,6 @@ msgid ""
 msgstr ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
-
-#: winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listview"
 
 #: winecfg.rc:238
 msgid "&Add..."

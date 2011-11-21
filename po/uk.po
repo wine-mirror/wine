@@ -23,7 +23,7 @@ msgid ""
 "computer."
 msgstr "Дозволяє встановити нове ПЗ та видалити наявне з вашого комп'ютера."
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:154 winecfg.rc:30
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
 msgstr "Додатки"
 
@@ -6076,7 +6076,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34
+#: sane.rc:34 winecfg.rc:185
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "точок на дюйм"
@@ -11249,10 +11249,6 @@ msgstr "Ввімкнути &Pixel Shader (якщо підтримується о
 msgid " Screen &Resolution "
 msgstr " &Розширення екрану "
 
-#: winecfg.rc:185
-msgid "dpi"
-msgstr "dpi"
-
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Приклад тексту. Шрифт Tahoma 10 пунктів"
@@ -11329,10 +11325,6 @@ msgid ""
 msgstr ""
 "Неможливо з'єднатися з mount manager, конфігурація дисків не буде "
 "редагуватися."
-
-#: winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listview"
 
 #: winecfg.rc:238
 msgid "&Add..."

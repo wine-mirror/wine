@@ -25,7 +25,7 @@ msgstr ""
 "Permite a instalação de novo software, ou a remoção de software existente no "
 "seu computador."
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:154 winecfg.rc:30
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
 msgstr "Aplicativos"
 
@@ -6297,7 +6297,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34
+#: sane.rc:34 winecfg.rc:185
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "dpi"
@@ -11631,10 +11631,6 @@ msgstr "Permitir &Pixel Shader (se suportado pelo hardware)"
 msgid " Screen &Resolution "
 msgstr " &Resolução da Tela "
 
-#: winecfg.rc:185
-msgid "dpi"
-msgstr "dpi"
-
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Este é um texto exemplo usando Tahoma 10 pontos"
@@ -11712,10 +11708,6 @@ msgid ""
 msgstr ""
 "Falha de conexão com o gerenciador de montagem, a configuração da unidade "
 "não pôde ser alterada."
-
-#: winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listagem"
 
 #: winecfg.rc:238
 msgid "&Add..."

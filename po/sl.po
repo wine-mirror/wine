@@ -25,7 +25,7 @@ msgstr ""
 "Omogoča namestitev novih programov oziroma odstranitev programov z vašega "
 "računalnika."
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:154 winecfg.rc:30
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
 msgstr "Programi"
 
@@ -6110,7 +6110,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34
+#: sane.rc:34 winecfg.rc:185
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "dpi"
@@ -11327,10 +11327,6 @@ msgstr "Omogoči &Pixel Shader (če to omogoča strojna oprema)"
 msgid " Screen &Resolution "
 msgstr " Ločljivost &zaslona "
 
-#: winecfg.rc:185
-msgid "dpi"
-msgstr "dpi"
-
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Vzorčno besedilo, napisano s pisavo Tahoma velikosti 10 točk"
@@ -11408,10 +11404,6 @@ msgid ""
 msgstr ""
 "Napaka pri povezovanju z upravljalnikom priklopov (mount manager); "
 "nastavitev pogonov ne bo mogoče urejati."
-
-#: winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listview"
 
 #: winecfg.rc:238
 msgid "&Add..."

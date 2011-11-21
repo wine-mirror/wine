@@ -24,7 +24,7 @@ msgid ""
 msgstr ""
 "Permite instalarea sau dezinstalarea de aplicații pe calculatorul d-voastră."
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:154 winecfg.rc:30
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
 msgstr "Aplicații"
 
@@ -6540,7 +6540,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34
+#: sane.rc:34 winecfg.rc:185
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "dpi"
@@ -11870,10 +11870,6 @@ msgstr "Permite pixel shader (dacă este oferit de hardware)"
 msgid " Screen &Resolution "
 msgstr " Rezoluție ecran "
 
-#: winecfg.rc:185
-msgid "dpi"
-msgstr "dpi"
-
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "This is a sample text using 10 point Tahoma"
@@ -11950,10 +11946,6 @@ msgid ""
 msgstr ""
 "A eșuat conectarea la managerul de montare, configurația discurilor nu poate "
 "fi schimbată."
-
-#: winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listview"
 
 #: winecfg.rc:238
 msgid "&Add..."

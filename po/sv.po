@@ -25,7 +25,7 @@ msgstr ""
 "Låter dig installera ny programvara, eller ta bort befintlig programvara "
 "från din dator."
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:154 winecfg.rc:30
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
 msgstr "Program"
 
@@ -6074,7 +6074,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34
+#: sane.rc:34 winecfg.rc:185
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "dpi"
@@ -11261,10 +11261,6 @@ msgstr "Tillåt &Pixel Shader (om hårdvaran stöds)"
 msgid " Screen &Resolution "
 msgstr " Skärm&upplösning "
 
-#: winecfg.rc:185
-msgid "dpi"
-msgstr "dpi"
-
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Denna exempeltext använder 10-punkters Tahoma"
@@ -11342,10 +11338,6 @@ msgid ""
 msgstr ""
 "Misslyckades med att ansluta till monteringshanteraren. "
 "Enhetskonfigurationen kan inte redigeras."
-
-#: winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listvy"
 
 #: winecfg.rc:238
 msgid "&Add..."

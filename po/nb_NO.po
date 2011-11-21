@@ -23,7 +23,7 @@ msgid ""
 "computer."
 msgstr "Lar deg installere ny programvare eller fjerne installerte programmer."
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:154 winecfg.rc:30
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
 msgstr "Programmer"
 
@@ -6308,7 +6308,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34
+#: sane.rc:34 winecfg.rc:185
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "dpi"
@@ -11553,10 +11553,6 @@ msgstr "Tillat piksel-skyggelegger (hvis maskinvaren støtter det)"
 msgid " Screen &Resolution "
 msgstr " Skjermoppløsning (styrer skriftstørrelse) "
 
-#: winecfg.rc:185
-msgid "dpi"
-msgstr "dpi"
-
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Forhåndsvisning av tekst med 10 punkters Tahoma"
@@ -11634,10 +11630,6 @@ msgid ""
 msgstr ""
 "Klarte ikke koble til monteringsbehandleren; diskstasjonene kan derfor ikke "
 "redigeres."
-
-#: winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Listevisning"
 
 #: winecfg.rc:238
 msgid "&Add..."

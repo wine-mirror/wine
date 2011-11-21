@@ -25,7 +25,7 @@ msgstr ""
 "Pozwala na instalację nowego lub usunięcie już istniejącego oprogramowania z "
 "twojego komputera."
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:154 winecfg.rc:30
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
 msgstr "Aplikacje"
 
@@ -6091,7 +6091,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr "b"
 
-#: sane.rc:34
+#: sane.rc:34 winecfg.rc:185
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "dpi"
@@ -11318,10 +11318,6 @@ msgstr "Obsługuj Pixel Shader (jeżeli są obsługiwane przez kartę graficzną
 msgid " Screen &Resolution "
 msgstr " Rozdzielczość "
 
-#: winecfg.rc:185
-msgid "dpi"
-msgstr "dpi"
-
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Oto przykład zastosowania 10-punktowej czcionki Tahoma"
@@ -11399,10 +11395,6 @@ msgid ""
 msgstr ""
 "Nieudane połączenie z menedżerem montowania, konfiguracja napędu nie może "
 "być zmodyfikowana."
-
-#: winecfg.rc:236 winecfg.rc:302
-msgid "Listview"
-msgstr "Widok listy"
 
 #: winecfg.rc:238
 msgid "&Add..."

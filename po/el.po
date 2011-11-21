@@ -23,7 +23,7 @@ msgid ""
 "computer."
 msgstr ""
 
-#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:154 winecfg.rc:30
+#: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 #, fuzzy
 msgid "Applications"
 msgstr "Επιλογές"
@@ -6069,7 +6069,7 @@ msgctxt "unit: bits"
 msgid "b"
 msgstr ""
 
-#: sane.rc:34
+#: sane.rc:34 winecfg.rc:185
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr ""
@@ -10834,10 +10834,6 @@ msgstr ""
 msgid " Screen &Resolution "
 msgstr ""
 
-#: winecfg.rc:185
-msgid "dpi"
-msgstr ""
-
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr ""
@@ -10911,11 +10907,6 @@ msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
 msgstr ""
-
-#: winecfg.rc:236 winecfg.rc:302
-#, fuzzy
-msgid "Listview"
-msgstr "Λίστα"
 
 #: winecfg.rc:238
 msgid "&Add..."
