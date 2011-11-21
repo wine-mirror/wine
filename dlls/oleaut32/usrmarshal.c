@@ -2191,7 +2191,7 @@ HRESULT __RPC_STUB IPropertyBag_Read_Stub(
     DWORD varType,
     IUnknown *pUnkObj)
 {
-  static const WCHAR emptyWstr[1] = {0};
+  static const WCHAR emptyWstr[] = {0};
   IDispatch *disp;
   HRESULT hr;
   TRACE("(%p, %s, %p, %p, %x, %p)\n", This, debugstr_w(pszPropName), pVar,

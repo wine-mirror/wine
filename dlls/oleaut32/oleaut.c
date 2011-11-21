@@ -447,7 +447,7 @@ void WINAPI SetOaNoCache(void)
   BSTR_bCache = FALSE;
 }
 
-static const WCHAR	_delimiter[2] = {'!',0}; /* default delimiter apparently */
+static const WCHAR	_delimiter[] = {'!',0}; /* default delimiter apparently */
 static const WCHAR	*pdelimiter = &_delimiter[0];
 
 /***********************************************************************
