@@ -84,7 +84,7 @@ typedef struct
 /* Error codes */
 
 #ifndef SUCCESS_SUCCESS
-#define SUCCESS_SUCCESS                 0L
+#define SUCCESS_SUCCESS                 0
 #endif
 
 #define MAPI_USER_ABORT                 1

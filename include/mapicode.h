@@ -30,7 +30,7 @@
 #define MAKE_MAPI_S(e) (MAKE_MAPI_SCODE(0,FACILITY_ITF,(e)))
 
 #ifndef SUCCESS_SUCCESS
-#define SUCCESS_SUCCESS     0L
+#define SUCCESS_SUCCESS     __MSABI_LONG(0)
 #endif
 
 /* Errors */
