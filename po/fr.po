@@ -334,13 +334,12 @@ msgid "Unreadable Entry"
 msgstr "Entrée illisible"
 
 #: comdlg32.rc:68
-#, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
-"Cette valeur n'est pas dans l'étendue de pages\n"
-"Veuillez indiquer une valeur entre %d et %d."
+"Cette valeur n'est pas dans l'intervalle de pages.\n"
+"Veuillez indiquer une valeur entre %1!d! et %2!d!."
 
 #: comdlg32.rc:70
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -400,9 +399,8 @@ msgstr ""
 "devez installer une imprimante. Veuillez en installer une et réessayez."
 
 #: comdlg32.rc:151
-#, fuzzy
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr "Sélectionnez une taille de police entre %d et %d points."
+msgstr "Sélectionnez une taille de police entre %1!d! et %2!d! points."
 
 #: comdlg32.rc:152 ieframe.rc:32
 msgid "&Save"
@@ -1586,9 +1584,8 @@ msgid "Public key"
 msgstr "Clé publique"
 
 #: cryptui.rc:58
-#, fuzzy
 msgid "%1 (%2!d! bits)"
-msgstr "%s (%d bits)"
+msgstr "%1 (%2!d! bits)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
@@ -2041,9 +2038,8 @@ msgid "Regional Setting"
 msgstr "Paramètres régionaux"
 
 #: dxdiagn.rc:26
-#, fuzzy
 msgid "%1!u!MB used, %2!u!MB available"
-msgstr "%u MB utilisés, %u MB disponibles"
+msgstr "%1!u! MB utilisés, %2!u! MB disponibles"
 
 #: gdi32.rc:25
 msgid "Western"
@@ -6114,9 +6110,8 @@ msgid "us"
 msgstr "µs"
 
 #: setupapi.rc:28
-#, fuzzy
 msgid "The file '%1' on %2 is needed"
-msgstr "Le fichier « %s » sur %s est requis"
+msgstr "Le fichier « %1 » sur %2 est requis"
 
 #: setupapi.rc:29 ipconfig.rc:31
 msgid "Unknown"
@@ -8850,9 +8845,8 @@ msgstr ""
 "invalides\n"
 
 #: ipconfig.rc:29
-#, fuzzy
 msgid "%1 adapter %2\n"
-msgstr "Adaptateur %s %s\n"
+msgstr "Adaptateur %1 %2\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
@@ -9594,9 +9588,8 @@ msgid "bytes"
 msgstr "octets"
 
 #: oleview.rc:148
-#, fuzzy
 msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
-msgstr "Échec de LoadTypeLib( %s ) ($%x)"
+msgstr "Échec de LoadTypeLib( %1 ) ($%2!x!)"
 
 #: oleview.rc:149
 msgid "Inherited Interfaces"
@@ -10371,52 +10364,45 @@ msgid "Error: One of options /im or /pid must be specified.\n"
 msgstr "Erreur : une des options /im ou /pid doit être spécifiée.\n"
 
 #: taskkill.rc:31
-#, fuzzy
 msgid "Error: Option %1 expects a command line parameter.\n"
-msgstr "Erreur : l'option %s requiert un paramètre de ligne de commande.\n"
+msgstr "Erreur : l'option %1 requiert un paramètre de ligne de commande.\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
 msgstr "Erreur : les options /im et /pid sont incompatibles.\n"
 
 #: taskkill.rc:33
-#, fuzzy
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
 msgstr ""
-"Message de fermeture envoyé aux fenêtres supérieures du processus de PID "
-"%u.\n"
+"Message de fermeture envoyé aux fenêtres supérieures du processus de PID %1!"
+"u!.\n"
 
 #: taskkill.rc:34
-#, fuzzy
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 msgstr ""
-"Message de fermeture envoyé aux fenêtres supérieures du processus « %s » de "
-"PID %u.\n"
+"Message de fermeture envoyé aux fenêtres supérieures du processus « %1 » de "
+"PID %2!u!.\n"
 
 #: taskkill.rc:35
-#, fuzzy
 msgid "Process with PID %1!u! was forcibly terminated.\n"
-msgstr "Le processus de PID %u a été terminé brutalement.\n"
+msgstr "Le processus de PID %1!u! a été terminé brutalement.\n"
 
 #: taskkill.rc:36
-#, fuzzy
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
-msgstr "Le processus « %s » de PID %u a été terminé brutalement.\n"
+msgstr "Le processus « %1 » de PID %2!u! a été terminé brutalement.\n"
 
 #: taskkill.rc:37
-#, fuzzy
 msgid "Error: Could not find process \"%1\".\n"
-msgstr "Erreur : processus « %s » introuvable.\n"
+msgstr "Erreur : processus « %1 » introuvable.\n"
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
 msgstr "Erreur : impossible d'énumérer la liste de processus.\n"
 
 #: taskkill.rc:39
-#, fuzzy
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr "Erreur : impossible de terminer le processus « %s ».\n"
+msgstr "Erreur : impossible de terminer le processus « %1 ».\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
@@ -12429,17 +12415,17 @@ msgstr "%1 libres sur %2"
 #: winefile.rc:121
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr ""
+msgstr "kB"
 
 #: winefile.rc:122
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr ""
+msgstr "MB"
 
 #: winefile.rc:123
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr ""
+msgstr "GB"
 
 #: winemine.rc:34
 msgid "&Game"
