@@ -1567,13 +1567,16 @@ static void ContextualShape_Arabic(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
 
         if (!shaped)
         {
-            WORD newGlyph = pwOutGlyphs[i];
-            if (pwcChars[i] >= FIRST_ARABIC_CHAR && pwcChars[i] <= LAST_ARABIC_CHAR)
+            if (context_shape[i] == Xn)
             {
-                /* fall back to presentation form B */
-                WCHAR context_char = wine_shaping_forms[pwcChars[i] - FIRST_ARABIC_CHAR][context_shape[i]];
-                if (context_char != pwcChars[i] && GetGlyphIndicesW(hdc, &context_char, 1, &newGlyph, 0) != GDI_ERROR && newGlyph != 0x0000)
-                    pwOutGlyphs[i] = newGlyph;
+                WORD newGlyph = pwOutGlyphs[i];
+                if (pwcChars[i] >= FIRST_ARABIC_CHAR && pwcChars[i] <= LAST_ARABIC_CHAR)
+                {
+                    /* fall back to presentation form B */
+                    WCHAR context_char = wine_shaping_forms[pwcChars[i] - FIRST_ARABIC_CHAR][context_shape[i]];
+                    if (context_char != pwcChars[i] && GetGlyphIndicesW(hdc, &context_char, 1, &newGlyph, 0) != GDI_ERROR && newGlyph != 0x0000)
+                        pwOutGlyphs[i] = newGlyph;
+                }
             }
             i++;
         }
