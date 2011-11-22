@@ -2213,13 +2213,21 @@ static HRESULT add_eval(script_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsexcep
 }
 
 /* ECMA-262 3rd Edition    11.6.1 */
-HRESULT add_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+HRESULT interp_add(exec_ctx_t *ctx)
 {
-    binary_expression_t *expr = (binary_expression_t*)_expr;
+    VARIANT *l, *r, ret;
+    HRESULT hres;
 
-    TRACE("\n");
+    r = stack_pop(ctx);
+    l = stack_pop(ctx);
 
-    return binary_expr_eval(ctx, expr, add_eval, ei, ret);
+    TRACE("%s + %s\n", debugstr_variant(l), debugstr_variant(r));
+
+    hres = add_eval(ctx->parser->script, l, r, &ctx->ei, &ret);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push(ctx, &ret);
 }
 
 /* ECMA-262 3rd Edition    11.6.2 */

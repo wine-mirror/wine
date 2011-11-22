@@ -1313,7 +1313,7 @@ static const expression_eval_t expression_eval_table[] = {
    binary_and_expression_eval,
    instanceof_expression_eval,
    in_expression_eval,
-   add_expression_eval,
+   compiled_expression_eval,
    sub_expression_eval,
    mul_expression_eval,
    div_expression_eval,
