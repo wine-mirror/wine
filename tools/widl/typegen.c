@@ -2379,8 +2379,8 @@ static void write_descriptors(FILE *file, type_t *type, unsigned int *tfsoff)
             print_file(file, 2, "0x%x,\t/* FIXME: always FC_LONG */\n", RPC_FC_LONG);
             write_conf_or_var_desc(file, current_structure, offset, ft,
                                    get_attrp(f->attrs, ATTR_SWITCHIS));
-            print_file(file, 2, "NdrFcShort(%hd),\t/* Offset= %hd (%u) */\n",
-                       reloff, reloff, absoff);
+            print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %hd (%u) */\n",
+                       (unsigned short)reloff, reloff, absoff);
             *tfsoff += 8;
         }
         offset += size;
