@@ -304,6 +304,7 @@ static ULONG WINAPI ProgressDialog_Release(IProgressDialog *iface)
 
 static HRESULT WINAPI ProgressDialog_StartProgressDialog(IProgressDialog *iface, HWND hwndParent, IUnknown *punkEnableModeless, DWORD dwFlags, LPCVOID reserved)
 {
+    static const INITCOMMONCONTROLSEX init = { sizeof(init), ICC_ANIMATE_CLASS };
     ProgressDialog *This = impl_from_IProgressDialog(iface);
     struct create_params params;
     HANDLE hThread;
@@ -315,6 +316,8 @@ static HRESULT WINAPI ProgressDialog_StartProgressDialog(IProgressDialog *iface,
         FIXME("Flags PROGDLG_AUTOTIME not supported\n");
     if (dwFlags & PROGDLG_NOTIME)
         FIXME("Flags PROGDLG_NOTIME not supported\n");
+
+    InitCommonControlsEx( &init );
 
     EnterCriticalSection(&This->cs);
 
