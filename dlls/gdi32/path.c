@@ -349,31 +349,36 @@ static BOOL PATH_AddFlatBezier(GdiPath *pPath, POINT *pt, BOOL closed)
  * Replaces Beziers with line segments
  *
  */
-static BOOL PATH_FlattenPath(GdiPath *pPath)
+static struct gdi_path *PATH_FlattenPath(const struct gdi_path *pPath)
 {
-    GdiPath newPath;
+    struct gdi_path *new_path;
     INT srcpt;
 
-    memset(&newPath, 0, sizeof(newPath));
-    newPath.state = PATH_Open;
+    if (!(new_path = alloc_gdi_path())) return NULL;
+
     for(srcpt = 0; srcpt < pPath->numEntriesUsed; srcpt++) {
         switch(pPath->pFlags[srcpt] & ~PT_CLOSEFIGURE) {
 	case PT_MOVETO:
 	case PT_LINETO:
-	    PATH_AddEntry(&newPath, &pPath->pPoints[srcpt],
-			  pPath->pFlags[srcpt]);
+	    if (!PATH_AddEntry(new_path, &pPath->pPoints[srcpt], pPath->pFlags[srcpt]))
+            {
+                free_gdi_path( new_path );
+                return NULL;
+            }
 	    break;
 	case PT_BEZIERTO:
-            PATH_AddFlatBezier(&newPath, &pPath->pPoints[srcpt-1],
-                               pPath->pFlags[srcpt+2] & PT_CLOSEFIGURE);
+            if (!PATH_AddFlatBezier(new_path, &pPath->pPoints[srcpt-1],
+                                    pPath->pFlags[srcpt+2] & PT_CLOSEFIGURE))
+            {
+                free_gdi_path( new_path );
+                return NULL;
+            }
 	    srcpt += 2;
 	    break;
 	}
     }
-    newPath.state = PATH_Closed;
-    PATH_AssignGdiPath(pPath, &newPath);
-    PATH_DestroyGdiPath(&newPath);
-    return TRUE;
+    new_path->state = PATH_Closed;
+    return new_path;
 }
 
 /* PATH_PathToRegion
@@ -381,37 +386,39 @@ static BOOL PATH_FlattenPath(GdiPath *pPath)
  * Creates a region from the specified path using the specified polygon
  * filling mode. The path is left unchanged.
  */
-static HRGN PATH_PathToRegion(GdiPath *pPath, INT nPolyFillMode)
+static HRGN PATH_PathToRegion(const struct gdi_path *pPath, INT nPolyFillMode)
 {
+    struct gdi_path *rgn_path;
     int    numStrokes, iStroke, i;
     INT  *pNumPointsInStroke;
     HRGN hrgn;
 
-    PATH_FlattenPath(pPath);
+    if (!(rgn_path = PATH_FlattenPath( pPath ))) return 0;
 
     /* FIXME: What happens when number of points is zero? */
 
     /* First pass: Find out how many strokes there are in the path */
     /* FIXME: We could eliminate this with some bookkeeping in GdiPath */
     numStrokes=0;
-    for(i=0; i<pPath->numEntriesUsed; i++)
-        if((pPath->pFlags[i] & ~PT_CLOSEFIGURE) == PT_MOVETO)
+    for(i=0; i<rgn_path->numEntriesUsed; i++)
+        if((rgn_path->pFlags[i] & ~PT_CLOSEFIGURE) == PT_MOVETO)
             numStrokes++;
 
     /* Allocate memory for number-of-points-in-stroke array */
     pNumPointsInStroke=HeapAlloc( GetProcessHeap(), 0, sizeof(int) * numStrokes );
     if(!pNumPointsInStroke)
     {
+        free_gdi_path( rgn_path );
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         return 0;
     }
 
     /* Second pass: remember number of points in each polygon */
     iStroke=-1;  /* Will get incremented to 0 at beginning of first stroke */
-    for(i=0; i<pPath->numEntriesUsed; i++)
+    for(i=0; i<rgn_path->numEntriesUsed; i++)
     {
         /* Is this the beginning of a new stroke? */
-        if((pPath->pFlags[i] & ~PT_CLOSEFIGURE) == PT_MOVETO)
+        if((rgn_path->pFlags[i] & ~PT_CLOSEFIGURE) == PT_MOVETO)
         {
             iStroke++;
             pNumPointsInStroke[iStroke]=0;
@@ -421,10 +428,11 @@ static HRGN PATH_PathToRegion(GdiPath *pPath, INT nPolyFillMode)
     }
 
     /* Create a region from the strokes */
-    hrgn=CreatePolyPolygonRgn(pPath->pPoints, pNumPointsInStroke,
+    hrgn=CreatePolyPolygonRgn(rgn_path->pPoints, pNumPointsInStroke,
                               numStrokes, nPolyFillMode);
 
     HeapFree( GetProcessHeap(), 0, pNumPointsInStroke );
+    free_gdi_path( rgn_path );
     return hrgn;
 }
 
@@ -1751,13 +1759,10 @@ static BOOL PATH_WidenPath(DC *dc)
 {
     INT i, j, numStrokes, penWidth, penWidthIn, penWidthOut, size, penStyle;
     BOOL ret = FALSE;
-    GdiPath *pPath, *pNewPath, **pStrokes = NULL, *pUpPath, *pDownPath;
+    struct gdi_path *flat_path;
+    GdiPath *pNewPath, **pStrokes = NULL, *pUpPath, *pDownPath;
     EXTLOGPEN *elp;
     DWORD obj_type, joint, endcap, penType;
-
-    pPath = &dc->path;
-
-    PATH_FlattenPath(pPath);
 
     size = GetObjectW( dc->hPen, 0, NULL );
     if (!size) {
@@ -1794,6 +1799,8 @@ static BOOL PATH_WidenPath(DC *dc)
         return FALSE;
     }
 
+    if (!(flat_path = PATH_FlattenPath( &dc->path ))) return FALSE;
+
     penWidthIn = penWidth / 2;
     penWidthOut = penWidth / 2;
     if(penWidthIn + penWidthOut < penWidth)
@@ -1801,16 +1808,17 @@ static BOOL PATH_WidenPath(DC *dc)
 
     numStrokes = 0;
 
-    for(i = 0, j = 0; i < pPath->numEntriesUsed; i++, j++) {
+    for(i = 0, j = 0; i < flat_path->numEntriesUsed; i++, j++) {
         POINT point;
-        if((i == 0 || (pPath->pFlags[i-1] & PT_CLOSEFIGURE)) &&
-            (pPath->pFlags[i] != PT_MOVETO)) {
+        if((i == 0 || (flat_path->pFlags[i-1] & PT_CLOSEFIGURE)) &&
+            (flat_path->pFlags[i] != PT_MOVETO)) {
             ERR("Expected PT_MOVETO %s, got path flag %c\n",
                 i == 0 ? "as first point" : "after PT_CLOSEFIGURE",
-                pPath->pFlags[i]);
+                flat_path->pFlags[i]);
+            free_gdi_path( flat_path );
             return FALSE;
         }
-        switch(pPath->pFlags[i]) {
+        switch(flat_path->pFlags[i]) {
             case PT_MOVETO:
                 if(numStrokes > 0) {
                     pStrokes[numStrokes - 1]->state = PATH_Closed;
@@ -1826,16 +1834,16 @@ static BOOL PATH_WidenPath(DC *dc)
                 /* fall through */
             case PT_LINETO:
             case (PT_LINETO | PT_CLOSEFIGURE):
-                point.x = pPath->pPoints[i].x;
-                point.y = pPath->pPoints[i].y;
-                PATH_AddEntry(pStrokes[numStrokes - 1], &point, pPath->pFlags[i]);
+                point.x = flat_path->pPoints[i].x;
+                point.y = flat_path->pPoints[i].y;
+                PATH_AddEntry(pStrokes[numStrokes - 1], &point, flat_path->pFlags[i]);
                 break;
             case PT_BEZIERTO:
                 /* should never happen because of the FlattenPath call */
                 ERR("Should never happen\n");
                 break;
             default:
-                ERR("Got path flag %c\n", pPath->pFlags[i]);
+                ERR("Got path flag %c\n", flat_path->pFlags[i]);
                 return FALSE;
         }
     }
@@ -2033,9 +2041,10 @@ static BOOL PATH_WidenPath(DC *dc)
         free_gdi_path( pDownPath );
     }
     HeapFree(GetProcessHeap(), 0, pStrokes);
+    free_gdi_path( flat_path );
 
     pNewPath->state = PATH_Closed;
-    if (!(ret = PATH_AssignGdiPath(pPath, pNewPath)))
+    if (!(ret = PATH_AssignGdiPath(&dc->path, pNewPath)))
         ERR("Assign path failed\n");
     free_gdi_path( pNewPath );
     return ret;
@@ -2203,13 +2212,17 @@ BOOL nulldrv_StrokePath( PHYSDEV dev )
 BOOL nulldrv_FlattenPath( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
+    struct gdi_path *path;
 
     if (dc->path.state != PATH_Closed)
     {
         SetLastError( ERROR_CAN_NOT_COMPLETE );
         return FALSE;
     }
-    return PATH_FlattenPath( &dc->path );
+    if (!(path = PATH_FlattenPath( &dc->path ))) return FALSE;
+    PATH_AssignGdiPath( &dc->path, path );
+    free_gdi_path( path );
+    return TRUE;
 }
 
 BOOL nulldrv_WidenPath( PHYSDEV dev )
