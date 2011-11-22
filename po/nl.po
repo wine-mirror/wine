@@ -2127,6 +2127,46 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
+#: gphoto2.rc:27
+msgid "Files on Camera"
+msgstr "Bestanden op de camera"
+
+#: gphoto2.rc:31
+msgid "Import Selected"
+msgstr "Importeer geselecteerde bestanden"
+
+#: gphoto2.rc:32
+msgid "Preview"
+msgstr "Voorbeeld"
+
+#: gphoto2.rc:33
+msgid "Import All"
+msgstr "Importeer alles"
+
+#: gphoto2.rc:34
+msgid "Skip This Dialog"
+msgstr "Sla dit venster over"
+
+#: gphoto2.rc:35
+msgid "Exit"
+msgstr "Afsluiten"
+
+#: gphoto2.rc:40
+msgid "Transferring"
+msgstr "Verplaatsen"
+
+#: gphoto2.rc:43
+msgid "Transferring... Please Wait"
+msgstr "Verplaatsen... Even geduld"
+
+#: gphoto2.rc:48
+msgid "Connecting to camera"
+msgstr "Verbinden met camera"
+
+#: gphoto2.rc:52
+msgid "Connecting to camera... Please Wait"
+msgstr "Verbinden met camera... Even geduld"
+
 #: hhctrl.rc:56
 msgid "S&ync"
 msgstr "S&ynchroniseer"

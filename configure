@@ -14918,7 +14918,7 @@ wine_fn_config_test dlls/gdi32/tests gdi32_test
 wine_fn_config_dll gdiplus enable_gdiplus implib
 wine_fn_config_test dlls/gdiplus/tests gdiplus_test
 wine_fn_config_dll glu32 enable_glu32 implib
-wine_fn_config_dll gphoto2.ds enable_gphoto2_ds
+wine_fn_config_dll gphoto2.ds enable_gphoto2_ds po
 wine_fn_config_dll gpkcsp enable_gpkcsp
 wine_fn_config_dll hal enable_hal
 wine_fn_config_dll hhctrl.ocx enable_hhctrl_ocx po

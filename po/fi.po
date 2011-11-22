@@ -2079,6 +2079,49 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
+#: gphoto2.rc:27
+#, fuzzy
+msgid "Files on Camera"
+msgstr "&Tiedosto"
+
+#: gphoto2.rc:31
+msgid "Import Selected"
+msgstr ""
+
+#: gphoto2.rc:32
+#, fuzzy
+msgid "Preview"
+msgstr "Tulosta &Kuva..."
+
+#: gphoto2.rc:33
+msgid "Import All"
+msgstr ""
+
+#: gphoto2.rc:34
+msgid "Skip This Dialog"
+msgstr ""
+
+#: gphoto2.rc:35
+msgid "Exit"
+msgstr ""
+
+#: gphoto2.rc:40
+msgid "Transferring"
+msgstr ""
+
+#: gphoto2.rc:43
+msgid "Transferring... Please Wait"
+msgstr ""
+
+#: gphoto2.rc:48
+#, fuzzy
+msgid "Connecting to camera"
+msgstr "Lähiverkkoyhteys"
+
+#: gphoto2.rc:52
+msgid "Connecting to camera... Please Wait"
+msgstr ""
+
 #: hhctrl.rc:56
 msgid "S&ync"
 msgstr ""

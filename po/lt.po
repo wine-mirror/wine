@@ -2109,6 +2109,46 @@ msgstr "Simboliai"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
+#: gphoto2.rc:27
+msgid "Files on Camera"
+msgstr "Failai kameroje"
+
+#: gphoto2.rc:31
+msgid "Import Selected"
+msgstr "Importuoti pažymėtus"
+
+#: gphoto2.rc:32
+msgid "Preview"
+msgstr "Peržiūra"
+
+#: gphoto2.rc:33
+msgid "Import All"
+msgstr "Importuoti visus"
+
+#: gphoto2.rc:34
+msgid "Skip This Dialog"
+msgstr "Praleisti šį dialogo langą"
+
+#: gphoto2.rc:35
+msgid "Exit"
+msgstr "Išeiti"
+
+#: gphoto2.rc:40
+msgid "Transferring"
+msgstr "Perduodama"
+
+#: gphoto2.rc:43
+msgid "Transferring... Please Wait"
+msgstr "Perduodama... Prašome palaukti"
+
+#: gphoto2.rc:48
+msgid "Connecting to camera"
+msgstr "Jungiamasi prie kameros"
+
+#: gphoto2.rc:52
+msgid "Connecting to camera... Please Wait"
+msgstr "Jungiamasi prie kameros... Prašome palaukti"
+
 #: hhctrl.rc:56
 msgid "S&ync"
 msgstr "S&inchronizuoti"

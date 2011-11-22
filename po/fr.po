@@ -2109,6 +2109,46 @@ msgstr "Symbole"
 msgid "OEM/DOS"
 msgstr "OEM/DOS"
 
+#: gphoto2.rc:27
+msgid "Files on Camera"
+msgstr "Fichiers sur l'appareil photo"
+
+#: gphoto2.rc:31
+msgid "Import Selected"
+msgstr "Importer la sélection"
+
+#: gphoto2.rc:32
+msgid "Preview"
+msgstr "Prévisualiser"
+
+#: gphoto2.rc:33
+msgid "Import All"
+msgstr "Tout importer"
+
+#: gphoto2.rc:34
+msgid "Skip This Dialog"
+msgstr "Sauter ce dialogue"
+
+#: gphoto2.rc:35
+msgid "Exit"
+msgstr "Fermer"
+
+#: gphoto2.rc:40
+msgid "Transferring"
+msgstr "Acquisition"
+
+#: gphoto2.rc:43
+msgid "Transferring... Please Wait"
+msgstr "Acquisition... Veuillez patienter"
+
+#: gphoto2.rc:48
+msgid "Connecting to camera"
+msgstr "Connexion à l'appareil photo"
+
+#: gphoto2.rc:52
+msgid "Connecting to camera... Please Wait"
+msgstr "Connexion à l'appareil photo... Veuillez patienter"
+
 #: hhctrl.rc:56
 msgid "S&ync"
 msgstr "S&ynchroniser"

@@ -2149,6 +2149,46 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
+#: gphoto2.rc:27
+msgid "Files on Camera"
+msgstr "Fényképezőgépen lévő fájlok"
+
+#: gphoto2.rc:31
+msgid "Import Selected"
+msgstr "Kiválasztottak importálása"
+
+#: gphoto2.rc:32
+msgid "Preview"
+msgstr "Előnézet"
+
+#: gphoto2.rc:33
+msgid "Import All"
+msgstr "Összes importálása"
+
+#: gphoto2.rc:34
+msgid "Skip This Dialog"
+msgstr "Ezen párbeszédablak kihagyása"
+
+#: gphoto2.rc:35
+msgid "Exit"
+msgstr "Kilépés"
+
+#: gphoto2.rc:40
+msgid "Transferring"
+msgstr "Átvitel"
+
+#: gphoto2.rc:43
+msgid "Transferring... Please Wait"
+msgstr "Átvitel... Kérem várjon"
+
+#: gphoto2.rc:48
+msgid "Connecting to camera"
+msgstr "Átvitel a fényképezőgépre"
+
+#: gphoto2.rc:52
+msgid "Connecting to camera... Please Wait"
+msgstr "Kapcsolódás a fényképezőgéphez... Kérem várjon"
+
 #: hhctrl.rc:56
 msgid "S&ync"
 msgstr ""

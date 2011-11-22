@@ -2118,6 +2118,46 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
+#: gphoto2.rc:27
+msgid "Files on Camera"
+msgstr "Filer på kamera"
+
+#: gphoto2.rc:31
+msgid "Import Selected"
+msgstr "Importera markerade"
+
+#: gphoto2.rc:32
+msgid "Preview"
+msgstr "Förhandsvisa"
+
+#: gphoto2.rc:33
+msgid "Import All"
+msgstr "Importera alla"
+
+#: gphoto2.rc:34
+msgid "Skip This Dialog"
+msgstr "Hoppa över"
+
+#: gphoto2.rc:35
+msgid "Exit"
+msgstr "Avsluta"
+
+#: gphoto2.rc:40
+msgid "Transferring"
+msgstr "Överför"
+
+#: gphoto2.rc:43
+msgid "Transferring... Please Wait"
+msgstr "Överför... var god vänta"
+
+#: gphoto2.rc:48
+msgid "Connecting to camera"
+msgstr "Ansluter till kamera"
+
+#: gphoto2.rc:52
+msgid "Connecting to camera... Please Wait"
+msgstr "Ansluter till kamera... vänta"
+
 #: hhctrl.rc:56
 msgid "S&ync"
 msgstr "S&ynkronisera"

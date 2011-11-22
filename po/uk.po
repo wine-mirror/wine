@@ -2112,6 +2112,46 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
+#: gphoto2.rc:27
+msgid "Files on Camera"
+msgstr "Файли в камері"
+
+#: gphoto2.rc:31
+msgid "Import Selected"
+msgstr "Імпортувати обране"
+
+#: gphoto2.rc:32
+msgid "Preview"
+msgstr "Перегляд"
+
+#: gphoto2.rc:33
+msgid "Import All"
+msgstr "Імпортувати все"
+
+#: gphoto2.rc:34
+msgid "Skip This Dialog"
+msgstr "Пропустити діалог"
+
+#: gphoto2.rc:35
+msgid "Exit"
+msgstr "Вихід"
+
+#: gphoto2.rc:40
+msgid "Transferring"
+msgstr "Перенесення"
+
+#: gphoto2.rc:43
+msgid "Transferring... Please Wait"
+msgstr "Перенесення... Зачекайте"
+
+#: gphoto2.rc:48
+msgid "Connecting to camera"
+msgstr "Під'єднання до камери"
+
+#: gphoto2.rc:52
+msgid "Connecting to camera... Please Wait"
+msgstr "Під'єднання до камери... Зачекайте"
+
 #: hhctrl.rc:56
 msgid "S&ync"
 msgstr "Син&х"

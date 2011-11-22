@@ -2075,6 +2075,46 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
+#: gphoto2.rc:27
+msgid "Files on Camera"
+msgstr "קבצים במצלמה"
+
+#: gphoto2.rc:31
+msgid "Import Selected"
+msgstr "יבוא הנבחרים"
+
+#: gphoto2.rc:32
+msgid "Preview"
+msgstr "תצוגה מקדימה"
+
+#: gphoto2.rc:33
+msgid "Import All"
+msgstr "יבוא הכול"
+
+#: gphoto2.rc:34
+msgid "Skip This Dialog"
+msgstr "דילוג על דו־שיח זה"
+
+#: gphoto2.rc:35
+msgid "Exit"
+msgstr "יציאה"
+
+#: gphoto2.rc:40
+msgid "Transferring"
+msgstr "העברה"
+
+#: gphoto2.rc:43
+msgid "Transferring... Please Wait"
+msgstr "מתבצעת העברה... נא להמתין"
+
+#: gphoto2.rc:48
+msgid "Connecting to camera"
+msgstr "התחברות למצלמה"
+
+#: gphoto2.rc:52
+msgid "Connecting to camera... Please Wait"
+msgstr "בהתחברות למצלמה... נא להמתין"
+
 #: hhctrl.rc:56
 msgid "S&ync"
 msgstr "&סנכרון"

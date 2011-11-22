@@ -9,28 +9,7 @@ C_SRCS = \
 	gphoto2_main.c \
 	ui.c
 
-RC_SRCS = \
-	gphoto2_Da.rc \
-	gphoto2_De.rc \
-	gphoto2_En.rc \
-	gphoto2_Es.rc \
-	gphoto2_Fr.rc \
-	gphoto2_He.rc \
-	gphoto2_Hu.rc \
-	gphoto2_It.rc \
-	gphoto2_Ja.rc \
-	gphoto2_Ko.rc \
-	gphoto2_Lt.rc \
-	gphoto2_Nl.rc \
-	gphoto2_No.rc \
-	gphoto2_Pl.rc \
-	gphoto2_Pt.rc \
-	gphoto2_Ro.rc \
-	gphoto2_Ru.rc \
-	gphoto2_Si.rc \
-	gphoto2_Sr.rc \
-	gphoto2_Sv.rc \
-	gphoto2_Uk.rc \
-	gphoto2_Zh.rc
+RC_SRCS = gphoto2.rc
+PO_SRCS = gphoto2.rc
 
 @MAKE_DLL_RULES@

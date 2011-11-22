@@ -2100,6 +2100,46 @@ msgstr "기호"
 msgid "OEM/DOS"
 msgstr "OEM/도"
 
+#: gphoto2.rc:27
+msgid "Files on Camera"
+msgstr "카메라에 있는 파"
+
+#: gphoto2.rc:31
+msgid "Import Selected"
+msgstr "선택된 것을 불러오기"
+
+#: gphoto2.rc:32
+msgid "Preview"
+msgstr " 미리 보기"
+
+#: gphoto2.rc:33
+msgid "Import All"
+msgstr "모두 불러오기"
+
+#: gphoto2.rc:34
+msgid "Skip This Dialog"
+msgstr "대화상자 지나치기"
+
+#: gphoto2.rc:35
+msgid "Exit"
+msgstr "나가기"
+
+#: gphoto2.rc:40
+msgid "Transferring"
+msgstr "옮기는 중"
+
+#: gphoto2.rc:43
+msgid "Transferring... Please Wait"
+msgstr "옮기는 중... 잠시만 기다리십시오"
+
+#: gphoto2.rc:48
+msgid "Connecting to camera"
+msgstr "카메라하고 연결중"
+
+#: gphoto2.rc:52
+msgid "Connecting to camera... Please Wait"
+msgstr "카메라하고 연결중...  잠시만 기다리십시오"
+
 #: hhctrl.rc:56
 msgid "S&ync"
 msgstr "동기화(&Y)"

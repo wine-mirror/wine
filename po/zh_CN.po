@@ -2092,6 +2092,46 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
+#: gphoto2.rc:27
+msgid "Files on Camera"
+msgstr "照相机中的文件"
+
+#: gphoto2.rc:31
+msgid "Import Selected"
+msgstr "导入选定文件"
+
+#: gphoto2.rc:32
+msgid "Preview"
+msgstr "预览"
+
+#: gphoto2.rc:33
+msgid "Import All"
+msgstr "导入全部"
+
+#: gphoto2.rc:34
+msgid "Skip This Dialog"
+msgstr "跳过本对话框"
+
+#: gphoto2.rc:35
+msgid "Exit"
+msgstr "退出"
+
+#: gphoto2.rc:40
+msgid "Transferring"
+msgstr "正在传输"
+
+#: gphoto2.rc:43
+msgid "Transferring... Please Wait"
+msgstr "正在传输... 请稍候"
+
+#: gphoto2.rc:48
+msgid "Connecting to camera"
+msgstr "连接照相机"
+
+#: gphoto2.rc:52
+msgid "Connecting to camera... Please Wait"
+msgstr "正在连接照相机... 请稍候"
+
 #: hhctrl.rc:56
 msgid "S&ync"
 msgstr ""

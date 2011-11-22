@@ -2096,6 +2096,46 @@ msgstr ""
 msgid "OEM/DOS"
 msgstr ""
 
+#: gphoto2.rc:27
+msgid "Files on Camera"
+msgstr "Датотеке на камери"
+
+#: gphoto2.rc:31
+msgid "Import Selected"
+msgstr "Увези изабрано"
+
+#: gphoto2.rc:32
+msgid "Preview"
+msgstr "Преглед"
+
+#: gphoto2.rc:33
+msgid "Import All"
+msgstr "Увези све"
+
+#: gphoto2.rc:34
+msgid "Skip This Dialog"
+msgstr "Прескочи ово прозорче"
+
+#: gphoto2.rc:35
+msgid "Exit"
+msgstr "Излаз"
+
+#: gphoto2.rc:40
+msgid "Transferring"
+msgstr "Пренос"
+
+#: gphoto2.rc:43
+msgid "Transferring... Please Wait"
+msgstr "Преношење..."
+
+#: gphoto2.rc:48
+msgid "Connecting to camera"
+msgstr "Повезивање са камером"
+
+#: gphoto2.rc:52
+msgid "Connecting to camera... Please Wait"
+msgstr "Повезивање са камером..."
+
 #: hhctrl.rc:56
 msgid "S&ync"
 msgstr ""
