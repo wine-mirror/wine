@@ -273,7 +273,7 @@ int CDECL MSVCRT__wchdir(const MSVCRT_wchar_t * newdir)
  */
 int CDECL MSVCRT__chdrive(int newdrive)
 {
-  WCHAR buffer[3] = {'A', ':', 0};
+  WCHAR buffer[] = {'A', ':', 0};
 
   buffer[0] += newdrive - 1;
   if (!SetCurrentDirectoryW( buffer ))
@@ -801,7 +801,7 @@ char* CDECL MSVCRT__getdcwd(int drive, char * buf, int size)
   else
   {
     char dir[MAX_PATH];
-    char drivespec[4] = {'A', ':', 0};
+    char drivespec[] = {'A', ':', 0};
     int dir_len;
 
     drivespec[0] += drive - 1;
@@ -886,7 +886,7 @@ MSVCRT_wchar_t* CDECL MSVCRT__wgetdcwd(int drive, MSVCRT_wchar_t * buf, int size
  */
 unsigned int CDECL MSVCRT__getdiskfree(unsigned int disk, struct MSVCRT__diskfree_t * d)
 {
-  WCHAR drivespec[4] = {'@', ':', '\\', 0};
+  WCHAR drivespec[] = {'@', ':', '\\', 0};
   DWORD ret[4];
   unsigned int err;
 
