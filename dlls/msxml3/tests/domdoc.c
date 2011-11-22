@@ -10739,6 +10739,7 @@ static void test_supporterrorinfo(void)
     IXMLDOMDocument *doc;
     IUnknown *unk;
     REFIID *iid;
+    void *dummy;
     HRESULT hr;
 
     doc = create_document_version(60, &IID_IXMLDOMDocument3);
@@ -10756,6 +10757,13 @@ static void test_supporterrorinfo(void)
     hr = IXMLDOMDocument_QueryInterface(doc, &IID_ISupportErrorInfo, (void**)&info2);
     EXPECT_HR(hr, S_OK);
     ok(errorinfo != info2, "got %p, %p\n", info2, errorinfo);
+
+    /* error interface can't be queried back for DOM interface */
+    hr = ISupportErrorInfo_QueryInterface(info2, &IID_IXMLDOMDocument, &dummy);
+    EXPECT_HR(hr, E_NOINTERFACE);
+    hr = ISupportErrorInfo_QueryInterface(info2, &IID_IXMLDOMNode, &dummy);
+    EXPECT_HR(hr, E_NOINTERFACE);
+
     ISupportErrorInfo_Release(info2);
 
     iid = iids;
