@@ -2513,7 +2513,7 @@ static LRESULT WINAPI set_focus_on_activate_proc(HWND hwnd, UINT msg, WPARAM wp,
 
 static void test_SetFocus(HWND hwnd)
 {
-    HWND child, child2;
+    HWND child, child2, ret;
     WNDPROC old_wnd_proc;
 
     /* check if we can set focus to non-visible windows */
@@ -2588,8 +2588,31 @@ todo_wine
     ok( GetActiveWindow() == hwnd, "parent window %p should be active\n", hwnd);
 todo_wine
     ok( GetFocus() == child, "Focus should be on child %p, not %p\n", child, GetFocus() );
-
     SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)old_wnd_proc);
+
+    SetFocus( hwnd );
+    SetParent( child, GetDesktopWindow());
+    SetParent( child2, child );
+    ok( GetActiveWindow() == hwnd, "parent window %p should be active\n", hwnd);
+    ok( GetFocus() == hwnd, "Focus should be on parent %p\n", hwnd );
+    ret = SetFocus( child2 );
+    ok( ret == 0, "SetFocus %p should fail\n", child2);
+    ok( GetActiveWindow() == hwnd, "parent window %p should be active\n", hwnd);
+    ok( GetFocus() == hwnd, "Focus should be on parent %p\n", hwnd );
+    ret = SetFocus( child );
+    ok( ret == 0, "SetFocus %p should fail\n", child);
+    ok( GetActiveWindow() == hwnd, "parent window %p should be active\n", hwnd);
+    ok( GetFocus() == hwnd, "Focus should be on parent %p\n", hwnd );
+    SetWindowLongW( child, GWL_STYLE, WS_POPUP|WS_CHILD );
+    SetFocus( child2 );
+    ok( GetActiveWindow() == child, "child window %p should be active\n", child);
+    ok( GetFocus() == child2, "Focus should be on child2 %p\n", child2 );
+    SetFocus( hwnd );
+    ok( GetActiveWindow() == hwnd, "parent window %p should be active\n", hwnd);
+    ok( GetFocus() == hwnd, "Focus should be on parent %p\n", hwnd );
+    SetFocus( child );
+    ok( GetActiveWindow() == child, "child window %p should be active\n", child);
+    ok( GetFocus() == child, "Focus should be on child %p\n", child );
 
     DestroyWindow( child2 );
     DestroyWindow( child );
