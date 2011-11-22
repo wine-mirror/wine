@@ -1523,6 +1523,21 @@ static void test_VirtualProtect(void)
     VirtualFree(base, 0, MEM_FREE);
 }
 
+static BOOL is_mem_writable(DWORD prot)
+{
+    switch (prot & 0xff)
+    {
+        case PAGE_READWRITE:
+        case PAGE_WRITECOPY:
+        case PAGE_EXECUTE_READWRITE:
+        case PAGE_EXECUTE_WRITECOPY:
+            return TRUE;
+
+        default:
+            return FALSE;
+    }
+}
+
 static void test_VirtualAlloc_protection(void)
 {
     static const struct test_data
@@ -1575,7 +1590,7 @@ static void test_VirtualAlloc_protection(void)
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
     {
         SetLastError(0xdeadbeef);
-        base = VirtualAlloc(0, si.dwPageSize, MEM_RESERVE | MEM_COMMIT, td[i].prot);
+        base = VirtualAlloc(0, si.dwPageSize, MEM_COMMIT, td[i].prot);
 
         if (td[i].success)
         {
@@ -1591,6 +1606,16 @@ static void test_VirtualAlloc_protection(void)
             ok(info.AllocationProtect == td[i].prot, "%d: %#x != %#x\n", i, info.AllocationProtect, td[i].prot);
             ok(info.State == MEM_COMMIT, "%d: %#x != MEM_COMMIT\n", i, info.State);
             ok(info.Type == MEM_PRIVATE, "%d: %#x != MEM_PRIVATE\n", i, info.Type);
+
+            if (is_mem_writable(info.Protect))
+            {
+                base[0] = 0xfe;
+
+                SetLastError(0xdeadbeef);
+                ret = VirtualQuery(base, &info, sizeof(info));
+                ok(ret, "VirtualQuery failed %d\n", GetLastError());
+                ok(info.Protect == td[i].prot, "%d: got %#x != expected %#x\n", i, info.Protect, td[i].prot);
+            }
 
             VirtualFree(base, 0, MEM_FREE);
         }
