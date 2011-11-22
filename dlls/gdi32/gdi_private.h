@@ -84,7 +84,7 @@ typedef enum tagGdiPathState
    PATH_Closed
 } GdiPathState;
 
-typedef struct tagGdiPath
+typedef struct gdi_path
 {
    GdiPathState state;
    POINT      *pPoints;

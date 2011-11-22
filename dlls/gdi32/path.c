@@ -100,6 +100,36 @@ static inline void pop_path_driver( DC *dc )
     HeapFree( GetProcessHeap(), 0, dev );
 }
 
+static void free_gdi_path( struct gdi_path *path )
+{
+    HeapFree( GetProcessHeap(), 0, path->pPoints );
+    HeapFree( GetProcessHeap(), 0, path->pFlags );
+    HeapFree( GetProcessHeap(), 0, path );
+}
+
+static struct gdi_path *alloc_gdi_path(void)
+{
+    struct gdi_path *path = HeapAlloc( GetProcessHeap(), 0, sizeof(*path) );
+
+    if (!path)
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return NULL;
+    }
+    path->pPoints = HeapAlloc( GetProcessHeap(), 0, NUM_ENTRIES_INITIAL * sizeof(*path->pPoints) );
+    path->pFlags = HeapAlloc( GetProcessHeap(), 0, NUM_ENTRIES_INITIAL * sizeof(*path->pFlags) );
+    if (!path->pPoints || !path->pFlags)
+    {
+        free_gdi_path( path );
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return NULL;
+    }
+    path->state = PATH_Open;
+    path->numEntriesUsed = 0;
+    path->numEntriesAllocated = NUM_ENTRIES_INITIAL;
+    path->newStroke = TRUE;
+    return path;
+}
 
 /* Performs a world-to-viewport transformation on the specified point (which
  * is in floating point format).
@@ -1808,9 +1838,7 @@ static BOOL PATH_WidenPath(DC *dc)
                 else
                     pStrokes = HeapReAlloc(GetProcessHeap(), 0, pStrokes, numStrokes * sizeof(GdiPath*));
                 if(!pStrokes) return FALSE;
-                pStrokes[numStrokes - 1] = HeapAlloc(GetProcessHeap(), 0, sizeof(GdiPath));
-                PATH_InitGdiPath(pStrokes[numStrokes - 1]);
-                pStrokes[numStrokes - 1]->state = PATH_Open;
+                pStrokes[numStrokes - 1] = alloc_gdi_path();
                 /* fall through */
             case PT_LINETO:
             case (PT_LINETO | PT_CLOSEFIGURE):
@@ -1828,17 +1856,11 @@ static BOOL PATH_WidenPath(DC *dc)
         }
     }
 
-    pNewPath = HeapAlloc(GetProcessHeap(), 0, sizeof(GdiPath));
-    PATH_InitGdiPath(pNewPath);
-    pNewPath->state = PATH_Open;
+    pNewPath = alloc_gdi_path();
 
     for(i = 0; i < numStrokes; i++) {
-        pUpPath = HeapAlloc(GetProcessHeap(), 0, sizeof(GdiPath));
-        PATH_InitGdiPath(pUpPath);
-        pUpPath->state = PATH_Open;
-        pDownPath = HeapAlloc(GetProcessHeap(), 0, sizeof(GdiPath));
-        PATH_InitGdiPath(pDownPath);
-        pDownPath->state = PATH_Open;
+        pUpPath = alloc_gdi_path();
+        pDownPath = alloc_gdi_path();
 
         for(j = 0; j < pStrokes[i]->numEntriesUsed; j++) {
             /* Beginning or end of the path if not closed */
@@ -2022,20 +2044,16 @@ static BOOL PATH_WidenPath(DC *dc)
             PATH_AddEntry(pNewPath, &pt, ( (j == 0 && (pStrokes[i]->pFlags[pStrokes[i]->numEntriesUsed - 1] & PT_CLOSEFIGURE)) ? PT_MOVETO : PT_LINETO));
         }
 
-        PATH_DestroyGdiPath(pStrokes[i]);
-        HeapFree(GetProcessHeap(), 0, pStrokes[i]);
-        PATH_DestroyGdiPath(pUpPath);
-        HeapFree(GetProcessHeap(), 0, pUpPath);
-        PATH_DestroyGdiPath(pDownPath);
-        HeapFree(GetProcessHeap(), 0, pDownPath);
+        free_gdi_path( pStrokes[i] );
+        free_gdi_path( pUpPath );
+        free_gdi_path( pDownPath );
     }
     HeapFree(GetProcessHeap(), 0, pStrokes);
 
     pNewPath->state = PATH_Closed;
     if (!(ret = PATH_AssignGdiPath(pPath, pNewPath)))
         ERR("Assign path failed\n");
-    PATH_DestroyGdiPath(pNewPath);
-    HeapFree(GetProcessHeap(), 0, pNewPath);
+    free_gdi_path( pNewPath );
     return ret;
 }
 
