@@ -395,8 +395,7 @@ static void testGetDllDirectory(void)
 {
     CHAR bufferA[MAX_PATH];
     WCHAR bufferW[MAX_PATH];
-    size_t length;
-    DWORD ret;
+    DWORD length, ret;
     int i;
     static const char *dll_directories[] =
     {
