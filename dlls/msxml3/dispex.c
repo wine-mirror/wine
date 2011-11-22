@@ -152,7 +152,7 @@ static tid_id_t tid_ids[] = {
     { &IID_IVBMXNamespaceManager, LibXml2 }
 };
 
-inline REFIID get_riid_from_tid(tid_t tid)
+const IID *get_riid_from_tid(tid_t tid)
 {
     return tid_ids[tid].iid;
 }

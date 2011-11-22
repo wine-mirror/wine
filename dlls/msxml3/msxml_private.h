@@ -157,7 +157,7 @@ extern HINSTANCE MSXML_hInstance DECLSPEC_HIDDEN;
 void init_dispex(DispatchEx*,IUnknown*,dispex_static_data_t*) DECLSPEC_HIDDEN;
 void release_dispex(DispatchEx*) DECLSPEC_HIDDEN;
 BOOL dispex_query_interface(DispatchEx*,REFIID,void**) DECLSPEC_HIDDEN;
-REFIID get_riid_from_tid(enum tid_t tid) DECLSPEC_HIDDEN;
+const IID *get_riid_from_tid(enum tid_t tid) DECLSPEC_HIDDEN;
 
 /* memory allocation functions */
 
