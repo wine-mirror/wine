@@ -379,13 +379,9 @@ static BOOL PATH_FlattenPath(GdiPath *pPath)
 /* PATH_PathToRegion
  *
  * Creates a region from the specified path using the specified polygon
- * filling mode. The path is left unchanged. A handle to the region that
- * was created is stored in *pHrgn. If successful, TRUE is returned; if an
- * error occurs, SetLastError is called with the appropriate value and
- * FALSE is returned.
+ * filling mode. The path is left unchanged.
  */
-static BOOL PATH_PathToRegion(GdiPath *pPath, INT nPolyFillMode,
-   HRGN *pHrgn)
+static HRGN PATH_PathToRegion(GdiPath *pPath, INT nPolyFillMode)
 {
     int    numStrokes, iStroke, i;
     INT  *pNumPointsInStroke;
@@ -407,7 +403,7 @@ static BOOL PATH_PathToRegion(GdiPath *pPath, INT nPolyFillMode,
     if(!pNumPointsInStroke)
     {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return FALSE;
+        return 0;
     }
 
     /* Second pass: remember number of points in each polygon */
@@ -428,18 +424,8 @@ static BOOL PATH_PathToRegion(GdiPath *pPath, INT nPolyFillMode,
     hrgn=CreatePolyPolygonRgn(pPath->pPoints, pNumPointsInStroke,
                               numStrokes, nPolyFillMode);
 
-    /* Free memory for number-of-points-in-stroke array */
     HeapFree( GetProcessHeap(), 0, pNumPointsInStroke );
-
-    if(hrgn==NULL)
-    {
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return FALSE;
-    }
-
-    /* Success! */
-    *pHrgn=hrgn;
-    return TRUE;
+    return hrgn;
 }
 
 /* PATH_ScaleNormalizedPoint
@@ -689,10 +675,8 @@ HRGN WINAPI PathToRegion(HDC hdc)
    else
    {
        /* FIXME: Should we empty the path even if conversion failed? */
-       if(PATH_PathToRegion(pPath, GetPolyFillMode(hdc), &hrgnRval))
-           PATH_EmptyPath(pPath);
-       else
-           hrgnRval=0;
+       hrgnRval = PATH_PathToRegion(pPath, GetPolyFillMode(hdc));
+       if (hrgnRval) PATH_EmptyPath(pPath);
    }
    release_dc_ptr( dc );
    return hrgnRval;
@@ -707,7 +691,7 @@ static BOOL PATH_FillPath( HDC hdc, GdiPath *pPath )
    HRGN  hrgn;
 
    /* Construct a region from the path and fill it */
-   if(PATH_PathToRegion(pPath, GetPolyFillMode(hdc), &hrgn))
+   if ((hrgn = PATH_PathToRegion(pPath, GetPolyFillMode(hdc))))
    {
       /* Since PaintRgn interprets the region as being in logical coordinates
        * but the points we store for the path are already in device
@@ -2164,7 +2148,7 @@ BOOL nulldrv_SelectClipPath( PHYSDEV dev, INT mode )
         SetLastError( ERROR_CAN_NOT_COMPLETE );
         return FALSE;
     }
-    if (!PATH_PathToRegion( &dc->path, GetPolyFillMode(dev->hdc), &hrgn )) return FALSE;
+    if (!(hrgn = PATH_PathToRegion( &dc->path, GetPolyFillMode(dev->hdc)))) return FALSE;
     ret = ExtSelectClipRgn( dev->hdc, hrgn, mode ) != ERROR;
     if (ret) PATH_EmptyPath( &dc->path );
     /* FIXME: Should this function delete the path even if it failed? */
