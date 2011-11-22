@@ -118,6 +118,16 @@ msgstr "Wine AVI-domyślna-obsługa-pliku"
 msgid "uncompressed"
 msgstr "nie skompresowany"
 
+#: browseui.rc:37 ieframe.rc:85 inetcpl.rc:78 winspool.rc:40 notepad.rc:123
+#: oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140
+#: progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245
+#: regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311
+#: taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
+#: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+msgid "Cancel"
+msgstr "Anuluj"
+
 #: browseui.rc:25
 msgid "Canceling..."
 msgstr "Trwa anulowanie..."
@@ -2346,16 +2356,6 @@ msgstr "Otwórz:"
 #: wordpad.rc:246
 msgid "OK"
 msgstr "OK"
-
-#: ieframe.rc:85 inetcpl.rc:78 winspool.rc:40 notepad.rc:123 oleview.rc:160
-#: oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156
-#: progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256
-#: regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447
-#: taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
-#: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
-msgid "Cancel"
-msgstr "Anuluj"
 
 #: ieframe.rc:67
 msgctxt "home page"

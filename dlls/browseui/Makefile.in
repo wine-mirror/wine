@@ -11,31 +11,7 @@ C_SRCS = \
 
 IDL_R_SRCS = browseui_classes.idl
 
-RC_SRCS = \
-	browseui.rc \
-	rsrc_Da.rc \
-	rsrc_De.rc \
-	rsrc_En.rc \
-	rsrc_Es.rc \
-	rsrc_Fr.rc \
-	rsrc_He.rc \
-	rsrc_Hu.rc \
-	rsrc_It.rc \
-	rsrc_Ja.rc \
-	rsrc_Ko.rc \
-	rsrc_Lt.rc \
-	rsrc_Nl.rc \
-	rsrc_No.rc \
-	rsrc_Pl.rc \
-	rsrc_Pt.rc \
-	rsrc_Ro.rc \
-	rsrc_Ru.rc \
-	rsrc_Si.rc \
-	rsrc_Sr.rc \
-	rsrc_Sv.rc \
-	rsrc_Uk.rc \
-	rsrc_Zh.rc
-
+RC_SRCS = browseui.rc
 PO_SRCS = browseui.rc
 
 @MAKE_DLL_RULES@
