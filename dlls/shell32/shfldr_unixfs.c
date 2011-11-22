@@ -1609,7 +1609,7 @@ static HRESULT WINAPI UnixFolder_IPersistFolder3_Initialize(IPersistFolder3* ifa
 
     if (current->mkid.cb) {
         if (_ILIsDrive(current)) {
-            WCHAR wszDrive[4] = { '?', ':', '\\', 0 };
+            WCHAR wszDrive[] = { '?', ':', '\\', 0 };
             wszDrive[0] = (WCHAR)*_ILGetTextPointer(current);
             if (!UNIXFS_get_unix_path(wszDrive, szBasePath))
                 return E_FAIL;
