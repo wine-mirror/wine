@@ -74,8 +74,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
  */
 
 #define NUM_ENTRIES_INITIAL 16  /* Initial size of points / flags arrays  */
-#define GROW_FACTOR_NUMER    2  /* Numerator of grow factor for the array */
-#define GROW_FACTOR_DENOM    1  /* Denominator of grow factor             */
 
 /* A floating point version of the POINT structure */
 typedef struct tagFLOAT_POINT
@@ -144,59 +142,31 @@ static void PATH_EmptyPath(GdiPath *pPath)
  * been allocated; allocates larger arrays and copies the existing entries
  * to those arrays, if necessary. Returns TRUE if successful, else FALSE.
  */
-static BOOL PATH_ReserveEntries(GdiPath *pPath, INT numEntries)
+static BOOL PATH_ReserveEntries(GdiPath *pPath, INT count)
 {
-    INT   numEntriesToAllocate;
     POINT *pPointsNew;
     BYTE    *pFlagsNew;
 
-    assert(numEntries>=0);
+    assert(count>=0);
 
     /* Do we have to allocate more memory? */
-    if(numEntries > pPath->numEntriesAllocated)
+    if(count > pPath->numEntriesAllocated)
     {
         /* Find number of entries to allocate. We let the size of the array
          * grow exponentially, since that will guarantee linear time
          * complexity. */
-        if(pPath->numEntriesAllocated)
-        {
-            numEntriesToAllocate=pPath->numEntriesAllocated;
-            while(numEntriesToAllocate<numEntries)
-                numEntriesToAllocate=numEntriesToAllocate*GROW_FACTOR_NUMER/
-                    GROW_FACTOR_DENOM;
-        }
-        else
-            numEntriesToAllocate=numEntries;
+        count = max( pPath->numEntriesAllocated * 2, count );
 
-        /* Allocate new arrays */
-        pPointsNew=HeapAlloc( GetProcessHeap(), 0, numEntriesToAllocate * sizeof(POINT) );
-        if(!pPointsNew)
-            return FALSE;
-        pFlagsNew=HeapAlloc( GetProcessHeap(), 0, numEntriesToAllocate * sizeof(BYTE) );
-        if(!pFlagsNew)
-        {
-            HeapFree( GetProcessHeap(), 0, pPointsNew );
-            return FALSE;
-        }
+        pPointsNew = HeapReAlloc( GetProcessHeap(), 0, pPath->pPoints, count * sizeof(POINT) );
+        if (!pPointsNew) return FALSE;
+        pPath->pPoints = pPointsNew;
 
-        /* Copy old arrays to new arrays and discard old arrays */
-        if(pPath->pPoints)
-        {
-            assert(pPath->pFlags);
+        pFlagsNew = HeapReAlloc( GetProcessHeap(), 0, pPath->pFlags, count * sizeof(BYTE) );
+        if (!pFlagsNew) return FALSE;
+        pPath->pFlags = pFlagsNew;
 
-            memcpy(pPointsNew, pPath->pPoints,
-                   sizeof(POINT)*pPath->numEntriesUsed);
-            memcpy(pFlagsNew, pPath->pFlags,
-                   sizeof(BYTE)*pPath->numEntriesUsed);
-
-            HeapFree( GetProcessHeap(), 0, pPath->pPoints );
-            HeapFree( GetProcessHeap(), 0, pPath->pFlags );
-        }
-        pPath->pPoints=pPointsNew;
-        pPath->pFlags=pFlagsNew;
-        pPath->numEntriesAllocated=numEntriesToAllocate;
+        pPath->numEntriesAllocated = count;
     }
-
     return TRUE;
 }
 
