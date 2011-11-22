@@ -65,6 +65,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(coreaudio);
 static const REFERENCE_TIME DefaultPeriod = 200000;
 static const REFERENCE_TIME MinimumPeriod = 100000;
 
+typedef struct _QueuedBufInfo {
+    Float64 start_sampletime;
+    UINT64 start_pos;
+    UINT32 len_frames;
+    struct list entry;
+} QueuedBufInfo;
+
 typedef struct _AQBuffer {
     AudioQueueBufferRef buf;
     struct list entry;
@@ -130,12 +137,15 @@ struct ACImpl {
     UINT32 getbuf_last;
     int playing;
 
+    Float64 highest_sampletime;
+
     AudioSession *session;
     AudioSessionWrapper *session_wrapper;
 
     struct list entry;
 
     struct list avail_buffers;
+    struct list queued_bufinfos;
 
     /* We can't use debug printing or {Enter,Leave}CriticalSection from
      * OSX callback threads, so we use OSX's OSSpinLock for synchronization
@@ -182,7 +192,7 @@ static CRITICAL_SECTION g_sessions_lock = { &g_sessions_lock_debug, -1, 0, 0, 0,
 static struct list g_sessions = LIST_INIT(g_sessions);
 
 static HRESULT AudioClock_GetPosition_nolock(ACImpl *This, UINT64 *pos,
-        UINT64 *qpctime, BOOL raw);
+        UINT64 *qpctime);
 static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client);
 static HRESULT ca_setvol(ACImpl *This, UINT32 index);
 
@@ -477,6 +487,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(AudioDeviceID *adevid, IMMDevice *dev,
     IMMDevice_AddRef(This->parent);
 
     list_init(&This->avail_buffers);
+    list_init(&This->queued_bufinfos);
 
     This->adevid = *adevid;
 
@@ -484,6 +495,84 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(AudioDeviceID *adevid, IMMDevice *dev,
     IAudioClient_AddRef(&This->IAudioClient_iface);
 
     return S_OK;
+}
+
+/* current position from start of stream */
+#define BUFPOS_ABSOLUTE 1
+/* current position from start of this buffer */
+#define BUFPOS_RELATIVE 2
+
+static UINT64 get_current_aqbuffer_position(ACImpl *This, int mode)
+{
+    struct list *head;
+    QueuedBufInfo *bufinfo;
+    UINT64 ret;
+
+    head = list_head(&This->queued_bufinfos);
+    if(!head){
+        TRACE("No buffers queued\n");
+        if(mode == BUFPOS_ABSOLUTE)
+            return This->written_frames;
+        return 0;
+    }
+    bufinfo = LIST_ENTRY(head, QueuedBufInfo, entry);
+
+    if(This->playing == StatePlaying){
+        AudioTimeStamp tstamp;
+        OSStatus sc;
+
+        /* AudioQueueGetCurrentTime() is brain damaged. The returned
+         * mSampleTime member jumps backwards seemingly at random, so
+         * we record the highest sampletime and use that during these
+         * anomalies.
+         *
+         * It also behaves poorly when the queue is paused, jumping
+         * forwards during the pause and backwards again after resuming.
+         * So we record the sampletime when the queue is paused and use
+         * that. */
+        sc = AudioQueueGetCurrentTime(This->aqueue, NULL, &tstamp, NULL);
+        if(sc != noErr){
+            if(sc != kAudioQueueErr_InvalidRunState)
+                WARN("Unable to get current time: %lx\n", sc);
+            return 0;
+        }
+
+        if(!(tstamp.mFlags & kAudioTimeStampSampleTimeValid)){
+            FIXME("SampleTime not valid: %lx\n", tstamp.mFlags);
+            return 0;
+        }
+
+        if(tstamp.mSampleTime > This->highest_sampletime)
+            This->highest_sampletime = tstamp.mSampleTime;
+    }
+
+    while(This->highest_sampletime > bufinfo->start_sampletime + bufinfo->len_frames){
+        This->inbuf_frames -= bufinfo->len_frames;
+        list_remove(&bufinfo->entry);
+        HeapFree(GetProcessHeap(), 0, bufinfo);
+
+        head = list_head(&This->queued_bufinfos);
+        if(!head){
+            TRACE("No buffers queued\n");
+            if(mode == BUFPOS_ABSOLUTE)
+                return This->written_frames;
+            return 0;
+        }
+        bufinfo = LIST_ENTRY(head, QueuedBufInfo, entry);
+    }
+
+    if(This->highest_sampletime < bufinfo->start_sampletime)
+        ret = 0;
+    else
+        ret = This->highest_sampletime - bufinfo->start_sampletime;
+
+    if(mode == BUFPOS_ABSOLUTE)
+        ret += bufinfo->start_pos;
+
+    TRACE("%llu frames (%s)\n", ret,
+            mode == BUFPOS_ABSOLUTE ? "absolute" : "relative");
+
+    return ret;
 }
 
 static HRESULT WINAPI AudioClient_QueryInterface(IAudioClient *iface,
@@ -522,17 +611,26 @@ static ULONG WINAPI AudioClient_Release(IAudioClient *iface)
     if(!ref){
         if(This->aqueue){
             AQBuffer *buf, *next;
+            QueuedBufInfo *bufinfo, *bufinfo2;
+
             if(This->public_buffer){
                 buf = This->public_buffer->mUserData;
                 list_add_tail(&This->avail_buffers, &buf->entry);
             }
+
             IAudioClient_Stop(iface);
             AudioQueueStop(This->aqueue, 1);
+
             /* Stopped synchronously, all buffers returned. */
             LIST_FOR_EACH_ENTRY_SAFE(buf, next, &This->avail_buffers, AQBuffer, entry){
                 AudioQueueFreeBuffer(This->aqueue, buf->buf);
                 HeapFree(GetProcessHeap(), 0, buf);
             }
+
+            LIST_FOR_EACH_ENTRY_SAFE(bufinfo, bufinfo2, &This->queued_bufinfos,
+                    QueuedBufInfo, entry)
+                HeapFree(GetProcessHeap(), 0, bufinfo);
+
             AudioQueueDispose(This->aqueue, 1);
         }
         if(This->session){
@@ -677,7 +775,6 @@ static void ca_out_buffer_cb(void *user, AudioQueueRef aqueue,
 
     OSSpinLockLock(&This->lock);
     list_add_tail(&This->avail_buffers, &buf->entry);
-    This->inbuf_frames -= buffer->mAudioDataByteSize / This->fmt->nBlockAlign;
     OSSpinLockUnlock(&This->lock);
 }
 
@@ -1112,7 +1209,12 @@ static HRESULT AudioClient_GetCurrentPadding_nolock(ACImpl *This,
     if(!This->aqueue)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    *numpad = This->inbuf_frames;
+    if(This->dataflow == eRender){
+        UINT64 bufpos;
+        bufpos = get_current_aqbuffer_position(This, BUFPOS_RELATIVE);
+        *numpad = This->inbuf_frames - bufpos;
+    }else
+        *numpad = This->inbuf_frames;
 
     return S_OK;
 }
@@ -1359,6 +1461,7 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient *iface)
 static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
 {
     ACImpl *This = impl_from_IAudioClient(iface);
+    AudioTimeStamp tstamp;
     OSStatus sc;
 
     TRACE("(%p)\n", This);
@@ -1387,6 +1490,16 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
 
     This->playing = StateInTransition;
 
+    sc = AudioQueueGetCurrentTime(This->aqueue, NULL, &tstamp, NULL);
+    if(sc == noErr){
+        if(tstamp.mFlags & kAudioTimeStampSampleTimeValid){
+            if(tstamp.mSampleTime > This->highest_sampletime)
+                This->highest_sampletime = tstamp.mSampleTime;
+        }else
+            WARN("Returned tstamp mSampleTime not valid: %lx\n", tstamp.mFlags);
+    }else
+        WARN("GetCurrentTime failed: %lx\n", sc);
+
     OSSpinLockUnlock(&This->lock);
 
     sc = AudioQueueFlush(This->aqueue);
@@ -1411,8 +1524,8 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
 static HRESULT WINAPI AudioClient_Reset(IAudioClient *iface)
 {
     ACImpl *This = impl_from_IAudioClient(iface);
-    HRESULT hr;
     OSStatus sc;
+    QueuedBufInfo *bufinfo, *bufinfo2;
 
     TRACE("(%p)\n", This);
 
@@ -1434,11 +1547,12 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient *iface)
     }
 
     This->written_frames = 0;
+    This->inbuf_frames = 0;
 
-    hr = AudioClock_GetPosition_nolock(This, &This->last_time, NULL, TRUE);
-    if(FAILED(hr)){
-        OSSpinLockUnlock(&This->lock);
-        return hr;
+    LIST_FOR_EACH_ENTRY_SAFE(bufinfo, bufinfo2, &This->queued_bufinfos,
+            QueuedBufInfo, entry){
+        list_remove(&bufinfo->entry);
+        HeapFree(GetProcessHeap(), 0, bufinfo);
     }
 
     OSSpinLockUnlock(&This->lock);
@@ -1695,6 +1809,7 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
         IAudioRenderClient *iface, UINT32 frames, DWORD flags)
 {
     ACImpl *This = impl_from_IAudioRenderClient(iface);
+    AudioTimeStamp start_time;
     OSStatus sc;
 
     TRACE("(%p)->(%u, %x)\n", This, frames, flags);
@@ -1737,12 +1852,25 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
 
     This->public_buffer->mAudioDataByteSize = frames * This->fmt->nBlockAlign;
 
-    sc = AudioQueueEnqueueBuffer(This->aqueue, This->public_buffer, 0, NULL);
+    sc = AudioQueueEnqueueBufferWithParameters(This->aqueue,
+            This->public_buffer, 0, NULL, 0, 0, 0, NULL, NULL, &start_time);
     if(sc != noErr){
         OSSpinLockUnlock(&This->lock);
         WARN("Unable to enqueue buffer: %lx\n", sc);
         return E_FAIL;
     }
+
+    if(start_time.mFlags & kAudioTimeStampSampleTimeValid){
+        QueuedBufInfo *bufinfo;
+
+        bufinfo = HeapAlloc(GetProcessHeap(), 0, sizeof(*bufinfo));
+        bufinfo->start_sampletime = start_time.mSampleTime;
+        bufinfo->start_pos = This->written_frames;
+        bufinfo->len_frames = frames;
+
+        list_add_tail(&This->queued_bufinfos, &bufinfo->entry);
+    }else
+        WARN("Start time didn't contain valid SampleTime member\n");
 
     if(This->playing == StateStopped)
         AudioQueuePrime(This->aqueue, 0, NULL);
@@ -1842,7 +1970,7 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
     This->getbuf_last = 1;
 
     if(devpos || qpcpos)
-        AudioClock_GetPosition_nolock(This, devpos, qpcpos, FALSE);
+        AudioClock_GetPosition_nolock(This, devpos, qpcpos);
 
     OSSpinLockUnlock(&This->lock);
 
@@ -1974,28 +2102,12 @@ static HRESULT WINAPI AudioClock_GetFrequency(IAudioClock *iface, UINT64 *freq)
 }
 
 static HRESULT AudioClock_GetPosition_nolock(ACImpl *This,
-        UINT64 *pos, UINT64 *qpctime, BOOL raw)
+        UINT64 *pos, UINT64 *qpctime)
 {
-    AudioTimeStamp time;
-    OSStatus sc;
-
-    sc = AudioQueueGetCurrentTime(This->aqueue, NULL, &time, NULL);
-    if(sc == kAudioQueueErr_InvalidRunState){
-        *pos = 0;
-    }else if(sc == noErr){
-        if(!(time.mFlags & kAudioTimeStampSampleTimeValid)){
-            FIXME("Sample time not valid, should calculate from something else\n");
-            return E_FAIL;
-        }
-
-        if(raw)
-            *pos = time.mSampleTime;
-        else
-            *pos = time.mSampleTime - This->last_time;
-    }else{
-        WARN("Unable to get current time: %lx\n", sc);
-        return E_FAIL;
-    }
+    if(This->dataflow == eRender)
+        *pos = get_current_aqbuffer_position(This, BUFPOS_ABSOLUTE);
+    else
+        *pos = This->inbuf_frames + This->written_frames;
 
     if(qpctime){
         LARGE_INTEGER stamp, freq;
@@ -2020,7 +2132,7 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
 
     OSSpinLockLock(&This->lock);
 
-    hr = AudioClock_GetPosition_nolock(This, pos, qpctime, FALSE);
+    hr = AudioClock_GetPosition_nolock(This, pos, qpctime);
 
     OSSpinLockUnlock(&This->lock);
 
