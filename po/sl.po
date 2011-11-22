@@ -119,13 +119,14 @@ msgstr "Wine privzeti-upravljalnik-AVI-datotek"
 msgid "uncompressed"
 msgstr "nestisnjeno"
 
-#: browseui.rc:37 ieframe.rc:85 inetcpl.rc:78 winspool.rc:40 notepad.rc:123
-#: oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140
-#: progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245
-#: regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311
-#: taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
-#: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: browseui.rc:37 ieframe.rc:85 inetcpl.rc:78 shlwapi.rc:42 winspool.rc:40
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
+#: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
+#: regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298
+#: regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217
+#: winecfg.rc:227 wineconsole.rc:132 winefile.rc:135 winefile.rc:158
+#: winefile.rc:188 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
+#: wordpad.rc:247
 msgid "Cancel"
 msgstr "Prekliči"
 
@@ -2360,14 +2361,14 @@ msgstr "Vnesite interneti naslov dokumenta, ki ga bo Internet Explorer odpru."
 msgid "Open:"
 msgstr "Odpri:"
 
-#: ieframe.rc:84 winspool.rc:39 net.rc:44 notepad.rc:122 oleview.rc:159
-#: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
-#: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
-#: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
-#: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
-#: winefile.rc:134 winefile.rc:157 winefile.rc:187 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
-#: wordpad.rc:246
+#: ieframe.rc:84 shlwapi.rc:41 winspool.rc:39 net.rc:44 notepad.rc:122
+#: oleview.rc:159 oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139
+#: progman.rc:155 progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244
+#: regedit.rc:255 regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310
+#: taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226
+#: wineconsole.rc:131 winefile.rc:134 winefile.rc:157 winefile.rc:187
+#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
+#: wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "V redu"
 
@@ -7031,6 +7032,22 @@ msgstr "Licenca Wine"
 msgid "Trash"
 msgstr "Smeti"
 
+#: shlwapi.rc:35 user32.rc:68 regedit.rc:176 winecfg.rc:90 winefile.rc:100
+msgid "Error"
+msgstr "Napaka"
+
+#: shlwapi.rc:40
+msgid "Don't show me th&is message again"
+msgstr "Tega sporočila ne &kaži več"
+
+#: shlwapi.rc:43
+msgid "&Yes"
+msgstr "&Da"
+
+#: shlwapi.rc:44
+msgid "&No"
+msgstr "&Ne"
+
 #: shlwapi.rc:27
 #, fuzzy
 msgid "%d bytes"
@@ -7092,10 +7109,6 @@ msgstr "&Zapri\tAlt-F4"
 #: user32.rc:48
 msgid "Nex&t\tCtrl-F6"
 msgstr ""
-
-#: user32.rc:68 regedit.rc:176 winecfg.rc:90 winefile.rc:100
-msgid "Error"
-msgstr "Napaka"
 
 #: user32.rc:69
 msgid "&More Windows..."

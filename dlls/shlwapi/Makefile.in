@@ -20,35 +20,7 @@ C_SRCS = \
 	url.c \
 	wsprintf.c
 
-RC_SRCS = \
-	shlwapi.rc \
-	shlwapi_Da.rc \
-	shlwapi_De.rc \
-	shlwapi_En.rc \
-	shlwapi_Eo.rc \
-	shlwapi_Es.rc \
-	shlwapi_Fi.rc \
-	shlwapi_Fr.rc \
-	shlwapi_He.rc \
-	shlwapi_Hu.rc \
-	shlwapi_It.rc \
-	shlwapi_Ja.rc \
-	shlwapi_Ko.rc \
-	shlwapi_Lt.rc \
-	shlwapi_Nl.rc \
-	shlwapi_No.rc \
-	shlwapi_Pl.rc \
-	shlwapi_Pt.rc \
-	shlwapi_Ro.rc \
-	shlwapi_Ru.rc \
-	shlwapi_Si.rc \
-	shlwapi_Sk.rc \
-	shlwapi_Sr.rc \
-	shlwapi_Sv.rc \
-	shlwapi_Tr.rc \
-	shlwapi_Uk.rc \
-	shlwapi_Zh.rc
-
+RC_SRCS = shlwapi.rc
 PO_SRCS = shlwapi.rc
 
 @MAKE_DLL_RULES@
