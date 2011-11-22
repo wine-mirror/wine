@@ -84,10 +84,12 @@ $(MAKEDEP): include/config.h
 
 # Misc rules
 
+TAGSFLAGS = --langmap='c:+.idl.l.rh,make:(Make*.in)'
+
 TAGS etags:
 	$(RM) TAGS
-	(test -d .git && git ls-files '*.[chly]' '*.idl' || find -L $(top_srcdir) -name '*.[ch]' -print) | xargs etags -a
+	(test -d .git && git ls-files || find -L $(top_srcdir) -name '*.[ch]' -print) | xargs etags -a $(TAGSFLAGS)
 
 tags ctags:
 	$(RM) tags
-	(test -d .git && git ls-files '*.[chly]' '*.idl' || find -L $(top_srcdir) -name '*.[ch]' -print) | xargs ctags -a
+	(test -d .git && git ls-files || find -L $(top_srcdir) -name '*.[ch]' -print) | xargs ctags -a $(TAGSFLAGS)
