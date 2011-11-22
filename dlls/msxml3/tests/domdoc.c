@@ -2815,14 +2815,6 @@ static void test_domnode( void )
 
     if (map)
     {
-        ISupportErrorInfo *support_error;
-        r = IXMLDOMNamedNodeMap_QueryInterface( map, &IID_ISupportErrorInfo, (void**)&support_error );
-        ok( r == S_OK, "ret %08x\n", r );
-
-        r = ISupportErrorInfo_InterfaceSupportsErrorInfo( support_error, &IID_IXMLDOMNamedNodeMap );
-        todo_wine EXPECT_HR(r, S_OK);
-        ISupportErrorInfo_Release( support_error );
-
         str = SysAllocString( szdl );
         r = IXMLDOMNamedNodeMap_getNamedItem( map, str, &node );
         ok( r == S_OK, "getNamedItem returned wrong code\n");
@@ -10733,10 +10725,14 @@ static const supporterror_t supporterror_test[] = {
 
 static void test_supporterrorinfo(void)
 {
-    static REFIID iids[4] = { &IID_IXMLDOMDocument, &IID_IXMLDOMDocument2, &IID_IXMLDOMDocument3 };
+    static REFIID iids[5] = { &IID_IXMLDOMNode, &IID_IXMLDOMDocument,
+                              &IID_IXMLDOMDocument2, &IID_IXMLDOMDocument3 };
     const supporterror_t *ptr = supporterror_test;
     ISupportErrorInfo *errorinfo, *info2;
+    IXMLDOMNamedNodeMap *map, *map2;
     IXMLDOMDocument *doc;
+    IXMLDOMElement *elem;
+    VARIANT_BOOL b;
     IUnknown *unk;
     REFIID *iid;
     void *dummy;
@@ -10794,8 +10790,13 @@ static void test_supporterrorinfo(void)
         hr = IXMLDOMDocument_createNode(doc, type, _bstr_(ptr->name), NULL, &node);
         ok(hr == S_OK, "%d: got 0x%08x\n", ptr->type, hr);
 
+        EXPECT_REF(node, 1);
         hr = IXMLDOMNode_QueryInterface(node, &IID_ISupportErrorInfo, (void**)&errorinfo);
         ok(hr == S_OK, "%d: got 0x%08x\n", ptr->type, hr);
+        EXPECT_REF(node, 1);
+
+        hr = ISupportErrorInfo_QueryInterface(errorinfo, &IID_IXMLDOMNode, &dummy);
+        ok(hr == E_NOINTERFACE, "%d: got 0x%08x\n", ptr->type, hr);
 
         iid = ptr->iids;
 
@@ -10816,6 +10817,42 @@ static void test_supporterrorinfo(void)
         IXMLDOMNode_Release(node);
         ptr++;
     }
+
+    /* IXMLDOMNamedNodeMap */
+    b = VARIANT_FALSE;
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(complete4A), &b);
+    EXPECT_HR(hr, S_OK);
+    ok(b == VARIANT_TRUE, "got %d\n", b);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &elem);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMElement_get_attributes(elem, &map);
+    EXPECT_HR(hr, S_OK);
+
+    EXPECT_REF(map, 1);
+    hr = IXMLDOMNamedNodeMap_QueryInterface(map, &IID_ISupportErrorInfo, (void**)&errorinfo);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(map, 2);
+
+    hr = ISupportErrorInfo_InterfaceSupportsErrorInfo(errorinfo, &IID_IXMLDOMNamedNodeMap);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISupportErrorInfo_QueryInterface(errorinfo, &IID_IXMLDOMNamedNodeMap, (void**)&map2);
+    EXPECT_HR(hr, S_OK);
+    ok(map == map2, "got %p\n", map2);
+    IXMLDOMNamedNodeMap_Release(map2);
+
+    EXPECT_REF(errorinfo, 2);
+    hr = ISupportErrorInfo_QueryInterface(errorinfo, &IID_IUnknown, (void**)&unk);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(errorinfo, 3);
+    EXPECT_REF(map, 3);
+    IUnknown_Release(unk);
+
+    ISupportErrorInfo_Release(errorinfo);
+    IXMLDOMNamedNodeMap_Release(map);
+    IXMLDOMElement_Release(elem);
 
     IXMLDOMDocument_Release(doc);
     free_bstrs();

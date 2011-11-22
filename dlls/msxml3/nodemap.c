@@ -308,7 +308,7 @@ static HRESULT WINAPI support_error_QueryInterface(
     REFIID riid, void** ppvObject )
 {
     xmlnodemap *This = impl_from_ISupportErrorInfo( iface );
-    TRACE("%p %s %p\n", iface, debugstr_guid(riid), ppvObject);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
     return IXMLDOMNamedNodeMap_QueryInterface(&This->IXMLDOMNamedNodeMap_iface, riid, ppvObject);
 }
 
@@ -330,8 +330,9 @@ static HRESULT WINAPI support_error_InterfaceSupportsErrorInfo(
     ISupportErrorInfo *iface,
     REFIID riid )
 {
-    FIXME("(%p)->(%s)\n", iface, debugstr_guid(riid));
-    return S_FALSE;
+    xmlnodemap *This = impl_from_ISupportErrorInfo( iface );
+    TRACE("(%p)->(%s)\n", This, debugstr_guid(riid));
+    return IsEqualGUID(riid, &IID_IXMLDOMNamedNodeMap) ? S_OK : S_FALSE;
 }
 
 static const struct ISupportErrorInfoVtbl support_error_vtbl =
