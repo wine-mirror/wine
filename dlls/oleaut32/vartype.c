@@ -6408,7 +6408,7 @@ static BSTR VARIANT_BstrReplaceDecimal(const WCHAR * buff, LCID lcid, ULONG dwFl
   {
     WCHAR *p;
     WCHAR numbuff[256];
-    WCHAR empty[1] = {'\0'};
+    WCHAR empty[] = {'\0'};
     NUMBERFMTW minFormat;
 
     minFormat.NumDigits = 0;
