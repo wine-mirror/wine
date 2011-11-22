@@ -216,6 +216,10 @@ tmp = new Object();
 ok((~tmp.nonexistent) === -1, "!tmp.nonexistent = " + ~tmp.nonexistent);
 ok(!("nonexistent" in tmp), "nonexistent is in tmp after '~' expression")
 
+tmp = new Object();
+ok(isNaN(tmp.nonexistent), "!tmp.nonexistent = " + (+tmp.nonexistent));
+ok(!("nonexistent" in tmp), "nonexistent is in tmp after '+' expression")
+
 tmp = 0;
 if(true)
     tmp = 1;
