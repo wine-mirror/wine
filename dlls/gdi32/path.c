@@ -1755,19 +1755,17 @@ static BOOL PATH_StrokePath( HDC hdc, GdiPath *pPath )
 
 #define round(x) ((int)((x)>0?(x)+0.5:(x)-0.5))
 
-static BOOL PATH_WidenPath(DC *dc)
+static struct gdi_path *PATH_WidenPath(DC *dc)
 {
     INT i, j, numStrokes, penWidth, penWidthIn, penWidthOut, size, penStyle;
-    BOOL ret = FALSE;
-    struct gdi_path *flat_path;
-    GdiPath *pNewPath, **pStrokes = NULL, *pUpPath, *pDownPath;
+    struct gdi_path *flat_path, *pNewPath, **pStrokes = NULL, *pUpPath, *pDownPath;
     EXTLOGPEN *elp;
     DWORD obj_type, joint, endcap, penType;
 
     size = GetObjectW( dc->hPen, 0, NULL );
     if (!size) {
         SetLastError(ERROR_CAN_NOT_COMPLETE);
-        return FALSE;
+        return NULL;
     }
 
     elp = HeapAlloc( GetProcessHeap(), 0, size );
@@ -1783,7 +1781,7 @@ static BOOL PATH_WidenPath(DC *dc)
     else {
         SetLastError(ERROR_CAN_NOT_COMPLETE);
         HeapFree( GetProcessHeap(), 0, elp );
-        return FALSE;
+        return NULL;
     }
 
     penWidth = elp->elpWidth;
@@ -1796,10 +1794,10 @@ static BOOL PATH_WidenPath(DC *dc)
     /* The function cannot apply to cosmetic pens */
     if(obj_type == OBJ_EXTPEN && penType == PS_COSMETIC) {
         SetLastError(ERROR_CAN_NOT_COMPLETE);
-        return FALSE;
+        return NULL;
     }
 
-    if (!(flat_path = PATH_FlattenPath( &dc->path ))) return FALSE;
+    if (!(flat_path = PATH_FlattenPath( &dc->path ))) return NULL;
 
     penWidthIn = penWidth / 2;
     penWidthOut = penWidth / 2;
@@ -1816,7 +1814,7 @@ static BOOL PATH_WidenPath(DC *dc)
                 i == 0 ? "as first point" : "after PT_CLOSEFIGURE",
                 flat_path->pFlags[i]);
             free_gdi_path( flat_path );
-            return FALSE;
+            return NULL;
         }
         switch(flat_path->pFlags[i]) {
             case PT_MOVETO:
@@ -1829,7 +1827,7 @@ static BOOL PATH_WidenPath(DC *dc)
                     pStrokes = HeapAlloc(GetProcessHeap(), 0, sizeof(GdiPath*));
                 else
                     pStrokes = HeapReAlloc(GetProcessHeap(), 0, pStrokes, numStrokes * sizeof(GdiPath*));
-                if(!pStrokes) return FALSE;
+                if(!pStrokes) return NULL;
                 pStrokes[numStrokes - 1] = alloc_gdi_path();
                 /* fall through */
             case PT_LINETO:
@@ -1844,7 +1842,7 @@ static BOOL PATH_WidenPath(DC *dc)
                 break;
             default:
                 ERR("Got path flag %c\n", flat_path->pFlags[i]);
-                return FALSE;
+                return NULL;
         }
     }
 
@@ -2044,10 +2042,7 @@ static BOOL PATH_WidenPath(DC *dc)
     free_gdi_path( flat_path );
 
     pNewPath->state = PATH_Closed;
-    if (!(ret = PATH_AssignGdiPath(&dc->path, pNewPath)))
-        ERR("Assign path failed\n");
-    free_gdi_path( pNewPath );
-    return ret;
+    return pNewPath;
 }
 
 
@@ -2228,13 +2223,17 @@ BOOL nulldrv_FlattenPath( PHYSDEV dev )
 BOOL nulldrv_WidenPath( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
+    struct gdi_path *path;
 
     if (dc->path.state != PATH_Closed)
     {
         SetLastError( ERROR_CAN_NOT_COMPLETE );
         return FALSE;
     }
-    return PATH_WidenPath( dc );
+    if (!(path = PATH_WidenPath( dc ))) return FALSE;
+    PATH_AssignGdiPath( &dc->path, path );
+    free_gdi_path( path );
+    return TRUE;
 }
 
 const struct gdi_dc_funcs path_driver =
