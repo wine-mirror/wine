@@ -1096,6 +1096,9 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient *iface,
     }
 
     latency += stream_latency;
+    /* pretend we process audio in Period chunks, so max latency includes
+     * the period time */
+    latency += DefaultPeriod;
     *out = (latency / (double)This->fmt->nSamplesPerSec) * 10000000;
 
     OSSpinLockUnlock(&This->lock);
