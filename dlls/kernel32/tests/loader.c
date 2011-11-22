@@ -604,6 +604,7 @@ static void test_section_access(void)
     };
     static const char filler[0x1000];
     static const char section_data[0x10] = "section data";
+    char buf[256];
     int i;
     DWORD dummy, file_align;
     HANDLE hfile;
@@ -613,7 +614,9 @@ static void test_section_access(void)
     char dll_name[MAX_PATH];
     SIZE_T size;
     MEMORY_BASIC_INFORMATION info;
-    BOOL ret;
+    STARTUPINFO sti;
+    PROCESS_INFORMATION pi;
+    DWORD ret;
 
     GetSystemInfo(&si);
     trace("system page size %#x\n", si.dwPageSize);
@@ -641,6 +644,9 @@ static void test_section_access(void)
 
         nt_header.FileHeader.NumberOfSections = 1;
         nt_header.FileHeader.SizeOfOptionalHeader = sizeof(IMAGE_OPTIONAL_HEADER);
+
+        /* don't set IMAGE_FILE_DLL to show that it doesn't change anything for a DLL or a process image */
+        nt_header.FileHeader.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE;
 
         nt_header.OptionalHeader.SectionAlignment = si.dwPageSize;
         nt_header.OptionalHeader.FileAlignment = 0x200;
@@ -716,6 +722,45 @@ static void test_section_access(void)
         SetLastError(0xdeadbeef);
         ret = FreeLibrary(hlib);
         ok(ret, "FreeLibrary error %d\n", GetLastError());
+
+        memset(&sti, 0, sizeof(sti));
+        sti.cb = sizeof(sti);
+        SetLastError(0xdeadbeef);
+        ret = CreateProcess(dll_name, NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &sti, &pi);
+        ok(ret, "CreateProcess() error %d\n", GetLastError());
+
+        SetLastError(0xdeadbeef);
+        size = VirtualQueryEx(pi.hProcess, (char *)hlib + section.VirtualAddress, &info, sizeof(info));
+        ok(size == sizeof(info),
+            "%d: VirtualQuery error %d\n", i, GetLastError());
+        ok(info.BaseAddress == (char *)hlib + section.VirtualAddress, "%d: got %p != expected %p\n", i, info.BaseAddress, (char *)hlib + section.VirtualAddress);
+        ok(info.RegionSize == si.dwPageSize, "%d: got %#lx != expected %#x\n", i, info.RegionSize, si.dwPageSize);
+        /* FIXME: remove the condition below once Wine is fixed */
+        if ((td[i].scn_file_access & IMAGE_SCN_MEM_WRITE) &&
+            (td[i].scn_file_access & IMAGE_SCN_CNT_UNINITIALIZED_DATA))
+        todo_wine ok(info.Protect == td[i].scn_page_access, "%d: got %#x != expected %#x\n", i, info.Protect, td[i].scn_page_access);
+        else
+        ok(info.Protect == td[i].scn_page_access, "%d: got %#x != expected %#x\n", i, info.Protect, td[i].scn_page_access);
+        ok(info.AllocationBase == hlib, "%d: %p != %p\n", i, info.AllocationBase, hlib);
+        ok(info.AllocationProtect == PAGE_EXECUTE_WRITECOPY, "%d: %#x != PAGE_EXECUTE_WRITECOPY\n", i, info.AllocationProtect);
+        ok(info.State == MEM_COMMIT, "%d: %#x != MEM_COMMIT\n", i, info.State);
+        ok(info.Type == SEC_IMAGE, "%d: %#x != SEC_IMAGE\n", i, info.Type);
+        if (info.Protect != PAGE_NOACCESS)
+        {
+            SetLastError(0xdeadbeef);
+            ret = ReadProcessMemory(pi.hProcess, info.BaseAddress, buf, section.SizeOfRawData, NULL);
+            ok(ret, "ReadProcessMemory() error %d\n", GetLastError());
+            ok(!memcmp(buf, section_data, section.SizeOfRawData), "wrong section data\n");
+        }
+
+        SetLastError(0xdeadbeef);
+        ret = TerminateProcess(pi.hProcess, 0);
+        ok(ret, "TerminateProcess() error %d\n", GetLastError());
+        ret = WaitForSingleObject(pi.hProcess, 3000);
+        ok(ret == WAIT_OBJECT_0, "WaitForSingleObject failed: %x\n", ret);
+
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
 
         SetLastError(0xdeadbeef);
         ret = DeleteFile(dll_name);
