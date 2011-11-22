@@ -6262,6 +6262,14 @@ msgstr "Nä&ytä Lähde"
 msgid "the program which created it"
 msgstr ""
 
+#: sane.rc:41
+msgid "Scanning"
+msgstr "Skannataan"
+
+#: sane.rc:44
+msgid "SCANNING... Please Wait"
+msgstr "SKANNATAAN... Odota hetki"
+
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"

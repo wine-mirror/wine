@@ -6307,6 +6307,14 @@ msgstr "不明来源"
 msgid "the program which created it"
 msgstr "不明应用程序"
 
+#: sane.rc:41
+msgid "Scanning"
+msgstr "正在扫描"
+
+#: sane.rc:44
+msgid "SCANNING... Please Wait"
+msgstr "正在扫描... 请稍候"
+
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"

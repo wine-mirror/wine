@@ -6319,6 +6319,14 @@ msgstr "מקור לא ידוע"
 msgid "the program which created it"
 msgstr "התכנית שיצרה אותו"
 
+#: sane.rc:41
+msgid "Scanning"
+msgstr "סריקה"
+
+#: sane.rc:44
+msgid "SCANNING... Please Wait"
+msgstr "מתבצעת סריקה... נא להמתין"
+
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"

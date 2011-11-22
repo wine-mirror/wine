@@ -6118,6 +6118,14 @@ msgstr "Sorgente sconosciuta"
 msgid "the program which created it"
 msgstr "Il programma che lo ha creato"
 
+#: sane.rc:41
+msgid "Scanning"
+msgstr "Scansione"
+
+#: sane.rc:44
+msgid "SCANNING... Please Wait"
+msgstr "SCANSIONE... Aspetta un momento"
+
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"

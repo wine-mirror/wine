@@ -6040,6 +6040,14 @@ msgstr ""
 msgid "the program which created it"
 msgstr ""
 
+#: sane.rc:41
+msgid "Scanning"
+msgstr ""
+
+#: sane.rc:44
+msgid "SCANNING... Please Wait"
+msgstr ""
+
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"

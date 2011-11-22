@@ -6106,6 +6106,14 @@ msgstr "Unknown Source"
 msgid "the program which created it"
 msgstr "the program which created it"
 
+#: sane.rc:41
+msgid "Scanning"
+msgstr "Scanning"
+
+#: sane.rc:44
+msgid "SCANNING... Please Wait"
+msgstr "SCANNING... Please Wait"
+
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"

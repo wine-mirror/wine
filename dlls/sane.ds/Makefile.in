@@ -10,32 +10,7 @@ C_SRCS = \
 	sane_main.c \
 	ui.c
 
-RC_SRCS = \
-	sane.rc \
-	sane_Da.rc \
-	sane_De.rc \
-	sane_En.rc \
-	sane_Es.rc \
-	sane_Fi.rc \
-	sane_Fr.rc \
-	sane_He.rc \
-	sane_Hu.rc \
-	sane_It.rc \
-	sane_Ja.rc \
-	sane_Ko.rc \
-	sane_Lt.rc \
-	sane_Nl.rc \
-	sane_No.rc \
-	sane_Pl.rc \
-	sane_Pt.rc \
-	sane_Ro.rc \
-	sane_Ru.rc \
-	sane_Si.rc \
-	sane_Sr.rc \
-	sane_Sv.rc \
-	sane_Uk.rc \
-	sane_Zh.rc
-
+RC_SRCS = sane.rc
 PO_SRCS = sane.rc
 
 @MAKE_DLL_RULES@

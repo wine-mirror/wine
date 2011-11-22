@@ -6570,6 +6570,14 @@ msgstr "Sursă necunoscută"
 msgid "the program which created it"
 msgstr "programul care l-a creat"
 
+#: sane.rc:41
+msgid "Scanning"
+msgstr "Scanare"
+
+#: sane.rc:44
+msgid "SCANNING... Please Wait"
+msgstr "SCANEZ... Așteptați"
+
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"

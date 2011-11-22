@@ -6125,6 +6125,15 @@ msgstr "Font Desconegut"
 msgid "the program which created it"
 msgstr "el programa que el ha creat"
 
+#: sane.rc:41
+#, fuzzy
+msgid "Scanning"
+msgstr "Executant"
+
+#: sane.rc:44
+msgid "SCANNING... Please Wait"
+msgstr ""
+
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"

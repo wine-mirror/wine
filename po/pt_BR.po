@@ -6327,6 +6327,14 @@ msgstr "Origem Desconhecida"
 msgid "the program which created it"
 msgstr "o programa que o criou"
 
+#: sane.rc:41
+msgid "Scanning"
+msgstr "Escaneando"
+
+#: sane.rc:44
+msgid "SCANNING... Please Wait"
+msgstr "ESCANEANDO... Por Favor Espere"
+
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"

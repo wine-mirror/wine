@@ -6445,6 +6445,14 @@ msgstr "Ismeretlen forrás"
 msgid "the program which created it"
 msgstr "a program ami létrehozta"
 
+#: sane.rc:41
+msgid "Scanning"
+msgstr "Lapolvasás"
+
+#: sane.rc:44
+msgid "SCANNING... Please Wait"
+msgstr "LAPOLVASÁS... Kérem várjon"
+
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"

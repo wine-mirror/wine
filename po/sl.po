@@ -6140,6 +6140,14 @@ msgstr "Neznan vir"
 msgid "the program which created it"
 msgstr "program, ki jo je ustvaril"
 
+#: sane.rc:41
+msgid "Scanning"
+msgstr "Skeniranje"
+
+#: sane.rc:44
+msgid "SCANNING... Please Wait"
+msgstr "Skeniram ... Prosim, počakajte"
+
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"

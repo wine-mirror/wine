@@ -6103,6 +6103,14 @@ msgstr "不明"
 msgid "the program which created it"
 msgstr "作成プログラム"
 
+#: sane.rc:41
+msgid "Scanning"
+msgstr "スキャン中"
+
+#: sane.rc:44
+msgid "SCANNING... Please Wait"
+msgstr "スキャン中... しばらくお待ちください"
+
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"

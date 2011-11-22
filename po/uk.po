@@ -6106,6 +6106,14 @@ msgstr "Невідоме джерело"
 msgid "the program which created it"
 msgstr "програми, яка його створила"
 
+#: sane.rc:41
+msgid "Scanning"
+msgstr "Сканування"
+
+#: sane.rc:44
+msgid "SCANNING... Please Wait"
+msgstr "СКАНУВАННЯ... Зачекайте"
+
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"

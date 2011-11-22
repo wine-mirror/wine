@@ -6218,6 +6218,14 @@ msgstr "Onbekende bron"
 msgid "the program which created it"
 msgstr "het programma die het gecreëerd heeft"
 
+#: sane.rc:41
+msgid "Scanning"
+msgstr "Scannen"
+
+#: sane.rc:44
+msgid "SCANNING... Please Wait"
+msgstr "SCANNEN... Even geduld a.u.b."
+
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"

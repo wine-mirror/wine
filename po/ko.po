@@ -6098,6 +6098,14 @@ msgstr "알수 없는 원본"
 msgid "the program which created it"
 msgstr "내가 만든 프로그램"
 
+#: sane.rc:41
+msgid "Scanning"
+msgstr "스캐닝중"
+
+#: sane.rc:44
+msgid "SCANNING... Please Wait"
+msgstr "스캐닝중... 기다리십시오."
+
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"

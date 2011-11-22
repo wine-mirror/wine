@@ -6116,6 +6116,14 @@ msgstr "Nežinomas šaltinis"
 msgid "the program which created it"
 msgstr "programa, kuri jį sukūrė"
 
+#: sane.rc:41
+msgid "Scanning"
+msgstr "Skaitoma"
+
+#: sane.rc:44
+msgid "SCANNING... Please Wait"
+msgstr "SKAITOMA... Prašome palaukti"
+
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"

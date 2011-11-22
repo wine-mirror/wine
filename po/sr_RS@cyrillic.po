@@ -6357,6 +6357,14 @@ msgstr "Непознат извор"
 msgid "the program which created it"
 msgstr "програм који га је направио"
 
+#: sane.rc:41
+msgid "Scanning"
+msgstr "Претрага"
+
+#: sane.rc:44
+msgid "SCANNING... Please Wait"
+msgstr "Претраживање..."
+
 #: sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"
