@@ -68,7 +68,7 @@ static BOOL source_matches_volume(MSIMEDIAINFO *mi, LPCWSTR source_root)
         return FALSE;
     }
 
-    return !strcmpW( mi->volume_label, volume_name );
+    return !strcmpiW( mi->volume_label, volume_name );
 }
 
 static UINT msi_change_media(MSIPACKAGE *package, MSIMEDIAINFO *mi)
