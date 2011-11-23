@@ -4936,7 +4936,7 @@ lend:
     if (request->session->appInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         if (res == ERROR_SUCCESS) {
-            if(request->contentLength && request->bytesWritten == request->bytesToWrite)
+            if(bEndRequest && request->contentLength && request->bytesWritten == request->bytesToWrite)
                 HTTP_ReceiveRequestData(request, TRUE);
             else
                 send_request_complete(request,
