@@ -4586,6 +4586,80 @@ static void test_initialize(void)
     CoUninitialize();
 }
 
+static void test_coop_level_surf_create(void)
+{
+    IDirectDrawSurface7 *surface7;
+    IDirectDrawSurface4 *surface4;
+    IDirectDrawSurface *surface1;
+    IDirectDraw7 *ddraw7;
+    IDirectDraw4 *ddraw4;
+    IDirectDraw2 *ddraw2;
+    IDirectDraw *ddraw1;
+    DDSURFACEDESC2 ddsd2;
+    DDSURFACEDESC ddsd;
+    HRESULT hr;
+
+    /* IDirectDraw */
+    if (FAILED(hr = DirectDrawCreate(NULL, &ddraw1, NULL)))
+    {
+        skip("Failed to create IDirectDraw object (%#x), skipping tests.\n", hr);
+        return;
+    }
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+    hr = IDirectDraw_CreateSurface(ddraw1, &ddsd, &surface1, NULL);
+    ok(hr == DDERR_NOCOOPERATIVELEVELSET, "Surface creation returned hr %#x.\n", hr);
+
+    /* IDirectDraw2 */
+    if (SUCCEEDED(IDirectDraw_QueryInterface(ddraw1, &IID_IDirectDraw2, (void **)&ddraw2)))
+    {
+        memset(&ddsd, 0, sizeof(ddsd));
+        ddsd.dwSize = sizeof(ddsd);
+        ddsd.dwFlags = DDSD_CAPS;
+        ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+        hr = IDirectDraw2_CreateSurface(ddraw2, &ddsd, &surface1, NULL);
+        ok(hr == DDERR_NOCOOPERATIVELEVELSET, "Surface creation returned hr %#x.\n", hr);
+
+        IDirectDraw2_Release(ddraw2);
+    }
+    else skip("Failed to query IDirectDraw2 interface, skipping tests.\n");
+
+    /* IDirectDraw4 */
+    if (SUCCEEDED(IDirectDraw_QueryInterface(ddraw1, &IID_IDirectDraw4, (void **)&ddraw4)))
+    {
+        memset(&ddsd2, 0, sizeof(ddsd2));
+        ddsd2.dwSize = sizeof(ddsd2);
+        ddsd2.dwFlags = DDSD_CAPS;
+        ddsd2.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+        hr = IDirectDraw4_CreateSurface(ddraw4, &ddsd2, &surface4, NULL);
+        ok(hr == DDERR_NOCOOPERATIVELEVELSET, "Surface creation returned hr %#x.\n", hr);
+
+        IDirectDraw4_Release(ddraw4);
+    }
+    else skip("Failed to query IDirectDraw4 interface, skipping tests.\n");
+
+    IDirectDraw_Release(ddraw1);
+
+    /* IDirectDraw7 */
+    if (FAILED(hr = pDirectDrawCreateEx(NULL, (void **)&ddraw7, &IID_IDirectDraw7, NULL)))
+    {
+        skip("Failed to create IDirectDraw7 object (%#x), skipping tests.\n", hr);
+        return;
+    }
+
+    memset(&ddsd2, 0, sizeof(ddsd2));
+    ddsd2.dwSize = sizeof(ddsd2);
+    ddsd2.dwFlags = DDSD_CAPS;
+    ddsd2.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+    hr = IDirectDraw7_CreateSurface(ddraw7, &ddsd2, &surface7, NULL);
+    ok(hr == DDERR_NOCOOPERATIVELEVELSET, "Surface creation returned hr %#x.\n", hr);
+
+    IDirectDraw7_Release(ddraw7);
+}
+
 START_TEST(d3d)
 {
     init_function_pointers();
@@ -4633,4 +4707,5 @@ START_TEST(d3d)
     test_redundant_mode_set();
     test_coop_level_mode_set();
     test_initialize();
+    test_coop_level_surf_create();
 }

@@ -2732,19 +2732,15 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
         DDRAW_dump_surface_desc(DDSD);
     }
 
-    wined3d_mutex_lock();
-
     if (UnkOuter != NULL)
     {
         FIXME("(%p) : outer != NULL?\n", ddraw);
-        wined3d_mutex_unlock();
         return CLASS_E_NOAGGREGATION; /* unchecked */
     }
 
     if (Surf == NULL)
     {
         FIXME("(%p) You want to get back a surface? Don't give NULL ptrs!\n", ddraw);
-        wined3d_mutex_unlock();
         return E_POINTER; /* unchecked */
     }
 
@@ -2773,14 +2769,12 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
         TRACE("(%p): Attempt to create a flipable primary surface without DDSCL_EXCLUSIVE set\n",
                 ddraw);
         *Surf = NULL;
-        wined3d_mutex_unlock();
         return DDERR_NOEXCLUSIVEMODE;
     }
 
     if((DDSD->ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER | DDSCAPS_PRIMARYSURFACE)) == (DDSCAPS_BACKBUFFER | DDSCAPS_PRIMARYSURFACE))
     {
         WARN("Application wanted to create back buffer primary surface\n");
-        wined3d_mutex_unlock();
         return DDERR_INVALIDCAPS;
     }
 
@@ -2788,7 +2782,6 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
     {
         /* This is a special switch in ddrawex.dll, but not allowed in ddraw.dll */
         WARN("Application tries to put the surface in both system and video memory\n");
-        wined3d_mutex_unlock();
         *Surf = NULL;
         return DDERR_INVALIDCAPS;
     }
@@ -2800,14 +2793,12 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
            !(DDSD->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP))
         {
             WARN("Cube map faces requested without cube map flag\n");
-            wined3d_mutex_unlock();
             return DDERR_INVALIDCAPS;
         }
         if(DDSD->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP &&
            (DDSD->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP_ALLFACES) == 0)
         {
             WARN("Cube map without faces requested\n");
-            wined3d_mutex_unlock();
             return DDERR_INVALIDPARAMS;
         }
 
@@ -2877,7 +2868,6 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
         {
             WARN("Creating a non-Primary surface without Width or Height info, returning DDERR_INVALIDPARAMS\n");
             *Surf = NULL;
-            wined3d_mutex_unlock();
             return DDERR_INVALIDPARAMS;
         }
 
@@ -2887,10 +2877,7 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
     }
 
     if (!desc2.dwWidth || !desc2.dwHeight)
-    {
-        wined3d_mutex_unlock();
         return DDERR_INVALIDPARAMS;
-    }
 
     /* Mipmap count fixes */
     if(desc2.ddsCaps.dwCaps & DDSCAPS_MIPMAP)
@@ -2901,10 +2888,7 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
             {
                 /* Mipmap count is given, should not be 0 */
                 if( desc2.u2.dwMipMapCount == 0 )
-                {
-                    wined3d_mutex_unlock();
                     return DDERR_INVALIDPARAMS;
-                }
             }
             else
             {
@@ -2951,7 +2935,6 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
     if (FAILED(hr))
     {
         WARN("ddraw_create_surface failed, hr %#x.\n", hr);
-        wined3d_mutex_unlock();
         return hr;
     }
     object->is_complex_root = TRUE;
@@ -2998,18 +2981,12 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
     {
         /* This destroys and possibly created surfaces too */
         if (version == 7)
-        {
             IDirectDrawSurface7_Release(&object->IDirectDrawSurface7_iface);
-        }
         else if (version == 4)
-        {
             IDirectDrawSurface4_Release(&object->IDirectDrawSurface4_iface);
-        }
         else
-        {
             IDirectDrawSurface_Release(&object->IDirectDrawSurface_iface);
-        }
-        wined3d_mutex_unlock();
+
         return hr;
     }
 
@@ -3034,7 +3011,6 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
                 object = object->complex_array[0];
                 ddraw_surface_destroy(release_surf);
             }
-            wined3d_mutex_unlock();
             return hr;
         }
 
@@ -3053,8 +3029,6 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
         ddraw->tex_root = NULL;
     }
 
-    wined3d_mutex_unlock();
-
     return hr;
 }
 
@@ -3068,9 +3042,19 @@ static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface, DDSURFACEDESC2 *
     TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
             iface, surface_desc, surface, outer_unknown);
 
+    wined3d_mutex_lock();
+
+    if (!(This->cooperative_level & (DDSCL_NORMAL | DDSCL_EXCLUSIVE)))
+    {
+        WARN("Cooperative level not set.\n");
+        wined3d_mutex_unlock();
+        return DDERR_NOCOOPERATIVELEVELSET;
+    }
+
     if(surface_desc == NULL || surface_desc->dwSize != sizeof(DDSURFACEDESC2))
     {
         WARN("Application supplied invalid surface descriptor\n");
+        wined3d_mutex_unlock();
         return DDERR_INVALIDPARAMS;
     }
 
@@ -3083,10 +3067,12 @@ static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface, DDSURFACEDESC2 *
         }
 
         WARN("Application tried to create an explicit front or back buffer\n");
+        wined3d_mutex_unlock();
         return DDERR_INVALIDCAPS;
     }
 
     hr = CreateSurface(This, surface_desc, &impl, outer_unknown, 7);
+    wined3d_mutex_unlock();
     if (FAILED(hr))
     {
         *surface = NULL;
@@ -3110,9 +3096,19 @@ static HRESULT WINAPI ddraw4_CreateSurface(IDirectDraw4 *iface,
     TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
             iface, surface_desc, surface, outer_unknown);
 
+    wined3d_mutex_lock();
+
+    if (!(This->cooperative_level & (DDSCL_NORMAL | DDSCL_EXCLUSIVE)))
+    {
+        WARN("Cooperative level not set.\n");
+        wined3d_mutex_unlock();
+        return DDERR_NOCOOPERATIVELEVELSET;
+    }
+
     if(surface_desc == NULL || surface_desc->dwSize != sizeof(DDSURFACEDESC2))
     {
         WARN("Application supplied invalid surface descriptor\n");
+        wined3d_mutex_unlock();
         return DDERR_INVALIDPARAMS;
     }
 
@@ -3125,10 +3121,12 @@ static HRESULT WINAPI ddraw4_CreateSurface(IDirectDraw4 *iface,
         }
 
         WARN("Application tried to create an explicit front or back buffer\n");
+        wined3d_mutex_unlock();
         return DDERR_INVALIDCAPS;
     }
 
     hr = CreateSurface(This, surface_desc, &impl, outer_unknown, 4);
+    wined3d_mutex_unlock();
     if (FAILED(hr))
     {
         *surface = NULL;
@@ -3153,9 +3151,19 @@ static HRESULT WINAPI ddraw2_CreateSurface(IDirectDraw2 *iface,
     TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
             iface, surface_desc, surface, outer_unknown);
 
+    wined3d_mutex_lock();
+
+    if (!(This->cooperative_level & (DDSCL_NORMAL | DDSCL_EXCLUSIVE)))
+    {
+        WARN("Cooperative level not set.\n");
+        wined3d_mutex_unlock();
+        return DDERR_NOCOOPERATIVELEVELSET;
+    }
+
     if(surface_desc == NULL || surface_desc->dwSize != sizeof(DDSURFACEDESC))
     {
         WARN("Application supplied invalid surface descriptor\n");
+        wined3d_mutex_unlock();
         return DDERR_INVALIDPARAMS;
     }
 
@@ -3169,10 +3177,12 @@ static HRESULT WINAPI ddraw2_CreateSurface(IDirectDraw2 *iface,
         }
 
         WARN("Application tried to create an explicit front or back buffer\n");
+        wined3d_mutex_unlock();
         return DDERR_INVALIDCAPS;
     }
 
     hr = CreateSurface(This, &surface_desc2, &impl, outer_unknown, 2);
+    wined3d_mutex_unlock();
     if (FAILED(hr))
     {
         *surface = NULL;
@@ -3196,9 +3206,19 @@ static HRESULT WINAPI ddraw1_CreateSurface(IDirectDraw *iface,
     TRACE("iface %p, surface_desc %p, surface %p, outer_unknown %p.\n",
             iface, surface_desc, surface, outer_unknown);
 
+    wined3d_mutex_lock();
+
+    if (!(This->cooperative_level & (DDSCL_NORMAL | DDSCL_EXCLUSIVE)))
+    {
+        WARN("Cooperative level not set.\n");
+        wined3d_mutex_unlock();
+        return DDERR_NOCOOPERATIVELEVELSET;
+    }
+
     if(surface_desc == NULL || surface_desc->dwSize != sizeof(DDSURFACEDESC))
     {
         WARN("Application supplied invalid surface descriptor\n");
+        wined3d_mutex_unlock();
         return DDERR_INVALIDPARAMS;
     }
 
@@ -3207,6 +3227,7 @@ static HRESULT WINAPI ddraw1_CreateSurface(IDirectDraw *iface,
     surface_desc->ddsCaps.dwCaps &= ~DDSCAPS_FRONTBUFFER;
     DDSD_to_DDSD2(surface_desc, &surface_desc2);
     hr = CreateSurface(This, &surface_desc2, &impl, outer_unknown, 1);
+    wined3d_mutex_unlock();
     if (FAILED(hr))
     {
         *surface = NULL;
