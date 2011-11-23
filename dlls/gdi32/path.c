@@ -83,9 +83,10 @@ typedef struct tagFLOAT_POINT
 
 struct gdi_path
 {
-    POINT       *pPoints;
-    BYTE        *pFlags;
-    int          numEntriesUsed, numEntriesAllocated;
+    POINT       *points;
+    BYTE        *flags;
+    int          count;
+    int          allocated;
     BOOL         newStroke;
 };
 
@@ -119,8 +120,8 @@ static inline struct path_physdev *find_path_physdev( DC *dc )
 
 void free_gdi_path( struct gdi_path *path )
 {
-    HeapFree( GetProcessHeap(), 0, path->pPoints );
-    HeapFree( GetProcessHeap(), 0, path->pFlags );
+    HeapFree( GetProcessHeap(), 0, path->points );
+    HeapFree( GetProcessHeap(), 0, path->flags );
     HeapFree( GetProcessHeap(), 0, path );
 }
 
@@ -133,16 +134,16 @@ static struct gdi_path *alloc_gdi_path(void)
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return NULL;
     }
-    path->pPoints = HeapAlloc( GetProcessHeap(), 0, NUM_ENTRIES_INITIAL * sizeof(*path->pPoints) );
-    path->pFlags = HeapAlloc( GetProcessHeap(), 0, NUM_ENTRIES_INITIAL * sizeof(*path->pFlags) );
-    if (!path->pPoints || !path->pFlags)
+    path->points = HeapAlloc( GetProcessHeap(), 0, NUM_ENTRIES_INITIAL * sizeof(*path->points) );
+    path->flags = HeapAlloc( GetProcessHeap(), 0, NUM_ENTRIES_INITIAL * sizeof(*path->flags) );
+    if (!path->points || !path->flags)
     {
         free_gdi_path( path );
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return NULL;
     }
-    path->numEntriesUsed = 0;
-    path->numEntriesAllocated = NUM_ENTRIES_INITIAL;
+    path->count = 0;
+    path->allocated = NUM_ENTRIES_INITIAL;
     path->newStroke = TRUE;
     return path;
 }
@@ -156,18 +157,18 @@ static struct gdi_path *copy_gdi_path( const struct gdi_path *src_path )
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return NULL;
     }
-    path->numEntriesUsed = path->numEntriesAllocated = src_path->numEntriesUsed;
+    path->count = path->allocated = src_path->count;
     path->newStroke = src_path->newStroke;
-    path->pPoints = HeapAlloc( GetProcessHeap(), 0, path->numEntriesUsed * sizeof(*path->pPoints) );
-    path->pFlags = HeapAlloc( GetProcessHeap(), 0, path->numEntriesUsed * sizeof(*path->pFlags) );
-    if (!path->pPoints || !path->pFlags)
+    path->points = HeapAlloc( GetProcessHeap(), 0, path->count * sizeof(*path->points) );
+    path->flags = HeapAlloc( GetProcessHeap(), 0, path->count * sizeof(*path->flags) );
+    if (!path->points || !path->flags)
     {
         free_gdi_path( path );
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return NULL;
     }
-    memcpy( path->pPoints, src_path->pPoints, path->numEntriesUsed * sizeof(*path->pPoints) );
-    memcpy( path->pFlags, src_path->pFlags, path->numEntriesUsed * sizeof(*path->pFlags) );
+    memcpy( path->points, src_path->points, path->count * sizeof(*path->points) );
+    memcpy( path->flags, src_path->flags, path->count * sizeof(*path->flags) );
     return path;
 }
 
@@ -210,22 +211,22 @@ static BOOL PATH_ReserveEntries(struct gdi_path *pPath, INT count)
     assert(count>=0);
 
     /* Do we have to allocate more memory? */
-    if(count > pPath->numEntriesAllocated)
+    if(count > pPath->allocated)
     {
         /* Find number of entries to allocate. We let the size of the array
          * grow exponentially, since that will guarantee linear time
          * complexity. */
-        count = max( pPath->numEntriesAllocated * 2, count );
+        count = max( pPath->allocated * 2, count );
 
-        pPointsNew = HeapReAlloc( GetProcessHeap(), 0, pPath->pPoints, count * sizeof(POINT) );
+        pPointsNew = HeapReAlloc( GetProcessHeap(), 0, pPath->points, count * sizeof(POINT) );
         if (!pPointsNew) return FALSE;
-        pPath->pPoints = pPointsNew;
+        pPath->points = pPointsNew;
 
-        pFlagsNew = HeapReAlloc( GetProcessHeap(), 0, pPath->pFlags, count * sizeof(BYTE) );
+        pFlagsNew = HeapReAlloc( GetProcessHeap(), 0, pPath->flags, count * sizeof(BYTE) );
         if (!pFlagsNew) return FALSE;
-        pPath->pFlags = pFlagsNew;
+        pPath->flags = pFlagsNew;
 
-        pPath->numEntriesAllocated = count;
+        pPath->allocated = count;
     }
     return TRUE;
 }
@@ -244,14 +245,14 @@ static BOOL PATH_AddEntry(struct gdi_path *pPath, const POINT *pPoint, BYTE flag
     TRACE("(%d,%d) - %d\n", pPoint->x, pPoint->y, flags);
 
     /* Reserve enough memory for an extra path entry */
-    if(!PATH_ReserveEntries(pPath, pPath->numEntriesUsed+1))
+    if(!PATH_ReserveEntries(pPath, pPath->count+1))
         return FALSE;
 
     /* Store information in path entry */
-    pPath->pPoints[pPath->numEntriesUsed]=*pPoint;
-    pPath->pFlags[pPath->numEntriesUsed]=flags;
+    pPath->points[pPath->count]=*pPoint;
+    pPath->flags[pPath->count]=flags;
 
-    pPath->numEntriesUsed++;
+    pPath->count++;
 
     return TRUE;
 }
@@ -263,13 +264,13 @@ static BYTE *add_log_points( struct path_physdev *physdev, const POINT *points, 
     BYTE *ret;
     struct gdi_path *path = physdev->path;
 
-    if (!PATH_ReserveEntries( path, path->numEntriesUsed + count )) return NULL;
+    if (!PATH_ReserveEntries( path, path->count + count )) return NULL;
 
-    ret = &path->pFlags[path->numEntriesUsed];
-    memcpy( &path->pPoints[path->numEntriesUsed], points, count * sizeof(*points) );
-    LPtoDP( physdev->dev.hdc, &path->pPoints[path->numEntriesUsed], count );
+    ret = &path->flags[path->count];
+    memcpy( &path->points[path->count], points, count * sizeof(*points) );
+    LPtoDP( physdev->dev.hdc, &path->points[path->count], count );
     memset( ret, type, count );
-    path->numEntriesUsed += count;
+    path->count += count;
     return ret;
 }
 
@@ -279,8 +280,8 @@ static BOOL start_new_stroke( struct path_physdev *physdev )
     POINT pos;
     struct gdi_path *path = physdev->path;
 
-    if (!path->newStroke && path->numEntriesUsed &&
-        !(path->pFlags[path->numEntriesUsed - 1] & PT_CLOSEFIGURE))
+    if (!path->newStroke && path->count &&
+        !(path->flags[path->count - 1] & PT_CLOSEFIGURE))
         return TRUE;
 
     path->newStroke = FALSE;
@@ -353,19 +354,19 @@ static struct gdi_path *PATH_FlattenPath(const struct gdi_path *pPath)
 
     if (!(new_path = alloc_gdi_path())) return NULL;
 
-    for(srcpt = 0; srcpt < pPath->numEntriesUsed; srcpt++) {
-        switch(pPath->pFlags[srcpt] & ~PT_CLOSEFIGURE) {
+    for(srcpt = 0; srcpt < pPath->count; srcpt++) {
+        switch(pPath->flags[srcpt] & ~PT_CLOSEFIGURE) {
 	case PT_MOVETO:
 	case PT_LINETO:
-	    if (!PATH_AddEntry(new_path, &pPath->pPoints[srcpt], pPath->pFlags[srcpt]))
+	    if (!PATH_AddEntry(new_path, &pPath->points[srcpt], pPath->flags[srcpt]))
             {
                 free_gdi_path( new_path );
                 return NULL;
             }
 	    break;
 	case PT_BEZIERTO:
-            if (!PATH_AddFlatBezier(new_path, &pPath->pPoints[srcpt-1],
-                                    pPath->pFlags[srcpt+2] & PT_CLOSEFIGURE))
+            if (!PATH_AddFlatBezier(new_path, &pPath->points[srcpt-1],
+                                    pPath->flags[srcpt+2] & PT_CLOSEFIGURE))
             {
                 free_gdi_path( new_path );
                 return NULL;
@@ -396,8 +397,8 @@ static HRGN PATH_PathToRegion(const struct gdi_path *pPath, INT nPolyFillMode)
     /* First pass: Find out how many strokes there are in the path */
     /* FIXME: We could eliminate this with some bookkeeping in GdiPath */
     numStrokes=0;
-    for(i=0; i<rgn_path->numEntriesUsed; i++)
-        if((rgn_path->pFlags[i] & ~PT_CLOSEFIGURE) == PT_MOVETO)
+    for(i=0; i<rgn_path->count; i++)
+        if((rgn_path->flags[i] & ~PT_CLOSEFIGURE) == PT_MOVETO)
             numStrokes++;
 
     /* Allocate memory for number-of-points-in-stroke array */
@@ -411,10 +412,10 @@ static HRGN PATH_PathToRegion(const struct gdi_path *pPath, INT nPolyFillMode)
 
     /* Second pass: remember number of points in each polygon */
     iStroke=-1;  /* Will get incremented to 0 at beginning of first stroke */
-    for(i=0; i<rgn_path->numEntriesUsed; i++)
+    for(i=0; i<rgn_path->count; i++)
     {
         /* Is this the beginning of a new stroke? */
-        if((rgn_path->pFlags[i] & ~PT_CLOSEFIGURE) == PT_MOVETO)
+        if((rgn_path->flags[i] & ~PT_CLOSEFIGURE) == PT_MOVETO)
         {
             iStroke++;
             pNumPointsInStroke[iStroke]=0;
@@ -424,7 +425,7 @@ static HRGN PATH_PathToRegion(const struct gdi_path *pPath, INT nPolyFillMode)
     }
 
     /* Create a region from the strokes */
-    hrgn=CreatePolyPolygonRgn(rgn_path->pPoints, pNumPointsInStroke,
+    hrgn=CreatePolyPolygonRgn(rgn_path->points, pNumPointsInStroke,
                               numStrokes, nPolyFillMode);
 
     HeapFree( GetProcessHeap(), 0, pNumPointsInStroke );
@@ -623,25 +624,25 @@ INT WINAPI GetPath(HDC hdc, LPPOINT pPoints, LPBYTE pTypes, INT nSize)
    }
 
    if(nSize==0)
-      ret = dc->path->numEntriesUsed;
-   else if(nSize<dc->path->numEntriesUsed)
+      ret = dc->path->count;
+   else if(nSize<dc->path->count)
    {
       SetLastError(ERROR_INVALID_PARAMETER);
       goto done;
    }
    else
    {
-      memcpy(pPoints, dc->path->pPoints, sizeof(POINT)*dc->path->numEntriesUsed);
-      memcpy(pTypes, dc->path->pFlags, sizeof(BYTE)*dc->path->numEntriesUsed);
+      memcpy(pPoints, dc->path->points, sizeof(POINT)*dc->path->count);
+      memcpy(pTypes, dc->path->flags, sizeof(BYTE)*dc->path->count);
 
       /* Convert the points to logical coordinates */
-      if(!DPtoLP(hdc, pPoints, dc->path->numEntriesUsed))
+      if(!DPtoLP(hdc, pPoints, dc->path->count))
       {
 	 /* FIXME: Is this the correct value? */
          SetLastError(ERROR_CAN_NOT_COMPLETE);
 	goto done;
       }
-     else ret = dc->path->numEntriesUsed;
+     else ret = dc->path->count;
    }
  done:
    release_dc_ptr( dc );
@@ -1259,9 +1260,9 @@ static BOOL pathdrv_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *types, 
     GetCurrentPositionEx( dev->hdc, &orig_pos );
     lastmove = orig_pos;
 
-    for(i = physdev->path->numEntriesUsed - 1; i >= 0; i--){
-        if(physdev->path->pFlags[i] == PT_MOVETO){
-            lastmove = physdev->path->pPoints[i];
+    for(i = physdev->path->count - 1; i >= 0; i--){
+        if(physdev->path->flags[i] == PT_MOVETO){
+            lastmove = physdev->path->points[i];
             DPtoLP(dev->hdc, &lastmove, 1);
             break;
         }
@@ -1298,7 +1299,7 @@ static BOOL pathdrv_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *types, 
         }
 
         if(types[i] & PT_CLOSEFIGURE){
-            physdev->path->pFlags[physdev->path->numEntriesUsed-1] |= PT_CLOSEFIGURE;
+            physdev->path->flags[physdev->path->count-1] |= PT_CLOSEFIGURE;
             MoveToEx( dev->hdc, lastmove.x, lastmove.y, NULL );
         }
     }
@@ -1583,8 +1584,8 @@ static BOOL pathdrv_CloseFigure( PHYSDEV dev )
 
     /* Set PT_CLOSEFIGURE on the last entry and start a new stroke */
     /* It is not necessary to draw a line, PT_CLOSEFIGURE is a virtual closing line itself */
-    if (physdev->path->numEntriesUsed)
-        physdev->path->pFlags[physdev->path->numEntriesUsed - 1] |= PT_CLOSEFIGURE;
+    if (physdev->path->count)
+        physdev->path->flags[physdev->path->count - 1] |= PT_CLOSEFIGURE;
     return TRUE;
 }
 
@@ -1639,48 +1640,48 @@ static BOOL PATH_StrokePath( HDC hdc, const struct gdi_path *pPath )
     /* Allocate enough memory for the worst case without beziers (one PT_MOVETO
      * and the rest PT_LINETO with PT_CLOSEFIGURE at the end) plus some buffer 
      * space in case we get one to keep the number of reallocations small. */
-    nAlloc = pPath->numEntriesUsed + 1 + 300; 
+    nAlloc = pPath->count + 1 + 300;
     pLinePts = HeapAlloc(GetProcessHeap(), 0, nAlloc * sizeof(POINT));
     nLinePts = 0;
     
-    for(i = 0; i < pPath->numEntriesUsed; i++) {
-        if((i == 0 || (pPath->pFlags[i-1] & PT_CLOSEFIGURE)) &&
-	   (pPath->pFlags[i] != PT_MOVETO)) {
+    for(i = 0; i < pPath->count; i++) {
+        if((i == 0 || (pPath->flags[i-1] & PT_CLOSEFIGURE)) &&
+	   (pPath->flags[i] != PT_MOVETO)) {
 	    ERR("Expected PT_MOVETO %s, got path flag %d\n", 
 	        i == 0 ? "as first point" : "after PT_CLOSEFIGURE",
-		(INT)pPath->pFlags[i]);
+		pPath->flags[i]);
 	    ret = FALSE;
 	    goto end;
 	}
-        switch(pPath->pFlags[i]) {
+        switch(pPath->flags[i]) {
 	case PT_MOVETO:
             TRACE("Got PT_MOVETO (%d, %d)\n",
-		  pPath->pPoints[i].x, pPath->pPoints[i].y);
+		  pPath->points[i].x, pPath->points[i].y);
 	    if(nLinePts >= 2)
 	        Polyline(hdc, pLinePts, nLinePts);
 	    nLinePts = 0;
-	    pLinePts[nLinePts++] = pPath->pPoints[i];
+	    pLinePts[nLinePts++] = pPath->points[i];
 	    break;
 	case PT_LINETO:
 	case (PT_LINETO | PT_CLOSEFIGURE):
             TRACE("Got PT_LINETO (%d, %d)\n",
-		  pPath->pPoints[i].x, pPath->pPoints[i].y);
-	    pLinePts[nLinePts++] = pPath->pPoints[i];
+		  pPath->points[i].x, pPath->points[i].y);
+	    pLinePts[nLinePts++] = pPath->points[i];
 	    break;
 	case PT_BEZIERTO:
 	    TRACE("Got PT_BEZIERTO\n");
-	    if(pPath->pFlags[i+1] != PT_BEZIERTO ||
-	       (pPath->pFlags[i+2] & ~PT_CLOSEFIGURE) != PT_BEZIERTO) {
+	    if(pPath->flags[i+1] != PT_BEZIERTO ||
+	       (pPath->flags[i+2] & ~PT_CLOSEFIGURE) != PT_BEZIERTO) {
 	        ERR("Path didn't contain 3 successive PT_BEZIERTOs\n");
 		ret = FALSE;
 		goto end;
 	    } else {
 	        INT nBzrPts, nMinAlloc;
-	        POINT *pBzrPts = GDI_Bezier(&pPath->pPoints[i-1], 4, &nBzrPts);
+	        POINT *pBzrPts = GDI_Bezier(&pPath->points[i-1], 4, &nBzrPts);
 		/* Make sure we have allocated enough memory for the lines of 
 		 * this bezier and the rest of the path, assuming we won't get
 		 * another one (since we won't reallocate again then). */
-		nMinAlloc = nLinePts + (pPath->numEntriesUsed - i) + nBzrPts;
+		nMinAlloc = nLinePts + (pPath->count - i) + nBzrPts;
 		if(nAlloc < nMinAlloc)
 		{
 		    nAlloc = nMinAlloc * 2;
@@ -1695,11 +1696,11 @@ static BOOL PATH_StrokePath( HDC hdc, const struct gdi_path *pPath )
 	    }
 	    break;
 	default:
-	    ERR("Got path flag %d\n", (INT)pPath->pFlags[i]);
+	    ERR("Got path flag %d\n", pPath->flags[i]);
 	    ret = FALSE;
 	    goto end;
 	}
-	if(pPath->pFlags[i] & PT_CLOSEFIGURE)
+	if(pPath->flags[i] & PT_CLOSEFIGURE)
 	    pLinePts[nLinePts++] = pLinePts[0];
     }
     if(nLinePts >= 2)
@@ -1790,17 +1791,17 @@ static struct gdi_path *PATH_WidenPath(DC *dc)
 
     numStrokes = 0;
 
-    for(i = 0, j = 0; i < flat_path->numEntriesUsed; i++, j++) {
+    for(i = 0, j = 0; i < flat_path->count; i++, j++) {
         POINT point;
-        if((i == 0 || (flat_path->pFlags[i-1] & PT_CLOSEFIGURE)) &&
-            (flat_path->pFlags[i] != PT_MOVETO)) {
+        if((i == 0 || (flat_path->flags[i-1] & PT_CLOSEFIGURE)) &&
+            (flat_path->flags[i] != PT_MOVETO)) {
             ERR("Expected PT_MOVETO %s, got path flag %c\n",
                 i == 0 ? "as first point" : "after PT_CLOSEFIGURE",
-                flat_path->pFlags[i]);
+                flat_path->flags[i]);
             free_gdi_path( flat_path );
             return NULL;
         }
-        switch(flat_path->pFlags[i]) {
+        switch(flat_path->flags[i]) {
             case PT_MOVETO:
                 numStrokes++;
                 j = 0;
@@ -1813,16 +1814,16 @@ static struct gdi_path *PATH_WidenPath(DC *dc)
                 /* fall through */
             case PT_LINETO:
             case (PT_LINETO | PT_CLOSEFIGURE):
-                point.x = flat_path->pPoints[i].x;
-                point.y = flat_path->pPoints[i].y;
-                PATH_AddEntry(pStrokes[numStrokes - 1], &point, flat_path->pFlags[i]);
+                point.x = flat_path->points[i].x;
+                point.y = flat_path->points[i].y;
+                PATH_AddEntry(pStrokes[numStrokes - 1], &point, flat_path->flags[i]);
                 break;
             case PT_BEZIERTO:
                 /* should never happen because of the FlattenPath call */
                 ERR("Should never happen\n");
                 break;
             default:
-                ERR("Got path flag %c\n", flat_path->pFlags[i]);
+                ERR("Got path flag %c\n", flat_path->flags[i]);
                 return NULL;
         }
     }
@@ -1833,24 +1834,24 @@ static struct gdi_path *PATH_WidenPath(DC *dc)
         pUpPath = alloc_gdi_path();
         pDownPath = alloc_gdi_path();
 
-        for(j = 0; j < pStrokes[i]->numEntriesUsed; j++) {
+        for(j = 0; j < pStrokes[i]->count; j++) {
             /* Beginning or end of the path if not closed */
-            if((!(pStrokes[i]->pFlags[pStrokes[i]->numEntriesUsed - 1] & PT_CLOSEFIGURE)) && (j == 0 || j == pStrokes[i]->numEntriesUsed - 1) ) {
+            if((!(pStrokes[i]->flags[pStrokes[i]->count - 1] & PT_CLOSEFIGURE)) && (j == 0 || j == pStrokes[i]->count - 1) ) {
                 /* Compute segment angle */
                 double xo, yo, xa, ya, theta;
                 POINT pt;
                 FLOAT_POINT corners[2];
                 if(j == 0) {
-                    xo = pStrokes[i]->pPoints[j].x;
-                    yo = pStrokes[i]->pPoints[j].y;
-                    xa = pStrokes[i]->pPoints[1].x;
-                    ya = pStrokes[i]->pPoints[1].y;
+                    xo = pStrokes[i]->points[j].x;
+                    yo = pStrokes[i]->points[j].y;
+                    xa = pStrokes[i]->points[1].x;
+                    ya = pStrokes[i]->points[1].y;
                 }
                 else {
-                    xa = pStrokes[i]->pPoints[j - 1].x;
-                    ya = pStrokes[i]->pPoints[j - 1].y;
-                    xo = pStrokes[i]->pPoints[j].x;
-                    yo = pStrokes[i]->pPoints[j].y;
+                    xa = pStrokes[i]->points[j - 1].x;
+                    ya = pStrokes[i]->points[j - 1].y;
+                    xo = pStrokes[i]->points[j].x;
+                    yo = pStrokes[i]->points[j].y;
                 }
                 theta = atan2( ya - yo, xa - xo );
                 switch(endcap) {
@@ -1892,24 +1893,24 @@ static struct gdi_path *PATH_WidenPath(DC *dc)
                 DWORD _joint = joint;
                 POINT pt;
 		struct gdi_path *pInsidePath, *pOutsidePath;
-                if(j > 0 && j < pStrokes[i]->numEntriesUsed - 1) {
+                if(j > 0 && j < pStrokes[i]->count - 1) {
                     previous = j - 1;
                     next = j + 1;
                 }
                 else if (j == 0) {
-                    previous = pStrokes[i]->numEntriesUsed - 1;
+                    previous = pStrokes[i]->count - 1;
                     next = j + 1;
                 }
                 else {
                     previous = j - 1;
                     next = 0;
                 }
-                xo = pStrokes[i]->pPoints[j].x;
-                yo = pStrokes[i]->pPoints[j].y;
-                xa = pStrokes[i]->pPoints[previous].x;
-                ya = pStrokes[i]->pPoints[previous].y;
-                xb = pStrokes[i]->pPoints[next].x;
-                yb = pStrokes[i]->pPoints[next].y;
+                xo = pStrokes[i]->points[j].x;
+                yo = pStrokes[i]->points[j].y;
+                xa = pStrokes[i]->points[previous].x;
+                ya = pStrokes[i]->points[previous].y;
+                xb = pStrokes[i]->points[next].x;
+                yb = pStrokes[i]->points[next].y;
                 theta = atan2( yo - ya, xo - xa );
                 alpha = atan2( yb - yo, xb - xo ) - theta;
                 if (alpha > 0) alpha -= M_PI;
@@ -2002,17 +2003,17 @@ static struct gdi_path *PATH_WidenPath(DC *dc)
                 }
             }
         }
-        for(j = 0; j < pUpPath->numEntriesUsed; j++) {
+        for(j = 0; j < pUpPath->count; j++) {
             POINT pt;
-            pt.x = pUpPath->pPoints[j].x;
-            pt.y = pUpPath->pPoints[j].y;
+            pt.x = pUpPath->points[j].x;
+            pt.y = pUpPath->points[j].y;
             PATH_AddEntry(pNewPath, &pt, (j == 0 ? PT_MOVETO : PT_LINETO));
         }
-        for(j = 0; j < pDownPath->numEntriesUsed; j++) {
+        for(j = 0; j < pDownPath->count; j++) {
             POINT pt;
-            pt.x = pDownPath->pPoints[pDownPath->numEntriesUsed - j - 1].x;
-            pt.y = pDownPath->pPoints[pDownPath->numEntriesUsed - j - 1].y;
-            PATH_AddEntry(pNewPath, &pt, ( (j == 0 && (pStrokes[i]->pFlags[pStrokes[i]->numEntriesUsed - 1] & PT_CLOSEFIGURE)) ? PT_MOVETO : PT_LINETO));
+            pt.x = pDownPath->points[pDownPath->count - j - 1].x;
+            pt.y = pDownPath->points[pDownPath->count - j - 1].y;
+            PATH_AddEntry(pNewPath, &pt, ( (j == 0 && (pStrokes[i]->flags[pStrokes[i]->count - 1] & PT_CLOSEFIGURE)) ? PT_MOVETO : PT_LINETO));
         }
 
         free_gdi_path( pStrokes[i] );
