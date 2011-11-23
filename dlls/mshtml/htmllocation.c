@@ -359,7 +359,7 @@ static HRESULT WINAPI HTMLLocation_put_hostname(IHTMLLocation *iface, BSTR v)
 static HRESULT WINAPI HTMLLocation_get_hostname(IHTMLLocation *iface, BSTR *p)
 {
     HTMLLocation *This = impl_from_IHTMLLocation(iface);
-    URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW)};
+    BSTR hostname;
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -367,19 +367,21 @@ static HRESULT WINAPI HTMLLocation_get_hostname(IHTMLLocation *iface, BSTR *p)
     if(!p)
         return E_POINTER;
 
-    url.dwHostNameLength = 1;
-    hres = get_url_components(This, &url);
-    if(FAILED(hres))
-        return hres;
-
-    if(!url.dwHostNameLength){
-        *p = NULL;
-        return S_OK;
+    if(!This->window || !This->window->uri) {
+        FIXME("No current URI\n");
+        return E_NOTIMPL;
     }
 
-    *p = SysAllocStringLen(url.lpszHostName, url.dwHostNameLength);
-    if(!*p)
-        return E_OUTOFMEMORY;
+    hres = IUri_GetHost(This->window->uri, &hostname);
+    if(hres == S_OK) {
+        *p = hostname;
+    }else if(hres == S_FALSE) {
+        SysFreeString(hostname);
+        *p = NULL;
+    }else {
+        return hres;
+    }
+
     return S_OK;
 }
 
