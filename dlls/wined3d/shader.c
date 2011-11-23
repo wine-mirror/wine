@@ -595,33 +595,6 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             list_add_head(&shader->constantsB, &lconst->entry);
             reg_maps->local_bool_consts |= (1 << dst.reg.idx);
         }
-        /* If there's a loop in the shader. */
-        else if (ins.handler_idx == WINED3DSIH_LOOP
-                || ins.handler_idx == WINED3DSIH_REP)
-        {
-            struct wined3d_shader_src_param src, rel_addr;
-
-            fe->shader_read_src_param(fe_data, &ptr, &src, &rel_addr);
-
-            /* Rep and Loop always use an integer constant for the control parameters. */
-            if (ins.handler_idx == WINED3DSIH_REP)
-            {
-                reg_maps->integer_constants |= 1 << src.reg.idx;
-            }
-            else
-            {
-                fe->shader_read_src_param(fe_data, &ptr, &src, &rel_addr);
-                reg_maps->integer_constants |= 1 << src.reg.idx;
-            }
-
-            cur_loop_depth++;
-            if (cur_loop_depth > max_loop_depth) max_loop_depth = cur_loop_depth;
-        }
-        else if (ins.handler_idx == WINED3DSIH_ENDLOOP
-                || ins.handler_idx == WINED3DSIH_ENDREP)
-        {
-            cur_loop_depth--;
-        }
         /* For subroutine prototypes. */
         else if (ins.handler_idx == WINED3DSIH_LABEL)
         {
@@ -795,6 +768,16 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             else if (ins.handler_idx == WINED3DSIH_IFC) reg_maps->usesifc = 1;
             else if (ins.handler_idx == WINED3DSIH_CALL) reg_maps->usescall = 1;
             else if (ins.handler_idx == WINED3DSIH_POW) reg_maps->usespow = 1;
+            else if (ins.handler_idx == WINED3DSIH_LOOP
+                    || ins.handler_idx == WINED3DSIH_REP)
+            {
+                ++cur_loop_depth;
+                if (cur_loop_depth > max_loop_depth)
+                    max_loop_depth = cur_loop_depth;
+            }
+            else if (ins.handler_idx == WINED3DSIH_ENDLOOP
+                    || ins.handler_idx == WINED3DSIH_ENDREP)
+                --cur_loop_depth;
 
             limit = ins.src_count + (ins.predicate ? 1 : 0);
             for (i = 0; i < limit; ++i)
