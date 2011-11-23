@@ -150,6 +150,7 @@ typedef struct tagDC
 } DC;
 
   /* DC flags */
+#define DC_PATH_OPEN     0x0001   /* DC path is open (only set on saved DCs) */
 #define DC_BOUNDS_ENABLE 0x0008   /* Bounding rectangle tracking is enabled */
 
 /* Certain functions will do no further processing if the driver returns this.
