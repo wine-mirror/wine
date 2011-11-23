@@ -121,6 +121,8 @@ static HRESULT compile_literal(compiler_ctx_t *ctx, literal_expression_t *expr)
     literal_t *literal = expr->literal;
 
     switch(literal->type) {
+    case LT_BOOL:
+        return push_instr_int(ctx, OP_bool, literal->u.bval);
     case LT_INT:
         return push_instr_int(ctx, OP_int, literal->u.lval);
     default:

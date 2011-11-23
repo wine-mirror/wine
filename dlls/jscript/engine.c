@@ -1724,6 +1724,16 @@ HRESULT identifier_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD
     return hres;
 }
 
+/* ECMA-262 3rd Edition    7.8.2 */
+HRESULT interp_bool(exec_ctx_t *ctx)
+{
+    const LONG arg = ctx->parser->code->instrs[ctx->ip].arg1.lng;
+
+    TRACE("%s\n", arg ? "true" : "false");
+
+    return stack_push_bool(ctx, arg);
+}
+
 /* ECMA-262 3rd Edition    7.8.3 */
 HRESULT interp_int(exec_ctx_t *ctx)
 {

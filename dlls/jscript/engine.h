@@ -43,6 +43,7 @@ typedef struct _func_stack {
 
 #define OP_LIST                                   \
     X(add, 1, 0)                                  \
+    X(bool, 1, 0)                                 \
     X(bneg, 1, 0)                                 \
     X(eq2, 1, 0)                                  \
     X(in, 1, 0)                                   \
