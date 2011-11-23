@@ -3031,7 +3031,7 @@ HRESULT CDECL wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UI
 /* NOTE: due to structure differences between dx8 and dx9 D3DADAPTER_IDENTIFIER,
    and fields being inserted in the middle, a new structure is used in place    */
 HRESULT CDECL wined3d_get_adapter_identifier(const struct wined3d *wined3d,
-        UINT adapter_idx, DWORD flags, WINED3DADAPTER_IDENTIFIER *identifier)
+        UINT adapter_idx, DWORD flags, struct wined3d_adapter_identifier *identifier)
 {
     const struct wined3d_adapter *adapter;
     size_t len;

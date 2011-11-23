@@ -1551,7 +1551,7 @@ static HRESULT WINAPI ddraw7_GetAvailableVidMem(IDirectDraw7 *iface, DDSCAPS2 *C
         *free = wined3d_device_get_available_texture_mem(This->wined3d_device);
     if (total)
     {
-        WINED3DADAPTER_IDENTIFIER desc = {0};
+        struct wined3d_adapter_identifier desc = {0};
 
         hr = wined3d_get_adapter_identifier(This->wineD3D, WINED3DADAPTER_DEFAULT, 0, &desc);
         *total = desc.video_memory;

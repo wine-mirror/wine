@@ -138,7 +138,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_EnumOutputs(IWineDXGIAdapter *ifac
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetDesc(IWineDXGIAdapter *iface, DXGI_ADAPTER_DESC *desc)
 {
     struct dxgi_adapter *This = impl_from_IWineDXGIAdapter(iface);
-    WINED3DADAPTER_IDENTIFIER adapter_id;
+    struct wined3d_adapter_identifier adapter_id;
     char description[128];
     struct wined3d *wined3d;
     HRESULT hr;

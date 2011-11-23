@@ -121,7 +121,7 @@ static HRESULT WINAPI IDirect3D9Impl_GetAdapterIdentifier(IDirect3D9Ex *iface, U
         DWORD Flags, D3DADAPTER_IDENTIFIER9 *pIdentifier)
 {
     IDirect3D9Impl *This = impl_from_IDirect3D9Ex(iface);
-    WINED3DADAPTER_IDENTIFIER adapter_id;
+    struct wined3d_adapter_identifier adapter_id;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, flags %#x, identifier %p.\n",
@@ -529,7 +529,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH IDirect3D9ExImpl_CreateDeviceEx(IDirect3
 static HRESULT WINAPI IDirect3D9ExImpl_GetAdapterLUID(IDirect3D9Ex *iface, UINT adapter, LUID *luid)
 {
     IDirect3D9Impl *This = impl_from_IDirect3D9Ex(iface);
-    WINED3DADAPTER_IDENTIFIER adapter_id;
+    struct wined3d_adapter_identifier adapter_id;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, luid %p.\n", iface, adapter, luid);

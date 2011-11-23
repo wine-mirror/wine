@@ -1615,7 +1615,7 @@ struct wined3d_tri_patch_info
     WINED3DDEGREETYPE degree;
 };
 
-typedef struct _WINED3DADAPTER_IDENTIFIER
+struct wined3d_adapter_identifier
 {
     char *driver;
     UINT driver_size;
@@ -1632,7 +1632,7 @@ typedef struct _WINED3DADAPTER_IDENTIFIER
     DWORD whql_level;
     LUID adapter_luid;
     SIZE_T video_memory;
-} WINED3DADAPTER_IDENTIFIER;
+};
 
 typedef struct _WINED3DPRESENT_PARAMETERS
 {
@@ -2126,7 +2126,7 @@ UINT __cdecl wined3d_get_adapter_count(const struct wined3d *wined3d);
 HRESULT __cdecl wined3d_get_adapter_display_mode(const struct wined3d *wined3d, UINT adapter_idx,
         struct wined3d_display_mode *mode);
 HRESULT __cdecl wined3d_get_adapter_identifier(const struct wined3d *wined3d, UINT adapter_idx,
-        DWORD flags, WINED3DADAPTER_IDENTIFIER *identifier);
+        DWORD flags, struct wined3d_adapter_identifier *identifier);
 UINT __cdecl wined3d_get_adapter_mode_count(const struct wined3d *wined3d,
         UINT adapter_idx, enum wined3d_format_id format_id);
 HMONITOR __cdecl wined3d_get_adapter_monitor(const struct wined3d *wined3d, UINT adapter_idx);

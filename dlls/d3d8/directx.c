@@ -123,7 +123,7 @@ static HRESULT WINAPI IDirect3D8Impl_GetAdapterIdentifier(LPDIRECT3D8 iface, UIN
         DWORD Flags, D3DADAPTER_IDENTIFIER8 *pIdentifier)
 {
     IDirect3D8Impl *This = impl_from_IDirect3D8(iface);
-    WINED3DADAPTER_IDENTIFIER adapter_id;
+    struct wined3d_adapter_identifier adapter_id;
     HRESULT hr;
 
     TRACE("iface %p, adapter %u, flags %#x, identifier %p.\n",
