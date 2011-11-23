@@ -46,6 +46,7 @@ typedef struct _func_stack {
     X(bneg, 1, 0)                                 \
     X(eq2, 1, 0)                                  \
     X(in, 1, 0)                                   \
+    X(int, 1, ARG_INT)                            \
     X(neg, 1, 0)                                  \
     X(neq2, 1, 0)                                 \
     X(tonum, 1, 0)                                \
@@ -61,11 +62,13 @@ OP_LIST
 
 typedef union {
     expression_t *expr;
+    LONG lng;
 } instr_arg_t;
 
 typedef enum {
     ARG_NONE = 0,
-    ARG_EXPR
+    ARG_EXPR,
+    ARG_INT
 } instr_arg_type_t;
 
 typedef struct {

@@ -66,6 +66,18 @@ static inline instr_t *instr_ptr(compiler_ctx_t *ctx, unsigned off)
     return ctx->code->instrs + off;
 }
 
+static HRESULT push_instr_int(compiler_ctx_t *ctx, jsop_t op, LONG arg)
+{
+    unsigned instr;
+
+    instr = push_instr(ctx, op);
+    if(instr == -1)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, instr)->arg1.lng = arg;
+    return S_OK;
+}
+
 static HRESULT compile_binary_expression(compiler_ctx_t *ctx, binary_expression_t *expr, jsop_t op)
 {
     HRESULT hres;
@@ -104,6 +116,18 @@ static HRESULT compile_interp_fallback(compiler_ctx_t *ctx, expression_t *expr)
     return S_OK;
 }
 
+static HRESULT compile_literal(compiler_ctx_t *ctx, literal_expression_t *expr)
+{
+    literal_t *literal = expr->literal;
+
+    switch(literal->type) {
+    case LT_INT:
+        return push_instr_int(ctx, OP_int, literal->u.lval);
+    default:
+        return compile_interp_fallback(ctx, &expr->expr);
+    }
+}
+
 static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
 {
     switch(expr->type) {
@@ -115,6 +139,8 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_eq2);
     case EXPR_IN:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_in);
+    case EXPR_LITERAL:
+        return compile_literal(ctx, (literal_expression_t*)expr);
     case EXPR_LOGNEG:
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_neg);
     case EXPR_NOTEQEQ:

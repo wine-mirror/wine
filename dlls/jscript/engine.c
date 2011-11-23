@@ -1724,6 +1724,19 @@ HRESULT identifier_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD
     return hres;
 }
 
+/* ECMA-262 3rd Edition    7.8.3 */
+HRESULT interp_int(exec_ctx_t *ctx)
+{
+    const LONG arg = ctx->parser->code->instrs[ctx->ip].arg1.lng;
+    VARIANT v;
+
+    TRACE("%d\n", arg);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = arg;
+    return stack_push(ctx, &v);
+}
+
 /* ECMA-262 3rd Edition    7.8 */
 HRESULT literal_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
