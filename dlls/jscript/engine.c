@@ -2111,42 +2111,43 @@ HRESULT instanceof_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD
 }
 
 /* ECMA-262 3rd Edition    11.8.7 */
-static HRESULT in_eval(script_ctx_t *ctx, VARIANT *lval, VARIANT *obj, jsexcept_t *ei, VARIANT *retv)
+HRESULT interp_in(exec_ctx_t *ctx)
 {
-    VARIANT_BOOL ret;
-    DISPID id;
+    VARIANT *obj, *v;
+    DISPID id = 0;
+    BOOL ret;
     BSTR str;
     HRESULT hres;
 
-    if(V_VT(obj) != VT_DISPATCH || !V_DISPATCH(obj))
-        return throw_type_error(ctx, ei, JS_E_OBJECT_EXPECTED, NULL);
+    TRACE("\n");
 
-    hres = to_string(ctx, lval, ei, &str);
-    if(FAILED(hres))
+    obj = stack_pop(ctx);
+    v = stack_pop(ctx);
+
+    if(V_VT(obj) != VT_DISPATCH || !V_DISPATCH(obj)) {
+        VariantClear(obj);
+        VariantClear(v);
+        return throw_type_error(ctx->parser->script, &ctx->ei, JS_E_OBJECT_EXPECTED, NULL);
+    }
+
+    hres = to_string(ctx->parser->script, v, &ctx->ei, &str);
+    VariantClear(v);
+    if(FAILED(hres)) {
+        IDispatch_Release(V_DISPATCH(obj));
         return hres;
+    }
 
-    hres = disp_get_id(ctx, V_DISPATCH(obj), str, 0, &id);
+    hres = disp_get_id(ctx->parser->script, V_DISPATCH(obj), str, 0, &id);
+    IDispatch_Release(V_DISPATCH(obj));
     SysFreeString(str);
     if(SUCCEEDED(hres))
-        ret = VARIANT_TRUE;
+        ret = TRUE;
     else if(hres == DISP_E_UNKNOWNNAME)
-        ret = VARIANT_FALSE;
+        ret = FALSE;
     else
         return hres;
 
-    V_VT(retv) = VT_BOOL;
-    V_BOOL(retv) = ret;
-    return S_OK;
-}
-
-/* ECMA-262 3rd Edition    11.8.7 */
-HRESULT in_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
-{
-    binary_expression_t *expr = (binary_expression_t*)_expr;
-
-    TRACE("\n");
-
-    return binary_expr_eval(ctx, expr, in_eval, ei, ret);
+    return stack_push_bool(ctx, ret);
 }
 
 /* ECMA-262 3rd Edition    11.6.1 */

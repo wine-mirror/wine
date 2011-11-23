@@ -113,6 +113,8 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_bneg);
     case EXPR_EQEQ:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_eq2);
+    case EXPR_IN:
+        return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_in);
     case EXPR_LOGNEG:
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_neg);
     case EXPR_NOTEQEQ:
