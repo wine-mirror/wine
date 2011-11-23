@@ -101,6 +101,7 @@ EXTENSION_MAP[] =
     {"GL_ARB_geometry_shader4",             ARB_GEOMETRY_SHADER4,           0                           },
     {"GL_ARB_half_float_pixel",             ARB_HALF_FLOAT_PIXEL,           0                           },
     {"GL_ARB_half_float_vertex",            ARB_HALF_FLOAT_VERTEX,          0                           },
+    {"GL_ARB_map_buffer_alignment",         ARB_MAP_BUFFER_ALIGNMENT,       0                           },
     {"GL_ARB_map_buffer_range",             ARB_MAP_BUFFER_RANGE,           0                           },
     {"GL_ARB_multisample",                  ARB_MULTISAMPLE,                0                           }, /* needs GLX_ARB_MULTISAMPLE as well */
     {"GL_ARB_multitexture",                 ARB_MULTITEXTURE,               0                           },
@@ -2474,6 +2475,15 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
         }
     }
 
+    if (gl_info->supported[ARB_MAP_BUFFER_ALIGNMENT])
+    {
+        glGetIntegerv(GL_MIN_MAP_BUFFER_ALIGNMENT, &gl_max);
+        TRACE_(d3d_caps)("Minimum buffer map alignment: %d.\n", gl_max);
+    }
+    else
+    {
+        WARN_(d3d_caps)("Driver doesn't guarantee a minimum buffer map alignment.\n");
+    }
     if (gl_info->supported[NV_REGISTER_COMBINERS])
     {
         glGetIntegerv(GL_MAX_GENERAL_COMBINERS_NV, &gl_max);

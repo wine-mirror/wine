@@ -1745,6 +1745,7 @@ enum wined3d_gl_extension
     ARB_GEOMETRY_SHADER4,
     ARB_HALF_FLOAT_PIXEL,
     ARB_HALF_FLOAT_VERTEX,
+    ARB_MAP_BUFFER_ALIGNMENT,
     ARB_MAP_BUFFER_RANGE,
     ARB_MULTISAMPLE,
     ARB_MULTITEXTURE,
@@ -2159,6 +2160,12 @@ typedef void (WINE_GLAPI *PGLFNFRAMEBUFFERTEXTUREFACEARBPROC)(GLenum target, GLe
 #define GL_ARB_half_float_vertex 1
 /* No _ARB, see extension spec */
 #define GL_HALF_FLOAT                                       0x140b
+#endif
+
+/* GL_ARB_map_buffer_alignment */
+#ifndef GL_ARB_map_buffer_alignment
+#define GL_ARB_map_buffer_alignment 1
+#define GL_MIN_MAP_BUFFER_ALIGNMENT                         0x90bc
 #endif
 
 /* GL_ARB_map_buffer_range */
