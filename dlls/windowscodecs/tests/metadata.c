@@ -31,7 +31,7 @@
 #define expect_blob(propvar, data, length) do { \
     ok((propvar).vt == VT_BLOB, "unexpected vt: %i\n", (propvar).vt); \
     if ((propvar).vt == VT_BLOB) { \
-        ok(U(propvar).blob.cbSize == (length), "expected size %i, got %i\n", (length), U(propvar).blob.cbSize); \
+        ok(U(propvar).blob.cbSize == (length), "expected size %u, got %u\n", (ULONG)(length), U(propvar).blob.cbSize); \
         if (U(propvar).blob.cbSize == (length)) { \
             ok(!memcmp(U(propvar).blob.pBlobData, (data), (length)), "unexpected data\n"); \
         } \
