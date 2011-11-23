@@ -2522,26 +2522,13 @@ CreateAdditionalSurfaces(IDirectDrawImpl *This,
     return DD_OK;
 }
 
-/*****************************************************************************
- * ddraw_attach_d3d_device
- *
- * Initializes the D3D capabilities of WineD3D
- *
- * Params:
- *  primary: The primary surface for D3D
- *
- * Returns
- *  DD_OK on success,
- *  DDERR_* otherwise
- *
- *****************************************************************************/
-static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw, IDirectDrawSurfaceImpl *primary,
+static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw,
         WINED3DPRESENT_PARAMETERS *presentation_parameters)
 {
     HWND window = presentation_parameters->hDeviceWindow;
     HRESULT hr;
 
-    TRACE("ddraw %p, primary %p.\n", ddraw, primary);
+    TRACE("ddraw %p.\n", ddraw);
 
     if (!window || window == GetDesktopWindow())
     {
@@ -2564,9 +2551,6 @@ static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw, IDirectDrawSurfac
         TRACE("Using existing window %p for Direct3D rendering.\n", window);
     }
     ddraw->d3d_window = window;
-
-    /* Store the future Render Target surface */
-    ddraw->d3d_target = primary;
 
     /* Set this NOW, otherwise creating the depth stencil surface will cause a
      * recursive loop until ram or emulated video memory is full. */
@@ -2597,7 +2581,6 @@ static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw, IDirectDrawSurfac
 static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSurfaceImpl *surface)
 {
     WINED3DPRESENT_PARAMETERS presentation_parameters;
-    IDirectDrawSurfaceImpl *target = surface;
     struct wined3d_display_mode mode;
     HRESULT hr = WINED3D_OK;
 
@@ -2610,12 +2593,6 @@ static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSurface
     {
         ERR("Failed to get display mode.\n");
         return hr;
-    }
-
-    if (ddraw->primary)
-    {
-        TRACE("Using primary %p.\n", ddraw->primary);
-        target = ddraw->primary;
     }
 
     memset(&presentation_parameters, 0, sizeof(presentation_parameters));
@@ -2635,8 +2612,7 @@ static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSurface
      * target creation will cause the 3D init. */
     if (DefaultSurfaceType == SURFACE_OPENGL)
     {
-        TRACE("Attaching a D3DDevice, rendertarget = %p.\n", target);
-        hr = ddraw_attach_d3d_device(ddraw, target, &presentation_parameters);
+        hr = ddraw_attach_d3d_device(ddraw, &presentation_parameters);
     }
     else if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
@@ -3061,6 +3037,9 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
             wined3d_mutex_unlock();
             return hr;
         }
+
+        if (DefaultSurfaceType == SURFACE_OPENGL)
+            ddraw->d3d_target = ddraw->primary ? ddraw->primary : object;
     }
 
     if (desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
