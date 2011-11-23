@@ -1747,6 +1747,22 @@ HRESULT interp_int(exec_ctx_t *ctx)
     return stack_push(ctx, &v);
 }
 
+/* ECMA-262 3rd Edition    7.8.4 */
+HRESULT interp_str(exec_ctx_t *ctx)
+{
+    const WCHAR *str = ctx->parser->code->instrs[ctx->ip].arg1.str;
+    VARIANT v;
+
+    TRACE("%s\n", debugstr_w(str));
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(str);
+    if(!V_BSTR(&v))
+        return E_OUTOFMEMORY;
+
+    return stack_push(ctx, &v);
+}
+
 /* ECMA-262 3rd Edition    7.8 */
 HRESULT literal_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {

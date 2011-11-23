@@ -50,6 +50,7 @@ typedef struct _func_stack {
     X(int, 1, ARG_INT)                            \
     X(neg, 1, 0)                                  \
     X(neq2, 1, 0)                                 \
+    X(str, 1, 0)                                  \
     X(tonum, 1, 0)                                \
     X(tree, 1, ARG_EXPR)                          \
     X(ret, 0, 0)
@@ -64,6 +65,7 @@ OP_LIST
 typedef union {
     expression_t *expr;
     LONG lng;
+    WCHAR *str;
 } instr_arg_t;
 
 typedef enum {
@@ -79,6 +81,7 @@ typedef struct {
 
 typedef struct {
     instr_t *instrs;
+    jsheap_t heap;
 } bytecode_t;
 
 void release_bytecode(bytecode_t*);

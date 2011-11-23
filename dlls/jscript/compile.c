@@ -36,6 +36,23 @@ struct _compiler_ctx_t {
 
 static HRESULT compile_expression(compiler_ctx_t*,expression_t*);
 
+static inline void *compiler_alloc(bytecode_t *code, size_t size)
+{
+    return jsheap_alloc(&code->heap, size);
+}
+
+static WCHAR *compiler_alloc_string(bytecode_t *code, const WCHAR *str)
+{
+    size_t size;
+    WCHAR *ret;
+
+    size = (strlenW(str)+1)*sizeof(WCHAR);
+    ret = compiler_alloc(code, size);
+    if(ret)
+        memcpy(ret, str, size);
+    return ret;
+}
+
 static unsigned push_instr(compiler_ctx_t *ctx, jsop_t op)
 {
     assert(ctx->code_size >= ctx->code_off);
@@ -75,6 +92,23 @@ static HRESULT push_instr_int(compiler_ctx_t *ctx, jsop_t op, LONG arg)
         return E_OUTOFMEMORY;
 
     instr_ptr(ctx, instr)->arg1.lng = arg;
+    return S_OK;
+}
+
+static HRESULT push_instr_str(compiler_ctx_t *ctx, jsop_t op, const WCHAR *arg)
+{
+    unsigned instr;
+    WCHAR *str;
+
+    str = compiler_alloc_string(ctx->code, arg);
+    if(!str)
+        return E_OUTOFMEMORY;
+
+    instr = push_instr(ctx, op);
+    if(instr == -1)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, instr)->arg1.str = str;
     return S_OK;
 }
 
@@ -125,6 +159,8 @@ static HRESULT compile_literal(compiler_ctx_t *ctx, literal_expression_t *expr)
         return push_instr_int(ctx, OP_bool, literal->u.bval);
     case LT_INT:
         return push_instr_int(ctx, OP_int, literal->u.lval);
+    case LT_STRING:
+        return push_instr_str(ctx, OP_str, literal->u.wstr);
     default:
         return compile_interp_fallback(ctx, &expr->expr);
     }
@@ -159,6 +195,7 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
 
 void release_bytecode(bytecode_t *code)
 {
+    jsheap_free(&code->heap);
     heap_free(code->instrs);
     heap_free(code);
 }
@@ -176,6 +213,7 @@ HRESULT compile_subscript(parser_ctx_t *parser, expression_t *expr, unsigned *re
         parser->code = heap_alloc_zero(sizeof(bytecode_t));
         if(!parser->code)
             return E_OUTOFMEMORY;
+        jsheap_init(&parser->code->heap);
     }
 
     if(!parser->compiler) {
