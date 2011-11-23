@@ -304,7 +304,7 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
         /* Set the device up to render to the front buffer since the back
          * buffer will vanish soon. */
         wined3d_device_set_render_target(This->wined3d_device, 0,
-                This->ddraw->d3d_target->wined3d_surface, TRUE);
+                This->ddraw->wined3d_frontbuffer, TRUE);
 
         /* Release the WineD3DDevice. This won't destroy it. */
         if (!wined3d_device_decref(This->wined3d_device))
