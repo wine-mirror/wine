@@ -1607,13 +1607,13 @@ struct wined3d_rect_patch_info
     WINED3DDEGREETYPE degree;
 };
 
-typedef struct _WINED3DTRIPATCH_INFO
+struct wined3d_tri_patch_info
 {
-    UINT StartVertexOffset;
-    UINT NumVertices;
-    WINED3DBASISTYPE Basis;
-    WINED3DDEGREETYPE Degree;
-} WINED3DTRIPATCH_INFO;
+    UINT start_vertex_offset;
+    UINT vertex_count;
+    WINED3DBASISTYPE basis;
+    WINED3DDEGREETYPE degree;
+};
 
 typedef struct _WINED3DADAPTER_IDENTIFIER
 {
@@ -2191,7 +2191,7 @@ HRESULT __cdecl wined3d_device_draw_primitive_up(struct wined3d_device *device,
 HRESULT __cdecl wined3d_device_draw_rect_patch(struct wined3d_device *device, UINT handle,
         const float *num_segs, const struct wined3d_rect_patch_info *rect_patch_info);
 HRESULT __cdecl wined3d_device_draw_tri_patch(struct wined3d_device *device, UINT handle,
-        const float *num_segs, const WINED3DTRIPATCH_INFO *tri_patch_info);
+        const float *num_segs, const struct wined3d_tri_patch_info *tri_patch_info);
 HRESULT __cdecl wined3d_device_end_scene(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_end_stateblock(struct wined3d_device *device, struct wined3d_stateblock **stateblock);
 void __cdecl wined3d_device_evict_managed_resources(struct wined3d_device *device);

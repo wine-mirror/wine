@@ -4745,7 +4745,7 @@ HRESULT CDECL wined3d_device_draw_rect_patch(struct wined3d_device *device, UINT
 }
 
 HRESULT CDECL wined3d_device_draw_tri_patch(struct wined3d_device *device, UINT handle,
-        const float *segment_count, const WINED3DTRIPATCH_INFO *patch_info)
+        const float *segment_count, const struct wined3d_tri_patch_info *patch_info)
 {
     FIXME("device %p, handle %#x, segment_count %p, patch_info %p stub!\n",
             device, handle, segment_count, patch_info);

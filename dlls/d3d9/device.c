@@ -2701,7 +2701,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_DrawTriPatch(IDirect3DDevice9Ex *ifac
 
     wined3d_mutex_lock();
     hr = wined3d_device_draw_tri_patch(This->wined3d_device, Handle,
-            pNumSegs, (const WINED3DTRIPATCH_INFO *)pTriPatchInfo);
+            pNumSegs, (const struct wined3d_tri_patch_info *)pTriPatchInfo);
     wined3d_mutex_unlock();
 
     return hr;
