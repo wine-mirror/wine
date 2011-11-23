@@ -1059,17 +1059,15 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
 
     static const enum wined3d_format_id FormatList[] =
     {
-        /* 32 bit */
-        WINED3DFMT_B8G8R8A8_UNORM,
-        WINED3DFMT_B8G8R8X8_UNORM,
-        /* 24 bit */
-        WINED3DFMT_B8G8R8_UNORM,
-        /* 16 Bit */
+        /* 16 bit */
+        WINED3DFMT_B5G5R5X1_UNORM,
         WINED3DFMT_B5G5R5A1_UNORM,
         WINED3DFMT_B4G4R4A4_UNORM,
         WINED3DFMT_B5G6R5_UNORM,
-        WINED3DFMT_B5G5R5X1_UNORM,
-        /* 8 Bit */
+        /* 32 bit */
+        WINED3DFMT_B8G8R8X8_UNORM,
+        WINED3DFMT_B8G8R8A8_UNORM,
+        /* 8 bit */
         WINED3DFMT_B2G3R3_UNORM,
         WINED3DFMT_P8_UINT,
         /* FOURCC codes */
@@ -1211,17 +1209,15 @@ IDirect3DDeviceImpl_2_EnumTextureFormats(IDirect3DDevice2 *iface,
 
     static const enum wined3d_format_id FormatList[] =
     {
-        /* 32 bit */
-        WINED3DFMT_B8G8R8A8_UNORM,
-        WINED3DFMT_B8G8R8X8_UNORM,
-        /* 24 bit */
-        WINED3DFMT_B8G8R8_UNORM,
-        /* 16 Bit */
+        /* 16 bit */
+        WINED3DFMT_B5G5R5X1_UNORM,
         WINED3DFMT_B5G5R5A1_UNORM,
         WINED3DFMT_B4G4R4A4_UNORM,
         WINED3DFMT_B5G6R5_UNORM,
-        WINED3DFMT_B5G5R5X1_UNORM,
-        /* 8 Bit */
+        /* 32 bit */
+        WINED3DFMT_B8G8R8X8_UNORM,
+        WINED3DFMT_B8G8R8A8_UNORM,
+        /* 8 bit */
         WINED3DFMT_B2G3R3_UNORM,
         WINED3DFMT_P8_UINT,
         /* FOURCC codes - Not in this version*/
