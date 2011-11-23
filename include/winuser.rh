@@ -56,6 +56,13 @@
 #define SW_MAX                 11
 #define SW_NORMALNA            0xCC /* Undocumented. Flag in MinMaximize */
 
+/* Obsolete ShowWindow() codes for compatibility */
+#define HIDE_WINDOW            SW_HIDE
+#define SHOW_OPENWINDOW        SW_SHOWNORMAL
+#define SHOW_ICONWINDOW        SW_SHOWMINIMIZED
+#define SHOW_FULLSCREEN        SW_SHOWMAXIMIZED
+#define SHOW_OPENNOACTIVATE    SW_SHOWNOACTIVATE
+
 /* WM_SHOWWINDOW lParam codes */
 #define SW_PARENTCLOSING       1
 #define SW_OTHERZOOM           2
@@ -223,12 +230,24 @@
 #define VK_ICO_HELP            0xE3  /* Help key on ICO */
 #define VK_ICO_00              0xE4  /* 00 key on ICO */
 #define VK_PROCESSKEY          0xE5
-/*                             0xE6       OEM specific */
+#define VK_ICO_CLEAR           0xE6
 
 #define VK_PACKET              0xE7
 /*                             0xE8       Unassigned */
 
-/*                             0xE9-0xF5  OEM specific */
+#define VK_OEM_RESET           0xE9
+#define VK_OEM_JUMP            0xEA
+#define VK_OEM_PA1             0xEB
+#define VK_OEM_PA2             0xEC
+#define VK_OEM_PA3             0xED
+#define VK_OEM_WSCTRL          0xEE
+#define VK_OEM_CUSEL           0xEF
+#define VK_OEM_ATTN            0xF0
+#define VK_OEM_FINISH          0xF1
+#define VK_OEM_COPY            0xF2
+#define VK_OEM_AUTO            0xF3
+#define VK_OEM_ENLW            0xF4
+#define VK_OEM_BACKTAB         0xF5
 #define VK_ATTN                0xF6
 #define VK_CRSEL               0xF7
 #define VK_EXSEL               0xF8
@@ -274,7 +293,7 @@
 #define WM_ENDSESSION          0x0016
 #define WM_SYSTEMERROR         0x0017 /* DDK / Win16 */
 #define WM_SHOWWINDOW          0x0018
-#define WM_CTLCOLOR            0x0019
+#define WM_CTLCOLOR            0x0019 /* Added from windowsx.h */
 #define WM_WININICHANGE        0x001a
 #define WM_SETTINGCHANGE       WM_WININICHANGE
 #define WM_DEVMODECHANGE       0x001b
@@ -321,6 +340,13 @@
 #define WM_WINDOWPOSCHANGED    0x0047
 
 #define WM_POWER               0x0048
+
+/* For WM_POWER */
+#define PWR_OK                 1
+#define PWR_FAIL               (-1)
+#define PWR_SUSPENDREQUEST     1
+#define PWR_SUSPENDRESUME      2
+#define PWR_CRITICALRESUME     3
 
 /* Win32 4.0 messages */
 #define WM_COPYDATA            0x004a
@@ -412,6 +438,8 @@
 /* Menu messages */
 #define WM_INITMENU            0x0116
 #define WM_INITMENUPOPUP       0x0117
+#define WM_GESTURE             0x0119
+#define WM_GESTURENOTIFY       0x011A
 
 #define WM_MENUSELECT          0x011F
 #define WM_MENUCHAR            0x0120
@@ -474,6 +502,9 @@
 #define GET_WHEEL_DELTA_WPARAM(wParam) ((short)HIWORD(wParam))
 #define WHEEL_PAGESCROLL       (UINT_MAX)
 
+#define GET_KEYSTATE_WPARAM(wParam)     (LOWORD(wParam))
+#define GET_NCHITTEST_WPARAM(wParam)    ((short)LOWORD(wParam))
+#define GET_XBUTTON_WPARAM(wParam)      (HIWORD(wParam))
 #define XBUTTON1               0x0001
 #define XBUTTON2               0x0002
 
@@ -513,6 +544,8 @@
 #define WM_ENTERSIZEMOVE       0x0231
 #define WM_EXITSIZEMOVE        0x0232
 #define WM_DROPFILES           0x0233
+
+#define WM_TOUCH               0x0240
 
 /* Win32 4.0 messages for IME */
 #define WM_IME_SETCONTEXT      0x0281
@@ -574,6 +607,8 @@
 #define WM_DWMNCRENDERINGCHANGED 0x031F
 #define WM_DWMCOLORIZATIONCOLORCHANGED 0x0320
 #define WM_DWMWINDOWMAXIMIZEDCHANGE 0x0321
+#define WM_DWMSENDICONICTHUMBNAIL 0x0323
+#define WM_DWMSENDICONICLIVEPREVIEWBITMAP 0x0326
 
 #define WM_GETTITLEBARINFOEX   0x033F
 
@@ -609,12 +644,16 @@
 #define HTCAPTION              2
 #define HTSYSMENU              3
 #define HTSIZE                 4
+#define HTGROWBOX              HTSIZE
 #define HTMENU                 5
 #define HTHSCROLL              6
 #define HTVSCROLL              7
 #define HTMINBUTTON            8
+#define HTREDUCE               HTMINBUTTON
 #define HTMAXBUTTON            9
+#define HTZOOM                 HTMAXBUTTON
 #define HTLEFT                 10
+#define HTSIZEFIRST            HTLEFT
 #define HTRIGHT                11
 #define HTTOP                  12
 #define HTTOPLEFT              13
@@ -622,21 +661,18 @@
 #define HTBOTTOM               15
 #define HTBOTTOMLEFT           16
 #define HTBOTTOMRIGHT          17
+#define HTSIZELAST             HTBOTTOMRIGHT
 #define HTBORDER               18
-#define HTGROWBOX              HTSIZE
-#define HTREDUCE               HTMINBUTTON
-#define HTZOOM                 HTMAXBUTTON
 #define HTOBJECT               19
 #define HTCLOSE                20
 #define HTHELP                 21
-#define HTSIZEFIRST            HTLEFT
-#define HTSIZELAST             HTBOTTOMRIGHT
 
 /* SendMessageTimeout flags */
 #define SMTO_NORMAL            0x0000
 #define SMTO_BLOCK             0x0001
 #define SMTO_ABORTIFHUNG       0x0002
 #define SMTO_NOTIMEOUTIFNOTHUNG 0x0008
+#define SMTO_ERRORONEXIT       0x0020
 
 /* WM_MOUSEACTIVATE return values */
 #define MA_ACTIVATE            1
@@ -754,8 +790,8 @@
 #define WS_EX_COMPOSITED       __MSABI_LONG(0x02000000)
 #define WS_EX_NOACTIVATE       __MSABI_LONG(0x08000000)
 
-#define WS_EX_OVERLAPPEDWINDOW (WS_EX_WINDOWEDGE|WS_EX_CLIENTEDGE)
-#define WS_EX_PALETTEWINDOW    (WS_EX_WINDOWEDGE|WS_EX_TOOLWINDOW|WS_EX_TOPMOST)
+#define WS_EX_OVERLAPPEDWINDOW (WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE)
+#define WS_EX_PALETTEWINDOW    (WS_EX_WINDOWEDGE | WS_EX_TOOLWINDOW | WS_EX_TOPMOST)
 #endif /* NOWINSTYLES */
 
 
@@ -908,6 +944,9 @@
 #define SC_CONTEXTHELP         0xf180
 #define SC_SEPARATOR           0xf00f
 
+#define GET_SC_WPARAM(wParam)  ((int)wParam & 0xfff0)
+#define SCF_ISSECURE           0x0001
+
 /* Obsolete names */
 #define SC_ICON               SC_MINIMIZE
 #define SC_ZOOM               SC_MAXIMIZE
@@ -916,6 +955,9 @@
 
 /*** OEM Resource Ordinal Numbers ***/
 #ifdef OEMRESOURCE
+#define OBM_RDRVERT            32559
+#define OBM_RDRHORZ            32660
+#define OBM_RDR2DIM            32661
 #define OBM_TRTYPE             32732 /* FIXME: Wine-only */
 #define OBM_LFARROWI           32734
 #define OBM_RGARROWI           32735
@@ -969,7 +1011,18 @@
 #define OCR_HAND               32649
 #define OCR_APPSTARTING        32650
 #define OCR_HELP               32651 /* DDK / Win16 */
-#define OCR_DRAGOBJECT         32653 /* FIXME: Wine-only */
+#define OCR_RDRVERT            32652 /* DDK / Win16 */
+#define OCR_RDRHORZ            32653 /* DDK / Win16 */
+#define OCR_DRAGOBJECT         OCR_RDRHORZ /* FIXME: Wine-only */
+#define OCR_RDR2DIM            32654 /* DDK / Win16 */
+#define OCR_RDRNORTH           32655 /* DDK / Win16 */
+#define OCR_RDRSOUTH           32656 /* DDK / Win16 */
+#define OCR_RDRWEST            32657 /* DDK / Win16 */
+#define OCR_RDREAST            32658 /* DDK / Win16 */
+#define OCR_RDRNORTHWEST       32659 /* DDK / Win16 */
+#define OCR_RDRNORTHEAST       32660 /* DDK / Win16 */
+#define OCR_RDRSOUTHWEST       32661 /* DDK / Win16 */
+#define OCR_RDRSOUTHEAST       32662 /* DDK / Win16 */
 
 #define OIC_SAMPLE             32512
 #define OIC_HAND               32513
@@ -980,6 +1033,7 @@
 #define OIC_NOTE               32516
 #define OIC_INFORMATION        OIC_NOTE
 #define OIC_WINLOGO            32517
+#define OIC_SHIELD             32518
 #endif /* OEMRESOURCE */
 
 
@@ -991,6 +1045,7 @@
 #define IDI_EXCLAMATION        MAKEINTRESOURCE(32515)
 #define IDI_ASTERISK           MAKEINTRESOURCE(32516)
 #define IDI_WINLOGO            MAKEINTRESOURCE(32517)
+#define IDI_SHIELD             MAKEINTRESOURCE(32518)
 
 #define IDI_WARNING            IDI_EXCLAMATION
 #define IDI_ERROR              IDI_HAND
@@ -1052,10 +1107,10 @@
 #define EM_SETHANDLE           0x00bc
 #define EM_GETHANDLE           0x00bd
 #define EM_GETTHUMB            0x00be
-/* FIXME : missing from specs 0x00bf and 0x00c0 */
+/* Unassigned 0x00bf and 0x00c0 */
 #define EM_LINELENGTH          0x00c1
 #define EM_REPLACESEL          0x00c2
-/* FIXME : missing from specs 0x00c3 */
+#define EM_SETFONT             0x00c3 /* DDK / Win16 */
 #define EM_GETLINE             0x00c4
 #define EM_LIMITTEXT           0x00c5
 #define EM_SETLIMITTEXT        EM_LIMITTEXT
@@ -1063,7 +1118,7 @@
 #define EM_UNDO                0x00c7
 #define EM_FMTLINES            0x00c8
 #define EM_LINEFROMCHAR        0x00c9
-/* FIXME : missing from specs 0x00ca */
+#define EM_SETWORDBREAK        0x00ca /* DDK / Win16 */
 #define EM_SETTABSTOPS         0x00cb
 #define EM_SETPASSWORDCHAR     0x00cc
 #define EM_EMPTYUNDOBUFFER     0x00cd
@@ -1137,6 +1192,7 @@
 #define BM_CLICK               0x00f5
 #define BM_GETIMAGE            0x00f6
 #define BM_SETIMAGE            0x00f7
+#define BM_SETDONTCLICK        0x00f8
 
 /* Button states */
 #define BST_UNCHECKED          0x0000
