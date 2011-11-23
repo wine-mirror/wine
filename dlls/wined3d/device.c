@@ -5871,6 +5871,9 @@ HRESULT CDECL wined3d_device_get_surface_from_dc(const struct wined3d_device *de
 
     TRACE("device %p, dc %p, surface %p.\n", device, dc, surface);
 
+    if (!dc)
+        return WINED3DERR_INVALIDCALL;
+
     LIST_FOR_EACH_ENTRY(resource, &device->resources, struct wined3d_resource, resource_list_entry)
     {
         if (resource->resourceType == WINED3DRTYPE_SURFACE)
