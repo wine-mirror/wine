@@ -81,16 +81,8 @@ typedef struct tagFLOAT_POINT
    double x, y;
 } FLOAT_POINT;
 
-typedef enum
-{
-    PATH_Null,
-    PATH_Open,
-    PATH_Closed
-} GdiPathState;
-
 typedef struct gdi_path
 {
-    GdiPathState state;
     POINT       *pPoints;
     BYTE        *pFlags;
     int          numEntriesUsed, numEntriesAllocated;
@@ -149,7 +141,6 @@ static struct gdi_path *alloc_gdi_path(void)
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return NULL;
     }
-    path->state = PATH_Open;
     path->numEntriesUsed = 0;
     path->numEntriesAllocated = NUM_ENTRIES_INITIAL;
     path->newStroke = TRUE;
@@ -165,7 +156,6 @@ static struct gdi_path *copy_gdi_path( const struct gdi_path *src_path )
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return NULL;
     }
-    path->state = src_path->state;
     path->numEntriesUsed = path->numEntriesAllocated = src_path->numEntriesUsed;
     path->newStroke = src_path->newStroke;
     path->pPoints = HeapAlloc( GetProcessHeap(), 0, path->numEntriesUsed * sizeof(*path->pPoints) );
@@ -252,10 +242,6 @@ static BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags)
      * getting a PT_MOVETO
      */
     TRACE("(%d,%d) - %d\n", pPoint->x, pPoint->y, flags);
-
-    /* Check that path is open */
-    if(pPath->state!=PATH_Open)
-        return FALSE;
 
     /* Reserve enough memory for an extra path entry */
     if(!PATH_ReserveEntries(pPath, pPath->numEntriesUsed+1))
@@ -388,7 +374,6 @@ static struct gdi_path *PATH_FlattenPath(const struct gdi_path *pPath)
 	    break;
 	}
     }
-    new_path->state = PATH_Closed;
     return new_path;
 }
 
@@ -836,7 +821,6 @@ static BOOL pathdrv_EndPath( PHYSDEV dev )
 
     if (!dc) return FALSE;
     dc->path = physdev->path;
-    dc->path->state = PATH_Closed;
     pop_path_driver( dc, physdev );
     release_dc_ptr( dc );
     return TRUE;
@@ -1818,9 +1802,6 @@ static struct gdi_path *PATH_WidenPath(DC *dc)
         }
         switch(flat_path->pFlags[i]) {
             case PT_MOVETO:
-                if(numStrokes > 0) {
-                    pStrokes[numStrokes - 1]->state = PATH_Closed;
-                }
                 numStrokes++;
                 j = 0;
                 if(numStrokes == 1)
@@ -2040,8 +2021,6 @@ static struct gdi_path *PATH_WidenPath(DC *dc)
     }
     HeapFree(GetProcessHeap(), 0, pStrokes);
     free_gdi_path( flat_path );
-
-    pNewPath->state = PATH_Closed;
     return pNewPath;
 }
 
