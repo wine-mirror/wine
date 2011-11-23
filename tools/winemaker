@@ -20,7 +20,7 @@ use strict;
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 #
 
-my $version="0.8.0";
+my $version="0.8.1";
 
 use Cwd;
 use File::Basename;
@@ -1288,10 +1288,18 @@ sub source_scan_directory($$$$)
       if ($dentry =~ /^(Release|Debug)/i) {
 	# These directories are often used to store the object files and the
 	# resulting executable/library. They should not contain anything else.
-	my @candidates=grep /\.(exe|dll)$/i, @{get_directory_contents("$fullentry")};
-	foreach my $candidate (@candidates) {
-	  $targets{$candidate}=1;
-	}
+        my @candidates=grep /\.(exe|dll|lib)$/i, @{get_directory_contents("$fullentry")};
+        foreach my $candidate (sort @candidates) {
+            my $dlldup = $candidate;
+            $dlldup =~ s/\.lib$/.dll/;
+            if ($candidate =~ /\.lib$/ and $targets{$dlldup})
+            {
+                # Often lib files are created together with dll files, even if the dll file is the
+                # real target.
+                next;
+            }
+            $targets{$candidate}=1;
+        }
       } elsif ($dentry =~ /^include/i) {
         # This directory must contain headers we're going to need
         push @{@$project_settings[$T_INCLUDE_PATH]},"-I$dentry";
@@ -1303,7 +1311,7 @@ sub source_scan_directory($$$$)
 	source_scan_directory($project,"$fullentry/","$dentry/",$no_target);
       }
     } elsif (-f "$fullentry") {
-      if ($dentry =~ /\.(exe|dll)$/i) {
+      if ($dentry =~ /\.(exe|dll|lib)$/i) {
 	$targets{$dentry}=1;
       } elsif ($dentry =~ /\.c$/i and $dentry !~ /\.(dbg|spec)\.c$/) {
 	push @sources_c,"$dentry";
@@ -1517,6 +1525,7 @@ sub source_scan_directory($$$$)
   # - Match each target with source files (sort in reverse
   #   alphabetical order to get the longest matches first)
   my @local_dlls=();
+  my @local_libs=();
   my @local_depends=();
   my @exe_list=();
   foreach my $target_name (map (lc, (sort { $b cmp $a } keys %targets))) {
@@ -1535,6 +1544,13 @@ sub source_scan_directory($$$$)
       } else {
           push @{@$target[$T_LDFLAGS]},("-shared","\$(${canon}_MODULE:.dll=.spec)");
       }
+    } elsif ($target_name =~ /\.lib$/) {
+      $target_name =~ s/(.*)\.lib/lib$1.a/;
+      @$target[$T_NAME]=$target_name;
+      @$target[$T_TYPE]=$TT_LIB;
+      push @local_depends,"$target_name";
+      push @local_libs,$target_name;
+      push @{@$target[$T_ARFLAGS]},("rc");
     } else {
       @$target[$T_TYPE]=$opt_target_type;
       push @exe_list,$target;
@@ -1692,6 +1708,12 @@ sub source_scan_directory($$$$)
     foreach my $target (@exe_list) {
       push @{@$target[$T_DLL_PATH]},"-L.";
       push @{@$target[$T_DLLS]},@local_dlls;
+    }
+  }
+  if (@local_libs > 0 and @exe_list > 0) {
+    foreach my $target (@exe_list) {
+      push @{@$target[$T_LIBRARY_PATH]},"-L.";
+      push @{@$target[$T_LIBRARIES]},@local_libs;
     }
   }
 }
