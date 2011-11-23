@@ -10999,8 +10999,8 @@ msgid "Processes: %d"
 msgstr "Processes: %d"
 
 #: taskmgr.rc:267
-msgid "Mem Usage: %dK / %dK"
-msgstr "Mem Usage: %dK / %dK"
+msgid "Mem Usage: %1!u!kB / %2!u!kB"
+msgstr "Mem Usage: %1!u!kB / %2!u!kB"
 
 #: taskmgr.rc:272
 msgid "Image Name"

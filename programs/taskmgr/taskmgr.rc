@@ -263,7 +263,7 @@ BEGIN
     IDS_PERFORMANCE                    "Performance"
     IDS_STATUS_BAR_CPU_USAGE           "CPU Usage: %3d%%"
     IDS_STATUS_BAR_PROCESSES           "Processes: %d"
-    IDS_STATUS_BAR_MEMORY_USAGE        "Mem Usage: %dK / %dK"
+    IDS_STATUS_BAR_MEMORY_USAGE        "Mem Usage: %1!u!kB / %2!u!kB"
 END
 
 STRINGTABLE

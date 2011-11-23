@@ -11187,7 +11187,8 @@ msgid "Processes: %d"
 msgstr "Processos: %d"
 
 #: taskmgr.rc:267
-msgid "Mem Usage: %dK / %dK"
+#, fuzzy
+msgid "Mem Usage: %1!u!kB / %2!u!kB"
 msgstr "Ús de Memòria: %dK / %dK"
 
 #: taskmgr.rc:272

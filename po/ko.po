@@ -10966,7 +10966,8 @@ msgid "Processes: %d"
 msgstr "프로세스: %d"
 
 #: taskmgr.rc:267
-msgid "Mem Usage: %dK / %dK"
+#, fuzzy
+msgid "Mem Usage: %1!u!kB / %2!u!kB"
 msgstr "메모리 사용량: %dK / %dK"
 
 #: taskmgr.rc:272

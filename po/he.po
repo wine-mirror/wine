@@ -11083,7 +11083,8 @@ msgid "Processes: %d"
 msgstr "תהליכים: %d"
 
 #: taskmgr.rc:267
-msgid "Mem Usage: %dK / %dK"
+#, fuzzy
+msgid "Mem Usage: %1!u!kB / %2!u!kB"
 msgstr "שימוש בזיכרון: %d ק׳ / %d ק׳"
 
 #: taskmgr.rc:272
