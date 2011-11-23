@@ -401,6 +401,7 @@ void wined3d_texture_apply_state_changes(struct wined3d_texture *texture,
         glTexParameteri(target, GL_TEXTURE_SRGB_DECODE_EXT,
                 sampler_states[WINED3DSAMP_SRGBTEXTURE] ? GL_DECODE_EXT : GL_SKIP_DECODE_EXT);
         checkGLcall("glTexParameteri(GL_TEXTURE_SRGB_DECODE_EXT)");
+        gl_tex->states[WINED3DTEXSTA_SRGBTEXTURE] = sampler_states[WINED3DSAMP_SRGBTEXTURE];
     }
 
     if (!(texture->resource.format->flags & WINED3DFMT_FLAG_SHADOW)
