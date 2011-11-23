@@ -112,6 +112,24 @@ static HRESULT push_instr_str(compiler_ctx_t *ctx, jsop_t op, const WCHAR *arg)
     return S_OK;
 }
 
+static HRESULT push_instr_double(compiler_ctx_t *ctx, jsop_t op, double arg)
+{
+    unsigned instr;
+    DOUBLE *dbl;
+
+    dbl = compiler_alloc(ctx->code, sizeof(arg));
+    if(!dbl)
+        return E_OUTOFMEMORY;
+    *dbl = arg;
+
+    instr = push_instr(ctx, op);
+    if(instr == -1)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, instr)->arg1.dbl = dbl;
+    return S_OK;
+}
+
 static HRESULT compile_binary_expression(compiler_ctx_t *ctx, binary_expression_t *expr, jsop_t op)
 {
     HRESULT hres;
@@ -157,6 +175,8 @@ static HRESULT compile_literal(compiler_ctx_t *ctx, literal_expression_t *expr)
     switch(literal->type) {
     case LT_BOOL:
         return push_instr_int(ctx, OP_bool, literal->u.bval);
+    case LT_DOUBLE:
+        return push_instr_double(ctx, OP_double, literal->u.dval);
     case LT_INT:
         return push_instr_int(ctx, OP_int, literal->u.lval);
     case LT_STRING:

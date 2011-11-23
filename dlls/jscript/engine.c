@@ -1747,6 +1747,19 @@ HRESULT interp_int(exec_ctx_t *ctx)
     return stack_push(ctx, &v);
 }
 
+/* ECMA-262 3rd Edition    7.8.3 */
+HRESULT interp_double(exec_ctx_t *ctx)
+{
+    const double arg = *ctx->parser->code->instrs[ctx->ip].arg1.dbl;
+    VARIANT v;
+
+    TRACE("%lf\n", arg);
+
+    V_VT(&v) = VT_R8;
+    V_R8(&v) = arg;
+    return stack_push(ctx, &v);
+}
+
 /* ECMA-262 3rd Edition    7.8.4 */
 HRESULT interp_str(exec_ctx_t *ctx)
 {

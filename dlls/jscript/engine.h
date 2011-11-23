@@ -45,6 +45,7 @@ typedef struct _func_stack {
     X(add, 1, 0)                                  \
     X(bool, 1, 0)                                 \
     X(bneg, 1, 0)                                 \
+    X(double, 1, 0)                               \
     X(eq2, 1, 0)                                  \
     X(in, 1, 0)                                   \
     X(int, 1, ARG_INT)                            \
@@ -64,6 +65,7 @@ OP_LIST
 
 typedef union {
     expression_t *expr;
+    double *dbl;
     LONG lng;
     WCHAR *str;
 } instr_arg_t;
