@@ -491,8 +491,16 @@ locale* __thiscall locale_ctor_uninitialized(locale *this, int uninitialized)
 DEFINE_THISCALL_WRAPPER(locale_ctor, 4)
 locale* __thiscall locale_ctor(locale *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+    this->ptr = MSVCRT_operator_new(sizeof(locale__Locimp));
+    if(!this->ptr) {
+        ERR("Out of memory\n");
+        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+        return NULL;
+    }
+
+    locale__Locimp_ctor(this->ptr);
+    return this;
 }
 
 /* ??1locale@std@@QAE@XZ */
@@ -500,13 +508,14 @@ locale* __thiscall locale_ctor(locale *this)
 DEFINE_THISCALL_WRAPPER(locale_dtor, 4)
 void __thiscall locale_dtor(locale *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    locale__Locimp_dtor(this->ptr);
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_locale_vector_dtor, 8)
 locale* __thiscall MSVCP_locale_vector_dtor(locale *this, unsigned int flags)
 {
-    TRACE("(%p %x) stub\n", this, flags);
+    TRACE("(%p %x)\n", this, flags);
     if(flags & 2) {
         /* we have an array, with the number of elements stored before the first object */
         int i, *ptr = (int *)this-1;

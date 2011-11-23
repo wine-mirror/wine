@@ -195,7 +195,7 @@ MSVCP_size_t __stdcall MSVCP_allocator_wchar_max_size(void*);
 /* class locale */
 typedef struct
 {
-    struct locale__Locimp *ptr;
+    struct _locale__Locimp *ptr;
 } locale;
 
 locale* __thiscall locale_ctor(locale*);
