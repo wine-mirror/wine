@@ -626,6 +626,57 @@ static void call_docview_84(HTMLDocumentObj *doc)
         FIXME("handle result\n");
 }
 
+static void parse_content_type(nsChannelBSC *This, const WCHAR *value)
+{
+    const WCHAR *ptr;
+    size_t len;
+
+    static const WCHAR charsetW[] = {'c','h','a','r','s','e','t','='};
+
+    ptr = strchrW(value, ';');
+    if(!ptr)
+        return;
+
+    ptr++;
+    while(*ptr && isspaceW(*ptr))
+        ptr++;
+
+    len = strlenW(value);
+    if(ptr + sizeof(charsetW)/sizeof(WCHAR) < value+len && !memicmpW(ptr, charsetW, sizeof(charsetW)/sizeof(WCHAR))) {
+        size_t charset_len, lena;
+        nsACString charset_str;
+        const WCHAR *charset;
+        char *charseta;
+
+        ptr += sizeof(charsetW)/sizeof(WCHAR);
+
+        if(*ptr == '\'') {
+            FIXME("Quoted value\n");
+            return;
+        }else {
+            charset = ptr;
+            while(*ptr && *ptr != ',')
+                ptr++;
+            charset_len = ptr-charset;
+        }
+
+        lena = WideCharToMultiByte(CP_ACP, 0, charset, charset_len, NULL, 0, NULL, NULL);
+        charseta = heap_alloc(lena+1);
+        if(!charseta)
+            return;
+
+        WideCharToMultiByte(CP_ACP, 0, charset, charset_len, charseta, lena, NULL, NULL);
+        charseta[lena] = 0;
+
+        nsACString_InitDepend(&charset_str, charseta);
+        nsIHttpChannel_SetContentCharset(&This->nschannel->nsIHttpChannel_iface, &charset_str);
+        nsACString_Finish(&charset_str);
+        heap_free(charseta);
+    }else {
+        FIXME("unhandled: %s\n", debugstr_wn(ptr, len - (ptr-value)));
+    }
+}
+
 static HRESULT parse_headers(const WCHAR *headers, struct list *headers_list)
 {
     const WCHAR *header, *header_end, *colon, *value;
@@ -654,6 +705,25 @@ static HRESULT parse_headers(const WCHAR *headers, struct list *headers_list)
         header = header_end;
         if(header[0] == '\r' && header[1] == '\n')
             header += 2;
+    }
+
+    return S_OK;
+}
+
+static HRESULT process_response_headers(nsChannelBSC *This, const WCHAR *headers)
+{
+    http_header_t *iter;
+    HRESULT hres;
+
+    static const WCHAR content_typeW[] = {'c','o','n','t','e','n','t','-','t','y','p','e',0};
+
+    hres = parse_headers(headers, &This->nschannel->response_headers);
+    if(FAILED(hres))
+        return hres;
+
+    LIST_FOR_EACH_ENTRY(iter, &This->nschannel->response_headers, http_header_t, entry) {
+        if(!strcmpiW(iter->header, content_typeW))
+            parse_content_type(This, iter->data);
     }
 
     return S_OK;
@@ -1471,7 +1541,7 @@ static HRESULT nsChannelBSC_on_response(BSCallback *bsc, DWORD response_code,
         headers = strchrW(response_headers, '\r');
         if(headers && headers[1] == '\n') {
             headers += 2;
-            hres = parse_headers(headers, &This->nschannel->response_headers);
+            hres = process_response_headers(This, headers);
             if(FAILED(hres)) {
                 WARN("parsing headers failed: %08x\n", hres);
                 return hres;
