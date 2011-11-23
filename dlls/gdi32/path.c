@@ -81,13 +81,13 @@ typedef struct tagFLOAT_POINT
    double x, y;
 } FLOAT_POINT;
 
-typedef struct gdi_path
+struct gdi_path
 {
     POINT       *pPoints;
     BYTE        *pFlags;
     int          numEntriesUsed, numEntriesAllocated;
     BOOL         newStroke;
-} GdiPath;
+};
 
 struct path_physdev
 {
@@ -202,7 +202,7 @@ static inline INT int_from_fixed(FIXED f)
  * been allocated; allocates larger arrays and copies the existing entries
  * to those arrays, if necessary. Returns TRUE if successful, else FALSE.
  */
-static BOOL PATH_ReserveEntries(GdiPath *pPath, INT count)
+static BOOL PATH_ReserveEntries(struct gdi_path *pPath, INT count)
 {
     POINT *pPointsNew;
     BYTE    *pFlagsNew;
@@ -236,7 +236,7 @@ static BOOL PATH_ReserveEntries(GdiPath *pPath, INT count)
  * or PT_BEZIERTO, optionally ORed with PT_CLOSEFIGURE. Returns TRUE if
  * successful, FALSE otherwise (e.g. if not enough memory was available).
  */
-static BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags)
+static BOOL PATH_AddEntry(struct gdi_path *pPath, const POINT *pPoint, BYTE flags)
 {
     /* FIXME: If newStroke is true, perhaps we want to check that we're
      * getting a PT_MOVETO
@@ -261,7 +261,7 @@ static BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags)
 static BYTE *add_log_points( struct path_physdev *physdev, const POINT *points, DWORD count, BYTE type )
 {
     BYTE *ret;
-    GdiPath *path = physdev->path;
+    struct gdi_path *path = physdev->path;
 
     if (!PATH_ReserveEntries( path, path->numEntriesUsed + count )) return NULL;
 
@@ -277,7 +277,7 @@ static BYTE *add_log_points( struct path_physdev *physdev, const POINT *points, 
 static BOOL start_new_stroke( struct path_physdev *physdev )
 {
     POINT pos;
-    GdiPath *path = physdev->path;
+    struct gdi_path *path = physdev->path;
 
     if (!path->newStroke && path->numEntriesUsed &&
         !(path->pFlags[path->numEntriesUsed - 1] & PT_CLOSEFIGURE))
@@ -327,7 +327,7 @@ static void PATH_CheckCorners( HDC hdc, POINT corners[], INT x1, INT y1, INT x2,
 
 /* PATH_AddFlatBezier
  */
-static BOOL PATH_AddFlatBezier(GdiPath *pPath, POINT *pt, BOOL closed)
+static BOOL PATH_AddFlatBezier(struct gdi_path *pPath, POINT *pt, BOOL closed)
 {
     POINT *pts;
     INT no, i;
@@ -468,7 +468,7 @@ static void PATH_NormalizePoint(FLOAT_POINT corners[],
  * control point is added to the path; otherwise, it is assumed that the current
  * position is equal to the first control point.
  */
-static BOOL PATH_DoArcPart(GdiPath *pPath, FLOAT_POINT corners[],
+static BOOL PATH_DoArcPart(struct gdi_path *pPath, FLOAT_POINT corners[],
    double angleStart, double angleEnd, BYTE startEntryType)
 {
     double  halfAngle, a;
@@ -680,7 +680,7 @@ HRGN WINAPI PathToRegion(HDC hdc)
    return hrgnRval;
 }
 
-static BOOL PATH_FillPath( HDC hdc, GdiPath *pPath )
+static BOOL PATH_FillPath( HDC hdc, const struct gdi_path *pPath )
 {
    INT   mapMode, graphicsMode;
    SIZE  ptViewportExt, ptWindowExt;
@@ -1394,7 +1394,7 @@ static BOOL pathdrv_PolyPolyline( PHYSDEV dev, const POINT* pts, const DWORD* co
  *
  * internally used by PATH_add_outline
  */
-static void PATH_BezierTo(GdiPath *pPath, POINT *lppt, INT n)
+static void PATH_BezierTo(struct gdi_path *pPath, POINT *lppt, INT n)
 {
     if (n < 2) return;
 
@@ -1609,7 +1609,7 @@ BOOL WINAPI FlattenPath(HDC hdc)
 }
 
 
-static BOOL PATH_StrokePath( HDC hdc, GdiPath *pPath )
+static BOOL PATH_StrokePath( HDC hdc, const struct gdi_path *pPath )
 {
     INT i, nLinePts, nAlloc;
     POINT *pLinePts;
@@ -1805,9 +1805,9 @@ static struct gdi_path *PATH_WidenPath(DC *dc)
                 numStrokes++;
                 j = 0;
                 if(numStrokes == 1)
-                    pStrokes = HeapAlloc(GetProcessHeap(), 0, sizeof(GdiPath*));
+                    pStrokes = HeapAlloc(GetProcessHeap(), 0, sizeof(*pStrokes));
                 else
-                    pStrokes = HeapReAlloc(GetProcessHeap(), 0, pStrokes, numStrokes * sizeof(GdiPath*));
+                    pStrokes = HeapReAlloc(GetProcessHeap(), 0, pStrokes, numStrokes * sizeof(*pStrokes));
                 if(!pStrokes) return NULL;
                 pStrokes[numStrokes - 1] = alloc_gdi_path();
                 /* fall through */
@@ -1891,7 +1891,7 @@ static struct gdi_path *PATH_WidenPath(DC *dc)
                 double alpha, theta, miterWidth;
                 DWORD _joint = joint;
                 POINT pt;
-		GdiPath *pInsidePath, *pOutsidePath;
+		struct gdi_path *pInsidePath, *pOutsidePath;
                 if(j > 0 && j < pStrokes[i]->numEntriesUsed - 1) {
                     previous = j - 1;
                     next = j + 1;
