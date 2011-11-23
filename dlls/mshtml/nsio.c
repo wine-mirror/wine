@@ -802,10 +802,19 @@ static nsresult NSAPI nsChannel_SetContentCharset(nsIHttpChannel *iface,
                                                   const nsACString *aContentCharset)
 {
     nsChannel *This = impl_from_nsIHttpChannel(iface);
+    const char *data;
+    char *charset;
 
-    FIXME("(%p)->(%s)\n", This, debugstr_nsacstr(aContentCharset));
+    TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aContentCharset));
 
-    return NS_ERROR_NOT_IMPLEMENTED;
+    nsACString_GetData(aContentCharset, &data);
+    charset = heap_strdupA(data);
+    if(!charset)
+        return NS_ERROR_OUT_OF_MEMORY;
+
+    heap_free(This->charset);
+    This->charset = charset;
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_GetContentLength(nsIHttpChannel *iface, PRInt32 *aContentLength)
