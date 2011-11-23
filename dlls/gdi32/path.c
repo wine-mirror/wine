@@ -125,7 +125,7 @@ void free_gdi_path( struct gdi_path *path )
     HeapFree( GetProcessHeap(), 0, path );
 }
 
-static struct gdi_path *alloc_gdi_path(void)
+static struct gdi_path *alloc_gdi_path( int count )
 {
     struct gdi_path *path = HeapAlloc( GetProcessHeap(), 0, sizeof(*path) );
 
@@ -134,8 +134,9 @@ static struct gdi_path *alloc_gdi_path(void)
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return NULL;
     }
-    path->points = HeapAlloc( GetProcessHeap(), 0, NUM_ENTRIES_INITIAL * sizeof(*path->points) );
-    path->flags = HeapAlloc( GetProcessHeap(), 0, NUM_ENTRIES_INITIAL * sizeof(*path->flags) );
+    count = max( NUM_ENTRIES_INITIAL, count );
+    path->points = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*path->points) );
+    path->flags = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*path->flags) );
     if (!path->points || !path->flags)
     {
         free_gdi_path( path );
@@ -143,7 +144,7 @@ static struct gdi_path *alloc_gdi_path(void)
         return NULL;
     }
     path->count = 0;
-    path->allocated = NUM_ENTRIES_INITIAL;
+    path->allocated = count;
     path->newStroke = TRUE;
     return path;
 }
@@ -352,7 +353,7 @@ static struct gdi_path *PATH_FlattenPath(const struct gdi_path *pPath)
     struct gdi_path *new_path;
     INT srcpt;
 
-    if (!(new_path = alloc_gdi_path())) return NULL;
+    if (!(new_path = alloc_gdi_path( pPath->count ))) return NULL;
 
     for(srcpt = 0; srcpt < pPath->count; srcpt++) {
         switch(pPath->flags[srcpt] & ~PT_CLOSEFIGURE) {
@@ -1810,7 +1811,7 @@ static struct gdi_path *PATH_WidenPath(DC *dc)
                 else
                     pStrokes = HeapReAlloc(GetProcessHeap(), 0, pStrokes, numStrokes * sizeof(*pStrokes));
                 if(!pStrokes) return NULL;
-                pStrokes[numStrokes - 1] = alloc_gdi_path();
+                pStrokes[numStrokes - 1] = alloc_gdi_path(0);
                 /* fall through */
             case PT_LINETO:
             case (PT_LINETO | PT_CLOSEFIGURE):
@@ -1828,11 +1829,11 @@ static struct gdi_path *PATH_WidenPath(DC *dc)
         }
     }
 
-    pNewPath = alloc_gdi_path();
+    pNewPath = alloc_gdi_path( flat_path->count );
 
     for(i = 0; i < numStrokes; i++) {
-        pUpPath = alloc_gdi_path();
-        pDownPath = alloc_gdi_path();
+        pUpPath = alloc_gdi_path( pStrokes[i]->count );
+        pDownPath = alloc_gdi_path( pStrokes[i]->count );
 
         for(j = 0; j < pStrokes[i]->count; j++) {
             /* Beginning or end of the path if not closed */
@@ -2094,7 +2095,7 @@ BOOL nulldrv_BeginPath( PHYSDEV dev )
 {
     DC *dc = get_nulldrv_dc( dev );
     struct path_physdev *physdev;
-    struct gdi_path *path = alloc_gdi_path();
+    struct gdi_path *path = alloc_gdi_path(0);
 
     if (!path) return FALSE;
     if (!path_driver.pCreateDC( &dc->physDev, NULL, NULL, NULL, NULL ))
