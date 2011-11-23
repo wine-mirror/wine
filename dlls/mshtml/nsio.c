@@ -66,6 +66,7 @@ struct  nsWineURI {
     IUri *uri;
     IUriBuilder *uri_builder;
     BOOL is_doc_uri;
+    BOOL is_mutable;
 };
 
 static BOOL ensure_uri(nsWineURI *This)
@@ -1656,6 +1657,11 @@ static void invalidate_uri(nsWineURI *This)
 
 static BOOL ensure_uri_builder(nsWineURI *This)
 {
+    if(!This->is_mutable) {
+        WARN("Not mutable URI\n");
+        return FALSE;
+    }
+
     if(!This->uri_builder) {
         HRESULT hres;
 
@@ -1791,6 +1797,9 @@ static nsresult NSAPI nsURI_SetSpec(nsIURL *iface, const nsACString *aSpec)
     HRESULT hres;
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aSpec));
+
+    if(!This->is_mutable)
+        return NS_ERROR_UNEXPECTED;
 
     nsACString_GetData(aSpec, &speca);
     spec = heap_strdupAtoW(speca);
@@ -2473,6 +2482,9 @@ static nsresult NSAPI nsURL_SetFilePath(nsIURL *iface, const nsACString *aFilePa
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aFilePath));
 
+    if(!This->is_mutable)
+        return NS_ERROR_UNEXPECTED;
+
     return nsIURL_SetPath(&This->nsIURL_iface, aFilePath);
 }
 
@@ -2595,6 +2607,9 @@ static nsresult NSAPI nsURL_SetFileName(nsIURL *iface, const nsACString *aFileNa
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aFileName));
 
+    if(!This->is_mutable)
+        return NS_ERROR_UNEXPECTED;
+
     if(This->nsurl) {
         invalidate_uri(This);
         return nsIURL_SetFileName(This->nsurl, aFileName);
@@ -2623,6 +2638,9 @@ static nsresult NSAPI nsURL_SetFileBaseName(nsIURL *iface, const nsACString *aFi
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aFileBaseName));
 
+    if(!This->is_mutable)
+        return NS_ERROR_UNEXPECTED;
+
     if(This->nsurl) {
         invalidate_uri(This);
         return nsIURL_SetFileBaseName(This->nsurl, aFileBaseName);
@@ -2646,6 +2664,9 @@ static nsresult NSAPI nsURL_SetFileExtension(nsIURL *iface, const nsACString *aF
     nsWineURI *This = impl_from_nsIURL(iface);
 
     TRACE("(%p)->(%s)\n", This, debugstr_nsacstr(aFileExtension));
+
+    if(!This->is_mutable)
+        return NS_ERROR_UNEXPECTED;
 
     if(This->nsurl) {
         invalidate_uri(This);
@@ -2766,15 +2787,18 @@ static nsresult NSAPI nsStandardURL_GetMutable(nsIStandardURL *iface, PRBool *aM
 
     TRACE("(%p)->(%p)\n", This, aMutable);
 
-    *aMutable = TRUE;
+    *aMutable = This->is_mutable;
     return NS_OK;
 }
 
 static nsresult NSAPI nsStandardURL_SetMutable(nsIStandardURL *iface, PRBool aMutable)
 {
     nsWineURI *This = impl_from_nsIStandardURL(iface);
-    FIXME("(%p)->(%x)\n", This, aMutable);
-    return NS_ERROR_NOT_IMPLEMENTED;
+
+    TRACE("(%p)->(%x)\n", This, aMutable);
+
+    This->is_mutable = aMutable;
+    return NS_OK;
 }
 
 static nsresult NSAPI nsStandardURL_Init(nsIStandardURL *iface, PRUint32 aUrlType, PRInt32 aDefaultPort,
@@ -2802,6 +2826,7 @@ static nsresult create_nsuri(IUri *iuri, nsIURI *nsuri, HTMLWindow *window, NSCo
     ret->nsIStandardURL_iface.lpVtbl = &nsStandardURLVtbl;
     ret->ref = 1;
     ret->nsuri = nsuri;
+    ret->is_mutable = TRUE;
 
     set_uri_nscontainer(ret, container);
     set_uri_window(ret, window);
