@@ -1590,11 +1590,11 @@ struct wined3d_gamma_ramp
     WORD blue[256];
 };
 
-typedef struct _WINED3DLINEPATTERN
+struct wined3d_line_pattern
 {
-    WORD wRepeatFactor;
-    WORD wLinePattern;
-} WINED3DLINEPATTERN;
+    WORD repeat_factor;
+    WORD line_pattern;
+};
 
 typedef struct _WINEDD3DRECTPATCH_INFO
 {

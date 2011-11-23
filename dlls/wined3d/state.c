@@ -1313,20 +1313,24 @@ static void state_colormat(struct wined3d_context *context, const struct wined3d
 
 static void state_linepattern(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    union {
-        DWORD                 d;
-        WINED3DLINEPATTERN    lp;
+    union
+    {
+        DWORD d;
+        struct wined3d_line_pattern lp;
     } tmppattern;
     tmppattern.d = state->render_states[WINED3DRS_LINEPATTERN];
 
-    TRACE("Line pattern: repeat %d bits %x\n", tmppattern.lp.wRepeatFactor, tmppattern.lp.wLinePattern);
+    TRACE("Line pattern: repeat %d bits %x.\n", tmppattern.lp.repeat_factor, tmppattern.lp.line_pattern);
 
-    if (tmppattern.lp.wRepeatFactor) {
-        glLineStipple(tmppattern.lp.wRepeatFactor, tmppattern.lp.wLinePattern);
+    if (tmppattern.lp.repeat_factor)
+    {
+        glLineStipple(tmppattern.lp.repeat_factor, tmppattern.lp.line_pattern);
         checkGLcall("glLineStipple(repeat, linepattern)");
         glEnable(GL_LINE_STIPPLE);
         checkGLcall("glEnable(GL_LINE_STIPPLE);");
-    } else {
+    }
+    else
+    {
         glDisable(GL_LINE_STIPPLE);
         checkGLcall("glDisable(GL_LINE_STIPPLE);");
     }

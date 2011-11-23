@@ -1074,8 +1074,9 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     struct wined3d_device *device = stateblock->device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_state *state = &stateblock->state;
-    union {
-        WINED3DLINEPATTERN lp;
+    union
+    {
+        struct wined3d_line_pattern lp;
         DWORD d;
     } lp;
     union {
@@ -1109,8 +1110,8 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
        state->render_states[WINED3DRS_ZENABLE] = WINED3DZB_FALSE;
     state->render_states[WINED3DRS_FILLMODE] = WINED3DFILL_SOLID;
     state->render_states[WINED3DRS_SHADEMODE] = WINED3DSHADE_GOURAUD;
-    lp.lp.wRepeatFactor = 0;
-    lp.lp.wLinePattern = 0;
+    lp.lp.repeat_factor = 0;
+    lp.lp.line_pattern = 0;
     state->render_states[WINED3DRS_LINEPATTERN] = lp.d;
     state->render_states[WINED3DRS_ZWRITEENABLE] = TRUE;
     state->render_states[WINED3DRS_ALPHATESTENABLE] = FALSE;
