@@ -789,6 +789,7 @@ static void normalize_normal(float *n) {
 HRESULT tesselate_rectpatch(struct wined3d_device *This, struct WineD3DRectPatch *patch)
 {
     unsigned int i, j, num_quads, out_vertex_size, buffer_size, d3d_out_vertex_size;
+    const struct wined3d_rect_patch_info *info = &patch->rect_patch_info;
     float max_x = 0.0f, max_y = 0.0f, max_z = 0.0f, neg_z = 0.0f;
     struct wined3d_state *state = &This->stateBlock->state;
     struct wined3d_stream_info stream_info;
@@ -796,7 +797,6 @@ HRESULT tesselate_rectpatch(struct wined3d_device *This, struct WineD3DRectPatch
     struct wined3d_context *context;
     struct wined3d_shader *vs;
     const BYTE *data;
-    const WINED3DRECTPATCH_INFO *info = &patch->RectPatchInfo;
     DWORD vtxStride;
     GLenum feedback_type;
     GLfloat *feedbuffer;
@@ -821,9 +821,9 @@ HRESULT tesselate_rectpatch(struct wined3d_device *This, struct WineD3DRectPatch
         e->data.addr = (BYTE *)((ULONG_PTR)e->data.addr + (ULONG_PTR)buffer_get_sysmem(vb, context->gl_info));
     }
     vtxStride = e->stride;
-    data = e->data.addr +
-           vtxStride * info->Stride * info->StartVertexOffsetHeight +
-           vtxStride * info->StartVertexOffsetWidth;
+    data = e->data.addr
+            + vtxStride * info->stride * info->start_vertex_offset_height
+            + vtxStride * info->start_vertex_offset_width;
 
     /* Not entirely sure about what happens with transformed vertices */
     if (stream_info.position_transformed) FIXME("Transformed position in rectpatch generation\n");
@@ -835,17 +835,17 @@ HRESULT tesselate_rectpatch(struct wined3d_device *This, struct WineD3DRectPatch
          */
         ERR("Vertex stride is not a multiple of sizeof(GLfloat)\n");
     }
-    if(info->Basis != WINED3DBASIS_BEZIER) {
-        FIXME("Basis is %s, how to handle this?\n", debug_d3dbasis(info->Basis));
-    }
-    if(info->Degree != WINED3DDEGREE_CUBIC) {
-        FIXME("Degree is %s, how to handle this?\n", debug_d3ddegree(info->Degree));
-    }
+    if (info->basis != WINED3DBASIS_BEZIER)
+        FIXME("Basis is %s, how to handle this?\n", debug_d3dbasis(info->basis));
+    if (info->degree != WINED3DDEGREE_CUBIC)
+        FIXME("Degree is %s, how to handle this?\n", debug_d3ddegree(info->degree));
 
     /* First, get the boundary cube of the input data */
-    for(j = 0; j < info->Height; j++) {
-        for(i = 0; i < info->Width; i++) {
-            const float *v = (const float *)(data + vtxStride * i + vtxStride * info->Stride * j);
+    for (j = 0; j < info->height; ++j)
+    {
+        for (i = 0; i < info->width; ++i)
+        {
+            const float *v = (const float *)(data + vtxStride * i + vtxStride * info->stride * j);
             if(fabs(v[0]) > max_x) max_x = fabsf(v[0]);
             if(fabs(v[1]) > max_y) max_y = fabsf(v[1]);
             if(fabs(v[2]) > max_z) max_z = fabsf(v[2]);
@@ -964,14 +964,15 @@ HRESULT tesselate_rectpatch(struct wined3d_device *This, struct WineD3DRectPatch
     feedbuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buffer_size * sizeof(float) * 8);
 
     glMap2f(GL_MAP2_VERTEX_3,
-            0.0f, 1.0f, vtxStride / sizeof(float), info->Width,
-            0.0f, 1.0f, info->Stride * vtxStride / sizeof(float), info->Height,
+            0.0f, 1.0f, vtxStride / sizeof(float), info->width,
+            0.0f, 1.0f, info->stride * vtxStride / sizeof(float), info->height,
             (const GLfloat *)data);
     checkGLcall("glMap2f");
-    if(patch->has_texcoords) {
+    if (patch->has_texcoords)
+    {
         glMap2f(GL_MAP2_TEXTURE_COORD_4,
-                0.0f, 1.0f, vtxStride / sizeof(float), info->Width,
-                0.0f, 1.0f, info->Stride * vtxStride / sizeof(float), info->Height,
+                0.0f, 1.0f, vtxStride / sizeof(float), info->width,
+                0.0f, 1.0f, info->stride * vtxStride / sizeof(float), info->height,
                 (const GLfloat *)data);
         checkGLcall("glMap2f");
     }

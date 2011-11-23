@@ -4647,7 +4647,7 @@ HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
 }
 
 HRESULT CDECL wined3d_device_draw_rect_patch(struct wined3d_device *device, UINT handle,
-        const float *num_segs, const WINED3DRECTPATCH_INFO *rect_patch_info)
+        const float *num_segs, const struct wined3d_rect_patch_info *rect_patch_info)
 {
     struct WineD3DRectPatch *patch;
     GLenum old_primitive_type;
@@ -4704,13 +4704,13 @@ HRESULT CDECL wined3d_device_draw_rect_patch(struct wined3d_device *device, UINT
 
     if (num_segs[0] != patch->numSegs[0] || num_segs[1] != patch->numSegs[1]
             || num_segs[2] != patch->numSegs[2] || num_segs[3] != patch->numSegs[3]
-            || (rect_patch_info && memcmp(rect_patch_info, &patch->RectPatchInfo, sizeof(*rect_patch_info))))
+            || (rect_patch_info && memcmp(rect_patch_info, &patch->rect_patch_info, sizeof(*rect_patch_info))))
     {
         HRESULT hr;
         TRACE("Tesselation density or patch info changed, retesselating\n");
 
         if (rect_patch_info)
-            patch->RectPatchInfo = *rect_patch_info;
+            patch->rect_patch_info = *rect_patch_info;
 
         patch->numSegs[0] = num_segs[0];
         patch->numSegs[1] = num_segs[1];

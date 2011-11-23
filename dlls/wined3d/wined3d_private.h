@@ -1556,7 +1556,7 @@ struct WineD3DRectPatch
     UINT                            Handle;
     float                          *mem;
     WineDirect3DVertexStridedData   strided;
-    WINED3DRECTPATCH_INFO           RectPatchInfo;
+    struct wined3d_rect_patch_info rect_patch_info;
     float                           numSegs[4];
     char                            has_normals, has_texcoords;
     struct list                     entry;

@@ -1596,16 +1596,16 @@ struct wined3d_line_pattern
     WORD line_pattern;
 };
 
-typedef struct _WINEDD3DRECTPATCH_INFO
+struct wined3d_rect_patch_info
 {
-    UINT StartVertexOffsetWidth;
-    UINT StartVertexOffsetHeight;
-    UINT Width;
-    UINT Height;
-    UINT Stride;
-    WINED3DBASISTYPE Basis;
-    WINED3DDEGREETYPE Degree;
-} WINED3DRECTPATCH_INFO;
+    UINT start_vertex_offset_width;
+    UINT start_vertex_offset_height;
+    UINT width;
+    UINT height;
+    UINT stride;
+    WINED3DBASISTYPE basis;
+    WINED3DDEGREETYPE degree;
+};
 
 typedef struct _WINED3DTRIPATCH_INFO
 {
@@ -2189,7 +2189,7 @@ HRESULT __cdecl wined3d_device_draw_primitive_strided(struct wined3d_device *dev
 HRESULT __cdecl wined3d_device_draw_primitive_up(struct wined3d_device *device,
         UINT vertex_count, const void *stream_data, UINT stream_stride);
 HRESULT __cdecl wined3d_device_draw_rect_patch(struct wined3d_device *device, UINT handle,
-        const float *num_segs, const WINED3DRECTPATCH_INFO *rect_patch_info);
+        const float *num_segs, const struct wined3d_rect_patch_info *rect_patch_info);
 HRESULT __cdecl wined3d_device_draw_tri_patch(struct wined3d_device *device, UINT handle,
         const float *num_segs, const WINED3DTRIPATCH_INFO *tri_patch_info);
 HRESULT __cdecl wined3d_device_end_scene(struct wined3d_device *device);

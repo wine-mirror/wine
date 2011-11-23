@@ -2684,7 +2684,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_DrawRectPatch(IDirect3DDevice9Ex *ifa
 
     wined3d_mutex_lock();
     hr = wined3d_device_draw_rect_patch(This->wined3d_device, Handle,
-            pNumSegs, (const WINED3DRECTPATCH_INFO *)pRectPatchInfo);
+            pNumSegs, (const struct wined3d_rect_patch_info *)pRectPatchInfo);
     wined3d_mutex_unlock();
 
     return hr;
