@@ -1512,7 +1512,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
         WCMD_type (p);
 	break;
       case WCMD_VER:
-        WCMD_output(newline);
+        WCMD_output_asis(newline);
         WCMD_version ();
         break;
       case WCMD_VERIFY:

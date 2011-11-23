@@ -361,7 +361,7 @@ void WCMD_choice (const WCHAR * command) {
         ptr = strchrW(opt_c, answer[0]);
         if (ptr) {
             WCMD_output_asis(answer);
-            WCMD_output(newline);
+            WCMD_output_asis(newline);
             if (have_console)
                 SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), oldmode);
 
@@ -964,7 +964,7 @@ void WCMD_echo (const WCHAR *command)
     echo_mode = FALSE;
   else {
     WCMD_output_asis (command);
-    WCMD_output (newline);
+    WCMD_output_asis (newline);
   }
   HeapFree(GetProcessHeap(), 0, trimmed);
 }
@@ -1777,7 +1777,7 @@ void WCMD_pause (void)
   if (have_console)
       SetConsoleMode(hIn, 0);
 
-  WCMD_output(anykey);
+  WCMD_output_asis(anykey);
   WCMD_ReadFile(hIn, &key, 1, &count);
   if (have_console)
     SetConsoleMode(hIn, oldmode);
@@ -2114,7 +2114,7 @@ void WCMD_setshow_default (const WCHAR *command) {
   GetCurrentDirectoryW(sizeof(cwd)/sizeof(WCHAR), cwd);
   if (strlenW(command) == 0) {
     strcatW (cwd, newline);
-    WCMD_output (cwd);
+    WCMD_output_asis (cwd);
   }
   else {
     /* Remove any double quotes, which may be in the
@@ -2325,7 +2325,7 @@ void WCMD_setshow_env (WCHAR *s) {
 
     /* Output the prompt */
     *p++ = '\0';
-    if (strlenW(p) != 0) WCMD_output(p);
+    if (strlenW(p) != 0) WCMD_output_asis(p);
 
     /* Read the reply */
     WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string)/sizeof(WCHAR), &count);
@@ -2697,7 +2697,7 @@ void WCMD_verify (const WCHAR *command) {
 
 void WCMD_version (void) {
 
-  WCMD_output (version_string);
+  WCMD_output_asis (version_string);
 
 }
 

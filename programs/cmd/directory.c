@@ -326,7 +326,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
 
     /* Output the results */
     if (!bare) {
-       if (level != 0 && (entry_count > 0)) WCMD_output (newline);
+       if (level != 0 && (entry_count > 0)) WCMD_output_asis (newline);
        if (!recurse || ((entry_count > 0) && done_header==FALSE)) {
            static const WCHAR headerW[] = {'D','i','r','e','c','t','o','r','y',' ','o','f',
                                            ' ','%','s','\n','\n','\0'};
@@ -430,13 +430,13 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
                 strcatW(&temp[toWrite], space);
                 toWrite++;
                 if (toWrite > 99) {
-                    WCMD_output(temp);
+                    WCMD_output_asis(temp);
                     toWrite = 0;
                     strcpyW(temp, nullW);
                 }
                 padding--;
             }
-            WCMD_output(temp);
+            WCMD_output_asis(temp);
         }
 
       } else if ((fd+i)->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
@@ -472,7 +472,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
         }
       }
      }
-     if (addNewLine) WCMD_output (newline);
+     if (addNewLine) WCMD_output_asis (newline);
      cur_width = 0;
     }
 
@@ -949,7 +949,7 @@ void WCMD_directory (WCHAR *cmd)
       }
     } else {
       static const WCHAR newLine2[] = {'\n','\n','\0'};
-      if (!bare) WCMD_output (newLine2);
+      if (!bare) WCMD_output_asis (newLine2);
     }
 
     /* Clear any errors from previous invocations, and process it */
