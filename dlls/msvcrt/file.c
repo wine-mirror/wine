@@ -362,7 +362,12 @@ static MSVCRT_FILE* msvcrt_alloc_fp(void)
 
     if (file->_flag == 0)
     {
-      if (i == MSVCRT_stream_idx) MSVCRT_stream_idx++;
+      if (i == MSVCRT_stream_idx)
+      {
+          InitializeCriticalSection(&((file_crit*)file)->crit);
+          ((file_crit*)file)->crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": file_crit.crit");
+          MSVCRT_stream_idx++;
+      }
       return file;
     }
   }
@@ -384,12 +389,6 @@ static int msvcrt_init_fp(MSVCRT_FILE* file, int fd, unsigned stream_flags)
   memset(file, 0, sizeof(*file));
   file->_file = fd;
   file->_flag = stream_flags;
-
-  if(file<MSVCRT__iob || file>=MSVCRT__iob+_IOB_ENTRIES)
-  {
-      InitializeCriticalSection(&((file_crit*)file)->crit);
-      ((file_crit*)file)->crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": file_crit.crit");
-  }
 
   TRACE(":got FILE* (%p)\n",file);
   return 0;
@@ -984,6 +983,16 @@ void msvcrt_free_io(void)
 
     for(i=0; i<sizeof(MSVCRT___pioinfo)/sizeof(MSVCRT___pioinfo[0]); i++)
         MSVCRT_free(MSVCRT___pioinfo[i]);
+
+    for(i=0; i<MSVCRT_stream_idx; i++)
+    {
+        MSVCRT_FILE *file = msvcrt_get_file(i);
+        if(file<MSVCRT__iob || file>=MSVCRT__iob+_IOB_ENTRIES)
+        {
+            ((file_crit*)file)->crit.DebugInfo->Spare[0] = 0;
+            DeleteCriticalSection(&((file_crit*)file)->crit);
+        }
+    }
 
     for(i=0; i<sizeof(MSVCRT_fstream)/sizeof(MSVCRT_fstream[0]); i++)
         MSVCRT_free(MSVCRT_fstream[i]);
@@ -2607,18 +2616,6 @@ int CDECL MSVCRT_fclose(MSVCRT_FILE* file)
 
   file->_flag = 0;
   MSVCRT__unlock_file(file);
-  if(file<MSVCRT__iob || file>=MSVCRT__iob+_IOB_ENTRIES)
-  {
-      ((file_crit*)file)->crit.DebugInfo->Spare[0] = 0;
-      DeleteCriticalSection(&((file_crit*)file)->crit);
-  }
-
-  if(file == msvcrt_get_file(MSVCRT_stream_idx-1)) {
-    while(MSVCRT_stream_idx>3 && !file->_flag) {
-      MSVCRT_stream_idx--;
-      file = msvcrt_get_file(MSVCRT_stream_idx-1);
-    }
-  }
 
   return ((r == -1) || (flag & MSVCRT__IOERR) ? MSVCRT_EOF : 0);
 }
