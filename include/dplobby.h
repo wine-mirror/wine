@@ -151,7 +151,7 @@ typedef struct tagDPLMSG_SETPROPERTY
         DWORD   dwPropertyData[1];   /* Buffer containing data */
 } DPLMSG_SETPROPERTY, *LPDPLMSG_SETPROPERTY;
 
-#define DPL_NOCONFIRMATION                      0L
+#define DPL_NOCONFIRMATION      0
 
 /* Reply to DPLMSG_SETPROPERTY */
 typedef struct tagDPLMSG_SETPROPERTYRESPONSE
