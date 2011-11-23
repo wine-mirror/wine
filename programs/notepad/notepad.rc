@@ -91,9 +91,9 @@ STRING_UNICODE_LE,     "Unicode (UTF-16)"
 STRING_UNICODE_BE,     "Unicode (UTF-16 big-endian)"
 STRING_UTF8,           "Unicode (UTF-8)"
 
-STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
+STRING_LOSS_OF_UNICODE_CHARACTERS,         "%1\n\
 This file contains Unicode characters which will be lost if\n\
-you save this file in the %s encoding.\n\
+you save this file in the %2 encoding.\n\
 To keep these characters, click Cancel, and then select\n\
 one of the Unicode options in the Encoding drop down list.\n\
 Continue?"

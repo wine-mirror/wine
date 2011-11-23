@@ -153,19 +153,25 @@ static int AlertFileNotSaved(LPCWSTR szFileName)
 
 static int AlertUnicodeCharactersLost(LPCWSTR szFileName)
 {
+    WCHAR szCaption[MAX_STRING_LEN];
     WCHAR szMsgFormat[MAX_STRING_LEN];
     WCHAR szEnc[MAX_STRING_LEN];
-    WCHAR szMsg[ARRAY_SIZE(szMsgFormat) + MAX_PATH + ARRAY_SIZE(szEnc)];
-    WCHAR szCaption[MAX_STRING_LEN];
+    WCHAR* szMsg;
+    DWORD_PTR args[2];
+    int rc;
 
+    LoadStringW(Globals.hInstance, STRING_NOTEPAD, szCaption,
+                ARRAY_SIZE(szCaption));
     LoadStringW(Globals.hInstance, STRING_LOSS_OF_UNICODE_CHARACTERS,
                 szMsgFormat, ARRAY_SIZE(szMsgFormat));
     load_encoding_name(ENCODING_ANSI, szEnc, ARRAY_SIZE(szEnc));
-    wnsprintfW(szMsg, ARRAY_SIZE(szMsg), szMsgFormat, szFileName, szEnc);
-    LoadStringW(Globals.hInstance, STRING_NOTEPAD, szCaption,
-                ARRAY_SIZE(szCaption));
-    return MessageBoxW(Globals.hMainWnd, szMsg, szCaption,
-                       MB_OKCANCEL|MB_ICONEXCLAMATION);
+    args[0] = (DWORD_PTR)szFileName;
+    args[1] = (DWORD_PTR)szEnc;
+    FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_ARGUMENT_ARRAY, szMsgFormat, 0, 0, (LPWSTR)&szMsg, 0, (__ms_va_list*)args);
+    rc = MessageBoxW(Globals.hMainWnd, szMsg, szCaption,
+                     MB_OKCANCEL|MB_ICONEXCLAMATION);
+    LocalFree(szMsg);
+    return rc;
 }
 
 /**

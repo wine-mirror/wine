@@ -9526,10 +9526,11 @@ msgid "Unicode (UTF-8)"
 msgstr "Unicode (UTF-16)"
 
 #: notepad.rc:99
+#, fuzzy
 msgid ""
-"%s\n"
+"%1\n"
 "This file contains Unicode characters which will be lost if\n"
-"you save this file in the %s encoding.\n"
+"you save this file in the %2 encoding.\n"
 "To keep these characters, click Cancel, and then select\n"
 "one of the Unicode options in the Encoding drop down list.\n"
 "Continue?"
