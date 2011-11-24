@@ -42,7 +42,7 @@ static HRESULT isgn_handler(const char *data, DWORD data_size, DWORD tag, void *
 
 static HRESULT d3d10_input_layout_to_wined3d_declaration(const D3D10_INPUT_ELEMENT_DESC *element_descs,
         UINT element_count, const void *shader_byte_code, SIZE_T shader_byte_code_length,
-        WINED3DVERTEXELEMENT **wined3d_elements, UINT *wined3d_element_count)
+        struct wined3d_vertex_element **wined3d_elements, UINT *wined3d_element_count)
 {
     struct wined3d_shader_signature is;
     HRESULT hr;
@@ -73,7 +73,7 @@ static HRESULT d3d10_input_layout_to_wined3d_declaration(const D3D10_INPUT_ELEME
             if (!strcmp(element_descs[i].SemanticName, is.elements[j].semantic_name)
                     && element_descs[i].SemanticIndex == is.elements[j].semantic_idx)
             {
-                WINED3DVERTEXELEMENT *e = &(*wined3d_elements)[(*wined3d_element_count)++];
+                struct wined3d_vertex_element *e = &(*wined3d_elements)[(*wined3d_element_count)++];
                 const D3D10_INPUT_ELEMENT_DESC *f = &element_descs[i];
 
                 e->format = wined3dformat_from_dxgi_format(f->Format);
@@ -218,7 +218,7 @@ HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d10_
         const D3D10_INPUT_ELEMENT_DESC *element_descs, UINT element_count,
         const void *shader_byte_code, SIZE_T shader_byte_code_length)
 {
-    WINED3DVERTEXELEMENT *wined3d_elements;
+    struct wined3d_vertex_element *wined3d_elements;
     UINT wined3d_element_count;
     HRESULT hr;
 

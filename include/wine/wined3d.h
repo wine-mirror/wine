@@ -1673,7 +1673,7 @@ struct wined3d_clip_status
    DWORD clip_intersection;
 };
 
-typedef struct _WINED3DVERTEXELEMENT
+struct wined3d_vertex_element
 {
     enum wined3d_format_id format;
     WORD input_slot;
@@ -1682,7 +1682,7 @@ typedef struct _WINED3DVERTEXELEMENT
     BYTE method;
     BYTE usage;
     BYTE usage_idx;
-} WINED3DVERTEXELEMENT;
+};
 
 typedef struct _WINED3DDEVICE_CREATION_PARAMETERS
 {
@@ -2502,7 +2502,7 @@ DWORD __cdecl wined3d_texture_set_lod(struct wined3d_texture *texture, DWORD lod
 DWORD __cdecl wined3d_texture_set_priority(struct wined3d_texture *texture, DWORD priority);
 
 HRESULT __cdecl wined3d_vertex_declaration_create(struct wined3d_device *device,
-        const WINED3DVERTEXELEMENT *elements, UINT element_count, void *parent,
+        const struct wined3d_vertex_element *elements, UINT element_count, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_vertex_declaration **declaration);
 HRESULT __cdecl wined3d_vertex_declaration_create_from_fvf(struct wined3d_device *device,
         DWORD fvf, void *parent, const struct wined3d_parent_ops *parent_ops,
