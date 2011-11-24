@@ -26,6 +26,9 @@
 #include "wingdi.h"
 #include "d3dx9_36_private.h"
 
+/* Constants for special INT/FLOAT conversation */
+#define INT_FLOAT_MULTI 255.0f
+
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 static const struct ID3DXEffectVtbl ID3DXEffect_Vtbl;
@@ -1703,11 +1706,31 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetInt(ID3DXBaseEffect *iface, D3DXHAN
 
     TRACE("iface %p, parameter %p, n %p\n", This, parameter, n);
 
-    if (n && param && !param->element_count && param->columns == 1 && param->rows == 1)
+    if (n && param && !param->element_count)
     {
-        *n = get_int(param->type, param->data);
-        TRACE("Returning %i\n", *n);
-        return D3D_OK;
+        if (param->columns == 1 && param->rows == 1)
+        {
+            *n = get_int(param->type, param->data);
+            TRACE("Returning %i\n", *n);
+            return D3D_OK;
+        }
+
+        if (param->type == D3DXPT_FLOAT &&
+                ((param->class == D3DXPC_VECTOR && param->columns != 2)
+                || (param->class == D3DXPC_MATRIX_ROWS && param->rows != 2 && param->columns == 1)))
+        {
+            /* all components (3,4) are clamped (0,255) and put in the INT */
+            *n = (INT)(min(max(0.0f, *((FLOAT *)param->data + 2)), 1.0f) * INT_FLOAT_MULTI);
+            *n += ((INT)(min(max(0.0f, *((FLOAT *)param->data + 1)), 1.0f) * INT_FLOAT_MULTI)) << 8;
+            *n += ((INT)(min(max(0.0f, *((FLOAT *)param->data + 0)), 1.0f) * INT_FLOAT_MULTI)) << 16;
+            if (param->columns * param->rows > 3)
+            {
+                *n += ((INT)(min(max(0.0f, *((FLOAT *)param->data + 3)), 1.0f) * INT_FLOAT_MULTI)) << 24;
+            }
+
+            TRACE("Returning %i\n", *n);
+            return D3D_OK;
+        }
     }
 
     WARN("Invalid argument specified\n");
