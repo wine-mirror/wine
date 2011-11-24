@@ -121,11 +121,11 @@ msgid "uncompressed"
 msgstr "neglaudintas"
 
 #: browseui.rc:37 credui.rc:50 ieframe.rc:85 inetcpl.rc:78 localui.rc:42
-#: localui.rc:55 shlwapi.rc:42 winspool.rc:40 notepad.rc:123 oleview.rc:160
-#: oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156
-#: progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256
-#: regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447
-#: taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
+#: localui.rc:55 mpr.rc:47 shlwapi.rc:42 winspool.rc:40 notepad.rc:123
+#: oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140
+#: progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245
+#: regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311
+#: taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
 #: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
 #: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
@@ -577,14 +577,15 @@ msgstr "&Slaptažodis:"
 msgid "&Remember my password"
 msgstr "Į&siminti mano slaptažodį"
 
-#: credui.rc:49 ieframe.rc:84 localui.rc:41 localui.rc:54 shlwapi.rc:41
-#: winspool.rc:39 net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172
-#: progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177
-#: progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268
-#: regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521
-#: winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131 winefile.rc:134
-#: winefile.rc:157 winefile.rc:187 winemine.rc:68 winemine.rc:78
-#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: credui.rc:49 ieframe.rc:84 localui.rc:41 localui.rc:54 mpr.rc:46
+#: shlwapi.rc:41 winspool.rc:39 net.rc:44 notepad.rc:122 oleview.rc:159
+#: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
+#: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
+#: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
+#: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
+#: winefile.rc:134 winefile.rc:157 winefile.rc:187 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "Gerai"
 
@@ -5642,6 +5643,30 @@ msgstr "Nepavyko išsiųsti laiškų, nes neturite įdiegto MAPI pašto kliento.
 #: mapi32.rc:29
 msgid "Send Mail"
 msgstr "Laiškų siuntimas"
+
+#: mpr.rc:32
+msgid "Enter Network Password"
+msgstr "Įveskite tinklo slaptažodį"
+
+#: mpr.rc:35
+msgid "Please enter your username and password:"
+msgstr "Įveskite savo naudotojo vardą ir slaptažodį:"
+
+#: mpr.rc:36
+msgid "Proxy"
+msgstr "Įgaliot. serv."
+
+#: mpr.rc:38
+msgid "User"
+msgstr "Naudotojas"
+
+#: mpr.rc:39
+msgid "Password"
+msgstr "Slaptažodis"
+
+#: mpr.rc:44
+msgid "&Save this password (Insecure)"
+msgstr "Į&rašyti šį slaptažodį (nesaugu)"
 
 #: mpr.rc:27
 msgid "Entire Network"

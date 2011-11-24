@@ -10,35 +10,7 @@ C_SRCS = \
 	pwcache.c \
 	wnet.c
 
-RC_SRCS = \
-	mpr.rc \
-	mpr_Bg.rc \
-	mpr_Cs.rc \
-	mpr_Da.rc \
-	mpr_De.rc \
-	mpr_En.rc \
-	mpr_Eo.rc \
-	mpr_Es.rc \
-	mpr_Fr.rc \
-	mpr_He.rc \
-	mpr_Hu.rc \
-	mpr_It.rc \
-	mpr_Ja.rc \
-	mpr_Ko.rc \
-	mpr_Lt.rc \
-	mpr_Nl.rc \
-	mpr_No.rc \
-	mpr_Pl.rc \
-	mpr_Pt.rc \
-	mpr_Ro.rc \
-	mpr_Ru.rc \
-	mpr_Si.rc \
-	mpr_Sr.rc \
-	mpr_Sv.rc \
-	mpr_Tr.rc \
-	mpr_Uk.rc \
-	mpr_Zh.rc
-
+RC_SRCS = mpr.rc
 PO_SRCS = mpr.rc
 
 @MAKE_DLL_RULES@
