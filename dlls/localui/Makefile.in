@@ -4,31 +4,7 @@ IMPORTS   = winspool user32
 C_SRCS = \
 	localui.c
 
-RC_SRCS = \
-	localui.rc \
-	ui_Da.rc \
-	ui_De.rc \
-	ui_En.rc \
-	ui_Es.rc \
-	ui_Fr.rc \
-	ui_He.rc \
-	ui_Hu.rc \
-	ui_It.rc \
-	ui_Ja.rc \
-	ui_Ko.rc \
-	ui_Lt.rc \
-	ui_Nl.rc \
-	ui_No.rc \
-	ui_Pl.rc \
-	ui_Pt.rc \
-	ui_Ro.rc \
-	ui_Ru.rc \
-	ui_Si.rc \
-	ui_Sr.rc \
-	ui_Sv.rc \
-	ui_Uk.rc \
-	ui_Zh.rc
-
+RC_SRCS = localui.rc
 PO_SRCS = localui.rc
 
 @MAKE_DLL_RULES@
