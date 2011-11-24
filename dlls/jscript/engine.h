@@ -41,24 +41,25 @@ typedef struct _func_stack {
     struct _func_stack *next;
 } func_stack_t;
 
-#define OP_LIST                                   \
-    X(add, 1, 0)                                  \
-    X(bool, 1, 0)                                 \
-    X(bneg, 1, 0)                                 \
-    X(double, 1, 0)                               \
-    X(eq2, 1, 0)                                  \
-    X(in, 1, 0)                                   \
-    X(int, 1, ARG_INT)                            \
-    X(neg, 1, 0)                                  \
-    X(neq2, 1, 0)                                 \
-    X(null, 1, 0)                                 \
-    X(str, 1, 0)                                  \
-    X(tonum, 1, 0)                                \
-    X(tree, 1, ARG_EXPR)                          \
-    X(ret, 0, 0)
+#define OP_LIST                            \
+    X(add,        1, 0,0)                  \
+    X(bool,       1, ARG_INT,    0)        \
+    X(bneg,       1, 0,0)                  \
+    X(double,     1, ARG_SBL,    0)        \
+    X(eq2,        1, 0,0)                  \
+    X(in,         1, 0,0)                  \
+    X(int,        1, ARG_INT,    0)        \
+    X(neg,        1, 0,0)                  \
+    X(neq2,       1, 0,0)                  \
+    X(null,       1, 0,0)                  \
+    X(regexp,     1, ARG_STR,    ARG_INT)  \
+    X(str,        1, ARG_STR,    0)        \
+    X(tonum,      1, 0,0)                  \
+    X(tree,       1, ARG_EXPR,   0)        \
+    X(ret,        0, 0,0)
 
 typedef enum {
-#define X(x,a,b) OP_##x,
+#define X(x,a,b,c) OP_##x,
 OP_LIST
 #undef X
     OP_LAST
@@ -80,6 +81,7 @@ typedef enum {
 typedef struct {
     jsop_t op;
     instr_arg_t arg1;
+    instr_arg_t arg2;
 } instr_t;
 
 typedef struct {
@@ -199,7 +201,6 @@ typedef struct {
         double dval;
         const WCHAR *wstr;
         VARIANT_BOOL bval;
-        IDispatch *disp;
         struct {
             const WCHAR *str;
             DWORD str_len;

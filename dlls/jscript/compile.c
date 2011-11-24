@@ -168,10 +168,8 @@ static HRESULT compile_interp_fallback(compiler_ctx_t *ctx, expression_t *expr)
     return S_OK;
 }
 
-static HRESULT compile_literal(compiler_ctx_t *ctx, literal_expression_t *expr)
+static HRESULT compile_literal(compiler_ctx_t *ctx, literal_t *literal)
 {
-    literal_t *literal = expr->literal;
-
     switch(literal->type) {
     case LT_BOOL:
         return push_instr_int(ctx, OP_bool, literal->u.bval);
@@ -183,8 +181,26 @@ static HRESULT compile_literal(compiler_ctx_t *ctx, literal_expression_t *expr)
         return push_instr(ctx, OP_null);
     case LT_STRING:
         return push_instr_str(ctx, OP_str, literal->u.wstr);
+    case LT_REGEXP: {
+        unsigned instr;
+        WCHAR *str;
+
+        str = compiler_alloc(ctx->code, (literal->u.regexp.str_len+1)*sizeof(WCHAR));
+        if(!str)
+            return E_OUTOFMEMORY;
+        memcpy(str, literal->u.regexp.str, literal->u.regexp.str_len*sizeof(WCHAR));
+        str[literal->u.regexp.str_len] = 0;
+
+        instr = push_instr(ctx, OP_regexp);
+        if(instr == -1)
+            return E_OUTOFMEMORY;
+
+        instr_ptr(ctx, instr)->arg1.str = str;
+        instr_ptr(ctx, instr)->arg2.lng = literal->u.regexp.flags;
+        return S_OK;
+    }
     default:
-        return compile_interp_fallback(ctx, &expr->expr);
+        assert(0);
     }
 }
 
@@ -200,7 +216,7 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
     case EXPR_IN:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_in);
     case EXPR_LITERAL:
-        return compile_literal(ctx, (literal_expression_t*)expr);
+        return compile_literal(ctx, ((literal_expression_t*)expr)->literal);
     case EXPR_LOGNEG:
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_neg);
     case EXPR_NOTEQEQ:

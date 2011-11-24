@@ -1788,6 +1788,25 @@ HRESULT interp_str(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    7.8 */
+HRESULT interp_regexp(exec_ctx_t *ctx)
+{
+    const WCHAR *source = ctx->parser->code->instrs[ctx->ip].arg1.str;
+    const LONG flags = ctx->parser->code->instrs[ctx->ip].arg2.lng;
+    jsdisp_t *regexp;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("%s %x\n", debugstr_w(source), flags);
+
+    hres = create_regexp(ctx->parser->script, source, strlenW(source), flags, &regexp);
+    if(FAILED(hres))
+        return hres;
+
+    var_set_jsdisp(&v, regexp);
+    return stack_push(ctx, &v);
+}
+
+/* ECMA-262 3rd Edition    7.8 */
 HRESULT literal_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
     literal_expression_t *expr = (literal_expression_t*)_expr;
@@ -3382,13 +3401,13 @@ static HRESULT interp_tree(exec_ctx_t *ctx)
 typedef HRESULT (*op_func_t)(exec_ctx_t*);
 
 static const op_func_t op_funcs[] = {
-#define X(x,a,b) interp_##x,
+#define X(x,a,b,c) interp_##x,
 OP_LIST
 #undef X
 };
 
 static const unsigned op_move[] = {
-#define X(a,x,b) x,
+#define X(a,x,b,c) x,
 OP_LIST
 #undef X
 };
