@@ -826,7 +826,7 @@ static void free_effect_compiler(struct ID3DXEffectCompilerImpl *compiler)
     }
 }
 
-static INT get_int(D3DXPARAMETER_TYPE type, void *data)
+static INT get_int(D3DXPARAMETER_TYPE type, LPCVOID data)
 {
     INT i;
 
@@ -853,7 +853,7 @@ static INT get_int(D3DXPARAMETER_TYPE type, void *data)
     return i;
 }
 
-inline static FLOAT get_float(D3DXPARAMETER_TYPE type, void *data)
+inline static FLOAT get_float(D3DXPARAMETER_TYPE type, LPCVOID data)
 {
     FLOAT f;
 
@@ -880,7 +880,7 @@ inline static FLOAT get_float(D3DXPARAMETER_TYPE type, void *data)
     return f;
 }
 
-static inline BOOL get_bool(void *data)
+static inline BOOL get_bool(LPCVOID data)
 {
     return (*(DWORD *)data) ? TRUE : FALSE;
 }
@@ -891,6 +891,31 @@ static void get_vector(struct d3dx_parameter *param, D3DXVECTOR4 *vector)
     vector->y = param->columns > 1 ? get_float(param->type, (float *)param->data + 1) : 0.0f;
     vector->z = param->columns > 2 ? get_float(param->type, (float *)param->data + 2) : 0.0f;
     vector->w = param->columns > 3 ? get_float(param->type, (float *)param->data + 3) : 0.0f;
+}
+
+static void set_number(LPVOID outdata, D3DXPARAMETER_TYPE outtype, LPCVOID indata, D3DXPARAMETER_TYPE intype)
+{
+    TRACE("Changing from type %i to type %i\n", intype, outtype);
+
+    switch (outtype)
+    {
+        case D3DXPT_FLOAT:
+            *(FLOAT *)outdata = get_float(intype, indata);
+            break;
+
+        case D3DXPT_BOOL:
+            *(BOOL *)outdata = get_bool(indata);
+            break;
+
+        case D3DXPT_INT:
+            *(INT *)outdata = get_int(intype, indata);
+            break;
+
+        default:
+            FIXME("Error converting to type %i\n", outtype);
+            *(INT *)outdata = 0;
+            break;
+    }
 }
 
 static void get_matrix(struct d3dx_parameter *param, D3DXMATRIX *matrix)
@@ -1776,10 +1801,19 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetIntArray(ID3DXBaseEffect *iface, D3
 static HRESULT WINAPI ID3DXBaseEffectImpl_SetFloat(ID3DXBaseEffect *iface, D3DXHANDLE parameter, FLOAT f)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
-    FIXME("iface %p, parameter %p, f %f stub\n", This, parameter, f);
+    TRACE("iface %p, parameter %p, f %f\n", This, parameter, f);
 
-    return E_NOTIMPL;
+    if (param && !param->element_count && param->rows == 1 && param->columns == 1)
+    {
+        set_number((DWORD *)param->data, param->type, &f, D3DXPT_FLOAT);
+        return D3D_OK;
+    }
+
+    WARN("Invalid argument specified\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetFloat(ID3DXBaseEffect *iface, D3DXHANDLE parameter, FLOAT *f)
