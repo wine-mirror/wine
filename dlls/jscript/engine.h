@@ -51,6 +51,7 @@ typedef struct _func_stack {
     X(int, 1, ARG_INT)                            \
     X(neg, 1, 0)                                  \
     X(neq2, 1, 0)                                 \
+    X(null, 1, 0)                                 \
     X(str, 1, 0)                                  \
     X(tonum, 1, 0)                                \
     X(tree, 1, ARG_EXPR)                          \

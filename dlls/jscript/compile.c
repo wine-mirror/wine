@@ -179,6 +179,8 @@ static HRESULT compile_literal(compiler_ctx_t *ctx, literal_expression_t *expr)
         return push_instr_double(ctx, OP_double, literal->u.dval);
     case LT_INT:
         return push_instr_int(ctx, OP_int, literal->u.lval);
+    case LT_NULL:
+        return push_instr(ctx, OP_null);
     case LT_STRING:
         return push_instr_str(ctx, OP_str, literal->u.wstr);
     default:

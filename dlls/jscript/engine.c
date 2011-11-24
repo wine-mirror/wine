@@ -1724,6 +1724,17 @@ HRESULT identifier_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD
     return hres;
 }
 
+/* ECMA-262 3rd Edition    7.8.1 */
+HRESULT interp_null(exec_ctx_t *ctx)
+{
+    VARIANT v;
+
+    TRACE("\n");
+
+    V_VT(&v) = VT_NULL;
+    return stack_push(ctx, &v);
+}
+
 /* ECMA-262 3rd Edition    7.8.2 */
 HRESULT interp_bool(exec_ctx_t *ctx)
 {
