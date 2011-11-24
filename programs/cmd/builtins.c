@@ -517,7 +517,6 @@ void WCMD_copy (void) {
       } while (FindNextFileW(hff, &fd) != 0);
       FindClose (hff);
   } else {
-      status = ERROR_FILE_NOT_FOUND;
       WCMD_print_error ();
   }
 }
