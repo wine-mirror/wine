@@ -5241,6 +5241,8 @@ static HRESULT updateSurfaceDesc(struct wined3d_surface *surface,
         while (surface->pow2Height < pPresentationParameters->BackBufferHeight) surface->pow2Height <<= 1;
     }
 
+    if (!(surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL))
+        surface->resource.format = wined3d_get_format(gl_info, pPresentationParameters->BackBufferFormat);
     surface->resource.multisample_type = pPresentationParameters->MultiSampleType;
     surface->resource.multisample_quality = pPresentationParameters->MultiSampleQuality;
 
@@ -5498,10 +5500,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
             && present_parameters->BackBufferCount != swapchain->presentParms.BackBufferCount)
         FIXME("Cannot change the back buffer count yet.\n");
 
-    if (present_parameters->BackBufferFormat != WINED3DFMT_UNKNOWN
-            && present_parameters->BackBufferFormat != swapchain->presentParms.BackBufferFormat)
-        FIXME("Cannot change the back buffer format yet.\n");
-
     if (present_parameters->hDeviceWindow
             && present_parameters->hDeviceWindow != swapchain->presentParms.hDeviceWindow)
         FIXME("Cannot change the device window yet.\n");
@@ -5569,6 +5567,13 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
         swapchain->presentParms.BackBufferWidth = present_parameters->BackBufferWidth;
         swapchain->presentParms.BackBufferHeight = present_parameters->BackBufferHeight;
+        update_desc = TRUE;
+    }
+
+    if (present_parameters->BackBufferFormat != WINED3DFMT_UNKNOWN
+            && present_parameters->BackBufferFormat != swapchain->presentParms.BackBufferFormat)
+    {
+        swapchain->presentParms.BackBufferFormat = present_parameters->BackBufferFormat;
         update_desc = TRUE;
     }
 
