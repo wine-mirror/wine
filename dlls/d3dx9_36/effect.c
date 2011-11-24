@@ -28,6 +28,7 @@
 
 /* Constants for special INT/FLOAT conversation */
 #define INT_FLOAT_MULTI 255.0f
+#define INT_FLOAT_MULTI_INVERSE (1/INT_FLOAT_MULTI)
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
@@ -1718,10 +1719,46 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetBoolArray(ID3DXBaseEffect *iface, D
 static HRESULT WINAPI ID3DXBaseEffectImpl_SetInt(ID3DXBaseEffect *iface, D3DXHANDLE parameter, INT n)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
-    FIXME("iface %p, parameter %p, n %u stub\n", This, parameter, n);
+    TRACE("iface %p, parameter %p, n %i\n", This, parameter, n);
 
-    return E_NOTIMPL;
+    if (param && !param->element_count)
+    {
+        if (param->rows == 1 && param->columns == 1)
+        {
+            set_number(param->data, param->type, &n, D3DXPT_INT);
+            return D3D_OK;
+        }
+
+        /*
+         * Split the value, if parameter is a vector with dimension 3 or 4.
+         */
+        if (param->type == D3DXPT_FLOAT &&
+            ((param->class == D3DXPC_VECTOR && param->columns != 2) ||
+            (param->class == D3DXPC_MATRIX_ROWS && param->rows != 2 && param->columns == 1)))
+        {
+            FLOAT tmp = ((n & 0xff0000) >> 16) * INT_FLOAT_MULTI_INVERSE;
+            set_number((DWORD *)param->data, param->type, &tmp, D3DXPT_FLOAT);
+
+            tmp = ((n & 0xff00) >> 8) * INT_FLOAT_MULTI_INVERSE;
+            set_number((DWORD *)param->data + 1, param->type, &tmp, D3DXPT_FLOAT);
+
+            tmp = (n & 0xff) * INT_FLOAT_MULTI_INVERSE;
+            set_number((DWORD *)param->data + 2, param->type, &tmp, D3DXPT_FLOAT);
+
+            if (param->rows * param->columns > 3)
+            {
+                tmp = ((n & 0xff000000) >> 24) * INT_FLOAT_MULTI_INVERSE;
+                set_number((DWORD *)param->data + 3, param->type, &tmp, D3DXPT_FLOAT);
+            }
+            return D3D_OK;
+        }
+    }
+
+    WARN("Invalid argument specified\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetInt(ID3DXBaseEffect *iface, D3DXHANDLE parameter, INT *n)
