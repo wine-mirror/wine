@@ -725,12 +725,14 @@ static void test_surface_lockrect_blocks(IDirect3DDevice9 *device)
                         ok(SUCCEEDED(hr), "IDirect3DTexture9_GetSurfaceLevel failed (%08x)\n", hr);
                         IDirect3DTexture9_Release(texture);
                     }
+                    if (FAILED(hr)) continue;
                     break;
 
                 case D3DPOOL_SCRATCH:
                     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 128, 128, formats[i].fmt,
                             pools[j].pool, &surface, 0);
                     ok(SUCCEEDED(hr), "CreateOffscreenPlainSurface failed (%08x)\n", hr);
+                    if (FAILED(hr)) continue;
                     break;
 
                 default:
