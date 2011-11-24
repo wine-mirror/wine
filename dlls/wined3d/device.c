@@ -5556,7 +5556,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         mode.width = present_parameters->BackBufferWidth;
         mode.height = present_parameters->BackBufferHeight;
         mode.refresh_rate = present_parameters->FullScreen_RefreshRateInHz;
-        mode.format_id = swapchain->presentParms.BackBufferFormat;
+        mode.format_id = present_parameters->BackBufferFormat;
     }
 
     /* Should Width == 800 && Height == 0 set 800x600? */
