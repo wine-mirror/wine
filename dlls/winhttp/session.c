@@ -423,6 +423,7 @@ BOOL set_server_for_hostname( connect_t *connect, LPCWSTR server, INTERNET_PORT 
                 session->proxy_server, colon - session->proxy_server - 1 ))
             {
                 heap_free( connect->servername );
+                connect->sockaddr.ss_family = 0xffff;
                 if (!(connect->servername = heap_alloc(
                     (colon - session->proxy_server + 1) * sizeof(WCHAR) )))
                 {
@@ -444,6 +445,7 @@ BOOL set_server_for_hostname( connect_t *connect, LPCWSTR server, INTERNET_PORT 
                 session->proxy_server ))
             {
                 heap_free( connect->servername );
+                connect->sockaddr.ss_family = 0xffff;
                 if (!(connect->servername = strdupW( session->proxy_server )))
                 {
                     ret = FALSE;
@@ -456,6 +458,7 @@ BOOL set_server_for_hostname( connect_t *connect, LPCWSTR server, INTERNET_PORT 
     else if (server)
     {
         heap_free( connect->servername );
+        connect->sockaddr.ss_family = 0xffff;
         if (!(connect->servername = strdupW( server )))
         {
             ret = FALSE;
@@ -1837,7 +1840,9 @@ static BOOL run_script( const BSTR script, const WCHAR *url, WINHTTP_PROXY_INFO 
     hostname[uc.dwHostNameLength] = 0;
 
     init = CoInitialize( NULL );
-    CLSIDFromProgID( jscriptW, &clsid );
+    hr = CLSIDFromProgID( jscriptW, &clsid );
+    if (hr != S_OK) goto done;
+
     hr = CoCreateInstance( &clsid, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
                            &IID_IActiveScript, (void **)&engine );
     if (hr != S_OK) goto done;
