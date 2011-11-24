@@ -192,8 +192,9 @@ static DWORD get_glyph_bitmap( HDC hdc, UINT index, UINT aa_flags, GLYPHMETRICS 
 
     indices[0] = index;
 
-    for (i = 0; i < sizeof(indices) / sizeof(indices[0]); index = indices[++i])
+    for (i = 0; i < sizeof(indices) / sizeof(indices[0]); i++)
     {
+        index = indices[i];
         ret = GetGlyphOutlineW( hdc, index, ggo_flags, metrics, 0, NULL, &identity );
         if (ret != GDI_ERROR) break;
     }
