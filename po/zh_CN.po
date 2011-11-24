@@ -62,7 +62,7 @@ msgstr "程序 (*.exe)"
 msgid "All files (*.*)"
 msgstr "所有文件 (*.*)"
 
-#: appwiz.rc:42 winecfg.rc:202 winecfg.rc:239 wordpad.rc:245
+#: appwiz.rc:42 msacm32.rc:37 winecfg.rc:202 winecfg.rc:239 wordpad.rc:245
 msgid "&Remove"
 msgstr "删除(&R)"
 
@@ -110,11 +110,11 @@ msgid "Current format:"
 msgstr "当前格式:"
 
 #: avifil32.rc:51 credui.rc:49 ieframe.rc:84 localui.rc:41 localui.rc:54
-#: mpr.rc:46 shlwapi.rc:41 winspool.rc:39 net.rc:44 notepad.rc:122
-#: oleview.rc:159 oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139
-#: progman.rc:155 progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244
-#: regedit.rc:255 regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310
-#: taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226
+#: mpr.rc:46 msacm32.rc:50 shlwapi.rc:41 winspool.rc:39 net.rc:44
+#: notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103 progman.rc:121
+#: progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196 progman.rc:213
+#: regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284 regedit.rc:297
+#: regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226
 #: wineconsole.rc:131 winefile.rc:134 winefile.rc:157 winefile.rc:187
 #: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
 #: wordpad.rc:233 wordpad.rc:246
@@ -122,14 +122,14 @@ msgid "OK"
 msgstr "确定"
 
 #: avifil32.rc:52 browseui.rc:37 credui.rc:50 ieframe.rc:85 inetcpl.rc:78
-#: localui.rc:42 localui.rc:55 mpr.rc:47 shlwapi.rc:42 winspool.rc:40
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
-#: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
-#: regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298
-#: regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217
-#: winecfg.rc:227 wineconsole.rc:132 winefile.rc:135 winefile.rc:158
-#: winefile.rc:188 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
-#: wordpad.rc:247
+#: localui.rc:42 localui.rc:55 mpr.rc:47 msacm32.rc:51 shlwapi.rc:42
+#: winspool.rc:40 notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104
+#: progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197
+#: progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285
+#: regedit.rc:298 regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31
+#: winecfg.rc:217 winecfg.rc:227 wineconsole.rc:132 winefile.rc:135
+#: winefile.rc:158 winefile.rc:188 winemine.rc:93 wordpad.rc:205
+#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "取消"
 
@@ -2383,10 +2383,11 @@ msgstr "收藏夹(&F)"
 msgid "&Add to Favorites..."
 msgstr "添加到收藏夹(&A)..."
 
-#: ieframe.rc:55 shell32.rc:125 clock.rc:41 notepad.rc:57 notepad.rc:124
-#: oleview.rc:69 progman.rc:52 progman.rc:105 progman.rc:123 progman.rc:141
-#: progman.rc:157 progman.rc:181 progman.rc:199 progman.rc:216 regedit.rc:76
-#: taskmgr.rc:87 winefile.rc:85 winemine.rc:48 winhlp32.rc:53 wordpad.rc:91
+#: ieframe.rc:55 msacm32.rc:49 shell32.rc:125 clock.rc:41 notepad.rc:57
+#: notepad.rc:124 oleview.rc:69 progman.rc:52 progman.rc:105 progman.rc:123
+#: progman.rc:141 progman.rc:157 progman.rc:181 progman.rc:199 progman.rc:216
+#: regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48 winhlp32.rc:53
+#: wordpad.rc:91
 msgid "&Help"
 msgstr "帮助(&H)"
 
@@ -5913,6 +5914,26 @@ msgstr "保存密码(不安全)(&S)"
 #: mpr.rc:27
 msgid "Entire Network"
 msgstr "整个网络"
+
+#: msacm32.rc:27
+msgid "Sound Selection"
+msgstr "声音选择"
+
+#: msacm32.rc:31 winefile.rc:144
+msgid "&Name:"
+msgstr "名称(&N):"
+
+#: msacm32.rc:36
+msgid "&Save As..."
+msgstr "保存为(&S)..."
+
+#: msacm32.rc:39
+msgid "&Format:"
+msgstr "格式(&F):"
+
+#: msacm32.rc:44
+msgid "&Attributes:"
+msgstr "属性(&A):"
 
 #: mshtml.rc:31
 msgid "HTML rendering is currently disabled."
@@ -12178,11 +12199,6 @@ msgstr "选中信息(&I)"
 #, fuzzy
 msgid "By File Type"
 msgstr "按类型 (&T)"
-
-#: winefile.rc:144
-#, fuzzy
-msgid "&Name:"
-msgstr "文件名称(&N)"
 
 #: winefile.rc:146
 #, fuzzy

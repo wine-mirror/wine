@@ -11,30 +11,7 @@ C_SRCS = \
 	pcmconverter.c \
 	stream.c
 
-RC_SRCS = \
-	msacm_Cs.rc \
-	msacm_Da.rc \
-	msacm_De.rc \
-	msacm_En.rc \
-	msacm_Es.rc \
-	msacm_Fr.rc \
-	msacm_He.rc \
-	msacm_Hu.rc \
-	msacm_It.rc \
-	msacm_Ja.rc \
-	msacm_Ko.rc \
-	msacm_Lt.rc \
-	msacm_Nl.rc \
-	msacm_No.rc \
-	msacm_Pl.rc \
-	msacm_Pt.rc \
-	msacm_Ro.rc \
-	msacm_Ru.rc \
-	msacm_Si.rc \
-	msacm_Sr.rc \
-	msacm_Sv.rc \
-	msacm_Tr.rc \
-	msacm_Uk.rc \
-	msacm_Zh.rc
+RC_SRCS = msacm32.rc
+PO_SRCS = msacm32.rc
 
 @MAKE_DLL_RULES@
