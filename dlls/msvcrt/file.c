@@ -364,8 +364,11 @@ static MSVCRT_FILE* msvcrt_alloc_fp(void)
     {
       if (i == MSVCRT_stream_idx)
       {
-          InitializeCriticalSection(&((file_crit*)file)->crit);
-          ((file_crit*)file)->crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": file_crit.crit");
+          if (file<MSVCRT__iob || file>=MSVCRT__iob+_IOB_ENTRIES)
+          {
+              InitializeCriticalSection(&((file_crit*)file)->crit);
+              ((file_crit*)file)->crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": file_crit.crit");
+          }
           MSVCRT_stream_idx++;
       }
       return file;
