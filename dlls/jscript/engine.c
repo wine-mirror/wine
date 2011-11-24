@@ -1694,15 +1694,16 @@ HRESULT call_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags
 }
 
 /* ECMA-262 3rd Edition    11.1.1 */
-HRESULT this_expression_eval(script_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+HRESULT interp_this(exec_ctx_t *ctx)
 {
+    VARIANT v;
+
     TRACE("\n");
 
-    ret->type = EXPRVAL_VARIANT;
-    V_VT(&ret->u.var) = VT_DISPATCH;
-    V_DISPATCH(&ret->u.var) = ctx->exec_ctx->this_obj;
-    IDispatch_AddRef(ctx->exec_ctx->this_obj);
-    return S_OK;
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = ctx->this_obj;
+    IDispatch_AddRef(ctx->this_obj);
+    return stack_push(ctx, &v);
 }
 
 /* ECMA-262 3rd Edition    10.1.4 */
