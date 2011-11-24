@@ -2032,6 +2032,7 @@ static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
         heap_free(This->elem_vars[i]);
     heap_free(This->elem_vars);
 
+    detach_events(This);
     if(This->body_event_target)
         release_event_target(This->body_event_target);
     if(This->nsevent_listener)

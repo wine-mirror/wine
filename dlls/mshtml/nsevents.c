@@ -281,7 +281,7 @@ static nsresult NSAPI handle_htmlevent(nsIDOMEventListener *iface, nsIDOMEvent *
     eventid_t eid;
     nsresult nsres;
 
-    TRACE("\n");
+    TRACE("%p\n", This->This);
 
     nsAString_Init(&type_str, NULL);
     nsIDOMEvent_GetType(event, &type_str);
@@ -363,8 +363,34 @@ void add_nsevent_listener(HTMLDocumentNode *doc, nsIDOMNode *nsnode, LPCWSTR typ
     nsIDOMEventTarget_Release(target);
 }
 
+void detach_nsevent(HTMLDocumentNode *doc, const WCHAR *type)
+{
+    nsIDOMEventTarget *target;
+    nsAString type_str;
+    nsresult nsres;
+
+    if(!doc->basedoc.window)
+        return;
+
+    nsres = nsIDOMWindow_QueryInterface(doc->basedoc.window->nswindow, &IID_nsIDOMEventTarget, (void**)&target);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIDOMEventTarget interface: %08x\n", nsres);
+        return;
+    }
+
+    nsAString_InitDepend(&type_str, type);
+    nsres = nsIDOMEventTarget_RemoveEventListener(target, &type_str,
+            &doc->nsevent_listener->htmlevent_listener.nsIDOMEventListener_iface, TRUE);
+    nsAString_Finish(&type_str);
+    nsIDOMEventTarget_Release(target);
+    if(NS_FAILED(nsres))
+        ERR("RemoveEventTarget failed: %08x\n", nsres);
+}
+
 void release_nsevents(HTMLDocumentNode *doc)
 {
+    TRACE("%p %p\n", doc, doc->nsevent_listener);
+
     if(doc->nsevent_listener) {
         doc->nsevent_listener->doc = NULL;
         release_listener(doc->nsevent_listener);
@@ -386,6 +412,8 @@ void init_nsevents(HTMLDocumentNode *doc)
     listener = heap_alloc(sizeof(nsDocumentEventListener));
     if(!listener)
         return;
+
+    TRACE("%p %p\n", doc, listener);
 
     listener->ref = 1;
     listener->doc = doc;

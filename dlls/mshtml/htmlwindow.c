@@ -46,6 +46,7 @@ static void window_set_docnode(HTMLWindow *window, HTMLDocumentNode *doc_node)
     if(window->doc) {
         if(window->doc_obj && window == window->doc_obj->basedoc.window)
             window->doc->basedoc.cp_container.forward_container = NULL;
+        detach_events(window->doc);
         abort_document_bindings(window->doc);
         window->doc->basedoc.window = NULL;
         htmldoc_release(&window->doc->basedoc);

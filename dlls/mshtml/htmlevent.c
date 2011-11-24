@@ -1184,6 +1184,20 @@ static HRESULT ensure_nsevent_handler(HTMLDocumentNode *doc, event_target_t *eve
     return S_OK;
 }
 
+void detach_events(HTMLDocumentNode *doc)
+{
+    int i;
+
+    if(!doc->event_vector)
+        return;
+
+    for(i=0; i < EVENTID_LAST; i++) {
+        if(doc->event_vector[i])
+            detach_nsevent(doc, event_info[i].name);
+    }
+}
+
+
 static HRESULT remove_event_handler(event_target_t **event_target, eventid_t eid)
 {
     if(*event_target && (*event_target)->event_table[eid] && (*event_target)->event_table[eid]->handler_prop) {
