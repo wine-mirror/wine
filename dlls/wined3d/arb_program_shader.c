@@ -7137,6 +7137,15 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
     GLenum textype = surface->texture_target;
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
+    if (surface->flags & SFLAG_CONVERTED)
+    {
+        ENTER_GL();
+        glEnable(textype);
+        checkGLcall("glEnable(textype)");
+        LEAVE_GL();
+        return WINED3D_OK;
+    }
+
     if (!is_complex_fixup(surface->resource.format->color_fixup))
     {
         TRACE("Fixup:\n");

@@ -6229,7 +6229,8 @@ static HRESULT ffp_blit_set(void *blit_priv, struct wined3d_context *context, co
     /* When EXT_PALETTED_TEXTURE is around, palette conversion is done by the GPU
      * else the surface is converted in software at upload time in LoadLocation.
      */
-    if(fixup == COMPLEX_FIXUP_P8 && context->gl_info->supported[EXT_PALETTED_TEXTURE])
+    if (!(surface->flags & SFLAG_CONVERTED) && fixup == COMPLEX_FIXUP_P8
+            && context->gl_info->supported[EXT_PALETTED_TEXTURE])
         ffp_blit_p8_upload_palette(surface, context->gl_info);
 
     ENTER_GL();
