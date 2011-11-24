@@ -5,31 +5,7 @@ IMPORTS   = comctl32 user32 advapi32
 C_SRCS = \
 	credui_main.c
 
-RC_SRCS = \
-	credui.rc \
-	credui_Da.rc \
-	credui_De.rc \
-	credui_En.rc \
-	credui_Es.rc \
-	credui_Fr.rc \
-	credui_He.rc \
-	credui_Hu.rc \
-	credui_It.rc \
-	credui_Ja.rc \
-	credui_Ko.rc \
-	credui_Lt.rc \
-	credui_Nl.rc \
-	credui_No.rc \
-	credui_Pl.rc \
-	credui_Pt.rc \
-	credui_Ro.rc \
-	credui_Ru.rc \
-	credui_Si.rc \
-	credui_Sr.rc \
-	credui_Sv.rc \
-	credui_Uk.rc \
-	credui_Zh.rc
-
+RC_SRCS = credui.rc
 PO_SRCS = credui.rc
 
 SVG_SRCS = \
