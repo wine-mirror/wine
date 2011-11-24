@@ -1803,10 +1803,40 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetInt(ID3DXBaseEffect *iface, D3DXHAN
 static HRESULT WINAPI ID3DXBaseEffectImpl_SetIntArray(ID3DXBaseEffect *iface, D3DXHANDLE parameter, CONST INT *n, UINT count)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
-    FIXME("iface %p, parameter %p, n %p, count %u stub\n", This, parameter, n, count);
+    TRACE("iface %p, parameter %p, n %p, count %u\n", This, parameter, n, count);
 
-    return E_NOTIMPL;
+    if (param)
+    {
+        UINT i, size = min(count, param->bytes / sizeof(DWORD));
+
+        TRACE("Class %s\n", debug_d3dxparameter_class(param->class));
+
+        switch (param->class)
+        {
+            case D3DXPC_SCALAR:
+            case D3DXPC_VECTOR:
+            case D3DXPC_MATRIX_ROWS:
+                for (i = 0; i < size; ++i)
+                {
+                    set_number((DWORD *)param->data + i, param->type, &n[i], D3DXPT_INT);
+                }
+                return D3D_OK;
+
+            case D3DXPC_OBJECT:
+            case D3DXPC_STRUCT:
+                break;
+
+            default:
+                FIXME("Unhandled class %s\n", debug_d3dxparameter_class(param->class));
+                break;
+        }
+    }
+
+    WARN("Invalid argument specified\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetIntArray(ID3DXBaseEffect *iface, D3DXHANDLE parameter, INT *n, UINT count)
