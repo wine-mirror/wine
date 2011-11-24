@@ -696,7 +696,7 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
     return TRUE;
 }
 
-static BOOL solid_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts)
+static BOOL solid_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close)
 {
     int i;
 
@@ -704,6 +704,8 @@ static BOOL solid_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts)
     for (i = 0; i < num - 1; i++)
         if (!solid_pen_line( pdev, pts + i, pts + i + 1 ))
             return FALSE;
+
+    if (close) return solid_pen_line( pdev, pts + num - 1, pts );
 
     return TRUE;
 }
@@ -996,7 +998,7 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
     return TRUE;
 }
 
-static BOOL dashed_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts)
+static BOOL dashed_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close)
 {
     int i;
 
@@ -1005,10 +1007,12 @@ static BOOL dashed_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts)
         if (!dashed_pen_line( pdev, pts + i, pts + i + 1 ))
             return FALSE;
 
+    if (close) return dashed_pen_line( pdev, pts + num - 1, pts );
+
     return TRUE;
 }
 
-static BOOL null_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts)
+static BOOL null_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close)
 {
     return TRUE;
 }
