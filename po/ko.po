@@ -90,6 +90,54 @@ msgstr ""
 "다운로드한 파일의 체크섬에 문제가 있습니다..망가진 파일의 설치를 취소하는 중"
 "입니다."
 
+#: avifil32.rc:39
+msgid "Compress options"
+msgstr "압축 옵션"
+
+#: avifil32.rc:42
+msgid "&Choose a stream:"
+msgstr "스트림 선택(&C):"
+
+#: avifil32.rc:45 wordpad.rc:73
+msgid "&Options..."
+msgstr "옵션(&O)..."
+
+#: avifil32.rc:46
+msgid "&Interleave every"
+msgstr "항상 인터리브 적용(&I)"
+
+#: avifil32.rc:48
+msgid "frames"
+msgstr "프레임"
+
+#: avifil32.rc:49
+msgid "Current format:"
+msgstr "현재 형식:"
+
+#: avifil32.rc:51 credui.rc:49 ieframe.rc:84 localui.rc:41 localui.rc:54
+#: mpr.rc:46 shlwapi.rc:41 winspool.rc:39 net.rc:44 notepad.rc:122
+#: oleview.rc:159 oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139
+#: progman.rc:155 progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244
+#: regedit.rc:255 regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310
+#: taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226
+#: wineconsole.rc:131 winefile.rc:134 winefile.rc:157 winefile.rc:187
+#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
+#: wordpad.rc:233 wordpad.rc:246
+msgid "OK"
+msgstr "확인"
+
+#: avifil32.rc:52 browseui.rc:37 credui.rc:50 ieframe.rc:85 inetcpl.rc:78
+#: localui.rc:42 localui.rc:55 mpr.rc:47 shlwapi.rc:42 winspool.rc:40
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
+#: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
+#: regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298
+#: regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217
+#: winecfg.rc:227 wineconsole.rc:132 winefile.rc:135 winefile.rc:158
+#: winefile.rc:188 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
+#: wordpad.rc:247
+msgid "Cancel"
+msgstr "취소"
+
 #: avifil32.rc:27
 msgid "Waveform: %s"
 msgstr "파형: %s"
@@ -117,17 +165,6 @@ msgstr "Wine AVI-기본-파일핸들러"
 #: avifil32.rc:34
 msgid "uncompressed"
 msgstr "압축안됨"
-
-#: browseui.rc:37 credui.rc:50 ieframe.rc:85 inetcpl.rc:78 localui.rc:42
-#: localui.rc:55 mpr.rc:47 shlwapi.rc:42 winspool.rc:40 notepad.rc:123
-#: oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140
-#: progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245
-#: regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311
-#: taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
-#: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
-msgid "Cancel"
-msgstr "취소"
 
 #: browseui.rc:25
 msgid "Canceling..."
@@ -573,18 +610,6 @@ msgstr "암호(&P):"
 #: credui.rc:47
 msgid "&Remember my password"
 msgstr "내 암호 기억(&R)"
-
-#: credui.rc:49 ieframe.rc:84 localui.rc:41 localui.rc:54 mpr.rc:46
-#: shlwapi.rc:41 winspool.rc:39 net.rc:44 notepad.rc:122 oleview.rc:159
-#: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
-#: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
-#: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
-#: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
-#: winefile.rc:134 winefile.rc:157 winefile.rc:187 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
-#: wordpad.rc:246
-msgid "OK"
-msgstr "확인"
 
 #: credui.rc:27
 msgid "Connect to %s"
@@ -12612,10 +12637,6 @@ msgstr "눈금바(&R)"
 #: wordpad.rc:71 wordpad.rc:264
 msgid "&Statusbar"
 msgstr "상태바(&S)"
-
-#: wordpad.rc:73
-msgid "&Options..."
-msgstr "옵션(&O)..."
 
 #: wordpad.rc:75
 msgid "&Insert"

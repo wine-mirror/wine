@@ -16,33 +16,7 @@ C_SRCS = \
 
 IDL_R_SRCS = avifil32.idl
 
-RC_SRCS = \
-	avifil32.rc \
-	avifile_Cs.rc \
-	avifile_Da.rc \
-	avifile_De.rc \
-	avifile_En.rc \
-	avifile_Es.rc \
-	avifile_Fr.rc \
-	avifile_He.rc \
-	avifile_Hu.rc \
-	avifile_It.rc \
-	avifile_Ja.rc \
-	avifile_Ko.rc \
-	avifile_Lt.rc \
-	avifile_Nl.rc \
-	avifile_No.rc \
-	avifile_Pl.rc \
-	avifile_Pt.rc \
-	avifile_Ro.rc \
-	avifile_Ru.rc \
-	avifile_Si.rc \
-	avifile_Sr.rc \
-	avifile_Sv.rc \
-	avifile_Tr.rc \
-	avifile_Uk.rc \
-	avifile_Zh.rc
-
+RC_SRCS = avifil32.rc
 PO_SRCS = avifil32.rc
 
 @MAKE_DLL_RULES@
