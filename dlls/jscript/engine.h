@@ -57,7 +57,8 @@ typedef struct _func_stack {
     X(this,       1, 0,0)                  \
     X(tonum,      1, 0,0)                  \
     X(tree,       1, ARG_EXPR,   0)        \
-    X(ret,        0, 0,0)
+    X(ret,        0, 0,0)                  \
+    X(void,       1, 0,0)
 
 typedef enum {
 #define X(x,a,b,c) OP_##x,
@@ -545,7 +546,6 @@ HRESULT mul_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprva
 HRESULT div_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT mod_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT delete_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
-HRESULT void_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT typeof_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT minus_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT post_increment_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
