@@ -2260,7 +2260,8 @@ HRESULT CDECL wined3d_device_get_clip_plane(const struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_set_clip_status(struct wined3d_device *device, const WINED3DCLIPSTATUS *clip_status)
+HRESULT CDECL wined3d_device_set_clip_status(struct wined3d_device *device,
+        const struct wined3d_clip_status *clip_status)
 {
     FIXME("device %p, clip_status %p stub!\n", device, clip_status);
 
@@ -2270,7 +2271,8 @@ HRESULT CDECL wined3d_device_set_clip_status(struct wined3d_device *device, cons
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_get_clip_status(const struct wined3d_device *device, WINED3DCLIPSTATUS *clip_status)
+HRESULT CDECL wined3d_device_get_clip_status(const struct wined3d_device *device,
+        struct wined3d_clip_status *clip_status)
 {
     FIXME("device %p, clip_status %p stub!\n", device, clip_status);
 

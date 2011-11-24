@@ -1667,11 +1667,11 @@ struct wined3d_resource_desc
     UINT size;
 };
 
-typedef struct _WINED3DCLIPSTATUS
+struct wined3d_clip_status
 {
-   DWORD ClipUnion;
-   DWORD ClipIntersection;
-} WINED3DCLIPSTATUS;
+   DWORD clip_union;
+   DWORD clip_intersection;
+};
 
 typedef struct _WINED3DVERTEXELEMENT
 {
@@ -2200,7 +2200,8 @@ HRESULT __cdecl wined3d_device_get_back_buffer(const struct wined3d_device *devi
         UINT backbuffer_idx, WINED3DBACKBUFFER_TYPE backbuffer_type, struct wined3d_surface **backbuffer);
 INT __cdecl wined3d_device_get_base_vertex_index(const struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_get_clip_plane(const struct wined3d_device *device, UINT plane_idx, float *plane);
-HRESULT __cdecl wined3d_device_get_clip_status(const struct wined3d_device *device, WINED3DCLIPSTATUS *clip_status);
+HRESULT __cdecl wined3d_device_get_clip_status(const struct wined3d_device *device,
+        struct wined3d_clip_status *clip_status);
 HRESULT __cdecl wined3d_device_get_creation_parameters(const struct wined3d_device *device,
         WINED3DDEVICE_CREATION_PARAMETERS *creation_parameters);
 HRESULT __cdecl wined3d_device_get_depth_stencil(const struct wined3d_device *device,
@@ -2280,7 +2281,8 @@ HRESULT __cdecl wined3d_device_reset(struct wined3d_device *device,
 void __cdecl wined3d_device_restore_fullscreen_window(struct wined3d_device *device, HWND window);
 HRESULT __cdecl wined3d_device_set_base_vertex_index(struct wined3d_device *device, INT base_index);
 HRESULT __cdecl wined3d_device_set_clip_plane(struct wined3d_device *device, UINT plane_idx, const float *plane);
-HRESULT __cdecl wined3d_device_set_clip_status(struct wined3d_device *device, const WINED3DCLIPSTATUS *clip_status);
+HRESULT __cdecl wined3d_device_set_clip_status(struct wined3d_device *device,
+        const struct wined3d_clip_status *clip_status);
 void __cdecl wined3d_device_set_cursor_position(struct wined3d_device *device,
         int x_screen_space, int y_screen_space, DWORD flags);
 HRESULT __cdecl wined3d_device_set_cursor_properties(struct wined3d_device *device,

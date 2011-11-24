@@ -1648,10 +1648,10 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetClipStatus(IDirect3DDevice8 *iface
     HRESULT hr;
 
     TRACE("iface %p, clip_status %p.\n", iface, pClipStatus);
-/* FIXME: Verify that D3DCLIPSTATUS8 ~= WINED3DCLIPSTATUS */
+    /* FIXME: Verify that D3DCLIPSTATUS8 ~= struct wined3d_clip_status. */
 
     wined3d_mutex_lock();
-    hr = wined3d_device_set_clip_status(This->wined3d_device, (const WINED3DCLIPSTATUS *)pClipStatus);
+    hr = wined3d_device_set_clip_status(This->wined3d_device, (const struct wined3d_clip_status *)pClipStatus);
     wined3d_mutex_unlock();
 
     return hr;
@@ -1666,7 +1666,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetClipStatus(IDirect3DDevice8 *iface
     TRACE("iface %p, clip_status %p.\n", iface, pClipStatus);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_clip_status(This->wined3d_device, (WINED3DCLIPSTATUS *)pClipStatus);
+    hr = wined3d_device_get_clip_status(This->wined3d_device, (struct wined3d_clip_status *)pClipStatus);
     wined3d_mutex_unlock();
 
     return hr;
