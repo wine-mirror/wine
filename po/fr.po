@@ -5681,7 +5681,7 @@ msgstr "Entrez le mot de passe réseau"
 
 #: mpr.rc:35
 msgid "Please enter your username and password:"
-msgstr "Veuillez saisir votre nom d'utilisateur et votre mot de passe :"
+msgstr "Veuillez saisir vos nom d'utilisateur et mot de passe :"
 
 #: mpr.rc:36
 msgid "Proxy"
@@ -9396,7 +9396,6 @@ msgid "Unicode (UTF-8)"
 msgstr "Unicode (UTF-8)"
 
 #: notepad.rc:99
-#, fuzzy
 msgid ""
 "%1\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -9405,9 +9404,9 @@ msgid ""
 "one of the Unicode options in the Encoding drop down list.\n"
 "Continue?"
 msgstr ""
-"%s\n"
+"%1\n"
 "Ce fichier contient des caractères Unicode qui seront perdus si\n"
-"vous le sauvez dans le codage %s.\n"
+"vous le sauvez dans le codage %2.\n"
 "Pour conserver ces caractères, cliquez sur Annuler et sélectionnez\n"
 "une des alternatives Unicode dans la liste déroulante Codage.\n"
 "Continuer ?"
@@ -11240,9 +11239,8 @@ msgid "Processes: %d"
 msgstr "Processus : %d"
 
 #: taskmgr.rc:267
-#, fuzzy
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
-msgstr "Utilisation mémoire : %dK / %dK"
+msgstr "Utilisation mémoire : %1!u! ko / %2!u! ko"
 
 #: taskmgr.rc:272
 msgid "Image Name"
@@ -12577,17 +12575,17 @@ msgstr "%1 libres sur %2"
 #: winefile.rc:121
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr "kB"
+msgstr "ko"
 
 #: winefile.rc:122
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr "MB"
+msgstr "Mo"
 
 #: winefile.rc:123
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr "GB"
+msgstr "Go"
 
 #: winemine.rc:34
 msgid "&Game"
