@@ -2973,7 +2973,10 @@ static HRESULT WINAPI winhttp_request_Send(
         return S_OK;
     }
     VariantClear( &request->data );
-    if ((hr = VariantCopyInd( &request->data, &body )) != S_OK) return hr;
+    if ((hr = VariantCopyInd( &request->data, &body )) != S_OK) {
+        LeaveCriticalSection( &request->cs );
+        return hr;
+    }
 
     if (request->wait) /* async request */
     {
