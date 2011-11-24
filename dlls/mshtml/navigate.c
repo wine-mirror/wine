@@ -2069,7 +2069,7 @@ HRESULT navigate_url(HTMLWindow *window, const WCHAR *new_url, const WCHAR *base
         }
     }
 
-    if(window->doc_obj->is_webbrowser && window->doc_obj && window == window->doc_obj->basedoc.window) {
+    if(window->doc_obj && window->doc_obj->is_webbrowser && window == window->doc_obj->basedoc.window) {
         BOOL cancel = FALSE;
         IUri *uri;
 
