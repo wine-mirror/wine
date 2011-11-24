@@ -1362,7 +1362,7 @@ static const expression_eval_t expression_eval_table[] = {
    identifier_expression_eval,
    array_literal_expression_eval,
    property_value_expression_eval,
-   literal_expression_eval
+   compiled_expression_eval
 };
 
 static void *new_expression(parser_ctx_t *ctx, expression_type_t type, size_t size)

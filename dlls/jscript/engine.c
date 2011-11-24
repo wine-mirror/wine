@@ -1806,24 +1806,6 @@ HRESULT interp_regexp(exec_ctx_t *ctx)
     return stack_push(ctx, &v);
 }
 
-/* ECMA-262 3rd Edition    7.8 */
-HRESULT literal_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
-{
-    literal_expression_t *expr = (literal_expression_t*)_expr;
-    VARIANT var;
-    HRESULT hres;
-
-    TRACE("\n");
-
-    hres = literal_to_var(ctx, expr->literal, &var);
-    if(FAILED(hres))
-        return hres;
-
-    ret->type = EXPRVAL_VARIANT;
-    ret->u.var = var;
-    return S_OK;
-}
-
 /* ECMA-262 3rd Edition    11.1.4 */
 HRESULT array_literal_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
