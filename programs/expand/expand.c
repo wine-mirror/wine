@@ -30,7 +30,7 @@ static int myprintf(const char* format, ...)
 {
     va_list     va;
     char        tmp[8192];
-    DWORD       w;
+    DWORD       w = 0;
     int         len;
 
     va_start(va, format);
