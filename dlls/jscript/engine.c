@@ -2574,32 +2574,18 @@ HRESULT typeof_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD fla
 }
 
 /* ECMA-262 3rd Edition    11.4.7 */
-HRESULT minus_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+HRESULT interp_minus(exec_ctx_t *ctx)
 {
-    unary_expression_t *expr = (unary_expression_t*)_expr;
-    exprval_t exprval;
-    VARIANT val, num;
+    VARIANT n;
     HRESULT hres;
 
     TRACE("\n");
 
-    hres = expr_eval(ctx, expr->expression, 0, ei, &exprval);
+    hres = stack_pop_number(ctx, &n);
     if(FAILED(hres))
         return hres;
 
-    hres = exprval_to_value(ctx, &exprval, ei, &val);
-    exprval_release(&exprval);
-    if(FAILED(hres))
-        return hres;
-
-    hres = to_number(ctx, &val, ei, &num);
-    VariantClear(&val);
-    if(FAILED(hres))
-        return hres;
-
-    ret->type = EXPRVAL_VARIANT;
-    num_set_val(&ret->u.var, -num_val(&num));
-    return S_OK;
+    return stack_push_number(ctx, -num_val(&n));
 }
 
 /* ECMA-262 3rd Edition    11.4.6 */
