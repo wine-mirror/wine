@@ -2842,26 +2842,45 @@ static HRESULT equal_values(script_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jse
 }
 
 /* ECMA-262 3rd Edition    11.9.1 */
-HRESULT equal_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+HRESULT interp_eq(exec_ctx_t *ctx)
 {
-    binary_expression_t *expr = (binary_expression_t*)_expr;
-    VARIANT rval, lval;
+    VARIANT *l, *r;
     BOOL b;
     HRESULT hres;
 
-    TRACE("\n");
+    r = stack_pop(ctx);
+    l = stack_pop(ctx);
 
-    hres = get_binary_expr_values(ctx, expr, ei, &rval, &lval);
+    TRACE("%s == %s\n", debugstr_variant(l), debugstr_variant(r));
+
+    hres = equal_values(ctx->parser->script, l, r, &ctx->ei, &b);
+    VariantClear(l);
+    VariantClear(r);
     if(FAILED(hres))
         return hres;
 
-    hres = equal_values(ctx, &rval, &lval, ei, &b);
-    VariantClear(&lval);
-    VariantClear(&rval);
+    return stack_push_bool(ctx, b);
+}
+
+/* ECMA-262 3rd Edition    11.9.2 */
+HRESULT interp_neq(exec_ctx_t *ctx)
+{
+    VARIANT *l, *r;
+    BOOL b;
+    HRESULT hres;
+
+    r = stack_pop(ctx);
+    l = stack_pop(ctx);
+
+    TRACE("%s != %s\n", debugstr_variant(l), debugstr_variant(r));
+
+    hres = equal_values(ctx->parser->script, l, r, &ctx->ei, &b);
+    VariantClear(l);
+    VariantClear(r);
     if(FAILED(hres))
         return hres;
 
-    return return_bool(ret, b);
+    return stack_push_bool(ctx, !b);
 }
 
 /* ECMA-262 3rd Edition    11.9.4 */
@@ -2883,29 +2902,6 @@ static HRESULT interp_eq2(exec_ctx_t *ctx)
         return hres;
 
     return stack_push_bool(ctx, b);
-}
-
-/* ECMA-262 3rd Edition    11.9.2 */
-HRESULT not_equal_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
-{
-    binary_expression_t *expr = (binary_expression_t*)_expr;
-    VARIANT rval, lval;
-    BOOL b;
-    HRESULT hres;
-
-    TRACE("\n");
-
-    hres = get_binary_expr_values(ctx, expr, ei, &lval, &rval);
-    if(FAILED(hres))
-        return hres;
-
-    hres = equal_values(ctx, &lval, &rval, ei, &b);
-    VariantClear(&lval);
-    VariantClear(&rval);
-    if(FAILED(hres))
-        return hres;
-
-    return return_bool(ret, !b);
 }
 
 /* ECMA-262 3rd Edition    11.9.5 */

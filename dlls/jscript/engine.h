@@ -46,11 +46,13 @@ typedef struct _func_stack {
     X(bool,       1, ARG_INT,    0)        \
     X(bneg,       1, 0,0)                  \
     X(double,     1, ARG_SBL,    0)        \
+    X(eq,         1, 0,0)                  \
     X(eq2,        1, 0,0)                  \
     X(in,         1, 0,0)                  \
     X(int,        1, ARG_INT,    0)        \
     X(minus,      1, 0,0)                  \
     X(neg,        1, 0,0)                  \
+    X(neq,        1, 0,0)                  \
     X(neq2,       1, 0,0)                  \
     X(null,       1, 0,0)                  \
     X(pop,        1, 0,0)                  \
@@ -553,8 +555,6 @@ HRESULT post_increment_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcep
 HRESULT post_decrement_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT pre_increment_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT pre_decrement_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
-HRESULT equal_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
-HRESULT not_equal_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT less_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT lesseq_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT greater_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
