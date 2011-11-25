@@ -653,11 +653,14 @@ basic_string_char __thiscall locale_name(const locale *this)
 
 /* ??0_Timevec@std@@QAE@ABV01@@Z */
 /* ??0_Timevec@std@@QEAA@AEBV01@@Z */
+/* This copy constructor modifies copied object */
 DEFINE_THISCALL_WRAPPER(_Timevec_copy_ctor, 8)
-_Timevec* __thiscall _Timevec_copy_ctor(_Timevec *this, const _Timevec *copy)
+_Timevec* __thiscall _Timevec_copy_ctor(_Timevec *this, _Timevec *copy)
 {
-    FIXME("(%p %p) stub\n", this, copy);
-    return NULL;
+    TRACE("(%p %p)\n", this, copy);
+    this->timeptr = copy->timeptr;
+    copy->timeptr = NULL;
+    return this;
 }
 
 /* ??0_Timevec@std@@QAE@PAX@Z */
@@ -665,8 +668,9 @@ _Timevec* __thiscall _Timevec_copy_ctor(_Timevec *this, const _Timevec *copy)
 DEFINE_THISCALL_WRAPPER(_Timevec_ctor_timeptr, 8)
 _Timevec* __thiscall _Timevec_ctor_timeptr(_Timevec *this, void *timeptr)
 {
-    FIXME("(%p %p) stub\n", this, timeptr);
-    return NULL;
+    TRACE("(%p %p)\n", this, timeptr);
+    this->timeptr = timeptr;
+    return this;
 }
 
 /* ??_F_Timevec@std@@QAEXXZ */
@@ -674,8 +678,9 @@ _Timevec* __thiscall _Timevec_ctor_timeptr(_Timevec *this, void *timeptr)
 DEFINE_THISCALL_WRAPPER(_Timevec_ctor, 4)
 _Timevec* __thiscall _Timevec_ctor(_Timevec *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+    this->timeptr = NULL;
+    return this;
 }
 
 /* ??1_Timevec@std@@QAE@XZ */
@@ -683,7 +688,8 @@ _Timevec* __thiscall _Timevec_ctor(_Timevec *this)
 DEFINE_THISCALL_WRAPPER(_Timevec_dtor, 4)
 void __thiscall _Timevec_dtor(_Timevec *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    MSVCRT_operator_delete(this->timeptr);
 }
 
 /* ??4_Timevec@std@@QAEAAV01@ABV01@@Z */
@@ -691,8 +697,10 @@ void __thiscall _Timevec_dtor(_Timevec *this)
 DEFINE_THISCALL_WRAPPER(_Timevec_op_assign, 8)
 _Timevec* __thiscall _Timevec_op_assign(_Timevec *this, _Timevec *right)
 {
-    FIXME("(%p %p) stub\n", this, right);
-    return NULL;
+    TRACE("(%p %p)\n", this, right);
+    this->timeptr = right->timeptr;
+    right->timeptr = NULL;
+    return this;
 }
 
 /* ?_Getptr@_Timevec@std@@QBEPAXXZ */
@@ -700,8 +708,8 @@ _Timevec* __thiscall _Timevec_op_assign(_Timevec *this, _Timevec *right)
 DEFINE_THISCALL_WRAPPER(_Timevec__Getptr, 4)
 void* __thiscall _Timevec__Getptr(_Timevec *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+    return this->timeptr;
 }
 
 /* ?_Locinfo_ctor@_Locinfo@std@@SAXPAV12@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@@Z */
