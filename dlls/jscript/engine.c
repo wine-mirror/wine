@@ -1910,26 +1910,6 @@ HRESULT property_value_expression_eval(script_ctx_t *ctx, expression_t *_expr, D
     return S_OK;
 }
 
-/* ECMA-262 3rd Edition    11.14 */
-HRESULT comma_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
-{
-    binary_expression_t *expr = (binary_expression_t*)_expr;
-    VARIANT lval, rval;
-    HRESULT hres;
-
-    TRACE("\n");
-
-    hres = get_binary_expr_values(ctx, expr, ei, &lval, &rval);
-    if(FAILED(hres))
-        return hres;
-
-    VariantClear(&lval);
-
-    ret->type = EXPRVAL_VARIANT;
-    ret->u.var = rval;
-    return S_OK;
-}
-
 /* ECMA-262 3rd Edition    11.11 */
 HRESULT logical_or_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
@@ -3340,6 +3320,14 @@ HRESULT assign_xor_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD
     TRACE("\n");
 
     return assign_oper_eval(ctx, expr->expression1, expr->expression2, xor_eval, ei, ret);
+}
+
+static HRESULT interp_pop(exec_ctx_t *ctx)
+{
+    TRACE("\n");
+
+    stack_popn(ctx, 1);
+    return S_OK;
 }
 
 static HRESULT interp_ret(exec_ctx_t *ctx)

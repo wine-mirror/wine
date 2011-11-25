@@ -52,6 +52,7 @@ typedef struct _func_stack {
     X(neg,        1, 0,0)                  \
     X(neq2,       1, 0,0)                  \
     X(null,       1, 0,0)                  \
+    X(pop,        1, 0,0)                  \
     X(regexp,     1, ARG_STR,    ARG_INT)  \
     X(str,        1, ARG_STR,    0)        \
     X(this,       1, 0,0)                  \
@@ -534,7 +535,6 @@ HRESULT identifier_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*
 HRESULT array_literal_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT property_value_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 
-HRESULT comma_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT logical_or_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT logical_and_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT binary_or_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
