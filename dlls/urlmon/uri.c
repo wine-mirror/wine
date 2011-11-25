@@ -3859,6 +3859,49 @@ static HRESULT validate_components(const UriBuilder *builder, parse_data *data, 
     return S_OK;
 }
 
+static HRESULT compare_file_paths(const Uri *a, const Uri *b, BOOL *ret)
+{
+    WCHAR *canon_path_a, *canon_path_b;
+    DWORD len_a, len_b;
+
+    if(!a->path_len) {
+        *ret = !b->path_len;
+        return S_OK;
+    }
+
+    if(!b->path_len) {
+        *ret = FALSE;
+        return S_OK;
+    }
+
+    /* Fast path */
+    if(a->path_len == b->path_len && !memicmpW(a->canon_uri+a->path_start, b->canon_uri+b->path_start, a->path_len)) {
+        *ret = TRUE;
+        return S_OK;
+    }
+
+    len_a = canonicalize_path_hierarchical(a->canon_uri+a->path_start, a->path_len, a->scheme_type, FALSE, 0, NULL);
+    len_b = canonicalize_path_hierarchical(b->canon_uri+b->path_start, b->path_len, b->scheme_type, FALSE, 0, NULL);
+
+    canon_path_a = heap_alloc(len_a*sizeof(WCHAR));
+    if(!canon_path_a)
+        return E_OUTOFMEMORY;
+    canon_path_b = heap_alloc(len_b*sizeof(WCHAR));
+    if(!canon_path_b) {
+        heap_free(canon_path_a);
+        return E_OUTOFMEMORY;
+    }
+
+    len_a = canonicalize_path_hierarchical(a->canon_uri+a->path_start, a->path_len, a->scheme_type, FALSE, 0, canon_path_a);
+    len_b = canonicalize_path_hierarchical(b->canon_uri+b->path_start, b->path_len, b->scheme_type, FALSE, 0, canon_path_b);
+
+    *ret = len_a == len_b && !memicmpW(canon_path_a, canon_path_b, len_a);
+
+    heap_free(canon_path_a);
+    heap_free(canon_path_b);
+    return S_OK;
+}
+
 /* Checks if the two Uri's are logically equivalent. It's a simple
  * comparison, since they are both of type Uri, and it can access
  * the properties of each Uri directly without the need to go
@@ -3867,18 +3910,12 @@ static HRESULT validate_components(const UriBuilder *builder, parse_data *data, 
 static HRESULT compare_uris(const Uri *a, const Uri *b, BOOL *ret) {
     const BOOL known_scheme = a->scheme_type != URL_SCHEME_UNKNOWN;
     const BOOL are_hierarchical = a->authority_start > -1 && b->authority_start > -1;
+    HRESULT hres;
 
     *ret = FALSE;
 
     if(a->scheme_type != b->scheme_type)
         return S_OK;
-
-    if(a->scheme_type == URL_SCHEME_FILE) {
-        if(a->canon_len == b->canon_len) {
-            *ret = !StrCmpIW(a->canon_uri, b->canon_uri);
-            return S_OK;
-        }
-    }
 
     /* Only compare the scheme names (if any) if their unknown scheme types. */
     if(!known_scheme) {
@@ -3927,7 +3964,13 @@ static HRESULT compare_uris(const Uri *a, const Uri *b, BOOL *ret) {
      * would still evaluate to TRUE, but, only if they are both hierarchical
      * URIs.
      */
-    if((a->path_start > -1 && b->path_start > -1) &&
+    if(a->scheme_type == URL_SCHEME_FILE) {
+        BOOL cmp;
+
+        hres = compare_file_paths(a, b, &cmp);
+        if(FAILED(hres) || !cmp)
+            return hres;
+    } else if((a->path_start > -1 && b->path_start > -1) &&
        (a->path_len == b->path_len)) {
         if(StrCmpNW(a->canon_uri+a->path_start, b->canon_uri+b->path_start, a->path_len))
             return S_OK;
