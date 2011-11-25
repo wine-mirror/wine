@@ -104,7 +104,8 @@ typedef enum __exception_type {
     EXCEPTION_LOGIC_ERROR,
     EXCEPTION_LENGTH_ERROR,
     EXCEPTION_OUT_OF_RANGE,
-    EXCEPTION_INVALID_ARGUMENT
+    EXCEPTION_INVALID_ARGUMENT,
+    EXCEPTION_RUNTIME_ERROR
 } exception_type;
 void throw_exception(exception_type, const char *);
 void set_exception_vtable(void);
