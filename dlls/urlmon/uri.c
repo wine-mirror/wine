@@ -3870,16 +3870,20 @@ static HRESULT validate_components(const UriBuilder *builder, parse_data *data, 
  * the properties of each Uri directly without the need to go
  * through the "IUri_Get*" interface calls.
  */
-static BOOL are_equal_simple(const Uri *a, const Uri *b) {
+static HRESULT compare_uris(const Uri *a, const Uri *b, BOOL *ret) {
     const BOOL known_scheme = a->scheme_type != URL_SCHEME_UNKNOWN;
     const BOOL are_hierarchical = a->authority_start > -1 && b->authority_start > -1;
 
+    *ret = FALSE;
+
     if(a->scheme_type != b->scheme_type)
-        return FALSE;
+        return S_OK;
 
     if(a->scheme_type == URL_SCHEME_FILE) {
-        if(a->canon_len == b->canon_len)
-            return !StrCmpIW(a->canon_uri, b->canon_uri);
+        if(a->canon_len == b->canon_len) {
+            *ret = !StrCmpIW(a->canon_uri, b->canon_uri);
+            return S_OK;
+        }
     }
 
     /* Only compare the scheme names (if any) if their unknown scheme types. */
@@ -3888,20 +3892,20 @@ static BOOL are_equal_simple(const Uri *a, const Uri *b) {
            (a->scheme_len == b->scheme_len)) {
             /* Make sure the schemes are the same. */
             if(StrCmpNW(a->canon_uri+a->scheme_start, b->canon_uri+b->scheme_start, a->scheme_len))
-                return FALSE;
+                return S_OK;
         } else if(a->scheme_len != b->scheme_len)
             /* One of the Uri's has a scheme name, while the other doesn't. */
-            return FALSE;
+            return S_OK;
     }
 
     /* If they have a userinfo component, perform case sensitive compare. */
     if((a->userinfo_start > -1 && b->userinfo_start > -1) &&
        (a->userinfo_len == b->userinfo_len)) {
         if(StrCmpNW(a->canon_uri+a->userinfo_start, b->canon_uri+b->userinfo_start, a->userinfo_len))
-            return FALSE;
+            return S_OK;
     } else if(a->userinfo_len != b->userinfo_len)
         /* One of the Uri's had a userinfo, while the other one doesn't. */
-        return FALSE;
+        return S_OK;
 
     /* Check if they have a host name. */
     if((a->host_start > -1 && b->host_start > -1) &&
@@ -3909,19 +3913,19 @@ static BOOL are_equal_simple(const Uri *a, const Uri *b) {
         /* Perform a case insensitive compare if they are a known scheme type. */
         if(known_scheme) {
             if(StrCmpNIW(a->canon_uri+a->host_start, b->canon_uri+b->host_start, a->host_len))
-                return FALSE;
+                return S_OK;
         } else if(StrCmpNW(a->canon_uri+a->host_start, b->canon_uri+b->host_start, a->host_len))
-            return FALSE;
+            return S_OK;
     } else if(a->host_len != b->host_len)
         /* One of the Uri's had a host, while the other one didn't. */
-        return FALSE;
+        return S_OK;
 
     if(a->has_port && b->has_port) {
         if(a->port != b->port)
-            return FALSE;
+            return S_OK;
     } else if(a->has_port || b->has_port)
         /* One had a port, while the other one didn't. */
-        return FALSE;
+        return S_OK;
 
     /* Windows is weird with how it handles paths. For example
      * One URI could be "http://google.com" (after canonicalization)
@@ -3932,33 +3936,34 @@ static BOOL are_equal_simple(const Uri *a, const Uri *b) {
     if((a->path_start > -1 && b->path_start > -1) &&
        (a->path_len == b->path_len)) {
         if(StrCmpNW(a->canon_uri+a->path_start, b->canon_uri+b->path_start, a->path_len))
-            return FALSE;
+            return S_OK;
     } else if(are_hierarchical && a->path_len == -1 && b->path_len == 0) {
         if(*(a->canon_uri+a->path_start) != '/')
-            return FALSE;
+            return S_OK;
     } else if(are_hierarchical && b->path_len == 1 && a->path_len == 0) {
         if(*(b->canon_uri+b->path_start) != '/')
-            return FALSE;
+            return S_OK;
     } else if(a->path_len != b->path_len)
-        return FALSE;
+        return S_OK;
 
     /* Compare the query strings of the two URIs. */
     if((a->query_start > -1 && b->query_start > -1) &&
        (a->query_len == b->query_len)) {
         if(StrCmpNW(a->canon_uri+a->query_start, b->canon_uri+b->query_start, a->query_len))
-            return FALSE;
+            return S_OK;
     } else if(a->query_len != b->query_len)
-        return FALSE;
+        return S_OK;
 
     if((a->fragment_start > -1 && b->fragment_start > -1) &&
        (a->fragment_len == b->fragment_len)) {
         if(StrCmpNW(a->canon_uri+a->fragment_start, b->canon_uri+b->fragment_start, a->fragment_len))
-            return FALSE;
+            return S_OK;
     } else if(a->fragment_len != b->fragment_len)
-        return FALSE;
+        return S_OK;
 
     /* If we get here, the two URIs are equivalent. */
-    return TRUE;
+    *ret = TRUE;
+    return S_OK;
 }
 
 static void convert_to_dos_path(const WCHAR *path, DWORD path_len,
@@ -4944,16 +4949,13 @@ static HRESULT WINAPI Uri_IsEqual(IUri *iface, IUri *pUri, BOOL *pfEqual)
     }
 
     /* Try to convert it to a Uri (allows for a more simple comparison). */
-    if((other = get_uri_obj(pUri))) {
-        TRACE("comparing to %s\n", debugstr_w(other->canon_uri));
-        *pfEqual = are_equal_simple(This, other);
-    }else {
-        /* Do it the hard way. */
+    if(!(other = get_uri_obj(pUri))) {
         FIXME("(%p)->(%p %p) No support for unknown IUri's yet.\n", iface, pUri, pfEqual);
         return E_NOTIMPL;
     }
 
-    return S_OK;
+    TRACE("comparing to %s\n", debugstr_w(other->canon_uri));
+    return compare_uris(This, other, pfEqual);
 }
 
 static const IUriVtbl UriVtbl = {
