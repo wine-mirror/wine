@@ -274,15 +274,18 @@ locale__Locimp* __thiscall locale__Locimp_ctor(locale__Locimp *this)
 DEFINE_THISCALL_WRAPPER(locale__Locimp_copy_ctor, 8)
 locale__Locimp* __thiscall locale__Locimp_copy_ctor(locale__Locimp *this, const locale__Locimp *copy)
 {
+    _Lockit lock;
     MSVCP_size_t i;
 
     TRACE("(%p %p)\n", this, copy);
 
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
     memcpy(this, copy, sizeof(locale__Locimp));
     locale_facet_ctor_refs(&this->facet, 1);
     if(copy->facetvec) {
         this->facetvec = MSVCRT_operator_new(copy->facet_cnt*sizeof(locale_facet*));
         if(!this->facetvec) {
+            _Lockit_dtor(&lock);
             ERR("Out of memory\n");
             throw_exception(EXCEPTION_BAD_ALLOC, NULL);
             return NULL;
@@ -292,6 +295,7 @@ locale__Locimp* __thiscall locale__Locimp_copy_ctor(locale__Locimp *this, const 
                 locale_facet__Incref(this->facetvec[i]);
     }
     MSVCP_basic_string_char_copy_ctor(&this->name, &copy->name);
+    _Lockit_dtor(&lock);
     return this;
 }
 
@@ -351,8 +355,11 @@ locale__Locimp* __thiscall MSVCP_locale__Locimp_vector_dtor(locale__Locimp *this
 /* ?_Locimp_Addfac@_Locimp@locale@std@@CAXPEAV123@PEAVfacet@23@_K@Z */
 void __cdecl locale__Locimp__Locimp_Addfac(locale__Locimp *locimp, locale_facet *facet, MSVCP_size_t id)
 {
+    _Lockit lock;
+
     TRACE("(%p %p %lu)\n", locimp, facet, id);
 
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
     if(id >= locimp->facet_cnt) {
         MSVCP_size_t new_size = id+1;
         locale_facet **new_facetvec;
@@ -362,6 +369,7 @@ void __cdecl locale__Locimp__Locimp_Addfac(locale__Locimp *locimp, locale_facet 
 
         new_facetvec = MSVCRT_operator_new(sizeof(locale_facet*)*new_size);
         if(!new_facetvec) {
+            _Lockit_dtor(&lock);
             ERR("Out of memory\n");
             throw_exception(EXCEPTION_BAD_ALLOC, NULL);
             return;
@@ -380,6 +388,7 @@ void __cdecl locale__Locimp__Locimp_Addfac(locale__Locimp *locimp, locale_facet 
     locimp->facetvec[id] = facet;
     if(facet)
         locale_facet__Incref(facet);
+    _Lockit_dtor(&lock);
 }
 
 /* ?_Addfac@_Locimp@locale@std@@AAEXPAVfacet@23@I@Z */
@@ -437,8 +446,10 @@ const vtable_ptr MSVCP_locale__Locimp_vtable[] = {
 DEFINE_THISCALL_WRAPPER(locale_ctor_locimp, 8)
 locale* __thiscall locale_ctor_locimp(locale *this, locale__Locimp *locimp)
 {
-    FIXME("(%p %p) stub\n", this, locimp);
-    return NULL;
+    TRACE("(%p %p)\n", this, locimp);
+    /* Don't change locimp reference counter */
+    this->ptr = locimp;
+    return this;
 }
 
 /* ??0locale@std@@QAE@ABV01@0H@Z */
@@ -455,8 +466,10 @@ locale* __thiscall locale_ctor_locale_locale(locale *this, const locale *loc, co
 DEFINE_THISCALL_WRAPPER(locale_copy_ctor, 8)
 locale* __thiscall locale_copy_ctor(locale *this, const locale *copy)
 {
-    FIXME("(%p %p) stub\n", this, copy);
-    return NULL;
+    TRACE("(%p %p)\n", this, copy);
+    this->ptr = copy->ptr;
+    locale_facet__Incref(&this->ptr->facet);
+    return this;
 }
 
 /* ??0locale@std@@QAE@ABV01@PBDH@Z */
@@ -482,8 +495,9 @@ locale* __thiscall locale_ctor_cstr(locale *this, const char *locname, category 
 DEFINE_THISCALL_WRAPPER(locale_ctor_uninitialized, 8)
 locale* __thiscall locale_ctor_uninitialized(locale *this, int uninitialized)
 {
-    FIXME("(%p %d) stub\n", this, uninitialized);
-    return NULL;
+    TRACE("(%p)\n", this);
+    this->ptr = NULL;
+    return this;
 }
 
 /* ??0locale@std@@QAE@XZ */
@@ -509,7 +523,8 @@ DEFINE_THISCALL_WRAPPER(locale_dtor, 4)
 void __thiscall locale_dtor(locale *this)
 {
     TRACE("(%p)\n", this);
-    locale__Locimp_dtor(this->ptr);
+    if(this->ptr)
+        locale__Locimp_dtor(this->ptr);
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_locale_vector_dtor, 8)
