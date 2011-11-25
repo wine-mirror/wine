@@ -579,8 +579,27 @@ MSVCP_bool __thiscall locale_operator_not_equal(const locale *this, locale const
 DEFINE_THISCALL_WRAPPER(locale__Addfac, 16)
 locale* __thiscall locale__Addfac(locale *this, locale_facet *facet, MSVCP_size_t id, MSVCP_size_t catmask)
 {
-    FIXME("(%p %p %lu %lu) stub\n", this, facet, id, catmask);
-    return NULL;
+    TRACE("(%p %p %lu %lu)\n", this, facet, id, catmask);
+
+    if(this->ptr->facet.refs > 1) {
+        locale__Locimp *new_ptr = MSVCRT_operator_new(sizeof(locale__Locimp));
+        if(!new_ptr) {
+            ERR("Out of memory\n");
+            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            return NULL;
+        }
+        locale__Locimp_copy_ctor(new_ptr, this->ptr);
+        locale_facet__Decref(&this->ptr->facet);
+        this->ptr = new_ptr;
+    }
+
+    locale__Locimp__Addfac(this->ptr, facet, id);
+
+    if(catmask) {
+        MSVCP_basic_string_char_dtor(&this->ptr->name);
+        MSVCP_basic_string_char_ctor_cstr(&this->ptr->name, "*");
+    }
+    return this;
 }
 
 /* ?_Getfacet@locale@std@@QBEPBVfacet@12@I@Z */
