@@ -2828,60 +2828,56 @@ static BOOL canonicalize_authority(const parse_data *data, Uri *uri, DWORD flags
  *      file:///c:/test%20test  -> file:///c:/test%20test
  *      file:///c:/test%test    -> file:///c:/test%25test
  */
-static BOOL canonicalize_path_hierarchical(const parse_data *data, Uri *uri,
-                                           DWORD flags, BOOL computeOnly) {
+static DWORD canonicalize_path_hierarchical(const WCHAR *path, DWORD path_len, URL_SCHEME scheme_type, BOOL has_host, DWORD flags,
+        WCHAR *ret_path) {
+    const BOOL known_scheme = scheme_type != URL_SCHEME_UNKNOWN;
+    const BOOL is_file = scheme_type == URL_SCHEME_FILE;
+    const BOOL is_res = scheme_type == URL_SCHEME_RES;
     const WCHAR *ptr;
-    const BOOL known_scheme = data->scheme_type != URL_SCHEME_UNKNOWN;
-    const BOOL is_file = data->scheme_type == URL_SCHEME_FILE;
-    const BOOL is_res = data->scheme_type == URL_SCHEME_RES;
-
     BOOL escape_pct = FALSE;
+    DWORD len = 0;
 
-    if(!data->path) {
-        uri->path_start = -1;
-        uri->path_len = 0;
-        return TRUE;
-    }
+    if(!path)
+        return 0;
 
-    uri->path_start = uri->canon_len;
-    ptr = data->path;
+    ptr = path;
 
-    if(is_file && uri->host_start == -1) {
+    if(is_file && !has_host) {
         /* Check if a '/' needs to be appended for the file scheme. */
-        if(data->path_len > 1 && is_drive_path(ptr) && !(flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
-            if(!computeOnly)
-                uri->canon_uri[uri->canon_len] = '/';
-            uri->canon_len++;
+        if(path_len > 1 && is_drive_path(ptr) && !(flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
+            if(ret_path)
+                ret_path[len] = '/';
+            len++;
             escape_pct = TRUE;
         } else if(*ptr == '/') {
             if(!(flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
                 /* Copy the extra '/' over. */
-                if(!computeOnly)
-                    uri->canon_uri[uri->canon_len] = '/';
-                ++uri->canon_len;
+                if(ret_path)
+                    ret_path[len] = '/';
+                len++;
             }
             ++ptr;
         }
 
         if(is_drive_path(ptr)) {
-            if(!computeOnly) {
-                uri->canon_uri[uri->canon_len] = *ptr;
+            if(ret_path) {
+                ret_path[len] = *ptr;
                 /* If there's a '|' after the drive letter, convert it to a ':'. */
-                uri->canon_uri[uri->canon_len+1] = ':';
+                ret_path[len+1] = ':';
             }
             ptr += 2;
-            uri->canon_len += 2;
+            len += 2;
         }
     }
 
-    if(!is_file && *(data->path) && *(data->path) != '/') {
+    if(!is_file && *path && *path != '/') {
         /* Prepend a '/' to the path if it doesn't have one. */
-        if(!computeOnly)
-            uri->canon_uri[uri->canon_len] = '/';
-        ++uri->canon_len;
+        if(ret_path)
+            ret_path[len] = '/';
+        len++;
     }
 
-    for(; ptr < data->path+data->path_len; ++ptr) {
+    for(; ptr < path+path_len; ++ptr) {
         BOOL do_default_action = TRUE;
 
         if(*ptr == '%' && !is_res) {
@@ -2894,76 +2890,69 @@ static BOOL canonicalize_path_hierarchical(const parse_data *data, Uri *uri,
 
             if(force_encode || escape_pct) {
                 /* Escape the percent sign in the file URI. */
-                if(!computeOnly)
-                    pct_encode_val(*ptr, uri->canon_uri+uri->canon_len);
-                uri->canon_len += 3;
+                if(ret_path)
+                    pct_encode_val(*ptr, ret_path+len);
+                len += 3;
                 do_default_action = FALSE;
             } else if((is_unreserved(val) && known_scheme) ||
                       (is_file && (is_unreserved(val) || is_reserved(val) ||
                       (val && flags&Uri_CREATE_FILE_USE_DOS_PATH && !is_forbidden_dos_path_char(val))))) {
-                if(!computeOnly)
-                    uri->canon_uri[uri->canon_len] = val;
-                ++uri->canon_len;
+                if(ret_path)
+                    ret_path[len] = val;
+                len++;
 
                 ptr += 2;
                 continue;
             }
         } else if(*ptr == '/' && is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
             /* Convert the '/' back to a '\\'. */
-            if(!computeOnly)
-                uri->canon_uri[uri->canon_len] = '\\';
-            ++uri->canon_len;
+            if(ret_path)
+                ret_path[len] = '\\';
+            len++;
             do_default_action = FALSE;
         } else if(*ptr == '\\' && known_scheme) {
             if(!(is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH))) {
                 /* Convert '\\' into a '/'. */
-                if(!computeOnly)
-                    uri->canon_uri[uri->canon_len] = '/';
-                ++uri->canon_len;
+                if(ret_path)
+                    ret_path[len] = '/';
+                len++;
                 do_default_action = FALSE;
             }
         } else if(known_scheme && !is_res && !is_unreserved(*ptr) && !is_reserved(*ptr) &&
                   (!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS) || is_file)) {
             if(!(is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH))) {
                 /* Escape the forbidden character. */
-                if(!computeOnly)
-                    pct_encode_val(*ptr, uri->canon_uri+uri->canon_len);
-                uri->canon_len += 3;
+                if(ret_path)
+                    pct_encode_val(*ptr, ret_path+len);
+                len += 3;
                 do_default_action = FALSE;
             }
         }
 
         if(do_default_action) {
-            if(!computeOnly)
-                uri->canon_uri[uri->canon_len] = *ptr;
-            ++uri->canon_len;
+            if(ret_path)
+                ret_path[len] = *ptr;
+            len++;
         }
     }
-
-    uri->path_len = uri->canon_len - uri->path_start;
 
     /* Removing the dot segments only happens when it's not in
      * computeOnly mode and it's not a wildcard scheme. File schemes
      * with USE_DOS_PATH set don't get dot segments removed.
      */
     if(!(is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH)) &&
-       data->scheme_type != URL_SCHEME_WILDCARD) {
-        if(!(flags & Uri_CREATE_NO_CANONICALIZE) && !computeOnly) {
+       scheme_type != URL_SCHEME_WILDCARD) {
+        if(!(flags & Uri_CREATE_NO_CANONICALIZE) && ret_path) {
             /* Remove the dot segments (if any) and reset everything to the new
              * correct length.
              */
-            DWORD new_len = remove_dot_segments(uri->canon_uri+uri->path_start, uri->path_len);
-            uri->canon_len -= uri->path_len-new_len;
-            uri->path_len = new_len;
+            len = remove_dot_segments(ret_path, len);
         }
     }
 
-    if(!computeOnly)
-        TRACE("Canonicalized path %s len=%d\n",
-            debugstr_wn(uri->canon_uri+uri->path_start, uri->path_len),
-            uri->path_len);
-
-    return TRUE;
+    if(ret_path)
+        TRACE("Canonicalized path %s len=%d\n", debugstr_wn(ret_path, len), len);
+    return len;
 }
 
 /* Attempts to canonicalize the path for an opaque URI.
@@ -3121,8 +3110,13 @@ static BOOL canonicalize_hierpart(const parse_data *data, Uri *uri, DWORD flags,
             if(!canonicalize_path_opaque(data, uri, flags, computeOnly))
                 return FALSE;
         } else {
-            if(!canonicalize_path_hierarchical(data, uri, flags, computeOnly))
-                return FALSE;
+            if(!computeOnly)
+                uri->path_start = uri->canon_len;
+            uri->path_len = canonicalize_path_hierarchical(data->path, data->path_len, data->scheme_type, data->host_len != 0,
+                    flags, computeOnly ? NULL : uri->canon_uri+uri->canon_len);
+            uri->canon_len += uri->path_len;
+            if(!computeOnly && !uri->path_len)
+                uri->path_start = -1;
         }
     } else {
         /* Opaque URI's don't have an authority. */
