@@ -280,6 +280,31 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
+    {   "file://c:\\tests\\../tests/foo%20bar.mp3", Uri_CREATE_NO_CANONICALIZE, S_OK, FALSE,
+        {
+            {"file:///c:/tests/../tests/foo%2520bar.mp3",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file:///c:/tests/../tests/foo%2520bar.mp3",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".mp3",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/c:/tests/../tests/foo%2520bar.mp3",S_OK,FALSE},
+            {"/c:/tests/../tests/foo%2520bar.mp3",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file://c:\\tests\\../tests/foo%20bar.mp3",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
     {   "FILE://localhost/test dir\\../tests/test%20file.README.txt", 0, S_OK, FALSE,
         {
             {"file:///tests/test%20file.README.txt",S_OK,FALSE},
@@ -4500,6 +4525,41 @@ static const uri_equality equality_tests[] = {
     {
         "http://google.com:70/",0,
         "http://google.com:71/",0,
+        FALSE
+    },
+    {
+        "file:///c:/dir/file.txt", 0,
+        "file:///c:/dir/file.txt", Uri_CREATE_FILE_USE_DOS_PATH,
+        TRUE
+    },
+    {
+        "file:///c:/dir/file.txt", 0,
+        "file:///c:\\dir\\file.txt", Uri_CREATE_NO_CANONICALIZE,
+        TRUE
+    },
+    {
+        "file:///c:/dir/file.txt", 0,
+        "file:///c:\\dir2\\..\\dir\\file.txt", Uri_CREATE_NO_CANONICALIZE,
+        TRUE
+    },
+    {
+        "file:///c:\\dir2\\..\\ dir\\file.txt", Uri_CREATE_NO_CANONICALIZE,
+        "file:///c:/%20dir/file.txt", 0,
+        TRUE
+    },
+    {
+        "file:///c:/Dir/file.txt", 0,
+        "file:///C:/dir/file.TXT", Uri_CREATE_FILE_USE_DOS_PATH,
+        TRUE
+    },
+    {
+        "file:///c:/dir/file.txt", 0,
+        "file:///c:\\dir\\file.txt", Uri_CREATE_FILE_USE_DOS_PATH,
+        TRUE
+    },
+    {
+        "file:///c:/dir/file.txt#a", 0,
+        "file:///c:\\dir\\file.txt#b", Uri_CREATE_FILE_USE_DOS_PATH,
         FALSE
     }
 };
