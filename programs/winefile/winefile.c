@@ -526,6 +526,7 @@ static BOOL time_to_filetime(const time_t* t, FILETIME* ftime)
 	stime.wHour = tm->tm_hour;
 	stime.wMinute = tm->tm_min;
 	stime.wSecond = tm->tm_sec;
+	stime.wMilliseconds = 0;
 
 	return SystemTimeToFileTime(&stime, ftime);
 }
