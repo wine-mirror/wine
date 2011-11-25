@@ -647,9 +647,8 @@ const locale* __cdecl locale_classic(void)
 DEFINE_THISCALL_WRAPPER_RETPTR(locale_name, 4)
 basic_string_char __thiscall locale_name(const locale *this)
 {
-    basic_string_char ret = { 0 }; /* FIXME */
-    FIXME( "(%p) stub\n", this);
-    return ret;
+    TRACE( "(%p)\n", this);
+    return this->ptr->name;
 }
 
 /* ??0_Timevec@std@@QAE@ABV01@@Z */
