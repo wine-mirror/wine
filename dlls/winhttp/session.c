@@ -423,7 +423,7 @@ BOOL set_server_for_hostname( connect_t *connect, LPCWSTR server, INTERNET_PORT 
                 session->proxy_server, colon - session->proxy_server - 1 ))
             {
                 heap_free( connect->servername );
-                connect->sockaddr.ss_family = 0xffff;
+                connect->resolved = FALSE;
                 if (!(connect->servername = heap_alloc(
                     (colon - session->proxy_server + 1) * sizeof(WCHAR) )))
                 {
@@ -445,7 +445,7 @@ BOOL set_server_for_hostname( connect_t *connect, LPCWSTR server, INTERNET_PORT 
                 session->proxy_server ))
             {
                 heap_free( connect->servername );
-                connect->sockaddr.ss_family = 0xffff;
+                connect->resolved = FALSE;
                 if (!(connect->servername = strdupW( session->proxy_server )))
                 {
                     ret = FALSE;
@@ -458,7 +458,7 @@ BOOL set_server_for_hostname( connect_t *connect, LPCWSTR server, INTERNET_PORT 
     else if (server)
     {
         heap_free( connect->servername );
-        connect->sockaddr.ss_family = 0xffff;
+        connect->resolved = FALSE;
         if (!(connect->servername = strdupW( server )))
         {
             ret = FALSE;

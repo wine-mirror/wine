@@ -119,6 +119,7 @@ typedef struct
     INTERNET_PORT hostport;
     INTERNET_PORT serverport;
     struct sockaddr_storage sockaddr;
+    BOOL resolved;
 } connect_t;
 
 typedef struct

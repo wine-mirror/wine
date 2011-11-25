@@ -909,53 +909,68 @@ static BOOL secure_proxy_connect( request_t *request )
 #define INET6_ADDRSTRLEN 46
 #endif
 
+static WCHAR *addr_to_str( const struct sockaddr *addr )
+{
+    char buf[INET6_ADDRSTRLEN];
+    const void *src;
+
+    switch (addr->sa_family)
+    {
+    case AF_INET:
+        src = &((struct sockaddr_in *)addr)->sin_addr;
+        break;
+    case AF_INET6:
+        src = &((struct sockaddr_in6 *)addr)->sin6_addr;
+        break;
+    default:
+        WARN("unsupported address family %d\n", addr->sa_family);
+        return NULL;
+    }
+    if (!inet_ntop( addr->sa_family, src, buf, sizeof(buf) )) return NULL;
+    return strdupAW( buf );
+}
+
 static BOOL open_connection( request_t *request )
 {
     connect_t *connect;
-    const void *addr;
-    char address[INET6_ADDRSTRLEN];
-    WCHAR *addressW;
+    WCHAR *addressW = NULL;
     INTERNET_PORT port;
     socklen_t slen;
+    struct sockaddr *saddr;
+    DWORD len;
 
     if (netconn_connected( &request->netconn )) return TRUE;
 
     connect = request->connect;
     port = connect->serverport ? connect->serverport : (request->hdr.flags & WINHTTP_FLAG_SECURE ? 443 : 80);
+    saddr = (struct sockaddr *)&connect->sockaddr;
+    slen = sizeof(struct sockaddr);
 
-    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, connect->servername, strlenW(connect->servername) + 1 );
-
-    slen = sizeof(connect->sockaddr);
-    if (!netconn_resolve( connect->servername, port, (struct sockaddr *)&connect->sockaddr, &slen, request->resolve_timeout )) return FALSE;
-    switch (connect->sockaddr.ss_family)
+    if (!connect->resolved)
     {
-    case AF_INET:
-        addr = &((struct sockaddr_in *)&connect->sockaddr)->sin_addr;
-        break;
-    case AF_INET6:
-        addr = &((struct sockaddr_in6 *)&connect->sockaddr)->sin6_addr;
-        break;
-    default:
-        WARN("unsupported address family %d\n", connect->sockaddr.ss_family);
-        return FALSE;
+        len = strlenW( connect->servername ) + 1;
+        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, connect->servername, len );
+
+        if (!netconn_resolve( connect->servername, port, saddr, &slen, request->resolve_timeout )) return FALSE;
+        connect->resolved = TRUE;
+
+        if (!(addressW = addr_to_str( saddr ))) return FALSE;
+        len = strlenW( addressW ) + 1;
+        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_NAME_RESOLVED, addressW, len );
     }
-    inet_ntop( connect->sockaddr.ss_family, addr, address, sizeof(address) );
-    addressW = strdupAW( address );
-
-    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_NAME_RESOLVED, addressW, strlenW(addressW) + 1 );
-
-    TRACE("connecting to %s:%u\n", address, port);
+    if (!addressW && !(addressW = addr_to_str( saddr ))) return FALSE;
+    TRACE("connecting to %s:%u\n", debugstr_w(addressW), port);
 
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER, addressW, 0 );
 
-    if (!netconn_create( &request->netconn, connect->sockaddr.ss_family, SOCK_STREAM, 0 ))
+    if (!netconn_create( &request->netconn, saddr->sa_family, SOCK_STREAM, 0 ))
     {
         heap_free( addressW );
         return FALSE;
     }
     netconn_set_timeout( &request->netconn, TRUE, request->send_timeout );
     netconn_set_timeout( &request->netconn, FALSE, request->recv_timeout );
-    if (!netconn_connect( &request->netconn, (struct sockaddr *)&connect->sockaddr, slen, request->connect_timeout ))
+    if (!netconn_connect( &request->netconn, saddr, slen, request->connect_timeout ))
     {
         netconn_close( &request->netconn );
         heap_free( addressW );
