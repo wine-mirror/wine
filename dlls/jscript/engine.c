@@ -2290,6 +2290,8 @@ HRESULT interp_add(exec_ctx_t *ctx)
     TRACE("%s + %s\n", debugstr_variant(l), debugstr_variant(r));
 
     hres = add_eval(ctx->parser->script, l, r, &ctx->ei, &ret);
+    VariantClear(l);
+    VariantClear(r);
     if(FAILED(hres))
         return hres;
 
@@ -3362,6 +3364,7 @@ static HRESULT interp_tree(exec_ctx_t *ctx)
         return hres;
 
     hres = exprval_to_value(ctx->parser->script, &val, &ctx->ei, &v);
+    exprval_release(&val);
     if(FAILED(hres))
         return hres;
 
