@@ -132,7 +132,6 @@ static void test_preinitialization(void)
     }
 
     hr = IDirectInput_GetDeviceStatus(pDI, NULL);
-    todo_wine
     ok(hr == E_POINTER, "IDirectInput_GetDeviceStatus returned 0x%08x\n", hr);
 
     hr = IDirectInput_GetDeviceStatus(pDI, &GUID_Unknown);
@@ -475,7 +474,6 @@ static void test_GetDeviceStatus(void)
     }
 
     hr = IDirectInput_GetDeviceStatus(pDI, NULL);
-    todo_wine
     ok(hr == E_POINTER, "IDirectInput_GetDeviceStatus returned 0x%08x\n", hr);
 
     hr = IDirectInput_GetDeviceStatus(pDI, &GUID_Unknown);

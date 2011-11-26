@@ -614,6 +614,7 @@ static HRESULT WINAPI IDirectInputAImpl_GetDeviceStatus(LPDIRECTINPUT7A iface, R
 
     TRACE( "(%p)->(%s)\n", This, debugstr_guid(rguid) );
 
+    if (!rguid) return E_POINTER;
     if (!This->initialized)
         return DIERR_NOTINITIALIZED;
 
