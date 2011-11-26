@@ -86,11 +86,11 @@ static void test_preinitialization(void)
         {0, NULL, 0, DIERR_INVALIDPARAM},
         {0, NULL, ~0u, DIERR_INVALIDPARAM},
         {0, dummy_callback, 0, DIERR_NOTINITIALIZED},
-        {0, dummy_callback, ~0u, DIERR_INVALIDPARAM, 1},
+        {0, dummy_callback, ~0u, DIERR_INVALIDPARAM},
         {0xdeadbeef, NULL, 0, DIERR_INVALIDPARAM},
         {0xdeadbeef, NULL, ~0u, DIERR_INVALIDPARAM},
-        {0xdeadbeef, dummy_callback, 0, DIERR_INVALIDPARAM, 1},
-        {0xdeadbeef, dummy_callback, ~0u, DIERR_INVALIDPARAM, 1},
+        {0xdeadbeef, dummy_callback, 0, DIERR_INVALIDPARAM},
+        {0xdeadbeef, dummy_callback, ~0u, DIERR_INVALIDPARAM},
     };
 
     IDirectInputA *pDI;
@@ -434,11 +434,9 @@ static void test_EnumDevices(void)
     ok(hr == DIERR_INVALIDPARAM, "IDirectInput_EnumDevices returned 0x%08x\n", hr);
 
     hr = IDirectInput_EnumDevices(pDI, 0xdeadbeef, enum_devices_callback, NULL, 0);
-    todo_wine
     ok(hr == DIERR_INVALIDPARAM, "IDirectInput_EnumDevices returned 0x%08x\n", hr);
 
     hr = IDirectInput_EnumDevices(pDI, 0xdeadbeef, enum_devices_callback, NULL, ~0u);
-    todo_wine
     ok(hr == DIERR_INVALIDPARAM, "IDirectInput_EnumDevices returned 0x%08x\n", hr);
 
     enum_test.device_count = 0;

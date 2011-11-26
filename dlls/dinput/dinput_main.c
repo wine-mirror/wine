@@ -208,7 +208,8 @@ static void _dump_EnumDevices_dwFlags(DWORD dwFlags) {
 	    FE(DIEDFL_ATTACHEDONLY),
 	    FE(DIEDFL_FORCEFEEDBACK),
 	    FE(DIEDFL_INCLUDEALIASES),
-	    FE(DIEDFL_INCLUDEPHANTOMS)
+            FE(DIEDFL_INCLUDEPHANTOMS),
+            FE(DIEDFL_INCLUDEHIDDEN)
 #undef FE
 	};
 	TRACE(" flags: ");
@@ -356,7 +357,9 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
 	  lpCallback, pvRef, dwFlags);
     _dump_EnumDevices_dwFlags(dwFlags);
 
-    if (!lpCallback)
+    if (!lpCallback ||
+        dwFlags & ~(DIEDFL_ATTACHEDONLY | DIEDFL_FORCEFEEDBACK | DIEDFL_INCLUDEALIASES | DIEDFL_INCLUDEPHANTOMS | DIEDFL_INCLUDEHIDDEN) ||
+        dwDevType > 4)
         return DIERR_INVALIDPARAM;
 
     if (!This->initialized)
@@ -393,7 +396,9 @@ static HRESULT WINAPI IDirectInputWImpl_EnumDevices(
 	  lpCallback, pvRef, dwFlags);
     _dump_EnumDevices_dwFlags(dwFlags);
 
-    if (!lpCallback)
+    if (!lpCallback ||
+        dwFlags & ~(DIEDFL_ATTACHEDONLY | DIEDFL_FORCEFEEDBACK | DIEDFL_INCLUDEALIASES | DIEDFL_INCLUDEPHANTOMS | DIEDFL_INCLUDEHIDDEN) ||
+        dwDevType > 4)
         return DIERR_INVALIDPARAM;
 
     if (!This->initialized)
