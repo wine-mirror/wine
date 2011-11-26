@@ -427,9 +427,10 @@ const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
         fontconfig_installed = pFcInit();
     }
     else TRACE( "cannot find the fontconfig library " SONAME_LIBFONTCONFIG "\n" );
-#endif
 
 sym_not_found:
+#endif
+
     glyphsetCache = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                               sizeof(*glyphsetCache) * INIT_CACHE_SIZE);
 
