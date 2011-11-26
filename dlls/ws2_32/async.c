@@ -269,10 +269,10 @@ static HANDLE run_query( HWND hWnd, UINT uMsg, LPTHREAD_START_ROUTINE func,
 {
     static LONG next_handle = 0xdead;
     HANDLE thread;
-    ULONG handle = LOWORD( InterlockedIncrement( &next_handle ));
-
-    /* avoid handle 0 */
-    while (!handle) handle = LOWORD( InterlockedIncrement( &next_handle ));
+    ULONG handle;
+    do
+        handle = LOWORD( InterlockedIncrement( &next_handle ));
+    while (!handle); /* avoid handle 0 */
 
     query->hWnd    = hWnd;
     query->uMsg    = uMsg;
