@@ -22,6 +22,7 @@
 #include <initguid.h>
 #include <windows.h>
 #include <dinput.h>
+#include <dinputd.h>
 
 #include "wine/test.h"
 
@@ -225,7 +226,7 @@ static void test_DirectInput8Create(void)
 
 static void test_QueryInterface(void)
 {
-    static REFIID iid_list[] = {&IID_IUnknown, &IID_IDirectInput8A, &IID_IDirectInput8W};
+    static REFIID iid_list[] = {&IID_IUnknown, &IID_IDirectInput8A, &IID_IDirectInput8W, &IID_IDirectInputJoyConfig8};
 
     static const struct
     {
@@ -279,7 +280,19 @@ static void test_QueryInterface(void)
         hr = IDirectInput8_QueryInterface(pDI, iid_list[i], (void **)&pUnk);
         ok(hr == S_OK, "[%d] IDirectInput8_QueryInterface returned 0x%08x\n", i, hr);
         ok(pUnk != NULL, "[%d] Output interface pointer is NULL\n", i);
-        if (pUnk) IUnknown_Release(pUnk);
+        if (pUnk)
+        {
+            int j;
+            for (j = 0; j < sizeof(iid_list)/sizeof(iid_list[0]); j++)
+            {
+                IUnknown *pUnk1 = NULL;
+                hr = IDirectInput8_QueryInterface(pUnk, iid_list[j], (void **)&pUnk1);
+                ok(hr == S_OK, "[%d] IDirectInput8_QueryInterface(pUnk) returned 0x%08x\n", j, hr);
+                ok(pUnk1 != NULL, "[%d] Output interface pointer is NULL\n", i);
+                if (pUnk1) IUnknown_Release(pUnk1);
+            }
+            IUnknown_Release(pUnk);
+        }
     }
 
     for (i = 0; i < sizeof(no_interface_list)/sizeof(no_interface_list[0]); i++)

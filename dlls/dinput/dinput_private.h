@@ -24,6 +24,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "dinput.h"
+#include "dinputd.h"
 #include "wine/list.h"
 
 /* Implementation specification */
@@ -34,6 +35,7 @@ struct IDirectInputImpl
     IDirectInput7W              IDirectInput7W_iface;
     IDirectInput8A              IDirectInput8A_iface;
     IDirectInput8W              IDirectInput8W_iface;
+    IDirectInputJoyConfig8      IDirectInputJoyConfig8_iface;
 
     LONG                        ref;
 

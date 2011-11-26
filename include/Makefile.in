@@ -229,6 +229,7 @@ SRCDIR_INCLUDES = \
 	devpropdef.h \
 	digitalv.h \
 	dinput.h \
+	dinputd.h \
 	dispdib.h \
 	dlgs.h \
 	dls1.h \
