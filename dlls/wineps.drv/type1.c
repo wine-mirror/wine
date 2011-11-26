@@ -226,11 +226,20 @@ static BOOL get_glyf_pos(HDC hdc, DWORD index, DWORD *start, DWORD *end)
     *start = *end = 0;
 
     len = GetFontData(hdc, MS_MAKE_TAG('h','e','a','d'), 0, NULL, 0);
+    if (len == GDI_ERROR) return FALSE;
     head = HeapAlloc(GetProcessHeap(), 0, len);
     GetFontData(hdc, MS_MAKE_TAG('h','e','a','d'), 0, head, len);
     loca_format = get_be_word(head + 50);
 
     len = GetFontData(hdc, MS_MAKE_TAG('l','o','c','a'), 0, NULL, 0);
+    if (len == GDI_ERROR)
+    {
+        len = GetFontData(hdc, MS_MAKE_TAG('C','F','F',' '), 0, NULL, 0);
+        if (len != GDI_ERROR) FIXME( "CFF tables not supported yet\n" );
+        else ERR( "loca table not found\n" );
+        HeapFree(GetProcessHeap(), 0, head);
+        return FALSE;
+    }
     loca = HeapAlloc(GetProcessHeap(), 0, len);
     GetFontData(hdc, MS_MAKE_TAG('l','o','c','a'), 0, loca, len);
 
