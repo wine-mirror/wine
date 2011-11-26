@@ -43,6 +43,7 @@
 
 DEFINE_GUID(SID_SContainerDispatch, 0xb722be00, 0x4e68, 0x101b, 0xa2, 0xbc, 0x00, 0xaa, 0x00, 0x40, 0x47, 0x70);
 DEFINE_GUID(SID_UnknownSID, 0x75dd09cb, 0x6c40, 0x11d5, 0x85, 0x43, 0x00, 0xc0, 0x4f, 0xa0, 0xfb, 0xa3);
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -3087,29 +3088,202 @@ static void test_domnode( void )
     free_bstrs();
 }
 
+typedef struct {
+    DOMNodeType type;
+    REFIID iid;
+} refcount_test_t;
+
+static const refcount_test_t refcount_test[] = {
+    { NODE_ELEMENT,                &IID_IXMLDOMElement },
+    { NODE_ATTRIBUTE,              &IID_IXMLDOMAttribute },
+    { NODE_TEXT,                   &IID_IXMLDOMText },
+    { NODE_CDATA_SECTION,          &IID_IXMLDOMCDATASection },
+    { NODE_ENTITY_REFERENCE,       &IID_IXMLDOMEntityReference },
+    { NODE_PROCESSING_INSTRUCTION, &IID_IXMLDOMProcessingInstruction },
+    { NODE_COMMENT,                &IID_IXMLDOMComment },
+    { NODE_DOCUMENT_FRAGMENT,      &IID_IXMLDOMDocumentFragment },
+    { NODE_INVALID,                &IID_NULL }
+};
+
 static void test_refs(void)
 {
-    HRESULT r;
-    VARIANT_BOOL b;
-    IXMLDOMDocument *doc;
-    IXMLDOMElement *element = NULL;
-    IXMLDOMNode *node = NULL, *node2;
+    IXMLDOMImplementation *impl, *impl2;
+    IXMLDOMElement *element, *elem2;
     IXMLDOMNodeList *node_list = NULL;
-    LONG ref;
+    IXMLDOMNode *node, *node2, *node3;
+    const refcount_test_t *ptr;
+    IXMLDOMDocument *doc;
     IUnknown *unk, *unk2;
+    VARIANT_BOOL b;
+    HRESULT hr;
+    LONG ref;
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
+
+    ptr = refcount_test;
+    while (ptr->type != NODE_INVALID)
+    {
+        IUnknown *node_typed, *node_typed2;
+        IDispatchEx *dispex, *dispex2;
+        IDispatch *disp, *disp2;
+        VARIANT type;
+
+        V_VT(&type) = VT_I1;
+        V_I1(&type) = ptr->type;
+
+        EXPECT_REF(doc, 1);
+        hr = IXMLDOMDocument_createNode(doc, type, _bstr_("name"), NULL, &node);
+        EXPECT_HR(hr, S_OK);
+        EXPECT_REF(doc, 1);
+        EXPECT_REF(node, 1);
+
+        /* try IDispatch and IUnknown from IXMLDOMNode */
+        hr = IXMLDOMNode_QueryInterface(node, &IID_IUnknown, (void**)&unk);
+        EXPECT_HR(hr, S_OK);
+        EXPECT_REF(unk, 2);
+todo_wine {
+        EXPECT_REF(node, 1);
+        ok(unk != (IUnknown*)node, "%d: got %p and %p\n", ptr->type, unk, node);
+}
+        EXPECT_REF(unk, 2);
+        hr = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)&disp);
+        EXPECT_HR(hr, S_OK);
+        todo_wine ok(unk != (IUnknown*)disp, "%d: got %p and %p\n", ptr->type, unk, disp);
+        EXPECT_REF(unk, 3);
+        todo_wine EXPECT_REF(disp, 1);
+
+        EXPECT_REF(unk, 3);
+        hr = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)&disp2);
+        EXPECT_HR(hr, S_OK);
+        todo_wine ok(disp != disp2, "%d: got %p and %p\n", ptr->type, disp, disp2);
+        EXPECT_REF(unk, 4);
+        todo_wine EXPECT_REF(disp2, 1);
+
+        IDispatch_Release(disp);
+        IDispatch_Release(disp2);
+
+        /* get IXMLDOMNode from this IUnknown */
+        EXPECT_REF(unk, 2);
+        hr = IUnknown_QueryInterface(unk, &IID_IXMLDOMNode, (void**)&node2);
+        EXPECT_HR(hr, S_OK);
+        todo_wine ok(unk != (IUnknown*)node2, "%d: got %p and %p\n", ptr->type, unk, node2);
+        EXPECT_REF(unk, 3);
+        todo_wine EXPECT_REF(node2, 1);
+
+        EXPECT_REF(unk, 3);
+        hr = IUnknown_QueryInterface(unk, &IID_IXMLDOMNode, (void**)&node3);
+        EXPECT_HR(hr, S_OK);
+        todo_wine ok(node2 != node3, "%d: got %p and %p\n", ptr->type, node2, node3);
+        EXPECT_REF(unk, 4);
+        todo_wine EXPECT_REF(node3, 1);
+
+        IXMLDOMNode_Release(node2);
+        IXMLDOMNode_Release(node3);
+
+        /* try IDispatchEx from IUnknown */
+        EXPECT_REF(unk, 2);
+        hr = IUnknown_QueryInterface(unk, &IID_IDispatchEx, (void**)&dispex);
+        EXPECT_HR(hr, S_OK);
+        ok(unk != (IUnknown*)dispex, "%d: got %p and %p\n", ptr->type, unk, dispex);
+        EXPECT_REF(unk, 3);
+        todo_wine EXPECT_REF(dispex, 1);
+
+        EXPECT_REF(unk, 3);
+        hr = IUnknown_QueryInterface(unk, &IID_IDispatchEx, (void**)&dispex2);
+        EXPECT_HR(hr, S_OK);
+        todo_wine ok(dispex != dispex2, "%d: got %p and %p\n", ptr->type, dispex, dispex2);
+        EXPECT_REF(unk, 4);
+        todo_wine EXPECT_REF(dispex2, 1);
+
+        IDispatch_Release(dispex);
+        IDispatch_Release(dispex2);
+
+        /* try corresponding IXMLDOM* */
+        EXPECT_REF(unk, 2);
+        hr = IUnknown_QueryInterface(unk, ptr->iid, (void**)&node_typed);
+        EXPECT_HR(hr, S_OK);
+        EXPECT_REF(unk, 3);
+        hr = IUnknown_QueryInterface(unk, ptr->iid, (void**)&node_typed2);
+        EXPECT_HR(hr, S_OK);
+        EXPECT_REF(unk, 4);
+        todo_wine ok(node_typed != node_typed2, "%d: got %p and %p\n", ptr->type, node_typed, node_typed2);
+        IUnknown_Release(node_typed);
+        IUnknown_Release(node_typed2);
+
+        /* try invalid IXMLDOM* */
+        hr = IUnknown_QueryInterface(unk, (ptr+1)->iid, (void**)&node_typed);
+        EXPECT_HR(hr, E_NOINTERFACE);
+
+        IUnknown_Release(unk);
+
+        EXPECT_REF(node, 1);
+        hr = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMNode, (void**)&node2);
+        EXPECT_HR(hr, S_OK);
+        EXPECT_REF(node, 2);
+        ok(node == node2, "%d: got %p and %p\n", ptr->type, node, node2);
+
+        EXPECT_REF(node, 2);
+        hr = IXMLDOMNode_QueryInterface(node, ptr->iid, (void**)&node_typed);
+        EXPECT_HR(hr, S_OK);
+        EXPECT_REF(node, 3);
+todo_wine {
+        EXPECT_REF(node_typed, 2);
+        ok((IUnknown*)node != node_typed, "%d: got %p and %p\n", ptr->type, node, node_typed);
+}
+        IUnknown_Release(node_typed);
+
+        IXMLDOMNode_Release(node2);
+        IXMLDOMNode_Release(node);
+
+        ptr++;
+    }
 
     EXPECT_REF(doc, 1);
     ref = IXMLDOMDocument_Release(doc);
     ok( ref == 0, "ref %d\n", ref);
 
+    /* check IUnknown after releasing DOM iface */
+    doc = create_document(&IID_IXMLDOMDocument);
+    EXPECT_REF(doc, 1);
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IUnknown, (void**)&unk);
+    EXPECT_HR(hr, S_OK);
+todo_wine {
+    EXPECT_REF(unk, 3);
+    EXPECT_REF(doc, 1);
+}
+    IXMLDOMDocument_Release(doc);
+    EXPECT_REF(unk, 1);
+    IUnknown_Release(unk);
+
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
 
-    r = IXMLDOMDocument_loadXML( doc, _bstr_(complete4A), &b );
-    ok( r == S_OK, "loadXML failed\n");
+    EXPECT_REF(doc, 1);
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IUnknown, (void**)&unk);
+    EXPECT_HR(hr, S_OK);
+todo_wine {
+    EXPECT_REF(unk, 3);
+    EXPECT_REF(doc, 1);
+}
+    IUnknown_Release(unk);
+
+    /* IXMLDOMImplementation */
+    EXPECT_REF(doc, 1);
+    hr = IXMLDOMDocument_get_implementation(doc, &impl);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(doc, 1);
+    EXPECT_REF(impl, 1);
+    hr = IXMLDOMDocument_get_implementation(doc, &impl2);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(doc, 1);
+    EXPECT_REF(impl2, 1);
+    ok(impl != impl2, "got %p, %p\n", impl, impl2);
+    IXMLDOMImplementation_Release(impl);
+    IXMLDOMImplementation_Release(impl2);
+
+    hr = IXMLDOMDocument_loadXML( doc, _bstr_(complete4A), &b );
+    EXPECT_HR(hr, S_OK);
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
 
     EXPECT_REF(doc, 1);
@@ -3121,30 +3295,75 @@ static void test_refs(void)
     IXMLDOMDocument_Release( doc );
     IXMLDOMDocument_Release( doc );
 
-    r = IXMLDOMDocument_get_documentElement( doc, &element );
-    ok( r == S_OK, "should be a document element\n");
-    ok( element != NULL, "should be an element\n");
-
     EXPECT_REF(doc, 1);
-    todo_wine EXPECT_REF(element, 2);
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IUnknown, (void**)&unk);
+    EXPECT_HR(hr, S_OK);
+todo_wine {
+    EXPECT_REF(unk, 3);
+    EXPECT_REF(doc, 1);
+}
+    hr = IXMLDOMDocument_get_documentElement(doc, &element);
+    EXPECT_HR(hr, S_OK);
+todo_wine {
+    EXPECT_REF(doc, 1);
+    EXPECT_REF(element, 2);
+}
+    hr = IXMLDOMDocument_get_documentElement(doc, &elem2);
+    EXPECT_HR(hr, S_OK);
 
+todo_wine {
+    EXPECT_REF(doc, 1);
+    EXPECT_REF(element, 2);
+    EXPECT_REF(elem2, 2);
+}
     IXMLDOMElement_AddRef(element);
     todo_wine EXPECT_REF(element, 3);
     IXMLDOMElement_Release(element);
 
-    r = IXMLDOMElement_get_childNodes( element, &node_list );
-    ok( r == S_OK, "rets %08x\n", r);
+    /* get IUnknown from a node doesn't touch node instance refcount */
+    hr = IXMLDOMElement_QueryInterface(element, &IID_IUnknown, (void**)&unk);
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(element, 2);
+todo_wine {
+    EXPECT_REF(unk, 4);
+    EXPECT_REF(elem2, 2);
+}
+    hr = IXMLDOMElement_QueryInterface(elem2, &IID_IUnknown, (void**)&unk2);
+    EXPECT_HR(hr, S_OK);
+todo_wine {
+    EXPECT_REF(unk, 5);
+    EXPECT_REF(unk2, 5);
+}
+    EXPECT_REF(element, 2);
+    EXPECT_REF(elem2, 2);
+
+    todo_wine ok(unk == unk2, "got %p and %p\n", unk, unk2);
+
+    IUnknown_Release(unk);
+    IUnknown_Release(unk2);
+
+    /* IUnknown refcount is not affected by node refcount */
+    todo_wine EXPECT_REF(unk2, 3);
+    IXMLDOMElement_AddRef(elem2);
+    todo_wine EXPECT_REF(unk2, 3);
+    IXMLDOMElement_Release(elem2);
+
+    IXMLDOMElement_Release(elem2);
+    todo_wine EXPECT_REF(unk2, 2);
+
+    hr = IXMLDOMElement_get_childNodes( element, &node_list );
+    EXPECT_HR(hr, S_OK);
 
     todo_wine EXPECT_REF(element, 2);
     EXPECT_REF(node_list, 1);
 
-    IXMLDOMNodeList_get_item( node_list, 0, &node );
-    ok( r == S_OK, "rets %08x\n", r);
+    hr = IXMLDOMNodeList_get_item( node_list, 0, &node );
+    EXPECT_HR(hr, S_OK);
     EXPECT_REF(node_list, 1);
     EXPECT_REF(node, 1);
 
-    IXMLDOMNodeList_get_item( node_list, 0, &node2 );
-    ok( r == S_OK, "rets %08x\n", r);
+    hr = IXMLDOMNodeList_get_item( node_list, 0, &node2 );
+    EXPECT_HR(hr, S_OK);
     EXPECT_REF(node_list, 1);
     EXPECT_REF(node2, 1);
 
@@ -3159,22 +3378,22 @@ static void test_refs(void)
     ok( node != node2, "node %p node2 %p\n", node, node2 );
 
     ref = IXMLDOMDocument_Release( doc );
-    ok( ref == 0, "ref %d\n", ref );
+    todo_wine ok( ref == 0, "ref %d\n", ref );
 
     todo_wine EXPECT_REF(element, 2);
 
     /* IUnknown must be unique however we obtain it */
-    r = IXMLDOMElement_QueryInterface( element, &IID_IUnknown, (void**)&unk );
-    ok( r == S_OK, "rets %08x\n", r );
+    hr = IXMLDOMElement_QueryInterface(element, &IID_IUnknown, (void**)&unk);
+    EXPECT_HR(hr, S_OK);
     EXPECT_REF(element, 2);
-    r = IXMLDOMElement_QueryInterface( element, &IID_IXMLDOMNode, (void**)&node );
-    ok( r == S_OK, "rets %08x\n", r );
+    hr = IXMLDOMElement_QueryInterface(element, &IID_IXMLDOMNode, (void**)&node);
+    EXPECT_HR(hr, S_OK);
     todo_wine EXPECT_REF(element, 2);
-    r = IXMLDOMNode_QueryInterface( node, &IID_IUnknown, (void**)&unk2 );
-    ok( r == S_OK, "rets %08x\n", r );
+    hr = IXMLDOMNode_QueryInterface(node, &IID_IUnknown, (void**)&unk2);
+    EXPECT_HR(hr, S_OK);
     todo_wine EXPECT_REF(element, 2);
-    ok( unk == unk2, "unk %p unk2 %p\n", unk, unk2 );
-    todo_wine ok( element != (void*)node, "node %p element %p\n", node, element );
+    ok(unk == unk2, "unk %p unk2 %p\n", unk, unk2);
+    todo_wine ok(element != (void*)node, "node %p element %p\n", node, element);
 
     IUnknown_Release( unk2 );
     IUnknown_Release( unk );
