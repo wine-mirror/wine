@@ -224,6 +224,7 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
         output( "\t.byte 0x66\n" );
         output( "\tlret\n" );
 
+        output_function_size( "__wine_call_from_16_thunk" );
         return;
     }
 
@@ -333,6 +334,8 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
         output( "\tpopl %%ds\n" );
         output( "\tpopfl\n" );
         output( "\tlret\n" );
+
+        output_function_size( "__wine_call_from_16_regs" );
     }
     else
     {
@@ -352,10 +355,9 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
 
         /* Return to return stub which will return to caller */
         output( "\tlret $12\n" );
+
+        output_function_size( "__wine_call_from_16" );
     }
-    if (thunk) output_function_size( "__wine_call_from_16_thunk" );
-    else if (reg_func) output_function_size( "__wine_call_from_16_regs" );
-    else output_function_size( "__wine_call_from_16" );
 }
 
 
