@@ -4495,17 +4495,18 @@ static void test_AcceptEx(void)
     SOCKET acceptor = INVALID_SOCKET;
     SOCKET connector = INVALID_SOCKET;
     SOCKET connector2 = INVALID_SOCKET;
-    struct sockaddr_in bindAddress;
+    struct sockaddr_in bindAddress, peerAddress, *readBindAddress, *readRemoteAddress;
     int socklen;
-    GUID acceptExGuid = WSAID_ACCEPTEX;
+    GUID acceptExGuid = WSAID_ACCEPTEX, getAcceptExGuid = WSAID_GETACCEPTEXSOCKADDRS;
     LPFN_ACCEPTEX pAcceptEx = NULL;
+    LPFN_GETACCEPTEXSOCKADDRS pGetAcceptExSockaddrs = NULL;
     fd_set fds_accept, fds_send;
     struct timeval timeout = {0,10}; /* wait for 10 milliseconds */
     int got, conn1, i;
     DWORD bytesReturned;
     char buffer[1024];
     OVERLAPPED overlapped;
-    int iret;
+    int iret, localSize = sizeof(struct sockaddr_in), remoteSize = localSize;
     BOOL bret;
     DWORD dwret;
 
@@ -4554,6 +4555,13 @@ static void test_AcceptEx(void)
         &pAcceptEx, sizeof(pAcceptEx), &bytesReturned, NULL, NULL);
     if (iret) {
         skip("WSAIoctl failed to get AcceptEx with ret %d + errno %d\n", iret, WSAGetLastError());
+        goto end;
+    }
+
+    iret = WSAIoctl(listener, SIO_GET_EXTENSION_FUNCTION_POINTER, &getAcceptExGuid, sizeof(getAcceptExGuid),
+        &pGetAcceptExSockaddrs, sizeof(pGetAcceptExSockaddrs), &bytesReturned, NULL, NULL);
+    if (iret) {
+        skip("WSAIoctl failed to get GetAcceptExSockaddrs with ret %d + errno %d\n", iret, WSAGetLastError());
         goto end;
     }
 
@@ -4692,6 +4700,26 @@ static void test_AcceptEx(void)
 
     dwret = WaitForSingleObject(overlapped.hEvent, 0);
     ok(dwret == WAIT_TIMEOUT, "Waiting for accept event timeout failed with %d + errno %d\n", dwret, GetLastError());
+
+    iret = getsockname( connector, (struct sockaddr *)&peerAddress, &remoteSize);
+    ok( !iret, "getsockname failed.\n");
+
+    /* Check if the buffer from AcceptEx is decoded correclty */
+    pGetAcceptExSockaddrs(buffer, 2, sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
+                          (struct sockaddr **)&readBindAddress, &localSize,
+                          (struct sockaddr **)&readRemoteAddress, &remoteSize);
+    ok( readBindAddress->sin_addr.s_addr == bindAddress.sin_addr.s_addr,
+            "Local socket address is different %s != %s\n",
+            inet_ntoa(readBindAddress->sin_addr), inet_ntoa(bindAddress.sin_addr));
+    ok( readBindAddress->sin_port == bindAddress.sin_port,
+            "Local socket port is different: %d != %d\n",
+            readBindAddress->sin_port, bindAddress.sin_port);
+    ok( readRemoteAddress->sin_addr.s_addr == peerAddress.sin_addr.s_addr,
+            "Remote socket address is different %s != %s\n",
+            inet_ntoa(readRemoteAddress->sin_addr), inet_ntoa(peerAddress.sin_addr));
+    ok( readRemoteAddress->sin_port == peerAddress.sin_port,
+            "Remote socket port is different: %d != %d\n",
+            readRemoteAddress->sin_port, peerAddress.sin_port);
 
     iret = send(connector, buffer, 1, 0);
     ok(iret == 1, "could not send 1 byte: send %d errno %d\n", iret, WSAGetLastError());

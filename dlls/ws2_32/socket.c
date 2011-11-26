@@ -1675,13 +1675,13 @@ static NTSTATUS WS2_async_accept( void *arg, IO_STATUS_BLOCK *iosb, NTSTATUS sta
     /* WS2 Spec says size param is extra 16 bytes long...what do we put in it? */
     addr = ((char *)wsa->buf) + wsa->data_len;
     len = wsa->local_len - sizeof(int);
-    WS_getpeername(HANDLE2SOCKET(wsa->accept_socket),
+    WS_getsockname(HANDLE2SOCKET(wsa->accept_socket),
                    (struct WS_sockaddr *)(addr + sizeof(int)), &len);
     *(int *)addr = len;
 
     addr += wsa->local_len;
     len = wsa->remote_len - sizeof(int);
-    WS_getsockname(HANDLE2SOCKET(wsa->accept_socket),
+    WS_getpeername(HANDLE2SOCKET(wsa->accept_socket),
                    (struct WS_sockaddr *)(addr + sizeof(int)), &len);
     *(int *)addr = len;
 
