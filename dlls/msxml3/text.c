@@ -171,12 +171,7 @@ static HRESULT WINAPI domtext_get_nodeValue(
 
     TRACE("(%p)->(%p)\n", This, value);
 
-    if(!value)
-        return E_INVALIDARG;
-
-    V_VT(value) = VT_BSTR;
-    V_BSTR(value) = bstr_from_xmlChar(This->node.node->content);
-    return S_OK;
+    return node_get_content(&This->node, value);
 }
 
 static HRESULT WINAPI domtext_put_nodeValue(
