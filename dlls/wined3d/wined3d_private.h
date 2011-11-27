@@ -1704,7 +1704,7 @@ struct wined3d_device
     struct wined3d_stateblock *updateStateBlock;
 
     /* Internal use fields  */
-    WINED3DDEVICE_CREATION_PARAMETERS createParms;
+    struct wined3d_device_creation_parameters create_parms;
     WINED3DDEVTYPE                  devType;
     HWND focus_window;
 

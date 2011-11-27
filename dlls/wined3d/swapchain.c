@@ -864,7 +864,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, WINED3DSURFTY
             return WINED3DERR_INVALIDCALL;
     }
 
-    window = present_parameters->hDeviceWindow ? present_parameters->hDeviceWindow : device->createParms.hFocusWindow;
+    window = present_parameters->hDeviceWindow ? present_parameters->hDeviceWindow : device->create_parms.focus_window;
 
     swapchain->device = device;
     swapchain->parent = parent;

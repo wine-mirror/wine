@@ -1684,13 +1684,13 @@ struct wined3d_vertex_element
     BYTE usage_idx;
 };
 
-typedef struct _WINED3DDEVICE_CREATION_PARAMETERS
+struct wined3d_device_creation_parameters
 {
-    UINT AdapterOrdinal;
-    WINED3DDEVTYPE DeviceType;
-    HWND hFocusWindow;
-    DWORD BehaviorFlags;
-} WINED3DDEVICE_CREATION_PARAMETERS;
+    UINT adapter_idx;
+    WINED3DDEVTYPE device_type;
+    HWND focus_window;
+    DWORD flags;
+};
 
 typedef struct _WINED3DDEVINFO_BANDWIDTHTIMINGS
 {
@@ -2203,7 +2203,7 @@ HRESULT __cdecl wined3d_device_get_clip_plane(const struct wined3d_device *devic
 HRESULT __cdecl wined3d_device_get_clip_status(const struct wined3d_device *device,
         struct wined3d_clip_status *clip_status);
 HRESULT __cdecl wined3d_device_get_creation_parameters(const struct wined3d_device *device,
-        WINED3DDEVICE_CREATION_PARAMETERS *creation_parameters);
+        struct wined3d_device_creation_parameters *creation_parameters);
 HRESULT __cdecl wined3d_device_get_depth_stencil(const struct wined3d_device *device,
         struct wined3d_surface **depth_stencil);
 HRESULT __cdecl wined3d_device_get_device_caps(const struct wined3d_device *device, WINED3DCAPS *caps);

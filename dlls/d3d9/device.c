@@ -389,7 +389,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetCreationParameters(IDirect3DDevice
 
     wined3d_mutex_lock();
     hr = wined3d_device_get_creation_parameters(This->wined3d_device,
-            (WINED3DDEVICE_CREATION_PARAMETERS *)pParameters);
+            (struct wined3d_device_creation_parameters *)pParameters);
     wined3d_mutex_unlock();
 
     return hr;

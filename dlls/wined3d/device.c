@@ -1582,7 +1582,7 @@ void CDECL wined3d_device_set_multithreaded(struct wined3d_device *device)
     TRACE("device %p.\n", device);
 
     /* For now just store the flag (needed in case of ddraw). */
-    device->createParms.BehaviorFlags |= WINED3DCREATE_MULTITHREADED;
+    device->create_parms.flags |= WINED3DCREATE_MULTITHREADED;
 }
 
 HRESULT CDECL wined3d_device_set_display_mode(struct wined3d_device *device,
@@ -5629,7 +5629,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         {
             if (swapchain->presentParms.Windowed)
             {
-                HWND focus_window = device->createParms.hFocusWindow;
+                HWND focus_window = device->create_parms.focus_window;
                 if (!focus_window)
                     focus_window = present_parameters->hDeviceWindow;
                 if (FAILED(hr = wined3d_device_acquire_focus_window(device, focus_window)))
@@ -5711,11 +5711,11 @@ HRESULT CDECL wined3d_device_set_dialog_box_mode(struct wined3d_device *device, 
 
 
 HRESULT CDECL wined3d_device_get_creation_parameters(const struct wined3d_device *device,
-        WINED3DDEVICE_CREATION_PARAMETERS *parameters)
+        struct wined3d_device_creation_parameters *parameters)
 {
     TRACE("device %p, parameters %p.\n", device, parameters);
 
-    *parameters = device->createParms;
+    *parameters = device->create_parms;
     return WINED3D_OK;
 }
 
@@ -5933,10 +5933,10 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
     adapter->screen_format = mode.format_id;
 
     /* Save the creation parameters. */
-    device->createParms.AdapterOrdinal = adapter_idx;
-    device->createParms.DeviceType = device_type;
-    device->createParms.hFocusWindow = focus_window;
-    device->createParms.BehaviorFlags = flags;
+    device->create_parms.adapter_idx = adapter_idx;
+    device->create_parms.device_type = device_type;
+    device->create_parms.focus_window = focus_window;
+    device->create_parms.flags = flags;
 
     device->devType = device_type;
     for (i = 0; i < PATCHMAP_SIZE; ++i) list_init(&device->patches[i]);
