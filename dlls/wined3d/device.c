@@ -3882,7 +3882,8 @@ HRESULT CDECL wined3d_device_get_device_caps(const struct wined3d_device *device
 {
     TRACE("device %p, caps %p.\n", device, caps);
 
-    return wined3d_get_device_caps(device->wined3d, device->adapter->ordinal, device->devType, caps);
+    return wined3d_get_device_caps(device->wined3d, device->adapter->ordinal,
+            device->create_parms.device_type, caps);
 }
 
 HRESULT CDECL wined3d_device_get_display_mode(const struct wined3d_device *device,
@@ -5938,7 +5939,6 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
     device->create_parms.focus_window = focus_window;
     device->create_parms.flags = flags;
 
-    device->devType = device_type;
     for (i = 0; i < PATCHMAP_SIZE; ++i) list_init(&device->patches[i]);
 
     select_shader_mode(&adapter->gl_info, &device->ps_selected_mode, &device->vs_selected_mode);

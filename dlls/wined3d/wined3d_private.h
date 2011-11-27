@@ -1705,7 +1705,6 @@ struct wined3d_device
 
     /* Internal use fields  */
     struct wined3d_device_creation_parameters create_parms;
-    WINED3DDEVTYPE                  devType;
     HWND focus_window;
 
     struct wined3d_swapchain **swapchains;
