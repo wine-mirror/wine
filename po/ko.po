@@ -381,13 +381,12 @@ msgid "Unreadable Entry"
 msgstr "입력을 읽을 수 없습니다"
 
 #: comdlg32.rc:68
-#, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "페이지 범위를 벗어나지 않아야 올바른 값입니다.\n"
-"%d 과 %d 사이의 값을 입력하시오 "
+"%1!d! 과 %2!d! 사이의 값을 입력하시오 "
 
 #: comdlg32.rc:70
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -446,9 +445,8 @@ msgstr ""
 "은 먼저 프린터를 설치하시오. 설치하고 다시 시도하시오."
 
 #: comdlg32.rc:151
-#, fuzzy
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr "%d 와 %d 포인트 사이에서 글꼴 크기 선택."
+msgstr "%1!d! 와 %2!d! 포인트 사이에서 글꼴 크기 선택하십시오."
 
 #: comdlg32.rc:152 ieframe.rc:32
 msgid "&Save"
@@ -1640,9 +1638,8 @@ msgid "Public key"
 msgstr "공용 키"
 
 #: cryptui.rc:58
-#, fuzzy
 msgid "%1 (%2!d! bits)"
-msgstr "%s (%d 비트)"
+msgstr "%1 (%2!d! 비트)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
@@ -2088,13 +2085,12 @@ msgid "Regional Setting"
 msgstr "지역 설정"
 
 #: dxdiagn.rc:26
-#, fuzzy
 msgid "%1!u!MB used, %2!u!MB available"
-msgstr "%uMB 사용됨, %uMB 사용 가능함"
+msgstr "%1!u!메가바이트 사용됨, %2!u!메가바이 사용 가능함"
 
 #: gdi32.rc:25
 msgid "Western"
-msgstr "서"
+msgstr "서부"
 
 #: gdi32.rc:26
 msgid "Central European"
@@ -6236,9 +6232,8 @@ msgid "us"
 msgstr "마이크로초"
 
 #: setupapi.rc:28
-#, fuzzy
 msgid "The file '%1' on %2 is needed"
-msgstr "이 파일 '%s' 은 %s에서 필요로 합니다"
+msgstr "이 파일 '%1' 은 %2에서 필요로 합니다"
 
 #: setupapi.rc:29 ipconfig.rc:31
 msgid "Unknown"
@@ -8877,9 +8872,8 @@ msgid "Error: Unknown or invalid command line parameters specified\n"
 msgstr "오류: 알수 없거나 올바르지 않은 명령어 라인 매개변수가 지정됨\n"
 
 #: ipconfig.rc:29
-#, fuzzy
 msgid "%1 adapter %2\n"
-msgstr "%s 어댑터 %s\n"
+msgstr "%1 어댑터 %2\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
@@ -9266,7 +9260,6 @@ msgid "Unicode (UTF-8)"
 msgstr "유니코드 (UTF-8)"
 
 #: notepad.rc:99
-#, fuzzy
 msgid ""
 "%1\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -9276,7 +9269,7 @@ msgid ""
 "Continue?"
 msgstr ""
 "%s\n"
-"유니코드 문자를 포함하고 있는 이 파일은 만약 당신이 %s 인코딩으로\n"
+"유니코드 문자를 포함하고 있는 이 파일은 만약 당신이 %2 인코딩으로\n"
 "파일을 저장하면 문자의 손실이 있을 것입니다.\n"
 "이 문자를 보존하려면  취소를 클릭하고, 인코딩 드롭다운목록의 유니코드\n"
 "옵션 중의 하나를  선택하십시오t.\n"
@@ -9612,9 +9605,8 @@ msgid "bytes"
 msgstr "바이트"
 
 #: oleview.rc:148
-#, fuzzy
 msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
-msgstr "LoadTypeLib( %s ) 실패 ($%x)"
+msgstr "LoadTypeLib( %1 ) 실패 ($%2!x!)"
 
 #: oleview.rc:149
 msgid "Inherited Interfaces"
@@ -10366,49 +10358,42 @@ msgid "Error: One of options /im or /pid must be specified.\n"
 msgstr "오류: /im 니 /pid  옵션중의 하나는 반드시 지정되어야합니다.\n"
 
 #: taskkill.rc:31
-#, fuzzy
 msgid "Error: Option %1 expects a command line parameter.\n"
-msgstr "오류: 롭션 %s 는 하나의 명령어라인 매개변수가 올것으로 예상합니다.\n"
+msgstr "오류: 롭션 %1 는 하나의 명령어라인 매개변수가 올것으로 예상합니다.\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
 msgstr "오류:  /im 와 /pid 옵션은 같이 사용할 수 없습니다.\n"
 
 #: taskkill.rc:33
-#, fuzzy
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
-msgstr "PID %u 의 프로세스의 최상위 창에 닫는 메세지 보냈습니다.\n"
+msgstr "PID %1!u! 의 프로세스의 최상위 창에 닫는 메세지 보냈습니다.\n"
 
 #: taskkill.rc:34
-#, fuzzy
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 msgstr ""
-"PID %u 의 프로세스 \"%s\"의 최상위 창에 닫으라는 메세지를 보냈습니다.\n"
+"PID %2!u! 의 프로세스 \"%1\"의 최상위 창에 닫으라는 메세지를 보냈습니다.\n"
 
 #: taskkill.rc:35
-#, fuzzy
 msgid "Process with PID %1!u! was forcibly terminated.\n"
-msgstr "PID %u 의 프로세스는 강제로 종료되었습니다.\n"
+msgstr "PID %1!u! 의 프로세스는 강제로 종료되었습니다.\n"
 
 #: taskkill.rc:36
-#, fuzzy
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
-msgstr "PID %u 의 프로세스 \"%s\" 는 강제로 종료되엇습니다.\n"
+msgstr "PID %2!u! 의 프로세스 \"%1\" 는 강제로 종료되엇습니다.\n"
 
 #: taskkill.rc:37
-#, fuzzy
 msgid "Error: Could not find process \"%1\".\n"
-msgstr "오류: 프로세스 \"%s\"를 찾을 수 없습니다.\n"
+msgstr "오류: 프로세스 \"%1\"를 찾을 수 없습니다.\n"
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
 msgstr "오류: 프로세스 목록을 열거 할 수 없습니다.\n"
 
 #: taskkill.rc:39
-#, fuzzy
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr "오류: \"%s\" 프로세스를 중단시킬 수 없습니다.\n"
+msgstr "오류: \"%1\" 프로세스를 중단시킬 수 없습니다.\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
@@ -11070,9 +11055,8 @@ msgid "Processes: %d"
 msgstr "프로세스: %d"
 
 #: taskmgr.rc:267
-#, fuzzy
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
-msgstr "메모리 사용량: %dK / %dK"
+msgstr "메모리 사용량: %1!u!킬로바이트 / %2!u!킬로바이트"
 
 #: taskmgr.rc:272
 msgid "Image Name"
@@ -12396,17 +12380,17 @@ msgstr "%1 의 %2 사용가능"
 #: winefile.rc:121
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr ""
+msgstr "킬로바이트"
 
 #: winefile.rc:122
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr ""
+msgstr "메가바이트"
 
 #: winefile.rc:123
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr ""
+msgstr "기가바이트"
 
 #: winemine.rc:34
 msgid "&Game"
