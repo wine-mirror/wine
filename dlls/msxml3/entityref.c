@@ -174,14 +174,8 @@ static HRESULT WINAPI entityref_get_nodeValue(
     VARIANT* value)
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
-
-    FIXME("(%p)->(%p)\n", This, value);
-
-    if(!value)
-        return E_INVALIDARG;
-
-    V_VT(value) = VT_NULL;
-    return S_FALSE;
+    TRACE("(%p)->(%p)\n", This, value);
+    return return_null_var(value);
 }
 
 static HRESULT WINAPI entityref_put_nodeValue(

@@ -177,14 +177,8 @@ static HRESULT WINAPI domfrag_get_nodeValue(
     VARIANT* value)
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
-
-    FIXME("(%p)->(%p)\n", This, value);
-
-    if(!value)
-        return E_INVALIDARG;
-
-    V_VT(value) = VT_NULL;
-    return S_FALSE;
+    TRACE("(%p)->(%p)\n", This, value);
+    return return_null_var(value);
 }
 
 static HRESULT WINAPI domfrag_put_nodeValue(

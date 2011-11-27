@@ -2635,12 +2635,6 @@ if (0)
         ok( !lstrcmpW( str, _bstr_("xml") ), "incorrect target string\n");
         SysFreeString(str);
 
-        /* test get_nodeValue */
-        r = IXMLDOMProcessingInstruction_get_nodeValue(nodePI, &var);
-        ok(r == S_OK, "ret %08x\n", r );
-        ok( !lstrcmpW( V_BSTR(&var), _bstr_("version=\"1.0\"") ), "incorrect data string\n");
-        VariantClear(&var);
-
         /* test get_data */
         r = IXMLDOMProcessingInstruction_get_data(nodePI, &str);
         ok(r == S_OK, "ret %08x\n", r );
@@ -2909,12 +2903,6 @@ static void test_domnode( void )
         ok( lstrcmpW(str,szdl) == 0, "basename was wrong\n");
         SysFreeString( str );
 
-        r = IXMLDOMNode_get_nodeValue( node, &var );
-        ok( r == S_OK, "returns %08x\n", r );
-        ok( V_VT(&var) == VT_BSTR, "vt %x\n", V_VT(&var));
-        ok( !lstrcmpW(V_BSTR(&var), szstr1), "nodeValue incorrect\n");
-        VariantClear(&var);
-
         r = IXMLDOMNode_get_childNodes( node, NULL );
         ok( r == E_INVALIDARG, "get_childNodes returned wrong code\n");
 
@@ -3026,13 +3014,6 @@ static void test_domnode( void )
         r = IXMLDOMNode_get_nodeType( node, &type);
         ok( r == S_OK, "getNamedItem returned wrong code\n");
         ok( type == NODE_ELEMENT, "node not text\n");
-
-        VariantInit(&var);
-        ok( V_VT(&var) == VT_EMPTY, "variant init failed\n");
-        r = IXMLDOMNode_get_nodeValue( node, &var );
-        ok( r == S_FALSE, "nextNode returned wrong code\n");
-        ok( V_VT(&var) == VT_NULL, "variant wasn't empty\n");
-        ok( V_BSTR(&var) == NULL, "variant value wasn't null\n");
 
         r = IXMLDOMNode_hasChildNodes( node, NULL );
         ok( r == E_INVALIDARG, "hasChildNodes bad return\n");
@@ -5866,13 +5847,6 @@ static void test_xmlTypes(void)
                 ok( !lstrcmpW( str, _bstr_("This &is a ; test <>\\") ), "incorrect get_data string\n");
                 SysFreeString(str);
 
-                /* get data Tests */
-                hr = IXMLDOMComment_get_nodeValue(pComment, &v);
-                ok(hr == S_OK, "ret %08x\n", hr );
-                ok( V_VT(&v) == VT_BSTR, "incorrect dataType type\n");
-                ok( !lstrcmpW( V_BSTR(&v), _bstr_("This &is a ; test <>\\") ), "incorrect get_nodeValue string\n");
-                VariantClear(&v);
-
                 /* Confirm XML text is good */
                 hr = IXMLDOMComment_get_xml(pComment, &str);
                 ok(hr == S_OK, "ret %08x\n", hr );
@@ -6321,13 +6295,6 @@ static void test_xmlTypes(void)
                 hr = IXMLDOMCDATASection_get_length(pCDataSec, &len);
                 ok(hr == S_OK, "ret %08x\n", hr );
                 ok(len == 21, "expected 21 got %d\n", len);
-
-                /* test get nodeValue */
-                hr = IXMLDOMCDATASection_get_nodeValue(pCDataSec, &var);
-                ok(hr == S_OK, "ret %08x\n", hr );
-                ok(V_VT(&var) == VT_BSTR, "got vt %04x\n", V_VT(&var));
-                ok( !lstrcmpW( V_BSTR(&var), _bstr_("This &is a ; test <>\\") ), "incorrect text string\n");
-                VariantClear(&var);
 
                 /* test get data */
                 hr = IXMLDOMCDATASection_get_data(pCDataSec, &str);
@@ -9711,14 +9678,14 @@ static void test_get_tagName(void)
     free_bstrs();
 }
 
-typedef struct _get_datatype_t {
+typedef struct {
     DOMNodeType type;
     const char *name;
     VARTYPE vt;
     HRESULT hr;
-} get_datatype_t;
+} node_type_t;
 
-static const get_datatype_t get_datatype[] = {
+static const node_type_t get_datatype[] = {
     { NODE_ELEMENT,                "element",   VT_NULL, S_FALSE },
     { NODE_ATTRIBUTE,              "attr",      VT_NULL, S_FALSE },
     { NODE_TEXT,                   "text",      VT_NULL, S_FALSE },
@@ -9732,8 +9699,8 @@ static const get_datatype_t get_datatype[] = {
 
 static void test_get_dataType(void)
 {
+    const node_type_t *entry = get_datatype;
     IXMLDOMDocument *doc;
-    const get_datatype_t *entry = get_datatype;
 
     doc = create_document(&IID_IXMLDOMDocument);
 
@@ -10680,7 +10647,7 @@ static void test_domobj_dispex(IUnknown *obj)
     IDispatchEx_Release(dispex);
 }
 
-static const DOMNodeType dispex_types_test[] =
+static const DOMNodeType nodetypes_test[] =
 {
     NODE_ELEMENT,
     NODE_ATTRIBUTE,
@@ -10695,7 +10662,7 @@ static const DOMNodeType dispex_types_test[] =
 
 static void test_dispex(void)
 {
-    const DOMNodeType *type = dispex_types_test;
+    const DOMNodeType *type = nodetypes_test;
     IXMLDOMImplementation *impl;
     IXMLDOMNodeList *node_list;
     IXMLDOMParseError *error;
@@ -11077,6 +11044,72 @@ static void test_supporterrorinfo(void)
     free_bstrs();
 }
 
+typedef struct {
+    DOMNodeType type;
+    const char *name;
+    const char *put_content;
+    HRESULT put_hr;
+    VARTYPE get_vt;
+    HRESULT get_hr;
+} node_value_t;
+
+static const node_value_t nodevalue_test[] = {
+    { NODE_ELEMENT,                "element",   "",             E_FAIL, VT_NULL, S_FALSE },
+    { NODE_ATTRIBUTE,              "attr",      "value",        S_OK,   VT_BSTR, S_OK },
+    { NODE_TEXT,                   "text",      "textdata",     S_OK,   VT_BSTR, S_OK },
+    { NODE_CDATA_SECTION ,         "cdata",     "cdata data",   S_OK,   VT_BSTR, S_OK },
+    { NODE_ENTITY_REFERENCE,       "entityref", "ref",          E_FAIL, VT_NULL, S_FALSE },
+    { NODE_PROCESSING_INSTRUCTION, "pi",        "instr",        S_OK,   VT_BSTR, S_OK },
+    { NODE_COMMENT,                "comment",   "comment data", S_OK,   VT_BSTR, S_OK },
+    { NODE_DOCUMENT_FRAGMENT,      "docfrag",   "",             E_FAIL, VT_NULL, S_FALSE },
+    { NODE_INVALID }
+};
+
+static void test_nodeValue(void)
+{
+    const node_value_t *ptr = nodevalue_test;
+    IXMLDOMDocument *doc;
+    HRESULT hr;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+    if (!doc) return;
+
+    while (ptr->type != NODE_INVALID)
+    {
+        IXMLDOMNode *node;
+        VARIANT v;
+
+        V_VT(&v) = VT_I2;
+        V_I2(&v) = ptr->type;
+
+        hr = IXMLDOMDocument_createNode(doc, v, _bstr_(ptr->name), NULL, &node);
+        ok(hr == S_OK, "failed to create node type %d\n", ptr->type);
+
+        hr = IXMLDOMNode_get_nodeValue(node, NULL);
+        ok(hr == E_INVALIDARG, "%d: got 0x%08x\n", ptr->type, hr);
+
+        V_VT(&v) = VT_BSTR;
+        V_BSTR(&v) = _bstr_(ptr->put_content);
+        hr = IXMLDOMNode_put_nodeValue(node, v);
+        ok(hr == ptr->put_hr, "%d: got 0x%08x\n", ptr->type, hr);
+
+        V_VT(&v) = VT_EMPTY;
+        hr = IXMLDOMNode_get_nodeValue(node, &v);
+        ok(hr == ptr->get_hr, "%d: got 0x%08x, expected 0x%08x\n", ptr->type, hr, ptr->get_hr);
+        ok(V_VT(&v) == ptr->get_vt, "%d: got %d, expected %d\n", ptr->type, V_VT(&v), ptr->get_vt);
+        if (hr == S_OK)
+            ok(!lstrcmpW(V_BSTR(&v), _bstr_(ptr->put_content)), "%d: got %s\n", ptr->type,
+                wine_dbgstr_w(V_BSTR(&v)));
+        VariantClear(&v);
+
+        IXMLDOMNode_Release(node);
+
+        ptr++;
+    }
+
+    IXMLDOMDocument_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
@@ -11152,6 +11185,7 @@ START_TEST(domdoc)
     test_parseerror();
     test_getAttributeNode();
     test_supporterrorinfo();
+    test_nodeValue();
 
     test_xsltemplate();
 
