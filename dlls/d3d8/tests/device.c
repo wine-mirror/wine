@@ -2914,6 +2914,96 @@ cleanup:
     DestroyWindow(hwnd);
 }
 
+static void test_mode_change(void)
+{
+    RECT fullscreen_rect, focus_rect, r;
+    IDirect3DSurface8 *backbuffer;
+    IDirect3DDevice8 *device;
+    D3DSURFACE_DESC desc;
+    IDirect3D8 *d3d8;
+    DEVMODEW devmode;
+    UINT refcount;
+    HRESULT hr;
+    DWORD ret;
+
+    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create IDirect3D8 object, skipping mode change tests.\n");
+        return;
+    }
+
+    focus_window = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, screen_width / 2, screen_height / 2, 0, 0, 0, 0);
+    device_window = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, screen_width / 2, screen_height / 2, 0, 0, 0, 0);
+
+    SetRect(&fullscreen_rect, 0, 0, screen_width, screen_height);
+    GetWindowRect(focus_window, &focus_rect);
+
+    device = create_device(d3d8, device_window, focus_window, FALSE);
+    if (!device)
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    memset(&devmode, 0, sizeof(devmode));
+    devmode.dmSize = sizeof(devmode);
+    devmode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
+    devmode.dmPelsWidth = 640;
+    devmode.dmPelsHeight = 480;
+
+    ret = ChangeDisplaySettingsW(&devmode, CDS_FULLSCREEN);
+    ok(ret == DISP_CHANGE_SUCCESSFUL, "Failed to change display mode, ret %#x.\n", ret);
+
+    memset(&devmode, 0, sizeof(devmode));
+    devmode.dmSize = sizeof(devmode);
+    ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
+    ok(ret, "Failed to get display mode.\n");
+    ok(devmode.dmPelsWidth == 640, "Got unexpect width %u.\n", devmode.dmPelsWidth);
+    ok(devmode.dmPelsHeight == 480, "Got unexpect height %u.\n", devmode.dmPelsHeight);
+
+    GetWindowRect(device_window, &r);
+    ok(EqualRect(&r, &fullscreen_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
+            fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
+            r.left, r.top, r.right, r.bottom);
+    GetWindowRect(focus_window, &r);
+    ok(EqualRect(&r, &focus_rect), "Expected {%d, %d, %d, %d}, got {%d, %d, %d, %d}.\n",
+            focus_rect.left, focus_rect.top, focus_rect.right, focus_rect.bottom,
+            r.left, r.top, r.right, r.bottom);
+
+    hr = IDirect3DDevice8_GetBackBuffer(device, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    ok(SUCCEEDED(hr), "Failed to get backbuffer, hr %#x.\n", hr);
+    hr = IDirect3DSurface8_GetDesc(backbuffer, &desc);
+    ok(SUCCEEDED(hr), "Failed to get backbuffer desc, hr %#x.\n", hr);
+    ok(desc.Width == screen_width, "Got unexpected backbuffer width %u.\n", desc.Width);
+    ok(desc.Height == screen_height, "Got unexpected backbuffer height %u.\n", desc.Height);
+    IDirect3DSurface8_Release(backbuffer);
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
+    memset(&devmode, 0, sizeof(devmode));
+    devmode.dmSize = sizeof(devmode);
+    ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
+    ok(ret, "Failed to get display mode.\n");
+    ok(devmode.dmPelsWidth == screen_width, "Got unexpect width %u.\n", devmode.dmPelsWidth);
+    ok(devmode.dmPelsHeight == screen_height, "Got unexpect height %u.\n", devmode.dmPelsHeight);
+
+done:
+    DestroyWindow(device_window);
+    DestroyWindow(focus_window);
+    if (d3d8)
+        IDirect3D8_Release(d3d8);
+
+    memset(&devmode, 0, sizeof(devmode));
+    devmode.dmSize = sizeof(devmode);
+    ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
+    ok(ret, "Failed to get display mode.\n");
+    ok(devmode.dmPelsWidth == screen_width, "Got unexpect width %u.\n", devmode.dmPelsWidth);
+    ok(devmode.dmPelsHeight == screen_height, "Got unexpect height %u.\n", devmode.dmPelsHeight);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -2966,6 +3056,7 @@ START_TEST(device)
         test_depth_stencil_size();
         test_window_style();
         test_wrong_shader();
+        test_mode_change();
     }
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
