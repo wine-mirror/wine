@@ -1369,16 +1369,14 @@ static HRESULT WINAPI domdoc_get_parsed(
     return S_OK;
 }
 
-
 static HRESULT WINAPI domdoc_get_namespaceURI(
     IXMLDOMDocument3 *iface,
     BSTR* namespaceURI )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
     TRACE("(%p)->(%p)\n", This, namespaceURI);
-    return node_get_namespaceURI(&This->node, namespaceURI);
+    return return_null_bstr( namespaceURI );
 }
-
 
 static HRESULT WINAPI domdoc_get_prefix(
     IXMLDOMDocument3 *iface,

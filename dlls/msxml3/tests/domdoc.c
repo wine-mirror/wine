@@ -7137,6 +7137,11 @@ static void test_namespaces(void)
     EXPECT_HR(hr, S_OK);
     ok(b == VARIANT_TRUE, "got %d\n", b);
 
+    str = (BSTR)0xdeadbeef;
+    hr = IXMLDOMDocument_get_namespaceURI(doc, &str);
+    EXPECT_HR(hr, S_FALSE);
+    ok(str == NULL, "got %p\n", str);
+
     hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("//XMI.content"), &node );
     EXPECT_HR(hr, S_OK);
     if(hr == S_OK)
@@ -8757,11 +8762,11 @@ static void test_get_prefix(void)
     /* 1. document */
     str = (void*)0xdeadbeef;
     hr = IXMLDOMDocument_get_prefix(doc, &str);
-    ok( hr == S_FALSE, "got 0x%08x\n", hr);
-    ok( str == 0, "got %p\n", str);
+    EXPECT_HR(hr, S_FALSE);
+    ok(str == NULL, "got %p\n", str);
 
     hr = IXMLDOMDocument_get_prefix(doc, NULL);
-    ok( hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    EXPECT_HR(hr, E_INVALIDARG);
 
     /* 2. cdata */
     hr = IXMLDOMDocument_createCDATASection(doc, NULL, &cdata);
