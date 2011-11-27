@@ -246,3 +246,10 @@ NET_API_STATUS WINAPI NetScheduleJobEnum(LPCWSTR server, LPBYTE* bufptr, DWORD p
     *totalentries = 0;
     return NERR_Success;
 }
+
+NET_API_STATUS WINAPI NetUseGetInfo(LMSTR server, LMSTR name, DWORD level, LPBYTE *bufptr)
+{
+    FIXME("stub (%p, %p, %d, %p)\n", server, name, level, bufptr);
+    return ERROR_NOT_SUPPORTED;
+
+}

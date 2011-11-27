@@ -200,7 +200,7 @@
 @ stdcall NetUseAdd(wstr long ptr ptr)
 @ stdcall NetUseDel(wstr wstr long)
 @ stdcall NetUseEnum(wstr long ptr long ptr ptr ptr)
-@ stub NetUseGetInfo
+@ stdcall NetUseGetInfo(ptr ptr long ptr)
 @ stdcall NetUserAdd(wstr long ptr ptr)
 @ stdcall NetUserChangePassword(wstr wstr wstr wstr)
 @ stdcall NetUserDel(wstr wstr)
