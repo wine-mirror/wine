@@ -244,6 +244,8 @@ static HRESULT compile_literal(compiler_ctx_t *ctx, literal_t *literal)
 static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
 {
     switch(expr->type) {
+    case EXPR_AND:
+        return compile_logical_expression(ctx, (binary_expression_t*)expr, OP_jmp_z);
     case EXPR_ADD:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_add);
     case EXPR_BITNEG:

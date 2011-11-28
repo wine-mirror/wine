@@ -1957,47 +1957,24 @@ HRESULT interp_jmp_nz(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.11 */
-HRESULT logical_and_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+HRESULT interp_jmp_z(exec_ctx_t *ctx)
 {
-    binary_expression_t *expr = (binary_expression_t*)_expr;
-    exprval_t exprval;
+    const unsigned arg = ctx->parser->code->instrs[ctx->ip].arg1.uint;
     VARIANT_BOOL b;
-    VARIANT val;
     HRESULT hres;
 
     TRACE("\n");
 
-    hres = expr_eval(ctx, expr->expression1, 0, ei, &exprval);
+    hres = to_boolean(stack_top(ctx), &b);
     if(FAILED(hres))
         return hres;
 
-    hres = exprval_to_value(ctx, &exprval, ei, &val);
-    exprval_release(&exprval);
-    if(FAILED(hres))
-        return hres;
-
-    hres = to_boolean(&val, &b);
-    if(SUCCEEDED(hres) && !b) {
-        ret->type = EXPRVAL_VARIANT;
-        ret->u.var = val;
-        return S_OK;
+    if(b) {
+        stack_popn(ctx, 1);
+        ctx->ip++;
+    }else {
+        ctx->ip = arg;
     }
-
-    VariantClear(&val);
-    if(FAILED(hres))
-        return hres;
-
-    hres = expr_eval(ctx, expr->expression2, 0, ei, &exprval);
-    if(FAILED(hres))
-        return hres;
-
-    hres = exprval_to_value(ctx, &exprval, ei, &val);
-    exprval_release(&exprval);
-    if(FAILED(hres))
-        return hres;
-
-    ret->type = EXPRVAL_VARIANT;
-    ret->u.var = val;
     return S_OK;
 }
 
