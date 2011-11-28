@@ -33,6 +33,7 @@
 
 static HCRYPTPROV crypt_prov;
 static BOOL (WINAPI *pGdiAlphaBlend)(HDC,int,int,int,int,HDC,int,int,int,int,BLENDFUNCTION);
+static BOOL (WINAPI *pGdiGradientFill)(HDC,TRIVERTEX*,ULONG,void*,ULONG,ULONG);
 static DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
 
 static const DWORD rop3[256] =
@@ -132,6 +133,67 @@ static const char *sha1_graphics_a8r8g8b8[] =
     "568f87f0194ca19b69a5b2bcdef795d89c5721ce",
     "257d114354a93e681225072bcde756f155b70496",
     "0cdf6fee6721d60d5d5ed26b1989eacddc16b14e",
+    "50f0d4252e700b0a29358ca6363e1c560d9c5f9b",
+    NULL
+};
+
+static const char *sha1_graphics_a8r8g8b8_bitfields[] =
+{
+    "a3cadd34d95d3d5cc23344f69aab1c2e55935fcf",
+    "2426172d9e8fec27d9228088f382ef3c93717da9",
+    "9e8f27ca952cdba01dbf25d07c34e86a7820c012",
+    "664fac17803859a4015c6ae29e5538e314d5c827",
+    "17b2c177bdce5e94433574a928bda5c94a8cdfa5",
+    "fe6cc678fb13a3ead67839481bf22348adc69f52",
+    "d51bd330cec510cdccf5394328bd8e5411901e9e",
+    "df4aebf98d91f11be560dd232123b3ae327303d7",
+    "f2af53dd073a09b1031d0032d28da35c82adc566",
+    "eb5a963a6f7b25533ddfb8915e70865d037bd156",
+    "c387917268455017aa0b28bed73aa6554044bbb3",
+    "dcae44fee010dbf7a107797a503923fd8b1abe2e",
+    "6c530622a025d872a642e8f950867884d7b136cb",
+    "7c07d91b8f68fb31821701b3dcb96de018bf0c66",
+    "b2261353decda2712b83538ab434a49ce21f3172",
+    "35f731c0f6356b8f30651bb3cbe0d922c49deba5",
+    "9b9874c1c1d92afa554137e191d34ea33acc322f",
+    "c311dd74325e8cebfc8529a6d24a6fa4ecb7137e",
+    "d7398de15b2837a58a62a701ca1b3384625afec4",
+    "a78b28472bb7ff480ddedd06b9cf2daa775fa7ae",
+    "5246ef357e7317b9d141a3294d300c195da76cb7",
+    "87f6b6a19f021ca5912d285e14ce2ff9474d79f3",
+    "e2a8eef4aeda3a0f6c950075acba38f1f9e0814d",
+    "8b66f14d51ecdeea12bc993302bb9b7d3ec085a1",
+    "7da9dd3d40d44d92deb9883fb7110443c2d5769a",
+    "e358efb1c11172e40855de620bdb8a8e545cd790",
+    "9e0c2596c6ecb4f1bc97b18ec3ca493d37626608",
+    "58806549380c964e7a53ad54821d2eb86fa5b9ce",
+    "7fc30d3058c235ce39088de0a598b8c7fe7ca61f",
+    "52a6c769c227f2bb1949097c4c87fed5ee0cbcb1",
+    "8a010d4c5af51fcc34d51be3197878782bdf63e7",
+    "c84c2c33e22eb7e5c4a2faad3b3b99a359d77528",
+    "41bcc1f57c60bdec3c4d1e749084a12867f91224",
+    "94645300d6eb51020a7ef8261dee2941cd51b5df",
+    "c56f5bdc9cac4f0bc81c33295d9aed8eaf4cb1f2",
+    "21cdfde38ac7edbb241ec83d82f31286e90c4629",
+    "1fd2f4dcb62f8522171872e43fd4a35041d68100",
+    "68c18db6abfda626cab12d198298d4c39264bfbc",
+    "6b59ae6c20749020ad43175e05110dc33b6a59b5",
+    "39c31de73aafcfcadf0bf414da4495be9de54417",
+    "132949f59bfeb88dc2047e6eaecb8512aea3d9ab",
+    "f6a6d765bf23726329f96020ba8c5e3c0897aafa",
+    "a7aa311cdc6137f15b9ef9cb1a92ac54ec02f058",
+    "e71d6bb9bd38eea5719f8ba57177997910e2d841",
+    "3d2ccbe51408232a04769546b1bdd74f84558a41",
+    "a1fe9aa885584a0f713d7c6f76c89830fbf28563",
+    "d7085333becdec7759a5229e5fe9ba1e11db0c22",
+    "aaf62842bb98d8a2945c4f643baf50afaeea9307",
+    "287b2f2f2fb5a1d7ee4a29b43342103d78a7a8ab",
+    "d7dd4700f49808541bba99244b7eb5840e0a2439",
+    "af99228aa4cfbd1f61bd824db046144a3c6c2ed7",
+    "568f87f0194ca19b69a5b2bcdef795d89c5721ce",
+    "257d114354a93e681225072bcde756f155b70496",
+    "0cdf6fee6721d60d5d5ed26b1989eacddc16b14e",
+    "3692d0fe76bcd5622b567f524306d4df421aa450",
     NULL
 };
 
@@ -191,6 +253,7 @@ static const char *sha1_graphics_a8b8g8r8[] =
     "25675c30adfe24d6cae60793b156dfdaa36ac3ba",
     "2c4f116451b571106beba8b85da8e4b923937246",
     "9c8f3063504a81bbbfa8558e111c63d8bc36dbbf",
+    "d816ec7e95bd0d5ed336fa50efbadfcd63f20f9b",
     NULL
 };
 
@@ -250,6 +313,7 @@ static const char *sha1_graphics_r10g10b10[] =
     "d3f08946300e1700865042aed121870e292d1095",
     "abb56db94becb64d663b51f0ea6b4bd535a88ba0",
     "3a81fe558c69ca0aea7e7191771ed86cf4321a5a",
+    "126c112d9c77826cbedddaee1ff96348c8f1e349",
     NULL
 };
 
@@ -309,6 +373,7 @@ static const char *sha1_graphics_r6g6b6[] =
     "c3def160a1e847605ff0fc7edd30397fa90635a0",
     "50acb1597c4d53ad63225376d2aa36f64e8a229d",
     "796fd861474aa7861bd0384127df755458757ec3",
+    "d931b9b3e81b931826ea9dffdc7178ce87c422b5",
     NULL
 };
 
@@ -368,6 +433,7 @@ static const char *sha1_graphics_24[] =
     "ee315634ed92da3a32c2675ecd1b369471c60936",
     "3491e2bd81e70dd203c8551cc2d39b19401caafe",
     "826de85271b67a11e7bd1a6596b58a045a96b69e",
+    "927d799714511eba2dd5876201a926d06a5677ce",
     NULL
 };
 
@@ -431,6 +497,7 @@ static const char *sha1_graphics_r5g5b5[] =
     "2daca4d26a086ed34894693be0b0374402232809",
     "bf0e0b74ce5686b73c527843e0d0df0cd10efefe",
     "517e32a8c0312b5676d498583ea092b0f198f2bc",
+    "be813b2206a9156c38b175e5ff009c44340ebfa9",
     NULL
 };
 
@@ -489,6 +556,7 @@ static const char *sha1_graphics_r4g4b4[] =
     "f7900e60347029876ba55e8f0c4c02e89deb36b6",
     "734d4a7836891d729f4a9ec6916ead78eecb2596",
     "d8ba2e556fd64c9c2f1746496e6e7dd7a487cd6d",
+    "5472bfe300268fb299987a04ff00db34b2007796",
     NULL
 };
 
@@ -553,6 +621,7 @@ static const char *sha1_graphics_8_color[] =
     "2f7ba8803604c032cb1a1228bc021f0f1c03e245",
     "0204f06422a01787f7379d0edb51104bb023758a",
     "1f9a21eba2f2ce87768a5618d9cfefa7e48fb386",
+    "b61f2e6e2de63cb64b4ddcefd9f720dbf6ba8e93",
     NULL
 };
 
@@ -622,6 +691,7 @@ static const char *sha1_graphics_8_grayscale[] =
     "cb9ea8137eca1450e049879772f5c11a0e11ff0a",
     "a05e05b2e6e515baa59ea032d063ca11e70a72b5",
     "d908c86b7301666a8d7999b831841115a4938181",
+    "1f64da8432774f221fc3eb4bb66753bd92ede2da",
     NULL
 };
 
@@ -684,6 +754,7 @@ static const char *sha1_graphics_8[] =
     "600d6b2713d5e4c0d90c02660245ed26c7ae3033",
     "963d1fa8608c8b743e972eb9a4e9f3fc53c6c7e8",
     "ba49de83c4668fb08956221f465b93e7dd6a3383",
+    "d5fd38085d21bc27c388fb6702600ddcd935815a",
     NULL
 };
 
@@ -742,6 +813,7 @@ static const char *sha1_graphics_4[] =
     "ec8e2aebfb4a1c28ebcd0e053b9e4d8638b50951",
     "da401c745421f6bdfaefd590ab99dee948dce412",
     "38a3b6edcba2a1fba6064f0b4d771aedae7f4673",
+    "0b504b6eb09907543174210272ee7763d67de2a9",
     NULL
 };
 
@@ -800,6 +872,7 @@ static const char *sha1_graphics_4_grayscale[] =
     "d374d4d92c940ae42a9b42c14d744341b68a8c14",
     "25ec9fd2eeb1514ba4e0458a444149a5456cf63a",
     "2e4dc1e859350289575ffc2a47cd0033efca6c32",
+    "a0e8e78f3c082e2b674b5f5a592fb4be8324e843",
     NULL
 };
 
@@ -873,6 +946,7 @@ static const char *sha1_graphics_1[] =
     "013cee26bac8f815eadad4bfc012d9b5d01c3b7f",
     "6b2cb2346b5820bdd0251cd6a4aeb5c22ee82e85",
     "6c4640b17e072efc682044c499e5a4f3481b7c87",
+    "7b739d8f9437c4893dddf3d2ff457db0803c924e",
     NULL
 };
 
@@ -2012,6 +2086,48 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     compare_hash(bmi, bits, sha1, "SetPixel");
     memset(bits, 0xcc, dib_size);
 
+    /* gradients */
+
+    if (pGdiGradientFill)
+    {
+        TRIVERTEX vt[4];
+        GRADIENT_RECT rect[1] = { { 0 , 1 } };
+        vt[0].x = 1;
+        vt[0].y = 1;
+        vt[0].Red = 0;
+        vt[0].Green = 0x8000;
+        vt[0].Blue = 0;
+        vt[0].Alpha = 0x8000;
+        vt[1].x = 200;
+        vt[1].y = 200;
+        vt[1].Red = 0;
+        vt[1].Green = 0xff00;
+        vt[1].Blue = 0;
+        vt[1].Alpha = 0xff00;
+        pGdiGradientFill( hdc, vt, 2, rect, 1, GRADIENT_FILL_RECT_H );
+
+        vt[0].x = 180;
+        vt[0].y = 180;
+        vt[0].Red = 0;
+        vt[0].Green = 0;
+        vt[0].Blue = 0xff00;
+        vt[0].Alpha = 0xff00;
+        vt[1].x = 300;
+        vt[1].y = 300;
+        vt[1].Red = 0xff00;
+        vt[1].Green = 0xff00;
+        vt[1].Blue = 0xff00;
+        vt[1].Alpha = 0x00;
+        pGdiGradientFill( hdc, vt, 2, rect, 1, GRADIENT_FILL_RECT_V );
+        if (bmi->bmiHeader.biBitCount == 8 || bmi->bmiHeader.biBitCount == 4)
+            /* Wine's 8-bit dithering isn't identical to Windows */
+            compare_hash_broken_todo( bmi, bits, sha1, "GdiGradientFill", 0, 1 );
+        else
+            compare_hash(bmi, bits, sha1, "GdiGradientFill" );
+        memset(bits, 0xcc, dib_size);
+    }
+    else win_skip( "GdiGradientFill not supported\n" );
+
     SelectObject(hdc, orig_brush);
     SelectObject(hdc, orig_pen);
     DeleteObject(hrgn);
@@ -2266,7 +2382,7 @@ static void test_simple_graphics(void)
     orig_bm = SelectObject(mem_dc, dib);
 
     dst_format = "8888 - bitfields";
-    sha1 = sha1_graphics_a8r8g8b8;
+    sha1 = sha1_graphics_a8r8g8b8_bitfields;
     draw_graphics(mem_dc, bmi, bits, &sha1);
     draw_text(mem_dc, bmi, bits);
 
@@ -2562,6 +2678,7 @@ START_TEST(dib)
     HMODULE mod = GetModuleHandleA("gdi32.dll");
     pSetLayout = (void *)GetProcAddress( mod, "SetLayout" );
     pGdiAlphaBlend = (void *)GetProcAddress( mod, "GdiAlphaBlend" );
+    pGdiGradientFill = (void *)GetProcAddress( mod, "GdiGradientFill" );
 
     CryptAcquireContextW(&crypt_prov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
 
