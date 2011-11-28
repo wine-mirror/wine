@@ -50,6 +50,7 @@ typedef struct _func_stack {
     X(eq2,        1, 0,0)                  \
     X(in,         1, 0,0)                  \
     X(int,        1, ARG_INT,    0)        \
+    X(jmp,        0, ARG_ADDR,   0)        \
     X(jmp_nz,     0, ARG_ADDR,   0)        \
     X(jmp_z,      0, ARG_ADDR,   0)        \
     X(minus,      1, 0,0)                  \
@@ -535,7 +536,6 @@ typedef struct {
 } property_value_expression_t;
 
 HRESULT function_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
-HRESULT conditional_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT array_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT member_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT new_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;

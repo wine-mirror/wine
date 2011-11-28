@@ -193,6 +193,40 @@ static HRESULT compile_logical_expression(compiler_ctx_t *ctx, binary_expression
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    11.12 */
+static HRESULT compile_conditional_expression(compiler_ctx_t *ctx, conditional_expression_t *expr)
+{
+    unsigned jmp_false, jmp_end;
+    HRESULT hres;
+
+    hres = compile_expression(ctx, expr->expression);
+    if(FAILED(hres))
+        return hres;
+
+    jmp_false = push_instr(ctx, OP_jmp_z);
+    if(jmp_false == -1)
+        return E_OUTOFMEMORY;
+
+    hres = compile_expression(ctx, expr->true_expression);
+    if(FAILED(hres))
+        return hres;
+
+    jmp_end = push_instr(ctx, OP_jmp);
+    if(jmp_end == -1)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, jmp_false)->arg1.uint = ctx->code_off;
+    if(push_instr(ctx, OP_pop) == -1)
+        return E_OUTOFMEMORY;
+
+    hres = compile_expression(ctx, expr->false_expression);
+    if(FAILED(hres))
+        return hres;
+
+    instr_ptr(ctx, jmp_end)->arg1.uint = ctx->code_off;
+    return S_OK;
+}
+
 static HRESULT compile_interp_fallback(compiler_ctx_t *ctx, expression_t *expr)
 {
     unsigned instr;
@@ -252,6 +286,8 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_bneg);
     case EXPR_COMMA:
         return compile_comma_expression(ctx, (binary_expression_t*)expr);
+    case EXPR_COND:
+        return compile_conditional_expression(ctx, (conditional_expression_t*)expr);
     case EXPR_EQ:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_eq);
     case EXPR_EQEQ:

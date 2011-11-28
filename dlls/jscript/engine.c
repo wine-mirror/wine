@@ -1435,28 +1435,6 @@ HRESULT function_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD f
     return S_OK;
 }
 
-/* ECMA-262 3rd Edition    11.12 */
-HRESULT conditional_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
-{
-    conditional_expression_t *expr = (conditional_expression_t*)_expr;
-    exprval_t exprval;
-    VARIANT_BOOL b;
-    HRESULT hres;
-
-    TRACE("\n");
-
-    hres = expr_eval(ctx, expr->expression, 0, ei, &exprval);
-    if(FAILED(hres))
-        return hres;
-
-    hres = exprval_to_boolean(ctx, &exprval, ei, &b);
-    exprval_release(&exprval);
-    if(FAILED(hres))
-        return hres;
-
-    return expr_eval(ctx, b ? expr->true_expression : expr->false_expression, flags, ei, ret);
-}
-
 /* ECMA-262 3rd Edition    11.2.1 */
 HRESULT array_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
@@ -3289,6 +3267,16 @@ HRESULT assign_xor_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD
     TRACE("\n");
 
     return assign_oper_eval(ctx, expr->expression1, expr->expression2, xor_eval, ei, ret);
+}
+
+HRESULT interp_jmp(exec_ctx_t *ctx)
+{
+    const unsigned arg = ctx->parser->code->instrs[ctx->ip].arg1.uint;
+
+    TRACE("\n");
+
+    ctx->ip = arg;
+    return S_OK;
 }
 
 static HRESULT interp_pop(exec_ctx_t *ctx)
