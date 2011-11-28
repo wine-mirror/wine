@@ -118,6 +118,8 @@ extern BOOL     dibdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
                                    PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION blend ) DECLSPEC_HIDDEN;
 extern DWORD    dibdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_bits *bits,
                                    struct bitblt_coords *src, struct bitblt_coords *dst, BLENDFUNCTION func ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
+                                     void *grad_array, ULONG ngrad, ULONG mode ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
                                    const RECT *rect, LPCWSTR str, UINT count, const INT *dx ) DECLSPEC_HIDDEN;
 extern DWORD    dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
@@ -173,6 +175,7 @@ typedef struct primitive_funcs
                                     const POINT *origin, int rop2, int overlap);
     void             (* blend_rect)(const dib_info *dst, const RECT *rc, const dib_info *src,
                                     const POINT *origin, BLENDFUNCTION blend);
+    void          (* gradient_rect)(const dib_info *dib, const RECT *rc, const TRIVERTEX *v, int mode);
     void             (* draw_glyph)(const dib_info *dst, const RECT *rc, const dib_info *glyph,
                                     const POINT *origin, DWORD text_pixel, const struct intensity_range *ranges);
     DWORD             (* get_pixel)(const dib_info *dib, const POINT *pt);

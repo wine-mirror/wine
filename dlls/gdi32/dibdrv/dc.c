@@ -597,7 +597,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pGetTextExtentExPointI */
     NULL,                               /* pGetTextFace */
     NULL,                               /* pGetTextMetrics */
-    NULL,                               /* pGradientFill */
+    dibdrv_GradientFill,                /* pGradientFill */
     NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
     dibdrv_LineTo,                      /* pLineTo */

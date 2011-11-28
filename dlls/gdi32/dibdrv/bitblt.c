@@ -601,6 +601,30 @@ static DWORD blend_rect( dib_info *dst, const RECT *dst_rect, const dib_info *sr
     return ERROR_SUCCESS;
 }
 
+static void gradient_rect( dib_info *dib, TRIVERTEX *v, int mode, HRGN clip )
+{
+    int i;
+    RECT rect, clipped_rect;
+
+    rect.left   = max( v[0].x, 0 );
+    rect.top    = max( v[0].y, 0 );
+    rect.right  = min( v[1].x, dib->width );
+    rect.bottom = min( v[1].y, dib->height );
+
+    if (clip)
+    {
+        const WINEREGION *clip_data = get_wine_region( clip );
+
+        for (i = 0; i < clip_data->numRects; i++)
+        {
+            if (intersect_rect( &clipped_rect, &rect, clip_data->rects + i ))
+                dib->funcs->gradient_rect( dib, &clipped_rect, v, mode );
+        }
+        release_wine_region( clip );
+    }
+    else dib->funcs->gradient_rect( dib, &rect, v, mode );
+}
+
 static DWORD copy_src_bits( dib_info *src, RECT *src_rect )
 {
     int y, stride = get_dib_stride( src->width, src->bit_count );
@@ -1250,4 +1274,57 @@ BOOL dibdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     ret = dc_dst->nulldrv.funcs->pAlphaBlend( &dc_dst->nulldrv, dst, src_dev, src, blend );
     release_dc_ptr( dc_dst );
     return ret;
+}
+
+/***********************************************************************
+ *           dibdrv_GradientFill
+ */
+BOOL dibdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
+                          void *grad_array, ULONG ngrad, ULONG mode )
+{
+    dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
+    unsigned int i;
+
+    if (mode == GRADIENT_FILL_RECT_H || mode == GRADIENT_FILL_RECT_V)
+    {
+        const GRADIENT_RECT *rect = grad_array;
+        TRIVERTEX v[2];
+        POINT pt[2];
+
+        for (i = 0; i < ngrad; i++, rect++)
+        {
+            v[0] = vert_array[rect->UpperLeft];
+            v[1] = vert_array[rect->LowerRight];
+            pt[0].x = v[0].x;
+            pt[0].y = v[0].y;
+            pt[1].x = v[1].x;
+            pt[1].y = v[1].y;
+            LPtoDP( dev->hdc, pt, 2 );
+            if (mode == GRADIENT_FILL_RECT_H)
+            {
+                if (pt[1].x < pt[0].x)  /* swap the colors */
+                {
+                    v[0] = vert_array[rect->LowerRight];
+                    v[1] = vert_array[rect->UpperLeft];
+                }
+            }
+            else
+            {
+                if (pt[1].y < pt[0].y)  /* swap the colors */
+                {
+                    v[0] = vert_array[rect->LowerRight];
+                    v[1] = vert_array[rect->UpperLeft];
+                }
+            }
+            v[0].x = min( pt[0].x, pt[1].x );
+            v[0].y = min( pt[0].y, pt[1].y );
+            v[1].x = max( pt[0].x, pt[1].x );
+            v[1].y = max( pt[0].y, pt[1].y );
+            gradient_rect( &pdev->dib, v, mode, pdev->clip );
+        }
+        return TRUE;
+    }
+
+    dev = GET_NEXT_PHYSDEV( dev, pGradientFill );
+    return dev->funcs->pGradientFill( dev, vert_array, nvert, grad_array, ngrad, mode );
 }
