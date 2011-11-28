@@ -3309,7 +3309,7 @@ static void SetRenderTargetTest(void)
     ok(hr == DD_OK, "IDirect3DDevice7_GetRenderTarget failed, hr=0x%08x\n", hr);
 
     refcount = getRefcount((IUnknown*) oldrt);
-    todo_wine ok(refcount == 3, "Refcount should be 3, returned is %d\n", refcount);
+    ok(refcount == 3, "Refcount should be 3, returned is %d\n", refcount);
 
     refcount = getRefcount((IUnknown*) failrt);
     ok(refcount == 1, "Refcount should be 1, returned is %d\n", refcount);
@@ -3318,7 +3318,7 @@ static void SetRenderTargetTest(void)
     ok(hr != D3D_OK, "IDirect3DDevice7_SetRenderTarget succeeded\n");
 
     refcount = getRefcount((IUnknown*) oldrt);
-    todo_wine ok(refcount == 2, "Refcount should be 2, returned is %d\n", refcount);
+    ok(refcount == 2, "Refcount should be 2, returned is %d\n", refcount);
 
     refcount = getRefcount((IUnknown*) failrt);
     ok(refcount == 2, "Refcount should be 2, returned is %d\n", refcount);

@@ -98,7 +98,6 @@ struct IDirectDrawImpl
     DWORD                   orig_bpp;
 
     /* D3D things */
-    IDirectDrawSurfaceImpl  *d3d_target;
     HWND                    d3d_window;
     IDirect3DDeviceImpl     *d3ddevice;
     int                     d3dversion;

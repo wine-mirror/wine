@@ -445,7 +445,6 @@ void ddraw_destroy_swapchain(IDirectDrawImpl *ddraw)
         }
 
         ddraw->d3d_initialized = FALSE;
-        ddraw->d3d_target = NULL;
     }
     else
     {
@@ -484,16 +483,8 @@ static void ddraw_destroy(IDirectDrawImpl *This)
     list_remove(&This->ddraw_list_entry);
     wined3d_mutex_unlock();
 
-    /* This can happen more or less legitimately for ddraw 1 and 2, where
-     * surfaces don't keep a reference to the ddraw object. The surfaces
-     * will of course be broken after this, (and on native trying to do
-     * anything with them in that state results in an access violation), but
-     * the release of the ddraw object should succeed without crashing. */
     if (This->wined3d_swapchain)
-    {
-        WARN("DirectDraw object is being destroyed while the swapchain still exists.\n");
         ddraw_destroy_swapchain(This);
-    }
     wined3d_device_decref(This->wined3d_device);
     wined3d_decref(This->wineD3D);
 
@@ -621,6 +612,109 @@ static HRESULT ddraw_set_focus_window(IDirectDrawImpl *ddraw, HWND window)
         DestroyWindow(ddraw->devicewindow);
         ddraw->devicewindow = NULL;
     }
+
+    return DD_OK;
+}
+
+static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw,
+        WINED3DPRESENT_PARAMETERS *presentation_parameters)
+{
+    HWND window = presentation_parameters->hDeviceWindow;
+    HRESULT hr;
+
+    TRACE("ddraw %p.\n", ddraw);
+
+    if (!window || window == GetDesktopWindow())
+    {
+        window = CreateWindowExA(0, DDRAW_WINDOW_CLASS_NAME, "Hidden D3D Window",
+                WS_DISABLED, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
+                NULL, NULL, NULL, NULL);
+        if (!window)
+        {
+            ERR("Failed to create window, last error %#x.\n", GetLastError());
+            return E_FAIL;
+        }
+
+        ShowWindow(window, SW_HIDE);   /* Just to be sure */
+        WARN("No window for the Direct3DDevice, created hidden window %p.\n", window);
+
+        presentation_parameters->hDeviceWindow = window;
+    }
+    else
+    {
+        TRACE("Using existing window %p for Direct3D rendering.\n", window);
+    }
+    ddraw->d3d_window = window;
+
+    /* Set this NOW, otherwise creating the depth stencil surface will cause a
+     * recursive loop until ram or emulated video memory is full. */
+    ddraw->d3d_initialized = TRUE;
+    hr = wined3d_device_init_3d(ddraw->wined3d_device, presentation_parameters);
+    if (FAILED(hr))
+    {
+        ddraw->d3d_initialized = FALSE;
+        return hr;
+    }
+
+    ddraw->declArraySize = 2;
+    ddraw->decls = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ddraw->decls) * ddraw->declArraySize);
+    if (!ddraw->decls)
+    {
+        ERR("Error allocating an array for the converted vertex decls.\n");
+        ddraw->declArraySize = 0;
+        hr = wined3d_device_uninit_3d(ddraw->wined3d_device);
+        return E_OUTOFMEMORY;
+    }
+
+    TRACE("Successfully initialized 3D.\n");
+
+    return DD_OK;
+}
+
+static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, HWND window, BOOL windowed)
+{
+    WINED3DPRESENT_PARAMETERS presentation_parameters;
+    struct wined3d_display_mode mode;
+    HRESULT hr = WINED3D_OK;
+
+    /* FIXME: wined3d_get_adapter_display_mode() would be more appropriate
+     * here, since we don't actually have a swapchain yet, but
+     * wined3d_device_get_display_mode() has some special handling for color
+     * depth changes. */
+    hr = wined3d_device_get_display_mode(ddraw->wined3d_device, 0, &mode);
+    if (FAILED(hr))
+    {
+        ERR("Failed to get display mode.\n");
+        return hr;
+    }
+
+    memset(&presentation_parameters, 0, sizeof(presentation_parameters));
+    presentation_parameters.BackBufferWidth = mode.width;
+    presentation_parameters.BackBufferHeight = mode.height;
+    presentation_parameters.BackBufferFormat = mode.format_id;
+    presentation_parameters.SwapEffect = WINED3DSWAPEFFECT_COPY;
+    presentation_parameters.hDeviceWindow = window;
+    presentation_parameters.Windowed = windowed;
+
+    if (DefaultSurfaceType == SURFACE_OPENGL)
+        hr = ddraw_attach_d3d_device(ddraw, &presentation_parameters);
+    else
+        hr = wined3d_device_init_gdi(ddraw->wined3d_device, &presentation_parameters);
+
+    if (FAILED(hr))
+    {
+        ERR("Failed to create swapchain, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (FAILED(hr = wined3d_device_get_swapchain(ddraw->wined3d_device, 0, &ddraw->wined3d_swapchain)))
+    {
+        ERR("Failed to get swapchain, hr %#x.\n", hr);
+        ddraw->wined3d_swapchain = NULL;
+        return hr;
+    }
+
+    ddraw_set_swapchain_window(ddraw, window);
 
     return DD_OK;
 }
@@ -788,6 +882,11 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
 
     if (cooplevel & DDSCL_MULTITHREADED && !(This->cooperative_level & DDSCL_MULTITHREADED))
         wined3d_device_set_multithreaded(This->wined3d_device);
+
+    if (This->wined3d_swapchain)
+        ddraw_destroy_swapchain(This);
+    if (FAILED(hr = ddraw_create_swapchain(This, This->dest_window, !(cooplevel & DDSCL_FULLSCREEN))))
+        ERR("Failed to create swapchain, hr %#x.\n", hr);
 
     /* Unhandled flags */
     if(cooplevel & DDSCL_ALLOWREBOOT)
@@ -2522,118 +2621,9 @@ CreateAdditionalSurfaces(IDirectDrawImpl *This,
     return DD_OK;
 }
 
-static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw,
-        WINED3DPRESENT_PARAMETERS *presentation_parameters)
+HRESULT CDECL ddraw_reset_enum_callback(struct wined3d_resource *resource)
 {
-    HWND window = presentation_parameters->hDeviceWindow;
-    HRESULT hr;
-
-    TRACE("ddraw %p.\n", ddraw);
-
-    if (!window || window == GetDesktopWindow())
-    {
-        window = CreateWindowExA(0, DDRAW_WINDOW_CLASS_NAME, "Hidden D3D Window",
-                WS_DISABLED, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
-                NULL, NULL, NULL, NULL);
-        if (!window)
-        {
-            ERR("Failed to create window, last error %#x.\n", GetLastError());
-            return E_FAIL;
-        }
-
-        ShowWindow(window, SW_HIDE);   /* Just to be sure */
-        WARN("No window for the Direct3DDevice, created hidden window %p.\n", window);
-
-        presentation_parameters->hDeviceWindow = window;
-    }
-    else
-    {
-        TRACE("Using existing window %p for Direct3D rendering.\n", window);
-    }
-    ddraw->d3d_window = window;
-
-    /* Set this NOW, otherwise creating the depth stencil surface will cause a
-     * recursive loop until ram or emulated video memory is full. */
-    ddraw->d3d_initialized = TRUE;
-    hr = wined3d_device_init_3d(ddraw->wined3d_device, presentation_parameters);
-    if (FAILED(hr))
-    {
-        ddraw->d3d_target = NULL;
-        ddraw->d3d_initialized = FALSE;
-        return hr;
-    }
-
-    ddraw->declArraySize = 2;
-    ddraw->decls = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ddraw->decls) * ddraw->declArraySize);
-    if (!ddraw->decls)
-    {
-        ERR("Error allocating an array for the converted vertex decls.\n");
-        ddraw->declArraySize = 0;
-        hr = wined3d_device_uninit_3d(ddraw->wined3d_device);
-        return E_OUTOFMEMORY;
-    }
-
-    TRACE("Successfully initialized 3D.\n");
-
     return DD_OK;
-}
-
-static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, IDirectDrawSurfaceImpl *surface)
-{
-    WINED3DPRESENT_PARAMETERS presentation_parameters;
-    struct wined3d_display_mode mode;
-    HRESULT hr = WINED3D_OK;
-
-    /* FIXME: wined3d_get_adapter_display_mode() would be more appropriate
-     * here, since we don't actually have a swapchain yet, but
-     * wined3d_device_get_display_mode() has some special handling for color
-     * depth changes. */
-    hr = wined3d_device_get_display_mode(ddraw->wined3d_device, 0, &mode);
-    if (FAILED(hr))
-    {
-        ERR("Failed to get display mode.\n");
-        return hr;
-    }
-
-    memset(&presentation_parameters, 0, sizeof(presentation_parameters));
-    presentation_parameters.BackBufferWidth = mode.width;
-    presentation_parameters.BackBufferHeight = mode.height;
-    presentation_parameters.BackBufferFormat = mode.format_id;
-    presentation_parameters.SwapEffect = WINED3DSWAPEFFECT_COPY;
-    presentation_parameters.hDeviceWindow = ddraw->dest_window;
-    presentation_parameters.Windowed = !(ddraw->cooperative_level & DDSCL_FULLSCREEN);
-
-    /* If the implementation is OpenGL and there's no d3ddevice, attach a
-     * d3ddevice. But attach the d3ddevice only if the currently created
-     * surface was a primary surface (2D app in 3D mode) or a 3DDEVICE surface
-     * (3D app). The only case I can think of where this doesn't apply is when
-     * a 2D app was configured by the user to run with OpenGL and it didn't
-     * create the render target as first surface. In this case the render
-     * target creation will cause the 3D init. */
-    if (DefaultSurfaceType == SURFACE_OPENGL)
-    {
-        hr = ddraw_attach_d3d_device(ddraw, &presentation_parameters);
-    }
-    else if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
-    {
-        hr = wined3d_device_init_gdi(ddraw->wined3d_device, &presentation_parameters);
-        if (FAILED(hr))
-            WARN("Failed to initialize GDI ddraw implementation, hr %#x.\n", hr);
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        if (FAILED(hr = wined3d_device_get_swapchain(ddraw->wined3d_device, 0, &ddraw->wined3d_swapchain)))
-        {
-            ERR("Failed to get swapchain, hr %#x.\n", hr);
-            ddraw->wined3d_swapchain = NULL;
-        }
-    }
-
-    if (SUCCEEDED(hr))
-        ddraw_set_swapchain_window(ddraw, ddraw->dest_window);
-
-    return hr;
 }
 
 /*****************************************************************************
@@ -2930,6 +2920,30 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
         desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_POSITIVEX;
     }
 
+    if ((desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE) && (ddraw->cooperative_level & DDSCL_EXCLUSIVE))
+    {
+        WINED3DPRESENT_PARAMETERS presentation_parameters;
+
+        hr = wined3d_swapchain_get_present_parameters(ddraw->wined3d_swapchain, &presentation_parameters);
+        if (FAILED(hr))
+        {
+            ERR("Failed to get present parameters.\n");
+            return hr;
+        }
+
+        presentation_parameters.BackBufferWidth = mode.width;
+        presentation_parameters.BackBufferHeight = mode.height;
+        presentation_parameters.BackBufferFormat = mode.format_id;
+
+        hr = wined3d_device_reset(ddraw->wined3d_device,
+                &presentation_parameters, ddraw_reset_enum_callback);
+        if (FAILED(hr))
+        {
+            ERR("Failed to reset device.\n");
+            return hr;
+        }
+    }
+
     /* Create the first surface */
     hr = ddraw_create_surface(ddraw, &desc2, &object, 0, version);
     if (FAILED(hr))
@@ -2988,34 +3002,6 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
             IDirectDrawSurface_Release(&object->IDirectDrawSurface_iface);
 
         return hr;
-    }
-
-    if (!ddraw->d3d_initialized && desc2.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE))
-    {
-        if (FAILED(hr = ddraw_create_swapchain(ddraw, object)))
-        {
-            IDirectDrawSurfaceImpl *release_surf;
-            ERR("Failed to create swapchain, hr %#x.\n", hr);
-            *Surf = NULL;
-
-            /* The earlier created surface structures are in an incomplete
-             * state here. Wined3d holds the reference on the parents, and it
-             * released them on the failure already. So the regular release
-             * method implementation would fail on the attempt to destroy
-             * either the parents or the swapchain. So free the surface here.
-             * The surface structure here is a list, not a tree, because
-             * onscreen targets cannot be cube textures. */
-            while (object)
-            {
-                release_surf = object;
-                object = object->complex_array[0];
-                ddraw_surface_destroy(release_surf);
-            }
-            return hr;
-        }
-
-        if (DefaultSurfaceType == SURFACE_OPENGL)
-            ddraw->d3d_target = ddraw->primary ? ddraw->primary : object;
     }
 
     if (desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)

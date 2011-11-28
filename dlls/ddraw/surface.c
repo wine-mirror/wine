@@ -453,19 +453,11 @@ void ddraw_surface_destroy(IDirectDrawSurfaceImpl *This)
 
 static void ddraw_surface_cleanup(IDirectDrawSurfaceImpl *surface)
 {
-    IDirectDrawImpl *ddraw = surface->ddraw;
-    BOOL destroy_swapchain = FALSE;
     IDirectDrawSurfaceImpl *surf;
     IUnknown *ifaceToRelease;
     UINT i;
 
     TRACE("surface %p.\n", surface);
-
-    if ((ddraw->d3d_initialized && surface == ddraw->d3d_target
-            && DefaultSurfaceType == SURFACE_OPENGL)
-            || ((surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
-            && DefaultSurfaceType != SURFACE_OPENGL))
-        destroy_swapchain = TRUE;
 
     /* The refcount test shows that the palette is detached when the surface
      * is destroyed. */
@@ -494,9 +486,6 @@ static void ddraw_surface_cleanup(IDirectDrawSurfaceImpl *surface)
 
     /* Destroy the root surface. */
     ddraw_surface_destroy(surface);
-
-    if (ddraw->wined3d_swapchain && destroy_swapchain)
-        ddraw_destroy_swapchain(ddraw);
 
     /* Reduce the ddraw refcount */
     if (ifaceToRelease)

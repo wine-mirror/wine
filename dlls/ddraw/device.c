@@ -361,12 +361,11 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
 
         ddraw_handle_table_destroy(&This->handle_table);
 
-        TRACE("Releasing target %p %p\n", This->target, This->ddraw->d3d_target);
+        TRACE("Releasing target %p.\n", This->target);
         /* Release the render target and the WineD3D render target
          * (See IDirect3D7::CreateDevice for more comments on this)
          */
         IDirectDrawSurface7_Release(&This->target->IDirectDrawSurface7_iface);
-        IDirectDrawSurface7_Release(&This->ddraw->d3d_target->IDirectDrawSurface7_iface);
         TRACE("Target release done\n");
 
         This->ddraw->d3ddevice = NULL;
@@ -6914,7 +6913,6 @@ HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDi
      * In most cases, those surfaces are the same anyway, but this will simply
      * add another ref which is released when the device is destroyed. */
     IDirectDrawSurface7_AddRef(&target->IDirectDrawSurface7_iface);
-    IDirectDrawSurface7_AddRef(&ddraw->d3d_target->IDirectDrawSurface7_iface);
 
     ddraw->d3ddevice = device;
 
