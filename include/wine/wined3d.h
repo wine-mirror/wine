@@ -1692,12 +1692,6 @@ struct wined3d_device_creation_parameters
     DWORD flags;
 };
 
-typedef struct _WINED3DDEVINFO_CACHEUTILIZATION
-{
-    float TextureCacheHitRate;
-    float PostTransformVertexCacheHitRate;
-} WINED3DDEVINFO_CACHEUTILIZATION;
-
 typedef struct _WINED3DDEVINFO_INTERFACETIMINGS
 {
     float WaitingForGPUToUseApplicationResourceTimePercent;
