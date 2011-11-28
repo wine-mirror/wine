@@ -1513,6 +1513,7 @@ static void sync_window_position( Display *display, struct x11drv_win_data *data
     data->configure_serial = NextRequest( display );
     XReconfigureWMWindow( display, data->whole_window,
                           DefaultScreen(display), mask, &changes );
+    wine_tsx11_unlock();
 #ifdef HAVE_LIBXSHAPE
     if (IsRectEmpty( old_window_rect ) != IsRectEmpty( &data->window_rect ))
         sync_window_region( display, data, (HRGN)1 );
@@ -1523,11 +1524,14 @@ static void sync_window_position( Display *display, struct x11drv_win_data *data
         int new_x_offset = data->window_rect.left - data->whole_rect.left;
         int new_y_offset = data->window_rect.top - data->whole_rect.top;
         if (old_x_offset != new_x_offset || old_y_offset != new_y_offset)
+        {
+            wine_tsx11_lock();
             XShapeOffsetShape( display, data->whole_window, ShapeBounding,
                                new_x_offset - old_x_offset, new_y_offset - old_y_offset );
+            wine_tsx11_unlock();
+        }
     }
 #endif
-    wine_tsx11_unlock();
 
     TRACE( "win %p/%lx pos %d,%d,%dx%d after %lx changes=%x serial=%lu\n",
            data->hwnd, data->whole_window, data->whole_rect.left, data->whole_rect.top,
