@@ -1049,7 +1049,7 @@
 @ cdecl _ultoa(long ptr long) msvcrt._ultoa
 @ cdecl _ultoa_s(long ptr long long) msvcrt._ultoa_s
 @ cdecl _ultow(long ptr long) msvcrt._ultow
-@ stub _ultow_s
+@ cdecl _ultow_s(long ptr long long) msvcrt._ultow_s
 @ cdecl _umask(long) msvcrt._umask
 @ stub _umask_s
 @ stub _ungetc_nolock

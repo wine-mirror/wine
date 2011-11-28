@@ -991,7 +991,7 @@
 @ cdecl _ultoa(long ptr long) ntdll._ultoa
 @ cdecl _ultoa_s(long ptr long long)
 @ cdecl _ultow(long ptr long) ntdll._ultow
-# stub _ultow_s(long ptr long long)
+@ cdecl _ultow_s(long ptr long long)
 @ cdecl _umask(long) MSVCRT__umask
 # stub _umask_s(long ptr)
 @ cdecl _ungetch(long)
