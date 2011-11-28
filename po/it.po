@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-11-21 21:59+0100\n"
+"PO-Revision-Date: 2011-11-28 08:30+0100\n"
 "Last-Translator: Luca Bennati <lucak3@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Italian\n"
@@ -9352,7 +9352,6 @@ msgid "Unicode (UTF-8)"
 msgstr "Unicode (UTF-8)"
 
 #: notepad.rc:99
-#, fuzzy
 msgid ""
 "%1\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -9361,9 +9360,9 @@ msgid ""
 "one of the Unicode options in the Encoding drop down list.\n"
 "Continue?"
 msgstr ""
-"%s\n"
+"%1\n"
 "Questo file contiene caratteri Unicode che andranno persi se\n"
-"salvi questo file nella codifica %s.\n"
+"salvi questo file nella codifica %2.\n"
 "Per mantenere questi caratteri, clicca Annulla e scegli\n"
 "una delle opzioni Unicode nel menù a tendina Codifica.\n"
 "Continuare?"
@@ -11178,9 +11177,8 @@ msgid "Processes: %d"
 msgstr "Processi: %d"
 
 #: taskmgr.rc:267
-#, fuzzy
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
-msgstr "Uso della Memoria: %dK / %dK"
+msgstr "Uso della Memoria: %1!u!kB / %2!u!kB"
 
 #: taskmgr.rc:272
 msgid "Image Name"
