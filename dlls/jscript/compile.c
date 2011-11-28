@@ -227,6 +227,26 @@ static HRESULT compile_conditional_expression(compiler_ctx_t *ctx, conditional_e
     return S_OK;
 }
 
+static HRESULT compile_new_expression(compiler_ctx_t *ctx, call_expression_t *expr)
+{
+    unsigned arg_cnt = 0;
+    argument_t *arg;
+    HRESULT hres;
+
+    hres = compile_expression(ctx, expr->expression);
+    if(FAILED(hres))
+        return hres;
+
+    for(arg = expr->argument_list; arg; arg = arg->next) {
+        hres = compile_expression(ctx, arg->expr);
+        if(FAILED(hres))
+            return hres;
+        arg_cnt++;
+    }
+
+    return push_instr_int(ctx, OP_new, arg_cnt);
+}
+
 static HRESULT compile_interp_fallback(compiler_ctx_t *ctx, expression_t *expr)
 {
     unsigned instr;
@@ -300,6 +320,8 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_neg);
     case EXPR_MINUS:
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_minus);
+    case EXPR_NEW:
+        return compile_new_expression(ctx, (call_expression_t*)expr);
     case EXPR_NOTEQ:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_neq);
     case EXPR_NOTEQEQ:
