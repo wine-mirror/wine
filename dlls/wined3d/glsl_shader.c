@@ -3425,6 +3425,7 @@ static void shader_glsl_texm3x3spec(const struct wined3d_shader_instruction *ins
     struct wined3d_shader_tex_mx *tex_mx = ins->ctx->tex_mx;
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     struct glsl_sample_function sample_function;
+    char coord_mask[6];
 
     shader_glsl_add_src_param(ins, &ins->src[0], src_mask, &src0_param);
     shader_glsl_add_src_param(ins, &ins->src[1], src_mask, &src1_param);
@@ -3436,9 +3437,11 @@ static void shader_glsl_texm3x3spec(const struct wined3d_shader_instruction *ins
 
     /* Dependent read, not valid with conditional NP2 */
     shader_glsl_get_sample_function(ins->ctx, reg, 0, &sample_function);
+    shader_glsl_write_mask_to_str(sample_function.coord_mask, coord_mask);
 
     /* Sample the texture */
-    shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DSP_NOSWIZZLE, NULL, NULL, NULL, "tmp0.xyz");
+    shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DSP_NOSWIZZLE,
+            NULL, NULL, NULL, "tmp0%s", coord_mask);
 
     tex_mx->current_row = 0;
 }
@@ -3453,6 +3456,7 @@ static void shader_glsl_texm3x3vspec(const struct wined3d_shader_instruction *in
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     struct glsl_sample_function sample_function;
     struct glsl_src_param src0_param;
+    char coord_mask[6];
 
     shader_glsl_add_src_param(ins, &ins->src[0], src_mask, &src0_param);
 
@@ -3466,9 +3470,11 @@ static void shader_glsl_texm3x3vspec(const struct wined3d_shader_instruction *in
 
     /* Dependent read, not valid with conditional NP2 */
     shader_glsl_get_sample_function(ins->ctx, reg, 0, &sample_function);
+    shader_glsl_write_mask_to_str(sample_function.coord_mask, coord_mask);
 
     /* Sample the texture using the calculated coordinates */
-    shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DSP_NOSWIZZLE, NULL, NULL, NULL, "tmp0.xyz");
+    shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DSP_NOSWIZZLE,
+            NULL, NULL, NULL, "tmp0%s", coord_mask);
 
     tex_mx->current_row = 0;
 }
