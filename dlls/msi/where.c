@@ -732,7 +732,7 @@ static UINT reorder_check( const struct expr *expr, JOINTABLE **ordered_tables,
                 add_to_array(ordered_tables, *lastused);
             return res;
         default:
-            ERR("Unkown expr type: %i\n", expr->type);
+            ERR("Unknown expr type: %i\n", expr->type);
             assert(0);
             return 0x1000000;
     }

@@ -7297,7 +7297,7 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
             && (src_surface->flags & (SFLAG_INTEXTURE | SFLAG_INDRAWABLE)) == SFLAG_INDRAWABLE)
     {
-        /* Without FBO blits transfering from the drawable to the texture is
+        /* Without FBO blits transferring from the drawable to the texture is
          * expensive, because we have to flip the data in sysmem. Since we can
          * flip in the blitter, we don't actually need that flip anyway. So we
          * use the surface's texture as scratch texture, and flip the source

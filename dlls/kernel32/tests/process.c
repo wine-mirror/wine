@@ -1727,8 +1727,8 @@ static void test_QueryFullProcessImageNameA(void)
     expect_eq_s(INIT_STR, buf);
 
     /* this is a difference between the ascii and the unicode version
-     * the unicode version crashes when the size is big enough to hold the result
-     * ascii version through an error
+     * the unicode version crashes when the size is big enough to hold
+     * the result while the ascii version throws an error
      */
     size = 1024;
     expect_eq_d(FALSE, pQueryFullProcessImageNameA(GetCurrentProcess(), 0, NULL, &size));

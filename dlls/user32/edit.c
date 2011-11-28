@@ -3608,7 +3608,7 @@ static void EDIT_WM_Paint(EDITSTATE *es, HDC hdc)
 					(es->style & ES_NOHIDESEL));
         dc = hdc ? hdc : BeginPaint(es->hwndSelf, &ps);
 
-	/* The dc we use for calcualting may not be the one we paint into.
+	/* The dc we use for calculating may not be the one we paint into.
 	   This is the safest action. */
 	EDIT_InvalidateUniscribeData(es);
 	GetClientRect(es->hwndSelf, &rcClient);

@@ -233,7 +233,7 @@ static void test_create(void)
                 ok(hclient != INVALID_HANDLE_VALUE, "CreateFile failed for sharing %x, access: %x, GetLastError: %d\n",
                    sharing[j], access[k], GetLastError());
             else
-                ok(hclient == INVALID_HANDLE_VALUE, "CreateFile succeded for sharing %x, access: %x\n", sharing[j], access[k]);
+                ok(hclient == INVALID_HANDLE_VALUE, "CreateFile succeeded for sharing %x, access: %x\n", sharing[j], access[k]);
 
             CloseHandle(hserver);
         }
