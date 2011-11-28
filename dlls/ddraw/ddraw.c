@@ -486,7 +486,7 @@ static void ddraw_destroy(IDirectDrawImpl *This)
     if (This->wined3d_swapchain)
         ddraw_destroy_swapchain(This);
     wined3d_device_decref(This->wined3d_device);
-    wined3d_decref(This->wineD3D);
+    wined3d_decref(This->wined3d);
 
     /* Now free the object */
     HeapFree(GetProcessHeap(), 0, This);
@@ -835,7 +835,7 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
         {
             struct wined3d_display_mode display_mode;
 
-            wined3d_get_adapter_display_mode(This->wineD3D, WINED3DADAPTER_DEFAULT, &display_mode);
+            wined3d_get_adapter_display_mode(This->wined3d, WINED3DADAPTER_DEFAULT, &display_mode);
             wined3d_device_setup_fullscreen_window(This->wined3d_device, hwnd,
                     display_mode.width, display_mode.height);
         }
@@ -1453,7 +1453,7 @@ static HRESULT WINAPI ddraw7_GetFourCCCodes(IDirectDraw7 *iface, DWORD *NumCodes
 
     for (i = 0; i < (sizeof(formats) / sizeof(formats[0])); ++i)
     {
-        hr = wined3d_check_device_format(This->wineD3D, WINED3DADAPTER_DEFAULT, WINED3DDEVTYPE_HAL,
+        hr = wined3d_check_device_format(This->wined3d, WINED3DADAPTER_DEFAULT, WINED3DDEVTYPE_HAL,
                 mode.format_id, 0, WINED3DRTYPE_SURFACE, formats[i], DefaultSurfaceType);
         if (SUCCEEDED(hr))
         {
@@ -1652,7 +1652,7 @@ static HRESULT WINAPI ddraw7_GetAvailableVidMem(IDirectDraw7 *iface, DDSCAPS2 *C
     {
         struct wined3d_adapter_identifier desc = {0};
 
-        hr = wined3d_get_adapter_identifier(This->wineD3D, WINED3DADAPTER_DEFAULT, 0, &desc);
+        hr = wined3d_get_adapter_identifier(This->wined3d, WINED3DADAPTER_DEFAULT, 0, &desc);
         *total = desc.video_memory;
     }
 
@@ -2135,7 +2135,7 @@ static HRESULT WINAPI ddraw7_EnumDisplayModes(IDirectDraw7 *iface, DWORD Flags,
     for(fmt = 0; fmt < (sizeof(checkFormatList) / sizeof(checkFormatList[0])); fmt++)
     {
         modenum = 0;
-        while (wined3d_enum_adapter_modes(This->wineD3D, WINED3DADAPTER_DEFAULT,
+        while (wined3d_enum_adapter_modes(This->wined3d, WINED3DADAPTER_DEFAULT,
                 checkFormatList[fmt], modenum++, &mode) == WINED3D_OK)
         {
             PixelFormat_WineD3DtoDD(&pixelformat, mode.format_id);
@@ -3851,7 +3851,7 @@ static HRESULT WINAPI d3d7_EnumDevices(IDirect3D7 *iface, LPD3DENUMDEVICESCALLBA
 
     wined3d_mutex_lock();
 
-    hr = IDirect3DImpl_GetCaps(This->wineD3D, &device_desc1, &device_desc7);
+    hr = IDirect3DImpl_GetCaps(This->wined3d, &device_desc1, &device_desc7);
     if (hr != D3D_OK)
     {
         wined3d_mutex_unlock();
@@ -3918,7 +3918,7 @@ static HRESULT WINAPI d3d3_EnumDevices(IDirect3D3 *iface, LPD3DENUMDEVICESCALLBA
 
     wined3d_mutex_lock();
 
-    hr = IDirect3DImpl_GetCaps(This->wineD3D, &device_desc1, &device_desc7);
+    hr = IDirect3DImpl_GetCaps(This->wined3d, &device_desc1, &device_desc7);
     if (hr != D3D_OK)
     {
         wined3d_mutex_unlock();
@@ -4282,7 +4282,7 @@ static HRESULT WINAPI d3d3_FindDevice(IDirect3D3 *iface, D3DFINDDEVICESEARCH *fd
     }
 
     /* Get the caps */
-    hr = IDirect3DImpl_GetCaps(This->wineD3D, &desc1, &desc7);
+    hr = IDirect3DImpl_GetCaps(This->wined3d, &desc1, &desc7);
     if (hr != D3D_OK) return hr;
 
     /* Now return our own GUID */
@@ -4594,7 +4594,7 @@ static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device
 
     for (i = 0; i < (sizeof(formats) / sizeof(*formats)); ++i)
     {
-        hr = wined3d_check_device_format(This->wineD3D, WINED3DADAPTER_DEFAULT, type, mode.format_id,
+        hr = wined3d_check_device_format(This->wined3d, WINED3DADAPTER_DEFAULT, type, mode.format_id,
                 WINED3DUSAGE_DEPTHSTENCIL, WINED3DRTYPE_SURFACE, formats[i], SURFACE_OPENGL);
         if (SUCCEEDED(hr))
         {
@@ -4619,7 +4619,7 @@ static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device
      * while others used dwZBufferBitDepth=32. In either case the pitch matches a 32 bits per
      * pixel format, so we use dwZBufferBitDepth=32. Some games expect 24. Windows Vista and
      * newer enumerate both versions, so we do the same(bug 22434) */
-    hr = wined3d_check_device_format(This->wineD3D, WINED3DADAPTER_DEFAULT, type, mode.format_id,
+    hr = wined3d_check_device_format(This->wined3d, WINED3DADAPTER_DEFAULT, type, mode.format_id,
             WINED3DUSAGE_DEPTHSTENCIL, WINED3DRTYPE_SURFACE, WINED3DFMT_X8D24_UNORM, SURFACE_OPENGL);
     if (SUCCEEDED(hr))
     {
@@ -5455,20 +5455,20 @@ HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type)
     ddraw->orig_width = GetSystemMetrics(SM_CXSCREEN);
     ddraw->orig_height = GetSystemMetrics(SM_CYSCREEN);
 
-    ddraw->wineD3D = wined3d_create(7, WINED3D_LEGACY_DEPTH_BIAS,
+    ddraw->wined3d = wined3d_create(7, WINED3D_LEGACY_DEPTH_BIAS,
             &ddraw->IDirectDraw7_iface);
-    if (!ddraw->wineD3D)
+    if (!ddraw->wined3d)
     {
         WARN("Failed to create a wined3d object.\n");
         return E_OUTOFMEMORY;
     }
 
-    hr = wined3d_device_create(ddraw->wineD3D, WINED3DADAPTER_DEFAULT, device_type,
+    hr = wined3d_device_create(ddraw->wined3d, WINED3DADAPTER_DEFAULT, device_type,
             NULL, 0, 8, &ddraw->device_parent, &ddraw->wined3d_device);
     if (FAILED(hr))
     {
         WARN("Failed to create a wined3d device, hr %#x.\n", hr);
-        wined3d_decref(ddraw->wineD3D);
+        wined3d_decref(ddraw->wined3d);
         return hr;
     }
 
