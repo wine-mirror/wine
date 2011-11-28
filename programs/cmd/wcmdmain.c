@@ -978,7 +978,12 @@ void WCMD_run_program (WCHAR *command, int called) {
   static const WCHAR envPathExt[] = {'P','A','T','H','E','X','T','\0'};
   static const WCHAR delims[] = {'/','\\',':','\0'};
 
-  WCMD_parse (command, quals, param1, param2);	/* Quick way to get the filename */
+  /* Quick way to get the filename
+   * (but handle leading / as part of program name, not qualifier)
+   */
+  for (len = 0; command[len] == '/'; len++) param1[len] = '/';
+  WCMD_parse (command + len, quals, param1 + len, param2);
+
   if (!(*param1) && !(*param2))
     return;
 
