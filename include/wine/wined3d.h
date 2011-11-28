@@ -1692,15 +1692,6 @@ struct wined3d_device_creation_parameters
     DWORD flags;
 };
 
-typedef struct _WINED3DDEVINFO_BANDWIDTHTIMINGS
-{
-    float MaxBandwidthUtilized;
-    float FrontEndUploadMemoryUtilizedPercent;
-    float VertexRateUtilizedPercent;
-    float TriangleSetupRateUtilizedPercent;
-    float FillRateUtilizedPercent;
-} WINED3DDEVINFO_BANDWIDTHTIMINGS;
-
 typedef struct _WINED3DDEVINFO_CACHEUTILIZATION
 {
     float TextureCacheHitRate;
