@@ -50,6 +50,7 @@ typedef struct _func_stack {
     X(eq2,        1, 0,0)                  \
     X(in,         1, 0,0)                  \
     X(int,        1, ARG_INT,    0)        \
+    X(jmp_nz,     0, ARG_ADDR,   0)        \
     X(minus,      1, 0,0)                  \
     X(neg,        1, 0,0)                  \
     X(neq,        1, 0,0)                  \
@@ -77,12 +78,15 @@ typedef union {
     double *dbl;
     LONG lng;
     WCHAR *str;
+    unsigned uint;
 } instr_arg_t;
 
 typedef enum {
     ARG_NONE = 0,
+    ARG_ADDR,
     ARG_EXPR,
-    ARG_INT
+    ARG_INT,
+    ARG_STR
 } instr_arg_type_t;
 
 typedef struct {
@@ -539,7 +543,6 @@ HRESULT identifier_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*
 HRESULT array_literal_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT property_value_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 
-HRESULT logical_or_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT logical_and_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT binary_or_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT binary_xor_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;

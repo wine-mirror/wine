@@ -1306,7 +1306,7 @@ static expression_t *new_function_expression(parser_ctx_t *ctx, const WCHAR *ide
 
 static const expression_eval_t expression_eval_table[] = {
    compiled_expression_eval,
-   logical_or_expression_eval,
+   compiled_expression_eval,
    logical_and_expression_eval,
    binary_or_expression_eval,
    binary_xor_expression_eval,
