@@ -1738,6 +1738,28 @@ HRESULT identifier_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD
     return hres;
 }
 
+/* ECMA-262 3rd Edition    10.1.4 */
+static HRESULT interp_ident(exec_ctx_t *ctx)
+{
+    const BSTR arg = ctx->parser->code->instrs[ctx->ip].arg1.bstr;
+    exprval_t exprval;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_w(arg));
+
+    hres = identifier_eval(ctx->parser->script, arg, 0, &ctx->ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    hres = exprval_to_value(ctx->parser->script, &exprval, &ctx->ei, &v);
+    exprval_release(&exprval);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push(ctx, &v);
+}
+
 /* ECMA-262 3rd Edition    7.8.1 */
 HRESULT interp_null(exec_ctx_t *ctx)
 {

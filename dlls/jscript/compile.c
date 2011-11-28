@@ -53,6 +53,31 @@ static WCHAR *compiler_alloc_string(bytecode_t *code, const WCHAR *str)
     return ret;
 }
 
+static BSTR compiler_alloc_bstr(compiler_ctx_t *ctx, const WCHAR *str)
+{
+    if(!ctx->code->bstr_pool_size) {
+        ctx->code->bstr_pool = heap_alloc(8 * sizeof(BSTR));
+        if(!ctx->code->bstr_pool)
+            return NULL;
+        ctx->code->bstr_pool_size = 8;
+    }else if(ctx->code->bstr_pool_size == ctx->code->bstr_cnt) {
+        BSTR *new_pool;
+
+        new_pool = heap_realloc(ctx->code->bstr_pool, ctx->code->bstr_pool_size*2*sizeof(BSTR));
+        if(!new_pool)
+            return NULL;
+
+        ctx->code->bstr_pool = new_pool;
+        ctx->code->bstr_pool_size *= 2;
+    }
+
+    ctx->code->bstr_pool[ctx->code->bstr_cnt] = SysAllocString(str);
+    if(!ctx->code->bstr_pool[ctx->code->bstr_cnt])
+        return NULL;
+
+    return ctx->code->bstr_pool[ctx->code->bstr_cnt++];
+}
+
 static unsigned push_instr(compiler_ctx_t *ctx, jsop_t op)
 {
     assert(ctx->code_size >= ctx->code_off);
@@ -109,6 +134,23 @@ static HRESULT push_instr_str(compiler_ctx_t *ctx, jsop_t op, const WCHAR *arg)
         return E_OUTOFMEMORY;
 
     instr_ptr(ctx, instr)->arg1.str = str;
+    return S_OK;
+}
+
+static HRESULT push_instr_bstr(compiler_ctx_t *ctx, jsop_t op, const WCHAR *arg)
+{
+    unsigned instr;
+    WCHAR *str;
+
+    str = compiler_alloc_bstr(ctx, arg);
+    if(!str)
+        return E_OUTOFMEMORY;
+
+    instr = push_instr(ctx, op);
+    if(instr == -1)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, instr)->arg1.bstr = str;
     return S_OK;
 }
 
@@ -312,6 +354,8 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_eq);
     case EXPR_EQEQ:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_eq2);
+    case EXPR_IDENT:
+        return push_instr_bstr(ctx, OP_ident, ((identifier_expression_t*)expr)->identifier);
     case EXPR_IN:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_in);
     case EXPR_LITERAL:
@@ -346,7 +390,13 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
 
 void release_bytecode(bytecode_t *code)
 {
+    unsigned i;
+
+    for(i=0; i < code->bstr_cnt; i++)
+        SysFreeString(code->bstr_pool[i]);
+
     jsheap_free(&code->heap);
+    heap_free(code->bstr_pool);
     heap_free(code->instrs);
     heap_free(code);
 }

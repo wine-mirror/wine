@@ -48,6 +48,7 @@ typedef struct _func_stack {
     X(double,     1, ARG_SBL,    0)        \
     X(eq,         1, 0,0)                  \
     X(eq2,        1, 0,0)                  \
+    X(ident,      1, ARG_BSTR,   0)        \
     X(in,         1, 0,0)                  \
     X(int,        1, ARG_INT,    0)        \
     X(jmp,        0, ARG_ADDR,   0)        \
@@ -78,6 +79,7 @@ OP_LIST
 
 typedef union {
     expression_t *expr;
+    BSTR bstr;
     double *dbl;
     LONG lng;
     WCHAR *str;
@@ -87,6 +89,7 @@ typedef union {
 typedef enum {
     ARG_NONE = 0,
     ARG_ADDR,
+    ARG_BSTR,
     ARG_EXPR,
     ARG_INT,
     ARG_STR
@@ -101,6 +104,10 @@ typedef struct {
 typedef struct {
     instr_t *instrs;
     jsheap_t heap;
+
+    BSTR *bstr_pool;
+    unsigned bstr_pool_size;
+    unsigned bstr_cnt;
 } bytecode_t;
 
 void release_bytecode(bytecode_t*);
