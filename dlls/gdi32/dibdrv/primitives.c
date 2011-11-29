@@ -4015,6 +4015,34 @@ static inline WORD gradient_rgb_555( const TRIVERTEX *v, unsigned int pos, unsig
     return (r << 10) | (g << 5) | b;
 }
 
+static inline BYTE gradient_rgb_8( const dib_info *dib, const TRIVERTEX *v,
+                                   unsigned int pos, unsigned int len, unsigned int x, unsigned int y )
+{
+    static const BYTE matrix[16][16] =
+    {
+        {   0, 128,  32, 160,   8, 136,  40, 168,   2, 130,  34, 162,  10, 138,  42, 170 },
+        { 192,  64, 224,  96, 200,  72, 232, 104, 194,  66, 226,  98, 202,  74, 234, 106 },
+        {  48, 176,  16, 144,  56, 184,  24, 152,  50, 178,  18, 146,  58, 186,  26, 154 },
+        { 240, 112, 208,  80, 248, 120, 216,  88, 242, 114, 210,  82, 250, 122, 218,  90 },
+        {  12, 140,  44, 172,   4, 132,  36, 164,  14, 142,  46, 174,   6, 134,  38, 166 },
+        { 204,  76, 236, 108, 196,  68, 228, 100, 206,  78, 238, 110, 198,  70, 230, 102 },
+        {  60, 188,  28, 156,  52, 180,  20, 148,  62, 190,  30, 158,  54, 182,  22, 150 },
+        { 252, 124, 220,  92, 244, 116, 212,  84, 254, 126, 222,  94, 246, 118, 214,  86 },
+        {   3, 131,  35, 163,  11, 139,  43, 171,   1, 129,  33, 161,   9, 137,  41, 169 },
+        { 195,  67, 227,  99, 203,  75, 235, 107, 193,  65, 225,  97, 201,  73, 233, 105 },
+        {  51, 179,  19, 147,  59, 187,  27, 155,  49, 177,  17, 145,  57, 185,  25, 153 },
+        { 243, 115, 211,  83, 251, 123, 219,  91, 241, 113, 209,  81, 249, 121, 217,  89 },
+        {  15, 143,  47, 175,   7, 135,  39, 167,  13, 141,  45, 173,   5, 133,  37, 165 },
+        { 207,  79, 239, 111, 199,  71, 231, 103, 205,  77, 237, 109, 197,  69, 229, 101 },
+        {  63, 191,  31, 159,  55, 183,  23, 151,  61, 189,  29, 157,  53, 181,  21, 149 },
+        { 255, 127, 223,  95, 247, 119, 215,  87, 253, 125, 221,  93, 245, 117, 213,  85 },
+    };
+    BYTE r = ((v[0].Red   * (len - pos) + v[1].Red   * pos) / len / 128 + matrix[y % 16][x % 16]) / 256;
+    BYTE g = ((v[0].Green * (len - pos) + v[1].Green * pos) / len / 128 + matrix[y % 16][x % 16]) / 256;
+    BYTE b = ((v[0].Blue  * (len - pos) + v[1].Blue  * pos) / len / 128 + matrix[y % 16][x % 16]) / 256;
+    return rgb_to_pixel_colortable( dib, r * 127, g * 127, b * 127 );
+}
+
 static void gradient_rect_8888( const dib_info *dib, const RECT *rc, const TRIVERTEX *v, int mode )
 {
     DWORD *ptr = get_pixel_ptr_32( dib, rc->left, rc->top );
@@ -4196,29 +4224,26 @@ static void gradient_rect_16( const dib_info *dib, const RECT *rc, const TRIVERT
 
 static void gradient_rect_8( const dib_info *dib, const RECT *rc, const TRIVERTEX *v, int mode )
 {
-    BYTE *ptr = get_pixel_ptr_8( dib, rc->left, rc->top );
+    BYTE *ptr = get_pixel_ptr_8( dib, 0, rc->top );
     int x, y;
 
     switch (mode)
     {
     case GRADIENT_FILL_RECT_H:
-        for (x = 0; x < rc->right - rc->left; x++)
-        {
-            DWORD val = gradient_rgb_24( v, x + rc->left - v[0].x, v[1].x - v[0].x );
-            ptr[x] = rgb_lookup_colortable( dib, val >> 16, val >> 8, val );
-        }
-
-        for (y = rc->top + 1; y < rc->bottom; y++, ptr += dib->stride)
-            memcpy( ptr + dib->stride, ptr, rc->right - rc->left );
+        for (y = rc->top; y < min( rc->top + 16, rc->bottom ); y++, ptr += dib->stride)
+            for (x = rc->left; x < rc->right; x++)
+                ptr[x] = gradient_rgb_8( dib, v, x - v[0].x, v[1].x - v[0].x, x, y );
+        for (ptr += rc->left; y < rc->bottom; y++, ptr += dib->stride)
+            memcpy( ptr, ptr - dib->stride * 16, rc->right - rc->left );
         break;
 
     case GRADIENT_FILL_RECT_V:
-        for (y = rc->top; y < rc->bottom; y++)
+        for (y = rc->top; y < rc->bottom; y++, ptr += dib->stride)
         {
-            DWORD val = gradient_rgb_24( v, y - v[0].y, v[1].y - v[0].y );
-            val = rgb_lookup_colortable( dib, val >> 16, val >> 8, val );
-            for (x = 0; x < rc->right - rc->left; x++) ptr[x] = val;
-            ptr += dib->stride;
+            BYTE values[16];
+            for (x = 0; x < 16; x++)
+                values[x] = gradient_rgb_8( dib, v, y - v[0].y, v[1].y - v[0].y, x, y );
+            for (x = rc->left; x < rc->right; x++) ptr[x] = values[x % 16];
         }
         break;
     }
@@ -4232,44 +4257,42 @@ static void gradient_rect_4( const dib_info *dib, const RECT *rc, const TRIVERTE
     switch (mode)
     {
     case GRADIENT_FILL_RECT_H:
-        for (x = rc->left; x < rc->right; x++)
+        for (y = rc->top; y < min( rc->top + 16, rc->bottom ); y++, ptr += dib->stride)
         {
-            DWORD val = gradient_rgb_24( v, x - v[0].x, v[1].x - v[0].x );
-            val = rgb_lookup_colortable( dib, val >> 16, val >> 8, val );
-            if (x & 1)
-                ptr[x / 2] = val | (ptr[x / 2] & 0xf0);
-            else
-                ptr[x / 2] = (val << 4) | (ptr[x / 2] & 0x0f);
+            for (x = rc->left; x < rc->right; x++)
+            {
+                BYTE val = gradient_rgb_8( dib, v, x - v[0].x, v[1].x - v[0].x, x, y );
+                if (x & 1)
+                    ptr[x / 2] = val | (ptr[x / 2] & 0xf0);
+                else
+                    ptr[x / 2] = (val << 4) | (ptr[x / 2] & 0x0f);
+            }
         }
-
-        for (y = rc->top + 1; y < rc->bottom; y++, ptr += dib->stride)
+        for ( ; y < rc->bottom; y++, ptr += dib->stride)
         {
             x = rc->left;
             if (x & 1)
             {
-                ptr[dib->stride + x / 2] = (ptr[x / 2] & 0x0f) | (ptr[dib->stride + x / 2] & 0xf0);
+                ptr[x / 2] = (ptr[x / 2 - 16 * dib->stride] & 0x0f) | (ptr[x / 2] & 0xf0);
                 x++;
             }
-            for (; x < rc->right - 1; x += 2) ptr[dib->stride + x / 2] = ptr[x / 2];
+            for (; x < rc->right - 1; x += 2) ptr[x / 2] = ptr[x / 2 - 16 * dib->stride];
             if (x < rc->right)
-                ptr[dib->stride + x / 2] = (ptr[dib->stride + x / 2] & 0x0f) | (ptr[x / 2] & 0xf0);
+                ptr[x / 2] = (ptr[x / 2] & 0x0f) | (ptr[x / 2 - 16 * dib->stride] & 0xf0);
         }
         break;
 
     case GRADIENT_FILL_RECT_V:
-        for (y = rc->top; y < rc->bottom; y++)
+        for (y = rc->top; y < rc->bottom; y++, ptr += dib->stride)
         {
-            DWORD val = gradient_rgb_24( v, y - v[0].y, v[1].y - v[0].y );
-            val = rgb_lookup_colortable( dib, val >> 16, val >> 8, val );
-            x = rc->left;
-            if (x & 1)
-            {
-                ptr[x / 2] = val | (ptr[x / 2] & 0xf0);
-                x++;
-            }
-            for (; x < rc->right - 1; x += 2) ptr[x / 2] = (val << 4) | val;
-            if (x < rc->right) ptr[x / 2] = (ptr[x / 2] & 0x0f) | (val << 4);
-            ptr += dib->stride;
+            BYTE values[16];
+            for (x = 0; x < 16; x++)
+                values[x] = gradient_rgb_8( dib, v, y - v[0].y, v[1].y - v[0].y, x, y );
+            for (x = rc->left; x < rc->right; x++)
+                if (x & 1)
+                    ptr[x / 2] = values[x % 16] | (ptr[x / 2] & 0xf0);
+                else
+                    ptr[x / 2] = (values[x % 16] << 4) | (ptr[x / 2] & 0x0f);
         }
         break;
     }
