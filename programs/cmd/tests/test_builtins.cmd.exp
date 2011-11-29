@@ -2,8 +2,8 @@
 @pwd@>echo Tests for cmd's builtin commands@space@
 Tests for cmd's builtin commands
 
-@pwd@>echo ------------ Testing 'echo' [ON] --------------@space@
------------- Testing 'echo' [ON] --------------
+@pwd@>echo ------------ Testing 'echo' [ON] ------------@space@
+------------ Testing 'echo' [ON] ------------
 
 @pwd@>echo word@space@
 word
@@ -76,7 +76,7 @@ word
 @tab@word
 
 @pwd@>echo @tab@ on @space@@space@
------------- Testing 'echo' [OFF] --------------
+------------ Testing 'echo' [OFF] ------------
 word
 'singlequotedword'
 "doublequotedword"
@@ -101,7 +101,7 @@ word
 @tab@word
 @space@@tab@word
 @tab@word
------------- Testing mixed echo modes --------------
+------------ Testing mixed echo modes ------------
 @echo on
 if 1==1 echo foo
 if 1==1 @echo bar
@@ -116,7 +116,7 @@ foo
 bar
 foo2
 bar2
------------- Testing rem --------------
+------------ Testing rem ------------
 
 @pwd@>rem Hello@space@
 
@@ -133,7 +133,7 @@ bar2
 @pwd@>rem@tab@  Hello@space@
 
 @pwd@>rem@tab@echo foo & echo bar@space@
------------- Testing redirection operators --------------
+------------ Testing redirection operators ------------
 ...stdout redirection
 foo
 foo@space@
@@ -178,7 +178,7 @@ foo
 A
 B
 C
------------- Testing circumflex escape character --------------
+------------ Testing circumflex escape character ------------
 @todo_wine@hello, world
 @todo_wine@hello, world
 @todo_wine@hell^o, world
@@ -198,7 +198,7 @@ baz
 @todo_wine@FOO=bar ^| baz
 @todo_wine@bar | baz
 @todo_wine@0
------------- Testing 'set' --------------
+------------ Testing 'set' ------------
 1
 @todo_wine@0
 FOOBAR not defined
@@ -224,7 +224,7 @@ foo
 ''
 'foo@space@'
 'foo@tab@'
------------- Testing variable expansion --------------
+------------ Testing variable expansion ------------
 ~dp0 should be directory containing batch file
 @pwd@\
 @pwd@\
@@ -244,7 +244,7 @@ ERRORLEVEL
 P0
 0S
 P0S
------------- Testing variable substrings --------------
+------------ Testing variable substrings ------------
 q
 qwe
 er
@@ -254,7 +254,7 @@ ert@or_broken@qwerty
 e@or_broken@qwerty
 ''@or_broken@'qwerty'
 r@or_broken@qwerty
------------- Testing variable substitution --------------
+------------ Testing variable substitution ------------
 ...in FOR variables
 @todo_wine@"A B"
 C
@@ -316,7 +316,7 @@ N
 @drive@
 ''
 '.eh'@or_broken@''
------------- Testing variable delayed expansion --------------
+------------ Testing variable delayed expansion ------------
 ...default mode (load-time expansion)
 foo
 !FOO!
@@ -336,7 +336,7 @@ foo
 @todo_wine@foo@or_broken@!FOO!
 foo
 !FOO!
------------- Testing conditional execution --------------
+------------ Testing conditional execution ------------
 @todo_wine@...unconditional &
 foo1
 bar2@space@
@@ -380,7 +380,7 @@ bar
 bar
 NUL
 @todo_wine@foo created
------------- Testing if/else --------------
+------------ Testing if/else ------------
 if/else should work with blocks
 if seems to work
 else seems to work
@@ -402,7 +402,7 @@ lol
 quake
 quake
 quake
------------Testing for -----------
+------------ Testing for ------------
 ...plain FOR
 A
 B
@@ -588,14 +588,14 @@ c
 @todo_wine@c
 @todo_wine@no output
 @todo_wine@no output
------------Testing del /a-----------
+------------ Testing del /a ------------
 not-r.test not found after delete, good
 r.test found before delete, good
 r.test not found after delete, good
------------- Testing del /q --------------
+------------ Testing del /q ------------
 del /q * succeeded on file1
 del /q * succeeded on file2.dat
------------- Testing del /s --------------
+------------ Testing del /s ------------
 ------------ Testing rename ------------
 ... ren and rename are synonymous ...
 foo renamed to bar
@@ -661,7 +661,7 @@ foobar created
 bar\baz created
 mkdir foo\* errorlevel 1
 ok, foo created
------------ Testing rmdir -----------
+------------ Testing rmdir ------------
 0
 dir removed
 0
@@ -679,7 +679,7 @@ foo removed
 bar removed
 foobar removed
 bar\baz removed
------------ Testing pushd/popd -----------
+------------ Testing pushd/popd ------------
 @pwd@
 ...popd is no-op when dir stack is empty
 @pwd@
@@ -694,7 +694,7 @@ bar\baz removed
 @pwd@
 @pwd@\foobar
 @pwd@
------------- Testing attrib --------------
+------------ Testing attrib ------------
 @todo_wine@A            @pwd@\foobar\foo@or_broken@A          @pwd@\foobar\foo@or_broken@A       I    @pwd@\foobar\foo
 ... read-only attribute
 @todo_wine@A    R       @pwd@\foobar\foo@or_broken@A    R     @pwd@\foobar\foo@or_broken@A    R  I    @pwd@\foobar\foo
@@ -714,7 +714,7 @@ Read-only file forcibly deleted
 toto
 lulu
 file created in read-only dir
------------- Testing assoc --------------
+------------ Testing assoc ------------
 ...setting association
 ***
 .foo=bar
@@ -725,7 +725,7 @@ file created in read-only dir
 ***
 +++
 ***
------------- Testing ftype --------------
+------------ Testing ftype ------------
 ...setting association
 ***
 footype=foo_opencmd
@@ -790,7 +790,7 @@ globalval
 globalval
 localval
 @todo_wine@globalval
------------Testing Errorlevel-----------
+------------ Testing Errorlevel ------------
 9009
 1
 errorlevel just right, good
@@ -800,12 +800,12 @@ abc0def@or_broken@abc1def
 errorlevel zero, good@or_broken@errorlevel nonzero, bad
 7 should be 7
 7 should still be 7
------------Testing GOTO-----------
+------------ Testing GOTO ------------
 goto with no leading space worked
 goto with a leading space worked
 goto with a leading tab worked
 goto with a following space worked
----------- Testing combined CALLs/GOTOs -----------
+------------ Testing combined CALLs/GOTOs ------------
 world
 cheball
 barbare

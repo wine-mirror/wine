@@ -1,7 +1,7 @@
 echo Tests for cmd's builtin commands
 
 @echo on
-echo ------------ Testing 'echo' [ON] --------------
+echo ------------ Testing 'echo' [ON] ------------
 echo word
 echo 'singlequotedword'
 echo "doublequotedword"
@@ -30,7 +30,7 @@ echo @tab@ on @space@
 
 @echo off
 echo off@tab@@space@
-echo ------------ Testing 'echo' [OFF] --------------
+echo ------------ Testing 'echo' [OFF] ------------
 echo word
 echo 'singlequotedword'
 echo "doublequotedword"
@@ -56,7 +56,7 @@ echo @tab@word
 echo  @tab@word
 echo@tab@@tab@word
 
-echo ------------ Testing mixed echo modes --------------
+echo ------------ Testing mixed echo modes ------------
 echo @echo on> mixedEchoModes.cmd
 echo if 1==1 echo foo>> mixedEchoModes.cmd
 echo if 1==1 @echo bar>> mixedEchoModes.cmd
@@ -67,7 +67,7 @@ type mixedEchoModes.cmd
 cmd /c mixedEchoModes.cmd
 del mixedEchoModes.cmd
 
-echo ------------ Testing rem --------------
+echo ------------ Testing rem ------------
 rem Hello
 rem  Hello
 rem   Hello || foo
@@ -87,7 +87,7 @@ rem@tab@  Hello
 rem@tab@echo foo & echo bar
 @echo off
 
-echo ------------ Testing redirection operators --------------
+echo ------------ Testing redirection operators ------------
 mkdir foobar & cd foobar
 echo ...stdout redirection
 echo foo>foo
@@ -164,7 +164,7 @@ type C
 (if 1==0 (echo A > B) else echo C)
 cd .. & rd /s/q foobar
 
-echo ------------ Testing circumflex escape character --------------
+echo ------------ Testing circumflex escape character ------------
 rem Using something like "echo foo^" asks for an additional char after a "More?" prompt on the following line; it's not possible to currently test that non-interactively
 echo ^hell^o, world
 echo hell^o, world
@@ -198,7 +198,7 @@ echo %FOO%
 echo %ErrorLevel%
 set FOO=
 
-echo ------------ Testing 'set' --------------
+echo ------------ Testing 'set' ------------
 call :setError 0
 set FOOBAR 2> nul > nul
 echo %ErrorLevel%
@@ -246,7 +246,7 @@ set FOO=foo@tab@
 echo '%FOO%'
 set FOO=
 
-echo ------------ Testing variable expansion --------------
+echo ------------ Testing variable expansion ------------
 call :setError 0
 echo ~dp0 should be directory containing batch file
 echo %~dp0
@@ -272,7 +272,7 @@ echo P%ERRORLEVEL%
 echo %ERRORLEVEL%S
 echo P%ERRORLEVEL%S
 
-echo ------------ Testing variable substrings --------------
+echo ------------ Testing variable substrings ------------
 set VAR=qwerty
 echo %VAR:~0,1%
 echo %VAR:~0,3%
@@ -285,7 +285,7 @@ echo '%VAR:~-2,-4%'
 echo %VAR:~-3,-2%
 set VAR=
 
-echo ------------ Testing variable substitution --------------
+echo ------------ Testing variable substitution ------------
 echo ...in FOR variables
 for %%i in ("A B" C) do echo %%i
 rem quotes removal
@@ -395,7 +395,7 @@ echo '%~xs1'
 goto :eof
 :endEchoFuns
 
-echo ------------ Testing variable delayed expansion --------------
+echo ------------ Testing variable delayed expansion ------------
 rem NT4 doesn't support this
 echo ...default mode (load-time expansion)
 set FOO=foo
@@ -444,7 +444,7 @@ cmd /V:ON /C tmp.cmd
 cmd /V:OfF /C tmp.cmd
 del tmp.cmd
 
-echo ------------ Testing conditional execution --------------
+echo ------------ Testing conditional execution ------------
 echo ...unconditional ^&
 call :setError 123 & echo foo1
 echo bar2 & echo foo2
@@ -554,7 +554,7 @@ if exist foo (
 )
 cd .. & rd foobar
 
-echo ------------ Testing if/else --------------
+echo ------------ Testing if/else ------------
 echo if/else should work with blocks
 if 0 == 0 (
   echo if seems to work
@@ -592,7 +592,7 @@ if 1==0@tab@(echo doom) else echo quake
 if 1==0 (echo doom)@tab@else echo quake
 if 1==0 (echo doom) else@tab@echo quake
 
-echo -----------Testing for -----------
+echo ------------ Testing for ------------
 echo ...plain FOR
 for %%i in (A B C) do echo %%i
 for %%i in (A B C) do echo %%I
@@ -831,7 +831,7 @@ if not exist output_file (echo no output) else (del output_file)
 cd ..
 rd /s/q foobar
 
-echo -----------Testing del /a-----------
+echo ------------ Testing del /a ------------
 del /f/q *.test > nul
 echo r > r.test
 attrib +r r.test
@@ -847,7 +847,7 @@ del /a:r *.test
 if not exist r.test echo r.test not found after delete, good
 if exist r.test echo r.test found after delete, bad
 
-echo ------------ Testing del /q --------------
+echo ------------ Testing del /q ------------
 mkdir del_q_dir
 cd del_q_dir
 echo abc > file1
@@ -859,7 +859,7 @@ for %%a in (1 2.dat) do if not exist file%%a echo del /q * succeeded on file%%a
 cd ..
 rmdir del_q_dir
 
-echo ------------ Testing del /s --------------
+echo ------------ Testing del /s ------------
 mkdir "foo bar"
 cd "foo bar"
 mkdir "foo:"
@@ -1107,7 +1107,7 @@ echo mkdir foo\* errorlevel %ErrorLevel%
 if exist foo (rmdir foo & echo ok, foo created
 ) else ( echo bad, foo not created )
 
-echo ----------- Testing rmdir -----------
+echo ------------ Testing rmdir ------------
 call :setError 0
 rem rd and rmdir are synonymous
 mkdir foobar
@@ -1172,7 +1172,7 @@ if not exist foobar (echo foobar removed) else echo foobar not removed!
 if not exist bar\baz (echo bar\baz removed) else echo bar\baz not removed!
 cd .. & rd /s/q foobaz
 
-echo ----------- Testing pushd/popd -----------
+echo ------------ Testing pushd/popd ------------
 cd
 echo ...popd is no-op when dir stack is empty
 popd
@@ -1205,7 +1205,7 @@ popd
 cd
 rd /s/q foobar
 
-echo ------------ Testing attrib --------------
+echo ------------ Testing attrib ------------
 rem FIXME Add tests for archive, hidden and system attributes + mixed attributes modifications
 mkdir foobar & cd foobar
 echo foo original contents> foo
@@ -1263,7 +1263,7 @@ rem Oddly windows allows file creation in a read-only directory...
 if exist baz\lala (echo file created in read-only dir) else echo file not created
 cd .. & rd /s/q foobar
 
-echo ------------ Testing assoc --------------
+echo ------------ Testing assoc ------------
 rem FIXME Can't test error messages in the current test system, so we have to use some kludges
 rem FIXME Revise once || conditional execution is fixed
 mkdir foobar & cd foobar
@@ -1293,7 +1293,7 @@ type baz
 echo ***
 cd .. & rd /s/q foobar
 
-echo ------------ Testing ftype --------------
+echo ------------ Testing ftype ------------
 rem FIXME Can't test error messages in the current test system, so we have to use some kludges
 rem FIXME Revise once || conditional execution is fixed
 mkdir foobar & cd foobar
@@ -1477,7 +1477,7 @@ echo %VAR%
 set VAR=
 cd .. & rd /q/s foobar
 
-echo -----------Testing Errorlevel-----------
+echo ------------ Testing Errorlevel ------------
 rem WARNING: Do *not* add tests using ErrorLevel after this section
 should_not_exist 2> nul > nul
 echo %ErrorLevel%
@@ -1504,7 +1504,7 @@ if errorlevel 7 echo setting var worked too well, bad
 call :setError 3
 echo %ErrorLevel% should still be 7
 
-echo -----------Testing GOTO-----------
+echo ------------ Testing GOTO ------------
 if a==a goto dest1
 :dest1
 echo goto with no leading space worked
@@ -1518,7 +1518,7 @@ if d==d goto dest4
 :dest4@space@
 echo goto with a following space worked
 
-echo ---------- Testing combined CALLs/GOTOs -----------
+echo ------------ Testing combined CALLs/GOTOs ------------
 echo @echo off>foo.cmd
 echo goto :eof>>foot.cmd
 echo :eof>>foot.cmd
@@ -1565,7 +1565,7 @@ goto :eof
 echo Final message is not output since earlier 'foot' processing stops script execution
 echo Do NOT add any tests below this line
 
-echo -----------Done, jumping to EOF-----------
+echo ------------ Done, jumping to EOF -----------
 goto :eof
 rem Subroutine to set errorlevel and return
 rem in windows nt 4.0, this always sets errorlevel 1, since /b isn't supported
