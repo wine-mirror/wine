@@ -26,6 +26,7 @@ enum dib_info_flags
 typedef struct
 {
     int bit_count, width, height;
+    int compression;
     int stride; /* stride in bytes.  Will be -ve for bottom-up dibs (see bits). */
     struct gdi_image_bits bits; /* bits.ptr points to the top-left corner of the dib. */
 

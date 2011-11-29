@@ -73,6 +73,7 @@ BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD *bit_f
     dib->bit_count    = bi->biBitCount;
     dib->width        = bi->biWidth;
     dib->height       = bi->biHeight;
+    dib->compression  = bi->biCompression;
     dib->stride       = get_dib_stride( dib->width, dib->bit_count );
     dib->bits.ptr     = bits;
     dib->bits.is_copy = FALSE;

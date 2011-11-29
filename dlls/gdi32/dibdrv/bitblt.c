@@ -1320,6 +1320,8 @@ BOOL dibdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
             v[0].y = min( pt[0].y, pt[1].y );
             v[1].x = max( pt[0].x, pt[1].x );
             v[1].y = max( pt[0].y, pt[1].y );
+            if (pdev->dib.funcs == &funcs_8888 && pdev->dib.compression == BI_BITFIELDS)
+                v[0].Alpha = v[1].Alpha = 0;  /* Windows bug: no alpha on a8r8g8b8 created with bitfields */
             gradient_rect( &pdev->dib, v, mode, pdev->clip );
         }
         return TRUE;
