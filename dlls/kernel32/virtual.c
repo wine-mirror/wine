@@ -348,20 +348,17 @@ HANDLE WINAPI CreateFileMappingW( HANDLE hFile, LPSECURITY_ATTRIBUTES sa,
     protect &= ~sec_flags;
     if (!sec_type) sec_type = SEC_COMMIT;
 
+    /* Win9x compatibility */
+    if (!protect && (GetVersion() & 0x80000000)) protect = PAGE_READONLY;
+
     switch(protect)
     {
-    case 0:
-        protect = PAGE_READONLY;  /* Win9x compatibility */
-        /* fall through */
     case PAGE_READONLY:
     case PAGE_WRITECOPY:
         access = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_EXECUTE;
         break;
     case PAGE_READWRITE:
         access = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE;
-        break;
-    case PAGE_EXECUTE:
-        access = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_EXECUTE | SECTION_MAP_EXECUTE_EXPLICIT;
         break;
     case PAGE_EXECUTE_READ:
     case PAGE_EXECUTE_WRITECOPY:

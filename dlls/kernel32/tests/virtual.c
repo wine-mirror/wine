@@ -1627,6 +1627,129 @@ static void test_VirtualAlloc_protection(void)
     }
 }
 
+static void test_CreateFileMapping_protection(void)
+{
+    static const struct test_data
+    {
+        DWORD prot;
+        BOOL success;
+    } td[] =
+    {
+        { 0, FALSE }, /* 0x00 */
+        { PAGE_NOACCESS, FALSE }, /* 0x01 */
+        { PAGE_READONLY, TRUE }, /* 0x02 */
+        { PAGE_READONLY | PAGE_NOACCESS, FALSE }, /* 0x03 */
+        { PAGE_READWRITE, TRUE }, /* 0x04 */
+        { PAGE_READWRITE | PAGE_NOACCESS, FALSE }, /* 0x05 */
+        { PAGE_READWRITE | PAGE_READONLY, FALSE }, /* 0x06 */
+        { PAGE_READWRITE | PAGE_READONLY | PAGE_NOACCESS, FALSE }, /* 0x07 */
+        { PAGE_WRITECOPY, TRUE }, /* 0x08 */
+        { PAGE_WRITECOPY | PAGE_NOACCESS, FALSE }, /* 0x09 */
+        { PAGE_WRITECOPY | PAGE_READONLY, FALSE }, /* 0x0a */
+        { PAGE_WRITECOPY | PAGE_NOACCESS | PAGE_READONLY, FALSE }, /* 0x0b */
+        { PAGE_WRITECOPY | PAGE_READWRITE, FALSE }, /* 0x0c */
+        { PAGE_WRITECOPY | PAGE_READWRITE | PAGE_NOACCESS, FALSE }, /* 0x0d */
+        { PAGE_WRITECOPY | PAGE_READWRITE | PAGE_READONLY, FALSE }, /* 0x0e */
+        { PAGE_WRITECOPY | PAGE_READWRITE | PAGE_READONLY | PAGE_NOACCESS, FALSE }, /* 0x0f */
+
+        { PAGE_EXECUTE, FALSE }, /* 0x10 */
+        { PAGE_EXECUTE_READ, TRUE }, /* 0x20 */
+        { PAGE_EXECUTE_READ | PAGE_EXECUTE, FALSE }, /* 0x30 */
+        { PAGE_EXECUTE_READWRITE, TRUE }, /* 0x40 */
+        { PAGE_EXECUTE_READWRITE | PAGE_EXECUTE, FALSE }, /* 0x50 */
+        { PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_READ, FALSE }, /* 0x60 */
+        { PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_READ | PAGE_EXECUTE, FALSE }, /* 0x70 */
+        { PAGE_EXECUTE_WRITECOPY, TRUE }, /* 0x80 */
+        { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE, FALSE }, /* 0x90 */
+        { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE_READ, FALSE }, /* 0xa0 */
+        { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE_READ | PAGE_EXECUTE, FALSE }, /* 0xb0 */
+        { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE_READWRITE, FALSE }, /* 0xc0 */
+        { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE, FALSE }, /* 0xd0 */
+        { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_READ, FALSE }, /* 0xe0 */
+        { PAGE_EXECUTE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_READ | PAGE_EXECUTE, FALSE } /* 0xf0 */
+    };
+    char *base;
+    DWORD ret, i;
+    MEMORY_BASIC_INFORMATION info;
+    SYSTEM_INFO si;
+    char temp_path[MAX_PATH];
+    char file_name[MAX_PATH];
+    HANDLE hfile, hmap;
+
+    GetSystemInfo(&si);
+    trace("system page size %#x\n", si.dwPageSize);
+
+    GetTempPath(MAX_PATH, temp_path);
+    GetTempFileName(temp_path, "map", 0, file_name);
+
+    SetLastError(0xdeadbeef);
+    hfile = CreateFile(file_name, GENERIC_READ|GENERIC_WRITE|GENERIC_EXECUTE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(hfile != INVALID_HANDLE_VALUE, "CreateFile(%s) error %d\n", file_name, GetLastError());
+    SetFilePointer(hfile, si.dwPageSize, NULL, FILE_BEGIN);
+    SetEndOfFile(hfile);
+
+    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    {
+        SetLastError(0xdeadbeef);
+        hmap = CreateFileMapping(hfile, NULL, td[i].prot | SEC_COMMIT, 0, si.dwPageSize, NULL);
+
+        if (td[i].success)
+        {
+            if (!hmap)
+            {
+                /* NT4 and win2k don't support EXEC on file mappings */
+                if (td[i].prot == PAGE_EXECUTE_READ || td[i].prot == PAGE_EXECUTE_READWRITE)
+                {
+                    ok(broken(!hmap), "%d: CreateFileMapping doesn't support PAGE_EXECUTE\n", i);
+                    continue;
+                }
+                /* Vista+ supports PAGE_EXECUTE_WRITECOPY, earlier versions don't */
+                if (td[i].prot == PAGE_EXECUTE_WRITECOPY)
+                {
+                    ok(broken(!hmap), "%d: CreateFileMapping doesn't support PAGE_EXECUTE_WRITECOPY\n", i);
+                    continue;
+                }
+            }
+            ok(hmap != 0, "%d: CreateFileMapping error %d\n", i, GetLastError());
+
+            base = MapViewOfFile(hmap, FILE_MAP_READ, 0, 0, 0);
+            ok(base != NULL, "%d: MapViewOfFile failed %d\n", i, GetLastError());
+
+            SetLastError(0xdeadbeef);
+            ret = VirtualQuery(base, &info, sizeof(info));
+            ok(ret, "VirtualQuery failed %d\n", GetLastError());
+            ok(info.BaseAddress == base, "%d: got %p != expected %p\n", i, info.BaseAddress, base);
+            ok(info.RegionSize == si.dwPageSize, "%d: got %#lx != expected %#x\n", i, info.RegionSize, si.dwPageSize);
+            ok(info.Protect == PAGE_READONLY, "%d: got %#x != expected PAGE_READONLY\n", i, info.Protect);
+            ok(info.AllocationBase == base, "%d: %p != %p\n", i, info.AllocationBase, base);
+            ok(info.AllocationProtect == PAGE_READONLY, "%d: %#x != PAGE_READONLY\n", i, info.AllocationProtect);
+            ok(info.State == MEM_COMMIT, "%d: %#x != MEM_COMMIT\n", i, info.State);
+            ok(info.Type == MEM_MAPPED, "%d: %#x != MEM_MAPPED\n", i, info.Type);
+
+            if (is_mem_writable(info.Protect))
+            {
+                base[0] = 0xfe;
+
+                SetLastError(0xdeadbeef);
+                ret = VirtualQuery(base, &info, sizeof(info));
+                ok(ret, "VirtualQuery failed %d\n", GetLastError());
+                ok(info.Protect == td[i].prot, "%d: got %#x != expected %#x\n", i, info.Protect, td[i].prot);
+            }
+
+            UnmapViewOfFile(base);
+            CloseHandle(hmap);
+        }
+        else
+        {
+            ok(!hmap, "%d: CreateFileMapping should fail\n", i);
+            ok(GetLastError() == ERROR_INVALID_PARAMETER, "%d: expected ERROR_INVALID_PARAMETER, got %d\n", i, GetLastError());
+        }
+    }
+
+    CloseHandle(hfile);
+    DeleteFile(file_name);
+}
+
 START_TEST(virtual)
 {
     int argc;
@@ -1662,6 +1785,7 @@ START_TEST(virtual)
     pResetWriteWatch = (void *) GetProcAddress(hkernel32, "ResetWriteWatch");
     pNtAreMappedFilesTheSame = (void *)GetProcAddress( GetModuleHandle("ntdll.dll"),
                                                        "NtAreMappedFilesTheSame" );
+    test_CreateFileMapping_protection();
     test_VirtualAlloc_protection();
     test_VirtualProtect();
     test_VirtualAllocEx();
