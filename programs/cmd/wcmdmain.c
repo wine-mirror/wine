@@ -31,8 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
-extern WCHAR inbuilt[][10];
-HINSTANCE hinst;
+extern const WCHAR inbuilt[][10];
 DWORD errorlevel;
 int defaultColor = 7;
 BOOL echo_mode = TRUE;
