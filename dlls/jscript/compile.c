@@ -346,6 +346,8 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_add);
     case EXPR_BITNEG:
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_bneg);
+    case EXPR_BOR:
+        return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_or);
     case EXPR_COMMA:
         return compile_comma_expression(ctx, (binary_expression_t*)expr);
     case EXPR_COND:

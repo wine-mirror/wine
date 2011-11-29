@@ -94,6 +94,15 @@ static inline HRESULT stack_push_number(exec_ctx_t *ctx, double number)
     return stack_push(ctx, &v);
 }
 
+static inline HRESULT stack_push_int(exec_ctx_t *ctx, INT n)
+{
+    VARIANT v;
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = n;
+    return stack_push(ctx, &v);
+}
+
 static inline VARIANT *stack_top(exec_ctx_t *ctx)
 {
     assert(ctx->top);
@@ -127,6 +136,11 @@ static HRESULT stack_pop_number(exec_ctx_t *ctx, VARIANT *r)
     hres = to_number(ctx->parser->script, v, &ctx->ei, r);
     VariantClear(v);
     return hres;
+}
+
+static inline HRESULT stack_pop_int(exec_ctx_t *ctx, INT *r)
+{
+    return to_int32(ctx->parser->script, stack_pop(ctx), &ctx->ei, r);
 }
 
 static void exprval_release(exprval_t *val)
@@ -2009,13 +2023,22 @@ static HRESULT bitor_eval(script_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsexc
 }
 
 /* ECMA-262 3rd Edition    11.10 */
-HRESULT binary_or_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+static HRESULT interp_or(exec_ctx_t *ctx)
 {
-    binary_expression_t *expr = (binary_expression_t*)_expr;
+    INT l, r;
+    HRESULT hres;
 
     TRACE("\n");
 
-    return binary_expr_eval(ctx, expr, bitor_eval, ei, ret);
+    hres = stack_pop_int(ctx, &r);
+    if(FAILED(hres))
+        return hres;
+
+    hres = stack_pop_int(ctx, &l);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push_int(ctx, l|r);
 }
 
 /* ECMA-262 3rd Edition    11.10 */
