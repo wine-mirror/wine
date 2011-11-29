@@ -350,6 +350,8 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
         return compile_comma_expression(ctx, (binary_expression_t*)expr);
     case EXPR_COND:
         return compile_conditional_expression(ctx, (conditional_expression_t*)expr);
+    case EXPR_DIV:
+        return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_div);
     case EXPR_EQ:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_eq);
     case EXPR_EQEQ:

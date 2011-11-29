@@ -2360,13 +2360,22 @@ static HRESULT div_eval(script_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsexcep
 }
 
 /* ECMA-262 3rd Edition    11.5.2 */
-HRESULT div_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+static HRESULT interp_div(exec_ctx_t *ctx)
 {
-    binary_expression_t *expr = (binary_expression_t*)_expr;
+    VARIANT l, r;
+    HRESULT hres;
 
     TRACE("\n");
 
-    return binary_expr_eval(ctx, expr, div_eval, ei, ret);
+    hres = stack_pop_number(ctx, &r);
+    if(FAILED(hres))
+        return hres;
+
+    hres = stack_pop_number(ctx, &l);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push_number(ctx, num_val(&l)/num_val(&r));
 }
 
 /* ECMA-262 3rd Edition    11.5.3 */
