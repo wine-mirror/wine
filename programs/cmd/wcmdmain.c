@@ -39,7 +39,6 @@ BOOL echo_mode = TRUE;
 static int opt_c, opt_k, opt_s;
 const WCHAR newline[] = {'\r','\n','\0'};
 const WCHAR space[]   = {' ','\0'};
-static const WCHAR closeBW[] = {')','\0'};
 WCHAR anykey[100];
 WCHAR version_string[100];
 WCHAR quals[MAX_PATH], param1[MAXSTRING], param2[MAXSTRING];
