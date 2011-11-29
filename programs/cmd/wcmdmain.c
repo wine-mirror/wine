@@ -36,7 +36,7 @@ HINSTANCE hinst;
 DWORD errorlevel;
 int defaultColor = 7;
 BOOL echo_mode = TRUE;
-static int opt_c, opt_k, opt_s;
+static BOOL opt_c, opt_k, opt_s;
 const WCHAR newline[] = {'\r','\n','\0'};
 const WCHAR space[]   = {' ','\0'};
 WCHAR anykey[100];
@@ -1154,7 +1154,7 @@ void WCMD_run_program (WCHAR *command, int called) {
             && GetLastError()==ERROR_FILE_NOT_FOUND && command[0]=='\"') {
           /* strip first and last quote WCHARacters and try again */
           WCMD_strip_quotes(command);
-          opt_s=1;
+          opt_s = TRUE;
           WCMD_run_program(command, called);
           return;
         }
@@ -2221,7 +2221,7 @@ int wmain (int argc, WCHAR *argvW[])
   WCHAR  *cmd   = NULL;
   WCHAR string[1024];
   WCHAR envvar[4];
-  int opt_q;
+  BOOL opt_q;
   int opt_t = 0;
   static const WCHAR promptW[] = {'P','R','O','M','P','T','\0'};
   static const WCHAR defaultpromptW[] = {'$','P','$','G','\0'};
@@ -2237,7 +2237,7 @@ int wmain (int argc, WCHAR *argvW[])
   strcpyW(anykey, WCMD_LoadMessage(WCMD_ANYKEY));
 
   args  = argc;
-  opt_c=opt_k=opt_q=opt_s=0;
+  opt_c = opt_k = opt_q = opt_s = FALSE;
   while (args > 0)
   {
       WCHAR c;
@@ -2250,13 +2250,13 @@ int wmain (int argc, WCHAR *argvW[])
 
       c=(*argvW)[1];
       if (tolowerW(c)=='c') {
-          opt_c=1;
+          opt_c = TRUE;
       } else if (tolowerW(c)=='q') {
-          opt_q=1;
+          opt_q = TRUE;
       } else if (tolowerW(c)=='k') {
-          opt_k=1;
+          opt_k = TRUE;
       } else if (tolowerW(c)=='s') {
-          opt_s=1;
+          opt_s = TRUE;
       } else if (tolowerW(c)=='a') {
           unicodePipes=FALSE;
       } else if (tolowerW(c)=='u') {
@@ -2335,20 +2335,20 @@ int wmain (int argc, WCHAR *argvW[])
       }
 
       if (qcount!=2)
-          opt_s=1;
+          opt_s = TRUE;
 
       /* check argvW[0] for a space and invalid characters */
       if (!opt_s) {
-          opt_s=1;
+          opt_s = TRUE;
           p=*argvW;
           while (*p!='\0') {
               if (*p=='&' || *p=='<' || *p=='>' || *p=='(' || *p==')'
                   || *p=='@' || *p=='^' || *p=='|') {
-                  opt_s=1;
+                  opt_s = TRUE;
                   break;
               }
               if (*p==' ')
-                  opt_s=0;
+                  opt_s = FALSE;
               p++;
           }
       }
