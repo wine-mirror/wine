@@ -89,7 +89,7 @@ rem@tab@echo foo & echo bar
 
 echo ------------ Testing redirection operators ------------
 mkdir foobar & cd foobar
-echo ...stdout redirection
+echo --- stdout redirection
 echo foo>foo
 type foo
 echo foo 1> foo
@@ -113,7 +113,7 @@ type foo
 del foo
 echo1>foo
 type foo
-echo ...stdout appending
+echo --- stdout appending
 echo foo>foo
 echo foo >>foo
 type foo
@@ -133,7 +133,7 @@ del foo
 echo foo> foo
 echo foo7 7>> foo || (echo not supported & del foo)
 if exist foo (type foo) else echo not supported
-echo ...redirections within IF statements
+echo --- redirections within IF statements
 if 1==1 echo foo1>bar
 type bar & del bar
 if 1==1 (echo foo2>bar) else echo baz2>bar
@@ -286,7 +286,7 @@ echo %VAR:~-3,-2%
 set VAR=
 
 echo ------------ Testing variable substitution ------------
-echo ...in FOR variables
+echo --- in FOR variables
 for %%i in ("A B" C) do echo %%i
 rem quotes removal
 for %%i in ("A B" C) do echo '%%~i'
@@ -319,7 +319,7 @@ for %%i in ("g h" i) do echo %%~sdi
 for %%i in ("g h" i) do echo %%~dsi
 for %%i in ("j k" l.eh) do echo '%%~xsi'
 
-echo ...in parameters
+echo --- in parameters
 for %%i in ("A B" C) do call :echoFun %%i
 rem quotes removal
 for %%i in ("A B" C) do call :echoFunQ %%i
@@ -397,7 +397,7 @@ goto :eof
 
 echo ------------ Testing variable delayed expansion ------------
 rem NT4 doesn't support this
-echo ...default mode (load-time expansion)
+echo --- default mode (load-time expansion)
 set FOO=foo
 echo %FOO%
 echo !FOO!
@@ -412,7 +412,7 @@ if %FOO% == foo (
     if !FOO! == bar (echo bar) else echo foo
 )
 
-echo ...runtime (delayed) expansion mode
+echo --- runtime (delayed) expansion mode
 setlocal EnableDelayedExpansion
 set FOO=foo
 echo %FOO%
@@ -434,7 +434,7 @@ set FOO=foo
 echo %FOO%
 echo !FOO!
 set FOO=
-echo ...using /V cmd flag
+echo --- using /V cmd flag
 echo @echo off> tmp.cmd
 echo set FOO=foo>> tmp.cmd
 echo echo %%FOO%%>> tmp.cmd
@@ -445,7 +445,7 @@ cmd /V:OfF /C tmp.cmd
 del tmp.cmd
 
 echo ------------ Testing conditional execution ------------
-echo ...unconditional ^&
+echo --- unconditional ampersand
 call :setError 123 & echo foo1
 echo bar2 & echo foo2
 mkdir foobar & cd foobar
@@ -456,14 +456,14 @@ if exist foobazbar (
     cd ..
     rd /s/q foobar
 ) else echo foobar deleted
-echo ...on success conditional ^&^&
+echo --- on success conditional and
 call :setError 456 && echo foo3 > foo3
 if exist foo3 (
     echo foo3 created
     del foo3
 ) else echo foo3 not created
 echo bar4 && echo foo4
-echo ...on failure conditional ^|^|
+echo --- on failure conditional or
 call :setError 789 || echo foo5
 echo foo6 || echo bar6 > bar6
 if exist bar6 (
@@ -518,10 +518,10 @@ echo ------------ Testing type ------------
 echo bar> foobaz
 @echo on
 type foobaz
-echo ***
+echo ---
 @echo off
 type foobaz@tab@
-echo ***
+echo ---
 del foobaz
 
 echo ------------ Testing NUL ------------
@@ -593,7 +593,7 @@ if 1==0 (echo doom)@tab@else echo quake
 if 1==0 (echo doom) else@tab@echo quake
 
 echo ------------ Testing for ------------
-echo ...plain FOR
+echo --- plain FOR
 for %%i in (A B C) do echo %%i
 for %%i in (A B C) do echo %%I
 for %%i in (A B C) do echo %%j
@@ -616,7 +616,7 @@ goto :endForTestFun1
 echo %1
 goto :eof
 :endForTestFun1
-echo ...imbricated FORs
+echo --- imbricated FORs
 for %%i in (X) do (
     for %%j in (Y) do (
         echo %%i %%j))
@@ -639,9 +639,9 @@ mkdir foo
 mkdir bar
 mkdir baz
 echo > bazbaz
-echo ...basic wildcards
+echo --- basic wildcards
 for %%i in (ba*) do echo %%i
-echo ...for /d
+echo --- for /d
 for /d %%i in (baz foo bar) do echo %%i
 rem FIXME for /d incorrectly parses when wildcards are used
 rem for /d %%i in (bazb*) do echo %%i
@@ -658,7 +658,7 @@ rem for /d %%i in (*) do echo %%i>> tmp
 rem sort < tmp
 rem del tmp
 cd .. & rd /s/Q foobar
-echo ...for /L
+echo --- for /L
 rem Some cases loop forever writing 0s, like e.g. (1,0,1), (1,a,3) or (a,b,c); those can't be tested here
 for /L %%i in (1,2,0) do echo %%i
 for@tab@/L %%i in (1,2,0) do echo %%i
@@ -678,10 +678,10 @@ rem for /L %%i in (1,1,1) do echo %%i
 rem for /L %%i in (1,-2,-1) do echo %%i
 rem for /L %%i in (-1,-1,-1) do echo %%i
 rem for /L %%i in (1,2, 3) do echo %%i
-echo ...for /a
+echo --- for /a
 rem No output when using "set expr" syntax, unless in interactive mode
 rem Need to use "set envvar=expr" to use in a batch script
-echo ......individual operations
+echo ------ individual operations
 set var=0
 set /a var=1 +2 & echo %var%
 set /a var=1 +-2 & echo %var%
@@ -721,7 +721,7 @@ set /a var=5 ^^ 1 & echo %var%
 set /a var=5 ^^ 3 & echo %var%
 set /a var=5 ^^ 4 & echo %var%
 set /a var=5 ^^ 1 & echo %var%
-echo ......precedence and grouping
+echo ------ precedence and grouping
 set /a var=4 + 2*3 & echo %var%
 set /a var=(4+2)*3 & echo %var%
 set /a var=4 * 3/5 & echo %var%
@@ -730,12 +730,12 @@ set /a var=4 * 5 %% 4 & echo %var%
 set /a var=4 * (5 %% 4) & echo %var%
 set /a var=3 %% (5 + 8 %% 3 ^^ 2) & echo %var%
 set /a var=3 %% (5 + 8 %% 3 ^^ -2) & echo %var%
-echo ......octal and hexadecimal
+echo ------ octal and hexadecimal
 set /a var=0xf + 3 & echo %var%
 set /a var=0xF + 3 & echo %var%
 set /a var=015 + 2 & echo %var%
 set /a var=3, 8+3,0 & echo %var%
-echo ......variables
+echo ------ variables
 set /a var=foo=3, foo+1 & echo %var%
 if defined foo (echo %foo%) else (
     echo foo not defined
@@ -757,16 +757,16 @@ set /a var=foo=19, foo %%= 4 + (bar %%= 7) & echo.
 set foo=
 set bar=
 set var=
-echo ...for /F
+echo --- for /F
 mkdir foobar & cd foobar
-echo ......string argument
+echo ------ string argument
 for /F %%i in ("a b c") do echo %%i
 for /f %%i in ("a ") do echo %%i
 for /f %%i in ("a") do echo %%i
 fOr /f %%i in (" a") do echo %%i
 for /f %%i in (" a ") do echo %%i
-echo ......fileset argument
-echo .........basic blank handling
+echo ------ fileset argument
+echo --------- basic blank handling
 echo a b c>foo
 for /f %%i in (foo) do echo %%i
 echo a >foo
@@ -782,7 +782,7 @@ for /f %%i in (foo) do echo %%i
 echo. >> foo
 echo b > foo
 for /f %%i in (foo) do echo %%i
-echo .........multi-line with empty lines
+echo --------- multi-line with empty lines
 echo a Z f> foo
 echo. >> foo
 echo.>> foo
@@ -790,20 +790,20 @@ echo b bC>> foo
 echo c>> foo
 echo. >> foo
 for /f %%b in (foo) do echo %%b
-echo .........multiple files
+echo --------- multiple files
 echo q w > bar
 echo.>> bar
 echo kkk>>bar
 for /f %%k in (foo bar) do echo %%k
 for /f %%k in (bar foo) do echo %%k
-rem echo ......command argument
+rem echo ------ command argument
 rem Not implemented on NT4
 rem FIXME: Not testable right now in wine: not implemented and would need
 rem preliminary grep-like program implementation (e.g. like findstr or fc) even
 rem for a simple todo_wine test
 rem (for /f "usebackq" %%i in (`echo z a b`) do echo %%i) || echo not supported
 rem (for /f usebackq %%i in (`echo z a b`) do echo %%i) || echo not supported
-echo ......eol option
+echo ------ eol option
 for /f "eol=@" %%i in ("    ad") do echo %%i
 for /f "eol=@" %%i in (" z@y") do echo %%i
 for /f "eol=|" %%i in ("a|d") do echo %%i
@@ -811,7 +811,7 @@ for /f "eol=@" %%i in ("@y") do echo %%i > output_file
 if not exist output_file (echo no output) else (del output_file)
 for /f "eol==" %%i in ("=y") do echo %%i > output_file
 if not exist output_file (echo no output) else (del output_file)
-echo ......delims option
+echo ------ delims option
 for /f "delims=|" %%i in ("a|d") do echo %%i
 for /f "delims=|" %%i in ("a |d") do echo %%i
 for /f "delims=|" %%i in ("a d|") do echo %%i
@@ -819,7 +819,7 @@ for /f "delims=| " %%i in ("a d|") do echo %%i
 for /f "delims==" %%i in ("C r=d|") do echo %%i
 for /f "delims=" %%i in ("foo bar baz") do echo %%i
 for /f "delims=" %%i in ("c:\foo bar baz\..") do echo %%~fi
-echo ......skip option
+echo ------ skip option
 echo a > foo
 echo b >> foo
 echo c >> foo
@@ -883,7 +883,7 @@ rmdir "foo bar"
 
 echo ------------ Testing rename ------------
 mkdir foobar & cd foobar
-echo ... ren and rename are synonymous ...
+echo --- ren and rename are synonymous
 echo > foo
 rename foo bar
 if exist foo echo foo should be renamed!
@@ -891,7 +891,7 @@ if exist bar echo foo renamed to bar
 ren bar foo
 if exist bar echo bar should be renamed!
 if exist foo echo bar renamed to foo
-echo ... name collision ...
+echo --- name collision
 echo foo>foo
 echo bar>bar
 ren foo bar 2> nul
@@ -901,7 +901,7 @@ rem no-op
 ren foo foo
 mkdir baz
 ren foo baz\abc
-echo ... rename read-only files ...
+echo --- rename read-only files
 echo > file1
 attrib +r file1
 ren file1 file2
@@ -912,7 +912,7 @@ if not exist file1 (
 ) else (
     echo read-only file not renamed!
 )
-echo ... rename directories ...
+echo --- rename directories
 mkdir rep1
 ren rep1 rep2
 if not exist rep1 (
@@ -927,7 +927,7 @@ if not exist rep2 (
         echo read-only dir renamed
     )
 )
-echo ... rename in other directory ...
+echo --- rename in other directory
 if not exist baz\abc (
     echo rename impossible in other directory
     if exist foo echo original file still present
@@ -939,7 +939,7 @@ cd .. & rd /s/q foobar
 
 echo ------------ Testing move ------------
 mkdir foobar & cd foobar
-echo ... file move ...
+echo --- file move
 echo >foo
 move foo bar > nul 2>&1
 if not exist foo (
@@ -989,7 +989,7 @@ if errorlevel 1 (
 echo ErrorLevel: %ErrorLevel%
 call :setError 0
 del baz
-echo ... directory move ...
+echo --- directory move
 mkdir foo\bar
 mkdir baz
 echo baz2>baz\baz2
@@ -1003,7 +1003,7 @@ call :setError 0
 mkdir baz
 move baz baz > nul 2>&1
 echo moving a directory to itself gives error; errlevel %ErrorLevel%
-echo ...... dir in dir move ......
+echo ------ dir in dir move
 rd /s/q foo
 mkdir foo bar
 echo foo2>foo\foo2
@@ -1020,14 +1020,14 @@ cd .. & rd /s/q foobar
 
 echo ------------ Testing mkdir ------------
 call :setError 0
-echo ... md and mkdir are synonymous ...
+echo --- md and mkdir are synonymous
 mkdir foobar
 echo %ErrorLevel%
 rmdir foobar
 md foobar
 echo %ErrorLevel%
 rmdir foobar
-echo ... creating an already existing directory/file must fail ...
+echo --- creating an already existing directory/file must fail
 mkdir foobar
 md foobar
 echo %ErrorLevel%
@@ -1036,7 +1036,7 @@ echo > foobar
 mkdir foobar
 echo %ErrorLevel%
 del foobar
-echo ... multilevel path creation ...
+echo --- multilevel path creation
 mkdir foo
 echo %ErrorLevel%
 mkdir foo\bar\baz
@@ -1061,13 +1061,13 @@ rmdir bar
 cd ..
 rmdir foo
 echo %ErrorLevel%
-echo ... trailing backslashes ...
+echo --- trailing backslashes
 mkdir foo\\\\
 echo %ErrorLevel%
 if exist foo (rmdir foo & echo dir created
 ) else ( echo dir not created )
 echo %ErrorLevel%
-echo ... invalid chars ...
+echo --- invalid chars
 mkdir ?
 echo mkdir ? gives errorlevel %ErrorLevel%
 call :setError 0
@@ -1093,7 +1093,7 @@ if not exist foo (
     cd ..
     rmdir foo
 )
-echo ... multiple directories at once ...
+echo --- multiple directories at once
 mkdir foobaz & cd foobaz
 mkdir foo bar\baz foobar
 if exist foo (echo foo created) else echo foo not created!
@@ -1174,13 +1174,13 @@ cd .. & rd /s/q foobaz
 
 echo ------------ Testing pushd/popd ------------
 cd
-echo ...popd is no-op when dir stack is empty
+echo --- popd is no-op when dir stack is empty
 popd
 cd
-echo ...pushing non-existing dir
+echo --- pushing non-existing dir
 pushd foobar
 cd
-echo ...basic behaviour
+echo --- basic behaviour
 mkdir foobar\baz
 pushd foobar
 cd
@@ -1211,7 +1211,7 @@ mkdir foobar & cd foobar
 echo foo original contents> foo
 attrib foo
 echo > bar
-echo ... read-only attribute
+echo --- read-only attribute
 rem Read-only files cannot be altered or deleted, unless forced
 attrib +R foo
 attrib foo
@@ -1233,7 +1233,7 @@ if not exist foo (
     del foo
 )
 cd .. & rd /s/q foobar
-echo ... recursive behaviour
+echo --- recursive behaviour
 mkdir foobar\baz & cd foobar
 echo > level1
 echo > whatever
@@ -1247,7 +1247,7 @@ attrib baz\level2
 echo > bar
 attrib bar
 cd .. & rd /s/q foobar
-echo ... folders processing
+echo --- folders processing
 mkdir foobar
 attrib foobar
 cd foobar
@@ -1267,10 +1267,10 @@ echo ------------ Testing assoc ------------
 rem FIXME Can't test error messages in the current test system, so we have to use some kludges
 rem FIXME Revise once || conditional execution is fixed
 mkdir foobar & cd foobar
-echo ...setting association
+echo --- setting association
 assoc .foo > baz
 type baz
-echo ***
+echo ---
 
 assoc .foo=bar
 assoc .foo
@@ -1281,26 +1281,26 @@ echo echo +++>> tmp.cmd
 echo assoc .foo>> tmp.cmd
 cmd /c tmp.cmd
 
-echo ...resetting association
+echo --- resetting association
 assoc .foo=
 assoc .foo > baz
 type baz
-echo ***
+echo ---
 
 rem association removal set system-wide
 cmd /c tmp.cmd > baz
 type baz
-echo ***
+echo ---
 cd .. & rd /s/q foobar
 
 echo ------------ Testing ftype ------------
 rem FIXME Can't test error messages in the current test system, so we have to use some kludges
 rem FIXME Revise once || conditional execution is fixed
 mkdir foobar & cd foobar
-echo ...setting association
+echo --- setting association
 ftype footype> baz
 type baz
-echo ***
+echo ---
 
 ftype footype=foo_opencmd
 assoc .foo=footype
@@ -1312,7 +1312,7 @@ echo echo +++>> tmp.cmd
 echo ftype footype>> tmp.cmd
 cmd /c tmp.cmd
 
-echo ...resetting association
+echo --- resetting association
 assoc .foo=
 
 rem Removing a file type association doesn't work on XP due to a bug, so a workaround is needed
@@ -1337,7 +1337,7 @@ cd .. & rd /s/q foobar
 
 echo ------------ Testing CALL ------------
 mkdir foobar & cd foobar
-echo ... external script ...
+echo --- external script
 echo echo foo %%1> foo.cmd
 call foo
 call foo.cmd 8
@@ -1350,7 +1350,7 @@ call foo.cmd foo ''
 call foo.cmd '' bar
 del foo.cmd
 
-echo ... internal routines ...
+echo --- internal routines
 call :testRoutine :testRoutine
 goto :endTestRoutine
 :testRoutine
@@ -1370,7 +1370,7 @@ echo %1 %2
 goto :eof
 :endTestRoutineArgs
 
-echo ... with builtins ...
+echo --- with builtins
 call mkdir foo
 echo %ErrorLevel%
 if exist foo (echo foo created) else echo foo should exist!
@@ -1417,7 +1417,7 @@ goto :eof
 
 echo ------------ Testing cmd invocation ------------
 rem FIXME: only a stub ATM
-echo ... a batch file can delete itself ...
+echo --- a batch file can delete itself
 echo del foo.cmd>foo.cmd
 cmd /q /c foo.cmd
 if not exist foo.cmd (
@@ -1426,7 +1426,7 @@ if not exist foo.cmd (
     echo file should be deleted!
     del foo.cmd
 )
-echo ... a batch file can alter itself ...
+echo --- a batch file can alter itself
 echo echo bar^>foo.cmd>foo.cmd
 cmd /q /c foo.cmd > NUL 2>&1
 if exist foo.cmd (
@@ -1440,7 +1440,7 @@ echo ------------ Testing setlocal/endlocal ------------
 call :setError 0
 rem Note: setlocal EnableDelayedExpansion already tested in the variable delayed expansion test section
 mkdir foobar & cd foobar
-echo ...enable/disable extensions
+echo --- enable/disable extensions
 setlocal DisableEXTensions
 echo ErrLev: %ErrorLevel%
 endlocal
@@ -1453,7 +1453,7 @@ cmd /E:OfF /C tmp.cmd
 cmd /e:oN /C tmp.cmd
 
 rem FIXME: creating file before setting envvar value to prevent parsing-time evaluation (due to EnableDelayedExpansion not being implemented/available yet)
-echo ...setlocal with corresponding endlocal
+echo --- setlocal with corresponding endlocal
 echo @echo off> test.cmd
 echo echo %%VAR%%>> test.cmd
 echo setlocal>> test.cmd
@@ -1465,7 +1465,7 @@ set VAR=globalval
 call test.cmd
 echo %VAR%
 set VAR=
-echo ...setlocal with no corresponding endlocal
+echo --- setlocal with no corresponding endlocal
 echo @echo off> test.cmd
 echo echo %%VAR%%>> test.cmd
 echo setlocal>> test.cmd

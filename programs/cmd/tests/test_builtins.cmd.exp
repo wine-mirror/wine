@@ -134,7 +134,7 @@ bar2
 
 @pwd@>rem@tab@echo foo & echo bar@space@
 ------------ Testing redirection operators ------------
-...stdout redirection
+--- stdout redirection
 foo
 foo@space@
 foo@tab@
@@ -145,7 +145,7 @@ foo9@space@@or_broken@foo@tab@
 foo1
 foo11
 foo12
-...stdout appending
+--- stdout appending
 foo
 foo@space@
 foob@space@
@@ -161,7 +161,7 @@ food2
 food21
 @todo_wine@foo7@space@@space@@or_broken@not supported@space@
 @todo_wine@foo@or_broken@not supported
-...redirections within IF statements
+--- redirections within IF statements
 @todo_wine@foo1
 @todo_wine@foo2
 @todo_wine@foo3
@@ -255,7 +255,7 @@ e@or_broken@qwerty
 ''@or_broken@'qwerty'
 r@or_broken@qwerty
 ------------ Testing variable substitution ------------
-...in FOR variables
+--- in FOR variables
 @todo_wine@"A B"
 C
 'A B'@or_broken@''
@@ -289,7 +289,7 @@ N
 @drive@
 ''
 '.eh'
-...in parameters
+--- in parameters
 @todo_wine@"A B"
 C
 @todo_wine@'A B'@or_broken@''
@@ -317,12 +317,12 @@ N
 ''
 '.eh'@or_broken@''
 ------------ Testing variable delayed expansion ------------
-...default mode (load-time expansion)
+--- default mode (load-time expansion)
 foo
 !FOO!
 foo
 foo
-...runtime (delayed) expansion mode
+--- runtime (delayed) expansion mode
 foo
 @todo_wine@foo@or_broken@!FOO!
 foo
@@ -331,25 +331,25 @@ foo
 0@or_broken@1
 foo
 !FOO!
-...using /V cmd flag
+--- using /V cmd flag
 foo
 @todo_wine@foo@or_broken@!FOO!
 foo
 !FOO!
 ------------ Testing conditional execution ------------
-@todo_wine@...unconditional &
+--- unconditional ampersand
 foo1
 bar2@space@
 foo2
 foobar deleted
-@todo_wine@...on success conditional &&
+--- on success conditional and
 @todo_wine@foo3 not created
 bar4@space@
 foo4
-@todo_wine@...on failure conditional ||
-@todo_wine@foo5
-@todo_wine@foo6@space@
------------- Testing cd ------------
+--- on failure conditional or
+foo5
+foo6@space@
+@todo_wine@------------ Testing cd ------------
 singleFile
 Current dir: @pwd@\foobar@or_broken@Current dir:@space@
 @pwd@\foobar
@@ -370,10 +370,10 @@ Current dir: @pwd@\foobar@or_broken@Current dir:@space@
 @pwd@>type foobaz@space@
 bar
 
-@pwd@>echo ***@space@
-***
+@pwd@>echo ---@space@
+---
 bar
-***
+---
 ------------ Testing NUL ------------
 bar
 bar
@@ -403,7 +403,7 @@ quake
 quake
 quake
 ------------ Testing for ------------
-...plain FOR
+--- plain FOR
 A
 B
 C
@@ -440,7 +440,7 @@ B'
 @todo_wine@"echo A B"
 @todo_wine@"A B"
 C
-...imbricated FORs
+--- imbricated FORs
 @todo_wine@X Y
 @todo_wine@X Y
 @todo_wine@A C
@@ -451,13 +451,13 @@ C
 @todo_wine@A D
 @todo_wine@B C
 @todo_wine@B D
-...basic wildcards
+--- basic wildcards
 bazbaz
-...for /d
+--- for /d
 baz
 foo
 bar
-...for /L
+--- for /L
 1
 3
 5
@@ -470,8 +470,8 @@ bar
 -1
 @todo_wine@ErrorLevel 0
 @todo_wine@ErrorLevel 0
-...for /a
-......individual operations
+--- for /a
+------ individual operations
 0
 @todo_wine@3
 @todo_wine@-1
@@ -509,7 +509,7 @@ bar
 @todo_wine@4
 @todo_wine@6
 @todo_wine@1
-......precedence and grouping
+------ precedence and grouping
 @todo_wine@4
 @todo_wine@10
 @todo_wine@18@or_broken@10
@@ -518,12 +518,12 @@ bar
 0@or_broken@4
 @todo_wine@4
 @todo_wine@3@or_broken@4
-......octal and hexadecimal
+------ octal and hexadecimal
 @todo_wine@3@or_broken@4
 @todo_wine@18
 @todo_wine@18
 @todo_wine@15
-......variables
+------ variables
 @todo_wine@3
 @todo_wine@3@or_broken@foo not defined
 @todo_wine@3@or_broken@0
@@ -540,26 +540,26 @@ bar
 0
 @todo_wine@5@or_broken@0
 
-...for /F
-......string argument
+--- for /F
+------ string argument
 a
 a
 a
 a
 a
-......fileset argument
-.........basic blank handling
+------ fileset argument
+--------- basic blank handling
 a
 a
 a
 a
 a
 b
-.........multi-line with empty lines
+--------- multi-line with empty lines
 a
 b
 c
-.........multiple files
+--------- multiple files
 a
 b
 c
@@ -570,13 +570,13 @@ kkk
 a
 b
 c
-......eol option
+------ eol option
 @todo_wine@ad
 @todo_wine@z@y
 @todo_wine@a|d
 @todo_wine@no output
 @todo_wine@no output
-......delims option
+------ delims option
 @todo_wine@a
 @todo_wine@a@space@
 @todo_wine@a d
@@ -584,7 +584,7 @@ c
 @todo_wine@C r
 @todo_wine@foo bar baz
 @todo_wine@c:\
-......skip option
+------ skip option
 @todo_wine@c
 @todo_wine@no output
 @todo_wine@no output
@@ -597,22 +597,22 @@ del /q * succeeded on file1
 del /q * succeeded on file2.dat
 ------------ Testing del /s ------------
 ------------ Testing rename ------------
-... ren and rename are synonymous ...
+--- ren and rename are synonymous
 foo renamed to bar
 bar renamed to foo
-... name collision ...
+--- name collision
 foo
 bar
-... rename read-only files ...
+--- rename read-only files
 read-only file renamed
-... rename directories ...
+--- rename directories
 dir renamed
 read-only dir renamed
-... rename in other directory ...
+--- rename in other directory
 @todo_wine@rename impossible in other directory
 @todo_wine@original file still present
 ------------ Testing move ------------
-... file move ...
+--- file move
 file move succeeded
 @todo_wine@file move with overwrite succeeded@or_broken@file overwrite impossible!
 @todo_wine@bar@or_broken@baz
@@ -620,21 +620,21 @@ read-only files are moveable
 file moved in subdirectory
 @todo_wine@moving a file to itself is a no-op@or_broken@moving a file to itself should be a no-op!
 @todo_wine@ErrorLevel: 0@or_broken@ErrorLevel: 1
-... directory move ...
+--- directory move
 simple directory move succeeded
 moving a directory to itself gives error; errlevel 1
-...... dir in dir move ......
+------ dir in dir move
 foo
 bar2
 foo2
 ------------ Testing mkdir ------------
-... md and mkdir are synonymous ...
+--- md and mkdir are synonymous
 0
 0
-... creating an already existing directory/file must fail ...
+--- creating an already existing directory/file must fail
 1
 1
-... multilevel path creation ...
+--- multilevel path creation
 0
 0
 0
@@ -643,18 +643,18 @@ foo2
 1
 0
 0
-... trailing backslashes ...
+--- trailing backslashes
 0
 dir created
 0
-... invalid chars ...
+--- invalid chars
 mkdir ? gives errorlevel 1
 mkdir ?\foo gives errorlevel 1
 mkdir foo\? gives errorlevel 1
 ok, foo created
 mkdir foo\bar\? gives errorlevel 1
 ok, foo\bar created
-... multiple directories at once ...
+--- multiple directories at once
 foo created
 bar created
 foobar created
@@ -681,11 +681,11 @@ foobar removed
 bar\baz removed
 ------------ Testing pushd/popd ------------
 @pwd@
-...popd is no-op when dir stack is empty
+--- popd is no-op when dir stack is empty
 @pwd@
-...pushing non-existing dir
+--- pushing non-existing dir
 @pwd@
-...basic behaviour
+--- basic behaviour
 @pwd@\foobar
 @pwd@
 @pwd@\foobar\baz
@@ -696,18 +696,18 @@ bar\baz removed
 @pwd@
 ------------ Testing attrib ------------
 @todo_wine@A            @pwd@\foobar\foo@or_broken@A          @pwd@\foobar\foo@or_broken@A       I    @pwd@\foobar\foo
-... read-only attribute
+--- read-only attribute
 @todo_wine@A    R       @pwd@\foobar\foo@or_broken@A    R     @pwd@\foobar\foo@or_broken@A    R  I    @pwd@\foobar\foo
 foo
 foo original contents
 Read-only file not deleted
 Read-only file forcibly deleted
-... recursive behaviour
+--- recursive behaviour
 @todo_wine@A            @pwd@\foobar\baz\level2@or_broken@A          @pwd@\foobar\baz\level2@or_broken@A       I    @pwd@\foobar\baz\level2
 @todo_wine@A    R       @pwd@\foobar\level1@or_broken@A    R     @pwd@\foobar\level1@or_broken@A    R  I    @pwd@\foobar\level1
 @todo_wine@A    R       @pwd@\foobar\baz\level2@or_broken@A    R     @pwd@\foobar\baz\level2@or_broken@A    R  I    @pwd@\foobar\baz\level2
 @todo_wine@A            @pwd@\foobar\bar@or_broken@A          @pwd@\foobar\bar@or_broken@A       I    @pwd@\foobar\bar
-... folders processing
+--- folders processing
 @todo_wine@             @pwd@\foobar@or_broken@           @pwd@\foobar@or_broken@        I    @pwd@\foobar
 @todo_wine@     R       @pwd@\foobar\baz@or_broken@     R     @pwd@\foobar\baz@or_broken@           @pwd@\foobar\baz@or_broken@     R  I    @pwd@\foobar\baz
 @todo_wine@A            @pwd@\foobar\baz\toto@or_broken@A          @pwd@\foobar\baz\toto@or_broken@A       I    @pwd@\foobar\baz\toto
@@ -715,28 +715,28 @@ toto
 lulu
 file created in read-only dir
 ------------ Testing assoc ------------
-...setting association
-***
+--- setting association
+---
 .foo=bar
 .foo=bar
 +++
 .foo=bar
-...resetting association
-***
+--- resetting association
+---
 +++
-***
+---
 ------------ Testing ftype ------------
-...setting association
-***
+--- setting association
+---
 footype=foo_opencmd
 .foo=footype
 footype=foo_opencmd
 +++
 footype=foo_opencmd
-...resetting association
+--- resetting association
 @todo_wine@original value@or_broken@buggyXP@or_broken@!FOO!
 ------------ Testing CALL ------------
-... external script ...
+--- external script
 foo@space@
 foo 8
 foo@space@@space@
@@ -745,7 +745,7 @@ foo bar@space@
 @todo_wine@"" bar@space@
 foo ''@space@
 '' bar@space@
-... internal routines ...
+--- internal routines
 bar :testRoutine
 foo@space@
 foo bar
@@ -753,7 +753,7 @@ foo bar
 @todo_wine@"" bar
 foo ''
 '' bar
-... with builtins ...
+--- with builtins
 @todo_wine@0
 @todo_wine@foo created
 @todo_wine@Should expand foobaz
@@ -770,23 +770,23 @@ non-builtin dir
 'p3' 'p5' '' '' ''
 'p5' '' '' '' ''
 ------------ Testing cmd invocation ------------
-... a batch file can delete itself ...
+--- a batch file can delete itself
 file correctly deleted
-... a batch file can alter itself ...
+--- a batch file can alter itself
 @todo_wine@bar
 ------------ Testing setlocal/endlocal ------------
-...enable/disable extensions
+--- enable/disable extensions
 @todo_wine@ErrLev:@space@
 ErrLev: 0
 ErrLev: 0
 @todo_wine@ErrLev:@space@@or_broken@ErrLev: 0
 ErrLev: 0
-...setlocal with corresponding endlocal
+--- setlocal with corresponding endlocal
 globalval
 localval
 globalval
 globalval
-...setlocal with no corresponding endlocal
+--- setlocal with no corresponding endlocal
 globalval
 localval
 @todo_wine@globalval
