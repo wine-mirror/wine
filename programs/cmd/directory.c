@@ -19,22 +19,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/*
- * NOTES:
- * On entry, global variables quals, param1, param2 contain
- * the qualifiers (uppercased and concatenated) and parameters entered, with
- * environment-variable and batch parameter substitution already done.
- */
-
 #define WIN32_LEAN_AND_MEAN
 
 #include "wcmd.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cmd);
-
-extern WCHAR quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
-extern DWORD errorlevel;
 
 typedef enum _DISPLAYTIME
 {

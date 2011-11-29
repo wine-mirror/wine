@@ -20,13 +20,6 @@
  */
 
 /*
- * NOTES:
- * On entry to each function, global variables quals, param1, param2 contain
- * the qualifiers (uppercased and concatenated) and parameters entered, with
- * environment-variable and batch parameter substitution already done.
- */
-
-/*
  * FIXME:
  * - No support for pipes, shell parameters
  * - Lots of functionality missing from builtins
@@ -43,9 +36,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
 extern int defaultColor;
 extern BOOL echo_mode;
-extern WCHAR quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
-extern BATCH_CONTEXT *context;
-extern DWORD errorlevel;
 
 static HINSTANCE hinst;
 static struct env_stack *saved_environment;

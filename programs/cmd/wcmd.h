@@ -30,6 +30,9 @@
 #include <ctype.h>
 #include <wine/unicode.h>
 
+/* msdn specified max for Win XP */
+#define MAXSTRING 8192
+
 /* Data structure to hold commands delimitors/separators */
 
 typedef enum _CMDdelimiters {
@@ -155,6 +158,15 @@ typedef struct _DIRECTORY_STACK
   WCHAR  *fileName;
 } DIRECTORY_STACK;
 
+/*
+ * Global variables quals, param1, param2 contain the current qualifiers
+ * (uppercased and concatenated) and parameters entered, with environment
+ * variables and batch parameters substitution already done.
+ */
+extern WCHAR quals[MAX_PATH], param1[MAXSTRING], param2[MAXSTRING];
+extern DWORD errorlevel;
+extern BATCH_CONTEXT *context;
+
 #endif /* !RC_INVOKED */
 
 /*
@@ -264,6 +276,3 @@ extern WCHAR version_string[];
 #define WCMD_VERSION          1033
 #define WCMD_MOREPROMPT       1034
 #define WCMD_LINETOOLONG      1035
-
-/* msdn specified max for Win XP */
-#define MAXSTRING 8192
