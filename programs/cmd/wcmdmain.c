@@ -45,7 +45,7 @@ WCHAR quals[MAX_PATH], param1[MAXSTRING], param2[MAXSTRING];
 BATCH_CONTEXT *context = NULL;
 extern struct env_stack *pushd_directories;
 static const WCHAR *pagedMessage = NULL;
-static BOOL unicodePipes = FALSE;
+static BOOL unicodeOutput = FALSE;
 
 #define MAX_WRITECONSOLE_SIZE 65535
 
@@ -89,7 +89,7 @@ static void WCMD_output_asis_len(const WCHAR *message, DWORD len, HANDLE device)
       DWORD convertedChars;
       char *buffer;
 
-      if (!unicodePipes) {
+      if (!unicodeOutput) {
 
         if (!(buffer = get_file_buffer()))
             return;
@@ -2259,9 +2259,9 @@ int wmain (int argc, WCHAR *argvW[])
       } else if (tolowerW(c)=='s') {
           opt_s = TRUE;
       } else if (tolowerW(c)=='a') {
-          unicodePipes=FALSE;
+          unicodeOutput = FALSE;
       } else if (tolowerW(c)=='u') {
-          unicodePipes=TRUE;
+          unicodeOutput = TRUE;
       } else if (tolowerW(c)=='t' && (*argvW)[2]==':') {
           opt_t=strtoulW(&(*argvW)[3], NULL, 16);
       } else if (tolowerW(c)=='x' || tolowerW(c)=='y') {
