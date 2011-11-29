@@ -388,6 +388,8 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
         return push_instr(ctx, OP_this) == -1 ? E_OUTOFMEMORY : S_OK;
     case EXPR_VOID:
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_void);
+    case EXPR_BXOR:
+        return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_xor);
     default:
         assert(expr->eval != compiled_expression_eval);
         return compile_interp_fallback(ctx, expr);
