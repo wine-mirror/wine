@@ -176,8 +176,6 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
     }
 
     if(SUCCEEDED(hr))
-
-    if(SUCCEEDED(hr))
         for(i=0; i<MAX_CATEGORIES; ++i)
         {
             if(lstrlenW(stats->categories[i].sName)==0)
