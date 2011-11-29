@@ -164,7 +164,7 @@ type C
 (if 1==0 (echo A > B) else echo C)
 cd .. & rd /s/q foobar
 
-echo ------------ Testing ^^ escape character --------------
+echo ------------ Testing circumflex escape character --------------
 rem Using something like "echo foo^" asks for an additional char after a "More?" prompt on the following line; it's not possible to currently test that non-interactively
 echo ^hell^o, world
 echo hell^o, world

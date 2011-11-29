@@ -178,7 +178,7 @@ foo
 A
 B
 C
-@todo_wine@------------ Testing ^ escape character --------------
+------------ Testing circumflex escape character --------------
 @todo_wine@hello, world
 @todo_wine@hello, world
 @todo_wine@hell^o, world
