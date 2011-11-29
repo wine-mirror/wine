@@ -32,19 +32,28 @@
 WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
 extern const WCHAR inbuilt[][10];
+extern struct env_stack *pushd_directories;
+
+BATCH_CONTEXT *context = NULL;
 DWORD errorlevel;
+WCHAR quals[MAX_PATH], param1[MAXSTRING], param2[MAXSTRING];
+
 int defaultColor = 7;
 BOOL echo_mode = TRUE;
-static BOOL opt_c, opt_k, opt_s;
+
+WCHAR anykey[100], version_string[100];
 const WCHAR newline[] = {'\r','\n','\0'};
 const WCHAR space[]   = {' ','\0'};
-WCHAR anykey[100];
-WCHAR version_string[100];
-WCHAR quals[MAX_PATH], param1[MAXSTRING], param2[MAXSTRING];
-BATCH_CONTEXT *context = NULL;
-extern struct env_stack *pushd_directories;
+
+static BOOL opt_c, opt_k, opt_s, unicodeOutput = FALSE;
+
+/* Variables pertaining to paging */
+static BOOL paged_mode;
 static const WCHAR *pagedMessage = NULL;
-static BOOL unicodeOutput = FALSE;
+static int line_count;
+static int max_height;
+static int max_width;
+static int numChars;
 
 #define MAX_WRITECONSOLE_SIZE 65535
 
@@ -150,12 +159,6 @@ void WCMD_output_stderr (const WCHAR *format, ...) {
   va_end(ap);
   WCMD_output_asis_len(string, ret, GetStdHandle(STD_ERROR_HANDLE));
 }
-
-static int line_count;
-static int max_height;
-static int max_width;
-static BOOL paged_mode;
-static int numChars;
 
 void WCMD_enter_paged_mode(const WCHAR *msg)
 {

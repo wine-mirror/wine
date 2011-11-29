@@ -37,12 +37,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 extern int defaultColor;
 extern BOOL echo_mode;
 
-static HINSTANCE hinst;
-static struct env_stack *saved_environment;
 struct env_stack *pushd_directories;
-
-static BOOL verify_mode = FALSE;
-
+const WCHAR dotW[]    = {'.','\0'};
+const WCHAR dotdotW[] = {'.','.','\0'};
+const WCHAR nullW[]   = {'\0'};
+const WCHAR starW[]   = {'*','\0'};
+const WCHAR slashW[]  = {'\\','\0'};
+const WCHAR equalW[]  = {'=','\0'};
 const WCHAR inbuilt[][10] = {
         {'C','A','L','L','\0'},
         {'C','D','\0'},
@@ -90,23 +91,19 @@ const WCHAR inbuilt[][10] = {
         {'C','H','O','I','C','E','\0'},
         {'E','X','I','T','\0'}
 };
-
 static const WCHAR externals[][10] = {
         {'A','T','T','R','I','B','\0'},
         {'X','C','O','P','Y','\0'}
 };
-
-const WCHAR dotW[]    = {'.','\0'};
-const WCHAR dotdotW[] = {'.','.','\0'};
-const WCHAR nullW[]   = {'\0'};
-const WCHAR starW[]   = {'*','\0'};
-const WCHAR slashW[]  = {'\\','\0'};
-const WCHAR equalW[]  = {'=','\0'};
 static const WCHAR fslashW[] = {'/','\0'};
 static const WCHAR onW[]  = {'O','N','\0'};
 static const WCHAR offW[] = {'O','F','F','\0'};
 static const WCHAR parmY[] = {'/','Y','\0'};
 static const WCHAR parmNoY[] = {'/','-','Y','\0'};
+
+static HINSTANCE hinst;
+static struct env_stack *saved_environment;
+static BOOL verify_mode = FALSE;
 
 /**************************************************************************
  * WCMD_ask_confirm
