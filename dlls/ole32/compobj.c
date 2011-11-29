@@ -3650,7 +3650,7 @@ HRESULT WINAPI CoRevertToSelf(void)
 static BOOL COM_PeekMessage(struct apartment *apt, MSG *msg)
 {
     /* first try to retrieve messages for incoming COM calls to the apartment window */
-    return PeekMessageW(msg, apt->win, WM_USER, WM_APP - 1, PM_REMOVE|PM_NOYIELD) ||
+    return PeekMessageW(msg, apt->win, 0, 0, PM_REMOVE|PM_NOYIELD) ||
            /* next retrieve other messages necessary for the app to remain responsive */
            PeekMessageW(msg, NULL, WM_DDE_FIRST, WM_DDE_LAST, PM_REMOVE|PM_NOYIELD) ||
            PeekMessageW(msg, NULL, 0, 0, PM_QS_PAINT|PM_QS_SENDMESSAGE|PM_REMOVE|PM_NOYIELD);
@@ -3712,7 +3712,7 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
 
             res = MsgWaitForMultipleObjectsEx(cHandles, pHandles,
                 (dwTimeout == INFINITE) ? INFINITE : start_time + dwTimeout - now,
-                QS_ALLINPUT, wait_flags);
+                QS_SENDMESSAGE | QS_ALLPOSTMESSAGE | QS_PAINT, wait_flags);
 
             if (res == WAIT_OBJECT_0 + cHandles)  /* messages available */
             {
@@ -3746,11 +3746,7 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
                     }
                 }
 
-                /* note: using "if" here instead of "while" might seem less
-                 * efficient, but only if we are optimising for quick delivery
-                 * of pending messages, rather than quick completion of the
-                 * COM call */
-                if (COM_PeekMessage(apt, &msg))
+                while (COM_PeekMessage(apt, &msg))
                 {
                     TRACE("received message whilst waiting for RPC: 0x%04x\n", msg.message);
                     TranslateMessage(&msg);
@@ -3761,6 +3757,7 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
                         PostQuitMessage(msg.wParam);
                         /* no longer need to process messages */
                         message_loop = FALSE;
+                        break;
                     }
                 }
                 continue;
