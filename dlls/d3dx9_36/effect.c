@@ -1656,10 +1656,19 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetValue(ID3DXBaseEffect *iface, D3DXH
 static HRESULT WINAPI ID3DXBaseEffectImpl_SetBool(ID3DXBaseEffect *iface, D3DXHANDLE parameter, BOOL b)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
-    FIXME("iface %p, parameter %p, b %u stub\n", This, parameter, b);
+    TRACE("iface %p, parameter %p, b %s\n", This, parameter, b ? "TRUE" : "FALSE");
 
-    return E_NOTIMPL;
+    if (param && !param->element_count && param->rows == 1 && param->columns == 1)
+    {
+        set_number(param->data, param->type, &b, D3DXPT_BOOL);
+        return D3D_OK;
+    }
+
+    WARN("Invalid argument specified\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetBool(ID3DXBaseEffect *iface, D3DXHANDLE parameter, BOOL *b)
