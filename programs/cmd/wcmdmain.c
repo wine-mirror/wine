@@ -45,9 +45,9 @@ WCHAR quals[MAX_PATH], param1[MAXSTRING], param2[MAXSTRING];
 BATCH_CONTEXT *context = NULL;
 extern struct env_stack *pushd_directories;
 static const WCHAR *pagedMessage = NULL;
-static char  *output_bufA = NULL;
-#define MAX_WRITECONSOLE_SIZE 65535
 static BOOL unicodePipes = FALSE;
+
+#define MAX_WRITECONSOLE_SIZE 65535
 
 /*
  * Returns a buffer for reading from/writing to file
@@ -55,6 +55,7 @@ static BOOL unicodePipes = FALSE;
  */
 static char *get_file_buffer(void)
 {
+    static char *output_bufA = NULL;
     if (!output_bufA) {
         output_bufA = HeapAlloc(GetProcessHeap(), 0, MAX_WRITECONSOLE_SIZE);
         if (!output_bufA)
