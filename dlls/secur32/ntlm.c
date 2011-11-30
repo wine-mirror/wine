@@ -694,7 +694,10 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
             lstrcpynA(buffer, want_flags, max_len-1);
             if((ret = run_helper(helper, buffer, max_len, &buffer_len)) 
                     != SEC_E_OK)
+            {
+                cleanup_helper(helper);
                 goto isc_end;
+            }
             if(!strncmp(buffer, "BH", 2))
                 ERR("Helper doesn't understand new command set. Expect more things to fail.\n");
         }
