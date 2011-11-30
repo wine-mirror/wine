@@ -1060,7 +1060,7 @@
 @ cdecl _waccess(wstr long) MSVCRT__waccess
 @ cdecl _waccess_s(wstr long)
 @ cdecl _wasctime(ptr) MSVCRT__wasctime
-# stub _wasctime_s(ptr long ptr)
+@ cdecl _wasctime_s(ptr long ptr) MSVCRT__wasctime_s
 @ cdecl _wassert(wstr wstr long) MSVCRT__wassert
 @ cdecl _wchdir(wstr) MSVCRT__wchdir
 @ cdecl _wchmod(wstr long) MSVCRT__wchmod

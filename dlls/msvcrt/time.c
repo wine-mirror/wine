@@ -36,6 +36,7 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
@@ -947,6 +948,31 @@ MSVCRT_wchar_t * CDECL MSVCRT__wasctime(const struct MSVCRT_tm *mstm)
 #endif
     MultiByteToWideChar( CP_UNIXCP, 0, buffer, -1, data->wasctime_buffer, 30 );
     return data->wasctime_buffer;
+}
+
+/*********************************************************************
+ *      _wasctime_s (MSVCRT.@)
+ */
+int CDECL MSVCRT__wasctime_s(MSVCRT_wchar_t* time, MSVCRT_size_t size, const struct MSVCRT_tm *mstm)
+{
+    WCHAR* asc;
+    unsigned int len;
+
+    if (!MSVCRT_CHECK_PMT(time != NULL) || !MSVCRT_CHECK_PMT(mstm != NULL)) {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    asc = MSVCRT__wasctime(mstm);
+    len = (strlenW(asc) + 1) * sizeof(WCHAR);
+
+    if(!MSVCRT_CHECK_PMT(size >= len)) {
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+        return MSVCRT_ERANGE;
+    }
+
+    strcpyW(time, asc);
+    return 0;
 }
 
 /*********************************************************************
