@@ -19,37 +19,7 @@ C_SRCS = \
 	stringtable.c \
 	stubs.c
 
-RC_SRCS = \
-	Bg.rc \
-	Cs.rc \
-	Da.rc \
-	De.rc \
-	En.rc \
-	Eo.rc \
-	Es.rc \
-	Fi.rc \
-	Fr.rc \
-	He.rc \
-	Hu.rc \
-	It.rc \
-	Ja.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	No.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Si.rc \
-	Sk.rc \
-	Sr.rc \
-	Sv.rc \
-	Tr.rc \
-	Uk.rc \
-	Zh.rc \
-	setupapi.rc
-
+RC_SRCS = setupapi.rc
 PO_SRCS = setupapi.rc
 
 @MAKE_DLL_RULES@

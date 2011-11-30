@@ -107,27 +107,27 @@ msgstr ""
 
 #: avifil32.rc:51 credui.rc:49 dinput.rc:43 ieframe.rc:84 localui.rc:41
 #: localui.rc:54 mpr.rc:46 msacm32.rc:50 mshtml.rc:45 mshtml.rc:55
-#: msvfw32.rc:33 serialui.rc:38 shlwapi.rc:41 winspool.rc:39 net.rc:44
-#: notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103 progman.rc:121
-#: progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196 progman.rc:213
-#: regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284 regedit.rc:297
-#: regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226
-#: wineconsole.rc:131 winefile.rc:134 winefile.rc:157 winefile.rc:187
-#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
-#: wordpad.rc:233 wordpad.rc:246
+#: msvfw32.rc:33 serialui.rc:38 setupapi.rc:56 shlwapi.rc:41 winspool.rc:39
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
+#: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
+#: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
+#: regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216
+#: winecfg.rc:226 wineconsole.rc:131 winefile.rc:134 winefile.rc:157
+#: winefile.rc:187 winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204
+#: wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr ""
 
 #: avifil32.rc:52 browseui.rc:37 credui.rc:50 dinput.rc:44 ieframe.rc:85
 #: inetcpl.rc:78 localui.rc:42 localui.rc:55 mpr.rc:47 msacm32.rc:51
-#: mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34 serialui.rc:39 shlwapi.rc:42
-#: winspool.rc:40 notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104
-#: progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197
-#: progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285
-#: regedit.rc:298 regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31
-#: winecfg.rc:217 winecfg.rc:227 wineconsole.rc:132 winefile.rc:135
-#: winefile.rc:158 winefile.rc:188 winemine.rc:93 wordpad.rc:205
-#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34 serialui.rc:39 setupapi.rc:39
+#: setupapi.rc:57 shlwapi.rc:42 winspool.rc:40 notepad.rc:123 oleview.rc:160
+#: oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156
+#: progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256
+#: regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447
+#: taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
+#: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr ""
 
@@ -6211,6 +6211,36 @@ msgstr ""
 
 #: serialui.rc:36
 msgid "Stop Bits"
+msgstr ""
+
+#: setupapi.rc:36
+msgid "Copying Files..."
+msgstr ""
+
+#: setupapi.rc:40
+msgid "Source:"
+msgstr ""
+
+#: setupapi.rc:42
+msgid "Destination:"
+msgstr ""
+
+#: setupapi.rc:49
+msgid "Files Needed"
+msgstr ""
+
+#: setupapi.rc:52
+msgid ""
+"Insert the manufacturer's installation disk, and then\n"
+"make sure the correct drive is selected below"
+msgstr ""
+
+#: setupapi.rc:54
+msgid "Copy manufacturer's files from:"
+msgstr ""
+
+#: setupapi.rc:58
+msgid "Browse..."
 msgstr ""
 
 #: setupapi.rc:28
