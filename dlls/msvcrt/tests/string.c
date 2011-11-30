@@ -2002,6 +2002,9 @@ static void test_wctob(void)
     ret = p_wctob(0x81);
     ok(ret == (int)(char)0x81, "ret = %x\n", ret);
 
+    ret = p_wctob(0x9f);
+    ok(ret == (int)(char)0x9f, "ret = %x\n", ret);
+
     ret = p_wctob(0xe0);
     ok(ret == (int)(char)0xe0, "ret = %x\n", ret);
 }
