@@ -274,7 +274,6 @@ static int CreateSpoolFile(LPCSTR pszOutput)
 
             /* reset signals that we previously set to SIG_IGN */
             signal( SIGPIPE, SIG_DFL );
-            signal( SIGCHLD, SIG_DFL );
 
             execl("/bin/sh", "/bin/sh", "-c", psCmdP, NULL);
             _exit(1);
