@@ -321,6 +321,22 @@ static HRESULT compile_delete_expression(compiler_ctx_t *ctx, unary_expression_t
             return E_OUTOFMEMORY;
         break;
     }
+    case EXPR_MEMBER: {
+        member_expression_t *member_expr = (member_expression_t*)expr->expression;
+
+        hres = compile_expression(ctx, member_expr->expression);
+        if(FAILED(hres))
+            return hres;
+
+        /* FIXME: Potential optimization */
+        hres = push_instr_str(ctx, OP_str, member_expr->identifier);
+        if(FAILED(hres))
+            return hres;
+
+        if(push_instr(ctx, OP_delete) == -1)
+            return E_OUTOFMEMORY;
+        break;
+    }
     default:
         expr->expr.eval = delete_expression_eval;
         return compile_interp_fallback(ctx, &expr->expr);
