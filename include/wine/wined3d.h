@@ -1696,15 +1696,6 @@ struct wined3d_device_creation_parameters
     DWORD flags;
 };
 
-typedef struct _WINED3DDEVINFO_INTERFACETIMINGS
-{
-    float WaitingForGPUToUseApplicationResourceTimePercent;
-    float WaitingForGPUToAcceptMoreCommandsTimePercent;
-    float WaitingForGPUToStayWithinLatencyTimePercent;
-    float WaitingForGPUExclusiveResourceTimePercent;
-    float WaitingForGPUOtherTimePercent;
-} WINED3DDEVINFO_INTERFACETIMINGS;
-
 typedef struct _WINED3DDEVINFO_PIPELINETIMINGS
 {
     float VertexProcessingTimePercent;
