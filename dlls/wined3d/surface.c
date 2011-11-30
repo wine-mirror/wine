@@ -3569,9 +3569,10 @@ static struct wined3d_surface *surface_convert_format(struct wined3d_surface *so
     }
 
     wined3d_surface_create(source->resource.device, source->resource.width,
-            source->resource.height, to_fmt, TRUE /* lockable */, TRUE /* discard  */, 0 /* level */,
-            0 /* usage */, WINED3DPOOL_SCRATCH, WINED3DMULTISAMPLE_NONE /* TODO: Multisampled conversion */,
-            0 /* MultiSampleQuality */, source->surface_type, NULL /* parent */, &wined3d_null_parent_ops, &ret);
+            source->resource.height, to_fmt, 0 /* level */, 0 /* usage */, WINED3DPOOL_SCRATCH,
+            WINED3DMULTISAMPLE_NONE /* TODO: Multisampled conversion */, 0 /* MultiSampleQuality */,
+            source->surface_type, WINED3D_SURFACE_MAPPABLE | WINED3D_SURFACE_DISCARD,
+            NULL /* parent */, &wined3d_null_parent_ops, &ret);
     if (!ret)
     {
         ERR("Failed to create a destination surface for conversion.\n");
@@ -7089,12 +7090,13 @@ const struct blit_shader cpu_blit =  {
 };
 
 static HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE surface_type, UINT alignment,
-        UINT width, UINT height, UINT level, BOOL lockable, BOOL discard, WINED3DMULTISAMPLE_TYPE multisample_type,
+        UINT width, UINT height, UINT level, WINED3DMULTISAMPLE_TYPE multisample_type,
         UINT multisample_quality, struct wined3d_device *device, DWORD usage, enum wined3d_format_id format_id,
-        WINED3DPOOL pool, void *parent, const struct wined3d_parent_ops *parent_ops)
+        WINED3DPOOL pool, DWORD flags, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
+    BOOL lockable = flags & WINED3D_SURFACE_MAPPABLE;
     unsigned int resource_size;
     HRESULT hr;
 
@@ -7182,7 +7184,7 @@ static HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE sur
 
     /* Flags */
     surface->flags = SFLAG_NORMCOORD; /* Default to normalized coords. */
-    if (discard)
+    if (flags & WINED3D_SURFACE_DISCARD)
         surface->flags |= SFLAG_DISCARD;
     if (lockable || format_id == WINED3DFMT_D16_LOCKABLE)
         surface->flags |= SFLAG_LOCKABLE;
@@ -7227,18 +7229,18 @@ static HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE sur
 }
 
 HRESULT CDECL wined3d_surface_create(struct wined3d_device *device, UINT width, UINT height,
-        enum wined3d_format_id format_id, BOOL lockable, BOOL discard, UINT level, DWORD usage, WINED3DPOOL pool,
+        enum wined3d_format_id format_id, UINT level, DWORD usage, WINED3DPOOL pool,
         WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, WINED3DSURFTYPE surface_type,
-        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_surface **surface)
+        DWORD flags, void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_surface **surface)
 {
     struct wined3d_surface *object;
     HRESULT hr;
 
-    TRACE("device %p, width %u, height %u, format %s, lockable %#x, discard %#x, level %u\n",
-            device, width, height, debug_d3dformat(format_id), lockable, discard, level);
+    TRACE("device %p, width %u, height %u, format %s, level %u\n",
+            device, width, height, debug_d3dformat(format_id), level);
     TRACE("surface %p, usage %s (%#x), pool %s, multisample_type %#x, multisample_quality %u\n",
             surface, debug_d3dusage(usage), usage, debug_d3dpool(pool), multisample_type, multisample_quality);
-    TRACE("surface_type %#x, parent %p, parent_ops %p.\n", surface_type, parent, parent_ops);
+    TRACE("surface_type %#x, flags %#x, parent %p, parent_ops %p.\n", surface_type, flags, parent, parent_ops);
 
     if (surface_type == SURFACE_OPENGL && !device->adapter)
     {
@@ -7253,8 +7255,8 @@ HRESULT CDECL wined3d_surface_create(struct wined3d_device *device, UINT width, 
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
-    hr = surface_init(object, surface_type, device->surface_alignment, width, height, level, lockable,
-            discard, multisample_type, multisample_quality, device, usage, format_id, pool, parent, parent_ops);
+    hr = surface_init(object, surface_type, device->surface_alignment, width, height, level,
+            multisample_type, multisample_quality, device, usage, format_id, pool, flags, parent, parent_ops);
     if (FAILED(hr))
     {
         WARN("Failed to initialize surface, returning %#x.\n", hr);

@@ -395,6 +395,7 @@ HRESULT surface_init(IDirect3DSurface9Impl *surface, IDirect3DDevice9Impl *devic
         UINT width, UINT height, D3DFORMAT format, BOOL lockable, BOOL discard, UINT level,
         DWORD usage, D3DPOOL pool, D3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality)
 {
+    DWORD flags = 0;
     HRESULT hr;
 
     surface->IDirect3DSurface9_iface.lpVtbl = &Direct3DSurface9_Vtbl;
@@ -423,10 +424,15 @@ HRESULT surface_init(IDirect3DSurface9Impl *surface, IDirect3DDevice9Impl *devic
         multisample_quality = 0;
     }
 
+    if (lockable)
+        flags |= WINED3D_SURFACE_MAPPABLE;
+    if (discard)
+        flags |= WINED3D_SURFACE_DISCARD;
+
     wined3d_mutex_lock();
     hr = wined3d_surface_create(device->wined3d_device, width, height, wined3dformat_from_d3dformat(format),
-            lockable, discard, level, usage & WINED3DUSAGE_MASK, (WINED3DPOOL)pool, multisample_type,
-            multisample_quality, SURFACE_OPENGL, surface, &d3d9_surface_wined3d_parent_ops, &surface->wined3d_surface);
+            level, usage & WINED3DUSAGE_MASK, (WINED3DPOOL)pool, multisample_type, multisample_quality,
+            SURFACE_OPENGL, flags, surface, &d3d9_surface_wined3d_parent_ops, &surface->wined3d_surface);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {

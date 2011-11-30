@@ -5342,10 +5342,9 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
 
     surface->first_attached = surface;
 
-    hr = wined3d_surface_create(ddraw->wined3d_device, desc->dwWidth, desc->dwHeight, format,
-            TRUE /* Lockable */, FALSE /* Discard */, mip_level, usage, pool,
-            WINED3DMULTISAMPLE_NONE, 0 /* MultiSampleQuality */, DefaultSurfaceType, surface,
-            &ddraw_surface_wined3d_parent_ops, &surface->wined3d_surface);
+    hr = wined3d_surface_create(ddraw->wined3d_device, desc->dwWidth, desc->dwHeight, format, mip_level,
+            usage, pool, WINED3DMULTISAMPLE_NONE, 0, DefaultSurfaceType, WINED3D_SURFACE_MAPPABLE,
+            surface, &ddraw_surface_wined3d_parent_ops, &surface->wined3d_surface);
     if (FAILED(hr))
     {
         WARN("Failed to create wined3d surface, hr %#x.\n", hr);

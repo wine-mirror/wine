@@ -5384,6 +5384,7 @@ static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_par
         struct wined3d_surface **surface)
 {
     struct IDirectDrawImpl *ddraw = ddraw_from_device_parent(device_parent);
+    DWORD flags = 0;
     HRESULT hr;
 
     TRACE("device_parent %p, container_parent %p, width %u, height %u, format %#x, multisample_type %#x,\n"
@@ -5397,9 +5398,12 @@ static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_par
         return E_FAIL;
     }
 
-    hr = wined3d_surface_create(ddraw->wined3d_device, width, height, format, lockable, FALSE, 0,
+    if (lockable)
+        flags |= WINED3D_SURFACE_MAPPABLE;
+
+    hr = wined3d_surface_create(ddraw->wined3d_device, width, height, format, 0,
             WINED3DUSAGE_RENDERTARGET, WINED3DPOOL_DEFAULT, multisample_type, multisample_quality,
-            DefaultSurfaceType, ddraw, &ddraw_frontbuffer_parent_ops, surface);
+            DefaultSurfaceType, flags, ddraw, &ddraw_frontbuffer_parent_ops, surface);
     if (SUCCEEDED(hr))
         ddraw->wined3d_frontbuffer = *surface;
 

@@ -934,9 +934,9 @@ static void device_load_logo(struct wined3d_device *device, const char *filename
         bm.bmHeight = 32;
     }
 
-    hr = wined3d_surface_create(device, bm.bmWidth, bm.bmHeight, WINED3DFMT_B5G6R5_UNORM, TRUE,
-            FALSE, 0, 0, WINED3DPOOL_DEFAULT, WINED3DMULTISAMPLE_NONE, 0, SURFACE_OPENGL, NULL,
-            &wined3d_null_parent_ops, &device->logo_surface);
+    hr = wined3d_surface_create(device, bm.bmWidth, bm.bmHeight, WINED3DFMT_B5G6R5_UNORM, 0, 0,
+            WINED3DPOOL_DEFAULT, WINED3DMULTISAMPLE_NONE, 0, SURFACE_OPENGL, WINED3D_SURFACE_MAPPABLE,
+            NULL, &wined3d_null_parent_ops, &device->logo_surface);
     if (FAILED(hr))
     {
         ERR("Wine logo requested, but failed to create surface, hr %#x.\n", hr);
