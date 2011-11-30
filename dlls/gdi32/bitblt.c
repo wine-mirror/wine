@@ -398,6 +398,163 @@ update_format:
     return ERROR_BAD_FORMAT;
 }
 
+BOOL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
+                           void * grad_array, ULONG ngrad, ULONG mode )
+{
+    DC *dc = get_nulldrv_dc( dev );
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
+    struct bitblt_coords src, dst;
+    struct gdi_image_bits bits;
+    unsigned int i;
+    DWORD err;
+
+    switch(mode)
+    {
+    case GRADIENT_FILL_RECT_H:
+    case GRADIENT_FILL_RECT_V:
+    {
+        const GRADIENT_RECT *rect = grad_array;
+        TRIVERTEX v[2];
+
+        for (i = 0; i < ngrad; i++, rect++)
+        {
+            v[0] = vert_array[rect->UpperLeft];
+            v[1] = vert_array[rect->LowerRight];
+
+            dst.log_x = v[0].x;
+            dst.log_y = v[0].y;
+            dst.log_width = v[1].x - v[0].x;
+            dst.log_height = v[1].y - v[0].y;
+            dst.layout = dc->layout;
+            if (!get_vis_rectangles( dc, &dst, NULL, NULL )) continue;
+
+            if (dst.width < 0)
+            {
+                if (mode == GRADIENT_FILL_RECT_H)  /* swap the colors */
+                {
+                    v[0] = vert_array[rect->LowerRight];
+                    v[1] = vert_array[rect->UpperLeft];
+                }
+                dst.x += dst.width + 1;
+                dst.width = -dst.width;
+            }
+            if (dst.height < 0)
+            {
+                if (mode == GRADIENT_FILL_RECT_V)  /* swap the colors */
+                {
+                    v[0] = vert_array[rect->LowerRight];
+                    v[1] = vert_array[rect->UpperLeft];
+                }
+                dst.y += dst.height + 1;
+                dst.height = -dst.height;
+            }
+
+            /* query the bitmap format */
+            info->bmiHeader.biSize          = sizeof(info->bmiHeader);
+            info->bmiHeader.biPlanes        = 1;
+            info->bmiHeader.biBitCount      = 0;
+            info->bmiHeader.biCompression   = BI_RGB;
+            info->bmiHeader.biXPelsPerMeter = 0;
+            info->bmiHeader.biYPelsPerMeter = 0;
+            info->bmiHeader.biClrUsed       = 0;
+            info->bmiHeader.biClrImportant  = 0;
+            info->bmiHeader.biWidth         = dst.visrect.right - dst.visrect.left;
+            info->bmiHeader.biHeight        = dst.visrect.bottom - dst.visrect.top;
+            info->bmiHeader.biSizeImage     = 0;
+            dev = GET_DC_PHYSDEV( dc, pPutImage );
+            err = dev->funcs->pPutImage( dev, 0, 0, info, NULL, NULL, NULL, 0 );
+            if (!err || err == ERROR_BAD_FORMAT)
+            {
+                if (!(bits.ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( info ))))
+                    return FALSE;
+                bits.is_copy = TRUE;
+                bits.free = free_heap_bits;
+
+                /* make src relative to the bitmap */
+                src = dst;
+                src.x -= src.visrect.left;
+                src.y -= src.visrect.top;
+                offset_rect( &src.visrect, -src.visrect.left, -src.visrect.top );
+                v[0].x = src.x;
+                v[0].y = src.y;
+                v[1].x = src.x + src.width;
+                v[1].y = src.y + src.height;
+                err = gradient_bitmapinfo( info, bits.ptr, v, mode );
+
+                if (!err) err = dev->funcs->pPutImage( dev, 0, 0, info, &bits, &src, &dst, SRCCOPY );
+                if (bits.free) bits.free( &bits );
+            }
+            if (err) return FALSE;
+        }
+        break;
+    }
+    case GRADIENT_FILL_TRIANGLE:
+        for (i = 0; i < ngrad; i++)
+        {
+            GRADIENT_TRIANGLE *tri = ((GRADIENT_TRIANGLE *)grad_array) + i;
+            TRIVERTEX *v1 = vert_array + tri->Vertex1;
+            TRIVERTEX *v2 = vert_array + tri->Vertex2;
+            TRIVERTEX *v3 = vert_array + tri->Vertex3;
+            int y, dy;
+
+            if (v1->y > v2->y)
+            { TRIVERTEX *t = v1; v1 = v2; v2 = t; }
+            if (v2->y > v3->y)
+            {
+                TRIVERTEX *t = v2; v2 = v3; v3 = t;
+                if (v1->y > v2->y)
+                { t = v1; v1 = v2; v2 = t; }
+            }
+            /* v1->y <= v2->y <= v3->y */
+
+            dy = v3->y - v1->y;
+            for (y = 0; y < dy; y++)
+            {
+                /* v1->y <= y < v3->y */
+                TRIVERTEX *v = y < (v2->y - v1->y) ? v1 : v3;
+                /* (v->y <= y < v2->y) || (v2->y <= y < v->y) */
+                int dy2 = v2->y - v->y;
+                int y2 = y + v1->y - v->y;
+
+                int x1 = (v3->x     * y  + v1->x     * (dy  - y )) / dy;
+                int x2 = (v2->x     * y2 + v-> x     * (dy2 - y2)) / dy2;
+                int r1 = (v3->Red   * y  + v1->Red   * (dy  - y )) / dy;
+                int r2 = (v2->Red   * y2 + v-> Red   * (dy2 - y2)) / dy2;
+                int g1 = (v3->Green * y  + v1->Green * (dy  - y )) / dy;
+                int g2 = (v2->Green * y2 + v-> Green * (dy2 - y2)) / dy2;
+                int b1 = (v3->Blue  * y  + v1->Blue  * (dy  - y )) / dy;
+                int b2 = (v2->Blue  * y2 + v-> Blue  * (dy2 - y2)) / dy2;
+
+                int x;
+                if (x1 < x2)
+                {
+                    int dx = x2 - x1;
+                    for (x = 0; x < dx; x++)
+                        SetPixel (dev->hdc, x + x1, y + v1->y, RGB(
+                                      (r1 * (dx - x) + r2 * x) / dx >> 8,
+                                      (g1 * (dx - x) + g2 * x) / dx >> 8,
+                                      (b1 * (dx - x) + b2 * x) / dx >> 8));
+                }
+                else
+                {
+                    int dx = x1 - x2;
+                    for (x = 0; x < dx; x++)
+                        SetPixel (dev->hdc, x + x2, y + v1->y, RGB(
+                                      (r2 * (dx - x) + r1 * x) / dx >> 8,
+                                      (g2 * (dx - x) + g1 * x) / dx >> 8,
+                                      (b2 * (dx - x) + b1 * x) / dx >> 8));
+                }
+            }
+        }
+        break;
+    default:
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 /***********************************************************************
  *           PatBlt    (GDI32.@)
  */

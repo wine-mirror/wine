@@ -1240,6 +1240,15 @@ DWORD blend_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bitbl
     return blend_rect( &dst_dib, &dst->visrect, &src_dib, &src->visrect, NULL, blend );
 }
 
+DWORD gradient_bitmapinfo( const BITMAPINFO *info, void *bits, TRIVERTEX *v, int mode )
+{
+    dib_info dib;
+
+    if (!init_dib_info_from_bitmapinfo( &dib, info, bits, 0 )) return ERROR_BAD_FORMAT;
+    gradient_rect( &dib, v, mode, 0 );
+    return ERROR_SUCCESS;
+}
+
 /***********************************************************************
  *           dibdrv_StretchBlt
  */
