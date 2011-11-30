@@ -4175,10 +4175,7 @@ static void test_coop_level_mode_set(void)
         WM_WINDOWPOSCHANGING,
         WM_WINDOWPOSCHANGED,
         WM_SIZE,
-        /* WM_DISPLAYCHANGE,    This message is received after WM_SIZE on native. However, the
-         *                      more important behaviour is that at the time the WM_SIZE message
-         *                      is processed SM_CXSCREEN and SM_CYSCREEN already have the new
-         *                      values. */
+        WM_DISPLAYCHANGE,
         0,
     };
 

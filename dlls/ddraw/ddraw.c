@@ -1008,9 +1008,6 @@ static HRESULT ddraw_set_display_mode(IDirectDrawImpl *ddraw, DWORD Width, DWORD
     /* TODO: Lose the primary surface */
     hr = wined3d_device_set_display_mode(ddraw->wined3d_device, 0, &mode);
 
-    if (ddraw->cooperative_level & DDSCL_EXCLUSIVE)
-        SetWindowPos(ddraw->dest_window, HWND_TOP, 0, 0, Width, Height, SWP_SHOWWINDOW | SWP_NOACTIVATE);
-
     wined3d_mutex_unlock();
 
     switch(hr)
@@ -5268,6 +5265,38 @@ static void CDECL device_parent_wined3d_device_created(struct wined3d_device_par
     TRACE("device_parent %p, device %p.\n", device_parent, device);
 }
 
+static void CDECL device_parent_mode_changed(struct wined3d_device_parent *device_parent)
+{
+    struct IDirectDrawImpl *ddraw = ddraw_from_device_parent(device_parent);
+    MONITORINFO monitor_info;
+    HMONITOR monitor;
+    BOOL ret;
+    RECT *r;
+
+    TRACE("device_parent %p.\n", device_parent);
+
+    if (!(ddraw->cooperative_level & DDSCL_EXCLUSIVE) || !ddraw->swapchain_window)
+    {
+        TRACE("Nothing to resize.\n");
+        return;
+    }
+
+    monitor = MonitorFromWindow(ddraw->swapchain_window, MONITOR_DEFAULTTOPRIMARY);
+    monitor_info.cbSize = sizeof(monitor_info);
+    if (!(ret = GetMonitorInfoW(monitor, &monitor_info)))
+    {
+        ERR("Failed to get monitor info.\n");
+        return;
+    }
+
+    r = &monitor_info.rcMonitor;
+    TRACE("Resizing window %p to %s.\n", ddraw->swapchain_window, wine_dbgstr_rect(r));
+
+    if (!(ret = SetWindowPos(ddraw->swapchain_window, HWND_TOP, r->left, r->top,
+            r->right - r->left, r->bottom - r->top, SWP_SHOWWINDOW | SWP_NOACTIVATE)))
+        ERR("Failed to resize window.\n");
+}
+
 static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
         WINED3DPOOL pool, UINT level, WINED3DCUBEMAP_FACES face, struct wined3d_surface **surface)
@@ -5424,6 +5453,7 @@ static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent
 static const struct wined3d_device_parent_ops ddraw_wined3d_device_parent_ops =
 {
     device_parent_wined3d_device_created,
+    device_parent_mode_changed,
     device_parent_create_surface,
     device_parent_create_rendertarget,
     device_parent_create_depth_stencil,

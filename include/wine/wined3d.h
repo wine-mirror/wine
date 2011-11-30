@@ -2066,6 +2066,7 @@ struct wined3d_device_parent
 struct wined3d_device_parent_ops
 {
     void (__cdecl *wined3d_device_created)(struct wined3d_device_parent *device_parent, struct wined3d_device *device);
+    void (__cdecl *mode_changed)(struct wined3d_device_parent *device_parent);
     HRESULT (__cdecl *create_surface)(struct wined3d_device_parent *device_parent, void *container_parent,
             UINT width, UINT height, enum wined3d_format_id format_id, DWORD usage, WINED3DPOOL pool,
             UINT level, WINED3DCUBEMAP_FACES face, struct wined3d_surface **surface);

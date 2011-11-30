@@ -3043,6 +3043,11 @@ static void CDECL device_parent_wined3d_device_created(struct wined3d_device_par
     TRACE("device_parent %p, device %p.\n", device_parent, device);
 }
 
+static void CDECL device_parent_mode_changed(struct wined3d_device_parent *device_parent)
+{
+    TRACE("device_parent %p.\n", device_parent);
+}
+
 static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format, DWORD usage,
         WINED3DPOOL pool, UINT level, WINED3DCUBEMAP_FACES face, struct wined3d_surface **surface)
@@ -3247,6 +3252,7 @@ static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent
 static const struct wined3d_device_parent_ops d3d9_wined3d_device_parent_ops =
 {
     device_parent_wined3d_device_created,
+    device_parent_mode_changed,
     device_parent_create_surface,
     device_parent_create_rendertarget,
     device_parent_create_depth_stencil,

@@ -6033,6 +6033,10 @@ LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL 
         if (device->focus_window == window) device->focus_window = NULL;
         else ERR("Window %p is not the focus window for device %p.\n", window, device);
     }
+    else if (message == WM_DISPLAYCHANGE)
+    {
+        device->device_parent->ops->mode_changed(device->device_parent);
+    }
 
     if (unicode)
         return CallWindowProcW(proc, window, message, wparam, lparam);
