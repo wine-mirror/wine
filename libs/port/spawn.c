@@ -36,7 +36,7 @@
 int spawnvp(int mode, const char *cmdname, const char *const argv[])
 {
 #ifndef HAVE__SPAWNVP
-    int pid = 0, status, wret;
+    int pid, status, wret;
 
     if (mode == _P_OVERLAY)
     {
@@ -51,20 +51,45 @@ int spawnvp(int mode, const char *cmdname, const char *const argv[])
     pid = fork();
     if (pid == 0)
     {
+        /* in child */
+        if (mode == _P_DETACH)
+        {
+            pid = fork();
+            if (pid == -1) _exit(1);
+            else if (pid > 0) _exit(0);
+            /* else in grandchild */
+        }
+
         signal( SIGPIPE, SIG_DFL );
         execvp(cmdname, (char **)argv);
         _exit(1);
     }
 
-    if (pid != -1 && mode == _P_OVERLAY) exit(0);
+    if (pid == -1)
+        return -1;
 
-    if (pid != -1 && mode == _P_WAIT)
+    if (mode == _P_OVERLAY) exit(0);
+
+    if (mode == _P_WAIT || mode == _P_DETACH)
     {
         while (pid != (wret = waitpid(pid, &status, 0)))
             if (wret == -1 && errno != EINTR) break;
 
-        if (pid == wret && WIFEXITED(status)) pid = WEXITSTATUS(status);
-        else pid = 255; /* abnormal exit with an abort or an interrupt */
+        if (pid == wret && WIFEXITED(status))
+        {
+            if (mode == _P_WAIT)
+                pid = WEXITSTATUS(status);
+            else /* mode == _P_DETACH */
+                if (WEXITSTATUS(status) != 0) /* child couldn't fork grandchild */
+                    pid = -1;
+        }
+        else
+        {
+            if (mode == _P_WAIT)
+                pid = 255; /* abnormal exit with an abort or an interrupt */
+            else /* mode == _P_DETACH */
+                pid = -1;
+        }
     }
 
     return pid;
