@@ -303,6 +303,21 @@ RPC_STATUS WINAPI RpcEpRegisterW( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *Bind
 }
 
 /***********************************************************************
+ *             RpcEpRegisterNoReplaceW (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcEpRegisterNoReplaceW( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *BindingVector,
+                                           UUID_VECTOR *UuidVector, RPC_WSTR Annotation )
+{
+  LPSTR annA = RPCRT4_strdupWtoA(Annotation);
+  RPC_STATUS status;
+
+  status = epm_register(IfSpec, BindingVector, UuidVector, (RPC_CSTR)annA, FALSE);
+
+  HeapFree(GetProcessHeap(), 0, annA);
+  return status;
+}
+
+/***********************************************************************
  *             RpcEpUnregister (RPCRT4.@)
  */
 RPC_STATUS WINAPI RpcEpUnregister( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *BindingVector,

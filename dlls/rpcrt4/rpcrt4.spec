@@ -370,7 +370,7 @@
 @ stdcall RpcCompleteAsyncCall(ptr ptr) RpcAsyncCompleteCall
 @ stdcall RpcEpRegisterA(ptr ptr ptr str)
 @ stdcall RpcEpRegisterNoReplaceA(ptr ptr ptr str)
-@ stub RpcEpRegisterNoReplaceW
+@ stdcall RpcEpRegisterNoReplaceW(ptr ptr ptr wstr)
 @ stdcall RpcEpRegisterW(ptr ptr ptr wstr)
 @ stdcall RpcEpResolveBinding(ptr ptr)
 @ stdcall RpcEpUnregister(ptr ptr ptr)
