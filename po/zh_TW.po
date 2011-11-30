@@ -110,29 +110,29 @@ msgstr "當前格式:"
 
 #: avifil32.rc:51 credui.rc:49 dinput.rc:43 ieframe.rc:84 localui.rc:41
 #: localui.rc:54 mpr.rc:46 msacm32.rc:50 mshtml.rc:45 mshtml.rc:55
-#: msvfw32.rc:33 serialui.rc:38 setupapi.rc:56 shlwapi.rc:41 wininet.rc:48
-#: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:122 oleview.rc:159
-#: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
-#: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
-#: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
-#: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
-#: winefile.rc:134 winefile.rc:157 winefile.rc:187 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
-#: wordpad.rc:246
+#: msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87 serialui.rc:38 setupapi.rc:56
+#: shlwapi.rc:41 wininet.rc:48 wininet.rc:68 winspool.rc:39 net.rc:44
+#: notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103 progman.rc:121
+#: progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196 progman.rc:213
+#: regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284 regedit.rc:297
+#: regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226
+#: wineconsole.rc:131 winefile.rc:134 winefile.rc:157 winefile.rc:187
+#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
+#: wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "確定"
 
 #: avifil32.rc:52 browseui.rc:37 credui.rc:50 dinput.rc:44 ieframe.rc:85
 #: inetcpl.rc:78 localui.rc:42 localui.rc:55 mpr.rc:47 msacm32.rc:51
-#: mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34 serialui.rc:39 setupapi.rc:39
-#: setupapi.rc:57 shlwapi.rc:42 wininet.rc:49 wininet.rc:69 winspool.rc:40
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
-#: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
-#: regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298
-#: regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217
-#: winecfg.rc:227 wineconsole.rc:132 winefile.rc:135 winefile.rc:158
-#: winefile.rc:188 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
-#: wordpad.rc:247
+#: mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34 oledlg.rc:56 oledlg.rc:88
+#: serialui.rc:39 setupapi.rc:39 setupapi.rc:57 shlwapi.rc:42 wininet.rc:49
+#: wininet.rc:69 winspool.rc:40 notepad.rc:123 oleview.rc:160 oleview.rc:173
+#: progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178
+#: progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269
+#: regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522
+#: wineboot.rc:31 winecfg.rc:217 winecfg.rc:227 wineconsole.rc:132
+#: winefile.rc:135 winefile.rc:158 winefile.rc:188 winemine.rc:93
+#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "取消"
 
@@ -2413,11 +2413,11 @@ msgstr "我的最愛(&F)"
 msgid "&Add to Favorites..."
 msgstr "添加到我的最愛(&A)..."
 
-#: ieframe.rc:55 msacm32.rc:49 shell32.rc:125 clock.rc:41 notepad.rc:57
-#: notepad.rc:124 oleview.rc:69 progman.rc:52 progman.rc:105 progman.rc:123
-#: progman.rc:141 progman.rc:157 progman.rc:181 progman.rc:199 progman.rc:216
-#: regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48 winhlp32.rc:53
-#: wordpad.rc:91
+#: ieframe.rc:55 msacm32.rc:49 oledlg.rc:89 shell32.rc:125 clock.rc:41
+#: notepad.rc:57 notepad.rc:124 oleview.rc:69 progman.rc:52 progman.rc:105
+#: progman.rc:123 progman.rc:141 progman.rc:157 progman.rc:181 progman.rc:199
+#: progman.rc:216 regedit.rc:76 taskmgr.rc:87 winefile.rc:85 winemine.rc:48
+#: winhlp32.rc:53 wordpad.rc:91
 msgid "&Help"
 msgstr "幫助(&H)"
 
@@ -6403,6 +6403,75 @@ msgstr "開"
 msgid "Off"
 msgstr "關"
 
+#: oledlg.rc:48
+msgid "Insert Object"
+msgstr "插入對象"
+
+#: oledlg.rc:54
+msgid "Object Type:"
+msgstr "對象類型:"
+
+#: oledlg.rc:57 oledlg.rc:95
+msgid "Result"
+msgstr "結果"
+
+#: oledlg.rc:58
+msgid "Create New"
+msgstr "新建"
+
+#: oledlg.rc:60
+msgid "Create Control"
+msgstr "建立控件"
+
+#: oledlg.rc:62
+msgid "Create From File"
+msgstr "建立於檔案"
+
+#: oledlg.rc:65
+msgid "&Add Control..."
+msgstr "添加控件(&A)..."
+
+#: oledlg.rc:66
+msgid "Display As Icon"
+msgstr "顯示為圖標"
+
+#: oledlg.rc:68 setupapi.rc:58
+msgid "Browse..."
+msgstr "瀏覽..."
+
+#: oledlg.rc:69
+msgid "File:"
+msgstr "檔案:"
+
+#: oledlg.rc:75
+msgid "Paste Special"
+msgstr "特殊貼上"
+
+#: oledlg.rc:78 setupapi.rc:40
+msgid "Source:"
+msgstr "原始檔案:"
+
+#: oledlg.rc:79 shdoclc.rc:47 shdoclc.rc:79 shdoclc.rc:92 shdoclc.rc:132
+#: shdoclc.rc:159 shdoclc.rc:183 user32.rc:59 wineconsole.rc:30 wordpad.rc:103
+msgid "&Paste"
+msgstr "貼上(&P)"
+
+#: oledlg.rc:81
+msgid "Paste &Link"
+msgstr "貼上鏈接(&L)"
+
+#: oledlg.rc:83
+msgid "&As:"
+msgstr "為(&A):"
+
+#: oledlg.rc:90
+msgid "&Display As Icon"
+msgstr "顯示為圖標(&D)"
+
+#: oledlg.rc:92
+msgid "Change &Icon..."
+msgstr "改變圖標(&I)..."
+
 #: oledlg.rc:25
 msgid "Insert a new %s object into your document"
 msgstr "在你的檔案中插入一個新的 %s 對象"
@@ -6549,10 +6618,6 @@ msgstr "停止位"
 msgid "Copying Files..."
 msgstr "複製檔案..."
 
-#: setupapi.rc:40
-msgid "Source:"
-msgstr "原始檔案:"
-
 #: setupapi.rc:42
 msgid "Destination:"
 msgstr "目標檔案:"
@@ -6572,10 +6637,6 @@ msgstr ""
 #: setupapi.rc:54
 msgid "Copy manufacturer's files from:"
 msgstr "複製原廠檔案:"
-
-#: setupapi.rc:58
-msgid "Browse..."
-msgstr "瀏覽..."
 
 #: setupapi.rc:28
 #, fuzzy
@@ -6617,11 +6678,6 @@ msgstr "設定到桌面(&D)"
 #: shdoclc.rc:46 shdoclc.rc:95 shdoclc.rc:117 user32.rc:62
 msgid "Select &All"
 msgstr "全選(&A)"
-
-#: shdoclc.rc:47 shdoclc.rc:79 shdoclc.rc:92 shdoclc.rc:132 shdoclc.rc:159
-#: shdoclc.rc:183 user32.rc:59 wineconsole.rc:30 wordpad.rc:103
-msgid "&Paste"
-msgstr "貼上(&P)"
 
 #: shdoclc.rc:49
 msgid "Create Shor&tcut"
