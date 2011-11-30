@@ -1858,15 +1858,14 @@ MSVCRT_size_t CDECL _mbstrlen_l(const char* str, MSVCRT__locale_t locale)
         locinfo = locale->locinfo;
 
     if(locinfo->mb_cur_max > 1) {
-        MSVCRT_size_t len = 0;
-        while(*str) {
-            /* FIXME: According to the documentation we are supposed to test for
-             * multi-byte character validity. Whatever that means
-             */
-            str += MSVCRT_isleadbyte(*str) ? 2 : 1;
-            len++;
+        MSVCRT_size_t len;
+        len = MultiByteToWideChar(locinfo->lc_codepage, MB_ERR_INVALID_CHARS,
+                                  str, -1, NULL, 0);
+        if (!len) {
+            *MSVCRT__errno() = MSVCRT_EILSEQ;
+            return -1;
         }
-        return len;
+        return len - 1;
     }
 
     return strlen(str);
