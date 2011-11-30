@@ -1696,14 +1696,6 @@ struct wined3d_device_creation_parameters
     DWORD flags;
 };
 
-typedef struct _WINED3DDEVINFO_PIPELINETIMINGS
-{
-    float VertexProcessingTimePercent;
-    float PixelProcessingTimePercent;
-    float OtherGPUProcessingTimePercent;
-    float GPUIdleTimePercent;
-} WINED3DDEVINFO_PIPELINETIMINGS;
-
 typedef struct _WINED3DDEVINFO_STAGETIMINGS
 {
     float MemoryProcessingPercent;
