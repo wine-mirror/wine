@@ -163,9 +163,11 @@ food21
 @todo_wine@foo@or_broken@not supported
 --- redirections within IF statements
 @todo_wine@foo1
-@todo_wine@foo2
-@todo_wine@foo3
-file does not exist, ok
+-----
+foo2
+foo3
+@todo_wine@file does not exist, ok
+@todo_wine@-----
 foo4
 baz5
 baz6@space@
