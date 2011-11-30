@@ -9,6 +9,7 @@ C_SRCS = \
 
 RC_SRCS = \
 	Bg.rc \
+	Ca.rc \
 	Da.rc \
 	De.rc \
 	En.rc \
