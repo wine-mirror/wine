@@ -37,7 +37,6 @@ int spawnvp(int mode, const char *cmdname, const char *const argv[])
 {
 #ifndef HAVE__SPAWNVP
     int pid = 0, status, wret;
-    struct sigaction dfl_act, old_act;
 
     if (mode == _P_OVERLAY)
     {
@@ -49,16 +48,10 @@ int spawnvp(int mode, const char *cmdname, const char *const argv[])
             return -1;
     }
 
-    dfl_act.sa_handler = SIG_DFL;
-    dfl_act.sa_flags = 0;
-    sigemptyset( &dfl_act.sa_mask );
-
-    if (mode == _P_WAIT) sigaction( SIGCHLD, &dfl_act, &old_act );
-
     pid = fork();
     if (pid == 0)
     {
-        sigaction( SIGPIPE, &dfl_act, NULL );
+        signal( SIGPIPE, SIG_DFL );
         execvp(cmdname, (char **)argv);
         _exit(1);
     }
@@ -74,7 +67,6 @@ int spawnvp(int mode, const char *cmdname, const char *const argv[])
         else pid = 255; /* abnormal exit with an abort or an interrupt */
     }
 
-    if (mode == _P_WAIT) sigaction( SIGCHLD, &old_act, NULL );
     return pid;
 #else   /* HAVE__SPAWNVP */
     return _spawnvp(mode, cmdname, argv);
