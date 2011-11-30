@@ -33,6 +33,12 @@
 #include <string.h>
 #include <ctype.h>
 #include <stddef.h>
+#ifdef HAVE_SYS_ERRNO_H
+#include <sys/errno.h>
+#endif
+#ifdef HAVE_SYS_WAIT_H
+#include <sys/wait.h>
+#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -7408,6 +7414,8 @@ static BOOL schedule_pipe(LPCWSTR cmd, LPCWSTR filename)
     int fds[2] = {-1, -1}, file_fd = -1, no_read;
     BOOL ret = FALSE;
     char buf[1024];
+    pid_t pid, wret;
+    int status;
 
     if(!(unixname = wine_get_unix_file_name(filename)))
         return FALSE;
@@ -7427,7 +7435,7 @@ static BOOL schedule_pipe(LPCWSTR cmd, LPCWSTR filename)
         goto end;
     }
 
-    if (fork() == 0)
+    if ((pid = fork()) == 0)
     {
         close(0);
         dup2(fds[0], 0);
@@ -7439,9 +7447,32 @@ static BOOL schedule_pipe(LPCWSTR cmd, LPCWSTR filename)
         execl("/bin/sh", "/bin/sh", "-c", cmdA, NULL);
         _exit(1);
     }
+    else if (pid == -1)
+    {
+        ERR("fork() failed!\n");
+        goto end;
+    }
 
     while((no_read = read(file_fd, buf, sizeof(buf))) > 0)
         write(fds[1], buf, no_read);
+
+    close(fds[1]);
+    fds[1] = -1;
+
+    /* reap child */
+    do {
+        wret = waitpid(pid, &status, 0);
+    } while (wret < 0 && errno == EINTR);
+    if (wret < 0)
+    {
+        ERR("waitpid() failed!\n");
+        goto end;
+    }
+    if (!WIFEXITED(status) || WEXITSTATUS(status))
+    {
+        ERR("child process failed! %d\n", status);
+        goto end;
+    }
 
     ret = TRUE;
 
