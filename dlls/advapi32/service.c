@@ -1400,6 +1400,10 @@ BOOL WINAPI QueryServiceConfig2A(SC_HANDLE hService, DWORD dwLevel, LPBYTE buffe
                 else configA->lpDescription = NULL;
             }
             break;
+        case SERVICE_CONFIG_PRESHUTDOWN_INFO:
+            if (buffer && bufferW && *needed<=size)
+                memcpy(buffer, bufferW, *needed);
+            break;
         default:
             FIXME("conversation W->A not implemented for level %d\n", dwLevel);
             ret = FALSE;
@@ -1421,7 +1425,7 @@ BOOL WINAPI QueryServiceConfig2W(SC_HANDLE hService, DWORD dwLevel, LPBYTE buffe
 {
     DWORD err;
 
-    if(dwLevel != SERVICE_CONFIG_DESCRIPTION) {
+    if(dwLevel!=SERVICE_CONFIG_DESCRIPTION && dwLevel!=SERVICE_CONFIG_PRESHUTDOWN_INFO) {
         FIXME("Level %d not implemented\n", dwLevel);
         SetLastError(ERROR_INVALID_LEVEL);
         return FALSE;
@@ -2050,6 +2054,10 @@ BOOL WINAPI ChangeServiceConfig2A( SC_HANDLE hService, DWORD dwInfoLevel,
 
         HeapFree( GetProcessHeap(), 0, faw.lpRebootMsg );
         HeapFree( GetProcessHeap(), 0, faw.lpCommand );
+    }
+    else if (dwInfoLevel == SERVICE_CONFIG_PRESHUTDOWN_INFO)
+    {
+        r = ChangeServiceConfig2W( hService, dwInfoLevel, lpInfo);
     }
     else
         SetLastError( ERROR_INVALID_PARAMETER );
