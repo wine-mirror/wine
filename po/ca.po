@@ -15,7 +15,7 @@ msgstr ""
 
 #: appwiz.rc:28
 msgid "Add/Remove Programs"
-msgstr "Afegeix/Treu Programas"
+msgstr "Afegeix/Treu Programes"
 
 #: appwiz.rc:29
 msgid ""
@@ -55,11 +55,11 @@ msgstr "Versió"
 
 #: appwiz.rc:38
 msgid "Installation programs"
-msgstr "Programas d'instal·lació"
+msgstr "Programes d'instal·lació"
 
 #: appwiz.rc:39
 msgid "Programs (*.exe)"
-msgstr "Programas (*.exe)"
+msgstr "Programes (*.exe)"
 
 #: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:75
 #: oleview.rc:101 progman.rc:79 regedit.rc:195 winhlp32.rc:87
@@ -91,13 +91,12 @@ msgstr ""
 "corromput."
 
 #: avifil32.rc:39
-#, fuzzy
 msgid "Compress options"
-msgstr "Cap ranura de procés\n"
+msgstr "Opcions d'compressió"
 
 #: avifil32.rc:42
 msgid "&Choose a stream:"
-msgstr ""
+msgstr "&Trobeu un rierol"
 
 #: avifil32.rc:45 wordpad.rc:73
 msgid "&Options..."
@@ -105,16 +104,15 @@ msgstr "&Opcions..."
 
 #: avifil32.rc:46
 msgid "&Interleave every"
-msgstr ""
+msgstr "&Intercala cada"
 
 #: avifil32.rc:48
 msgid "frames"
-msgstr ""
+msgstr "marcs"
 
 #: avifil32.rc:49
-#, fuzzy
 msgid "Current format:"
-msgstr "Informació de Client"
+msgstr "Format actual:"
 
 #: avifil32.rc:51 credui.rc:49 ieframe.rc:84 localui.rc:41 localui.rc:54
 #: mpr.rc:46 msacm32.rc:50 shlwapi.rc:41 winspool.rc:39 net.rc:44
@@ -138,7 +136,7 @@ msgstr "D'acord"
 #: winefile.rc:158 winefile.rc:188 winemine.rc:93 wordpad.rc:205
 #: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
-msgstr "Cancella"
+msgstr "Cancel·la"
 
 #: avifil32.rc:27
 msgid "Waveform: %s"
@@ -162,7 +160,7 @@ msgstr "àudio"
 
 #: avifil32.rc:33
 msgid "Wine AVI-default-filehandler"
-msgstr "Manejador de fitxer AVI predeterminat de Wine"
+msgstr "Manejador de fitxer AVI predeterminat del Wine"
 
 #: avifil32.rc:34
 msgid "uncompressed"
@@ -199,7 +197,7 @@ msgstr "Qu&ant a la prova FolderPicker"
 
 #: comdlg32.rc:30
 msgid "Document Folders"
-msgstr "Carpetas de Documents"
+msgstr "Carpetes de Documents"
 
 #: comdlg32.rc:31 shell32.rc:200
 msgid "My Documents"
@@ -228,7 +226,7 @@ msgstr "El meu ordinador"
 
 #: comdlg32.rc:41
 msgid "System Folders"
-msgstr "Carpetas de Sistema"
+msgstr "Carpetes de Sistema"
 
 #: comdlg32.rc:42
 msgid "Local Hard Drives"
@@ -383,13 +381,12 @@ msgid "Unreadable Entry"
 msgstr "Entrada Il·legible"
 
 #: comdlg32.rc:68
-#, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "Aquest valor no cau entre l'abast de la pàgina.\n"
-"Si us plau, introdueix un valor entre %d i %d."
+"Si us plau, introdueix un valor entre %1!d! i %2!d!."
 
 #: comdlg32.rc:70
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -449,9 +446,8 @@ msgstr ""
 "Si us plau, instal·leu una i torneu a intentar."
 
 #: comdlg32.rc:151
-#, fuzzy
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr "Seleccioneu una mida de lletra entre %d i %d punts."
+msgstr "Seleccioneu una mida de lletra entre %1!d! i %2!d! punts."
 
 #: comdlg32.rc:152 ieframe.rc:32
 msgid "&Save"
@@ -603,18 +599,16 @@ msgid "Print"
 msgstr "Imprimeix"
 
 #: credui.rc:42
-#, fuzzy
 msgid "&User name:"
-msgstr "Nom de Usuari"
+msgstr "Nom de &usuari"
 
 #: credui.rc:45
-#, fuzzy
 msgid "&Password:"
-msgstr "Introduïu Contrasenya"
+msgstr "&Contrasenya:"
 
 #: credui.rc:47
 msgid "&Remember my password"
-msgstr ""
+msgstr "&Recorda la meva contrasenya"
 
 #: credui.rc:27
 msgid "Connect to %s"
@@ -1648,9 +1642,8 @@ msgid "Public key"
 msgstr "Clau Pública"
 
 #: cryptui.rc:58
-#, fuzzy
 msgid "%1 (%2!d! bits)"
-msgstr "%s (%d bits)"
+msgstr "%1 (%2!d! bits)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
@@ -1989,7 +1982,7 @@ msgstr "Format d'Exportació"
 
 #: cryptui.rc:149
 msgid "Choose the format in which the content will be saved."
-msgstr "Escolliu el format en que es guardarà el contingut."
+msgstr "Escolliu el format en que es desarà el contingut."
 
 #: cryptui.rc:150
 msgid "Export Filename"
@@ -1997,7 +1990,7 @@ msgstr "Nom de Fitxer d'Exportació"
 
 #: cryptui.rc:151
 msgid "Specify the name of the file in which the content will be saved."
-msgstr "Especificeu el nom del fitxer en el qual es guardarà el contingut."
+msgstr "Especificeu el nom del fitxer en el qual es desarà el contingut."
 
 #: cryptui.rc:152
 msgid "The specified file already exists.  Do you want to replace it?"
@@ -2104,55 +2097,52 @@ msgid "Regional Setting"
 msgstr "Ajustament Regional"
 
 #: dxdiagn.rc:26
-#, fuzzy
 msgid "%1!u!MB used, %2!u!MB available"
-msgstr "%uMB usat, %uMB disponible"
+msgstr "%1!u!MB usats, %2!u!MB disponibles"
 
 #: gdi32.rc:25
 msgid "Western"
-msgstr ""
+msgstr "Occidental"
 
 #: gdi32.rc:26
 msgid "Central European"
-msgstr ""
+msgstr "Europeu Central"
 
 #: gdi32.rc:27
 msgid "Cyrillic"
-msgstr ""
+msgstr "Ciríl·lic"
 
 #: gdi32.rc:28
-#, fuzzy
 msgid "Greek"
-msgstr "Verd"
+msgstr "Grec"
 
 #: gdi32.rc:29
 msgid "Turkish"
-msgstr ""
+msgstr "Turc"
 
 #: gdi32.rc:30
 msgid "Hebrew"
-msgstr ""
+msgstr "Hebreu"
 
 #: gdi32.rc:31
 msgid "Arabic"
-msgstr ""
+msgstr "Àrab"
 
 #: gdi32.rc:32
 msgid "Baltic"
-msgstr ""
+msgstr "Bàltic"
 
 #: gdi32.rc:33
 msgid "Vietnamese"
-msgstr ""
+msgstr "Vietnamita"
 
 #: gdi32.rc:34
 msgid "Thai"
-msgstr ""
+msgstr "Tailandès"
 
 #: gdi32.rc:35
-#, fuzzy
 msgid "Japanese"
-msgstr "panell"
+msgstr "Japonès"
 
 #: gdi32.rc:36
 msgid "CHINESE_GB2312"
@@ -2172,55 +2162,51 @@ msgstr ""
 
 #: gdi32.rc:40
 msgid "Symbol"
-msgstr ""
+msgstr "Símbol"
 
 #: gdi32.rc:41
 msgid "OEM/DOS"
 msgstr ""
 
 #: gphoto2.rc:27
-#, fuzzy
 msgid "Files on Camera"
-msgstr "Nom Complet"
+msgstr "Arxius en Càmera"
 
 #: gphoto2.rc:31
-#, fuzzy
 msgid "Import Selected"
-msgstr "S'esperava un nombre"
+msgstr "Importa Seleccionats"
 
 #: gphoto2.rc:32
-#, fuzzy
 msgid "Preview"
-msgstr "Pre&visualització de la impresió"
+msgstr "Previsualitza"
 
 #: gphoto2.rc:33
 msgid "Import All"
-msgstr ""
+msgstr "Importa Tots"
 
 #: gphoto2.rc:34
 msgid "Skip This Dialog"
-msgstr ""
+msgstr "Salta Aquest Diàleg"
 
 #: gphoto2.rc:35
 msgid "Exit"
-msgstr ""
+msgstr "Surt"
 
 #: gphoto2.rc:40
 msgid "Transferring"
-msgstr ""
+msgstr "Transmetent"
 
 #: gphoto2.rc:43
 msgid "Transferring... Please Wait"
-msgstr ""
+msgstr "Transmetent... Espereu, Si's Plau"
 
 #: gphoto2.rc:48
-#, fuzzy
 msgid "Connecting to camera"
-msgstr "Connectant a $s"
+msgstr "Connectant al càmera"
 
 #: gphoto2.rc:52
 msgid "Connecting to camera... Please Wait"
-msgstr ""
+msgstr "Connectant al càmera... Espereu, Si's Plau"
 
 #: hhctrl.rc:56
 msgid "S&ync"
@@ -2397,18 +2383,16 @@ msgid "&About Internet Explorer"
 msgstr "&Quant a Internet Explorer..."
 
 #: ieframe.rc:78
-#, fuzzy
 msgid "Open URL"
-msgstr "&Obre Enllaç"
+msgstr "Obre Adreça"
 
 #: ieframe.rc:81
 msgid "Specify the URL you wish to open in Internet Explorer"
 msgstr ""
 
 #: ieframe.rc:82
-#, fuzzy
 msgid "Open:"
-msgstr "Obre"
+msgstr "Obre:"
 
 #: ieframe.rc:67
 msgctxt "home page"
@@ -2424,60 +2408,56 @@ msgid "Address"
 msgstr "Adreça"
 
 #: inetcpl.rc:43
-#, fuzzy
 msgid "General"
-msgstr "Fallada general\n"
+msgstr "General"
 
 #: inetcpl.rc:46
-#, fuzzy
 msgid " Home page "
-msgstr "Una pàgina"
+msgstr " Pàgina d'inici "
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
-msgstr ""
+msgstr "Podeu triar la direcció que s'utilitzarà com la vostra pàgina d'inici."
 
 #: inetcpl.rc:50
-#, fuzzy
 msgid "&Current page"
-msgstr "Pàgina següent"
+msgstr "Pàgina &actual"
 
 #: inetcpl.rc:51
-#, fuzzy
 msgid "&Default page"
-msgstr "Passarel·la predeterminada"
+msgstr "Pàgina &predeterminada"
 
 #: inetcpl.rc:52
-#, fuzzy
 msgid "&Blank page"
-msgstr "Una pàgina"
+msgstr "Pàgina en blanc"
 
 #: inetcpl.rc:53
 msgid " Browsing history "
-msgstr ""
+msgstr " Historial de navegació "
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
-msgstr ""
+msgstr "Podeu eliminar les pàgines en memòria cau, galetes i altres dades."
 
 #: inetcpl.rc:56
 msgid "Delete &files..."
-msgstr ""
+msgstr "Suprimeix &fitxers..."
 
 #: inetcpl.rc:57
-#, fuzzy
 msgid "&Settings..."
 msgstr "&Opcions..."
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
-msgstr ""
+msgstr "Elimina historial de navegació"
 
 #: inetcpl.rc:68
 msgid ""
 "Temporary internet files\n"
 "Cached copies of webpages, images and certificates."
 msgstr ""
+"Fitxers temporals d'Internet\n"
+"Les còpies en memòria cau de pàgines web, imatges i certificats."
 
 #: inetcpl.rc:70
 msgid ""
@@ -2485,24 +2465,33 @@ msgid ""
 "Files saved on your computer by websites, which store things like user "
 "preferences and login information."
 msgstr ""
+"Galetes\n"
+"Els arxius desats en el vostre ordinador pels llocs web, que emmagatzemen "
+"coses com preferències d'usuari i informació d'inici de sessió."
 
 #: inetcpl.rc:72
 msgid ""
 "History\n"
 "List of websites you have accessed."
 msgstr ""
+"Historial\n"
+"Llista de llocs web a que heu accedit."
 
 #: inetcpl.rc:74
 msgid ""
 "Form data\n"
 "Usernames and other information you have entered into forms."
 msgstr ""
+"Dades de formulari\n"
+"Noms d'usuari i altra informació que hàgeu introduïts en formularis."
 
 #: inetcpl.rc:76
 msgid ""
 "Passwords\n"
 "Saved passwords you have entered into forms."
 msgstr ""
+"Contrasenyes\n"
+"Contrasenyes desades que hàgeu introduïdes en formularis."
 
 #: inetcpl.rc:79 progman.rc:64
 msgid "Delete"
@@ -2513,25 +2502,24 @@ msgid "Security"
 msgstr "Seguritat"
 
 #: inetcpl.rc:108
-#, fuzzy
 msgid " Certificates "
-msgstr "Certificats"
+msgstr " Certificats "
 
 #: inetcpl.rc:109
 msgid ""
 "Certificates are used for your personal identification and to identify "
 "certificate authorities and publishers."
 msgstr ""
+"Els certificats s'utilitzen per a la vostra identificació personal i per "
+"identificar les autoritats i els editors de certificació."
 
 #: inetcpl.rc:111
-#, fuzzy
 msgid "Certificates..."
-msgstr "Certificats"
+msgstr "Certificats..."
 
 #: inetcpl.rc:112
-#, fuzzy
 msgid "Publishers..."
-msgstr "Editor"
+msgstr "Editors..."
 
 #: inetcpl.rc:28
 msgid "Internet Settings"
@@ -2539,7 +2527,7 @@ msgstr "Ajustaments d'Internet"
 
 #: inetcpl.rc:29
 msgid "Configure Wine Internet Browser and related settings"
-msgstr "Configura Wine Internet Browser i ajustaments relacionats"
+msgstr "Configura el Wine Internet Browser i ajustaments relacionats"
 
 #: inetcpl.rc:30
 msgid "Security settings for zone: "
@@ -4695,7 +4683,7 @@ msgstr "LB_SETCOUNT invàlid enviat\n"
 
 #: winerror.mc:2566
 msgid "No tab stops on this list box\n"
-msgstr "Cap tabulador atura en aquesta caixa de llista\n"
+msgstr "Cap tabulador s'atura en aquesta caixa de llista\n"
 
 #: winerror.mc:2571
 msgid "Can't destroy object owned by another thread\n"
@@ -5640,25 +5628,24 @@ msgid "Local Monitor"
 msgstr "Monitor Local"
 
 #: localui.rc:36
-#, fuzzy
 msgid "Add a Local Port"
-msgstr "Port Local"
+msgstr "Afegeix un Port Local"
 
 #: localui.rc:39
 msgid "&Enter the port name to add:"
-msgstr ""
+msgstr "&Introduïu el nom del port per afegir:"
 
 #: localui.rc:48
 msgid "Configure LPT Port"
-msgstr ""
+msgstr "Configura Port LPT"
 
 #: localui.rc:51
 msgid "Timeout (seconds)"
-msgstr ""
+msgstr "Temps d'espera (segons)"
 
 #: localui.rc:52
 msgid "&Transmission Retry:"
-msgstr ""
+msgstr "Reintent de &Transmissió:"
 
 #: localui.rc:29
 msgid "'%s' is not a valid port name"
@@ -5683,61 +5670,52 @@ msgid "Send Mail"
 msgstr "Envia Correu"
 
 #: mpr.rc:32
-#, fuzzy
 msgid "Enter Network Password"
-msgstr "Introduïu Contrasenya"
+msgstr "Introduïu Contrasenya de Xarxa"
 
 #: mpr.rc:35
-#, fuzzy
 msgid "Please enter your username and password:"
-msgstr "Si us plau, torneu a intentar l'operació\n"
+msgstr "Si us plau, introduïu els vostres nom d'usuari y contrasenya:"
 
 #: mpr.rc:36
 msgid "Proxy"
 msgstr ""
 
 #: mpr.rc:38
-#, fuzzy
 msgid "User"
-msgstr "Usuaris"
+msgstr "Usuari"
 
 #: mpr.rc:39
-#, fuzzy
 msgid "Password"
-msgstr "Introduïu Contrasenya"
+msgstr "Contrasenya"
 
 #: mpr.rc:44
 msgid "&Save this password (Insecure)"
-msgstr ""
+msgstr "&Desa aquesta contrasenya (No segur)"
 
 #: mpr.rc:27
 msgid "Entire Network"
 msgstr "Tota la Xarxa"
 
 #: msacm32.rc:27
-#, fuzzy
 msgid "Sound Selection"
-msgstr "Confirma eliminació"
+msgstr "Selecció de So"
 
 #: msacm32.rc:31 winefile.rc:144
-#, fuzzy
 msgid "&Name:"
-msgstr "&Nom"
+msgstr "&Nom:"
 
 #: msacm32.rc:36
-#, fuzzy
 msgid "&Save As..."
-msgstr "Anomena i &desa..."
+msgstr "Anomena i &Desa..."
 
 #: msacm32.rc:39
-#, fuzzy
 msgid "&Format:"
-msgstr "F&ormat"
+msgstr "&Format:"
 
 #: msacm32.rc:44
-#, fuzzy
 msgid "&Attributes:"
-msgstr "Atributs"
+msgstr "&Atributs:"
 
 #: mshtml.rc:31
 msgid "HTML rendering is currently disabled."
@@ -5855,14 +5833,14 @@ msgstr "trieu qual carpeta conté %s"
 
 #: msrle32.rc:28
 msgid "Wine MS-RLE video codec"
-msgstr "Còdec de vídeo MS-RLE de Wine"
+msgstr "Còdec de vídeo MS-RLE del Wine"
 
 #: msrle32.rc:29
 msgid ""
 "Wine MS-RLE video codec\n"
 "Copyright 2002 by Michael Guennewig"
 msgstr ""
-"Còdec de vídeo MS-RLE de Wine\n"
+"Còdec de vídeo MS-RLE del Wine\n"
 "© 2002 per Michael Guennewig"
 
 #: msvfw32.rc:25
@@ -5871,7 +5849,7 @@ msgstr "Fotogramas Ple (Sense Compressió)"
 
 #: msvidc32.rc:26
 msgid "Wine Video 1 video codec"
-msgstr "Còdec de vídeo Video 1 de Wine"
+msgstr "Còdec de vídeo Video 1 del Wine"
 
 #: oleacc.rc:27
 msgid "unknown object"
@@ -6244,13 +6222,12 @@ msgid "the program which created it"
 msgstr "el programa que el ha creat"
 
 #: sane.rc:41
-#, fuzzy
 msgid "Scanning"
-msgstr "Executant"
+msgstr "Explorant"
 
 #: sane.rc:44
 msgid "SCANNING... Please Wait"
-msgstr ""
+msgstr "EXPLORANT... Espereu, Si's Plau"
 
 #: sane.rc:31
 msgctxt "unit: pixels"
@@ -6278,9 +6255,8 @@ msgid "us"
 msgstr "µs"
 
 #: setupapi.rc:28
-#, fuzzy
 msgid "The file '%1' on %2 is needed"
-msgstr "Cal el fitxer '%s' en %s"
+msgstr "Cal el fitxer '%1' en %2"
 
 #: setupapi.rc:29 ipconfig.rc:31
 msgid "Unknown"
@@ -6656,7 +6632,7 @@ msgstr "Nova &Carpeta"
 
 #: shell32.rc:67
 msgid "New &Link"
-msgstr "Nova en&llaç"
+msgstr "Nova En&llaç"
 
 #: shell32.rc:71
 msgid "Properties"
@@ -6762,11 +6738,11 @@ msgstr "Atura"
 
 #: shell32.rc:189
 msgid "Do you want to shutdown your Wine session?"
-msgstr "Voleu aturar la vostre sessió de Wine?"
+msgstr "Voleu aturar la vostre sessió del Wine?"
 
 #: shell32.rc:199
 msgid "Start Menu\\Programs"
-msgstr "Menú d'Inici\\Programas"
+msgstr "Menú d'Inici\\Programes"
 
 #: shell32.rc:201
 msgid "Favorites"
@@ -6774,7 +6750,7 @@ msgstr "Preferits"
 
 #: shell32.rc:202
 msgid "Start Menu\\Programs\\StartUp"
-msgstr "Menú d'Inici\\Programas\\Inici"
+msgstr "Menú d'Inici\\Programes\\Inici"
 
 #: shell32.rc:203
 msgid "Recent"
@@ -6851,7 +6827,7 @@ msgstr "Documents"
 
 #: shell32.rc:223
 msgid "Start Menu\\Programs\\Administrative Tools"
-msgstr "Menú d'Inici\\Programas\\Eines Administratives"
+msgstr "Menú d'Inici\\Programes\\Eines Administratives"
 
 #: shell32.rc:224
 msgid "Music"
@@ -7029,9 +7005,8 @@ msgstr ""
 "Aquesta carpeta ja conté una carpeta anomenada '%1'.\n"
 "\n"
 "Si els fitxers en la carpeta de destinació tenen els mateixos noms que els\n"
-"fitxers en la carpeta seleccionada seran reemplaçats. they will be "
-"replaced.\n"
-"Encara voleu moure o copiar la carpeta?"
+"fitxers en la carpeta seleccionada seran reemplaçats. Encara voleu moure o\n"
+"copiar la carpeta?"
 
 #: shell32.rc:248
 msgid "New Folder"
@@ -7110,23 +7085,23 @@ msgid ""
 "along with Wine; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 msgstr ""
-"Wine és programari lliure, podeu redistribuir i/o modificar-lo sota els "
+"El Wine és programari lliure, podeu redistribuir i/o modificar-lo sota els "
 "termes de la Llicència Pública General Menor GNU com publicada per la Free "
 "Software Foundation; o la versió 2.1 de la Llicència, o (a la seva elecció) "
 "qualsevol versió posterior.\n"
 "\n"
-"Wine es distribueix en l'esperança que sigui útil, però SENSE CAP GARANTIA, "
-"fins i tot sense la garantia implícita de COMERCIABILITAT o APTITUD PER A "
-"PROPÒSITS DETERMINATS. Consulteu la Llicència Pública General Menor GNU per "
-"més detalls.\n"
+"El Wine es distribueix en l'esperança que sigui útil, però SENSE CAP "
+"GARANTIA, fins i tot sense la garantia implícita de COMERCIABILITAT o "
+"APTITUD PER A PROPÒSITS DETERMINATS. Consulteu la Llicència Pública General "
+"Menor GNU per més detalls.\n"
 "\n"
 "Hauríeu d'haver rebut una còpia de la Llicència Pública General Menor GNU "
-"juntament amb Wine, si no, escriviu a la Free Software Foundation, Inc., 51 "
-"Franklin St, Fifth Floor, Boston, MA 02110-1301, EUA."
+"juntament amb el Wine, si no, escriviu a la Free Software Foundation, Inc., "
+"51 Franklin St, Fifth Floor, Boston, MA 02110-1301, EUA."
 
 #: shell32.rc:266
 msgid "Wine License"
-msgstr "Llicència de Wine"
+msgstr "Llicència del Wine"
 
 #: shell32.rc:155
 msgid "Trash"
@@ -7138,16 +7113,15 @@ msgstr "Error"
 
 #: shlwapi.rc:40
 msgid "Don't show me th&is message again"
-msgstr ""
+msgstr "No torn&is a mostrar-me aquest missatge"
 
 #: shlwapi.rc:43
 msgid "&Yes"
-msgstr ""
+msgstr "&Sí"
 
 #: shlwapi.rc:44
-#, fuzzy
 msgid "&No"
-msgstr "No"
+msgstr "&No"
 
 #: shlwapi.rc:27
 msgid "%d bytes"
@@ -7195,7 +7169,7 @@ msgstr "&Tanca\tAlt-F4"
 
 #: user32.rc:35
 msgid "&About Wine"
-msgstr "&Quant a Wine..."
+msgstr "&Quant al Wine..."
 
 #: user32.rc:46
 msgid "&Close\tCtrl-F4"
@@ -7210,30 +7184,28 @@ msgid "&More Windows..."
 msgstr "&Més finestres..."
 
 #: wineps.rc:25
-#, fuzzy
 msgid "Paper"
-msgstr "Embús de paper; "
+msgstr "Paper"
 
 #: wineps.rc:28
 msgid "Paper Si&ze:"
-msgstr ""
+msgstr "&Mida de Paper:"
 
 #: wineps.rc:31
-#, fuzzy
 msgid "Orientation"
-msgstr "Implementació"
+msgstr "Orientació"
 
 #: wineps.rc:32
 msgid "&Portrait"
-msgstr ""
+msgstr "&Vertical"
 
 #: wineps.rc:34
 msgid "&Landscape"
-msgstr ""
+msgstr "&Horizontal"
 
 #: wineps.rc:36
 msgid "Duplex:"
-msgstr ""
+msgstr "Dúplex"
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -7887,14 +7859,12 @@ msgstr ""
 "suficient de disc o que encara estigui connectat a la xarxa."
 
 #: winspool.rc:34
-#, fuzzy
 msgid "Print to File"
-msgstr "&Lligar a fitxer..."
+msgstr "Imprimeix a Fitxer"
 
 #: winspool.rc:37
-#, fuzzy
 msgid "&Output File Name:"
-msgstr "Nom Complet"
+msgstr "Nom de Fitxer de &Sortida:"
 
 #: winspool.rc:28
 msgid "The output file already exists.  Click OK to overwrite."
@@ -8154,9 +8124,8 @@ msgstr ""
 "\n"
 
 #: attrib.rc:28
-#, fuzzy
 msgid "%1: File Not Found\n"
-msgstr "%s: Fitxer No Trobat\n"
+msgstr "%1: Fitxer No Trobat\n"
 
 #: attrib.rc:47
 msgid ""
@@ -8563,7 +8532,7 @@ msgstr ""
 "abans del signe igual, ni pot el nom de la variable tenir espais\n"
 "incorporats.\n"
 "\n"
-"Sota Wine, l'entorn del sistema operatiu subjacent es inclou en l'entorn\n"
+"Sota el Wine, l'entorn del sistema operatiu subjacent es inclou en l'entorn\n"
 "Win32, hi haurà en general, per tant, molts més valors que en una\n"
 "implementació nativa de Win32. Tingueu en compte que no és possible\n"
 "afectar l'entorn del sistema operatiu des de dins cmd.\n"
@@ -8613,7 +8582,7 @@ msgstr ""
 "VERIFY OFF\tEsborra la bandera\n"
 "VERIFY\t\tMostra ON o OFF segons correspon.\n"
 "\n"
-"La bandera de verificació no té cap funció en Wine.\n"
+"La bandera de verificació no té cap funció en el Wine.\n"
 
 #: cmd.rc:203
 msgid "VER displays the version of cmd you are running.\n"
@@ -8943,7 +8912,7 @@ msgstr "Premeu cualsevol tecla per continuar... "
 
 #: cmd.rc:322
 msgid "Wine Command Prompt"
-msgstr "Línia d'Ordres de Wine"
+msgstr "Línia d'Ordres del Wine"
 
 #: cmd.rc:323
 msgid "CMD Version %s\n"
@@ -9001,9 +8970,8 @@ msgstr ""
 "especificats\n"
 
 #: ipconfig.rc:29
-#, fuzzy
 msgid "%1 adapter %2\n"
-msgstr "%s adaptador %s\n"
+msgstr "%1 adaptador %s\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
@@ -9102,14 +9070,12 @@ msgstr ""
 "On 'servei' és el nom del servei per aturar.\n"
 
 #: net.rc:30
-#, fuzzy
 msgid "Stopping dependent service: %1\n"
-msgstr "Aturant servei dependent: %s\n"
+msgstr "Aturant servei dependent: %1\n"
 
 #: net.rc:31
-#, fuzzy
 msgid "Could not stop service %1\n"
-msgstr "No s'ha pogut aturar el servei %s\n"
+msgstr "No s'ha pogut aturar el servei %1\n"
 
 #: net.rc:32
 msgid "Could not get handle to service control manager.\n"
@@ -9120,34 +9086,28 @@ msgid "Could not get handle to service.\n"
 msgstr "No s'ha pogut obtenir el mànec al servei.\n"
 
 #: net.rc:34
-#, fuzzy
 msgid "The %1 service is starting.\n"
-msgstr "El servei %s s'està iniciant.\n"
+msgstr "El servei %1 s'està iniciant.\n"
 
 #: net.rc:35
-#, fuzzy
 msgid "The %1 service was started successfully.\n"
-msgstr "El servei %s s'ha iniciat amb èxit.\n"
+msgstr "El servei %1 s'ha iniciat amb èxit.\n"
 
 #: net.rc:36
-#, fuzzy
 msgid "The %1 service failed to start.\n"
-msgstr "El servei %s ha fallat en iniciar.\n"
+msgstr "El servei %1 ha fallat en iniciar.\n"
 
 #: net.rc:37
-#, fuzzy
 msgid "The %1 service is stopping.\n"
-msgstr "El servei %s està aturant.\n"
+msgstr "El servei %1 està aturant.\n"
 
 #: net.rc:38
-#, fuzzy
 msgid "The %1 service was stopped successfully.\n"
-msgstr "S'ha aturat el servei %s amb èxit.\n"
+msgstr "S'ha aturat el servei %1 amb èxit.\n"
 
 #: net.rc:39
-#, fuzzy
 msgid "The %1 service failed to stop.\n"
-msgstr "El servei %s ha fallat en aturar.\n"
+msgstr "El servei %1 ha fallat en aturar.\n"
 
 #: net.rc:41
 msgid "There are no entries in the list.\n"
@@ -9164,9 +9124,8 @@ msgstr ""
 "---------------------------------------------------------------\n"
 
 #: net.rc:43
-#, fuzzy
 msgid "%1      %2      %3      Open resources: %4!u!\n"
-msgstr "%s      %s      %s      Recursos oberts: %lu\n"
+msgstr "%1      %2      %3      Recursos oberts: %4!u!\n"
 
 #: net.rc:45
 msgid "Paused"
@@ -9274,45 +9233,40 @@ msgid "&About Notepad"
 msgstr "Qu&ant a Notepad"
 
 #: notepad.rc:105
-#, fuzzy
 msgid "Page Setup"
-msgstr "&Configuració de pàgina..."
+msgstr "Configuració de Pàgina..."
 
 #: notepad.rc:107
 msgid "&Header:"
-msgstr ""
+msgstr "&Capçalera:"
 
 #: notepad.rc:109
 msgid "&Footer:"
-msgstr ""
+msgstr "&Peu:"
 
 #: notepad.rc:112
 msgid "&Margins (millimeters):"
-msgstr ""
+msgstr "&Marges (mil·límetres):"
 
 #: notepad.rc:113
-#, fuzzy
 msgid "&Left:"
-msgstr "A &L'esquerra"
+msgstr "&Esquerra:"
 
 #: notepad.rc:115
 msgid "&Top:"
-msgstr ""
+msgstr "&Superior:"
 
 #: notepad.rc:117
-#, fuzzy
 msgid "&Right:"
-msgstr "Al D&reta"
+msgstr "&Dreta:"
 
 #: notepad.rc:119
-#, fuzzy
 msgid "&Bottom:"
-msgstr "Abaix"
+msgstr "&Inferior:"
 
 #: notepad.rc:131
-#, fuzzy
 msgid "Encoding:"
-msgstr "C&odificació"
+msgstr "Codificació:"
 
 #: notepad.rc:66
 msgid "Page &p"
@@ -9347,7 +9301,7 @@ msgid ""
 "File '%s' is too large for notepad.\n"
 "Please use a different editor."
 msgstr ""
-"El fitxer '%s' és massa gran per el bloc de notes.\n"
+"El fitxer '%s' és massa gran pel bloc de notes.\n"
 "Si us plau, useu un editor diferent."
 
 #: notepad.rc:81
@@ -9403,7 +9357,6 @@ msgid "Unicode (UTF-8)"
 msgstr ""
 
 #: notepad.rc:99
-#, fuzzy
 msgid ""
 "%1\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -9412,9 +9365,9 @@ msgid ""
 "one of the Unicode options in the Encoding drop down list.\n"
 "Continue?"
 msgstr ""
-"%s\n"
+"%1\n"
 "Aquest fitxer conté caràcters Unicode que es perdran si\n"
-"deseu aquest fitxer en la codificació %s.\n"
+"deseu aquest fitxer en la codificació %2.\n"
 "Per mantenir aquests caràcters, feu clic a Cancel·la i\n"
 "llovers seleccioneu una de les opcions Unicode en la\n"
 "llista desplegable Encoding.\n"
@@ -9518,82 +9471,75 @@ msgstr "A&grupa per categoria de tipus"
 
 #: oleview.rc:154
 msgid "Connect to another machine"
-msgstr ""
+msgstr "Connecta's a una altra màquina"
 
 #: oleview.rc:157
 msgid "&Machine name:"
-msgstr ""
+msgstr "Nom de &màquina:"
 
 #: oleview.rc:165
-#, fuzzy
 msgid "System Configuration"
-msgstr "Configuració de &Sistema"
+msgstr "Configuració de Sistema"
 
 #: oleview.rc:168
-#, fuzzy
 msgid "System Settings"
-msgstr "Ajustaments d'Internet"
+msgstr "Ajustaments de Sistema"
 
 #: oleview.rc:169
 msgid "&Enable Distributed COM"
-msgstr ""
+msgstr "&Habilitar COM distribuït"
 
 #: oleview.rc:170
 msgid "Enable &Remote Connections (Win95 only)"
-msgstr ""
+msgstr "Habilitar les Connexions &Remotes (només Win95)"
 
 #: oleview.rc:171
 msgid ""
 "These settings change only registry values.\n"
 "They have no effect on Wine performance."
 msgstr ""
+"Aquests valors només canvien valors de registre.\n"
+"No tenen efecte en el rendiment del Wine."
 
 #: oleview.rc:178
-#, fuzzy
 msgid "Default Interface Viewer"
-msgstr "Impressora Predeterminada; "
+msgstr "Visor de Interfície Predeterminat"
 
 #: oleview.rc:181
-#, fuzzy
 msgid "Interface"
-msgstr "Interfícies"
+msgstr "Interfície"
 
 #: oleview.rc:183
 msgid "IID:"
 msgstr ""
 
 #: oleview.rc:186
-#, fuzzy
 msgid "&View Type Info"
-msgstr "Veu informació de &Tipus"
+msgstr "&Veu informació de Tipus"
 
 #: oleview.rc:191
-#, fuzzy
 msgid "IPersist Interface Viewer"
-msgstr "Interfícies Heretades"
+msgstr "Visor de Interfície IPersist"
 
 #: oleview.rc:194 oleview.rc:206
-#, fuzzy
 msgid "Class Name:"
-msgstr "Nom Complet"
+msgstr "Nom de Classe:"
 
 #: oleview.rc:196 oleview.rc:208
 msgid "CLSID:"
 msgstr ""
 
 #: oleview.rc:203
-#, fuzzy
 msgid "IPersistStream Interface Viewer"
-msgstr "Interfícies Heretades"
+msgstr "Visor de Interfície IPersistStream"
 
 #: oleview.rc:211
 msgid "&IsDirty"
 msgstr ""
 
 #: oleview.rc:213
-#, fuzzy
 msgid "&GetSizeMax"
-msgstr "&Mida"
+msgstr ""
 
 #: oleview.rc:93 oleview.rc:94
 msgid "OleView"
@@ -9629,7 +9575,7 @@ msgstr "Canvia els ajustaments de Distributed COM de tot el equip"
 
 #: oleview.rc:106
 msgid "Run the Wine registry editor"
-msgstr "Executar l'editor de registre de Wine"
+msgstr "Executar l'editor de registre del Wine"
 
 #: oleview.rc:107
 msgid "Quit the application. Prompts to save changes"
@@ -9759,9 +9705,8 @@ msgid "bytes"
 msgstr ""
 
 #: oleview.rc:148
-#, fuzzy
 msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
-msgstr "LoadTypeLib( %s ) ha fallat ($%x)"
+msgstr "LoadTypeLib( %1 ) ha fallat ($%2!x!)"
 
 #: oleview.rc:149
 msgid "Inherited Interfaces"
@@ -9841,80 +9786,69 @@ msgstr "Organitz&ar Icones"
 
 #: progman.rc:54
 msgid "&About Program Manager"
-msgstr "Qu&ant a Gestor de Programas"
+msgstr "Qu&ant al Gestor de Programes"
 
 #: progman.rc:100
-#, fuzzy
 msgid "Program &group"
-msgstr "Gestor de Programas"
+msgstr "&Grup de Programa"
 
 #: progman.rc:102
-#, fuzzy
 msgid "&Program"
-msgstr "Programas"
+msgstr "&Programa"
 
 #: progman.rc:113
-#, fuzzy
 msgid "Move Program"
-msgstr "Afegeix/Treu Programas"
+msgstr "Mou Programa"
 
 #: progman.rc:115
-#, fuzzy
 msgid "Move program:"
-msgstr "Executa un nou programa"
+msgstr "Mou programa:"
 
 #: progman.rc:117 progman.rc:135
 msgid "From group:"
-msgstr ""
+msgstr "Del grup:"
 
 #: progman.rc:119 progman.rc:137
 msgid "&To group:"
-msgstr ""
+msgstr "&Al grup:"
 
 #: progman.rc:131
-#, fuzzy
 msgid "Copy Program"
-msgstr "Programas"
+msgstr "Copia Programa"
 
 #: progman.rc:133
-#, fuzzy
 msgid "Copy program:"
-msgstr "Executa un nou programa"
+msgstr "Copia programa:"
 
 #: progman.rc:149
-#, fuzzy
 msgid "Program Group Attributes"
-msgstr "Atributs de grup invàlids\n"
+msgstr "Atributs de Grup de Programa"
 
 #: progman.rc:151 progman.rc:167
-#, fuzzy
 msgid "&Description:"
-msgstr "Descripció"
+msgstr "&Descripció:"
 
 #: progman.rc:153
 msgid "&Group file:"
-msgstr ""
+msgstr "Fitxer de &grup:"
 
 #: progman.rc:165
-#, fuzzy
 msgid "Program Attributes"
-msgstr "Atributs"
+msgstr "Atributs de Programa"
 
 #: progman.rc:169 progman.rc:209
-#, fuzzy
 msgid "&Command line:"
-msgstr "Línea d'ordres invàlida\n"
+msgstr "Línea d'ordres:"
 
 #: progman.rc:171
 msgid "&Working directory:"
-msgstr ""
+msgstr "Directori de &treball:"
 
 #: progman.rc:173
 msgid "&Key combination:"
-msgstr ""
+msgstr "&Combinació de tecles:"
 
 #: progman.rc:176 progman.rc:212
-#, fuzzy
 msgid "&Minimize at launch"
 msgstr "&Minimitza al executar"
 
@@ -9923,40 +9857,36 @@ msgid "&Browse..."
 msgstr "&Navega..."
 
 #: progman.rc:180
-#, fuzzy
 msgid "Change &icon..."
-msgstr "Organitzar &Icones"
+msgstr "Canvia d'&icona..."
 
 #: progman.rc:189
-#, fuzzy
 msgid "Change Icon"
-msgstr "Organitz&ar Icones"
+msgstr "Canvia d'Icona"
 
 #: progman.rc:191
-#, fuzzy
 msgid "&Filename:"
-msgstr "Nom Complet"
+msgstr "Nom de &fitxer:"
 
 #: progman.rc:193
 msgid "Current &icon:"
-msgstr ""
+msgstr "&Icona actual:"
 
 #: progman.rc:207
-#, fuzzy
 msgid "Execute Program"
-msgstr "Programas"
+msgstr "Executa Programa"
 
 #: progman.rc:60
 msgid "Program Manager"
-msgstr "Gestor de Programas"
+msgstr "Gestor de Programes"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
-msgstr "Suprimir grup `%s'?"
+msgstr "Suprimir el grup `%s'?"
 
 #: progman.rc:66
 msgid "Delete program `%s'?"
-msgstr "Suprimir programa `%s'?"
+msgstr "Suprimir el programa `%s'?"
 
 #: progman.rc:67 winhlp32.rc:82
 msgid "Not implemented"
@@ -9996,7 +9926,7 @@ msgstr "Desa el grup com `%s per evitar sobreescriure els fitxers originals."
 
 #: progman.rc:80
 msgid "Programs"
-msgstr "Programas"
+msgstr "Programes"
 
 #: progman.rc:81
 msgid "Libraries (*.dll)"
@@ -10142,87 +10072,76 @@ msgid "&Export..."
 msgstr "&Exporta..."
 
 #: regedit.rc:215
-#, fuzzy
 msgid "Export registry"
-msgstr "Exportar Fitxer de Registre"
+msgstr "Exporta registre"
 
 #: regedit.rc:216
 msgid "&All"
-msgstr ""
+msgstr "&Tot"
 
 #: regedit.rc:217
-#, fuzzy
 msgid "S&elected branch:"
-msgstr "Controlador seleccionat: %s"
+msgstr "Branca s&eleccionada:"
 
 #: regedit.rc:223 regedit.rc:233
 msgid "Find"
-msgstr ""
+msgstr "Cerca"
 
 #: regedit.rc:226
 msgid "Find:"
-msgstr ""
+msgstr "Cerca:"
 
 #: regedit.rc:228
 msgid "Find in:"
-msgstr ""
+msgstr "Cerca en:"
 
 #: regedit.rc:229
 msgid "Keys"
-msgstr ""
+msgstr "Claus"
 
 #: regedit.rc:230
-#, fuzzy
 msgid "Value names"
-msgstr "Jocs Desats"
+msgstr "Noms dels valors"
 
 #: regedit.rc:231
-#, fuzzy
 msgid "Value content"
-msgstr "(valor no establert)"
+msgstr "Contingut del valor"
 
 #: regedit.rc:232
 msgid "Whole string only"
-msgstr ""
+msgstr "Només cadena sencera"
 
 #: regedit.rc:239
-#, fuzzy
 msgid "Add Favorite"
-msgstr "Preferits"
+msgstr "Afegeix Preferit"
 
 #: regedit.rc:242 regedit.rc:253
-#, fuzzy
 msgid "Name:"
-msgstr "&Nom"
+msgstr "Nom:"
 
 #: regedit.rc:250
-#, fuzzy
 msgid "Remove Favorite"
-msgstr "T&reure Preferit..."
+msgstr "T&reure Preferit"
 
 #: regedit.rc:261
-#, fuzzy
 msgid "Edit String"
-msgstr "&Edita"
+msgstr "Edita Cadena"
 
 #: regedit.rc:264 regedit.rc:277 regedit.rc:293 regedit.rc:306
-#, fuzzy
 msgid "Value name:"
-msgstr "Nom Complet"
+msgstr "Nom del valor:"
 
 #: regedit.rc:266 regedit.rc:279 regedit.rc:295 regedit.rc:308
-#, fuzzy
 msgid "Value data:"
-msgstr "Valor"
+msgstr "Dades del valor:"
 
 #: regedit.rc:274
 msgid "Edit DWORD"
-msgstr ""
+msgstr "Edita DWORD"
 
 #: regedit.rc:281
-#, fuzzy
 msgid "Base"
-msgstr "Prioritat Base"
+msgstr ""
 
 #: regedit.rc:282
 msgid "Hexadecimal"
@@ -10233,14 +10152,12 @@ msgid "Decimal"
 msgstr ""
 
 #: regedit.rc:290
-#, fuzzy
 msgid "Edit Binary"
-msgstr "&Edita"
+msgstr "Edita Binari"
 
 #: regedit.rc:303
-#, fuzzy
 msgid "Edit Multi String"
-msgstr "Valor &Multicadena"
+msgstr "Edita Multicadena"
 
 #: regedit.rc:134
 msgid "Contains commands for working with the whole registry"
@@ -10552,52 +10469,45 @@ msgid "Error: One of options /im or /pid must be specified.\n"
 msgstr "Error: Un de les opcions /im i /pid s'ha d'especificar.\n"
 
 #: taskkill.rc:31
-#, fuzzy
 msgid "Error: Option %1 expects a command line parameter.\n"
-msgstr "Error: L'opció %s espera un paràmetre de línia d'ordres.\n"
+msgstr "Error: L'opció %1 espera un paràmetre de línia d'ordres.\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
 msgstr "Error: Les opcions /im i /pid són mútuament excloents.\n"
 
 #: taskkill.rc:33
-#, fuzzy
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
 msgstr ""
 "Missatge de tancar enviat a les finestres del nivell superior del procès amb "
-"PID %u.\n"
+"PID %1!u!.\n"
 
 #: taskkill.rc:34
-#, fuzzy
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 msgstr ""
-"Missatge de tancar enviat a les finestres del nivell superior del procès \"%s"
-"\" amb PID %u.\n"
+"Missatge de tancar enviat a les finestres del nivell superior del procès "
+"\"%1\" amb PID %2!u!.\n"
 
 #: taskkill.rc:35
-#, fuzzy
 msgid "Process with PID %1!u! was forcibly terminated.\n"
-msgstr "El procès amb PID %u s'ha terminat a la força.\n"
+msgstr "El procès amb PID %1!u! s'ha terminat a la força.\n"
 
 #: taskkill.rc:36
-#, fuzzy
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
-msgstr "El procès \"%s\" amb PID %u s'ha terminat a la força.\n"
+msgstr "El procès \"%1\" amb PID %u s'ha terminat a la força.\n"
 
 #: taskkill.rc:37
-#, fuzzy
 msgid "Error: Could not find process \"%1\".\n"
-msgstr "Error: No s'ha pogut trobar el procès \"%s\".\n"
+msgstr "Error: No s'ha pogut trobar el procès \"%1\".\n"
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
 msgstr "Error: No es pot enumerar la llista de processos.\n"
 
 #: taskkill.rc:39
-#, fuzzy
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr "Error: No es pot terminar el procès \"%s\".\n"
+msgstr "Error: No es pot terminar el procès \"%1\".\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
@@ -10748,28 +10658,24 @@ msgid "Tab1"
 msgstr ""
 
 #: taskmgr.rc:353 taskmgr.rc:364 taskmgr.rc:435
-#, fuzzy
 msgid "List2"
-msgstr "Llista"
+msgstr ""
 
 #: taskmgr.rc:355
-#, fuzzy
 msgid "&New Task..."
-msgstr "Tasca &Nova (Executa...)"
+msgstr "Tasca &Nova..."
 
 #: taskmgr.rc:368
 msgid "&Show processes from all users"
-msgstr ""
+msgstr "&Mostra els processos de tots els usuaris"
 
 #: taskmgr.rc:376
-#, fuzzy
 msgid "CPU Usage"
-msgstr "Ús de CPU: %3d%%"
+msgstr "Ús de CPU"
 
 #: taskmgr.rc:377
-#, fuzzy
 msgid "MEM Usage"
-msgstr "Ús de Mem"
+msgstr "Ús MEM"
 
 #: taskmgr.rc:378
 msgid "Totals"
@@ -10777,15 +10683,15 @@ msgstr ""
 
 #: taskmgr.rc:379
 msgid "Commit Charge (K)"
-msgstr ""
+msgstr "Càrrega de Transaccions (K)"
 
 #: taskmgr.rc:380
 msgid "Physical Memory (K)"
-msgstr ""
+msgstr "Memòria Física (K)"
 
 #: taskmgr.rc:381
 msgid "Kernel Memory (K)"
-msgstr ""
+msgstr "Memòria del Nucli (K)"
 
 #: taskmgr.rc:382 taskmgr.rc:290
 msgid "Handles"
@@ -10805,102 +10711,87 @@ msgstr ""
 
 #: taskmgr.rc:392
 msgid "Limit"
-msgstr ""
+msgstr "Límit"
 
 #: taskmgr.rc:393
 msgid "Peak"
-msgstr ""
+msgstr "Màxim"
 
 #: taskmgr.rc:402
-#, fuzzy
 msgid "System Cache"
-msgstr "Ruta del Sistema"
+msgstr "Memòria Cau de Sistema"
 
 #: taskmgr.rc:410
-#, fuzzy
 msgid "Paged"
-msgstr "Pàgina"
+msgstr "Pàginada"
 
 #: taskmgr.rc:411
-#, fuzzy
 msgid "Nonpaged"
-msgstr "Una pàgina"
+msgstr "No pàginada"
 
 #: taskmgr.rc:418
-#, fuzzy
 msgid "CPU Usage History"
-msgstr "Historis de &CPU"
+msgstr "Historial d'Ús de CPU"
 
 #: taskmgr.rc:419
-#, fuzzy
 msgid "Memory Usage History"
-msgstr "Monitor de Memòria"
+msgstr "Monitor d'Ús de Memòria"
 
 #: taskmgr.rc:432 taskmgr.rc:327
 msgid "Debug Channels"
 msgstr "Canals de Depuració"
 
 #: taskmgr.rc:443
-#, fuzzy
 msgid "Processor Affinity"
-msgstr "Realitzant; "
+msgstr "Afinitat de Processador"
 
 #: taskmgr.rc:448
-#, fuzzy
 msgid ""
 "The Processor Affinity setting controls which CPUs the process will be "
 "allowed to execute on."
-msgstr "Controla en quals processadors es permetrà que el procès executi"
+msgstr ""
+"L'ajustament Afinitat de Processador controla en quals processadors es "
+"permetrà que el procès executi."
 
 #: taskmgr.rc:450
-#, fuzzy
 msgid "CPU 0"
-msgstr "Temps de CPU"
+msgstr ""
 
 #: taskmgr.rc:452
-#, fuzzy
 msgid "CPU 1"
-msgstr "Temps de CPU"
+msgstr ""
 
 #: taskmgr.rc:454
-#, fuzzy
 msgid "CPU 2"
-msgstr "Temps de CPU"
+msgstr ""
 
 #: taskmgr.rc:456
-#, fuzzy
 msgid "CPU 3"
-msgstr "Temps de CPU"
+msgstr ""
 
 #: taskmgr.rc:458
-#, fuzzy
 msgid "CPU 4"
-msgstr "Temps de CPU"
+msgstr ""
 
 #: taskmgr.rc:460
-#, fuzzy
 msgid "CPU 5"
-msgstr "Temps de CPU"
+msgstr ""
 
 #: taskmgr.rc:462
-#, fuzzy
 msgid "CPU 6"
-msgstr "Temps de CPU"
+msgstr ""
 
 #: taskmgr.rc:464
-#, fuzzy
 msgid "CPU 7"
-msgstr "Temps de CPU"
+msgstr ""
 
 #: taskmgr.rc:466
-#, fuzzy
 msgid "CPU 8"
-msgstr "Temps de CPU"
+msgstr ""
 
 #: taskmgr.rc:468
-#, fuzzy
 msgid "CPU 9"
-msgstr "Temps de CPU"
+msgstr ""
 
 #: taskmgr.rc:470
 msgid "CPU 10"
@@ -10991,60 +10882,49 @@ msgid "CPU 31"
 msgstr ""
 
 #: taskmgr.rc:518
-#, fuzzy
 msgid "Select Columns"
-msgstr "&Selecciona Columnes..."
+msgstr "Selecciona Columnes..."
 
 #: taskmgr.rc:523
-#, fuzzy
 msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
-msgstr "Seleccionar quales columnes seran visibles a la pàgina de Procés"
+msgstr "Seleccioneu quales columnes apareixeran a la pàgina de Procés"
 
 #: taskmgr.rc:525
-#, fuzzy
 msgid "&Image Name"
-msgstr "Nom de Imatge"
+msgstr "Nom d'&Imatge"
 
 #: taskmgr.rc:527
-#, fuzzy
 msgid "&PID (Process Identifier)"
-msgstr "Identificador de Política: "
+msgstr "&PID (Identificador de Procés)"
 
 #: taskmgr.rc:529
-#, fuzzy
 msgid "&CPU Usage"
-msgstr "Ús de CPU: %3d%%"
+msgstr "Ús de CPU"
 
 #: taskmgr.rc:531
-#, fuzzy
 msgid "CPU Tim&e"
-msgstr "Temps de CPU"
+msgstr "T&emps de CPU"
 
 #: taskmgr.rc:533
-#, fuzzy
 msgid "&Memory Usage"
-msgstr "Ús de Mem"
+msgstr "Ús de &Memòria"
 
 #: taskmgr.rc:535
-#, fuzzy
 msgid "Memory Usage &Delta"
-msgstr "Ús de Mem"
+msgstr "Delta d'Ús de Memòria"
 
 #: taskmgr.rc:537
-#, fuzzy
 msgid "Pea&k Memory Usage"
-msgstr "Ús de Mem Més Gran"
+msgstr "Mà&xim Ús de Memòria"
 
 #: taskmgr.rc:539
-#, fuzzy
 msgid "Page &Faults"
-msgstr "Fallades de Pàgina"
+msgstr "&Fallades de Pàgina"
 
 #: taskmgr.rc:541
-#, fuzzy
 msgid "&USER Objects"
-msgstr "Objectes USER"
+msgstr "Objectes &USER"
 
 #: taskmgr.rc:543 taskmgr.rc:281
 msgid "I/O Reads"
@@ -11055,48 +10935,40 @@ msgid "I/O Read Bytes"
 msgstr "Bytes E/S Llegits"
 
 #: taskmgr.rc:547
-#, fuzzy
 msgid "&Session ID"
-msgstr "ID de Sessió"
+msgstr "ID de &Sessió"
 
 #: taskmgr.rc:549
-#, fuzzy
 msgid "User &Name"
-msgstr "Nom de Usuari"
+msgstr "&Nom de Usuari"
 
 #: taskmgr.rc:551
-#, fuzzy
 msgid "Page F&aults Delta"
-msgstr "Fallades de Pàgina"
+msgstr "F&allades de Pàgina"
 
 #: taskmgr.rc:553
 msgid "&Virtual Memory Size"
-msgstr ""
+msgstr "Mida de Memòria &Virtual"
 
 #: taskmgr.rc:555
-#, fuzzy
 msgid "Pa&ged Pool"
-msgstr "Bloc Paginat"
+msgstr "Bloc Pa&ginat"
 
 #: taskmgr.rc:557
-#, fuzzy
 msgid "N&on-paged Pool"
-msgstr "Bloc Paginat"
+msgstr "Bloc N&o Paginat"
 
 #: taskmgr.rc:559
-#, fuzzy
 msgid "Base P&riority"
-msgstr "Estableix &Prioritat"
+msgstr "P&rioritat Base"
 
 #: taskmgr.rc:561
-#, fuzzy
 msgid "&Handle Count"
-msgstr "Mànecs"
+msgstr "Nombre de &Mànecs"
 
 #: taskmgr.rc:563
-#, fuzzy
 msgid "&Thread Count"
-msgstr "Fils"
+msgstr "Nombre de &Fils"
 
 #: taskmgr.rc:565 taskmgr.rc:292
 msgid "GDI Objects"
@@ -11206,7 +11078,7 @@ msgstr "Mostra temas d'ajuda de l'Administrador de Tasques"
 
 #: taskmgr.rc:212
 msgid "Displays program information, version number, and copyright"
-msgstr "Mostra informació de programa, nombre de versió, i drets de autor"
+msgstr "Mostra informació de programa, nombre de versió i drets de autor"
 
 #: taskmgr.rc:213
 msgid "Exits the Task Manager application"
@@ -11305,9 +11177,8 @@ msgid "Processes: %d"
 msgstr "Processos: %d"
 
 #: taskmgr.rc:267
-#, fuzzy
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
-msgstr "Ús de Memòria: %dK / %dK"
+msgstr "Ús de Memòria: %1!u!kB / %2!u!kB"
 
 #: taskmgr.rc:272
 msgid "Image Name"
@@ -11469,7 +11340,7 @@ msgstr "Rastreig"
 
 #: uninstaller.rc:26
 msgid "Wine Application Uninstaller"
-msgstr "Desinstal·lador d'Aplicacions de Wine"
+msgstr "Desinstal·lador d'Aplicacions del Wine"
 
 #: uninstaller.rc:27
 msgid ""
@@ -11510,14 +11381,12 @@ msgid "Regular Metafile Viewer"
 msgstr "Visualitzador de Metafitxers Regular"
 
 #: wineboot.rc:28
-#, fuzzy
 msgid "Waiting for Program"
-msgstr "No Disposat a Realitzar"
+msgstr "Esperant Programa"
 
 #: wineboot.rc:32
-#, fuzzy
 msgid "Terminate Process"
-msgstr "No es pot Terminar el Procès"
+msgstr "Termina el Procès"
 
 #: wineboot.rc:33
 msgid ""
@@ -11526,15 +11395,19 @@ msgid ""
 "\n"
 "If you terminate the process you may lose all unsaved data."
 msgstr ""
+"Una simulació de sortida o apagació està en progrés, però aquest programa no "
+"respon.\n"
+"\n"
+"Si termineu el procés, podeu perdre totes les dades no desades."
 
 #: wineboot.rc:39
-#, fuzzy
 msgid "Wine"
-msgstr "Ajuda de Wine"
+msgstr ""
 
 #: wineboot.rc:43
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr ""
+"La configuració del Wine en %s s'està actualitzant, si us plau, espereu..."
 
 #: winecfg.rc:138
 msgid ""
@@ -11543,14 +11416,14 @@ msgid ""
 "Free Software Foundation; either version 2.1 of the License, or (at your "
 "option) any later version."
 msgstr ""
-"Aquest programari s programari lliure; podeu redistribuir i/o modificar-lo "
-"sota els termes de la Llicncia Pblica General Menor GNU com publicada per la "
-"Free Software Foundation; o la versi 2.1 de la Llicncia, o (a la seva "
-"elecci) qualsevol versi posterior."
+"Aquest programari és programari lliure; podeu redistribuir i/o modificar-lo "
+"sota els termes de la Llicncia Pública General Menor GNU com publicada per "
+"la Free Software Foundation; o la versió 2.1 de la Llicència, o (a la vostra "
+"elecció) qualsevol versió posterior."
 
 #: winecfg.rc:140
 msgid " Windows Registration Information "
-msgstr " Informaci de Registraci de Windows "
+msgstr " Informació de Registració del Windows "
 
 #: winecfg.rc:141
 msgid "&Owner:"
@@ -11558,11 +11431,11 @@ msgstr "Pr&opietari:"
 
 #: winecfg.rc:143
 msgid "Organi&zation:"
-msgstr "Organit&zaci:"
+msgstr "Organit&zació:"
 
 #: winecfg.rc:151
 msgid " Application Settings "
-msgstr " Configuraci de les Aplicacions "
+msgstr " Ajustaments de les Aplicacions "
 
 #: winecfg.rc:152
 msgid ""
@@ -11570,22 +11443,22 @@ msgid ""
 "linked to the Libraries and Graphics tabs to allow you to change systemwide "
 "or per-application settings in those tabs as well."
 msgstr ""
-"Wine pot imitar versions de Windows diferents per a cada aplicaci. Aquesta "
-"pestanya es enllaa a les pestanyes Biblioteques i Grfics per permetre-vos "
-"canviar la configuraci del sistema o d'una aplicaci en aquestes pestanyes "
-"tamb."
+"El Wine pot imitar versions de Windows diferents per a cada aplicació. "
+"Aquesta pestanya es enllaça a les pestanyes Biblioteques i Gràfics per "
+"permetre-vos canviar la configuració del sistema o d'una aplicació en "
+"aquestes pestanyes també."
 
 #: winecfg.rc:156
 msgid "&Add application..."
-msgstr "&Afegeix aplicaci..."
+msgstr "&Afegeix aplicació..."
 
 #: winecfg.rc:157
 msgid "&Remove application"
-msgstr "T&reure aplicaci"
+msgstr "T&reure aplicació"
 
 #: winecfg.rc:158
 msgid "&Windows Version:"
-msgstr "Versi de &Windows:"
+msgstr "Versió de &Windows:"
 
 #: winecfg.rc:166
 msgid " Window Settings "
@@ -11593,7 +11466,7 @@ msgstr " Ajustaments de Finestra "
 
 #: winecfg.rc:167
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr "Captura automticament el &ratol en les finestres de pantalla completa"
+msgstr "Captura automticament el &ratolí en les finestres de pantalla completa"
 
 #: winecfg.rc:168
 msgid "Allow the window manager to &decorate the windows"
@@ -11601,39 +11474,39 @@ msgstr "Permet que el gestor de finestres &decori les finestres"
 
 #: winecfg.rc:169
 msgid "Allow the &window manager to control the windows"
-msgstr "&Emula un escriptori virtual"
+msgstr "Permet que el gestor de finestres &controli les finestres"
 
 #: winecfg.rc:170
 msgid "&Emulate a virtual desktop"
-msgstr "&Mida d'escriptori:"
+msgstr "&Emula un escriptori virtual:"
 
 #: winecfg.rc:172
 msgid "Desktop &size:"
-msgstr ""
+msgstr "&Mida d'escriptori:"
 
 #: winecfg.rc:177
 msgid " Direct3D "
-msgstr "Shader de &Vrtexs: "
+msgstr ""
 
 #: winecfg.rc:178
 msgid "&Vertex Shader Support: "
-msgstr ""
+msgstr "Shader de &Vértices: "
 
 #: winecfg.rc:180
 msgid "Allow &Pixel Shader (if supported by hardware)"
-msgstr " &Resoluci de la Pantalla "
+msgstr "Permet Shader de &Píxels (si compatible amb el maquinari)"
 
 #: winecfg.rc:182
 msgid " Screen &Resolution "
-msgstr ""
+msgstr " &Resolució de Pantalla "
 
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
-msgstr ""
+msgstr "Això és un text de mostra en Tahoma de 10 punts"
 
 #: winecfg.rc:193
 msgid " DLL Overrides "
-msgstr " Reemplaament DLL "
+msgstr " Reemplaçaments DLL "
 
 #: winecfg.rc:194
 msgid ""
@@ -11641,13 +11514,13 @@ msgid ""
 "(provided by Wine) or native (taken from Windows or provided by the "
 "application)."
 msgstr ""
-"Es pot especificar que una biblioteca d'enlla dinmic sigui o interna "
-"(proporcionada per Wine) o nativa (treta de Windows o proporcionada per "
-"l'aplicaci)."
+"Es pot especificar que una biblioteca d'enllaç dinàmic sigui o interna "
+"(proporcionada pel Wine) o nativa (treta de Windows o proporcionada per "
+"l'aplicació)."
 
 #: winecfg.rc:196
 msgid "&New override for library:"
-msgstr "&Nou reemplaament per la biblioteca:"
+msgstr "&Nou reemplaçament per la biblioteca:"
 
 #: winecfg.rc:198 wordpad.rc:244
 msgid "&Add"
@@ -11655,7 +11528,7 @@ msgstr "&Afegeix"
 
 #: winecfg.rc:199
 msgid "Existing &overrides:"
-msgstr "&Reemplaaments Existents:"
+msgstr "&Reemplaçaments Existents:"
 
 #: winecfg.rc:201
 msgid "&Edit..."
@@ -11663,11 +11536,11 @@ msgstr "&Edita..."
 
 #: winecfg.rc:207
 msgid "Edit Override"
-msgstr "Editar Reemplaament"
+msgstr "Editar Reemplaçament"
 
 #: winecfg.rc:210
 msgid " Load Order "
-msgstr " Ordre de Crrega "
+msgstr " Ordre de Càrrega "
 
 #: winecfg.rc:211
 msgid "&Builtin (Wine)"
@@ -11679,11 +11552,11 @@ msgstr "&Nativa (Windows)"
 
 #: winecfg.rc:213
 msgid "Bui&ltin then Native"
-msgstr "In&terna, desprs Nativa"
+msgstr "In&terna, després Nativa"
 
 #: winecfg.rc:214
 msgid "Nati&ve then Builtin"
-msgstr "Nati&va, desprs Interna"
+msgstr "Nati&va, després Interna"
 
 #: winecfg.rc:215
 msgid "&Disable"
@@ -11691,7 +11564,7 @@ msgstr "&Deshabilitada"
 
 #: winecfg.rc:222
 msgid "Select Drive Letter"
-msgstr "Seleccioneu la Lletra de la Unitat"
+msgstr "Lletra de la Unitat"
 
 #: winecfg.rc:234
 msgid " Drive &mappings "
@@ -11702,8 +11575,8 @@ msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
 msgstr ""
-"S'ha fallat en connectar el gestor de muntatge, la configuraci d'unitat no "
-"es pot editor."
+"S'ha fallat en connectar al gestor de muntatge; la configuració d'unitat no "
+"es pot editar."
 
 #: winecfg.rc:238
 msgid "&Add..."
@@ -11739,7 +11612,7 @@ msgstr "&Etiqueta:"
 
 #: winecfg.rc:257
 msgid "S&erial:"
-msgstr "Sri&e:"
+msgstr "&Sèrie:"
 
 #: winecfg.rc:260
 msgid "Show &dot files"
@@ -11747,11 +11620,11 @@ msgstr "Mostra els fitxers de &punt"
 
 #: winecfg.rc:267
 msgid " Driver Diagnostics "
-msgstr " Diagnstics de Controlador "
+msgstr " Diagnòstics de Controlador "
 
 #: winecfg.rc:269
 msgid " Defaults "
-msgstr " Predetermiats "
+msgstr " Predeterminats "
 
 #: winecfg.rc:270
 msgid "Output device:"
@@ -11775,7 +11648,7 @@ msgstr "&Prova el So"
 
 #: winecfg.rc:285
 msgid " Appearance "
-msgstr " Aparena "
+msgstr " Aparença "
 
 #: winecfg.rc:286
 msgid "&Theme:"
@@ -11783,7 +11656,7 @@ msgstr "&Tema:"
 
 #: winecfg.rc:288
 msgid "&Install theme..."
-msgstr "&Installa tema..."
+msgstr "&Instal·la tema..."
 
 #: winecfg.rc:289
 msgid "&Color:"
@@ -11807,11 +11680,11 @@ msgstr "Mi&da:"
 
 #: winecfg.rc:301
 msgid " Fol&ders "
-msgstr " Car&petas "
+msgstr " Car&petes "
 
 #: winecfg.rc:304
 msgid "&Link to:"
-msgstr "En&llaa a:"
+msgstr "En&llaça a:"
 
 #: winecfg.rc:306
 msgid "B&rowse..."
@@ -11855,7 +11728,7 @@ msgstr "Quant a..."
 
 #: winecfg.rc:41
 msgid "Wine configuration"
-msgstr "Configuració de Wine"
+msgstr "Configuració del Wine"
 
 #: winecfg.rc:43
 msgid "Theme files (*.msstyles; *.theme)"
@@ -11875,7 +11748,7 @@ msgstr "Enllaça a"
 
 #: winecfg.rc:42
 msgid "Wine configuration for %s"
-msgstr "Configuració de Wine para %s"
+msgstr "Configuració del Wine per a %s"
 
 #: winecfg.rc:87
 msgid "Selected driver: %s"
@@ -11923,15 +11796,15 @@ msgstr "interna, nativa"
 
 #: winecfg.rc:57
 msgid "disabled"
-msgstr "discapacitat"
+msgstr "deshabilitada"
 
 #: winecfg.rc:58
 msgid "Default Settings"
-msgstr "Configuració Predeterminada"
+msgstr "Ajustaments Predeterminats"
 
 #: winecfg.rc:59
 msgid "Wine Programs (*.exe; *.exe.so)"
-msgstr "Programas de Wine (*.exe; *.exe.so)"
+msgstr "Programes del Wine (*.exe; *.exe.so)"
 
 #: winecfg.rc:60
 msgid "Use global settings"
@@ -11939,7 +11812,7 @@ msgstr "Usar ajustaments globals"
 
 #: winecfg.rc:61
 msgid "Select an executable file"
-msgstr "Seleccioneu un fitxer executable"
+msgstr "Seleccionar un fitxer executable"
 
 #: winecfg.rc:66
 msgid "Hardware"
@@ -11952,7 +11825,7 @@ msgstr "Cap"
 
 #: winecfg.rc:72
 msgid "Autodetect..."
-msgstr "Autodetectar..."
+msgstr "Autodetecta..."
 
 #: winecfg.rc:73
 msgid "Local hard disk"
@@ -12141,145 +12014,124 @@ msgid "Menu Bar"
 msgstr "Menú--Barra"
 
 #: wineconsole.rc:57
-#, fuzzy
 msgid " Options "
-msgstr "Opcions"
+msgstr " Opcions "
 
 #: wineconsole.rc:60
 msgid "Cursor size"
-msgstr ""
+msgstr "Mida de cursor"
 
 #: wineconsole.rc:61
-#, fuzzy
 msgid "&Small"
-msgstr "Petit"
+msgstr "&Petit"
 
 #: wineconsole.rc:62
-#, fuzzy
 msgid "&Medium"
-msgstr "Medio"
+msgstr "&Medi"
 
 #: wineconsole.rc:63
-#, fuzzy
 msgid "&Large"
-msgstr "Gran"
+msgstr "&Gran"
 
 #: wineconsole.rc:65
-#, fuzzy
 msgid "Control"
-msgstr "Afegeix Control"
+msgstr "Control"
 
 #: wineconsole.rc:66
-#, fuzzy
 msgid "Popup menu"
-msgstr "menú emergent"
+msgstr "Menú emergent"
 
 #: wineconsole.rc:67
-#, fuzzy
 msgid "&Control"
-msgstr "Afegeix Control"
+msgstr "&Control"
 
 #: wineconsole.rc:68
 msgid "S&hift"
-msgstr ""
+msgstr "&Maj"
 
 #: wineconsole.rc:69
 msgid "Quick edit"
-msgstr ""
+msgstr "Edició ràpida"
 
 #: wineconsole.rc:70
-#, fuzzy
 msgid "&enable"
-msgstr "&Taula"
+msgstr "&habilita"
 
 #: wineconsole.rc:72
 msgid "Command history"
-msgstr ""
+msgstr "Historial d'ordres"
 
 #: wineconsole.rc:73
 msgid "&Number of recalled commands :"
-msgstr ""
+msgstr "&Nombre d'ordres cancel·lats"
 
 #: wineconsole.rc:76
-#, fuzzy
 msgid "&Remove doubles"
-msgstr "T&reu"
+msgstr "&Treu dobles"
 
 #: wineconsole.rc:81
-#, fuzzy
 msgid " Font "
-msgstr "Fonts"
+msgstr " Tipus de lletra "
 
 #: wineconsole.rc:84
-#, fuzzy
 msgid "&Font"
-msgstr "Fonts"
+msgstr "&Tipus de lletra"
 
 #: wineconsole.rc:86
-#, fuzzy
 msgid "&Color"
-msgstr "&Columna"
+msgstr "&Color"
 
 #: wineconsole.rc:97
-#, fuzzy
 msgid " Configuration "
-msgstr "Error de configuració"
+msgstr " Configuració "
 
 #: wineconsole.rc:100
-#, fuzzy
 msgid "Buffer zone"
-msgstr "Desbordament de memòria intermèdia\n"
+msgstr "Zona de memòria intermèdia"
 
 #: wineconsole.rc:101
 msgid "&Width :"
-msgstr ""
+msgstr "A&mplada :"
 
 #: wineconsole.rc:104
-#, fuzzy
 msgid "&Height :"
-msgstr "Al D&reta"
+msgstr "A&lçada :"
 
 #: wineconsole.rc:108
-#, fuzzy
 msgid "Window size"
-msgstr "&Finestres"
+msgstr "Mida de finestra"
 
 #: wineconsole.rc:109
 msgid "W&idth :"
-msgstr ""
+msgstr "Am&plada :"
 
 #: wineconsole.rc:112
-#, fuzzy
 msgid "H&eight :"
-msgstr "Al D&reta"
+msgstr "Al&çada :"
 
 #: wineconsole.rc:116
-#, fuzzy
 msgid "End of program"
-msgstr "Executa un nou programa"
+msgstr "Fi de programa"
 
 #: wineconsole.rc:117
-#, fuzzy
 msgid "&Close console"
-msgstr "Tanca la finestra"
+msgstr "Tanca la &consola"
 
 #: wineconsole.rc:119
-#, fuzzy
 msgid "Edition"
-msgstr "&Edita"
+msgstr "&Edició"
 
 #: wineconsole.rc:125
-#, fuzzy
 msgid "Console parameters"
-msgstr "Paràmetre invàlid\n"
+msgstr "Paràmetres de consola"
 
 #: wineconsole.rc:128
 msgid "Retain these settings for later sessions"
-msgstr ""
+msgstr "Conserva aquests valors per a sessions futures"
 
 #: wineconsole.rc:129
 msgid "Modify only current session"
-msgstr ""
+msgstr "Modifica només la sessió actual"
 
 #: wineconsole.rc:26
 msgid "Set &Defaults"
@@ -12320,9 +12172,8 @@ msgstr ""
 "la finestra"
 
 #: wineconsole.rc:34
-#, fuzzy
 msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
-msgstr "Cada caràcter és %ld píxels d'ampla per %ld píxels d'alta"
+msgstr "Cada caràcter és %1!u! píxels d'ampla per %2!u! píxels d'alta"
 
 #: wineconsole.rc:35
 msgid "This is a test"
@@ -12342,7 +12193,7 @@ msgstr "wineconsole: Opció de línea d'ordres no reconeguda\n"
 
 #: wineconsole.rc:44
 msgid "Starts a program in a Wine console\n"
-msgstr "Inicia un programa en una consola Wine\n"
+msgstr "Inicia un programa en una consola del Wine\n"
 
 #: wineconsole.rc:45
 msgid ""
@@ -12393,19 +12244,20 @@ msgstr ""
 "\n"
 "Exemple:\n"
 "  wineconsole cmd\n"
-"Inicia la línea d'ordres en una consola Wine.\n"
+"Inicia la línea d'ordres en una consola del Wine.\n"
 "\n"
 
 #: winedbg.rc:42
-#, fuzzy
 msgid "Program Error"
-msgstr "Gestor de Programas"
+msgstr "Error de Programa"
 
 #: winedbg.rc:47
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
 msgstr ""
+"El programa %s ha trobat un problema greu i necessita tancar-se. Sentim les "
+"molèsties."
 
 #: winedbg.rc:53
 msgid ""
@@ -12416,10 +12268,18 @@ msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a>."
 msgstr ""
+"Això pot ser causat per un problema en el programa o una deficiència en el "
+"Wine. És possible que vulgueu comprovar el <a href=\"http://appdb.winehq.org"
+"\">Base de Dades de Aplicacions</a> per suggeriments sobre executar aquesta "
+"aplicació.\n"
+"\n"
+"Si aquest problema no està present en el Windows i encara no s'ha reportat, "
+"podeu <a href=\"http://wiki.winehq.org/Bugs\">presentar un informe d'error</"
+"a>."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
-msgstr "Crash del programa Wine"
+msgstr "Caiguda de programa del Wine"
 
 #: winedbg.rc:36
 msgid "Internal errors - invalid parameters received"
@@ -12515,108 +12375,91 @@ msgstr "Mosaic &Vertical\tCtrl+F4"
 
 #: winefile.rc:87
 msgid "&About Wine File Manager"
-msgstr "&Quant al Gestor de Fixers de Wine..."
+msgstr "&Quant al Gestor de Fixers del Wine..."
 
 #: winefile.rc:128
-#, fuzzy
 msgid "Select destination"
-msgstr "Seleccionar Magatzem de Certificats"
+msgstr "Selecciona destinació"
 
 #: winefile.rc:141
-#, fuzzy
 msgid "By File Type"
-msgstr "Per &Tipus"
+msgstr "Per Tipus de Fitxer"
 
 #: winefile.rc:146
-#, fuzzy
 msgid "File Type"
-msgstr "Fitxer"
+msgstr "Tipus de Fitxer"
 
 #: winefile.rc:147
-#, fuzzy
 msgid "&Directories"
-msgstr "Adreça de Directori"
+msgstr "&Directoris"
 
 #: winefile.rc:149
-#, fuzzy
 msgid "&Programs"
-msgstr "Programas"
+msgstr "&Programes"
 
 #: winefile.rc:151
-#, fuzzy
 msgid "Docu&ments"
-msgstr "Documents"
+msgstr "Docu&ments"
 
 #: winefile.rc:153
-#, fuzzy
 msgid "&Other files"
-msgstr "Altres Persones"
+msgstr "&Altres fitxers"
 
 #: winefile.rc:155
 msgid "Show Hidden/&System Files"
-msgstr ""
+msgstr "Mostra Fitxers Amagats y de Sistema"
 
 #: winefile.rc:163
-#, fuzzy
 msgid "Properties for %s"
-msgstr "Propietats"
+msgstr "Propietats de %s"
 
 #: winefile.rc:166
-#, fuzzy
 msgid "&File Name:"
-msgstr "Nom Complet"
+msgstr "Nom de &Fitxer:"
 
 #: winefile.rc:168
-#, fuzzy
 msgid "Full &Path:"
-msgstr "Nom Complet"
+msgstr "&Ruta Complet"
 
 #: winefile.rc:170
 msgid "Last Change:"
-msgstr ""
+msgstr "Últim Canvi:"
 
 #: winefile.rc:172
-#, fuzzy
 msgid "Version:"
-msgstr "Versió"
+msgstr "Versió:"
 
 #: winefile.rc:174
-#, fuzzy
 msgid "Cop&yright:"
-msgstr "Al D&reta"
+msgstr "&Drets d'Autor:"
 
 #: winefile.rc:176
-#, fuzzy
 msgid "Size:"
-msgstr "Mida"
+msgstr "Mida:"
 
 #: winefile.rc:179
-#, fuzzy
 msgid "&Read Only"
-msgstr "N&omés lectura"
+msgstr "&Només Lectura"
 
 #: winefile.rc:180
 msgid "H&idden"
-msgstr ""
+msgstr "A&magat"
 
 #: winefile.rc:181
 msgid "&Archive"
-msgstr ""
+msgstr "&Archiu"
 
 #: winefile.rc:182
-#, fuzzy
 msgid "&System"
-msgstr "&Sistema\tCtrl+1"
+msgstr "&Sistema"
 
 #: winefile.rc:183
-#, fuzzy
 msgid "&Compressed"
-msgstr "no comprimit"
+msgstr "&Comprimit"
 
 #: winefile.rc:184
-#, fuzzy
 msgid "&Version Information"
-msgstr "Informació de Client"
+msgstr "Informació de Versió"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -12628,7 +12471,7 @@ msgstr "Error al seleccionar el nou tipus de lletra."
 
 #: winefile.rc:99
 msgid "Wine File Manager"
-msgstr "Gestor de Fixers de Wine"
+msgstr "Gestor de Fixers del Wine"
 
 #: winefile.rc:101
 msgid "root fs"
@@ -12663,9 +12506,8 @@ msgid "Index/Inode"
 msgstr "Índex/Inode"
 
 #: winefile.rc:120
-#, fuzzy
 msgid "%1 of %2 free"
-msgstr "%s de %s lliure"
+msgstr "%1 de %2 lliure"
 
 #: winefile.rc:121
 msgctxt "unit kilobyte"
@@ -12716,51 +12558,43 @@ msgstr "&Millors Temps"
 
 #: winemine.rc:49
 msgid "&About WineMine"
-msgstr "&Quant a WineMine..."
+msgstr "&Quant al WineMine..."
 
 #: winemine.rc:56 winemine.rc:58
-#, fuzzy
 msgid "Fastest Times"
-msgstr "&Millors Temps"
+msgstr "Millors Temps"
 
 #: winemine.rc:59
-#, fuzzy
 msgid "Beginner"
-msgstr "&Principiant"
+msgstr "Principiant"
 
 #: winemine.rc:60
-#, fuzzy
 msgid "Advanced"
-msgstr "&Avançat"
+msgstr "Avançat"
 
 #: winemine.rc:61
-#, fuzzy
 msgid "Expert"
-msgstr "&Expert"
+msgstr "Expert"
 
 #: winemine.rc:74
-#, fuzzy
 msgid "Congratulations!"
-msgstr "Violació de Restricció"
+msgstr "Felicitacions!"
 
 #: winemine.rc:76
-#, fuzzy
 msgid "Please enter your name"
-msgstr "Si us plau, torneu a intentar l'operació\n"
+msgstr "Si us plau, introduïu el vostre nom"
 
 #: winemine.rc:84
-#, fuzzy
 msgid "Custom Game"
-msgstr "Costum"
+msgstr "Joc Costum"
 
 #: winemine.rc:86
 msgid "Rows"
-msgstr ""
+msgstr "Files"
 
 #: winemine.rc:87
-#, fuzzy
 msgid "Columns"
-msgstr "&Columna"
+msgstr "Columnes"
 
 #: winemine.rc:88
 msgid "Mines"
@@ -12820,7 +12654,7 @@ msgstr "Sempre amun&t"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr "&Quant a l'Ajuda de Wine..."
+msgstr "&Quant a l'Ajuda del Wine..."
 
 #: winhlp32.rc:64
 msgid "Annotation..."
@@ -12831,23 +12665,20 @@ msgid "Copy"
 msgstr "Copia"
 
 #: winhlp32.rc:97
-#, fuzzy
 msgid "Index"
-msgstr "&Índex"
+msgstr "Índex"
 
 #: winhlp32.rc:105
-#, fuzzy
 msgid "Search"
-msgstr "&Cerca"
+msgstr "Cerca"
 
 #: winhlp32.rc:107
-#, fuzzy
 msgid "Not implemented yet"
-msgstr "No implementat"
+msgstr "Encara no implementat"
 
 #: winhlp32.rc:78
 msgid "Wine Help"
-msgstr "Ajuda de Wine"
+msgstr "Ajuda del Wine"
 
 #: winhlp32.rc:83
 msgid "Error while reading the help file `%s'"
@@ -12931,7 +12762,7 @@ msgstr "&Obté text"
 
 #: wordpad.rc:69 wordpad.rc:262
 msgid "&Formatbar"
-msgstr "Barra de %format"
+msgstr "Barra de &Format"
 
 #: wordpad.rc:70 wordpad.rc:263
 msgid "&Ruler"
@@ -12979,36 +12810,31 @@ msgstr "Groc &pal·lid\tCtrl+2"
 
 #: wordpad.rc:93
 msgid "&About Wine Wordpad"
-msgstr "&Quant a Wine Wordpad..."
+msgstr "&Quant al Wine Wordpad..."
 
 #: wordpad.rc:130
 msgid "Automatic"
 msgstr "Automàtic"
 
 #: wordpad.rc:199
-#, fuzzy
 msgid "Date and time"
-msgstr "&Data i hora..."
+msgstr "Data i hora"
 
 #: wordpad.rc:202
-#, fuzzy
 msgid "Available formats"
-msgstr "Disponible"
+msgstr "Formats disponibles"
 
 #: wordpad.rc:213
-#, fuzzy
 msgid "New document type"
-msgstr "Document de text"
+msgstr "Nou tipus de document"
 
 #: wordpad.rc:221
-#, fuzzy
 msgid "Paragraph format"
-msgstr "Format de paragra&f"
+msgstr "Format de paragraf"
 
 #: wordpad.rc:224
-#, fuzzy
 msgid "Indentation"
-msgstr "Implementació"
+msgstr "Sagnia"
 
 #: wordpad.rc:225 wordpad.rc:148
 msgid "Left"
@@ -13020,46 +12846,41 @@ msgstr "Dreta"
 
 #: wordpad.rc:229
 msgid "First line"
-msgstr ""
+msgstr "Primera línia"
 
 #: wordpad.rc:231
 msgid "Alignment"
-msgstr ""
+msgstr "Alineació"
 
 #: wordpad.rc:239
-#, fuzzy
 msgid "Tabs"
-msgstr "&Tabuladors..."
+msgstr "Tabuladors"
 
 #: wordpad.rc:242
 msgid "Tab stops"
-msgstr ""
+msgstr "Aturadas de tabulador"
 
 #: wordpad.rc:248
-#, fuzzy
 msgid "Remove al&l"
-msgstr "T&reu"
+msgstr "&Treu tots"
 
 #: wordpad.rc:256
-#, fuzzy
 msgid "Line wrapping"
-msgstr "Mapa d'Unitat"
+msgstr "Ajust de línia"
 
 #: wordpad.rc:257
-#, fuzzy
 msgid "&No line wrapping"
-msgstr "Mappings de Política"
+msgstr "&Cap ajust de línia"
 
 #: wordpad.rc:258
 msgid "Wrap text by the &window border"
-msgstr ""
+msgstr "Ajusta text per la vora de la &ventana"
 
 #: wordpad.rc:259
 msgid "Wrap text by the &margin"
-msgstr ""
+msgstr "Ajusta text pel &marge"
 
 #: wordpad.rc:260
-#, fuzzy
 msgid "Toolbars"
 msgstr "Barras d'eines"
 
@@ -13109,11 +12930,11 @@ msgstr "Text enriquit"
 
 #: wordpad.rc:163
 msgid "Next page"
-msgstr "Pàgina següent"
+msgstr "Pàg. següent"
 
 #: wordpad.rc:164
 msgid "Previous page"
-msgstr "Pàgina anterior"
+msgstr "Pàg. anterior"
 
 #: wordpad.rc:165
 msgid "Two pages"
@@ -13196,7 +13017,7 @@ msgstr "No s'ha pogut desar el fitxer."
 
 #: wordpad.rc:190
 msgid "You do not have access to save the file."
-msgstr "No teneu accés per guardar el fitxer."
+msgstr "No teneu accés per desar el fitxer."
 
 #: wordpad.rc:191
 msgid "Could not open the file."
