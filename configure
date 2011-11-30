@@ -15237,7 +15237,7 @@ wine_fn_config_dll secur32 enable_secur32 implib
 wine_fn_config_test dlls/secur32/tests secur32_test
 wine_fn_config_dll security enable_security
 wine_fn_config_dll sensapi enable_sensapi implib
-wine_fn_config_dll serialui enable_serialui implib
+wine_fn_config_dll serialui enable_serialui implib,po
 wine_fn_config_test dlls/serialui/tests serialui_test
 wine_fn_config_dll setupapi enable_setupapi implib,po
 wine_fn_config_test dlls/setupapi/tests setupapi_test

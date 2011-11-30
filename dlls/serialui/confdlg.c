@@ -346,10 +346,7 @@ static void SERIALUI_DialogInfoToDCB(HWND hDlg, SERIALUI_DialogInfo *info)
  */
 static INT_PTR CALLBACK SERIALUI_ConfigDialogProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    static const WCHAR szSettings[] = {
-        'S','e','t','t','i','n','g','s',' ','f','o','r',' ',0
-    };
-    WCHAR szTitle[40];
+    WCHAR szTitle[128], format[40];
     SERIALUI_DialogInfo *info;
 
     switch (uMsg)
@@ -359,8 +356,8 @@ static INT_PTR CALLBACK SERIALUI_ConfigDialogProc(HWND hWnd, UINT uMsg, WPARAM w
         if(!info)
             return FALSE;
         SetWindowLongPtrW(hWnd, DWLP_USER, lParam);
-        strcpyW( szTitle, szSettings );
-        strcatW( szTitle, info->lpszDevice );
+        GetWindowTextW(hWnd, format, sizeof(format)/sizeof(WCHAR));
+        snprintfW( szTitle, sizeof(szTitle)/sizeof(WCHAR), format, info->lpszDevice );
         SetWindowTextW(hWnd, szTitle);
         SERIALUI_DCBToDialogInfo(hWnd, info);
         return TRUE;
