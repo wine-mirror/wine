@@ -6201,7 +6201,8 @@ msgid "&Data Rate"
 msgstr "&Protok podataka"
 
 #: msvfw32.rc:52
-msgid "KB/sec"
+#, fuzzy
+msgid "kB/sec"
 msgstr "KB/s"
 
 #: msvfw32.rc:25

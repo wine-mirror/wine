@@ -5832,7 +5832,7 @@ msgid "&Data Rate"
 msgstr "&Data Rate"
 
 #: msvfw32.rc:52
-msgid "KB/sec"
+msgid "kB/sec"
 msgstr ""
 
 #: msvfw32.rc:25
