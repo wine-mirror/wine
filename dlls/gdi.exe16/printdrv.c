@@ -388,8 +388,6 @@ INT16 WINAPI CloseJob16(HPJOB16 hJob)
     pPrintJob = FindPrintJobFromHandle(hJob);
     if (pPrintJob != NULL)
     {
-	/* Close the spool file */
-	close(pPrintJob->fd);
 	FreePrintJob(hJob);
 	nRet  = 1;
     }
