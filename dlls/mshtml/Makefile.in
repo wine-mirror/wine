@@ -75,31 +75,7 @@ C_SRCS = \
 	txtrange.c \
 	view.c
 
-RC_SRCS = \
-	Da.rc \
-	De.rc \
-	En.rc \
-	Es.rc \
-	Fr.rc \
-	He.rc \
-	Hu.rc \
-	It.rc \
-	Ja.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	No.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Si.rc \
-	Sr.rc \
-	Sv.rc \
-	Uk.rc \
-	Zh.rc \
-	mshtml.rc
-
+RC_SRCS = mshtml.rc
 PO_SRCS = mshtml.rc
 
 IDL_H_SRCS = nsiface.idl
