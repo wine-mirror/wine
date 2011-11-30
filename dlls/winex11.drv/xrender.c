@@ -198,6 +198,9 @@ MAKE_FUNCPTR(XRenderFindVisualFormat)
 MAKE_FUNCPTR(XRenderFreeGlyphSet)
 MAKE_FUNCPTR(XRenderFreePicture)
 MAKE_FUNCPTR(XRenderSetPictureClipRectangles)
+#ifdef HAVE_XRENDERCREATELINEARGRADIENT
+MAKE_FUNCPTR(XRenderCreateLinearGradient)
+#endif
 #ifdef HAVE_XRENDERSETPICTURETRANSFORM
 MAKE_FUNCPTR(XRenderSetPictureTransform)
 #endif
@@ -367,6 +370,7 @@ const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
     if (!(xrender_handle = wine_dlopen(SONAME_LIBXRENDER, RTLD_NOW, NULL, 0))) return NULL;
 
 #define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(xrender_handle, #f, NULL, 0)) == NULL) return NULL
+#define LOAD_OPTIONAL_FUNCPTR(f) p##f = wine_dlsym(xrender_handle, #f, NULL, 0)
     LOAD_FUNCPTR(XRenderAddGlyphs);
     LOAD_FUNCPTR(XRenderComposite);
     LOAD_FUNCPTR(XRenderCompositeText16);
@@ -379,12 +383,14 @@ const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
     LOAD_FUNCPTR(XRenderFreePicture);
     LOAD_FUNCPTR(XRenderSetPictureClipRectangles);
     LOAD_FUNCPTR(XRenderQueryExtension);
-#undef LOAD_FUNCPTR
-#ifdef HAVE_XRENDERSETPICTURETRANSFORM
-#define LOAD_OPTIONAL_FUNCPTR(f) p##f = wine_dlsym(xrender_handle, #f, NULL, 0)
-    LOAD_OPTIONAL_FUNCPTR(XRenderSetPictureTransform);
-#undef LOAD_OPTIONAL_FUNCPTR
+#ifdef HAVE_XRENDERCREATELINEARGRADIENT
+    LOAD_OPTIONAL_FUNCPTR(XRenderCreateLinearGradient);
 #endif
+#ifdef HAVE_XRENDERSETPICTURETRANSFORM
+    LOAD_OPTIONAL_FUNCPTR(XRenderSetPictureTransform);
+#endif
+#undef LOAD_OPTIONAL_FUNCPTR
+#undef LOAD_FUNCPTR
 
     wine_tsx11_lock();
     X11DRV_XRender_Installed = pXRenderQueryExtension(gdi_display, &event_base, &xrender_error_base);
@@ -2519,6 +2525,110 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
 }
 
 /***********************************************************************
+ *           xrenderdrv_GradientFill
+ */
+static BOOL xrenderdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
+                                     void * grad_array, ULONG ngrad, ULONG mode )
+{
+#ifdef HAVE_XRENDERCREATELINEARGRADIENT
+    static const XFixed stops[2] = { 0, 1 << 16 };
+    struct xrender_physdev *physdev = get_xrender_dev( dev );
+    XLinearGradient gradient;
+    XRenderColor colors[2];
+    Picture src_pict, dst_pict;
+    unsigned int i;
+    const GRADIENT_RECT *rect = grad_array;
+    POINT pt[2];
+
+    if (!X11DRV_XRender_Installed) goto fallback;
+    if (!pXRenderCreateLinearGradient) goto fallback;
+
+    /* 16-bpp uses dithering */
+    if (!physdev->pict_format || physdev->pict_format->depth == 16) goto fallback;
+
+    switch (mode)
+    {
+    case GRADIENT_FILL_RECT_H:
+    case GRADIENT_FILL_RECT_V:
+        X11DRV_LockDIBSection( physdev->x11dev, DIB_Status_GdiMod );
+        for (i = 0; i < ngrad; i++, rect++)
+        {
+            const TRIVERTEX *v1 = vert_array + rect->UpperLeft;
+            const TRIVERTEX *v2 = vert_array + rect->LowerRight;
+
+            colors[0].red   = v1->Red * 257 / 256;
+            colors[0].green = v1->Green * 257 / 256;
+            colors[0].blue  = v1->Blue * 257 / 256;
+            colors[1].red   = v2->Red * 257 / 256;
+            colors[1].green = v2->Green * 257 / 256;
+            colors[1].blue  = v2->Blue * 257 / 256;
+            if (has_alpha( physdev->format ))
+            {
+                colors[0].alpha = v1->Alpha * 257 / 256;
+                colors[1].alpha = v2->Alpha * 257 / 256;
+            }
+            else colors[0].alpha = colors[1].alpha = 65535;
+
+            pt[0].x = v1->x;
+            pt[0].y = v1->y;
+            pt[1].x = v2->x;
+            pt[1].y = v2->y;
+            LPtoDP( dev->hdc, pt, 2 );
+            if (mode == GRADIENT_FILL_RECT_H)
+            {
+                gradient.p1.y = gradient.p2.y = 0;
+                if (pt[1].x > pt[0].x)
+                {
+                    gradient.p1.x = 0;
+                    gradient.p2.x = (pt[1].x - pt[0].x) << 16;
+                }
+                else
+                {
+                    gradient.p1.x = (pt[0].x - pt[1].x) << 16;
+                    gradient.p2.x = 0;
+                }
+            }
+            else
+            {
+                gradient.p1.x = gradient.p2.x = 0;
+                if (pt[1].y > pt[0].y)
+                {
+                    gradient.p1.y = 0;
+                    gradient.p2.y = (pt[1].y - pt[0].y) << 16;
+                }
+                else
+                {
+                    gradient.p1.y = (pt[0].y - pt[1].y) << 16;
+                    gradient.p2.y = 0;
+                }
+            }
+
+            TRACE( "%u gradient %d,%d - %d,%d colors %04x,%04x,%04x,%04x -> %04x,%04x,%04x,%04x\n",
+                   mode, pt[0].x, pt[0].y, pt[1].x, pt[1].y,
+                   colors[0].red, colors[0].green, colors[0].blue, colors[0].alpha,
+                   colors[1].red, colors[1].green, colors[1].blue, colors[1].alpha );
+
+            wine_tsx11_lock();
+            src_pict = pXRenderCreateLinearGradient( gdi_display, &gradient, stops, colors, 2 );
+            dst_pict = get_xrender_picture( physdev, 0, NULL );
+            xrender_blit( PictOpSrc, src_pict, 0, dst_pict, 0, 0,
+                          physdev->x11dev->dc_rect.left + min( pt[0].x, pt[1].x ),
+                          physdev->x11dev->dc_rect.top + min( pt[0].y, pt[1].y ),
+                          1, 1, abs(pt[1].x - pt[0].x), abs(pt[1].y - pt[0].y) );
+            pXRenderFreePicture( gdi_display, src_pict );
+            wine_tsx11_unlock();
+        }
+        X11DRV_UnlockDIBSection( physdev->x11dev, TRUE );
+        return TRUE;
+    }
+
+fallback:
+#endif
+    dev = GET_NEXT_PHYSDEV( dev, pGradientFill );
+    return dev->funcs->pGradientFill( dev, vert_array, nvert, grad_array, ngrad, mode );
+}
+
+/***********************************************************************
  *           xrenderdrv_SelectBrush
  */
 static HBRUSH xrenderdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
@@ -2644,7 +2754,7 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pGetTextExtentExPointI */
     NULL,                               /* pGetTextFace */
     NULL,                               /* pGetTextMetrics */
-    NULL,                               /* pGradientFill */
+    xrenderdrv_GradientFill,            /* pGradientFill */
     NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
     NULL,                               /* pLineTo */

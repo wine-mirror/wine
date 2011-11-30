@@ -1133,6 +1133,9 @@
 /* Define if libxml2 has the xmlSchemaSetValidStructuredErrors function */
 #undef HAVE_XMLSCHEMASSETVALIDSTRUCTUREDERRORS
 
+/* Define if Xrender has the XRenderCreateLinearGradient function */
+#undef HAVE_XRENDERCREATELINEARGRADIENT
+
 /* Define if Xrender has the XRenderSetPictureTransform function */
 #undef HAVE_XRENDERSETPICTURETRANSFORM
 

@@ -1021,8 +1021,11 @@ then
             WINE_CHECK_SONAME(Xrender,XRenderQueryExtension,
               [AC_CHECK_LIB(Xrender,XRenderSetPictureTransform,
                 [AC_DEFINE(HAVE_XRENDERSETPICTURETRANSFORM, 1,
-                 [Define if Xrender has the XRenderSetPictureTransform function])],,
-                [$X_LIBS $XLIB $X_EXTRA_LIBS])],,[$X_LIBS $XLIB $X_EXTRA_LIBS])
+                 [Define if Xrender has the XRenderSetPictureTransform function])],,[$X_LIBS $XLIB $X_EXTRA_LIBS])
+               AC_CHECK_LIB(Xrender,XRenderCreateLinearGradient,
+                [AC_DEFINE(HAVE_XRENDERCREATELINEARGRADIENT, 1,
+                 [Define if Xrender has the XRenderCreateLinearGradient function])],,[$X_LIBS $XLIB $X_EXTRA_LIBS])],,
+              [$X_LIBS $XLIB $X_EXTRA_LIBS])
 
         fi
         WINE_WARNING_WITH(xrender,[test "x$ac_cv_lib_soname_Xrender" = "x"],
