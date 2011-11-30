@@ -1280,7 +1280,7 @@
 @ cdecl abs(long) msvcrt.abs
 @ cdecl acos(double) msvcrt.acos
 @ cdecl asctime(ptr) msvcrt.asctime
-@ stub asctime_s
+@ cdecl asctime_s(ptr long ptr) msvcrt.asctime_s
 @ cdecl asin(double) msvcrt.asin
 @ cdecl atan(double) msvcrt.atan
 @ cdecl atan2(double double) msvcrt.atan2

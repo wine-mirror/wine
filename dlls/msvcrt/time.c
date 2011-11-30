@@ -903,6 +903,31 @@ char * CDECL MSVCRT_asctime(const struct MSVCRT_tm *mstm)
 }
 
 /*********************************************************************
+ *      asctime_s (MSVCRT.@)
+ */
+int CDECL MSVCRT_asctime_s(char* time, MSVCRT_size_t size, const struct MSVCRT_tm *mstm)
+{
+    char* asc;
+    unsigned int len;
+
+    if (!MSVCRT_CHECK_PMT(time != NULL) || !MSVCRT_CHECK_PMT(mstm != NULL)) {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return MSVCRT_EINVAL;
+    }
+
+    asc = MSVCRT_asctime(mstm);
+    len = strlen(asc) + 1;
+
+    if(!MSVCRT_CHECK_PMT(size >= len)) {
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+        return MSVCRT_ERANGE;
+    }
+
+    strcpy(time, asc);
+    return 0;
+}
+
+/*********************************************************************
  *		_wasctime (MSVCRT.@)
  */
 MSVCRT_wchar_t * CDECL MSVCRT__wasctime(const struct MSVCRT_tm *mstm)

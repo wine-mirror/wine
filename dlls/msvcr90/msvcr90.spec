@@ -1272,7 +1272,7 @@
 @ cdecl acos(double) msvcrt.acos
 @ cdecl -arch=x86_64 acosf(float) msvcrt.acosf
 @ cdecl asctime(ptr) msvcrt.asctime
-@ stub asctime_s
+@ cdecl asctime_s(ptr long ptr) msvcrt.asctime_s
 @ cdecl asin(double) msvcrt.asin
 @ cdecl atan(double) msvcrt.atan
 @ cdecl atan2(double double) msvcrt.atan2
