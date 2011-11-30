@@ -2498,6 +2498,53 @@ HRESULT delete_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD fla
 }
 
 /* ECMA-262 3rd Edition    11.4.2 */
+static HRESULT interp_delete(exec_ctx_t *ctx)
+{
+    VARIANT *obj_var, *name_var;
+    IDispatchEx *dispex;
+    IDispatch *obj;
+    BSTR name;
+    BOOL ret;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    name_var = stack_pop(ctx);
+    obj_var = stack_pop(ctx);
+
+    hres = to_object(ctx->parser->script, obj_var, &obj);
+    VariantClear(obj_var);
+    if(FAILED(hres)) {
+        VariantClear(name_var);
+        return hres;
+    }
+
+    hres = to_string(ctx->parser->script, name_var, &ctx->ei, &name);
+    VariantClear(name_var);
+    if(FAILED(hres)) {
+        IDispatch_Release(obj);
+        return hres;
+    }
+
+    hres = IDispatch_QueryInterface(obj, &IID_IDispatchEx, (void**)&dispex);
+    if(SUCCEEDED(hres)) {
+        hres = IDispatchEx_DeleteMemberByName(dispex, name, make_grfdex(ctx->parser->script, fdexNameCaseSensitive));
+        ret = TRUE;
+        IDispatchEx_Release(dispex);
+    }else {
+        hres = S_OK;
+        ret = FALSE;
+    }
+
+    IDispatch_Release(obj);
+    SysFreeString(name);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push_bool(ctx, ret);
+}
+
+/* ECMA-262 3rd Edition    11.4.2 */
 static HRESULT interp_void(exec_ctx_t *ctx)
 {
     VARIANT v;
@@ -3469,5 +3516,8 @@ HRESULT compiled_expression_eval(script_ctx_t *ctx, expression_t *expr, DWORD fl
     if(FAILED(hres))
         return hres;
 
-    return (expr->eval = interp_expression_eval)(ctx, expr, flags, ei, ret);
+    if(expr->eval == compiled_expression_eval)
+        expr->eval = interp_expression_eval;
+
+    return expr->eval(ctx, expr, flags, ei, ret);
 }

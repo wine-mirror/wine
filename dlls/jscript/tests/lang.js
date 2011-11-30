@@ -830,8 +830,15 @@ tmp = new Object();
 tmp.test = false;
 ok((delete tmp.test) === true, "delete returned false");
 ok(typeof(tmp.test) === "undefined", "tmp.test type = " + typeof(tmp.test));
+ok(!("test" in tmp), "test is still in tmp after delete?");
 for(iter in tmp)
     ok(false, "tmp has prop " + iter);
+
+tmp = new Object();
+tmp.test = false;
+ok((delete tmp["test"]) === true, "delete returned false");
+ok(typeof(tmp.test) === "undefined", "tmp.test type = " + typeof(tmp.test));
+ok(!("test" in tmp), "test is still in tmp after delete?");
 
 tmp.testWith = true;
 with(tmp)

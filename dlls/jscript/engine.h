@@ -45,6 +45,7 @@ typedef struct _func_stack {
     X(add,        1, 0,0)                  \
     X(bool,       1, ARG_INT,    0)        \
     X(bneg,       1, 0,0)                  \
+    X(delete,     1, 0,0)                  \
     X(div,        1, 0,0)                  \
     X(double,     1, ARG_SBL,    0)        \
     X(eq,         1, 0,0)                  \

@@ -301,6 +301,34 @@ static HRESULT compile_interp_fallback(compiler_ctx_t *ctx, expression_t *expr)
     return S_OK;
 }
 
+static HRESULT compile_delete_expression(compiler_ctx_t *ctx, unary_expression_t *expr)
+{
+    HRESULT hres;
+
+    switch(expr->expression->type) {
+    case EXPR_ARRAY: {
+        array_expression_t *array_expr = (array_expression_t*)expr->expression;
+
+        hres = compile_expression(ctx, array_expr->member_expr);
+        if(FAILED(hres))
+            return hres;
+
+        hres = compile_expression(ctx, array_expr->expression);
+        if(FAILED(hres))
+            return hres;
+
+        if(push_instr(ctx, OP_delete) == -1)
+            return E_OUTOFMEMORY;
+        break;
+    }
+    default:
+        expr->expr.eval = delete_expression_eval;
+        return compile_interp_fallback(ctx, &expr->expr);
+    }
+
+    return S_OK;
+}
+
 static HRESULT compile_literal(compiler_ctx_t *ctx, literal_t *literal)
 {
     switch(literal->type) {
@@ -352,6 +380,8 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
         return compile_comma_expression(ctx, (binary_expression_t*)expr);
     case EXPR_COND:
         return compile_conditional_expression(ctx, (conditional_expression_t*)expr);
+    case EXPR_DELETE:
+        return compile_delete_expression(ctx, (unary_expression_t*)expr);
     case EXPR_DIV:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_div);
     case EXPR_EQ:
