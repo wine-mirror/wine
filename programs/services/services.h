@@ -39,6 +39,7 @@ struct service_entry
     LPWSTR name;
     SERVICE_STATUS_PROCESS status;
     QUERY_SERVICE_CONFIGW config;
+    DWORD preshutdown_timeout;
     LPWSTR description;
     LPWSTR dependOnServices;
     LPWSTR dependOnGroups;

@@ -737,6 +737,14 @@ DWORD __cdecl svcctl_ChangeServiceConfig2W( SC_RPC_HANDLE hService, DWORD level,
                     wine_dbgstr_w(config->actions.lpRebootMsg),
                     wine_dbgstr_w(config->actions.lpCommand) );
         break;
+    case SERVICE_CONFIG_PRESHUTDOWN_INFO:
+        WINE_TRACE( "changing service %p preshutdown timeout to %d\n",
+                service, config->preshutdown.dwPreshutdownTimeout );
+        service_lock_exclusive( service->service_entry );
+        service->service_entry->preshutdown_timeout = config->preshutdown.dwPreshutdownTimeout;
+        save_service_config( service->service_entry );
+        service_unlock( service->service_entry );
+        break;
     default:
         WINE_FIXME("level %u not implemented\n", level);
         err = ERROR_INVALID_LEVEL;
@@ -779,6 +787,18 @@ DWORD __cdecl svcctl_QueryServiceConfig2W( SC_RPC_HANDLE hService, DWORD level,
             else err = ERROR_INSUFFICIENT_BUFFER;
             service_unlock(service->service_entry);
         }
+        break;
+
+    case SERVICE_CONFIG_PRESHUTDOWN_INFO:
+        service_lock_shared(service->service_entry);
+
+        *needed = sizeof(SERVICE_PRESHUTDOWN_INFO);
+        if (size >= *needed)
+            ((LPSERVICE_PRESHUTDOWN_INFO)buffer)->dwPreshutdownTimeout =
+                service->service_entry->preshutdown_timeout;
+        else err = ERROR_INSUFFICIENT_BUFFER;
+
+        service_unlock(service->service_entry);
         break;
 
     default:

@@ -41,6 +41,7 @@ struct scmdatabase *active_database;
 
 DWORD service_pipe_timeout = 10000;
 DWORD service_kill_timeout = 20000;
+static DWORD default_preshutdown_timeout = 180000;
 static void *env = NULL;
 
 static const int is_win64 = (sizeof(void *) > sizeof(int));
@@ -64,6 +65,7 @@ static const WCHAR SZ_DEPEND_ON_GROUP[]   = {'D','e','p','e','n','d','O','n','G'
 static const WCHAR SZ_OBJECT_NAME[]       = {'O','b','j','e','c','t','N','a','m','e',0};
 static const WCHAR SZ_TAG[]               = {'T','a','g',0};
 static const WCHAR SZ_DESCRIPTION[]       = {'D','e','s','c','r','i','p','t','i','o','n',0};
+static const WCHAR SZ_PRESHUTDOWN[]       = {'P','r','e','s','h','u','t','d','o','w','n','T','i','m','e','o','u','t',0};
 
 
 DWORD service_create(LPCWSTR name, struct service_entry **entry)
@@ -80,6 +82,7 @@ DWORD service_create(LPCWSTR name, struct service_entry **entry)
     (*entry)->control_pipe = INVALID_HANDLE_VALUE;
     (*entry)->status.dwCurrentState = SERVICE_STOPPED;
     (*entry)->status.dwWin32ExitCode = ERROR_SERVICE_NEVER_STARTED;
+    (*entry)->preshutdown_timeout = default_preshutdown_timeout;
     /* all other fields are zero */
     return ERROR_SUCCESS;
 }
@@ -129,6 +132,8 @@ static DWORD load_service_config(HKEY hKey, struct service_entry *entry)
     if ((err = load_reg_dword(hKey, SZ_ERROR, &entry->config.dwErrorControl)) != 0)
         return err;
     if ((err = load_reg_dword(hKey, SZ_TAG,   &entry->config.dwTagId)) != 0)
+        return err;
+    if ((err = load_reg_dword(hKey, SZ_PRESHUTDOWN, &entry->preshutdown_timeout)) != 0)
         return err;
 
     WINE_TRACE("Image path           = %s\n", wine_dbgstr_w(entry->config.lpBinaryPathName) );
@@ -206,8 +211,9 @@ DWORD save_service_config(struct service_entry *entry)
         goto cleanup;
     if ((err = RegSetValueExW(hKey, SZ_ERROR, 0, REG_DWORD, (LPBYTE)&entry->config.dwErrorControl, sizeof(DWORD))) != 0)
         goto cleanup;
-
     if ((err = RegSetValueExW(hKey, SZ_TYPE, 0, REG_DWORD, (LPBYTE)&entry->config.dwServiceType, sizeof(DWORD))) != 0)
+        goto cleanup;
+    if ((err = RegSetValueExW(hKey, SZ_PRESHUTDOWN, 0, REG_DWORD, (LPBYTE)&entry->preshutdown_timeout, sizeof(DWORD))) != 0)
         goto cleanup;
 
     if (entry->config.dwTagId)
