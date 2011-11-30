@@ -101,7 +101,7 @@ static int try_mmap_fixed (void *addr, size_t len, int prot, int flags,
 {
     char * volatile result = NULL;
     int pagesize = getpagesize();
-    pid_t pid;
+    pid_t pid, wret;
 
     /* We only try to map to a fixed address if
        addr is non-NULL and properly aligned,
@@ -150,9 +150,10 @@ static int try_mmap_fixed (void *addr, size_t len, int prot, int flags,
        _exit(1);
     }
 
-    /* vfork() lets the parent continue only after the child
-       has exited.  Furthermore, Wine sets SIGCHLD to SIG_IGN,
-       so we don't need to wait for the child. */
+    /* reap child */
+    do {
+        wret = waitpid(pid, NULL, 0);
+    } while (wret < 0 && errno == EINTR);
 
     return result == addr;
 }
