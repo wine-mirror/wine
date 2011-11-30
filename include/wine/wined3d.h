@@ -1511,6 +1511,7 @@ enum wined3d_sysval_semantic
 
 #define WINED3D_SURFACE_MAPPABLE                                0x00000001
 #define WINED3D_SURFACE_DISCARD                                 0x00000002
+#define WINED3D_SURFACE_PIN_SYSMEM                              0x00000004
 
 struct wined3d_display_mode
 {

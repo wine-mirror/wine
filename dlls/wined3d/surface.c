@@ -544,7 +544,7 @@ static void surface_prepare_system_memory(struct wined3d_surface *surface)
      * converted or NPOT surfaces. Also don't create a PBO for systemmem
      * surfaces. */
     if (gl_info->supported[ARB_PIXEL_BUFFER_OBJECT] && (surface->flags & SFLAG_DYNLOCK)
-            && !(surface->flags & (SFLAG_PBO | SFLAG_CONVERTED | SFLAG_NONPOW2))
+            && !(surface->flags & (SFLAG_PBO | SFLAG_CONVERTED | SFLAG_NONPOW2 | SFLAG_PIN_SYSMEM))
             && (surface->resource.pool != WINED3DPOOL_SYSTEMMEM))
     {
         struct wined3d_context *context;
@@ -7186,6 +7186,8 @@ static HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE sur
     surface->flags = SFLAG_NORMCOORD; /* Default to normalized coords. */
     if (flags & WINED3D_SURFACE_DISCARD)
         surface->flags |= SFLAG_DISCARD;
+    if (flags & WINED3D_SURFACE_PIN_SYSMEM)
+        surface->flags |= SFLAG_PIN_SYSMEM;
     if (lockable || format_id == WINED3DFMT_D16_LOCKABLE)
         surface->flags |= SFLAG_LOCKABLE;
     /* I'm not sure if this qualifies as a hack or as an optimization. It

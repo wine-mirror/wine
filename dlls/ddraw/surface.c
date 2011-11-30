@@ -5254,6 +5254,7 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
         DDSURFACEDESC2 *desc, UINT mip_level, UINT version)
 {
     WINED3DPOOL pool = WINED3DPOOL_DEFAULT;
+    DWORD flags = WINED3D_SURFACE_MAPPABLE;
     enum wined3d_format_id format;
     DWORD usage = 0;
     HRESULT hr;
@@ -5269,6 +5270,13 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
 
     if (desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
+        /* Some applications assume that the primary surface will always be
+         * mapped at the same address. Some of those also assume that this
+         * address is valid even when the surface isn't mapped, and that
+         * updates done this way will be visible on the screen. The game Nox
+         * is such an application. */
+        if (version == 1)
+            flags |= WINED3D_SURFACE_PIN_SYSMEM;
         usage |= WINED3DUSAGE_RENDERTARGET;
         desc->ddsCaps.dwCaps |= DDSCAPS_VISIBLE;
     }
@@ -5343,7 +5351,7 @@ HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddr
     surface->first_attached = surface;
 
     hr = wined3d_surface_create(ddraw->wined3d_device, desc->dwWidth, desc->dwHeight, format, mip_level,
-            usage, pool, WINED3DMULTISAMPLE_NONE, 0, DefaultSurfaceType, WINED3D_SURFACE_MAPPABLE,
+            usage, pool, WINED3DMULTISAMPLE_NONE, 0, DefaultSurfaceType, flags,
             surface, &ddraw_surface_wined3d_parent_ops, &surface->wined3d_surface);
     if (FAILED(hr))
     {

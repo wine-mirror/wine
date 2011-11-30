@@ -2140,6 +2140,7 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
 #define SFLAG_INRB_RESOLVED     0x00400000 /* The resolved renderbuffer is current. */
 #define SFLAG_DS_ONSCREEN       0x00800000 /* This is a depth / stencil surface, last modified onscreen. */
 #define SFLAG_DS_OFFSCREEN      0x01000000 /* This is a depth / stencil surface, last modified offscreen. */
+#define SFLAG_PIN_SYSMEM        0x02000000 /* Keep the surface in sysmem, at the same address. */
 
 /* In some conditions the surface memory must not be freed:
  * SFLAG_CONVERTED: Converting the data back would take too long
@@ -2155,7 +2156,8 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
                              SFLAG_CLIENT           | \
                              SFLAG_DIBSECTION       | \
                              SFLAG_USERPTR          | \
-                             SFLAG_PBO)
+                             SFLAG_PBO              | \
+                             SFLAG_PIN_SYSMEM)
 
 #define SFLAG_LOCATIONS     (SFLAG_INSYSMEM         | \
                              SFLAG_INTEXTURE        | \
