@@ -818,9 +818,9 @@ void signal_init_process(void)
        this is correct, because that is what x86 does, or it is harmful 
        because it could obscure problems in user code */
     __asm__("ta 6"); /* 6 == ST_FIX_ALIGN defined in sys/trap.h */
-    return;
 #endif
 
+    return;
  error:
     perror("sigaction");
     exit(1);
