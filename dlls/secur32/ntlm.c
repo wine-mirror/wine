@@ -2030,21 +2030,17 @@ void SECUR32_initNTLMSP(void)
         NULL };
 
     if(fork_helper(&helper, ntlm_auth, args) != SEC_E_OK)
-    {
-        /* Cheat and allocate a helper anyway, so cleanup later will work. */
-        helper = HeapAlloc(GetProcessHeap(),0, sizeof(NegoHelper));
-        helper->major = helper->minor = helper->micro = -1;
-        helper->pipe_in = helper->pipe_out = -1;
-    }
+        helper = NULL;
     else
         check_version(helper);
 
-    if( (helper->major >  MIN_NTLM_AUTH_MAJOR_VERSION) ||
-        (helper->major == MIN_NTLM_AUTH_MAJOR_VERSION  &&
-         helper->minor >  MIN_NTLM_AUTH_MINOR_VERSION) ||
-        (helper->major == MIN_NTLM_AUTH_MAJOR_VERSION  &&
-         helper->minor == MIN_NTLM_AUTH_MINOR_VERSION  &&
-         helper->micro >= MIN_NTLM_AUTH_MICRO_VERSION) )
+    if( helper &&
+        ((helper->major >  MIN_NTLM_AUTH_MAJOR_VERSION) ||
+         (helper->major == MIN_NTLM_AUTH_MAJOR_VERSION  &&
+          helper->minor >  MIN_NTLM_AUTH_MINOR_VERSION) ||
+         (helper->major == MIN_NTLM_AUTH_MAJOR_VERSION  &&
+          helper->minor == MIN_NTLM_AUTH_MINOR_VERSION  &&
+          helper->micro >= MIN_NTLM_AUTH_MICRO_VERSION)) )
     {
         SecureProvider *provider = SECUR32_addProvider(&ntlmTableA, &ntlmTableW, NULL);
         SecureProvider *nego_provider = SECUR32_addProvider(&ntlmTableA, &ntlmTableW, NULL);
