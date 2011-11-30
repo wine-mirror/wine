@@ -98,6 +98,7 @@ void free_service_entry(struct service_entry *entry)
     HeapFree(GetProcessHeap(), 0, entry->description);
     HeapFree(GetProcessHeap(), 0, entry->dependOnServices);
     HeapFree(GetProcessHeap(), 0, entry->dependOnGroups);
+    CloseHandle(entry->process);
     CloseHandle(entry->control_mutex);
     CloseHandle(entry->control_pipe);
     CloseHandle(entry->overlapped_event);
@@ -310,6 +311,32 @@ static void scmdatabase_autostart_services(struct scmdatabase *db)
     }
 
     HeapFree(GetProcessHeap(), 0, services_list);
+}
+
+static void scmdatabase_wait_terminate(struct scmdatabase *db)
+{
+    struct service_entry *service;
+    BOOL run = TRUE;
+
+    scmdatabase_lock_shared(db);
+    while(run)
+    {
+        run = FALSE;
+        LIST_FOR_EACH_ENTRY(service, &db->services, struct service_entry, entry)
+        {
+            if(service->process)
+            {
+                scmdatabase_unlock(db);
+                WaitForSingleObject(service->process, INFINITE);
+                scmdatabase_lock_shared(db);
+                CloseHandle(service->process);
+                service->process = NULL;
+                run = TRUE;
+                break;
+            }
+        }
+    }
+    scmdatabase_unlock(db);
 }
 
 BOOL validate_service_name(LPCWSTR name)
@@ -662,6 +689,7 @@ static DWORD service_start_process(struct service_entry *service_entry, HANDLE *
     }
 
     service_entry->status.dwProcessId = pi.dwProcessId;
+    service_entry->process = pi.hProcess;
     *process = pi.hProcess;
     CloseHandle( pi.hThread );
 
@@ -808,9 +836,6 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
 
         if (err == ERROR_SUCCESS)
             err = service_wait_for_startup(service, process_handle);
-
-        if (process_handle)
-            CloseHandle(process_handle);
     }
 
     if (err == ERROR_SUCCESS)
@@ -884,9 +909,12 @@ int main(int argc, char *argv[])
     {
         scmdatabase_autostart_services(active_database);
         RPC_MainLoop();
+        scmdatabase_wait_terminate(active_database);
     }
     scmdatabase_destroy(active_database);
     if (env)
         DestroyEnvironmentBlock(env);
+
+    WINE_TRACE("services.exe exited with code %d\n", err);
     return err;
 }

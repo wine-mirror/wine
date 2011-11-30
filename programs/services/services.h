@@ -43,6 +43,7 @@ struct service_entry
     LPWSTR description;
     LPWSTR dependOnServices;
     LPWSTR dependOnGroups;
+    HANDLE process;
     HANDLE control_mutex;
     HANDLE control_pipe;
     HANDLE overlapped_event;
