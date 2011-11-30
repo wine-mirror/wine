@@ -14123,6 +14123,32 @@ if test $ac_cv_cpp_def___x86_64__ = yes; then :
   CFLAGS="$CFLAGS -D__x86_64__"
   LINTFLAGS="$LINTFLAGS -D__x86_64__"
 fi ;;
+  *sparc64*)        { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we need to define __sparc64__" >&5
+$as_echo_n "checking whether we need to define __sparc64__... " >&6; }
+if ${ac_cv_cpp_def___sparc64__+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifndef __sparc64__
+yes
+#endif
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "yes" >/dev/null 2>&1; then :
+  ac_cv_cpp_def___sparc64__=yes
+else
+  ac_cv_cpp_def___sparc64__=no
+fi
+rm -f conftest*
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cpp_def___sparc64__" >&5
+$as_echo "$ac_cv_cpp_def___sparc64__" >&6; }
+if test $ac_cv_cpp_def___sparc64__ = yes; then :
+  CFLAGS="$CFLAGS -D__sparc64__"
+  LINTFLAGS="$LINTFLAGS -D__sparc64__"
+fi ;;
   *sparc*)          { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we need to define __sparc__" >&5
 $as_echo_n "checking whether we need to define __sparc__... " >&6; }
 if ${ac_cv_cpp_def___sparc__+:} false; then :
@@ -14148,6 +14174,32 @@ $as_echo "$ac_cv_cpp_def___sparc__" >&6; }
 if test $ac_cv_cpp_def___sparc__ = yes; then :
   CFLAGS="$CFLAGS -D__sparc__"
   LINTFLAGS="$LINTFLAGS -D__sparc__"
+fi ;;
+  *powerpc64*)      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we need to define __powerpc64__" >&5
+$as_echo_n "checking whether we need to define __powerpc64__... " >&6; }
+if ${ac_cv_cpp_def___powerpc64__+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifndef __powerpc64__
+yes
+#endif
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "yes" >/dev/null 2>&1; then :
+  ac_cv_cpp_def___powerpc64__=yes
+else
+  ac_cv_cpp_def___powerpc64__=no
+fi
+rm -f conftest*
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cpp_def___powerpc64__" >&5
+$as_echo "$ac_cv_cpp_def___powerpc64__" >&6; }
+if test $ac_cv_cpp_def___powerpc64__ = yes; then :
+  CFLAGS="$CFLAGS -D__powerpc64__"
+  LINTFLAGS="$LINTFLAGS -D__powerpc64__"
 fi ;;
   *powerpc*)        { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we need to define __powerpc__" >&5
 $as_echo_n "checking whether we need to define __powerpc__... " >&6; }
