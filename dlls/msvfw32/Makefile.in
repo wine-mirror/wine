@@ -7,32 +7,7 @@ C_SRCS = \
 	mciwnd.c \
 	msvideo_main.c
 
-RC_SRCS = \
-	msvfw32.rc \
-	msvfw32_Da.rc \
-	msvfw32_De.rc \
-	msvfw32_En.rc \
-	msvfw32_Es.rc \
-	msvfw32_Fr.rc \
-	msvfw32_He.rc \
-	msvfw32_Hu.rc \
-	msvfw32_It.rc \
-	msvfw32_Ja.rc \
-	msvfw32_Ko.rc \
-	msvfw32_Lt.rc \
-	msvfw32_Nl.rc \
-	msvfw32_No.rc \
-	msvfw32_Pl.rc \
-	msvfw32_Pt.rc \
-	msvfw32_Ro.rc \
-	msvfw32_Ru.rc \
-	msvfw32_Si.rc \
-	msvfw32_Sr.rc \
-	msvfw32_Sv.rc \
-	msvfw32_Tr.rc \
-	msvfw32_Uk.rc \
-	msvfw32_Zh.rc
-
+RC_SRCS = msvfw32.rc
 PO_SRCS = msvfw32.rc
 
 @MAKE_DLL_RULES@

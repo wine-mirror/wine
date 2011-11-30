@@ -107,7 +107,7 @@ msgstr "M&ožnosti ..."
 msgid "&Interleave every"
 msgstr "&Prepletanje vsake"
 
-#: avifil32.rc:48
+#: avifil32.rc:48 msvfw32.rc:48
 msgid "frames"
 msgstr "slike"
 
@@ -116,26 +116,26 @@ msgid "Current format:"
 msgstr "Trenutna oblika zapisa:"
 
 #: avifil32.rc:51 credui.rc:49 ieframe.rc:84 localui.rc:41 localui.rc:54
-#: mpr.rc:46 msacm32.rc:50 serialui.rc:38 shlwapi.rc:41 winspool.rc:39
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
-#: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
-#: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
-#: regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216
-#: winecfg.rc:226 wineconsole.rc:131 winefile.rc:134 winefile.rc:157
-#: winefile.rc:187 winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204
-#: wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: mpr.rc:46 msacm32.rc:50 msvfw32.rc:33 serialui.rc:38 shlwapi.rc:41
+#: winspool.rc:39 net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172
+#: progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177
+#: progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268
+#: regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521
+#: winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131 winefile.rc:134
+#: winefile.rc:157 winefile.rc:187 winemine.rc:68 winemine.rc:78
+#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "V redu"
 
 #: avifil32.rc:52 browseui.rc:37 credui.rc:50 ieframe.rc:85 inetcpl.rc:78
-#: localui.rc:42 localui.rc:55 mpr.rc:47 msacm32.rc:51 serialui.rc:39
-#: shlwapi.rc:42 winspool.rc:40 notepad.rc:123 oleview.rc:160 oleview.rc:173
-#: progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178
-#: progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269
-#: regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522
-#: wineboot.rc:31 winecfg.rc:217 winecfg.rc:227 wineconsole.rc:132
-#: winefile.rc:135 winefile.rc:158 winefile.rc:188 winemine.rc:93
-#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: localui.rc:42 localui.rc:55 mpr.rc:47 msacm32.rc:51 msvfw32.rc:34
+#: serialui.rc:39 shlwapi.rc:42 winspool.rc:40 notepad.rc:123 oleview.rc:160
+#: oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156
+#: progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256
+#: regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447
+#: taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
+#: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Prekliči"
 
@@ -5869,6 +5869,38 @@ msgid ""
 msgstr ""
 "Wine MS-RLE video kodek\n"
 "Avtorske pravice 2002 Michael Günnewig"
+
+#: msvfw32.rc:30
+msgid "Video Compression"
+msgstr "Stiskanje videa"
+
+#: msvfw32.rc:36
+msgid "&Compressor:"
+msgstr "&Kodek za stiskanje:"
+
+#: msvfw32.rc:39
+msgid "Con&figure..."
+msgstr "&Nastavitve ..."
+
+#: msvfw32.rc:40
+msgid "&About"
+msgstr "&O ..."
+
+#: msvfw32.rc:44
+msgid "Compression &Quality:"
+msgstr "Kakovost &stiskanja:"
+
+#: msvfw32.rc:46
+msgid "&Key Frame Every"
+msgstr "&Ključna slika na vsakih"
+
+#: msvfw32.rc:50
+msgid "&Data Rate"
+msgstr "&Pretok podatkov"
+
+#: msvfw32.rc:52
+msgid "KB/sec"
+msgstr "kb/s"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
