@@ -1544,7 +1544,6 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline, const WCHA
 
         /* Reset signals that we previously set to SIG_IGN */
         signal( SIGPIPE, SIG_DFL );
-        signal( SIGCHLD, SIG_DFL );
 
         if (newdir) chdir(newdir);
 
@@ -1835,7 +1834,6 @@ static pid_t exec_loader( LPCWSTR cmd_line, unsigned int flags, int socketfd,
 
         /* Reset signals that we previously set to SIG_IGN */
         signal( SIGPIPE, SIG_DFL );
-        signal( SIGCHLD, SIG_DFL );
 
         sprintf( socket_env, "WINESERVERSOCKET=%u", socketfd );
         sprintf( preloader_reserve, "WINEPRELOADRESERVE=%lx-%lx",
