@@ -1636,7 +1636,7 @@ static void jsstack_to_dp(exec_ctx_t *ctx, unsigned arg_cnt, DISPPARAMS *dp)
 }
 
 /* ECMA-262 3rd Edition    11.2.2 */
-HRESULT interp_new(exec_ctx_t *ctx)
+static HRESULT interp_new(exec_ctx_t *ctx)
 {
     const LONG arg = ctx->parser->code->instrs[ctx->ip].arg1.lng;
     VARIANT *constr, v;
@@ -1721,7 +1721,7 @@ HRESULT call_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags
 }
 
 /* ECMA-262 3rd Edition    11.1.1 */
-HRESULT interp_this(exec_ctx_t *ctx)
+static HRESULT interp_this(exec_ctx_t *ctx)
 {
     VARIANT v;
 
@@ -1775,7 +1775,7 @@ static HRESULT interp_ident(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    7.8.1 */
-HRESULT interp_null(exec_ctx_t *ctx)
+static HRESULT interp_null(exec_ctx_t *ctx)
 {
     VARIANT v;
 
@@ -1786,7 +1786,7 @@ HRESULT interp_null(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    7.8.2 */
-HRESULT interp_bool(exec_ctx_t *ctx)
+static HRESULT interp_bool(exec_ctx_t *ctx)
 {
     const LONG arg = ctx->parser->code->instrs[ctx->ip].arg1.lng;
 
@@ -1796,7 +1796,7 @@ HRESULT interp_bool(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    7.8.3 */
-HRESULT interp_int(exec_ctx_t *ctx)
+static HRESULT interp_int(exec_ctx_t *ctx)
 {
     const LONG arg = ctx->parser->code->instrs[ctx->ip].arg1.lng;
     VARIANT v;
@@ -1809,7 +1809,7 @@ HRESULT interp_int(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    7.8.3 */
-HRESULT interp_double(exec_ctx_t *ctx)
+static HRESULT interp_double(exec_ctx_t *ctx)
 {
     const double arg = *ctx->parser->code->instrs[ctx->ip].arg1.dbl;
     VARIANT v;
@@ -1822,7 +1822,7 @@ HRESULT interp_double(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    7.8.4 */
-HRESULT interp_str(exec_ctx_t *ctx)
+static HRESULT interp_str(exec_ctx_t *ctx)
 {
     const WCHAR *str = ctx->parser->code->instrs[ctx->ip].arg1.str;
     VARIANT v;
@@ -1838,7 +1838,7 @@ HRESULT interp_str(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    7.8 */
-HRESULT interp_regexp(exec_ctx_t *ctx)
+static HRESULT interp_regexp(exec_ctx_t *ctx)
 {
     const WCHAR *source = ctx->parser->code->instrs[ctx->ip].arg1.str;
     const LONG flags = ctx->parser->code->instrs[ctx->ip].arg2.lng;
@@ -1960,7 +1960,7 @@ HRESULT property_value_expression_eval(script_ctx_t *ctx, expression_t *_expr, D
 }
 
 /* ECMA-262 3rd Edition    11.11 */
-HRESULT interp_jmp_nz(exec_ctx_t *ctx)
+static HRESULT interp_jmp_nz(exec_ctx_t *ctx)
 {
     const unsigned arg = ctx->parser->code->instrs[ctx->ip].arg1.uint;
     VARIANT_BOOL b;
@@ -1982,7 +1982,7 @@ HRESULT interp_jmp_nz(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.11 */
-HRESULT interp_jmp_z(exec_ctx_t *ctx)
+static HRESULT interp_jmp_z(exec_ctx_t *ctx)
 {
     const unsigned arg = ctx->parser->code->instrs[ctx->ip].arg1.uint;
     VARIANT_BOOL b;
@@ -2177,7 +2177,7 @@ HRESULT instanceof_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD
 }
 
 /* ECMA-262 3rd Edition    11.8.7 */
-HRESULT interp_in(exec_ctx_t *ctx)
+static HRESULT interp_in(exec_ctx_t *ctx)
 {
     VARIANT *obj, *v;
     DISPID id = 0;
@@ -2280,7 +2280,7 @@ static HRESULT add_eval(script_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsexcep
 }
 
 /* ECMA-262 3rd Edition    11.6.1 */
-HRESULT interp_add(exec_ctx_t *ctx)
+static HRESULT interp_add(exec_ctx_t *ctx)
 {
     VARIANT *l, *r, ret;
     HRESULT hres;
@@ -2318,7 +2318,7 @@ static HRESULT sub_eval(script_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsexcep
 }
 
 /* ECMA-262 3rd Edition    11.6.2 */
-HRESULT interp_sub(exec_ctx_t *ctx)
+static HRESULT interp_sub(exec_ctx_t *ctx)
 {
     VARIANT l, r;
     HRESULT hres;
@@ -2355,7 +2355,7 @@ static HRESULT mul_eval(script_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsexcep
 }
 
 /* ECMA-262 3rd Edition    11.5.1 */
-HRESULT interp_mul(exec_ctx_t *ctx)
+static HRESULT interp_mul(exec_ctx_t *ctx)
 {
     VARIANT l, r;
     HRESULT hres;
@@ -2498,7 +2498,7 @@ HRESULT delete_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD fla
 }
 
 /* ECMA-262 3rd Edition    11.4.2 */
-HRESULT interp_void(exec_ctx_t *ctx)
+static HRESULT interp_void(exec_ctx_t *ctx)
 {
     VARIANT v;
 
@@ -2603,7 +2603,7 @@ HRESULT typeof_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD fla
 }
 
 /* ECMA-262 3rd Edition    11.4.7 */
-HRESULT interp_minus(exec_ctx_t *ctx)
+static HRESULT interp_minus(exec_ctx_t *ctx)
 {
     VARIANT n;
     HRESULT hres;
@@ -2618,7 +2618,7 @@ HRESULT interp_minus(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.4.6 */
-HRESULT interp_tonum(exec_ctx_t *ctx)
+static HRESULT interp_tonum(exec_ctx_t *ctx)
 {
     VARIANT *v, num;
     HRESULT hres;
@@ -2871,7 +2871,7 @@ static HRESULT equal_values(script_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jse
 }
 
 /* ECMA-262 3rd Edition    11.9.1 */
-HRESULT interp_eq(exec_ctx_t *ctx)
+static HRESULT interp_eq(exec_ctx_t *ctx)
 {
     VARIANT *l, *r;
     BOOL b;
@@ -2892,7 +2892,7 @@ HRESULT interp_eq(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.9.2 */
-HRESULT interp_neq(exec_ctx_t *ctx)
+static HRESULT interp_neq(exec_ctx_t *ctx)
 {
     VARIANT *l, *r;
     BOOL b;
@@ -3090,7 +3090,7 @@ HRESULT greatereq_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD 
 }
 
 /* ECMA-262 3rd Edition    11.4.8 */
-HRESULT interp_bneg(exec_ctx_t *ctx)
+static HRESULT interp_bneg(exec_ctx_t *ctx)
 {
     VARIANT *v, r;
     INT i;
@@ -3110,7 +3110,7 @@ HRESULT interp_bneg(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.4.9 */
-HRESULT interp_neg(exec_ctx_t *ctx)
+static HRESULT interp_neg(exec_ctx_t *ctx)
 {
     VARIANT *v;
     VARIANT_BOOL b;
@@ -3361,7 +3361,7 @@ HRESULT assign_xor_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD
     return assign_oper_eval(ctx, expr->expression1, expr->expression2, xor_eval, ei, ret);
 }
 
-HRESULT interp_jmp(exec_ctx_t *ctx)
+static HRESULT interp_jmp(exec_ctx_t *ctx)
 {
     const unsigned arg = ctx->parser->code->instrs[ctx->ip].arg1.uint;
 
