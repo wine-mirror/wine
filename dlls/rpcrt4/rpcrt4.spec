@@ -369,7 +369,7 @@
 @ stub RpcCertGeneratePrincipalNameW
 @ stdcall RpcCompleteAsyncCall(ptr ptr) RpcAsyncCompleteCall
 @ stdcall RpcEpRegisterA(ptr ptr ptr str)
-@ stub RpcEpRegisterNoReplaceA
+@ stdcall RpcEpRegisterNoReplaceA(ptr ptr ptr str)
 @ stub RpcEpRegisterNoReplaceW
 @ stdcall RpcEpRegisterW(ptr ptr ptr wstr)
 @ stdcall RpcEpResolveBinding(ptr ptr)
