@@ -17,36 +17,7 @@ C_SRCS = \
 	utility.c \
 	wininet_main.c
 
-RC_SRCS = \
-	wininet.rc \
-	wininet_Bg.rc \
-	wininet_Cs.rc \
-	wininet_Da.rc \
-	wininet_De.rc \
-	wininet_En.rc \
-	wininet_Eo.rc \
-	wininet_Es.rc \
-	wininet_Fi.rc \
-	wininet_Fr.rc \
-	wininet_He.rc \
-	wininet_Hu.rc \
-	wininet_It.rc \
-	wininet_Ja.rc \
-	wininet_Ko.rc \
-	wininet_Lt.rc \
-	wininet_Nl.rc \
-	wininet_No.rc \
-	wininet_Pl.rc \
-	wininet_Pt.rc \
-	wininet_Ro.rc \
-	wininet_Ru.rc \
-	wininet_Si.rc \
-	wininet_Sr.rc \
-	wininet_Sv.rc \
-	wininet_Tr.rc \
-	wininet_Uk.rc \
-	wininet_Zh.rc
-
+RC_SRCS = wininet.rc
 PO_SRCS = wininet.rc
 
 @MAKE_DLL_RULES@

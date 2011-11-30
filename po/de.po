@@ -114,27 +114,29 @@ msgstr "Aktuelles Format:"
 
 #: avifil32.rc:51 credui.rc:49 dinput.rc:43 ieframe.rc:84 localui.rc:41
 #: localui.rc:54 mpr.rc:46 msacm32.rc:50 mshtml.rc:45 mshtml.rc:55
-#: msvfw32.rc:33 serialui.rc:38 setupapi.rc:56 shlwapi.rc:41 winspool.rc:39
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
-#: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
-#: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
-#: regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216
-#: winecfg.rc:226 wineconsole.rc:131 winefile.rc:134 winefile.rc:157
-#: winefile.rc:187 winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204
-#: wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: msvfw32.rc:33 serialui.rc:38 setupapi.rc:56 shlwapi.rc:41 wininet.rc:48
+#: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:122 oleview.rc:159
+#: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
+#: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
+#: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
+#: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
+#: winefile.rc:134 winefile.rc:157 winefile.rc:187 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
 #: avifil32.rc:52 browseui.rc:37 credui.rc:50 dinput.rc:44 ieframe.rc:85
 #: inetcpl.rc:78 localui.rc:42 localui.rc:55 mpr.rc:47 msacm32.rc:51
 #: mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34 serialui.rc:39 setupapi.rc:39
-#: setupapi.rc:57 shlwapi.rc:42 winspool.rc:40 notepad.rc:123 oleview.rc:160
-#: oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156
-#: progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256
-#: regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447
-#: taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
-#: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: setupapi.rc:57 shlwapi.rc:42 wininet.rc:49 wininet.rc:69 winspool.rc:40
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
+#: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
+#: regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298
+#: regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217
+#: winecfg.rc:227 wineconsole.rc:132 winefile.rc:135 winefile.rc:158
+#: winefile.rc:188 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
+#: wordpad.rc:247
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -1397,11 +1399,11 @@ msgstr "Nicht vorhanden"
 msgid "Meets Criteria="
 msgstr "Kriterien erfüllt="
 
-#: crypt32.rc:222 cryptui.rc:163 oleaut32.rc:29 ipconfig.rc:44
+#: crypt32.rc:222 cryptui.rc:163 oleaut32.rc:29 wininet.rc:80 ipconfig.rc:44
 msgid "Yes"
 msgstr "Ja"
 
-#: crypt32.rc:223 cryptui.rc:164 oleaut32.rc:30 ipconfig.rc:45
+#: crypt32.rc:223 cryptui.rc:164 oleaut32.rc:30 wininet.rc:81 ipconfig.rc:45
 msgid "No"
 msgstr "Nein"
 
@@ -5698,23 +5700,23 @@ msgstr ""
 msgid "Send Mail"
 msgstr "E-Mail senden"
 
-#: mpr.rc:32
+#: mpr.rc:32 wininet.rc:34
 msgid "Enter Network Password"
 msgstr "Netzwerkkennung eingeben"
 
-#: mpr.rc:35
+#: mpr.rc:35 wininet.rc:37 wininet.rc:57
 msgid "Please enter your username and password:"
 msgstr "Bitte geben Sie Benutzernamen und Kennwort ein:"
 
-#: mpr.rc:36
+#: mpr.rc:36 wininet.rc:38
 msgid "Proxy"
 msgstr "Proxy"
 
-#: mpr.rc:38
+#: mpr.rc:38 wininet.rc:40 wininet.rc:60
 msgid "User"
 msgstr "Benutzername"
 
-#: mpr.rc:39
+#: mpr.rc:39 wininet.rc:41 wininet.rc:61
 msgid "Password"
 msgstr "Kennwort"
 
@@ -7346,6 +7348,34 @@ msgstr "&Querformat"
 #: wineps.rc:36
 msgid "Duplex:"
 msgstr "Duplex:"
+
+#: wininet.rc:39 wininet.rc:59
+msgid "Realm"
+msgstr "Bereich"
+
+#: wininet.rc:46 wininet.rc:66
+msgid "&Save this password (insecure)"
+msgstr "Dieses &Kennwort speichern (unsicher)"
+
+#: wininet.rc:54
+msgid "Authentication Required"
+msgstr "Benutzeranmeldung"
+
+#: wininet.rc:58
+msgid "Server"
+msgstr "Server"
+
+#: wininet.rc:74
+msgid "Security Warning"
+msgstr "Sicherheits Warnung"
+
+#: wininet.rc:77
+msgid "There is a problem with the certificate for this site."
+msgstr "Es gibt ein Problem mit dem Zertifikat dieser Seite."
+
+#: wininet.rc:79
+msgid "Do you want to continue anyway?"
+msgstr "Möchten Sie dennoch fortfahren?"
 
 #: wininet.rc:25
 msgid "LAN Connection"
