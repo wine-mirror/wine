@@ -1937,7 +1937,7 @@ MSVCRT_size_t CDECL MSVCRT__mbstowcs_l(MSVCRT_wchar_t *wcstr, const char *mbstr,
         if(mbstr[size] == '\0')
             break;
 
-        size += (MSVCRT_isleadbyte(mbstr[size]) ? 2 : 1);
+        size += (MSVCRT__isleadbyte_l(mbstr[size], locale) ? 2 : 1);
     }
 
     size = MultiByteToWideChar(locinfo->lc_codepage, 0,
