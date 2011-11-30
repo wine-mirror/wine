@@ -364,7 +364,6 @@ typedef struct {
     enum {
         EXPRVAL_VARIANT,
         EXPRVAL_IDREF,
-        EXPRVAL_NAMEREF,
         EXPRVAL_INVALID
     } type;
     union {
@@ -373,10 +372,6 @@ typedef struct {
             IDispatch *disp;
             DISPID id;
         } idref;
-        struct {
-            IDispatch *disp;
-            BSTR name;
-        } nameref;
         BSTR identifier;
     } u;
 } exprval_t;

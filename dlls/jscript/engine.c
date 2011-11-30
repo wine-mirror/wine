@@ -31,7 +31,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
 #define EXPR_NOVAL   0x0001
 #define EXPR_NEWREF  0x0002
-#define EXPR_STRREF  0x0004
 
 struct _return_type_t {
     enum{
@@ -154,11 +153,6 @@ static void exprval_release(exprval_t *val)
         if(val->u.idref.disp)
             IDispatch_Release(val->u.idref.disp);
         return;
-    case EXPRVAL_NAMEREF:
-        if(val->u.nameref.disp)
-            IDispatch_Release(val->u.nameref.disp);
-        SysFreeString(val->u.nameref.name);
-        return;
     case EXPRVAL_INVALID:
         SysFreeString(val->u.identifier);
     }
@@ -179,8 +173,6 @@ static HRESULT exprval_value(script_ctx_t *ctx, exprval_t *val, jsexcept_t *ei, 
         }
 
         return disp_propget(ctx, val->u.idref.disp, val->u.idref.id, ret, ei, NULL/*FIXME*/);
-    case EXPRVAL_NAMEREF:
-        break;
     case EXPRVAL_INVALID:
         return throw_type_error(ctx, ei, JS_E_UNDEFINED_VARIABLE, val->u.identifier);
     }
@@ -1494,13 +1486,6 @@ HRESULT array_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flag
         hres = to_string(ctx, &val, ei, &str);
         VariantClear(&val);
         if(SUCCEEDED(hres)) {
-            if(flags & EXPR_STRREF) {
-                ret->type = EXPRVAL_NAMEREF;
-                ret->u.nameref.disp = obj;
-                ret->u.nameref.name = str;
-                return S_OK;
-            }
-
             hres = disp_get_id(ctx, obj, str, flags & EXPR_NEWREF ? fdexNameEnsure : 0, &id);
             SysFreeString(str);
         }
@@ -1546,11 +1531,9 @@ HRESULT member_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD fla
         return hres;
 
     str = SysAllocString(expr->identifier);
-    if(flags & EXPR_STRREF) {
-        ret->type = EXPRVAL_NAMEREF;
-        ret->u.nameref.disp = obj;
-        ret->u.nameref.name = str;
-        return S_OK;
+    if(!str) {
+        IDispatch_Release(obj);
+        return E_OUTOFMEMORY;
     }
 
     hres = disp_get_id(ctx, obj, str, flags & EXPR_NEWREF ? fdexNameEnsure : 0, &id);
@@ -2457,7 +2440,7 @@ HRESULT delete_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD fla
 
     TRACE("\n");
 
-    hres = expr_eval(ctx, expr->expression, EXPR_STRREF, ei, &exprval);
+    hres = expr_eval(ctx, expr->expression, 0, ei, &exprval);
     if(FAILED(hres))
         return hres;
 
@@ -2465,21 +2448,9 @@ HRESULT delete_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD fla
     case EXPRVAL_IDREF: {
         IDispatchEx *dispex;
 
-        hres = IDispatch_QueryInterface(exprval.u.nameref.disp, &IID_IDispatchEx, (void**)&dispex);
+        hres = IDispatch_QueryInterface(exprval.u.idref.disp, &IID_IDispatchEx, (void**)&dispex);
         if(SUCCEEDED(hres)) {
             hres = IDispatchEx_DeleteMemberByDispID(dispex, exprval.u.idref.id);
-            b = VARIANT_TRUE;
-            IDispatchEx_Release(dispex);
-        }
-        break;
-    }
-    case EXPRVAL_NAMEREF: {
-        IDispatchEx *dispex;
-
-        hres = IDispatch_QueryInterface(exprval.u.nameref.disp, &IID_IDispatchEx, (void**)&dispex);
-        if(SUCCEEDED(hres)) {
-            hres = IDispatchEx_DeleteMemberByName(dispex, exprval.u.nameref.name,
-                    make_grfdex(ctx, fdexNameCaseSensitive));
             b = VARIANT_TRUE;
             IDispatchEx_Release(dispex);
         }
