@@ -34,6 +34,9 @@
 #ifdef HAVE_IO_H
 # include <io.h>
 #endif
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>
+#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -205,6 +208,7 @@ typedef struct PRINTJOB
     HANDLE16 	hHandle;
     int		nIndex;
     int		fd;
+    pid_t       pid;
 } PRINTJOB, *PPRINTJOB;
 
 #define MAX_PRINT_JOBS 1
@@ -218,7 +222,7 @@ static PPRINTJOB FindPrintJobFromHandle(HANDLE16 hHandle)
     return gPrintJobsTable[0];
 }
 
-static int CreateSpoolFile(LPCSTR pszOutput)
+static int CreateSpoolFile(LPCSTR pszOutput, pid_t *out_pid)
 {
     int fd=-1;
     char psCmd[1024];
@@ -227,8 +231,10 @@ static int CreateSpoolFile(LPCSTR pszOutput)
 
     /* TTD convert the 'output device' into a spool file name */
 
-    if (pszOutput == NULL || *pszOutput == '\0')
+    if (pszOutput == NULL || *pszOutput == '\0' || out_pid == NULL)
       return -1;
+
+    *out_pid = -1;
 
     psCmd[0] = 0;
     /* @@ Wine registry key: HKCU\Software\Wine\Printing\Spooler */
@@ -263,7 +269,7 @@ static int CreateSpoolFile(LPCSTR pszOutput)
 	    ERR("pipe() failed!\n");
             return -1;
 	}
-        if (fork() == 0)
+        if ((*out_pid = fork()) == 0)
         {
             psCmdP++;
 
@@ -317,12 +323,22 @@ static int FreePrintJob(HANDLE16 hJob)
     pPrintJob = FindPrintJobFromHandle(hJob);
     if (pPrintJob != NULL)
     {
+	nRet = SP_OK;
 	gPrintJobsTable[pPrintJob->nIndex] = NULL;
 	HeapFree(GetProcessHeap(), 0, pPrintJob->pszOutput);
 	HeapFree(GetProcessHeap(), 0, pPrintJob->pszTitle);
 	if (pPrintJob->fd >= 0) close(pPrintJob->fd);
+	if (pPrintJob->pid > 0)
+	{
+	    pid_t wret;
+            int status;
+            do {
+                wret = waitpid(pPrintJob->pid, &status, 0);
+            } while (wret < 0 && errno == EINTR);
+            if (wret < 0 || !WIFEXITED(status) || WEXITSTATUS(status))
+                nRet = SP_ERROR;
+	}
 	HeapFree(GetProcessHeap(), 0, pPrintJob);
-	nRet = SP_OK;
     }
     return nRet;
 }
@@ -342,9 +358,10 @@ HPJOB16 WINAPI OpenJob16(LPCSTR lpOutput, LPCSTR lpTitle, HDC16 hDC)
     if (pPrintJob == NULL)
     {
 	int fd;
+	pid_t pid;
 
 	/* Try and create a spool file */
-	fd = CreateSpoolFile(lpOutput);
+	fd = CreateSpoolFile(lpOutput, &pid);
 	if (fd >= 0)
 	{
 	    pPrintJob = HeapAlloc(GetProcessHeap(), 0, sizeof(PRINTJOB));
@@ -364,6 +381,7 @@ HPJOB16 WINAPI OpenJob16(LPCSTR lpOutput, LPCSTR lpTitle, HDC16 hDC)
             }
 	    pPrintJob->hDC = hDC;
 	    pPrintJob->fd = fd;
+	    pPrintJob->pid = pid;
 	    pPrintJob->nIndex = 0;
 	    pPrintJob->hHandle = hHandle;
 	    gPrintJobsTable[pPrintJob->nIndex] = pPrintJob;
