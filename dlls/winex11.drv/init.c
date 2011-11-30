@@ -527,7 +527,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pGetTextExtentExPointI */
     NULL,                               /* pGetTextFace */
     X11DRV_GetTextMetrics,              /* pGetTextMetrics */
-    NULL,                               /* pGradientFill */
+    X11DRV_GradientFill,                /* pGradientFill */
     NULL,                               /* pIntersectClipRect */
     NULL,                               /* pInvertRgn */
     X11DRV_LineTo,                      /* pLineTo */

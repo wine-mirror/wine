@@ -1494,6 +1494,124 @@ BOOL X11DRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillTy
 }
 
 /**********************************************************************
+ *          X11DRV_GradientFill
+ */
+BOOL X11DRV_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
+                          void *grad_array, ULONG ngrad, ULONG mode )
+{
+    X11DRV_PDEVICE *physdev = get_x11drv_dev( dev );
+    const GRADIENT_RECT *rect = grad_array;
+    TRIVERTEX v[2];
+    POINT pt[2];
+    unsigned int i;
+    XGCValues val;
+
+    /* 4, 8, and 16-bpp use dithering */
+    if (physdev->depth >= 4 && physdev->depth <= 16) goto fallback;
+
+    switch (mode)
+    {
+    case GRADIENT_FILL_RECT_H:
+        val.function   = GXcopy;
+        val.fill_style = FillSolid;
+        val.line_width = 1;
+        val.cap_style  = CapNotLast;
+        val.line_style = LineSolid;
+        wine_tsx11_lock();
+        XChangeGC( gdi_display, physdev->gc,
+                   GCFunction | GCLineWidth | GCLineStyle | GCCapStyle | GCFillStyle, &val );
+        wine_tsx11_unlock();
+
+	X11DRV_LockDIBSection( physdev, DIB_Status_GdiMod );
+        for (i = 0; i < ngrad; i++, rect++)
+        {
+            int pos, x, dx;
+
+            v[0] = vert_array[rect->UpperLeft];
+            v[1] = vert_array[rect->LowerRight];
+            pt[0].x = v[0].x;
+            pt[0].y = v[0].y;
+            pt[1].x = v[1].x;
+            pt[1].y = v[1].y;
+            LPtoDP( dev->hdc, pt, 2 );
+            dx = pt[1].x - pt[0].x;
+            if (!dx) continue;
+            if (dx < 0)  /* swap the colors */
+            {
+                v[0] = vert_array[rect->LowerRight];
+                v[1] = vert_array[rect->UpperLeft];
+                dx = -dx;
+            }
+            for (x = 0, pos = min( pt[0].x, pt[1].x ); x < dx; x++, pos++)
+            {
+                COLORREF color = RGB( (v[0].Red   * (dx - x) + v[1].Red   * x) / dx / 256,
+                                      (v[0].Green * (dx - x) + v[1].Green * x) / dx / 256,
+                                      (v[0].Blue  * (dx - x) + v[1].Blue  * x) / dx / 256);
+                wine_tsx11_lock();
+                XSetForeground( gdi_display, physdev->gc, X11DRV_PALETTE_ToPhysical( physdev, color ));
+                XDrawLine( gdi_display, physdev->drawable, physdev->gc,
+                           physdev->dc_rect.left + pos, physdev->dc_rect.top + pt[0].y,
+                           physdev->dc_rect.left + pos, physdev->dc_rect.top + pt[1].y );
+                wine_tsx11_unlock();
+            }
+        }
+        X11DRV_UnlockDIBSection( physdev, TRUE );
+        return TRUE;
+
+    case GRADIENT_FILL_RECT_V:
+        val.function   = GXcopy;
+        val.fill_style = FillSolid;
+        val.line_width = 1;
+        val.cap_style  = CapNotLast;
+        val.line_style = LineSolid;
+        wine_tsx11_lock();
+        XChangeGC( gdi_display, physdev->gc,
+                   GCFunction | GCLineWidth | GCLineStyle | GCCapStyle | GCFillStyle, &val );
+        wine_tsx11_unlock();
+
+	X11DRV_LockDIBSection( physdev, DIB_Status_GdiMod );
+        for (i = 0; i < ngrad; i++, rect++)
+        {
+            int pos, y, dy;
+
+            v[0] = vert_array[rect->UpperLeft];
+            v[1] = vert_array[rect->LowerRight];
+            pt[0].x = v[0].x;
+            pt[0].y = v[0].y;
+            pt[1].x = v[1].x;
+            pt[1].y = v[1].y;
+            LPtoDP( dev->hdc, pt, 2 );
+            dy = pt[1].y - pt[0].y;
+            if (!dy) continue;
+            if (dy < 0)  /* swap the colors */
+            {
+                v[0] = vert_array[rect->LowerRight];
+                v[1] = vert_array[rect->UpperLeft];
+                dy = -dy;
+            }
+            for (y = 0, pos = min( pt[0].y, pt[1].y ); y < dy; y++, pos++)
+            {
+                COLORREF color = RGB( (v[0].Red   * (dy - y) + v[1].Red   * y) / dy / 256,
+                                      (v[0].Green * (dy - y) + v[1].Green * y) / dy / 256,
+                                      (v[0].Blue  * (dy - y) + v[1].Blue  * y) / dy / 256);
+                wine_tsx11_lock();
+                XSetForeground( gdi_display, physdev->gc, X11DRV_PALETTE_ToPhysical( physdev, color ));
+                XDrawLine( gdi_display, physdev->drawable, physdev->gc,
+                           physdev->dc_rect.left + pt[0].x, physdev->dc_rect.top + pos,
+                           physdev->dc_rect.left + pt[1].x, physdev->dc_rect.top + pos );
+                wine_tsx11_unlock();
+            }
+        }
+        X11DRV_UnlockDIBSection( physdev, TRUE );
+        return TRUE;
+    }
+
+fallback:
+    dev = GET_NEXT_PHYSDEV( dev, pGradientFill );
+    return dev->funcs->pGradientFill( dev, vert_array, nvert, grad_array, ngrad, mode );
+}
+
+/**********************************************************************
  *          X11DRV_SetBkColor
  */
 COLORREF X11DRV_SetBkColor( PHYSDEV dev, COLORREF color )

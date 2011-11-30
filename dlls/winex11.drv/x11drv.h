@@ -203,6 +203,8 @@ extern UINT X11DRV_GetSystemPaletteEntries( PHYSDEV dev, UINT start, UINT count,
 extern BOOL X11DRV_GetTextExtentExPoint( PHYSDEV dev, LPCWSTR str, INT count, INT maxExt,
                                          LPINT lpnFit, LPINT alpDx, LPSIZE size ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_GetTextMetrics(PHYSDEV dev, TEXTMETRICW *metrics) DECLSPEC_HIDDEN;
+extern BOOL X11DRV_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
+                                 void *grad_array, ULONG ngrad, ULONG mode ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_LineTo( PHYSDEV dev, INT x, INT y) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_PaintRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop ) DECLSPEC_HIDDEN;
