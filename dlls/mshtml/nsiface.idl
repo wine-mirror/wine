@@ -3169,7 +3169,7 @@ interface nsIParser : nsISupports
 ]
 interface nsIDocumentObserver : nsIMutationObserver
 {
-    typedef int nsUpdateType;
+    typedef PRUint32 nsUpdateType;
 
     typedef struct {
         PRUint64 mStates;
@@ -3179,8 +3179,8 @@ interface nsIDocumentObserver : nsIMutationObserver
     void EndUpdate(nsIDocument *aDocument, nsUpdateType aUpdateType);
     void BeginLoad(nsIDocument *aDocument);
     void EndLoad(nsIDocument *aDocument);
-    void ContentStatesChanged(nsIDocument *aDocument, nsIContent *aContent, nsEventStates aStateMask);
-    void DocumentStatesChanged(nsIDocument *aDocument, nsEventStates aStateMask);
+    void ContentStatesChanged(nsIDocument *aDocument, nsIContent *aContent, nsEventStates *aStateMask);
+    void DocumentStatesChanged(nsIDocument *aDocument, nsEventStates *aStateMask);
     void StyleSheetAdded(nsIDocument *aDocument, nsIStyleSheet *aStyleSheet, PRBool aDocumentSheet);
     void StyleSheetRemoved(nsIDocument *aDocument, nsIStyleSheet *aStyleSheet, PRBool aDocumentSheet);
     void StyleSheetApplicableStateChanged(nsIDocument *aDocument, nsIStyleSheet *aStyleSheet,
