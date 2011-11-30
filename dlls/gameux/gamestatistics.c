@@ -388,17 +388,18 @@ static HRESULT GAMEUX_getAppIdFromGDFPath(
         /* game is registered, let's read it's application id from registry */
         hr = GAMEUX_buildGameRegistryPath(installScope, &instanceId, &lpRegistryPath);
 
-    if(SUCCEEDED(hr))
+    if(SUCCEEDED(hr)) {
         hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_LOCAL_MACHINE,
                 lpRegistryPath, 0, KEY_READ | KEY_WOW64_64KEY, &hKey));
-
-    if(SUCCEEDED(hr))
-        hr = HRESULT_FROM_WIN32(RegGetValueW(hKey,
-                NULL, sApplicationId, RRF_RT_REG_SZ,
-                NULL, lpApplicationId, &dwLength));
+        if(SUCCEEDED(hr)) {
+            hr = HRESULT_FROM_WIN32(RegGetValueW(hKey,
+                    NULL, sApplicationId, RRF_RT_REG_SZ,
+                    NULL, lpApplicationId, &dwLength));
+            RegCloseKey(hKey);
+        }
+    }
 
     HeapFree(GetProcessHeap(), 0, lpRegistryPath);
-    RegCloseKey(hKey);
 
     TRACE("found app id: %s, return: %#x\n", debugstr_w(lpApplicationId), hr);
     return hr;
