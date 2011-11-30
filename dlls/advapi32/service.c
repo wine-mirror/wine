@@ -61,6 +61,7 @@ typedef struct service_data_t
     LPVOID context;
     HANDLE thread;
     SC_HANDLE handle;
+    SC_HANDLE full_access_handle;
     BOOL unicode : 1;
     union {
         LPSERVICE_MAIN_FUNCTIONA a;
@@ -425,7 +426,8 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
         case WINESERV_STARTINFO:
             if (!service->handle)
             {
-                if (!(service->handle = OpenServiceW( manager, data, SERVICE_SET_STATUS )))
+                if (!(service->handle = OpenServiceW( manager, data, SERVICE_SET_STATUS )) ||
+                    !(service->full_access_handle = OpenServiceW( manager, data, GENERIC_READ|GENERIC_WRITE )))
                     FIXME( "failed to open service %s\n", debugstr_w(data) );
             }
             result = service_handle_start(service, data + info.name_size,
@@ -484,8 +486,41 @@ static BOOL service_run_main_thread(void)
         ret = WaitForMultipleObjects( n, wait_handles, FALSE, INFINITE );
         if (!ret)  /* system process event */
         {
-            TRACE( "last user process exited, shutting down\n" );
-            /* FIXME: we should maybe send a shutdown control to running services */
+            SERVICE_STATUS st;
+            SERVICE_PRESHUTDOWN_INFO spi;
+            DWORD timeout = 5000;
+            BOOL res;
+
+            EnterCriticalSection( &service_cs );
+            n = 0;
+            for (i = 0; i < nb_services && n < MAXIMUM_WAIT_OBJECTS; i++)
+            {
+                if (!services[i]->thread) continue;
+
+                res = QueryServiceStatus(services[i]->full_access_handle, &st);
+                ret = ERROR_SUCCESS;
+                if (res && (st.dwControlsAccepted & SERVICE_ACCEPT_PRESHUTDOWN))
+                {
+                    res = QueryServiceConfig2W( services[i]->full_access_handle, SERVICE_CONFIG_PRESHUTDOWN_INFO,
+                            (LPBYTE)&spi, sizeof(spi), &i );
+                    if (res)
+                    {
+                        FIXME("service should be able to delay shutdown\n");
+                        timeout += spi.dwPreshutdownTimeout;
+                        ret = service_handle_control( services[i], SERVICE_CONTROL_PRESHUTDOWN );
+                        wait_handles[n++] = services[i]->thread;
+                    }
+                }
+                else if (res && (st.dwControlsAccepted & SERVICE_ACCEPT_SHUTDOWN))
+                {
+                    ret = service_handle_control( services[i], SERVICE_CONTROL_SHUTDOWN );
+                    wait_handles[n++] = services[i]->thread;
+                }
+            }
+            LeaveCriticalSection( &service_cs );
+
+            TRACE("last user process exited, shutting down (timeout: %d)\n", timeout);
+            WaitForMultipleObjects( n, wait_handles, TRUE, timeout );
             ExitProcess(0);
         }
         else if (ret == 1)
