@@ -726,7 +726,7 @@ static INT GSUB_apply_SingleSubst(const GSUB_LookupTable *look, WORD *glyphs, IN
                 TRACE("  Glyph 0x%x ->",glyphs[glyph_index]);
                 glyphs[glyph_index] = glyphs[glyph_index] + GET_BE_WORD(ssf1->DeltaGlyphID);
                 TRACE(" 0x%x\n",glyphs[glyph_index]);
-                return glyph_index + 1;
+                return glyph_index + write_dir;
             }
         }
         else
@@ -748,7 +748,7 @@ static INT GSUB_apply_SingleSubst(const GSUB_LookupTable *look, WORD *glyphs, IN
                 TRACE("    Glyph is 0x%x ->",glyphs[glyph_index]);
                 glyphs[glyph_index] = GET_BE_WORD(ssf2->Substitute[index]);
                 TRACE("0x%x\n",glyphs[glyph_index]);
-                return glyph_index + 1;
+                return glyph_index + write_dir;
             }
         }
     }
@@ -797,7 +797,7 @@ static INT GSUB_apply_MultipleSubst(const GSUB_LookupTable *look, WORD *glyphs, 
                 TRACE("\n");
             }
 
-            return glyph_index + sub_count;
+            return glyph_index + (sub_count * write_dir);
         }
     }
     return GSUB_E_NOGLYPH;
@@ -831,7 +831,7 @@ static INT GSUB_apply_AlternateSubst(const GSUB_LookupTable *look, WORD *glyphs,
             TRACE("  Glyph 0x%x ->",glyphs[glyph_index]);
             glyphs[glyph_index] = GET_BE_WORD(as->Alternate[0]);
             TRACE(" 0x%x\n",glyphs[glyph_index]);
-            return glyph_index + 1;
+            return glyph_index + write_dir;
         }
     }
     return GSUB_E_NOGLYPH;
@@ -894,7 +894,7 @@ static INT GSUB_apply_LigatureSubst(const GSUB_LookupTable *look, WORD *glyphs, 
                             glyphs[j] =glyphs[j+CompCount];
                         *glyph_count = *glyph_count - CompCount;
                     }
-                    return replaceIdx + 1;
+                    return replaceIdx + write_dir;
                 }
             }
         }
@@ -1338,7 +1338,7 @@ static void UpdateClusters(int nextIndex, int changeCount, int write_dir, int ch
     else
     {
         int i;
-        int target_glyph = nextIndex - 1;
+        int target_glyph = nextIndex - write_dir;
         int seeking_glyph;
         int target_index = -1;
         int replacing_glyph = -1;
@@ -1346,7 +1346,7 @@ static void UpdateClusters(int nextIndex, int changeCount, int write_dir, int ch
 
 
         if (changeCount > 0)
-            target_glyph = nextIndex - (changeCount+1);
+            target_glyph = nextIndex - ((changeCount+1)*write_dir);
 
         seeking_glyph = target_glyph;
 
@@ -1437,21 +1437,25 @@ static int apply_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, W
         for (lookup_index = 0; lookup_index < lookup_count; lookup_index++)
         {
             int i;
-            i = 0;
+
+            if (write_dir > 0)
+                i = 0;
+            else
+                i = *pcGlyphs-1;
             TRACE("applying lookup (%i/%i)\n",lookup_index,lookup_count);
-            while(i < *pcGlyphs)
+            while(i < *pcGlyphs && i >= 0)
             {
                 INT nextIndex;
                 INT prevCount = *pcGlyphs;
 
                 nextIndex = GSUB_apply_lookup(lookup, GET_BE_WORD(feature->LookupListIndex[lookup_index]), pwOutGlyphs, i, write_dir, pcGlyphs);
-                if (nextIndex > GSUB_E_NOGLYPH)
+                if (*pcGlyphs != prevCount)
                 {
                     UpdateClusters(nextIndex, *pcGlyphs - prevCount, write_dir, cChars, pwLogClust);
                     i = nextIndex;
                 }
                 else
-                    i++;
+                    i+=write_dir;
             }
         }
         return *pcGlyphs;
