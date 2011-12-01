@@ -534,49 +534,51 @@ static BOOL surface_need_pbo(const struct wined3d_surface *surface, const struct
     return TRUE;
 }
 
+static void surface_load_pbo(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
+{
+    struct wined3d_context *context;
+    GLenum error;
+
+    context = context_acquire(surface->resource.device, NULL);
+    ENTER_GL();
+
+    GL_EXTCALL(glGenBuffersARB(1, &surface->pbo));
+    error = glGetError();
+    if (!surface->pbo || error != GL_NO_ERROR)
+        ERR("Failed to create a PBO with error %s (%#x).\n", debug_glerror(error), error);
+
+    TRACE("Binding PBO %u.\n", surface->pbo);
+
+    GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
+    checkGLcall("glBindBufferARB");
+
+    GL_EXTCALL(glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->resource.size + 4,
+            surface->resource.allocatedMemory, GL_STREAM_DRAW_ARB));
+    checkGLcall("glBufferDataARB");
+
+    GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+    checkGLcall("glBindBufferARB");
+
+    /* We don't need the system memory anymore and we can't even use it for PBOs. */
+    if (!(surface->flags & SFLAG_CLIENT))
+    {
+        HeapFree(GetProcessHeap(), 0, surface->resource.heapMemory);
+        surface->resource.heapMemory = NULL;
+    }
+    surface->resource.allocatedMemory = NULL;
+    surface->flags |= SFLAG_PBO;
+    LEAVE_GL();
+    context_release(context);
+}
+
 static void surface_prepare_system_memory(struct wined3d_surface *surface)
 {
-    struct wined3d_device *device = surface->resource.device;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = &surface->resource.device->adapter->gl_info;
 
     TRACE("surface %p.\n", surface);
 
     if (!(surface->flags & SFLAG_PBO) && surface_need_pbo(surface, gl_info))
-    {
-        struct wined3d_context *context;
-        GLenum error;
-
-        context = context_acquire(device, NULL);
-        ENTER_GL();
-
-        GL_EXTCALL(glGenBuffersARB(1, &surface->pbo));
-        error = glGetError();
-        if (!surface->pbo || error != GL_NO_ERROR)
-            ERR("Failed to create a PBO with error %s (%#x).\n", debug_glerror(error), error);
-
-        TRACE("Binding PBO %u.\n", surface->pbo);
-
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
-        checkGLcall("glBindBufferARB");
-
-        GL_EXTCALL(glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->resource.size + 4,
-                surface->resource.allocatedMemory, GL_STREAM_DRAW_ARB));
-        checkGLcall("glBufferDataARB");
-
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
-        checkGLcall("glBindBufferARB");
-
-        /* We don't need the system memory anymore and we can't even use it for PBOs. */
-        if (!(surface->flags & SFLAG_CLIENT))
-        {
-            HeapFree(GetProcessHeap(), 0, surface->resource.heapMemory);
-            surface->resource.heapMemory = NULL;
-        }
-        surface->resource.allocatedMemory = NULL;
-        surface->flags |= SFLAG_PBO;
-        LEAVE_GL();
-        context_release(context);
-    }
+        surface_load_pbo(surface, gl_info);
     else if (!(surface->resource.allocatedMemory || surface->flags & SFLAG_PBO))
     {
         /* Whatever surface we have, make sure that there is memory allocated
@@ -6136,6 +6138,11 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location, c
     if (surface->flags & location)
     {
         TRACE("Location already up to date.\n");
+
+        if (location == SFLAG_INSYSMEM && !(surface->flags & SFLAG_PBO)
+                && surface_need_pbo(surface, gl_info))
+            surface_load_pbo(surface, gl_info);
+
         return WINED3D_OK;
     }
 
