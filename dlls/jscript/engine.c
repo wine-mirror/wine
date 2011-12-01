@@ -3058,26 +3058,24 @@ static HRESULT interp_lteq(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.8.2 */
-HRESULT greater_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+static HRESULT interp_gt(exec_ctx_t *ctx)
 {
-    binary_expression_t *expr = (binary_expression_t*)_expr;
-    VARIANT rval, lval;
+    VARIANT *l, *r;
     BOOL b;
     HRESULT hres;
 
-    TRACE("\n");
+    r = stack_pop(ctx);
+    l = stack_pop(ctx);
 
-    hres = get_binary_expr_values(ctx, expr, ei, &lval, &rval);
+    TRACE("%s > %s\n", debugstr_variant(l), debugstr_variant(r));
+
+    hres = less_eval(ctx->parser->script, r, l, FALSE, &ctx->ei, &b);
+    VariantClear(l);
+    VariantClear(r);
     if(FAILED(hres))
         return hres;
 
-    hres = less_eval(ctx, &rval, &lval, FALSE, ei, &b);
-    VariantClear(&lval);
-    VariantClear(&rval);
-    if(FAILED(hres))
-        return hres;
-
-    return return_bool(ret, b);
+    return stack_push_bool(ctx, b);
 }
 
 /* ECMA-262 3rd Edition    11.8.4 */
