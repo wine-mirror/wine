@@ -56,6 +56,7 @@ typedef struct _func_stack {
     X(jmp,        0, ARG_ADDR,   0)        \
     X(jmp_nz,     0, ARG_ADDR,   0)        \
     X(jmp_z,      0, ARG_ADDR,   0)        \
+    X(lt,         1, 0,0)                  \
     X(minus,      1, 0,0)                  \
     X(mod,        1, 0,0)                  \
     X(mul,        1, 0,0)                  \
@@ -560,7 +561,6 @@ HRESULT post_increment_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcep
 HRESULT post_decrement_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT pre_increment_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT pre_decrement_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
-HRESULT less_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT lesseq_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT greater_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT greatereq_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
