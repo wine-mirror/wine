@@ -520,6 +520,20 @@ static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
     return WINED3D_OK;
 }
 
+static BOOL surface_need_pbo(const struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
+{
+    if (surface->resource.pool == WINED3DPOOL_SYSTEMMEM)
+        return FALSE;
+    if (!(surface->flags & SFLAG_DYNLOCK))
+        return FALSE;
+    if (surface->flags & (SFLAG_CONVERTED | SFLAG_NONPOW2 | SFLAG_PIN_SYSMEM))
+        return FALSE;
+    if (!gl_info->supported[ARB_PIXEL_BUFFER_OBJECT])
+        return FALSE;
+
+    return TRUE;
+}
+
 static void surface_prepare_system_memory(struct wined3d_surface *surface)
 {
     struct wined3d_device *device = surface->resource.device;
@@ -527,12 +541,7 @@ static void surface_prepare_system_memory(struct wined3d_surface *surface)
 
     TRACE("surface %p.\n", surface);
 
-    /* Create a PBO for dynamically locked surfaces but don't do it for
-     * converted or NPOT surfaces. Also don't create a PBO for systemmem
-     * surfaces. */
-    if (gl_info->supported[ARB_PIXEL_BUFFER_OBJECT] && (surface->flags & SFLAG_DYNLOCK)
-            && !(surface->flags & (SFLAG_PBO | SFLAG_CONVERTED | SFLAG_NONPOW2 | SFLAG_PIN_SYSMEM))
-            && (surface->resource.pool != WINED3DPOOL_SYSTEMMEM))
+    if (!(surface->flags & SFLAG_PBO) && surface_need_pbo(surface, gl_info))
     {
         struct wined3d_context *context;
         GLenum error;
