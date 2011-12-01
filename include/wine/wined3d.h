@@ -1696,12 +1696,6 @@ struct wined3d_device_creation_parameters
     DWORD flags;
 };
 
-typedef struct _WINED3DDEVINFO_STAGETIMINGS
-{
-    float MemoryProcessingPercent;
-    float ComputationProcessingPercent;
-} WINED3DDEVINFO_STAGETIMINGS;
-
 typedef struct _WINED3DRASTER_STATUS
 {
     BOOL InVBlank;
