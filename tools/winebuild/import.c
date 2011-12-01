@@ -1071,6 +1071,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             case CPU_SPARC:
                 output( "\tset %d, %%g1\n", (idx << 16) | j );
                 output( "\tb,a %s\n", asm_name("__wine_delay_load_asm") );
+                output( "\tnop\n" );
                 break;
             case CPU_ARM:
                 output( "\tstmfd  SP!, {r0-r3}\n" );
