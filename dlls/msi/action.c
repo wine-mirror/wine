@@ -2689,40 +2689,36 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
     return rc;
 }
 
-static void delete_reg_key_or_value( HKEY hkey_root, LPCWSTR key, LPCWSTR value, BOOL delete_key )
+static void delete_reg_value( HKEY root, const WCHAR *keypath, const WCHAR *value )
 {
     LONG res;
     HKEY hkey;
     DWORD num_subkeys, num_values;
 
-    if (delete_key)
-    {
-        if ((res = RegDeleteTreeW( hkey_root, key )))
-        {
-            TRACE("Failed to delete key %s (%d)\n", debugstr_w(key), res);
-        }
-        return;
-    }
-
-    if (!(res = RegOpenKeyW( hkey_root, key, &hkey )))
+    if (!(res = RegOpenKeyW( root, keypath, &hkey )))
     {
         if ((res = RegDeleteValueW( hkey, value )))
         {
-            TRACE("Failed to delete value %s (%d)\n", debugstr_w(value), res);
+            TRACE("failed to delete value %s (%d)\n", debugstr_w(value), res);
         }
         res = RegQueryInfoKeyW( hkey, NULL, NULL, NULL, &num_subkeys, NULL, NULL, &num_values,
                                 NULL, NULL, NULL, NULL );
         RegCloseKey( hkey );
         if (!res && !num_subkeys && !num_values)
         {
-            TRACE("Removing empty key %s\n", debugstr_w(key));
-            RegDeleteKeyW( hkey_root, key );
+            TRACE("removing empty key %s\n", debugstr_w(keypath));
+            RegDeleteKeyW( root, keypath );
         }
         return;
     }
-    TRACE("Failed to open key %s (%d)\n", debugstr_w(key), res);
+    TRACE("failed to open key %s (%d)\n", debugstr_w(keypath), res);
 }
 
+static void delete_reg_key( HKEY root, const WCHAR *keypath )
+{
+    LONG res = RegDeleteTreeW( root, keypath );
+    if (res) TRACE("failed to delete key %s (%d)\n", debugstr_w(keypath), res);
+}
 
 static UINT ITERATE_RemoveRegistryValuesOnUninstall( MSIRECORD *row, LPVOID param )
 {
@@ -2779,7 +2775,8 @@ static UINT ITERATE_RemoveRegistryValuesOnUninstall( MSIRECORD *row, LPVOID para
 
     keypath = get_keypath( package, hkey_root, deformated_key );
     msi_free( deformated_key );
-    delete_reg_key_or_value( hkey_root, keypath, deformated_name, delete_key );
+    if (delete_key) delete_reg_key( hkey_root, keypath );
+    else delete_reg_value( hkey_root, keypath, deformated_name );
     msi_free( keypath );
 
     uirow = MSI_CreateRecord( 2 );
@@ -2843,7 +2840,8 @@ static UINT ITERATE_RemoveRegistryValuesOnInstall( MSIRECORD *row, LPVOID param 
 
     keypath = get_keypath( package, hkey_root, deformated_key );
     msi_free( deformated_key );
-    delete_reg_key_or_value( hkey_root, keypath, deformated_name, delete_key );
+    if (delete_key) delete_reg_key( hkey_root, keypath );
+    else delete_reg_value( hkey_root, keypath, deformated_name );
     msi_free( keypath );
 
     uirow = MSI_CreateRecord( 2 );
