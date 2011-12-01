@@ -406,6 +406,8 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_eq2);
     case EXPR_GREATER:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_gt);
+    case EXPR_GREATEREQ:
+        return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_gteq);
     case EXPR_IDENT:
         return push_instr_bstr(ctx, OP_ident, ((identifier_expression_t*)expr)->identifier);
     case EXPR_IN:
