@@ -213,8 +213,18 @@ UINT msi_strcpy_to_awstring( LPCWSTR str, awstring *awbuf, DWORD *sz )
 const WCHAR *msi_get_target_folder( MSIPACKAGE *package, const WCHAR *name )
 {
     MSIFOLDER *folder = msi_get_loaded_folder( package, name );
-    if (folder) return folder->ResolvedTarget;
-    return NULL;
+
+    if (!folder) return NULL;
+    if (!folder->ResolvedTarget)
+    {
+        MSIFOLDER *parent = folder;
+        while (parent->Parent && strcmpW( parent->Parent, parent->Directory ))
+        {
+            parent = msi_get_loaded_folder( package, parent->Parent );
+        }
+        msi_resolve_target_folder( package, parent->Directory, TRUE );
+    }
+    return folder->ResolvedTarget;
 }
 
 /***********************************************************************

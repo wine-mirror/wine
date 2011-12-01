@@ -3517,14 +3517,8 @@ static WCHAR *get_link_file( MSIPACKAGE *package, MSIRECORD *row )
     link_folder = msi_get_target_folder( package, directory );
     if (!link_folder)
     {
-        /* some installers use a separate root */
-        MSIFOLDER *folder = msi_get_loaded_folder( package, directory );
-        while (folder->Parent && strcmpW( folder->Parent, folder->Directory ))
-        {
-            folder = msi_get_loaded_folder( package, folder->Parent );
-        }
-        msi_resolve_target_folder( package, folder->Directory, TRUE );
-        link_folder = msi_get_target_folder( package, directory );
+        ERR("unable to resolve folder %s\n", debugstr_w(directory));
+        return NULL;
     }
     /* may be needed because of a bug somewhere else */
     msi_create_full_path( link_folder );
