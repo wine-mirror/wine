@@ -527,19 +527,6 @@ static void surface_prepare_system_memory(struct wined3d_surface *surface)
 
     TRACE("surface %p.\n", surface);
 
-    /* Performance optimization: Count how often a surface is locked, if it is
-     * locked regularly do not throw away the system memory copy. This avoids
-     * the need to download the surface from OpenGL all the time. The surface
-     * is still downloaded if the OpenGL texture is changed. */
-    if (!(surface->flags & SFLAG_DYNLOCK))
-    {
-        if (++surface->lockCount > MAXLOCKCOUNT)
-        {
-            TRACE("Surface is locked regularly, not freeing the system memory copy any more.\n");
-            surface->flags |= SFLAG_DYNLOCK;
-        }
-    }
-
     /* Create a PBO for dynamically locked surfaces but don't do it for
      * converted or NPOT surfaces. Also don't create a PBO for systemmem
      * surfaces. */
@@ -3717,6 +3704,19 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
 
     if (!(surface->flags & SFLAG_LOCKABLE))
         WARN("Trying to lock unlockable surface.\n");
+
+    /* Performance optimization: Count how often a surface is mapped, if it is
+     * mapped regularly do not throw away the system memory copy. This avoids
+     * the need to download the surface from OpenGL all the time. The surface
+     * is still downloaded if the OpenGL texture is changed. */
+    if (!(surface->flags & SFLAG_DYNLOCK))
+    {
+        if (++surface->lockCount > MAXLOCKCOUNT)
+        {
+            TRACE("Surface is mapped regularly, not freeing the system memory copy any more.\n");
+            surface->flags |= SFLAG_DYNLOCK;
+        }
+    }
 
     surface->surface_ops->surface_map(surface, rect, flags);
 
