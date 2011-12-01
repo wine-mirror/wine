@@ -340,6 +340,12 @@ static const char* contextual_features[] =
 
 static OPENTYPE_FEATURE_RECORD standard_features[] =
 {
+    { MS_MAKE_TAG('c','c','m','p'), 1},
+    { MS_MAKE_TAG('l','o','c','l'), 1},
+};
+
+static OPENTYPE_FEATURE_RECORD latin_features[] =
+{
     { MS_MAKE_TAG('l','i','g','a'), 1},
     { MS_MAKE_TAG('c','l','i','g'), 1},
 };
@@ -539,11 +545,11 @@ typedef struct ScriptShapeDataTag {
 static const ScriptShapeData ShapingData[] =
 {
     {{ standard_features, 2}, NULL, "", "", NULL, NULL},
-    {{ standard_features, 2}, NULL, "latn", "", NULL, NULL},
-    {{ standard_features, 2}, NULL, "latn", "", NULL, NULL},
-    {{ standard_features, 2}, NULL, "latn", "", NULL, NULL},
+    {{ latin_features, 2}, NULL, "latn", "", NULL, NULL},
+    {{ latin_features, 2}, NULL, "latn", "", NULL, NULL},
+    {{ latin_features, 2}, NULL, "latn", "", NULL, NULL},
     {{ standard_features, 2}, NULL, "" , "", NULL, NULL},
-    {{ standard_features, 2}, NULL, "latn", "", NULL, NULL},
+    {{ latin_features, 2}, NULL, "latn", "", NULL, NULL},
     {{ arabic_features, 6}, required_arabic_features, "arab", "", ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
     {{ arabic_features, 6}, required_arabic_features, "arab", "", ContextualShape_Arabic, ShapeCharGlyphProp_Arabic},
     {{ hebrew_features, 1}, NULL, "hebr", "", NULL, NULL},
@@ -583,7 +589,7 @@ static const ScriptShapeData ShapingData[] =
     {{ devanagari_features, 6}, required_telugu_features, "mlym", "mlm2", ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
     {{ devanagari_features, 6}, required_telugu_features, "mlym", "mlm2", ContextualShape_Malayalam, ShapeCharGlyphProp_Malayalam},
     {{ standard_features, 2}, NULL, "" , "", NULL, NULL},
-    {{ standard_features, 2}, NULL, "latn" , "", NULL, NULL},
+    {{ latin_features, 2}, NULL, "latn" , "", NULL, NULL},
     {{ standard_features, 2}, NULL, "" , "", NULL, NULL},
 };
 
