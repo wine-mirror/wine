@@ -38,7 +38,7 @@ static BOOL set_component( WCHAR **str, DWORD *str_len, WCHAR *value, DWORD len,
 {
     if (!*str)
     {
-        if (len && *str_len && (flags & ICU_DECODE))
+        if (len && *str_len && (flags & (ICU_DECODE|ICU_ESCAPE)))
         {
             set_last_error( ERROR_INVALID_PARAMETER );
             return FALSE;
@@ -89,17 +89,92 @@ static WCHAR *decode_url( LPCWSTR url, DWORD *len )
     return ret;
 }
 
+static BOOL need_escape( WCHAR c )
+{
+    if (isalnumW( c )) return FALSE;
+
+    if (c <= 31 || c >= 127) return TRUE;
+    else
+    {
+        switch (c)
+        {
+        case ' ':
+        case '"':
+        case '#':
+        case '%':
+        case '<':
+        case '>':
+        case ']':
+        case '\\':
+        case '[':
+        case '^':
+        case '`':
+        case '{':
+        case '|':
+        case '}':
+        case '~':
+            return TRUE;
+        default:
+            return FALSE;
+        }
+    }
+}
+
+static DWORD copy_escape( WCHAR *dst, const WCHAR *src, DWORD len )
+{
+    static const WCHAR hex[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+    DWORD ret = len;
+    unsigned int i;
+    WCHAR *p = dst;
+
+    for (i = 0; i < len; i++, p++)
+    {
+        if (need_escape( src[i] ))
+        {
+            p[0] = '%';
+            p[1] = hex[(src[i] >> 4) & 0xf];
+            p[2] = hex[src[i] & 0xf];
+            ret += 2;
+            p += 2;
+        }
+        else *p = src[i];
+    }
+    dst[ret] = 0;
+    return ret;
+}
+
+static WCHAR *escape_url( LPCWSTR url, DWORD *len )
+{
+    WCHAR *ret;
+    const WCHAR *p, *q;
+
+    if ((p = q = strrchrW( url, '/' )))
+    {
+        while (*q)
+        {
+            if (need_escape( *q )) *len += 2;
+            q++;
+        }
+    }
+    if (!(ret = heap_alloc( (*len + 1) * sizeof(WCHAR) ))) return NULL;
+    if (!p) strcpyW( ret, url );
+    else
+    {
+        memcpy( ret, url, (p - url) * sizeof(WCHAR) );
+        copy_escape( ret + (p - url), p, q - p );
+    }
+    return ret;
+}
+
 /***********************************************************************
  *          WinHttpCrackUrl (winhttp.@)
  */
 BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONENTSW uc )
 {
     BOOL ret = FALSE;
-    WCHAR *p, *q, *r, *url_decoded = NULL;
+    WCHAR *p, *q, *r, *url_decoded = NULL, *url_escaped = NULL;
 
     TRACE("%s, %d, %x, %p\n", debugstr_w(url), len, flags, uc);
-
-    if (flags & ICU_ESCAPE) FIXME("flag ICU_ESCAPE not supported\n");
 
     if (!url || !uc || uc->dwStructSize != sizeof(URL_COMPONENTS))
     {
@@ -108,7 +183,16 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
     }
     if (!len) len = strlenW( url );
 
-    if (flags & ICU_DECODE)
+    if (flags & ICU_ESCAPE)
+    {
+        if (!(url_escaped = escape_url( url, &len )))
+        {
+            set_last_error( ERROR_OUTOFMEMORY );
+            return FALSE;
+        }
+        url = url_escaped;
+    }
+    else if (flags & ICU_DECODE)
     {
         if (!(url_decoded = decode_url( url, &len )))
         {
@@ -211,6 +295,7 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
 
 exit:
     heap_free( url_decoded );
+    heap_free( url_escaped );
     return ret;
 }
 
@@ -233,60 +318,6 @@ static BOOL uses_default_port( INTERNET_SCHEME scheme, INTERNET_PORT port )
     if ((scheme == INTERNET_SCHEME_HTTP) && (port == INTERNET_DEFAULT_HTTP_PORT)) return TRUE;
     if ((scheme == INTERNET_SCHEME_HTTPS) && (port == INTERNET_DEFAULT_HTTPS_PORT)) return TRUE;
     return FALSE;
-}
-
-static BOOL need_escape( WCHAR c )
-{
-    if (isalnumW( c )) return FALSE;
-
-    if (c <= 31 || c >= 127) return TRUE;
-    else
-    {
-        switch (c)
-        {
-        case ' ':
-        case '"':
-        case '#':
-        case '%':
-        case '<':
-        case '>':
-        case ']':
-        case '\\':
-        case '[':
-        case '^':
-        case '`':
-        case '{':
-        case '|':
-        case '}':
-        case '~':
-            return TRUE;
-        default:
-            return FALSE;
-        }
-    }
-}
-
-static DWORD copy_escape( WCHAR *dst, const WCHAR *src, DWORD len )
-{
-    static const WCHAR hex[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
-    DWORD ret = len;
-    unsigned int i;
-    WCHAR *p = dst;
-
-    for (i = 0; i < len; i++, p++)
-    {
-        if (need_escape( src[i] ))
-        {
-            p[0] = '%';
-            p[1] = hex[(src[i] >> 4) & 0xf];
-            p[2] = hex[src[i] & 0xf];
-            ret += 2;
-            p += 2;
-        }
-        else *p = src[i];
-    }
-    dst[ret] = 0;
-    return ret;
 }
 
 static DWORD comp_length( DWORD len, DWORD flags, WCHAR *comp )
