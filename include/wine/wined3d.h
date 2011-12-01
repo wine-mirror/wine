@@ -1702,26 +1702,6 @@ typedef struct _WINED3DRASTER_STATUS
     UINT ScanLine;
 } WINED3DRASTER_STATUS;
 
-typedef struct WINED3DRESOURCESTATS
-{
-    BOOL bThrashing;
-    DWORD ApproxBytesDownloaded;
-    DWORD NumEvicts;
-    DWORD NumVidCreates;
-    DWORD LastPri;
-    DWORD NumUsed;
-    DWORD NumUsedInVidMem;
-    DWORD WorkingSet;
-    DWORD WorkingSetBytes;
-    DWORD TotalManaged;
-    DWORD TotalBytes;
-} WINED3DRESOURCESTATS;
-
-typedef struct _WINED3DDEVINFO_RESOURCEMANAGER
-{
-    WINED3DRESOURCESTATS stats[WINED3DRTYPECOUNT];
-} WINED3DDEVINFO_RESOURCEMANAGER;
-
 typedef struct _WINED3DDEVINFO_VERTEXSTATS
 {
     DWORD NumRenderedTriangles;
