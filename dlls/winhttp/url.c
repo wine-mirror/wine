@@ -210,7 +210,7 @@ BOOL WINAPI WinHttpCrackUrl( LPCWSTR url, DWORD len, DWORD flags, LPURL_COMPONEN
           debugstr_wn( uc->lpszExtraInfo, uc->dwExtraInfoLength ));
 
 exit:
-    HeapFree( GetProcessHeap(), 0, url_decoded );
+    heap_free( url_decoded );
     return ret;
 }
 

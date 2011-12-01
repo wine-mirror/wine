@@ -532,7 +532,7 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
 
     pCRYPTO_set_id_callback(ssl_thread_id);
     num_ssl_locks = pCRYPTO_num_locks();
-    ssl_locks = HeapAlloc(GetProcessHeap(), 0, num_ssl_locks * sizeof(CRITICAL_SECTION));
+    ssl_locks = heap_alloc(num_ssl_locks * sizeof(CRITICAL_SECTION));
     if (!ssl_locks)
     {
         set_last_error( ERROR_OUTOFMEMORY );
@@ -577,7 +577,7 @@ void netconn_unload( void )
             ssl_locks[i].DebugInfo->Spare[0] = 0;
             DeleteCriticalSection( &ssl_locks[i] );
         }
-        HeapFree( GetProcessHeap(), 0, ssl_locks );
+        heap_free( ssl_locks );
     }
     DeleteCriticalSection(&init_ssl_cs);
 #endif
