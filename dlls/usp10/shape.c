@@ -2597,7 +2597,10 @@ static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
 
 static int gurmukhi_lex(WCHAR c)
 {
-    return unicode_lex(c);
+    if (c == 0x0A71)
+        return lex_Modifier;
+    else
+        return unicode_lex(c);
 }
 
 static const ConsonantComponents Gurmukhi_consonants[] = {
