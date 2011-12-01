@@ -410,6 +410,8 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_in);
     case EXPR_LESS:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_lt);
+    case EXPR_LESSEQ:
+        return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_lteq);
     case EXPR_LITERAL:
         return compile_literal(ctx, ((literal_expression_t*)expr)->literal);
     case EXPR_LOGNEG:
