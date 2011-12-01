@@ -41,6 +41,9 @@
 # include <sys/prctl.h>
 #endif
 #include <sys/types.h>
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>
+#endif
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -1505,11 +1508,11 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline, const WCHA
 
     if (!(pid = fork()))  /* child */
     {
-        close( fd[0] );
-
-        if (flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS))
+        if (!(pid = fork()))  /* grandchild */
         {
-            if (!(pid = fork()))
+            close( fd[0] );
+
+            if (flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS))
             {
                 int nullfd = open( "/dev/null", O_RDWR );
                 setsid();
@@ -1521,36 +1524,41 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline, const WCHA
                     close( nullfd );
                 }
             }
-            else if (pid != -1) _exit(0);  /* parent */
+            else
+            {
+                if (stdin_fd != -1)
+                {
+                    dup2( stdin_fd, 0 );
+                    close( stdin_fd );
+                }
+                if (stdout_fd != -1)
+                {
+                    dup2( stdout_fd, 1 );
+                    close( stdout_fd );
+                }
+                if (stderr_fd != -1)
+                {
+                    dup2( stderr_fd, 2 );
+                    close( stderr_fd );
+                }
+            }
+
+            /* Reset signals that we previously set to SIG_IGN */
+            signal( SIGPIPE, SIG_DFL );
+
+            if (newdir) chdir(newdir);
+
+            if (argv && envp) execve( filename, argv, envp );
         }
-        else
+
+        if (pid <= 0)  /* grandchild if exec failed or child if fork failed */
         {
-            if (stdin_fd != -1)
-            {
-                dup2( stdin_fd, 0 );
-                close( stdin_fd );
-            }
-            if (stdout_fd != -1)
-            {
-                dup2( stdout_fd, 1 );
-                close( stdout_fd );
-            }
-            if (stderr_fd != -1)
-            {
-                dup2( stderr_fd, 2 );
-                close( stderr_fd );
-            }
+            err = errno;
+            write( fd[1], &err, sizeof(err) );
+            _exit(1);
         }
 
-        /* Reset signals that we previously set to SIG_IGN */
-        signal( SIGPIPE, SIG_DFL );
-
-        if (newdir) chdir(newdir);
-
-        if (argv && envp) execve( filename, argv, envp );
-        err = errno;
-        write( fd[1], &err, sizeof(err) );
-        _exit(1);
+        _exit(0); /* child if fork succeeded */
     }
     HeapFree( GetProcessHeap(), 0, argv );
     HeapFree( GetProcessHeap(), 0, envp );
@@ -1558,10 +1566,18 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline, const WCHA
     if (stdout_fd != -1) close( stdout_fd );
     if (stderr_fd != -1) close( stderr_fd );
     close( fd[1] );
-    if ((pid != -1) && (read( fd[0], &err, sizeof(err) ) > 0))  /* exec failed */
+    if (pid != -1)
     {
-        errno = err;
-        pid = -1;
+        /* reap child */
+        do {
+            err = waitpid(pid, NULL, 0);
+        } while (err < 0 && errno == EINTR);
+
+        if (read( fd[0], &err, sizeof(err) ) > 0)  /* exec or second fork failed */
+        {
+            errno = err;
+            pid = -1;
+        }
     }
     if (pid == -1) FILE_SetDosError();
     close( fd[0] );
@@ -1805,11 +1821,11 @@ static pid_t exec_loader( LPCWSTR cmd_line, unsigned int flags, int socketfd,
 
     if (exec_only || !(pid = fork()))  /* child */
     {
-        char preloader_reserve[64], socket_env[64];
-
-        if (flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS))
+        if (exec_only || !(pid = fork()))  /* grandchild */
         {
-            if (!(pid = fork()))
+            char preloader_reserve[64], socket_env[64];
+
+            if (flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS))
             {
                 int fd = open( "/dev/null", O_RDWR );
                 setsid();
@@ -1821,44 +1837,55 @@ static pid_t exec_loader( LPCWSTR cmd_line, unsigned int flags, int socketfd,
                     close( fd );
                 }
             }
-            else if (pid != -1) _exit(0);  /* parent */
-        }
-        else
-        {
-            if (stdin_fd != -1) dup2( stdin_fd, 0 );
-            if (stdout_fd != -1) dup2( stdout_fd, 1 );
-        }
-
-        if (stdin_fd != -1) close( stdin_fd );
-        if (stdout_fd != -1) close( stdout_fd );
-
-        /* Reset signals that we previously set to SIG_IGN */
-        signal( SIGPIPE, SIG_DFL );
-
-        sprintf( socket_env, "WINESERVERSOCKET=%u", socketfd );
-        sprintf( preloader_reserve, "WINEPRELOADRESERVE=%lx-%lx",
-                 (unsigned long)binary_info->res_start, (unsigned long)binary_info->res_end );
-
-        putenv( preloader_reserve );
-        putenv( socket_env );
-        if (winedebug) putenv( winedebug );
-        if (wineloader) putenv( wineloader );
-        if (unixdir) chdir(unixdir);
-
-        if (argv)
-        {
-            do
+            else
             {
-                wine_exec_wine_binary( loader, argv, getenv("WINELOADER") );
+                if (stdin_fd != -1) dup2( stdin_fd, 0 );
+                if (stdout_fd != -1) dup2( stdout_fd, 1 );
             }
+
+            if (stdin_fd != -1) close( stdin_fd );
+            if (stdout_fd != -1) close( stdout_fd );
+
+            /* Reset signals that we previously set to SIG_IGN */
+            signal( SIGPIPE, SIG_DFL );
+
+            sprintf( socket_env, "WINESERVERSOCKET=%u", socketfd );
+            sprintf( preloader_reserve, "WINEPRELOADRESERVE=%lx-%lx",
+                     (unsigned long)binary_info->res_start, (unsigned long)binary_info->res_end );
+
+            putenv( preloader_reserve );
+            putenv( socket_env );
+            if (winedebug) putenv( winedebug );
+            if (wineloader) putenv( wineloader );
+            if (unixdir) chdir(unixdir);
+
+            if (argv)
+            {
+                do
+                {
+                    wine_exec_wine_binary( loader, argv, getenv("WINELOADER") );
+                }
 #ifdef __APPLE__
-            while (errno == ENOTSUP && exec_only && terminate_main_thread());
+                while (errno == ENOTSUP && exec_only && terminate_main_thread());
 #else
-            while (0);
+                while (0);
 #endif
+            }
+            _exit(1);
         }
-        _exit(1);
+
+        _exit(pid == -1);
     }
+
+    if (pid != -1)
+    {
+        /* reap child */
+        pid_t wret;
+        do {
+            wret = waitpid(pid, NULL, 0);
+        } while (wret < 0 && errno == EINTR);
+    }
+
     HeapFree( GetProcessHeap(), 0, wineloader );
     HeapFree( GetProcessHeap(), 0, argv );
     return pid;
