@@ -33,6 +33,7 @@
 #include "wine/test.h"
 
 static BOOL (WINAPI *pGdiAlphaBlend)(HDC,int,int,int,int,HDC,int,int,int,int,BLENDFUNCTION);
+static BOOL (WINAPI *pGdiGradientFill)(HDC,TRIVERTEX*,ULONG,void*,ULONG,ULONG);
 static DWORD (WINAPI *pSetLayout)(HDC hdc, DWORD layout);
 
 static inline int get_bitmap_stride( int width, int bpp )
@@ -3350,6 +3351,89 @@ static void test_GdiAlphaBlend(void)
 
 }
 
+static void test_GdiGradientFill(void)
+{
+    HDC hdc;
+    BOOL ret;
+    HBITMAP bmp;
+    BITMAPINFO *bmi;
+    void *bits;
+    GRADIENT_RECT rect[] = { { 0, 0 }, { 0, 1 }, { 2, 3 } };
+    GRADIENT_TRIANGLE tri[] = { { 0, 0, 0 }, { 0, 1, 2 }, { 0, 2, 1 }, { 0, 1, 3 } };
+    TRIVERTEX vt[3] = { { 2,  2,  0xff00, 0x0000, 0x0000, 0x8000 },
+                        { 10, 10, 0x0000, 0xff00, 0x0000, 0x8000 },
+                        { 20, 10, 0x0000, 0x0000, 0xff00, 0xff00 } };
+
+    if (!pGdiGradientFill)
+    {
+        win_skip( "GdiGradientFill is not implemented\n" );
+        return;
+    }
+
+    hdc = CreateCompatibleDC( NULL );
+    bmi = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, FIELD_OFFSET( BITMAPINFO, bmiColors[3] ));
+    bmi->bmiHeader.biSize = sizeof(bmi->bmiHeader);
+    bmi->bmiHeader.biHeight = 20;
+    bmi->bmiHeader.biWidth = 20;
+    bmi->bmiHeader.biBitCount = 32;
+    bmi->bmiHeader.biPlanes = 1;
+    bmi->bmiHeader.biCompression = BI_RGB;
+    bmp = CreateDIBSection(hdc, bmi, DIB_RGB_COLORS, &bits, NULL, 0);
+    ok( bmp != NULL, "couldn't create bitmap\n" );
+    SelectObject( hdc, bmp );
+
+    SetLastError( 0xdeadbeef );
+    ret = pGdiGradientFill( hdc, vt, 3, rect, 1, GRADIENT_FILL_RECT_H );
+    ok( ret, "GdiGradientFill failed err %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pGdiGradientFill( hdc, vt, 3, rect, 1, 3 );
+    ok( !ret, "GdiGradientFill succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pGdiGradientFill( (HDC)0xdead, vt, 3, rect, 1, GRADIENT_FILL_RECT_H );
+    ok( !ret, "GdiGradientFill succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pGdiGradientFill( NULL, NULL, 0, rect, 1, GRADIENT_FILL_RECT_H );
+    ok( !ret, "GdiGradientFill succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    ret = pGdiGradientFill( hdc, NULL, 0, rect, 1, GRADIENT_FILL_RECT_H );
+    ok( !ret, "GdiGradientFill succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pGdiGradientFill( hdc, NULL, 3, rect, 1, GRADIENT_FILL_RECT_H );
+    ok( !ret, "GdiGradientFill succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pGdiGradientFill( hdc, vt, 3, NULL, 0, GRADIENT_FILL_RECT_H );
+    ok( !ret, "GdiGradientFill succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pGdiGradientFill( hdc, vt, 3, NULL, 1, GRADIENT_FILL_RECT_H );
+    ok( !ret, "GdiGradientFill succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pGdiGradientFill( hdc, vt, 3, rect, 0, GRADIENT_FILL_RECT_H );
+    ok( !ret, "GdiGradientFill succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pGdiGradientFill( hdc, vt, 1, tri, 0, GRADIENT_FILL_TRIANGLE );
+    ok( !ret, "GdiGradientFill succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pGdiGradientFill( hdc, vt, 1, tri, 1, GRADIENT_FILL_TRIANGLE );
+    ok( ret, "GdiGradientFill failed err %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pGdiGradientFill( hdc, vt, 3, tri, 2, GRADIENT_FILL_TRIANGLE );
+    ok( ret, "GdiGradientFill failed err %u\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pGdiGradientFill( hdc, vt, 3, tri, 3, GRADIENT_FILL_TRIANGLE );
+    ok( ret, "GdiGradientFill failed err %u\n", GetLastError() );
+
+    DeleteDC( hdc );
+    DeleteObject( bmp );
+}
+
 static void test_clipping(void)
 {
     HBITMAP bmpDst;
@@ -4911,8 +4995,9 @@ START_TEST(bitmap)
     HMODULE hdll;
 
     hdll = GetModuleHandle("gdi32.dll");
-    pGdiAlphaBlend = (void*)GetProcAddress(hdll, "GdiAlphaBlend");
-    pSetLayout     = (void*)GetProcAddress(hdll, "SetLayout");
+    pGdiAlphaBlend   = (void*)GetProcAddress(hdll, "GdiAlphaBlend");
+    pGdiGradientFill = (void*)GetProcAddress(hdll, "GdiGradientFill");
+    pSetLayout       = (void*)GetProcAddress(hdll, "SetLayout");
 
     test_createdibitmap();
     test_dibsections();
@@ -4933,6 +5018,7 @@ START_TEST(bitmap)
     test_StretchBlt();
     test_StretchDIBits();
     test_GdiAlphaBlend();
+    test_GdiGradientFill();
     test_32bit_bitmap_blt();
     test_bitmapinfoheadersize();
     test_get16dibits();

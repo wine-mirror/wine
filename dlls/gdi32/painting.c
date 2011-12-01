@@ -1217,19 +1217,26 @@ POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut )
 
 /******************************************************************************
  *           GdiGradientFill   (GDI32.@)
- *
- *  FIXME: we don't support the Alpha channel properly
  */
 BOOL WINAPI GdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
                           void * grad_array, ULONG ngrad, ULONG mode )
 {
-    DC *dc = get_dc_ptr( hdc );
+    DC *dc;
     PHYSDEV physdev;
     BOOL ret;
 
     TRACE("%p vert_array:%p nvert:%d grad_array:%p ngrad:%d\n", hdc, vert_array, nvert, grad_array, ngrad);
 
-    if (!dc) return FALSE;
+    if (!vert_array || !nvert || !grad_array || !ngrad || mode > GRADIENT_FILL_TRIANGLE)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (!(dc = get_dc_ptr( hdc )))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
 
     update_dc( dc );
     physdev = GET_DC_PHYSDEV( dc, pGradientFill );
