@@ -13,6 +13,137 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: appwiz.rc:55
+msgid "Install/Uninstall"
+msgstr "설치/삭제"
+
+#: appwiz.rc:58
+msgid ""
+"To install a new program from a floppy disk, CD-ROM drive, or your hard "
+"drive, click Install."
+msgstr ""
+"플로피 디스크나 시디롬이나 ,하드디스크에서 새 프로그램을 설치하려면  [설치]"
+"를 클릭하십시오."
+
+#: appwiz.rc:59
+msgid "&Install..."
+msgstr "설치(&I)..."
+
+#: appwiz.rc:62
+msgid ""
+"The following software can be automatically removed. To remove a program or "
+"to modify its installed components, select it from the list and click Change/"
+"Remove."
+msgstr ""
+"이 소프트웨어는 자동으로 삭제되었을 수도 있습니다.설치된 구성요소를 고치거나 "
+"프로그램을 지우려면 , 추가/삭제 목록에서 선택하십시오.."
+
+#: appwiz.rc:64
+msgid "&Support Info"
+msgstr "지원  정보(&S)"
+
+#: appwiz.rc:65 regedit.rc:42 regedit.rc:87
+msgid "&Modify..."
+msgstr "고치기(&M)..."
+
+#: appwiz.rc:66 appwiz.rc:42 msacm32.rc:37 winecfg.rc:202 winecfg.rc:239
+#: wordpad.rc:245
+msgid "&Remove"
+msgstr "제거(&R)"
+
+#: appwiz.rc:72
+msgid "Support Information"
+msgstr "지원 정보"
+
+#: appwiz.rc:75 avifil32.rc:51 credui.rc:49 dinput.rc:43 ieframe.rc:84
+#: localui.rc:41 localui.rc:54 mpr.rc:46 msacm32.rc:50 mshtml.rc:45
+#: mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87 serialui.rc:38
+#: setupapi.rc:56 shlwapi.rc:41 wininet.rc:48 wininet.rc:68 winspool.rc:39
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
+#: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
+#: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
+#: regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216
+#: winecfg.rc:226 wineconsole.rc:131 winefile.rc:134 winefile.rc:157
+#: winefile.rc:187 winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204
+#: wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+msgid "OK"
+msgstr "확인"
+
+#: appwiz.rc:76
+msgid "The following information can be used to get technical support for %s:"
+msgstr "이 정보는 %s: 에서 기술 지원을 받기 위해 사용됩니다"
+
+#: appwiz.rc:77
+msgid "Publisher:"
+msgstr "제작사:"
+
+#: appwiz.rc:78 winefile.rc:172
+msgid "Version:"
+msgstr "버젼:"
+
+#: appwiz.rc:79
+msgid "Contact:"
+msgstr "연락처:"
+
+#: appwiz.rc:80
+msgid "Support Information:"
+msgstr "지원 정보:"
+
+#: appwiz.rc:81
+msgid "Support Telephone:"
+msgstr "지원 전화:"
+
+#: appwiz.rc:82
+msgid "Readme:"
+msgstr "주의사항:"
+
+#: appwiz.rc:83
+msgid "Product Updates:"
+msgstr "제품 업데이트:"
+
+#: appwiz.rc:84
+msgid "Comments:"
+msgstr "설명:"
+
+#: appwiz.rc:97
+msgid "Wine Gecko Installer"
+msgstr "Wine Gecko 설치관리자"
+
+#: appwiz.rc:100
+msgid ""
+"Wine could not find a Gecko package which is needed for applications "
+"embedding HTML to work correctly. Wine can automatically download and "
+"install it for you.\n"
+"\n"
+"Note: it is recommended to use your distribution's packages instead. See "
+"http://wiki.winehq.org/Gecko for details."
+msgstr ""
+"Wine은 HTML 임베딩 프로그램이 정상적으로 작동하기 위해서 필요로 하는 Gecko 패"
+"키지를 찾을 수 없습니다. WIne은 당신을 위해 자동으로 다운로드하고 설치할 것입"
+"니다.\n"
+"\n"
+"\n"
+"주위:당신의 배포판의 패키지를 대신 사용하는 것을 추천합니다. 자세한 것은 "
+"http://wiki.winehq.org/Gecko를 보십시오."
+
+#: appwiz.rc:106
+msgid "&Install"
+msgstr "설치(&I)"
+
+#: appwiz.rc:107 avifil32.rc:52 browseui.rc:37 credui.rc:50 dinput.rc:44
+#: ieframe.rc:85 inetcpl.rc:78 localui.rc:42 localui.rc:55 mpr.rc:47
+#: msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34 oledlg.rc:56
+#: oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57 shlwapi.rc:42
+#: wininet.rc:49 wininet.rc:69 winspool.rc:40 notepad.rc:123 oleview.rc:160
+#: oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156
+#: progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256
+#: regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447
+#: taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
+#: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+msgid "Cancel"
+msgstr "취소"
+
 #: appwiz.rc:28
 msgid "Add/Remove Programs"
 msgstr "프로그램 추가/삭제"
@@ -66,10 +197,6 @@ msgstr "프로그램 (*.exe)"
 msgid "All files (*.*)"
 msgstr "모든 파일 (*.*)"
 
-#: appwiz.rc:42 msacm32.rc:37 winecfg.rc:202 winecfg.rc:239 wordpad.rc:245
-msgid "&Remove"
-msgstr "제거(&R)"
-
 #: appwiz.rc:43
 msgid "&Modify/Remove"
 msgstr "고치기(&M)/제거"
@@ -113,34 +240,6 @@ msgstr "프레임"
 #: avifil32.rc:49
 msgid "Current format:"
 msgstr "현재 형식:"
-
-#: avifil32.rc:51 credui.rc:49 dinput.rc:43 ieframe.rc:84 localui.rc:41
-#: localui.rc:54 mpr.rc:46 msacm32.rc:50 mshtml.rc:45 mshtml.rc:55
-#: msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87 serialui.rc:38 setupapi.rc:56
-#: shlwapi.rc:41 wininet.rc:48 wininet.rc:68 winspool.rc:39 net.rc:44
-#: notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103 progman.rc:121
-#: progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196 progman.rc:213
-#: regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284 regedit.rc:297
-#: regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226
-#: wineconsole.rc:131 winefile.rc:134 winefile.rc:157 winefile.rc:187
-#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
-#: wordpad.rc:233 wordpad.rc:246
-msgid "OK"
-msgstr "확인"
-
-#: avifil32.rc:52 browseui.rc:37 credui.rc:50 dinput.rc:44 ieframe.rc:85
-#: inetcpl.rc:78 localui.rc:42 localui.rc:55 mpr.rc:47 msacm32.rc:51
-#: mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34 oledlg.rc:56 oledlg.rc:88
-#: serialui.rc:39 setupapi.rc:39 setupapi.rc:57 shlwapi.rc:42 wininet.rc:49
-#: wininet.rc:69 winspool.rc:40 notepad.rc:123 oleview.rc:160 oleview.rc:173
-#: progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178
-#: progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269
-#: regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522
-#: wineboot.rc:31 winecfg.rc:217 winecfg.rc:227 wineconsole.rc:132
-#: winefile.rc:135 winefile.rc:158 winefile.rc:188 winemine.rc:93
-#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
-msgid "Cancel"
-msgstr "취소"
 
 #: avifil32.rc:27
 msgid "Waveform: %s"
@@ -10122,10 +10221,6 @@ msgstr "레지스트리 파일 가져오기(&I)..."
 msgid "&Export Registry File..."
 msgstr "레지스트리 파일 내보내기(&E)..."
 
-#: regedit.rc:42 regedit.rc:87
-msgid "&Modify..."
-msgstr "고치기(&M)..."
-
 #: regedit.rc:46 regedit.rc:97
 msgid "&Key"
 msgstr "&키(&K)"
@@ -12510,10 +12605,6 @@ msgstr "완전한 경로(&P):"
 #: winefile.rc:170
 msgid "Last Change:"
 msgstr "마지막 변화:"
-
-#: winefile.rc:172
-msgid "Version:"
-msgstr "버젼:"
 
 #: winefile.rc:174
 msgid "Cop&yright:"

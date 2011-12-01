@@ -13,6 +13,136 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: appwiz.rc:55
+msgid "Install/Uninstall"
+msgstr "Инсталирај/уклони"
+
+#: appwiz.rc:58
+msgid ""
+"To install a new program from a floppy disk, CD-ROM drive, or your hard "
+"drive, click Install."
+msgstr ""
+"Да бисте инсталирали нови програм са дискете, диска или тврдог диска, "
+"кликните на дугме „Инсталирај...“."
+
+#: appwiz.rc:59
+msgid "&Install..."
+msgstr "&Инсталирај..."
+
+#: appwiz.rc:62
+msgid ""
+"The following software can be automatically removed. To remove a program or "
+"to modify its installed components, select it from the list and click Change/"
+"Remove."
+msgstr ""
+"Програм се може аутоматски уклонити. Да уклоните програм или да измените "
+"инсталационе делове, изаберите са списка и кликните на дугме „Измени/уклони“."
+
+#: appwiz.rc:64
+msgid "&Support Info"
+msgstr "&Подршка..."
+
+#: appwiz.rc:65 regedit.rc:42 regedit.rc:87
+msgid "&Modify..."
+msgstr "&Измени..."
+
+#: appwiz.rc:66 appwiz.rc:42 msacm32.rc:37 winecfg.rc:202 winecfg.rc:239
+#: wordpad.rc:245
+msgid "&Remove"
+msgstr "&Уклони"
+
+#: appwiz.rc:72
+msgid "Support Information"
+msgstr "Подршка"
+
+#: appwiz.rc:75 avifil32.rc:51 credui.rc:49 dinput.rc:43 ieframe.rc:84
+#: localui.rc:41 localui.rc:54 mpr.rc:46 msacm32.rc:50 mshtml.rc:45
+#: mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87 serialui.rc:38
+#: setupapi.rc:56 shlwapi.rc:41 wininet.rc:48 wininet.rc:68 winspool.rc:39
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
+#: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
+#: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
+#: regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216
+#: winecfg.rc:226 wineconsole.rc:131 winefile.rc:134 winefile.rc:157
+#: winefile.rc:187 winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204
+#: wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+msgid "OK"
+msgstr "У реду"
+
+#: appwiz.rc:76
+msgid "The following information can be used to get technical support for %s:"
+msgstr "Следећи подаци се могу користити за добијање техничке подршке за %s:"
+
+#: appwiz.rc:77
+msgid "Publisher:"
+msgstr "Издавач:"
+
+#: appwiz.rc:78 winefile.rc:172
+msgid "Version:"
+msgstr "Издање:"
+
+#: appwiz.rc:79
+msgid "Contact:"
+msgstr "Контакт:"
+
+#: appwiz.rc:80
+msgid "Support Information:"
+msgstr "Подршка:"
+
+#: appwiz.rc:81
+msgid "Support Telephone:"
+msgstr "Телефон за подршку:"
+
+#: appwiz.rc:82
+msgid "Readme:"
+msgstr "Прочитај ме:"
+
+#: appwiz.rc:83
+msgid "Product Updates:"
+msgstr "Доградње:"
+
+#: appwiz.rc:84
+msgid "Comments:"
+msgstr "Коментари:"
+
+#: appwiz.rc:97
+msgid "Wine Gecko Installer"
+msgstr "Wine Gecko инсталациони програм"
+
+#: appwiz.rc:100
+msgid ""
+"Wine could not find a Gecko package which is needed for applications "
+"embedding HTML to work correctly. Wine can automatically download and "
+"install it for you.\n"
+"\n"
+"Note: it is recommended to use your distribution's packages instead. See "
+"http://wiki.winehq.org/Gecko for details."
+msgstr ""
+"Wine није успео да пронађе Gecko пакет који је неопходан за исправно "
+"функционисање HTML програма. Wine је у могућности да аутоматски преузме и "
+"инсталира програм.\n"
+"\n"
+"Напомена: препоручујемо Вам да користите расподељене пакете. Погледајте "
+"http://wiki.winehq.org/Gecko за више информација."
+
+#: appwiz.rc:106
+msgid "&Install"
+msgstr "&Инсталирај"
+
+#: appwiz.rc:107 avifil32.rc:52 browseui.rc:37 credui.rc:50 dinput.rc:44
+#: ieframe.rc:85 inetcpl.rc:78 localui.rc:42 localui.rc:55 mpr.rc:47
+#: msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34 oledlg.rc:56
+#: oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57 shlwapi.rc:42
+#: wininet.rc:49 wininet.rc:69 winspool.rc:40 notepad.rc:123 oleview.rc:160
+#: oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156
+#: progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256
+#: regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447
+#: taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
+#: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+msgid "Cancel"
+msgstr "Откажи"
+
 #: appwiz.rc:28
 msgid "Add/Remove Programs"
 msgstr "Додај/уклони програме"
@@ -69,10 +199,6 @@ msgstr "Извршне датотеке (*.exe)"
 msgid "All files (*.*)"
 msgstr "Све датотеке (*.*)"
 
-#: appwiz.rc:42 msacm32.rc:37 winecfg.rc:202 winecfg.rc:239 wordpad.rc:245
-msgid "&Remove"
-msgstr "&Уклони"
-
 #: appwiz.rc:43
 #, fuzzy
 msgid "&Modify/Remove"
@@ -115,34 +241,6 @@ msgstr "кадрова"
 #: avifil32.rc:49
 msgid "Current format:"
 msgstr "Текући формат:"
-
-#: avifil32.rc:51 credui.rc:49 dinput.rc:43 ieframe.rc:84 localui.rc:41
-#: localui.rc:54 mpr.rc:46 msacm32.rc:50 mshtml.rc:45 mshtml.rc:55
-#: msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87 serialui.rc:38 setupapi.rc:56
-#: shlwapi.rc:41 wininet.rc:48 wininet.rc:68 winspool.rc:39 net.rc:44
-#: notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103 progman.rc:121
-#: progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196 progman.rc:213
-#: regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284 regedit.rc:297
-#: regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226
-#: wineconsole.rc:131 winefile.rc:134 winefile.rc:157 winefile.rc:187
-#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
-#: wordpad.rc:233 wordpad.rc:246
-msgid "OK"
-msgstr "У реду"
-
-#: avifil32.rc:52 browseui.rc:37 credui.rc:50 dinput.rc:44 ieframe.rc:85
-#: inetcpl.rc:78 localui.rc:42 localui.rc:55 mpr.rc:47 msacm32.rc:51
-#: mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34 oledlg.rc:56 oledlg.rc:88
-#: serialui.rc:39 setupapi.rc:39 setupapi.rc:57 shlwapi.rc:42 wininet.rc:49
-#: wininet.rc:69 winspool.rc:40 notepad.rc:123 oleview.rc:160 oleview.rc:173
-#: progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178
-#: progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269
-#: regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522
-#: wineboot.rc:31 winecfg.rc:217 winecfg.rc:227 wineconsole.rc:132
-#: winefile.rc:135 winefile.rc:158 winefile.rc:188 winemine.rc:93
-#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
-msgid "Cancel"
-msgstr "Откажи"
 
 #: avifil32.rc:27
 msgid "Waveform: %s"
@@ -10147,11 +10245,6 @@ msgstr ""
 msgid "&Export Registry File..."
 msgstr ""
 
-#: regedit.rc:42 regedit.rc:87
-#, fuzzy
-msgid "&Modify..."
-msgstr "Измењено"
-
 #: regedit.rc:46 regedit.rc:97
 msgid "&Key"
 msgstr ""
@@ -12611,11 +12704,6 @@ msgstr ""
 #: winefile.rc:170
 msgid "Last Change:"
 msgstr ""
-
-#: winefile.rc:172
-#, fuzzy
-msgid "Version:"
-msgstr "Издање"
 
 #: winefile.rc:174
 #, fuzzy

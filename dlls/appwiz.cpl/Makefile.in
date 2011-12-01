@@ -7,34 +7,7 @@ C_SRCS = \
 	addons.c \
 	appwiz.c
 
-RC_SRCS = \
-	Bg.rc \
-	Ca.rc \
-	Da.rc \
-	De.rc \
-	En.rc \
-	Es.rc \
-	Fr.rc \
-	He.rc \
-	Hu.rc \
-	It.rc \
-	Ja.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	No.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Si.rc \
-	Sr.rc \
-	Sv.rc \
-	Tr.rc \
-	Uk.rc \
-	Zh.rc \
-	appwiz.rc
-
+RC_SRCS = appwiz.rc
 PO_SRCS = appwiz.rc
 
 SVG_SRCS = \

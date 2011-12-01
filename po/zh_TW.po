@@ -13,6 +13,128 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: appwiz.rc:55
+msgid "Install/Uninstall"
+msgstr "安裝/卸載"
+
+#: appwiz.rc:58
+msgid ""
+"To install a new program from a floppy disk, CD-ROM drive, or your hard "
+"drive, click Install."
+msgstr "要從軟碟，光碟或硬碟安裝新程式，請按'安裝'."
+
+#: appwiz.rc:59
+msgid "&Install..."
+msgstr "安裝(&I)..."
+
+#: appwiz.rc:62
+msgid ""
+"The following software can be automatically removed. To remove a program or "
+"to modify its installed components, select it from the list and click Change/"
+"Remove."
+msgstr "下列軟件可以自動卸載. 按'添加/刪除'可卸載選定程式或者調整已安裝部件."
+
+#: appwiz.rc:64
+msgid "&Support Info"
+msgstr "技術支援(&S)..."
+
+#: appwiz.rc:65 regedit.rc:42 regedit.rc:87
+msgid "&Modify..."
+msgstr "&Modify..."
+
+#: appwiz.rc:66 appwiz.rc:42 msacm32.rc:37 winecfg.rc:202 winecfg.rc:239
+#: wordpad.rc:245
+msgid "&Remove"
+msgstr "刪除(&R)"
+
+#: appwiz.rc:72
+msgid "Support Information"
+msgstr "技術支援資訊"
+
+#: appwiz.rc:75 avifil32.rc:51 credui.rc:49 dinput.rc:43 ieframe.rc:84
+#: localui.rc:41 localui.rc:54 mpr.rc:46 msacm32.rc:50 mshtml.rc:45
+#: mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87 serialui.rc:38
+#: setupapi.rc:56 shlwapi.rc:41 wininet.rc:48 wininet.rc:68 winspool.rc:39
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
+#: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
+#: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
+#: regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216
+#: winecfg.rc:226 wineconsole.rc:131 winefile.rc:134 winefile.rc:157
+#: winefile.rc:187 winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204
+#: wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+msgid "OK"
+msgstr "確定"
+
+#: appwiz.rc:76
+msgid "The following information can be used to get technical support for %s:"
+msgstr "%s 技術支援資訊:"
+
+#: appwiz.rc:77
+msgid "Publisher:"
+msgstr "生產商:"
+
+#: appwiz.rc:78 winefile.rc:172
+msgid "Version:"
+msgstr "版本:"
+
+#: appwiz.rc:79
+msgid "Contact:"
+msgstr "聯繫人:"
+
+#: appwiz.rc:80
+msgid "Support Information:"
+msgstr "支援資訊:"
+
+#: appwiz.rc:81
+msgid "Support Telephone:"
+msgstr "支援電話:"
+
+#: appwiz.rc:82
+msgid "Readme:"
+msgstr "產品說明:"
+
+#: appwiz.rc:83
+msgid "Product Updates:"
+msgstr "產品更新:"
+
+#: appwiz.rc:84
+msgid "Comments:"
+msgstr "備註:"
+
+#: appwiz.rc:97
+msgid "Wine Gecko Installer"
+msgstr "Wine Gecko 安裝"
+
+#: appwiz.rc:100
+msgid ""
+"Wine could not find a Gecko package which is needed for applications "
+"embedding HTML to work correctly. Wine can automatically download and "
+"install it for you.\n"
+"\n"
+"Note: it is recommended to use your distribution's packages instead. See "
+"http://wiki.winehq.org/Gecko for details."
+msgstr ""
+"這個運用程式要顯示一個HTML 網頁. Wine 需要裝上 Gecko (Mozilla HTML engine)才"
+"能顯示HTML網頁. 如果你想自動下載和安裝Gecko，請按'安裝'."
+
+#: appwiz.rc:106
+msgid "&Install"
+msgstr "安裝(&I)"
+
+#: appwiz.rc:107 avifil32.rc:52 browseui.rc:37 credui.rc:50 dinput.rc:44
+#: ieframe.rc:85 inetcpl.rc:78 localui.rc:42 localui.rc:55 mpr.rc:47
+#: msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34 oledlg.rc:56
+#: oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57 shlwapi.rc:42
+#: wininet.rc:49 wininet.rc:69 winspool.rc:40 notepad.rc:123 oleview.rc:160
+#: oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156
+#: progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256
+#: regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447
+#: taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
+#: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+msgid "Cancel"
+msgstr "取消"
+
 #: appwiz.rc:28
 msgid "Add/Remove Programs"
 msgstr "添加/刪除程式"
@@ -62,10 +184,6 @@ msgstr ""
 msgid "All files (*.*)"
 msgstr "所有檔案 (*.*)"
 
-#: appwiz.rc:42 msacm32.rc:37 winecfg.rc:202 winecfg.rc:239 wordpad.rc:245
-msgid "&Remove"
-msgstr "刪除(&R)"
-
 #: appwiz.rc:43
 msgid "&Modify/Remove"
 msgstr ""
@@ -107,34 +225,6 @@ msgstr "幀數"
 #: avifil32.rc:49
 msgid "Current format:"
 msgstr "當前格式:"
-
-#: avifil32.rc:51 credui.rc:49 dinput.rc:43 ieframe.rc:84 localui.rc:41
-#: localui.rc:54 mpr.rc:46 msacm32.rc:50 mshtml.rc:45 mshtml.rc:55
-#: msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87 serialui.rc:38 setupapi.rc:56
-#: shlwapi.rc:41 wininet.rc:48 wininet.rc:68 winspool.rc:39 net.rc:44
-#: notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103 progman.rc:121
-#: progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196 progman.rc:213
-#: regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284 regedit.rc:297
-#: regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226
-#: wineconsole.rc:131 winefile.rc:134 winefile.rc:157 winefile.rc:187
-#: winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215
-#: wordpad.rc:233 wordpad.rc:246
-msgid "OK"
-msgstr "確定"
-
-#: avifil32.rc:52 browseui.rc:37 credui.rc:50 dinput.rc:44 ieframe.rc:85
-#: inetcpl.rc:78 localui.rc:42 localui.rc:55 mpr.rc:47 msacm32.rc:51
-#: mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34 oledlg.rc:56 oledlg.rc:88
-#: serialui.rc:39 setupapi.rc:39 setupapi.rc:57 shlwapi.rc:42 wininet.rc:49
-#: wininet.rc:69 winspool.rc:40 notepad.rc:123 oleview.rc:160 oleview.rc:173
-#: progman.rc:104 progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178
-#: progman.rc:197 progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269
-#: regedit.rc:285 regedit.rc:298 regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522
-#: wineboot.rc:31 winecfg.rc:217 winecfg.rc:227 wineconsole.rc:132
-#: winefile.rc:135 winefile.rc:158 winefile.rc:188 winemine.rc:93
-#: wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
-msgid "Cancel"
-msgstr "取消"
 
 #: avifil32.rc:27
 msgid "Waveform: %s"
@@ -10123,11 +10213,6 @@ msgstr "導入註冊表檔案(&I)..."
 msgid "&Export Registry File..."
 msgstr "導出註冊表檔案(&E)..."
 
-#: regedit.rc:42 regedit.rc:87
-#, fuzzy
-msgid "&Modify..."
-msgstr "修改(&M)"
-
 #: regedit.rc:46 regedit.rc:97
 msgid "&Key"
 msgstr "關鍵詞(&K)"
@@ -12508,11 +12593,6 @@ msgstr ""
 #: winefile.rc:170
 msgid "Last Change:"
 msgstr ""
-
-#: winefile.rc:172
-#, fuzzy
-msgid "Version:"
-msgstr "版本"
 
 #: winefile.rc:174
 #, fuzzy
