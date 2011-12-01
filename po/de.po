@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-01 20:05+0100\n"
+"PO-Revision-Date: 2011-12-01 21:21+0100\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -113,7 +113,6 @@ msgid "Wine Gecko Installer"
 msgstr "Wine-Gecko-Installation"
 
 #: appwiz.rc:100
-#, fuzzy
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
 "embedding HTML to work correctly. Wine can automatically download and "
@@ -128,7 +127,8 @@ msgstr ""
 "Wine kann das Paket für Sie herunterladen und installieren.\n"
 "\n"
 "Hinweis: Es wird empfohlen das Paket ihrer Distribution zu verwenden. "
-"Weitere Hinweise finden Sie unter http://wiki.winehq.org/Gecko"
+"Weitere Hinweise finden Sie unter <a href=\"http://wiki.winehq.org/Gecko\"> "
+"http://wiki.winehq.org/Gecko</a>."
 
 #: appwiz.rc:106
 msgid "&Install"
@@ -6016,9 +6016,8 @@ msgid "&Data Rate"
 msgstr "&Datenrate"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/sec"
-msgstr "KB/sec"
+msgstr "kB/Sek"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
