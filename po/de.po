@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-11-29 18:54+0100\n"
+"PO-Revision-Date: 2011-12-01 20:05+0100\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -2184,38 +2184,32 @@ msgid "Default MidiOut Device"
 msgstr "Standard MidiOut - Gerät"
 
 #: dinput.rc:40
-#, fuzzy
 msgid "Configure Devices"
-msgstr "Kon&figurieren"
+msgstr "Geräte konfigurieren"
 
 #: dinput.rc:45
 msgid "Reset"
-msgstr ""
+msgstr "Rücksetzen"
 
 #: dinput.rc:48
-#, fuzzy
 msgid "Player"
-msgstr "Abspielen"
+msgstr "Player"
 
 #: dinput.rc:49
-#, fuzzy
 msgid "Device"
-msgstr "De&vice:"
+msgstr "Gerät"
 
 #: dinput.rc:50
-#, fuzzy
 msgid "Actions"
-msgstr "Aktion"
+msgstr "Aktionen"
 
 #: dinput.rc:51
-#, fuzzy
 msgid "Mapping"
 msgstr "Zuordnung"
 
 #: dinput.rc:53
-#, fuzzy
 msgid "Sort Assigned"
-msgstr "Bereits zugewiesen\n"
+msgstr "Zugewiesene sortieren"
 
 #: dinput.rc:34
 msgid "Action"
@@ -6507,9 +6501,8 @@ msgid "us"
 msgstr "µs"
 
 #: serialui.rc:25
-#, fuzzy
 msgid "Settings for %s"
-msgstr "Eigenschaften für %s"
+msgstr "Einstellungen für %s"
 
 #: serialui.rc:28
 msgid "Baud Rate"
