@@ -1076,6 +1076,19 @@ void WINAPI ExInitializeNPagedLookasideList(PNPAGED_LOOKASIDE_LIST Lookaside,
     FIXME( "stub: %p, %p, %p, %u, %lu, %u, %u\n", Lookaside, Allocate, Free, Flags, Size, Tag, Depth );
 }
 
+/***********************************************************************
+ *           ExInitializePagedLookasideList   (NTOSKRNL.EXE.@)
+ */
+void WINAPI ExInitializePagedLookasideList(PPAGED_LOOKASIDE_LIST Lookaside,
+                                           PALLOCATE_FUNCTION Allocate,
+                                           PFREE_FUNCTION Free,
+                                           ULONG Flags,
+                                           SIZE_T Size,
+                                           ULONG Tag,
+                                           USHORT Depth)
+{
+    FIXME( "stub: %p, %p, %p, %u, %lu, %u, %u\n", Lookaside, Allocate, Free, Flags, Size, Tag, Depth );
+}
 
 /***********************************************************************
  *           ExInitializeZone   (NTOSKRNL.EXE.@)

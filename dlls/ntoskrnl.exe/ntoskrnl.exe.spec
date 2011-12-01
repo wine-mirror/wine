@@ -140,7 +140,7 @@
 @ stub ExGetPreviousMode
 @ stub ExGetSharedWaiterCount
 @ stdcall ExInitializeNPagedLookasideList(ptr ptr ptr long long long long)
-@ stub ExInitializePagedLookasideList
+@ stdcall ExInitializePagedLookasideList(ptr ptr ptr long long long long)
 @ stdcall ExInitializeResourceLite(ptr)
 @ stdcall ExInitializeZone(ptr long ptr long)
 @ stub ExInterlockedAddLargeInteger
