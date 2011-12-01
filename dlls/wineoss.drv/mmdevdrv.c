@@ -1055,6 +1055,10 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient *iface,
     }else
         *latency = 10000; /* OSS doesn't provide input latency */
 
+    /* pretend we process audio in Period chunks, so max latency includes
+     * the period time */
+    *latency += DefaultPeriod;
+
     LeaveCriticalSection(&This->lock);
 
     return S_OK;
