@@ -120,8 +120,9 @@ msgid ""
 "embedding HTML to work correctly. Wine can automatically download and "
 "install it for you.\n"
 "\n"
-"Note: it is recommended to use your distribution's packages instead. See "
-"http://wiki.winehq.org/Gecko for details."
+"Note: it is recommended to use your distribution's packages instead. See <a "
+"href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> for "
+"details."
 msgstr ""
 
 #: appwiz.rc:106

@@ -113,13 +113,15 @@ msgid "Wine Gecko Installer"
 msgstr "Wine Gecko Installer"
 
 #: appwiz.rc:100
+#, fuzzy
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
 "embedding HTML to work correctly. Wine can automatically download and "
 "install it for you.\n"
 "\n"
-"Note: it is recommended to use your distribution's packages instead. See "
-"http://wiki.winehq.org/Gecko for details."
+"Note: it is recommended to use your distribution's packages instead. See <a "
+"href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> for "
+"details."
 msgstr ""
 "A Wine nem talált Gecko csomagot, ami ahhoz szükséges hogy a HTML-t beágyazó "
 "alkalmazások megfelelően működjenek. A Wine ezt automatikusan letöltheti és "

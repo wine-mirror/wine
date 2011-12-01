@@ -106,13 +106,15 @@ msgid "Wine Gecko Installer"
 msgstr "Wine Gecko 安裝"
 
 #: appwiz.rc:100
+#, fuzzy
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
 "embedding HTML to work correctly. Wine can automatically download and "
 "install it for you.\n"
 "\n"
-"Note: it is recommended to use your distribution's packages instead. See "
-"http://wiki.winehq.org/Gecko for details."
+"Note: it is recommended to use your distribution's packages instead. See <a "
+"href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> for "
+"details."
 msgstr ""
 "這個運用程式要顯示一個HTML 網頁. Wine 需要裝上 Gecko (Mozilla HTML engine)才"
 "能顯示HTML網頁. 如果你想自動下載和安裝Gecko，請按'安裝'."

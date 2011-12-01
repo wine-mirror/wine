@@ -1000,7 +1000,7 @@ LONG CALLBACK CPlApplet(HWND hwndCPL, UINT message, LPARAM lParam1, LPARAM lPara
     {
         case CPL_INIT:
             iccEx.dwSize = sizeof(iccEx);
-            iccEx.dwICC = ICC_LISTVIEW_CLASSES | ICC_TAB_CLASSES;
+            iccEx.dwICC = ICC_LISTVIEW_CLASSES | ICC_TAB_CLASSES | ICC_LINK_CLASS;
 
             InitCommonControlsEx(&iccEx);
 

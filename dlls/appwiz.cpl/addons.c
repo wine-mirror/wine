@@ -436,11 +436,24 @@ static DWORD WINAPI download_proc(PVOID arg)
 
 static INT_PTR CALLBACK installer_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    static const WCHAR openW[] = {'o','p','e','n',0};
+
     switch(msg) {
     case WM_INITDIALOG:
         ShowWindow(GetDlgItem(hwnd, ID_DWL_PROGRESS), SW_HIDE);
         install_dialog = hwnd;
         return TRUE;
+
+    case WM_NOTIFY:
+        switch (((NMHDR *)lParam)->code)
+        {
+        case NM_CLICK:
+        case NM_RETURN:
+            if (wParam == ID_DWL_STATUS)
+                ShellExecuteW( NULL, openW, ((NMLINK *)lParam)->item.szUrl, NULL, NULL, SW_SHOW );
+            break;
+        }
+        break;
 
     case WM_COMMAND:
         switch(wParam) {
