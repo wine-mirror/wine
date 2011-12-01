@@ -165,7 +165,6 @@ static CRITICAL_SECTION g_sessions_lock = { &g_sessions_lock_debug, -1, 0, 0, 0,
 static struct list g_sessions = LIST_INIT(g_sessions);
 
 static AudioSessionWrapper *AudioSessionWrapper_Create(ACImpl *client);
-static HRESULT oss_setvol(ACImpl *This, UINT32 index);
 
 static const IAudioClientVtbl AudioClient_Vtbl;
 static const IAudioRenderClientVtbl AudioRenderClient_Vtbl;
@@ -992,8 +991,6 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
     LeaveCriticalSection(&g_sessions_lock);
 
     This->initted = TRUE;
-
-    oss_setvol(This, -1);
 
     LeaveCriticalSection(&This->lock);
 
@@ -2405,83 +2402,6 @@ static const IAudioSessionControl2Vtbl AudioSessionControl2_Vtbl =
     AudioSessionControl_SetDuckingPreference
 };
 
-/* index == -1 means set all channels, otherwise sets only the given channel */
-static HRESULT oss_setvol(ACImpl *This, UINT32 index)
-{
-    int setreq, getreq;
-    unsigned int vol;
-    unsigned short l;
-    float level;
-
-    if(index == (UINT32)-1){
-        HRESULT ret = S_OK;
-        UINT32 i;
-        for(i = 0; i < This->fmt->nChannels; ++i){
-            HRESULT hr;
-            hr = oss_setvol(This, i);
-            if(FAILED(hr))
-                ret = hr;
-        }
-        return ret;
-    }
-
-    if(index > 1)
-        /* OSS doesn't support volume control past the first two channels */
-        return S_OK;
-
-    if(This->dataflow == eRender){
-        setreq = SNDCTL_DSP_SETPLAYVOL;
-        getreq = SNDCTL_DSP_GETPLAYVOL;
-    }else if(This->dataflow == eCapture){
-        setreq = SNDCTL_DSP_SETRECVOL;
-        getreq = SNDCTL_DSP_GETRECVOL;
-    }else
-        return E_UNEXPECTED;
-
-    if(ioctl(This->fd, getreq, &vol) < 0){
-        if(errno == EINVAL)
-            /* device doesn't support this call */
-            return S_OK;
-
-        WARN("GET[REC|PLAY]VOL failed: %d (%s)\n", errno, strerror(errno));
-        return E_FAIL;
-    }
-
-    level = This->session->master_vol * This->session->channel_vols[index] *
-        This->vols[index];
-    l = level * 100;
-    if(index == 0)
-        vol = l | (vol & 0xFF00);
-    else
-        vol = (vol & 0xFF) | (l << 8);
-
-    if(ioctl(This->fd, setreq, &vol) < 0){
-        if(errno == EINVAL)
-            /* device doesn't support this call */
-            return S_OK;
-
-        WARN("SET[REC|PLAY]VOL failed: %d (%s)\n", errno, strerror(errno));
-        return E_FAIL;
-    }
-
-    return S_OK;
-}
-
-static HRESULT oss_session_setvol(AudioSession *session, UINT32 index)
-{
-    HRESULT ret = S_OK;
-    ACImpl *client;
-
-    LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry){
-        HRESULT hr;
-        hr = oss_setvol(client, index);
-        if(FAILED(hr))
-            ret = hr;
-    }
-
-    return ret;
-}
-
 static HRESULT WINAPI SimpleAudioVolume_QueryInterface(
         ISimpleAudioVolume *iface, REFIID riid, void **ppv)
 {
@@ -2520,7 +2440,6 @@ static HRESULT WINAPI SimpleAudioVolume_SetMasterVolume(
 {
     AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
     AudioSession *session = This->session;
-    HRESULT ret;
 
     TRACE("(%p)->(%f, %s)\n", session, level, wine_dbgstr_guid(context));
 
@@ -2534,11 +2453,11 @@ static HRESULT WINAPI SimpleAudioVolume_SetMasterVolume(
 
     session->master_vol = level;
 
-    ret = oss_session_setvol(session, -1);
+    TRACE("OSS doesn't support setting volume\n");
 
     LeaveCriticalSection(&session->lock);
 
-    return ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI SimpleAudioVolume_GetMasterVolume(
@@ -2667,7 +2586,6 @@ static HRESULT WINAPI AudioStreamVolume_SetChannelVolume(
         IAudioStreamVolume *iface, UINT32 index, float level)
 {
     ACImpl *This = impl_from_IAudioStreamVolume(iface);
-    HRESULT ret;
 
     TRACE("(%p)->(%d, %f)\n", This, index, level);
 
@@ -2681,11 +2599,11 @@ static HRESULT WINAPI AudioStreamVolume_SetChannelVolume(
 
     This->vols[index] = level;
 
-    ret = oss_setvol(This, index);
+    TRACE("OSS doesn't support setting volume\n");
 
     LeaveCriticalSection(&This->lock);
 
-    return ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI AudioStreamVolume_GetChannelVolume(
@@ -2711,7 +2629,6 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
 {
     ACImpl *This = impl_from_IAudioStreamVolume(iface);
     int i;
-    HRESULT ret;
 
     TRACE("(%p)->(%d, %p)\n", This, count, levels);
 
@@ -2726,11 +2643,11 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
     for(i = 0; i < count; ++i)
         This->vols[i] = levels[i];
 
-    ret = oss_setvol(This, -1);
+    TRACE("OSS doesn't support setting volume\n");
 
     LeaveCriticalSection(&This->lock);
 
-    return ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI AudioStreamVolume_GetAllVolumes(
@@ -2824,7 +2741,6 @@ static HRESULT WINAPI ChannelAudioVolume_SetChannelVolume(
 {
     AudioSessionWrapper *This = impl_from_IChannelAudioVolume(iface);
     AudioSession *session = This->session;
-    HRESULT ret;
 
     TRACE("(%p)->(%d, %f, %s)\n", session, index, level,
             wine_dbgstr_guid(context));
@@ -2842,11 +2758,11 @@ static HRESULT WINAPI ChannelAudioVolume_SetChannelVolume(
 
     session->channel_vols[index] = level;
 
-    ret = oss_session_setvol(session, index);
+    TRACE("OSS doesn't support setting volume\n");
 
     LeaveCriticalSection(&session->lock);
 
-    return ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI ChannelAudioVolume_GetChannelVolume(
@@ -2875,7 +2791,6 @@ static HRESULT WINAPI ChannelAudioVolume_SetAllVolumes(
     AudioSessionWrapper *This = impl_from_IChannelAudioVolume(iface);
     AudioSession *session = This->session;
     int i;
-    HRESULT ret;
 
     TRACE("(%p)->(%d, %p, %s)\n", session, count, levels,
             wine_dbgstr_guid(context));
@@ -2894,11 +2809,11 @@ static HRESULT WINAPI ChannelAudioVolume_SetAllVolumes(
     for(i = 0; i < count; ++i)
         session->channel_vols[i] = levels[i];
 
-    ret = oss_session_setvol(session, -1);
+    TRACE("OSS doesn't support setting volume\n");
 
     LeaveCriticalSection(&session->lock);
 
-    return ret;
+    return S_OK;
 }
 
 static HRESULT WINAPI ChannelAudioVolume_GetAllVolumes(
