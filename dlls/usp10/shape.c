@@ -365,7 +365,7 @@ static const char* required_arabic_features[] =
 
 static OPENTYPE_FEATURE_RECORD hebrew_features[] =
 {
-    { MS_MAKE_TAG('d','l','i','g'), 1},
+    { MS_MAKE_TAG('d','l','i','g'), 0},
 };
 
 static OPENTYPE_FEATURE_RECORD syriac_features[] =
