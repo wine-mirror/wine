@@ -698,6 +698,9 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateTexture(IDirect3DDevice9Ex *ifa
     TRACE("iface %p, width %u, height %u, levels %u, usage %#x, format %#x, pool %#x, texture %p, shared_handle %p.\n",
             iface, width, height, levels, usage, format, pool, texture, shared_handle);
 
+    if (shared_handle)
+        FIXME("Resource sharing not implemented, *shared_handle %p.\n", *shared_handle);
+
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
@@ -732,6 +735,9 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateVolumeTexture(IDirect3DDevice9E
     TRACE("usage %#x, format %#x, pool %#x, texture %p, shared_handle %p.\n",
             usage, format, pool, texture, shared_handle);
 
+    if (shared_handle)
+        FIXME("Resource sharing not implemented, *shared_handle %p.\n", *shared_handle);
+
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
@@ -763,6 +769,9 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateCubeTexture(IDirect3DDevice9Ex 
 
     TRACE("iface %p, edge_length %u, levels %u, usage %#x, format %#x, pool %#x, texture %p, shared_handle %p.\n",
             iface, edge_length, levels, usage, format, pool, texture, shared_handle);
+
+    if (shared_handle)
+        FIXME("Resource sharing not implemented, *shared_handle %p.\n", *shared_handle);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -796,6 +805,9 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexBuffer(IDirect3DDevice9Ex
     TRACE("iface %p, size %u, usage %#x, fvf %#x, pool %#x, buffer %p, shared_handle %p.\n",
             iface, size, usage, fvf, pool, buffer, shared_handle);
 
+    if (shared_handle)
+        FIXME("Resource sharing not implemented, *shared_handle %p.\n", *shared_handle);
+
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
@@ -827,6 +839,9 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateIndexBuffer(IDirect3DDevice9Ex 
 
     TRACE("iface %p, size %u, usage %#x, format %#x, pool %#x, buffer %p, shared_handle %p.\n",
             iface, size, usage, format, pool, buffer, shared_handle);
+
+    if (shared_handle)
+        FIXME("Resource sharing not implemented, *shared_handle %p.\n", *shared_handle);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -886,7 +901,7 @@ static HRESULT IDirect3DDevice9Impl_CreateSurface(IDirect3DDevice9Impl *device, 
 
 static HRESULT WINAPI IDirect3DDevice9Impl_CreateRenderTarget(IDirect3DDevice9Ex *iface, UINT Width,
         UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality,
-        BOOL Lockable, IDirect3DSurface9 **ppSurface, HANDLE *pSharedHandle)
+        BOOL Lockable, IDirect3DSurface9 **ppSurface, HANDLE *shared_handle)
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
     HRESULT hr;
@@ -894,7 +909,10 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateRenderTarget(IDirect3DDevice9Ex
     TRACE("iface %p, width %u, height %u, format %#x, multisample_type %#x, multisample_quality %u.\n"
             "lockable %#x, surface %p, shared_handle %p.\n",
             iface, Width, Height, Format, MultiSample, MultisampleQuality,
-            Lockable, ppSurface, pSharedHandle);
+            Lockable, ppSurface, shared_handle);
+
+    if (shared_handle)
+        FIXME("Resource sharing not implemented, *shared_handle %p.\n", *shared_handle);
 
     hr = IDirect3DDevice9Impl_CreateSurface(This, Width, Height, Format, Lockable,
             FALSE /* Discard */, 0 /* Level */, ppSurface, D3DUSAGE_RENDERTARGET, D3DPOOL_DEFAULT,
@@ -906,7 +924,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateRenderTarget(IDirect3DDevice9Ex
 static HRESULT WINAPI IDirect3DDevice9Impl_CreateDepthStencilSurface(IDirect3DDevice9Ex *iface,
         UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample,
         DWORD MultisampleQuality, BOOL Discard, IDirect3DSurface9 **ppSurface,
-        HANDLE *pSharedHandle)
+        HANDLE *shared_handle)
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
     HRESULT hr;
@@ -914,7 +932,10 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateDepthStencilSurface(IDirect3DDe
     TRACE("iface %p, width %u, height %u, format %#x, multisample_type %#x, multisample_quality %u.\n"
             "discard %#x, surface %p, shared_handle %p.\n",
             iface, Width, Height, Format, MultiSample, MultisampleQuality,
-            Discard, ppSurface, pSharedHandle);
+            Discard, ppSurface, shared_handle);
+
+    if (shared_handle)
+        FIXME("Resource sharing not implemented, *shared_handle %p.\n", *shared_handle);
 
     hr = IDirect3DDevice9Impl_CreateSurface(This, Width, Height, Format, TRUE /* Lockable */,
             Discard, 0 /* Level */, ppSurface, D3DUSAGE_DEPTHSTENCIL, D3DPOOL_DEFAULT, MultiSample,
@@ -1054,15 +1075,19 @@ static HRESULT WINAPI IDirect3DDevice9Impl_ColorFill(IDirect3DDevice9Ex *iface,
 
 static HRESULT  WINAPI  IDirect3DDevice9Impl_CreateOffscreenPlainSurface(IDirect3DDevice9Ex *iface,
         UINT Width, UINT Height, D3DFORMAT Format, D3DPOOL Pool, IDirect3DSurface9 **ppSurface,
-        HANDLE *pSharedHandle)
+        HANDLE *shared_handle)
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
     HRESULT hr;
 
     TRACE("iface %p, width %u, height %u, format %#x, pool %#x, surface %p, shared_handle %p.\n",
-            iface, Width, Height, Format, Pool, ppSurface, pSharedHandle);
+            iface, Width, Height, Format, Pool, ppSurface, shared_handle);
 
-    if(Pool == D3DPOOL_MANAGED ){
+    if (shared_handle)
+        FIXME("Resource sharing not implemented, *shared_handle %p.\n", *shared_handle);
+
+    if (Pool == D3DPOOL_MANAGED)
+    {
         FIXME("Attempting to create a managed offscreen plain surface\n");
         return D3DERR_INVALIDCALL;
     }
@@ -2850,6 +2875,9 @@ static HRESULT WINAPI IDirect3DDevice9ExImpl_CreateRenderTargetEx(IDirect3DDevic
             iface, width, height, format, multisample_type, multisample_quality,
             lockable, surface, shared_handle, usage);
 
+    if (shared_handle)
+        FIXME("Resource sharing not implemented, *shared_handle %p.\n", *shared_handle);
+
     return E_NOTIMPL;
 }
 
@@ -2871,6 +2899,9 @@ static HRESULT WINAPI IDirect3DDevice9ExImpl_CreateDepthStencilSurfaceEx(IDirect
             "discard %#x, surface %p, shared_handle %p, usage %#x stub!\n",
             iface, width, height, format, multisample_type, multisample_quality,
             discard, surface, shared_handle, usage);
+
+    if (shared_handle)
+        FIXME("Resource sharing not implemented, *shared_handle %p.\n", *shared_handle);
 
     return E_NOTIMPL;
 }
