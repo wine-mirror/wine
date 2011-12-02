@@ -374,6 +374,12 @@ HRESULT primarybuffer_SetFormat(DirectSoundDevice *device, LPCWAVEFORMATEX passe
 		  passed_fmt->nAvgBytesPerSec, passed_fmt->nBlockAlign,
 		  passed_fmt->wBitsPerSample, passed_fmt->cbSize);
 
+	if(passed_fmt->wBitsPerSample < 8 || passed_fmt->wBitsPerSample % 8 != 0 ||
+			passed_fmt->nChannels == 0 || passed_fmt->nSamplesPerSec == 0 ||
+			passed_fmt->nAvgBytesPerSec == 0 ||
+			passed_fmt->nBlockAlign != passed_fmt->nChannels * passed_fmt->wBitsPerSample / 8)
+		return DSERR_INVALIDPARAM;
+
 	/* **** */
 	RtlAcquireResourceExclusive(&(device->buffer_list_lock), TRUE);
 	EnterCriticalSection(&(device->mixlock));
