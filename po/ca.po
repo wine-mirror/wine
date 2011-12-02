@@ -112,7 +112,6 @@ msgid "Wine Gecko Installer"
 msgstr "Instal·lador del Wine Gecko"
 
 #: appwiz.rc:100
-#, fuzzy
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
 "embedding HTML to work correctly. Wine can automatically download and "
@@ -127,7 +126,8 @@ msgstr ""
 "descarregar i instal·lar automàticament per vostè.\n"
 "\n"
 "Nota: es recomana utilitzar els paquets de la vostra distribució en compte."
-"Vegeu http://wiki.winehq.org/Gecko pels detalls."
+"Vegeu <a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko"
+"</a> pels detalls."
 
 #: appwiz.rc:106
 msgid "&Install"
@@ -222,7 +222,7 @@ msgstr ""
 
 #: avifil32.rc:39
 msgid "Compress options"
-msgstr "Opcions d'compressió"
+msgstr "Opcions de compressió"
 
 #: avifil32.rc:42
 msgid "&Choose a stream:"
@@ -1036,7 +1036,7 @@ msgstr "Restriccions de Nom"
 
 #: crypt32.rc:97
 msgid "Policy Mappings"
-msgstr "Mappings de Política"
+msgstr "Mapes de Política"
 
 #: crypt32.rc:98
 msgid "Policy Constraints"
@@ -1052,7 +1052,7 @@ msgstr "Polítiques d'Aplicació"
 
 #: crypt32.rc:101
 msgid "Application Policy Mappings"
-msgstr "Mappings de Política d'Aplicació"
+msgstr "Mapes de Política d'Aplicació"
 
 #: crypt32.rc:102
 msgid "Application Policy Constraints"
@@ -2191,38 +2191,32 @@ msgid "Default MidiOut Device"
 msgstr "Dispositiu MidiOut Predeterminat"
 
 #: dinput.rc:40
-#, fuzzy
 msgid "Configure Devices"
-msgstr "&Defineix..."
+msgstr "Configurar Dispositius"
 
 #: dinput.rc:45
 msgid "Reset"
-msgstr ""
+msgstr "Reinicia"
 
 #: dinput.rc:48
-#, fuzzy
 msgid "Player"
-msgstr "Reprodueix"
+msgstr "Reproductor"
 
 #: dinput.rc:49
-#, fuzzy
 msgid "Device"
-msgstr "Dispositi&u:"
+msgstr "Dispositiu"
 
 #: dinput.rc:50
-#, fuzzy
 msgid "Actions"
-msgstr "Acció"
+msgstr "Accions"
 
 #: dinput.rc:51
-#, fuzzy
 msgid "Mapping"
-msgstr "Mapa d'Unitat"
+msgstr "Mapa"
 
 #: dinput.rc:53
-#, fuzzy
 msgid "Sort Assigned"
-msgstr "Ja assignat\n"
+msgstr "Ordena Assignats"
 
 #: dinput.rc:34
 msgid "Action"
@@ -4171,11 +4165,11 @@ msgstr "Cap xarxa\n"
 
 #: winerror.mc:1746
 msgid "Operation canceled by user\n"
-msgstr "Operació cancel·lat per l'usuari\n"
+msgstr "Operació cancel·lat per usuari\n"
 
 #: winerror.mc:1751
 msgid "File has a user-mapped section\n"
-msgstr "El fitxer té una secció assignada per l'usuari\n"
+msgstr "El fitxer té una secció assignada per usuari\n"
 
 #: winerror.mc:1756 winerror.mc:3741
 msgid "Connection refused\n"
@@ -5858,14 +5852,12 @@ msgid "&Attributes:"
 msgstr "&Atributs:"
 
 #: mshtml.rc:37
-#, fuzzy
 msgid "Hyperlink"
-msgstr "enllaç"
+msgstr "Hiperenllaç"
 
 #: mshtml.rc:40
-#, fuzzy
 msgid "Hyperlink Information"
-msgstr "Informació de Versió"
+msgstr "Informació de Hiperenllaç"
 
 #: mshtml.rc:41 winecfg.rc:247
 msgid "&Type:"
@@ -6002,42 +5994,36 @@ msgstr ""
 "© 2002 per Michael Guennewig"
 
 #: msvfw32.rc:30
-#, fuzzy
 msgid "Video Compression"
-msgstr "Opcions d'compressió"
+msgstr "Compressió de Video"
 
 #: msvfw32.rc:36
-#, fuzzy
 msgid "&Compressor:"
-msgstr "&Comprimit"
+msgstr ""
 
 #: msvfw32.rc:39
-#, fuzzy
 msgid "Con&figure..."
-msgstr "&Defineix..."
+msgstr "Con&figura..."
 
 #: msvfw32.rc:40
-#, fuzzy
 msgid "&About"
-msgstr "Quant a..."
+msgstr "&Quant a"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
-msgstr ""
+msgstr "&Qualitat de Compressió:"
 
 #: msvfw32.rc:46
-#, fuzzy
 msgid "&Key Frame Every"
-msgstr "Recuperació de Clau"
+msgstr ""
 
 #: msvfw32.rc:50
-#, fuzzy
 msgid "&Data Rate"
-msgstr "&Data"
+msgstr "Velocitat de &Dades"
 
 #: msvfw32.rc:52
 msgid "kB/sec"
-msgstr ""
+msgstr "kB/seg"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
@@ -6324,61 +6310,52 @@ msgid "Off"
 msgstr "Inactiu"
 
 #: oledlg.rc:48
-#, fuzzy
 msgid "Insert Object"
-msgstr "Objectes GDI"
+msgstr "Insereix Objecte"
 
 #: oledlg.rc:54
-#, fuzzy
 msgid "Object Type:"
-msgstr "Tipus d'Entitat"
+msgstr "Tipus d'Objecte"
 
 #: oledlg.rc:57 oledlg.rc:95
 msgid "Result"
-msgstr ""
+msgstr "Resultat"
 
 #: oledlg.rc:58
-#, fuzzy
 msgid "Create New"
-msgstr "Crea Tasca Nova"
+msgstr "Crea Nova"
 
 #: oledlg.rc:60
-#, fuzzy
 msgid "Create Control"
-msgstr "Control"
+msgstr "Crea Control"
 
 #: oledlg.rc:62
-#, fuzzy
 msgid "Create From File"
-msgstr "Crear Nova Carpeta"
+msgstr "Crea des d'un Fitxer"
 
 #: oledlg.rc:65
-#, fuzzy
 msgid "&Add Control..."
-msgstr "Afegeix Control"
+msgstr "&Afegeix Control..."
 
 #: oledlg.rc:66
 msgid "Display As Icon"
-msgstr ""
+msgstr "Mostra com Icona"
 
 #: oledlg.rc:68 setupapi.rc:58
-#, fuzzy
 msgid "Browse..."
-msgstr "&Navega..."
+msgstr "Navega..."
 
 #: oledlg.rc:69
-#, fuzzy
 msgid "File:"
-msgstr "Fitxer"
+msgstr "Fitxer:"
 
 #: oledlg.rc:75
 msgid "Paste Special"
-msgstr ""
+msgstr "Enganxa Especial"
 
 #: oledlg.rc:78 setupapi.rc:40
-#, fuzzy
 msgid "Source:"
-msgstr "&Veure Font"
+msgstr "Font:"
 
 #: oledlg.rc:79 shdoclc.rc:47 shdoclc.rc:79 shdoclc.rc:92 shdoclc.rc:132
 #: shdoclc.rc:159 shdoclc.rc:183 user32.rc:59 wineconsole.rc:30 wordpad.rc:103
@@ -6386,22 +6363,20 @@ msgid "&Paste"
 msgstr "&Enganxar"
 
 #: oledlg.rc:81
-#, fuzzy
 msgid "Paste &Link"
-msgstr "Enganxa com Enllaç"
+msgstr "Enganxa &Enllaç"
 
 #: oledlg.rc:83
 msgid "&As:"
-msgstr ""
+msgstr "&Com:"
 
 #: oledlg.rc:90
 msgid "&Display As Icon"
-msgstr ""
+msgstr "&Mostra Com Icona"
 
 #: oledlg.rc:92
-#, fuzzy
 msgid "Change &Icon..."
-msgstr "Canvia d'&icona..."
+msgstr "Canvia d'&Icona..."
 
 #: oledlg.rc:25
 msgid "Insert a new %s object into your document"
@@ -6531,57 +6506,53 @@ msgid "us"
 msgstr "µs"
 
 #: serialui.rc:25
-#, fuzzy
 msgid "Settings for %s"
-msgstr "Propietats de %s"
+msgstr "Ajustaments de %s"
 
 #: serialui.rc:28
 msgid "Baud Rate"
-msgstr ""
+msgstr "Velocitat en Baud"
 
 #: serialui.rc:30
 msgid "Parity"
-msgstr ""
+msgstr "Paritat"
 
 #: serialui.rc:32
-#, fuzzy
 msgid "Flow Control"
-msgstr "Control"
+msgstr "Control de Flux"
 
 #: serialui.rc:34
-#, fuzzy
 msgid "Data Bits"
-msgstr "Dades"
+msgstr "Bits de Dades"
 
 #: serialui.rc:36
-#, fuzzy
 msgid "Stop Bits"
-msgstr "Atura"
+msgstr "Bits de Terminació"
 
 #: setupapi.rc:36
 msgid "Copying Files..."
-msgstr ""
+msgstr "Copiant Fitxers..."
 
 #: setupapi.rc:42
-#, fuzzy
 msgid "Destination:"
-msgstr "&Descripció:"
+msgstr "Destinació:"
 
 #: setupapi.rc:49
-#, fuzzy
 msgid "Files Needed"
-msgstr "Nom de &Fitxer:"
+msgstr "Calen Fitxers"
 
 #: setupapi.rc:52
 msgid ""
 "Insert the manufacturer's installation disk, and then\n"
 "make sure the correct drive is selected below"
 msgstr ""
+"Inseriu el disc d'instal·lació del fabricant, i\n"
+"llavors assegureu-vos que la unitat correcta estigui\n"
+"seleccionada abaix"
 
 #: setupapi.rc:54
-#, fuzzy
 msgid "Copy manufacturer's files from:"
-msgstr "Copia fitxers de:"
+msgstr "Copiar fitxers del fabricant de:"
 
 #: setupapi.rc:28
 msgid "The file '%1' on %2 is needed"
@@ -7532,39 +7503,32 @@ msgid "Duplex:"
 msgstr "Dúplex"
 
 #: wininet.rc:39 wininet.rc:59
-#, fuzzy
 msgid "Realm"
-msgstr "Temps &real"
+msgstr "Regne"
 
 #: wininet.rc:46 wininet.rc:66
-#, fuzzy
 msgid "&Save this password (insecure)"
-msgstr "&Desa aquesta contrasenya (No segur)"
+msgstr "&Desa aquesta contrasenya (no segur)"
 
 #: wininet.rc:54
-#, fuzzy
 msgid "Authentication Required"
-msgstr "Autenticació Forta Requerida"
+msgstr "Autenticació Requerida"
 
 #: wininet.rc:58
-#, fuzzy
 msgid "Server"
-msgstr "Servidor Fora de Línia"
+msgstr "Servidor"
 
 #: wininet.rc:74
-#, fuzzy
 msgid "Security Warning"
-msgstr "Seguritat"
+msgstr "Advertència de Seguritat"
 
 #: wininet.rc:77
-#, fuzzy
 msgid "There is a problem with the certificate for this site."
-msgstr "El nom en el certificat no coincideix amb el lloc."
+msgstr "Hi ha un problema amb el certificat d'aquest lloc."
 
 #: wininet.rc:79
-#, fuzzy
 msgid "Do you want to continue anyway?"
-msgstr "Voleu simular un reinici de Windows?"
+msgstr "Voleu continuar igualment?"
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -9045,8 +9009,8 @@ msgid ""
 "presses an allowed Key from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
-"CHOICE mostra un text i espera fins que l'Usuari\n"
-"premi una Tecla permesa d'una llista seleccionable.\n"
+"CHOICE mostra un text i espera fins que l'Usuari premi una Tecla permesa\n"
+"d'una llista seleccionable.\n"
 "CHOISE s'usa principalment per construir un menú de selecció en un fitxer\n"
 "batch.\n"
 
@@ -12224,7 +12188,7 @@ msgstr ""
 #: winecfg.rc:80
 msgctxt "Drive letter"
 msgid "Letter"
-msgstr "Lletra d'Unitat"
+msgstr "Lletra"
 
 #: winecfg.rc:81
 msgid "Drive Mapping"
