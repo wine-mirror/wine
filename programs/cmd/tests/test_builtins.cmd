@@ -141,7 +141,6 @@ if 1==1 (echo foo2>bar) else echo baz2>bar
 type bar & del bar
 if 1==1 (echo foo3) else echo baz3>bar
 type bar || echo file does not exist, ok
-echo -----
 if 1==1 (echo foo4>bar) else echo baz4>bar
 type bar & del bar
 if 1==0 (echo foo5>bar) else echo baz5>bar

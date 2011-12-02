@@ -194,7 +194,7 @@ void WCMD_clear_screen (void) {
 
 void WCMD_change_tty (void) {
 
-  WCMD_output (WCMD_LoadMessage(WCMD_NYI));
+  WCMD_output_stderr (WCMD_LoadMessage(WCMD_NYI));
 
 }
 
@@ -390,7 +390,7 @@ void WCMD_copy (void) {
   WCHAR ext[MAX_PATH];
 
   if (param1[0] == 0x00) {
-    WCMD_output (WCMD_LoadMessage(WCMD_NOARG));
+    WCMD_output_stderr (WCMD_LoadMessage(WCMD_NOARG));
     return;
   }
 
@@ -1135,7 +1135,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
 
   /* Ensure line continues with variable */
   if (!*curPos || *curPos != '%') {
-      WCMD_output (WCMD_LoadMessage(WCMD_SYNTAXERR));
+      WCMD_output_stderr (WCMD_LoadMessage(WCMD_SYNTAXERR));
       return;
   }
 
@@ -1154,7 +1154,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   if (!*curPos
        || !WCMD_keyword_ws_found(inW, sizeof(inW)/sizeof(inW[0]), curPos)) {
 
-      WCMD_output (WCMD_LoadMessage(WCMD_SYNTAXERR));
+      WCMD_output_stderr (WCMD_LoadMessage(WCMD_SYNTAXERR));
       return;
   }
 
@@ -1181,7 +1181,7 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
   if ((*cmdList == NULL)
       || !WCMD_keyword_ws_found(doW, sizeof(doW)/sizeof(doW[0]), (*cmdList)->command)) {
 
-      WCMD_output (WCMD_LoadMessage(WCMD_SYNTAXERR));
+      WCMD_output_stderr (WCMD_LoadMessage(WCMD_SYNTAXERR));
       return;
   }
 
@@ -2199,14 +2199,14 @@ void WCMD_setshow_date (void) {
         WCMD_output (WCMD_LoadMessage(WCMD_NEWDATE));
         WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), buffer, sizeof(buffer)/sizeof(WCHAR), &count);
         if (count > 2) {
-          WCMD_output (WCMD_LoadMessage(WCMD_NYI));
+          WCMD_output_stderr (WCMD_LoadMessage(WCMD_NYI));
         }
       }
     }
     else WCMD_print_error ();
   }
   else {
-    WCMD_output (WCMD_LoadMessage(WCMD_NYI));
+    WCMD_output_stderr (WCMD_LoadMessage(WCMD_NYI));
   }
 }
 
@@ -2427,14 +2427,14 @@ void WCMD_setshow_time (void) {
         WCMD_output (WCMD_LoadMessage(WCMD_NEWTIME));
         WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), buffer, sizeof(buffer)/sizeof(WCHAR), &count);
         if (count > 2) {
-          WCMD_output (WCMD_LoadMessage(WCMD_NYI));
+          WCMD_output_stderr (WCMD_LoadMessage(WCMD_NYI));
         }
       }
     }
     else WCMD_print_error ();
   }
   else {
-    WCMD_output (WCMD_LoadMessage(WCMD_NYI));
+    WCMD_output_stderr (WCMD_LoadMessage(WCMD_NYI));
   }
 }
 
@@ -2515,7 +2515,7 @@ void WCMD_type (WCHAR *command) {
 		FILE_ATTRIBUTE_NORMAL, NULL);
     if (h == INVALID_HANDLE_VALUE) {
       WCMD_print_error ();
-      WCMD_output(WCMD_LoadMessage(WCMD_READFAIL), thisArg); /* should be _stderr */
+      WCMD_output_stderr(WCMD_LoadMessage(WCMD_READFAIL), thisArg);
       errorlevel = 1;
     } else {
       if (writeHeaders) {

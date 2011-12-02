@@ -166,8 +166,7 @@ food21
 -----
 foo2
 foo3
-@todo_wine@file does not exist, ok
-@todo_wine@-----
+file does not exist, ok
 foo4
 baz5
 baz6@space@
@@ -190,8 +189,8 @@ baz
 @todo_wine@foo | echo bar
 @todo_wine@foo & echo bar
 @todo_wine@bak &
-@todo_wine@baz@space@
-@todo_wine@0@or_broken@1
+baz@space@
+0@or_broken@1
 @todo_wine@foo > foo
 @todo_wine@<
 @todo_wine@ffoof
