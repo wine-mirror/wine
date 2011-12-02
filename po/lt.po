@@ -1,11 +1,11 @@
 # Lithuanian translations for Wine
-#
+# Aurimas Fišeras <aurimas@members.fsf.org>, 2011, 2012.
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-30 19:55+0300\n"
+"PO-Revision-Date: 2012-01-07 09:29+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -79,7 +79,8 @@ msgstr "Gerai"
 #: appwiz.rc:76
 msgid "The following information can be used to get technical support for %s:"
 msgstr ""
-"Ši informacija gali būti panaudota programos „%s“ techninei priežiūrai gauti:"
+"Ši informacija gali būti panaudota programos „%s“ techninei priežiūrai "
+"gauti:"
 
 #: appwiz.rc:77
 msgid "Publisher:"
@@ -8396,9 +8397,8 @@ msgid "The specified device handle is invalid."
 msgstr "Nurodyta įrenginio rodyklė yra netinkama."
 
 #: winmm.rc:34
-#, fuzzy
 msgid "There is no driver installed on your system!"
-msgstr "Sistemoje nėra įdiegta tvarkyklė!\n"
+msgstr "Sistemoje nėra įdiegta tvarkyklė!"
 
 #: winmm.rc:35 winmm.rc:61
 msgid ""
@@ -13055,9 +13055,8 @@ msgid "&Color"
 msgstr "&Spalva"
 
 #: wineconsole.rc:97
-#, fuzzy
 msgid "Configuration"
-msgstr " Konfigūracija "
+msgstr "Konfigūracija"
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
