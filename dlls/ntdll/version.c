@@ -112,8 +112,8 @@ static const RTL_OSVERSIONINFOEXW VersionData[NB_WINDOWS_VERSIONS] =
     /* NT351 */
     {
         sizeof(RTL_OSVERSIONINFOEXW), 3, 51, 0x421, VER_PLATFORM_WIN32_NT,
-        {'S','e','r','v','i','c','e',' ','P','a','c','k',' ','2',0},
-        0, 0, 0, 0, 0
+        {'S','e','r','v','i','c','e',' ','P','a','c','k',' ','5',0},
+        5, 0, 0, VER_NT_WORKSTATION, 0
     },
     /* NT40 */
     {
