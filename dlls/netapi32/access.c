@@ -21,9 +21,7 @@
 #include "config.h"
 #include <stdarg.h>
 #include <fcntl.h>
-#ifdef HAVE_SYS_ERRNO_H
-#include <sys/errno.h>
-#endif
+#include <errno.h>
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
