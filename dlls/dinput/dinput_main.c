@@ -359,7 +359,7 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
 
     if (!lpCallback ||
         dwFlags & ~(DIEDFL_ATTACHEDONLY | DIEDFL_FORCEFEEDBACK | DIEDFL_INCLUDEALIASES | DIEDFL_INCLUDEPHANTOMS | DIEDFL_INCLUDEHIDDEN) ||
-        dwDevType > 4)
+        (dwDevType > DI8DEVCLASS_GAMECTRL && dwDevType < DI8DEVTYPE_DEVICE) || dwDevType > DI8DEVTYPE_SUPPLEMENTAL)
         return DIERR_INVALIDPARAM;
 
     if (!This->initialized)
@@ -398,7 +398,7 @@ static HRESULT WINAPI IDirectInputWImpl_EnumDevices(
 
     if (!lpCallback ||
         dwFlags & ~(DIEDFL_ATTACHEDONLY | DIEDFL_FORCEFEEDBACK | DIEDFL_INCLUDEALIASES | DIEDFL_INCLUDEPHANTOMS | DIEDFL_INCLUDEHIDDEN) ||
-        dwDevType > 4)
+        (dwDevType > DI8DEVCLASS_GAMECTRL && dwDevType < DI8DEVTYPE_DEVICE) || dwDevType > DI8DEVTYPE_SUPPLEMENTAL)
         return DIERR_INVALIDPARAM;
 
     if (!This->initialized)
