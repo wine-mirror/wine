@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-12 21:39+0300\n"
+"PO-Revision-Date: 2011-12-16 20:12+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -3550,9 +3550,8 @@ msgid "Boolean object expected"
 msgstr "Tikėtasi loginio objekto"
 
 #: jscript.rc:46
-#, fuzzy
 msgid "Cannot delete '|'"
-msgstr "Nepavyko užbaigti\n"
+msgstr "Negalima pašalinti „|“"
 
 #: jscript.rc:47
 msgid "VBArray object expected"
@@ -6799,7 +6798,6 @@ msgid "&Data Rate"
 msgstr "&Duomenų sparta"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/s"
 msgstr "kB/s"
 
@@ -9997,13 +9995,11 @@ msgid "Parameter error\n"
 msgstr "Parametro klaida\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
-"Tomas diske %1!c! yra %2\n"
-"Tomo serijos numeris yra %3!04x!-%4!04x!\n"
+"Tomo serijos numeris yra %1!04x!-%2!04x!\n"
 "\n"
 
 #: cmd.rc:319
@@ -10036,11 +10032,11 @@ msgstr "Įvedimo eilutė per ilga.\n"
 
 #: cmd.rc:326
 msgid "Volume in drive %1!c! is %2\n"
-msgstr ""
+msgstr "Tomas diske %1!c! yra %2\n"
 
 #: cmd.rc:327
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr ""
+msgstr "Tomas diske %1!c! neturi vardo.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
