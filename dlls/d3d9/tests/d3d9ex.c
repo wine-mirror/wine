@@ -49,6 +49,42 @@ static HWND create_window(void)
     return ret;
 }
 
+static IDirect3DDevice9Ex *create_device(IDirect3D9Ex *d3d9, HWND device_window, HWND focus_window, BOOL windowed)
+{
+    D3DPRESENT_PARAMETERS present_parameters = {0};
+    IDirect3DDevice9Ex *device;
+    D3DDISPLAYMODEEX mode, *m;
+
+    present_parameters.Windowed = windowed;
+    present_parameters.hDeviceWindow = device_window;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.BackBufferWidth = 640;
+    present_parameters.BackBufferHeight = 480;
+    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+    present_parameters.EnableAutoDepthStencil = TRUE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+
+    mode.Size = sizeof(mode);
+    mode.Width = 640;
+    mode.Height = 480;
+    mode.RefreshRate = 0;
+    mode.Format = D3DFMT_A8R8G8B8;
+    mode.ScanLineOrdering = 0;
+
+    m = windowed ? NULL : &mode;
+    if (SUCCEEDED(IDirect3D9Ex_CreateDeviceEx(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
+            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, m, &device))) return device;
+
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D16;
+    if (SUCCEEDED(IDirect3D9Ex_CreateDeviceEx(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
+            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, m, &device))) return device;
+
+    if (SUCCEEDED(IDirect3D9Ex_CreateDeviceEx(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
+            D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, m, &device))) return device;
+
+    return NULL;
+}
+
 static ULONG getref(IUnknown *obj) {
     IUnknown_AddRef(obj);
     return IUnknown_Release(obj);
@@ -340,6 +376,56 @@ out:
     IDirect3D9Ex_Release(d3d9ex);
 }
 
+static void test_texture_sysmem_create(void)
+{
+    IDirect3DDevice9Ex *device;
+    IDirect3DTexture9 *texture;
+    D3DLOCKED_RECT locked_rect;
+    IDirect3D9Ex *d3d9;
+    UINT refcount;
+    HWND window;
+    HRESULT hr;
+    void *mem;
+
+    if (FAILED(hr = pDirect3DCreate9Ex(D3D_SDK_VERSION, &d3d9)))
+    {
+        skip("Failed to create IDirect3D9Ex object (hr %#x), skipping tests.\n", hr);
+        return;
+    }
+
+    window = create_window();
+    device = create_device(d3d9, window, window, TRUE);
+    if (!device)
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 128 * 128 * 4);
+    hr = IDirect3DDevice9Ex_CreateTexture(device, 128, 128, 0, 0, D3DFMT_A8R8G8B8,
+            D3DPOOL_SYSTEMMEM, &texture, &mem);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CreateTexture(device, 128, 128, 1, 0, D3DFMT_A8R8G8B8,
+            D3DPOOL_SYSTEMMEM, &texture, &mem);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = IDirect3DTexture9_LockRect(texture, 0, &locked_rect, NULL, 0);
+    ok(SUCCEEDED(hr), "Failed to lock texture, hr %#x.\n", hr);
+    ok(locked_rect.Pitch == 128 * 4, "Got unexpected pitch %d.\n", locked_rect.Pitch);
+    ok(locked_rect.pBits == mem, "Got unexpected pBits %p, expected %p.\n", locked_rect.pBits, mem);
+    hr = IDirect3DTexture9_UnlockRect(texture, 0);
+    ok(SUCCEEDED(hr), "Failed to unlock texture, hr %#x.\n", hr);
+    IDirect3DTexture9_Release(texture);
+    HeapFree(GetProcessHeap(), 0, mem);
+
+    refcount = IDirect3DDevice9Ex_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
+done:
+    DestroyWindow(window);
+    if (d3d9)
+        IDirect3D9Ex_Release(d3d9);
+}
+
 START_TEST(d3d9ex)
 {
     d3d9_handle = LoadLibraryA("d3d9.dll");
@@ -364,4 +450,5 @@ START_TEST(d3d9ex)
     test_qi_ex_to_base();
     test_get_adapter_luid();
     test_get_adapter_displaymode_ex();
+    test_texture_sysmem_create();
 }
