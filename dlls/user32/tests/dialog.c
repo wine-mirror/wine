@@ -832,8 +832,7 @@ static void test_initial_focus(void)
 {
     /* Test 1:
      * This test intentionally returns FALSE in response to WM_INITDIALOG
-     * without setting focus to a control. This is not allowed according to
-     * MSDN, but it is exactly what MFC's CFormView does.
+     * without setting focus to a control. This is what MFC's CFormView does.
      *
      * Since the WM_INITDIALOG handler returns FALSE without setting the focus,
      * the focus should initially be NULL. Later, when we manually set focus to
@@ -912,6 +911,31 @@ static void test_initial_focus(void)
 
         ok ((g_hwndInitialFocusT1 == 0),
             "Focus should not be set for an invisible DS_CONTROL dialog %p.\n", g_hwndInitialFocusT1);
+
+        DestroyWindow(hDlg);
+    }
+
+    /* Test 4:
+     * If the dialog has no tab-accessible controls, set focus to first control */
+    {
+        HWND hDlg;
+        HRSRC hResource;
+        HANDLE hTemplate;
+        DLGTEMPLATE* pTemplate;
+        HWND hLabel;
+
+        hResource = FindResourceA(g_hinst,"FOCUS_TEST_DIALOG_2", RT_DIALOG);
+        hTemplate = LoadResource(g_hinst, hResource);
+        pTemplate = LockResource(hTemplate);
+
+        hDlg = CreateDialogIndirectParamA(g_hinst, pTemplate, NULL, focusDlgWinProc, 0);
+        g_hwndInitialFocusT1 = GetFocus();
+        hLabel = GetDlgItem(hDlg, 200);
+        ok (hDlg != 0, "Failed to create test dialog.\n");
+
+        ok ((g_hwndInitialFocusT1 == hLabel),
+            "Focus should have been set to the first control, expected (%p) got (%p).\n",
+            hLabel, g_hwndInitialFocusT1);
 
         DestroyWindow(hDlg);
     }
