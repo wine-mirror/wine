@@ -1197,7 +1197,7 @@ void CDECL wined3d_device_release_focus_window(struct wined3d_device *device)
 }
 
 HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
-        WINED3DPRESENT_PARAMETERS *present_parameters)
+        struct wined3d_swapchain_desc *swapchain_desc)
 {
     static const struct wined3d_color black = {0.0f, 0.0f, 0.0f, 0.0f};
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -1207,7 +1207,7 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     DWORD state;
     unsigned int i;
 
-    TRACE("device %p, present_parameters %p.\n", device, present_parameters);
+    TRACE("device %p, swapchain_desc %p.\n", device, swapchain_desc);
 
     if (device->d3d_initialized)
         return WINED3DERR_INVALIDCALL;
@@ -1250,7 +1250,7 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     /* Setup the implicit swapchain. This also initializes a context. */
     TRACE("Creating implicit swapchain\n");
     hr = device->device_parent->ops->create_swapchain(device->device_parent,
-            present_parameters, &swapchain);
+            swapchain_desc, &swapchain);
     if (FAILED(hr))
     {
         WARN("Failed to create implicit swapchain\n");
@@ -1345,7 +1345,7 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
 
     /* Clear the screen */
     wined3d_device_clear(device, 0, NULL, WINED3DCLEAR_TARGET
-            | (present_parameters->EnableAutoDepthStencil ? WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL : 0),
+            | (swapchain_desc->enable_auto_depth_stencil ? WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL : 0),
             &black, 1.0f, 0);
 
     device->d3d_initialized = TRUE;
@@ -1376,17 +1376,17 @@ err_out:
 }
 
 HRESULT CDECL wined3d_device_init_gdi(struct wined3d_device *device,
-        WINED3DPRESENT_PARAMETERS *present_parameters)
+        struct wined3d_swapchain_desc *swapchain_desc)
 {
     struct wined3d_swapchain *swapchain = NULL;
     HRESULT hr;
 
-    TRACE("device %p, present_parameters %p.\n", device, present_parameters);
+    TRACE("device %p, swapchain_desc %p.\n", device, swapchain_desc);
 
     /* Setup the implicit swapchain */
     TRACE("Creating implicit swapchain\n");
     hr = device->device_parent->ops->create_swapchain(device->device_parent,
-            present_parameters, &swapchain);
+            swapchain_desc, &swapchain);
     if (FAILED(hr))
     {
         WARN("Failed to create implicit swapchain\n");
@@ -4950,7 +4950,7 @@ HRESULT CDECL wined3d_device_set_depth_stencil(struct wined3d_device *device, st
 
     if (prev)
     {
-        if (device->swapchains[0]->presentParms.Flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
+        if (device->swapchains[0]->desc.flags & WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL
                 || prev->flags & SFLAG_DISCARD)
         {
             surface_modify_ds_location(prev, SFLAG_DS_DISCARDED,
@@ -5217,7 +5217,7 @@ void CDECL wined3d_device_evict_managed_resources(struct wined3d_device *device)
 }
 
 static HRESULT updateSurfaceDesc(struct wined3d_surface *surface,
-        const WINED3DPRESENT_PARAMETERS *pPresentationParameters)
+        const struct wined3d_swapchain_desc *swapchain_desc)
 {
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -5231,28 +5231,32 @@ static HRESULT updateSurfaceDesc(struct wined3d_surface *surface,
         surface->resource.allocatedMemory = NULL;
         surface->flags &= ~SFLAG_DIBSECTION;
     }
-    surface->resource.width = pPresentationParameters->BackBufferWidth;
-    surface->resource.height = pPresentationParameters->BackBufferHeight;
+    surface->resource.width = swapchain_desc->backbuffer_width;
+    surface->resource.height = swapchain_desc->backbuffer_height;
     if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] || gl_info->supported[ARB_TEXTURE_RECTANGLE]
             || gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
     {
-        surface->pow2Width = pPresentationParameters->BackBufferWidth;
-        surface->pow2Height = pPresentationParameters->BackBufferHeight;
-    } else {
+        surface->pow2Width = swapchain_desc->backbuffer_width;
+        surface->pow2Height = swapchain_desc->backbuffer_height;
+    }
+    else
+    {
         surface->pow2Width = surface->pow2Height = 1;
-        while (surface->pow2Width < pPresentationParameters->BackBufferWidth) surface->pow2Width <<= 1;
-        while (surface->pow2Height < pPresentationParameters->BackBufferHeight) surface->pow2Height <<= 1;
+        while (surface->pow2Width < swapchain_desc->backbuffer_width)
+            surface->pow2Width <<= 1;
+        while (surface->pow2Height < swapchain_desc->backbuffer_height)
+            surface->pow2Height <<= 1;
     }
 
     if (!(surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL))
-        surface->resource.format = wined3d_get_format(gl_info, pPresentationParameters->BackBufferFormat);
-    surface->resource.multisample_type = pPresentationParameters->MultiSampleType;
-    surface->resource.multisample_quality = pPresentationParameters->MultiSampleQuality;
+        surface->resource.format = wined3d_get_format(gl_info, swapchain_desc->backbuffer_format);
+    surface->resource.multisample_type = swapchain_desc->multisample_type;
+    surface->resource.multisample_quality = swapchain_desc->multisample_quality;
 
     surface->resource.resource_ops->resource_unload(&surface->resource);
 
-    if (surface->pow2Width != pPresentationParameters->BackBufferWidth
-            || surface->pow2Height != pPresentationParameters->BackBufferHeight)
+    if (surface->pow2Width != swapchain_desc->backbuffer_width
+            || surface->pow2Height != swapchain_desc->backbuffer_height)
     {
         surface->flags |= SFLAG_NONPOW2;
     }
@@ -5274,16 +5278,20 @@ static HRESULT updateSurfaceDesc(struct wined3d_surface *surface,
     return WINED3D_OK;
 }
 
-static BOOL is_display_mode_supported(const struct wined3d_device *device, const WINED3DPRESENT_PARAMETERS *pp)
+static BOOL is_display_mode_supported(const struct wined3d_device *device,
+        const struct wined3d_swapchain_desc *swapchain_desc)
 {
     struct wined3d_display_mode m;
     UINT i, count;
     HRESULT hr;
 
     /* All Windowed modes are supported, as is leaving the current mode */
-    if(pp->Windowed) return TRUE;
-    if(!pp->BackBufferWidth) return TRUE;
-    if(!pp->BackBufferHeight) return TRUE;
+    if (swapchain_desc->windowed)
+        return TRUE;
+    if (!swapchain_desc->backbuffer_width)
+        return TRUE;
+    if (!swapchain_desc->backbuffer_height)
+        return TRUE;
 
     count = wined3d_get_adapter_mode_count(device->wined3d, device->adapter->ordinal, WINED3DFMT_UNKNOWN);
     for (i = 0; i < count; ++i)
@@ -5292,7 +5300,7 @@ static BOOL is_display_mode_supported(const struct wined3d_device *device, const
         hr = wined3d_enum_adapter_modes(device->wined3d, device->adapter->ordinal, WINED3DFMT_UNKNOWN, i, &m);
         if (FAILED(hr))
             ERR("Failed to enumerate adapter mode.\n");
-        if (m.width == pp->BackBufferWidth && m.height == pp->BackBufferHeight)
+        if (m.width == swapchain_desc->backbuffer_width && m.height == swapchain_desc->backbuffer_height)
             /* Mode found, it is supported. */
             return TRUE;
     }
@@ -5418,7 +5426,7 @@ err:
 
 /* Do not call while under the GL lock. */
 HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
-        const WINED3DPRESENT_PARAMETERS *present_parameters,
+        const struct wined3d_swapchain_desc *swapchain_desc,
         wined3d_device_reset_cb callback)
 {
     struct wined3d_resource *resource, *cursor;
@@ -5429,7 +5437,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     unsigned int i;
     HRESULT hr;
 
-    TRACE("device %p, present_parameters %p.\n", device, present_parameters);
+    TRACE("device %p, swapchain_desc %p.\n", device, swapchain_desc);
 
     wined3d_device_set_index_buffer(device, NULL, WINED3DFMT_UNKNOWN);
     for (i = 0; i < MAX_STREAMS; ++i)
@@ -5460,12 +5468,12 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         return hr;
     }
 
-    if (!is_display_mode_supported(device, present_parameters))
+    if (!is_display_mode_supported(device, swapchain_desc))
     {
-        WARN("Rejecting Reset() call because the requested display mode is not supported\n");
-        WARN("Requested mode: %d, %d.\n",
-            present_parameters->BackBufferWidth,
-             present_parameters->BackBufferHeight);
+        WARN("Rejecting reset() call because the requested display mode is not supported.\n");
+        WARN("Requested mode: %ux%u.\n",
+                swapchain_desc->backbuffer_width,
+                swapchain_desc->backbuffer_height);
         wined3d_swapchain_decref(swapchain);
         return WINED3DERR_INVALIDCALL;
     }
@@ -5478,47 +5486,47 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
      * TODO: Figure out what happens to explicit swapchains, or if we have more than one implicit swapchain
      */
     TRACE("New params:\n");
-    TRACE("BackBufferWidth = %d\n", present_parameters->BackBufferWidth);
-    TRACE("BackBufferHeight = %d\n", present_parameters->BackBufferHeight);
-    TRACE("BackBufferFormat = %s\n", debug_d3dformat(present_parameters->BackBufferFormat));
-    TRACE("BackBufferCount = %d\n", present_parameters->BackBufferCount);
-    TRACE("MultiSampleType = %d\n", present_parameters->MultiSampleType);
-    TRACE("MultiSampleQuality = %d\n", present_parameters->MultiSampleQuality);
-    TRACE("SwapEffect = %d\n", present_parameters->SwapEffect);
-    TRACE("hDeviceWindow = %p\n", present_parameters->hDeviceWindow);
-    TRACE("Windowed = %s\n", present_parameters->Windowed ? "true" : "false");
-    TRACE("EnableAutoDepthStencil = %s\n", present_parameters->EnableAutoDepthStencil ? "true" : "false");
-    TRACE("Flags = %08x\n", present_parameters->Flags);
-    TRACE("FullScreen_RefreshRateInHz = %d\n", present_parameters->FullScreen_RefreshRateInHz);
-    TRACE("PresentationInterval = %d\n", present_parameters->PresentationInterval);
+    TRACE("backbuffer_width %u\n", swapchain_desc->backbuffer_width);
+    TRACE("backbuffer_height %u\n", swapchain_desc->backbuffer_height);
+    TRACE("backbuffer_format %s\n", debug_d3dformat(swapchain_desc->backbuffer_format));
+    TRACE("backbuffer_count %u\n", swapchain_desc->backbuffer_count);
+    TRACE("multisample_type %#x\n", swapchain_desc->multisample_type);
+    TRACE("multisample_quality %u\n", swapchain_desc->multisample_quality);
+    TRACE("swap_effect %#x\n", swapchain_desc->swap_effect);
+    TRACE("device_window %p\n", swapchain_desc->device_window);
+    TRACE("windowed %#x\n", swapchain_desc->windowed);
+    TRACE("enable_auto_depth_stencil %#x\n", swapchain_desc->enable_auto_depth_stencil);
+    TRACE("flags %#x\n", swapchain_desc->flags);
+    TRACE("refresh_rate %u\n", swapchain_desc->refresh_rate);
+    TRACE("swap_interval %u\n", swapchain_desc->swap_interval);
 
     /* No special treatment of these parameters. Just store them */
-    swapchain->presentParms.SwapEffect = present_parameters->SwapEffect;
-    swapchain->presentParms.Flags = present_parameters->Flags;
-    swapchain->presentParms.PresentationInterval = present_parameters->PresentationInterval;
-    swapchain->presentParms.FullScreen_RefreshRateInHz = present_parameters->FullScreen_RefreshRateInHz;
+    swapchain->desc.swap_effect = swapchain_desc->swap_effect;
+    swapchain->desc.flags = swapchain_desc->flags;
+    swapchain->desc.swap_interval = swapchain_desc->swap_interval;
+    swapchain->desc.refresh_rate = swapchain_desc->refresh_rate;
 
     /* What to do about these? */
-    if (present_parameters->BackBufferCount
-            && present_parameters->BackBufferCount != swapchain->presentParms.BackBufferCount)
+    if (swapchain_desc->backbuffer_count
+            && swapchain_desc->backbuffer_count != swapchain->desc.backbuffer_count)
         FIXME("Cannot change the back buffer count yet.\n");
 
-    if (present_parameters->hDeviceWindow
-            && present_parameters->hDeviceWindow != swapchain->presentParms.hDeviceWindow)
+    if (swapchain_desc->device_window
+            && swapchain_desc->device_window != swapchain->desc.device_window)
         FIXME("Cannot change the device window yet.\n");
 
-    if (present_parameters->EnableAutoDepthStencil && !device->auto_depth_stencil)
+    if (swapchain_desc->enable_auto_depth_stencil && !device->auto_depth_stencil)
     {
         HRESULT hrc;
 
         TRACE("Creating the depth stencil buffer\n");
 
         hrc = device->device_parent->ops->create_depth_stencil(device->device_parent,
-                present_parameters->BackBufferWidth,
-                present_parameters->BackBufferHeight,
-                present_parameters->AutoDepthStencilFormat,
-                present_parameters->MultiSampleType,
-                present_parameters->MultiSampleQuality,
+                swapchain_desc->backbuffer_width,
+                swapchain_desc->backbuffer_height,
+                swapchain_desc->auto_depth_stencil_format,
+                swapchain_desc->multisample_type,
+                swapchain_desc->multisample_quality,
                 FALSE,
                 &device->auto_depth_stencil);
         if (FAILED(hrc))
@@ -5536,7 +5544,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     }
 
     /* Reset the depth stencil */
-    if (present_parameters->EnableAutoDepthStencil)
+    if (swapchain_desc->enable_auto_depth_stencil)
         wined3d_device_set_depth_stencil(device, device->auto_depth_stencil);
     else
         wined3d_device_set_depth_stencil(device, NULL);
@@ -5545,46 +5553,46 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     wined3d_stateblock_decref(device->updateStateBlock);
     wined3d_stateblock_decref(device->stateBlock);
 
-    if (present_parameters->Windowed)
+    if (swapchain_desc->windowed)
     {
         mode.width = swapchain->orig_width;
         mode.height = swapchain->orig_height;
         mode.refresh_rate = 0;
-        mode.format_id = swapchain->presentParms.BackBufferFormat;
+        mode.format_id = swapchain->desc.backbuffer_format;
     }
     else
     {
-        mode.width = present_parameters->BackBufferWidth;
-        mode.height = present_parameters->BackBufferHeight;
-        mode.refresh_rate = present_parameters->FullScreen_RefreshRateInHz;
-        mode.format_id = present_parameters->BackBufferFormat;
+        mode.width = swapchain_desc->backbuffer_width;
+        mode.height = swapchain_desc->backbuffer_height;
+        mode.refresh_rate = swapchain_desc->refresh_rate;
+        mode.format_id = swapchain_desc->backbuffer_format;
     }
 
     /* Should Width == 800 && Height == 0 set 800x600? */
-    if (present_parameters->BackBufferWidth && present_parameters->BackBufferHeight
-            && (present_parameters->BackBufferWidth != swapchain->presentParms.BackBufferWidth
-            || present_parameters->BackBufferHeight != swapchain->presentParms.BackBufferHeight))
+    if (swapchain_desc->backbuffer_width && swapchain_desc->backbuffer_height
+            && (swapchain_desc->backbuffer_width != swapchain->desc.backbuffer_width
+            || swapchain_desc->backbuffer_height != swapchain->desc.backbuffer_height))
     {
-        if (!present_parameters->Windowed)
+        if (!swapchain_desc->windowed)
             DisplayModeChanged = TRUE;
 
-        swapchain->presentParms.BackBufferWidth = present_parameters->BackBufferWidth;
-        swapchain->presentParms.BackBufferHeight = present_parameters->BackBufferHeight;
+        swapchain->desc.backbuffer_width = swapchain_desc->backbuffer_width;
+        swapchain->desc.backbuffer_height = swapchain_desc->backbuffer_height;
         update_desc = TRUE;
     }
 
-    if (present_parameters->BackBufferFormat != WINED3DFMT_UNKNOWN
-            && present_parameters->BackBufferFormat != swapchain->presentParms.BackBufferFormat)
+    if (swapchain_desc->backbuffer_format != WINED3DFMT_UNKNOWN
+            && swapchain_desc->backbuffer_format != swapchain->desc.backbuffer_format)
     {
-        swapchain->presentParms.BackBufferFormat = present_parameters->BackBufferFormat;
+        swapchain->desc.backbuffer_format = swapchain_desc->backbuffer_format;
         update_desc = TRUE;
     }
 
-    if (present_parameters->MultiSampleType != swapchain->presentParms.MultiSampleType
-            || present_parameters->MultiSampleQuality != swapchain->presentParms.MultiSampleQuality)
+    if (swapchain_desc->multisample_type != swapchain->desc.multisample_type
+            || swapchain_desc->multisample_quality != swapchain->desc.multisample_quality)
     {
-        swapchain->presentParms.MultiSampleType = present_parameters->MultiSampleType;
-        swapchain->presentParms.MultiSampleQuality = present_parameters->MultiSampleQuality;
+        swapchain->desc.multisample_type = swapchain_desc->multisample_type;
+        swapchain->desc.multisample_quality = swapchain_desc->multisample_quality;
         update_desc = TRUE;
     }
 
@@ -5592,16 +5600,16 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     {
         UINT i;
 
-        hr = updateSurfaceDesc(swapchain->front_buffer, &swapchain->presentParms);
+        hr = updateSurfaceDesc(swapchain->front_buffer, &swapchain->desc);
         if (FAILED(hr))
         {
             wined3d_swapchain_decref(swapchain);
             return hr;
         }
 
-        for (i = 0; i < swapchain->presentParms.BackBufferCount; ++i)
+        for (i = 0; i < swapchain->desc.backbuffer_count; ++i)
         {
-            hr = updateSurfaceDesc(swapchain->back_buffers[i], &swapchain->presentParms);
+            hr = updateSurfaceDesc(swapchain->back_buffers[i], &swapchain->desc);
             if (FAILED(hr))
             {
                 wined3d_swapchain_decref(swapchain);
@@ -5610,7 +5618,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         }
         if (device->auto_depth_stencil)
         {
-            hr = updateSurfaceDesc(device->auto_depth_stencil, &swapchain->presentParms);
+            hr = updateSurfaceDesc(device->auto_depth_stencil, &swapchain->desc);
             if (FAILED(hr))
             {
                 wined3d_swapchain_decref(swapchain);
@@ -5621,18 +5629,18 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
     delete_opengl_contexts(device, swapchain);
 
-    if (!present_parameters->Windowed != !swapchain->presentParms.Windowed
+    if (!swapchain_desc->windowed != !swapchain->desc.windowed
             || DisplayModeChanged)
     {
         wined3d_device_set_display_mode(device, 0, &mode);
 
-        if (!present_parameters->Windowed)
+        if (!swapchain_desc->windowed)
         {
-            if (swapchain->presentParms.Windowed)
+            if (swapchain->desc.windowed)
             {
                 HWND focus_window = device->create_parms.focus_window;
                 if (!focus_window)
-                    focus_window = present_parameters->hDeviceWindow;
+                    focus_window = swapchain_desc->device_window;
                 if (FAILED(hr = wined3d_device_acquire_focus_window(device, focus_window)))
                 {
                     ERR("Failed to acquire focus window, hr %#x.\n", hr);
@@ -5642,26 +5650,27 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
                 /* switch from windowed to fs */
                 wined3d_device_setup_fullscreen_window(device, swapchain->device_window,
-                        present_parameters->BackBufferWidth,
-                        present_parameters->BackBufferHeight);
+                        swapchain_desc->backbuffer_width,
+                        swapchain_desc->backbuffer_height);
             }
             else
             {
                 /* Fullscreen -> fullscreen mode change */
                 MoveWindow(swapchain->device_window, 0, 0,
-                           present_parameters->BackBufferWidth, present_parameters->BackBufferHeight,
-                           TRUE);
+                        swapchain_desc->backbuffer_width,
+                        swapchain_desc->backbuffer_height,
+                        TRUE);
             }
         }
-        else if (!swapchain->presentParms.Windowed)
+        else if (!swapchain->desc.windowed)
         {
             /* Fullscreen -> windowed switch */
             wined3d_device_restore_fullscreen_window(device, swapchain->device_window);
             wined3d_device_release_focus_window(device);
         }
-        swapchain->presentParms.Windowed = present_parameters->Windowed;
+        swapchain->desc.windowed = swapchain_desc->windowed;
     }
-    else if (!present_parameters->Windowed)
+    else if (!swapchain_desc->windowed)
     {
         DWORD style = device->style;
         DWORD exStyle = device->exStyle;
@@ -5672,8 +5681,8 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         device->style = 0;
         device->exStyle = 0;
         wined3d_device_setup_fullscreen_window(device, swapchain->device_window,
-                present_parameters->BackBufferWidth,
-                present_parameters->BackBufferHeight);
+                swapchain_desc->backbuffer_width,
+                swapchain_desc->backbuffer_height);
         device->style = style;
         device->exStyle = exStyle;
     }
@@ -6008,8 +6017,8 @@ void get_drawable_size_backbuffer(const struct wined3d_context *context, UINT *w
     /* The drawable size of a backbuffer / aux buffer offscreen target is the size of the
      * current context's drawable, which is the size of the back buffer of the swapchain
      * the active context belongs to. */
-    *width = swapchain->presentParms.BackBufferWidth;
-    *height = swapchain->presentParms.BackBufferHeight;
+    *width = swapchain->desc.backbuffer_width;
+    *height = swapchain->desc.backbuffer_height;
 }
 
 LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL unicode,

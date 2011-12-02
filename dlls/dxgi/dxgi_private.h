@@ -130,7 +130,7 @@ struct dxgi_swapchain
 };
 
 HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device *device,
-        WINED3DPRESENT_PARAMETERS *present_parameters) DECLSPEC_HIDDEN;
+        struct wined3d_swapchain_desc *desc) DECLSPEC_HIDDEN;
 
 /* IDXGISurface */
 struct dxgi_surface

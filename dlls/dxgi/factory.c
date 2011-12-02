@@ -161,13 +161,11 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_GetWindowAssociation(IWineDXGIFact
     return E_NOTIMPL;
 }
 
-/* TODO: The DXGI swapchain desc is a bit nicer than WINED3DPRESENT_PARAMETERS,
- * change wined3d to use a structure more similar to DXGI. */
 static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IWineDXGIFactory *iface,
         IUnknown *device, DXGI_SWAP_CHAIN_DESC *desc, IDXGISwapChain **swapchain)
 {
-    WINED3DPRESENT_PARAMETERS present_parameters;
     struct wined3d_swapchain *wined3d_swapchain;
+    struct wined3d_swapchain_desc wined3d_desc;
     struct wined3d_device *wined3d_device;
     IWineDXGIDevice *dxgi_device;
     UINT count;
@@ -200,31 +198,30 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IWineDXGIFactory *
 
     FIXME("Ignoring SwapEffect and Flags\n");
 
-    present_parameters.BackBufferWidth = desc->BufferDesc.Width;
-    present_parameters.BackBufferHeight = desc->BufferDesc.Height;
-    present_parameters.BackBufferFormat = wined3dformat_from_dxgi_format(desc->BufferDesc.Format);
-    present_parameters.BackBufferCount = desc->BufferCount;
+    wined3d_desc.backbuffer_width = desc->BufferDesc.Width;
+    wined3d_desc.backbuffer_height = desc->BufferDesc.Height;
+    wined3d_desc.backbuffer_format = wined3dformat_from_dxgi_format(desc->BufferDesc.Format);
+    wined3d_desc.backbuffer_count = desc->BufferCount;
     if (desc->SampleDesc.Count > 1)
     {
-        present_parameters.MultiSampleType = desc->SampleDesc.Count;
-        present_parameters.MultiSampleQuality = desc->SampleDesc.Quality;
+        wined3d_desc.multisample_type = desc->SampleDesc.Count;
+        wined3d_desc.multisample_quality = desc->SampleDesc.Quality;
     }
     else
     {
-        present_parameters.MultiSampleType = WINED3DMULTISAMPLE_NONE;
-        present_parameters.MultiSampleQuality = 0;
+        wined3d_desc.multisample_type = WINED3DMULTISAMPLE_NONE;
+        wined3d_desc.multisample_quality = 0;
     }
-    present_parameters.SwapEffect = WINED3DSWAPEFFECT_DISCARD;
-    present_parameters.hDeviceWindow = desc->OutputWindow;
-    present_parameters.Windowed = desc->Windowed;
-    present_parameters.EnableAutoDepthStencil = FALSE;
-    present_parameters.AutoDepthStencilFormat = 0;
-    present_parameters.Flags = 0; /* WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL? */
-    present_parameters.FullScreen_RefreshRateInHz =
-            desc->BufferDesc.RefreshRate.Numerator / desc->BufferDesc.RefreshRate.Denominator;
-    present_parameters.PresentationInterval = WINED3DPRESENT_INTERVAL_DEFAULT;
+    wined3d_desc.swap_effect = WINED3DSWAPEFFECT_DISCARD;
+    wined3d_desc.device_window = desc->OutputWindow;
+    wined3d_desc.windowed = desc->Windowed;
+    wined3d_desc.enable_auto_depth_stencil = FALSE;
+    wined3d_desc.auto_depth_stencil_format = 0;
+    wined3d_desc.flags = 0; /* WINED3DPRESENTFLAG_DISCARD_DEPTHSTENCIL? */
+    wined3d_desc.refresh_rate = desc->BufferDesc.RefreshRate.Numerator / desc->BufferDesc.RefreshRate.Denominator;
+    wined3d_desc.swap_interval = WINED3DPRESENT_INTERVAL_DEFAULT;
 
-    hr = wined3d_device_init_3d(wined3d_device, &present_parameters);
+    hr = wined3d_device_init_3d(wined3d_device, &wined3d_desc);
     if (FAILED(hr))
     {
         WARN("Failed to initialize 3D, returning %#x\n", hr);

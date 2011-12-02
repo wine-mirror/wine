@@ -1513,13 +1513,13 @@ static HRESULT CDECL device_parent_create_volume(struct wined3d_device_parent *d
 }
 
 static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent *device_parent,
-        WINED3DPRESENT_PARAMETERS *present_parameters, struct wined3d_swapchain **swapchain)
+        struct wined3d_swapchain_desc *desc, struct wined3d_swapchain **swapchain)
 {
     struct d3d10_device *device = device_from_wined3d_device_parent(device_parent);
     IWineDXGIDevice *wine_device;
     HRESULT hr;
 
-    TRACE("device_parent %p, present_parameters %p, swapchain %p\n", device_parent, present_parameters, swapchain);
+    TRACE("device_parent %p, desc %p, swapchain %p\n", device_parent, desc, swapchain);
 
     hr = d3d10_device_QueryInterface(&device->ID3D10Device_iface, &IID_IWineDXGIDevice,
             (void **)&wine_device);
@@ -1529,7 +1529,7 @@ static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent
         return E_FAIL;
     }
 
-    hr = IWineDXGIDevice_create_swapchain(wine_device, present_parameters, swapchain);
+    hr = IWineDXGIDevice_create_swapchain(wine_device, desc, swapchain);
     IWineDXGIDevice_Release(wine_device);
     if (FAILED(hr))
     {

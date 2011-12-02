@@ -272,14 +272,14 @@ static const struct wined3d_parent_ops dxgi_swapchain_wined3d_parent_ops =
 };
 
 HRESULT dxgi_swapchain_init(struct dxgi_swapchain *swapchain, struct dxgi_device *device,
-        WINED3DPRESENT_PARAMETERS *present_parameters)
+        struct wined3d_swapchain_desc *desc)
 {
     HRESULT hr;
 
     swapchain->IDXGISwapChain_iface.lpVtbl = &dxgi_swapchain_vtbl;
     swapchain->refcount = 1;
 
-    hr = wined3d_swapchain_create(device->wined3d_device, present_parameters,
+    hr = wined3d_swapchain_create(device->wined3d_device, desc,
             SURFACE_OPENGL, swapchain, &dxgi_swapchain_wined3d_parent_ops,
             &swapchain->wined3d_swapchain);
     if (FAILED(hr))

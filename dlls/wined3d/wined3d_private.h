@@ -2442,7 +2442,7 @@ struct wined3d_swapchain
 
     struct wined3d_surface **back_buffers;
     struct wined3d_surface *front_buffer;
-    WINED3DPRESENT_PARAMETERS presentParms;
+    struct wined3d_swapchain_desc desc;
     DWORD orig_width, orig_height;
     enum wined3d_format_id orig_fmt;
     struct wined3d_gamma_ramp orig_gamma;

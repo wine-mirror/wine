@@ -1441,7 +1441,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         goto out;
     }
 
-    switch (swapchain->presentParms.PresentationInterval)
+    switch (swapchain->desc.swap_interval)
     {
         case WINED3DPRESENT_INTERVAL_IMMEDIATE:
             swap_interval = 0;
@@ -1460,7 +1460,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
             swap_interval = 4;
             break;
         default:
-            FIXME("Unknown presentation interval %08x\n", swapchain->presentParms.PresentationInterval);
+            FIXME("Unknown swap interval %#x.\n", swapchain->desc.swap_interval);
             swap_interval = 1;
     }
 

@@ -1694,15 +1694,15 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
                     && dst_surface == dst_swapchain->front_buffer
                     && src_surface == dst_swapchain->back_buffers[0])
             {
-                WINED3DSWAPEFFECT swap_effect = dst_swapchain->presentParms.SwapEffect;
+                WINED3DSWAPEFFECT swap_effect = dst_swapchain->desc.swap_effect;
 
                 TRACE("Using present for backbuffer -> frontbuffer blit.\n");
 
                 /* Set the swap effect to COPY, we don't want the backbuffer
                  * to become undefined. */
-                dst_swapchain->presentParms.SwapEffect = WINED3DSWAPEFFECT_COPY;
+                dst_swapchain->desc.swap_effect = WINED3DSWAPEFFECT_COPY;
                 wined3d_swapchain_present(dst_swapchain, NULL, NULL, dst_swapchain->win_handle, NULL, 0);
-                dst_swapchain->presentParms.SwapEffect = swap_effect;
+                dst_swapchain->desc.swap_effect = swap_effect;
 
                 return WINED3D_OK;
             }
@@ -5639,8 +5639,8 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
          * buffer, so the onscreen depth/stencil buffer is potentially smaller
          * than the offscreen surface. Don't overwrite the offscreen surface
          * with undefined data. */
-        w = min(w, context->swapchain->presentParms.BackBufferWidth);
-        h = min(h, context->swapchain->presentParms.BackBufferHeight);
+        w = min(w, context->swapchain->desc.backbuffer_width);
+        h = min(h, context->swapchain->desc.backbuffer_height);
 
         TRACE("Copying onscreen depth buffer to depth texture.\n");
 

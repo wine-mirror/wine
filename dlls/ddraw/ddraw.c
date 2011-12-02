@@ -617,9 +617,9 @@ static HRESULT ddraw_set_focus_window(IDirectDrawImpl *ddraw, HWND window)
 }
 
 static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw,
-        WINED3DPRESENT_PARAMETERS *presentation_parameters)
+        struct wined3d_swapchain_desc *swapchain_desc)
 {
-    HWND window = presentation_parameters->hDeviceWindow;
+    HWND window = swapchain_desc->device_window;
     HRESULT hr;
 
     TRACE("ddraw %p.\n", ddraw);
@@ -638,7 +638,7 @@ static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw,
         ShowWindow(window, SW_HIDE);   /* Just to be sure */
         WARN("No window for the Direct3DDevice, created hidden window %p.\n", window);
 
-        presentation_parameters->hDeviceWindow = window;
+        swapchain_desc->device_window = window;
     }
     else
     {
@@ -649,7 +649,7 @@ static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw,
     /* Set this NOW, otherwise creating the depth stencil surface will cause a
      * recursive loop until ram or emulated video memory is full. */
     ddraw->d3d_initialized = TRUE;
-    hr = wined3d_device_init_3d(ddraw->wined3d_device, presentation_parameters);
+    hr = wined3d_device_init_3d(ddraw->wined3d_device, swapchain_desc);
     if (FAILED(hr))
     {
         ddraw->d3d_initialized = FALSE;
@@ -673,7 +673,7 @@ static HRESULT ddraw_attach_d3d_device(IDirectDrawImpl *ddraw,
 
 static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, HWND window, BOOL windowed)
 {
-    WINED3DPRESENT_PARAMETERS presentation_parameters;
+    struct wined3d_swapchain_desc swapchain_desc;
     struct wined3d_display_mode mode;
     HRESULT hr = WINED3D_OK;
 
@@ -688,18 +688,18 @@ static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, HWND window, BOOL 
         return hr;
     }
 
-    memset(&presentation_parameters, 0, sizeof(presentation_parameters));
-    presentation_parameters.BackBufferWidth = mode.width;
-    presentation_parameters.BackBufferHeight = mode.height;
-    presentation_parameters.BackBufferFormat = mode.format_id;
-    presentation_parameters.SwapEffect = WINED3DSWAPEFFECT_COPY;
-    presentation_parameters.hDeviceWindow = window;
-    presentation_parameters.Windowed = windowed;
+    memset(&swapchain_desc, 0, sizeof(swapchain_desc));
+    swapchain_desc.backbuffer_width = mode.width;
+    swapchain_desc.backbuffer_height = mode.height;
+    swapchain_desc.backbuffer_format = mode.format_id;
+    swapchain_desc.swap_effect = WINED3DSWAPEFFECT_COPY;
+    swapchain_desc.device_window = window;
+    swapchain_desc.windowed = windowed;
 
     if (DefaultSurfaceType == SURFACE_OPENGL)
-        hr = ddraw_attach_d3d_device(ddraw, &presentation_parameters);
+        hr = ddraw_attach_d3d_device(ddraw, &swapchain_desc);
     else
-        hr = wined3d_device_init_gdi(ddraw->wined3d_device, &presentation_parameters);
+        hr = wined3d_device_init_gdi(ddraw->wined3d_device, &swapchain_desc);
 
     if (FAILED(hr))
     {
@@ -2919,21 +2919,21 @@ static HRESULT CreateSurface(IDirectDrawImpl *ddraw, DDSURFACEDESC2 *DDSD,
 
     if ((desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE) && (ddraw->cooperative_level & DDSCL_EXCLUSIVE))
     {
-        WINED3DPRESENT_PARAMETERS presentation_parameters;
+        struct wined3d_swapchain_desc swapchain_desc;
 
-        hr = wined3d_swapchain_get_present_parameters(ddraw->wined3d_swapchain, &presentation_parameters);
+        hr = wined3d_swapchain_get_desc(ddraw->wined3d_swapchain, &swapchain_desc);
         if (FAILED(hr))
         {
             ERR("Failed to get present parameters.\n");
             return hr;
         }
 
-        presentation_parameters.BackBufferWidth = mode.width;
-        presentation_parameters.BackBufferHeight = mode.height;
-        presentation_parameters.BackBufferFormat = mode.format_id;
+        swapchain_desc.backbuffer_width = mode.width;
+        swapchain_desc.backbuffer_height = mode.height;
+        swapchain_desc.backbuffer_format = mode.format_id;
 
         hr = wined3d_device_reset(ddraw->wined3d_device,
-                &presentation_parameters, ddraw_reset_enum_callback);
+                &swapchain_desc, ddraw_reset_enum_callback);
         if (FAILED(hr))
         {
             ERR("Failed to reset device.\n");
@@ -5433,12 +5433,12 @@ static HRESULT CDECL device_parent_create_volume(struct wined3d_device_parent *d
 }
 
 static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent *device_parent,
-        WINED3DPRESENT_PARAMETERS *present_parameters, struct wined3d_swapchain **swapchain)
+        struct wined3d_swapchain_desc *desc, struct wined3d_swapchain **swapchain)
 {
     struct IDirectDrawImpl *ddraw = ddraw_from_device_parent(device_parent);
     HRESULT hr;
 
-    TRACE("device_parent %p, present_parameters %p, swapchain %p.\n", device_parent, present_parameters, swapchain);
+    TRACE("device_parent %p, desc %p, swapchain %p.\n", device_parent, desc, swapchain);
 
     if (ddraw->wined3d_swapchain)
     {
@@ -5446,7 +5446,7 @@ static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent
         return E_FAIL;
     }
 
-    hr = wined3d_swapchain_create(ddraw->wined3d_device, present_parameters,
+    hr = wined3d_swapchain_create(ddraw->wined3d_device, desc,
             DefaultSurfaceType, NULL, &ddraw_null_wined3d_parent_ops, swapchain);
     if (FAILED(hr))
         WARN("Failed to create swapchain, hr %#x.\n", hr);

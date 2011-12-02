@@ -239,7 +239,7 @@
 @ cdecl wined3d_swapchain_get_front_buffer_data(ptr ptr)
 @ cdecl wined3d_swapchain_get_gamma_ramp(ptr ptr)
 @ cdecl wined3d_swapchain_get_parent(ptr)
-@ cdecl wined3d_swapchain_get_present_parameters(ptr ptr)
+@ cdecl wined3d_swapchain_get_desc(ptr ptr)
 @ cdecl wined3d_swapchain_get_raster_status(ptr ptr)
 @ cdecl wined3d_swapchain_incref(ptr)
 @ cdecl wined3d_swapchain_present(ptr ptr ptr ptr ptr long)

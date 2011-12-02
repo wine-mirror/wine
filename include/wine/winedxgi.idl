@@ -54,7 +54,7 @@ interface IWineDXGIDevice : IDXGIDevice
         [out] void **surface
     );
     HRESULT create_swapchain(
-        [in] struct _WINED3DPRESENT_PARAMETERS *present_parameters,
+        [in] struct wined3d_swapchain_desc *desc,
         [out] struct wined3d_swapchain **wined3d_swapchain
     );
 }
