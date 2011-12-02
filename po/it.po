@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-11-29 22:07+0100\n"
+"PO-Revision-Date: 2011-12-02 12:11+0100\n"
 "Last-Translator: Luca Bennati <lucak3@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Italian\n"
@@ -22,8 +22,8 @@ msgid ""
 "To install a new program from a floppy disk, CD-ROM drive, or your hard "
 "drive, click Install."
 msgstr ""
-"Per installare un nuovo programma dal floppy disk, CD-ROM o dal tuo hard "
-"disk, clicca Installa."
+"Per installare un nuovo programma dal floppy disk, CD-ROM o dal tuo disco "
+"rigido, clicca Installa."
 
 #: appwiz.rc:59
 msgid "&Install..."
@@ -113,7 +113,6 @@ msgid "Wine Gecko Installer"
 msgstr "Installer di Wine Gecko"
 
 #: appwiz.rc:100
-#, fuzzy
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
 "embedding HTML to work correctly. Wine can automatically download and "
@@ -127,8 +126,9 @@ msgstr ""
 "incorporano HTML per funzionare correttamente. Wine lo può scaricare e "
 "installare automaticamente per te.\n"
 "\n"
-"Nota: è raccomandato usare i pacchetti delle distribuzioni. Leggi http://"
-"wiki.winehq.org/Gecko per i dettagli."
+"Nota: è raccomandato usare i pacchetti delle distribuzioni. Leggi <a href="
+"\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> per i "
+"dettagli."
 
 #: appwiz.rc:106
 msgid "&Install"
@@ -5851,11 +5851,11 @@ msgstr "&Attributi:"
 
 #: mshtml.rc:37
 msgid "Hyperlink"
-msgstr "Hyperlink"
+msgstr "Iperlink"
 
 #: mshtml.rc:40
 msgid "Hyperlink Information"
-msgstr "Informazioni sull'hyperlink"
+msgstr "Informazioni sull'iperlink"
 
 #: mshtml.rc:41 winecfg.rc:247
 msgid "&Type:"
@@ -6017,12 +6017,11 @@ msgstr "&Keyframe ogni"
 
 #: msvfw32.rc:50
 msgid "&Data Rate"
-msgstr "&Ritmo dati"
+msgstr "&Rate di dati"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/sec"
-msgstr "KBps"
+msgstr "kB/sec"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
@@ -6342,7 +6341,7 @@ msgstr "Visualizza come icona"
 
 #: oledlg.rc:68 setupapi.rc:58
 msgid "Browse..."
-msgstr "Scegli..."
+msgstr "Sfoglia..."
 
 #: oledlg.rc:69
 msgid "File:"
@@ -6350,7 +6349,7 @@ msgstr "File:"
 
 #: oledlg.rc:75
 msgid "Paste Special"
-msgstr "Incolla Speciale"
+msgstr "Incolla speciale"
 
 #: oledlg.rc:78 setupapi.rc:40
 msgid "Source:"
@@ -6505,13 +6504,12 @@ msgid "us"
 msgstr "µs"
 
 #: serialui.rc:25
-#, fuzzy
 msgid "Settings for %s"
-msgstr "Proprietà di %s"
+msgstr "Impostazioni di %s"
 
 #: serialui.rc:28
 msgid "Baud Rate"
-msgstr "Bit per secondo (baud)"
+msgstr "Rate di bit (Baud)"
 
 #: serialui.rc:30
 msgid "Parity"
@@ -6539,7 +6537,7 @@ msgstr "Destinazione:"
 
 #: setupapi.rc:49
 msgid "Files Needed"
-msgstr "File Necessari"
+msgstr "File necessari"
 
 #: setupapi.rc:52
 msgid ""
@@ -11006,7 +11004,7 @@ msgstr "Carico di lavore (K)"
 
 #: taskmgr.rc:380
 msgid "Physical Memory (K)"
-msgstr "Memoria Fisica (K)"
+msgstr "Memoria fisica (K)"
 
 #: taskmgr.rc:381
 msgid "Kernel Memory (K)"
