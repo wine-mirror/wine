@@ -3131,6 +3131,8 @@ static void ShapeCharGlyphProp_Thai( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
             }
     }
 
+    GDEF_UpdateGlyphProps(hdc, psc, pwGlyphs, cGlyphs, pwLogClust, cChars, pGlyphProp);
+
     for (i = 0; i < cGlyphs; i++)
     {
         int char_index[20];
@@ -3157,10 +3159,13 @@ static void ShapeCharGlyphProp_Thai( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
             pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_NONE;
         else
             pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_CHARACTER;
+
+        /* handle Thai SARA AM (U+0E33) differently than GDEF */
+        if (char_count == 1 && pwcChars[char_index[0]] == 0x0e33)
+            pGlyphProp[i].sva.fClusterStart = 0;
     }
 
     HeapFree(GetProcessHeap(),0,spaces);
-    GDEF_UpdateGlyphProps(hdc, psc, pwGlyphs, cGlyphs, pwLogClust, cChars, pGlyphProp);
     UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
 
     /* Do not allow justification between marks and their base */
