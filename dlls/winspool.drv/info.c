@@ -33,9 +33,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stddef.h>
-#ifdef HAVE_SYS_ERRNO_H
-#include <sys/errno.h>
-#endif
+#include <errno.h>
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
