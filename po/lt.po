@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-02 19:05+0300\n"
+"PO-Revision-Date: 2011-12-12 21:39+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -2211,7 +2211,6 @@ msgid "Welcome to the Certificate Import Wizard"
 msgstr "Sveiki atvėrę liudijimo importo vediklį"
 
 #: cryptui.rc:283
-#, fuzzy
 msgid ""
 "This wizard helps you import certificates, certificate revocation lists, and "
 "certificate trust lists from a file to a certificate store.\n"
@@ -2223,10 +2222,15 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Šis vediklis padeda jums importuoti liudijimus, atšauktų liudijimų sąrašus "
+"ir patikintų liudijimų sąrašus iš failo į liudijimų saugyklą.\n"
+"\n"
 "Liudijimas gali būti naudojamas nustatyti jūsų ar kompiuterio su kuriuo "
-"esate užmezgę ryšį tapatumą. Jis taip pat gali būti naudojamas pranešimų "
-"pasirašymui. Liudijimų saugyklos yra liudijimų rinkiniai, atšauktų liudijimų "
-"sąrašai ir patikintų liudijimų sąrašai."
+"esate užmezgę ryšį tapatumą. Jis taip pat gali būti naudojamas tapatumo "
+"nustatymui ir pranešimų pasirašymui. Liudijimų saugyklos yra liudijimų, "
+"atšauktų liudijimų sąrašų ir patikintų liudijimų sąrašų rinkiniai.\n"
+"\n"
+"Jei norite tęsti, spauskite Kitas."
 
 #: cryptui.rc:291 cryptui.rc:427
 msgid "&File name:"
@@ -2343,7 +2347,6 @@ msgid "Welcome to the Certificate Export Wizard"
 msgstr "Sveiki atvėrę liudijimo eksporto vediklį"
 
 #: cryptui.rc:373
-#, fuzzy
 msgid ""
 "This wizard helps you export certificates, certificate revocation lists, and "
 "certificate trust lists from a certificate store to a file.\n"
@@ -2355,10 +2358,15 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Šis vediklis padeda jums eksportuoti liudijimus, atšauktų liudijimų sąrašus "
+"ir patikintų liudijimų sąrašus iš liudijimų saugyklos į failą.\n"
+"\n"
 "Liudijimas gali būti naudojamas nustatyti jūsų ar kompiuterio su kuriuo "
-"esate užmezgę ryšį tapatumą. Jis taip pat gali būti naudojamas pranešimų "
-"pasirašymui. Liudijimų saugyklos yra liudijimų rinkiniai, atšauktų liudijimų "
-"sąrašai ir patikintų liudijimų sąrašai."
+"esate užmezgę ryšį tapatumą. Jis taip pat gali būti naudojamas tapatumo "
+"nustatymui ir pranešimų pasirašymui. Liudijimų saugyklos yra liudijimų, "
+"atšauktų liudijimų sąrašų ir patikintų liudijimų sąrašų rinkiniai.\n"
+"\n"
+"Jei norite tęsti, spauskite Kitas."
 
 #: cryptui.rc:381
 msgid ""
@@ -3005,9 +3013,8 @@ msgid "Mapping"
 msgstr "Susiejimas"
 
 #: dinput.rc:53
-#, fuzzy
 msgid "Show Assigned First"
-msgstr "Rikiuoti priskirtus"
+msgstr "Iš pradžių rodyti priskirtus"
 
 #: dinput.rc:34
 msgid "Action"
@@ -3471,9 +3478,8 @@ msgid "Subscript out of range"
 msgstr "Indeksas nepatenka į rėžius"
 
 #: jscript.rc:28
-#, fuzzy
 msgid "Object required"
-msgstr "Tikėtasi objekto"
+msgstr "Reikalingas objektas"
 
 #: jscript.rc:29
 msgid "Automation server can't create object"
@@ -8344,7 +8350,7 @@ msgstr "Yra nesklandumų su šios svetainės liudijimu."
 
 #: wininet.rc:79
 msgid "Do you want to continue anyway?"
-msgstr "Ar vistiek norite tęsti?"
+msgstr "Ar vis tiek norite tęsti?"
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -9896,19 +9902,16 @@ msgid "N"
 msgstr "N"
 
 #: cmd.rc:294
-#, fuzzy
 msgid "File association missing for extension %1\n"
-msgstr "Trūksta failo susiejimo prievardžiui %s\n"
+msgstr "Trūksta failo susiejimo prievardžiui %1\n"
 
 #: cmd.rc:295
-#, fuzzy
 msgid "No open command associated with file type '%1'\n"
-msgstr "Jokia atvėrimo komanda nesusieta su failo tipu „%s“\n"
+msgstr "Jokia atvėrimo komanda nesusieta su failo tipu „%1“\n"
 
 #: cmd.rc:296
-#, fuzzy
 msgid "Overwrite %1"
-msgstr "Perrašyti %s"
+msgstr "Perrašyti %1"
 
 #: cmd.rc:297
 msgid "More..."
@@ -9927,23 +9930,20 @@ msgid "Syntax error\n"
 msgstr "Sintaksės klaida\n"
 
 #: cmd.rc:303
-#, fuzzy
 msgid "No help available for %1\n"
-msgstr "Nėra informacijos apie %s\n"
+msgstr "Nėra informacijos apie %1\n"
 
 #: cmd.rc:304
 msgid "Target to GOTO not found\n"
 msgstr "GOTO tikslas nerastas\n"
 
 #: cmd.rc:305
-#, fuzzy
 msgid "Current Date is %1\n"
-msgstr "Dabartinė data yra %s\n"
+msgstr "Dabartinė data yra %1\n"
 
 #: cmd.rc:306
-#, fuzzy
 msgid "Current Time is %1\n"
-msgstr "Dabartinis laikas yra %s\n"
+msgstr "Dabartinis laikas yra %1\n"
 
 #: cmd.rc:307
 msgid "Enter new date: "
@@ -9954,9 +9954,8 @@ msgid "Enter new time: "
 msgstr "Įveskite naują laiką: "
 
 #: cmd.rc:309
-#, fuzzy
 msgid "Environment variable %1 not defined\n"
-msgstr "Aplinkos kintamasis %s neapibrėžtas\n"
+msgstr "Aplinkos kintamasis %1 neapibrėžtas\n"
 
 #: cmd.rc:310 xcopy.rc:38
 msgid "Failed to open '%1'\n"
@@ -9972,19 +9971,16 @@ msgid "A"
 msgstr "V"
 
 #: cmd.rc:313
-#, fuzzy
 msgid "%1, Delete"
-msgstr "%s, šalinti"
+msgstr "%1, šalinti"
 
 #: cmd.rc:314
-#, fuzzy
 msgid "Echo is %1\n"
-msgstr "ECHO yra %s\n"
+msgstr "Echo yra %1\n"
 
 #: cmd.rc:315
-#, fuzzy
 msgid "Verify is %1\n"
-msgstr "VERIFY yra %s\n"
+msgstr "Verify yra %1\n"
 
 #: cmd.rc:316
 msgid "Verify must be ON or OFF\n"
@@ -9995,14 +9991,13 @@ msgid "Parameter error\n"
 msgstr "Parametro klaida\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid ""
 "Volume in drive %1!c! is %2\n"
 "Volume Serial Number is %3!04x!-%4!04x!\n"
 "\n"
 msgstr ""
-"Tomas diske %c yra %s\n"
-"Tomo serijos numeris yra %04x-%04x\n"
+"Tomas diske %1!c! yra %2\n"
+"Tomo serijos numeris yra %3!04x!-%4!04x!\n"
 "\n"
 
 #: cmd.rc:319
@@ -10022,9 +10017,8 @@ msgid "Wine Command Prompt"
 msgstr "Wine komandų interpretatorius"
 
 #: cmd.rc:323
-#, fuzzy
 msgid "CMD Version %1!S!\n"
-msgstr "CMD versija %s\n"
+msgstr "CMD versija %1!S!\n"
 
 #: cmd.rc:324
 msgid "More? "
