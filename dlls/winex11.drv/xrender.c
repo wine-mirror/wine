@@ -2562,12 +2562,8 @@ static BOOL xrenderdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG n
             colors[1].red   = v2->Red * 257 / 256;
             colors[1].green = v2->Green * 257 / 256;
             colors[1].blue  = v2->Blue * 257 / 256;
-            if (has_alpha( physdev->format ))
-            {
-                colors[0].alpha = v1->Alpha * 257 / 256;
-                colors[1].alpha = v2->Alpha * 257 / 256;
-            }
-            else colors[0].alpha = colors[1].alpha = 65535;
+            /* always ignore alpha since otherwise xrender will want to pre-multiply the colors */
+            colors[0].alpha = colors[1].alpha = 65535;
 
             pt[0].x = v1->x;
             pt[0].y = v1->y;
