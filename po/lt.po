@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-16 20:12+0300\n"
+"PO-Revision-Date: 2011-12-21 21:04+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -3318,24 +3318,20 @@ msgid "Address"
 msgstr "Adresas"
 
 #: ieframe.rc:78
-#, fuzzy
 msgid "Searching for %s"
-msgstr "%s nustatymai"
+msgstr "Ieškoma %s"
 
 #: ieframe.rc:79
-#, fuzzy
 msgid "Start downloading %s"
-msgstr "Atsiunčiama iš %s..."
+msgstr "Pradedamas %s atsiuntimas"
 
 #: ieframe.rc:80
-#, fuzzy
 msgid "Downloading %s"
-msgstr "Atsiunčiama..."
+msgstr "Atsiunčiama %s"
 
 #: ieframe.rc:81
-#, fuzzy
 msgid "Asking for %s"
-msgstr "%s nustatymai"
+msgstr "Prašoma %s"
 
 #: inetcpl.rc:46
 msgid " Home page "
