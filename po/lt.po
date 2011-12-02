@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-11-26 17:27+0300\n"
+"PO-Revision-Date: 2011-12-02 19:05+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -114,7 +114,6 @@ msgid "Wine Gecko Installer"
 msgstr "Wine Gecko diegimo programa"
 
 #: appwiz.rc:100
-#, fuzzy
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
 "embedding HTML to work correctly. Wine can automatically download and "
@@ -124,11 +123,11 @@ msgid ""
 "href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> for "
 "details."
 msgstr ""
-"Wine nepavyko rasti Gecko paketo reikalingo programoms įterpiančioms HTML "
+"Wine nepavyko rasti Gecko paketo reikalingo programoms, įterpiančioms HTML, "
 "teisingai veikti. Wine gali automatiškai atsiųsti ir įdiegti šį paketą.\n"
 "\n"
 "Pastaba: rekomenduojama naudoti distribucijos paketus. Daugiau informacijos "
-"http://wiki.winehq.org/Gecko."
+"<a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a>."
 
 #: appwiz.rc:106
 msgid "&Install"
@@ -6018,9 +6017,8 @@ msgid "&Data Rate"
 msgstr "&Duomenų sparta"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/sec"
-msgstr "KB/sek"
+msgstr "kB/s"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
@@ -6501,9 +6499,8 @@ msgid "us"
 msgstr "µs"
 
 #: serialui.rc:25
-#, fuzzy
 msgid "Settings for %s"
-msgstr "%s savybės"
+msgstr "%s nustatymai"
 
 #: serialui.rc:28
 msgid "Baud Rate"
@@ -12519,7 +12516,6 @@ msgstr ""
 "dėl nepatogumų."
 
 #: winedbg.rc:53
-#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
@@ -12529,11 +12525,11 @@ msgid ""
 "you can <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a>."
 msgstr ""
 "Programos problemos ar Wine trūkumai gali būti to priežastimi. Jūs turbūt "
-"norėsite patikrinti http://appdb.winehq.org dėl patarimų apie šios programos "
-"vykdymą.\n"
+"norėsite patikrinti <a href=\"http://appdb.winehq.org\">programų duomenų "
+"bazę</a> dėl patarimų apie šios programos vykdymą.\n"
 "\n"
 "Jei šios problemos nėra Windows sistemoje ir apie ją dar nebuvo pranešta, "
-"galite pranešti http://bugs.winehq.org."
+"galite <a href=\"http://wiki.winehq.org/Bugs\">užregistruoti klaidą</a>."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
