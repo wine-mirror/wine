@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-11-05 21:36+0900\n"
+"PO-Revision-Date: 2011-11-30 21:20+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Japanese\n"
@@ -486,13 +486,12 @@ msgid "Unreadable Entry"
 msgstr ""
 
 #: comdlg32.rc:68
-#, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "この値はページの範囲に含まれません。\n"
-"%d から %d までの値を入力してください。"
+"%1!d! から %2!d! までの値を入力してください。"
 
 #: comdlg32.rc:70
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -552,9 +551,9 @@ msgstr ""
 "ください。"
 
 #: comdlg32.rc:151
-#, fuzzy
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr "フォントサイズを %d ポイントから %d ポイントの間で選択してください。"
+msgstr ""
+"フォントサイズを %1!d! ポイントから %2!d! ポイントの間で選択してください。"
 
 #: comdlg32.rc:152 ieframe.rc:32
 msgid "&Save"
@@ -968,7 +967,7 @@ msgstr ""
 
 #: crypt32.rc:80
 msgid "Surname"
-msgstr "ユーザー名"
+msgstr ""
 
 #: crypt32.rc:81
 msgid "Domain Component"
@@ -1746,9 +1745,8 @@ msgid "Public key"
 msgstr "公開鍵"
 
 #: cryptui.rc:58
-#, fuzzy
 msgid "%1 (%2!d! bits)"
-msgstr "%s (%d ビット)"
+msgstr "%1 (%2!d! ビット)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
@@ -2226,79 +2224,76 @@ msgid "Regional Setting"
 msgstr "地域の設定"
 
 #: dxdiagn.rc:26
-#, fuzzy
 msgid "%1!u!MB used, %2!u!MB available"
-msgstr "%u MB 使用中、%u MB 使用可能"
+msgstr "%1!u!MB 使用中、%2!u!MB 使用可能"
 
 #: gdi32.rc:25
 msgid "Western"
-msgstr ""
+msgstr "欧文"
 
 #: gdi32.rc:26
 msgid "Central European"
-msgstr ""
+msgstr "中央ヨーロッパ言語"
 
 #: gdi32.rc:27
 msgid "Cyrillic"
-msgstr ""
+msgstr "キリル言語"
 
 #: gdi32.rc:28
-#, fuzzy
 msgid "Greek"
-msgstr "緑"
+msgstr "ギリシャ語"
 
 #: gdi32.rc:29
 msgid "Turkish"
-msgstr ""
+msgstr "トルコ語"
 
 #: gdi32.rc:30
 msgid "Hebrew"
-msgstr ""
+msgstr "ヘブライ語"
 
 #: gdi32.rc:31
 msgid "Arabic"
-msgstr ""
+msgstr "アラビア語"
 
 #: gdi32.rc:32
 msgid "Baltic"
-msgstr ""
+msgstr "バルト言語"
 
 #: gdi32.rc:33
 msgid "Vietnamese"
-msgstr ""
+msgstr "ベトナム語"
 
 #: gdi32.rc:34
 msgid "Thai"
-msgstr ""
+msgstr "タイ語"
 
 #: gdi32.rc:35
-#, fuzzy
 msgid "Japanese"
-msgstr "ペイン"
+msgstr "日本語"
 
 #: gdi32.rc:36
 msgid "CHINESE_GB2312"
-msgstr ""
+msgstr "CHINESE_GB2312"
 
 #: gdi32.rc:37
 msgid "Hangul"
-msgstr ""
+msgstr "韓国語"
 
 #: gdi32.rc:38
 msgid "CHINESE_BIG5"
-msgstr ""
+msgstr "CHINESE_BIG5"
 
 #: gdi32.rc:39
 msgid "Hangul(Johab)"
-msgstr ""
+msgstr "韓国語(Johab)"
 
 #: gdi32.rc:40
 msgid "Symbol"
-msgstr ""
+msgstr "シンボル"
 
 #: gdi32.rc:41
 msgid "OEM/DOS"
-msgstr ""
+msgstr "OEM/DOS"
 
 #: gphoto2.rc:27
 msgid "Files on Camera"
@@ -6547,9 +6542,8 @@ msgid "Copy manufacturer's files from:"
 msgstr "製造元のファイルのコピー元:"
 
 #: setupapi.rc:28
-#, fuzzy
 msgid "The file '%1' on %2 is needed"
-msgstr "ファイル '%s' (%s 上) が必要です。"
+msgstr "%2 上のファイル '%1' が必要です。"
 
 #: setupapi.rc:29 ipconfig.rc:31
 msgid "Unknown"
@@ -7142,11 +7136,11 @@ msgstr "Program Files (x86)\\Common Files"
 
 #: shell32.rc:228
 msgid "Contacts"
-msgstr ""
+msgstr "Contacs"
 
 #: shell32.rc:229 winefile.rc:116
 msgid "Links"
-msgstr ""
+msgstr "Links"
 
 #: shell32.rc:230
 msgid "Pictures\\Slide Shows"
@@ -7202,15 +7196,15 @@ msgstr "Videos\\Sample Videos"
 
 #: shell32.rc:240
 msgid "Saved Games"
-msgstr ""
+msgstr "Saved Games"
 
 #: shell32.rc:241
 msgid "Searches"
-msgstr ""
+msgstr "Searches"
 
 #: shell32.rc:242
 msgid "Users"
-msgstr ""
+msgstr "Users"
 
 #: shell32.rc:243
 msgid "OEM Links"
@@ -7465,7 +7459,7 @@ msgstr "次のウィンドウ(&N)\tCtrl-F6"
 
 #: user32.rc:69
 msgid "&More Windows..."
-msgstr ""
+msgstr "ウィンドウの一覧(&M)..."
 
 #: wineps.rc:25
 msgid "Paper"
@@ -9194,7 +9188,7 @@ msgstr "CMD バージョン %s\n"
 
 #: cmd.rc:324
 msgid "More? "
-msgstr ""
+msgstr "More? "
 
 #: cmd.rc:325
 msgid "The input line is too long.\n"
@@ -9240,9 +9234,8 @@ msgid "Error: Unknown or invalid command line parameters specified\n"
 msgstr "エラー: 不明または無効なコマンド ライン パラメータが指定されました\n"
 
 #: ipconfig.rc:29
-#, fuzzy
 msgid "%1 adapter %2\n"
-msgstr "%s アダプタ %s\n"
+msgstr "%1 アダプタ %2\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
@@ -9631,7 +9624,6 @@ msgid "Unicode (UTF-8)"
 msgstr "Unicode (UTF-8)"
 
 #: notepad.rc:99
-#, fuzzy
 msgid ""
 "%1\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -9640,12 +9632,12 @@ msgid ""
 "one of the Unicode options in the Encoding drop down list.\n"
 "Continue?"
 msgstr ""
-"%s\n"
-"このファイルには、%s として保存すると失われてしまう Unicode 文字が含まれてい"
+"%1\n"
+"このファイルには、%2 として保存すると失われてしまう Unicode 文字が含まれてい"
 "ます。\n"
 "これらの文字を保存するには [キャンセル] をクリックし、[文字コード] リストか"
 "ら\n"
-"Unicode のいずれかを選択してください。\n"
+"Unicode 選択肢のいずれか一つを選択してください。\n"
 "続行しますか?"
 
 #: oleview.rc:29
@@ -9978,9 +9970,8 @@ msgid "bytes"
 msgstr "バイト"
 
 #: oleview.rc:148
-#, fuzzy
 msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
-msgstr "LoadTypeLib( %s ) が失敗しました ($%x)"
+msgstr "LoadTypeLib( %1 ) が失敗しました ($%2!x!)"
 
 #: oleview.rc:149
 msgid "Inherited Interfaces"
@@ -10063,107 +10054,92 @@ msgid "&About Program Manager"
 msgstr "バージョン情報(&A)"
 
 #: progman.rc:100
-#, fuzzy
 msgid "Program &group"
-msgstr "プログラム マネージャ"
+msgstr "プログラム グループ(&G)"
 
 #: progman.rc:102
-#, fuzzy
 msgid "&Program"
-msgstr "&Programs"
+msgstr "プログラム(&P)"
 
 #: progman.rc:113
-#, fuzzy
 msgid "Move Program"
-msgstr "プログラムの追加と削除"
+msgstr "プログラムの移動"
 
 #: progman.rc:115
-#, fuzzy
 msgid "Move program:"
-msgstr "プログラムの終了時"
+msgstr "移動するプログラム:"
 
 #: progman.rc:117 progman.rc:135
 msgid "From group:"
-msgstr ""
+msgstr "移動元:"
 
 #: progman.rc:119 progman.rc:137
 msgid "&To group:"
-msgstr ""
+msgstr "移動先(&T):"
 
 #: progman.rc:131
-#, fuzzy
 msgid "Copy Program"
-msgstr "プログラム"
+msgstr "プログラムのコピー"
 
 #: progman.rc:133
-#, fuzzy
 msgid "Copy program:"
-msgstr "プログラムの終了時"
+msgstr "コピーするプログラム:"
 
 #: progman.rc:149
-#, fuzzy
 msgid "Program Group Attributes"
-msgstr "グループ属性が正しくありません。\n"
+msgstr "プログラム グループ属性"
 
 #: progman.rc:151 progman.rc:167
-#, fuzzy
 msgid "&Description:"
-msgstr "説明"
+msgstr "説明(&D):"
 
 #: progman.rc:153
 msgid "&Group file:"
-msgstr ""
+msgstr "グループ ファイル(&G):"
 
 #: progman.rc:165
-#, fuzzy
 msgid "Program Attributes"
-msgstr "属性"
+msgstr "プログラム属性"
 
 #: progman.rc:169 progman.rc:209
-#, fuzzy
 msgid "&Command line:"
-msgstr "コマンド ラインが正しくありません。\n"
+msgstr "コマンド ライン(&C):"
 
 #: progman.rc:171
 msgid "&Working directory:"
-msgstr ""
+msgstr "作業ディレクトリ(&W)"
 
 #: progman.rc:173
 msgid "&Key combination:"
-msgstr ""
+msgstr "キーの組み合わせ(&K)"
 
 #: progman.rc:176 progman.rc:212
-#, fuzzy
 msgid "&Minimize at launch"
 msgstr "実行時に最小化(&M)"
 
 #: progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:245 winefile.rc:136
 msgid "&Browse..."
-msgstr "参照(&B)"
+msgstr "参照(&B)..."
 
 #: progman.rc:180
-#, fuzzy
 msgid "Change &icon..."
-msgstr "アイコンの整列(&I)"
+msgstr "アイコンの変更(&I)..."
 
 #: progman.rc:189
-#, fuzzy
 msgid "Change Icon"
-msgstr "アイコンの並び替え(&A)"
+msgstr "アイコンの変更"
 
 #: progman.rc:191
-#, fuzzy
 msgid "&Filename:"
-msgstr "&File Name:"
+msgstr "ファイル名(&F):"
 
 #: progman.rc:193
 msgid "Current &icon:"
-msgstr ""
+msgstr "現在のアイコン(&I):"
 
 #: progman.rc:207
-#, fuzzy
 msgid "Execute Program"
-msgstr "プログラム"
+msgstr "実行プログラム"
 
 #: progman.rc:60
 msgid "Program Manager"
@@ -10750,52 +10726,45 @@ msgstr ""
 "エラー: /im または /pid のオプションのうち、1 つを必ず指定してください。\n"
 
 #: taskkill.rc:31
-#, fuzzy
 msgid "Error: Option %1 expects a command line parameter.\n"
-msgstr "エラー: %s オプションにはコマンド ライン パラメータが必要です。\n"
+msgstr "エラー: %1 オプションにはコマンド ライン パラメータが必要です。\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
 msgstr "エラー: /im と /pid のオプションは同時に指定できません。\n"
 
 #: taskkill.rc:33
-#, fuzzy
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
 msgstr ""
-"クローズ メッセージがプロセス(PID %u)のトップレベル ウィンドウに送られまし"
+"クローズ メッセージがプロセス(PID %1!u!)のトップレベル ウィンドウに送られまし"
 "た。\n"
 
 #: taskkill.rc:34
-#, fuzzy
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 msgstr ""
-"クローズ メッセージがプロセス(%s, PID %u)のトップレベル ウィンドウに送られま"
-"した。\n"
+"クローズ メッセージがプロセス(%1, PID %2!u!)のトップレベル ウィンドウに送られ"
+"ました。\n"
 
 #: taskkill.rc:35
-#, fuzzy
 msgid "Process with PID %1!u! was forcibly terminated.\n"
-msgstr "プロセス(PID %u)は強制的に終了されました。\n"
+msgstr "プロセス(PID %1!u!)は強制的に終了されました。\n"
 
 #: taskkill.rc:36
-#, fuzzy
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
-msgstr "プロセス(%s, PID %u)は強制的に終了されました。\n"
+msgstr "プロセス(%1, PID %2!u!)は強制的に終了されました。\n"
 
 #: taskkill.rc:37
-#, fuzzy
 msgid "Error: Could not find process \"%1\".\n"
-msgstr "エラー: プロセス(%s)が見つかりません。\n"
+msgstr "エラー: プロセス(%1)が見つかりません。\n"
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
 msgstr "エラー: プロセスの一覧を列挙できません。\n"
 
 #: taskkill.rc:39
-#, fuzzy
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr "エラー: プロセス(%s)を終了できません。\n"
+msgstr "エラー: プロセス(%1)を終了できません。\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
@@ -11462,9 +11431,8 @@ msgid "Processes: %d"
 msgstr "プロセス数: %d"
 
 #: taskmgr.rc:267
-#, fuzzy
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
-msgstr "メモリ使用量: %dK / %dK"
+msgstr "メモリ使用量: %1!u!kB / %2!u!kB"
 
 #: taskmgr.rc:272
 msgid "Image Name"
@@ -11711,11 +11679,11 @@ msgstr " Windows 登録情報 "
 
 #: winecfg.rc:141
 msgid "&Owner:"
-msgstr "所有者:"
+msgstr "所有者(&O):"
 
 #: winecfg.rc:143
 msgid "Organi&zation:"
-msgstr "組織:"
+msgstr "組織(&Z):"
 
 #: winecfg.rc:151
 msgid " Application Settings "
@@ -11729,8 +11697,7 @@ msgid ""
 msgstr ""
 "Wineはアプリケーションによって異なるWindowsのバージョンをエミュレートできま"
 "す。 このタブはライブラリ及びグラフィック各タブと連動しますので、システム全体"
-"の設定や\n"
-"個別アプリケーションの設定の変更が行えます。"
+"の設定や個別アプリケーションの設定の変更が行えます。"
 
 #: winecfg.rc:156
 msgid "&Add application..."
@@ -11798,8 +11765,8 @@ msgid ""
 "(provided by Wine) or native (taken from Windows or provided by the "
 "application)."
 msgstr ""
-"ダイナミック リンク ライブラリ(DLL)は個別に builtin (Wine版) または native "
-"(Windows もしくはアプリケーション提供の物)を選ぶことができます。"
+"ダイナミック リンク ライブラリ(DLL)は個別に 内蔵版(Wine提供) または ネイティ"
+"ブ版(Windows もしくはアプリケーション提供のもの)を選ぶことができます。"
 
 #: winecfg.rc:196
 msgid "&New override for library:"
@@ -11827,19 +11794,19 @@ msgstr " 読込順序 "
 
 #: winecfg.rc:211
 msgid "&Builtin (Wine)"
-msgstr "&Builtin (Wine)"
+msgstr "内蔵版(Wine)(&B)"
 
 #: winecfg.rc:212
 msgid "&Native (Windows)"
-msgstr "&Native (Windows)"
+msgstr "ネイティブ版(Windows)(&N)"
 
 #: winecfg.rc:213
 msgid "Bui&ltin then Native"
-msgstr "Bui&ltin 後 Native"
+msgstr "内蔵版後にネイティブ版(&L)"
 
 #: winecfg.rc:214
 msgid "Nati&ve then Builtin"
-msgstr "Nati&ve 後 Builtin"
+msgstr "ネイティブ版後に内蔵版(&V)"
 
 #: winecfg.rc:215
 msgid "&Disable"
@@ -11898,27 +11865,27 @@ msgstr "ドット ファイルを表示する"
 
 #: winecfg.rc:267
 msgid " Driver Diagnostics "
-msgstr " Driver Diagnostics "
+msgstr " ドライバ診断 "
 
 #: winecfg.rc:269
 msgid " Defaults "
-msgstr " Defaults "
+msgstr " デフォルト "
 
 #: winecfg.rc:270
 msgid "Output device:"
-msgstr "Output device:"
+msgstr "出力デバイス:"
 
 #: winecfg.rc:271
 msgid "Voice output device:"
-msgstr "Voice output device:"
+msgstr "音声出力デバイス:"
 
 #: winecfg.rc:272
 msgid "Input device:"
-msgstr "Input device:"
+msgstr "入力デバイス:"
 
 #: winecfg.rc:273
 msgid "Voice input device:"
-msgstr "Voice input device:"
+msgstr "音声入力デバイス:"
 
 #: winecfg.rc:278
 msgid "&Test Sound"
@@ -12054,23 +12021,23 @@ msgstr ""
 
 #: winecfg.rc:52
 msgid "Warning: system library"
-msgstr "警告: システムライブラリ"
+msgstr "警告: システム ライブラリ"
 
 #: winecfg.rc:53
 msgid "native"
-msgstr "native"
+msgstr "ネイティブ版"
 
 #: winecfg.rc:54
 msgid "builtin"
-msgstr ""
+msgstr "内蔵版"
 
 #: winecfg.rc:55
 msgid "native, builtin"
-msgstr ""
+msgstr "ネイティブ版、内蔵版"
 
 #: winecfg.rc:56
 msgid "builtin, native"
-msgstr ""
+msgstr "内蔵版、ネイティブ版"
 
 #: winecfg.rc:57
 msgid "disabled"
@@ -12251,43 +12218,43 @@ msgstr "非アクティブ境界"
 
 #: winecfg.rc:117
 msgid "Controls Shadow"
-msgstr ""
+msgstr "コントロールの影"
 
 #: winecfg.rc:118
 msgid "Gray Text"
-msgstr ""
+msgstr "灰色テキスト"
 
 #: winecfg.rc:119
 msgid "Controls Highlight"
-msgstr ""
+msgstr "コントロールの明るい部分"
 
 #: winecfg.rc:120
 msgid "Controls Dark Shadow"
-msgstr ""
+msgstr "コントロールの暗い影"
 
 #: winecfg.rc:121
 msgid "Controls Light"
-msgstr ""
+msgstr "コントロールの明かり"
 
 #: winecfg.rc:122
 msgid "Controls Alternate Background"
-msgstr ""
+msgstr "コントロールの別の背景"
 
 #: winecfg.rc:123
 msgid "Hot Tracked Item"
-msgstr ""
+msgstr "選択中のアイテム"
 
 #: winecfg.rc:124
 msgid "Active Title Bar Gradient"
-msgstr ""
+msgstr "アクティブ タイトル バーの階調"
 
 #: winecfg.rc:125
 msgid "Inactive Title Bar Gradient"
-msgstr ""
+msgstr "非アクティブ タイトル バーの階調"
 
 #: winecfg.rc:126
 msgid "Menu Highlight"
-msgstr ""
+msgstr "メニューの明るい部分"
 
 #: winecfg.rc:127
 msgid "Menu Bar"
@@ -12538,7 +12505,6 @@ msgstr ""
 "かけし申し訳ありません。"
 
 #: winedbg.rc:53
-#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
@@ -12547,12 +12513,12 @@ msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a>."
 msgstr ""
-"これはプログラム内の問題や Wine の欠陥によって発生することがあります。 "
-"http://appdb.winehq.org で このアプリケーションを動作させるヒントを 確認する"
-"とよいでしょう。\n"
+"これはプログラム内の問題や Wine の欠陥によって発生することがあります。<a "
+"href=\"http://appdb.winehq.org\">アプリケーション データベース</a>で このアプ"
+"リケーションを動作させるヒントを 確認するとよいでしょう。\n"
 "\n"
-"この問題が Windows 上で発生することがなく、まだ報告されていない場合は http://"
-"bugs.winehq.org でこの問題を報告できます。"
+"この問題が Windows 上で発生することがなく、まだ報告されていない場合は<a href="
+"\"http://wiki.winehq.org/Bugs\">バグ レポートを作成</a>できます。"
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -12785,17 +12751,17 @@ msgstr "全 %2 中、%1 の空き"
 #: winefile.rc:121
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr ""
+msgstr "kB"
 
 #: winefile.rc:122
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr ""
+msgstr "MB"
 
 #: winefile.rc:123
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr ""
+msgstr "GB"
 
 #: winemine.rc:34
 msgid "&Game"
@@ -13011,27 +12977,27 @@ msgstr "変更あり(&M)"
 
 #: wordpad.rc:57
 msgid "E&xtras"
-msgstr ""
+msgstr "おまけ(&X)"
 
 #: wordpad.rc:59
 msgid "Selection &info"
-msgstr ""
+msgstr "選択範囲の情報(&I)"
 
 #: wordpad.rc:60
 msgid "Character &format"
-msgstr ""
+msgstr "文字書式(&F)"
 
 #: wordpad.rc:61
 msgid "&Def. char format"
-msgstr ""
+msgstr "規定の文字書式(&D)"
 
 #: wordpad.rc:62
 msgid "Paragrap&h format"
-msgstr ""
+msgstr "段落の書式(&H)"
 
 #: wordpad.rc:63
 msgid "&Get text"
-msgstr ""
+msgstr "テキストの取得(&G)"
 
 #: wordpad.rc:69 wordpad.rc:262
 msgid "&Formatbar"
