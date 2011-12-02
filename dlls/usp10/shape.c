@@ -1269,7 +1269,7 @@ static VOID *load_gdef_table(HDC hdc)
     return GDEF_Table;
 }
 
-static void GDEF_UpdateGlyphProps(HDC hdc, ScriptCache *psc, const WORD *pwGlyphs, const WORD cGlyphs, WORD* pwLogClust, SCRIPT_GLYPHPROP *pGlyphProp)
+static void GDEF_UpdateGlyphProps(HDC hdc, ScriptCache *psc, const WORD *pwGlyphs, const WORD cGlyphs, WORD* pwLogClust, const WORD cChars, SCRIPT_GLYPHPROP *pGlyphProp)
 {
     int i;
 
@@ -1279,6 +1279,12 @@ static void GDEF_UpdateGlyphProps(HDC hdc, ScriptCache *psc, const WORD *pwGlyph
     for (i = 0; i < cGlyphs; i++)
     {
         WORD class;
+        int char_count = 0;
+        int k;
+
+        for (k = 0; k < cChars; k++)
+            if (pwLogClust[k] == i)
+                char_count++;
 
         class = GDEF_get_glyph_class(psc->GDEF_Table, pwGlyphs[i]);
 
@@ -1311,6 +1317,9 @@ static void GDEF_UpdateGlyphProps(HDC hdc, ScriptCache *psc, const WORD *pwGlyph
                 pGlyphProp[i].sva.fDiacritic = 0;
                 pGlyphProp[i].sva.fZeroWidth = 0;
         }
+
+        if (char_count == 0)
+            pGlyphProp[i].sva.fClusterStart = 0;
     }
 }
 
@@ -2964,10 +2973,7 @@ static void ShapeCharGlyphProp_Default( HDC hdc, ScriptCache* psc, SCRIPT_ANALYS
         }
 
         if (char_count == 0)
-        {
-            FIXME("No chars in this glyph?  Must be an error\n");
             continue;
-        }
 
         if (char_count ==1 && pwcChars[char_index[0]] == 0x0020)  /* space */
         {
@@ -2978,7 +2984,7 @@ static void ShapeCharGlyphProp_Default( HDC hdc, ScriptCache* psc, SCRIPT_ANALYS
             pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_CHARACTER;
     }
 
-    GDEF_UpdateGlyphProps(hdc, psc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
+    GDEF_UpdateGlyphProps(hdc, psc, pwGlyphs, cGlyphs, pwLogClust, cChars, pGlyphProp);
     UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
 }
 
@@ -3036,10 +3042,7 @@ static void ShapeCharGlyphProp_Arabic( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSI
         isFinal = (i == finaGlyph || (i+dirL > 0 && i+dirL < cGlyphs && spaces[i+dirL]));
 
         if (char_count == 0)
-        {
-            FIXME("No chars in this glyph?  Must be an error\n");
             continue;
-        }
 
         if (char_count == 1)
         {
@@ -3092,7 +3095,7 @@ static void ShapeCharGlyphProp_Arabic( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSI
             pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_NONE;
     }
 
-    GDEF_UpdateGlyphProps(hdc, psc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
+    GDEF_UpdateGlyphProps(hdc, psc, pwGlyphs, cGlyphs, pwLogClust, cChars, pGlyphProp);
     UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
     HeapFree(GetProcessHeap(),0,spaces);
 }
@@ -3143,10 +3146,7 @@ static void ShapeCharGlyphProp_Thai( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
         }
 
         if (char_count == 0)
-        {
-            FIXME("No chars in this glyph?  Must be an error\n");
             continue;
-        }
 
         if (char_count ==1 && pwcChars[char_index[0]] == 0x0020)  /* space */
         {
@@ -3160,7 +3160,7 @@ static void ShapeCharGlyphProp_Thai( HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS 
     }
 
     HeapFree(GetProcessHeap(),0,spaces);
-    GDEF_UpdateGlyphProps(hdc, psc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
+    GDEF_UpdateGlyphProps(hdc, psc, pwGlyphs, cGlyphs, pwLogClust, cChars, pGlyphProp);
     UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
 
     /* Do not allow justification between marks and their base */
@@ -3190,10 +3190,7 @@ static void ShapeCharGlyphProp_None( HDC hdc, ScriptCache* psc, SCRIPT_ANALYSIS*
         }
 
         if (char_count == 0)
-        {
-            FIXME("No chars in this glyph?  Must be an error\n");
             continue;
-        }
 
         if (char_count ==1 && pwcChars[char_index[0]] == 0x0020)  /* space */
         {
@@ -3203,7 +3200,7 @@ static void ShapeCharGlyphProp_None( HDC hdc, ScriptCache* psc, SCRIPT_ANALYSIS*
         else
             pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_NONE;
     }
-    GDEF_UpdateGlyphProps(hdc, psc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
+    GDEF_UpdateGlyphProps(hdc, psc, pwGlyphs, cGlyphs, pwLogClust, cChars, pGlyphProp);
     UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
 }
 
@@ -3226,10 +3223,7 @@ static void ShapeCharGlyphProp_Tibet( HDC hdc, ScriptCache* psc, SCRIPT_ANALYSIS
         }
 
         if (char_count == 0)
-        {
-            FIXME("No chars in this glyph?  Must be an error\n");
             continue;
-        }
 
         if (char_count ==1 && pwcChars[char_index[0]] == 0x0020)  /* space */
         {
@@ -3239,7 +3233,7 @@ static void ShapeCharGlyphProp_Tibet( HDC hdc, ScriptCache* psc, SCRIPT_ANALYSIS
         else
             pGlyphProp[i].sva.uJustification = SCRIPT_JUSTIFY_NONE;
     }
-    GDEF_UpdateGlyphProps(hdc, psc, pwGlyphs, cGlyphs, pwLogClust, pGlyphProp);
+    GDEF_UpdateGlyphProps(hdc, psc, pwGlyphs, cGlyphs, pwLogClust, cChars, pGlyphProp);
     UpdateClustersFromGlyphProp(cGlyphs, cChars, pwLogClust, pGlyphProp);
 
     /* Tibeten script does not set sva.fDiacritic or sva.fZeroWidth */
