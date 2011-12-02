@@ -408,6 +408,13 @@ static OPENTYPE_FEATURE_RECORD tibetan_features[] =
     { MS_MAKE_TAG('b','l','w','s'), 1},
 };
 
+static OPENTYPE_FEATURE_RECORD phags_features[] =
+{
+    { MS_MAKE_TAG('a','b','v','s'), 1},
+    { MS_MAKE_TAG('b','l','w','s'), 1},
+    { MS_MAKE_TAG('c','a','l','t'), 1},
+};
+
 static OPENTYPE_FEATURE_RECORD thai_features[] =
 {
     { MS_MAKE_TAG('c','c','m','p'), 1},
@@ -563,7 +570,7 @@ static const ScriptShapeData ShapingData[] =
     {{ sinhala_features, 3}, NULL, "sinh", "", ContextualShape_Sinhala, ShapeCharGlyphProp_Sinhala},
     {{ tibetan_features, 2}, NULL, "tibt", "", NULL, ShapeCharGlyphProp_Tibet},
     {{ tibetan_features, 2}, NULL, "tibt", "", NULL, ShapeCharGlyphProp_Tibet},
-    {{ tibetan_features, 2}, NULL, "phag", "", ContextualShape_Phags_pa, ShapeCharGlyphProp_Thai},
+    {{ phags_features, 3}, NULL, "phag", "", ContextualShape_Phags_pa, ShapeCharGlyphProp_Thai},
     {{ thai_features, 1}, NULL, "thai", "", NULL, ShapeCharGlyphProp_Thai},
     {{ thai_features, 1}, NULL, "thai", "", NULL, ShapeCharGlyphProp_Thai},
     {{ thai_features, 1}, required_lao_features, "lao", "", NULL, ShapeCharGlyphProp_Thai},
