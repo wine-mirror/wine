@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-29 20:49+0300\n"
+"PO-Revision-Date: 2011-12-30 19:55+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -3527,11 +3527,11 @@ msgstr "Nebaigta eilutės konstanta"
 
 #: jscript.rc:38
 msgid "Can't have 'break' outside of loop"
-msgstr ""
+msgstr "Negalima turėti „break“ ne cikle"
 
 #: jscript.rc:39
 msgid "Can't have 'continue' outside of loop"
-msgstr ""
+msgstr "Negalima turėti „continue“ ne cikle"
 
 #: jscript.rc:40
 msgid "Conditional compilation is turned off"
@@ -12493,9 +12493,8 @@ msgstr ""
 "(Jūsų pasirinkimu) bet kurios vėlesnės licencijos versijos sąlygomis."
 
 #: winecfg.rc:140
-#, fuzzy
 msgid "Windows registration information"
-msgstr " Windows registracijos informacija "
+msgstr "Windows registracijos informacija"
 
 #: winecfg.rc:141
 msgid "&Owner:"
@@ -12506,9 +12505,8 @@ msgid "Organi&zation:"
 msgstr "Organizacija:"
 
 #: winecfg.rc:151
-#, fuzzy
 msgid "Application settings"
-msgstr " Programos nuostatos "
+msgstr "Programų nuostatos"
 
 #: winecfg.rc:152
 msgid ""
@@ -12534,9 +12532,8 @@ msgid "&Windows Version:"
 msgstr "Windows &versija:"
 
 #: winecfg.rc:166
-#, fuzzy
 msgid "Window settings"
-msgstr " Langų nuostatos "
+msgstr "Langų nuostatos"
 
 #: winecfg.rc:167
 msgid "Automatically capture the &mouse in full-screen windows"
@@ -12559,9 +12556,8 @@ msgid "Desktop &size:"
 msgstr "Darbalaukio d&ydis:"
 
 #: winecfg.rc:177
-#, fuzzy
 msgid "Direct3D"
-msgstr " Direct3D "
+msgstr "Direct3D"
 
 #: winecfg.rc:178
 msgid "&Vertex Shader Support: "
@@ -12572,18 +12568,16 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr "Leisti &Pixel Shader (jei palaiko aparatinė įranga)"
 
 #: winecfg.rc:182
-#, fuzzy
 msgid "Screen resolution"
-msgstr " Ekrano &skiriamoji geba "
+msgstr "Ekrano skiriamoji geba"
 
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Tai yra pavyzdinis tekstas naudojantis 10 taškų Tahoma"
 
 #: winecfg.rc:193
-#, fuzzy
 msgid "DLL overrides"
-msgstr " DLL nustelbimai "
+msgstr "DLL nustelbimai"
 
 #: winecfg.rc:194
 msgid ""
@@ -12615,9 +12609,8 @@ msgid "Edit Override"
 msgstr "Redaguoti nustelbimą"
 
 #: winecfg.rc:210
-#, fuzzy
 msgid "Load order"
-msgstr " Įkėlimo tvarka "
+msgstr "Įkėlimo tvarka"
 
 #: winecfg.rc:211
 msgid "&Builtin (Wine)"
@@ -12644,9 +12637,8 @@ msgid "Select Drive Letter"
 msgstr "Parinkite disko raidę"
 
 #: winecfg.rc:234
-#, fuzzy
 msgid "Drive mappings"
-msgstr " Diskų atvai&zdavimas "
+msgstr "Diskų atvaizdavimas"
 
 #: winecfg.rc:235
 msgid ""
@@ -12693,14 +12685,12 @@ msgid "Show &dot files"
 msgstr "Rodyti &failus su tašku"
 
 #: winecfg.rc:267
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " Tvarkyklės diagnostika "
+msgstr "Tvarkyklės diagnostika"
 
 #: winecfg.rc:269
-#, fuzzy
 msgid "Defaults"
-msgstr " Numatytosios reikšmės "
+msgstr "Numatytosios reikšmės"
 
 #: winecfg.rc:270
 msgid "Output device:"
@@ -12723,9 +12713,8 @@ msgid "&Test Sound"
 msgstr "&Testuoti garsą"
 
 #: winecfg.rc:285
-#, fuzzy
 msgid "Appearance"
-msgstr " Išvaizda "
+msgstr "Išvaizda"
 
 #: winecfg.rc:286
 msgid "&Theme:"
@@ -12744,9 +12733,8 @@ msgid "C&olor:"
 msgstr "S&palva:"
 
 #: winecfg.rc:301
-#, fuzzy
 msgid "Folders"
-msgstr "Aplankas"
+msgstr "Aplankai"
 
 #: winecfg.rc:304
 msgid "&Link to:"
