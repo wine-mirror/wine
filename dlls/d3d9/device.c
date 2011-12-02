@@ -693,13 +693,23 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateTexture(IDirect3DDevice9Ex *ifa
 {
     IDirect3DDevice9Impl *This = impl_from_IDirect3DDevice9Ex(iface);
     IDirect3DTexture9Impl *object;
+    BOOL set_mem = FALSE;
     HRESULT hr;
 
     TRACE("iface %p, width %u, height %u, levels %u, usage %#x, format %#x, pool %#x, texture %p, shared_handle %p.\n",
             iface, width, height, levels, usage, format, pool, texture, shared_handle);
 
     if (shared_handle)
-        FIXME("Resource sharing not implemented, *shared_handle %p.\n", *shared_handle);
+    {
+        if (pool == D3DPOOL_SYSTEMMEM)
+        {
+            if (levels != 1)
+                return D3DERR_INVALIDCALL;
+            set_mem = TRUE;
+        }
+        else
+            FIXME("Resource sharing not implemented, *shared_handle %p.\n", *shared_handle);
+    }
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -714,6 +724,16 @@ static HRESULT WINAPI IDirect3DDevice9Impl_CreateTexture(IDirect3DDevice9Ex *ifa
         WARN("Failed to initialize texture, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
         return hr;
+    }
+
+    if (set_mem)
+    {
+        struct wined3d_resource *resource;
+        IDirect3DSurface9Impl *surface;
+
+        resource = wined3d_texture_get_sub_resource(object->wined3d_texture, 0);
+        surface = wined3d_resource_get_parent(resource);
+        wined3d_surface_set_mem(surface->wined3d_surface, *shared_handle);
     }
 
     TRACE("Created texture %p.\n", object);
