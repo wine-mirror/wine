@@ -146,7 +146,7 @@ static HRESULT WINAPI IDirect3DSwapChain9Impl_GetRasterStatus(LPDIRECT3DSWAPCHAI
     TRACE("iface %p, raster_status %p.\n", iface, pRasterStatus);
 
     wined3d_mutex_lock();
-    hr = wined3d_swapchain_get_raster_status(This->wined3d_swapchain, (WINED3DRASTER_STATUS *)pRasterStatus);
+    hr = wined3d_swapchain_get_raster_status(This->wined3d_swapchain, (struct wined3d_raster_status *)pRasterStatus);
     wined3d_mutex_unlock();
 
     return hr;

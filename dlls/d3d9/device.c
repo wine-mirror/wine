@@ -640,7 +640,8 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetRasterStatus(IDirect3DDevice9Ex *i
     TRACE("iface %p, swapchain %u, raster_status %p.\n", iface, iSwapChain, pRasterStatus);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_raster_status(This->wined3d_device, iSwapChain, (WINED3DRASTER_STATUS *)pRasterStatus);
+    hr = wined3d_device_get_raster_status(This->wined3d_device,
+            iSwapChain, (struct wined3d_raster_status *)pRasterStatus);
     wined3d_mutex_unlock();
 
     return hr;

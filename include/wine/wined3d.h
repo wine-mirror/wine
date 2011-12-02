@@ -1696,11 +1696,11 @@ struct wined3d_device_creation_parameters
     DWORD flags;
 };
 
-typedef struct _WINED3DRASTER_STATUS
+struct wined3d_raster_status
 {
-    BOOL InVBlank;
-    UINT ScanLine;
-} WINED3DRASTER_STATUS;
+    BOOL in_vblank;
+    UINT scan_line;
+};
 
 typedef struct _WINED3DDEVINFO_VERTEXSTATS
 {
@@ -2177,7 +2177,7 @@ HRESULT __cdecl wined3d_device_get_ps_consts_f(const struct wined3d_device *devi
 HRESULT __cdecl wined3d_device_get_ps_consts_i(const struct wined3d_device *device,
         UINT start_register, int *constants, UINT vector4i_count);
 HRESULT __cdecl wined3d_device_get_raster_status(const struct wined3d_device *device,
-        UINT swapchain_idx, WINED3DRASTER_STATUS *raster_status);
+        UINT swapchain_idx, struct wined3d_raster_status *raster_status);
 HRESULT __cdecl wined3d_device_get_render_state(const struct wined3d_device *device,
         WINED3DRENDERSTATETYPE state, DWORD *value);
 HRESULT __cdecl wined3d_device_get_render_target(const struct wined3d_device *device,
@@ -2411,7 +2411,7 @@ void * __cdecl wined3d_swapchain_get_parent(const struct wined3d_swapchain *swap
 HRESULT __cdecl wined3d_swapchain_get_desc(const struct wined3d_swapchain *swapchain,
         struct wined3d_swapchain_desc *desc);
 HRESULT __cdecl wined3d_swapchain_get_raster_status(const struct wined3d_swapchain *swapchain,
-        WINED3DRASTER_STATUS *raster_status);
+        struct wined3d_raster_status *raster_status);
 ULONG __cdecl wined3d_swapchain_incref(struct wined3d_swapchain *swapchain);
 HRESULT __cdecl wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
         const RECT *src_rect, const RECT *dst_rect, HWND dst_window_override,

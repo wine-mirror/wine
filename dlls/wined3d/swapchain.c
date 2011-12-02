@@ -203,7 +203,7 @@ HRESULT CDECL wined3d_swapchain_get_back_buffer(const struct wined3d_swapchain *
 }
 
 HRESULT CDECL wined3d_swapchain_get_raster_status(const struct wined3d_swapchain *swapchain,
-        WINED3DRASTER_STATUS *raster_status)
+        struct wined3d_raster_status *raster_status)
 {
     static BOOL warned;
     /* No OpenGL equivalent */

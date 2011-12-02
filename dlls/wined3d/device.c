@@ -4572,7 +4572,7 @@ BOOL CDECL wined3d_device_get_software_vertex_processing(const struct wined3d_de
 }
 
 HRESULT CDECL wined3d_device_get_raster_status(const struct wined3d_device *device,
-        UINT swapchain_idx, WINED3DRASTER_STATUS *raster_status)
+        UINT swapchain_idx, struct wined3d_raster_status *raster_status)
 {
     struct wined3d_swapchain *swapchain;
     HRESULT hr;
