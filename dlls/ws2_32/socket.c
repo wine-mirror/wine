@@ -6496,7 +6496,7 @@ INT WINAPI WSALookupServiceBeginW( LPWSAQUERYSETW lpqsRestrictions,
 }
 
 /***********************************************************************
- *              WSALookupServiceBeginW                       (WS2_32.61)
+ *              WSALookupServiceEnd                          (WS2_32.61)
  */
 INT WINAPI WSALookupServiceEnd( HANDLE lookup )
 {
