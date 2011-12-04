@@ -5604,7 +5604,8 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         }
     }
 
-    delete_opengl_contexts(device, swapchain);
+    if (device->d3d_initialized)
+        delete_opengl_contexts(device, swapchain);
 
     if (!swapchain_desc->windowed != !swapchain->desc.windowed
             || DisplayModeChanged)
@@ -5678,7 +5679,8 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     swapchain_update_render_to_fbo(swapchain);
     swapchain_update_draw_bindings(swapchain);
 
-    hr = create_primary_opengl_context(device, swapchain);
+    if (device->d3d_initialized)
+        hr = create_primary_opengl_context(device, swapchain);
     wined3d_swapchain_decref(swapchain);
 
     /* All done. There is no need to reload resources or shaders, this will happen automatically on the
