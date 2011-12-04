@@ -2208,7 +2208,7 @@ msgstr "ドライブの割り当て"
 
 #: dinput.rc:53
 #, fuzzy
-msgid "Sort Assigned"
+msgid "Show Assigned First"
 msgstr "すでに割り当てられています。\n"
 
 #: dinput.rc:34

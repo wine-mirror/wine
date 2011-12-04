@@ -2236,7 +2236,7 @@ msgstr "Toewijzing"
 
 #: dinput.rc:53
 #, fuzzy
-msgid "Sort Assigned"
+msgid "Show Assigned First"
 msgstr "Reeds toegewezen\n"
 
 #: dinput.rc:34

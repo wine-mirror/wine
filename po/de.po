@@ -2208,7 +2208,8 @@ msgid "Mapping"
 msgstr "Zuordnung"
 
 #: dinput.rc:53
-msgid "Sort Assigned"
+#, fuzzy
+msgid "Show Assigned First"
 msgstr "Zugewiesene sortieren"
 
 #: dinput.rc:34

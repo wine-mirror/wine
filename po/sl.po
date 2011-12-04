@@ -2230,7 +2230,7 @@ msgstr "Preslikava pogona"
 
 #: dinput.rc:53
 #, fuzzy
-msgid "Sort Assigned"
+msgid "Show Assigned First"
 msgstr "Že dodeljeno\n"
 
 #: dinput.rc:34

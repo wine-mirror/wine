@@ -126,8 +126,8 @@ msgstr ""
 "descarregar i instal·lar automàticament per vostè.\n"
 "\n"
 "Nota: es recomana utilitzar els paquets de la vostra distribució en compte."
-"Vegeu <a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko"
-"</a> pels detalls."
+"Vegeu <a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</"
+"a> pels detalls."
 
 #: appwiz.rc:106
 msgid "&Install"
@@ -2215,7 +2215,8 @@ msgid "Mapping"
 msgstr "Mapa"
 
 #: dinput.rc:53
-msgid "Sort Assigned"
+#, fuzzy
+msgid "Show Assigned First"
 msgstr "Ordena Assignats"
 
 #: dinput.rc:34

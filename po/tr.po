@@ -2203,7 +2203,7 @@ msgstr "Sürücü Eşleme"
 
 #: dinput.rc:53
 #, fuzzy
-msgid "Sort Assigned"
+msgid "Show Assigned First"
 msgstr "Zaten Var"
 
 #: dinput.rc:34

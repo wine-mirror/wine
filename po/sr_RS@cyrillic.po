@@ -2199,7 +2199,7 @@ msgstr ""
 
 #: dinput.rc:53
 #, fuzzy
-msgid "Sort Assigned"
+msgid "Show Assigned First"
 msgstr "Већ постоји"
 
 #: dinput.rc:34

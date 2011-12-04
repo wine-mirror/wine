@@ -2218,7 +2218,7 @@ msgstr "Peger på"
 
 #: dinput.rc:53
 #, fuzzy
-msgid "Sort Assigned"
+msgid "Show Assigned First"
 msgstr "Allerede tildelt\n"
 
 #: dinput.rc:34

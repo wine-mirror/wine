@@ -2214,7 +2214,8 @@ msgid "Mapping"
 msgstr "Corrispondenza"
 
 #: dinput.rc:53
-msgid "Sort Assigned"
+#, fuzzy
+msgid "Show Assigned First"
 msgstr "Ordina assegnati"
 
 #: dinput.rc:34

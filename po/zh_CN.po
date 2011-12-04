@@ -2191,7 +2191,7 @@ msgid "Mapping"
 msgstr "驱动器映射"
 
 #: dinput.rc:53
-msgid "Sort Assigned"
+msgid "Show Assigned First"
 msgstr ""
 
 #: dinput.rc:34

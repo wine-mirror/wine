@@ -2212,7 +2212,7 @@ msgstr "Путь"
 
 #: dinput.rc:53
 #, fuzzy
-msgid "Sort Assigned"
+msgid "Show Assigned First"
 msgstr "Название уже используется\n"
 
 #: dinput.rc:34
@@ -12515,12 +12515,12 @@ msgid ""
 "you can <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a>."
 msgstr ""
 "Ошибка могла быть вызвана проблемой в программе или недоработкой в Wine. Вы "
-"можете посетить <a href=\"http://appdb.winehq.org\">Application "
-"Database</a> и поискать советы о запуске этой программы.\n"
+"можете посетить <a href=\"http://appdb.winehq.org\">Application Database</a> "
+"и поискать советы о запуске этой программы.\n"
 "\n"
 "Если эта проблема не присутствует под Windows и ещё не была "
-"зарегистрирована, вы можете сообщить "
-"<a href=\"http://wiki.winehq.org/Bugs\">cообщить об ошибке</a>."
+"зарегистрирована, вы можете сообщить <a href=\"http://wiki.winehq.org/Bugs"
+"\">cообщить об ошибке</a>."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -13289,7 +13289,8 @@ msgstr ""
 #: xcopy.rc:28
 msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
 msgstr ""
-"Недопустимый параметр '%1' - воспользуйтесь 'xcopy /?' для получения подробного\n"
+"Недопустимый параметр '%1' - воспользуйтесь 'xcopy /?' для получения "
+"подробного\n"
 "описания.\n"
 
 #: xcopy.rc:29

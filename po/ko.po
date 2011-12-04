@@ -2202,7 +2202,8 @@ msgid "Mapping"
 msgstr "매핑"
 
 #: dinput.rc:53
-msgid "Sort Assigned"
+#, fuzzy
+msgid "Show Assigned First"
 msgstr "할당 정렬"
 
 #: dinput.rc:34

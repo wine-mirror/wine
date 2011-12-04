@@ -2154,7 +2154,7 @@ msgid "Mapping"
 msgstr ""
 
 #: dinput.rc:53
-msgid "Sort Assigned"
+msgid "Show Assigned First"
 msgstr ""
 
 #: dinput.rc:34

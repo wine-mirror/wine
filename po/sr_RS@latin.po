@@ -2223,7 +2223,7 @@ msgstr "Disk mapa"
 
 #: dinput.rc:53
 #, fuzzy
-msgid "Sort Assigned"
+msgid "Show Assigned First"
 msgstr "Već postoji"
 
 #: dinput.rc:34

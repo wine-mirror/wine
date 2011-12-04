@@ -2231,7 +2231,7 @@ msgstr "Mapeo de unidad"
 
 #: dinput.rc:53
 #, fuzzy
-msgid "Sort Assigned"
+msgid "Show Assigned First"
 msgstr "Ya existe"
 
 #: dinput.rc:34

@@ -2225,7 +2225,7 @@ msgstr "Enhetsmappning"
 
 #: dinput.rc:53
 #, fuzzy
-msgid "Sort Assigned"
+msgid "Show Assigned First"
 msgstr "Redan tilldelad\n"
 
 #: dinput.rc:34

@@ -2316,7 +2316,7 @@ msgstr "Peker til"
 
 #: dinput.rc:53
 #, fuzzy
-msgid "Sort Assigned"
+msgid "Show Assigned First"
 msgstr "Allerede oppnevnt\n"
 
 #: dinput.rc:34
