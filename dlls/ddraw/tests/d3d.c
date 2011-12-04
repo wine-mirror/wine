@@ -2,7 +2,7 @@
  * Some unit tests for d3d functions
  *
  * Copyright (C) 2005 Antoine Chavasse
- * Copyright (C) 2006 Stefan Dösinger for CodeWeavers
+ * Copyright (C) 2006,2011 Stefan Dösinger for CodeWeavers
  * Copyright (C) 2008 Alexander Dorofeyev
  *
  * This library is free software; you can redistribute it and/or
