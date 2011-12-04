@@ -5230,7 +5230,8 @@ static HRESULT updateSurfaceDesc(struct wined3d_surface *surface,
     surface->resource.multisample_type = swapchain_desc->multisample_type;
     surface->resource.multisample_quality = swapchain_desc->multisample_quality;
 
-    surface->resource.resource_ops->resource_unload(&surface->resource);
+    if (device->d3d_initialized)
+        surface->resource.resource_ops->resource_unload(&surface->resource);
 
     if (surface->pow2Width != swapchain_desc->backbuffer_width
             || surface->pow2Height != swapchain_desc->backbuffer_height)
