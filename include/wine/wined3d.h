@@ -1725,16 +1725,6 @@ typedef struct _WINED3DBOX
     UINT Back;
 } WINED3DBOX;
 
-/*Vertex cache optimization hints.*/
-typedef struct WINED3DDEVINFO_VCACHE
-{
-    DWORD Pattern;      /* Must be a 4 char code FOURCC (e.g. CACH) */
-    DWORD OptMethod;    /* 0 to get the longest  strips, 1 vertex cache */
-    DWORD CacheSize;    /* Cache size to use (only valid if OptMethod==1) */
-    DWORD MagicNumber;  /* Internal for deciding when to restart strips,
-                           non user modifiable (only valid if OptMethod==1) */
-} WINED3DDEVINFO_VCACHE;
-
 typedef struct WineDirect3DStridedData
 {
     enum wined3d_format_id format;   /* Format of the data */
