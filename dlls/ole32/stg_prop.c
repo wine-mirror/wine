@@ -1111,6 +1111,22 @@ static HRESULT PropertyStorage_ReadProperty(PropertyStorage_impl *This,
         }
         break;
     }
+    case VT_BLOB:
+    {
+        DWORD count;
+
+        StorageUtl_ReadDWord(data, 0, &count);
+        prop->u.blob.cbSize = count;
+        prop->u.blob.pBlobData = CoTaskMemAlloc(count);
+        if (prop->u.blob.pBlobData)
+        {
+            memcpy(prop->u.blob.pBlobData, data + sizeof(DWORD), count);
+            TRACE("Read blob value of size %d\n", count);
+        }
+        else
+            hr = STG_E_INSUFFICIENTMEMORY;
+        break;
+    }
     case VT_LPWSTR:
     {
         DWORD count;
