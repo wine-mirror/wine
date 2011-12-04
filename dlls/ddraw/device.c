@@ -459,6 +459,12 @@ IDirect3DDeviceImpl_7_GetCaps(IDirect3DDevice7 *iface,
 
     TRACE("iface %p, device_desc %p.\n", iface, Desc);
 
+    if (!Desc)
+    {
+        WARN("Desc is NULL, returning DDERR_INVALIDPARAMS.\n");
+        return DDERR_INVALIDPARAMS;
+    }
+
     /* Call the same function used by IDirect3D, this saves code */
     return IDirect3DImpl_GetCaps(This->ddraw->wined3d, &OldDesc, Desc);
 }

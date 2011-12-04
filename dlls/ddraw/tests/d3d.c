@@ -4980,6 +4980,21 @@ static void test_get_caps1(void)
     ok(hr == D3D_OK, "GetCaps with different sizes returned hr %#x, expected D3D_OK.\n", hr);
 }
 
+static void test_get_caps7(void)
+{
+    HRESULT hr;
+    D3DDEVICEDESC7 desc;
+
+    hr = IDirect3DDevice7_GetCaps(lpD3DDevice, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "IDirect3DDevice7::GetCaps(NULL) returned hr %#x, expected INVALIDPARAMS.\n", hr);
+
+    memset(&desc, 0, sizeof(desc));
+    hr = IDirect3DDevice7_GetCaps(lpD3DDevice, &desc);
+    ok(hr == D3D_OK, "IDirect3DDevice7::GetCaps(non-NULL) returned hr %#x, expected D3D_OK.\n", hr);
+
+    /* There's no dwSize in D3DDEVICEDESC7 */
+}
+
 START_TEST(d3d)
 {
     init_function_pointers();
@@ -5007,6 +5022,7 @@ START_TEST(d3d)
         SetRenderTargetTest();
         VertexBufferLockRest();
         z_format_test();
+        test_get_caps7();
         ReleaseDirect3D();
     }
 
