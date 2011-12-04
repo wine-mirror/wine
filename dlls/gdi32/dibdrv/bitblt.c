@@ -601,15 +601,105 @@ static DWORD blend_rect( dib_info *dst, const RECT *dst_rect, const dib_info *sr
     return ERROR_SUCCESS;
 }
 
-static void gradient_rect( dib_info *dib, TRIVERTEX *v, int mode, HRGN clip )
+/* compute y-ordered, device coords vertices for a horizontal rectangle gradient */
+static void get_gradient_hrect_vertices( const GRADIENT_RECT *rect, const TRIVERTEX *vert,
+                                         const POINT *dev_pts, TRIVERTEX v[2] )
+{
+    int v0 = rect->UpperLeft;
+    int v1 = rect->LowerRight;
+
+    if (dev_pts[v1].x < dev_pts[v0].x)  /* swap the colors */
+    {
+        v0 = rect->LowerRight;
+        v1 = rect->UpperLeft;
+    }
+    v[0]   = vert[v0];
+    v[1]   = vert[v1];
+    v[0].x = dev_pts[v0].x;
+    v[1].x = dev_pts[v1].x;
+    v[0].y = min( dev_pts[v0].y, dev_pts[v1].y );
+    v[1].y = max( dev_pts[v0].y, dev_pts[v1].y );
+}
+
+/* compute y-ordered, device coords vertices for a vertical rectangle gradient */
+static void get_gradient_vrect_vertices( const GRADIENT_RECT *rect, const TRIVERTEX *vert,
+                                         const POINT *dev_pts, TRIVERTEX v[2] )
+{
+    int v0 = rect->UpperLeft;
+    int v1 = rect->LowerRight;
+
+    if (dev_pts[v1].y < dev_pts[v0].y)  /* swap the colors */
+    {
+        v0 = rect->LowerRight;
+        v1 = rect->UpperLeft;
+    }
+    v[0]   = vert[v0];
+    v[1]   = vert[v1];
+    v[0].x = min( dev_pts[v0].x, dev_pts[v1].x );
+    v[1].x = max( dev_pts[v0].x, dev_pts[v1].x );
+    v[0].y = dev_pts[v0].y;
+    v[1].y = dev_pts[v1].y;
+}
+
+/* compute y-ordered, device coords vertices for a triangle gradient */
+static void get_gradient_triangle_vertices( const GRADIENT_TRIANGLE *tri, const TRIVERTEX *vert,
+                                            const POINT *dev_pts, TRIVERTEX v[3] )
+{
+    int v0, v1, v2;
+
+    if (dev_pts[tri->Vertex1].y > dev_pts[tri->Vertex2].y)
+    {
+        if (dev_pts[tri->Vertex3].y < dev_pts[tri->Vertex2].y)
+            { v0 = tri->Vertex3; v1 = tri->Vertex2; v2 = tri->Vertex1; }
+        else if (dev_pts[tri->Vertex3].y < dev_pts[tri->Vertex1].y)
+            { v0 = tri->Vertex2; v1 = tri->Vertex3; v2 = tri->Vertex1; }
+        else
+            { v0 = tri->Vertex2; v1 = tri->Vertex1; v2 = tri->Vertex3; }
+    }
+    else
+    {
+        if (dev_pts[tri->Vertex3].y < dev_pts[tri->Vertex1].y)
+            { v0 = tri->Vertex3; v1 = tri->Vertex1; v2 = tri->Vertex2; }
+        else if (dev_pts[tri->Vertex3].y < dev_pts[tri->Vertex2].y)
+            { v0 = tri->Vertex1; v1 = tri->Vertex3; v2 = tri->Vertex2; }
+        else
+            { v0 = tri->Vertex1; v1 = tri->Vertex2; v2 = tri->Vertex3; }
+    }
+    v[0]   = vert[v0];
+    v[1]   = vert[v1];
+    v[2]   = vert[v2];
+    v[0].x = dev_pts[v0].x;
+    v[0].y = dev_pts[v0].y;
+    v[1].y = dev_pts[v1].y;
+    v[1].x = dev_pts[v1].x;
+    v[2].x = dev_pts[v2].x;
+    v[2].y = dev_pts[v2].y;
+}
+
+static BOOL gradient_rect( dib_info *dib, TRIVERTEX *v, int mode, HRGN clip )
 {
     int i;
     RECT rect, clipped_rect;
+    BOOL ret = TRUE;
 
-    rect.left   = max( v[0].x, 0 );
-    rect.top    = max( v[0].y, 0 );
-    rect.right  = min( v[1].x, dib->width );
-    rect.bottom = min( v[1].y, dib->height );
+    if (mode == GRADIENT_FILL_TRIANGLE)
+    {
+        rect.left   = min( v[0].x, min( v[1].x, v[2].x ));
+        rect.top    = v[0].y;
+        rect.right  = max( v[0].x, max( v[1].x, v[2].x ));
+        rect.bottom = v[2].y;
+    }
+    else
+    {
+        rect.left   = v[0].x;
+        rect.top    = v[0].y;
+        rect.right  = v[1].x;
+        rect.bottom = v[1].y;
+    }
+    rect.left   = max( rect.left, 0 );
+    rect.top    = max( rect.top, 0 );
+    rect.right  = min( rect.right, dib->width );
+    rect.bottom = min( rect.bottom, dib->height );
 
     if (clip)
     {
@@ -618,11 +708,15 @@ static void gradient_rect( dib_info *dib, TRIVERTEX *v, int mode, HRGN clip )
         for (i = 0; i < clip_data->numRects; i++)
         {
             if (intersect_rect( &clipped_rect, &rect, clip_data->rects + i ))
-                dib->funcs->gradient_rect( dib, &clipped_rect, v, mode );
+            {
+                if (!(ret = dib->funcs->gradient_rect( dib, &clipped_rect, v, mode ))) break;
+            }
         }
         release_wine_region( clip );
     }
-    else dib->funcs->gradient_rect( dib, &rect, v, mode );
+    else if (!is_rect_empty( &rect )) ret = dib->funcs->gradient_rect( dib, &rect, v, mode );
+
+    return ret;
 }
 
 static DWORD copy_src_bits( dib_info *src, RECT *src_rect )
@@ -1245,7 +1339,7 @@ DWORD gradient_bitmapinfo( const BITMAPINFO *info, void *bits, TRIVERTEX *v, int
     dib_info dib;
 
     if (!init_dib_info_from_bitmapinfo( &dib, info, bits, 0 )) return ERROR_BAD_FORMAT;
-    gradient_rect( &dib, v, mode, 0 );
+    if (!gradient_rect( &dib, v, mode, 0 )) return ERROR_INVALID_PARAMETER;
     return ERROR_SUCCESS;
 }
 
@@ -1292,50 +1386,57 @@ BOOL dibdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
                           void *grad_array, ULONG ngrad, ULONG mode )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
+    const GRADIENT_TRIANGLE *tri = grad_array;
+    const GRADIENT_RECT *rect = grad_array;
     unsigned int i;
+    POINT *pts;
+    TRIVERTEX vert[3];
+    BOOL ret = TRUE;
 
-    if (mode == GRADIENT_FILL_RECT_H || mode == GRADIENT_FILL_RECT_V)
+    if (!(pts = HeapAlloc( GetProcessHeap(), 0, nvert * sizeof(*pts) ))) return FALSE;
+    for (i = 0; i < nvert; i++)
     {
-        const GRADIENT_RECT *rect = grad_array;
-        TRIVERTEX v[2];
-        POINT pt[2];
+        pts[i].x = vert_array[i].x;
+        pts[i].y = vert_array[i].y;
+    }
+    LPtoDP( dev->hdc, pts, nvert );
 
+    switch (mode)
+    {
+    case GRADIENT_FILL_RECT_H:
         for (i = 0; i < ngrad; i++, rect++)
         {
-            v[0] = vert_array[rect->UpperLeft];
-            v[1] = vert_array[rect->LowerRight];
-            pt[0].x = v[0].x;
-            pt[0].y = v[0].y;
-            pt[1].x = v[1].x;
-            pt[1].y = v[1].y;
-            LPtoDP( dev->hdc, pt, 2 );
-            if (mode == GRADIENT_FILL_RECT_H)
-            {
-                if (pt[1].x < pt[0].x)  /* swap the colors */
-                {
-                    v[0] = vert_array[rect->LowerRight];
-                    v[1] = vert_array[rect->UpperLeft];
-                }
-            }
-            else
-            {
-                if (pt[1].y < pt[0].y)  /* swap the colors */
-                {
-                    v[0] = vert_array[rect->LowerRight];
-                    v[1] = vert_array[rect->UpperLeft];
-                }
-            }
-            v[0].x = min( pt[0].x, pt[1].x );
-            v[0].y = min( pt[0].y, pt[1].y );
-            v[1].x = max( pt[0].x, pt[1].x );
-            v[1].y = max( pt[0].y, pt[1].y );
+            get_gradient_hrect_vertices( rect, vert_array, pts, vert );
+            /* Windows bug: no alpha on a8r8g8b8 created with bitfields */
             if (pdev->dib.funcs == &funcs_8888 && pdev->dib.compression == BI_BITFIELDS)
-                v[0].Alpha = v[1].Alpha = 0;  /* Windows bug: no alpha on a8r8g8b8 created with bitfields */
-            gradient_rect( &pdev->dib, v, mode, pdev->clip );
+                vert[0].Alpha = vert[1].Alpha = 0;
+            gradient_rect( &pdev->dib, vert, mode, pdev->clip );
         }
-        return TRUE;
+        break;
+
+    case GRADIENT_FILL_RECT_V:
+        for (i = 0; i < ngrad; i++, rect++)
+        {
+            get_gradient_vrect_vertices( rect, vert_array, pts, vert );
+            /* Windows bug: no alpha on a8r8g8b8 created with bitfields */
+            if (pdev->dib.funcs == &funcs_8888 && pdev->dib.compression == BI_BITFIELDS)
+                vert[0].Alpha = vert[1].Alpha = 0;
+            gradient_rect( &pdev->dib, vert, mode, pdev->clip );
+        }
+        break;
+
+    case GRADIENT_FILL_TRIANGLE:
+        for (i = 0; i < ngrad; i++, tri++)
+        {
+            get_gradient_triangle_vertices( tri, vert_array, pts, vert );
+            /* Windows bug: no alpha on a8r8g8b8 created with bitfields */
+            if (pdev->dib.funcs == &funcs_8888 && pdev->dib.compression == BI_BITFIELDS)
+                vert[0].Alpha = vert[1].Alpha = vert[2].Alpha = 0;
+            if (!gradient_rect( &pdev->dib, vert, mode, pdev->clip )) ret = FALSE;
+        }
+        break;
     }
 
-    dev = GET_NEXT_PHYSDEV( dev, pGradientFill );
-    return dev->funcs->pGradientFill( dev, vert_array, nvert, grad_array, ngrad, mode );
+    HeapFree( GetProcessHeap(), 0, pts );
+    return ret;
 }

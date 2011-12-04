@@ -176,7 +176,7 @@ typedef struct primitive_funcs
                                     const POINT *origin, int rop2, int overlap);
     void             (* blend_rect)(const dib_info *dst, const RECT *rc, const dib_info *src,
                                     const POINT *origin, BLENDFUNCTION blend);
-    void          (* gradient_rect)(const dib_info *dib, const RECT *rc, const TRIVERTEX *v, int mode);
+    BOOL          (* gradient_rect)(const dib_info *dib, const RECT *rc, const TRIVERTEX *v, int mode);
     void             (* draw_glyph)(const dib_info *dst, const RECT *rc, const dib_info *glyph,
                                     const POINT *origin, DWORD text_pixel, const struct intensity_range *ranges);
     DWORD             (* get_pixel)(const dib_info *dib, const POINT *pt);
@@ -244,6 +244,15 @@ extern void restore_clipping_region( dibdrv_physdev *pdev, HRGN rgn ) DECLSPEC_H
 extern int clip_line(const POINT *start, const POINT *end, const RECT *clip,
                      const bres_params *params, POINT *pt1, POINT *pt2) DECLSPEC_HIDDEN;
 extern void update_aa_ranges( dibdrv_physdev *pdev ) DECLSPEC_HIDDEN;
+
+/* compute the x coordinate corresponding to y on the specified edge */
+static inline int edge_coord( int y, int x1, int y1, int x2, int y2 )
+{
+    if (x2 > x1)  /* always follow the edge from right to left to get correct rounding */
+        return x2 + (y - y2) * (x2 - x1) / (y2 - y1);
+    else
+        return x1 + (y - y1) * (x2 - x1) / (y2 - y1);
+}
 
 static inline BOOL defer_pen(dibdrv_physdev *pdev)
 {
