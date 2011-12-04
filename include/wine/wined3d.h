@@ -1702,12 +1702,6 @@ struct wined3d_raster_status
     UINT scan_line;
 };
 
-typedef struct _WINED3DDEVINFO_VERTEXSTATS
-{
-    DWORD NumRenderedTriangles;
-    DWORD NumExtraClippingTriangles;
-} WINED3DDEVINFO_VERTEXSTATS;
-
 typedef struct _WINED3DLOCKED_RECT
 {
     INT Pitch;
