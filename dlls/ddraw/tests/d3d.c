@@ -4895,6 +4895,91 @@ static void test_coop_level_surf_create(void)
     IDirectDraw7_Release(ddraw7);
 }
 
+static void test_get_caps1(void)
+{
+    D3DDEVICEDESC hw_caps, hel_caps;
+    HRESULT hr;
+    unsigned int i;
+
+    memset(&hw_caps, 0, sizeof(hw_caps));
+    hw_caps.dwSize = sizeof(hw_caps);
+    hw_caps.dwFlags = 0xdeadbeef;
+    memset(&hel_caps, 0, sizeof(hel_caps));
+    hel_caps.dwSize = sizeof(hel_caps);
+    hel_caps.dwFlags = 0xdeadc0de;
+
+    /* NULL pointers */
+    hr = IDirect3DDevice_GetCaps(Direct3DDevice1, &hw_caps, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "GetCaps with NULL hel caps returned hr %#x, expected INVALIDPARAMS.\n", hr);
+    ok(hw_caps.dwFlags == 0xdeadbeef, "hw_caps.dwFlags was modified: %#x.\n", hw_caps.dwFlags);
+    hr = IDirect3DDevice_GetCaps(Direct3DDevice1, NULL, &hel_caps);
+    ok(hr == DDERR_INVALIDPARAMS, "GetCaps with NULL hw caps returned hr %#x, expected INVALIDPARAMS.\n", hr);
+    ok(hel_caps.dwFlags == 0xdeadc0de, "hel_caps.dwFlags was modified: %#x.\n", hel_caps.dwFlags);
+
+    /* Successful call: Both are modified */
+    hr = IDirect3DDevice_GetCaps(Direct3DDevice1, &hw_caps, &hel_caps);
+    ok(hr == D3D_OK, "GetCaps with correct size returned hr %#x, expected D3D_OK.\n", hr);
+    ok(hw_caps.dwFlags != 0xdeadbeef, "hw_caps.dwFlags was not modified: %#x.\n", hw_caps.dwFlags);
+    ok(hel_caps.dwFlags != 0xdeadc0de, "hel_caps.dwFlags was not modified: %#x.\n", hel_caps.dwFlags);
+
+    memset(&hw_caps, 0, sizeof(hw_caps));
+    hw_caps.dwSize = sizeof(hw_caps);
+    hw_caps.dwFlags = 0xdeadbeef;
+    memset(&hel_caps, 0, sizeof(hel_caps));
+    /* Keep dwSize at 0 */
+    hel_caps.dwFlags = 0xdeadc0de;
+
+    /* If one is invalid the call fails */
+    hr = IDirect3DDevice_GetCaps(Direct3DDevice1, &hw_caps, &hel_caps);
+    ok(hr == DDERR_INVALIDPARAMS, "GetCaps with invalid hel_caps size returned hr %#x, expected INVALIDPARAMS.\n", hr);
+    ok(hw_caps.dwFlags == 0xdeadbeef, "hw_caps.dwFlags was modified: %#x.\n", hw_caps.dwFlags);
+    ok(hel_caps.dwFlags == 0xdeadc0de, "hel_caps.dwFlags was modified: %#x.\n", hel_caps.dwFlags);
+    hel_caps.dwSize = sizeof(hel_caps);
+    hw_caps.dwSize = sizeof(hw_caps) + 1;
+    hr = IDirect3DDevice_GetCaps(Direct3DDevice1, &hw_caps, &hel_caps);
+    ok(hr == DDERR_INVALIDPARAMS, "GetCaps with invalid hw_caps size returned hr %#x, expected INVALIDPARAMS.\n", hr);
+    ok(hw_caps.dwFlags == 0xdeadbeef, "hw_caps.dwFlags was modified: %#x.\n", hw_caps.dwFlags);
+    ok(hel_caps.dwFlags == 0xdeadc0de, "hel_caps.dwFlags was modified: %#x.\n", hel_caps.dwFlags);
+
+    for (i = 0; i < 1024; i++)
+    {
+        memset(&hw_caps, 0xfe, sizeof(hw_caps));
+        memset(&hel_caps, 0xfe, sizeof(hel_caps));
+        hw_caps.dwSize = hel_caps.dwSize = i;
+        hr = IDirect3DDevice_GetCaps(Direct3DDevice1, &hw_caps, &hel_caps);
+        switch (i)
+        {
+            /* D3DDEVICEDESCSIZE in old sdk versions */
+            case FIELD_OFFSET(D3DDEVICEDESC, dwMinTextureWidth): /* 172, DirectX 3, IDirect3DDevice1 */
+                ok(hw_caps.dwMinTextureWidth == 0xfefefefe, "hw_caps.dwMinTextureWidth was modified: %#x.\n",
+                        hw_caps.dwMinTextureWidth);
+                ok(hel_caps.dwMinTextureWidth == 0xfefefefe, "hel_caps.dwMinTextureWidth was modified: %#x.\n",
+                        hel_caps.dwMinTextureWidth);
+                /* drop through */
+            case FIELD_OFFSET(D3DDEVICEDESC, dwMaxTextureRepeat): /* 204, DirectX 5, IDirect3DDevice2 */
+                ok(hw_caps.dwMaxTextureRepeat == 0xfefefefe, "hw_caps.dwMaxTextureRepeat was modified: %#x.\n",
+                        hw_caps.dwMaxTextureRepeat);
+                ok(hel_caps.dwMaxTextureRepeat == 0xfefefefe, "hel_caps.dwMaxTextureRepeat was modified: %#x.\n",
+                        hel_caps.dwMaxTextureRepeat);
+                /* drop through */
+            case sizeof(D3DDEVICEDESC): /* 252, DirectX 6, IDirect3DDevice3 */
+                ok(hr == D3D_OK, "GetCaps with size %u returned hr %#x, expected D3D_OK.\n", i, hr);
+                break;
+
+            default:
+                ok(hr == DDERR_INVALIDPARAMS,
+                        "GetCaps with size %u returned hr %#x, expected DDERR_INVALIDPARAMS.\n", i, hr);
+                break;
+        }
+    }
+
+    /* Different valid sizes are OK */
+    hw_caps.dwSize = 172;
+    hel_caps.dwSize = sizeof(D3DDEVICEDESC);
+    hr = IDirect3DDevice_GetCaps(Direct3DDevice1, &hw_caps, &hel_caps);
+    ok(hr == D3D_OK, "GetCaps with different sizes returned hr %#x, expected D3D_OK.\n", hr);
+}
+
 START_TEST(d3d)
 {
     init_function_pointers();
@@ -4934,6 +5019,7 @@ START_TEST(d3d)
         FindDevice();
         BackBuffer3DCreateSurfaceTest();
         BackBuffer3DAttachmentTest();
+        test_get_caps1();
         D3D1_releaseObjects();
     }
 

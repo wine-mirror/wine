@@ -500,21 +500,66 @@ IDirect3DDeviceImpl_7_GetCaps_FPUPreserve(IDirect3DDevice7 *iface,
  *  D3DERR_* if a problem occurs. See WineD3D
  *
  *****************************************************************************/
+
+/* There are 3 versions of D3DDEVICEDESC. All 3 share the same name because
+ * Microsoft just expanded the existing structure without naming them
+ * D3DDEVICEDESC2 and D3DDEVICEDESC3. Which version is used have depends
+ * on the version of the DirectX SDK. DirectX 6+ and Wine use the latest
+ * one with 252 bytes.
+ *
+ * All 3 versions are allowed as parameters and only the specified amount of
+ * bytes is written.
+ *
+ * Note that Direct3D7 and earlier are not available in native Win64
+ * ddraw.dll builds, so possible size differences between 32 bit and
+ * 64 bit are a non-issue.
+ */
+static inline BOOL check_d3ddevicedesc_size(DWORD size)
+{
+    if (size == FIELD_OFFSET(D3DDEVICEDESC, dwMinTextureWidth) /* 172 */
+            || size == FIELD_OFFSET(D3DDEVICEDESC, dwMaxTextureRepeat) /* 204 */
+            || size == sizeof(D3DDEVICEDESC) /* 252 */) return TRUE;
+    return FALSE;
+}
+
 static HRESULT WINAPI
 IDirect3DDeviceImpl_3_GetCaps(IDirect3DDevice3 *iface,
                               D3DDEVICEDESC *HWDesc,
                               D3DDEVICEDESC *HelDesc)
 {
     IDirect3DDeviceImpl *This = impl_from_IDirect3DDevice3(iface);
+    D3DDEVICEDESC oldDesc;
     D3DDEVICEDESC7 newDesc;
     HRESULT hr;
 
     TRACE("iface %p, hw_desc %p, hel_desc %p.\n", iface, HWDesc, HelDesc);
 
-    hr = IDirect3DImpl_GetCaps(This->ddraw->wined3d, HWDesc, &newDesc);
+    if (!HWDesc)
+    {
+        WARN("HWDesc is NULL, returning DDERR_INVALIDPARAMS.\n");
+        return DDERR_INVALIDPARAMS;
+    }
+    if (!check_d3ddevicedesc_size(HWDesc->dwSize))
+    {
+        WARN("HWDesc->dwSize is %u, returning DDERR_INVALIDPARAMS.\n", HWDesc->dwSize);
+        return DDERR_INVALIDPARAMS;
+    }
+    if (!HelDesc)
+    {
+        WARN("HelDesc is NULL, returning DDERR_INVALIDPARAMS.\n");
+        return DDERR_INVALIDPARAMS;
+    }
+    if (!check_d3ddevicedesc_size(HelDesc->dwSize))
+    {
+        WARN("HelDesc->dwSize is %u, returning DDERR_INVALIDPARAMS.\n", HelDesc->dwSize);
+        return DDERR_INVALIDPARAMS;
+    }
+
+    hr = IDirect3DImpl_GetCaps(This->ddraw->wined3d, &oldDesc, &newDesc);
     if(hr != D3D_OK) return hr;
 
-    *HelDesc = *HWDesc;
+    DD_STRUCT_COPY_BYSIZE(HWDesc, &oldDesc);
+    DD_STRUCT_COPY_BYSIZE(HelDesc, &oldDesc);
     return D3D_OK;
 }
 
