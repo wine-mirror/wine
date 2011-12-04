@@ -8392,17 +8392,19 @@ static HIMAGELIST LISTVIEW_CreateCheckBoxIL(const LISTVIEW_INFO *infoPtr)
  *   SUCCESS : previous style
  *   FAILURE : 0
  */
-static DWORD LISTVIEW_SetExtendedListViewStyle(LISTVIEW_INFO *infoPtr, DWORD dwMask, DWORD dwExStyle)
+static DWORD LISTVIEW_SetExtendedListViewStyle(LISTVIEW_INFO *infoPtr, DWORD mask, DWORD ex_style)
 {
-    DWORD dwOldExStyle = infoPtr->dwLvExStyle;
+    DWORD old_ex_style = infoPtr->dwLvExStyle;
+
+    TRACE("mask=0x%08x, ex_style=0x%08x\n", mask, ex_style);
 
     /* set new style */
-    if (dwMask)
-	infoPtr->dwLvExStyle = (dwOldExStyle & ~dwMask) | (dwExStyle & dwMask);
+    if (mask)
+	infoPtr->dwLvExStyle = (old_ex_style & ~mask) | (ex_style & mask);
     else
-	infoPtr->dwLvExStyle = dwExStyle;
+	infoPtr->dwLvExStyle = ex_style;
 
-    if((infoPtr->dwLvExStyle ^ dwOldExStyle) & LVS_EX_CHECKBOXES)
+    if((infoPtr->dwLvExStyle ^ old_ex_style) & LVS_EX_CHECKBOXES)
     {
         HIMAGELIST himl = 0;
         if(infoPtr->dwLvExStyle & LVS_EX_CHECKBOXES)
@@ -8422,38 +8424,39 @@ static DWORD LISTVIEW_SetExtendedListViewStyle(LISTVIEW_INFO *infoPtr, DWORD dwM
         if(((infoPtr->dwLvExStyle & LVS_EX_CHECKBOXES) &&
            !(infoPtr->dwStyle & LVS_SHAREIMAGELISTS)) ||
             /* ...previous was checkbox list */
-            (dwOldExStyle & LVS_EX_CHECKBOXES))
+            (old_ex_style & LVS_EX_CHECKBOXES))
             ImageList_Destroy(himl);
     }
 
-    if((infoPtr->dwLvExStyle ^ dwOldExStyle) & LVS_EX_HEADERDRAGDROP)
+    if((infoPtr->dwLvExStyle ^ old_ex_style) & LVS_EX_HEADERDRAGDROP)
     {
-        DWORD dwStyle;
+        DWORD style;
 
         /* if not already created */
         LISTVIEW_CreateHeader(infoPtr);
 
-        dwStyle = GetWindowLongW(infoPtr->hwndHeader, GWL_STYLE);
+        style = GetWindowLongW(infoPtr->hwndHeader, GWL_STYLE);
         if (infoPtr->dwLvExStyle & LVS_EX_HEADERDRAGDROP)
-            dwStyle |= HDS_DRAGDROP;
+            style |= HDS_DRAGDROP;
         else
-            dwStyle &= ~HDS_DRAGDROP;
-        SetWindowLongW(infoPtr->hwndHeader, GWL_STYLE, dwStyle);
+            style &= ~HDS_DRAGDROP;
+        SetWindowLongW(infoPtr->hwndHeader, GWL_STYLE, style);
     }
 
     /* GRIDLINES adds decoration at top so changes sizes */
-    if((infoPtr->dwLvExStyle ^ dwOldExStyle) & LVS_EX_GRIDLINES)
+    if((infoPtr->dwLvExStyle ^ old_ex_style) & LVS_EX_GRIDLINES)
     {
+        LISTVIEW_CreateHeader(infoPtr);
         LISTVIEW_UpdateSize(infoPtr);
     }
 
-    if((infoPtr->dwLvExStyle ^ dwOldExStyle) & LVS_EX_TRANSPARENTBKGND)
+    if((infoPtr->dwLvExStyle ^ old_ex_style) & LVS_EX_TRANSPARENTBKGND)
     {
         if (infoPtr->dwLvExStyle & LVS_EX_TRANSPARENTBKGND)
             LISTVIEW_SetBkColor(infoPtr, CLR_NONE);
     }
 
-    if((infoPtr->dwLvExStyle ^ dwOldExStyle) & LVS_EX_HEADERINALLVIEWS)
+    if((infoPtr->dwLvExStyle ^ old_ex_style) & LVS_EX_HEADERINALLVIEWS)
     {
         if (infoPtr->dwLvExStyle & LVS_EX_HEADERINALLVIEWS)
             LISTVIEW_CreateHeader(infoPtr);
@@ -8464,7 +8467,7 @@ static DWORD LISTVIEW_SetExtendedListViewStyle(LISTVIEW_INFO *infoPtr, DWORD dwM
     }
 
     LISTVIEW_InvalidateList(infoPtr);
-    return dwOldExStyle;
+    return old_ex_style;
 }
 
 /***
@@ -9369,7 +9372,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongPtrW(hwnd, 0);
 
-  TRACE("(lpcs=%p)\n", lpcs);
+  TRACE("(lpcs=%p, style=0x%08x)\n", lpcs, lpcs->style);
 
   infoPtr->dwStyle = lpcs->style;
   map_style_view(infoPtr);

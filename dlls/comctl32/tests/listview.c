@@ -1543,6 +1543,20 @@ static void test_create(void)
     ok(hHeader == GetDlgItem(hList, 0), "Expected header as dialog item\n");
     DestroyWindow(hList);
 
+    /* setting LVS_EX_GRIDLINES creates header */
+    hList = CreateWindow("SysListView32", "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
+                          GetModuleHandle(NULL), 0);
+    hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
+    ok(!IsWindow(hHeader), "Header shouldn't be created\n");
+    ok(NULL == GetDlgItem(hList, 0), "NULL dialog item expected\n");
+    SendMessage(hList, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_GRIDLINES);
+    hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(hHeader) ||
+       broken(!IsWindow(hHeader)), /* 4.7x common controls */
+       "Header should be created\n");
+    ok(hHeader == GetDlgItem(hList, 0), "Expected header as dialog item\n");
+    DestroyWindow(hList);
+
     /* not report style accepts LVS_EX_HEADERDRAGDROP too */
     hList = create_listview_control(LVS_ICON);
     SendMessage(hList, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_HEADERDRAGDROP);
