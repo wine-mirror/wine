@@ -843,7 +843,18 @@ ULONG CDECL wined3d_device_decref(struct wined3d_device *device)
 
     if (!refcount)
     {
+        struct wined3d_stateblock *stateblock;
         UINT i;
+
+        if (wined3d_stateblock_decref(device->updateStateBlock)
+                && device->updateStateBlock != device->stateBlock)
+            FIXME("Something's still holding the update stateblock.\n");
+        device->updateStateBlock = NULL;
+
+        stateblock = device->stateBlock;
+        device->stateBlock = NULL;
+        if (wined3d_stateblock_decref(stateblock))
+            FIXME("Something's still holding the stateblock.\n");
 
         for (i = 0; i < sizeof(device->multistate_funcs) / sizeof(device->multistate_funcs[0]); ++i)
         {
@@ -1214,18 +1225,6 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
     if (!device->adapter->opengl)
         return WINED3DERR_INVALIDCALL;
 
-    TRACE("Creating stateblock.\n");
-    hr = wined3d_stateblock_create(device, WINED3DSBT_INIT, &device->stateBlock);
-    if (FAILED(hr))
-    {
-        WARN("Failed to create stateblock\n");
-        goto err_out;
-    }
-
-    TRACE("Created stateblock %p.\n", device->stateBlock);
-    device->updateStateBlock = device->stateBlock;
-    wined3d_stateblock_incref(device->updateStateBlock);
-
     device->valid_rt_mask = 0;
     for (i = 0; i < gl_info->limits.buffers; ++i)
         device->valid_rt_mask |= (1 << i);
@@ -1360,11 +1359,6 @@ err_out:
     device->swapchain_count = 0;
     if (swapchain)
         wined3d_swapchain_decref(swapchain);
-    if (device->stateBlock)
-    {
-        wined3d_stateblock_decref(device->stateBlock);
-        device->stateBlock = NULL;
-    }
     if (device->blit_priv)
         device->blitter->free_private(device);
     if (device->fragment_priv)
@@ -1470,23 +1464,6 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
         glDeleteTextures(1, &device->depth_blt_texture);
         LEAVE_GL();
         device->depth_blt_texture = 0;
-    }
-
-    /* Release the update stateblock */
-    if (wined3d_stateblock_decref(device->updateStateBlock))
-    {
-        if (device->updateStateBlock != device->stateBlock)
-            FIXME("Something's still holding the update stateblock.\n");
-    }
-    device->updateStateBlock = NULL;
-
-    {
-        struct wined3d_stateblock *stateblock = device->stateBlock;
-        device->stateBlock = NULL;
-
-        /* Release the stateblock */
-        if (wined3d_stateblock_decref(stateblock))
-            FIXME("Something's still holding the stateblock.\n");
     }
 
     /* Destroy the shader backend. Note that this has to happen after all shaders are destroyed. */
@@ -5979,6 +5956,22 @@ HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
         }
     }
     device->blitter = adapter->blitter;
+
+    hr = wined3d_stateblock_create(device, WINED3DSBT_INIT, &device->stateBlock);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create stateblock.\n");
+        for (i = 0; i < sizeof(device->multistate_funcs) / sizeof(device->multistate_funcs[0]); ++i)
+        {
+            HeapFree(GetProcessHeap(), 0, device->multistate_funcs[i]);
+        }
+        wined3d_decref(device->wined3d);
+        return hr;
+    }
+
+    TRACE("Created stateblock %p.\n", device->stateBlock);
+    device->updateStateBlock = device->stateBlock;
+    wined3d_stateblock_incref(device->updateStateBlock);
 
     return WINED3D_OK;
 }
