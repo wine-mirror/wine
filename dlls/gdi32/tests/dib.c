@@ -133,7 +133,8 @@ static const char *sha1_graphics_a8r8g8b8[] =
     "568f87f0194ca19b69a5b2bcdef795d89c5721ce",
     "257d114354a93e681225072bcde756f155b70496",
     "0cdf6fee6721d60d5d5ed26b1989eacddc16b14e",
-    "50f0d4252e700b0a29358ca6363e1c560d9c5f9b",
+    "e462052a03dbe4ec3814db7700e166d00d4d686f",
+    "a27917d4db49ce77989fae246015aeb2a28520ee",
     NULL
 };
 
@@ -193,7 +194,8 @@ static const char *sha1_graphics_a8r8g8b8_bitfields[] =
     "568f87f0194ca19b69a5b2bcdef795d89c5721ce",
     "257d114354a93e681225072bcde756f155b70496",
     "0cdf6fee6721d60d5d5ed26b1989eacddc16b14e",
-    "3692d0fe76bcd5622b567f524306d4df421aa450",
+    "0cda6b3297003b3ccd6d5baa17e1ca9bb7c56f08",
+    "b2c8e1ebb9435031fe068442f479d1304096e79f",
     NULL
 };
 
@@ -253,7 +255,8 @@ static const char *sha1_graphics_a8b8g8r8[] =
     "25675c30adfe24d6cae60793b156dfdaa36ac3ba",
     "2c4f116451b571106beba8b85da8e4b923937246",
     "9c8f3063504a81bbbfa8558e111c63d8bc36dbbf",
-    "d816ec7e95bd0d5ed336fa50efbadfcd63f20f9b",
+    "87f57a31253a38dbf3dc3070473328fa04b68a48",
+    "db64cc4d830fc35ed170b53943e722b2342954d4",
     NULL
 };
 
@@ -313,7 +316,8 @@ static const char *sha1_graphics_r10g10b10[] =
     "d3f08946300e1700865042aed121870e292d1095",
     "abb56db94becb64d663b51f0ea6b4bd535a88ba0",
     "3a81fe558c69ca0aea7e7191771ed86cf4321a5a",
-    "126c112d9c77826cbedddaee1ff96348c8f1e349",
+    "8ea5d7e4bebc40a1d91b04b12e1c11a42c188095",
+    "317521e576801acaea62c76fe16813cdfe20f4ad",
     NULL
 };
 
@@ -373,7 +377,8 @@ static const char *sha1_graphics_r6g6b6[] =
     "c3def160a1e847605ff0fc7edd30397fa90635a0",
     "50acb1597c4d53ad63225376d2aa36f64e8a229d",
     "796fd861474aa7861bd0384127df755458757ec3",
-    "d931b9b3e81b931826ea9dffdc7178ce87c422b5",
+    "aecb242c31f31a90f071b6455ea7d808d4ea22e3",
+    "77ea86e51a94b11a8081b29696cb4115687843e3",
     NULL
 };
 
@@ -433,7 +438,8 @@ static const char *sha1_graphics_24[] =
     "ee315634ed92da3a32c2675ecd1b369471c60936",
     "3491e2bd81e70dd203c8551cc2d39b19401caafe",
     "826de85271b67a11e7bd1a6596b58a045a96b69e",
-    "927d799714511eba2dd5876201a926d06a5677ce",
+    "354b92008a8409c62d0fa1dff1532c5943aa37a2",
+    "8dc9cb7deae5c24d1eae004d53893fa6caf4723c",
     NULL
 };
 
@@ -497,7 +503,8 @@ static const char *sha1_graphics_r5g5b5[] =
     "2daca4d26a086ed34894693be0b0374402232809",
     "bf0e0b74ce5686b73c527843e0d0df0cd10efefe",
     "517e32a8c0312b5676d498583ea092b0f198f2bc",
-    "be813b2206a9156c38b175e5ff009c44340ebfa9",
+    "295ec16530126046790fb734e99f86f5b3b74ed8",
+    "d98b0561010606b55a1b9b85fbc93640f681d256",
     NULL
 };
 
@@ -556,7 +563,8 @@ static const char *sha1_graphics_r4g4b4[] =
     "f7900e60347029876ba55e8f0c4c02e89deb36b6",
     "734d4a7836891d729f4a9ec6916ead78eecb2596",
     "d8ba2e556fd64c9c2f1746496e6e7dd7a487cd6d",
-    "5472bfe300268fb299987a04ff00db34b2007796",
+    "7587a9c87cab1eca827807f351bb67ca184d1ac5",
+    "b53ef0b5c674822e784903a9dbdd3b386d9f2350",
     NULL
 };
 
@@ -621,7 +629,8 @@ static const char *sha1_graphics_8_color[] =
     "2f7ba8803604c032cb1a1228bc021f0f1c03e245",
     "0204f06422a01787f7379d0edb51104bb023758a",
     "1f9a21eba2f2ce87768a5618d9cfefa7e48fb386",
-    "b61f2e6e2de63cb64b4ddcefd9f720dbf6ba8e93",
+    "e58d9c0acf0219d0839e1dbd162e08a765ed7f0f",
+    "34ca0f9660e1889f9f2c0deb80535d3c4f349fa4",
     NULL
 };
 
@@ -691,7 +700,8 @@ static const char *sha1_graphics_8_grayscale[] =
     "cb9ea8137eca1450e049879772f5c11a0e11ff0a",
     "a05e05b2e6e515baa59ea032d063ca11e70a72b5",
     "d908c86b7301666a8d7999b831841115a4938181",
-    "1f64da8432774f221fc3eb4bb66753bd92ede2da",
+    "0ca8775d9a61ccc251d1e6f2e3cfd26a24ae24a2",
+    "17ae603c199a5d6695d198a7f36e6d7263990951",
     NULL
 };
 
@@ -754,7 +764,8 @@ static const char *sha1_graphics_8[] =
     "600d6b2713d5e4c0d90c02660245ed26c7ae3033",
     "963d1fa8608c8b743e972eb9a4e9f3fc53c6c7e8",
     "ba49de83c4668fb08956221f465b93e7dd6a3383",
-    "d5fd38085d21bc27c388fb6702600ddcd935815a",
+    "bd28d77cd85b20a2384d6b25082cfd884bba683e",
+    "7e591ec8ae9bb61c3a443c93f071cab2b8978394",
     NULL
 };
 
@@ -813,7 +824,8 @@ static const char *sha1_graphics_4[] =
     "ec8e2aebfb4a1c28ebcd0e053b9e4d8638b50951",
     "da401c745421f6bdfaefd590ab99dee948dce412",
     "38a3b6edcba2a1fba6064f0b4d771aedae7f4673",
-    "0b504b6eb09907543174210272ee7763d67de2a9",
+    "28a6b9f7927e99e53cf46f0333d29168cb10e920",
+    "029552113292cc110fd6b7888e766628950aaeef",
     NULL
 };
 
@@ -872,7 +884,8 @@ static const char *sha1_graphics_4_grayscale[] =
     "d374d4d92c940ae42a9b42c14d744341b68a8c14",
     "25ec9fd2eeb1514ba4e0458a444149a5456cf63a",
     "2e4dc1e859350289575ffc2a47cd0033efca6c32",
-    "a0e8e78f3c082e2b674b5f5a592fb4be8324e843",
+    "ada3b7c34946e584dcdf4203e07cfa3dad02bc63",
+    "c2f61571b067a44b30f56b4658c9606f0edfc0f3",
     NULL
 };
 
@@ -946,7 +959,8 @@ static const char *sha1_graphics_1[] =
     "013cee26bac8f815eadad4bfc012d9b5d01c3b7f",
     "6b2cb2346b5820bdd0251cd6a4aeb5c22ee82e85",
     "6c4640b17e072efc682044c499e5a4f3481b7c87",
-    "7b739d8f9437c4893dddf3d2ff457db0803c924e",
+    "781d8c5cbc28591fd48fce06f984c502fdc6b363",
+    "df510792a7790cc699532b1420d43c6d4da2ae2f",
     NULL
 };
 
@@ -2090,37 +2104,65 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 
     if (pGdiGradientFill)
     {
-        TRIVERTEX vt[4];
-        GRADIENT_RECT rect[1] = { { 0 , 1 } };
-        vt[0].x = 1;
-        vt[0].y = 1;
-        vt[0].Red = 0;
-        vt[0].Green = 0x8000;
-        vt[0].Blue = 0;
-        vt[0].Alpha = 0x8000;
-        vt[1].x = 200;
-        vt[1].y = 200;
-        vt[1].Red = 0;
-        vt[1].Green = 0xff00;
-        vt[1].Blue = 0;
-        vt[1].Alpha = 0xff00;
-        pGdiGradientFill( hdc, vt, 2, rect, 1, GRADIENT_FILL_RECT_H );
+        TRIVERTEX vrect[] =
+        {
+            {   1,   1, 0xff00, 0x8000, 0x0000, 0x8000 },
+            { 200, 200, 0x0000, 0x0000, 0xff00, 0xff00 },
+            { 180, 180, 0x1234, 0x5678, 0x9abc, 0xdef0 },
+            { 300, 300, 0xff00, 0xff00, 0xff00, 0x0000 }
+        };
+        GRADIENT_RECT rect[] = { { 0, 1 }, { 2, 3 }, { 2, 1 } };
 
-        vt[0].x = 180;
-        vt[0].y = 180;
-        vt[0].Red = 0;
-        vt[0].Green = 0;
-        vt[0].Blue = 0xff00;
-        vt[0].Alpha = 0xff00;
-        vt[1].x = 300;
-        vt[1].y = 300;
-        vt[1].Red = 0xff00;
-        vt[1].Green = 0xff00;
-        vt[1].Blue = 0xff00;
-        vt[1].Alpha = 0x00;
-        pGdiGradientFill( hdc, vt, 2, rect, 1, GRADIENT_FILL_RECT_V );
-        if (bmi->bmiHeader.biBitCount == 8 || bmi->bmiHeader.biBitCount == 4)
-            /* Wine's 8-bit dithering isn't identical to Windows */
+        TRIVERTEX vtri[] =
+        {
+            { 250,   0, 0xff00, 0x0000, 0xff00, 0xff00 },
+            { 500, 500, 0x0000, 0xff00, 0x0000, 0xff00 },
+            {   0, 500, 0x0000, 0x0000, 0xff00, 0xff00 },
+
+            {  10,   0, 0x8000, 0x0000, 0x8000, 0x8000 },
+            {   0,  20, 0xff00, 0xff00, 0xff00, 0x0000 },
+            {   5,  30, 0x4000, 0xc000, 0x7000, 0x9000 },
+
+            {  30,   0, 0x9000, 0x8800, 0xcc00, 0xff00 },
+            {   5,  12, 0x9900, 0xaa00, 0xbb00, 0xcc00 },
+            {   0,  30, 0x5000, 0xd000, 0x9000, 0xbb00 },
+
+            {  35,   3, 0xaa00, 0x6500, 0x4300, 0x2100 },
+            {  50,   6, 0x9800, 0x9800, 0x9800, 0x2000 },
+            {  60,  10, 0x0100, 0x0200, 0x0300, 0x3000 },
+
+            {  60,   2, 0x0700, 0x0800, 0x0900, 0xff00 },
+            {  73,  10, 0x9900, 0x8800, 0x7700, 0xff00 },
+            {  66,  23, 0x1100, 0x2200, 0x3300, 0xff00 },
+
+            {  80,   1, 0xa000, 0x6000, 0x4000, 0x2000 },
+            {  76,   9, 0x7000, 0x5000, 0x3000, 0x1000 },
+            {  85,  23, 0x3300, 0x3300, 0x3300, 0x3300 },
+
+            {  90,   4, 0x4400, 0x5500, 0x6600, 0x9900 },
+            {  95,  12, 0x4500, 0x5600, 0x6700, 0x9900 },
+            {  85,  14, 0x4600, 0x5700, 0x6800, 0x9900 },
+        };
+        GRADIENT_TRIANGLE tri[] =
+        {
+            { 0, 1, 2 }, { 3, 4, 5 }, { 6, 7, 8 }, { 9, 10, 11 }, { 12, 13, 14 }, { 15, 16, 17 }, { 18, 19, 20 },
+            { 2, 1, 0 }, { 3, 5, 4 }, { 7, 6, 8 }, { 10, 11, 9 }, { 14, 13, 12 }, { 17, 15, 16 }, { 19, 20, 18 }
+        };
+
+        pGdiGradientFill( hdc, vrect, 4, rect, 2, GRADIENT_FILL_RECT_H );
+        for (i = 0; i < 4; i++) vrect[i].y += 250;
+        pGdiGradientFill( hdc, vrect, 4, rect, 2, GRADIENT_FILL_RECT_V );
+
+        if (bmi->bmiHeader.biBitCount <= 8) /* Wine's 8-bit dithering isn't identical to Windows */
+            compare_hash_broken_todo( bmi, bits, sha1, "GdiGradientFill", 0, 1 );
+        else
+            compare_hash(bmi, bits, sha1, "GdiGradientFill" );
+        memset(bits, 0xcc, dib_size);
+
+        pGdiGradientFill( hdc, vtri, 7*3, tri, 7, GRADIENT_FILL_TRIANGLE );
+        for (i = 0; i < 7*3; i++) vtri[i].y += 100;
+        pGdiGradientFill( hdc, vtri, 7*3, tri + 7, 7, GRADIENT_FILL_TRIANGLE );
+        if (bmi->bmiHeader.biBitCount <= 8) /* Wine's 8-bit dithering isn't identical to Windows */
             compare_hash_broken_todo( bmi, bits, sha1, "GdiGradientFill", 0, 1 );
         else
             compare_hash(bmi, bits, sha1, "GdiGradientFill" );
