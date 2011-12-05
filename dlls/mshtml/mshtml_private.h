@@ -804,6 +804,8 @@ BOOL find_global_prop(HTMLWindow*,BSTR,DWORD,ScriptHost**,DISPID*) DECLSPEC_HIDD
 IDispatch *get_script_disp(ScriptHost*) DECLSPEC_HIDDEN;
 HRESULT search_window_props(HTMLWindow*,BSTR,DWORD,DISPID*) DECLSPEC_HIDDEN;
 
+HRESULT wrap_iface(IUnknown*,IUnknown*,IUnknown**) DECLSPEC_HIDDEN;
+
 IHTMLElementCollection *create_all_collection(HTMLDOMNode*,BOOL) DECLSPEC_HIDDEN;
 IHTMLElementCollection *create_collection_from_nodelist(HTMLDocumentNode*,IUnknown*,nsIDOMNodeList*) DECLSPEC_HIDDEN;
 IHTMLElementCollection *create_collection_from_htmlcol(HTMLDocumentNode*,IUnknown*,nsIDOMHTMLCollection*) DECLSPEC_HIDDEN;

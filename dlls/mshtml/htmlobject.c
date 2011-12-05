@@ -420,7 +420,26 @@ static HRESULT HTMLObjectElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
         *ppv = &This->plugin_container;
         return S_OK;
     }else {
-        return HTMLElement_QI(&This->plugin_container.element.node, riid, ppv);
+        HRESULT hres;
+
+        hres = HTMLElement_QI(&This->plugin_container.element.node, riid, ppv);
+        if(hres == E_NOINTERFACE && This->plugin_container.plugin_host && This->plugin_container.plugin_host->plugin_unk) {
+            IUnknown *plugin_iface, *ret;
+
+            hres = IUnknown_QueryInterface(This->plugin_container.plugin_host->plugin_unk, riid, (void**)&plugin_iface);
+            if(hres == S_OK) {
+                hres = wrap_iface(plugin_iface, (IUnknown*)&This->IHTMLObjectElement_iface, &ret);
+                IUnknown_Release(plugin_iface);
+                if(FAILED(hres))
+                    return hres;
+
+                TRACE("returning plugin iface %p wrapped to %p\n", plugin_iface, ret);
+                *ppv = ret;
+                return S_OK;
+            }
+        }
+
+        return hres;
     }
 
     IUnknown_AddRef((IUnknown*)*ppv);
