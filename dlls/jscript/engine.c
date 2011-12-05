@@ -3328,9 +3328,8 @@ HRESULT assign_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD fla
     }
 
     if(SUCCEEDED(hres)) {
-        hres = put_value(ctx, &exprval, &rval, ei);
-        if(FAILED(hres))
-            VariantClear(&rval);
+        assert(exprval.type != EXPRVAL_IDREF);
+        return throw_reference_error(ctx, ei, JS_E_ILLEGAL_ASSIGN, NULL);
     }
 
     exprval_release(&exprval);
