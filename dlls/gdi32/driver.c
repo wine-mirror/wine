@@ -477,24 +477,27 @@ static BOOL nulldrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 
 static BOOL nulldrv_PolyPolygon( PHYSDEV dev, const POINT *points, const INT *counts, UINT polygons )
 {
-    /* FIXME: could be implemented with Polygon */
     return TRUE;
 }
 
 static BOOL nulldrv_PolyPolyline( PHYSDEV dev, const POINT *points, const DWORD *counts, DWORD lines )
 {
-    /* FIXME: could be implemented with Polyline */
     return TRUE;
 }
 
 static BOOL nulldrv_Polygon( PHYSDEV dev, const POINT *points, INT count )
 {
-    return TRUE;
+    INT counts[1] = { count };
+
+    return PolyPolygon( dev->hdc, points, counts, 1 );
 }
 
 static BOOL nulldrv_Polyline( PHYSDEV dev, const POINT *points, INT count )
 {
-    return TRUE;
+    DWORD counts[1] = { count };
+
+    if (count < 0) return FALSE;
+    return PolyPolyline( dev->hdc, points, counts, 1 );
 }
 
 static UINT nulldrv_RealizeDefaultPalette( PHYSDEV dev )
