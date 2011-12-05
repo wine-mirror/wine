@@ -11249,7 +11249,7 @@ static void depth_blit_test(IDirect3DDevice9 *device)
         {0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000},
     };
 
-    IDirect3DSurface9 *backbuffer, *ds1, *ds2;
+    IDirect3DSurface9 *backbuffer, *ds1, *ds2, *ds3;
     RECT src_rect, dst_rect;
     unsigned int i, j;
     D3DVIEWPORT9 vp;
@@ -11274,6 +11274,8 @@ static void depth_blit_test(IDirect3DDevice9 *device)
     ok(SUCCEEDED(hr), "CreateDepthStencilSurface failed, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetDepthStencilSurface(device, ds2);
     ok(SUCCEEDED(hr), "SetDepthStencilSurface failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateDepthStencilSurface(device, 320, 240, D3DFMT_D24S8, 0, 0, FALSE, &ds3, NULL);
+    ok(SUCCEEDED(hr), "CreateDepthStencilSurface failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
     ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
@@ -11315,6 +11317,11 @@ static void depth_blit_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_StretchRect(device, ds2, NULL, backbuffer, NULL, D3DTEXF_POINT);
     ok(hr == D3DERR_INVALIDCALL, "StretchRect returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
     IDirect3DSurface9_Release(backbuffer);
+    /* Full surface, different sizes */
+    hr = IDirect3DDevice9_StretchRect(device, ds3, NULL, ds1, NULL, D3DTEXF_POINT);
+    ok(hr == D3DERR_INVALIDCALL, "StretchRect returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
+    hr = IDirect3DDevice9_StretchRect(device, ds1, NULL, ds3, NULL, D3DTEXF_POINT);
+    ok(hr == D3DERR_INVALIDCALL, "StretchRect returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
 
     hr = IDirect3DDevice9_SetDepthStencilSurface(device, ds1);
     ok(SUCCEEDED(hr), "SetDepthStencilSurface failed, hr %#x.\n", hr);
@@ -11322,6 +11329,7 @@ static void depth_blit_test(IDirect3DDevice9 *device)
     ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
     hr = IDirect3DDevice9_StretchRect(device, ds2, NULL, ds1, NULL, D3DTEXF_POINT);
     ok(SUCCEEDED(hr), "StretchRect failed, hr %#x.\n", hr);
+    IDirect3DSurface9_Release(ds3);
     IDirect3DSurface9_Release(ds2);
     IDirect3DSurface9_Release(ds1);
 
