@@ -53,39 +53,7 @@ C_SRCS = \
 	trash.c \
 	xdg.c
 
-RC_SRCS = \
-	shell32.rc \
-	shell32_Bg.rc \
-	shell32_Ca.rc \
-	shell32_Cs.rc \
-	shell32_Da.rc \
-	shell32_De.rc \
-	shell32_En.rc \
-	shell32_Eo.rc \
-	shell32_Es.rc \
-	shell32_Fi.rc \
-	shell32_Fr.rc \
-	shell32_He.rc \
-	shell32_Hu.rc \
-	shell32_It.rc \
-	shell32_Ja.rc \
-	shell32_Ko.rc \
-	shell32_Lt.rc \
-	shell32_Nl.rc \
-	shell32_No.rc \
-	shell32_Pl.rc \
-	shell32_Pt.rc \
-	shell32_Ro.rc \
-	shell32_Ru.rc \
-	shell32_Si.rc \
-	shell32_Sk.rc \
-	shell32_Sr.rc \
-	shell32_Sv.rc \
-	shell32_Tr.rc \
-	shell32_Uk.rc \
-	shell32_Wa.rc \
-	shell32_Zh.rc
-
+RC_SRCS = shell32.rc
 PO_SRCS = shell32.rc
 
 IDL_TLB_SRCS = shell32_tlb.idl

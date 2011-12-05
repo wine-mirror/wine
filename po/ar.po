@@ -55,14 +55,15 @@ msgstr "معلومات"
 #: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 credui.rc:49 dinput.rc:43
 #: ieframe.rc:84 localui.rc:41 localui.rc:54 mpr.rc:46 msacm32.rc:50
 #: mshtml.rc:45 mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87
-#: serialui.rc:38 setupapi.rc:56 shlwapi.rc:41 wininet.rc:48 wininet.rc:68
-#: winspool.rc:39 net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172
-#: progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177
-#: progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268
-#: regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521
-#: winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131 winefile.rc:134
-#: winefile.rc:157 winefile.rc:187 winemine.rc:68 winemine.rc:78
-#: winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: serialui.rc:38 setupapi.rc:56 shell32.rc:286 shell32.rc:310 shell32.rc:332
+#: shell32.rc:351 shlwapi.rc:41 wininet.rc:48 wininet.rc:68 winspool.rc:39
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
+#: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
+#: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
+#: regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216
+#: winecfg.rc:226 wineconsole.rc:131 winefile.rc:134 winefile.rc:157
+#: winefile.rc:187 winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204
+#: wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "حسنا"
 
@@ -128,14 +129,14 @@ msgstr ""
 #: credui.rc:50 dinput.rc:44 ieframe.rc:85 inetcpl.rc:78 localui.rc:42
 #: localui.rc:55 mpr.rc:47 msacm32.rc:51 mshtml.rc:46 mshtml.rc:56
 #: msvfw32.rc:34 oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39
-#: setupapi.rc:57 shlwapi.rc:42 wininet.rc:49 wininet.rc:69 winspool.rc:40
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
-#: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
-#: regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298
-#: regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217
-#: winecfg.rc:227 wineconsole.rc:132 winefile.rc:135 winefile.rc:158
-#: winefile.rc:188 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
-#: wordpad.rc:247
+#: setupapi.rc:57 shell32.rc:287 shell32.rc:311 shell32.rc:322 shell32.rc:352
+#: shlwapi.rc:42 wininet.rc:49 wininet.rc:69 winspool.rc:40 notepad.rc:123
+#: oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140
+#: progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245
+#: regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311
+#: taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
+#: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "ألغِ"
 
@@ -6983,6 +6984,67 @@ msgstr "ا&خرج"
 msgid "&About Control Panel"
 msgstr "&عن لوح الملاحظات"
 
+#: shell32.rc:283 shell32.rc:298
+msgid "Browse for Folder"
+msgstr ""
+
+#: shell32.rc:303
+msgid "Folder:"
+msgstr ""
+
+#: shell32.rc:309
+msgid "&Make New Folder"
+msgstr ""
+
+#: shell32.rc:316
+msgid "Message"
+msgstr ""
+
+#: shell32.rc:319 shlwapi.rc:43
+msgid "&Yes"
+msgstr ""
+
+#: shell32.rc:320
+msgid "Yes to &all"
+msgstr ""
+
+#: shell32.rc:321 shlwapi.rc:44
+msgid "&No"
+msgstr ""
+
+#: shell32.rc:329
+#, fuzzy
+msgid "About %s"
+msgstr "&عن لوح الملاحظات"
+
+#: shell32.rc:333
+msgid "Wine &license"
+msgstr ""
+
+#: shell32.rc:338
+msgid "Running on %s"
+msgstr ""
+
+#: shell32.rc:339
+msgid "Wine was brought to you by:"
+msgstr ""
+
+#: shell32.rc:348
+msgid ""
+"Type the name of a program, folder, document, or Internet resource, and Wine "
+"will open it for you."
+msgstr ""
+
+#: shell32.rc:349
+#, fuzzy
+msgid "&Open:"
+msgstr "ا&فتح...\tCtrl+O"
+
+#: shell32.rc:353 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:245
+#: winefile.rc:136
+msgid "&Browse..."
+msgstr ""
+
 #: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
 msgstr ""
@@ -7412,14 +7474,6 @@ msgstr ""
 
 #: shlwapi.rc:40
 msgid "Don't show me th&is message again"
-msgstr ""
-
-#: shlwapi.rc:43
-msgid "&Yes"
-msgstr ""
-
-#: shlwapi.rc:44
-msgid "&No"
 msgstr ""
 
 #: shlwapi.rc:27
@@ -9806,10 +9860,6 @@ msgstr ""
 
 #: progman.rc:176 progman.rc:212
 msgid "&Minimize at launch"
-msgstr ""
-
-#: progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:245 winefile.rc:136
-msgid "&Browse..."
 msgstr ""
 
 #: progman.rc:180
