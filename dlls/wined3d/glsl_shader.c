@@ -1129,16 +1129,15 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
      */
     if (pshader && reg_maps->shader_version.major >= 3)
     {
+        UINT in_count = min(vec4_varyings(reg_maps->shader_version.major, gl_info), shader->limits.packed_input);
+
         if (use_vs(state))
-        {
-            shader_addline(buffer, "varying vec4 IN[%u];\n", vec4_varyings(reg_maps->shader_version.major, gl_info));
-        } else {
+            shader_addline(buffer, "varying vec4 IN[%u];\n", in_count);
+        else
             /* TODO: Write a replacement shader for the fixed function vertex pipeline, so this isn't needed.
              * For fixed function vertex processing + 3.0 pixel shader we need a separate function in the
-             * pixel shader that reads the fixed function color into the packed input registers.
-             */
-            shader_addline(buffer, "vec4 IN[%u];\n", vec4_varyings(reg_maps->shader_version.major, gl_info));
-        }
+             * pixel shader that reads the fixed function color into the packed input registers. */
+            shader_addline(buffer, "vec4 IN[%u];\n", in_count);
     }
 
     /* Declare output register temporaries */
@@ -3916,8 +3915,9 @@ static GLhandleARB generate_param_reorder_function(struct wined3d_shader_buffer 
     }
     else
     {
+        UINT in_count = min(vec4_varyings(ps_major, gl_info), ps->limits.packed_input);
         /* This one is tricky: a 3.0 pixel shader reads from a 3.0 vertex shader */
-        shader_addline(buffer, "varying vec4 IN[%u];\n", vec4_varyings(3, gl_info));
+        shader_addline(buffer, "varying vec4 IN[%u];\n", in_count);
         shader_addline(buffer, "void order_ps_input(in vec4 OUT[%u]) {\n", MAX_REG_OUTPUT);
 
         /* First, sort out position and point size. Those are not passed to the pixel shader */
