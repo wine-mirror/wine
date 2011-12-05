@@ -4995,8 +4995,207 @@ static void test_get_caps7(void)
     /* There's no dwSize in D3DDEVICEDESC7 */
 }
 
+struct d3d2_test_context
+{
+    IDirectDraw *ddraw;
+    IDirect3D2 *d3d;
+    IDirectDrawSurface *surface;
+    IDirect3DDevice2 *device;
+    IDirect3DViewport2 *viewport;
+};
+
+static void d3d2_release_objects(struct d3d2_test_context *context)
+{
+    LONG ref;
+    HRESULT hr;
+
+    if (context->viewport)
+    {
+        hr = IDirect3DDevice2_DeleteViewport(context->device, context->viewport);
+        ok(hr == D3D_OK, "DeleteViewport returned %08x.\n", hr);
+        ref = IDirect3DViewport2_Release(context->viewport);
+        ok(ref == 0, "Viewport has reference count %d, expected 0.\n", ref);
+    }
+    if (context->device)
+    {
+        ref = IDirect3DDevice2_Release(context->device);
+        ok(ref == 0, "Device has reference count %d, expected 0.\n", ref);
+    }
+    if (context->surface)
+    {
+        ref = IDirectDrawSurface_Release(context->surface);
+        ok(ref == 0, "Surface has reference count %d, expected 0.\n", ref);
+    }
+    if (context->d3d)
+    {
+        ref = IDirect3D2_Release(context->d3d);
+        ok(ref == 1, "IDirect3D2 has reference count %d, expected 1.\n", ref);
+    }
+    if (context->ddraw)
+    {
+        ref = IDirectDraw_Release(context->ddraw);
+        ok(ref == 0, "DDraw has reference count %d, expected 0.\n", ref);
+    }
+}
+
+static BOOL d3d2_create_objects(struct d3d2_test_context *context)
+{
+    HRESULT hr;
+    DDSURFACEDESC ddsd;
+    D3DVIEWPORT vp_data;
+
+    memset(context, 0, sizeof(*context));
+
+    hr = DirectDrawCreate(NULL, &context->ddraw, NULL);
+    ok(hr == DD_OK || hr == DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreate failed: %08x.\n", hr);
+    if (!context->ddraw) goto error;
+
+    hr = IDirectDraw_SetCooperativeLevel(context->ddraw, NULL, DDSCL_NORMAL);
+    ok(hr == DD_OK, "SetCooperativeLevel failed: %08x.\n", hr);
+    if (FAILED(hr)) goto error;
+
+    hr = IDirectDraw_QueryInterface(context->ddraw, &IID_IDirect3D2, (void**) &context->d3d);
+    ok(hr == DD_OK || hr == E_NOINTERFACE, "QueryInterface failed: %08x.\n", hr);
+    if (!context->d3d) goto error;
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE;
+    ddsd.dwWidth = 256;
+    ddsd.dwHeight = 256;
+    IDirectDraw_CreateSurface(context->ddraw, &ddsd, &context->surface, NULL);
+    if (!context->surface)
+    {
+        skip("DDSCAPS_3DDEVICE surface not available.\n");
+        goto error;
+    }
+
+    hr = IDirect3D2_CreateDevice(context->d3d, &IID_IDirect3DHALDevice, context->surface, &context->device);
+    ok(hr == D3D_OK  || hr == E_OUTOFMEMORY || hr == E_NOINTERFACE, "CreateDevice failed: %08x.\n", hr);
+    if (!context->device) goto error;
+
+    hr = IDirect3D2_CreateViewport(context->d3d, &context->viewport, NULL);
+    ok(hr == D3D_OK, "CreateViewport failed: %08x.\n", hr);
+    if (!context->viewport) goto error;
+
+    hr = IDirect3DDevice2_AddViewport(context->device, context->viewport);
+    ok(hr == D3D_OK, "AddViewport returned %08x.\n", hr);
+    vp_data.dwSize = sizeof(vp_data);
+    vp_data.dwX = 0;
+    vp_data.dwY = 0;
+    vp_data.dwWidth = 256;
+    vp_data.dwHeight = 256;
+    vp_data.dvScaleX = 1;
+    vp_data.dvScaleY = 1;
+    vp_data.dvMaxX = 256;
+    vp_data.dvMaxY = 256;
+    vp_data.dvMinZ = 0;
+    vp_data.dvMaxZ = 1;
+    hr = IDirect3DViewport2_SetViewport(context->viewport, &vp_data);
+    ok(hr == D3D_OK, "SetViewport returned %08x.\n", hr);
+
+    return TRUE;
+
+error:
+    d3d2_release_objects(context);
+    return FALSE;
+}
+
+static void test_get_caps2(const struct d3d2_test_context *context)
+{
+    D3DDEVICEDESC hw_caps, hel_caps;
+    HRESULT hr;
+    unsigned int i;
+
+    memset(&hw_caps, 0, sizeof(hw_caps));
+    hw_caps.dwSize = sizeof(hw_caps);
+    hw_caps.dwFlags = 0xdeadbeef;
+    memset(&hel_caps, 0, sizeof(hel_caps));
+    hel_caps.dwSize = sizeof(hel_caps);
+    hel_caps.dwFlags = 0xdeadc0de;
+
+    /* NULL pointers */
+    hr = IDirect3DDevice2_GetCaps(context->device, &hw_caps, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "GetCaps with NULL hel caps returned hr %#x, expected INVALIDPARAMS.\n", hr);
+    ok(hw_caps.dwFlags == 0xdeadbeef, "hw_caps.dwFlags was modified: %#x.\n", hw_caps.dwFlags);
+    hr = IDirect3DDevice2_GetCaps(context->device, NULL, &hel_caps);
+    ok(hr == DDERR_INVALIDPARAMS, "GetCaps with NULL hw caps returned hr %#x, expected INVALIDPARAMS.\n", hr);
+    ok(hel_caps.dwFlags == 0xdeadc0de, "hel_caps.dwFlags was modified: %#x.\n", hel_caps.dwFlags);
+
+    /* Successful call: Both are modified */
+    hr = IDirect3DDevice2_GetCaps(context->device, &hw_caps, &hel_caps);
+    ok(hr == D3D_OK, "GetCaps with correct size returned hr %#x, expected D3D_OK.\n", hr);
+    ok(hw_caps.dwFlags != 0xdeadbeef, "hw_caps.dwFlags was not modified: %#x.\n", hw_caps.dwFlags);
+    ok(hel_caps.dwFlags != 0xdeadc0de, "hel_caps.dwFlags was not modified: %#x.\n", hel_caps.dwFlags);
+
+    memset(&hw_caps, 0, sizeof(hw_caps));
+    hw_caps.dwSize = sizeof(hw_caps);
+    hw_caps.dwFlags = 0xdeadbeef;
+    memset(&hel_caps, 0, sizeof(hel_caps));
+    /* Keep dwSize at 0 */
+    hel_caps.dwFlags = 0xdeadc0de;
+
+    /* If one is invalid the call fails */
+    hr = IDirect3DDevice2_GetCaps(context->device, &hw_caps, &hel_caps);
+    ok(hr == DDERR_INVALIDPARAMS, "GetCaps with invalid hel_caps size returned hr %#x, expected INVALIDPARAMS.\n", hr);
+    ok(hw_caps.dwFlags == 0xdeadbeef, "hw_caps.dwFlags was modified: %#x.\n", hw_caps.dwFlags);
+    ok(hel_caps.dwFlags == 0xdeadc0de, "hel_caps.dwFlags was modified: %#x.\n", hel_caps.dwFlags);
+    hel_caps.dwSize = sizeof(hel_caps);
+    hw_caps.dwSize = sizeof(hw_caps) + 1;
+    hr = IDirect3DDevice2_GetCaps(context->device, &hw_caps, &hel_caps);
+    ok(hr == DDERR_INVALIDPARAMS, "GetCaps with invalid hw_caps size returned hr %#x, expected INVALIDPARAMS.\n", hr);
+    ok(hw_caps.dwFlags == 0xdeadbeef, "hw_caps.dwFlags was modified: %#x.\n", hw_caps.dwFlags);
+    ok(hel_caps.dwFlags == 0xdeadc0de, "hel_caps.dwFlags was modified: %#x.\n", hel_caps.dwFlags);
+
+    for (i = 0; i < 1024; i++)
+    {
+        memset(&hw_caps, 0xfe, sizeof(hw_caps));
+        memset(&hel_caps, 0xfe, sizeof(hel_caps));
+        hw_caps.dwSize = hel_caps.dwSize = i;
+        hr = IDirect3DDevice2_GetCaps(context->device, &hw_caps, &hel_caps);
+        switch (i)
+        {
+            /* D3DDEVICEDESCSIZE in old sdk versions */
+            case FIELD_OFFSET(D3DDEVICEDESC, dwMinTextureWidth): /* 172, DirectX 3, IDirect3DDevice1 */
+                ok(hw_caps.dwMinTextureWidth == 0xfefefefe, "dwMinTextureWidth was modified: %#x.\n",
+                        hw_caps.dwMinTextureWidth);
+                ok(hel_caps.dwMinTextureWidth == 0xfefefefe, "dwMinTextureWidth was modified: %#x.\n",
+                        hel_caps.dwMinTextureWidth);
+                /* drop through */
+            case FIELD_OFFSET(D3DDEVICEDESC, dwMaxTextureRepeat): /* 204, DirectX 5, IDirect3DDevice2 */
+                ok(hw_caps.dwMaxTextureRepeat == 0xfefefefe, "dwMaxTextureRepeat was modified: %#x.\n",
+                        hw_caps.dwMaxTextureRepeat);
+                ok(hel_caps.dwMaxTextureRepeat == 0xfefefefe, "dwMaxTextureRepeat was modified: %#x.\n",
+                        hel_caps.dwMaxTextureRepeat);
+                /* drop through */
+            case sizeof(D3DDEVICEDESC): /* 252, DirectX 6, IDirect3DDevice3 */
+                ok(hr == D3D_OK, "GetCaps with size %u returned hr %#x, expected D3D_OK.\n", i, hr);
+                break;
+
+            default:
+                ok(hr == DDERR_INVALIDPARAMS,
+                        "GetCaps with size %u returned hr %#x, expected DDERR_INVALIDPARAMS.\n", i, hr);
+                break;
+        }
+    }
+
+    /* Different valid sizes are OK */
+    hw_caps.dwSize = 172;
+    hel_caps.dwSize = sizeof(D3DDEVICEDESC);
+    hr = IDirect3DDevice2_GetCaps(context->device, &hw_caps, &hel_caps);
+    ok(hr == D3D_OK, "GetCaps with different sizes returned hr %#x, expected D3D_OK.\n", hr);
+}
+
 START_TEST(d3d)
 {
+    struct d3d2_test_context d3d2_context;
+    void (* const d3d2_tests[])(const struct d3d2_test_context *) =
+    {
+        test_get_caps2
+    };
+    unsigned int i;
+
     init_function_pointers();
     if(!pDirectDrawCreateEx) {
         win_skip("function DirectDrawCreateEx not available\n");
@@ -5024,6 +5223,18 @@ START_TEST(d3d)
         z_format_test();
         test_get_caps7();
         ReleaseDirect3D();
+    }
+
+    for (i = 0; i < (sizeof(d3d2_tests) / sizeof(*d3d2_tests)); i++)
+    {
+        if (!d3d2_create_objects(&d3d2_context))
+        {
+            ok(!i, "Unexpected d3d2 initialization failure.\n");
+            skip("Skipping d3d2 tests.\n");
+            break;
+        }
+        d3d2_tests[i](&d3d2_context);
+        d3d2_release_objects(&d3d2_context);
     }
 
     if (!D3D1_createObjects()) {
