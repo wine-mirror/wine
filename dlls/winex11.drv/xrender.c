@@ -594,7 +594,7 @@ static Picture get_xrender_picture( struct xrender_physdev *dev, HRGN clip_rgn, 
         dev->update_clip = TRUE;
     }
 
-    if (dev->update_clip)
+    if (dev->update_clip || clip_rect || clip_rgn)
     {
         RGNDATA *clip_data;
         HRGN rgn = 0;
