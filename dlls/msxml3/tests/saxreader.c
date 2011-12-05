@@ -2672,6 +2672,27 @@ static void test_dispex(void)
      ISAXXMLReader_Release(reader);
 }
 
+static void test_mxwriter_dispex(void)
+{
+    IDispatchEx *dispex;
+    IMXWriter *writer;
+    IUnknown *unk;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMXWriter, (void**)&writer);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXWriter_QueryInterface(writer, &IID_IDispatchEx, (void**)&dispex);
+    EXPECT_HR(hr, S_OK);
+    hr = IDispatchEx_QueryInterface(dispex, &IID_IUnknown, (void**)&unk);
+    test_obj_dispex(unk);
+    IUnknown_Release(unk);
+    IDispatchEx_Release(dispex);
+
+    IMXWriter_Release(writer);
+}
+
 START_TEST(saxreader)
 {
     ISAXXMLReader *reader;
@@ -2711,6 +2732,7 @@ START_TEST(saxreader)
         test_mxwriter_flush();
         test_mxwriter_stream();
         test_mxwriter_encoding();
+        test_mxwriter_dispex();
     }
     else
         win_skip("MXXMLWriter not supported\n");

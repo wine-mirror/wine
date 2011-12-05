@@ -59,6 +59,7 @@ typedef enum
 
 typedef struct _mxwriter
 {
+    DispatchEx dispex;
     IMXWriter IMXWriter_iface;
     ISAXContentHandler ISAXContentHandler_iface;
 
@@ -209,6 +210,8 @@ static HRESULT WINAPI mxwriter_QueryInterface(IMXWriter *iface, REFIID riid, voi
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
 
+    *obj = NULL;
+
     if ( IsEqualGUID( riid, &IID_IMXWriter ) ||
          IsEqualGUID( riid, &IID_IDispatch ) ||
          IsEqualGUID( riid, &IID_IUnknown ) )
@@ -218,6 +221,10 @@ static HRESULT WINAPI mxwriter_QueryInterface(IMXWriter *iface, REFIID riid, voi
     else if ( IsEqualGUID( riid, &IID_ISAXContentHandler ) )
     {
         *obj = &This->ISAXContentHandler_iface;
+    }
+    else if (dispex_query_interface(&This->dispex, riid, obj))
+    {
+        return *obj ? S_OK : E_NOINTERFACE;
     }
     else
     {
@@ -257,6 +264,7 @@ static ULONG WINAPI mxwriter_Release(IMXWriter *iface)
 
         xmlOutputBufferClose(This->buffer);
         SysFreeString(This->element);
+        release_dispex(&This->dispex);
         heap_free(This);
     }
 
@@ -266,12 +274,7 @@ static ULONG WINAPI mxwriter_Release(IMXWriter *iface)
 static HRESULT WINAPI mxwriter_GetTypeInfoCount(IMXWriter *iface, UINT* pctinfo)
 {
     mxwriter *This = impl_from_IMXWriter( iface );
-
-    TRACE("(%p)->(%p)\n", This, pctinfo);
-
-    *pctinfo = 1;
-
-    return S_OK;
+    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI mxwriter_GetTypeInfo(
@@ -280,10 +283,8 @@ static HRESULT WINAPI mxwriter_GetTypeInfo(
     ITypeInfo** ppTInfo )
 {
     mxwriter *This = impl_from_IMXWriter( iface );
-
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
-
-    return get_typeinfo(IMXWriter_tid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface,
+        iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI mxwriter_GetIDsOfNames(
@@ -292,23 +293,8 @@ static HRESULT WINAPI mxwriter_GetIDsOfNames(
     UINT cNames, LCID lcid, DISPID* rgDispId )
 {
     mxwriter *This = impl_from_IMXWriter( iface );
-    ITypeInfo *typeinfo;
-    HRESULT hr;
-
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
-          lcid, rgDispId);
-
-    if(!rgszNames || cNames == 0 || !rgDispId)
-        return E_INVALIDARG;
-
-    hr = get_typeinfo(IMXWriter_tid, &typeinfo);
-    if(SUCCEEDED(hr))
-    {
-        hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
-        ITypeInfo_Release(typeinfo);
-    }
-
-    return hr;
+    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface,
+        riid, rgszNames, cNames, lcid, rgDispId);
 }
 
 static HRESULT WINAPI mxwriter_Invoke(
@@ -318,21 +304,8 @@ static HRESULT WINAPI mxwriter_Invoke(
     EXCEPINFO* pExcepInfo, UINT* puArgErr )
 {
     mxwriter *This = impl_from_IMXWriter( iface );
-    ITypeInfo *typeinfo;
-    HRESULT hr;
-
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
-          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
-
-    hr = get_typeinfo(IMXWriter_tid, &typeinfo);
-    if(SUCCEEDED(hr))
-    {
-        hr = ITypeInfo_Invoke(typeinfo, &This->IMXWriter_iface, dispIdMember, wFlags,
-                pDispParams, pVarResult, pExcepInfo, puArgErr);
-        ITypeInfo_Release(typeinfo);
-    }
-
-    return hr;
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface,
+        dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI mxwriter_put_output(IMXWriter *iface, VARIANT dest)
@@ -575,7 +548,7 @@ static HRESULT WINAPI mxwriter_flush(IMXWriter *iface)
     return flush_output_buffer(This);
 }
 
-static const struct IMXWriterVtbl mxwriter_vtbl =
+static const struct IMXWriterVtbl MXWriterVtbl =
 {
     mxwriter_QueryInterface,
     mxwriter_AddRef,
@@ -897,20 +870,32 @@ static const struct ISAXContentHandlerVtbl mxwriter_saxcontent_vtbl =
     mxwriter_saxcontent_skippedEntity
 };
 
-HRESULT MXWriter_create(MSXML_VERSION version, IUnknown *pUnkOuter, void **ppObj)
+static const tid_t mxwriter_iface_tids[] = {
+    IMXWriter_tid,
+    0
+};
+
+static dispex_static_data_t mxwriter_dispex = {
+    NULL,
+    IMXWriter_tid,
+    NULL,
+    mxwriter_iface_tids
+};
+
+HRESULT MXWriter_create(MSXML_VERSION version, IUnknown *outer, void **ppObj)
 {
     static const WCHAR version10W[] = {'1','.','0',0};
     mxwriter *This;
 
-    TRACE("(%p,%p)\n", pUnkOuter, ppObj);
+    TRACE("(%p, %p)\n", outer, ppObj);
 
-    if (pUnkOuter) FIXME("support aggregation, outer\n");
+    if (outer) FIXME("support aggregation, outer\n");
 
     This = heap_alloc( sizeof (*This) );
     if(!This)
         return E_OUTOFMEMORY;
 
-    This->IMXWriter_iface.lpVtbl = &mxwriter_vtbl;
+    This->IMXWriter_iface.lpVtbl = &MXWriterVtbl;
     This->ISAXContentHandler_iface.lpVtbl = &mxwriter_saxcontent_vtbl;
     This->ref = 1;
     This->class_version = version;
@@ -931,6 +916,8 @@ HRESULT MXWriter_create(MSXML_VERSION version, IUnknown *pUnkOuter, void **ppObj
 
     This->buffer = xmlAllocOutputBuffer(xmlGetCharEncodingHandler(This->encoding));
 
+    init_dispex(&This->dispex, (IUnknown*)&This->IMXWriter_iface, &mxwriter_dispex);
+
     *ppObj = &This->IMXWriter_iface;
 
     TRACE("returning iface %p\n", *ppObj);
@@ -940,7 +927,7 @@ HRESULT MXWriter_create(MSXML_VERSION version, IUnknown *pUnkOuter, void **ppObj
 
 #else
 
-HRESULT MXWriter_create(MSXML_VERSION version, IUnknown *pUnkOuter, void **obj)
+HRESULT MXWriter_create(MSXML_VERSION version, IUnknown *outer, void **obj)
 {
     MESSAGE("This program tried to use a MXXMLWriter object, but\n"
             "libxml2 support was not present at compile time.\n");
