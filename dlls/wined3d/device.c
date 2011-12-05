@@ -4301,8 +4301,8 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive_strided(struct wined3d_devic
 static HRESULT device_update_volume(struct wined3d_device *device,
         struct wined3d_volume *src_volume, struct wined3d_volume *dst_volume)
 {
-    WINED3DLOCKED_BOX src;
-    WINED3DLOCKED_BOX dst;
+    struct wined3d_mapped_box src;
+    struct wined3d_mapped_box dst;
     HRESULT hr;
 
     TRACE("device %p, src_volume %p, dst_volume %p.\n",
@@ -4319,7 +4319,7 @@ static HRESULT device_update_volume(struct wined3d_device *device,
         return hr;
     }
 
-    memcpy(dst.pBits, src.pBits, dst_volume->resource.size);
+    memcpy(dst.data, src.data, dst_volume->resource.size);
 
     hr = wined3d_volume_unmap(dst_volume);
     if (FAILED(hr))

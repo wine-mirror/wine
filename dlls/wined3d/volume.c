@@ -185,23 +185,23 @@ struct wined3d_resource * CDECL wined3d_volume_get_resource(struct wined3d_volum
 }
 
 HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
-        WINED3DLOCKED_BOX *locked_box, const WINED3DBOX *box, DWORD flags)
+        struct wined3d_mapped_box *mapped_box, const WINED3DBOX *box, DWORD flags)
 {
-    TRACE("volume %p, locked_box %p, box %p, flags %#x.\n",
-            volume, locked_box, box, flags);
+    TRACE("volume %p, mapped_box %p, box %p, flags %#x.\n",
+            volume, mapped_box, box, flags);
 
     if (!volume->resource.allocatedMemory)
         volume->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, volume->resource.size);
 
     TRACE("allocatedMemory %p.\n", volume->resource.allocatedMemory);
 
-    locked_box->RowPitch = volume->resource.format->byte_count * volume->resource.width; /* Bytes / row */
-    locked_box->SlicePitch = volume->resource.format->byte_count
+    mapped_box->row_pitch = volume->resource.format->byte_count * volume->resource.width; /* Bytes / row */
+    mapped_box->slice_pitch = volume->resource.format->byte_count
             * volume->resource.width * volume->resource.height; /* Bytes / slice */
     if (!box)
     {
         TRACE("No box supplied - all is ok\n");
-        locked_box->pBits = volume->resource.allocatedMemory;
+        mapped_box->data = volume->resource.allocatedMemory;
         volume->lockedBox.Left   = 0;
         volume->lockedBox.Top    = 0;
         volume->lockedBox.Front  = 0;
@@ -213,9 +213,9 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
     {
         TRACE("Lock Box (%p) = l %d, t %d, r %d, b %d, fr %d, ba %d\n",
                 box, box->Left, box->Top, box->Right, box->Bottom, box->Front, box->Back);
-        locked_box->pBits = volume->resource.allocatedMemory
-                + (locked_box->SlicePitch * box->Front)     /* FIXME: is front < back or vica versa? */
-                + (locked_box->RowPitch * box->Top)
+        mapped_box->data = volume->resource.allocatedMemory
+                + (mapped_box->slice_pitch * box->Front)     /* FIXME: is front < back or vica versa? */
+                + (mapped_box->row_pitch * box->Top)
                 + (box->Left * volume->resource.format->byte_count);
         volume->lockedBox.Left   = box->Left;
         volume->lockedBox.Top    = box->Top;
@@ -234,7 +234,7 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
     volume->locked = TRUE;
 
     TRACE("Returning memory %p, row pitch %d, slice pitch %d.\n",
-            locked_box->pBits, locked_box->RowPitch, locked_box->SlicePitch);
+            mapped_box->data, mapped_box->row_pitch, mapped_box->slice_pitch);
 
     return WINED3D_OK;
 }

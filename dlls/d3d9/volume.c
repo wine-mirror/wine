@@ -225,7 +225,7 @@ static HRESULT WINAPI IDirect3DVolume9Impl_LockBox(IDirect3DVolume9 *iface,
             iface, pLockedVolume, pBox, Flags);
 
     wined3d_mutex_lock();
-    hr = wined3d_volume_map(This->wined3d_volume, (WINED3DLOCKED_BOX *)pLockedVolume,
+    hr = wined3d_volume_map(This->wined3d_volume, (struct wined3d_mapped_box *)pLockedVolume,
             (const WINED3DBOX *)pBox, Flags);
     wined3d_mutex_unlock();
 

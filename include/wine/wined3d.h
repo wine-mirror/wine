@@ -1708,12 +1708,12 @@ struct wined3d_mapped_rect
     void *data;
 };
 
-typedef struct _WINED3DLOCKED_BOX
+struct wined3d_mapped_box
 {
-    INT RowPitch;
-    INT SlicePitch;
-    void *pBits;
-} WINED3DLOCKED_BOX;
+    UINT row_pitch;
+    UINT slice_pitch;
+    void *data;
+};
 
 typedef struct _WINED3DBOX
 {
@@ -2452,7 +2452,7 @@ DWORD __cdecl wined3d_volume_get_priority(const struct wined3d_volume *volume);
 struct wined3d_resource * __cdecl wined3d_volume_get_resource(struct wined3d_volume *volume);
 ULONG __cdecl wined3d_volume_incref(struct wined3d_volume *volume);
 HRESULT __cdecl wined3d_volume_map(struct wined3d_volume *volume,
-        WINED3DLOCKED_BOX *locked_box, const WINED3DBOX *box, DWORD flags);
+        struct wined3d_mapped_box *mapped_box, const WINED3DBOX *box, DWORD flags);
 void __cdecl wined3d_volume_preload(struct wined3d_volume *volume);
 DWORD __cdecl wined3d_volume_set_priority(struct wined3d_volume *volume, DWORD new_priority);
 HRESULT __cdecl wined3d_volume_unmap(struct wined3d_volume *volume);

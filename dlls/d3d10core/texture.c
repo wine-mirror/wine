@@ -363,8 +363,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture3d_Map(ID3D10Texture3D *iface, UIN
         D3D10_MAP map_type, UINT map_flags, D3D10_MAPPED_TEXTURE3D *mapped_texture)
 {
     struct d3d10_texture3d *texture = impl_from_ID3D10Texture3D(iface);
+    struct wined3d_mapped_box wined3d_map_desc;
     struct wined3d_resource *sub_resource;
-    WINED3DLOCKED_BOX wined3d_map_desc;
     HRESULT hr;
 
     TRACE("iface %p, sub_resource_idx %u, map_type %u, map_flags %#x, mapped_texture %p.\n",
@@ -380,9 +380,9 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture3d_Map(ID3D10Texture3D *iface, UIN
     else if (SUCCEEDED(hr = wined3d_volume_map(wined3d_volume_from_resource(sub_resource),
             &wined3d_map_desc, NULL, 0)))
     {
-        mapped_texture->pData = wined3d_map_desc.pBits;
-        mapped_texture->RowPitch = wined3d_map_desc.RowPitch;
-        mapped_texture->DepthPitch = wined3d_map_desc.SlicePitch;
+        mapped_texture->pData = wined3d_map_desc.data;
+        mapped_texture->RowPitch = wined3d_map_desc.row_pitch;
+        mapped_texture->DepthPitch = wined3d_map_desc.slice_pitch;
     }
 
     return hr;
