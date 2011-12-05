@@ -931,10 +931,6 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         return E_FAIL;
     }
 
-    mask = (100 << 8) | 100;
-    if(ioctl(This->fd, SNDCTL_DSP_SETPLAYVOL, &mask) < 0)
-        WARN("SETPLAYVOL failed: %d (%s)\n", errno, strerror(errno));
-
     This->fmt = clone_format(fmt);
     if(!This->fmt){
         LeaveCriticalSection(&This->lock);
