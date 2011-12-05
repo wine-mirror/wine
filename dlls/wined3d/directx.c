@@ -807,8 +807,6 @@ static void quirk_apple_glsl_constants(struct wined3d_gl_info *gl_info)
 
 static void quirk_amd_dx9(struct wined3d_gl_info *gl_info)
 {
-    quirk_arb_constants(gl_info);
-
     /* MacOS advertises GL_ARB_texture_non_power_of_two on ATI r500 and earlier cards, although
      * these cards only support GL_ARB_texture_rectangle(D3DPTEXTURECAPS_NONPOW2CONDITIONAL).
      * If real NP2 textures are used, the driver falls back to software. We could just remove the
@@ -826,11 +824,6 @@ static void quirk_amd_dx9(struct wined3d_gl_info *gl_info)
         gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = FALSE;
         gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT] = TRUE;
     }
-
-    /* fglrx has the same structural issues as the one described in quirk_apple_glsl_constants, although
-     * it is generally more efficient. Reserve just 8 constants. */
-    TRACE_(d3d_caps)("Reserving 8 GLSL constants for compiler private use.\n");
-    gl_info->reserved_glsl_constants = max(gl_info->reserved_glsl_constants, 8);
 }
 
 static void quirk_no_np2(struct wined3d_gl_info *gl_info)
@@ -932,7 +925,7 @@ static const struct driver_quirk quirk_table[] =
     {
         match_amd_r300_to_500,
         quirk_amd_dx9,
-        "AMD GLSL constant and normalized texrect quirk"
+        "AMD normalized texrect quirk"
     },
     /* MacOS advertises more GLSL vertex shader uniforms than supported by the hardware, and if more are
      * used it falls back to software. While the compiler can detect if the shader uses all declared
