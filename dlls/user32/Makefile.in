@@ -50,39 +50,7 @@ C_SRCS = \
 	winstation.c \
 	wsprintf.c
 
-RC_SRCS = \
-	resources/user32_Bg.rc \
-	resources/user32_Ca.rc \
-	resources/user32_Cs.rc \
-	resources/user32_Da.rc \
-	resources/user32_De.rc \
-	resources/user32_En.rc \
-	resources/user32_Eo.rc \
-	resources/user32_Es.rc \
-	resources/user32_Fi.rc \
-	resources/user32_Fr.rc \
-	resources/user32_He.rc \
-	resources/user32_Hu.rc \
-	resources/user32_It.rc \
-	resources/user32_Ja.rc \
-	resources/user32_Ko.rc \
-	resources/user32_Lt.rc \
-	resources/user32_Nl.rc \
-	resources/user32_No.rc \
-	resources/user32_Pl.rc \
-	resources/user32_Pt.rc \
-	resources/user32_Ro.rc \
-	resources/user32_Ru.rc \
-	resources/user32_Si.rc \
-	resources/user32_Sk.rc \
-	resources/user32_Sr.rc \
-	resources/user32_Sv.rc \
-	resources/user32_Tr.rc \
-	resources/user32_Uk.rc \
-	resources/user32_Wa.rc \
-	resources/user32_Zh.rc \
-	user32.rc
-
+RC_SRCS = user32.rc
 PO_SRCS = user32.rc
 
 SVG_SRCS = \
