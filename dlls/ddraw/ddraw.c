@@ -3422,6 +3422,13 @@ static HRESULT WINAPI ddraw7_EnumSurfaces(IDirectDraw7 *iface, DWORD Flags,
     LIST_FOR_EACH_SAFE(entry, entry2, &This->surface_list)
     {
         surf = LIST_ENTRY(entry, IDirectDrawSurfaceImpl, surface_list_entry);
+
+        if (!surf->iface_count)
+        {
+            WARN("Not enumerating surface %p because it doesn't have any references.\n", surf);
+            continue;
+        }
+
         if (all || (nomatch != ddraw_match_surface_desc(DDSD, &surf->surface_desc)))
         {
             TRACE("Enumerating surface %p.\n", surf);
