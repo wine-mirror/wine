@@ -4491,27 +4491,28 @@ static BOOL gradient_rect_1( const dib_info *dib, const RECT *rc, const TRIVERTE
     switch (mode)
     {
     case GRADIENT_FILL_RECT_H:
-        for (x = rc->left; x < rc->right; x++)
+        for (y = rc->top; y < min( rc->top + 16, rc->bottom ); y++, ptr += dib->stride)
         {
-            DWORD val = gradient_rgb_24( v, x - v[0].x, v[1].x - v[0].x );
-            val = rgb_to_pixel_colortable( dib, val >> 16, val >> 8, val ) ? 0xff : 0;
-            ptr[x / 8] = (ptr[x / 8] & ~pixel_masks_1[x % 8]) | (val & pixel_masks_1[x % 8]);
-        }
-
-        for (y = rc->top + 1; y < rc->bottom; y++, ptr += dib->stride)
             for (x = rc->left; x < rc->right; x++)
-                ptr[dib->stride + x / 8] = (ptr[dib->stride + x / 8] & ~pixel_masks_1[x % 8]) |
-                                           (ptr[x / 8] & pixel_masks_1[x % 8]);
+            {
+                BYTE val = gradient_rgb_8( dib, v, x - v[0].x, v[1].x - v[0].x, x, y ) ? 0xff : 0;
+                ptr[x / 8] = (ptr[x / 8] & ~pixel_masks_1[x % 8]) | (val & pixel_masks_1[x % 8]);
+            }
+        }
+        for ( ; y < rc->bottom; y++, ptr += dib->stride)
+            for (x = rc->left; x < rc->right; x++)
+                ptr[x / 8] = (ptr[x / 8] & ~pixel_masks_1[x % 8]) |
+                             (ptr[x / 8 - 16 * dib->stride] & pixel_masks_1[x % 8]);
         break;
 
     case GRADIENT_FILL_RECT_V:
-        for (y = rc->top; y < rc->bottom; y++)
+        for (y = rc->top; y < rc->bottom; y++, ptr += dib->stride)
         {
-            DWORD val = gradient_rgb_24( v, y - v[0].y, v[1].y - v[0].y );
-            val = rgb_to_pixel_colortable( dib, val >> 16, val >> 8, val ) ? 0xff : 0;
+            BYTE values[16];
+            for (x = 0; x < 16; x++)
+                values[x] = gradient_rgb_8( dib, v, y - v[0].y, v[1].y - v[0].y, x, y ) ? 0xff : 0;
             for (x = rc->left; x < rc->right; x++)
-                ptr[x / 8] = (ptr[x / 8] & ~pixel_masks_1[x % 8]) | (val & pixel_masks_1[x % 8]);
-            ptr += dib->stride;
+                ptr[x / 8] = (ptr[x / 8] & ~pixel_masks_1[x % 8]) | (values[x % 16] & pixel_masks_1[x % 8]);
         }
         break;
 
@@ -4522,8 +4523,7 @@ static BOOL gradient_rect_1( const dib_info *dib, const RECT *rc, const TRIVERTE
             triangle_coords( v, rc, y, &left, &right );
             for (x = left; x < right; x++)
             {
-                DWORD val = gradient_triangle_24( v, x, y, det );
-                val = rgb_to_pixel_colortable( dib, val >> 16, val >> 8, val ) ? 0xff : 0;
+                BYTE val = gradient_triangle_8( dib, v, x, y, det ) ? 0xff : 0;
                 ptr[x / 8] = (ptr[x / 8] & ~pixel_masks_1[x % 8]) | (val & pixel_masks_1[x % 8]);
             }
         }

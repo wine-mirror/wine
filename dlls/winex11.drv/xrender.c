@@ -2543,8 +2543,8 @@ static BOOL xrenderdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG n
     if (!X11DRV_XRender_Installed) goto fallback;
     if (!pXRenderCreateLinearGradient) goto fallback;
 
-    /* 16-bpp uses dithering */
-    if (!physdev->pict_format || physdev->pict_format->depth == 16) goto fallback;
+    /* <= 16-bpp uses dithering */
+    if (!physdev->pict_format || physdev->pict_format->depth <= 16) goto fallback;
 
     switch (mode)
     {

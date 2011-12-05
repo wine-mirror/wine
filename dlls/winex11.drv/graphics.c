@@ -1506,8 +1506,8 @@ BOOL X11DRV_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
     unsigned int i;
     XGCValues val;
 
-    /* 4, 8, and 16-bpp use dithering */
-    if (physdev->depth >= 4 && physdev->depth <= 16) goto fallback;
+    /* <= 16-bpp use dithering */
+    if (physdev->depth <= 16) goto fallback;
 
     switch (mode)
     {
