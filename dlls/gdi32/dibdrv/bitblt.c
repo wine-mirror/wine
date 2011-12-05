@@ -1334,13 +1334,67 @@ DWORD blend_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bitbl
     return blend_rect( &dst_dib, &dst->visrect, &src_dib, &src->visrect, NULL, blend );
 }
 
-DWORD gradient_bitmapinfo( const BITMAPINFO *info, void *bits, TRIVERTEX *v, int mode )
+DWORD gradient_bitmapinfo( const BITMAPINFO *info, void *bits, TRIVERTEX *vert_array, ULONG nvert,
+                           void *grad_array, ULONG ngrad, ULONG mode, const POINT *dev_pts, HRGN rgn )
 {
     dib_info dib;
+    const GRADIENT_TRIANGLE *tri = grad_array;
+    const GRADIENT_RECT *rect = grad_array;
+    unsigned int i;
+    int y;
+    TRIVERTEX vert[3];
+    DWORD ret = ERROR_SUCCESS;
+    HRGN tmp_rgn = 0;
 
     if (!init_dib_info_from_bitmapinfo( &dib, info, bits, 0 )) return ERROR_BAD_FORMAT;
-    if (!gradient_rect( &dib, v, mode, 0 )) return ERROR_INVALID_PARAMETER;
-    return ERROR_SUCCESS;
+
+    switch (mode)
+    {
+    case GRADIENT_FILL_RECT_H:
+        for (i = 0; i < ngrad; i++, rect++)
+        {
+            get_gradient_hrect_vertices( rect, vert_array, dev_pts, vert );
+            gradient_rect( &dib, vert, mode, 0 );
+            if (!tmp_rgn) tmp_rgn = CreateRectRgn( vert[0].x, vert[0].y, vert[1].x, vert[1].y );
+            else SetRectRgn( tmp_rgn, vert[0].x, vert[0].y, vert[1].x, vert[1].y );
+            CombineRgn( rgn, rgn, tmp_rgn, RGN_OR );
+        }
+        break;
+
+    case GRADIENT_FILL_RECT_V:
+        for (i = 0; i < ngrad; i++, rect++)
+        {
+            get_gradient_vrect_vertices( rect, vert_array, dev_pts, vert );
+            gradient_rect( &dib, vert, mode, 0 );
+            if (!tmp_rgn) tmp_rgn = CreateRectRgn( vert[0].x, vert[0].y, vert[1].x, vert[1].y );
+            else SetRectRgn( tmp_rgn, vert[0].x, vert[0].y, vert[1].x, vert[1].y );
+            CombineRgn( rgn, rgn, tmp_rgn, RGN_OR );
+        }
+        break;
+
+    case GRADIENT_FILL_TRIANGLE:
+        for (i = 0; i < ngrad; i++, tri++)
+        {
+            get_gradient_triangle_vertices( tri, vert_array, dev_pts, vert );
+            if (gradient_rect( &dib, vert, mode, 0 ))
+            {
+                if (!tmp_rgn) tmp_rgn = CreateRectRgn( 0, 0, 0, 0 );
+                for (y = vert[0].y; y < vert[2].y; y++)
+                {
+                    int x1, x2 = edge_coord( y, vert[0].x, vert[0].y, vert[2].x, vert[2].y );
+                    if (y < vert[1].y) x1 = edge_coord( y, vert[0].x, vert[0].y, vert[1].x, vert[1].y );
+                    else x1 = edge_coord( y, vert[1].x, vert[1].y, vert[2].x, vert[2].y );
+
+                    SetRectRgn( tmp_rgn, min(x1,x2), y, max(x1,x2), y + 1 );
+                    CombineRgn( rgn, rgn, tmp_rgn, RGN_OR );
+                }
+            }
+            else ret = ERROR_INVALID_PARAMETER;
+        }
+        break;
+    }
+    DeleteObject( tmp_rgn );
+    return ret;
 }
 
 /***********************************************************************

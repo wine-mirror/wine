@@ -246,7 +246,8 @@ extern DWORD stretch_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, str
 extern DWORD blend_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bitblt_coords *src,
                                const BITMAPINFO *dst_info, void *dst_bits, struct bitblt_coords *dst,
                                BLENDFUNCTION blend ) DECLSPEC_HIDDEN;
-extern DWORD gradient_bitmapinfo( const BITMAPINFO *info, void *bits, TRIVERTEX *v, int mode ) DECLSPEC_HIDDEN;
+extern DWORD gradient_bitmapinfo( const BITMAPINFO *info, void *bits, TRIVERTEX *vert_array, ULONG nvert,
+                                  void *grad_array, ULONG ngrad, ULONG mode, const POINT *dev_pts, HRGN rgn ) DECLSPEC_HIDDEN;
 extern BOOL render_aa_text_bitmapinfo( HDC hdc, BITMAPINFO *info, struct gdi_image_bits *bits,
                                        struct bitblt_coords *src, INT x, INT y, UINT flags,
                                        UINT aa_flags, LPCWSTR str, UINT count, const INT *dx ) DECLSPEC_HIDDEN;
