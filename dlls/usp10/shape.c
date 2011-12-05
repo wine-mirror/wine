@@ -1360,9 +1360,13 @@ static void UpdateClusters(int nextIndex, int changeCount, int write_dir, int ch
         int replacing_glyph = -1;
         int changed = 0;
 
-
         if (changeCount > 0)
-            target_glyph = nextIndex - ((changeCount+1)*write_dir);
+        {
+            if (write_dir > 0)
+                target_glyph = nextIndex - changeCount;
+            else
+                target_glyph = nextIndex + (changeCount + 1);
+        }
 
         seeking_glyph = target_glyph;
 
