@@ -358,6 +358,21 @@ static HRESULT compile_assign_expression(compiler_ctx_t *ctx, binary_expression_
             return hres;
         break;
     }
+    case EXPR_ARRAY: {
+        array_expression_t *array_expr = (array_expression_t*)expr->expression1;
+
+        hres = compile_expression(ctx, array_expr->member_expr);
+        if(FAILED(hres))
+            return hres;
+
+        hres = compile_expression(ctx, array_expr->expression);
+        if(FAILED(hres))
+            return hres;
+
+        if(push_instr(ctx, OP_memberid) == -1)
+            return E_OUTOFMEMORY;
+        break;
+    }
     default:
         expr->expr.eval = assign_expression_eval;
         return compile_interp_fallback(ctx, &expr->expr);

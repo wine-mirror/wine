@@ -1573,6 +1573,41 @@ HRESULT member_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD fla
     return hres;
 }
 
+/* ECMA-262 3rd Edition    11.2.1 */
+static HRESULT interp_memberid(exec_ctx_t *ctx)
+{
+    VARIANT *objv, *namev;
+    IDispatch *obj;
+    BSTR name;
+    DISPID id;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    namev = stack_pop(ctx);
+    objv = stack_pop(ctx);
+
+    hres = to_object(ctx->parser->script, objv, &obj);
+    VariantClear(objv);
+    if(SUCCEEDED(hres)) {
+        hres = to_string(ctx->parser->script, namev, &ctx->ei, &name);
+        if(FAILED(hres))
+            IDispatch_Release(obj);
+    }
+    VariantClear(namev);
+    if(FAILED(hres))
+        return hres;
+
+    hres = disp_get_id(ctx->parser->script, obj, name, fdexNameEnsure, &id);
+    SysFreeString(name);
+    if(FAILED(hres)) {
+        IDispatch_Release(obj);
+        return hres;
+    }
+
+    return stack_push_objid(ctx, obj, id);
+}
+
 static void free_dp(DISPPARAMS *dp)
 {
     DWORD i;
