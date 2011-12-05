@@ -642,13 +642,6 @@ static BOOL match_allows_spec_alpha(const struct wined3d_gl_info *gl_info, const
     }
 }
 
-static BOOL match_apple_nvts(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
-        enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
-{
-    if (!match_apple(gl_info, gl_renderer, gl_vendor, card_vendor, device)) return FALSE;
-    return gl_info->supported[NV_TEXTURE_SHADER];
-}
-
 /* A GL context is provided by the caller */
 static BOOL match_broken_nv_clip(const struct wined3d_gl_info *gl_info, const char *gl_renderer,
         enum wined3d_gl_vendor gl_vendor, enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
@@ -876,12 +869,6 @@ static void quirk_allows_specular_alpha(struct wined3d_gl_info *gl_info)
     gl_info->quirks |= WINED3D_QUIRK_ALLOWS_SPECULAR_ALPHA;
 }
 
-static void quirk_apple_nvts(struct wined3d_gl_info *gl_info)
-{
-    gl_info->supported[NV_TEXTURE_SHADER] = FALSE;
-    gl_info->supported[NV_TEXTURE_SHADER2] = FALSE;
-}
-
 static void quirk_disable_nvvp_clip(struct wined3d_gl_info *gl_info)
 {
     gl_info->quirks |= WINED3D_QUIRK_NV_CLIP_BROKEN;
@@ -972,14 +959,6 @@ static const struct driver_quirk quirk_table[] =
         match_allows_spec_alpha,
         quirk_allows_specular_alpha,
         "Allow specular alpha quirk"
-    },
-    {
-        /* The pixel formats provided by GL_NV_texture_shader are broken on OSX
-         * (rdar://5682521).
-         */
-        match_apple_nvts,
-        quirk_apple_nvts,
-        "Apple NV_texture_shader disable"
     },
     {
         match_broken_nv_clip,
