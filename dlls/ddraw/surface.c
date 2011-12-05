@@ -910,7 +910,7 @@ static HRESULT WINAPI ddraw_surface1_GetAttachedSurface(IDirectDrawSurface *ifac
 static HRESULT surface_lock(IDirectDrawSurfaceImpl *This,
         RECT *Rect, DDSURFACEDESC2 *DDSD, DWORD Flags, HANDLE h)
 {
-    WINED3DLOCKED_RECT LockedRect;
+    struct wined3d_mapped_rect mapped_rect;
     HRESULT hr = DD_OK;
 
     TRACE("This %p, rect %s, surface_desc %p, flags %#x, h %p.\n",
@@ -946,7 +946,7 @@ static HRESULT surface_lock(IDirectDrawSurfaceImpl *This,
     if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
         hr = ddraw_surface_update_frontbuffer(This, Rect, TRUE);
     if (SUCCEEDED(hr))
-        hr = wined3d_surface_map(This->wined3d_surface, &LockedRect, Rect, Flags);
+        hr = wined3d_surface_map(This->wined3d_surface, &mapped_rect, Rect, Flags);
     if (FAILED(hr))
     {
         wined3d_mutex_unlock();
@@ -977,7 +977,7 @@ static HRESULT surface_lock(IDirectDrawSurfaceImpl *This,
      * does not set the LPSURFACE flag on locked surfaces !?!.
      * DDSD->dwFlags |= DDSD_LPSURFACE;
      */
-    This->surface_desc.lpSurface = LockedRect.pBits;
+    This->surface_desc.lpSurface = mapped_rect.data;
     DD_STRUCT_COPY_BYSIZE(DDSD,&(This->surface_desc));
 
     TRACE("locked surface returning description :\n");
@@ -4759,7 +4759,7 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
         }
         else
         {
-            WINED3DLOCKED_RECT src_rect, dst_rect;
+            struct wined3d_mapped_rect src_rect, dst_rect;
 
             /* Copy also the ColorKeying stuff */
             if (src_desc->dwFlags & DDSD_CKSRCBLT)
@@ -4790,9 +4790,9 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
             }
 
             if (dst_surface->surface_desc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC)
-                memcpy(dst_rect.pBits, src_rect.pBits, src_surface->surface_desc.u1.dwLinearSize);
+                memcpy(dst_rect.data, src_rect.data, src_surface->surface_desc.u1.dwLinearSize);
             else
-                memcpy(dst_rect.pBits, src_rect.pBits, src_rect.Pitch * src_desc->dwHeight);
+                memcpy(dst_rect.data, src_rect.data, src_rect.row_pitch * src_desc->dwHeight);
 
             wined3d_surface_unmap(src_surface->wined3d_surface);
             wined3d_surface_unmap(dst_surface->wined3d_surface);

@@ -1702,11 +1702,11 @@ struct wined3d_raster_status
     UINT scan_line;
 };
 
-typedef struct _WINED3DLOCKED_RECT
+struct wined3d_mapped_rect
 {
-    INT Pitch;
-    void *pBits;
-} WINED3DLOCKED_RECT;
+    UINT row_pitch;
+    void *data;
+};
 
 typedef struct _WINED3DLOCKED_BOX
 {
@@ -2360,7 +2360,7 @@ HRESULT __cdecl wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc);
 ULONG __cdecl wined3d_surface_incref(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_is_lost(const struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_map(struct wined3d_surface *surface,
-        WINED3DLOCKED_RECT *locked_rect, const RECT *rect, DWORD flags);
+        struct wined3d_mapped_rect *mapped_rect, const RECT *rect, DWORD flags);
 void __cdecl wined3d_surface_preload(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc);
 HRESULT __cdecl wined3d_surface_restore(struct wined3d_surface *surface);

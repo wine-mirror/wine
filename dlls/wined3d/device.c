@@ -4967,7 +4967,7 @@ HRESULT CDECL wined3d_device_set_depth_stencil(struct wined3d_device *device, st
 HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device,
         UINT x_hotspot, UINT y_hotspot, struct wined3d_surface *cursor_image)
 {
-    WINED3DLOCKED_RECT lockedRect;
+    struct wined3d_mapped_rect mapped_rect;
 
     TRACE("device %p, x_hotspot %u, y_hotspot %u, cursor_image %p.\n",
             device, x_hotspot, y_hotspot, cursor_image);
@@ -4985,7 +4985,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
 
     if (cursor_image)
     {
-        WINED3DLOCKED_RECT rect;
+        struct wined3d_mapped_rect rect;
 
         /* MSDN: Cursor must be A8R8G8B8 */
         if (cursor_image->resource.format->id != WINED3DFMT_B8G8R8A8_UNORM)
@@ -5018,7 +5018,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
             const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
             const struct wined3d_format *format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM);
             struct wined3d_context *context;
-            char *mem, *bits = rect.pBits;
+            char *mem, *bits = rect.data;
             GLint intfmt = format->glInternal;
             GLint gl_format = format->glFormat;
             GLint type = format->glType;
@@ -5031,7 +5031,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
              * different) */
             mem = HeapAlloc(GetProcessHeap(), 0, width * height * bpp);
             for(i = 0; i < height; i++)
-                memcpy(&mem[width * bpp * i], &bits[rect.Pitch * i], width * bpp);
+                memcpy(&mem[width * bpp * i], &bits[rect.row_pitch * i], width * bpp);
             wined3d_surface_unmap(cursor_image);
 
             context = context_acquire(device, NULL);
@@ -5080,7 +5080,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
              * chunks. */
             DWORD *maskBits = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                     (cursor_image->resource.width * cursor_image->resource.height / 8));
-            wined3d_surface_map(cursor_image, &lockedRect, NULL,
+            wined3d_surface_map(cursor_image, &mapped_rect, NULL,
                     WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY);
             TRACE("width: %u height: %u.\n", cursor_image->resource.width, cursor_image->resource.height);
 
@@ -5090,7 +5090,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
             cursorInfo.hbmMask = CreateBitmap(cursor_image->resource.width, cursor_image->resource.height,
                     1, 1, maskBits);
             cursorInfo.hbmColor = CreateBitmap(cursor_image->resource.width, cursor_image->resource.height,
-                    1, 32, lockedRect.pBits);
+                    1, 32, mapped_rect.data);
             wined3d_surface_unmap(cursor_image);
             /* Create our cursor and clean up. */
             cursor = CreateIconIndirect(&cursorInfo);

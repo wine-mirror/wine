@@ -3553,8 +3553,8 @@ static inline const struct d3dfmt_convertor_desc *find_convertor(enum wined3d_fo
  *****************************************************************************/
 static struct wined3d_surface *surface_convert_format(struct wined3d_surface *source, enum wined3d_format_id to_fmt)
 {
+    struct wined3d_mapped_rect src_map, dst_map;
     const struct d3dfmt_convertor_desc *conv;
-    WINED3DLOCKED_RECT lock_src, lock_dst;
     struct wined3d_surface *ret = NULL;
     HRESULT hr;
 
@@ -3577,17 +3577,17 @@ static struct wined3d_surface *surface_convert_format(struct wined3d_surface *so
         return NULL;
     }
 
-    memset(&lock_src, 0, sizeof(lock_src));
-    memset(&lock_dst, 0, sizeof(lock_dst));
+    memset(&src_map, 0, sizeof(src_map));
+    memset(&dst_map, 0, sizeof(dst_map));
 
-    hr = wined3d_surface_map(source, &lock_src, NULL, WINED3DLOCK_READONLY);
+    hr = wined3d_surface_map(source, &src_map, NULL, WINED3DLOCK_READONLY);
     if (FAILED(hr))
     {
         ERR("Failed to lock the source surface.\n");
         wined3d_surface_decref(ret);
         return NULL;
     }
-    hr = wined3d_surface_map(ret, &lock_dst, NULL, WINED3DLOCK_READONLY);
+    hr = wined3d_surface_map(ret, &dst_map, NULL, WINED3DLOCK_READONLY);
     if (FAILED(hr))
     {
         ERR("Failed to lock the destination surface.\n");
@@ -3596,7 +3596,7 @@ static struct wined3d_surface *surface_convert_format(struct wined3d_surface *so
         return NULL;
     }
 
-    conv->convert(lock_src.pBits, lock_dst.pBits, lock_src.Pitch, lock_dst.Pitch,
+    conv->convert(src_map.data, dst_map.data, src_map.row_pitch, dst_map.row_pitch,
             source->resource.width, source->resource.height);
 
     wined3d_surface_unmap(ret);
@@ -3680,12 +3680,12 @@ HRESULT CDECL wined3d_surface_unmap(struct wined3d_surface *surface)
 }
 
 HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
-        WINED3DLOCKED_RECT *locked_rect, const RECT *rect, DWORD flags)
+        struct wined3d_mapped_rect *mapped_rect, const RECT *rect, DWORD flags)
 {
     const struct wined3d_format *format = surface->resource.format;
 
-    TRACE("surface %p, locked_rect %p, rect %s, flags %#x.\n",
-            surface, locked_rect, wine_dbgstr_rect(rect), flags);
+    TRACE("surface %p, mapped_rect %p, rect %s, flags %#x.\n",
+            surface, mapped_rect, wine_dbgstr_rect(rect), flags);
 
     if (surface->flags & SFLAG_LOCKED)
     {
@@ -3732,13 +3732,13 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
     surface->surface_ops->surface_map(surface, rect, flags);
 
     if (format->flags & WINED3DFMT_FLAG_BROKEN_PITCH)
-        locked_rect->Pitch = surface->resource.width * format->byte_count;
+        mapped_rect->row_pitch = surface->resource.width * format->byte_count;
     else
-        locked_rect->Pitch = wined3d_surface_get_pitch(surface);
+        mapped_rect->row_pitch = wined3d_surface_get_pitch(surface);
 
     if (!rect)
     {
-        locked_rect->pBits = surface->resource.allocatedMemory;
+        mapped_rect->data = surface->resource.allocatedMemory;
         surface->lockedRect.left = 0;
         surface->lockedRect.top = 0;
         surface->lockedRect.right = surface->resource.width;
@@ -3750,14 +3750,14 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         {
             /* Compressed textures are block based, so calculate the offset of
              * the block that contains the top-left pixel of the locked rectangle. */
-            locked_rect->pBits = surface->resource.allocatedMemory
-                    + ((rect->top / format->block_height) * locked_rect->Pitch)
+            mapped_rect->data = surface->resource.allocatedMemory
+                    + ((rect->top / format->block_height) * mapped_rect->row_pitch)
                     + ((rect->left / format->block_width) * format->block_byte_count);
         }
         else
         {
-            locked_rect->pBits = surface->resource.allocatedMemory
-                    + (locked_rect->Pitch * rect->top)
+            mapped_rect->data = surface->resource.allocatedMemory
+                    + (mapped_rect->row_pitch * rect->top)
                     + (rect->left * format->byte_count);
         }
         surface->lockedRect.left = rect->left;
@@ -3767,14 +3767,14 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
     }
 
     TRACE("Locked rect %s.\n", wine_dbgstr_rect(&surface->lockedRect));
-    TRACE("Returning memory %p, pitch %u.\n", locked_rect->pBits, locked_rect->Pitch);
+    TRACE("Returning memory %p, pitch %u.\n", mapped_rect->data, mapped_rect->row_pitch);
 
     return WINED3D_OK;
 }
 
 HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
 {
-    WINED3DLOCKED_RECT lock;
+    struct wined3d_mapped_rect map;
     HRESULT hr;
 
     TRACE("surface %p, dc %p.\n", surface, dc);
@@ -3811,7 +3811,7 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
     }
 
     /* Map the surface. */
-    hr = wined3d_surface_map(surface, &lock, NULL, 0);
+    hr = wined3d_surface_map(surface, &map, NULL, 0);
     if (FAILED(hr))
     {
         ERR("Map failed, hr %#x.\n", hr);
@@ -6520,7 +6520,7 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
     int bpp, srcheight, srcwidth, dstheight, dstwidth, width;
     const struct wined3d_format *src_format, *dst_format;
     struct wined3d_surface *orig_src = src_surface;
-    WINED3DLOCKED_RECT dlock, slock;
+    struct wined3d_mapped_rect dst_map, src_map;
     HRESULT hr = WINED3D_OK;
     const BYTE *sbuf;
     RECT xdst,xsrc;
@@ -6606,8 +6606,8 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
 
     if (src_surface == dst_surface)
     {
-        wined3d_surface_map(dst_surface, &dlock, NULL, 0);
-        slock = dlock;
+        wined3d_surface_map(dst_surface, &dst_map, NULL, 0);
+        src_map = dst_map;
         src_format = dst_surface->resource.format;
         dst_format = src_format;
     }
@@ -6626,7 +6626,7 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
                     goto release;
                 }
             }
-            wined3d_surface_map(src_surface, &slock, NULL, WINED3DLOCK_READONLY);
+            wined3d_surface_map(src_surface, &src_map, NULL, WINED3DLOCK_READONLY);
             src_format = src_surface->resource.format;
         }
         else
@@ -6634,9 +6634,9 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
             src_format = dst_format;
         }
         if (dst_rect)
-            wined3d_surface_map(dst_surface, &dlock, &xdst, 0);
+            wined3d_surface_map(dst_surface, &dst_map, &xdst, 0);
         else
-            wined3d_surface_map(dst_surface, &dlock, NULL, 0);
+            wined3d_surface_map(dst_surface, &dst_map, NULL, 0);
     }
 
     bpp = dst_surface->resource.format->byte_count;
@@ -6671,21 +6671,21 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
             goto release;
         }
 
-        hr = surface_cpu_blt_compressed(slock.pBits, dlock.pBits,
-                slock.Pitch, dlock.Pitch, dstwidth, dstheight,
+        hr = surface_cpu_blt_compressed(src_map.data, dst_map.data,
+                src_map.row_pitch, dst_map.row_pitch, dstwidth, dstheight,
                 src_format, flags, fx);
         goto release;
     }
 
     if (dst_rect && src_surface != dst_surface)
-        dbuf = dlock.pBits;
+        dbuf = dst_map.data;
     else
-        dbuf = (BYTE*)dlock.pBits+(xdst.top*dlock.Pitch)+(xdst.left*bpp);
+        dbuf = (BYTE *)dst_map.data + (xdst.top * dst_map.row_pitch) + (xdst.left * bpp);
 
     /* First, all the 'source-less' blits */
     if (flags & WINEDDBLT_COLORFILL)
     {
-        hr = _Blt_ColorFill(dbuf, dstwidth, dstheight, bpp, dlock.Pitch, fx->u5.dwFillColor);
+        hr = _Blt_ColorFill(dbuf, dstwidth, dstheight, bpp, dst_map.row_pitch, fx->u5.dwFillColor);
         flags &= ~WINEDDBLT_COLORFILL;
     }
 
@@ -6699,12 +6699,12 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
         switch (fx->dwROP)
         {
             case BLACKNESS:
-                hr = _Blt_ColorFill(dbuf,dstwidth,dstheight,bpp,dlock.Pitch,0);
+                hr = _Blt_ColorFill(dbuf, dstwidth, dstheight, bpp, dst_map.row_pitch, 0);
                 break;
             case 0xAA0029: /* No-op */
                 break;
             case WHITENESS:
-                hr = _Blt_ColorFill(dbuf,dstwidth,dstheight,bpp,dlock.Pitch,~0);
+                hr = _Blt_ColorFill(dbuf, dstwidth, dstheight, bpp, dst_map.row_pitch, ~0U);
                 break;
             case SRCCOPY: /* Well, we do that below? */
                 break;
@@ -6734,7 +6734,7 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
             FIXME("Filter %s not supported in software blit.\n", debug_d3dtexturefiltertype(filter));
         }
 
-        sbase = (BYTE*)slock.pBits+(xsrc.top*slock.Pitch)+xsrc.left*bpp;
+        sbase = (BYTE *)src_map.data + (xsrc.top * src_map.row_pitch) + xsrc.left * bpp;
         xinc = (srcwidth << 16) / dstwidth;
         yinc = (srcheight << 16) / dstheight;
 
@@ -6757,19 +6757,19 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
                         for (y = 0; y < dstheight; ++y)
                         {
                             memcpy(dbuf, sbuf, width);
-                            sbuf += slock.Pitch;
-                            dbuf += dlock.Pitch;
+                            sbuf += src_map.row_pitch;
+                            dbuf += dst_map.row_pitch;
                         }
                     }
                     else if (xdst.top > xsrc.top)
                     {
                         /* Copy from bottom upwards. */
-                        sbuf += (slock.Pitch*dstheight);
-                        dbuf += (dlock.Pitch*dstheight);
+                        sbuf += src_map.row_pitch * dstheight;
+                        dbuf += dst_map.row_pitch * dstheight;
                         for (y = 0; y < dstheight; ++y)
                         {
-                            sbuf -= slock.Pitch;
-                            dbuf -= dlock.Pitch;
+                            sbuf -= src_map.row_pitch;
+                            dbuf -= dst_map.row_pitch;
                             memcpy(dbuf, sbuf, width);
                         }
                     }
@@ -6779,8 +6779,8 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
                         for (y = 0; y < dstheight; ++y)
                         {
                             memmove(dbuf, sbuf, width);
-                            sbuf += slock.Pitch;
-                            dbuf += dlock.Pitch;
+                            sbuf += src_map.row_pitch;
+                            dbuf += dst_map.row_pitch;
                         }
                     }
                 }
@@ -6789,9 +6789,9 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
                     /* Stretching in y direction only. */
                     for (y = sy = 0; y < dstheight; ++y, sy += yinc)
                     {
-                        sbuf = sbase + (sy >> 16) * slock.Pitch;
+                        sbuf = sbase + (sy >> 16) * src_map.row_pitch;
                         memcpy(dbuf, sbuf, width);
-                        dbuf += dlock.Pitch;
+                        dbuf += dst_map.row_pitch;
                     }
                 }
             }
@@ -6801,13 +6801,13 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
                 int last_sy = -1;
                 for (y = sy = 0; y < dstheight; ++y, sy += yinc)
                 {
-                    sbuf = sbase + (sy >> 16) * slock.Pitch;
+                    sbuf = sbase + (sy >> 16) * src_map.row_pitch;
 
                     if ((sy >> 16) == (last_sy >> 16))
                     {
                         /* This source row is the same as last source row -
                          * Copy the already stretched row. */
-                        memcpy(dbuf, dbuf - dlock.Pitch, width);
+                        memcpy(dbuf, dbuf - dst_map.row_pitch, width);
                     }
                     else
                     {
@@ -6854,14 +6854,14 @@ do { \
                         }
 #undef STRETCH_ROW
                     }
-                    dbuf += dlock.Pitch;
+                    dbuf += dst_map.row_pitch;
                     last_sy = sy;
                 }
             }
         }
         else
         {
-            LONG dstyinc = dlock.Pitch, dstxinc = bpp;
+            LONG dstyinc = dst_map.row_pitch, dstxinc = bpp;
             DWORD keylow = 0xFFFFFFFF, keyhigh = 0, keymask = 0xFFFFFFFF;
             DWORD destkeylow = 0x0, destkeyhigh = 0xFFFFFFFF, destkeymask = 0xFFFFFFFF;
             if (flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYDEST | WINEDDBLT_KEYSRCOVERRIDE | WINEDDBLT_KEYDESTOVERRIDE))
@@ -6909,7 +6909,7 @@ do { \
                 LONG tmpxy;
                 dTopLeft     = dbuf;
                 dTopRight    = dbuf + ((dstwidth - 1) * bpp);
-                dBottomLeft  = dTopLeft + ((dstheight - 1) * dlock.Pitch);
+                dBottomLeft  = dTopLeft + ((dstheight - 1) * dst_map.row_pitch);
                 dBottomRight = dBottomLeft + ((dstwidth - 1) * bpp);
 
                 if (fx->dwDDFX & WINEDDBLTFX_ARITHSTRETCHY)
@@ -6992,7 +6992,7 @@ do { \
     type *d = (type *)dbuf, *dx, tmp; \
     for (y = sy = 0; y < dstheight; ++y, sy += yinc) \
     { \
-        s = (const type *)(sbase + (sy >> 16) * slock.Pitch); \
+        s = (const type *)(sbase + (sy >> 16) * src_map.row_pitch); \
         dx = d; \
         for (x = sx = 0; x < dstwidth; ++x, sx += xinc) \
         { \
@@ -7025,7 +7025,7 @@ do { \
                     BYTE *d = dbuf, *dx;
                     for (y = sy = 0; y < dstheight; ++y, sy += yinc)
                     {
-                        sbuf = sbase + (sy >> 16) * slock.Pitch;
+                        sbuf = sbase + (sy >> 16) * src_map.row_pitch;
                         dx = d;
                         for (x = sx = 0; x < dstwidth; ++x, sx+= xinc)
                         {

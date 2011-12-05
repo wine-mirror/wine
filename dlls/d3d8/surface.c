@@ -262,7 +262,7 @@ static HRESULT WINAPI IDirect3DSurface8Impl_LockRect(IDirect3DSurface8 *iface,
         }
     }
 
-    hr = wined3d_surface_map(This->wined3d_surface, (WINED3DLOCKED_RECT *)pLockedRect, pRect, Flags);
+    hr = wined3d_surface_map(This->wined3d_surface, (struct wined3d_mapped_rect *)pLockedRect, pRect, Flags);
     wined3d_mutex_unlock();
 
     return hr;
