@@ -86,6 +86,10 @@ DEFINE_EXPECT(QueryService_TestActiveX);
 DEFINE_EXPECT(GetMiscStatus);
 DEFINE_EXPECT(SetAdvise);
 DEFINE_EXPECT(GetViewStatus);
+DEFINE_EXPECT(QI_ITestActiveX);
+DEFINE_EXPECT(wrapped_AddRef);
+DEFINE_EXPECT(wrapped_Release);
+DEFINE_EXPECT(wrapped_func);
 
 #define DISPID_SCRIPTPROP 1000
 
@@ -101,6 +105,9 @@ static int plugin_behavior;
 
 static const GUID CLSID_TestActiveX =
     {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xf6,0x68,0x07,0x46}};
+
+static const GUID IID_ITestActiveX =
+    {0x178fc663,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xf6,0x68,0x07,0x46}};
 
 static const char object_ax_str[] =
     "<html><head></head><body>"
@@ -1143,6 +1150,57 @@ static const IOleInPlaceObjectWindowlessVtbl OleInPlaceObjectWindowlessVtbl = {
 
 static IOleInPlaceObjectWindowless OleInPlaceObjectWindowless = { &OleInPlaceObjectWindowlessVtbl };
 
+static void *wrapped_iface_vtbl[100];
+static IUnknown wrapped_iface = { (IUnknownVtbl*)wrapped_iface_vtbl };
+
+static HRESULT WINAPI wrapped_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected wrapped_QueryInterface call\n");
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI wrapped_AddRef(IUnknown *iface)
+{
+    CHECK_EXPECT(wrapped_AddRef);
+    return 2;
+}
+
+static ULONG WINAPI wrapped_Release(IUnknown *iface)
+{
+    CHECK_EXPECT(wrapped_Release);
+    return 1;
+}
+
+static HRESULT WINAPI wrapped_func_nocall(IUnknown *iface, int i, double d)
+{
+    ok(0, "unexpected call\n");
+    return E_FAIL;
+}
+
+static HRESULT WINAPI wrapped_func(IUnknown *iface, int i, double d)
+{
+    CHECK_EXPECT(wrapped_func);
+    ok(iface == &wrapped_iface, "iface != wrapped_iface\n");
+    ok(i == 10, "i = %d\n", i);
+    ok(d == 32.0, "d = %lf\n", d);
+    return S_OK;
+}
+
+static void init_wrapped_iface(void)
+{
+    unsigned i;
+
+    wrapped_iface_vtbl[0] = wrapped_QueryInterface;
+    wrapped_iface_vtbl[1] = wrapped_AddRef;
+    wrapped_iface_vtbl[2] = wrapped_Release;
+
+    for(i=3; i<100; i++)
+        wrapped_iface_vtbl[i] = wrapped_func_nocall;
+
+    wrapped_iface_vtbl[63] = wrapped_func;
+}
+
 static HRESULT ax_qi(REFIID riid, void **ppv)
 {
     if(IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IOleControl)) {
@@ -1158,6 +1216,9 @@ static HRESULT ax_qi(REFIID riid, void **ppv)
         *ppv = &ViewObjectEx;
     }else if(IsEqualGUID(riid, &IID_IOleObject)) {
         *ppv = &OleObject;
+    }else if(IsEqualGUID(riid, &IID_ITestActiveX)) {
+        CHECK_EXPECT(QI_ITestActiveX);
+        *ppv = &wrapped_iface;
     }else  if(IsEqualGUID(riid, &IID_IOleWindow) || IsEqualGUID(riid, &IID_IOleInPlaceObject)
        || IsEqualGUID(&IID_IOleInPlaceObjectWindowless, riid)) {
         *ppv = &OleInPlaceObjectWindowless;
@@ -1257,6 +1318,68 @@ static void test_elem_dispex(IDispatchEx *dispex)
     CHECK_CALLED(Invoke_SCRIPTPROP);
 }
 
+static void test_iface_wrapping(IHTMLObjectElement *elem)
+{
+    IHTMLObjectElement *elem2;
+    IUnknown *unk, *unk2;
+    ULONG ref;
+    void **vtbl;
+    HRESULT hres;
+
+    SET_EXPECT(QI_ITestActiveX);
+    SET_EXPECT(wrapped_AddRef);
+    SET_EXPECT(wrapped_Release);
+    unk = (void*)0xdeadbeef;
+    hres = IHTMLObjectElement_QueryInterface(elem, &IID_ITestActiveX, (void**)&unk);
+    ok(hres == S_OK, "QueryInerface(IID_ITestActiveX failed: %08x\n", hres);
+    CHECK_CALLED(QI_ITestActiveX);
+    CHECK_CALLED(wrapped_AddRef);
+    CHECK_CALLED(wrapped_Release);
+
+    /* See dlls/mshtml/ifacewrap.c */
+    ok(unk != &wrapped_iface, "Unexpected unk %p, expected %p (%p, %p)\n", unk, &ViewObjectEx, unk->lpVtbl, &ViewObjectExVtbl);
+    ok(unk->lpVtbl != wrapped_iface.lpVtbl, "unk->lpVtbl == wrapped_iface->lpVtbl\n");
+    ok(unk->lpVtbl->QueryInterface != wrapped_QueryInterface, "QueryInterface not wrapped\n");
+    ok(unk->lpVtbl->AddRef != wrapped_AddRef, "AddRef not wrapped\n");
+    ok(unk->lpVtbl->Release != wrapped_Release, "Release not wrapped\n");
+
+    vtbl = (void**)unk->lpVtbl;
+    ok(vtbl[4] != wrapped_func_nocall, "func not wrapped\n");
+    ok(vtbl[63] != wrapped_func, "func not wrapped\n");
+
+    SET_EXPECT(wrapped_func);
+    hres = ((HRESULT (WINAPI*)(IUnknown*,int,double))vtbl[63])(unk, 10, 32.0);
+    ok(hres == S_OK, "wrapped_func returned %08x\n", hres);
+    CHECK_CALLED(wrapped_func);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLObjectElement, (void**)&elem2);
+    ok(hres == S_OK, "Could not get IHTMLObjectElement from wrapped iface: %08x\n", hres);
+    ok(iface_cmp((IUnknown*)elem2, (IUnknown*)elem), "elem2 != elem\n");
+    IHTMLObjectElement_Release(elem2);
+
+    SET_EXPECT(wrapped_Release);
+    ref = IUnknown_Release(unk);
+    ok(!ref, "ref=%d\n", ref);
+    CHECK_CALLED(wrapped_Release);
+
+    SET_EXPECT(QI_ITestActiveX);
+    SET_EXPECT(wrapped_AddRef);
+    SET_EXPECT(wrapped_Release);
+    unk = (void*)0xdeadbeef;
+    hres = IHTMLObjectElement_QueryInterface(elem, &IID_ITestActiveX, (void**)&unk2);
+    ok(hres == S_OK, "QueryInerface(IID_ITestActiveX failed: %08x\n", hres);
+    CHECK_CALLED(QI_ITestActiveX);
+    CHECK_CALLED(wrapped_AddRef);
+    CHECK_CALLED(wrapped_Release);
+
+    ok(unk != unk2, "unk == unk2\n");
+
+    SET_EXPECT(wrapped_Release);
+    ref = IUnknown_Release(unk2);
+    ok(!ref, "ref=%d\n", ref);
+    CHECK_CALLED(wrapped_Release);
+}
+
 static void test_object_elem(IHTMLDocument2 *doc)
 {
     IHTMLObjectElement *objelem;
@@ -1292,6 +1415,8 @@ static void test_object_elem(IHTMLDocument2 *doc)
     ok(hres == S_OK, "QueryInterface failed: %08x\n", hres);
     test_elem_dispex(dispex);
     IDispatchEx_Release(dispex);
+
+    test_iface_wrapping(objelem);
 
     IHTMLObjectElement_Release(objelem);
 }
@@ -2171,6 +2296,7 @@ START_TEST(activex)
         return;
     }
 
+    init_wrapped_iface();
     container_hwnd = create_container_window();
     ShowWindow(container_hwnd, SW_SHOW);
 
