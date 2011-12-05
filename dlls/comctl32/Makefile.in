@@ -42,39 +42,7 @@ C_SRCS = \
 	treeview.c \
 	updown.c
 
-RC_SRCS = \
-	comctl32.rc \
-	comctl_Bg.rc \
-	comctl_Ca.rc \
-	comctl_Cs.rc \
-	comctl_Da.rc \
-	comctl_De.rc \
-	comctl_El.rc \
-	comctl_En.rc \
-	comctl_Eo.rc \
-	comctl_Es.rc \
-	comctl_Fr.rc \
-	comctl_He.rc \
-	comctl_Hu.rc \
-	comctl_It.rc \
-	comctl_Ja.rc \
-	comctl_Ko.rc \
-	comctl_Lt.rc \
-	comctl_Nl.rc \
-	comctl_No.rc \
-	comctl_Pl.rc \
-	comctl_Pt.rc \
-	comctl_Ro.rc \
-	comctl_Ru.rc \
-	comctl_Si.rc \
-	comctl_Sk.rc \
-	comctl_Sr.rc \
-	comctl_Sv.rc \
-	comctl_Th.rc \
-	comctl_Tr.rc \
-	comctl_Uk.rc \
-	comctl_Zh.rc
-
+RC_SRCS = comctl32.rc
 PO_SRCS = comctl32.rc
 
 SVG_SRCS = \
