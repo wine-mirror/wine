@@ -1471,7 +1471,7 @@ static void test_scene(void)
     }
 
     /* Now try it in a BeginScene - EndScene pair. Seems to be allowed in a beginScene - Endscene pair
-     * width normal surfaces, render targets and depth stencil surfaces.
+     * with normal surfaces and render targets, but not depth stencil surfaces.
      */
     hr = IDirect3DDevice9_BeginScene(pDevice);
     ok( hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %08x\n", hr);
