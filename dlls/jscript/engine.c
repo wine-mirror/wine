@@ -1279,6 +1279,15 @@ HRESULT throw_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_
     return DISP_E_EXCEPTION;
 }
 
+static HRESULT interp_throw(exec_ctx_t *ctx)
+{
+    const HRESULT arg = ctx->parser->code->instrs[ctx->ip].arg1.uint;
+
+    TRACE("%08x\n", arg);
+
+    return throw_reference_error(ctx->parser->script, &ctx->ei, arg, NULL);
+}
+
 /* ECMA-262 3rd Edition    12.14 */
 static HRESULT catch_eval(script_ctx_t *ctx, catch_block_t *block, return_type_t *rt, VARIANT *ret)
 {
@@ -3305,40 +3314,6 @@ HRESULT right2_shift_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWO
     TRACE("\n");
 
     return binary_expr_eval(ctx, expr, rshift2_eval, ei, ret);
-}
-
-/* ECMA-262 3rd Edition    11.13.1 */
-HRESULT assign_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
-{
-    binary_expression_t *expr = (binary_expression_t*)_expr;
-    exprval_t exprval, exprvalr;
-    VARIANT rval;
-    HRESULT hres;
-
-    TRACE("\n");
-
-    hres = expr_eval(ctx, expr->expression1, EXPR_NEWREF, ei, &exprval);
-    if(FAILED(hres))
-        return hres;
-
-    hres = expr_eval(ctx, expr->expression2, 0, ei, &exprvalr);
-    if(SUCCEEDED(hres)) {
-        hres = exprval_to_value(ctx, &exprvalr, ei, &rval);
-        exprval_release(&exprvalr);
-    }
-
-    if(SUCCEEDED(hres)) {
-        assert(exprval.type != EXPRVAL_IDREF);
-        return throw_reference_error(ctx, ei, JS_E_ILLEGAL_ASSIGN, NULL);
-    }
-
-    exprval_release(&exprval);
-    if(FAILED(hres))
-        return hres;
-
-    ret->type = EXPRVAL_VARIANT;
-    ret->u.var = rval;
-    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    11.13.1 */

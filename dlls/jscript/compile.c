@@ -172,6 +172,18 @@ static HRESULT push_instr_double(compiler_ctx_t *ctx, jsop_t op, double arg)
     return S_OK;
 }
 
+static HRESULT push_instr_uint(compiler_ctx_t *ctx, jsop_t op, unsigned arg)
+{
+    unsigned instr;
+
+    instr = push_instr(ctx, op);
+    if(instr == -1)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, instr)->arg1.uint = arg;
+    return S_OK;
+}
+
 static HRESULT compile_binary_expression(compiler_ctx_t *ctx, binary_expression_t *expr, jsop_t op)
 {
     HRESULT hres;
@@ -390,8 +402,15 @@ static HRESULT compile_assign_expression(compiler_ctx_t *ctx, binary_expression_
         break;
     }
     default:
-        expr->expr.eval = assign_expression_eval;
-        return compile_interp_fallback(ctx, &expr->expr);
+        hres = compile_expression(ctx, expr->expression1);
+        if(FAILED(hres))
+            return hres;
+
+        hres = compile_expression(ctx, expr->expression2);
+        if(FAILED(hres))
+            return hres;
+
+        return push_instr_uint(ctx, OP_throw, JS_E_ILLEGAL_ASSIGN);
     }
 
 

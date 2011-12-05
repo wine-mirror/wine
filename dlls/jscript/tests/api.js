@@ -2076,6 +2076,18 @@ tmp = false;
 testException(function() {test = (tmp = true);}, "E_ILLEGAL_ASSIGN");
 ok(tmp, "expr value on invalid assign not evaluated");
 
+tmp = false;
+testException(function() {(tmp = true) = false;}, "E_ILLEGAL_ASSIGN");
+ok(tmp, "expr assign not evaluated");
+
+tmp = false;
+testException(function() {true = (tmp = true);}, "E_ILLEGAL_ASSIGN");
+ok(tmp, "expr value assign not evaluated");
+
+tmp = "";
+testException(function() {(tmp = tmp+"1") = (tmp = tmp+"2");}, "E_ILLEGAL_ASSIGN");
+ok(tmp === "12", "assign evaluated in unexpected order");
+
 // RegExpError tests
 testException(function() {RegExp(/a/, "g");}, "E_REGEXP_SYNTAX_ERROR");
 
