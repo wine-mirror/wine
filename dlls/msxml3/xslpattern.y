@@ -179,7 +179,7 @@ static void xslpattern_error(parser_param* param, void const* scanner, char cons
                                 $$=xmlStrcat($$,U("::"));
                             }
     ;
-    Attribute               : '@' TOK_NCName
+    Attribute               : '@' QName
                             {
                                 TRACE("Got Attribute: \"@%s\"\n", $2);
                                 $$=xmlStrdup(U("@"));
