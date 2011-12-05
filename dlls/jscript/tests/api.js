@@ -2072,6 +2072,10 @@ testSyntaxError("/* @cc_on @*/ @_jscript_version", "E_DISABLED_CC");
 // ReferenceError tests
 testException(function() {test = function() {}}, "E_ILLEGAL_ASSIGN");
 
+tmp = false;
+testException(function() {test = (tmp = true);}, "E_ILLEGAL_ASSIGN");
+ok(tmp, "expr value on invalid assign not evaluated");
+
 // RegExpError tests
 testException(function() {RegExp(/a/, "g");}, "E_REGEXP_SYNTAX_ERROR");
 

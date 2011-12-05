@@ -345,6 +345,35 @@ static HRESULT compile_delete_expression(compiler_ctx_t *ctx, unary_expression_t
     return S_OK;
 }
 
+static HRESULT compile_assign_expression(compiler_ctx_t *ctx, binary_expression_t *expr)
+{
+    HRESULT hres;
+
+    switch(expr->expression1->type) {
+    case EXPR_IDENT: {
+        identifier_expression_t *ident_expr = (identifier_expression_t*)expr->expression1;
+
+        hres = push_instr_bstr(ctx, OP_identid, ident_expr->identifier);
+        if(FAILED(hres))
+            return hres;
+        break;
+    }
+    default:
+        expr->expr.eval = assign_expression_eval;
+        return compile_interp_fallback(ctx, &expr->expr);
+    }
+
+
+    hres = compile_expression(ctx, expr->expression2);
+    if(FAILED(hres))
+        return hres;
+
+    if(push_instr(ctx, OP_assign) == -1)
+        return E_OUTOFMEMORY;
+
+    return S_OK;
+}
+
 static HRESULT compile_literal(compiler_ctx_t *ctx, literal_t *literal)
 {
     switch(literal->type) {
@@ -384,10 +413,12 @@ static HRESULT compile_literal(compiler_ctx_t *ctx, literal_t *literal)
 static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
 {
     switch(expr->type) {
-    case EXPR_AND:
-        return compile_logical_expression(ctx, (binary_expression_t*)expr, OP_jmp_z);
     case EXPR_ADD:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_add);
+    case EXPR_AND:
+        return compile_logical_expression(ctx, (binary_expression_t*)expr, OP_jmp_z);
+    case EXPR_ASSIGN:
+        return compile_assign_expression(ctx, (binary_expression_t*)expr);
     case EXPR_BITNEG:
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_bneg);
     case EXPR_BOR:

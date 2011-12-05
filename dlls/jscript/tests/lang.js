@@ -118,6 +118,9 @@ ok(testFunc1(true, "test") === true, "testFunc1 not returned true");
 
 ok(testFunc1.arguments === null, "testFunc1.arguments = " + testFunc1.arguments);
 
+(tmp) = 3;
+ok(tmp === 3, "tmp = " + tmp);
+
 function testRecFunc(x) {
     ok(testRecFunc.arguments === arguments, "testRecFunc.arguments = " + testRecFunc.arguments);
     if(x) {

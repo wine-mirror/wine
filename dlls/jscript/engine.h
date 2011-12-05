@@ -43,6 +43,7 @@ typedef struct _func_stack {
 
 #define OP_LIST                            \
     X(add,        1, 0,0)                  \
+    X(assign,     1, 0,0)                  \
     X(bool,       1, ARG_INT,    0)        \
     X(bneg,       1, 0,0)                  \
     X(delete,     1, 0,0)                  \
@@ -51,8 +52,9 @@ typedef struct _func_stack {
     X(eq,         1, 0,0)                  \
     X(eq2,        1, 0,0)                  \
     X(gt,         1, 0,0)                  \
-    X(gteq,         1, 0,0)                \
+    X(gteq,       1, 0,0)                  \
     X(ident,      1, ARG_BSTR,   0)        \
+    X(identid,    1, ARG_BSTR,   0)        \
     X(in,         1, 0,0)                  \
     X(int,        1, ARG_INT,    0)        \
     X(jmp,        0, ARG_ADDR,   0)        \

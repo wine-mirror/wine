@@ -102,6 +102,22 @@ static inline HRESULT stack_push_int(exec_ctx_t *ctx, INT n)
     return stack_push(ctx, &v);
 }
 
+static HRESULT stack_push_objid(exec_ctx_t *ctx, IDispatch *disp, DISPID id)
+{
+    VARIANT v;
+    HRESULT hres;
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = disp;
+    hres = stack_push(ctx, &v);
+    if(FAILED(hres))
+        return hres;
+
+    V_VT(&v) = VT_INT;
+    V_INT(&v) = id;
+    return stack_push(ctx, &v);
+}
+
 static inline VARIANT *stack_top(exec_ctx_t *ctx)
 {
     assert(ctx->top);
@@ -140,6 +156,14 @@ static HRESULT stack_pop_number(exec_ctx_t *ctx, VARIANT *r)
 static inline HRESULT stack_pop_int(exec_ctx_t *ctx, INT *r)
 {
     return to_int32(ctx->parser->script, stack_pop(ctx), &ctx->ei, r);
+}
+
+static inline IDispatch *stack_pop_objid(exec_ctx_t *ctx, DISPID *id)
+{
+    assert(V_VT(stack_top(ctx)) == VT_INT && V_VT(stack_topn(ctx, 1)) == VT_DISPATCH);
+
+    *id = V_INT(stack_pop(ctx));
+    return V_DISPATCH(stack_pop(ctx));
 }
 
 static void exprval_release(exprval_t *val)
@@ -1757,6 +1781,28 @@ static HRESULT interp_ident(exec_ctx_t *ctx)
     return stack_push(ctx, &v);
 }
 
+/* ECMA-262 3rd Edition    10.1.4 */
+static HRESULT interp_identid(exec_ctx_t *ctx)
+{
+    const BSTR arg = ctx->parser->code->instrs[ctx->ip].arg1.bstr;
+    exprval_t exprval;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_w(arg));
+
+    hres = identifier_eval(ctx->parser->script, arg, EXPR_NEWREF, &ctx->ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    if(exprval.type != EXPRVAL_IDREF) {
+        WARN("invalid ref\n");
+        exprval_release(&exprval);
+        return stack_push_objid(ctx, NULL, -1);
+    }
+
+    return stack_push_objid(ctx, exprval.u.idref.disp, exprval.u.idref.id);
+}
+
 /* ECMA-262 3rd Edition    7.8.1 */
 static HRESULT interp_null(exec_ctx_t *ctx)
 {
@@ -3259,6 +3305,32 @@ HRESULT assign_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD fla
     ret->type = EXPRVAL_VARIANT;
     ret->u.var = rval;
     return S_OK;
+}
+
+/* ECMA-262 3rd Edition    11.13.1 */
+static HRESULT interp_assign(exec_ctx_t *ctx)
+{
+    IDispatch *disp;
+    DISPID id;
+    VARIANT *v;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    v = stack_pop(ctx);
+    disp = stack_pop_objid(ctx, &id);
+
+    if(!disp)
+        return throw_reference_error(ctx->parser->script, &ctx->ei, JS_E_ILLEGAL_ASSIGN, NULL);
+
+    hres = disp_propput(ctx->parser->script, disp, id, v, &ctx->ei, NULL/*FIXME*/);
+    IDispatch_Release(disp);
+    if(FAILED(hres)) {
+        VariantClear(v);
+        return hres;
+    }
+
+    return stack_push(ctx, v);
 }
 
 /* ECMA-262 3rd Edition    11.13.2 */
