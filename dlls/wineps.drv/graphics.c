@@ -351,15 +351,6 @@ BOOL PSDRV_PolyPolyline( PHYSDEV dev, const POINT* pts, const DWORD* counts, DWO
 
 
 /***********************************************************************
- *           PSDRV_Polyline
- */
-BOOL PSDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
-{
-    return PSDRV_PolyPolyline( dev, pt, (LPDWORD) &count, 1 );
-}
-
-
-/***********************************************************************
  *           PSDRV_PolyPolygon
  */
 BOOL PSDRV_PolyPolygon( PHYSDEV dev, const POINT* pts, const INT* counts, UINT polygons )
@@ -398,15 +389,6 @@ BOOL PSDRV_PolyPolygon( PHYSDEV dev, const POINT* pts, const INT* counts, UINT p
     PSDRV_DrawLine(dev);
     PSDRV_ResetClip(dev);
     return TRUE;
-}
-
-
-/***********************************************************************
- *           PSDRV_Polygon
- */
-BOOL PSDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
-{
-     return PSDRV_PolyPolygon( dev, pt, &count, 1 );
 }
 
 
