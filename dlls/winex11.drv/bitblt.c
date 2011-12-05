@@ -582,6 +582,12 @@ int main()
 #endif  /* BITBLT_TEST */
 
 
+/* handler for XGetImage BadMatch errors */
+static int XGetImage_handler( Display *dpy, XErrorEvent *event, void *arg )
+{
+    return (event->request_code == X_GetImage && event->error_code == BadMatch);
+}
+
 /***********************************************************************
  *           BITBLT_GetDstArea
  *
@@ -1423,16 +1429,23 @@ DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
     }
     else
     {
-        Pixmap pixmap;
+        X11DRV_expect_error( gdi_display, XGetImage_handler, NULL );
+        image = XGetImage( gdi_display, physdev->drawable,
+                           physdev->dc_rect.left + x, physdev->dc_rect.top + y,
+                           width, height, AllPlanes, ZPixmap );
+        if (X11DRV_check_error())
+        {
+            /* use a temporary pixmap to avoid the BadMatch error */
+            Pixmap pixmap;
 
-        wine_tsx11_lock();
-        /* use a temporary pixmap to avoid BadMatch errors */
-        pixmap = XCreatePixmap( gdi_display, root_window, width, height, depth );
-        XCopyArea( gdi_display, physdev->drawable, pixmap, get_bitmap_gc(depth),
-                   physdev->dc_rect.left + x, physdev->dc_rect.top + y, width, height, 0, 0 );
-        image = XGetImage( gdi_display, pixmap, 0, 0, width, height, AllPlanes, ZPixmap );
-        XFreePixmap( gdi_display, pixmap );
-        wine_tsx11_unlock();
+            wine_tsx11_lock();
+            pixmap = XCreatePixmap( gdi_display, root_window, width, height, depth );
+            XCopyArea( gdi_display, physdev->drawable, pixmap, get_bitmap_gc(depth),
+                       physdev->dc_rect.left + x, physdev->dc_rect.top + y, width, height, 0, 0 );
+            image = XGetImage( gdi_display, pixmap, 0, 0, width, height, AllPlanes, ZPixmap );
+            XFreePixmap( gdi_display, pixmap );
+            wine_tsx11_unlock();
+        }
     }
     if (!image) return ERROR_OUTOFMEMORY;
 
