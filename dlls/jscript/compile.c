@@ -357,7 +357,7 @@ static HRESULT compile_delete_expression(compiler_ctx_t *ctx, unary_expression_t
     return S_OK;
 }
 
-static HRESULT compile_assign_expression(compiler_ctx_t *ctx, binary_expression_t *expr)
+static HRESULT compile_assign_expression(compiler_ctx_t *ctx, binary_expression_t *expr, jsop_t op)
 {
     HRESULT hres;
 
@@ -410,13 +410,21 @@ static HRESULT compile_assign_expression(compiler_ctx_t *ctx, binary_expression_
         if(FAILED(hres))
             return hres;
 
+        if(op != OP_LAST && push_instr(ctx, op) == -1)
+            return E_OUTOFMEMORY;
+
         return push_instr_uint(ctx, OP_throw, JS_E_ILLEGAL_ASSIGN);
     }
 
+    if(op != OP_LAST && push_instr(ctx, OP_refval) == -1)
+        return E_OUTOFMEMORY;
 
     hres = compile_expression(ctx, expr->expression2);
     if(FAILED(hres))
         return hres;
+
+    if(op != OP_LAST && push_instr(ctx, op) == -1)
+        return E_OUTOFMEMORY;
 
     if(push_instr(ctx, OP_assign) == -1)
         return E_OUTOFMEMORY;
@@ -468,7 +476,9 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
     case EXPR_AND:
         return compile_logical_expression(ctx, (binary_expression_t*)expr, OP_jmp_z);
     case EXPR_ASSIGN:
-        return compile_assign_expression(ctx, (binary_expression_t*)expr);
+        return compile_assign_expression(ctx, (binary_expression_t*)expr, OP_LAST);
+    case EXPR_ASSIGNADD:
+        return compile_assign_expression(ctx, (binary_expression_t*)expr, OP_add);
     case EXPR_BITNEG:
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_bneg);
     case EXPR_BOR:

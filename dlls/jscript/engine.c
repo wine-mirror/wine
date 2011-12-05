@@ -166,6 +166,14 @@ static inline IDispatch *stack_pop_objid(exec_ctx_t *ctx, DISPID *id)
     return V_DISPATCH(stack_pop(ctx));
 }
 
+static inline IDispatch *stack_top_objid(exec_ctx_t *ctx, DISPID *id)
+{
+    assert(V_VT(stack_top(ctx)) == VT_INT && V_VT(stack_topn(ctx, 1)) == VT_DISPATCH);
+
+    *id = V_INT(stack_top(ctx));
+    return V_DISPATCH(stack_topn(ctx, 1));
+}
+
 static void exprval_release(exprval_t *val)
 {
     switch(val->type) {
@@ -1615,6 +1623,27 @@ static HRESULT interp_memberid(exec_ctx_t *ctx)
     }
 
     return stack_push_objid(ctx, obj, id);
+}
+
+/* ECMA-262 3rd Edition    11.2.1 */
+static HRESULT interp_refval(exec_ctx_t *ctx)
+{
+    IDispatch *disp;
+    VARIANT v;
+    DISPID id;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    disp = stack_top_objid(ctx, &id);
+    if(!disp)
+        return throw_reference_error(ctx->parser->script, &ctx->ei, JS_E_ILLEGAL_ASSIGN, NULL);
+
+    hres = disp_propget(ctx->parser->script, disp, id, &v, &ctx->ei, NULL/*FIXME*/);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push(ctx, &v);
 }
 
 static void free_dp(DISPPARAMS *dp)
@@ -3370,16 +3399,6 @@ HRESULT assign_rrshift_expression_eval(script_ctx_t *ctx, expression_t *_expr, D
     TRACE("\n");
 
     return assign_oper_eval(ctx, expr->expression1, expr->expression2, rshift2_eval, ei, ret);
-}
-
-/* ECMA-262 3rd Edition    11.13.2 */
-HRESULT assign_add_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
-{
-    binary_expression_t *expr = (binary_expression_t*)_expr;
-
-    TRACE("\n");
-
-    return assign_oper_eval(ctx, expr->expression1, expr->expression2, add_eval, ei, ret);
 }
 
 /* ECMA-262 3rd Edition    11.13.2 */

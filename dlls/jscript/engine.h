@@ -79,6 +79,7 @@ typedef struct _func_stack {
     X(throw,      0, ARG_UINT,   0)        \
     X(tonum,      1, 0,0)                  \
     X(tree,       1, ARG_EXPR,   0)        \
+    X(refval,     1, 0,0)                  \
     X(ret,        0, 0,0)                  \
     X(sub,        1, 0,0)                  \
     X(void,       1, 0,0)                  \
@@ -574,7 +575,6 @@ HRESULT right2_shift_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_
 HRESULT assign_lshift_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT assign_rshift_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT assign_rrshift_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
-HRESULT assign_add_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT assign_sub_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT assign_mul_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT assign_div_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
