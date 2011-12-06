@@ -47,13 +47,15 @@ static HRESULT navigate_anchor(HTMLAnchorElement *This)
     nsresult nsres;
     HRESULT hres = E_FAIL;
 
+    static const WCHAR _selfW[] = {'_','s','e','l','f',0};
+
     nsAString_Init(&target_str, NULL);
     nsres = nsIDOMHTMLAnchorElement_GetTarget(This->nsanchor, &target_str);
     if(NS_SUCCEEDED(nsres)) {
         const PRUnichar *target;
 
         nsAString_GetData(&target_str, &target);
-        if(*target) {
+        if(*target && strcmpiW(target, _selfW)) {
             FIXME("Navigating to target %s is not implemented\n", debugstr_w(target));
             nsAString_Finish(&target_str);
             return S_OK;
