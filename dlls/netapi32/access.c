@@ -876,39 +876,6 @@ NET_API_STATUS WINAPI NetUserModalsGet(
     return NERR_Success;
 }
 
-static int fork_smbpasswd( char * const argv[], pid_t *pid )
-{
-#ifdef HAVE_FORK
-    int pipe_out[2];
-
-    if (pipe( pipe_out ) == -1) return -1;
-    fcntl( pipe_out[0], F_SETFD, FD_CLOEXEC );
-    fcntl( pipe_out[1], F_SETFD, FD_CLOEXEC );
-
-    switch ((*pid = fork()))
-    {
-    case -1:
-        close( pipe_out[0] );
-        close( pipe_out[1] );
-        return -1;
-    case 0:
-        dup2( pipe_out[0], 0 );
-        close( pipe_out[0] );
-        close( pipe_out[1] );
-        execvp( "smbpasswd", argv );
-        ERR( "can't execute smbpasswd, is it installed?\n" );
-        _exit(1);
-    default:
-        close( pipe_out[0] );
-        break;
-    }
-    return pipe_out[1];
-#else
-    ERR( "no fork support on this platform\n" );
-    return -1;
-#endif
-}
-
 static char *strdup_unixcp( const WCHAR *str )
 {
     char *ret;
@@ -921,20 +888,32 @@ static char *strdup_unixcp( const WCHAR *str )
 static NET_API_STATUS change_password_smb( LPCWSTR domainname, LPCWSTR username,
     LPCWSTR oldpassword, LPCWSTR newpassword )
 {
+#ifdef HAVE_FORK
     NET_API_STATUS ret = NERR_Success;
     static char option_silent[] = "-s";
     static char option_user[] = "-U";
     static char option_remote[] = "-r";
     static char smbpasswd[] = "smbpasswd";
-    int pipe_out;
-    pid_t pid;
-    char *server = NULL, *user, *argv[7], *old, *new = NULL;
+    int pipe_out[2];
+    pid_t pid, wret;
+    int status;
+    char *server = NULL, *user, *argv[7], *old = NULL, *new = NULL;
 
     if (domainname && !(server = strdup_unixcp( domainname ))) return ERROR_OUTOFMEMORY;
     if (!(user = strdup_unixcp( username )))
     {
-        HeapFree( GetProcessHeap(), 0, server );
-        return ERROR_OUTOFMEMORY;
+        ret = ERROR_OUTOFMEMORY;
+        goto end;
+    }
+    if (!(old = strdup_unixcp( oldpassword )))
+    {
+        ret = ERROR_OUTOFMEMORY;
+        goto end;
+    }
+    if (!(new = strdup_unixcp( newpassword )))
+    {
+        ret = ERROR_OUTOFMEMORY;
+        goto end;
     }
     argv[0] = smbpasswd;
     argv[1] = option_silent;
@@ -948,48 +927,57 @@ static NET_API_STATUS change_password_smb( LPCWSTR domainname, LPCWSTR username,
     }
     else argv[4] = NULL;
 
-    pipe_out = fork_smbpasswd( argv, &pid );
-    HeapFree( GetProcessHeap(), 0, server );
-    HeapFree( GetProcessHeap(), 0, user );
-    if (pipe_out == -1) return NERR_InternalError;
+    if (pipe( pipe_out ) == -1)
+    {
+        ret = NERR_InternalError;
+        goto end;
+    }
+    fcntl( pipe_out[0], F_SETFD, FD_CLOEXEC );
+    fcntl( pipe_out[1], F_SETFD, FD_CLOEXEC );
 
-    if (!(old = strdup_unixcp( oldpassword )))
+    switch ((pid = fork()))
     {
-        ret = ERROR_OUTOFMEMORY;
+    case -1:
+        close( pipe_out[0] );
+        close( pipe_out[1] );
+        ret = NERR_InternalError;
         goto end;
+    case 0:
+        dup2( pipe_out[0], 0 );
+        close( pipe_out[0] );
+        close( pipe_out[1] );
+        execvp( "smbpasswd", argv );
+        ERR( "can't execute smbpasswd, is it installed?\n" );
+        _exit(1);
+    default:
+        close( pipe_out[0] );
+        break;
     }
-    if (!(new = strdup_unixcp( newpassword )))
-    {
-        ret = ERROR_OUTOFMEMORY;
-        goto end;
-    }
-    write( pipe_out, old, strlen( old ) );
-    write( pipe_out, "\n", 1 );
-    write( pipe_out, new, strlen( new ) );
-    write( pipe_out, "\n", 1 );
-    write( pipe_out, new, strlen( new ) );
-    write( pipe_out, "\n", 1 );
+    write( pipe_out[1], old, strlen( old ) );
+    write( pipe_out[1], "\n", 1 );
+    write( pipe_out[1], new, strlen( new ) );
+    write( pipe_out[1], "\n", 1 );
+    write( pipe_out[1], new, strlen( new ) );
+    write( pipe_out[1], "\n", 1 );
+    close( pipe_out[1] );
+
+    do {
+        wret = waitpid(pid, &status, 0);
+    } while (wret < 0 && errno == EINTR);
+
+    if (ret == NERR_Success && (wret < 0 || !WIFEXITED(status) || WEXITSTATUS(status)))
+        ret = NERR_InternalError;
 
 end:
-    close( pipe_out );
-
-#ifdef HAVE_FORK
-    {
-        pid_t wret;
-        int status;
-
-        do {
-            wret = waitpid(pid, &status, 0);
-        } while (wret < 0 && errno == EINTR);
-        if (ret == NERR_Success &&
-            (wret < 0 || !WIFEXITED(status) || WEXITSTATUS(status)))
-            ret = NERR_InternalError;
-    }
-#endif
-
+    HeapFree( GetProcessHeap(), 0, server );
+    HeapFree( GetProcessHeap(), 0, user );
     HeapFree( GetProcessHeap(), 0, old );
     HeapFree( GetProcessHeap(), 0, new );
     return ret;
+#else
+    ERR( "no fork support on this platform\n" );
+    return NERR_InternalError;
+#endif
 }
 
 /******************************************************************************
