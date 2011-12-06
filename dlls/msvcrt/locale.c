@@ -603,6 +603,9 @@ void free_locinfo(MSVCRT_pthreadlocinfo locinfo)
     if(!locinfo)
         return;
 
+    if(InterlockedDecrement(&locinfo->refcount))
+        return;
+
     for(i=MSVCRT_LC_MIN+1; i<=MSVCRT_LC_MAX; i++) {
         MSVCRT_free(locinfo->lc_category[i].locale);
         MSVCRT_free(locinfo->lc_category[i].refcount);
@@ -640,7 +643,24 @@ void free_mbcinfo(MSVCRT_pthreadmbcinfo mbcinfo)
     if(!mbcinfo)
         return;
 
+    if(InterlockedDecrement(&mbcinfo->refcount))
+        return;
+
     MSVCRT_free(mbcinfo);
+}
+
+/* _get_current_locale - not exported in native msvcrt */
+MSVCRT__locale_t CDECL MSVCRT__get_current_locale(void)
+{
+    MSVCRT__locale_t loc = MSVCRT_malloc(sizeof(MSVCRT__locale_tstruct));
+    if(!loc)
+        return NULL;
+
+    loc->locinfo = get_locinfo();
+    loc->mbcinfo = get_mbcinfo();
+    InterlockedIncrement(&loc->locinfo->refcount);
+    InterlockedIncrement(&loc->mbcinfo->refcount);
+    return loc;
 }
 
 /* _free_locale - not exported in native msvcrt */
@@ -747,6 +767,8 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
     }
 
     memset(loc->locinfo, 0, sizeof(MSVCRT_threadlocinfo));
+    loc->locinfo->refcount = 1;
+    loc->mbcinfo->refcount = 1;
 
     loc->locinfo->lconv = MSVCRT_malloc(sizeof(struct MSVCRT_lconv));
     if(!loc->locinfo->lconv) {
@@ -761,8 +783,6 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
         MSVCRT__free_locale(loc);
         return NULL;
     }
-
-    loc->locinfo->refcount = 1;
 
     if(lcid[MSVCRT_LC_COLLATE] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_COLLATE)) {
         if(update_threadlocinfo_category(lcid[MSVCRT_LC_COLLATE], loc, MSVCRT_LC_COLLATE)) {

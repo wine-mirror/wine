@@ -1490,6 +1490,7 @@
 @ cdecl -arch=i386 __control87_2(long long ptr ptr)
 @ cdecl _configthreadlocale(long)
 @ cdecl _create_locale(long str) MSVCRT__create_locale
+@ cdecl _get_current_locale() MSVCRT__get_current_locale
 @ cdecl _dupenv_s(ptr ptr str)
 @ cdecl _free_locale(ptr) MSVCRT__free_locale
 @ cdecl _get_invalid_parameter_handler()
