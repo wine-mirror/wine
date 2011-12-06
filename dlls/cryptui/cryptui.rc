@@ -173,6 +173,277 @@ STRINGTABLE
     IDS_EXPORT_PRIVATE_KEY_NON_EXPORTABLE "Note: The private  key for this certificate is not exportable."
 }
 
+IDD_GENERAL DIALOG 0, 0, 255, 236
+CAPTION "General"
+STYLE WS_VISIBLE
+FONT 8, "MS Shell Dlg"
+BEGIN
+  CONTROL "", -1, "Static", WS_BORDER|SS_WHITERECT, 6,10,241,200
+  CONTROL "", IDC_CERTIFICATE_ICON,"RichEdit20W", ES_READONLY|WS_DISABLED,8,11,26,26
+  CONTROL "", IDC_CERTIFICATE_INFO,"RichEdit20W", ES_READONLY|WS_DISABLED,34,11,212,26
+  CONTROL "", -1, "Static", SS_BLACKFRAME, 16,37,222,1
+  CONTROL "", IDC_CERTIFICATE_STATUS,"RichEdit20W", ES_READONLY|ES_MULTILINE,8,38,238,78
+  CONTROL "", -1, "Static", SS_BLACKFRAME, 16,116,222,1
+  CONTROL "", IDC_CERTIFICATE_NAMES,"RichEdit20W", ES_READONLY|ES_MULTILINE|WS_DISABLED,8,118,238,90
+  PUSHBUTTON "&Install Certificate...", IDC_ADDTOSTORE,53,216,95,14
+  PUSHBUTTON "Issuer &Statement", IDC_ISSUERSTATEMENT,152,216,95,14
+END
+
+IDD_DETAIL DIALOG 0, 0, 255, 236
+CAPTION "Details"
+STYLE WS_VISIBLE
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "&Show:", -1, 6,12,40,14
+  COMBOBOX IDC_DETAIL_SELECT, 48,10,100,14, CBS_DROPDOWNLIST|WS_BORDER|WS_VSCROLL|WS_TABSTOP
+  CONTROL "", IDC_DETAIL_LIST, "SysListView32",
+    LVS_REPORT|LVS_SINGLESEL|WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_BORDER, 6,28,241,100
+  CONTROL "", IDC_DETAIL_VALUE, "RichEdit20W", ES_READONLY|ES_MULTILINE|WS_TABSTOP, 6,136,241,70
+  PUSHBUTTON "&Edit Properties...", IDC_EDITPROPERTIES,53,216,95,14
+  PUSHBUTTON "&Copy to File...", IDC_EXPORT,152,216,95,14
+END
+
+IDD_HIERARCHY DIALOG 0, 0, 255, 236
+CAPTION "Certification Path"
+STYLE WS_VISIBLE
+FONT 8, "MS Shell Dlg"
+BEGIN
+  GROUPBOX "Certification &path", -1,6,10,245,165, BS_GROUPBOX
+  CONTROL "",IDC_CERTPATH, "SysTreeView32", TVS_HASLINES|WS_BORDER,
+    13,22,231,130
+  PUSHBUTTON "&View Certificate", IDC_VIEWCERTIFICATE,155,156,90,14
+  LTEXT "Certificate &status:", IDC_CERTIFICATESTATUS,6,183,200,14
+  CONTROL "", IDC_CERTIFICATESTATUSTEXT,"RichEdit20W",
+    WS_BORDER|ES_READONLY|ES_MULTILINE|WS_DISABLED,6,195,245,36
+END
+
+IDD_USERNOTICE DIALOG 0, 0, 255, 256
+CAPTION "Disclaimer"
+STYLE WS_VISIBLE
+FONT 8, "MS Shell Dlg"
+BEGIN
+  CONTROL "", IDC_USERNOTICE,"RichEdit20W",
+    WS_BORDER|ES_READONLY|ES_MULTILINE|WS_DISABLED,6,10,241,200
+  PUSHBUTTON "Close", IDOK,73,216,85,14
+  PUSHBUTTON "More &Info", IDC_CPS,162,216,85,14
+END
+
+IDD_CERT_PROPERTIES_GENERAL DIALOG 0, 0, 255, 236
+CAPTION "General"
+STYLE WS_VISIBLE
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "&Friendly name:", -1, 6,14,60,14
+  EDITTEXT IDC_FRIENDLY_NAME, 70,12,181,14, ES_AUTOHSCROLL|WS_TABSTOP
+  LTEXT "&Description:", -1, 6,32,60,14
+  EDITTEXT IDC_DESCRIPTION, 70,30,181,14, ES_AUTOVSCROLL|ES_MULTILINE|WS_TABSTOP|WS_VSCROLL
+  GROUPBOX "Certificate purposes", -1,6,48,245,185, BS_GROUPBOX
+  AUTORADIOBUTTON "&Enable all purposes for this certificate",
+    IDC_ENABLE_ALL_PURPOSES, 12,58,230,14, BS_AUTORADIOBUTTON|WS_TABSTOP
+  AUTORADIOBUTTON "D&isable all purposes for this certificate",
+    IDC_DISABLE_ALL_PURPOSES, 12,70,230,14, BS_AUTORADIOBUTTON
+  AUTORADIOBUTTON "Enable &only the following purposes for this certificate:",
+    IDC_ENABLE_SELECTED_PURPOSES, 12,82,230,14, BS_AUTORADIOBUTTON
+  CONTROL "", IDC_CERTIFICATE_USAGES,"SysListView32",
+    LVS_REPORT|LVS_NOCOLUMNHEADER|LVS_SINGLESEL|WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_BORDER,
+    24,100,220,106
+  PUSHBUTTON "Add &Purpose...", IDC_ADD_PURPOSE,174,212,70,14
+END
+
+IDD_ADD_CERT_PURPOSE DIALOG 0,0,200,68
+CAPTION "Add Purpose"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Add the object identifier (OID) for the certificate purpose you wish to add:",
+    -1, 6,6,190,28
+  EDITTEXT IDC_NEW_PURPOSE, 6,28,190,14, ES_AUTOVSCROLL|ES_MULTILINE|WS_TABSTOP|WS_VSCROLL
+  PUSHBUTTON "OK", IDOK, 33,48,60,14
+  PUSHBUTTON "Cancel", IDCANCEL, 100,48,60,14
+END
+
+IDD_SELECT_STORE DIALOG 0,0,200,136
+CAPTION "Select Certificate Store"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Select the certificate store you want to use:", IDC_STORE_TEXT, 6,6,190,28
+  CONTROL "",IDC_STORE_LIST, "SysTreeView32", TVS_HASLINES|WS_BORDER|WS_TABSTOP,
+    6,28,188,70
+  CHECKBOX "&Show physical stores", IDC_SHOW_PHYSICAL_STORES, 6,102,180,14, BS_AUTOCHECKBOX|WS_TABSTOP
+  PUSHBUTTON "OK", IDOK, 90,118,50,14, BS_DEFPUSHBUTTON
+  PUSHBUTTON "Cancel", IDCANCEL, 144,118,50,14
+END
+
+IDD_IMPORT_WELCOME DIALOG 0,0,317,143
+CAPTION "Certificate Import Wizard"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Welcome to the Certificate Import Wizard", IDC_IMPORT_TITLE, 115,7,195,30
+  LTEXT "This wizard helps you import certificates, certificate revocation lists, and certificate trust lists from a file to a certificate store.\n\n\
+A certificate can be used to identify you or the computer with which you are communicating.  It can also be used for authentication, and to sign messages.  Certificate stores are collections of certificates, certificate revocation lists, and certificate trust lists.\n\n\
+To continue, click Next.",
+    -1, 115,40,195,120
+END
+
+IDD_IMPORT_FILE DIALOG 0,0,317,178
+CAPTION "Certificate Import Wizard"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "&File name:", -1, 21,1,195,10
+  EDITTEXT IDC_IMPORT_FILENAME, 21,11,208,14, ES_AUTOHSCROLL|WS_TABSTOP
+  PUSHBUTTON "B&rowse...", IDC_IMPORT_BROWSE_FILE, 236,11,60,14
+  LTEXT "Note:  The following file formats may contain more than one certificate, certificate revocation list, or certificate trust list:",
+    -1, 21,30,265,16
+  LTEXT "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)",
+    -1, 31,53,265,10
+  LTEXT "Personal Information Exchange/PKCS #12 (.pfx, .p12)",
+    -1, 31,68,265,10
+  LTEXT "Microsoft Serialized Certificate Store (.sst)",
+    -1, 31,83,265,10
+END
+
+IDD_IMPORT_STORE DIALOG 0,0,317,143
+CAPTION "Certificate Import Wizard"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Wine can automatically select the certificate store, or you can specify a location for the certificates.",
+    -1, 21,1,220,25
+  AUTORADIOBUTTON "&Automatically select certificate store",
+    IDC_IMPORT_AUTO_STORE, 31,28,220,12, BS_AUTORADIOBUTTON|WS_TABSTOP
+  AUTORADIOBUTTON "&Place all certificates in the following store:",
+    IDC_IMPORT_SPECIFY_STORE, 31,42,220,12, BS_AUTORADIOBUTTON
+  EDITTEXT IDC_IMPORT_STORE, 44,61,185,14, ES_READONLY
+  PUSHBUTTON "B&rowse...", IDC_IMPORT_BROWSE_STORE, 236,61,60,14
+END
+
+IDD_IMPORT_FINISH DIALOG 0,0,317,178
+CAPTION "Certificate Import Wizard"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Completing the Certificate Import Wizard", IDC_IMPORT_TITLE,
+    115,1,195,40
+  LTEXT "You have successfully completed the Certificate Import Wizard.",
+    -1, 115,33,195,24
+  LTEXT "You have specified the following settings:",
+    -1, 115,57,195,12
+  CONTROL "", IDC_IMPORT_SETTINGS, "SysListView32",
+    LVS_REPORT|LVS_NOCOLUMNHEADER|LVS_SINGLESEL|WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_BORDER,
+    115,67,174,100
+END
+
+IDD_CERT_MGR DIALOG 0,0,335,270
+CAPTION "Certificates"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "I&ntended purpose:", -1, 7,9,100,12
+  COMBOBOX IDC_MGR_PURPOSE_SELECTION, 83,7,245,14, CBS_DROPDOWNLIST|WS_BORDER|WS_VSCROLL|WS_TABSTOP
+  CONTROL "", IDC_MGR_STORES, "SysTabControl32", WS_CLIPSIBLINGS|WS_TABSTOP, 7,25,321,140
+  CONTROL "", IDC_MGR_CERTS, "SysListView32", LVS_REPORT|WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_BORDER, 15,46,305,111
+  PUSHBUTTON "&Import...", IDC_MGR_IMPORT, 7,172,65,14
+  PUSHBUTTON "&Export...", IDC_MGR_EXPORT, 76,172,65,14, WS_DISABLED
+  PUSHBUTTON "&Remove", IDC_MGR_REMOVE, 145,172,65,14, WS_DISABLED
+  PUSHBUTTON "&Advanced...", IDC_MGR_ADVANCED, 263,172,65,14
+  GROUPBOX "Certificate intended purposes", -1,7,194,321,47, BS_GROUPBOX
+  LTEXT "", IDC_MGR_PURPOSES, 13,206,252,32
+  PUSHBUTTON "&View", IDC_MGR_VIEW, 269,218,51,14, WS_DISABLED
+  PUSHBUTTON "&Close", IDCANCEL, 277,249,51,14, BS_DEFPUSHBUTTON
+END
+
+IDD_CERT_MGR_ADVANCED DIALOG 0,0,248,176
+CAPTION "Advanced Options"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  GROUPBOX "Certificate purpose", -1, 7,7,234,141, BS_GROUPBOX
+  LTEXT "Select one or more purposes to be listed when Advanced Purposes is selected.",
+    -1, 14,18,220,16
+  LTEXT "&Certificate purposes:", -1, 14,41,90,12, WS_TABSTOP
+  CONTROL "", IDC_CERTIFICATE_USAGES,"SysListView32",
+    LVS_REPORT|LVS_NOCOLUMNHEADER|LVS_SINGLESEL|WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_BORDER,
+    14,51,220,90
+  PUSHBUTTON "OK", IDOK, 132,155,51,14, BS_DEFPUSHBUTTON
+  PUSHBUTTON "Cancel", IDCANCEL, 190,155,51,14
+END
+
+IDD_EXPORT_WELCOME DIALOG 0,0,317,143
+CAPTION "Certificate Export Wizard"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Welcome to the Certificate Export Wizard", IDC_EXPORT_TITLE, 115,7,195,30
+  LTEXT "This wizard helps you export certificates, certificate revocation lists, and certificate trust lists from a certificate store to a file.\n\n\
+A certificate can be used to identify you or the computer with which you are communicating.  It can also be used for authentication, and to sign messages.  Certificate stores are collections of certificates, certificate revocation lists, and certificate trust lists.\n\n\
+To continue, click Next.",
+    -1, 115,40,195,120
+END
+
+IDD_EXPORT_PRIVATE_KEY DIALOG 0,0,317,143
+CAPTION "Certificate Export Wizard"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "If you choose to export the private key, you will be prompted for a password to protect the private key on a later page.", -1, 21,1,195,25
+  LTEXT "Do you wish to export the private key?", -1, 21,27,195,10
+  AUTORADIOBUTTON "&Yes, export the private key",
+    IDC_EXPORT_PRIVATE_KEY_YES, 31,36,200,12, BS_AUTORADIOBUTTON|WS_TABSTOP
+  AUTORADIOBUTTON "N&o, do not export the private key",
+    IDC_EXPORT_PRIVATE_KEY_NO, 31,48,200,12, BS_AUTORADIOBUTTON
+  LTEXT "", IDC_EXPORT_PRIVATE_KEY_UNAVAILABLE, 21,60,200,24
+END
+
+IDD_EXPORT_PASSWORD DIALOG 0,0,317,143
+CAPTION "Certificate Export Wizard"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "&Password:", -1, 21,1,195,10
+  EDITTEXT IDC_EXPORT_PASSWORD, 21,11,208,14, ES_AUTOHSCROLL|WS_TABSTOP
+  LTEXT "&Confirm password:", -1, 21,35,195,10
+  EDITTEXT IDC_EXPORT_PASSWORD_CONFIRM, 21,45,208,14, ES_AUTOHSCROLL|WS_TABSTOP
+END
+
+IDD_EXPORT_FORMAT DIALOG 0,0,317,143
+CAPTION "Certificate Export Wizard"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Select the format you want to use:", -1, 21,1,195,10
+  AUTORADIOBUTTON "&DER-encoded X.509 (.cer)",
+    IDC_EXPORT_FORMAT_DER, 31,18,280,12, BS_AUTORADIOBUTTON|WS_TABSTOP
+  AUTORADIOBUTTON "Ba&se64-encoded X.509 (.cer):",
+    IDC_EXPORT_FORMAT_BASE64, 31,30,280,12, BS_AUTORADIOBUTTON
+  AUTORADIOBUTTON "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)",
+    IDC_EXPORT_FORMAT_CMS, 31,42,280,12, BS_AUTORADIOBUTTON
+  CHECKBOX "&Include all certificates in the certification path if possible",
+    IDC_EXPORT_CMS_INCLUDE_CHAIN, 44,57,280,8, BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED
+  AUTORADIOBUTTON "&Personal Information Exchange/PKCS #12 (.pfx)",
+    IDC_EXPORT_FORMAT_PFX, 31,72,280,12, BS_AUTORADIOBUTTON|WS_DISABLED
+  CHECKBOX "Incl&ude all certificates in the certification path if possible",
+    IDC_EXPORT_PFX_INCLUDE_CHAIN, 44,87,280,8, BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED
+  CHECKBOX "&Enable strong encryption",
+    IDC_EXPORT_PFX_STRONG_ENCRYPTION, 44,102,280,8, BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED
+  CHECKBOX "Delete the private &key if the export is successful",
+    IDC_EXPORT_PFX_DELETE_PRIVATE_KEY, 44,117,280,8, BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED
+END
+
+IDD_EXPORT_FILE DIALOG 0,0,317,143
+CAPTION "Certificate Export Wizard"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "&File name:", -1, 21,1,195,10
+  EDITTEXT IDC_EXPORT_FILENAME, 21,11,208,14, ES_AUTOHSCROLL|WS_TABSTOP
+  PUSHBUTTON "B&rowse...", IDC_EXPORT_BROWSE_FILE, 236,11,60,14
+END
+
+IDD_EXPORT_FINISH DIALOG 0,0,317,178
+CAPTION "Certificate Export Wizard"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Completing the Certificate Export Wizard", IDC_EXPORT_TITLE,
+    115,1,195,40
+  LTEXT "You have successfully completed the Certificate Export Wizard.",
+    -1, 115,33,195,24
+  LTEXT "You have specified the following settings:",
+    -1, 115,57,195,12
+  CONTROL "", IDC_EXPORT_SETTINGS, "SysListView32",
+    LVS_REPORT|LVS_NOCOLUMNHEADER|LVS_SINGLESEL|WS_CHILD|WS_VISIBLE|WS_TABSTOP|WS_BORDER,
+    115,67,174,100
+END
+
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /* @makedep: smallicons.bmp */

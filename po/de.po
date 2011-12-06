@@ -47,8 +47,8 @@ msgstr "&Informationen..."
 msgid "&Modify..."
 msgstr "&Ändern..."
 
-#: appwiz.rc:66 appwiz.rc:42 msacm32.rc:37 winecfg.rc:202 winecfg.rc:239
-#: wordpad.rc:245
+#: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:202
+#: winecfg.rc:239 wordpad.rc:245
 msgid "&Remove"
 msgstr "&Entfernen"
 
@@ -56,19 +56,19 @@ msgstr "&Entfernen"
 msgid "Support Information"
 msgstr "Support Information"
 
-#: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 credui.rc:49 dinput.rc:43
-#: ieframe.rc:84 localui.rc:41 localui.rc:54 mpr.rc:46 msacm32.rc:50
-#: mshtml.rc:45 mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87
-#: serialui.rc:38 setupapi.rc:56 shell32.rc:286 shell32.rc:310 shell32.rc:332
-#: shell32.rc:350 shlwapi.rc:41 user32.rc:77 user32.rc:95 wininet.rc:48
-#: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:122 oleview.rc:159
-#: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
-#: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
-#: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
-#: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
-#: winefile.rc:134 winefile.rc:157 winefile.rc:187 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
-#: wordpad.rc:246
+#: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 credui.rc:49 cryptui.rc:260
+#: cryptui.rc:272 cryptui.rc:362 dinput.rc:43 ieframe.rc:84 localui.rc:41
+#: localui.rc:54 mpr.rc:46 msacm32.rc:50 mshtml.rc:45 mshtml.rc:55
+#: msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87 serialui.rc:38 setupapi.rc:56
+#: shell32.rc:286 shell32.rc:310 shell32.rc:332 shell32.rc:350 shlwapi.rc:41
+#: user32.rc:77 user32.rc:95 wininet.rc:48 wininet.rc:68 winspool.rc:39
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
+#: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
+#: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
+#: regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216
+#: winecfg.rc:226 wineconsole.rc:131 winefile.rc:134 winefile.rc:157
+#: winefile.rc:187 winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204
+#: wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -137,18 +137,18 @@ msgid "&Install"
 msgstr "&Installieren"
 
 #: appwiz.rc:107 avifil32.rc:52 browseui.rc:37 comctl32.rc:53 comctl32.rc:68
-#: credui.rc:50 dinput.rc:44 ieframe.rc:85 inetcpl.rc:78 localui.rc:42
-#: localui.rc:55 mpr.rc:47 msacm32.rc:51 mshtml.rc:46 mshtml.rc:56
-#: msvfw32.rc:34 oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39
-#: setupapi.rc:57 shell32.rc:287 shell32.rc:311 shell32.rc:322 shell32.rc:351
-#: shlwapi.rc:42 user32.rc:78 user32.rc:96 wininet.rc:49 wininet.rc:69
-#: winspool.rc:40 notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104
-#: progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197
-#: progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285
-#: regedit.rc:298 regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31
-#: winecfg.rc:217 winecfg.rc:227 wineconsole.rc:132 winefile.rc:135
-#: winefile.rc:158 winefile.rc:188 winemine.rc:93 wordpad.rc:205
-#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: credui.rc:50 cryptui.rc:261 cryptui.rc:273 cryptui.rc:363 dinput.rc:44
+#: ieframe.rc:85 inetcpl.rc:78 localui.rc:42 localui.rc:55 mpr.rc:47
+#: msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34 oledlg.rc:56
+#: oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57 shell32.rc:287
+#: shell32.rc:311 shell32.rc:322 shell32.rc:351 shlwapi.rc:42 user32.rc:78
+#: user32.rc:96 wininet.rc:49 wininet.rc:69 winspool.rc:40 notepad.rc:123
+#: oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140
+#: progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245
+#: regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311
+#: taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
+#: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -311,8 +311,8 @@ msgstr "&Fertig"
 msgid "Customize Toolbar"
 msgstr "Toolbar einrichten"
 
-#: comctl32.rc:81 ieframe.rc:40 oleview.rc:80 oleview.rc:185 oleview.rc:198
-#: oleview.rc:210 taskmgr.rc:139
+#: comctl32.rc:81 cryptui.rc:348 ieframe.rc:40 oleview.rc:80 oleview.rc:185
+#: oleview.rc:198 oleview.rc:210 taskmgr.rc:139
 msgid "&Close"
 msgstr "&Schliessen"
 
@@ -361,7 +361,8 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Kein"
 
-#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54 wordpad.rc:169
+#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54
+#: wordpad.rc:169
 msgid "Close"
 msgstr "Schließen"
 
@@ -470,7 +471,7 @@ msgstr "Neuen Ordner anlegen"
 msgid "List"
 msgstr "Liste"
 
-#: comdlg32.rc:58
+#: comdlg32.rc:58 cryptui.rc:193
 msgid "Details"
 msgstr "Details"
 
@@ -784,7 +785,7 @@ msgstr "Drucken"
 msgid "&User name:"
 msgstr "&Benutzername:"
 
-#: credui.rc:45
+#: credui.rc:45 cryptui.rc:394
 msgid "&Password:"
 msgstr "&Kennwort:"
 
@@ -1691,6 +1692,330 @@ msgstr "Serienummer des Zertifikats="
 msgid "Notice Text="
 msgstr "Benachrichtigungstext="
 
+#: cryptui.rc:177 cryptui.rc:232 inetcpl.rc:43
+msgid "General"
+msgstr "Allgemein"
+
+#: cryptui.rc:188
+msgid "&Install Certificate..."
+msgstr "&Zertifikat installieren..."
+
+#: cryptui.rc:189
+msgid "Issuer &Statement"
+msgstr "Au&sstellererklärung"
+
+#: cryptui.rc:197
+msgid "&Show:"
+msgstr "&Anzeigen:"
+
+#: cryptui.rc:202
+msgid "&Edit Properties..."
+msgstr "&Eigenschaften bearbeiten..."
+
+#: cryptui.rc:203
+msgid "&Copy to File..."
+msgstr "In &Datei kopieren..."
+
+#: cryptui.rc:207
+msgid "Certification Path"
+msgstr "Zertifizierungspfad"
+
+#: cryptui.rc:211
+msgid "Certification &path"
+msgstr "&Zertifizierungspfad"
+
+#: cryptui.rc:214
+msgid "&View Certificate"
+msgstr "&Zertifikat anzeigen"
+
+#: cryptui.rc:215
+msgid "Certificate &status:"
+msgstr "Zertifizierungs&status:"
+
+#: cryptui.rc:221
+msgid "Disclaimer"
+msgstr "Haftungsausschluss"
+
+#: cryptui.rc:228
+msgid "More &Info"
+msgstr "weitere &Informationen"
+
+#: cryptui.rc:236
+msgid "&Friendly name:"
+msgstr "&Name:"
+
+#: cryptui.rc:238 progman.rc:151 progman.rc:167
+msgid "&Description:"
+msgstr "&Beschreibung:"
+
+#: cryptui.rc:240
+msgid "Certificate purposes"
+msgstr "Zertifikatszwecke"
+
+#: cryptui.rc:241
+msgid "&Enable all purposes for this certificate"
+msgstr "&Alle Zwecke für dieses Zertifikat aktivieren"
+
+#: cryptui.rc:243
+msgid "D&isable all purposes for this certificate"
+msgstr "A&lle Zwecke für dieses Zertifikat deaktivieren"
+
+#: cryptui.rc:245
+msgid "Enable &only the following purposes for this certificate:"
+msgstr "Nur &folgende Zwecke aktivieren:"
+
+#: cryptui.rc:250
+msgid "Add &Purpose..."
+msgstr "&Zweck hinzufügen..."
+
+#: cryptui.rc:254
+msgid "Add Purpose"
+msgstr "Zweck hinzufügen"
+
+#: cryptui.rc:257
+msgid ""
+"Add the object identifier (OID) for the certificate purpose you wish to add:"
+msgstr ""
+"Geben Sie die Objekt-ID (OID) für den Zertifikatszweck an, den Sie "
+"hinzufügen möchten:"
+
+#: cryptui.rc:265 cryptui.rc:66
+msgid "Select Certificate Store"
+msgstr "Zertifikatsspeicher wählen"
+
+#: cryptui.rc:268
+msgid "Select the certificate store you want to use:"
+msgstr "Zertifikatsspeicher wählen den Sie benutzen möchten:"
+
+#: cryptui.rc:271
+msgid "&Show physical stores"
+msgstr "&Physikalischen Speicher anzeigen"
+
+#: cryptui.rc:277 cryptui.rc:288 cryptui.rc:305 cryptui.rc:319 cryptui.rc:68
+msgid "Certificate Import Wizard"
+msgstr "Importassistent für die Zertifikatsverwaltung"
+
+#: cryptui.rc:280
+msgid "Welcome to the Certificate Import Wizard"
+msgstr "Willkommen"
+
+#: cryptui.rc:283
+#, fuzzy
+msgid ""
+"This wizard helps you import certificates, certificate revocation lists, and "
+"certificate trust lists from a file to a certificate store.\n"
+"\n"
+"A certificate can be used to identify you or the computer with which you are "
+"communicating.  It can also be used for authentication, and to sign "
+"messages.  Certificate stores are collections of certificates, certificate "
+"revocation lists, and certificate trust lists.\n"
+"\n"
+"To continue, click Next."
+msgstr ""
+"Ein Zertifikat dient zur Identifikation von Ihnen oder ihrem Computer. Es "
+"kann auch für die Authentifizierung und zum Unterzeichnen genutzt werden. "
+"Zertifikatsspeicher sind Sammlungen von Zertifikaten, Zertifikatssperrlisten "
+"und Zertifikatsvertrauenslisten."
+
+#: cryptui.rc:291 cryptui.rc:427
+msgid "&File name:"
+msgstr "&Dateiname:"
+
+#: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:306
+msgid "B&rowse..."
+msgstr "&Wählen"
+
+#: cryptui.rc:294
+msgid ""
+"Note:  The following file formats may contain more than one certificate, "
+"certificate revocation list, or certificate trust list:"
+msgstr ""
+"Hinweis: Es können mehrere Zertifikate in einer Datei folgender Formate "
+"gespeichert werden:"
+
+#: cryptui.rc:296
+msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
+msgstr "Syntaxstandard kryptografischer Meldungen /PKCS #7 Messages (.p7b)"
+
+#: cryptui.rc:298
+msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
+msgstr "Privater Informationsaustausch/PKCS #12 (.pfx, .p12)"
+
+#: cryptui.rc:300
+msgid "Microsoft Serialized Certificate Store (.sst)"
+msgstr "Microsoft Speicher serieller Zertifikate (.sst)"
+
+#: cryptui.rc:308
+msgid ""
+"Wine can automatically select the certificate store, or you can specify a "
+"location for the certificates."
+msgstr ""
+"Wine kann automatisch einen Zertifikatsspeicher wählen, oder Sie wählen "
+"einen aus."
+
+#: cryptui.rc:310
+msgid "&Automatically select certificate store"
+msgstr "A&utomatisch einen Zertifikatsspeicher wählen"
+
+#: cryptui.rc:312
+msgid "&Place all certificates in the following store:"
+msgstr "&Alle Zertifikate im folgendem Zertifikatsspeicher speichern:"
+
+#: cryptui.rc:322
+msgid "Completing the Certificate Import Wizard"
+msgstr "Fertigstellen des Assistenten"
+
+#: cryptui.rc:324
+msgid "You have successfully completed the Certificate Import Wizard."
+msgstr "Importvorgang ordnungsgemäß abgeschlossen."
+
+#: cryptui.rc:326 cryptui.rc:440
+msgid "You have specified the following settings:"
+msgstr "Sie haben folgende Einstellungen gewählt:"
+
+#: cryptui.rc:334 cryptui.rc:119
+msgid "Certificates"
+msgstr "Zertifikate"
+
+#: cryptui.rc:337
+msgid "I&ntended purpose:"
+msgstr "&Geplanter Zweck:"
+
+#: cryptui.rc:341
+msgid "&Import..."
+msgstr "&Importieren..."
+
+#: cryptui.rc:342 regedit.rc:109
+msgid "&Export..."
+msgstr "&Exportieren..."
+
+#: cryptui.rc:344
+msgid "&Advanced..."
+msgstr "&Erweitert..."
+
+#: cryptui.rc:345
+msgid "Certificate intended purposes"
+msgstr "Beabsichtigte Zwecke des Zertifikats"
+
+#: cryptui.rc:347 ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56
+#: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49
+#: wordpad.rc:66
+msgid "&View"
+msgstr "&Ansicht"
+
+#: cryptui.rc:352
+msgid "Advanced Options"
+msgstr "Erweiterte Optionen"
+
+#: cryptui.rc:355
+msgid "Certificate purpose"
+msgstr "Zertifikatszweck"
+
+#: cryptui.rc:356
+msgid ""
+"Select one or more purposes to be listed when Advanced Purposes is selected."
+msgstr ""
+"Wählen Sie mindestens einen Zweck, der als Erweitert aufgeführt werden soll."
+
+#: cryptui.rc:358
+msgid "&Certificate purposes:"
+msgstr "&Zertifikatszwecke:"
+
+#: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
+#: cryptui.rc:433 cryptui.rc:147
+msgid "Certificate Export Wizard"
+msgstr "Exportassistent für die Zertifikatsverwaltung"
+
+#: cryptui.rc:370
+msgid "Welcome to the Certificate Export Wizard"
+msgstr "Willkommen"
+
+#: cryptui.rc:373
+#, fuzzy
+msgid ""
+"This wizard helps you export certificates, certificate revocation lists, and "
+"certificate trust lists from a certificate store to a file.\n"
+"\n"
+"A certificate can be used to identify you or the computer with which you are "
+"communicating.  It can also be used for authentication, and to sign "
+"messages.  Certificate stores are collections of certificates, certificate "
+"revocation lists, and certificate trust lists.\n"
+"\n"
+"To continue, click Next."
+msgstr ""
+"Ein Zertifikat dient zur Identifikation von Ihnen oder ihrem Computer. Es "
+"kann auch für die Authentifizierung und zum Unterzeichnen genutzt werden. "
+"Zertifikatsspeicher sind Sammlungen von Zertifikaten, Zertifikatssperrlisten "
+"und Zertifikatsvertrauenslisten."
+
+#: cryptui.rc:381
+msgid ""
+"If you choose to export the private key, you will be prompted for a password "
+"to protect the private key on a later page."
+msgstr ""
+"Wenn Sie sich entscheiden den privaten Schlüssel zu exportieren, werden Sie "
+"später nach einem Passwort gefragt."
+
+#: cryptui.rc:382
+msgid "Do you wish to export the private key?"
+msgstr "Privaten Schlüssel exportieren?"
+
+#: cryptui.rc:383
+msgid "&Yes, export the private key"
+msgstr "&Ja, privaten Schlüssel exportieren"
+
+#: cryptui.rc:385
+msgid "N&o, do not export the private key"
+msgstr "&Nein, privaten Schlüssel nicht exportieren"
+
+#: cryptui.rc:396
+msgid "&Confirm password:"
+msgstr "Passwort &bestätigen:"
+
+#: cryptui.rc:404
+msgid "Select the format you want to use:"
+msgstr "Wählen Sie das gewünschte Format:"
+
+#: cryptui.rc:405
+msgid "&DER-encoded X.509 (.cer)"
+msgstr "&DER-codiertes X.509 (.cer)"
+
+#: cryptui.rc:407
+msgid "Ba&se64-encoded X.509 (.cer):"
+msgstr "B&ase64-codiertes X.509 (.cer):"
+
+#: cryptui.rc:409
+msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
+msgstr "&Syntaxstandard kryptografischer Meldungen/PKCS #7 Zertifikate (.p7b)"
+
+#: cryptui.rc:411
+msgid "&Include all certificates in the certification path if possible"
+msgstr "&Wenn möglich alle Zertifikate im Zertifizierungspfad einbeziehen"
+
+#: cryptui.rc:413
+msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
+msgstr "&Privater Informationsaustausch/PKCS #12 (.pfx)"
+
+#: cryptui.rc:415
+msgid "Incl&ude all certificates in the certification path if possible"
+msgstr "W&enn möglich alle Zertifikate im Zertifizierungspfad einbeziehen"
+
+#: cryptui.rc:417
+msgid "&Enable strong encryption"
+msgstr "&Verstärkte Sicherheit aktivieren"
+
+#: cryptui.rc:419
+msgid "Delete the private &key if the export is successful"
+msgstr "Priva&ten Schlüssel löschen wenn der Export erfolgreich war"
+
+#: cryptui.rc:436
+msgid "Completing the Certificate Export Wizard"
+msgstr "Fertigstellen des Assistenten"
+
+#: cryptui.rc:438
+msgid "You have successfully completed the Certificate Export Wizard."
+msgstr "Exportvorgang ordnungsgemäß abgeschlossen."
+
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
 msgstr "Zertifikat"
@@ -1852,17 +2177,9 @@ msgstr "Bitte geben Sie die OID im Format 1.2.3.4 an"
 msgid "The OID you entered already exists."
 msgstr "Die eingegebene OID existiert bereits."
 
-#: cryptui.rc:66
-msgid "Select Certificate Store"
-msgstr "Zertifikatsspeicher wählen"
-
 #: cryptui.rc:67
 msgid "Please select a certificate store."
 msgstr "Bitte wählen Sie einen Zertifikatsspeicher."
-
-#: cryptui.rc:68
-msgid "Certificate Import Wizard"
-msgstr "Importassistent für die Zertifikatsverwaltung"
 
 #: cryptui.rc:69
 msgid ""
@@ -2104,10 +2421,6 @@ msgstr "Sind Sie sicher, dass Sie dieses Zertifikat entfernen möchten?"
 msgid "Are you sure you want to remove these certificates?"
 msgstr "Sind Sie sicher, dass Sie diese Zertifikate entfernen möchten?"
 
-#: cryptui.rc:119
-msgid "Certificates"
-msgstr "Zertifikate"
-
 #: cryptui.rc:121
 msgid "Ensures the identity of a remote computer"
 msgstr "Garantiert die Identität eines entfernten Computers"
@@ -2145,10 +2458,6 @@ msgstr "Erlaubt es lokale Daten zu verschlüsseln"
 #: cryptui.rc:144
 msgid "Private Key Archival"
 msgstr "Private Schlüsselarchive"
-
-#: cryptui.rc:147
-msgid "Certificate Export Wizard"
-msgstr "Exportassistent für die Zertifikatsverwaltung"
 
 #: cryptui.rc:148
 msgid "Export Format"
@@ -2545,11 +2854,6 @@ msgstr "Dru&ckvorschau"
 msgid "&Properties"
 msgstr "&Eigenschaften"
 
-#: ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56 oleview.rc:58
-#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
-msgid "&View"
-msgstr "&Ansicht"
-
 #: ieframe.rc:44
 msgid "&Toolbars"
 msgstr "&Symbolleisten"
@@ -2598,10 +2902,6 @@ msgstr "Drucken..."
 #: ieframe.rc:73
 msgid "Address"
 msgstr "Adresse"
-
-#: inetcpl.rc:43
-msgid "General"
-msgstr "Allgemein"
 
 #: inetcpl.rc:46
 msgid " Home page "
@@ -10315,10 +10615,6 @@ msgstr "Kopiere Programm:"
 msgid "Program Group Attributes"
 msgstr "Programmgruppeneigenschaften"
 
-#: progman.rc:151 progman.rc:167
-msgid "&Description:"
-msgstr "&Beschreibung:"
-
 #: progman.rc:153
 msgid "&Group file:"
 msgstr "&Gruppendatei:"
@@ -10549,10 +10845,6 @@ msgstr "&Über Registry Editor"
 #: regedit.rc:88
 msgid "Modify Binary Data..."
 msgstr "Binäre Daten ändern..."
-
-#: regedit.rc:109
-msgid "&Export..."
-msgstr "&Exportieren..."
 
 #: regedit.rc:215
 msgid "Export registry"
@@ -12167,10 +12459,6 @@ msgstr " Shell-&Ordner "
 #: winecfg.rc:304
 msgid "&Link to:"
 msgstr "&Verknüpfe:"
-
-#: winecfg.rc:306
-msgid "B&rowse..."
-msgstr "&Wählen"
 
 #: winecfg.rc:31
 msgid "Libraries"

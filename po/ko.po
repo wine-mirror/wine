@@ -46,8 +46,8 @@ msgstr "지원  정보(&S)"
 msgid "&Modify..."
 msgstr "고치기(&M)..."
 
-#: appwiz.rc:66 appwiz.rc:42 msacm32.rc:37 winecfg.rc:202 winecfg.rc:239
-#: wordpad.rc:245
+#: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:202
+#: winecfg.rc:239 wordpad.rc:245
 msgid "&Remove"
 msgstr "제거(&R)"
 
@@ -55,19 +55,19 @@ msgstr "제거(&R)"
 msgid "Support Information"
 msgstr "지원 정보"
 
-#: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 credui.rc:49 dinput.rc:43
-#: ieframe.rc:84 localui.rc:41 localui.rc:54 mpr.rc:46 msacm32.rc:50
-#: mshtml.rc:45 mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87
-#: serialui.rc:38 setupapi.rc:56 shell32.rc:286 shell32.rc:310 shell32.rc:332
-#: shell32.rc:350 shlwapi.rc:41 user32.rc:77 user32.rc:95 wininet.rc:48
-#: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:122 oleview.rc:159
-#: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
-#: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
-#: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
-#: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
-#: winefile.rc:134 winefile.rc:157 winefile.rc:187 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
-#: wordpad.rc:246
+#: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 credui.rc:49 cryptui.rc:260
+#: cryptui.rc:272 cryptui.rc:362 dinput.rc:43 ieframe.rc:84 localui.rc:41
+#: localui.rc:54 mpr.rc:46 msacm32.rc:50 mshtml.rc:45 mshtml.rc:55
+#: msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87 serialui.rc:38 setupapi.rc:56
+#: shell32.rc:286 shell32.rc:310 shell32.rc:332 shell32.rc:350 shlwapi.rc:41
+#: user32.rc:77 user32.rc:95 wininet.rc:48 wininet.rc:68 winspool.rc:39
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
+#: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
+#: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
+#: regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216
+#: winecfg.rc:226 wineconsole.rc:131 winefile.rc:134 winefile.rc:157
+#: winefile.rc:187 winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204
+#: wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "확인"
 
@@ -135,18 +135,18 @@ msgid "&Install"
 msgstr "설치(&I)"
 
 #: appwiz.rc:107 avifil32.rc:52 browseui.rc:37 comctl32.rc:53 comctl32.rc:68
-#: credui.rc:50 dinput.rc:44 ieframe.rc:85 inetcpl.rc:78 localui.rc:42
-#: localui.rc:55 mpr.rc:47 msacm32.rc:51 mshtml.rc:46 mshtml.rc:56
-#: msvfw32.rc:34 oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39
-#: setupapi.rc:57 shell32.rc:287 shell32.rc:311 shell32.rc:322 shell32.rc:351
-#: shlwapi.rc:42 user32.rc:78 user32.rc:96 wininet.rc:49 wininet.rc:69
-#: winspool.rc:40 notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104
-#: progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197
-#: progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285
-#: regedit.rc:298 regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31
-#: winecfg.rc:217 winecfg.rc:227 wineconsole.rc:132 winefile.rc:135
-#: winefile.rc:158 winefile.rc:188 winemine.rc:93 wordpad.rc:205
-#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: credui.rc:50 cryptui.rc:261 cryptui.rc:273 cryptui.rc:363 dinput.rc:44
+#: ieframe.rc:85 inetcpl.rc:78 localui.rc:42 localui.rc:55 mpr.rc:47
+#: msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34 oledlg.rc:56
+#: oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57 shell32.rc:287
+#: shell32.rc:311 shell32.rc:322 shell32.rc:351 shlwapi.rc:42 user32.rc:78
+#: user32.rc:96 wininet.rc:49 wininet.rc:69 winspool.rc:40 notepad.rc:123
+#: oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140
+#: progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245
+#: regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311
+#: taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
+#: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "취소"
 
@@ -311,8 +311,8 @@ msgstr "종료"
 msgid "Customize Toolbar"
 msgstr "도구바 사용자 정의"
 
-#: comctl32.rc:81 ieframe.rc:40 oleview.rc:80 oleview.rc:185 oleview.rc:198
-#: oleview.rc:210 taskmgr.rc:139
+#: comctl32.rc:81 cryptui.rc:348 ieframe.rc:40 oleview.rc:80 oleview.rc:185
+#: oleview.rc:198 oleview.rc:210 taskmgr.rc:139
 msgid "&Close"
 msgstr "닫기(&C)"
 
@@ -361,7 +361,8 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "없음"
 
-#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54 wordpad.rc:169
+#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54
+#: wordpad.rc:169
 msgid "Close"
 msgstr "닫기"
 
@@ -470,7 +471,7 @@ msgstr "새 폴더 만들기"
 msgid "List"
 msgstr "목록"
 
-#: comdlg32.rc:58
+#: comdlg32.rc:58 cryptui.rc:193
 msgid "Details"
 msgstr "세부사항"
 
@@ -783,7 +784,7 @@ msgstr "인쇄"
 msgid "&User name:"
 msgstr "사용자 이름(&U):"
 
-#: credui.rc:45
+#: credui.rc:45 cryptui.rc:394
 msgid "&Password:"
 msgstr "암호(&P):"
 
@@ -1691,6 +1692,325 @@ msgstr "인증서 시리얼 번호="
 msgid "Notice Text="
 msgstr "공지 사항="
 
+#: cryptui.rc:177 cryptui.rc:232 inetcpl.rc:43
+msgid "General"
+msgstr "일반"
+
+#: cryptui.rc:188
+msgid "&Install Certificate..."
+msgstr "인증서 설치(&I)..."
+
+#: cryptui.rc:189
+msgid "Issuer &Statement"
+msgstr "발행자 설명(&S)"
+
+#: cryptui.rc:197
+msgid "&Show:"
+msgstr "표시(&S):"
+
+#: cryptui.rc:202
+msgid "&Edit Properties..."
+msgstr "속성 편집(&E)..."
+
+#: cryptui.rc:203
+msgid "&Copy to File..."
+msgstr "파일로 복사(&C)..."
+
+#: cryptui.rc:207
+msgid "Certification Path"
+msgstr "인증서 경로"
+
+#: cryptui.rc:211
+msgid "Certification &path"
+msgstr "인증서 경로(&P)"
+
+#: cryptui.rc:214
+msgid "&View Certificate"
+msgstr "인증서 보기(&V)"
+
+#: cryptui.rc:215
+msgid "Certificate &status:"
+msgstr "인증서 상태(&S):"
+
+#: cryptui.rc:221
+msgid "Disclaimer"
+msgstr "거부"
+
+#: cryptui.rc:228
+msgid "More &Info"
+msgstr "추가 정보(&I)"
+
+#: cryptui.rc:236
+msgid "&Friendly name:"
+msgstr "애칭(&F):"
+
+#: cryptui.rc:238 progman.rc:151 progman.rc:167
+msgid "&Description:"
+msgstr "설명(&D):"
+
+#: cryptui.rc:240
+msgid "Certificate purposes"
+msgstr "인증서 용도"
+
+#: cryptui.rc:241
+msgid "&Enable all purposes for this certificate"
+msgstr "인증서를 모든 용도로 사용 가능(&E)"
+
+#: cryptui.rc:243
+msgid "D&isable all purposes for this certificate"
+msgstr "인증서를 모든 용도로 사용하지 않음(&I)"
+
+#: cryptui.rc:245
+msgid "Enable &only the following purposes for this certificate:"
+msgstr "인증서를 오직 다음의 용도로만 사용(&O):"
+
+#: cryptui.rc:250
+msgid "Add &Purpose..."
+msgstr "용도 추가(&)..."
+
+#: cryptui.rc:254
+msgid "Add Purpose"
+msgstr "용도 추가"
+
+#: cryptui.rc:257
+msgid ""
+"Add the object identifier (OID) for the certificate purpose you wish to add:"
+msgstr "추가하고자 하는 인증서 용도의 객체 식별자(OID) 추가:"
+
+#: cryptui.rc:265 cryptui.rc:66
+msgid "Select Certificate Store"
+msgstr "인증서 저장소 선택"
+
+#: cryptui.rc:268
+msgid "Select the certificate store you want to use:"
+msgstr "사용하고자 하는 인증서 저장소를 선택하십시오:"
+
+#: cryptui.rc:271
+msgid "&Show physical stores"
+msgstr "물리적 저장소 보여주기(&S)"
+
+#: cryptui.rc:277 cryptui.rc:288 cryptui.rc:305 cryptui.rc:319 cryptui.rc:68
+msgid "Certificate Import Wizard"
+msgstr "인증서 가져오기 마법사"
+
+#: cryptui.rc:280
+msgid "Welcome to the Certificate Import Wizard"
+msgstr "인증서 가져오기 마법사에 온 것을 환영합니다"
+
+#: cryptui.rc:283
+#, fuzzy
+msgid ""
+"This wizard helps you import certificates, certificate revocation lists, and "
+"certificate trust lists from a file to a certificate store.\n"
+"\n"
+"A certificate can be used to identify you or the computer with which you are "
+"communicating.  It can also be used for authentication, and to sign "
+"messages.  Certificate stores are collections of certificates, certificate "
+"revocation lists, and certificate trust lists.\n"
+"\n"
+"To continue, click Next."
+msgstr ""
+"이 인증서는 당신이나 당신이 통신에 사용하는 컴퓨터를 신원보증하는 데 사용됩니"
+"다.  또한  메세지에 사인하고 인증하는 데도 사용됩니다. 인증서 보관소는 인증"
+"서, 인증서 파기 목록, 인증서 신뢰 목록의 저장소입니다."
+
+#: cryptui.rc:291 cryptui.rc:427
+msgid "&File name:"
+msgstr "파일 이름(&F):"
+
+#: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:306
+msgid "B&rowse..."
+msgstr "찾기(&R)..."
+
+#: cryptui.rc:294
+msgid ""
+"Note:  The following file formats may contain more than one certificate, "
+"certificate revocation list, or certificate trust list:"
+msgstr ""
+"주의:  이 파일 형식은 아마도 하나 이상의 인증서,인증서 파기 목록,인증서 신뢰 "
+"목록을 가지고 있을 수 있습니다:"
+
+#: cryptui.rc:296
+msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
+msgstr "암호화 메세지 문법 표준/PKCS #7 메시지 (.p7b)"
+
+#: cryptui.rc:298
+msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
+msgstr "개인 정보 교환/PKCS #12 (.pfx, .p12)"
+
+#: cryptui.rc:300
+msgid "Microsoft Serialized Certificate Store (.sst)"
+msgstr "Microsoft 연속 인증서 보관소 (.sst)"
+
+#: cryptui.rc:308
+msgid ""
+"Wine can automatically select the certificate store, or you can specify a "
+"location for the certificates."
+msgstr ""
+"Wine이 자동으로 인증서 저장소를 선택하거나, 아니면 직접 저장할 곳을 선택할 "
+"수 있습니다."
+
+#: cryptui.rc:310
+msgid "&Automatically select certificate store"
+msgstr "자동으로 인증서 저장소 선택(&A)"
+
+#: cryptui.rc:312
+msgid "&Place all certificates in the following store:"
+msgstr "다음 저장소에 모든 인증서 저장(&P):"
+
+#: cryptui.rc:322
+msgid "Completing the Certificate Import Wizard"
+msgstr "인증서 가져오기 마법사 마치는 중"
+
+#: cryptui.rc:324
+msgid "You have successfully completed the Certificate Import Wizard."
+msgstr "당신은 인증서 가져오기 마법사를 마치는데 성공했습니다."
+
+#: cryptui.rc:326 cryptui.rc:440
+msgid "You have specified the following settings:"
+msgstr "당신은 다음 설정을 지정했습니다:"
+
+#: cryptui.rc:334 cryptui.rc:119
+msgid "Certificates"
+msgstr "인증서"
+
+#: cryptui.rc:337
+msgid "I&ntended purpose:"
+msgstr "지정된 용도(&N):"
+
+#: cryptui.rc:341
+msgid "&Import..."
+msgstr "불러오기(&I)..."
+
+#: cryptui.rc:342 regedit.rc:109
+msgid "&Export..."
+msgstr "내보내기(&E)..."
+
+#: cryptui.rc:344
+msgid "&Advanced..."
+msgstr "추가(&A)..."
+
+#: cryptui.rc:345
+msgid "Certificate intended purposes"
+msgstr "인증서 지정 용도"
+
+#: cryptui.rc:347 ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56
+#: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49
+#: wordpad.rc:66
+msgid "&View"
+msgstr "보기(&V)"
+
+#: cryptui.rc:352
+msgid "Advanced Options"
+msgstr "추가 옵션"
+
+#: cryptui.rc:355
+msgid "Certificate purpose"
+msgstr "인증서 용도"
+
+#: cryptui.rc:356
+msgid ""
+"Select one or more purposes to be listed when Advanced Purposes is selected."
+msgstr "추가 용도가 선택되었을 때 나타나는 하나나 다수의 용도 선택."
+
+#: cryptui.rc:358
+msgid "&Certificate purposes:"
+msgstr "인증서 용도(&C):"
+
+#: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
+#: cryptui.rc:433 cryptui.rc:147
+msgid "Certificate Export Wizard"
+msgstr "인증서 내보내기 마법사"
+
+#: cryptui.rc:370
+msgid "Welcome to the Certificate Export Wizard"
+msgstr "인증서 내보내기 마법사에 오신 것을 환영합니다"
+
+#: cryptui.rc:373
+#, fuzzy
+msgid ""
+"This wizard helps you export certificates, certificate revocation lists, and "
+"certificate trust lists from a certificate store to a file.\n"
+"\n"
+"A certificate can be used to identify you or the computer with which you are "
+"communicating.  It can also be used for authentication, and to sign "
+"messages.  Certificate stores are collections of certificates, certificate "
+"revocation lists, and certificate trust lists.\n"
+"\n"
+"To continue, click Next."
+msgstr ""
+"이 인증서는 당신이나 당신이 통신에 사용하는 컴퓨터를 신원보증하는 데 사용됩니"
+"다.  또한  메세지에 사인하고 인증하는 데도 사용됩니다. 인증서 보관소는 인증"
+"서, 인증서 파기 목록, 인증서 신뢰 목록의 저장소입니다."
+
+#: cryptui.rc:381
+msgid ""
+"If you choose to export the private key, you will be prompted for a password "
+"to protect the private key on a later page."
+msgstr ""
+"당신이  개인 키를 내보내기를 선택하면, 당신은 다음 페이지에서 개인 키를 보호"
+"할 암호를 입력하게 될 것입니다."
+
+#: cryptui.rc:382
+msgid "Do you wish to export the private key?"
+msgstr "개인 키를 내보내기를 원합니까?"
+
+#: cryptui.rc:383
+msgid "&Yes, export the private key"
+msgstr "예(&Y), 개인 키 내보내기"
+
+#: cryptui.rc:385
+msgid "N&o, do not export the private key"
+msgstr "아니오(&O), 개인 키 안 내보내기"
+
+#: cryptui.rc:396
+msgid "&Confirm password:"
+msgstr "암호 확인(&C):"
+
+#: cryptui.rc:404
+msgid "Select the format you want to use:"
+msgstr "사용할 파일 형식 선택:"
+
+#: cryptui.rc:405
+msgid "&DER-encoded X.509 (.cer)"
+msgstr "&DER-암호화된 X.509 (.cer)"
+
+#: cryptui.rc:407
+msgid "Ba&se64-encoded X.509 (.cer):"
+msgstr "Ba&se64-암호화된 X.509 (.cer):"
+
+#: cryptui.rc:409
+msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
+msgstr "암호 메시지 문법 표준/PKCS #7 메시지(&C) (.p7b)"
+
+#: cryptui.rc:411
+msgid "&Include all certificates in the certification path if possible"
+msgstr "가능한 인증서 경로에 있는 모든 인증서 포함(&I)"
+
+#: cryptui.rc:413
+msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
+msgstr "개인 정보 교환(&P)/PKCS #12 (.pfx)"
+
+#: cryptui.rc:415
+msgid "Incl&ude all certificates in the certification path if possible"
+msgstr "가능한 인증서 경로에 있는 모든 인증서 포함(&U)"
+
+#: cryptui.rc:417
+msgid "&Enable strong encryption"
+msgstr "강한 암호화 가능(&E)"
+
+#: cryptui.rc:419
+msgid "Delete the private &key if the export is successful"
+msgstr "내보내기가 성공하면 개인 키 지우기(&K)"
+
+#: cryptui.rc:436
+msgid "Completing the Certificate Export Wizard"
+msgstr "인증서 내보내기 마법서 완료하는 중"
+
+#: cryptui.rc:438
+msgid "You have successfully completed the Certificate Export Wizard."
+msgstr "당신은 인증서 내보내기 마법를 완료하는 데 성공하였습니다."
+
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
 msgstr "인증서"
@@ -1851,17 +2171,9 @@ msgstr "폼 1,2,3,4에 하나의 OID를 입력하십시오"
 msgid "The OID you entered already exists."
 msgstr "당신이 입력한 OID는 이미 존재합니다."
 
-#: cryptui.rc:66
-msgid "Select Certificate Store"
-msgstr "인증서 저장소 선택"
-
 #: cryptui.rc:67
 msgid "Please select a certificate store."
 msgstr "인증서 저장소를 선택하십시오."
-
-#: cryptui.rc:68
-msgid "Certificate Import Wizard"
-msgstr "인증서 가져오기 마법사"
 
 #: cryptui.rc:69
 msgid ""
@@ -2100,10 +2412,6 @@ msgstr "이 인증거를 제거하기를 원합니까?"
 msgid "Are you sure you want to remove these certificates?"
 msgstr "이 인증서를 제거하기를 원합니까?"
 
-#: cryptui.rc:119
-msgid "Certificates"
-msgstr "인증서"
-
 #: cryptui.rc:121
 msgid "Ensures the identity of a remote computer"
 msgstr "원격 컴퓨터의 동일성 보증"
@@ -2143,10 +2451,6 @@ msgstr "디스크에 데이타 암호화 허용"
 #: cryptui.rc:144
 msgid "Private Key Archival"
 msgstr "사적 키 보관소"
-
-#: cryptui.rc:147
-msgid "Certificate Export Wizard"
-msgstr "인증서 내보내기 마법사"
 
 #: cryptui.rc:148
 msgid "Export Format"
@@ -2539,11 +2843,6 @@ msgstr "인쇄 미리보기(&W)..."
 msgid "&Properties"
 msgstr "등록 정보(&P)"
 
-#: ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56 oleview.rc:58
-#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
-msgid "&View"
-msgstr "보기(&V)"
-
 #: ieframe.rc:44
 msgid "&Toolbars"
 msgstr "도구바(&T)"
@@ -2592,10 +2891,6 @@ msgstr "인쇄..."
 #: ieframe.rc:73
 msgid "Address"
 msgstr "주소"
-
-#: inetcpl.rc:43
-msgid "General"
-msgstr "일반"
 
 #: inetcpl.rc:46
 msgid " Home page "
@@ -10196,10 +10491,6 @@ msgstr "풀그림 복사:"
 msgid "Program Group Attributes"
 msgstr "풀그림 그룹 속성"
 
-#: progman.rc:151 progman.rc:167
-msgid "&Description:"
-msgstr "설명(&D):"
-
 #: progman.rc:153
 msgid "&Group file:"
 msgstr "그룹 파일(&G):"
@@ -10427,10 +10718,6 @@ msgstr "레지스트리 편집기 정보(&A)"
 #: regedit.rc:88
 msgid "Modify Binary Data..."
 msgstr "이진값 고치기..."
-
-#: regedit.rc:109
-msgid "&Export..."
-msgstr "내보내기(&E)..."
 
 #: regedit.rc:215
 msgid "Export registry"
@@ -12018,10 +12305,6 @@ msgstr " 폴더(&D) "
 #: winecfg.rc:304
 msgid "&Link to:"
 msgstr "연결 위치(&L):"
-
-#: winecfg.rc:306
-msgid "B&rowse..."
-msgstr "찾기(&R)..."
 
 #: winecfg.rc:31
 msgid "Libraries"

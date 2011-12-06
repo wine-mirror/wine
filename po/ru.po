@@ -47,8 +47,8 @@ msgstr "&Сведения о поддержке..."
 msgid "&Modify..."
 msgstr "&Изменить..."
 
-#: appwiz.rc:66 appwiz.rc:42 msacm32.rc:37 winecfg.rc:202 winecfg.rc:239
-#: wordpad.rc:245
+#: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:202
+#: winecfg.rc:239 wordpad.rc:245
 msgid "&Remove"
 msgstr "&Удалить"
 
@@ -56,19 +56,19 @@ msgstr "&Удалить"
 msgid "Support Information"
 msgstr "Сведения о поддержке"
 
-#: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 credui.rc:49 dinput.rc:43
-#: ieframe.rc:84 localui.rc:41 localui.rc:54 mpr.rc:46 msacm32.rc:50
-#: mshtml.rc:45 mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87
-#: serialui.rc:38 setupapi.rc:56 shell32.rc:286 shell32.rc:310 shell32.rc:332
-#: shell32.rc:350 shlwapi.rc:41 user32.rc:77 user32.rc:95 wininet.rc:48
-#: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:122 oleview.rc:159
-#: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
-#: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
-#: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
-#: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
-#: winefile.rc:134 winefile.rc:157 winefile.rc:187 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
-#: wordpad.rc:246
+#: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 credui.rc:49 cryptui.rc:260
+#: cryptui.rc:272 cryptui.rc:362 dinput.rc:43 ieframe.rc:84 localui.rc:41
+#: localui.rc:54 mpr.rc:46 msacm32.rc:50 mshtml.rc:45 mshtml.rc:55
+#: msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87 serialui.rc:38 setupapi.rc:56
+#: shell32.rc:286 shell32.rc:310 shell32.rc:332 shell32.rc:350 shlwapi.rc:41
+#: user32.rc:77 user32.rc:95 wininet.rc:48 wininet.rc:68 winspool.rc:39
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
+#: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
+#: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
+#: regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216
+#: winecfg.rc:226 wineconsole.rc:131 winefile.rc:134 winefile.rc:157
+#: winefile.rc:187 winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204
+#: wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "ОК"
 
@@ -138,18 +138,18 @@ msgid "&Install"
 msgstr "&Установить"
 
 #: appwiz.rc:107 avifil32.rc:52 browseui.rc:37 comctl32.rc:53 comctl32.rc:68
-#: credui.rc:50 dinput.rc:44 ieframe.rc:85 inetcpl.rc:78 localui.rc:42
-#: localui.rc:55 mpr.rc:47 msacm32.rc:51 mshtml.rc:46 mshtml.rc:56
-#: msvfw32.rc:34 oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39
-#: setupapi.rc:57 shell32.rc:287 shell32.rc:311 shell32.rc:322 shell32.rc:351
-#: shlwapi.rc:42 user32.rc:78 user32.rc:96 wininet.rc:49 wininet.rc:69
-#: winspool.rc:40 notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104
-#: progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197
-#: progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285
-#: regedit.rc:298 regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31
-#: winecfg.rc:217 winecfg.rc:227 wineconsole.rc:132 winefile.rc:135
-#: winefile.rc:158 winefile.rc:188 winemine.rc:93 wordpad.rc:205
-#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: credui.rc:50 cryptui.rc:261 cryptui.rc:273 cryptui.rc:363 dinput.rc:44
+#: ieframe.rc:85 inetcpl.rc:78 localui.rc:42 localui.rc:55 mpr.rc:47
+#: msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34 oledlg.rc:56
+#: oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57 shell32.rc:287
+#: shell32.rc:311 shell32.rc:322 shell32.rc:351 shlwapi.rc:42 user32.rc:78
+#: user32.rc:96 wininet.rc:49 wininet.rc:69 winspool.rc:40 notepad.rc:123
+#: oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140
+#: progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245
+#: regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311
+#: taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
+#: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Отмена"
 
@@ -313,8 +313,8 @@ msgstr "Готово"
 msgid "Customize Toolbar"
 msgstr "Настройка панели инструментов"
 
-#: comctl32.rc:81 ieframe.rc:40 oleview.rc:80 oleview.rc:185 oleview.rc:198
-#: oleview.rc:210 taskmgr.rc:139
+#: comctl32.rc:81 cryptui.rc:348 ieframe.rc:40 oleview.rc:80 oleview.rc:185
+#: oleview.rc:198 oleview.rc:210 taskmgr.rc:139
 msgid "&Close"
 msgstr "&Закрыть"
 
@@ -363,7 +363,8 @@ msgctxt "hotkey"
 msgid "None"
 msgstr "Нет"
 
-#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54 wordpad.rc:169
+#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54
+#: wordpad.rc:169
 msgid "Close"
 msgstr "Закрыть"
 
@@ -472,7 +473,7 @@ msgstr "Создать новую папку"
 msgid "List"
 msgstr "Список"
 
-#: comdlg32.rc:58
+#: comdlg32.rc:58 cryptui.rc:193
 msgid "Details"
 msgstr "Подробности"
 
@@ -785,7 +786,7 @@ msgstr "Печать"
 msgid "&User name:"
 msgstr "По&льзователь:"
 
-#: credui.rc:45
+#: credui.rc:45 cryptui.rc:394
 msgid "&Password:"
 msgstr "&Пароль:"
 
@@ -1692,6 +1693,331 @@ msgstr "Номер уведомления="
 msgid "Notice Text="
 msgstr "Текст уведомления="
 
+#: cryptui.rc:177 cryptui.rc:232 inetcpl.rc:43
+msgid "General"
+msgstr "Общие"
+
+#: cryptui.rc:188
+msgid "&Install Certificate..."
+msgstr "&Установить сертификат..."
+
+#: cryptui.rc:189
+msgid "Issuer &Statement"
+msgstr "&Уведомление поставщика"
+
+#: cryptui.rc:197
+msgid "&Show:"
+msgstr "&Показать:"
+
+#: cryptui.rc:202
+msgid "&Edit Properties..."
+msgstr "&Свойства..."
+
+#: cryptui.rc:203
+msgid "&Copy to File..."
+msgstr "&Экспортировать..."
+
+#: cryptui.rc:207
+msgid "Certification Path"
+msgstr "Путь сертификации"
+
+#: cryptui.rc:211
+msgid "Certification &path"
+msgstr "П&уть сертификации"
+
+#: cryptui.rc:214
+msgid "&View Certificate"
+msgstr "&Просмотр сертификата"
+
+#: cryptui.rc:215
+msgid "Certificate &status:"
+msgstr "&Состояние сертификата:"
+
+#: cryptui.rc:221
+msgid "Disclaimer"
+msgstr "Уведомление"
+
+#: cryptui.rc:228
+msgid "More &Info"
+msgstr "&Дополнительно..."
+
+#: cryptui.rc:236
+msgid "&Friendly name:"
+msgstr "&Понятное имя:"
+
+#: cryptui.rc:238 progman.rc:151 progman.rc:167
+msgid "&Description:"
+msgstr "&Описание:"
+
+#: cryptui.rc:240
+msgid "Certificate purposes"
+msgstr "Назначения"
+
+#: cryptui.rc:241
+msgid "&Enable all purposes for this certificate"
+msgstr "&Разрешить все назначения для этого сертификата"
+
+#: cryptui.rc:243
+msgid "D&isable all purposes for this certificate"
+msgstr "&Запретить все назначения для этого сертификата"
+
+#: cryptui.rc:245
+msgid "Enable &only the following purposes for this certificate:"
+msgstr "Р&азрешить только следующие назначения:"
+
+#: cryptui.rc:250
+msgid "Add &Purpose..."
+msgstr "&Добавить..."
+
+#: cryptui.rc:254
+msgid "Add Purpose"
+msgstr "Добавление назначения"
+
+#: cryptui.rc:257
+msgid ""
+"Add the object identifier (OID) for the certificate purpose you wish to add:"
+msgstr "Введите OID назначения сертификата, которое вы хотите добавить:"
+
+#: cryptui.rc:265 cryptui.rc:66
+msgid "Select Certificate Store"
+msgstr "Выбор хранилища сертификатов"
+
+#: cryptui.rc:268
+msgid "Select the certificate store you want to use:"
+msgstr "Выберите хранилище для импорта сертификата:"
+
+#: cryptui.rc:271
+msgid "&Show physical stores"
+msgstr "&Показывать физические хранилища"
+
+#: cryptui.rc:277 cryptui.rc:288 cryptui.rc:305 cryptui.rc:319 cryptui.rc:68
+msgid "Certificate Import Wizard"
+msgstr "Мастер импорта сертификатов"
+
+#: cryptui.rc:280
+msgid "Welcome to the Certificate Import Wizard"
+msgstr "Вас приветствует мастер импорта сертификатов"
+
+#: cryptui.rc:283
+#, fuzzy
+msgid ""
+"This wizard helps you import certificates, certificate revocation lists, and "
+"certificate trust lists from a file to a certificate store.\n"
+"\n"
+"A certificate can be used to identify you or the computer with which you are "
+"communicating.  It can also be used for authentication, and to sign "
+"messages.  Certificate stores are collections of certificates, certificate "
+"revocation lists, and certificate trust lists.\n"
+"\n"
+"To continue, click Next."
+msgstr ""
+"Сертификаты позволяют идентифицировать вас или ваш компьютер. Также они "
+"используются для подтверждения подлинности и подписывания сообщений. Все "
+"устанавливаемые на компьютере сертификаты помещаются в хранилище "
+"сертификатов."
+
+#: cryptui.rc:291 cryptui.rc:427
+msgid "&File name:"
+msgstr "Имя &файла:"
+
+#: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:306
+msgid "B&rowse..."
+msgstr "Обзор"
+
+#: cryptui.rc:294
+msgid ""
+"Note:  The following file formats may contain more than one certificate, "
+"certificate revocation list, or certificate trust list:"
+msgstr ""
+"Примечание: Набор сертификатов, список отзыва и список доверия сертификатов "
+"могут содержаться в файлах следующих форматов:"
+
+#: cryptui.rc:296
+msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
+msgstr "Сообщения CMS/PKCS #7 (.p7b)"
+
+#: cryptui.rc:298
+msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
+msgstr "Формат обмена личной информацией/PKCS #12 (.pfx, .p12)"
+
+#: cryptui.rc:300
+msgid "Microsoft Serialized Certificate Store (.sst)"
+msgstr "Хранилище сериализованных сертификатов Microsoft (.sst)"
+
+#: cryptui.rc:308
+msgid ""
+"Wine can automatically select the certificate store, or you can specify a "
+"location for the certificates."
+msgstr ""
+"Wine может автоматически выбрать хранилище сертификатов, либо вы можете сами "
+"указать его."
+
+#: cryptui.rc:310
+msgid "&Automatically select certificate store"
+msgstr "&Выбрать хранилище сертификатов автоматически"
+
+#: cryptui.rc:312
+msgid "&Place all certificates in the following store:"
+msgstr "&Поместить все сертификаты в следующее хранилище:"
+
+#: cryptui.rc:322
+msgid "Completing the Certificate Import Wizard"
+msgstr "Завершение работы мастера импорта сертификатов"
+
+#: cryptui.rc:324
+msgid "You have successfully completed the Certificate Import Wizard."
+msgstr ""
+"Мастер импорта сертификатов успешно собрал все данные, необходимые для "
+"выполнения импорта."
+
+#: cryptui.rc:326 cryptui.rc:440
+msgid "You have specified the following settings:"
+msgstr "Вы определили следующие параметры импорта:"
+
+#: cryptui.rc:334 cryptui.rc:119
+msgid "Certificates"
+msgstr "Сертификаты"
+
+#: cryptui.rc:337
+msgid "I&ntended purpose:"
+msgstr "&Назначения:"
+
+#: cryptui.rc:341
+msgid "&Import..."
+msgstr "&Импорт..."
+
+#: cryptui.rc:342 regedit.rc:109
+msgid "&Export..."
+msgstr "&Экспортировать..."
+
+#: cryptui.rc:344
+msgid "&Advanced..."
+msgstr "&Параметры..."
+
+#: cryptui.rc:345
+msgid "Certificate intended purposes"
+msgstr "Назначения сертификата"
+
+#: cryptui.rc:347 ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56
+#: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49
+#: wordpad.rc:66
+msgid "&View"
+msgstr "&Вид"
+
+#: cryptui.rc:352
+msgid "Advanced Options"
+msgstr "Дополнительные параметры"
+
+#: cryptui.rc:355
+msgid "Certificate purpose"
+msgstr "Назначения сертификатов"
+
+#: cryptui.rc:356
+msgid ""
+"Select one or more purposes to be listed when Advanced Purposes is selected."
+msgstr "Выберите назначения, которые будут включены в Определяемый набор."
+
+#: cryptui.rc:358
+msgid "&Certificate purposes:"
+msgstr "&Назначения:"
+
+#: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
+#: cryptui.rc:433 cryptui.rc:147
+msgid "Certificate Export Wizard"
+msgstr "Мастер экспорта сертификатов"
+
+#: cryptui.rc:370
+msgid "Welcome to the Certificate Export Wizard"
+msgstr "Вас приветствует мастер экспорта"
+
+#: cryptui.rc:373
+#, fuzzy
+msgid ""
+"This wizard helps you export certificates, certificate revocation lists, and "
+"certificate trust lists from a certificate store to a file.\n"
+"\n"
+"A certificate can be used to identify you or the computer with which you are "
+"communicating.  It can also be used for authentication, and to sign "
+"messages.  Certificate stores are collections of certificates, certificate "
+"revocation lists, and certificate trust lists.\n"
+"\n"
+"To continue, click Next."
+msgstr ""
+"Сертификаты позволяют идентифицировать вас или ваш компьютер. Также они "
+"используются для подтверждения подлинности и подписывания сообщений. Все "
+"устанавливаемые на компьютере сертификаты помещаются в хранилище "
+"сертификатов."
+
+#: cryptui.rc:381
+msgid ""
+"If you choose to export the private key, you will be prompted for a password "
+"to protect the private key on a later page."
+msgstr ""
+"Если вы решите экспортировать закрытый ключ, позже вам будет предложено "
+"задать пароль для защиты ключа."
+
+#: cryptui.rc:382
+msgid "Do you wish to export the private key?"
+msgstr "Вы хотите экспортировать закрытый ключ?"
+
+#: cryptui.rc:383
+msgid "&Yes, export the private key"
+msgstr "&Да, экспортировать"
+
+#: cryptui.rc:385
+msgid "N&o, do not export the private key"
+msgstr "&Нет, не экспортировать"
+
+#: cryptui.rc:396
+msgid "&Confirm password:"
+msgstr "П&одтверждение:"
+
+#: cryptui.rc:404
+msgid "Select the format you want to use:"
+msgstr "Выберите формат для экспорта:"
+
+#: cryptui.rc:405
+msgid "&DER-encoded X.509 (.cer)"
+msgstr "X.509 в кодировке &DER (.cer)"
+
+#: cryptui.rc:407
+msgid "Ba&se64-encoded X.509 (.cer):"
+msgstr "X.509 в кодировке Ba&se64 (.cer)"
+
+#: cryptui.rc:409
+msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
+msgstr "Сообщение &CMS/PKCS #7 (.p7b)"
+
+#: cryptui.rc:411
+msgid "&Include all certificates in the certification path if possible"
+msgstr "&По возможности включить все сертификаты в путь сертификации"
+
+#: cryptui.rc:413
+msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
+msgstr "&Формат обмена личной информацией/PKCS #12 (.pfx)"
+
+#: cryptui.rc:415
+msgid "Incl&ude all certificates in the certification path if possible"
+msgstr "По &возможности включить все сертификаты в путь сертификации"
+
+#: cryptui.rc:417
+msgid "&Enable strong encryption"
+msgstr "Использовать &сильное шифрование"
+
+#: cryptui.rc:419
+msgid "Delete the private &key if the export is successful"
+msgstr "Удалить закрытый &ключ после успешного экспорта"
+
+#: cryptui.rc:436
+msgid "Completing the Certificate Export Wizard"
+msgstr "Завершение работы мастера экспорта сертификатов"
+
+#: cryptui.rc:438
+msgid "You have successfully completed the Certificate Export Wizard."
+msgstr ""
+"Мастер импорта сертификатов успешно собрал все данные, необходимые для "
+"выполнения экспорта."
+
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
 msgstr "Сертификат"
@@ -1851,17 +2177,9 @@ msgstr "Введите OID в форме 1.2.3.4"
 msgid "The OID you entered already exists."
 msgstr "Введённый OID уже существует."
 
-#: cryptui.rc:66
-msgid "Select Certificate Store"
-msgstr "Выбор хранилища сертификатов"
-
 #: cryptui.rc:67
 msgid "Please select a certificate store."
 msgstr "Выберите хранилище сертификатов."
-
-#: cryptui.rc:68
-msgid "Certificate Import Wizard"
-msgstr "Мастер импорта сертификатов"
 
 #: cryptui.rc:69
 msgid ""
@@ -2103,10 +2421,6 @@ msgstr "Вы действительно хотите удалить этот с�
 msgid "Are you sure you want to remove these certificates?"
 msgstr "Вы действительно хотите удалить эти сертификаты?"
 
-#: cryptui.rc:119
-msgid "Certificates"
-msgstr "Сертификаты"
-
 #: cryptui.rc:121
 msgid "Ensures the identity of a remote computer"
 msgstr "Идентифицирует удалённый компьютер"
@@ -2146,10 +2460,6 @@ msgstr "Позволяет шифровать данные на диске"
 #: cryptui.rc:144
 msgid "Private Key Archival"
 msgstr "Архивация закрытых ключей"
-
-#: cryptui.rc:147
-msgid "Certificate Export Wizard"
-msgstr "Мастер экспорта сертификатов"
 
 #: cryptui.rc:148
 msgid "Export Format"
@@ -2550,11 +2860,6 @@ msgstr "Пред&варительный просмотр"
 msgid "&Properties"
 msgstr "&Свойства"
 
-#: ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56 oleview.rc:58
-#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
-msgid "&View"
-msgstr "&Вид"
-
 #: ieframe.rc:44
 msgid "&Toolbars"
 msgstr "Па&нели"
@@ -2603,10 +2908,6 @@ msgstr "Печать..."
 #: ieframe.rc:73
 msgid "Address"
 msgstr "Адрес"
-
-#: inetcpl.rc:43
-msgid "General"
-msgstr "Общие"
 
 #: inetcpl.rc:46
 msgid " Home page "
@@ -10243,10 +10544,6 @@ msgstr "Копировать программу:"
 msgid "Program Group Attributes"
 msgstr "Атрибуты программной группы"
 
-#: progman.rc:151 progman.rc:167
-msgid "&Description:"
-msgstr "&Описание:"
-
 #: progman.rc:153
 msgid "&Group file:"
 msgstr "&Файл группы:"
@@ -10475,10 +10772,6 @@ msgstr "&О редакторе реестра"
 #: regedit.rc:88
 msgid "Modify Binary Data..."
 msgstr "Изменить &двоичные данные..."
-
-#: regedit.rc:109
-msgid "&Export..."
-msgstr "&Экспортировать..."
 
 #: regedit.rc:215
 msgid "Export registry"
@@ -12078,10 +12371,6 @@ msgstr " Стандартные папки "
 #: winecfg.rc:304
 msgid "&Link to:"
 msgstr "Направить в:"
-
-#: winecfg.rc:306
-msgid "B&rowse..."
-msgstr "Обзор"
 
 #: winecfg.rc:31
 msgid "Libraries"

@@ -47,8 +47,8 @@ msgstr "Informații a&sistență..."
 msgid "&Modify..."
 msgstr "&Modifică..."
 
-#: appwiz.rc:66 appwiz.rc:42 msacm32.rc:37 winecfg.rc:202 winecfg.rc:239
-#: wordpad.rc:245
+#: appwiz.rc:66 appwiz.rc:42 cryptui.rc:343 msacm32.rc:37 winecfg.rc:202
+#: winecfg.rc:239 wordpad.rc:245
 msgid "&Remove"
 msgstr "&Elimină"
 
@@ -56,19 +56,19 @@ msgstr "&Elimină"
 msgid "Support Information"
 msgstr "Informații de asistență"
 
-#: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 credui.rc:49 dinput.rc:43
-#: ieframe.rc:84 localui.rc:41 localui.rc:54 mpr.rc:46 msacm32.rc:50
-#: mshtml.rc:45 mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87
-#: serialui.rc:38 setupapi.rc:56 shell32.rc:286 shell32.rc:310 shell32.rc:332
-#: shell32.rc:350 shlwapi.rc:41 user32.rc:77 user32.rc:95 wininet.rc:48
-#: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:122 oleview.rc:159
-#: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
-#: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
-#: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
-#: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
-#: winefile.rc:134 winefile.rc:157 winefile.rc:187 winemine.rc:68
-#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
-#: wordpad.rc:246
+#: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 credui.rc:49 cryptui.rc:260
+#: cryptui.rc:272 cryptui.rc:362 dinput.rc:43 ieframe.rc:84 localui.rc:41
+#: localui.rc:54 mpr.rc:46 msacm32.rc:50 mshtml.rc:45 mshtml.rc:55
+#: msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87 serialui.rc:38 setupapi.rc:56
+#: shell32.rc:286 shell32.rc:310 shell32.rc:332 shell32.rc:350 shlwapi.rc:41
+#: user32.rc:77 user32.rc:95 wininet.rc:48 wininet.rc:68 winspool.rc:39
+#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
+#: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
+#: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
+#: regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216
+#: winecfg.rc:226 wineconsole.rc:131 winefile.rc:134 winefile.rc:157
+#: winefile.rc:187 winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204
+#: wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -137,18 +137,18 @@ msgid "&Install"
 msgstr "&Instalează"
 
 #: appwiz.rc:107 avifil32.rc:52 browseui.rc:37 comctl32.rc:53 comctl32.rc:68
-#: credui.rc:50 dinput.rc:44 ieframe.rc:85 inetcpl.rc:78 localui.rc:42
-#: localui.rc:55 mpr.rc:47 msacm32.rc:51 mshtml.rc:46 mshtml.rc:56
-#: msvfw32.rc:34 oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39
-#: setupapi.rc:57 shell32.rc:287 shell32.rc:311 shell32.rc:322 shell32.rc:351
-#: shlwapi.rc:42 user32.rc:78 user32.rc:96 wininet.rc:49 wininet.rc:69
-#: winspool.rc:40 notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104
-#: progman.rc:122 progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197
-#: progman.rc:214 regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285
-#: regedit.rc:298 regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31
-#: winecfg.rc:217 winecfg.rc:227 wineconsole.rc:132 winefile.rc:135
-#: winefile.rc:158 winefile.rc:188 winemine.rc:93 wordpad.rc:205
-#: wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: credui.rc:50 cryptui.rc:261 cryptui.rc:273 cryptui.rc:363 dinput.rc:44
+#: ieframe.rc:85 inetcpl.rc:78 localui.rc:42 localui.rc:55 mpr.rc:47
+#: msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34 oledlg.rc:56
+#: oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57 shell32.rc:287
+#: shell32.rc:311 shell32.rc:322 shell32.rc:351 shlwapi.rc:42 user32.rc:78
+#: user32.rc:96 wininet.rc:49 wininet.rc:69 winspool.rc:40 notepad.rc:123
+#: oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140
+#: progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245
+#: regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311
+#: taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
+#: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
+#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
 msgid "Cancel"
 msgstr "Renunță"
 
@@ -311,8 +311,8 @@ msgstr "&Termină"
 msgid "Customize Toolbar"
 msgstr "Personalizare toolbar"
 
-#: comctl32.rc:81 ieframe.rc:40 oleview.rc:80 oleview.rc:185 oleview.rc:198
-#: oleview.rc:210 taskmgr.rc:139
+#: comctl32.rc:81 cryptui.rc:348 ieframe.rc:40 oleview.rc:80 oleview.rc:185
+#: oleview.rc:198 oleview.rc:210 taskmgr.rc:139
 msgid "&Close"
 msgstr "În&chide"
 
@@ -366,7 +366,8 @@ msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
 "Niciuna"
 
-#: comctl32.rc:28 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54 wordpad.rc:169
+#: comctl32.rc:28 cryptui.rc:227 regedit.rc:234 taskmgr.rc:438 winedbg.rc:54
+#: wordpad.rc:169
 msgid "Close"
 msgstr "Închide"
 
@@ -490,7 +491,7 @@ msgstr "Creează un dosar nou"
 msgid "List"
 msgstr "Listă"
 
-#: comdlg32.rc:58
+#: comdlg32.rc:58 cryptui.rc:193
 msgid "Details"
 msgstr "Detalii"
 
@@ -852,7 +853,7 @@ msgstr ""
 msgid "&User name:"
 msgstr "Nume &utilizator:"
 
-#: credui.rc:45
+#: credui.rc:45 cryptui.rc:394
 msgid "&Password:"
 msgstr "&Parolă:"
 
@@ -1848,6 +1849,335 @@ msgstr "Numărul de serie al certificatului="
 msgid "Notice Text="
 msgstr ""
 
+#: cryptui.rc:177 cryptui.rc:232 inetcpl.rc:43
+msgid "General"
+msgstr "General"
+
+#: cryptui.rc:188
+msgid "&Install Certificate..."
+msgstr "&Instalare certificat..."
+
+#: cryptui.rc:189
+msgid "Issuer &Statement"
+msgstr "&Declarația emitentului"
+
+#: cryptui.rc:197
+msgid "&Show:"
+msgstr "&Afișează:"
+
+#: cryptui.rc:202
+msgid "&Edit Properties..."
+msgstr "&Editare proprietăți..."
+
+#: cryptui.rc:203
+msgid "&Copy to File..."
+msgstr "&Copiere în fișier..."
+
+#: cryptui.rc:207
+msgid "Certification Path"
+msgstr "Cale de certificare"
+
+#: cryptui.rc:211
+msgid "Certification &path"
+msgstr "Cale de certi&ficare"
+
+#: cryptui.rc:214
+msgid "&View Certificate"
+msgstr "&Vizualizează certificat"
+
+#: cryptui.rc:215
+msgid "Certificate &status:"
+msgstr "&Stare certificat:"
+
+#: cryptui.rc:221
+msgid "Disclaimer"
+msgstr "Declinare a responsabilității"
+
+#: cryptui.rc:228
+msgid "More &Info"
+msgstr "Alte &informații"
+
+#: cryptui.rc:236
+msgid "&Friendly name:"
+msgstr "&Nume uzual:"
+
+#: cryptui.rc:238 progman.rc:151 progman.rc:167
+msgid "&Description:"
+msgstr "&Descriere:"
+
+#: cryptui.rc:240
+msgid "Certificate purposes"
+msgstr "Rolurile certificatului"
+
+#: cryptui.rc:241
+msgid "&Enable all purposes for this certificate"
+msgstr "Activ&ează toate rolurile acestui certificat"
+
+#: cryptui.rc:243
+msgid "D&isable all purposes for this certificate"
+msgstr "Dezact&ivează toate rolurile acestui certificat"
+
+#: cryptui.rc:245
+msgid "Enable &only the following purposes for this certificate:"
+msgstr "Activează d&oar următoarele roluri ale acestui certificat:"
+
+#: cryptui.rc:250
+msgid "Add &Purpose..."
+msgstr "Adăugare &rol..."
+
+#: cryptui.rc:254
+msgid "Add Purpose"
+msgstr "Adăugare rol"
+
+#: cryptui.rc:257
+msgid ""
+"Add the object identifier (OID) for the certificate purpose you wish to add:"
+msgstr ""
+"Adăugați identificatorul de obiect (OID) pentru rolul de certificat pe care "
+"doriți să-l adăugați:"
+
+#: cryptui.rc:265 cryptui.rc:66
+msgid "Select Certificate Store"
+msgstr "Selectare depozit de certificate"
+
+#: cryptui.rc:268
+msgid "Select the certificate store you want to use:"
+msgstr "Selectați depozitul de certificate pe care doriți să-l utilizați:"
+
+#: cryptui.rc:271
+msgid "&Show physical stores"
+msgstr "Afișea&ză depozitele fizice"
+
+#: cryptui.rc:277 cryptui.rc:288 cryptui.rc:305 cryptui.rc:319 cryptui.rc:68
+msgid "Certificate Import Wizard"
+msgstr "Asistent de importare a certificatelor"
+
+#: cryptui.rc:280
+msgid "Welcome to the Certificate Import Wizard"
+msgstr "Bun venit în Asistentul de importare a certificatelor"
+
+#: cryptui.rc:283
+#, fuzzy
+msgid ""
+"This wizard helps you import certificates, certificate revocation lists, and "
+"certificate trust lists from a file to a certificate store.\n"
+"\n"
+"A certificate can be used to identify you or the computer with which you are "
+"communicating.  It can also be used for authentication, and to sign "
+"messages.  Certificate stores are collections of certificates, certificate "
+"revocation lists, and certificate trust lists.\n"
+"\n"
+"To continue, click Next."
+msgstr ""
+"Un certificat poate fi utilizat pentru identificarea proprie sau a "
+"calculatorului cu care comunicați.  Poate fi utilizat și pentru "
+"autentificare sau pentru a semna mesaje.  Depozitele de certificate sunt "
+"colecții de certificate, liste de certificate revocate și liste de "
+"certificate acreditate."
+
+#: cryptui.rc:291 cryptui.rc:427
+msgid "&File name:"
+msgstr "Nume &fișier:"
+
+#: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:306
+msgid "B&rowse..."
+msgstr "&Navighează"
+
+#: cryptui.rc:294
+msgid ""
+"Note:  The following file formats may contain more than one certificate, "
+"certificate revocation list, or certificate trust list:"
+msgstr ""
+"Notă:  Următoarele formate de fișier pot conține mai multe certificate, "
+"liste de certificate revocate sau liste de certificate acreditate:"
+
+#: cryptui.rc:296
+msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
+msgstr "Standard sintaxă mesaje criptografice/Mesaje PKCS #7 (.p7b)"
+
+#: cryptui.rc:298
+msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
+msgstr "Schimb de informații personale/PKCS #12 (.pfx, .p12)"
+
+#: cryptui.rc:300
+msgid "Microsoft Serialized Certificate Store (.sst)"
+msgstr "Depozit Microsoft înseriat de certificate (.sst)"
+
+#: cryptui.rc:308
+msgid ""
+"Wine can automatically select the certificate store, or you can specify a "
+"location for the certificates."
+msgstr ""
+"Wine poate selecta automat depozitul de certificate sau puteți să "
+"specificați o locație pentru certificate."
+
+#: cryptui.rc:310
+msgid "&Automatically select certificate store"
+msgstr "Selectează &automat depozitul de certificate"
+
+#: cryptui.rc:312
+msgid "&Place all certificates in the following store:"
+msgstr "&Plasează toate certificatele în următorul depozit:"
+
+#: cryptui.rc:322
+msgid "Completing the Certificate Import Wizard"
+msgstr "Se finalizează Asistentul de importare a certificatelor"
+
+#: cryptui.rc:324
+msgid "You have successfully completed the Certificate Import Wizard."
+msgstr "Ați finalizat cu succes Asistentul de importare a certificatelor."
+
+#: cryptui.rc:326 cryptui.rc:440
+msgid "You have specified the following settings:"
+msgstr "Ați specificat următoarea configurație:"
+
+#: cryptui.rc:334 cryptui.rc:119
+msgid "Certificates"
+msgstr "Certificate"
+
+#: cryptui.rc:337
+msgid "I&ntended purpose:"
+msgstr "Rolul i&ntenționat:"
+
+#: cryptui.rc:341
+msgid "&Import..."
+msgstr "&Importare..."
+
+#: cryptui.rc:342 regedit.rc:109
+msgid "&Export..."
+msgstr "&Exportare..."
+
+#: cryptui.rc:344
+msgid "&Advanced..."
+msgstr "&Avansate..."
+
+#: cryptui.rc:345
+msgid "Certificate intended purposes"
+msgstr "Rolurile intenționate ale certificatului"
+
+#: cryptui.rc:347 ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56
+#: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49
+#: wordpad.rc:66
+msgid "&View"
+msgstr "&Vizualizare"
+
+#: cryptui.rc:352
+msgid "Advanced Options"
+msgstr "Opțiuni avansate"
+
+#: cryptui.rc:355
+msgid "Certificate purpose"
+msgstr "Rolul certificatului"
+
+#: cryptui.rc:356
+msgid ""
+"Select one or more purposes to be listed when Advanced Purposes is selected."
+msgstr ""
+"Selectați unul sau mai multe roluri care să fie afișate când se selectează "
+"Roluri avansate."
+
+#: cryptui.rc:358
+msgid "&Certificate purposes:"
+msgstr "Rolurile &certificatului:"
+
+#: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
+#: cryptui.rc:433 cryptui.rc:147
+msgid "Certificate Export Wizard"
+msgstr "Asistent de exportare a certificatelor"
+
+#: cryptui.rc:370
+msgid "Welcome to the Certificate Export Wizard"
+msgstr "Bun venit în Asistentul de exportare a certificatelor"
+
+#: cryptui.rc:373
+#, fuzzy
+msgid ""
+"This wizard helps you export certificates, certificate revocation lists, and "
+"certificate trust lists from a certificate store to a file.\n"
+"\n"
+"A certificate can be used to identify you or the computer with which you are "
+"communicating.  It can also be used for authentication, and to sign "
+"messages.  Certificate stores are collections of certificates, certificate "
+"revocation lists, and certificate trust lists.\n"
+"\n"
+"To continue, click Next."
+msgstr ""
+"Un certificat poate fi utilizat pentru identificarea proprie sau a "
+"calculatorului cu care comunicați.  Poate fi utilizat și pentru "
+"autentificare sau pentru a semna mesaje.  Depozitele de certificate sunt "
+"colecții de certificate, liste de certificate revocate și liste de "
+"certificate acreditate."
+
+#: cryptui.rc:381
+msgid ""
+"If you choose to export the private key, you will be prompted for a password "
+"to protect the private key on a later page."
+msgstr ""
+"Dacă alegeți să exportați cheia privată, vi se va solicita pe o pagină "
+"următoare o parolă pentru a proteja această cheie privată."
+
+#: cryptui.rc:382
+msgid "Do you wish to export the private key?"
+msgstr "Doriți să exportați cheia privată?"
+
+#: cryptui.rc:383
+msgid "&Yes, export the private key"
+msgstr "&Da, exportă cheia privată"
+
+#: cryptui.rc:385
+msgid "N&o, do not export the private key"
+msgstr "N&u, nu exporta cheia privată"
+
+#: cryptui.rc:396
+msgid "&Confirm password:"
+msgstr "&Confirmați parola:"
+
+#: cryptui.rc:404
+msgid "Select the format you want to use:"
+msgstr "Selectați formatul pe care doriți să îl utilizați:"
+
+#: cryptui.rc:405
+msgid "&DER-encoded X.509 (.cer)"
+msgstr "Binar X.509 codificat în &DER (.cer)"
+
+#: cryptui.rc:407
+msgid "Ba&se64-encoded X.509 (.cer):"
+msgstr "X.509 codificat în ba&se64 (.cer):"
+
+#: cryptui.rc:409
+msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
+msgstr "Standard sintaxă mesaje &criptografice/Mesaj PKCS #7 (.p7b)"
+
+#: cryptui.rc:411
+msgid "&Include all certificates in the certification path if possible"
+msgstr ""
+"&Include toate certificatele din calea de certificare, dacă este posibil"
+
+#: cryptui.rc:413
+msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
+msgstr "Schimb de informații &personale/PKCS #12 (.pfx)"
+
+#: cryptui.rc:415
+msgid "Incl&ude all certificates in the certification path if possible"
+msgstr ""
+"Incl&ude toate certificatele din calea de certificare, dacă este posibil"
+
+#: cryptui.rc:417
+msgid "&Enable strong encryption"
+msgstr "Activ&ează criptarea puternică"
+
+#: cryptui.rc:419
+msgid "Delete the private &key if the export is successful"
+msgstr "Șterge c&heia privată dacă exportarea reușește"
+
+#: cryptui.rc:436
+msgid "Completing the Certificate Export Wizard"
+msgstr "Se finalizează Asistentul de exportare a certificatelor"
+
+#: cryptui.rc:438
+msgid "You have successfully completed the Certificate Export Wizard."
+msgstr "Ați finalizat cu succes Asistentul de exportare a certificatelor"
+
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
 msgstr "Certificat"
@@ -2015,17 +2345,9 @@ msgstr "Introduceți OID sub forma 1.2.3.4"
 msgid "The OID you entered already exists."
 msgstr "OID introdus există deja."
 
-#: cryptui.rc:66
-msgid "Select Certificate Store"
-msgstr "Selectare depozit de certificate"
-
 #: cryptui.rc:67
 msgid "Please select a certificate store."
 msgstr "Selectați un depozit de certificate."
-
-#: cryptui.rc:68
-msgid "Certificate Import Wizard"
-msgstr "Asistent de importare a certificatelor"
 
 #: cryptui.rc:69
 msgid ""
@@ -2267,10 +2589,6 @@ msgstr "Sigur doriți să eliminați acest certificat?"
 msgid "Are you sure you want to remove these certificates?"
 msgstr "Sigur doriți să eliminați aceste certificate?"
 
-#: cryptui.rc:119
-msgid "Certificates"
-msgstr "Certificate"
-
 #: cryptui.rc:121
 msgid "Ensures the identity of a remote computer"
 msgstr "Asigură identificarea unui calculator de la distanță"
@@ -2310,10 +2628,6 @@ msgstr "Permite criptarea datelor de pe disc"
 #: cryptui.rc:144
 msgid "Private Key Archival"
 msgstr "Arhivare chei private"
-
-#: cryptui.rc:147
-msgid "Certificate Export Wizard"
-msgstr "Asistent de exportare a certificatelor"
 
 #: cryptui.rc:148
 msgid "Export Format"
@@ -2733,11 +3047,6 @@ msgstr ""
 "#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
 "P&roprietăți"
 
-#: ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56 oleview.rc:58
-#: oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49 wordpad.rc:66
-msgid "&View"
-msgstr "&Vizualizare"
-
 #: ieframe.rc:44
 msgid "&Toolbars"
 msgstr "&Despre Internet Explorer..."
@@ -2794,10 +3103,6 @@ msgstr "Tipărește..."
 #, fuzzy
 msgid "Address"
 msgstr "Adresa IP="
-
-#: inetcpl.rc:43
-msgid "General"
-msgstr ""
 
 #: inetcpl.rc:46
 #, fuzzy
@@ -10830,10 +11135,6 @@ msgstr "Copiere program:"
 msgid "Program Group Attributes"
 msgstr "Atributele grupului de programe"
 
-#: progman.rc:151 progman.rc:167
-msgid "&Description:"
-msgstr "&Descriere:"
-
 #: progman.rc:153
 msgid "&Group file:"
 msgstr "Fișier &grup:"
@@ -11071,10 +11372,6 @@ msgstr "Des&pre editorul de registru"
 #, fuzzy
 msgid "Modify Binary Data..."
 msgstr "Modifică date binare"
-
-#: regedit.rc:109
-msgid "&Export..."
-msgstr "&Exportare..."
 
 #: regedit.rc:215
 msgid "Export registry"
@@ -12691,10 +12988,6 @@ msgstr " Dosare sistem "
 #: winecfg.rc:304
 msgid "&Link to:"
 msgstr "Leagă la:"
-
-#: winecfg.rc:306
-msgid "B&rowse..."
-msgstr "&Navighează"
 
 #: winecfg.rc:31
 msgid "Libraries"
