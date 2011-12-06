@@ -56,19 +56,21 @@ msgstr "E&ltávolítás"
 msgid "Support Information"
 msgstr "Támogatási információ"
 
-#: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 credui.rc:49 cryptui.rc:260
-#: cryptui.rc:272 cryptui.rc:362 dinput.rc:43 ieframe.rc:84 localui.rc:41
-#: localui.rc:54 mpr.rc:46 msacm32.rc:50 mshtml.rc:45 mshtml.rc:55
-#: msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87 serialui.rc:38 setupapi.rc:56
-#: shell32.rc:286 shell32.rc:310 shell32.rc:332 shell32.rc:350 shlwapi.rc:41
-#: user32.rc:77 user32.rc:95 wininet.rc:48 wininet.rc:68 winspool.rc:39
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
-#: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
-#: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
-#: regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216
-#: winecfg.rc:226 wineconsole.rc:131 winefile.rc:134 winefile.rc:157
-#: winefile.rc:187 winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204
-#: wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 comdlg32.rc:240 comdlg32.rc:270
+#: comdlg32.rc:313 comdlg32.rc:367 comdlg32.rc:406 comdlg32.rc:460
+#: credui.rc:49 cryptui.rc:260 cryptui.rc:272 cryptui.rc:362 dinput.rc:43
+#: ieframe.rc:84 localui.rc:41 localui.rc:54 mpr.rc:46 msacm32.rc:50
+#: mshtml.rc:45 mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87
+#: serialui.rc:38 setupapi.rc:56 shell32.rc:286 shell32.rc:310 shell32.rc:332
+#: shell32.rc:350 shlwapi.rc:41 user32.rc:77 user32.rc:95 wininet.rc:48
+#: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:122 oleview.rc:159
+#: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
+#: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
+#: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
+#: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
+#: winefile.rc:134 winefile.rc:157 winefile.rc:187 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -137,18 +139,22 @@ msgid "&Install"
 msgstr "&Telepítés"
 
 #: appwiz.rc:107 avifil32.rc:52 browseui.rc:37 comctl32.rc:53 comctl32.rc:68
-#: credui.rc:50 cryptui.rc:261 cryptui.rc:273 cryptui.rc:363 dinput.rc:44
-#: ieframe.rc:85 inetcpl.rc:78 localui.rc:42 localui.rc:55 mpr.rc:47
-#: msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34 oledlg.rc:56
-#: oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57 shell32.rc:287
-#: shell32.rc:311 shell32.rc:322 shell32.rc:351 shlwapi.rc:42 user32.rc:78
-#: user32.rc:96 wininet.rc:49 wininet.rc:69 winspool.rc:40 notepad.rc:123
-#: oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140
-#: progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245
-#: regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311
-#: taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
-#: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: comdlg32.rc:179 comdlg32.rc:201 comdlg32.rc:219 comdlg32.rc:241
+#: comdlg32.rc:271 comdlg32.rc:314 comdlg32.rc:336 comdlg32.rc:356
+#: comdlg32.rc:368 comdlg32.rc:407 comdlg32.rc:461 comdlg32.rc:485
+#: comdlg32.rc:503 credui.rc:50 cryptui.rc:261 cryptui.rc:273 cryptui.rc:363
+#: dinput.rc:44 ieframe.rc:85 inetcpl.rc:78 localui.rc:42 localui.rc:55
+#: mpr.rc:47 msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34
+#: oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57
+#: shell32.rc:287 shell32.rc:311 shell32.rc:322 shell32.rc:351 shlwapi.rc:42
+#: user32.rc:78 user32.rc:96 wininet.rc:49 wininet.rc:69 winspool.rc:40
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
+#: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
+#: regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298
+#: regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217
+#: winecfg.rc:227 wineconsole.rc:132 winefile.rc:135 winefile.rc:158
+#: winefile.rc:188 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
+#: wordpad.rc:247
 msgid "Cancel"
 msgstr "Mégse"
 
@@ -290,11 +296,11 @@ msgstr "Megszakítás..."
 msgid "Properties for %s"
 msgstr "Tulajdonságok: %s"
 
-#: comctl32.rc:54
+#: comctl32.rc:54 comdlg32.rc:272
 msgid "&Apply"
 msgstr "&Alkalmazás"
 
-#: comctl32.rc:55 comctl32.rc:69 user32.rc:86
+#: comctl32.rc:55 comctl32.rc:69 comdlg32.rc:315 user32.rc:86
 msgid "Help"
 msgstr "Súgó"
 
@@ -327,7 +333,9 @@ msgstr "&Bezárás"
 msgid "R&eset"
 msgstr "Alaph&elyzet"
 
-#: comctl32.rc:83 ieframe.rc:55 msacm32.rc:49 oledlg.rc:89 shell32.rc:125
+#: comctl32.rc:83 comdlg32.rc:180 comdlg32.rc:202 comdlg32.rc:273
+#: comdlg32.rc:337 comdlg32.rc:357 comdlg32.rc:369 comdlg32.rc:486
+#: comdlg32.rc:504 ieframe.rc:55 msacm32.rc:49 oledlg.rc:89 shell32.rc:125
 #: clock.rc:41 notepad.rc:57 notepad.rc:124 oleview.rc:69 progman.rc:52
 #: progman.rc:105 progman.rc:123 progman.rc:141 progman.rc:157 progman.rc:181
 #: progman.rc:199 progman.rc:216 regedit.rc:76 taskmgr.rc:87 winefile.rc:85
@@ -385,6 +393,415 @@ msgstr "Ma:"
 #: comctl32.rc:34
 msgid "Go to today"
 msgstr "Ugrás mára"
+
+#: comdlg32.rc:165 comdlg32.rc:178 comdlg32.rc:467 comdlg32.rc:492
+#: shell32.rc:164 oleview.rc:99
+msgid "Open"
+msgstr "Megnyitás"
+
+#: comdlg32.rc:168 comdlg32.rc:190
+msgid "File &Name:"
+msgstr "Fájl&név:"
+
+#: comdlg32.rc:171 comdlg32.rc:193
+msgid "&Directories:"
+msgstr "&Könyvtár:"
+
+#: comdlg32.rc:174 comdlg32.rc:196
+msgid "List Files of &Type:"
+msgstr "Fájl&típus:"
+
+#: comdlg32.rc:176 comdlg32.rc:198
+msgid "Dri&ves:"
+msgstr "&Meghajtó:"
+
+#: comdlg32.rc:181 comdlg32.rc:203 winefile.rc:179
+msgid "&Read Only"
+msgstr "&Csak olvasható"
+
+#: comdlg32.rc:187
+msgid "Save As..."
+msgstr "Mentés másként..."
+
+#: comdlg32.rc:200
+msgid "Save As"
+msgstr "Mentés másként"
+
+#: comdlg32.rc:209 comdlg32.rc:218 comdlg32.rc:364 comdlg32.rc:64 hhctrl.rc:46
+#: wordpad.rc:162
+msgid "Print"
+msgstr "Nyomtatás"
+
+#: comdlg32.rc:212
+msgid "Printer:"
+msgstr "Nyomtató:"
+
+#: comdlg32.rc:214
+msgid "Print Range"
+msgstr "Nyomtatandó terület"
+
+#: comdlg32.rc:215 comdlg32.rc:392 regedit.rc:216
+msgid "&All"
+msgstr "&Mind"
+
+#: comdlg32.rc:216
+msgid "S&election"
+msgstr "&Kiválasztott"
+
+#: comdlg32.rc:217
+msgid "&Pages"
+msgstr "&Lapok"
+
+#: comdlg32.rc:220 comdlg32.rc:242
+msgid "&Setup"
+msgstr "&Beállítás"
+
+#: comdlg32.rc:221
+msgid "&From:"
+msgstr "Et&tõl:"
+
+#: comdlg32.rc:222
+msgid "&To:"
+msgstr "Ed&dig:"
+
+#: comdlg32.rc:223
+msgid "Print &Quality:"
+msgstr "Mi&nőség:"
+
+#: comdlg32.rc:225
+msgid "Print to Fi&le"
+msgstr "&Fájlba nyomtat"
+
+#: comdlg32.rc:226
+msgid "Condensed"
+msgstr "Sűrű"
+
+#: comdlg32.rc:232 comdlg32.rc:403
+msgid "Print Setup"
+msgstr "Nyomtató beállítása"
+
+#: comdlg32.rc:235 comdlg32.rc:371 comdlg32.rc:410
+msgid "Printer"
+msgstr "Nyomtató"
+
+#: comdlg32.rc:236
+msgid "&Default Printer"
+msgstr "&Alapértelmezett nyomtató"
+
+#: comdlg32.rc:237
+msgid "[none]"
+msgstr "[nincs]"
+
+#: comdlg32.rc:238
+msgid "Specific &Printer"
+msgstr "&Adott nyomtató"
+
+#: comdlg32.rc:243 comdlg32.rc:429 comdlg32.rc:448 wineps.rc:31
+msgid "Orientation"
+msgstr "Írásirány"
+
+#: comdlg32.rc:244
+msgid "Po&rtrait"
+msgstr "Á&lló"
+
+#: comdlg32.rc:245 comdlg32.rc:450 wineps.rc:34
+msgid "&Landscape"
+msgstr "&Vízszintes"
+
+#: comdlg32.rc:248 comdlg32.rc:423 comdlg32.rc:443 wineps.rc:25
+msgid "Paper"
+msgstr "Papír"
+
+#: comdlg32.rc:249
+msgid "Si&ze"
+msgstr "&Méret"
+
+#: comdlg32.rc:250
+msgid "&Source"
+msgstr "Fo&rrás"
+
+#: comdlg32.rc:258
+msgid "Font"
+msgstr "Betûtípus"
+
+#: comdlg32.rc:261
+msgid "&Font:"
+msgstr "&Betûtípus:"
+
+#: comdlg32.rc:264
+msgid "Font St&yle:"
+msgstr "Betû&stílus:"
+
+#: comdlg32.rc:267 comdlg32.rc:444 winecfg.rc:291
+msgid "&Size:"
+msgstr "Méret:"
+
+#: comdlg32.rc:274
+msgid "Effects"
+msgstr "Effektusok"
+
+#: comdlg32.rc:275
+msgid "Stri&keout"
+msgstr "Á&thúzott"
+
+#: comdlg32.rc:276
+msgid "&Underline"
+msgstr "&Aláhúzott"
+
+#: comdlg32.rc:277 winecfg.rc:289
+msgid "&Color:"
+msgstr "Szín:"
+
+#: comdlg32.rc:280
+msgid "Sample"
+msgstr "Minta"
+
+#: comdlg32.rc:281
+msgid "AaBbYyZz"
+msgstr "AaBbYyZzÁáŐőÉé"
+
+#: comdlg32.rc:282
+msgid "Scr&ipt:"
+msgstr "Szkr&ipt:"
+
+#: comdlg32.rc:290
+msgid "Color"
+msgstr "Szín"
+
+#: comdlg32.rc:293
+msgid "&Basic Colors:"
+msgstr "&Alap színek:"
+
+#: comdlg32.rc:294
+msgid "&Custom Colors:"
+msgstr "&Egyedi színek:"
+
+#: comdlg32.rc:295 comdlg32.rc:318
+msgid "Color |  Sol&id"
+msgstr "Szín |  &Tömör"
+
+#: comdlg32.rc:296
+msgid "&Red:"
+msgstr "&Vörös:"
+
+#: comdlg32.rc:298
+msgid "&Green:"
+msgstr "&Zöld:"
+
+#: comdlg32.rc:300
+msgid "&Blue:"
+msgstr "&Kék:"
+
+#: comdlg32.rc:302
+msgid "&Hue:"
+msgstr "&Hue:"
+
+#: comdlg32.rc:304
+msgid "&Sat:"
+msgstr "&Sat:"
+
+#: comdlg32.rc:306
+msgid "&Lum:"
+msgstr "&Lum:"
+
+#: comdlg32.rc:316
+msgid "&Add to Custom Colors"
+msgstr "&Egyedi színekhez adás"
+
+#: comdlg32.rc:317
+msgid "&Define Custom Colors >>"
+msgstr "E&gyedi szín definiálás >>"
+
+#: comdlg32.rc:324 regedit.rc:223 regedit.rc:233
+msgid "Find"
+msgstr "Keresés"
+
+#: comdlg32.rc:327 comdlg32.rc:346
+msgid "Fi&nd What:"
+msgstr "&Mit keressen:"
+
+#: comdlg32.rc:329 comdlg32.rc:350
+msgid "Match &Whole Word Only"
+msgstr "Teljes &szavak keresése"
+
+#: comdlg32.rc:330 comdlg32.rc:351
+msgid "Match &Case"
+msgstr "Kis/&nagybetű különb."
+
+#: comdlg32.rc:331
+msgid "Direction"
+msgstr "Irány"
+
+#: comdlg32.rc:332 view.rc:39
+msgid "&Up"
+msgstr "&Vissza"
+
+#: comdlg32.rc:333 view.rc:40
+msgid "&Down"
+msgstr "&Előre"
+
+#: comdlg32.rc:335 comdlg32.rc:353
+msgid "&Find Next"
+msgstr "&Következő"
+
+#: comdlg32.rc:343
+msgid "Replace"
+msgstr "Csere"
+
+#: comdlg32.rc:348
+msgid "Re&place With:"
+msgstr "Mire &cserélje:"
+
+#: comdlg32.rc:354
+msgid "&Replace"
+msgstr "C&serél"
+
+#: comdlg32.rc:355
+msgid "Replace &All"
+msgstr "M&indent cserél"
+
+#: comdlg32.rc:372
+msgid "Print to fi&le"
+msgstr "Nyomtatás fáj&lba"
+
+#: comdlg32.rc:373 comdlg32.rc:411 ieframe.rc:39 shdoclc.rc:58 shell32.rc:105
+#: clock.rc:28 wineconsole.rc:27
+msgid "&Properties"
+msgstr "&Tulajdonságok"
+
+#: comdlg32.rc:374 comdlg32.rc:412 msacm32.rc:31 winefile.rc:144
+msgid "&Name:"
+msgstr "&Név:"
+
+#: comdlg32.rc:376 comdlg32.rc:414
+msgid "Status:"
+msgstr "Állapot:"
+
+#: comdlg32.rc:378 comdlg32.rc:416
+msgid "Type:"
+msgstr "Típus:"
+
+#: comdlg32.rc:380 comdlg32.rc:418
+msgid "Where:"
+msgstr "Hely:"
+
+#: comdlg32.rc:382 comdlg32.rc:420
+msgid "Comment:"
+msgstr "Megjegyzés:"
+
+#: comdlg32.rc:385
+msgid "Copies"
+msgstr "Másolatok"
+
+#: comdlg32.rc:386
+msgid "Number of &copies:"
+msgstr "Másola&tok száma:"
+
+#: comdlg32.rc:388
+msgid "C&ollate"
+msgstr "Le&válogatás"
+
+#: comdlg32.rc:391
+msgid "Print range"
+msgstr "Nyomtatási terület"
+
+#: comdlg32.rc:393
+msgid "Pa&ges"
+msgstr "Oldala&k"
+
+#: comdlg32.rc:394
+msgid "&Selection"
+msgstr "&Kijelölés"
+
+#: comdlg32.rc:397
+msgid "&from:"
+msgstr "Et&tõl:"
+
+#: comdlg32.rc:398
+msgid "&to:"
+msgstr "Ed&dig:"
+
+#: comdlg32.rc:424 winecfg.rc:297
+msgid "Si&ze:"
+msgstr "Size:"
+
+#: comdlg32.rc:426
+msgid "&Source:"
+msgstr "&Forrás:"
+
+#: comdlg32.rc:431
+msgid "P&ortrait"
+msgstr "&Álló"
+
+#: comdlg32.rc:432
+msgid "L&andscape"
+msgstr "Fe&kvõ"
+
+#: comdlg32.rc:437
+msgid "Setup Page"
+msgstr "Oldalbeállítás"
+
+#: comdlg32.rc:446
+msgid "&Tray:"
+msgstr "&Forrás:"
+
+#: comdlg32.rc:449 wineps.rc:32
+msgid "&Portrait"
+msgstr "&Függőleges"
+
+#: comdlg32.rc:451
+msgid "Borders"
+msgstr "Margók"
+
+#: comdlg32.rc:452
+msgid "L&eft:"
+msgstr "&Bal:"
+
+#: comdlg32.rc:454 notepad.rc:117
+msgid "&Right:"
+msgstr "&Jobb:"
+
+#: comdlg32.rc:456
+msgid "T&op:"
+msgstr "F&elül:"
+
+#: comdlg32.rc:458 notepad.rc:119
+msgid "&Bottom:"
+msgstr "&Alsó:"
+
+#: comdlg32.rc:462
+msgid "P&rinter..."
+msgstr "Ny&omtató..."
+
+#: comdlg32.rc:470
+msgid "Look &in:"
+msgstr "H&ely:"
+
+#: comdlg32.rc:476
+msgid "File &name:"
+msgstr "Fájl&név:"
+
+#: comdlg32.rc:479
+msgid "Files of &type:"
+msgstr "Fájl&típus:"
+
+#: comdlg32.rc:482
+msgid "Open as &read-only"
+msgstr "Me&gnyitás csak olvashatóként"
+
+#: comdlg32.rc:484 comdlg32.rc:502 shdoclc.rc:124 shell32.rc:96
+msgid "&Open"
+msgstr "&Megnyitás"
+
+#: comdlg32.rc:495
+#, fuzzy
+msgid "File name:"
+msgstr "&Fájlnév:"
+
+#: comdlg32.rc:498
+#, fuzzy
+msgid "Files of type:"
+msgstr "Fájl&típus:"
 
 #: comdlg32.rc:29
 msgid "&About FolderPicker Test"
@@ -808,10 +1225,6 @@ msgstr "Margók [mm]"
 msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "mm"
-
-#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
-msgid "Print"
-msgstr "Nyomtatás"
 
 #: credui.rc:42
 msgid "&User name:"
@@ -2952,15 +3365,6 @@ msgstr "Nyomtatás"
 #, fuzzy
 msgid "Print previe&w"
 msgstr "Print previe&w..."
-
-#: ieframe.rc:39 shdoclc.rc:58 shell32.rc:105 clock.rc:28 wineconsole.rc:27
-#, fuzzy
-msgid "&Properties"
-msgstr ""
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"&Beállítások\n"
-"#-#-#-#-#  hu.po (Wine)  #-#-#-#-#\n"
-"Tula&jdonságok"
 
 #: ieframe.rc:44
 #, fuzzy
@@ -6586,10 +6990,6 @@ msgstr "Teljes hálózat"
 msgid "Sound Selection"
 msgstr "Hang kiválasztás"
 
-#: msacm32.rc:31 winefile.rc:144
-msgid "&Name:"
-msgstr "&Név:"
-
 #: msacm32.rc:36
 msgid "&Save As..."
 msgstr "&Mentés másként..."
@@ -7466,10 +7866,6 @@ msgstr "Beillesztés"
 msgid "&Print"
 msgstr "&Nyomtatás"
 
-#: shdoclc.rc:124 shell32.rc:96
-msgid "&Open"
-msgstr "&Megnyitás"
-
 #: shdoclc.rc:125
 msgid "Open in &New Window"
 msgstr "Megnyitás &új ablakban"
@@ -7826,10 +8222,6 @@ msgstr "Vezérlőpult"
 #: shell32.rc:163
 msgid "Select"
 msgstr "Kiválasztás"
-
-#: shell32.rc:164 oleview.rc:99
-msgid "Open"
-msgstr "Megnyitás"
 
 #: shell32.rc:186
 msgid "Restart"
@@ -8323,25 +8715,9 @@ msgstr "Ablak kiválasztása"
 msgid "&More Windows..."
 msgstr "&További ablakok..."
 
-#: wineps.rc:25
-msgid "Paper"
-msgstr "Papír"
-
 #: wineps.rc:28
 msgid "Paper Si&ze:"
 msgstr "Papír &méret:"
-
-#: wineps.rc:31
-msgid "Orientation"
-msgstr "Írásirány"
-
-#: wineps.rc:32
-msgid "&Portrait"
-msgstr "&Függőleges"
-
-#: wineps.rc:34
-msgid "&Landscape"
-msgstr "&Vízszintes"
 
 #: wineps.rc:36
 msgid "Duplex:"
@@ -10075,14 +10451,6 @@ msgstr "&Bal:"
 msgid "&Top:"
 msgstr "&Felső:"
 
-#: notepad.rc:117
-msgid "&Right:"
-msgstr "&Jobb:"
-
-#: notepad.rc:119
-msgid "&Bottom:"
-msgstr "&Alsó:"
-
 #: notepad.rc:131
 #, fuzzy
 msgid "Encoding:"
@@ -10926,17 +11294,9 @@ msgstr ""
 msgid "Export registry"
 msgstr "Regisztrációs adatbázis fájl &exportálása..."
 
-#: regedit.rc:216
-msgid "&All"
-msgstr ""
-
 #: regedit.rc:217
 msgid "S&elected branch:"
 msgstr ""
-
-#: regedit.rc:223 regedit.rc:233
-msgid "Find"
-msgstr "Keresés"
 
 #: regedit.rc:226
 msgid "Find:"
@@ -12206,14 +12566,6 @@ msgstr ""
 msgid "&Right"
 msgstr "Jobb széle"
 
-#: view.rc:39
-msgid "&Up"
-msgstr ""
-
-#: view.rc:40
-msgid "&Down"
-msgstr ""
-
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr ""
@@ -12491,14 +12843,6 @@ msgstr "Téma:"
 msgid "&Install theme..."
 msgstr "Téma telepítése..."
 
-#: winecfg.rc:289
-msgid "&Color:"
-msgstr "Szín:"
-
-#: winecfg.rc:291
-msgid "&Size:"
-msgstr "Méret:"
-
 #: winecfg.rc:293
 msgid "It&em:"
 msgstr "Item:"
@@ -12506,10 +12850,6 @@ msgstr "Item:"
 #: winecfg.rc:295
 msgid "C&olor:"
 msgstr "Color:"
-
-#: winecfg.rc:297
-msgid "Si&ze:"
-msgstr "Size:"
 
 #: winecfg.rc:301
 msgid " Fol&ders "
@@ -13265,11 +13605,6 @@ msgstr "&Jobb:"
 #, fuzzy
 msgid "Size:"
 msgstr "Méret"
-
-#: winefile.rc:179
-#, fuzzy
-msgid "&Read Only"
-msgstr "Csak &olvasható"
 
 #: winefile.rc:180
 msgid "H&idden"

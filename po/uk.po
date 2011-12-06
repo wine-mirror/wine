@@ -55,19 +55,21 @@ msgstr "&Видалити"
 msgid "Support Information"
 msgstr "Дані підтримки"
 
-#: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 credui.rc:49 cryptui.rc:260
-#: cryptui.rc:272 cryptui.rc:362 dinput.rc:43 ieframe.rc:84 localui.rc:41
-#: localui.rc:54 mpr.rc:46 msacm32.rc:50 mshtml.rc:45 mshtml.rc:55
-#: msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87 serialui.rc:38 setupapi.rc:56
-#: shell32.rc:286 shell32.rc:310 shell32.rc:332 shell32.rc:350 shlwapi.rc:41
-#: user32.rc:77 user32.rc:95 wininet.rc:48 wininet.rc:68 winspool.rc:39
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
-#: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
-#: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
-#: regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216
-#: winecfg.rc:226 wineconsole.rc:131 winefile.rc:134 winefile.rc:157
-#: winefile.rc:187 winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204
-#: wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 comdlg32.rc:240 comdlg32.rc:270
+#: comdlg32.rc:313 comdlg32.rc:367 comdlg32.rc:406 comdlg32.rc:460
+#: credui.rc:49 cryptui.rc:260 cryptui.rc:272 cryptui.rc:362 dinput.rc:43
+#: ieframe.rc:84 localui.rc:41 localui.rc:54 mpr.rc:46 msacm32.rc:50
+#: mshtml.rc:45 mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87
+#: serialui.rc:38 setupapi.rc:56 shell32.rc:286 shell32.rc:310 shell32.rc:332
+#: shell32.rc:350 shlwapi.rc:41 user32.rc:77 user32.rc:95 wininet.rc:48
+#: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:122 oleview.rc:159
+#: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
+#: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
+#: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
+#: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
+#: winefile.rc:134 winefile.rc:157 winefile.rc:187 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -134,18 +136,22 @@ msgid "&Install"
 msgstr "&Встановити"
 
 #: appwiz.rc:107 avifil32.rc:52 browseui.rc:37 comctl32.rc:53 comctl32.rc:68
-#: credui.rc:50 cryptui.rc:261 cryptui.rc:273 cryptui.rc:363 dinput.rc:44
-#: ieframe.rc:85 inetcpl.rc:78 localui.rc:42 localui.rc:55 mpr.rc:47
-#: msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34 oledlg.rc:56
-#: oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57 shell32.rc:287
-#: shell32.rc:311 shell32.rc:322 shell32.rc:351 shlwapi.rc:42 user32.rc:78
-#: user32.rc:96 wininet.rc:49 wininet.rc:69 winspool.rc:40 notepad.rc:123
-#: oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140
-#: progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245
-#: regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311
-#: taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
-#: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: comdlg32.rc:179 comdlg32.rc:201 comdlg32.rc:219 comdlg32.rc:241
+#: comdlg32.rc:271 comdlg32.rc:314 comdlg32.rc:336 comdlg32.rc:356
+#: comdlg32.rc:368 comdlg32.rc:407 comdlg32.rc:461 comdlg32.rc:485
+#: comdlg32.rc:503 credui.rc:50 cryptui.rc:261 cryptui.rc:273 cryptui.rc:363
+#: dinput.rc:44 ieframe.rc:85 inetcpl.rc:78 localui.rc:42 localui.rc:55
+#: mpr.rc:47 msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34
+#: oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57
+#: shell32.rc:287 shell32.rc:311 shell32.rc:322 shell32.rc:351 shlwapi.rc:42
+#: user32.rc:78 user32.rc:96 wininet.rc:49 wininet.rc:69 winspool.rc:40
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
+#: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
+#: regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298
+#: regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217
+#: winecfg.rc:227 wineconsole.rc:132 winefile.rc:135 winefile.rc:158
+#: winefile.rc:188 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
+#: wordpad.rc:247
 msgid "Cancel"
 msgstr "Скасувати"
 
@@ -280,11 +286,11 @@ msgstr "Скасування..."
 msgid "Properties for %s"
 msgstr "Властивості для %s"
 
-#: comctl32.rc:54
+#: comctl32.rc:54 comdlg32.rc:272
 msgid "&Apply"
 msgstr "&Застосувати"
 
-#: comctl32.rc:55 comctl32.rc:69 user32.rc:86
+#: comctl32.rc:55 comctl32.rc:69 comdlg32.rc:315 user32.rc:86
 msgid "Help"
 msgstr "&Довідка"
 
@@ -317,7 +323,9 @@ msgstr "За&крити"
 msgid "R&eset"
 msgstr "&Скинути"
 
-#: comctl32.rc:83 ieframe.rc:55 msacm32.rc:49 oledlg.rc:89 shell32.rc:125
+#: comctl32.rc:83 comdlg32.rc:180 comdlg32.rc:202 comdlg32.rc:273
+#: comdlg32.rc:337 comdlg32.rc:357 comdlg32.rc:369 comdlg32.rc:486
+#: comdlg32.rc:504 ieframe.rc:55 msacm32.rc:49 oledlg.rc:89 shell32.rc:125
 #: clock.rc:41 notepad.rc:57 notepad.rc:124 oleview.rc:69 progman.rc:52
 #: progman.rc:105 progman.rc:123 progman.rc:141 progman.rc:157 progman.rc:181
 #: progman.rc:199 progman.rc:216 regedit.rc:76 taskmgr.rc:87 winefile.rc:85
@@ -370,6 +378,415 @@ msgstr "Сьогодні:"
 #: comctl32.rc:34
 msgid "Go to today"
 msgstr "Поточна дата"
+
+#: comdlg32.rc:165 comdlg32.rc:178 comdlg32.rc:467 comdlg32.rc:492
+#: shell32.rc:164 oleview.rc:99
+msgid "Open"
+msgstr "Відкрити"
+
+#: comdlg32.rc:168 comdlg32.rc:190
+msgid "File &Name:"
+msgstr "&Ім'я файлу:"
+
+#: comdlg32.rc:171 comdlg32.rc:193
+msgid "&Directories:"
+msgstr "&Теки:"
+
+#: comdlg32.rc:174 comdlg32.rc:196
+msgid "List Files of &Type:"
+msgstr "Показувати файли &типу:"
+
+#: comdlg32.rc:176 comdlg32.rc:198
+msgid "Dri&ves:"
+msgstr "&Диски:"
+
+#: comdlg32.rc:181 comdlg32.rc:203 winefile.rc:179
+msgid "&Read Only"
+msgstr "&Лише для читання"
+
+#: comdlg32.rc:187
+msgid "Save As..."
+msgstr "Зберегти як..."
+
+#: comdlg32.rc:200
+msgid "Save As"
+msgstr "Зберегти як"
+
+#: comdlg32.rc:209 comdlg32.rc:218 comdlg32.rc:364 comdlg32.rc:64 hhctrl.rc:46
+#: wordpad.rc:162
+msgid "Print"
+msgstr "Друк"
+
+#: comdlg32.rc:212
+msgid "Printer:"
+msgstr "Принтер:"
+
+#: comdlg32.rc:214
+msgid "Print Range"
+msgstr "Друкувати"
+
+#: comdlg32.rc:215 comdlg32.rc:392 regedit.rc:216
+msgid "&All"
+msgstr "&Все"
+
+#: comdlg32.rc:216
+msgid "S&election"
+msgstr "В&иділення"
+
+#: comdlg32.rc:217
+msgid "&Pages"
+msgstr "&Сторінки"
+
+#: comdlg32.rc:220 comdlg32.rc:242
+msgid "&Setup"
+msgstr "Властивості"
+
+#: comdlg32.rc:221
+msgid "&From:"
+msgstr "&з:"
+
+#: comdlg32.rc:222
+msgid "&To:"
+msgstr "&до:"
+
+#: comdlg32.rc:223
+msgid "Print &Quality:"
+msgstr "&Якість друку:"
+
+#: comdlg32.rc:225
+msgid "Print to Fi&le"
+msgstr "Друк до файлу"
+
+#: comdlg32.rc:226
+msgid "Condensed"
+msgstr "Стисло"
+
+#: comdlg32.rc:232 comdlg32.rc:403
+msgid "Print Setup"
+msgstr "Параметри друку"
+
+#: comdlg32.rc:235 comdlg32.rc:371 comdlg32.rc:410
+msgid "Printer"
+msgstr "Принтер"
+
+#: comdlg32.rc:236
+msgid "&Default Printer"
+msgstr "Принтер за &обумовленням"
+
+#: comdlg32.rc:237
+msgid "[none]"
+msgstr "[Нема]"
+
+#: comdlg32.rc:238
+msgid "Specific &Printer"
+msgstr "&Інший принтер"
+
+#: comdlg32.rc:243 comdlg32.rc:429 comdlg32.rc:448 wineps.rc:31
+msgid "Orientation"
+msgstr "Орієнтація"
+
+#: comdlg32.rc:244
+msgid "Po&rtrait"
+msgstr "&Книжкова"
+
+#: comdlg32.rc:245 comdlg32.rc:450 wineps.rc:34
+msgid "&Landscape"
+msgstr "&Альбомна"
+
+#: comdlg32.rc:248 comdlg32.rc:423 comdlg32.rc:443 wineps.rc:25
+msgid "Paper"
+msgstr "Папір"
+
+#: comdlg32.rc:249
+msgid "Si&ze"
+msgstr "Ро&змір"
+
+#: comdlg32.rc:250
+msgid "&Source"
+msgstr "&Джерело"
+
+#: comdlg32.rc:258
+msgid "Font"
+msgstr "Шрифт"
+
+#: comdlg32.rc:261
+msgid "&Font:"
+msgstr "&Шрифт:"
+
+#: comdlg32.rc:264
+msgid "Font St&yle:"
+msgstr "&Стиль:"
+
+#: comdlg32.rc:267 comdlg32.rc:444 winecfg.rc:291
+msgid "&Size:"
+msgstr "&Розмір:"
+
+#: comdlg32.rc:274
+msgid "Effects"
+msgstr "Атрибути"
+
+#: comdlg32.rc:275
+msgid "Stri&keout"
+msgstr "&Закреслений"
+
+#: comdlg32.rc:276
+msgid "&Underline"
+msgstr "&Підкреслений"
+
+#: comdlg32.rc:277 winecfg.rc:289
+msgid "&Color:"
+msgstr "&Колір:"
+
+#: comdlg32.rc:280
+msgid "Sample"
+msgstr "&Зразок"
+
+#: comdlg32.rc:281
+msgid "AaBbYyZz"
+msgstr "АаБбAaBb"
+
+#: comdlg32.rc:282
+msgid "Scr&ipt:"
+msgstr "Група символ&ів:"
+
+#: comdlg32.rc:290
+msgid "Color"
+msgstr "Зміна кольору"
+
+#: comdlg32.rc:293
+msgid "&Basic Colors:"
+msgstr "&Базова палітра:"
+
+#: comdlg32.rc:294
+msgid "&Custom Colors:"
+msgstr "Д&одаткові кольори:"
+
+#: comdlg32.rc:295 comdlg32.rc:318
+msgid "Color |  Sol&id"
+msgstr "Колір|За&ливка"
+
+#: comdlg32.rc:296
+msgid "&Red:"
+msgstr "&Черв:"
+
+#: comdlg32.rc:298
+msgid "&Green:"
+msgstr "&Зелен:"
+
+#: comdlg32.rc:300
+msgid "&Blue:"
+msgstr "С&иній:"
+
+#: comdlg32.rc:302
+msgid "&Hue:"
+msgstr "Від&тінок:"
+
+#: comdlg32.rc:304
+msgid "&Sat:"
+msgstr "&Контраст:"
+
+#: comdlg32.rc:306
+msgid "&Lum:"
+msgstr "&Яскравість:"
+
+#: comdlg32.rc:316
+msgid "&Add to Custom Colors"
+msgstr "&Додати до набору"
+
+#: comdlg32.rc:317
+msgid "&Define Custom Colors >>"
+msgstr "&Визначити колір >>"
+
+#: comdlg32.rc:324 regedit.rc:223 regedit.rc:233
+msgid "Find"
+msgstr "Знайти"
+
+#: comdlg32.rc:327 comdlg32.rc:346
+msgid "Fi&nd What:"
+msgstr "&Зразок:"
+
+#: comdlg32.rc:329 comdlg32.rc:350
+msgid "Match &Whole Word Only"
+msgstr "&Лише слово цілком"
+
+#: comdlg32.rc:330 comdlg32.rc:351
+msgid "Match &Case"
+msgstr "Враховувати &реґістр"
+
+#: comdlg32.rc:331
+msgid "Direction"
+msgstr "Напрям"
+
+#: comdlg32.rc:332 view.rc:39
+msgid "&Up"
+msgstr "В&верх"
+
+#: comdlg32.rc:333 view.rc:40
+msgid "&Down"
+msgstr "В&низ"
+
+#: comdlg32.rc:335 comdlg32.rc:353
+msgid "&Find Next"
+msgstr "З&найти далі"
+
+#: comdlg32.rc:343
+msgid "Replace"
+msgstr "Заміна"
+
+#: comdlg32.rc:348
+msgid "Re&place With:"
+msgstr "З&амінити на:"
+
+#: comdlg32.rc:354
+msgid "&Replace"
+msgstr "&Замінити"
+
+#: comdlg32.rc:355
+msgid "Replace &All"
+msgstr "Замінити &все"
+
+#: comdlg32.rc:372
+msgid "Print to fi&le"
+msgstr "Друк у фай&л"
+
+#: comdlg32.rc:373 comdlg32.rc:411 ieframe.rc:39 shdoclc.rc:58 shell32.rc:105
+#: clock.rc:28 wineconsole.rc:27
+msgid "&Properties"
+msgstr "В&ластивості"
+
+#: comdlg32.rc:374 comdlg32.rc:412 msacm32.rc:31 winefile.rc:144
+msgid "&Name:"
+msgstr "&Ім'я:"
+
+#: comdlg32.rc:376 comdlg32.rc:414
+msgid "Status:"
+msgstr "Статус:"
+
+#: comdlg32.rc:378 comdlg32.rc:416
+msgid "Type:"
+msgstr "Тип:"
+
+#: comdlg32.rc:380 comdlg32.rc:418
+msgid "Where:"
+msgstr "Місце:"
+
+#: comdlg32.rc:382 comdlg32.rc:420
+msgid "Comment:"
+msgstr "Примітка:"
+
+#: comdlg32.rc:385
+msgid "Copies"
+msgstr "Копії"
+
+#: comdlg32.rc:386
+msgid "Number of &copies:"
+msgstr "Кількість &копій:"
+
+#: comdlg32.rc:388
+msgid "C&ollate"
+msgstr "&Розбити"
+
+#: comdlg32.rc:391
+msgid "Print range"
+msgstr "Друкувати"
+
+#: comdlg32.rc:393
+msgid "Pa&ges"
+msgstr "&Сторінки"
+
+#: comdlg32.rc:394
+msgid "&Selection"
+msgstr "&Виділення"
+
+#: comdlg32.rc:397
+msgid "&from:"
+msgstr "&від:"
+
+#: comdlg32.rc:398
+msgid "&to:"
+msgstr "&до:"
+
+#: comdlg32.rc:424 winecfg.rc:297
+msgid "Si&ze:"
+msgstr "Ро&змір:"
+
+#: comdlg32.rc:426
+msgid "&Source:"
+msgstr "&Джерело:"
+
+#: comdlg32.rc:431
+msgid "P&ortrait"
+msgstr "&Книжкова"
+
+#: comdlg32.rc:432
+msgid "L&andscape"
+msgstr "&Альбомна"
+
+#: comdlg32.rc:437
+msgid "Setup Page"
+msgstr "Параметри сторінки"
+
+#: comdlg32.rc:446
+msgid "&Tray:"
+msgstr "Ло&ток:"
+
+#: comdlg32.rc:449 wineps.rc:32
+msgid "&Portrait"
+msgstr "&Книжкова"
+
+#: comdlg32.rc:451
+msgid "Borders"
+msgstr "Поля"
+
+#: comdlg32.rc:452
+msgid "L&eft:"
+msgstr "&Ліве:"
+
+#: comdlg32.rc:454 notepad.rc:117
+msgid "&Right:"
+msgstr "&Праве:"
+
+#: comdlg32.rc:456
+msgid "T&op:"
+msgstr "&Верхнє:"
+
+#: comdlg32.rc:458 notepad.rc:119
+msgid "&Bottom:"
+msgstr "&Нижнє:"
+
+#: comdlg32.rc:462
+msgid "P&rinter..."
+msgstr "П&ринтер..."
+
+#: comdlg32.rc:470
+msgid "Look &in:"
+msgstr "Шукати &в"
+
+#: comdlg32.rc:476
+msgid "File &name:"
+msgstr "Ім'я &файлу:"
+
+#: comdlg32.rc:479
+msgid "Files of &type:"
+msgstr "Файли &типу"
+
+#: comdlg32.rc:482
+msgid "Open as &read-only"
+msgstr "Лише для &читання"
+
+#: comdlg32.rc:484 comdlg32.rc:502 shdoclc.rc:124 shell32.rc:96
+msgid "&Open"
+msgstr "&Відкрити"
+
+#: comdlg32.rc:495
+#, fuzzy
+msgid "File name:"
+msgstr "&Ім'я файлу:"
+
+#: comdlg32.rc:498
+#, fuzzy
+msgid "Files of type:"
+msgstr "Файли &типу"
 
 #: comdlg32.rc:29
 msgid "&About FolderPicker Test"
@@ -775,10 +1192,6 @@ msgstr "Межі [мм]"
 msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "мм"
-
-#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
-msgid "Print"
-msgstr "Друк"
 
 #: credui.rc:42
 msgid "&User name:"
@@ -2866,10 +3279,6 @@ msgstr "&Друк..."
 #: ieframe.rc:37 wordpad.rc:34
 msgid "Print previe&w"
 msgstr "Попередній пе&регляд"
-
-#: ieframe.rc:39 shdoclc.rc:58 shell32.rc:105 clock.rc:28 wineconsole.rc:27
-msgid "&Properties"
-msgstr "В&ластивості"
 
 #: ieframe.rc:44
 msgid "&Toolbars"
@@ -6197,10 +6606,6 @@ msgstr "Вся Мережа"
 msgid "Sound Selection"
 msgstr "Sound Selection"
 
-#: msacm32.rc:31 winefile.rc:144
-msgid "&Name:"
-msgstr "&Ім'я:"
-
 #: msacm32.rc:36
 msgid "&Save As..."
 msgstr "Зберегти &як..."
@@ -7083,10 +7488,6 @@ msgstr "Вставити"
 msgid "&Print"
 msgstr "&Друк"
 
-#: shdoclc.rc:124 shell32.rc:96
-msgid "&Open"
-msgstr "&Відкрити"
-
 #: shdoclc.rc:125
 msgid "Open in &New Window"
 msgstr "Відкрити в &новому вікні"
@@ -7437,10 +7838,6 @@ msgstr "Панель керування"
 #: shell32.rc:163
 msgid "Select"
 msgstr "Ви&брати"
-
-#: shell32.rc:164 oleview.rc:99
-msgid "Open"
-msgstr "Відкрити"
 
 #: shell32.rc:186
 msgid "Restart"
@@ -7924,25 +8321,9 @@ msgstr "Вибір вікна"
 msgid "&More Windows..."
 msgstr "&Ще вікна..."
 
-#: wineps.rc:25
-msgid "Paper"
-msgstr "Папір"
-
 #: wineps.rc:28
 msgid "Paper Si&ze:"
 msgstr "&Розмір паперу:"
-
-#: wineps.rc:31
-msgid "Orientation"
-msgstr "Орієнтація"
-
-#: wineps.rc:32
-msgid "&Portrait"
-msgstr "&Книжкова"
-
-#: wineps.rc:34
-msgid "&Landscape"
-msgstr "&Альбомна"
 
 #: wineps.rc:36
 msgid "Duplex:"
@@ -9953,14 +10334,6 @@ msgstr "&Ліве:"
 msgid "&Top:"
 msgstr "&Верхнє:"
 
-#: notepad.rc:117
-msgid "&Right:"
-msgstr "&Праве:"
-
-#: notepad.rc:119
-msgid "&Bottom:"
-msgstr "&Нижнє:"
-
 #: notepad.rc:131
 msgid "Encoding:"
 msgstr "Кодування:"
@@ -10760,17 +11133,9 @@ msgstr "Змінити двійкові дані..."
 msgid "Export registry"
 msgstr "Експорт реєстру"
 
-#: regedit.rc:216
-msgid "&All"
-msgstr "&Все"
-
 #: regedit.rc:217
 msgid "S&elected branch:"
 msgstr "О&брану гілку:"
-
-#: regedit.rc:223 regedit.rc:233
-msgid "Find"
-msgstr "Знайти"
 
 #: regedit.rc:226
 msgid "Find:"
@@ -12055,14 +12420,6 @@ msgstr "В&ліво"
 msgid "&Right"
 msgstr "В&право"
 
-#: view.rc:39
-msgid "&Up"
-msgstr "В&верх"
-
-#: view.rc:40
-msgid "&Down"
-msgstr "В&низ"
-
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "Переглядач звичайних метафайлів"
@@ -12336,14 +12693,6 @@ msgstr "&Тема:"
 msgid "&Install theme..."
 msgstr "&Встановити тему..."
 
-#: winecfg.rc:289
-msgid "&Color:"
-msgstr "&Колір:"
-
-#: winecfg.rc:291
-msgid "&Size:"
-msgstr "&Розмір:"
-
 #: winecfg.rc:293
 msgid "It&em:"
 msgstr "Е&лемент:"
@@ -12351,10 +12700,6 @@ msgstr "Е&лемент:"
 #: winecfg.rc:295
 msgid "C&olor:"
 msgstr "Ко&лір:"
-
-#: winecfg.rc:297
-msgid "Si&ze:"
-msgstr "Ро&змір:"
 
 #: winecfg.rc:301
 msgid " Fol&ders "
@@ -13108,10 +13453,6 @@ msgstr "Cop&yright:"
 #: winefile.rc:176
 msgid "Size:"
 msgstr "Розмір:"
-
-#: winefile.rc:179
-msgid "&Read Only"
-msgstr "&Лише для читання"
 
 #: winefile.rc:180
 msgid "H&idden"

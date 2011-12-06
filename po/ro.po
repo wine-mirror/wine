@@ -56,19 +56,21 @@ msgstr "&Elimină"
 msgid "Support Information"
 msgstr "Informații de asistență"
 
-#: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 credui.rc:49 cryptui.rc:260
-#: cryptui.rc:272 cryptui.rc:362 dinput.rc:43 ieframe.rc:84 localui.rc:41
-#: localui.rc:54 mpr.rc:46 msacm32.rc:50 mshtml.rc:45 mshtml.rc:55
-#: msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87 serialui.rc:38 setupapi.rc:56
-#: shell32.rc:286 shell32.rc:310 shell32.rc:332 shell32.rc:350 shlwapi.rc:41
-#: user32.rc:77 user32.rc:95 wininet.rc:48 wininet.rc:68 winspool.rc:39
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
-#: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
-#: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
-#: regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216
-#: winecfg.rc:226 wineconsole.rc:131 winefile.rc:134 winefile.rc:157
-#: winefile.rc:187 winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204
-#: wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 comdlg32.rc:240 comdlg32.rc:270
+#: comdlg32.rc:313 comdlg32.rc:367 comdlg32.rc:406 comdlg32.rc:460
+#: credui.rc:49 cryptui.rc:260 cryptui.rc:272 cryptui.rc:362 dinput.rc:43
+#: ieframe.rc:84 localui.rc:41 localui.rc:54 mpr.rc:46 msacm32.rc:50
+#: mshtml.rc:45 mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87
+#: serialui.rc:38 setupapi.rc:56 shell32.rc:286 shell32.rc:310 shell32.rc:332
+#: shell32.rc:350 shlwapi.rc:41 user32.rc:77 user32.rc:95 wininet.rc:48
+#: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:122 oleview.rc:159
+#: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
+#: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
+#: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
+#: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
+#: winefile.rc:134 winefile.rc:157 winefile.rc:187 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "OK"
 
@@ -137,18 +139,22 @@ msgid "&Install"
 msgstr "&Instalează"
 
 #: appwiz.rc:107 avifil32.rc:52 browseui.rc:37 comctl32.rc:53 comctl32.rc:68
-#: credui.rc:50 cryptui.rc:261 cryptui.rc:273 cryptui.rc:363 dinput.rc:44
-#: ieframe.rc:85 inetcpl.rc:78 localui.rc:42 localui.rc:55 mpr.rc:47
-#: msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34 oledlg.rc:56
-#: oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57 shell32.rc:287
-#: shell32.rc:311 shell32.rc:322 shell32.rc:351 shlwapi.rc:42 user32.rc:78
-#: user32.rc:96 wininet.rc:49 wininet.rc:69 winspool.rc:40 notepad.rc:123
-#: oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140
-#: progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245
-#: regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311
-#: taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
-#: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: comdlg32.rc:179 comdlg32.rc:201 comdlg32.rc:219 comdlg32.rc:241
+#: comdlg32.rc:271 comdlg32.rc:314 comdlg32.rc:336 comdlg32.rc:356
+#: comdlg32.rc:368 comdlg32.rc:407 comdlg32.rc:461 comdlg32.rc:485
+#: comdlg32.rc:503 credui.rc:50 cryptui.rc:261 cryptui.rc:273 cryptui.rc:363
+#: dinput.rc:44 ieframe.rc:85 inetcpl.rc:78 localui.rc:42 localui.rc:55
+#: mpr.rc:47 msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34
+#: oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57
+#: shell32.rc:287 shell32.rc:311 shell32.rc:322 shell32.rc:351 shlwapi.rc:42
+#: user32.rc:78 user32.rc:96 wininet.rc:49 wininet.rc:69 winspool.rc:40
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
+#: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
+#: regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298
+#: regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217
+#: winecfg.rc:227 wineconsole.rc:132 winefile.rc:135 winefile.rc:158
+#: winefile.rc:188 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
+#: wordpad.rc:247
 msgid "Cancel"
 msgstr "Renunță"
 
@@ -283,11 +289,11 @@ msgstr "Renunț..."
 msgid "Properties for %s"
 msgstr "Proprietăți pentru %s"
 
-#: comctl32.rc:54
+#: comctl32.rc:54 comdlg32.rc:272
 msgid "&Apply"
 msgstr "A&plică"
 
-#: comctl32.rc:55 comctl32.rc:69 user32.rc:86
+#: comctl32.rc:55 comctl32.rc:69 comdlg32.rc:315 user32.rc:86
 msgid "Help"
 msgstr "&Ajutor"
 
@@ -320,7 +326,9 @@ msgstr "În&chide"
 msgid "R&eset"
 msgstr "&Resetează"
 
-#: comctl32.rc:83 ieframe.rc:55 msacm32.rc:49 oledlg.rc:89 shell32.rc:125
+#: comctl32.rc:83 comdlg32.rc:180 comdlg32.rc:202 comdlg32.rc:273
+#: comdlg32.rc:337 comdlg32.rc:357 comdlg32.rc:369 comdlg32.rc:486
+#: comdlg32.rc:504 ieframe.rc:55 msacm32.rc:49 oledlg.rc:89 shell32.rc:125
 #: clock.rc:41 notepad.rc:57 notepad.rc:124 oleview.rc:69 progman.rc:52
 #: progman.rc:105 progman.rc:123 progman.rc:141 progman.rc:157 progman.rc:181
 #: progman.rc:199 progman.rc:216 regedit.rc:76 taskmgr.rc:87 winefile.rc:85
@@ -378,6 +386,415 @@ msgstr "Azi:"
 #: comctl32.rc:34
 msgid "Go to today"
 msgstr "Mergi la Azi"
+
+#: comdlg32.rc:165 comdlg32.rc:178 comdlg32.rc:467 comdlg32.rc:492
+#: shell32.rc:164 oleview.rc:99
+msgid "Open"
+msgstr "Deschide"
+
+#: comdlg32.rc:168 comdlg32.rc:190
+msgid "File &Name:"
+msgstr "&Nume fișier:"
+
+#: comdlg32.rc:171 comdlg32.rc:193
+msgid "&Directories:"
+msgstr "&Dosare:"
+
+#: comdlg32.rc:174 comdlg32.rc:196
+msgid "List Files of &Type:"
+msgstr "&Tip de fișier:"
+
+#: comdlg32.rc:176 comdlg32.rc:198
+msgid "Dri&ves:"
+msgstr "D&iscuri:"
+
+#: comdlg32.rc:181 comdlg32.rc:203 winefile.rc:179
+msgid "&Read Only"
+msgstr "Doar citi&re"
+
+#: comdlg32.rc:187
+msgid "Save As..."
+msgstr "Salvare ca..."
+
+#: comdlg32.rc:200
+msgid "Save As"
+msgstr "Salvează ca"
+
+#: comdlg32.rc:209 comdlg32.rc:218 comdlg32.rc:364 comdlg32.rc:64 hhctrl.rc:46
+#: wordpad.rc:162
+msgid "Print"
+msgstr "Tipărire"
+
+#: comdlg32.rc:212
+msgid "Printer:"
+msgstr "Imprimantă:"
+
+#: comdlg32.rc:214
+msgid "Print Range"
+msgstr "Interval tipărire"
+
+#: comdlg32.rc:215 comdlg32.rc:392 regedit.rc:216
+msgid "&All"
+msgstr "To&ate"
+
+#: comdlg32.rc:216
+msgid "S&election"
+msgstr "S&elecție"
+
+#: comdlg32.rc:217
+msgid "&Pages"
+msgstr "&Pagini"
+
+#: comdlg32.rc:220 comdlg32.rc:242
+msgid "&Setup"
+msgstr "&Setează"
+
+#: comdlg32.rc:221
+msgid "&From:"
+msgstr "&De la:"
+
+#: comdlg32.rc:222
+msgid "&To:"
+msgstr "&La:"
+
+#: comdlg32.rc:223
+msgid "Print &Quality:"
+msgstr "&Calitate tipărire:"
+
+#: comdlg32.rc:225
+msgid "Print to Fi&le"
+msgstr "Tipăreşte în fişier"
+
+#: comdlg32.rc:226
+msgid "Condensed"
+msgstr "Comprimat"
+
+#: comdlg32.rc:232 comdlg32.rc:403
+msgid "Print Setup"
+msgstr "Setări tipărire"
+
+#: comdlg32.rc:235 comdlg32.rc:371 comdlg32.rc:410
+msgid "Printer"
+msgstr "Imprimantă"
+
+#: comdlg32.rc:236
+msgid "&Default Printer"
+msgstr "&Imprimantă implicită"
+
+#: comdlg32.rc:237
+msgid "[none]"
+msgstr "[nimic]"
+
+#: comdlg32.rc:238
+msgid "Specific &Printer"
+msgstr "I&mprimantă specifică"
+
+#: comdlg32.rc:243 comdlg32.rc:429 comdlg32.rc:448 wineps.rc:31
+msgid "Orientation"
+msgstr "Orientare"
+
+#: comdlg32.rc:244
+msgid "Po&rtrait"
+msgstr "P&ortret"
+
+#: comdlg32.rc:245 comdlg32.rc:450 wineps.rc:34
+msgid "&Landscape"
+msgstr "&Peisaj"
+
+#: comdlg32.rc:248 comdlg32.rc:423 comdlg32.rc:443 wineps.rc:25
+msgid "Paper"
+msgstr "Hârtie"
+
+#: comdlg32.rc:249
+msgid "Si&ze"
+msgstr "&Mărime"
+
+#: comdlg32.rc:250
+msgid "&Source"
+msgstr "&Sursă"
+
+#: comdlg32.rc:258
+msgid "Font"
+msgstr "Font"
+
+#: comdlg32.rc:261
+msgid "&Font:"
+msgstr "&Font:"
+
+#: comdlg32.rc:264
+msgid "Font St&yle:"
+msgstr "&Stil font:"
+
+#: comdlg32.rc:267 comdlg32.rc:444 winecfg.rc:291
+msgid "&Size:"
+msgstr "Mărime:"
+
+#: comdlg32.rc:274
+msgid "Effects"
+msgstr "Efecte"
+
+#: comdlg32.rc:275
+msgid "Stri&keout"
+msgstr "&Linie mijloc"
+
+#: comdlg32.rc:276
+msgid "&Underline"
+msgstr "&Subliniat"
+
+#: comdlg32.rc:277 winecfg.rc:289
+msgid "&Color:"
+msgstr "Culoare:"
+
+#: comdlg32.rc:280
+msgid "Sample"
+msgstr "Eșantion"
+
+#: comdlg32.rc:281
+msgid "AaBbYyZz"
+msgstr "AaBbYyZz"
+
+#: comdlg32.rc:282
+msgid "Scr&ipt:"
+msgstr "Scr&ipt:"
+
+#: comdlg32.rc:290
+msgid "Color"
+msgstr "Culoare"
+
+#: comdlg32.rc:293
+msgid "&Basic Colors:"
+msgstr "Culori de &bază:"
+
+#: comdlg32.rc:294
+msgid "&Custom Colors:"
+msgstr "&Culori personalizate:"
+
+#: comdlg32.rc:295 comdlg32.rc:318
+msgid "Color |  Sol&id"
+msgstr "Culoare |  Sol&id"
+
+#: comdlg32.rc:296
+msgid "&Red:"
+msgstr "&Roșu:"
+
+#: comdlg32.rc:298
+msgid "&Green:"
+msgstr "&Verde:"
+
+#: comdlg32.rc:300
+msgid "&Blue:"
+msgstr "&Albastru:"
+
+#: comdlg32.rc:302
+msgid "&Hue:"
+msgstr "&Nuanță:"
+
+#: comdlg32.rc:304
+msgid "&Sat:"
+msgstr "&Sat:"
+
+#: comdlg32.rc:306
+msgid "&Lum:"
+msgstr "&Lum:"
+
+#: comdlg32.rc:316
+msgid "&Add to Custom Colors"
+msgstr "&Adaugă culori personalizate"
+
+#: comdlg32.rc:317
+msgid "&Define Custom Colors >>"
+msgstr "&Definește colori personalizate >>"
+
+#: comdlg32.rc:324 regedit.rc:223 regedit.rc:233
+msgid "Find"
+msgstr "Căutare"
+
+#: comdlg32.rc:327 comdlg32.rc:346
+msgid "Fi&nd What:"
+msgstr "&Caută:"
+
+#: comdlg32.rc:329 comdlg32.rc:350
+msgid "Match &Whole Word Only"
+msgstr "&Numai cuvinte întregi"
+
+#: comdlg32.rc:330 comdlg32.rc:351
+msgid "Match &Case"
+msgstr "Sensibil la registru"
+
+#: comdlg32.rc:331
+msgid "Direction"
+msgstr "Direcție"
+
+#: comdlg32.rc:332 view.rc:39
+msgid "&Up"
+msgstr "&Sus"
+
+#: comdlg32.rc:333 view.rc:40
+msgid "&Down"
+msgstr "&Jos"
+
+#: comdlg32.rc:335 comdlg32.rc:353
+msgid "&Find Next"
+msgstr "Caută &înainte"
+
+#: comdlg32.rc:343
+msgid "Replace"
+msgstr "Înlocuire"
+
+#: comdlg32.rc:348
+msgid "Re&place With:"
+msgstr "În&locuieşte cu:"
+
+#: comdlg32.rc:354
+msgid "&Replace"
+msgstr "&Înlocuieşte"
+
+#: comdlg32.rc:355
+msgid "Replace &All"
+msgstr "Înlocuieşte &tot"
+
+#: comdlg32.rc:372
+msgid "Print to fi&le"
+msgstr "Tipăreşte în &fişier"
+
+#: comdlg32.rc:373 comdlg32.rc:411 ieframe.rc:39 shdoclc.rc:58 shell32.rc:105
+#: clock.rc:28 wineconsole.rc:27
+msgid "&Properties"
+msgstr "&Proprietăți"
+
+#: comdlg32.rc:374 comdlg32.rc:412 msacm32.rc:31 winefile.rc:144
+msgid "&Name:"
+msgstr "&Nume:"
+
+#: comdlg32.rc:376 comdlg32.rc:414
+msgid "Status:"
+msgstr "Stare:"
+
+#: comdlg32.rc:378 comdlg32.rc:416
+msgid "Type:"
+msgstr "Tip:"
+
+#: comdlg32.rc:380 comdlg32.rc:418
+msgid "Where:"
+msgstr "Loc:"
+
+#: comdlg32.rc:382 comdlg32.rc:420
+msgid "Comment:"
+msgstr "Comentariu:"
+
+#: comdlg32.rc:385
+msgid "Copies"
+msgstr "Copii"
+
+#: comdlg32.rc:386
+msgid "Number of &copies:"
+msgstr "Număr de &copii:"
+
+#: comdlg32.rc:388
+msgid "C&ollate"
+msgstr "C&olaționate"
+
+#: comdlg32.rc:391
+msgid "Print range"
+msgstr "Interval tipărire"
+
+#: comdlg32.rc:393
+msgid "Pa&ges"
+msgstr "Pa&ginile"
+
+#: comdlg32.rc:394
+msgid "&Selection"
+msgstr "&Selecție"
+
+#: comdlg32.rc:397
+msgid "&from:"
+msgstr "&de la:"
+
+#: comdlg32.rc:398
+msgid "&to:"
+msgstr "&la:"
+
+#: comdlg32.rc:424 winecfg.rc:297
+msgid "Si&ze:"
+msgstr "Mărime:"
+
+#: comdlg32.rc:426
+msgid "&Source:"
+msgstr "&Sursă:"
+
+#: comdlg32.rc:431
+msgid "P&ortrait"
+msgstr "P&ortret"
+
+#: comdlg32.rc:432
+msgid "L&andscape"
+msgstr "&Peisaj"
+
+#: comdlg32.rc:437
+msgid "Setup Page"
+msgstr "Setare Pagină"
+
+#: comdlg32.rc:446
+msgid "&Tray:"
+msgstr "S&ertar:"
+
+#: comdlg32.rc:449 wineps.rc:32
+msgid "&Portrait"
+msgstr "P&ortret"
+
+#: comdlg32.rc:451
+msgid "Borders"
+msgstr "Margini"
+
+#: comdlg32.rc:452
+msgid "L&eft:"
+msgstr "S&tânga:"
+
+#: comdlg32.rc:454 notepad.rc:117
+msgid "&Right:"
+msgstr "&Dreapta:"
+
+#: comdlg32.rc:456
+msgid "T&op:"
+msgstr "&Sus:"
+
+#: comdlg32.rc:458 notepad.rc:119
+msgid "&Bottom:"
+msgstr "&Jos:"
+
+#: comdlg32.rc:462
+msgid "P&rinter..."
+msgstr "&Imprimantă..."
+
+#: comdlg32.rc:470
+msgid "Look &in:"
+msgstr "Caută &în:"
+
+#: comdlg32.rc:476
+msgid "File &name:"
+msgstr "&Nume fișier:"
+
+#: comdlg32.rc:479
+msgid "Files of &type:"
+msgstr "&Tip de fișier:"
+
+#: comdlg32.rc:482
+msgid "Open as &read-only"
+msgstr "Deschide pentru &numai-citire"
+
+#: comdlg32.rc:484 comdlg32.rc:502 shdoclc.rc:124 shell32.rc:96
+msgid "&Open"
+msgstr "&Deschide"
+
+#: comdlg32.rc:495
+#, fuzzy
+msgid "File name:"
+msgstr "Nume &fișier:"
+
+#: comdlg32.rc:498
+#, fuzzy
+msgid "Files of type:"
+msgstr "&Tip de fișier:"
 
 #: comdlg32.rc:29
 msgid "&About FolderPicker Test"
@@ -839,15 +1256,6 @@ msgstr "Margini [mm]"
 msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "mm"
-
-#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
-#, fuzzy
-msgid "Print"
-msgstr ""
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Imprimă\n"
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Tipărire"
 
 #: credui.rc:42
 msgid "&User name:"
@@ -3037,15 +3445,6 @@ msgstr "T&ipărire..."
 #, fuzzy
 msgid "Print previe&w"
 msgstr "Pre&vizualizare imprimare..."
-
-#: ieframe.rc:39 shdoclc.rc:58 shell32.rc:105 clock.rc:28 wineconsole.rc:27
-#, fuzzy
-msgid "&Properties"
-msgstr ""
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"&Proprietăți\n"
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"P&roprietăți"
 
 #: ieframe.rc:44
 msgid "&Toolbars"
@@ -6688,10 +7087,6 @@ msgstr "Toată rețeaua"
 msgid "Sound Selection"
 msgstr "Sound Selection"
 
-#: msacm32.rc:31 winefile.rc:144
-msgid "&Name:"
-msgstr "&Nume:"
-
 #: msacm32.rc:36
 msgid "&Save As..."
 msgstr "&Salvează ca"
@@ -7572,15 +7967,6 @@ msgstr ""
 msgid "&Print"
 msgstr "&Tipărește"
 
-#: shdoclc.rc:124 shell32.rc:96
-#, fuzzy
-msgid "&Open"
-msgstr ""
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"Deschide &legătura\n"
-"#-#-#-#-#  ro.po (Wine)  #-#-#-#-#\n"
-"&Deschide"
-
 #: shdoclc.rc:125
 msgid "Open in &New Window"
 msgstr "Deschide legătura într-o fereastră &nouă"
@@ -7955,10 +8341,6 @@ msgstr "Panoul de control"
 #: shell32.rc:163
 msgid "Select"
 msgstr "Selectează"
-
-#: shell32.rc:164 oleview.rc:99
-msgid "Open"
-msgstr "Deschide"
 
 #: shell32.rc:186
 msgid "Restart"
@@ -8452,25 +8834,9 @@ msgstr "Selectare fereastră"
 msgid "&More Windows..."
 msgstr "&Mai multe ferestre..."
 
-#: wineps.rc:25
-msgid "Paper"
-msgstr "Hârtie"
-
 #: wineps.rc:28
 msgid "Paper Si&ze:"
 msgstr "&Mărimea foii:"
-
-#: wineps.rc:31
-msgid "Orientation"
-msgstr "Orientare"
-
-#: wineps.rc:32
-msgid "&Portrait"
-msgstr "P&ortret"
-
-#: wineps.rc:34
-msgid "&Landscape"
-msgstr "&Peisaj"
 
 #: wineps.rc:36
 msgid "Duplex:"
@@ -10532,14 +10898,6 @@ msgstr "&Stânga:"
 msgid "&Top:"
 msgstr "S&us:"
 
-#: notepad.rc:117
-msgid "&Right:"
-msgstr "&Dreapta:"
-
-#: notepad.rc:119
-msgid "&Bottom:"
-msgstr "&Jos:"
-
 #: notepad.rc:131
 msgid "Encoding:"
 msgstr "Codificare:"
@@ -11377,17 +11735,9 @@ msgstr "Modifică date binare"
 msgid "Export registry"
 msgstr "Exportă registrul"
 
-#: regedit.rc:216
-msgid "&All"
-msgstr "To&ate"
-
 #: regedit.rc:217
 msgid "S&elected branch:"
 msgstr "Ramura s&electată:"
-
-#: regedit.rc:223 regedit.rc:233
-msgid "Find"
-msgstr "Căutare"
 
 #: regedit.rc:226
 msgid "Find:"
@@ -12678,14 +13028,6 @@ msgstr "&Stânga"
 msgid "&Right"
 msgstr "D&reapta"
 
-#: view.rc:39
-msgid "&Up"
-msgstr "&Sus"
-
-#: view.rc:40
-msgid "&Down"
-msgstr "&Jos"
-
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr "Vizualizator de fișiere metafile normale"
@@ -12961,14 +13303,6 @@ msgstr "Tematică:"
 msgid "&Install theme..."
 msgstr "Instalează o tematică"
 
-#: winecfg.rc:289
-msgid "&Color:"
-msgstr "Culoare:"
-
-#: winecfg.rc:291
-msgid "&Size:"
-msgstr "Mărime:"
-
 #: winecfg.rc:293
 msgid "It&em:"
 msgstr "Element:"
@@ -12976,10 +13310,6 @@ msgstr "Element:"
 #: winecfg.rc:295
 msgid "C&olor:"
 msgstr "Culoare:"
-
-#: winecfg.rc:297
-msgid "Si&ze:"
-msgstr "Mărime:"
 
 #: winecfg.rc:301
 msgid " Fol&ders "
@@ -13755,10 +14085,6 @@ msgstr "Drep&t de autor:"
 #: winefile.rc:176
 msgid "Size:"
 msgstr "Dimensiune:"
-
-#: winefile.rc:179
-msgid "&Read Only"
-msgstr "Doar citi&re"
 
 #: winefile.rc:180
 msgid "H&idden"

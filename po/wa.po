@@ -55,19 +55,21 @@ msgstr "&Sicrîre..."
 msgid "Support Information"
 msgstr "Informåcion"
 
-#: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 credui.rc:49 cryptui.rc:260
-#: cryptui.rc:272 cryptui.rc:362 dinput.rc:43 ieframe.rc:84 localui.rc:41
-#: localui.rc:54 mpr.rc:46 msacm32.rc:50 mshtml.rc:45 mshtml.rc:55
-#: msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87 serialui.rc:38 setupapi.rc:56
-#: shell32.rc:286 shell32.rc:310 shell32.rc:332 shell32.rc:350 shlwapi.rc:41
-#: user32.rc:77 user32.rc:95 wininet.rc:48 wininet.rc:68 winspool.rc:39
-#: net.rc:44 notepad.rc:122 oleview.rc:159 oleview.rc:172 progman.rc:103
-#: progman.rc:121 progman.rc:139 progman.rc:155 progman.rc:177 progman.rc:196
-#: progman.rc:213 regedit.rc:244 regedit.rc:255 regedit.rc:268 regedit.rc:284
-#: regedit.rc:297 regedit.rc:310 taskmgr.rc:446 taskmgr.rc:521 winecfg.rc:216
-#: winecfg.rc:226 wineconsole.rc:131 winefile.rc:134 winefile.rc:157
-#: winefile.rc:187 winemine.rc:68 winemine.rc:78 winemine.rc:92 wordpad.rc:204
-#: wordpad.rc:215 wordpad.rc:233 wordpad.rc:246
+#: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 comdlg32.rc:240 comdlg32.rc:270
+#: comdlg32.rc:313 comdlg32.rc:367 comdlg32.rc:406 comdlg32.rc:460
+#: credui.rc:49 cryptui.rc:260 cryptui.rc:272 cryptui.rc:362 dinput.rc:43
+#: ieframe.rc:84 localui.rc:41 localui.rc:54 mpr.rc:46 msacm32.rc:50
+#: mshtml.rc:45 mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87
+#: serialui.rc:38 setupapi.rc:56 shell32.rc:286 shell32.rc:310 shell32.rc:332
+#: shell32.rc:350 shlwapi.rc:41 user32.rc:77 user32.rc:95 wininet.rc:48
+#: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:122 oleview.rc:159
+#: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
+#: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
+#: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
+#: taskmgr.rc:521 winecfg.rc:216 winecfg.rc:226 wineconsole.rc:131
+#: winefile.rc:134 winefile.rc:157 winefile.rc:187 winemine.rc:68
+#: winemine.rc:78 winemine.rc:92 wordpad.rc:204 wordpad.rc:215 wordpad.rc:233
+#: wordpad.rc:246
 msgid "OK"
 msgstr "I Va"
 
@@ -131,18 +133,22 @@ msgid "&Install"
 msgstr "&Sicrîre..."
 
 #: appwiz.rc:107 avifil32.rc:52 browseui.rc:37 comctl32.rc:53 comctl32.rc:68
-#: credui.rc:50 cryptui.rc:261 cryptui.rc:273 cryptui.rc:363 dinput.rc:44
-#: ieframe.rc:85 inetcpl.rc:78 localui.rc:42 localui.rc:55 mpr.rc:47
-#: msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34 oledlg.rc:56
-#: oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57 shell32.rc:287
-#: shell32.rc:311 shell32.rc:322 shell32.rc:351 shlwapi.rc:42 user32.rc:78
-#: user32.rc:96 wininet.rc:49 wininet.rc:69 winspool.rc:40 notepad.rc:123
-#: oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122 progman.rc:140
-#: progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214 regedit.rc:245
-#: regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298 regedit.rc:311
-#: taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217 winecfg.rc:227
-#: wineconsole.rc:132 winefile.rc:135 winefile.rc:158 winefile.rc:188
-#: winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234 wordpad.rc:247
+#: comdlg32.rc:179 comdlg32.rc:201 comdlg32.rc:219 comdlg32.rc:241
+#: comdlg32.rc:271 comdlg32.rc:314 comdlg32.rc:336 comdlg32.rc:356
+#: comdlg32.rc:368 comdlg32.rc:407 comdlg32.rc:461 comdlg32.rc:485
+#: comdlg32.rc:503 credui.rc:50 cryptui.rc:261 cryptui.rc:273 cryptui.rc:363
+#: dinput.rc:44 ieframe.rc:85 inetcpl.rc:78 localui.rc:42 localui.rc:55
+#: mpr.rc:47 msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34
+#: oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57
+#: shell32.rc:287 shell32.rc:311 shell32.rc:322 shell32.rc:351 shlwapi.rc:42
+#: user32.rc:78 user32.rc:96 wininet.rc:49 wininet.rc:69 winspool.rc:40
+#: notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
+#: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
+#: regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298
+#: regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217
+#: winecfg.rc:227 wineconsole.rc:132 winefile.rc:135 winefile.rc:158
+#: winefile.rc:188 winemine.rc:93 wordpad.rc:205 wordpad.rc:216 wordpad.rc:234
+#: wordpad.rc:247
 msgid "Cancel"
 msgstr "Rinoncî"
 
@@ -276,11 +282,11 @@ msgstr ""
 msgid "Properties for %s"
 msgstr "&Propietés"
 
-#: comctl32.rc:54
+#: comctl32.rc:54 comdlg32.rc:272
 msgid "&Apply"
-msgstr ""
+msgstr "&Mete èn Oûve"
 
-#: comctl32.rc:55 comctl32.rc:69 user32.rc:86
+#: comctl32.rc:55 comctl32.rc:69 comdlg32.rc:315 user32.rc:86
 msgid "Help"
 msgstr "Help"
 
@@ -314,7 +320,9 @@ msgstr ""
 msgid "R&eset"
 msgstr ""
 
-#: comctl32.rc:83 ieframe.rc:55 msacm32.rc:49 oledlg.rc:89 shell32.rc:125
+#: comctl32.rc:83 comdlg32.rc:180 comdlg32.rc:202 comdlg32.rc:273
+#: comdlg32.rc:337 comdlg32.rc:357 comdlg32.rc:369 comdlg32.rc:486
+#: comdlg32.rc:504 ieframe.rc:55 msacm32.rc:49 oledlg.rc:89 shell32.rc:125
 #: clock.rc:41 notepad.rc:57 notepad.rc:124 oleview.rc:69 progman.rc:52
 #: progman.rc:105 progman.rc:123 progman.rc:141 progman.rc:157 progman.rc:181
 #: progman.rc:199 progman.rc:216 regedit.rc:76 taskmgr.rc:87 winefile.rc:85
@@ -369,6 +377,428 @@ msgstr ""
 #: comctl32.rc:34
 msgid "Go to today"
 msgstr ""
+
+#: comdlg32.rc:165 comdlg32.rc:178 comdlg32.rc:467 comdlg32.rc:492
+#: shell32.rc:164 oleview.rc:99
+msgid "Open"
+msgstr "Drovî"
+
+#: comdlg32.rc:168 comdlg32.rc:190
+msgid "File &Name:"
+msgstr "&No do fitchî:"
+
+#: comdlg32.rc:171 comdlg32.rc:193
+msgid "&Directories:"
+msgstr "&Ridants"
+
+#: comdlg32.rc:174 comdlg32.rc:196
+msgid "List Files of &Type:"
+msgstr "Djîveye des fitchîs del sôr&te:"
+
+#: comdlg32.rc:176 comdlg32.rc:198
+msgid "Dri&ves:"
+msgstr "&Plakes:"
+
+#: comdlg32.rc:181 comdlg32.rc:203 winefile.rc:179
+msgid "&Read Only"
+msgstr "Rén ki &lere"
+
+#: comdlg32.rc:187
+msgid "Save As..."
+msgstr "Schaper èt rlomer..."
+
+#: comdlg32.rc:200
+msgid "Save As"
+msgstr "I Va"
+
+#: comdlg32.rc:209 comdlg32.rc:218 comdlg32.rc:364 comdlg32.rc:64 hhctrl.rc:46
+#: wordpad.rc:162
+msgid "Print"
+msgstr "Rexhe"
+
+#: comdlg32.rc:212
+msgid "Printer:"
+msgstr "Sicrirece:"
+
+#: comdlg32.rc:214
+msgid "Print Range"
+msgstr "Cwé rexhe"
+
+#: comdlg32.rc:215 comdlg32.rc:392 regedit.rc:216
+msgid "&All"
+msgstr "&Tot"
+
+#: comdlg32.rc:216
+msgid "S&election"
+msgstr "Tch&wezî"
+
+#: comdlg32.rc:217
+msgid "&Pages"
+msgstr "&Pådjes"
+
+#: comdlg32.rc:220 comdlg32.rc:242
+msgid "&Setup"
+msgstr "Apon&tiaedje"
+
+#: comdlg32.rc:221
+msgid "&From:"
+msgstr "&Di:"
+
+#: comdlg32.rc:222
+msgid "&To:"
+msgstr "&A:"
+
+#: comdlg32.rc:223
+msgid "Print &Quality:"
+msgstr "&Cwalité po rexhe:"
+
+#: comdlg32.rc:225
+msgid "Print to Fi&le"
+msgstr "Rexhe sol &fitchî"
+
+#: comdlg32.rc:226
+msgid "Condensed"
+msgstr "Streu scrijhas"
+
+#: comdlg32.rc:232 comdlg32.rc:403
+msgid "Print Setup"
+msgstr "Apontiaedje del rexhe"
+
+#: comdlg32.rc:235 comdlg32.rc:371 comdlg32.rc:410
+msgid "Printer"
+msgstr "Sicrirece"
+
+#: comdlg32.rc:236
+msgid "&Default Printer"
+msgstr "Sicrirece tchwezi por &vos"
+
+#: comdlg32.rc:237
+msgid "[none]"
+msgstr "[nole]"
+
+#: comdlg32.rc:238
+msgid "Specific &Printer"
+msgstr "Sicrirece &specifike"
+
+#: comdlg32.rc:243 comdlg32.rc:429 comdlg32.rc:448 wineps.rc:31
+msgid "Orientation"
+msgstr "Orientation"
+
+#: comdlg32.rc:244
+msgid "Po&rtrait"
+msgstr "D' &Astampé"
+
+#: comdlg32.rc:245 comdlg32.rc:450 wineps.rc:34
+msgid "&Landscape"
+msgstr "Di &Coûtchî"
+
+#: comdlg32.rc:248 comdlg32.rc:423 comdlg32.rc:443 wineps.rc:25
+msgid "Paper"
+msgstr "Papî"
+
+#: comdlg32.rc:249
+msgid "Si&ze"
+msgstr "&Grandeu"
+
+#: comdlg32.rc:250
+msgid "&Source"
+msgstr "Ali&mentåcion"
+
+#: comdlg32.rc:258
+msgid "Font"
+msgstr "Fontes"
+
+#: comdlg32.rc:261
+msgid "&Font:"
+msgstr "&Fonte:"
+
+#: comdlg32.rc:264
+msgid "Font St&yle:"
+msgstr "S&tîle del fonte:"
+
+#: comdlg32.rc:267 comdlg32.rc:444 winecfg.rc:291
+msgid "&Size:"
+msgstr "&Grandeu:"
+
+#: comdlg32.rc:274
+msgid "Effects"
+msgstr "Efets"
+
+#: comdlg32.rc:275
+msgid "Stri&keout"
+msgstr "&Barré"
+
+#: comdlg32.rc:276
+msgid "&Underline"
+msgstr "&Sorligné"
+
+#: comdlg32.rc:277 winecfg.rc:289
+msgid "&Color:"
+msgstr "&Coleur:"
+
+#: comdlg32.rc:280
+msgid "Sample"
+msgstr "Egzimpe"
+
+#: comdlg32.rc:281
+msgid "AaBbYyZz"
+msgstr "AaBbYyZzÅåÇçÛû"
+
+#: comdlg32.rc:282
+msgid "Scr&ipt:"
+msgstr "Scr&ipt (translate):"
+
+#: comdlg32.rc:290
+msgid "Color"
+msgstr "Coleurs"
+
+#: comdlg32.rc:293
+msgid "&Basic Colors:"
+msgstr "&Maisse coleurs:"
+
+#: comdlg32.rc:294
+msgid "&Custom Colors:"
+msgstr "&Coleurs da vosse:"
+
+#: comdlg32.rc:295 comdlg32.rc:318
+msgid "Color |  Sol&id"
+msgstr "Coleur | &Uni"
+
+#: comdlg32.rc:296
+msgid "&Red:"
+msgstr "&Rodje:"
+
+#: comdlg32.rc:298
+msgid "&Green:"
+msgstr "&Vert:"
+
+#: comdlg32.rc:300
+msgid "&Blue:"
+msgstr "&Bleu:"
+
+#: comdlg32.rc:302
+msgid "&Hue:"
+msgstr "&Tinte:"
+
+#: comdlg32.rc:304
+msgid "&Sat:"
+msgstr "&Sat.:"
+
+#: comdlg32.rc:306
+msgid "&Lum:"
+msgstr "&Lum.:"
+
+#: comdlg32.rc:316
+msgid "&Add to Custom Colors"
+msgstr "Rad&jouter des coleur da vosse"
+
+#: comdlg32.rc:317
+msgid "&Define Custom Colors >>"
+msgstr "&Defini les coleurs da vosse >>"
+
+#: comdlg32.rc:324 regedit.rc:223 regedit.rc:233
+msgid "Find"
+msgstr "Cwerî"
+
+#: comdlg32.rc:327 comdlg32.rc:346
+msgid "Fi&nd What:"
+msgstr "C&werî:"
+
+#: comdlg32.rc:329 comdlg32.rc:350
+msgid "Match &Whole Word Only"
+msgstr "Mots &etîrs seulmint"
+
+#: comdlg32.rc:330 comdlg32.rc:351
+msgid "Match &Case"
+msgstr "Rispecter les &madjuscules/minuscules"
+
+#: comdlg32.rc:331
+msgid "Direction"
+msgstr "Direccion"
+
+#: comdlg32.rc:332 view.rc:39
+msgid "&Up"
+msgstr "&Copete"
+
+#: comdlg32.rc:333 view.rc:40
+msgid "&Down"
+msgstr "&Bas"
+
+#: comdlg32.rc:335 comdlg32.rc:353
+msgid "&Find Next"
+msgstr "&Shûvant"
+
+#: comdlg32.rc:343
+msgid "Replace"
+msgstr "Mete el plaece"
+
+#: comdlg32.rc:348
+msgid "Re&place With:"
+msgstr "Mete el &place:"
+
+#: comdlg32.rc:354
+msgid "&Replace"
+msgstr "&Rimplacer"
+
+#: comdlg32.rc:355
+msgid "Replace &All"
+msgstr "Rimplacer &tot"
+
+#: comdlg32.rc:372
+#, fuzzy
+msgid "Print to fi&le"
+msgstr "Rexhe sol &fitchî"
+
+#: comdlg32.rc:373 comdlg32.rc:411 ieframe.rc:39 shdoclc.rc:58 shell32.rc:105
+#: clock.rc:28 wineconsole.rc:27
+msgid "&Properties"
+msgstr "&Propietés"
+
+#: comdlg32.rc:374 comdlg32.rc:412 msacm32.rc:31 winefile.rc:144
+msgid "&Name:"
+msgstr ""
+
+#: comdlg32.rc:376 comdlg32.rc:414
+msgid "Status:"
+msgstr ""
+
+#: comdlg32.rc:378 comdlg32.rc:416
+msgid "Type:"
+msgstr ""
+
+#: comdlg32.rc:380 comdlg32.rc:418
+msgid "Where:"
+msgstr ""
+
+#: comdlg32.rc:382 comdlg32.rc:420
+#, fuzzy
+msgid "Comment:"
+msgstr "Å&dvins"
+
+#: comdlg32.rc:385
+msgid "Copies"
+msgstr ""
+
+#: comdlg32.rc:386
+msgid "Number of &copies:"
+msgstr ""
+
+#: comdlg32.rc:388
+msgid "C&ollate"
+msgstr ""
+
+#: comdlg32.rc:391
+#, fuzzy
+msgid "Print range"
+msgstr "Cwé rexhe"
+
+#: comdlg32.rc:393
+msgid "Pa&ges"
+msgstr ""
+
+#: comdlg32.rc:394
+#, fuzzy
+msgid "&Selection"
+msgstr "Tch&wezî"
+
+#: comdlg32.rc:397
+#, fuzzy
+msgid "&from:"
+msgstr "&Di:"
+
+#: comdlg32.rc:398
+msgid "&to:"
+msgstr ""
+
+#: comdlg32.rc:424 winecfg.rc:297
+msgid "Si&ze:"
+msgstr ""
+
+#: comdlg32.rc:426
+#, fuzzy
+msgid "&Source:"
+msgstr "Ali&mentåcion"
+
+#: comdlg32.rc:431
+#, fuzzy
+msgid "P&ortrait"
+msgstr "D' &Astampé"
+
+#: comdlg32.rc:432
+#, fuzzy
+msgid "L&andscape"
+msgstr "Di &Coûtchî"
+
+#: comdlg32.rc:437
+#, fuzzy
+msgid "Setup Page"
+msgstr "Apon&tiaedje"
+
+#: comdlg32.rc:446
+msgid "&Tray:"
+msgstr ""
+
+#: comdlg32.rc:449 wineps.rc:32
+msgid "&Portrait"
+msgstr ""
+
+#: comdlg32.rc:451
+msgid "Borders"
+msgstr ""
+
+#: comdlg32.rc:452
+#, fuzzy
+msgid "L&eft:"
+msgstr "&Hintche:"
+
+#: comdlg32.rc:454 notepad.rc:117
+msgid "&Right:"
+msgstr "&Droete:"
+
+#: comdlg32.rc:456
+msgid "T&op:"
+msgstr ""
+
+#: comdlg32.rc:458 notepad.rc:119
+msgid "&Bottom:"
+msgstr "&Bas:"
+
+#: comdlg32.rc:462
+#, fuzzy
+msgid "P&rinter..."
+msgstr "&Rexhe"
+
+#: comdlg32.rc:470
+msgid "Look &in:"
+msgstr ""
+
+#: comdlg32.rc:476
+#, fuzzy
+msgid "File &name:"
+msgstr "&Fitchî"
+
+#: comdlg32.rc:479
+#, fuzzy
+msgid "Files of &type:"
+msgstr "Djîveye des fitchîs del sôr&te:"
+
+#: comdlg32.rc:482
+msgid "Open as &read-only"
+msgstr ""
+
+#: comdlg32.rc:484 comdlg32.rc:502 shdoclc.rc:124 shell32.rc:96
+msgid "&Open"
+msgstr "&Drovî..."
+
+#: comdlg32.rc:495
+#, fuzzy
+msgid "File name:"
+msgstr "&Fitchî"
+
+#: comdlg32.rc:498
+#, fuzzy
+msgid "Files of type:"
+msgstr "Djîveye des fitchîs del sôr&te:"
 
 #: comdlg32.rc:29
 msgid "&About FolderPicker Test"
@@ -762,10 +1192,6 @@ msgstr ""
 #: comdlg32.rc:91 sane.rc:33
 msgctxt "unit: millimeters"
 msgid "mm"
-msgstr ""
-
-#: comdlg32.rc:64 hhctrl.rc:46 wordpad.rc:162
-msgid "Print"
 msgstr ""
 
 #: credui.rc:42
@@ -2812,10 +3238,6 @@ msgstr "&Rexhe"
 #, fuzzy
 msgid "Print previe&w"
 msgstr "&Rexhe"
-
-#: ieframe.rc:39 shdoclc.rc:58 shell32.rc:105 clock.rc:28 wineconsole.rc:27
-msgid "&Properties"
-msgstr "&Propietés"
 
 #: ieframe.rc:44
 msgid "&Toolbars"
@@ -6177,10 +6599,6 @@ msgstr ""
 msgid "Sound Selection"
 msgstr ""
 
-#: msacm32.rc:31 winefile.rc:144
-msgid "&Name:"
-msgstr ""
-
 #: msacm32.rc:36
 #, fuzzy
 msgid "&Save As..."
@@ -7035,10 +7453,6 @@ msgstr ""
 msgid "&Print"
 msgstr "&Rexhe"
 
-#: shdoclc.rc:124 shell32.rc:96
-msgid "&Open"
-msgstr "&Drovî..."
-
 #: shdoclc.rc:125
 msgid "Open in &New Window"
 msgstr ""
@@ -7392,11 +7806,6 @@ msgstr ""
 #: shell32.rc:163
 msgid "Select"
 msgstr ""
-
-#: shell32.rc:164 oleview.rc:99
-#, fuzzy
-msgid "Open"
-msgstr "&Drovî..."
 
 #: shell32.rc:186
 msgid "Restart"
@@ -7854,25 +8263,8 @@ msgstr "Å dfait di &Wine..."
 msgid "&More Windows..."
 msgstr "Å dfait di &Wine..."
 
-#: wineps.rc:25
-msgid "Paper"
-msgstr ""
-
 #: wineps.rc:28
 msgid "Paper Si&ze:"
-msgstr ""
-
-#: wineps.rc:31
-#, fuzzy
-msgid "Orientation"
-msgstr "&Sicrîre..."
-
-#: wineps.rc:32
-msgid "&Portrait"
-msgstr ""
-
-#: wineps.rc:34
-msgid "&Landscape"
 msgstr ""
 
 #: wineps.rc:36
@@ -9568,14 +9960,6 @@ msgstr "&Hintche:"
 msgid "&Top:"
 msgstr "&Copete:"
 
-#: notepad.rc:117
-msgid "&Right:"
-msgstr "&Droete:"
-
-#: notepad.rc:119
-msgid "&Bottom:"
-msgstr "&Bas:"
-
 #: notepad.rc:131
 msgid "Encoding:"
 msgstr ""
@@ -10367,16 +10751,8 @@ msgstr ""
 msgid "Export registry"
 msgstr "Fitchîs tekse (*.txt)"
 
-#: regedit.rc:216
-msgid "&All"
-msgstr ""
-
 #: regedit.rc:217
 msgid "S&elected branch:"
-msgstr ""
-
-#: regedit.rc:223 regedit.rc:233
-msgid "Find"
 msgstr ""
 
 #: regedit.rc:226
@@ -11604,14 +11980,6 @@ msgstr ""
 msgid "&Right"
 msgstr ""
 
-#: view.rc:39
-msgid "&Up"
-msgstr ""
-
-#: view.rc:40
-msgid "&Down"
-msgstr ""
-
 #: view.rc:46
 msgid "Regular Metafile Viewer"
 msgstr ""
@@ -11882,25 +12250,12 @@ msgstr ""
 msgid "&Install theme..."
 msgstr "&Sicrîre..."
 
-#: winecfg.rc:289
-msgid "&Color:"
-msgstr ""
-
-#: winecfg.rc:291
-#, fuzzy
-msgid "&Size:"
-msgstr "&Grandeu"
-
 #: winecfg.rc:293
 msgid "It&em:"
 msgstr ""
 
 #: winecfg.rc:295
 msgid "C&olor:"
-msgstr ""
-
-#: winecfg.rc:297
-msgid "Si&ze:"
 msgstr ""
 
 #: winecfg.rc:301
@@ -12638,10 +12993,6 @@ msgstr "&Droete:"
 #, fuzzy
 msgid "Size:"
 msgstr "&Grandeu"
-
-#: winefile.rc:179
-msgid "&Read Only"
-msgstr ""
 
 #: winefile.rc:180
 msgid "H&idden"

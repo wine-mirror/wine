@@ -14,41 +14,7 @@ C_SRCS = \
 	itemdlg.c \
 	printdlg.c
 
-RC_SRCS = \
-	cdlg_Bg.rc \
-	cdlg_Ca.rc \
-	cdlg_Cs.rc \
-	cdlg_Da.rc \
-	cdlg_De.rc \
-	cdlg_El.rc \
-	cdlg_En.rc \
-	cdlg_Eo.rc \
-	cdlg_Es.rc \
-	cdlg_Fi.rc \
-	cdlg_Fr.rc \
-	cdlg_He.rc \
-	cdlg_Hu.rc \
-	cdlg_It.rc \
-	cdlg_Ja.rc \
-	cdlg_Ko.rc \
-	cdlg_Lt.rc \
-	cdlg_Nl.rc \
-	cdlg_No.rc \
-	cdlg_Pl.rc \
-	cdlg_Pt.rc \
-	cdlg_Ro.rc \
-	cdlg_Ru.rc \
-	cdlg_Si.rc \
-	cdlg_Sk.rc \
-	cdlg_Sr.rc \
-	cdlg_Sv.rc \
-	cdlg_Th.rc \
-	cdlg_Tr.rc \
-	cdlg_Uk.rc \
-	cdlg_Wa.rc \
-	cdlg_Zh.rc \
-	comdlg32.rc
-
+RC_SRCS = comdlg32.rc
 PO_SRCS = comdlg32.rc
 
 SVG_SRCS = \
