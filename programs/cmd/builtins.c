@@ -488,9 +488,10 @@ void WCMD_copy (void) {
         else if (!overwrite) {
           attribs = GetFileAttributesW(outname);
           if (attribs != INVALID_FILE_ATTRIBUTES) {
-            WCHAR buffer[MAXSTRING];
-            wsprintfW(buffer, WCMD_LoadMessage(WCMD_OVERWRITE), outname);
-            overwrite = WCMD_ask_confirm(buffer, FALSE, NULL);
+            WCHAR* question;
+            question = WCMD_format_string(WCMD_LoadMessage(WCMD_OVERWRITE), outname);
+            overwrite = WCMD_ask_confirm(question, FALSE, NULL);
+            LocalFree(question);
           }
           else overwrite = TRUE;
         }
@@ -734,11 +735,12 @@ static BOOL WCMD_delete_one (const WCHAR *thisArg) {
 
           /* /P means prompt for each file */
           if (ok && strstrW (quals, parmP) != NULL) {
-            WCHAR  question[MAXSTRING];
+            WCHAR* question;
 
             /* Ask for confirmation */
-            wsprintfW(question, WCMD_LoadMessage(WCMD_DELPROMPT), fpath);
+            question = WCMD_format_string(WCMD_LoadMessage(WCMD_DELPROMPT), fpath);
             ok = WCMD_ask_confirm(question, FALSE, NULL);
+            LocalFree(question);
           }
 
           /* Only proceed if ok to */
@@ -1711,14 +1713,15 @@ void WCMD_move (void)
 
       /* Prompt if overwriting */
       if (!force) {
-        WCHAR  question[MAXSTRING];
+        WCHAR* question;
         WCHAR  yesChar[10];
 
         strcpyW(yesChar, WCMD_LoadMessage(WCMD_YES));
 
         /* Ask for confirmation */
-        wsprintfW(question, WCMD_LoadMessage(WCMD_OVERWRITE), dest);
+        question = WCMD_format_string(WCMD_LoadMessage(WCMD_OVERWRITE), dest);
         ok = WCMD_ask_confirm(question, FALSE, NULL);
+        LocalFree(question);
 
         /* So delete the destination prior to the move */
         if (ok) {
@@ -2519,7 +2522,7 @@ void WCMD_type (WCHAR *command) {
       errorlevel = 1;
     } else {
       if (writeHeaders) {
-        static const WCHAR fmt[] = {'\n','%','s','\n','\n','\0'};
+        static const WCHAR fmt[] = {'\n','%','1','\n','\n','\0'};
         WCMD_output(fmt, thisArg);
       }
       while (WCMD_ReadFile(h, buffer, sizeof(buffer)/sizeof(WCHAR) - 1, &count)) {
@@ -2866,7 +2869,6 @@ void WCMD_assoc (const WCHAR *command, BOOL assoc) {
 
         } else {
           WCHAR  msgbuffer[MAXSTRING];
-          WCHAR  outbuffer[MAXSTRING];
 
           /* Load the translated 'File association not found' */
           if (assoc) {
@@ -2874,8 +2876,7 @@ void WCMD_assoc (const WCHAR *command, BOOL assoc) {
           } else {
             LoadStringW(hinst, WCMD_NOFTYPE, msgbuffer, sizeof(msgbuffer)/sizeof(WCHAR));
           }
-          wsprintfW(outbuffer, msgbuffer, keyValue);
-          WCMD_output_asis_stderr(outbuffer);
+          WCMD_output_stderr(msgbuffer, keyValue);
           errorlevel = 2;
         }
 
@@ -2905,7 +2906,6 @@ void WCMD_assoc (const WCHAR *command, BOOL assoc) {
 
           } else {
             WCHAR  msgbuffer[MAXSTRING];
-            WCHAR  outbuffer[MAXSTRING];
 
             /* Load the translated 'File association not found' */
             if (assoc) {
@@ -2915,8 +2915,7 @@ void WCMD_assoc (const WCHAR *command, BOOL assoc) {
               LoadStringW(hinst, WCMD_NOFTYPE, msgbuffer,
                           sizeof(msgbuffer)/sizeof(WCHAR));
             }
-            wsprintfW(outbuffer, msgbuffer, keyValue);
-            WCMD_output_asis_stderr(outbuffer);
+            WCMD_output_stderr(msgbuffer, keyValue);
             errorlevel = 2;
           }
 

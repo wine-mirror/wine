@@ -8951,7 +8951,7 @@ msgstr ""
 "No implementado\n"
 "\n"
 
-#: attrib.rc:28
+#: attrib.rc:28 cmd.rc:302
 #, fuzzy
 msgid "%1: File Not Found\n"
 msgstr "%s : Archivo no encontrado\n"
@@ -9586,15 +9586,18 @@ msgid "N"
 msgstr "N"
 
 #: cmd.rc:294
-msgid "File association missing for extension %s\n"
+#, fuzzy
+msgid "File association missing for extension %1\n"
 msgstr "Falta una asociación de archivo para la extensión %s\n"
 
 #: cmd.rc:295
-msgid "No open command associated with file type '%s'\n"
+#, fuzzy
+msgid "No open command associated with file type '%1'\n"
 msgstr "Ningún comando de apertura asociado con el tipo de archivo '%s'\n"
 
 #: cmd.rc:296
-msgid "Overwrite %s"
+#, fuzzy
+msgid "Overwrite %1"
 msgstr "Sobrescribir %s"
 
 #: cmd.rc:297
@@ -9613,12 +9616,9 @@ msgstr "Argumento faltante\n"
 msgid "Syntax error\n"
 msgstr "Error de sintaxis\n"
 
-#: cmd.rc:302
-msgid "%s: File Not Found\n"
-msgstr "%s : Archivo no encontrado\n"
-
 #: cmd.rc:303
-msgid "No help available for %s\n"
+#, fuzzy
+msgid "No help available for %1\n"
 msgstr "No hay ayuda disponible para %s\n"
 
 #: cmd.rc:304
@@ -9626,11 +9626,13 @@ msgid "Target to GOTO not found\n"
 msgstr "El destino de la instrucción GOTO no se ha encontrado\n"
 
 #: cmd.rc:305
-msgid "Current Date is %s\n"
+#, fuzzy
+msgid "Current Date is %1\n"
 msgstr "La fecha actual es %s\n"
 
 #: cmd.rc:306
-msgid "Current Time is %s\n"
+#, fuzzy
+msgid "Current Time is %1\n"
 msgstr "La hora actual es %s\n"
 
 #: cmd.rc:307
@@ -9642,11 +9644,13 @@ msgid "Enter new time: "
 msgstr "Ingrese la nueva hora: "
 
 #: cmd.rc:309
-msgid "Environment variable %s not defined\n"
+#, fuzzy
+msgid "Environment variable %1 not defined\n"
 msgstr "Variable de entorno %s no definida\n"
 
-#: cmd.rc:310
-msgid "Failed to open '%s'\n"
+#: cmd.rc:310 xcopy.rc:38
+#, fuzzy
+msgid "Failed to open '%1'\n"
 msgstr "No se pudo abrir '%s'\n"
 
 #: cmd.rc:311
@@ -9659,15 +9663,18 @@ msgid "A"
 msgstr "A"
 
 #: cmd.rc:313
-msgid "%s, Delete"
+#, fuzzy
+msgid "%1, Delete"
 msgstr "%s, Borrar"
 
 #: cmd.rc:314
-msgid "Echo is %s\n"
+#, fuzzy
+msgid "Echo is %1\n"
 msgstr "Echo es %s\n"
 
 #: cmd.rc:315
-msgid "Verify is %s\n"
+#, fuzzy
+msgid "Verify is %1\n"
 msgstr "Verificar es %s\n"
 
 #: cmd.rc:316
@@ -9679,9 +9686,10 @@ msgid "Parameter error\n"
 msgstr "Error de parámetro\n"
 
 #: cmd.rc:318
+#, fuzzy
 msgid ""
-"Volume in drive %c is %s\n"
-"Volume Serial Number is %04x-%04x\n"
+"Volume in drive %1!c! is %2\n"
+"Volume Serial Number is %3!04x!-%4!04x!\n"
 "\n"
 msgstr ""
 "El volumen en la unidad %c es %s\n"
@@ -9706,7 +9714,8 @@ msgid "Wine Command Prompt"
 msgstr "Wine Símbolo del sistema"
 
 #: cmd.rc:323
-msgid "CMD Version %s\n"
+#, fuzzy
+msgid "CMD Version %1!S!\n"
 msgstr "CMD Versión %s\n"
 
 #: cmd.rc:324
@@ -14004,11 +14013,6 @@ msgstr "Sobrescribir %s"
 #: xcopy.rc:37
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
 msgstr ""
-
-#: xcopy.rc:38
-#, fuzzy
-msgid "Failed to open '%1'\n"
-msgstr "No se pudo abrir '%s'\n"
 
 #: xcopy.rc:39
 #, fuzzy

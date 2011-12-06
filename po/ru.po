@@ -8552,7 +8552,7 @@ msgstr ""
 "Ещё не выполнено\n"
 "\n"
 
-#: attrib.rc:28
+#: attrib.rc:28 cmd.rc:302
 msgid "%1: File Not Found\n"
 msgstr "%1 : Файл не найден\n"
 
@@ -9209,15 +9209,18 @@ msgid "N"
 msgstr "N"
 
 #: cmd.rc:294
-msgid "File association missing for extension %s\n"
+#, fuzzy
+msgid "File association missing for extension %1\n"
 msgstr "Файл, ассоциированный с расширением %s,отсутствует\n"
 
 #: cmd.rc:295
-msgid "No open command associated with file type '%s'\n"
+#, fuzzy
+msgid "No open command associated with file type '%1'\n"
 msgstr "Не работает команда, ассоциированная с файлом '%s'\n"
 
 #: cmd.rc:296
-msgid "Overwrite %s"
+#, fuzzy
+msgid "Overwrite %1"
 msgstr "Перезаписано %s"
 
 #: cmd.rc:297
@@ -9236,12 +9239,9 @@ msgstr "Отсутствует аргумент\n"
 msgid "Syntax error\n"
 msgstr "Синтаксическая ошибка\n"
 
-#: cmd.rc:302
-msgid "%s: File Not Found\n"
-msgstr "%s : Файл не найден\n"
-
 #: cmd.rc:303
-msgid "No help available for %s\n"
+#, fuzzy
+msgid "No help available for %1\n"
 msgstr "Справка для %s отсутствует\n"
 
 #: cmd.rc:304
@@ -9249,11 +9249,13 @@ msgid "Target to GOTO not found\n"
 msgstr "Цель для GOTO не найдена\n"
 
 #: cmd.rc:305
-msgid "Current Date is %s\n"
+#, fuzzy
+msgid "Current Date is %1\n"
 msgstr "Текущая дата %s\n"
 
 #: cmd.rc:306
-msgid "Current Time is %s\n"
+#, fuzzy
+msgid "Current Time is %1\n"
 msgstr "Текущее время %s\n"
 
 #: cmd.rc:307
@@ -9265,12 +9267,13 @@ msgid "Enter new time: "
 msgstr "Введите новое время: "
 
 #: cmd.rc:309
-msgid "Environment variable %s not defined\n"
+#, fuzzy
+msgid "Environment variable %1 not defined\n"
 msgstr "Переменная окружения %s не определена\n"
 
-#: cmd.rc:310
-msgid "Failed to open '%s'\n"
-msgstr "Не удалось открыть '%s'\n"
+#: cmd.rc:310 xcopy.rc:38
+msgid "Failed to open '%1'\n"
+msgstr "Не удалось открыть '%1'\n"
 
 #: cmd.rc:311
 msgid "Cannot call batch label outside of a batch script\n"
@@ -9282,15 +9285,18 @@ msgid "A"
 msgstr "A"
 
 #: cmd.rc:313
-msgid "%s, Delete"
+#, fuzzy
+msgid "%1, Delete"
 msgstr "%s, Удалено"
 
 #: cmd.rc:314
-msgid "Echo is %s\n"
+#, fuzzy
+msgid "Echo is %1\n"
 msgstr "Echo установлено в %s\n"
 
 #: cmd.rc:315
-msgid "Verify is %s\n"
+#, fuzzy
+msgid "Verify is %1\n"
 msgstr "Verify установлено в %s\n"
 
 #: cmd.rc:316
@@ -9302,9 +9308,10 @@ msgid "Parameter error\n"
 msgstr "Неверный параметр\n"
 
 #: cmd.rc:318
+#, fuzzy
 msgid ""
-"Volume in drive %c is %s\n"
-"Volume Serial Number is %04x-%04x\n"
+"Volume in drive %1!c! is %2\n"
+"Volume Serial Number is %3!04x!-%4!04x!\n"
 "\n"
 msgstr ""
 "Объём диска %c %s\n"
@@ -9328,7 +9335,8 @@ msgid "Wine Command Prompt"
 msgstr "Приглашение командной строки Wine"
 
 #: cmd.rc:323
-msgid "CMD Version %s\n"
+#, fuzzy
+msgid "CMD Version %1!S!\n"
 msgstr "Версия CMD %s\n"
 
 #: cmd.rc:324
@@ -13458,10 +13466,6 @@ msgstr "Перезаписать %1? (Y - Да|N - Нет|А - Все)\n"
 #: xcopy.rc:37
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
 msgstr "Произошла ошибка %3!d! при копировании '%1' в '%2'\n"
-
-#: xcopy.rc:38
-msgid "Failed to open '%1'\n"
-msgstr "Не удалось открыть '%1'\n"
 
 #: xcopy.rc:39
 msgid "Failed during reading of '%1'\n"

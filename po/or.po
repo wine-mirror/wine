@@ -8288,7 +8288,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: attrib.rc:28
+#: attrib.rc:28 cmd.rc:302
 msgid "%1: File Not Found\n"
 msgstr ""
 
@@ -8735,15 +8735,15 @@ msgid "N"
 msgstr ""
 
 #: cmd.rc:294
-msgid "File association missing for extension %s\n"
+msgid "File association missing for extension %1\n"
 msgstr ""
 
 #: cmd.rc:295
-msgid "No open command associated with file type '%s'\n"
+msgid "No open command associated with file type '%1'\n"
 msgstr ""
 
 #: cmd.rc:296
-msgid "Overwrite %s"
+msgid "Overwrite %1"
 msgstr ""
 
 #: cmd.rc:297
@@ -8762,12 +8762,8 @@ msgstr ""
 msgid "Syntax error\n"
 msgstr ""
 
-#: cmd.rc:302
-msgid "%s: File Not Found\n"
-msgstr ""
-
 #: cmd.rc:303
-msgid "No help available for %s\n"
+msgid "No help available for %1\n"
 msgstr ""
 
 #: cmd.rc:304
@@ -8775,11 +8771,11 @@ msgid "Target to GOTO not found\n"
 msgstr ""
 
 #: cmd.rc:305
-msgid "Current Date is %s\n"
+msgid "Current Date is %1\n"
 msgstr ""
 
 #: cmd.rc:306
-msgid "Current Time is %s\n"
+msgid "Current Time is %1\n"
 msgstr ""
 
 #: cmd.rc:307
@@ -8791,11 +8787,11 @@ msgid "Enter new time: "
 msgstr ""
 
 #: cmd.rc:309
-msgid "Environment variable %s not defined\n"
+msgid "Environment variable %1 not defined\n"
 msgstr ""
 
-#: cmd.rc:310
-msgid "Failed to open '%s'\n"
+#: cmd.rc:310 xcopy.rc:38
+msgid "Failed to open '%1'\n"
 msgstr ""
 
 #: cmd.rc:311
@@ -8808,15 +8804,15 @@ msgid "A"
 msgstr ""
 
 #: cmd.rc:313
-msgid "%s, Delete"
+msgid "%1, Delete"
 msgstr ""
 
 #: cmd.rc:314
-msgid "Echo is %s\n"
+msgid "Echo is %1\n"
 msgstr ""
 
 #: cmd.rc:315
-msgid "Verify is %s\n"
+msgid "Verify is %1\n"
 msgstr ""
 
 #: cmd.rc:316
@@ -8829,8 +8825,8 @@ msgstr ""
 
 #: cmd.rc:318
 msgid ""
-"Volume in drive %c is %s\n"
-"Volume Serial Number is %04x-%04x\n"
+"Volume in drive %1!c! is %2\n"
+"Volume Serial Number is %3!04x!-%4!04x!\n"
 "\n"
 msgstr ""
 
@@ -8851,7 +8847,7 @@ msgid "Wine Command Prompt"
 msgstr ""
 
 #: cmd.rc:323
-msgid "CMD Version %s\n"
+msgid "CMD Version %1!S!\n"
 msgstr ""
 
 #: cmd.rc:324
@@ -12822,10 +12818,6 @@ msgstr ""
 
 #: xcopy.rc:37
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
-msgstr ""
-
-#: xcopy.rc:38
-msgid "Failed to open '%1'\n"
 msgstr ""
 
 #: xcopy.rc:39

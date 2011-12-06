@@ -121,21 +121,25 @@ static void WCMD_output_asis_len(const WCHAR *message, DWORD len, HANDLE device)
  *
  */
 
-void WCMD_output (const WCHAR *format, ...) {
+void CDECL WCMD_output (const WCHAR *format, ...) {
 
-  va_list ap;
-  WCHAR string[1024];
-  DWORD ret;
+  __ms_va_list ap;
+  WCHAR* string;
+  DWORD len;
 
-  va_start(ap,format);
-  ret = vsnprintfW(string, sizeof(string)/sizeof(WCHAR), format, ap);
-  if( ret >= (sizeof(string)/sizeof(WCHAR))) {
-       WINE_ERR("Output truncated\n" );
-       ret = (sizeof(string)/sizeof(WCHAR)) - 1;
-       string[ret] = '\0';
+  __ms_va_start(ap,format);
+  SetLastError(NO_ERROR);
+  string = NULL;
+  len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                       format, 0, 0, (LPWSTR)&string, 0, &ap);
+  __ms_va_end(ap);
+  if (len == 0 && GetLastError() != NO_ERROR)
+    WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
+  else
+  {
+    WCMD_output_asis_len(string, len, GetStdHandle(STD_OUTPUT_HANDLE));
+    LocalFree(string);
   }
-  va_end(ap);
-  WCMD_output_asis_len(string, ret, GetStdHandle(STD_OUTPUT_HANDLE));
 }
 
 /*******************************************************************
@@ -143,21 +147,49 @@ void WCMD_output (const WCHAR *format, ...) {
  *
  */
 
-void WCMD_output_stderr (const WCHAR *format, ...) {
+void CDECL WCMD_output_stderr (const WCHAR *format, ...) {
 
-  va_list ap;
-  WCHAR string[1024];
-  DWORD ret;
+  __ms_va_list ap;
+  WCHAR* string;
+  DWORD len;
 
-  va_start(ap,format);
-  ret = vsnprintfW(string, sizeof(string)/sizeof(WCHAR), format, ap);
-  if( ret >= (sizeof(string)/sizeof(WCHAR))) {
-       WINE_ERR("Output truncated\n" );
-       ret = (sizeof(string)/sizeof(WCHAR)) - 1;
-       string[ret] = '\0';
+  __ms_va_start(ap,format);
+  SetLastError(NO_ERROR);
+  string = NULL;
+  len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                       format, 0, 0, (LPWSTR)&string, 0, &ap);
+  __ms_va_end(ap);
+  if (len == 0 && GetLastError() != NO_ERROR)
+    WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
+  else
+  {
+    WCMD_output_asis_len(string, len, GetStdHandle(STD_ERROR_HANDLE));
+    LocalFree(string);
   }
-  va_end(ap);
-  WCMD_output_asis_len(string, ret, GetStdHandle(STD_ERROR_HANDLE));
+}
+
+/*******************************************************************
+ * WCMD_format_string - allocate a buffer and format a string
+ *
+ */
+
+WCHAR* CDECL WCMD_format_string (const WCHAR *format, ...) {
+
+  __ms_va_list ap;
+  WCHAR* string;
+  DWORD len;
+
+  __ms_va_start(ap,format);
+  SetLastError(NO_ERROR);
+  len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                       format, 0, 0, (LPWSTR)&string, 0, &ap);
+  __ms_va_end(ap);
+  if (len == 0 && GetLastError() != NO_ERROR) {
+    WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(format));
+    string = (WCHAR*)LocalAlloc(LMEM_FIXED, 2);
+    *string = 0;
+  }
+  return string;
 }
 
 void WCMD_enter_paged_mode(const WCHAR *msg)
@@ -2221,23 +2253,23 @@ void WCMD_free_commands(CMD_LIST *cmds) {
 int wmain (int argc, WCHAR *argvW[])
 {
   int     args;
-  WCHAR  *cmd   = NULL;
+  WCHAR  *cmd;
   WCHAR string[1024];
   WCHAR envvar[4];
   BOOL opt_q;
   int opt_t = 0;
   static const WCHAR promptW[] = {'P','R','O','M','P','T','\0'};
   static const WCHAR defaultpromptW[] = {'$','P','$','G','\0'};
-  char ansiVersion[100];
   CMD_LIST *toExecute = NULL;         /* Commands left to be executed */
 
   srand(time(NULL));
 
   /* Pre initialize some messages */
-  strcpy(ansiVersion, PACKAGE_VERSION);
-  MultiByteToWideChar(CP_ACP, 0, ansiVersion, -1, string, 1024);
-  wsprintfW(version_string, WCMD_LoadMessage(WCMD_VERSION), string);
   strcpyW(anykey, WCMD_LoadMessage(WCMD_ANYKEY));
+  cmd = WCMD_format_string(WCMD_LoadMessage(WCMD_VERSION), PACKAGE_VERSION);
+  strcpyW(version_string, cmd);
+  LocalFree(cmd);
+  cmd = NULL;
 
   args  = argc;
   opt_c = opt_k = opt_q = opt_s = FALSE;

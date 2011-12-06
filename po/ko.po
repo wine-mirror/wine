@@ -8514,7 +8514,7 @@ msgstr ""
 "아직 구현되지 않았습니다\n"
 "\n"
 
-#: attrib.rc:28
+#: attrib.rc:28 cmd.rc:302
 msgid "%1: File Not Found\n"
 msgstr "%1 :파일을 찾을 수 없습니다\n"
 
@@ -9166,15 +9166,18 @@ msgid "N"
 msgstr "아니오"
 
 #: cmd.rc:294
-msgid "File association missing for extension %s\n"
+#, fuzzy
+msgid "File association missing for extension %1\n"
 msgstr "이 파일확장자 %s에 연결된 풀그림이 없습니다.\n"
 
 #: cmd.rc:295
-msgid "No open command associated with file type '%s'\n"
+#, fuzzy
+msgid "No open command associated with file type '%1'\n"
 msgstr "이 파일 형식 '%s'과 연결된 어떠한 명령도 없습니다.'\n"
 
 #: cmd.rc:296
-msgid "Overwrite %s"
+#, fuzzy
+msgid "Overwrite %1"
 msgstr "%s 덮어쓰기"
 
 #: cmd.rc:297
@@ -9193,12 +9196,9 @@ msgstr "인수가 없습니다\n"
 msgid "Syntax error\n"
 msgstr "문법 오류\n"
 
-#: cmd.rc:302
-msgid "%s: File Not Found\n"
-msgstr "%s :파일을 찾을 수 없습니다\n"
-
 #: cmd.rc:303
-msgid "No help available for %s\n"
+#, fuzzy
+msgid "No help available for %1\n"
 msgstr "%s를 위한 어떠한 도움말도 찾을 수 없습니다\n"
 
 #: cmd.rc:304
@@ -9206,11 +9206,13 @@ msgid "Target to GOTO not found\n"
 msgstr "GOTO 타겟을 찾을 수 없습니다\n"
 
 #: cmd.rc:305
-msgid "Current Date is %s\n"
+#, fuzzy
+msgid "Current Date is %1\n"
 msgstr "현재 날짜는 %s\n"
 
 #: cmd.rc:306
-msgid "Current Time is %s\n"
+#, fuzzy
+msgid "Current Time is %1\n"
 msgstr "현재 시간은 %s\n"
 
 #: cmd.rc:307
@@ -9222,12 +9224,13 @@ msgid "Enter new time: "
 msgstr "새 시간 입력: "
 
 #: cmd.rc:309
-msgid "Environment variable %s not defined\n"
+#, fuzzy
+msgid "Environment variable %1 not defined\n"
 msgstr "환경 변수 %s 는 정의되지 않았습니다\n"
 
-#: cmd.rc:310
-msgid "Failed to open '%s'\n"
-msgstr "'%s' 열기 실패\n"
+#: cmd.rc:310 xcopy.rc:38
+msgid "Failed to open '%1'\n"
+msgstr "'%1' 열기 실패\n"
 
 #: cmd.rc:311
 msgid "Cannot call batch label outside of a batch script\n"
@@ -9239,15 +9242,18 @@ msgid "A"
 msgstr "A"
 
 #: cmd.rc:313
-msgid "%s, Delete"
+#, fuzzy
+msgid "%1, Delete"
 msgstr "%s, 삭제"
 
 #: cmd.rc:314
-msgid "Echo is %s\n"
+#, fuzzy
+msgid "Echo is %1\n"
 msgstr "에코(Echo)는 %s\n"
 
 #: cmd.rc:315
-msgid "Verify is %s\n"
+#, fuzzy
+msgid "Verify is %1\n"
 msgstr "검증(Verify)은 %s\n"
 
 #: cmd.rc:316
@@ -9259,9 +9265,10 @@ msgid "Parameter error\n"
 msgstr "매개변수 오류\n"
 
 #: cmd.rc:318
+#, fuzzy
 msgid ""
-"Volume in drive %c is %s\n"
-"Volume Serial Number is %04x-%04x\n"
+"Volume in drive %1!c! is %2\n"
+"Volume Serial Number is %3!04x!-%4!04x!\n"
 "\n"
 msgstr ""
 "%c 드라이브의 볼륨은 %s\n"
@@ -9285,7 +9292,8 @@ msgid "Wine Command Prompt"
 msgstr "Wine 명령 프롬프트"
 
 #: cmd.rc:323
-msgid "CMD Version %s\n"
+#, fuzzy
+msgid "CMD Version %1!S!\n"
 msgstr "CMD 버젼 %s\n"
 
 #: cmd.rc:324
@@ -13392,10 +13400,6 @@ msgstr "%1를 덮어쓰겠습니까? (예|아니오|모두)\n"
 #: xcopy.rc:37
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
 msgstr "r/c %3!d!로 '%1'를 '%2'로 복사 실패 \n"
-
-#: xcopy.rc:38
-msgid "Failed to open '%1'\n"
-msgstr "'%1' 열기 실패\n"
 
 #: xcopy.rc:39
 msgid "Failed during reading of '%1'\n"

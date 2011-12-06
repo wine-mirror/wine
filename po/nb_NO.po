@@ -8833,7 +8833,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: attrib.rc:28
+#: attrib.rc:28 cmd.rc:302
 #, fuzzy
 msgid "%1: File Not Found\n"
 msgstr "Fant ikke filen\n"
@@ -9455,16 +9455,19 @@ msgid "N"
 msgstr "N"
 
 #: cmd.rc:294
-msgid "File association missing for extension %s\n"
+#, fuzzy
+msgid "File association missing for extension %1\n"
 msgstr "Manglende filtilknytning for etternavnet %s\n"
 
 #: cmd.rc:295
-msgid "No open command associated with file type '%s'\n"
+#, fuzzy
+msgid "No open command associated with file type '%1'\n"
 msgstr "Ingen åpnekommando er tilknyttet filtypene '%s'\n"
 
 #: cmd.rc:296
-msgid "Overwrite %s"
-msgstr ""
+#, fuzzy
+msgid "Overwrite %1"
+msgstr "Skrive over «%s»? (Ja|Nei|Alle)\n"
 
 #: cmd.rc:297
 msgid "More..."
@@ -9482,24 +9485,22 @@ msgstr ""
 msgid "Syntax error\n"
 msgstr ""
 
-#: cmd.rc:302
-msgid "%s: File Not Found\n"
-msgstr ""
-
 #: cmd.rc:303
-msgid "No help available for %s\n"
-msgstr ""
+#, fuzzy
+msgid "No help available for %1\n"
+msgstr "Ikke tilgjengelig; "
 
 #: cmd.rc:304
 msgid "Target to GOTO not found\n"
 msgstr ""
 
 #: cmd.rc:305
-msgid "Current Date is %s\n"
-msgstr ""
+#, fuzzy
+msgid "Current Date is %1\n"
+msgstr "Neste side"
 
 #: cmd.rc:306
-msgid "Current Time is %s\n"
+msgid "Current Time is %1\n"
 msgstr ""
 
 #: cmd.rc:307
@@ -9511,11 +9512,13 @@ msgid "Enter new time: "
 msgstr ""
 
 #: cmd.rc:309
-msgid "Environment variable %s not defined\n"
-msgstr ""
+#, fuzzy
+msgid "Environment variable %1 not defined\n"
+msgstr "Fant ikke miljøvariablen\n"
 
-#: cmd.rc:310
-msgid "Failed to open '%s'\n"
+#: cmd.rc:310 xcopy.rc:38
+#, fuzzy
+msgid "Failed to open '%1'\n"
 msgstr "Klarte ikke åpne «%s»\n"
 
 #: cmd.rc:311
@@ -9528,15 +9531,16 @@ msgid "A"
 msgstr "A"
 
 #: cmd.rc:313
-msgid "%s, Delete"
-msgstr ""
+#, fuzzy
+msgid "%1, Delete"
+msgstr "Slett"
 
 #: cmd.rc:314
-msgid "Echo is %s\n"
+msgid "Echo is %1\n"
 msgstr ""
 
 #: cmd.rc:315
-msgid "Verify is %s\n"
+msgid "Verify is %1\n"
 msgstr ""
 
 #: cmd.rc:316
@@ -9549,8 +9553,8 @@ msgstr ""
 
 #: cmd.rc:318
 msgid ""
-"Volume in drive %c is %s\n"
-"Volume Serial Number is %04x-%04x\n"
+"Volume in drive %1!c! is %2\n"
+"Volume Serial Number is %3!04x!-%4!04x!\n"
 "\n"
 msgstr ""
 
@@ -9571,8 +9575,9 @@ msgid "Wine Command Prompt"
 msgstr "Wine Command Prompt"
 
 #: cmd.rc:323
-msgid "CMD Version %s\n"
-msgstr ""
+#, fuzzy
+msgid "CMD Version %1!S!\n"
+msgstr "CA-versjon"
 
 #: cmd.rc:324
 msgid "More? "
@@ -13786,11 +13791,6 @@ msgstr "Skrive over «%s»? (Ja|Nei|Alle)\n"
 #, fuzzy
 msgid "Copying of '%1' to '%2' failed with r/c %3!d!\n"
 msgstr "Klarte ikke kopiere «%s» til «%s»; feilet med r/c %d\n"
-
-#: xcopy.rc:38
-#, fuzzy
-msgid "Failed to open '%1'\n"
-msgstr "Klarte ikke åpne «%s»\n"
 
 #: xcopy.rc:39
 #, fuzzy
