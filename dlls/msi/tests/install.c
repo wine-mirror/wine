@@ -5335,19 +5335,19 @@ static void test_shortcut(void)
 
     CoUninitialize();
 
-    delete_pf("msitest\\cabout\\new\\five.txt", TRUE);
-    delete_pf("msitest\\cabout\\new", FALSE);
-    delete_pf("msitest\\cabout\\four.txt", TRUE);
-    delete_pf("msitest\\cabout", FALSE);
-    delete_pf("msitest\\changed\\three.txt", TRUE);
-    delete_pf("msitest\\changed", FALSE);
-    delete_pf("msitest\\first\\two.txt", TRUE);
-    delete_pf("msitest\\first", FALSE);
-    delete_pf("msitest\\filename", TRUE);
-    delete_pf("msitest\\one.txt", TRUE);
-    delete_pf("msitest\\service.exe", TRUE);
-    delete_pf("msitest\\Shortcut.lnk", TRUE);
-    delete_pf("msitest", FALSE);
+    ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout\\new", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\cabout\\four.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\changed\\three.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\changed", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\first\\two.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\first", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\filename", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\one.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\service.exe", TRUE), "File not installed\n");
+    while (!delete_pf("msitest\\Shortcut.lnk", TRUE) && GetLastError() == ERROR_SHARING_VIOLATION) Sleep(1000);
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
 error:
     delete_test_files();
