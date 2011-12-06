@@ -41,7 +41,7 @@ BOOL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
                         const RECT *lprect, LPCWSTR wstr, UINT count, const INT *lpDx )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
-    RGNDATA *saved_region = NULL;
+    BOOL restore_region = FALSE;
     unsigned int i;
     fontObject*		pfo = XFONT_GetFontObject( physDev->font );
     XFontStruct*	font;
@@ -88,7 +88,7 @@ BOOL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     if (flags & ETO_CLIPPED)
     {
         HRGN clip_region = CreateRectRgnIndirect( lprect );
-        saved_region = add_extra_clipping_region( physDev, clip_region );
+        restore_region = add_extra_clipping_region( physDev, clip_region );
         DeleteObject( clip_region );
     }
 
@@ -182,7 +182,7 @@ BOOL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 END:
     HeapFree( GetProcessHeap(), 0, str2b );
     if (dibUpdateFlag) X11DRV_UnlockDIBSection( physDev, TRUE );
-    restore_clipping_region( physDev, saved_region );
+    if (restore_region) restore_clipping_region( physDev );
     return result;
 }
 

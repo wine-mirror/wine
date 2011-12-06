@@ -188,12 +188,24 @@ RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp )
 /***********************************************************************
  *           update_x11_clipping
  */
-static void update_x11_clipping( X11DRV_PDEVICE *physDev, const RGNDATA *data )
+static void update_x11_clipping( X11DRV_PDEVICE *physDev, HRGN rgn )
 {
-    wine_tsx11_lock();
-    XSetClipRectangles( gdi_display, physDev->gc, physDev->dc_rect.left, physDev->dc_rect.top,
-                        (XRectangle *)data->Buffer, data->rdh.nCount, YXBanded );
-    wine_tsx11_unlock();
+    RGNDATA *data;
+
+    if (!rgn)
+    {
+        wine_tsx11_lock();
+        XSetClipMask( gdi_display, physDev->gc, None );
+        wine_tsx11_unlock();
+    }
+    else if ((data = X11DRV_GetRegionData( rgn, 0 )))
+    {
+        wine_tsx11_lock();
+        XSetClipRectangles( gdi_display, physDev->gc, physDev->dc_rect.left, physDev->dc_rect.top,
+                            (XRectangle *)data->Buffer, data->rdh.nCount, YXBanded );
+        wine_tsx11_unlock();
+        HeapFree( GetProcessHeap(), 0, data );
+    }
 }
 
 
@@ -201,38 +213,31 @@ static void update_x11_clipping( X11DRV_PDEVICE *physDev, const RGNDATA *data )
  *           add_extra_clipping_region
  *
  * Temporarily add a region to the current clipping region.
- * The returned region must be restored with restore_clipping_region.
+ * The region must be restored with restore_clipping_region.
  */
-RGNDATA *add_extra_clipping_region( X11DRV_PDEVICE *dev, HRGN rgn )
+BOOL add_extra_clipping_region( X11DRV_PDEVICE *dev, HRGN rgn )
 {
-    RGNDATA *ret, *data;
     HRGN clip;
 
-    if (!(ret = X11DRV_GetRegionData( dev->region, 0 ))) return NULL;
-    if (!(clip = CreateRectRgn( 0, 0, 0, 0 )))
+    if (!rgn) return FALSE;
+    if (dev->region)
     {
-        HeapFree( GetProcessHeap(), 0, ret );
-        return NULL;
+        if (!(clip = CreateRectRgn( 0, 0, 0, 0 ))) return FALSE;
+        CombineRgn( clip, dev->region, rgn, RGN_AND );
+        update_x11_clipping( dev, clip );
+        DeleteObject( clip );
     }
-    CombineRgn( clip, dev->region, rgn, RGN_AND );
-    if ((data = X11DRV_GetRegionData( clip, 0 )))
-    {
-        update_x11_clipping( dev, data );
-        HeapFree( GetProcessHeap(), 0, data );
-    }
-    DeleteObject( clip );
-    return ret;
+    else update_x11_clipping( dev, rgn );
+    return TRUE;
 }
 
 
 /***********************************************************************
  *           restore_clipping_region
  */
-void restore_clipping_region( X11DRV_PDEVICE *dev, RGNDATA *data )
+void restore_clipping_region( X11DRV_PDEVICE *dev )
 {
-    if (!data) return;
-    update_x11_clipping( dev, data );
-    HeapFree( GetProcessHeap(), 0, data );
+    update_x11_clipping( dev, dev->region );
 }
 
 
@@ -241,13 +246,10 @@ void restore_clipping_region( X11DRV_PDEVICE *dev, RGNDATA *data )
  */
 void X11DRV_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
 {
-    RGNDATA *data;
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
 
     physDev->region = rgn;
-
-    if ((data = X11DRV_GetRegionData( physDev->region, 0 ))) update_x11_clipping( physDev, data );
-    HeapFree( GetProcessHeap(), 0, data );
+    update_x11_clipping( physDev, rgn );
 }
 
 
@@ -1455,8 +1457,24 @@ BOOL X11DRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillTy
     pt.x = x;
     pt.y = y;
     LPtoDP( dev->hdc, &pt, 1 );
-    if (!PtInRegion( physDev->region, pt.x, pt.y )) return FALSE;
-    GetRgnBox( physDev->region, &rect );
+
+    if (!physDev->region)
+    {
+        rect.left   = 0;
+        rect.top    = 0;
+        rect.right  = physDev->dc_rect.right - physDev->dc_rect.left;
+        rect.bottom = physDev->dc_rect.bottom - physDev->dc_rect.top;
+    }
+    else
+    {
+        if (!PtInRegion( physDev->region, pt.x, pt.y )) return FALSE;
+        GetRgnBox( physDev->region, &rect );
+        rect.left   = max( rect.left, 0 );
+        rect.top    = max( rect.top, 0 );
+        rect.right  = min( rect.right, physDev->dc_rect.right - physDev->dc_rect.left );
+        rect.bottom = min( rect.bottom, physDev->dc_rect.bottom - physDev->dc_rect.top );
+    }
+    if (pt.x < rect.left || pt.x >= rect.right || pt.y < rect.top || pt.y >= rect.bottom) return FALSE;
 
     X11DRV_expect_error( gdi_display, ExtFloodFillXGetImageErrorHandler, NULL );
     image = XGetImage( gdi_display, physDev->drawable,

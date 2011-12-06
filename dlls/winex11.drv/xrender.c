@@ -188,6 +188,7 @@ static void *xrender_handle;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f;
 MAKE_FUNCPTR(XRenderAddGlyphs)
+MAKE_FUNCPTR(XRenderChangePicture)
 MAKE_FUNCPTR(XRenderComposite)
 MAKE_FUNCPTR(XRenderCompositeText16)
 MAKE_FUNCPTR(XRenderCreateGlyphSet)
@@ -372,6 +373,7 @@ const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
 #define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(xrender_handle, #f, NULL, 0)) == NULL) return NULL
 #define LOAD_OPTIONAL_FUNCPTR(f) p##f = wine_dlsym(xrender_handle, #f, NULL, 0)
     LOAD_FUNCPTR(XRenderAddGlyphs);
+    LOAD_FUNCPTR(XRenderChangePicture);
     LOAD_FUNCPTR(XRenderComposite);
     LOAD_FUNCPTR(XRenderCompositeText16);
     LOAD_FUNCPTR(XRenderCreateGlyphSet);
@@ -578,6 +580,30 @@ static BOOL use_source_repeat( struct xrender_physdev *dev )
             dev->x11dev->drawable_rect.bottom - dev->x11dev->drawable_rect.top == 1);
 }
 
+static void update_xrender_clipping( struct xrender_physdev *dev, HRGN rgn )
+{
+    XRenderPictureAttributes pa;
+    RGNDATA *data;
+
+    if (!rgn)
+    {
+        wine_tsx11_lock();
+        pa.clip_mask = None;
+        pXRenderChangePicture( gdi_display, dev->pict, CPClipMask, &pa );
+        wine_tsx11_unlock();
+    }
+    else if ((data = X11DRV_GetRegionData( rgn, 0 )))
+    {
+        wine_tsx11_lock();
+        pXRenderSetPictureClipRectangles( gdi_display, dev->pict,
+                                          dev->x11dev->dc_rect.left, dev->x11dev->dc_rect.top,
+                                          (XRectangle *)data->Buffer, data->rdh.nCount );
+        wine_tsx11_unlock();
+        HeapFree( GetProcessHeap(), 0, data );
+    }
+}
+
+
 static Picture get_xrender_picture( struct xrender_physdev *dev, HRGN clip_rgn, const RECT *clip_rect )
 {
     if (!dev->pict && dev->pict_format)
@@ -591,38 +617,31 @@ static Picture get_xrender_picture( struct xrender_physdev *dev, HRGN clip_rgn, 
         wine_tsx11_unlock();
         TRACE( "Allocing pict=%lx dc=%p drawable=%08lx\n",
                dev->pict, dev->dev.hdc, dev->x11dev->drawable );
-        dev->update_clip = TRUE;
+        dev->update_clip = (dev->x11dev->region != 0);
     }
 
-    if (dev->update_clip || clip_rect || clip_rgn)
+    if (clip_rect)
     {
-        RGNDATA *clip_data;
-        HRGN rgn = 0;
-
-        if (clip_rect)
-        {
-            rgn = CreateRectRgnIndirect( clip_rect );
-            if (clip_rgn) CombineRgn( rgn, rgn, clip_rgn, RGN_AND );
-            CombineRgn( rgn, rgn, dev->x11dev->region, RGN_AND );
-        }
-        else if (clip_rgn)
-        {
-            rgn = CreateRectRgn( 0, 0, 0, 0 );
-            CombineRgn( rgn, clip_rgn, dev->x11dev->region, RGN_AND );
-        }
-
-        if ((clip_data = X11DRV_GetRegionData( rgn ? rgn : dev->x11dev->region, 0 )))
-        {
-            wine_tsx11_lock();
-            pXRenderSetPictureClipRectangles( gdi_display, dev->pict,
-                                              dev->x11dev->dc_rect.left, dev->x11dev->dc_rect.top,
-                                              (XRectangle *)clip_data->Buffer, clip_data->rdh.nCount );
-            wine_tsx11_unlock();
-            HeapFree( GetProcessHeap(), 0, clip_data );
-        }
-        dev->update_clip = (rgn != 0);  /* have to update again if we are using a custom region */
-        if (rgn) DeleteObject( rgn );
+        HRGN rgn = CreateRectRgnIndirect( clip_rect );
+        if (clip_rgn) CombineRgn( rgn, rgn, clip_rgn, RGN_AND );
+        if (dev->x11dev->region) CombineRgn( rgn, rgn, dev->x11dev->region, RGN_AND );
+        update_xrender_clipping( dev, rgn );
+        DeleteObject( rgn );
     }
+    else if (clip_rgn)
+    {
+        if (dev->x11dev->region)
+        {
+            HRGN rgn = CreateRectRgn( 0, 0, 0, 0 );
+            CombineRgn( rgn, clip_rgn, dev->x11dev->region, RGN_AND );
+            update_xrender_clipping( dev, rgn );
+            DeleteObject( rgn );
+        }
+        else update_xrender_clipping( dev, clip_rgn );
+    }
+    else if (dev->update_clip) update_xrender_clipping( dev, dev->x11dev->region );
+
+    dev->update_clip = (clip_rect || clip_rgn);  /* have to update again if we are using a custom region */
     return dev->pict;
 }
 
@@ -2288,15 +2307,13 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMA
 
             if (rop != SRCCOPY)
             {
-                RGNDATA *clip_data = NULL;
+                BOOL restore_region = add_extra_clipping_region( physdev->x11dev, clip );
 
                 /* make coordinates relative to tmp pixmap */
                 tmp = *dst;
                 tmp.x -= tmp.visrect.left;
                 tmp.y -= tmp.visrect.top;
                 OffsetRect( &tmp.visrect, -tmp.visrect.left, -tmp.visrect.top );
-
-                if (clip) clip_data = add_extra_clipping_region( physdev->x11dev, clip );
 
                 wine_tsx11_lock();
                 gc = XCreateGC( gdi_display, physdev->x11dev->drawable, 0, NULL );
@@ -2315,7 +2332,7 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMA
                 XFreeGC( gdi_display, gc );
                 wine_tsx11_unlock();
 
-                restore_clipping_region( physdev->x11dev, clip_data );
+                if (restore_region) restore_clipping_region( physdev->x11dev );
             }
             else xrender_put_image( src_pixmap, src_pict, mask_pict, clip,
                                     physdev->pict_format, physdev, 0, src, dst, use_repeat );
