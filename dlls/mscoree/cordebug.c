@@ -401,7 +401,7 @@ static const ICorDebugProcessVtbl cordebugprocessVtbl = {
 };
 
 
-HRESULT CorDebugProcess_Create(CorDebug *cordebug, IUnknown** ppUnk, LPPROCESS_INFORMATION lpProcessInformation)
+static HRESULT CorDebugProcess_Create(CorDebug *cordebug, IUnknown** ppUnk, LPPROCESS_INFORMATION lpProcessInformation)
 {
     DebugProcess *This;
 
