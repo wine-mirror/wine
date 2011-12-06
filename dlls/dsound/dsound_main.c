@@ -101,33 +101,6 @@ static HANDLE g_devenum_thread;
 
 WCHAR wine_vxd_drv[] = { 'w','i','n','e','m','m','.','v','x','d', 0 };
 
-HRESULT mmErr(UINT err)
-{
-	switch(err) {
-	case MMSYSERR_NOERROR:
-		return DS_OK;
-	case MMSYSERR_ALLOCATED:
-		return DSERR_ALLOCATED;
-	case MMSYSERR_ERROR:
-	case MMSYSERR_INVALHANDLE:
-	case WAVERR_STILLPLAYING:
-		return DSERR_GENERIC; /* FIXME */
-	case MMSYSERR_NODRIVER:
-		return DSERR_NODRIVER;
-	case MMSYSERR_NOMEM:
-		return DSERR_OUTOFMEMORY;
-	case MMSYSERR_INVALPARAM:
-	case WAVERR_BADFORMAT:
-	case WAVERR_UNPREPARED:
-		return DSERR_INVALIDPARAM;
-	case MMSYSERR_NOTSUPPORTED:
-		return DSERR_UNSUPPORTED;
-	default:
-		FIXME("Unknown MMSYS error %d\n",err);
-		return DSERR_GENERIC;
-	}
-}
-
 /* All default settings, you most likely don't want to touch these, see wiki on UsefulRegistryKeys */
 int ds_hel_buflen = 32768 * 2;
 int ds_snd_queue_max = 10;
