@@ -1359,6 +1359,7 @@ static void UpdateClusters(int nextIndex, int changeCount, int write_dir, int ch
         int target_index = -1;
         int replacing_glyph = -1;
         int changed = 0;
+        int top_logclust = 0;
 
         if (changeCount > 0)
         {
@@ -1369,6 +1370,9 @@ static void UpdateClusters(int nextIndex, int changeCount, int write_dir, int ch
         }
 
         seeking_glyph = target_glyph;
+        for (i = 0; i < chars; i++)
+            if (pwLogClust[i] > top_logclust)
+                top_logclust = pwLogClust[i];
 
         do {
             if (write_dir > 0)
@@ -1392,7 +1396,7 @@ static void UpdateClusters(int nextIndex, int changeCount, int write_dir, int ch
             if (target_index == -1)
                 seeking_glyph ++;
         }
-        while (target_index == -1 && seeking_glyph < chars);
+        while (target_index == -1 && seeking_glyph <= top_logclust);
 
         if (target_index == -1)
         {
