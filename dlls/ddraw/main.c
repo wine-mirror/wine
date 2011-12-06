@@ -945,6 +945,9 @@ DllMain(HINSTANCE hInstDLL,
                 IDirectDraw4_AddRef(&ddraw->IDirectDraw4_iface);
                 IDirectDraw7_AddRef(&ddraw->IDirectDraw7_iface);
 
+                if (ddraw->wined3d_swapchain)
+                    ddraw_destroy_swapchain(ddraw);
+
                 /* Does a D3D device exist? Destroy it
                     * TODO: Destroy all Vertex buffers, Lights, Materials
                     * and execute buffers too
