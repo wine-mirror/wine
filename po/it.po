@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-02 12:11+0100\n"
+"PO-Revision-Date: 2011-12-06 11:22+0100\n"
 "Last-Translator: Luca Bennati <lucak3@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Italian\n"
@@ -2291,9 +2291,8 @@ msgid "Mapping"
 msgstr "Corrispondenza"
 
 #: dinput.rc:53
-#, fuzzy
 msgid "Show Assigned First"
-msgstr "Ordina assegnati"
+msgstr "Mostra assegnati prima"
 
 #: dinput.rc:34
 msgid "Action"
