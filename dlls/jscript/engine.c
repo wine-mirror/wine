@@ -3407,7 +3407,7 @@ OP_LIST
 #undef X
 };
 
-HRESULT interp_expression_eval(script_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+static HRESULT interp_expression_eval(script_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
     exec_ctx_t *exec_ctx = ctx->exec_ctx;
     unsigned prev_ip, prev_top;
