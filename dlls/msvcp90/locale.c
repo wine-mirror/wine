@@ -846,14 +846,26 @@ _Locinfo* __thiscall _Locinfo__Addcats(_Locinfo *this, int category, const char 
     return _Locinfo__Locinfo_Addcats(this, category, locstr);
 }
 
+/* _Getcoll */
+_Collvec __cdecl _Getcoll(void)
+{
+    _Collvec ret;
+    _locale_t locale = _get_current_locale();
+
+    TRACE("\n");
+
+    ret.page = locale->locinfo->lc_collate_cp;
+    ret.handle = locale->locinfo->lc_handle[LC_COLLATE];
+    _free_locale(locale);
+    return ret;
+}
+
 /* ?_Getcoll@_Locinfo@std@@QBE?AU_Collvec@@XZ */
 /* ?_Getcoll@_Locinfo@std@@QEBA?AU_Collvec@@XZ */
 DEFINE_THISCALL_WRAPPER(_Locinfo__Getcoll, 4)
 _Collvec __thiscall _Locinfo__Getcoll(const _Locinfo *this)
 {
-    _Collvec ret = { 0 }; /* FIXME */
-    FIXME("(%p) stub\n", this);
-    return ret;
+    return _Getcoll();
 }
 
 /* ?_Getctype@_Locinfo@std@@QBE?AU_Ctypevec@@XZ */

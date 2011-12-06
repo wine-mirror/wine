@@ -5750,7 +5750,7 @@
 @ stub _FSinh
 @ extern _FSnan
 # extern _FXbig
-@ stub _Getcoll
+@ cdecl _Getcoll()
 @ stub _Getctype
 @ stub _Getcvt
 @ stub _Getdateorder
