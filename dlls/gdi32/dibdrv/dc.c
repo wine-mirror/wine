@@ -475,14 +475,15 @@ static INT dibdrv_SetBkMode( PHYSDEV dev, INT mode )
 /***********************************************************************
  *           dibdrv_SetDeviceClipping
  */
-static void dibdrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn )
+static void dibdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetDeviceClipping );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
-    TRACE("(%p, %p, %p)\n", dev, vis_rgn, clip_rgn);
+    TRACE("(%p, %p)\n", dev, rgn);
 
-    CombineRgn( pdev->clip, vis_rgn, clip_rgn, clip_rgn ? RGN_AND : RGN_COPY );
-    return next->funcs->pSetDeviceClipping( next, vis_rgn, clip_rgn);
+    SetRectRgn( pdev->clip, 0, 0, pdev->dib.width, pdev->dib.height );
+    if (rgn) CombineRgn( pdev->clip, pdev->clip, rgn, RGN_AND );
+    return next->funcs->pSetDeviceClipping( next, rgn );
 }
 
 /***********************************************************************

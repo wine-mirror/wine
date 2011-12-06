@@ -1337,14 +1337,14 @@ static DWORD xrenderdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info
 /***********************************************************************
  *           xrenderdrv_SetDeviceClipping
  */
-static void xrenderdrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn )
+static void xrenderdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
 {
     struct xrender_physdev *physdev = get_xrender_dev( dev );
 
     physdev->update_clip = TRUE;
 
     dev = GET_NEXT_PHYSDEV( dev, pSetDeviceClipping );
-    dev->funcs->pSetDeviceClipping( dev, vis_rgn, clip_rgn );
+    dev->funcs->pSetDeviceClipping( dev, rgn );
 }
 
 

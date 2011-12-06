@@ -582,7 +582,7 @@ static UINT nulldrv_SetDIBColorTable( PHYSDEV dev, UINT pos, UINT count, const R
     return 0;
 }
 
-static void nulldrv_SetDeviceClipping( PHYSDEV dev, HRGN vis_rgn, HRGN clip_rgn )
+static void nulldrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
 {
 }
 

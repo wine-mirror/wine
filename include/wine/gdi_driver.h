@@ -159,7 +159,7 @@ struct gdi_dc_funcs
     COLORREF (*pSetDCPenColor)(PHYSDEV, COLORREF);
     UINT     (*pSetDIBColorTable)(PHYSDEV,UINT,UINT,const RGBQUAD*);
     INT      (*pSetDIBitsToDevice)(PHYSDEV,INT,INT,DWORD,DWORD,INT,INT,UINT,UINT,LPCVOID,BITMAPINFO*,UINT);
-    VOID     (*pSetDeviceClipping)(PHYSDEV,HRGN,HRGN);
+    VOID     (*pSetDeviceClipping)(PHYSDEV,HRGN);
     BOOL     (*pSetDeviceGammaRamp)(PHYSDEV,LPVOID);
     DWORD    (*pSetLayout)(PHYSDEV,DWORD);
     INT      (*pSetMapMode)(PHYSDEV,INT);
@@ -205,7 +205,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 19
+#define WINE_GDI_DRIVER_VERSION 20
 
 static inline PHYSDEV get_physdev_entry_point( PHYSDEV dev, size_t offset )
 {

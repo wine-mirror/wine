@@ -101,7 +101,7 @@ void CLIPPING_UpdateGCRegion( DC * dc )
         if (dc->region) DeleteObject( dc->region );
         dc->region = 0;
     }
-    physdev->funcs->pSetDeviceClipping( physdev, dc->hVisRgn, clip_rgn );
+    physdev->funcs->pSetDeviceClipping( physdev, dc->region );
 }
 
 /***********************************************************************
