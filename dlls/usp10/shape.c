@@ -1840,11 +1840,10 @@ static void ReplaceInsertChars(HDC hdc, INT cWalk, INT* pcChars, WCHAR *pwOutCha
     }
 }
 
-static void DecomposeVowels(HDC hdc, WCHAR *pwOutChars, INT *pcChars, const VowelComponents vowels[], WORD* pwLogClust)
+static void DecomposeVowels(HDC hdc, WCHAR *pwOutChars, INT *pcChars, const VowelComponents vowels[], WORD* pwLogClust, INT cChars)
 {
     int i;
     int cWalk;
-    int offset = 0;
 
     for (cWalk = 0; cWalk < *pcChars; cWalk++)
     {
@@ -1852,14 +1851,11 @@ static void DecomposeVowels(HDC hdc, WCHAR *pwOutChars, INT *pcChars, const Vowe
         {
             if (pwOutChars[cWalk] == vowels[i].base)
             {
-                int j;
-                int o = 1;
+                int o = 0;
                 ReplaceInsertChars(hdc, cWalk, pcChars, pwOutChars, vowels[i].parts);
                 if (vowels[i].parts[1]) { cWalk++; o++; }
                 if (vowels[i].parts[2]) { cWalk++; o++; }
-                offset += o;
-                for (j = (cWalk - offset) + 1; j < *pcChars - offset; j ++)
-                    pwLogClust[j]+=o;
+                UpdateClusters(cWalk, o, 1,  cChars,  pwLogClust);
                 break;
             }
         }
@@ -2467,7 +2463,7 @@ static void ContextualShape_Sinhala(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
     /* Step 1:  Decompose multi part vowels */
-    DecomposeVowels(hdc, input,  &cCount, Sinhala_vowels, pwLogClust);
+    DecomposeVowels(hdc, input,  &cCount, Sinhala_vowels, pwLogClust, cChars);
 
     TRACE("New double vowel expanded string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
@@ -2589,7 +2585,7 @@ static void ContextualShape_Bengali(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
     /* Step 1: Decompose Vowels and Compose Consonents */
-    DecomposeVowels(hdc, input,  &cCount, Bengali_vowels, pwLogClust);
+    DecomposeVowels(hdc, input,  &cCount, Bengali_vowels, pwLogClust, cChars);
     ComposeConsonants(hdc, input, &cCount, Bengali_consonants, pwLogClust);
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
@@ -2749,7 +2745,7 @@ static void ContextualShape_Oriya(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
     /* Step 1: Decompose Vowels and Compose Consonents */
-    DecomposeVowels(hdc, input,  &cCount, Oriya_vowels, pwLogClust);
+    DecomposeVowels(hdc, input,  &cCount, Oriya_vowels, pwLogClust, cChars);
     ComposeConsonants(hdc, input, &cCount, Oriya_consonants, pwLogClust);
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
@@ -2799,7 +2795,7 @@ static void ContextualShape_Tamil(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
     /* Step 1: Decompose Vowels and Compose Consonents */
-    DecomposeVowels(hdc, input,  &cCount, Tamil_vowels, pwLogClust);
+    DecomposeVowels(hdc, input,  &cCount, Tamil_vowels, pwLogClust, cChars);
     ComposeConsonants(hdc, input, &cCount, Tamil_consonants, pwLogClust);
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
@@ -2849,7 +2845,7 @@ static void ContextualShape_Telugu(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
     /* Step 1: Decompose Vowels */
-    DecomposeVowels(hdc, input,  &cCount, Telugu_vowels, pwLogClust);
+    DecomposeVowels(hdc, input,  &cCount, Telugu_vowels, pwLogClust, cChars);
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
@@ -2901,7 +2897,7 @@ static void ContextualShape_Kannada(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
     /* Step 1: Decompose Vowels */
-    DecomposeVowels(hdc, input,  &cCount, Kannada_vowels, pwLogClust);
+    DecomposeVowels(hdc, input,  &cCount, Kannada_vowels, pwLogClust, cChars);
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
@@ -2946,7 +2942,7 @@ static void ContextualShape_Malayalam(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS
     memcpy(input, pwcChars, cChars * sizeof(WCHAR));
 
     /* Step 1: Decompose Vowels */
-    DecomposeVowels(hdc, input,  &cCount, Malayalam_vowels, pwLogClust);
+    DecomposeVowels(hdc, input,  &cCount, Malayalam_vowels, pwLogClust, cChars);
     TRACE("New composed string %s (%i)\n",debugstr_wn(input,cCount),cCount);
 
     /* Step 2: Reorder within Syllables */
