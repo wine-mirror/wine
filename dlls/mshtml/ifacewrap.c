@@ -88,7 +88,7 @@ static HRESULT WINAPI wrapper_Release(IUnknown *iface)
 #ifdef __i386__
 
 #define DEFINE_WRAPPER_FUNC(n, off, x)          \
-    HRESULT WINAPI wrapper_func_##n(IUnknown*); \
+    HRESULT wrapper_func_##n(IUnknown*);        \
     __ASM_GLOBAL_FUNC(wrapper_func_##n,         \
         "movl 4(%esp), %eax\n\t"                \
         "movl 4(%eax), %eax\n\t"                \
