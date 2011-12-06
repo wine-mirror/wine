@@ -258,14 +258,17 @@ BOOL PSDRV_WriteSetDownloadFont(PHYSDEV dev)
 
     assert(physDev->font.fontloc == Download);
 
+    if (!GetObjectW( GetCurrentObject(dev->hdc, OBJ_FONT), sizeof(lf), &lf ))
+        return FALSE;
+
     potm = HeapAlloc(GetProcessHeap(), 0, len);
+    if (!potm)
+        return FALSE;
+
     GetOutlineTextMetricsA(dev->hdc, len, potm);
 
     get_download_name(dev, potm, &ps_name);
     physDev->font.fontinfo.Download = is_font_downloaded(physDev, ps_name);
-
-    if (!GetObjectW( GetCurrentObject(dev->hdc, OBJ_FONT), sizeof(lf), &lf ))
-        return FALSE;
 
     ppem = calc_ppem_for_height(dev->hdc, lf.lfHeight);
 
