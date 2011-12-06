@@ -63,6 +63,10 @@ extern "C" {
 
 char*         __cdecl setlocale(int,const char*);
 struct lconv* __cdecl localeconv(void);
+int           __cdecl _configthreadlocale(int);
+_locale_t     __cdecl _get_current_locale(void);
+_locale_t     __cdecl _create_locale(int, const char*);
+void          __cdecl _free_locale(_locale_t);
 
 #ifndef _WLOCALE_DEFINED
 #define _WLOCALE_DEFINED
