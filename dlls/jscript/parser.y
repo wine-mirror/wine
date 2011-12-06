@@ -1347,7 +1347,7 @@ static const expression_eval_t expression_eval_table[] = {
    compiled_expression_eval,
    compiled_expression_eval,
    compiled_expression_eval,
-   assign_div_expression_eval,
+   compiled_expression_eval,
    assign_mod_expression_eval,
    assign_and_expression_eval,
    assign_or_expression_eval,
