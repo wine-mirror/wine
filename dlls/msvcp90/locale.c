@@ -814,8 +814,28 @@ void __thiscall _Locinfo_dtor(_Locinfo *this)
 /* ?_Locinfo_Addcats@_Locinfo@std@@SAAEAV12@PEAV12@HPEBD@Z */
 _Locinfo* __cdecl _Locinfo__Locinfo_Addcats(_Locinfo *locinfo, int category, const char *locstr)
 {
-    FIXME("%p %d %s) stub\n", locinfo, category, locstr);
-    return NULL;
+    const char *locale = NULL;
+
+    /* This function is probably modifying more global objects */
+    FIXME("(%p %d %s) semi-stub\n", locinfo, category, locstr);
+    if(!locstr)
+        throw_exception(EXCEPTION_RUNTIME_ERROR, "bad locale name");
+
+    _Lockit_ctor_locktype(&locinfo->lock, _LOCK_LOCALE);
+    MSVCP_basic_string_char_dtor(&locinfo->newlocname);
+
+    if(category)
+        locale = setlocale(LC_ALL, locstr);
+    else
+        locale = setlocale(LC_ALL, NULL);
+
+    if(locale)
+        MSVCP_basic_string_char_ctor_cstr(&locinfo->newlocname, locale);
+    else
+        MSVCP_basic_string_char_ctor_cstr(&locinfo->newlocname, "*");
+    _Lockit_dtor(&locinfo->lock);
+
+    return locinfo;
 }
 
 /* ?_Addcats@_Locinfo@std@@QAEAAV12@HPBD@Z */
@@ -823,8 +843,7 @@ _Locinfo* __cdecl _Locinfo__Locinfo_Addcats(_Locinfo *locinfo, int category, con
 DEFINE_THISCALL_WRAPPER(_Locinfo__Addcats, 12)
 _Locinfo* __thiscall _Locinfo__Addcats(_Locinfo *this, int category, const char *locstr)
 {
-    FIXME("(%p %d %s) stub\n", this, category, locstr);
-    return NULL;
+    return _Locinfo__Locinfo_Addcats(this, category, locstr);
 }
 
 /* ?_Getcoll@_Locinfo@std@@QBE?AU_Collvec@@XZ */
