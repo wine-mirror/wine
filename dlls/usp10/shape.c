@@ -3263,6 +3263,7 @@ static void ShapeCharGlyphProp_BaseIndic( HDC hdc, ScriptCache *psc, SCRIPT_ANAL
     int syllable_count = 0;
     BOOL modern = get_GSUB_Indic2(psa, psc);
 
+    GDEF_UpdateGlyphProps(hdc, psc, pwGlyphs, cGlyphs, pwLogClust, cChars, pGlyphProp);
     for (i = 0; i < cGlyphs; i++)
     {
         int char_index[20];
@@ -3277,11 +3278,12 @@ static void ShapeCharGlyphProp_BaseIndic( HDC hdc, ScriptCache *psc, SCRIPT_ANAL
             }
         }
 
+        /* Indic scripts do not set fDiacritic or fZeroWidth */
+        pGlyphProp[i].sva.fDiacritic = FALSE;
+        pGlyphProp[i].sva.fZeroWidth = FALSE;
+
         if (char_count == 0)
-        {
-            FIXME("No chars in this glyph?  Must be an error\n");
             continue;
-        }
 
         if (char_count ==1 && pwcChars[char_index[0]] == 0x0020)  /* space */
         {
