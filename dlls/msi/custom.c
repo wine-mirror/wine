@@ -734,7 +734,6 @@ static UINT HANDLE_CustomType23(MSIPACKAGE *package, LPCWSTR source,
     msi_custom_action_info *info;
     WCHAR package_path[MAX_PATH];
     DWORD size;
-    UINT r;
 
     size = MAX_PATH;
     msi_get_property(package->db, szSourceDir, package_path, &size);
@@ -744,10 +743,7 @@ static UINT HANDLE_CustomType23(MSIPACKAGE *package, LPCWSTR source,
     TRACE("Installing package %s concurrently\n", debugstr_w(package_path));
 
     info = do_msidbCAConcurrentInstall(package, type, package_path, target, action);
-
-    r = wait_thread_handle(info);
-    release_custom_action_data( info );
-    return r;
+    return wait_thread_handle(info);
 }
 
 static UINT HANDLE_CustomType1(MSIPACKAGE *package, LPCWSTR source,
@@ -755,7 +751,6 @@ static UINT HANDLE_CustomType1(MSIPACKAGE *package, LPCWSTR source,
 {
     msi_custom_action_info *info;
     MSIBINARY *binary;
-    UINT r;
 
     if (!(binary = get_temp_binary( package, source, TRUE )))
         return ERROR_FUNCTION_FAILED;
@@ -763,10 +758,7 @@ static UINT HANDLE_CustomType1(MSIPACKAGE *package, LPCWSTR source,
     TRACE("Calling function %s from %s\n", debugstr_w(target), debugstr_w(binary->tmpfile));
 
     info = do_msidbCustomActionTypeDll( package, type, binary->tmpfile, target, action );
-
-    r = wait_thread_handle( info );
-    release_custom_action_data( info );
-    return r;
+    return wait_thread_handle( info );
 }
 
 static HANDLE execute_command( const WCHAR *app, WCHAR *arg, const WCHAR *dir )
@@ -860,7 +852,6 @@ static UINT HANDLE_CustomType17(MSIPACKAGE *package, LPCWSTR source,
 {
     msi_custom_action_info *info;
     MSIFILE *file;
-    UINT r;
 
     TRACE("%s %s\n", debugstr_w(source), debugstr_w(target));
 
@@ -872,10 +863,7 @@ static UINT HANDLE_CustomType17(MSIPACKAGE *package, LPCWSTR source,
     }
 
     info = do_msidbCustomActionTypeDll( package, type, file->TargetPath, target, action );
-
-    r = wait_thread_handle( info );
-    release_custom_action_data( info );
-    return r;
+    return wait_thread_handle( info );
 }
 
 static UINT HANDLE_CustomType18(MSIPACKAGE *package, LPCWSTR source,
@@ -1046,16 +1034,12 @@ static msi_custom_action_info *do_msidbCustomActionTypeScript(
 static UINT HANDLE_CustomType37_38(MSIPACKAGE *package, LPCWSTR source,
                                LPCWSTR target, const INT type, LPCWSTR action)
 {
-    UINT r;
     msi_custom_action_info *info;
 
     TRACE("%s %s\n", debugstr_w(source), debugstr_w(target));
 
     info = do_msidbCustomActionTypeScript( package, type, target, NULL, action );
-
-    r = wait_thread_handle( info );
-    release_custom_action_data( info );
-    return r;
+    return wait_thread_handle( info );
 }
 
 static UINT HANDLE_CustomType5_6(MSIPACKAGE *package, LPCWSTR source,
@@ -1098,7 +1082,6 @@ static UINT HANDLE_CustomType5_6(MSIPACKAGE *package, LPCWSTR source,
 
     info = do_msidbCustomActionTypeScript( package, type, bufferw, target, action );
     r = wait_thread_handle( info );
-    release_custom_action_data( info );
 
 done:
     msi_free(bufferw);
@@ -1158,7 +1141,6 @@ static UINT HANDLE_CustomType21_22(MSIPACKAGE *package, LPCWSTR source,
     }
     info = do_msidbCustomActionTypeScript( package, type, bufferw, target, action );
     r = wait_thread_handle( info );
-    release_custom_action_data( info );
 
 done:
     msi_free(bufferw);
@@ -1171,7 +1153,6 @@ static UINT HANDLE_CustomType53_54(MSIPACKAGE *package, LPCWSTR source,
 {
     msi_custom_action_info *info;
     WCHAR *prop;
-    UINT r;
 
     TRACE("%s %s\n", debugstr_w(source), debugstr_w(target));
 
@@ -1180,9 +1161,7 @@ static UINT HANDLE_CustomType53_54(MSIPACKAGE *package, LPCWSTR source,
 
     info = do_msidbCustomActionTypeScript( package, type, prop, NULL, action );
     msi_free(prop);
-    r = wait_thread_handle( info );
-    release_custom_action_data( info );
-    return r;
+    return wait_thread_handle( info );
 }
 
 UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL execute)
@@ -1404,8 +1383,14 @@ void ACTION_FinishCustomActions(const MSIPACKAGE* package)
         msi_dialog_check_messages( wait_handles[i] );
         CloseHandle( wait_handles[i] );
     }
-
     msi_free( wait_handles );
+
+    EnterCriticalSection( &msi_custom_action_cs );
+    LIST_FOR_EACH_ENTRY_SAFE( info, cursor, &msi_pending_custom_actions, msi_custom_action_info, entry )
+    {
+        if (info->package == package) release_custom_action_data( info );
+    }
+    LeaveCriticalSection( &msi_custom_action_cs );
 }
 
 typedef struct _msi_custom_remote_impl {
