@@ -1529,6 +1529,8 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
                          FILE_SYNCHRONOUS_IO_NONALERT);
     if (status != ERROR_SUCCESS)
     {
+        HeapFree( GetProcessHeap(), 0, pipe_wait);
+        RtlFreeUnicodeString( &nt_name );
         SetLastError( ERROR_PATH_NOT_FOUND );
         return FALSE;
     }
