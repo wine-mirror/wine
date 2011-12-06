@@ -10672,6 +10672,7 @@ static void test_dispex(void)
     IXMLDOMNodeList *node_list;
     IXMLDOMParseError *error;
     IXMLDOMNamedNodeMap *map;
+    IXSLTemplate *template;
     IXMLDOMDocument *doc;
     IXMLHTTPRequest *req;
     IXMLDOMElement *elem;
@@ -10815,6 +10816,17 @@ static void test_dispex(void)
         EXPECT_HR(hr, E_NOINTERFACE);
         IXMLHTTPRequest_Release(req);
     }
+
+    /* IXSLTemplate */
+    template = create_xsltemplate(&IID_IXSLTemplate);
+    hr = IXSLTemplate_QueryInterface(template, &IID_IDispatchEx, (void**)&dispex);
+    EXPECT_HR(hr, S_OK);
+    hr = IDispatchEx_QueryInterface(dispex, &IID_IUnknown, (void**)&unk);
+    EXPECT_HR(hr, S_OK);
+    test_domobj_dispex(unk);
+    IUnknown_Release(unk);
+    IDispatchEx_Release(dispex);
+    IXSLTemplate_Release(template);
 
     free_bstrs();
 }
