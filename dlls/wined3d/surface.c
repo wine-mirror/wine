@@ -904,14 +904,14 @@ static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD
             surface_add_dirty_rect(surface, NULL);
         else
         {
-            WINED3DBOX b;
+            struct wined3d_box b;
 
-            b.Left = rect->left;
-            b.Top = rect->top;
-            b.Right = rect->right;
-            b.Bottom = rect->bottom;
-            b.Front = 0;
-            b.Back = 1;
+            b.left = rect->left;
+            b.top = rect->top;
+            b.right = rect->right;
+            b.bottom = rect->bottom;
+            b.front = 0;
+            b.back = 1;
             surface_add_dirty_rect(surface, &b);
         }
     }
@@ -2679,7 +2679,7 @@ GLenum surface_get_gl_buffer(const struct wined3d_surface *surface)
 }
 
 /* Slightly inefficient way to handle multiple dirty rects but it works :) */
-void surface_add_dirty_rect(struct wined3d_surface *surface, const WINED3DBOX *dirty_rect)
+void surface_add_dirty_rect(struct wined3d_surface *surface, const struct wined3d_box *dirty_rect)
 {
     TRACE("surface %p, dirty_rect %p.\n", surface, dirty_rect);
 
@@ -2690,10 +2690,10 @@ void surface_add_dirty_rect(struct wined3d_surface *surface, const WINED3DBOX *d
     surface_modify_location(surface, SFLAG_INSYSMEM, TRUE);
     if (dirty_rect)
     {
-        surface->dirtyRect.left = min(surface->dirtyRect.left, dirty_rect->Left);
-        surface->dirtyRect.top = min(surface->dirtyRect.top, dirty_rect->Top);
-        surface->dirtyRect.right = max(surface->dirtyRect.right, dirty_rect->Right);
-        surface->dirtyRect.bottom = max(surface->dirtyRect.bottom, dirty_rect->Bottom);
+        surface->dirtyRect.left = min(surface->dirtyRect.left, dirty_rect->left);
+        surface->dirtyRect.top = min(surface->dirtyRect.top, dirty_rect->top);
+        surface->dirtyRect.right = max(surface->dirtyRect.right, dirty_rect->right);
+        surface->dirtyRect.bottom = max(surface->dirtyRect.bottom, dirty_rect->bottom);
     }
     else
     {

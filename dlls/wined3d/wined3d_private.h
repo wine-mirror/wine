@@ -1882,7 +1882,7 @@ struct wined3d_texture_ops
             struct wined3d_context *context, BOOL srgb);
     void (*texture_preload)(struct wined3d_texture *texture, enum WINED3DSRGB srgb);
     void (*texture_sub_resource_add_dirty_region)(struct wined3d_resource *sub_resource,
-            const WINED3DBOX *dirty_region);
+            const struct wined3d_box *dirty_region);
     void (*texture_sub_resource_cleanup)(struct wined3d_resource *sub_resource);
 };
 
@@ -1932,8 +1932,8 @@ struct wined3d_volume
     struct wined3d_texture *container;
     BOOL                    lockable;
     BOOL                    locked;
-    WINED3DBOX              lockedBox;
-    WINED3DBOX              dirtyBox;
+    struct wined3d_box lockedBox;
+    struct wined3d_box dirtyBox;
     BOOL                    dirty;
 };
 
@@ -1942,7 +1942,7 @@ static inline struct wined3d_volume *volume_from_resource(struct wined3d_resourc
     return CONTAINING_RECORD(resource, struct wined3d_volume, resource);
 }
 
-void volume_add_dirty_box(struct wined3d_volume *volume, const WINED3DBOX *dirty_box) DECLSPEC_HIDDEN;
+void volume_add_dirty_box(struct wined3d_volume *volume, const struct wined3d_box *dirty_box) DECLSPEC_HIDDEN;
 void volume_load(const struct wined3d_volume *volume, struct wined3d_context *context, UINT level, BOOL srgb_mode) DECLSPEC_HIDDEN;
 void volume_set_container(struct wined3d_volume *volume, struct wined3d_texture *container) DECLSPEC_HIDDEN;
 
@@ -2076,7 +2076,7 @@ static inline GLuint surface_get_texture_name(const struct wined3d_surface *surf
             ? surface->texture_name_srgb : surface->texture_name;
 }
 
-void surface_add_dirty_rect(struct wined3d_surface *surface, const WINED3DBOX *dirty_rect) DECLSPEC_HIDDEN;
+void surface_add_dirty_rect(struct wined3d_surface *surface, const struct wined3d_box *dirty_rect) DECLSPEC_HIDDEN;
 void surface_bind(struct wined3d_surface *surface, struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 HRESULT surface_color_fill(struct wined3d_surface *s,
         const RECT *rect, const struct wined3d_color *color) DECLSPEC_HIDDEN;

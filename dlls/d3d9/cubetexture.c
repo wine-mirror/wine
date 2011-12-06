@@ -406,14 +406,14 @@ static HRESULT  WINAPI IDirect3DCubeTexture9Impl_AddDirtyRect(IDirect3DCubeTextu
         hr = wined3d_texture_add_dirty_region(texture->wined3d_texture, face, NULL);
     else
     {
-        WINED3DBOX dirty_region;
+        struct wined3d_box dirty_region;
 
-        dirty_region.Left = dirty_rect->left;
-        dirty_region.Top = dirty_rect->top;
-        dirty_region.Right = dirty_rect->right;
-        dirty_region.Bottom = dirty_rect->bottom;
-        dirty_region.Front = 0;
-        dirty_region.Back = 1;
+        dirty_region.left = dirty_rect->left;
+        dirty_region.top = dirty_rect->top;
+        dirty_region.right = dirty_rect->right;
+        dirty_region.bottom = dirty_rect->bottom;
+        dirty_region.front = 0;
+        dirty_region.back = 1;
         hr = wined3d_texture_add_dirty_region(texture->wined3d_texture, face, &dirty_region);
     }
     wined3d_mutex_unlock();

@@ -569,7 +569,7 @@ struct wined3d_resource * CDECL wined3d_texture_get_sub_resource(struct wined3d_
 }
 
 HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
-        UINT layer, const WINED3DBOX *dirty_region)
+        UINT layer, const struct wined3d_box *dirty_region)
 {
     struct wined3d_resource *sub_resource;
 
@@ -704,7 +704,7 @@ static void texture2d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
 }
 
 static void texture2d_sub_resource_add_dirty_region(struct wined3d_resource *sub_resource,
-        const WINED3DBOX *dirty_region)
+        const struct wined3d_box *dirty_region)
 {
     surface_add_dirty_rect(surface_from_resource(sub_resource), dirty_region);
 }
@@ -1102,7 +1102,7 @@ static void texture3d_preload(struct wined3d_texture *texture, enum WINED3DSRGB 
 }
 
 static void texture3d_sub_resource_add_dirty_region(struct wined3d_resource *sub_resource,
-        const WINED3DBOX *dirty_region)
+        const struct wined3d_box *dirty_region)
 {
     volume_add_dirty_box(volume_from_resource(sub_resource), dirty_region);
 }

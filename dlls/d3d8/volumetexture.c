@@ -348,7 +348,7 @@ static HRESULT WINAPI IDirect3DVolumeTexture8Impl_AddDirtyBox(IDirect3DVolumeTex
     TRACE("iface %p, dirty_box %p.\n", iface, dirty_box);
 
     wined3d_mutex_lock();
-    hr = wined3d_texture_add_dirty_region(texture->wined3d_texture, 0, (const WINED3DBOX *)dirty_box);
+    hr = wined3d_texture_add_dirty_region(texture->wined3d_texture, 0, (const struct wined3d_box *)dirty_box);
     wined3d_mutex_unlock();
 
     return hr;

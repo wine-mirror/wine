@@ -1715,15 +1715,15 @@ struct wined3d_mapped_box
     void *data;
 };
 
-typedef struct _WINED3DBOX
+struct wined3d_box
 {
-    UINT Left;
-    UINT Top;
-    UINT Right;
-    UINT Bottom;
-    UINT Front;
-    UINT Back;
-} WINED3DBOX;
+    UINT left;
+    UINT top;
+    UINT right;
+    UINT bottom;
+    UINT front;
+    UINT back;
+};
 
 typedef struct WineDirect3DStridedData
 {
@@ -2405,7 +2405,7 @@ HRESULT __cdecl wined3d_swapchain_set_gamma_ramp(const struct wined3d_swapchain 
 HRESULT __cdecl wined3d_swapchain_set_window(struct wined3d_swapchain *swapchain, HWND window);
 
 HRESULT __cdecl wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
-        UINT layer, const WINED3DBOX *dirty_region);
+        UINT layer, const struct wined3d_box *dirty_region);
 HRESULT __cdecl wined3d_texture_create_2d(struct wined3d_device *device, UINT width, UINT height,
         UINT level_count, DWORD usage, enum wined3d_format_id format_id, WINED3DPOOL pool, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture);
@@ -2452,7 +2452,7 @@ DWORD __cdecl wined3d_volume_get_priority(const struct wined3d_volume *volume);
 struct wined3d_resource * __cdecl wined3d_volume_get_resource(struct wined3d_volume *volume);
 ULONG __cdecl wined3d_volume_incref(struct wined3d_volume *volume);
 HRESULT __cdecl wined3d_volume_map(struct wined3d_volume *volume,
-        struct wined3d_mapped_box *mapped_box, const WINED3DBOX *box, DWORD flags);
+        struct wined3d_mapped_box *mapped_box, const struct wined3d_box *box, DWORD flags);
 void __cdecl wined3d_volume_preload(struct wined3d_volume *volume);
 DWORD __cdecl wined3d_volume_set_priority(struct wined3d_volume *volume, DWORD new_priority);
 HRESULT __cdecl wined3d_volume_unmap(struct wined3d_volume *volume);

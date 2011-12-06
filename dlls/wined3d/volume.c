@@ -46,26 +46,26 @@ static void volume_bind_and_dirtify(const struct wined3d_volume *volume, struct 
     container->texture_ops->texture_bind(container, context, FALSE);
 }
 
-void volume_add_dirty_box(struct wined3d_volume *volume, const WINED3DBOX *dirty_box)
+void volume_add_dirty_box(struct wined3d_volume *volume, const struct wined3d_box *dirty_box)
 {
     volume->dirty = TRUE;
     if (dirty_box)
     {
-        volume->lockedBox.Left = min(volume->lockedBox.Left, dirty_box->Left);
-        volume->lockedBox.Top = min(volume->lockedBox.Top, dirty_box->Top);
-        volume->lockedBox.Front = min(volume->lockedBox.Front, dirty_box->Front);
-        volume->lockedBox.Right = max(volume->lockedBox.Right, dirty_box->Right);
-        volume->lockedBox.Bottom = max(volume->lockedBox.Bottom, dirty_box->Bottom);
-        volume->lockedBox.Back = max(volume->lockedBox.Back, dirty_box->Back);
+        volume->lockedBox.left = min(volume->lockedBox.left, dirty_box->left);
+        volume->lockedBox.top = min(volume->lockedBox.top, dirty_box->top);
+        volume->lockedBox.front = min(volume->lockedBox.front, dirty_box->front);
+        volume->lockedBox.right = max(volume->lockedBox.right, dirty_box->right);
+        volume->lockedBox.bottom = max(volume->lockedBox.bottom, dirty_box->bottom);
+        volume->lockedBox.back = max(volume->lockedBox.back, dirty_box->back);
     }
     else
     {
-        volume->lockedBox.Left = 0;
-        volume->lockedBox.Top = 0;
-        volume->lockedBox.Front = 0;
-        volume->lockedBox.Right = volume->resource.width;
-        volume->lockedBox.Bottom = volume->resource.height;
-        volume->lockedBox.Back = volume->resource.depth;
+        volume->lockedBox.left = 0;
+        volume->lockedBox.top = 0;
+        volume->lockedBox.front = 0;
+        volume->lockedBox.right = volume->resource.width;
+        volume->lockedBox.bottom = volume->resource.height;
+        volume->lockedBox.back = volume->resource.depth;
     }
 }
 
@@ -185,7 +185,7 @@ struct wined3d_resource * CDECL wined3d_volume_get_resource(struct wined3d_volum
 }
 
 HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
-        struct wined3d_mapped_box *mapped_box, const WINED3DBOX *box, DWORD flags)
+        struct wined3d_mapped_box *mapped_box, const struct wined3d_box *box, DWORD flags)
 {
     TRACE("volume %p, mapped_box %p, box %p, flags %#x.\n",
             volume, mapped_box, box, flags);
@@ -202,27 +202,27 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
     {
         TRACE("No box supplied - all is ok\n");
         mapped_box->data = volume->resource.allocatedMemory;
-        volume->lockedBox.Left   = 0;
-        volume->lockedBox.Top    = 0;
-        volume->lockedBox.Front  = 0;
-        volume->lockedBox.Right  = volume->resource.width;
-        volume->lockedBox.Bottom = volume->resource.height;
-        volume->lockedBox.Back   = volume->resource.depth;
+        volume->lockedBox.left   = 0;
+        volume->lockedBox.top    = 0;
+        volume->lockedBox.front  = 0;
+        volume->lockedBox.right  = volume->resource.width;
+        volume->lockedBox.bottom = volume->resource.height;
+        volume->lockedBox.back   = volume->resource.depth;
     }
     else
     {
-        TRACE("Lock Box (%p) = l %d, t %d, r %d, b %d, fr %d, ba %d\n",
-                box, box->Left, box->Top, box->Right, box->Bottom, box->Front, box->Back);
+        TRACE("Lock Box (%p) = l %u, t %u, r %u, b %u, fr %u, ba %u\n",
+                box, box->left, box->top, box->right, box->bottom, box->front, box->back);
         mapped_box->data = volume->resource.allocatedMemory
-                + (mapped_box->slice_pitch * box->Front)     /* FIXME: is front < back or vica versa? */
-                + (mapped_box->row_pitch * box->Top)
-                + (box->Left * volume->resource.format->byte_count);
-        volume->lockedBox.Left   = box->Left;
-        volume->lockedBox.Top    = box->Top;
-        volume->lockedBox.Front  = box->Front;
-        volume->lockedBox.Right  = box->Right;
-        volume->lockedBox.Bottom = box->Bottom;
-        volume->lockedBox.Back   = box->Back;
+                + (mapped_box->slice_pitch * box->front)     /* FIXME: is front < back or vica versa? */
+                + (mapped_box->row_pitch * box->top)
+                + (box->left * volume->resource.format->byte_count);
+        volume->lockedBox.left   = box->left;
+        volume->lockedBox.top    = box->top;
+        volume->lockedBox.front  = box->front;
+        volume->lockedBox.right  = box->right;
+        volume->lockedBox.bottom = box->bottom;
+        volume->lockedBox.back   = box->back;
     }
 
     if (!(flags & (WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY)))
