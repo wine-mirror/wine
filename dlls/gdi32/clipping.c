@@ -57,7 +57,7 @@ static inline RECT get_clip_rect( DC * dc, int left, int top, int right, int bot
  *
  * Get the clipping rectangle in device coordinates.
  */
-int get_clip_box( DC *dc, RECT *rect )
+static int get_clip_box( DC *dc, RECT *rect )
 {
     int ret = ERROR;
     HRGN rgn, clip = get_clip_region( dc );
@@ -71,6 +71,23 @@ int get_clip_box( DC *dc, RECT *rect )
         DeleteObject( rgn );
     }
     return ret;
+}
+
+/***********************************************************************
+ *           clip_visrect
+ *
+ * Clip a rectangle to the DC visible rect.
+ */
+BOOL clip_visrect( DC *dc, RECT *dst, const RECT *src )
+{
+    RECT clip;
+
+    if (!get_clip_box( dc, &clip ))
+    {
+        *dst = *src;
+        return !is_rect_empty( dst );
+    }
+    return intersect_rect( dst, src, &clip );
 }
 
 /***********************************************************************

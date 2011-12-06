@@ -403,7 +403,7 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
     INT ret = 0;
     INT height = abs( src_info->bmiHeader.biHeight );
     BOOL top_down = src_info->bmiHeader.biHeight < 0, non_stretch_from_origin = FALSE;
-    RECT rect, clip_rect;
+    RECT rect;
 
     TRACE("%d %d %d %d <- %d %d %d %d rop %08x\n", xDst, yDst, widthDst, heightDst,
           xSrc, ySrc, widthSrc, heightSrc, rop);
@@ -487,11 +487,7 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
 
     get_bounding_rect( &rect, dst.x, dst.y, dst.width, dst.height );
 
-    if (get_clip_box( dc, &clip_rect ))
-        intersect_rect( &dst.visrect, &rect, &clip_rect );
-    else
-        dst.visrect = rect;
-    if (is_rect_empty( &dst.visrect )) goto done;
+    if (!clip_visrect( dc, &dst.visrect, &rect )) goto done;
 
     if (!intersect_vis_rectangles( &dst, &src )) goto done;
 
@@ -796,11 +792,11 @@ INT nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWOR
     dst.height = cy;
     if (GetLayout( dev->hdc ) & LAYOUT_RTL) dst.x -= cx - 1;
 
-    dst.visrect.left = dst.x;
-    dst.visrect.top = dst.y;
-    dst.visrect.right = dst.x + cx;
-    dst.visrect.bottom = dst.y + cy;
-    if (get_clip_box( dc, &rect )) intersect_rect( &dst.visrect, &dst.visrect, &rect );
+    rect.left = dst.x;
+    rect.top = dst.y;
+    rect.right = dst.x + cx;
+    rect.bottom = dst.y + cy;
+    if (!clip_visrect( dc, &dst.visrect, &rect )) goto done;
 
     offset_rect( &src.visrect, dst.x - src.x, dst.y - src.y );
     intersect_rect( &rect, &src.visrect, &dst.visrect );

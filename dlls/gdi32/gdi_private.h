@@ -212,7 +212,7 @@ extern DWORD stretch_bits( const BITMAPINFO *src_info, struct bitblt_coords *src
 extern BOOL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void **bits, UINT *usage ) DECLSPEC_HIDDEN;
 
 /* clipping.c */
-extern int get_clip_box( DC *dc, RECT *rect ) DECLSPEC_HIDDEN;
+extern BOOL clip_visrect( DC *dc, RECT *dst, const RECT *src ) DECLSPEC_HIDDEN;
 extern void CLIPPING_UpdateGCRegion( DC * dc ) DECLSPEC_HIDDEN;
 
 /* Return the total clip region (if any) */

@@ -104,7 +104,7 @@ BOOL intersect_vis_rectangles( struct bitblt_coords *dst, struct bitblt_coords *
 static BOOL get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
                                 DC *dc_src, struct bitblt_coords *src )
 {
-    RECT rect, clip;
+    RECT rect;
 
     /* get the destination visible rectangle */
 
@@ -124,10 +124,7 @@ static BOOL get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
     }
     get_bounding_rect( &rect, dst->x, dst->y, dst->width, dst->height );
 
-    if (get_clip_box( dc_dst, &clip ))
-        intersect_rect( &dst->visrect, &rect, &clip );
-    else
-        dst->visrect = rect;
+    clip_visrect( dc_dst, &dst->visrect, &rect );
 
     /* get the source visible rectangle */
 
@@ -408,7 +405,6 @@ BOOL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
     struct gdi_image_bits bits;
     unsigned int i;
     POINT *pts;
-    RECT clip;
     BOOL ret = TRUE;
     DWORD err;
     HRGN rgn;
@@ -437,9 +433,7 @@ BOOL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
     dst.y = dst.visrect.top;
     dst.width = dst.visrect.right - dst.visrect.left;
     dst.height = dst.visrect.bottom - dst.visrect.top;
-
-    if (get_clip_box( dc, &clip )) intersect_rect( &dst.visrect, &dst.visrect, &clip );
-    if (is_rect_empty( &dst.visrect )) goto done;
+    if (!clip_visrect( dc, &dst.visrect, &dst.visrect )) goto done;
 
     /* query the bitmap format */
     info->bmiHeader.biSize          = sizeof(info->bmiHeader);

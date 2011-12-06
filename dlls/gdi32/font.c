@@ -1863,13 +1863,11 @@ BOOL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect
         struct gdi_image_bits bits;
         struct bitblt_coords src, dst;
         PHYSDEV dst_dev;
-        RECT clip;
 
         dst_dev = GET_DC_PHYSDEV( dc, pPutImage );
         src.visrect = get_total_extents( dev->hdc, x, y, flags, aa_flags, str, count, dx );
         if (flags & ETO_CLIPPED) intersect_rect( &src.visrect, &src.visrect, rect );
-        if (get_clip_box( dc, &clip )) intersect_rect( &src.visrect, &src.visrect, &clip );
-        if (is_rect_empty( &src.visrect )) return TRUE;
+        if (!clip_visrect( dc, &src.visrect, &src.visrect )) return TRUE;
 
         /* FIXME: check for ETO_OPAQUE and avoid GetImage */
         src.x = src.visrect.left;
