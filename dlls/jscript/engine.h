@@ -62,6 +62,7 @@ typedef struct _func_stack {
     X(jmp_z,      0, ARG_ADDR,   0)        \
     X(lt,         1, 0,0)                  \
     X(lteq,       1, 0,0)                  \
+    X(member,     1, ARG_BSTR,   0)        \
     X(memberid,   1, 0,0)                  \
     X(minus,      1, 0,0)                  \
     X(mod,        1, 0,0)                  \

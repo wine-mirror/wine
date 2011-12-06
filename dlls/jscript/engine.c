@@ -153,6 +153,22 @@ static HRESULT stack_pop_number(exec_ctx_t *ctx, VARIANT *r)
     return hres;
 }
 
+static HRESULT stack_pop_object(exec_ctx_t *ctx, IDispatch **r)
+{
+    VARIANT *v;
+    HRESULT hres;
+
+    v = stack_pop(ctx);
+    if(V_VT(v) == VT_DISPATCH) {
+        *r = V_DISPATCH(v);
+        return S_OK;
+    }
+
+    hres = to_object(ctx->parser->script, v, r);
+    VariantClear(v);
+    return hres;
+}
+
 static inline HRESULT stack_pop_int(exec_ctx_t *ctx, INT *r)
 {
     return to_int32(ctx->parser->script, stack_pop(ctx), &ctx->ei, r);
@@ -1588,6 +1604,35 @@ HRESULT member_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD fla
 
     IDispatch_Release(obj);
     return hres;
+}
+
+/* ECMA-262 3rd Edition    11.2.1 */
+static HRESULT interp_member(exec_ctx_t *ctx)
+{
+    const BSTR arg = ctx->parser->code->instrs[ctx->ip].arg1.bstr;
+    IDispatch *obj;
+    VARIANT v;
+    DISPID id;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = stack_pop_object(ctx, &obj);
+    if(FAILED(hres))
+        return hres;
+
+    hres = disp_get_id(ctx->parser->script, obj, arg, 0, &id);
+    if(SUCCEEDED(hres)) {
+        hres = disp_propget(ctx->parser->script, obj, id, &v, &ctx->ei, NULL/*FIXME*/);
+    }else if(hres == DISP_E_UNKNOWNNAME) {
+        V_VT(&v) = VT_EMPTY;
+        hres = S_OK;
+    }
+    IDispatch_Release(obj);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push(ctx, &v);
 }
 
 /* ECMA-262 3rd Edition    11.2.1 */
