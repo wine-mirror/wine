@@ -1351,7 +1351,7 @@ static const expression_eval_t expression_eval_table[] = {
    compiled_expression_eval,
    assign_and_expression_eval,
    compiled_expression_eval,
-   assign_xor_expression_eval,
+   compiled_expression_eval,
    compiled_expression_eval,
    array_expression_eval,
    member_expression_eval,

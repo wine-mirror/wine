@@ -2170,25 +2170,6 @@ static HRESULT interp_or(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.10 */
-static HRESULT xor_eval(script_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsexcept_t *ei, VARIANT *retv)
-{
-    INT li, ri;
-    HRESULT hres;
-
-    hres = to_int32(ctx, lval, ei, &li);
-    if(FAILED(hres))
-        return hres;
-
-    hres = to_int32(ctx, rval, ei, &ri);
-    if(FAILED(hres))
-        return hres;
-
-    V_VT(retv) = VT_I4;
-    V_I4(retv) = li^ri;
-    return S_OK;
-}
-
-/* ECMA-262 3rd Edition    11.10 */
 static HRESULT interp_xor(exec_ctx_t *ctx)
 {
     INT l, r;
@@ -3363,16 +3344,6 @@ HRESULT assign_and_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD
     TRACE("\n");
 
     return assign_oper_eval(ctx, expr->expression1, expr->expression2, bitand_eval, ei, ret);
-}
-
-/* ECMA-262 3rd Edition    11.13.2 */
-HRESULT assign_xor_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
-{
-    binary_expression_t *expr = (binary_expression_t*)_expr;
-
-    TRACE("\n");
-
-    return assign_oper_eval(ctx, expr->expression1, expr->expression2, xor_eval, ei, ret);
 }
 
 static HRESULT interp_jmp(exec_ctx_t *ctx)
