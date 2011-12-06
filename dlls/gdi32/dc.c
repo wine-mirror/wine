@@ -103,6 +103,7 @@ DC *alloc_dc_ptr( WORD magic )
     dc->hMetaRgn            = 0;
     dc->hMetaClipRgn        = 0;
     dc->hVisRgn             = 0;
+    dc->region              = 0;
     dc->hPen                = GDI_inc_ref_count( GetStockObject( BLACK_PEN ));
     dc->hBrush              = GDI_inc_ref_count( GetStockObject( WHITE_BRUSH ));
     dc->hFont               = GDI_inc_ref_count( GetStockObject( SYSTEM_FONT ));
@@ -174,6 +175,7 @@ static void free_dc_state( DC *dc )
     if (dc->hMetaRgn) DeleteObject( dc->hMetaRgn );
     if (dc->hMetaClipRgn) DeleteObject( dc->hMetaClipRgn );
     if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
+    if (dc->region) DeleteObject( dc->region );
     if (dc->path) free_gdi_path( dc->path );
     HeapFree( GetProcessHeap(), 0, dc );
 }
@@ -418,6 +420,7 @@ INT nulldrv_SaveDC( PHYSDEV dev )
 
     /* Get/SetDCState() don't change hVisRgn field ("Undoc. Windows" p.559). */
 
+    newdc->region       = 0;
     newdc->hVisRgn      = 0;
     newdc->hClipRgn     = 0;
     newdc->hMetaRgn     = 0;

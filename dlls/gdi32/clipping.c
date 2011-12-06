@@ -53,27 +53,6 @@ static inline RECT get_clip_rect( DC * dc, int left, int top, int right, int bot
 }
 
 /***********************************************************************
- *           get_clip_box
- *
- * Get the clipping rectangle in device coordinates.
- */
-static int get_clip_box( DC *dc, RECT *rect )
-{
-    int ret = ERROR;
-    HRGN rgn, clip = get_clip_region( dc );
-
-    if (!clip) return GetRgnBox( dc->hVisRgn, rect );
-
-    if ((rgn = CreateRectRgn( 0, 0, 0, 0 )))
-    {
-        CombineRgn( rgn, dc->hVisRgn, clip, RGN_AND );
-        ret = GetRgnBox( rgn, rect );
-        DeleteObject( rgn );
-    }
-    return ret;
-}
-
-/***********************************************************************
  *           clip_visrect
  *
  * Clip a rectangle to the DC visible rect.
@@ -82,7 +61,7 @@ BOOL clip_visrect( DC *dc, RECT *dst, const RECT *src )
 {
     RECT clip;
 
-    if (!get_clip_box( dc, &clip ))
+    if (!GetRgnBox( get_dc_region(dc), &clip ))
     {
         *dst = *src;
         return !is_rect_empty( dst );
@@ -105,13 +84,22 @@ void CLIPPING_UpdateGCRegion( DC * dc )
     {
         if (!dc->hMetaClipRgn) dc->hMetaClipRgn = CreateRectRgn( 0, 0, 0, 0 );
         CombineRgn( dc->hMetaClipRgn, dc->hClipRgn, dc->hMetaRgn, RGN_AND );
-        clip_rgn = dc->hMetaClipRgn;
     }
     else  /* only one is set, no need for an intersection */
     {
         if (dc->hMetaClipRgn) DeleteObject( dc->hMetaClipRgn );
         dc->hMetaClipRgn = 0;
-        clip_rgn = dc->hMetaRgn ? dc->hMetaRgn : dc->hClipRgn;
+    }
+    clip_rgn = get_clip_region( dc );
+    if (clip_rgn || dc->hVisRgn)
+    {
+        if (!dc->region) dc->region = CreateRectRgn( 0, 0, 0, 0 );
+        CombineRgn( dc->region, dc->hVisRgn, clip_rgn, clip_rgn ? RGN_AND : RGN_COPY );
+    }
+    else
+    {
+        if (dc->region) DeleteObject( dc->region );
+        dc->region = 0;
     }
     physdev->funcs->pSetDeviceClipping( physdev, dc->hVisRgn, clip_rgn );
 }
@@ -365,7 +353,6 @@ BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
 {
     POINT pt;
     BOOL ret;
-    HRGN clip;
     DC *dc = get_dc_ptr( hdc );
 
     TRACE("%p %d,%d\n", hdc, x, y );
@@ -375,8 +362,7 @@ BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
     pt.y = y;
     LPtoDP( hdc, &pt, 1 );
     update_dc( dc );
-    ret = PtInRegion( dc->hVisRgn, pt.x, pt.y );
-    if (ret && (clip = get_clip_region(dc))) ret = PtInRegion( clip, pt.x, pt.y );
+    ret = PtInRegion( get_dc_region(dc), pt.x, pt.y );
     release_dc_ptr( dc );
     return ret;
 }
@@ -389,7 +375,6 @@ BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
 {
     RECT tmpRect;
     BOOL ret;
-    HRGN clip;
     DC *dc = get_dc_ptr( hdc );
     if (!dc) return FALSE;
     TRACE("%p %s\n", hdc, wine_dbgstr_rect( rect ));
@@ -398,14 +383,7 @@ BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
     LPtoDP( hdc, (POINT *)&tmpRect, 2 );
 
     update_dc( dc );
-    if ((clip = get_clip_region(dc)))
-    {
-        HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
-        CombineRgn( hrgn, dc->hVisRgn, clip, RGN_AND );
-        ret = RectInRegion( hrgn, &tmpRect );
-        DeleteObject( hrgn );
-    }
-    else ret = RectInRegion( dc->hVisRgn, &tmpRect );
+    ret = RectInRegion( get_dc_region(dc), &tmpRect );
     release_dc_ptr( dc );
     return ret;
 }
@@ -421,7 +399,7 @@ INT WINAPI GetClipBox( HDC hdc, LPRECT rect )
     if (!dc) return ERROR;
 
     update_dc( dc );
-    ret = get_clip_box( dc, rect );
+    ret = GetRgnBox( get_dc_region(dc), rect );
     if (dc->layout & LAYOUT_RTL)
     {
         int tmp = rect->left;

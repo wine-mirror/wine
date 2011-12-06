@@ -104,10 +104,11 @@ typedef struct tagDC
 
     int           flags;
     DWORD         layout;
-    HRGN          hClipRgn;      /* Clip region (may be 0) */
-    HRGN          hMetaRgn;      /* Meta region (may be 0) */
-    HRGN          hMetaClipRgn;  /* Intersection of meta and clip regions (may be 0) */
-    HRGN          hVisRgn;       /* Visible region (must never be 0) */
+    HRGN          hClipRgn;      /* Clip region */
+    HRGN          hMetaRgn;      /* Meta region */
+    HRGN          hMetaClipRgn;  /* Intersection of meta and clip regions */
+    HRGN          hVisRgn;       /* Visible region */
+    HRGN          region;        /* Total DC region (intersection of clip and visible) */
     HPEN          hPen;
     HBRUSH        hBrush;
     HFONT         hFont;
@@ -221,6 +222,12 @@ static inline HRGN get_clip_region( DC * dc )
     if (dc->hMetaClipRgn) return dc->hMetaClipRgn;
     if (dc->hMetaRgn) return dc->hMetaRgn;
     return dc->hClipRgn;
+}
+
+/* Return the total DC region (if any) */
+static inline HRGN get_dc_region( DC *dc )
+{
+    return dc->region;
 }
 
 /* dc.c */
