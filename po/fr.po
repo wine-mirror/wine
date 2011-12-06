@@ -76,11 +76,11 @@ msgstr "OK"
 msgid "The following information can be used to get technical support for %s:"
 msgstr ""
 "Les informations suivantes peuvent être utilisées pour obtenir du support "
-"technique pour %s :"
+"technique pour %s :"
 
 #: appwiz.rc:77
 msgid "Publisher:"
-msgstr "Éditeur :"
+msgstr "Éditeur :"
 
 #: appwiz.rc:78 winefile.rc:172
 msgid "Version:"
@@ -88,27 +88,27 @@ msgstr "Version :"
 
 #: appwiz.rc:79
 msgid "Contact:"
-msgstr "Contact :"
+msgstr "Contact :"
 
 #: appwiz.rc:80
 msgid "Support Information:"
-msgstr "Support :"
+msgstr "Support :"
 
 #: appwiz.rc:81
 msgid "Support Telephone:"
-msgstr "Téléphone :"
+msgstr "Téléphone :"
 
 #: appwiz.rc:82
 msgid "Readme:"
-msgstr "Lisez-moi :"
+msgstr "Lisez-moi :"
 
 #: appwiz.rc:83
 msgid "Product Updates:"
-msgstr "Mises à jour :"
+msgstr "Mises à jour :"
 
 #: appwiz.rc:84
 msgid "Comments:"
-msgstr "Commentaires :"
+msgstr "Commentaires :"
 
 #: appwiz.rc:97
 msgid "Wine Gecko Installer"
@@ -1901,11 +1901,11 @@ msgstr ""
 
 #: cryptui.rc:74
 msgid "X.509 Certificate (*.cer; *.crt)"
-msgstr "Certificat X.509 (*.cer ; *.crt)"
+msgstr "Certificat X.509 (*.cer ; *.crt)"
 
 #: cryptui.rc:75
 msgid "Personal Information Exchange (*.pfx; *.p12)"
-msgstr "Échange d'informations personnelles (*.pfx ; *.p12)"
+msgstr "Échange d'informations personnelles (*.pfx ; *.p12)"
 
 #: cryptui.rc:76 cryptui.rc:155
 msgid "Certificate Revocation List (*.crl)"
@@ -1921,7 +1921,7 @@ msgstr "Magasin de certificats sérialisés Microsoft (*.sst)"
 
 #: cryptui.rc:79
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
-msgstr "Messages CMS/PKCS #7 (*.spc ; *.p7b)"
+msgstr "Messages CMS/PKCS #7 (*.spc ; *.p7b)"
 
 #: cryptui.rc:81
 msgid "Please select a file."
@@ -5932,7 +5932,7 @@ msgstr "Informations sur l'hyperlien"
 
 #: mshtml.rc:41 winecfg.rc:247
 msgid "&Type:"
-msgstr "&Type :"
+msgstr "&Type :"
 
 #: mshtml.rc:43
 msgid "&URL:"
@@ -6387,7 +6387,7 @@ msgstr "Insérer objet"
 
 #: oledlg.rc:54
 msgid "Object Type:"
-msgstr "Type d'objet :"
+msgstr "Type d'objet :"
 
 #: oledlg.rc:57 oledlg.rc:95
 msgid "Result"
@@ -6419,7 +6419,7 @@ msgstr "Parcourir..."
 
 #: oledlg.rc:69
 msgid "File:"
-msgstr "Fichier :"
+msgstr "Fichier :"
 
 #: oledlg.rc:75
 msgid "Paste Special"
@@ -7681,7 +7681,7 @@ msgstr "Le certificat pour ce site pose problème."
 
 #: wininet.rc:79
 msgid "Do you want to continue anyway?"
-msgstr "Voulez-vous tout de même continuer ?"
+msgstr "Voulez-vous tout de même continuer ?"
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -9039,7 +9039,7 @@ msgid ""
 msgstr ""
 "SHIFT est utilisé dans un fichier batch pour enlever le premier paramètre de "
 "la\n"
-"liste ; ainsi, le paramètre 2 devient paramètre 1 et ainsi de suite. Il est "
+"liste ; ainsi, le paramètre 2 devient paramètre 1 et ainsi de suite. Il est "
 "sans effet\n"
 "s'il est appelé depuis la ligne de commande.\n"
 
@@ -9050,7 +9050,7 @@ msgstr "TIME règle ou affiche l'heure système courante.\n"
 #: cmd.rc:187
 msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
 msgstr ""
-"Définit le titre de la fenêtre pour la session cmd ; syntaxe : TITLE "
+"Définit le titre de la fenêtre pour la session cmd ; syntaxe : TITLE "
 "[chaîne]\n"
 
 #: cmd.rc:191
@@ -9329,7 +9329,7 @@ msgstr "Erreur de syntaxe\n"
 
 #: cmd.rc:302
 msgid "%s: File Not Found\n"
-msgstr "%s : fichier non trouvé\n"
+msgstr "%s : fichier non trouvé\n"
 
 #: cmd.rc:303
 msgid "No help available for %s\n"
@@ -9436,7 +9436,7 @@ msgstr "Outil de diagnostic DirectX"
 
 #: dxdiag.rc:28
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
-msgstr "Usage : dxdiag [/whql:off | /whql:on] [/t fichier | /x fichier]"
+msgstr "Usage : dxdiag [/whql:off | /whql:on] [/t fichier | /x fichier]"
 
 #: explorer.rc:28
 msgid "Wine Explorer"
@@ -9448,7 +9448,7 @@ msgstr "Emplacement :"
 
 #: hostname.rc:27
 msgid "Usage: hostname\n"
-msgstr "Usage : hostname\n"
+msgstr "Usage : hostname\n"
 
 #: hostname.rc:28
 msgid "Error: Invalid option '%c'.\n"
@@ -9459,17 +9459,17 @@ msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"
 msgstr ""
-"Erreur : impossible de spécifier le nom d'hôte système avec l'utilitaire "
+"Erreur : impossible de spécifier le nom d'hôte système avec l'utilitaire "
 "hostname.\n"
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
-msgstr "Usage : ipconfig [ /? | /all ]\n"
+msgstr "Usage : ipconfig [ /? | /all ]\n"
 
 #: ipconfig.rc:28
 msgid "Error: Unknown or invalid command line parameters specified\n"
 msgstr ""
-"Erreur : les paramètres de ligne de commande spécifiés sont inconnus ou "
+"Erreur : les paramètres de ligne de commande spécifiés sont inconnus ou "
 "invalides\n"
 
 #: ipconfig.rc:29
@@ -10839,7 +10839,7 @@ msgstr "Occurrence de « %s » non trouvée"
 
 #: regedit.rc:183
 msgid "Are you sure you want to delete these values?"
-msgstr "Voulez-vous réellement supprimer ces valeurs ?"
+msgstr "Voulez-vous réellement supprimer ces valeurs ?"
 
 #: regedit.rc:184
 msgid "New Key #%d"
@@ -10969,27 +10969,27 @@ msgstr ""
 
 #: taskkill.rc:27
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
-msgstr "Usage : taskkill [/?] [/f] [/im NomProcessus | /pid IdProcessus]\n"
+msgstr "Usage : taskkill [/?] [/f] [/im NomProcessus | /pid IdProcessus]\n"
 
 #: taskkill.rc:28
 msgid "Error: Unknown or invalid command line option specified.\n"
-msgstr "Erreur : option de ligne de commande inconnue ou invalide.\n"
+msgstr "Erreur : option de ligne de commande inconnue ou invalide.\n"
 
 #: taskkill.rc:29
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr "Erreur : paramètre de ligne de commande invalide.\n"
+msgstr "Erreur : paramètre de ligne de commande invalide.\n"
 
 #: taskkill.rc:30
 msgid "Error: One of options /im or /pid must be specified.\n"
-msgstr "Erreur : une des options /im ou /pid doit être spécifiée.\n"
+msgstr "Erreur : une des options /im ou /pid doit être spécifiée.\n"
 
 #: taskkill.rc:31
 msgid "Error: Option %1 expects a command line parameter.\n"
-msgstr "Erreur : l'option %1 requiert un paramètre de ligne de commande.\n"
+msgstr "Erreur : l'option %1 requiert un paramètre de ligne de commande.\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
-msgstr "Erreur : les options /im et /pid sont incompatibles.\n"
+msgstr "Erreur : les options /im et /pid sont incompatibles.\n"
 
 #: taskkill.rc:33
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
@@ -11923,7 +11923,7 @@ msgstr "Wine"
 #: wineboot.rc:43
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr ""
-"La configuration de Wine est en cours de mise à jour dans %s ; veuillez "
+"La configuration de Wine est en cours de mise à jour dans %s ; veuillez "
 "patienter..."
 
 #: winecfg.rc:138
@@ -12093,7 +12093,7 @@ msgid ""
 "Failed to connect to the mount manager, the drive configuration cannot be "
 "edited."
 msgstr ""
-"N'a pu se connecter au gestionnaire de montage : la configuration du lecteur "
+"N'a pu se connecter au gestionnaire de montage : la configuration du lecteur "
 "n'a pu être éditée."
 
 #: winecfg.rc:238
@@ -12286,11 +12286,11 @@ msgid ""
 "Are you sure you want to do this?"
 msgstr ""
 "Modifier l'ordre de chargement de cette bibliothèque n'est pas recommandé.\n"
-"Êtes-vous sûr de vouloir le faire ?"
+"Êtes-vous sûr de vouloir le faire ?"
 
 #: winecfg.rc:52
 msgid "Warning: system library"
-msgstr "Attention : bibliothèque système"
+msgstr "Attention : bibliothèque système"
 
 #: winecfg.rc:53
 msgid "native"
@@ -12697,15 +12697,15 @@ msgstr "Ceci est un test"
 
 #: wineconsole.rc:41
 msgid "wineconsole: Couldn't parse event id\n"
-msgstr "wineconsole : impossible de déchiffrer l'identifiant d'événement\n"
+msgstr "wineconsole : impossible de déchiffrer l'identifiant d'événement\n"
 
 #: wineconsole.rc:42
 msgid "wineconsole: Invalid backend\n"
-msgstr "wineconsole : moteur de traitement invalide\n"
+msgstr "wineconsole : moteur de traitement invalide\n"
 
 #: wineconsole.rc:43
 msgid "wineconsole: Unrecognized command line option\n"
-msgstr "wineconsole : option de ligne de commande non reconnue\n"
+msgstr "wineconsole : option de ligne de commande non reconnue\n"
 
 #: wineconsole.rc:44
 msgid "Starts a program in a Wine console\n"
@@ -12716,7 +12716,7 @@ msgid ""
 "wineconsole: Starting program %s failed.\n"
 "The command is invalid.\n"
 msgstr ""
-"wineconsole : impossible de démarrer le programme %s.\n"
+"wineconsole : impossible de démarrer le programme %s.\n"
 "La commande est invalide.\n"
 
 #: wineconsole.rc:47
