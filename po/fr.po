@@ -1,11 +1,11 @@
 # French translations for Wine
-# Frédéric Delanoy <frederic.delanoy@gmail.com>, 2011.
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-11-01 00:20+0100\n"
+"PO-Revision-Date: 2011-12-06 00:09+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -115,7 +115,6 @@ msgid "Wine Gecko Installer"
 msgstr "Programme d'installation de Gecko pour Wine"
 
 #: appwiz.rc:100
-#, fuzzy
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
 "embedding HTML to work correctly. Wine can automatically download and "
@@ -129,8 +128,9 @@ msgstr ""
 "applications incorporant du HTML puissent fonctionner correctement.\n"
 "Wine peut automatiquement le télécharger et l'installer pour vous.\n"
 "\n"
-"Note : il est recommandé d'utiliser le paquet de votre distribution si "
-"disponible. Consultez http://wiki.winehq.org/Gecko pour plus de détails."
+"Note : il est recommandé d'utiliser le paquet de votre distribution."
+"Consultez <a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/"
+"Gecko</a> pour plus de détails."
 
 #: appwiz.rc:106
 msgid "&Install"
@@ -2270,38 +2270,32 @@ msgid "Default MidiOut Device"
 msgstr "Périphérique MidiOut par défaut"
 
 #: dinput.rc:40
-#, fuzzy
 msgid "Configure Devices"
-msgstr "Con&figurer..."
+msgstr "Configurer les périphériques"
 
 #: dinput.rc:45
 msgid "Reset"
-msgstr ""
+msgstr "Réinitialiser"
 
 #: dinput.rc:48
-#, fuzzy
 msgid "Player"
-msgstr "Lecture"
+msgstr "Lecteur"
 
 #: dinput.rc:49
-#, fuzzy
 msgid "Device"
-msgstr "De&vice:"
+msgstr "Périphérique"
 
 #: dinput.rc:50
-#, fuzzy
 msgid "Actions"
-msgstr "Action"
+msgstr "Actions"
 
 #: dinput.rc:51
-#, fuzzy
 msgid "Mapping"
-msgstr "Assignation de lecteur"
+msgstr "Mapping"
 
 #: dinput.rc:53
-#, fuzzy
 msgid "Show Assigned First"
-msgstr "Déjà assigné\n"
+msgstr "Afficher en premier les affectations"
 
 #: dinput.rc:34
 msgid "Action"
@@ -6100,9 +6094,8 @@ msgid "&Data Rate"
 msgstr "&Débit de données"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/sec"
-msgstr "Kio/sec"
+msgstr "ko/sec"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
@@ -6585,7 +6578,6 @@ msgid "us"
 msgstr "µs"
 
 #: serialui.rc:25
-#, fuzzy
 msgid "Settings for %s"
 msgstr "Propriétés de %s"
 
@@ -12785,7 +12777,6 @@ msgstr ""
 "somme désolés pour le désagrément subi."
 
 #: winedbg.rc:53
-#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
@@ -12795,11 +12786,13 @@ msgid ""
 "you can <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a>."
 msgstr ""
 "Cela peut être causé par une erreur dans le programme ou un défaut dans "
-"Wine. Vous pouvez consulter http://appdb.winehq.org pour obtenir des "
-"instructions sur l'exécution de cette application.\n"
+"Wine. Vous pouvez consulter la <a href=\"http://appdb.winehq.org\">base de "
+"données d'applications</a> pour obtenir des conseils sur la façon d'exécuter "
+"cette application.\n"
 "\n"
 "Si ce problème ne se produit pas sous Windows et n'a pas déjà été rapporté, "
-"vous pouvez le rapporter sur http://bugs.winehq.org."
+"vous pouvez <a href=\"http://wiki.winehq.org/Bugs\">soumettre un rapport "
+"d'anomalie</a>."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
