@@ -789,6 +789,8 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
             MSVCRT__free_locale(loc);
             return NULL;
         }
+
+        loc->locinfo->lc_collate_cp = loc->locinfo->lc_id[MSVCRT_LC_COLLATE].wCodePage;
     } else
         loc->locinfo->lc_category[MSVCRT_LC_COLLATE].locale = MSVCRT__strdup("C");
 
@@ -802,7 +804,6 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
         }
 
         loc->locinfo->lc_codepage = loc->locinfo->lc_id[MSVCRT_LC_CTYPE].wCodePage;
-        loc->locinfo->lc_collate_cp = loc->locinfo->lc_codepage;
         loc->locinfo->lc_clike = 1;
         if(!GetCPInfo(loc->locinfo->lc_codepage, &cp)) {
             MSVCRT__free_locale(loc);
@@ -1155,6 +1156,7 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
     switch(category) {
         case MSVCRT_LC_ALL:
         case MSVCRT_LC_COLLATE:
+            locinfo->lc_collate_cp = loc->locinfo->lc_collate_cp;
             locinfo->lc_handle[MSVCRT_LC_COLLATE] =
                 loc->locinfo->lc_handle[MSVCRT_LC_COLLATE];
             swap_pointers((void**)&locinfo->lc_category[MSVCRT_LC_COLLATE].locale,
@@ -1174,7 +1176,6 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
                     (void**)&loc->locinfo->lc_category[MSVCRT_LC_CTYPE].refcount);
 
             locinfo->lc_codepage = loc->locinfo->lc_codepage;
-            locinfo->lc_collate_cp = loc->locinfo->lc_collate_cp;
             locinfo->lc_clike = loc->locinfo->lc_clike;
             locinfo->mb_cur_max = loc->locinfo->mb_cur_max;
 
