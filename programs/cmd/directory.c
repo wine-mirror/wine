@@ -410,8 +410,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
             cur_width = 0;
         } else {
             static const WCHAR padfmt[] = {'%','1','!','*','s','!','\0'};
-            static const WCHAR empty[] = {'\0'};
-            WCMD_output(padfmt, cur_width - tmp_width, empty);
+            WCMD_output(padfmt, cur_width - tmp_width, nullW);
         }
 
       } else if ((fd+i)->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
