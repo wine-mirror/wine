@@ -1427,6 +1427,8 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     if (device->logo_surface)
         wined3d_surface_decref(device->logo_surface);
 
+    stateblock_unbind_resources(device->stateBlock);
+
     /* Unload resources */
     LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
     {
@@ -5412,20 +5414,12 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     struct wined3d_display_mode mode;
     BOOL DisplayModeChanged = FALSE;
     BOOL update_desc = FALSE;
-    unsigned int i;
     HRESULT hr;
 
     TRACE("device %p, swapchain_desc %p.\n", device, swapchain_desc);
 
-    wined3d_device_set_index_buffer(device, NULL, WINED3DFMT_UNKNOWN);
-    for (i = 0; i < MAX_STREAMS; ++i)
-    {
-        wined3d_device_set_stream_source(device, i, NULL, 0, 0);
-    }
-    for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
-    {
-        wined3d_device_set_texture(device, i, NULL);
-    }
+    stateblock_unbind_resources(device->stateBlock);
+
     if (device->onscreen_depth_stencil)
     {
         wined3d_surface_decref(device->onscreen_depth_stencil);
