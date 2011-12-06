@@ -882,7 +882,7 @@ MSVCP_size_t __thiscall basic_string_char_copy(const basic_string_char *this,
 /* ?data@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ */
 /* ?data@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEBDXZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_c_str, 4)
-const char* __thiscall MSVCP_basic_string_char_c_str(basic_string_char *this)
+const char* __thiscall MSVCP_basic_string_char_c_str(const basic_string_char *this)
 {
     TRACE("%p\n", this);
     return basic_string_char_const_ptr(this);
@@ -2724,7 +2724,7 @@ MSVCP_size_t __thiscall basic_string_wchar_copy(const basic_string_wchar *this,
 /* ?data@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEPBGXZ */
 /* ?data@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBAPEBGXZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_c_str, 4)
-const wchar_t* __thiscall MSVCP_basic_string_wchar_c_str(basic_string_wchar *this)
+const wchar_t* __thiscall MSVCP_basic_string_wchar_c_str(const basic_string_wchar *this)
 {
     TRACE("%p\n", this);
     return basic_string_wchar_const_ptr(this);

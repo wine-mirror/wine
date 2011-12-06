@@ -712,29 +712,35 @@ void* __thiscall _Timevec__Getptr(_Timevec *this)
     return this->timeptr;
 }
 
-/* ?_Locinfo_ctor@_Locinfo@std@@SAXPAV12@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@@Z */
-/* ?_Locinfo_ctor@_Locinfo@std@@SAXPEAV12@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@@Z */
-_Locinfo* __cdecl _Locinfo__Locinfo_ctor_bstr(_Locinfo *locinfo, const basic_string_char *locstr)
-{
-    FIXME("(%p %p) stub\n", locinfo, locstr);
-    return NULL;
-}
-
-/* ??0_Locinfo@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z */
-/* ??0_Locinfo@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z */
-DEFINE_THISCALL_WRAPPER(_Locinfo_ctor_bstr, 8)
-_Locinfo* __thiscall _Locinfo_ctor_bstr(_Locinfo *this, const basic_string_char *locstr)
-{
-    FIXME("(%p %p) stub\n", this, locstr);
-    return NULL;
-}
-
 /* ?_Locinfo_ctor@_Locinfo@std@@SAXPAV12@HPBD@Z */
 /* ?_Locinfo_ctor@_Locinfo@std@@SAXPEAV12@HPEBD@Z */
 _Locinfo* __cdecl _Locinfo__Locinfo_ctor_cat_cstr(_Locinfo *locinfo, int category, const char *locstr)
 {
-    FIXME("(%p %d %s) stub\n", locinfo, category, locstr);
-    return NULL;
+    const char *locale = NULL;
+
+    /* This function is probably modifying more global objects */
+    FIXME("(%p %d %s) semi-stub\n", locinfo, category, locstr);
+
+    if(!locstr)
+        throw_exception(EXCEPTION_RUNTIME_ERROR, "bad locale name");
+
+    _Lockit_ctor_locktype(&locinfo->lock, _LOCK_LOCALE);
+    MSVCP_basic_string_char_ctor_cstr(&locinfo->days, "");
+    MSVCP_basic_string_char_ctor_cstr(&locinfo->months, "");
+    MSVCP_basic_string_char_ctor_cstr(&locinfo->oldlocname, setlocale(LC_ALL, NULL));
+
+    if(category)
+        locale = setlocale(LC_ALL, locstr);
+    else
+        locale = setlocale(LC_ALL, NULL);
+
+    if(locale)
+        MSVCP_basic_string_char_ctor_cstr(&locinfo->newlocname, locale);
+    else
+        MSVCP_basic_string_char_ctor_cstr(&locinfo->newlocname, "*");
+    _Lockit_dtor(&locinfo->lock);
+
+    return locinfo;
 }
 
 /* ??0_Locinfo@std@@QAE@HPBD@Z */
@@ -742,16 +748,29 @@ _Locinfo* __cdecl _Locinfo__Locinfo_ctor_cat_cstr(_Locinfo *locinfo, int categor
 DEFINE_THISCALL_WRAPPER(_Locinfo_ctor_cat_cstr, 12)
 _Locinfo* __thiscall _Locinfo_ctor_cat_cstr(_Locinfo *this, int category, const char *locstr)
 {
-    FIXME("(%p %d %s) stub\n", this, category, locstr);
-    return NULL;
+    return _Locinfo__Locinfo_ctor_cat_cstr(this, category, locstr);
+}
+
+/* ?_Locinfo_ctor@_Locinfo@std@@SAXPAV12@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@@Z */
+/* ?_Locinfo_ctor@_Locinfo@std@@SAXPEAV12@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@@Z */
+_Locinfo* __cdecl _Locinfo__Locinfo_ctor_bstr(_Locinfo *locinfo, const basic_string_char *locstr)
+{
+    return _Locinfo__Locinfo_ctor_cat_cstr(locinfo, 1/*FIXME*/, MSVCP_basic_string_char_c_str(locstr));
+}
+
+/* ??0_Locinfo@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z */
+/* ??0_Locinfo@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z */
+DEFINE_THISCALL_WRAPPER(_Locinfo_ctor_bstr, 8)
+_Locinfo* __thiscall _Locinfo_ctor_bstr(_Locinfo *this, const basic_string_char *locstr)
+{
+    return _Locinfo__Locinfo_ctor_cat_cstr(this, 1/*FIXME*/, MSVCP_basic_string_char_c_str(locstr));
 }
 
 /* ?_Locinfo_ctor@_Locinfo@std@@SAXPAV12@PBD@Z */
 /* ?_Locinfo_ctor@_Locinfo@std@@SAXPEAV12@PEBD@Z */
 _Locinfo* __cdecl _Locinfo__Locinfo_ctor_cstr(_Locinfo *locinfo, const char *locstr)
 {
-    FIXME("(%p %s) stub\n", locinfo, locstr);
-    return NULL;
+    return _Locinfo__Locinfo_ctor_cat_cstr(locinfo, 1/*FIXME*/, locstr);
 }
 
 /* ??0_Locinfo@std@@QAE@PBD@Z */
@@ -759,16 +778,20 @@ _Locinfo* __cdecl _Locinfo__Locinfo_ctor_cstr(_Locinfo *locinfo, const char *loc
 DEFINE_THISCALL_WRAPPER(_Locinfo_ctor_cstr, 8)
 _Locinfo* __thiscall _Locinfo_ctor_cstr(_Locinfo *this, const char *locstr)
 {
-    FIXME("(%p %s) stub\n", this, locstr);
-    return NULL;
+    return _Locinfo__Locinfo_ctor_cat_cstr(this, 1/*FIXME*/, locstr);
 }
 
 /* ?_Locinfo_dtor@_Locinfo@std@@SAXPAV12@@Z */
 /* ?_Locinfo_dtor@_Locinfo@std@@SAXPEAV12@@Z */
-_Locinfo* __cdecl _Locinfo__Locinfo_dtor(_Locinfo *locinfo)
+void __cdecl _Locinfo__Locinfo_dtor(_Locinfo *locinfo)
 {
-    FIXME("(%p) stub\n", locinfo);
-    return NULL;
+    TRACE("(%p)\n", locinfo);
+
+    setlocale(LC_ALL, MSVCP_basic_string_char_c_str(&locinfo->oldlocname));
+    MSVCP_basic_string_char_dtor(&locinfo->days);
+    MSVCP_basic_string_char_dtor(&locinfo->months);
+    MSVCP_basic_string_char_dtor(&locinfo->oldlocname);
+    MSVCP_basic_string_char_dtor(&locinfo->newlocname);
 }
 
 /* ??_F_Locinfo@std@@QAEXXZ */
@@ -776,8 +799,7 @@ _Locinfo* __cdecl _Locinfo__Locinfo_dtor(_Locinfo *locinfo)
 DEFINE_THISCALL_WRAPPER(_Locinfo_ctor, 4)
 _Locinfo* __thiscall _Locinfo_ctor(_Locinfo *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    return _Locinfo__Locinfo_ctor_cat_cstr(this, 1/*FIXME*/, "C");
 }
 
 /* ??1_Locinfo@std@@QAE@XZ */
@@ -785,7 +807,7 @@ _Locinfo* __thiscall _Locinfo_ctor(_Locinfo *this)
 DEFINE_THISCALL_WRAPPER(_Locinfo_dtor, 4)
 void __thiscall _Locinfo_dtor(_Locinfo *this)
 {
-    FIXME("(%p) stub\n", this);
+    _Locinfo__Locinfo_dtor(this);
 }
 
 /* ?_Locinfo_Addcats@_Locinfo@std@@SAAAV12@PAV12@HPBD@Z */
