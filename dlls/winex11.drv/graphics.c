@@ -244,7 +244,7 @@ void X11DRV_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
     RGNDATA *data;
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
 
-    CombineRgn( physDev->region, rgn, 0, RGN_COPY );
+    physDev->region = rgn;
 
     if ((data = X11DRV_GetRegionData( physDev->region, 0 ))) update_x11_clipping( physDev, data );
     HeapFree( GetProcessHeap(), 0, data );

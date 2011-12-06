@@ -126,12 +126,6 @@ static X11DRV_PDEVICE *create_x11_physdev( Drawable drawable )
 
     if (!(physDev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physDev) ))) return NULL;
 
-    if (!(physDev->region = CreateRectRgn( 0, 0, 0, 0 )))
-    {
-        HeapFree( GetProcessHeap(), 0, physDev );
-        return NULL;
-    }
-
     wine_tsx11_lock();
     physDev->drawable = drawable;
     physDev->gc = XCreateGC( gdi_display, drawable, 0, NULL );
@@ -193,7 +187,6 @@ static BOOL X11DRV_DeleteDC( PHYSDEV dev )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
 
-    DeleteObject( physDev->region );
     wine_tsx11_lock();
     XFreeGC( gdi_display, physDev->gc );
     wine_tsx11_unlock();
