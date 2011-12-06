@@ -343,12 +343,12 @@ void device_stream_info_from_declaration(struct wined3d_device *device,
 }
 
 static void stream_info_element_from_strided(const struct wined3d_gl_info *gl_info,
-        const struct WineDirect3DStridedData *strided, struct wined3d_stream_info_element *e)
+        const struct wined3d_strided_element *strided, struct wined3d_stream_info_element *e)
 {
-    e->data.addr = strided->lpData;
+    e->data.addr = strided->data;
     e->data.buffer_object = 0;
     e->format = wined3d_get_format(gl_info, strided->format);
-    e->stride = strided->dwStride;
+    e->stride = strided->stride;
     e->stream_idx = 0;
 }
 
@@ -359,18 +359,18 @@ static void device_stream_info_from_strided(const struct wined3d_gl_info *gl_inf
 
     memset(stream_info, 0, sizeof(*stream_info));
 
-    if (strided->position.lpData)
+    if (strided->position.data)
         stream_info_element_from_strided(gl_info, &strided->position, &stream_info->elements[WINED3D_FFP_POSITION]);
-    if (strided->normal.lpData)
+    if (strided->normal.data)
         stream_info_element_from_strided(gl_info, &strided->normal, &stream_info->elements[WINED3D_FFP_NORMAL]);
-    if (strided->diffuse.lpData)
+    if (strided->diffuse.data)
         stream_info_element_from_strided(gl_info, &strided->diffuse, &stream_info->elements[WINED3D_FFP_DIFFUSE]);
-    if (strided->specular.lpData)
+    if (strided->specular.data)
         stream_info_element_from_strided(gl_info, &strided->specular, &stream_info->elements[WINED3D_FFP_SPECULAR]);
 
     for (i = 0; i < WINED3DDP_MAXTEXCOORD; ++i)
     {
-        if (strided->texCoords[i].lpData)
+        if (strided->texCoords[i].data)
             stream_info_element_from_strided(gl_info, &strided->texCoords[i],
                     &stream_info->elements[WINED3D_FFP_TEXCOORD0 + i]);
     }

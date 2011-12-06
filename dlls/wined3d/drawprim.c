@@ -1125,21 +1125,22 @@ HRESULT tesselate_rectpatch(struct wined3d_device *This, struct WineD3DRectPatch
     }
     memset(&patch->strided, 0, sizeof(patch->strided));
     patch->strided.position.format = WINED3DFMT_R32G32B32_FLOAT;
-    patch->strided.position.lpData = (BYTE *) patch->mem;
-    patch->strided.position.dwStride = vtxStride;
+    patch->strided.position.data = (BYTE *)patch->mem;
+    patch->strided.position.stride = vtxStride;
 
-    if(patch->has_normals) {
+    if (patch->has_normals)
+    {
         patch->strided.normal.format = WINED3DFMT_R32G32B32_FLOAT;
-        patch->strided.normal.lpData = (BYTE *) patch->mem + 3 * sizeof(float) /* pos */;
-        patch->strided.normal.dwStride = vtxStride;
+        patch->strided.normal.data = (BYTE *)patch->mem + 3 * sizeof(float) /* pos */;
+        patch->strided.normal.stride = vtxStride;
     }
-    if(patch->has_texcoords) {
+    if (patch->has_texcoords)
+    {
         patch->strided.texCoords[0].format = WINED3DFMT_R32G32B32A32_FLOAT;
-        patch->strided.texCoords[0].lpData = (BYTE *) patch->mem + 3 * sizeof(float) /* pos */;
-        if(patch->has_normals) {
-            patch->strided.texCoords[0].lpData += 3 * sizeof(float);
-        }
-        patch->strided.texCoords[0].dwStride = vtxStride;
+        patch->strided.texCoords[0].data = (BYTE *)patch->mem + 3 * sizeof(float) /* pos */;
+        if (patch->has_normals)
+            patch->strided.texCoords[0].data += 3 * sizeof(float);
+        patch->strided.texCoords[0].stride = vtxStride;
     }
 
     return WINED3D_OK;

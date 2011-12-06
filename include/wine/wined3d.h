@@ -1725,20 +1725,20 @@ struct wined3d_box
     UINT back;
 };
 
-typedef struct WineDirect3DStridedData
+struct wined3d_strided_element
 {
-    enum wined3d_format_id format;   /* Format of the data */
-    const BYTE *lpData;     /* Pointer to start of data */
-    DWORD dwStride;         /* Stride between occurrences of this data */
-} WineDirect3DStridedData;
+    enum wined3d_format_id format;  /* Format of the data */
+    const BYTE *data;               /* Pointer to start of data */
+    UINT stride;                    /* Stride between occurrences of this data */
+};
 
 typedef struct WineDirect3DVertexStridedData
 {
-    WineDirect3DStridedData position;
-    WineDirect3DStridedData normal;
-    WineDirect3DStridedData diffuse;
-    WineDirect3DStridedData specular;
-    WineDirect3DStridedData texCoords[WINED3DDP_MAXTEXCOORD];
+    struct wined3d_strided_element position;
+    struct wined3d_strided_element normal;
+    struct wined3d_strided_element diffuse;
+    struct wined3d_strided_element specular;
+    struct wined3d_strided_element texCoords[WINED3DDP_MAXTEXCOORD];
     BOOL position_transformed;
 } WineDirect3DVertexStridedData;
 
