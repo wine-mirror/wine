@@ -830,7 +830,7 @@ static INT EDIT_CharFromPos(EDITSTATE *es, INT x, INT y, LPBOOL after_wrap)
 				*after_wrap = (line_def->ending == END_WRAP);
 			return line_index + line_def->net_length;
 		}
-		if (x <= 0) {
+		if (x <= 0 || !line_def->ssa) {
 			if (after_wrap)
 				*after_wrap = FALSE;
 			return line_index;
@@ -863,17 +863,22 @@ static INT EDIT_CharFromPos(EDITSTATE *es, INT x, INT y, LPBOOL after_wrap)
 		EDIT_UpdateUniscribeData(es, NULL, 0);
 		if (es->x_offset)
 		{
-			if (es->x_offset>= get_text_length(es))
+			if (es->ssa)
 			{
-				const SIZE *size;
-				size = ScriptString_pSize(es->ssa);
-				xoff = size->cx;
+				if (es->x_offset>= get_text_length(es))
+				{
+					const SIZE *size;
+					size = ScriptString_pSize(es->ssa);
+					xoff = size->cx;
+				}
+				ScriptStringCPtoX(es->ssa, es->x_offset, FALSE, &xoff);
 			}
-			ScriptStringCPtoX(es->ssa, es->x_offset, FALSE, &xoff);
+			else
+				xoff = 0;
 		}
 		if (x < 0)
 		{
-			if (x + xoff > 0)
+			if (x + xoff > 0 || !es->ssa)
 			{
 				ScriptStringXtoCP(es->ssa, x+xoff, &index, &trailing);
 				if (trailing) index++;
@@ -892,11 +897,13 @@ static INT EDIT_CharFromPos(EDITSTATE *es, INT x, INT y, LPBOOL after_wrap)
 					index = 0;
 				else if (x > size->cx)
 					index = get_text_length(es);
-				else
+				else if (es->ssa)
 				{
 					ScriptStringXtoCP(es->ssa, x+xoff, &index, &trailing);
 					if (trailing) index++;
 				}
+				else
+					index = 0;
 			}
 			else
 				index = es->x_offset;
@@ -1062,6 +1069,9 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
 		while (line_def->index != li)
 			line_def = line_def->next;
 
+		if (!line_def->ssa)
+			return 0;
+
 		lw = line_def->width;
 		w = es->format_rect.right - es->format_rect.left;
 		ScriptStringCPtoX(line_def->ssa, (index - 1) - li, TRUE, &x);
@@ -1077,18 +1087,23 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
 		EDIT_UpdateUniscribeData(es, NULL, 0);
 		if (es->x_offset)
 		{
-			if (es->x_offset >= get_text_length(es))
+			if (es->ssa)
 			{
-				if (es->ssa)
+				if (es->x_offset >= get_text_length(es))
 				{
-					const SIZE *size;
-					size = ScriptString_pSize(es->ssa);
-					xoff = size->cx;
+					if (es->ssa)
+					{
+						const SIZE *size;
+						size = ScriptString_pSize(es->ssa);
+						xoff = size->cx;
+					}
+					else
+						xoff = 0;
 				}
-				else
-					xoff = 0;
+				ScriptStringCPtoX(es->ssa, es->x_offset, FALSE, &xoff);
 			}
-			ScriptStringCPtoX(es->ssa, es->x_offset, FALSE, &xoff);
+			else
+				xoff = 0;
 		}
 		if (index)
 		{
@@ -1103,8 +1118,10 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
 				else
 					xi = 0;
 			}
-			else
+			else if (es->ssa)
 				ScriptStringCPtoX(es->ssa, index, FALSE, &xi);
+			else
+				xi = 0;
 		}
 		x = xi - xoff;
 
