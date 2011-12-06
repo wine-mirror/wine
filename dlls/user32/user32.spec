@@ -498,8 +498,8 @@
 @ stdcall MessageBoxExW(long wstr wstr long long)
 @ stdcall MessageBoxIndirectA(ptr)
 @ stdcall MessageBoxIndirectW(ptr)
-# @ stub MessageBoxTimeoutA
-# @ stub MessageBoxTimeoutW
+@ stdcall MessageBoxTimeoutA(long str str long long long)
+@ stdcall MessageBoxTimeoutW(long wstr wstr long long long)
 @ stdcall MessageBoxW(long wstr wstr long)
 # @ stub ModifyAccess
 @ stdcall ModifyMenuA(long long long long ptr)

@@ -454,6 +454,26 @@ INT WINAPI MessageBoxExW( HWND hWnd, LPCWSTR text, LPCWSTR title,
 }
 
 /**************************************************************************
+ *      MessageBoxTimeoutA (USER32.@)
+ */
+INT WINAPI MessageBoxTimeoutA( HWND hWnd, LPCSTR text, LPCSTR title,
+                               UINT type, WORD langid, DWORD timeout )
+{
+    FIXME("timeout not supported (%u)\n", timeout);
+    return MessageBoxExA( hWnd, text, title, type, langid );
+}
+
+/**************************************************************************
+ *      MessageBoxTimeoutW (USER32.@)
+ */
+INT WINAPI MessageBoxTimeoutW( HWND hWnd, LPCWSTR text, LPCWSTR title,
+                               UINT type, WORD langid, DWORD timeout )
+{
+    FIXME("timeout not supported (%u)\n", timeout);
+    return MessageBoxExW( hWnd, text, title, type, langid );
+}
+
+/**************************************************************************
  *		MessageBoxIndirectA (USER32.@)
  */
 INT WINAPI MessageBoxIndirectA( LPMSGBOXPARAMSA msgbox )
