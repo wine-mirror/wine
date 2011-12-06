@@ -3299,6 +3299,11 @@ static void ShapeCharGlyphProp_BaseIndic( HDC hdc, ScriptCache *psc, SCRIPT_ANAL
                 case lex_Matra_above:
                 case lex_Matra_below:
                 case lex_Modifier:
+                case lex_Halant:
+                    break;
+                case lex_ZWJ:
+                case lex_ZWNJ:
+                    k = char_count;
                     break;
                 default:
                     pGlyphProp[i].sva.fClusterStart = 1;
