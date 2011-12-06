@@ -481,6 +481,8 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
         return compile_assign_expression(ctx, (binary_expression_t*)expr, OP_add);
     case EXPR_ASSIGNSUB:
         return compile_assign_expression(ctx, (binary_expression_t*)expr, OP_sub);
+    case EXPR_ASSIGNMUL:
+        return compile_assign_expression(ctx, (binary_expression_t*)expr, OP_mul);
     case EXPR_BITNEG:
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_bneg);
     case EXPR_BOR:
