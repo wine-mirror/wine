@@ -224,9 +224,6 @@ extern void get_rop_codes(INT rop, struct rop_codes *codes) DECLSPEC_HIDDEN;
 extern void calc_and_xor_masks(INT rop, DWORD color, DWORD *and, DWORD *xor) DECLSPEC_HIDDEN;
 extern void update_brush_rop( dibdrv_physdev *pdev, INT rop ) DECLSPEC_HIDDEN;
 extern void reset_dash_origin(dibdrv_physdev *pdev) DECLSPEC_HIDDEN;
-extern BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD *bit_fields,
-                          RGBQUAD *color_table, int color_table_size, void *bits,
-                          enum dib_info_flags flags) DECLSPEC_HIDDEN;
 extern BOOL init_dib_info_from_brush(dib_info *dib, const BITMAPINFO *bi, void *bits, UINT usage, HPALETTE pal) DECLSPEC_HIDDEN;
 extern BOOL init_dib_info_from_bitmapinfo(dib_info *dib, const BITMAPINFO *info, void *bits,
                                           enum dib_info_flags flags) DECLSPEC_HIDDEN;

@@ -67,8 +67,8 @@ static void init_bit_fields(dib_info *dib, const DWORD *bit_fields)
     calc_shift_and_len(dib->blue_mask,  &dib->blue_shift,  &dib->blue_len);
 }
 
-BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD *bit_fields,
-                   RGBQUAD *color_table, int color_table_size, void *bits, enum dib_info_flags flags)
+static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD *bit_fields,
+                          RGBQUAD *color_table, int color_table_size, void *bits, enum dib_info_flags flags)
 {
     dib->bit_count    = bi->biBitCount;
     dib->width        = bi->biWidth;
