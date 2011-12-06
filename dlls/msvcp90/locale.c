@@ -68,7 +68,7 @@ typedef struct {
 typedef struct {
     LCID handle;
     unsigned page;
-    const short *table;
+    short *table;
     int delfl;
 } _Ctypevec;
 
@@ -868,14 +868,33 @@ _Collvec __thiscall _Locinfo__Getcoll(const _Locinfo *this)
     return _Getcoll();
 }
 
+/* _Getctype */
+_Ctypevec __cdecl _Getctype(void)
+{
+    _Ctypevec ret;
+    _locale_t locale = _get_current_locale();
+
+    TRACE("\n");
+
+    ret.page = locale->locinfo->lc_codepage;
+    ret.handle = locale->locinfo->lc_handle[LC_COLLATE];
+    ret.delfl = TRUE;
+    ret.table = malloc(sizeof(short[256]));
+    if(!ret.table) {
+        _free_locale(locale);
+        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+    }
+    memcpy(ret.table, locale->locinfo->pctype, sizeof(short[256]));
+    _free_locale(locale);
+    return ret;
+}
+
 /* ?_Getctype@_Locinfo@std@@QBE?AU_Ctypevec@@XZ */
 /* ?_Getctype@_Locinfo@std@@QEBA?AU_Ctypevec@@XZ */
 DEFINE_THISCALL_WRAPPER_RETPTR(_Locinfo__Getctype, 4)
 _Ctypevec __thiscall _Locinfo__Getctype(const _Locinfo *this)
 {
-    _Ctypevec ret = { 0 }; /* FIXME */
-    FIXME("(%p) stub\n", this);
-    return ret;
+    return _Getctype();
 }
 
 /* ?_Getcvt@_Locinfo@std@@QBE?AU_Cvtvec@@XZ */

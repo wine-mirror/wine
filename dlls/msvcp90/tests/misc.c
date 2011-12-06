@@ -17,12 +17,22 @@
  */
 
 #include <stdio.h>
+#include <locale.h>
 
 #include <windef.h>
 #include <winbase.h>
 #include "wine/test.h"
 
+typedef struct {
+    LCID handle;
+    unsigned page;
+    short *table;
+    int delfl;
+} MSVCP__Ctypevec;
+
 static void* (__cdecl *p_set_invalid_parameter_handler)(void*);
+static _locale_t (__cdecl *p__get_current_locale)(void);
+static void  (__cdecl *p_free)(void*);
 
 static void (__cdecl *p_char_assign)(void*, const void*);
 static void (__cdecl *p_wchar_assign)(void*, const void*);
@@ -35,6 +45,7 @@ static BYTE (__cdecl *p_short_eq)(const void*, const void*);
 static char* (__cdecl *p_Copy_s)(char*, size_t, const char*, size_t);
 
 static unsigned short (__cdecl *p_wctype)(const char*);
+static MSVCP__Ctypevec (__cdecl *p__Getctype)(void);
 
 #ifdef __i386__
 #define __thiscall __stdcall
@@ -119,7 +130,9 @@ static BOOL init(void)
     }
 
     p_set_invalid_parameter_handler = (void*)GetProcAddress(msvcr, "_set_invalid_parameter_handler");
-    if(!p_set_invalid_parameter_handler) {
+    p__get_current_locale = (void*)GetProcAddress(msvcr, "_get_current_locale");
+    p_free = (void*)GetProcAddress(msvcr, "free");
+    if(!p_set_invalid_parameter_handler || !p__get_current_locale || !p_free) {
         win_skip("Error setting tests environment\n");
         return FALSE;
     }
@@ -127,6 +140,7 @@ static BOOL init(void)
     p_set_invalid_parameter_handler(test_invalid_parameter_handler);
 
     SET(p_wctype, "wctype");
+    SET(p__Getctype, "_Getctype");
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(p_char_assign, "?assign@?$char_traits@D@std@@SAXAEADAEBD@Z");
         SET(p_wchar_assign, "?assign@?$char_traits@_W@std@@SAXAEA_WAEB_W@Z");
@@ -291,6 +305,26 @@ static void test_wctype(void)
     }
 }
 
+static void test__Getctype(void)
+{
+    MSVCP__Ctypevec ret;
+
+    ret = p__Getctype();
+    ok(ret.handle == 0, "ret.handle = %d\n", ret.handle);
+    ok(ret.page == 0, "ret.page = %d\n", ret.page);
+    ok(ret.delfl == 1, "ret.delfl = %d\n", ret.delfl);
+    ok(ret.table[0] == 32, "ret.table[0] = %d\n", ret.table[0]);
+    p_free(ret.table);
+
+    p__get_current_locale()->locinfo->lc_handle[LC_COLLATE] = 1;
+    ret = p__Getctype();
+    ok(ret.handle == 1, "ret.handle = %d\n", ret.handle);
+    ok(ret.page == 0, "ret.page = %d\n", ret.page);
+    ok(ret.delfl == 1, "ret.delfl = %d\n", ret.delfl);
+    ok(ret.table[0] == 32, "ret.table[0] = %d\n", ret.table[0]);
+    p_free(ret.table);
+}
+
 static void test_allocator_char(void)
 {
     void *allocator = (void*)0xdeadbeef;
@@ -331,6 +365,7 @@ START_TEST(misc)
     test_equal();
     test_Copy_s();
     test_wctype();
+    test__Getctype();
 
     test_allocator_char();
 

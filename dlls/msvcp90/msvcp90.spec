@@ -5751,7 +5751,7 @@
 @ extern _FSnan
 # extern _FXbig
 @ cdecl _Getcoll()
-@ stub _Getctype
+@ cdecl _Getctype()
 @ stub _Getcvt
 @ stub _Getdateorder
 @ stub _Getwctype
