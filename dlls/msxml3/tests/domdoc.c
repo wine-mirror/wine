@@ -10672,6 +10672,7 @@ static void test_dispex(void)
     IXMLDOMNodeList *node_list;
     IXMLDOMParseError *error;
     IXMLDOMNamedNodeMap *map;
+    IXSLProcessor *processor;
     IXSLTemplate *template;
     IXMLDOMDocument *doc;
     IXMLHTTPRequest *req;
@@ -10826,6 +10827,30 @@ static void test_dispex(void)
     test_domobj_dispex(unk);
     IUnknown_Release(unk);
     IDispatchEx_Release(dispex);
+
+    /* IXSLProcessor */
+    hr = CoCreateInstance(&CLSID_FreeThreadedDOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void**)&doc);
+    EXPECT_HR(hr, S_OK);
+    b = VARIANT_FALSE;
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(szTransformSSXML), &b);
+    EXPECT_HR(hr, S_OK);
+    ok(b == VARIANT_TRUE, "got %d\n", b);
+
+    hr = IXSLTemplate_putref_stylesheet(template, (IXMLDOMNode*)doc);
+    EXPECT_HR(hr, S_OK);
+    IXMLDOMDocument_Release(doc);
+
+    hr = IXSLTemplate_createProcessor(template, &processor);
+    EXPECT_HR(hr, S_OK);
+    hr = IXSLProcessor_QueryInterface(processor, &IID_IDispatchEx, (void**)&dispex);
+    EXPECT_HR(hr, S_OK);
+    hr = IDispatchEx_QueryInterface(dispex, &IID_IUnknown, (void**)&unk);
+    EXPECT_HR(hr, S_OK);
+    test_domobj_dispex(unk);
+    IUnknown_Release(unk);
+    IDispatchEx_Release(dispex);
+
+    IXSLProcessor_Release(processor);
     IXSLTemplate_Release(template);
 
     free_bstrs();

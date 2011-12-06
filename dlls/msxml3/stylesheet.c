@@ -53,6 +53,7 @@ typedef struct _xsltemplate
 
 typedef struct _xslprocessor
 {
+    DispatchEx dispex;
     IXSLProcessor IXSLProcessor_iface;
     LONG ref;
 
@@ -276,6 +277,10 @@ static HRESULT WINAPI xslprocessor_QueryInterface(
     {
         *ppvObject = iface;
     }
+    else if (dispex_query_interface(&This->dispex, riid, ppvObject))
+    {
+        return *ppvObject ? S_OK : E_NOINTERFACE;
+    }
     else
     {
         FIXME("Unsupported interface %s\n", debugstr_guid(riid));
@@ -305,6 +310,7 @@ static ULONG WINAPI xslprocessor_Release( IXSLProcessor *iface )
         if (This->output) IStream_Release(This->output);
         SysFreeString(This->outstr);
         IXSLTemplate_Release(&This->stylesheet->IXSLTemplate_iface);
+        release_dispex(&This->dispex);
         heap_free( This );
     }
 
@@ -314,11 +320,7 @@ static ULONG WINAPI xslprocessor_Release( IXSLProcessor *iface )
 static HRESULT WINAPI xslprocessor_GetTypeInfoCount( IXSLProcessor *iface, UINT* pctinfo )
 {
     xslprocessor *This = impl_from_IXSLProcessor( iface );
-
-    TRACE("(%p)->(%p)\n", This, pctinfo);
-
-    *pctinfo = 1;
-    return S_OK;
+    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI xslprocessor_GetTypeInfo(
@@ -327,10 +329,8 @@ static HRESULT WINAPI xslprocessor_GetTypeInfo(
     ITypeInfo** ppTInfo )
 {
     xslprocessor *This = impl_from_IXSLProcessor( iface );
-
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
-
-    return get_typeinfo(IXSLProcessor_tid, ppTInfo);
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface,
+        iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI xslprocessor_GetIDsOfNames(
@@ -339,23 +339,8 @@ static HRESULT WINAPI xslprocessor_GetIDsOfNames(
     UINT cNames, LCID lcid, DISPID* rgDispId )
 {
     xslprocessor *This = impl_from_IXSLProcessor( iface );
-    ITypeInfo *typeinfo;
-    HRESULT hr;
-
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
-          lcid, rgDispId);
-
-    if(!rgszNames || cNames == 0 || !rgDispId)
-        return E_INVALIDARG;
-
-    hr = get_typeinfo(IXSLProcessor_tid, &typeinfo);
-    if(SUCCEEDED(hr))
-    {
-        hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
-        ITypeInfo_Release(typeinfo);
-    }
-
-    return hr;
+    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface,
+        riid, rgszNames, cNames, lcid, rgDispId);
 }
 
 static HRESULT WINAPI xslprocessor_Invoke(
@@ -365,21 +350,8 @@ static HRESULT WINAPI xslprocessor_Invoke(
     EXCEPINFO* pExcepInfo, UINT* puArgErr )
 {
     xslprocessor *This = impl_from_IXSLProcessor( iface );
-    ITypeInfo *typeinfo;
-    HRESULT hr;
-
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
-          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
-
-    hr = get_typeinfo(IXSLProcessor_tid, &typeinfo);
-    if(SUCCEEDED(hr))
-    {
-       hr = ITypeInfo_Invoke(typeinfo, &This->IXSLProcessor_iface, dispIdMember,
-                wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
-        ITypeInfo_Release(typeinfo);
-    }
-
-    return hr;
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface,
+        dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI xslprocessor_put_input( IXSLProcessor *iface, VARIANT input )
@@ -610,7 +582,7 @@ static HRESULT WINAPI xslprocessor_get_stylesheet(
     return E_NOTIMPL;
 }
 
-static const struct IXSLProcessorVtbl xslprocessor_vtbl =
+static const struct IXSLProcessorVtbl XSLProcessorVtbl =
 {
     xslprocessor_QueryInterface,
     xslprocessor_AddRef,
@@ -636,6 +608,18 @@ static const struct IXSLProcessorVtbl xslprocessor_vtbl =
     xslprocessor_get_stylesheet
 };
 
+static const tid_t xslprocessor_iface_tids[] = {
+    IXSLProcessor_tid,
+    0
+};
+
+static dispex_static_data_t xslprocessor_dispex = {
+    NULL,
+    IXSLProcessor_tid,
+    NULL,
+    xslprocessor_iface_tids
+};
+
 HRESULT XSLProcessor_create(xsltemplate *template, IXSLProcessor **ppObj)
 {
     xslprocessor *This;
@@ -646,13 +630,14 @@ HRESULT XSLProcessor_create(xsltemplate *template, IXSLProcessor **ppObj)
     if(!This)
         return E_OUTOFMEMORY;
 
-    This->IXSLProcessor_iface.lpVtbl = &xslprocessor_vtbl;
+    This->IXSLProcessor_iface.lpVtbl = &XSLProcessorVtbl;
     This->ref = 1;
     This->input = NULL;
     This->output = NULL;
     This->outstr = NULL;
     This->stylesheet = template;
     IXSLTemplate_AddRef(&template->IXSLTemplate_iface);
+    init_dispex(&This->dispex, (IUnknown*)&This->IXSLProcessor_iface, &xslprocessor_dispex);
 
     *ppObj = &This->IXSLProcessor_iface;
 
