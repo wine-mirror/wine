@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-06 11:22+0100\n"
+"PO-Revision-Date: 2011-12-07 18:06+0100\n"
 "Last-Translator: Luca Bennati <lucak3@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Italian\n"
@@ -2215,7 +2215,6 @@ msgid "Welcome to the Certificate Import Wizard"
 msgstr "Benvenuto alla Guida all'Importazione di Certificati"
 
 #: cryptui.rc:283
-#, fuzzy
 msgid ""
 "This wizard helps you import certificates, certificate revocation lists, and "
 "certificate trust lists from a file to a certificate store.\n"
@@ -2227,10 +2226,16 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Questa guida ti aiuta a importare certificate, liste di revoca di "
+"certificati e liste di fiducia di certificati da un file in un deposito di "
+"certificati.\n"
+"\n"
 "Un certificato può essere usato per identificare te o il computer da cui "
-"stai comunicando. Può essere anche usato per l'autenticazione, e per firmare "
-"messaggi. I depositi certificati sono collezioni di certificati, liste di "
-"revoca di certificati, e liste di fiducia di certificati."
+"stai comunicando. Può essere anche usato per l'autenticazione e per firmare "
+"messaggi. I depositi di certificati sono collezioni di certificati, liste di "
+"revoca di certificati e liste di fiducia di certificati.\n"
+"\n"
+"Per continuare, premere Avanti."
 
 #: cryptui.rc:291 cryptui.rc:427
 msgid "&File name:"
@@ -2348,7 +2353,6 @@ msgid "Welcome to the Certificate Export Wizard"
 msgstr "Benvenuto alla Guida all'Esportazione del Certificato"
 
 #: cryptui.rc:373
-#, fuzzy
 msgid ""
 "This wizard helps you export certificates, certificate revocation lists, and "
 "certificate trust lists from a certificate store to a file.\n"
@@ -2360,10 +2364,16 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Questa guida ti aiuta a esportare certificate, liste di revoca di "
+"certificati e liste di fiducia di certificati da un deposito di certificati "
+"in un file.\n"
+"\n"
 "Un certificato può essere usato per identificare te o il computer da cui "
-"stai comunicando. Può essere anche usato per l'autenticazione, e per firmare "
-"messaggi. I depositi certificati sono collezioni di certificati, liste di "
-"revoca di certificati, e liste di fiducia di certificati."
+"stai comunicando. Può essere anche usato per l'autenticazione e per firmare "
+"messaggi. I depositi di certificati sono collezioni di certificati, liste di "
+"revoca di certificati e liste di fiducia di certificati.\n"
+"\n"
+"Per continuare, premere Avanti."
 
 #: cryptui.rc:381
 msgid ""
@@ -9937,19 +9947,16 @@ msgid "N"
 msgstr "N"
 
 #: cmd.rc:294
-#, fuzzy
 msgid "File association missing for extension %1\n"
-msgstr "Associazione di file mancante per l'estensione %s\n"
+msgstr "Associazione di file mancante per l'estensione %1\n"
 
 #: cmd.rc:295
-#, fuzzy
 msgid "No open command associated with file type '%1'\n"
-msgstr "Nessun comando di apertura associato con il tipo di file '%s'\n"
+msgstr "Nessun comando di apertura associato con il tipo di file '%1'\n"
 
 #: cmd.rc:296
-#, fuzzy
 msgid "Overwrite %1"
-msgstr "Sovrascrivere %s"
+msgstr "Sovrascrivere %1"
 
 #: cmd.rc:297
 msgid "More..."
@@ -9968,23 +9975,20 @@ msgid "Syntax error\n"
 msgstr "Errore di sintassi\n"
 
 #: cmd.rc:303
-#, fuzzy
 msgid "No help available for %1\n"
-msgstr "Nessun aiuto disponibile per %s\n"
+msgstr "Nessun aiuto disponibile per %1\n"
 
 #: cmd.rc:304
 msgid "Target to GOTO not found\n"
 msgstr "Destinazione del GOTO non trovata\n"
 
 #: cmd.rc:305
-#, fuzzy
 msgid "Current Date is %1\n"
-msgstr "La data attuale è  %s\n"
+msgstr "La data attuale è  %1\n"
 
 #: cmd.rc:306
-#, fuzzy
 msgid "Current Time is %1\n"
-msgstr "L'ora attuale è %s\n"
+msgstr "L'ora attuale è %1\n"
 
 #: cmd.rc:307
 msgid "Enter new date: "
@@ -9995,9 +9999,8 @@ msgid "Enter new time: "
 msgstr "Inserisci una nuova ora: "
 
 #: cmd.rc:309
-#, fuzzy
 msgid "Environment variable %1 not defined\n"
-msgstr "Variabile d'ambiente %s non definita\n"
+msgstr "Variabile d'ambiente %1 non definita\n"
 
 #: cmd.rc:310 xcopy.rc:38
 msgid "Failed to open '%1'\n"
@@ -10013,19 +10016,16 @@ msgid "A"
 msgstr "T"
 
 #: cmd.rc:313
-#, fuzzy
 msgid "%1, Delete"
-msgstr "%s, Cancella"
+msgstr "%1, Cancella"
 
 #: cmd.rc:314
-#, fuzzy
 msgid "Echo is %1\n"
-msgstr "Echo è %s\n"
+msgstr "Echo è %1\n"
 
 #: cmd.rc:315
-#, fuzzy
 msgid "Verify is %1\n"
-msgstr "Verify è %s\n"
+msgstr "Verify è %1\n"
 
 #: cmd.rc:316
 msgid "Verify must be ON or OFF\n"
@@ -10036,14 +10036,13 @@ msgid "Parameter error\n"
 msgstr "Errore nel parametro\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid ""
 "Volume in drive %1!c! is %2\n"
 "Volume Serial Number is %3!04x!-%4!04x!\n"
 "\n"
 msgstr ""
-"Il volume nell'unità %c è %s\n"
-"Il numero seriale del volume è %04x-%04x\n"
+"Il volume nell'unità %1!c! è %2\n"
+"Il numero seriale del volume è %3!04x!-%4!04x!\n"
 "\n"
 
 #: cmd.rc:319
@@ -10063,9 +10062,8 @@ msgid "Wine Command Prompt"
 msgstr "Prompt dei comandi di Wine"
 
 #: cmd.rc:323
-#, fuzzy
 msgid "CMD Version %1!S!\n"
-msgstr "Versione di CMD %s\n"
+msgstr "Versione di CMD %1!S!\n"
 
 #: cmd.rc:324
 msgid "More? "
