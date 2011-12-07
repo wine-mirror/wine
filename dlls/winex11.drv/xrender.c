@@ -2621,9 +2621,10 @@ static BOOL xrenderdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG n
                    colors[0].red, colors[0].green, colors[0].blue, colors[0].alpha,
                    colors[1].red, colors[1].green, colors[1].blue, colors[1].alpha );
 
+            dst_pict = get_xrender_picture( physdev, 0, NULL );
+
             wine_tsx11_lock();
             src_pict = pXRenderCreateLinearGradient( gdi_display, &gradient, stops, colors, 2 );
-            dst_pict = get_xrender_picture( physdev, 0, NULL );
             xrender_blit( PictOpSrc, src_pict, 0, dst_pict, 0, 0,
                           physdev->x11dev->dc_rect.left + min( pt[0].x, pt[1].x ),
                           physdev->x11dev->dc_rect.top + min( pt[0].y, pt[1].y ),
