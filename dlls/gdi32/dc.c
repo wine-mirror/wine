@@ -75,43 +75,21 @@ DC *alloc_dc_ptr( WORD magic )
 {
     DC *dc;
 
-    if (!(dc = HeapAlloc( GetProcessHeap(), 0, sizeof(*dc) ))) return NULL;
+    if (!(dc = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dc) ))) return NULL;
 
     dc->nulldrv.funcs       = &null_driver;
-    dc->nulldrv.next        = NULL;
-    dc->dibdrv              = NULL;
     dc->physDev             = &dc->nulldrv;
     dc->thread              = GetCurrentThreadId();
     dc->refcount            = 1;
-    dc->dirty               = 0;
-    dc->saveLevel           = 0;
-    dc->saved_dc            = 0;
-    dc->dwHookData          = 0;
-    dc->hookProc            = NULL;
-    dc->wndOrgX             = 0;
-    dc->wndOrgY             = 0;
     dc->wndExtX             = 1;
     dc->wndExtY             = 1;
-    dc->vportOrgX           = 0;
-    dc->vportOrgY           = 0;
     dc->vportExtX           = 1;
     dc->vportExtY           = 1;
     dc->miterLimit          = 10.0f; /* 10.0 is the default, from MSDN */
-    dc->flags               = 0;
-    dc->layout              = 0;
-    dc->hClipRgn            = 0;
-    dc->hMetaRgn            = 0;
-    dc->hMetaClipRgn        = 0;
-    dc->hVisRgn             = 0;
-    dc->region              = 0;
     dc->hPen                = GDI_inc_ref_count( GetStockObject( BLACK_PEN ));
     dc->hBrush              = GDI_inc_ref_count( GetStockObject( WHITE_BRUSH ));
     dc->hFont               = GDI_inc_ref_count( GetStockObject( SYSTEM_FONT ));
-    dc->hBitmap             = 0;
-    dc->hDevice             = 0;
     dc->hPalette            = GetStockObject( DEFAULT_PALETTE );
-    dc->gdiFont             = 0;
-    dc->path                = NULL;
     dc->font_code_page      = CP_ACP;
     dc->ROPmode             = R2_COPYPEN;
     dc->polyFillMode        = ALTERNATE;
@@ -122,18 +100,9 @@ DC *alloc_dc_ptr( WORD magic )
     dc->dcBrushColor        = RGB( 255, 255, 255 );
     dc->dcPenColor          = RGB( 0, 0, 0 );
     dc->textColor           = RGB( 0, 0, 0 );
-    dc->brushOrgX           = 0;
-    dc->brushOrgY           = 0;
-    dc->mapperFlags         = 0;
     dc->textAlign           = TA_LEFT | TA_TOP | TA_NOUPDATECP;
-    dc->charExtra           = 0;
-    dc->breakExtra          = 0;
-    dc->breakRem            = 0;
     dc->MapMode             = MM_TEXT;
     dc->GraphicsMode        = GM_COMPATIBLE;
-    dc->pAbortProc          = NULL;
-    dc->CursPosX            = 0;
-    dc->CursPosY            = 0;
     dc->ArcDirection        = AD_COUNTERCLOCKWISE;
     dc->xformWorld2Wnd.eM11 = 1.0f;
     dc->xformWorld2Wnd.eM12 = 0.0f;
@@ -144,10 +113,6 @@ DC *alloc_dc_ptr( WORD magic )
     dc->xformWorld2Vport    = dc->xformWorld2Wnd;
     dc->xformVport2World    = dc->xformWorld2Wnd;
     dc->vport2WorldValid    = TRUE;
-    dc->BoundsRect.left     = 0;
-    dc->BoundsRect.top      = 0;
-    dc->BoundsRect.right    = 0;
-    dc->BoundsRect.bottom   = 0;
 
     if (!(dc->hSelf = alloc_gdi_handle( &dc->header, magic, &dc_funcs )))
     {
@@ -371,7 +336,7 @@ INT nulldrv_SaveDC( PHYSDEV dev )
 {
     DC *newdc, *dc = get_nulldrv_dc( dev );
 
-    if (!(newdc = HeapAlloc( GetProcessHeap(), 0, sizeof(*newdc )))) return 0;
+    if (!(newdc = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*newdc )))) return 0;
     newdc->flags            = dc->flags;
     newdc->layout           = dc->layout;
     newdc->hPen             = dc->hPen;
@@ -420,11 +385,6 @@ INT nulldrv_SaveDC( PHYSDEV dev )
 
     /* Get/SetDCState() don't change hVisRgn field ("Undoc. Windows" p.559). */
 
-    newdc->region       = 0;
-    newdc->hVisRgn      = 0;
-    newdc->hClipRgn     = 0;
-    newdc->hMetaRgn     = 0;
-    newdc->hMetaClipRgn = 0;
     if (dc->hClipRgn)
     {
         newdc->hClipRgn = CreateRectRgn( 0, 0, 0, 0 );
