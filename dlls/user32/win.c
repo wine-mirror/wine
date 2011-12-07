@@ -1324,14 +1324,15 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
             wndPtr->dwStyle |= WS_CAPTION;
     }
 
-    /*
-     * WS_EX_WINDOWEDGE appears to be enforced based on the other styles, so
-     * why does the user get to set it?
-     */
-
-    if ((wndPtr->dwExStyle & WS_EX_DLGMODALFRAME) ||
-          (wndPtr->dwStyle & (WS_DLGFRAME | WS_THICKFRAME)))
+    /* WS_EX_WINDOWEDGE depends on some other styles */
+    if (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME)
         wndPtr->dwExStyle |= WS_EX_WINDOWEDGE;
+    else if (wndPtr->dwStyle & (WS_DLGFRAME | WS_THICKFRAME))
+    {
+        if (!((wndPtr->dwExStyle & WS_EX_STATICEDGE) &&
+            (wndPtr->dwStyle & (WS_CHILD | WS_POPUP))))
+            wndPtr->dwExStyle |= WS_EX_WINDOWEDGE;
+    }
     else
         wndPtr->dwExStyle &= ~WS_EX_WINDOWEDGE;
 
@@ -2176,6 +2177,8 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
         newval = style.styleNew;
         /* WS_CLIPSIBLINGS can't be reset on top-level windows */
         if (wndPtr->parent == GetDesktopWindow()) newval |= WS_CLIPSIBLINGS;
+        /* FIXME: changing WS_DLGFRAME | WS_THICKFRAME is supposed to change
+           WS_EX_WINDOWEDGE too */
         break;
     case GWL_EXSTYLE:
         style.styleOld = wndPtr->dwExStyle;
@@ -2186,9 +2189,11 @@ LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, UINT size, LONG_PTR newval, B
         /* WS_EX_TOPMOST can only be changed through SetWindowPos */
         newval = (style.styleNew & ~WS_EX_TOPMOST) | (wndPtr->dwExStyle & WS_EX_TOPMOST);
         /* WS_EX_WINDOWEDGE depends on some other styles */
-        if ((newval & WS_EX_DLGMODALFRAME) || (wndPtr->dwStyle & WS_THICKFRAME))
+        if (newval & WS_EX_DLGMODALFRAME)
             newval |= WS_EX_WINDOWEDGE;
-        else if (wndPtr->dwStyle & (WS_CHILD|WS_POPUP))
+        else if (!(newval & WS_EX_STATICEDGE) && (wndPtr->dwStyle & (WS_DLGFRAME | WS_THICKFRAME)))
+            newval |= WS_EX_WINDOWEDGE;
+        else
             newval &= ~WS_EX_WINDOWEDGE;
         break;
     case GWLP_HWNDPARENT:
