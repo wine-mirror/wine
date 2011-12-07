@@ -434,10 +434,45 @@ static DWORD WINAPI download_proc(PVOID arg)
     return 0;
 }
 
+static void run_winebrowser(const WCHAR *url)
+{
+    PROCESS_INFORMATION pi;
+    STARTUPINFOW si;
+    WCHAR app[MAX_PATH];
+    LONG len, url_len;
+    WCHAR *args;
+    BOOL ret;
+
+    static const WCHAR winebrowserW[] = {'\\','w','i','n','e','b','r','o','w','s','e','r','.','e','x','e',0};
+
+    url_len = strlenW(url);
+
+    len = GetSystemDirectoryW(app, MAX_PATH-sizeof(winebrowserW)/sizeof(WCHAR));
+    memcpy(app+len, winebrowserW, sizeof(winebrowserW));
+    len += sizeof(winebrowserW)/sizeof(WCHAR) -1;
+
+    args = heap_alloc((len+1+url_len)*sizeof(WCHAR));
+    if(!args)
+        return;
+
+    memcpy(args, app, len*sizeof(WCHAR));
+    args[len++] = ' ';
+    memcpy(args+len, url, (url_len+1) * sizeof(WCHAR));
+
+    TRACE("starting %s\n", debugstr_w(args));
+
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    ret = CreateProcessW(app, args, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    heap_free(args);
+    if (ret) {
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+    }
+}
+
 static INT_PTR CALLBACK installer_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    static const WCHAR openW[] = {'o','p','e','n',0};
-
     switch(msg) {
     case WM_INITDIALOG:
         ShowWindow(GetDlgItem(hwnd, ID_DWL_PROGRESS), SW_HIDE);
@@ -450,7 +485,7 @@ static INT_PTR CALLBACK installer_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
         case NM_CLICK:
         case NM_RETURN:
             if (wParam == ID_DWL_STATUS)
-                ShellExecuteW( NULL, openW, ((NMLINK *)lParam)->item.szUrl, NULL, NULL, SW_SHOW );
+                run_winebrowser(((NMLINK*)lParam)->item.szUrl);
             break;
         }
         break;
