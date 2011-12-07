@@ -1873,15 +1873,13 @@ typedef struct _WINED3DCAPS
     WINEDDCAPS DirectDrawCaps;
 } WINED3DCAPS;
 
-/* DirectDraw types */
-
-typedef struct _WINEDDCOLORKEY
+struct wined3d_color_key
 {
-    DWORD dwColorSpaceLowValue;     /* low boundary of color space that is to
+    DWORD color_space_low_value;    /* low boundary of color space that is to
                                      * be treated as Color Key, inclusive */
-    DWORD dwColorSpaceHighValue;    /* high boundary of color space that is
+    DWORD color_space_high_value;   /* high boundary of color space that is
                                      * to be treated as Color Key, inclusive */
-} WINEDDCOLORKEY,*LPWINEDDCOLORKEY;
+};
 
 typedef struct _WINEDDBLTFX
 {
@@ -1928,8 +1926,8 @@ typedef struct _WINEDDBLTFX
         DWORD dwFillPixel;                          /* pixel val for RGBA or RGBZ */
         struct wined3d_surface *lpDDSPattern;       /* Surface to use as pattern */
     } DUMMYUNIONNAME5;
-    WINEDDCOLORKEY ddckDestColorkey;                /* DestColorkey override */
-    WINEDDCOLORKEY ddckSrcColorkey;                 /* SrcColorkey override */
+    struct wined3d_color_key ddckDestColorkey;      /* DestColorkey override */
+    struct wined3d_color_key ddckSrcColorkey;       /* SrcColorkey override */
 } WINEDDBLTFX,*LPWINEDDBLTFX;
 
 typedef struct _WINEDDOVERLAYFX
@@ -1950,8 +1948,8 @@ typedef struct _WINEDDOVERLAYFX
         DWORD dwAlphaSrcConst;                      /* Constant to use as alpha channel for src */
         struct wined3d_surface *lpDDSAlphaSrc;      /* Surface to use as alpha channel for src */
     } DUMMYUNIONNAME2;
-    WINEDDCOLORKEY dckDestColorkey;                 /* DestColorkey override */
-    WINEDDCOLORKEY dckSrcColorkey;                  /* SrcColorkey override */
+    struct wined3d_color_key dckDestColorkey;       /* DestColorkey override */
+    struct wined3d_color_key dckSrcColorkey;        /* SrcColorkey override */
     DWORD dwDDFX;                                   /* Overlay FX */
     DWORD dwFlags;                                  /* flags */
 } WINEDDOVERLAYFX;
@@ -2366,7 +2364,7 @@ HRESULT __cdecl wined3d_surface_releasedc(struct wined3d_surface *surface, HDC d
 HRESULT __cdecl wined3d_surface_restore(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_set_clipper(struct wined3d_surface *surface, struct wined3d_clipper *clipper);
 HRESULT __cdecl wined3d_surface_set_color_key(struct wined3d_surface *surface,
-        DWORD flags, const WINEDDCOLORKEY *color_key);
+        DWORD flags, const struct wined3d_color_key *color_key);
 HRESULT __cdecl wined3d_surface_set_format(struct wined3d_surface *surface, enum wined3d_format_id format_id);
 HRESULT __cdecl wined3d_surface_set_mem(struct wined3d_surface *surface, void *mem);
 HRESULT __cdecl wined3d_surface_set_overlay_position(struct wined3d_surface *surface, LONG x, LONG y);

@@ -2041,13 +2041,13 @@ struct wined3d_surface
     HDC                       hDC;
 
     /* Color keys for DDraw */
-    WINEDDCOLORKEY            DestBltCKey;
-    WINEDDCOLORKEY            DestOverlayCKey;
-    WINEDDCOLORKEY            SrcOverlayCKey;
-    WINEDDCOLORKEY            SrcBltCKey;
+    struct wined3d_color_key dst_blt_color_key;
+    struct wined3d_color_key src_blt_color_key;
+    struct wined3d_color_key dst_overlay_color_key;
+    struct wined3d_color_key src_overlay_color_key;
     DWORD                     CKeyFlags;
 
-    WINEDDCOLORKEY            glCKey;
+    struct wined3d_color_key gl_color_key;
 
     struct list               renderbuffers;
     const struct wined3d_renderbuffer_entry *current_renderbuffer;

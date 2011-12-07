@@ -921,11 +921,11 @@ HRESULT CDECL wined3d_device_get_swapchain(const struct wined3d_device *device,
 
 static void device_load_logo(struct wined3d_device *device, const char *filename)
 {
+    struct wined3d_color_key color_key;
     HBITMAP hbm;
     BITMAP bm;
     HRESULT hr;
     HDC dcb = NULL, dcs = NULL;
-    WINEDDCOLORKEY colorkey;
 
     hbm = LoadImageA(NULL, filename, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_CREATEDIBSECTION);
     if(hbm)
@@ -961,9 +961,9 @@ static void device_load_logo(struct wined3d_device *device, const char *filename
         BitBlt(dcs, 0, 0, bm.bmWidth, bm.bmHeight, dcb, 0, 0, SRCCOPY);
         wined3d_surface_releasedc(device->logo_surface, dcs);
 
-        colorkey.dwColorSpaceLowValue = 0;
-        colorkey.dwColorSpaceHighValue = 0;
-        wined3d_surface_set_color_key(device->logo_surface, WINEDDCKEY_SRCBLT, &colorkey);
+        color_key.color_space_low_value = 0;
+        color_key.color_space_high_value = 0;
+        wined3d_surface_set_color_key(device->logo_surface, WINEDDCKEY_SRCBLT, &color_key);
     }
     else
     {

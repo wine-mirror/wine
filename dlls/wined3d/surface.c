@@ -1448,11 +1448,11 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
         TRACE("lpDDSAlphaSrc %p.\n", fx->u4.lpDDSAlphaSrc);
         TRACE("lpDDSPattern %p.\n", fx->u5.lpDDSPattern);
         TRACE("ddckDestColorkey {%#x, %#x}.\n",
-                fx->ddckDestColorkey.dwColorSpaceLowValue,
-                fx->ddckDestColorkey.dwColorSpaceHighValue);
+                fx->ddckDestColorkey.color_space_low_value,
+                fx->ddckDestColorkey.color_space_high_value);
         TRACE("ddckSrcColorkey {%#x, %#x}.\n",
-                fx->ddckSrcColorkey.dwColorSpaceLowValue,
-                fx->ddckSrcColorkey.dwColorSpaceHighValue);
+                fx->ddckSrcColorkey.color_space_low_value,
+                fx->ddckSrcColorkey.color_space_high_value);
     }
 
     if ((dst_surface->flags & SFLAG_LOCKED) || (src_surface && (src_surface->flags & SFLAG_LOCKED)))
@@ -2733,8 +2733,8 @@ HRESULT surface_load(struct wined3d_surface *surface, BOOL srgb)
     /* Reload if either the texture and sysmem have different ideas about the
      * color key, or the actual key values changed. */
     if (ck_changed || ((surface->CKeyFlags & WINEDDSD_CKSRCBLT)
-            && (surface->glCKey.dwColorSpaceLowValue != surface->SrcBltCKey.dwColorSpaceLowValue
-            || surface->glCKey.dwColorSpaceHighValue != surface->SrcBltCKey.dwColorSpaceHighValue)))
+            && (surface->gl_color_key.color_space_low_value != surface->src_blt_color_key.color_space_low_value
+            || surface->gl_color_key.color_space_high_value != surface->src_blt_color_key.color_space_high_value)))
     {
         TRACE("Reloading because of color keying\n");
         /* To perform the color key conversion we need a sysmem copy of
@@ -3005,7 +3005,7 @@ HRESULT CDECL wined3d_surface_set_palette(struct wined3d_surface *surface, struc
 }
 
 HRESULT CDECL wined3d_surface_set_color_key(struct wined3d_surface *surface,
-        DWORD flags, const WINEDDCOLORKEY *color_key)
+        DWORD flags, const struct wined3d_color_key *color_key)
 {
     TRACE("surface %p, flags %#x, color_key %p.\n", surface, flags, color_key);
 
@@ -3021,22 +3021,22 @@ HRESULT CDECL wined3d_surface_set_color_key(struct wined3d_surface *surface,
         switch (flags & ~WINEDDCKEY_COLORSPACE)
         {
             case WINEDDCKEY_DESTBLT:
-                surface->DestBltCKey = *color_key;
+                surface->dst_blt_color_key = *color_key;
                 surface->CKeyFlags |= WINEDDSD_CKDESTBLT;
                 break;
 
             case WINEDDCKEY_DESTOVERLAY:
-                surface->DestOverlayCKey = *color_key;
+                surface->dst_overlay_color_key = *color_key;
                 surface->CKeyFlags |= WINEDDSD_CKDESTOVERLAY;
                 break;
 
             case WINEDDCKEY_SRCOVERLAY:
-                surface->SrcOverlayCKey = *color_key;
+                surface->src_overlay_color_key = *color_key;
                 surface->CKeyFlags |= WINEDDSD_CKSRCOVERLAY;
                 break;
 
             case WINEDDCKEY_SRCBLT:
-                surface->SrcBltCKey = *color_key;
+                surface->src_blt_color_key = *color_key;
                 surface->CKeyFlags |= WINEDDSD_CKSRCBLT;
                 break;
         }
@@ -4578,8 +4578,8 @@ void d3dfmt_p8_init_palette(const struct wined3d_surface *surface, BYTE table[25
             {
                 table[i][3] = i;
             }
-            else if (colorkey && (i >= surface->SrcBltCKey.dwColorSpaceLowValue)
-                    && (i <= surface->SrcBltCKey.dwColorSpaceHighValue))
+            else if (colorkey && (i >= surface->src_blt_color_key.color_space_low_value)
+                    && (i <= surface->src_blt_color_key.color_space_high_value))
             {
                 table[i][3] = 0x00;
             }
@@ -4656,8 +4656,8 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                 for (x = 0; x < width; x++ ) {
                     WORD color = *Source++;
                     *Dest = ((color & 0xFFC0) | ((color & 0x1F) << 1));
-                    if ((color < surface->SrcBltCKey.dwColorSpaceLowValue)
-                            || (color > surface->SrcBltCKey.dwColorSpaceHighValue))
+                    if ((color < surface->src_blt_color_key.color_space_low_value)
+                            || (color > surface->src_blt_color_key.color_space_high_value))
                         *Dest |= 0x0001;
                     Dest++;
                 }
@@ -4678,8 +4678,8 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                 for (x = 0; x < width; x++ ) {
                     WORD color = *Source++;
                     *Dest = color;
-                    if ((color < surface->SrcBltCKey.dwColorSpaceLowValue)
-                            || (color > surface->SrcBltCKey.dwColorSpaceHighValue))
+                    if ((color < surface->src_blt_color_key.color_space_low_value)
+                            || (color > surface->src_blt_color_key.color_space_high_value))
                         *Dest |= (1 << 15);
                     else
                         *Dest &= ~(1 << 15);
@@ -4700,8 +4700,8 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                 for (x = 0; x < width; x++) {
                     DWORD color = ((DWORD)source[0] << 16) + ((DWORD)source[1] << 8) + (DWORD)source[2] ;
                     DWORD dstcolor = color << 8;
-                    if ((color < surface->SrcBltCKey.dwColorSpaceLowValue)
-                            || (color > surface->SrcBltCKey.dwColorSpaceHighValue))
+                    if ((color < surface->src_blt_color_key.color_space_low_value)
+                            || (color > surface->src_blt_color_key.color_space_high_value))
                         dstcolor |= 0xff;
                     *(DWORD*)dest = dstcolor;
                     source += 3;
@@ -4722,8 +4722,8 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                 for (x = 0; x < width; x++) {
                     DWORD color = 0xffffff & *(const DWORD*)source;
                     DWORD dstcolor = color << 8;
-                    if ((color < surface->SrcBltCKey.dwColorSpaceLowValue)
-                            || (color > surface->SrcBltCKey.dwColorSpaceHighValue))
+                    if ((color < surface->src_blt_color_key.color_space_low_value)
+                            || (color > surface->src_blt_color_key.color_space_high_value))
                         dstcolor |= 0xff;
                     *(DWORD*)dest = dstcolor;
                     source += 4;
@@ -5273,7 +5273,7 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
          * the palette entries. In other cases pixels that should be masked
          * away have alpha set to 0. */
         if (primary_render_target_is_p8(device))
-            glAlphaFunc(GL_NOTEQUAL, (float)src_surface->SrcBltCKey.dwColorSpaceLowValue / 256.0f);
+            glAlphaFunc(GL_NOTEQUAL, (float)src_surface->src_blt_color_key.color_space_low_value / 256.0f);
         else
             glAlphaFunc(GL_NOTEQUAL, 0.0f);
         checkGLcall("glAlphaFunc");
@@ -5459,8 +5459,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
     else if (src_surface)
     {
         /* Blit from offscreen surface to render target */
+        struct wined3d_color_key old_blt_key = src_surface->src_blt_color_key;
         DWORD oldCKeyFlags = src_surface->CKeyFlags;
-        WINEDDCOLORKEY oldBltCKey = src_surface->SrcBltCKey;
 
         TRACE("Blt from surface %p to rendertarget %p\n", src_surface, dst_surface);
 
@@ -5487,7 +5487,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
         {
             /* Use color key from DDBltFx */
             src_surface->CKeyFlags |= WINEDDSD_CKSRCBLT;
-            src_surface->SrcBltCKey = DDBltFx->ddckSrcColorkey;
+            src_surface->src_blt_color_key = DDBltFx->ddckSrcColorkey;
         }
         else
         {
@@ -5500,7 +5500,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(struct wined3d_surface *dst_surfa
 
         /* Restore the color key parameters */
         src_surface->CKeyFlags = oldCKeyFlags;
-        src_surface->SrcBltCKey = oldBltCKey;
+        src_surface->src_blt_color_key = old_blt_key;
 
         surface_modify_location(dst_surface, dst_surface->draw_binding, TRUE);
 
@@ -6032,7 +6032,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     if (surface->CKeyFlags & WINEDDSD_CKSRCBLT)
     {
         surface->flags |= SFLAG_GLCKEY;
-        surface->glCKey = surface->SrcBltCKey;
+        surface->gl_color_key = surface->src_blt_color_key;
     }
     else surface->flags &= ~SFLAG_GLCKEY;
 
@@ -6873,25 +6873,25 @@ do { \
                 /* The color keying flags are checked for correctness in ddraw */
                 if (flags & WINEDDBLT_KEYSRC)
                 {
-                    keylow  = src_surface->SrcBltCKey.dwColorSpaceLowValue;
-                    keyhigh = src_surface->SrcBltCKey.dwColorSpaceHighValue;
+                    keylow  = src_surface->src_blt_color_key.color_space_low_value;
+                    keyhigh = src_surface->src_blt_color_key.color_space_high_value;
                 }
                 else if (flags & WINEDDBLT_KEYSRCOVERRIDE)
                 {
-                    keylow = fx->ddckSrcColorkey.dwColorSpaceLowValue;
-                    keyhigh = fx->ddckSrcColorkey.dwColorSpaceHighValue;
+                    keylow = fx->ddckSrcColorkey.color_space_low_value;
+                    keyhigh = fx->ddckSrcColorkey.color_space_high_value;
                 }
 
                 if (flags & WINEDDBLT_KEYDEST)
                 {
                     /* Destination color keys are taken from the source surface! */
-                    destkeylow = src_surface->DestBltCKey.dwColorSpaceLowValue;
-                    destkeyhigh = src_surface->DestBltCKey.dwColorSpaceHighValue;
+                    destkeylow = src_surface->dst_blt_color_key.color_space_low_value;
+                    destkeyhigh = src_surface->dst_blt_color_key.color_space_high_value;
                 }
                 else if (flags & WINEDDBLT_KEYDESTOVERRIDE)
                 {
-                    destkeylow = fx->ddckDestColorkey.dwColorSpaceLowValue;
-                    destkeyhigh = fx->ddckDestColorkey.dwColorSpaceHighValue;
+                    destkeylow = fx->ddckDestColorkey.color_space_low_value;
+                    destkeyhigh = fx->ddckDestColorkey.color_space_high_value;
                 }
 
                 if (bpp == 1)
