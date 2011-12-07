@@ -50,7 +50,6 @@ my %bin_install =
 # Programs that we don't want to install at all
 my %dont_install =
 (
-  "cmdlgtst" => 1,
   "winetest" => 1,
 );
 
