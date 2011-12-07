@@ -129,7 +129,6 @@ static expression_t *new_function_expression(parser_ctx_t*,const WCHAR*,paramete
 static expression_t *new_binary_expression(parser_ctx_t*,expression_type_t,expression_t*,expression_t*);
 static expression_t *new_unary_expression(parser_ctx_t*,expression_type_t,expression_t*);
 static expression_t *new_conditional_expression(parser_ctx_t*,expression_t*,expression_t*,expression_t*);
-static expression_t *new_array_expression(parser_ctx_t*,expression_t*,expression_t*);
 static expression_t *new_member_expression(parser_ctx_t*,expression_t*,const WCHAR*);
 static expression_t *new_new_expression(parser_ctx_t*,expression_t*,argument_list_t*);
 static expression_t *new_call_expression(parser_ctx_t*,expression_t*,argument_list_t*);
@@ -710,7 +709,7 @@ MemberExpression
         : PrimaryExpression     { $$ = $1; }
         | FunctionExpression    { $$ = $1; }
         | MemberExpression '[' Expression ']'
-                                { $$ = new_array_expression(ctx, $1, $3); }
+                                { $$ = new_binary_expression(ctx, EXPR_ARRAY, $1, $3); }
         | MemberExpression '.' tIdentifier
                                 { $$ = new_member_expression(ctx, $1, $3); }
         | kNEW MemberExpression Arguments
@@ -723,7 +722,7 @@ CallExpression
         | CallExpression Arguments
                                 { $$ = new_call_expression(ctx, $1, $2); }
         | CallExpression '[' Expression ']'
-                                { $$ = new_array_expression(ctx, $1, $3); }
+                                { $$ = new_binary_expression(ctx, EXPR_ARRAY, $1, $3); }
         | CallExpression '.' tIdentifier
                                 { $$ = new_member_expression(ctx, $1, $3); }
 
@@ -1403,16 +1402,6 @@ static expression_t *new_conditional_expression(parser_ctx_t *ctx, expression_t 
     ret->expression = expression;
     ret->true_expression = true_expression;
     ret->false_expression = false_expression;
-
-    return &ret->expr;
-}
-
-static expression_t *new_array_expression(parser_ctx_t *ctx, expression_t *member_expr, expression_t *expression)
-{
-    array_expression_t *ret = new_expression(ctx, EXPR_ARRAY, sizeof(*ret));
-
-    ret->member_expr = member_expr;
-    ret->expression = expression;
 
     return &ret->expr;
 }

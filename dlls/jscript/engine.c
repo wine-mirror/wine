@@ -1508,7 +1508,7 @@ HRESULT function_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD f
 /* ECMA-262 3rd Edition    11.2.1 */
 HRESULT array_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    array_expression_t *expr = (array_expression_t*)_expr;
+    binary_expression_t *expr = (binary_expression_t*)_expr;
     exprval_t exprval;
     VARIANT member, val;
     DISPID id;
@@ -1518,7 +1518,7 @@ HRESULT array_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flag
 
     TRACE("\n");
 
-    hres = expr_eval(ctx, expr->member_expr, 0, ei, &exprval);
+    hres = expr_eval(ctx, expr->expression1, 0, ei, &exprval);
     if(FAILED(hres))
         return hres;
 
@@ -1527,7 +1527,7 @@ HRESULT array_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flag
     if(FAILED(hres))
         return hres;
 
-    hres = expr_eval(ctx, expr->expression, EXPR_NEWREF, ei, &exprval);
+    hres = expr_eval(ctx, expr->expression2, EXPR_NEWREF, ei, &exprval);
     if(SUCCEEDED(hres)) {
         hres = exprval_to_value(ctx, &exprval, ei, &val);
         exprval_release(&exprval);

@@ -499,12 +499,6 @@ typedef struct {
 
 typedef struct {
     expression_t expr;
-    expression_t *member_expr;
-    expression_t *expression;
-} array_expression_t;
-
-typedef struct {
-    expression_t expr;
     expression_t *expression;
     const WCHAR *identifier;
 } member_expression_t;

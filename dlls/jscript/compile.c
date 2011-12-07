@@ -257,13 +257,13 @@ static HRESULT compile_memberid_expression(compiler_ctx_t *ctx, expression_t *ex
         break;
     }
     case EXPR_ARRAY: {
-        array_expression_t *array_expr = (array_expression_t*)expr;
+        binary_expression_t *array_expr = (binary_expression_t*)expr;
 
-        hres = compile_expression(ctx, array_expr->member_expr);
+        hres = compile_expression(ctx, array_expr->expression1);
         if(FAILED(hres))
             return hres;
 
-        hres = compile_expression(ctx, array_expr->expression);
+        hres = compile_expression(ctx, array_expr->expression2);
         if(FAILED(hres))
             return hres;
 
@@ -438,13 +438,13 @@ static HRESULT compile_delete_expression(compiler_ctx_t *ctx, unary_expression_t
 
     switch(expr->expression->type) {
     case EXPR_ARRAY: {
-        array_expression_t *array_expr = (array_expression_t*)expr->expression;
+        binary_expression_t *array_expr = (binary_expression_t*)expr->expression;
 
-        hres = compile_expression(ctx, array_expr->member_expr);
+        hres = compile_expression(ctx, array_expr->expression1);
         if(FAILED(hres))
             return hres;
 
-        hres = compile_expression(ctx, array_expr->expression);
+        hres = compile_expression(ctx, array_expr->expression2);
         if(FAILED(hres))
             return hres;
 
