@@ -451,14 +451,35 @@ char* CDECL _Getdays(void)
 /*********************************************************************
  *		_Getmonths (MSVCRT.@)
  */
-const char* CDECL _Getmonths(void)
+char* CDECL _Getmonths(void)
 {
-  static const char MSVCRT_months[] = ":Jan:January:Feb:February:Mar:March:Apr:"
-                "April:May:May:Jun:June:Jul:July:Aug:August:Sep:September:Oct:"
-                "October:Nov:November:Dec:December";
-  /* FIXME: Use locale */
-  TRACE("(void) semi-stub\n");
-  return MSVCRT_months;
+    static const int months_offset = 14;
+
+    MSVCRT___lc_time_data *cur = get_locinfo()->lc_time_curr;
+    int i, len, size;
+    char *out;
+
+    TRACE("\n");
+
+    size = cur->str[months_offset+2*12]-cur->str[months_offset];
+    out = MSVCRT_malloc(size+1);
+    if(!out)
+        return NULL;
+
+    size = 0;
+    for(i=0; i<12; i++) {
+        out[size++] = ':';
+        len = strlen(cur->str[months_offset+i]);
+        memcpy(&out[size], cur->str[months_offset+i], len);
+        size += len;
+
+        out[size++] = ':';
+        len = strlen(cur->str[months_offset+12+i]);
+        memcpy(&out[size], cur->str[months_offset+12+i], len);
+        size += len;
+    }
+
+    return out;
 }
 
 /*********************************************************************
