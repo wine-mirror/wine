@@ -1555,7 +1555,7 @@ struct WineD3DRectPatch
 {
     UINT                            Handle;
     float                          *mem;
-    WineDirect3DVertexStridedData   strided;
+    struct wined3d_strided_data strided;
     struct wined3d_rect_patch_info rect_patch_info;
     float                           numSegs[4];
     char                            has_normals, has_texcoords;
@@ -1746,7 +1746,7 @@ struct wined3d_device
 
     /* Stream source management */
     struct wined3d_stream_info strided_streams;
-    const WineDirect3DVertexStridedData *up_strided;
+    const struct wined3d_strided_data *up_strided;
     struct wined3d_event_query *buffer_queries[MAX_ATTRIBS];
     unsigned int num_buffer_queries;
 

@@ -1136,11 +1136,11 @@ HRESULT tesselate_rectpatch(struct wined3d_device *This, struct WineD3DRectPatch
     }
     if (patch->has_texcoords)
     {
-        patch->strided.texCoords[0].format = WINED3DFMT_R32G32B32A32_FLOAT;
-        patch->strided.texCoords[0].data = (BYTE *)patch->mem + 3 * sizeof(float) /* pos */;
+        patch->strided.tex_coords[0].format = WINED3DFMT_R32G32B32A32_FLOAT;
+        patch->strided.tex_coords[0].data = (BYTE *)patch->mem + 3 * sizeof(float) /* pos */;
         if (patch->has_normals)
-            patch->strided.texCoords[0].data += 3 * sizeof(float);
-        patch->strided.texCoords[0].stride = vtxStride;
+            patch->strided.tex_coords[0].data += 3 * sizeof(float);
+        patch->strided.tex_coords[0].stride = vtxStride;
     }
 
     return WINED3D_OK;

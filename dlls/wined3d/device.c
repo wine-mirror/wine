@@ -353,7 +353,7 @@ static void stream_info_element_from_strided(const struct wined3d_gl_info *gl_in
 }
 
 static void device_stream_info_from_strided(const struct wined3d_gl_info *gl_info,
-        const struct WineDirect3DVertexStridedData *strided, struct wined3d_stream_info *stream_info)
+        const struct wined3d_strided_data *strided, struct wined3d_stream_info *stream_info)
 {
     unsigned int i;
 
@@ -370,8 +370,8 @@ static void device_stream_info_from_strided(const struct wined3d_gl_info *gl_inf
 
     for (i = 0; i < WINED3DDP_MAXTEXCOORD; ++i)
     {
-        if (strided->texCoords[i].data)
-            stream_info_element_from_strided(gl_info, &strided->texCoords[i],
+        if (strided->tex_coords[i].data)
+            stream_info_element_from_strided(gl_info, &strided->tex_coords[i],
                     &stream_info->elements[WINED3D_FFP_TEXCOORD0 + i]);
     }
 
@@ -4249,7 +4249,7 @@ HRESULT CDECL wined3d_device_draw_indexed_primitive_up(struct wined3d_device *de
 }
 
 HRESULT CDECL wined3d_device_draw_primitive_strided(struct wined3d_device *device,
-        UINT vertex_count, const WineDirect3DVertexStridedData *strided_data)
+        UINT vertex_count, const struct wined3d_strided_data *strided_data)
 {
     /* Mark the state dirty until we have nicer tracking. It's fine to change
      * baseVertexIndex because that call is only called by ddraw which does
@@ -4274,7 +4274,7 @@ HRESULT CDECL wined3d_device_draw_primitive_strided(struct wined3d_device *devic
 }
 
 HRESULT CDECL wined3d_device_draw_indexed_primitive_strided(struct wined3d_device *device,
-        UINT index_count, const WineDirect3DVertexStridedData *strided_data,
+        UINT index_count, const struct wined3d_strided_data *strided_data,
         UINT vertex_count, const void *index_data, enum wined3d_format_id index_data_format_id)
 {
     UINT index_size = index_data_format_id == WINED3DFMT_R32_UINT ? 4 : 2;

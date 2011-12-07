@@ -1732,15 +1732,15 @@ struct wined3d_strided_element
     UINT stride;                    /* Stride between occurrences of this data */
 };
 
-typedef struct WineDirect3DVertexStridedData
+struct wined3d_strided_data
 {
     struct wined3d_strided_element position;
     struct wined3d_strided_element normal;
     struct wined3d_strided_element diffuse;
     struct wined3d_strided_element specular;
-    struct wined3d_strided_element texCoords[WINED3DDP_MAXTEXCOORD];
+    struct wined3d_strided_element tex_coords[WINED3DDP_MAXTEXCOORD];
     BOOL position_transformed;
-} WineDirect3DVertexStridedData;
+};
 
 typedef struct _WINED3DVSHADERCAPS2_0
 {
@@ -2109,14 +2109,14 @@ ULONG __cdecl wined3d_device_decref(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_delete_patch(struct wined3d_device *device, UINT handle);
 HRESULT __cdecl wined3d_device_draw_indexed_primitive(struct wined3d_device *device, UINT start_idx, UINT index_count);
 HRESULT __cdecl wined3d_device_draw_indexed_primitive_strided(struct wined3d_device *device, UINT index_count,
-        const WineDirect3DVertexStridedData *strided_data, UINT vertex_count, const void *index_data,
+        const struct wined3d_strided_data *strided_data, UINT vertex_count, const void *index_data,
         enum wined3d_format_id index_data_format_id);
 HRESULT __cdecl wined3d_device_draw_indexed_primitive_up(struct wined3d_device *device,
         UINT index_count, const void *index_data, enum wined3d_format_id index_data_format_id,
         const void *stream_data, UINT stream_stride);
 HRESULT __cdecl wined3d_device_draw_primitive(struct wined3d_device *device, UINT start_vertex, UINT vertex_count);
 HRESULT __cdecl wined3d_device_draw_primitive_strided(struct wined3d_device *device,
-        UINT vertex_count, const WineDirect3DVertexStridedData *strided_data);
+        UINT vertex_count, const struct wined3d_strided_data *strided_data);
 HRESULT __cdecl wined3d_device_draw_primitive_up(struct wined3d_device *device,
         UINT vertex_count, const void *stream_data, UINT stream_stride);
 HRESULT __cdecl wined3d_device_draw_rect_patch(struct wined3d_device *device, UINT handle,
