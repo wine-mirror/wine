@@ -3221,6 +3221,8 @@ struct info
     HANDLE       wait;
     DWORD        thread;
     unsigned int line;
+    DWORD        expect_result;
+    BOOL         is_aborted;
 };
 
 static CRITICAL_SECTION notification_cs;
@@ -3233,11 +3235,27 @@ static void CALLBACK check_notification( HINTERNET handle, DWORD_PTR context, DW
 
     EnterCriticalSection( &notification_cs );
 
+    if(info->is_aborted) {
+        LeaveCriticalSection(&notification_cs);
+        return;
+    }
+
     if (status == INTERNET_STATUS_HANDLE_CREATED)
     {
         DWORD size = sizeof(struct info *);
         HttpQueryInfoA( handle, INTERNET_OPTION_CONTEXT_VALUE, &info, &size, 0 );
+    }else if(status == INTERNET_STATUS_REQUEST_COMPLETE) {
+        INTERNET_ASYNC_RESULT *ar = (INTERNET_ASYNC_RESULT*)buffer;
+
+        ok(buflen == sizeof(*ar), "unexpected buflen = %d\n", buflen);
+        if(info->expect_result == ERROR_SUCCESS) {
+            ok(ar->dwResult == 1, "ar->dwResult = %ld, expected 1\n", ar->dwResult);
+        }else {
+            ok(!ar->dwResult, "ar->dwResult = %ld, expected 1\n", ar->dwResult);
+            ok(ar->dwError == info->expect_result, "ar->dwError = %d, expected %d\n", ar->dwError, info->expect_result);
+        }
     }
+
     i = info->index;
     if (i >= info->count)
     {
@@ -3277,17 +3295,22 @@ static void CALLBACK check_notification( HINTERNET handle, DWORD_PTR context, DW
     LeaveCriticalSection( &notification_cs );
 }
 
-static void setup_test( struct info *info, enum api function, unsigned int line )
+static void setup_test( struct info *info, enum api function, unsigned int line, DWORD expect_result )
 {
     info->function = function;
     info->line = line;
+    info->expect_result = expect_result;
 }
 
 struct notification_data
 {
     const struct notification *test;
     const unsigned int count;
+    const char *method;
+    const char *host;
+    const char *path;
     const char *data;
+    BOOL expect_conn_failure;
 };
 
 static const struct notification async_send_request_ex_test[] =
@@ -3334,16 +3357,46 @@ static const struct notification async_send_request_ex_test2[] =
     { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING, 0, }
 };
 
+static const struct notification async_send_request_ex_resolve_failure_test[] =
+{
+    { internet_connect,      INTERNET_STATUS_HANDLE_CREATED, 0 },
+    { http_open_request,     INTERNET_STATUS_HANDLE_CREATED, 0 },
+    { http_send_request_ex,  INTERNET_STATUS_DETECTING_PROXY, 1, 0, 1 },
+    { http_send_request_ex,  INTERNET_STATUS_RESOLVING_NAME, 1 },
+    { http_send_request_ex,  INTERNET_STATUS_DETECTING_PROXY, 1, 0, 1 },
+    { http_send_request_ex,  INTERNET_STATUS_REQUEST_COMPLETE, 1 },
+    { http_end_request,      INTERNET_STATUS_REQUEST_COMPLETE, 1 },
+    { internet_close_handle, INTERNET_STATUS_CLOSING_CONNECTION, 0, 0, 1 },
+    { internet_close_handle, INTERNET_STATUS_CONNECTION_CLOSED, 0, 0, 1 },
+    { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING, 0, },
+    { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING, 0, }
+};
+
 static const struct notification_data notification_data[] = {
     {
         async_send_request_ex_test,
         sizeof(async_send_request_ex_test)/sizeof(async_send_request_ex_test[0]),
+        "POST",
+        "test.winehq.org",
+        "tests/posttest.php",
         "Public ID=codeweavers"
     },
     {
         async_send_request_ex_test2,
-        sizeof(async_send_request_ex_test)/sizeof(async_send_request_ex_test[0])
+        sizeof(async_send_request_ex_test)/sizeof(async_send_request_ex_test[0]),
+        "POST",
+        "test.winehq.org",
+        "tests/posttest.php"
     },
+    {
+        async_send_request_ex_resolve_failure_test,
+        sizeof(async_send_request_ex_resolve_failure_test)/sizeof(async_send_request_ex_resolve_failure_test[0]),
+        "GET",
+        "brokenhost",
+        "index.html",
+        NULL,
+        TRUE
+    }
 };
 
 static void test_async_HttpSendRequestEx(const struct notification_data *nd)
@@ -3356,7 +3409,7 @@ static void test_async_HttpSendRequestEx(const struct notification_data *nd)
     static const char *accept[2] = {"*/*", NULL};
     char buffer[32];
 
-    trace("\n");
+    trace("Async HttpSendRequestEx test (%s %s)\n", nd->method, nd->host);
 
     InitializeCriticalSection( &notification_cs );
 
@@ -3365,50 +3418,63 @@ static void test_async_HttpSendRequestEx(const struct notification_data *nd)
     info.index = 0;
     info.wait = CreateEvent( NULL, FALSE, FALSE, NULL );
     info.thread = GetCurrentThreadId();
+    info.is_aborted = FALSE;
 
     ses = InternetOpen( "winetest", 0, NULL, NULL, INTERNET_FLAG_ASYNC );
     ok( ses != NULL, "InternetOpen failed\n" );
 
     pInternetSetStatusCallbackA( ses, check_notification );
 
-    setup_test( &info, internet_connect, __LINE__ );
-    con = InternetConnect( ses, "test.winehq.org", 80, NULL, NULL, INTERNET_SERVICE_HTTP, 0, (DWORD_PTR)&info );
+    setup_test( &info, internet_connect, __LINE__, ERROR_SUCCESS );
+    con = InternetConnect( ses, nd->host, 80, NULL, NULL, INTERNET_SERVICE_HTTP, 0, (DWORD_PTR)&info );
     ok( con != NULL, "InternetConnect failed %u\n", GetLastError() );
 
     WaitForSingleObject( info.wait, 10000 );
 
-    setup_test( &info, http_open_request, __LINE__ );
-    req = HttpOpenRequest( con, "POST", "tests/posttest.php", NULL, NULL, accept, 0, (DWORD_PTR)&info );
+    setup_test( &info, http_open_request, __LINE__, ERROR_SUCCESS );
+    req = HttpOpenRequest( con, nd->method, nd->path, NULL, NULL, accept, 0, (DWORD_PTR)&info );
     ok( req != NULL, "HttpOpenRequest failed %u\n", GetLastError() );
 
     WaitForSingleObject( info.wait, 10000 );
 
-    memset( &b, 0, sizeof(INTERNET_BUFFERSA) );
-    b.dwStructSize = sizeof(INTERNET_BUFFERSA);
-    b.lpcszHeader = "Content-Type: application/x-www-form-urlencoded";
-    b.dwHeadersLength = strlen( b.lpcszHeader );
-    b.dwBufferTotal = nd->data ? strlen( nd->data ) : 0;
+    if(nd->data) {
+        memset( &b, 0, sizeof(INTERNET_BUFFERSA) );
+        b.dwStructSize = sizeof(INTERNET_BUFFERSA);
+        b.lpcszHeader = "Content-Type: application/x-www-form-urlencoded";
+        b.dwHeadersLength = strlen( b.lpcszHeader );
+        b.dwBufferTotal = nd->data ? strlen( nd->data ) : 0;
+    }
 
-    setup_test( &info, http_send_request_ex, __LINE__ );
+    setup_test( &info, http_send_request_ex, __LINE__,
+            nd->expect_conn_failure ? ERROR_INTERNET_NAME_NOT_RESOLVED : ERROR_SUCCESS );
     ret = HttpSendRequestExA( req, nd->data ? &b : NULL, NULL, 0x28, 0 );
     ok( !ret && GetLastError() == ERROR_IO_PENDING, "HttpSendRequestExA failed %d %u\n", ret, GetLastError() );
 
-    WaitForSingleObject( info.wait, 10000 );
+    error = WaitForSingleObject( info.wait, 10000 );
+    if(error != WAIT_OBJECT_0) {
+        skip("WaitForSingleObject returned %d, assuming DNS problem\n", error);
+        info.is_aborted = TRUE;
+        goto abort;
+    }
 
     size = sizeof(buffer);
     SetLastError( 0xdeadbeef );
     ret = HttpQueryInfoA( req, HTTP_QUERY_CONTENT_ENCODING, buffer, &size, 0 );
     error = GetLastError();
     ok( !ret, "HttpQueryInfoA failed %u\n", GetLastError() );
-    todo_wine
-    ok( error == ERROR_INTERNET_INCORRECT_HANDLE_STATE,
-        "expected ERROR_INTERNET_INCORRECT_HANDLE_STATE got %u\n", error );
+    if(nd->expect_conn_failure) {
+        ok(error == ERROR_HTTP_HEADER_NOT_FOUND, "expected ERROR_HTTP_HEADER_NOT_FOUND got %u\n", error );
+    }else {
+        todo_wine
+        ok(error == ERROR_INTERNET_INCORRECT_HANDLE_STATE,
+            "expected ERROR_INTERNET_INCORRECT_HANDLE_STATE got %u\n", error );
+    }
 
     if (nd->data)
     {
         written = 0;
         size = strlen( nd->data );
-        setup_test( &info, internet_writefile, __LINE__ );
+        setup_test( &info, internet_writefile, __LINE__, ERROR_SUCCESS );
         ret = InternetWriteFile( req, nd->data, size, &written );
         ok( ret, "InternetWriteFile failed %u\n", GetLastError() );
         ok( written == size, "expected %u got %u\n", written, size );
@@ -3423,7 +3489,8 @@ static void test_async_HttpSendRequestEx(const struct notification_data *nd)
     }
 
     SetLastError( 0xdeadbeef );
-    setup_test( &info, http_end_request, __LINE__ );
+    setup_test( &info, http_end_request, __LINE__,
+            nd->expect_conn_failure ? ERROR_INTERNET_OPERATION_CANCELLED : ERROR_SUCCESS);
     ret = HttpEndRequestA( req, NULL, 0x28, 0 );
     error = GetLastError();
     ok( !ret, "HttpEndRequestA succeeded\n" );
@@ -3431,7 +3498,8 @@ static void test_async_HttpSendRequestEx(const struct notification_data *nd)
 
     WaitForSingleObject( info.wait, 10000 );
 
-    setup_test( &info, internet_close_handle, __LINE__ );
+    setup_test( &info, internet_close_handle, __LINE__, ERROR_SUCCESS );
+ abort:
     InternetCloseHandle( req );
     InternetCloseHandle( con );
     InternetCloseHandle( ses );
@@ -3571,6 +3639,7 @@ START_TEST(http)
     test_open_url_async();
     test_async_HttpSendRequestEx(&notification_data[0]);
     test_async_HttpSendRequestEx(&notification_data[1]);
+    test_async_HttpSendRequestEx(&notification_data[2]);
     InternetOpenRequest_test();
     test_http_cache();
     InternetOpenUrlA_test();
