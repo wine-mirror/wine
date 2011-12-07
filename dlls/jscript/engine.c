@@ -182,12 +182,12 @@ static inline IDispatch *stack_pop_objid(exec_ctx_t *ctx, DISPID *id)
     return V_DISPATCH(stack_pop(ctx));
 }
 
-static inline IDispatch *stack_top_objid(exec_ctx_t *ctx, DISPID *id)
+static inline IDispatch *stack_topn_objid(exec_ctx_t *ctx, unsigned n, DISPID *id)
 {
-    assert(V_VT(stack_top(ctx)) == VT_INT && V_VT(stack_topn(ctx, 1)) == VT_DISPATCH);
+    assert(V_VT(stack_topn(ctx, n)) == VT_INT && V_VT(stack_topn(ctx, n+1)) == VT_DISPATCH);
 
-    *id = V_INT(stack_top(ctx));
-    return V_DISPATCH(stack_topn(ctx, 1));
+    *id = V_INT(stack_topn(ctx, n));
+    return V_DISPATCH(stack_topn(ctx, n+1));
 }
 
 static void exprval_release(exprval_t *val)
@@ -1638,13 +1638,14 @@ static HRESULT interp_member(exec_ctx_t *ctx)
 /* ECMA-262 3rd Edition    11.2.1 */
 static HRESULT interp_memberid(exec_ctx_t *ctx)
 {
+    const unsigned arg = ctx->parser->code->instrs[ctx->ip].arg1.lng;
     VARIANT *objv, *namev;
     IDispatch *obj;
     BSTR name;
     DISPID id;
     HRESULT hres;
 
-    TRACE("\n");
+    TRACE("%x\n", arg);
 
     namev = stack_pop(ctx);
     objv = stack_pop(ctx);
@@ -1660,11 +1661,16 @@ static HRESULT interp_memberid(exec_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    hres = disp_get_id(ctx->parser->script, obj, name, fdexNameEnsure, &id);
+    hres = disp_get_id(ctx->parser->script, obj, name, arg, &id);
     SysFreeString(name);
     if(FAILED(hres)) {
         IDispatch_Release(obj);
-        return hres;
+        if(hres == DISP_E_UNKNOWNNAME && !(arg & fdexNameEnsure)) {
+            obj = NULL;
+            id = JS_E_INVALID_PROPERTY;
+        }else {
+            return hres;
+        }
     }
 
     return stack_push_objid(ctx, obj, id);
@@ -1680,7 +1686,7 @@ static HRESULT interp_refval(exec_ctx_t *ctx)
 
     TRACE("\n");
 
-    disp = stack_top_objid(ctx, &id);
+    disp = stack_topn_objid(ctx, 0, &id);
     if(!disp)
         return throw_reference_error(ctx->parser->script, &ctx->ei, JS_E_ILLEGAL_ASSIGN, NULL);
 
@@ -1817,9 +1823,7 @@ HRESULT call_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags
                 hres = throw_type_error(ctx, ei, JS_E_INVALID_PROPERTY, NULL);
             break;
         case EXPRVAL_IDREF:
-            hres = disp_call(ctx, exprval.u.idref.disp, exprval.u.idref.id,
-                    DISPATCH_METHOD, &dp, flags & EXPR_NOVAL ? NULL : &var, ei, NULL/*FIXME*/);
-            break;
+            assert(0);
         case EXPRVAL_INVALID:
             hres = throw_type_error(ctx, ei, JS_E_OBJECT_EXPECTED, NULL);
             break;
@@ -1843,6 +1847,33 @@ HRESULT call_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags
         ret->u.var = var;
     }
     return S_OK;
+}
+
+/* ECMA-262 3rd Edition    11.2.3 */
+static HRESULT interp_call_member(exec_ctx_t *ctx)
+{
+    const unsigned argn = ctx->parser->code->instrs[ctx->ip].arg1.uint;
+    const int do_ret = ctx->parser->code->instrs[ctx->ip].arg2.lng;
+    IDispatch *obj;
+    DISPPARAMS dp;
+    VARIANT v;
+    DISPID id;
+    HRESULT hres;
+
+    TRACE("%d %d\n", argn, do_ret);
+
+    obj = stack_topn_objid(ctx, argn, &id);
+    if(!obj)
+        return throw_type_error(ctx->parser->script, &ctx->ei, id, NULL);
+
+    jsstack_to_dp(ctx, argn, &dp);
+    hres = disp_call(ctx->parser->script, obj, id, DISPATCH_METHOD, &dp, do_ret ? &v : NULL, &ctx->ei, NULL/*FIXME*/);
+    if(FAILED(hres))
+        return hres;
+
+    stack_popn(ctx, argn+2);
+    return do_ret ? stack_push(ctx, &v) : S_OK;
+
 }
 
 /* ECMA-262 3rd Edition    11.1.1 */
@@ -1903,19 +1934,20 @@ static HRESULT interp_ident(exec_ctx_t *ctx)
 static HRESULT interp_identid(exec_ctx_t *ctx)
 {
     const BSTR arg = ctx->parser->code->instrs[ctx->ip].arg1.bstr;
+    const unsigned flags = ctx->parser->code->instrs[ctx->ip].arg2.uint;
     exprval_t exprval;
     HRESULT hres;
 
-    TRACE("%s\n", debugstr_w(arg));
+    TRACE("%s %x\n", debugstr_w(arg), flags);
 
-    hres = identifier_eval(ctx->parser->script, arg, EXPR_NEWREF, &ctx->ei, &exprval);
+    hres = identifier_eval(ctx->parser->script, arg, (flags&fdexNameEnsure) ? EXPR_NEWREF : 0, &ctx->ei, &exprval);
     if(FAILED(hres))
         return hres;
 
     if(exprval.type != EXPRVAL_IDREF) {
         WARN("invalid ref\n");
         exprval_release(&exprval);
-        return stack_push_objid(ctx, NULL, -1);
+        return stack_push_objid(ctx, NULL, JS_E_OBJECT_EXPECTED);
     }
 
     return stack_push_objid(ctx, exprval.u.idref.disp, exprval.u.idref.id);
@@ -3437,10 +3469,13 @@ static HRESULT interp_expression_eval(script_ctx_t *ctx, expression_t *expr, DWO
         return hres;
     }
 
-    assert(exec_ctx->top == prev_top+1);
+    assert(exec_ctx->top == prev_top+1 || ((flags&EXPR_NOVAL) && exec_ctx->top == prev_top));
 
     ret->type = EXPRVAL_VARIANT;
-    ret->u.var = *stack_pop(exec_ctx);
+    if(exec_ctx->top == prev_top)
+        V_VT(&ret->u.var) = VT_EMPTY;
+    else
+        ret->u.var = *stack_pop(exec_ctx);
     return S_OK;
 }
 
@@ -3450,7 +3485,7 @@ HRESULT compiled_expression_eval(script_ctx_t *ctx, expression_t *expr, DWORD fl
 
     TRACE("\n");
 
-    hres = compile_subscript(ctx->exec_ctx->parser, expr, &expr->instr_off);
+    hres = compile_subscript(ctx->exec_ctx->parser, expr, !(flags & EXPR_NOVAL), &expr->instr_off);
     if(FAILED(hres))
         return hres;
 

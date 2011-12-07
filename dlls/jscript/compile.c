@@ -154,6 +154,24 @@ static HRESULT push_instr_bstr(compiler_ctx_t *ctx, jsop_t op, const WCHAR *arg)
     return S_OK;
 }
 
+static HRESULT push_instr_bstr_uint(compiler_ctx_t *ctx, jsop_t op, const WCHAR *arg1, unsigned arg2)
+{
+    unsigned instr;
+    WCHAR *str;
+
+    str = compiler_alloc_bstr(ctx, arg1);
+    if(!str)
+        return E_OUTOFMEMORY;
+
+    instr = push_instr(ctx, op);
+    if(instr == -1)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, instr)->arg1.bstr = str;
+    instr_ptr(ctx, instr)->arg2.uint = arg2;
+    return S_OK;
+}
+
 static HRESULT push_instr_double(compiler_ctx_t *ctx, jsop_t op, double arg)
 {
     unsigned instr;
@@ -220,6 +238,58 @@ static HRESULT compile_member_expression(compiler_ctx_t *ctx, member_expression_
         return hres;
 
     return push_instr_bstr(ctx, OP_member, expr->identifier);
+}
+
+static inline BOOL is_memberid_expr(expression_type_t type)
+{
+    return type == EXPR_IDENT || type == EXPR_MEMBER || type == EXPR_ARRAY;
+}
+
+static HRESULT compile_memberid_expression(compiler_ctx_t *ctx, expression_t *expr, unsigned flags)
+{
+    HRESULT hres = S_OK;
+
+    switch(expr->type) {
+    case EXPR_IDENT: {
+        identifier_expression_t *ident_expr = (identifier_expression_t*)expr;
+
+        hres = push_instr_bstr_uint(ctx, OP_identid, ident_expr->identifier, flags);
+        break;
+    }
+    case EXPR_ARRAY: {
+        array_expression_t *array_expr = (array_expression_t*)expr;
+
+        hres = compile_expression(ctx, array_expr->member_expr);
+        if(FAILED(hres))
+            return hres;
+
+        hres = compile_expression(ctx, array_expr->expression);
+        if(FAILED(hres))
+            return hres;
+
+        hres = push_instr_uint(ctx, OP_memberid, flags);
+        break;
+    }
+    case EXPR_MEMBER: {
+        member_expression_t *member_expr = (member_expression_t*)expr;
+
+        hres = compile_expression(ctx, member_expr->expression);
+        if(FAILED(hres))
+            return hres;
+
+        /* FIXME: Potential optimization */
+        hres = push_instr_str(ctx, OP_str, member_expr->identifier);
+        if(FAILED(hres))
+            return hres;
+
+        hres = push_instr_uint(ctx, OP_memberid, flags);
+        break;
+    }
+    default:
+        assert(0);
+    }
+
+    return hres;
 }
 
 /* ECMA-262 3rd Edition    11.14 */
@@ -325,6 +395,40 @@ static HRESULT compile_interp_fallback(compiler_ctx_t *ctx, expression_t *expr)
     return S_OK;
 }
 
+static HRESULT compile_call_expression(compiler_ctx_t *ctx, call_expression_t *expr, BOOL *no_ret)
+{
+    unsigned arg_cnt = 0;
+    argument_t *arg;
+    unsigned instr;
+    HRESULT hres;
+
+    if(!is_memberid_expr(expr->expression->type)) {
+        expr->expr.eval = call_expression_eval;
+        return compile_interp_fallback(ctx, &expr->expr);
+    }
+
+    hres = compile_memberid_expression(ctx, expr->expression, 0);
+    if(FAILED(hres))
+        return hres;
+
+    for(arg = expr->argument_list; arg; arg = arg->next) {
+        hres = compile_expression(ctx, arg->expr);
+        if(FAILED(hres))
+            return hres;
+        arg_cnt++;
+    }
+
+    instr = push_instr(ctx, OP_call_member);
+    if(instr == -1)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, instr)->arg1.uint = arg_cnt;
+    instr_ptr(ctx, instr)->arg2.lng = no_ret == NULL;
+    if(no_ret)
+        *no_ret = TRUE;
+    return S_OK;
+}
+
 static HRESULT compile_delete_expression(compiler_ctx_t *ctx, unary_expression_t *expr)
 {
     HRESULT hres;
@@ -373,47 +477,7 @@ static HRESULT compile_assign_expression(compiler_ctx_t *ctx, binary_expression_
 {
     HRESULT hres;
 
-    switch(expr->expression1->type) {
-    case EXPR_IDENT: {
-        identifier_expression_t *ident_expr = (identifier_expression_t*)expr->expression1;
-
-        hres = push_instr_bstr(ctx, OP_identid, ident_expr->identifier);
-        if(FAILED(hres))
-            return hres;
-        break;
-    }
-    case EXPR_ARRAY: {
-        array_expression_t *array_expr = (array_expression_t*)expr->expression1;
-
-        hres = compile_expression(ctx, array_expr->member_expr);
-        if(FAILED(hres))
-            return hres;
-
-        hres = compile_expression(ctx, array_expr->expression);
-        if(FAILED(hres))
-            return hres;
-
-        if(push_instr(ctx, OP_memberid) == -1)
-            return E_OUTOFMEMORY;
-        break;
-    }
-    case EXPR_MEMBER: {
-        member_expression_t *member_expr = (member_expression_t*)expr->expression1;
-
-        hres = compile_expression(ctx, member_expr->expression);
-        if(FAILED(hres))
-            return hres;
-
-        /* FIXME: Potential optimization */
-        hres = push_instr_str(ctx, OP_str, member_expr->identifier);
-        if(FAILED(hres))
-            return hres;
-
-        if(push_instr(ctx, OP_memberid) == -1)
-            return E_OUTOFMEMORY;
-        break;
-    }
-    default:
+    if(!is_memberid_expr(expr->expression1->type)) {
         hres = compile_expression(ctx, expr->expression1);
         if(FAILED(hres))
             return hres;
@@ -427,6 +491,10 @@ static HRESULT compile_assign_expression(compiler_ctx_t *ctx, binary_expression_
 
         return push_instr_uint(ctx, OP_throw, JS_E_ILLEGAL_ASSIGN);
     }
+
+    hres = compile_memberid_expression(ctx, expr->expression1, fdexNameEnsure);
+    if(FAILED(hres))
+        return hres;
 
     if(op != OP_LAST && push_instr(ctx, OP_refval) == -1)
         return E_OUTOFMEMORY;
@@ -480,7 +548,7 @@ static HRESULT compile_literal(compiler_ctx_t *ctx, literal_t *literal)
     }
 }
 
-static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
+static HRESULT compile_expression_noret(compiler_ctx_t *ctx, expression_t *expr, BOOL *no_ret)
 {
     switch(expr->type) {
     case EXPR_ADD:
@@ -507,6 +575,8 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_bneg);
     case EXPR_BOR:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_or);
+    case EXPR_CALL:
+        return compile_call_expression(ctx, (call_expression_t*)expr, no_ret);
     case EXPR_COMMA:
         return compile_comma_expression(ctx, (binary_expression_t*)expr);
     case EXPR_COND:
@@ -569,6 +639,11 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
     return S_OK;
 }
 
+static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
+{
+    return compile_expression_noret(ctx, expr, NULL);
+}
+
 void release_bytecode(bytecode_t *code)
 {
     unsigned i;
@@ -587,8 +662,9 @@ void release_compiler(compiler_ctx_t *ctx)
     heap_free(ctx);
 }
 
-HRESULT compile_subscript(parser_ctx_t *parser, expression_t *expr, unsigned *ret_off)
+HRESULT compile_subscript(parser_ctx_t *parser, expression_t *expr, BOOL do_ret, unsigned *ret_off)
 {
+    BOOL no_ret = FALSE;
     HRESULT hres;
 
     if(!parser->code) {
@@ -608,7 +684,7 @@ HRESULT compile_subscript(parser_ctx_t *parser, expression_t *expr, unsigned *re
     }
 
     *ret_off = parser->compiler->code_off;
-    hres = compile_expression(parser->compiler, expr);
+    hres = compile_expression_noret(parser->compiler, expr, do_ret ? NULL : &no_ret);
     if(FAILED(hres))
         return hres;
 

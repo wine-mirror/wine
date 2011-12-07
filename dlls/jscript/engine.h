@@ -46,6 +46,7 @@ typedef struct _func_stack {
     X(assign,     1, 0,0)                  \
     X(bool,       1, ARG_INT,    0)        \
     X(bneg,       1, 0,0)                  \
+    X(call_member,1, ARG_UINT,   ARG_UINT) \
     X(delete,     1, 0,0)                  \
     X(div,        1, 0,0)                  \
     X(double,     1, ARG_SBL,    0)        \
@@ -54,7 +55,7 @@ typedef struct _func_stack {
     X(gt,         1, 0,0)                  \
     X(gteq,       1, 0,0)                  \
     X(ident,      1, ARG_BSTR,   0)        \
-    X(identid,    1, ARG_BSTR,   0)        \
+    X(identid,    1, ARG_BSTR,   ARG_INT)  \
     X(in,         1, 0,0)                  \
     X(int,        1, ARG_INT,    0)        \
     X(jmp,        0, ARG_ADDR,   0)        \
@@ -63,7 +64,7 @@ typedef struct _func_stack {
     X(lt,         1, 0,0)                  \
     X(lteq,       1, 0,0)                  \
     X(member,     1, ARG_BSTR,   0)        \
-    X(memberid,   1, 0,0)                  \
+    X(memberid,   1, ARG_UINT,   0)        \
     X(minus,      1, 0,0)                  \
     X(mod,        1, 0,0)                  \
     X(mul,        1, 0,0)                  \
@@ -580,4 +581,4 @@ HRESULT assign_and_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*
 
 HRESULT compiled_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 
-HRESULT compile_subscript(parser_ctx_t*,expression_t*,unsigned*) DECLSPEC_HIDDEN;
+HRESULT compile_subscript(parser_ctx_t*,expression_t*,BOOL,unsigned*) DECLSPEC_HIDDEN;

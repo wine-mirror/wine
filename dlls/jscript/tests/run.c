@@ -729,7 +729,7 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
         ok(wFlags == INVOKE_FUNC, "wFlags = %x\n", wFlags);
         ok(pdp != NULL, "pdp == NULL\n");
-        todo_wine ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
         ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
         ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
         ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
