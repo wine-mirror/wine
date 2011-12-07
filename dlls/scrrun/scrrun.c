@@ -21,9 +21,14 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "ole2.h"
+#include "rpcproxy.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(scrrun);
+
+static HINSTANCE scrrun_instance;
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
@@ -35,6 +40,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
             return FALSE;    /* prefer native version */
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls( hinst );
+            scrrun_instance = hinst;
             break;
         case DLL_PROCESS_DETACH:
             break;
@@ -47,8 +53,8 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    FIXME("\n");
-    return S_OK;
+    TRACE("()\n");
+    return __wine_register_resources(scrrun_instance);
 }
 
 /***********************************************************************
@@ -56,6 +62,6 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    FIXME("\n");
-    return S_OK;
+    TRACE("()\n");
+    return __wine_unregister_resources(scrrun_instance);
 }

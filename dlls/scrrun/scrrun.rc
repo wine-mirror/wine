@@ -16,6 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/* @makedep: scrrun.rgs */
+1 WINE_REGISTRY scrrun.rgs
+
 #define WINE_FILEDESCRIPTION_STR "Wine ScrRun dll"
 #define WINE_FILENAME_STR "scrrun.dll"
 #define WINE_FILEVERSION 5,8,7600,16385

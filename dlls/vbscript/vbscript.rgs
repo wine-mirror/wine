@@ -56,7 +56,6 @@ HKCR
     {
         OLEScript
     }
-    ForceRemove '.vbs' = s 'VBSFile'
     ForceRemove VBSFile = s 'VBScript Script File'
     {
         ScriptEngine = s 'VBScript'

@@ -116,7 +116,6 @@ HKCR
         OLEScript
     }
 
-    ForceRemove '.js' = s 'JSFile'
     ForceRemove JSFile = s 'JScript Script File'
     {
         ScriptEngine = s 'JScript'
