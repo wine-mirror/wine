@@ -3302,7 +3302,11 @@ static void ShapeCharGlyphProp_BaseIndic( HDC hdc, ScriptCache *psc, SCRIPT_ANAL
                     break;
                 case lex_ZWJ:
                 case lex_ZWNJ:
-                    k = char_count;
+                    /* check for dangling joiners */
+                    if (pwcChars[char_index[k]-1] == 0x0020 || pwcChars[char_index[k]+1] == 0x0020)
+                        pGlyphProp[i].sva.fClusterStart = 1;
+                    else
+                        k = char_count;
                     break;
                 default:
                     pGlyphProp[i].sva.fClusterStart = 1;
