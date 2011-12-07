@@ -400,14 +400,17 @@ static HRESULT compile_call_expression(compiler_ctx_t *ctx, call_expression_t *e
     unsigned arg_cnt = 0;
     argument_t *arg;
     unsigned instr;
+    jsop_t op;
     HRESULT hres;
 
-    if(!is_memberid_expr(expr->expression->type)) {
-        expr->expr.eval = call_expression_eval;
-        return compile_interp_fallback(ctx, &expr->expr);
+    if(is_memberid_expr(expr->expression->type)) {
+        op = OP_call_member;
+        hres = compile_memberid_expression(ctx, expr->expression, 0);
+    }else {
+        op = OP_call;
+        hres = compile_expression(ctx, expr->expression);
     }
 
-    hres = compile_memberid_expression(ctx, expr->expression, 0);
     if(FAILED(hres))
         return hres;
 
@@ -418,7 +421,7 @@ static HRESULT compile_call_expression(compiler_ctx_t *ctx, call_expression_t *e
         arg_cnt++;
     }
 
-    instr = push_instr(ctx, OP_call_member);
+    instr = push_instr(ctx, op);
     if(instr == -1)
         return E_OUTOFMEMORY;
 

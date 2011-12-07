@@ -1697,55 +1697,6 @@ static HRESULT interp_refval(exec_ctx_t *ctx)
     return stack_push(ctx, &v);
 }
 
-static void free_dp(DISPPARAMS *dp)
-{
-    DWORD i;
-
-    for(i=0; i < dp->cArgs; i++)
-        VariantClear(dp->rgvarg+i);
-    heap_free(dp->rgvarg);
-}
-
-static HRESULT args_to_param(script_ctx_t *ctx, argument_t *args, jsexcept_t *ei, DISPPARAMS *dp)
-{
-    VARIANTARG *vargs;
-    exprval_t exprval;
-    argument_t *iter;
-    DWORD cnt = 0, i;
-    HRESULT hres = S_OK;
-
-    memset(dp, 0, sizeof(*dp));
-    if(!args)
-        return S_OK;
-
-    for(iter = args; iter; iter = iter->next)
-        cnt++;
-
-    vargs = heap_alloc_zero(cnt * sizeof(*vargs));
-    if(!vargs)
-        return E_OUTOFMEMORY;
-
-    for(i = cnt, iter = args; iter; iter = iter->next) {
-        hres = expr_eval(ctx, iter->expr, 0, ei, &exprval);
-        if(FAILED(hres))
-            break;
-
-        hres = exprval_to_value(ctx, &exprval, ei, vargs + (--i));
-        exprval_release(&exprval);
-        if(FAILED(hres))
-            break;
-    }
-
-    if(FAILED(hres)) {
-        free_dp(dp);
-        return hres;
-    }
-
-    dp->rgvarg = vargs;
-    dp->cArgs = cnt;
-    return S_OK;
-}
-
 static void jsstack_to_dp(exec_ctx_t *ctx, unsigned arg_cnt, DISPPARAMS *dp)
 {
     VARIANT tmp;
@@ -1798,55 +1749,29 @@ static HRESULT interp_new(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.2.3 */
-HRESULT call_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+static HRESULT interp_call(exec_ctx_t *ctx)
 {
-    call_expression_t *expr = (call_expression_t*)_expr;
-    VARIANT var;
-    exprval_t exprval;
+    const unsigned argn = ctx->parser->code->instrs[ctx->ip].arg1.uint;
+    const int do_ret = ctx->parser->code->instrs[ctx->ip].arg2.lng;
+    VARIANT v, *objv;
     DISPPARAMS dp;
     HRESULT hres;
 
-    TRACE("\n");
+    TRACE("%d %d\n", argn, do_ret);
 
-    hres = expr_eval(ctx, expr->expression, 0, ei, &exprval);
+    objv = stack_topn(ctx, argn);
+    if(V_VT(objv) != VT_DISPATCH)
+        return throw_type_error(ctx->parser->script, &ctx->ei, JS_E_INVALID_PROPERTY, NULL);
+
+    jsstack_to_dp(ctx, argn, &dp);
+    hres = disp_call(ctx->parser->script, V_DISPATCH(objv), DISPID_VALUE, DISPATCH_METHOD, &dp,
+            do_ret ? &v : NULL, &ctx->ei, NULL/*FIXME*/);
     if(FAILED(hres))
         return hres;
 
-    hres = args_to_param(ctx, expr->argument_list, ei, &dp);
-    if(SUCCEEDED(hres)) {
-        switch(exprval.type) {
-        case EXPRVAL_VARIANT:
-            if(V_VT(&exprval.u.var) == VT_DISPATCH)
-                hres = disp_call(ctx, V_DISPATCH(&exprval.u.var), DISPID_VALUE,
-                        DISPATCH_METHOD, &dp, flags & EXPR_NOVAL ? NULL : &var, ei, NULL/*FIXME*/);
-            else
-                hres = throw_type_error(ctx, ei, JS_E_INVALID_PROPERTY, NULL);
-            break;
-        case EXPRVAL_IDREF:
-            assert(0);
-        case EXPRVAL_INVALID:
-            hres = throw_type_error(ctx, ei, JS_E_OBJECT_EXPECTED, NULL);
-            break;
-        default:
-            FIXME("unimplemented type %d\n", exprval.type);
-            hres = E_NOTIMPL;
-        }
+    stack_popn(ctx, argn+1);
+    return do_ret ? stack_push(ctx, &v) : S_OK;
 
-        free_dp(&dp);
-    }
-
-    exprval_release(&exprval);
-    if(FAILED(hres))
-        return hres;
-
-    ret->type = EXPRVAL_VARIANT;
-    if(flags & EXPR_NOVAL) {
-        V_VT(&ret->u.var) = VT_EMPTY;
-    }else {
-        TRACE("= %s\n", debugstr_variant(&var));
-        ret->u.var = var;
-    }
-    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    11.2.3 */
