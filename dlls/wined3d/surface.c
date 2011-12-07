@@ -1983,7 +1983,7 @@ static void gdi_surface_map(struct wined3d_surface *surface, const RECT *rect, D
     TRACE("surface %p, rect %s, flags %#x.\n",
             surface, wine_dbgstr_rect(rect), flags);
 
-    if (!surface->resource.allocatedMemory)
+    if (!(surface->flags & SFLAG_DIBSECTION))
     {
         /* This happens on gdi surfaces if the application set a user pointer
          * and resets it. Recreate the DIB section. */
