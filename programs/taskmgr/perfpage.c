@@ -98,7 +98,6 @@ static void AdjustFrameSize(HWND hCntrl, HWND hDlg, int nXDifference, int nYDiff
     } else {
         cx = rc.left + nXDifference;
         cy = rc.top + nYDifference;
-        sx = sy = 0;
         SetWindowPos(hCntrl, NULL, cx, cy, 0, 0, SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOSIZE|SWP_NOZORDER);
     }
     InvalidateRect(hCntrl, NULL, TRUE);
