@@ -4977,6 +4977,12 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
     DWORD dwBufferSize;
     DWORD res = ERROR_SUCCESS;
 
+    if(!request->netconn) {
+        WARN("Not connected\n");
+        send_request_complete(request, 0, ERROR_INTERNET_OPERATION_CANCELLED);
+        return ERROR_INTERNET_OPERATION_CANCELLED;
+    }
+
     INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
                   INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
 
