@@ -3372,13 +3372,13 @@ static void test_async_HttpSendRequestEx(const struct notification_data *nd)
     pInternetSetStatusCallbackA( ses, check_notification );
 
     setup_test( &info, internet_connect, __LINE__ );
-    con = InternetConnect( ses, "crossover.codeweavers.com", 80, NULL, NULL, INTERNET_SERVICE_HTTP, 0, (DWORD_PTR)&info );
+    con = InternetConnect( ses, "test.winehq.org", 80, NULL, NULL, INTERNET_SERVICE_HTTP, 0, (DWORD_PTR)&info );
     ok( con != NULL, "InternetConnect failed %u\n", GetLastError() );
 
     WaitForSingleObject( info.wait, 10000 );
 
     setup_test( &info, http_open_request, __LINE__ );
-    req = HttpOpenRequest( con, "POST", "posttest.php", NULL, NULL, accept, 0, (DWORD_PTR)&info );
+    req = HttpOpenRequest( con, "POST", "tests/posttest.php", NULL, NULL, accept, 0, (DWORD_PTR)&info );
     ok( req != NULL, "HttpOpenRequest failed %u\n", GetLastError() );
 
     WaitForSingleObject( info.wait, 10000 );
