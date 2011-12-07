@@ -444,11 +444,28 @@ const char* CDECL _Getmonths(void)
 /*********************************************************************
  *		_Gettnames (MSVCRT.@)
  */
-const char* CDECL _Gettnames(void)
+void* CDECL _Gettnames(void)
 {
-  /* FIXME: */
-  TRACE("(void) stub\n");
-  return "";
+    MSVCRT___lc_time_data *ret, *cur = get_locinfo()->lc_time_curr;
+    int i, size = sizeof(MSVCRT___lc_time_data);
+
+    TRACE("\n");
+
+    for(i=0; i<sizeof(cur->str)/sizeof(cur->str[0]); i++)
+        size += strlen(cur->str[i])+1;
+
+    ret = MSVCRT_malloc(size);
+    if(!ret)
+        return NULL;
+    memcpy(ret, cur, size);
+
+    size = 0;
+    for(i=0; i<sizeof(cur->str)/sizeof(cur->str[0]); i++) {
+        ret->str[i] = &ret->data[size];
+        size += strlen(&ret->data[size])+1;
+    }
+
+    return ret;
 }
 
 /*********************************************************************
