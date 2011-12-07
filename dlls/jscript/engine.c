@@ -1561,6 +1561,46 @@ HRESULT array_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flag
 }
 
 /* ECMA-262 3rd Edition    11.2.1 */
+static HRESULT interp_array(exec_ctx_t *ctx)
+{
+    VARIANT v, *namev;
+    IDispatch *obj;
+    DISPID id;
+    BSTR name;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    namev = stack_pop(ctx);
+
+    hres = stack_pop_object(ctx, &obj);
+    if(FAILED(hres)) {
+        VariantClear(namev);
+        return hres;
+    }
+
+    hres = to_string(ctx->parser->script, namev, &ctx->ei, &name);
+    if(FAILED(hres)) {
+        IDispatch_Release(obj);
+        return hres;
+    }
+
+    hres = disp_get_id(ctx->parser->script, obj, name, 0, &id);
+    SysFreeString(name);
+    if(SUCCEEDED(hres)) {
+        hres = disp_propget(ctx->parser->script, obj, id, &v, &ctx->ei, NULL/*FIXME*/);
+    }else if(hres == DISP_E_UNKNOWNNAME) {
+        V_VT(&v) = VT_EMPTY;
+        hres = S_OK;
+    }
+    IDispatch_Release(obj);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push(ctx, &v);
+}
+
+/* ECMA-262 3rd Edition    11.2.1 */
 HRESULT member_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
     member_expression_t *expr = (member_expression_t*)_expr;
