@@ -77,6 +77,7 @@ typedef struct _func_stack {
     X(null,       1, 0,0)                  \
     X(or,         1, 0,0)                  \
     X(pop,        1, 0,0)                  \
+    X(postinc,    1, ARG_INT,    0)        \
     X(regexp,     1, ARG_STR,    ARG_INT)  \
     X(str,        1, ARG_STR,    0)        \
     X(this,       1, 0,0)                  \
@@ -562,7 +563,6 @@ HRESULT binary_and_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*
 HRESULT instanceof_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT delete_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT typeof_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
-HRESULT post_increment_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT post_decrement_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT pre_increment_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT pre_decrement_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;

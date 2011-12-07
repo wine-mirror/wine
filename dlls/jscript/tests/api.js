@@ -2031,6 +2031,9 @@ testException(function() {new nullDisp;}, "E_NO_PROPERTY");
 testException(function() {new VBArray();}, "E_NOT_VBARRAY");
 testException(function() {new VBArray(new VBArray(createArray()));}, "E_NOT_VBARRAY");
 testException(function() {VBArray.prototype.lbound.call(new Object());}, "E_NOT_VBARRAY");
+//FIXME: testException(function() {nonexistent++;}, "E_OBJECT_EXPECTED");
+//FIXME: testException(function() {undefined.nonexistent++;}, "E_OBJECT_EXPECTED");
+
 
 // SyntaxError tests
 function testSyntaxError(code, id) {
@@ -2087,6 +2090,10 @@ ok(tmp, "expr value assign not evaluated");
 tmp = "";
 testException(function() {(tmp = tmp+"1") = (tmp = tmp+"2");}, "E_ILLEGAL_ASSIGN");
 ok(tmp === "12", "assign evaluated in unexpected order");
+
+tmp = false;
+testException(function() { ((tmp = true) && false)++; }, "E_ILLEGAL_ASSIGN")
+ok(tmp, "incremented expression not evaluated");
 
 // RegExpError tests
 testException(function() {RegExp(/a/, "g");}, "E_REGEXP_SYNTAX_ERROR");
