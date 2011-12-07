@@ -1767,7 +1767,11 @@ HRESULT CDECL wined3d_surface_get_render_target_data(struct wined3d_surface *sur
 /* Context activation is done by the caller. */
 static void surface_remove_pbo(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
 {
-    if (!surface->resource.heapMemory)
+    if (surface->flags & SFLAG_DIBSECTION)
+    {
+        surface->resource.allocatedMemory = surface->dib.bitmap_data;
+    }
+    else if (!surface->resource.heapMemory)
     {
         surface->resource.heapMemory = HeapAlloc(GetProcessHeap(), 0, surface->resource.size + RESOURCE_ALIGNMENT);
         surface->resource.allocatedMemory = (BYTE *)(((ULONG_PTR)surface->resource.heapMemory
