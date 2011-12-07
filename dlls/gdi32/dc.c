@@ -585,11 +585,10 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         ERR( "no driver found for %s\n", debugstr_w(buf) );
         return 0;
     }
-    if (!(dc = alloc_dc_ptr( OBJ_DC ))) goto error;
+    if (!(dc = alloc_dc_ptr( OBJ_DC ))) return 0;
     hdc = dc->hSelf;
 
     dc->hBitmap = GDI_inc_ref_count( GetStockObject( DEFAULT_BITMAP ));
-    if (!(dc->hVisRgn = CreateRectRgn( 0, 0, 1, 1 ))) goto error;
 
     TRACE("(driver=%s, device=%s, output=%s): returning %p\n",
           debugstr_w(driver), debugstr_w(device), debugstr_w(output), dc->hSelf );
@@ -599,7 +598,8 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         if (!funcs->pCreateDC( &dc->physDev, buf, device, output, initData ))
         {
             WARN("creation aborted by device\n" );
-            goto error;
+            free_dc_ptr( dc );
+            return 0;
         }
     }
 
@@ -607,15 +607,10 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
     dc->vis_rect.top    = 0;
     dc->vis_rect.right  = GetDeviceCaps( hdc, DESKTOPHORZRES );
     dc->vis_rect.bottom = GetDeviceCaps( hdc, DESKTOPVERTRES );
-    SetRectRgn(dc->hVisRgn, dc->vis_rect.left, dc->vis_rect.top, dc->vis_rect.right, dc->vis_rect.bottom);
 
     DC_InitDC( dc );
     release_dc_ptr( dc );
     return hdc;
-
-error:
-    if (dc) free_dc_ptr( dc );
-    return 0;
 }
 
 
@@ -698,7 +693,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
         release_dc_ptr( origDC );
     }
 
-    if (!(dc = alloc_dc_ptr( OBJ_MEMDC ))) goto error;
+    if (!(dc = alloc_dc_ptr( OBJ_MEMDC ))) return 0;
 
     TRACE("(%p): returning %p\n", hdc, dc->hSelf );
 
@@ -707,22 +702,18 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
     dc->vis_rect.top    = 0;
     dc->vis_rect.right  = 1;
     dc->vis_rect.bottom = 1;
-    if (!(dc->hVisRgn = CreateRectRgn( 0, 0, 1, 1 ))) goto error;   /* default bitmap is 1x1 */
 
     ret = dc->hSelf;
 
     if (!funcs->pCreateCompatibleDC( physDev, &dc->physDev ))
     {
         WARN("creation aborted by device\n");
-        goto error;
+        free_dc_ptr( dc );
+        return 0;
     }
     DC_InitDC( dc );
     release_dc_ptr( dc );
     return ret;
-
-error:
-    if (dc) free_dc_ptr( dc );
-    return 0;
 }
 
 
@@ -790,8 +781,8 @@ HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
             dc->vis_rect.top    = 0;
             dc->vis_rect.right  = GetDeviceCaps( hdc, DESKTOPHORZRES );
             dc->vis_rect.bottom = GetDeviceCaps( hdc, DESKTOPVERTRES );
-            SetRectRgn( dc->hVisRgn, dc->vis_rect.left, dc->vis_rect.top,
-                        dc->vis_rect.right, dc->vis_rect.bottom );
+            if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
+            dc->hVisRgn = 0;
             CLIPPING_UpdateGCRegion( dc );
         }
         release_dc_ptr( dc );

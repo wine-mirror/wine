@@ -29,6 +29,16 @@
 WINE_DEFAULT_DEBUG_CHANNEL(clipping);
 
 
+/* return the DC visible rectangle if not empty */
+static inline BOOL get_dc_visrect( DC *dc, RECT *rect )
+{
+    rect->left = 0;
+    rect->top = 0;
+    rect->right = dc->vis_rect.right - dc->vis_rect.left;
+    rect->bottom = dc->vis_rect.bottom - dc->vis_rect.top;
+    return !is_rect_empty( rect );
+}
+
 /***********************************************************************
  *           get_clip_rect
  *
@@ -77,6 +87,7 @@ BOOL clip_visrect( DC *dc, RECT *dst, const RECT *src )
 void CLIPPING_UpdateGCRegion( DC * dc )
 {
     HRGN clip_rgn;
+    RECT visrect;
     PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetDeviceClipping );
 
     /* update the intersection of meta and clip regions */
@@ -91,10 +102,16 @@ void CLIPPING_UpdateGCRegion( DC * dc )
         dc->hMetaClipRgn = 0;
     }
     clip_rgn = get_clip_region( dc );
-    if (clip_rgn || dc->hVisRgn)
+    if (dc->hVisRgn)
     {
         if (!dc->region) dc->region = CreateRectRgn( 0, 0, 0, 0 );
         CombineRgn( dc->region, dc->hVisRgn, clip_rgn, clip_rgn ? RGN_AND : RGN_COPY );
+    }
+    else if (get_dc_visrect( dc, &visrect ))
+    {
+        if (!dc->region) dc->region = CreateRectRgn( 0, 0, 0, 0 );
+        SetRectRgn( dc->region, visrect.left, visrect.top, visrect.right, visrect.bottom );
+        if (clip_rgn) CombineRgn( dc->region, dc->region, clip_rgn, RGN_AND );
     }
     else
     {
@@ -272,7 +289,7 @@ void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect )
     /* map region to DC coordinates */
     OffsetRgn( hrgn, -vis_rect->left, -vis_rect->top );
 
-    DeleteObject( dc->hVisRgn );
+    if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
     dc->dirty = 0;
     dc->vis_rect = *vis_rect;
     dc->hVisRgn = hrgn;
@@ -476,7 +493,8 @@ INT WINAPI GetMetaRgn( HDC hdc, HRGN hRgn )
  */
 INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, INT iCode)
 {
-    HRGN rgn;
+    INT ret = 1;
+    RECT visrect;
     DC *dc = get_dc_ptr( hDC );
 
     if (!dc) return -1;
@@ -484,33 +502,37 @@ INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, INT iCode)
     switch (iCode)
     {
     case 1:
-        rgn = dc->hClipRgn;
+        if (dc->hClipRgn) CombineRgn( hRgn, dc->hClipRgn, 0, RGN_COPY );
+        else ret = 0;
         break;
     case 2:
-        rgn = dc->hMetaRgn;
+        if (dc->hMetaRgn) CombineRgn( hRgn, dc->hMetaRgn, 0, RGN_COPY );
+        else ret = 0;
         break;
     case 3:
-        rgn = dc->hMetaClipRgn;
-        if(!rgn) rgn = dc->hClipRgn;
-        if(!rgn) rgn = dc->hMetaRgn;
+        if (dc->hMetaClipRgn) CombineRgn( hRgn, dc->hMetaClipRgn, 0, RGN_COPY );
+        else if (dc->hClipRgn) CombineRgn( hRgn, dc->hClipRgn, 0, RGN_COPY );
+        else if (dc->hMetaRgn) CombineRgn( hRgn, dc->hMetaRgn, 0, RGN_COPY );
+        else ret = 0;
         break;
     case SYSRGN: /* == 4 */
         update_dc( dc );
-        rgn = dc->hVisRgn;
+        if (dc->hVisRgn)
+            CombineRgn( hRgn, dc->hVisRgn, 0, RGN_COPY );
+        else if (get_dc_visrect( dc, &visrect ))
+            SetRectRgn( hRgn, visrect.left, visrect.top, visrect.right, visrect.bottom );
+        else
+            ret = 0;
+        /* On Windows NT/2000, the SYSRGN returned is in screen coordinates */
+        if (ret && !(GetVersion() & 0x80000000)) OffsetRgn( hRgn, dc->vis_rect.left, dc->vis_rect.top );
         break;
     default:
         WARN("Unknown code %d\n", iCode);
-        release_dc_ptr( dc );
-        return -1;
+        ret = -1;
+        break;
     }
-    if (rgn) CombineRgn( hRgn, rgn, 0, RGN_COPY );
     release_dc_ptr( dc );
-
-    /* On Windows NT/2000, the SYSRGN returned is in screen coordinates */
-    if (iCode == SYSRGN && !(GetVersion() & 0x80000000))
-        OffsetRgn( hRgn, dc->vis_rect.left, dc->vis_rect.top );
-
-    return (rgn != 0);
+    return ret;
 }
 
 
