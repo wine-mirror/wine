@@ -341,11 +341,6 @@ static BOOL WineD3D_CreateFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
     }
 
     /* Make it the current GL context. */
-    if (!context_set_current(NULL))
-    {
-        ERR_(d3d_caps)("Failed to clear current D3D context.\n");
-    }
-
     if (!pwglMakeCurrent(ctx->dc, ctx->gl_ctx))
     {
         ERR_(d3d_caps)("Failed to make fake GL context current.\n");
