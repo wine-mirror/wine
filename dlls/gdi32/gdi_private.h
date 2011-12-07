@@ -227,7 +227,9 @@ static inline HRGN get_clip_region( DC * dc )
 /* Return the total DC region (if any) */
 static inline HRGN get_dc_region( DC *dc )
 {
-    return dc->region;
+    if (dc->region) return dc->region;
+    if (dc->hVisRgn) return dc->hVisRgn;
+    return get_clip_region( dc );
 }
 
 /* dc.c */

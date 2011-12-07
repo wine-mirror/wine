@@ -71,12 +71,11 @@ BOOL clip_visrect( DC *dc, RECT *dst, const RECT *src )
 {
     RECT clip;
 
-    if (!GetRgnBox( get_dc_region(dc), &clip ))
-    {
-        *dst = *src;
-        return !is_rect_empty( dst );
-    }
-    return intersect_rect( dst, src, &clip );
+    if (get_dc_visrect( dc, &clip )) intersect_rect( dst, src, &clip );
+    else *dst = *src;
+
+    if (GetRgnBox( get_dc_region(dc), &clip )) intersect_rect( dst, dst, &clip );
+    return !is_rect_empty( dst );
 }
 
 /***********************************************************************
@@ -87,7 +86,6 @@ BOOL clip_visrect( DC *dc, RECT *dst, const RECT *src )
 void CLIPPING_UpdateGCRegion( DC * dc )
 {
     HRGN clip_rgn;
-    RECT visrect;
     PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetDeviceClipping );
 
     /* update the intersection of meta and clip regions */
@@ -102,23 +100,17 @@ void CLIPPING_UpdateGCRegion( DC * dc )
         dc->hMetaClipRgn = 0;
     }
     clip_rgn = get_clip_region( dc );
-    if (dc->hVisRgn)
+    if (clip_rgn && dc->hVisRgn)
     {
         if (!dc->region) dc->region = CreateRectRgn( 0, 0, 0, 0 );
         CombineRgn( dc->region, dc->hVisRgn, clip_rgn, clip_rgn ? RGN_AND : RGN_COPY );
-    }
-    else if (get_dc_visrect( dc, &visrect ))
-    {
-        if (!dc->region) dc->region = CreateRectRgn( 0, 0, 0, 0 );
-        SetRectRgn( dc->region, visrect.left, visrect.top, visrect.right, visrect.bottom );
-        if (clip_rgn) CombineRgn( dc->region, dc->region, clip_rgn, RGN_AND );
     }
     else
     {
         if (dc->region) DeleteObject( dc->region );
         dc->region = 0;
     }
-    physdev->funcs->pSetDeviceClipping( physdev, dc->region );
+    physdev->funcs->pSetDeviceClipping( physdev, get_dc_region( dc ));
 }
 
 /***********************************************************************
@@ -132,11 +124,8 @@ static inline void create_default_clip_region( DC * dc )
 
     if (dc->header.type == OBJ_MEMDC)
     {
-        BITMAP bitmap;
-
-        GetObjectW( dc->hBitmap, sizeof(bitmap), &bitmap );
-        width = bitmap.bmWidth;
-        height = bitmap.bmHeight;
+        width = dc->vis_rect.right - dc->vis_rect.left;
+        height = dc->vis_rect.bottom - dc->vis_rect.top;
     }
     else
     {
@@ -369,6 +358,7 @@ INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom 
 BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
 {
     POINT pt;
+    RECT visrect;
     BOOL ret;
     DC *dc = get_dc_ptr( hdc );
 
@@ -379,7 +369,10 @@ BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
     pt.y = y;
     LPtoDP( hdc, &pt, 1 );
     update_dc( dc );
-    ret = PtInRegion( get_dc_region(dc), pt.x, pt.y );
+    ret = (get_dc_visrect( dc, &visrect ) &&
+           pt.x >= visrect.left && pt.x < visrect.right &&
+           pt.y >= visrect.top && pt.y < visrect.bottom);
+    if (ret && get_dc_region( dc )) ret = PtInRegion( get_dc_region( dc ), pt.x, pt.y );
     release_dc_ptr( dc );
     return ret;
 }
@@ -390,7 +383,7 @@ BOOL WINAPI PtVisible( HDC hdc, INT x, INT y )
  */
 BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
 {
-    RECT tmpRect;
+    RECT tmpRect, visrect;
     BOOL ret;
     DC *dc = get_dc_ptr( hdc );
     if (!dc) return FALSE;
@@ -400,7 +393,8 @@ BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
     LPtoDP( hdc, (POINT *)&tmpRect, 2 );
 
     update_dc( dc );
-    ret = RectInRegion( get_dc_region(dc), &tmpRect );
+    ret = (get_dc_visrect( dc, &visrect ) && intersect_rect( &visrect, &visrect, &tmpRect ));
+    if (ret && get_dc_region( dc )) ret = RectInRegion( get_dc_region( dc ), &tmpRect );
     release_dc_ptr( dc );
     return ret;
 }
@@ -411,12 +405,20 @@ BOOL WINAPI RectVisible( HDC hdc, const RECT* rect )
  */
 INT WINAPI GetClipBox( HDC hdc, LPRECT rect )
 {
+    RECT visrect;
     INT ret;
     DC *dc = get_dc_ptr( hdc );
     if (!dc) return ERROR;
 
     update_dc( dc );
-    ret = GetRgnBox( get_dc_region(dc), rect );
+    if (get_dc_region( dc ))
+    {
+        ret = GetRgnBox( get_dc_region( dc ), rect );
+        if (get_dc_visrect( dc, &visrect ) && !intersect_rect( rect, rect, &visrect ))
+            ret = NULLREGION;
+    }
+    else ret = get_dc_visrect( dc, rect ) ? SIMPLEREGION : NULLREGION;
+
     if (dc->layout & LAYOUT_RTL)
     {
         int tmp = rect->left;
