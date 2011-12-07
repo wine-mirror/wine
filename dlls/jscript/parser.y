@@ -1323,7 +1323,7 @@ static const expression_eval_t expression_eval_table[] = {
    compiled_expression_eval,
    compiled_expression_eval,
    compiled_expression_eval,
-   post_decrement_expression_eval,
+   compiled_expression_eval,
    pre_increment_expression_eval,
    pre_decrement_expression_eval,
    compiled_expression_eval,

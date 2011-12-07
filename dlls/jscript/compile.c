@@ -292,7 +292,7 @@ static HRESULT compile_memberid_expression(compiler_ctx_t *ctx, expression_t *ex
     return hres;
 }
 
-static HRESULT compile_increment_expression(compiler_ctx_t *ctx, unary_expression_t *expr)
+static HRESULT compile_increment_expression(compiler_ctx_t *ctx, unary_expression_t *expr, int n)
 {
     HRESULT hres;
 
@@ -308,7 +308,7 @@ static HRESULT compile_increment_expression(compiler_ctx_t *ctx, unary_expressio
     if(FAILED(hres))
         return hres;
 
-    return push_instr_int(ctx, OP_postinc, 1);
+    return push_instr_int(ctx, OP_postinc, n);
 }
 
 /* ECMA-262 3rd Edition    11.14 */
@@ -647,8 +647,10 @@ static HRESULT compile_expression_noret(compiler_ctx_t *ctx, expression_t *expr,
         return compile_logical_expression(ctx, (binary_expression_t*)expr, OP_jmp_nz);
     case EXPR_PLUS:
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_tonum);
+    case EXPR_POSTDEC:
+        return compile_increment_expression(ctx, (unary_expression_t*)expr, -1);
     case EXPR_POSTINC:
-        return compile_increment_expression(ctx, (unary_expression_t*)expr);
+        return compile_increment_expression(ctx, (unary_expression_t*)expr, 1);
     case EXPR_SUB:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_sub);
     case EXPR_THIS:
