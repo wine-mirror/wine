@@ -242,7 +242,7 @@ void DC_InitDC( DC* dc )
     SelectObject( dc->hSelf, dc->hPen );
     SelectObject( dc->hSelf, dc->hBrush );
     SelectObject( dc->hSelf, dc->hFont );
-    CLIPPING_UpdateGCRegion( dc );
+    update_dc_clipping( dc );
     SetVirtualResolution( dc->hSelf, 0, 0, 0, 0 );
 }
 
@@ -490,7 +490,7 @@ BOOL nulldrv_RestoreDC( PHYSDEV dev, INT level )
         dc->hMetaRgn = 0;
     }
     DC_UpdateXforms( dc );
-    CLIPPING_UpdateGCRegion( dc );
+    update_dc_clipping( dc );
 
     SelectObject( dev->hdc, dcs->hBitmap );
     SelectObject( dev->hdc, dcs->hBrush );
@@ -780,7 +780,7 @@ HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
             dc->vis_rect.bottom = GetDeviceCaps( hdc, DESKTOPVERTRES );
             if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
             dc->hVisRgn = 0;
-            CLIPPING_UpdateGCRegion( dc );
+            update_dc_clipping( dc );
         }
         release_dc_ptr( dc );
     }

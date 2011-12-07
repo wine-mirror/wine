@@ -213,7 +213,7 @@ extern BOOL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void **bits,
 
 /* clipping.c */
 extern BOOL clip_visrect( DC *dc, RECT *dst, const RECT *src ) DECLSPEC_HIDDEN;
-extern void CLIPPING_UpdateGCRegion( DC * dc ) DECLSPEC_HIDDEN;
+extern void update_dc_clipping( DC * dc ) DECLSPEC_HIDDEN;
 
 /* Return the total DC region (if any) */
 static inline HRGN get_dc_region( DC *dc )

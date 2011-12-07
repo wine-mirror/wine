@@ -79,11 +79,11 @@ BOOL clip_visrect( DC *dc, RECT *dst, const RECT *src )
 }
 
 /***********************************************************************
- *           CLIPPING_UpdateGCRegion
+ *           update_dc_clipping
  *
- * Update the GC clip region when the ClipRgn or VisRgn have changed.
+ * Update the DC and device clip regions when the ClipRgn or VisRgn have changed.
  */
-void CLIPPING_UpdateGCRegion( DC * dc )
+void update_dc_clipping( DC * dc )
 {
     PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetDeviceClipping );
     HRGN regions[3];
@@ -171,7 +171,7 @@ INT nulldrv_ExtSelectClipRgn( PHYSDEV dev, HRGN rgn, INT mode )
 
         if (mirrored) DeleteObject( mirrored );
     }
-    CLIPPING_UpdateGCRegion( dc );
+    update_dc_clipping( dc );
     return ret;
 }
 
@@ -186,7 +186,7 @@ INT nulldrv_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bott
     if (!dc->hClipRgn) create_default_clip_region( dc );
     ret = CombineRgn( dc->hClipRgn, dc->hClipRgn, rgn, RGN_DIFF );
     DeleteObject( rgn );
-    if (ret != ERROR) CLIPPING_UpdateGCRegion( dc );
+    if (ret != ERROR) update_dc_clipping( dc );
     return ret;
 }
 
@@ -208,7 +208,7 @@ INT nulldrv_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bo
         ret = CombineRgn( dc->hClipRgn, dc->hClipRgn, rgn, RGN_AND );
         DeleteObject( rgn );
     }
-    if (ret != ERROR) CLIPPING_UpdateGCRegion( dc );
+    if (ret != ERROR) update_dc_clipping( dc );
     return ret;
 }
 
@@ -223,7 +223,7 @@ INT nulldrv_OffsetClipRgn( PHYSDEV dev, INT x, INT y )
         y = MulDiv( y, dc->vportExtY, dc->wndExtY );
         if (dc->layout & LAYOUT_RTL) x = -x;
         ret = OffsetRgn( dc->hClipRgn, x, y );
-	CLIPPING_UpdateGCRegion( dc );
+	update_dc_clipping( dc );
     }
     return ret;
 }
@@ -277,7 +277,7 @@ void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect )
     dc->vis_rect = *vis_rect;
     dc->hVisRgn = hrgn;
     DC_UpdateXforms( dc );
-    CLIPPING_UpdateGCRegion( dc );
+    update_dc_clipping( dc );
     release_dc_ptr( dc );
 }
 
@@ -560,7 +560,7 @@ INT WINAPI SetMetaRgn( HDC hdc )
     }
     /* else nothing to do */
 
-    /* Note: no need to call CLIPPING_UpdateGCRegion, the overall clip region hasn't changed */
+    /* Note: no need to call update_dc_clipping, the overall clip region hasn't changed */
 
     ret = GetRgnBox( dc->hMetaRgn, &dummy );
     release_dc_ptr( dc );
