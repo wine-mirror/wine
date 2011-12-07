@@ -634,6 +634,8 @@ void free_locinfo(MSVCRT_pthreadlocinfo locinfo)
     MSVCRT_free(locinfo->pclmap);
     MSVCRT_free(locinfo->pcumap);
 
+    MSVCRT_free(locinfo->lc_time_curr);
+
     MSVCRT_free(locinfo);
 }
 
@@ -677,6 +679,23 @@ void CDECL MSVCRT__free_locale(MSVCRT__locale_t locale)
 /* _create_locale - not exported in native msvcrt */
 MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
 {
+    static const DWORD time_data[] = {
+        LOCALE_SABBREVDAYNAME7, LOCALE_SABBREVDAYNAME1, LOCALE_SABBREVDAYNAME2,
+        LOCALE_SABBREVDAYNAME3, LOCALE_SABBREVDAYNAME4, LOCALE_SABBREVDAYNAME5,
+        LOCALE_SABBREVDAYNAME6,
+        LOCALE_SDAYNAME7, LOCALE_SDAYNAME1, LOCALE_SDAYNAME2, LOCALE_SDAYNAME3,
+        LOCALE_SDAYNAME4, LOCALE_SDAYNAME5, LOCALE_SDAYNAME6,
+        LOCALE_SABBREVMONTHNAME1, LOCALE_SABBREVMONTHNAME2, LOCALE_SABBREVMONTHNAME3,
+        LOCALE_SABBREVMONTHNAME4, LOCALE_SABBREVMONTHNAME5, LOCALE_SABBREVMONTHNAME6,
+        LOCALE_SABBREVMONTHNAME7, LOCALE_SABBREVMONTHNAME8, LOCALE_SABBREVMONTHNAME9,
+        LOCALE_SABBREVMONTHNAME10, LOCALE_SABBREVMONTHNAME11, LOCALE_SABBREVMONTHNAME12,
+        LOCALE_SMONTHNAME1, LOCALE_SMONTHNAME2, LOCALE_SMONTHNAME3, LOCALE_SMONTHNAME4,
+        LOCALE_SMONTHNAME5, LOCALE_SMONTHNAME6, LOCALE_SMONTHNAME7, LOCALE_SMONTHNAME8,
+        LOCALE_SMONTHNAME9, LOCALE_SMONTHNAME10, LOCALE_SMONTHNAME11, LOCALE_SMONTHNAME12,
+        LOCALE_S1159, LOCALE_S2359,
+        LOCALE_SSHORTDATE, LOCALE_SLONGDATE,
+        LOCALE_STIMEFORMAT
+    };
     static const char collate[] = "COLLATE=";
     static const char ctype[] = "CTYPE=";
     static const char monetary[] = "MONETARY=";
@@ -686,7 +705,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
     MSVCRT__locale_t loc;
     LCID lcid[6] = { 0 };
     char buf[256];
-    int i;
+    int i, ret, size;
 
     TRACE("(%d %s)\n", category, locale);
 
@@ -1124,6 +1143,44 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
     } else
         loc->locinfo->lc_category[MSVCRT_LC_TIME].locale = MSVCRT__strdup("C");
 
+    size = sizeof(MSVCRT___lc_time_data);
+    for(i=0; i<sizeof(time_data)/sizeof(time_data[0]); i++) {
+        ret = GetLocaleInfoA(lcid[MSVCRT_LC_TIME], time_data[i]
+                |LOCALE_NOUSEROVERRIDE, NULL, 0);
+        if(!ret) {
+            MSVCRT__free_locale(loc);
+            return NULL;
+        }
+        size += ret;
+
+        ret = GetLocaleInfoW(lcid[MSVCRT_LC_TIME], time_data[i]
+                |LOCALE_NOUSEROVERRIDE, NULL, 0);
+        if(!ret) {
+            MSVCRT__free_locale(loc);
+            return NULL;
+        }
+        size += ret*sizeof(MSVCRT_wchar_t);
+    }
+
+    loc->locinfo->lc_time_curr = MSVCRT_malloc(size);
+    if(!loc->locinfo->lc_time_curr) {
+        MSVCRT__free_locale(loc);
+        return NULL;
+    }
+
+    ret = 0;
+    for(i=0; i<sizeof(time_data)/sizeof(time_data[0]); i++) {
+        loc->locinfo->lc_time_curr->str[i] = &loc->locinfo->lc_time_curr->data[ret];
+        ret += GetLocaleInfoA(lcid[MSVCRT_LC_TIME], time_data[i]|LOCALE_NOUSEROVERRIDE,
+                &loc->locinfo->lc_time_curr->data[ret], size-ret);
+    }
+    for(i=0; i<sizeof(time_data)/sizeof(time_data[0]); i++) {
+        loc->locinfo->lc_time_curr->wstr[i] = (MSVCRT_wchar_t*)&loc->locinfo->lc_time_curr->data[ret];
+        ret += GetLocaleInfoW(lcid[MSVCRT_LC_TIME], time_data[i]|LOCALE_NOUSEROVERRIDE,
+                (MSVCRT_wchar_t*)&loc->locinfo->lc_time_curr->data[ret], size-ret)*sizeof(MSVCRT_wchar_t);
+    }
+    loc->locinfo->lc_time_curr->lcid = lcid[MSVCRT_LC_TIME];
+
     return loc;
 }
 
@@ -1248,6 +1305,8 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
                     (void**)&loc->locinfo->lc_category[MSVCRT_LC_TIME].locale);
             swap_pointers((void**)&locinfo->lc_category[MSVCRT_LC_TIME].refcount,
                     (void**)&loc->locinfo->lc_category[MSVCRT_LC_TIME].refcount);
+            swap_pointers((void**)&locinfo->lc_time_curr,
+                    (void**)&loc->locinfo->lc_time_curr);
 
             if(category != MSVCRT_LC_ALL)
                 break;

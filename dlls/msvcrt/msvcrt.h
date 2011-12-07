@@ -108,6 +108,25 @@ typedef struct MSVCRT_tagLC_ID {
     unsigned short wCodePage;
 } MSVCRT_LC_ID, *MSVCRT_LPLC_ID;
 
+typedef struct {
+    /* str table contains following strings:
+     * short weekday names [7];
+     * weekday names [7];
+     * short month names [12];
+     * month names [12];
+     * s1159 (AM);
+     * s2359 (PM);
+     * short date format;
+     * date format;
+     * time format;
+     */
+    char *str[43];
+    LCID lcid;
+    int  unk[2];
+    MSVCRT_wchar_t *wstr[43];
+    char data[1];
+} MSVCRT___lc_time_data;
+
 typedef struct MSVCRT_threadlocaleinfostruct {
     int refcount;
     unsigned int lc_codepage;
@@ -131,7 +150,7 @@ typedef struct MSVCRT_threadlocaleinfostruct {
     unsigned short *pctype;
     unsigned char *pclmap;
     unsigned char *pcumap;
-    struct MSVCRT___lc_time_data *lc_time_curr;
+    MSVCRT___lc_time_data *lc_time_curr;
 } MSVCRT_threadlocinfo;
 
 typedef struct MSVCRT_threadmbcinfostruct {
