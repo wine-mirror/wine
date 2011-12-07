@@ -106,7 +106,6 @@ typedef struct tagDC
     DWORD         layout;
     HRGN          hClipRgn;      /* Clip region */
     HRGN          hMetaRgn;      /* Meta region */
-    HRGN          hMetaClipRgn;  /* Intersection of meta and clip regions */
     HRGN          hVisRgn;       /* Visible region */
     HRGN          region;        /* Total DC region (intersection of clip and visible) */
     HPEN          hPen;
@@ -216,20 +215,13 @@ extern BOOL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void **bits,
 extern BOOL clip_visrect( DC *dc, RECT *dst, const RECT *src ) DECLSPEC_HIDDEN;
 extern void CLIPPING_UpdateGCRegion( DC * dc ) DECLSPEC_HIDDEN;
 
-/* Return the total clip region (if any) */
-static inline HRGN get_clip_region( DC * dc )
-{
-    if (dc->hMetaClipRgn) return dc->hMetaClipRgn;
-    if (dc->hMetaRgn) return dc->hMetaRgn;
-    return dc->hClipRgn;
-}
-
 /* Return the total DC region (if any) */
 static inline HRGN get_dc_region( DC *dc )
 {
     if (dc->region) return dc->region;
     if (dc->hVisRgn) return dc->hVisRgn;
-    return get_clip_region( dc );
+    if (dc->hClipRgn) return dc->hClipRgn;
+    return dc->hMetaRgn;
 }
 
 /* dc.c */

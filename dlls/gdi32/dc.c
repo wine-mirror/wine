@@ -138,7 +138,6 @@ static void free_dc_state( DC *dc )
 {
     if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
     if (dc->hMetaRgn) DeleteObject( dc->hMetaRgn );
-    if (dc->hMetaClipRgn) DeleteObject( dc->hMetaClipRgn );
     if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
     if (dc->region) DeleteObject( dc->region );
     if (dc->path) free_gdi_path( dc->path );
@@ -395,8 +394,6 @@ INT nulldrv_SaveDC( PHYSDEV dev )
         newdc->hMetaRgn = CreateRectRgn( 0, 0, 0, 0 );
         CombineRgn( newdc->hMetaRgn, dc->hMetaRgn, 0, RGN_COPY );
     }
-
-    /* don't bother recomputing hMetaClipRgn, we'll do that in SetDCState */
 
     if (!PATH_SavePath( newdc, dc ))
     {

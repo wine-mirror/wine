@@ -85,27 +85,21 @@ BOOL clip_visrect( DC *dc, RECT *dst, const RECT *src )
  */
 void CLIPPING_UpdateGCRegion( DC * dc )
 {
-    HRGN clip_rgn;
     PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetDeviceClipping );
+    HRGN regions[3];
+    int count = 0;
 
-    /* update the intersection of meta and clip regions */
-    if (dc->hMetaRgn && dc->hClipRgn)
-    {
-        if (!dc->hMetaClipRgn) dc->hMetaClipRgn = CreateRectRgn( 0, 0, 0, 0 );
-        CombineRgn( dc->hMetaClipRgn, dc->hClipRgn, dc->hMetaRgn, RGN_AND );
-    }
-    else  /* only one is set, no need for an intersection */
-    {
-        if (dc->hMetaClipRgn) DeleteObject( dc->hMetaClipRgn );
-        dc->hMetaClipRgn = 0;
-    }
-    clip_rgn = get_clip_region( dc );
-    if (clip_rgn && dc->hVisRgn)
+    if (dc->hVisRgn)  regions[count++] = dc->hVisRgn;
+    if (dc->hClipRgn) regions[count++] = dc->hClipRgn;
+    if (dc->hMetaRgn) regions[count++] = dc->hMetaRgn;
+
+    if (count > 1)
     {
         if (!dc->region) dc->region = CreateRectRgn( 0, 0, 0, 0 );
-        CombineRgn( dc->region, dc->hVisRgn, clip_rgn, clip_rgn ? RGN_AND : RGN_COPY );
+        CombineRgn( dc->region, regions[0], regions[1], RGN_AND );
+        if (count > 2) CombineRgn( dc->region, dc->region, regions[2], RGN_AND );
     }
-    else
+    else  /* only one region, we don't need the total region */
     {
         if (dc->region) DeleteObject( dc->region );
         dc->region = 0;
@@ -512,7 +506,7 @@ INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, INT iCode)
         else ret = 0;
         break;
     case 3:
-        if (dc->hMetaClipRgn) CombineRgn( hRgn, dc->hMetaClipRgn, 0, RGN_COPY );
+        if (dc->hClipRgn && dc->hMetaRgn) CombineRgn( hRgn, dc->hClipRgn, dc->hMetaRgn, RGN_AND );
         else if (dc->hClipRgn) CombineRgn( hRgn, dc->hClipRgn, 0, RGN_COPY );
         else if (dc->hMetaRgn) CombineRgn( hRgn, dc->hMetaRgn, 0, RGN_COPY );
         else ret = 0;
@@ -549,19 +543,20 @@ INT WINAPI SetMetaRgn( HDC hdc )
 
     if (!dc) return ERROR;
 
-    if (dc->hMetaClipRgn)
+    if (dc->hClipRgn)
     {
-        /* the intersection becomes the new meta region */
-        DeleteObject( dc->hMetaRgn );
-        DeleteObject( dc->hClipRgn );
-        dc->hMetaRgn = dc->hMetaClipRgn;
-        dc->hClipRgn = 0;
-        dc->hMetaClipRgn = 0;
-    }
-    else if (dc->hClipRgn)
-    {
-        dc->hMetaRgn = dc->hClipRgn;
-        dc->hClipRgn = 0;
+        if (dc->hMetaRgn)
+        {
+            /* the intersection becomes the new meta region */
+            CombineRgn( dc->hMetaRgn, dc->hMetaRgn, dc->hClipRgn, RGN_AND );
+            DeleteObject( dc->hClipRgn );
+            dc->hClipRgn = 0;
+        }
+        else
+        {
+            dc->hMetaRgn = dc->hClipRgn;
+            dc->hClipRgn = 0;
+        }
     }
     /* else nothing to do */
 
