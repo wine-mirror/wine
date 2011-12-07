@@ -838,7 +838,7 @@ static void handleExpansion(WCHAR *cmd, BOOL justFors,
     /* Replace use of %* if in batch program*/
     } else if (!justFors && context && *(p+1)=='*') {
       WCHAR *startOfParms = NULL;
-      t = WCMD_parameter(context -> command, 1, &startOfParms, NULL);
+      WCMD_parameter(context -> command, 1, &startOfParms, NULL);
       if (startOfParms != NULL)
         WCMD_strsubstW(p, p+2, startOfParms, -1);
       else
