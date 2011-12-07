@@ -419,13 +419,33 @@ MSVCRT_wchar_t* CDECL MSVCRT__wsetlocale(int category, const MSVCRT_wchar_t* loc
 /*********************************************************************
  *		_Getdays (MSVCRT.@)
  */
-const char* CDECL _Getdays(void)
+char* CDECL _Getdays(void)
 {
-  static const char MSVCRT_days[] = ":Sun:Sunday:Mon:Monday:Tue:Tuesday:Wed:"
-                            "Wednesday:Thu:Thursday:Fri:Friday:Sat:Saturday";
-  /* FIXME: Use locale */
-  TRACE("(void) semi-stub\n");
-  return MSVCRT_days;
+    MSVCRT___lc_time_data *cur = get_locinfo()->lc_time_curr;
+    int i, len, size;
+    char *out;
+
+    TRACE("\n");
+
+    size = cur->str[2*7]-cur->str[0];
+    out = MSVCRT_malloc(size+1);
+    if(!out)
+        return NULL;
+
+    size = 0;
+    for(i=0; i<7; i++) {
+        out[size++] = ':';
+        len = strlen(cur->str[i]);
+        memcpy(&out[size], cur->str[i], len);
+        size += len;
+
+        out[size++] = ':';
+        len = strlen(cur->str[7+i]);
+        memcpy(&out[size], cur->str[7+i], len);
+        size += len;
+    }
+
+    return out;
 }
 
 /*********************************************************************
