@@ -1,17 +1,21 @@
 # Polish translations for Wine
 #
+# Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-11-03 18:10+0100\n"
+"PO-Revision-Date: 2011-12-08 18:14+0100\n"
 "Last-Translator: Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: Polish\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Lokalize 1.2\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
 
 #: appwiz.rc:55
 msgid "Install/Uninstall"
@@ -117,7 +121,6 @@ msgid "Wine Gecko Installer"
 msgstr "Instalator Wine Gecko"
 
 #: appwiz.rc:100
-#, fuzzy
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
 "embedding HTML to work correctly. Wine can automatically download and "
@@ -128,11 +131,12 @@ msgid ""
 "details."
 msgstr ""
 "Nie znaleziono paczki Gecko potrzebnej do prawidłowego działania aplikacji "
-"zawierających kod HTML . Wine może automatycznie pobrać i zainstalować tą "
+"zawierających kod HTML. Wine może automatycznie pobrać i zainstalować tą "
 "paczkę dla ciebie.\n"
 "\n"
 "Uwaga: Lepiej jednak użyć paczki z twojej dystrybucji. Po szczegóły zajrzyj "
-"na http://wiki.winehq.org/Gecko."
+"na <a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> "
+"po szczegóły."
 
 #: appwiz.rc:106
 msgid "&Install"
@@ -784,14 +788,12 @@ msgid "&Open"
 msgstr "&Otwórz"
 
 #: comdlg32.rc:495
-#, fuzzy
 msgid "File name:"
-msgstr "&Nazwa pliku:"
+msgstr "Nazwa pliku:"
 
 #: comdlg32.rc:498
-#, fuzzy
 msgid "Files of type:"
-msgstr "&Pliki typu:"
+msgstr "Pliki typu:"
 
 #: comdlg32.rc:29
 msgid "&About FolderPicker Test"
@@ -983,13 +985,12 @@ msgid "Unreadable Entry"
 msgstr "Składnia zakresu stron jest nieprawidłowa."
 
 #: comdlg32.rc:68
-#, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
-"Ta wartość nie mieści się w zakresie stron.\n"
-"Wprowadź liczbę pomiędzy %d a %d."
+"Ta wartość nie leży w zakresie stron.\n"
+"Wprowadź wartość pomiędzy %1!d! i %2!d!.."
 
 #: comdlg32.rc:70
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -1049,9 +1050,8 @@ msgstr ""
 "zainstalowaniu spróbuj ponownie."
 
 #: comdlg32.rc:151
-#, fuzzy
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr "Wybierz czcionkę o rozmiarze pomiędzy %d a %d punktami."
+msgstr "Wybierz czcionkę o rozmiarze pomiędzy %1!d! i %2!d! punktami."
 
 #: comdlg32.rc:152 ieframe.rc:32
 msgid "&Save"
@@ -2217,7 +2217,6 @@ msgid "Welcome to the Certificate Import Wizard"
 msgstr "Witamy w kreatorze importu certyfikatów"
 
 #: cryptui.rc:283
-#, fuzzy
 msgid ""
 "This wizard helps you import certificates, certificate revocation lists, and "
 "certificate trust lists from a file to a certificate store.\n"
@@ -2229,10 +2228,16 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
-"Certyfikat może być użyty do identyfikacji ciebie lub komputera, z którym "
-"się komunikujesz.  Może być równiez użyty do uwierzytelnienia i podpisywania "
-"wiadomości. Magazyn certyfikatów jest zbiorem certyfikatów, list odwołania "
-"certyfikatu oraz list zaufania certyfikatu."
+"Asystent ten pomaga tobie importować certyfikaty, listy odwołania "
+"certyfikatów, i listy zaufania certyfikatów z pliku do magazynu "
+"certyfikatów.\n"
+"\n"
+"Certyfikat może zostać użyty do identyfikacji ciebie lub komputer, z którym "
+"się komunikujesz. Może on również zostać wykorzystany do uwierzytelnienia i "
+"do podpisywania wiadomości. Magazyny certyfikatów są zbiorem certyfikatów, "
+"list odwołań certyfikatów oraz list zaufań certyfikatów.\n"
+"\n"
+"Aby kontynuować, naciśnij Dalej."
 
 #: cryptui.rc:291 cryptui.rc:427
 msgid "&File name:"
@@ -2350,7 +2355,6 @@ msgid "Welcome to the Certificate Export Wizard"
 msgstr "Witamy w kreatorze eksportu certyfikatów"
 
 #: cryptui.rc:373
-#, fuzzy
 msgid ""
 "This wizard helps you export certificates, certificate revocation lists, and "
 "certificate trust lists from a certificate store to a file.\n"
@@ -2362,10 +2366,16 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
-"Certyfikat może być użyty do identyfikacji ciebie lub komputera, z którym "
-"się komunikujesz.  Może być równiez użyty do uwierzytelnienia i podpisywania "
-"wiadomości. Magazyn certyfikatów jest zbiorem certyfikatów, list odwołania "
-"certyfikatu oraz list zaufania certyfikatu."
+"Asystent ten pomaga tobie eksportować certyfikaty, listy odwołania "
+"certyfikatów, i listy zaufania certyfikatów z magazynu certyfikatów do "
+"pliku.\n"
+"\n"
+"Certyfikat może zostać użyty do identyfikacji ciebie lub komputer, z którym "
+"się komunikujesz. Może on również zostać wykorzystany do uwierzytelnienia i "
+"do podpisywania wiadomości. Magazyny certyfikatów są zbiorem certyfikatów, "
+"list odwołań certyfikatów oraz list zaufań certyfikatów.\n"
+"\n"
+"Aby kontynuować, naciśnij Dalej."
 
 #: cryptui.rc:381
 msgid ""
@@ -2570,9 +2580,8 @@ msgid "Public key"
 msgstr "Klucz publiczny"
 
 #: cryptui.rc:58
-#, fuzzy
 msgid "%1 (%2!d! bits)"
-msgstr "%s (%d bitów)"
+msgstr "%1 (%2!d! bitów)"
 
 #: cryptui.rc:59
 msgid "SHA1 hash"
@@ -2995,38 +3004,32 @@ msgid "Default MidiOut Device"
 msgstr "Standardowe urządzenie Device"
 
 #: dinput.rc:40
-#, fuzzy
 msgid "Configure Devices"
-msgstr "Kon&figuruj..."
+msgstr "Konfiguruj Urządzenia"
 
 #: dinput.rc:45
 msgid "Reset"
-msgstr ""
+msgstr "Wyzeruj"
 
 #: dinput.rc:48
-#, fuzzy
 msgid "Player"
-msgstr "Odtwórz"
+msgstr "Odtwarzacz"
 
 #: dinput.rc:49
-#, fuzzy
 msgid "Device"
-msgstr "U&rządzenie:"
+msgstr "Urządzenie:"
 
 #: dinput.rc:50
-#, fuzzy
 msgid "Actions"
-msgstr "Działanie"
+msgstr "Działania"
 
 #: dinput.rc:51
-#, fuzzy
 msgid "Mapping"
-msgstr "Przyporządkowany do"
+msgstr "Mapowanie"
 
 #: dinput.rc:53
-#, fuzzy
 msgid "Show Assigned First"
-msgstr "Już przydzielone\n"
+msgstr "Najpierw pokaż przypisane"
 
 #: dinput.rc:34
 msgid "Action"
@@ -3041,79 +3044,76 @@ msgid "Regional Setting"
 msgstr "Ustawienia regionalne"
 
 #: dxdiagn.rc:26
-#, fuzzy
 msgid "%1!u!MB used, %2!u!MB available"
-msgstr "%uMB użytych, %uMB dostępnych"
+msgstr "%1!u!MB wykorzystywanych, %2!u!MB dostępnych"
 
 #: gdi32.rc:25
 msgid "Western"
-msgstr ""
+msgstr "Zachodni"
 
 #: gdi32.rc:26
 msgid "Central European"
-msgstr ""
+msgstr "Środkowoeuropejski"
 
 #: gdi32.rc:27
 msgid "Cyrillic"
-msgstr ""
+msgstr "Cyrylica"
 
 #: gdi32.rc:28
-#, fuzzy
 msgid "Greek"
-msgstr "Zielony"
+msgstr "Grecki"
 
 #: gdi32.rc:29
 msgid "Turkish"
-msgstr ""
+msgstr "Turecki"
 
 #: gdi32.rc:30
 msgid "Hebrew"
-msgstr ""
+msgstr "Hebrajski"
 
 #: gdi32.rc:31
 msgid "Arabic"
-msgstr ""
+msgstr "Arabski"
 
 #: gdi32.rc:32
 msgid "Baltic"
-msgstr ""
+msgstr "Bałtycki"
 
 #: gdi32.rc:33
 msgid "Vietnamese"
-msgstr ""
+msgstr "Wietnamski"
 
 #: gdi32.rc:34
 msgid "Thai"
-msgstr ""
+msgstr "Tajski"
 
 #: gdi32.rc:35
-#, fuzzy
 msgid "Japanese"
-msgstr "okienko"
+msgstr "Japoński"
 
 #: gdi32.rc:36
 msgid "CHINESE_GB2312"
-msgstr ""
+msgstr "Chiński GB2312"
 
 #: gdi32.rc:37
 msgid "Hangul"
-msgstr ""
+msgstr "Hangul"
 
 #: gdi32.rc:38
 msgid "CHINESE_BIG5"
-msgstr ""
+msgstr "Chiński BIG5"
 
 #: gdi32.rc:39
 msgid "Hangul(Johab)"
-msgstr ""
+msgstr "Hangul(Johab)"
 
 #: gdi32.rc:40
 msgid "Symbol"
-msgstr ""
+msgstr "Symbol"
 
 #: gdi32.rc:41
 msgid "OEM/DOS"
-msgstr ""
+msgstr "OEM/DOS"
 
 #: gphoto2.rc:27
 msgid "Files on Camera"
@@ -4583,7 +4583,7 @@ msgstr "Różne konto usługi\n"
 
 #: winerror.mc:1276
 msgid "Driver failure cannot be detected\n"
-msgstr "Nie można wykryć niepowodzenia sterownikai\n"
+msgstr "Nie można wykryć niepowodzenia sterownika\n"
 
 #: winerror.mc:1281
 msgid "Process abort cannot be detected\n"
@@ -4651,11 +4651,11 @@ msgstr "Brak nośnika w napędzie\n"
 
 #: winerror.mc:1361
 msgid "No Unicode translation\n"
-msgstr "Brak tłumaczenia unicode\n"
+msgstr "Brak tłumaczenia Unicode\n"
 
 #: winerror.mc:1366
 msgid "DLL init failed\n"
-msgstr "Nieudana initializacja biblioteki DLL\n"
+msgstr "Nieudana inicjalizacja biblioteki DLL\n"
 
 #: winerror.mc:1371
 msgid "Shutdown in progress\n"
@@ -4839,7 +4839,7 @@ msgstr "Brak takiego identyfikatora woluminu\n"
 
 #: winerror.mc:1596
 msgid "Unable to remove the file to be replaced\n"
-msgstr "Nie moża usunąć pliku, który ma być zamieniony\n"
+msgstr "Nie można usunąć pliku, który ma być zamieniony\n"
 
 #: winerror.mc:1601
 msgid "Unable to move the replacement file into place\n"
@@ -6499,7 +6499,7 @@ msgstr "Nazwa sieci niedostępna\n"
 
 #: winerror.mc:3686
 msgid "The file cannot be accessed\n"
-msgstr "Nie mozna uzyskać dostępu do pliku\n"
+msgstr "Nie można uzyskać dostępu do pliku\n"
 
 #: winerror.mc:3691
 msgid "The filename cannot be resolved\n"
@@ -6621,7 +6621,7 @@ msgstr "Cała sieć"
 
 #: msacm32.rc:27
 msgid "Sound Selection"
-msgstr "Wybór dżwięku"
+msgstr "Wybór dźwięku"
 
 #: msacm32.rc:36
 msgid "&Save As..."
@@ -6806,9 +6806,8 @@ msgid "&Data Rate"
 msgstr "&Strumień"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/sec"
-msgstr "KB/s"
+msgstr "kB/sek"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
@@ -7237,7 +7236,7 @@ msgid ""
 "The shortcut is linked to the source file so that changes to the file will "
 "be reflected in your document."
 msgstr ""
-"Wstawia do documentu skrót do zawartości schowka. Skrót będzie połączony z "
+"Wstawia do dokumentu skrót do zawartości schowka. Skrót będzie połączony z "
 "plikiem źródłowym, dzięki czemu zmiany w pliku będą odzwierciedlone w "
 "dokumencie."
 
@@ -7291,9 +7290,8 @@ msgid "us"
 msgstr "µs"
 
 #: serialui.rc:25
-#, fuzzy
 msgid "Settings for %s"
-msgstr "Właściwości: %s"
+msgstr "Ustawienia dla %s"
 
 #: serialui.rc:28
 msgid "Baud Rate"
@@ -7340,9 +7338,8 @@ msgid "Copy manufacturer's files from:"
 msgstr "Kopiuj pliki producenta z:"
 
 #: setupapi.rc:28
-#, fuzzy
 msgid "The file '%1' on %2 is needed"
-msgstr "Potrzebny plik o nazwie '%s' znajdujący się  na %s"
+msgstr "Plik '%1' znajdujący się na %2 jest potrzebny"
 
 #: setupapi.rc:29 ipconfig.rc:31
 msgid "Unknown"
@@ -7410,7 +7407,7 @@ msgstr "Otwórz łącze w &nowym oknie"
 
 #: shdoclc.rc:65 shdoclc.rc:126 shdoclc.rc:148 shdoclc.rc:172
 msgid "Save Target &As..."
-msgstr "&Zapisz element doecelowy jako..."
+msgstr "&Zapisz element docelowy jako..."
 
 #: shdoclc.rc:66 shdoclc.rc:127 shdoclc.rc:149 shdoclc.rc:173
 msgid "&Print Target"
@@ -9097,7 +9094,7 @@ msgstr "Naruszenie więzów"
 
 #: wldap32.rc:47
 msgid "Attribute Or Value Exists"
-msgstr "Atrybut lub wartość isnieje"
+msgstr "Atrybut lub wartość istnieje"
 
 #: wldap32.rc:48
 msgid "Invalid Syntax"
@@ -9610,7 +9607,7 @@ msgstr ""
 "Zauważ, że wpisanie polecenia PROMPT bez ciagu znaków zgłoszenia zeruje "
 "ustawienia zgłoszenia do domyślnych, czyli do obecnego katalogu (co "
 "uwzględnia\n"
-"obecną literę dystku), po której następuje znak większe niż (>).\n"
+"obecną literę dysku), po której następuje znak większe niż (>).\n"
 "(tak jak polecenie PROMPT $p$g).\n"
 "(Tak samo jak polecenie PROMPT $p$g).\n"
 "\n"
@@ -9685,7 +9682,7 @@ msgid ""
 "if called from the command line.\n"
 msgstr ""
 "SHIFT jest używane w plikach bat do usunięcia pierwszego parametru z listy\n"
-"parametrów, parametr 2 staje sie 1 itd. Polecenie to nie ma efektu gdy jest\n"
+"parametrów, parametr 2 staje się 1 itd. Polecenie to nie ma efektu gdy jest\n"
 "wywoływane z linii komend.\n"
 
 #: cmd.rc:185
@@ -9935,19 +9932,16 @@ msgid "N"
 msgstr "N"
 
 #: cmd.rc:294
-#, fuzzy
 msgid "File association missing for extension %1\n"
-msgstr "Brak skojarzenia pliku dla rozszerzenia %s\n"
+msgstr "Brak skojarzenia pliku dla rozszerzenia %1\n"
 
 #: cmd.rc:295
-#, fuzzy
 msgid "No open command associated with file type '%1'\n"
-msgstr "Brak skojarzenia polecenia otwórz z typem plików '%s'\n"
+msgstr "Brak skojarzenia polecenia otwórz z typem plików '%1'\n"
 
 #: cmd.rc:296
-#, fuzzy
 msgid "Overwrite %1"
-msgstr "Nadpisać %s"
+msgstr "Nadpisz %1"
 
 #: cmd.rc:297
 msgid "More..."
@@ -9966,23 +9960,20 @@ msgid "Syntax error\n"
 msgstr "Błąd składni\n"
 
 #: cmd.rc:303
-#, fuzzy
 msgid "No help available for %1\n"
-msgstr "Plik pomocy nie istnieje dla %s\n"
+msgstr "Brak pliku pomocy dla %1\n"
 
 #: cmd.rc:304
 msgid "Target to GOTO not found\n"
 msgstr "Nie znaleziono przeznaczenia dla GOTO\n"
 
 #: cmd.rc:305
-#, fuzzy
 msgid "Current Date is %1\n"
-msgstr "Aktualna data: %s\n"
+msgstr "Obecna data to %1\n"
 
 #: cmd.rc:306
-#, fuzzy
 msgid "Current Time is %1\n"
-msgstr "Aktualny czas: %s\n"
+msgstr "Obecny czas to %1\n"
 
 #: cmd.rc:307
 msgid "Enter new date: "
@@ -9993,9 +9984,8 @@ msgid "Enter new time: "
 msgstr "Wpisz nowy czas: "
 
 #: cmd.rc:309
-#, fuzzy
 msgid "Environment variable %1 not defined\n"
-msgstr "Zmienna środowiskowa %s niezdefiniowana\n"
+msgstr "Zmienna środowiskowa %1 jest niezdefiniowana\n"
 
 #: cmd.rc:310 xcopy.rc:38
 msgid "Failed to open '%1'\n"
@@ -10011,19 +10001,16 @@ msgid "A"
 msgstr "A"
 
 #: cmd.rc:313
-#, fuzzy
 msgid "%1, Delete"
-msgstr "%s, Usunąć"
+msgstr "%1, Usuń"
 
 #: cmd.rc:314
-#, fuzzy
 msgid "Echo is %1\n"
-msgstr "Echo jest %s\n"
+msgstr "Echo jest %1\n"
 
 #: cmd.rc:315
-#, fuzzy
 msgid "Verify is %1\n"
-msgstr "Verify jest %s\n"
+msgstr "Verify jest %1\n"
 
 #: cmd.rc:316
 msgid "Verify must be ON or OFF\n"
@@ -10034,14 +10021,13 @@ msgid "Parameter error\n"
 msgstr "Błąd parametru\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid ""
 "Volume in drive %1!c! is %2\n"
 "Volume Serial Number is %3!04x!-%4!04x!\n"
 "\n"
 msgstr ""
-"Wolumenem w napędzie %c jest %s\n"
-"Numer seryjny wolumenu: %04x-%04x\n"
+"Wolumenem w napędzie %1!c! jest %2\n"
+"Numer seryjny wolumenu: %3!04x!-%4!04x!\n"
 "\n"
 
 #: cmd.rc:319
@@ -10061,9 +10047,8 @@ msgid "Wine Command Prompt"
 msgstr "Wiersz Poleceń Wine"
 
 #: cmd.rc:323
-#, fuzzy
 msgid "CMD Version %1!S!\n"
-msgstr "Wersja CMD %s\n"
+msgstr "Wersja CMD %1!S!\n"
 
 #: cmd.rc:324
 msgid "More? "
@@ -10115,9 +10100,8 @@ msgid "Error: Unknown or invalid command line parameters specified\n"
 msgstr "Błąd: Nierozpoznany lub niepełny wiersz polecenia\n"
 
 #: ipconfig.rc:29
-#, fuzzy
 msgid "%1 adapter %2\n"
-msgstr "%s karta %s\n"
+msgstr "%1 adapter %2\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
@@ -10495,7 +10479,6 @@ msgid "Unicode (UTF-8)"
 msgstr "Unicode (UTF-8)"
 
 #: notepad.rc:99
-#, fuzzy
 msgid ""
 "%1\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -10504,7 +10487,7 @@ msgid ""
 "one of the Unicode options in the Encoding drop down list.\n"
 "Continue?"
 msgstr ""
-"%s\n"
+"%1\n"
 "Plik ten zawiera znaki Unicode, które zostaną utracone jeżeli\n"
 "zapiszesz ten plik przy użyciu kodowania %s.\n"
 "Aby zachować te znaki, naciśnij Anuluj, a później zaznacz\n"
@@ -10629,7 +10612,7 @@ msgstr "Włącz &Distributed COM"
 
 #: oleview.rc:170
 msgid "Enable &Remote Connections (Win95 only)"
-msgstr "Włącz &zadalne połączenia (tylko Win95)"
+msgstr "Włącz &zdalne połączenia (tylko Win95)"
 
 #: oleview.rc:171
 msgid ""
@@ -10842,9 +10825,8 @@ msgid "bytes"
 msgstr "bajty(ów)"
 
 #: oleview.rc:148
-#, fuzzy
 msgid "LoadTypeLib( %1 ) failed ($%2!x!)"
-msgstr "LoadTypeLib( %s ) nie powiodło się ($%x)"
+msgstr "LoadTypeLib( %1 ) nie powiodło się ($%2!x!)"
 
 #: oleview.rc:149
 msgid "Inherited Interfaces"
@@ -10928,7 +10910,7 @@ msgstr "Menedżer zadań - i&nformacje"
 
 #: progman.rc:100
 msgid "Program &group"
-msgstr "&Groupa programów"
+msgstr "&Grupa programów"
 
 #: progman.rc:102
 msgid "&Program"
@@ -11052,7 +11034,7 @@ msgstr "Plik `%s' istnieje. Nie został zastąpiony."
 
 #: progman.rc:77
 msgid "Save group as `%s to prevent overwriting original files."
-msgstr "Grupa zapisana jako `%s aby uniknąć zastąpienia orginalnego pliku."
+msgstr "Grupa zapisana jako `%s aby uniknąć zastąpienia oryginalnego pliku."
 
 #: progman.rc:80
 msgid "Programs"
@@ -11532,7 +11514,7 @@ msgid ""
 "\n"
 "See the COPYING.LIB file for license information.\n"
 msgstr ""
-"start.exe wesja 0.2 Copyright (C) 2003, Dan Kegel\n"
+"start.exe wersja 0.2 Copyright (C) 2003, Dan Kegel\n"
 "Ten program jest wolnym oprogramowaniem; wolno ci je rozpowszechniać i/lub\n"
 "modyfikować zgodnie z warunkami zawartymi w GNU Lesser General Public "
 "License\n"
@@ -11585,51 +11567,45 @@ msgid "Error: One of options /im or /pid must be specified.\n"
 msgstr "Błąd: Jedna z opcji /im albo /pid musi być podana.\n"
 
 #: taskkill.rc:31
-#, fuzzy
 msgid "Error: Option %1 expects a command line parameter.\n"
-msgstr "Błąd: Argument %s oczekuje parametru wiersza poleceń.\n"
+msgstr "Błąd: Argument %1 oczekuje parametru wiersza poleceń.\n"
 
 #: taskkill.rc:32
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
 msgstr "Błąd: Argumenty /im i /pid wykluczają się wzajemnie.\n"
 
 #: taskkill.rc:33
-#, fuzzy
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
 msgstr ""
-"Polecenie zamykające zostało wysłane do najwyższego okna procesu z PID %u.\n"
+"Polecenie zamykające zostało wysłane do najwyższego okna procesu z PID %1!"
+"u!.\n"
 
 #: taskkill.rc:34
-#, fuzzy
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 msgstr ""
-"Polecenie zamykające zostało wysłane do najwyższego okna procesu \"%s\" z "
-"PID %u.\n"
+"Polecenie zamykające zostało wysłane do najwyższego okna procesu \"%1\" z "
+"PID %2!u!.\n"
 
 #: taskkill.rc:35
-#, fuzzy
 msgid "Process with PID %1!u! was forcibly terminated.\n"
-msgstr "Proces z PID %u został zmuszony do zakończenia.\n"
+msgstr "Proces z PID %1!u! został zmuszony do zakończenia.\n"
 
 #: taskkill.rc:36
-#, fuzzy
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
-msgstr "Proces \"%s\" z PID %u został zmuszony do zakończenia.\n"
+msgstr "Proces \"%1\" z PID %2!u! został zmuszony do zakończenia.\n"
 
 #: taskkill.rc:37
-#, fuzzy
 msgid "Error: Could not find process \"%1\".\n"
-msgstr "Błąd: Nie można znaleźć procesu \"%s\".\n"
+msgstr "Błąd: Nie można znaleźć procesu \"%1\".\n"
 
 #: taskkill.rc:38
 msgid "Error: Unable to enumerate the process list.\n"
 msgstr "Błąd: Nie można ponumerować listy procesów.\n"
 
 #: taskkill.rc:39
-#, fuzzy
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr "Błąd: Nie można zakończyć procesu \"%s\".\n"
+msgstr "Błąd: Nie można zakończyć procesu \"%1\".\n"
 
 #: taskkill.rc:40
 msgid "Error: Process self-termination is not permitted.\n"
@@ -12249,7 +12225,7 @@ msgstr "Usuwa z systemu ten proces i wszystkie procesy zależne"
 
 #: taskmgr.rc:233
 msgid "Attaches the debugger to this process"
-msgstr "Dołącza debugera do tego procesu"
+msgstr "Dołącza debuggera do tego procesu"
 
 #: taskmgr.rc:235
 msgid "Controls which processors the process will be allowed to run on"
@@ -12296,9 +12272,8 @@ msgid "Processes: %d"
 msgstr "Procesy: %d"
 
 #: taskmgr.rc:267
-#, fuzzy
 msgid "Mem Usage: %1!u!kB / %2!u!kB"
-msgstr "Pam. zadeklar.: %dK / %dK"
+msgstr "Wyk. pamięci: %1!u!kB / %2!u!kB"
 
 #: taskmgr.rc:272
 msgid "Image Name"
@@ -12405,7 +12380,7 @@ msgid ""
 "WARNING: Debugging this process may result in loss of data.\n"
 "Are you sure you wish to attach the debugger?"
 msgstr ""
-"OSTRZEŻENIE: Debugowanie tego procesu może spowodować utratę tanych.\n"
+"OSTRZEŻENIE: Debugowanie tego procesu może spowodować utratę danych.\n"
 "Czy na pewno chcesz uruchomić debuggera?"
 
 #: taskmgr.rc:314
@@ -12466,7 +12441,7 @@ msgid ""
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
-"Nie udało się wykonać polecenia '%s', które powinno usunąć progam. Być może "
+"Nie udało się wykonać polecenia '%s', które powinno usunąć program. Być może "
 "już był usunięty.\n"
 "Czy chcesz usunąć jego wpis z tej listy?"
 
@@ -12574,7 +12549,7 @@ msgstr " Ustawienia okna "
 
 #: winecfg.rc:167
 msgid "Automatically capture the &mouse in full-screen windows"
-msgstr "Automatycznie przechywć &mysz w oknach pełnoekranowych"
+msgstr "Automatycznie przechwyć &mysz w oknach pełnoekranowych"
 
 #: winecfg.rc:168
 msgid "Allow the window manager to &decorate the windows"
@@ -13345,7 +13320,6 @@ msgstr ""
 "za tą niedogodność."
 
 #: winedbg.rc:53
-#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
@@ -13354,11 +13328,13 @@ msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a>."
 msgstr ""
-"Powodem błędu może być problem w programie lub braki w Wine. Zajrzyj na "
-"http://appdb.winehq.org po wskazówki do uruchomienia tej aplikacji.\n"
+"Powodem błędu może być problem w programie lub braki w Wine. Zajrzyj do <a "
+"href=\"http://appdb.winehq.org\">Bazy danych aplikacji</a> po wskazówki na "
+"temat uruchomienia tej aplikacji.\n"
 "\n"
 "Jeżeli problem ten nie występuje pod Windowsem i nie został jeszcze "
-"zgłoszony to możesz poinformować o tym pod adresem http://bugs.winehq.org."
+"zgłoszony to możesz poinformować o tym <a href=\"http://wiki.winehq.org/Bugs"
+"\">wypełniając zgłoszenie o błędzie</a>."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
@@ -13583,17 +13559,17 @@ msgstr "%1 z %2 wolnych"
 #: winefile.rc:121
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr ""
+msgstr "kB"
 
 #: winefile.rc:122
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr ""
+msgstr "MB"
 
 #: winefile.rc:123
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr ""
+msgstr "GB"
 
 #: winemine.rc:34
 msgid "&Game"
