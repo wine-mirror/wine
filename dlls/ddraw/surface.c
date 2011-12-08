@@ -4008,6 +4008,8 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
     IDirectDrawSurfaceImpl *This = impl_from_IDirectDrawSurface7(iface);
     enum wined3d_format_id newFormat = WINED3DFMT_UNKNOWN;
     HRESULT hr;
+    const DWORD allowed_flags = DDSD_LPSURFACE | DDSD_PIXELFORMAT | DDSD_WIDTH
+            | DDSD_HEIGHT | DDSD_PITCH | DDSD_CAPS;
 
     TRACE("iface %p, surface_desc %p, flags %#x.\n", iface, DDSD, Flags);
 
@@ -4021,10 +4023,15 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
         WARN("Flags is %x, returning DDERR_INVALIDPARAMS\n", Flags);
         return DDERR_INVALIDPARAMS;
     }
+    if (!(This->surface_desc.ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY))
+    {
+        WARN("Surface is not in system memory, returning DDERR_INVALIDSURFACETYPE.\n");
+        return DDERR_INVALIDSURFACETYPE;
+    }
 
     /* Tests show that only LPSURFACE and PIXELFORMAT can be set, and LPSURFACE is required
      * for PIXELFORMAT to work */
-    if (DDSD->dwFlags & ~(DDSD_LPSURFACE | DDSD_PIXELFORMAT))
+    if (DDSD->dwFlags & ~allowed_flags)
     {
         WARN("Invalid flags (0x%08x) set, returning DDERR_INVALIDPARAMS\n", DDSD->dwFlags);
         return DDERR_INVALIDPARAMS;
@@ -4033,6 +4040,50 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
     {
         WARN("DDSD_LPSURFACE is not set, returning DDERR_INVALIDPARAMS\n");
         return DDERR_INVALIDPARAMS;
+    }
+    if (DDSD->dwFlags & DDSD_CAPS)
+    {
+        WARN("DDSD_CAPS is set, returning DDERR_INVALIDCAPS.\n");
+        return DDERR_INVALIDCAPS;
+    }
+    if (DDSD->dwFlags & DDSD_WIDTH)
+    {
+        if (!(DDSD->dwFlags & DDSD_PITCH))
+        {
+            WARN("DDSD_WIDTH is set, but DDSD_PITCH is not, returning DDERR_INVALIDPARAMS.\n");
+            return DDERR_INVALIDPARAMS;
+        }
+        if (!DDSD->dwWidth || DDSD->u1.lPitch <= 0 || DDSD->u1.lPitch & 0x3)
+        {
+            WARN("Pitch is %d, width is %u, returning DDERR_INVALIDPARAMS.\n",
+                    DDSD->u1.lPitch, DDSD->dwWidth);
+            return DDERR_INVALIDPARAMS;
+        }
+        if (DDSD->dwWidth != This->surface_desc.dwWidth)
+        {
+            FIXME("Surface width changed from %u to %u.\n", This->surface_desc.dwWidth, DDSD->dwWidth);
+        }
+        if (DDSD->u1.lPitch != This->surface_desc.u1.lPitch)
+        {
+            FIXME("Surface pitch changed from %u to %u.\n", This->surface_desc.u1.lPitch, DDSD->u1.lPitch);
+        }
+    }
+    else if (DDSD->dwFlags & DDSD_PITCH)
+    {
+        WARN("DDSD_PITCH is set, but DDSD_WIDTH is not, returning DDERR_INVALIDPARAMS.\n");
+        return DDERR_INVALIDPARAMS;
+    }
+    if (DDSD->dwFlags & DDSD_HEIGHT)
+    {
+        if (!DDSD->dwHeight)
+        {
+            WARN("Height is 0, returning DDERR_INVALIDPARAMS.\n");
+            return DDERR_INVALIDPARAMS;
+        }
+        if (DDSD->dwHeight != This->surface_desc.dwHeight)
+        {
+            FIXME("Surface height changed from %u to %u.\n", This->surface_desc.dwHeight, DDSD->dwHeight);
+        }
     }
 
     wined3d_mutex_lock();
