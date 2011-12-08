@@ -4804,18 +4804,18 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
         /* Caps is more or less undocumented on MSDN but it appears to be
          * used for PS20Caps based on results from R9600/FX5900/Geforce6800
          * cards from Windows */
-        caps->PS20Caps.Caps = WINED3DPS20CAPS_ARBITRARYSWIZZLE |
+        caps->PS20Caps.caps = WINED3DPS20CAPS_ARBITRARYSWIZZLE |
                 WINED3DPS20CAPS_GRADIENTINSTRUCTIONS |
                 WINED3DPS20CAPS_PREDICATION          |
                 WINED3DPS20CAPS_NODEPENDENTREADLIMIT |
                 WINED3DPS20CAPS_NOTEXINSTRUCTIONLIMIT;
         /* PS 3.0 requires MAX_DYNAMICFLOWCONTROLDEPTH (24) */
-        caps->PS20Caps.DynamicFlowControlDepth  = WINED3DPS20_MAX_DYNAMICFLOWCONTROLDEPTH;
-        caps->PS20Caps.NumTemps = max(32, adapter->gl_info.limits.arb_ps_temps);
+        caps->PS20Caps.dynamic_flow_control_depth = WINED3DPS20_MAX_DYNAMICFLOWCONTROLDEPTH;
+        caps->PS20Caps.temp_count = max(32, adapter->gl_info.limits.arb_ps_temps);
         /* PS 3.0 requires MAX_STATICFLOWCONTROLDEPTH (4) */
-        caps->PS20Caps.StaticFlowControlDepth = WINED3DPS20_MAX_STATICFLOWCONTROLDEPTH;
+        caps->PS20Caps.static_flow_control_depth = WINED3DPS20_MAX_STATICFLOWCONTROLDEPTH;
         /* PS 3.0 requires MAX_NUMINSTRUCTIONSLOTS (512) */
-        caps->PS20Caps.NumInstructionSlots = WINED3DPS20_MAX_NUMINSTRUCTIONSLOTS;
+        caps->PS20Caps.instruction_slot_count = WINED3DPS20_MAX_NUMINSTRUCTIONSLOTS;
 
         caps->MaxPShaderInstructionsExecuted = 65535;
         caps->MaxPixelShader30InstructionSlots = max(WINED3DMIN30SHADERINSTRUCTIONS,
@@ -4824,23 +4824,23 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
     else if(caps->PixelShaderVersion == 2)
     {
         /* Below we assume PS2.0 specs, not extended 2.0a(GeforceFX)/2.0b(Radeon R3xx) ones */
-        caps->PS20Caps.Caps                     = 0;
-        caps->PS20Caps.DynamicFlowControlDepth  = 0; /* WINED3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH = 0 */
-        caps->PS20Caps.NumTemps = max(12, adapter->gl_info.limits.arb_ps_temps);
-        caps->PS20Caps.StaticFlowControlDepth   = WINED3DPS20_MIN_STATICFLOWCONTROLDEPTH; /* Minimum: 1 */
+        caps->PS20Caps.caps = 0;
+        caps->PS20Caps.dynamic_flow_control_depth = 0; /* WINED3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH = 0 */
+        caps->PS20Caps.temp_count = max(12, adapter->gl_info.limits.arb_ps_temps);
+        caps->PS20Caps.static_flow_control_depth = WINED3DPS20_MIN_STATICFLOWCONTROLDEPTH; /* Minimum: 1 */
         /* Minimum number (64 ALU + 32 Texture), a GeforceFX uses 512 */
-        caps->PS20Caps.NumInstructionSlots      = WINED3DPS20_MIN_NUMINSTRUCTIONSLOTS;
+        caps->PS20Caps.instruction_slot_count = WINED3DPS20_MIN_NUMINSTRUCTIONSLOTS;
 
         caps->MaxPShaderInstructionsExecuted    = 512; /* Minimum value, a GeforceFX uses 1024 */
         caps->MaxPixelShader30InstructionSlots  = 0;
     }
     else /* PS 1.x */
     {
-        caps->PS20Caps.Caps                     = 0;
-        caps->PS20Caps.DynamicFlowControlDepth  = 0;
-        caps->PS20Caps.NumTemps                 = 0;
-        caps->PS20Caps.StaticFlowControlDepth   = 0;
-        caps->PS20Caps.NumInstructionSlots      = 0;
+        caps->PS20Caps.caps = 0;
+        caps->PS20Caps.dynamic_flow_control_depth = 0;
+        caps->PS20Caps.temp_count = 0;
+        caps->PS20Caps.static_flow_control_depth = 0;
+        caps->PS20Caps.instruction_slot_count = 0;
 
         caps->MaxPShaderInstructionsExecuted    = 0;
         caps->MaxPixelShader30InstructionSlots  = 0;
