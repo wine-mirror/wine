@@ -951,8 +951,8 @@ const char* __thiscall _Locinfo__Getmonths(const _Locinfo *this)
 DEFINE_THISCALL_WRAPPER(_Locinfo__Getfalse, 4)
 const char* __thiscall _Locinfo__Getfalse(const _Locinfo *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+    return "false";
 }
 
 /* ?_Gettrue@_Locinfo@std@@QBEPBDXZ */
@@ -960,8 +960,8 @@ const char* __thiscall _Locinfo__Getfalse(const _Locinfo *this)
 DEFINE_THISCALL_WRAPPER(_Locinfo__Gettrue, 4)
 const char* __thiscall _Locinfo__Gettrue(const _Locinfo *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+    return "true";
 }
 
 /* ?_Getlconv@_Locinfo@std@@QBEPBUlconv@@XZ */
