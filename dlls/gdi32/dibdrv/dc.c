@@ -422,7 +422,7 @@ static HBITMAP dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
 
     free_dib_info(&pdev->dib);
     pdev->defer = 0;
-    if(!init_dib_info_from_bitmapobj(&pdev->dib, bmp, private_color_table))
+    if(!init_dib_info_from_bitmapobj(&pdev->dib, bmp, 0))
         pdev->defer |= DEFER_FORMAT;
 
     GDI_ReleaseObj( bitmap );
@@ -495,11 +495,8 @@ static UINT dibdrv_SetDIBColorTable( PHYSDEV dev, UINT pos, UINT count, const RG
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     TRACE("(%p, %d, %d, %p)\n", dev, pos, count, colors);
 
-    if( pdev->dib.color_table && pos < pdev->dib.color_table_size )
+    if (pdev->dib.color_table)
     {
-        if( pos + count > pdev->dib.color_table_size ) count = pdev->dib.color_table_size - pos;
-        memcpy( pdev->dib.color_table + pos, colors, count * sizeof(RGBQUAD) );
-
         pdev->bkgnd_color = get_pixel_color( pdev, GetBkColor( dev->hdc ), FALSE );
         update_fg_colors( pdev );
 
