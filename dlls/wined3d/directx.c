@@ -4763,32 +4763,32 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
          * aren't set (in case of software rendering) use the VS 3.0 from
          * MSDN or else if there's OpenGL spec use a hardcoded value minimum
          * VS3.0 value. */
-        caps->VS20Caps.Caps                     = WINED3DVS20CAPS_PREDICATION;
+        caps->VS20Caps.caps = WINED3DVS20CAPS_PREDICATION;
         /* VS 3.0 requires MAX_DYNAMICFLOWCONTROLDEPTH (24) */
-        caps->VS20Caps.DynamicFlowControlDepth  = WINED3DVS20_MAX_DYNAMICFLOWCONTROLDEPTH;
-        caps->VS20Caps.NumTemps = max(32, adapter->gl_info.limits.arb_vs_temps);
+        caps->VS20Caps.dynamic_flow_control_depth = WINED3DVS20_MAX_DYNAMICFLOWCONTROLDEPTH;
+        caps->VS20Caps.temp_count = max(32, adapter->gl_info.limits.arb_vs_temps);
         /* level of nesting in loops / if-statements; VS 3.0 requires MAX (4) */
-        caps->VS20Caps.StaticFlowControlDepth   = WINED3DVS20_MAX_STATICFLOWCONTROLDEPTH;
+        caps->VS20Caps.static_flow_control_depth = WINED3DVS20_MAX_STATICFLOWCONTROLDEPTH;
 
         caps->MaxVShaderInstructionsExecuted    = 65535; /* VS 3.0 needs at least 65535, some cards even use 2^32-1 */
         caps->MaxVertexShader30InstructionSlots = max(512, adapter->gl_info.limits.arb_vs_instructions);
     }
     else if (caps->VertexShaderVersion == 2)
     {
-        caps->VS20Caps.Caps                     = 0;
-        caps->VS20Caps.DynamicFlowControlDepth  = WINED3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH;
-        caps->VS20Caps.NumTemps = max(12, adapter->gl_info.limits.arb_vs_temps);
-        caps->VS20Caps.StaticFlowControlDepth   = 1;
+        caps->VS20Caps.caps = 0;
+        caps->VS20Caps.dynamic_flow_control_depth = WINED3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH;
+        caps->VS20Caps.temp_count = max(12, adapter->gl_info.limits.arb_vs_temps);
+        caps->VS20Caps.static_flow_control_depth = 1;
 
         caps->MaxVShaderInstructionsExecuted    = 65535;
         caps->MaxVertexShader30InstructionSlots = 0;
     }
     else
     { /* VS 1.x */
-        caps->VS20Caps.Caps                     = 0;
-        caps->VS20Caps.DynamicFlowControlDepth  = 0;
-        caps->VS20Caps.NumTemps                 = 0;
-        caps->VS20Caps.StaticFlowControlDepth   = 0;
+        caps->VS20Caps.caps = 0;
+        caps->VS20Caps.dynamic_flow_control_depth = 0;
+        caps->VS20Caps.temp_count = 0;
+        caps->VS20Caps.static_flow_control_depth = 0;
 
         caps->MaxVShaderInstructionsExecuted    = 0;
         caps->MaxVertexShader30InstructionSlots = 0;

@@ -1742,13 +1742,13 @@ struct wined3d_strided_data
     BOOL position_transformed;
 };
 
-typedef struct _WINED3DVSHADERCAPS2_0
+struct wined3d_vertex_shader_caps
 {
-    DWORD Caps;
-    INT DynamicFlowControlDepth;
-    INT NumTemps;
-    INT StaticFlowControlDepth;
-} WINED3DVSHADERCAPS2_0;
+    DWORD caps;
+    INT dynamic_flow_control_depth;
+    INT temp_count;
+    INT static_flow_control_depth;
+};
 
 typedef struct _WINED3DPSHADERCAPS2_0
 {
@@ -1860,7 +1860,7 @@ typedef struct _WINED3DCAPS
     DWORD DeclTypes;
     DWORD NumSimultaneousRTs;
     DWORD StretchRectFilterCaps;
-    WINED3DVSHADERCAPS2_0 VS20Caps;
+    struct wined3d_vertex_shader_caps VS20Caps;
     WINED3DPSHADERCAPS2_0 PS20Caps;
     DWORD VertexTextureFilterCaps;
     DWORD MaxVShaderInstructionsExecuted;

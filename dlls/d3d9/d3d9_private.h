@@ -111,11 +111,10 @@ enum wined3d_format_id wined3dformat_from_d3dformat(D3DFORMAT format) DECLSPEC_H
     _pD3D9Caps->DeclTypes                         = _pWineCaps->DeclTypes; \
     _pD3D9Caps->NumSimultaneousRTs                = _pWineCaps->NumSimultaneousRTs; \
     _pD3D9Caps->StretchRectFilterCaps             = _pWineCaps->StretchRectFilterCaps; \
-    _pD3D9Caps->VS20Caps.Caps                     = _pWineCaps->VS20Caps.Caps; \
-    _pD3D9Caps->VS20Caps.DynamicFlowControlDepth  = _pWineCaps->VS20Caps.DynamicFlowControlDepth; \
-    _pD3D9Caps->VS20Caps.NumTemps                 = _pWineCaps->VS20Caps.NumTemps; \
-    _pD3D9Caps->VS20Caps.NumTemps                 = _pWineCaps->VS20Caps.NumTemps; \
-    _pD3D9Caps->VS20Caps.StaticFlowControlDepth   = _pWineCaps->VS20Caps.StaticFlowControlDepth; \
+    _pD3D9Caps->VS20Caps.Caps                     = _pWineCaps->VS20Caps.caps; \
+    _pD3D9Caps->VS20Caps.DynamicFlowControlDepth  = _pWineCaps->VS20Caps.dynamic_flow_control_depth; \
+    _pD3D9Caps->VS20Caps.NumTemps                 = _pWineCaps->VS20Caps.temp_count; \
+    _pD3D9Caps->VS20Caps.StaticFlowControlDepth   = _pWineCaps->VS20Caps.static_flow_control_depth; \
     _pD3D9Caps->PS20Caps.Caps                     = _pWineCaps->PS20Caps.Caps; \
     _pD3D9Caps->PS20Caps.DynamicFlowControlDepth  = _pWineCaps->PS20Caps.DynamicFlowControlDepth; \
     _pD3D9Caps->PS20Caps.NumTemps                 = _pWineCaps->PS20Caps.NumTemps; \
