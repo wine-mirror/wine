@@ -103,6 +103,7 @@ typedef struct dibdrv_physdev
     const BITMAPINFO *brush_pattern_info;
     void *brush_pattern_bits;
     UINT brush_pattern_usage;
+    HBITMAP brush_pattern_bitmap;
     BOOL   (* brush_rects)(struct dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects, HRGN clip);
 
     /* background */
@@ -226,7 +227,6 @@ extern void get_rop_codes(INT rop, struct rop_codes *codes) DECLSPEC_HIDDEN;
 extern void calc_and_xor_masks(INT rop, DWORD color, DWORD *and, DWORD *xor) DECLSPEC_HIDDEN;
 extern void update_brush_rop( dibdrv_physdev *pdev, INT rop ) DECLSPEC_HIDDEN;
 extern void reset_dash_origin(dibdrv_physdev *pdev) DECLSPEC_HIDDEN;
-extern BOOL init_dib_info_from_brush(dib_info *dib, const BITMAPINFO *bi, void *bits, UINT usage, HDC hdc) DECLSPEC_HIDDEN;
 extern BOOL init_dib_info_from_bitmapinfo(dib_info *dib, const BITMAPINFO *info, void *bits,
                                           enum dib_info_flags flags) DECLSPEC_HIDDEN;
 extern BOOL init_dib_info_from_bitmapobj(dib_info *dib, BITMAPOBJ *bmp, enum dib_info_flags flags) DECLSPEC_HIDDEN;

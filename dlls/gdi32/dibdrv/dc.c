@@ -167,20 +167,6 @@ static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD
     return TRUE;
 }
 
-BOOL init_dib_info_from_brush(dib_info *dib, const BITMAPINFO *bi, void *bits, UINT usage, HDC hdc)
-{
-    if (bi->bmiHeader.biClrUsed && usage == DIB_PAL_COLORS)
-    {
-        char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
-        BITMAPINFO *info = (BITMAPINFO *)buffer;
-
-        copy_bitmapinfo( info, bi );
-        fill_color_table_from_pal_colors( info, hdc );
-        return init_dib_info_from_bitmapinfo( dib, info, bits, private_color_table );
-    }
-    return init_dib_info_from_bitmapinfo(dib, bi, bits, private_color_table );
-}
-
 BOOL init_dib_info_from_bitmapinfo(dib_info *dib, const BITMAPINFO *info, void *bits, enum dib_info_flags flags)
 {
     return init_dib_info( dib, &info->bmiHeader, (const DWORD *)info->bmiColors,
