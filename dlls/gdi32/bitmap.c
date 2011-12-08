@@ -513,14 +513,43 @@ LONG WINAPI SetBitmapBits(
 
 static void set_initial_bitmap_bits( HBITMAP hbitmap, BITMAPOBJ *bmp )
 {
-    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
-    BITMAPINFO *info = (BITMAPINFO *)buffer;
+    char src_bmibuf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *src_info = (BITMAPINFO *)src_bmibuf;
+    char dst_bmibuf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *dst_info = (BITMAPINFO *)dst_bmibuf;
+    DWORD err;
+    struct gdi_image_bits bits;
+    struct bitblt_coords src, dst;
 
     if (!bmp->bitmap.bmBits) return;
     if (bmp->funcs->pPutImage == nulldrv_PutImage) return;
 
-    get_ddb_bitmapinfo( bmp, info );
-    SetDIBits( 0, hbitmap, 0, bmp->bitmap.bmHeight, bmp->bitmap.bmBits, info, DIB_RGB_COLORS );
+    get_ddb_bitmapinfo( bmp, src_info );
+
+    bits.ptr = bmp->bitmap.bmBits;
+    bits.is_copy = FALSE;
+    bits.free = NULL;
+    bits.param = NULL;
+
+    src.x      = 0;
+    src.y      = 0;
+    src.width  = bmp->bitmap.bmWidth;
+    src.height = bmp->bitmap.bmHeight;
+    src.visrect.left   = 0;
+    src.visrect.top    = 0;
+    src.visrect.right  = bmp->bitmap.bmWidth;
+    src.visrect.bottom = bmp->bitmap.bmHeight;
+    dst = src;
+
+    copy_bitmapinfo( dst_info, src_info );
+
+    err = bmp->funcs->pPutImage( NULL, hbitmap, 0, dst_info, &bits, &src, &dst, 0 );
+    if (err == ERROR_BAD_FORMAT)
+    {
+        err = convert_bits( src_info, &src, dst_info, &bits, FALSE );
+        if (!err) err = bmp->funcs->pPutImage( NULL, hbitmap, 0, dst_info, &bits, &src, &dst, 0 );
+        if (bits.free) bits.free( &bits );
+    }
 }
 
 /***********************************************************************
