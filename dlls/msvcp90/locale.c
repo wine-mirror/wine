@@ -30,6 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcp90);
 
 char* __cdecl _Getdays(void);
 char* __cdecl _Getmonths(void);
+void* __cdecl _Gettnames(void);
 
 typedef int category;
 
@@ -692,7 +693,7 @@ DEFINE_THISCALL_WRAPPER(_Timevec_dtor, 4)
 void __thiscall _Timevec_dtor(_Timevec *this)
 {
     TRACE("(%p)\n", this);
-    MSVCRT_operator_delete(this->timeptr);
+    free(this->timeptr);
 }
 
 /* ??4_Timevec@std@@QAEAAV01@ABV01@@Z */
@@ -1015,7 +1016,10 @@ basic_string_char __thiscall _Locinfo__Getname(const _Locinfo *this)
 DEFINE_THISCALL_WRAPPER(_Locinfo__Gettnames, 4)
 _Timevec __thiscall _Locinfo__Gettnames(const _Locinfo *this)
 {
-    _Timevec ret = { 0 }; /* FIXME */
-    FIXME("(%p) stub\n", this);
+    _Timevec ret;
+
+    TRACE("(%p)\n", this);
+
+    _Timevec_ctor_timeptr(&ret, _Gettnames());
     return ret;
 }
