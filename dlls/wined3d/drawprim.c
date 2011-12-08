@@ -384,7 +384,7 @@ static inline void send_attribute(const struct wined3d_gl_info *gl_info,
             /* Are those 16 bit floats. C doesn't have a 16 bit float type. I could read the single bits and calculate a 4
              * byte float according to the IEEE standard
              */
-            if (gl_info->supported[NV_HALF_FLOAT])
+            if (gl_info->supported[NV_HALF_FLOAT] && gl_info->supported[NV_VERTEX_PROGRAM])
             {
                 /* Not supported by GL_ARB_half_float_vertex */
                 GL_EXTCALL(glVertexAttrib2hvNV(index, ptr));
@@ -397,7 +397,7 @@ static inline void send_attribute(const struct wined3d_gl_info *gl_info,
             }
             break;
         case WINED3DFMT_R16G16B16A16_FLOAT:
-            if (gl_info->supported[NV_HALF_FLOAT])
+            if (gl_info->supported[NV_HALF_FLOAT] && gl_info->supported[NV_VERTEX_PROGRAM])
             {
                 /* Not supported by GL_ARB_half_float_vertex */
                 GL_EXTCALL(glVertexAttrib4hvNV(index, ptr));
