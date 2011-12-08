@@ -174,6 +174,11 @@ static inline HRESULT stack_pop_int(exec_ctx_t *ctx, INT *r)
     return to_int32(ctx->parser->script, stack_pop(ctx), &ctx->ei, r);
 }
 
+static inline HRESULT stack_pop_uint(exec_ctx_t *ctx, DWORD *r)
+{
+    return to_uint32(ctx->parser->script, stack_pop(ctx), &ctx->ei, r);
+}
+
 static inline IDispatch *stack_pop_objid(exec_ctx_t *ctx, DISPID *id)
 {
     assert(V_VT(stack_top(ctx)) == VT_INT && V_VT(stack_topn(ctx, 1)) == VT_DISPATCH);
@@ -3132,6 +3137,24 @@ static HRESULT rshift_eval(script_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsex
     V_VT(retv) = VT_I4;
     V_I4(retv) = li >> (ri&0x1f);
     return S_OK;
+}
+
+/* ECMA-262 3rd Edition    11.7.2 */
+static HRESULT interp_rshift(exec_ctx_t *ctx)
+{
+    DWORD r;
+    INT l;
+    HRESULT hres;
+
+    hres = stack_pop_uint(ctx, &r);
+    if(FAILED(hres))
+        return hres;
+
+    hres = stack_pop_int(ctx, &l);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push_int(ctx, l >> (r&0x1f));
 }
 
 /* ECMA-262 3rd Edition    11.7.2 */
