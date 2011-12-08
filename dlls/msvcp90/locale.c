@@ -29,6 +29,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp90);
 
 char* __cdecl _Getdays(void);
+char* __cdecl _Getmonths(void);
 
 typedef int category;
 
@@ -952,10 +953,21 @@ const char* __thiscall _Locinfo__Getdays(_Locinfo *this)
 /* ?_Getmonths@_Locinfo@std@@QBEPBDXZ */
 /* ?_Getmonths@_Locinfo@std@@QEBAPEBDXZ */
 DEFINE_THISCALL_WRAPPER(_Locinfo__Getmonths, 4)
-const char* __thiscall _Locinfo__Getmonths(const _Locinfo *this)
+const char* __thiscall _Locinfo__Getmonths(_Locinfo *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    char *months = _Getmonths();
+
+    TRACE("(%p)\n", this);
+
+    if(months) {
+        MSVCP_basic_string_char_dtor(&this->months);
+        MSVCP_basic_string_char_ctor_cstr(&this->months, months);
+        free(months);
+    }
+
+    return this->months.size ? MSVCP_basic_string_char_c_str(&this->months) :
+        ":Jan:January:Feb:February:Mar:March:Apr:April:May:May:Jun:June:Jul:July"
+        ":Aug:August:Sep:September:Oct:October:Nov:November:Dec:December";
 }
 
 /* ?_Getfalse@_Locinfo@std@@QBEPBDXZ */
