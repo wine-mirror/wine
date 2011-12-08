@@ -56,7 +56,7 @@ BOOL intersect_vis_rectangles( struct bitblt_coords *dst, struct bitblt_coords *
     if ((src->width == dst->width) && (src->height == dst->height)) /* no stretching */
     {
         offset_rect( &src->visrect, dst->x - src->x, dst->y - src->y );
-        intersect_rect( &rect, &src->visrect, &dst->visrect );
+        if (!intersect_rect( &rect, &src->visrect, &dst->visrect )) return FALSE;
         src->visrect = dst->visrect = rect;
         offset_rect( &src->visrect, src->x - dst->x, src->y - dst->y );
     }
