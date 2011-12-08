@@ -794,6 +794,79 @@ static void test_dibsections(void)
     DeleteObject(hdib);
     DeleteObject(hpal);
 
+    plogpal->palNumEntries = 37;
+    hpal = CreatePalette(plogpal);
+    ok(hpal != NULL, "CreatePalette failed\n");
+    oldpal = SelectPalette(hdc, hpal, TRUE);
+    pbmi->bmiHeader.biClrUsed = 142;
+    hdib = CreateDIBSection(hdc, pbmi, DIB_PAL_COLORS, (void**)&bits, NULL, 0);
+    ok(hdib != NULL, "CreateDIBSection failed\n");
+    ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
+    ok(dibsec.dsBmih.biClrUsed == 256, "created DIBSection: wrong biClrUsed field: %u, should be: %u\n", dibsec.dsBmih.biClrUsed, 256);
+
+    test_dib_info(hdib, bits, &pbmi->bmiHeader);
+
+    SelectPalette(hdc, oldpal, TRUE);
+    oldbm = SelectObject(hdcmem, hdib);
+
+    memset( rgb, 0xcc, sizeof(rgb) );
+    ret = GetDIBColorTable(hdcmem, 0, 256, rgb);
+    ok(ret == 256, "GetDIBColorTable returned %d\n", ret);
+    for (i = 0; i < 256; i++)
+    {
+        if (i < pbmi->bmiHeader.biClrUsed)
+        {
+            ok(rgb[i].rgbRed == palent[i % 37].peRed &&
+               rgb[i].rgbBlue == palent[i % 37].peBlue &&
+               rgb[i].rgbGreen == palent[i % 37].peGreen,
+               "GetDIBColorTable returns table %d: r %02x g %02x b %02x res%02x\n",
+               i, rgb[i].rgbRed, rgb[i].rgbGreen, rgb[i].rgbBlue, rgb[i].rgbReserved);
+            test_color(hdcmem, DIBINDEX(i),
+                       RGB(palent[i % 37].peRed, palent[i % 37].peGreen, palent[i % 37].peBlue));
+        }
+        else
+        {
+            ok(rgb[i].rgbRed == 0 && rgb[i].rgbBlue == 0 && rgb[i].rgbGreen == 0,
+               "GetDIBColorTable returns table %d: r %02x g %02x b %02x res%02x\n",
+               i, rgb[i].rgbRed, rgb[i].rgbGreen, rgb[i].rgbBlue, rgb[i].rgbReserved);
+            test_color(hdcmem, DIBINDEX(i), 0 );
+        }
+    }
+    pbmi->bmiHeader.biClrUsed = 173;
+    memset( pbmi->bmiColors, 0xcc, 256 * sizeof(RGBQUAD) );
+    GetDIBits( hdc, hdib, 0, 1, bits, pbmi, DIB_RGB_COLORS );
+    ok( pbmi->bmiHeader.biClrUsed == 0, "wrong colors %u\n", pbmi->bmiHeader.biClrUsed );
+    for (i = 0; i < 256; i++)
+    {
+        if (i < 142)
+            ok(colors[i].rgbRed == palent[i % 37].peRed &&
+               colors[i].rgbBlue == palent[i % 37].peBlue &&
+               colors[i].rgbGreen == palent[i % 37].peGreen,
+               "GetDIBits returns table %d: r %02x g %02x b %02x res%02x\n",
+               i, colors[i].rgbRed, colors[i].rgbGreen, colors[i].rgbBlue, colors[i].rgbReserved);
+        else
+            ok(colors[i].rgbRed == 0 && colors[i].rgbBlue == 0 && colors[i].rgbGreen == 0,
+               "GetDIBits returns table %d: r %02x g %02x b %02x res%02x\n",
+               i, colors[i].rgbRed, colors[i].rgbGreen, colors[i].rgbBlue, colors[i].rgbReserved);
+    }
+
+    SelectObject(hdcmem, oldbm);
+    DeleteObject(hdib);
+    DeleteObject(hpal);
+
+    /* ClrUsed ignored on > 8bpp */
+    pbmi->bmiHeader.biBitCount = 16;
+    pbmi->bmiHeader.biClrUsed = 37;
+    hdib = CreateDIBSection(hdc, pbmi, DIB_PAL_COLORS, (void**)&bits, NULL, 0);
+    ok(hdib != NULL, "CreateDIBSection failed\n");
+    ok(GetObject(hdib, sizeof(DIBSECTION), &dibsec) != 0, "GetObject failed for DIB Section\n");
+    ok(dibsec.dsBmih.biClrUsed == 0, "created DIBSection: wrong biClrUsed field: %u\n", dibsec.dsBmih.biClrUsed);
+    oldbm = SelectObject(hdcmem, hdib);
+    ret = GetDIBColorTable(hdcmem, 0, 256, rgb);
+    ok(ret == 0, "GetDIBColorTable returned %d\n", ret);
+    SelectObject(hdcmem, oldbm);
+    DeleteObject(hdib);
+
     DeleteDC(hdcmem);
     DeleteDC(hdcmem2);
     ReleaseDC(0, hdc);
@@ -804,7 +877,7 @@ static void test_dib_formats(void)
     BITMAPINFO *bi;
     char data[256];
     void *bits;
-    int planes, bpp, compr;
+    int planes, bpp, compr, format;
     HBITMAP hdib, hbmp;
     HDC hdc, memdc;
     UINT ret;
@@ -823,127 +896,131 @@ static void test_dib_formats(void)
         {
             for (compr = 0; compr < 8; compr++)
             {
-                switch (bpp)
+                for (format = DIB_RGB_COLORS; format <= DIB_PAL_COLORS; format++)
                 {
-                case 1:
-                case 4:
-                case 8:
-                case 24: expect_ok = (compr == BI_RGB); break;
-                case 16:
-                case 32: expect_ok = (compr == BI_RGB || compr == BI_BITFIELDS); break;
-                default: expect_ok = FALSE; break;
+                    switch (bpp)
+                    {
+                    case 1:
+                    case 4:
+                    case 8:
+                    case 24: expect_ok = (compr == BI_RGB); break;
+                    case 16:
+                    case 32: expect_ok = (compr == BI_RGB || compr == BI_BITFIELDS); break;
+                    default: expect_ok = FALSE; break;
+                    }
+
+                    memset( bi, 0, sizeof(bi->bmiHeader) );
+                    bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+                    bi->bmiHeader.biWidth = 2;
+                    bi->bmiHeader.biHeight = 2;
+                    bi->bmiHeader.biPlanes = planes;
+                    bi->bmiHeader.biBitCount = bpp;
+                    bi->bmiHeader.biCompression = compr;
+                    bi->bmiHeader.biSizeImage = 0;
+                    memset( bi->bmiColors, 0xaa, sizeof(RGBQUAD) * 256 );
+                    ret = GetDIBits(hdc, hbmp, 0, 0, data, bi, format);
+                    if (expect_ok || (!bpp && compr != BI_JPEG && compr != BI_PNG) ||
+                        (bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8))
+                        ok( ret, "GetDIBits failed for %u/%u/%u/%u\n", bpp, planes, compr, format );
+                    else
+                        ok( !ret || broken(!bpp && (compr == BI_JPEG || compr == BI_PNG)), /* nt4 */
+                            "GetDIBits succeeded for %u/%u/%u/%u\n", bpp, planes, compr, format );
+
+                    /* all functions check planes except GetDIBits with 0 lines */
+                    if (!planes) expect_ok = FALSE;
+                    memset( bi, 0, sizeof(bi->bmiHeader) );
+                    bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+                    bi->bmiHeader.biWidth = 2;
+                    bi->bmiHeader.biHeight = 2;
+                    bi->bmiHeader.biPlanes = planes;
+                    bi->bmiHeader.biBitCount = bpp;
+                    bi->bmiHeader.biCompression = compr;
+                    bi->bmiHeader.biSizeImage = 0;
+                    memset( bi->bmiColors, 0xaa, sizeof(RGBQUAD) * 256 );
+
+                    hdib = CreateDIBSection(hdc, bi, format, &bits, NULL, 0);
+                    if (expect_ok && (planes == 1 || planes * bpp <= 16) &&
+                        (compr != BI_BITFIELDS || format != DIB_PAL_COLORS))
+                        ok( hdib != NULL, "CreateDIBSection failed for %u/%u/%u/%u\n", bpp, planes, compr, format );
+                    else
+                        ok( hdib == NULL, "CreateDIBSection succeeded for %u/%u/%u/%u\n", bpp, planes, compr, format );
+                    if (hdib) DeleteObject( hdib );
+
+                    hdib = CreateDIBitmap( hdc, &bi->bmiHeader, 0, data, bi, format );
+                    /* no sanity checks in CreateDIBitmap except compression */
+                    if (compr == BI_JPEG || compr == BI_PNG)
+                        ok( hdib == NULL || broken(hdib != NULL), /* nt4 */
+                            "CreateDIBitmap succeeded for %u/%u/%u/%u\n", bpp, planes, compr, format );
+                    else
+                        ok( hdib != NULL, "CreateDIBitmap failed for %u/%u/%u/%u\n", bpp, planes, compr, format );
+                    if (hdib) DeleteObject( hdib );
+
+                    /* RLE needs a size */
+                    bi->bmiHeader.biSizeImage = 0;
+                    ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, format);
+                    if (expect_ok)
+                        ok( ret, "SetDIBits failed for %u/%u/%u/%u\n", bpp, planes, compr, format );
+                    else
+                        ok( !ret ||
+                            broken((bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8)), /* nt4 */
+                            "SetDIBits succeeded for %u/%u/%u/%u\n", bpp, planes, compr, format );
+                    ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, format );
+                    if (expect_ok)
+                        ok( ret, "SetDIBitsToDevice failed for %u/%u/%u/%u\n", bpp, planes, compr, format );
+                    else
+                        ok( !ret ||
+                            broken((bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8)), /* nt4 */
+                            "SetDIBitsToDevice succeeded for %u/%u/%u/%u\n", bpp, planes, compr, format );
+                    ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, format, SRCCOPY );
+                    if (expect_ok)
+                        ok( ret, "StretchDIBits failed for %u/%u/%u/%u\n", bpp, planes, compr, format );
+                    else
+                        ok( !ret ||
+                            broken((bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8)), /* nt4 */
+                            "StretchDIBits succeeded for %u/%u/%u/%u\n", bpp, planes, compr, format );
+
+                    ret = GetDIBits(hdc, hbmp, 0, 2, data, bi, format);
+                    if (expect_ok)
+                        ok( ret, "GetDIBits failed for %u/%u/%u/%u\n", bpp, planes, compr, format );
+                    else
+                        ok( !ret, "GetDIBits succeeded for %u/%u/%u/%u\n", bpp, planes, compr, format );
+                    ok( bi->bmiHeader.biBitCount == bpp, "GetDIBits modified bpp %u/%u\n",
+                        bpp, bi->bmiHeader.biBitCount );
+
+                    bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+                    bi->bmiHeader.biWidth = 2;
+                    bi->bmiHeader.biHeight = 2;
+                    bi->bmiHeader.biPlanes = planes;
+                    bi->bmiHeader.biBitCount = bpp;
+                    bi->bmiHeader.biCompression = compr;
+                    bi->bmiHeader.biSizeImage = 1;
+                    memset( bi->bmiColors, 0xaa, sizeof(RGBQUAD) * 256 );
+                    /* RLE allowed with valid biSizeImage */
+                    if ((bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8)) expect_ok = TRUE;
+
+                    ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, format);
+                    if (expect_ok)
+                        ok( ret, "SetDIBits failed for %u/%u/%u/%u\n", bpp, planes, compr, format );
+                    else
+                        ok( !ret, "SetDIBits succeeded for %u/%u/%u/%u\n", bpp, planes, compr, format );
+                    ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, format );
+                    if (expect_ok)
+                        ok( ret, "SetDIBitsToDevice failed for %u/%u/%u/%u\n", bpp, planes, compr, format );
+                    else
+                        ok( !ret, "SetDIBitsToDevice succeeded for %u/%u/%u/%u\n", bpp, planes, compr, format );
+                    ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, format, SRCCOPY );
+                    if (expect_ok)
+                        ok( ret, "StretchDIBits failed for %u/%u/%u/%u\n", bpp, planes, compr, format );
+                    else
+                        ok( !ret, "StretchDIBits succeeded for %u/%u/%u/%u\n", bpp, planes, compr, format );
+
+                    bi->bmiHeader.biSizeImage = 0;
+                    ret = GetDIBits(hdc, hbmp, 0, 2, NULL, bi, format);
+                    if (expect_ok || !bpp)
+                        ok( ret, "GetDIBits failed for %u/%u/%u/%u\n", bpp, planes, compr, format );
+                    else
+                        ok( !ret, "GetDIBits succeeded for %u/%u/%u/%u\n", bpp, planes, compr, format );
                 }
-
-                memset( bi, 0, sizeof(bi->bmiHeader) );
-                bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-                bi->bmiHeader.biWidth = 2;
-                bi->bmiHeader.biHeight = 2;
-                bi->bmiHeader.biPlanes = planes;
-                bi->bmiHeader.biBitCount = bpp;
-                bi->bmiHeader.biCompression = compr;
-                bi->bmiHeader.biSizeImage = 0;
-                memset( bi->bmiColors, 0xaa, sizeof(RGBQUAD) * 256 );
-                ret = GetDIBits(hdc, hbmp, 0, 0, data, bi, DIB_RGB_COLORS);
-                if (expect_ok || (!bpp && compr != BI_JPEG && compr != BI_PNG) ||
-                    (bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8))
-                    ok( ret, "GetDIBits failed for %u/%u/%u\n", bpp, planes, compr );
-                else
-                    ok( !ret || broken(!bpp && (compr == BI_JPEG || compr == BI_PNG)), /* nt4 */
-                        "GetDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
-
-                /* all functions check planes except GetDIBits with 0 lines */
-                if (!planes) expect_ok = FALSE;
-                memset( bi, 0, sizeof(bi->bmiHeader) );
-                bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-                bi->bmiHeader.biWidth = 2;
-                bi->bmiHeader.biHeight = 2;
-                bi->bmiHeader.biPlanes = planes;
-                bi->bmiHeader.biBitCount = bpp;
-                bi->bmiHeader.biCompression = compr;
-                bi->bmiHeader.biSizeImage = 0;
-                memset( bi->bmiColors, 0xaa, sizeof(RGBQUAD) * 256 );
-
-                hdib = CreateDIBSection(hdc, bi, DIB_RGB_COLORS, &bits, NULL, 0);
-                if (expect_ok && (planes == 1 || planes * bpp <= 16))
-                    ok( hdib != NULL, "CreateDIBSection failed for %u/%u/%u\n", bpp, planes, compr );
-                else
-                    ok( hdib == NULL, "CreateDIBSection succeeded for %u/%u/%u\n", bpp, planes, compr );
-                if (hdib) DeleteObject( hdib );
-
-                hdib = CreateDIBitmap( hdc, &bi->bmiHeader, 0, data, bi, DIB_RGB_COLORS );
-                /* no sanity checks in CreateDIBitmap except compression */
-                if (compr == BI_JPEG || compr == BI_PNG)
-                    ok( hdib == NULL || broken(hdib != NULL), /* nt4 */
-                        "CreateDIBitmap succeeded for %u/%u/%u\n", bpp, planes, compr );
-                else
-                    ok( hdib != NULL, "CreateDIBitmap failed for %u/%u/%u\n", bpp, planes, compr );
-                if (hdib) DeleteObject( hdib );
-
-                /* RLE needs a size */
-                bi->bmiHeader.biSizeImage = 0;
-                ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_RGB_COLORS);
-                if (expect_ok)
-                    ok( ret, "SetDIBits failed for %u/%u/%u\n", bpp, planes, compr );
-                else
-                    ok( !ret ||
-                        broken((bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8)), /* nt4 */
-                        "SetDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
-                ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, DIB_RGB_COLORS );
-                if (expect_ok)
-                    ok( ret, "SetDIBitsToDevice failed for %u/%u/%u\n", bpp, planes, compr );
-                else
-                    ok( !ret ||
-                        broken((bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8)), /* nt4 */
-                        "SetDIBitsToDevice succeeded for %u/%u/%u\n", bpp, planes, compr );
-                ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_RGB_COLORS, SRCCOPY );
-                if (expect_ok)
-                    ok( ret, "StretchDIBits failed for %u/%u/%u\n", bpp, planes, compr );
-                else
-                    ok( !ret ||
-                        broken((bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8)), /* nt4 */
-                        "StretchDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
-
-                ret = GetDIBits(hdc, hbmp, 0, 2, data, bi, DIB_RGB_COLORS);
-                if (expect_ok)
-                    ok( ret, "GetDIBits failed for %u/%u/%u\n", bpp, planes, compr );
-                else
-                    ok( !ret, "GetDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
-                ok( bi->bmiHeader.biBitCount == bpp, "GetDIBits modified bpp %u/%u\n",
-                    bpp, bi->bmiHeader.biBitCount );
-
-                bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-                bi->bmiHeader.biWidth = 2;
-                bi->bmiHeader.biHeight = 2;
-                bi->bmiHeader.biPlanes = planes;
-                bi->bmiHeader.biBitCount = bpp;
-                bi->bmiHeader.biCompression = compr;
-                bi->bmiHeader.biSizeImage = 1;
-                memset( bi->bmiColors, 0xaa, sizeof(RGBQUAD) * 256 );
-                /* RLE allowed with valid biSizeImage */
-                if ((bpp == 4 && compr == BI_RLE4) || (bpp == 8 && compr == BI_RLE8)) expect_ok = TRUE;
-
-                ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_RGB_COLORS);
-                if (expect_ok)
-                    ok( ret, "SetDIBits failed for %u/%u/%u\n", bpp, planes, compr );
-                else
-                    ok( !ret, "SetDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
-                ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, DIB_RGB_COLORS );
-                if (expect_ok)
-                    ok( ret, "SetDIBitsToDevice failed for %u/%u/%u\n", bpp, planes, compr );
-                else
-                    ok( !ret, "SetDIBitsToDevice succeeded for %u/%u/%u\n", bpp, planes, compr );
-                ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_RGB_COLORS, SRCCOPY );
-                if (expect_ok)
-                    ok( ret, "StretchDIBits failed for %u/%u/%u\n", bpp, planes, compr );
-                else
-                    ok( !ret, "StretchDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
-
-                bi->bmiHeader.biSizeImage = 0;
-                ret = GetDIBits(hdc, hbmp, 0, 2, NULL, bi, DIB_RGB_COLORS);
-                if (expect_ok || !bpp)
-                    ok( ret, "GetDIBits failed for %u/%u/%u\n", bpp, planes, compr );
-                else
-                    ok( !ret, "GetDIBits succeeded for %u/%u/%u\n", bpp, planes, compr );
             }
         }
     }
@@ -1754,6 +1831,7 @@ static void test_GetDIBits(void)
     bi->bmiHeader.biPlanes = 1;
     bi->bmiHeader.biBitCount = 1;
     bi->bmiHeader.biCompression = BI_RGB;
+    bi->bmiHeader.biClrUsed = 37;
     bi->bmiHeader.biSizeImage = 0;
     memset(colors, 0xAA, sizeof(RGBQUAD) * 256);
     SetLastError(0xdeadbeef);
@@ -1763,6 +1841,7 @@ static void test_GetDIBits(void)
        broken(GetLastError() == 0xdeadbeef), /* winnt */
        "wrong error %u\n", GetLastError());
     ok(bi->bmiHeader.biSizeImage == 0, "expected 0, got %u\n", bi->bmiHeader.biSizeImage);
+    ok(bi->bmiHeader.biClrUsed == 37, "wrong biClrUsed %u\n", bi->bmiHeader.biClrUsed);
 
     memset(buf, 0xAA, sizeof(buf));
     SetLastError(0xdeadbeef);
@@ -1770,6 +1849,7 @@ static void test_GetDIBits(void)
     ok(lines == bm.bmHeight, "GetDIBits copied %d lines of %d, error %u\n",
        lines, bm.bmHeight, GetLastError());
     ok(bi->bmiHeader.biSizeImage == sizeof(dib_bits_1), "expected 16*4, got %u\n", bi->bmiHeader.biSizeImage);
+    ok(bi->bmiHeader.biClrUsed == 0, "wrong biClrUsed %u\n", bi->bmiHeader.biClrUsed);
 
     /* the color table consists of black and white */
     ok(colors[0].rgbRed == 0 && colors[0].rgbGreen == 0 &&
@@ -1808,6 +1888,7 @@ static void test_GetDIBits(void)
     bi->bmiHeader.biPlanes = 1;
     bi->bmiHeader.biBitCount = 24;
     bi->bmiHeader.biCompression = BI_RGB;
+    bi->bmiHeader.biClrUsed = 37;
     bi->bmiHeader.biSizeImage = 0;
     memset(colors, 0xAA, sizeof(RGBQUAD) * 256);
     memset(buf, 0xAA, sizeof(buf));
@@ -1816,6 +1897,7 @@ static void test_GetDIBits(void)
     ok(lines == bm.bmHeight, "GetDIBits copied %d lines of %d, error %u\n",
        lines, bm.bmHeight, GetLastError());
     ok(bi->bmiHeader.biSizeImage == sizeof(dib_bits_24), "expected 16*16*3, got %u\n", bi->bmiHeader.biSizeImage);
+    ok(bi->bmiHeader.biClrUsed == 0, "wrong biClrUsed %u\n", bi->bmiHeader.biClrUsed);
 
     /* the color table doesn't exist for 24-bit images */
     for (i = 0; i < 256; i++)
@@ -1864,6 +1946,7 @@ static void test_GetDIBits(void)
     bi->bmiHeader.biPlanes = 1;
     bi->bmiHeader.biBitCount = 1;
     bi->bmiHeader.biCompression = BI_RGB;
+    bi->bmiHeader.biClrUsed = 37;
     bi->bmiHeader.biSizeImage = 0;
     memset(colors, 0xAA, sizeof(RGBQUAD) * 256);
     memset(buf, 0xAA, sizeof(buf));
@@ -1872,6 +1955,7 @@ static void test_GetDIBits(void)
     ok(lines == bm.bmHeight, "GetDIBits copied %d lines of %d, error %u\n",
        lines, bm.bmHeight, GetLastError());
     ok(bi->bmiHeader.biSizeImage == sizeof(dib_bits_1), "expected 16*4, got %u\n", bi->bmiHeader.biSizeImage);
+    ok(bi->bmiHeader.biClrUsed == 0, "wrong biClrUsed %u\n", bi->bmiHeader.biClrUsed);
 
     /* the color table consists of black and white */
     ok(colors[0].rgbRed == 0 && colors[0].rgbGreen == 0 &&
@@ -1910,6 +1994,7 @@ static void test_GetDIBits(void)
     bi->bmiHeader.biPlanes = 1;
     bi->bmiHeader.biBitCount = 4;
     bi->bmiHeader.biCompression = BI_RGB;
+    bi->bmiHeader.biClrUsed = 37;
     bi->bmiHeader.biSizeImage = 0;
     memset(colors, 0xAA, sizeof(RGBQUAD) * 256);
     memset(buf, 0xAA, sizeof(buf));
@@ -1917,6 +2002,7 @@ static void test_GetDIBits(void)
     lines = GetDIBits(hdc, hbmp, 0, bm.bmHeight, buf, bi, DIB_RGB_COLORS);
     ok(lines == bm.bmHeight, "GetDIBits copied %d lines of %d, error %u\n",
        lines, bm.bmHeight, GetLastError());
+    ok(bi->bmiHeader.biClrUsed == 0, "wrong biClrUsed %u\n", bi->bmiHeader.biClrUsed);
 
     GetPaletteEntries( GetStockObject(DEFAULT_PALETTE), 0, 20, pal_ents );
 
@@ -1947,6 +2033,7 @@ static void test_GetDIBits(void)
     bi->bmiHeader.biPlanes = 1;
     bi->bmiHeader.biBitCount = 8;
     bi->bmiHeader.biCompression = BI_RGB;
+    bi->bmiHeader.biClrUsed = 37;
     bi->bmiHeader.biSizeImage = 0;
     memset(colors, 0xAA, sizeof(RGBQUAD) * 256);
     memset(buf, 0xAA, sizeof(buf));
@@ -1954,6 +2041,7 @@ static void test_GetDIBits(void)
     lines = GetDIBits(hdc, hbmp, 0, bm.bmHeight, buf, bi, DIB_RGB_COLORS);
     ok(lines == bm.bmHeight, "GetDIBits copied %d lines of %d, error %u\n",
        lines, bm.bmHeight, GetLastError());
+    ok(bi->bmiHeader.biClrUsed == 0, "wrong biClrUsed %u\n", bi->bmiHeader.biClrUsed);
 
     GetPaletteEntries( GetStockObject(DEFAULT_PALETTE), 0, 20, pal_ents );
 
@@ -1990,6 +2078,7 @@ static void test_GetDIBits(void)
     bi->bmiHeader.biPlanes = 1;
     bi->bmiHeader.biBitCount = 24;
     bi->bmiHeader.biCompression = BI_RGB;
+    bi->bmiHeader.biClrUsed = 37;
     bi->bmiHeader.biSizeImage = 0;
     memset(colors, 0xAA, sizeof(RGBQUAD) * 256);
     memset(buf, 0xAA, sizeof(buf));
@@ -1998,6 +2087,7 @@ static void test_GetDIBits(void)
     ok(lines == bm.bmHeight, "GetDIBits copied %d lines of %d, error %u\n",
        lines, bm.bmHeight, GetLastError());
     ok(bi->bmiHeader.biSizeImage == sizeof(dib_bits_24), "expected 16*16*3, got %u\n", bi->bmiHeader.biSizeImage);
+    ok(bi->bmiHeader.biClrUsed == 0, "wrong biClrUsed %u\n", bi->bmiHeader.biClrUsed);
 
     /* the color table doesn't exist for 24-bit images */
     for (i = 0; i < 256; i++)
@@ -4055,6 +4145,10 @@ static void test_GetDIBits_scanlines(void)
 
 static void test_SetDIBits(void)
 {
+    char palbuf[sizeof(LOGPALETTE) + 256 * sizeof(PALETTEENTRY)];
+    LOGPALETTE *pal = (LOGPALETTE *)palbuf;
+    PALETTEENTRY *palent = pal->palPalEntry;
+    HPALETTE palette;
     BITMAPINFO *info;
     DWORD *dib_bits;
     HDC hdc = GetDC( NULL );
@@ -4223,8 +4317,61 @@ static void test_SetDIBits(void)
     for (i = 32; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
     memset( dib_bits, 0xaa, 64 * 4 );
 
-    DeleteObject( dib );
+    /* handling of partial color table */
+
+    info->bmiHeader.biHeight   = -8;
+    info->bmiHeader.biBitCount = 8;
+    info->bmiHeader.biClrUsed  = 137;
+    for (i = 0; i < 256; i++)
+    {
+        info->bmiColors[i].rgbRed      = 255 - i;
+        info->bmiColors[i].rgbGreen    = i * 2;
+        info->bmiColors[i].rgbBlue     = i;
+        info->bmiColors[i].rgbReserved = 0;
+    }
+    for (i = 0; i < 64; i++) ((BYTE *)data)[i] = i * 4 + 1;
+    ret = SetDIBits( hdc, dib, 0, 8, data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    for (i = 0; i < 64; i++)
+    {
+        int idx = i * 4 + 1;
+        DWORD expect = idx >= info->bmiHeader.biClrUsed ? 0 : (info->bmiColors[idx].rgbRed << 16 |
+                                                               info->bmiColors[idx].rgbGreen << 8 |
+                                                               info->bmiColors[idx].rgbBlue);
+        ok( dib_bits[i] == expect, "%d: got %08x instead of %08x\n", i, dib_bits[i], expect );
+    }
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    /* handling of DIB_PAL_COLORS */
+
+    pal->palVersion = 0x300;
+    pal->palNumEntries = 137;
+    info->bmiHeader.biClrUsed = 221;
+    for (i = 0; i < 256; i++)
+    {
+        palent[i].peRed   = i * 2;
+        palent[i].peGreen = 255 - i;
+        palent[i].peBlue  = i;
+    }
+    palette = CreatePalette( pal );
+    ok( palette != 0, "palette creation failed\n" );
+    SelectPalette( hdc, palette, FALSE );
+    for (i = 0; i < 256; i++) ((WORD *)info->bmiColors)[i] = 255 - i;
+    ret = SetDIBits( hdc, dib, 0, 8, data, info, DIB_PAL_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    for (i = 0; i < 64; i++)
+    {
+        int idx = i * 4 + 1;
+        int ent = (255 - idx) % pal->palNumEntries;
+        DWORD expect = idx >= info->bmiHeader.biClrUsed ? 0 :
+                        (palent[ent].peRed << 16 | palent[ent].peGreen << 8 | palent[ent].peBlue);
+        ok( dib_bits[i] == expect, "%d: got %08x instead of %08x\n", i, dib_bits[i], expect );
+    }
+    memset( dib_bits, 0xaa, 64 * 4 );
+
     ReleaseDC( NULL, hdc );
+    DeleteObject( dib );
+    DeleteObject( palette );
     HeapFree( GetProcessHeap(), 0, info );
 }
 
@@ -4435,6 +4582,10 @@ static void test_SetDIBits_RLE8(void)
 
 static void test_SetDIBitsToDevice(void)
 {
+    char palbuf[sizeof(LOGPALETTE) + 256 * sizeof(PALETTEENTRY)];
+    LOGPALETTE *pal = (LOGPALETTE *)palbuf;
+    PALETTEENTRY *palent = pal->palPalEntry;
+    HPALETTE palette;
     BITMAPINFO *info;
     DWORD *dib_bits;
     HDC hdc = CreateCompatibleDC( 0 );
@@ -4793,8 +4944,61 @@ static void test_SetDIBitsToDevice(void)
     for (i = 0; i < 64; i++) ok( dib_bits[i] == 0xaaaaaaaa, "%d: got %08x\n", i, dib_bits[i] );
     memset( dib_bits, 0xaa, 64 * 4 );
 
+    /* handling of partial color table */
+
+    info->bmiHeader.biHeight   = -8;
+    info->bmiHeader.biBitCount = 8;
+    info->bmiHeader.biClrUsed  = 137;
+    for (i = 0; i < 256; i++)
+    {
+        info->bmiColors[i].rgbRed      = 255 - i;
+        info->bmiColors[i].rgbGreen    = i * 2;
+        info->bmiColors[i].rgbBlue     = i;
+        info->bmiColors[i].rgbReserved = 0;
+    }
+    for (i = 0; i < 64; i++) ((BYTE *)data)[i] = i * 4 + 1;
+    ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 0, 8, data, info, DIB_RGB_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    for (i = 0; i < 64; i++)
+    {
+        int idx = i * 4 + 1;
+        DWORD expect = idx >= info->bmiHeader.biClrUsed ? 0 : (info->bmiColors[idx].rgbRed << 16 |
+                                                               info->bmiColors[idx].rgbGreen << 8 |
+                                                               info->bmiColors[idx].rgbBlue);
+        ok( dib_bits[i] == expect, "%d: got %08x instead of %08x\n", i, dib_bits[i], expect );
+    }
+    memset( dib_bits, 0xaa, 64 * 4 );
+
+    /* handling of DIB_PAL_COLORS */
+
+    pal->palVersion = 0x300;
+    pal->palNumEntries = 137;
+    info->bmiHeader.biClrUsed = 221;
+    for (i = 0; i < 256; i++)
+    {
+        palent[i].peRed   = i * 2;
+        palent[i].peGreen = 255 - i;
+        palent[i].peBlue  = i;
+    }
+    palette = CreatePalette( pal );
+    ok( palette != 0, "palette creation failed\n" );
+    SelectPalette( hdc, palette, FALSE );
+    for (i = 0; i < 256; i++) ((WORD *)info->bmiColors)[i] = 255 - i;
+    ret = SetDIBitsToDevice( hdc, 0, 0, 8, 8, 0, 0, 0, 8, data, info, DIB_PAL_COLORS );
+    ok( ret == 8, "got %d\n", ret );
+    for (i = 0; i < 64; i++)
+    {
+        int idx = i * 4 + 1;
+        int ent = (255 - idx) % pal->palNumEntries;
+        DWORD expect = idx >= info->bmiHeader.biClrUsed ? 0 :
+                        (palent[ent].peRed << 16 | palent[ent].peGreen << 8 | palent[ent].peBlue);
+        ok( dib_bits[i] == expect, "%d: got %08x instead of %08x\n", i, dib_bits[i], expect );
+    }
+    memset( dib_bits, 0xaa, 64 * 4 );
+
     DeleteDC( hdc );
     DeleteObject( dib );
+    DeleteObject( palette );
     HeapFree( GetProcessHeap(), 0, info );
 }
 
