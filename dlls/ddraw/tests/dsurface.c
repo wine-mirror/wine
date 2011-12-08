@@ -29,6 +29,8 @@
 #include "d3d.h"
 #include "unknwn.h"
 
+static HRESULT (WINAPI *pDirectDrawCreateEx)(GUID *, void **, REFIID, IUnknown *);
+
 static LPDIRECTDRAW lpDD = NULL;
 static DDCAPS ddcaps;
 
@@ -4484,10 +4486,6 @@ static void set_surface_desc_test(void)
     IDirectDrawSurface3 *surface3;
     BYTE data[16*16*4];
 
-    hr = IDirectDraw_CreateSurface(lpDD, NULL, &surface, NULL);
-    ok(hr == DDERR_INVALIDPARAMS, "CreateSurface with a NULL DDSD returned %#x,"
-            " expected DDERR_INVALIDPARAMS(%#x)\n", hr, DDERR_INVALIDPARAMS);
-
     reset_ddsd(&ddsd);
     ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT;
     ddsd.dwWidth = 8;
@@ -4909,10 +4907,67 @@ static void partial_block_lock_test(void)
     IDirectDraw7_Release(dd7);
 }
 
+static void create_surface_test(void)
+{
+    HRESULT hr;
+    IDirectDraw2 *ddraw2;
+    IDirectDraw4 *ddraw4;
+    IDirectDraw7 *ddraw7;
+    IDirectDrawSurface *surface;
+    IDirectDrawSurface4 *surface4;
+    IDirectDrawSurface7 *surface7;
+
+    hr = IDirectDraw_CreateSurface(lpDD, NULL, &surface, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "CreateSurface(ddsd=NULL) returned %#x,"
+            " expected %#x.\n", hr, DDERR_INVALIDPARAMS);
+
+    hr = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw2, (void **) &ddraw2);
+    ok(SUCCEEDED(hr), "QueryInterface failed, hr %#x.\n", hr);
+
+    hr = IDirectDraw2_CreateSurface(ddraw2, NULL, &surface, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "CreateSurface(ddsd=NULL) returned %#x,"
+            " expected %#x.\n", hr, DDERR_INVALIDPARAMS);
+
+    IDirectDraw2_Release(ddraw2);
+
+    hr = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw4, (void **) &ddraw4);
+    ok(SUCCEEDED(hr), "QueryInterface failed, hr %#x.\n", hr);
+
+    hr = IDirectDraw4_CreateSurface(ddraw4, NULL, &surface4, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "CreateSurface(ddsd=NULL) returned %#x,"
+            " expected %#x.\n", hr, DDERR_INVALIDPARAMS);
+
+    IDirectDraw4_Release(ddraw4);
+
+    if (!pDirectDrawCreateEx)
+    {
+        skip("DirectDrawCreateEx not available, skipping IDirectDraw7 tests.\n");
+        return;
+    }
+    hr = pDirectDrawCreateEx(NULL, (void **) &ddraw7, &IID_IDirectDraw7, NULL);
+    ok(SUCCEEDED(hr), "DirectDrawCreateEx failed, hr %#x.\n", hr);
+
+    hr = IDirectDraw7_CreateSurface(ddraw7, NULL, &surface7, NULL);
+    ok(hr == DDERR_NOCOOPERATIVELEVELSET, "CreateSurface(ddsd=NULL, pre-SCL) returned %#x,"
+            " expected %#x.\n", hr, DDERR_NOCOOPERATIVELEVELSET);
+
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw7, NULL, DDSCL_NORMAL);
+    ok(hr == DD_OK, "SetCooperativeLevel failed, hr %#x.\n", hr);
+
+    hr = IDirectDraw7_CreateSurface(ddraw7, NULL, &surface7, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "CreateSurface(ddsd=NULL) returned %#x,"
+            " expected %#x.\n", hr, DDERR_INVALIDPARAMS);
+
+    IDirectDraw7_Release(ddraw7);
+}
+
 START_TEST(dsurface)
 {
     HRESULT ret;
     IDirectDraw4 *dd4;
+
+    HMODULE ddraw_mod = GetModuleHandleA("ddraw.dll");
+    pDirectDrawCreateEx = (void *) GetProcAddress(ddraw_mod, "DirectDrawCreateEx");
 
     if (!CreateDirectDraw())
         return;
@@ -4970,5 +5025,6 @@ START_TEST(dsurface)
     pixelformat_flag_test();
     set_surface_desc_test();
     partial_block_lock_test();
+    create_surface_test();
     ReleaseDirectDraw();
 }
