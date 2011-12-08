@@ -625,6 +625,8 @@ static HRESULT compile_expression_noret(compiler_ctx_t *ctx, expression_t *expr,
         return compile_assign_expression(ctx, (binary_expression_t*)expr, OP_or);
     case EXPR_ASSIGNXOR:
         return compile_assign_expression(ctx, (binary_expression_t*)expr, OP_xor);
+    case EXPR_BAND:
+        return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_and);
     case EXPR_BITNEG:
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_bneg);
     case EXPR_BOR:

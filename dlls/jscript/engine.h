@@ -43,6 +43,7 @@ typedef struct _func_stack {
 
 #define OP_LIST                            \
     X(add,        1, 0,0)                  \
+    X(and,        1, 0,0)                  \
     X(array,      1, 0,0)                  \
     X(assign,     1, 0,0)                  \
     X(bool,       1, ARG_INT,    0)        \
@@ -561,7 +562,6 @@ HRESULT member_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exp
 HRESULT identifier_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT property_value_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 
-HRESULT binary_and_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT instanceof_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT delete_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT typeof_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
