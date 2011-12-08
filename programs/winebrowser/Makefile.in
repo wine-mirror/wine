@@ -1,7 +1,7 @@
 EXTRADEFS = -DWINE_NO_UNICODE_MACROS
 MODULE    = winebrowser.exe
 APPMODE   = -mwindows -municode
-IMPORTS   = shlwapi user32 advapi32
+IMPORTS   = urlmon oleaut32 user32 advapi32
 
 C_SRCS = \
 	main.c
