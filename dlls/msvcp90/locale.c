@@ -969,8 +969,8 @@ const char* __thiscall _Locinfo__Gettrue(const _Locinfo *this)
 DEFINE_THISCALL_WRAPPER(_Locinfo__Getlconv, 4)
 const struct lconv* __thiscall _Locinfo__Getlconv(const _Locinfo *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+    return localeconv();
 }
 
 /* ?_Getname@_Locinfo@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
