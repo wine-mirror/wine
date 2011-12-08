@@ -2150,8 +2150,8 @@ static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *
         return vendor_card_select_table[i].select_card(gl_info, gl_renderer);
     }
 
-    FIXME_(d3d_caps)("No card selector available for GL vendor %d and card vendor %04x.\n",
-                     *gl_vendor, *card_vendor);
+    FIXME_(d3d_caps)("No card selector available for GL vendor %#x and card vendor %04x (using GL_RENDERER %s).\n",
+            *gl_vendor, *card_vendor, debugstr_a(gl_renderer));
 
     /* Default to generic Nvidia hardware based on the supported OpenGL extensions. The choice
      * for Nvidia was because the hardware and drivers they make are of good quality. This makes
