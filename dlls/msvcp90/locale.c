@@ -28,6 +28,8 @@
 #include "wine/debug.h"
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp90);
 
+char* __cdecl _Getdays(void);
+
 typedef int category;
 
 typedef struct _locale_id {
@@ -931,10 +933,20 @@ int __thiscall _Locinfo__Getdateorder(const _Locinfo *this)
 /* ?_Getdays@_Locinfo@std@@QBEPBDXZ */
 /* ?_Getdays@_Locinfo@std@@QEBAPEBDXZ */
 DEFINE_THISCALL_WRAPPER(_Locinfo__Getdays, 4)
-const char* __thiscall _Locinfo__Getdays(const _Locinfo *this)
+const char* __thiscall _Locinfo__Getdays(_Locinfo *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    char *days = _Getdays();
+
+    TRACE("(%p)\n", this);
+
+    if(days) {
+        MSVCP_basic_string_char_dtor(&this->days);
+        MSVCP_basic_string_char_ctor_cstr(&this->days, days);
+        free(days);
+    }
+
+    return this->days.size ? MSVCP_basic_string_char_c_str(&this->days) :
+        ":Sun:Sunday:Mon:Monday:Tue:Tuesday:Wed:Wednesday:Thu:Thursday:Fri:Friday:Sat:Saturday";
 }
 
 /* ?_Getmonths@_Locinfo@std@@QBEPBDXZ */
