@@ -680,21 +680,8 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
     err = funcs->pPutImage( NULL, hbitmap, clip, dst_info, &src_bits, &src, &dst, 0 );
     if (err == ERROR_BAD_FORMAT)
     {
-        void *ptr;
-
-        dst_info->bmiHeader.biWidth = dst.width;
-        ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( dst_info ));
-        if (ptr)
-        {
-            err = convert_bitmapinfo( src_info, src_bits.ptr, &src, dst_info, ptr, FALSE );
-            if (src_bits.free) src_bits.free( &src_bits );
-            src_bits.ptr = ptr;
-            src_bits.is_copy = TRUE;
-            src_bits.free = free_heap_bits;
-            if (!err)
-                err = funcs->pPutImage( NULL, hbitmap, clip, dst_info, &src_bits, &src, &dst, 0 );
-        }
-        else err = ERROR_OUTOFMEMORY;
+        err = convert_bits( src_info, &src, dst_info, &src_bits, FALSE );
+        if (!err) err = funcs->pPutImage( NULL, hbitmap, clip, dst_info, &src_bits, &src, &dst, 0 );
     }
     if(err) result = 0;
 
@@ -810,20 +797,8 @@ INT nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWOR
     err = dev->funcs->pPutImage( dev, 0, clip, dst_info, &src_bits, &src, &dst, SRCCOPY );
     if (err == ERROR_BAD_FORMAT)
     {
-        void *ptr;
-
-        dst_info->bmiHeader.biWidth = src.visrect.right - src.visrect.left;
-        ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( dst_info ));
-        if (ptr)
-        {
-            err = convert_bitmapinfo( src_info, src_bits.ptr, &src, dst_info, ptr, FALSE );
-            if (src_bits.free) src_bits.free( &src_bits );
-            src_bits.ptr = ptr;
-            src_bits.is_copy = TRUE;
-            src_bits.free = free_heap_bits;
-            if (!err) err = dev->funcs->pPutImage( dev, 0, clip, dst_info, &src_bits, &src, &dst, SRCCOPY );
-        }
-        else err = ERROR_OUTOFMEMORY;
+        err = convert_bits( src_info, &src, dst_info, &src_bits, FALSE );
+        if (!err) err = dev->funcs->pPutImage( dev, 0, clip, dst_info, &src_bits, &src, &dst, SRCCOPY );
     }
     if (err) lines = 0;
 
