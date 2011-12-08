@@ -1303,7 +1303,6 @@ static BOOL xrenderdrv_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap )
 
     if (!GetObjectW( hbitmap, sizeof(bitmap), &bitmap )) return FALSE;
 
-    if (bitmap.bmPlanes != 1) return FALSE;
     format = get_bitmap_format( bitmap.bmBitsPixel );
 
     if (pict_formats[format])

@@ -130,6 +130,16 @@ BOOL X11DRV_create_phys_bitmap( HBITMAP hbitmap, const BITMAP *bitmap, int depth
 {
     X_PHYSBITMAP *physBitmap;
 
+    if (bitmap->bmWidth > 65535 || bitmap->bmHeight > 65535 || bitmap->bmPlanes != 1 ||
+        (bitmap->bmBitsPixel != 1 && bitmap->bmBitsPixel != screen_bpp))
+    {
+        WARN( "Trying to create invalid pixmap %dx%d planes %d bpp %d\n",
+              bitmap->bmWidth, bitmap->bmHeight, bitmap->bmPlanes, bitmap->bmBitsPixel );
+        return FALSE;
+    }
+
+    TRACE( "(%p) %dx%d %d bpp\n", hbitmap, bitmap->bmWidth, bitmap->bmHeight, bitmap->bmBitsPixel );
+
     if (!(physBitmap = X11DRV_init_phys_bitmap( hbitmap ))) return FALSE;
 
     physBitmap->depth = depth;
@@ -170,28 +180,8 @@ BOOL X11DRV_CreateBitmap( PHYSDEV dev, HBITMAP hbitmap )
 
     if (!GetObjectW( hbitmap, sizeof(bitmap), &bitmap )) return FALSE;
 
-      /* Check parameters */
-    if (bitmap.bmPlanes != 1) return FALSE;
-
-    /* check if bpp is compatible with screen depth */
-    if (!((bitmap.bmBitsPixel == 1) || (bitmap.bmBitsPixel == screen_bpp)))
-    {
-        WARN("Trying to make bitmap with planes=%d, bpp=%d\n",
-            bitmap.bmPlanes, bitmap.bmBitsPixel);
-        return FALSE;
-    }
-
-    TRACE("(%p) %dx%d %d bpp\n", hbitmap, bitmap.bmWidth, bitmap.bmHeight, bitmap.bmBitsPixel);
-
     if (bitmap.bmBitsPixel == 1)
-    {
-        if (hbitmap == BITMAP_stock_phys_bitmap.hbitmap)
-        {
-            ERR( "called for stock bitmap, please report\n" );
-            return FALSE;
-        }
         return X11DRV_create_phys_bitmap( hbitmap, &bitmap, 1, FALSE, NULL );
-    }
 
     return X11DRV_create_phys_bitmap( hbitmap, &bitmap, screen_depth,
                                       (visual->class == TrueColor || visual->class == DirectColor),
