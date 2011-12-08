@@ -2001,54 +2001,33 @@ static HRESULT interp_regexp(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.1.4 */
-HRESULT array_literal_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+static HRESULT interp_carray(exec_ctx_t *ctx)
 {
-    array_literal_expression_t *expr = (array_literal_expression_t*)_expr;
-    DWORD length = 0, i = 0;
-    array_element_t *elem;
+    const unsigned arg = ctx->parser->code->instrs[ctx->ip].arg1.uint;
     jsdisp_t *array;
-    exprval_t exprval;
-    VARIANT val;
+    VARIANT *v, r;
+    unsigned i;
     HRESULT hres;
 
-    TRACE("\n");
+    TRACE("%u\n", arg);
 
-    for(elem = expr->element_list; elem; elem = elem->next)
-        length += elem->elision+1;
-    length += expr->length;
-
-    hres = create_array(ctx, length, &array);
+    hres = create_array(ctx->parser->script, arg, &array);
     if(FAILED(hres))
         return hres;
 
-    for(elem = expr->element_list; elem; elem = elem->next) {
-        i += elem->elision;
-
-        hres = expr_eval(ctx, elem->expr, 0, ei, &exprval);
-        if(FAILED(hres))
-            break;
-
-        hres = exprval_to_value(ctx, &exprval, ei, &val);
-        exprval_release(&exprval);
-        if(FAILED(hres))
-            break;
-
-        hres = jsdisp_propput_idx(array, i, &val, ei, NULL/*FIXME*/);
-        VariantClear(&val);
-        if(FAILED(hres))
-            break;
-
-        i++;
+    i = arg;
+    while(i--) {
+        v = stack_pop(ctx);
+        hres = jsdisp_propput_idx(array, i, v, &ctx->ei, NULL/*FIXME*/);
+        VariantClear(v);
+        if(FAILED(hres)) {
+            jsdisp_release(array);
+            return hres;
+        }
     }
 
-    if(FAILED(hres)) {
-        jsdisp_release(array);
-        return hres;
-    }
-
-    ret->type = EXPRVAL_VARIANT;
-    var_set_jsdisp(&ret->u.var, array);
-    return S_OK;
+    var_set_jsdisp(&r, array);
+    return stack_push(ctx, &r);
 }
 
 /* ECMA-262 3rd Edition    11.1.5 */
@@ -3268,6 +3247,16 @@ HRESULT assign_and_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD
     TRACE("\n");
 
     return assign_oper_eval(ctx, expr->expression1, expr->expression2, bitand_eval, ei, ret);
+}
+
+static HRESULT interp_undefined(exec_ctx_t *ctx)
+{
+    VARIANT v;
+
+    TRACE("\n");
+
+    V_VT(&v) = VT_EMPTY;
+    return stack_push(ctx, &v);
 }
 
 static HRESULT interp_jmp(exec_ctx_t *ctx)

@@ -49,6 +49,7 @@ typedef struct _func_stack {
     X(bneg,       1, 0,0)                  \
     X(call,       1, ARG_UINT,   ARG_UINT) \
     X(call_member,1, ARG_UINT,   ARG_UINT) \
+    X(carray,     1, ARG_UINT,   0)        \
     X(delete,     1, 0,0)                  \
     X(div,        1, 0,0)                  \
     X(double,     1, ARG_SBL,    0)        \
@@ -88,6 +89,7 @@ typedef struct _func_stack {
     X(refval,     1, 0,0)                  \
     X(ret,        0, 0,0)                  \
     X(sub,        1, 0,0)                  \
+    X(undefined,  1, 0,0)                  \
     X(void,       1, 0,0)                  \
     X(xor,        1, 0,0)
 
@@ -557,7 +559,6 @@ HRESULT function_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,e
 HRESULT array_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT member_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT identifier_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
-HRESULT array_literal_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT property_value_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 
 HRESULT binary_and_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;

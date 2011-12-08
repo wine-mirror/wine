@@ -570,6 +570,34 @@ static HRESULT compile_literal(compiler_ctx_t *ctx, literal_t *literal)
     }
 }
 
+static HRESULT compile_array_literal(compiler_ctx_t *ctx, array_literal_expression_t *expr)
+{
+    unsigned i, elem_cnt = expr->length;
+    array_element_t *iter;
+    HRESULT hres;
+
+    for(iter = expr->element_list; iter; iter = iter->next) {
+        elem_cnt += iter->elision+1;
+
+        for(i=0; i < iter->elision; i++) {
+            if(push_instr(ctx, OP_undefined) == -1)
+                return E_OUTOFMEMORY;
+        }
+
+        hres = compile_expression(ctx, iter->expr);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    for(i=0; i < expr->length; i++) {
+        if(push_instr(ctx, OP_undefined) == -1)
+            return E_OUTOFMEMORY;
+    }
+
+    return push_instr_uint(ctx, OP_carray, elem_cnt);
+}
+
+
 static HRESULT compile_expression_noret(compiler_ctx_t *ctx, expression_t *expr, BOOL *no_ret)
 {
     switch(expr->type) {
@@ -579,6 +607,8 @@ static HRESULT compile_expression_noret(compiler_ctx_t *ctx, expression_t *expr,
         return compile_logical_expression(ctx, (binary_expression_t*)expr, OP_jmp_z);
     case EXPR_ARRAY:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_array);
+    case EXPR_ARRAYLIT:
+        return compile_array_literal(ctx, (array_literal_expression_t*)expr);
     case EXPR_ASSIGN:
         return compile_assign_expression(ctx, (binary_expression_t*)expr, OP_LAST);
     case EXPR_ASSIGNADD:

@@ -1359,7 +1359,7 @@ static const expression_eval_t expression_eval_table[] = {
    compiled_expression_eval,
    function_expression_eval,
    identifier_expression_eval,
-   array_literal_expression_eval,
+   compiled_expression_eval,
    property_value_expression_eval,
    compiled_expression_eval
 };
