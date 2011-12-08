@@ -978,8 +978,11 @@ const struct lconv* __thiscall _Locinfo__Getlconv(const _Locinfo *this)
 DEFINE_THISCALL_WRAPPER_RETPTR(_Locinfo__Getname, 4)
 basic_string_char __thiscall _Locinfo__Getname(const _Locinfo *this)
 {
-    basic_string_char ret = { 0 }; /* FIXME */
-    FIXME("(%p) stub\n", this);
+    basic_string_char ret;
+
+    TRACE("(%p)\n", this);
+
+    MSVCP_basic_string_char_copy_ctor(&ret, &this->newlocname);
     return ret;
 }
 
