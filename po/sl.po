@@ -415,9 +415,9 @@ msgstr "Samo za &branje"
 msgid "Save As..."
 msgstr "Shrani kot ..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
-msgstr "Shrani"
+msgstr "Shrani kot"
 
 #: comdlg32.rc:209 comdlg32.rc:218 comdlg32.rc:364 comdlg32.rc:64 hhctrl.rc:46
 #: wordpad.rc:162
@@ -1067,10 +1067,6 @@ msgstr "Shrani &v:"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "Shrani"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "Shrani kot"
 
 #: comdlg32.rc:156
 msgid "Open File"

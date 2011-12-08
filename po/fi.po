@@ -428,9 +428,9 @@ msgstr "&Vain luku"
 msgid "Save As..."
 msgstr "Tallenna nimellä"
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
-msgstr "Tallenna"
+msgstr "Tallenna nimellä"
 
 #: comdlg32.rc:209 comdlg32.rc:218 comdlg32.rc:364 comdlg32.rc:64 hhctrl.rc:46
 #: wordpad.rc:162
@@ -1080,10 +1080,6 @@ msgstr "&Kansioon:"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "Tallenna"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "Tallenna nimellä"
 
 #: comdlg32.rc:156
 msgid "Open File"

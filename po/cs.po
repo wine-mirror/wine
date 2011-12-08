@@ -418,7 +418,7 @@ msgstr "&Pouze pro čtení"
 msgid "Save As..."
 msgstr "Ulož pod jménem..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr "Ulož pod jménem"
 
@@ -1078,10 +1078,6 @@ msgstr "Ulož&it v:"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "Uložit"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "Uložit jako"
 
 #: comdlg32.rc:156
 msgid "Open File"

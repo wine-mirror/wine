@@ -416,7 +416,7 @@ msgstr "&Salt Okunur"
 msgid "Save As..."
 msgstr "Farklı Kaydet..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr "Farklı Kaydet"
 
@@ -1073,10 +1073,6 @@ msgstr "Kayıt &Yeri:"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "Kaydet"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "Farklı Kaydet"
 
 #: comdlg32.rc:156
 msgid "Open File"

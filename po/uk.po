@@ -408,7 +408,7 @@ msgstr "&Лише для читання"
 msgid "Save As..."
 msgstr "Зберегти як..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr "Зберегти як"
 
@@ -1059,10 +1059,6 @@ msgstr "Зберегти &в:"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "Зберегти"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "Зберегти як"
 
 #: comdlg32.rc:156
 msgid "Open File"

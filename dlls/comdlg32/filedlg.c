@@ -1505,7 +1505,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   else if (fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG)
   {
       WCHAR buf[16];
-      LoadStringW(COMDLG32_hInstance, IDS_SAVE, buf, sizeof(buf)/sizeof(WCHAR));
+      LoadStringW(COMDLG32_hInstance, IDS_SAVE_AS, buf, sizeof(buf)/sizeof(WCHAR));
       SetWindowTextW(hwnd, buf);
   }
 

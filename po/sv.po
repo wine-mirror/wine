@@ -412,7 +412,7 @@ msgstr "Sk&rivskyddad"
 msgid "Save As..."
 msgstr "Spara som..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr "Spara som"
 
@@ -1064,10 +1064,6 @@ msgstr "Spara &i:"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "Spara"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "Spara som"
 
 #: comdlg32.rc:156
 msgid "Open File"

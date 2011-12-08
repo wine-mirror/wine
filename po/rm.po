@@ -408,7 +408,7 @@ msgstr ""
 msgid "Save As..."
 msgstr "&Options"
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 #, fuzzy
 msgid "Save As"
 msgstr "&Options"
@@ -1060,10 +1060,6 @@ msgstr ""
 
 #: comdlg32.rc:154
 msgid "Save"
-msgstr ""
-
-#: comdlg32.rc:155
-msgid "Save as"
 msgstr ""
 
 #: comdlg32.rc:156

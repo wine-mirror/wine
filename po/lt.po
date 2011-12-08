@@ -412,7 +412,7 @@ msgstr "&Tik skaitymui"
 msgid "Save As..."
 msgstr "Išsaugoti kaip..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr "Išsaugoti kaip"
 
@@ -1059,10 +1059,6 @@ msgstr "&Kur išsaugoti:"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "Išsaugoti"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "Išsaugoti kaip"
 
 #: comdlg32.rc:156
 msgid "Open File"

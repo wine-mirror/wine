@@ -412,7 +412,7 @@ msgstr "&Només Lectura"
 msgid "Save As..."
 msgstr "Anomenar i desar..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr "D'acord"
 
@@ -1059,10 +1059,6 @@ msgstr "Desa &en:"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "Desa"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "Anomena i desa"
 
 #: comdlg32.rc:156
 msgid "Open File"

@@ -408,7 +408,7 @@ msgstr "&קריאה בלבד"
 msgid "Save As..."
 msgstr "שמירה בשם..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr "שמירה בשם"
 
@@ -1058,10 +1058,6 @@ msgstr "שמירה &תחת:"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "שמירה"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "שמירה בשם"
 
 #: comdlg32.rc:156
 msgid "Open File"

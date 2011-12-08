@@ -152,7 +152,7 @@ STRINGTABLE
     IDS_SAVE_BUTTON "&Save"
     IDS_SAVE_IN     "Save &in:"
     IDS_SAVE        "Save"
-    IDS_SAVE_AS     "Save as"
+    IDS_SAVE_AS     "Save As"
     IDS_OPEN_FILE   "Open File"
 }
 

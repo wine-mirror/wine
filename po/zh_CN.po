@@ -403,9 +403,9 @@ msgstr "只读(&R)"
 msgid "Save As..."
 msgstr "另存为..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
-msgstr "保存"
+msgstr "另存为"
 
 #: comdlg32.rc:209 comdlg32.rc:218 comdlg32.rc:364 comdlg32.rc:64 hhctrl.rc:46
 #: wordpad.rc:162
@@ -1063,10 +1063,6 @@ msgstr "保存在(&I)："
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "保存"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "另存为"
 
 #: comdlg32.rc:156
 msgid "Open File"

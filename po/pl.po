@@ -417,7 +417,7 @@ msgstr "Tylko do &odczytu"
 msgid "Save As..."
 msgstr "Zapisz jako..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr "Zapisz jako"
 
@@ -1064,10 +1064,6 @@ msgstr "Zapisz &w:"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "Zapisz"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "Zapisz jako"
 
 #: comdlg32.rc:156
 msgid "Open File"

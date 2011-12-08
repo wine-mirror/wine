@@ -407,7 +407,7 @@ msgstr "Rén ki &lere"
 msgid "Save As..."
 msgstr "Schaper èt rlomer..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr "I Va"
 
@@ -1055,11 +1055,6 @@ msgstr "Schaper èt r&lomer..."
 #: comdlg32.rc:154
 msgid "Save"
 msgstr ""
-
-#: comdlg32.rc:155
-#, fuzzy
-msgid "Save as"
-msgstr "Schaper èt r&lomer..."
 
 #: comdlg32.rc:156
 #, fuzzy

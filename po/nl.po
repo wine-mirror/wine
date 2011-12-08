@@ -412,7 +412,7 @@ msgstr "A&lleen-lezen"
 msgid "Save As..."
 msgstr "Opslaan als..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr "&Opslaan als"
 
@@ -1058,10 +1058,6 @@ msgstr "Op&slaan in:"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "Opslaan"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "Opslaan als"
 
 #: comdlg32.rc:156
 msgid "Open File"

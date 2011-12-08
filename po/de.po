@@ -411,7 +411,7 @@ msgstr "&Schreibgeschützt"
 msgid "Save As..."
 msgstr "Speichern als..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr "Speichern als"
 
@@ -1060,10 +1060,6 @@ msgstr "Speichern &unter:"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "Speichern"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "Speichern als"
 
 #: comdlg32.rc:156
 msgid "Open File"

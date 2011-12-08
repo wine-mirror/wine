@@ -423,7 +423,7 @@ msgstr "&Csak olvasható"
 msgid "Save As..."
 msgstr "Mentés másként..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr "Mentés másként"
 
@@ -1092,10 +1092,6 @@ msgstr "Mentés &ide:"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "Mentés"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "Mentés másként"
 
 #: comdlg32.rc:156
 msgid "Open File"

@@ -416,9 +416,9 @@ msgstr "Sk&rivebeskyttet"
 msgid "Save As..."
 msgstr "Gem som..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
-msgstr "&Gem som"
+msgstr "Gem som"
 
 #: comdlg32.rc:209 comdlg32.rc:218 comdlg32.rc:364 comdlg32.rc:64 hhctrl.rc:46
 #: wordpad.rc:162
@@ -1084,10 +1084,6 @@ msgstr "Gem &i:"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "Gem"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "Gem som"
 
 #: comdlg32.rc:156
 msgid "Open File"

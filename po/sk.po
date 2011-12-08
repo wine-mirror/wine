@@ -405,7 +405,7 @@ msgstr "&Len na čítanie"
 msgid "Save As..."
 msgstr "Uložiť ako..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr "Uložiť ako"
 
@@ -1042,10 +1042,6 @@ msgstr ""
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "Uložiť"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "Uložiť ako"
 
 #: comdlg32.rc:156
 msgid "Open File"

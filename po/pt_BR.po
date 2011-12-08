@@ -416,7 +416,7 @@ msgstr "&Apenas leitura"
 msgid "Save As..."
 msgstr "Salvar Como..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr "Salvar &Como"
 
@@ -1078,10 +1078,6 @@ msgstr "Salvar &em:"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "Salvar"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "Salvar como"
 
 #: comdlg32.rc:156
 msgid "Open File"

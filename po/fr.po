@@ -414,7 +414,7 @@ msgstr "Lectu&re seule"
 msgid "Save As..."
 msgstr "Enregistrer sous..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr "Enregistrer"
 
@@ -1061,10 +1061,6 @@ msgstr "Enregistrer &dans :"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "Enregistrer"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "Enregistrer sous"
 
 #: comdlg32.rc:156
 msgid "Open File"

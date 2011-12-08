@@ -408,7 +408,7 @@ msgstr "Sk&rivebeskyttet"
 msgid "Save As..."
 msgstr "Lagre som..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr "Lagre som"
 
@@ -1080,10 +1080,6 @@ msgstr "Lagre &i:"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "Lagre"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "Lagre som"
 
 #: comdlg32.rc:156
 msgid "Open File"

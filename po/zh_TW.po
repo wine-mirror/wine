@@ -401,7 +401,7 @@ msgstr "唯讀(&R)"
 msgid "Save As..."
 msgstr "另存新檔..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr "另存新檔"
 
@@ -1085,11 +1085,6 @@ msgstr "另存為(&A)..."
 #, fuzzy
 msgid "Save"
 msgstr "儲存 HTML"
-
-#: comdlg32.rc:155
-#, fuzzy
-msgid "Save as"
-msgstr "另存為(&S)..."
 
 #: comdlg32.rc:156
 #, fuzzy

@@ -426,7 +426,7 @@ msgstr "Spremno"
 msgid "Save As..."
 msgstr "&Sačuvaj kao..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 #, fuzzy
 msgid "Save As"
 msgstr "Sačuvaj kao"
@@ -1140,10 +1140,6 @@ msgstr "Sačuvaj &u:"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "Sačuvaj"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "Sačuvaj kao"
 
 #: comdlg32.rc:156
 msgid "Open File"

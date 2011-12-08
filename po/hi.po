@@ -396,7 +396,7 @@ msgstr ""
 msgid "Save As..."
 msgstr ""
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr ""
 
@@ -1034,10 +1034,6 @@ msgstr ""
 
 #: comdlg32.rc:154
 msgid "Save"
-msgstr ""
-
-#: comdlg32.rc:155
-msgid "Save as"
 msgstr ""
 
 #: comdlg32.rc:156

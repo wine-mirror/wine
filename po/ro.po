@@ -416,7 +416,7 @@ msgstr "Doar citi&re"
 msgid "Save As..."
 msgstr "Salvare ca..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr "Salvează ca"
 
@@ -1118,10 +1118,6 @@ msgstr "Salvează &în:"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "Salvează"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "Salvează ca"
 
 #: comdlg32.rc:156
 msgid "Open File"

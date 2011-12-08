@@ -411,7 +411,7 @@ msgstr "읽기 전용(&R)"
 msgid "Save As..."
 msgstr "다른 이름으로 저장..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr "다른 이름으로 저장"
 
@@ -1057,10 +1057,6 @@ msgstr "~에 저장(&I):"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "저장"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "다른 이름으로 저장"
 
 #: comdlg32.rc:156
 msgid "Open File"

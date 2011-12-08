@@ -413,7 +413,7 @@ msgstr "&Само за читање"
 msgid "Save As..."
 msgstr "Сачувај као..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr "Сачувај као"
 
@@ -1065,10 +1065,6 @@ msgstr "Сачувај &у:"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "Сачувај"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "Сачувај као"
 
 #: comdlg32.rc:156
 msgid "Open File"

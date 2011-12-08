@@ -401,7 +401,7 @@ msgstr "&Μόνο για Ανάγνωση"
 msgid "Save As..."
 msgstr "Αποθήκευση ως..."
 
-#: comdlg32.rc:200
+#: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
 msgstr "Αποθήκευση ως"
 
@@ -1044,10 +1044,6 @@ msgstr "Αποθήκευση &σε:"
 #: comdlg32.rc:154
 msgid "Save"
 msgstr "Αποθήκευση"
-
-#: comdlg32.rc:155
-msgid "Save as"
-msgstr "Αποθήκευση ως"
 
 #: comdlg32.rc:156
 msgid "Open File"
