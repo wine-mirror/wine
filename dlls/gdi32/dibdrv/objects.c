@@ -1338,9 +1338,8 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RE
             if (pdev->brush_pattern_usage == DIB_PAL_COLORS)
             {
                 dib_info pattern;
-                HPALETTE pal = GetCurrentObject( pdev->dev.hdc, OBJ_PAL );
                 if (!init_dib_info_from_brush( &pattern, pdev->brush_pattern_info,
-                                               pdev->brush_pattern_bits, DIB_PAL_COLORS, pal ))
+                                               pdev->brush_pattern_bits, DIB_PAL_COLORS, pdev->dev.hdc ))
                     return FALSE;
                 select_pattern_brush( pdev, &pattern );
                 free_dib_info( &pattern );

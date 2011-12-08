@@ -162,7 +162,7 @@ static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD
     return TRUE;
 }
 
-BOOL init_dib_info_from_brush(dib_info *dib, const BITMAPINFO *bi, void *bits, UINT usage, HPALETTE palette)
+BOOL init_dib_info_from_brush(dib_info *dib, const BITMAPINFO *bi, void *bits, UINT usage, HDC hdc)
 {
     DWORD *masks = (bi->bmiHeader.biCompression == BI_BITFIELDS) ? (DWORD *)bi->bmiColors : NULL;
     RGBQUAD *color_table = NULL, pal_table[256];
@@ -172,17 +172,7 @@ BOOL init_dib_info_from_brush(dib_info *dib, const BITMAPINFO *bi, void *bits, U
     {
         if(usage == DIB_PAL_COLORS)
         {
-            PALETTEENTRY entries[256];
-            const WORD *index = (const WORD *)bi->bmiColors;
-            UINT i, count = GetPaletteEntries( palette, 0, num_colors, entries );
-            for (i = 0; i < num_colors; i++, index++)
-            {
-                PALETTEENTRY *entry = &entries[*index % count];
-                pal_table[i].rgbRed      = entry->peRed;
-                pal_table[i].rgbGreen    = entry->peGreen;
-                pal_table[i].rgbBlue     = entry->peBlue;
-                pal_table[i].rgbReserved = 0;
-            }
+            fill_color_table_from_pal_colors( hdc, bi, pal_table );
             color_table = pal_table;
         }
         else color_table = (RGBQUAD *)bi->bmiColors;

@@ -233,6 +233,28 @@ static int fill_color_table_from_palette( BITMAPINFO *info, HDC hdc )
     return colors;
 }
 
+int fill_color_table_from_pal_colors( HDC hdc, const BITMAPINFO *info, RGBQUAD *color_table )
+{
+    PALETTEENTRY entries[256];
+    HPALETTE palette;
+    const WORD *index = (const WORD *)info->bmiColors;
+    int i, count, colors = get_dib_num_of_colors( info );
+
+    if (!colors) return 0;
+    if (!(palette = GetCurrentObject( hdc, OBJ_PAL ))) return 0;
+    if (!(count = GetPaletteEntries( palette, 0, colors, entries ))) return 0;
+
+    for (i = 0; i < colors; i++, index++)
+    {
+        PALETTEENTRY *entry = &entries[*index % count];
+        color_table[i].rgbRed = entry->peRed;
+        color_table[i].rgbGreen = entry->peGreen;
+        color_table[i].rgbBlue = entry->peBlue;
+        color_table[i].rgbReserved = 0;
+    }
+    return colors;
+}
+
 static void *get_pixel_ptr( const BITMAPINFO *info, void *bits, int x, int y )
 {
     const int width = info->bmiHeader.biWidth, height = info->bmiHeader.biHeight;
@@ -1383,11 +1405,10 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
 }
 
 /* Copy/synthesize RGB palette from BITMAPINFO */
-static void DIB_CopyColorTable( DC *dc, BITMAPOBJ *bmp, WORD coloruse, const BITMAPINFO *info )
+static void DIB_CopyColorTable( HDC hdc, BITMAPOBJ *bmp, WORD coloruse, const BITMAPINFO *info )
 {
-    unsigned int colors, i;
+    unsigned int colors = get_dib_num_of_colors( info );
 
-    colors = get_dib_num_of_colors( info );
     if (!(bmp->color_table = HeapAlloc(GetProcessHeap(), 0, colors * sizeof(RGBQUAD) ))) return;
     bmp->nb_colors = colors;
 
@@ -1397,18 +1418,7 @@ static void DIB_CopyColorTable( DC *dc, BITMAPOBJ *bmp, WORD coloruse, const BIT
     }
     else
     {
-        PALETTEENTRY entries[256];
-        const WORD *index = (const WORD *)info->bmiColors;
-        UINT count = GetPaletteEntries( dc->hPalette, 0, colors, entries );
-
-        for (i = 0; i < colors; i++, index++)
-        {
-            PALETTEENTRY *entry = &entries[*index % count];
-            bmp->color_table[i].rgbRed = entry->peRed;
-            bmp->color_table[i].rgbGreen = entry->peGreen;
-            bmp->color_table[i].rgbBlue = entry->peBlue;
-            bmp->color_table[i].rgbReserved = 0;
-        }
+        fill_color_table_from_pal_colors( hdc, info, bmp->color_table );
     }
 }
 
@@ -1521,7 +1531,7 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
         bmp->dib = dib;
         bmp->funcs = physdev->funcs;
         /* create local copy of DIB palette */
-        if (info->bmiHeader.biBitCount <= 8) DIB_CopyColorTable( dc, bmp, usage, info );
+        if (info->bmiHeader.biBitCount <= 8) DIB_CopyColorTable( hdc, bmp, usage, info );
         GDI_ReleaseObj( ret );
 
         if (!physdev->funcs->pCreateDIBSection( physdev, ret, info, usage ))
