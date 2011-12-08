@@ -651,6 +651,8 @@ static HRESULT compile_expression_noret(compiler_ctx_t *ctx, expression_t *expr,
         return compile_increment_expression(ctx, (unary_expression_t*)expr, OP_postinc, -1);
     case EXPR_POSTINC:
         return compile_increment_expression(ctx, (unary_expression_t*)expr, OP_postinc, 1);
+    case EXPR_PREDEC:
+        return compile_increment_expression(ctx, (unary_expression_t*)expr, OP_preinc, -1);
     case EXPR_PREINC:
         return compile_increment_expression(ctx, (unary_expression_t*)expr, OP_preinc, 1);
     case EXPR_SUB:

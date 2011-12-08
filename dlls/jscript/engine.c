@@ -2735,7 +2735,7 @@ static HRESULT interp_postinc(exec_ctx_t *ctx)
     return stack_push(ctx, &v);
 }
 
-/* ECMA-262 3rd Edition    11.4.4 */
+/* ECMA-262 3rd Edition    11.4.4, 11.4.5 */
 static HRESULT interp_preinc(exec_ctx_t *ctx)
 {
     const int arg = ctx->parser->code->instrs[ctx->ip].arg1.lng;
@@ -2766,40 +2766,6 @@ static HRESULT interp_preinc(exec_ctx_t *ctx)
         return hres;
 
     return stack_push(ctx, &v);
-}
-
-/* ECMA-262 3rd Edition    11.4.5 */
-HRESULT pre_decrement_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
-{
-    unary_expression_t *expr = (unary_expression_t*)_expr;
-    VARIANT val, num;
-    exprval_t exprval;
-    HRESULT hres;
-
-    TRACE("\n");
-
-    hres = expr_eval(ctx, expr->expression, EXPR_NEWREF, ei, &exprval);
-    if(FAILED(hres))
-        return hres;
-
-    hres = exprval_value(ctx, &exprval, ei, &val);
-    if(SUCCEEDED(hres)) {
-        hres = to_number(ctx, &val, ei, &num);
-        VariantClear(&val);
-    }
-
-    if(SUCCEEDED(hres)) {
-        num_set_val(&val, num_val(&num)-1.0);
-        hres = put_value(ctx, &exprval, &val, ei);
-    }
-
-    exprval_release(&exprval);
-    if(FAILED(hres))
-        return hres;
-
-    ret->type = EXPRVAL_VARIANT;
-    ret->u.var = val;
-    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    11.9.3 */
