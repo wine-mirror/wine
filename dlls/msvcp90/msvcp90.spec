@@ -5752,7 +5752,7 @@
 # extern _FXbig
 @ cdecl _Getcoll()
 @ cdecl _Getctype()
-@ stub _Getcvt
+@ cdecl _Getcvt()
 @ stub _Getdateorder
 @ stub _Getwctype
 @ stub _Getwctypes

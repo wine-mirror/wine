@@ -897,14 +897,26 @@ _Ctypevec __thiscall _Locinfo__Getctype(const _Locinfo *this)
     return _Getctype();
 }
 
+/* _Getcvt */
+_Cvtvec __cdecl _Getcvt(void)
+{
+    _Cvtvec ret;
+    _locale_t locale = _get_current_locale();
+
+    TRACE("\n");
+
+    ret.page = locale->locinfo->lc_codepage;
+    ret.handle = locale->locinfo->lc_handle[LC_CTYPE];
+    _free_locale(locale);
+    return ret;
+}
+
 /* ?_Getcvt@_Locinfo@std@@QBE?AU_Cvtvec@@XZ */
 /* ?_Getcvt@_Locinfo@std@@QEBA?AU_Cvtvec@@XZ */
 DEFINE_THISCALL_WRAPPER(_Locinfo__Getcvt, 4)
 _Cvtvec __thiscall _Locinfo__Getcvt(const _Locinfo *this)
 {
-    _Cvtvec ret = { 0 }; /* FIXME */
-    FIXME("(%p) stub\n", this);
-    return ret;
+    return _Getcvt();
 }
 
 /* ?_Getdateorder@_Locinfo@std@@QBEHXZ */
