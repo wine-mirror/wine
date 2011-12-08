@@ -4534,6 +4534,14 @@ HRESULT d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_alpha_c
     return WINED3D_OK;
 }
 
+static BOOL color_in_range(const struct wined3d_color_key *color_key, DWORD color)
+{
+    /* FIXME: Is this really how color keys are supposed to work? I think it
+     * makes more sense to compare the individual channels. */
+    return color >= color_key->color_space_low_value
+            && color <= color_key->color_space_high_value;
+}
+
 void d3dfmt_p8_init_palette(const struct wined3d_surface *surface, BYTE table[256][4], BOOL colorkey)
 {
     const struct wined3d_device *device = surface->resource.device;
@@ -4575,22 +4583,13 @@ void d3dfmt_p8_init_palette(const struct wined3d_surface *surface, BYTE table[25
              * color key itself is passed to glAlphaFunc in other cases the
              * alpha component of pixels that should be masked away is set to 0. */
             if (index_in_alpha)
-            {
                 table[i][3] = i;
-            }
-            else if (colorkey && (i >= surface->src_blt_color_key.color_space_low_value)
-                    && (i <= surface->src_blt_color_key.color_space_high_value))
-            {
+            else if (colorkey && color_in_range(&surface->src_blt_color_key, i))
                 table[i][3] = 0x00;
-            }
             else if (pal->flags & WINEDDPCAPS_ALPHA)
-            {
                 table[i][3] = pal->palents[i].peFlags;
-            }
             else
-            {
                 table[i][3] = 0xFF;
-            }
         }
     }
 }
@@ -4656,8 +4655,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                 for (x = 0; x < width; x++ ) {
                     WORD color = *Source++;
                     *Dest = ((color & 0xFFC0) | ((color & 0x1F) << 1));
-                    if ((color < surface->src_blt_color_key.color_space_low_value)
-                            || (color > surface->src_blt_color_key.color_space_high_value))
+                    if (!color_in_range(&surface->src_blt_color_key, color))
                         *Dest |= 0x0001;
                     Dest++;
                 }
@@ -4678,8 +4676,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                 for (x = 0; x < width; x++ ) {
                     WORD color = *Source++;
                     *Dest = color;
-                    if ((color < surface->src_blt_color_key.color_space_low_value)
-                            || (color > surface->src_blt_color_key.color_space_high_value))
+                    if (!color_in_range(&surface->src_blt_color_key, color))
                         *Dest |= (1 << 15);
                     else
                         *Dest &= ~(1 << 15);
@@ -4700,8 +4697,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                 for (x = 0; x < width; x++) {
                     DWORD color = ((DWORD)source[0] << 16) + ((DWORD)source[1] << 8) + (DWORD)source[2] ;
                     DWORD dstcolor = color << 8;
-                    if ((color < surface->src_blt_color_key.color_space_low_value)
-                            || (color > surface->src_blt_color_key.color_space_high_value))
+                    if (!color_in_range(&surface->src_blt_color_key, color))
                         dstcolor |= 0xff;
                     *(DWORD*)dest = dstcolor;
                     source += 3;
@@ -4722,8 +4718,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                 for (x = 0; x < width; x++) {
                     DWORD color = 0xffffff & *(const DWORD*)source;
                     DWORD dstcolor = color << 8;
-                    if ((color < surface->src_blt_color_key.color_space_low_value)
-                            || (color > surface->src_blt_color_key.color_space_high_value))
+                    if (!color_in_range(&surface->src_blt_color_key, color))
                         dstcolor |= 0xff;
                     *(DWORD*)dest = dstcolor;
                     source += 4;
