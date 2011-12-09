@@ -894,11 +894,10 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, CONST RGBQUA
         /* Check if currently selected bitmap is a DIB */
         if (bitmap->color_table)
         {
-            if (startpos < bitmap->nb_colors)
+            if (startpos < bitmap->dib->dsBmih.biClrUsed)
             {
-                if (startpos + entries > bitmap->nb_colors) entries = bitmap->nb_colors - startpos;
-                memcpy(bitmap->color_table + startpos, colors, entries * sizeof(RGBQUAD));
-                result = entries;
+                result = min( entries, bitmap->dib->dsBmih.biClrUsed - startpos );
+                memcpy(bitmap->color_table + startpos, colors, result * sizeof(RGBQUAD));
             }
         }
         GDI_ReleaseObj( dc->hBitmap );
@@ -925,11 +924,10 @@ UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries, RGBQUAD *col
         /* Check if currently selected bitmap is a DIB */
         if (bitmap->color_table)
         {
-            if (startpos < bitmap->nb_colors)
+            if (startpos < bitmap->dib->dsBmih.biClrUsed)
             {
-                if (startpos + entries > bitmap->nb_colors) entries = bitmap->nb_colors - startpos;
-                memcpy(colors, bitmap->color_table + startpos, entries * sizeof(RGBQUAD));
-                result = entries;
+                result = min( entries, bitmap->dib->dsBmih.biClrUsed - startpos );
+                memcpy(colors, bitmap->color_table + startpos, result * sizeof(RGBQUAD));
             }
         }
         GDI_ReleaseObj( dc->hBitmap );
@@ -1534,7 +1532,6 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
         bmp->dib = dib;
         bmp->funcs = physdev->funcs;
         bmp->color_table = color_table;
-        bmp->nb_colors = dib->dsBmih.biClrUsed;
         GDI_ReleaseObj( ret );
 
         if (!physdev->funcs->pCreateDIBSection( physdev, ret, info, usage ))

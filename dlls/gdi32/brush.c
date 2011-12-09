@@ -122,10 +122,10 @@ static BOOL copy_bitmap( BRUSHOBJ *brush, HBITMAP bitmap )
                       bitmap_info_size( (BITMAPINFO *)&bmp->dib->dsBmih, DIB_RGB_COLORS ));
     if (!info) goto done;
     info->bmiHeader = bmp->dib->dsBmih;
-    if (bmp->dib->dsBmih.biCompression == BI_BITFIELDS)
+    if (info->bmiHeader.biCompression == BI_BITFIELDS)
         memcpy( &info->bmiHeader + 1, bmp->dib->dsBitfields, sizeof(bmp->dib->dsBitfields) );
-    else if (bmp->nb_colors)
-        memcpy( &info->bmiHeader + 1, bmp->color_table, bmp->nb_colors * sizeof(RGBQUAD) );
+    else if (info->bmiHeader.biClrUsed)
+        memcpy( &info->bmiHeader + 1, bmp->color_table, info->bmiHeader.biClrUsed * sizeof(RGBQUAD) );
     if (!(brush->bits.ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( info ))))
     {
         HeapFree( GetProcessHeap(), 0, info );

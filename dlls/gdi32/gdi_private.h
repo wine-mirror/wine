@@ -179,8 +179,7 @@ typedef struct tagBITMAPOBJ
     const struct gdi_dc_funcs *funcs; /* DC function table */
     /* For device-independent bitmaps: */
     DIBSECTION         *dib;
-    RGBQUAD            *color_table;  /* DIB color table if <= 8bpp */
-    UINT                nb_colors;    /* number of colors in table */
+    RGBQUAD            *color_table;  /* DIB color table if <= 8bpp (always 1 << bpp in size) */
 } BITMAPOBJ;
 
 /* bidi.c */

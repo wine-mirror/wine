@@ -206,7 +206,7 @@ BOOL init_dib_info_from_bitmapobj(dib_info *dib, BITMAPOBJ *bmp, enum dib_info_f
                                               flags | private_color_table );
     }
     return init_dib_info( dib, &bmp->dib->dsBmih, bmp->dib->dsBitfields,
-                          bmp->color_table, bmp->nb_colors, bmp->dib->dsBm.bmBits, flags );
+                          bmp->color_table, bmp->dib->dsBmih.biClrUsed, bmp->dib->dsBm.bmBits, flags );
 }
 
 static void clear_dib_info(dib_info *dib)

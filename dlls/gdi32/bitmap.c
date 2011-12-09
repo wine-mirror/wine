@@ -300,7 +300,6 @@ HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
     bmpobj->funcs = &null_driver;
     bmpobj->dib = NULL;
     bmpobj->color_table = NULL;
-    bmpobj->nb_colors = 0;
 
     if (!(hbitmap = alloc_gdi_handle( &bmpobj->header, OBJ_BITMAP, &bitmap_funcs )))
     {
