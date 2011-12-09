@@ -1440,47 +1440,6 @@ static HRESULT binary_expr_eval(script_ctx_t *ctx, binary_expression_t *expr, op
     return S_OK;
 }
 
-/* ECMA-262 3rd Edition    11.13.2 */
-static HRESULT assign_oper_eval(script_ctx_t *ctx, expression_t *lexpr, expression_t *rexpr, oper_t oper,
-                                jsexcept_t *ei, exprval_t *ret)
-{
-    VARIANT retv, lval, rval;
-    exprval_t exprval, exprvalr;
-    HRESULT hres;
-
-    hres = expr_eval(ctx, lexpr, EXPR_NEWREF, ei, &exprval);
-    if(FAILED(hres))
-        return hres;
-
-    hres = exprval_value(ctx, &exprval, ei, &lval);
-    if(SUCCEEDED(hres)) {
-        hres = expr_eval(ctx, rexpr, 0, ei, &exprvalr);
-        if(SUCCEEDED(hres)) {
-            hres = exprval_value(ctx, &exprvalr, ei, &rval);
-            exprval_release(&exprvalr);
-        }
-        if(SUCCEEDED(hres)) {
-            hres = oper(ctx, &lval, &rval, ei, &retv);
-            VariantClear(&rval);
-        }
-        VariantClear(&lval);
-    }
-
-    if(SUCCEEDED(hres)) {
-        hres = put_value(ctx, &exprval, &retv, ei);
-        if(FAILED(hres))
-            VariantClear(&retv);
-    }
-    exprval_release(&exprval);
-
-    if(FAILED(hres))
-        return hres;
-
-    ret->type = EXPRVAL_VARIANT;
-    ret->u.var = retv;
-    return S_OK;
-}
-
 /* ECMA-262 3rd Edition    13 */
 HRESULT function_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
@@ -3093,26 +3052,6 @@ static HRESULT interp_neg(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.7.1 */
-static HRESULT lshift_eval(script_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsexcept_t *ei, VARIANT *retv)
-{
-    DWORD ri;
-    INT li;
-    HRESULT hres;
-
-    hres = to_int32(ctx, lval, ei, &li);
-    if(FAILED(hres))
-        return hres;
-
-    hres = to_uint32(ctx, rval, ei, &ri);
-    if(FAILED(hres))
-        return hres;
-
-    V_VT(retv) = VT_I4;
-    V_I4(retv) = li << (ri&0x1f);
-    return S_OK;
-}
-
-/* ECMA-262 3rd Edition    11.7.1 */
 static HRESULT interp_lshift(exec_ctx_t *ctx)
 {
     DWORD r;
@@ -3189,16 +3128,6 @@ static HRESULT interp_assign(exec_ctx_t *ctx)
     }
 
     return stack_push(ctx, v);
-}
-
-/* ECMA-262 3rd Edition    11.13.2 */
-HRESULT assign_lshift_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
-{
-    binary_expression_t *expr = (binary_expression_t*)_expr;
-
-    TRACE("\n");
-
-    return assign_oper_eval(ctx, expr->expression1, expr->expression2, lshift_eval, ei, ret);
 }
 
 static HRESULT interp_undefined(exec_ctx_t *ctx)
