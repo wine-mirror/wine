@@ -3160,13 +3160,20 @@ static HRESULT rshift2_eval(script_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jse
 }
 
 /* ECMA-262 3rd Edition    11.7.3 */
-HRESULT right2_shift_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+static HRESULT interp_rshift2(exec_ctx_t *ctx)
 {
-    binary_expression_t *expr = (binary_expression_t*)_expr;
+    DWORD r, l;
+    HRESULT hres;
 
-    TRACE("\n");
+    hres = stack_pop_uint(ctx, &r);
+    if(FAILED(hres))
+        return hres;
 
-    return binary_expr_eval(ctx, expr, rshift2_eval, ei, ret);
+    hres = stack_pop_uint(ctx, &l);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push_int(ctx, l >> (r&0x1f));
 }
 
 /* ECMA-262 3rd Edition    11.13.1 */

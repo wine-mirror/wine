@@ -1338,7 +1338,7 @@ static const expression_eval_t expression_eval_table[] = {
    compiled_expression_eval,
    left_shift_expression_eval,
    compiled_expression_eval,
-   right2_shift_expression_eval,
+   compiled_expression_eval,
    compiled_expression_eval,
    assign_lshift_expression_eval,
    compiled_expression_eval,
