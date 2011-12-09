@@ -27,8 +27,8 @@
 
 typedef struct WS(in6_addr) {
     union {
-        WS(u_char)  Byte[16];
-        WS(u_short) Word[8];
+        UCHAR  Byte[16];
+        USHORT Word[8];
     } u;
 } IN6_ADDR, *PIN6_ADDR, *LPIN6_ADDR;
 
