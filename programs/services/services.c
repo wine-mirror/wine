@@ -711,7 +711,12 @@ static DWORD service_wait_for_startup(struct service_entry *service_entry, HANDL
         service_lock_shared(service_entry);
         dwCurrentStatus = service_entry->status.dwCurrentState;
         service_unlock(service_entry);
-        if (dwCurrentStatus == SERVICE_RUNNING)
+        if (dwCurrentStatus == SERVICE_START_PENDING)
+        {
+            WINE_TRACE("Service changed its status to SERVICE_START_PENDING\n");
+            return ERROR_SUCCESS;
+        }
+        else if (dwCurrentStatus == SERVICE_RUNNING)
         {
             WINE_TRACE("Service started successfully\n");
             return ERROR_SUCCESS;
