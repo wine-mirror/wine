@@ -245,7 +245,7 @@ static int fill_color_table_from_palette( BITMAPINFO *info, HDC hdc )
     return colors;
 }
 
-int fill_color_table_from_pal_colors( HDC hdc, const BITMAPINFO *info, RGBQUAD *color_table )
+BOOL fill_color_table_from_pal_colors( BITMAPINFO *info, HDC hdc )
 {
     PALETTEENTRY entries[256];
     RGBQUAD table[256];
@@ -253,9 +253,9 @@ int fill_color_table_from_pal_colors( HDC hdc, const BITMAPINFO *info, RGBQUAD *
     const WORD *index = (const WORD *)info->bmiColors;
     int i, count, colors = info->bmiHeader.biClrUsed;
 
-    if (!colors) return 0;
-    if (!(palette = GetCurrentObject( hdc, OBJ_PAL ))) return 0;
-    if (!(count = GetPaletteEntries( palette, 0, colors, entries ))) return 0;
+    if (!colors) return TRUE;
+    if (!(palette = GetCurrentObject( hdc, OBJ_PAL ))) return FALSE;
+    if (!(count = GetPaletteEntries( palette, 0, colors, entries ))) return FALSE;
 
     for (i = 0; i < colors; i++, index++)
     {
@@ -264,9 +264,10 @@ int fill_color_table_from_pal_colors( HDC hdc, const BITMAPINFO *info, RGBQUAD *
         table[i].rgbBlue  = entries[*index % count].peBlue;
         table[i].rgbReserved = 0;
     }
-    memcpy( color_table, table, colors * sizeof(RGBQUAD) );
-    memset( color_table + colors, 0, ((1 << info->bmiHeader.biBitCount) - colors) * sizeof(RGBQUAD) );
-    return colors;
+    info->bmiHeader.biClrUsed = 1 << info->bmiHeader.biBitCount;
+    memcpy( info->bmiColors, table, colors * sizeof(RGBQUAD) );
+    memset( info->bmiColors + colors, 0, (info->bmiHeader.biClrUsed - colors) * sizeof(RGBQUAD) );
+    return TRUE;
 }
 
 static void *get_pixel_ptr( const BITMAPINFO *info, void *bits, int x, int y )
@@ -448,7 +449,7 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
     src_bits.is_copy = FALSE;
     src_bits.free = NULL;
 
-    if (coloruse == DIB_PAL_COLORS && !fill_color_table_from_palette( src_info, dev->hdc )) return 0;
+    if (coloruse == DIB_PAL_COLORS && !fill_color_table_from_pal_colors( src_info, dev->hdc )) return 0;
 
     rect.left   = xDst;
     rect.top    = yDst;
@@ -656,7 +657,7 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
     src_bits.free = NULL;
     src_bits.param = NULL;
 
-    if (coloruse == DIB_PAL_COLORS && !fill_color_table_from_palette( src_info, hdc )) return 0;
+    if (coloruse == DIB_PAL_COLORS && !fill_color_table_from_pal_colors( src_info, hdc )) return 0;
 
     if (!(bitmap = GDI_GetObjPtr( hbitmap, OBJ_BITMAP ))) return 0;
 
@@ -753,7 +754,7 @@ INT nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx, DWOR
     src_bits.free = NULL;
 
     if (!lines) return 0;
-    if (coloruse == DIB_PAL_COLORS && !fill_color_table_from_palette( src_info, dev->hdc )) return 0;
+    if (coloruse == DIB_PAL_COLORS && !fill_color_table_from_pal_colors( src_info, dev->hdc )) return 0;
 
     if (src_info->bmiHeader.biCompression == BI_RLE4 || src_info->bmiHeader.biCompression == BI_RLE8)
     {
@@ -1463,19 +1464,12 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
 
     if (info->bmiHeader.biBitCount <= 8)  /* build the color table */
     {
-        unsigned int colors = 1 << info->bmiHeader.biBitCount;
-
-        if (!(color_table = HeapAlloc( GetProcessHeap(), 0, colors * sizeof(RGBQUAD) )))
-        {
-            HeapFree( GetProcessHeap(), 0, dib );
-            return 0;
-        }
-        if (usage == DIB_RGB_COLORS)
-            memcpy( color_table, info->bmiColors, colors * sizeof(RGBQUAD) );
-        else
-            fill_color_table_from_pal_colors( hdc, info, color_table );
-
-        dib->dsBmih.biClrUsed = colors;
+        if (usage == DIB_PAL_COLORS && !fill_color_table_from_pal_colors( info, hdc ))
+            goto error;
+        dib->dsBmih.biClrUsed = info->bmiHeader.biClrUsed;
+        if (!(color_table = HeapAlloc( GetProcessHeap(), 0, dib->dsBmih.biClrUsed * sizeof(RGBQUAD) )))
+            goto error;
+        memcpy( color_table, info->bmiColors, dib->dsBmih.biClrUsed * sizeof(RGBQUAD) );
     }
 
     /* set dsBitfields values */
@@ -1488,6 +1482,7 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
     }
     else if (info->bmiHeader.biCompression == BI_BITFIELDS)
     {
+        if (usage == DIB_PAL_COLORS) goto error;
         dib->dsBitfields[0] =  *(const DWORD *)info->bmiColors;
         dib->dsBitfields[1] =  *((const DWORD *)info->bmiColors + 1);
         dib->dsBitfields[2] =  *((const DWORD *)info->bmiColors + 2);
@@ -1518,12 +1513,7 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
     dib->dshSection = section;
     dib->dsOffset = offset;
 
-    if (!dib->dsBm.bmBits)
-    {
-        HeapFree( GetProcessHeap(), 0, color_table );
-        HeapFree( GetProcessHeap(), 0, dib );
-        return 0;
-    }
+    if (!dib->dsBm.bmBits) goto error;
 
     /* If the reference hdc is null, take the desktop dc */
     if (hdc == 0)

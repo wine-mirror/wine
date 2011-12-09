@@ -235,7 +235,7 @@ extern void DC_UpdateXforms( DC * dc ) DECLSPEC_HIDDEN;
 
 /* dib.c */
 extern int bitmap_info_size( const BITMAPINFO * info, WORD coloruse ) DECLSPEC_HIDDEN;
-extern int fill_color_table_from_pal_colors( HDC hdc, const BITMAPINFO *info, RGBQUAD *color_table ) DECLSPEC_HIDDEN;
+extern BOOL fill_color_table_from_pal_colors( BITMAPINFO *info, HDC hdc ) DECLSPEC_HIDDEN;
 extern void fill_default_color_table( BITMAPINFO *info ) DECLSPEC_HIDDEN;
 extern void get_ddb_bitmapinfo( BITMAPOBJ *bmp, BITMAPINFO *info ) DECLSPEC_HIDDEN;
 extern BITMAPINFO *copy_packed_dib( const BITMAPINFO *src_info, UINT usage ) DECLSPEC_HIDDEN;
