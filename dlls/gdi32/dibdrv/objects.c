@@ -1017,6 +1017,166 @@ static BOOL null_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close
     return TRUE;
 }
 
+static void add_cap( dibdrv_physdev *pdev, HRGN region, const POINT *pt )
+{
+    HRGN cap;
+
+    switch (pdev->pen_endcap)
+    {
+    case PS_ENDCAP_ROUND:
+        cap = CreateEllipticRgn( pt->x - pdev->pen_width / 2, pt->y - pdev->pen_width / 2,
+                                 pt->x + (pdev->pen_width + 1) / 2, pt->y + (pdev->pen_width + 1) / 2 );
+        break;
+
+    default: /* only supporting cosmetic pens so far, so always PS_ENDCAP_ROUND */
+        return;
+    }
+
+    CombineRgn( region, region, cap, RGN_OR );
+    DeleteObject( cap );
+    return;
+}
+
+static void add_join( dibdrv_physdev *pdev, HRGN region, const POINT *pt )
+{
+    HRGN join;
+
+    switch (pdev->pen_join)
+    {
+    case PS_JOIN_ROUND:
+        join = CreateEllipticRgn( pt->x - pdev->pen_width / 2, pt->y - pdev->pen_width / 2,
+                                  pt->x + (pdev->pen_width + 1) / 2, pt->y + (pdev->pen_width + 1) / 2 );
+        break;
+
+    default: /* only supporting cosmetic pens so far, so always PS_JOIN_ROUND */
+        return;
+    }
+
+    CombineRgn( region, region, join, RGN_OR );
+    DeleteObject( join );
+    return;
+}
+
+#define round( f ) (((f) > 0) ? (f) + 0.5 : (f) - 0.5)
+
+static HRGN get_wide_lines_region( dibdrv_physdev *pdev, int num, POINT *pts, BOOL close )
+{
+    int i;
+    HRGN total, segment;
+
+    assert( num >= 2 );
+
+    total = CreateRectRgn( 0, 0, 0, 0 );
+
+    if (!close) num--;
+    for (i = 0; i < num; i++)
+    {
+        const POINT *pt_1 = pts + i;
+        const POINT *pt_2 = pts + ((close && i == num - 1) ? 0 : i + 1);
+        int dx = pt_2->x - pt_1->x;
+        int dy = pt_2->y - pt_1->y;
+        RECT rect;
+
+        if (dx == 0 && dy == 0) continue;
+
+        if (dy == 0)
+        {
+            rect.left = min( pt_1->x, pt_2->x );
+            rect.right = rect.left + abs( dx );
+            rect.top = pt_1->y - pdev->pen_width / 2;
+            rect.bottom = rect.top + pdev->pen_width;
+            segment = CreateRectRgnIndirect( &rect );
+        }
+        else if (dx == 0)
+        {
+            rect.top = min( pt_1->y, pt_2->y );
+            rect.bottom = rect.top + abs( dy );
+            rect.left = pt_1->x - pdev->pen_width / 2;
+            rect.right = rect.left + pdev->pen_width;
+            segment = CreateRectRgnIndirect( &rect );
+        }
+        else
+        {
+            double len = hypot( dx, dy );
+            double width_x, width_y;
+            POINT seg_pts[4];
+            POINT wide_half, narrow_half;
+
+            width_x = pdev->pen_width * abs( dy ) / len;
+            width_y = pdev->pen_width * abs( dx ) / len;
+
+            narrow_half.x = round( width_x / 2 );
+            narrow_half.y = round( width_y / 2 );
+            wide_half.x   = round( (width_x + 1) / 2 );
+            wide_half.y   = round( (width_y + 1) / 2 );
+
+            if (dx < 0)
+            {
+                wide_half.y   = -wide_half.y;
+                narrow_half.y = -narrow_half.y;
+            }
+
+            if (dy < 0)
+            {
+                POINT tmp = narrow_half; narrow_half = wide_half; wide_half = tmp;
+                wide_half.x   = -wide_half.x;
+                narrow_half.x = -narrow_half.x;
+            }
+
+            seg_pts[0].x = pt_1->x - narrow_half.x;
+            seg_pts[0].y = pt_1->y + narrow_half.y;
+            seg_pts[1].x = pt_1->x + wide_half.x;
+            seg_pts[1].y = pt_1->y - wide_half.y;
+            seg_pts[2].x = pt_2->x + wide_half.x;
+            seg_pts[2].y = pt_2->y - wide_half.y;
+            seg_pts[3].x = pt_2->x - narrow_half.x;
+            seg_pts[3].y = pt_2->y + narrow_half.y;
+
+            segment = CreatePolygonRgn( seg_pts, 4, ALTERNATE );
+        }
+
+        CombineRgn( total, total, segment, RGN_OR );
+        DeleteObject( segment );
+
+        if (i == 0)
+        {
+            if (!close) add_cap( pdev, total, pt_1 );
+        }
+        else
+            add_join( pdev, total, pt_1 );
+
+        if (i == num - 1)
+        {
+            if (close) add_join( pdev, total, pt_2 );
+            else add_cap( pdev, total, pt_2 );
+        }
+
+    }
+    return total;
+}
+
+static BOOL wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close)
+{
+    const WINEREGION *data;
+    rop_mask color;
+    HRGN region;
+
+    color.and = pdev->pen_and;
+    color.xor = pdev->pen_xor;
+
+    region = get_wide_lines_region( pdev, num, pts, close );
+
+    if (CombineRgn( region, region, pdev->clip, RGN_AND ) != ERROR)
+    {
+        data = get_wine_region( region );
+        solid_rects( &pdev->dib, data->numRects, data->rects, &color, NULL );
+        release_wine_region( region );
+    }
+
+    DeleteObject( region );
+    return TRUE;
+}
+
 static const dash_pattern dash_patterns[5] =
 {
     {0, {0}, 0},                  /* PS_SOLID - a pseudo-pattern used to initialise unpatterned pens. */
@@ -1025,6 +1185,21 @@ static const dash_pattern dash_patterns[5] =
     {4, {9, 6, 3, 6}, 24},        /* PS_DASHDOT */
     {6, {9, 3, 3, 3, 3, 3}, 24}   /* PS_DASHDOTDOT */
 };
+
+static inline int get_pen_device_width( dibdrv_physdev *pdev, LOGPEN *pen )
+{
+    int width = pen->lopnWidth.x;
+
+    if (pen->lopnStyle & PS_GEOMETRIC && width > 1)
+    {
+        POINT pts[2];
+        pts[0].x = pts[0].y = pts[1].y = 0;
+        pts[1].x = width;
+        LPtoDP( pdev->dev.hdc, pts, 2 );
+        width = max( abs( pts[1].x - pts[0].x ), 1 );
+    }
+    return width;
+}
 
 /***********************************************************************
  *           dibdrv_SelectPen
@@ -1058,6 +1233,10 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
         HeapFree( GetProcessHeap(), 0, elp );
     }
 
+    pdev->pen_join   = logpen.lopnStyle & PS_JOIN_MASK;
+    pdev->pen_endcap = logpen.lopnStyle & PS_ENDCAP_MASK;
+    pdev->pen_width  = get_pen_device_width( pdev, &logpen );
+
     if (hpen == GetStockObject( DC_PEN ))
         logpen.lopnColor = GetDCPenColor( dev->hdc );
 
@@ -1075,8 +1254,10 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
     {
     case PS_SOLID:
         if(logpen.lopnStyle & PS_GEOMETRIC) break;
-        if(logpen.lopnWidth.x > 1) break;
-        pdev->pen_lines = solid_pen_lines;
+        if(pdev->pen_width <= 1)
+            pdev->pen_lines = solid_pen_lines;
+        else
+            pdev->pen_lines = wide_pen_lines;
         pdev->defer &= ~DEFER_PEN;
         break;
 
