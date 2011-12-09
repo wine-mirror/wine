@@ -78,8 +78,8 @@ typedef struct _mxwriter
     IStream *dest;
     ULONG   dest_written;
 
-    INT decl_count;   /* practically how many times startDocument was called */
-    INT decl_written; /* byte length of document prolog */
+    int decl_count;   /* practically how many times startDocument was called */
+    int decl_written; /* byte length of document prolog */
 
     xmlOutputBufferPtr buffer;
 } mxwriter;
@@ -385,11 +385,6 @@ static HRESULT WINAPI mxwriter_put_output(IMXWriter *iface, VARIANT dest)
     {
         if (This->dest) IStream_Release(This->dest);
         This->dest = NULL;
-
-        /* We need to reset the output buffer to UTF-16, since the only way
-         * the content of the mxwriter can be accessed now is through a BSTR.
-         */
-        This->encoding = xmlParseCharEncoding("UTF-16");
         reset_output_buffer(This);
         break;
     }
@@ -427,48 +422,76 @@ static HRESULT WINAPI mxwriter_get_output(IMXWriter *iface, VARIANT *dest)
 
     if (!This->dest)
     {
-        BSTR output;
+        xmlOutputBufferPtr prolog;
+        BSTR output, body = NULL;
+        xmlBufferPtr buffer;
+        WCHAR *ptr;
         HRESULT hr;
+        int i;
 
         hr = flush_output_buffer(This);
         if (FAILED(hr))
             return hr;
 
-        /* TODO: Windows always seems to re-encode the XML to UTF-16 (this includes
-         * updating the XML decl so it says "UTF-16" instead of "UTF-8"). We don't
-         * support this yet...
-         */
-        if (This->encoding == XML_CHAR_ENCODING_UTF8) {
-            FIXME("XML re-encoding not supported yet\n");
-            return E_NOTIMPL;
-        }
-
         if (This->decl_count)
         {
-            xmlOutputBufferPtr prolog;
-            INT i = This->decl_count;
-            WCHAR *ptr;
-
             prolog = xmlAllocOutputBuffer(xmlGetCharEncodingHandler(xmlParseCharEncoding("UTF-16")));
-
             write_prolog_buffer(This, xmlParseCharEncoding("UTF-16"), prolog);
+        }
+        else
+            prolog = NULL;
 
+        /* optimize some paticular cases */
+        /* 1. no prolog and UTF-8 buffer */
+        if (This->encoding == XML_CHAR_ENCODING_UTF8 && !prolog)
+        {
+            V_VT(dest)   = VT_BSTR;
+            V_BSTR(dest) = bstr_from_xmlChar(This->buffer->buffer->content);
+            return S_OK;
+        }
+
+        /* 2. no prolog and UTF-16 buffer */
+        if (!prolog)
+        {
+            V_VT(dest)   = VT_BSTR;
+            V_BSTR(dest) = SysAllocStringLen((const WCHAR*)This->buffer->conv->content,
+                This->buffer->conv->use/sizeof(WCHAR));
+            return S_OK;
+        }
+
+        V_BSTR(dest) = NULL;
+
+        if (This->encoding == XML_CHAR_ENCODING_UTF8)
+        {
+            buffer = This->buffer->buffer;
+            body = bstr_from_xmlChar(buffer->content+This->decl_written);
             ptr = output = SysAllocStringByteLen(NULL, prolog->conv->use*This->decl_count +
-                This->buffer->conv->use-This->decl_written);
-            while (i--)
-            {
-                memcpy(ptr, prolog->conv->content, prolog->conv->use);
-                ptr += prolog->conv->use/sizeof(WCHAR);
-            }
-
-            memcpy(ptr, This->buffer->conv->content + This->decl_written, This->buffer->conv->use-This->decl_written);
-            xmlOutputBufferClose(prolog);
+                SysStringByteLen(body));
         }
         else
         {
-            output = SysAllocStringLen((const WCHAR*)This->buffer->conv->content,
-                This->buffer->conv->use/sizeof(WCHAR));
+            buffer = This->buffer->conv;
+            ptr = output = SysAllocStringByteLen(NULL, prolog->conv->use*This->decl_count +
+                buffer->use - This->decl_written);
         }
+
+        /* write prolog part */
+        i = This->decl_count;
+        while (i--)
+        {
+            memcpy(ptr, prolog->conv->content, prolog->conv->use);
+            ptr += prolog->conv->use/sizeof(WCHAR);
+        }
+        xmlOutputBufferClose(prolog);
+
+        /* write main part */
+        if (body)
+        {
+            memcpy(ptr, body, SysStringByteLen(body));
+            SysFreeString(body);
+        }
+        else
+            memcpy(ptr, buffer->content + This->decl_written, buffer->use-This->decl_written);
 
         V_VT(dest)   = VT_BSTR;
         V_BSTR(dest) = output;
