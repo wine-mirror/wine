@@ -8450,6 +8450,11 @@ static DWORD LISTVIEW_SetExtendedListViewStyle(LISTVIEW_INFO *infoPtr, DWORD mas
         LISTVIEW_UpdateSize(infoPtr);
     }
 
+    if((infoPtr->dwLvExStyle ^ old_ex_style) & LVS_EX_FULLROWSELECT)
+    {
+        LISTVIEW_CreateHeader(infoPtr);
+    }
+
     if((infoPtr->dwLvExStyle ^ old_ex_style) & LVS_EX_TRANSPARENTBKGND)
     {
         if (infoPtr->dwLvExStyle & LVS_EX_TRANSPARENTBKGND)
