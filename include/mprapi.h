@@ -21,7 +21,7 @@
 
 #include <lmcons.h>
 #include <ras.h>
-/* FIXME: #include <in6addr.h> */
+#include <in6addr.h>
 
 #define MAX_DEVICE_NAME                 128
 #define MAX_DEVICETYPE_NAME              16

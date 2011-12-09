@@ -25,6 +25,8 @@
 extern "C" {
 #endif
 #include <pshpack4.h>
+#include <inaddr.h>
+#include <in6addr.h>
 
 #define RAS_MaxCallbackNumber RAS_MaxPhoneNumber
 #define RAS_MaxDeviceName     128

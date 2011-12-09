@@ -37,8 +37,8 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "iprtrmib.h"
 #define USE_WS_PREFIX
+#include "iprtrmib.h"
 #include "winsock2.h"
 
 #define MAX_INTERFACE_PHYSADDR    8

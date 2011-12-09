@@ -63,6 +63,8 @@
 # include <sys/poll.h>
 #endif
 
+#define USE_WS_PREFIX
+
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"

@@ -21,6 +21,9 @@
 #ifndef __WINE_IPEXPORT_H
 #define __WINE_IPEXPORT_H
 
+#include <in6addr.h>
+#include <inaddr.h>
+
 typedef ULONG IPAddr;
 typedef ULONG IPMask;
 typedef ULONG IP_STATUS;

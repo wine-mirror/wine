@@ -19,7 +19,7 @@
 #ifndef _WS2DEF_
 #define _WS2DEF_
 
-/* FIXME: #include <inaddr.h> */
+#include <inaddr.h>
 
 #ifdef USE_WS_PREFIX
 #define WS(x)    WS_##x
