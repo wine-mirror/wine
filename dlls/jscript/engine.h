@@ -65,6 +65,7 @@ typedef struct _func_stack {
     X(jmp,        0, ARG_ADDR,   0)        \
     X(jmp_nz,     0, ARG_ADDR,   0)        \
     X(jmp_z,      0, ARG_ADDR,   0)        \
+    X(lshift,     1, 0,0)                  \
     X(lt,         1, 0,0)                  \
     X(lteq,       1, 0,0)                  \
     X(member,     1, ARG_BSTR,   0)        \
@@ -567,7 +568,6 @@ HRESULT property_value_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcep
 HRESULT instanceof_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT delete_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT typeof_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
-HRESULT left_shift_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT assign_lshift_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 
 HRESULT compiled_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;

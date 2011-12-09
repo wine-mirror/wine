@@ -3113,13 +3113,21 @@ static HRESULT lshift_eval(script_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsex
 }
 
 /* ECMA-262 3rd Edition    11.7.1 */
-HRESULT left_shift_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+static HRESULT interp_lshift(exec_ctx_t *ctx)
 {
-    binary_expression_t *expr = (binary_expression_t*)_expr;
+    DWORD r;
+    INT l;
+    HRESULT hres;
 
-    TRACE("\n");
+    hres = stack_pop_uint(ctx, &r);
+    if(FAILED(hres))
+        return hres;
 
-    return binary_expr_eval(ctx, expr, lshift_eval, ei, ret);
+    hres = stack_pop_int(ctx, &l);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push_int(ctx, l << (r&0x1f));
 }
 
 /* ECMA-262 3rd Edition    11.7.2 */
