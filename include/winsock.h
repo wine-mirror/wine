@@ -116,6 +116,8 @@
 #ifndef _WINSOCKAPI_
 #define _WINSOCKAPI_
 
+#include <inaddr.h>
+
 #ifdef USE_WS_PREFIX
 typedef unsigned char  WS_u_char;
 typedef unsigned short WS_u_short;
@@ -590,34 +592,6 @@ static inline ULONG __wine_ulong_swap(ULONG l)
 #define WS_INADDR_BROADCAST        ((ULONG)0xffffffff)
 #define WS_INADDR_NONE             0xffffffff
 #endif /* USE_WS_PREFIX */
-
-typedef struct WS(in_addr)
-{
-    union {
-        struct {
-            WS(u_char) s_b1,s_b2,s_b3,s_b4;
-        } S_un_b;
-        struct {
-            WS(u_short) s_w1,s_w2;
-        } S_un_w;
-        ULONG S_addr;
-    } S_un;
-#ifndef USE_WS_PREFIX
-#define s_addr  S_un.S_addr
-#define s_host  S_un.S_un_b.s_b2
-#define s_net   S_un.S_un_b.s_b1
-#define s_imp   S_un.S_un_w.s_w2
-#define s_impno S_un.S_un_b.s_b4
-#define s_lh    S_un.S_un_b.s_b3
-#else
-#define WS_s_addr  S_un.S_addr
-#define WS_s_host  S_un.S_un_b.s_b2
-#define WS_s_net   S_un.S_un_b.s_b1
-#define WS_s_imp   S_un.S_un_w.s_w2
-#define WS_s_impno S_un.S_un_b.s_b4
-#define WS_s_lh    S_un.S_un_b.s_b3
-#endif /* USE_WS_PREFIX */
-} IN_ADDR, *PIN_ADDR, *LPIN_ADDR;
 
 typedef struct WS(sockaddr_in)
 {

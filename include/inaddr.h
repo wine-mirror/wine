@@ -48,6 +48,13 @@ typedef struct WS(in_addr)
 #define s_lh    S_un.S_un_b.s_b3
 #define s_impno S_un.S_un_b.s_b4
 #define s_imp   S_un.S_un_w.s_w2
+#else
+#define WS_s_addr  S_un.S_addr
+#define WS_s_net   S_un.S_un_b.s_b1
+#define WS_s_host  S_un.S_un_b.s_b2
+#define WS_s_lh    S_un.S_un_b.s_b3
+#define WS_s_impno S_un.S_un_b.s_b4
+#define WS_s_imp   S_un.S_un_w.s_w2
 #endif  /* USE_WS_PREFIX */
 
 #endif /* __INADDR_H__ */
