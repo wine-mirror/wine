@@ -2552,6 +2552,35 @@ static void test_mxwriter_stream(void)
             "Got wrong content: %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
+    /* test when BOM is written to output stream */
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_put_output(writer, dest);
+    EXPECT_HR(hr, S_OK);
+
+    pos.QuadPart = 0;
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&dest) = VT_UNKNOWN;
+    V_UNKNOWN(&dest) = (IUnknown*)stream;
+    hr = IMXWriter_put_output(writer, dest);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXWriter_put_byteOrderMark(writer, VARIANT_TRUE);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXWriter_put_encoding(writer, _bstr_("UTF-16"));
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXContentHandler_startDocument(content);
+    EXPECT_HR(hr, S_OK);
+
+    pos.QuadPart = 0;
+    pos2.QuadPart = 0;
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_CUR, &pos2);
+    EXPECT_HR(hr, S_OK);
+    ok(pos2.QuadPart == 2, "got wrong position\n");
+
     ISAXContentHandler_Release(content);
     IMXWriter_Release(writer);
 

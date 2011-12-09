@@ -148,12 +148,23 @@ static HRESULT write_data_to_stream(mxwriter *This)
     return hres;
 }
 
+static void write_output_buffer(const mxwriter *This, const char *data, int len)
+{
+    xmlOutputBufferWrite(This->buffer, len, data);
+}
+
+static void write_output_buffer_str(const mxwriter *This, const char *data)
+{
+    xmlOutputBufferWriteString(This->buffer, data);
+}
+
 /* Newly added element start tag left unclosed cause for empty elements
    we have to close it differently. */
 static void close_element_starttag(const mxwriter *This)
 {
+    static const char gt = '>';
     if (!This->element) return;
-    xmlOutputBufferWriteString(This->buffer, ">");
+    write_output_buffer(This, &gt, 1);
 }
 
 static void set_element_name(mxwriter *This, const WCHAR *name, int len)
@@ -609,6 +620,12 @@ static HRESULT WINAPI mxwriter_saxcontent_putDocumentLocator(
 
 static HRESULT WINAPI mxwriter_saxcontent_startDocument(ISAXContentHandler *iface)
 {
+    static const char version[] = "<?xml version=\"";
+    static const char encoding[] = " encoding=\"";
+    static const char standalone[] = " standalone=\"";
+    static const char yes[] = "yes\"?>";
+    static const char no[] = "no\"?>";
+
     mxwriter *This = impl_from_ISAXContentHandler( iface );
     xmlChar *s;
 
@@ -627,25 +644,25 @@ static HRESULT WINAPI mxwriter_saxcontent_startDocument(ISAXContentHandler *ifac
     if (This->props[MXWriter_OmitXmlDecl] == VARIANT_TRUE) return S_OK;
 
     /* version */
-    xmlOutputBufferWriteString(This->buffer, "<?xml version=\"");
+    write_output_buffer(This, version, sizeof(version)-1);
     s = xmlchar_from_wchar(This->version);
-    xmlOutputBufferWriteString(This->buffer, (char*)s);
+    write_output_buffer_str(This, (char*)s);
     heap_free(s);
-    xmlOutputBufferWriteString(This->buffer, "\"");
+    write_output_buffer(This, "\"", 1);
 
     /* encoding */
-    xmlOutputBufferWriteString(This->buffer, " encoding=\"");
-    xmlOutputBufferWriteString(This->buffer, xmlGetCharEncodingName(This->encoding));
-    xmlOutputBufferWriteString(This->buffer, "\"");
+    write_output_buffer(This, encoding, sizeof(encoding)-1);
+    write_output_buffer_str(This, xmlGetCharEncodingName(This->encoding));
+    write_output_buffer(This, "\"", 1);
 
     /* standalone */
-    xmlOutputBufferWriteString(This->buffer, " standalone=\"");
+    write_output_buffer(This, standalone, sizeof(standalone)-1);
     if (This->props[MXWriter_Standalone] == VARIANT_TRUE)
-        xmlOutputBufferWriteString(This->buffer, "yes\"?>");
+        write_output_buffer(This, yes, sizeof(yes)-1);
     else
-        xmlOutputBufferWriteString(This->buffer, "no\"?>");
+        write_output_buffer(This, no, sizeof(no)-1);
 
-    xmlOutputBufferWriteString(This->buffer, crlfA);
+    write_output_buffer(This, crlfA, sizeof(crlfA)-1);
 
     if (This->dest && This->encoding == XML_CHAR_ENCODING_UTF16LE) {
         static const CHAR utf16BOM[] = {0xff,0xfe};
@@ -713,9 +730,9 @@ static HRESULT WINAPI mxwriter_saxcontent_startElement(
     set_element_name(This, QName ? QName  : emptyW,
                            QName ? nQName : 0);
 
-    xmlOutputBufferWriteString(This->buffer, "<");
+    write_output_buffer(This, "<", 1);
     s = xmlchar_from_wcharn(QName, nQName);
-    xmlOutputBufferWriteString(This->buffer, (char*)s);
+    write_output_buffer_str(This, (char*)s);
     heap_free(s);
 
     if (attr)
@@ -736,23 +753,23 @@ static HRESULT WINAPI mxwriter_saxcontent_startElement(
             if (FAILED(hr)) return hr;
 
             /* space separator in front of every attribute */
-            xmlOutputBufferWriteString(This->buffer, " ");
+            write_output_buffer(This, " ", 1);
 
             s = xmlchar_from_wcharn(str, len);
-            xmlOutputBufferWriteString(This->buffer, (char*)s);
+            write_output_buffer_str(This, (char*)s);
             heap_free(s);
 
-            xmlOutputBufferWriteString(This->buffer, "=\"");
+            write_output_buffer(This, "=\"", 2);
 
             len = 0;
             hr = ISAXAttributes_getValue(attr, i, &str, &len);
             if (FAILED(hr)) return hr;
 
             s = xmlchar_from_wcharn(str, len);
-            xmlOutputBufferWriteString(This->buffer, (char*)s);
+            write_output_buffer_str(This, (char*)s);
             heap_free(s);
 
-            xmlOutputBufferWriteString(This->buffer, "\"");
+            write_output_buffer(This, "\"", 1);
         }
     }
 
@@ -778,15 +795,15 @@ static HRESULT WINAPI mxwriter_saxcontent_endElement(
 
     if (This->element && QName && !strncmpW(This->element, QName, nQName))
     {
-        xmlOutputBufferWriteString(This->buffer, "/>");
+        write_output_buffer(This, "/>", 2);
     }
     else
     {
         xmlChar *s = xmlchar_from_wcharn(QName, nQName);
 
-        xmlOutputBufferWriteString(This->buffer, "</");
-        xmlOutputBufferWriteString(This->buffer, (char*)s);
-        xmlOutputBufferWriteString(This->buffer, ">");
+        write_output_buffer(This, "</", 2);
+        write_output_buffer_str(This, (char*)s);
+        write_output_buffer(This, ">", 1);
 
         heap_free(s);
     }
@@ -813,7 +830,7 @@ static HRESULT WINAPI mxwriter_saxcontent_characters(
     if (nchars)
     {
         xmlChar *s = xmlchar_from_wcharn(chars, nchars);
-        xmlOutputBufferWriteString(This->buffer, (char*)s);
+        write_output_buffer_str(This, (char*)s);
         heap_free(s);
     }
 
