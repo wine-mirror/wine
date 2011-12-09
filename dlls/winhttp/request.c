@@ -1872,7 +1872,7 @@ static BOOL receive_response( request_t *request, BOOL async )
             if (!(ret = handle_redirect( request, status ))) break;
 
             clear_response_headers( request );
-            ret = send_request( request, NULL, 0, NULL, 0, 0, 0, FALSE ); /* recurse synchronously */
+            send_request( request, NULL, 0, NULL, 0, 0, 0, FALSE ); /* recurse synchronously */
             continue;
         }
         else if (status == 401 || status == 407)
@@ -1886,7 +1886,7 @@ static BOOL receive_response( request_t *request, BOOL async )
                 break;
             }
             clear_response_headers( request );
-            ret = send_request( request, NULL, 0, NULL, 0, 0, 0, FALSE );
+            send_request( request, NULL, 0, NULL, 0, 0, 0, FALSE );
             continue;
         }
         break;
