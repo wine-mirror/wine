@@ -129,9 +129,6 @@
 #define ADVANCE(x, n) (x += ROUNDUP(((struct sockaddr *)n)->sa_len))
 #endif
 
-#include "windef.h"
-#include "winbase.h"
-#include "iprtrmib.h"
 #include "ifenum.h"
 #include "ipstats.h"
 
