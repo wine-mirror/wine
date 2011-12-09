@@ -452,6 +452,12 @@ static OPENTYPE_FEATURE_RECORD devanagari_features[] =
     { MS_MAKE_TAG('c','a','l','t'), 1},
 };
 
+static OPENTYPE_FEATURE_RECORD myanmar_features[] =
+{
+    { MS_MAKE_TAG('l','i','g','a'), 1},
+    { MS_MAKE_TAG('c','l','i','g'), 1},
+};
+
 static const char* required_bengali_features[] =
 {
     "nukt",
@@ -598,6 +604,8 @@ static const ScriptShapeData ShapingData[] =
     {{ standard_features, 2}, NULL, "" , "", NULL, NULL},
     {{ latin_features, 2}, NULL, "latn" , "", NULL, NULL},
     {{ standard_features, 2}, NULL, "" , "", NULL, NULL},
+    {{ myanmar_features, 2}, NULL, "mymr", "", NULL, NULL},
+    {{ myanmar_features, 2}, NULL, "mymr", "", NULL, NULL},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)

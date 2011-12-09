@@ -107,6 +107,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Lao,       0xe80,  0xeff,  Script_Lao_Numeric, 0},
     /* Tibetan: U+0F00–U+0FFF */
     { Script_Tibetan,   0xf00,  0xfff,  0, 0},
+    /* Myanmar: U+1000–U+109F */
+    { Script_Myanmar,    0x1000,  0x109f, Script_Myanmar_Numeric, 0},
     /* Georgian: U+10A0–U+10FF */
     { Script_Georgian,   0x10a0,  0x10ff,  0, 0},
     /* Vedic Extensions: U+1CD0-U+1CFF */
@@ -165,6 +167,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Phags_pa,   0xa840, 0xa87f, 0, 0},
     /* Devanagari Extended: U+A8E0-U+A8FF */
     { Script_Devanagari, 0xa8e0, 0xa8ff, Script_Devanagari_Numeric, 0},
+    /* Myanmar Extended-A: U+AA60–U+AA7F */
+    { Script_Myanmar,    0xaa60,  0xaa7f, Script_Myanmar_Numeric, 0},
     /* Latin Ligatures: U+FB00–U+FB06 */
     { Script_Latin,      0xfb00, 0xfb06, 0, 0},
     /* Armenian ligatures U+FB13..U+FB17 */
@@ -377,6 +381,14 @@ static const scriptData scriptInformation[] = {
      {LANG_ENGLISH, 1, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
      0x00000000,
      {0}},
+    {{Script_Myanmar, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {0x55, 0, 1, 1, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 1, 0, 0, 0, 0},
+     MS_MAKE_TAG('m','y','m','r'),
+     {0}},
+    {{Script_Myanmar_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {0x55, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('m','y','m','r'),
+     {0}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -403,7 +415,8 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[38].props, &scriptInformation[39].props,
     &scriptInformation[40].props, &scriptInformation[41].props,
     &scriptInformation[42].props, &scriptInformation[43].props,
-    &scriptInformation[44].props, &scriptInformation[45].props
+    &scriptInformation[44].props, &scriptInformation[45].props,
+    &scriptInformation[46].props, &scriptInformation[47].props
 };
 
 typedef struct {

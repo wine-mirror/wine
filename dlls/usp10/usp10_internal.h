@@ -75,6 +75,9 @@
 #define Script_Diacritical 44
 #define Script_Punctuation2 45
 #define Script_Numeric2 46
+/* Unicode Chapter 11 continued */
+#define Script_Myanmar 47
+#define Script_Myanmar_Numeric 48
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
