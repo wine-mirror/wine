@@ -914,34 +914,50 @@ BOOL service_send_command( struct service_entry *service, HANDLE pipe,
                            const void *data, DWORD size, DWORD *result )
 {
     OVERLAPPED overlapped;
-    DWORD count;
+    DWORD count, ret;
     BOOL r;
 
     overlapped.hEvent = service->overlapped_event;
     r = WriteFile(pipe, data, size, &count, &overlapped);
     if (!r && GetLastError() == ERROR_IO_PENDING)
     {
-        WaitForSingleObject( service->overlapped_event, service_pipe_timeout );
+        ret = WaitForSingleObject( service->overlapped_event, service_pipe_timeout );
+        if (ret == WAIT_TIMEOUT)
+        {
+            WINE_ERR("sending command timed out\n");
+            *result = ERROR_SERVICE_REQUEST_TIMEOUT;
+            return FALSE;
+        }
         r = GetOverlappedResult( pipe, &overlapped, &count, FALSE );
     }
     if (!r || count != size)
     {
         WINE_ERR("service protocol error - failed to write pipe!\n");
+        *result  = (!r ? GetLastError() : ERROR_WRITE_FAULT);
         return FALSE;
     }
     r = ReadFile(pipe, result, sizeof *result, &count, &overlapped);
     if (!r && GetLastError() == ERROR_IO_PENDING)
     {
-        WaitForSingleObject( service->overlapped_event, service_pipe_timeout );
+        ret = WaitForSingleObject( service->overlapped_event, service_pipe_timeout );
+        if (ret == WAIT_TIMEOUT)
+        {
+            WINE_ERR("receiving command result timed out\n");
+            *result = ERROR_SERVICE_REQUEST_TIMEOUT;
+            return FALSE;
+        }
         r = GetOverlappedResult( pipe, &overlapped, &count, FALSE );
     }
     if (!r || count != sizeof *result)
     {
         WINE_ERR("service protocol error - failed to read pipe "
             "r = %d  count = %d!\n", r, count);
+        *result = (!r ? GetLastError() : ERROR_READ_FAULT);
         return FALSE;
     }
-    return r;
+
+    *result = ERROR_SUCCESS;
+    return TRUE;
 }
 
 /******************************************************************************
@@ -996,7 +1012,7 @@ DWORD __cdecl svcctl_ControlService(
 {
     DWORD access_required;
     struct sc_service_handle *service;
-    DWORD err;
+    DWORD result;
     BOOL ret;
     HANDLE control_mutex;
     HANDLE control_pipe;
@@ -1027,8 +1043,8 @@ DWORD __cdecl svcctl_ControlService(
             return ERROR_INVALID_PARAMETER;
     }
 
-    if ((err = validate_service_handle(hService, access_required, &service)) != 0)
-        return err;
+    if ((result = validate_service_handle(hService, access_required, &service)) != 0)
+        return result;
 
     service_lock_exclusive(service->service_entry);
 
@@ -1078,9 +1094,7 @@ DWORD __cdecl svcctl_ControlService(
     ret = WaitForSingleObject(control_mutex, 30000);
     if (ret == WAIT_OBJECT_0)
     {
-        DWORD result = ERROR_SUCCESS;
-
-        ret = service_send_control(service->service_entry, control_pipe, dwControl, &result);
+        service_send_control(service->service_entry, control_pipe, dwControl, &result);
 
         if (dwControl == SERVICE_CONTROL_STOP)
         {
