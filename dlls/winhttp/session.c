@@ -565,7 +565,7 @@ static void str_to_buffer( WCHAR *buffer, const WCHAR *str, LPDWORD buflen )
     if (str) len = strlenW( str );
     if (buffer && *buflen > len)
     {
-        memcpy( buffer, str, len * sizeof(WCHAR) );
+        if (str) memcpy( buffer, str, len * sizeof(WCHAR) );
         buffer[len] = 0;
     }
     *buflen = len * sizeof(WCHAR);
