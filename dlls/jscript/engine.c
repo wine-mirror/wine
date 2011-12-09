@@ -1585,6 +1585,7 @@ static HRESULT interp_array(exec_ctx_t *ctx)
     }
 
     hres = to_string(ctx->parser->script, namev, &ctx->ei, &name);
+    VariantClear(namev);
     if(FAILED(hres)) {
         IDispatch_Release(obj);
         return hres;
@@ -2701,6 +2702,8 @@ static HRESULT interp_postinc(exec_ctx_t *ctx)
             num_set_val(&inc, num_val(&n)+(double)arg);
             hres = disp_propput(ctx->parser->script, obj, id, &inc, &ctx->ei, NULL/*FIXME*/);
         }
+        if(FAILED(hres))
+            VariantClear(&v);
     }
     IDispatch_Release(obj);
     if(FAILED(hres))
