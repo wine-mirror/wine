@@ -109,7 +109,7 @@ struct ACImpl {
 
     BOOL initted, started;
     REFERENCE_TIME mmdev_period_rt;
-    UINT64 written_frames;
+    UINT64 written_frames, last_pos_frames;
     UINT32 bufsize_frames, held_frames, tmp_buffer_frames;
     UINT32 lcl_offs_frames; /* offs into local_buffer where valid data starts */
 
@@ -1790,6 +1790,7 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient *iface)
     if(snd_pcm_prepare(This->pcm_handle) < 0)
         WARN("snd_pcm_prepare failed\n");
 
+    This->last_pos_frames = 0;
     This->held_frames = 0;
     This->written_frames = 0;
     This->lcl_offs_frames = 0;
@@ -2291,8 +2292,12 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
         UINT64 *qpctime)
 {
     ACImpl *This = impl_from_IAudioClock(iface);
-    UINT32 pad;
-    HRESULT hr;
+    UINT64 written_frames, position;
+    UINT32 held_frames;
+    int err;
+    snd_pcm_state_t alsa_state;
+    snd_pcm_uframes_t avail_frames;
+    snd_pcm_sframes_t delay_frames;
 
     TRACE("(%p)->(%p, %p)\n", This, pos, qpctime);
 
@@ -2301,18 +2306,41 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
 
     EnterCriticalSection(&This->lock);
 
-    hr = IAudioClient_GetCurrentPadding(&This->IAudioClient_iface, &pad);
-    if(FAILED(hr)){
-        LeaveCriticalSection(&This->lock);
-        return hr;
+    /* call required to get accurate snd_pcm_state() */
+    avail_frames = snd_pcm_avail_update(This->pcm_handle);
+    alsa_state = snd_pcm_state(This->pcm_handle);
+    written_frames = This->written_frames;
+    held_frames = This->held_frames;
+
+    err = snd_pcm_delay(This->pcm_handle, &delay_frames);
+    if(err < 0){
+        /* old Pulse, shortly after start */
+        WARN("snd_pcm_delay failed in state %u: %d (%s)\n", alsa_state, err, snd_strerror(err));
     }
 
-    if(This->dataflow == eRender)
-        *pos = This->written_frames - pad;
-    else if(This->dataflow == eCapture)
-        *pos = This->written_frames + pad;
+    if(This->dataflow == eRender){
+        position = written_frames - held_frames; /* maximum */
+        if(!This->started || alsa_state > SND_PCM_STATE_RUNNING)
+            ; /* mmdevapi stopped or ALSA underrun: pretend everything was played */
+        else if(err<0 || delay_frames > position - This->last_pos_frames)
+            /* Pulse bug: past underrun, despite recovery, avail_frames & delay
+             * may be larger than alsa_bufsize_frames, as if cumulating frames. */
+            /* Pulse bug: EIO(-5) shortly after starting: nothing played */
+            position = This->last_pos_frames;
+        else if(delay_frames > 0)
+            position -= delay_frames;
+    }else
+        position = written_frames + held_frames;
+
+    /* ensure monotic growth */
+    This->last_pos_frames = position;
 
     LeaveCriticalSection(&This->lock);
+
+    TRACE("frames written: %u, held: %u, avail: %ld, delay: %ld state %d, pos: %u\n",
+          (UINT32)(written_frames%1000000000), held_frames,
+          avail_frames, delay_frames, alsa_state, (UINT32)(position%1000000000));
+    *pos = position;
 
     if(qpctime){
         LARGE_INTEGER stamp, freq;
