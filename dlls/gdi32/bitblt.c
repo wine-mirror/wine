@@ -170,7 +170,9 @@ DWORD convert_bits( const BITMAPINFO *src_info, struct bitblt_coords *src,
     DWORD err;
 
     dst_info->bmiHeader.biWidth = src->visrect.right - src->visrect.left;
-    if (!(ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( dst_info ))))
+    dst_info->bmiHeader.biSizeImage = get_dib_image_size( dst_info );
+
+    if (!(ptr = HeapAlloc( GetProcessHeap(), 0, dst_info->bmiHeader.biSizeImage )))
         return ERROR_OUTOFMEMORY;
 
     err = convert_bitmapinfo( src_info, bits->ptr, src, dst_info, ptr, add_alpha );
@@ -190,8 +192,10 @@ DWORD stretch_bits( const BITMAPINFO *src_info, struct bitblt_coords *src,
 
     dst_info->bmiHeader.biWidth = dst->visrect.right - dst->visrect.left;
     dst_info->bmiHeader.biHeight = dst->visrect.bottom - dst->visrect.top;
+    dst_info->bmiHeader.biSizeImage = get_dib_image_size( dst_info );
+
     if (src_info->bmiHeader.biHeight < 0) dst_info->bmiHeader.biHeight = -dst_info->bmiHeader.biHeight;
-    if (!(ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( dst_info ))))
+    if (!(ptr = HeapAlloc( GetProcessHeap(), 0, dst_info->bmiHeader.biSizeImage )))
         return ERROR_OUTOFMEMORY;
 
     err = stretch_bitmapinfo( src_info, bits->ptr, src, dst_info, ptr, dst, mode );
@@ -208,7 +212,7 @@ static DWORD blend_bits( const BITMAPINFO *src_info, const struct gdi_image_bits
 {
     if (!dst_bits->is_copy)
     {
-        int size = get_dib_image_size( dst_info );
+        int size = dst_info->bmiHeader.biSizeImage;
         void *ptr = HeapAlloc( GetProcessHeap(), 0, size );
         if (!ptr) return ERROR_OUTOFMEMORY;
         memcpy( ptr, dst_bits->ptr, size );
@@ -446,11 +450,11 @@ BOOL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
     info->bmiHeader.biClrImportant  = 0;
     info->bmiHeader.biWidth         = dst.visrect.right - dst.visrect.left;
     info->bmiHeader.biHeight        = dst.visrect.bottom - dst.visrect.top;
-    info->bmiHeader.biSizeImage     = 0;
+    info->bmiHeader.biSizeImage     = get_dib_image_size( info );
     dev = GET_DC_PHYSDEV( dc, pPutImage );
     err = dev->funcs->pPutImage( dev, 0, 0, info, NULL, NULL, NULL, 0 );
     if ((err && err != ERROR_BAD_FORMAT) ||
-        !(bits.ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, get_dib_image_size( info ))))
+        !(bits.ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, info->bmiHeader.biSizeImage )))
     {
         ret = FALSE;
         goto done;

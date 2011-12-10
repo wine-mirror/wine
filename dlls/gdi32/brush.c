@@ -126,12 +126,12 @@ static BOOL copy_bitmap( BRUSHOBJ *brush, HBITMAP bitmap )
         memcpy( &info->bmiHeader + 1, bmp->dib->dsBitfields, sizeof(bmp->dib->dsBitfields) );
     else if (info->bmiHeader.biClrUsed)
         memcpy( &info->bmiHeader + 1, bmp->color_table, info->bmiHeader.biClrUsed * sizeof(RGBQUAD) );
-    if (!(brush->bits.ptr = HeapAlloc( GetProcessHeap(), 0, get_dib_image_size( info ))))
+    if (!(brush->bits.ptr = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage )))
     {
         HeapFree( GetProcessHeap(), 0, info );
         goto done;
     }
-    memcpy( brush->bits.ptr, bmp->dib->dsBm.bmBits, get_dib_image_size( info ));
+    memcpy( brush->bits.ptr, bmp->dib->dsBm.bmBits, info->bmiHeader.biSizeImage );
     brush->bits.is_copy = TRUE;
     brush->bits.free = free_heap_bits;
     brush->info = info;
