@@ -272,7 +272,7 @@
 @ stub D3DXSaveVolumeToFileA(ptr long ptr ptr ptr)
 @ stub D3DXSaveVolumeToFileInMemory(ptr long ptr ptr ptr)
 @ stub D3DXSaveVolumeToFileW(ptr long ptr ptr ptr)
-@ stub D3DXSHAdd(ptr long ptr ptr)
+@ stdcall D3DXSHAdd(ptr long ptr ptr)
 @ stub D3DXSHDot(long ptr ptr)
 @ stub D3DXSHEvalConeLight(long ptr long long long long ptr ptr ptr)
 @ stub D3DXSHEvalDirection(ptr long ptr)

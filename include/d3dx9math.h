@@ -27,10 +27,11 @@
 #define D3DX_PI    ((FLOAT)3.141592654)
 #define D3DX_1BYPI ((FLOAT)0.318309886)
 
+#define D3DXSH_MINORDER 2
+#define D3DXSH_MAXORDER 6
+
 #define D3DXToRadian(degree) ((degree) * (D3DX_PI / 180.0f))
 #define D3DXToDegree(radian) ((radian) * (180.0f / D3DX_PI))
-
-
 
 typedef struct D3DXVECTOR2
 {
@@ -374,6 +375,8 @@ D3DXVECTOR4* WINAPI D3DXVec4TransformArray(D3DXVECTOR4 *pout, UINT outstride, CO
 
 D3DXFLOAT16 *WINAPI D3DXFloat32To16Array(D3DXFLOAT16 *pout, CONST FLOAT *pin, UINT n);
 FLOAT *WINAPI D3DXFloat16To32Array(FLOAT *pout, CONST D3DXFLOAT16 *pin, UINT n);
+
+FLOAT* WINAPI D3DXSHAdd(FLOAT *out, UINT order, CONST FLOAT *a, CONST FLOAT *b);
 
 #ifdef __cplusplus
 }

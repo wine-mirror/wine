@@ -557,9 +557,6 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     rect.left = rect.top = 0;
     rect.right = MulDiv(template.cx, xBaseUnit, 4);
     rect.bottom =  MulDiv(template.cy, yBaseUnit, 8);
-
-    if (template.style & DS_CONTROL)
-        template.style &= ~(WS_CAPTION|WS_SYSMENU);
     template.style |= DS_3DLOOK;
     if (template.style & DS_MODALFRAME)
         template.exStyle |= WS_EX_DLGMODALFRAME;

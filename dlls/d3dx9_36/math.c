@@ -1900,3 +1900,15 @@ FLOAT *WINAPI D3DXFloat16To32Array(FLOAT *pout, CONST D3DXFLOAT16 *pin, UINT n)
 
     return pout;
 }
+
+FLOAT* WINAPI D3DXSHAdd(FLOAT *out, UINT order, const FLOAT *a, const FLOAT *b)
+{
+    UINT i;
+
+    TRACE("out %p, order %u, a %p, b %p\n", out, order, a, b);
+
+    for (i = 0; i < order * order; i++)
+        out[i] = a[i] + b[i];
+
+    return out;
+}

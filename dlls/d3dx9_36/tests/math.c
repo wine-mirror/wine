@@ -27,7 +27,7 @@
 
 #define admitted_error 0.0001f
 
-#define relative_error(exp, out) ((exp == 0.0f) ? fabs(exp - out) : (fabs(1.0f - out/ exp) ))
+#define relative_error(exp, out) ((exp == 0.0f) ? fabs(exp - out) : (fabs(1.0f - (out) / (exp))))
 
 #define expect_color(expectedcolor,gotcolor) ok((relative_error(expectedcolor.r, gotcolor.r)<admitted_error)&&(relative_error(expectedcolor.g, gotcolor.g)<admitted_error)&&(relative_error(expectedcolor.b, gotcolor.b)<admitted_error)&&(relative_error(expectedcolor.a, gotcolor.a)<admitted_error),"Expected Color= (%f, %f, %f, %f)\n , Got Color= (%f, %f, %f, %f)\n", expectedcolor.r, expectedcolor.g, expectedcolor.b, expectedcolor.a, gotcolor.r, gotcolor.g, gotcolor.b, gotcolor.a);
 
@@ -2293,6 +2293,53 @@ static void test_D3DXFloat_Array(void)
     }
 }
 
+static void test_D3DXSHAdd(void)
+{
+    UINT i, k;
+    FLOAT *ret = (FLOAT *)0xdeadbeef;
+    const FLOAT in1[50] =
+    {
+        1.11f, 1.12f, 1.13f, 1.14f, 1.15f, 1.16f, 1.17f, 1.18f,
+        1.19f, 1.20f, 1.21f, 1.22f, 1.23f, 1.24f, 1.25f, 1.26f,
+        1.27f, 1.28f, 1.29f, 1.30f, 1.31f, 1.32f, 1.33f, 1.34f,
+        1.35f, 1.36f, 1.37f, 1.38f, 1.39f, 1.40f, 1.41f, 1.42f,
+        1.43f, 1.44f, 1.45f, 1.46f, 1.47f, 1.48f, 1.49f, 1.50f,
+        1.51f, 1.52f, 1.53f, 1.54f, 1.55f, 1.56f, 1.57f, 1.58f,
+        1.59f, 1.60f,
+    };
+    const FLOAT in2[50] =
+    {
+        2.11f, 2.12f, 2.13f, 2.14f, 2.15f, 2.16f, 2.17f, 2.18f,
+        2.19f, 2.20f, 2.21f, 2.22f, 2.23f, 2.24f, 2.25f, 2.26f,
+        2.27f, 2.28f, 2.29f, 2.30f, 2.31f, 2.32f, 2.33f, 2.34f,
+        2.35f, 2.36f, 2.37f, 2.38f, 2.39f, 2.40f, 2.41f, 2.42f,
+        2.43f, 2.44f, 2.45f, 2.46f, 2.47f, 2.48f, 2.49f, 2.50f,
+        2.51f, 2.52f, 2.53f, 2.54f, 2.55f, 2.56f, 2.57f, 2.58f,
+        2.59f, 2.60f,
+    };
+    FLOAT out[50] = {0.0f};
+
+    /*
+     * Order is not limited by D3DXSH_MINORDER and D3DXSH_MAXORDER!
+     * All values will work, test from 0-7 [D3DXSH_MINORDER = 2, D3DXSH_MAXORDER = 6]
+     * Exceptions will show up when out, in1 or in2 are NULL
+     */
+    for (k = 0; k < 8; ++k)
+    {
+        UINT count = k * k;
+
+        ret = D3DXSHAdd(&out[0], k, &in1[0], &in2[0]);
+        ok(ret == out, "%u: D3DXSHAdd() failed, got %p, expected %p\n", k, out, ret);
+
+        for (i = 0; i < count; ++i)
+        {
+            ok(relative_error(in1[i] + in2[i], out[i]) < admitted_error,
+                    "%u-%u: D3DXSHAdd() failed, got %f, expected %f\n", k, i, out[i], in1[i] + in2[i]);
+        }
+        ok(out[count] == 0.0f, "%u-%u: D3DXSHAdd() failed, got %f, expected 0.0\n", k, k * k, out[count]);
+    }
+}
+
 START_TEST(math)
 {
     D3DXColorTest();
@@ -2309,4 +2356,5 @@ START_TEST(math)
     test_Matrix_Transformation2D();
     test_D3DXVec_Array();
     test_D3DXFloat_Array();
+    test_D3DXSHAdd();
 }
