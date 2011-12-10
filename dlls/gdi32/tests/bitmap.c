@@ -881,7 +881,7 @@ static void test_dib_formats(void)
     HBITMAP hdib, hbmp;
     HDC hdc, memdc;
     UINT ret;
-    BOOL expect_ok;
+    BOOL format_ok, expect_ok;
 
     bi = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ) );
     hdc = GetDC( 0 );
@@ -927,6 +927,7 @@ static void test_dib_formats(void)
                             "GetDIBits succeeded for %u/%u/%u/%u\n", bpp, planes, compr, format );
 
                     /* all functions check planes except GetDIBits with 0 lines */
+                    format_ok = expect_ok;
                     if (!planes) expect_ok = FALSE;
                     memset( bi, 0, sizeof(bi->bmiHeader) );
                     bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -1019,7 +1020,8 @@ static void test_dib_formats(void)
                     if (expect_ok || !bpp)
                         ok( ret, "GetDIBits failed for %u/%u/%u/%u\n", bpp, planes, compr, format );
                     else
-                        ok( !ret, "GetDIBits succeeded for %u/%u/%u/%u\n", bpp, planes, compr, format );
+                        ok( !ret || broken(format_ok && !planes),  /* nt4 */
+                            "GetDIBits succeeded for %u/%u/%u/%u\n", bpp, planes, compr, format );
                 }
             }
         }
@@ -1841,7 +1843,8 @@ static void test_GetDIBits(void)
        broken(GetLastError() == 0xdeadbeef), /* winnt */
        "wrong error %u\n", GetLastError());
     ok(bi->bmiHeader.biSizeImage == 0, "expected 0, got %u\n", bi->bmiHeader.biSizeImage);
-    ok(bi->bmiHeader.biClrUsed == 37, "wrong biClrUsed %u\n", bi->bmiHeader.biClrUsed);
+    ok(bi->bmiHeader.biClrUsed == 37 || broken(bi->bmiHeader.biClrUsed == 0),
+       "wrong biClrUsed %u\n", bi->bmiHeader.biClrUsed);
 
     memset(buf, 0xAA, sizeof(buf));
     SetLastError(0xdeadbeef);
@@ -4365,7 +4368,8 @@ static void test_SetDIBits(void)
         int ent = (255 - idx) % pal->palNumEntries;
         DWORD expect = idx >= info->bmiHeader.biClrUsed ? 0 :
                         (palent[ent].peRed << 16 | palent[ent].peGreen << 8 | palent[ent].peBlue);
-        ok( dib_bits[i] == expect, "%d: got %08x instead of %08x\n", i, dib_bits[i], expect );
+        ok( dib_bits[i] == expect || broken(dib_bits[i] == 0),  /* various Windows versions get some values wrong */
+            "%d: got %08x instead of %08x\n", i, dib_bits[i], expect );
     }
     memset( dib_bits, 0xaa, 64 * 4 );
 
