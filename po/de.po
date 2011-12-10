@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-01 21:21+0100\n"
+"PO-Revision-Date: 2011-12-10 19:51+0100\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -782,14 +782,12 @@ msgid "&Open"
 msgstr "&Öffnen"
 
 #: comdlg32.rc:495
-#, fuzzy
 msgid "File name:"
-msgstr "&Dateiname:"
+msgstr "Dateiname:"
 
 #: comdlg32.rc:498
-#, fuzzy
 msgid "Files of type:"
-msgstr "Datei&typen"
+msgstr "Dateien vom Typ:"
 
 #: comdlg32.rc:29
 msgid "&About FolderPicker Test"
@@ -2209,7 +2207,6 @@ msgid "Welcome to the Certificate Import Wizard"
 msgstr "Willkommen"
 
 #: cryptui.rc:283
-#, fuzzy
 msgid ""
 "This wizard helps you import certificates, certificate revocation lists, and "
 "certificate trust lists from a file to a certificate store.\n"
@@ -2221,10 +2218,15 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Dieser Assistent hilft ihnen Zertifikate, Zertifikatssperrlisten und "
+"Zertifikatsvertrauenslisten aus einer Datei zu importieren.\n"
+"\n"
 "Ein Zertifikat dient zur Identifikation von Ihnen oder ihrem Computer. Es "
-"kann auch für die Authentifizierung und zum Unterzeichnen genutzt werden. "
+"kann auch fÃ¼r die Authentifizierung und zum Unterzeichnen genutzt werden. "
 "Zertifikatsspeicher sind Sammlungen von Zertifikaten, Zertifikatssperrlisten "
-"und Zertifikatsvertrauenslisten."
+"und Zertifikatsvertrauenslisten.\n"
+"\n"
+"Klicken Sie Weiter um fortzufahren."
 
 #: cryptui.rc:291 cryptui.rc:427
 msgid "&File name:"
@@ -2340,7 +2342,6 @@ msgid "Welcome to the Certificate Export Wizard"
 msgstr "Willkommen"
 
 #: cryptui.rc:373
-#, fuzzy
 msgid ""
 "This wizard helps you export certificates, certificate revocation lists, and "
 "certificate trust lists from a certificate store to a file.\n"
@@ -2352,10 +2353,15 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Dieser Assistent hilft ihnen Zertifikate, Zertifikatssperrlisten und "
+"Zertifikatsvertrauenslisten in eine Datei zu exportieren.\n"
+"\n"
 "Ein Zertifikat dient zur Identifikation von Ihnen oder ihrem Computer. Es "
 "kann auch für die Authentifizierung und zum Unterzeichnen genutzt werden. "
 "Zertifikatsspeicher sind Sammlungen von Zertifikaten, Zertifikatssperrlisten "
-"und Zertifikatsvertrauenslisten."
+"und Zertifikatsvertrauenslisten.\n"
+"\n"
+"Klicken Sie Weiter um fortzufahren."
 
 #: cryptui.rc:381
 msgid ""
@@ -3003,9 +3009,8 @@ msgid "Mapping"
 msgstr "Zuordnung"
 
 #: dinput.rc:53
-#, fuzzy
 msgid "Show Assigned First"
-msgstr "Zugewiesene sortieren"
+msgstr "Zeige Zugewiesene zuerst"
 
 #: dinput.rc:34
 msgid "Action"
@@ -9954,19 +9959,16 @@ msgid "N"
 msgstr "N"
 
 #: cmd.rc:294
-#, fuzzy
 msgid "File association missing for extension %1\n"
-msgstr "Verknüpfung für Dateiendung %s fehlt\n"
+msgstr "Verknüpfung für Dateiendung %1 fehlt\n"
 
 #: cmd.rc:295
-#, fuzzy
 msgid "No open command associated with file type '%1'\n"
-msgstr "Kein Befehl zum Öffnen für Dateityp '%s'\n"
+msgstr "Kein Befehl zum Öffnen für Dateityp '%1'\n"
 
 #: cmd.rc:296
-#, fuzzy
 msgid "Overwrite %1"
-msgstr "%s überschreiben"
+msgstr "%1 überschreiben"
 
 #: cmd.rc:297
 msgid "More..."
@@ -9987,23 +9989,20 @@ msgid "Syntax error\n"
 msgstr "Syntaxfehler\n"
 
 #: cmd.rc:303
-#, fuzzy
 msgid "No help available for %1\n"
-msgstr "Hilfe für %s ist nicht verfügbar\n"
+msgstr "Hilfe für %1 ist nicht verfügbar\n"
 
 #: cmd.rc:304
 msgid "Target to GOTO not found\n"
 msgstr "Das Sprungziel von GOTO wurde nicht gefunden\n"
 
 #: cmd.rc:305
-#, fuzzy
 msgid "Current Date is %1\n"
-msgstr "Aktuelles Datum ist %s\n"
+msgstr "Aktuelles Datum ist %1\n"
 
 #: cmd.rc:306
-#, fuzzy
 msgid "Current Time is %1\n"
-msgstr "Aktuelle Zeit ist %s\n"
+msgstr "Aktuelle Zeit ist %1\n"
 
 #: cmd.rc:307
 msgid "Enter new date: "
@@ -10014,9 +10013,8 @@ msgid "Enter new time: "
 msgstr "Geben Sie die neue Zeit ein: "
 
 #: cmd.rc:309
-#, fuzzy
 msgid "Environment variable %1 not defined\n"
-msgstr "Die Umgebungsvariable %s ist nicht definiert\n"
+msgstr "Die Umgebungsvariable %1 ist nicht definiert\n"
 
 #: cmd.rc:310 xcopy.rc:38
 msgid "Failed to open '%1'\n"
@@ -10032,19 +10030,16 @@ msgid "A"
 msgstr "A"
 
 #: cmd.rc:313
-#, fuzzy
 msgid "%1, Delete"
-msgstr "%s, löschen"
+msgstr "%1, löschen"
 
 #: cmd.rc:314
-#, fuzzy
 msgid "Echo is %1\n"
-msgstr "Echo ist %s\n"
+msgstr "Echo ist %1\n"
 
 #: cmd.rc:315
-#, fuzzy
 msgid "Verify is %1\n"
-msgstr "Verify ist %s\n"
+msgstr "Verify ist %1\n"
 
 #: cmd.rc:316
 msgid "Verify must be ON or OFF\n"
@@ -10055,14 +10050,13 @@ msgid "Parameter error\n"
 msgstr "Parameterfehler\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid ""
 "Volume in drive %1!c! is %2\n"
 "Volume Serial Number is %3!04x!-%4!04x!\n"
 "\n"
 msgstr ""
-"Volume in Laufwerk %c ist %s\n"
-"Volumeseriennummer ist %04x-%04x\n"
+"Volume in Laufwerk %1!c! ist %2\n"
+"Volumeseriennummer ist %3!04x!-%4!04x!\n"
 "\n"
 
 #: cmd.rc:319
@@ -10082,9 +10076,8 @@ msgid "Wine Command Prompt"
 msgstr "Wine Befehlsprozessor"
 
 #: cmd.rc:323
-#, fuzzy
 msgid "CMD Version %1!S!\n"
-msgstr "CMD Version %s\n"
+msgstr "CMD Version %1!S!\n"
 
 #: cmd.rc:324
 msgid "More? "
@@ -12727,7 +12720,7 @@ msgstr "&Erweitert"
 
 #: winecfg.rc:251
 msgid "De&vice:"
-msgstr "De&vice:"
+msgstr "Ge&rät:"
 
 #: winecfg.rc:253
 msgid "Bro&wse..."
@@ -12747,31 +12740,31 @@ msgstr "Zeige D&ot-Dateien an"
 
 #: winecfg.rc:267
 msgid " Driver Diagnostics "
-msgstr " Driver Diagnostics "
+msgstr " Treiber Diagnose "
 
 #: winecfg.rc:269
 msgid " Defaults "
-msgstr " Defaults "
+msgstr " Standards "
 
 #: winecfg.rc:270
 msgid "Output device:"
-msgstr "Output device:"
+msgstr "Ausgabegerät:"
 
 #: winecfg.rc:271
 msgid "Voice output device:"
-msgstr "Voice output device:"
+msgstr "Sprachausgabegerät:"
 
 #: winecfg.rc:272
 msgid "Input device:"
-msgstr "Input device:"
+msgstr "Eingabegerät:"
 
 #: winecfg.rc:273
 msgid "Voice input device:"
-msgstr "Voice input device:"
+msgstr "Spracheingabegerät:"
 
 #: winecfg.rc:278
 msgid "&Test Sound"
-msgstr "&Test Sound"
+msgstr "Sound &testen"
 
 #: winecfg.rc:285
 msgid " Appearance "
