@@ -469,15 +469,9 @@ static inline int get_dib_image_size( const BITMAPINFO *info )
         * abs( info->bmiHeader.biHeight );
 }
 
-static inline int get_dib_num_of_colors( const BITMAPINFO *info )
-{
-    if (info->bmiHeader.biClrUsed) return min( info->bmiHeader.biClrUsed, 256 );
-    return info->bmiHeader.biBitCount > 8 ? 0 : 1 << info->bmiHeader.biBitCount;
-}
-
 static inline void copy_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *src )
 {
-    unsigned int size = FIELD_OFFSET( BITMAPINFO, bmiColors[get_dib_num_of_colors( src )] );
+    unsigned int size = FIELD_OFFSET( BITMAPINFO, bmiColors[src->bmiHeader.biClrUsed] );
     if (src->bmiHeader.biCompression == BI_BITFIELDS) size += 3 * sizeof(DWORD);
     memcpy( dst, src, size );
 }

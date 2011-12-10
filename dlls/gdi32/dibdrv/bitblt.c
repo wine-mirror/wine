@@ -872,7 +872,6 @@ DWORD dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
     info->bmiHeader.biCompression   = BI_RGB;
     info->bmiHeader.biXPelsPerMeter = 0;
     info->bmiHeader.biYPelsPerMeter = 0;
-    info->bmiHeader.biClrUsed       = 0;
     info->bmiHeader.biClrImportant  = 0;
 
     if (hbitmap)
@@ -929,7 +928,7 @@ static BOOL matching_color_info( const dib_info *dib, const BITMAPINFO *info )
     {
         RGBQUAD *color_table = (RGBQUAD *)((char *)info + info->bmiHeader.biSize);
         if (!info->bmiHeader.biClrUsed) return FALSE;
-        if (dib->color_table_size != get_dib_num_of_colors( info )) return FALSE;
+        if (dib->color_table_size != info->bmiHeader.biClrUsed) return FALSE;
         return !memcmp( color_table, dib->color_table, dib->color_table_size * sizeof(RGBQUAD) );
     }
 
