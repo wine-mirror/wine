@@ -83,7 +83,7 @@ static BOOL store_bitmap_bits( BRUSHOBJ *brush, BITMAPOBJ *bmp )
 
     /* release the unneeded space */
     HeapReAlloc( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY, info,
-                 bitmap_info_size( info, DIB_RGB_COLORS ));
+                 get_dib_info_size( info, DIB_RGB_COLORS ));
     brush->info  = info;
     brush->bits  = bits;
     brush->usage = DIB_RGB_COLORS;
@@ -119,7 +119,7 @@ static BOOL copy_bitmap( BRUSHOBJ *brush, HBITMAP bitmap )
     }
 
     info = HeapAlloc( GetProcessHeap(), 0,
-                      bitmap_info_size( (BITMAPINFO *)&bmp->dib->dsBmih, DIB_RGB_COLORS ));
+                      get_dib_info_size( (BITMAPINFO *)&bmp->dib->dsBmih, DIB_RGB_COLORS ));
     if (!info) goto done;
     info->bmiHeader = bmp->dib->dsBmih;
     if (info->bmiHeader.biCompression == BI_BITFIELDS)
@@ -161,7 +161,7 @@ BOOL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void **bits, UINT *
     }
     if (brush->info)
     {
-        memcpy( info, brush->info, bitmap_info_size( brush->info, brush->usage ));
+        memcpy( info, brush->info, get_dib_info_size( brush->info, brush->usage ));
         *bits = brush->bits.ptr;
         *usage = brush->usage;
         ret = TRUE;
@@ -224,7 +224,7 @@ HBRUSH WINAPI CreateBrushIndirect( const LOGBRUSH * brush )
         ptr->info = copy_packed_dib( (BITMAPINFO *)ptr->logbrush.lbHatch, ptr->usage );
         if (hmem) GlobalUnlock( hmem );
         if (!ptr->info) goto error;
-        ptr->bits.ptr = (char *)ptr->info + bitmap_info_size( ptr->info, ptr->usage );
+        ptr->bits.ptr = (char *)ptr->info + get_dib_info_size( ptr->info, ptr->usage );
         ptr->logbrush.lbStyle = BS_DIBPATTERN;
         ptr->logbrush.lbColor = 0;
         break;

@@ -90,8 +90,7 @@ BOOL MFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
 	  len,rop,lpBMI->biYPelsPerMeter,GetDeviceCaps(devSrc->hdc, LOGPIXELSY));
 
     if (GetDIBits(devSrc->hdc, hBitmap, 0, (UINT)lpBMI->biHeight,
-                  (LPSTR)lpBMI + bitmap_info_size( (BITMAPINFO *)lpBMI,
-                                                     DIB_RGB_COLORS ),
+                  (LPSTR)lpBMI + get_dib_info_size( (BITMAPINFO *)lpBMI, DIB_RGB_COLORS ),
                   (LPBITMAPINFO)lpBMI, DIB_RGB_COLORS))
 #else
     len = sizeof(METARECORD) + 15 * sizeof(INT16) + BM.bmWidthBytes * BM.bmHeight;
@@ -135,7 +134,7 @@ INT MFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
                          INT heightSrc, const void *bits,
                          BITMAPINFO *info, UINT wUsage, DWORD dwRop )
 {
-    DWORD infosize = bitmap_info_size(info, wUsage);
+    DWORD infosize = get_dib_info_size(info, wUsage);
     DWORD len = sizeof(METARECORD) + 10 * sizeof(WORD) + infosize + info->bmiHeader.biSizeImage;
     METARECORD *mr = HeapAlloc( GetProcessHeap(), 0, len );
     if(!mr) return 0;
@@ -169,7 +168,7 @@ INT MFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD cx,
                              UINT lines, LPCVOID bits, BITMAPINFO *info, UINT coloruse )
 
 {
-    DWORD infosize = bitmap_info_size(info, coloruse);
+    DWORD infosize = get_dib_info_size(info, coloruse);
     DWORD len = sizeof(METARECORD) + 8 * sizeof(WORD) + infosize + info->bmiHeader.biSizeImage;
     METARECORD *mr = HeapAlloc( GetProcessHeap(), 0, len );
     if(!mr) return 0;

@@ -168,6 +168,12 @@ static BOOL bitmapinfoheader_from_user_bitmapinfo( BITMAPINFOHEADER *dst, const 
 
 /*******************************************************************************************
  *  Fill out a true BITMAPINFO from a variable sized BITMAPINFO / BITMAPCOREINFO.
+ *
+ * The resulting stanitized BITMAPINFO is guaranteed to have:
+ * - biSize set to sizeof(BITMAPINFOHEADER)
+ * - biSizeImage set to the actual image size even for non-compressed DIB
+ * - biClrUsed set to the size of the color table, and 0 only when there is no color table
+ * - color table present only for <= 8 bpp, always starts at info->bmiColors
  */
 static BOOL bitmapinfo_from_user_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *info,
                                              UINT coloruse, BOOL allow_compression )
@@ -1122,16 +1128,16 @@ BITMAPINFO *copy_packed_dib( const BITMAPINFO *src_info, UINT usage )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *ret, *info = (BITMAPINFO *)buffer;
-    int info_size, image_size;
+    unsigned int info_size;
 
     if (!bitmapinfo_from_user_bitmapinfo( info, src_info, usage, FALSE )) return NULL;
 
-    info_size = bitmap_info_size( info, usage );
-    image_size = get_dib_image_size( info );
-    if ((ret = HeapAlloc( GetProcessHeap(), 0, info_size + image_size )))
+    info_size = get_dib_info_size( info, usage );
+    if ((ret = HeapAlloc( GetProcessHeap(), 0, info_size + info->bmiHeader.biSizeImage )))
     {
         memcpy( ret, info, info_size );
-        memcpy( (char *)ret + info_size, (char *)src_info + bitmap_info_size(src_info,usage), image_size );
+        memcpy( (char *)ret + info_size, (char *)src_info + bitmap_info_size( src_info, usage ),
+                info->bmiHeader.biSizeImage );
     }
     return ret;
 }

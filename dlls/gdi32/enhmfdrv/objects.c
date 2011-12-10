@@ -138,15 +138,15 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
         EMRCREATEDIBPATTERNBRUSHPT *emr;
         char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
         BITMAPINFO *info = (BITMAPINFO *)buffer;
-        DWORD info_size, image_size;
+        DWORD info_size;
         void *bits;
         UINT usage;
 
         if (!get_brush_bitmap_info( hBrush, info, &bits, &usage )) break;
-        info_size = bitmap_info_size( info, usage );
-        image_size = get_dib_image_size( info );
+        info_size = get_dib_info_size( info, usage );
 
-        emr = HeapAlloc( GetProcessHeap(), 0, sizeof(EMRCREATEDIBPATTERNBRUSHPT)+info_size+image_size );
+        emr = HeapAlloc( GetProcessHeap(), 0,
+                         sizeof(EMRCREATEDIBPATTERNBRUSHPT)+info_size+info->bmiHeader.biSizeImage );
         if(!emr) break;
 
         if (logbrush.lbStyle == BS_PATTERN && info->bmiHeader.biBitCount == 1)
@@ -176,7 +176,7 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
         emr->ihBrush = index = EMFDRV_AddHandle( dev, hBrush );
         emr->iUsage = usage;
         emr->offBits = emr->offBmi + emr->cbBmi;
-        emr->cbBits = image_size;
+        emr->cbBits = info->bmiHeader.biSizeImage;
 
         memcpy( (BYTE *)emr + emr->offBmi, info, emr->cbBmi );
         memcpy( (BYTE *)emr + emr->offBits, bits, emr->cbBits );

@@ -469,11 +469,20 @@ static inline int get_dib_image_size( const BITMAPINFO *info )
         * abs( info->bmiHeader.biHeight );
 }
 
+/* only for use on sanitized BITMAPINFO structures */
+static inline int get_dib_info_size( const BITMAPINFO *info, UINT coloruse )
+{
+    if (info->bmiHeader.biCompression == BI_BITFIELDS)
+        return sizeof(BITMAPINFOHEADER) + 3 * sizeof(DWORD);
+    if (coloruse == DIB_PAL_COLORS)
+        return sizeof(BITMAPINFOHEADER) + info->bmiHeader.biClrUsed * sizeof(WORD);
+    return FIELD_OFFSET( BITMAPINFO, bmiColors[info->bmiHeader.biClrUsed] );
+}
+
+/* only for use on sanitized BITMAPINFO structures */
 static inline void copy_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *src )
 {
-    unsigned int size = FIELD_OFFSET( BITMAPINFO, bmiColors[src->bmiHeader.biClrUsed] );
-    if (src->bmiHeader.biCompression == BI_BITFIELDS) size += 3 * sizeof(DWORD);
-    memcpy( dst, src, size );
+    memcpy( dst, src, get_dib_info_size( src, DIB_RGB_COLORS ));
 }
 
 static inline const struct gdi_dc_funcs *get_bitmap_funcs( const BITMAPOBJ *bitmap )

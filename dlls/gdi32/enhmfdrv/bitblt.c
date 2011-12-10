@@ -178,7 +178,7 @@ INT EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT hei
     UINT bmi_size, emr_size;
 
     /* calculate the size of the colour table */
-    bmi_size = bitmap_info_size(info, wUsage);
+    bmi_size = get_dib_info_size(info, wUsage);
 
     emr_size = sizeof (EMRSTRETCHDIBITS) + bmi_size + info->bmiHeader.biSizeImage;
     emr = HeapAlloc(GetProcessHeap(), 0, emr_size );
@@ -231,7 +231,7 @@ INT EMFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD width, DWOR
                               LPCVOID bits, BITMAPINFO *info, UINT wUsage )
 {
     EMRSETDIBITSTODEVICE* pEMR;
-    DWORD bmiSize = bitmap_info_size(info, wUsage);
+    DWORD bmiSize = get_dib_info_size(info, wUsage);
     DWORD size = sizeof(EMRSETDIBITSTODEVICE) + bmiSize + info->bmiHeader.biSizeImage;
 
     pEMR = HeapAlloc(GetProcessHeap(), 0, size);

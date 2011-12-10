@@ -178,16 +178,15 @@ INT16 MFDRV_CreateBrushIndirect(PHYSDEV dev, HBRUSH hBrush )
         {
             char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
             BITMAPINFO *dst_info, *src_info = (BITMAPINFO *)buffer;
-            DWORD info_size, image_size;
+            DWORD info_size;
             char *dst_ptr;
             void *bits;
             UINT usage;
 
             if (!get_brush_bitmap_info( hBrush, src_info, &bits, &usage )) goto done;
 
-            info_size = bitmap_info_size( src_info, usage );
-            image_size = get_dib_image_size( src_info );
-	    size = FIELD_OFFSET( METARECORD, rdParm[2] ) + info_size + image_size;
+            info_size = get_dib_info_size( src_info, usage );
+	    size = FIELD_OFFSET( METARECORD, rdParm[2] ) + info_size + src_info->bmiHeader.biSizeImage;
 
             if (!(mr = HeapAlloc( GetProcessHeap(), 0, size ))) goto done;
 	    mr->rdFunction = META_DIBCREATEPATTERNBRUSH;
@@ -210,7 +209,7 @@ INT16 MFDRV_CreateBrushIndirect(PHYSDEV dev, HBRUSH hBrush )
                 for (i = 0; i < dst_info->bmiHeader.biHeight; i++, dst_ptr -= width_bytes)
                     memcpy( dst_ptr, (char *)bits + i * width_bytes, width_bytes );
             }
-            else memcpy( dst_ptr, bits, image_size );
+            else memcpy( dst_ptr, bits, src_info->bmiHeader.biSizeImage );
 	    break;
 	}
 
