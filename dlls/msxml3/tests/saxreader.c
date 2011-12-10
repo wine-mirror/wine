@@ -737,7 +737,7 @@ static ULONG WINAPI isaxattributes_Release(ISAXAttributes* iface)
 
 static HRESULT WINAPI isaxattributes_getLength(ISAXAttributes* iface, int *length)
 {
-    *length = 2;
+    *length = 3;
     return S_OK;
 }
 
@@ -763,17 +763,19 @@ static HRESULT WINAPI isaxattributes_getLocalName(
 
 static HRESULT WINAPI isaxattributes_getQName(
     ISAXAttributes* iface,
-    int nIndex,
-    const WCHAR **pQName,
-    int *pQNameLength)
+    int index,
+    const WCHAR **QName,
+    int *QNameLength)
 {
-    static const WCHAR attr1W[] = {'a',':','a','t','t','r','1','j','u','n','k',0};
-    static const WCHAR attr2W[] = {'a','t','t','r','2','j','u','n','k',0};
+    static const WCHAR attrqnamesW[][15] = {{'a',':','a','t','t','r','1','j','u','n','k',0},
+                                            {'a','t','t','r','2','j','u','n','k',0},
+                                            {'a','t','t','r','3',0}};
+    static const int attrqnamelen[] = {7, 5, 5};
 
-    ok(nIndex == 0 || nIndex == 1, "invalid index received %d\n", nIndex);
+    ok(index >= 0 && index <= 2, "invalid index received %d\n", index);
 
-    *pQName = (nIndex == 0) ? attr1W : attr2W;
-    *pQNameLength = (nIndex == 0) ? 7 : 5;
+    *QName = attrqnamesW[index];
+    *QNameLength = attrqnamelen[index];
 
     return S_OK;
 }
@@ -848,19 +850,18 @@ static HRESULT WINAPI isaxattributes_getTypeFromQName(
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI isaxattributes_getValue(
-    ISAXAttributes* iface,
-    int nIndex,
-    const WCHAR ** pValue,
-    int * nValue)
+static HRESULT WINAPI isaxattributes_getValue(ISAXAttributes* iface, int index,
+    const WCHAR **value, int *nValue)
 {
-    static const WCHAR attrval1W[] = {'a','1','j','u','n','k',0};
-    static const WCHAR attrval2W[] = {'a','2','j','u','n','k',0};
+    static const WCHAR attrvaluesW[][10] = {{'a','1','j','u','n','k',0},
+                                            {'a','2','j','u','n','k',0},
+                                            {'<','&','"','>',0}};
+    static const int attrvalueslen[] = {2, 2, 4};
 
-    ok(nIndex == 0 || nIndex == 1, "invalid index received %d\n", nIndex);
+    ok(index >= 0 && index <= 2, "invalid index received %d\n", index);
 
-    *pValue = (nIndex == 0) ? attrval1W : attrval2W;
-    *nValue = 2;
+    *value = attrvaluesW[index];
+    *nValue = attrvalueslen[index];
 
     return S_OK;
 }
@@ -2039,6 +2040,9 @@ struct writer_startendelement_t {
     ISAXAttributes *attr;
 };
 
+static const char startelement_xml[] = "<uri:local a:attr1=\"a1\" attr2=\"a2\" attr3=\"&lt;&amp;&quot;&gt;\">";
+static const char startendelement_xml[] = "<uri:local a:attr1=\"a1\" attr2=\"a2\" attr3=\"&lt;&amp;&quot;&gt;\"/>";
+
 static const struct writer_startendelement_t writer_startendelement[] = {
     /* 0 */
     { &CLSID_MXXMLWriter,   StartElement, NULL, NULL, NULL, NULL, E_INVALIDARG },
@@ -2120,17 +2124,17 @@ static const struct writer_startendelement_t writer_startendelement[] = {
     { &CLSID_MXXMLWriter60, EndElement, "uri", "local", "uri:local2", "</uri:local2>", S_OK },
 
     /* with attributes */
-    { &CLSID_MXXMLWriter,   StartElement, "uri", "local", "uri:local", "<uri:local a:attr1=\"a1\" attr2=\"a2\">", S_OK, &saxattributes },
+    { &CLSID_MXXMLWriter,   StartElement, "uri", "local", "uri:local", startelement_xml, S_OK, &saxattributes },
     /* 65 */
-    { &CLSID_MXXMLWriter30, StartElement, "uri", "local", "uri:local", "<uri:local a:attr1=\"a1\" attr2=\"a2\">", S_OK, &saxattributes },
-    { &CLSID_MXXMLWriter40, StartElement, "uri", "local", "uri:local", "<uri:local a:attr1=\"a1\" attr2=\"a2\">", S_OK, &saxattributes },
-    { &CLSID_MXXMLWriter60, StartElement, "uri", "local", "uri:local", "<uri:local a:attr1=\"a1\" attr2=\"a2\">", S_OK, &saxattributes },
+    { &CLSID_MXXMLWriter30, StartElement, "uri", "local", "uri:local", startelement_xml, S_OK, &saxattributes },
+    { &CLSID_MXXMLWriter40, StartElement, "uri", "local", "uri:local", startelement_xml, S_OK, &saxattributes },
+    { &CLSID_MXXMLWriter60, StartElement, "uri", "local", "uri:local", startelement_xml, S_OK, &saxattributes },
     /* empty elements */
-    { &CLSID_MXXMLWriter,   StartEndElement, "uri", "local", "uri:local", "<uri:local a:attr1=\"a1\" attr2=\"a2\"/>", S_OK, &saxattributes },
-    { &CLSID_MXXMLWriter30, StartEndElement, "uri", "local", "uri:local", "<uri:local a:attr1=\"a1\" attr2=\"a2\"/>", S_OK, &saxattributes },
+    { &CLSID_MXXMLWriter,   StartEndElement, "uri", "local", "uri:local", startendelement_xml, S_OK, &saxattributes },
+    { &CLSID_MXXMLWriter30, StartEndElement, "uri", "local", "uri:local", startendelement_xml, S_OK, &saxattributes },
     /* 70 */
-    { &CLSID_MXXMLWriter40, StartEndElement, "uri", "local", "uri:local", "<uri:local a:attr1=\"a1\" attr2=\"a2\"/>", S_OK, &saxattributes },
-    { &CLSID_MXXMLWriter60, StartEndElement, "uri", "local", "uri:local", "<uri:local a:attr1=\"a1\" attr2=\"a2\"/>", S_OK, &saxattributes },
+    { &CLSID_MXXMLWriter40, StartEndElement, "uri", "local", "uri:local", startendelement_xml, S_OK, &saxattributes },
+    { &CLSID_MXXMLWriter60, StartEndElement, "uri", "local", "uri:local", startendelement_xml, S_OK, &saxattributes },
     { &CLSID_MXXMLWriter,   StartEndElement, "", "", "", "</>", S_OK },
     { &CLSID_MXXMLWriter30, StartEndElement, "", "", "", "</>", S_OK },
     { &CLSID_MXXMLWriter40, StartEndElement, "", "", "", "</>", S_OK },

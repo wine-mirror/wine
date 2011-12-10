@@ -57,7 +57,7 @@ typedef enum
     MXWriter_LastProp
 } MXWRITER_PROPS;
 
-typedef struct _mxwriter
+typedef struct
 {
     DispatchEx dispex;
     IMXWriter IMXWriter_iface;
@@ -104,6 +104,71 @@ static HRESULT bstr_from_xmlCharEncoding(xmlCharEncoding enc, BSTR *encoding)
         *encoding = SysAllocStringLen(NULL, 0);
 
     return *encoding ? S_OK : E_OUTOFMEMORY;
+}
+
+/* escapes special characters like:
+   '<' -> "&lt;"
+   '&' -> "&amp;"
+   '"' -> "&quot;"
+   '>' -> "&gt;"
+*/
+static WCHAR *get_escaped_string(const WCHAR *str, int *len)
+{
+    static const WCHAR ltW[]   = {'&','l','t',';'};
+    static const WCHAR ampW[]  = {'&','a','m','p',';'};
+    static const WCHAR quotW[] = {'&','q','u','o','t',';'};
+    static const WCHAR gtW[]   = {'&','g','t',';'};
+
+    const int default_alloc = 100;
+    const int grow_thresh = 10;
+    int p = *len, conv_len;
+    WCHAR *ptr, *ret;
+
+    /* default buffer size to something if length is unknown */
+    conv_len = *len == -1 ? default_alloc : max(2**len, default_alloc);
+    ptr = ret = heap_alloc(conv_len*sizeof(WCHAR));
+
+    while (*str && p)
+    {
+        if (ptr - ret > conv_len - grow_thresh)
+        {
+            int written = ptr - ret;
+            conv_len *= 2;
+            ptr = ret = heap_realloc(ret, conv_len*sizeof(WCHAR));
+            ptr += written;
+        }
+
+        switch (*str)
+        {
+        case '<':
+            memcpy(ptr, ltW, sizeof(ltW));
+            ptr += sizeof(ltW)/sizeof(WCHAR);
+            break;
+        case '&':
+            memcpy(ptr, ampW, sizeof(ampW));
+            ptr += sizeof(ampW)/sizeof(WCHAR);
+            break;
+        case '"':
+            memcpy(ptr, quotW, sizeof(quotW));
+            ptr += sizeof(quotW)/sizeof(WCHAR);
+            break;
+        case '>':
+            memcpy(ptr, gtW, sizeof(gtW));
+            ptr += sizeof(gtW)/sizeof(WCHAR);
+            break;
+        default:
+            *ptr++ = *str;
+            break;
+        }
+
+        str++;
+        if (*len != -1) p--;
+    }
+
+    if (*len != -1) *len = ptr-ret;
+    *++ptr = 0;
+
+    return ret;
 }
 
 /* creates UTF-8 encoded prolog string with specified or store encoding value */
@@ -824,6 +889,7 @@ static HRESULT WINAPI mxwriter_saxcontent_startElement(
         for (i = 0; i < length; i++)
         {
             const WCHAR *str;
+            WCHAR *escaped;
             INT len = 0;
 
             hr = ISAXAttributes_getQName(attr, i, &str, &len);
@@ -842,8 +908,10 @@ static HRESULT WINAPI mxwriter_saxcontent_startElement(
             hr = ISAXAttributes_getValue(attr, i, &str, &len);
             if (FAILED(hr)) return hr;
 
-            s = xmlchar_from_wcharn(str, len);
+            escaped = get_escaped_string(str, &len);
+            s = xmlchar_from_wcharn(escaped, len);
             write_output_buffer_str(This, (char*)s);
+            heap_free(escaped);
             heap_free(s);
 
             write_output_buffer(This, "\"", 1);
