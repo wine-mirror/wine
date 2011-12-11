@@ -1993,25 +1993,25 @@ const char *debug_d3dresourcetype(WINED3DRESOURCETYPE res)
     }
 }
 
-const char *debug_d3dprimitivetype(WINED3DPRIMITIVETYPE PrimitiveType)
+const char *debug_d3dprimitivetype(enum wined3d_primitive_type primitive_type)
 {
-    switch (PrimitiveType)
+    switch (primitive_type)
     {
 #define PRIM_TO_STR(prim) case prim: return #prim
-        PRIM_TO_STR(WINED3DPT_UNDEFINED);
-        PRIM_TO_STR(WINED3DPT_POINTLIST);
-        PRIM_TO_STR(WINED3DPT_LINELIST);
-        PRIM_TO_STR(WINED3DPT_LINESTRIP);
-        PRIM_TO_STR(WINED3DPT_TRIANGLELIST);
-        PRIM_TO_STR(WINED3DPT_TRIANGLESTRIP);
-        PRIM_TO_STR(WINED3DPT_TRIANGLEFAN);
-        PRIM_TO_STR(WINED3DPT_LINELIST_ADJ);
-        PRIM_TO_STR(WINED3DPT_LINESTRIP_ADJ);
-        PRIM_TO_STR(WINED3DPT_TRIANGLELIST_ADJ);
-        PRIM_TO_STR(WINED3DPT_TRIANGLESTRIP_ADJ);
+        PRIM_TO_STR(WINED3D_PT_UNDEFINED);
+        PRIM_TO_STR(WINED3D_PT_POINTLIST);
+        PRIM_TO_STR(WINED3D_PT_LINELIST);
+        PRIM_TO_STR(WINED3D_PT_LINESTRIP);
+        PRIM_TO_STR(WINED3D_PT_TRIANGLELIST);
+        PRIM_TO_STR(WINED3D_PT_TRIANGLESTRIP);
+        PRIM_TO_STR(WINED3D_PT_TRIANGLEFAN);
+        PRIM_TO_STR(WINED3D_PT_LINELIST_ADJ);
+        PRIM_TO_STR(WINED3D_PT_LINESTRIP_ADJ);
+        PRIM_TO_STR(WINED3D_PT_TRIANGLELIST_ADJ);
+        PRIM_TO_STR(WINED3D_PT_TRIANGLESTRIP_ADJ);
 #undef  PRIM_TO_STR
         default:
-            FIXME("Unrecognized %u WINED3DPRIMITIVETYPE!\n", PrimitiveType);
+            FIXME("Unrecognized %u primitive type!\n", primitive_type);
             return "unrecognized";
     }
 }

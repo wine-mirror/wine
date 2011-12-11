@@ -62,38 +62,38 @@ const float identity[] =
 
 /* Note that except for WINED3DPT_POINTLIST and WINED3DPT_LINELIST these
  * actually have the same values in GL and D3D. */
-static GLenum gl_primitive_type_from_d3d(WINED3DPRIMITIVETYPE primitive_type)
+static GLenum gl_primitive_type_from_d3d(enum wined3d_primitive_type primitive_type)
 {
     switch(primitive_type)
     {
-        case WINED3DPT_POINTLIST:
+        case WINED3D_PT_POINTLIST:
             return GL_POINTS;
 
-        case WINED3DPT_LINELIST:
+        case WINED3D_PT_LINELIST:
             return GL_LINES;
 
-        case WINED3DPT_LINESTRIP:
+        case WINED3D_PT_LINESTRIP:
             return GL_LINE_STRIP;
 
-        case WINED3DPT_TRIANGLELIST:
+        case WINED3D_PT_TRIANGLELIST:
             return GL_TRIANGLES;
 
-        case WINED3DPT_TRIANGLESTRIP:
+        case WINED3D_PT_TRIANGLESTRIP:
             return GL_TRIANGLE_STRIP;
 
-        case WINED3DPT_TRIANGLEFAN:
+        case WINED3D_PT_TRIANGLEFAN:
             return GL_TRIANGLE_FAN;
 
-        case WINED3DPT_LINELIST_ADJ:
+        case WINED3D_PT_LINELIST_ADJ:
             return GL_LINES_ADJACENCY_ARB;
 
-        case WINED3DPT_LINESTRIP_ADJ:
+        case WINED3D_PT_LINESTRIP_ADJ:
             return GL_LINE_STRIP_ADJACENCY_ARB;
 
-        case WINED3DPT_TRIANGLELIST_ADJ:
+        case WINED3D_PT_TRIANGLELIST_ADJ:
             return GL_TRIANGLES_ADJACENCY_ARB;
 
-        case WINED3DPT_TRIANGLESTRIP_ADJ:
+        case WINED3D_PT_TRIANGLESTRIP_ADJ:
             return GL_TRIANGLE_STRIP_ADJACENCY_ARB;
 
         default:
@@ -102,43 +102,43 @@ static GLenum gl_primitive_type_from_d3d(WINED3DPRIMITIVETYPE primitive_type)
     }
 }
 
-static WINED3DPRIMITIVETYPE d3d_primitive_type_from_gl(GLenum primitive_type)
+static enum wined3d_primitive_type d3d_primitive_type_from_gl(GLenum primitive_type)
 {
     switch(primitive_type)
     {
         case GL_POINTS:
-            return WINED3DPT_POINTLIST;
+            return WINED3D_PT_POINTLIST;
 
         case GL_LINES:
-            return WINED3DPT_LINELIST;
+            return WINED3D_PT_LINELIST;
 
         case GL_LINE_STRIP:
-            return WINED3DPT_LINESTRIP;
+            return WINED3D_PT_LINESTRIP;
 
         case GL_TRIANGLES:
-            return WINED3DPT_TRIANGLELIST;
+            return WINED3D_PT_TRIANGLELIST;
 
         case GL_TRIANGLE_STRIP:
-            return WINED3DPT_TRIANGLESTRIP;
+            return WINED3D_PT_TRIANGLESTRIP;
 
         case GL_TRIANGLE_FAN:
-            return WINED3DPT_TRIANGLEFAN;
+            return WINED3D_PT_TRIANGLEFAN;
 
         case GL_LINES_ADJACENCY_ARB:
-            return WINED3DPT_LINELIST_ADJ;
+            return WINED3D_PT_LINELIST_ADJ;
 
         case GL_LINE_STRIP_ADJACENCY_ARB:
-            return WINED3DPT_LINESTRIP_ADJ;
+            return WINED3D_PT_LINESTRIP_ADJ;
 
         case GL_TRIANGLES_ADJACENCY_ARB:
-            return WINED3DPT_TRIANGLELIST_ADJ;
+            return WINED3D_PT_TRIANGLELIST_ADJ;
 
         case GL_TRIANGLE_STRIP_ADJACENCY_ARB:
-            return WINED3DPT_TRIANGLESTRIP_ADJ;
+            return WINED3D_PT_TRIANGLESTRIP_ADJ;
 
         default:
             FIXME("Unhandled primitive type %s\n", debug_d3dprimitivetype(primitive_type));
-            return WINED3DPT_UNDEFINED;
+            return WINED3D_PT_UNDEFINED;
     }
 }
 
@@ -4045,7 +4045,7 @@ HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_cou
 }
 
 void CDECL wined3d_device_set_primitive_type(struct wined3d_device *device,
-        WINED3DPRIMITIVETYPE primitive_type)
+        enum wined3d_primitive_type primitive_type)
 {
     TRACE("device %p, primitive_type %s\n", device, debug_d3dprimitivetype(primitive_type));
 
@@ -4054,7 +4054,7 @@ void CDECL wined3d_device_set_primitive_type(struct wined3d_device *device,
 }
 
 void CDECL wined3d_device_get_primitive_type(const struct wined3d_device *device,
-        WINED3DPRIMITIVETYPE *primitive_type)
+        enum wined3d_primitive_type *primitive_type)
 {
     TRACE("device %p, primitive_type %p\n", device, primitive_type);
 

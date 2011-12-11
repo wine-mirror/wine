@@ -270,7 +270,7 @@ static void STDMETHODCALLTYPE d3d10_device_IASetPrimitiveTopology(ID3D10Device *
 
     TRACE("iface %p, topology %s\n", iface, debug_d3d10_primitive_topology(topology));
 
-    wined3d_device_set_primitive_type(This->wined3d_device, (WINED3DPRIMITIVETYPE)topology);
+    wined3d_device_set_primitive_type(This->wined3d_device, (enum wined3d_primitive_type)topology);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_VSSetShaderResources(ID3D10Device *iface,
@@ -490,7 +490,7 @@ static void STDMETHODCALLTYPE d3d10_device_IAGetPrimitiveTopology(ID3D10Device *
 
     TRACE("iface %p, topology %p\n", iface, topology);
 
-    wined3d_device_get_primitive_type(This->wined3d_device, (WINED3DPRIMITIVETYPE *)topology);
+    wined3d_device_get_primitive_type(This->wined3d_device, (enum wined3d_primitive_type *)topology);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_VSGetShaderResources(ID3D10Device *iface,

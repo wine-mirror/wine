@@ -74,21 +74,20 @@ enum wined3d_light_type
     WINED3D_LIGHT_GLSPOT                    = 5, /* D3D7 */
 };
 
-typedef enum _WINED3DPRIMITIVETYPE
+enum wined3d_primitive_type
 {
-    WINED3DPT_UNDEFINED                     = 0,
-    WINED3DPT_POINTLIST                     = 1,
-    WINED3DPT_LINELIST                      = 2,
-    WINED3DPT_LINESTRIP                     = 3,
-    WINED3DPT_TRIANGLELIST                  = 4,
-    WINED3DPT_TRIANGLESTRIP                 = 5,
-    WINED3DPT_TRIANGLEFAN                   = 6,
-    WINED3DPT_LINELIST_ADJ                  = 10,
-    WINED3DPT_LINESTRIP_ADJ                 = 11,
-    WINED3DPT_TRIANGLELIST_ADJ              = 12,
-    WINED3DPT_TRIANGLESTRIP_ADJ             = 13,
-    WINED3DPT_FORCE_DWORD                   = 0x7fffffff
-} WINED3DPRIMITIVETYPE;
+    WINED3D_PT_UNDEFINED                    = 0,
+    WINED3D_PT_POINTLIST                    = 1,
+    WINED3D_PT_LINELIST                     = 2,
+    WINED3D_PT_LINESTRIP                    = 3,
+    WINED3D_PT_TRIANGLELIST                 = 4,
+    WINED3D_PT_TRIANGLESTRIP                = 5,
+    WINED3D_PT_TRIANGLEFAN                  = 6,
+    WINED3D_PT_LINELIST_ADJ                 = 10,
+    WINED3D_PT_LINESTRIP_ADJ                = 11,
+    WINED3D_PT_TRIANGLELIST_ADJ             = 12,
+    WINED3D_PT_TRIANGLESTRIP_ADJ            = 13,
+};
 
 typedef enum _WINED3DDEVTYPE
 {
@@ -2150,7 +2149,7 @@ HRESULT __cdecl wined3d_device_get_material(const struct wined3d_device *device,
 float __cdecl wined3d_device_get_npatch_mode(const struct wined3d_device *device);
 struct wined3d_shader * __cdecl wined3d_device_get_pixel_shader(const struct wined3d_device *device);
 void __cdecl wined3d_device_get_primitive_type(const struct wined3d_device *device,
-        WINED3DPRIMITIVETYPE *primitive_topology);
+        enum wined3d_primitive_type *primitive_topology);
 HRESULT __cdecl wined3d_device_get_ps_consts_b(const struct wined3d_device *device,
         UINT start_register, BOOL *constants, UINT bool_count);
 HRESULT __cdecl wined3d_device_get_ps_consts_f(const struct wined3d_device *device,
@@ -2230,7 +2229,8 @@ HRESULT __cdecl wined3d_device_set_material(struct wined3d_device *device, const
 void __cdecl wined3d_device_set_multithreaded(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_set_npatch_mode(struct wined3d_device *device, float segments);
 HRESULT __cdecl wined3d_device_set_pixel_shader(struct wined3d_device *device, struct wined3d_shader *shader);
-void __cdecl wined3d_device_set_primitive_type(struct wined3d_device *device, WINED3DPRIMITIVETYPE primitive_topology);
+void __cdecl wined3d_device_set_primitive_type(struct wined3d_device *device,
+        enum wined3d_primitive_type primitive_topology);
 HRESULT __cdecl wined3d_device_set_ps_consts_b(struct wined3d_device *device,
         UINT start_register, const BOOL *constants, UINT bool_count);
 HRESULT __cdecl wined3d_device_set_ps_consts_f(struct wined3d_device *device,
