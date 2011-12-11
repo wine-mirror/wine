@@ -9930,6 +9930,130 @@ cleanup:
     free_test_context(test_context);
 }
 
+static void test_valid_mesh(void)
+{
+    HRESULT hr;
+    struct test_context *test_context = NULL;
+    UINT i;
+    const DWORD options = D3DXMESH_32BIT | D3DXMESH_SYSTEMMEM;
+    const D3DVERTEXELEMENT9 declaration[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        D3DDECL_END()
+    };
+    const unsigned int VERTS_PER_FACE = 3;
+    /* mesh0 (one face)
+     *
+     * 0--1
+     * | /
+     * |/
+     * 2
+     */
+    const D3DXVECTOR3 vertices0[] =
+    {
+        { 0.0f,  3.0f,  0.f},
+        { 2.0f,  3.0f,  0.f},
+        { 0.0f,  0.0f,  0.f},
+    };
+    const DWORD indices0[] = {0, 1, 2};
+    const unsigned int num_vertices0 = ARRAY_SIZE(vertices0);
+    const unsigned int num_faces0 = ARRAY_SIZE(indices0) / VERTS_PER_FACE;
+    const DWORD adjacency0[] = {-1, -1, -1};
+    const HRESULT exp_hr0 = D3D_OK;
+    /* mesh1 (Simple bow-tie)
+     *
+     * 0--1 1--3
+     * | /   \ |
+     * |/     \|
+     * 2       4
+     */
+    const D3DXVECTOR3 vertices1[] =
+    {
+        { 0.0f,  3.0f,  0.f},
+        { 2.0f,  3.0f,  0.f},
+        { 0.0f,  0.0f,  0.f},
+
+        { 4.0f,  3.0f,  0.f},
+        { 4.0f,  0.0f,  0.f},
+    };
+    const DWORD indices1[] = {0, 1, 2, 1, 3, 4};
+    const unsigned int num_vertices1 = ARRAY_SIZE(vertices1);
+    const unsigned int num_faces1 = ARRAY_SIZE(indices1) / VERTS_PER_FACE;
+    const DWORD adjacency1[] = {-1, -1, -1, -1, -1, -1};
+    const HRESULT exp_hr1 = D3DXERR_INVALIDMESH;
+    /* Common mesh data */
+    ID3DXMesh *mesh = NULL;
+    UINT vertex_size = sizeof(D3DXVECTOR3);
+    ID3DXBuffer *errors_and_warnings = NULL;
+    struct
+    {
+        const D3DXVECTOR3 *vertices;
+        const DWORD *indices;
+        const UINT num_vertices;
+        const UINT num_faces;
+        const DWORD *adjacency;
+        const HRESULT exp_hr;
+    }
+    tc[] =
+    {
+        {
+            vertices0,
+            indices0,
+            num_vertices0,
+            num_faces0,
+            adjacency0,
+            exp_hr0,
+        },
+        {
+            vertices1,
+            indices1,
+            num_vertices1,
+            num_faces1,
+            adjacency1,
+            exp_hr1,
+        },
+    };
+
+    test_context = new_test_context();
+    if (!test_context)
+    {
+        skip("Couldn't create test context\n");
+        goto cleanup;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(tc); i++)
+    {
+        hr = init_test_mesh(tc[i].num_faces, tc[i].num_vertices,
+                            options, declaration,
+                            test_context->device, &mesh,
+                            tc[i].vertices, vertex_size,
+                            tc[i].indices, NULL);
+        if (FAILED(hr))
+        {
+            skip("Couldn't initialize test mesh %d. Got %x expected D3D_OK\n", i, hr);
+            goto cleanup;
+        }
+
+        hr = D3DXValidMesh(mesh, tc[i].adjacency, &errors_and_warnings);
+        todo_wine ok(hr == tc[i].exp_hr, "D3DXValidMesh test case %d failed. "
+                     "Got %x\n, expected %x\n", i, hr, tc[i].exp_hr);
+
+        /* Note errors_and_warnings is deliberately not checked because that
+         * would require copying wast amounts of the text output. */
+        if (errors_and_warnings)
+        {
+            ID3DXBuffer_Release(errors_and_warnings);
+            errors_and_warnings = NULL;
+        }
+        mesh->lpVtbl->Release(mesh);
+        mesh = NULL;
+    }
+
+cleanup:
+    if (mesh) mesh->lpVtbl->Release(mesh);
+    free_test_context(test_context);
+}
+
 START_TEST(mesh)
 {
     D3DXBoundProbeTest();
@@ -9954,4 +10078,5 @@ START_TEST(mesh)
     test_convert_point_reps_to_adjacency();
     test_weld_vertices();
     test_clone_mesh();
+    test_valid_mesh();
 }

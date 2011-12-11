@@ -5939,6 +5939,13 @@ error:
     return hr;
 }
 
+HRESULT WINAPI D3DXValidMesh(LPD3DXMESH mesh, CONST DWORD *adjacency, LPD3DXBUFFER *errors_and_warnings)
+{
+    FIXME("(%p, %p, %p): stub\n", mesh, adjacency, *errors_and_warnings);
+
+    return E_NOTIMPL;
+}
+
 static BOOL weld_float1(void *to, void *from, FLOAT epsilon)
 {
     FLOAT *v1 = to;

@@ -300,7 +300,7 @@
 @ stub D3DXUVAtlasCreate(ptr long long long long long long ptr ptr ptr ptr long ptr long ptr ptr ptr ptr ptr)
 @ stub D3DXUVAtlasPack(ptr long long long long ptr ptr long ptr long ptr)
 @ stub D3DXUVAtlasPartition(ptr long long long ptr ptr ptr ptr long ptr long ptr ptr ptr ptr ptr ptr)
-@ stub D3DXValidMesh(ptr ptr ptr)
+@ stdcall D3DXValidMesh(ptr ptr ptr)
 @ stub D3DXValidPatchMesh(ptr ptr ptr ptr)
 @ stdcall D3DXVec2BaryCentric(ptr ptr ptr ptr float float)
 @ stdcall D3DXVec2CatmullRom(ptr ptr ptr ptr ptr float)
