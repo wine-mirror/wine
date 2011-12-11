@@ -5468,9 +5468,12 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     TRACE("device_window %p\n", swapchain_desc->device_window);
     TRACE("windowed %#x\n", swapchain_desc->windowed);
     TRACE("enable_auto_depth_stencil %#x\n", swapchain_desc->enable_auto_depth_stencil);
+    if (swapchain_desc->enable_auto_depth_stencil)
+        TRACE("auto_depth_stencil_format %s\n", debug_d3dformat(swapchain_desc->auto_depth_stencil_format));
     TRACE("flags %#x\n", swapchain_desc->flags);
     TRACE("refresh_rate %u\n", swapchain_desc->refresh_rate);
     TRACE("swap_interval %u\n", swapchain_desc->swap_interval);
+    TRACE("auto_restore_display_mode %#x\n", swapchain_desc->auto_restore_display_mode);
 
     /* No special treatment of these parameters. Just store them */
     swapchain->desc.swap_effect = swapchain_desc->swap_effect;
