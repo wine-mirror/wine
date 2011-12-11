@@ -684,7 +684,7 @@ static xmlParserInputPtr external_entity_loader(const char *URL, const char *ID,
 {
     xmlParserInputPtr input;
 
-    TRACE("(%s, %s, %p)\n", wine_dbgstr_a(URL), wine_dbgstr_a(ID), ctxt);
+    TRACE("(%s %s %p)\n", wine_dbgstr_a(URL), wine_dbgstr_a(ID), ctxt);
 
     assert(MSXML_hInstance != NULL);
     assert(datatypes_rsrc != NULL);
@@ -746,14 +746,14 @@ void schemasCleanup(void)
 static LONG cache_entry_add_ref(cache_entry* entry)
 {
     LONG ref = InterlockedIncrement(&entry->ref);
-    TRACE("%p new ref %d\n", entry, ref);
+    TRACE("(%p)->(%d)\n", entry, ref);
     return ref;
 }
 
 static LONG cache_entry_release(cache_entry* entry)
 {
     LONG ref = InterlockedDecrement(&entry->ref);
-    TRACE("%p new ref %d\n", entry, ref);
+    TRACE("(%p)->(%d)\n", entry, ref);
 
     if (ref == 0)
     {
@@ -974,7 +974,7 @@ static ULONG WINAPI schema_cache_AddRef(IXMLDOMSchemaCollection2* iface)
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
     LONG ref = InterlockedIncrement(&This->ref);
-    TRACE("%p new ref %d\n", This, ref);
+    TRACE("(%p)->(%d)\n", This, ref);
     return ref;
 }
 
@@ -987,7 +987,7 @@ static ULONG WINAPI schema_cache_Release(IXMLDOMSchemaCollection2* iface)
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
     LONG ref = InterlockedDecrement(&This->ref);
-    TRACE("%p new ref %d\n", This, ref);
+    TRACE("(%p)->(%d)\n", This, ref);
 
     if (ref == 0)
     {
@@ -1170,7 +1170,7 @@ static HRESULT WINAPI schema_cache_get(IXMLDOMSchemaCollection2* iface, BSTR uri
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
     xmlChar* name;
     cache_entry* entry;
-    TRACE("(%p)->(%s, %p)\n", This, wine_dbgstr_w(uri), node);
+    TRACE("(%p)->(%s %p)\n", This, wine_dbgstr_w(uri), node);
 
     if (!node)
         return E_POINTER;
@@ -1222,7 +1222,7 @@ static HRESULT WINAPI schema_cache_get_namespaceURI(IXMLDOMSchemaCollection2* if
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
     cache_index_data data = {index,len};
-    TRACE("(%p)->(%i, %p)\n", This, index, len);
+    TRACE("(%p)->(%i %p)\n", This, index, len);
 
     if (!len)
         return E_POINTER;
@@ -1266,7 +1266,8 @@ static HRESULT WINAPI schema_cache_addCollection(IXMLDOMSchemaCollection2* iface
 static HRESULT WINAPI schema_cache_get__newEnum(IXMLDOMSchemaCollection2* iface,
                                                 IUnknown** ppUnk)
 {
-    FIXME("stub\n");
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
+    FIXME("(%p)->(%p): stub\n", This, ppUnk);
     if (ppUnk)
         *ppUnk = NULL;
     return E_NOTIMPL;
@@ -1274,28 +1275,32 @@ static HRESULT WINAPI schema_cache_get__newEnum(IXMLDOMSchemaCollection2* iface,
 
 static HRESULT WINAPI schema_cache_validate(IXMLDOMSchemaCollection2* iface)
 {
-    FIXME("stub\n");
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
+    FIXME("(%p): stub\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI schema_cache_put_validateOnLoad(IXMLDOMSchemaCollection2* iface,
-                                                      VARIANT_BOOL validateOnLoad)
+                                                      VARIANT_BOOL value)
 {
-    FIXME("stub\n");
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
+    FIXME("(%p)->(%d): stub\n", This, value);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI schema_cache_get_validateOnLoad(IXMLDOMSchemaCollection2* iface,
-                                                      VARIANT_BOOL* validateOnLoad)
+                                                      VARIANT_BOOL* value)
 {
-    FIXME("stub\n");
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
+    FIXME("(%p)->(%p): stub\n", This, value);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI schema_cache_getSchema(IXMLDOMSchemaCollection2* iface,
                                              BSTR namespaceURI, ISchema** schema)
 {
-    FIXME("stub\n");
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
+    FIXME("(%p)->(%s %p): stub\n", This, debugstr_w(namespaceURI), schema);
     if (schema)
         *schema = NULL;
     return E_NOTIMPL;
@@ -1304,7 +1309,8 @@ static HRESULT WINAPI schema_cache_getSchema(IXMLDOMSchemaCollection2* iface,
 static HRESULT WINAPI schema_cache_getDeclaration(IXMLDOMSchemaCollection2* iface,
                                                   IXMLDOMNode* node, ISchemaItem** item)
 {
-    FIXME("stub\n");
+    schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
+    FIXME("(%p)->(%p %p): stub\n", This, node, item);
     if (item)
         *item = NULL;
     return E_NOTIMPL;
