@@ -10378,23 +10378,66 @@ static void test_load(void)
     free_bstrs();
 }
 
+static void test_domobj_dispex(IUnknown *obj)
+{
+    DISPID dispid = DISPID_XMLDOM_NODELIST_RESET;
+    IDispatchEx *dispex;
+    IUnknown *unk;
+    DWORD props;
+    UINT ticnt;
+    HRESULT hr;
+    BSTR name;
+
+    hr = IUnknown_QueryInterface(obj, &IID_IDispatchEx, (void**)&dispex);
+    EXPECT_HR(hr, S_OK);
+    if (FAILED(hr)) return;
+
+    ticnt = 0;
+    hr = IDispatchEx_GetTypeInfoCount(dispex, &ticnt);
+    EXPECT_HR(hr, S_OK);
+    ok(ticnt == 1, "ticnt=%u\n", ticnt);
+
+    name = SysAllocString(szstar);
+    hr = IDispatchEx_DeleteMemberByName(dispex, name, fdexNameCaseSensitive);
+    EXPECT_HR(hr, E_NOTIMPL);
+    SysFreeString(name);
+
+    hr = IDispatchEx_DeleteMemberByDispID(dispex, dispid);
+    EXPECT_HR(hr, E_NOTIMPL);
+
+    props = 0;
+    hr = IDispatchEx_GetMemberProperties(dispex, dispid, grfdexPropCanAll, &props);
+    EXPECT_HR(hr, E_NOTIMPL);
+    ok(props == 0, "expected 0 got %d\n", props);
+
+    hr = IDispatchEx_GetMemberName(dispex, dispid, &name);
+    EXPECT_HR(hr, E_NOTIMPL);
+    if (SUCCEEDED(hr)) SysFreeString(name);
+
+    hr = IDispatchEx_GetNextDispID(dispex, fdexEnumDefault, DISPID_XMLDOM_NODELIST_RESET, &dispid);
+    EXPECT_HR(hr, E_NOTIMPL);
+
+    hr = IDispatchEx_GetNameSpaceParent(dispex, &unk);
+    EXPECT_HR(hr, E_NOTIMPL);
+    if (hr == S_OK && unk) IUnknown_Release(unk);
+
+    IDispatchEx_Release(dispex);
+}
+
 static void test_nsnamespacemanager(void)
 {
     static const char xmluriA[] = "http://www.w3.org/XML/1998/namespace";
-    IMXNamespaceManager *nsmgr;
     IVBMXNamespaceManager *mgr2;
-    IDispatch *disp;
-    HRESULT hr;
+    IMXNamespaceManager *nsmgr;
     WCHAR buffW[250];
+    IDispatch *disp;
+    IUnknown *unk;
+    HRESULT hr;
     INT len;
 
     hr = CoCreateInstance(&CLSID_MXNamespaceManager40, NULL, CLSCTX_INPROC_SERVER,
         &IID_IMXNamespaceManager, (void**)&nsmgr);
-    if (hr != S_OK)
-    {
-        win_skip("MXNamespaceManager is not available\n");
-        return;
-    }
+    EXPECT_HR(hr, S_OK);
 
     /* IMXNamespaceManager inherits from IUnknown */
     hr = IMXNamespaceManager_QueryInterface(nsmgr, &IID_IDispatch, (void**)&disp);
@@ -10491,6 +10534,12 @@ todo_wine {
     ok(buffW[0] == 0, "got %x\n", buffW[0]);
     ok(len == 0, "got %d\n", len);
 
+    /* IDispatchEx tests */
+    hr = IMXNamespaceManager_QueryInterface(nsmgr, &IID_IUnknown, (void**)&unk);
+    EXPECT_HR(hr, S_OK);
+    test_domobj_dispex(unk);
+    IUnknown_Release(unk);
+
     IMXNamespaceManager_Release(nsmgr);
 
     free_bstrs();
@@ -10506,11 +10555,7 @@ static void test_nsnamespacemanager_override(void)
 
     hr = CoCreateInstance(&CLSID_MXNamespaceManager40, NULL, CLSCTX_INPROC_SERVER,
         &IID_IMXNamespaceManager, (void**)&nsmgr);
-    if (hr != S_OK)
-    {
-        win_skip("MXNamespaceManager is not available\n");
-        return;
-    }
+    EXPECT_HR(hr, S_OK);
 
     len = sizeof(buffW)/sizeof(WCHAR);
     buffW[0] = 0;
@@ -10604,52 +10649,6 @@ static void test_nsnamespacemanager_override(void)
     IMXNamespaceManager_Release(nsmgr);
 
     free_bstrs();
-}
-
-static void test_domobj_dispex(IUnknown *obj)
-{
-    DISPID dispid = DISPID_XMLDOM_NODELIST_RESET;
-    IDispatchEx *dispex;
-    IUnknown *unk;
-    DWORD props;
-    UINT ticnt;
-    HRESULT hr;
-    BSTR name;
-
-    hr = IUnknown_QueryInterface(obj, &IID_IDispatchEx, (void**)&dispex);
-    EXPECT_HR(hr, S_OK);
-    if (FAILED(hr)) return;
-
-    ticnt = 0;
-    hr = IDispatchEx_GetTypeInfoCount(dispex, &ticnt);
-    EXPECT_HR(hr, S_OK);
-    ok(ticnt == 1, "ticnt=%u\n", ticnt);
-
-    name = SysAllocString(szstar);
-    hr = IDispatchEx_DeleteMemberByName(dispex, name, fdexNameCaseSensitive);
-    EXPECT_HR(hr, E_NOTIMPL);
-    SysFreeString(name);
-
-    hr = IDispatchEx_DeleteMemberByDispID(dispex, dispid);
-    EXPECT_HR(hr, E_NOTIMPL);
-
-    props = 0;
-    hr = IDispatchEx_GetMemberProperties(dispex, dispid, grfdexPropCanAll, &props);
-    EXPECT_HR(hr, E_NOTIMPL);
-    ok(props == 0, "expected 0 got %d\n", props);
-
-    hr = IDispatchEx_GetMemberName(dispex, dispid, &name);
-    EXPECT_HR(hr, E_NOTIMPL);
-    if (SUCCEEDED(hr)) SysFreeString(name);
-
-    hr = IDispatchEx_GetNextDispID(dispex, fdexEnumDefault, DISPID_XMLDOM_NODELIST_RESET, &dispid);
-    EXPECT_HR(hr, E_NOTIMPL);
-
-    hr = IDispatchEx_GetNameSpaceParent(dispex, &unk);
-    EXPECT_HR(hr, E_NOTIMPL);
-    if (hr == S_OK && unk) IUnknown_Release(unk);
-
-    IDispatchEx_Release(dispex);
 }
 
 static const DOMNodeType nodetypes_test[] =
@@ -11155,6 +11154,7 @@ static void test_nodeValue(void)
 START_TEST(domdoc)
 {
     IXMLDOMDocument *doc;
+    IUnknown *unk;
     HRESULT hr;
 
     hr = CoInitialize( NULL );
@@ -11231,8 +11231,17 @@ START_TEST(domdoc)
 
     test_xsltemplate();
 
-    test_nsnamespacemanager();
-    test_nsnamespacemanager_override();
+    hr = CoCreateInstance(&CLSID_MXNamespaceManager40, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IMXNamespaceManager, (void**)&unk);
+    if (hr == S_OK)
+    {
+        test_nsnamespacemanager();
+        test_nsnamespacemanager_override();
+
+        IUnknown_Release(unk);
+    }
+    else
+        win_skip("MXNamespaceManager is not available\n");
 
     CoUninitialize();
 }
