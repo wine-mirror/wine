@@ -2797,9 +2797,9 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
         req->options = options;
         req->sharing = sharing;
         req->flags = 
-            (pipe_type) ? NAMED_PIPE_MESSAGE_STREAM_WRITE : 0 |
-            (read_mode) ? NAMED_PIPE_MESSAGE_STREAM_READ  : 0 |
-            (completion_mode) ? NAMED_PIPE_NONBLOCKING_MODE  : 0;
+            (pipe_type ? NAMED_PIPE_MESSAGE_STREAM_WRITE   : 0) |
+            (read_mode ? NAMED_PIPE_MESSAGE_STREAM_READ    : 0) |
+            (completion_mode ? NAMED_PIPE_NONBLOCKING_MODE : 0);
         req->maxinstances = max_inst;
         req->outsize = outbound_quota;
         req->insize  = inbound_quota;
