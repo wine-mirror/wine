@@ -941,9 +941,6 @@ DllMain(HINSTANCE hInstDLL,
                 IDirectDraw4_AddRef(&ddraw->IDirectDraw4_iface);
                 IDirectDraw7_AddRef(&ddraw->IDirectDraw7_iface);
 
-                if (ddraw->wined3d_swapchain)
-                    ddraw_destroy_swapchain(ddraw);
-
                 /* Does a D3D device exist? Destroy it
                     * TODO: Destroy all Vertex buffers, Lights, Materials
                     * and execute buffers too
@@ -953,6 +950,12 @@ DllMain(HINSTANCE hInstDLL,
                     WARN("DDraw %p has d3ddevice %p attached\n", ddraw, ddraw->d3ddevice);
                     while(IDirect3DDevice7_Release(&ddraw->d3ddevice->IDirect3DDevice7_iface));
                 }
+
+                /* Destroy the swapchain after any 3D device. The 3D device
+                 * cleanup code needs a swapchain. Specifically, it tries to
+                 * set the current render target to the front buffer. */
+                if (ddraw->wined3d_swapchain)
+                    ddraw_destroy_swapchain(ddraw);
 
                 /* Try to release the objects
                     * Do an EnumSurfaces to find any hanging surfaces
