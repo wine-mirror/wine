@@ -252,7 +252,7 @@ static inline void write_dword(char **ptr, DWORD d)
     *ptr += sizeof(d);
 }
 
-void skip_dword_unknown(const char **ptr, unsigned int count) DECLSPEC_HIDDEN;
+void skip_dword_unknown(const char *location, const char **ptr, unsigned int count) DECLSPEC_HIDDEN;
 void write_dword_unknown(char **ptr, DWORD d) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_D3D10_PRIVATE_H */

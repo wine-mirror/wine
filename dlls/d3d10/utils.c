@@ -146,12 +146,12 @@ void d3d10_rb_free(void *ptr)
     HeapFree(GetProcessHeap(), 0, ptr);
 }
 
-void skip_dword_unknown(const char **ptr, unsigned int count)
+void skip_dword_unknown(const char *location, const char **ptr, unsigned int count)
 {
     unsigned int i;
     DWORD d;
 
-    FIXME("Skipping %u unknown DWORDs:\n", count);
+    FIXME("Skipping %u unknown DWORDs (%s):\n", count, location);
     for (i = 0; i < count; ++i)
     {
         read_dword(ptr, &d);
@@ -191,9 +191,9 @@ HRESULT parse_dxbc(const char *data, SIZE_T data_size,
     }
 
     /* checksum? */
-    skip_dword_unknown(&ptr, 4);
+    skip_dword_unknown("DXBC header", &ptr, 4);
 
-    skip_dword_unknown(&ptr, 1);
+    skip_dword_unknown("DXBC header", &ptr, 1);
 
     read_dword(&ptr, &total_size);
     TRACE("total size: %#x\n", total_size);

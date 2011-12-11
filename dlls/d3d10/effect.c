@@ -144,7 +144,7 @@ static HRESULT shader_parse_signature(const char *data, DWORD data_size, struct 
     read_dword(&ptr, &count);
     TRACE("%u elements\n", count);
 
-    skip_dword_unknown(&ptr, 1);
+    skip_dword_unknown("shader signature", &ptr, 1);
 
     e = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*e));
     if (!e)
@@ -825,7 +825,7 @@ static HRESULT parse_fx10_annotation(struct d3d10_effect_variable *a, const char
     hr = parse_fx10_variable_head(a, ptr, data);
     if (FAILED(hr)) return hr;
 
-    skip_dword_unknown(ptr, 1);
+    skip_dword_unknown("annotation", ptr, 1);
 
     /* mark the variable as annotation */
     a->flag = D3D10_EFFECT_VARIABLE_ANNOTATION;
@@ -1160,7 +1160,7 @@ static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char *
     read_dword(ptr, &v->buffer_offset);
     TRACE("Variable offset in buffer: %#x.\n", v->buffer_offset);
 
-    skip_dword_unknown(ptr, 1);
+    skip_dword_unknown("variable", ptr, 1);
 
     read_dword(ptr, &v->flag);
     TRACE("Variable flag: %#x.\n", v->flag);
@@ -1208,7 +1208,7 @@ static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const 
     }
     TRACE("Variable semantic: %s.\n", debugstr_a(v->semantic));
 
-    skip_dword_unknown(ptr, 1);
+    skip_dword_unknown("local variable", ptr, 1);
 
     switch (v->type->basetype)
     {
@@ -1266,7 +1266,7 @@ static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const 
 
                 for (j = 0; j < object_count; ++j)
                 {
-                    skip_dword_unknown(ptr, 4);
+                    skip_dword_unknown("state object attribute", ptr, 4);
                 }
             }
             break;
@@ -1363,7 +1363,7 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_variable *l, const ch
     read_dword(ptr, &l->type->member_count);
     TRACE("Local buffer member count: %#x.\n", l->type->member_count);
 
-    skip_dword_unknown(ptr, 1);
+    skip_dword_unknown("local buffer", ptr, 1);
 
     read_dword(ptr, &l->annotation_count);
     TRACE("Local buffer has %u annotations.\n", l->annotation_count);
