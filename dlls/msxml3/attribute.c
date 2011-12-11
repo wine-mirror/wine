@@ -432,17 +432,17 @@ static HRESULT WINAPI domattr_get_nodeTypedValue(
     hr = IXMLDOMAttribute_get_ownerDocument(iface, &doc);
     if (hr == S_OK)
     {
-        IXMLDOMDocument2 *doc2;
+        IXMLDOMDocument3 *doc3;
 
-        hr = IXMLDOMDocument_QueryInterface(doc, &IID_IXMLDOMDocument2, (void**)&doc2);
+        hr = IXMLDOMDocument_QueryInterface(doc, &IID_IXMLDOMDocument3, (void**)&doc3);
         IXMLDOMDocument_Release(doc);
 
         if (hr == S_OK)
         {
             VARIANT schemas;
 
-            hr = IXMLDOMDocument2_get_schemas(doc2, &schemas);
-            IXMLDOMDocument2_Release(doc2);
+            hr = IXMLDOMDocument3_get_schemas(doc3, &schemas);
+            IXMLDOMDocument3_Release(doc3);
 
             if (hr != S_OK)
                 return IXMLDOMAttribute_get_value(iface, value);
