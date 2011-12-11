@@ -3237,7 +3237,7 @@ static void test_cursor_pos(void)
     flush_events();
 
     ok(!expect_pos->x && !expect_pos->y, "Didn't receive MOUSEMOVE %u (%d, %d).\n",
-            expect_pos - points, expect_pos->x, expect_pos->y);
+       (unsigned)(expect_pos - points), expect_pos->x, expect_pos->y);
 
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
