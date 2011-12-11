@@ -114,7 +114,6 @@ msgid "Wine Gecko Installer"
 msgstr "Wine Gecko 설치관리자"
 
 #: appwiz.rc:100
-#, fuzzy
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
 "embedding HTML to work correctly. Wine can automatically download and "
@@ -124,13 +123,13 @@ msgid ""
 "href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> for "
 "details."
 msgstr ""
-"Wine은 HTML 임베딩 프로그램이 정상적으로 작동하기 위해서 필요로 하는 Gecko 패"
-"키지를 찾을 수 없습니다. WIne은 당신을 위해 자동으로 다운로드하고 설치할 것입"
-"니다.\n"
+"Wine은 HTML 임베딩 프로그램이 정상적으로 작동하기 위해서 필요로 하는 Gecko 키"
+"지를 찾을 수 없습니다. Wine은 당신을 위해 자동으로 다운로드하고 설치할 것입니"
+"다.\n"
 "\n"
-"\n"
-"주위:당신의 배포판의 패키지를 대신 사용하는 것을 추천합니다. 자세한 것은 "
-"http://wiki.winehq.org/Gecko를 보십시오."
+"주위:당신의 배포판의 패키지를 대신 사용하는 것을 추천합니다. 자세한 것은 <a "
+"href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> 보십시"
+"오."
 
 #: appwiz.rc:106
 msgid "&Install"
@@ -2205,7 +2204,6 @@ msgid "Welcome to the Certificate Import Wizard"
 msgstr "인증서 가져오기 마법사에 온 것을 환영합니다"
 
 #: cryptui.rc:283
-#, fuzzy
 msgid ""
 "This wizard helps you import certificates, certificate revocation lists, and "
 "certificate trust lists from a file to a certificate store.\n"
@@ -2217,9 +2215,14 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"이 마법사는 당신이 인증서,인증서 폐기 목록을 가져오는 데 도움을 주고,파일에"
+"서 인증서 신뢰 목록을 인증서 저장소으로 가져오는 데도 도움을 줍니다.\n"
+"\n"
 "이 인증서는 당신이나 당신이 통신에 사용하는 컴퓨터를 신원보증하는 데 사용됩니"
-"다.  또한  메세지에 사인하고 인증하는 데도 사용됩니다. 인증서 보관소는 인증"
-"서, 인증서 파기 목록, 인증서 신뢰 목록의 저장소입니다."
+"다. 또한  메세지에 사인하고 인증하는 데도 사용됩니다.인증서 보관소는 인증서, "
+"인증서 파기 목록, 인증서 신뢰 목록의저장소입니다.\n"
+"\n"
+"계속하려면,다음을 클릭하십시오."
 
 #: cryptui.rc:291 cryptui.rc:427
 msgid "&File name:"
@@ -2334,7 +2337,6 @@ msgid "Welcome to the Certificate Export Wizard"
 msgstr "인증서 내보내기 마법사에 오신 것을 환영합니다"
 
 #: cryptui.rc:373
-#, fuzzy
 msgid ""
 "This wizard helps you export certificates, certificate revocation lists, and "
 "certificate trust lists from a certificate store to a file.\n"
@@ -2346,9 +2348,15 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"이 마법사는 당신이 인증서,인증서 폐기 목록을 내보오는 데 도움을 주고,인증서 "
+"신뢰 목록을 인증서 저장소의 인증서 신뢰 목록을 파일로 내보내는 데도 도움을 줍"
+"니다.\n"
+"\n"
 "이 인증서는 당신이나 당신이 통신에 사용하는 컴퓨터를 신원보증하는 데 사용됩니"
-"다.  또한  메세지에 사인하고 인증하는 데도 사용됩니다. 인증서 보관소는 인증"
-"서, 인증서 파기 목록, 인증서 신뢰 목록의 저장소입니다."
+"다. 또한  메세지에 사인하고 인증하는 데도 사용됩니다.인증서 보관소는 인증서, "
+"인증서 파기 목록, 인증서 신뢰 목록의저장소입니다.\n"
+"\n"
+"계속 하려면, 다음을 클릭하십시오."
 
 #: cryptui.rc:381
 msgid ""
@@ -2990,9 +2998,8 @@ msgid "Mapping"
 msgstr "매핑"
 
 #: dinput.rc:53
-#, fuzzy
 msgid "Show Assigned First"
-msgstr "할당 정렬"
+msgstr "우선 할당 보기"
 
 #: dinput.rc:34
 msgid "Action"
@@ -6761,9 +6768,8 @@ msgid "&Data Rate"
 msgstr "데이타 전송율(&D)"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/sec"
-msgstr "KB/sec"
+msgstr "킬로바이트/초"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
@@ -7242,9 +7248,8 @@ msgid "us"
 msgstr "마이크로초"
 
 #: serialui.rc:25
-#, fuzzy
 msgid "Settings for %s"
-msgstr "%s 속성"
+msgstr "%s 설정"
 
 #: serialui.rc:28
 msgid "Baud Rate"
@@ -9836,19 +9841,16 @@ msgid "N"
 msgstr "아니오"
 
 #: cmd.rc:294
-#, fuzzy
 msgid "File association missing for extension %1\n"
-msgstr "이 파일확장자 %s에 연결된 풀그림이 없습니다.\n"
+msgstr "이 파일확장자 %1에 연결된 풀그림이 없습니다.\n"
 
 #: cmd.rc:295
-#, fuzzy
 msgid "No open command associated with file type '%1'\n"
-msgstr "이 파일 형식 '%s'과 연결된 어떠한 명령도 없습니다.'\n"
+msgstr "이 파일 형식 '%1'과 연결된 어떠한 명령도 없습니다.'\n"
 
 #: cmd.rc:296
-#, fuzzy
 msgid "Overwrite %1"
-msgstr "%s 덮어쓰기"
+msgstr "%1 덮어쓰기"
 
 #: cmd.rc:297
 msgid "More..."
@@ -9867,23 +9869,20 @@ msgid "Syntax error\n"
 msgstr "문법 오류\n"
 
 #: cmd.rc:303
-#, fuzzy
 msgid "No help available for %1\n"
-msgstr "%s를 위한 어떠한 도움말도 찾을 수 없습니다\n"
+msgstr "%1를 위한 어떠한 도움말도 찾을 수 없습니다\n"
 
 #: cmd.rc:304
 msgid "Target to GOTO not found\n"
 msgstr "GOTO 타겟을 찾을 수 없습니다\n"
 
 #: cmd.rc:305
-#, fuzzy
 msgid "Current Date is %1\n"
-msgstr "현재 날짜는 %s\n"
+msgstr "현재 날짜는 %1임\n"
 
 #: cmd.rc:306
-#, fuzzy
 msgid "Current Time is %1\n"
-msgstr "현재 시간은 %s\n"
+msgstr "현재 시간은 %s임\n"
 
 #: cmd.rc:307
 msgid "Enter new date: "
@@ -9894,9 +9893,8 @@ msgid "Enter new time: "
 msgstr "새 시간 입력: "
 
 #: cmd.rc:309
-#, fuzzy
 msgid "Environment variable %1 not defined\n"
-msgstr "환경 변수 %s 는 정의되지 않았습니다\n"
+msgstr "환경 변수 %1 는 정의되지 않았습니다\n"
 
 #: cmd.rc:310 xcopy.rc:38
 msgid "Failed to open '%1'\n"
@@ -9912,19 +9910,16 @@ msgid "A"
 msgstr "A"
 
 #: cmd.rc:313
-#, fuzzy
 msgid "%1, Delete"
-msgstr "%s, 삭제"
+msgstr "%1, 삭제"
 
 #: cmd.rc:314
-#, fuzzy
 msgid "Echo is %1\n"
-msgstr "에코(Echo)는 %s\n"
+msgstr "에코(Echo)는 %1임\n"
 
 #: cmd.rc:315
-#, fuzzy
 msgid "Verify is %1\n"
-msgstr "검증(Verify)은 %s\n"
+msgstr "검증(Verify)은 %1임\n"
 
 #: cmd.rc:316
 msgid "Verify must be ON or OFF\n"
@@ -9935,15 +9930,14 @@ msgid "Parameter error\n"
 msgstr "매개변수 오류\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid ""
 "Volume in drive %1!c! is %2\n"
 "Volume Serial Number is %3!04x!-%4!04x!\n"
 "\n"
 msgstr ""
-"%c 드라이브의 볼륨은 %s\n"
-" 볼륨 시리얼 번호는 %04x-%04x\n"
-"\n"
+"드라이브 %1!c!의 볼륨은 %2임\n"
+" 볼륨 시리얼 번호는 %3!04x!-%4!04x!\n"
+"임\n"
 
 #: cmd.rc:319
 msgid "Volume label (11 characters, ENTER for none)?"
@@ -9962,9 +9956,8 @@ msgid "Wine Command Prompt"
 msgstr "Wine 명령 프롬프트"
 
 #: cmd.rc:323
-#, fuzzy
 msgid "CMD Version %1!S!\n"
-msgstr "CMD 버젼 %s\n"
+msgstr "CMD 버젼 %1!S!\n"
 
 #: cmd.rc:324
 msgid "More? "
@@ -13212,7 +13205,6 @@ msgstr ""
 "을 끼쳐드린 거에 대하여 유감을 표함니다."
 
 #: winedbg.rc:53
-#, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"http://appdb.winehq.org\">Application "
@@ -13221,11 +13213,13 @@ msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can <a href=\"http://wiki.winehq.org/Bugs\">file a bug report</a>."
 msgstr ""
-"프로그램의 문제나 Wind의 결함으로 위해 발생할 수 있습니다. 당신은 실행한 프로"
-"그램에 대하여  http://appdb.winehq.org 의 팁을 확인 할 수 있습니다. .\n"
+"이 문제는 프로그램의 문제나 Wine의 결함으로 위해 발생할 수 있습니다. 당신은실"
+"행한 프로그램에 대하여   <a href=\"http://appdb.winehq.org\">Application "
+"Database</a> 에서 관련 팁을 살펴 볼 수 있습니다.\n"
 "\n"
 "만약 이 문제가 윈도우에서는 존재하지 않고, 아직 버그로 보고되지 않았으면 , 당"
-"신은 http://bugs.winehq.org에 버그로 보고할 수 있습니다."
+"신은 <a href=\"http://wiki.winehq.org/Bugs\">파일을 버그로 보고할 수 있습니다"
+"</a>."
 
 #: winedbg.rc:35
 msgid "Wine program crash"
