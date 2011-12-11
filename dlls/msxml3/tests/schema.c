@@ -27,6 +27,7 @@
 #include "windows.h"
 #include "ole2.h"
 #include "msxml2.h"
+#include "msxml2did.h"
 #include "dispex.h"
 
 #include "wine/test.h"
@@ -1996,6 +1997,70 @@ static void test_validate_on_load(void)
     IXMLDOMSchemaCollection2_Release(cache);
 }
 
+static void test_obj_dispex(IUnknown *obj)
+{
+    static const WCHAR starW[] = {'*',0};
+    DISPID dispid = DISPID_SAX_XMLREADER_GETFEATURE;
+    IDispatchEx *dispex;
+    IUnknown *unk;
+    DWORD props;
+    UINT ticnt;
+    HRESULT hr;
+    BSTR name;
+
+    hr = IUnknown_QueryInterface(obj, &IID_IDispatchEx, (void**)&dispex);
+    EXPECT_HR(hr, S_OK);
+    if (FAILED(hr)) return;
+
+    ticnt = 0;
+    hr = IDispatchEx_GetTypeInfoCount(dispex, &ticnt);
+    EXPECT_HR(hr, S_OK);
+    ok(ticnt == 1, "ticnt=%u\n", ticnt);
+
+    name = SysAllocString(starW);
+    hr = IDispatchEx_DeleteMemberByName(dispex, name, fdexNameCaseSensitive);
+    EXPECT_HR(hr, E_NOTIMPL);
+    SysFreeString(name);
+
+    hr = IDispatchEx_DeleteMemberByDispID(dispex, dispid);
+    EXPECT_HR(hr, E_NOTIMPL);
+
+    props = 0;
+    hr = IDispatchEx_GetMemberProperties(dispex, dispid, grfdexPropCanAll, &props);
+    EXPECT_HR(hr, E_NOTIMPL);
+    ok(props == 0, "expected 0 got %d\n", props);
+
+    hr = IDispatchEx_GetMemberName(dispex, dispid, &name);
+    EXPECT_HR(hr, E_NOTIMPL);
+    if (SUCCEEDED(hr)) SysFreeString(name);
+
+    hr = IDispatchEx_GetNextDispID(dispex, fdexEnumDefault, DISPID_XMLDOM_SCHEMACOLLECTION_ADD, &dispid);
+    EXPECT_HR(hr, E_NOTIMPL);
+
+    hr = IDispatchEx_GetNameSpaceParent(dispex, &unk);
+    EXPECT_HR(hr, E_NOTIMPL);
+    if (hr == S_OK && unk) IUnknown_Release(unk);
+
+    IDispatchEx_Release(dispex);
+}
+
+static void test_dispex(void)
+{
+    IXMLDOMSchemaCollection *cache;
+    IUnknown *unk;
+    HRESULT hr;
+
+    cache = create_cache(&IID_IXMLDOMSchemaCollection);
+    if (!cache) return;
+
+    hr = IXMLDOMSchemaCollection_QueryInterface(cache, &IID_IUnknown, (void**)&unk);
+    EXPECT_HR(hr, S_OK);
+    test_obj_dispex(unk);
+    IUnknown_Release(unk);
+
+    IXMLDOMSchemaCollection_Release(cache);
+}
+
 START_TEST(schema)
 {
     HRESULT r;
@@ -2010,6 +2075,7 @@ START_TEST(schema)
     test_XDR_schemas();
     test_XDR_datatypes();
     test_validate_on_load();
+    test_dispex();
 
     CoUninitialize();
 }

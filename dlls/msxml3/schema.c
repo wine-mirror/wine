@@ -89,6 +89,7 @@ typedef enum _SCHEMA_TYPE {
 
 typedef struct
 {
+    DispatchEx dispex;
     IXMLDOMSchemaCollection2 IXMLDOMSchemaCollection2_iface;
     LONG ref;
 
@@ -961,6 +962,10 @@ static HRESULT WINAPI schema_cache_QueryInterface(IXMLDOMSchemaCollection2* ifac
     {
         *ppvObject = iface;
     }
+    else if (dispex_query_interface(&This->dispex, riid, ppvObject))
+    {
+        return *ppvObject ? S_OK : E_NOINTERFACE;
+    }
     else
     {
         FIXME("interface %s not implemented\n", debugstr_guid(riid));
@@ -995,6 +1000,7 @@ static ULONG WINAPI schema_cache_Release(IXMLDOMSchemaCollection2* iface)
     if (ref == 0)
     {
         xmlHashFree(This->cache, cache_free);
+        release_dispex(&This->dispex);
         heap_free(This);
     }
 
@@ -1005,25 +1011,15 @@ static HRESULT WINAPI schema_cache_GetTypeInfoCount(IXMLDOMSchemaCollection2* if
                                                     UINT* pctinfo)
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
-
-    TRACE("(%p)->(%p)\n", This, pctinfo);
-
-    *pctinfo = 1;
-
-    return S_OK;
+    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI schema_cache_GetTypeInfo(IXMLDOMSchemaCollection2* iface,
                                                UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo)
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
-    HRESULT hr;
-
-    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
-
-    hr = get_typeinfo(IXMLDOMSchemaCollection_tid, ppTInfo);
-
-    return hr;
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface,
+        iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI schema_cache_GetIDsOfNames(IXMLDOMSchemaCollection2* iface,
@@ -1031,23 +1027,8 @@ static HRESULT WINAPI schema_cache_GetIDsOfNames(IXMLDOMSchemaCollection2* iface
                                                  UINT cNames, LCID lcid, DISPID* rgDispId)
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
-    ITypeInfo* typeinfo;
-    HRESULT hr;
-
-    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames,
-          lcid, rgDispId);
-
-    if(!rgszNames || cNames == 0 || !rgDispId)
-        return E_INVALIDARG;
-
-    hr = get_typeinfo(IXMLDOMSchemaCollection_tid, &typeinfo);
-    if(SUCCEEDED(hr))
-    {
-        hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
-        ITypeInfo_Release(typeinfo);
-    }
-
-    return hr;
+    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface,
+        riid, rgszNames, cNames, lcid, rgDispId);
 }
 
 static HRESULT WINAPI schema_cache_Invoke(IXMLDOMSchemaCollection2* iface,
@@ -1057,21 +1038,8 @@ static HRESULT WINAPI schema_cache_Invoke(IXMLDOMSchemaCollection2* iface,
                                           UINT* puArgErr)
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
-    ITypeInfo* typeinfo;
-    HRESULT hr;
-
-    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
-          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
-
-    hr = get_typeinfo(IXMLDOMSchemaCollection_tid, &typeinfo);
-    if(SUCCEEDED(hr))
-    {
-        hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDOMSchemaCollection2_iface.lpVtbl, dispIdMember, wFlags, pDispParams,
-                pVarResult, pExcepInfo, puArgErr);
-        ITypeInfo_Release(typeinfo);
-    }
-
-    return hr;
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface,
+        dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static HRESULT WINAPI schema_cache_add(IXMLDOMSchemaCollection2* iface, BSTR uri, VARIANT var)
@@ -1437,6 +1405,18 @@ XDR_DT SchemaCache_get_node_dt(IXMLDOMSchemaCollection2* iface, xmlNodePtr node)
     return dt;
 }
 
+static const tid_t schemacache_iface_tids[] = {
+    IXMLDOMSchemaCollection2_tid,
+    0
+};
+
+static dispex_static_data_t schemacache_dispex = {
+    NULL,
+    IXMLDOMSchemaCollection2_tid,
+    NULL,
+    schemacache_iface_tids
+};
+
 HRESULT SchemaCache_create(MSXML_VERSION version, IUnknown* outer, void** obj)
 {
     schema_cache* This = heap_alloc(sizeof(schema_cache));
@@ -1450,6 +1430,7 @@ HRESULT SchemaCache_create(MSXML_VERSION version, IUnknown* outer, void** obj)
     This->ref = 1;
     This->version = version;
     This->validateOnLoad = VARIANT_TRUE;
+    init_dispex(&This->dispex, (IUnknown*)&This->IXMLDOMSchemaCollection2_iface, &schemacache_dispex);
 
     *obj = &This->IXMLDOMSchemaCollection2_iface;
     return S_OK;
