@@ -31,6 +31,9 @@
 
 #include "wine/test.h"
 
+#define EXPECT_HR(hr,hr_exp) \
+    ok(hr == hr_exp, "got 0x%08x, expected 0x%08x\n", hr, hr_exp)
+
 static const WCHAR xdr_schema_uri[] = {'x','-','s','c','h','e','m','a',':','t','e','s','t','.','x','m','l',0};
 
 static const WCHAR xdr_schema_xml[] = {
@@ -1973,6 +1976,26 @@ static void test_XDR_datatypes(void)
     free_bstrs();
 }
 
+static void test_validate_on_load(void)
+{
+    IXMLDOMSchemaCollection2 *cache;
+    VARIANT_BOOL b;
+    HRESULT hr;
+
+    cache = create_cache_version(40, &IID_IXMLDOMSchemaCollection2);
+    if (!cache) return;
+
+    hr = IXMLDOMSchemaCollection2_get_validateOnLoad(cache, NULL);
+    EXPECT_HR(hr, E_POINTER);
+
+    b = VARIANT_FALSE;
+    hr = IXMLDOMSchemaCollection2_get_validateOnLoad(cache, &b);
+    EXPECT_HR(hr, S_OK);
+    ok(b == VARIANT_TRUE, "got %d\n", b);
+
+    IXMLDOMSchemaCollection2_Release(cache);
+}
+
 START_TEST(schema)
 {
     HRESULT r;
@@ -1986,6 +2009,7 @@ START_TEST(schema)
     test_collection_content();
     test_XDR_schemas();
     test_XDR_datatypes();
+    test_validate_on_load();
 
     CoUninitialize();
 }

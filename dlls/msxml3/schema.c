@@ -93,6 +93,8 @@ typedef struct _schema_cache
     MSXML_VERSION version;
     xmlHashTablePtr cache;
     LONG ref;
+
+    VARIANT_BOOL validateOnLoad;
 } schema_cache;
 
 typedef struct _cache_entry
@@ -1285,6 +1287,11 @@ static HRESULT WINAPI schema_cache_put_validateOnLoad(IXMLDOMSchemaCollection2* 
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
     FIXME("(%p)->(%d): stub\n", This, value);
+
+    This->validateOnLoad = value;
+    /* it's ok to disable it, cause we don't validate on load anyway */
+    if (value == VARIANT_FALSE) return S_OK;
+
     return E_NOTIMPL;
 }
 
@@ -1292,8 +1299,12 @@ static HRESULT WINAPI schema_cache_get_validateOnLoad(IXMLDOMSchemaCollection2* 
                                                       VARIANT_BOOL* value)
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
-    FIXME("(%p)->(%p): stub\n", This, value);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, value);
+
+    if (!value) return E_POINTER;
+    *value = This->validateOnLoad;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI schema_cache_getSchema(IXMLDOMSchemaCollection2* iface,
@@ -1425,18 +1436,21 @@ XDR_DT SchemaCache_get_node_dt(IXMLDOMSchemaCollection2* iface, xmlNodePtr node)
     return dt;
 }
 
-HRESULT SchemaCache_create(MSXML_VERSION version, IUnknown* pUnkOuter, void** ppObj)
+HRESULT SchemaCache_create(MSXML_VERSION version, IUnknown* outer, void** obj)
 {
     schema_cache* This = heap_alloc(sizeof(schema_cache));
     if (!This)
         return E_OUTOFMEMORY;
 
+    TRACE("(%d %p %p)\n", version, outer, obj);
+
     This->lpVtbl = &schema_cache_vtbl;
     This->cache = xmlHashCreate(DEFAULT_HASHTABLE_SIZE);
     This->ref = 1;
     This->version = version;
+    This->validateOnLoad = VARIANT_TRUE;
 
-    *ppObj = &This->lpVtbl;
+    *obj = &This->lpVtbl;
     return S_OK;
 }
 
