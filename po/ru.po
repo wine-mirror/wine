@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-02 09:55+0300\n"
+"PO-Revision-Date: 2011-12-11 15:50+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: none\n"
 "Language: Russian\n"
@@ -35,13 +35,13 @@ msgid ""
 "to modify its installed components, select it from the list and click Change/"
 "Remove."
 msgstr ""
-"&Перечисленные программы можно удалить или переустановить автоматически. "
-"Чтобы удалить программу или изменить состав установленных компонентов, "
-"выберите нужный пункт списка и нажмите кнопку Установить/Удалить."
+"Перечисленные программы можно автоматически удалить. Чтобы удалить программу "
+"или изменить состав установленных компонентов, выберите её в списке и "
+"нажмите кнопку Изменить/Удалить."
 
 #: appwiz.rc:64
 msgid "&Support Info"
-msgstr "&Сведения о поддержке..."
+msgstr "&Сведения о поддержке"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
@@ -77,7 +77,7 @@ msgstr "ОК"
 #: appwiz.rc:76
 msgid "The following information can be used to get technical support for %s:"
 msgstr ""
-"Перечисленная информация может быть использована для получения технической "
+"Указанная информация может быть использована для получения технической "
 "поддержки приложения %s:"
 
 #: appwiz.rc:77
@@ -117,7 +117,6 @@ msgid "Wine Gecko Installer"
 msgstr "Установка Wine Gecko"
 
 #: appwiz.rc:100
-#, fuzzy
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
 "embedding HTML to work correctly. Wine can automatically download and "
@@ -129,11 +128,11 @@ msgid ""
 msgstr ""
 "Wine не может найти пакет Gecko, который необходим для корректной работы "
 "приложений с поддержкой HTML. Wine может автоматически загрузить и "
-"установить его для вас.\n"
+"установить его.\n"
 "\n"
 "Примечание: рекомендуется использовать пакет, предоставляемый вашим "
-"дистрибутивом. Посетите http://wiki.winehq.org/Gecko для получения более "
-"подробной информации."
+"дистрибутивом. Посетите <a href=\"http://wiki.winehq.org/Gecko\">http://wiki."
+"winehq.org/Gecko</a> для получения более подробной информации."
 
 #: appwiz.rc:106
 msgid "&Install"
@@ -168,7 +167,7 @@ msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
 msgstr ""
-"Установка нового программного обеспечения и удаление установленного ранее"
+"Установка нового программного обеспечения и удаление установленного ранее."
 
 #: appwiz.rc:30 taskmgr.rc:262 winecfg.rc:30
 msgid "Applications"
@@ -180,7 +179,7 @@ msgid ""
 "entry for this program from the registry?"
 msgstr ""
 "Невозможно запустить программу удаления '%s'. Вы хотите удалить запись "
-"программы из списка?"
+"программы из реестра?"
 
 #: appwiz.rc:33
 msgid "Not specified"
@@ -228,8 +227,8 @@ msgid ""
 "Unexpected checksum of downloaded file. Aborting installation of corrupted "
 "file."
 msgstr ""
-"Ошибка контрольной суммы загруженного файла. Установка испорченного файла "
-"прерывается."
+"Ошибка контрольной суммы загруженного файла. Установка поврежденного файла "
+"отменяется."
 
 #: avifil32.rc:39
 msgid "Compress options"
@@ -265,7 +264,7 @@ msgstr "Звуковой поток"
 
 #: avifil32.rc:29
 msgid "All multimedia files"
-msgstr "Все файлы мультимедиа"
+msgstr "Все мультимедиа файлы"
 
 #: avifil32.rc:31
 msgid "video"
@@ -576,7 +575,7 @@ msgstr "Крас&н:"
 
 #: comdlg32.rc:298
 msgid "&Green:"
-msgstr "&Зелён:"
+msgstr "&Зелёный:"
 
 #: comdlg32.rc:300
 msgid "&Blue:"
@@ -784,14 +783,12 @@ msgid "&Open"
 msgstr "&Открыть"
 
 #: comdlg32.rc:495
-#, fuzzy
 msgid "File name:"
-msgstr "Имя &файла:"
+msgstr "Имя файла:"
 
 #: comdlg32.rc:498
-#, fuzzy
 msgid "Files of type:"
-msgstr "&Тип файлов:"
+msgstr "Файлы типа:"
 
 #: comdlg32.rc:29
 msgid "&About FolderPicker Test"
@@ -992,7 +989,7 @@ msgstr ""
 
 #: comdlg32.rc:70
 msgid "The 'from' entry cannot exceed the 'to' entry."
-msgstr "Значение ОТ не должно превышать ДО:"
+msgstr "Значение \"от\" не должно превышать значения \"до\"."
 
 #: comdlg32.rc:72
 msgid ""
@@ -1000,11 +997,11 @@ msgid ""
 "Please reenter margins."
 msgstr ""
 "Границы перекрывают или превышают размеры бумаги.\n"
-"Введите их заново"
+"Введите их заново."
 
 #: comdlg32.rc:74
 msgid "The 'Number of copies' field cannot be empty."
-msgstr "Число копий не может быть пустым"
+msgstr "Число копий не может быть пустым."
 
 #: comdlg32.rc:76
 msgid ""
@@ -1012,19 +1009,19 @@ msgid ""
 "Please enter a value between 1 and %d."
 msgstr ""
 "Такое большое количество копий не может быть напечатано вашим принтером.\n"
-"Введите значение между 1 и %d"
+"Введите значение от 1 до %d."
 
 #: comdlg32.rc:77
 msgid "A printer error occurred."
-msgstr "Произошла ошибка принтера"
+msgstr "Произошла ошибка принтера."
 
 #: comdlg32.rc:78
 msgid "No default printer defined."
-msgstr "Нет принтера, установленного по умолчанию"
+msgstr "Не задан принтер по умолчанию."
 
 #: comdlg32.rc:79
 msgid "Cannot find the printer."
-msgstr "Не удалось найти принтер"
+msgstr "Не удалось найти принтер."
 
 #: comdlg32.rc:80 progman.rc:73
 msgid "Out of memory."
@@ -1032,19 +1029,19 @@ msgstr "Мало памяти."
 
 #: comdlg32.rc:81
 msgid "An error occurred."
-msgstr "Произошла(и) ошибка(и)"
+msgstr "Произошла ошибка."
 
 #: comdlg32.rc:82
 msgid "Unknown printer driver."
-msgstr "Неизвестный драйвер принтера"
+msgstr "Неизвестный драйвер принтера."
 
 #: comdlg32.rc:85
 msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
 msgstr ""
-"Отсутствуют принтеры в системе. Проверьте, что хотя бы один принтер "
-"установлен и система печати запущена. "
+"Перед тем как настраивать страницу печати или печатать документ "
+"нужноустановить принтеры. Пожалуйста установите его и попробуйте еще раз."
 
 #: comdlg32.rc:151
 msgid "Select a font size between %1!d! and %2!d! points."
@@ -1088,7 +1085,7 @@ msgstr "Бумага застряла; "
 
 #: comdlg32.rc:98
 msgid "Out of paper; "
-msgstr "Не хватает бумаги; "
+msgstr "Не хватило бумаги; "
 
 #: comdlg32.rc:99
 msgid "Feed paper manual; "
@@ -1164,11 +1161,11 @@ msgstr "Крышка принтера открыта; "
 
 #: comdlg32.rc:117
 msgid "Print server unknown; "
-msgstr "Неизвестный сервер принтера; "
+msgstr "Неизвестный принт-сервер; "
 
 #: comdlg32.rc:118
 msgid "Power save mode; "
-msgstr "Питание в безопасном режиме; "
+msgstr "Режим экономии энергии; "
 
 #: comdlg32.rc:87
 msgid "Default Printer; "
@@ -1205,7 +1202,7 @@ msgstr "Со&хранить пароль"
 
 #: credui.rc:27
 msgid "Connect to %s"
-msgstr "Подключение к %s"
+msgstr "Подключить к %s"
 
 #: credui.rc:28
 msgid "Connecting to %s"
@@ -2208,7 +2205,6 @@ msgid "Welcome to the Certificate Import Wizard"
 msgstr "Вас приветствует мастер импорта сертификатов"
 
 #: cryptui.rc:283
-#, fuzzy
 msgid ""
 "This wizard helps you import certificates, certificate revocation lists, and "
 "certificate trust lists from a file to a certificate store.\n"
@@ -2220,10 +2216,17 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
-"Сертификаты позволяют идентифицировать вас или ваш компьютер. Также они "
-"используются для подтверждения подлинности и подписывания сообщений. Все "
-"устанавливаемые на компьютере сертификаты помещаются в хранилище "
-"сертификатов."
+"Этот мастер поможет вам импортировать сертификаты, списки отзыва "
+"сертификатов исписки доверенных сертификатов из файла в хранилище "
+"сертификатов.\n"
+"\n"
+"Сертификаты позволяют идентифицировать вас или компьютер, с которым "
+"устанавливается связь.Также они используются для подтверждения подлинности и "
+"подписывания сообщений. Хранилище сертификатов представляет собой набор "
+"сертификатов, списков отзыва сертификатов и списков доверенных "
+"сертификатов.\n"
+"\n"
+"Для продолжения нажмите Далее."
 
 #: cryptui.rc:291 cryptui.rc:427
 msgid "&File name:"
@@ -2340,7 +2343,6 @@ msgid "Welcome to the Certificate Export Wizard"
 msgstr "Вас приветствует мастер экспорта"
 
 #: cryptui.rc:373
-#, fuzzy
 msgid ""
 "This wizard helps you export certificates, certificate revocation lists, and "
 "certificate trust lists from a certificate store to a file.\n"
@@ -2352,10 +2354,17 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
-"Сертификаты позволяют идентифицировать вас или ваш компьютер. Также они "
-"используются для подтверждения подлинности и подписывания сообщений. Все "
-"устанавливаемые на компьютере сертификаты помещаются в хранилище "
-"сертификатов."
+"Этот мастер поможет вам экспортировать сертификаты, списки отзыва "
+"сертификатов исписки доверенных сертификатов из хранилища сертификатов в "
+"файл.\n"
+"\n"
+"Сертификаты позволяют идентифицировать вас или компьютер, с которым "
+"устанавливается связь.Также они используются для подтверждения подлинности и "
+"подписывания сообщений. Хранилище сертификатов представляет собой набор "
+"сертификатов, списков отзыва сертификатов и списков доверенных "
+"сертификатов.\n"
+"\n"
+"Для продолжения нажмите Далее."
 
 #: cryptui.rc:381
 msgid ""
@@ -2391,7 +2400,7 @@ msgstr "X.509 в кодировке &DER (.cer)"
 
 #: cryptui.rc:407
 msgid "Ba&se64-encoded X.509 (.cer):"
-msgstr "X.509 в кодировке Ba&se64 (.cer)"
+msgstr "X.509 в кодировке Ba&se64 (.cer):"
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
@@ -2984,7 +2993,7 @@ msgstr "Настроить устройства"
 
 #: dinput.rc:45
 msgid "Reset"
-msgstr ""
+msgstr "Сброс"
 
 #: dinput.rc:48
 #, fuzzy
@@ -2992,24 +3001,20 @@ msgid "Player"
 msgstr "Воспроизвести"
 
 #: dinput.rc:49
-#, fuzzy
 msgid "Device"
-msgstr "De&vice:"
+msgstr "Устройство"
 
 #: dinput.rc:50
-#, fuzzy
 msgid "Actions"
-msgstr "Действие"
+msgstr "Действия"
 
 #: dinput.rc:51
-#, fuzzy
 msgid "Mapping"
-msgstr "Путь"
+msgstr "Привязка"
 
 #: dinput.rc:53
-#, fuzzy
 msgid "Show Assigned First"
-msgstr "Название уже используется\n"
+msgstr "Показывать назначенные первыми"
 
 #: dinput.rc:34
 msgid "Action"
@@ -3029,73 +3034,71 @@ msgstr "%1!u!МБ используется, %2!u!МБ доступно"
 
 #: gdi32.rc:25
 msgid "Western"
-msgstr ""
+msgstr "Западный"
 
 #: gdi32.rc:26
 msgid "Central European"
-msgstr ""
+msgstr "Центральноевропейский"
 
 #: gdi32.rc:27
 msgid "Cyrillic"
-msgstr ""
+msgstr "Кириллический"
 
 #: gdi32.rc:28
-#, fuzzy
 msgid "Greek"
-msgstr "Зелёный"
+msgstr "Греческий"
 
 #: gdi32.rc:29
 msgid "Turkish"
-msgstr ""
+msgstr "Турецкий"
 
 #: gdi32.rc:30
 msgid "Hebrew"
-msgstr ""
+msgstr "Иврит"
 
 #: gdi32.rc:31
 msgid "Arabic"
-msgstr ""
+msgstr "Арабский"
 
 #: gdi32.rc:32
 msgid "Baltic"
-msgstr ""
+msgstr "Балтийский"
 
 #: gdi32.rc:33
 msgid "Vietnamese"
-msgstr ""
+msgstr "Вьетнамский"
 
 #: gdi32.rc:34
 msgid "Thai"
-msgstr ""
+msgstr "Тайский"
 
 #: gdi32.rc:35
-#, fuzzy
 msgid "Japanese"
-msgstr "панель"
+msgstr "Японский"
 
 #: gdi32.rc:36
 msgid "CHINESE_GB2312"
-msgstr ""
+msgstr "CHINESE_GB2312"
 
 #: gdi32.rc:37
 msgid "Hangul"
-msgstr ""
+msgstr "Хангул"
 
 #: gdi32.rc:38
 msgid "CHINESE_BIG5"
-msgstr ""
+msgstr "CHINESE_BIG5"
 
 #: gdi32.rc:39
 msgid "Hangul(Johab)"
-msgstr ""
+msgstr "Хангул(Johab)"
 
 #: gdi32.rc:40
 msgid "Symbol"
-msgstr ""
+msgstr "Символьный"
 
 #: gdi32.rc:41
 msgid "OEM/DOS"
-msgstr ""
+msgstr "OEM/DOS"
 
 #: gphoto2.rc:27
 msgid "Files on Camera"
@@ -3229,7 +3232,7 @@ msgstr "Вперёд"
 
 #: iccvid.rc:25 iccvid.rc:26
 msgid "Cinepak Video codec"
-msgstr "Видео кодер-декодер Cinepak"
+msgstr "Видео кодек Cinepak"
 
 #: ieframe.rc:25 shell32.rc:111 notepad.rc:26 oleview.rc:27 oleview.rc:77
 #: progman.rc:29 taskmgr.rc:35 view.rc:28 winefile.rc:25 winhlp32.rc:28
@@ -3283,7 +3286,7 @@ msgstr "&Избранное"
 
 #: ieframe.rc:52 regedit.rc:73
 msgid "&Add to Favorites..."
-msgstr "&Добавить в избранное"
+msgstr "&Добавить в избранное..."
 
 #: ieframe.rc:57
 msgid "&About Internet Explorer"
@@ -6593,7 +6596,7 @@ msgstr "Пароль"
 
 #: mpr.rc:44
 msgid "&Save this password (Insecure)"
-msgstr "&Сохранить этот пароль (небезопасно!)"
+msgstr "&Сохранить этот пароль (небезопасно)"
 
 #: mpr.rc:27
 msgid "Entire Network"
@@ -6730,15 +6733,15 @@ msgstr "укажите каталог, содержащий %s"
 
 #: msi.rc:58
 msgid "install source for feature missing"
-msgstr "источник установки данной возможности не указан"
+msgstr "источник установки данной функции не указан"
 
 #: msi.rc:59
 msgid "network drive for feature missing"
-msgstr "сетевой диск для данной возможности не указан"
+msgstr "сетевой диск для данной функции не указан"
 
 #: msi.rc:60
 msgid "feature from:"
-msgstr "возможность из:"
+msgstr "функции из:"
 
 #: msi.rc:61
 msgid "choose which folder contains %s"
@@ -6754,7 +6757,7 @@ msgid ""
 "Copyright 2002 by Michael Guennewig"
 msgstr ""
 "Видео кодек Wine MS-RLE\n"
-"Copyright 2002 by Michael Günnewig"
+"Copyright 2002 by Michael Guennewig"
 
 #: msvfw32.rc:30
 msgid "Video Compression"
@@ -6785,7 +6788,6 @@ msgid "&Data Rate"
 msgstr "&Поток данных"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/sec"
 msgstr "КБ/сек"
 
@@ -6795,7 +6797,7 @@ msgstr "Кадры целиком (Без компрессии)"
 
 #: msvidc32.rc:26
 msgid "Wine Video 1 video codec"
-msgstr "Видео кодер Wine Video 1"
+msgstr "Видео кодек Wine Video 1"
 
 #: oleacc.rc:27
 msgid "unknown object"
@@ -7179,16 +7181,16 @@ msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s."
 msgstr ""
-"Вставка содержимого буфера обмена в документ так, что его можно "
-"активировать, используя %s."
+"Вставка содержимого буфера обмена в документ так, что его можно активировать "
+"с помощью %s."
 
 #: oledlg.rc:36
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s.  It will be displayed as an icon."
 msgstr ""
-"Вставка содержимого буфера обмена в документ так, что его можно "
-"активировать, используя %s. Он будет отображаться в виде значка."
+"Вставка содержимого буфера обмена в документ так, что его можно активировать "
+"с помощью %s. Он будет отображаться в виде значка."
 
 #: oledlg.rc:37
 msgid ""
@@ -7349,7 +7351,7 @@ msgstr "&Копировать фон"
 
 #: shdoclc.rc:44
 msgid "Set as &Desktop Item"
-msgstr "Сохранить как &элемент рабочего стола..."
+msgstr "Установить как &элемент рабочего стола"
 
 #: shdoclc.rc:46 shdoclc.rc:95 shdoclc.rc:117 user32.rc:62
 msgid "Select &All"
@@ -7361,7 +7363,7 @@ msgstr "Создать &ярлык"
 
 #: shdoclc.rc:50 shdoclc.rc:81 shdoclc.rc:134 shdoclc.rc:161 shdoclc.rc:185
 msgid "Add to &Favorites..."
-msgstr "Добавить в &избранное"
+msgstr "Добавить в &избранное..."
 
 #: shdoclc.rc:51
 msgid "&View Source"
@@ -9887,19 +9889,16 @@ msgid "N"
 msgstr "N"
 
 #: cmd.rc:294
-#, fuzzy
 msgid "File association missing for extension %1\n"
-msgstr "Файл, ассоциированный с расширением %s,отсутствует\n"
+msgstr "Нет ассоциации для расширения %1\n"
 
 #: cmd.rc:295
-#, fuzzy
 msgid "No open command associated with file type '%1'\n"
-msgstr "Не работает команда, ассоциированная с файлом '%s'\n"
+msgstr "Не работает команда, ассоциированная с типом файлов '%1'\n"
 
 #: cmd.rc:296
-#, fuzzy
 msgid "Overwrite %1"
-msgstr "Перезаписано %s"
+msgstr "Перезаписать %1"
 
 #: cmd.rc:297
 msgid "More..."
@@ -9918,23 +9917,20 @@ msgid "Syntax error\n"
 msgstr "Синтаксическая ошибка\n"
 
 #: cmd.rc:303
-#, fuzzy
 msgid "No help available for %1\n"
-msgstr "Справка для %s отсутствует\n"
+msgstr "Справка для %1 отсутствует\n"
 
 #: cmd.rc:304
 msgid "Target to GOTO not found\n"
 msgstr "Цель для GOTO не найдена\n"
 
 #: cmd.rc:305
-#, fuzzy
 msgid "Current Date is %1\n"
-msgstr "Текущая дата %s\n"
+msgstr "Текущая дата %1\n"
 
 #: cmd.rc:306
-#, fuzzy
 msgid "Current Time is %1\n"
-msgstr "Текущее время %s\n"
+msgstr "Текущее время %1\n"
 
 #: cmd.rc:307
 msgid "Enter new date: "
@@ -9945,9 +9941,8 @@ msgid "Enter new time: "
 msgstr "Введите новое время: "
 
 #: cmd.rc:309
-#, fuzzy
 msgid "Environment variable %1 not defined\n"
-msgstr "Переменная окружения %s не определена\n"
+msgstr "Переменная окружения %1 не определена\n"
 
 #: cmd.rc:310 xcopy.rc:38
 msgid "Failed to open '%1'\n"
@@ -9963,19 +9958,16 @@ msgid "A"
 msgstr "A"
 
 #: cmd.rc:313
-#, fuzzy
 msgid "%1, Delete"
-msgstr "%s, Удалено"
+msgstr "%1, Удалить"
 
 #: cmd.rc:314
-#, fuzzy
 msgid "Echo is %1\n"
-msgstr "Echo установлено в %s\n"
+msgstr "Echo установлено в %1\n"
 
 #: cmd.rc:315
-#, fuzzy
 msgid "Verify is %1\n"
-msgstr "Verify установлено в %s\n"
+msgstr "Verify установлено в %1\n"
 
 #: cmd.rc:316
 msgid "Verify must be ON or OFF\n"
@@ -9986,14 +9978,13 @@ msgid "Parameter error\n"
 msgstr "Неверный параметр\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid ""
 "Volume in drive %1!c! is %2\n"
 "Volume Serial Number is %3!04x!-%4!04x!\n"
 "\n"
 msgstr ""
-"Объём диска %c %s\n"
-" Серийный номер %04x-%04x\n"
+"Том диска %1!c! %2\n"
+" Серийный номер %3!04x!-%4!04x!\n"
 "\n"
 
 #: cmd.rc:319
@@ -10013,9 +10004,8 @@ msgid "Wine Command Prompt"
 msgstr "Приглашение командной строки Wine"
 
 #: cmd.rc:323
-#, fuzzy
 msgid "CMD Version %1!S!\n"
-msgstr "Версия CMD %s\n"
+msgstr "Версия CMD %1!S!\n"
 
 #: cmd.rc:324
 msgid "More? "
@@ -12775,7 +12765,7 @@ msgstr "Настройка Wine для %s"
 
 #: winecfg.rc:87
 msgid "Selected driver: %s"
-msgstr ""
+msgstr "Выбранный драйвер: %s"
 
 #: winecfg.rc:88
 msgid "(None)"
@@ -12908,7 +12898,7 @@ msgid ""
 "\n"
 "Remember to click 'Add' in the Drives tab to create one!\n"
 msgstr ""
-"Вы не назначили диск C.\n"
+"У вас нет диска C. Это не очень хорошо.\n"
 "\n"
 "Не забудьте его создать!\n"
 
@@ -13270,7 +13260,7 @@ msgstr ""
 
 #: winedbg.rc:42
 msgid "Program Error"
-msgstr "Ошибка программы"
+msgstr "Программная ошибка"
 
 #: winedbg.rc:47
 msgid ""
@@ -13520,17 +13510,17 @@ msgstr "%1 из %2 свободно"
 #: winefile.rc:121
 msgctxt "unit kilobyte"
 msgid "kB"
-msgstr ""
+msgstr "КБ"
 
 #: winefile.rc:122
 msgctxt "unit megabyte"
 msgid "MB"
-msgstr ""
+msgstr "МБ"
 
 #: winefile.rc:123
 msgctxt "unit gigabyte"
 msgid "GB"
-msgstr ""
+msgstr "ГБ"
 
 #: winemine.rc:34
 msgid "&Game"
@@ -13558,7 +13548,7 @@ msgstr "&Эксперт"
 
 #: winemine.rc:42
 msgid "&Custom..."
-msgstr "Нестандартные &параметры"
+msgstr "Нестандартные &параметры..."
 
 #: winemine.rc:44
 msgid "&Fastest Times"
@@ -13654,7 +13644,7 @@ msgstr "Крупный"
 
 #: winhlp32.rc:54
 msgid "&Help on help\tF1"
-msgstr "&Справка о справочной программе"
+msgstr "&Справка о справочной программе\tF1"
 
 #: winhlp32.rc:55
 msgid "Always on &top"
@@ -13662,7 +13652,7 @@ msgstr "Всегда &сверху"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr "&Информация..."
+msgstr "&Информация"
 
 #: winhlp32.rc:64
 msgid "Annotation..."
@@ -14013,11 +14003,11 @@ msgstr ""
 
 #: wordpad.rc:187
 msgid "Invalid number format"
-msgstr "Неправильный числовой формат."
+msgstr "Неправильный числовой формат"
 
 #: wordpad.rc:188
 msgid "OLE storage documents are not supported"
-msgstr "Документы в виде OLE-хранилища не поддерживаются."
+msgstr "Документы в виде OLE-хранилища не поддерживаются"
 
 #: wordpad.rc:189
 msgid "Could not save the file."
@@ -14037,7 +14027,7 @@ msgstr "Недостаточно прав для открытия файла."
 
 #: wordpad.rc:193
 msgid "Printing not implemented"
-msgstr "Печать не поддерживается."
+msgstr "Печать не поддерживается"
 
 #: wordpad.rc:194
 msgid "Cannot add more than 32 tab stops."
@@ -14051,18 +14041,18 @@ msgstr "Не удалось запустить Wordpad"
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
 msgstr ""
 "Недопустимое число параметров - попробуйте 'xcopy /?' для получения\n"
-"подробного описания.\n"
+"подробного описания\n"
 
 #: xcopy.rc:28
 msgid "Invalid parameter '%1' -  Use xcopy /? for help\n"
 msgstr ""
 "Недопустимый параметр '%1' - воспользуйтесь 'xcopy /?' для получения "
 "подробного\n"
-"описания.\n"
+"описания\n"
 
 #: xcopy.rc:29
 msgid "Press <enter> to begin copying\n"
-msgstr "Нажмите клавишу <Enter>, чтобы начать копирование.\n"
+msgstr "Нажмите клавишу <Enter>, чтобы начать копирование\n"
 
 #: xcopy.rc:30
 msgid "%1!d! file(s) would be copied\n"
