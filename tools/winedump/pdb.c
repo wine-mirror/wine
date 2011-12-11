@@ -542,7 +542,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
 
             /* line number info */
             if (lineno_size)
-                codeview_dump_linetab((const char*)modimage + symbol_size, lineno_size, TRUE, "        ");
+                codeview_dump_linetab((const char*)modimage + symbol_size, TRUE, "        ");
             /* anyway, lineno_size doesn't see to really be the size of the line number information, and
              * it's not clear yet when to call for linetab2...
              */

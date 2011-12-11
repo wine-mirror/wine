@@ -255,7 +255,7 @@ void            fnt_dump( void );
 int             codeview_dump_symbols(const void* root, unsigned long size);
 int             codeview_dump_types_from_offsets(const void* table, const DWORD* offsets, unsigned num_types);
 int             codeview_dump_types_from_block(const void* table, unsigned long len);
-void            codeview_dump_linetab(const char* linetab, DWORD size, BOOL pascal_str, const char* pfx);
+void            codeview_dump_linetab(const char* linetab, BOOL pascal_str, const char* pfx);
 void            codeview_dump_linetab2(const char* linetab, DWORD size, const char* strimage, DWORD strsize, const char* pfx);
 
 void            dump_stabs(const void* pv_stabs, unsigned szstabs, const char* stabstr, unsigned szstr);

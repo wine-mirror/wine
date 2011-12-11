@@ -1383,7 +1383,7 @@ int codeview_dump_symbols(const void* root, unsigned long size)
     return 0;
 }
 
-void codeview_dump_linetab(const char* linetab, DWORD size, BOOL pascal_str, const char* pfx)
+void codeview_dump_linetab(const char* linetab, BOOL pascal_str, const char* pfx)
 {
     const char*                 ptr = linetab;
     int				nfile, nseg, nline;
