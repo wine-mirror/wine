@@ -87,12 +87,13 @@ typedef enum _SCHEMA_TYPE {
     SCHEMA_TYPE_XSD
 } SCHEMA_TYPE;
 
-typedef struct _schema_cache
+typedef struct
 {
-    const struct IXMLDOMSchemaCollection2Vtbl* lpVtbl;
+    IXMLDOMSchemaCollection2 IXMLDOMSchemaCollection2_iface;
+    LONG ref;
+
     MSXML_VERSION version;
     xmlHashTablePtr cache;
-    LONG ref;
 
     VARIANT_BOOL validateOnLoad;
 } schema_cache;
@@ -780,7 +781,7 @@ static LONG cache_entry_release(cache_entry* entry)
 
 static inline schema_cache* impl_from_IXMLDOMSchemaCollection2(IXMLDOMSchemaCollection2* iface)
 {
-    return (schema_cache*)((char*)iface - FIELD_OFFSET(schema_cache, lpVtbl));
+    return CONTAINING_RECORD(iface, schema_cache, IXMLDOMSchemaCollection2_iface);
 }
 
 static inline SCHEMA_TYPE schema_type_from_xmlDocPtr(xmlDocPtr schema)
@@ -1065,7 +1066,7 @@ static HRESULT WINAPI schema_cache_Invoke(IXMLDOMSchemaCollection2* iface,
     hr = get_typeinfo(IXMLDOMSchemaCollection_tid, &typeinfo);
     if(SUCCEEDED(hr))
     {
-        hr = ITypeInfo_Invoke(typeinfo, &(This->lpVtbl), dispIdMember, wFlags, pDispParams,
+        hr = ITypeInfo_Invoke(typeinfo, &This->IXMLDOMSchemaCollection2_iface.lpVtbl, dispIdMember, wFlags, pDispParams,
                 pVarResult, pExcepInfo, puArgErr);
         ITypeInfo_Release(typeinfo);
     }
@@ -1327,7 +1328,7 @@ static HRESULT WINAPI schema_cache_getDeclaration(IXMLDOMSchemaCollection2* ifac
     return E_NOTIMPL;
 }
 
-static const struct IXMLDOMSchemaCollection2Vtbl schema_cache_vtbl =
+static const struct IXMLDOMSchemaCollection2Vtbl XMLDOMSchemaCollection2Vtbl =
 {
     schema_cache_QueryInterface,
     schema_cache_AddRef,
@@ -1444,13 +1445,13 @@ HRESULT SchemaCache_create(MSXML_VERSION version, IUnknown* outer, void** obj)
 
     TRACE("(%d %p %p)\n", version, outer, obj);
 
-    This->lpVtbl = &schema_cache_vtbl;
+    This->IXMLDOMSchemaCollection2_iface.lpVtbl = &XMLDOMSchemaCollection2Vtbl;
     This->cache = xmlHashCreate(DEFAULT_HASHTABLE_SIZE);
     This->ref = 1;
     This->version = version;
     This->validateOnLoad = VARIANT_TRUE;
 
-    *obj = &This->lpVtbl;
+    *obj = &This->IXMLDOMSchemaCollection2_iface;
     return S_OK;
 }
 
