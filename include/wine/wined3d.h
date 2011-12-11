@@ -65,15 +65,14 @@
 #define WINEDDERR_NOCLIPLIST                                    MAKE_WINED3DHRESULT(205)
 #define WINEDDERR_OVERLAYNOTVISIBLE                             MAKE_WINED3DHRESULT(577)
 
-typedef enum _WINED3DLIGHTTYPE
+enum wined3d_light_type
 {
-    WINED3DLIGHT_POINT                      = 1,
-    WINED3DLIGHT_SPOT                       = 2,
-    WINED3DLIGHT_DIRECTIONAL                = 3,
-    WINED3DLIGHT_PARALLELPOINT              = 4, /* D3D7 */
-    WINED3DLIGHT_GLSPOT                     = 5, /* D3D7 */
-    WINED3DLIGHT_FORCE_DWORD                = 0x7fffffff
-} WINED3DLIGHTTYPE;
+    WINED3D_LIGHT_POINT                     = 1,
+    WINED3D_LIGHT_SPOT                      = 2,
+    WINED3D_LIGHT_DIRECTIONAL               = 3,
+    WINED3D_LIGHT_PARALLELPOINT             = 4, /* D3D7 */
+    WINED3D_LIGHT_GLSPOT                    = 5, /* D3D7 */
+};
 
 typedef enum _WINED3DPRIMITIVETYPE
 {
@@ -1553,7 +1552,7 @@ struct wined3d_matrix
 
 struct wined3d_light
 {
-    WINED3DLIGHTTYPE type;
+    enum wined3d_light_type type;
     struct wined3d_color diffuse;
     struct wined3d_color specular;
     struct wined3d_color ambient;

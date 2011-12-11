@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 /* Define the default light parameters as specified by MSDN. */
 const struct wined3d_light WINED3D_default_light =
 {
-    WINED3DLIGHT_DIRECTIONAL,   /* Type */
+    WINED3D_LIGHT_DIRECTIONAL,  /* Type */
     { 1.0f, 1.0f, 1.0f, 0.0f }, /* Diffuse r,g,b,a */
     { 0.0f, 0.0f, 0.0f, 0.0f }, /* Specular r,g,b,a */
     { 0.0f, 0.0f, 0.0f, 0.0f }, /* Ambient r,g,b,a, */
@@ -1898,10 +1898,10 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
 
     switch (light->type)
     {
-        case WINED3DLIGHT_POINT:
-        case WINED3DLIGHT_SPOT:
-        case WINED3DLIGHT_PARALLELPOINT:
-        case WINED3DLIGHT_GLSPOT:
+        case WINED3D_LIGHT_POINT:
+        case WINED3D_LIGHT_SPOT:
+        case WINED3D_LIGHT_PARALLELPOINT:
+        case WINED3D_LIGHT_GLSPOT:
             /* Incorrect attenuation values can cause the gl driver to crash.
              * Happens with Need for speed most wanted. */
             if (light->attenuation0 < 0.0f || light->attenuation1 < 0.0f || light->attenuation2 < 0.0f)
@@ -1911,7 +1911,7 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
             }
             break;
 
-        case WINED3DLIGHT_DIRECTIONAL:
+        case WINED3D_LIGHT_DIRECTIONAL:
             /* Ignores attenuation */
             break;
 
@@ -1958,7 +1958,7 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
 
     switch (light->type)
     {
-        case WINED3DLIGHT_POINT:
+        case WINED3D_LIGHT_POINT:
             /* Position */
             object->lightPosn[0] = light->position.x;
             object->lightPosn[1] = light->position.y;
@@ -1968,7 +1968,7 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
             /* FIXME: Range */
             break;
 
-        case WINED3DLIGHT_DIRECTIONAL:
+        case WINED3D_LIGHT_DIRECTIONAL:
             /* Direction */
             object->lightPosn[0] = -light->direction.x;
             object->lightPosn[1] = -light->direction.y;
@@ -1978,7 +1978,7 @@ HRESULT CDECL wined3d_device_set_light(struct wined3d_device *device,
             object->cutoff = 180.0f;
             break;
 
-        case WINED3DLIGHT_SPOT:
+        case WINED3D_LIGHT_SPOT:
             /* Position */
             object->lightPosn[0] = light->position.x;
             object->lightPosn[1] = light->position.y;

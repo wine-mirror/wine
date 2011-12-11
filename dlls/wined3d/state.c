@@ -4688,7 +4688,7 @@ static void light(struct wined3d_context *context, const struct wined3d_state *s
 
         switch (lightInfo->OriginalParms.type)
         {
-            case WINED3DLIGHT_POINT:
+            case WINED3D_LIGHT_POINT:
                 /* Position */
                 glLightfv(GL_LIGHT0 + Index, GL_POSITION, &lightInfo->lightPosn[0]);
                 checkGLcall("glLightfv");
@@ -4706,7 +4706,7 @@ static void light(struct wined3d_context *context, const struct wined3d_state *s
                 /* FIXME: Range */
                 break;
 
-            case WINED3DLIGHT_SPOT:
+            case WINED3D_LIGHT_SPOT:
                 /* Position */
                 glLightfv(GL_LIGHT0 + Index, GL_POSITION, &lightInfo->lightPosn[0]);
                 checkGLcall("glLightfv");
@@ -4729,7 +4729,7 @@ static void light(struct wined3d_context *context, const struct wined3d_state *s
                 /* FIXME: Range */
                 break;
 
-            case WINED3DLIGHT_DIRECTIONAL:
+            case WINED3D_LIGHT_DIRECTIONAL:
                 /* Direction */
                 glLightfv(GL_LIGHT0 + Index, GL_POSITION, &lightInfo->lightPosn[0]); /* Note gl uses w position of 0 for direction! */
                 checkGLcall("glLightfv");
