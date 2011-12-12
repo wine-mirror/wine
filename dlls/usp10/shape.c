@@ -607,6 +607,8 @@ static const ScriptShapeData ShapingData[] =
     {{ myanmar_features, 2}, NULL, "mymr", "", NULL, NULL},
     {{ myanmar_features, 2}, NULL, "mymr", "", NULL, NULL},
     {{ standard_features, 2}, NULL, "tale", "", NULL, NULL},
+    {{ standard_features, 2}, NULL, "talu", "", NULL, NULL},
+    {{ standard_features, 2}, NULL, "talu", "", NULL, NULL},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)

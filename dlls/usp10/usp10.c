@@ -113,6 +113,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Georgian,   0x10a0,  0x10ff,  0, 0},
     /* Tai Le: U+1950–U+197F */
     { Script_Tai_Le,     0x1950,  0x197f,  0, 0},
+    /* New Tai Lue: U+1980–U+19DF */
+    { Script_New_Tai_Lue,0x1980,  0x19df,  Script_New_Tai_Lue_Numeric, 0},
     /* Vedic Extensions: U+1CD0-U+1CFF */
     { Script_Devanagari, 0x1cd0, 0x1cff, Script_Devanagari_Numeric, 0},
     /* Phonetic Extensions: U+1D00–U+1DBF */
@@ -395,6 +397,14 @@ static const scriptData scriptInformation[] = {
      {0, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      MS_MAKE_TAG('t','a','l','e'),
      {'M','i','c','r','o','s','o','f','t',' ','T','a','i',' ','L','e'}},
+    {{Script_New_Tai_Lue, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {0, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('t','a','l','u'),
+     {'M','i','c','r','o','s','o','f','t',' ','N','e','w',' ','T','a','i',' ','L','u','e'}},
+    {{Script_New_Tai_Lue_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {0, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('t','a','l','u'),
+     {'M','i','c','r','o','s','o','f','t',' ','N','e','w',' ','T','a','i',' ','L','u','e'}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -423,7 +433,8 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[42].props, &scriptInformation[43].props,
     &scriptInformation[44].props, &scriptInformation[45].props,
     &scriptInformation[46].props, &scriptInformation[47].props,
-    &scriptInformation[48].props, &scriptInformation[49].props
+    &scriptInformation[48].props, &scriptInformation[49].props,
+    &scriptInformation[50].props, &scriptInformation[51].props
 };
 
 typedef struct {

@@ -79,6 +79,8 @@
 #define Script_Myanmar 47
 #define Script_Myanmar_Numeric 48
 #define Script_Tai_Le 49
+#define Script_New_Tai_Lue 50
+#define Script_New_Tai_Lue_Numeric 51
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
