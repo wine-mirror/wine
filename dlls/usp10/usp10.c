@@ -111,6 +111,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Myanmar,    0x1000,  0x109f, Script_Myanmar_Numeric, 0},
     /* Georgian: U+10A0–U+10FF */
     { Script_Georgian,   0x10a0,  0x10ff,  0, 0},
+    /* Tai Le: U+1950–U+197F */
+    { Script_Tai_Le,     0x1950,  0x197f,  0, 0},
     /* Vedic Extensions: U+1CD0-U+1CFF */
     { Script_Devanagari, 0x1cd0, 0x1cff, Script_Devanagari_Numeric, 0},
     /* Phonetic Extensions: U+1D00–U+1DBF */
@@ -389,6 +391,10 @@ static const scriptData scriptInformation[] = {
      {0x55, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      MS_MAKE_TAG('m','y','m','r'),
      {0}},
+    {{Script_Tai_Le, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {0, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('t','a','l','e'),
+     {'M','i','c','r','o','s','o','f','t',' ','T','a','i',' ','L','e'}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -417,7 +423,7 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[42].props, &scriptInformation[43].props,
     &scriptInformation[44].props, &scriptInformation[45].props,
     &scriptInformation[46].props, &scriptInformation[47].props,
-    &scriptInformation[48].props
+    &scriptInformation[48].props, &scriptInformation[49].props
 };
 
 typedef struct {

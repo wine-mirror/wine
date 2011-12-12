@@ -78,6 +78,7 @@
 /* Unicode Chapter 11 continued */
 #define Script_Myanmar 47
 #define Script_Myanmar_Numeric 48
+#define Script_Tai_Le 49
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
