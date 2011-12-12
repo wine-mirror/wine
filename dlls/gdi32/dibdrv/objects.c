@@ -1468,10 +1468,11 @@ static BOOL matching_pattern_format( dib_info *dib, dib_info *pattern )
     return TRUE;
 }
 
-static BOOL select_pattern_brush( dibdrv_physdev *pdev )
+static BOOL select_pattern_brush( dibdrv_physdev *pdev, BOOL *needs_reselect )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *info = (BITMAPINFO *)buffer;
+    RGBQUAD color_table[2];
     RECT rect;
     dib_info pattern;
 
@@ -1490,10 +1491,29 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev )
         copy_bitmapinfo( info, pdev->brush_pattern_info );
         fill_color_table_from_pal_colors( info, pdev->dev.hdc );
         init_dib_info_from_bitmapinfo( &pattern, info, pdev->brush_pattern_bits, 0 );
+        *needs_reselect = TRUE;
     }
     else
     {
         init_dib_info_from_bitmapinfo( &pattern, pdev->brush_pattern_info, pdev->brush_pattern_bits, 0 );
+    }
+
+    if (pattern.bit_count == 1 && !pattern.color_table)
+    {
+        /* monochrome DDB pattern uses DC colors */
+        COLORREF color = GetTextColor( pdev->dev.hdc );
+        color_table[0].rgbRed      = GetRValue( color );
+        color_table[0].rgbGreen    = GetGValue( color );
+        color_table[0].rgbBlue     = GetBValue( color );
+        color_table[0].rgbReserved = 0;
+        color = GetBkColor( pdev->dev.hdc );
+        color_table[1].rgbRed      = GetRValue( color );
+        color_table[1].rgbGreen    = GetGValue( color );
+        color_table[1].rgbBlue     = GetBValue( color );
+        color_table[1].rgbReserved = 0;
+        pattern.color_table = color_table;
+        pattern.color_table_size = 2;
+        *needs_reselect = TRUE;
     }
 
     copy_dib_color_info(&pdev->brush_dib, &pdev->dib);
@@ -1537,13 +1557,14 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RE
     int i, j;
     const WINEREGION *clip;
     POINT origin;
+    BOOL needs_reselect = FALSE;
 
     if(pdev->brush_and_bits == NULL)
     {
         switch(pdev->brush_style)
         {
         case BS_DIBPATTERN:
-            if (!pdev->brush_dib.bits.ptr && !select_pattern_brush( pdev ))
+            if (!pdev->brush_dib.bits.ptr && !select_pattern_brush( pdev, &needs_reselect ))
                 return FALSE;
             if(!create_pattern_brush_bits(pdev))
                 return FALSE;
@@ -1600,9 +1621,7 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RE
     }
     release_wine_region( region );
 
-    /* we need to recompute the bits each time for DIB_PAL_COLORS */
-    if (pdev->brush_style == BS_DIBPATTERN && pdev->brush_pattern_usage == DIB_PAL_COLORS)
-        free_pattern_brush( pdev );
+    if (needs_reselect) free_pattern_brush( pdev );
 
     return TRUE;
 }

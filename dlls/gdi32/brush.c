@@ -79,8 +79,6 @@ static BOOL store_bitmap_bits( BRUSHOBJ *brush, BITMAPOBJ *bmp )
         return FALSE;
     }
 
-    if (info->bmiHeader.biBitCount <= 8 && !info->bmiHeader.biClrUsed) fill_default_color_table( info );
-
     /* release the unneeded space */
     HeapReAlloc( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY, info,
                  get_dib_info_size( info, DIB_RGB_COLORS ));
@@ -162,6 +160,8 @@ BOOL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void **bits, UINT *
     if (brush->info)
     {
         memcpy( info, brush->info, get_dib_info_size( brush->info, brush->usage ));
+        if (info->bmiHeader.biBitCount <= 8 && !info->bmiHeader.biClrUsed)
+            fill_default_color_table( info );
         *bits = brush->bits.ptr;
         *usage = brush->usage;
         ret = TRUE;
