@@ -156,6 +156,7 @@ static inline void _test_items_ok(LPCWSTR string, DWORD cchString,
 #define hani_tag MS_MAKE_TAG('h','a','n','i')
 #define bopo_tag MS_MAKE_TAG('b','o','p','o')
 #define kana_tag MS_MAKE_TAG('k','a','n','a')
+#define hang_tag MS_MAKE_TAG('h','a','n','g')
 
 static void test_ScriptItemize( void )
 {
@@ -345,6 +346,11 @@ static void test_ScriptItemize( void )
     static const itemTest t311[2] = {{{0,0,0,0,0},0,0,0,0,kana_tag,FALSE},{{0,0,0,0,0},8,0,0,0,-1,FALSE}};
     static const itemTest t312[2] = {{{0,0,0,0,0},0,0,0,2,kana_tag,FALSE},{{0,0,0,0,0},8,0,0,0,-1,FALSE}};
 
+    /* Hangul */
+    static const WCHAR test32[] = {0xd55c,0xad6d,0xc5b4};
+    static const itemTest t321[2] = {{{0,0,0,0,0},0,0,0,0,hang_tag,FALSE},{{0,0,0,0,0},3,0,0,0,-1,FALSE}};
+    static const itemTest t322[2] = {{{0,0,0,0,0},0,0,0,2,hang_tag,FALSE},{{0,0,0,0,0},3,0,0,0,-1,FALSE}};
+
     SCRIPT_ITEM items[15];
     SCRIPT_CONTROL  Control;
     SCRIPT_STATE    State;
@@ -409,6 +415,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test29,10,NULL,NULL,2,t291,FALSE,0);
     test_items_ok(test30,8,NULL,NULL,1,t301,FALSE,0);
     test_items_ok(test31,8,NULL,NULL,1,t311,FALSE,2);
+    test_items_ok(test32,3,NULL,NULL,1,t321,FALSE,0);
 
     State.uBidiLevel = 0;
     test_items_ok(test1,4,&Control,&State,1,t11,FALSE,0);
@@ -447,6 +454,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test29,10,&Control,&State,2,t291,FALSE,0);
     test_items_ok(test30,8,&Control,&State,1,t301,FALSE,0);
     test_items_ok(test31,8,&Control,&State,1,t311,FALSE,2);
+    test_items_ok(test32,3,&Control,&State,1,t321,FALSE,0);
 
     State.uBidiLevel = 1;
     test_items_ok(test1,4,&Control,&State,1,t12,FALSE,0);
@@ -485,6 +493,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test29,10,&Control,&State,2,t292,FALSE,0);
     test_items_ok(test30,8,&Control,&State,1,t302,FALSE,0);
     test_items_ok(test31,8,&Control,&State,1,t312,FALSE,2);
+    test_items_ok(test32,3,&Control,&State,1,t322,FALSE,0);
 
     State.uBidiLevel = 1;
     Control.fMergeNeutralItems = TRUE;
@@ -524,6 +533,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test29,10,&Control,&State,2,t292,FALSE,0);
     test_items_ok(test30,8,&Control,&State,1,t302,FALSE,0);
     test_items_ok(test31,8,&Control,&State,1,t312,FALSE,2);
+    test_items_ok(test32,3,&Control,&State,1,t322,FALSE,0);
 }
 
 static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,

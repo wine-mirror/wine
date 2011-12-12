@@ -111,6 +111,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Myanmar,    0x1000,  0x109f, Script_Myanmar_Numeric, 0},
     /* Georgian: U+10A0–U+10FF */
     { Script_Georgian,   0x10a0,  0x10ff,  0, 0},
+    /* Hangul Jamo: U+1100–U+11FF */
+    { Script_Hangul,     0x1100,  0x11ff,  0, 0},
     /* Khmer: U+1780–U+17FF */
     { Script_Khmer,      0x1780,  0x17ff,  Script_Khmer_Numeric, 0},
     /* Tai Le: U+1950–U+197F */
@@ -189,6 +191,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Kana       ,0x3040, 0x30ff,  0, 0},
     /* Bopomofo: U+3100–U+312F */
     { Script_Bopomofo   ,0x3100, 0x312f,  0, 0},
+    /* Hangul Compatibility Jamo: U+3130–U+318F */
+    { Script_Hangul     ,0x3130, 0x318f,  0, 0},
     /* Kanbun: U+3190–U+319F */
     { Script_Ideograph  ,0x3190, 0x319f,  0, 0},
     /* Bopomofo Extended: U+31A0–U+31BF */
@@ -198,7 +202,10 @@ static const scriptRange scriptRanges[] = {
     /* Katakana Phonetic Extensions: U+31F0–U+31FF */
     { Script_Kana       ,0x31f0, 0x31ff,  0, 0},
     /* Enclosed CJK Letters and Months: U+3200–U+32FF */
-    { Script_Ideograph  ,0x3220, 0x32ef,  0, 0},
+    { Script_Hangul     ,0x3200, 0x321f,  0, 0},
+    { Script_Ideograph  ,0x3220, 0x325f,  0, 0},
+    { Script_Hangul     ,0x3260, 0x327f,  0, 0},
+    { Script_Ideograph  ,0x3280, 0x32ef,  0, 0},
     { Script_Kana       ,0x32d0, 0x31ff,  0, 0},
     /* CJK Compatibility: U+3300–U+33FF*/
     { Script_Kana       ,0x3300, 0x3357,  0, 0},
@@ -218,6 +225,12 @@ static const scriptRange scriptRanges[] = {
     { Script_Devanagari, 0xa8e0, 0xa8ff, Script_Devanagari_Numeric, 0},
     /* Myanmar Extended-A: U+AA60–U+AA7F */
     { Script_Myanmar,    0xaa60,  0xaa7f, Script_Myanmar_Numeric, 0},
+    /* Hangul Jamo Extended-A: U+A960–U+A97F */
+    { Script_Hangul,     0xa960, 0xa97f,  0, 0},
+    /* Hangul Syllables: U+AC00–U+D7A3 */
+    { Script_Hangul,     0xac00, 0xd7a3,  0, 0},
+    /* Hangul Jamo Extended-B: U+D7B0–U+D7FF */
+    { Script_Hangul,     0xd7b0, 0xd7ff,  0, 0},
     /* CJK Compatibility Ideographs: U+F900–U+FAFF */
     { Script_CJK_Han    ,0xf900, 0xfaff,  0, 0},
     /* Latin Ligatures: U+FB00–U+FB06 */
@@ -238,6 +251,7 @@ static const scriptRange scriptRanges[] = {
     /* Halfwidth and Fullwidth Forms: U+FF00–FFEF */
     { Script_Ideograph  ,0xff00, 0xff64,  Script_Numeric2, 0},
     { Script_Kana       ,0xff65, 0xff9f,  0, 0},
+    { Script_Hangul     ,0xffa0, 0xffdf,  0, 0},
     { Script_Ideograph  ,0xffe0, 0xffef,  0, 0},
     /* END */
     { SCRIPT_UNDEFINED,  0, 0, 0}
@@ -485,6 +499,10 @@ static const scriptData scriptInformation[] = {
      {LANG_ENGLISH, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
      MS_MAKE_TAG('k','a','n','a'),
      {0}},
+    {{Script_Hangul, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_KOREAN, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+     MS_MAKE_TAG('h','a','n','g'),
+     {0}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -517,7 +535,8 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[50].props, &scriptInformation[51].props,
     &scriptInformation[52].props, &scriptInformation[53].props,
     &scriptInformation[54].props, &scriptInformation[55].props,
-    &scriptInformation[56].props, &scriptInformation[57].props
+    &scriptInformation[56].props, &scriptInformation[57].props,
+    &scriptInformation[58].props
 };
 
 typedef struct {
