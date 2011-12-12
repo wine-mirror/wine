@@ -1048,29 +1048,35 @@ DWORD __cdecl svcctl_ControlService(
 
     service_lock_exclusive(service->service_entry);
 
-    if (lpServiceStatus)
-    {
-        lpServiceStatus->dwServiceType = service->service_entry->status.dwServiceType;
-        lpServiceStatus->dwCurrentState = service->service_entry->status.dwCurrentState;
-        lpServiceStatus->dwControlsAccepted = service->service_entry->status.dwControlsAccepted;
-        lpServiceStatus->dwWin32ExitCode = service->service_entry->status.dwWin32ExitCode;
-        lpServiceStatus->dwServiceSpecificExitCode = service->service_entry->status.dwServiceSpecificExitCode;
-        lpServiceStatus->dwCheckPoint = service->service_entry->status.dwCheckPoint;
-        lpServiceStatus->dwWaitHint = service->service_entry->status.dwWaitHint;
-    }
-
+    result = ERROR_SUCCESS;
     switch (service->service_entry->status.dwCurrentState)
     {
     case SERVICE_STOPPED:
-        service_unlock(service->service_entry);
-        return ERROR_SERVICE_NOT_ACTIVE;
+        result = ERROR_SERVICE_NOT_ACTIVE;
+        break;
     case SERVICE_START_PENDING:
         if (dwControl==SERVICE_CONTROL_STOP)
             break;
         /* fall thru */
     case SERVICE_STOP_PENDING:
+        result = ERROR_SERVICE_CANNOT_ACCEPT_CTRL;
+        break;
+    }
+
+    if (result != ERROR_SUCCESS)
+    {
+        if (lpServiceStatus)
+        {
+            lpServiceStatus->dwServiceType = service->service_entry->status.dwServiceType;
+            lpServiceStatus->dwCurrentState = service->service_entry->status.dwCurrentState;
+            lpServiceStatus->dwControlsAccepted = service->service_entry->status.dwControlsAccepted;
+            lpServiceStatus->dwWin32ExitCode = service->service_entry->status.dwWin32ExitCode;
+            lpServiceStatus->dwServiceSpecificExitCode = service->service_entry->status.dwServiceSpecificExitCode;
+            lpServiceStatus->dwCheckPoint = service->service_entry->status.dwCheckPoint;
+            lpServiceStatus->dwWaitHint = service->service_entry->status.dwWaitHint;
+        }
         service_unlock(service->service_entry);
-        return ERROR_SERVICE_CANNOT_ACCEPT_CTRL;
+        return result;
     }
 
     if (!service_accepts_control(service->service_entry, dwControl))
@@ -1095,6 +1101,19 @@ DWORD __cdecl svcctl_ControlService(
     if (ret == WAIT_OBJECT_0)
     {
         service_send_control(service->service_entry, control_pipe, dwControl, &result);
+
+        if (lpServiceStatus)
+        {
+            service_lock_shared(service->service_entry);
+            lpServiceStatus->dwServiceType = service->service_entry->status.dwServiceType;
+            lpServiceStatus->dwCurrentState = service->service_entry->status.dwCurrentState;
+            lpServiceStatus->dwControlsAccepted = service->service_entry->status.dwControlsAccepted;
+            lpServiceStatus->dwWin32ExitCode = service->service_entry->status.dwWin32ExitCode;
+            lpServiceStatus->dwServiceSpecificExitCode = service->service_entry->status.dwServiceSpecificExitCode;
+            lpServiceStatus->dwCheckPoint = service->service_entry->status.dwCheckPoint;
+            lpServiceStatus->dwWaitHint = service->service_entry->status.dwWaitHint;
+            service_unlock(service->service_entry);
+        }
 
         if (dwControl == SERVICE_CONTROL_STOP)
         {
