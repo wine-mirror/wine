@@ -881,7 +881,7 @@ DWORD dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
         if (!bmp) return ERROR_INVALID_HANDLE;
         if (!init_dib_info_from_bitmapobj( &stand_alone, bmp, 0 ))
         {
-            ret = ERROR_BAD_FORMAT;
+            ret = ERROR_OUTOFMEMORY;
             goto done;
         }
         dib = &stand_alone;
@@ -909,12 +909,7 @@ DWORD dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
     }
 
 done:
-   if (hbitmap)
-   {
-       if (dib) free_dib_info( dib );
-       GDI_ReleaseObj( hbitmap );
-   }
-
+   if (hbitmap) GDI_ReleaseObj( hbitmap );
    return ret;
 }
 
@@ -984,7 +979,7 @@ DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
         if (!bmp) return ERROR_INVALID_HANDLE;
         if (!init_dib_info_from_bitmapobj( &stand_alone, bmp, 0 ))
         {
-            ret = ERROR_BAD_FORMAT;
+            ret = ERROR_OUTOFMEMORY;
             goto done;
         }
         dib = &stand_alone;
@@ -1029,10 +1024,7 @@ DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
         ret = execute_rop( pdev, &dst->visrect, &src_dib, &src->visrect, clip, rop );
     }
 
-    free_dib_info( &src_dib );
-
     if (saved_clip) restore_clipping_region( pdev, saved_clip );
-
     goto done;
 
 update_format:
@@ -1042,12 +1034,7 @@ update_format:
     ret = ERROR_BAD_FORMAT;
 
 done:
-    if (hbitmap)
-    {
-       if (dib) free_dib_info( dib );
-       GDI_ReleaseObj( hbitmap );
-    }
-
+    if (hbitmap) GDI_ReleaseObj( hbitmap );
     return ret;
 }
 
@@ -1059,7 +1046,6 @@ DWORD dibdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_b
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
     dib_info src_dib;
-    DWORD ret;
 
     TRACE( "%p %p\n", dev, info );
 
@@ -1077,11 +1063,7 @@ DWORD dibdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_b
 
     init_dib_info_from_bitmapinfo( &src_dib, info, bits->ptr, 0 );
     src_dib.bits.is_copy = bits->is_copy;
-
-    ret = blend_rect( &pdev->dib, &dst->visrect, &src_dib, &src->visrect, pdev->clip, blend );
-
-    free_dib_info( &src_dib );
-    return ret;
+    return blend_rect( &pdev->dib, &dst->visrect, &src_dib, &src->visrect, pdev->clip, blend );
 
 update_format:
     if (blend.AlphaFormat & AC_SRC_ALPHA)  /* source alpha requires A8R8G8B8 format */
@@ -1220,10 +1202,8 @@ DWORD stretch_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
           dst->x, dst->y, dst->width, dst->height, wine_dbgstr_rect(&dst->visrect),
           src->x, src->y, src->width, src->height, wine_dbgstr_rect(&src->visrect));
 
-    if ( !init_dib_info_from_bitmapinfo( &src_dib, src_info, src_bits, 0 ) )
-        return ERROR_BAD_FORMAT;
-    if ( !init_dib_info_from_bitmapinfo( &dst_dib, dst_info, dst_bits, 0 ) )
-        return ERROR_BAD_FORMAT;
+    init_dib_info_from_bitmapinfo( &src_dib, src_info, src_bits, 0 );
+    init_dib_info_from_bitmapinfo( &dst_dib, dst_info, dst_bits, 0 );
 
     /* v */
     ret = calc_1d_stretch_params( dst->y, dst->height, dst->visrect.top, dst->visrect.bottom,
@@ -1324,10 +1304,8 @@ DWORD blend_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bitbl
 {
     dib_info src_dib, dst_dib;
 
-    if (!init_dib_info_from_bitmapinfo( &src_dib, src_info, src_bits, 0 ) )
-        return ERROR_BAD_FORMAT;
-    if (!init_dib_info_from_bitmapinfo( &dst_dib, dst_info, dst_bits, default_color_table ) )
-        return ERROR_BAD_FORMAT;
+    init_dib_info_from_bitmapinfo( &src_dib, src_info, src_bits, 0 );
+    init_dib_info_from_bitmapinfo( &dst_dib, dst_info, dst_bits, default_color_table );
 
     return blend_rect( &dst_dib, &dst->visrect, &src_dib, &src->visrect, NULL, blend );
 }
@@ -1344,7 +1322,7 @@ DWORD gradient_bitmapinfo( const BITMAPINFO *info, void *bits, TRIVERTEX *vert_a
     DWORD ret = ERROR_SUCCESS;
     HRGN tmp_rgn = 0;
 
-    if (!init_dib_info_from_bitmapinfo( &dib, info, bits, default_color_table )) return ERROR_BAD_FORMAT;
+    init_dib_info_from_bitmapinfo( &dib, info, bits, default_color_table );
 
     switch (mode)
     {

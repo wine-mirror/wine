@@ -1541,8 +1541,6 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, BOOL *needs_reselect )
 
         pdev->brush_dib.funcs->convert_to(&pdev->brush_dib, &pattern, &rect);
     }
-
-    free_dib_info( &pattern );
     return TRUE;
 }
 

@@ -111,7 +111,6 @@ typedef struct dibdrv_physdev
     struct intensity_range glyph_intensities[17];
 } dibdrv_physdev;
 
-#define DEFER_FORMAT     1
 #define DEFER_PEN        2
 #define DEFER_BRUSH      4
 
@@ -224,8 +223,7 @@ extern void get_rop_codes(INT rop, struct rop_codes *codes) DECLSPEC_HIDDEN;
 extern void calc_and_xor_masks(INT rop, DWORD color, DWORD *and, DWORD *xor) DECLSPEC_HIDDEN;
 extern void update_brush_rop( dibdrv_physdev *pdev, INT rop ) DECLSPEC_HIDDEN;
 extern void reset_dash_origin(dibdrv_physdev *pdev) DECLSPEC_HIDDEN;
-extern BOOL init_dib_info_from_bitmapinfo(dib_info *dib, const BITMAPINFO *info, void *bits,
-                                          enum dib_info_flags flags) DECLSPEC_HIDDEN;
+extern void init_dib_info_from_bitmapinfo(dib_info *dib, const BITMAPINFO *info, void *bits, enum dib_info_flags flags) DECLSPEC_HIDDEN;
 extern BOOL init_dib_info_from_bitmapobj(dib_info *dib, BITMAPOBJ *bmp, enum dib_info_flags flags) DECLSPEC_HIDDEN;
 extern void free_dib_info(dib_info *dib) DECLSPEC_HIDDEN;
 extern void free_pattern_brush(dibdrv_physdev *pdev) DECLSPEC_HIDDEN;
@@ -252,10 +250,10 @@ static inline int edge_coord( int y, int x1, int y1, int x2, int y2 )
 
 static inline BOOL defer_pen(dibdrv_physdev *pdev)
 {
-    return pdev->defer & (DEFER_FORMAT | DEFER_PEN);
+    return pdev->defer & DEFER_PEN;
 }
 
 static inline BOOL defer_brush(dibdrv_physdev *pdev)
 {
-    return pdev->defer & (DEFER_FORMAT | DEFER_BRUSH);
+    return pdev->defer & DEFER_BRUSH;
 }

@@ -254,7 +254,7 @@ BOOL render_aa_text_bitmapinfo( HDC hdc, BITMAPINFO *info, struct gdi_image_bits
 
     assert( info->bmiHeader.biBitCount > 8 ); /* mono and indexed formats don't support anti-aliasing */
 
-    if (!init_dib_info_from_bitmapinfo( &dib, info, bits->ptr, 0 )) return FALSE;
+    init_dib_info_from_bitmapinfo( &dib, info, bits->ptr, 0 );
 
     fg = make_rgb_colorref( hdc, &dib, GetTextColor( hdc ), &got_pixel, &fg_pixel);
     if (!got_pixel) fg_pixel = dib.funcs->colorref_to_pixel( &dib, fg );
@@ -325,7 +325,6 @@ BOOL render_aa_text_bitmapinfo( HDC hdc, BITMAPINFO *info, struct gdi_image_bits
             y += metrics.gmCellIncY;
         }
     }
-    free_dib_info( &dib );
     return TRUE;
 }
 
