@@ -81,6 +81,8 @@
 #define Script_Tai_Le 49
 #define Script_New_Tai_Lue 50
 #define Script_New_Tai_Lue_Numeric 51
+#define Script_Khmer 52
+#define Script_Khmer_Numeric 53
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
