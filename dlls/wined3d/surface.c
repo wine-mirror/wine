@@ -6038,6 +6038,8 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
             return E_OUTOFMEMORY;
         }
         format.convert(surface->resource.allocatedMemory, mem, src_pitch, width, height);
+        format.byte_count = format.conv_byte_count;
+        src_pitch = dst_pitch;
     }
     else if (convert != NO_CONVERSION && surface->resource.allocatedMemory)
     {
@@ -6056,6 +6058,8 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         }
         d3dfmt_convert_surface(surface->resource.allocatedMemory, mem, src_pitch,
                 width, height, dst_pitch, convert, surface);
+        format.byte_count = format.conv_byte_count;
+        src_pitch = dst_pitch;
     }
     else
     {
