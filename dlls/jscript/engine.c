@@ -929,7 +929,7 @@ HRESULT for_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t 
         if(FAILED(hres))
             return hres;
     }else if(stat->begin_expr) {
-        hres = expr_eval(ctx, stat->begin_expr, EXPR_NEWREF, &rt->ei, &exprval);
+        hres = expr_eval(ctx, stat->begin_expr, 0, &rt->ei, &exprval);
         if(FAILED(hres))
             return hres;
 

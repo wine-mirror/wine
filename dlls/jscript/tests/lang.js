@@ -798,6 +798,11 @@ for(var fi=0; fi < 4; fi++)
     ok(fi < 4, "fi = " + fi);
 ok(fi === 4, "fi !== 4");
 
+tmp = true;
+obj1 = new Object();
+for(obj1.nonexistent; tmp; tmp = false)
+    ok(!("nonexistent" in obj1), "nonexistent added to obj1");
+
 ok((void 1) === undefined, "(void 1) !== undefined");
 
 var inobj = new Object();
