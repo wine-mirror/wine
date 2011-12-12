@@ -570,6 +570,9 @@ static const char* required_khmer_features[] =
     NULL
 };
 
+static OPENTYPE_FEATURE_RECORD no_features[] =
+{ };
+
 typedef struct ScriptShapeDataTag {
     TEXTRANGE_PROPERTIES   defaultTextRange;
     const char**           requiredFeatures;
@@ -636,6 +639,8 @@ static const ScriptShapeData ShapingData[] =
     {{ standard_features, 2}, NULL, "talu", "", NULL, NULL},
     {{ khmer_features, 5}, required_khmer_features, "khmr", "", ContextualShape_Khmer, ShapeCharGlyphProp_Khmer},
     {{ khmer_features, 5}, required_khmer_features, "khmr", "", ContextualShape_Khmer, ShapeCharGlyphProp_Khmer},
+    {{ no_features, 0}, NULL, "hani", "", NULL, NULL},
+    {{ no_features, 0}, NULL, "hani", "", NULL, NULL},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)

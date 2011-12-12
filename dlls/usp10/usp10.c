@@ -166,6 +166,34 @@ static const scriptRange scriptRanges[] = {
     { Script_Georgian,   0x2d00,  0x2d2f,  0, 0},
     /* Cyrillic Extended-A: U+2DE0–U+2DFF */
     { Script_Cyrillic,   0x2de0, 0x2dff,  0, 0},
+    /* CJK Radicals Supplement: U+2E80–U+2EFF */
+    /* Kangxi Radicals: U+2F00–U+2FDF */
+    { Script_CJK_Han,    0x2e80, 0x2fdf,  0, 0},
+    /* Ideographic Description Characters: U+2FF0–U+2FFF */
+    { Script_Ideograph  ,0x2ff0, 0x2fff,  0, 0},
+    /* CJK Symbols and Punctuation: U+3000–U+303F */
+    { Script_Ideograph  ,0x3000, 0x3004,  0, 0},
+    { Script_CJK_Han    ,0x3005, 0x3005,  0, 0},
+    { Script_Ideograph  ,0x3006, 0x3006,  0, 0},
+    { Script_CJK_Han    ,0x3007, 0x3007,  0, 0},
+    { Script_Ideograph  ,0x3008, 0x3020,  0, 0},
+    { Script_CJK_Han    ,0x3021, 0x3029,  0, 0},
+    { Script_Ideograph  ,0x302a, 0x3030,  0, 0},
+    { Script_Ideograph  ,0x3036, 0x3037,  0, 0},
+    { Script_CJK_Han    ,0x3038, 0x303b,  0, 0},
+    { Script_Ideograph  ,0x303c, 0x303f,  0, 0},
+    /* Kanbun: U+3190–U+319F */
+    { Script_Ideograph  ,0x3190, 0x319f,  0, 0},
+    /* CJK Strokes: U+31C0–U+31EF */
+    { Script_Ideograph  ,0x31c0, 0x31ef,  0, 0},
+    /* Enclosed CJK Letters and Months: U+3200–U+32FF */
+    { Script_Ideograph  ,0x3220, 0x32ff,  0, 0},
+    /* CJK Compatibility: U+3300–U+33FF*/
+    { Script_Ideograph  ,0x3300, 0x33ff,  0, 0},
+    /* CJK Unified Ideographs Extension A: U+3400–U+4DBF */
+    { Script_CJK_Han    ,0x3400, 0x4dbf,  0, 0},
+    /* CJK Unified Ideographs: U+4E00–U+9FFF */
+    { Script_CJK_Han    ,0x4e00, 0x9fff,  0, 0},
     /* Cyrillic Extended-B: U+A640–U+A69F */
     { Script_Cyrillic,   0xa640, 0xa69f,  0, 0},
     /* Modifier Tone Letters: U+A700–U+A71F */
@@ -177,6 +205,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Devanagari, 0xa8e0, 0xa8ff, Script_Devanagari_Numeric, 0},
     /* Myanmar Extended-A: U+AA60–U+AA7F */
     { Script_Myanmar,    0xaa60,  0xaa7f, Script_Myanmar_Numeric, 0},
+    /* CJK Compatibility Ideographs: U+F900–U+FAFF */
+    { Script_CJK_Han    ,0xf900, 0xfaff,  0, 0},
     /* Latin Ligatures: U+FB00–U+FB06 */
     { Script_Latin,      0xfb00, 0xfb06, 0, 0},
     /* Armenian ligatures U+FB13..U+FB17 */
@@ -185,8 +215,16 @@ static const scriptRange scriptRanges[] = {
     { Script_Hebrew,     0xfb1d, 0xfb4f, 0, 0},
     /* Arabic Presentation Forms-A: U+FB50–U+FDFF*/
     { Script_Arabic,     0xfb50, 0xfdff, 0, 0},
+    /* Vertical Forms: U+FE10–U+FE1F */
+    /* Combining Half Marks: U+FE20–U+FE2F */
+    /* CJK Compatibility Forms: U+FE30–U+FE4F */
+    /* Small Form Variants: U+FE50–U+FE6F */
+    { Script_Ideograph  ,0xfe10, 0xfe6f,  0, 0},
     /* Arabic Presentation Forms-B: U+FE70–U+FEFF*/
     { Script_Arabic,     0xfe70, 0xfeff, 0, 0},
+    /* Halfwidth and Fullwidth Forms: U+FF00–FFEF */
+    { Script_Ideograph  ,0xff00, 0xff64,  Script_Numeric2, 0},
+    { Script_Ideograph  ,0xffe0, 0xffef,  0, 0},
     /* END */
     { SCRIPT_UNDEFINED,  0, 0, 0}
 };
@@ -417,6 +455,14 @@ static const scriptData scriptInformation[] = {
      {0x53, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      MS_MAKE_TAG('k','h','m','r'),
      {'D','a','u','n','P','e','n','h'}},
+    {{Script_CJK_Han, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_ENGLISH, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+     MS_MAKE_TAG('h','a','n','i'),
+     {0}},
+    {{Script_Ideograph, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_ENGLISH, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+     MS_MAKE_TAG('h','a','n','i'),
+     {0}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -447,7 +493,8 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[46].props, &scriptInformation[47].props,
     &scriptInformation[48].props, &scriptInformation[49].props,
     &scriptInformation[50].props, &scriptInformation[51].props,
-    &scriptInformation[52].props, &scriptInformation[53].props
+    &scriptInformation[52].props, &scriptInformation[53].props,
+    &scriptInformation[54].props, &scriptInformation[55].props
 };
 
 typedef struct {
