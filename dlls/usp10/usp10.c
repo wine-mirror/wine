@@ -214,6 +214,8 @@ static const scriptRange scriptRanges[] = {
     { Script_CJK_Han    ,0x3400, 0x4dbf,  0, 0},
     /* CJK Unified Ideographs: U+4E00–U+9FFF */
     { Script_CJK_Han    ,0x4e00, 0x9fff,  0, 0},
+    /* Yi: U+A000–U+A4CF */
+    { Script_Yi         ,0xa000, 0xa4cf,  0, 0},
     /* Cyrillic Extended-B: U+A640–U+A69F */
     { Script_Cyrillic,   0xa640, 0xa69f,  0, 0},
     /* Modifier Tone Letters: U+A700–U+A71F */
@@ -503,6 +505,10 @@ static const scriptData scriptInformation[] = {
      {LANG_KOREAN, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
      MS_MAKE_TAG('h','a','n','g'),
      {0}},
+    {{Script_Yi, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_ENGLISH, 0, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+     MS_MAKE_TAG('y','i',' ',' '),
+     {'M','i','c','r','o','s','o','f','t',' ','Y','i',' ','B','a','i','t','i'}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -536,7 +542,7 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[52].props, &scriptInformation[53].props,
     &scriptInformation[54].props, &scriptInformation[55].props,
     &scriptInformation[56].props, &scriptInformation[57].props,
-    &scriptInformation[58].props
+    &scriptInformation[58].props, &scriptInformation[59].props
 };
 
 typedef struct {
