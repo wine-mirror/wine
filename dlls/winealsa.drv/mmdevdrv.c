@@ -939,14 +939,12 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         goto exit;
     }
 
-    alsa_period_us = duration / 100; /* duration / 10 converted to us */
+    This->mmdev_period_rt = period;
+    alsa_period_us = This->mmdev_period_rt / 10;
     if((err = snd_pcm_hw_params_set_period_time_near(This->pcm_handle,
-                This->hw_params, &alsa_period_us, NULL)) < 0){
+                This->hw_params, &alsa_period_us, NULL)) < 0)
         WARN("Unable to set period time near %u: %d (%s)\n", alsa_period_us,
                 err, snd_strerror(err));
-        hr = E_FAIL;
-        goto exit;
-    }
 
     if((err = snd_pcm_hw_params(This->pcm_handle, This->hw_params)) < 0){
         WARN("Unable to set hw params: %d (%s)\n", err, snd_strerror(err));
@@ -960,7 +958,6 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         hr = E_FAIL;
         goto exit;
     }
-    TRACE("alsa_period_frames: %lu\n", This->alsa_period_frames);
 
     if((err = snd_pcm_hw_params_get_buffer_size(This->hw_params,
                     &This->alsa_bufsize_frames)) < 0){
@@ -1007,8 +1004,6 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         hr = E_FAIL;
         goto exit;
     }
-
-    This->mmdev_period_rt = period;
 
     /* Check if the ALSA buffer is so small that it will run out before
      * the next MMDevAPI period tick occurs. Allow a little wiggle room
@@ -1062,6 +1057,11 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
     LeaveCriticalSection(&g_sessions_lock);
 
     This->initted = TRUE;
+
+    TRACE("ALSA period: %lu frames\n", This->alsa_period_frames);
+    TRACE("ALSA buffer: %lu frames\n", This->alsa_bufsize_frames);
+    TRACE("MMDevice period: %u frames\n", This->mmdev_period_frames);
+    TRACE("MMDevice buffer: %u frames\n", This->bufsize_frames);
 
 exit:
     HeapFree(GetProcessHeap(), 0, sw_params);
