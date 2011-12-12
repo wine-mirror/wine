@@ -371,14 +371,11 @@ static UINT ACTION_SearchDirectory(MSIPACKAGE *package, MSISIGNATURE *sig,
 static UINT ACTION_AppSearchReg(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNATURE *sig)
 {
     static const WCHAR query[] =  {
-        's','e','l','e','c','t',' ','*',' ',
-        'f','r','o','m',' ',
-        'R','e','g','L','o','c','a','t','o','r',' ',
-        'w','h','e','r','e',' ',
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'R','e','g','L','o','c','a','t','o','r',' ','W','H','E','R','E',' ',
         'S','i','g','n','a','t','u','r','e','_',' ','=',' ', '\'','%','s','\'',0};
-    LPWSTR keyPath = NULL, valueName = NULL;
-    LPWSTR deformatted = NULL;
-    LPWSTR ptr = NULL, end;
+    const WCHAR *keyPath, *valueName;
+    WCHAR *deformatted = NULL, *ptr = NULL, *end;
     int root, type;
     HKEY rootKey, key = NULL;
     DWORD sz = 0, regType;
@@ -397,10 +394,10 @@ static UINT ACTION_AppSearchReg(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNAT
         return ERROR_SUCCESS;
     }
 
-    root = MSI_RecordGetInteger(row,2);
-    keyPath = msi_dup_record_field(row,3);
-    valueName = msi_dup_record_field(row,4);
-    type = MSI_RecordGetInteger(row,5);
+    root = MSI_RecordGetInteger(row, 2);
+    keyPath = MSI_RecordGetString(row, 3);
+    valueName = MSI_RecordGetString(row, 4);
+    type = MSI_RecordGetInteger(row, 5);
 
     deformat_string(package, keyPath, &deformatted);
 
@@ -430,7 +427,10 @@ static UINT ACTION_AppSearchReg(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNAT
         goto end;
     }
 
-    rc = RegQueryValueExW(key, valueName, NULL, NULL, NULL, &sz);
+    msi_free(deformatted);
+    deformat_string(package, valueName, &deformatted);
+
+    rc = RegQueryValueExW(key, deformatted, NULL, NULL, NULL, &sz);
     if (rc)
     {
         TRACE("RegQueryValueExW returned %d\n", rc);
@@ -440,7 +440,7 @@ static UINT ACTION_AppSearchReg(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNAT
      * on the value of a property?)
      */
     value = msi_alloc( sz );
-    rc = RegQueryValueExW(key, valueName, NULL, &regType, value, &sz);
+    rc = RegQueryValueExW(key, deformatted, NULL, &regType, value, &sz);
     if (rc)
     {
         TRACE("RegQueryValueExW returned %d\n", rc);
@@ -475,9 +475,6 @@ static UINT ACTION_AppSearchReg(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNAT
 end:
     msi_free( value );
     RegCloseKey( key );
-
-    msi_free( keyPath );
-    msi_free( valueName );
     msi_free( deformatted );
 
     msiobj_release(&row->hdr);
