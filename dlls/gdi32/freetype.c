@@ -6416,9 +6416,6 @@ static BOOL freetype_GetCharABCWidths( PHYSDEV dev, UINT firstChar, UINT lastCha
 
     TRACE("%p, %d, %d, %p\n", physdev->font, firstChar, lastChar, buffer);
 
-    if(!FT_IS_SCALABLE(physdev->font->ft_face))
-        return FALSE;
-
     GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
 

@@ -2656,10 +2656,19 @@ BOOL WINAPI GetCharABCWidthsW( HDC hdc, UINT firstChar, UINT lastChar,
     PHYSDEV dev;
     unsigned int i;
     BOOL ret;
+    TEXTMETRICW tm;
 
     if (!dc) return FALSE;
 
     if (!abc)
+    {
+        release_dc_ptr( dc );
+        return FALSE;
+    }
+
+    /* unlike GetCharABCWidthsFloatW, this one is supposed to fail on non-TrueType fonts */
+    dev = GET_DC_PHYSDEV( dc, pGetTextMetrics );
+    if (!dev->funcs->pGetTextMetrics( dev, &tm ) || !(tm.tmPitchAndFamily & TMPF_TRUETYPE))
     {
         release_dc_ptr( dc );
         return FALSE;
