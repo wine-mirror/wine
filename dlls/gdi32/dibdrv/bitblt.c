@@ -833,9 +833,8 @@ static void set_color_info( const dib_info *dib, BITMAPINFO *info )
     case 8:
         if (dib->color_table)
         {
-            info->bmiHeader.biClrUsed = min( dib->color_table_size, 1 << dib->bit_count );
-            memcpy( info->bmiColors, dib->color_table,
-                    info->bmiHeader.biClrUsed * sizeof(RGBQUAD) );
+            info->bmiHeader.biClrUsed = 1 << dib->bit_count;
+            memcpy( info->bmiColors, dib->color_table, info->bmiHeader.biClrUsed * sizeof(RGBQUAD) );
         }
         break;
     case 16:
