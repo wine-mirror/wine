@@ -1012,7 +1012,7 @@ HRESULT forin_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_
             return hres;
     }
 
-    hres = expr_eval(ctx, stat->in_expr, EXPR_NEWREF, &rt->ei, &exprval);
+    hres = expr_eval(ctx, stat->in_expr, 0, &rt->ei, &exprval);
     if(FAILED(hres))
         return hres;
 

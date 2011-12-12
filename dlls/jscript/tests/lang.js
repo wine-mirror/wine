@@ -803,6 +803,11 @@ obj1 = new Object();
 for(obj1.nonexistent; tmp; tmp = false)
     ok(!("nonexistent" in obj1), "nonexistent added to obj1");
 
+obj1 = new Object();
+for(tmp in obj1.nonexistent)
+    ok(false, "for(tmp in obj1.nonexistent) called with tmp = " + tmp);
+ok(!("nonexistent" in obj1), "nonexistent added to obj1 by for..in loop");
+
 ok((void 1) === undefined, "(void 1) !== undefined");
 
 var inobj = new Object();
