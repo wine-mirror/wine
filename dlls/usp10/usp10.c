@@ -416,7 +416,8 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[40].props, &scriptInformation[41].props,
     &scriptInformation[42].props, &scriptInformation[43].props,
     &scriptInformation[44].props, &scriptInformation[45].props,
-    &scriptInformation[46].props, &scriptInformation[47].props
+    &scriptInformation[46].props, &scriptInformation[47].props,
+    &scriptInformation[48].props
 };
 
 typedef struct {
