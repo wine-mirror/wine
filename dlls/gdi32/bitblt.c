@@ -472,6 +472,35 @@ done:
     return ret;
 }
 
+COLORREF nulldrv_GetPixel( PHYSDEV dev, INT x, INT y )
+{
+    DC *dc = get_nulldrv_dc( dev );
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
+    struct bitblt_coords src;
+    struct gdi_image_bits bits;
+    COLORREF ret;
+
+    src.visrect.left = x;
+    src.visrect.top  = y;
+    LPtoDP( dev->hdc, (POINT *)&src.visrect, 1 );
+    src.visrect.right  = src.visrect.left + 1;
+    src.visrect.bottom = src.visrect.top + 1;
+    src.x = src.visrect.left;
+    src.y = src.visrect.top;
+    src.width = src.height = 1;
+
+    if (!clip_visrect( dc, &src.visrect, &src.visrect )) return CLR_INVALID;
+
+    dev = GET_DC_PHYSDEV( dc, pGetImage );
+    if (dev->funcs->pGetImage( dev, 0, info, &bits, &src )) return CLR_INVALID;
+
+    ret = get_pixel_bitmapinfo( info, bits.ptr, &src );
+    if (bits.free) bits.free( &bits );
+    return ret;
+}
+
+
 /***********************************************************************
  *           PatBlt    (GDI32.@)
  */

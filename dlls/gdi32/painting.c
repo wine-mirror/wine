@@ -476,13 +476,9 @@ COLORREF WINAPI GetPixel( HDC hdc, INT x, INT y )
 
     if (dc)
     {
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetPixel );
         update_dc( dc );
-        /* FIXME: should this be in the graphics driver? */
-        if (PtVisible( hdc, x, y ))
-        {
-            PHYSDEV physdev = GET_DC_PHYSDEV( dc, pGetPixel );
-            ret = physdev->funcs->pGetPixel( physdev, x, y );
-        }
+        ret = physdev->funcs->pGetPixel( physdev, x, y );
         release_dc_ptr( dc );
     }
     return ret;

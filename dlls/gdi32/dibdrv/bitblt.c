@@ -1372,6 +1372,19 @@ DWORD gradient_bitmapinfo( const BITMAPINFO *info, void *bits, TRIVERTEX *vert_a
     return ret;
 }
 
+COLORREF get_pixel_bitmapinfo( const BITMAPINFO *info, void *bits, struct bitblt_coords *src )
+{
+    dib_info dib;
+    POINT pt;
+    DWORD pixel;
+
+    init_dib_info_from_bitmapinfo( &dib, info, bits, default_color_table );
+    pt.x  = src->x;
+    pt.y  = src->y;
+    pixel = dib.funcs->get_pixel( &dib, &pt );
+    return dib.funcs->pixel_to_colorref( &dib, pixel );
+}
+
 /***********************************************************************
  *           dibdrv_StretchBlt
  */
