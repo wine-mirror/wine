@@ -2600,26 +2600,30 @@ static void test_mxwriter_stream(void)
 
 static void test_mxwriter_encoding(void)
 {
-    IMXWriter *writer;
     ISAXContentHandler *content;
-    HRESULT hr;
+    IMXWriter *writer;
+    IStream *stream;
     VARIANT dest;
+    HRESULT hr;
+    HGLOBAL g;
+    char *ptr;
+    BSTR s;
 
     hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMXWriter, (void**)&writer);
-    ok(hr == S_OK, "CoCreateInstance failed: %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
 
     hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&content);
-    ok(hr == S_OK, "QueryInterface(ISAXContentHandler) failed: %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
 
     hr = IMXWriter_put_encoding(writer, _bstr_("UTF-8"));
-    ok(hr == S_OK, "put_encoding failed: %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
 
     hr = ISAXContentHandler_startDocument(content);
-    ok(hr == S_OK, "startDocument failed: %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
 
     hr = ISAXContentHandler_endDocument(content);
-    ok(hr == S_OK, "endDocument failed: %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
 
     /* The content is always re-encoded to UTF-16 when the output is
      * retrieved as a BSTR.
@@ -2631,6 +2635,47 @@ static void test_mxwriter_encoding(void)
     ok(!lstrcmpW(_bstr_("<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\"?>\r\n"), V_BSTR(&dest)),
             "got wrong content: %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
+
+    /* switch encoding when something is written already */
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&dest) = VT_UNKNOWN;
+    V_UNKNOWN(&dest) = (IUnknown*)stream;
+    hr = IMXWriter_put_output(writer, dest);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXWriter_put_encoding(writer, _bstr_("UTF-8"));
+    EXPECT_HR(hr, S_OK);
+
+    /* write empty element */
+    hr = ISAXContentHandler_startElement(content, _bstr_(""), 0, _bstr_(""), 0, _bstr_("a"), 1, NULL);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXContentHandler_endElement(content, _bstr_(""), 0, _bstr_(""), 0, _bstr_("a"), 1);
+    EXPECT_HR(hr, S_OK);
+
+    /* switch */
+    hr = IMXWriter_put_encoding(writer, _bstr_("UTF-16"));
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXWriter_flush(writer);
+    EXPECT_HR(hr, S_OK);
+
+    hr = GetHGlobalFromStream(stream, &g);
+    EXPECT_HR(hr, S_OK);
+
+    ptr = GlobalLock(g);
+    ok(!strncmp(ptr, "<a/>", 4), "got %c%c%c%c\n", ptr[0],ptr[1],ptr[2],ptr[3]);
+    GlobalUnlock(g);
+
+    /* so output is unaffected, encoding name is stored however */
+    hr = IMXWriter_get_encoding(writer, &s);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(s, _bstr_("UTF-16")), "got %s\n", wine_dbgstr_w(s));
+    SysFreeString(s);
+
+    IStream_Release(stream);
 
     ISAXContentHandler_Release(content);
     IMXWriter_Release(writer);
