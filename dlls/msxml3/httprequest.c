@@ -926,7 +926,9 @@ static HRESULT WINAPI httprequest_get_responseBody(IXMLHTTPRequest *iface, VARIA
     TRACE("(%p)->(%p)\n", This, body);
 
     if (!body) return E_INVALIDARG;
-    if (This->state != READYSTATE_COMPLETE) return E_FAIL;
+    V_VT(body) = VT_EMPTY;
+
+    if (This->state != READYSTATE_COMPLETE) return E_PENDING;
 
     hr = GetHGlobalFromStream(This->bsc->stream, &hglobal);
     if (hr == S_OK)
@@ -968,13 +970,29 @@ static HRESULT WINAPI httprequest_get_responseBody(IXMLHTTPRequest *iface, VARIA
     return hr;
 }
 
-static HRESULT WINAPI httprequest_get_responseStream(IXMLHTTPRequest *iface, VARIANT *pvarBody)
+static HRESULT WINAPI httprequest_get_responseStream(IXMLHTTPRequest *iface, VARIANT *body)
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
+    LARGE_INTEGER move;
+    IStream *stream;
+    HRESULT hr;
 
-    FIXME("stub %p %p\n", This, pvarBody);
+    TRACE("(%p)->(%p)\n", This, body);
 
-    return E_NOTIMPL;
+    if (!body) return E_INVALIDARG;
+    V_VT(body) = VT_EMPTY;
+
+    if (This->state != READYSTATE_COMPLETE) return E_PENDING;
+
+    hr = IStream_Clone(This->bsc->stream, &stream);
+
+    move.QuadPart = 0;
+    IStream_Seek(stream, move, STREAM_SEEK_SET, NULL);
+
+    V_VT(body) = VT_UNKNOWN;
+    V_UNKNOWN(body) = (IUnknown*)stream;
+
+    return hr;
 }
 
 static HRESULT WINAPI httprequest_get_readyState(IXMLHTTPRequest *iface, LONG *state)

@@ -4639,6 +4639,7 @@ static void test_XMLHTTP(void)
     IDispatch *event;
     void *ptr;
     HRESULT hr;
+    HGLOBAL g;
 
     hr = CoCreateInstance(&CLSID_XMLHTTPRequest, NULL, CLSCTX_INPROC_SERVER,
         &IID_IXMLHttpRequest, (void**)&xhr);
@@ -4664,6 +4665,20 @@ static void test_XMLHTTP(void)
 
     hr = IXMLHttpRequest_abort(xhr);
     EXPECT_HR(hr, S_OK);
+
+    V_VT(&varbody) = VT_I2;
+    V_I2(&varbody) = 1;
+    hr = IXMLHttpRequest_get_responseBody(xhr, &varbody);
+    EXPECT_HR(hr, E_PENDING);
+    ok(V_VT(&varbody) == VT_EMPTY, "got type %d\n", V_VT(&varbody));
+    ok(V_I2(&varbody) == 1, "got %d\n", V_I2(&varbody));
+
+    V_VT(&varbody) = VT_I2;
+    V_I2(&varbody) = 1;
+    hr = IXMLHttpRequest_get_responseStream(xhr, &varbody);
+    EXPECT_HR(hr, E_PENDING);
+    ok(V_VT(&varbody) == VT_EMPTY, "got type %d\n", V_VT(&varbody));
+    ok(V_I2(&varbody) == 1, "got %d\n", V_I2(&varbody));
 
     /* send before open */
     hr = IXMLHttpRequest_send(xhr, dummy);
@@ -4835,8 +4850,22 @@ static void test_XMLHTTP(void)
     SafeArrayUnaccessData(V_ARRAY(&varbody));
 
     VariantClear(&varbody);
-
     SysFreeString(url);
+
+    /* get_responseStream */
+    hr = IXMLHttpRequest_get_responseStream(xhr, NULL);
+    EXPECT_HR(hr, E_INVALIDARG);
+
+    V_VT(&varbody) = VT_EMPTY;
+    hr = IXMLHttpRequest_get_responseStream(xhr, &varbody);
+    ok(V_VT(&varbody) == VT_UNKNOWN, "got type %d\n", V_VT(&varbody));
+    EXPECT_HR(hr, S_OK);
+    EXPECT_REF(V_UNKNOWN(&varbody), 1);
+
+    g = NULL;
+    hr = GetHGlobalFromStream((IStream*)V_UNKNOWN(&varbody), &g);
+    EXPECT_HR(hr, S_OK);
+    ok(g != NULL, "got %p\n", g);
 
     hr = IXMLHttpRequest_QueryInterface(xhr, &IID_IObjectSafety, (void**)&safety);
     EXPECT_HR(hr, S_OK);
