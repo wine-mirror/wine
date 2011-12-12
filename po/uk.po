@@ -6791,7 +6791,7 @@ msgstr "&Потік даних"
 
 #: msvfw32.rc:52
 #, fuzzy
-msgid "kB/sec"
+msgid "kB/s"
 msgstr "KB/sec"
 
 #: msvfw32.rc:25

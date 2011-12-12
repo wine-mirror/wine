@@ -6788,7 +6788,7 @@ msgid "&Data Rate"
 msgstr "วันที่"
 
 #: msvfw32.rc:52
-msgid "kB/sec"
+msgid "kB/s"
 msgstr ""
 
 #: msvfw32.rc:25

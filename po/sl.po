@@ -6850,7 +6850,7 @@ msgstr "&Pretok podatkov"
 
 #: msvfw32.rc:52
 #, fuzzy
-msgid "kB/sec"
+msgid "kB/s"
 msgstr "kb/s"
 
 #: msvfw32.rc:25

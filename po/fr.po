@@ -6817,7 +6817,8 @@ msgid "&Data Rate"
 msgstr "&Débit de données"
 
 #: msvfw32.rc:52
-msgid "kB/sec"
+#, fuzzy
+msgid "kB/s"
 msgstr "ko/sec"
 
 #: msvfw32.rc:25

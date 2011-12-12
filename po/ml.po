@@ -6671,7 +6671,7 @@ msgid "&Data Rate"
 msgstr "_തീയതി"
 
 #: msvfw32.rc:52
-msgid "kB/sec"
+msgid "kB/s"
 msgstr ""
 
 #: msvfw32.rc:25

@@ -6777,7 +6777,7 @@ msgstr "データ レート(&D)"
 
 #: msvfw32.rc:52
 #, fuzzy
-msgid "kB/sec"
+msgid "kB/s"
 msgstr "KB/秒"
 
 #: msvfw32.rc:25
