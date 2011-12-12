@@ -193,11 +193,15 @@ struct IDirectSoundBufferImpl
     LONG                        ds3db_lVolume;
     BOOL                        ds3db_need_recalc;
     /* Used for bit depth conversion */
-    bitsgetfunc get;
-    bitsputfunc put;
+    int                         mix_channels;
+    bitsgetfunc get, get_aux;
+    bitsputfunc put, put_aux;
 
     struct list entry;
 };
+
+float get_mono(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel) DECLSPEC_HIDDEN;
+void put_mono2stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value) DECLSPEC_HIDDEN;
 
 HRESULT IDirectSoundBufferImpl_Create(
     DirectSoundDevice *device,

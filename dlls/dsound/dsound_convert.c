@@ -104,6 +104,18 @@ static float getieee32(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD chann
 
 const bitsgetfunc getbpp[5] = {get8, get16, get24, get32, getieee32};
 
+float get_mono(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel)
+{
+    DWORD channels = dsb->pwfx->nChannels;
+    DWORD c;
+    float val = 0;
+    /* XXX: does Windows include LFE into the mix? */
+    for (c = 0; c < channels; c++)
+        val += dsb->get_aux(dsb, pos, c);
+    val /= channels;
+    return val;
+}
+
 static void put8(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
 {
     BYTE* buf = dsb->device->tmp_buffer;
@@ -157,6 +169,12 @@ static void put32(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, f
 }
 
 const bitsputfunc putbpp[4] = {put8, put16, put24, put32};
+
+void put_mono2stereo(const IDirectSoundBufferImpl *dsb, DWORD pos, DWORD channel, float value)
+{
+    dsb->put_aux(dsb, pos, 0, value);
+    dsb->put_aux(dsb, pos, 1, value);
+}
 
 static void mix8(signed char *src, INT *dst, unsigned len)
 {

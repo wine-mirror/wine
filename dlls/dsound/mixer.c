@@ -178,6 +178,8 @@ static void DSOUND_RecalcFreqAcc(IDirectSoundBufferImpl *dsb)
  */
 void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 {
+	DWORD ichannels = dsb->pwfx->nChannels;
+	DWORD ochannels = dsb->device->pwfx->nChannels;
 	BOOL needremix = TRUE, needresample = (dsb->freq != dsb->device->pwfx->nSamplesPerSec);
 	DWORD bAlign = dsb->pwfx->nBlockAlign, pAlign = dsb->device->pwfx->nBlockAlign;
 	WAVEFORMATEXTENSIBLE *pwfxe;
@@ -200,8 +202,36 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 	dsb->freqAcc = dsb->freqAccNext = 0;
 	dsb->freqneeded = needresample;
 
-	dsb->get = ieee ? getbpp[4] : getbpp[dsb->pwfx->wBitsPerSample/8 - 1];
-	dsb->put = putbpp[dsb->device->pwfx->wBitsPerSample/8 - 1];
+	dsb->get_aux = ieee ? getbpp[4] : getbpp[dsb->pwfx->wBitsPerSample/8 - 1];
+	dsb->put_aux = putbpp[dsb->device->pwfx->wBitsPerSample/8 - 1];
+
+	dsb->get = dsb->get_aux;
+	dsb->put = dsb->put_aux;
+
+	if (ichannels == ochannels)
+	{
+		dsb->mix_channels = ichannels;
+		if (ichannels > 32) {
+			FIXME("Copying %u channels is unsupported, limiting to first 32\n", ichannels);
+			dsb->mix_channels = 32;
+		}
+	}
+	else if (ichannels == 1)
+	{
+		dsb->mix_channels = 1;
+		dsb->put = put_mono2stereo;
+	}
+	else if (ochannels == 1)
+	{
+		dsb->mix_channels = 1;
+		dsb->get = get_mono;
+	}
+	else
+	{
+		if (ichannels > 2)
+			FIXME("Conversion from %u to %u channels is not implemented, falling back to stereo\n", ichannels, ochannels);
+		dsb->mix_channels = 2;
+	}
 
 	if (needremix)
 	{
@@ -278,38 +308,13 @@ static inline void cp_fields(const IDirectSoundBufferImpl *dsb,
     DWORD ipos = dsb->sec_mixpos;
     UINT istride = dsb->pwfx->nBlockAlign;
     UINT adj = dsb->freqAdjust;
-    DirectSoundDevice *device = dsb->device;
-    float value;
     ULONG adv;
     DWORD opos = 0;
 
     while (count-- > 0) {
-        if (device->pwfx->nChannels == dsb->pwfx->nChannels ||
-                (device->pwfx->nChannels == 2 && dsb->pwfx->nChannels == 6) ||
-                (device->pwfx->nChannels == 8 && dsb->pwfx->nChannels == 2) ||
-                (device->pwfx->nChannels == 6 && dsb->pwfx->nChannels == 2)) {
-            value = dsb->get(dsb, ipos, 0);
-            dsb->put(dsb, opos, 0, value);
-            if (device->pwfx->nChannels == 2 || dsb->pwfx->nChannels == 2) {
-                value = dsb->get(dsb, ipos, 1);
-                dsb->put(dsb, opos, 1, value);
-            }
-        }
-
-        if (device->pwfx->nChannels == 1 && dsb->pwfx->nChannels == 2)
-        {
-            float val = (dsb->get(dsb, ipos, 0) + dsb->get(dsb, ipos, 1)) / 2.;
-
-            dsb->put(dsb, opos, 0, val);
-        }
-
-        if (device->pwfx->nChannels == 2 && dsb->pwfx->nChannels == 1)
-        {
-            value = dsb->get(dsb, ipos, 0);
-            dsb->put(dsb, opos, 0, value);
-            dsb->put(dsb, opos, 1, value);
-        }
-
+        DWORD channel;
+        for (channel = 0; channel < dsb->mix_channels; channel++)
+            dsb->put(dsb, opos, channel, dsb->get(dsb, ipos, channel));
         freqAcc += adj;
         adv = (freqAcc >> DSOUND_FREQSHIFT);
         freqAcc &= (1 << DSOUND_FREQSHIFT) - 1;
@@ -360,18 +365,6 @@ static void DSOUND_MixToTemporary(const IDirectSoundBufferImpl *dsb, DWORD tmp_l
 		else
 			dsb->device->tmp_buffer = HeapAlloc(GetProcessHeap(), 0, tmp_len);
 	}
-
-	/* Check for same sample rate */
-	if (dsb->freq == dsb->device->pwfx->nSamplesPerSec) {
-		TRACE("(%p) Same sample rate %d = primary %d\n", dsb,
-			dsb->freq, dsb->device->pwfx->nSamplesPerSec);
-
-		cp_fields(dsb, oAdvance, size, 0);
-		return;
-	}
-
-	/* Mix in different sample rates */
-	TRACE("(%p) Adjusting frequency: %d -> %d\n", dsb, dsb->freq, dsb->device->pwfx->nSamplesPerSec);
 
 	DSOUND_secpos_to_bufpos(dsb, dsb->sec_mixpos, dsb->sec_mixpos, &freqAcc);
 
