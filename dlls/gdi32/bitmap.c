@@ -481,7 +481,7 @@ LONG WINAPI SetBitmapBits(
     /* query the color info */
     info->bmiHeader.biSize          = sizeof(info->bmiHeader);
     info->bmiHeader.biPlanes        = 1;
-    info->bmiHeader.biBitCount      = bmp->bitmap.bmBitsPixel;
+    info->bmiHeader.biBitCount      = bmp->dib ? bmp->dib->dsBmih.biBitCount : bmp->bitmap.bmBitsPixel;
     info->bmiHeader.biCompression   = BI_RGB;
     info->bmiHeader.biXPelsPerMeter = 0;
     info->bmiHeader.biYPelsPerMeter = 0;
@@ -494,11 +494,9 @@ LONG WINAPI SetBitmapBits(
 
     if (!err || err == ERROR_BAD_FORMAT)
     {
-        info->bmiHeader.biPlanes        = 1;
-        info->bmiHeader.biBitCount      = bmp->bitmap.bmBitsPixel;
-        info->bmiHeader.biWidth         = bmp->bitmap.bmWidth;
-        info->bmiHeader.biHeight        = -dst.height;
-        info->bmiHeader.biSizeImage     = dst.height * dst_stride;
+        info->bmiHeader.biWidth     = bmp->bitmap.bmWidth;
+        info->bmiHeader.biHeight    = -dst.height;
+        info->bmiHeader.biSizeImage = dst.height * dst_stride;
         err = funcs->pPutImage( NULL, hbitmap, clip, info, &src_bits, &src, &dst, SRCCOPY );
     }
     if (err) count = 0;
