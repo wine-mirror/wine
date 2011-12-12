@@ -15,6 +15,8 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#ifndef __WINE_MSTCPIP_H
+#define __WINE_MSTCPIP_H
 
 struct tcp_keepalive
 {
@@ -60,3 +62,5 @@ struct tcp_keepalive
 #define WS_RCVALL_SOCKETLEVELONLY 2
 
 #endif /* USE_WS_PREFIX */
+
+#endif /* __WINE_MSTCPIP_H */
