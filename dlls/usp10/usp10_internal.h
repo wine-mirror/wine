@@ -86,6 +86,7 @@
 /* Unicode Chapter 12 */
 #define Script_CJK_Han  54
 #define Script_Ideograph  55
+#define Script_Bopomofo 56
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)

@@ -182,8 +182,12 @@ static const scriptRange scriptRanges[] = {
     { Script_Ideograph  ,0x3036, 0x3037,  0, 0},
     { Script_CJK_Han    ,0x3038, 0x303b,  0, 0},
     { Script_Ideograph  ,0x303c, 0x303f,  0, 0},
+    /* Bopomofo: U+3100–U+312F */
+    { Script_Bopomofo   ,0x3100, 0x312f,  0, 0},
     /* Kanbun: U+3190–U+319F */
     { Script_Ideograph  ,0x3190, 0x319f,  0, 0},
+    /* Bopomofo Extended: U+31A0–U+31BF */
+    { Script_Bopomofo   ,0x31a0, 0x31bf,  0, 0},
     /* CJK Strokes: U+31C0–U+31EF */
     { Script_Ideograph  ,0x31c0, 0x31ef,  0, 0},
     /* Enclosed CJK Letters and Months: U+3200–U+32FF */
@@ -463,6 +467,10 @@ static const scriptData scriptInformation[] = {
      {LANG_ENGLISH, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
      MS_MAKE_TAG('h','a','n','i'),
      {0}},
+    {{Script_Bopomofo, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_ENGLISH, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+     MS_MAKE_TAG('b','o','p','o'),
+     {0}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -494,7 +502,8 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[48].props, &scriptInformation[49].props,
     &scriptInformation[50].props, &scriptInformation[51].props,
     &scriptInformation[52].props, &scriptInformation[53].props,
-    &scriptInformation[54].props, &scriptInformation[55].props
+    &scriptInformation[54].props, &scriptInformation[55].props,
+    &scriptInformation[56].props
 };
 
 typedef struct {

@@ -641,6 +641,7 @@ static const ScriptShapeData ShapingData[] =
     {{ khmer_features, 5}, required_khmer_features, "khmr", "", ContextualShape_Khmer, ShapeCharGlyphProp_Khmer},
     {{ no_features, 0}, NULL, "hani", "", NULL, NULL},
     {{ no_features, 0}, NULL, "hani", "", NULL, NULL},
+    {{ no_features, 0}, NULL, "bopo", "", NULL, NULL},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
