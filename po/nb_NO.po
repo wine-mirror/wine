@@ -3611,101 +3611,106 @@ msgid "Subscript out of range"
 msgstr ""
 
 #: jscript.rc:28
+#, fuzzy
+msgid "Object required"
+msgstr "Forventet objekt"
+
+#: jscript.rc:29
 msgid "Automation server can't create object"
 msgstr "Automatiseringstjeneren klarte ikke opprette objekt"
 
-#: jscript.rc:29
+#: jscript.rc:30
 msgid "Object doesn't support this property or method"
 msgstr "Objektet støtter ikke denne egenskapen eller metoden"
 
-#: jscript.rc:30
+#: jscript.rc:31
 #, fuzzy
 msgid "Object doesn't support this action"
 msgstr "Objektet støtter ikke denne egenskapen eller metoden"
 
-#: jscript.rc:31
+#: jscript.rc:32
 msgid "Argument not optional"
 msgstr "Argumentet er ikke valgfritt"
 
-#: jscript.rc:32
+#: jscript.rc:33
 msgid "Syntax error"
 msgstr "Syntaksfeil"
 
-#: jscript.rc:33
+#: jscript.rc:34
 msgid "Expected ';'"
 msgstr "Forventet ';'"
 
-#: jscript.rc:34
+#: jscript.rc:35
 msgid "Expected '('"
 msgstr "Forventet '('"
 
-#: jscript.rc:35
+#: jscript.rc:36
 msgid "Expected ')'"
 msgstr "Forventet ')'"
 
-#: jscript.rc:36
+#: jscript.rc:37
 msgid "Unterminated string constant"
 msgstr "Uavsluttet strengkonstant"
 
-#: jscript.rc:37
+#: jscript.rc:38
 msgid "Conditional compilation is turned off"
 msgstr ""
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Number expected"
 msgstr "Forventet nummer"
 
-#: jscript.rc:38
+#: jscript.rc:39
 msgid "Function expected"
 msgstr "Forventet funksjon"
 
-#: jscript.rc:39
+#: jscript.rc:40
 msgid "'[object]' is not a date object"
 msgstr "'[object]' er ikke et dataobjekt"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "Object expected"
 msgstr "Forventet objekt"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Illegal assignment"
 msgstr "Ugyldig tilordning"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "'|' is undefined"
 msgstr "'|' er udefinert"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "Boolean object expected"
 msgstr "Forventet boolsk verdi"
 
-#: jscript.rc:45
+#: jscript.rc:46
 #, fuzzy
 msgid "VBArray object expected"
 msgstr "Forventet rekke-objekt"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "JScript object expected"
 msgstr "Forventet JScript-objekt"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Syntax error in regular expression"
 msgstr "Syntaksfeil i regulært uttrykk"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "URI to be encoded contains invalid characters"
 msgstr "URI'en som skulle kodes inneholder ugyldige tegn"
 
-#: jscript.rc:48
+#: jscript.rc:49
 #, fuzzy
 msgid "URI to be decoded is incorrect"
 msgstr "URI'en som skulle kodes inneholder ugyldige tegn"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Array length must be a finite positive integer"
 msgstr "Rekkens lengde må være et endelig, positivt tall"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "Array object expected"
 msgstr "Forventet rekke-objekt"
 

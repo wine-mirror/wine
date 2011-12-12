@@ -1964,6 +1964,7 @@ var exception_array = {
     E_INVALID_CALL_ARG:    { type: "TypeError",   number: -2146828283 },
     E_NOT_FUNC:            { type: "TypeError",   number: -2146823286 },
     E_OBJECT_EXPECTED:     { type: "TypeError", number: -2146823281 },
+    E_OBJECT_REQUIRED:     { type: "TypeError", number: -2146827864 },
     E_UNSUPPORTED_ACTION:  { type: "TypeError", number: -2146827843 },
     E_NOT_VBARRAY:         { type: "TypeError", number: -2146823275 },
     E_UNDEFINED:           { type: "TypeError", number: -2146823279 },
@@ -2031,6 +2032,8 @@ testException(function() {new nullDisp;}, "E_NO_PROPERTY");
 testException(function() {new VBArray();}, "E_NOT_VBARRAY");
 testException(function() {new VBArray(new VBArray(createArray()));}, "E_NOT_VBARRAY");
 testException(function() {VBArray.prototype.lbound.call(new Object());}, "E_NOT_VBARRAY");
+testException(function() {+nullDisp.prop;}, "E_OBJECT_REQUIRED");
+testException(function() {+nullDisp["prop"];}, "E_OBJECT_REQUIRED");
 //FIXME: testException(function() {nonexistent++;}, "E_OBJECT_EXPECTED");
 //FIXME: testException(function() {undefined.nonexistent++;}, "E_OBJECT_EXPECTED");
 

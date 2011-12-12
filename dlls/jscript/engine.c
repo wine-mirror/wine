@@ -160,6 +160,8 @@ static HRESULT stack_pop_object(exec_ctx_t *ctx, IDispatch **r)
 
     v = stack_pop(ctx);
     if(V_VT(v) == VT_DISPATCH) {
+        if(!V_DISPATCH(v))
+            return throw_type_error(ctx->parser->script, &ctx->ei, JS_E_OBJECT_REQUIRED, NULL);
         *r = V_DISPATCH(v);
         return S_OK;
     }

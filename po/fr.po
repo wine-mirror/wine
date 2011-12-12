@@ -3494,98 +3494,103 @@ msgid "Subscript out of range"
 msgstr "Indice hors limites"
 
 #: jscript.rc:28
+#, fuzzy
+msgid "Object required"
+msgstr "Objet attendu"
+
+#: jscript.rc:29
 msgid "Automation server can't create object"
 msgstr "Le serveur d'automatisation ne peut créer l'objet"
 
-#: jscript.rc:29
+#: jscript.rc:30
 msgid "Object doesn't support this property or method"
 msgstr "Cet objet ne supporte pas cette propriété ou méthode"
 
-#: jscript.rc:30
+#: jscript.rc:31
 msgid "Object doesn't support this action"
 msgstr "Cet objet ne supporte pas cette action"
 
-#: jscript.rc:31
+#: jscript.rc:32
 msgid "Argument not optional"
 msgstr "Argument non optionnel"
 
-#: jscript.rc:32
+#: jscript.rc:33
 msgid "Syntax error"
 msgstr "Erreur de syntaxe"
 
-#: jscript.rc:33
+#: jscript.rc:34
 msgid "Expected ';'"
 msgstr "« ; » attendu"
 
-#: jscript.rc:34
+#: jscript.rc:35
 msgid "Expected '('"
 msgstr "« ( » attendu"
 
-#: jscript.rc:35
+#: jscript.rc:36
 msgid "Expected ')'"
 msgstr "« ) » attendu"
 
-#: jscript.rc:36
+#: jscript.rc:37
 msgid "Unterminated string constant"
 msgstr "Constante chaîne de caractères non clôturée"
 
-#: jscript.rc:37
+#: jscript.rc:38
 msgid "Conditional compilation is turned off"
 msgstr "La compilation conditionnelle est désactivée"
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Number expected"
 msgstr "Nombre attendu"
 
-#: jscript.rc:38
+#: jscript.rc:39
 msgid "Function expected"
 msgstr "Fonction attendue"
 
-#: jscript.rc:39
+#: jscript.rc:40
 msgid "'[object]' is not a date object"
 msgstr "« [objet] » n'est pas un objet de type date"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "Object expected"
 msgstr "Objet attendu"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Illegal assignment"
 msgstr "Affectation illégale"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "'|' is undefined"
 msgstr "« | » n'est pas défini"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "Boolean object expected"
 msgstr "Objet booléen attendu"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "VBArray object expected"
 msgstr "Objet VBArray attendu"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "JScript object expected"
 msgstr "Objet JScript attendu"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Syntax error in regular expression"
 msgstr "Erreur de syntaxe dans l'expression rationnelle"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "URI to be encoded contains invalid characters"
 msgstr "L'URI à coder contient des caractères invalides"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "URI to be decoded is incorrect"
 msgstr "L'URI à décoder est incorrecte"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Array length must be a finite positive integer"
 msgstr "La longueur d'un tableau doit être un entier positif"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "Array object expected"
 msgstr "Objet tableau attendu"
 

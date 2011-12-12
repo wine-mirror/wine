@@ -3436,98 +3436,102 @@ msgid "Subscript out of range"
 msgstr ""
 
 #: jscript.rc:28
-msgid "Automation server can't create object"
+msgid "Object required"
 msgstr ""
 
 #: jscript.rc:29
-msgid "Object doesn't support this property or method"
+msgid "Automation server can't create object"
 msgstr ""
 
 #: jscript.rc:30
-msgid "Object doesn't support this action"
+msgid "Object doesn't support this property or method"
 msgstr ""
 
 #: jscript.rc:31
-msgid "Argument not optional"
+msgid "Object doesn't support this action"
 msgstr ""
 
 #: jscript.rc:32
-msgid "Syntax error"
+msgid "Argument not optional"
 msgstr ""
 
 #: jscript.rc:33
-msgid "Expected ';'"
+msgid "Syntax error"
 msgstr ""
 
 #: jscript.rc:34
-msgid "Expected '('"
+msgid "Expected ';'"
 msgstr ""
 
 #: jscript.rc:35
-msgid "Expected ')'"
+msgid "Expected '('"
 msgstr ""
 
 #: jscript.rc:36
-msgid "Unterminated string constant"
+msgid "Expected ')'"
 msgstr ""
 
 #: jscript.rc:37
-msgid "Conditional compilation is turned off"
-msgstr ""
-
-#: jscript.rc:40
-msgid "Number expected"
+msgid "Unterminated string constant"
 msgstr ""
 
 #: jscript.rc:38
-msgid "Function expected"
-msgstr ""
-
-#: jscript.rc:39
-msgid "'[object]' is not a date object"
+msgid "Conditional compilation is turned off"
 msgstr ""
 
 #: jscript.rc:41
-msgid "Object expected"
+msgid "Number expected"
+msgstr ""
+
+#: jscript.rc:39
+msgid "Function expected"
+msgstr ""
+
+#: jscript.rc:40
+msgid "'[object]' is not a date object"
 msgstr ""
 
 #: jscript.rc:42
-msgid "Illegal assignment"
+msgid "Object expected"
 msgstr ""
 
 #: jscript.rc:43
-msgid "'|' is undefined"
+msgid "Illegal assignment"
 msgstr ""
 
 #: jscript.rc:44
-msgid "Boolean object expected"
+msgid "'|' is undefined"
 msgstr ""
 
 #: jscript.rc:45
-msgid "VBArray object expected"
+msgid "Boolean object expected"
 msgstr ""
 
 #: jscript.rc:46
-msgid "JScript object expected"
+msgid "VBArray object expected"
 msgstr ""
 
 #: jscript.rc:47
-msgid "Syntax error in regular expression"
-msgstr ""
-
-#: jscript.rc:49
-msgid "URI to be encoded contains invalid characters"
+msgid "JScript object expected"
 msgstr ""
 
 #: jscript.rc:48
-msgid "URI to be decoded is incorrect"
+msgid "Syntax error in regular expression"
 msgstr ""
 
 #: jscript.rc:50
-msgid "Array length must be a finite positive integer"
+msgid "URI to be encoded contains invalid characters"
+msgstr ""
+
+#: jscript.rc:49
+msgid "URI to be decoded is incorrect"
 msgstr ""
 
 #: jscript.rc:51
+msgid "Array length must be a finite positive integer"
+msgstr ""
+
+#: jscript.rc:52
 msgid "Array object expected"
 msgstr ""
 

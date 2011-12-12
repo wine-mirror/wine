@@ -3658,101 +3658,106 @@ msgid "Subscript out of range"
 msgstr ""
 
 #: jscript.rc:28
+#, fuzzy
+msgid "Object required"
+msgstr "Se așteaptă un obiect"
+
+#: jscript.rc:29
 msgid "Automation server can't create object"
 msgstr "Serverul de automatizare nu poate crea obiectul"
 
-#: jscript.rc:29
+#: jscript.rc:30
 msgid "Object doesn't support this property or method"
 msgstr "Obiectul nu suportă această proprietate sau metodă"
 
-#: jscript.rc:30
+#: jscript.rc:31
 #, fuzzy
 msgid "Object doesn't support this action"
 msgstr "Obiectul nu suportă această proprietate sau metodă"
 
-#: jscript.rc:31
+#: jscript.rc:32
 msgid "Argument not optional"
 msgstr "Argumentul nu este opțional"
 
-#: jscript.rc:32
+#: jscript.rc:33
 msgid "Syntax error"
 msgstr "Eroare de sintaxă"
 
-#: jscript.rc:33
+#: jscript.rc:34
 msgid "Expected ';'"
 msgstr "Se așteaptă „;”"
 
-#: jscript.rc:34
+#: jscript.rc:35
 msgid "Expected '('"
 msgstr "Se așteaptă „(”"
 
-#: jscript.rc:35
+#: jscript.rc:36
 msgid "Expected ')'"
 msgstr "Se așteaptă „)”"
 
-#: jscript.rc:36
+#: jscript.rc:37
 msgid "Unterminated string constant"
 msgstr "Șir constant neterminat"
 
-#: jscript.rc:37
+#: jscript.rc:38
 msgid "Conditional compilation is turned off"
 msgstr ""
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Number expected"
 msgstr "Se așteaptă un număr"
 
-#: jscript.rc:38
+#: jscript.rc:39
 msgid "Function expected"
 msgstr "Se așteaptă o funcție"
 
-#: jscript.rc:39
+#: jscript.rc:40
 msgid "'[object]' is not a date object"
 msgstr "„[obiect]” nu este un obiect de tip dată"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "Object expected"
 msgstr "Se așteaptă un obiect"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Illegal assignment"
 msgstr "Atribuire ilegală"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "'|' is undefined"
 msgstr "„|” nu este definit"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "Boolean object expected"
 msgstr "Se așteaptă un obiect boolean"
 
-#: jscript.rc:45
+#: jscript.rc:46
 #, fuzzy
 msgid "VBArray object expected"
 msgstr "Se așteaptă un obiect matrice"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "JScript object expected"
 msgstr "Se așteaptă un obiect JScript"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Syntax error in regular expression"
 msgstr "Eroare de sintaxă în expresia regulată"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "URI to be encoded contains invalid characters"
 msgstr "URI care trebuie codificat conține caractere nevalide"
 
-#: jscript.rc:48
+#: jscript.rc:49
 #, fuzzy
 msgid "URI to be decoded is incorrect"
 msgstr "URI care trebuie codificat conține caractere nevalide"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Array length must be a finite positive integer"
 msgstr "Lungimea unei matrice trebuie să fie un număr întreg pozitiv"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "Array object expected"
 msgstr "Se așteaptă un obiect matrice"
 

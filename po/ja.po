@@ -3458,98 +3458,103 @@ msgid "Subscript out of range"
 msgstr "添字が範囲外です"
 
 #: jscript.rc:28
+#, fuzzy
+msgid "Object required"
+msgstr "オブジェクトを期待していました"
+
+#: jscript.rc:29
 msgid "Automation server can't create object"
 msgstr "オートメーション サーバはオブジェクトを生成できません"
 
-#: jscript.rc:29
+#: jscript.rc:30
 msgid "Object doesn't support this property or method"
 msgstr "オブジェクトはこのプロパティまたはメソッドをサポートしていません"
 
-#: jscript.rc:30
+#: jscript.rc:31
 msgid "Object doesn't support this action"
 msgstr "オブジェクトはこの操作をサポートしていません"
 
-#: jscript.rc:31
+#: jscript.rc:32
 msgid "Argument not optional"
 msgstr "引数は省略できません"
 
-#: jscript.rc:32
+#: jscript.rc:33
 msgid "Syntax error"
 msgstr "構文エラー"
 
-#: jscript.rc:33
+#: jscript.rc:34
 msgid "Expected ';'"
 msgstr "';'を期待していました"
 
-#: jscript.rc:34
+#: jscript.rc:35
 msgid "Expected '('"
 msgstr "'('を期待していました"
 
-#: jscript.rc:35
+#: jscript.rc:36
 msgid "Expected ')'"
 msgstr "')'を期待していました"
 
-#: jscript.rc:36
+#: jscript.rc:37
 msgid "Unterminated string constant"
 msgstr "文字列定数が終端していません"
 
-#: jscript.rc:37
+#: jscript.rc:38
 msgid "Conditional compilation is turned off"
 msgstr "条件コンパイルはオフにされています"
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Number expected"
 msgstr "数値を期待していました"
 
-#: jscript.rc:38
+#: jscript.rc:39
 msgid "Function expected"
 msgstr "関数を期待していました"
 
-#: jscript.rc:39
+#: jscript.rc:40
 msgid "'[object]' is not a date object"
 msgstr "'[object]' は日付オブジェクトではありません"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "Object expected"
 msgstr "オブジェクトを期待していました"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Illegal assignment"
 msgstr "不正な割り当て"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "'|' is undefined"
 msgstr "'|'は定義されていません"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "Boolean object expected"
 msgstr "Boolean オブジェクトを期待していました"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "VBArray object expected"
 msgstr "VBArray オブジェクトを期待していました"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "JScript object expected"
 msgstr "JScript オブジェクトを期待していました"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Syntax error in regular expression"
 msgstr "正規表現に構文誤りがあります"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "URI to be encoded contains invalid characters"
 msgstr "エンコードされるURIに無効な文字が含まれています"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "URI to be decoded is incorrect"
 msgstr "デコードされるURIが正しくありません"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Array length must be a finite positive integer"
 msgstr "配列の長さは有限の正整数でなければなりません"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "Array object expected"
 msgstr "配列オブジェクトを期待していました"
 

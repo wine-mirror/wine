@@ -3485,98 +3485,103 @@ msgid "Subscript out of range"
 msgstr "Sottoscript fuori portata"
 
 #: jscript.rc:28
+#, fuzzy
+msgid "Object required"
+msgstr "Richiesto un oggetto"
+
+#: jscript.rc:29
 msgid "Automation server can't create object"
 msgstr "Il server di automazione non può creare l'oggetto"
 
-#: jscript.rc:29
+#: jscript.rc:30
 msgid "Object doesn't support this property or method"
 msgstr "L'oggetto non supporta questa proprietà o metodo"
 
-#: jscript.rc:30
+#: jscript.rc:31
 msgid "Object doesn't support this action"
 msgstr "L'oggetto non supporta questa azione"
 
-#: jscript.rc:31
+#: jscript.rc:32
 msgid "Argument not optional"
 msgstr "Argomento non opzionale"
 
-#: jscript.rc:32
+#: jscript.rc:33
 msgid "Syntax error"
 msgstr "Errore di sintassi"
 
-#: jscript.rc:33
+#: jscript.rc:34
 msgid "Expected ';'"
 msgstr "Richiesto ';'"
 
-#: jscript.rc:34
+#: jscript.rc:35
 msgid "Expected '('"
 msgstr "Richiesto '('"
 
-#: jscript.rc:35
+#: jscript.rc:36
 msgid "Expected ')'"
 msgstr "Richiesto ')'"
 
-#: jscript.rc:36
+#: jscript.rc:37
 msgid "Unterminated string constant"
 msgstr "Costante stringa non terminata"
 
-#: jscript.rc:37
+#: jscript.rc:38
 msgid "Conditional compilation is turned off"
 msgstr "Compilazione condizionale disattivata"
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Number expected"
 msgstr "Richiesto un numero"
 
-#: jscript.rc:38
+#: jscript.rc:39
 msgid "Function expected"
 msgstr "Richiesta una funzione"
 
-#: jscript.rc:39
+#: jscript.rc:40
 msgid "'[object]' is not a date object"
 msgstr "'[oggetto]' non è un oggetto data"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "Object expected"
 msgstr "Richiesto un oggetto"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Illegal assignment"
 msgstr "Assegnamento illegale"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "'|' is undefined"
 msgstr "'|' non è definito"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "Boolean object expected"
 msgstr "Richiesto un oggetto Booleano"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "VBArray object expected"
 msgstr "Richiesto un oggetto VBArray"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "JScript object expected"
 msgstr "Richiesto un oggetto JScript"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Syntax error in regular expression"
 msgstr "Errore di sintassi nell'espressione regolare"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "URI to be encoded contains invalid characters"
 msgstr "L'URI da codificare contiene caratteri non validi"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "URI to be decoded is incorrect"
 msgstr "L'URI da decodificare non è corretto"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Array length must be a finite positive integer"
 msgstr "La lunghezza dell'array deve essere un intero finito e positivo"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "Array object expected"
 msgstr "Richiesto un oggetto array"
 

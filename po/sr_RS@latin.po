@@ -3565,99 +3565,104 @@ msgid "Subscript out of range"
 msgstr "Potpis je van dometa"
 
 #: jscript.rc:28
+#, fuzzy
+msgid "Object required"
+msgstr "Očekivani objekat"
+
+#: jscript.rc:29
 msgid "Automation server can't create object"
 msgstr "Automatizovani server ne može da stvori objekat"
 
-#: jscript.rc:29
+#: jscript.rc:30
 msgid "Object doesn't support this property or method"
 msgstr "Objekat ne podržava ovo svojstvo ili metodu"
 
-#: jscript.rc:30
+#: jscript.rc:31
 msgid "Object doesn't support this action"
 msgstr "Objekat ne podržava ovu radnju"
 
-#: jscript.rc:31
+#: jscript.rc:32
 msgid "Argument not optional"
 msgstr "Argument je obavezan"
 
-#: jscript.rc:32
+#: jscript.rc:33
 msgid "Syntax error"
 msgstr "Greška u sintaksi"
 
-#: jscript.rc:33
+#: jscript.rc:34
 msgid "Expected ';'"
 msgstr "Očekivano ';'"
 
-#: jscript.rc:34
+#: jscript.rc:35
 msgid "Expected '('"
 msgstr "Očekivano '('"
 
-#: jscript.rc:35
+#: jscript.rc:36
 msgid "Expected ')'"
 msgstr "Očekivano ')'"
 
-#: jscript.rc:36
+#: jscript.rc:37
 msgid "Unterminated string constant"
 msgstr "Nezavršena konstanta niski"
 
-#: jscript.rc:37
+#: jscript.rc:38
 msgid "Conditional compilation is turned off"
 msgstr ""
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Number expected"
 msgstr "Očekivani broj"
 
-#: jscript.rc:38
+#: jscript.rc:39
 msgid "Function expected"
 msgstr "Očekivana funkcija"
 
-#: jscript.rc:39
+#: jscript.rc:40
 msgid "'[object]' is not a date object"
 msgstr "„[object]“ nije vremenski objekat"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "Object expected"
 msgstr "Očekivani objekat"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Illegal assignment"
 msgstr "Nedozvoljen zadatak"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "'|' is undefined"
 msgstr "„|“ nije određeno"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "Boolean object expected"
 msgstr "Očekivani objekat istinitosne vrednosti"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "VBArray object expected"
 msgstr "VBArray objekat se očekuje"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "JScript object expected"
 msgstr "Očekivani objekat JScript vrste"
 
-#: jscript.rc:47
+#: jscript.rc:48
 msgid "Syntax error in regular expression"
 msgstr "Sintaksna greška u regularnom izrazu"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "URI to be encoded contains invalid characters"
 msgstr "URI sadrži neispravne znakove"
 
-#: jscript.rc:48
+#: jscript.rc:49
 #, fuzzy
 msgid "URI to be decoded is incorrect"
 msgstr "URI sadrži neispravne znakove"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Array length must be a finite positive integer"
 msgstr "Niz dužine mora biti konačan pozitivan ceo broj"
 
-#: jscript.rc:51
+#: jscript.rc:52
 msgid "Array object expected"
 msgstr "Očekivani niz objekta"
 

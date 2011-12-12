@@ -25,6 +25,7 @@ STRINGTABLE
     IDS_TO_PRIMITIVE        "Error converting object to primitive type"
     IDS_INVALID_CALL_ARG    "Invalid procedure call or argument"
     IDS_SUBSCRIPT_OUT_OF_RANGE "Subscript out of range"
+    IDS_OBJECT_REQUIRED     "Object required"
     IDS_CREATE_OBJ_ERROR    "Automation server can't create object"
     IDS_NO_PROPERTY         "Object doesn't support this property or method"
     IDS_UNSUPPORTED_ACTION  "Object doesn't support this action"
