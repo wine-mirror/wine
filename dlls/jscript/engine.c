@@ -1579,6 +1579,7 @@ static HRESULT interp_member(exec_ctx_t *ctx)
 
     hres = disp_get_id(ctx->parser->script, obj, arg, 0, &id);
     if(SUCCEEDED(hres)) {
+        V_VT(&v) = VT_EMPTY;
         hres = disp_propget(ctx->parser->script, obj, id, &v, &ctx->ei, NULL/*FIXME*/);
     }else if(hres == DISP_E_UNKNOWNNAME) {
         V_VT(&v) = VT_EMPTY;
