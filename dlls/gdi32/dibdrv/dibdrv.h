@@ -20,7 +20,8 @@
 
 enum dib_info_flags
 {
-    private_color_table = 1
+    private_color_table = 1,
+    default_color_table = 2
 };
 
 typedef struct

@@ -927,7 +927,6 @@ static BOOL matching_color_info( const dib_info *dib, const BITMAPINFO *info )
     case 8:
     {
         RGBQUAD *color_table = (RGBQUAD *)((char *)info + info->bmiHeader.biSize);
-        if (!info->bmiHeader.biClrUsed) return FALSE;
         if (dib->color_table_size != info->bmiHeader.biClrUsed) return FALSE;
         return !memcmp( color_table, dib->color_table, dib->color_table_size * sizeof(RGBQUAD) );
     }
@@ -1327,7 +1326,7 @@ DWORD blend_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bitbl
 
     if (!init_dib_info_from_bitmapinfo( &src_dib, src_info, src_bits, 0 ) )
         return ERROR_BAD_FORMAT;
-    if (!init_dib_info_from_bitmapinfo( &dst_dib, dst_info, dst_bits, 0 ) )
+    if (!init_dib_info_from_bitmapinfo( &dst_dib, dst_info, dst_bits, default_color_table ) )
         return ERROR_BAD_FORMAT;
 
     return blend_rect( &dst_dib, &dst->visrect, &src_dib, &src->visrect, NULL, blend );
@@ -1345,7 +1344,7 @@ DWORD gradient_bitmapinfo( const BITMAPINFO *info, void *bits, TRIVERTEX *vert_a
     DWORD ret = ERROR_SUCCESS;
     HRGN tmp_rgn = 0;
 
-    if (!init_dib_info_from_bitmapinfo( &dib, info, bits, 0 )) return ERROR_BAD_FORMAT;
+    if (!init_dib_info_from_bitmapinfo( &dib, info, bits, default_color_table )) return ERROR_BAD_FORMAT;
 
     switch (mode)
     {

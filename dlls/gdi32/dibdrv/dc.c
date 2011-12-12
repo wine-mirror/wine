@@ -153,6 +153,11 @@ static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD
             dib->color_table = color_table;
         dib->color_table_size = bi->biClrUsed;
     }
+    else if (flags & default_color_table)
+    {
+        dib->color_table = (RGBQUAD *)get_default_color_table( dib->bit_count );
+        dib->color_table_size = dib->color_table ? (1 << dib->bit_count) : 0;
+    }
     else
     {
         dib->color_table = NULL;
@@ -186,10 +191,9 @@ BOOL init_dib_info_from_bitmapobj(dib_info *dib, BITMAPOBJ *bmp, enum dib_info_f
 {
     if (!bmp->dib)
     {
-        char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
-        BITMAPINFO *info = (BITMAPINFO *)buffer;
+        BITMAPINFO info;
 
-        get_ddb_bitmapinfo( bmp, info );
+        get_ddb_bitmapinfo( bmp, &info );
         if (!bmp->bitmap.bmBits)
         {
             int width_bytes = get_dib_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
@@ -197,8 +201,7 @@ BOOL init_dib_info_from_bitmapobj(dib_info *dib, BITMAPOBJ *bmp, enum dib_info_f
                                             bmp->bitmap.bmHeight * width_bytes );
             if (!bmp->bitmap.bmBits) return FALSE;
         }
-        return init_dib_info_from_bitmapinfo( dib, info, bmp->bitmap.bmBits,
-                                              flags | private_color_table );
+        return init_dib_info_from_bitmapinfo( dib, &info, bmp->bitmap.bmBits, flags );
     }
     return init_dib_info( dib, &bmp->dib->dsBmih, bmp->dib->dsBitfields,
                           bmp->color_table, bmp->dib->dsBm.bmBits, flags );
@@ -261,9 +264,9 @@ DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
     dib_info src_dib, dst_dib;
     DWORD ret;
 
-    if ( !init_dib_info_from_bitmapinfo( &src_dib, src_info, src_bits, 0 ) )
+    if ( !init_dib_info_from_bitmapinfo( &src_dib, src_info, src_bits, default_color_table ) )
         return ERROR_BAD_FORMAT;
-    if ( !init_dib_info_from_bitmapinfo( &dst_dib, dst_info, dst_bits, 0 ) )
+    if ( !init_dib_info_from_bitmapinfo( &dst_dib, dst_info, dst_bits, default_color_table ) )
         return ERROR_BAD_FORMAT;
 
     __TRY
@@ -405,7 +408,7 @@ static HBITMAP dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
 
     free_dib_info(&pdev->dib);
     pdev->defer = 0;
-    if(!init_dib_info_from_bitmapobj(&pdev->dib, bmp, 0))
+    if(!init_dib_info_from_bitmapobj(&pdev->dib, bmp, default_color_table))
         pdev->defer |= DEFER_FORMAT;
 
     GDI_ReleaseObj( bitmap );

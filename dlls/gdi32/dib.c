@@ -1155,7 +1155,6 @@ void get_ddb_bitmapinfo( BITMAPOBJ *bmp, BITMAPINFO *info )
     info->bmiHeader.biYPelsPerMeter = 0;
     info->bmiHeader.biClrUsed       = 0;
     info->bmiHeader.biClrImportant  = 0;
-    if (info->bmiHeader.biBitCount <= 8) fill_default_color_table( info );
 }
 
 BITMAPINFO *copy_packed_dib( const BITMAPINFO *src_info, UINT usage )
