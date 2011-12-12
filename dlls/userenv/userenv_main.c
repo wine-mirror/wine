@@ -28,6 +28,7 @@
 #include "winternl.h"
 #include "winnls.h"
 #include "sddl.h"
+#include "objbase.h"
 #include "userenv.h"
 
 #include "wine/debug.h"

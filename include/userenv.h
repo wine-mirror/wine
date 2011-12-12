@@ -19,7 +19,7 @@
 #ifndef __WINE_USERENV_H
 #define __WINE_USERENV_H
 
-/* FIXME: #include <wbemcli.h> */
+#include <wbemcli.h>
 #include <profinfo.h>
 
 #define PT_TEMPORARY    0x00000001
