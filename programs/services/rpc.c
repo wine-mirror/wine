@@ -697,7 +697,9 @@ DWORD __cdecl svcctl_SetServiceStatus(
     service->service_entry->status.dwWaitHint = lpServiceStatus->dwWaitHint;
     service_unlock(service->service_entry);
 
-    if (service->service_entry->status_changed_event)
+    if (lpServiceStatus->dwCurrentState == SERVICE_STOPPED)
+        service_terminate(service->service_entry);
+    else if (service->service_entry->status_changed_event)
         SetEvent(service->service_entry->status_changed_event);
 
     return ERROR_SUCCESS;
