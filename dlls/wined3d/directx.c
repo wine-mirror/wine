@@ -4899,28 +4899,28 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
                                         WINEDDPCAPS_PRIMARYSURFACE;
 
     /* Fill the ddraw caps structure */
-    caps->DirectDrawCaps.Caps =         WINEDDCAPS_GDI                      |
+    caps->ddraw_caps.caps =             WINEDDCAPS_GDI                      |
                                         WINEDDCAPS_PALETTE                  |
                                         blit_caps;
-    caps->DirectDrawCaps.Caps2 =        WINEDDCAPS2_CERTIFIED                |
-                                        WINEDDCAPS2_NOPAGELOCKREQUIRED       |
-                                        WINEDDCAPS2_PRIMARYGAMMA             |
-                                        WINEDDCAPS2_WIDESURFACES             |
+    caps->ddraw_caps.caps2 =            WINEDDCAPS2_CERTIFIED               |
+                                        WINEDDCAPS2_NOPAGELOCKREQUIRED      |
+                                        WINEDDCAPS2_PRIMARYGAMMA            |
+                                        WINEDDCAPS2_WIDESURFACES            |
                                         WINEDDCAPS2_CANRENDERWINDOWED;
-    caps->DirectDrawCaps.CKeyCaps =     ckey_caps;
-    caps->DirectDrawCaps.FXCaps =       fx_caps;
-    caps->DirectDrawCaps.PalCaps =      pal_caps;
-    caps->DirectDrawCaps.SVBCaps =      blit_caps;
-    caps->DirectDrawCaps.SVBCKeyCaps =  ckey_caps;
-    caps->DirectDrawCaps.SVBFXCaps =    fx_caps;
-    caps->DirectDrawCaps.VSBCaps =      blit_caps;
-    caps->DirectDrawCaps.VSBCKeyCaps =  ckey_caps;
-    caps->DirectDrawCaps.VSBFXCaps =    fx_caps;
-    caps->DirectDrawCaps.SSBCaps =      blit_caps;
-    caps->DirectDrawCaps.SSBCKeyCaps =  ckey_caps;
-    caps->DirectDrawCaps.SSBFXCaps =    fx_caps;
+    caps->ddraw_caps.color_key_caps = ckey_caps;
+    caps->ddraw_caps.fx_caps = fx_caps;
+    caps->ddraw_caps.pal_caps = pal_caps;
+    caps->ddraw_caps.svb_caps = blit_caps;
+    caps->ddraw_caps.svb_color_key_caps = ckey_caps;
+    caps->ddraw_caps.svb_fx_caps = fx_caps;
+    caps->ddraw_caps.vsb_caps = blit_caps;
+    caps->ddraw_caps.vsb_color_key_caps = ckey_caps;
+    caps->ddraw_caps.vsb_fx_caps = fx_caps;
+    caps->ddraw_caps.ssb_caps = blit_caps;
+    caps->ddraw_caps.ssb_color_key_caps = ckey_caps;
+    caps->ddraw_caps.ssb_fx_caps = fx_caps;
 
-    caps->DirectDrawCaps.ddsCaps =      WINEDDSCAPS_ALPHA                   |
+    caps->ddraw_caps.dds_caps =         WINEDDSCAPS_ALPHA                   |
                                         WINEDDSCAPS_BACKBUFFER              |
                                         WINEDDSCAPS_FLIP                    |
                                         WINEDDSCAPS_FRONTBUFFER             |
@@ -4930,16 +4930,16 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
                                         WINEDDSCAPS_SYSTEMMEMORY            |
                                         WINEDDSCAPS_VIDEOMEMORY             |
                                         WINEDDSCAPS_VISIBLE;
-    caps->DirectDrawCaps.StrideAlign = DDRAW_PITCH_ALIGNMENT;
+    caps->ddraw_caps.stride_align = DDRAW_PITCH_ALIGNMENT;
 
     /* Set D3D caps if OpenGL is available. */
     if (adapter->opengl)
     {
-        caps->DirectDrawCaps.ddsCaps |= WINEDDSCAPS_3DDEVICE                |
+        caps->ddraw_caps.dds_caps |=    WINEDDSCAPS_3DDEVICE                |
                                         WINEDDSCAPS_MIPMAP                  |
                                         WINEDDSCAPS_TEXTURE                 |
                                         WINEDDSCAPS_ZBUFFER;
-        caps->DirectDrawCaps.Caps |=    WINEDDCAPS_3D;
+        caps->ddraw_caps.caps |=        WINEDDCAPS_3D;
     }
 
     return WINED3D_OK;

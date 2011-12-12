@@ -1757,27 +1757,27 @@ struct wined3d_pixel_shader_caps
     INT instruction_slot_count;
 };
 
-typedef struct _WINEDDCAPS
+struct wined3d_ddraw_caps
 {
-    DWORD Caps;
-    DWORD Caps2;
-    DWORD CKeyCaps;
-    DWORD FXCaps;
-    DWORD FXAlphaCaps;
-    DWORD PalCaps;
-    DWORD SVCaps;
-    DWORD SVBCaps;
-    DWORD SVBCKeyCaps;
-    DWORD SVBFXCaps;
-    DWORD VSBCaps;
-    DWORD VSBCKeyCaps;
-    DWORD VSBFXCaps;
-    DWORD SSBCaps;
-    DWORD SSBCKeyCaps;
-    DWORD SSBFXCaps;
-    DWORD ddsCaps;
-    DWORD StrideAlign;
-} WINEDDCAPS;
+    DWORD caps;
+    DWORD caps2;
+    DWORD color_key_caps;
+    DWORD fx_caps;
+    DWORD fx_alpha_caps;
+    DWORD pal_caps;
+    DWORD sv_caps;
+    DWORD svb_caps;
+    DWORD svb_color_key_caps;
+    DWORD svb_fx_caps;
+    DWORD vsb_caps;
+    DWORD vsb_color_key_caps;
+    DWORD vsb_fx_caps;
+    DWORD ssb_caps;
+    DWORD ssb_color_key_caps;
+    DWORD ssb_fx_caps;
+    DWORD dds_caps;
+    DWORD stride_align;
+};
 
 typedef struct _WINED3DCAPS
 {
@@ -1868,7 +1868,7 @@ typedef struct _WINED3DCAPS
     DWORD Reserved2; /* Not in the microsoft headers but documented */
     DWORD Reserved3;
 
-    WINEDDCAPS DirectDrawCaps;
+    struct wined3d_ddraw_caps ddraw_caps;
 } WINED3DCAPS;
 
 struct wined3d_color_key

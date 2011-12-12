@@ -1197,21 +1197,21 @@ static HRESULT WINAPI ddraw7_GetCaps(IDirectDraw7 *iface, DDCAPS *DriverCaps, DD
         return hr;
     }
 
-    caps.dwCaps = winecaps.DirectDrawCaps.Caps;
-    caps.dwCaps2 = winecaps.DirectDrawCaps.Caps2;
-    caps.dwCKeyCaps = winecaps.DirectDrawCaps.CKeyCaps;
-    caps.dwFXCaps = winecaps.DirectDrawCaps.FXCaps;
-    caps.dwPalCaps = winecaps.DirectDrawCaps.PalCaps;
-    caps.ddsCaps.dwCaps = winecaps.DirectDrawCaps.ddsCaps;
-    caps.dwSVBCaps = winecaps.DirectDrawCaps.SVBCaps;
-    caps.dwSVBCKeyCaps = winecaps.DirectDrawCaps.SVBCKeyCaps;
-    caps.dwSVBFXCaps = winecaps.DirectDrawCaps.SVBFXCaps;
-    caps.dwVSBCaps = winecaps.DirectDrawCaps.VSBCaps;
-    caps.dwVSBCKeyCaps = winecaps.DirectDrawCaps.VSBCKeyCaps;
-    caps.dwVSBFXCaps = winecaps.DirectDrawCaps.VSBFXCaps;
-    caps.dwSSBCaps = winecaps.DirectDrawCaps.SSBCaps;
-    caps.dwSSBCKeyCaps = winecaps.DirectDrawCaps.SSBCKeyCaps;
-    caps.dwSSBFXCaps = winecaps.DirectDrawCaps.SSBFXCaps;
+    caps.dwCaps = winecaps.ddraw_caps.caps;
+    caps.dwCaps2 = winecaps.ddraw_caps.caps2;
+    caps.dwCKeyCaps = winecaps.ddraw_caps.color_key_caps;
+    caps.dwFXCaps = winecaps.ddraw_caps.fx_caps;
+    caps.dwPalCaps = winecaps.ddraw_caps.pal_caps;
+    caps.ddsCaps.dwCaps = winecaps.ddraw_caps.dds_caps;
+    caps.dwSVBCaps = winecaps.ddraw_caps.svb_caps;
+    caps.dwSVBCKeyCaps = winecaps.ddraw_caps.svb_color_key_caps;
+    caps.dwSVBFXCaps = winecaps.ddraw_caps.svb_fx_caps;
+    caps.dwVSBCaps = winecaps.ddraw_caps.vsb_caps;
+    caps.dwVSBCKeyCaps = winecaps.ddraw_caps.vsb_color_key_caps;
+    caps.dwVSBFXCaps = winecaps.ddraw_caps.vsb_fx_caps;
+    caps.dwSSBCaps = winecaps.ddraw_caps.ssb_caps;
+    caps.dwSSBCKeyCaps = winecaps.ddraw_caps.ssb_color_key_caps;
+    caps.dwSSBFXCaps = winecaps.ddraw_caps.ssb_fx_caps;
 
     /* Even if WineD3D supports 3D rendering, remove the cap if ddraw is configured
      * not to use it
@@ -1220,9 +1220,10 @@ static HRESULT WINAPI ddraw7_GetCaps(IDirectDraw7 *iface, DDCAPS *DriverCaps, DD
         caps.dwCaps &= ~DDCAPS_3D;
         caps.ddsCaps.dwCaps &= ~(DDSCAPS_3DDEVICE | DDSCAPS_MIPMAP | DDSCAPS_TEXTURE | DDSCAPS_ZBUFFER);
     }
-    if(winecaps.DirectDrawCaps.StrideAlign != 0) {
+    if (winecaps.ddraw_caps.stride_align)
+    {
         caps.dwCaps |= DDCAPS_ALIGNSTRIDE;
-        caps.dwAlignStrideAlign = winecaps.DirectDrawCaps.StrideAlign;
+        caps.dwAlignStrideAlign = winecaps.ddraw_caps.stride_align;
     }
 
     if(DriverCaps)
