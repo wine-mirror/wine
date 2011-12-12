@@ -1093,58 +1093,6 @@ COLORREF X11DRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 
 
 /***********************************************************************
- *           X11DRV_GetPixel
- */
-COLORREF X11DRV_GetPixel( PHYSDEV dev, INT x, INT y )
-{
-    static Pixmap pixmap = 0;
-    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
-    XImage * image;
-    int pixel;
-    POINT pt;
-    BOOL memdc = (GetObjectType(dev->hdc) == OBJ_MEMDC);
-
-    pt.x = x;
-    pt.y = y;
-    LPtoDP( dev->hdc, &pt, 1 );
-
-    /* Update the pixmap from the DIB section */
-    X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod);
-
-    wine_tsx11_lock();
-    if (memdc)
-    {
-        image = XGetImage( gdi_display, physDev->drawable,
-                           physDev->dc_rect.left + pt.x, physDev->dc_rect.top + pt.y,
-                           1, 1, AllPlanes, ZPixmap );
-    }
-    else
-    {
-        /* If we are reading from the screen, use a temporary copy */
-        /* to avoid a BadMatch error */
-        if (!pixmap) pixmap = XCreatePixmap( gdi_display, root_window,
-                                             1, 1, physDev->depth );
-        XCopyArea( gdi_display, physDev->drawable, pixmap, get_bitmap_gc(physDev->depth),
-                   physDev->dc_rect.left + pt.x, physDev->dc_rect.top + pt.y, 1, 1, 0, 0 );
-        image = XGetImage( gdi_display, pixmap, 0, 0, 1, 1, AllPlanes, ZPixmap );
-    }
-    pixel = XGetPixel( image, 0, 0 );
-    XDestroyImage( image );
-    wine_tsx11_unlock();
-
-    /* Update the DIBSection from the pixmap */
-    X11DRV_UnlockDIBSection(physDev, FALSE);
-    if( physDev->depth > 1)
-        pixel = X11DRV_PALETTE_ToLogical(physDev, pixel);
-    else
-        /* monochrome bitmaps return black or white */
-        if( pixel) pixel = 0xffffff;
-    return pixel;
-
-}
-
-
-/***********************************************************************
  *           X11DRV_PaintRgn
  */
 BOOL X11DRV_PaintRgn( PHYSDEV dev, HRGN hrgn )

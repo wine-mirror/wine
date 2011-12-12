@@ -512,7 +512,7 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pGetKerningPairs */
     X11DRV_GetNearestColor,             /* pGetNearestColor */
     NULL,                               /* pGetOutlineTextMetrics */
-    X11DRV_GetPixel,                    /* pGetPixel */
+    NULL,                               /* pGetPixel */
     X11DRV_GetPixelFormat,              /* pGetPixelFormat */
     X11DRV_GetSystemPaletteEntries,     /* pGetSystemPaletteEntries */
     NULL,                               /* pGetTextCharsetInfo */
