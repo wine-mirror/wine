@@ -144,8 +144,47 @@ static void test_palette_entries(void)
     ok( palEntry.peFlags == getEntryResult.peFlags, "palEntry.peFlags (%#x) != getEntryResult.peFlags (%#x)\n", palEntry.peFlags, getEntryResult.peFlags );
 }
 
+static void test_halftone_palette(void)
+{
+    HDC hdc;
+    HPALETTE pal;
+    PALETTEENTRY entries[256];
+    PALETTEENTRY defpal[20];
+    int i, count;
+
+    hdc = GetDC(0);
+
+    count = GetPaletteEntries( GetStockObject(DEFAULT_PALETTE), 0, 20, defpal );
+    ok( count == 20, "wrong size %u\n", count );
+
+    pal = CreateHalftonePalette( hdc );
+    count = GetPaletteEntries( pal, 0, 256, entries );
+    ok( count == 256 || broken(count == 20), /* nt 4 */
+        "wrong size %u\n", count );
+
+    /* first and last 10 match the default palette */
+    for (i = 0; i < 10; i++)
+        ok( entries[i].peRed   == defpal[i].peRed &&
+            entries[i].peGreen == defpal[i].peGreen &&
+            entries[i].peBlue  == defpal[i].peBlue &&
+            !entries[i].peFlags,
+            "%u: wrong color %02x,%02x,%02x,%02x\n", i,
+            entries[i].peRed, entries[i].peGreen, entries[i].peBlue, entries[i].peFlags );
+    for (i = count - 10; i < count; i++)
+        ok( entries[i].peRed   == defpal[i - count + 20].peRed &&
+            entries[i].peGreen == defpal[i - count + 20].peGreen &&
+            entries[i].peBlue  == defpal[i - count + 20].peBlue &&
+            !entries[i].peFlags,
+            "%u: wrong color %02x,%02x,%02x,%02x\n", i,
+            entries[i].peRed, entries[i].peGreen, entries[i].peBlue, entries[i].peFlags );
+
+    DeleteObject( pal );
+    ReleaseDC( 0, hdc );
+}
+
 START_TEST(palette)
 {
     test_DIB_PAL_COLORS();
     test_palette_entries();
+    test_halftone_palette();
 }

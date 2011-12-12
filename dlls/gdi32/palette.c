@@ -72,40 +72,6 @@ static UINT SystemPaletteUse = SYSPAL_STATIC;  /* currently not considered */
 static HPALETTE hPrimaryPalette = 0; /* used for WM_PALETTECHANGED */
 static HPALETTE hLastRealizedPalette = 0; /* UnrealizeObject() needs it */
 
-#define NB_RESERVED_COLORS  20   /* number of fixed colors in system palette */
-
-static const PALETTEENTRY sys_pal_template[NB_RESERVED_COLORS] =
-{
-    /* first 10 entries in the system palette */
-    /* red  green blue  flags */
-    { 0x00, 0x00, 0x00, 0 },
-    { 0x80, 0x00, 0x00, 0 },
-    { 0x00, 0x80, 0x00, 0 },
-    { 0x80, 0x80, 0x00, 0 },
-    { 0x00, 0x00, 0x80, 0 },
-    { 0x80, 0x00, 0x80, 0 },
-    { 0x00, 0x80, 0x80, 0 },
-    { 0xc0, 0xc0, 0xc0, 0 },
-    { 0xc0, 0xdc, 0xc0, 0 },
-    { 0xa6, 0xca, 0xf0, 0 },
-
-    /* ... c_min/2 dynamic colorcells */
-
-    /* ... gap (for sparse palettes) */
-
-    /* ... c_min/2 dynamic colorcells */
-
-    { 0xff, 0xfb, 0xf0, 0 },
-    { 0xa0, 0xa0, 0xa4, 0 },
-    { 0x80, 0x80, 0x80, 0 },
-    { 0xff, 0x00, 0x00, 0 },
-    { 0x00, 0xff, 0x00, 0 },
-    { 0xff, 0xff, 0x00, 0 },
-    { 0x00, 0x00, 0xff, 0 },
-    { 0xff, 0x00, 0xff, 0 },
-    { 0x00, 0xff, 0xff, 0 },
-    { 0xff, 0xff, 0xff, 0 }     /* last 10 */
-};
 
 /***********************************************************************
  *           PALETTE_Init
@@ -114,21 +80,30 @@ static const PALETTEENTRY sys_pal_template[NB_RESERVED_COLORS] =
  */
 HPALETTE PALETTE_Init(void)
 {
-    HPALETTE          hpalette;
-    LOGPALETTE *        palPtr;
+    const RGBQUAD *entries = get_default_color_table( 8 );
+    char buffer[FIELD_OFFSET( LOGPALETTE, palPalEntry[20] )];
+    LOGPALETTE *palPtr = (LOGPALETTE *)buffer;
+    int i;
 
     /* create default palette (20 system colors) */
 
-    palPtr = HeapAlloc( GetProcessHeap(), 0,
-             sizeof(LOGPALETTE) + (NB_RESERVED_COLORS-1)*sizeof(PALETTEENTRY));
-    if (!palPtr) return FALSE;
-
     palPtr->palVersion = 0x300;
-    palPtr->palNumEntries = NB_RESERVED_COLORS;
-    memcpy( palPtr->palPalEntry, sys_pal_template, sizeof(sys_pal_template) );
-    hpalette = CreatePalette( palPtr );
-    HeapFree( GetProcessHeap(), 0, palPtr );
-    return hpalette;
+    palPtr->palNumEntries = 20;
+    for (i = 0; i < 10; i++)
+    {
+        palPtr->palPalEntry[i].peRed   = entries[i].rgbRed;
+        palPtr->palPalEntry[i].peGreen = entries[i].rgbGreen;
+        palPtr->palPalEntry[i].peBlue  = entries[i].rgbBlue;
+        palPtr->palPalEntry[i].peFlags = 0;
+    }
+    for (i = 10; i < 20; i++)
+    {
+        palPtr->palPalEntry[i].peRed   = entries[236 + i].rgbRed;
+        palPtr->palPalEntry[i].peGreen = entries[236 + i].rgbGreen;
+        palPtr->palPalEntry[i].peBlue  = entries[236 + i].rgbBlue;
+        palPtr->palPalEntry[i].peFlags = 0;
+    }
+    return CreatePalette( palPtr );
 }
 
 
@@ -150,8 +125,6 @@ HPALETTE WINAPI CreatePalette(
 
     if (!palette) return 0;
     TRACE("entries=%i\n", palette->palNumEntries);
-
-    size = sizeof(LOGPALETTE) + (palette->palNumEntries - 1) * sizeof(PALETTEENTRY);
 
     if (!(palettePtr = HeapAlloc( GetProcessHeap(), 0, sizeof(*palettePtr) ))) return 0;
     palettePtr->unrealize = NULL;
@@ -191,83 +164,21 @@ HPALETTE WINAPI CreatePalette(
 HPALETTE WINAPI CreateHalftonePalette(
     HDC hdc) /* [in] Handle to device context */
 {
+    const RGBQUAD *entries = get_default_color_table( 8 );
+    char buffer[FIELD_OFFSET( LOGPALETTE, palPalEntry[256] )];
+    LOGPALETTE *pal = (LOGPALETTE *)buffer;
     int i;
-    struct {
-	WORD Version;
-	WORD NumberOfEntries;
-	PALETTEENTRY aEntries[256];
-    } Palette;
 
-    Palette.Version = 0x300;
-    Palette.NumberOfEntries = 256;
-    GetSystemPaletteEntries(hdc, 0, 256, Palette.aEntries);
-
-    Palette.NumberOfEntries = 20;
-
-    for (i = 0; i < Palette.NumberOfEntries; i++)
+    pal->palVersion = 0x300;
+    pal->palNumEntries = 256;
+    for (i = 0; i < 256; i++)
     {
-        Palette.aEntries[i].peRed=0xff;
-        Palette.aEntries[i].peGreen=0xff;
-        Palette.aEntries[i].peBlue=0xff;
-        Palette.aEntries[i].peFlags=0x00;
+        pal->palPalEntry[i].peRed   = entries[i].rgbRed;
+        pal->palPalEntry[i].peGreen = entries[i].rgbGreen;
+        pal->palPalEntry[i].peBlue  = entries[i].rgbBlue;
+        pal->palPalEntry[i].peFlags = 0;
     }
-
-    Palette.aEntries[0].peRed=0x00;
-    Palette.aEntries[0].peBlue=0x00;
-    Palette.aEntries[0].peGreen=0x00;
-
-    /* the first 6 */
-    for (i=1; i <= 6; i++)
-    {
-        Palette.aEntries[i].peRed=(i%2)?0x80:0;
-        Palette.aEntries[i].peGreen=(i==2)?0x80:(i==3)?0x80:(i==6)?0x80:0;
-        Palette.aEntries[i].peBlue=(i>3)?0x80:0;
-    }
-
-    for (i=7;  i <= 12; i++)
-    {
-        switch(i)
-        {
-            case 7:
-                Palette.aEntries[i].peRed=0xc0;
-                Palette.aEntries[i].peBlue=0xc0;
-                Palette.aEntries[i].peGreen=0xc0;
-                break;
-            case 8:
-                Palette.aEntries[i].peRed=0xc0;
-                Palette.aEntries[i].peGreen=0xdc;
-                Palette.aEntries[i].peBlue=0xc0;
-                break;
-            case 9:
-                Palette.aEntries[i].peRed=0xa6;
-                Palette.aEntries[i].peGreen=0xca;
-                Palette.aEntries[i].peBlue=0xf0;
-                break;
-            case 10:
-                Palette.aEntries[i].peRed=0xff;
-                Palette.aEntries[i].peGreen=0xfb;
-                Palette.aEntries[i].peBlue=0xf0;
-                break;
-            case 11:
-                Palette.aEntries[i].peRed=0xa0;
-                Palette.aEntries[i].peGreen=0xa0;
-                Palette.aEntries[i].peBlue=0xa4;
-                break;
-            case 12:
-                Palette.aEntries[i].peRed=0x80;
-                Palette.aEntries[i].peGreen=0x80;
-                Palette.aEntries[i].peBlue=0x80;
-        }
-    }
-
-   for (i=13; i <= 18; i++)
-    {
-        Palette.aEntries[i].peRed=(i%2)?0xff:0;
-        Palette.aEntries[i].peGreen=(i==14)?0xff:(i==15)?0xff:(i==18)?0xff:0;
-        Palette.aEntries[i].peBlue=(i>15)?0xff:0x00;
-    }
-
-    return CreatePalette((LOGPALETTE *)&Palette);
+    return CreatePalette( pal );
 }
 
 
