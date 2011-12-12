@@ -117,7 +117,9 @@ static inline void _test_items_ok(LPCWSTR string, DWORD cchString,
             winetest_ok(outpItems[x].a.eScript != SCRIPT_UNDEFINED, "%i: Undefined script\n",x);
         if (pScriptItemizeOpenType)
         {
-            if (items[x].todo_flag[4])
+            if (items[x].isBroken && broken(tags[x] == items[x].broken_value[4]))
+                winetest_win_skip("This test broken on this platform\n");
+            else if (items[x].todo_flag[4])
                 todo_wine winetest_ok(tags[x] == items[x].scriptTag,"%i:Incorrect Script Tag %x != %x\n",x,tags[x],items[x].scriptTag);
             else
                 winetest_ok(tags[x] == items[x].scriptTag,"%i:Incorrect Script Tag %x != %x\n",x,tags[x],items[x].scriptTag);
