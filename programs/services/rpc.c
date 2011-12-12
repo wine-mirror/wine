@@ -1062,6 +1062,11 @@ DWORD __cdecl svcctl_ControlService(
         break;
     }
 
+    if (result==ERROR_SUCCESS && !service->service_entry->control_mutex) {
+        result = ERROR_SERVICE_CANNOT_ACCEPT_CTRL;
+        service_terminate(service->service_entry);
+    }
+
     if (result != ERROR_SUCCESS)
     {
         if (lpServiceStatus)

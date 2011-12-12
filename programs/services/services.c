@@ -847,27 +847,32 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
     if (err == ERROR_SUCCESS)
         ReleaseMutex(service->control_mutex);
     else
-    {
-        CloseHandle(service->overlapped_event);
-        service->overlapped_event = NULL;
-        CloseHandle(service->status_changed_event);
-        service->status_changed_event = NULL;
-        CloseHandle(service->control_mutex);
-        service->control_mutex = NULL;
-        if (service->control_pipe != INVALID_HANDLE_VALUE)
-            CloseHandle(service->control_pipe);
-        service->control_pipe = INVALID_HANDLE_VALUE;
-
-        service->status.dwProcessId = 0;
-        service_lock_exclusive(service);
-        service->status.dwCurrentState = SERVICE_STOPPED;
-        service_unlock(service);
-    }
+        service_terminate(service);
     scmdatabase_unlock_startup(service->db);
 
     WINE_TRACE("returning %d\n", err);
 
     return err;
+}
+
+void service_terminate(struct service_entry *service)
+{
+    service_lock_exclusive(service);
+    TerminateProcess(service->process, 0);
+    CloseHandle(service->process);
+    service->process = NULL;
+    CloseHandle(service->overlapped_event);
+    service->overlapped_event = NULL;
+    CloseHandle(service->status_changed_event);
+    service->status_changed_event = NULL;
+    CloseHandle(service->control_mutex);
+    service->control_mutex = NULL;
+    CloseHandle(service->control_pipe);
+    service->control_pipe = INVALID_HANDLE_VALUE;
+
+    service->status.dwProcessId = 0;
+    service->status.dwCurrentState = SERVICE_STOPPED;
+    service_unlock(service);
 }
 
 static void load_registry_parameters(void)
