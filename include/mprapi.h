@@ -22,6 +22,7 @@
 #include <lmcons.h>
 #include <ras.h>
 #include <in6addr.h>
+#include <wincrypt.h>
 
 #define MAX_DEVICE_NAME                 128
 #define MAX_DEVICETYPE_NAME              16

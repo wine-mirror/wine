@@ -3432,6 +3432,7 @@ typedef struct _CERT_ID
 #define CERT_ID_KEY_IDENTIFIER       2
 #define CERT_ID_SHA1_HASH            3
 
+#ifndef USE_WC_PREFIX
 #undef CMSG_DATA /* may be defined by sys/socket.h */
 #define CMSG_DATA                 1
 #define CMSG_SIGNED               2
@@ -3446,6 +3447,21 @@ typedef struct _CERT_ID
 #define CMSG_ENVELOPED_FLAG            (1 << CMSG_ENVELOPED)
 #define CMSG_SIGNED_AND_ENVELOPED_FLAG (1 << CMSG_SIGNED_AND_ENVELOPED)
 #define CMSG_ENCRYPTED_FLAG            (1 << CMSG_ENCRYPTED)
+#else
+#define WC_CMSG_DATA                 1
+#define WC_CMSG_SIGNED               2
+#define WC_CMSG_ENVELOPED            3
+#define WC_CMSG_SIGNED_AND_ENVELOPED 4
+#define WC_CMSG_HASHED               5
+#define WC_CMSG_ENCRYPTED            6
+
+#define WC_CMSG_ALL_FLAGS                 ~0U
+#define WC_CMSG_DATA_FLAG                 (1 << WC_CMSG_DATA)
+#define WC_CMSG_SIGNED_FLAG               (1 << WC_CMSG_SIGNED)
+#define WC_CMSG_ENVELOPED_FLAG            (1 << WC_CMSG_ENVELOPED)
+#define WC_CMSG_SIGNED_AND_ENVELOPED_FLAG (1 << WC_CMSG_SIGNED_AND_ENVELOPED)
+#define WC_CMSG_ENCRYPTED_FLAG            (1 << WC_CMSG_ENCRYPTED)
+#endif
 
 typedef struct _CMSG_SIGNER_ENCODE_INFO
 {
