@@ -89,14 +89,13 @@ enum wined3d_primitive_type
     WINED3D_PT_TRIANGLESTRIP_ADJ            = 13,
 };
 
-typedef enum _WINED3DDEVTYPE
+enum wined3d_device_type
 {
-    WINED3DDEVTYPE_HAL                      = 1,
-    WINED3DDEVTYPE_REF                      = 2,
-    WINED3DDEVTYPE_SW                       = 3,
-    WINED3DDEVTYPE_NULLREF                  = 4,
-    WINED3DDEVTYPE_FORCE_DWORD              = 0xffffffff
-} WINED3DDEVTYPE;
+    WINED3D_DEVICE_TYPE_HAL                 = 1,
+    WINED3D_DEVICE_TYPE_REF                 = 2,
+    WINED3D_DEVICE_TYPE_SW                  = 3,
+    WINED3D_DEVICE_TYPE_NULLREF             = 4,
+};
 
 typedef enum _WINED3DDEGREETYPE
 {
@@ -1689,7 +1688,7 @@ struct wined3d_vertex_element
 struct wined3d_device_creation_parameters
 {
     UINT adapter_idx;
-    WINED3DDEVTYPE device_type;
+    enum wined3d_device_type device_type;
     HWND focus_window;
     DWORD flags;
 };
@@ -1781,7 +1780,7 @@ struct wined3d_ddraw_caps
 
 typedef struct _WINED3DCAPS
 {
-    WINED3DDEVTYPE DeviceType;
+    enum wined3d_device_type DeviceType;
     UINT AdapterOrdinal;
 
     DWORD Caps;
@@ -2029,20 +2028,20 @@ void __stdcall wined3d_mutex_lock(void);
 void __stdcall wined3d_mutex_unlock(void);
 
 HRESULT __cdecl wined3d_check_depth_stencil_match(const struct wined3d *wined3d, UINT adapter_idx,
-        WINED3DDEVTYPE device_type, enum wined3d_format_id adapter_format_id,
+        enum wined3d_device_type device_type, enum wined3d_format_id adapter_format_id,
         enum wined3d_format_id render_target_format_id, enum wined3d_format_id depth_stencil_format_id);
 HRESULT __cdecl wined3d_check_device_format(const struct wined3d *wined3d, UINT adaper_idx,
-        WINED3DDEVTYPE device_type, enum wined3d_format_id adapter_format_id, DWORD usage,
+        enum wined3d_device_type device_type, enum wined3d_format_id adapter_format_id, DWORD usage,
         WINED3DRESOURCETYPE resource_type, enum wined3d_format_id check_format_id,
         WINED3DSURFTYPE surface_type);
 HRESULT __cdecl wined3d_check_device_format_conversion(const struct wined3d *wined3d, UINT adapter_idx,
-        WINED3DDEVTYPE device_type, enum wined3d_format_id source_format_id,
+        enum wined3d_device_type device_type, enum wined3d_format_id source_format_id,
         enum wined3d_format_id target_format_id);
 HRESULT __cdecl wined3d_check_device_multisample_type(const struct wined3d *wined3d, UINT adapter_idx,
-        WINED3DDEVTYPE device_type, enum wined3d_format_id surface_format_id, BOOL windowed,
+        enum wined3d_device_type device_type, enum wined3d_format_id surface_format_id, BOOL windowed,
         WINED3DMULTISAMPLE_TYPE multisample_type, DWORD *quality_levels);
 HRESULT __cdecl wined3d_check_device_type(const struct wined3d *wined3d, UINT adapter_idx,
-        WINED3DDEVTYPE device_type, enum wined3d_format_id display_format_id,
+        enum wined3d_device_type device_type, enum wined3d_format_id display_format_id,
         enum wined3d_format_id backbuffer_format_id, BOOL windowed);
 struct wined3d * __cdecl wined3d_create(UINT dxVersion, DWORD flags, void *parent);
 ULONG __cdecl wined3d_decref(struct wined3d *wined3d);
@@ -2057,7 +2056,7 @@ UINT __cdecl wined3d_get_adapter_mode_count(const struct wined3d *wined3d,
         UINT adapter_idx, enum wined3d_format_id format_id);
 HMONITOR __cdecl wined3d_get_adapter_monitor(const struct wined3d *wined3d, UINT adapter_idx);
 HRESULT __cdecl wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapter_idx,
-        WINED3DDEVTYPE device_type, WINED3DCAPS *caps);
+        enum wined3d_device_type device_type, WINED3DCAPS *caps);
 void * __cdecl wined3d_get_parent(const struct wined3d *wined3d);
 ULONG __cdecl wined3d_incref(struct wined3d *wined3d);
 HRESULT __cdecl wined3d_register_software_device(struct wined3d *wined3d, void *init_function);
@@ -2088,7 +2087,7 @@ void __cdecl wined3d_device_clear_rendertarget_view(struct wined3d_device *devic
 HRESULT __cdecl wined3d_device_color_fill(struct wined3d_device *device, struct wined3d_surface *surface,
         const RECT *rect, const struct wined3d_color *color);
 HRESULT __cdecl wined3d_device_create(struct wined3d *wined3d, UINT adapter_idx,
-        WINED3DDEVTYPE device_type, HWND focus_window, DWORD behaviour_flags, BYTE surface_alignment,
+        enum wined3d_device_type device_type, HWND focus_window, DWORD behaviour_flags, BYTE surface_alignment,
         struct wined3d_device_parent *device_parent, struct wined3d_device **device);
 ULONG __cdecl wined3d_device_decref(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_delete_patch(struct wined3d_device *device, UINT handle);

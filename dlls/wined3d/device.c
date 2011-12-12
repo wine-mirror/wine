@@ -5887,7 +5887,7 @@ HRESULT CDECL wined3d_device_get_surface_from_dc(const struct wined3d_device *de
 }
 
 HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
-        UINT adapter_idx, WINED3DDEVTYPE device_type, HWND focus_window, DWORD flags,
+        UINT adapter_idx, enum wined3d_device_type device_type, HWND focus_window, DWORD flags,
         BYTE surface_alignment, struct wined3d_device_parent *device_parent)
 {
     struct wined3d_adapter *adapter = &wined3d->adapters[adapter_idx];

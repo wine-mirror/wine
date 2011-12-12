@@ -122,7 +122,7 @@ struct IDirectDrawImpl
 
 #define DDRAW_WINDOW_CLASS_NAME "ddraw_wc"
 
-HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type) DECLSPEC_HIDDEN;
+HRESULT ddraw_init(IDirectDrawImpl *ddraw, enum wined3d_device_type device_type) DECLSPEC_HIDDEN;
 void ddraw_destroy_swapchain(IDirectDrawImpl *ddraw) DECLSPEC_HIDDEN;
 
 static inline void ddraw_set_swapchain_window(struct IDirectDrawImpl *ddraw, HWND window)

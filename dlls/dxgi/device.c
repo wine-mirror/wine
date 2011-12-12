@@ -400,7 +400,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
 
     FIXME("Ignoring adapter type.\n");
 
-    hr = wined3d_get_device_caps(wined3d, adapter_ordinal, WINED3DDEVTYPE_HAL, &caps);
+    hr = wined3d_get_device_caps(wined3d, adapter_ordinal, WINED3D_DEVICE_TYPE_HAL, &caps);
     if (FAILED(hr) || caps.VertexShaderVersion < 4 || caps.PixelShaderVersion < 4)
     {
         WARN("Direct3D 10 is not supported on this GPU with the current shader backend.\n");
@@ -410,7 +410,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     }
 
     EnterCriticalSection(&dxgi_cs);
-    hr = wined3d_device_create(wined3d, adapter_ordinal, WINED3DDEVTYPE_HAL, NULL, 0, 4,
+    hr = wined3d_device_create(wined3d, adapter_ordinal, WINED3D_DEVICE_TYPE_HAL, NULL, 0, 4,
             wined3d_device_parent, &device->wined3d_device);
     IWineDXGIDeviceParent_Release(dxgi_device_parent);
     wined3d_decref(wined3d);

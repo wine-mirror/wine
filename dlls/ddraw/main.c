@@ -186,7 +186,7 @@ DDRAW_Create(const GUID *guid,
              IUnknown *UnkOuter,
              REFIID iid)
 {
-    WINED3DDEVTYPE devicetype;
+    enum wined3d_device_type device_type;
     IDirectDrawImpl *This;
     HRESULT hr;
 
@@ -204,15 +204,15 @@ DDRAW_Create(const GUID *guid,
          * WineD3D always uses OpenGL for D3D rendering. One could make it request
          * indirect rendering
          */
-        devicetype = WINED3DDEVTYPE_REF;
+        device_type = WINED3D_DEVICE_TYPE_REF;
     }
     else if(guid == (GUID *) DDCREATE_HARDWAREONLY)
     {
-        devicetype = WINED3DDEVTYPE_HAL;
+        device_type = WINED3D_DEVICE_TYPE_HAL;
     }
     else
     {
-        devicetype = 0;
+        device_type = 0;
     }
 
     /* DDraw doesn't support aggregation, according to msdn */
@@ -227,7 +227,7 @@ DDRAW_Create(const GUID *guid,
         return E_OUTOFMEMORY;
     }
 
-    hr = ddraw_init(This, devicetype);
+    hr = ddraw_init(This, device_type);
     if (FAILED(hr))
     {
         WARN("Failed to initialize ddraw object, hr %#x.\n", hr);

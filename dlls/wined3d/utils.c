@@ -1875,17 +1875,17 @@ const char *debug_d3dformat(enum wined3d_format_id format_id)
     }
 }
 
-const char *debug_d3ddevicetype(WINED3DDEVTYPE devtype)
+const char *debug_d3ddevicetype(enum wined3d_device_type device_type)
 {
-    switch (devtype)
+    switch (device_type)
     {
 #define DEVTYPE_TO_STR(dev) case dev: return #dev
-        DEVTYPE_TO_STR(WINED3DDEVTYPE_HAL);
-        DEVTYPE_TO_STR(WINED3DDEVTYPE_REF);
-        DEVTYPE_TO_STR(WINED3DDEVTYPE_SW);
+        DEVTYPE_TO_STR(WINED3D_DEVICE_TYPE_HAL);
+        DEVTYPE_TO_STR(WINED3D_DEVICE_TYPE_REF);
+        DEVTYPE_TO_STR(WINED3D_DEVICE_TYPE_SW);
 #undef DEVTYPE_TO_STR
         default:
-            FIXME("Unrecognized %u WINED3DDEVTYPE!\n", devtype);
+            FIXME("Unrecognized device type %#x.\n", device_type);
             return "unrecognized";
     }
 }

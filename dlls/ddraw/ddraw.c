@@ -1451,7 +1451,7 @@ static HRESULT WINAPI ddraw7_GetFourCCCodes(IDirectDraw7 *iface, DWORD *NumCodes
 
     for (i = 0; i < (sizeof(formats) / sizeof(formats[0])); ++i)
     {
-        hr = wined3d_check_device_format(This->wined3d, WINED3DADAPTER_DEFAULT, WINED3DDEVTYPE_HAL,
+        hr = wined3d_check_device_format(This->wined3d, WINED3DADAPTER_DEFAULT, WINED3D_DEVICE_TYPE_HAL,
                 mode.format_id, 0, WINED3DRTYPE_SURFACE, formats[i], DefaultSurfaceType);
         if (SUCCEEDED(hr))
         {
@@ -4534,7 +4534,7 @@ static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device
 {
     IDirectDrawImpl *This = impl_from_IDirect3D7(iface);
     struct wined3d_display_mode mode;
-    WINED3DDEVTYPE type;
+    enum wined3d_device_type type;
     unsigned int i;
     HRESULT hr;
 
@@ -4560,28 +4560,28 @@ static HRESULT WINAPI d3d7_EnumZBufferFormats(IDirect3D7 *iface, REFCLSID device
             || IsEqualGUID(device_iid, &IID_D3DDEVICE_WineD3D))
     {
         TRACE("Asked for HAL device.\n");
-        type = WINED3DDEVTYPE_HAL;
+        type = WINED3D_DEVICE_TYPE_HAL;
     }
     else if (IsEqualGUID(device_iid, &IID_IDirect3DRGBDevice)
             || IsEqualGUID(device_iid, &IID_IDirect3DMMXDevice))
     {
         TRACE("Asked for SW device.\n");
-        type = WINED3DDEVTYPE_SW;
+        type = WINED3D_DEVICE_TYPE_SW;
     }
     else if (IsEqualGUID(device_iid, &IID_IDirect3DRefDevice))
     {
         TRACE("Asked for REF device.\n");
-        type = WINED3DDEVTYPE_REF;
+        type = WINED3D_DEVICE_TYPE_REF;
     }
     else if (IsEqualGUID(device_iid, &IID_IDirect3DNullDevice))
     {
         TRACE("Asked for NULLREF device.\n");
-        type = WINED3DDEVTYPE_NULLREF;
+        type = WINED3D_DEVICE_TYPE_NULLREF;
     }
     else
     {
         FIXME("Unexpected device GUID %s.\n", debugstr_guid(device_iid));
-        type = WINED3DDEVTYPE_HAL;
+        type = WINED3D_DEVICE_TYPE_HAL;
     }
 
     wined3d_mutex_lock();
@@ -4712,7 +4712,7 @@ HRESULT IDirect3DImpl_GetCaps(const struct wined3d *wined3d, D3DDEVICEDESC *desc
     memset(&wined3d_caps, 0, sizeof(wined3d_caps));
 
     wined3d_mutex_lock();
-    hr = wined3d_get_device_caps(wined3d, 0, WINED3DDEVTYPE_HAL, &wined3d_caps);
+    hr = wined3d_get_device_caps(wined3d, 0, WINED3D_DEVICE_TYPE_HAL, &wined3d_caps);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
@@ -5469,7 +5469,7 @@ static const struct wined3d_device_parent_ops ddraw_wined3d_device_parent_ops =
     device_parent_create_swapchain,
 };
 
-HRESULT ddraw_init(IDirectDrawImpl *ddraw, WINED3DDEVTYPE device_type)
+HRESULT ddraw_init(IDirectDrawImpl *ddraw, enum wined3d_device_type device_type)
 {
     HRESULT hr;
     HDC hDC;

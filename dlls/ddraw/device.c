@@ -1154,7 +1154,7 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
 
     for (i = 0; i < sizeof(FormatList) / sizeof(*FormatList); ++i)
     {
-        hr = wined3d_check_device_format(This->ddraw->wined3d, WINED3DADAPTER_DEFAULT, WINED3DDEVTYPE_HAL,
+        hr = wined3d_check_device_format(This->ddraw->wined3d, WINED3DADAPTER_DEFAULT, WINED3D_DEVICE_TYPE_HAL,
                 mode.format_id, 0, WINED3DRTYPE_TEXTURE, FormatList[i], SURFACE_OPENGL);
         if (hr == D3D_OK)
         {
@@ -1178,7 +1178,7 @@ IDirect3DDeviceImpl_7_EnumTextureFormats(IDirect3DDevice7 *iface,
     for (i = 0; i < sizeof(BumpFormatList) / sizeof(*BumpFormatList); ++i)
     {
         hr = wined3d_check_device_format(This->ddraw->wined3d, WINED3DADAPTER_DEFAULT,
-                WINED3DDEVTYPE_HAL, mode.format_id, WINED3DUSAGE_QUERY_LEGACYBUMPMAP,
+                WINED3D_DEVICE_TYPE_HAL, mode.format_id, WINED3DUSAGE_QUERY_LEGACYBUMPMAP,
                 WINED3DRTYPE_TEXTURE, BumpFormatList[i], SURFACE_OPENGL);
         if (hr == D3D_OK)
         {
@@ -1291,7 +1291,7 @@ IDirect3DDeviceImpl_2_EnumTextureFormats(IDirect3DDevice2 *iface,
 
     for (i = 0; i < sizeof(FormatList) / sizeof(*FormatList); ++i)
     {
-        hr = wined3d_check_device_format(This->ddraw->wined3d, 0, WINED3DDEVTYPE_HAL,
+        hr = wined3d_check_device_format(This->ddraw->wined3d, 0, WINED3D_DEVICE_TYPE_HAL,
                 mode.format_id, 0, WINED3DRTYPE_TEXTURE, FormatList[i], SURFACE_OPENGL);
         if (hr == D3D_OK)
         {

@@ -1766,7 +1766,7 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
 BOOL device_context_add(struct wined3d_device *device, struct wined3d_context *context) DECLSPEC_HIDDEN;
 void device_context_remove(struct wined3d_device *device, struct wined3d_context *context) DECLSPEC_HIDDEN;
 HRESULT device_init(struct wined3d_device *device, struct wined3d *wined3d,
-        UINT adapter_idx, WINED3DDEVTYPE device_type, HWND focus_window, DWORD flags,
+        UINT adapter_idx, enum wined3d_device_type device_type, HWND focus_window, DWORD flags,
         BYTE surface_alignment, struct wined3d_device_parent *device_parent) DECLSPEC_HIDDEN;
 void device_preload_textures(const struct wined3d_device *device) DECLSPEC_HIDDEN;
 LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL unicode,
@@ -2468,7 +2468,7 @@ void swapchain_update_render_to_fbo(struct wined3d_swapchain *swapchain) DECLSPE
 
 /* Trace routines */
 const char *debug_d3dformat(enum wined3d_format_id format_id) DECLSPEC_HIDDEN;
-const char *debug_d3ddevicetype(WINED3DDEVTYPE devtype) DECLSPEC_HIDDEN;
+const char *debug_d3ddevicetype(enum wined3d_device_type device_type) DECLSPEC_HIDDEN;
 const char *debug_d3dresourcetype(WINED3DRESOURCETYPE res) DECLSPEC_HIDDEN;
 const char *debug_d3dusage(DWORD usage) DECLSPEC_HIDDEN;
 const char *debug_d3dusagequery(DWORD usagequery) DECLSPEC_HIDDEN;
