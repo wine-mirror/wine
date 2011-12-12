@@ -1391,7 +1391,7 @@ static DWORD rgb_to_pixel_colortable(const dib_info *dib, BYTE r, BYTE g, BYTE b
 
     for(i = 0; i < dib->color_table_size; i++)
     {
-        RGBQUAD *cur = dib->color_table + i;
+        const RGBQUAD *cur = dib->color_table + i;
         diff = (r - cur->rgbRed)   * (r - cur->rgbRed)
             +  (g - cur->rgbGreen) * (g - cur->rgbGreen)
             +  (b - cur->rgbBlue)  * (b - cur->rgbBlue);

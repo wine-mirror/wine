@@ -68,7 +68,7 @@ static void init_bit_fields(dib_info *dib, const DWORD *bit_fields)
 }
 
 static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD *bit_fields,
-                          RGBQUAD *color_table, void *bits, enum dib_info_flags flags)
+                          const RGBQUAD *color_table, void *bits, enum dib_info_flags flags)
 {
     dib->bit_count    = bi->biBitCount;
     dib->width        = bi->biWidth;
@@ -79,7 +79,6 @@ static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD
     dib->bits.is_copy = FALSE;
     dib->bits.free    = NULL;
     dib->bits.param   = NULL;
-    dib->flags        = flags;
 
     if(dib->height < 0) /* top-down */
     {
@@ -143,19 +142,12 @@ static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD
 
     if (color_table && bi->biClrUsed)
     {
-        if (flags & private_color_table)
-        {
-            dib->color_table = HeapAlloc(GetProcessHeap(), 0, bi->biClrUsed * sizeof(dib->color_table[0]));
-            if(!dib->color_table) return FALSE;
-            memcpy(dib->color_table, color_table, bi->biClrUsed * sizeof(color_table[0]));
-        }
-        else
-            dib->color_table = color_table;
+        dib->color_table = color_table;
         dib->color_table_size = bi->biClrUsed;
     }
     else if (flags & default_color_table)
     {
-        dib->color_table = (RGBQUAD *)get_default_color_table( dib->bit_count );
+        dib->color_table = get_default_color_table( dib->bit_count );
         dib->color_table_size = dib->color_table ? (1 << dib->bit_count) : 0;
     }
     else
@@ -170,7 +162,7 @@ static BOOL init_dib_info(dib_info *dib, const BITMAPINFOHEADER *bi, const DWORD
 BOOL init_dib_info_from_bitmapinfo(dib_info *dib, const BITMAPINFO *info, void *bits, enum dib_info_flags flags)
 {
     return init_dib_info( dib, &info->bmiHeader, (const DWORD *)info->bmiColors,
-                          (RGBQUAD *)info->bmiColors, bits, flags );
+                          info->bmiColors, bits, flags );
 }
 
 BOOL init_dib_info_from_bitmapobj(dib_info *dib, BITMAPOBJ *bmp, enum dib_info_flags flags)
@@ -208,9 +200,6 @@ static void clear_dib_info(dib_info *dib)
  */
 void free_dib_info(dib_info *dib)
 {
-    if (dib->flags & private_color_table)
-        HeapFree(GetProcessHeap(), 0, dib->color_table);
-
     if (dib->bits.free) dib->bits.free( &dib->bits );
     clear_dib_info( dib );
 }
@@ -229,19 +218,7 @@ void copy_dib_color_info(dib_info *dst, const dib_info *src)
     dst->blue_shift       = src->blue_shift;
     dst->funcs            = src->funcs;
     dst->color_table_size = src->color_table_size;
-    dst->color_table      = NULL;
-    dst->flags            = src->flags;
-    if(dst->color_table_size)
-    {
-        int size = dst->color_table_size * sizeof(dst->color_table[0]);
-        if (dst->flags & private_color_table)
-        {
-            dst->color_table = HeapAlloc(GetProcessHeap(), 0, size);
-            memcpy(dst->color_table, src->color_table, size);
-        }
-        else
-            dst->color_table = src->color_table;
-    }
+    dst->color_table      = src->color_table;
 }
 
 DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bitblt_coords *src,

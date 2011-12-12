@@ -20,8 +20,7 @@
 
 enum dib_info_flags
 {
-    private_color_table = 1,
-    default_color_table = 2
+    default_color_table = 1
 };
 
 typedef struct
@@ -35,10 +34,8 @@ typedef struct
     int red_shift, green_shift, blue_shift;
     int red_len, green_len, blue_len;
 
-    RGBQUAD *color_table;
+    const RGBQUAD *color_table;
     DWORD color_table_size;
-
-    enum dib_info_flags flags;
 
     const struct primitive_funcs *funcs;
 } dib_info;
