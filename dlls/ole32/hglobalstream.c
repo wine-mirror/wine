@@ -74,46 +74,6 @@ static inline HGLOBALStreamImpl *impl_from_IStream(IStream *iface)
   return CONTAINING_RECORD(iface, HGLOBALStreamImpl, IStream_iface);
 }
 
-/***
- * This is the destructor of the HGLOBALStreamImpl class.
- *
- * This method will clean-up all the resources used-up by the given HGLOBALStreamImpl
- * class. The pointer passed-in to this function will be freed and will not
- * be valid anymore.
- */
-static void HGLOBALStreamImpl_Destroy(HGLOBALStreamImpl* This)
-{
-  TRACE("(%p)\n", This);
-
-  /*
-   * Release the HGlobal if the constructor asked for that.
-   */
-  if (This->deleteOnRelease)
-  {
-    GlobalFree(This->supportHandle);
-    This->supportHandle=0;
-  }
-
-  /*
-   * Finally, free the memory used-up by the class.
-   */
-  HeapFree(GetProcessHeap(), 0, This);
-}
-
-/***
- * This implements the IUnknown method AddRef for this
- * class
- */
-static ULONG WINAPI HGLOBALStreamImpl_AddRef(IStream* iface)
-{
-  HGLOBALStreamImpl* This = impl_from_IStream(iface);
-  return InterlockedIncrement(&This->ref);
-}
-
-/***
- * This implements the IUnknown method QueryInterface for this
- * class
- */
 static HRESULT WINAPI HGLOBALStreamImpl_QueryInterface(
 		  IStream*     iface,
 		  REFIID         riid,	      /* [in] */
@@ -121,20 +81,11 @@ static HRESULT WINAPI HGLOBALStreamImpl_QueryInterface(
 {
   HGLOBALStreamImpl* This = impl_from_IStream(iface);
 
-  /*
-   * Perform a sanity check on the parameters.
-   */
   if (ppvObject==0)
     return E_INVALIDARG;
 
-  /*
-   * Initialize the return parameter.
-   */
   *ppvObject = 0;
 
-  /*
-   * Compare the riid with the interface IDs implemented by this object.
-   */
   if (IsEqualIID(&IID_IUnknown, riid) ||
       IsEqualIID(&IID_ISequentialStream, riid) ||
       IsEqualIID(&IID_IStream, riid))
@@ -142,25 +93,20 @@ static HRESULT WINAPI HGLOBALStreamImpl_QueryInterface(
     *ppvObject = This;
   }
 
-  /*
-   * Check that we obtained an interface.
-   */
   if ((*ppvObject)==0)
     return E_NOINTERFACE;
 
-  /*
-   * Query Interface always increases the reference count by one when it is
-   * successful
-   */
-  HGLOBALStreamImpl_AddRef(iface);
+  IStream_AddRef(iface);
 
   return S_OK;
 }
 
-/***
- * This implements the IUnknown method Release for this
- * class
- */
+static ULONG WINAPI HGLOBALStreamImpl_AddRef(IStream* iface)
+{
+  HGLOBALStreamImpl* This = impl_from_IStream(iface);
+  return InterlockedIncrement(&This->ref);
+}
+
 static ULONG WINAPI HGLOBALStreamImpl_Release(
 		IStream* iface)
 {
@@ -168,7 +114,15 @@ static ULONG WINAPI HGLOBALStreamImpl_Release(
   ULONG ref = InterlockedDecrement(&This->ref);
 
   if (!ref)
-    HGLOBALStreamImpl_Destroy(This);
+  {
+    if (This->deleteOnRelease)
+    {
+      GlobalFree(This->supportHandle);
+      This->supportHandle = NULL;
+    }
+
+    HeapFree(GetProcessHeap(), 0, This);
+  }
 
   return ref;
 }
@@ -598,14 +552,11 @@ static HRESULT WINAPI HGLOBALStreamImpl_Clone(
   hr = CreateStreamOnHGlobal(This->supportHandle, FALSE, ppstm);
   if(FAILED(hr))
     return hr;
-  offset.QuadPart=(LONGLONG)This->currentPosition.QuadPart;
-  HGLOBALStreamImpl_Seek(*ppstm,offset,STREAM_SEEK_SET,&dummy);
+  offset.QuadPart = (LONGLONG)This->currentPosition.QuadPart;
+  IStream_Seek(*ppstm, offset, STREAM_SEEK_SET, &dummy);
   return S_OK;
 }
 
-/*
- * Virtual function table for the HGLOBALStreamImpl class.
- */
 static const IStreamVtbl HGLOBALStreamImplVtbl =
 {
     HGLOBALStreamImpl_QueryInterface,
@@ -624,62 +575,6 @@ static const IStreamVtbl HGLOBALStreamImplVtbl =
     HGLOBALStreamImpl_Clone
 };
 
-/******************************************************************************
-** HGLOBALStreamImpl implementation
-*/
-
-/***
- * This is the constructor for the HGLOBALStreamImpl class.
- *
- * Params:
- *    hGlobal          - Handle that will support the stream. can be NULL.
- *    fDeleteOnRelease - Flag set to TRUE if the HGLOBAL will be released
- *                       when the IStream object is destroyed.
- */
-static HGLOBALStreamImpl* HGLOBALStreamImpl_Construct(
-		HGLOBAL  hGlobal,
-		BOOL     fDeleteOnRelease)
-{
-  HGLOBALStreamImpl* This;
-
-  This = HeapAlloc(GetProcessHeap(), 0, sizeof(HGLOBALStreamImpl));
-  if (This)
-  {
-    This->IStream_iface.lpVtbl = &HGLOBALStreamImplVtbl;
-    This->ref = 0;
-
-    /*
-     * Initialize the support.
-     */
-    This->supportHandle = hGlobal;
-    This->deleteOnRelease = fDeleteOnRelease;
-
-    /*
-     * This method will allocate a handle if one is not supplied.
-     */
-    if (!This->supportHandle)
-    {
-      This->supportHandle = GlobalAlloc(GMEM_MOVEABLE | GMEM_NODISCARD |
-					     GMEM_SHARE, 0);
-    }
-
-    /*
-     * Start the stream at the beginning.
-     */
-    This->currentPosition.u.HighPart = 0;
-    This->currentPosition.u.LowPart = 0;
-
-    /*
-     * Initialize the size of the stream to the size of the handle.
-     */
-    This->streamSize.u.HighPart = 0;
-    This->streamSize.u.LowPart = GlobalSize(This->supportHandle);
-  }
-
-  return This;
-}
-
-
 /***********************************************************************
  *           CreateStreamOnHGlobal     [OLE32.@]
  */
@@ -688,22 +583,36 @@ HRESULT WINAPI CreateStreamOnHGlobal(
 		BOOL      fDeleteOnRelease,
 		LPSTREAM* ppstm)
 {
-  HGLOBALStreamImpl* newStream;
+  HGLOBALStreamImpl* This;
 
   if (!ppstm)
     return E_INVALIDARG;
 
-  newStream = HGLOBALStreamImpl_Construct(hGlobal,
-					  fDeleteOnRelease);
+  This = HeapAlloc(GetProcessHeap(), 0, sizeof(HGLOBALStreamImpl));
+  if (!This) return E_OUTOFMEMORY;
 
-  if (newStream!=NULL)
-  {
-    return IUnknown_QueryInterface((IUnknown*)newStream,
-				   &IID_IStream,
-				   (void**)ppstm);
-  }
+  This->IStream_iface.lpVtbl = &HGLOBALStreamImplVtbl;
+  This->ref = 1;
 
-  return E_OUTOFMEMORY;
+  /* initialize the support */
+  This->supportHandle = hGlobal;
+  This->deleteOnRelease = fDeleteOnRelease;
+
+  /* allocate a handle if one is not supplied */
+  if (!This->supportHandle)
+    This->supportHandle = GlobalAlloc(GMEM_MOVEABLE|GMEM_NODISCARD|GMEM_SHARE, 0);
+
+  /* start at the beginning */
+  This->currentPosition.u.HighPart = 0;
+  This->currentPosition.u.LowPart = 0;
+
+  /* initialize the size of the stream to the size of the handle */
+  This->streamSize.u.HighPart = 0;
+  This->streamSize.u.LowPart = GlobalSize(This->supportHandle);
+
+  *ppstm = &This->IStream_iface;
+
+  return S_OK;
 }
 
 /***********************************************************************
