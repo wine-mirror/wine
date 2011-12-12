@@ -1015,7 +1015,6 @@ DWORD __cdecl svcctl_ControlService(
     DWORD result;
     BOOL ret;
     HANDLE control_mutex;
-    HANDLE control_pipe;
 
     WINE_TRACE("(%p, %d, %p)\n", hService, dwControl, lpServiceStatus);
 
@@ -1085,22 +1084,19 @@ DWORD __cdecl svcctl_ControlService(
         return ERROR_INVALID_SERVICE_CONTROL;
     }
 
-    /* prevent races by caching these variables and clearing them on
-     * stop here instead of outside the services lock */
+    /* prevent races by caching control_mutex and clearing it on
+     * stop instead of outside the services lock */
     control_mutex = service->service_entry->control_mutex;
-    control_pipe = service->service_entry->control_pipe;
     if (dwControl == SERVICE_CONTROL_STOP)
-    {
         service->service_entry->control_mutex = NULL;
-        service->service_entry->control_pipe = INVALID_HANDLE_VALUE;
-    }
 
     service_unlock(service->service_entry);
 
     ret = WaitForSingleObject(control_mutex, 30000);
     if (ret == WAIT_OBJECT_0)
     {
-        service_send_control(service->service_entry, control_pipe, dwControl, &result);
+        service_send_control(service->service_entry, service->service_entry->control_pipe,
+                dwControl, &result);
 
         if (lpServiceStatus)
         {
@@ -1116,10 +1112,7 @@ DWORD __cdecl svcctl_ControlService(
         }
 
         if (dwControl == SERVICE_CONTROL_STOP)
-        {
             CloseHandle(control_mutex);
-            CloseHandle(control_pipe);
-        }
         else
             ReleaseMutex(control_mutex);
 
@@ -1128,10 +1121,7 @@ DWORD __cdecl svcctl_ControlService(
     else
     {
         if (dwControl == SERVICE_CONTROL_STOP)
-        {
             CloseHandle(control_mutex);
-            CloseHandle(control_pipe);
-        }
         return ERROR_SERVICE_REQUEST_TIMEOUT;
     }
 }

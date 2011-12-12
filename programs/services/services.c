@@ -813,6 +813,7 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
         return ERROR_SERVICE_ALREADY_RUNNING;
     }
 
+    CloseHandle(service->control_pipe);
     service->control_mutex = CreateMutexW(NULL, TRUE, NULL);
 
     if (!service->status_changed_event)
