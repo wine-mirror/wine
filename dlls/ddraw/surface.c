@@ -1270,6 +1270,125 @@ static HRESULT WINAPI ddraw_surface1_Flip(IDirectDrawSurface *iface, IDirectDraw
             dst_impl ? &dst_impl->IDirectDrawSurface7_iface : NULL, flags);
 }
 
+static HRESULT ddraw_surface_blt_clipped(IDirectDrawSurfaceImpl *dst_surface, const RECT *dst_rect_in,
+        IDirectDrawSurfaceImpl *src_surface, const RECT *src_rect_in, DWORD flags,
+        const WINEDDBLTFX *fx, WINED3DTEXTUREFILTERTYPE filter)
+{
+    struct wined3d_surface *wined3d_src_surface = src_surface ? src_surface->wined3d_surface : NULL;
+    RECT src_rect, dst_rect;
+    float scale_x, scale_y;
+    const RECT *clip_rect;
+    UINT clip_list_size;
+    RGNDATA *clip_list;
+    HRESULT hr = DD_OK;
+    UINT i;
+
+    if (!dst_surface->clipper)
+    {
+        if (src_surface && src_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
+            hr = ddraw_surface_update_frontbuffer(src_surface, src_rect_in, TRUE);
+        if (SUCCEEDED(hr))
+            hr = wined3d_surface_blt(dst_surface->wined3d_surface, dst_rect_in,
+                    wined3d_src_surface, src_rect_in, flags, fx, filter);
+        if (SUCCEEDED(hr) && (dst_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER))
+            hr = ddraw_surface_update_frontbuffer(dst_surface, dst_rect_in, FALSE);
+
+        return hr;
+    }
+
+    if (!dst_rect_in)
+    {
+        dst_rect.left = 0;
+        dst_rect.top = 0;
+        dst_rect.right = dst_surface->surface_desc.dwWidth;
+        dst_rect.bottom = dst_surface->surface_desc.dwHeight;
+    }
+    else
+    {
+        dst_rect = *dst_rect_in;
+    }
+
+    if (IsRectEmpty(&dst_rect))
+        return DDERR_INVALIDRECT;
+
+    if (src_surface)
+    {
+        if (!src_rect_in)
+        {
+            src_rect.left = 0;
+            src_rect.top = 0;
+            src_rect.right = src_surface->surface_desc.dwWidth;
+            src_rect.bottom = src_surface->surface_desc.dwHeight;
+        }
+        else
+        {
+            src_rect = *src_rect_in;
+        }
+
+        if (IsRectEmpty(&src_rect))
+            return DDERR_INVALIDRECT;
+    }
+    else
+    {
+        SetRect(&src_rect, 0, 0, 0, 0);
+    }
+
+    scale_x = (float)(src_rect.right - src_rect.left) / (float)(dst_rect.right - dst_rect.left);
+    scale_y = (float)(src_rect.bottom - src_rect.top) / (float)(dst_rect.bottom - dst_rect.top);
+
+    if (FAILED(hr = IDirectDrawClipper_GetClipList(&dst_surface->clipper->IDirectDrawClipper_iface,
+            &dst_rect, NULL, &clip_list_size)))
+    {
+        WARN("Failed to get clip list size, hr %#x.\n", hr);
+        return hr;
+    }
+
+    if (!(clip_list = HeapAlloc(GetProcessHeap(), 0, clip_list_size)))
+    {
+        WARN("Failed to allocate clip list.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    if (FAILED(hr = IDirectDrawClipper_GetClipList(&dst_surface->clipper->IDirectDrawClipper_iface,
+            &dst_rect, clip_list, &clip_list_size)))
+    {
+        WARN("Failed to get clip list, hr %#x.\n", hr);
+        return hr;
+    }
+
+    clip_rect = (RECT *)clip_list->Buffer;
+    for (i = 0; i < clip_list->rdh.nCount; ++i)
+    {
+        RECT src_rect_clipped = src_rect;
+
+        if (src_surface)
+        {
+            src_rect_clipped.left += (clip_rect[i].left - dst_rect.left) * scale_x;
+            src_rect_clipped.top += (clip_rect[i].top - dst_rect.top) * scale_y;
+            src_rect_clipped.right -= (dst_rect.right - clip_rect[i].right) * scale_x;
+            src_rect_clipped.bottom -= (dst_rect.bottom - clip_rect[i].bottom) * scale_y;
+
+            if (src_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
+            {
+                if (FAILED(hr = ddraw_surface_update_frontbuffer(src_surface, &src_rect_clipped, TRUE)))
+                    break;
+            }
+        }
+
+        if (FAILED(hr = wined3d_surface_blt(dst_surface->wined3d_surface, &clip_rect[i],
+                wined3d_src_surface, &src_rect_clipped, flags, fx, filter)))
+            break;
+
+        if (dst_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
+        {
+            if (FAILED(hr = ddraw_surface_update_frontbuffer(dst_surface, &clip_rect[i], FALSE)))
+                break;
+        }
+    }
+
+    return hr;
+}
+
 /*****************************************************************************
  * IDirectDrawSurface7::Blt
  *
@@ -1322,13 +1441,8 @@ static HRESULT WINAPI ddraw_surface7_Blt(IDirectDrawSurface7 *iface, RECT *DestR
      * does, copy the struct, and replace the ddraw surfaces with the wined3d
      * surfaces. So far no blitting operations using surfaces in the bltfx
      * struct are supported anyway. */
-    if (Src && Src->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
-        hr = ddraw_surface_update_frontbuffer(Src, SrcRect, TRUE);
-    if (SUCCEEDED(hr))
-        hr = wined3d_surface_blt(This->wined3d_surface, DestRect, Src ? Src->wined3d_surface : NULL,
-                SrcRect, Flags, (WINEDDBLTFX *)DDBltFx, WINED3DTEXF_LINEAR);
-    if (SUCCEEDED(hr) && (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER))
-        hr = ddraw_surface_update_frontbuffer(This, DestRect, FALSE);
+    hr = ddraw_surface_blt_clipped(This, DestRect, Src, SrcRect,
+            Flags, (WINEDDBLTFX *)DDBltFx, WINED3DTEXF_LINEAR);
 
     wined3d_mutex_unlock();
     switch(hr)
@@ -3756,13 +3870,7 @@ static HRESULT WINAPI ddraw_surface7_BltFast(IDirectDrawSurface7 *iface, DWORD d
         flags |= WINEDDBLT_DONOTWAIT;
 
     wined3d_mutex_lock();
-    if (src->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
-        hr = ddraw_surface_update_frontbuffer(src, rsrc, TRUE);
-    if (SUCCEEDED(hr))
-        hr = wined3d_surface_blt(This->wined3d_surface, &dst_rect,
-                src->wined3d_surface, rsrc, flags, NULL, WINED3DTEXF_POINT);
-    if (SUCCEEDED(hr) && (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER))
-        hr = ddraw_surface_update_frontbuffer(This, &dst_rect, FALSE);
+    hr = ddraw_surface_blt_clipped(This, &dst_rect, src, rsrc, flags, NULL, WINED3DTEXF_POINT);
     wined3d_mutex_unlock();
 
     switch(hr)
