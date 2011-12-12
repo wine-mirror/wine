@@ -140,7 +140,7 @@ void WINAPI RtlDeleteResource(LPRTL_RWLOCK rwl)
     {
 	RtlEnterCriticalSection( &rwl->rtlCS );
 	if( rwl->iNumberActive || rwl->uExclusiveWaiters || rwl->uSharedWaiters )
-	    MESSAGE("Deleting active MRSW lock (%p), expect failure\n", rwl );
+	    ERR("Deleting active MRSW lock (%p), expect failure\n", rwl );
 	rwl->hOwningThreadId = 0;
 	rwl->uExclusiveWaiters = rwl->uSharedWaiters = 0;
 	rwl->iNumberActive = 0;
