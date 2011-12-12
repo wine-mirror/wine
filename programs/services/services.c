@@ -807,7 +807,7 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
     if (err != ERROR_SUCCESS)
         return err;
 
-    if (service->control_pipe != INVALID_HANDLE_VALUE)
+    if (WaitForSingleObject(service->process, 0) == WAIT_TIMEOUT)
     {
         scmdatabase_unlock_startup(service->db);
         return ERROR_SERVICE_ALREADY_RUNNING;
