@@ -392,6 +392,20 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 }
 
 /***********************************************************************
+ *           dibdrv_GetNearestColor
+ */
+COLORREF dibdrv_GetNearestColor( PHYSDEV dev, COLORREF color )
+{
+    dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
+    DWORD pixel;
+
+    TRACE( "(%p, %08x)\n", dev, color );
+
+    pixel = get_pixel_color( pdev, color, FALSE );
+    return pdev->dib.funcs->pixel_to_colorref( &pdev->dib, pixel );
+}
+
+/***********************************************************************
  *           dibdrv_GetPixel
  */
 COLORREF dibdrv_GetPixel( PHYSDEV dev, INT x, INT y )

@@ -346,6 +346,8 @@ static void test_dib_info(HBITMAP hbm, const void *bits, const BITMAPINFOHEADER 
     ok(c == exp, "SetPixel failed: got 0x%06x expected 0x%06x\n", c, (UINT)exp); \
     c = GetPixel(hdc, 0, 0); \
     ok(c == exp, "GetPixel failed: got 0x%06x expected 0x%06x\n", c, (UINT)exp); \
+    c = GetNearestColor(hdc, color); \
+    ok(c == exp, "GetNearestColor failed: got 0x%06x expected 0x%06x\n", c, (UINT)exp); \
 }
 
 static void test_dib_bits_access( HBITMAP hdib, void *bits )

@@ -530,7 +530,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pGetICMProfile */
     dibdrv_GetImage,                    /* pGetImage */
     NULL,                               /* pGetKerningPairs */
-    NULL,                               /* pGetNearestColor */
+    dibdrv_GetNearestColor,             /* pGetNearestColor */
     NULL,                               /* pGetOutlineTextMetrics */
     dibdrv_GetPixel,                    /* pGetPixel */
     NULL,                               /* pGetPixelFormat */
