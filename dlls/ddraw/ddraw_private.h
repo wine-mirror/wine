@@ -43,7 +43,6 @@ extern const struct wined3d_parent_ops ddraw_null_wined3d_parent_ops DECLSPEC_HI
 /* Typdef the interfaces */
 typedef struct IDirectDrawImpl            IDirectDrawImpl;
 typedef struct IDirectDrawSurfaceImpl     IDirectDrawSurfaceImpl;
-typedef struct IDirectDrawClipperImpl     IDirectDrawClipperImpl;
 typedef struct IDirectDrawPaletteImpl     IDirectDrawPaletteImpl;
 typedef struct IDirect3DDeviceImpl        IDirect3DDeviceImpl;
 typedef struct IDirect3DLightImpl         IDirect3DLightImpl;
@@ -192,7 +191,7 @@ struct IDirectDrawSurfaceImpl
     UINT                    mipmap_level;
 
     /* Clipper objects */
-    IDirectDrawClipperImpl  *clipper;
+    struct ddraw_clipper *clipper;
 
     /* For the ddraw surface list */
     struct list             surface_list_entry;
@@ -355,20 +354,16 @@ IDirect3DDeviceImpl *unsafe_impl_from_IDirect3DDevice2(IDirect3DDevice2 *iface) 
 IDirect3DDeviceImpl *unsafe_impl_from_IDirect3DDevice3(IDirect3DDevice3 *iface) DECLSPEC_HIDDEN;
 IDirect3DDeviceImpl *unsafe_impl_from_IDirect3DDevice7(IDirect3DDevice7 *iface) DECLSPEC_HIDDEN;
 
-/*****************************************************************************
- * IDirectDrawClipper implementation structure
- *****************************************************************************/
-struct IDirectDrawClipperImpl
+struct ddraw_clipper
 {
     IDirectDrawClipper IDirectDrawClipper_iface;
     LONG ref;
-
-    struct wined3d_clipper *wineD3DClipper;
+    HWND window;
     BOOL initialized;
 };
 
-HRESULT ddraw_clipper_init(IDirectDrawClipperImpl *clipper) DECLSPEC_HIDDEN;
-IDirectDrawClipperImpl *unsafe_impl_from_IDirectDrawClipper(IDirectDrawClipper *iface) DECLSPEC_HIDDEN;
+HRESULT ddraw_clipper_init(struct ddraw_clipper *clipper) DECLSPEC_HIDDEN;
+struct ddraw_clipper *unsafe_impl_from_IDirectDrawClipper(IDirectDrawClipper *iface) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirectDrawPalette implementation structure

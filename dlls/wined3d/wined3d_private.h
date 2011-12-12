@@ -1972,13 +1972,6 @@ struct fbo_entry
     GLuint id;
 };
 
-struct wined3d_clipper
-{
-    LONG ref;
-
-    HWND hWnd;
-};
-
 enum wined3d_container_type
 {
     WINED3D_CONTAINER_NONE = 0,
@@ -2052,9 +2045,6 @@ struct wined3d_surface
     struct list               renderbuffers;
     const struct wined3d_renderbuffer_entry *current_renderbuffer;
     SIZE ds_current_size;
-
-    /* DirectDraw clippers */
-    struct wined3d_clipper *clipper;
 
     /* DirectDraw Overlay handling */
     RECT                      overlay_srcrect;

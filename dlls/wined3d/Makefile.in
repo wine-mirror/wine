@@ -6,7 +6,6 @@ C_SRCS = \
 	arb_program_shader.c \
 	ati_fragment_shader.c \
 	buffer.c \
-	clipper.c \
 	context.c \
 	device.c \
 	directx.c \

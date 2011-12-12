@@ -1469,12 +1469,7 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
             || dst_rect.right > dst_surface->resource.width || dst_rect.right < 0
             || dst_rect.bottom > dst_surface->resource.height || dst_rect.bottom < 0)
     {
-        /* The destination rect can be out of bounds on the condition
-         * that a clipper is set for the surface. */
-        if (dst_surface->clipper)
-            FIXME("Blit clipping not implemented.\n");
-        else
-            WARN("The application gave us a bad destination rectangle without a clipper set.\n");
+        WARN("The application gave us a bad destination rectangle.\n");
         return WINEDDERR_INVALIDRECT;
     }
 
@@ -3303,22 +3298,6 @@ HRESULT CDECL wined3d_surface_update_overlay(struct wined3d_surface *surface, co
     surface_draw_overlay(surface);
 
     return WINED3D_OK;
-}
-
-HRESULT CDECL wined3d_surface_set_clipper(struct wined3d_surface *surface, struct wined3d_clipper *clipper)
-{
-    TRACE("surface %p, clipper %p.\n", surface, clipper);
-
-    surface->clipper = clipper;
-
-    return WINED3D_OK;
-}
-
-struct wined3d_clipper * CDECL wined3d_surface_get_clipper(const struct wined3d_surface *surface)
-{
-    TRACE("surface %p.\n", surface);
-
-    return surface->clipper;
 }
 
 HRESULT CDECL wined3d_surface_set_format(struct wined3d_surface *surface, enum wined3d_format_id format_id)

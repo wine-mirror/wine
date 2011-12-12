@@ -3514,25 +3514,21 @@ static HRESULT WINAPI ddraw1_EnumSurfaces(IDirectDraw *iface, DWORD flags,
  *  E_OUTOFMEMORY if allocating the object failed
  *
  *****************************************************************************/
-HRESULT WINAPI
-DirectDrawCreateClipper(DWORD Flags,
-                        LPDIRECTDRAWCLIPPER *Clipper,
-                        IUnknown *UnkOuter)
+HRESULT WINAPI DirectDrawCreateClipper(DWORD flags, IDirectDrawClipper **clipper, IUnknown *outer_unknown)
 {
-    IDirectDrawClipperImpl* object;
+    struct ddraw_clipper *object;
     HRESULT hr;
 
     TRACE("flags %#x, clipper %p, outer_unknown %p.\n",
-            Flags, Clipper, UnkOuter);
+            flags, clipper, outer_unknown);
 
-    if (UnkOuter)
+    if (outer_unknown)
         return CLASS_E_NOAGGREGATION;
 
     wined3d_mutex_lock();
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                     sizeof(IDirectDrawClipperImpl));
-    if (object == NULL)
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
     {
         wined3d_mutex_unlock();
         return E_OUTOFMEMORY;
@@ -3548,7 +3544,7 @@ DirectDrawCreateClipper(DWORD Flags,
     }
 
     TRACE("Created clipper %p.\n", object);
-    *Clipper = &object->IDirectDrawClipper_iface;
+    *clipper = &object->IDirectDrawClipper_iface;
     wined3d_mutex_unlock();
 
     return DD_OK;

@@ -1985,7 +1985,6 @@ struct wined3d_parent_ops
 
 struct wined3d;
 struct wined3d_buffer;
-struct wined3d_clipper;
 struct wined3d_device;
 struct wined3d_palette;
 struct wined3d_query;
@@ -2078,16 +2077,6 @@ HRESULT __cdecl wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, U
 void  __cdecl wined3d_buffer_preload(struct wined3d_buffer *buffer);
 DWORD __cdecl wined3d_buffer_set_priority(struct wined3d_buffer *buffer, DWORD new_priority);
 void __cdecl wined3d_buffer_unmap(struct wined3d_buffer *buffer);
-
-struct wined3d_clipper * __cdecl wined3d_clipper_create(void);
-ULONG __cdecl wined3d_clipper_decref(struct wined3d_clipper *clipper);
-HRESULT __cdecl wined3d_clipper_get_clip_list(const struct wined3d_clipper *clipper,
-        const RECT *rect, RGNDATA *clip_list, DWORD *clip_list_size);
-HRESULT __cdecl wined3d_clipper_get_window(const struct wined3d_clipper *clipper, HWND *hwnd);
-ULONG __cdecl wined3d_clipper_incref(struct wined3d_clipper *clipper);
-HRESULT __cdecl wined3d_clipper_is_clip_list_changed(const struct wined3d_clipper *clipper, BOOL *changed);
-HRESULT __cdecl wined3d_clipper_set_clip_list(struct wined3d_clipper *clipper, const RGNDATA *clip_list, DWORD flags);
-HRESULT __cdecl wined3d_clipper_set_window(struct wined3d_clipper *clipper, DWORD flags, HWND hwnd);
 
 HRESULT __cdecl wined3d_device_acquire_focus_window(struct wined3d_device *device, HWND window);
 HRESULT __cdecl wined3d_device_begin_scene(struct wined3d_device *device);
@@ -2343,7 +2332,6 @@ HRESULT __cdecl wined3d_surface_create(struct wined3d_device *device, UINT width
 ULONG __cdecl wined3d_surface_decref(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_flip(struct wined3d_surface *surface, struct wined3d_surface *override, DWORD flags);
 HRESULT __cdecl wined3d_surface_get_blt_status(const struct wined3d_surface *surface, DWORD flags);
-struct wined3d_clipper * __cdecl wined3d_surface_get_clipper(const struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_get_flip_status(const struct wined3d_surface *surface, DWORD flags);
 HRESULT __cdecl wined3d_surface_get_overlay_position(const struct wined3d_surface *surface, LONG *x, LONG *y);
 struct wined3d_palette * __cdecl wined3d_surface_get_palette(const struct wined3d_surface *surface);
@@ -2361,7 +2349,6 @@ HRESULT __cdecl wined3d_surface_map(struct wined3d_surface *surface,
 void __cdecl wined3d_surface_preload(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc);
 HRESULT __cdecl wined3d_surface_restore(struct wined3d_surface *surface);
-HRESULT __cdecl wined3d_surface_set_clipper(struct wined3d_surface *surface, struct wined3d_clipper *clipper);
 HRESULT __cdecl wined3d_surface_set_color_key(struct wined3d_surface *surface,
         DWORD flags, const struct wined3d_color_key *color_key);
 HRESULT __cdecl wined3d_surface_set_format(struct wined3d_surface *surface, enum wined3d_format_id format_id);
