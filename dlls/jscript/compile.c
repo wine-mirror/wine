@@ -661,6 +661,8 @@ static HRESULT compile_expression_noret(compiler_ctx_t *ctx, expression_t *expr,
         return push_instr_bstr(ctx, OP_ident, ((identifier_expression_t*)expr)->identifier);
     case EXPR_IN:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_in);
+    case EXPR_INSTANCEOF:
+        return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_instanceof);
     case EXPR_LESS:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_lt);
     case EXPR_LESSEQ:

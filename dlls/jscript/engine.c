@@ -1389,57 +1389,6 @@ static HRESULT return_bool(exprval_t *ret, DWORD b)
     return S_OK;
 }
 
-static HRESULT get_binary_expr_values(script_ctx_t *ctx, binary_expression_t *expr, jsexcept_t *ei, VARIANT *lval, VARIANT *rval)
-{
-    exprval_t exprval;
-    HRESULT hres;
-
-    hres = expr_eval(ctx, expr->expression1, 0, ei, &exprval);
-    if(FAILED(hres))
-        return hres;
-
-    hres = exprval_to_value(ctx, &exprval, ei, lval);
-    exprval_release(&exprval);
-    if(FAILED(hres))
-        return hres;
-
-    hres = expr_eval(ctx, expr->expression2, 0, ei, &exprval);
-    if(SUCCEEDED(hres)) {
-        hres = exprval_to_value(ctx, &exprval, ei, rval);
-        exprval_release(&exprval);
-    }
-
-    if(FAILED(hres)) {
-        VariantClear(lval);
-        return hres;
-    }
-
-    return S_OK;
-}
-
-typedef HRESULT (*oper_t)(script_ctx_t*,VARIANT*,VARIANT*,jsexcept_t*,VARIANT*);
-
-static HRESULT binary_expr_eval(script_ctx_t *ctx, binary_expression_t *expr, oper_t oper, jsexcept_t *ei,
-        exprval_t *ret)
-{
-    VARIANT lval, rval, retv;
-    HRESULT hres;
-
-    hres = get_binary_expr_values(ctx, expr, ei, &lval, &rval);
-    if(FAILED(hres))
-        return hres;
-
-    hres = oper(ctx, &lval, &rval, ei, &retv);
-    VariantClear(&lval);
-    VariantClear(&rval);
-    if(FAILED(hres))
-        return hres;
-
-    ret->type = EXPRVAL_VARIANT;
-    ret->u.var = retv;
-    return S_OK;
-}
-
 /* ECMA-262 3rd Edition    13 */
 HRESULT function_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
@@ -2149,45 +2098,46 @@ static HRESULT interp_and(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.8.6 */
-static HRESULT instanceof_eval(script_ctx_t *ctx, VARIANT *inst, VARIANT *objv, jsexcept_t *ei, VARIANT *retv)
+static HRESULT interp_instanceof(exec_ctx_t *ctx)
 {
     jsdisp_t *obj, *iter, *tmp = NULL;
-    VARIANT_BOOL ret = VARIANT_FALSE;
-    BOOL b;
-    VARIANT var;
+    VARIANT prot, *v;
+    BOOL ret = FALSE;
     HRESULT hres;
 
     static const WCHAR prototypeW[] = {'p','r','o','t','o','t', 'y', 'p','e',0};
 
-    if(V_VT(objv) != VT_DISPATCH || !V_DISPATCH(objv))
-        return throw_type_error(ctx, ei, JS_E_FUNCTION_EXPECTED, NULL);
+    v = stack_pop(ctx);
+    if(V_VT(v) != VT_DISPATCH || !V_DISPATCH(v)) {
+        VariantClear(v);
+        return throw_type_error(ctx->parser->script, &ctx->ei, JS_E_FUNCTION_EXPECTED, NULL);
+    }
 
-    obj = iface_to_jsdisp((IUnknown*)V_DISPATCH(objv));
+    obj = iface_to_jsdisp((IUnknown*)V_DISPATCH(v));
+    IDispatch_Release(V_DISPATCH(v));
     if(!obj) {
         FIXME("non-jsdisp objects not supported\n");
         return E_FAIL;
     }
 
     if(is_class(obj, JSCLASS_FUNCTION)) {
-        hres = jsdisp_propget_name(obj, prototypeW, &var, ei, NULL/*FIXME*/);
+        hres = jsdisp_propget_name(obj, prototypeW, &prot, &ctx->ei, NULL/*FIXME*/);
     }else {
-        hres = throw_type_error(ctx, ei, JS_E_FUNCTION_EXPECTED, NULL);
+        hres = throw_type_error(ctx->parser->script, &ctx->ei, JS_E_FUNCTION_EXPECTED, NULL);
     }
     jsdisp_release(obj);
     if(FAILED(hres))
         return hres;
 
-    if(V_VT(&var) == VT_DISPATCH) {
-        if(V_VT(inst) == VT_DISPATCH)
-            tmp = iface_to_jsdisp((IUnknown*)V_DISPATCH(inst));
-        for(iter = tmp; iter; iter = iter->prototype) {
-            hres = disp_cmp(V_DISPATCH(&var), to_disp(iter), &b);
+    v = stack_pop(ctx);
+
+    if(V_VT(&prot) == VT_DISPATCH) {
+        if(V_VT(v) == VT_DISPATCH)
+            tmp = iface_to_jsdisp((IUnknown*)V_DISPATCH(v));
+        for(iter = tmp; !ret && iter; iter = iter->prototype) {
+            hres = disp_cmp(V_DISPATCH(&prot), to_disp(iter), &ret);
             if(FAILED(hres))
                 break;
-            if(b) {
-                ret = VARIANT_TRUE;
-                break;
-            }
         }
 
         if(tmp)
@@ -2197,23 +2147,12 @@ static HRESULT instanceof_eval(script_ctx_t *ctx, VARIANT *inst, VARIANT *objv, 
         hres = E_FAIL;
     }
 
-    VariantClear(&var);
+    VariantClear(&prot);
+    VariantClear(v);
     if(FAILED(hres))
         return hres;
 
-    V_VT(retv) = VT_BOOL;
-    V_BOOL(retv) = ret;
-    return S_OK;
-}
-
-/* ECMA-262 3rd Edition    11.8.6 */
-HRESULT instanceof_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
-{
-    binary_expression_t *expr = (binary_expression_t*)_expr;
-
-    TRACE("\n");
-
-    return binary_expr_eval(ctx, expr, instanceof_eval, ei, ret);
+    return stack_push_bool(ctx, ret);
 }
 
 /* ECMA-262 3rd Edition    11.8.7 */
