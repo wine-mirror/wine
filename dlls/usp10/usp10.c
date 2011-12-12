@@ -179,9 +179,14 @@ static const scriptRange scriptRanges[] = {
     { Script_Ideograph  ,0x3008, 0x3020,  0, 0},
     { Script_CJK_Han    ,0x3021, 0x3029,  0, 0},
     { Script_Ideograph  ,0x302a, 0x3030,  0, 0},
+    /* Kana Marks: */
+    { Script_Kana       ,0x3031, 0x3035,  0, 0},
     { Script_Ideograph  ,0x3036, 0x3037,  0, 0},
     { Script_CJK_Han    ,0x3038, 0x303b,  0, 0},
     { Script_Ideograph  ,0x303c, 0x303f,  0, 0},
+    /* Hiragana: U+3040–U+309F */
+    /* Katakana: U+30A0–U+30FF */
+    { Script_Kana       ,0x3040, 0x30ff,  0, 0},
     /* Bopomofo: U+3100–U+312F */
     { Script_Bopomofo   ,0x3100, 0x312f,  0, 0},
     /* Kanbun: U+3190–U+319F */
@@ -190,10 +195,14 @@ static const scriptRange scriptRanges[] = {
     { Script_Bopomofo   ,0x31a0, 0x31bf,  0, 0},
     /* CJK Strokes: U+31C0–U+31EF */
     { Script_Ideograph  ,0x31c0, 0x31ef,  0, 0},
+    /* Katakana Phonetic Extensions: U+31F0–U+31FF */
+    { Script_Kana       ,0x31f0, 0x31ff,  0, 0},
     /* Enclosed CJK Letters and Months: U+3200–U+32FF */
-    { Script_Ideograph  ,0x3220, 0x32ff,  0, 0},
+    { Script_Ideograph  ,0x3220, 0x32ef,  0, 0},
+    { Script_Kana       ,0x32d0, 0x31ff,  0, 0},
     /* CJK Compatibility: U+3300–U+33FF*/
-    { Script_Ideograph  ,0x3300, 0x33ff,  0, 0},
+    { Script_Kana       ,0x3300, 0x3357,  0, 0},
+    { Script_Ideograph  ,0x3358, 0x33ff,  0, 0},
     /* CJK Unified Ideographs Extension A: U+3400–U+4DBF */
     { Script_CJK_Han    ,0x3400, 0x4dbf,  0, 0},
     /* CJK Unified Ideographs: U+4E00–U+9FFF */
@@ -228,6 +237,7 @@ static const scriptRange scriptRanges[] = {
     { Script_Arabic,     0xfe70, 0xfeff, 0, 0},
     /* Halfwidth and Fullwidth Forms: U+FF00–FFEF */
     { Script_Ideograph  ,0xff00, 0xff64,  Script_Numeric2, 0},
+    { Script_Kana       ,0xff65, 0xff9f,  0, 0},
     { Script_Ideograph  ,0xffe0, 0xffef,  0, 0},
     /* END */
     { SCRIPT_UNDEFINED,  0, 0, 0}
@@ -471,6 +481,10 @@ static const scriptData scriptInformation[] = {
      {LANG_ENGLISH, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
      MS_MAKE_TAG('b','o','p','o'),
      {0}},
+    {{Script_Kana, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_ENGLISH, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+     MS_MAKE_TAG('k','a','n','a'),
+     {0}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -503,7 +517,7 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[50].props, &scriptInformation[51].props,
     &scriptInformation[52].props, &scriptInformation[53].props,
     &scriptInformation[54].props, &scriptInformation[55].props,
-    &scriptInformation[56].props
+    &scriptInformation[56].props, &scriptInformation[57].props
 };
 
 typedef struct {
