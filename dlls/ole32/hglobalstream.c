@@ -51,39 +51,28 @@ WINE_DEFAULT_DEBUG_CHANNEL(storage);
  * This class implements the IStream interface and represents a stream
  * supported by an HGLOBAL pointer.
  */
-struct HGLOBALStreamImpl
+typedef struct
 {
-  const IStreamVtbl *lpVtbl;   /* Needs to be the first item in the struct
-			  * since we want to cast this in an IStream pointer */
+  IStream IStream_iface;
+  LONG ref;
 
-  /*
-   * Reference count
-   */
-  LONG		     ref;
-
-  /*
-   * Support for the stream
-   */
+  /* support for the stream */
   HGLOBAL supportHandle;
 
-  /*
-   * This flag is TRUE if the HGLOBAL is destroyed when the stream
-   * is finally released.
-   */
-  BOOL    deleteOnRelease;
+  /* if TRUE the HGLOBAL is destroyed when the stream is finally released */
+  BOOL deleteOnRelease;
 
-  /*
-   * Helper variable that contains the size of the stream
-   */
-  ULARGE_INTEGER     streamSize;
+  /* size of the stream */
+  ULARGE_INTEGER streamSize;
 
-  /*
-   * This is the current position of the cursor in the stream
-   */
-  ULARGE_INTEGER     currentPosition;
-};
+  /* current position of the cursor */
+  ULARGE_INTEGER currentPosition;
+} HGLOBALStreamImpl;
 
-typedef struct HGLOBALStreamImpl HGLOBALStreamImpl;
+static inline HGLOBALStreamImpl *impl_from_IStream(IStream *iface)
+{
+  return CONTAINING_RECORD(iface, HGLOBALStreamImpl, IStream_iface);
+}
 
 /***
  * This is the destructor of the HGLOBALStreamImpl class.
@@ -115,10 +104,9 @@ static void HGLOBALStreamImpl_Destroy(HGLOBALStreamImpl* This)
  * This implements the IUnknown method AddRef for this
  * class
  */
-static ULONG WINAPI HGLOBALStreamImpl_AddRef(
-		IStream* iface)
+static ULONG WINAPI HGLOBALStreamImpl_AddRef(IStream* iface)
 {
-  HGLOBALStreamImpl* const This=(HGLOBALStreamImpl*)iface;
+  HGLOBALStreamImpl* This = impl_from_IStream(iface);
   return InterlockedIncrement(&This->ref);
 }
 
@@ -131,7 +119,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_QueryInterface(
 		  REFIID         riid,	      /* [in] */
 		  void**         ppvObject)   /* [iid_is][out] */
 {
-  HGLOBALStreamImpl* const This=(HGLOBALStreamImpl*)iface;
+  HGLOBALStreamImpl* This = impl_from_IStream(iface);
 
   /*
    * Perform a sanity check on the parameters.
@@ -176,20 +164,13 @@ static HRESULT WINAPI HGLOBALStreamImpl_QueryInterface(
 static ULONG WINAPI HGLOBALStreamImpl_Release(
 		IStream* iface)
 {
-  HGLOBALStreamImpl* const This=(HGLOBALStreamImpl*)iface;
-  ULONG newRef;
+  HGLOBALStreamImpl* This= impl_from_IStream(iface);
+  ULONG ref = InterlockedDecrement(&This->ref);
 
-  newRef = InterlockedDecrement(&This->ref);
-
-  /*
-   * If the reference count goes down to 0, perform suicide.
-   */
-  if (newRef==0)
-  {
+  if (!ref)
     HGLOBALStreamImpl_Destroy(This);
-  }
 
-  return newRef;
+  return ref;
 }
 
 /***
@@ -207,7 +188,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_Read(
 		  ULONG          cb,        /* [in] */
 		  ULONG*         pcbRead)   /* [out] */
 {
-  HGLOBALStreamImpl* const This=(HGLOBALStreamImpl*)iface;
+  HGLOBALStreamImpl* This = impl_from_IStream(iface);
 
   void* supportBuffer;
   ULONG bytesReadBuffer;
@@ -281,7 +262,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_Write(
 		  ULONG          cb,          /* [in] */
 		  ULONG*         pcbWritten)  /* [out] */
 {
-  HGLOBALStreamImpl* const This=(HGLOBALStreamImpl*)iface;
+  HGLOBALStreamImpl* This = impl_from_IStream(iface);
 
   void*          supportBuffer;
   ULARGE_INTEGER newSize;
@@ -363,7 +344,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_Seek(
 		  DWORD           dwOrigin,         /* [in] */
 		  ULARGE_INTEGER* plibNewPosition) /* [out] */
 {
-  HGLOBALStreamImpl* const This=(HGLOBALStreamImpl*)iface;
+  HGLOBALStreamImpl* This = impl_from_IStream(iface);
 
   ULARGE_INTEGER newPosition = This->currentPosition;
   HRESULT hr = S_OK;
@@ -428,7 +409,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_SetSize(
 				     IStream*      iface,
 				     ULARGE_INTEGER  libNewSize)   /* [in] */
 {
-  HGLOBALStreamImpl* const This=(HGLOBALStreamImpl*)iface;
+  HGLOBALStreamImpl* This = impl_from_IStream(iface);
   HGLOBAL supportHandle;
 
   TRACE("(%p, %d)\n", iface, libNewSize.u.LowPart);
@@ -593,7 +574,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_Stat(
 		  STATSTG*     pstatstg,     /* [out] */
 		  DWORD        grfStatFlag)  /* [in] */
 {
-  HGLOBALStreamImpl* const This=(HGLOBALStreamImpl*)iface;
+  HGLOBALStreamImpl* This = impl_from_IStream(iface);
 
   memset(pstatstg, 0, sizeof(STATSTG));
 
@@ -608,12 +589,13 @@ static HRESULT WINAPI HGLOBALStreamImpl_Clone(
 		  IStream*     iface,
 		  IStream**    ppstm) /* [out] */
 {
+  HGLOBALStreamImpl* This = impl_from_IStream(iface);
   ULARGE_INTEGER dummy;
   LARGE_INTEGER offset;
   HRESULT hr;
-  HGLOBALStreamImpl* const This=(HGLOBALStreamImpl*)iface;
+
   TRACE(" Cloning %p (deleteOnRelease=%d seek position=%ld)\n",iface,This->deleteOnRelease,(long)This->currentPosition.QuadPart);
-  hr=CreateStreamOnHGlobal(This->supportHandle, FALSE, ppstm);
+  hr = CreateStreamOnHGlobal(This->supportHandle, FALSE, ppstm);
   if(FAILED(hr))
     return hr;
   offset.QuadPart=(LONGLONG)This->currentPosition.QuadPart;
@@ -624,7 +606,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_Clone(
 /*
  * Virtual function table for the HGLOBALStreamImpl class.
  */
-static const IStreamVtbl HGLOBALStreamImpl_Vtbl =
+static const IStreamVtbl HGLOBALStreamImplVtbl =
 {
     HGLOBALStreamImpl_QueryInterface,
     HGLOBALStreamImpl_AddRef,
@@ -658,47 +640,43 @@ static HGLOBALStreamImpl* HGLOBALStreamImpl_Construct(
 		HGLOBAL  hGlobal,
 		BOOL     fDeleteOnRelease)
 {
-  HGLOBALStreamImpl* newStream;
+  HGLOBALStreamImpl* This;
 
-  newStream = HeapAlloc(GetProcessHeap(), 0, sizeof(HGLOBALStreamImpl));
-
-  if (newStream!=0)
+  This = HeapAlloc(GetProcessHeap(), 0, sizeof(HGLOBALStreamImpl));
+  if (This)
   {
-    /*
-     * Set-up the virtual function table and reference count.
-     */
-    newStream->lpVtbl = &HGLOBALStreamImpl_Vtbl;
-    newStream->ref    = 0;
+    This->IStream_iface.lpVtbl = &HGLOBALStreamImplVtbl;
+    This->ref = 0;
 
     /*
      * Initialize the support.
      */
-    newStream->supportHandle = hGlobal;
-    newStream->deleteOnRelease = fDeleteOnRelease;
+    This->supportHandle = hGlobal;
+    This->deleteOnRelease = fDeleteOnRelease;
 
     /*
      * This method will allocate a handle if one is not supplied.
      */
-    if (!newStream->supportHandle)
+    if (!This->supportHandle)
     {
-      newStream->supportHandle = GlobalAlloc(GMEM_MOVEABLE | GMEM_NODISCARD |
+      This->supportHandle = GlobalAlloc(GMEM_MOVEABLE | GMEM_NODISCARD |
 					     GMEM_SHARE, 0);
     }
 
     /*
      * Start the stream at the beginning.
      */
-    newStream->currentPosition.u.HighPart = 0;
-    newStream->currentPosition.u.LowPart = 0;
+    This->currentPosition.u.HighPart = 0;
+    This->currentPosition.u.LowPart = 0;
 
     /*
      * Initialize the size of the stream to the size of the handle.
      */
-    newStream->streamSize.u.HighPart = 0;
-    newStream->streamSize.u.LowPart  = GlobalSize(newStream->supportHandle);
+    This->streamSize.u.HighPart = 0;
+    This->streamSize.u.LowPart = GlobalSize(This->supportHandle);
   }
 
-  return newStream;
+  return This;
 }
 
 
@@ -743,7 +721,7 @@ HRESULT WINAPI GetHGlobalFromStream(IStream* pstm, HGLOBAL* phglobal)
   /*
    * Verify that the stream object was created with CreateStreamOnHGlobal.
    */
-  if (pStream->lpVtbl == &HGLOBALStreamImpl_Vtbl)
+  if (pStream->IStream_iface.lpVtbl == &HGLOBALStreamImplVtbl)
     *phglobal = pStream->supportHandle;
   else
   {
