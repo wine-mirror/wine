@@ -803,7 +803,8 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, DWORD index,
     {
         char name[IF_NAMESIZE], *ptr = (char *)aa + sizeof(IP_ADAPTER_ADDRESSES), *src;
         WCHAR *dst;
-        DWORD buflen, type, status;
+        DWORD buflen, type;
+        INTERNAL_IF_OPER_STATUS status;
 
         memset(aa, 0, sizeof(IP_ADAPTER_ADDRESSES));
         aa->u.s.Length  = sizeof(IP_ADAPTER_ADDRESSES);

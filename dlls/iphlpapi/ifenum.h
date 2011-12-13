@@ -119,6 +119,6 @@ ULONG v6addressesFromIndex(DWORD index, SOCKET_ADDRESS **addrs, ULONG *num_addrs
 char *toIPAddressString(unsigned int addr, char string[16]) DECLSPEC_HIDDEN;
 
 DWORD getInterfaceMtuByName(const char *name, PDWORD mtu) DECLSPEC_HIDDEN;
-DWORD getInterfaceStatusByName(const char *name, PDWORD status) DECLSPEC_HIDDEN;
+DWORD getInterfaceStatusByName(const char *name, INTERNAL_IF_OPER_STATUS *status) DECLSPEC_HIDDEN;
 
 #endif /* ndef WINE_IFENUM_H_ */

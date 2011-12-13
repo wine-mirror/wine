@@ -586,7 +586,7 @@ DWORD getInterfaceMtuByName(const char *name, PDWORD mtu)
   return ret;
 }
 
-DWORD getInterfaceStatusByName(const char *name, PDWORD status)
+DWORD getInterfaceStatusByName(const char *name, INTERNAL_IF_OPER_STATUS *status)
 {
   DWORD ret;
   int fd;
