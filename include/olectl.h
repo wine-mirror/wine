@@ -183,6 +183,10 @@ typedef VARIANT_BOOL OLE_ENABLEDEFAULTBOOL;
 #define LP_VGACOLOR     0x2
 #define LP_COLOR        0x4
 
+HRESULT WINAPI DllRegisterServer(void);
+
+HRESULT WINAPI DllUnregisterServer(void);
+
 HCURSOR WINAPI OleIconToCursor( HINSTANCE hinstExe, HICON hicon);
 
 HRESULT WINAPI OleCreatePropertyFrameIndirect( LPOCPFIPARAMS lpParams);
