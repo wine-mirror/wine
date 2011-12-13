@@ -21,9 +21,6 @@
 
 #include "vsstyle.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 enum BGTYPE {
     BT_IMAGEFILE = 0,
@@ -677,9 +674,5 @@ enum MENUBANDSTATES {
     MDS_CHECKED = 5,
     MDS_HOTCHECKED = 6,
 };
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* __VSSYM32_H__ */
