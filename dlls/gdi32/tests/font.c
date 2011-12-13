@@ -4125,8 +4125,6 @@ static void test_vertical_font(void)
     ok(num == 2, "AddFontResourceExA should add 2 fonts from vertical.ttf\n");
 
     check_vertical_font("@WineTestVertical", &installed, &selected, &gm);
-    /* This test fails on wine if locale is not en-US. Disable for now. */
-    if (0)
     ok(installed, "@WineTestVertical is not installed\n");
     todo_wine
     ok(selected, "@WineTestVertical is not selected\n");

@@ -1487,8 +1487,6 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
 #endif /* HAVE_CARBON_CARBON_H */
 
     do {
-        char *family_name = fake_family;
-
         if (file)
         {
             TRACE("Loading font file %s index %ld\n", debugstr_a(file), face_index);
@@ -1571,9 +1569,6 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
             HeapFree(GetProcessHeap(), 0, localised_family);
         }
 
-        if(!family_name)
-            family_name = ft_face->family_name;
-
         bitmap_num = 0;
         do {
             My_FT_Bitmap_Size *size = NULL;
@@ -1582,9 +1577,22 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
             if(!FT_IS_SCALABLE(ft_face))
                 size = (My_FT_Bitmap_Size *)ft_face->available_sizes + bitmap_num;
 
-            len = MultiByteToWideChar(CP_ACP, 0, family_name, -1, NULL, 0);
-            english_family = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-            MultiByteToWideChar(CP_ACP, 0, family_name, -1, english_family, len);
+            if(fake_family)
+            {
+                len = MultiByteToWideChar(CP_ACP, 0, fake_family, -1, NULL, 0);
+                english_family = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+                MultiByteToWideChar(CP_ACP, 0, fake_family, -1, english_family, len);
+            }
+            else
+            {
+                english_family = get_face_name(ft_face, TT_NAME_ID_FONT_FAMILY, TT_MS_LANGID_ENGLISH_UNITED_STATES);
+                if(!english_family)
+                {
+                    len = MultiByteToWideChar(CP_ACP, 0, ft_face->family_name, -1, NULL, 0);
+                    english_family = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+                    MultiByteToWideChar(CP_ACP, 0, ft_face->family_name, -1, english_family, len);
+                }
+            }
 
             localised_family = NULL;
             if(!fake_family) {
