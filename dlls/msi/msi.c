@@ -2685,18 +2685,14 @@ UINT WINAPI MsiVerifyPackageW( LPCWSTR szPackage )
 static INSTALLSTATE MSI_GetComponentPath(LPCWSTR szProduct, LPCWSTR szComponent,
                                          awstring* lpPathBuf, LPDWORD pcchBuf)
 {
+    static const WCHAR wininstaller[] =
+        {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
     WCHAR squished_pc[GUID_SIZE];
     WCHAR squished_comp[GUID_SIZE];
     HKEY hkey;
     LPWSTR path = NULL;
     INSTALLSTATE state;
     DWORD version;
-
-    static const WCHAR wininstaller[] = {
-        'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
-
-    TRACE("%s %s %p %p\n", debugstr_w(szProduct),
-           debugstr_w(szComponent), lpPathBuf->str.w, pcchBuf);
 
     if (!szProduct || !szComponent)
         return INSTALLSTATE_INVALIDARG;
@@ -2772,6 +2768,8 @@ INSTALLSTATE WINAPI MsiGetComponentPathW(LPCWSTR szProduct, LPCWSTR szComponent,
 {
     awstring path;
 
+    TRACE("%s %s %p %p\n", debugstr_w(szProduct), debugstr_w(szComponent), lpPathBuf, pcchBuf);
+
     path.unicode = TRUE;
     path.str.w = lpPathBuf;
 
@@ -2787,6 +2785,8 @@ INSTALLSTATE WINAPI MsiGetComponentPathA(LPCSTR szProduct, LPCSTR szComponent,
     LPWSTR szwProduct, szwComponent = NULL;
     INSTALLSTATE r = INSTALLSTATE_UNKNOWN;
     awstring path;
+
+    TRACE("%s %s %p %p\n", debugstr_a(szProduct), debugstr_a(szComponent), lpPathBuf, pcchBuf);
 
     szwProduct = strdupAtoW( szProduct );
     if( szProduct && !szwProduct)
@@ -3243,10 +3243,6 @@ static UINT MSI_ProvideQualifiedComponentEx(LPCWSTR szComponent,
     DWORD sz;
     UINT rc;
 
-    TRACE("%s %s %i %s %i %i %p %p\n", debugstr_w(szComponent),
-          debugstr_w(szQualifier), dwInstallMode, debugstr_w(szProduct),
-          Unused1, Unused2, lpPathBuf, pcchPathBuf);
-
     rc = MSIREG_OpenUserComponentsKey(szComponent, &hkey, FALSE);
     if (rc != ERROR_SUCCESS)
         return ERROR_INDEX_ABSENT;
@@ -3281,6 +3277,10 @@ UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR szComponent,
                 LPDWORD pcchPathBuf)
 {
     awstring path;
+
+    TRACE("%s %s %u %s %u %u %p %p\n", debugstr_w(szComponent),
+          debugstr_w(szQualifier), dwInstallMode, debugstr_w(szProduct),
+          Unused1, Unused2, lpPathBuf, pcchPathBuf);
 
     path.unicode = TRUE;
     path.str.w = lpPathBuf;
