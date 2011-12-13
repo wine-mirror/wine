@@ -3831,7 +3831,6 @@ UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature,
         return r;
 
     msi_set_property( package->db, szReinstallMode, reinstallmode );
-    msi_set_property( package->db, szInstalled, szOne );
     msi_set_property( package->db, szLogVerbose, szOne );
     msi_set_property( package->db, szReinstall, szFeature );
 
