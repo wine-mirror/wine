@@ -3770,14 +3770,14 @@ UINT WINAPI MsiGetShortcutTargetW( LPCWSTR szShortcutTarget,
     return ERROR_FUNCTION_FAILED;
 }
 
-UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature,
-                                  DWORD dwReinstallMode )
+UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature, DWORD dwReinstallMode )
 {
+    static const WCHAR fmtW[] = {'%','s','=','%','s',' ','%','s','=','%','s',0};
     MSIPACKAGE *package;
     MSIINSTALLCONTEXT context;
     UINT r;
     WCHAR sourcepath[MAX_PATH], filename[MAX_PATH], reinstallmode[11];
-    LPWSTR ptr;
+    WCHAR *ptr, *cmdline;
     DWORD sz;
 
     TRACE("%s, %s, 0x%08x\n", debugstr_w(szProduct), debugstr_w(szFeature), dwReinstallMode);
@@ -3813,12 +3813,10 @@ UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature,
     sz = sizeof(sourcepath);
     MsiSourceListGetInfoW( szProduct, NULL, context, MSICODE_PRODUCT,
                            INSTALLPROPERTY_LASTUSEDSOURCEW, sourcepath, &sz );
-
     sz = sizeof(filename);
     MsiSourceListGetInfoW( szProduct, NULL, context, MSICODE_PRODUCT,
                            INSTALLPROPERTY_PACKAGENAMEW, filename, &sz );
-
-    lstrcatW( sourcepath, filename );
+    strcatW( sourcepath, filename );
 
     if (dwReinstallMode & REINSTALLMODE_PACKAGE)
         r = MSI_OpenPackageW( sourcepath, &package );
@@ -3828,12 +3826,18 @@ UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature,
     if (r != ERROR_SUCCESS)
         return r;
 
-    msi_set_property( package->db, szReinstallMode, reinstallmode );
-    msi_set_property( package->db, szReinstall, szFeature );
+    sz = (strlenW( fmtW ) + strlenW( szReinstallMode ) + strlenW( reinstallmode )) * sizeof(WCHAR);
+    sz += (strlenW( szReinstall ) + strlenW( szFeature )) * sizeof(WCHAR);
+    if (!(cmdline = msi_alloc( sz )))
+    {
+        msiobj_release( &package->hdr );
+        return ERROR_OUTOFMEMORY;
+    }
+    sprintfW( cmdline, fmtW, szReinstallMode, reinstallmode, szReinstall, szFeature );
 
-    r = MSI_InstallPackage( package, sourcepath, NULL );
-
+    r = MSI_InstallPackage( package, sourcepath, cmdline );
     msiobj_release( &package->hdr );
+    msi_free( cmdline );
 
     return r;
 }
