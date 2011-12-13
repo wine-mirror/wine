@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-06 00:09+0100\n"
+"PO-Revision-Date: 2011-12-13 22:35+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -3494,9 +3494,8 @@ msgid "Subscript out of range"
 msgstr "Indice hors limites"
 
 #: jscript.rc:28
-#, fuzzy
 msgid "Object required"
-msgstr "Objet attendu"
+msgstr "Objet requis"
 
 #: jscript.rc:29
 msgid "Automation server can't create object"
@@ -6817,9 +6816,8 @@ msgid "&Data Rate"
 msgstr "&Débit de données"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/s"
-msgstr "ko/sec"
+msgstr "ko/s"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
