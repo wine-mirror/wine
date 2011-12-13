@@ -4588,6 +4588,7 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
     int in_attr, out_attr;
     int i = 0, sep = 0;
     const var_t *var;
+    type_t *ref;
 
     if (!type_get_function_args(func->type))
         return;
@@ -4646,7 +4647,8 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
                 break;
             case TGT_POINTER:
                 fprintf(file, " = &%s_W%u;\n", local_var_prefix, i);
-                switch (typegen_detect_type(type_pointer_get_ref(var->type), var->attrs, TDT_IGNORE_STRINGS))
+                ref = type_pointer_get_ref(var->type);
+                switch (typegen_detect_type(ref, var->attrs, TDT_IGNORE_STRINGS))
                 {
                 case TGT_BASIC:
                 case TGT_ENUM:
@@ -4659,9 +4661,20 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
                     print_file(file, indent, "memset(&%s_W%u, 0, sizeof(%s_W%u));\n",
                                local_var_prefix, i, local_var_prefix, i);
                     break;
+                case TGT_ARRAY:
+                    if (type_array_is_decl_as_ptr(ref))
+                    {
+                        print_file(file, indent, "%s_W%u = 0;\n", local_var_prefix, i);
+                        break;
+                    }
+                    ref = type_array_get_element(ref);
+                    /* fall through */
                 case TGT_STRUCT:
                 case TGT_UNION:
-                case TGT_ARRAY:
+                    if (type_has_pointers(ref))
+                        print_file(file, indent, "memset(&%s_W%u, 0, sizeof(%s_W%u));\n",
+                                   local_var_prefix, i, local_var_prefix, i);
+                    break;
                 case TGT_CTXT_HANDLE:
                 case TGT_CTXT_HANDLE_POINTER:
                 case TGT_INVALID:
