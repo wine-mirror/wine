@@ -7408,11 +7408,12 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq)
 UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
                          LPCWSTR szCommandLine )
 {
-    UINT rc;
-    BOOL ui_exists;
     static const WCHAR szDisableRollback[] = {'D','I','S','A','B','L','E','R','O','L','L','B','A','C','K',0};
     static const WCHAR szAction[] = {'A','C','T','I','O','N',0};
     static const WCHAR szInstall[] = {'I','N','S','T','A','L','L',0};
+    WCHAR *reinstall = NULL;
+    BOOL ui_exists;
+    UINT rc;
 
     msi_set_property( package->db, szAction, szInstall );
 
@@ -7515,11 +7516,12 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     /* finish up running custom actions */
     ACTION_FinishCustomActions(package);
 
-    if (package->need_rollback)
+    if (package->need_rollback && !(reinstall = msi_dup_property( package->db, szReinstall )))
     {
         WARN("installation failed, running rollback script\n");
         execute_script( package, ROLLBACK_SCRIPT );
     }
+    msi_free( reinstall );
 
     if (rc == ERROR_SUCCESS && package->need_reboot)
         return ERROR_SUCCESS_REBOOT_REQUIRED;
