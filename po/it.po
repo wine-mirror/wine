@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-07 18:06+0100\n"
+"PO-Revision-Date: 2011-12-13 08:20+0100\n"
 "Last-Translator: Luca Bennati <lucak3@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Italian\n"
@@ -3485,7 +3485,6 @@ msgid "Subscript out of range"
 msgstr "Sottoscript fuori portata"
 
 #: jscript.rc:28
-#, fuzzy
 msgid "Object required"
 msgstr "Richiesto un oggetto"
 
@@ -3543,7 +3542,7 @@ msgstr "'[oggetto]' non è un oggetto data"
 
 #: jscript.rc:42
 msgid "Object expected"
-msgstr "Richiesto un oggetto"
+msgstr "Previsto un oggetto"
 
 #: jscript.rc:43
 msgid "Illegal assignment"
@@ -3555,15 +3554,15 @@ msgstr "'|' non è definito"
 
 #: jscript.rc:45
 msgid "Boolean object expected"
-msgstr "Richiesto un oggetto Booleano"
+msgstr "Previsto un oggetto Booleano"
 
 #: jscript.rc:46
 msgid "VBArray object expected"
-msgstr "Richiesto un oggetto VBArray"
+msgstr "Previsto un oggetto VBArray"
 
 #: jscript.rc:47
 msgid "JScript object expected"
-msgstr "Richiesto un oggetto JScript"
+msgstr "Previsto un oggetto JScript"
 
 #: jscript.rc:48
 msgid "Syntax error in regular expression"
@@ -3583,7 +3582,7 @@ msgstr "La lunghezza dell'array deve essere un intero finito e positivo"
 
 #: jscript.rc:52
 msgid "Array object expected"
-msgstr "Richiesto un oggetto array"
+msgstr "Previsto un oggetto array"
 
 #: winerror.mc:26
 msgid "Success\n"
