@@ -32,6 +32,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 #define EXPR_NOVAL   0x0001
 #define EXPR_NEWREF  0x0002
 
+static const WCHAR booleanW[] = {'b','o','o','l','e','a','n',0};
+static const WCHAR functionW[] = {'f','u','n','c','t','i','o','n',0};
+static const WCHAR numberW[] = {'n','u','m','b','e','r',0};
+static const WCHAR objectW[] = {'o','b','j','e','c','t',0};
+static const WCHAR stringW[] = {'s','t','r','i','n','g',0};
+static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
+static const WCHAR unknownW[] = {'u','n','k','n','o','w','n',0};
+
 struct _return_type_t {
     enum{
         RT_NORMAL,
@@ -100,6 +108,15 @@ static inline HRESULT stack_push_int(exec_ctx_t *ctx, INT n)
     V_VT(&v) = VT_I4;
     V_I4(&v) = n;
     return stack_push(ctx, &v);
+}
+
+static inline HRESULT stack_push_string(exec_ctx_t *ctx, const WCHAR *str)
+{
+    VARIANT v;
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = SysAllocString(str);
+    return V_BSTR(&v) ? stack_push(ctx, &v) : E_OUTOFMEMORY;
 }
 
 static HRESULT stack_push_objid(exec_ctx_t *ctx, IDispatch *disp, DISPID id)
@@ -2456,34 +2473,9 @@ static HRESULT interp_void(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.4.3 */
-static HRESULT typeof_exprval(script_ctx_t *ctx, exprval_t *exprval, jsexcept_t *ei, const WCHAR **ret)
+static HRESULT typeof_string(VARIANT *v, const WCHAR **ret)
 {
-    VARIANT val;
-    HRESULT hres;
-
-    static const WCHAR booleanW[] = {'b','o','o','l','e','a','n',0};
-    static const WCHAR functionW[] = {'f','u','n','c','t','i','o','n',0};
-    static const WCHAR numberW[] = {'n','u','m','b','e','r',0};
-    static const WCHAR objectW[] = {'o','b','j','e','c','t',0};
-    static const WCHAR stringW[] = {'s','t','r','i','n','g',0};
-    static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
-    static const WCHAR unknownW[] = {'u','n','k','n','o','w','n',0};
-
-    if(exprval->type == EXPRVAL_INVALID) {
-        *ret = undefinedW;
-        return S_OK;
-    }
-
-    hres = exprval_to_value(ctx, exprval, ei, &val);
-    if(FAILED(hres)) {
-        if(exprval->type == EXPRVAL_IDREF) {
-            *ret = unknownW;
-            return S_OK;
-        }
-        return hres;
-    }
-
-    switch(V_VT(&val)) {
+    switch(V_VT(v)) {
     case VT_EMPTY:
         *ret = undefinedW;
         break;
@@ -2503,7 +2495,7 @@ static HRESULT typeof_exprval(script_ctx_t *ctx, exprval_t *exprval, jsexcept_t 
     case VT_DISPATCH: {
         jsdisp_t *dispex;
 
-        if(V_DISPATCH(&val) && (dispex = iface_to_jsdisp((IUnknown*)V_DISPATCH(&val)))) {
+        if(V_DISPATCH(v) && (dispex = iface_to_jsdisp((IUnknown*)V_DISPATCH(v)))) {
             *ret = is_class(dispex, JSCLASS_FUNCTION) ? functionW : objectW;
             jsdisp_release(dispex);
         }else {
@@ -2512,39 +2504,94 @@ static HRESULT typeof_exprval(script_ctx_t *ctx, exprval_t *exprval, jsexcept_t 
         break;
     }
     default:
-        FIXME("unhandled vt %d\n", V_VT(&val));
-        hres = E_NOTIMPL;
+        FIXME("unhandled vt %d\n", V_VT(v));
+        return E_NOTIMPL;
     }
 
-    VariantClear(&val);
-    return hres;
+    return S_OK;
 }
 
-HRESULT typeof_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+/* ECMA-262 3rd Edition    11.4.3 */
+static HRESULT interp_typeofid(exec_ctx_t *ctx)
 {
-    unary_expression_t *expr = (unary_expression_t*)_expr;
-    const WCHAR *str = NULL;
-    exprval_t exprval;
+    const WCHAR *ret;
+    IDispatch *obj;
+    VARIANT v;
+    DISPID id;
     HRESULT hres;
+
+    static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
 
     TRACE("\n");
 
-    hres = expr_eval(ctx, expr->expression, 0, ei, &exprval);
+    obj = stack_pop_objid(ctx, &id);
+    if(!obj)
+        return stack_push_string(ctx, undefinedW);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = disp_propget(ctx->parser->script, obj, id, &v, &ctx->ei, NULL/*FIXME*/);
+    IDispatch_Release(obj);
+    if(FAILED(hres))
+        return stack_push_string(ctx, unknownW);
+
+    hres = typeof_string(&v, &ret);
+    VariantClear(&v);
     if(FAILED(hres))
         return hres;
 
-    hres = typeof_exprval(ctx, &exprval, ei, &str);
+    return stack_push_string(ctx, ret);
+}
+
+/* ECMA-262 3rd Edition    11.4.3 */
+static HRESULT interp_typeofident(exec_ctx_t *ctx)
+{
+    const BSTR arg = ctx->parser->code->instrs[ctx->ip].arg1.bstr;
+    exprval_t exprval;
+    const WCHAR *ret;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_w(arg));
+
+    hres = identifier_eval(ctx->parser->script, arg, 0, &ctx->ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    if(exprval.type == EXPRVAL_INVALID) {
+        hres = stack_push_string(ctx, undefinedW);
+        exprval_release(&exprval);
+        return hres;
+    }
+
+    hres = exprval_to_value(ctx->parser->script, &exprval, &ctx->ei, &v);
     exprval_release(&exprval);
     if(FAILED(hres))
         return hres;
 
-    ret->type = EXPRVAL_VARIANT;
-    V_VT(&ret->u.var) = VT_BSTR;
-    V_BSTR(&ret->u.var) = SysAllocString(str);
-    if(!V_BSTR(&ret->u.var))
-        return E_OUTOFMEMORY;
+    hres = typeof_string(&v, &ret);
+    VariantClear(&v);
+    if(FAILED(hres))
+        return hres;
 
-    return S_OK;
+    return stack_push_string(ctx, ret);
+}
+
+/* ECMA-262 3rd Edition    11.4.3 */
+static HRESULT interp_typeof(exec_ctx_t *ctx)
+{
+    const WCHAR *ret;
+    VARIANT *v;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    v = stack_pop(ctx);
+    hres = typeof_string(v, &ret);
+    VariantClear(v);
+    if(FAILED(hres))
+        return hres;
+
+    return stack_push_string(ctx, ret);
 }
 
 /* ECMA-262 3rd Edition    11.4.7 */

@@ -534,6 +534,27 @@ static HRESULT compile_assign_expression(compiler_ctx_t *ctx, binary_expression_
     return S_OK;
 }
 
+static HRESULT compile_typeof_expression(compiler_ctx_t *ctx, unary_expression_t *expr)
+{
+    jsop_t op;
+    HRESULT hres;
+
+    if(is_memberid_expr(expr->expression->type)) {
+        if(expr->expression->type == EXPR_IDENT)
+            return push_instr_str(ctx, OP_typeofident, ((identifier_expression_t*)expr->expression)->identifier);
+
+        op = OP_typeofid;
+        hres = compile_memberid_expression(ctx, expr->expression, 0);
+    }else {
+        op = OP_typeof;
+        hres = compile_expression(ctx, expr->expression);
+    }
+    if(FAILED(hres))
+        return hres;
+
+    return push_instr(ctx, op) == -1 ? E_OUTOFMEMORY : S_OK;
+}
+
 static HRESULT compile_literal(compiler_ctx_t *ctx, literal_t *literal)
 {
     switch(literal->type) {
@@ -707,6 +728,8 @@ static HRESULT compile_expression_noret(compiler_ctx_t *ctx, expression_t *expr,
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_sub);
     case EXPR_THIS:
         return push_instr(ctx, OP_this) == -1 ? E_OUTOFMEMORY : S_OK;
+    case EXPR_TYPEOF:
+        return compile_typeof_expression(ctx, (unary_expression_t*)expr);
     case EXPR_VOID:
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_void);
     case EXPR_BXOR:
