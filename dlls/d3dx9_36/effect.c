@@ -1603,10 +1603,48 @@ static D3DXHANDLE WINAPI ID3DXBaseEffectImpl_GetAnnotationByName(ID3DXBaseEffect
 static HRESULT WINAPI ID3DXBaseEffectImpl_SetValue(ID3DXBaseEffect *iface, D3DXHANDLE parameter, LPCVOID data, UINT bytes)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
-    FIXME("iface %p, parameter %p, data %p, bytes %u stub\n", This, parameter, data, bytes);
+    TRACE("iface %p, parameter %p, data %p, bytes %u\n", This, parameter, data, bytes);
 
-    return E_NOTIMPL;
+    if (!param)
+    {
+        WARN("Invalid parameter %p specified\n", parameter);
+        return D3DERR_INVALIDCALL;
+    }
+
+    /* samplers don't touch data */
+    if (param->class == D3DXPC_OBJECT && (param->type == D3DXPT_SAMPLER
+            || param->type == D3DXPT_SAMPLER1D || param->type == D3DXPT_SAMPLER2D
+            || param->type == D3DXPT_SAMPLER3D || param->type == D3DXPT_SAMPLERCUBE))
+    {
+        TRACE("Sampler: returning E_FAIL\n");
+        return E_FAIL;
+    }
+
+    if (data && param->bytes >= bytes)
+    {
+        switch (param->type)
+        {
+            case D3DXPT_VOID:
+            case D3DXPT_BOOL:
+            case D3DXPT_INT:
+            case D3DXPT_FLOAT:
+                TRACE("Copy %u bytes\n", bytes);
+                memcpy(param->data, data, bytes);
+                break;
+
+            default:
+                FIXME("Unhandled type %s\n", debug_d3dxparameter_type(param->type));
+                break;
+        }
+
+        return D3D_OK;
+    }
+
+    WARN("Invalid argument specified\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetValue(ID3DXBaseEffect *iface, D3DXHANDLE parameter, LPVOID data, UINT bytes)
