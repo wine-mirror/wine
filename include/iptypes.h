@@ -21,6 +21,7 @@
 
 #include <time.h>
 #include <ifdef.h>
+#include <nldef.h>
 
 #define MAX_ADAPTER_DESCRIPTION_LENGTH  128
 #define MAX_ADAPTER_NAME_LENGTH         256
@@ -87,32 +88,9 @@ typedef struct {
     UINT EnableDns;
 } FIXED_INFO, *PFIXED_INFO;
 
-typedef enum {
-    IpPrefixOriginOther = 0,
-    IpPrefixOriginManual,
-    IpPrefixOriginWellKnown,
-    IpPrefixOriginDhcp,
-    IpPrefixOriginRouterAdvertisement,
-    IpPrefixOriginUnchanged = 16
-} IP_PREFIX_ORIGIN;
-
-typedef enum {
-    IpSuffixOriginOther = 0,
-    IpSuffixOriginManual,
-    IpSuffixOriginWellKnown,
-    IpSuffixOriginDhcp,
-    IpSuffixOriginLinkLayerAddress,
-    IpSuffixOriginRandom,
-    IpSuffixOriginUnchanged = 16
-} IP_SUFFIX_ORIGIN;
-
-typedef enum {
-    IpDadStateInvalid = 0,
-    IpDadStateTentative,
-    IpDadStateDuplicate,
-    IpDadStateDeprecated,
-    IpDadStatePreferred
-} IP_DAD_STATE;
+typedef NL_PREFIX_ORIGIN IP_PREFIX_ORIGIN;
+typedef NL_SUFFIX_ORIGIN IP_SUFFIX_ORIGIN;
+typedef NL_DAD_STATE IP_DAD_STATE;
 
 #ifdef _WINSOCK2API_
 

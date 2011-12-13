@@ -18,6 +18,8 @@
 #ifndef __WINE_MSTCPIP_H
 #define __WINE_MSTCPIP_H
 
+#include <nldef.h>
+
 struct tcp_keepalive
 {
     ULONG onoff;
