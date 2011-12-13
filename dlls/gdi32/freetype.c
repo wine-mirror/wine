@@ -3940,14 +3940,6 @@ static HFONT freetype_SelectFont( PHYSDEV dev, HFONT hfont )
         CHILD_FONT *font_link_entry;
         LPWSTR FaceName = lf.lfFaceName;
 
-        /*
-         * Check for a leading '@' this signals that the font is being
-         * requested in tategaki mode (vertical writing substitution) but
-         * does not affect the fontface that is to be selected.
-         */
-        if (lf.lfFaceName[0]=='@')
-            FaceName = &lf.lfFaceName[1];
-
         psub = get_font_subst(&font_subst_list, FaceName, lf.lfCharSet);
 
 	if(psub) {
