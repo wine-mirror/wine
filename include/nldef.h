@@ -48,4 +48,23 @@ typedef enum
     IpDadStatePreferred,
 } NL_DAD_STATE;
 
+#define MIB_IPPROTO_OTHER             1
+#define MIB_IPPROTO_LOCAL             2
+#define MIB_IPPROTO_NETMGMT           3
+#define MIB_IPPROTO_ICMP              4
+#define MIB_IPPROTO_EGP               5
+#define MIB_IPPROTO_GGP               6
+#define MIB_IPPROTO_HELLO             7
+#define MIB_IPPROTO_RIP               8
+#define MIB_IPPROTO_IS_IS             9
+#define MIB_IPPROTO_ES_IS             10
+#define MIB_IPPROTO_CISCO             11
+#define MIB_IPPROTO_BBN               12
+#define MIB_IPPROTO_OSPF              13
+#define MIB_IPPROTO_BGP               14
+
+#define MIB_IPPROTO_NT_AUTOSTATIC     10002
+#define MIB_IPPROTO_NT_STATIC         10006
+#define MIB_IPPROTO_NT_STATIC_NON_DOD 10007
+
 #endif /* __WINE_NLDEF_H */

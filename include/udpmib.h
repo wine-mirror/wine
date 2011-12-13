@@ -1,4 +1,4 @@
-/* WINE iprtrmib.h
+/*
  * Copyright (C) 2003 Juan Lang
  *
  * This library is free software; you can redistribute it and/or
@@ -15,14 +15,34 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#ifndef WINE_IPRTRMIB_H__
-#define WINE_IPRTRMIB_H__
+#ifndef __WINE_UDPMIB_H
+#define __WINE_UDPMIB_H
 
-#include <mprapi.h>
-#include <ipifcons.h>
 
-#include <ipmib.h>
-#include <tcpmib.h>
-#include <udpmib.h>
+/* UDP table */
 
-#endif /* WINE_IPRTRMIB_H__ */
+typedef struct _MIB_UDPROW
+{
+    DWORD dwLocalAddr;
+    DWORD dwLocalPort;
+} MIB_UDPROW, *PMIB_UDPROW;
+
+typedef struct _MIB_UDPTABLE
+{
+    DWORD      dwNumEntries;
+    MIB_UDPROW table[1];
+} MIB_UDPTABLE, *PMIB_UDPTABLE;
+
+
+/* UDP statistics */
+
+typedef struct _MIB_UDPSTATS
+{
+    DWORD dwInDatagrams;
+    DWORD dwNoPorts;
+    DWORD dwInErrors;
+    DWORD dwOutDatagrams;
+    DWORD dwNumAddrs;
+} MIB_UDPSTATS, *PMIB_UDPSTATS;
+
+#endif /* __WINE_UDPMIB_H */

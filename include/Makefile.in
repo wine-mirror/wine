@@ -297,6 +297,7 @@ SRCDIR_INCLUDES = \
 	icmpapi.h \
 	idispids.h \
 	ifdef.h \
+	ifmib.h \
 	imagehlp.h \
 	imm.h \
 	in6addr.h \
@@ -306,6 +307,7 @@ SRCDIR_INCLUDES = \
 	ipexport.h \
 	iphlpapi.h \
 	ipifcons.h \
+	ipmib.h \
 	iprtrmib.h \
 	iptypes.h \
 	isguids.h \
@@ -499,11 +501,13 @@ SRCDIR_INCLUDES = \
 	t2embapi.h \
 	tapi.h \
 	tchar.h \
+	tcpmib.h \
 	textserv.h \
 	tlhelp32.h \
 	tmschema.h \
 	traffic.h \
 	twain.h \
+	udpmib.h \
 	userenv.h \
 	usp10.h \
 	uuids.h \
