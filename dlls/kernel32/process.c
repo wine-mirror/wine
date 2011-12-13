@@ -242,24 +242,15 @@ static HANDLE open_exe_file( const WCHAR *name, struct binary_info *binary_info 
  *
  * Open an exe file, and return the full name and file handle.
  * Returns FALSE if file could not be found.
- * If file exists but cannot be opened, returns TRUE and set handle to INVALID_HANDLE_VALUE.
- * If file is a builtin exe, returns TRUE and sets handle to 0.
  */
 static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, int buflen,
                            HANDLE *handle, struct binary_info *binary_info )
 {
     TRACE("looking for %s\n", debugstr_w(name) );
 
-    if (!SearchPathW( NULL, name, exeW, buflen, buffer, NULL ))
-    {
-        if (contains_path( name ) && get_builtin_path( name, exeW, buffer, buflen, binary_info ))
-        {
-            *handle = 0;
-            return TRUE;
-        }
+    if (!SearchPathW( NULL, name, exeW, buflen, buffer, NULL ) &&
         /* no builtin found, try native without extension in case it is a Unix app */
-        if (!SearchPathW( NULL, name, NULL, buflen, buffer, NULL )) return FALSE;
-    }
+        !SearchPathW( NULL, name, NULL, buflen, buffer, NULL )) return FALSE;
 
     TRACE( "Trying native exe %s\n", debugstr_w(buffer) );
     if ((*handle = CreateFileW( buffer, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_DELETE,
@@ -2173,11 +2164,7 @@ static LPWSTR get_file_name( LPCWSTR appname, LPWSTR cmdline, LPWSTR buffer,
         memcpy( name, cmdline + 1, len * sizeof(WCHAR) );
         name[len] = 0;
 
-        if (!find_exe_file( name, buffer, buflen, handle, binary_info ))
-        {
-            if (!get_builtin_path( name, exeW, buffer, buflen, binary_info )) goto done;
-            *handle = 0;
-        }
+        if (!find_exe_file( name, buffer, buflen, handle, binary_info )) goto done;
         ret = cmdline;  /* no change necessary */
         goto done;
     }
@@ -2205,13 +2192,7 @@ static LPWSTR get_file_name( LPCWSTR appname, LPWSTR cmdline, LPWSTR buffer,
 
     if (!ret)
     {
-        if (first_space) *first_space = 0;  /* try only the first word as a builtin */
-        if (get_builtin_path( name, exeW, buffer, buflen, binary_info ))
-        {
-            *handle = 0;
-            ret = cmdline;
-        }
-        else SetLastError( ERROR_FILE_NOT_FOUND );
+        SetLastError( ERROR_FILE_NOT_FOUND );
     }
     else if (first_space)  /* build a new command-line with quotes */
     {
