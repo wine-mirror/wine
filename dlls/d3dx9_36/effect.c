@@ -919,6 +919,16 @@ static void set_number(LPVOID outdata, D3DXPARAMETER_TYPE outtype, LPCVOID indat
     }
 }
 
+static void set_vector(struct d3dx_parameter *param, CONST D3DXVECTOR4 *vector)
+{
+    UINT i;
+
+    for (i = 0; i < param->columns; ++i)
+    {
+        set_number((FLOAT *)param->data + i, param->type, (FLOAT *)vector + i, D3DXPT_FLOAT);
+    }
+}
+
 static void get_matrix(struct d3dx_parameter *param, D3DXMATRIX *matrix)
 {
     unsigned int i, k;
@@ -2020,13 +2030,51 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetFloatArray(ID3DXBaseEffect *iface, 
     return D3DERR_INVALIDCALL;
 }
 
-static HRESULT WINAPI ID3DXBaseEffectImpl_SetVector(ID3DXBaseEffect* iface, D3DXHANDLE parameter, CONST D3DXVECTOR4* vector)
+static HRESULT WINAPI ID3DXBaseEffectImpl_SetVector(ID3DXBaseEffect *iface, D3DXHANDLE parameter, CONST D3DXVECTOR4 *vector)
 {
     struct ID3DXBaseEffectImpl *This = impl_from_ID3DXBaseEffect(iface);
+    struct d3dx_parameter *param = get_valid_parameter(This, parameter);
 
-    FIXME("iface %p, parameter %p, vector %p stub\n", This, parameter, vector);
+    TRACE("iface %p, parameter %p, vector %p\n", This, parameter, vector);
 
-    return E_NOTIMPL;
+    if (param && !param->element_count)
+    {
+        TRACE("Class %s\n", debug_d3dxparameter_class(param->class));
+
+        switch (param->class)
+        {
+            case D3DXPC_SCALAR:
+            case D3DXPC_VECTOR:
+                if (param->type == D3DXPT_INT && param->bytes == 4)
+                {
+                    DWORD tmp;
+
+                    TRACE("INT fixup\n");
+                    tmp = (DWORD)(max(min(vector->z, 1.0f), 0.0f) * INT_FLOAT_MULTI);
+                    tmp += ((DWORD)(max(min(vector->y, 1.0f), 0.0f) * INT_FLOAT_MULTI)) << 8;
+                    tmp += ((DWORD)(max(min(vector->x, 1.0f), 0.0f) * INT_FLOAT_MULTI)) << 16;
+                    tmp += ((DWORD)(max(min(vector->w, 1.0f), 0.0f) * INT_FLOAT_MULTI)) << 24;
+
+                    *(INT *)param->data = tmp;
+                    return D3D_OK;
+                }
+                set_vector(param, vector);
+                return D3D_OK;
+
+            case D3DXPC_MATRIX_ROWS:
+            case D3DXPC_OBJECT:
+            case D3DXPC_STRUCT:
+                break;
+
+            default:
+                FIXME("Unhandled class %s\n", debug_d3dxparameter_class(param->class));
+                break;
+        }
+    }
+
+    WARN("Invalid argument specified\n");
+
+    return D3DERR_INVALIDCALL;
 }
 
 static HRESULT WINAPI ID3DXBaseEffectImpl_GetVector(ID3DXBaseEffect *iface, D3DXHANDLE parameter, D3DXVECTOR4 *vector)
