@@ -206,6 +206,11 @@ DECLARE_INTERFACE_(ID3D10ShaderReflection, IUnknown)
 };
 #undef INTERFACE
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 HRESULT WINAPI D3D10CompileShader(LPCSTR data, SIZE_T data_size, LPCSTR filename,
         const D3D10_SHADER_MACRO *defines, ID3D10Include *include, LPCSTR entrypoint,
         LPCSTR profile, UINT flags, ID3D10Blob **shader, ID3D10Blob **error_messages);
@@ -218,5 +223,9 @@ HRESULT WINAPI D3D10GetInputSignatureBlob(const void *data, SIZE_T data_size, ID
 HRESULT WINAPI D3D10GetOutputSignatureBlob(const void *data, SIZE_T data_size, ID3D10Blob **blob);
 HRESULT WINAPI D3D10GetInputAndOutputSignatureBlob(const void *data, SIZE_T data_size, ID3D10Blob **blob);
 HRESULT WINAPI D3D10GetShaderDebugInfo(const void *data, SIZE_T data_size, ID3D10Blob **blob);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __WINE_D3D10SHADER_H */

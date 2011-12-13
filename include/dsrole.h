@@ -21,6 +21,10 @@
 #ifndef __WINE_DSROLE_H
 #define __WINE_DSROLE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define DSROLE_PRIMARY_DS_RUNNING           0x00000001
 #define DSROLE_PRIMARY_DS_MIXED_MODE        0x00000002
 #define DSROLE_UPGRADE_IN_PROGRESS          0x00000004
@@ -80,5 +84,9 @@ typedef struct _DSROLE_OPERATION_STATE_INFO
 
 VOID WINAPI DsRoleFreeMemory(IN PVOID Buffer);
 DWORD WINAPI DsRoleGetPrimaryDomainInformation(IN LPCWSTR lpServer OPTIONAL, IN DSROLE_PRIMARY_DOMAIN_INFO_LEVEL InfoLevel, OUT PBYTE *Buffer);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __WINE_DSROLE_H */

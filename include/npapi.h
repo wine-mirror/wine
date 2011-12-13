@@ -18,6 +18,10 @@
 #ifndef __WINE_NPAPI_H__
 #define __WINE_NPAPI_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* capabilities */
 #define WNNC_SPEC_VERSION          0x00000001
 #define WNNC_SPEC_VERSION51        0x00050001
@@ -207,5 +211,9 @@ typedef DWORD (APIENTRY *PF_AddConnectNotify)(LPNOTIFYINFO lpNotifyInfo,
  LPNOTIFYADD lpAddInfo);
 typedef DWORD (APIENTRY *PF_CancelConnectNotify)(LPNOTIFYINFO lpNotifyInfo,
  LPNOTIFYADD lpAddInfo);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ndef __WINE_NPAPI_H__ */
