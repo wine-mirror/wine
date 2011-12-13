@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Jacek Caban for CodeWeavers
+ * Copyright 2006,2011 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,6 +18,7 @@
 
 import "objidl.idl";
 import "oleidl.idl";
+import "urlmon.idl";
 
 /*****************************************************************************
  *    ITargetNotify interface
@@ -131,4 +132,64 @@ interface ITargetContainer : IUnknown
 
     HRESULT GetFramesContainer([out] IOleContainer **ppContainer);
 
+}
+
+/*****************************************************************************
+ *    ITargetFramePriv interface
+ */
+[
+    object,
+    uuid(9216e421-2bf5-11d0-82b4-00a0c90c29c5),
+    pointer_default(unique)
+]
+interface ITargetFramePriv : IUnknown
+{
+    typedef [unique] ITargetFramePriv *LPTARGETFRAMEPRIV;
+
+    HRESULT FindFrameDownwards(
+            [in] LPCWSTR pszTargetName,
+            [in] DWORD dwFlags,
+            [out] IUnknown **ppunkTargetFrame);
+
+    HRESULT FindFrameInContext(
+            [in] LPCWSTR pszTargetName,
+            [in] IUnknown *punkContextFrame,
+            [in] DWORD dwFlags,
+            [out] IUnknown **ppunkTargetFrame);
+
+    HRESULT OnChildFrameActivate([in] IUnknown *pUnkChildFrame);
+    HRESULT OnChildFrameDeactivate([in] IUnknown *pUnkChildFrame);
+
+    HRESULT NavigateHack(
+            [in] DWORD grfHLNF,
+            [in, unique] LPBC pbc,
+            [in, unique] IBindStatusCallback *pibsc,
+            [in, unique] LPCWSTR pszTargetName,
+            [in] LPCWSTR pszUrl,
+            [in, unique] LPCWSTR pszLocation);
+
+    HRESULT FindBrowserByIndex(
+            [in] DWORD dwID,
+            [out] IUnknown **ppunkBrowser);
+}
+
+/*****************************************************************************
+ *    ITargetFramePriv2 interface
+ */
+[
+    object,
+    uuid(b2c867e6-69d6-46f2-a611-ded9a4bd7fef),
+    pointer_default(unique)
+]
+interface ITargetFramePriv2 : ITargetFramePriv
+{
+    typedef [unique] ITargetFramePriv2 *LPTARGETFRAMEPRIV2;
+
+    HRESULT AggregatedNavigation2(
+            [in] DWORD grfHLNF,
+            [in, unique] LPBC pbc,
+            [in, unique] IBindStatusCallback *pibsc,
+            [in, unique] LPCWSTR pszTargetName,
+            [in] IUri *pUri,
+            [in, unique] LPCWSTR pszLocation);
 }
