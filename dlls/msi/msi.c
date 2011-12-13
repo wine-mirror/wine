@@ -3773,18 +3773,20 @@ UINT WINAPI MsiGetShortcutTargetW( LPCWSTR szShortcutTarget,
 UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature,
                                   DWORD dwReinstallMode )
 {
-    MSIPACKAGE* package = NULL;
+    static const WCHAR szLogVerbose[] =
+        {' ','L','O','G','V','E','R','B','O','S','E',0};
+    MSIPACKAGE *package;
+    MSIINSTALLCONTEXT context;
     UINT r;
-    WCHAR sourcepath[MAX_PATH];
-    WCHAR filename[MAX_PATH];
-    static const WCHAR szLogVerbose[] = {
-        ' ','L','O','G','V','E','R','B','O','S','E',0 };
-    WCHAR reinstallmode[11];
+    WCHAR sourcepath[MAX_PATH], filename[MAX_PATH], reinstallmode[11];
     LPWSTR ptr;
     DWORD sz;
 
-    FIXME("%s %s 0x%08x\n",
-          debugstr_w(szProduct), debugstr_w(szFeature), dwReinstallMode);
+    TRACE("%s, %s, 0x%08x\n", debugstr_w(szProduct), debugstr_w(szFeature), dwReinstallMode);
+
+    r = msi_locate_product( szProduct, &context );
+    if (r != ERROR_SUCCESS)
+        return r;
 
     ptr = reinstallmode;
 
@@ -3811,12 +3813,12 @@ UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature,
     *ptr = 0;
     
     sz = sizeof(sourcepath);
-    MsiSourceListGetInfoW(szProduct, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-            MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCEW, sourcepath, &sz);
+    MsiSourceListGetInfoW( szProduct, NULL, context, MSICODE_PRODUCT,
+                           INSTALLPROPERTY_LASTUSEDSOURCEW, sourcepath, &sz );
 
     sz = sizeof(filename);
-    MsiSourceListGetInfoW(szProduct, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
-            MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAMEW, filename, &sz);
+    MsiSourceListGetInfoW( szProduct, NULL, context, MSICODE_PRODUCT,
+                           INSTALLPROPERTY_PACKAGENAMEW, filename, &sz );
 
     lstrcatW( sourcepath, filename );
 
