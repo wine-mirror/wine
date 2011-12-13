@@ -3870,7 +3870,7 @@ static void test_fullname(void)
     DeleteDC(hdc);
 }
 
-static BOOL write_ttf_file(char *tmp_name)
+static BOOL write_ttf_file(const char *fontname, char *tmp_name)
 {
     char tmp_path[MAX_PATH];
     HRSRC rsrc;
@@ -3880,7 +3880,7 @@ static BOOL write_ttf_file(char *tmp_name)
     BOOL ret;
 
     SetLastError(0xdeadbeef);
-    rsrc = FindResource(GetModuleHandle(0), "wine_test.ttf", RT_RCDATA);
+    rsrc = FindResource(GetModuleHandle(0), fontname, RT_RCDATA);
     ok(rsrc != 0, "FindResource error %d\n", GetLastError());
     if (!rsrc) return FALSE;
     SetLastError(0xdeadbeef);
@@ -3926,7 +3926,7 @@ static void test_CreateScalableFontResource(void)
         return;
     }
 
-    if (!write_ttf_file(ttf_name))
+    if (!write_ttf_file("wine_test.ttf", ttf_name))
     {
         skip("Failed to create ttf file for testing\n");
         return;
@@ -4054,6 +4054,103 @@ todo_wine
     DeleteFile(ttf_name);
 }
 
+static void check_vertical_font(const char *name, BOOL *installed, BOOL *selected, GLYPHMETRICS *gm)
+{
+    LOGFONTA lf;
+    HFONT hfont, hfont_prev;
+    HDC hdc;
+    char facename[100];
+    DWORD ret;
+
+    *installed = is_truetype_font_installed(name);
+
+    lf.lfHeight = -18;
+    lf.lfWidth = 0;
+    lf.lfEscapement = 0;
+    lf.lfOrientation = 0;
+    lf.lfWeight = FW_DONTCARE;
+    lf.lfItalic = 0;
+    lf.lfUnderline = 0;
+    lf.lfStrikeOut = 0;
+    lf.lfCharSet = DEFAULT_CHARSET;
+    lf.lfOutPrecision = OUT_TT_ONLY_PRECIS;
+    lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+    lf.lfQuality = DEFAULT_QUALITY;
+    lf.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
+    strcpy(lf.lfFaceName, name);
+
+    hfont = CreateFontIndirectA(&lf);
+    ok(hfont != NULL, "CreateFontIndirectA failed\n");
+
+    hdc = GetDC(NULL);
+
+    hfont_prev = SelectObject(hdc, hfont);
+    ok(hfont_prev != NULL, "SelectObject failed\n");
+
+    ret = GetTextFaceA(hdc, sizeof facename, facename);
+    ok(ret, "GetTextFaceA failed\n");
+    *selected = !strcmp(facename, name);
+
+    ret = GetGlyphOutlineW(hdc, 0x2025, GGO_METRICS, gm, 0, NULL, &mat);
+    ok(ret != GDI_ERROR, "GetGlyphOutlineW failed\n");
+    if (!*selected)
+        memset(gm, 0, sizeof *gm);
+
+    SelectObject(hdc, hfont_prev);
+    DeleteObject(hfont);
+    ReleaseDC(NULL, hdc);
+}
+
+static void test_vertical_font(void)
+{
+    char ttf_name[MAX_PATH];
+    int num;
+    BOOL ret, installed, selected;
+    GLYPHMETRICS gm;
+
+    if (!pAddFontResourceExA || !pRemoveFontResourceExA)
+    {
+        win_skip("AddFontResourceExA is not available on this platform\n");
+        return;
+    }
+
+    if (!write_ttf_file("vertical.ttf", ttf_name))
+    {
+        skip("Failed to create ttf file for testing\n");
+        return;
+    }
+
+    num = pAddFontResourceExA(ttf_name, FR_PRIVATE, 0);
+    todo_wine
+    ok(num == 2, "AddFontResourceExA should add 2 fonts from vertical.ttf\n");
+
+    check_vertical_font("@WineTestVertical", &installed, &selected, &gm);
+    /* This test fails on wine if locale is not en-US. Disable for now. */
+    if (0)
+    ok(installed, "@WineTestVertical is not installed\n");
+    todo_wine
+    ok(selected, "@WineTestVertical is not selected\n");
+    todo_wine
+    ok(gm.gmBlackBoxX > gm.gmBlackBoxY,
+       "gmBlackBoxX(%u) should be greater than gmBlackBoxY(%u) if horizontal\n",
+       gm.gmBlackBoxX, gm.gmBlackBoxY);
+
+    check_vertical_font("@@WineTestVertical", &installed, &selected, &gm);
+    todo_wine
+    ok(installed, "@@WineTestVertical is not installed\n");
+    todo_wine
+    ok(selected, "@@WineTestVertical is not selected\n");
+    todo_wine
+    ok(gm.gmBlackBoxX < gm.gmBlackBoxY,
+       "gmBlackBoxX(%u) should be less than gmBlackBoxY(%u) if vertical\n",
+       gm.gmBlackBoxX, gm.gmBlackBoxY);
+
+    ret = pRemoveFontResourceExA(ttf_name, FR_PRIVATE, 0);
+    ok(ret, "RemoveFontResourceEx() error %d\n", GetLastError());
+
+    DeleteFile(ttf_name);
+}
+
 START_TEST(font)
 {
     init();
@@ -4107,6 +4204,7 @@ START_TEST(font)
     test_oemcharset();
     test_fullname();
 
+    test_vertical_font();
     /* CreateScalableFontResource should be last test until RemoveFontResource
      * is properly implemented.
      */
