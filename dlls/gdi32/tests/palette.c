@@ -159,25 +159,34 @@ static void test_halftone_palette(void)
 
     pal = CreateHalftonePalette( hdc );
     count = GetPaletteEntries( pal, 0, 256, entries );
-    ok( count == 256 || broken(count == 20), /* nt 4 */
+    ok( count == 256 || broken(count <= 20), /* nt 4 */
         "wrong size %u\n", count );
 
     /* first and last 10 match the default palette */
-    for (i = 0; i < 10; i++)
-        ok( entries[i].peRed   == defpal[i].peRed &&
-            entries[i].peGreen == defpal[i].peGreen &&
-            entries[i].peBlue  == defpal[i].peBlue &&
-            !entries[i].peFlags,
-            "%u: wrong color %02x,%02x,%02x,%02x\n", i,
-            entries[i].peRed, entries[i].peGreen, entries[i].peBlue, entries[i].peFlags );
-    for (i = count - 10; i < count; i++)
-        ok( entries[i].peRed   == defpal[i - count + 20].peRed &&
-            entries[i].peGreen == defpal[i - count + 20].peGreen &&
-            entries[i].peBlue  == defpal[i - count + 20].peBlue &&
-            !entries[i].peFlags,
-            "%u: wrong color %02x,%02x,%02x,%02x\n", i,
-            entries[i].peRed, entries[i].peGreen, entries[i].peBlue, entries[i].peFlags );
-
+    if (count >= 20)
+    {
+        for (i = 0; i < 10; i++)
+        {
+            ok( entries[i].peRed   == defpal[i].peRed &&
+                entries[i].peGreen == defpal[i].peGreen &&
+                entries[i].peBlue  == defpal[i].peBlue &&
+                !entries[i].peFlags,
+                "%u: wrong color %02x,%02x,%02x,%02x instead of %02x,%02x,%02x\n", i,
+                entries[i].peRed, entries[i].peGreen, entries[i].peBlue, entries[i].peFlags,
+                defpal[i].peRed, defpal[i].peGreen, defpal[i].peBlue );
+        }
+        for (i = count - 10; i < count; i++)
+        {
+            int idx = i - count + 20;
+            ok( entries[i].peRed   == defpal[idx].peRed &&
+                entries[i].peGreen == defpal[idx].peGreen &&
+                entries[i].peBlue  == defpal[idx].peBlue &&
+                !entries[i].peFlags,
+                "%u: wrong color %02x,%02x,%02x,%02x instead of %02x,%02x,%02x\n", i,
+                entries[i].peRed, entries[i].peGreen, entries[i].peBlue, entries[i].peFlags,
+                defpal[idx].peRed, defpal[idx].peGreen, defpal[idx].peBlue );
+        }
+    }
     DeleteObject( pal );
     ReleaseDC( 0, hdc );
 }

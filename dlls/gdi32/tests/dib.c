@@ -953,6 +953,7 @@ static const char *sha1_graphics_1[] =
     "c14832e69ec3585c15987b3d69d5007236fa9814",
     "e44ea620b0c47125a34193537ab9d219a52ad028",
     "ef2db9fb75a672f69bab88e5d08fe64f50ec2bc4",
+    "df81db2a9b3942a82e0dc5e57247b642f9b42702",
     "8819bf7a43295161fe045a42936000b3a51fe200",
     "e08dbc26469c229f75ccbf1a38a133401f270b84",
     "d1e6091caa4482d3142df3b958606c41ebf4698e",
@@ -1647,7 +1648,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
         }
     }
 
-    compare_hash_broken_todo(bmi, bits, sha1, "1 bpp ddb brush patblt", dib_is_1bpp ? 2 : 0, dib_is_1bpp);
+    compare_hash_broken_todo(bmi, bits, sha1, "1 bpp ddb brush patblt", dib_is_1bpp ? 3 : 0, dib_is_1bpp);
     memset(bits, 0xcc, dib_size);
 
     DeleteObject(bmp);

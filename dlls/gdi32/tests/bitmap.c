@@ -4998,7 +4998,8 @@ static void test_SetDIBitsToDevice(void)
         int ent = (255 - idx) % pal->palNumEntries;
         DWORD expect = idx >= info->bmiHeader.biClrUsed ? 0 :
                         (palent[ent].peRed << 16 | palent[ent].peGreen << 8 | palent[ent].peBlue);
-        ok( dib_bits[i] == expect, "%d: got %08x instead of %08x\n", i, dib_bits[i], expect );
+        ok( dib_bits[i] == expect || broken(dib_bits[i] == 0),
+            "%d: got %08x instead of %08x\n", i, dib_bits[i], expect );
     }
     memset( dib_bits, 0xaa, 64 * 4 );
 
