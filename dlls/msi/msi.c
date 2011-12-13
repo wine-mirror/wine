@@ -3773,8 +3773,6 @@ UINT WINAPI MsiGetShortcutTargetW( LPCWSTR szShortcutTarget,
 UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature,
                                   DWORD dwReinstallMode )
 {
-    static const WCHAR szLogVerbose[] =
-        {' ','L','O','G','V','E','R','B','O','S','E',0};
     MSIPACKAGE *package;
     MSIINSTALLCONTEXT context;
     UINT r;
@@ -3831,7 +3829,6 @@ UINT WINAPI MsiReinstallFeatureW( LPCWSTR szProduct, LPCWSTR szFeature,
         return r;
 
     msi_set_property( package->db, szReinstallMode, reinstallmode );
-    msi_set_property( package->db, szLogVerbose, szOne );
     msi_set_property( package->db, szReinstall, szFeature );
 
     r = MSI_InstallPackage( package, sourcepath, NULL );
