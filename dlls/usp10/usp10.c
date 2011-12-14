@@ -81,6 +81,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Arabic,     0x750,  0x77f,  0, 0},
     /* Thaana: U+0780–U+07BF */
     { Script_Thaana,     0x780,  0x7bf,  0, 0},
+    /* N’Ko: U+07C0–U+07FF */
+    { Script_NKo,        0x7c0,  0x7ff,  0, 0},
     /* Devanagari: U+0900–U+097F */
     { Script_Devanagari, 0x900,  0x97f,  Script_Devanagari_Numeric, 0},
     /* Bengali: U+0980–U+09FF */
@@ -538,6 +540,10 @@ static const scriptData scriptInformation[] = {
      {0, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      MS_MAKE_TAG('t','f','n','g'),
      {'E','b','r','i','m','a'}},
+    {{Script_NKo, 1, 1, 0, 0, 0, 0, { 1,0,0,0,0,0,0,0,0,0,0}},
+     {0, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('n','k','o',' '),
+     {0}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -574,7 +580,7 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[58].props, &scriptInformation[59].props,
     &scriptInformation[60].props, &scriptInformation[61].props,
     &scriptInformation[62].props, &scriptInformation[63].props,
-    &scriptInformation[64].props
+    &scriptInformation[64].props, &scriptInformation[65].props
 };
 
 typedef struct {
