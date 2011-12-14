@@ -258,6 +258,12 @@ static const scriptRange scriptRanges[] = {
     { Script_Hangul,     0xac00, 0xd7a3,  0, 0},
     /* Hangul Jamo Extended-B: U+D7B0–U+D7FF */
     { Script_Hangul,     0xd7b0, 0xd7ff,  0, 0},
+    /* Surrogates Area: U+D800–U+DFFF */
+    { Script_Surrogates, 0xd800, 0xdbfe,  0, 0},
+    { Script_Private,    0xdbff, 0xdc00,  0, 0},
+    { Script_Surrogates, 0xdc01, 0xdfff,  0, 0},
+    /* Private Use Area: U+E000–U+F8FF */
+    { Script_Private,    0xe000, 0xf8ff,  0, 0},
     /* CJK Compatibility Ideographs: U+F900–U+FAFF */
     { Script_CJK_Han    ,0xf900, 0xfaff,  0, 0},
     /* Latin Ligatures: U+FB00–U+FB06 */
@@ -586,6 +592,14 @@ static const scriptData scriptInformation[] = {
      {LANG_ENGLISH, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      MS_MAKE_TAG('b','r','a','i'),
      {'S','e','g','o','e',' ','U','I',' ','S','y','m','b','o','l'}},
+    {{Script_Surrogates, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_ENGLISH, 0, 1, 0, 1, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+     0x00000000,
+     {0}},
+    {{Script_Private, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {0, 0, 0, 0, 0, DEFAULT_CHARSET, 0, 1, 0, 0, 0, 0, 1, 0, 0},
+     0x00000000,
+     {0}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -626,7 +640,8 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[66].props, &scriptInformation[67].props,
     &scriptInformation[68].props, &scriptInformation[69].props,
     &scriptInformation[70].props, &scriptInformation[71].props,
-    &scriptInformation[72].props
+    &scriptInformation[72].props, &scriptInformation[73].props,
+    &scriptInformation[74].props
 };
 
 typedef struct {

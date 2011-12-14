@@ -106,6 +106,9 @@
 #define Script_Runic 71
 /* Unicode Chapter 15 */
 #define Script_Braille 72
+/* Unicode Chapter 16 */
+#define Script_Surrogates 73
+#define Script_Private 74
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
