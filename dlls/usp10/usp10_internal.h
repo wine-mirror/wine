@@ -100,6 +100,7 @@
 #define Script_Vai 66
 #define Script_Vai_Numeric 67
 #define Script_Cherokee 68
+#define Script_Canadian 69
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)

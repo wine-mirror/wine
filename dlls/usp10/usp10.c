@@ -120,10 +120,14 @@ static const scriptRange scriptRanges[] = {
     { Script_Ethiopic,   0x1200,  0x139f,  0, 0},
     /* Cherokee: U+13A0–U+13FF */
     { Script_Cherokee,   0x13a0,  0x13ff,  0, 0},
+    /* Canadian Aboriginal Syllabics: U+1400–U+167F */
+    { Script_Canadian,   0x1400,  0x167f,  0, 0},
     /* Khmer: U+1780–U+17FF */
     { Script_Khmer,      0x1780,  0x17ff,  Script_Khmer_Numeric, 0},
     /* Mongolian: U+1800–U+18AF */
     { Script_Mongolian,  0x1800,  0x18af,  Script_Mongolian_Numeric, 0},
+    /* Canadian Aboriginal Syllabics Extended: U+18B0–U+18FF */
+    { Script_Canadian,   0x18b0,  0x18ff,  0, 0},
     /* Tai Le: U+1950–U+197F */
     { Script_Tai_Le,     0x1950,  0x197f,  0, 0},
     /* New Tai Lue: U+1980–U+19DF */
@@ -560,6 +564,10 @@ static const scriptData scriptInformation[] = {
      {0x5c, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      MS_MAKE_TAG('c','h','e','r'),
      {'P','l','a','n','t','a','g','e','n','e','t',' ','C','h','e','r','o','k','e','e'}},
+    {{Script_Canadian, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {0x5d, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('c','a','n','s'),
+     {'E','u','p','h','e','m','i','a'}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -598,7 +606,7 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[62].props, &scriptInformation[63].props,
     &scriptInformation[64].props, &scriptInformation[65].props,
     &scriptInformation[66].props, &scriptInformation[67].props,
-    &scriptInformation[68].props
+    &scriptInformation[68].props, &scriptInformation[69].props
 };
 
 typedef struct {
