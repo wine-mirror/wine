@@ -122,6 +122,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Cherokee,   0x13a0,  0x13ff,  0, 0},
     /* Canadian Aboriginal Syllabics: U+1400–U+167F */
     { Script_Canadian,   0x1400,  0x167f,  0, 0},
+    /* Ogham: U+1680–U+169F */
+    { Script_Ogham,      0x1680,  0x169f,  0, 0},
     /* Khmer: U+1780–U+17FF */
     { Script_Khmer,      0x1780,  0x17ff,  Script_Khmer_Numeric, 0},
     /* Mongolian: U+1800–U+18AF */
@@ -568,6 +570,10 @@ static const scriptData scriptInformation[] = {
      {0x5d, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      MS_MAKE_TAG('c','a','n','s'),
      {'E','u','p','h','e','m','i','a'}},
+    {{Script_Ogham, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {0, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('o','g','a','m'),
+     {'S','e','g','o','e',' ','U','I',' ','S','y','m','b','o','l'}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -606,7 +612,8 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[62].props, &scriptInformation[63].props,
     &scriptInformation[64].props, &scriptInformation[65].props,
     &scriptInformation[66].props, &scriptInformation[67].props,
-    &scriptInformation[68].props, &scriptInformation[69].props
+    &scriptInformation[68].props, &scriptInformation[69].props,
+    &scriptInformation[70].props
 };
 
 typedef struct {
