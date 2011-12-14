@@ -3601,22 +3601,24 @@ static void test_clipping(void)
     DeleteDC( hdcSrc );
 }
 
-static void test_32bit_bitmap_blt(void)
+static void test_32bit_ddb(void)
 {
-    BITMAPINFO biDst;
+    char buffer[sizeof(BITMAPINFOHEADER) + sizeof(DWORD)];
+    BITMAPINFO *biDst = (BITMAPINFO *)buffer;
     HBITMAP bmpSrc, bmpDst;
     HBITMAP oldSrc, oldDst;
     HDC hdcSrc, hdcDst, hdcScreen;
-    UINT32 *dstBuffer;
-    DWORD colorSrc = 0x11223344;
+    HBRUSH brush;
+    DWORD *dstBuffer, *data;
+    DWORD colorSrc = 0x40201008;
 
-    memset(&biDst, 0, sizeof(BITMAPINFO));
-    biDst.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    biDst.bmiHeader.biWidth = 2;
-    biDst.bmiHeader.biHeight = -2;
-    biDst.bmiHeader.biPlanes = 1;
-    biDst.bmiHeader.biBitCount = 32;
-    biDst.bmiHeader.biCompression = BI_RGB;
+    memset(biDst, 0, sizeof(BITMAPINFOHEADER));
+    biDst->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    biDst->bmiHeader.biWidth = 1;
+    biDst->bmiHeader.biHeight = -1;
+    biDst->bmiHeader.biPlanes = 1;
+    biDst->bmiHeader.biBitCount = 32;
+    biDst->bmiHeader.biCompression = BI_RGB;
 
     hdcScreen = CreateCompatibleDC(0);
     if(GetDeviceCaps(hdcScreen, BITSPIXEL) != 32)
@@ -3631,11 +3633,53 @@ static void test_32bit_bitmap_blt(void)
     oldSrc = SelectObject(hdcSrc, bmpSrc);
 
     hdcDst = CreateCompatibleDC(hdcScreen);
-    bmpDst = CreateDIBSection(hdcDst, &biDst, DIB_RGB_COLORS, (void**)&dstBuffer, NULL, 0);
+    bmpDst = CreateDIBSection(hdcDst, biDst, DIB_RGB_COLORS, (void**)&dstBuffer, NULL, 0);
     oldDst = SelectObject(hdcDst, bmpDst);
 
     StretchBlt(hdcDst, 0, 0, 1, 1, hdcSrc, 0, 0, 1, 1, SRCCOPY);
     ok(dstBuffer[0] == colorSrc, "Expected color=%x, received color=%x\n", colorSrc, dstBuffer[0]);
+
+    if (pGdiAlphaBlend)
+    {
+        BLENDFUNCTION blend;
+        BOOL ret;
+
+        blend.BlendOp = AC_SRC_OVER;
+        blend.BlendFlags = 0;
+        blend.SourceConstantAlpha = 128;
+        blend.AlphaFormat = 0;
+        dstBuffer[0] = 0x80808080;
+        ret = pGdiAlphaBlend( hdcDst, 0, 0, 1, 1, hdcSrc, 0, 0, 1, 1, blend );
+        ok( ret, "GdiAlphaBlend failed err %u\n", GetLastError() );
+        ok(dstBuffer[0] == 0x60504844, "wrong color %x\n", dstBuffer[0]);
+        blend.AlphaFormat = AC_SRC_ALPHA;
+        dstBuffer[0] = 0x80808080;
+        ret = pGdiAlphaBlend( hdcDst, 0, 0, 1, 1, hdcSrc, 0, 0, 1, 1, blend );
+        ok( ret, "GdiAlphaBlend failed err %u\n", GetLastError() );
+        ok(dstBuffer[0] == 0x90807874, "wrong color %x\n", dstBuffer[0]);
+    }
+
+    data = (DWORD *)biDst->bmiColors;
+    data[0] = 0x20304050;
+    brush = CreateDIBPatternBrushPt( biDst, DIB_RGB_COLORS );
+    ok( brush != 0, "brush creation failed\n" );
+    SelectObject( hdcSrc, brush );
+    PatBlt( hdcSrc, 0, 0, 1, 1, PATCOPY );
+    BitBlt( hdcDst, 0, 0, 1, 1, hdcSrc, 0, 0, SRCCOPY );
+    ok(dstBuffer[0] == data[0], "Expected color=%x, received color=%x\n", data[0], dstBuffer[0]);
+    SelectObject( hdcSrc, GetStockObject(BLACK_BRUSH) );
+    DeleteObject( brush );
+
+    biDst->bmiHeader.biBitCount = 24;
+    brush = CreateDIBPatternBrushPt( biDst, DIB_RGB_COLORS );
+    ok( brush != 0, "brush creation failed\n" );
+    SelectObject( hdcSrc, brush );
+    PatBlt( hdcSrc, 0, 0, 1, 1, PATCOPY );
+    BitBlt( hdcDst, 0, 0, 1, 1, hdcSrc, 0, 0, SRCCOPY );
+    ok(dstBuffer[0] == (data[0] & ~0xff000000),
+       "Expected color=%x, received color=%x\n", data[0] & 0xff000000, dstBuffer[0]);
+    SelectObject( hdcSrc, GetStockObject(BLACK_BRUSH) );
+    DeleteObject( brush );
 
     /* Tidy up */
     SelectObject(hdcDst, oldDst);
@@ -5259,7 +5303,7 @@ START_TEST(bitmap)
     test_StretchDIBits();
     test_GdiAlphaBlend();
     test_GdiGradientFill();
-    test_32bit_bitmap_blt();
+    test_32bit_ddb();
     test_bitmapinfoheadersize();
     test_get16dibits();
     test_clipping();
