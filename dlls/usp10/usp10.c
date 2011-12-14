@@ -124,6 +124,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Canadian,   0x1400,  0x167f,  0, 0},
     /* Ogham: U+1680–U+169F */
     { Script_Ogham,      0x1680,  0x169f,  0, 0},
+    /* Runic: U+16A0–U+16F0 */
+    { Script_Runic,      0x16a0,  0x16f0,  0, 0},
     /* Khmer: U+1780–U+17FF */
     { Script_Khmer,      0x1780,  0x17ff,  Script_Khmer_Numeric, 0},
     /* Mongolian: U+1800–U+18AF */
@@ -574,6 +576,10 @@ static const scriptData scriptInformation[] = {
      {0, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      MS_MAKE_TAG('o','g','a','m'),
      {'S','e','g','o','e',' ','U','I',' ','S','y','m','b','o','l'}},
+    {{Script_Runic, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {0, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('r','u','n','r'),
+     {'S','e','g','o','e',' ','U','I',' ','S','y','m','b','o','l'}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -613,7 +619,7 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[64].props, &scriptInformation[65].props,
     &scriptInformation[66].props, &scriptInformation[67].props,
     &scriptInformation[68].props, &scriptInformation[69].props,
-    &scriptInformation[70].props
+    &scriptInformation[70].props, &scriptInformation[71].props
 };
 
 typedef struct {

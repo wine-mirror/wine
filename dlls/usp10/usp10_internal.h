@@ -103,6 +103,7 @@
 #define Script_Canadian 69
 /* Unicode Chapter 14 */
 #define Script_Ogham 70
+#define Script_Runic 71
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
