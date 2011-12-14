@@ -104,6 +104,8 @@
 /* Unicode Chapter 14 */
 #define Script_Ogham 70
 #define Script_Runic 71
+/* Unicode Chapter 15 */
+#define Script_Braille 72
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)

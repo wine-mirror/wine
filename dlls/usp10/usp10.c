@@ -174,6 +174,8 @@ static const scriptRange scriptRanges[] = {
     /* Miscellaneous Mathematical Symbols-A : U+27c0 –U+27ef */
     /* Supplemental Arrows-A : U+27f0 –U+27ff */
     { Script_Latin,      0x2100, 0x27ff, 0, 0},
+    /* Braille Patterns: U+2800–U+28FF */
+    { Script_Braille,    0x2800, 0x28ff, 0, 0},
     /* Supplemental Arrows-B : U+2900 –U+297f */
     /* Miscellaneous Mathematical Symbols-B : U+2980 –U+29ff */
     /* Supplemental Mathematical Operators : U+2a00 –U+2aff */
@@ -580,6 +582,10 @@ static const scriptData scriptInformation[] = {
      {0, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      MS_MAKE_TAG('r','u','n','r'),
      {'S','e','g','o','e',' ','U','I',' ','S','y','m','b','o','l'}},
+    {{Script_Braille, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_ENGLISH, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('b','r','a','i'),
+     {'S','e','g','o','e',' ','U','I',' ','S','y','m','b','o','l'}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -619,7 +625,8 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[64].props, &scriptInformation[65].props,
     &scriptInformation[66].props, &scriptInformation[67].props,
     &scriptInformation[68].props, &scriptInformation[69].props,
-    &scriptInformation[70].props, &scriptInformation[71].props
+    &scriptInformation[70].props, &scriptInformation[71].props,
+    &scriptInformation[72].props
 };
 
 typedef struct {
