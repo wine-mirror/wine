@@ -62,7 +62,7 @@ static DWORD (WINAPI *pGetGlyphIndicesW)(HDC hdc, LPCWSTR lpstr, INT count, LPWO
 static inline void _test_items_ok(LPCWSTR string, DWORD cchString,
                          SCRIPT_CONTROL *Control, SCRIPT_STATE *State,
                          DWORD nItems, const itemTest* items, BOOL nItemsToDo,
-                         INT nItemsBroken)
+                         const INT nItemsBroken[2])
 {
     HRESULT hr;
     int x, outnItems;
@@ -75,7 +75,7 @@ static inline void _test_items_ok(LPCWSTR string, DWORD cchString,
         hr = ScriptItemize(string, cchString, 15, Control, State, outpItems, &outnItems);
 
     winetest_ok(!hr, "ScriptItemize should return S_OK not %08x\n", hr);
-    if (nItemsBroken && broken(nItemsBroken == outnItems))
+    if (nItemsBroken && (broken(nItemsBroken[0] == outnItems) || broken(nItemsBroken[1] == outnItems)))
     {
         winetest_win_skip("This test broken on this platform\n");
         return;
@@ -184,6 +184,7 @@ static void test_ScriptItemize( void )
     static const itemTest t2b1[5] = {{{0,0,0,0,0},0,0,0,0,latn_tag,FALSE},{{0,0,0,0,0},3,0,0,0,0,FALSE},{{0,0,0,0,0},4,0,0,0,latn_tag,FALSE},{{0,0,0,0,0},8,1,1,1,arab_tag,FALSE},{{0,0,0,0,0},11,0,0,0,-1,FALSE}};
     static const itemTest t2b2[5] = {{{0,0,0,0,0},0,0,0,2,latn_tag,FALSE},{{0,0,0,0,0},3,0,0,2,0,FALSE},{{0,0,0,0,0},4,0,0,2,latn_tag,FALSE},{{0,0,0,0,0},7,1,1,1,arab_tag,FALSE},{{0,0,0,0,0},11,0,0,0,-1,FALSE}};
     static const itemTest t2b3[3] = {{{0,0,0,0,0},0,0,0,2,latn_tag,FALSE},{{0,0,0,0,0},7,1,1,1,arab_tag,FALSE},{{0,0,0,0,0},11,0,0,0,-1,FALSE}};
+    static const int b2[2] = {4,4};
 
     /* leading space */
     static const WCHAR test2c[] = {' ',0x0621,0x0623,0x0624,'A','B','C','-','D','E','F',0};
@@ -214,6 +215,7 @@ static void test_ScriptItemize( void )
     static const itemTest t41[6] = {{{0,0,0,0,0},0,0,0,0,0,FALSE},{{0,0,0,0,0},3,0,0,0,0,FALSE},{{0,0,0,0,0},4,0,0,0,0,FALSE},{{0,0,0,0,0},7,0,0,0,latn_tag,FALSE},{{0,0,0,0,0},10,0,0,0,0,FALSE},{{0,0,0,0,0},12,0,0,0,-1,FALSE}};
     static const itemTest t42[5] = {{{0,0,0,0,0},0,0,1,2,0,FALSE},{{0,0,0,0,0},6,1,1,1,0,FALSE},{{0,0,0,0,0},7,0,0,2,latn_tag,FALSE},{{0,0,0,0,0},10,0,0,2,0,FALSE},{{0,0,0,0,0},12,0,0,0,-1,FALSE}};
     static const itemTest t43[4] = {{{0,0,0,0,0},0,0,1,2,0,FALSE},{{0,0,0,0,0},6,1,1,1,0,FALSE},{{0,0,0,0,0},7,0,0,2,latn_tag,FALSE},{{0,0,0,0,0},12,0,0,0,-1,FALSE}};
+    static const int b43[2] = {4,4};
 
     /* Arabic */
     static const WCHAR test5[]  =
@@ -228,6 +230,7 @@ static void test_ScriptItemize( void )
     static const itemTest t61[3] = {{{0,0,0,0,0},0,1,1,1,hebr_tag,FALSE},{{0,0,0,0,0},4,0,0,0,0,FALSE},{{0,0,0,0,0},5,0,0,0,-1,FALSE}};
     static const itemTest t62[3] = {{{0,0,0,0,0},0,1,1,1,hebr_tag,FALSE},{{0,0,0,0,0},4,1,1,1,0,FALSE},{{0,0,0,0,0},5,0,0,0,-1,FALSE}};
     static const itemTest t63[2] = {{{0,0,0,0,0},0,1,1,1,hebr_tag,FALSE},{{0,0,0,0,0},5,0,0,0,-1,FALSE}};
+    static const int b63[2] = {2,2};
     static const WCHAR test7[]  = {'p','a','r','t',' ','o','n','e',' ',0x05d7, 0x05dc, 0x05e7, ' ', 0x05e9, 0x05ea, 0x05d9, 0x05d9, 0x05dd, ' ','p','a','r','t',' ','t','h','r','e','e', 0};
     static const itemTest t71[4] = {{{0,0,0,0,0},0,0,0,0,latn_tag,FALSE},{{0,0,0,0,0},9,1,1,1,hebr_tag,FALSE},{{0,0,0,0,0},19,0,0,0,latn_tag,FALSE},{{0,0,0,0,0},29,0,0,0,-1,FALSE}};
     static const itemTest t72[4] = {{{0,0,0,0,0},0,0,0,0,latn_tag,FALSE},{{0,0,0,0,0},9,1,1,1,hebr_tag,FALSE},{{0,0,0,0,0},18,0,0,0,latn_tag,FALSE},{{0,0,0,0,0},29,0,0,0,-1,FALSE}};
@@ -240,6 +243,7 @@ static void test_ScriptItemize( void )
     static const itemTest t91[3] = {{{0,0,0,0,0},0,1,1,1,syrc_tag,FALSE},{{0,0,0,0,0},4,0,0,0,0,FALSE},{{0,0,0,0,0},5,0,0,0,-1,FALSE}};
     static const itemTest t92[3] = {{{0,0,0,0,0},0,1,1,1,syrc_tag},{{0,0,0,0,0},4,1,1,1,0,FALSE},{{0,0,0,0,0},5,0,0,0,-1,FALSE}};
     static const itemTest t93[2] = {{{0,0,0,0,0},0,1,1,1,syrc_tag,FALSE},{{0,0,0,0,0},5,0,0,0,-1,FALSE}};
+    static const int b93[2] = {2,2};
 
     static const WCHAR test10[] = {0x0717, 0x0718, 0x071a, 0x071b,0};
     static const itemTest t101[2] = {{{0,0,0,0,0},0,1,1,1,syrc_tag,FALSE},{{0,0,0,0,0},4,0,0,0,-1,FALSE}};
@@ -302,6 +306,8 @@ static void test_ScriptItemize( void )
     static const itemTest t221[3] = {{{0,0,0,0,0},0,0,0,0,latn_tag,FALSE},{{0,0,0,0,0},3,0,0,0,0,FALSE},{{0,0,0,0,0},6,0,0,0,-1,FALSE}};
     static const itemTest t222[3] = {{{0,0,0,0,0},0,1,1,1,latn_tag,FALSE},{{0,0,0,0,0},3,1,1,1,0,FALSE},{{0,0,0,0,0},6,0,0,0,-1,FALSE}};
     static const itemTest t223[2] = {{{0,0,0,0,0},0,1,1,1,latn_tag,FALSE},{{0,0,0,0,0},6,0,0,0,-1,FALSE}};
+    static const int b222[2] = {1,1};
+    static const int b223[2] = {2,2};
 
     /* Number 2*/
     static const WCHAR test23[] = {'1','2','3',0x00b2,0x00b3,0x2070,0};
@@ -347,6 +353,8 @@ static void test_ScriptItemize( void )
     static const WCHAR test31[] = {0x3072,0x3089,0x304b,0x306a,0x30ab,0x30bf,0x30ab,0x30ca};
     static const itemTest t311[2] = {{{0,0,0,0,0},0,0,0,0,kana_tag,FALSE},{{0,0,0,0,0},8,0,0,0,-1,FALSE}};
     static const itemTest t312[2] = {{{0,0,0,0,0},0,0,0,2,kana_tag,FALSE},{{0,0,0,0,0},8,0,0,0,-1,FALSE}};
+    static const int b311[2] = {2,2};
+    static const int b312[2] = {2,2};
 
     /* Hangul */
     static const WCHAR test32[] = {0xd55c,0xad6d,0xc5b4};
@@ -362,6 +370,7 @@ static void test_ScriptItemize( void )
     static const WCHAR test34[] = {0x130d,0x12d5,0x12dd};
     static const itemTest t341[2] = {{{0,0,0,0,0},0,0,0,0,ethi_tag,FALSE},{{0,0,0,0,0},3,0,0,0,-1,FALSE}};
     static const itemTest t342[2] = {{{0,0,0,0,0},0,0,0,2,ethi_tag,FALSE},{{0,0,0,0,0},3,0,0,0,-1,FALSE}};
+    static const int b342[2] = {2,2};
 
     SCRIPT_ITEM items[15];
     SCRIPT_CONTROL  Control;
@@ -426,7 +435,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test28,4,NULL,NULL,1,t281,FALSE,0);
     test_items_ok(test29,10,NULL,NULL,2,t291,FALSE,0);
     test_items_ok(test30,8,NULL,NULL,1,t301,FALSE,0);
-    test_items_ok(test31,8,NULL,NULL,1,t311,FALSE,2);
+    test_items_ok(test31,8,NULL,NULL,1,t311,FALSE,b311);
     test_items_ok(test32,3,NULL,NULL,1,t321,FALSE,0);
     test_items_ok(test33,4,NULL,NULL,1,t331,FALSE,0);
     test_items_ok(test34,3,NULL,NULL,1,t341,FALSE,0);
@@ -467,7 +476,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test28,4,&Control,&State,1,t281,FALSE,0);
     test_items_ok(test29,10,&Control,&State,2,t291,FALSE,0);
     test_items_ok(test30,8,&Control,&State,1,t301,FALSE,0);
-    test_items_ok(test31,8,&Control,&State,1,t311,FALSE,2);
+    test_items_ok(test31,8,&Control,&State,1,t311,FALSE,b311);
     test_items_ok(test32,3,&Control,&State,1,t321,FALSE,0);
     test_items_ok(test33,4,&Control,&State,1,t331,FALSE,0);
     test_items_ok(test34,3,&Control,&State,1,t341,FALSE,0);
@@ -499,7 +508,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test19,6,&Control,&State,1,t192,FALSE,0);
     test_items_ok(test20,5,&Control,&State,2,t202,FALSE,0);
     test_items_ok(test21,5,&Control,&State,1,t211,FALSE,0);
-    test_items_ok(test22,6,&Control,&State,2,t222,FALSE,1);
+    test_items_ok(test22,6,&Control,&State,2,t222,FALSE,b222);
     test_items_ok(test23,6,&Control,&State,2,t232,FALSE,0);
     test_items_ok(test24,12,&Control,&State,1,t242,FALSE,0);
     test_items_ok(test25,10,&Control,&State,1,t252,FALSE,0);
@@ -508,10 +517,10 @@ static void test_ScriptItemize( void )
     test_items_ok(test28,4,&Control,&State,1,t282,FALSE,0);
     test_items_ok(test29,10,&Control,&State,2,t292,FALSE,0);
     test_items_ok(test30,8,&Control,&State,1,t302,FALSE,0);
-    test_items_ok(test31,8,&Control,&State,1,t312,FALSE,2);
+    test_items_ok(test31,8,&Control,&State,1,t312,FALSE,b312);
     test_items_ok(test32,3,&Control,&State,1,t322,FALSE,0);
     test_items_ok(test33,4,&Control,&State,1,t332,FALSE,0);
-    test_items_ok(test34,3,&Control,&State,1,t342,FALSE,2);
+    test_items_ok(test34,3,&Control,&State,1,t342,FALSE,b342);
 
     State.uBidiLevel = 1;
     Control.fMergeNeutralItems = TRUE;
@@ -519,16 +528,16 @@ static void test_ScriptItemize( void )
     test_items_ok(test1b,4,&Control,&State,1,t1b2,FALSE,0);
     test_items_ok(test1c,6,&Control,&State,3,t1c2,FALSE,0);
     test_items_ok(test2,16,&Control,&State,4,t23,FALSE,0);
-    test_items_ok(test2b,11,&Control,&State,2,t2b3,FALSE,4);
-    test_items_ok(test2c,11,&Control,&State,2,t2c4,FALSE,4);
-    test_items_ok(test2d,11,&Control,&State,2,t2d4,FALSE,4);
+    test_items_ok(test2b,11,&Control,&State,2,t2b3,FALSE,b2);
+    test_items_ok(test2c,11,&Control,&State,2,t2c4,FALSE,b2);
+    test_items_ok(test2d,11,&Control,&State,2,t2d4,FALSE,b2);
     test_items_ok(test3,41,&Control,&State,1,t32,FALSE,0);
-    test_items_ok(test4,12,&Control,&State,3,t43,FALSE,4);
+    test_items_ok(test4,12,&Control,&State,3,t43,FALSE,b43);
     test_items_ok(test5,38,&Control,&State,1,t51,FALSE,0);
-    test_items_ok(test6,5,&Control,&State,1,t63,FALSE,2);
+    test_items_ok(test6,5,&Control,&State,1,t63,FALSE,b63);
     test_items_ok(test7,29,&Control,&State,3,t73,FALSE,0);
     test_items_ok(test8,4,&Control,&State,1,t81,FALSE,0);
-    test_items_ok(test9,5,&Control,&State,1,t93,FALSE,2);
+    test_items_ok(test9,5,&Control,&State,1,t93,FALSE,b93);
     test_items_ok(test10,4,&Control,&State,1,t101,FALSE,0);
     test_items_ok(test11,8,&Control,&State,1,t112,FALSE,0);
     test_items_ok(test12,5,&Control,&State,1,t122,FALSE,0);
@@ -541,7 +550,7 @@ static void test_ScriptItemize( void )
     test_items_ok(test19,6,&Control,&State,1,t192,FALSE,0);
     test_items_ok(test20,5,&Control,&State,2,t202,FALSE,0);
     test_items_ok(test21,5,&Control,&State,1,t211,FALSE,0);
-    test_items_ok(test22,6,&Control,&State,1,t223,FALSE,2);
+    test_items_ok(test22,6,&Control,&State,1,t223,FALSE,b223);
     test_items_ok(test23,6,&Control,&State,2,t232,FALSE,0);
     test_items_ok(test24,12,&Control,&State,1,t242,FALSE,0);
     test_items_ok(test25,10,&Control,&State,1,t252,FALSE,0);
@@ -550,10 +559,10 @@ static void test_ScriptItemize( void )
     test_items_ok(test28,4,&Control,&State,1,t282,FALSE,0);
     test_items_ok(test29,10,&Control,&State,2,t292,FALSE,0);
     test_items_ok(test30,8,&Control,&State,1,t302,FALSE,0);
-    test_items_ok(test31,8,&Control,&State,1,t312,FALSE,2);
+    test_items_ok(test31,8,&Control,&State,1,t312,FALSE,b312);
     test_items_ok(test32,3,&Control,&State,1,t322,FALSE,0);
     test_items_ok(test33,4,&Control,&State,1,t332,FALSE,0);
-    test_items_ok(test34,3,&Control,&State,1,t342,FALSE,2);
+    test_items_ok(test34,3,&Control,&State,1,t342,FALSE,b342);
 }
 
 static inline void _test_shape_ok(int valid, HDC hdc, LPCWSTR string,
