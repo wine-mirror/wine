@@ -543,8 +543,6 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
     SetBkColor (hdcBitmap, bkColor);
     BitBlt (hdcMask, 0, 0, bmp.bmWidth, bmp.bmHeight, hdcBitmap, 0, 0, SRCCOPY);
 
-    SetBkColor(hdcBitmap, RGB(255,255,255));
-
     /*
      * Remove the background from the image
      *
@@ -558,7 +556,11 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
      *
      *  Blt mode 0x220326 is NOTSRCAND
      */
-    BitBlt(hdcBitmap, 0, 0, bmp.bmWidth, bmp.bmHeight, hdcMask, 0, 0, 0x220326);
+    if (bmp.bmBitsPixel > 8)  /* NOTSRCAND can't work with palettes */
+    {
+        SetBkColor(hdcBitmap, RGB(255,255,255));
+        BitBlt(hdcBitmap, 0, 0, bmp.bmWidth, bmp.bmHeight, hdcMask, 0, 0, 0x220326);
+    }
 
     DeleteDC(hdcBitmap);
     DeleteDC(hdcMask);
