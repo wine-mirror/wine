@@ -113,6 +113,9 @@ static const scriptRange scriptRanges[] = {
     { Script_Georgian,   0x10a0,  0x10ff,  0, 0},
     /* Hangul Jamo: U+1100–U+11FF */
     { Script_Hangul,     0x1100,  0x11ff,  0, 0},
+    /* Ethiopic: U+1200–U+137F */
+    /* Ethiopic Extensions: U+1380–U+139F */
+    { Script_Ethiopic,   0x1200,  0x139f,  0, 0},
     /* Khmer: U+1780–U+17FF */
     { Script_Khmer,      0x1780,  0x17ff,  Script_Khmer_Numeric, 0},
     /* Tai Le: U+1950–U+197F */
@@ -166,6 +169,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Latin,      0x2c60, 0x2c7f, 0, 0},
     /* Georgian: U+2D00–U+2D2F */
     { Script_Georgian,   0x2d00,  0x2d2f,  0, 0},
+    /* Ethiopic Extensions: U+2D80–U+2DDF */
+    { Script_Ethiopic,   0x2d80,  0x2ddf,  0, 0},
     /* Cyrillic Extended-A: U+2DE0–U+2DFF */
     { Script_Cyrillic,   0x2de0, 0x2dff,  0, 0},
     /* CJK Radicals Supplement: U+2E80–U+2EFF */
@@ -509,6 +514,14 @@ static const scriptData scriptInformation[] = {
      {LANG_ENGLISH, 0, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 1, 0, 0},
      MS_MAKE_TAG('y','i',' ',' '),
      {'M','i','c','r','o','s','o','f','t',' ','Y','i',' ','B','a','i','t','i'}},
+    {{Script_Ethiopic, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {0x5e, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('e','t','h','i'),
+     {'N','y','a','l','a'}},
+    {{Script_Ethiopic_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {0x5e, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('e','t','h','i'),
+     {'N','y','a','l','a'}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -542,7 +555,8 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[52].props, &scriptInformation[53].props,
     &scriptInformation[54].props, &scriptInformation[55].props,
     &scriptInformation[56].props, &scriptInformation[57].props,
-    &scriptInformation[58].props, &scriptInformation[59].props
+    &scriptInformation[58].props, &scriptInformation[59].props,
+    &scriptInformation[60].props, &scriptInformation[61].props
 };
 
 typedef struct {

@@ -573,6 +573,14 @@ static const char* required_khmer_features[] =
 static OPENTYPE_FEATURE_RECORD no_features[] =
 { };
 
+static OPENTYPE_FEATURE_RECORD ethiopic_features[] =
+{
+    { MS_MAKE_TAG('c','c','m','p'), 1},
+    { MS_MAKE_TAG('l','o','c','l'), 1},
+    { MS_MAKE_TAG('c','a','l','t'), 1},
+    { MS_MAKE_TAG('l','i','g','a'), 1},
+};
+
 typedef struct ScriptShapeDataTag {
     TEXTRANGE_PROPERTIES   defaultTextRange;
     const char**           requiredFeatures;
@@ -645,6 +653,8 @@ static const ScriptShapeData ShapingData[] =
     {{ no_features, 0}, NULL, "kana", "", NULL, NULL},
     {{ no_features, 0}, NULL, "hang", "", NULL, NULL},
     {{ no_features, 0}, NULL, "yi  ", "", NULL, NULL},
+    {{ ethiopic_features, 4}, NULL, "ethi", "", NULL, NULL},
+    {{ ethiopic_features, 4}, NULL, "ethi", "", NULL, NULL},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)

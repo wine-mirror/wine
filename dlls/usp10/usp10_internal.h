@@ -90,6 +90,9 @@
 #define Script_Kana 57
 #define Script_Hangul 58
 #define Script_Yi 59
+/* Unicode Chapter 13 */
+#define Script_Ethiopic 60
+#define Script_Ethiopic_Numeric 61
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
