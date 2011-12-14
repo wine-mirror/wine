@@ -118,6 +118,8 @@ static const scriptRange scriptRanges[] = {
     /* Ethiopic: U+1200–U+137F */
     /* Ethiopic Extensions: U+1380–U+139F */
     { Script_Ethiopic,   0x1200,  0x139f,  0, 0},
+    /* Cherokee: U+13A0–U+13FF */
+    { Script_Cherokee,   0x13a0,  0x13ff,  0, 0},
     /* Khmer: U+1780–U+17FF */
     { Script_Khmer,      0x1780,  0x17ff,  Script_Khmer_Numeric, 0},
     /* Mongolian: U+1800–U+18AF */
@@ -554,6 +556,10 @@ static const scriptData scriptInformation[] = {
      {0, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      MS_MAKE_TAG('v','a','i',' '),
      {'E','b','r','i','m','a'}},
+    {{Script_Cherokee, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {0x5c, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('c','h','e','r'),
+     {'P','l','a','n','t','a','g','e','n','e','t',' ','C','h','e','r','o','k','e','e'}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -591,7 +597,8 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[60].props, &scriptInformation[61].props,
     &scriptInformation[62].props, &scriptInformation[63].props,
     &scriptInformation[64].props, &scriptInformation[65].props,
-    &scriptInformation[66].props, &scriptInformation[67].props
+    &scriptInformation[66].props, &scriptInformation[67].props,
+    &scriptInformation[68].props
 };
 
 typedef struct {
