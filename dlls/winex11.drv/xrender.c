@@ -2690,6 +2690,7 @@ static HBRUSH xrenderdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap
     physdev->x11dev->brush.pixmap = pixmap;
     physdev->x11dev->brush.fillStyle = FillTiled;
     physdev->x11dev->brush.pixel = 0;  /* ignored */
+    physdev->x11dev->brush.style = BS_PATTERN;
     wine_tsx11_unlock();
 
     X11DRV_DIB_Unlock( physbitmap, TRUE );
