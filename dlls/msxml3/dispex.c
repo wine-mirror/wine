@@ -553,6 +553,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
 
         switch(wFlags) {
         case INVOKE_PROPERTYGET:
+            V_VT(pvarRes) = VT_EMPTY;
             return VariantCopy(pvarRes, var);
         case INVOKE_PROPERTYPUT:
             VariantClear(var);
