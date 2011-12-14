@@ -57,7 +57,8 @@ static const scriptRange scriptRanges[] = {
     /* Latin Extended-A: U+0100–U+017F */
     /* Latin Extended-B: U+0180–U+024F */
     /* IPA Extensions: U+0250–U+02AF */
-    { Script_Latin,      0x80,   0x2af ,  Script_Numeric2, Script_Punctuation},
+    /* Spacing Modifier Letters:U+02B0–U+02FF */
+    { Script_Latin,      0x80,   0x2ff ,  Script_Numeric2, Script_Punctuation},
     /* Combining Diacritical Marks : U+0300–U+036F */
     { Script_Diacritical,0x300,  0x36f,  0, 0},
     /* Greek: U+0370–U+03FF */
