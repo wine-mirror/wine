@@ -10886,6 +10886,7 @@ static void test_dispex(void)
 
 static void test_parseerror(void)
 {
+    IXMLDOMParseError2 *error2;
     IXMLDOMParseError *error;
     IXMLDOMDocument *doc;
     HRESULT hr;
@@ -10905,7 +10906,16 @@ static void test_parseerror(void)
     EXPECT_HR(hr, E_INVALIDARG);
 
     IXMLDOMParseError_Release(error);
+    IXMLDOMDocument_Release(doc);
 
+    doc = create_document_version(60, &IID_IXMLDOMDocument);
+    if (!doc) return;
+    hr = IXMLDOMDocument_get_parseError(doc, &error);
+    EXPECT_HR(hr, S_OK);
+    hr = IXMLDOMParseError_QueryInterface(error, &IID_IXMLDOMParseError2, (void**)&error2);
+    EXPECT_HR(hr, S_OK);
+    IXMLDOMParseError2_Release(error2);
+    IXMLDOMParseError_Release(error);
     IXMLDOMDocument_Release(doc);
 }
 

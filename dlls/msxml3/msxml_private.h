@@ -53,7 +53,7 @@ typedef enum tid_t {
     IXMLDOMNamedNodeMap_tid,
     IXMLDOMNode_tid,
     IXMLDOMNodeList_tid,
-    IXMLDOMParseError_tid,
+    IXMLDOMParseError2_tid,
     IXMLDOMProcessingInstruction_tid,
     IXMLDOMSchemaCollection_tid,
     IXMLDOMSchemaCollection2_tid,

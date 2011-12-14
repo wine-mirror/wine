@@ -126,7 +126,7 @@ static tid_id_t tid_ids[] = {
     { &IID_IXMLDOMNamedNodeMap, LibXml2 },
     { &IID_IXMLDOMNode, LibXml2 },
     { &IID_IXMLDOMNodeList, LibXml2 },
-    { &IID_IXMLDOMParseError, LibXml2 },
+    { &IID_IXMLDOMParseError2, LibXml2 },
     { &IID_IXMLDOMProcessingInstruction, LibXml2 },
     { &IID_IXMLDOMSchemaCollection, LibXml2 },
     { &IID_IXMLDOMSchemaCollection2, LibXml2 },
