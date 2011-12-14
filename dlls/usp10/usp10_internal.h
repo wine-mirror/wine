@@ -97,6 +97,8 @@
 #define Script_Mongolian_Numeric 63
 #define Script_Tifinagh 64
 #define Script_NKo 65
+#define Script_Vai 66
+#define Script_Vai_Numeric 67
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)

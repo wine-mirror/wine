@@ -227,6 +227,8 @@ static const scriptRange scriptRanges[] = {
     { Script_CJK_Han    ,0x4e00, 0x9fff,  0, 0},
     /* Yi: U+A000–U+A4CF */
     { Script_Yi         ,0xa000, 0xa4cf,  0, 0},
+    /* Vai: U+A500–U+A63F */
+    { Script_Vai        ,0xa500, 0xa63f,  Script_Vai_Numeric, 0},
     /* Cyrillic Extended-B: U+A640–U+A69F */
     { Script_Cyrillic,   0xa640, 0xa69f,  0, 0},
     /* Modifier Tone Letters: U+A700–U+A71F */
@@ -544,6 +546,14 @@ static const scriptData scriptInformation[] = {
      {0, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      MS_MAKE_TAG('n','k','o',' '),
      {0}},
+    {{Script_Vai, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {0, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('v','a','i',' '),
+     {'E','b','r','i','m','a'}},
+    {{Script_Vai_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {0, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('v','a','i',' '),
+     {'E','b','r','i','m','a'}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -580,7 +590,8 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[58].props, &scriptInformation[59].props,
     &scriptInformation[60].props, &scriptInformation[61].props,
     &scriptInformation[62].props, &scriptInformation[63].props,
-    &scriptInformation[64].props, &scriptInformation[65].props
+    &scriptInformation[64].props, &scriptInformation[65].props,
+    &scriptInformation[66].props, &scriptInformation[67].props
 };
 
 typedef struct {
