@@ -54,6 +54,7 @@ static void ContextualShape_Telugu(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *p
 static void ContextualShape_Kannada(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Malayalam(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 static void ContextualShape_Khmer(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
+static void ContextualShape_Mongolian(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust);
 
 typedef VOID (*ShapeCharGlyphPropProc)( HDC , ScriptCache*, SCRIPT_ANALYSIS*, const WCHAR*, const INT, const WORD*, const INT, WORD*, SCRIPT_CHARPROP*, SCRIPT_GLYPHPROP*);
 
@@ -581,6 +582,14 @@ static OPENTYPE_FEATURE_RECORD ethiopic_features[] =
     { MS_MAKE_TAG('l','i','g','a'), 1},
 };
 
+static OPENTYPE_FEATURE_RECORD mongolian_features[] =
+{
+    { MS_MAKE_TAG('c','c','m','p'), 1},
+    { MS_MAKE_TAG('l','o','c','l'), 1},
+    { MS_MAKE_TAG('c','a','l','t'), 1},
+    { MS_MAKE_TAG('r','l','i','g'), 1},
+};
+
 typedef struct ScriptShapeDataTag {
     TEXTRANGE_PROPERTIES   defaultTextRange;
     const char**           requiredFeatures;
@@ -655,6 +664,8 @@ static const ScriptShapeData ShapingData[] =
     {{ no_features, 0}, NULL, "yi  ", "", NULL, NULL},
     {{ ethiopic_features, 4}, NULL, "ethi", "", NULL, NULL},
     {{ ethiopic_features, 4}, NULL, "ethi", "", NULL, NULL},
+    {{ mongolian_features, 4}, NULL, "mong", "", ContextualShape_Mongolian, NULL},
+    {{ mongolian_features, 4}, NULL, "mong", "", ContextualShape_Mongolian, NULL},
 };
 
 static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
@@ -3046,6 +3057,73 @@ static void ContextualShape_Khmer(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
 
     HeapFree(GetProcessHeap(),0,input);
     HeapFree(GetProcessHeap(),0,syllables);
+}
+
+static inline BOOL mongolian_wordbreak(WCHAR chr)
+{
+    return ((chr == 0x0020) || (chr == 0x200C) || (chr == 0x202F) || (chr == 0x180E) || (chr == 0x1800) || (chr == 0x1802) || (chr == 0x1803) || (chr == 0x1805) || (chr == 0x1808) || (chr == 0x1809) || (chr == 0x1807));
+}
+
+static void ContextualShape_Mongolian(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwcChars, INT cChars, WORD* pwOutGlyphs, INT* pcGlyphs, INT cMaxGlyphs, WORD *pwLogClust)
+{
+    INT *context_shape;
+    INT dirL;
+    int i;
+
+    if (*pcGlyphs != cChars)
+    {
+        ERR("Number of Glyphs and Chars need to match at the beginning\n");
+        return;
+    }
+
+    if (!psa->fLogicalOrder && psa->fRTL)
+        dirL = -1;
+    else
+        dirL = 1;
+
+    if (!psc->GSUB_Table)
+        psc->GSUB_Table = load_gsub_table(hdc);
+
+    if (!psc->GSUB_Table)
+        return;
+
+    context_shape = HeapAlloc(GetProcessHeap(),0,sizeof(INT) * cChars);
+
+    for (i = 0; i < cChars; i++)
+    {
+        if (i == 0 || mongolian_wordbreak(pwcChars[i-1]))
+        {
+            if ((i == cChars-1) || mongolian_wordbreak(pwcChars[i+1]))
+                context_shape[i] = Xn;
+            else
+                context_shape[i] = Xl;
+        }
+        else
+        {
+            if ((i == cChars-1) || mongolian_wordbreak(pwcChars[i+1]))
+                context_shape[i] = Xr;
+            else
+                context_shape[i] = Xm;
+        }
+    }
+
+    /* Contextual Shaping */
+    i = 0;
+    while(i < *pcGlyphs)
+    {
+        INT nextIndex;
+        INT prevCount = *pcGlyphs;
+        nextIndex = apply_GSUB_feature_to_glyph(hdc, psa, psc, pwOutGlyphs, i, dirL, pcGlyphs, contextual_features[context_shape[i]]);
+        if (nextIndex > GSUB_E_NOGLYPH)
+        {
+            UpdateClusters(nextIndex, *pcGlyphs - prevCount, dirL, cChars, pwLogClust);
+            i = nextIndex;
+        }
+        else
+            i++;
+    }
+
+    HeapFree(GetProcessHeap(),0,context_shape);
 }
 
 static void ShapeCharGlyphProp_Default( HDC hdc, ScriptCache* psc, SCRIPT_ANALYSIS* psa, const WCHAR* pwcChars, const INT cChars, const WORD* pwGlyphs, const INT cGlyphs, WORD* pwLogClust, SCRIPT_CHARPROP* pCharProp, SCRIPT_GLYPHPROP* pGlyphProp)

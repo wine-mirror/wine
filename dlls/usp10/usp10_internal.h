@@ -93,6 +93,8 @@
 /* Unicode Chapter 13 */
 #define Script_Ethiopic 60
 #define Script_Ethiopic_Numeric 61
+#define Script_Mongolian 62
+#define Script_Mongolian_Numeric 63
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)

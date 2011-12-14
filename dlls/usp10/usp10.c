@@ -118,6 +118,8 @@ static const scriptRange scriptRanges[] = {
     { Script_Ethiopic,   0x1200,  0x139f,  0, 0},
     /* Khmer: U+1780–U+17FF */
     { Script_Khmer,      0x1780,  0x17ff,  Script_Khmer_Numeric, 0},
+    /* Mongolian: U+1800–U+18AF */
+    { Script_Mongolian,  0x1800,  0x18af,  Script_Mongolian_Numeric, 0},
     /* Tai Le: U+1950–U+197F */
     { Script_Tai_Le,     0x1950,  0x197f,  0, 0},
     /* New Tai Lue: U+1980–U+19DF */
@@ -522,6 +524,14 @@ static const scriptData scriptInformation[] = {
      {0x5e, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      MS_MAKE_TAG('e','t','h','i'),
      {'N','y','a','l','a'}},
+    {{Script_Mongolian, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_MONGOLIAN, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('m','o','n','g'),
+     {'M','o','n','g','o','l','i','a','n',' ','B','a','i','t','i'}},
+    {{Script_Mongolian_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_MONGOLIAN, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('m','o','n','g'),
+     {'M','o','n','g','o','l','i','a','n',' ','B','a','i','t','i'}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -556,7 +566,8 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[54].props, &scriptInformation[55].props,
     &scriptInformation[56].props, &scriptInformation[57].props,
     &scriptInformation[58].props, &scriptInformation[59].props,
-    &scriptInformation[60].props, &scriptInformation[61].props
+    &scriptInformation[60].props, &scriptInformation[61].props,
+    &scriptInformation[62].props, &scriptInformation[63].props
 };
 
 typedef struct {
