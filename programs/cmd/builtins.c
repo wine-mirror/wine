@@ -2729,8 +2729,16 @@ int WCMD_volume(BOOL set_label, const WCHAR *path)
     WCMD_print_error ();
     return 0;
   }
-  WCMD_output (WCMD_LoadMessage(WCMD_VOLUMEDETAIL),
-    	curdir[0], label, HIWORD(serial), LOWORD(serial));
+  if (label[0] != '\0') {
+    WCMD_output (WCMD_LoadMessage(WCMD_VOLUMELABEL),
+      	curdir[0], label);
+  }
+  else {
+    WCMD_output (WCMD_LoadMessage(WCMD_VOLUMENOLABEL),
+      	curdir[0]);
+  }
+  WCMD_output (WCMD_LoadMessage(WCMD_VOLUMESERIALNO),
+    	HIWORD(serial), LOWORD(serial));
   if (set_label) {
     WCMD_output (WCMD_LoadMessage(WCMD_VOLUMEPROMPT));
     WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string)/sizeof(WCHAR), &count);

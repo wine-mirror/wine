@@ -269,7 +269,7 @@ extern WCHAR version_string[];
 #define WCMD_VERIFYPROMPT     1025
 #define WCMD_VERIFYERR        1026
 #define WCMD_ARGERR           1027
-#define WCMD_VOLUMEDETAIL     1028
+#define WCMD_VOLUMESERIALNO   1028
 #define WCMD_VOLUMEPROMPT     1029
 #define WCMD_NOPATH           1030
 #define WCMD_ANYKEY           1031
@@ -277,3 +277,5 @@ extern WCHAR version_string[];
 #define WCMD_VERSION          1033
 #define WCMD_MOREPROMPT       1034
 #define WCMD_LINETOOLONG      1035
+#define WCMD_VOLUMELABEL      1036
+#define WCMD_VOLUMENOLABEL    1037

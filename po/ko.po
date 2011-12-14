@@ -9936,9 +9936,9 @@ msgid "Parameter error\n"
 msgstr "매개변수 오류\n"
 
 #: cmd.rc:318
+#, fuzzy
 msgid ""
-"Volume in drive %1!c! is %2\n"
-"Volume Serial Number is %3!04x!-%4!04x!\n"
+"Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
 "드라이브 %1!c!의 볼륨은 %2임\n"
@@ -9972,6 +9972,14 @@ msgstr "더? "
 #: cmd.rc:325
 msgid "The input line is too long.\n"
 msgstr "이 출력 줄은 너무 깁니다.\n"
+
+#: cmd.rc:326
+msgid "Volume in drive %1!c! is %2\n"
+msgstr ""
+
+#: cmd.rc:327
+msgid "Volume in drive %1!c! has no label.\n"
+msgstr ""
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"

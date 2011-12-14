@@ -9982,8 +9982,7 @@ msgstr "パラメータ エラー\n"
 #: cmd.rc:318
 #, fuzzy
 msgid ""
-"Volume in drive %1!c! is %2\n"
-"Volume Serial Number is %3!04x!-%4!04x!\n"
+"Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
 "ドライブ %c のボリューム ラベルは %s\n"
@@ -10018,6 +10017,14 @@ msgstr "More? "
 #: cmd.rc:325
 msgid "The input line is too long.\n"
 msgstr "入力行が長すぎます。\n"
+
+#: cmd.rc:326
+msgid "Volume in drive %1!c! is %2\n"
+msgstr ""
+
+#: cmd.rc:327
+msgid "Volume in drive %1!c! has no label.\n"
+msgstr ""
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
