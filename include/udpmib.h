@@ -18,6 +18,8 @@
 #ifndef __WINE_UDPMIB_H
 #define __WINE_UDPMIB_H
 
+#define TCPIP_OWNING_MODULE_SIZE 16
+
 
 /* UDP table */
 
@@ -32,6 +34,18 @@ typedef struct _MIB_UDPTABLE
     DWORD      dwNumEntries;
     MIB_UDPROW table[1];
 } MIB_UDPTABLE, *PMIB_UDPTABLE;
+
+typedef struct _MIB_UDPROW_OWNER_PID
+{
+    DWORD dwLocalAddr;
+    DWORD dwLocalPort;
+} MIB_UDPROW_OWNER_PID, *PMIB_UDPROW_OWNER_PID;
+
+typedef struct _MIB_UDPTABLE_OWNER_PID
+{
+    DWORD                dwNumEntries;
+    MIB_UDPROW_OWNER_PID table[1];
+} MIB_UDPTABLE_OWNER_PID, *PMIB_UDPTABLE_OWNER_PID;
 
 
 /* UDP statistics */

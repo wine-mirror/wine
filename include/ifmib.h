@@ -20,6 +20,11 @@
 
 #include <ifdef.h>
 
+typedef struct _MIB_IFNUMBER
+{
+    DWORD dwValue;
+} MIB_IFNUMBER, *PMIB_IFNUMBER;
+
 
 /* Interface table */
 
@@ -35,9 +40,9 @@ typedef struct _MIB_IFROW
     DWORD dwMtu;
     DWORD dwSpeed;
     DWORD dwPhysAddrLen;
-    BYTE  bPhysAddr[MAXLEN_PHYSADDR];
+    UCHAR bPhysAddr[MAXLEN_PHYSADDR];
     DWORD dwAdminStatus;
-    DWORD dwOperStatus;
+    INTERNAL_IF_OPER_STATUS dwOperStatus;
     DWORD dwLastChange;
     DWORD dwInOctets;
     DWORD dwInUcastPkts;

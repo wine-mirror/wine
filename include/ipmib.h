@@ -27,7 +27,7 @@
 typedef struct _MIB_IPADDRROW
 {
     DWORD          dwAddr;
-    DWORD          dwIndex;
+    IF_INDEX       dwIndex;
     DWORD          dwMask;
     DWORD          dwBCastAddr;
     DWORD          dwReasmSize;
@@ -49,10 +49,15 @@ typedef struct _MIB_IPFORWARDNUMBER
     DWORD dwValue;
 } MIB_IPFORWARDNUMBER, *PMIB_IPFORWARDNUMBER;
 
-#define MIB_IPROUTE_TYPE_OTHER      1
-#define MIB_IPROUTE_TYPE_INVALID    2
-#define MIB_IPROUTE_TYPE_DIRECT     3
-#define MIB_IPROUTE_TYPE_INDIRECT   4
+typedef enum
+{
+    MIB_IPROUTE_TYPE_OTHER = 1,
+    MIB_IPROUTE_TYPE_INVALID = 2,
+    MIB_IPROUTE_TYPE_DIRECT = 3,
+    MIB_IPROUTE_TYPE_INDIRECT = 4,
+} MIB_IPFORWARD_TYPE;
+
+typedef NL_ROUTE_PROTOCOL MIB_IPFORWARD_PROTO;
 
 typedef struct _MIB_IPFORWARDROW
 {
@@ -60,9 +65,17 @@ typedef struct _MIB_IPFORWARDROW
     DWORD    dwForwardMask;
     DWORD    dwForwardPolicy;
     DWORD    dwForwardNextHop;
-    DWORD    dwForwardIfIndex;
-    DWORD    dwForwardType;
-    DWORD    dwForwardProto;
+    IF_INDEX dwForwardIfIndex;
+    union
+    {
+        DWORD              dwForwardType;
+        MIB_IPFORWARD_TYPE ForwardType;
+    } DUMMYUNIONNAME1;
+    union
+    {
+        DWORD               dwForwardProto;
+        MIB_IPFORWARD_PROTO ForwardProto;
+    } DUMMYUNIONNAME2;
     DWORD    dwForwardAge;
     DWORD    dwForwardNextHopAS;
     DWORD    dwForwardMetric1;
@@ -81,10 +94,13 @@ typedef struct _MIB_IPFORWARDTABLE
 
 /* IPNET table */
 
-#define MIB_IPNET_TYPE_OTHER        1
-#define MIB_IPNET_TYPE_INVALID      2
-#define MIB_IPNET_TYPE_DYNAMIC      3
-#define MIB_IPNET_TYPE_STATIC       4
+typedef enum
+{
+    MIB_IPNET_TYPE_OTHER = 1,
+    MIB_IPNET_TYPE_INVALID = 2,
+    MIB_IPNET_TYPE_DYNAMIC = 3,
+    MIB_IPNET_TYPE_STATIC = 4,
+} MIB_IPNET_TYPE;
 
 typedef struct _MIB_IPNETROW
 {
@@ -92,7 +108,11 @@ typedef struct _MIB_IPNETROW
     DWORD dwPhysAddrLen;
     BYTE  bPhysAddr[MAXLEN_PHYSADDR];
     DWORD dwAddr;
-    DWORD dwType;
+    union
+    {
+        DWORD          dwType;
+        MIB_IPNET_TYPE Type;
+    } DUMMYUNIONNAME;
 } MIB_IPNETROW, *PMIB_IPNETROW;
 
 typedef struct _MIB_IPNETTABLE
@@ -104,9 +124,19 @@ typedef struct _MIB_IPNETTABLE
 
 /* IP statistics */
 
+typedef enum
+{
+    MIB_IP_FORWARDING = 1,
+    MIB_IP_NOT_FORWARDING = 2,
+} MIB_IPSTATS_FORWARDING, *PMIB_IPSTATS_FORWARDING;
+
 typedef struct _MIB_IPSTATS
 {
-    DWORD dwForwarding;
+    union
+    {
+        DWORD                  dwForwarding;
+        MIB_IPSTATS_FORWARDING Forwarding;
+    } DUMMYUNIONNAME;
     DWORD dwDefaultTTL;
     DWORD dwInReceives;
     DWORD dwInHdrErrors;
@@ -149,7 +179,7 @@ typedef struct _MIBICMPSTATS
     DWORD dwTimestampReps;
     DWORD dwAddrMasks;
     DWORD dwAddrMaskReps;
-} MIBICMPSTATS;
+} MIBICMPSTATS, *PMIBICMPSTATS;
 
 typedef struct _MIBICMPINFO
 {

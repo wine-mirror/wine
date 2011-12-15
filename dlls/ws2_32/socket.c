@@ -321,7 +321,7 @@ struct per_thread_data
 /* internal: routing description information */
 struct route {
     struct in_addr addr;
-    DWORD interface;
+    IF_INDEX interface;
     DWORD metric;
 };
 
@@ -4487,9 +4487,10 @@ static struct WS_hostent* WS_get_local_ips( char *hostname )
     /* Store the interface associated with each route */
     for (i = 0; i < routes->dwNumEntries; i++)
     {
-        DWORD ifindex, ifmetric, exists = FALSE;
+        IF_INDEX ifindex;
+        DWORD ifmetric, exists = FALSE;
 
-        if (routes->table[i].dwForwardType != MIB_IPROUTE_TYPE_DIRECT)
+        if (routes->table[i].u1.ForwardType != MIB_IPROUTE_TYPE_DIRECT)
             continue;
         ifindex = routes->table[i].dwForwardIfIndex;
         ifmetric = routes->table[i].dwForwardMetric1;

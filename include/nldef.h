@@ -48,23 +48,32 @@ typedef enum
     IpDadStatePreferred,
 } NL_DAD_STATE;
 
-#define MIB_IPPROTO_OTHER             1
-#define MIB_IPPROTO_LOCAL             2
-#define MIB_IPPROTO_NETMGMT           3
-#define MIB_IPPROTO_ICMP              4
-#define MIB_IPPROTO_EGP               5
-#define MIB_IPPROTO_GGP               6
-#define MIB_IPPROTO_HELLO             7
-#define MIB_IPPROTO_RIP               8
-#define MIB_IPPROTO_IS_IS             9
-#define MIB_IPPROTO_ES_IS             10
-#define MIB_IPPROTO_CISCO             11
-#define MIB_IPPROTO_BBN               12
-#define MIB_IPPROTO_OSPF              13
-#define MIB_IPPROTO_BGP               14
 
-#define MIB_IPPROTO_NT_AUTOSTATIC     10002
-#define MIB_IPPROTO_NT_STATIC         10006
-#define MIB_IPPROTO_NT_STATIC_NON_DOD 10007
+typedef enum
+{
+#define MAKE_ROUTE_PROTOCOL(name, value) \
+    MIB_IPPROTO_ ## name = value, \
+    PROTO_IP_ ## name = value
+
+    MAKE_ROUTE_PROTOCOL(OTHER,   1),
+    MAKE_ROUTE_PROTOCOL(LOCAL,   2),
+    MAKE_ROUTE_PROTOCOL(NETMGMT, 3),
+    MAKE_ROUTE_PROTOCOL(ICMP,    4),
+    MAKE_ROUTE_PROTOCOL(EGP,     5),
+    MAKE_ROUTE_PROTOCOL(GGP,     6),
+    MAKE_ROUTE_PROTOCOL(HELLO,   7),
+    MAKE_ROUTE_PROTOCOL(RIP,     8),
+    MAKE_ROUTE_PROTOCOL(IS_IS,   9),
+    MAKE_ROUTE_PROTOCOL(ES_IS,   10),
+    MAKE_ROUTE_PROTOCOL(CISCO,   11),
+    MAKE_ROUTE_PROTOCOL(BBN,     12),
+    MAKE_ROUTE_PROTOCOL(OSPF,    13),
+    MAKE_ROUTE_PROTOCOL(BGP,     14),
+
+    MAKE_ROUTE_PROTOCOL(NT_AUTOSTATIC,     10002),
+    MAKE_ROUTE_PROTOCOL(NT_STATIC,         10006),
+    MAKE_ROUTE_PROTOCOL(NT_STATIC_NON_DOD, 10007),
+} NL_ROUTE_PROTOCOL, *PNL_ROUTE_PROTOCOL;
+
 
 #endif /* __WINE_NLDEF_H */

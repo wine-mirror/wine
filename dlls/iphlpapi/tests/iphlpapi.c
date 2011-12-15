@@ -354,7 +354,7 @@ static void testGetIpForwardTable(void)
               sprintf( buffer + strlen(buffer), " mask %s", ntoa( buf->table[i].dwForwardMask ));
               trace( "%u: %s gw %s if %u type %u\n", i, buffer,
                      ntoa( buf->table[i].dwForwardNextHop ),
-                     buf->table[i].dwForwardIfIndex, buf->table[i].dwForwardType );
+                     buf->table[i].dwForwardIfIndex, U1(buf->table[i]).dwForwardType );
           }
       }
       HeapFree(GetProcessHeap(), 0, buf);
@@ -474,7 +474,7 @@ static void testGetIpStatistics(void)
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
         trace( "IP stats:\n" );
-        trace( "    dwForwarding:      %u\n", stats.dwForwarding );
+        trace( "    dwForwarding:      %u\n", U(stats).dwForwarding );
         trace( "    dwDefaultTTL:      %u\n", stats.dwDefaultTTL );
         trace( "    dwInReceives:      %u\n", stats.dwInReceives );
         trace( "    dwInHdrErrors:     %u\n", stats.dwInHdrErrors );
@@ -521,7 +521,7 @@ static void testGetTcpStatistics(void)
     if (apiReturn == NO_ERROR && winetest_debug > 1)
     {
         trace( "TCP stats:\n" );
-        trace( "    dwRtoAlgorithm: %u\n", stats.dwRtoAlgorithm );
+        trace( "    dwRtoAlgorithm: %u\n", U(stats).dwRtoAlgorithm );
         trace( "    dwRtoMin:       %u\n", stats.dwRtoMin );
         trace( "    dwRtoMax:       %u\n", stats.dwRtoMax );
         trace( "    dwMaxConn:      %u\n", stats.dwMaxConn );
@@ -603,7 +603,7 @@ static void testGetTcpTable(void)
                        ntoa(buf->table[i].dwLocalAddr), ntohs(buf->table[i].dwLocalPort) );
               trace( "%u: %s remote %s:%u state %u\n",
                      i, buffer, ntoa( buf->table[i].dwRemoteAddr ),
-                     ntohs(buf->table[i].dwRemotePort), buf->table[i].dwState );
+                     ntohs(buf->table[i].dwRemotePort), U(buf->table[i]).dwState );
           }
       }
       HeapFree(GetProcessHeap(), 0, buf);

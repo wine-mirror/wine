@@ -583,7 +583,7 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
                * is the default gateway for this adapter */
               for (i = 0; i < routeTable->dwNumEntries; i++)
                 if (routeTable->table[i].dwForwardIfIndex == ptr->Index
-                 && routeTable->table[i].dwForwardType ==
+                 && routeTable->table[i].u1.ForwardType ==
                  MIB_IPROUTE_TYPE_INDIRECT)
                   toIPAddressString(routeTable->table[i].dwForwardNextHop,
                    ptr->GatewayList.IpAddress.String);
@@ -628,7 +628,7 @@ static DWORD typeFromMibType(DWORD mib_type)
     }
 }
 
-static DWORD connectionTypeFromMibType(DWORD mib_type)
+static NET_IF_CONNECTION_TYPE connectionTypeFromMibType(DWORD mib_type)
 {
     switch (mib_type)
     {
@@ -638,7 +638,7 @@ static DWORD connectionTypeFromMibType(DWORD mib_type)
     }
 }
 
-static ULONG v4addressesFromIndex(DWORD index, DWORD **addrs, ULONG *num_addrs)
+static ULONG v4addressesFromIndex(IF_INDEX index, DWORD **addrs, ULONG *num_addrs)
 {
     ULONG ret, i, j;
     MIB_IPADDRTABLE *at;
@@ -715,7 +715,7 @@ static ULONG count_v4_gateways(DWORD index, PMIB_IPFORWARDTABLE routeTable)
     for (i = 0; i < routeTable->dwNumEntries; i++)
     {
         if (routeTable->table[i].dwForwardIfIndex == index &&
-            routeTable->table[i].dwForwardType == MIB_IPROUTE_TYPE_INDIRECT)
+            routeTable->table[i].u1.ForwardType == MIB_IPROUTE_TYPE_INDIRECT)
             num_gateways++;
     }
     return num_gateways;
@@ -730,13 +730,13 @@ static PMIB_IPFORWARDROW findIPv4Gateway(DWORD index,
     for (i = 0; !row && i < routeTable->dwNumEntries; i++)
     {
         if (routeTable->table[i].dwForwardIfIndex == index &&
-            routeTable->table[i].dwForwardType == MIB_IPROUTE_TYPE_INDIRECT)
+            routeTable->table[i].u1.ForwardType == MIB_IPROUTE_TYPE_INDIRECT)
             row = &routeTable->table[i];
     }
     return row;
 }
 
-static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, DWORD index,
+static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index,
                                        IP_ADAPTER_ADDRESSES *aa, ULONG *size)
 {
     ULONG ret = ERROR_SUCCESS, i, num_v4addrs = 0, num_v4_gateways = 0, num_v6addrs = 0, total_size;
@@ -1212,7 +1212,7 @@ DWORD WINAPI GetBestRoute(DWORD dwDestAddr, DWORD dwSourceAddr, PMIB_IPFORWARDRO
     DWORD ndx, matchedBits, matchedNdx = table->dwNumEntries;
 
     for (ndx = 0, matchedBits = 0; ndx < table->dwNumEntries; ndx++) {
-      if (table->table[ndx].dwForwardType != MIB_IPROUTE_TYPE_INVALID &&
+      if (table->table[ndx].u1.ForwardType != MIB_IPROUTE_TYPE_INVALID &&
        (dwDestAddr & table->table[ndx].dwForwardMask) ==
        (table->table[ndx].dwForwardDest & table->table[ndx].dwForwardMask)) {
         DWORD numShifts, mask;

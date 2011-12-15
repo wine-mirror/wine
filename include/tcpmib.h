@@ -18,25 +18,43 @@
 #ifndef __WINE_TCPMIB_H
 #define __WINE_TCPMIB_H
 
+#define TCPIP_OWNING_MODULE_SIZE 16
+
 
 /* TCP tables */
 
-#define MIB_TCP_STATE_CLOSED            1
-#define MIB_TCP_STATE_LISTEN            2
-#define MIB_TCP_STATE_SYN_SENT          3
-#define MIB_TCP_STATE_SYN_RCVD          4
-#define MIB_TCP_STATE_ESTAB             5
-#define MIB_TCP_STATE_FIN_WAIT1         6
-#define MIB_TCP_STATE_FIN_WAIT2         7
-#define MIB_TCP_STATE_CLOSE_WAIT        8
-#define MIB_TCP_STATE_CLOSING           9
-#define MIB_TCP_STATE_LAST_ACK         10
-#define MIB_TCP_STATE_TIME_WAIT        11
-#define MIB_TCP_STATE_DELETE_TCB       12
+typedef enum
+{
+    MIB_TCP_STATE_CLOSED = 1,
+    MIB_TCP_STATE_LISTEN = 2,
+    MIB_TCP_STATE_SYN_SENT = 3,
+    MIB_TCP_STATE_SYN_RCVD = 4,
+    MIB_TCP_STATE_ESTAB = 5,
+    MIB_TCP_STATE_FIN_WAIT1 = 6,
+    MIB_TCP_STATE_FIN_WAIT2 = 7,
+    MIB_TCP_STATE_CLOSE_WAIT = 8,
+    MIB_TCP_STATE_CLOSING = 9,
+    MIB_TCP_STATE_LAST_ACK = 10,
+    MIB_TCP_STATE_TIME_WAIT = 11,
+    MIB_TCP_STATE_DELETE_TCB = 12,
+} MIB_TCP_STATE;
+
+typedef enum
+{
+    TcpConnectionOffloadStateInHost,
+    TcpConnectionOffloadStateOffloading,
+    TcpConnectionOffloadStateOffloaded,
+    TcpConnectionOffloadStateUploading,
+    TcpConnectionOffloadStateMax,
+} TCP_CONNECTION_OFFLOAD_STATE, *PTCP_CONNECTION_OFFLOAD_STATE;
 
 typedef struct _MIB_TCPROW
 {
-    DWORD dwState;
+    union
+    {
+        DWORD         dwState;
+        MIB_TCP_STATE State;
+    } DUMMYUNIONNAME;
     DWORD dwLocalAddr;
     DWORD dwLocalPort;
     DWORD dwRemoteAddr;
@@ -49,17 +67,62 @@ typedef struct _MIB_TCPTABLE
     MIB_TCPROW table[1];
 } MIB_TCPTABLE, *PMIB_TCPTABLE;
 
+typedef struct _MIB_TCPROW_OWNER_PID
+{
+    DWORD dwState;
+    DWORD dwLocalAddr;
+    DWORD dwLocalPort;
+    DWORD dwRemoteAddr;
+    DWORD dwRemotePort;
+    DWORD dwOwningPid;
+} MIB_TCPROW_OWNER_PID, *PMIB_TCPROW_OWNER_PID;
+
+typedef struct _MIB_TCPTABLE_OWNER_PID
+{
+    DWORD                dwNumEntries;
+    MIB_TCPROW_OWNER_PID table[1];
+} MIB_TCPTABLE_OWNER_PID, *PMIB_TCPTABLE_OWNER_PID;
+
+typedef struct _MIB_TCPROW2
+{
+    DWORD dwState;
+    DWORD dwLocalAddr;
+    DWORD dwLocalPort;
+    DWORD dwRemoteAddr;
+    DWORD dwRemotePort;
+    DWORD dwOwningPid;
+    TCP_CONNECTION_OFFLOAD_STATE dwOffloadState;
+} MIB_TCPROW2, *PMIB_TCPROW2;
+
+typedef struct _MIB_TCPTABLE2
+{
+    DWORD       dwNumEntries;
+    MIB_TCPROW2 table[1];
+} MIB_TCPTABLE2, *PMIB_TCPTABLE2;
+
 
 /* TCP stats */
 
-#define MIB_TCP_RTO_OTHER               1
-#define MIB_TCP_RTO_CONSTANT            2
-#define MIB_TCP_RTO_RSRE                3
-#define MIB_TCP_RTO_VANJ                4
+typedef enum
+{
+    TcpRtoAlgorithmOther = 0,
+    TcpRtoAlgorithmConstant = 1,
+    TcpRtoAlgorithmRsre = 2,
+    TcpRtoAlgorithmVanj = 3,
+
+    MIB_TCP_RTO_OTHER = 1,
+    MIB_TCP_RTO_CONSTANT = 2,
+    MIB_TCP_RTO_RSRE = 3,
+    MIB_TCP_RTO_VANJ = 4,
+} TCP_RTO_ALGORITHM, *PTCP_RTO_ALGORITHM;
 
 typedef struct _MIB_TCPSTATS
 {
-    DWORD dwRtoAlgorithm;
+    union
+    {
+        DWORD             dwRtoAlgorithm;
+        TCP_RTO_ALGORITHM RtoAlgorithm;
+    } DUMMYUNIONNAME;
     DWORD dwRtoMin;
     DWORD dwRtoMax;
     DWORD dwMaxConn;

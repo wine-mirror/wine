@@ -51,7 +51,7 @@ BOOL isIfIndexLoopback(ULONG idx) DECLSPEC_HIDDEN;
 /* A table of interface indexes, see get*InterfaceTable(). */
 typedef struct _InterfaceIndexTable {
   DWORD numIndexes;
-  DWORD indexes[1];
+  IF_INDEX indexes[1];
 } InterfaceIndexTable;
 
 /* Returns a table with all known interface indexes, or NULL if one could not
@@ -68,13 +68,13 @@ InterfaceIndexTable *getNonLoopbackInterfaceIndexTable(void) DECLSPEC_HIDDEN;
  * if not.  Overwrites your buffer, which should be at least of size
  * MAX_ADAPTER_NAME.
  */
-char *getInterfaceNameByIndex(DWORD index, char *name) DECLSPEC_HIDDEN;
+char *getInterfaceNameByIndex(IF_INDEX index, char *name) DECLSPEC_HIDDEN;
 
 /* Fills index with the index of name, if found.  Returns
  * ERROR_INVALID_PARAMETER if name or index is NULL, ERROR_INVALID_DATA if name
  * is not found, and NO_ERROR on success.
  */
-DWORD getInterfaceIndexByName(const char *name, PDWORD index) DECLSPEC_HIDDEN;
+DWORD getInterfaceIndexByName(const char *name, IF_INDEX *index) DECLSPEC_HIDDEN;
 
 /* Gets a few physical characteristics of a device:  MAC addr len, MAC addr,
  * and type as one of the MIB_IF_TYPEs.
@@ -89,7 +89,7 @@ DWORD getInterfaceIndexByName(const char *name, PDWORD index) DECLSPEC_HIDDEN;
  * if internal errors occur.
  * Returns NO_ERROR on success.
  */
-DWORD getInterfacePhysicalByIndex(DWORD index, PDWORD len, PBYTE addr,
+DWORD getInterfacePhysicalByIndex(IF_INDEX index, PDWORD len, PBYTE addr,
  PDWORD type) DECLSPEC_HIDDEN;
 
 /* Fills in the MIB_IFROW by name.  Doesn't fill in interface statistics,
@@ -111,7 +111,7 @@ DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags) 
 /* Returns the IPv6 addresses for a particular interface index.
  * Returns NO_ERROR on success, something else on failure.
  */
-ULONG v6addressesFromIndex(DWORD index, SOCKET_ADDRESS **addrs, ULONG *num_addrs) DECLSPEC_HIDDEN;
+ULONG v6addressesFromIndex(IF_INDEX index, SOCKET_ADDRESS **addrs, ULONG *num_addrs) DECLSPEC_HIDDEN;
 
 /* Converts the network-order bytes in addr to a printable string.  Returns
  * string.

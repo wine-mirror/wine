@@ -122,12 +122,12 @@ static int isLoopbackInterface(int fd, const char *name)
 /* The comments say MAX_ADAPTER_NAME is required, but really only IF_NAMESIZE
  * bytes are necessary.
  */
-char *getInterfaceNameByIndex(DWORD index, char *name)
+char *getInterfaceNameByIndex(IF_INDEX index, char *name)
 {
   return if_indextoname(index, name);
 }
 
-DWORD getInterfaceIndexByName(const char *name, PDWORD index)
+DWORD getInterfaceIndexByName(const char *name, IF_INDEX *index)
 {
   DWORD ret;
   unsigned int idx;
@@ -542,7 +542,7 @@ static DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr
 }
 #endif
 
-DWORD getInterfacePhysicalByIndex(DWORD index, PDWORD len, PBYTE addr,
+DWORD getInterfacePhysicalByIndex(IF_INDEX index, PDWORD len, PBYTE addr,
  PDWORD type)
 {
   char nameBuf[IF_NAMESIZE];
@@ -752,7 +752,7 @@ DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags)
   return ret;
 }
 
-ULONG v6addressesFromIndex(DWORD index, SOCKET_ADDRESS **addrs, ULONG *num_addrs)
+ULONG v6addressesFromIndex(IF_INDEX index, SOCKET_ADDRESS **addrs, ULONG *num_addrs)
 {
   struct ifaddrs *ifa;
   ULONG ret;
@@ -937,7 +937,7 @@ DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags)
   return ret;
 }
 
-ULONG v6addressesFromIndex(DWORD index, SOCKET_ADDRESS **addrs, ULONG *num_addrs)
+ULONG v6addressesFromIndex(IF_INDEX index, SOCKET_ADDRESS **addrs, ULONG *num_addrs)
 {
   *addrs = NULL;
   *num_addrs = 0;
