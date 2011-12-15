@@ -129,8 +129,12 @@ void THEMING_Initialize (void)
         WNDCLASSEXW class;
 
         class.cbSize = sizeof(class);
-        class.style |= CS_GLOBALCLASS;
-        GetClassInfoExW (NULL, subclasses[i].className, &class);
+        if (!GetClassInfoExW (NULL, subclasses[i].className, &class))
+        {
+            ERR("Could not retrieve information for class %s\n",
+                debugstr_w (subclasses[i].className));
+            continue;
+        }
         originalProcs[i] = class.lpfnWndProc;
         class.lpfnWndProc = subclassProcs[i];
         
