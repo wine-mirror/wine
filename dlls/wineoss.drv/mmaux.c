@@ -31,9 +31,6 @@
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
 #endif
-#ifdef HAVE_SYS_ERRNO_H
-#include <sys/errno.h>
-#endif
 #include <sys/soundcard.h>
 
 #include "windef.h"

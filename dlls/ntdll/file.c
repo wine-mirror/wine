@@ -27,9 +27,6 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#ifdef HAVE_SYS_ERRNO_H
-#include <sys/errno.h>
-#endif
 #ifdef HAVE_LINUX_MAJOR_H
 # include <linux/major.h>
 #endif

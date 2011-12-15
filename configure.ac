@@ -460,7 +460,6 @@ AC_CHECK_HEADERS(\
 	sys/cdio.h \
 	sys/elf32.h \
 	sys/epoll.h \
-	sys/errno.h \
 	sys/event.h \
 	sys/exec_elf.h \
 	sys/filio.h \

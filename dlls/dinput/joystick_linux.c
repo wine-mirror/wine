@@ -43,9 +43,6 @@
 # include <sys/ioctl.h>
 #endif
 #include <errno.h>
-#ifdef HAVE_SYS_ERRNO_H
-# include <sys/errno.h>
-#endif
 #ifdef HAVE_LINUX_IOCTL_H
 # include <linux/ioctl.h>
 #endif

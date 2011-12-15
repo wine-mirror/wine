@@ -60,9 +60,6 @@
 #ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
 #endif
-#ifdef HAVE_SYS_ERRNO_H
-#include <sys/errno.h>
-#endif
 #include <sys/soundcard.h>
 
 #include "windef.h"

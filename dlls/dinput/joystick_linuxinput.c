@@ -39,9 +39,6 @@
 # include <sys/ioctl.h>
 #endif
 #include <errno.h>
-#ifdef HAVE_SYS_ERRNO_H
-# include <sys/errno.h>
-#endif
 #ifdef HAVE_LINUX_INPUT_H
 # include <linux/input.h>
 # undef SW_MAX

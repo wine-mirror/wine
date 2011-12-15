@@ -76,9 +76,6 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <errno.h>
-#ifdef HAVE_SYS_ERRNO_H
-#include <sys/errno.h>
-#endif
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif

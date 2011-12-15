@@ -60,9 +60,7 @@
 #define JOYDEV_NEW "/dev/input/js%d"
 #define JOYDEV_OLD "/dev/js%d"
 #endif
-#ifdef HAVE_SYS_ERRNO_H
-#include <sys/errno.h>
-#endif
+#include <errno.h>
 
 #include "windef.h"
 #include "winbase.h"

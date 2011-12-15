@@ -23,9 +23,6 @@
 
 #include <assert.h>
 #include <errno.h>
-#ifdef HAVE_SYS_ERRNO_H
-#include <sys/errno.h>
-#endif
 #include <fcntl.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
