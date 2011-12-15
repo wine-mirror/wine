@@ -1719,12 +1719,16 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
                 LOGFONTW lf;
                 GetObjectW(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), & lf);
                 lf.lfCharSet = scriptInformation[analysis->pItem[i].a.eScript].props.bCharSet;
+                lf.lfFaceName[0] = 0;
                 find_fallback_font(analysis->pItem[i].a.eScript, lf.lfFaceName);
-                analysis->glyphs[i].fallbackFont = CreateFontIndirectW(&lf);
-                if (analysis->glyphs[i].fallbackFont)
+                if (lf.lfFaceName[0])
                 {
-                    ScriptFreeCache(sc);
-                    originalFont = SelectObject(hdc, analysis->glyphs[i].fallbackFont);
+                    analysis->glyphs[i].fallbackFont = CreateFontIndirectW(&lf);
+                    if (analysis->glyphs[i].fallbackFont)
+                    {
+                        ScriptFreeCache(sc);
+                        originalFont = SelectObject(hdc, analysis->glyphs[i].fallbackFont);
+                    }
                 }
             }
 
