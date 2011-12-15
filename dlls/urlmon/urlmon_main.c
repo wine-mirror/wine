@@ -921,23 +921,42 @@ BOOL WINAPI IsProtectedModeURL(const WCHAR *url)
 }
 
 /***********************************************************************
- *           URLMON_410 (URLMON.410)
+ *           LogSqmBits (URLMON.410)
  *    Undocumented, added in IE8
  */
-BOOL WINAPI URLMON_410(DWORD unknown1, DWORD unknown2)
+int WINAPI LogSqmBits(DWORD unk1, DWORD unk2)
 {
-    FIXME("stub: %d %d\n", unknown1, unknown2);
-    return FALSE;
+    FIXME("stub: %d %d\n", unk1, unk2);
+    return 0;
 }
 
 /***********************************************************************
- *           URLMON_423 (URLMON.423)
+ *           LogSqmUXCommandOffsetInternal (URLMON.423)
  *    Undocumented, added in IE8
  */
-BOOL WINAPI URLMON_423(DWORD unknown1, DWORD unknown2, DWORD unknown3, DWORD unknown4)
+void WINAPI LogSqmUXCommandOffsetInternal(DWORD unk1, DWORD unk2, DWORD unk3, DWORD unk4)
 {
-    FIXME("stub: %d %d %d %d\n", unknown1, unknown2, unknown3, unknown4);
-    return FALSE;
+    FIXME("stub: %d %d %d %d\n", unk1, unk2, unk3, unk4);
+}
+
+/***********************************************************************
+ *           MapUriToBrowserEmulationState (URLMON.444)
+ *    Undocumented, added in IE8
+ */
+int WINAPI MapUriToBrowserEmulationState(DWORD unk1, DWORD unk2, DWORD unk3)
+{
+    FIXME("stub: %d %d %d\n", unk1, unk2, unk3);
+    return 0;
+}
+
+/***********************************************************************
+ *           MapBrowserEmulationModeToUserAgent (URLMON.445)
+ *    Undocumented, added in IE8
+ */
+int WINAPI MapBrowserEmulationModeToUserAgent(DWORD unk1, DWORD unk2)
+{
+    FIXME("stub: %d %d\n", unk1, unk2);
+    return 0;
 }
 
 /***********************************************************************

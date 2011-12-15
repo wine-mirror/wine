@@ -101,5 +101,7 @@
 335 stdcall @(ptr long ptr) propsys.InitVariantFromBuffer
 350 stdcall @(ptr ptr) propsys.PropVariantToGUID
 362 stdcall @(ptr ptr) propsys.InitVariantFromGUIDAsString
-410 stdcall @(long long) URLMON_410
-423 stdcall @(long long long long) URLMON_423
+410 stdcall @(long long) LogSqmBits
+423 stdcall @(long long long long) LogSqmUXCommandOffsetInternal
+444 stdcall @(long long long) MapUriToBrowserEmulationState
+445 stdcall @(long long) MapBrowserEmulationModeToUserAgent
