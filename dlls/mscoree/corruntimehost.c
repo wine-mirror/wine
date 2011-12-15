@@ -534,9 +534,88 @@ static HRESULT WINAPI CLRRuntimeHost_ExecuteInDefaultAppDomain(ICLRRuntimeHost* 
     LPCWSTR pwzAssemblyPath, LPCWSTR pwzTypeName, LPCWSTR pwzMethodName,
     LPCWSTR pwzArgument, DWORD *pReturnValue)
 {
-    FIXME("(%p,%s,%s,%s,%s)\n", iface, debugstr_w(pwzAssemblyPath),
+    RuntimeHost *This = impl_from_ICLRRuntimeHost( iface );
+    HRESULT hr;
+    MonoDomain *domain;
+    MonoAssembly *assembly;
+    MonoImage *image;
+    MonoClass *klass;
+    MonoMethod *method;
+    MonoObject *result;
+    MonoString *str;
+    void *args[2];
+    char *filenameA = NULL, *classA = NULL, *methodA = NULL;
+    char *argsA = NULL, *ns;
+
+    TRACE("(%p,%s,%s,%s,%s)\n", iface, debugstr_w(pwzAssemblyPath),
         debugstr_w(pwzTypeName), debugstr_w(pwzMethodName), debugstr_w(pwzArgument));
-    return E_NOTIMPL;
+
+    hr = RuntimeHost_GetDefaultDomain(This, &domain);
+    if(hr != S_OK)
+    {
+        ERR("Couldn't get Default Domain\n");
+        return hr;
+    }
+
+    hr = E_FAIL;
+
+    filenameA = WtoA(pwzAssemblyPath);
+    assembly = This->mono->mono_domain_assembly_open(domain, filenameA);
+    if (!assembly)
+    {
+        ERR("Cannot open assembly %s\n", filenameA);
+        goto cleanup;
+    }
+
+    image = This->mono->mono_assembly_get_image(assembly);
+    if (!image)
+    {
+        ERR("Couldn't get assembly image\n");
+        goto cleanup;
+    }
+
+    classA = WtoA(pwzTypeName);
+    ns = strrchr(classA, '.');
+    *ns = '\0';
+    klass = This->mono->mono_class_from_name(image, classA, ns+1);
+    if (!klass)
+    {
+        ERR("Couldn't get class from image\n");
+        goto cleanup;
+    }
+
+    methodA = WtoA(pwzMethodName);
+    method = This->mono->mono_class_get_method_from_name(klass, methodA, 1);
+    if (!method)
+    {
+        ERR("Couldn't get method from class\n");
+        goto cleanup;
+    }
+
+    argsA = WtoA(pwzArgument);
+    str = This->mono->mono_string_new(domain, argsA);
+    args[0] = &str;
+    args[1] = NULL;
+    result = This->mono->mono_runtime_invoke(method, NULL, args, NULL);
+    if (!result)
+        ERR("Couldn't get result pointer\n");
+    else
+    {
+        *pReturnValue = *(DWORD*)This->mono->mono_object_unbox(result);
+        hr = S_OK;
+    }
+
+cleanup:
+    if(filenameA)
+        HeapFree(GetProcessHeap(), 0, filenameA);
+    if(classA)
+        HeapFree(GetProcessHeap(), 0, classA);
+    if(argsA)
+        HeapFree(GetProcessHeap(), 0, argsA);
+    if(methodA)
+        HeapFree(GetProcessHeap(), 0, methodA);
+
+    return hr;
 }
 
 static const struct ICLRRuntimeHostVtbl CLRHostVtbl =

@@ -41,6 +41,7 @@ typedef struct _MonoType MonoType;
 typedef struct _MonoImage MonoImage;
 typedef struct _MonoClass MonoClass;
 typedef struct _MonoObject MonoObject;
+typedef struct _MonoString MonoString;
 typedef struct _MonoMethod MonoMethod;
 typedef struct _MonoProfiler MonoProfiler;
 
@@ -161,6 +162,7 @@ struct loaded_mono
     void (CDECL *mono_thread_pool_cleanup)(void);
     void (CDECL *mono_thread_suspend_all_other_threads)(void);
     void (CDECL *mono_threads_set_shutting_down)(void);
+    MonoString* (CDECL *mono_string_new)(MonoDomain *domain, const char *str);
 };
 
 /* loaded runtime interfaces */
