@@ -318,19 +318,19 @@ void __asm_dummy_vtables(void) {
     __ASM_VTABLE(ios_base, "");
     __ASM_VTABLE(basic_ios_char, "");
     __ASM_VTABLE(basic_streambuf_char,
-            "\t.long " THISCALL_NAME(basic_streambuf_char_overflow) "\n"
-            "\t.long " THISCALL_NAME(basic_streambuf_char_pbackfail) "\n"
-            "\t.long " THISCALL_NAME(basic_streambuf_char_showmanyc) "\n"
-            "\t.long " THISCALL_NAME(basic_streambuf_char_underflow) "\n"
-            "\t.long " THISCALL_NAME(basic_streambuf_char_uflow) "\n"
-            "\t.long " THISCALL_NAME(basic_streambuf_char_xsgetn) "\n"
-            "\t.long " THISCALL_NAME(basic_streambuf_char__Xsgetn_s) "\n"
-            "\t.long " THISCALL_NAME(basic_streambuf_char_xsputn) "\n"
-            "\t.long " THISCALL_NAME(basic_streambuf_char_seekoff) "\n"
-            "\t.long " THISCALL_NAME(basic_streambuf_char_seekpos) "\n"
-            "\t.long " THISCALL_NAME(basic_streambuf_char_setbuf) "\n"
-            "\t.long " THISCALL_NAME(basic_streambuf_char_sync) "\n"
-            "\t.long " THISCALL_NAME(basic_streambuf_char_imbue) "\n");
+            VTABLE_ADD_FUNC(basic_streambuf_char_overflow)
+            VTABLE_ADD_FUNC(basic_streambuf_char_pbackfail)
+            VTABLE_ADD_FUNC(basic_streambuf_char_showmanyc)
+            VTABLE_ADD_FUNC(basic_streambuf_char_underflow)
+            VTABLE_ADD_FUNC(basic_streambuf_char_uflow)
+            VTABLE_ADD_FUNC(basic_streambuf_char_xsgetn)
+            VTABLE_ADD_FUNC(basic_streambuf_char__Xsgetn_s)
+            VTABLE_ADD_FUNC(basic_streambuf_char_xsputn)
+            VTABLE_ADD_FUNC(basic_streambuf_char_seekoff)
+            VTABLE_ADD_FUNC(basic_streambuf_char_seekpos)
+            VTABLE_ADD_FUNC(basic_streambuf_char_setbuf)
+            VTABLE_ADD_FUNC(basic_streambuf_char_sync)
+            VTABLE_ADD_FUNC(basic_streambuf_char_imbue));
     __ASM_VTABLE(basic_ostream_char, "");
 #ifndef __GNUC__
 }
