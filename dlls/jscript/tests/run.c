@@ -61,6 +61,7 @@ DEFINE_EXPECT(global_propget_d);
 DEFINE_EXPECT(global_propget_i);
 DEFINE_EXPECT(global_propput_d);
 DEFINE_EXPECT(global_propput_i);
+DEFINE_EXPECT(global_propdelete_d);
 DEFINE_EXPECT(global_success_d);
 DEFINE_EXPECT(global_success_i);
 DEFINE_EXPECT(global_notexists_d);
@@ -75,6 +76,7 @@ DEFINE_EXPECT(testobj_onlydispid_i);
 DEFINE_EXPECT(GetItemInfo_testVal);
 DEFINE_EXPECT(ActiveScriptSite_OnScriptError);
 DEFINE_EXPECT(invoke_func);
+DEFINE_EXPECT(DeleteMemberByDispID);
 
 #define DISPID_GLOBAL_TESTPROPGET   0x1000
 #define DISPID_GLOBAL_TESTPROPPUT   0x1001
@@ -93,6 +95,7 @@ DEFINE_EXPECT(invoke_func);
 #define DISPID_GLOBAL_OBJECT_FLAG   0x100e
 #define DISPID_GLOBAL_ISWIN64       0x100f
 #define DISPID_GLOBAL_PUREDISP      0x1010
+#define DISPID_GLOBAL_TESTPROPDELETE  0x1010
 
 #define DISPID_TESTOBJ_PROP         0x2000
 #define DISPID_TESTOBJ_ONLYDISPID   0x2001
@@ -413,6 +416,12 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         CHECK_EXPECT(global_propput_d);
         test_grfdex(grfdex, fdexNameCaseSensitive);
         *pid = DISPID_GLOBAL_TESTPROPPUT;
+        return S_OK;
+    }
+    if(!strcmp_wa(bstrName, "testPropDelete")) {
+        CHECK_EXPECT(global_propdelete_d);
+        test_grfdex(grfdex, fdexNameCaseSensitive);
+        *pid = DISPID_GLOBAL_TESTPROPDELETE;
         return S_OK;
     }
     if(!strcmp_wa(bstrName, "getVT")) {
@@ -835,6 +844,13 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
     return DISP_E_MEMBERNOTFOUND;
 }
 
+static HRESULT WINAPI Global_DeleteMemberByDispID(IDispatchEx *iface, DISPID id)
+{
+    CHECK_EXPECT(DeleteMemberByDispID);
+    ok(id == DISPID_GLOBAL_TESTPROPDELETE, "id = %d\n", id);
+    return S_OK;
+}
+
 static IDispatchExVtbl GlobalVtbl = {
     DispatchEx_QueryInterface,
     DispatchEx_AddRef,
@@ -846,7 +862,7 @@ static IDispatchExVtbl GlobalVtbl = {
     Global_GetDispID,
     Global_InvokeEx,
     DispatchEx_DeleteMemberByName,
-    DispatchEx_DeleteMemberByDispID,
+    Global_DeleteMemberByDispID,
     DispatchEx_GetMemberProperties,
     DispatchEx_GetMemberName,
     DispatchEx_GetNextDispID,
@@ -1464,6 +1480,12 @@ static void run_tests(void)
     SET_EXPECT(testobj_delete);
     parse_script_a("delete testObj.deleteTest;");
     CHECK_CALLED(testobj_delete);
+
+    SET_EXPECT(global_propdelete_d);
+    SET_EXPECT(DeleteMemberByDispID);
+    parse_script_a("delete testPropDelete;");
+    CHECK_CALLED(global_propdelete_d);
+    CHECK_CALLED(DeleteMemberByDispID);
 
     parse_script_a("ok(typeof(test) === 'object', \"typeof(test) != 'object'\");");
 
