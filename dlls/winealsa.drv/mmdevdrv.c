@@ -835,13 +835,27 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         return E_INVALIDARG;
     }
 
-    if(mode == AUDCLNT_SHAREMODE_EXCLUSIVE && flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK){
-        FIXME("EXCLUSIVE mode with EVENTCALLBACK\n");
-        return AUDCLNT_E_DEVICE_IN_USE;
+    if(mode == AUDCLNT_SHAREMODE_SHARED){
+        period = DefaultPeriod;
+        if( duration < 3 * period)
+            duration = 3 * period;
+    }else{
+        if(!period)
+            period = DefaultPeriod; /* not minimum */
+        if(period < MinimumPeriod || period > 5000000)
+            return AUDCLNT_E_INVALID_DEVICE_PERIOD;
+        if(duration > 20000000) /* the smaller the period, the lower this limit */
+            return AUDCLNT_E_BUFFER_SIZE_ERROR;
+        if(flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK){
+            if(duration != period)
+                return AUDCLNT_E_BUFDURATION_PERIOD_NOT_EQUAL;
+            FIXME("EXCLUSIVE mode with EVENTCALLBACK\n");
+            return AUDCLNT_E_DEVICE_IN_USE;
+        }else{
+            if( duration < 8 * period)
+                duration = 8 * period; /* may grow above 2s */
+        }
     }
-
-    if(!duration)
-        duration = 300000; /* 0.03s */
 
     EnterCriticalSection(&This->lock);
 
@@ -1001,10 +1015,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         goto exit;
     }
 
-    if(period)
-        This->mmdev_period_rt = period;
-    else
-        This->mmdev_period_rt = DefaultPeriod;
+    This->mmdev_period_rt = period;
 
     /* Check if the ALSA buffer is so small that it will run out before
      * the next MMDevAPI period tick occurs. Allow a little wiggle room
