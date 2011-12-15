@@ -2395,6 +2395,9 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
 	}
     }
 
+    /* use default alignment for submenus */
+    wFlags &= ~(TPM_CENTERALIGN | TPM_RIGHTALIGN | TPM_VCENTERALIGN | TPM_BOTTOMALIGN);
+
     MENU_ShowPopup( hwndOwner, item->hSubMenu, menu->FocusedItem, wFlags,
 		    rect.left, rect.top, rect.right, rect.bottom );
     if (selectFirst)
