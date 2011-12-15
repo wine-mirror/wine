@@ -229,7 +229,7 @@ static HRESULT WINAPI URLMoniker_BindToObject(IMoniker *iface, IBindCtx* pbc, IM
     IRunningObjectTable *obj_tbl;
     HRESULT hres;
 
-    TRACE("(%p)->(%p,%p,%s,%p): stub\n", This, pbc, pmkToLeft, debugstr_guid(riid), ppv);
+    TRACE("(%p)->(%p,%p,%s,%p)\n", This, pbc, pmkToLeft, debugstr_guid(riid), ppv);
 
     hres = IBindCtx_GetRunningObjectTable(pbc, &obj_tbl);
     if(SUCCEEDED(hres)) {
