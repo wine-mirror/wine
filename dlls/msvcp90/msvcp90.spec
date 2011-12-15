@@ -860,12 +860,12 @@
 @ stub -arch=win64 ??0?$collate@G@std@@QEAA@AEBV_Locinfo@1@_K@Z
 @ stub -arch=win32 ??0?$collate@G@std@@QAE@I@Z
 @ stub -arch=win64 ??0?$collate@G@std@@QEAA@_K@Z
-@ stub -arch=win32 ??0?$collate@_W@std@@IAE@PBDI@Z
-@ stub -arch=win64 ??0?$collate@_W@std@@IEAA@PEBD_K@Z
-@ stub -arch=win32 ??0?$collate@_W@std@@QAE@ABV_Locinfo@1@I@Z
-@ stub -arch=win64 ??0?$collate@_W@std@@QEAA@AEBV_Locinfo@1@_K@Z
-@ stub -arch=win32 ??0?$collate@_W@std@@QAE@I@Z
-@ stub -arch=win64 ??0?$collate@_W@std@@QEAA@_K@Z
+@ thiscall -arch=win32 ??0?$collate@_W@std@@IAE@PBDI@Z(ptr str long) collate_wchar_ctor_name
+@ cdecl -arch=win64 ??0?$collate@_W@std@@IEAA@PEBD_K@Z(ptr str long) collate_wchar_ctor_name
+@ thiscall -arch=win32 ??0?$collate@_W@std@@QAE@ABV_Locinfo@1@I@Z(ptr ptr long) collate_wchar_ctor_locinfo
+@ cdecl -arch=win64 ??0?$collate@_W@std@@QEAA@AEBV_Locinfo@1@_K@Z(ptr ptr long) collate_wchar_ctor_locinfo
+@ thiscall -arch=win32 ??0?$collate@_W@std@@QAE@I@Z(ptr long) collate_wchar_ctor_refs
+@ cdecl -arch=win64 ??0?$collate@_W@std@@QEAA@_K@Z(ptr long) collate_wchar_ctor_refs
 @ stub -arch=win32 ??0?$complex@M@std@@QAE@ABM0@Z
 @ stub -arch=win64 ??0?$complex@M@std@@QEAA@AEBM0@Z
 @ stub -arch=win32 ??0?$complex@M@std@@QAE@ABU_C_double_complex@@@Z
@@ -1240,8 +1240,8 @@
 @ cdecl -arch=win64 ??1?$collate@D@std@@MEAA@XZ(ptr) collate_char_dtor
 @ stub -arch=win32 ??1?$collate@G@std@@MAE@XZ
 @ stub -arch=win64 ??1?$collate@G@std@@MEAA@XZ
-@ stub -arch=win32 ??1?$collate@_W@std@@MAE@XZ
-@ stub -arch=win64 ??1?$collate@_W@std@@MEAA@XZ
+@ thiscall -arch=win32 ??1?$collate@_W@std@@MAE@XZ(ptr) collate_wchar_dtor
+@ cdecl -arch=win64 ??1?$collate@_W@std@@MEAA@XZ(ptr) collate_wchar_dtor
 @ stub -arch=win32 ??1?$ctype@D@std@@MAE@XZ
 @ stub -arch=win64 ??1?$ctype@D@std@@MEAA@XZ
 @ stub -arch=win32 ??1?$ctype@G@std@@MAE@XZ
@@ -1823,7 +1823,7 @@
 # extern ??_7?$codecvt@_WDH@std@@6B@
 @ extern ??_7?$collate@D@std@@6B@ MSVCP_collate_char_vtable
 # extern ??_7?$collate@G@std@@6B@
-# extern ??_7?$collate@_W@std@@6B@
+@ extern ??_7?$collate@_W@std@@6B@ MSVCP_collate_wchar_vtable
 # extern ??_7?$ctype@D@std@@6B@
 # extern ??_7?$ctype@G@std@@6B@
 # extern ??_7?$ctype@_W@std@@6B@
@@ -2001,8 +2001,8 @@
 @ cdecl -arch=win64 ??_F?$collate@D@std@@QEAAXXZ(ptr) collate_char_ctor
 @ stub -arch=win32 ??_F?$collate@G@std@@QAEXXZ
 @ stub -arch=win64 ??_F?$collate@G@std@@QEAAXXZ
-@ stub -arch=win32 ??_F?$collate@_W@std@@QAEXXZ
-@ stub -arch=win64 ??_F?$collate@_W@std@@QEAAXXZ
+@ thiscall -arch=win32 ??_F?$collate@_W@std@@QAEXXZ(ptr) collate_wchar_ctor
+@ cdecl -arch=win64 ??_F?$collate@_W@std@@QEAAXXZ(ptr) collate_wchar_ctor
 @ stub -arch=win32 ??_F?$complex@M@std@@QAEXXZ
 @ stub -arch=win64 ??_F?$complex@M@std@@QEAAXXZ
 @ stub -arch=win32 ??_F?$complex@N@std@@QAEXXZ
@@ -2231,8 +2231,8 @@
 @ cdecl -arch=win64 ?_Getcat@?$collate@D@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z(ptr ptr) collate_char__Getcat
 @ stub -arch=win32 ?_Getcat@?$collate@G@std@@SAIPAPBVfacet@locale@2@PBV42@@Z
 @ stub -arch=win64 ?_Getcat@?$collate@G@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z
-@ stub -arch=win32 ?_Getcat@?$collate@_W@std@@SAIPAPBVfacet@locale@2@PBV42@@Z
-@ stub -arch=win64 ?_Getcat@?$collate@_W@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z
+@ cdecl -arch=win32 ?_Getcat@?$collate@_W@std@@SAIPAPBVfacet@locale@2@PBV42@@Z(ptr ptr) collate_wchar__Getcat
+@ cdecl -arch=win64 ?_Getcat@?$collate@_W@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z(ptr ptr) collate_wchar__Getcat
 @ stub -arch=win32 ?_Getcat@?$ctype@D@std@@SAIPAPBVfacet@locale@2@PBV42@@Z
 @ stub -arch=win64 ?_Getcat@?$ctype@D@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z
 @ stub -arch=win32 ?_Getcat@?$ctype@G@std@@SAIPAPBVfacet@locale@2@PBV42@@Z
@@ -2468,8 +2468,8 @@
 @ cdecl -arch=win64 ?_Init@?$collate@D@std@@IEAAXAEBV_Locinfo@2@@Z(ptr ptr) collate_char__Init
 @ stub -arch=win32 ?_Init@?$collate@G@std@@IAEXABV_Locinfo@2@@Z
 @ stub -arch=win64 ?_Init@?$collate@G@std@@IEAAXAEBV_Locinfo@2@@Z
-@ stub -arch=win32 ?_Init@?$collate@_W@std@@IAEXABV_Locinfo@2@@Z
-@ stub -arch=win64 ?_Init@?$collate@_W@std@@IEAAXAEBV_Locinfo@2@@Z
+@ thiscall -arch=win32 ?_Init@?$collate@_W@std@@IAEXABV_Locinfo@2@@Z(ptr ptr) collate_wchar__Init
+@ cdecl -arch=win64 ?_Init@?$collate@_W@std@@IEAAXAEBV_Locinfo@2@@Z(ptr ptr) collate_wchar__Init
 @ stub -arch=win32 ?_Init@?$ctype@D@std@@IAEXABV_Locinfo@2@@Z
 @ stub -arch=win64 ?_Init@?$ctype@D@std@@IEAAXAEBV_Locinfo@2@@Z
 @ stub -arch=win32 ?_Init@?$ctype@G@std@@IAEXABV_Locinfo@2@@Z
@@ -3160,8 +3160,8 @@
 @ cdecl -arch=win64 ?compare@?$collate@D@std@@QEBAHPEBD000@Z(ptr ptr ptr ptr ptr) collate_char_compare
 @ stub -arch=win32 ?compare@?$collate@G@std@@QBEHPBG000@Z
 @ stub -arch=win64 ?compare@?$collate@G@std@@QEBAHPEBG000@Z
-@ stub -arch=win32 ?compare@?$collate@_W@std@@QBEHPB_W000@Z
-@ stub -arch=win64 ?compare@?$collate@_W@std@@QEBAHPEB_W000@Z
+@ thiscall -arch=win32 ?compare@?$collate@_W@std@@QBEHPB_W000@Z(ptr ptr ptr ptr ptr) collate_wchar_compare
+@ cdecl -arch=win64 ?compare@?$collate@_W@std@@QEBAHPEB_W000@Z(ptr ptr ptr ptr ptr) collate_wchar_compare
 @ thiscall -arch=win32 ?construct@?$allocator@D@std@@QAEXPADABD@Z(ptr ptr ptr) MSVCP_allocator_char_construct
 @ cdecl -arch=win64 ?construct@?$allocator@D@std@@QEAAXPEADAEBD@Z(ptr ptr ptr) MSVCP_allocator_char_construct
 @ thiscall -arch=win32 ?construct@?$allocator@G@std@@QAEXPAGABG@Z(ptr ptr ptr) MSVCP_allocator_short_construct
@@ -3300,8 +3300,8 @@
 @ cdecl -arch=win64 ?do_compare@?$collate@D@std@@MEBAHPEBD000@Z(ptr ptr ptr ptr ptr) collate_char_do_compare
 @ stub -arch=win32 ?do_compare@?$collate@G@std@@MBEHPBG000@Z
 @ stub -arch=win64 ?do_compare@?$collate@G@std@@MEBAHPEBG000@Z
-@ stub -arch=win32 ?do_compare@?$collate@_W@std@@MBEHPB_W000@Z
-@ stub -arch=win64 ?do_compare@?$collate@_W@std@@MEBAHPEB_W000@Z
+@ thiscall -arch=win32 ?do_compare@?$collate@_W@std@@MBEHPB_W000@Z(ptr ptr ptr ptr ptr) collate_wchar_do_compare
+@ cdecl -arch=win64 ?do_compare@?$collate@_W@std@@MEBAHPEB_W000@Z(ptr ptr ptr ptr ptr) collate_wchar_do_compare
 @ stub -arch=win32 ?do_curr_symbol@?$_Mpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win64 ?do_curr_symbol@?$_Mpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win32 ?do_curr_symbol@?$_Mpunct@G@std@@MBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
@@ -3470,8 +3470,8 @@
 @ cdecl -arch=win64 ?do_hash@?$collate@D@std@@MEBAJPEBD0@Z(ptr ptr ptr) collate_char_do_hash
 @ stub -arch=win32 ?do_hash@?$collate@G@std@@MBEJPBG0@Z
 @ stub -arch=win64 ?do_hash@?$collate@G@std@@MEBAJPEBG0@Z
-@ stub -arch=win32 ?do_hash@?$collate@_W@std@@MBEJPB_W0@Z
-@ stub -arch=win64 ?do_hash@?$collate@_W@std@@MEBAJPEB_W0@Z
+@ thiscall -arch=win32 ?do_hash@?$collate@_W@std@@MBEJPB_W0@Z(ptr ptr ptr) collate_wchar_do_hash
+@ cdecl -arch=win64 ?do_hash@?$collate@_W@std@@MEBAJPEB_W0@Z(ptr ptr ptr) collate_wchar_do_hash
 @ stub -arch=win32 ?do_in@?$codecvt@DDH@std@@MBEHAAHPBD1AAPBDPAD3AAPAD@Z
 @ stub -arch=win64 ?do_in@?$codecvt@DDH@std@@MEBAHAEAHPEBD1AEAPEBDPEAD3AEAPEAD@Z
 @ stub -arch=win32 ?do_in@?$codecvt@GDH@std@@MBEHAAHPBD1AAPBDPAG3AAPAG@Z
@@ -3660,8 +3660,8 @@
 @ cdecl -arch=win64 ?do_transform@?$collate@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@PEBD0@Z(ptr ptr ptr ptr) collate_char_do_transform
 @ stub -arch=win32 ?do_transform@?$collate@G@std@@MBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@PBG0@Z
 @ stub -arch=win64 ?do_transform@?$collate@G@std@@MEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@PEBG0@Z
-@ stub -arch=win32 ?do_transform@?$collate@_W@std@@MBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@PB_W0@Z
-@ stub -arch=win64 ?do_transform@?$collate@_W@std@@MEBA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@PEB_W0@Z
+@ thiscall -arch=win32 ?do_transform@?$collate@_W@std@@MBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@PB_W0@Z(ptr ptr ptr ptr) collate_wchar_do_transform
+@ cdecl -arch=win64 ?do_transform@?$collate@_W@std@@MEBA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@PEB_W0@Z(ptr ptr ptr ptr) collate_wchar_do_transform
 @ stub -arch=win32 ?do_truename@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win64 ?do_truename@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win32 ?do_truename@?$numpunct@G@std@@MBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
@@ -4191,14 +4191,14 @@
 @ cdecl -arch=win64 ?hash@?$collate@D@std@@QEBAJPEBD0@Z(ptr ptr ptr) collate_char_hash
 @ stub -arch=win32 ?hash@?$collate@G@std@@QBEJPBG0@Z
 @ stub -arch=win64 ?hash@?$collate@G@std@@QEBAJPEBG0@Z
-@ stub -arch=win32 ?hash@?$collate@_W@std@@QBEJPB_W0@Z
-@ stub -arch=win64 ?hash@?$collate@_W@std@@QEBAJPEB_W0@Z
+@ thiscall -arch=win32 ?hash@?$collate@_W@std@@QBEJPB_W0@Z(ptr ptr ptr) collate_wchar_hash
+@ cdecl -arch=win64 ?hash@?$collate@_W@std@@QEBAJPEB_W0@Z(ptr ptr ptr) collate_wchar_hash
 # extern ?id@?$codecvt@DDH@std@@2V0locale@2@A
 # extern ?id@?$codecvt@GDH@std@@2V0locale@2@A
 # extern ?id@?$codecvt@_WDH@std@@2V0locale@2@A
 @ extern ?id@?$collate@D@std@@2V0locale@2@A collate_char_id
 # extern ?id@?$collate@G@std@@2V0locale@2@A
-# extern ?id@?$collate@_W@std@@2V0locale@2@A
+@ extern ?id@?$collate@_W@std@@2V0locale@2@A collate_wchar_id
 # extern ?id@?$ctype@D@std@@2V0locale@2@A
 # extern ?id@?$ctype@G@std@@2V0locale@2@A
 # extern ?id@?$ctype@_W@std@@2V0locale@2@A
@@ -5618,8 +5618,8 @@
 @ cdecl -arch=win64 ?transform@?$collate@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@PEBD0@Z(ptr ptr ptr ptr) collate_char_transform
 @ stub -arch=win32 ?transform@?$collate@G@std@@QBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@PBG0@Z
 @ stub -arch=win64 ?transform@?$collate@G@std@@QEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@PEBG0@Z
-@ stub -arch=win32 ?transform@?$collate@_W@std@@QBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@PB_W0@Z
-@ stub -arch=win64 ?transform@?$collate@_W@std@@QEBA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@PEB_W0@Z
+@ thiscall -arch=win32 ?transform@?$collate@_W@std@@QBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@PB_W0@Z(ptr ptr ptr ptr) collate_wchar_transform
+@ cdecl -arch=win64 ?transform@?$collate@_W@std@@QEBA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@PEB_W0@Z(ptr ptr ptr ptr) collate_wchar_transform
 @ extern ?traps@_Num_base@std@@2_NB std_Num_base_traps
 @ extern ?traps@_Num_float_base@std@@2_NB std_Num_float_base_traps
 @ stub -arch=win32 ?truename@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ

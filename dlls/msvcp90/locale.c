@@ -408,6 +408,158 @@ basic_string_char __thiscall collate_char_transform(const collate *this,
     return ret;
 }
 
+/* ?id@?$collate@_W@std@@2V0locale@2@A */
+locale_id collate_wchar_id = {0};
+
+/* ??_7?$collate@_W@std@@6B@ */
+extern const vtable_ptr MSVCP_collate_wchar_vtable;
+
+/* ??0?$collate@_W@std@@IAE@PBDI@Z */
+/* ??0?$collate@_W@std@@IEAA@PEBD_K@Z */
+DEFINE_THISCALL_WRAPPER(collate_wchar_ctor_name, 12)
+collate* __thiscall collate_wchar_ctor_name(collate *this, const char *name, MSVCP_size_t refs)
+{
+    FIXME("(%p %s %lu) stub\n", this, name, refs);
+    this->facet.vtable = &MSVCP_collate_wchar_vtable;
+    return NULL;
+}
+
+/* ??0?$collate@_W@std@@QAE@ABV_Locinfo@1@I@Z */
+/* ??0?$collate@_W@std@@QEAA@AEBV_Locinfo@1@_K@Z */
+DEFINE_THISCALL_WRAPPER(collate_wchar_ctor_locinfo, 12)
+collate* __thiscall collate_wchar_ctor_locinfo(collate *this, _Locinfo *locinfo, MSVCP_size_t refs)
+{
+    FIXME("(%p %p %lu) stub\n", this, locinfo, refs);
+    this->facet.vtable = &MSVCP_collate_wchar_vtable;
+    return NULL;
+}
+
+/* ??0?$collate@_W@std@@QAE@I@Z */
+/* ??0?$collate@_W@std@@QEAA@_K@Z */
+DEFINE_THISCALL_WRAPPER(collate_wchar_ctor_refs, 8)
+collate* __thiscall collate_wchar_ctor_refs(collate *this, MSVCP_size_t refs)
+{
+    FIXME("(%p %lu) stub\n", this, refs);
+    this->facet.vtable = &MSVCP_collate_wchar_vtable;
+    return NULL;
+}
+
+/* ??1?$collate@_W@std@@MAE@XZ */
+/* ??1?$collate@_W@std@@MEAA@XZ */
+DEFINE_THISCALL_WRAPPER(collate_wchar_dtor, 4)
+void __thiscall collate_wchar_dtor(collate *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_collate_wchar_vector_dtor, 8)
+collate* __thiscall MSVCP_collate_wchar_vector_dtor(collate *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            collate_wchar_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        collate_wchar_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ??_F?$collate@_W@std@@QAEXXZ */
+/* ??_F?$collate@_W@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(collate_wchar_ctor, 4)
+collate* __thiscall collate_wchar_ctor(collate *this)
+{
+    FIXME("(%p) stub\n", this);
+    this->facet.vtable = &MSVCP_collate_wchar_vtable;
+    return NULL;
+}
+
+/* ?_Getcat@?$collate@_W@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
+/* ?_Getcat@?$collate@_W@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
+MSVCP_size_t __cdecl collate_wchar__Getcat(const locale_facet **facet, const locale_facet *loc)
+{
+    FIXME("(%p %p) stub\n", facet, loc);
+    return 0;
+}
+
+/* ?_Init@?$collate@_W@std@@IAEXABV_Locinfo@2@@Z */
+/* ?_Init@?$collate@_W@std@@IEAAXAEBV_Locinfo@2@@Z */
+DEFINE_THISCALL_WRAPPER(collate_wchar__Init, 8)
+void __thiscall collate_wchar__Init(collate *this, const _Locinfo *locinfo)
+{
+    FIXME("(%p %p) stub\n", this, locinfo);
+}
+
+/* ?do_compare@?$collate@_W@std@@MBEHPB_W000@Z */
+/* ?do_compare@?$collate@_W@std@@MEBAHPEB_W000@Z */
+DEFINE_THISCALL_WRAPPER(collate_wchar_do_compare, 20)
+int __thiscall collate_wchar_do_compare(const collate *this, const wchar_t *first1,
+        const wchar_t *last1, const wchar_t *first2, const wchar_t *last2)
+{
+    FIXME("(%p %p %p %p %p) stub\n", this, first1, last1, first2, last2);
+    return 0;
+}
+
+/* ?compare@?$collate@_W@std@@QBEHPB_W000@Z */
+/* ?compare@?$collate@_W@std@@QEBAHPEB_W000@Z */
+DEFINE_THISCALL_WRAPPER(collate_wchar_compare, 20)
+int __thiscall collate_wchar_compare(const collate *this, const wchar_t *first1,
+        const wchar_t *last1, const wchar_t *first2, const wchar_t *last2)
+{
+    FIXME("(%p %p %p %p %p) stub\n", this, first1, last1, first2, last2);
+    return 0;
+}
+
+/* ?do_hash@?$collate@_W@std@@MBEJPB_W0@Z */
+/* ?do_hash@?$collate@_W@std@@MEBAJPEB_W0@Z */
+DEFINE_THISCALL_WRAPPER(collate_wchar_do_hash, 12)
+LONG __thiscall collate_wchar_do_hash(const collate *this,
+        const wchar_t *first, const wchar_t *last)
+{
+    FIXME("(%p %p %p) stub\n", this, first, last);
+    return 0;
+}
+
+/* ?hash@?$collate@_W@std@@QBEJPB_W0@Z */
+/* ?hash@?$collate@_W@std@@QEBAJPEB_W0@Z */
+DEFINE_THISCALL_WRAPPER(collate_wchar_hash, 12)
+LONG __thiscall collate_wchar_hash(const collate *this,
+        const wchar_t *first, const wchar_t *last)
+{
+    FIXME("(%p %p %p) stub\n", this, first, last);
+    return 0;
+}
+
+/* ?do_transform@?$collate@_W@std@@MBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@PB_W0@Z */
+/* ?do_transform@?$collate@_W@std@@MEBA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@PEB_W0@Z */
+DEFINE_THISCALL_WRAPPER_RETPTR(collate_wchar_do_transform, 12)
+basic_string_wchar __thiscall collate_wchar_do_transform(const collate *this,
+        const wchar_t *first, const wchar_t *last)
+{
+    basic_string_wchar ret = {0}; /* FIXME */
+    FIXME("(%p %p %p) stub\n", this, first, last);
+    return ret;
+}
+
+/* ?transform@?$collate@_W@std@@QBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@PB_W0@Z */
+/* ?transform@?$collate@_W@std@@QEBA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@PEB_W0@Z */
+DEFINE_THISCALL_WRAPPER_RETPTR(collate_wchar_transform, 12)
+basic_string_wchar __thiscall collate_wchar_transform(const collate *this,
+        const wchar_t *first, const wchar_t *last)
+{
+    basic_string_wchar ret = {0}; /* FIXME */
+    FIXME("(%p %p %p) stub\n", this, first, last);
+    return ret;
+}
+
 /* ??0_Locimp@locale@std@@AAE@_N@Z */
 /* ??0_Locimp@locale@std@@AEAA@_N@Z */
 DEFINE_THISCALL_WRAPPER(locale__Locimp_ctor_transparent, 8)
@@ -1231,6 +1383,43 @@ const rtti_object_locator collate_char_rtti = {
     &collate_char_hierarchy
 };
 
+static const type_info collate_wchar_type_info = {
+    &MSVCP_collate_wchar_vtable,
+    NULL,
+    ".?AV?$collate@_W@std@@"
+};
+
+static const rtti_base_descriptor collate_wchar_rtti_base_descriptor = {
+    &collate_wchar_type_info,
+    1,
+    { 0, -1, 0},
+    64
+};
+
+static const rtti_base_array collate_wchar_rtti_base_array = {
+    {
+        &collate_wchar_rtti_base_descriptor,
+        &locale_facet_rtti_base_descriptor,
+        NULL,
+        NULL
+    }
+};
+
+static const rtti_object_hierarchy collate_wchar_hierarchy = {
+    0,
+    0,
+    2,
+    &collate_wchar_rtti_base_array
+};
+
+const rtti_object_locator collate_wchar_rtti = {
+    0,
+    0,
+    0,
+    &collate_wchar_type_info,
+    &collate_wchar_hierarchy
+};
+
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
@@ -1238,6 +1427,10 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(collate_char_do_compare)
             VTABLE_ADD_FUNC(collate_char_do_transform)
             VTABLE_ADD_FUNC(collate_char_do_hash));
+    __ASM_VTABLE(collate_wchar,
+            VTABLE_ADD_FUNC(collate_wchar_do_compare)
+            VTABLE_ADD_FUNC(collate_wchar_do_transform)
+            VTABLE_ADD_FUNC(collate_wchar_do_hash));
 #ifndef __GNUC__
 }
 #endif
