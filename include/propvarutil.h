@@ -19,7 +19,6 @@
 #ifndef __WINE_PROPVARUTIL_H
 #define __WINE_PROPVARUTIL_H
 
-#include <propidl.h>
 #include <shtypes.h>
 #include <shlwapi.h>
 

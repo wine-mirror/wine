@@ -19,6 +19,8 @@
 #ifndef __DPNATHLP_H__
 #define __DPNATHLP_H__
 
+#include <ole2.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

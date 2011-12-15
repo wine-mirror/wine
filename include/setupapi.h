@@ -21,6 +21,7 @@
 #define _INC_SETUPAPI
 
 #include <commctrl.h>
+#include <devpropdef.h>
 
 #ifdef _WIN64
 #include <pshpack8.h>

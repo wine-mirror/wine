@@ -23,8 +23,8 @@
 extern "C" {
 #endif
 
-/* #include <ifdef.h>*/
-/* #include <devpkey.h> */
+#include <ifdef.h>
+#include <devpkey.h>
 /* #include <pciprop.h> */
 
 #define _NDIS_CONTROL_CODE(request, method) \

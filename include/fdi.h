@@ -19,6 +19,8 @@
 #ifndef __WINE_FDI_H
 #define __WINE_FDI_H
 
+#include <basetsd.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */

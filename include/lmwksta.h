@@ -20,6 +20,7 @@
 #define __WINE_LMWKSTA_H
 
 #include <lmcons.h>
+#include <lmuseflg.h>
 
 #ifdef __cplusplus
 extern "C" {

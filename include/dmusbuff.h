@@ -20,6 +20,8 @@
 #ifndef __WINE_DMUSIC_BUFFER_H
 #define __WINE_DMUSIC_BUFFER_H
 
+#include <dmdls.h>
+
 /*****************************************************************************
  * Misc. definitions
  */
