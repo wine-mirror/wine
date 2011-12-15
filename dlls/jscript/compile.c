@@ -487,6 +487,8 @@ static HRESULT compile_delete_expression(compiler_ctx_t *ctx, unary_expression_t
             return E_OUTOFMEMORY;
         break;
     }
+    case EXPR_IDENT:
+        return push_instr_bstr(ctx, OP_delete_ident, ((identifier_expression_t*)expr->expression)->identifier);
     default:
         expr->expr.eval = delete_expression_eval;
         return compile_interp_fallback(ctx, &expr->expr);

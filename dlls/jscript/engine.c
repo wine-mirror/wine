@@ -1399,15 +1399,6 @@ HRESULT try_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t 
     return S_OK;
 }
 
-static HRESULT return_bool(exprval_t *ret, DWORD b)
-{
-    ret->type = EXPRVAL_VARIANT;
-    V_VT(&ret->u.var) = VT_BOOL;
-    V_BOOL(&ret->u.var) = b ? VARIANT_TRUE : VARIANT_FALSE;
-
-    return S_OK;
-}
-
 /* ECMA-262 3rd Edition    13 */
 HRESULT function_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
@@ -2377,39 +2368,8 @@ static HRESULT interp_mod(exec_ctx_t *ctx)
 /* ECMA-262 3rd Edition    11.4.2 */
 HRESULT delete_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    unary_expression_t *expr = (unary_expression_t*)_expr;
-    VARIANT_BOOL b = VARIANT_FALSE;
-    exprval_t exprval;
-    HRESULT hres;
-
-    TRACE("\n");
-
-    hres = expr_eval(ctx, expr->expression, 0, ei, &exprval);
-    if(FAILED(hres))
-        return hres;
-
-    switch(exprval.type) {
-    case EXPRVAL_IDREF: {
-        IDispatchEx *dispex;
-
-        hres = IDispatch_QueryInterface(exprval.u.idref.disp, &IID_IDispatchEx, (void**)&dispex);
-        if(SUCCEEDED(hres)) {
-            hres = IDispatchEx_DeleteMemberByDispID(dispex, exprval.u.idref.id);
-            b = VARIANT_TRUE;
-            IDispatchEx_Release(dispex);
-        }
-        break;
-    }
-    default:
-        FIXME("unsupported type %d\n", exprval.type);
-        hres = E_NOTIMPL;
-    }
-
-    exprval_release(&exprval);
-    if(FAILED(hres))
-        return hres;
-
-    return return_bool(ret, b);
+    FIXME("\n");
+    return E_NOTIMPL;
 }
 
 /* ECMA-262 3rd Edition    11.4.2 */
@@ -2455,6 +2415,41 @@ static HRESULT interp_delete(exec_ctx_t *ctx)
     SysFreeString(name);
     if(FAILED(hres))
         return hres;
+
+    return stack_push_bool(ctx, ret);
+}
+
+/* ECMA-262 3rd Edition    11.4.2 */
+static HRESULT interp_delete_ident(exec_ctx_t *ctx)
+{
+    const BSTR arg = ctx->parser->code->instrs[ctx->ip].arg1.bstr;
+    IDispatchEx *dispex;
+    exprval_t exprval;
+    BOOL ret = FALSE;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_w(arg));
+
+    hres = identifier_eval(ctx->parser->script, arg, 0, &ctx->ei, &exprval);
+    if(FAILED(hres))
+        return hres;
+
+    if(exprval.type != EXPRVAL_IDREF) {
+        FIXME("Unsupported exprval\n");
+        exprval_release(&exprval);
+        return E_NOTIMPL;
+    }
+
+    hres = IDispatch_QueryInterface(exprval.u.idref.disp, &IID_IDispatchEx, (void**)&dispex);
+    IDispatch_Release(exprval.u.idref.disp);
+    if(SUCCEEDED(hres)) {
+        hres = IDispatchEx_DeleteMemberByDispID(dispex, exprval.u.idref.id);
+        IDispatchEx_Release(dispex);
+        if(FAILED(hres))
+            return hres;
+
+        ret = TRUE;
+    }
 
     return stack_push_bool(ctx, ret);
 }
