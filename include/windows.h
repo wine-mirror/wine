@@ -60,7 +60,7 @@
 #include <nb30.h>
 #include <rpc.h>
 #include <shellapi.h>
-/* #include <winperf.h> */
+#include <winperf.h>
 
 #ifndef WINE_NOWINSOCK
 #include <winsock.h>
@@ -69,7 +69,7 @@
 #ifndef NOCRYPT
 #include <wincrypt.h>
 /* #include <winefs.h> */
-/* #include <winscard.h> */
+#include <winscard.h>
 #endif /* !NOCRYPT */
 
 #ifndef NOGDI

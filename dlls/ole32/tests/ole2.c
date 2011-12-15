@@ -20,6 +20,7 @@
 
 #define COBJMACROS
 #define CONST_VTABLE
+#define WIN32_LEAN_AND_MEAN
 
 #include <stdarg.h>
 
@@ -1841,13 +1842,13 @@ static const IUnknownVtbl UnknownVtbl =
     Unknown_Release
 };
 
-static IUnknown Unknown = { &UnknownVtbl };
+static IUnknown unknown = { &UnknownVtbl };
 
 static void test_OleLockRunning(void)
 {
     HRESULT hr;
 
-    hr = OleLockRunning((LPUNKNOWN)&Unknown, TRUE, FALSE);
+    hr = OleLockRunning((LPUNKNOWN)&unknown, TRUE, FALSE);
     ok(hr == S_OK, "OleLockRunning failed 0x%08x\n", hr);
 }
 

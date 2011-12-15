@@ -24,6 +24,7 @@
 
 #define COBJMACROS
 #define CONST_VTABLE
+#define WIN32_LEAN_AND_MEAN
 
 #include "windef.h"
 #include "winbase.h"
