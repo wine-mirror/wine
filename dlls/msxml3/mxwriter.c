@@ -42,10 +42,21 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 #ifdef HAVE_LIBXML2
 
 static const WCHAR utf16W[] = {'U','T','F','-','1','6',0};
-static const WCHAR utf8W[]  = {'U','T','F','-','8',0};
-
-static const char crlfA[] = "\r\n";
 static const WCHAR emptyW[] = {0};
+
+typedef enum
+{
+    XmlEncoding_UTF8,
+    XmlEncoding_UTF16,
+    XmlEncoding_Unknown
+} xml_encoding;
+
+typedef enum
+{
+    OutputBuffer_Native  = 0x001,
+    OutputBuffer_Encoded = 0x010,
+    OutputBuffer_Both    = 0x100
+} output_mode;
 
 typedef enum
 {
@@ -55,7 +66,7 @@ typedef enum
     MXWriter_OmitXmlDecl,
     MXWriter_Standalone,
     MXWriter_LastProp
-} MXWRITER_PROPS;
+} mxwriter_prop;
 
 typedef struct
 {
@@ -82,8 +93,11 @@ typedef struct
 
     VARIANT_BOOL props[MXWriter_LastProp];
     BOOL prop_changed;
-    xmlCharEncoding encoding;
+
     BSTR version;
+
+    BSTR encoding; /* exact property value */
+    xml_encoding xml_enc;
 
     /* contains a pending (or not closed yet) element name or NULL if
        we don't have to close */
@@ -95,20 +109,12 @@ typedef struct
     output_buffer *buffer;
 } mxwriter;
 
-static const WCHAR *get_encoding_name(xmlCharEncoding encoding)
+static xml_encoding parse_encoding_name(const WCHAR *encoding)
 {
-    static const WCHAR unkW[]  = {'u','n','k','n','o','w','n',0};
-
-    switch (encoding)
-    {
-    case XML_CHAR_ENCODING_UTF8:
-        return utf8W;
-    case XML_CHAR_ENCODING_UTF16LE:
-        return utf16W;
-    default:
-        FIXME("unsupported encoding %d\n", encoding);
-        return unkW;
-    }
+    static const WCHAR utf8W[]  = {'U','T','F','-','8',0};
+    if (!strcmpiW(encoding, utf8W))  return XmlEncoding_UTF8;
+    if (!strcmpiW(encoding, utf16W)) return XmlEncoding_UTF16;
+    return XmlEncoding_Unknown;
 }
 
 static HRESULT init_encoded_buffer(encoded_buffer *buffer)
@@ -129,14 +135,14 @@ static void free_encoded_buffer(encoded_buffer *buffer)
     heap_free(buffer->data);
 }
 
-static HRESULT get_code_page(xmlCharEncoding encoding, UINT *cp)
+static HRESULT get_code_page(xml_encoding encoding, UINT *cp)
 {
     switch (encoding)
     {
-    case XML_CHAR_ENCODING_UTF8:
+    case XmlEncoding_UTF8:
         *cp = CP_UTF8;
         break;
-    case XML_CHAR_ENCODING_UTF16LE:
+    case XmlEncoding_UTF16:
         *cp = ~0;
         break;
     default:
@@ -147,7 +153,7 @@ static HRESULT get_code_page(xmlCharEncoding encoding, UINT *cp)
     return S_OK;
 }
 
-static HRESULT alloc_output_buffer(xmlCharEncoding encoding, output_buffer **buffer)
+static HRESULT alloc_output_buffer(xml_encoding encoding, output_buffer **buffer)
 {
     output_buffer *ret;
     HRESULT hr;
@@ -201,12 +207,6 @@ static void grow_buffer(encoded_buffer *buffer, int length)
     }
 }
 
-typedef enum {
-    OutputBuffer_Native  = 0x001,
-    OutputBuffer_Encoded = 0x010,
-    OutputBuffer_Both    = 0x100
-} output_mode;
-
 static HRESULT write_output_buffer_mode(output_buffer *buffer, output_mode mode, const WCHAR *data, int len)
 {
     int length;
@@ -256,29 +256,7 @@ static void close_output_buffer(mxwriter *This)
     heap_free(This->buffer->encoded.data);
     init_encoded_buffer(&This->buffer->utf16);
     init_encoded_buffer(&This->buffer->encoded);
-    get_code_page(This->encoding, &This->buffer->code_page);
-}
-
-static HRESULT bstr_from_xmlCharEncoding(xmlCharEncoding enc, BSTR *encoding)
-{
-    const char *encodingA;
-
-    if (enc != XML_CHAR_ENCODING_UTF16LE && enc != XML_CHAR_ENCODING_UTF8) {
-        FIXME("Unsupported xmlCharEncoding: %d\n", enc);
-        *encoding = NULL;
-        return E_NOTIMPL;
-    }
-
-    encodingA = xmlGetCharEncodingName(enc);
-    if (encodingA) {
-        DWORD len = MultiByteToWideChar(CP_ACP, 0, encodingA, -1, NULL, 0);
-        *encoding = SysAllocStringLen(NULL, len-1);
-        if(*encoding)
-            MultiByteToWideChar( CP_ACP, 0, encodingA, -1, *encoding, len);
-    } else
-        *encoding = SysAllocStringLen(NULL, 0);
-
-    return *encoding ? S_OK : E_OUTOFMEMORY;
+    get_code_page(This->xml_enc, &This->buffer->code_page);
 }
 
 /* escapes special characters like:
@@ -366,7 +344,7 @@ static void write_prolog_buffer(const mxwriter *This)
 
     /* always write UTF-16 to WCHAR buffer */
     write_output_buffer_mode(This->buffer, OutputBuffer_Native, utf16W, sizeof(utf16W)/sizeof(WCHAR) - 1);
-    write_output_buffer_mode(This->buffer, OutputBuffer_Encoded, get_encoding_name(This->encoding), -1);
+    write_output_buffer_mode(This->buffer, OutputBuffer_Encoded, This->encoding, -1);
     write_output_buffer(This->buffer, quotW, 1);
 
     /* standalone */
@@ -394,7 +372,7 @@ static HRESULT write_data_to_stream(mxwriter *This)
     /* The xmlOutputBuffer doesn't copy its contents from its 'buffer' to the
      * 'conv' buffer when UTF8 encoding is used.
      */
-    if (This->encoding != XML_CHAR_ENCODING_UTF16LE)
+    if (This->xml_enc != XmlEncoding_UTF16)
         buffer = &This->buffer->encoded;
     else
         buffer = &This->buffer->utf16;
@@ -402,7 +380,7 @@ static HRESULT write_data_to_stream(mxwriter *This)
     if (This->dest_written > buffer->written) {
         ERR("Failed sanity check! Not sure what to do... (%d > %d)\n", This->dest_written, buffer->written);
         return E_FAIL;
-    } else if (This->dest_written == buffer->written && This->encoding != XML_CHAR_ENCODING_UTF8)
+    } else if (This->dest_written == buffer->written && This->xml_enc != XmlEncoding_UTF8)
         /* Windows seems to make an empty write call when the encoding is UTF-8 and
          * all the data has been written to the stream. It doesn't seem make this call
          * for any other encodings.
@@ -455,14 +433,14 @@ static inline void reset_output_buffer(mxwriter *This)
     This->dest_written = 0;
 }
 
-static HRESULT writer_set_property(mxwriter *writer, MXWRITER_PROPS property, VARIANT_BOOL value)
+static HRESULT writer_set_property(mxwriter *writer, mxwriter_prop property, VARIANT_BOOL value)
 {
     writer->props[property] = value;
     writer->prop_changed = TRUE;
     return S_OK;
 }
 
-static HRESULT writer_get_property(const mxwriter *writer, MXWRITER_PROPS property, VARIANT_BOOL *value)
+static HRESULT writer_get_property(const mxwriter *writer, mxwriter_prop property, VARIANT_BOOL *value)
 {
     if (!value) return E_POINTER;
     *value = writer->props[property];
@@ -537,6 +515,7 @@ static ULONG WINAPI mxwriter_Release(IMXWriter *iface)
 
         if (This->dest) IStream_Release(This->dest);
         SysFreeString(This->version);
+        SysFreeString(This->encoding);
 
         SysFreeString(This->element);
         release_dispex(&This->dispex);
@@ -655,35 +634,28 @@ static HRESULT WINAPI mxwriter_get_output(IMXWriter *iface, VARIANT *dest)
 static HRESULT WINAPI mxwriter_put_encoding(IMXWriter *iface, BSTR encoding)
 {
     mxwriter *This = impl_from_IMXWriter( iface );
+    xml_encoding enc;
+    HRESULT hr;
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(encoding));
 
-    /* FIXME: filter all supported encodings */
-    if (!strcmpW(encoding, utf16W) || !strcmpW(encoding, utf8W))
-    {
-        HRESULT hr;
-        LPSTR enc;
-
-        hr = flush_output_buffer(This);
-        if (FAILED(hr))
-            return hr;
-
-        enc = heap_strdupWtoA(encoding);
-        if (!enc)
-            return E_OUTOFMEMORY;
-
-        This->encoding = xmlParseCharEncoding(enc);
-        heap_free(enc);
-
-        TRACE("got encoding %d\n", This->encoding);
-        reset_output_buffer(This);
-        return S_OK;
-    }
-    else
+    enc = parse_encoding_name(encoding);
+    if (enc == XmlEncoding_Unknown)
     {
         FIXME("unsupported encoding %s\n", debugstr_w(encoding));
         return E_INVALIDARG;
     }
+
+    hr = flush_output_buffer(This);
+    if (FAILED(hr))
+        return hr;
+
+    SysReAllocString(&This->encoding, encoding);
+    This->xml_enc = enc;
+
+    TRACE("got encoding %d\n", This->xml_enc);
+    reset_output_buffer(This);
+    return S_OK;
 }
 
 static HRESULT WINAPI mxwriter_get_encoding(IMXWriter *iface, BSTR *encoding)
@@ -694,7 +666,10 @@ static HRESULT WINAPI mxwriter_get_encoding(IMXWriter *iface, BSTR *encoding)
 
     if (!encoding) return E_POINTER;
 
-    return bstr_from_xmlCharEncoding(This->encoding, encoding);
+    *encoding = SysAllocString(This->encoding);
+    if (!*encoding) return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI mxwriter_put_byteOrderMark(IMXWriter *iface, VARIANT_BOOL value)
@@ -888,8 +863,8 @@ static HRESULT WINAPI mxwriter_saxcontent_startDocument(ISAXContentHandler *ifac
 
     write_prolog_buffer(This);
 
-    if (This->dest && This->encoding == XML_CHAR_ENCODING_UTF16LE) {
-        static const CHAR utf16BOM[] = {0xff,0xfe};
+    if (This->dest && This->xml_enc == XmlEncoding_UTF16) {
+        static const char utf16BOM[] = {0xff,0xfe};
 
         if (This->props[MXWriter_BOM] == VARIANT_TRUE)
             /* Windows passes a NULL pointer as the pcbWritten parameter and
@@ -1144,16 +1119,18 @@ HRESULT MXWriter_create(MSXML_VERSION version, IUnknown *outer, void **ppObj)
     This->props[MXWriter_OmitXmlDecl] = VARIANT_FALSE;
     This->props[MXWriter_Standalone] = VARIANT_FALSE;
     This->prop_changed = FALSE;
-    This->encoding = xmlParseCharEncoding("UTF-16");
+    This->encoding = SysAllocString(utf16W);
     This->version  = SysAllocString(version10W);
+    This->xml_enc  = XmlEncoding_UTF16;
 
     This->element = NULL;
 
     This->dest = NULL;
     This->dest_written = 0;
 
-    hr = alloc_output_buffer(This->encoding, &This->buffer);
+    hr = alloc_output_buffer(This->xml_enc, &This->buffer);
     if (hr != S_OK) {
+        SysFreeString(This->encoding);
         SysFreeString(This->version);
         heap_free(This);
         return hr;

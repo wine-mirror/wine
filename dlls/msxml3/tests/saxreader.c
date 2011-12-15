@@ -116,6 +116,9 @@ static const CHAR szUtf16BOM[] = {0xff, 0xfe};
 static const CHAR szUtf8XML[] =
 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\r\n";
 
+static const char utf8xml2[] =
+"<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\r\n";
+
 static const CHAR szTestXML[] =
 "<?xml version=\"1.0\" ?>\n"
 "<BankAccount>\n"
@@ -1758,10 +1761,12 @@ static void test_mxwriter_properties(void)
     static const WCHAR utf16W[] = {'U','T','F','-','1','6',0};
     static const WCHAR emptyW[] = {0};
     static const WCHAR testW[] = {'t','e','s','t',0};
+    ISAXContentHandler *content;
     IMXWriter *writer;
     VARIANT_BOOL b;
     HRESULT hr;
     BSTR str, str2;
+    VARIANT dest;
 
     test_mxwriter_default_properties(mxwriter_default_props);
 
@@ -1794,12 +1799,12 @@ static void test_mxwriter_properties(void)
     ok(b == VARIANT_TRUE, "got %d\n", b);
 
     hr = IMXWriter_get_encoding(writer, NULL);
-    ok(hr == E_POINTER, "got %08x\n", hr);
+    EXPECT_HR(hr, E_POINTER);
 
     /* UTF-16 is a default setting apparently */
     str = (void*)0xdeadbeef;
     hr = IMXWriter_get_encoding(writer, &str);
-    ok(hr == S_OK, "got %08x\n", hr);
+    EXPECT_HR(hr, S_OK);
     ok(lstrcmpW(str, utf16W) == 0, "expected empty string, got %s\n", wine_dbgstr_w(str));
 
     str2 = (void*)0xdeadbeef;
@@ -1818,8 +1823,8 @@ static void test_mxwriter_properties(void)
 
     str = (void*)0xdeadbeef;
     hr = IMXWriter_get_encoding(writer, &str);
-    ok(hr == S_OK, "got %08x\n", hr);
-    ok(!lstrcmpW(str, emptyW) == 0, "expected empty string, got %s\n", wine_dbgstr_w(str));
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(str, _bstr_("UTF-16")), "got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     /* invalid encoding name */
@@ -1827,6 +1832,41 @@ static void test_mxwriter_properties(void)
     hr = IMXWriter_put_encoding(writer, str);
     ok(hr == E_INVALIDARG, "got %08x\n", hr);
     SysFreeString(str);
+
+    /* test case sensivity */
+    hr = IMXWriter_put_encoding(writer, _bstr_("utf-8"));
+    EXPECT_HR(hr, S_OK);
+    str = (void*)0xdeadbeef;
+    hr = IMXWriter_get_encoding(writer, &str);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(str, _bstr_("utf-8")), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    hr = IMXWriter_put_encoding(writer, _bstr_("uTf-16"));
+    EXPECT_HR(hr, S_OK);
+    str = (void*)0xdeadbeef;
+    hr = IMXWriter_get_encoding(writer, &str);
+    EXPECT_HR(hr, S_OK);
+    ok(!lstrcmpW(str, _bstr_("uTf-16")), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    /* how it affects document creation */
+    hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&content);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ISAXContentHandler_startDocument(content);
+    EXPECT_HR(hr, S_OK);
+    hr = ISAXContentHandler_endDocument(content);
+    EXPECT_HR(hr, S_OK);
+
+    V_VT(&dest) = VT_EMPTY;
+    hr = IMXWriter_get_output(writer, &dest);
+    EXPECT_HR(hr, S_OK);
+    ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
+    ok(!lstrcmpW(_bstr_("<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"yes\"?>\r\n"),
+        V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
+    VariantClear(&dest);
+    ISAXContentHandler_Release(content);
 
     hr = IMXWriter_get_version(writer, NULL);
     ok(hr == E_POINTER, "got %08x\n", hr);
@@ -2443,6 +2483,17 @@ static const mxwriter_stream_test mxwriter_stream_tests[] = {
         VARIANT_TRUE,"UTF-8",
         {
             {FALSE,(const BYTE*)szUtf8XML,sizeof(szUtf8XML)-1},
+            /* For some reason Windows makes an empty write call when UTF-8 encoding is used
+             * and the writer is released.
+             */
+            {FALSE,NULL,0},
+            {TRUE}
+        }
+    },
+    {
+        VARIANT_TRUE,"utf-8",
+        {
+            {FALSE,(const BYTE*)utf8xml2,sizeof(utf8xml2)-1},
             /* For some reason Windows makes an empty write call when UTF-8 encoding is used
              * and the writer is released.
              */
