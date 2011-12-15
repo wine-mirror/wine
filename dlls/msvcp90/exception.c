@@ -61,17 +61,6 @@ typedef struct __cxx_exception_type
 void WINAPI _CxxThrowException(exception*,const cxx_exception_type*);
 
 /* vtables */
-
-#ifdef _WIN64
-
-#define __ASM_EXCEPTION_VTABLE(name, what_func) \
-    __ASM_VTABLE(name, "\t.quad " THISCALL_NAME(what_func) )
-#else
-
-#define __ASM_EXCEPTION_VTABLE(name, what_func) \
-    __ASM_VTABLE(name, "\t.long " THISCALL_NAME(what_func) )
-#endif /* _WIN64 */
-
 extern const vtable_ptr MSVCP_bad_alloc_vtable;
 extern const vtable_ptr MSVCP_logic_error_vtable;
 extern const vtable_ptr MSVCP_length_error_vtable;
@@ -806,12 +795,12 @@ const char* __thiscall MSVCP_runtime_error_what(runtime_error *this)
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
-    __ASM_EXCEPTION_VTABLE(bad_alloc, MSVCP_what_exception);
-    __ASM_EXCEPTION_VTABLE(logic_error, MSVCP_logic_error_what);
-    __ASM_EXCEPTION_VTABLE(length_error, MSVCP_logic_error_what);
-    __ASM_EXCEPTION_VTABLE(out_of_range, MSVCP_logic_error_what);
-    __ASM_EXCEPTION_VTABLE(invalid_argument, MSVCP_logic_error_what);
-    __ASM_EXCEPTION_VTABLE(runtime_error, MSVCP_runtime_error_what);
+    __ASM_VTABLE(bad_alloc, VTABLE_ADD_FUNC(MSVCP_what_exception));
+    __ASM_VTABLE(logic_error, VTABLE_ADD_FUNC(MSVCP_logic_error_what));
+    __ASM_VTABLE(length_error, VTABLE_ADD_FUNC(MSVCP_logic_error_what));
+    __ASM_VTABLE(out_of_range, VTABLE_ADD_FUNC(MSVCP_logic_error_what));
+    __ASM_VTABLE(invalid_argument, VTABLE_ADD_FUNC(MSVCP_logic_error_what));
+    __ASM_VTABLE(runtime_error, VTABLE_ADD_FUNC(MSVCP_runtime_error_what));
 #ifndef __GNUC__
 }
 #endif

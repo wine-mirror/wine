@@ -66,6 +66,8 @@ extern void* (__cdecl *MSVCRT_set_new_handler)(void*);
 
 #ifdef _WIN64
 
+#define VTABLE_ADD_FUNC(name) "\t.quad " THISCALL_NAME(name) "\n"
+
 #define __ASM_VTABLE(name,funcs) \
     __asm__(".data\n" \
             "\t.align 8\n" \
@@ -76,6 +78,8 @@ extern void* (__cdecl *MSVCRT_set_new_handler)(void*);
             funcs "\n\t.text")
 
 #else
+
+#define VTABLE_ADD_FUNC(name) "\t.long " THISCALL_NAME(name) "\n"
 
 #define __ASM_VTABLE(name,funcs) \
     __asm__(".data\n" \
