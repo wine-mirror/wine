@@ -1336,6 +1336,16 @@ static HRESULT interp_throw(exec_ctx_t *ctx)
     return throw_reference_error(ctx->parser->script, &ctx->ei, arg, NULL);
 }
 
+static HRESULT interp_throw_type(exec_ctx_t *ctx)
+{
+    const HRESULT hres = ctx->parser->code->instrs[ctx->ip].arg1.uint;
+    const WCHAR *str = ctx->parser->code->instrs[ctx->ip].arg2.str;
+
+    TRACE("%08x %s\n", hres, debugstr_w(str));
+
+    return throw_type_error(ctx->parser->script, &ctx->ei, hres, str);
+}
+
 /* ECMA-262 3rd Edition    12.14 */
 static HRESULT catch_eval(script_ctx_t *ctx, catch_block_t *block, return_type_t *rt, VARIANT *ret)
 {
@@ -2363,13 +2373,6 @@ static HRESULT interp_mod(exec_ctx_t *ctx)
         return hres;
 
     return stack_push_number(ctx, fmod(num_val(&l), num_val(&r)));
-}
-
-/* ECMA-262 3rd Edition    11.4.2 */
-HRESULT delete_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
 }
 
 /* ECMA-262 3rd Edition    11.4.2 */

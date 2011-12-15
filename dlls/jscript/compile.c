@@ -172,6 +172,24 @@ static HRESULT push_instr_bstr_uint(compiler_ctx_t *ctx, jsop_t op, const WCHAR 
     return S_OK;
 }
 
+static HRESULT push_instr_uint_str(compiler_ctx_t *ctx, jsop_t op, unsigned arg1, const WCHAR *arg2)
+{
+    unsigned instr;
+    WCHAR *str;
+
+    str = compiler_alloc_string(ctx->code, arg2);
+    if(!str)
+        return E_OUTOFMEMORY;
+
+    instr = push_instr(ctx, op);
+    if(instr == -1)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, instr)->arg1.uint = arg1;
+    instr_ptr(ctx, instr)->arg2.str = str;
+    return S_OK;
+}
+
 static HRESULT push_instr_double(compiler_ctx_t *ctx, jsop_t op, double arg)
 {
     unsigned instr;
@@ -489,9 +507,17 @@ static HRESULT compile_delete_expression(compiler_ctx_t *ctx, unary_expression_t
     }
     case EXPR_IDENT:
         return push_instr_bstr(ctx, OP_delete_ident, ((identifier_expression_t*)expr->expression)->identifier);
-    default:
-        expr->expr.eval = delete_expression_eval;
-        return compile_interp_fallback(ctx, &expr->expr);
+    default: {
+        const WCHAR fixmeW[] = {'F','I','X','M','E',0};
+
+        WARN("invalid delete, unimplemented exception message\n");
+
+        hres = compile_expression(ctx, expr->expression);
+        if(FAILED(hres))
+            return hres;
+
+        return push_instr_uint_str(ctx, OP_throw_type, JS_E_INVALID_DELETE, fixmeW);
+    }
     }
 
     return S_OK;

@@ -43,6 +43,7 @@
 #define IDS_ILLEGAL_ASSIGN                  0x1390
 #define IDS_UNDEFINED                       0x1391
 #define IDS_NOT_BOOL                        0x1392
+#define IDS_INVALID_DELETE                  0x1394
 #define IDS_NOT_VBARRAY                     0x1395
 #define IDS_JSCRIPT_EXPECTED                0x1396
 #define IDS_REGEXP_SYNTAX_ERROR             0x1399

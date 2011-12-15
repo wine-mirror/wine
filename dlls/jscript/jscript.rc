@@ -43,6 +43,7 @@ STRINGTABLE
     IDS_ILLEGAL_ASSIGN      "Illegal assignment"
     IDS_UNDEFINED           "'|' is undefined"
     IDS_NOT_BOOL            "Boolean object expected"
+    IDS_INVALID_DELETE      "Cannot delete '|'"
     IDS_NOT_VBARRAY         "VBArray object expected"
     IDS_JSCRIPT_EXPECTED    "JScript object expected"
     IDS_REGEXP_SYNTAX_ERROR "Syntax error in regular expression"

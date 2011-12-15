@@ -90,6 +90,7 @@ typedef struct _func_stack {
     X(str,        1, ARG_STR,    0)        \
     X(this,       1, 0,0)                  \
     X(throw,      0, ARG_UINT,   0)        \
+    X(throw_type, 0, ARG_UINT,   ARG_STR) \
     X(tonum,      1, 0,0)                  \
     X(tree,       1, ARG_EXPR,   0)        \
     X(typeof,     1, 0,0)                  \
@@ -569,8 +570,6 @@ HRESULT array_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,expr
 HRESULT member_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT identifier_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT property_value_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
-
-HRESULT delete_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 
 HRESULT compiled_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 

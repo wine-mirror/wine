@@ -1967,6 +1967,7 @@ var exception_array = {
     E_OBJECT_REQUIRED:     { type: "TypeError", number: -2146827864 },
     E_UNSUPPORTED_ACTION:  { type: "TypeError", number: -2146827843 },
     E_NOT_VBARRAY:         { type: "TypeError", number: -2146823275 },
+    E_INVALID_DELETE:      { type: "TypeError", number: -2146823276 },
     E_UNDEFINED:           { type: "TypeError", number: -2146823279 },
     E_JSCRIPT_EXPECTED:    { type: "TypeError", number: -2146823274 },
     E_NOT_ARRAY:           { type: "TypeError", number: -2146823257 },
@@ -2034,6 +2035,15 @@ testException(function() {new VBArray(new VBArray(createArray()));}, "E_NOT_VBAR
 testException(function() {VBArray.prototype.lbound.call(new Object());}, "E_NOT_VBARRAY");
 testException(function() {+nullDisp.prop;}, "E_OBJECT_REQUIRED");
 testException(function() {+nullDisp["prop"];}, "E_OBJECT_REQUIRED");
+testException(function() {delete (new Object());}, "E_INVALID_DELETE");
+testException(function() {delete false;}, "E_INVALID_DELETE");
+
+obj = new Object();
+obj.prop = 1;
+tmp = false;
+testException(function() {delete ((tmp = true) ? obj.prop : obj.prop);}, "E_INVALID_DELETE");
+ok(tmp, "delete (..) expression not evaluated");
+
 //FIXME: testException(function() {nonexistent++;}, "E_OBJECT_EXPECTED");
 //FIXME: testException(function() {undefined.nonexistent++;}, "E_OBJECT_EXPECTED");
 
