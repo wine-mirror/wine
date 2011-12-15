@@ -385,6 +385,10 @@ static LRESULT call_hook( struct hook_info *info, INT code, WPARAM wparam, LPARA
             thread_info->hook_unicode = prev_unicode;
         }
     }
+
+    if (info->id == WH_KEYBOARD_LL || info->id == WH_MOUSE_LL)
+        get_user_thread_info()->key_state_time = 0;  /* force refreshing the key state cache */
+
     return ret;
 }
 

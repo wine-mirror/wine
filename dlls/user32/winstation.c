@@ -401,6 +401,7 @@ BOOL WINAPI SetThreadDesktop( HDESK handle )
         struct user_thread_info *thread_info = get_user_thread_info();
         thread_info->top_window = 0;
         thread_info->msg_window = 0;
+        thread_info->key_state_time = 0;
     }
     return ret;
 }

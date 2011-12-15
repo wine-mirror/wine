@@ -3112,6 +3112,7 @@ static BOOL send_message( struct send_message_info *info, DWORD_PTR *res_ptr, BO
  */
 NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, UINT flags )
 {
+    struct user_thread_info *thread_info = get_user_thread_info();
     struct send_message_info info;
     NTSTATUS ret;
     BOOL wait;
@@ -3149,10 +3150,13 @@ NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, UINT flags )
             req->input.hw.lparam = MAKELONG( input->u.hi.wParamL, input->u.hi.wParamH );
             break;
         }
+        if (thread_info->key_state) wine_server_set_reply( req, thread_info->key_state, 256 );
         ret = wine_server_call( req );
         wait = reply->wait;
     }
     SERVER_END_REQ;
+
+    if (!ret && thread_info->key_state) thread_info->key_state_time = GetTickCount();
 
     if (wait)
     {
