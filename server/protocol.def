@@ -2032,6 +2032,7 @@ enum message_type
     unsigned int    flags;     /* flags (see below) */
 @REPLY
     int             wait;      /* do we need to wait for a reply? */
+    VARARG(keystate,bytes);    /* global state array for all the keys */
 @END
 #define SEND_HWMSG_INJECTED    0x01
 

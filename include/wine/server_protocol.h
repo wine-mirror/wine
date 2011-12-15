@@ -2796,6 +2796,7 @@ struct send_hardware_message_reply
 {
     struct reply_header __header;
     int             wait;
+    /* VARARG(keystate,bytes); */
     char __pad_12[4];
 };
 #define SEND_HWMSG_INJECTED    0x01
@@ -5639,6 +5640,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 428
+#define SERVER_PROTOCOL_VERSION 429
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -2189,13 +2189,20 @@ DECL_HANDLER(send_hardware_message)
     struct thread *thread = NULL;
     struct desktop *desktop;
     struct msg_queue *sender = get_current_queue();
+    data_size_t size = min( 256, get_reply_max_size() );
+
+    if (!(desktop = get_thread_desktop( current, 0 ))) return;
 
     if (req->win)
     {
         if (!(thread = get_window_thread( req->win ))) return;
-        desktop = (struct desktop *)grab_object( thread->queue->input->desktop );
+        if (desktop != thread->queue->input->desktop)
+        {
+            /* don't allow queuing events to a different desktop */
+            release_object( desktop );
+            return;
+        }
     }
-    else if (!(desktop = get_thread_desktop( current, 0 ))) return;
 
     switch (req->input.type)
     {
@@ -2212,6 +2219,7 @@ DECL_HANDLER(send_hardware_message)
         set_error( STATUS_INVALID_PARAMETER );
     }
     if (thread) release_object( thread );
+    set_reply_data( desktop->keystate, size );
     release_object( desktop );
 }
 

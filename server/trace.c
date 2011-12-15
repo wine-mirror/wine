@@ -2452,6 +2452,7 @@ static void dump_send_hardware_message_request( const struct send_hardware_messa
 static void dump_send_hardware_message_reply( const struct send_hardware_message_reply *req )
 {
     fprintf( stderr, " wait=%d", req->wait );
+    dump_varargs_bytes( ", keystate=", cur_size );
 }
 
 static void dump_get_message_request( const struct get_message_request *req )
