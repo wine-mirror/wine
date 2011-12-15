@@ -1071,10 +1071,23 @@ HRESULT forin_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_
 
         TRACE("iter %s\n", debugstr_w(str));
 
-        if(stat->variable)
+        if(stat->variable) {
             hres = identifier_eval(ctx, identifier, 0, NULL, &exprval);
-        else
-            hres = expr_eval(ctx, stat->expr, EXPR_NEWREF, &rt->ei, &exprval);
+        }else {
+            switch(stat->expr->type) {
+            case EXPR_ARRAY:
+                hres = array_expression_eval(ctx, stat->expr, EXPR_NEWREF, &rt->ei, &exprval);
+                break;
+            case EXPR_IDENT:
+                hres = identifier_expression_eval(ctx, stat->expr, EXPR_NEWREF, &rt->ei, &exprval);
+                break;
+            case EXPR_MEMBER:
+                hres = member_expression_eval(ctx, stat->expr, EXPR_NEWREF, &rt->ei, &exprval);
+                break;
+            default:
+                hres = expr_eval(ctx, stat->expr, 0, &rt->ei, &exprval);
+            }
+        }
         if(SUCCEEDED(hres)) {
             V_VT(&name) = VT_BSTR;
             V_BSTR(&name) = str;
