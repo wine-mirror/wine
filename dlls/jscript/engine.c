@@ -1473,7 +1473,7 @@ HRESULT array_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flag
     if(FAILED(hres))
         return hres;
 
-    hres = expr_eval(ctx, expr->expression2, EXPR_NEWREF, ei, &exprval);
+    hres = expr_eval(ctx, expr->expression2, 0, ei, &exprval);
     if(SUCCEEDED(hres)) {
         hres = exprval_to_value(ctx, &exprval, ei, &val);
         exprval_release(&exprval);
