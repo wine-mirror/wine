@@ -5,33 +5,7 @@ IMPORTS   = comdlg32 user32 gdi32
 C_SRCS = \
 	view.c
 
-RC_SRCS = \
-	Cs.rc \
-	Cy.rc \
-	Da.rc \
-	De.rc \
-	En.rc \
-	Eo.rc \
-	Es.rc \
-	Fr.rc \
-	He.rc \
-	It.rc \
-	Ja.rc \
-	Ko.rc \
-	Lt.rc \
-	Nl.rc \
-	No.rc \
-	Pl.rc \
-	Pt.rc \
-	Ro.rc \
-	Ru.rc \
-	Si.rc \
-	Sv.rc \
-	Tr.rc \
-	Uk.rc \
-	Zh.rc \
-	view.rc
-
+RC_SRCS = view.rc
 PO_SRCS = view.rc
 
 @MAKE_PROG_RULES@
