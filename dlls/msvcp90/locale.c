@@ -34,11 +34,11 @@ void* __cdecl _Gettnames(void);
 
 typedef int category;
 
-typedef struct _locale_id {
+typedef struct {
     MSVCP_size_t id;
 } locale_id;
 
-typedef struct _locale_facet {
+typedef struct {
     const vtable_ptr *vtable;
     MSVCP_size_t refs;
 } locale_facet;
@@ -81,6 +81,11 @@ typedef struct {
     unsigned page;
 } _Cvtvec;
 
+typedef struct {
+    locale_facet facet;
+    _Collvec coll;
+} collate;
+
 /* ?_Id_cnt@id@locale@std@@0HA */
 int locale_id__Id_cnt = 0;
 
@@ -116,7 +121,7 @@ locale_facet* __thiscall MSVCP_locale_facet_vector_dtor(locale_facet *this, unsi
     return this;
 }
 
-static const vtable_ptr MSVCP_locale_facet_vtable[] = {
+const vtable_ptr MSVCP_locale_facet_vtable[] = {
     (vtable_ptr)THISCALL_NAME(MSVCP_locale_facet_vector_dtor)
 };
 #ifdef __i386__
@@ -249,6 +254,158 @@ MSVCP_size_t __cdecl locale_facet__Getcat(const locale_facet **facet, const loca
 {
     TRACE("(%p %p)\n", facet, loc);
     return -1;
+}
+
+/* ?id@?$collate@D@std@@2V0locale@2@A */
+locale_id collate_char_id = {0};
+
+/* ??_7?$collate@D@std@@6B@ */
+extern const vtable_ptr MSVCP_collate_char_vtable;
+
+/* ??0?$collate@D@std@@IAE@PBDI@Z */
+/* ??0?$collate@D@std@@IEAA@PEBD_K@Z */
+DEFINE_THISCALL_WRAPPER(collate_char_ctor_name, 12)
+collate* __thiscall collate_char_ctor_name(collate *this, const char *name, MSVCP_size_t refs)
+{
+    FIXME("(%p %s %lu) stub\n", this, name, refs);
+    this->facet.vtable = &MSVCP_collate_char_vtable;
+    return NULL;
+}
+
+/* ??0?$collate@D@std@@QAE@ABV_Locinfo@1@I@Z */
+/* ??0?$collate@D@std@@QEAA@AEBV_Locinfo@1@_K@Z */
+DEFINE_THISCALL_WRAPPER(collate_char_ctor_locinfo, 12)
+collate* __thiscall collate_char_ctor_locinfo(collate *this, _Locinfo *locinfo, MSVCP_size_t refs)
+{
+    FIXME("(%p %p %lu) stub\n", this, locinfo, refs);
+    this->facet.vtable = &MSVCP_collate_char_vtable;
+    return NULL;
+}
+
+/* ??0?$collate@D@std@@QAE@I@Z */
+/* ??0?$collate@D@std@@QEAA@_K@Z */
+DEFINE_THISCALL_WRAPPER(collate_char_ctor_refs, 8)
+collate* __thiscall collate_char_ctor_refs(collate *this, MSVCP_size_t refs)
+{
+    FIXME("(%p %lu) stub\n", this, refs);
+    this->facet.vtable = &MSVCP_collate_char_vtable;
+    return NULL;
+}
+
+/* ??1?$collate@D@std@@MAE@XZ */
+/* ??1?$collate@D@std@@MEAA@XZ */
+DEFINE_THISCALL_WRAPPER(collate_char_dtor, 4)
+void __thiscall collate_char_dtor(collate *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_collate_char_vector_dtor, 8)
+collate* __thiscall MSVCP_collate_char_vector_dtor(collate *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            collate_char_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        collate_char_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ??_F?$collate@D@std@@QAEXXZ */
+/* ??_F?$collate@D@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(collate_char_ctor, 4)
+collate* __thiscall collate_char_ctor(collate *this)
+{
+    FIXME("(%p) stub\n", this);
+    this->facet.vtable = &MSVCP_collate_char_vtable;
+    return NULL;
+}
+
+/* ?_Getcat@?$collate@D@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
+/* ?_Getcat@?$collate@D@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
+MSVCP_size_t __cdecl collate_char__Getcat(const locale_facet **facet, const locale_facet *loc)
+{
+    FIXME("(%p %p) stub\n", facet, loc);
+    return 0;
+}
+
+/* ?_Init@?$collate@D@std@@IAEXABV_Locinfo@2@@Z */
+/* ?_Init@?$collate@D@std@@IEAAXAEBV_Locinfo@2@@Z */
+DEFINE_THISCALL_WRAPPER(collate_char__Init, 8)
+void __thiscall collate_char__Init(collate *this, const _Locinfo *locinfo)
+{
+    FIXME("(%p %p) stub\n", this, locinfo);
+}
+
+/* ?do_compare@?$collate@D@std@@MBEHPBD000@Z */
+/* ?do_compare@?$collate@D@std@@MEBAHPEBD000@Z */
+DEFINE_THISCALL_WRAPPER(collate_char_do_compare, 20)
+int __thiscall collate_char_do_compare(const collate *this, const char *first1,
+        const char *last1, const char *first2, const char *last2)
+{
+    FIXME("(%p %p %p %p %p) stub\n", this, first1, last1, first2, last2);
+    return 0;
+}
+
+/* ?compare@?$collate@D@std@@QBEHPBD000@Z */
+/* ?compare@?$collate@D@std@@QEBAHPEBD000@Z */
+DEFINE_THISCALL_WRAPPER(collate_char_compare, 20)
+int __thiscall collate_char_compare(const collate *this, const char *first1,
+        const char *last1, const char *first2, const char *last2)
+{
+    FIXME("(%p %p %p %p %p) stub\n", this, first1, last1, first2, last2);
+    return 0;
+}
+
+/* ?do_hash@?$collate@D@std@@MBEJPBD0@Z */
+/* ?do_hash@?$collate@D@std@@MEBAJPEBD0@Z */
+DEFINE_THISCALL_WRAPPER(collate_char_do_hash, 12)
+LONG __thiscall collate_char_do_hash(const collate *this,
+        const char *first, const char *last)
+{
+    FIXME("(%p %p %p) stub\n", this, first, last);
+    return 0;
+}
+
+/* ?hash@?$collate@D@std@@QBEJPBD0@Z */
+/* ?hash@?$collate@D@std@@QEBAJPEBD0@Z */
+DEFINE_THISCALL_WRAPPER(collate_char_hash, 12)
+LONG __thiscall collate_char_hash(const collate *this,
+        const char *first, const char *last)
+{
+    FIXME("(%p %p %p) stub\n", this, first, last);
+    return 0;
+}
+
+/* ?do_transform@?$collate@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@PBD0@Z */
+/* ?do_transform@?$collate@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@PEBD0@Z */
+DEFINE_THISCALL_WRAPPER_RETPTR(collate_char_do_transform, 12)
+basic_string_char __thiscall collate_char_do_transform(const collate *this,
+        const char *first, const char *last)
+{
+    basic_string_char ret = {0}; /* FIXME */
+    FIXME("(%p %p %p) stub\n", this, first, last);
+    return ret;
+}
+
+/* ?transform@?$collate@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@PBD0@Z */
+/* ?transform@?$collate@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@PEBD0@Z */
+DEFINE_THISCALL_WRAPPER_RETPTR(collate_char_transform, 12)
+basic_string_char __thiscall collate_char_transform(const collate *this,
+        const char *first, const char *last)
+{
+    basic_string_char ret = {0}; /* FIXME */
+    FIXME("(%p %p %p) stub\n", this, first, last);
+    return ret;
 }
 
 /* ??0_Locimp@locale@std@@AAE@_N@Z */
@@ -1023,3 +1180,64 @@ _Timevec __thiscall _Locinfo__Gettnames(const _Locinfo *this)
     _Timevec_ctor_timeptr(&ret, _Gettnames());
     return ret;
 }
+
+static const type_info locale_facet_type_info = {
+    MSVCP_locale_facet_vtable,
+    NULL,
+    ".?AVfacet@locale@std@@"
+};
+
+static const rtti_base_descriptor locale_facet_rtti_base_descriptor = {
+    &locale_facet_type_info,
+    0,
+    { 0, -1, 0},
+    64
+};
+
+static const type_info collate_char_type_info = {
+    &MSVCP_collate_char_vtable,
+    NULL,
+    ".?AV?$collate@D@std@@"
+};
+
+static const rtti_base_descriptor collate_char_rtti_base_descriptor = {
+    &collate_char_type_info,
+    1,
+    { 0, -1, 0},
+    64
+};
+
+static const rtti_base_array collate_char_rtti_base_array = {
+    {
+        &collate_char_rtti_base_descriptor,
+        &locale_facet_rtti_base_descriptor,
+        NULL,
+        NULL
+    }
+};
+
+static const rtti_object_hierarchy collate_char_hierarchy = {
+    0,
+    0,
+    2,
+    &collate_char_rtti_base_array
+};
+
+const rtti_object_locator collate_char_rtti = {
+    0,
+    0,
+    0,
+    &collate_char_type_info,
+    &collate_char_hierarchy
+};
+
+#ifndef __GNUC__
+void __asm_dummy_vtables(void) {
+#endif
+    __ASM_VTABLE(collate_char,
+            VTABLE_ADD_FUNC(collate_char_do_compare)
+            VTABLE_ADD_FUNC(collate_char_do_transform)
+            VTABLE_ADD_FUNC(collate_char_do_hash));
+#ifndef __GNUC__
+}
+#endif
