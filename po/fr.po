@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-13 22:35+0100\n"
+"PO-Revision-Date: 2011-12-15 21:33+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -3566,9 +3566,8 @@ msgid "Boolean object expected"
 msgstr "Objet booléen attendu"
 
 #: jscript.rc:46
-#, fuzzy
 msgid "Cannot delete '|'"
-msgstr "Ne peut terminer cette opération\n"
+msgstr "Impossible de supprimer « | »"
 
 #: jscript.rc:47
 msgid "VBArray object expected"
@@ -10091,13 +10090,11 @@ msgid "Parameter error\n"
 msgstr "Erreur de paramètre\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
-"Le volume dans le lecteur %1!c! est %2\n"
-"Le numéro de série du volume est %3!04x!-%4!04x!\n"
+"Le numéro de série du volume est %1!04x!-%2!04x!\n"
 "\n"
 
 #: cmd.rc:319
@@ -10130,11 +10127,11 @@ msgstr "La ligne d'entrée est trop longue.\n"
 
 #: cmd.rc:326
 msgid "Volume in drive %1!c! is %2\n"
-msgstr ""
+msgstr "Le volume dans le lecteur %1!c! est %2\n"
 
 #: cmd.rc:327
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr ""
+msgstr "Le volume dans le lecteur %1!c! n'a pas de label.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
