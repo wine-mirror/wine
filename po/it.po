@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-13 08:20+0100\n"
+"PO-Revision-Date: 2011-12-17 08:45+0100\n"
 "Last-Translator: Luca Bennati <lucak3@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Italian\n"
@@ -3557,9 +3557,8 @@ msgid "Boolean object expected"
 msgstr "Previsto un oggetto Booleano"
 
 #: jscript.rc:46
-#, fuzzy
 msgid "Cannot delete '|'"
-msgstr "Impossibile completare\n"
+msgstr "Impossibile eliminare '|'"
 
 #: jscript.rc:47
 msgid "VBArray object expected"
@@ -6807,9 +6806,8 @@ msgid "&Data Rate"
 msgstr "&Rate di dati"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/s"
-msgstr "kB/sec"
+msgstr "kB/s"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
@@ -10042,13 +10040,11 @@ msgid "Parameter error\n"
 msgstr "Errore nel parametro\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
-"Il volume nell'unità %1!c! è %2\n"
-"Il numero seriale del volume è %3!04x!-%4!04x!\n"
+"Il numero seriale del volume è %1!04x!-%2!04x!\n"
 "\n"
 
 #: cmd.rc:319
@@ -10081,11 +10077,11 @@ msgstr "La linea di input è troppo lunga.\n"
 
 #: cmd.rc:326
 msgid "Volume in drive %1!c! is %2\n"
-msgstr ""
+msgstr "Il volume nell'unità %1!c! è %2\n"
 
 #: cmd.rc:327
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr ""
+msgstr "Il volume nell'unità %1!c! non ha etichetta.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
