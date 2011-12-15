@@ -282,12 +282,6 @@ static HRESULT exprval_to_boolean(script_ctx_t *ctx, exprval_t *exprval, jsexcep
     return to_boolean(&exprval->u.var, b);
 }
 
-static void exprval_init(exprval_t *val)
-{
-    val->type = EXPRVAL_VARIANT;
-    V_VT(&val->u.var) = VT_EMPTY;
-}
-
 static void exprval_set_idref(exprval_t *val, IDispatch *disp, DISPID id)
 {
     val->type = EXPRVAL_IDREF;
@@ -1012,6 +1006,10 @@ HRESULT for_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t 
     return S_OK;
 }
 
+static HRESULT array_expression_eval(script_ctx_t*,expression_t*,jsexcept_t*,exprval_t*);
+static HRESULT member_expression_eval(script_ctx_t*,expression_t*,jsexcept_t*,exprval_t*);
+static HRESULT identifier_expression_eval(script_ctx_t*,expression_t*,jsexcept_t*,exprval_t*);
+
 /* ECMA-262 3rd Edition    12.6.4 */
 HRESULT forin_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
 {
@@ -1076,13 +1074,13 @@ HRESULT forin_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_
         }else {
             switch(stat->expr->type) {
             case EXPR_ARRAY:
-                hres = array_expression_eval(ctx, stat->expr, EXPR_NEWREF, &rt->ei, &exprval);
+                hres = array_expression_eval(ctx, stat->expr, &rt->ei, &exprval);
                 break;
             case EXPR_IDENT:
-                hres = identifier_expression_eval(ctx, stat->expr, EXPR_NEWREF, &rt->ei, &exprval);
+                hres = identifier_expression_eval(ctx, stat->expr, &rt->ei, &exprval);
                 break;
             case EXPR_MEMBER:
-                hres = member_expression_eval(ctx, stat->expr, EXPR_NEWREF, &rt->ei, &exprval);
+                hres = member_expression_eval(ctx, stat->expr, &rt->ei, &exprval);
                 break;
             default:
                 hres = expr_eval(ctx, stat->expr, 0, &rt->ei, &exprval);
@@ -1452,7 +1450,7 @@ HRESULT function_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD f
 }
 
 /* ECMA-262 3rd Edition    11.2.1 */
-HRESULT array_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+static HRESULT array_expression_eval(script_ctx_t *ctx, expression_t *_expr, jsexcept_t *ei, exprval_t *ret)
 {
     binary_expression_t *expr = (binary_expression_t*)_expr;
     exprval_t exprval;
@@ -1489,16 +1487,12 @@ HRESULT array_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flag
         hres = to_string(ctx, &val, ei, &str);
         VariantClear(&val);
         if(SUCCEEDED(hres)) {
-            hres = disp_get_id(ctx, obj, str, flags & EXPR_NEWREF ? fdexNameEnsure : 0, &id);
+            hres = disp_get_id(ctx, obj, str, fdexNameEnsure, &id);
             SysFreeString(str);
         }
 
-        if(SUCCEEDED(hres)) {
+        if(SUCCEEDED(hres))
             exprval_set_idref(ret, obj, id);
-        }else if(!(flags & EXPR_NEWREF) && hres == DISP_E_UNKNOWNNAME) {
-            exprval_init(ret);
-            hres = S_OK;
-        }
 
         IDispatch_Release(obj);
     }
@@ -1548,7 +1542,7 @@ static HRESULT interp_array(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.2.1 */
-HRESULT member_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+static HRESULT member_expression_eval(script_ctx_t *ctx, expression_t *_expr, jsexcept_t *ei, exprval_t *ret)
 {
     member_expression_t *expr = (member_expression_t*)_expr;
     IDispatch *obj = NULL;
@@ -1580,14 +1574,10 @@ HRESULT member_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD fla
         return E_OUTOFMEMORY;
     }
 
-    hres = disp_get_id(ctx, obj, str, flags & EXPR_NEWREF ? fdexNameEnsure : 0, &id);
+    hres = disp_get_id(ctx, obj, str, fdexNameEnsure, &id);
     SysFreeString(str);
-    if(SUCCEEDED(hres)) {
+    if(SUCCEEDED(hres))
         exprval_set_idref(ret, obj, id);
-    }else if(!(flags & EXPR_NEWREF) && hres == DISP_E_UNKNOWNNAME) {
-        exprval_init(ret);
-        hres = S_OK;
-    }
 
     IDispatch_Release(obj);
     return hres;
@@ -1803,7 +1793,7 @@ static HRESULT interp_this(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    10.1.4 */
-HRESULT identifier_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+static HRESULT identifier_expression_eval(script_ctx_t *ctx, expression_t *_expr, jsexcept_t *ei, exprval_t *ret)
 {
     identifier_expression_t *expr = (identifier_expression_t*)_expr;
     BSTR identifier;
@@ -1815,7 +1805,7 @@ HRESULT identifier_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD
     if(!identifier)
         return E_OUTOFMEMORY;
 
-    hres = identifier_eval(ctx, identifier, flags, ei, ret);
+    hres = identifier_eval(ctx, identifier, EXPR_NEWREF, ei, ret);
 
     SysFreeString(identifier);
     return hres;
