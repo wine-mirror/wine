@@ -30,7 +30,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
 #define EXPR_NOVAL   0x0001
-#define EXPR_NEWREF  0x0002
 
 static const WCHAR booleanW[] = {'b','o','o','l','e','a','n',0};
 static const WCHAR functionW[] = {'f','u','n','c','t','i','o','n',0};
@@ -715,7 +714,7 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, DWORD flags, 
     if(lookup_global_members(ctx, identifier, ret))
         return S_OK;
 
-    if(flags & EXPR_NEWREF) {
+    if(flags & fdexNameEnsure) {
         hres = jsdisp_get_id(ctx->global, identifier, fdexNameEnsure, &id);
         if(FAILED(hres))
             return hres;
@@ -1805,7 +1804,7 @@ static HRESULT identifier_expression_eval(script_ctx_t *ctx, expression_t *_expr
     if(!identifier)
         return E_OUTOFMEMORY;
 
-    hres = identifier_eval(ctx, identifier, EXPR_NEWREF, ei, ret);
+    hres = identifier_eval(ctx, identifier, fdexNameEnsure, ei, ret);
 
     SysFreeString(identifier);
     return hres;
@@ -1843,7 +1842,7 @@ static HRESULT interp_identid(exec_ctx_t *ctx)
 
     TRACE("%s %x\n", debugstr_w(arg), flags);
 
-    hres = identifier_eval(ctx->parser->script, arg, (flags&fdexNameEnsure) ? EXPR_NEWREF : 0, &ctx->ei, &exprval);
+    hres = identifier_eval(ctx->parser->script, arg, flags, &ctx->ei, &exprval);
     if(FAILED(hres))
         return hres;
 
