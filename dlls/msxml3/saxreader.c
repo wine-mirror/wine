@@ -49,7 +49,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
 
-enum ReaderFeatures
+typedef enum
 {
     ExhaustiveErrors             = 1 << 1,
     ExternalGeneralEntities      = 1 << 2,
@@ -66,7 +66,7 @@ enum ReaderFeatures
     UseInlineSchema              = 1 << 13,
     UseSchemaLocation            = 1 << 14,
     LexicalHandlerParEntities    = 1 << 15
-};
+} saxreader_features;
 
 struct bstrpool
 {
@@ -75,28 +75,28 @@ struct bstrpool
     unsigned int len;
 };
 
-typedef struct _saxreader
+typedef struct
 {
     DispatchEx dispex;
     IVBSAXXMLReader IVBSAXXMLReader_iface;
     ISAXXMLReader ISAXXMLReader_iface;
     LONG ref;
-    struct ISAXContentHandler *contentHandler;
-    struct IVBSAXContentHandler *vbcontentHandler;
-    struct ISAXErrorHandler *errorHandler;
-    struct IVBSAXErrorHandler *vberrorHandler;
-    struct ISAXLexicalHandler *lexicalHandler;
-    struct IVBSAXLexicalHandler *vblexicalHandler;
-    struct ISAXDeclHandler *declHandler;
-    struct IVBSAXDeclHandler *vbdeclHandler;
+    ISAXContentHandler *contentHandler;
+    IVBSAXContentHandler *vbcontentHandler;
+    ISAXErrorHandler *errorHandler;
+    IVBSAXErrorHandler *vberrorHandler;
+    ISAXLexicalHandler *lexicalHandler;
+    IVBSAXLexicalHandler *vblexicalHandler;
+    ISAXDeclHandler *declHandler;
+    IVBSAXDeclHandler *vbdeclHandler;
     xmlSAXHandler sax;
     BOOL isParsing;
     struct bstrpool pool;
-    enum ReaderFeatures features;
+    saxreader_features features;
     MSXML_VERSION version;
 } saxreader;
 
-typedef struct _saxlocator
+typedef struct
 {
     IVBSAXLocator IVBSAXLocator_iface;
     ISAXLocator ISAXLocator_iface;
@@ -231,7 +231,7 @@ static const WCHAR FeatureNamespacesW[] = {
     '/','n','a','m','e','s','p','a','c','e','s',0
 };
 
-static inline HRESULT set_feature_value(saxreader *reader, enum ReaderFeatures feature, VARIANT_BOOL value)
+static inline HRESULT set_feature_value(saxreader *reader, saxreader_features feature, VARIANT_BOOL value)
 {
     if (value == VARIANT_TRUE)
         reader->features |=  feature;
@@ -241,7 +241,7 @@ static inline HRESULT set_feature_value(saxreader *reader, enum ReaderFeatures f
     return S_OK;
 }
 
-static inline HRESULT get_feature_value(const saxreader *reader, enum ReaderFeatures feature, VARIANT_BOOL *value)
+static inline HRESULT get_feature_value(const saxreader *reader, saxreader_features feature, VARIANT_BOOL *value)
 {
     *value = reader->features & feature ? VARIANT_TRUE : VARIANT_FALSE;
     return S_OK;
