@@ -461,7 +461,7 @@ static inline void token_to_str(BYTE *bytes, LPWSTR str)
 {
     DWORD i;
 
-    static const WCHAR hexval[16] = {
+    static const WCHAR hexval[] = {
         '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'
     };
 
