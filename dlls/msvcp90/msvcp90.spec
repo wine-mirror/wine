@@ -1094,8 +1094,8 @@
 @ stub -arch=win64 ??0_Winit@std@@QEAA@XZ
 @ stub -arch=win32 ??0codecvt_base@std@@QAE@I@Z
 @ stub -arch=win64 ??0codecvt_base@std@@QEAA@_K@Z
-@ stub -arch=win32 ??0ctype_base@std@@QAE@I@Z
-@ stub -arch=win64 ??0ctype_base@std@@QEAA@_K@Z
+@ thiscall -arch=win32 ??0ctype_base@std@@QAE@I@Z(ptr long) ctype_base_ctor_refs
+@ cdecl -arch=win64 ??0ctype_base@std@@QEAA@_K@Z(ptr long) ctype_base_ctor_refs
 @ thiscall -arch=win32 ??0facet@locale@std@@IAE@I@Z(ptr long) locale_facet_ctor_refs
 @ cdecl -arch=win64 ??0facet@locale@std@@IEAA@_K@Z(ptr long) locale_facet_ctor_refs
 @ thiscall -arch=win32 ??0id@locale@std@@QAE@I@Z(ptr long) locale_id_ctor_id
@@ -1328,8 +1328,8 @@
 @ stub -arch=win64 ??1_Winit@std@@QEAA@XZ
 @ stub -arch=win32 ??1codecvt_base@std@@UAE@XZ
 @ stub -arch=win64 ??1codecvt_base@std@@UEAA@XZ
-@ stub -arch=win32 ??1ctype_base@std@@UAE@XZ
-@ stub -arch=win64 ??1ctype_base@std@@UEAA@XZ
+@ thiscall -arch=win32 ??1ctype_base@std@@UAE@XZ(ptr) ctype_base_dtor
+@ cdecl -arch=win64 ??1ctype_base@std@@UEAA@XZ(ptr) ctype_base_dtor
 @ thiscall -arch=win32 ??1facet@locale@std@@UAE@XZ(ptr) locale_facet_dtor
 @ cdecl -arch=win64 ??1facet@locale@std@@UEAA@XZ(ptr) locale_facet_dtor
 @ thiscall -arch=win32 ??1ios_base@std@@UAE@XZ(ptr) ios_base_dtor
@@ -1859,7 +1859,7 @@
 # extern ??_7?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@
 @ extern ??_7_Locimp@locale@std@@6B@ MSVCP_locale__Locimp_vtable
 # extern ??_7codecvt_base@std@@6B@
-# extern ??_7ctype_base@std@@6B@
+@ extern ??_7ctype_base@std@@6B@ MSVCP_ctype_base_vtable
 @ extern ??_7ios_base@std@@6B@ MSVCP_ios_base_vtable
 # extern ??_7messages_base@std@@6B@
 # extern ??_7money_base@std@@6B@
@@ -2083,8 +2083,8 @@
 @ cdecl -arch=win64 ??_F_Timevec@std@@QEAAXXZ(ptr) _Timevec_ctor
 @ stub -arch=win32 ??_Fcodecvt_base@std@@QAEXXZ
 @ stub -arch=win64 ??_Fcodecvt_base@std@@QEAAXXZ
-@ stub -arch=win32 ??_Fctype_base@std@@QAEXXZ
-@ stub -arch=win64 ??_Fctype_base@std@@QEAAXXZ
+@ thiscall -arch=win32 ??_Fctype_base@std@@QAEXXZ(ptr) ctype_base_ctor
+@ cdecl -arch=win64 ??_Fctype_base@std@@QEAAXXZ(ptr) ctype_base_ctor
 @ thiscall -arch=win32 ??_Ffacet@locale@std@@QAEXXZ(ptr) locale_facet_ctor
 @ cdecl -arch=win64 ??_Ffacet@locale@std@@QEAAXXZ(ptr) locale_facet_ctor
 @ thiscall -arch=win32 ??_Fid@locale@std@@QAEXXZ(ptr) locale_id_ctor
@@ -2882,7 +2882,7 @@
 @ stub ?_Xmem@tr1@std@@YAXXZ
 @ stub ?_Xoutrange@tr1@std@@YAXXZ
 @ cdecl ?_Xran@_String_base@std@@SAXXZ() MSVCP__String_base_Xran
-@ stub ?_Xran@ctype_base@std@@KAXXZ
+@ cdecl ?_Xran@ctype_base@std@@KAXXZ() ctype_base__Xran
 @ thiscall -arch=win32 ?_Xsgetn_s@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHPADIH@Z(ptr ptr long long) basic_streambuf_char__Xsgetn_s
 @ cdecl -arch=win64 ?_Xsgetn_s@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAA_JPEAD_K_J@Z(ptr ptr long long) basic_streambuf_char__Xsgetn_s
 @ stub -arch=win32 ?_Xsgetn_s@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEHPAGIH@Z

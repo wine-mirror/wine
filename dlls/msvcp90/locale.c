@@ -86,6 +86,10 @@ typedef struct {
     _Collvec coll;
 } collate;
 
+typedef struct {
+    locale_facet facet;
+} ctype_base;
+
 /* ?_Id_cnt@id@locale@std@@0HA */
 int locale_id__Id_cnt = 0;
 
@@ -626,6 +630,65 @@ basic_string_wchar __thiscall collate_wchar_transform(const collate *this,
     basic_string_wchar ret = {0}; /* FIXME */
     FIXME("(%p %p %p) stub\n", this, first, last);
     return ret;
+}
+
+/* ??_7ctype_base@std@@6B@ */
+extern const vtable_ptr MSVCP_ctype_base_vtable;
+
+/* ??0ctype_base@std@@QAE@I@Z */
+/* ??0ctype_base@std@@QEAA@_K@Z */
+DEFINE_THISCALL_WRAPPER(ctype_base_ctor_refs, 8)
+ctype_base* __thiscall ctype_base_ctor_refs(ctype_base *this, MSVCP_size_t refs)
+{
+    TRACE("(%p %lu)\n", this, refs);
+    locale_facet_ctor_refs(&this->facet, refs);
+    this->facet.vtable = &MSVCP_ctype_base_vtable;
+    return this;
+}
+
+/* ??_Fctype_base@std@@QAEXXZ */
+/* ??_Fctype_base@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(ctype_base_ctor, 4)
+ctype_base* __thiscall ctype_base_ctor(ctype_base *this)
+{
+    TRACE("(%p)\n", this);
+    locale_facet_ctor_refs(&this->facet, 0);
+    this->facet.vtable = &MSVCP_ctype_base_vtable;
+    return this;
+}
+
+/* ??1ctype_base@std@@UAE@XZ */
+/* ??1ctype_base@std@@UEAA@XZ */
+DEFINE_THISCALL_WRAPPER(ctype_base_dtor, 4)
+void __thiscall ctype_base_dtor(ctype_base *this)
+{
+    TRACE("(%p)\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_ctype_base_vector_dtor, 8)
+ctype_base* __thiscall MSVCP_ctype_base_vector_dtor(ctype_base *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            ctype_base_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        ctype_base_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ?_Xran@ctype_base@std@@KAXXZ */
+void __cdecl ctype_base__Xran(void)
+{
+    throw_exception(EXCEPTION_OUT_OF_RANGE, "out of range in ctype<T>");
 }
 
 /* ??0_Locimp@locale@std@@AAE@_N@Z */
@@ -1525,6 +1588,43 @@ const rtti_object_locator collate_short_rtti = {
     &collate_short_hierarchy
 };
 
+static const type_info ctype_base_type_info = {
+    &MSVCP_ctype_base_vtable,
+    NULL,
+    ".?AUctype_base@std@@"
+};
+
+static const rtti_base_descriptor ctype_base_rtti_base_descriptor = {
+    &ctype_base_type_info,
+    1,
+    { 0, -1, 0},
+    64
+};
+
+static const rtti_base_array ctype_base_rtti_base_array = {
+    {
+        &ctype_base_rtti_base_descriptor,
+        &locale_facet_rtti_base_descriptor,
+        NULL,
+        NULL
+    }
+};
+
+static const rtti_object_hierarchy ctype_base_hierarchy = {
+    0,
+    0,
+    2,
+    &ctype_base_rtti_base_array
+};
+
+const rtti_object_locator ctype_base_rtti = {
+    0,
+    0,
+    0,
+    &ctype_base_type_info,
+    &ctype_base_hierarchy
+};
+
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
@@ -1540,6 +1640,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(collate_wchar_do_compare)
             VTABLE_ADD_FUNC(collate_wchar_do_transform)
             VTABLE_ADD_FUNC(collate_wchar_do_hash));
+    __ASM_VTABLE(ctype_base, "");
 #ifndef __GNUC__
 }
 #endif
