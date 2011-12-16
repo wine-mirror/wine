@@ -798,7 +798,10 @@ ImageList_Create (INT cx, INT cy, UINT flags,
 
     /* Default to ILC_COLOR4 if none of the ILC_COLOR* flags are specified */
     if (ilc == ILC_COLOR)
+    {
         ilc = ILC_COLOR4;
+        himl->flags |= ILC_COLOR4;
+    }
 
     if (ilc >= ILC_COLOR4 && ilc <= ILC_COLOR32)
         himl->uBitsPixel = ilc;
@@ -2993,11 +2996,11 @@ _write_bitmap(HBITMAP hBitmap, LPSTREAM pstm)
     if (!GetObjectW(hBitmap, sizeof(BITMAP), &bm))
         return FALSE;
 
-    bitCount = bm.bmBitsPixel == 1 ? 1 : 24;
+    bitCount = bm.bmBitsPixel;
     sizeImage = get_dib_stride(bm.bmWidth, bitCount) * bm.bmHeight;
 
     totalSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
-    if(bitCount != 24)
+    if(bitCount <= 8)
 	totalSize += (1 << bitCount) * sizeof(RGBQUAD);
     offBits = totalSize;
     totalSize += sizeImage;
@@ -3036,13 +3039,6 @@ _write_bitmap(HBITMAP hBitmap, LPSTREAM pstm)
     TRACE("width %u, height %u, planes %u, bpp %u\n",
           bmih->biWidth, bmih->biHeight,
           bmih->biPlanes, bmih->biBitCount);
-
-    if(bitCount == 1) {
-        /* Hack. */
-	LPBITMAPINFO inf = (LPBITMAPINFO)bmih;
-	inf->bmiColors[0].rgbRed = inf->bmiColors[0].rgbGreen = inf->bmiColors[0].rgbBlue = 0;
-	inf->bmiColors[1].rgbRed = inf->bmiColors[1].rgbGreen = inf->bmiColors[1].rgbBlue = 0xff;
-    }
 
     if(FAILED(IStream_Write(pstm, data, totalSize, NULL)))
 	goto failed;
