@@ -390,7 +390,7 @@ msgstr "Obre"
 
 #: comdlg32.rc:168 comdlg32.rc:190
 msgid "File &Name:"
-msgstr "&Nom:"
+msgstr "&Nom de Fitxer:"
 
 #: comdlg32.rc:171 comdlg32.rc:193
 msgid "&Directories:"
@@ -414,7 +414,7 @@ msgstr "Anomenar i desar..."
 
 #: comdlg32.rc:200 comdlg32.rc:155
 msgid "Save As"
-msgstr "D'acord"
+msgstr "Anomenar i Desar"
 
 #: comdlg32.rc:209 comdlg32.rc:218 comdlg32.rc:364 comdlg32.rc:64 hhctrl.rc:46
 #: wordpad.rc:162
@@ -427,7 +427,7 @@ msgstr "Impressora:"
 
 #: comdlg32.rc:214
 msgid "Print Range"
-msgstr "Print Range"
+msgstr "Rang d'Impressió"
 
 #: comdlg32.rc:215 comdlg32.rc:392 regedit.rc:216
 msgid "&All"
@@ -435,7 +435,7 @@ msgstr "&Tot"
 
 #: comdlg32.rc:216
 msgid "S&election"
-msgstr "&Part seleccionada"
+msgstr "&Selecció"
 
 #: comdlg32.rc:217
 msgid "&Pages"
@@ -447,27 +447,27 @@ msgstr "&Configuració"
 
 #: comdlg32.rc:221
 msgid "&From:"
-msgstr "P&rimera:"
+msgstr "&De:"
 
 #: comdlg32.rc:222
 msgid "&To:"
-msgstr "Ú&ltima:"
+msgstr "&A:"
 
 #: comdlg32.rc:223
 msgid "Print &Quality:"
-msgstr "&Qualitat:"
+msgstr "&Qualitat d'Impressió:"
 
 #: comdlg32.rc:225
 msgid "Print to Fi&le"
-msgstr "Imprimir en un &fitxer"
+msgstr "Imprimir a un &Fitxer"
 
 #: comdlg32.rc:226
 msgid "Condensed"
-msgstr "S&eparar les còpies"
+msgstr "Condensat"
 
 #: comdlg32.rc:232 comdlg32.rc:403
 msgid "Print Setup"
-msgstr "Configuració de la impressió"
+msgstr "Configuració d'Impressió"
 
 #: comdlg32.rc:235 comdlg32.rc:371 comdlg32.rc:410
 msgid "Printer"
@@ -475,15 +475,15 @@ msgstr "Impressora:"
 
 #: comdlg32.rc:236
 msgid "&Default Printer"
-msgstr "Impressora per &defecte"
+msgstr "Impressora per &Defecte"
 
 #: comdlg32.rc:237
 msgid "[none]"
-msgstr "[none]"
+msgstr "[cap]"
 
 #: comdlg32.rc:238
 msgid "Specific &Printer"
-msgstr "Impressora &especificada:"
+msgstr "Impressora &Específica:"
 
 #: comdlg32.rc:243 comdlg32.rc:429 comdlg32.rc:448 wineps.rc:31
 msgid "Orientation"
@@ -507,7 +507,7 @@ msgstr "&Mida"
 
 #: comdlg32.rc:250
 msgid "&Source"
-msgstr "A&limentació:"
+msgstr "&Font:"
 
 #: comdlg32.rc:258
 msgid "Font"
@@ -519,7 +519,7 @@ msgstr "&Tipus de lletra:"
 
 #: comdlg32.rc:264
 msgid "Font St&yle:"
-msgstr "&Estil del tipus de lletra:"
+msgstr "&Estil del Tipus de Lletra:"
 
 #: comdlg32.rc:267 comdlg32.rc:444 winecfg.rc:291
 msgid "&Size:"
@@ -531,11 +531,11 @@ msgstr "Efectes"
 
 #: comdlg32.rc:275
 msgid "Stri&keout"
-msgstr "&Barrar-lo"
+msgstr "&Ratllat"
 
 #: comdlg32.rc:276
 msgid "&Underline"
-msgstr "&Subratllar-lo"
+msgstr "&Subratllat"
 
 #: comdlg32.rc:277 winecfg.rc:289
 msgid "&Color:"
@@ -559,31 +559,31 @@ msgstr "Color"
 
 #: comdlg32.rc:293
 msgid "&Basic Colors:"
-msgstr "Colors &básics:"
+msgstr "Colors &Básics:"
 
 #: comdlg32.rc:294
 msgid "&Custom Colors:"
-msgstr "Colors person&alitzats:"
+msgstr "Colors &Personalitzats:"
 
 #: comdlg32.rc:295 comdlg32.rc:318
 msgid "Color |  Sol&id"
-msgstr "Color Sòl&id"
+msgstr "Color |  Sòl&id"
 
 #: comdlg32.rc:296
 msgid "&Red:"
-msgstr "&Roig:"
+msgstr "Ver&mell:"
 
 #: comdlg32.rc:298
 msgid "&Green:"
-msgstr "&Verd:"
+msgstr "Ver&d:"
 
 #: comdlg32.rc:300
 msgid "&Blue:"
-msgstr "Bla&u:"
+msgstr "&Blau:"
 
 #: comdlg32.rc:302
 msgid "&Hue:"
-msgstr "&Tint:"
+msgstr "&Ton.:"
 
 #: comdlg32.rc:304
 msgid "&Sat:"
@@ -595,11 +595,11 @@ msgstr "&Llum.:"
 
 #: comdlg32.rc:316
 msgid "&Add to Custom Colors"
-msgstr "Afegir als &colors personalitzats"
+msgstr "&Afegeix als Colors Personalitzats"
 
 #: comdlg32.rc:317
 msgid "&Define Custom Colors >>"
-msgstr "&Definir colors personalitzats >>"
+msgstr "&Defineix els Colors Personalitzats >>"
 
 #: comdlg32.rc:324 regedit.rc:223 regedit.rc:233
 msgid "Find"
@@ -607,11 +607,11 @@ msgstr "Cerca"
 
 #: comdlg32.rc:327 comdlg32.rc:346
 msgid "Fi&nd What:"
-msgstr "&Cercar:"
+msgstr "&Cerca Por:"
 
 #: comdlg32.rc:329 comdlg32.rc:350
 msgid "Match &Whole Word Only"
-msgstr "C&ercar mots sencers"
+msgstr "Troba només paraules &completes"
 
 #: comdlg32.rc:330 comdlg32.rc:351
 msgid "Match &Case"
@@ -623,7 +623,7 @@ msgstr "Direcció"
 
 #: comdlg32.rc:332 view.rc:39
 msgid "&Up"
-msgstr "Am&unt"
+msgstr "A&munt"
 
 #: comdlg32.rc:333 view.rc:40
 msgid "&Down"
@@ -728,7 +728,7 @@ msgstr "&Horizontal"
 
 #: comdlg32.rc:437
 msgid "Setup Page"
-msgstr "Configuraci de la Pgina"
+msgstr "Configuració de la Pgina"
 
 #: comdlg32.rc:446
 msgid "&Tray:"
@@ -776,7 +776,7 @@ msgstr "Fitxers de &tipus:"
 
 #: comdlg32.rc:482
 msgid "Open as &read-only"
-msgstr "Obre per noms &lectura"
+msgstr "Obre per només &lectura"
 
 #: comdlg32.rc:484 comdlg32.rc:502 shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
@@ -2107,121 +2107,107 @@ msgid "General"
 msgstr "General"
 
 #: cryptui.rc:188
-#, fuzzy
 msgid "&Install Certificate..."
-msgstr "Certificats..."
+msgstr "&Instal·la Certificat..."
 
 #: cryptui.rc:189
-#, fuzzy
 msgid "Issuer &Statement"
-msgstr "Nom Alternatiu de l'Emissor"
+msgstr "&Declaració d'Emissor"
 
 #: cryptui.rc:197
-#, fuzzy
 msgid "&Show:"
-msgstr "Mostra"
+msgstr "&Mostra:"
 
 #: cryptui.rc:202
-#, fuzzy
 msgid "&Edit Properties..."
-msgstr "&Propietats"
+msgstr "&Edita Propietats..."
 
 #: cryptui.rc:203
-#, fuzzy
 msgid "&Copy to File..."
-msgstr "Copiant Fitxers..."
+msgstr "&Copia a un Fitxer..."
 
 #: cryptui.rc:207
-#, fuzzy
 msgid "Certification Path"
-msgstr "Nom de Plantilla de Certificació"
+msgstr "Ruta de Certificació"
 
 #: cryptui.rc:211
-#, fuzzy
 msgid "Certification &path"
-msgstr "Nom de Plantilla de Certificació"
+msgstr "&Ruta de certificació"
 
 #: cryptui.rc:214
-#, fuzzy
 msgid "&View Certificate"
-msgstr "Obté Certificat"
+msgstr "&Visualitza certificat"
 
 #: cryptui.rc:215
-#, fuzzy
 msgid "Certificate &status:"
-msgstr "Certificats"
+msgstr "E&stat de certificat:"
 
 #: cryptui.rc:221
 msgid "Disclaimer"
-msgstr ""
+msgstr "Renúncia"
 
 #: cryptui.rc:228
-#, fuzzy
 msgid "More &Info"
-msgstr "Informació de Reg"
+msgstr "Més &Info."
 
 #: cryptui.rc:236
-#, fuzzy
 msgid "&Friendly name:"
-msgstr "Nom amistós"
+msgstr "Nom &amistós"
 
 #: cryptui.rc:238 progman.rc:151 progman.rc:167
 msgid "&Description:"
 msgstr "&Descripció:"
 
 #: cryptui.rc:240
-#, fuzzy
 msgid "Certificate purposes"
-msgstr "Tipus de Certificat"
+msgstr "Finalitats de certificat"
 
 #: cryptui.rc:241
 msgid "&Enable all purposes for this certificate"
-msgstr ""
+msgstr "&Habilita aquest certificat per a tots els finalitats"
 
 #: cryptui.rc:243
 msgid "D&isable all purposes for this certificate"
-msgstr ""
+msgstr "D&eshabilita aquest certificat per a tots els finalitats"
 
 #: cryptui.rc:245
 msgid "Enable &only the following purposes for this certificate:"
-msgstr ""
+msgstr "Habilita aquest certificat per a &només els següents finalitats:"
 
 #: cryptui.rc:250
-#, fuzzy
 msgid "Add &Purpose..."
-msgstr "<Propòsits Avançades>"
+msgstr "Afegeix &Finalitat..."
 
 #: cryptui.rc:254
-#, fuzzy
 msgid "Add Purpose"
-msgstr "<Propòsits Avançades>"
+msgstr "Afegeix Finalitat"
 
 #: cryptui.rc:257
 msgid ""
 "Add the object identifier (OID) for the certificate purpose you wish to add:"
 msgstr ""
+"Afegiu l'identificador d'objecte (OID) de la finalitat de certificat que "
+"voleu afegir:"
 
 #: cryptui.rc:265 cryptui.rc:66
 msgid "Select Certificate Store"
 msgstr "Seleccionar Magatzem de Certificats"
 
 #: cryptui.rc:268
-#, fuzzy
 msgid "Select the certificate store you want to use:"
-msgstr "El nom en el certificat no coincideix amb el lloc."
+msgstr "Seleccioneu el magatzem de certificats que voleu utilitzar:"
 
 #: cryptui.rc:271
 msgid "&Show physical stores"
-msgstr ""
+msgstr "&Mostra els magatzems físics"
 
 #: cryptui.rc:277 cryptui.rc:288 cryptui.rc:305 cryptui.rc:319 cryptui.rc:68
 msgid "Certificate Import Wizard"
 msgstr "Assistent d'Importació de Certificats"
 
 #: cryptui.rc:280
-#, fuzzy
 msgid "Welcome to the Certificate Import Wizard"
-msgstr "Assistent d'Importació de Certificats"
+msgstr "Benvingut a l'Assistent d'Importació de Certificats"
 
 #: cryptui.rc:283
 msgid ""
@@ -2235,9 +2221,18 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Aquest assistent us ajuda a importar certificats, llistes de revocació de "
+"certificats i llistes de certificats de confiança d'un fitxer a un magatzem "
+"de certificats.\n"
+"\n"
+"Es pot usar un certificat per identificar-vos o l'equip amb el que esteu "
+"comunicant. També es pot usar per a l'autenticació, i per signar els "
+"missatges. Els magatzems de certificats són conjunts de certificats, llistes "
+"de revocació de certificats i llistes de certificats de confiança.\n"
+"\n"
+"Per continuar, feu clic a Següent."
 
 #: cryptui.rc:291 cryptui.rc:427
-#, fuzzy
 msgid "&File name:"
 msgstr "Nom de &fitxer:"
 
@@ -2246,25 +2241,23 @@ msgid "B&rowse..."
 msgstr "&Navega..."
 
 #: cryptui.rc:294
-#, fuzzy
 msgid ""
 "Note:  The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
-"Els magatzems de certificats són conjunts de certificats, llistes de "
-"revocació de certificats, i llistes de certificats de confiança."
+"Nota:  Els següents formats de fitxer poden contenir més d'un certificat, "
+"llista de revocació de certificats o llista de certificats de confiança:"
 
 #: cryptui.rc:296
-#, fuzzy
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
-msgstr "Missatges CMS/PKCS #7 (*.p7b)"
+msgstr ""
+"Estàndard de Sintaxi dels Missatges Criptogràfics/Missatges PKCS #7 (*.p7b)"
 
 #: cryptui.rc:298
 msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
-msgstr ""
+msgstr "Intercanvi d'Informació Personal/PKCS #12 (.pfx, .p12)"
 
 #: cryptui.rc:300
-#, fuzzy
 msgid "Microsoft Serialized Certificate Store (.sst)"
 msgstr "Magatzem de Certificats Serialitzat de Microsoft (*.sst)"
 
@@ -2273,29 +2266,28 @@ msgid ""
 "Wine can automatically select the certificate store, or you can specify a "
 "location for the certificates."
 msgstr ""
+"El Wine pot seleccionar automàticament el magatzem de certificats, o podeu "
+"especificar una ubicació per als certificats."
 
 #: cryptui.rc:310
-#, fuzzy
 msgid "&Automatically select certificate store"
-msgstr "Si us plau, seleccioneu un magatzem de certificats."
+msgstr "Selecciona &automàticament el magatzem de certificats"
 
 #: cryptui.rc:312
-#, fuzzy
 msgid "&Place all certificates in the following store:"
-msgstr "Aquest certificat no s'destina per als propòsits següents:"
+msgstr "&Col·locar tots els certificats en el següent magatzem:"
 
 #: cryptui.rc:322
-#, fuzzy
 msgid "Completing the Certificate Import Wizard"
-msgstr "Assistent d'Importació de Certificats"
+msgstr "Completant l'Assistent d'Importació de Certificats"
 
 #: cryptui.rc:324
 msgid "You have successfully completed the Certificate Import Wizard."
-msgstr ""
+msgstr "Heu completat amb èxit l'Assistent d'Importació de Certificats."
 
 #: cryptui.rc:326 cryptui.rc:440
 msgid "You have specified the following settings:"
-msgstr ""
+msgstr "Heu especificat la configuració següent:"
 
 #: cryptui.rc:334 cryptui.rc:119
 msgid "Certificates"
@@ -2303,26 +2295,23 @@ msgstr "Certificats"
 
 #: cryptui.rc:337
 msgid "I&ntended purpose:"
-msgstr ""
+msgstr "&Finalitat prevista:"
 
 #: cryptui.rc:341
-#, fuzzy
 msgid "&Import..."
-msgstr "&Exporta..."
+msgstr "&Importa..."
 
 #: cryptui.rc:342 regedit.rc:109
 msgid "&Export..."
 msgstr "&Exporta..."
 
 #: cryptui.rc:344
-#, fuzzy
 msgid "&Advanced..."
-msgstr "&Avançat"
+msgstr "&Avançat..."
 
 #: cryptui.rc:345
-#, fuzzy
 msgid "Certificate intended purposes"
-msgstr "Extensions del Certificat"
+msgstr "Finalitats previstas de certificat"
 
 #: cryptui.rc:347 ieframe.rc:42 shell32.rc:40 shell32.rc:117 oleview.rc:56
 #: oleview.rc:58 oleview.rc:82 regedit.rc:63 taskmgr.rc:52 winefile.rc:49
@@ -2331,24 +2320,23 @@ msgid "&View"
 msgstr "&Visualitza"
 
 #: cryptui.rc:352
-#, fuzzy
 msgid "Advanced Options"
-msgstr "<Propòsits Avançades>"
+msgstr "Opcions Avançades"
 
 #: cryptui.rc:355
-#, fuzzy
 msgid "Certificate purpose"
-msgstr "Tipus de Certificat"
+msgstr "Finalitat de certificat"
 
 #: cryptui.rc:356
 msgid ""
 "Select one or more purposes to be listed when Advanced Purposes is selected."
 msgstr ""
+"Selecciona una o més finalitats per allistar quan es selecciona Finalitats "
+"Avançades."
 
 #: cryptui.rc:358
-#, fuzzy
 msgid "&Certificate purposes:"
-msgstr "Tipus de Certificat"
+msgstr "Finalitats de &certificat:"
 
 #: cryptui.rc:367 cryptui.rc:378 cryptui.rc:391 cryptui.rc:401 cryptui.rc:424
 #: cryptui.rc:433 cryptui.rc:147
@@ -2356,9 +2344,8 @@ msgid "Certificate Export Wizard"
 msgstr "Assistent d'Exportació de Certificats"
 
 #: cryptui.rc:370
-#, fuzzy
 msgid "Welcome to the Certificate Export Wizard"
-msgstr "Assistent d'Exportació de Certificats"
+msgstr "Benvingut a l'Assistent d'Exportació de Certificats"
 
 #: cryptui.rc:373
 msgid ""
@@ -2372,80 +2359,85 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"Aquest assistent us ajuda a exportar certificats, llistes de revocació de "
+"certificats i llistes de certificats de confiança d'un magatzem de "
+"certificats a un fitxer.\n"
+"\n"
+"Es pot usar un certificat per identificar-vos o l'equip amb el que esteu "
+"comunicant. També es pot usar per a l'autenticació, i per signar els "
+"missatges. Els magatzems de certificats són conjunts de certificats, llistes "
+"de revocació de certificats i llistes de certificats de confiança.\n"
+"\n"
+"Per continuar, feu clic a Següent."
 
 #: cryptui.rc:381
 msgid ""
 "If you choose to export the private key, you will be prompted for a password "
 "to protect the private key on a later page."
 msgstr ""
+"Si trieu exportar la clau privada, se li demanarà una contrasenya per "
+"protegir la clau privada en una pàgina posterior."
 
 #: cryptui.rc:382
 msgid "Do you wish to export the private key?"
-msgstr ""
+msgstr "Voleu exportar la clau privada?"
 
 #: cryptui.rc:383
-#, fuzzy
 msgid "&Yes, export the private key"
-msgstr "Exporta Clau Privada"
+msgstr "&Sí, exporta la clau privada"
 
 #: cryptui.rc:385
 msgid "N&o, do not export the private key"
-msgstr ""
+msgstr "&No, no exportis la clau privada"
 
 #: cryptui.rc:396
-#, fuzzy
 msgid "&Confirm password:"
-msgstr "Contrasenya equivocada\n"
+msgstr "&Confirmeu la contrasenya:"
 
 #: cryptui.rc:404
-#, fuzzy
 msgid "Select the format you want to use:"
-msgstr "Especifiqueu el fitxer que voleu importar."
+msgstr "Seleccioneu el format que voleu usar:"
 
 #: cryptui.rc:405
-#, fuzzy
 msgid "&DER-encoded X.509 (.cer)"
-msgstr "Binari DER-Codificat X.509 (*.cer)"
+msgstr "Codificat en &DER X.509 (*.cer)"
 
 #: cryptui.rc:407
-#, fuzzy
 msgid "Ba&se64-encoded X.509 (.cer):"
-msgstr "Base64-Codificat X.509 (*.cer)"
+msgstr "Codificat en &base64 X.509 (*.cer)"
 
 #: cryptui.rc:409
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
 msgstr ""
+"&Estàndard de Sintaxi dels Missatges Criptogràfics/Missatges PKCS #7 (*.p7b)"
 
 #: cryptui.rc:411
-#, fuzzy
 msgid "&Include all certificates in the certification path if possible"
-msgstr "Inclou tots els certificats en la ruta de certificat"
+msgstr "&Inclou tots els certificats en la ruta de certificat si és possible"
 
 #: cryptui.rc:413
 msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
-msgstr ""
+msgstr "Intercanvi d'Informació &Personal/PKCS #12 (.pfx, .p12)"
 
 #: cryptui.rc:415
-#, fuzzy
 msgid "Incl&ude all certificates in the certification path if possible"
-msgstr "Inclou tots els certificats en la ruta de certificat"
+msgstr "Inclo&u tots els certificats en la ruta de certificat si és possible"
 
 #: cryptui.rc:417
 msgid "&Enable strong encryption"
-msgstr ""
+msgstr "&Habilita el xifratge fort"
 
 #: cryptui.rc:419
 msgid "Delete the private &key if the export is successful"
-msgstr ""
+msgstr "&Suprimeix la clau privada si l'exportació té èxit"
 
 #: cryptui.rc:436
-#, fuzzy
 msgid "Completing the Certificate Export Wizard"
-msgstr "Assistent d'Exportació de Certificats"
+msgstr "Finitzant l'Assistent d'Exportació de Certificats"
 
 #: cryptui.rc:438
 msgid "You have successfully completed the Certificate Export Wizard."
-msgstr ""
+msgstr "Heu completat amb èxit l'Assistent d'Exportació de Certificats."
 
 #: cryptui.rc:27 cryptui.rc:90
 msgid "Certificate"
@@ -3029,9 +3021,8 @@ msgid "Mapping"
 msgstr "Mapa"
 
 #: dinput.rc:53
-#, fuzzy
 msgid "Show Assigned First"
-msgstr "Ordena Assignats"
+msgstr "Mostra els Assignats Primer"
 
 #: dinput.rc:34
 msgid "Action"
@@ -3493,9 +3484,8 @@ msgid "Subscript out of range"
 msgstr "El subíndex està fora del rang"
 
 #: jscript.rc:28
-#, fuzzy
 msgid "Object required"
-msgstr "S'esperava un objecte"
+msgstr "Es requereix un objecte"
 
 #: jscript.rc:29
 msgid "Automation server can't create object"
@@ -3566,9 +3556,8 @@ msgid "Boolean object expected"
 msgstr "S'esperava un objecte booleà"
 
 #: jscript.rc:46
-#, fuzzy
 msgid "Cannot delete '|'"
-msgstr "No es pot completar\n"
+msgstr "No es pot suprimir '|'"
 
 #: jscript.rc:47
 msgid "VBArray object expected"
@@ -6817,9 +6806,8 @@ msgid "&Data Rate"
 msgstr "Velocitat de &Dades"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/s"
-msgstr "kB/seg"
+msgstr "kB/s"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
@@ -8329,20 +8317,19 @@ msgstr "&Ignorar"
 
 #: user32.rc:84
 msgid "&Try Again"
-msgstr "&Try Again"
+msgstr "&Torna a Intentar"
 
 #: user32.rc:85
 msgid "&Continue"
-msgstr "&Continue"
+msgstr "&Continua"
 
 #: user32.rc:91
-#, fuzzy
 msgid "Select Window"
-msgstr "E&scala a la finestra"
+msgstr "Seleccionar Finestra"
 
 #: user32.rc:69
 msgid "&More Windows..."
-msgstr "&Més finestres..."
+msgstr "&Més Finestres..."
 
 #: wineps.rc:28
 msgid "Paper Si&ze:"
@@ -9969,19 +9956,16 @@ msgid "N"
 msgstr "N"
 
 #: cmd.rc:294
-#, fuzzy
 msgid "File association missing for extension %1\n"
-msgstr "Falta l'associació de fitxer per l'extensió %s\n"
+msgstr "Falta l'associació de fitxer per l'extensió %1\n"
 
 #: cmd.rc:295
-#, fuzzy
 msgid "No open command associated with file type '%1'\n"
-msgstr "Cap ordre d'obertura associat amb el tipus de fitxer '%s'\n"
+msgstr "Cap ordre d'obertura associat amb el tipus de fitxer '%1'\n"
 
 #: cmd.rc:296
-#, fuzzy
 msgid "Overwrite %1"
-msgstr "Sobreescriure %s"
+msgstr "Sobreescriure %1"
 
 #: cmd.rc:297
 msgid "More..."
@@ -10000,23 +9984,20 @@ msgid "Syntax error\n"
 msgstr "Error de sintaxi\n"
 
 #: cmd.rc:303
-#, fuzzy
 msgid "No help available for %1\n"
-msgstr "Cap ajuda disponible per %s\n"
+msgstr "Cap ajuda disponible per %1\n"
 
 #: cmd.rc:304
 msgid "Target to GOTO not found\n"
 msgstr "Destinació del GOTO no trobat\n"
 
 #: cmd.rc:305
-#, fuzzy
 msgid "Current Date is %1\n"
-msgstr "La Data Actual és %s\n"
+msgstr "La Data Actual és %1\n"
 
 #: cmd.rc:306
-#, fuzzy
 msgid "Current Time is %1\n"
-msgstr "L'Hora Actual és %s\n"
+msgstr "L'Hora Actual és %1\n"
 
 #: cmd.rc:307
 msgid "Enter new date: "
@@ -10027,9 +10008,8 @@ msgid "Enter new time: "
 msgstr "Introduïu hora nova: "
 
 #: cmd.rc:309
-#, fuzzy
 msgid "Environment variable %1 not defined\n"
-msgstr "Variable d'entorn %s no definida\n"
+msgstr "Variable d'entorn %1 no definida\n"
 
 #: cmd.rc:310 xcopy.rc:38
 msgid "Failed to open '%1'\n"
@@ -10045,19 +10025,16 @@ msgid "A"
 msgstr "A"
 
 #: cmd.rc:313
-#, fuzzy
 msgid "%1, Delete"
-msgstr "%s, Suprimir"
+msgstr "%1, Suprimir"
 
 #: cmd.rc:314
-#, fuzzy
 msgid "Echo is %1\n"
-msgstr "L'eco està %s\n"
+msgstr "L'eco està %1\n"
 
 #: cmd.rc:315
-#, fuzzy
 msgid "Verify is %1\n"
-msgstr "La verificació està %s\n"
+msgstr "La verificació està %1\n"
 
 #: cmd.rc:316
 msgid "Verify must be ON or OFF\n"
@@ -10068,13 +10045,11 @@ msgid "Parameter error\n"
 msgstr "Error de paràmetre\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
-"Volum en unitat %c és %s\n"
-"Nombre de Sèrie del Volum és %04x-%04x\n"
+"El Nombre de Sèrie del Volum és %04x-%04x\n"
 "\n"
 
 #: cmd.rc:319
@@ -10094,9 +10069,8 @@ msgid "Wine Command Prompt"
 msgstr "Línia d'Ordres del Wine"
 
 #: cmd.rc:323
-#, fuzzy
 msgid "CMD Version %1!S!\n"
-msgstr "Versió de CMD %s\n"
+msgstr "Versió de CMD %1!S!\n"
 
 #: cmd.rc:324
 msgid "More? "
@@ -10108,11 +10082,11 @@ msgstr "La lìnia d'entrada és massa llarga.\n"
 
 #: cmd.rc:326
 msgid "Volume in drive %1!c! is %2\n"
-msgstr ""
+msgstr "El volum en la unitat %1!c! és %2\n"
 
 #: cmd.rc:327
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr ""
+msgstr "El volum en la unitat %1!c! no té etiqueta.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10144,8 +10118,8 @@ msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"
 msgstr ""
-"Error: Establir el nom d'equip del sistema no és possible amb la\n"
-"utilitat hostname.\n"
+"Error: Establir el nom d'equip del sistema no és possible amb la utilitat \n"
+"hostname.\n"
 
 #: ipconfig.rc:27
 msgid "Usage: ipconfig [ /? | /all ]\n"
@@ -10159,7 +10133,7 @@ msgstr ""
 
 #: ipconfig.rc:29
 msgid "%1 adapter %2\n"
-msgstr "%1 adaptador %s\n"
+msgstr "%1 adaptador %2\n"
 
 #: ipconfig.rc:30
 msgid "Ethernet"
@@ -10470,7 +10444,7 @@ msgstr "Informació"
 
 #: notepad.rc:73
 msgid "Untitled"
-msgstr "Sin título"
+msgstr "Sense títol"
 
 #: notepad.rc:76
 msgid "Text files (*.txt)"
@@ -10946,7 +10920,7 @@ msgstr "&Minimitza al executar"
 
 #: progman.rc:44 winefile.rc:73
 msgid "&Save settings on exit"
-msgstr "&Desa ajustaments al sortir"
+msgstr "&Desa els ajustaments al sortir"
 
 #: progman.rc:46 taskmgr.rc:78 taskmgr.rc:255
 msgid "&Windows"
@@ -14101,7 +14075,7 @@ msgstr "Document"
 
 #: wordpad.rc:181
 msgid "Save changes to '%s'?"
-msgstr "Desar canvis a '%s'?"
+msgstr "Desar els canvis al '%s'?"
 
 #: wordpad.rc:182
 msgid "Finished searching the document."
