@@ -932,7 +932,7 @@ static BOOL UITOOLS95_DrawFrameCaption(HDC dc, LPRECT r, UINT uFlags)
     int colorIdx = uFlags & DFCS_INACTIVE ? COLOR_BTNSHADOW : COLOR_BTNTEXT;
     int xc = (myr.left+myr.right)/2;
     int yc = (myr.top+myr.bottom)/2;
-    WCHAR str[2] = {0, 0};
+    WCHAR str[] = {0, 0};
     static const WCHAR glyphFontName[] = { 'M','a','r','l','e','t','t',0 };
     UINT alignsave;
     int bksave;
