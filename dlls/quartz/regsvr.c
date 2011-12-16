@@ -124,43 +124,43 @@ static HRESULT unregister_filters(struct regsvr_filter const *list);
 /***********************************************************************
  *		static string constants
  */
-static WCHAR const interface_keyname[10] = {
+static WCHAR const interface_keyname[] = {
     'I', 'n', 't', 'e', 'r', 'f', 'a', 'c', 'e', 0 };
-static WCHAR const base_ifa_keyname[14] = {
+static WCHAR const base_ifa_keyname[] = {
     'B', 'a', 's', 'e', 'I', 'n', 't', 'e', 'r', 'f', 'a', 'c',
     'e', 0 };
-static WCHAR const num_methods_keyname[11] = {
+static WCHAR const num_methods_keyname[] = {
     'N', 'u', 'm', 'M', 'e', 't', 'h', 'o', 'd', 's', 0 };
-static WCHAR const ps_clsid_keyname[15] = {
+static WCHAR const ps_clsid_keyname[] = {
     'P', 'r', 'o', 'x', 'y', 'S', 't', 'u', 'b', 'C', 'l', 's',
     'i', 'd', 0 };
-static WCHAR const ps_clsid32_keyname[17] = {
+static WCHAR const ps_clsid32_keyname[] = {
     'P', 'r', 'o', 'x', 'y', 'S', 't', 'u', 'b', 'C', 'l', 's',
     'i', 'd', '3', '2', 0 };
-static WCHAR const clsid_keyname[6] = {
+static WCHAR const clsid_keyname[] = {
     'C', 'L', 'S', 'I', 'D', 0 };
-static WCHAR const curver_keyname[7] = {
+static WCHAR const curver_keyname[] = {
     'C', 'u', 'r', 'V', 'e', 'r', 0 };
-static WCHAR const ips_keyname[13] = {
+static WCHAR const ips_keyname[] = {
     'I', 'n', 'P', 'r', 'o', 'c', 'S', 'e', 'r', 'v', 'e', 'r',
     0 };
-static WCHAR const ips32_keyname[15] = {
+static WCHAR const ips32_keyname[] = {
     'I', 'n', 'P', 'r', 'o', 'c', 'S', 'e', 'r', 'v', 'e', 'r',
     '3', '2', 0 };
-static WCHAR const progid_keyname[7] = {
+static WCHAR const progid_keyname[] = {
     'P', 'r', 'o', 'g', 'I', 'D', 0 };
-static WCHAR const viprogid_keyname[25] = {
+static WCHAR const viprogid_keyname[] = {
     'V', 'e', 'r', 's', 'i', 'o', 'n', 'I', 'n', 'd', 'e', 'p',
     'e', 'n', 'd', 'e', 'n', 't', 'P', 'r', 'o', 'g', 'I', 'D',
     0 };
 static char const tmodel_valuename[] = "ThreadingModel";
-static WCHAR const mediatype_name[11] = {
+static WCHAR const mediatype_name[] = {
     'M', 'e', 'd', 'i', 'a', ' ', 'T', 'y', 'p', 'e', 0 };
-static WCHAR const subtype_valuename[8] = {
+static WCHAR const subtype_valuename[] = {
     'S', 'u', 'b', 't', 'y', 'p', 'e', 0 };
-static WCHAR const sourcefilter_valuename[14] = {
+static WCHAR const sourcefilter_valuename[] = {
     'S', 'o', 'u', 'r', 'c', 'e', ' ', 'F', 'i', 'l', 't', 'e', 'r', 0 };
-static WCHAR const extensions_keyname[11] = {
+static WCHAR const extensions_keyname[] = {
     'E', 'x', 't', 'e', 'n', 's', 'i', 'o', 'n', 's', 0 };
 
 /***********************************************************************
@@ -209,7 +209,7 @@ static HRESULT register_interfaces(struct regsvr_interface const *list)
 	}
 
 	if (0 <= list->num_methods) {
-	    static WCHAR const fmt[3] = { '%', 'd', 0 };
+	    static WCHAR const fmt[] = { '%', 'd', 0 };
 	    HKEY key;
 
 	    res = RegCreateKeyExW(iid_key, num_methods_keyname, 0, NULL, 0,
