@@ -99,19 +99,19 @@ static HRESULT unregister_converters(struct regsvr_converter const *list);
 /***********************************************************************
  *		static string constants
  */
-static WCHAR const clsid_keyname[6] = {
+static WCHAR const clsid_keyname[] = {
     'C', 'L', 'S', 'I', 'D', 0 };
-static WCHAR const curver_keyname[7] = {
+static WCHAR const curver_keyname[] = {
     'C', 'u', 'r', 'V', 'e', 'r', 0 };
-static WCHAR const ips_keyname[13] = {
+static WCHAR const ips_keyname[] = {
     'I', 'n', 'P', 'r', 'o', 'c', 'S', 'e', 'r', 'v', 'e', 'r',
     0 };
-static WCHAR const ips32_keyname[15] = {
+static WCHAR const ips32_keyname[] = {
     'I', 'n', 'P', 'r', 'o', 'c', 'S', 'e', 'r', 'v', 'e', 'r',
     '3', '2', 0 };
-static WCHAR const progid_keyname[7] = {
+static WCHAR const progid_keyname[] = {
     'P', 'r', 'o', 'g', 'I', 'D', 0 };
-static WCHAR const viprogid_keyname[25] = {
+static WCHAR const viprogid_keyname[] = {
     'V', 'e', 'r', 's', 'i', 'o', 'n', 'I', 'n', 'd', 'e', 'p',
     'e', 'n', 'd', 'e', 'n', 't', 'P', 'r', 'o', 'g', 'I', 'D',
     0 };
