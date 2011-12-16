@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
+
 #include "jscript.h"
 
 #include "wine/unicode.h"
@@ -828,6 +830,12 @@ static IDispatchExVtbl DispatchExVtbl = {
     DispatchEx_GetNextDispID,
     DispatchEx_GetNameSpaceParent
 };
+
+jsdisp_t *as_jsdisp(IDispatch *disp)
+{
+    assert(disp->lpVtbl == (IDispatchVtbl*)&DispatchExVtbl);
+    return impl_from_IDispatchEx((IDispatchEx*)disp);
+}
 
 HRESULT init_dispex(jsdisp_t *dispex, script_ctx_t *ctx, const builtin_info_t *builtin_info, jsdisp_t *prototype)
 {

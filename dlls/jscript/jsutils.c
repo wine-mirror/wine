@@ -497,7 +497,7 @@ HRESULT to_uint32(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, DWORD *ret)
     return S_OK;
 }
 
-static BSTR int_to_bstr(INT i)
+BSTR int_to_bstr(int i)
 {
     WCHAR buf[12], *p;
     BOOL neg = FALSE;
@@ -527,6 +527,32 @@ static BSTR int_to_bstr(INT i)
     return SysAllocString(p);
 }
 
+HRESULT double_to_bstr(double n, BSTR *str)
+{
+    const WCHAR NaNW[] = {'N','a','N',0};
+    const WCHAR InfinityW[] = {'-','I','n','f','i','n','i','t','y',0};
+
+    if(isnan(n)) {
+       *str = SysAllocString(NaNW);
+    }else if(isinf(n)) {
+        *str = SysAllocString(n<0 ? InfinityW : InfinityW+1);
+    }else {
+        VARIANT strv, v;
+        HRESULT hres;
+
+        V_VT(&v) = VT_R8;
+        V_R8(&v) = n;
+        V_VT(&strv) = VT_EMPTY;
+        hres = VariantChangeTypeEx(&strv, &v, MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT), 0, VT_BSTR);
+        if(FAILED(hres))
+            return hres;
+
+        *str = V_BSTR(&strv);
+    }
+
+    return *str ? S_OK : E_OUTOFMEMORY;
+}
+
 /* ECMA-262 3rd Edition    9.8 */
 HRESULT to_string(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, BSTR *str)
 {
@@ -534,8 +560,6 @@ HRESULT to_string(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, BSTR *str)
     const WCHAR nullW[] = {'n','u','l','l',0};
     const WCHAR trueW[] = {'t','r','u','e',0};
     const WCHAR falseW[] = {'f','a','l','s','e',0};
-    const WCHAR NaNW[] = {'N','a','N',0};
-    const WCHAR InfinityW[] = {'-','I','n','f','i','n','i','t','y',0};
 
     switch(V_VT(v)) {
     case VT_EMPTY:
@@ -548,22 +572,7 @@ HRESULT to_string(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, BSTR *str)
         *str = int_to_bstr(V_I4(v));
         break;
     case VT_R8: {
-        if(isnan(V_R8(v)))
-            *str = SysAllocString(NaNW);
-        else if(isinf(V_R8(v)))
-            *str = SysAllocString(V_R8(v)<0 ? InfinityW : InfinityW+1);
-        else {
-            VARIANT strv;
-            HRESULT hres;
-
-            V_VT(&strv) = VT_EMPTY;
-            hres = VariantChangeTypeEx(&strv, v, MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT), 0, VT_BSTR);
-            if(FAILED(hres))
-                return hres;
-
-            *str = V_BSTR(&strv);
-            return S_OK;
-        }
+        return double_to_bstr(V_R8(v), str);
         break;
     }
     case VT_BSTR:

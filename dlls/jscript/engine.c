@@ -507,49 +507,6 @@ static HRESULT equal2_values(VARIANT *lval, VARIANT *rval, BOOL *ret)
     return S_OK;
 }
 
-static HRESULT literal_to_var(script_ctx_t *ctx, literal_t *literal, VARIANT *v)
-{
-    switch(literal->type) {
-    case LT_NULL:
-        V_VT(v) = VT_NULL;
-        break;
-    case LT_INT:
-        V_VT(v) = VT_I4;
-        V_I4(v) = literal->u.lval;
-        break;
-    case LT_DOUBLE:
-        V_VT(v) = VT_R8;
-        V_R8(v) = literal->u.dval;
-        break;
-    case LT_STRING: {
-        BSTR str = SysAllocString(literal->u.wstr);
-        if(!str)
-            return E_OUTOFMEMORY;
-
-        V_VT(v) = VT_BSTR;
-        V_BSTR(v) = str;
-        break;
-    }
-    case LT_BOOL:
-        V_VT(v) = VT_BOOL;
-        V_BOOL(v) = literal->u.bval;
-        break;
-    case LT_REGEXP: {
-        jsdisp_t *regexp;
-        HRESULT hres;
-
-        hres = create_regexp(ctx, literal->u.regexp.str, literal->u.regexp.str_len,
-                             literal->u.regexp.flags, &regexp);
-        if(FAILED(hres))
-            return hres;
-
-        var_set_jsdisp(v, regexp);
-    }
-    }
-
-    return S_OK;
-}
-
 static BOOL lookup_global_members(script_ctx_t *ctx, BSTR identifier, exprval_t *ret)
 {
     named_item_t *item;
@@ -1958,55 +1915,40 @@ static HRESULT interp_carray(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.1.5 */
-HRESULT property_value_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+HRESULT interp_new_obj(exec_ctx_t *ctx)
 {
-    property_value_expression_t *expr = (property_value_expression_t*)_expr;
-    VARIANT val, tmp;
     jsdisp_t *obj;
-    prop_val_t *iter;
-    exprval_t exprval;
-    BSTR name;
+    VARIANT v;
     HRESULT hres;
 
     TRACE("\n");
 
-    hres = create_object(ctx, NULL, &obj);
+    hres = create_object(ctx->parser->script, NULL, &obj);
     if(FAILED(hres))
         return hres;
 
-    for(iter = expr->property_list; iter; iter = iter->next) {
-        hres = literal_to_var(ctx, iter->name, &tmp);
-        if(FAILED(hres))
-            break;
+    var_set_jsdisp(&v, obj);
+    return stack_push(ctx, &v);
+}
 
-        hres = to_string(ctx, &tmp, ei, &name);
-        VariantClear(&tmp);
-        if(FAILED(hres))
-            break;
+/* ECMA-262 3rd Edition    11.1.5 */
+HRESULT interp_obj_prop(exec_ctx_t *ctx)
+{
+    const BSTR name = ctx->parser->code->instrs[ctx->ip].arg1.bstr;
+    jsdisp_t *obj;
+    VARIANT *v;
+    HRESULT hres;
 
-        hres = expr_eval(ctx, iter->value, 0, ei, &exprval);
-        if(SUCCEEDED(hres)) {
-            hres = exprval_to_value(ctx, &exprval, ei, &val);
-            exprval_release(&exprval);
-            if(SUCCEEDED(hres)) {
-                hres = jsdisp_propput_name(obj, name, &val, ei, NULL/*FIXME*/);
-                VariantClear(&val);
-            }
-        }
+    TRACE("%s\n", debugstr_w(name));
 
-        SysFreeString(name);
-        if(FAILED(hres))
-            break;
-    }
+    v = stack_pop(ctx);
 
-    if(FAILED(hres)) {
-        jsdisp_release(obj);
-        return hres;
-    }
+    assert(V_VT(stack_top(ctx)) == VT_DISPATCH);
+    obj = as_jsdisp(V_DISPATCH(stack_top(ctx)));
 
-    ret->type = EXPRVAL_VARIANT;
-    var_set_jsdisp(&ret->u.var, obj);
-    return S_OK;
+    hres = jsdisp_propput_name(obj, name, v, &ctx->ei, NULL/*FIXME*/);
+    VariantClear(v);
+    return hres;
 }
 
 /* ECMA-262 3rd Edition    11.11 */

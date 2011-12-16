@@ -619,6 +619,24 @@ static HRESULT compile_literal(compiler_ctx_t *ctx, literal_t *literal)
     }
 }
 
+static HRESULT literal_as_bstr(compiler_ctx_t *ctx, literal_t *literal, BSTR *str)
+{
+    switch(literal->type) {
+    case LT_STRING:
+        *str = compiler_alloc_bstr(ctx, literal->u.wstr);
+        break;
+    case LT_INT:
+        *str = int_to_bstr(literal->u.lval);
+        break;
+    case LT_DOUBLE:
+        return double_to_bstr(literal->u.dval, str);
+    default:
+        assert(0);
+    }
+
+    return *str ? S_OK : E_OUTOFMEMORY;
+}
+
 static HRESULT compile_array_literal(compiler_ctx_t *ctx, array_literal_expression_t *expr)
 {
     unsigned i, elem_cnt = expr->length;
@@ -644,6 +662,35 @@ static HRESULT compile_array_literal(compiler_ctx_t *ctx, array_literal_expressi
     }
 
     return push_instr_uint(ctx, OP_carray, elem_cnt);
+}
+
+static HRESULT compile_object_literal(compiler_ctx_t *ctx, property_value_expression_t *expr)
+{
+    prop_val_t *iter;
+    unsigned instr;
+    BSTR name;
+    HRESULT hres;
+
+    if(push_instr(ctx, OP_new_obj) == -1)
+        return E_OUTOFMEMORY;
+
+    for(iter = expr->property_list; iter; iter = iter->next) {
+        hres = literal_as_bstr(ctx, iter->name, &name);
+        if(FAILED(hres))
+            return hres;
+
+        hres = compile_expression(ctx, iter->value);
+        if(FAILED(hres))
+            return hres;
+
+        instr = push_instr(ctx, OP_obj_prop);
+        if(instr == -1)
+            return E_OUTOFMEMORY;
+
+        instr_ptr(ctx, instr)->arg1.bstr = name;
+    }
+
+    return S_OK;
 }
 
 static HRESULT compile_function_expression(compiler_ctx_t *ctx, function_expression_t *expr)
@@ -765,6 +812,8 @@ static HRESULT compile_expression_noret(compiler_ctx_t *ctx, expression_t *expr,
         return compile_increment_expression(ctx, (unary_expression_t*)expr, OP_preinc, -1);
     case EXPR_PREINC:
         return compile_increment_expression(ctx, (unary_expression_t*)expr, OP_preinc, 1);
+    case EXPR_PROPVAL:
+        return compile_object_literal(ctx, (property_value_expression_t*)expr);
     case EXPR_RSHIFT:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_rshift);
     case EXPR_RRSHIFT:

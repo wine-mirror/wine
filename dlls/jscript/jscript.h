@@ -189,6 +189,8 @@ static inline IDispatch *to_disp(jsdisp_t *jsdisp)
     return (IDispatch*)&jsdisp->IDispatchEx_iface;
 }
 
+jsdisp_t *as_jsdisp(IDispatch*);
+
 static inline void jsdisp_addref(jsdisp_t *jsdisp)
 {
     IDispatchEx_AddRef(&jsdisp->IDispatchEx_iface);
@@ -256,6 +258,9 @@ HRESULT to_int32(script_ctx_t*,VARIANT*,jsexcept_t*,INT*) DECLSPEC_HIDDEN;
 HRESULT to_uint32(script_ctx_t*,VARIANT*,jsexcept_t*,DWORD*) DECLSPEC_HIDDEN;
 HRESULT to_string(script_ctx_t*,VARIANT*,jsexcept_t*,BSTR*) DECLSPEC_HIDDEN;
 HRESULT to_object(script_ctx_t*,VARIANT*,IDispatch**) DECLSPEC_HIDDEN;
+
+BSTR int_to_bstr(int) DECLSPEC_HIDDEN;
+HRESULT double_to_bstr(double,BSTR*) DECLSPEC_HIDDEN;
 
 typedef struct named_item_t {
     IDispatch *disp;

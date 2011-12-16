@@ -80,7 +80,9 @@ typedef struct _func_stack {
     X(neq,        1, 0,0)                  \
     X(neq2,       1, 0,0)                  \
     X(new,        1, ARG_INT,    0)        \
+    X(new_obj,    1, 0,0)                  \
     X(null,       1, 0,0)                  \
+    X(obj_prop,   1, ARG_BSTR,   0)        \
     X(or,         1, 0,0)                  \
     X(pop,        1, 0,0)                  \
     X(postinc,    1, ARG_INT,    0)        \
@@ -567,8 +569,6 @@ typedef struct {
     expression_t expr;
     prop_val_t *property_list;
 } property_value_expression_t;
-
-HRESULT property_value_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 
 HRESULT compiled_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 
