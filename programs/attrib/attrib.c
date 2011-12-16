@@ -126,7 +126,7 @@ int wmain(int argc, WCHAR *argv[])
     DWORD count;
     HANDLE hff;
     WIN32_FIND_DATAW fd;
-    WCHAR flags[9] = {' ',' ',' ',' ',' ',' ',' ',' ','\0'};
+    WCHAR flags[] = {' ',' ',' ',' ',' ',' ',' ',' ','\0'};
     WCHAR name[128];
     WCHAR *param = argc >= 2 ? argv[1] : NULL;
     DWORD attrib_set = 0;
