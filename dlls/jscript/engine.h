@@ -567,6 +567,4 @@ typedef struct {
     prop_val_t *property_list;
 } property_value_expression_t;
 
-HRESULT compiled_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
-
 HRESULT compile_subscript(parser_ctx_t*,expression_t*,BOOL,unsigned*) DECLSPEC_HIDDEN;

@@ -54,10 +54,7 @@ static inline HRESULT stat_eval(script_ctx_t *ctx, statement_t *stat, return_typ
     return stat->eval(ctx, stat, rt, ret);
 }
 
-static inline HRESULT expr_eval(script_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
-{
-    return compiled_expression_eval(ctx, expr, flags, ei, ret);
-}
+static HRESULT expr_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
 
 static HRESULT stack_push(exec_ctx_t *ctx, VARIANT *v)
 {
@@ -3122,7 +3119,7 @@ OP_LIST
 #undef X
 };
 
-static HRESULT interp_expression_eval(script_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+static HRESULT expr_eval(script_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
     exec_ctx_t *exec_ctx = ctx->exec_ctx;
     unsigned prev_ip, prev_top;
@@ -3130,6 +3127,12 @@ static HRESULT interp_expression_eval(script_ctx_t *ctx, expression_t *expr, DWO
     HRESULT hres = S_OK;
 
     TRACE("\n");
+
+    if(expr->instr_off == -1) {
+        hres = compile_subscript(ctx->exec_ctx->parser, expr, !(flags & EXPR_NOVAL), &expr->instr_off);
+        if(FAILED(hres))
+            return hres;
+    }
 
     prev_top = exec_ctx->top;
     prev_ip = exec_ctx->ip;
@@ -3160,19 +3163,4 @@ static HRESULT interp_expression_eval(script_ctx_t *ctx, expression_t *expr, DWO
     else
         ret->u.var = *stack_pop(exec_ctx);
     return S_OK;
-}
-
-HRESULT compiled_expression_eval(script_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
-{
-    HRESULT hres;
-
-    TRACE("\n");
-
-    if(expr->instr_off == -1) {
-        hres = compile_subscript(ctx->exec_ctx->parser, expr, !(flags & EXPR_NOVAL), &expr->instr_off);
-        if(FAILED(hres))
-            return hres;
-    }
-
-    return interp_expression_eval(ctx, expr, flags, ei, ret);
 }
