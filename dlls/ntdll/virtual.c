@@ -552,7 +552,7 @@ static DWORD VIRTUAL_GetWin32Prot( BYTE vprot )
  * RETURNS
  *	Value of page protection flags
  */
-static NTSTATUS get_vprot_flags( DWORD protect, unsigned int *vprot )
+static NTSTATUS get_vprot_flags( DWORD protect, unsigned int *vprot, BOOL image )
 {
     switch(protect & 0xff)
     {
@@ -560,7 +560,10 @@ static NTSTATUS get_vprot_flags( DWORD protect, unsigned int *vprot )
         *vprot = VPROT_READ;
         break;
     case PAGE_READWRITE:
-        *vprot = VPROT_READ | VPROT_WRITE;
+        if (image)
+            *vprot = VPROT_READ | VPROT_WRITECOPY;
+        else
+            *vprot = VPROT_READ | VPROT_WRITE;
         break;
     case PAGE_WRITECOPY:
         *vprot = VPROT_READ | VPROT_WRITECOPY;
@@ -572,7 +575,10 @@ static NTSTATUS get_vprot_flags( DWORD protect, unsigned int *vprot )
         *vprot = VPROT_EXEC | VPROT_READ;
         break;
     case PAGE_EXECUTE_READWRITE:
-        *vprot = VPROT_EXEC | VPROT_READ | VPROT_WRITE;
+        if (image)
+            *vprot = VPROT_EXEC | VPROT_READ | VPROT_WRITECOPY;
+        else
+            *vprot = VPROT_EXEC | VPROT_READ | VPROT_WRITE;
         break;
     case PAGE_EXECUTE_WRITECOPY:
         *vprot = VPROT_EXEC | VPROT_READ | VPROT_WRITECOPY;
@@ -1860,7 +1866,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
 
     if (is_beyond_limit( 0, size, working_set_limit )) return STATUS_WORKING_SET_LIMIT_RANGE;
 
-    if ((status = get_vprot_flags( protect, &vprot ))) return status;
+    if ((status = get_vprot_flags( protect, &vprot, FALSE ))) return status;
     if (vprot & VPROT_WRITECOPY) return STATUS_INVALID_PAGE_PROTECTION;
     vprot |= VPROT_VALLOC;
     if (type & MEM_COMMIT) vprot |= VPROT_COMMITTED;
@@ -2087,7 +2093,7 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
         /* Make sure all the pages are committed */
         if (get_committed_size( view, base, &vprot ) >= size && (vprot & VPROT_COMMITTED))
         {
-            if (!(status = get_vprot_flags( new_prot, &new_vprot )))
+            if (!(status = get_vprot_flags( new_prot, &new_vprot, view->protect & VPROT_IMAGE )))
             {
                 if ((new_vprot & VPROT_WRITECOPY) && (view->protect & VPROT_VALLOC))
                     status = STATUS_INVALID_PAGE_PROTECTION;
@@ -2392,7 +2398,7 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
 
     if (len > MAX_PATH*sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
 
-    if ((ret = get_vprot_flags( protect, &vprot ))) return ret;
+    if ((ret = get_vprot_flags( protect, &vprot, sec_flags & SEC_IMAGE ))) return ret;
 
     objattr.rootdir = wine_server_obj_handle( attr ? attr->RootDirectory : 0 );
     objattr.sd_len = 0;
@@ -2602,7 +2608,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
-    get_vprot_flags( protect, &vprot );
+    get_vprot_flags( protect, &vprot, map_vprot & VPROT_IMAGE );
     vprot |= (map_vprot & VPROT_COMMITTED);
     res = map_view( &view, *addr_ptr, size, mask, FALSE, vprot );
     if (res)

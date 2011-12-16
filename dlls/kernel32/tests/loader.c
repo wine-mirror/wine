@@ -647,9 +647,6 @@ static void test_VirtualProtect(void *base, void *section)
             ok(ret, "VirtualQuery failed %d\n", GetLastError());
             ok(info.BaseAddress == section, "%d: got %p != expected %p\n", i, info.BaseAddress, section);
             ok(info.RegionSize == si.dwPageSize, "%d: got %#lx != expected %#x\n", i, info.RegionSize, si.dwPageSize);
-            if (info.Protect != td[i].prot_get)
-            todo_wine ok(info.Protect == td[i].prot_get, "%d: got %#x != expected %#x\n", i, info.Protect, td[i].prot_get);
-            else
             ok(info.Protect == td[i].prot_get, "%d: got %#x != expected %#x\n", i, info.Protect, td[i].prot_get);
             ok(info.AllocationBase == base, "%d: %p != %p\n", i, info.AllocationBase, base);
             ok(info.AllocationProtect == PAGE_EXECUTE_WRITECOPY, "%d: %#x != PAGE_EXECUTE_WRITECOPY\n", i, info.AllocationProtect);
@@ -667,12 +664,7 @@ static void test_VirtualProtect(void *base, void *section)
         ret = VirtualProtect(section, si.dwPageSize, PAGE_NOACCESS, &old_prot);
         ok(ret, "%d: VirtualProtect error %d\n", i, GetLastError());
         if (td[i].prot_get)
-        {
-            if (old_prot != td[i].prot_get)
-            todo_wine ok(old_prot == td[i].prot_get, "%d: got %#x != expected %#x\n", i, old_prot, td[i].prot_get);
-            else
             ok(old_prot == td[i].prot_get, "%d: got %#x != expected %#x\n", i, old_prot, td[i].prot_get);
-        }
         else
             ok(old_prot == PAGE_NOACCESS, "%d: got %#x != expected PAGE_NOACCESS\n", i, old_prot);
     }
