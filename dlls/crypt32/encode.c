@@ -185,7 +185,7 @@ BOOL WINAPI CRYPT_AsnEncodeSequence(DWORD dwCertEncodingType,
     DWORD i, dataLen = 0;
 
     TRACE("%p, %d, %08x, %p, %p, %d\n", items, cItem, dwFlags, pEncodePara,
-     pbEncoded, *pcbEncoded);
+     pbEncoded, pbEncoded ? *pcbEncoded : 0);
     for (i = 0, ret = TRUE; ret && i < cItem; i++)
     {
         ret = items[i].encodeFunc(dwCertEncodingType, NULL,
@@ -580,7 +580,7 @@ static BOOL CRYPT_AsnEncodeCRLEntry(const CRL_ENTRY *entry,
     DWORD cItem = 2;
     BOOL ret;
 
-    TRACE("%p, %p, %p\n", entry, pbEncoded, pcbEncoded);
+    TRACE("%p, %p, %d\n", entry, pbEncoded, pbEncoded ? *pcbEncoded : 0);
 
     if (entry->cExtension)
     {
@@ -736,7 +736,7 @@ static BOOL CRYPT_AsnEncodeExtension(CERT_EXTENSION *ext, BYTE *pbEncoded,
     };
     DWORD cItem = 1;
 
-    TRACE("%p, %p, %d\n", ext, pbEncoded, *pcbEncoded);
+    TRACE("%p, %p, %d\n", ext, pbEncoded, pbEncoded ? *pcbEncoded : 0);
 
     if (ext->fCritical)
     {
@@ -3194,7 +3194,7 @@ BOOL WINAPI CRYPT_AsnEncodeOctets(DWORD dwCertEncodingType,
         DWORD bytesNeeded, lenBytes;
 
         TRACE("(%d, %p), %08x, %p, %p, %d\n", blob->cbData, blob->pbData,
-         dwFlags, pEncodePara, pbEncoded, *pcbEncoded);
+         dwFlags, pEncodePara, pbEncoded, pbEncoded ? *pcbEncoded : 0);
 
         CRYPT_EncodeLen(blob->cbData, NULL, &lenBytes);
         bytesNeeded = 1 + lenBytes + blob->cbData;
