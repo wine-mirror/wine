@@ -2531,7 +2531,6 @@ done:
 INT WINAPI
 ImageList_ReplaceIcon (HIMAGELIST himl, INT nIndex, HICON hIcon)
 {
-    HDC     hdcImage;
     HICON   hBestFitIcon;
     ICONINFO  ii;
     BITMAP  bmp;
@@ -2563,23 +2562,6 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT nIndex, HICON hIcon)
     if (!hBestFitIcon)
         return -1;
 
-    ret = GetIconInfo (hBestFitIcon, &ii);
-    if (!ret) {
-        DestroyIcon(hBestFitIcon);
-        return -1;
-    }
-
-    ret = GetObjectW (ii.hbmMask, sizeof(BITMAP), &bmp);
-    if (!ret) {
-        ERR("couldn't get mask bitmap info\n");
-        if (ii.hbmColor)
-            DeleteObject (ii.hbmColor);
-        if (ii.hbmMask)
-            DeleteObject (ii.hbmMask);
-        DestroyIcon(hBestFitIcon);
-        return -1;
-    }
-
     if (nIndex == -1) {
         if (himl->cCurImage + 1 > himl->cMaxImage)
             IMAGELIST_InternalExpandBitmaps(himl, 1);
@@ -2588,13 +2570,11 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT nIndex, HICON hIcon)
         himl->cCurImage++;
     }
 
-    hdcImage = CreateCompatibleDC (0);
-    TRACE("hdcImage=%p\n", hdcImage);
-    if (hdcImage == 0)
-	ERR("invalid hdcImage!\n");
-
-    if (himl->has_alpha)
+    if (himl->has_alpha && GetIconInfo (hBestFitIcon, &ii))
     {
+        HDC hdcImage = CreateCompatibleDC( 0 );
+        GetObjectW (ii.hbmMask, sizeof(BITMAP), &bmp);
+
         if (!ii.hbmColor)
         {
             UINT height = bmp.bmHeight / 2;
@@ -2606,48 +2586,38 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT nIndex, HICON hIcon)
             ret = add_with_alpha( himl, hdcImage, nIndex, 1, bmp.bmWidth, height, color, ii.hbmMask );
             DeleteDC( hdcMask );
             DeleteObject( color );
-            if (ret) goto done;
         }
-        else if (add_with_alpha( himl, hdcImage, nIndex, 1, bmp.bmWidth, bmp.bmHeight,
-                                 ii.hbmColor, ii.hbmMask )) goto done;
+        else ret = add_with_alpha( himl, hdcImage, nIndex, 1, bmp.bmWidth, bmp.bmHeight,
+                                   ii.hbmColor, ii.hbmMask );
+
+        DeleteDC( hdcImage );
+        DeleteObject (ii.hbmMask);
+        if (ii.hbmColor) DeleteObject (ii.hbmColor);
+        if (ret) goto done;
     }
 
     imagelist_point_from_index(himl, nIndex, &pt);
 
-    SetTextColor(himl->hdcImage, RGB(0,0,0));
-    SetBkColor  (himl->hdcImage, RGB(255,255,255));
-
-    if (ii.hbmColor)
+    if (himl->hbmMask)
     {
-        SelectObject (hdcImage, ii.hbmColor);
-        StretchBlt (himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy,
-                    hdcImage, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
-        if (himl->hbmMask)
-        {
-            SelectObject (hdcImage, ii.hbmMask);
-            StretchBlt (himl->hdcMask, pt.x, pt.y, himl->cx, himl->cy,
-                        hdcImage, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
-        }
+        DrawIconEx( himl->hdcImage, pt.x, pt.y, hBestFitIcon, himl->cx, himl->cy, 0, 0, DI_IMAGE );
+        PatBlt( himl->hdcMask, pt.x, pt.y, himl->cx, himl->cy, WHITENESS );
+        DrawIconEx( himl->hdcMask, pt.x, pt.y, hBestFitIcon, himl->cx, himl->cy, 0, 0, DI_MASK );
     }
     else
     {
-        UINT height = bmp.bmHeight / 2;
-        SelectObject (hdcImage, ii.hbmMask);
-        StretchBlt (himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy,
-                    hdcImage, 0, height, bmp.bmWidth, height, SRCCOPY);
-        if (himl->hbmMask)
-            StretchBlt (himl->hdcMask, pt.x, pt.y, himl->cx, himl->cy,
-                        hdcImage, 0, 0, bmp.bmWidth, height, SRCCOPY);
+        COLORREF color = himl->clrBk != CLR_NONE ? himl->clrBk : comctl32_color.clrWindow;
+        HBRUSH brush = CreateSolidBrush( GetNearestColor( himl->hdcImage, color ));
+
+        SelectObject( himl->hdcImage, brush );
+        PatBlt( himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy, PATCOPY );
+        SelectObject( himl->hdcImage, GetStockObject(BLACK_BRUSH) );
+        DeleteObject( brush );
+        DrawIconEx( himl->hdcImage, pt.x, pt.y, hBestFitIcon, himl->cx, himl->cy, 0, 0, DI_NORMAL );
     }
 
 done:
     DestroyIcon(hBestFitIcon);
-    if (hdcImage)
-	DeleteDC (hdcImage);
-    if (ii.hbmColor)
-	DeleteObject (ii.hbmColor);
-    if (ii.hbmMask)
-	DeleteObject (ii.hbmMask);
 
     TRACE("Insert index = %d, himl->cCurImage = %d\n", nIndex, himl->cCurImage);
     return nIndex;
