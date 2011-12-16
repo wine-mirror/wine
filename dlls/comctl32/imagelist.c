@@ -3093,54 +3093,28 @@ static HBITMAP ImageList_CreateImage(HDC hdc, HIMAGELIST himl, UINT count)
 
     if ((ilc >= ILC_COLOR4 && ilc <= ILC_COLOR32) || ilc == ILC_COLOR)
     {
-        VOID* bits;
-        BITMAPINFO *bmi;
+        char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+        BITMAPINFO *bmi = (BITMAPINFO *)buffer;
 
         TRACE("Creating DIBSection %d x %d, %d Bits per Pixel\n",
               sz.cx, sz.cy, himl->uBitsPixel);
 
-	if (himl->uBitsPixel <= ILC_COLOR8)
-	{
-	    LPPALETTEENTRY pal;
-	    ULONG i, colors;
-	    BYTE temp;
-
-	    colors = 1 << himl->uBitsPixel;
-	    bmi = Alloc(sizeof(BITMAPINFOHEADER) +
-	                    sizeof(PALETTEENTRY) * colors);
-
-	    pal = (LPPALETTEENTRY)bmi->bmiColors;
-	    GetPaletteEntries(GetStockObject(DEFAULT_PALETTE), 0, colors, pal);
-
-	    /* Swap colors returned by GetPaletteEntries so we can use them for
-	     * CreateDIBSection call. */
-	    for (i = 0; i < colors; i++)
-	    {
-	        temp = pal[i].peBlue;
-	        bmi->bmiColors[i].rgbRed = pal[i].peRed;
-	        bmi->bmiColors[i].rgbBlue = temp;
-	    }
-	}
-	else
-	{
-	    bmi = Alloc(sizeof(BITMAPINFOHEADER));
-	}
-
+        memset( buffer, 0, sizeof(buffer) );
 	bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	bmi->bmiHeader.biWidth = sz.cx;
 	bmi->bmiHeader.biHeight = sz.cy;
 	bmi->bmiHeader.biPlanes = 1;
 	bmi->bmiHeader.biBitCount = himl->uBitsPixel;
 	bmi->bmiHeader.biCompression = BI_RGB;
-	bmi->bmiHeader.biSizeImage = 0;
-	bmi->bmiHeader.biXPelsPerMeter = 0;
-	bmi->bmiHeader.biYPelsPerMeter = 0;
-	bmi->bmiHeader.biClrUsed = 0;
-	bmi->bmiHeader.biClrImportant = 0;
 
-	hbmNewBitmap = CreateDIBSection(hdc, bmi, DIB_RGB_COLORS, &bits, 0, 0);
-
-	Free (bmi);
+	if (himl->uBitsPixel <= ILC_COLOR8)
+	{
+            /* retrieve the default color map */
+            HBITMAP tmp = CreateBitmap( 1, 1, 1, 1, NULL );
+            GetDIBits( hdc, tmp, 0, 0, NULL, bmi, DIB_RGB_COLORS );
+            DeleteObject( tmp );
+	}
+	hbmNewBitmap = CreateDIBSection(hdc, bmi, DIB_RGB_COLORS, NULL, 0, 0);
     }
     else /*if (ilc == ILC_COLORDDB)*/
     {
