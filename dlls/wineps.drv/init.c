@@ -385,6 +385,7 @@ static BOOL PSDRV_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
 
     if (!pi) return FALSE;
     if (!(physDev = create_psdrv_physdev( pi ))) return FALSE;
+    PSDRV_MergeDevmodes( physDev->Devmode, orig_dev->Devmode, pi );
     PSDRV_UpdateDevCaps(physDev);
     SelectObject( hdc, PSDRV_DefaultFont );
     push_dc_driver( pdev, &physDev->dev, &psdrv_funcs );
