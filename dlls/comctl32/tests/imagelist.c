@@ -771,7 +771,8 @@ static void check_ilhead_data(const char *ilh_data, INT cx, INT cy, INT cur, INT
     ok(ilh->cx == cx, "wrong cx %d (expected %d)\n", ilh->cx, cx);
     ok(ilh->cy == cy, "wrong cy %d (expected %d)\n", ilh->cy, cy);
     ok(ilh->bkcolor == CLR_NONE, "wrong bkcolor %x\n", ilh->bkcolor);
-    ok(ilh->flags == flags, "wrong flags %04x\n", ilh->flags);
+    ok(ilh->flags == flags || broken(!(ilh->flags & 0xfe) && (flags & 0xfe) == ILC_COLOR4),  /* <= w2k */
+       "wrong flags %04x\n", ilh->flags);
     ok(ilh->ovls[0] == -1, "wrong ovls[0] %04x\n", ilh->ovls[0]);
     ok(ilh->ovls[1] == -1, "wrong ovls[1] %04x\n", ilh->ovls[1]);
     ok(ilh->ovls[2] == -1, "wrong ovls[2] %04x\n", ilh->ovls[2]);
