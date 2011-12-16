@@ -708,7 +708,7 @@ static inline BYTE get_cache_pitch_family(SCRIPT_CACHE *psc)
     return ((ScriptCache *)*psc)->tm.tmPitchAndFamily;
 }
 
-static inline WORD get_cache_glyph(SCRIPT_CACHE *psc, WCHAR c)
+static inline WORD get_cache_glyph(SCRIPT_CACHE *psc, DWORD c)
 {
     WORD *block = ((ScriptCache *)*psc)->glyphs[c >> GLYPH_BLOCK_SHIFT];
 
@@ -2631,8 +2631,9 @@ HRESULT WINAPI ScriptShapeOpenType( HDC hdc, SCRIPT_CACHE *psc,
                                     SCRIPT_GLYPHPROP *pOutGlyphProps, int *pcGlyphs)
 {
     HRESULT hr;
-    unsigned int i;
+    unsigned int i,g;
     BOOL rtl;
+    int cluster;
 
     TRACE("(%p, %p, %p, %s, %s, %p, %p, %d, %s, %d, %d, %p, %p, %p, %p, %p )\n",
      hdc, psc, psa,
@@ -2688,35 +2689,59 @@ HRESULT WINAPI ScriptShapeOpenType( HDC hdc, SCRIPT_CACHE *psc,
 
         rChars = heap_alloc(sizeof(WCHAR) * cChars);
         if (!rChars) return E_OUTOFMEMORY;
-        for (i = 0; i < cChars; i++)
+        for (i = 0, g = 0, cluster = 0; i < cChars; i++)
         {
             int idx = i;
-            WCHAR chInput;
+            DWORD chInput;
+
             if (rtl) idx = cChars - 1 - i;
-            if (psa->fRTL)
-                chInput = mirror_char(pwcChars[idx]);
-            else
-                chInput = pwcChars[idx];
-            /* special case for tabs */
-            if (chInput == 0x0009)
-                chInput = 0x0020;
-            if (!(pwOutGlyphs[i] = get_cache_glyph(psc, chInput)))
+            if (!cluster)
             {
-                WORD glyph;
-                if (!hdc)
+                chInput = decode_surrogate_pair(pwcChars, idx, cChars);
+                if (!chInput)
                 {
-                    heap_free(rChars);
-                    return E_PENDING;
+                    if (psa->fRTL)
+                        chInput = mirror_char(pwcChars[idx]);
+                    else
+                        chInput = pwcChars[idx];
+                    /* special case for tabs */
+                    if (chInput == 0x0009)
+                        chInput = 0x0020;
+                    rChars[i] = chInput;
                 }
-                if (GetGlyphIndicesW(hdc, &chInput, 1, &glyph, 0) == GDI_ERROR)
+                else
                 {
-                    heap_free(rChars);
-                    return S_FALSE;
+                    rChars[i] = pwcChars[idx];
+                    rChars[i+1] = pwcChars[(rtl)?idx-1:idx+1];
+                    cluster = 1;
                 }
-                pwOutGlyphs[i] = set_cache_glyph(psc, chInput, glyph);
+                if (!(pwOutGlyphs[g] = get_cache_glyph(psc, chInput)))
+                {
+                    WORD glyph;
+                    if (!hdc)
+                    {
+                        heap_free(rChars);
+                        return E_PENDING;
+                    }
+                    if (CMAP_GetGlyphIndex(hdc, (ScriptCache *)*psc, chInput, &glyph, 0) == GDI_ERROR)
+                    {
+                        heap_free(rChars);
+                        return S_FALSE;
+                    }
+                    pwOutGlyphs[g] = set_cache_glyph(psc, chInput, glyph);
+                }
+                g++;
             }
-            rChars[i] = chInput;
+            else
+            {
+                int k;
+                cluster--;
+                pwLogClust[idx] = (rtl)?pwLogClust[idx+1]:pwLogClust[idx-1];
+                for (k = (rtl)?idx-1:idx+1; k >= 0 && k < cChars; (rtl)?k--:k++)
+                    pwLogClust[k]--;
+            }
         }
+        *pcGlyphs = g;
 
         SHAPE_ContextualShaping(hdc, (ScriptCache *)*psc, psa, rChars, cChars, pwOutGlyphs, pcGlyphs, cMaxGlyphs, pwLogClust);
         SHAPE_ApplyDefaultOpentypeFeatures(hdc, (ScriptCache *)*psc, psa, pwOutGlyphs, pcGlyphs, cMaxGlyphs, cChars, pwLogClust);
