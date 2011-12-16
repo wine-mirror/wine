@@ -1333,7 +1333,7 @@ static LPENUMGUID COMCAT_CATID_IEnumGUID_Construct(
 
     This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CATID_IEnumGUIDImpl));
     if (This) {
-	WCHAR prefix[6] = { 'C', 'L', 'S', 'I', 'D', '\\' };
+	WCHAR prefix[] = { 'C', 'L', 'S', 'I', 'D', '\\' };
 
 	This->lpVtbl = &COMCAT_CATID_IEnumGUID_Vtbl;
 	memcpy(This->keyname, prefix, sizeof(prefix));
