@@ -56,7 +56,7 @@ static inline HRESULT stat_eval(script_ctx_t *ctx, statement_t *stat, return_typ
 
 static inline HRESULT expr_eval(script_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
-    return expr->eval(ctx, expr, flags, ei, ret);
+    return compiled_expression_eval(ctx, expr, flags, ei, ret);
 }
 
 static HRESULT stack_push(exec_ctx_t *ctx, VARIANT *v)
@@ -3168,12 +3168,11 @@ HRESULT compiled_expression_eval(script_ctx_t *ctx, expression_t *expr, DWORD fl
 
     TRACE("\n");
 
-    hres = compile_subscript(ctx->exec_ctx->parser, expr, !(flags & EXPR_NOVAL), &expr->instr_off);
-    if(FAILED(hres))
-        return hres;
+    if(expr->instr_off == -1) {
+        hres = compile_subscript(ctx->exec_ctx->parser, expr, !(flags & EXPR_NOVAL), &expr->instr_off);
+        if(FAILED(hres))
+            return hres;
+    }
 
-    if(expr->eval == compiled_expression_eval)
-        expr->eval = interp_expression_eval;
-
-    return expr->eval(ctx, expr, flags, ei, ret);
+    return interp_expression_eval(ctx, expr, flags, ei, ret);
 }

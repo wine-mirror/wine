@@ -829,7 +829,6 @@ static HRESULT compile_expression_noret(compiler_ctx_t *ctx, expression_t *expr,
     case EXPR_BXOR:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_xor);
     default:
-        assert(expr->eval != compiled_expression_eval);
         return compile_interp_fallback(ctx, expr);
     }
 

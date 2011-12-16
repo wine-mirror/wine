@@ -1303,73 +1303,12 @@ static expression_t *new_function_expression(parser_ctx_t *ctx, const WCHAR *ide
     return &ret->expr;
 }
 
-static const expression_eval_t expression_eval_table[] = {
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval,
-   compiled_expression_eval
-};
-
 static void *new_expression(parser_ctx_t *ctx, expression_type_t type, size_t size)
 {
     expression_t *ret = parser_alloc(ctx, size ? size : sizeof(*ret));
 
     ret->type = type;
-    ret->eval = expression_eval_table[type];
+    ret->instr_off = -1;
 
     return ret;
 }

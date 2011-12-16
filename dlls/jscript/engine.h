@@ -469,11 +469,8 @@ typedef enum {
      EXPR_LITERAL
 } expression_type_t;
 
-typedef HRESULT (*expression_eval_t)(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*);
-
 struct _expression_t {
     expression_type_t type;
-    expression_eval_t eval;
     unsigned instr_off;
 };
 
