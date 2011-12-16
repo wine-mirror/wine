@@ -1001,6 +1001,32 @@ static void set_size_hints( Display *display, struct x11drv_win_data *data, DWOR
 
 
 /***********************************************************************
+ *              set_mwm_hints
+ */
+static void set_mwm_hints( Display *display, struct x11drv_win_data *data, DWORD style, DWORD ex_style )
+{
+    MwmHints mwm_hints;
+
+    mwm_hints.flags = MWM_HINTS_FUNCTIONS | MWM_HINTS_DECORATIONS;
+    mwm_hints.decorations = get_mwm_decorations( data, style, ex_style );
+    mwm_hints.functions = MWM_FUNC_MOVE;
+    if (is_window_resizable( data, style )) mwm_hints.functions |= MWM_FUNC_RESIZE;
+    if (!(style & WS_DISABLED))
+    {
+        if (style & WS_MINIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MINIMIZE;
+        if (style & WS_MAXIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MAXIMIZE;
+        if (style & WS_SYSMENU)     mwm_hints.functions |= MWM_FUNC_CLOSE;
+    }
+    TRACE( "%p setting mwm hints to %lx,%lx (style %x exstyle %x)\n",
+           data->hwnd, mwm_hints.decorations, mwm_hints.functions, style, ex_style );
+
+    XChangeProperty( display, data->whole_window, x11drv_atom(_MOTIF_WM_HINTS),
+                     x11drv_atom(_MOTIF_WM_HINTS), 32, PropModeReplace,
+                     (unsigned char*)&mwm_hints, sizeof(mwm_hints)/sizeof(long) );
+}
+
+
+/***********************************************************************
  *              get_process_name
  *
  * get the name of the current process for setting class hints
@@ -1129,7 +1155,6 @@ static void set_wm_hints( Display *display, struct x11drv_win_data *data )
     Window group_leader = data->whole_window;
     Window owner_win = 0;
     Atom window_type;
-    MwmHints mwm_hints;
     DWORD style, ex_style;
     HWND owner;
 
@@ -1154,6 +1179,7 @@ static void set_wm_hints( Display *display, struct x11drv_win_data *data )
 
     /* size hints */
     set_size_hints( display, data, style );
+    set_mwm_hints( display, data, style, ex_style );
 
     /* Only use dialog type for owned popups. Metacity allows making fullscreen
      * only normal windows, and doesn't handle correctly TRANSIENT_FOR hint for
@@ -1164,21 +1190,6 @@ static void set_wm_hints( Display *display, struct x11drv_win_data *data )
 
     XChangeProperty(display, data->whole_window, x11drv_atom(_NET_WM_WINDOW_TYPE),
 		    XA_ATOM, 32, PropModeReplace, (unsigned char*)&window_type, 1);
-
-    mwm_hints.flags = MWM_HINTS_FUNCTIONS | MWM_HINTS_DECORATIONS;
-    mwm_hints.decorations = get_mwm_decorations( data, style, ex_style );
-    mwm_hints.functions = MWM_FUNC_MOVE;
-    if (is_window_resizable( data, style )) mwm_hints.functions |= MWM_FUNC_RESIZE;
-    if (!(style & WS_DISABLED))
-    {
-        if (style & WS_MINIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MINIMIZE;
-        if (style & WS_MAXIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MAXIMIZE;
-        if (style & WS_SYSMENU)     mwm_hints.functions |= MWM_FUNC_CLOSE;
-    }
-
-    XChangeProperty( display, data->whole_window, x11drv_atom(_MOTIF_WM_HINTS),
-                     x11drv_atom(_MOTIF_WM_HINTS), 32, PropModeReplace,
-                     (unsigned char*)&mwm_hints, sizeof(mwm_hints)/sizeof(long) );
 
     /* wm hints */
     if (data->wm_hints)
@@ -1468,6 +1479,7 @@ static void sync_window_position( Display *display, struct x11drv_win_data *data
                                   const RECT *old_whole_rect, const RECT *old_client_rect )
 {
     DWORD style = GetWindowLongW( data->hwnd, GWL_STYLE );
+    DWORD ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
     XWindowChanges changes;
     unsigned int mask = 0;
 
@@ -1510,6 +1522,7 @@ static void sync_window_position( Display *display, struct x11drv_win_data *data
 
     wine_tsx11_lock();
     set_size_hints( display, data, style );
+    set_mwm_hints( display, data, style, ex_style );
     data->configure_serial = NextRequest( display );
     XReconfigureWMWindow( display, data->whole_window,
                           DefaultScreen(display), mask, &changes );
