@@ -168,11 +168,11 @@ static void test_get_atom_name(void)
 
     if (unicode_OS)
     {
-        static const WCHAR sampleW[10] = {'.','.','.','.','.','.','.','.','.','.'};
+        static const WCHAR sampleW[] = {'.','.','.','.','.','.','.','.','.','.'};
 
         for (i = 0; i < 10; i++) bufW[i] = '.';
         ok( !GlobalGetAtomNameW( atom, bufW, 0 ), "succeeded\n" );
-        ok( !memcmp( bufW, sampleW, 10 * sizeof(WCHAR) ), "should not touch buffer\n" );
+        ok( !memcmp( bufW, sampleW, sizeof(sampleW) ), "should not touch buffer\n" );
     }
 
     /* Test integer atoms */
@@ -442,11 +442,11 @@ static void test_local_get_atom_name(void)
 
     if (unicode_OS)
     {
-        static const WCHAR sampleW[10] = {'.','.','.','.','.','.','.','.','.','.'};
+        static const WCHAR sampleW[] = {'.','.','.','.','.','.','.','.','.','.'};
 
         for (i = 0; i < 10; i++) bufW[i] = '.';
         ok( !GetAtomNameW( atom, bufW, 0 ), "succeeded\n" );
-        ok( !memcmp( bufW, sampleW, 10 * sizeof(WCHAR) ), "should not touch buffer\n" );
+        ok( !memcmp( bufW, sampleW, sizeof(sampleW) ), "should not touch buffer\n" );
     }
 
     /* Test integer atoms */

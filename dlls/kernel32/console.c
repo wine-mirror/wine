@@ -2430,8 +2430,7 @@ BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
 		break;
 	    case '\t':
 	        {
-		    WCHAR tmp[8] = {' ',' ',' ',' ',' ',' ',' ',' '};
-
+		    static const WCHAR tmp[] = {' ',' ',' ',' ',' ',' ',' ',' '};
 		    if (!write_block(hConsoleOutput, &csbi, mode, tmp,
 				     ((csbi.dwCursorPosition.X + 8) & ~7) - csbi.dwCursorPosition.X))
 			goto the_end;
