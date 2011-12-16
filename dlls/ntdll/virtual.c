@@ -2079,26 +2079,30 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
 
     size = ROUND_SIZE( addr, size );
     base = ROUND_ADDR( addr, page_mask );
-    if ((status = get_vprot_flags( new_prot, &new_vprot ))) return status;
-    if (new_vprot & VPROT_WRITECOPY) return STATUS_INVALID_PAGE_PROTECTION;
-    new_vprot |= VPROT_COMMITTED;
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
-    if (!(view = VIRTUAL_FindView( base, size )))
-    {
-        status = STATUS_INVALID_PARAMETER;
-    }
-    else
+    if ((view = VIRTUAL_FindView( base, size )))
     {
         /* Make sure all the pages are committed */
         if (get_committed_size( view, base, &vprot ) >= size && (vprot & VPROT_COMMITTED))
         {
-            if (old_prot) *old_prot = VIRTUAL_GetWin32Prot( vprot );
-            if (!VIRTUAL_SetProt( view, base, size, new_vprot )) status = STATUS_ACCESS_DENIED;
+            if (!(status = get_vprot_flags( new_prot, &new_vprot )))
+            {
+                if ((new_vprot & VPROT_WRITECOPY) && (view->protect & VPROT_VALLOC))
+                    status = STATUS_INVALID_PAGE_PROTECTION;
+                else
+                {
+                    new_vprot |= VPROT_COMMITTED;
+                    if (old_prot) *old_prot = VIRTUAL_GetWin32Prot( vprot );
+                    if (!VIRTUAL_SetProt( view, base, size, new_vprot )) status = STATUS_ACCESS_DENIED;
+                }
+            }
         }
         else status = STATUS_NOT_COMMITTED;
     }
+    else status = STATUS_INVALID_PARAMETER;
+
     server_leave_uninterrupted_section( &csVirtual, &sigset );
 
     if (status == STATUS_SUCCESS)

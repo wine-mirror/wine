@@ -1787,13 +1787,6 @@ static void test_CreateFileMapping_protection(void)
         {
             if (!ret)
             {
-                /* FIXME: completely remove the condition below once Wine is fixed */
-                if (td[i].prot == PAGE_WRITECOPY)
-                {
-                todo_wine
-                    ok(ret, "%d: VirtualProtect error %d\n", i, GetLastError());
-                    continue;
-                }
                 /* win2k and XP don't support EXEC on file mappings */
                 if (td[i].prot == PAGE_EXECUTE)
                 {
@@ -1809,7 +1802,6 @@ static void test_CreateFileMapping_protection(void)
                 /* Vista+ supports PAGE_EXECUTE_WRITECOPY, earlier versions don't */
                 if (td[i].prot == PAGE_EXECUTE_WRITECOPY)
                 {
-                todo_wine
                     ok(broken(!ret), "%d: VirtualProtect doesn't support PAGE_EXECUTE_WRITECOPY\n", i);
                     continue;
                 }
@@ -1827,7 +1819,11 @@ static void test_CreateFileMapping_protection(void)
             ok(ret, "VirtualQuery failed %d\n", GetLastError());
             ok(info.BaseAddress == base, "%d: got %p != expected %p\n", i, info.BaseAddress, base);
             ok(info.RegionSize == si.dwPageSize, "%d: got %#lx != expected %#x\n", i, info.RegionSize, si.dwPageSize);
-            ok(info.Protect == prot, "%d: got %#x != expected %#x\n", i, info.Protect, prot);
+            /* FIXME: remove the condition below once Wine is fixed */
+            if (td[i].prot == PAGE_EXECUTE_WRITECOPY)
+                todo_wine ok(info.Protect == prot, "%d: got %#x != expected %#x\n", i, info.Protect, prot);
+            else
+                ok(info.Protect == prot, "%d: got %#x != expected %#x\n", i, info.Protect, prot);
             ok(info.AllocationBase == base, "%d: %p != %p\n", i, info.AllocationBase, base);
             ok(info.AllocationProtect == alloc_prot, "%d: %#x != %#x\n", i, info.AllocationProtect, alloc_prot);
             ok(info.State == MEM_COMMIT, "%d: %#x != MEM_COMMIT\n", i, info.State);
@@ -2120,13 +2116,6 @@ static void test_mapping(void)
                     if (!ret && view[j].prot == PAGE_EXECUTE_WRITECOPY)
                     {
                         ok(broken(!ret), "VirtualProtect doesn't support PAGE_EXECUTE_WRITECOPY view properly\n");
-                        continue;
-                    }
-                    /* FIXME: completely remove the condition below once Wine is fixed */
-                    if (!ret && page_prot[k] == PAGE_WRITECOPY)
-                    {
-                    todo_wine
-                        ok(ret, "VirtualProtect error %d\n", GetLastError());
                         continue;
                     }
 
