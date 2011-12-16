@@ -11788,14 +11788,6 @@ msgstr "Debug&kanalen instellen..."
 msgid "Task Manager"
 msgstr "Taakbeheer"
 
-#: taskmgr.rc:346
-msgid "Tab1"
-msgstr "Tab1"
-
-#: taskmgr.rc:353 taskmgr.rc:364 taskmgr.rc:435
-msgid "List2"
-msgstr "List2"
-
 #: taskmgr.rc:355
 msgid "&New Task..."
 msgstr "&Nieuwe taak..."

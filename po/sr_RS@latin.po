@@ -11837,15 +11837,6 @@ msgstr ""
 msgid "Task Manager"
 msgstr ""
 
-#: taskmgr.rc:346
-msgid "Tab1"
-msgstr ""
-
-#: taskmgr.rc:353 taskmgr.rc:364 taskmgr.rc:435
-#, fuzzy
-msgid "List2"
-msgstr "Spisak"
-
 #: taskmgr.rc:355
 msgid "&New Task..."
 msgstr ""

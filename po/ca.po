@@ -11783,14 +11783,6 @@ msgstr "Edita les Canals de Depuració..."
 msgid "Task Manager"
 msgstr "Administrador de Tasques"
 
-#: taskmgr.rc:346
-msgid "Tab1"
-msgstr ""
-
-#: taskmgr.rc:353 taskmgr.rc:364 taskmgr.rc:435
-msgid "List2"
-msgstr ""
-
 #: taskmgr.rc:355
 msgid "&New Task..."
 msgstr "Tasca &Nova..."
