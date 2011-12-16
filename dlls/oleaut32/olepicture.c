@@ -141,6 +141,7 @@ typedef struct OLEPictureImpl {
 
     BOOL keepOrigFormat;
     HDC	hDCCur;
+    HBITMAP stock_bitmap;
 
   /* Bitmap transparency mask */
     HBITMAP hbmMask;
@@ -219,6 +220,7 @@ static void OLEPictureImpl_SetBitmap(OLEPictureImpl *This)
 
   This->himetricWidth  = xpixels_to_himetric(bm.bmWidth, hdcRef);
   This->himetricHeight = ypixels_to_himetric(bm.bmHeight, hdcRef);
+  This->stock_bitmap = GetCurrentObject( hdcRef, OBJ_BITMAP );
 
   DeleteDC(hdcRef);
 }
@@ -769,10 +771,10 @@ static HRESULT WINAPI OLEPictureImpl_SelectPicture(IPicture *iface,
   OLEPictureImpl *This = impl_from_IPicture(iface);
   TRACE("(%p)->(%p, %p, %p)\n", This, hdcIn, phdcOut, phbmpOut);
   if (This->desc.picType == PICTYPE_BITMAP) {
-      SelectObject(hdcIn,This->desc.u.bmp.hbitmap);
-
       if (phdcOut)
 	  *phdcOut = This->hDCCur;
+      if (This->hDCCur) SelectObject(This->hDCCur,This->stock_bitmap);
+      if (hdcIn) SelectObject(hdcIn,This->desc.u.bmp.hbitmap);
       This->hDCCur = hdcIn;
       if (phbmpOut)
 	  *phbmpOut = HandleToUlong(This->desc.u.bmp.hbitmap);
