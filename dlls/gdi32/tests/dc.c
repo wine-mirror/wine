@@ -263,13 +263,98 @@ static void test_GdiConvertToDevmodeW(void)
     HeapFree(GetProcessHeap(), 0, dmW);
 }
 
+static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr )
+{
+    static const int caps[] =
+    {
+        DRIVERVERSION,
+        TECHNOLOGY,
+        HORZSIZE,
+        VERTSIZE,
+        HORZRES,
+        VERTRES,
+        BITSPIXEL,
+        PLANES,
+        NUMBRUSHES,
+        NUMPENS,
+        NUMMARKERS,
+        NUMFONTS,
+        NUMCOLORS,
+        PDEVICESIZE,
+        CURVECAPS,
+        LINECAPS,
+        POLYGONALCAPS,
+        TEXTCAPS,
+        CLIPCAPS,
+        RASTERCAPS,
+        ASPECTX,
+        ASPECTY,
+        ASPECTXY,
+        LOGPIXELSX,
+        LOGPIXELSY,
+        SIZEPALETTE,
+        NUMRESERVED,
+        COLORRES,
+        PHYSICALWIDTH,
+        PHYSICALHEIGHT,
+        PHYSICALOFFSETX,
+        PHYSICALOFFSETY,
+        SCALINGFACTORX,
+        SCALINGFACTORY,
+        VREFRESH,
+        DESKTOPVERTRES,
+        DESKTOPHORZRES,
+        BLTALIGNMENT,
+        SHADEBLENDCAPS,
+        COLORMGMTCAPS
+    };
+    unsigned int i;
+
+    if (GetObjectType( hdc ) == OBJ_METADC)
+        for (i = 0; i < sizeof(caps)/sizeof(caps[0]); i++)
+            ok( GetDeviceCaps( hdc, caps[i] ) == (caps[i] == TECHNOLOGY ? DT_METAFILE : 0),
+                "wrong caps on %s for %u: %u\n", descr, caps[i],
+                GetDeviceCaps( hdc, caps[i] ) );
+    else
+        for (i = 0; i < sizeof(caps)/sizeof(caps[0]); i++)
+            ok( GetDeviceCaps( hdc, caps[i] ) == GetDeviceCaps( ref_dc, caps[i] ),
+                "mismatched caps on %s for %u: %u/%u\n", descr, caps[i],
+                GetDeviceCaps( hdc, caps[i] ), GetDeviceCaps( ref_dc, caps[i] ) );
+
+    if (GetObjectType( hdc ) == OBJ_MEMDC)
+    {
+        char buffer[sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD)];
+        BITMAPINFO *info = (BITMAPINFO *)buffer;
+        HBITMAP dib, old;
+
+        memset( buffer, 0, sizeof(buffer) );
+        info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        info->bmiHeader.biWidth = 16;
+        info->bmiHeader.biHeight = 16;
+        info->bmiHeader.biPlanes = 1;
+        info->bmiHeader.biBitCount = 8;
+        info->bmiHeader.biCompression = BI_RGB;
+        dib = CreateDIBSection( ref_dc, info, DIB_RGB_COLORS, NULL, NULL, 0 );
+        old = SelectObject( hdc, dib );
+
+        for (i = 0; i < sizeof(caps)/sizeof(caps[0]); i++)
+            ok( GetDeviceCaps( hdc, caps[i] ) == GetDeviceCaps( ref_dc, caps[i] ),
+                "mismatched caps on %s and DIB for %u: %u/%u\n", descr, caps[i],
+                GetDeviceCaps( hdc, caps[i] ), GetDeviceCaps( ref_dc, caps[i] ) );
+
+        SelectObject( hdc, old );
+        DeleteObject( dib );
+    }
+}
+
 static void test_CreateCompatibleDC(void)
 {
     BOOL bRet;
-    HDC hdc, hNewDC, hdcMetafile;
+    HDC hdc, hNewDC, hdcMetafile, screen_dc;
     HBITMAP bitmap;
     INT caps;
 
+    screen_dc = GetDC( 0 );
     bitmap = CreateBitmap( 10, 10, 1, 1, NULL );
 
     /* Create a DC compatible with the screen */
@@ -278,6 +363,8 @@ static void test_CreateCompatibleDC(void)
     ok( SelectObject( hdc, bitmap ) != 0, "SelectObject failed\n" );
     caps = GetDeviceCaps( hdc, TECHNOLOGY );
     ok( caps == DT_RASDISPLAY, "wrong caps %u\n", caps );
+
+    test_device_caps( hdc, screen_dc, "display dc" );
 
     /* Delete this DC, this should succeed */
     bRet = DeleteDC(hdc);
@@ -307,9 +394,11 @@ static void test_CreateCompatibleDC(void)
     ok(hNewDC == NULL, "CreateCompatibleDC succeeded\n");
     caps = GetDeviceCaps( hdcMetafile, TECHNOLOGY );
     ok( caps == DT_METAFILE, "wrong caps %u\n", caps );
+    test_device_caps( hdcMetafile, screen_dc, "metafile dc" );
     DeleteMetaFile( CloseMetaFile( hdcMetafile ));
 
     DeleteObject( bitmap );
+    ReleaseDC( 0, screen_dc );
 }
 
 static void test_DC_bitmap(void)
@@ -855,6 +944,8 @@ static void test_printer_dc(void)
 
     ret = GetDeviceCaps( display_memdc, TECHNOLOGY );
     ok( ret == DT_RASDISPLAY, "wrong type %u\n", ret );
+
+    test_device_caps( memdc, hdc, "printer dc" );
 
     bmp = CreateBitmap( 100, 100, 1, GetDeviceCaps( hdc, BITSPIXEL ), NULL );
     orig = SelectObject( memdc, bmp );
