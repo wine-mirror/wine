@@ -927,7 +927,7 @@ static BOOL ME_StreamOutText(ME_TextEditor *editor, ME_OutStream *pStream,
 
     if (!editor->bEmulateVersion10 && cursor.pRun->member.run.nFlags & MERF_ENDPARA)
     {
-      static const WCHAR szEOL[2] = { '\r', '\n' };
+      static const WCHAR szEOL[] = { '\r', '\n' };
 
       /* richedit 2.0 - all line breaks are \r\n */
       if (dwFormat & SF_UNICODE)
