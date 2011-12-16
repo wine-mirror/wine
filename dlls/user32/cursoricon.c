@@ -2288,15 +2288,15 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
 
     if (frame->alpha && (flags & DI_IMAGE))
     {
-        BOOL is_mono = FALSE;
+        BOOL alpha_blend = TRUE;
 
         if (GetObjectType( hdc_dest ) == OBJ_MEMDC)
         {
             BITMAP bm;
             HBITMAP bmp = GetCurrentObject( hdc_dest, OBJ_BITMAP );
-            is_mono = GetObjectW( bmp, sizeof(bm), &bm ) && bm.bmBitsPixel == 1;
+            alpha_blend = GetObjectW( bmp, sizeof(bm), &bm ) && bm.bmBitsPixel > 8;
         }
-        if (!is_mono)
+        if (alpha_blend)
         {
             BLENDFUNCTION pixelblend = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
             SelectObject( hMemDC, frame->alpha );
