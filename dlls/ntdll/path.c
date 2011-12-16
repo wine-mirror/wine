@@ -269,12 +269,12 @@ DOS_PATHNAME_TYPE WINAPI RtlDetermineDosPathNameType_U( PCWSTR path )
 ULONG WINAPI RtlIsDosDeviceName_U( PCWSTR dos_name )
 {
     static const WCHAR consoleW[] = {'\\','\\','.','\\','C','O','N',0};
-    static const WCHAR auxW[3] = {'A','U','X'};
-    static const WCHAR comW[3] = {'C','O','M'};
-    static const WCHAR conW[3] = {'C','O','N'};
-    static const WCHAR lptW[3] = {'L','P','T'};
-    static const WCHAR nulW[3] = {'N','U','L'};
-    static const WCHAR prnW[3] = {'P','R','N'};
+    static const WCHAR auxW[] = {'A','U','X'};
+    static const WCHAR comW[] = {'C','O','M'};
+    static const WCHAR conW[] = {'C','O','N'};
+    static const WCHAR lptW[] = {'L','P','T'};
+    static const WCHAR nulW[] = {'N','U','L'};
+    static const WCHAR prnW[] = {'P','R','N'};
 
     const WCHAR *start, *end, *p;
 
@@ -343,7 +343,7 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PCWSTR dos_path,
                                              PWSTR* file_part,
                                              CURDIR* cd)
 {
-    static const WCHAR LongFileNamePfxW[4] = {'\\','\\','?','\\'};
+    static const WCHAR LongFileNamePfxW[] = {'\\','\\','?','\\'};
     ULONG sz, offset;
     WCHAR local[MAX_PATH];
     LPWSTR ptr;
