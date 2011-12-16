@@ -44,8 +44,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(uniscribe);
 typedef struct _scriptRange
 {
     WORD script;
-    WORD rangeFirst;
-    WORD rangeLast;
+    DWORD rangeFirst;
+    DWORD rangeLast;
     WORD numericScript;
     WORD punctScript;
 } scriptRange;
@@ -774,30 +774,50 @@ static WCHAR mirror_char( WCHAR ch )
     return ch + wine_mirror_map[wine_mirror_map[ch >> 8] + (ch & 0xff)];
 }
 
-static WORD get_char_script( WCHAR ch)
+static inline DWORD decode_surrogate_pair(LPCWSTR str, INT index, INT end)
+{
+    if (index < end-1 && IS_SURROGATE_PAIR(str[index],str[index+1]))
+    {
+        DWORD ch = 0x10000 + ((str[index] - 0xd800) << 10) + (str[index+1] - 0xdc00);
+        TRACE("Surrogate Pair %x %x => %x\n",str[index], str[index+1], ch);
+        return ch;
+    }
+    return 0;
+}
+
+static WORD get_char_script( LPCWSTR str, INT index, INT end, INT *consumed)
 {
     static const WCHAR latin_punc[] = {'#','$','&','\'',',',';','<','>','?','@','\\','^','_','`','{','|','}','~', 0x00a0, 0};
     WORD type = 0;
+    DWORD ch;
     int i;
 
-    if (ch == 0xc || ch == 0x20 || ch == 0x202f)
+    *consumed = 1;
+
+    if (str[index] == 0xc || str[index] == 0x20 || str[index] == 0x202f)
         return Script_CR;
 
     /* These punctuation are separated out as Latin punctuation */
-    if (strchrW(latin_punc,ch))
+    if (strchrW(latin_punc,str[index]))
         return Script_Punctuation2;
 
     /* These chars are itemized as Punctuation by Windows */
-    if (ch == 0x2212 || ch == 0x2044)
+    if (str[index] == 0x2212 || str[index] == 0x2044)
         return Script_Punctuation;
 
-    GetStringTypeW(CT_CTYPE1, &ch, 1, &type);
+    GetStringTypeW(CT_CTYPE1, &str[index], 1, &type);
 
     if (type == 0)
         return SCRIPT_UNDEFINED;
 
     if (type & C1_CNTRL)
         return Script_Control;
+
+    ch = decode_surrogate_pair(str, index, end);
+    if (ch)
+        *consumed = 2;
+    else
+        ch = str[index];
 
     i = 0;
     do
@@ -1114,6 +1134,7 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
     WORD  last_indic = -1;
     WORD layoutRTL = 0;
     BOOL forceLevels = FALSE;
+    INT consumed = 0;
 
     TRACE("%s,%d,%d,%p,%p,%p,%p\n", debugstr_wn(pwcInChars, cInChars), cInChars, cMaxItems, 
           psControl, psState, pItems, pcItems);
@@ -1127,7 +1148,16 @@ HRESULT WINAPI ScriptItemizeOpenType(const WCHAR *pwcInChars, int cInChars, int 
 
     for (i = 0; i < cInChars; i++)
     {
-        scripts[i] = get_char_script(pwcInChars[i]);
+        if (consumed <= 0)
+        {
+            scripts[i] = get_char_script(pwcInChars,i,cInChars,&consumed);
+            consumed --;
+        }
+        else
+        {
+            scripts[i] = scripts[i-1];
+            consumed --;
+        }
         /* Devanagari danda (U+0964) and double danda (U+0965) are used for
            all Indic scripts */
         if ((pwcInChars[i] == 0x964 || pwcInChars[i] ==0x965) && last_indic > 0)
@@ -2543,17 +2573,20 @@ HRESULT WINAPI ScriptBreak(const WCHAR *chars, int count, const SCRIPT_ANALYSIS 
 HRESULT WINAPI ScriptIsComplex(const WCHAR *chars, int len, DWORD flag)
 {
     int i;
+    INT consumed = 0;
 
     TRACE("(%s,%d,0x%x)\n", debugstr_wn(chars, len), len, flag);
 
-    for (i = 0; i < len; i++)
+    for (i = 0; i < len; i+=consumed)
     {
         int script;
+        if (i >= len)
+            break;
 
         if ((flag & SIC_ASCIIDIGIT) && chars[i] >= 0x30 && chars[i] <= 0x39)
             return S_OK;
 
-        script = get_char_script(chars[i]);
+        script = get_char_script(chars,i,len, &consumed);
         if ((scriptInformation[script].props.fComplex && (flag & SIC_COMPLEX))||
             (!scriptInformation[script].props.fComplex && (flag & SIC_NEUTRAL)))
             return S_OK;
