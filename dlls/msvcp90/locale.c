@@ -1047,9 +1047,13 @@ const short* __thiscall ctype_char_table(const ctype_char *this)
 
 /* ?id@?$ctype@_W@std@@2V0locale@2@A */
 locale_id ctype_wchar_id = {0};
+/* ?id@?$ctype@G@std@@2V0locale@2@A */
+locale_id ctype_short_id = {0};
 
 /* ??_7?$ctype@_W@std@@6B@ */
 extern const vtable_ptr MSVCP_ctype_wchar_vtable;
+/* ??_7?$ctype@G@std@@6B@ */
+extern const vtable_ptr MSVCP_ctype_short_vtable;
 
 /* ?_Id_func@?$ctype@_W@std@@SAAAVid@locale@2@XZ */
 /* ?_Id_func@?$ctype@_W@std@@SAAEAVid@locale@2@XZ */
@@ -1059,8 +1063,18 @@ locale_id* __cdecl ctype_wchar__Id_func(void)
     return NULL;
 }
 
+/* ?_Id_func@?$ctype@G@std@@SAAAVid@locale@2@XZ */
+/* ?_Id_func@?$ctype@G@std@@SAAEAVid@locale@2@XZ */
+locale_id* __cdecl ctype_short__Id_func(void)
+{
+    FIXME("() stub\n");
+    return NULL;
+}
+
 /* ?_Init@?$ctype@_W@std@@IAEXABV_Locinfo@2@@Z */
 /* ?_Init@?$ctype@_W@std@@IEAAXAEBV_Locinfo@2@@Z */
+/* ?_Init@?$ctype@G@std@@IAEXABV_Locinfo@2@@Z */
+/* ?_Init@?$ctype@G@std@@IEAAXAEBV_Locinfo@2@@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar__Init, 8)
 void __thiscall ctype_wchar__Init(ctype_wchar *this, _Locinfo *locinfo)
 {
@@ -1078,6 +1092,17 @@ ctype_wchar* __thiscall ctype_wchar_ctor_locinfo(ctype_wchar *this,
     return NULL;
 }
 
+/* ??0?$ctype@G@std@@QAE@ABV_Locinfo@1@I@Z */
+/* ??0?$ctype@G@std@@QEAA@AEBV_Locinfo@1@_K@Z */
+DEFINE_THISCALL_WRAPPER(ctype_short_ctor_locinfo, 12)
+ctype_wchar* __thiscall ctype_short_ctor_locinfo(ctype_wchar *this,
+        _Locinfo *locinfo, MSVCP_size_t refs)
+{
+    ctype_wchar *ret = ctype_wchar_ctor_locinfo(this, locinfo, refs);
+    this->base.facet.vtable = &MSVCP_ctype_short_vtable;
+    return ret;
+}
+
 /* ??0?$ctype@_W@std@@QAE@I@Z */
 /* ??0?$ctype@_W@std@@QEAA@_K@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_ctor_refs, 8)
@@ -1085,6 +1110,26 @@ ctype_wchar* __thiscall ctype_wchar_ctor_refs(ctype_wchar *this, MSVCP_size_t re
 {
     FIXME("(%p %lu) stub\n", this, refs);
     this->base.facet.vtable = &MSVCP_ctype_wchar_vtable;
+    return NULL;
+}
+
+/* ??0?$ctype@G@std@@QAE@I@Z */
+/* ??0?$ctype@G@std@@QEAA@_K@Z */
+DEFINE_THISCALL_WRAPPER(ctype_short_ctor_refs, 8)
+ctype_wchar* __thiscall ctype_short_ctor_refs(ctype_wchar *this, MSVCP_size_t refs)
+{
+    ctype_wchar *ret = ctype_wchar_ctor_refs(this, refs);
+    this->base.facet.vtable = &MSVCP_ctype_short_vtable;
+    return ret;
+}
+
+/* ??0?$ctype@G@std@@IAE@PBDI@Z */
+DEFINE_THISCALL_WRAPPER(ctype_short_ctor_name, 12)
+ctype_wchar* __thiscall ctype_short_ctor_name(ctype_wchar *this,
+    const char *name, MSVCP_size_t refs)
+{
+    FIXME("(%p %s %lu) stub\n", this, debugstr_a(name), refs);
+    this->base.facet.vtable = &MSVCP_ctype_short_vtable;
     return NULL;
 }
 
@@ -1098,8 +1143,20 @@ ctype_wchar* __thiscall ctype_wchar_ctor(ctype_wchar *this)
     return NULL;
 }
 
+/* ??_F?$ctype@G@std@@QAEXXZ */
+/* ??_F?$ctype@G@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(ctype_short_ctor, 4)
+ctype_wchar* __thiscall ctype_short_ctor(ctype_wchar *this)
+{
+    ctype_wchar *ret = ctype_wchar_ctor(this);
+    this->base.facet.vtable = &MSVCP_ctype_short_vtable;
+    return ret;
+}
+
 /* ??1?$ctype@_W@std@@MAE@XZ */
 /* ??1?$ctype@_W@std@@MEAA@XZ */
+/* ??1?$ctype@G@std@@MAE@XZ */
+/* ??1?$ctype@G@std@@MEAA@XZ */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_dtor, 4)
 void __thiscall ctype_wchar_dtor(ctype_wchar *this)
 {
@@ -1126,8 +1183,16 @@ ctype_wchar* __thiscall MSVCP_ctype_wchar_vector_dtor(ctype_wchar *this, unsigne
     return this;
 }
 
+DEFINE_THISCALL_WRAPPER(MSVCP_ctype_short_vector_dtor, 8)
+ctype_wchar* __thiscall MSVCP_ctype_short_vector_dtor(ctype_wchar *this, unsigned int flags)
+{
+    return MSVCP_ctype_wchar_vector_dtor(this, flags);
+}
+
 /* ?_Donarrow@?$ctype@_W@std@@IBED_WD@Z */
 /* ?_Donarrow@?$ctype@_W@std@@IEBAD_WD@Z */
+/* ?_Donarrow@?$ctype@G@std@@IBEDGD@Z */
+/* ?_Donarrow@?$ctype@G@std@@IEBADGD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar__Donarrow, 12)
 char __thiscall ctype_wchar__Donarrow(const ctype_wchar *this, wchar_t ch, char dflt)
 {
@@ -1137,6 +1202,8 @@ char __thiscall ctype_wchar__Donarrow(const ctype_wchar *this, wchar_t ch, char 
 
 /* ?do_narrow@?$ctype@_W@std@@MBED_WD@Z */
 /* ?do_narrow@?$ctype@_W@std@@MEBAD_WD@Z */
+/* ?do_narrow@?$ctype@G@std@@MBEDGD@Z */
+/* ?do_narrow@?$ctype@G@std@@MEBADGD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_narrow_ch, 12)
 wchar_t __thiscall ctype_wchar_do_narrow_ch(const ctype_wchar *this, wchar_t ch, char dflt)
 {
@@ -1146,6 +1213,8 @@ wchar_t __thiscall ctype_wchar_do_narrow_ch(const ctype_wchar *this, wchar_t ch,
 
 /* ?do_narrow@?$ctype@_W@std@@MBEPB_WPB_W0DPAD@Z */
 /* ?do_narrow@?$ctype@_W@std@@MEBAPEB_WPEB_W0DPEAD@Z */
+/* ?do_narrow@?$ctype@G@std@@MBEPBGPBG0DPAD@Z */
+/* ?do_narrow@?$ctype@G@std@@MEBAPEBGPEBG0DPEAD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_narrow, 20)
 const wchar_t* __thiscall ctype_wchar_do_narrow(const ctype_wchar *this,
         const wchar_t *first, const wchar_t *last, char dflt, char *dest)
@@ -1156,6 +1225,8 @@ const wchar_t* __thiscall ctype_wchar_do_narrow(const ctype_wchar *this,
 
 /* ?_Do_narrow_s@?$ctype@_W@std@@MBEPB_WPB_W0DPADI@Z */
 /* ?_Do_narrow_s@?$ctype@_W@std@@MEBAPEB_WPEB_W0DPEAD_K@Z */
+/* ?_Do_narrow_s@?$ctype@G@std@@MBEPBGPBG0DPADI@Z */
+/* ?_Do_narrow_s@?$ctype@G@std@@MEBAPEBGPEBG0DPEAD_K@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar__Do_narrow_s, 24)
 const wchar_t* __thiscall ctype_wchar__Do_narrow_s(const ctype_wchar *this,
         const wchar_t *first, const wchar_t *last, char dflt, char *dest, MSVCP_size_t size)
@@ -1166,6 +1237,8 @@ const wchar_t* __thiscall ctype_wchar__Do_narrow_s(const ctype_wchar *this,
 
 /* ?narrow@?$ctype@_W@std@@QBED_WD@Z */
 /* ?narrow@?$ctype@_W@std@@QEBAD_WD@Z */
+/* ?narrow@?$ctype@G@std@@QBEDGD@Z */
+/* ?narrow@?$ctype@G@std@@QEBADGD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_narrow_ch, 12)
 char __thiscall ctype_wchar_narrow_ch(const ctype_wchar *this, wchar_t ch, char dflt)
 {
@@ -1175,6 +1248,8 @@ char __thiscall ctype_wchar_narrow_ch(const ctype_wchar *this, wchar_t ch, char 
 
 /* ?narrow@?$ctype@_W@std@@QBEPB_WPB_W0DPAD@Z */
 /* ?narrow@?$ctype@_W@std@@QEBAPEB_WPEB_W0DPEAD@Z */
+/* ?narrow@?$ctype@G@std@@QBEPBGPBG0DPAD@Z */
+/* ?narrow@?$ctype@G@std@@QEBAPEBGPEBG0DPEAD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_narrow, 20)
 const wchar_t* __thiscall ctype_wchar_narrow(const ctype_wchar *this,
         const wchar_t *first, const wchar_t *last, char dflt, char *dest)
@@ -1185,6 +1260,8 @@ const wchar_t* __thiscall ctype_wchar_narrow(const ctype_wchar *this,
 
 /* ?_Narrow_s@?$ctype@_W@std@@QBEPB_WPB_W0DPADI@Z */
 /* ?_Narrow_s@?$ctype@_W@std@@QEBAPEB_WPEB_W0DPEAD_K@Z */
+/* ?_Narrow_s@?$ctype@G@std@@QBEPBGPBG0DPADI@Z */
+/* ?_Narrow_s@?$ctype@G@std@@QEBAPEBGPEBG0DPEAD_K@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar__Narrow_s, 24)
 const wchar_t* __thiscall ctype_wchar__Narrow_s(const ctype_wchar *this, const wchar_t *first,
         const wchar_t *last, char dflt, char *dest, unsigned int size)
@@ -1195,6 +1272,8 @@ const wchar_t* __thiscall ctype_wchar__Narrow_s(const ctype_wchar *this, const w
 
 /* ?_Dowiden@?$ctype@_W@std@@IBE_WD@Z */
 /* ?_Dowiden@?$ctype@_W@std@@IEBA_WD@Z */
+/* ?_Dowiden@?$ctype@G@std@@IBEGD@Z */
+/* ?_Dowiden@?$ctype@G@std@@IEBAGD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar__Dowiden, 8)
 wchar_t __thiscall ctype_wchar__Dowiden(const ctype_wchar *this, char ch)
 {
@@ -1204,6 +1283,8 @@ wchar_t __thiscall ctype_wchar__Dowiden(const ctype_wchar *this, char ch)
 
 /* ?do_widen@?$ctype@_W@std@@MBE_WD@Z */
 /* ?do_widen@?$ctype@_W@std@@MEBA_WD@Z */
+/* ?do_widen@?$ctype@G@std@@MBEGD@Z */
+/* ?do_widen@?$ctype@G@std@@MEBAGD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_widen_ch, 8)
 wchar_t __thiscall ctype_wchar_do_widen_ch(const ctype_wchar *this, char ch)
 {
@@ -1213,6 +1294,8 @@ wchar_t __thiscall ctype_wchar_do_widen_ch(const ctype_wchar *this, char ch)
 
 /* ?do_widen@?$ctype@_W@std@@MBEPBDPBD0PA_W@Z */
 /* ?do_widen@?$ctype@_W@std@@MEBAPEBDPEBD0PEA_W@Z */
+/* ?do_widen@?$ctype@G@std@@MBEPBDPBD0PAG@Z */
+/* ?do_widen@?$ctype@G@std@@MEBAPEBDPEBD0PEAG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_widen, 16)
 const char* __thiscall ctype_wchar_do_widen(const ctype_wchar *this,
         const char *first, const char *last, wchar_t *dest)
@@ -1223,6 +1306,8 @@ const char* __thiscall ctype_wchar_do_widen(const ctype_wchar *this,
 
 /* ?_Do_widen_s@?$ctype@_W@std@@MBEPBDPBD0PA_WI@Z */
 /* ?_Do_widen_s@?$ctype@_W@std@@MEBAPEBDPEBD0PEA_W_K@Z */
+/* ?_Do_widen_s@?$ctype@G@std@@MBEPBDPBD0PAGI@Z */
+/* ?_Do_widen_s@?$ctype@G@std@@MEBAPEBDPEBD0PEAG_K@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar__Do_widen_s, 20)
 const char* __thiscall ctype_wchar__Do_widen_s(const ctype_wchar *this,
         const char *first, const char *last, wchar_t *dest, MSVCP_size_t size)
@@ -1233,6 +1318,8 @@ const char* __thiscall ctype_wchar__Do_widen_s(const ctype_wchar *this,
 
 /* ?widen@?$ctype@_W@std@@QBE_WD@Z */
 /* ?widen@?$ctype@_W@std@@QEBA_WD@Z */
+/* ?widen@?$ctype@G@std@@QBEGD@Z */
+/* ?widen@?$ctype@G@std@@QEBAGD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_widen_ch, 8)
 wchar_t __thiscall ctype_wchar_widen_ch(const ctype_wchar *this, char ch)
 {
@@ -1242,6 +1329,8 @@ wchar_t __thiscall ctype_wchar_widen_ch(const ctype_wchar *this, char ch)
 
 /* ?widen@?$ctype@_W@std@@QBEPBDPBD0PA_W@Z */
 /* ?widen@?$ctype@_W@std@@QEBAPEBDPEBD0PEA_W@Z */
+/* ?widen@?$ctype@G@std@@QBEPBDPBD0PAG@Z */
+/* ?widen@?$ctype@G@std@@QEBAPEBDPEBD0PEAG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_widen, 16)
 const char* __thiscall ctype_wchar_widen(const ctype_wchar *this,
         const char *first, const char *last, wchar_t *dest)
@@ -1252,6 +1341,8 @@ const char* __thiscall ctype_wchar_widen(const ctype_wchar *this,
 
 /* ?_Widen_s@?$ctype@_W@std@@QBEPBDPBD0PA_WI@Z */
 /* ?_Widen_s@?$ctype@_W@std@@QEBAPEBDPEBD0PEA_W_K@Z */
+/* ?_Widen_s@?$ctype@G@std@@QBEPBDPBD0PAGI@Z */
+/* ?_Widen_s@?$ctype@G@std@@QEBAPEBDPEBD0PEAG_K@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar__Widen_s, 20)
 const char* __thiscall ctype_wchar__Widen_s(const ctype_wchar *this,
         const char *first, const char *last, wchar_t *dest, MSVCP_size_t size)
@@ -1262,6 +1353,8 @@ const char* __thiscall ctype_wchar__Widen_s(const ctype_wchar *this,
 
 /* ?_Getcat@?$ctype@_W@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$ctype@_W@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
+/* ?_Getcat@?$ctype@G@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
+/* ?_Getcat@?$ctype@G@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
 MSVCP_size_t __cdecl ctype_wchar__Getcat(const locale_facet **facet, const locale_facet *loc)
 {
     FIXME("(%p %p) stub\n", facet, loc);
@@ -1270,6 +1363,8 @@ MSVCP_size_t __cdecl ctype_wchar__Getcat(const locale_facet **facet, const local
 
 /* ?do_tolower@?$ctype@_W@std@@MBE_W_W@Z */
 /* ?do_tolower@?$ctype@_W@std@@MEBA_W_W@Z */
+/* ?do_tolower@?$ctype@G@std@@MBEGG@Z */
+/* ?do_tolower@?$ctype@G@std@@MEBAGG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_tolower_ch, 8)
 char __thiscall ctype_wchar_do_tolower_ch(const ctype_wchar *this, wchar_t ch)
 {
@@ -1279,6 +1374,8 @@ char __thiscall ctype_wchar_do_tolower_ch(const ctype_wchar *this, wchar_t ch)
 
 /* ?do_tolower@?$ctype@_W@std@@MBEPB_WPA_WPB_W@Z */
 /* ?do_tolower@?$ctype@_W@std@@MEBAPEB_WPEA_WPEB_W@Z */
+/* ?do_tolower@?$ctype@G@std@@MBEPBGPAGPBG@Z */
+/* ?do_tolower@?$ctype@G@std@@MEBAPEBGPEAGPEBG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_tolower, 12)
 const wchar_t* __thiscall ctype_wchar_do_tolower(const ctype_wchar *this,
         wchar_t *first, const wchar_t *last)
@@ -1289,6 +1386,8 @@ const wchar_t* __thiscall ctype_wchar_do_tolower(const ctype_wchar *this,
 
 /* ?tolower@?$ctype@_W@std@@QBE_W_W@Z */
 /* ?tolower@?$ctype@_W@std@@QEBA_W_W@Z */
+/* ?tolower@?$ctype@G@std@@QBEGG@Z */
+/* ?tolower@?$ctype@G@std@@QEBAGG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_tolower_ch, 8)
 wchar_t __thiscall ctype_wchar_tolower_ch(const ctype_wchar *this, wchar_t ch)
 {
@@ -1298,6 +1397,8 @@ wchar_t __thiscall ctype_wchar_tolower_ch(const ctype_wchar *this, wchar_t ch)
 
 /* ?tolower@?$ctype@_W@std@@QBEPB_WPA_WPB_W@Z */
 /* ?tolower@?$ctype@_W@std@@QEBAPEB_WPEA_WPEB_W@Z */
+/* ?tolower@?$ctype@G@std@@QBEPBGPAGPBG@Z */
+/* ?tolower@?$ctype@G@std@@QEBAPEBGPEAGPEBG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_tolower, 12)
 const wchar_t* __thiscall ctype_wchar_tolower(const ctype_wchar *this,
         wchar_t *first, const wchar_t *last)
@@ -1308,6 +1409,8 @@ const wchar_t* __thiscall ctype_wchar_tolower(const ctype_wchar *this,
 
 /* ?do_toupper@?$ctype@_W@std@@MBE_W_W@Z */
 /* ?do_toupper@?$ctype@_W@std@@MEBA_W_W@Z */
+/* ?do_toupper@?$ctype@G@std@@MBEGG@Z */
+/* ?do_toupper@?$ctype@G@std@@MEBAGG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_toupper_ch, 8)
 wchar_t __thiscall ctype_wchar_do_toupper_ch(const ctype_wchar *this, wchar_t ch)
 {
@@ -1317,6 +1420,8 @@ wchar_t __thiscall ctype_wchar_do_toupper_ch(const ctype_wchar *this, wchar_t ch
 
 /* ?do_toupper@?$ctype@_W@std@@MBEPB_WPA_WPB_W@Z */
 /* ?do_toupper@?$ctype@_W@std@@MEBAPEB_WPEA_WPEB_W@Z */
+/* ?do_toupper@?$ctype@G@std@@MBEPBGPAGPBG@Z */
+/* ?do_toupper@?$ctype@G@std@@MEBAPEBGPEAGPEBG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_toupper, 12)
 const wchar_t* __thiscall ctype_wchar_do_toupper(const ctype_wchar *this,
         wchar_t *first, const wchar_t *last)
@@ -1327,6 +1432,8 @@ const wchar_t* __thiscall ctype_wchar_do_toupper(const ctype_wchar *this,
 
 /* ?toupper@?$ctype@_W@std@@QBE_W_W@Z */
 /* ?toupper@?$ctype@_W@std@@QEBA_W_W@Z */
+/* ?toupper@?$ctype@G@std@@QBEGG@Z */
+/* ?toupper@?$ctype@G@std@@QEBAGG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_toupper_ch, 8)
 wchar_t __thiscall ctype_wchar_toupper_ch(const ctype_wchar *this, wchar_t ch)
 {
@@ -1336,6 +1443,8 @@ wchar_t __thiscall ctype_wchar_toupper_ch(const ctype_wchar *this, wchar_t ch)
 
 /* ?toupper@?$ctype@_W@std@@QBEPB_WPA_WPB_W@Z */
 /* ?toupper@?$ctype@_W@std@@QEBAPEB_WPEA_WPEB_W@Z */
+/* ?toupper@?$ctype@G@std@@QBEPBGPAGPBG@Z */
+/* ?toupper@?$ctype@G@std@@QEBAPEBGPEAGPEBG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_toupper, 12)
 const wchar_t* __thiscall ctype_wchar_toupper(const ctype_wchar *this,
         wchar_t *first, const wchar_t *last)
@@ -1346,6 +1455,8 @@ const wchar_t* __thiscall ctype_wchar_toupper(const ctype_wchar *this,
 
 /* ?do_is@?$ctype@_W@std@@MBE_NF_W@Z */
 /* ?do_is@?$ctype@_W@std@@MEBA_NF_W@Z */
+/* ?do_is@?$ctype@G@std@@MBE_NFG@Z */
+/* ?do_is@?$ctype@G@std@@MEBA_NFG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_is_ch, 12)
 MSVCP_bool __thiscall ctype_wchar_do_is_ch(const ctype_wchar *this, short mask, wchar_t ch)
 {
@@ -1355,6 +1466,8 @@ MSVCP_bool __thiscall ctype_wchar_do_is_ch(const ctype_wchar *this, short mask, 
 
 /* ?do_is@?$ctype@_W@std@@MBEPB_WPB_W0PAF@Z */
 /* ?do_is@?$ctype@_W@std@@MEBAPEB_WPEB_W0PEAF@Z */
+/* ?do_is@?$ctype@G@std@@MBEPBGPBG0PAF@Z */
+/* ?do_is@?$ctype@G@std@@MEBAPEBGPEBG0PEAF@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_is, 16)
 const wchar_t* __thiscall ctype_wchar_do_is(const ctype_wchar *this,
         const wchar_t *first, const wchar_t *last, short *dest)
@@ -1365,6 +1478,8 @@ const wchar_t* __thiscall ctype_wchar_do_is(const ctype_wchar *this,
 
 /* ?is@?$ctype@_W@std@@QBE_NF_W@Z */
 /* ?is@?$ctype@_W@std@@QEBA_NF_W@Z */
+/* ?is@?$ctype@G@std@@QBE_NFG@Z */
+/* ?is@?$ctype@G@std@@QEBA_NFG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_is_ch, 12)
 MSVCP_bool __thiscall ctype_wchar_is_ch(const ctype_wchar *this, short mask, wchar_t ch)
 {
@@ -1374,6 +1489,8 @@ MSVCP_bool __thiscall ctype_wchar_is_ch(const ctype_wchar *this, short mask, wch
 
 /* ?is@?$ctype@_W@std@@QBEPB_WPB_W0PAF@Z */
 /* ?is@?$ctype@_W@std@@QEBAPEB_WPEB_W0PEAF@Z */
+/* ?is@?$ctype@G@std@@QBEPBGPBG0PAF@Z */
+/* ?is@?$ctype@G@std@@QEBAPEBGPEBG0PEAF@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_is, 16)
 const wchar_t* __thiscall ctype_wchar_is(const ctype_wchar *this,
         const wchar_t *first, const wchar_t *last, short *dest)
@@ -1384,6 +1501,8 @@ const wchar_t* __thiscall ctype_wchar_is(const ctype_wchar *this,
 
 /* ?do_scan_is@?$ctype@_W@std@@MBEPB_WFPB_W0@Z */
 /* ?do_scan_is@?$ctype@_W@std@@MEBAPEB_WFPEB_W0@Z */
+/* ?do_scan_is@?$ctype@G@std@@MBEPBGFPBG0@Z */
+/* ?do_scan_is@?$ctype@G@std@@MEBAPEBGFPEBG0@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_scan_is, 16)
 const wchar_t* __thiscall ctype_wchar_do_scan_is(const ctype_wchar *this,
         short mask, const wchar_t *first, const wchar_t *last)
@@ -1394,6 +1513,8 @@ const wchar_t* __thiscall ctype_wchar_do_scan_is(const ctype_wchar *this,
 
 /* ?scan_is@?$ctype@_W@std@@QBEPB_WFPB_W0@Z */
 /* ?scan_is@?$ctype@_W@std@@QEBAPEB_WFPEB_W0@Z */
+/* ?scan_is@?$ctype@G@std@@QBEPBGFPBG0@Z */
+/* ?scan_is@?$ctype@G@std@@QEBAPEBGFPEBG0@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_scan_is, 16)
 const wchar_t* __thiscall ctype_wchar_scan_is(const ctype_wchar *this,
         short mask, const wchar_t *first, const wchar_t *last)
@@ -1404,6 +1525,8 @@ const wchar_t* __thiscall ctype_wchar_scan_is(const ctype_wchar *this,
 
 /* ?do_scan_not@?$ctype@_W@std@@MBEPB_WFPB_W0@Z */
 /* ?do_scan_not@?$ctype@_W@std@@MEBAPEB_WFPEB_W0@Z */
+/* ?do_scan_not@?$ctype@G@std@@MBEPBGFPBG0@Z */
+/* ?do_scan_not@?$ctype@G@std@@MEBAPEBGFPEBG0@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_scan_not, 16)
 const wchar_t* __thiscall ctype_wchar_do_scan_not(const ctype_wchar *this,
         short mask, const wchar_t *first, const wchar_t *last)
@@ -1414,6 +1537,8 @@ const wchar_t* __thiscall ctype_wchar_do_scan_not(const ctype_wchar *this,
 
 /* ?scan_not@?$ctype@_W@std@@QBEPB_WFPB_W0@Z */
 /* ?scan_not@?$ctype@_W@std@@QEBAPEB_WFPEB_W0@Z */
+/* ?scan_not@?$ctype@G@std@@QBEPBGFPBG0@Z */
+/* ?scan_not@?$ctype@G@std@@QEBAPEBGFPEBG0@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_scan_not, 16)
 const wchar_t* __thiscall ctype_wchar_scan_not(const ctype_wchar *this,
         short mask, const wchar_t *first, const wchar_t *last)
@@ -2430,6 +2555,43 @@ const rtti_object_locator ctype_wchar_rtti = {
     &ctype_wchar_hierarchy
 };
 
+static const type_info ctype_short_type_info = {
+    &MSVCP_ctype_short_vtable,
+    NULL,
+    ".?AV?$ctype@G@std@@"
+};
+
+static const rtti_base_descriptor ctype_short_rtti_base_descriptor = {
+    &ctype_short_type_info,
+    2,
+    { 0, -1, 0},
+    64
+};
+
+static const rtti_base_array ctype_short_rtti_base_array = {
+    {
+        &ctype_short_rtti_base_descriptor,
+        &ctype_base_rtti_base_descriptor,
+        &locale_facet_rtti_base_descriptor,
+        NULL
+    }
+};
+
+static const rtti_object_hierarchy ctype_short_hierarchy = {
+    0,
+    0,
+    3,
+    &ctype_short_rtti_base_array
+};
+
+const rtti_object_locator ctype_short_rtti = {
+    0,
+    0,
+    0,
+    &ctype_short_type_info,
+    &ctype_short_hierarchy
+};
+
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
@@ -2458,6 +2620,21 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(ctype_char_do_narrow_ch)
             VTABLE_ADD_FUNC(ctype_char__Do_narrow_s));
     __ASM_VTABLE(ctype_wchar,
+            VTABLE_ADD_FUNC(ctype_wchar_do_is)
+            VTABLE_ADD_FUNC(ctype_wchar_do_is_ch)
+            VTABLE_ADD_FUNC(ctype_wchar_do_scan_is)
+            VTABLE_ADD_FUNC(ctype_wchar_do_scan_not)
+            VTABLE_ADD_FUNC(ctype_wchar_do_tolower)
+            VTABLE_ADD_FUNC(ctype_wchar_do_tolower_ch)
+            VTABLE_ADD_FUNC(ctype_wchar_do_toupper)
+            VTABLE_ADD_FUNC(ctype_wchar_do_toupper_ch)
+            VTABLE_ADD_FUNC(ctype_wchar_do_widen)
+            VTABLE_ADD_FUNC(ctype_wchar_do_widen_ch)
+            VTABLE_ADD_FUNC(ctype_wchar__Do_widen_s)
+            VTABLE_ADD_FUNC(ctype_wchar_do_narrow)
+            VTABLE_ADD_FUNC(ctype_wchar_do_narrow_ch)
+            VTABLE_ADD_FUNC(ctype_wchar__Do_narrow_s));
+    __ASM_VTABLE(ctype_short,
             VTABLE_ADD_FUNC(ctype_wchar_do_is)
             VTABLE_ADD_FUNC(ctype_wchar_do_is_ch)
             VTABLE_ADD_FUNC(ctype_wchar_do_scan_is)
