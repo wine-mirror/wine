@@ -599,7 +599,7 @@ static WORD INT21_GetHeapSelector( CONTEXT *context )
  */
 static BOOL INT21_FillDrivePB( BYTE drive )
 {
-    WCHAR       drivespec[3] = {'A', ':', 0};
+    WCHAR       drivespec[] = {'A', ':', 0};
     INT21_HEAP *heap = INT21_GetHeapPointer();
     INT21_DPB  *dpb;
     UINT        drivetype;
