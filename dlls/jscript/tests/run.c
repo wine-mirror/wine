@@ -1487,6 +1487,8 @@ static void run_tests(void)
     CHECK_CALLED(global_propdelete_d);
     CHECK_CALLED(DeleteMemberByDispID);
 
+    parse_script_a("(function reportSuccess() {})()");
+
     parse_script_a("ok(typeof(test) === 'object', \"typeof(test) != 'object'\");");
 
     parse_script_a("function reportSuccess() {}; reportSuccess();");

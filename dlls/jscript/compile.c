@@ -646,6 +646,21 @@ static HRESULT compile_array_literal(compiler_ctx_t *ctx, array_literal_expressi
     return push_instr_uint(ctx, OP_carray, elem_cnt);
 }
 
+static HRESULT compile_function_expression(compiler_ctx_t *ctx, function_expression_t *expr)
+{
+    unsigned instr;
+
+    /* FIXME: not exactly right */
+    if(expr->identifier)
+        return push_instr_bstr(ctx, OP_ident, expr->identifier);
+
+    instr = push_instr(ctx, OP_func);
+    if(instr == -1)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, instr)->arg1.func = expr;
+    return S_OK;
+}
 
 static HRESULT compile_expression_noret(compiler_ctx_t *ctx, expression_t *expr, BOOL *no_ret)
 {
@@ -702,6 +717,8 @@ static HRESULT compile_expression_noret(compiler_ctx_t *ctx, expression_t *expr,
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_eq);
     case EXPR_EQEQ:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_eq2);
+    case EXPR_FUNC:
+        return compile_function_expression(ctx, (function_expression_t*)expr);
     case EXPR_GREATER:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_gt);
     case EXPR_GREATEREQ:

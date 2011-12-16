@@ -57,6 +57,7 @@ typedef struct _func_stack {
     X(double,     1, ARG_SBL,    0)        \
     X(eq,         1, 0,0)                  \
     X(eq2,        1, 0,0)                  \
+    X(func,       1, ARG_FUNC,   0)        \
     X(gt,         1, 0,0)                  \
     X(gteq,       1, 0,0)                  \
     X(ident,      1, ARG_BSTR,   0)        \
@@ -117,6 +118,7 @@ typedef union {
     LONG lng;
     WCHAR *str;
     unsigned uint;
+    function_expression_t *func; /* FIXME */
 } instr_arg_t;
 
 typedef enum {
@@ -124,6 +126,7 @@ typedef enum {
     ARG_ADDR,
     ARG_BSTR,
     ARG_EXPR,
+    ARG_FUNC,
     ARG_INT,
     ARG_STR
 } instr_arg_type_t;
@@ -565,7 +568,6 @@ typedef struct {
     prop_val_t *property_list;
 } property_value_expression_t;
 
-HRESULT function_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 HRESULT property_value_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;
 
 HRESULT compiled_expression_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,exprval_t*) DECLSPEC_HIDDEN;

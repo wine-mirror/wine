@@ -1420,32 +1420,22 @@ HRESULT try_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t 
 }
 
 /* ECMA-262 3rd Edition    13 */
-HRESULT function_expression_eval(script_ctx_t *ctx, expression_t *_expr, DWORD flags, jsexcept_t *ei, exprval_t *ret)
+static HRESULT interp_func(exec_ctx_t *ctx)
 {
-    function_expression_t *expr = (function_expression_t*)_expr;
-    VARIANT var;
+    function_expression_t *expr = ctx->parser->code->instrs[ctx->ip].arg1.func;
+    jsdisp_t *dispex;
+    VARIANT v;
     HRESULT hres;
 
     TRACE("\n");
 
-    if(expr->identifier) {
-        hres = jsdisp_propget_name(ctx->exec_ctx->var_disp, expr->identifier, &var, ei, NULL/*FIXME*/);
-        if(FAILED(hres))
-            return hres;
-    }else {
-        jsdisp_t *dispex;
+    hres = create_source_function(ctx->parser, expr->parameter_list, expr->source_elements, ctx->scope_chain,
+            expr->src_str, expr->src_len, &dispex);
+    if(FAILED(hres))
+        return hres;
 
-        hres = create_source_function(ctx->exec_ctx->parser, expr->parameter_list, expr->source_elements, ctx->exec_ctx->scope_chain,
-                expr->src_str, expr->src_len, &dispex);
-        if(FAILED(hres))
-            return hres;
-
-        var_set_jsdisp(&var, dispex);
-    }
-
-    ret->type = EXPRVAL_VARIANT;
-    ret->u.var = var;
-    return S_OK;
+    var_set_jsdisp(&v, dispex);
+    return stack_push(ctx, &v);
 }
 
 /* ECMA-262 3rd Edition    11.2.1 */

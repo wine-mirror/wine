@@ -1110,6 +1110,12 @@ ok(newValue === 1, "newValue = " + newValue);
 
 obj = {undefined: 3};
 
+ok(typeof(name_override_func) === "function", "typeof(name_override_func) = " + typeof(name_override_func));
+name_override_func = 3;
+ok(name_override_func === 3, "name_override_func = " + name_override_func);
+function name_override_func() {};
+ok(name_override_func === 3, "name_override_func = " + name_override_func);
+
 /* Keep this test in the end of file */
 undefined = 6;
 ok(undefined === 6, "undefined = " + undefined);
