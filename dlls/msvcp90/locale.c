@@ -90,6 +90,11 @@ typedef struct {
     locale_facet facet;
 } ctype_base;
 
+typedef struct {
+    ctype_base base;
+    _Ctypevec ctype;
+} ctype_char;
+
 /* ?_Id_cnt@id@locale@std@@0HA */
 int locale_id__Id_cnt = 0;
 
@@ -689,6 +694,349 @@ ctype_base* __thiscall MSVCP_ctype_base_vector_dtor(ctype_base *this, unsigned i
 void __cdecl ctype_base__Xran(void)
 {
     throw_exception(EXCEPTION_OUT_OF_RANGE, "out of range in ctype<T>");
+}
+
+/* ?id@?$ctype@D@std@@2V0locale@2@A */
+locale_id ctype_char_id = {0};
+/* ?table_size@?$ctype@D@std@@2IB */
+/* ?table_size@?$ctype@D@std@@2_KB */
+MSVCP_size_t ctype_char_table_size = 256;
+
+/* ??_7?$ctype@D@std@@6B@ */
+extern const vtable_ptr MSVCP_ctype_char_vtable;
+
+/* ?_Id_func@?$ctype@D@std@@SAAAVid@locale@2@XZ */
+/* ?_Id_func@?$ctype@D@std@@SAAEAVid@locale@2@XZ */
+locale_id* __cdecl ctype_char__Id_func(void)
+{
+    FIXME("() stub\n");
+    return NULL;
+}
+
+/* ?_Init@?$ctype@D@std@@IAEXABV_Locinfo@2@@Z */
+/* ?_Init@?$ctype@D@std@@IEAAXAEBV_Locinfo@2@@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char__Init, 8)
+void __thiscall ctype_char__Init(ctype_char *this, _Locinfo *locinfo)
+{
+    FIXME("(%p %p) stub\n", this, locinfo);
+}
+
+/* ?_Tidy@?$ctype@D@std@@IAEXXZ */
+/* ?_Tidy@?$ctype@D@std@@IEAAXXZ */
+DEFINE_THISCALL_WRAPPER(ctype_char__Tidy, 4)
+void __thiscall ctype_char__Tidy(ctype_char *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?classic_table@?$ctype@D@std@@KAPBFXZ */
+/* ?classic_table@?$ctype@D@std@@KAPEBFXZ */
+const short* __cdecl ctype_char_classic_table(void)
+{
+    FIXME("() stub\n");
+    return NULL;
+}
+
+/* ??0?$ctype@D@std@@QAE@ABV_Locinfo@1@I@Z */
+/* ??0?$ctype@D@std@@QEAA@AEBV_Locinfo@1@_K@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_ctor_locinfo, 12)
+ctype_char* __thiscall ctype_char_ctor_locinfo(ctype_char *this,
+        _Locinfo *locinfo, MSVCP_size_t refs)
+{
+    FIXME("(%p %p %lu) stub\n", this, locinfo, refs);
+    this->base.facet.vtable = &MSVCP_ctype_char_vtable;
+    return NULL;
+}
+
+/* ??0?$ctype@D@std@@QAE@PBF_NI@Z */
+/* ??0?$ctype@D@std@@QEAA@PEBF_N_K@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_ctor_table, 16)
+ctype_char* __thiscall ctype_char_ctor_table(ctype_char *this,
+        const short *table, MSVCP_bool delete, MSVCP_size_t refs)
+{
+    FIXME("(%p %p %d %lu) stub\n", this, table, delete, refs);
+    this->base.facet.vtable = &MSVCP_ctype_char_vtable;
+    return NULL;
+}
+
+/* ??_F?$ctype@D@std@@QAEXXZ */
+/* ??_F?$ctype@D@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(ctype_char_ctor, 4)
+ctype_char* __thiscall ctype_char_ctor(ctype_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    this->base.facet.vtable = &MSVCP_ctype_char_vtable;
+    return NULL;
+}
+
+/* ??1?$ctype@D@std@@MAE@XZ */
+/* ??1?$ctype@D@std@@MEAA@XZ */
+DEFINE_THISCALL_WRAPPER(ctype_char_dtor, 4)
+void __thiscall ctype_char_dtor(ctype_char *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_ctype_char_vector_dtor, 8)
+ctype_char* __thiscall MSVCP_ctype_char_vector_dtor(ctype_char *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            ctype_char_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        ctype_char_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ?do_narrow@?$ctype@D@std@@MBEDDD@Z */
+/* ?do_narrow@?$ctype@D@std@@MEBADDD@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_do_narrow_ch, 12)
+char __thiscall ctype_char_do_narrow_ch(const ctype_char *this, char ch, char unused)
+{
+    FIXME("(%p %c %c) stub\n", this, ch, unused);
+    return 0;
+}
+
+/* ?do_narrow@?$ctype@D@std@@MBEPBDPBD0DPAD@Z */
+/* ?do_narrow@?$ctype@D@std@@MEBAPEBDPEBD0DPEAD@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_do_narrow, 20)
+const char* __thiscall ctype_char_do_narrow(const ctype_char *this,
+        const char *first, const char *last, char unused, char *dest)
+{
+    FIXME("(%p %p %p %p) stub\n", this, first, last, dest);
+    return NULL;
+}
+
+/* ?_Do_narrow_s@?$ctype@D@std@@MBEPBDPBD0DPADI@Z */
+/* ?_Do_narrow_s@?$ctype@D@std@@MEBAPEBDPEBD0DPEAD_K@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char__Do_narrow_s, 24)
+const char* __thiscall ctype_char__Do_narrow_s(const ctype_char *this, const char *first,
+        const char *last, char unused, char *dest, MSVCP_size_t size)
+{
+    FIXME("(%p %p %p %p %lu) stub\n", this, first, last, dest, size);
+    return NULL;
+}
+
+/* ?narrow@?$ctype@D@std@@QBEDDD@Z */
+/* ?narrow@?$ctype@D@std@@QEBADDD@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_narrow_ch, 12)
+char __thiscall ctype_char_narrow_ch(const ctype_char *this, char ch, char dflt)
+{
+    FIXME("(%p %c %c) stub\n", this, ch, dflt);
+    return 0;
+}
+
+/* ?narrow@?$ctype@D@std@@QBEPBDPBD0DPAD@Z */
+/* ?narrow@?$ctype@D@std@@QEBAPEBDPEBD0DPEAD@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_narrow, 20)
+const char* __thiscall ctype_char_narrow(const ctype_char *this,
+        const char *first, const char *last, char dflt, char *dest)
+{
+    FIXME("(%p %p %p %c %p) stub\n", this, first, last, dflt, dest);
+    return NULL;
+}
+
+/* ?_Narrow_s@?$ctype@D@std@@QBEPBDPBD0DPADI@Z */
+/* ?_Narrow_s@?$ctype@D@std@@QEBAPEBDPEBD0DPEAD_K@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char__Narrow_s, 24)
+const char* __thiscall ctype_char__Narrow_s(const ctype_char *this, const char *first,
+        const char *last, char unused, char *dest, MSVCP_size_t size)
+{
+    FIXME("(%p %p %p %p %lu) stub\n", this, first, last, dest, size);
+    return NULL;
+}
+
+/* ?do_widen@?$ctype@D@std@@MBEDD@Z */
+/* ?do_widen@?$ctype@D@std@@MEBADD@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_do_widen_ch, 8)
+char __thiscall ctype_char_do_widen_ch(const ctype_char *this, char ch)
+{
+    FIXME("(%p %c) stub\n", this, ch);
+    return 0;
+}
+
+/* ?do_widen@?$ctype@D@std@@MBEPBDPBD0PAD@Z */
+/* ?do_widen@?$ctype@D@std@@MEBAPEBDPEBD0PEAD@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_do_widen, 16)
+const char* __thiscall ctype_char_do_widen(const ctype_char *this,
+        const char *first, const char *last, char *dest)
+{
+    FIXME("(%p %p %p %p) stub\n", this, first, last, dest);
+    return NULL;
+}
+
+/* ?_Do_widen_s@?$ctype@D@std@@MBEPBDPBD0PADI@Z */
+/* ?_Do_widen_s@?$ctype@D@std@@MEBAPEBDPEBD0PEAD_K@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char__Do_widen_s, 20)
+const char* __thiscall ctype_char__Do_widen_s(const ctype_char *this,
+        const char *first, const char *last, char *dest, MSVCP_size_t size)
+{
+    FIXME("(%p %p %p %p %lu) stub\n", this, first, last, dest, size);
+    return NULL;
+}
+
+/* ?widen@?$ctype@D@std@@QBEDD@Z */
+/* ?widen@?$ctype@D@std@@QEBADD@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_widen_ch, 8)
+char __thiscall ctype_char_widen_ch(const ctype_char *this, char ch)
+{
+    FIXME("(%p %c) stub\n", this, ch);
+    return 0;
+}
+
+/* ?widen@?$ctype@D@std@@QBEPBDPBD0PAD@Z */
+/* ?widen@?$ctype@D@std@@QEBAPEBDPEBD0PEAD@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_widen, 16)
+const char* __thiscall ctype_char_widen(const ctype_char *this,
+        const char *first, const char *last, char *dest)
+{
+    FIXME("(%p %p %p %p) stub\n", this, first, last, dest);
+    return NULL;
+}
+
+/* ?_Widen_s@?$ctype@D@std@@QBEPBDPBD0PADI@Z */
+/* ?_Widen_s@?$ctype@D@std@@QEBAPEBDPEBD0PEAD_K@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char__Widen_s, 20)
+const char* __thiscall ctype_char__Widen_s(const ctype_char *this,
+        const char *first, const char *last, char *dest, MSVCP_size_t size)
+{
+    FIXME("(%p %p %p %p %lu) stub\n", this, first, last, dest, size);
+    return NULL;
+}
+
+/* ?_Getcat@?$ctype@D@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
+/* ?_Getcat@?$ctype@D@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
+MSVCP_size_t __cdecl ctype_char__Getcat(const locale_facet **facet, const locale_facet *loc)
+{
+    FIXME("(%p %p) stub\n", facet, loc);
+    return 0;
+}
+
+/* ?do_tolower@?$ctype@D@std@@MBEDD@Z */
+/* ?do_tolower@?$ctype@D@std@@MEBADD@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_do_tolower_ch, 8)
+char __thiscall ctype_char_do_tolower_ch(const ctype_char *this, char ch)
+{
+    FIXME("(%p %c) stub\n", this, ch);
+    return 0;
+}
+
+/* ?do_tolower@?$ctype@D@std@@MBEPBDPADPBD@Z */
+/* ?do_tolower@?$ctype@D@std@@MEBAPEBDPEADPEBD@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_do_tolower, 12)
+const char* __thiscall ctype_char_do_tolower(const ctype_char *this, char *first, const char *last)
+{
+    FIXME("(%p %p %p) stub\n", this, first, last);
+    return NULL;
+}
+
+/* ?tolower@?$ctype@D@std@@QBEDD@Z */
+/* ?tolower@?$ctype@D@std@@QEBADD@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_tolower_ch, 8)
+char __thiscall ctype_char_tolower_ch(const ctype_char *this, char ch)
+{
+    FIXME("(%p %c) stub\n", this, ch);
+    return 0;
+}
+
+/* ?tolower@?$ctype@D@std@@QBEPBDPADPBD@Z */
+/* ?tolower@?$ctype@D@std@@QEBAPEBDPEADPEBD@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_tolower, 12)
+const char* __thiscall ctype_char_tolower(const ctype_char *this, char *first, const char *last)
+{
+    FIXME("(%p %p %p) stub\n", this, first, last);
+    return NULL;
+}
+
+/* ?do_toupper@?$ctype@D@std@@MBEDD@Z */
+/* ?do_toupper@?$ctype@D@std@@MEBADD@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_do_toupper_ch, 8)
+char __thiscall ctype_char_do_toupper_ch(const ctype_char *this, char ch)
+{
+    FIXME("(%p %c) stub\n", this, ch);
+    return 0;
+}
+
+/* ?do_toupper@?$ctype@D@std@@MBEPBDPADPBD@Z */
+/* ?do_toupper@?$ctype@D@std@@MEBAPEBDPEADPEBD@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_do_toupper, 12)
+const char* __thiscall ctype_char_do_toupper(const ctype_char *this,
+        char *first, const char *last)
+{
+    FIXME("(%p %p %p) stub\n", this, first, last);
+    return NULL;
+}
+
+/* ?toupper@?$ctype@D@std@@QBEDD@Z */
+/* ?toupper@?$ctype@D@std@@QEBADD@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_toupper_ch, 8)
+char __thiscall ctype_char_toupper_ch(const ctype_char *this, char ch)
+{
+    FIXME("(%p %c) stub\n", this, ch);
+    return 0;
+}
+
+/* ?toupper@?$ctype@D@std@@QBEPBDPADPBD@Z */
+/* ?toupper@?$ctype@D@std@@QEBAPEBDPEADPEBD@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_toupper, 12)
+const char* __thiscall ctype_char_toupper(const ctype_char *this, char *first, const char *last)
+{
+    FIXME("(%p %p %p) stub\n", this, first, last);
+    return NULL;
+}
+
+/* ?is@?$ctype@D@std@@QBE_NFD@Z */
+/* ?is@?$ctype@D@std@@QEBA_NFD@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_is_ch, 12)
+MSVCP_bool __thiscall ctype_char_is_ch(const ctype_char *this, short mask, char ch)
+{
+    FIXME("(%p %x %c) stub\n", this, mask, ch);
+    return 0;
+}
+
+/* ?is@?$ctype@D@std@@QBEPBDPBD0PAF@Z */
+/* ?is@?$ctype@D@std@@QEBAPEBDPEBD0PEAF@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_is, 16)
+const char* __thiscall ctype_char_is(const ctype_char *this, const char *first, const char *last, short *dest)
+{
+    FIXME("(%p %p %p %p) stub\n", this, first, last, dest);
+    return NULL;
+}
+
+/* ?scan_is@?$ctype@D@std@@QBEPBDFPBD0@Z */
+/* ?scan_is@?$ctype@D@std@@QEBAPEBDFPEBD0@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_scan_is, 16)
+const char* __thiscall ctype_char_scan_is(const ctype_char *this, short mask, const char *first, const char *last)
+{
+    FIXME("(%p %x %p %p) stub\n", this, mask, first, last);
+    return NULL;
+}
+
+/* ?scan_not@?$ctype@D@std@@QBEPBDFPBD0@Z */
+/* ?scan_not@?$ctype@D@std@@QEBAPEBDFPEBD0@Z */
+DEFINE_THISCALL_WRAPPER(ctype_char_scan_not, 16)
+const char* __thiscall ctype_char_scan_not(const ctype_char *this, short mask, const char *first, const char *last)
+{
+    FIXME("(%p %x %p %p) stub\n", this, mask, first, last);
+    return NULL;
+}
+
+/* ?table@?$ctype@D@std@@IBEPBFXZ */
+/* ?table@?$ctype@D@std@@IEBAPEBFXZ */
+DEFINE_THISCALL_WRAPPER(ctype_char_table, 4)
+const short* __thiscall ctype_char_table(const ctype_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
 }
 
 /* ??0_Locimp@locale@std@@AAE@_N@Z */
@@ -1625,6 +1973,43 @@ const rtti_object_locator ctype_base_rtti = {
     &ctype_base_hierarchy
 };
 
+static const type_info ctype_char_type_info = {
+    &MSVCP_ctype_char_vtable,
+    NULL,
+    ".?AV?$ctype@D@std@@"
+};
+
+static const rtti_base_descriptor ctype_char_rtti_base_descriptor = {
+    &ctype_char_type_info,
+    2,
+    { 0, -1, 0},
+    64
+};
+
+static const rtti_base_array ctype_char_rtti_base_array = {
+    {
+        &ctype_char_rtti_base_descriptor,
+        &ctype_base_rtti_base_descriptor,
+        &locale_facet_rtti_base_descriptor,
+        NULL
+    }
+};
+
+static const rtti_object_hierarchy ctype_char_hierarchy = {
+    0,
+    0,
+    3,
+    &ctype_char_rtti_base_array
+};
+
+const rtti_object_locator ctype_char_rtti = {
+    0,
+    0,
+    0,
+    &ctype_char_type_info,
+    &ctype_char_hierarchy
+};
+
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
@@ -1641,6 +2026,17 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(collate_wchar_do_transform)
             VTABLE_ADD_FUNC(collate_wchar_do_hash));
     __ASM_VTABLE(ctype_base, "");
+    __ASM_VTABLE(ctype_char,
+            VTABLE_ADD_FUNC(ctype_char_do_tolower)
+            VTABLE_ADD_FUNC(ctype_char_do_tolower_ch)
+            VTABLE_ADD_FUNC(ctype_char_do_toupper)
+            VTABLE_ADD_FUNC(ctype_char_do_toupper_ch)
+            VTABLE_ADD_FUNC(ctype_char_do_widen)
+            VTABLE_ADD_FUNC(ctype_char_do_widen_ch)
+            VTABLE_ADD_FUNC(ctype_char__Do_widen_s)
+            VTABLE_ADD_FUNC(ctype_char_do_narrow)
+            VTABLE_ADD_FUNC(ctype_char_do_narrow_ch)
+            VTABLE_ADD_FUNC(ctype_char__Do_narrow_s));
 #ifndef __GNUC__
 }
 #endif
