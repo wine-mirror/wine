@@ -562,7 +562,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
 static void WCMD_dir_trailer(WCHAR drive) {
     ULARGE_INTEGER avail, total, freebytes;
     DWORD status;
-    WCHAR driveName[4] = {'c',':','\\','\0'};
+    WCHAR driveName[] = {'c',':','\\','\0'};
 
     driveName[0] = drive;
     status = GetDiskFreeSpaceExW(driveName, &avail, &total, &freebytes);
