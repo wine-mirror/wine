@@ -41,6 +41,9 @@
 
 #include "wine/test.h"
 
+/* undef the #define in msxml2 so that we can access all versions */
+#undef CLSID_DOMDocument
+
 DEFINE_GUID(SID_SContainerDispatch, 0xb722be00, 0x4e68, 0x101b, 0xa2, 0xbc, 0x00, 0xaa, 0x00, 0x40, 0x47, 0x70);
 DEFINE_GUID(SID_UnknownSID, 0x75dd09cb, 0x6c40, 0x11d5, 0x85, 0x43, 0x00, 0xc0, 0x4f, 0xa0, 0xfb, 0xa3);
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
@@ -1737,15 +1740,6 @@ static const char xpath_simple_list[] =
 "   <d/>"
 "</root>";
 
-static const char* leading_spaces[] = {
-    "\n<?xml version=\"1.0\"?><root/>",
-    " <?xml version=\"1.0\"?><root/>",
-    "\t<?xml version=\"1.0\"?><root/>",
-    "\r\n<?xml version=\"1.0\"?><root/>",
-    "\r<?xml version=\"1.0\"?><root/>",
-    0
-};
-
 static const char default_ns_doc[] = {
     "<?xml version=\"1.0\"?>"
     "<a xmlns:ns=\"nshref\" xml:lang=\"ru\" ns:b=\"b attr\" xml:c=\"c attr\" "
@@ -1834,7 +1828,7 @@ static void* _create_object(const GUID *clsid, const char *name, const IID *iid,
 
 #define _create(cls) cls, #cls
 
-#define create_document(iid) _create_object(&_create(CLSID_DOMDocument), iid, __LINE__)
+#define create_document(iid) _create_object(&_create(CLSID_DOMDocument2), iid, __LINE__)
 #define create_document_version(v, iid) _create_object(&_create(CLSID_DOMDocument ## v), iid, __LINE__)
 #define create_cache(iid) _create_object(&_create(CLSID_XMLSchemaCache), iid, __LINE__)
 #define create_cache_version(v, iid) _create_object(&_create(CLSID_XMLSchemaCache ## v), iid, __LINE__)
@@ -2012,6 +2006,38 @@ static char *list_to_string(IXMLDOMNodeList *list)
 #define expect_node(node, expstr) { char str[4096]; node_to_string(node, str); ok(strcmp(str, expstr)==0, "Invalid node: %s, expected %s\n", str, expstr); }
 #define expect_list_and_release(list, expstr) { char *str = list_to_string(list); ok(strcmp(str, expstr)==0, "Invalid node list: %s, expected %s\n", str, expstr); if (list) IXMLDOMNodeList_Release(list); }
 
+struct docload_ret_t {
+    VARIANT_BOOL b;
+    HRESULT hr;
+};
+
+struct leading_spaces_t {
+    const CLSID *clsid;
+    const char *name;
+    struct docload_ret_t ret[2]; /* 0 - ::load(), 1 - ::loadXML() */
+};
+
+static const struct leading_spaces_t leading_spaces_classdata[] = {
+    { &CLSID_DOMDocument,   "CLSID_DOMDocument",   {{VARIANT_FALSE, S_FALSE }, {VARIANT_TRUE,  S_OK } }},
+    { &CLSID_DOMDocument2,  "CLSID_DOMDocument2",  {{VARIANT_FALSE, S_FALSE }, {VARIANT_FALSE, S_FALSE } }},
+    { &CLSID_DOMDocument26, "CLSID_DOMDocument26", {{VARIANT_FALSE, S_FALSE }, {VARIANT_TRUE,  S_OK } }},
+    { &CLSID_DOMDocument30, "CLSID_DOMDocument30", {{VARIANT_FALSE, S_FALSE }, {VARIANT_FALSE, S_FALSE } }},
+    { &CLSID_DOMDocument40, "CLSID_DOMDocument40", {{VARIANT_FALSE, S_FALSE }, {VARIANT_FALSE, S_FALSE } }},
+    { &CLSID_DOMDocument60, "CLSID_DOMDocument60", {{VARIANT_FALSE, S_FALSE }, {VARIANT_FALSE, S_FALSE } }},
+    { NULL }
+};
+
+static const char* leading_spaces_xmldata[] = {
+    "\n<?xml version=\"1.0\" encoding=\"UTF-16\" ?><root/>",
+    " <?xml version=\"1.0\"?><root/>",
+    "\n<?xml version=\"1.0\"?><root/>",
+    "\t<?xml version=\"1.0\"?><root/>",
+    "\r\n<?xml version=\"1.0\"?><root/>",
+    "\r<?xml version=\"1.0\"?><root/>",
+    "\r\r\r\r\t\t \n\n <?xml version=\"1.0\"?><root/>",
+    0
+};
+
 static void test_domdoc( void )
 {
     HRESULT r, hr;
@@ -2024,13 +2050,59 @@ static void test_domdoc( void )
     IXMLDOMAttribute *node_attr = NULL;
     IXMLDOMNode *nodeChild = NULL;
     IXMLDOMProcessingInstruction *nodePI = NULL;
+    const struct leading_spaces_t *class_ptr;
+    const char **data_ptr;
     VARIANT_BOOL b;
     VARIANT var;
     BSTR str;
     LONG code, ref;
     LONG nLength = 0;
     WCHAR buff[100];
-    const char **ptr;
+    int index;
+
+    /* Load document with leading spaces
+     *
+     * Test all CLSIDs with all test data XML strings
+     */
+    class_ptr = leading_spaces_classdata;
+    index = 0;
+    while (class_ptr->clsid)
+    {
+        HRESULT hr;
+        int i;
+
+        hr = CoCreateInstance(class_ptr->clsid, NULL, CLSCTX_INPROC_SERVER,
+             &IID_IXMLDOMDocument, (void**)&doc);
+        if (hr != S_OK) {
+            win_skip("%d: failed to create class instance for %s\n", index, class_ptr->name);
+            class_ptr++;
+            index++;
+            continue;
+        }
+
+        data_ptr = leading_spaces_xmldata;
+        i = 0;
+        while (*data_ptr) {
+            BSTR data = _bstr_(*data_ptr);
+
+            b = 0xc;
+            V_VT(&var) = VT_BSTR;
+            V_BSTR(&var) = data;
+            hr = IXMLDOMDocument_load(doc, var, &b);
+            EXPECT_HR(hr, class_ptr->ret[0].hr);
+            ok(b == class_ptr->ret[0].b, "%d:%d, got %d, expected %d\n", index, i, b, class_ptr->ret[0].b);
+
+            b = 0xc;
+            hr = IXMLDOMDocument_loadXML(doc, data, &b);
+            EXPECT_HR(hr, class_ptr->ret[1].hr);
+            ok(b == class_ptr->ret[1].b, "%d:%d, got %d, expected %d\n", index, i, b, class_ptr->ret[1].b);
+
+            data_ptr++;
+            i++;
+        }
+        class_ptr++;
+        index++;
+    }
 
     doc = create_document(&IID_IXMLDOMDocument);
     if (!doc) return;
@@ -2049,19 +2121,6 @@ if (0)
     hr = IXMLDOMDocument_loadXML( doc, NULL, &b );
     EXPECT_HR(hr, S_FALSE);
     ok( b == VARIANT_FALSE, "failed to load XML string\n");
-
-    /* load document with leading spaces */
-    ptr = leading_spaces;
-    while (*ptr)
-    {
-        b = VARIANT_TRUE;
-        V_VT(&var) = VT_BSTR;
-        V_BSTR(&var) = _bstr_(*ptr);
-        hr = IXMLDOMDocument_load( doc, var, &b);
-        EXPECT_HR(hr, S_FALSE);
-        ok( b == VARIANT_FALSE, "got %x\n", b);
-        ptr++;
-    }
 
     /* try to load a document from a nonexistent file */
     b = VARIANT_TRUE;

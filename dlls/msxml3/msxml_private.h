@@ -31,9 +31,11 @@
 
 typedef enum {
     MSXML_DEFAULT = 0,
-    MSXML3 = 30,
-    MSXML4 = 40,
-    MSXML6 = 60
+    MSXML2        = 20,
+    MSXML26       = 26,
+    MSXML3        = 30,
+    MSXML4        = 40,
+    MSXML6        = 60
 } MSXML_VERSION;
 
 /* typelibs */

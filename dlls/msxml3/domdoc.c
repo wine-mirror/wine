@@ -78,7 +78,7 @@ static const WCHAR PropertyResolveExternalsW[] = {'R','e','s','o','l','v','e','E
  * tests can go here (data shared between all instances).
  * We need to preserve this when reloading a document,
  * and also need access to it from the libxml backend. */
-typedef struct _domdoc_properties {
+typedef struct {
     MSXML_VERSION version;
     VARIANT_BOOL preserving;
     IXMLDOMSchemaCollection2* schemaCache;
@@ -285,7 +285,7 @@ static xmldoc_priv * create_priv(void)
     return priv;
 }
 
-static domdoc_properties * create_properties(MSXML_VERSION version)
+static domdoc_properties *create_properties(MSXML_VERSION version)
 {
     domdoc_properties *properties = heap_alloc(sizeof(domdoc_properties));
 
@@ -2230,18 +2230,17 @@ static HRESULT WINAPI domdoc_abort(
     return E_NOTIMPL;
 }
 
-
 /* don't rely on data to be in BSTR format, treat it as WCHAR string */
 static HRESULT WINAPI domdoc_loadXML(
     IXMLDOMDocument3 *iface,
-    BSTR bstrXML,
+    BSTR data,
     VARIANT_BOOL* isSuccessful )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
     xmlDocPtr xmldoc = NULL;
     HRESULT hr = S_FALSE, hr2;
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_w( bstrXML ), isSuccessful );
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(data), isSuccessful );
 
     assert ( &This->node );
 
@@ -2249,9 +2248,16 @@ static HRESULT WINAPI domdoc_loadXML(
     {
         *isSuccessful = VARIANT_FALSE;
 
-        if ( bstrXML )
+        if (data)
         {
-            xmldoc = doparse(This, (LPCSTR)bstrXML, lstrlenW(bstrXML) * sizeof(*bstrXML), XML_CHAR_ENCODING_UTF16LE);
+            WCHAR *ptr = data;
+
+            /* skip leading spaces if needed */
+            if (This->properties->version == MSXML_DEFAULT || This->properties->version == MSXML26)
+                 while (*ptr)
+                    if (isspaceW(*ptr)) ptr++; else break;
+
+            xmldoc = doparse(This, (char*)ptr, strlenW(ptr)*sizeof(WCHAR), XML_CHAR_ENCODING_UTF16LE);
             if ( !xmldoc )
             {
                 This->error = E_FAIL;
