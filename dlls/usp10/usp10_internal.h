@@ -109,6 +109,8 @@
 /* Unicode Chapter 16 */
 #define Script_Surrogates 73
 #define Script_Private 74
+/* Unicode Chapter 13 : Plane 1 */
+#define Script_Deseret 75
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)

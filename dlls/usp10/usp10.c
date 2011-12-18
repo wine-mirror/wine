@@ -287,6 +287,9 @@ static const scriptRange scriptRanges[] = {
     { Script_Kana       ,0xff65, 0xff9f,  0, 0},
     { Script_Hangul     ,0xffa0, 0xffdf,  0, 0},
     { Script_Ideograph  ,0xffe0, 0xffef,  0, 0},
+    /* Plane - 1 */
+    /* Deseret: U+10400–U+1044F */
+    { Script_Deseret,     0x10400, 0x1044F,  0, 0},
     /* END */
     { SCRIPT_UNDEFINED,  0, 0, 0}
 };
@@ -601,6 +604,10 @@ static const scriptData scriptInformation[] = {
      {0, 0, 0, 0, 0, DEFAULT_CHARSET, 0, 1, 0, 0, 0, 0, 1, 0, 0},
      0x00000000,
      {0}},
+    {{Script_Deseret, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {0, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('d','s','r','t'),
+     {'S','e','g','o','e',' ','U','I',' ','S','y','m','b','o','l'}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -642,7 +649,7 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[68].props, &scriptInformation[69].props,
     &scriptInformation[70].props, &scriptInformation[71].props,
     &scriptInformation[72].props, &scriptInformation[73].props,
-    &scriptInformation[74].props
+    &scriptInformation[74].props, &scriptInformation[75].props
 };
 
 typedef struct {
