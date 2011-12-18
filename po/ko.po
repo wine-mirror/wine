@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-09-06 18:50+0900\n"
+"PO-Revision-Date: 2011-12-18 18:50+0900\n"
 "Last-Translator: YunSong Hwang <hys545@dreamwiz.com>\n"
 "Language-Team: none\n"
 "Language: Korean\n"
@@ -3444,7 +3444,7 @@ msgstr "증가"
 
 #: inetcpl.rc:36
 msgid "High"
-msgstr "높음(&H)"
+msgstr "높음"
 
 #: jscript.rc:25
 msgid "Error converting object to primitive type"
@@ -3459,9 +3459,8 @@ msgid "Subscript out of range"
 msgstr "첨자가 범위를 벗어남"
 
 #: jscript.rc:28
-#, fuzzy
 msgid "Object required"
-msgstr "객체가 필요합니다"
+msgstr "객체가 필요함"
 
 #: jscript.rc:29
 msgid "Automation server can't create object"
@@ -3532,9 +3531,8 @@ msgid "Boolean object expected"
 msgstr "볼린 객제가 필요함"
 
 #: jscript.rc:46
-#, fuzzy
 msgid "Cannot delete '|'"
-msgstr "완료되지 않았습니다\n"
+msgstr "'|'를 지울 수 없음"
 
 #: jscript.rc:47
 msgid "VBArray object expected"
@@ -6778,9 +6776,8 @@ msgid "&Data Rate"
 msgstr "데이타 전송율(&D)"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/s"
-msgstr "킬로바이트/초"
+msgstr "kB/s"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
@@ -9941,14 +9938,10 @@ msgid "Parameter error\n"
 msgstr "매개변수 오류\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
-msgstr ""
-"드라이브 %1!c!의 볼륨은 %2임\n"
-" 볼륨 시리얼 번호는 %3!04x!-%4!04x!\n"
-"임\n"
+msgstr "볼륨 시리얼 번호는 %1!04x!-%2!04x!임\n"
 
 #: cmd.rc:319
 msgid "Volume label (11 characters, ENTER for none)?"
@@ -9980,11 +9973,11 @@ msgstr "이 출력 줄은 너무 깁니다.\n"
 
 #: cmd.rc:326
 msgid "Volume in drive %1!c! is %2\n"
-msgstr ""
+msgstr "드라이브 %1!c!의 볼륨은 %2임\n"
 
 #: cmd.rc:327
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr ""
+msgstr "드라이브 %1!c!는 라벨을 가지고 있지 않습니다.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
