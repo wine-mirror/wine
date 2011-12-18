@@ -537,6 +537,7 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
     BindStatusCallback *bsc;
     IBindCtx *pbc;
     HRESULT hr;
+    int size;
 
     hr = CreateBindCtx(0, &pbc);
     if (hr != S_OK) return hr;
@@ -562,6 +563,9 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
 
     if (This->verb != BINDVERB_GET)
     {
+        void *send_data, *ptr;
+        SAFEARRAY *sa = NULL;
+
         if (V_VT(body) == (VT_VARIANT|VT_BYREF))
             body = V_VARIANTREF(body);
 
@@ -569,9 +573,8 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
         {
         case VT_BSTR:
         {
-            int len = SysStringLen(V_BSTR(body)), size;
+            int len = SysStringLen(V_BSTR(body));
             const WCHAR *str = V_BSTR(body);
-            void *send_data, *ptr;
             UINT i, cp = CP_ACP;
 
             for (i = 0; i < len; i++)
@@ -606,10 +609,47 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
             heap_free(ptr);
             break;
         }
+        case VT_ARRAY|VT_UI1:
+        {
+            sa = V_ARRAY(body);
+            if ((hr = SafeArrayAccessData(sa, (void **)&ptr)) != S_OK) return hr;
+            if ((hr = SafeArrayGetUBound(sa, 1, &size) != S_OK))
+            {
+                SafeArrayUnaccessData(sa);
+                return hr;
+            }
+            size++;
+            break;
+        }
+        case VT_EMPTY:
+            ptr = NULL;
+            size = 0;
+            break;
         default:
             FIXME("unsupported body data type %d\n", V_VT(body));
             break;
         }
+
+        bsc->body = GlobalAlloc(GMEM_FIXED, size);
+        if (!bsc->body)
+        {
+            if (V_VT(body) == VT_BSTR)
+                heap_free(ptr);
+            else if (V_VT(body) == (VT_ARRAY|VT_UI1))
+                SafeArrayUnaccessData(sa);
+
+            heap_free(bsc);
+            return E_OUTOFMEMORY;
+        }
+
+        send_data = GlobalLock(bsc->body);
+        memcpy(send_data, ptr, size);
+        GlobalUnlock(bsc->body);
+
+        if (V_VT(body) == VT_BSTR)
+            heap_free(ptr);
+        else if (V_VT(body) == (VT_ARRAY|VT_UI1))
+            SafeArrayUnaccessData(sa);
     }
 
     hr = RegisterBindStatusCallback(pbc, &bsc->IBindStatusCallback_iface, NULL, 0);
