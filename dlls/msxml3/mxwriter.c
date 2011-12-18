@@ -39,8 +39,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
-#ifdef HAVE_LIBXML2
-
 static const WCHAR utf16W[] = {'U','T','F','-','1','6',0};
 static const WCHAR emptyW[] = {0};
 
@@ -1144,14 +1142,3 @@ HRESULT MXWriter_create(MSXML_VERSION version, IUnknown *outer, void **ppObj)
 
     return S_OK;
 }
-
-#else
-
-HRESULT MXWriter_create(MSXML_VERSION version, IUnknown *outer, void **obj)
-{
-    MESSAGE("This program tried to use a MXXMLWriter object, but\n"
-            "libxml2 support was not present at compile time.\n");
-    return E_NOTIMPL;
-}
-
-#endif /* HAVE_LIBXML2 */
