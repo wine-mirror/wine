@@ -56,7 +56,7 @@ static const WCHAR crlfW[] = {'\r','\n',0};
 
 typedef struct BindStatusCallback BindStatusCallback;
 
-struct reqheader
+struct httpheader
 {
     struct list entry;
     BSTR header;
@@ -80,6 +80,9 @@ typedef struct
     struct list reqheaders;
     /* cached resulting custom request headers string length in WCHARs */
     LONG reqheader_size;
+    /* response headers */
+    struct list respheaders;
+    BSTR raw_respheaders;
 
     /* credentials */
     BSTR user;
@@ -124,6 +127,22 @@ static void httprequest_setreadystate(httprequest *This, READYSTATE state)
         memset(&params, 0, sizeof(params));
         IDispatch_Invoke(This->sink, 0, &IID_NULL, LOCALE_SYSTEM_DEFAULT, DISPATCH_METHOD, &params, 0, 0, 0);
     }
+}
+
+static void free_response_headers(httprequest *This)
+{
+    struct httpheader *header, *header2;
+
+    LIST_FOR_EACH_ENTRY_SAFE(header, header2, &This->respheaders, struct httpheader, entry)
+    {
+        list_remove(&header->entry);
+        SysFreeString(header->header);
+        SysFreeString(header->value);
+        heap_free(header);
+    }
+
+    SysFreeString(This->raw_respheaders);
+    This->raw_respheaders = NULL;
 }
 
 struct BindStatusCallback
@@ -386,7 +405,7 @@ static HRESULT WINAPI BSCHttpNegotiate_BeginningTransaction(IHttpNegotiate *ifac
         LPCWSTR url, LPCWSTR headers, DWORD reserved, LPWSTR *add_headers)
 {
     BindStatusCallback *This = impl_from_IHttpNegotiate(iface);
-    const struct reqheader *entry;
+    const struct httpheader *entry;
     WCHAR *buff, *ptr;
 
     TRACE("(%p)->(%s %s %d %p)\n", This, debugstr_w(url), debugstr_w(headers), reserved, add_headers);
@@ -399,7 +418,7 @@ static HRESULT WINAPI BSCHttpNegotiate_BeginningTransaction(IHttpNegotiate *ifac
     if (!buff) return E_OUTOFMEMORY;
 
     ptr = buff;
-    LIST_FOR_EACH_ENTRY(entry, &This->request->reqheaders, struct reqheader, entry)
+    LIST_FOR_EACH_ENTRY(entry, &This->request->reqheaders, struct httpheader, entry)
     {
         lstrcpyW(ptr, entry->header);
         ptr += SysStringLen(entry->header);
@@ -419,6 +438,37 @@ static HRESULT WINAPI BSCHttpNegotiate_BeginningTransaction(IHttpNegotiate *ifac
     return S_OK;
 }
 
+static void add_response_header(httprequest *This, const WCHAR *data, int len)
+{
+    struct httpheader *entry;
+    const WCHAR *ptr = data;
+    BSTR header, value;
+
+    while (*ptr)
+    {
+        if (*ptr == ':')
+        {
+            header = SysAllocStringLen(data, ptr-data);
+            /* skip leading spaces for a value */
+            while (*++ptr == ' ')
+                ;
+            value = SysAllocStringLen(ptr, len-(ptr-data));
+            break;
+        }
+        ptr++;
+    }
+
+    if (!*ptr) return;
+
+    /* new header */
+    TRACE("got header %s:%s\n", debugstr_w(header), debugstr_w(value));
+
+    entry = heap_alloc(sizeof(*header));
+    entry->header = header;
+    entry->value  = value;
+    list_add_head(&This->respheaders, &entry->entry);
+}
+
 static HRESULT WINAPI BSCHttpNegotiate_OnResponse(IHttpNegotiate *iface, DWORD code,
         LPCWSTR resp_headers, LPCWSTR req_headers, LPWSTR *add_reqheaders)
 {
@@ -428,6 +478,28 @@ static HRESULT WINAPI BSCHttpNegotiate_OnResponse(IHttpNegotiate *iface, DWORD c
           debugstr_w(req_headers), add_reqheaders);
 
     This->request->status = code;
+    /* store headers */
+    free_response_headers(This->request);
+    if (resp_headers)
+    {
+        const WCHAR *ptr, *line;
+
+        ptr = line = resp_headers;
+
+        /* skip status line */
+        while (*ptr)
+        {
+            if (*ptr == '\r' && *(ptr+1) == '\n')
+            {
+                line = ++ptr+1;
+                break;
+            }
+            ptr++;
+        }
+
+        /* store as unparsed string for now */
+        This->request->raw_respheaders = SysAllocString(line);
+    }
 
     return S_OK;
 }
@@ -563,7 +635,7 @@ static ULONG WINAPI httprequest_Release(IXMLHTTPRequest *iface)
 
     if ( ref == 0 )
     {
-        struct reqheader *header, *header2;
+        struct httpheader *header, *header2;
 
         if (This->site)
             IUnknown_Release( This->site );
@@ -573,13 +645,15 @@ static ULONG WINAPI httprequest_Release(IXMLHTTPRequest *iface)
         SysFreeString(This->password);
 
         /* request headers */
-        LIST_FOR_EACH_ENTRY_SAFE(header, header2, &This->reqheaders, struct reqheader, entry)
+        LIST_FOR_EACH_ENTRY_SAFE(header, header2, &This->reqheaders, struct httpheader, entry)
         {
             list_remove(&header->entry);
             SysFreeString(header->header);
             SysFreeString(header->value);
             heap_free(header);
         }
+        /* response headers */
+        free_response_headers(This);
 
         /* detach callback object */
         BindStatusCallback_Detach(This->bsc);
@@ -719,7 +793,7 @@ static HRESULT WINAPI httprequest_open(IXMLHTTPRequest *iface, BSTR method, BSTR
 static HRESULT WINAPI httprequest_setRequestHeader(IXMLHTTPRequest *iface, BSTR header, BSTR value)
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
-    struct reqheader *entry;
+    struct httpheader *entry;
 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(header), debugstr_w(value));
 
@@ -728,7 +802,7 @@ static HRESULT WINAPI httprequest_setRequestHeader(IXMLHTTPRequest *iface, BSTR 
     if (!value) return E_INVALIDARG;
 
     /* replace existing header value if already added */
-    LIST_FOR_EACH_ENTRY(entry, &This->reqheaders, struct reqheader, entry)
+    LIST_FOR_EACH_ENTRY(entry, &This->reqheaders, struct httpheader, entry)
     {
         if (lstrcmpW(entry->header, header) == 0)
         {
@@ -760,22 +834,56 @@ static HRESULT WINAPI httprequest_setRequestHeader(IXMLHTTPRequest *iface, BSTR 
     return S_OK;
 }
 
-static HRESULT WINAPI httprequest_getResponseHeader(IXMLHTTPRequest *iface, BSTR bstrHeader, BSTR *pbstrValue)
+static HRESULT WINAPI httprequest_getResponseHeader(IXMLHTTPRequest *iface, BSTR header, BSTR *value)
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
+    struct httpheader *entry;
 
-    FIXME("stub (%p) %s %p\n", This, debugstr_w(bstrHeader), pbstrValue);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(header), value);
 
-    return E_NOTIMPL;
+    if (!header || !value) return E_INVALIDARG;
+
+    if (This->raw_respheaders && list_empty(&This->respheaders))
+    {
+        WCHAR *ptr, *line;
+
+        ptr = line = This->raw_respheaders;
+        while (*ptr)
+        {
+            if (*ptr == '\r' && *(ptr+1) == '\n')
+            {
+                add_response_header(This, line, ptr-line);
+                ptr++; line = ++ptr;
+                continue;
+            }
+            ptr++;
+        }
+    }
+
+    LIST_FOR_EACH_ENTRY(entry, &This->respheaders, struct httpheader, entry)
+    {
+        if (!strcmpiW(entry->header, header))
+        {
+            *value = SysAllocString(entry->value);
+            TRACE("header value %s\n", debugstr_w(*value));
+            return S_OK;
+        }
+    }
+
+    return S_FALSE;
 }
 
-static HRESULT WINAPI httprequest_getAllResponseHeaders(IXMLHTTPRequest *iface, BSTR *pbstrHeaders)
+static HRESULT WINAPI httprequest_getAllResponseHeaders(IXMLHTTPRequest *iface, BSTR *respheaders)
 {
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
 
-    FIXME("stub (%p) %p\n", This, pbstrHeaders);
+    TRACE("(%p)->(%p)\n", This, respheaders);
 
-    return E_NOTIMPL;
+    if (!respheaders) return E_INVALIDARG;
+
+    *respheaders = SysAllocString(This->raw_respheaders);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI httprequest_send(IXMLHTTPRequest *iface, VARIANT body)
@@ -1189,6 +1297,9 @@ HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **ppObj)
     req->status = 0;
     req->reqheader_size = 0;
     list_init(&req->reqheaders);
+    list_init(&req->respheaders);
+    req->raw_respheaders = NULL;
+
     req->site = NULL;
     req->safeopt = 0;
 

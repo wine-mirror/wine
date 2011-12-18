@@ -4690,7 +4690,7 @@ static void test_XMLHTTP(void)
     IXMLHttpRequest *xhr;
     IObjectSafety *safety;
     IObjectWithSite *obj_site, *obj_site2;
-    BSTR bstrResponse, url;
+    BSTR bstrResponse, url, str, str1;
     VARIANT dummy;
     VARIANT async;
     VARIANT varbody;
@@ -4839,6 +4839,29 @@ static void test_XMLHTTP(void)
         return;
     }
     EXPECT_HR(hr, S_OK);
+
+    /* response headers */
+    hr = IXMLHttpRequest_getAllResponseHeaders(xhr, NULL);
+    EXPECT_HR(hr, E_INVALIDARG);
+    hr = IXMLHttpRequest_getAllResponseHeaders(xhr, &str);
+    EXPECT_HR(hr, S_OK);
+    /* status line is stripped already */
+    ok(memcmp(str, _bstr_("HTTP"), 4*sizeof(WCHAR)), "got response headers %s\n", wine_dbgstr_w(str));
+    ok(*str, "got empty headers\n");
+    hr = IXMLHttpRequest_getAllResponseHeaders(xhr, &str1);
+    EXPECT_HR(hr, S_OK);
+    ok(str1 != str, "got %p\n", str1);
+    SysFreeString(str1);
+    SysFreeString(str);
+
+    hr = IXMLHttpRequest_getResponseHeader(xhr, NULL, NULL);
+    EXPECT_HR(hr, E_INVALIDARG);
+    hr = IXMLHttpRequest_getResponseHeader(xhr, _bstr_("Date"), NULL);
+    EXPECT_HR(hr, E_INVALIDARG);
+    hr = IXMLHttpRequest_getResponseHeader(xhr, _bstr_("Date"), &str);
+    EXPECT_HR(hr, S_OK);
+    ok(*str != ' ', "got leading space in header %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 
     /* status code after ::send() */
     status = 0xdeadbeef;
