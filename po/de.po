@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-10 19:51+0100\n"
+"PO-Revision-Date: 2011-12-18 13:19+0100\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -3473,9 +3473,8 @@ msgid "Subscript out of range"
 msgstr "Index außerhalb des Bereichs"
 
 #: jscript.rc:28
-#, fuzzy
 msgid "Object required"
-msgstr "Objekt erwartet"
+msgstr "Objekt benötigt"
 
 #: jscript.rc:29
 msgid "Automation server can't create object"
@@ -3546,9 +3545,8 @@ msgid "Boolean object expected"
 msgstr "Boolisches Objekt erwartet"
 
 #: jscript.rc:46
-#, fuzzy
 msgid "Cannot delete '|'"
-msgstr "Kann nicht abschliessen\n"
+msgstr "Kann '|' nicht löschen"
 
 #: jscript.rc:47
 msgid "VBArray object expected"
@@ -6797,9 +6795,8 @@ msgid "&Data Rate"
 msgstr "&Datenrate"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/s"
-msgstr "kB/Sek"
+msgstr "kB/s"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
@@ -10061,13 +10058,11 @@ msgid "Parameter error\n"
 msgstr "Parameterfehler\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
-"Volume in Laufwerk %1!c! ist %2\n"
-"Volumeseriennummer ist %3!04x!-%4!04x!\n"
+"Volumeseriennummer ist %1!04x!-%2!04x!\n"
 "\n"
 
 #: cmd.rc:319
@@ -10100,11 +10095,11 @@ msgstr "Die Eingabezeile ist zu lang.\n"
 
 #: cmd.rc:326
 msgid "Volume in drive %1!c! is %2\n"
-msgstr ""
+msgstr "Volume in Laufwerk %1!c! ist %2\n"
 
 #: cmd.rc:327
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr ""
+msgstr "Volume in Laufwerk %1!c! hat keine Bezeichnung\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
