@@ -111,6 +111,8 @@
 #define Script_Private 74
 /* Unicode Chapter 13 : Plane 1 */
 #define Script_Deseret 75
+#define Script_Osmanya 76
+#define Script_Osmanya_Numeric 77
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)

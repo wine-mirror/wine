@@ -290,6 +290,8 @@ static const scriptRange scriptRanges[] = {
     /* Plane - 1 */
     /* Deseret: U+10400–U+1044F */
     { Script_Deseret,     0x10400, 0x1044F,  0, 0},
+    /* Osmanya: U+10480–U+104AF */
+    { Script_Osmanya,    0x10480, 0x104AF,  Script_Osmanya_Numeric, 0},
     /* END */
     { SCRIPT_UNDEFINED,  0, 0, 0}
 };
@@ -608,6 +610,14 @@ static const scriptData scriptInformation[] = {
      {0, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      MS_MAKE_TAG('d','s','r','t'),
      {'S','e','g','o','e',' ','U','I',' ','S','y','m','b','o','l'}},
+    {{Script_Osmanya, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {0, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('o','s','m','a'),
+     {'E','b','r','i','m','a'}},
+    {{Script_Osmanya_Numeric, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {0, 1, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('o','s','m','a'),
+     {'E','b','r','i','m','a'}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -649,7 +659,8 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[68].props, &scriptInformation[69].props,
     &scriptInformation[70].props, &scriptInformation[71].props,
     &scriptInformation[72].props, &scriptInformation[73].props,
-    &scriptInformation[74].props, &scriptInformation[75].props
+    &scriptInformation[74].props, &scriptInformation[75].props,
+    &scriptInformation[76].props, &scriptInformation[77].props
 };
 
 typedef struct {
