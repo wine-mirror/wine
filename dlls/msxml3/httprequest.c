@@ -80,6 +80,9 @@ typedef struct
     struct list reqheaders;
     /* cached resulting custom request headers string length in WCHARs */
     LONG reqheader_size;
+    /* use UTF-8 content type */
+    BOOL use_utf8_content;
+
     /* response headers */
     struct list respheaders;
     BSTR raw_respheaders;
@@ -404,20 +407,37 @@ static ULONG WINAPI BSCHttpNegotiate_Release(IHttpNegotiate *iface)
 static HRESULT WINAPI BSCHttpNegotiate_BeginningTransaction(IHttpNegotiate *iface,
         LPCWSTR url, LPCWSTR headers, DWORD reserved, LPWSTR *add_headers)
 {
+    static const WCHAR content_type_utf8W[] = {'C','o','n','t','e','n','t','-','T','y','p','e',':',' ',
+        't','e','x','t','/','p','l','a','i','n',';','c','h','a','r','s','e','t','=','u','t','f','-','8','\r','\n',0};
+
     BindStatusCallback *This = impl_from_IHttpNegotiate(iface);
     const struct httpheader *entry;
     WCHAR *buff, *ptr;
+    int size = 0;
 
     TRACE("(%p)->(%s %s %d %p)\n", This, debugstr_w(url), debugstr_w(headers), reserved, add_headers);
 
     *add_headers = NULL;
 
-    if (list_empty(&This->request->reqheaders)) return S_OK;
+    if (This->request->use_utf8_content)
+        size = sizeof(content_type_utf8W);
 
-    buff = CoTaskMemAlloc(This->request->reqheader_size*sizeof(WCHAR));
+    if (!list_empty(&This->request->reqheaders))
+        size += This->request->reqheader_size*sizeof(WCHAR);
+
+    if (!size) return S_OK;
+
+    buff = CoTaskMemAlloc(size);
     if (!buff) return E_OUTOFMEMORY;
 
     ptr = buff;
+    if (This->request->use_utf8_content)
+    {
+        lstrcpyW(ptr, content_type_utf8W);
+        ptr += sizeof(content_type_utf8W)/sizeof(WCHAR)-1;
+    }
+
+    /* user headers */
     LIST_FOR_EACH_ENTRY(entry, &This->request->reqheaders, struct httpheader, entry)
     {
         lstrcpyW(ptr, entry->header);
@@ -536,25 +556,49 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
     bsc->stream = NULL;
     bsc->body = NULL;
 
-    TRACE("created callback %p\n", bsc);
+    TRACE("(%p)->(%p)\n", This, bsc);
+
+    This->use_utf8_content = FALSE;
 
     if (This->verb != BINDVERB_GET)
     {
         if (V_VT(body) == VT_BSTR)
         {
-            LONG size = SysStringLen(V_BSTR(body)) * sizeof(WCHAR);
-            void *ptr;
+            int len = SysStringLen(V_BSTR(body)), size;
+            const WCHAR *str = V_BSTR(body);
+            void *send_data, *ptr;
+            UINT i, cp = CP_ACP;
+
+            for (i = 0; i < len; i++)
+            {
+                if (str[i] > 127)
+                {
+                    cp = CP_UTF8;
+                    break;
+                }
+            }
+
+            size = WideCharToMultiByte(cp, 0, str, len, NULL, 0, NULL, NULL);
+            if (!(ptr = heap_alloc(size)))
+            {
+                heap_free(bsc);
+                return E_OUTOFMEMORY;
+            }
+            WideCharToMultiByte(cp, 0, str, len, ptr, size, NULL, NULL);
+            if (cp == CP_UTF8) This->use_utf8_content = TRUE;
 
             bsc->body = GlobalAlloc(GMEM_FIXED, size);
             if (!bsc->body)
             {
                 heap_free(bsc);
+                heap_free(ptr);
                 return E_OUTOFMEMORY;
             }
 
-            ptr = GlobalLock(bsc->body);
-            memcpy(ptr, V_BSTR(body), size);
+            send_data = GlobalLock(bsc->body);
+            memcpy(send_data, ptr, size);
             GlobalUnlock(bsc->body);
+            heap_free(ptr);
         }
         else
             FIXME("unsupported body data type %d\n", V_VT(body));
@@ -1296,9 +1340,11 @@ HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **ppObj)
     req->bsc = NULL;
     req->status = 0;
     req->reqheader_size = 0;
+    req->raw_respheaders = NULL;
+    req->use_utf8_content = FALSE;
+
     list_init(&req->reqheaders);
     list_init(&req->respheaders);
-    req->raw_respheaders = NULL;
 
     req->site = NULL;
     req->safeopt = 0;
