@@ -4677,23 +4677,19 @@ static void _test_IObjectSafety_common(unsigned line, IObjectSafety *safety)
 
 static void test_XMLHTTP(void)
 {
-    static const WCHAR wszBody[] = {'m','o','d','e','=','T','e','s','t',0};
-    static const WCHAR wszUrl[] = {'h','t','t','p',':','/','/',
-        'c','r','o','s','s','o','v','e','r','.','c','o','d','e','w','e','a','v','e','r','s','.','c','o','m','/',
-        'p','o','s','t','t','e','s','t','.','p','h','p',0};
-    static const WCHAR xmltestW[] = {'h','t','t','p',':','/','/',
-        'c','r','o','s','s','o','v','e','r','.','c','o','d','e','w','e','a','v','e','r','s','.','c','o','m','/',
-        'x','m','l','t','e','s','t','.','x','m','l',0};
+    static const char bodyA[] = "mode=Test";
+    static const char urlA[] = "http://crossover.codeweavers.com/posttest.php";
+    static const char xmltestA[] = "http://crossover.codeweavers.com/xmltest.xml";
     static const WCHAR wszExpectedResponse[] = {'F','A','I','L','E','D',0};
     static const CHAR xmltestbodyA[] = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<a>TEST</a>\n";
 
     IXMLHttpRequest *xhr;
     IObjectSafety *safety;
     IObjectWithSite *obj_site, *obj_site2;
-    BSTR bstrResponse, url, str, str1;
+    BSTR bstrResponse, str, str1;
+    VARIANT varbody, varbody_ref;
     VARIANT dummy;
     VARIANT async;
-    VARIANT varbody;
     LONG state, status, bound;
     IDispatch *event;
     void *ptr;
@@ -4714,10 +4710,6 @@ static void test_XMLHTTP(void)
     VariantInit(&async);
     V_VT(&async) = VT_BOOL;
     V_BOOL(&async) = VARIANT_FALSE;
-    V_VT(&varbody) = VT_BSTR;
-    V_BSTR(&varbody) = SysAllocString(wszBody);
-
-    url = SysAllocString(wszUrl);
 
     hr = IXMLHttpRequest_put_onreadystatechange(xhr, NULL);
     EXPECT_HR(hr, S_OK);
@@ -4759,7 +4751,7 @@ static void test_XMLHTTP(void)
     hr = IXMLHttpRequest_open(xhr, _bstr_("POST"), NULL, async, dummy, dummy);
     EXPECT_HR(hr, E_INVALIDARG);
 
-    hr = IXMLHttpRequest_open(xhr, NULL, url, async, dummy, dummy);
+    hr = IXMLHttpRequest_open(xhr, NULL, _bstr_(urlA), async, dummy, dummy);
     EXPECT_HR(hr, E_INVALIDARG);
 
     hr = IXMLHttpRequest_setRequestHeader(xhr, NULL, NULL);
@@ -4791,7 +4783,7 @@ static void test_XMLHTTP(void)
 
     g_unexpectedcall = g_expectedcall = 0;
 
-    hr = IXMLHttpRequest_open(xhr, _bstr_("POST"), url, async, dummy, dummy);
+    hr = IXMLHttpRequest_open(xhr, _bstr_("POST"), _bstr_(urlA), async, dummy, dummy);
     EXPECT_HR(hr, S_OK);
 
     ok(g_unexpectedcall == 0, "unexpected disp event call\n");
@@ -4817,7 +4809,7 @@ static void test_XMLHTTP(void)
     ok(state == READYSTATE_UNINITIALIZED || broken(state == READYSTATE_LOADING) /* win2k */,
         "got %d, expected READYSTATE_UNINITIALIZED\n", state);
 
-    hr = IXMLHttpRequest_open(xhr, _bstr_("POST"), url, async, dummy, dummy);
+    hr = IXMLHttpRequest_open(xhr, _bstr_("POST"), _bstr_(urlA), async, dummy, dummy);
     EXPECT_HR(hr, S_OK);
 
     hr = IXMLHttpRequest_setRequestHeader(xhr, _bstr_("header1"), _bstr_("value1"));
@@ -4829,7 +4821,8 @@ static void test_XMLHTTP(void)
     hr = IXMLHttpRequest_setRequestHeader(xhr, _bstr_(""), _bstr_("value1"));
     EXPECT_HR(hr, E_INVALIDARG);
 
-    SysFreeString(url);
+    V_VT(&varbody) = VT_BSTR;
+    V_BSTR(&varbody) = _bstr_(bodyA);
 
     hr = IXMLHttpRequest_send(xhr, varbody);
     if (hr == INET_E_RESOURCE_NOT_FOUND)
@@ -4870,10 +4863,11 @@ static void test_XMLHTTP(void)
     ok(status == 200, "got %d\n", status);
 
     /* another ::send() after completed request */
+    V_VT(&varbody) = VT_BSTR;
+    V_BSTR(&varbody) = _bstr_(bodyA);
+
     hr = IXMLHttpRequest_send(xhr, varbody);
     ok(hr == E_FAIL || broken(hr == E_UNEXPECTED) /* win2k */, "got 0x%08x\n", hr);
-
-    VariantClear(&varbody);
 
     hr = IXMLHttpRequest_get_responseText(xhr, &bstrResponse);
     EXPECT_HR(hr, S_OK);
@@ -4886,10 +4880,16 @@ static void test_XMLHTTP(void)
         SysFreeString(bstrResponse);
     }
 
-    /* GET request */
-    url = SysAllocString(xmltestW);
+    /* POST: VT_VARIANT|VT_BYREF body */
+    V_VT(&varbody_ref) = VT_VARIANT|VT_BYREF;
+    V_VARIANTREF(&varbody_ref) = &varbody;
+    hr = IXMLHttpRequest_open(xhr, _bstr_("POST"), _bstr_(urlA), async, dummy, dummy);
+    EXPECT_HR(hr, S_OK);
+    hr = IXMLHttpRequest_send(xhr, varbody_ref);
+    EXPECT_HR(hr, S_OK);
 
-    hr = IXMLHttpRequest_open(xhr, _bstr_("GET"), url, async, dummy, dummy);
+    /* GET request */
+    hr = IXMLHttpRequest_open(xhr, _bstr_("GET"), _bstr_(xmltestA), async, dummy, dummy);
     EXPECT_HR(hr, S_OK);
 
     V_VT(&varbody) = VT_EMPTY;
@@ -4932,7 +4932,6 @@ static void test_XMLHTTP(void)
     SafeArrayUnaccessData(V_ARRAY(&varbody));
 
     VariantClear(&varbody);
-    SysFreeString(url);
 
     /* get_responseStream */
     hr = IXMLHttpRequest_get_responseStream(xhr, NULL);

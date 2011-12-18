@@ -562,7 +562,12 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
 
     if (This->verb != BINDVERB_GET)
     {
-        if (V_VT(body) == VT_BSTR)
+        if (V_VT(body) == (VT_VARIANT|VT_BYREF))
+            body = V_VARIANTREF(body);
+
+        switch (V_VT(body))
+        {
+        case VT_BSTR:
         {
             int len = SysStringLen(V_BSTR(body)), size;
             const WCHAR *str = V_BSTR(body);
@@ -599,9 +604,12 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
             memcpy(send_data, ptr, size);
             GlobalUnlock(bsc->body);
             heap_free(ptr);
+            break;
         }
-        else
+        default:
             FIXME("unsupported body data type %d\n", V_VT(body));
+            break;
+        }
     }
 
     hr = RegisterBindStatusCallback(pbc, &bsc->IBindStatusCallback_iface, NULL, 0);
