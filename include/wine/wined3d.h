@@ -97,14 +97,13 @@ enum wined3d_device_type
     WINED3D_DEVICE_TYPE_NULLREF             = 4,
 };
 
-typedef enum _WINED3DDEGREETYPE
+enum wined3d_degree_type
 {
-    WINED3DDEGREE_LINEAR                    = 1,
-    WINED3DDEGREE_QUADRATIC                 = 2,
-    WINED3DDEGREE_CUBIC                     = 3,
-    WINED3DDEGREE_QUINTIC                   = 5,
-    WINED3DDEGREE_FORCE_DWORD               = 0x7fffffff
-} WINED3DDEGREETYPE;
+    WINED3D_DEGREE_LINEAR                   = 1,
+    WINED3D_DEGREE_QUADRATIC                = 2,
+    WINED3D_DEGREE_CUBIC                    = 3,
+    WINED3D_DEGREE_QUINTIC                  = 5,
+};
 
 #define WINEMAKEFOURCC(ch0, ch1, ch2, ch3) \
         ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8) | \
@@ -1603,7 +1602,7 @@ struct wined3d_rect_patch_info
     UINT height;
     UINT stride;
     WINED3DBASISTYPE basis;
-    WINED3DDEGREETYPE degree;
+    enum wined3d_degree_type degree;
 };
 
 struct wined3d_tri_patch_info
@@ -1611,7 +1610,7 @@ struct wined3d_tri_patch_info
     UINT start_vertex_offset;
     UINT vertex_count;
     WINED3DBASISTYPE basis;
-    WINED3DDEGREETYPE degree;
+    enum wined3d_degree_type degree;
 };
 
 struct wined3d_adapter_identifier

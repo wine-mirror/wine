@@ -2402,12 +2402,14 @@ const char *debug_d3dbasis(WINED3DBASISTYPE basis) {
     }
 }
 
-const char *debug_d3ddegree(WINED3DDEGREETYPE degree) {
-    switch(degree) {
-        case WINED3DDEGREE_LINEAR:      return "WINED3DDEGREE_LINEAR";
-        case WINED3DDEGREE_QUADRATIC:   return "WINED3DDEGREE_QUADRATIC";
-        case WINED3DDEGREE_CUBIC:       return "WINED3DDEGREE_CUBIC";
-        case WINED3DDEGREE_QUINTIC:     return "WINED3DDEGREE_QUINTIC";
+const char *debug_d3ddegree(enum wined3d_degree_type degree)
+{
+    switch (degree)
+    {
+        case WINED3D_DEGREE_LINEAR:     return "WINED3D_DEGREE_LINEAR";
+        case WINED3D_DEGREE_QUADRATIC:  return "WINED3D_DEGREE_QUADRATIC";
+        case WINED3D_DEGREE_CUBIC:      return "WINED3D_DEGREE_CUBIC";
+        case WINED3D_DEGREE_QUINTIC:    return "WINED3D_DEGREE_QUINTIC";
         default:                        return "unrecognized";
     }
 }

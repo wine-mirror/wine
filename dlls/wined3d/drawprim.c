@@ -837,7 +837,7 @@ HRESULT tesselate_rectpatch(struct wined3d_device *This, struct WineD3DRectPatch
     }
     if (info->basis != WINED3DBASIS_BEZIER)
         FIXME("Basis is %s, how to handle this?\n", debug_d3dbasis(info->basis));
-    if (info->degree != WINED3DDEGREE_CUBIC)
+    if (info->degree != WINED3D_DEGREE_CUBIC)
         FIXME("Degree is %s, how to handle this?\n", debug_d3ddegree(info->degree));
 
     /* First, get the boundary cube of the input data */

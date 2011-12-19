@@ -1798,14 +1798,14 @@ static void state_patchsegments(struct wined3d_context *context, const struct wi
 
 static void state_positiondegree(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_POSITIONDEGREE] != WINED3DDEGREE_CUBIC)
+    if (state->render_states[WINED3DRS_POSITIONDEGREE] != WINED3D_DEGREE_CUBIC)
         FIXME("WINED3DRS_POSITIONDEGREE %#x not yet implemented.\n",
                 state->render_states[WINED3DRS_POSITIONDEGREE]);
 }
 
 static void state_normaldegree(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_NORMALDEGREE] != WINED3DDEGREE_LINEAR)
+    if (state->render_states[WINED3DRS_NORMALDEGREE] != WINED3D_DEGREE_LINEAR)
         FIXME("WINED3DRS_NORMALDEGREE %#x not yet implemented.\n",
                 state->render_states[WINED3DRS_NORMALDEGREE]);
 }

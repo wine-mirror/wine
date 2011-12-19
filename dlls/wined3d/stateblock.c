@@ -1208,8 +1208,8 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     tmpfloat.f = 0.0f;
     state->render_states[WINED3DRS_TWEENFACTOR] = tmpfloat.d;
     state->render_states[WINED3DRS_BLENDOP] = WINED3D_BLEND_OP_ADD;
-    state->render_states[WINED3DRS_POSITIONDEGREE] = WINED3DDEGREE_CUBIC;
-    state->render_states[WINED3DRS_NORMALDEGREE] = WINED3DDEGREE_LINEAR;
+    state->render_states[WINED3DRS_POSITIONDEGREE] = WINED3D_DEGREE_CUBIC;
+    state->render_states[WINED3DRS_NORMALDEGREE] = WINED3D_DEGREE_LINEAR;
     /* states new in d3d9 */
     state->render_states[WINED3DRS_SCISSORTESTENABLE] = FALSE;
     state->render_states[WINED3DRS_SLOPESCALEDEPTHBIAS] = 0;

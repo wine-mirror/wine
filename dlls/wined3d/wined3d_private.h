@@ -2485,7 +2485,7 @@ const char *debug_d3dpool(WINED3DPOOL pool) DECLSPEC_HIDDEN;
 const char *debug_fbostatus(GLenum status) DECLSPEC_HIDDEN;
 const char *debug_glerror(GLenum error) DECLSPEC_HIDDEN;
 const char *debug_d3dbasis(WINED3DBASISTYPE basis) DECLSPEC_HIDDEN;
-const char *debug_d3ddegree(WINED3DDEGREETYPE order) DECLSPEC_HIDDEN;
+const char *debug_d3ddegree(enum wined3d_degree_type order) DECLSPEC_HIDDEN;
 const char *debug_d3dtop(WINED3DTEXTUREOP d3dtop) DECLSPEC_HIDDEN;
 void dump_color_fixup_desc(struct color_fixup_desc fixup) DECLSPEC_HIDDEN;
 const char *debug_surflocation(DWORD flag) DECLSPEC_HIDDEN;
