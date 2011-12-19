@@ -651,16 +651,6 @@ static void ProcessVerticesTest(void)
     ok(rc==D3D_OK , "IDirect3DVertexBuffer::Lock returned: %x\n", rc);
     if(!out) goto out;
 
-    /* Keep the viewport simpler, otherwise we get bad numbers to compare */
-    vp.dwX = 0;
-    vp.dwY = 0;
-    vp.dwWidth = 100;
-    vp.dwHeight = 100;
-    vp.dvMinZ = 1.0;
-    vp.dvMaxZ = 0.0;
-    rc = IDirect3DDevice7_SetViewport(lpD3DDevice, &vp);
-    ok(rc==D3D_OK, "IDirect3DDevice7_SetViewport failed\n");
-
     /* Check the results */
     ok(compare_vec4(&out[0], +2.560e+2f, +7.000e+1f, -2.000e+0f, +3.333e-1f, 4096),
             "Got unexpected vertex 0 {%.8e, %.8e, %.8e, %.8e}.\n",
