@@ -2548,14 +2548,21 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         case WS_SO_CONNECT_TIME:
         {
             static int pretendtime = 0;
+            struct WS_sockaddr addr;
+            int len = sizeof(addr);
 
-            if (!pretendtime) FIXME("WS_SO_CONNECT_TIME - faking results\n");
             if (!optlen || *optlen < sizeof(DWORD) || !optval)
             {
                 SetLastError(WSAEFAULT);
                 return SOCKET_ERROR;
             }
-            *(DWORD*)optval = pretendtime++;
+            if (WS_getpeername(s, &addr, &len) == SOCKET_ERROR)
+                *(DWORD *)optval = ~0u;
+            else
+            {
+                if (!pretendtime) FIXME("WS_SO_CONNECT_TIME - faking results\n");
+                *(DWORD *)optval = pretendtime++;
+            }
             *optlen = sizeof(DWORD);
             return ret;
         }

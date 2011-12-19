@@ -4496,14 +4496,14 @@ static void test_AcceptEx(void)
     SOCKET connector = INVALID_SOCKET;
     SOCKET connector2 = INVALID_SOCKET;
     struct sockaddr_in bindAddress, peerAddress, *readBindAddress, *readRemoteAddress;
-    int socklen;
+    int socklen, optlen;
     GUID acceptExGuid = WSAID_ACCEPTEX, getAcceptExGuid = WSAID_GETACCEPTEXSOCKADDRS;
     LPFN_ACCEPTEX pAcceptEx = NULL;
     LPFN_GETACCEPTEXSOCKADDRS pGetAcceptExSockaddrs = NULL;
     fd_set fds_accept, fds_send;
     struct timeval timeout = {0,10}; /* wait for 10 milliseconds */
     int got, conn1, i;
-    DWORD bytesReturned;
+    DWORD bytesReturned, connect_time;
     char buffer[1024];
     OVERLAPPED overlapped;
     int iret, localSize = sizeof(struct sockaddr_in), remoteSize = localSize;
@@ -4695,8 +4695,20 @@ static void test_AcceptEx(void)
         &bytesReturned, &overlapped);
     ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "AcceptEx returned %d + errno %d\n", bret, WSAGetLastError());
 
+    connect_time = 0xdeadbeef;
+    optlen = sizeof(connect_time);
+    iret = getsockopt(connector, SOL_SOCKET, SO_CONNECT_TIME, (char *)&connect_time, &optlen);
+    ok(!iret, "getsockopt failed %d\n", WSAGetLastError());
+    ok(connect_time == ~0u, "unexpected connect time %u\n", connect_time);
+
     iret = connect(connector, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
     ok(iret == 0, "connecting to accepting socket failed, error %d\n", WSAGetLastError());
+
+    connect_time = 0xdeadbeef;
+    optlen = sizeof(connect_time);
+    iret = getsockopt(connector, SOL_SOCKET, SO_CONNECT_TIME, (char *)&connect_time, &optlen);
+    ok(!iret, "getsockopt failed %d\n", WSAGetLastError());
+    ok(connect_time < 0xdeadbeef, "unexpected connect time %u\n", connect_time);
 
     dwret = WaitForSingleObject(overlapped.hEvent, 0);
     ok(dwret == WAIT_TIMEOUT, "Waiting for accept event timeout failed with %d + errno %d\n", dwret, GetLastError());
