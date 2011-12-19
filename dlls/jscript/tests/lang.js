@@ -139,6 +139,10 @@ tmp = (function() {1;})();
 ok(tmp === undefined, "tmp = " + tmp);
 tmp = eval("1;");
 ok(tmp === 1, "tmp = " + tmp);
+tmp = eval("1,2;");
+ok(tmp === 2, "tmp = " + tmp);
+tmp = eval("if(true) {3}");
+ok(tmp === 3, "tmp = " + tmp);
 
 var obj1 = new Object();
 ok(typeof(obj1) === "object", "typeof(obj1) is not object");

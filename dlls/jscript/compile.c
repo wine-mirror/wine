@@ -35,6 +35,7 @@ struct _compiler_ctx_t {
 };
 
 static HRESULT compile_expression(compiler_ctx_t*,expression_t*);
+static HRESULT compile_statement(compiler_ctx_t*,statement_t*);
 
 static inline void *compiler_alloc(bytecode_t *code, size_t size)
 {
@@ -420,7 +421,7 @@ static HRESULT compile_new_expression(compiler_ctx_t *ctx, call_expression_t *ex
     return push_instr_int(ctx, OP_new, arg_cnt);
 }
 
-static HRESULT compile_interp_fallback(compiler_ctx_t *ctx, expression_t *expr)
+static HRESULT compile_interp_fallback(compiler_ctx_t *ctx, statement_t *stat)
 {
     unsigned instr;
 
@@ -428,7 +429,7 @@ static HRESULT compile_interp_fallback(compiler_ctx_t *ctx, expression_t *expr)
     if(instr == -1)
         return E_OUTOFMEMORY;
 
-    instr_ptr(ctx, instr)->arg1.expr = expr;
+    instr_ptr(ctx, instr)->arg1.stat = stat;
     return S_OK;
 }
 
@@ -829,7 +830,7 @@ static HRESULT compile_expression_noret(compiler_ctx_t *ctx, expression_t *expr,
     case EXPR_BXOR:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_xor);
     default:
-        return compile_interp_fallback(ctx, expr);
+        assert(0);
     }
 
     return S_OK;
@@ -838,6 +839,40 @@ static HRESULT compile_expression_noret(compiler_ctx_t *ctx, expression_t *expr,
 static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
 {
     return compile_expression_noret(ctx, expr, NULL);
+}
+
+static HRESULT compile_block_statement(compiler_ctx_t *ctx, statement_t *iter)
+{
+    HRESULT hres;
+
+    /* FIXME: do it only if needed */
+    if(!iter)
+        return push_instr(ctx, OP_undefined) == -1 ? E_OUTOFMEMORY : S_OK;
+
+    while(1) {
+        hres = compile_statement(ctx, iter);
+        if(FAILED(hres))
+            return hres;
+
+        iter = iter->next;
+        if(!iter)
+            break;
+
+        if(push_instr(ctx, OP_pop) == -1)
+            return E_OUTOFMEMORY;
+    }
+
+    return S_OK;
+}
+
+static HRESULT compile_statement(compiler_ctx_t *ctx, statement_t *stat)
+{
+    switch(stat->type) {
+    case STAT_BLOCK:
+        return compile_block_statement(ctx, ((block_statement_t*)stat)->stat_list);
+    default:
+        return compile_interp_fallback(ctx, stat);
+    }
 }
 
 void release_bytecode(bytecode_t *code)
@@ -858,11 +893,8 @@ void release_compiler(compiler_ctx_t *ctx)
     heap_free(ctx);
 }
 
-HRESULT compile_subscript(parser_ctx_t *parser, expression_t *expr, BOOL do_ret, unsigned *ret_off)
+static HRESULT init_compiler(parser_ctx_t *parser)
 {
-    BOOL no_ret = FALSE;
-    HRESULT hres;
-
     if(!parser->code) {
         parser->code = heap_alloc_zero(sizeof(bytecode_t));
         if(!parser->code)
@@ -879,8 +911,38 @@ HRESULT compile_subscript(parser_ctx_t *parser, expression_t *expr, BOOL do_ret,
         parser->compiler->code = parser->code;
     }
 
+    return S_OK;
+}
+
+HRESULT compile_subscript(parser_ctx_t *parser, expression_t *expr, BOOL do_ret, unsigned *ret_off)
+{
+    BOOL no_ret = FALSE;
+    HRESULT hres;
+
+    hres = init_compiler(parser);
+    if(FAILED(hres))
+        return hres;
+
     *ret_off = parser->compiler->code_off;
     hres = compile_expression_noret(parser->compiler, expr, do_ret ? NULL : &no_ret);
+    if(FAILED(hres))
+        return hres;
+
+    return push_instr(parser->compiler, OP_ret) == -1 ? E_OUTOFMEMORY : S_OK;
+}
+
+HRESULT compile_subscript_stat(parser_ctx_t *parser, statement_t *stat, unsigned *ret_off)
+{
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = init_compiler(parser);
+    if(FAILED(hres))
+        return hres;
+
+    *ret_off = parser->compiler->code_off;
+    hres = compile_statement(parser->compiler, stat);
     if(FAILED(hres))
         return hres;
 

@@ -19,6 +19,7 @@
 typedef struct _source_elements_t source_elements_t;
 typedef struct _function_expression_t function_expression_t;
 typedef struct _expression_t expression_t;
+typedef struct _statement_t statement_t;
 
 typedef struct _function_declaration_t {
     function_expression_t *expr;
@@ -93,9 +94,9 @@ typedef struct _func_stack {
     X(str,        1, ARG_STR,    0)        \
     X(this,       1, 0,0)                  \
     X(throw,      0, ARG_UINT,   0)        \
-    X(throw_type, 0, ARG_UINT,   ARG_STR) \
+    X(throw_type, 0, ARG_UINT,   ARG_STR)  \
     X(tonum,      1, 0,0)                  \
-    X(tree,       1, ARG_EXPR,   0)        \
+    X(tree,       1, ARG_STAT,   0)        \
     X(typeof,     1, 0,0)                  \
     X(typeofid,   1, 0,0)                  \
     X(typeofident,1, 0,0)                  \
@@ -114,7 +115,7 @@ OP_LIST
 } jsop_t;
 
 typedef union {
-    expression_t *expr;
+    statement_t *stat;
     BSTR bstr;
     double *dbl;
     LONG lng;
@@ -127,7 +128,7 @@ typedef enum {
     ARG_NONE = 0,
     ARG_ADDR,
     ARG_BSTR,
-    ARG_EXPR,
+    ARG_STAT,
     ARG_FUNC,
     ARG_INT,
     ARG_STR
@@ -212,6 +213,8 @@ static inline void scope_addref(scope_chain_t *scope)
     scope->ref++;
 }
 
+typedef struct _return_type_t return_type_t;
+
 struct _exec_ctx_t {
     LONG ref;
 
@@ -227,6 +230,7 @@ struct _exec_ctx_t {
 
     unsigned ip;
     jsexcept_t ei;
+    return_type_t *rt; /* FIXME */
 };
 
 static inline void exec_addref(exec_ctx_t *ctx)
@@ -238,7 +242,6 @@ void exec_release(exec_ctx_t*) DECLSPEC_HIDDEN;
 HRESULT create_exec_ctx(script_ctx_t*,IDispatch*,jsdisp_t*,scope_chain_t*,BOOL,exec_ctx_t**) DECLSPEC_HIDDEN;
 HRESULT exec_source(exec_ctx_t*,parser_ctx_t*,source_elements_t*,BOOL,jsexcept_t*,VARIANT*) DECLSPEC_HIDDEN;
 
-typedef struct _statement_t statement_t;
 typedef struct _parameter_t parameter_t;
 
 HRESULT create_source_function(parser_ctx_t*,parameter_t*,source_elements_t*,scope_chain_t*,
@@ -278,8 +281,6 @@ typedef struct _variable_declaration_t {
     struct _variable_declaration_t *next;
 } variable_declaration_t;
 
-typedef struct _return_type_t return_type_t;
-
 typedef HRESULT (*statement_eval_t)(script_ctx_t*,statement_t*,return_type_t*,VARIANT*);
 
 typedef enum {
@@ -304,6 +305,7 @@ typedef enum {
 struct _statement_t {
     statement_type_t type;
     statement_eval_t eval;
+    unsigned instr_off;
     statement_t *next;
 };
 
@@ -395,7 +397,7 @@ typedef struct {
     statement_t *finally_statement;
 } try_statement_t;
 
-HRESULT block_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
+HRESULT compiled_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT var_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT empty_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT expression_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
@@ -588,3 +590,4 @@ typedef struct {
 } property_value_expression_t;
 
 HRESULT compile_subscript(parser_ctx_t*,expression_t*,BOOL,unsigned*) DECLSPEC_HIDDEN;
+HRESULT compile_subscript_stat(parser_ctx_t*,statement_t*,unsigned*) DECLSPEC_HIDDEN;

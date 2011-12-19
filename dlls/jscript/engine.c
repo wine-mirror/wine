@@ -667,37 +667,6 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, DWORD flags, 
     return S_OK;
 }
 
-/* ECMA-262 3rd Edition    12.1 */
-HRESULT block_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
-{
-    block_statement_t *stat = (block_statement_t*)_stat;
-    VARIANT val, tmp;
-    statement_t *iter;
-    HRESULT hres = S_OK;
-
-    TRACE("\n");
-
-    V_VT(&val) = VT_EMPTY;
-    for(iter = stat->stat_list; iter; iter = iter->next) {
-        hres = stat_eval(ctx, iter, rt, &tmp);
-        if(FAILED(hres))
-            break;
-
-        VariantClear(&val);
-        val = tmp;
-        if(rt->type != RT_NORMAL)
-            break;
-    }
-
-    if(FAILED(hres)) {
-        VariantClear(&val);
-        return hres;
-    }
-
-    *ret = val;
-    return S_OK;
-}
-
 /* ECMA-262 3rd Edition    12.2 */
 static HRESULT variable_list_eval(script_ctx_t *ctx, variable_declaration_t *var_list, jsexcept_t *ei)
 {
@@ -3004,7 +2973,7 @@ static HRESULT interp_tree(exec_ctx_t *ctx)
 
     TRACE("\n");
 
-    hres = expr_eval(ctx->parser->script, instr->arg1.expr, 0, &ctx->ei, &v);
+    hres = stat_eval(ctx->parser->script, instr->arg1.stat, ctx->rt, &v);
     if(FAILED(hres))
         return hres;
 
@@ -3024,6 +2993,53 @@ static const unsigned op_move[] = {
 OP_LIST
 #undef X
 };
+
+HRESULT compiled_statement_eval(script_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
+{
+    exec_ctx_t *exec_ctx = ctx->exec_ctx;
+    unsigned prev_ip, prev_top;
+    return_type_t *prev_rt;
+    jsop_t op;
+    HRESULT hres = S_OK;
+
+    TRACE("\n");
+
+    if(stat->instr_off == -1) {
+        hres = compile_subscript_stat(exec_ctx->parser, stat, &stat->instr_off);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    prev_rt = exec_ctx->rt;
+    prev_top = exec_ctx->top;
+    prev_ip = exec_ctx->ip;
+    exec_ctx->ip = stat->instr_off;
+    exec_ctx->rt = rt;
+
+    while(exec_ctx->ip != -1 && exec_ctx->rt->type == RT_NORMAL) {
+        op = exec_ctx->parser->code->instrs[exec_ctx->ip].op;
+        hres = op_funcs[op](exec_ctx);
+        if(FAILED(hres))
+            break;
+        exec_ctx->ip += op_move[op];
+    }
+
+    exec_ctx->rt = prev_rt;
+    exec_ctx->ip = prev_ip;
+
+    if(FAILED(hres)) {
+        stack_popn(exec_ctx, exec_ctx->top-prev_top);
+        return hres;
+    }
+
+    assert(exec_ctx->top == prev_top+1 || exec_ctx->top == prev_top);
+
+    if(exec_ctx->top == prev_top)
+        V_VT(ret) = VT_EMPTY;
+    else
+        *ret = *stack_pop(exec_ctx);
+    return S_OK;
+}
 
 static HRESULT expr_eval(script_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, VARIANT *ret)
 {
