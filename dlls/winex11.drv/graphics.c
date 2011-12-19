@@ -1074,19 +1074,12 @@ COLORREF X11DRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
     LPtoDP( dev->hdc, &pt, 1 );
     pixel = X11DRV_PALETTE_ToPhysical( physDev, color );
 
-    /* Update the pixmap from the DIB section */
-    X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod);
-
-    /* inefficient but simple... */
     wine_tsx11_lock();
     XSetForeground( gdi_display, physDev->gc, pixel );
     XSetFunction( gdi_display, physDev->gc, GXcopy );
     XDrawPoint( gdi_display, physDev->drawable, physDev->gc,
                 physDev->dc_rect.left + pt.x, physDev->dc_rect.top + pt.y );
     wine_tsx11_unlock();
-
-    /* Update the DIBSection from the pixmap */
-    X11DRV_UnlockDIBSection(physDev, TRUE);
 
     return X11DRV_PALETTE_ToLogical(physDev, pixel);
 }
@@ -1113,11 +1106,9 @@ BOOL X11DRV_PaintRgn( PHYSDEV dev, HRGN hrgn )
             rect[i].y += physDev->dc_rect.top;
         }
 
-        X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod);
         wine_tsx11_lock();
         XFillRectangles( gdi_display, physDev->drawable, physDev->gc, rect, data->rdh.nCount );
         wine_tsx11_unlock();
-        X11DRV_UnlockDIBSection(physDev, TRUE);
         HeapFree( GetProcessHeap(), 0, data );
     }
     return TRUE;
@@ -1488,7 +1479,6 @@ BOOL X11DRV_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
                    GCFunction | GCLineWidth | GCLineStyle | GCCapStyle | GCFillStyle, &val );
         wine_tsx11_unlock();
 
-	X11DRV_LockDIBSection( physdev, DIB_Status_GdiMod );
         for (i = 0; i < ngrad; i++, rect++)
         {
             int pos, x, dx;
@@ -1521,7 +1511,6 @@ BOOL X11DRV_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
                 wine_tsx11_unlock();
             }
         }
-        X11DRV_UnlockDIBSection( physdev, TRUE );
         return TRUE;
 
     case GRADIENT_FILL_RECT_V:
@@ -1535,7 +1524,6 @@ BOOL X11DRV_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
                    GCFunction | GCLineWidth | GCLineStyle | GCCapStyle | GCFillStyle, &val );
         wine_tsx11_unlock();
 
-	X11DRV_LockDIBSection( physdev, DIB_Status_GdiMod );
         for (i = 0; i < ngrad; i++, rect++)
         {
             int pos, y, dy;
@@ -1568,7 +1556,6 @@ BOOL X11DRV_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
                 wine_tsx11_unlock();
             }
         }
-        X11DRV_UnlockDIBSection( physdev, TRUE );
         return TRUE;
     }
 

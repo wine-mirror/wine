@@ -2192,9 +2192,6 @@ static BOOL xrenderdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     /* if not stretching, we only need to handle format conversion */
     if (!stretch && physdev_dst->format == physdev_src->format) goto x11drv_fallback;
 
-    X11DRV_LockDIBSection( physdev_dst->x11dev, DIB_Status_GdiMod );
-    if (physdev_dst != physdev_src) X11DRV_LockDIBSection( physdev_src->x11dev, DIB_Status_GdiMod );
-
     if (rop != SRCCOPY)
     {
         GC tmpGC;
@@ -2225,8 +2222,6 @@ static BOOL xrenderdrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     }
     else xrender_stretch_blit( physdev_src, physdev_dst, 0, src, dst );
 
-    if (physdev_dst != physdev_src) X11DRV_UnlockDIBSection( physdev_src->x11dev, FALSE );
-    X11DRV_UnlockDIBSection( physdev_dst->x11dev, TRUE );
     return TRUE;
 
 x11drv_fallback:
@@ -2292,18 +2287,12 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMA
             HRGN rgn = CreateRectRgnIndirect( &dst->visrect );
             if (clip) CombineRgn( rgn, rgn, clip, RGN_AND );
 
-            X11DRV_DIB_Lock( bitmap, DIB_Status_GdiMod );
-
             xrender_put_image( src_pixmap, src_pict, mask_pict, rgn,
                                pict_formats[dst_format], NULL, bitmap->pixmap, src, dst, use_repeat );
-
-            X11DRV_DIB_Unlock( bitmap, TRUE );
             DeleteObject( rgn );
         }
         else
         {
-            X11DRV_LockDIBSection( physdev->x11dev, DIB_Status_GdiMod );
-
             if (rop != SRCCOPY)
             {
                 BOOL restore_region = add_extra_clipping_region( physdev->x11dev, clip );
@@ -2335,8 +2324,6 @@ static DWORD xrenderdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMA
             }
             else xrender_put_image( src_pixmap, src_pict, mask_pict, clip,
                                     physdev->pict_format, physdev, 0, src, dst, use_repeat );
-
-            X11DRV_UnlockDIBSection( physdev->x11dev, TRUE );
         }
 
         wine_tsx11_lock();
@@ -2401,8 +2388,6 @@ static DWORD xrenderdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct 
     {
         double xscale, yscale;
 
-        X11DRV_LockDIBSection( physdev->x11dev, DIB_Status_GdiMod );
-
         if (!use_repeat)
         {
             xscale = src->width / (double)dst->width;
@@ -2426,8 +2411,6 @@ static DWORD xrenderdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct 
         wine_tsx11_unlock();
 
         LeaveCriticalSection( &xrender_cs );
-
-        X11DRV_UnlockDIBSection( physdev->x11dev, TRUE );
     }
     return ret;
 
@@ -2463,9 +2446,6 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-
-    X11DRV_LockDIBSection( physdev_dst->x11dev, DIB_Status_GdiMod );
-    if (physdev_dst != physdev_src) X11DRV_LockDIBSection( physdev_src->x11dev, DIB_Status_GdiMod );
 
     dst_pict = get_xrender_picture( physdev_dst, 0, &dst->visrect );
 
@@ -2535,8 +2515,6 @@ static BOOL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     wine_tsx11_unlock();
 
     LeaveCriticalSection( &xrender_cs );
-    if (physdev_src != physdev_dst) X11DRV_UnlockDIBSection( physdev_src->x11dev, FALSE );
-    X11DRV_UnlockDIBSection( physdev_dst->x11dev, TRUE );
     return TRUE;
 }
 
@@ -2566,7 +2544,6 @@ static BOOL xrenderdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG n
     {
     case GRADIENT_FILL_RECT_H:
     case GRADIENT_FILL_RECT_V:
-        X11DRV_LockDIBSection( physdev->x11dev, DIB_Status_GdiMod );
         for (i = 0; i < ngrad; i++, rect++)
         {
             const TRIVERTEX *v1 = vert_array + rect->UpperLeft;
@@ -2631,7 +2608,6 @@ static BOOL xrenderdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG n
             pXRenderFreePicture( gdi_display, src_pict );
             wine_tsx11_unlock();
         }
-        X11DRV_UnlockDIBSection( physdev->x11dev, TRUE );
         return TRUE;
     }
 

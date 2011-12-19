@@ -762,8 +762,6 @@ BOOL X11DRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 
     if (usePat && !X11DRV_SetupGCForBrush( physDev )) return TRUE;
 
-    X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod );
-
     wine_tsx11_lock();
     XSetFunction( gdi_display, physDev->gc, OP_ROP(*opcode) );
 
@@ -802,8 +800,6 @@ BOOL X11DRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
                     dst->visrect.right - dst->visrect.left,
                     dst->visrect.bottom - dst->visrect.top );
     wine_tsx11_unlock();
-
-    X11DRV_UnlockDIBSection( physDev, TRUE );
     return TRUE;
 }
 
@@ -832,10 +828,6 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
 
     width  = dst->visrect.right - dst->visrect.left;
     height = dst->visrect.bottom - dst->visrect.top;
-
-    X11DRV_LockDIBSection( physDevDst, DIB_Status_GdiMod );
-    if (physDevDst != physDevSrc) X11DRV_LockDIBSection( physDevSrc, DIB_Status_GdiMod );
-
     opcode = BITBLT_Opcodes[(rop >> 16) & 0xff];
 
     /* a few optimizations for single-op ROPs */
@@ -854,7 +846,7 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
                        physDevDst->dc_rect.top + dst->visrect.top );
             physDevDst->exposures++;
             wine_tsx11_unlock();
-            goto done;
+            return TRUE;
         }
         if (physDevSrc->depth == 1)
         {
@@ -871,7 +863,7 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
                         physDevDst->dc_rect.top + dst->visrect.top, 1 );
             physDevDst->exposures++;
             wine_tsx11_unlock();
-            goto done;
+            return TRUE;
         }
     }
 
@@ -919,10 +911,6 @@ BOOL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     XFreePixmap( gdi_display, src_pixmap );
     XFreeGC( gdi_display, gc );
     wine_tsx11_unlock();
-
-done:
-    if (physDevDst != physDevSrc) X11DRV_UnlockDIBSection( physDevSrc, FALSE );
-    X11DRV_UnlockDIBSection( physDevDst, TRUE );
     return TRUE;
 }
 
@@ -1263,7 +1251,6 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
             GC gc;
 
             if (clip) clip_data = X11DRV_GetRegionData( clip, 0 );
-            X11DRV_DIB_Lock( bitmap, DIB_Status_GdiMod );
 
             wine_tsx11_lock();
             gc = XCreateGC( gdi_display, bitmap->pixmap, 0, NULL );
@@ -1274,15 +1261,11 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
                        dst->visrect.left, dst->visrect.top, width, height );
             XFreeGC( gdi_display, gc );
             wine_tsx11_unlock();
-
-            X11DRV_DIB_Unlock( bitmap, TRUE );
             HeapFree( GetProcessHeap(), 0, clip_data );
         }
         else
         {
             BOOL restore_region = add_extra_clipping_region( physdev, clip );
-
-            X11DRV_LockDIBSection( physdev, DIB_Status_GdiMod );
 
             /* optimization for single-op ROPs */
             if (!opcode[1] && OP_SRCDST(opcode[0]) == OP_ARGS(SRC,DST))
@@ -1315,7 +1298,6 @@ DWORD X11DRV_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
                 wine_tsx11_unlock();
             }
 
-            X11DRV_UnlockDIBSection( physdev, !ret );
             if (restore_region) restore_clipping_region( physdev );
         }
         image->data = NULL;
@@ -1408,15 +1390,12 @@ DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
         GetObjectW( hbitmap, sizeof(bm), &bm );
         width = min( width, bm.bmWidth - x );
         height = min( height, bm.bmHeight - y );
-        X11DRV_DIB_Lock( bitmap, DIB_Status_GdiMod );
         wine_tsx11_lock();
         image = XGetImage( gdi_display, bitmap->pixmap, x, y, width, height, AllPlanes, ZPixmap );
         wine_tsx11_unlock();
-        X11DRV_DIB_Unlock( bitmap, TRUE );
     }
     else if (GetObjectType( dev->hdc ) == OBJ_MEMDC)
     {
-        X11DRV_LockDIBSection( physdev, DIB_Status_GdiMod );
         width = min( width, physdev->dc_rect.right - physdev->dc_rect.left - x );
         height = min( height, physdev->dc_rect.bottom - physdev->dc_rect.top - y );
         wine_tsx11_lock();
@@ -1424,7 +1403,6 @@ DWORD X11DRV_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
                            physdev->dc_rect.left + x, physdev->dc_rect.top + y,
                            width, height, AllPlanes, ZPixmap );
         wine_tsx11_unlock();
-        X11DRV_UnlockDIBSection( physdev, FALSE );
     }
     else
     {
