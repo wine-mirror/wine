@@ -1709,10 +1709,10 @@ HRESULT CDECL wined3d_shader_set_local_constants_float(struct wined3d_shader *sh
 void find_vs_compile_args(const struct wined3d_state *state,
         const struct wined3d_shader *shader, struct vs_compile_args *args)
 {
-    args->fog_src = state->render_states[WINED3DRS_FOGTABLEMODE]
+    args->fog_src = state->render_states[WINED3D_RS_FOGTABLEMODE]
             == WINED3DFOG_NONE ? VS_FOG_COORD : VS_FOG_Z;
-    args->clip_enabled = state->render_states[WINED3DRS_CLIPPING]
-            && state->render_states[WINED3DRS_CLIPPLANEENABLE];
+    args->clip_enabled = state->render_states[WINED3D_RS_CLIPPING]
+            && state->render_states[WINED3D_RS_CLIPPLANEENABLE];
     args->swizzle_map = shader->device->strided_streams.swizzle_map;
 }
 
@@ -1899,7 +1899,7 @@ void find_ps_compile_args(const struct wined3d_state *state,
     UINT i;
 
     memset(args, 0, sizeof(*args)); /* FIXME: Make sure all bits are set. */
-    if (state->render_states[WINED3DRS_SRGBWRITEENABLE])
+    if (state->render_states[WINED3D_RS_SRGBWRITEENABLE])
     {
         const struct wined3d_surface *rt = state->fb->render_targets[0];
         if (rt->resource.format->flags & WINED3DFMT_FLAG_SRGB_WRITE) args->srgb_correction = 1;
@@ -1976,9 +1976,9 @@ void find_ps_compile_args(const struct wined3d_state *state,
     else
     {
         args->vp_mode = vertexshader;
-        if (state->render_states[WINED3DRS_FOGENABLE])
+        if (state->render_states[WINED3D_RS_FOGENABLE])
         {
-            switch (state->render_states[WINED3DRS_FOGTABLEMODE])
+            switch (state->render_states[WINED3D_RS_FOGTABLEMODE])
             {
                 case WINED3DFOG_NONE:
                     if (device->strided_streams.position_transformed || use_vs(state))
@@ -1987,7 +1987,7 @@ void find_ps_compile_args(const struct wined3d_state *state,
                         break;
                     }
 
-                    switch (state->render_states[WINED3DRS_FOGVERTEXMODE])
+                    switch (state->render_states[WINED3D_RS_FOGVERTEXMODE])
                     {
                         case WINED3DFOG_NONE: /* Fall through. */
                         case WINED3DFOG_LINEAR: args->fog = FOG_LINEAR; break;

@@ -718,10 +718,10 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
         if (context->gl_info->supported[EXT_STENCIL_TWO_SIDE])
         {
             glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
-            context_invalidate_state(context, STATE_RENDER(WINED3DRS_TWOSIDEDSTENCILMODE));
+            context_invalidate_state(context, STATE_RENDER(WINED3D_RS_TWOSIDEDSTENCILMODE));
         }
         glStencilMask(~0U);
-        context_invalidate_state(context, STATE_RENDER(WINED3DRS_STENCILWRITEMASK));
+        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_STENCILWRITEMASK));
         glClearStencil(stencil);
         checkGLcall("glClearStencil");
         clear_mask = clear_mask | GL_STENCIL_BUFFER_BIT;
@@ -732,7 +732,7 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
         surface_modify_location(fb->depth_stencil, fb->depth_stencil->draw_binding, TRUE);
 
         glDepthMask(GL_TRUE);
-        context_invalidate_state(context, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
+        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_ZWRITEENABLE));
         glClearDepth(depth);
         checkGLcall("glClearDepth");
         clear_mask = clear_mask | GL_DEPTH_BUFFER_BIT;
@@ -749,10 +749,10 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
         }
 
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
-        context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
-        context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
-        context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
+        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE));
+        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE1));
+        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE2));
+        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE3));
         glClearColor(color->r, color->g, color->b, color->a);
         checkGLcall("glClearColor");
         clear_mask = clear_mask | GL_COLOR_BUFFER_BIT;
@@ -2419,7 +2419,7 @@ HRESULT CDECL wined3d_device_get_viewport(const struct wined3d_device *device, s
 }
 
 HRESULT CDECL wined3d_device_set_render_state(struct wined3d_device *device,
-        WINED3DRENDERSTATETYPE state, DWORD value)
+        enum wined3d_render_state state, DWORD value)
 {
     DWORD old_value = device->stateBlock->state.render_states[state];
 
@@ -2445,7 +2445,7 @@ HRESULT CDECL wined3d_device_set_render_state(struct wined3d_device *device,
 }
 
 HRESULT CDECL wined3d_device_get_render_state(const struct wined3d_device *device,
-        WINED3DRENDERSTATETYPE state, DWORD *value)
+        enum wined3d_render_state state, DWORD *value)
 {
     TRACE("device %p, state %s (%#x), value %p.\n", device, debug_d3drenderstate(state), state, value);
 
@@ -3227,7 +3227,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
         dest_conv = dest_conv_addr;
     }
 
-    if (device->stateBlock->state.render_states[WINED3DRS_CLIPPING])
+    if (device->stateBlock->state.render_states[WINED3D_RS_CLIPPING])
     {
         static BOOL warned = FALSE;
         /*
@@ -4497,8 +4497,8 @@ HRESULT CDECL wined3d_device_validate_device(const struct wined3d_device *device
         }
     }
 
-    if (state->render_states[WINED3DRS_ZENABLE] || state->render_states[WINED3DRS_ZWRITEENABLE] ||
-        state->render_states[WINED3DRS_STENCILENABLE])
+    if (state->render_states[WINED3D_RS_ZENABLE] || state->render_states[WINED3D_RS_ZWRITEENABLE]
+            || state->render_states[WINED3D_RS_STENCILENABLE])
     {
         struct wined3d_surface *ds = device->fb.depth_stencil;
         struct wined3d_surface *target = device->fb.render_targets[0];
@@ -4949,14 +4949,14 @@ HRESULT CDECL wined3d_device_set_depth_stencil(struct wined3d_device *device, st
     if (!prev != !depth_stencil)
     {
         /* Swapping NULL / non NULL depth stencil affects the depth and tests */
-        device_invalidate_state(device, STATE_RENDER(WINED3DRS_ZENABLE));
-        device_invalidate_state(device, STATE_RENDER(WINED3DRS_STENCILENABLE));
-        device_invalidate_state(device, STATE_RENDER(WINED3DRS_STENCILWRITEMASK));
-        device_invalidate_state(device, STATE_RENDER(WINED3DRS_DEPTHBIAS));
+        device_invalidate_state(device, STATE_RENDER(WINED3D_RS_ZENABLE));
+        device_invalidate_state(device, STATE_RENDER(WINED3D_RS_STENCILENABLE));
+        device_invalidate_state(device, STATE_RENDER(WINED3D_RS_STENCILWRITEMASK));
+        device_invalidate_state(device, STATE_RENDER(WINED3D_RS_DEPTHBIAS));
     }
     else if (prev && prev->resource.format->depth_size != depth_stencil->resource.format->depth_size)
     {
-        device_invalidate_state(device, STATE_RENDER(WINED3DRS_DEPTHBIAS));
+        device_invalidate_state(device, STATE_RENDER(WINED3D_RS_DEPTHBIAS));
     }
     if (prev)
         wined3d_surface_decref(prev);

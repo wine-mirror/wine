@@ -49,7 +49,7 @@ static void state_nop(struct wined3d_context *context, const struct wined3d_stat
 
 static void state_fillmode(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    WINED3DFILLMODE mode = state->render_states[WINED3DRS_FILLMODE];
+    WINED3DFILLMODE mode = state->render_states[WINED3D_RS_FILLMODE];
 
     switch (mode)
     {
@@ -66,7 +66,7 @@ static void state_fillmode(struct wined3d_context *context, const struct wined3d
             checkGLcall("glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)");
             break;
         default:
-            FIXME("Unrecognized WINED3DRS_FILLMODE %d.\n", mode);
+            FIXME("Unrecognized WINED3D_RS_FILLMODE %d.\n", mode);
     }
 }
 
@@ -80,7 +80,7 @@ static void state_lighting(struct wined3d_context *context, const struct wined3d
     if (isStateDirty(context, STATE_VDECL))
         return;
 
-    if (state->render_states[WINED3DRS_LIGHTING]
+    if (state->render_states[WINED3D_RS_LIGHTING]
             && !context->swapchain->device->strided_streams.position_transformed)
     {
         glEnable(GL_LIGHTING);
@@ -102,7 +102,7 @@ static void state_zenable(struct wined3d_context *context, const struct wined3d_
         return;
     }
 
-    switch (state->render_states[WINED3DRS_ZENABLE])
+    switch (state->render_states[WINED3D_RS_ZENABLE])
     {
         case WINED3DZB_FALSE:
             glDisable(GL_DEPTH_TEST);
@@ -119,7 +119,7 @@ static void state_zenable(struct wined3d_context *context, const struct wined3d_
             break;
         default:
             FIXME("Unrecognized D3DZBUFFERTYPE value %#x.\n",
-                    state->render_states[WINED3DRS_ZENABLE]);
+                    state->render_states[WINED3D_RS_ZENABLE]);
     }
 }
 
@@ -127,7 +127,7 @@ static void state_cullmode(struct wined3d_context *context, const struct wined3d
 {
     /* glFrontFace() is set in context.c at context init and on an
      * offscreen / onscreen rendering switch. */
-    switch (state->render_states[WINED3DRS_CULLMODE])
+    switch (state->render_states[WINED3D_RS_CULLMODE])
     {
         case WINED3DCULL_NONE:
             glDisable(GL_CULL_FACE);
@@ -147,13 +147,13 @@ static void state_cullmode(struct wined3d_context *context, const struct wined3d
             break;
         default:
             FIXME("Unrecognized/Unhandled WINED3DCULL value %#x.\n",
-                    state->render_states[WINED3DRS_CULLMODE]);
+                    state->render_states[WINED3D_RS_CULLMODE]);
     }
 }
 
 static void state_shademode(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    switch (state->render_states[WINED3DRS_SHADEMODE])
+    switch (state->render_states[WINED3D_RS_SHADEMODE])
     {
         case WINED3DSHADE_FLAT:
             glShadeModel(GL_FLAT);
@@ -168,13 +168,13 @@ static void state_shademode(struct wined3d_context *context, const struct wined3
             break;
         default:
             FIXME("Unrecognized/Unhandled WINED3DSHADEMODE value %#x.\n",
-                    state->render_states[WINED3DRS_SHADEMODE]);
+                    state->render_states[WINED3D_RS_SHADEMODE]);
     }
 }
 
 static void state_ditherenable(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_DITHERENABLE])
+    if (state->render_states[WINED3D_RS_DITHERENABLE])
     {
         glEnable(GL_DITHER);
         checkGLcall("glEnable GL_DITHER");
@@ -190,7 +190,7 @@ static void state_zwritenable(struct wined3d_context *context, const struct wine
 {
     /* TODO: Test if in d3d z writing is enabled even if ZENABLE is off.
      * If yes, this has to be merged with ZENABLE and ZFUNC. */
-    if (state->render_states[WINED3DRS_ZWRITEENABLE])
+    if (state->render_states[WINED3D_RS_ZWRITEENABLE])
     {
         glDepthMask(1);
         checkGLcall("glDepthMask(1)");
@@ -204,7 +204,7 @@ static void state_zwritenable(struct wined3d_context *context, const struct wine
 
 static void state_zfunc(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    GLenum depth_func = CompareFunc(state->render_states[WINED3DRS_ZFUNC]);
+    GLenum depth_func = CompareFunc(state->render_states[WINED3D_RS_ZFUNC]);
 
     if (!depth_func) return;
 
@@ -230,8 +230,8 @@ static void state_zfunc(struct wined3d_context *context, const struct wined3d_st
 static void state_ambient(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     float col[4];
-    D3DCOLORTOGLFLOAT4(state->render_states[WINED3DRS_AMBIENT], col);
 
+    D3DCOLORTOGLFLOAT4(state->render_states[WINED3D_RS_AMBIENT], col);
     TRACE("Setting ambient to (%f,%f,%f,%f)\n", col[0], col[1], col[2], col[3]);
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT, col);
     checkGLcall("glLightModel for MODEL_AMBIENT");
@@ -269,18 +269,18 @@ static void state_blendop(struct wined3d_context *context, const struct wined3d_
     GLenum blend_equation = GL_FUNC_ADD_EXT;
 
     /* BLENDOPALPHA requires GL_EXT_blend_equation_separate, so make sure it is around */
-    if (state->render_states[WINED3DRS_BLENDOPALPHA]
+    if (state->render_states[WINED3D_RS_BLENDOPALPHA]
             && !gl_info->supported[EXT_BLEND_EQUATION_SEPARATE])
     {
         WARN("Unsupported in local OpenGL implementation: glBlendEquationSeparateEXT\n");
         return;
     }
 
-    blend_equation = gl_blend_op(state->render_states[WINED3DRS_BLENDOP]);
-    blend_equation_alpha = gl_blend_op(state->render_states[WINED3DRS_BLENDOPALPHA]);
+    blend_equation = gl_blend_op(state->render_states[WINED3D_RS_BLENDOP]);
+    blend_equation_alpha = gl_blend_op(state->render_states[WINED3D_RS_BLENDOPALPHA]);
     TRACE("blend_equation %#x, blend_equation_alpha %#x.\n", blend_equation, blend_equation_alpha);
 
-    if (state->render_states[WINED3DRS_SEPARATEALPHABLENDENABLE])
+    if (state->render_states[WINED3D_RS_SEPARATEALPHABLENDENABLE])
     {
         GL_EXTCALL(glBlendEquationSeparateEXT(blend_equation, blend_equation_alpha));
         checkGLcall("glBlendEquationSeparateEXT");
@@ -343,9 +343,9 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
 
     /* According to the red book, GL_LINE_SMOOTH needs GL_BLEND with specific
      * blending parameters to work. */
-    if (state->render_states[WINED3DRS_ALPHABLENDENABLE]
-            || state->render_states[WINED3DRS_EDGEANTIALIAS]
-            || state->render_states[WINED3DRS_ANTIALIASEDLINEENABLE])
+    if (state->render_states[WINED3D_RS_ALPHABLENDENABLE]
+            || state->render_states[WINED3D_RS_EDGEANTIALIAS]
+            || state->render_states[WINED3D_RS_ANTIALIASEDLINEENABLE])
     {
         /* Disable blending in all cases even without pixelshaders.
          * With blending on we could face a big performance penalty.
@@ -370,7 +370,7 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
     /* WINED3D_BLEND_BOTHSRCALPHA and WINED3D_BLEND_BOTHINVSRCALPHA are legacy
      * source blending values which are still valid up to d3d9. They should
      * not occur as dest blend values. */
-    d3d_blend = state->render_states[WINED3DRS_SRCBLEND];
+    d3d_blend = state->render_states[WINED3D_RS_SRCBLEND];
     if (d3d_blend == WINED3D_BLEND_BOTHSRCALPHA)
     {
         srcBlend = GL_SRC_ALPHA;
@@ -384,20 +384,20 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
     else
     {
         srcBlend = gl_blend_factor(d3d_blend, target->resource.format);
-        dstBlend = gl_blend_factor(state->render_states[WINED3DRS_DESTBLEND],
+        dstBlend = gl_blend_factor(state->render_states[WINED3D_RS_DESTBLEND],
                 target->resource.format);
     }
 
-    if (state->render_states[WINED3DRS_EDGEANTIALIAS]
-            || state->render_states[WINED3DRS_ANTIALIASEDLINEENABLE])
+    if (state->render_states[WINED3D_RS_EDGEANTIALIAS]
+            || state->render_states[WINED3D_RS_ANTIALIASEDLINEENABLE])
     {
         glEnable(GL_LINE_SMOOTH);
         checkGLcall("glEnable(GL_LINE_SMOOTH)");
         if(srcBlend != GL_SRC_ALPHA) {
-            WARN("WINED3DRS_EDGEANTIALIAS enabled, but unexpected src blending param\n");
+            WARN("WINED3D_RS_EDGEANTIALIAS enabled, but unexpected src blending param\n");
         }
         if(dstBlend != GL_ONE_MINUS_SRC_ALPHA && dstBlend != GL_ONE) {
-            WARN("WINED3DRS_EDGEANTIALIAS enabled, but unexpected dst blending param\n");
+            WARN("WINED3D_RS_EDGEANTIALIAS enabled, but unexpected dst blending param\n");
         }
     } else {
         glDisable(GL_LINE_SMOOTH);
@@ -405,10 +405,10 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
     }
 
     /* Re-apply BLENDOP(ALPHA) because of a possible SEPARATEALPHABLENDENABLE change */
-    if (!isStateDirty(context, STATE_RENDER(WINED3DRS_BLENDOP)))
-        state_blendop(context, state, STATE_RENDER(WINED3DRS_BLENDOPALPHA));
+    if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_BLENDOP)))
+        state_blendop(context, state, STATE_RENDER(WINED3D_RS_BLENDOPALPHA));
 
-    if (state->render_states[WINED3DRS_SEPARATEALPHABLENDENABLE])
+    if (state->render_states[WINED3D_RS_SEPARATEALPHABLENDENABLE])
     {
         GLenum srcBlendAlpha, dstBlendAlpha;
 
@@ -422,7 +422,7 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
         /* WINED3D_BLEND_BOTHSRCALPHA and WINED3D_BLEND_BOTHINVSRCALPHA are legacy
          * source blending values which are still valid up to d3d9. They should
          * not occur as dest blend values. */
-        d3d_blend = state->render_states[WINED3DRS_SRCBLENDALPHA];
+        d3d_blend = state->render_states[WINED3D_RS_SRCBLENDALPHA];
         if (d3d_blend == WINED3D_BLEND_BOTHSRCALPHA)
         {
             srcBlendAlpha = GL_SRC_ALPHA;
@@ -436,7 +436,7 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
         else
         {
             srcBlendAlpha = gl_blend_factor(d3d_blend, target->resource.format);
-            dstBlendAlpha = gl_blend_factor(state->render_states[WINED3DRS_DESTBLENDALPHA],
+            dstBlendAlpha = gl_blend_factor(state->render_states[WINED3D_RS_DESTBLENDALPHA],
                     target->resource.format);
         }
 
@@ -449,8 +449,8 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
     }
 
     /* Colorkey fixup for stage 0 alphaop depends on
-     * WINED3DRS_ALPHABLENDENABLE state, so it may need updating. */
-    if (state->render_states[WINED3DRS_COLORKEYENABLE])
+     * WINED3D_RS_ALPHABLENDENABLE state, so it may need updating. */
+    if (state->render_states[WINED3D_RS_COLORKEYENABLE])
         context_apply_state(context, state, STATE_TEXTURESTAGE(0, WINED3DTSS_ALPHAOP));
 }
 
@@ -464,8 +464,9 @@ static void state_blendfactor(struct wined3d_context *context, const struct wine
     const struct wined3d_gl_info *gl_info = context->gl_info;
     float col[4];
 
-    TRACE("Setting blend factor to %#x.\n", state->render_states[WINED3DRS_BLENDFACTOR]);
-    D3DCOLORTOGLFLOAT4(state->render_states[WINED3DRS_BLENDFACTOR], col);
+    TRACE("Setting blend factor to %#x.\n", state->render_states[WINED3D_RS_BLENDFACTOR]);
+
+    D3DCOLORTOGLFLOAT4(state->render_states[WINED3D_RS_BLENDFACTOR], col);
     GL_EXTCALL(glBlendColorEXT (col[0],col[1],col[2],col[3]));
     checkGLcall("glBlendColor");
 }
@@ -481,7 +482,7 @@ static void state_alpha(struct wined3d_context *context, const struct wined3d_st
     /* Find out if the texture on the first stage has a ckey set
      * The alpha state func reads the texture settings, even though alpha and texture are not grouped
      * together. This is to avoid making a huge alpha+texture+texture stage+ckey block due to the hardly
-     * used WINED3DRS_COLORKEYENABLE state(which is d3d <= 3 only). The texture function will call alpha
+     * used WINED3D_RS_COLORKEYENABLE state(which is d3d <= 3 only). The texture function will call alpha
      * in case it finds some texture+colorkeyenable combination which needs extra care.
      */
     if (state->textures[0])
@@ -507,8 +508,8 @@ static void state_alpha(struct wined3d_context *context, const struct wined3d_st
         context_apply_state(context, state, STATE_TEXTURESTAGE(0, WINED3DTSS_ALPHAOP));
     context->last_was_ckey = enable_ckey;
 
-    if (state->render_states[WINED3DRS_ALPHATESTENABLE]
-            || (state->render_states[WINED3DRS_COLORKEYENABLE] && enable_ckey))
+    if (state->render_states[WINED3D_RS_ALPHATESTENABLE]
+            || (state->render_states[WINED3D_RS_COLORKEYENABLE] && enable_ckey))
     {
         glEnable(GL_ALPHA_TEST);
         checkGLcall("glEnable GL_ALPHA_TEST");
@@ -521,15 +522,15 @@ static void state_alpha(struct wined3d_context *context, const struct wined3d_st
         return;
     }
 
-    if (state->render_states[WINED3DRS_COLORKEYENABLE] && enable_ckey)
+    if (state->render_states[WINED3D_RS_COLORKEYENABLE] && enable_ckey)
     {
         glParm = GL_NOTEQUAL;
         ref = 0.0f;
     }
     else
     {
-        ref = ((float)state->render_states[WINED3DRS_ALPHAREF]) / 255.0f;
-        glParm = CompareFunc(state->render_states[WINED3DRS_ALPHAFUNC]);
+        ref = ((float)state->render_states[WINED3D_RS_ALPHAREF]) / 255.0f;
+        glParm = CompareFunc(state->render_states[WINED3D_RS_ALPHAFUNC]);
     }
     if(glParm) {
         glAlphaFunc(glParm, ref);
@@ -566,7 +567,7 @@ static void state_clipping(struct wined3d_context *context, const struct wined3d
              * conditions I got sick of tracking down. The shader state handler disables all clip planes because
              * of that - don't do anything here and keep them disabled
              */
-            if (state->render_states[WINED3DRS_CLIPPLANEENABLE])
+            if (state->render_states[WINED3D_RS_CLIPPLANEENABLE])
             {
                 static BOOL warned = FALSE;
                 if(!warned) {
@@ -594,10 +595,10 @@ static void state_clipping(struct wined3d_context *context, const struct wined3d
     /* If enabling / disabling all
      * TODO: Is this correct? Doesn't D3DRS_CLIPPING disable clipping on the viewport frustrum?
      */
-    if (state->render_states[WINED3DRS_CLIPPING])
+    if (state->render_states[WINED3D_RS_CLIPPING])
     {
-        enable = state->render_states[WINED3DRS_CLIPPLANEENABLE];
-        disable = ~state->render_states[WINED3DRS_CLIPPLANEENABLE];
+        enable = state->render_states[WINED3D_RS_CLIPPLANEENABLE];
+        disable = ~state->render_states[WINED3D_RS_CLIPPLANEENABLE];
     }
     else
     {
@@ -650,11 +651,11 @@ static void state_specularenable(struct wined3d_context *context, const struct w
      *
      * That's pretty much fine as it is, except for variable B, which needs to take
      * either GL_SPARE0_PLUS_SECONDARY_COLOR_NV or GL_SPARE0_NV, depending on
-     * whether WINED3DRS_SPECULARENABLE is enabled or not.
+     * whether WINED3D_RS_SPECULARENABLE is enabled or not.
      */
 
     TRACE("Setting specular enable state and materials\n");
-    if (state->render_states[WINED3DRS_SPECULARENABLE])
+    if (state->render_states[WINED3D_RS_SPECULARENABLE])
     {
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float *)&state->material.specular);
         checkGLcall("glMaterialfv");
@@ -745,14 +746,13 @@ static void state_texfactor(struct wined3d_context *context, const struct wined3
     /* Note the texture color applies to all textures whereas
      * GL_TEXTURE_ENV_COLOR applies to active only. */
     float col[4];
-    D3DCOLORTOGLFLOAT4(state->render_states[WINED3DRS_TEXTUREFACTOR], col);
+    D3DCOLORTOGLFLOAT4(state->render_states[WINED3D_RS_TEXTUREFACTOR], col);
 
     /* And now the default texture color as well */
     for (i = 0; i < gl_info->limits.texture_stages; ++i)
     {
-        /* Note the WINED3DRS value applies to all textures, but GL has one
-         * per texture, so apply it now ready to be used!
-         */
+        /* Note the WINED3D_RS value applies to all textures, but GL has one
+         * per texture, so apply it now ready to be used! */
         context_active_texture(context, gl_info, i);
 
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
@@ -799,20 +799,20 @@ static void state_stencil(struct wined3d_context *context, const struct wined3d_
         return;
     }
 
-    onesided_enable = state->render_states[WINED3DRS_STENCILENABLE];
-    twosided_enable = state->render_states[WINED3DRS_TWOSIDEDSTENCILMODE];
-    if (!(func = CompareFunc(state->render_states[WINED3DRS_STENCILFUNC])))
+    onesided_enable = state->render_states[WINED3D_RS_STENCILENABLE];
+    twosided_enable = state->render_states[WINED3D_RS_TWOSIDEDSTENCILMODE];
+    if (!(func = CompareFunc(state->render_states[WINED3D_RS_STENCILFUNC])))
         func = GL_ALWAYS;
-    if (!(func_ccw = CompareFunc(state->render_states[WINED3DRS_CCW_STENCILFUNC])))
+    if (!(func_ccw = CompareFunc(state->render_states[WINED3D_RS_CCW_STENCILFUNC])))
         func_ccw = GL_ALWAYS;
-    ref = state->render_states[WINED3DRS_STENCILREF];
-    mask = state->render_states[WINED3DRS_STENCILMASK];
-    stencilFail = StencilOp(state->render_states[WINED3DRS_STENCILFAIL]);
-    depthFail = StencilOp(state->render_states[WINED3DRS_STENCILZFAIL]);
-    stencilPass = StencilOp(state->render_states[WINED3DRS_STENCILPASS]);
-    stencilFail_ccw = StencilOp(state->render_states[WINED3DRS_CCW_STENCILFAIL]);
-    depthFail_ccw = StencilOp(state->render_states[WINED3DRS_CCW_STENCILZFAIL]);
-    stencilPass_ccw = StencilOp(state->render_states[WINED3DRS_CCW_STENCILPASS]);
+    ref = state->render_states[WINED3D_RS_STENCILREF];
+    mask = state->render_states[WINED3D_RS_STENCILMASK];
+    stencilFail = StencilOp(state->render_states[WINED3D_RS_STENCILFAIL]);
+    depthFail = StencilOp(state->render_states[WINED3D_RS_STENCILZFAIL]);
+    stencilPass = StencilOp(state->render_states[WINED3D_RS_STENCILPASS]);
+    stencilFail_ccw = StencilOp(state->render_states[WINED3D_RS_CCW_STENCILFAIL]);
+    depthFail_ccw = StencilOp(state->render_states[WINED3D_RS_CCW_STENCILZFAIL]);
+    stencilPass_ccw = StencilOp(state->render_states[WINED3D_RS_CCW_STENCILPASS]);
 
     TRACE("(onesided %d, twosided %d, ref %x, mask %x, "
           "GL_FRONT: func: %x, fail %x, zfail %x, zpass %x "
@@ -875,7 +875,7 @@ static void state_stencil(struct wined3d_context *context, const struct wined3d_
 
 static void state_stencilwrite2s(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    DWORD mask = state->fb->depth_stencil ? state->render_states[WINED3DRS_STENCILWRITEMASK] : 0;
+    DWORD mask = state->fb->depth_stencil ? state->render_states[WINED3D_RS_STENCILWRITEMASK] : 0;
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
     GL_EXTCALL(glActiveStencilFaceEXT(GL_BACK));
@@ -889,7 +889,7 @@ static void state_stencilwrite2s(struct wined3d_context *context, const struct w
 
 static void state_stencilwrite(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    DWORD mask = state->fb->depth_stencil ? state->render_states[WINED3DRS_STENCILWRITEMASK] : 0;
+    DWORD mask = state->fb->depth_stencil ? state->render_states[WINED3D_RS_STENCILWRITEMASK] : 0;
 
     glStencilMask(mask);
     checkGLcall("glStencilMask");
@@ -901,11 +901,11 @@ static void state_fog_vertexpart(struct wined3d_context *context, const struct w
     const struct wined3d_gl_info *gl_info = context->gl_info;
     TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
 
-    if (!state->render_states[WINED3DRS_FOGENABLE])
+    if (!state->render_states[WINED3D_RS_FOGENABLE])
         return;
 
     /* Table fog on: Never use fog coords, and use per-fragment fog */
-    if (state->render_states[WINED3DRS_FOGTABLEMODE] != WINED3DFOG_NONE)
+    if (state->render_states[WINED3D_RS_FOGTABLEMODE] != WINED3DFOG_NONE)
     {
         glHint(GL_FOG_HINT, GL_NICEST);
         if(context->fog_coord) {
@@ -926,7 +926,7 @@ static void state_fog_vertexpart(struct wined3d_context *context, const struct w
     /* Otherwise use per-vertex fog in any case */
     glHint(GL_FOG_HINT, GL_FASTEST);
 
-    if (state->render_states[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE || context->last_was_rhw)
+    if (state->render_states[WINED3D_RS_FOGVERTEXMODE] == WINED3DFOG_NONE || context->last_was_rhw)
     {
         /* No fog at all, or transformed vertices: Use fog coord */
         if(!context->fog_coord) {
@@ -944,7 +944,7 @@ static void state_fog_vertexpart(struct wined3d_context *context, const struct w
             context->fog_coord = FALSE;
         }
 
-        if (state->render_states[WINED3DRS_RANGEFOGENABLE])
+        if (state->render_states[WINED3D_RS_RANGEFOGENABLE])
         {
             if (gl_info->supported[NV_FOG_DISTANCE])
             {
@@ -984,9 +984,9 @@ void state_fogstartend(struct wined3d_context *context, const struct wined3d_sta
             break;
 
         case FOGSOURCE_FFP:
-            tmpvalue.d = state->render_states[WINED3DRS_FOGSTART];
+            tmpvalue.d = state->render_states[WINED3D_RS_FOGSTART];
             fogstart = tmpvalue.f;
-            tmpvalue.d = state->render_states[WINED3DRS_FOGEND];
+            tmpvalue.d = state->render_states[WINED3D_RS_FOGEND];
             fogend = tmpvalue.f;
             /* In GL, fogstart == fogend disables fog, in D3D everything's fogged.*/
             if(fogstart == fogend) {
@@ -1019,7 +1019,7 @@ void state_fog_fragpart(struct wined3d_context *context, const struct wined3d_st
 
     TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
 
-    if (!state->render_states[WINED3DRS_FOGENABLE])
+    if (!state->render_states[WINED3D_RS_FOGENABLE])
     {
         /* No fog? Disable it, and we're done :-) */
         glDisableWINE(GL_FOG);
@@ -1073,7 +1073,7 @@ void state_fog_fragpart(struct wined3d_context *context, const struct wined3d_st
     /* DX 7 sdk: "If both render states(vertex and table fog) are set to valid modes,
      * the system will apply only pixel(=table) fog effects."
      */
-    if (state->render_states[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
+    if (state->render_states[WINED3D_RS_FOGTABLEMODE] == WINED3DFOG_NONE)
     {
         if (use_vs(state))
         {
@@ -1083,7 +1083,7 @@ void state_fog_fragpart(struct wined3d_context *context, const struct wined3d_st
         }
         else
         {
-            switch (state->render_states[WINED3DRS_FOGVERTEXMODE])
+            switch (state->render_states[WINED3D_RS_FOGVERTEXMODE])
             {
                 /* If processed vertices are used, fall through to the NONE case */
                 case WINED3DFOG_EXP:
@@ -1124,15 +1124,15 @@ void state_fog_fragpart(struct wined3d_context *context, const struct wined3d_st
                     break;
 
                 default:
-                    FIXME("Unexpected WINED3DRS_FOGVERTEXMODE %#x.\n",
-                            state->render_states[WINED3DRS_FOGVERTEXMODE]);
+                    FIXME("Unexpected WINED3D_RS_FOGVERTEXMODE %#x.\n",
+                            state->render_states[WINED3D_RS_FOGVERTEXMODE]);
                     new_source = FOGSOURCE_FFP; /* Make the compiler happy */
             }
         }
     } else {
         new_source = FOGSOURCE_FFP;
 
-        switch (state->render_states[WINED3DRS_FOGTABLEMODE])
+        switch (state->render_states[WINED3D_RS_FOGTABLEMODE])
         {
             case WINED3DFOG_EXP:
                 glFogi(GL_FOG_MODE, GL_EXP);
@@ -1151,8 +1151,8 @@ void state_fog_fragpart(struct wined3d_context *context, const struct wined3d_st
 
             case WINED3DFOG_NONE:   /* Won't happen */
             default:
-                FIXME("Unexpected WINED3DRS_FOGTABLEMODE %#x.\n",
-                        state->render_states[WINED3DRS_FOGTABLEMODE]);
+                FIXME("Unexpected WINED3D_RS_FOGTABLEMODE %#x.\n",
+                        state->render_states[WINED3D_RS_FOGTABLEMODE]);
         }
     }
 
@@ -1161,7 +1161,7 @@ void state_fog_fragpart(struct wined3d_context *context, const struct wined3d_st
     if (new_source != context->fog_source)
     {
         context->fog_source = new_source;
-        state_fogstartend(context, state, STATE_RENDER(WINED3DRS_FOGSTART));
+        state_fogstartend(context, state, STATE_RENDER(WINED3D_RS_FOGSTART));
     }
 }
 
@@ -1169,7 +1169,7 @@ void state_fogcolor(struct wined3d_context *context, const struct wined3d_state 
 {
     float col[4];
 
-    D3DCOLORTOGLFLOAT4(state->render_states[WINED3DRS_FOGCOLOR], col);
+    D3DCOLORTOGLFLOAT4(state->render_states[WINED3D_RS_FOGCOLOR], col);
     glFogfv(GL_FOG_COLOR, &col[0]);
     checkGLcall("glFog GL_FOG_COLOR");
 }
@@ -1181,7 +1181,7 @@ void state_fogdensity(struct wined3d_context *context, const struct wined3d_stat
         float f;
     } tmpvalue;
 
-    tmpvalue.d = state->render_states[WINED3DRS_FOGDENSITY];
+    tmpvalue.d = state->render_states[WINED3D_RS_FOGDENSITY];
     glFogfv(GL_FOG_DENSITY, &tmpvalue.f);
     checkGLcall("glFogf(GL_FOG_DENSITY, (float) Value)");
 }
@@ -1201,55 +1201,55 @@ static void state_colormat(struct wined3d_context *context, const struct wined3d
 
     context->num_untracked_materials = 0;
     if ((device->strided_streams.use_map & (1 << WINED3D_FFP_DIFFUSE))
-            && state->render_states[WINED3DRS_COLORVERTEX])
+            && state->render_states[WINED3D_RS_COLORVERTEX])
     {
         TRACE("diff %d, amb %d, emis %d, spec %d\n",
-                state->render_states[WINED3DRS_DIFFUSEMATERIALSOURCE],
-                state->render_states[WINED3DRS_AMBIENTMATERIALSOURCE],
-                state->render_states[WINED3DRS_EMISSIVEMATERIALSOURCE],
-                state->render_states[WINED3DRS_SPECULARMATERIALSOURCE]);
+                state->render_states[WINED3D_RS_DIFFUSEMATERIALSOURCE],
+                state->render_states[WINED3D_RS_AMBIENTMATERIALSOURCE],
+                state->render_states[WINED3D_RS_EMISSIVEMATERIALSOURCE],
+                state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE]);
 
-        if (state->render_states[WINED3DRS_DIFFUSEMATERIALSOURCE] == WINED3DMCS_COLOR1)
+        if (state->render_states[WINED3D_RS_DIFFUSEMATERIALSOURCE] == WINED3DMCS_COLOR1)
         {
-            if (state->render_states[WINED3DRS_AMBIENTMATERIALSOURCE] == WINED3DMCS_COLOR1)
+            if (state->render_states[WINED3D_RS_AMBIENTMATERIALSOURCE] == WINED3DMCS_COLOR1)
                 Parm = GL_AMBIENT_AND_DIFFUSE;
             else
                 Parm = GL_DIFFUSE;
-            if (state->render_states[WINED3DRS_EMISSIVEMATERIALSOURCE] == WINED3DMCS_COLOR1)
+            if (state->render_states[WINED3D_RS_EMISSIVEMATERIALSOURCE] == WINED3DMCS_COLOR1)
             {
                 context->untracked_materials[context->num_untracked_materials] = GL_EMISSION;
                 context->num_untracked_materials++;
             }
-            if (state->render_states[WINED3DRS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1)
+            if (state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1)
             {
                 context->untracked_materials[context->num_untracked_materials] = GL_SPECULAR;
                 context->num_untracked_materials++;
             }
         }
-        else if (state->render_states[WINED3DRS_AMBIENTMATERIALSOURCE] == WINED3DMCS_COLOR1)
+        else if (state->render_states[WINED3D_RS_AMBIENTMATERIALSOURCE] == WINED3DMCS_COLOR1)
         {
             Parm = GL_AMBIENT;
-            if (state->render_states[WINED3DRS_EMISSIVEMATERIALSOURCE] == WINED3DMCS_COLOR1)
+            if (state->render_states[WINED3D_RS_EMISSIVEMATERIALSOURCE] == WINED3DMCS_COLOR1)
             {
                 context->untracked_materials[context->num_untracked_materials] = GL_EMISSION;
                 context->num_untracked_materials++;
             }
-            if (state->render_states[WINED3DRS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1)
+            if (state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1)
             {
                 context->untracked_materials[context->num_untracked_materials] = GL_SPECULAR;
                 context->num_untracked_materials++;
             }
         }
-        else if (state->render_states[WINED3DRS_EMISSIVEMATERIALSOURCE] == WINED3DMCS_COLOR1)
+        else if (state->render_states[WINED3D_RS_EMISSIVEMATERIALSOURCE] == WINED3DMCS_COLOR1)
         {
             Parm = GL_EMISSION;
-            if (state->render_states[WINED3DRS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1)
+            if (state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1)
             {
                 context->untracked_materials[context->num_untracked_materials] = GL_SPECULAR;
                 context->num_untracked_materials++;
             }
         }
-        else if (state->render_states[WINED3DRS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1)
+        else if (state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1)
         {
             Parm = GL_SPECULAR;
         }
@@ -1294,7 +1294,7 @@ static void state_colormat(struct wined3d_context *context, const struct wined3d
 
         case GL_SPECULAR:
             /* Only change material color if specular is enabled, otherwise it is set to black */
-            if (state->render_states[WINED3DRS_SPECULARENABLE])
+            if (state->render_states[WINED3D_RS_SPECULARENABLE])
             {
                 glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float *)&state->material.specular);
                 checkGLcall("glMaterialfv");
@@ -1318,7 +1318,7 @@ static void state_linepattern(struct wined3d_context *context, const struct wine
         DWORD d;
         struct wined3d_line_pattern lp;
     } tmppattern;
-    tmppattern.d = state->render_states[WINED3DRS_LINEPATTERN];
+    tmppattern.d = state->render_states[WINED3D_RS_LINEPATTERN];
 
     TRACE("Line pattern: repeat %d bits %x.\n", tmppattern.lp.repeat_factor, tmppattern.lp.line_pattern);
 
@@ -1345,7 +1345,7 @@ static void state_normalize(struct wined3d_context *context, const struct wined3
      * from the opengl lighting equation, as d3d does. Normalization of 0/0/0 can lead to a division
      * by zero and is not properly defined in opengl, so avoid it
      */
-    if (state->render_states[WINED3DRS_NORMALIZENORMALS]
+    if (state->render_states[WINED3D_RS_NORMALIZENORMALS]
             && (context->swapchain->device->strided_streams.use_map & (1 << WINED3D_FFP_NORMAL)))
     {
         glEnable(GL_NORMALIZE);
@@ -1365,15 +1365,15 @@ static void state_psizemin_w(struct wined3d_context *context, const struct wined
         float f;
     } tmpvalue;
 
-    tmpvalue.d = state->render_states[WINED3DRS_POINTSIZE_MIN];
+    tmpvalue.d = state->render_states[WINED3D_RS_POINTSIZE_MIN];
     if (tmpvalue.f != 1.0f)
     {
-        FIXME("WINED3DRS_POINTSIZE_MIN not supported on this opengl, value is %f\n", tmpvalue.f);
+        FIXME("WINED3D_RS_POINTSIZE_MIN not supported on this opengl, value is %f\n", tmpvalue.f);
     }
-    tmpvalue.d = state->render_states[WINED3DRS_POINTSIZE_MAX];
+    tmpvalue.d = state->render_states[WINED3D_RS_POINTSIZE_MAX];
     if (tmpvalue.f != 64.0f)
     {
-        FIXME("WINED3DRS_POINTSIZE_MAX not supported on this opengl, value is %f\n", tmpvalue.f);
+        FIXME("WINED3D_RS_POINTSIZE_MAX not supported on this opengl, value is %f\n", tmpvalue.f);
     }
 
 }
@@ -1387,8 +1387,8 @@ static void state_psizemin_ext(struct wined3d_context *context, const struct win
         float f;
     } min, max;
 
-    min.d = state->render_states[WINED3DRS_POINTSIZE_MIN];
-    max.d = state->render_states[WINED3DRS_POINTSIZE_MAX];
+    min.d = state->render_states[WINED3D_RS_POINTSIZE_MIN];
+    max.d = state->render_states[WINED3D_RS_POINTSIZE_MAX];
 
     /* Max point size trumps min point size */
     if(min.f > max.f) {
@@ -1410,8 +1410,8 @@ static void state_psizemin_arb(struct wined3d_context *context, const struct win
         float f;
     } min, max;
 
-    min.d = state->render_states[WINED3DRS_POINTSIZE_MIN];
-    max.d = state->render_states[WINED3DRS_POINTSIZE_MAX];
+    min.d = state->render_states[WINED3D_RS_POINTSIZE_MIN];
+    max.d = state->render_states[WINED3D_RS_POINTSIZE_MAX];
 
     /* Max point size trumps min point size */
     if(min.f > max.f) {
@@ -1441,12 +1441,12 @@ static void state_pscale(struct wined3d_context *context, const struct wined3d_s
         float f;
     } pointSize, A, B, C;
 
-    pointSize.d = state->render_states[WINED3DRS_POINTSIZE];
-    A.d = state->render_states[WINED3DRS_POINTSCALE_A];
-    B.d = state->render_states[WINED3DRS_POINTSCALE_B];
-    C.d = state->render_states[WINED3DRS_POINTSCALE_C];
+    pointSize.d = state->render_states[WINED3D_RS_POINTSIZE];
+    A.d = state->render_states[WINED3D_RS_POINTSCALE_A];
+    B.d = state->render_states[WINED3D_RS_POINTSCALE_B];
+    C.d = state->render_states[WINED3D_RS_POINTSCALE_C];
 
-    if (state->render_states[WINED3DRS_POINTSCALEENABLE])
+    if (state->render_states[WINED3D_RS_POINTSCALEENABLE])
     {
         DWORD h = state->viewport.height;
         GLfloat scaleFactor;
@@ -1494,7 +1494,7 @@ static void state_pscale(struct wined3d_context *context, const struct wined3d_s
         GL_EXTCALL(glPointParameterfvEXT)(GL_DISTANCE_ATTENUATION_EXT, att);
         checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...)");
     }
-    else if (state->render_states[WINED3DRS_POINTSCALEENABLE])
+    else if (state->render_states[WINED3D_RS_POINTSCALEENABLE])
     {
         WARN("POINT_PARAMETERS not supported in this version of opengl\n");
     }
@@ -1505,15 +1505,15 @@ static void state_pscale(struct wined3d_context *context, const struct wined3d_s
 
 static void state_debug_monitor(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    WARN("token: %#x.\n", state->render_states[WINED3DRS_DEBUGMONITORTOKEN]);
+    WARN("token: %#x.\n", state->render_states[WINED3D_RS_DEBUGMONITORTOKEN]);
 }
 
 static void state_colorwrite(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    DWORD mask0 = state->render_states[WINED3DRS_COLORWRITEENABLE];
-    DWORD mask1 = state->render_states[WINED3DRS_COLORWRITEENABLE1];
-    DWORD mask2 = state->render_states[WINED3DRS_COLORWRITEENABLE2];
-    DWORD mask3 = state->render_states[WINED3DRS_COLORWRITEENABLE3];
+    DWORD mask0 = state->render_states[WINED3D_RS_COLORWRITEENABLE];
+    DWORD mask1 = state->render_states[WINED3D_RS_COLORWRITEENABLE1];
+    DWORD mask2 = state->render_states[WINED3D_RS_COLORWRITEENABLE2];
+    DWORD mask3 = state->render_states[WINED3D_RS_COLORWRITEENABLE3];
 
     TRACE("Color mask: r(%d) g(%d) b(%d) a(%d)\n",
             mask0 & WINED3DCOLORWRITEENABLE_RED ? 1 : 0,
@@ -1529,7 +1529,7 @@ static void state_colorwrite(struct wined3d_context *context, const struct wined
     if (!((mask1 == mask0 && mask2 == mask0 && mask3 == mask0)
         || (mask1 == 0xf && mask2 == 0xf && mask3 == 0xf)))
     {
-        FIXME("WINED3DRS_COLORWRITEENABLE/1/2/3, %#x/%#x/%#x/%#x not yet implemented.\n",
+        FIXME("WINED3D_RS_COLORWRITEENABLE/1/2/3, %#x/%#x/%#x/%#x not yet implemented.\n",
             mask0, mask1, mask2, mask3);
         FIXME("Missing of cap D3DPMISCCAPS_INDEPENDENTWRITEMASKS wasn't honored?\n");
     }
@@ -1546,27 +1546,27 @@ static void set_color_mask(const struct wined3d_gl_info *gl_info, UINT index, DW
 
 static void state_colorwrite0(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    set_color_mask(context->gl_info, 0, state->render_states[WINED3DRS_COLORWRITEENABLE]);
+    set_color_mask(context->gl_info, 0, state->render_states[WINED3D_RS_COLORWRITEENABLE]);
 }
 
 static void state_colorwrite1(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    set_color_mask(context->gl_info, 1, state->render_states[WINED3DRS_COLORWRITEENABLE1]);
+    set_color_mask(context->gl_info, 1, state->render_states[WINED3D_RS_COLORWRITEENABLE1]);
 }
 
 static void state_colorwrite2(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    set_color_mask(context->gl_info, 2, state->render_states[WINED3DRS_COLORWRITEENABLE2]);
+    set_color_mask(context->gl_info, 2, state->render_states[WINED3D_RS_COLORWRITEENABLE2]);
 }
 
 static void state_colorwrite3(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    set_color_mask(context->gl_info, 3, state->render_states[WINED3DRS_COLORWRITEENABLE3]);
+    set_color_mask(context->gl_info, 3, state->render_states[WINED3D_RS_COLORWRITEENABLE3]);
 }
 
 static void state_localviewer(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_LOCALVIEWER])
+    if (state->render_states[WINED3D_RS_LOCALVIEWER])
     {
         glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, 1);
         checkGLcall("glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, 1)");
@@ -1578,7 +1578,7 @@ static void state_localviewer(struct wined3d_context *context, const struct wine
 
 static void state_lastpixel(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_LASTPIXEL])
+    if (state->render_states[WINED3D_RS_LASTPIXEL])
     {
         TRACE("Last Pixel Drawing Enabled\n");
     }
@@ -1599,7 +1599,7 @@ static void state_pointsprite_w(struct wined3d_context *context, const struct wi
     static BOOL warned;
 
     /* TODO: NV_POINT_SPRITE */
-    if (!warned && state->render_states[WINED3DRS_POINTSPRITEENABLE])
+    if (!warned && state->render_states[WINED3D_RS_POINTSPRITEENABLE])
     {
         /* A FIXME, not a WARN because point sprites should be software emulated if not supported by HW */
         FIXME("Point sprites not supported\n");
@@ -1609,7 +1609,7 @@ static void state_pointsprite_w(struct wined3d_context *context, const struct wi
 
 static void state_pointsprite(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_POINTSPRITEENABLE])
+    if (state->render_states[WINED3D_RS_POINTSPRITEENABLE])
     {
         glEnable(GL_POINT_SPRITE_ARB);
         checkGLcall("glEnable(GL_POINT_SPRITE_ARB)");
@@ -1621,34 +1621,34 @@ static void state_pointsprite(struct wined3d_context *context, const struct wine
 
 static void state_wrap(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_WRAP0]
-            || state->render_states[WINED3DRS_WRAP1]
-            || state->render_states[WINED3DRS_WRAP2]
-            || state->render_states[WINED3DRS_WRAP3]
-            || state->render_states[WINED3DRS_WRAP4]
-            || state->render_states[WINED3DRS_WRAP5]
-            || state->render_states[WINED3DRS_WRAP6]
-            || state->render_states[WINED3DRS_WRAP7]
-            || state->render_states[WINED3DRS_WRAP8]
-            || state->render_states[WINED3DRS_WRAP9]
-            || state->render_states[WINED3DRS_WRAP10]
-            || state->render_states[WINED3DRS_WRAP11]
-            || state->render_states[WINED3DRS_WRAP12]
-            || state->render_states[WINED3DRS_WRAP13]
-            || state->render_states[WINED3DRS_WRAP14]
-            || state->render_states[WINED3DRS_WRAP15])
-        FIXME("(WINED3DRS_WRAP0) Texture wrapping not yet supported.\n");
+    if (state->render_states[WINED3D_RS_WRAP0]
+            || state->render_states[WINED3D_RS_WRAP1]
+            || state->render_states[WINED3D_RS_WRAP2]
+            || state->render_states[WINED3D_RS_WRAP3]
+            || state->render_states[WINED3D_RS_WRAP4]
+            || state->render_states[WINED3D_RS_WRAP5]
+            || state->render_states[WINED3D_RS_WRAP6]
+            || state->render_states[WINED3D_RS_WRAP7]
+            || state->render_states[WINED3D_RS_WRAP8]
+            || state->render_states[WINED3D_RS_WRAP9]
+            || state->render_states[WINED3D_RS_WRAP10]
+            || state->render_states[WINED3D_RS_WRAP11]
+            || state->render_states[WINED3D_RS_WRAP12]
+            || state->render_states[WINED3D_RS_WRAP13]
+            || state->render_states[WINED3D_RS_WRAP14]
+            || state->render_states[WINED3D_RS_WRAP15])
+        FIXME("(WINED3D_RS_WRAP0) Texture wrapping not yet supported.\n");
 }
 
 static void state_msaa_w(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_MULTISAMPLEANTIALIAS])
+    if (state->render_states[WINED3D_RS_MULTISAMPLEANTIALIAS])
         WARN("Multisample antialiasing not supported by GL.\n");
 }
 
 static void state_msaa(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_MULTISAMPLEANTIALIAS])
+    if (state->render_states[WINED3D_RS_MULTISAMPLEANTIALIAS])
     {
         glEnable(GL_MULTISAMPLE_ARB);
         checkGLcall("glEnable(GL_MULTISAMPLE_ARB)");
@@ -1660,7 +1660,7 @@ static void state_msaa(struct wined3d_context *context, const struct wined3d_sta
 
 static void state_scissor(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_SCISSORTESTENABLE])
+    if (state->render_states[WINED3D_RS_SCISSORTESTENABLE])
     {
         glEnable(GL_SCISSOR_TEST);
         checkGLcall("glEnable(GL_SCISSOR_TEST)");
@@ -1681,8 +1681,8 @@ static void state_scissor(struct wined3d_context *context, const struct wined3d_
  * depth slope, and doesn't need to be scaled. */
 static void state_depthbias(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_SLOPESCALEDEPTHBIAS]
-            || state->render_states[WINED3DRS_DEPTHBIAS])
+    if (state->render_states[WINED3D_RS_SLOPESCALEDEPTHBIAS]
+            || state->render_states[WINED3D_RS_DEPTHBIAS])
     {
         const struct wined3d_surface *depth = state->fb->depth_stencil;
         float scale;
@@ -1693,8 +1693,8 @@ static void state_depthbias(struct wined3d_context *context, const struct wined3
             float f;
         } scale_bias, const_bias;
 
-        scale_bias.d = state->render_states[WINED3DRS_SLOPESCALEDEPTHBIAS];
-        const_bias.d = state->render_states[WINED3DRS_DEPTHBIAS];
+        scale_bias.d = state->render_states[WINED3D_RS_SLOPESCALEDEPTHBIAS];
+        const_bias.d = state->render_states[WINED3D_RS_DEPTHBIAS];
 
         glEnable(GL_POLYGON_OFFSET_FILL);
         checkGLcall("glEnable(GL_POLYGON_OFFSET_FILL)");
@@ -1734,13 +1734,13 @@ static void state_depthbias(struct wined3d_context *context, const struct wined3
 
 static void state_zvisible(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_ZVISIBLE])
-        FIXME("WINED3DRS_ZVISIBLE not implemented.\n");
+    if (state->render_states[WINED3D_RS_ZVISIBLE])
+        FIXME("WINED3D_RS_ZVISIBLE not implemented.\n");
 }
 
 static void state_perspective(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_TEXTUREPERSPECTIVE])
+    if (state->render_states[WINED3D_RS_TEXTUREPERSPECTIVE])
     {
         glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
         checkGLcall("glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST)");
@@ -1752,28 +1752,28 @@ static void state_perspective(struct wined3d_context *context, const struct wine
 
 static void state_stippledalpha(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_STIPPLEDALPHA])
+    if (state->render_states[WINED3D_RS_STIPPLEDALPHA])
         FIXME("Stippled Alpha not supported yet.\n");
 }
 
 static void state_antialias(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_ANTIALIAS])
+    if (state->render_states[WINED3D_RS_ANTIALIAS])
         FIXME("Antialias not supported yet.\n");
 }
 
 static void state_multisampmask(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_MULTISAMPLEMASK] != 0xffffffff)
-        FIXME("WINED3DRS_MULTISAMPLEMASK %#x not yet implemented.\n",
-                state->render_states[WINED3DRS_MULTISAMPLEMASK]);
+    if (state->render_states[WINED3D_RS_MULTISAMPLEMASK] != 0xffffffff)
+        FIXME("WINED3D_RS_MULTISAMPLEMASK %#x not yet implemented.\n",
+                state->render_states[WINED3D_RS_MULTISAMPLEMASK]);
 }
 
 static void state_patchedgestyle(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_PATCHEDGESTYLE] != WINED3DPATCHEDGE_DISCRETE)
-        FIXME("WINED3DRS_PATCHEDGESTYLE %#x not yet implemented.\n",
-                state->render_states[WINED3DRS_PATCHEDGESTYLE]);
+    if (state->render_states[WINED3D_RS_PATCHEDGESTYLE] != WINED3DPATCHEDGE_DISCRETE)
+        FIXME("WINED3D_RS_PATCHEDGESTYLE %#x not yet implemented.\n",
+                state->render_states[WINED3D_RS_PATCHEDGESTYLE]);
 }
 
 static void state_patchsegments(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -1784,13 +1784,13 @@ static void state_patchsegments(struct wined3d_context *context, const struct wi
     } tmpvalue;
     tmpvalue.f = 1.0f;
 
-    if (state->render_states[WINED3DRS_PATCHSEGMENTS] != tmpvalue.d)
+    if (state->render_states[WINED3D_RS_PATCHSEGMENTS] != tmpvalue.d)
     {
         static BOOL displayed = FALSE;
 
-        tmpvalue.d = state->render_states[WINED3DRS_PATCHSEGMENTS];
+        tmpvalue.d = state->render_states[WINED3D_RS_PATCHSEGMENTS];
         if(!displayed)
-            FIXME("(WINED3DRS_PATCHSEGMENTS,%f) not yet implemented\n", tmpvalue.f);
+            FIXME("(WINED3D_RS_PATCHSEGMENTS,%f) not yet implemented\n", tmpvalue.f);
 
         displayed = TRUE;
     }
@@ -1798,23 +1798,23 @@ static void state_patchsegments(struct wined3d_context *context, const struct wi
 
 static void state_positiondegree(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_POSITIONDEGREE] != WINED3D_DEGREE_CUBIC)
-        FIXME("WINED3DRS_POSITIONDEGREE %#x not yet implemented.\n",
-                state->render_states[WINED3DRS_POSITIONDEGREE]);
+    if (state->render_states[WINED3D_RS_POSITIONDEGREE] != WINED3D_DEGREE_CUBIC)
+        FIXME("WINED3D_RS_POSITIONDEGREE %#x not yet implemented.\n",
+                state->render_states[WINED3D_RS_POSITIONDEGREE]);
 }
 
 static void state_normaldegree(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_NORMALDEGREE] != WINED3D_DEGREE_LINEAR)
-        FIXME("WINED3DRS_NORMALDEGREE %#x not yet implemented.\n",
-                state->render_states[WINED3DRS_NORMALDEGREE]);
+    if (state->render_states[WINED3D_RS_NORMALDEGREE] != WINED3D_DEGREE_LINEAR)
+        FIXME("WINED3D_RS_NORMALDEGREE %#x not yet implemented.\n",
+                state->render_states[WINED3D_RS_NORMALDEGREE]);
 }
 
 static void state_tessellation(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_ENABLEADAPTIVETESSELLATION])
-        FIXME("WINED3DRS_ENABLEADAPTIVETESSELLATION %#x not yet implemented.\n",
-                state->render_states[WINED3DRS_ENABLEADAPTIVETESSELLATION]);
+    if (state->render_states[WINED3D_RS_ENABLEADAPTIVETESSELLATION])
+        FIXME("WINED3D_RS_ENABLEADAPTIVETESSELLATION %#x not yet implemented.\n",
+                state->render_states[WINED3D_RS_ENABLEADAPTIVETESSELLATION]);
 }
 
 static void state_nvdb(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -1826,10 +1826,10 @@ static void state_nvdb(struct wined3d_context *context, const struct wined3d_sta
 
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
-    if (state->render_states[WINED3DRS_ADAPTIVETESS_X] == WINED3DFMT_NVDB)
+    if (state->render_states[WINED3D_RS_ADAPTIVETESS_X] == WINED3DFMT_NVDB)
     {
-        zmin.d = state->render_states[WINED3DRS_ADAPTIVETESS_Z];
-        zmax.d = state->render_states[WINED3DRS_ADAPTIVETESS_W];
+        zmin.d = state->render_states[WINED3D_RS_ADAPTIVETESS_Z];
+        zmax.d = state->render_states[WINED3D_RS_ADAPTIVETESS_W];
 
         /* If zmin is larger than zmax INVALID_VALUE error is generated.
          * In d3d9 test is not performed in this case*/
@@ -1850,96 +1850,96 @@ static void state_nvdb(struct wined3d_context *context, const struct wined3d_sta
         checkGLcall("glDisable(GL_DEPTH_BOUNDS_TEST_EXT)");
     }
 
-    state_tessellation(context, state, STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION));
+    state_tessellation(context, state, STATE_RENDER(WINED3D_RS_ENABLEADAPTIVETESSELLATION));
 }
 
 static void state_wrapu(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_WRAPU])
-        FIXME("Render state WINED3DRS_WRAPU not implemented yet.\n");
+    if (state->render_states[WINED3D_RS_WRAPU])
+        FIXME("Render state WINED3D_RS_WRAPU not implemented yet.\n");
 }
 
 static void state_wrapv(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_WRAPV])
-        FIXME("Render state WINED3DRS_WRAPV not implemented yet.\n");
+    if (state->render_states[WINED3D_RS_WRAPV])
+        FIXME("Render state WINED3D_RS_WRAPV not implemented yet.\n");
 }
 
 static void state_monoenable(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_MONOENABLE])
-        FIXME("Render state WINED3DRS_MONOENABLE not implemented yet.\n");
+    if (state->render_states[WINED3D_RS_MONOENABLE])
+        FIXME("Render state WINED3D_RS_MONOENABLE not implemented yet.\n");
 }
 
 static void state_rop2(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_ROP2])
-        FIXME("Render state WINED3DRS_ROP2 not implemented yet.\n");
+    if (state->render_states[WINED3D_RS_ROP2])
+        FIXME("Render state WINED3D_RS_ROP2 not implemented yet.\n");
 }
 
 static void state_planemask(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_PLANEMASK])
-        FIXME("Render state WINED3DRS_PLANEMASK not implemented yet.\n");
+    if (state->render_states[WINED3D_RS_PLANEMASK])
+        FIXME("Render state WINED3D_RS_PLANEMASK not implemented yet.\n");
 }
 
 static void state_subpixel(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_SUBPIXEL])
-        FIXME("Render state WINED3DRS_SUBPIXEL not implemented yet.\n");
+    if (state->render_states[WINED3D_RS_SUBPIXEL])
+        FIXME("Render state WINED3D_RS_SUBPIXEL not implemented yet.\n");
 }
 
 static void state_subpixelx(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_SUBPIXELX])
-        FIXME("Render state WINED3DRS_SUBPIXELX not implemented yet.\n");
+    if (state->render_states[WINED3D_RS_SUBPIXELX])
+        FIXME("Render state WINED3D_RS_SUBPIXELX not implemented yet.\n");
 }
 
 static void state_stippleenable(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_STIPPLEENABLE])
-        FIXME("Render state WINED3DRS_STIPPLEENABLE not implemented yet.\n");
+    if (state->render_states[WINED3D_RS_STIPPLEENABLE])
+        FIXME("Render state WINED3D_RS_STIPPLEENABLE not implemented yet.\n");
 }
 
 static void state_mipmaplodbias(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_MIPMAPLODBIAS])
-        FIXME("Render state WINED3DRS_MIPMAPLODBIAS not implemented yet.\n");
+    if (state->render_states[WINED3D_RS_MIPMAPLODBIAS])
+        FIXME("Render state WINED3D_RS_MIPMAPLODBIAS not implemented yet.\n");
 }
 
 static void state_anisotropy(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_ANISOTROPY])
-        FIXME("Render state WINED3DRS_ANISOTROPY not implemented yet.\n");
+    if (state->render_states[WINED3D_RS_ANISOTROPY])
+        FIXME("Render state WINED3D_RS_ANISOTROPY not implemented yet.\n");
 }
 
 static void state_flushbatch(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_FLUSHBATCH])
-        FIXME("Render state WINED3DRS_FLUSHBATCH not implemented yet.\n");
+    if (state->render_states[WINED3D_RS_FLUSHBATCH])
+        FIXME("Render state WINED3D_RS_FLUSHBATCH not implemented yet.\n");
 }
 
 static void state_translucentsi(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_TRANSLUCENTSORTINDEPENDENT])
-        FIXME("Render state WINED3DRS_TRANSLUCENTSORTINDEPENDENT not implemented yet.\n");
+    if (state->render_states[WINED3D_RS_TRANSLUCENTSORTINDEPENDENT])
+        FIXME("Render state WINED3D_RS_TRANSLUCENTSORTINDEPENDENT not implemented yet.\n");
 }
 
 static void state_extents(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_EXTENTS])
-        FIXME("Render state WINED3DRS_EXTENTS not implemented yet.\n");
+    if (state->render_states[WINED3D_RS_EXTENTS])
+        FIXME("Render state WINED3D_RS_EXTENTS not implemented yet.\n");
 }
 
 static void state_ckeyblend(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_COLORKEYBLENDENABLE])
-        FIXME("Render state WINED3DRS_COLORKEYBLENDENABLE not implemented yet.\n");
+    if (state->render_states[WINED3D_RS_COLORKEYBLENDENABLE])
+        FIXME("Render state WINED3D_RS_COLORKEYBLENDENABLE not implemented yet.\n");
 }
 
 static void state_swvp(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3DRS_SOFTWAREVERTEXPROCESSING])
+    if (state->render_states[WINED3D_RS_SOFTWAREVERTEXPROCESSING])
         FIXME("Software vertex processing not implemented.\n");
 }
 
@@ -3112,7 +3112,7 @@ void tex_alphaop(struct wined3d_context *context, const struct wined3d_state *st
     arg2 = state->texture_states[stage][WINED3DTSS_ALPHAARG2];
     arg0 = state->texture_states[stage][WINED3DTSS_ALPHAARG0];
 
-    if (state->render_states[WINED3DRS_COLORKEYENABLE] && !stage && state->textures[0])
+    if (state->render_states[WINED3D_RS_COLORKEYENABLE] && !stage && state->textures[0])
     {
         struct wined3d_texture *texture = state->textures[0];
         GLenum texture_dimensions = texture->target;
@@ -3152,7 +3152,7 @@ void tex_alphaop(struct wined3d_context *context, const struct wined3d_state *st
                 }
                 else if(op == WINED3DTOP_SELECTARG1 && arg1 != WINED3DTA_TEXTURE)
                 {
-                    if (state->render_states[WINED3DRS_ALPHABLENDENABLE])
+                    if (state->render_states[WINED3D_RS_ALPHABLENDENABLE])
                     {
                         arg2 = WINED3DTA_TEXTURE;
                         op = WINED3DTOP_MODULATE;
@@ -3161,7 +3161,7 @@ void tex_alphaop(struct wined3d_context *context, const struct wined3d_state *st
                 }
                 else if(op == WINED3DTOP_SELECTARG2 && arg2 != WINED3DTA_TEXTURE)
                 {
-                    if (state->render_states[WINED3DRS_ALPHABLENDENABLE])
+                    if (state->render_states[WINED3D_RS_ALPHABLENDENABLE])
                     {
                         arg1 = WINED3DTA_TEXTURE;
                         op = WINED3DTOP_MODULATE;
@@ -3334,7 +3334,7 @@ static void tex_coordindex(struct wined3d_context *context, const struct wined3d
      * FIXME: When using generated texture coordinates, the index value is used to specify the wrapping mode.
      * eg. SetTextureStageState( 0, WINED3DTSS_TEXCOORDINDEX, WINED3DTSS_TCI_CAMERASPACEPOSITION | 1 );
      * means use the vertex position (camera-space) as the input texture coordinates
-     * for this texture stage, and the wrap mode set in the WINED3DRS_WRAP1 render
+     * for this texture stage, and the wrap mode set in the WINED3D_RS_WRAP1 render
      * state. We do not (yet) support the WINED3DRENDERSTATE_WRAPx values, nor tie them up
      * to the TEXCOORDINDEX value
      */
@@ -3576,11 +3576,11 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
 
         if (!use_ps(state) && sampler < state->lowest_disabled_stage)
         {
-            if (state->render_states[WINED3DRS_COLORKEYENABLE] && !sampler)
+            if (state->render_states[WINED3D_RS_COLORKEYENABLE] && !sampler)
             {
                 /* If color keying is enabled update the alpha test, it
                  * depends on the existence of a color key in stage 0. */
-                state_alpha(context, state, WINED3DRS_COLORKEYENABLE);
+                state_alpha(context, state, WINED3D_RS_COLORKEYENABLE);
             }
         }
 
@@ -3593,11 +3593,11 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
         if (sampler < state->lowest_disabled_stage)
         {
             /* TODO: What should I do with pixel shaders here ??? */
-            if (state->render_states[WINED3DRS_COLORKEYENABLE] && !sampler)
+            if (state->render_states[WINED3D_RS_COLORKEYENABLE] && !sampler)
             {
                 /* If color keying is enabled update the alpha test, it
                  * depends on the existence of a color key in stage 0. */
-                state_alpha(context, state, WINED3DRS_COLORKEYENABLE);
+                state_alpha(context, state, WINED3D_RS_COLORKEYENABLE);
             }
         } /* Otherwise tex_colorop disables the stage */
         context_bind_texture(context, GL_NONE, 0);
@@ -3780,7 +3780,7 @@ static void transform_worldex(struct wined3d_context *context, const struct wine
 
 static void state_vertexblend_w(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    WINED3DVERTEXBLENDFLAGS f = state->render_states[WINED3DRS_VERTEXBLEND];
+    WINED3DVERTEXBLENDFLAGS f = state->render_states[WINED3D_RS_VERTEXBLEND];
     static unsigned int once;
 
     if (f == WINED3DVBF_DISABLE) return;
@@ -3791,7 +3791,7 @@ static void state_vertexblend_w(struct wined3d_context *context, const struct wi
 
 static void state_vertexblend(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    WINED3DVERTEXBLENDFLAGS val = state->render_states[WINED3DRS_VERTEXBLEND];
+    WINED3DVERTEXBLENDFLAGS val = state->render_states[WINED3D_RS_VERTEXBLEND];
     struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     static unsigned int once;
@@ -3806,7 +3806,7 @@ static void state_vertexblend(struct wined3d_context *context, const struct wine
             /* D3D adds one more matrix which has weight (1 - sum(weights)).
              * This is enabled at context creation with enabling
              * GL_WEIGHT_SUM_UNITY_ARB. */
-            GL_EXTCALL(glVertexBlendARB(state->render_states[WINED3DRS_VERTEXBLEND] + 1));
+            GL_EXTCALL(glVertexBlendARB(state->render_states[WINED3D_RS_VERTEXBLEND] + 1));
 
             if (!device->vertexBlendUsed)
             {
@@ -4496,25 +4496,25 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
         if (transformed != wasrhw && !isStateDirty(context, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)))
                 && !isStateDirty(context, STATE_TRANSFORM(WINED3DTS_VIEW)))
             transform_world(context, state, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)));
-        if (!isStateDirty(context, STATE_RENDER(WINED3DRS_COLORVERTEX)))
-            state_colormat(context, state, STATE_RENDER(WINED3DRS_COLORVERTEX));
-        if (!isStateDirty(context, STATE_RENDER(WINED3DRS_LIGHTING)))
-            state_lighting(context, state, STATE_RENDER(WINED3DRS_LIGHTING));
+        if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_COLORVERTEX)))
+            state_colormat(context, state, STATE_RENDER(WINED3D_RS_COLORVERTEX));
+        if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_LIGHTING)))
+            state_lighting(context, state, STATE_RENDER(WINED3D_RS_LIGHTING));
 
         if (context->last_was_vshader)
         {
             updateFog = TRUE;
 
-            if (!device->vs_clipping && !isStateDirty(context, STATE_RENDER(WINED3DRS_CLIPPLANEENABLE)))
-                state_clipping(context, state, STATE_RENDER(WINED3DRS_CLIPPLANEENABLE));
+            if (!device->vs_clipping && !isStateDirty(context, STATE_RENDER(WINED3D_RS_CLIPPLANEENABLE)))
+                state_clipping(context, state, STATE_RENDER(WINED3D_RS_CLIPPLANEENABLE));
 
             for (i = 0; i < gl_info->limits.clipplanes; ++i)
             {
                 clipplane(context, state, STATE_CLIPPLANE(i));
             }
         }
-        if (!isStateDirty(context, STATE_RENDER(WINED3DRS_NORMALIZENORMALS)))
-            state_normalize(context, state, STATE_RENDER(WINED3DRS_NORMALIZENORMALS));
+        if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_NORMALIZENORMALS)))
+            state_normalize(context, state, STATE_RENDER(WINED3D_RS_NORMALIZENORMALS));
     }
     else
     {
@@ -4530,7 +4530,7 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
                     checkGLcall("glDisable(GL_CLIP_PLANE0 + i)");
                 }
 
-                if (!warned && state->render_states[WINED3DRS_CLIPPLANEENABLE])
+                if (!warned && state->render_states[WINED3D_RS_CLIPPLANEENABLE])
                 {
                     FIXME("Clipping not supported with vertex shaders\n");
                     warned = TRUE;
@@ -4577,7 +4577,7 @@ static void vertexdeclaration(struct wined3d_context *context, const struct wine
     context->last_was_vshader = useVertexShaderFunction;
 
     if (updateFog)
-        context_apply_state(context, state, STATE_RENDER(WINED3DRS_FOGVERTEXMODE));
+        context_apply_state(context, state, STATE_RENDER(WINED3D_RS_FOGVERTEXMODE));
 
     if (!useVertexShaderFunction)
     {
@@ -4625,8 +4625,8 @@ static void viewport_vertexpart(struct wined3d_context *context, const struct wi
 {
     if (!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION)))
         transform_projection(context, state, STATE_TRANSFORM(WINED3DTS_PROJECTION));
-    if (!isStateDirty(context, STATE_RENDER(WINED3DRS_POINTSCALEENABLE)))
-        state_pscale(context, state, STATE_RENDER(WINED3DRS_POINTSCALEENABLE));
+    if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_POINTSCALEENABLE)))
+        state_pscale(context, state, STATE_RENDER(WINED3D_RS_POINTSCALEENABLE));
     /* Update the position fixup. */
     if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT))
         shaderconstant(context, state, STATE_VERTEXSHADERCONSTANT);
@@ -4832,16 +4832,16 @@ static void psorigin(struct wined3d_context *context, const struct wined3d_state
 }
 
 const struct StateEntryTemplate misc_state_template[] = {
-    { STATE_RENDER(WINED3DRS_SRCBLEND),                   { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_DESTBLEND),                  { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_EDGEANTIALIAS),              { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_ANTIALIASEDLINEENABLE),      { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_SEPARATEALPHABLENDENABLE),   { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_SRCBLENDALPHA),              { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_DESTBLENDALPHA),             { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_DESTBLENDALPHA),             { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_BLENDOPALPHA),               { STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_SRCBLEND),                  { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_DESTBLEND),                 { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          state_blend         }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_EDGEANTIALIAS),             { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_ANTIALIASEDLINEENABLE),     { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_SEPARATEALPHABLENDENABLE),  { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_SRCBLENDALPHA),             { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_DESTBLENDALPHA),            { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_DESTBLENDALPHA),            { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_BLENDOPALPHA),              { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_STREAMSRC,                                    { STATE_STREAMSRC,                                    streamsrc           }, WINED3D_GL_EXT_NONE             },
     { STATE_VDECL,                                        { STATE_VDECL,                                        vdecl_miscpart      }, WINED3D_GL_EXT_NONE             },
     { STATE_FRONTFACE,                                    { STATE_FRONTFACE,                                    frontface           }, WINED3D_GL_EXT_NONE             },
@@ -4906,99 +4906,99 @@ const struct StateEntryTemplate misc_state_template[] = {
     { STATE_VIEWPORT,                                     { STATE_VIEWPORT,                                     viewport_miscpart   }, WINED3D_GL_EXT_NONE             },
     { STATE_INDEXBUFFER,                                  { STATE_INDEXBUFFER,                                  indexbuffer         }, ARB_VERTEX_BUFFER_OBJECT        },
     { STATE_INDEXBUFFER,                                  { STATE_INDEXBUFFER,                                  state_nop           }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_ANTIALIAS),                  { STATE_RENDER(WINED3DRS_ANTIALIAS),                  state_antialias     }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_TEXTUREPERSPECTIVE),         { STATE_RENDER(WINED3DRS_TEXTUREPERSPECTIVE),         state_perspective   }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_ZENABLE),                    { STATE_RENDER(WINED3DRS_ZENABLE),                    state_zenable       }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_WRAPU),                      { STATE_RENDER(WINED3DRS_WRAPU),                      state_wrapu         }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_WRAPV),                      { STATE_RENDER(WINED3DRS_WRAPV),                      state_wrapv         }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_FILLMODE),                   { STATE_RENDER(WINED3DRS_FILLMODE),                   state_fillmode      }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_SHADEMODE),                  { STATE_RENDER(WINED3DRS_SHADEMODE),                  state_shademode     }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_LINEPATTERN),                { STATE_RENDER(WINED3DRS_LINEPATTERN),                state_linepattern   }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_MONOENABLE),                 { STATE_RENDER(WINED3DRS_MONOENABLE),                 state_monoenable    }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_ROP2),                       { STATE_RENDER(WINED3DRS_ROP2),                       state_rop2          }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_PLANEMASK),                  { STATE_RENDER(WINED3DRS_PLANEMASK),                  state_planemask     }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_ZWRITEENABLE),               { STATE_RENDER(WINED3DRS_ZWRITEENABLE),               state_zwritenable   }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            { STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_alpha         }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_ALPHAREF),                   { STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_ALPHAFUNC),                  { STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_COLORKEYENABLE),             { STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_LASTPIXEL),                  { STATE_RENDER(WINED3DRS_LASTPIXEL),                  state_lastpixel     }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_CULLMODE),                   { STATE_RENDER(WINED3DRS_CULLMODE),                   state_cullmode      }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_ZFUNC),                      { STATE_RENDER(WINED3DRS_ZFUNC),                      state_zfunc         }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_DITHERENABLE),               { STATE_RENDER(WINED3DRS_DITHERENABLE),               state_ditherenable  }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_SUBPIXEL),                   { STATE_RENDER(WINED3DRS_SUBPIXEL),                   state_subpixel      }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_SUBPIXELX),                  { STATE_RENDER(WINED3DRS_SUBPIXELX),                  state_subpixelx     }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_STIPPLEDALPHA),              { STATE_RENDER(WINED3DRS_STIPPLEDALPHA),              state_stippledalpha }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_STIPPLEENABLE),              { STATE_RENDER(WINED3DRS_STIPPLEENABLE),              state_stippleenable }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_MIPMAPLODBIAS),              { STATE_RENDER(WINED3DRS_MIPMAPLODBIAS),              state_mipmaplodbias }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_ANISOTROPY),                 { STATE_RENDER(WINED3DRS_ANISOTROPY),                 state_anisotropy    }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_FLUSHBATCH),                 { STATE_RENDER(WINED3DRS_FLUSHBATCH),                 state_flushbatch    }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_TRANSLUCENTSORTINDEPENDENT), { STATE_RENDER(WINED3DRS_TRANSLUCENTSORTINDEPENDENT), state_translucentsi }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_STENCILENABLE),              { STATE_RENDER(WINED3DRS_STENCILENABLE),              state_stencil       }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_STENCILFAIL),                { STATE_RENDER(WINED3DRS_STENCILENABLE),              NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_STENCILZFAIL),               { STATE_RENDER(WINED3DRS_STENCILENABLE),              NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_STENCILPASS),                { STATE_RENDER(WINED3DRS_STENCILENABLE),              NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_STENCILFUNC),                { STATE_RENDER(WINED3DRS_STENCILENABLE),              NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_STENCILREF),                 { STATE_RENDER(WINED3DRS_STENCILENABLE),              NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_STENCILMASK),                { STATE_RENDER(WINED3DRS_STENCILENABLE),              NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_STENCILWRITEMASK),           { STATE_RENDER(WINED3DRS_STENCILWRITEMASK),           state_stencilwrite2s}, EXT_STENCIL_TWO_SIDE            },
-    { STATE_RENDER(WINED3DRS_STENCILWRITEMASK),           { STATE_RENDER(WINED3DRS_STENCILWRITEMASK),           state_stencilwrite  }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_TWOSIDEDSTENCILMODE),        { STATE_RENDER(WINED3DRS_STENCILENABLE),              NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_CCW_STENCILFAIL),            { STATE_RENDER(WINED3DRS_STENCILENABLE),              NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_CCW_STENCILZFAIL),           { STATE_RENDER(WINED3DRS_STENCILENABLE),              NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_CCW_STENCILPASS),            { STATE_RENDER(WINED3DRS_STENCILENABLE),              NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_CCW_STENCILFUNC),            { STATE_RENDER(WINED3DRS_STENCILENABLE),              NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_WRAP0),                      { STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_WRAP1),                      { STATE_RENDER(WINED3DRS_WRAP0),                      NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_WRAP2),                      { STATE_RENDER(WINED3DRS_WRAP0),                      NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_WRAP3),                      { STATE_RENDER(WINED3DRS_WRAP0),                      NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_WRAP4),                      { STATE_RENDER(WINED3DRS_WRAP0),                      NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_WRAP5),                      { STATE_RENDER(WINED3DRS_WRAP0),                      NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_WRAP6),                      { STATE_RENDER(WINED3DRS_WRAP0),                      NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_WRAP7),                      { STATE_RENDER(WINED3DRS_WRAP0),                      NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_WRAP8),                      { STATE_RENDER(WINED3DRS_WRAP0),                      NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_WRAP9),                      { STATE_RENDER(WINED3DRS_WRAP0),                      NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_WRAP10),                     { STATE_RENDER(WINED3DRS_WRAP0),                      NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_WRAP11),                     { STATE_RENDER(WINED3DRS_WRAP0),                      NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_WRAP12),                     { STATE_RENDER(WINED3DRS_WRAP0),                      NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_WRAP13),                     { STATE_RENDER(WINED3DRS_WRAP0),                      NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_WRAP14),                     { STATE_RENDER(WINED3DRS_WRAP0),                      NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_WRAP15),                     { STATE_RENDER(WINED3DRS_WRAP0),                      NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_EXTENTS),                    { STATE_RENDER(WINED3DRS_EXTENTS),                    state_extents       }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_COLORKEYBLENDENABLE),        { STATE_RENDER(WINED3DRS_COLORKEYBLENDENABLE),        state_ckeyblend     }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_SOFTWAREVERTEXPROCESSING),   { STATE_RENDER(WINED3DRS_SOFTWAREVERTEXPROCESSING),   state_swvp          }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_PATCHEDGESTYLE),             { STATE_RENDER(WINED3DRS_PATCHEDGESTYLE),             state_patchedgestyle}, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_PATCHSEGMENTS),              { STATE_RENDER(WINED3DRS_PATCHSEGMENTS),              state_patchsegments }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_POSITIONDEGREE),             { STATE_RENDER(WINED3DRS_POSITIONDEGREE),             state_positiondegree}, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_NORMALDEGREE),               { STATE_RENDER(WINED3DRS_NORMALDEGREE),               state_normaldegree  }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_MINTESSELLATIONLEVEL),       { STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_MAXTESSELLATIONLEVEL),       { STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_ADAPTIVETESS_X),             { STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_ADAPTIVETESS_Y),             { STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_ADAPTIVETESS_Z),             { STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_ADAPTIVETESS_W),             { STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), { STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), state_nvdb          }, EXT_DEPTH_BOUNDS_TEST           },
-    { STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), { STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), state_tessellation  }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_MULTISAMPLEANTIALIAS),       { STATE_RENDER(WINED3DRS_MULTISAMPLEANTIALIAS),       state_msaa          }, ARB_MULTISAMPLE                 },
-    { STATE_RENDER(WINED3DRS_MULTISAMPLEANTIALIAS),       { STATE_RENDER(WINED3DRS_MULTISAMPLEANTIALIAS),       state_msaa_w        }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_MULTISAMPLEMASK),            { STATE_RENDER(WINED3DRS_MULTISAMPLEMASK),            state_multisampmask }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_DEBUGMONITORTOKEN),          { STATE_RENDER(WINED3DRS_DEBUGMONITORTOKEN),          state_debug_monitor }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           { STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_colorwrite0   }, EXT_DRAW_BUFFERS2               },
-    { STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           { STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_colorwrite    }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_BLENDOP),                    { STATE_RENDER(WINED3DRS_BLENDOP),                    state_blendop       }, EXT_BLEND_MINMAX                },
-    { STATE_RENDER(WINED3DRS_BLENDOP),                    { STATE_RENDER(WINED3DRS_BLENDOP),                    state_blendop_w     }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_SCISSORTESTENABLE),          { STATE_RENDER(WINED3DRS_SCISSORTESTENABLE),          state_scissor       }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_SLOPESCALEDEPTHBIAS),        { STATE_RENDER(WINED3DRS_DEPTHBIAS),                  NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_COLORWRITEENABLE1),          { STATE_RENDER(WINED3DRS_COLORWRITEENABLE1),          state_colorwrite1   }, EXT_DRAW_BUFFERS2               },
-    { STATE_RENDER(WINED3DRS_COLORWRITEENABLE1),          { STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_COLORWRITEENABLE2),          { STATE_RENDER(WINED3DRS_COLORWRITEENABLE2),          state_colorwrite2   }, EXT_DRAW_BUFFERS2               },
-    { STATE_RENDER(WINED3DRS_COLORWRITEENABLE2),          { STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_COLORWRITEENABLE3),          { STATE_RENDER(WINED3DRS_COLORWRITEENABLE3),          state_colorwrite3   }, EXT_DRAW_BUFFERS2               },
-    { STATE_RENDER(WINED3DRS_COLORWRITEENABLE3),          { STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_BLENDFACTOR),                { STATE_RENDER(WINED3DRS_BLENDFACTOR),                state_blendfactor   }, EXT_BLEND_COLOR                 },
-    { STATE_RENDER(WINED3DRS_BLENDFACTOR),                { STATE_RENDER(WINED3DRS_BLENDFACTOR),                state_blendfactor_w }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_DEPTHBIAS),                  { STATE_RENDER(WINED3DRS_DEPTHBIAS),                  state_depthbias     }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_ZVISIBLE),                   { STATE_RENDER(WINED3DRS_ZVISIBLE),                   state_zvisible      }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_ANTIALIAS),                 { STATE_RENDER(WINED3D_RS_ANTIALIAS),                 state_antialias     }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_TEXTUREPERSPECTIVE),        { STATE_RENDER(WINED3D_RS_TEXTUREPERSPECTIVE),        state_perspective   }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_ZENABLE),                   { STATE_RENDER(WINED3D_RS_ZENABLE),                   state_zenable       }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_WRAPU),                     { STATE_RENDER(WINED3D_RS_WRAPU),                     state_wrapu         }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_WRAPV),                     { STATE_RENDER(WINED3D_RS_WRAPV),                     state_wrapv         }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_FILLMODE),                  { STATE_RENDER(WINED3D_RS_FILLMODE),                  state_fillmode      }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_SHADEMODE),                 { STATE_RENDER(WINED3D_RS_SHADEMODE),                 state_shademode     }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_LINEPATTERN),               { STATE_RENDER(WINED3D_RS_LINEPATTERN),               state_linepattern   }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_MONOENABLE),                { STATE_RENDER(WINED3D_RS_MONOENABLE),                state_monoenable    }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_ROP2),                      { STATE_RENDER(WINED3D_RS_ROP2),                      state_rop2          }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_PLANEMASK),                 { STATE_RENDER(WINED3D_RS_PLANEMASK),                 state_planemask     }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_ZWRITEENABLE),              { STATE_RENDER(WINED3D_RS_ZWRITEENABLE),              state_zwritenable   }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),           { STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),           state_alpha         }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_ALPHAREF),                  { STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_ALPHAFUNC),                 { STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_COLORKEYENABLE),            { STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_LASTPIXEL),                 { STATE_RENDER(WINED3D_RS_LASTPIXEL),                 state_lastpixel     }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_CULLMODE),                  { STATE_RENDER(WINED3D_RS_CULLMODE),                  state_cullmode      }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_ZFUNC),                     { STATE_RENDER(WINED3D_RS_ZFUNC),                     state_zfunc         }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_DITHERENABLE),              { STATE_RENDER(WINED3D_RS_DITHERENABLE),              state_ditherenable  }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_SUBPIXEL),                  { STATE_RENDER(WINED3D_RS_SUBPIXEL),                  state_subpixel      }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_SUBPIXELX),                 { STATE_RENDER(WINED3D_RS_SUBPIXELX),                 state_subpixelx     }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_STIPPLEDALPHA),             { STATE_RENDER(WINED3D_RS_STIPPLEDALPHA),             state_stippledalpha }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_STIPPLEENABLE),             { STATE_RENDER(WINED3D_RS_STIPPLEENABLE),             state_stippleenable }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_MIPMAPLODBIAS),             { STATE_RENDER(WINED3D_RS_MIPMAPLODBIAS),             state_mipmaplodbias }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_ANISOTROPY),                { STATE_RENDER(WINED3D_RS_ANISOTROPY),                state_anisotropy    }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_FLUSHBATCH),                { STATE_RENDER(WINED3D_RS_FLUSHBATCH),                state_flushbatch    }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_TRANSLUCENTSORTINDEPENDENT),{ STATE_RENDER(WINED3D_RS_TRANSLUCENTSORTINDEPENDENT),state_translucentsi }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_STENCILENABLE),             { STATE_RENDER(WINED3D_RS_STENCILENABLE),             state_stencil       }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_STENCILFAIL),               { STATE_RENDER(WINED3D_RS_STENCILENABLE),             NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_STENCILZFAIL),              { STATE_RENDER(WINED3D_RS_STENCILENABLE),             NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_STENCILPASS),               { STATE_RENDER(WINED3D_RS_STENCILENABLE),             NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_STENCILFUNC),               { STATE_RENDER(WINED3D_RS_STENCILENABLE),             NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_STENCILREF),                { STATE_RENDER(WINED3D_RS_STENCILENABLE),             NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_STENCILMASK),               { STATE_RENDER(WINED3D_RS_STENCILENABLE),             NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_STENCILWRITEMASK),          { STATE_RENDER(WINED3D_RS_STENCILWRITEMASK),          state_stencilwrite2s}, EXT_STENCIL_TWO_SIDE            },
+    { STATE_RENDER(WINED3D_RS_STENCILWRITEMASK),          { STATE_RENDER(WINED3D_RS_STENCILWRITEMASK),          state_stencilwrite  }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_TWOSIDEDSTENCILMODE),       { STATE_RENDER(WINED3D_RS_STENCILENABLE),             NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_CCW_STENCILFAIL),           { STATE_RENDER(WINED3D_RS_STENCILENABLE),             NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_CCW_STENCILZFAIL),          { STATE_RENDER(WINED3D_RS_STENCILENABLE),             NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_CCW_STENCILPASS),           { STATE_RENDER(WINED3D_RS_STENCILENABLE),             NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_CCW_STENCILFUNC),           { STATE_RENDER(WINED3D_RS_STENCILENABLE),             NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_WRAP0),                     { STATE_RENDER(WINED3D_RS_WRAP0),                     state_wrap          }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_WRAP1),                     { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_WRAP2),                     { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_WRAP3),                     { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_WRAP4),                     { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_WRAP5),                     { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_WRAP6),                     { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_WRAP7),                     { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_WRAP8),                     { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_WRAP9),                     { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_WRAP10),                    { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_WRAP11),                    { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_WRAP12),                    { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_WRAP13),                    { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_WRAP14),                    { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_WRAP15),                    { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_EXTENTS),                   { STATE_RENDER(WINED3D_RS_EXTENTS),                   state_extents       }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_COLORKEYBLENDENABLE),       { STATE_RENDER(WINED3D_RS_COLORKEYBLENDENABLE),       state_ckeyblend     }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_SOFTWAREVERTEXPROCESSING),  { STATE_RENDER(WINED3D_RS_SOFTWAREVERTEXPROCESSING),  state_swvp          }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_PATCHEDGESTYLE),            { STATE_RENDER(WINED3D_RS_PATCHEDGESTYLE),            state_patchedgestyle}, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_PATCHSEGMENTS),             { STATE_RENDER(WINED3D_RS_PATCHSEGMENTS),             state_patchsegments }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_POSITIONDEGREE),            { STATE_RENDER(WINED3D_RS_POSITIONDEGREE),            state_positiondegree}, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_NORMALDEGREE),              { STATE_RENDER(WINED3D_RS_NORMALDEGREE),              state_normaldegree  }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_MINTESSELLATIONLEVEL),      { STATE_RENDER(WINED3D_RS_ENABLEADAPTIVETESSELLATION),NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_MAXTESSELLATIONLEVEL),      { STATE_RENDER(WINED3D_RS_ENABLEADAPTIVETESSELLATION),NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_ADAPTIVETESS_X),            { STATE_RENDER(WINED3D_RS_ENABLEADAPTIVETESSELLATION),NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_ADAPTIVETESS_Y),            { STATE_RENDER(WINED3D_RS_ENABLEADAPTIVETESSELLATION),NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_ADAPTIVETESS_Z),            { STATE_RENDER(WINED3D_RS_ENABLEADAPTIVETESSELLATION),NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_ADAPTIVETESS_W),            { STATE_RENDER(WINED3D_RS_ENABLEADAPTIVETESSELLATION),NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_ENABLEADAPTIVETESSELLATION),{ STATE_RENDER(WINED3D_RS_ENABLEADAPTIVETESSELLATION),state_nvdb          }, EXT_DEPTH_BOUNDS_TEST           },
+    { STATE_RENDER(WINED3D_RS_ENABLEADAPTIVETESSELLATION),{ STATE_RENDER(WINED3D_RS_ENABLEADAPTIVETESSELLATION),state_tessellation  }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_MULTISAMPLEANTIALIAS),      { STATE_RENDER(WINED3D_RS_MULTISAMPLEANTIALIAS),      state_msaa          }, ARB_MULTISAMPLE                 },
+    { STATE_RENDER(WINED3D_RS_MULTISAMPLEANTIALIAS),      { STATE_RENDER(WINED3D_RS_MULTISAMPLEANTIALIAS),      state_msaa_w        }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_MULTISAMPLEMASK),           { STATE_RENDER(WINED3D_RS_MULTISAMPLEMASK),           state_multisampmask }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_DEBUGMONITORTOKEN),         { STATE_RENDER(WINED3D_RS_DEBUGMONITORTOKEN),         state_debug_monitor }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          state_colorwrite0   }, EXT_DRAW_BUFFERS2               },
+    { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          state_colorwrite    }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_BLENDOP),                   { STATE_RENDER(WINED3D_RS_BLENDOP),                   state_blendop       }, EXT_BLEND_MINMAX                },
+    { STATE_RENDER(WINED3D_RS_BLENDOP),                   { STATE_RENDER(WINED3D_RS_BLENDOP),                   state_blendop_w     }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_SCISSORTESTENABLE),         { STATE_RENDER(WINED3D_RS_SCISSORTESTENABLE),         state_scissor       }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_SLOPESCALEDEPTHBIAS),       { STATE_RENDER(WINED3D_RS_DEPTHBIAS),                 NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE1),         { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE1),         state_colorwrite1   }, EXT_DRAW_BUFFERS2               },
+    { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE1),         { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE2),         { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE2),         state_colorwrite2   }, EXT_DRAW_BUFFERS2               },
+    { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE2),         { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE3),         { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE3),         state_colorwrite3   }, EXT_DRAW_BUFFERS2               },
+    { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE3),         { STATE_RENDER(WINED3D_RS_COLORWRITEENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_BLENDFACTOR),               { STATE_RENDER(WINED3D_RS_BLENDFACTOR),               state_blendfactor   }, EXT_BLEND_COLOR                 },
+    { STATE_RENDER(WINED3D_RS_BLENDFACTOR),               { STATE_RENDER(WINED3D_RS_BLENDFACTOR),               state_blendfactor_w }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_DEPTHBIAS),                 { STATE_RENDER(WINED3D_RS_DEPTHBIAS),                 state_depthbias     }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_ZVISIBLE),                  { STATE_RENDER(WINED3D_RS_ZVISIBLE),                  state_zvisible      }, WINED3D_GL_EXT_NONE             },
     /* Samplers */
     { STATE_SAMPLER(0),                                   { STATE_SAMPLER(0),                                   sampler             }, WINED3D_GL_EXT_NONE             },
     { STATE_SAMPLER(1),                                   { STATE_SAMPLER(1),                                   sampler             }, WINED3D_GL_EXT_NONE             },
@@ -5030,8 +5030,8 @@ const struct StateEntryTemplate misc_state_template[] = {
 const struct StateEntryTemplate ffp_vertexstate_template[] = {
     { STATE_VDECL,                                        { STATE_VDECL,                                        vertexdeclaration   }, WINED3D_GL_EXT_NONE             },
     { STATE_VSHADER,                                      { STATE_VDECL,                                        NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_MATERIAL,                                     { STATE_RENDER(WINED3DRS_SPECULARENABLE),             NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_SPECULARENABLE),             { STATE_RENDER(WINED3DRS_SPECULARENABLE),             state_specularenable}, WINED3D_GL_EXT_NONE             },
+    { STATE_MATERIAL,                                     { STATE_RENDER(WINED3D_RS_SPECULARENABLE),            NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_SPECULARENABLE),            { STATE_RENDER(WINED3D_RS_SPECULARENABLE),            state_specularenable}, WINED3D_GL_EXT_NONE             },
       /* Clip planes */
     { STATE_CLIPPLANE(0),                                 { STATE_CLIPPLANE(0),                                 clipplane           }, WINED3D_GL_EXT_NONE             },
     { STATE_CLIPPLANE(1),                                 { STATE_CLIPPLANE(1),                                 clipplane           }, WINED3D_GL_EXT_NONE             },
@@ -5360,38 +5360,38 @@ const struct StateEntryTemplate ffp_vertexstate_template[] = {
     { STATE_TEXTURESTAGE(6, WINED3DTSS_TEXCOORDINDEX),    { STATE_TEXTURESTAGE(6, WINED3DTSS_TEXCOORDINDEX),    tex_coordindex      }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(7, WINED3DTSS_TEXCOORDINDEX),    { STATE_TEXTURESTAGE(7, WINED3DTSS_TEXCOORDINDEX),    tex_coordindex      }, WINED3D_GL_EXT_NONE             },
       /* Fog */
-    { STATE_RENDER(WINED3DRS_FOGENABLE),                  { STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog_vertexpart}, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_FOGTABLEMODE),               { STATE_RENDER(WINED3DRS_FOGENABLE),                  NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_FOGVERTEXMODE),              { STATE_RENDER(WINED3DRS_FOGENABLE),                  NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_RANGEFOGENABLE),             { STATE_RENDER(WINED3DRS_FOGENABLE),                  NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_CLIPPING),                   { STATE_RENDER(WINED3DRS_CLIPPING),                   state_clipping      }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_CLIPPLANEENABLE),            { STATE_RENDER(WINED3DRS_CLIPPING),                   NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_LIGHTING),                   { STATE_RENDER(WINED3DRS_LIGHTING),                   state_lighting      }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_AMBIENT),                    { STATE_RENDER(WINED3DRS_AMBIENT),                    state_ambient       }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_COLORVERTEX),                { STATE_RENDER(WINED3DRS_COLORVERTEX),                state_colormat      }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_LOCALVIEWER),                { STATE_RENDER(WINED3DRS_LOCALVIEWER),                state_localviewer   }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_NORMALIZENORMALS),           { STATE_RENDER(WINED3DRS_NORMALIZENORMALS),           state_normalize     }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_DIFFUSEMATERIALSOURCE),      { STATE_RENDER(WINED3DRS_COLORVERTEX),                NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_SPECULARMATERIALSOURCE),     { STATE_RENDER(WINED3DRS_COLORVERTEX),                NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_AMBIENTMATERIALSOURCE),      { STATE_RENDER(WINED3DRS_COLORVERTEX),                NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_EMISSIVEMATERIALSOURCE),     { STATE_RENDER(WINED3DRS_COLORVERTEX),                NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_VERTEXBLEND),                { STATE_RENDER(WINED3DRS_VERTEXBLEND),                state_vertexblend   }, ARB_VERTEX_BLEND                },
-    { STATE_RENDER(WINED3DRS_VERTEXBLEND),                { STATE_RENDER(WINED3DRS_VERTEXBLEND),                state_vertexblend_w }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_POINTSIZE),                  { STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              state_psizemin_arb  }, ARB_POINT_PARAMETERS            },
-    { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              state_psizemin_ext  }, EXT_POINT_PARAMETERS            },
-    { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              state_psizemin_w    }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_POINTSPRITEENABLE),          { STATE_RENDER(WINED3DRS_POINTSPRITEENABLE),          state_pointsprite   }, ARB_POINT_SPRITE                },
-    { STATE_RENDER(WINED3DRS_POINTSPRITEENABLE),          { STATE_RENDER(WINED3DRS_POINTSPRITEENABLE),          state_pointsprite_w }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           { STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_POINTSCALE_A),               { STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_POINTSCALE_B),               { STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_POINTSCALE_C),               { STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              NULL                }, ARB_POINT_PARAMETERS            },
-    { STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              NULL                }, EXT_POINT_PARAMETERS            },
-    { STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              { STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_TWEENFACTOR),                { STATE_RENDER(WINED3DRS_VERTEXBLEND),                NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_INDEXEDVERTEXBLENDENABLE),   { STATE_RENDER(WINED3DRS_VERTEXBLEND),                NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_FOGENABLE),                 { STATE_RENDER(WINED3D_RS_FOGENABLE),                 state_fog_vertexpart}, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_FOGTABLEMODE),              { STATE_RENDER(WINED3D_RS_FOGENABLE),                 NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_FOGVERTEXMODE),             { STATE_RENDER(WINED3D_RS_FOGENABLE),                 NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_RANGEFOGENABLE),            { STATE_RENDER(WINED3D_RS_FOGENABLE),                 NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_CLIPPING),                  { STATE_RENDER(WINED3D_RS_CLIPPING),                  state_clipping      }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_CLIPPLANEENABLE),           { STATE_RENDER(WINED3D_RS_CLIPPING),                  NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_LIGHTING),                  { STATE_RENDER(WINED3D_RS_LIGHTING),                  state_lighting      }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_AMBIENT),                   { STATE_RENDER(WINED3D_RS_AMBIENT),                   state_ambient       }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_COLORVERTEX),               { STATE_RENDER(WINED3D_RS_COLORVERTEX),               state_colormat      }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_LOCALVIEWER),               { STATE_RENDER(WINED3D_RS_LOCALVIEWER),               state_localviewer   }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_NORMALIZENORMALS),          { STATE_RENDER(WINED3D_RS_NORMALIZENORMALS),          state_normalize     }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_DIFFUSEMATERIALSOURCE),     { STATE_RENDER(WINED3D_RS_COLORVERTEX),               NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_SPECULARMATERIALSOURCE),    { STATE_RENDER(WINED3D_RS_COLORVERTEX),               NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_AMBIENTMATERIALSOURCE),     { STATE_RENDER(WINED3D_RS_COLORVERTEX),               NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_EMISSIVEMATERIALSOURCE),    { STATE_RENDER(WINED3D_RS_COLORVERTEX),               NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_VERTEXBLEND),               { STATE_RENDER(WINED3D_RS_VERTEXBLEND),               state_vertexblend   }, ARB_VERTEX_BLEND                },
+    { STATE_RENDER(WINED3D_RS_VERTEXBLEND),               { STATE_RENDER(WINED3D_RS_VERTEXBLEND),               state_vertexblend_w }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_POINTSIZE),                 { STATE_RENDER(WINED3D_RS_POINTSCALEENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),             { STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),             state_psizemin_arb  }, ARB_POINT_PARAMETERS            },
+    { STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),             { STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),             state_psizemin_ext  }, EXT_POINT_PARAMETERS            },
+    { STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),             { STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),             state_psizemin_w    }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE),         { STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE),         state_pointsprite   }, ARB_POINT_SPRITE                },
+    { STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE),         { STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE),         state_pointsprite_w }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_POINTSCALEENABLE),          { STATE_RENDER(WINED3D_RS_POINTSCALEENABLE),          state_pscale        }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_POINTSCALE_A),              { STATE_RENDER(WINED3D_RS_POINTSCALEENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_POINTSCALE_B),              { STATE_RENDER(WINED3D_RS_POINTSCALEENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_POINTSCALE_C),              { STATE_RENDER(WINED3D_RS_POINTSCALEENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_POINTSIZE_MAX),             { STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),             NULL                }, ARB_POINT_PARAMETERS            },
+    { STATE_RENDER(WINED3D_RS_POINTSIZE_MAX),             { STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),             NULL                }, EXT_POINT_PARAMETERS            },
+    { STATE_RENDER(WINED3D_RS_POINTSIZE_MAX),             { STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),             NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_TWEENFACTOR),               { STATE_RENDER(WINED3D_RS_VERTEXBLEND),               NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_INDEXEDVERTEXBLENDENABLE),  { STATE_RENDER(WINED3D_RS_VERTEXBLEND),               NULL                }, WINED3D_GL_EXT_NONE             },
 
     /* Samplers for NP2 texture matrix adjustions. They are not needed if GL_ARB_texture_non_power_of_two is supported,
      * so register a NULL state handler in that case to get the vertex part of sampler() skipped(VTF is handled in the misc states.
@@ -5506,15 +5506,15 @@ static const struct StateEntryTemplate ffp_fragmentstate_template[] = {
     { STATE_TEXTURESTAGE(7, WINED3DTSS_RESULTARG),        { STATE_TEXTURESTAGE(7, WINED3DTSS_COLOROP),          NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_TEXTURESTAGE(7, WINED3DTSS_CONSTANT),         { 0 /* As long as we don't support D3DTA_CONSTANT */, NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_PIXELSHADER,                                  { STATE_PIXELSHADER,                                  apply_pixelshader   }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_SRGBWRITEENABLE),            { STATE_PIXELSHADER,                                  NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              { STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              state_texfactor     }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_FOGCOLOR),                   { STATE_RENDER(WINED3DRS_FOGCOLOR),                   state_fogcolor      }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_FOGDENSITY),                 { STATE_RENDER(WINED3DRS_FOGDENSITY),                 state_fogdensity    }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_FOGENABLE),                  { STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog_fragpart  }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_FOGTABLEMODE),               { STATE_RENDER(WINED3DRS_FOGENABLE),                  NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_FOGVERTEXMODE),              { STATE_RENDER(WINED3DRS_FOGENABLE),                  NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_FOGSTART),                   { STATE_RENDER(WINED3DRS_FOGSTART),                   state_fogstartend   }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3DRS_FOGEND),                     { STATE_RENDER(WINED3DRS_FOGSTART),                   NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),           { STATE_PIXELSHADER,                                  NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),             { STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),             state_texfactor     }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_FOGCOLOR),                  { STATE_RENDER(WINED3D_RS_FOGCOLOR),                  state_fogcolor      }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_FOGDENSITY),                { STATE_RENDER(WINED3D_RS_FOGDENSITY),                state_fogdensity    }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_FOGENABLE),                 { STATE_RENDER(WINED3D_RS_FOGENABLE),                 state_fog_fragpart  }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_FOGTABLEMODE),              { STATE_RENDER(WINED3D_RS_FOGENABLE),                 NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_FOGVERTEXMODE),             { STATE_RENDER(WINED3D_RS_FOGENABLE),                 NULL                }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_FOGSTART),                  { STATE_RENDER(WINED3D_RS_FOGSTART),                  state_fogstartend   }, WINED3D_GL_EXT_NONE             },
+    { STATE_RENDER(WINED3D_RS_FOGEND),                    { STATE_RENDER(WINED3D_RS_FOGSTART),                  NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_SAMPLER(0),                                   { STATE_SAMPLER(0),                                   sampler_texdim      }, WINED3D_GL_EXT_NONE             },
     { STATE_SAMPLER(1),                                   { STATE_SAMPLER(1),                                   sampler_texdim      }, WINED3D_GL_EXT_NONE             },
     { STATE_SAMPLER(2),                                   { STATE_SAMPLER(2),                                   sampler_texdim      }, WINED3D_GL_EXT_NONE             },

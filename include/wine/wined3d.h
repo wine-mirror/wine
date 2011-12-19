@@ -252,137 +252,136 @@ enum wined3d_format_id
     WINED3DFMT_FORCE_DWORD = 0xffffffff
 };
 
-typedef enum _WINED3DRENDERSTATETYPE
+enum wined3d_render_state
 {
-    WINED3DRS_ANTIALIAS                     = 2, /* d3d7 */
-    WINED3DRS_TEXTUREPERSPECTIVE            = 4, /* d3d7 */
-    WINED3DRS_WRAPU                         = 5, /* d3d7 */
-    WINED3DRS_WRAPV                         = 6, /* d3d7 */
-    WINED3DRS_ZENABLE                       = 7,
-    WINED3DRS_FILLMODE                      = 8,
-    WINED3DRS_SHADEMODE                     = 9,
-    WINED3DRS_LINEPATTERN                   = 10, /* d3d7, d3d8 */
-    WINED3DRS_MONOENABLE                    = 11, /* d3d7 */
-    WINED3DRS_ROP2                          = 12, /* d3d7 */
-    WINED3DRS_PLANEMASK                     = 13, /* d3d7 */
-    WINED3DRS_ZWRITEENABLE                  = 14,
-    WINED3DRS_ALPHATESTENABLE               = 15,
-    WINED3DRS_LASTPIXEL                     = 16,
-    WINED3DRS_SRCBLEND                      = 19,
-    WINED3DRS_DESTBLEND                     = 20,
-    WINED3DRS_CULLMODE                      = 22,
-    WINED3DRS_ZFUNC                         = 23,
-    WINED3DRS_ALPHAREF                      = 24,
-    WINED3DRS_ALPHAFUNC                     = 25,
-    WINED3DRS_DITHERENABLE                  = 26,
-    WINED3DRS_ALPHABLENDENABLE              = 27,
-    WINED3DRS_FOGENABLE                     = 28,
-    WINED3DRS_SPECULARENABLE                = 29,
-    WINED3DRS_ZVISIBLE                      = 30, /* d3d7, d3d8 */
-    WINED3DRS_SUBPIXEL                      = 31, /* d3d7 */
-    WINED3DRS_SUBPIXELX                     = 32, /* d3d7 */
-    WINED3DRS_STIPPLEDALPHA                 = 33, /* d3d7 */
-    WINED3DRS_FOGCOLOR                      = 34,
-    WINED3DRS_FOGTABLEMODE                  = 35,
-    WINED3DRS_FOGSTART                      = 36,
-    WINED3DRS_FOGEND                        = 37,
-    WINED3DRS_FOGDENSITY                    = 38,
-    WINED3DRS_STIPPLEENABLE                 = 39, /* d3d7 */
-    WINED3DRS_EDGEANTIALIAS                 = 40, /* d3d7, d3d8 */
-    WINED3DRS_COLORKEYENABLE                = 41, /* d3d7 */
-    WINED3DRS_MIPMAPLODBIAS                 = 46, /* d3d7 */
-    WINED3DRS_RANGEFOGENABLE                = 48,
-    WINED3DRS_ANISOTROPY                    = 49, /* d3d7 */
-    WINED3DRS_FLUSHBATCH                    = 50, /* d3d7 */
-    WINED3DRS_TRANSLUCENTSORTINDEPENDENT    = 51, /* d3d7 */
-    WINED3DRS_STENCILENABLE                 = 52,
-    WINED3DRS_STENCILFAIL                   = 53,
-    WINED3DRS_STENCILZFAIL                  = 54,
-    WINED3DRS_STENCILPASS                   = 55,
-    WINED3DRS_STENCILFUNC                   = 56,
-    WINED3DRS_STENCILREF                    = 57,
-    WINED3DRS_STENCILMASK                   = 58,
-    WINED3DRS_STENCILWRITEMASK              = 59,
-    WINED3DRS_TEXTUREFACTOR                 = 60,
-    WINED3DRS_WRAP0                         = 128,
-    WINED3DRS_WRAP1                         = 129,
-    WINED3DRS_WRAP2                         = 130,
-    WINED3DRS_WRAP3                         = 131,
-    WINED3DRS_WRAP4                         = 132,
-    WINED3DRS_WRAP5                         = 133,
-    WINED3DRS_WRAP6                         = 134,
-    WINED3DRS_WRAP7                         = 135,
-    WINED3DRS_CLIPPING                      = 136,
-    WINED3DRS_LIGHTING                      = 137,
-    WINED3DRS_EXTENTS                       = 138, /* d3d7 */
-    WINED3DRS_AMBIENT                       = 139,
-    WINED3DRS_FOGVERTEXMODE                 = 140,
-    WINED3DRS_COLORVERTEX                   = 141,
-    WINED3DRS_LOCALVIEWER                   = 142,
-    WINED3DRS_NORMALIZENORMALS              = 143,
-    WINED3DRS_COLORKEYBLENDENABLE           = 144, /* d3d7 */
-    WINED3DRS_DIFFUSEMATERIALSOURCE         = 145,
-    WINED3DRS_SPECULARMATERIALSOURCE        = 146,
-    WINED3DRS_AMBIENTMATERIALSOURCE         = 147,
-    WINED3DRS_EMISSIVEMATERIALSOURCE        = 148,
-    WINED3DRS_VERTEXBLEND                   = 151,
-    WINED3DRS_CLIPPLANEENABLE               = 152,
-    WINED3DRS_SOFTWAREVERTEXPROCESSING      = 153, /* d3d8 */
-    WINED3DRS_POINTSIZE                     = 154,
-    WINED3DRS_POINTSIZE_MIN                 = 155,
-    WINED3DRS_POINTSPRITEENABLE             = 156,
-    WINED3DRS_POINTSCALEENABLE              = 157,
-    WINED3DRS_POINTSCALE_A                  = 158,
-    WINED3DRS_POINTSCALE_B                  = 159,
-    WINED3DRS_POINTSCALE_C                  = 160,
-    WINED3DRS_MULTISAMPLEANTIALIAS          = 161,
-    WINED3DRS_MULTISAMPLEMASK               = 162,
-    WINED3DRS_PATCHEDGESTYLE                = 163,
-    WINED3DRS_PATCHSEGMENTS                 = 164, /* d3d8 */
-    WINED3DRS_DEBUGMONITORTOKEN             = 165,
-    WINED3DRS_POINTSIZE_MAX                 = 166,
-    WINED3DRS_INDEXEDVERTEXBLENDENABLE      = 167,
-    WINED3DRS_COLORWRITEENABLE              = 168,
-    WINED3DRS_TWEENFACTOR                   = 170,
-    WINED3DRS_BLENDOP                       = 171,
-    WINED3DRS_POSITIONDEGREE                = 172,
-    WINED3DRS_NORMALDEGREE                  = 173,
-    WINED3DRS_SCISSORTESTENABLE             = 174,
-    WINED3DRS_SLOPESCALEDEPTHBIAS           = 175,
-    WINED3DRS_ANTIALIASEDLINEENABLE         = 176,
-    WINED3DRS_MINTESSELLATIONLEVEL          = 178,
-    WINED3DRS_MAXTESSELLATIONLEVEL          = 179,
-    WINED3DRS_ADAPTIVETESS_X                = 180,
-    WINED3DRS_ADAPTIVETESS_Y                = 181,
-    WINED3DRS_ADAPTIVETESS_Z                = 182,
-    WINED3DRS_ADAPTIVETESS_W                = 183,
-    WINED3DRS_ENABLEADAPTIVETESSELLATION    = 184,
-    WINED3DRS_TWOSIDEDSTENCILMODE           = 185,
-    WINED3DRS_CCW_STENCILFAIL               = 186,
-    WINED3DRS_CCW_STENCILZFAIL              = 187,
-    WINED3DRS_CCW_STENCILPASS               = 188,
-    WINED3DRS_CCW_STENCILFUNC               = 189,
-    WINED3DRS_COLORWRITEENABLE1             = 190,
-    WINED3DRS_COLORWRITEENABLE2             = 191,
-    WINED3DRS_COLORWRITEENABLE3             = 192,
-    WINED3DRS_BLENDFACTOR                   = 193,
-    WINED3DRS_SRGBWRITEENABLE               = 194,
-    WINED3DRS_DEPTHBIAS                     = 195,
-    WINED3DRS_WRAP8                         = 198,
-    WINED3DRS_WRAP9                         = 199,
-    WINED3DRS_WRAP10                        = 200,
-    WINED3DRS_WRAP11                        = 201,
-    WINED3DRS_WRAP12                        = 202,
-    WINED3DRS_WRAP13                        = 203,
-    WINED3DRS_WRAP14                        = 204,
-    WINED3DRS_WRAP15                        = 205,
-    WINED3DRS_SEPARATEALPHABLENDENABLE      = 206,
-    WINED3DRS_SRCBLENDALPHA                 = 207,
-    WINED3DRS_DESTBLENDALPHA                = 208,
-    WINED3DRS_BLENDOPALPHA                  = 209,
-    WINED3DRS_FORCE_DWORD                   = 0x7fffffff
-} WINED3DRENDERSTATETYPE;
-#define WINEHIGHEST_RENDER_STATE                                WINED3DRS_BLENDOPALPHA
+    WINED3D_RS_ANTIALIAS                    = 2, /* d3d7 */
+    WINED3D_RS_TEXTUREPERSPECTIVE           = 4, /* d3d7 */
+    WINED3D_RS_WRAPU                        = 5, /* d3d7 */
+    WINED3D_RS_WRAPV                        = 6, /* d3d7 */
+    WINED3D_RS_ZENABLE                      = 7,
+    WINED3D_RS_FILLMODE                     = 8,
+    WINED3D_RS_SHADEMODE                    = 9,
+    WINED3D_RS_LINEPATTERN                  = 10, /* d3d7, d3d8 */
+    WINED3D_RS_MONOENABLE                   = 11, /* d3d7 */
+    WINED3D_RS_ROP2                         = 12, /* d3d7 */
+    WINED3D_RS_PLANEMASK                    = 13, /* d3d7 */
+    WINED3D_RS_ZWRITEENABLE                 = 14,
+    WINED3D_RS_ALPHATESTENABLE              = 15,
+    WINED3D_RS_LASTPIXEL                    = 16,
+    WINED3D_RS_SRCBLEND                     = 19,
+    WINED3D_RS_DESTBLEND                    = 20,
+    WINED3D_RS_CULLMODE                     = 22,
+    WINED3D_RS_ZFUNC                        = 23,
+    WINED3D_RS_ALPHAREF                     = 24,
+    WINED3D_RS_ALPHAFUNC                    = 25,
+    WINED3D_RS_DITHERENABLE                 = 26,
+    WINED3D_RS_ALPHABLENDENABLE             = 27,
+    WINED3D_RS_FOGENABLE                    = 28,
+    WINED3D_RS_SPECULARENABLE               = 29,
+    WINED3D_RS_ZVISIBLE                     = 30, /* d3d7, d3d8 */
+    WINED3D_RS_SUBPIXEL                     = 31, /* d3d7 */
+    WINED3D_RS_SUBPIXELX                    = 32, /* d3d7 */
+    WINED3D_RS_STIPPLEDALPHA                = 33, /* d3d7 */
+    WINED3D_RS_FOGCOLOR                     = 34,
+    WINED3D_RS_FOGTABLEMODE                 = 35,
+    WINED3D_RS_FOGSTART                     = 36,
+    WINED3D_RS_FOGEND                       = 37,
+    WINED3D_RS_FOGDENSITY                   = 38,
+    WINED3D_RS_STIPPLEENABLE                = 39, /* d3d7 */
+    WINED3D_RS_EDGEANTIALIAS                = 40, /* d3d7, d3d8 */
+    WINED3D_RS_COLORKEYENABLE               = 41, /* d3d7 */
+    WINED3D_RS_MIPMAPLODBIAS                = 46, /* d3d7 */
+    WINED3D_RS_RANGEFOGENABLE               = 48,
+    WINED3D_RS_ANISOTROPY                   = 49, /* d3d7 */
+    WINED3D_RS_FLUSHBATCH                   = 50, /* d3d7 */
+    WINED3D_RS_TRANSLUCENTSORTINDEPENDENT   = 51, /* d3d7 */
+    WINED3D_RS_STENCILENABLE                = 52,
+    WINED3D_RS_STENCILFAIL                  = 53,
+    WINED3D_RS_STENCILZFAIL                 = 54,
+    WINED3D_RS_STENCILPASS                  = 55,
+    WINED3D_RS_STENCILFUNC                  = 56,
+    WINED3D_RS_STENCILREF                   = 57,
+    WINED3D_RS_STENCILMASK                  = 58,
+    WINED3D_RS_STENCILWRITEMASK             = 59,
+    WINED3D_RS_TEXTUREFACTOR                = 60,
+    WINED3D_RS_WRAP0                        = 128,
+    WINED3D_RS_WRAP1                        = 129,
+    WINED3D_RS_WRAP2                        = 130,
+    WINED3D_RS_WRAP3                        = 131,
+    WINED3D_RS_WRAP4                        = 132,
+    WINED3D_RS_WRAP5                        = 133,
+    WINED3D_RS_WRAP6                        = 134,
+    WINED3D_RS_WRAP7                        = 135,
+    WINED3D_RS_CLIPPING                     = 136,
+    WINED3D_RS_LIGHTING                     = 137,
+    WINED3D_RS_EXTENTS                      = 138, /* d3d7 */
+    WINED3D_RS_AMBIENT                      = 139,
+    WINED3D_RS_FOGVERTEXMODE                = 140,
+    WINED3D_RS_COLORVERTEX                  = 141,
+    WINED3D_RS_LOCALVIEWER                  = 142,
+    WINED3D_RS_NORMALIZENORMALS             = 143,
+    WINED3D_RS_COLORKEYBLENDENABLE          = 144, /* d3d7 */
+    WINED3D_RS_DIFFUSEMATERIALSOURCE        = 145,
+    WINED3D_RS_SPECULARMATERIALSOURCE       = 146,
+    WINED3D_RS_AMBIENTMATERIALSOURCE        = 147,
+    WINED3D_RS_EMISSIVEMATERIALSOURCE       = 148,
+    WINED3D_RS_VERTEXBLEND                  = 151,
+    WINED3D_RS_CLIPPLANEENABLE              = 152,
+    WINED3D_RS_SOFTWAREVERTEXPROCESSING     = 153, /* d3d8 */
+    WINED3D_RS_POINTSIZE                    = 154,
+    WINED3D_RS_POINTSIZE_MIN                = 155,
+    WINED3D_RS_POINTSPRITEENABLE            = 156,
+    WINED3D_RS_POINTSCALEENABLE             = 157,
+    WINED3D_RS_POINTSCALE_A                 = 158,
+    WINED3D_RS_POINTSCALE_B                 = 159,
+    WINED3D_RS_POINTSCALE_C                 = 160,
+    WINED3D_RS_MULTISAMPLEANTIALIAS         = 161,
+    WINED3D_RS_MULTISAMPLEMASK              = 162,
+    WINED3D_RS_PATCHEDGESTYLE               = 163,
+    WINED3D_RS_PATCHSEGMENTS                = 164, /* d3d8 */
+    WINED3D_RS_DEBUGMONITORTOKEN            = 165,
+    WINED3D_RS_POINTSIZE_MAX                = 166,
+    WINED3D_RS_INDEXEDVERTEXBLENDENABLE     = 167,
+    WINED3D_RS_COLORWRITEENABLE             = 168,
+    WINED3D_RS_TWEENFACTOR                  = 170,
+    WINED3D_RS_BLENDOP                      = 171,
+    WINED3D_RS_POSITIONDEGREE               = 172,
+    WINED3D_RS_NORMALDEGREE                 = 173,
+    WINED3D_RS_SCISSORTESTENABLE            = 174,
+    WINED3D_RS_SLOPESCALEDEPTHBIAS          = 175,
+    WINED3D_RS_ANTIALIASEDLINEENABLE        = 176,
+    WINED3D_RS_MINTESSELLATIONLEVEL         = 178,
+    WINED3D_RS_MAXTESSELLATIONLEVEL         = 179,
+    WINED3D_RS_ADAPTIVETESS_X               = 180,
+    WINED3D_RS_ADAPTIVETESS_Y               = 181,
+    WINED3D_RS_ADAPTIVETESS_Z               = 182,
+    WINED3D_RS_ADAPTIVETESS_W               = 183,
+    WINED3D_RS_ENABLEADAPTIVETESSELLATION   = 184,
+    WINED3D_RS_TWOSIDEDSTENCILMODE          = 185,
+    WINED3D_RS_CCW_STENCILFAIL              = 186,
+    WINED3D_RS_CCW_STENCILZFAIL             = 187,
+    WINED3D_RS_CCW_STENCILPASS              = 188,
+    WINED3D_RS_CCW_STENCILFUNC              = 189,
+    WINED3D_RS_COLORWRITEENABLE1            = 190,
+    WINED3D_RS_COLORWRITEENABLE2            = 191,
+    WINED3D_RS_COLORWRITEENABLE3            = 192,
+    WINED3D_RS_BLENDFACTOR                  = 193,
+    WINED3D_RS_SRGBWRITEENABLE              = 194,
+    WINED3D_RS_DEPTHBIAS                    = 195,
+    WINED3D_RS_WRAP8                        = 198,
+    WINED3D_RS_WRAP9                        = 199,
+    WINED3D_RS_WRAP10                       = 200,
+    WINED3D_RS_WRAP11                       = 201,
+    WINED3D_RS_WRAP12                       = 202,
+    WINED3D_RS_WRAP13                       = 203,
+    WINED3D_RS_WRAP14                       = 204,
+    WINED3D_RS_WRAP15                       = 205,
+    WINED3D_RS_SEPARATEALPHABLENDENABLE     = 206,
+    WINED3D_RS_SRCBLENDALPHA                = 207,
+    WINED3D_RS_DESTBLENDALPHA               = 208,
+    WINED3D_RS_BLENDOPALPHA                 = 209,
+};
+#define WINEHIGHEST_RENDER_STATE                                WINED3D_RS_BLENDOPALPHA
 
 enum wined3d_blend
 {
@@ -2144,7 +2143,7 @@ HRESULT __cdecl wined3d_device_get_ps_consts_i(const struct wined3d_device *devi
 HRESULT __cdecl wined3d_device_get_raster_status(const struct wined3d_device *device,
         UINT swapchain_idx, struct wined3d_raster_status *raster_status);
 HRESULT __cdecl wined3d_device_get_render_state(const struct wined3d_device *device,
-        WINED3DRENDERSTATETYPE state, DWORD *value);
+        enum wined3d_render_state state, DWORD *value);
 HRESULT __cdecl wined3d_device_get_render_target(const struct wined3d_device *device,
         UINT render_target_idx, struct wined3d_surface **render_target);
 HRESULT __cdecl wined3d_device_get_sampler_state(const struct wined3d_device *device,
@@ -2223,7 +2222,7 @@ HRESULT __cdecl wined3d_device_set_ps_consts_f(struct wined3d_device *device,
 HRESULT __cdecl wined3d_device_set_ps_consts_i(struct wined3d_device *device,
         UINT start_register, const int *constants, UINT vector4i_count);
 HRESULT __cdecl wined3d_device_set_render_state(struct wined3d_device *device,
-        WINED3DRENDERSTATETYPE state, DWORD value);
+        enum wined3d_render_state state, DWORD value);
 HRESULT __cdecl wined3d_device_set_render_target(struct wined3d_device *device,
         UINT render_target_idx, struct wined3d_surface *render_target, BOOL set_viewport);
 HRESULT __cdecl wined3d_device_set_sampler_state(struct wined3d_device *device,

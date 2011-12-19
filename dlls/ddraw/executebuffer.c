@@ -156,7 +156,7 @@ HRESULT d3d_execute_buffer_execute(IDirect3DExecuteBufferImpl *This,
                 /* IDirect3DDevices have color keying always enabled -
                  * enable it before drawing. This overwrites any ALPHA*
                  * render state. */
-                wined3d_device_set_render_state(lpDevice->wined3d_device, WINED3DRS_COLORKEYENABLE, 1);
+                wined3d_device_set_render_state(lpDevice->wined3d_device, WINED3D_RS_COLORKEYENABLE, 1);
                 IDirect3DDevice7_DrawIndexedPrimitive(&lpDevice->IDirect3DDevice7_iface,
                         D3DPT_TRIANGLELIST, D3DFVF_TLVERTEX, tl_vx, 0, This->indices, count * 3, 0);
 	    } break;

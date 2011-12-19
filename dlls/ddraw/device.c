@@ -2456,7 +2456,7 @@ static HRESULT IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
             break;
 
         case D3DRENDERSTATE_ZBIAS:
-            hr = wined3d_device_get_render_state(This->wined3d_device, WINED3DRS_DEPTHBIAS, Value);
+            hr = wined3d_device_get_render_state(This->wined3d_device, WINED3D_RS_DEPTHBIAS, Value);
             break;
 
         default:
@@ -2765,7 +2765,7 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
             break;
 
         case D3DRENDERSTATE_ZBIAS:
-            hr = wined3d_device_set_render_state(This->wined3d_device, WINED3DRS_DEPTHBIAS, Value);
+            hr = wined3d_device_set_render_state(This->wined3d_device, WINED3D_RS_DEPTHBIAS, Value);
             break;
 
         default:
@@ -6972,7 +6972,7 @@ HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDi
 
     ddraw->d3ddevice = device;
 
-    wined3d_device_set_render_state(ddraw->wined3d_device, WINED3DRS_ZENABLE,
+    wined3d_device_set_render_state(ddraw->wined3d_device, WINED3D_RS_ZENABLE,
             IDirect3DDeviceImpl_UpdateDepthStencil(device));
 
     return D3D_OK;

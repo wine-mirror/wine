@@ -587,7 +587,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_Reset(IDirect3DDevice8 *iface,
     hr = wined3d_device_reset(This->wined3d_device, &swapchain_desc, reset_enum_callback);
     if (SUCCEEDED(hr))
     {
-        hr = wined3d_device_set_render_state(This->wined3d_device, WINED3DRS_POINTSIZE_MIN, 0);
+        hr = wined3d_device_set_render_state(This->wined3d_device, WINED3D_RS_POINTSIZE_MIN, 0);
         This->lost = FALSE;
     }
     else
@@ -1439,7 +1439,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetRenderState(IDirect3DDevice8 *ifac
     switch (State)
     {
         case D3DRS_ZBIAS:
-            hr = wined3d_device_set_render_state(This->wined3d_device, WINED3DRS_DEPTHBIAS, Value);
+            hr = wined3d_device_set_render_state(This->wined3d_device, WINED3D_RS_DEPTHBIAS, Value);
             break;
 
         default:
@@ -1462,7 +1462,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetRenderState(IDirect3DDevice8 *ifac
     switch (State)
     {
         case D3DRS_ZBIAS:
-            hr = wined3d_device_get_render_state(This->wined3d_device, WINED3DRS_DEPTHBIAS, pValue);
+            hr = wined3d_device_get_render_state(This->wined3d_device, WINED3D_RS_DEPTHBIAS, pValue);
             break;
 
         default:
@@ -3112,7 +3112,7 @@ HRESULT device_init(IDirect3DDevice8Impl *device, IDirect3D8Impl *parent, struct
         return hr;
     }
 
-    hr = wined3d_device_set_render_state(device->wined3d_device, WINED3DRS_POINTSIZE_MIN, 0);
+    hr = wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_POINTSIZE_MIN, 0);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {

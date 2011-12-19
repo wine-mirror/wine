@@ -335,9 +335,9 @@ static HRESULT WINAPI IDirect3DVertexBufferImpl_ProcessVertices(IDirect3DVertexB
      * the vertex ops
      */
     doClip = VertexOp & D3DVOP_CLIP ? TRUE : FALSE;
-    wined3d_device_get_render_state(device_impl->wined3d_device, WINED3DRS_CLIPPING, (DWORD *)&oldClip);
+    wined3d_device_get_render_state(device_impl->wined3d_device, WINED3D_RS_CLIPPING, (DWORD *)&oldClip);
     if (doClip != oldClip)
-        wined3d_device_set_render_state(device_impl->wined3d_device, WINED3DRS_CLIPPING, doClip);
+        wined3d_device_set_render_state(device_impl->wined3d_device, WINED3D_RS_CLIPPING, doClip);
 
     wined3d_device_set_stream_source(device_impl->wined3d_device,
             0, Src->wineD3DVertexBuffer, 0, get_flexible_vertex_size(Src->fvf));
@@ -347,7 +347,7 @@ static HRESULT WINAPI IDirect3DVertexBufferImpl_ProcessVertices(IDirect3DVertexB
 
     /* Restore the states if needed */
     if (doClip != oldClip)
-        wined3d_device_set_render_state(device_impl->wined3d_device, WINED3DRS_CLIPPING, oldClip);
+        wined3d_device_set_render_state(device_impl->wined3d_device, WINED3D_RS_CLIPPING, oldClip);
 
     wined3d_mutex_unlock();
 

@@ -143,10 +143,10 @@ static void drawStridedSlow(const struct wined3d_device *device, const struct wi
         specular = element->data.addr;
 
         /* special case where the fog density is stored in the specular alpha channel */
-        if (state->render_states[WINED3DRS_FOGENABLE]
-                && (state->render_states[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE
+        if (state->render_states[WINED3D_RS_FOGENABLE]
+                && (state->render_states[WINED3D_RS_FOGVERTEXMODE] == WINED3DFOG_NONE
                     || si->elements[WINED3D_FFP_POSITION].format->id == WINED3DFMT_R32G32B32A32_FLOAT)
-                && state->render_states[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
+                && state->render_states[WINED3D_RS_FOGTABLEMODE] == WINED3DFOG_NONE)
         {
             if (gl_info->supported[EXT_FOG_COORD])
             {
@@ -583,7 +583,7 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
 
     if (!index_count) return;
 
-    if (state->render_states[WINED3DRS_COLORWRITEENABLE])
+    if (state->render_states[WINED3D_RS_COLORWRITEENABLE])
     {
         /* Invalidate the back buffer memory so LockRect will read it the next time */
         for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
@@ -616,7 +616,7 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
          * depthstencil for D3DCMP_NEVER and D3DCMP_ALWAYS as well. Also note
          * that we never copy the stencil data.*/
         DWORD location = context->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
-        if (state->render_states[WINED3DRS_ZWRITEENABLE] || state->render_states[WINED3DRS_ZENABLE])
+        if (state->render_states[WINED3D_RS_ZWRITEENABLE] || state->render_states[WINED3D_RS_ZENABLE])
         {
             struct wined3d_surface *ds = device->fb.depth_stencil;
             RECT current_rect, draw_rect, r;
@@ -635,7 +635,7 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
             if (!EqualRect(&r, &draw_rect))
                 surface_load_ds_location(ds, context, location);
 
-            if (state->render_states[WINED3DRS_ZWRITEENABLE])
+            if (state->render_states[WINED3D_RS_ZWRITEENABLE])
             {
                 surface_modify_ds_location(ds, location, ds->ds_current_size.cx, ds->ds_current_size.cy);
                 surface_modify_location(ds, ds->draw_binding, TRUE);
@@ -653,7 +653,7 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
     if ((!context->gl_info->supported[WINED3D_GL_VERSION_2_0]
             || (!glPointParameteri && !context->gl_info->supported[NV_POINT_SPRITE]))
             && context->render_offscreen
-            && state->render_states[WINED3DRS_POINTSPRITEENABLE]
+            && state->render_states[WINED3D_RS_POINTSPRITEENABLE]
             && state->gl_primitive_type == GL_POINTS)
     {
         FIXME("Point sprite coordinate origin switching not supported.\n");
@@ -671,7 +671,7 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
         if (!use_vs(state))
         {
             if (!stream_info->position_transformed && context->num_untracked_materials
-                    && state->render_states[WINED3DRS_LIGHTING])
+                    && state->render_states[WINED3D_RS_LIGHTING])
             {
                 static BOOL warned;
                 if (!warned) {
@@ -682,7 +682,7 @@ void drawPrimitive(struct wined3d_device *device, UINT index_count, UINT StartId
                 }
                 emulation = TRUE;
             }
-            else if (context->fog_coord && state->render_states[WINED3DRS_FOGENABLE])
+            else if (context->fog_coord && state->render_states[WINED3D_RS_FOGENABLE])
             {
                 /* Either write a pipeline replacement shader or convert the specular alpha from unsigned byte
                  * to a float in the vertex buffer
@@ -875,7 +875,7 @@ HRESULT tesselate_rectpatch(struct wined3d_device *This, struct WineD3DRectPatch
      */
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     checkGLcall("glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)");
-    context_invalidate_state(context, STATE_RENDER(WINED3DRS_FILLMODE));
+    context_invalidate_state(context, STATE_RENDER(WINED3D_RS_FILLMODE));
     if (patch->has_normals)
     {
         static const GLfloat black[] = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -887,7 +887,7 @@ HRESULT tesselate_rectpatch(struct wined3d_device *This, struct WineD3DRectPatch
         checkGLcall("glEnable(GL_LIGHTING)");
         glLightModelfv(GL_LIGHT_MODEL_AMBIENT, black);
         checkGLcall("glLightModel for MODEL_AMBIENT");
-        context_invalidate_state(context, STATE_RENDER(WINED3DRS_AMBIENT));
+        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_AMBIENT));
 
         for (i = 3; i < context->gl_info->limits.lights; ++i)
         {
@@ -919,7 +919,7 @@ HRESULT tesselate_rectpatch(struct wined3d_device *This, struct WineD3DRectPatch
         checkGLcall("Setting up light 3");
 
         context_invalidate_state(context, STATE_MATERIAL);
-        context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORVERTEX));
+        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORVERTEX));
         glDisable(GL_COLOR_MATERIAL);
         glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);

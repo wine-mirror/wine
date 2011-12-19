@@ -327,13 +327,13 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
         context_invalidate_state(context, STATE_FRAMEBUFFER);
 
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE));
-        context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE1));
-        context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE2));
-        context_invalidate_state(context, STATE_RENDER(WINED3DRS_COLORWRITEENABLE3));
+        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE));
+        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE1));
+        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE2));
+        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_COLORWRITEENABLE3));
 
         glDisable(GL_SCISSOR_TEST);
-        context_invalidate_state(context, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
+        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_SCISSORTESTENABLE));
 
         /* Note that the texture is upside down */
         gl_info->fbo_ops.glBlitFramebuffer(src_rect->left, src_rect->top, src_rect->right, src_rect->bottom,

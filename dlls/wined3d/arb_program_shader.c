@@ -4476,8 +4476,8 @@ static void find_arb_ps_compile_args(const struct wined3d_state *state,
      * duplicate the shader than have a no-op KIL instruction in every shader
      */
     if (!device->vs_clipping && use_vs(state)
-            && state->render_states[WINED3DRS_CLIPPING]
-            && state->render_states[WINED3DRS_CLIPPLANEENABLE])
+            && state->render_states[WINED3D_RS_CLIPPING]
+            && state->render_states[WINED3D_RS_CLIPPLANEENABLE])
         args->clip = 1;
     else
         args->clip = 0;
@@ -4538,8 +4538,8 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
 
     if (args->clip.boolclip.clip_texcoord)
     {
-        if (state->render_states[WINED3DRS_CLIPPING])
-            args->clip.boolclip.clipplane_mask = (unsigned char)state->render_states[WINED3DRS_CLIPPLANEENABLE];
+        if (state->render_states[WINED3D_RS_CLIPPING])
+            args->clip.boolclip.clipplane_mask = (unsigned char)state->render_states[WINED3D_RS_CLIPPLANEENABLE];
         /* clipplane_mask was set to 0 by setting boolclip_compare to 0 */
     }
 
@@ -5673,7 +5673,7 @@ static void state_texfactor_arbfp(struct wined3d_context *context,
         priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, ARB_FFP_CONST_TFACTOR + 1);
     }
 
-    D3DCOLORTOGLFLOAT4(state->render_states[WINED3DRS_TEXTUREFACTOR], col);
+    D3DCOLORTOGLFLOAT4(state->render_states[WINED3D_RS_TEXTUREFACTOR], col);
     GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_TFACTOR, col));
     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_TFACTOR, col)");
 }
@@ -5699,7 +5699,7 @@ static void state_arb_specularenable(struct wined3d_context *context,
         priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, ARB_FFP_CONST_SPECULAR_ENABLE + 1);
     }
 
-    if (state->render_states[WINED3DRS_SPECULARENABLE])
+    if (state->render_states[WINED3D_RS_SPECULARENABLE])
     {
         /* The specular color has no alpha */
         col[0] = 1.0f; col[1] = 1.0f;
@@ -6301,7 +6301,7 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
 
     TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
 
-    if (isStateDirty(context, STATE_RENDER(WINED3DRS_FOGENABLE)))
+    if (isStateDirty(context, STATE_RENDER(WINED3D_RS_FOGENABLE)))
     {
         if (!use_pshader && device->shader_backend == &arb_program_shader_backend && context->last_was_pshader)
         {
@@ -6311,8 +6311,8 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
             {
                 set_bumpmat_arbfp(context, state, STATE_TEXTURESTAGE(i, WINED3DTSS_BUMPENVMAT00));
             }
-            state_texfactor_arbfp(context, state, STATE_RENDER(WINED3DRS_TEXTUREFACTOR));
-            state_arb_specularenable(context, state, STATE_RENDER(WINED3DRS_SPECULARENABLE));
+            state_texfactor_arbfp(context, state, STATE_RENDER(WINED3D_RS_TEXTUREFACTOR));
+            state_arb_specularenable(context, state, STATE_RENDER(WINED3D_RS_SPECULARENABLE));
         }
         else if (use_pshader && !isStateDirty(context, context->state_table[STATE_VSHADER].representative))
         {
@@ -6364,8 +6364,8 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
             {
                 set_bumpmat_arbfp(context, state, STATE_TEXTURESTAGE(i, WINED3DTSS_BUMPENVMAT00));
             }
-            state_texfactor_arbfp(context, state, STATE_RENDER(WINED3DRS_TEXTUREFACTOR));
-            state_arb_specularenable(context, state, STATE_RENDER(WINED3DRS_SPECULARENABLE));
+            state_texfactor_arbfp(context, state, STATE_RENDER(WINED3D_RS_TEXTUREFACTOR));
+            state_arb_specularenable(context, state, STATE_RENDER(WINED3D_RS_SPECULARENABLE));
         }
         context->last_was_pshader = FALSE;
     } else {
@@ -6408,10 +6408,10 @@ static void state_arbfp_fog(struct wined3d_context *context, const struct wined3
     if (!isStateDirty(context, STATE_PIXELSHADER))
         fragment_prog_arbfp(context, state, state_id);
 
-    if (!state->render_states[WINED3DRS_FOGENABLE])
+    if (!state->render_states[WINED3D_RS_FOGENABLE])
         return;
 
-    if (state->render_states[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
+    if (state->render_states[WINED3D_RS_FOGTABLEMODE] == WINED3DFOG_NONE)
     {
         if (use_vs(state))
         {
@@ -6419,7 +6419,7 @@ static void state_arbfp_fog(struct wined3d_context *context, const struct wined3
         }
         else
         {
-            if (state->render_states[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE || context->last_was_rhw)
+            if (state->render_states[WINED3D_RS_FOGVERTEXMODE] == WINED3DFOG_NONE || context->last_was_rhw)
                 new_source = FOGSOURCE_COORD;
             else
                 new_source = FOGSOURCE_FFP;
@@ -6433,7 +6433,7 @@ static void state_arbfp_fog(struct wined3d_context *context, const struct wined3
     if (new_source != context->fog_source)
     {
         context->fog_source = new_source;
-        state_fogstartend(context, state, STATE_RENDER(WINED3DRS_FOGSTART));
+        state_fogstartend(context, state, STATE_RENDER(WINED3D_RS_FOGSTART));
     }
 }
 
@@ -6443,8 +6443,9 @@ static void textransform(struct wined3d_context *context, const struct wined3d_s
         fragment_prog_arbfp(context, state, state_id);
 }
 
-static const struct StateEntryTemplate arbfp_fragmentstate_template[] = {
-    {STATE_RENDER(WINED3DRS_TEXTUREFACTOR),               { STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              state_texfactor_arbfp   }, WINED3D_GL_EXT_NONE             },
+static const struct StateEntryTemplate arbfp_fragmentstate_template[] =
+{
+    {STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),              { STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),             state_texfactor_arbfp   }, WINED3D_GL_EXT_NONE             },
     {STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),           { STATE_PIXELSHADER,                                  NULL                    }, WINED3D_GL_EXT_NONE             },
     {STATE_TEXTURESTAGE(0, WINED3DTSS_COLORARG1),         { STATE_PIXELSHADER,                                  NULL                    }, WINED3D_GL_EXT_NONE             },
     {STATE_TEXTURESTAGE(0, WINED3DTSS_COLORARG2),         { STATE_PIXELSHADER,                                  NULL                    }, WINED3D_GL_EXT_NONE             },
@@ -6566,14 +6567,14 @@ static const struct StateEntryTemplate arbfp_fragmentstate_template[] = {
     {STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVLSCALE),     { STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlum_arbfp    }, WINED3D_GL_EXT_NONE             },
     {STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVLOFFSET),    { STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVLSCALE),    NULL                    }, WINED3D_GL_EXT_NONE             },
     {STATE_PIXELSHADER,                                   { STATE_PIXELSHADER,                                  fragment_prog_arbfp     }, WINED3D_GL_EXT_NONE             },
-    {STATE_RENDER(WINED3DRS_FOGENABLE),                   { STATE_RENDER(WINED3DRS_FOGENABLE),                  state_arbfp_fog         }, WINED3D_GL_EXT_NONE             },
-    {STATE_RENDER(WINED3DRS_FOGTABLEMODE),                { STATE_RENDER(WINED3DRS_FOGENABLE),                  NULL                    }, WINED3D_GL_EXT_NONE             },
-    {STATE_RENDER(WINED3DRS_FOGVERTEXMODE),               { STATE_RENDER(WINED3DRS_FOGENABLE),                  NULL                    }, WINED3D_GL_EXT_NONE             },
-    {STATE_RENDER(WINED3DRS_FOGSTART),                    { STATE_RENDER(WINED3DRS_FOGSTART),                   state_fogstartend       }, WINED3D_GL_EXT_NONE             },
-    {STATE_RENDER(WINED3DRS_FOGEND),                      { STATE_RENDER(WINED3DRS_FOGSTART),                   NULL                    }, WINED3D_GL_EXT_NONE             },
-    {STATE_RENDER(WINED3DRS_SRGBWRITEENABLE),             { STATE_PIXELSHADER,                                  NULL                    }, WINED3D_GL_EXT_NONE             },
-    {STATE_RENDER(WINED3DRS_FOGCOLOR),                    { STATE_RENDER(WINED3DRS_FOGCOLOR),                   state_fogcolor          }, WINED3D_GL_EXT_NONE             },
-    {STATE_RENDER(WINED3DRS_FOGDENSITY),                  { STATE_RENDER(WINED3DRS_FOGDENSITY),                 state_fogdensity        }, WINED3D_GL_EXT_NONE             },
+    {STATE_RENDER(WINED3D_RS_FOGENABLE),                  { STATE_RENDER(WINED3D_RS_FOGENABLE),                 state_arbfp_fog         }, WINED3D_GL_EXT_NONE             },
+    {STATE_RENDER(WINED3D_RS_FOGTABLEMODE),               { STATE_RENDER(WINED3D_RS_FOGENABLE),                 NULL                    }, WINED3D_GL_EXT_NONE             },
+    {STATE_RENDER(WINED3D_RS_FOGVERTEXMODE),              { STATE_RENDER(WINED3D_RS_FOGENABLE),                 NULL                    }, WINED3D_GL_EXT_NONE             },
+    {STATE_RENDER(WINED3D_RS_FOGSTART),                   { STATE_RENDER(WINED3D_RS_FOGSTART),                  state_fogstartend       }, WINED3D_GL_EXT_NONE             },
+    {STATE_RENDER(WINED3D_RS_FOGEND),                     { STATE_RENDER(WINED3D_RS_FOGSTART),                  NULL                    }, WINED3D_GL_EXT_NONE             },
+    {STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),            { STATE_PIXELSHADER,                                  NULL                    }, WINED3D_GL_EXT_NONE             },
+    {STATE_RENDER(WINED3D_RS_FOGCOLOR),                   { STATE_RENDER(WINED3D_RS_FOGCOLOR),                  state_fogcolor          }, WINED3D_GL_EXT_NONE             },
+    {STATE_RENDER(WINED3D_RS_FOGDENSITY),                 { STATE_RENDER(WINED3D_RS_FOGDENSITY),                state_fogdensity        }, WINED3D_GL_EXT_NONE             },
     {STATE_TEXTURESTAGE(0,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(0, WINED3DTSS_TEXTURETRANSFORMFLAGS), textransform      }, WINED3D_GL_EXT_NONE             },
     {STATE_TEXTURESTAGE(1,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(1, WINED3DTSS_TEXTURETRANSFORMFLAGS), textransform      }, WINED3D_GL_EXT_NONE             },
     {STATE_TEXTURESTAGE(2,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(2, WINED3DTSS_TEXTURETRANSFORMFLAGS), textransform      }, WINED3D_GL_EXT_NONE             },
@@ -6582,7 +6583,7 @@ static const struct StateEntryTemplate arbfp_fragmentstate_template[] = {
     {STATE_TEXTURESTAGE(5,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(5, WINED3DTSS_TEXTURETRANSFORMFLAGS), textransform      }, WINED3D_GL_EXT_NONE             },
     {STATE_TEXTURESTAGE(6,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(6, WINED3DTSS_TEXTURETRANSFORMFLAGS), textransform      }, WINED3D_GL_EXT_NONE             },
     {STATE_TEXTURESTAGE(7,WINED3DTSS_TEXTURETRANSFORMFLAGS),{STATE_TEXTURESTAGE(7, WINED3DTSS_TEXTURETRANSFORMFLAGS), textransform      }, WINED3D_GL_EXT_NONE             },
-    {STATE_RENDER(WINED3DRS_SPECULARENABLE),              { STATE_RENDER(WINED3DRS_SPECULARENABLE),             state_arb_specularenable}, WINED3D_GL_EXT_NONE             },
+    {STATE_RENDER(WINED3D_RS_SPECULARENABLE),             { STATE_RENDER(WINED3D_RS_SPECULARENABLE),            state_arb_specularenable}, WINED3D_GL_EXT_NONE             },
     {0 /* Terminate */,                                   { 0,                                                  0                       }, WINED3D_GL_EXT_NONE             },
 };
 
