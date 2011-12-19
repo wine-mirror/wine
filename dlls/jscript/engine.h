@@ -282,7 +282,27 @@ typedef struct _return_type_t return_type_t;
 
 typedef HRESULT (*statement_eval_t)(script_ctx_t*,statement_t*,return_type_t*,VARIANT*);
 
+typedef enum {
+    STAT_BLOCK,
+    STAT_BREAK,
+    STAT_CONTINUE,
+    STAT_EMPTY,
+    STAT_EXPR,
+    STAT_FOR,
+    STAT_FORIN,
+    STAT_IF,
+    STAT_LABEL,
+    STAT_RETURN,
+    STAT_SWITCH,
+    STAT_THROW,
+    STAT_TRY,
+    STAT_VAR,
+    STAT_WHILE,
+    STAT_WITH
+} statement_type_t;
+
 struct _statement_t {
+    statement_type_t type;
     statement_eval_t eval;
     statement_t *next;
 };
