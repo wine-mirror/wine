@@ -7,10 +7,7 @@ C_SRCS = \
 	splitpath.c \
 	winefile.c
 
-RC_SRCS = \
-	En.rc \
-	winefile.rc
-
+RC_SRCS = winefile.rc
 PO_SRCS = winefile.rc
 
 MANPAGE = winefile.man
