@@ -865,11 +865,30 @@ static HRESULT compile_block_statement(compiler_ctx_t *ctx, statement_t *iter)
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    12.4 */
+static HRESULT compile_expression_statement(compiler_ctx_t *ctx, expression_statement_t *stat)
+{
+    BOOL no_ret = FALSE;
+    HRESULT hres;
+
+    hres = compile_expression_noret(ctx, stat->expr, &no_ret);
+    if(FAILED(hres))
+        return hres;
+
+    /* FIXME: that's a big potential optimization */
+    if(no_ret && !push_instr(ctx, OP_undefined) == -1)
+        return E_OUTOFMEMORY;
+
+    return S_OK;
+}
+
 static HRESULT compile_statement(compiler_ctx_t *ctx, statement_t *stat)
 {
     switch(stat->type) {
     case STAT_BLOCK:
         return compile_block_statement(ctx, ((block_statement_t*)stat)->stat_list);
+    case STAT_EXPR:
+        return compile_expression_statement(ctx, (expression_statement_t*)stat);
     default:
         return compile_interp_fallback(ctx, stat);
     }
