@@ -513,8 +513,7 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
     function_declaration_t *func;
     parser_ctx_t *prev_parser;
     var_list_t *var;
-    VARIANT val, tmp;
-    statement_t *stat;
+    VARIANT val;
     exec_ctx_t *prev_ctx;
     return_type_t rt;
     HRESULT hres = S_OK;
@@ -560,15 +559,11 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
     memset(&rt, 0, sizeof(rt));
     rt.type = RT_NORMAL;
 
-    for(stat = source->statement; stat; stat = stat->next) {
-        hres = stat_eval(script, stat, &rt, &tmp);
-        if(FAILED(hres))
-            break;
-
-        VariantClear(&val);
-        val = tmp;
-        if(rt.type != RT_NORMAL)
-            break;
+    if(source->statement) {
+        if(source->statement->instr_off == -1)
+            hres = compile_subscript_stat(ctx->parser, source->statement, TRUE, &source->statement->instr_off);
+        if(SUCCEEDED(hres))
+            hres = compiled_statement_eval(script, source->statement, &rt, &val);
     }
 
     script->exec_ctx = prev_ctx;
@@ -3005,7 +3000,7 @@ HRESULT compiled_statement_eval(script_ctx_t *ctx, statement_t *stat, return_typ
     TRACE("\n");
 
     if(stat->instr_off == -1) {
-        hres = compile_subscript_stat(exec_ctx->parser, stat, &stat->instr_off);
+        hres = compile_subscript_stat(exec_ctx->parser, stat, FALSE, &stat->instr_off);
         if(FAILED(hres))
             return hres;
     }
