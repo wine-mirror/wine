@@ -703,15 +703,6 @@ HRESULT var_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t 
     return S_OK;
 }
 
-/* ECMA-262 3rd Edition    12.3 */
-HRESULT empty_statement_eval(script_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
-{
-    TRACE("\n");
-
-    V_VT(ret) = VT_EMPTY;
-    return S_OK;
-}
-
 /* ECMA-262 3rd Edition    12.6.2 */
 HRESULT while_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
 {

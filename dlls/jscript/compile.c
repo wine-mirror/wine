@@ -928,6 +928,8 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_t *stat)
     switch(stat->type) {
     case STAT_BLOCK:
         return compile_block_statement(ctx, ((block_statement_t*)stat)->stat_list);
+    case STAT_EMPTY:
+        return push_instr(ctx, OP_undefined) == -1 ? E_OUTOFMEMORY : S_OK; /* FIXME */
     case STAT_EXPR:
         return compile_expression_statement(ctx, (expression_statement_t*)stat);
     case STAT_IF:
