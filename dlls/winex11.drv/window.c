@@ -159,12 +159,15 @@ struct has_popup_result
     BOOL found;
 };
 
-static BOOL CALLBACK has_popup( HWND hwnd, LPARAM lparam )
+static BOOL CALLBACK has_managed_popup( HWND hwnd, LPARAM lparam )
 {
     struct has_popup_result *result = (struct has_popup_result *)lparam;
+    struct x11drv_win_data *data;
 
     if (hwnd == result->hwnd) return FALSE;  /* popups are always above owner */
-    result->found = (GetWindow( hwnd, GW_OWNER ) == result->hwnd);
+    if (!(data = X11DRV_get_win_data( hwnd ))) return TRUE;
+    if (GetWindow( hwnd, GW_OWNER ) != result->hwnd) return TRUE;
+    result->found = data->managed;
     return !result->found;
 }
 
@@ -174,7 +177,7 @@ static BOOL has_owned_popups( HWND hwnd )
 
     result.hwnd = hwnd;
     result.found = FALSE;
-    EnumWindows( has_popup, (LPARAM)&result );
+    EnumWindows( has_managed_popup, (LPARAM)&result );
     return result.found;
 }
 
