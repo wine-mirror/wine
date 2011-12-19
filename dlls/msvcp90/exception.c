@@ -209,41 +209,7 @@ const char* __thiscall MSVCP_what_exception(exception * this)
     return this->name ? this->name : "Unknown exception";
 }
 
-static const type_info bad_alloc_type_info = {
-    &MSVCP_bad_alloc_vtable,
-    NULL,
-    ".?AVbad_alloc@std@@"
-};
-
-static const rtti_base_descriptor bad_alloc_rtti_base_descriptor = {
-    &bad_alloc_type_info,
-    1,
-    { 0, -1, 0 },
-    64
-};
-
-static const rtti_base_array bad_alloc_rtti_base_array = {
-    {
-        &bad_alloc_rtti_base_descriptor,
-        &exception_rtti_base_descriptor,
-        NULL
-    }
-};
-
-static const rtti_object_hierarchy bad_alloc_type_hierarchy = {
-    0,
-    0,
-    2,
-    &bad_alloc_rtti_base_array
-};
-
-const rtti_object_locator bad_alloc_rtti = {
-    0,
-    0,
-    0,
-    &bad_alloc_type_info,
-    &bad_alloc_type_hierarchy
-};
+DEFINE_RTTI_DATA(bad_alloc, 0, 1, &exception_rtti_base_descriptor, NULL, NULL, ".?AVbad_alloc@std@@");
 
 static const cxx_type_info bad_alloc_cxx_type_info = {
     0,
@@ -334,41 +300,7 @@ const char* __thiscall MSVCP_logic_error_what(logic_error *this)
     return MSVCP_basic_string_char_c_str(&this->str);
 }
 
-static const type_info logic_error_type_info = {
-    &MSVCP_logic_error_vtable,
-    NULL,
-    ".?AVlogic_error@std@@"
-};
-
-static const rtti_base_descriptor logic_error_rtti_base_descriptor = {
-    &logic_error_type_info,
-    1,
-    { 0, -1, 0 },
-    64
-};
-
-static const rtti_base_array logic_error_rtti_base_array = {
-    {
-        &logic_error_rtti_base_descriptor,
-        &exception_rtti_base_descriptor,
-        NULL
-    }
-};
-
-static const rtti_object_hierarchy logic_error_type_hierarchy = {
-    0,
-    0,
-    2,
-    &logic_error_rtti_base_array
-};
-
-const rtti_object_locator logic_error_rtti = {
-    0,
-    0,
-    0,
-    &logic_error_type_info,
-    &logic_error_type_hierarchy
-};
+DEFINE_RTTI_DATA(logic_error, 0, 1, &exception_rtti_base_descriptor, NULL, NULL, ".?AVlogic_error@std@@");
 
 static const cxx_type_info logic_error_cxx_type_info = {
     0,
@@ -425,41 +357,7 @@ void* __thiscall MSVCP_length_error_vector_dtor(
     return MSVCP_logic_error_vector_dtor(this, flags);
 }
 
-static const type_info length_error_type_info = {
-    &MSVCP_length_error_vtable,
-    NULL,
-    ".?AVlength_error@std@@"
-};
-
-static const rtti_base_descriptor length_error_rtti_base_descriptor = {
-    &length_error_type_info,
-    2,
-    { 0, -1, 0 },
-    64
-};
-
-static const rtti_base_array length_error_rtti_base_array = {
-    {
-        &length_error_rtti_base_descriptor,
-        &logic_error_rtti_base_descriptor,
-        &exception_rtti_base_descriptor
-    }
-};
-
-static const rtti_object_hierarchy length_error_type_hierarchy = {
-    0,
-    0,
-    3,
-    &length_error_rtti_base_array
-};
-
-const rtti_object_locator length_error_rtti = {
-    0,
-    0,
-    0,
-    &length_error_type_info,
-    &length_error_type_hierarchy
-};
+DEFINE_RTTI_DATA(length_error, 0, 2, &logic_error_rtti_base_descriptor, &exception_rtti_base_descriptor, NULL, ".?AVlength_error@std@@");
 
 static const cxx_type_info length_error_cxx_type_info = {
     0,
@@ -516,41 +414,7 @@ void* __thiscall MSVCP_out_of_range_vector_dtor(
     return MSVCP_logic_error_vector_dtor(this, flags);
 }
 
-static const type_info out_of_range_type_info = {
-    &MSVCP_out_of_range_vtable,
-    NULL,
-    ".?AVout_of_range@std@@"
-};
-
-static const rtti_base_descriptor out_of_range_rtti_base_descriptor = {
-    &out_of_range_type_info,
-    2,
-    { 0, -1, 0 },
-    64
-};
-
-static const rtti_base_array out_of_range_rtti_base_array = {
-    {
-        &out_of_range_rtti_base_descriptor,
-        &logic_error_rtti_base_descriptor,
-        &exception_rtti_base_descriptor
-    }
-};
-
-static const rtti_object_hierarchy out_of_range_type_hierarchy = {
-    0,
-    0,
-    3,
-    &out_of_range_rtti_base_array
-};
-
-const rtti_object_locator out_of_range_rtti = {
-    0,
-    0,
-    0,
-    &out_of_range_type_info,
-    &out_of_range_type_hierarchy
-};
+DEFINE_RTTI_DATA(out_of_range, 0, 2, &logic_error_rtti_base_descriptor, &exception_rtti_base_descriptor, NULL, ".?AVout_of_range@std@@");
 
 static const cxx_type_info out_of_range_cxx_type_info = {
     0,
@@ -607,41 +471,7 @@ void* __thiscall MSVCP_invalid_argument_vector_dtor(
     return MSVCP_logic_error_vector_dtor(this, flags);
 }
 
-static const type_info invalid_argument_type_info = {
-    &MSVCP_invalid_argument_vtable,
-    NULL,
-    ".?AVinvalid_argument@std@@"
-};
-
-static const rtti_base_descriptor invalid_argument_rtti_base_descriptor = {
-    &invalid_argument_type_info,
-    2,
-    { 0, -1, 0 },
-    64
-};
-
-static const rtti_base_array invalid_argument_rtti_base_array = {
-    {
-        &invalid_argument_rtti_base_descriptor,
-        &logic_error_rtti_base_descriptor,
-        &exception_rtti_base_descriptor
-    }
-};
-
-static const rtti_object_hierarchy invalid_argument_type_hierarchy = {
-    0,
-    0,
-    3,
-    &invalid_argument_rtti_base_array
-};
-
-const rtti_object_locator invalid_argument_rtti = {
-    0,
-    0,
-    0,
-    &invalid_argument_type_info,
-    &invalid_argument_type_hierarchy
-};
+DEFINE_RTTI_DATA(invalid_argument, 0, 2, &logic_error_rtti_base_descriptor, &exception_rtti_base_descriptor, NULL, ".?AVinvalid_argument@std@@");
 
 static const cxx_type_info invalid_argument_cxx_type_info = {
     0,
@@ -725,41 +555,7 @@ void* __thiscall MSVCP_runtime_error_vector_dtor(
     return this;
 }
 
-static const type_info runtime_error_type_info = {
-    &MSVCP_runtime_error_vtable,
-    NULL,
-    ".?AVruntime_error@std@@"
-};
-
-static const rtti_base_descriptor runtime_error_rtti_base_descriptor = {
-    &runtime_error_type_info,
-    1,
-    { 0, -1, 0 },
-    64
-};
-
-static const rtti_base_array runtime_error_rtti_base_array = {
-    {
-        &runtime_error_rtti_base_descriptor,
-        &exception_rtti_base_descriptor,
-        NULL
-    }
-};
-
-static const rtti_object_hierarchy runtime_error_type_hierarchy = {
-    0,
-    0,
-    2,
-    &runtime_error_rtti_base_array
-};
-
-const rtti_object_locator runtime_error_rtti = {
-    0,
-    0,
-    0,
-    &runtime_error_type_info,
-    &runtime_error_type_hierarchy
-};
+DEFINE_RTTI_DATA(runtime_error, 0, 1, &exception_rtti_base_descriptor, NULL, NULL, ".?AVruntime_error@std@@");
 
 static const cxx_type_info runtime_error_cxx_type_info = {
     0,

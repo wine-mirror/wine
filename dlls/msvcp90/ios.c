@@ -154,25 +154,12 @@ extern const vtable_ptr MSVCP_basic_streambuf_char_vtable;
 /* ??_7?$basic_ostream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ostream_char_vtable;
 
-static const type_info ios_base_type_info = {
-    &MSVCP_ios_base_vtable,
-    NULL,
-    ".?AVios_base@std@@"
-};
-
-static const rtti_base_descriptor ios_base_rtti_base_descriptor = {
-    &ios_base_type_info,
-    1,
-    { 0, -1, 0 },
-    64
-};
-
 static const type_info iosb_type_info = {
     &MSVCP_ios_base_vtable,
     NULL,
     ".?AV?$_Iosb@H@std@@"
 };
-
+    
 static const rtti_base_descriptor iosb_rtti_base_descriptor = {
     &iosb_type_info,
     0,
@@ -180,137 +167,13 @@ static const rtti_base_descriptor iosb_rtti_base_descriptor = {
     64
 };
 
-static const rtti_base_array ios_base_rtti_base_array = {
-    {
-        &ios_base_rtti_base_descriptor,
-        &iosb_rtti_base_descriptor,
-        NULL
-    }
-};
-
-static const rtti_object_hierarchy ios_base_type_hierarchy = {
-    0,
-    0,
-    2,
-    &ios_base_rtti_base_array
-};
-
-const rtti_object_locator ios_base_rtti = {
-    0,
-    0,
-    0,
-    &ios_base_type_info,
-    &ios_base_type_hierarchy
-};
-
-static const type_info basic_ios_char_type_info = {
-    &MSVCP_basic_ios_char_vtable,
-    NULL,
-    ".?AV?$basic_ios@DU?$char_traits@D@std@@@std@@"
-};
-
-static const rtti_base_descriptor basic_ios_char_rtti_base_descriptor = {
-    &basic_ios_char_type_info,
-    2,
-    { 0, -1, 0 },
-    64
-};
-
-static const rtti_base_array basic_ios_char_rtti_base_array = {
-    {
-        &basic_ios_char_rtti_base_descriptor,
-        &ios_base_rtti_base_descriptor,
-        &iosb_rtti_base_descriptor
-    }
-};
-
-static const rtti_object_hierarchy basic_ios_char_hierarchy = {
-    0,
-    0,
-    3,
-    &basic_ios_char_rtti_base_array
-};
-
-const rtti_object_locator basic_ios_char_rtti = {
-    0,
-    0,
-    0,
-    &basic_ios_char_type_info,
-    &basic_ios_char_hierarchy
-};
-
-static const type_info basic_streambuf_char_type_info = {
-    &MSVCP_basic_streambuf_char_vtable,
-    NULL,
-    ".?AV?$basic_streambuf@DU?$char_traits@D@std@@@std@@"
-};
-
-static const rtti_base_descriptor basic_streambuf_char_rtti_base_descriptor = {
-    &basic_streambuf_char_type_info,
-    0,
-    { 0, -1, 0},
-    64
-};
-
-static const rtti_base_array basic_streambuf_char_rtti_base_array = {
-    {
-        &basic_streambuf_char_rtti_base_descriptor,
-        NULL,
-        NULL
-    }
-};
-
-static const rtti_object_hierarchy basic_streambuf_char_hierarchy = {
-    0,
-    0,
-    1,
-    &basic_streambuf_char_rtti_base_array
-};
-
-const rtti_object_locator basic_streambuf_char_rtti = {
-    0,
-    0,
-    0,
-    &basic_streambuf_char_type_info,
-    &basic_streambuf_char_hierarchy
-};
-
-static const type_info basic_ostream_char_type_info = {
-    &MSVCP_basic_ostream_char_vtable,
-    NULL,
-    ".?AV?$basic_ostream@DU?$char_traits@D@std@@@std@@"
-};
-
-static const rtti_base_descriptor basic_ostream_char_rtti_base_descriptor = {
-    &basic_ostream_char_type_info,
-    3,
-    { 0, -1, 0},
-    64
-};
-
-static const rtti_base_array basic_ostream_char_rtti_base_array = {
-    {
-        &basic_ostream_char_rtti_base_descriptor,
-        &basic_ios_char_rtti_base_descriptor,
-        &ios_base_rtti_base_descriptor,
-        &iosb_rtti_base_descriptor
-    }
-};
-
-static const rtti_object_hierarchy basic_ostream_char_hierarchy = {
-        0,
-        0,
-        4,
-        &basic_ostream_char_rtti_base_array
-};
-
-const rtti_object_locator basic_ostream_char_rtti = {
-    0,
-    4,
-    0,
-    &basic_ostream_char_type_info,
-    &basic_ostream_char_hierarchy
-};
+DEFINE_RTTI_DATA(ios_base, 0, 1, &iosb_rtti_base_descriptor, NULL, NULL, ".?AV?$_Iosb@H@std@@");
+DEFINE_RTTI_DATA(basic_ios_char, 0, 2, &ios_base_rtti_base_descriptor, &iosb_rtti_base_descriptor,
+        NULL, ".?AV?$basic_ios@DU?$char_traits@D@std@@@std@@");
+DEFINE_RTTI_DATA(basic_streambuf_char, 0, 0, NULL, NULL, NULL,
+        ".?AV?$basic_streambuf@DU?$char_traits@D@std@@@std@@");
+DEFINE_RTTI_DATA(basic_ostream_char, 4, 3, &basic_ios_char_rtti_base_descriptor, &ios_base_rtti_base_descriptor,
+        &iosb_rtti_base_descriptor, ".?AV?$basic_ostream@DU?$char_traits@D@std@@@std@@");
 
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {

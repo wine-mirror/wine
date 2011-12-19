@@ -92,6 +92,44 @@ extern void* (__cdecl *MSVCRT_set_new_handler)(void*);
 
 #endif /* _WIN64 */
 
+#define DEFINE_RTTI_DATA(name, off, base_classes, cl1, cl2, cl3, mangled_name) \
+static const type_info name ## _type_info = { \
+    &MSVCP_ ## name ## _vtable, \
+    NULL, \
+    mangled_name \
+}; \
+\
+static const rtti_base_descriptor name ## _rtti_base_descriptor = { \
+    &name ##_type_info, \
+    base_classes, \
+    { 0, -1, 0}, \
+    64 \
+}; \
+\
+static const rtti_base_array name ## _rtti_base_array = { \
+    { \
+        &name ## _rtti_base_descriptor, \
+        cl1, \
+        cl2, \
+        cl3 \
+    } \
+}; \
+\
+static const rtti_object_hierarchy name ## _hierarchy = { \
+    0, \
+    0, \
+    base_classes+1, \
+    &name ## _rtti_base_array \
+}; \
+\
+const rtti_object_locator name ## _rtti = { \
+    0, \
+    off, \
+    0, \
+    &name ## _type_info, \
+    &name ## _hierarchy \
+}
+
 /* exception object */
 typedef void (*vtable_ptr)(void);
 typedef struct __exception
