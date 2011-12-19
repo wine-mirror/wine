@@ -777,8 +777,7 @@ HANDLE WINAPI CreateMRUListLazyA (const MRUINFOA *lpcml, DWORD dwParam2,
 
     /* Native does not check for a NULL lpcml */
 
-    if (lpcml->cbSize != sizeof(MRUINFOA) || !lpcml->hKey ||
-        IsBadStringPtrA(lpcml->lpszSubKey, -1))
+    if (!lpcml->hKey || IsBadStringPtrA(lpcml->lpszSubKey, -1))
 	return 0;
 
     mp = Alloc(sizeof(WINEMRULIST));
