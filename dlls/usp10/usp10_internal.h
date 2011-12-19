@@ -129,6 +129,8 @@ typedef struct {
     ABC *widths[GLYPH_MAX / GLYPH_BLOCK_SIZE];
     LPVOID GSUB_Table;
     LPVOID GDEF_Table;
+    LPVOID CMAP_Table;
+    LPVOID CMAP_format12_Table;
     INT feature_count;
     LoadedFeature *features;
 
@@ -181,3 +183,5 @@ void Indic_ReorderCharacters( HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, L
 void Indic_ParseSyllables( HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, LPCWSTR input, const int cChar, IndicSyllable **syllables, int *syllable_count, lexical_function lex, BOOL modern);
 
 void BREAK_line(const WCHAR *chars, int count, const SCRIPT_ANALYSIS *sa, SCRIPT_LOGATTR *la) DECLSPEC_HIDDEN;
+
+DWORD CMAP_GetGlyphIndex(HDC hdc, ScriptCache *psc, DWORD utf32c, LPWORD pgi, DWORD flags) DECLSPEC_HIDDEN;
