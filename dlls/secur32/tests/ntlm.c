@@ -578,7 +578,7 @@ static void testInitializeSecurityContextFlags(void)
 
     if(pQuerySecurityPackageInfoA( sec_pkg_name, &pkg_info) != SEC_E_OK)
     {
-        skip("Package not installed, skipping test!\n");
+        ok(0, "NTLM package not installed, skipping test.\n");
         return;
     }
 
@@ -800,7 +800,7 @@ static void testAuth(ULONG data_rep, BOOL fake)
 
     if(pQuerySecurityPackageInfoA( sec_pkg_name, &pkg_info)!= SEC_E_OK)
     {
-        skip("Package not installed, skipping test.\n");
+        ok(0, "NTLM package not installed, skipping test.\n");
         return;
     }
 
@@ -942,7 +942,7 @@ static void testSignSeal(void)
      */
     if(pQuerySecurityPackageInfoA( sec_pkg_name, &pkg_info) != SEC_E_OK)
     {
-        skip("Package not installed, skipping test.\n");
+        ok(0, "NTLM package not installed, skipping test.\n");
         return;
     }
 
@@ -1192,7 +1192,7 @@ end:
     HeapFree(GetProcessHeap(), 0, complex_data[3].pvBuffer);
 }
 
-static void testAcquireCredentialsHandle(void)
+static BOOL testAcquireCredentialsHandle(void)
 {
     CredHandle cred;
     TimeStamp ttl;
@@ -1206,8 +1206,8 @@ static void testAcquireCredentialsHandle(void)
 
     if(pQuerySecurityPackageInfoA(sec_pkg_name, &pkg_info) != SEC_E_OK)
     {
-        skip("NTLM package not installed, skipping test\n");
-        return;
+        ok(0, "NTLM package not installed, skipping test\n");
+        return FALSE;
     }
     pFreeContextBuffer(pkg_info);
 
@@ -1258,6 +1258,7 @@ static void testAcquireCredentialsHandle(void)
     ok(ret == SEC_E_OK, "AcquireCredentialsHande() returned %s\n",
             getSecError(ret));
     pFreeCredentialsHandle(&cred);
+    return TRUE;
 }
 
 static void test_cred_multiple_use(void)
@@ -1279,7 +1280,7 @@ static void test_cred_multiple_use(void)
 
     if(pQuerySecurityPackageInfoA(sec_pkg_name, &pkg_info) != SEC_E_OK)
     {
-        skip("NTLM package not installed, skipping test\n");
+        ok(0, "NTLM package not installed, skipping test\n");
         return;
     }
     buffers[0].cbBuffer = pkg_info->cbMaxToken;
@@ -1340,7 +1341,7 @@ static void test_null_auth_data(void)
 
     if(pQuerySecurityPackageInfoA((SEC_CHAR *)"NTLM", &info) != SEC_E_OK)
     {
-        skip("NTLM package not installed, skipping test\n");
+        ok(0, "NTLM package not installed, skipping test\n");
         return;
     }
 
@@ -1383,7 +1384,8 @@ START_TEST(ntlm)
        pInitializeSecurityContextA && pCompleteAuthToken &&
        pQuerySecurityPackageInfoA)
     {
-        testAcquireCredentialsHandle();
+        if(!testAcquireCredentialsHandle())
+            goto cleanup;
         testInitializeSecurityContextFlags();
         if(pAcceptSecurityContext)
         {
@@ -1402,6 +1404,7 @@ START_TEST(ntlm)
     else
         win_skip("Needed functions are not available\n");
 
+cleanup:
     if(secdll)
         FreeLibrary(secdll);
 }
