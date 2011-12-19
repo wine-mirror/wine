@@ -652,14 +652,34 @@ locale_id collate_char_id = {0};
 /* ??_7?$collate@D@std@@6B@ */
 extern const vtable_ptr MSVCP_collate_char_vtable;
 
+/* ?_Init@?$collate@D@std@@IAEXABV_Locinfo@2@@Z */
+/* ?_Init@?$collate@D@std@@IEAAXAEBV_Locinfo@2@@Z */
+DEFINE_THISCALL_WRAPPER(collate_char__Init, 8)
+void __thiscall collate_char__Init(collate *this, const _Locinfo *locinfo)
+{
+    TRACE("(%p %p)\n", this, locinfo);
+    this->coll = _Locinfo__Getcoll(locinfo);
+}
+
 /* ??0?$collate@D@std@@IAE@PBDI@Z */
 /* ??0?$collate@D@std@@IEAA@PEBD_K@Z */
 DEFINE_THISCALL_WRAPPER(collate_char_ctor_name, 12)
 collate* __thiscall collate_char_ctor_name(collate *this, const char *name, MSVCP_size_t refs)
 {
-    FIXME("(%p %s %lu) stub\n", this, name, refs);
+    _Lockit lockit;
+    _Locinfo locinfo;
+
+    TRACE("(%p %s %lu)\n", this, name, refs);
+
+    locale_facet_ctor_refs(&this->facet, refs);
     this->facet.vtable = &MSVCP_collate_char_vtable;
-    return NULL;
+
+    _Lockit_ctor_locktype(&lockit, _LOCK_LOCALE);
+    _Locinfo_ctor_cstr(&locinfo, name);
+    collate_char__Init(this, &locinfo);
+    _Locinfo_dtor(&locinfo);
+    _Lockit_dtor(&lockit);
+    return this;
 }
 
 /* ??0?$collate@D@std@@QAE@ABV_Locinfo@1@I@Z */
@@ -667,9 +687,12 @@ collate* __thiscall collate_char_ctor_name(collate *this, const char *name, MSVC
 DEFINE_THISCALL_WRAPPER(collate_char_ctor_locinfo, 12)
 collate* __thiscall collate_char_ctor_locinfo(collate *this, _Locinfo *locinfo, MSVCP_size_t refs)
 {
-    FIXME("(%p %p %lu) stub\n", this, locinfo, refs);
+    TRACE("(%p %p %lu)\n", this, locinfo, refs);
+
+    locale_facet_ctor_refs(&this->facet, refs);
     this->facet.vtable = &MSVCP_collate_char_vtable;
-    return NULL;
+    collate_char__Init(this, locinfo);
+    return this;
 }
 
 /* ??0?$collate@D@std@@QAE@I@Z */
@@ -677,9 +700,7 @@ collate* __thiscall collate_char_ctor_locinfo(collate *this, _Locinfo *locinfo, 
 DEFINE_THISCALL_WRAPPER(collate_char_ctor_refs, 8)
 collate* __thiscall collate_char_ctor_refs(collate *this, MSVCP_size_t refs)
 {
-    FIXME("(%p %lu) stub\n", this, refs);
-    this->facet.vtable = &MSVCP_collate_char_vtable;
-    return NULL;
+    return collate_char_ctor_name(this, "C", refs);
 }
 
 /* ??1?$collate@D@std@@MAE@XZ */
@@ -687,7 +708,7 @@ collate* __thiscall collate_char_ctor_refs(collate *this, MSVCP_size_t refs)
 DEFINE_THISCALL_WRAPPER(collate_char_dtor, 4)
 void __thiscall collate_char_dtor(collate *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_collate_char_vector_dtor, 8)
@@ -715,25 +736,27 @@ collate* __thiscall MSVCP_collate_char_vector_dtor(collate *this, unsigned int f
 DEFINE_THISCALL_WRAPPER(collate_char_ctor, 4)
 collate* __thiscall collate_char_ctor(collate *this)
 {
-    FIXME("(%p) stub\n", this);
-    this->facet.vtable = &MSVCP_collate_char_vtable;
-    return NULL;
+    return collate_char_ctor_name(this, "C", 0);
 }
 
 /* ?_Getcat@?$collate@D@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$collate@D@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
-MSVCP_size_t __cdecl collate_char__Getcat(const locale_facet **facet, const locale_facet *loc)
+MSVCP_size_t __cdecl collate_char__Getcat(const locale_facet **facet, const locale *loc)
 {
-    FIXME("(%p %p) stub\n", facet, loc);
-    return 0;
-}
+    TRACE("(%p %p)\n", facet, loc);
 
-/* ?_Init@?$collate@D@std@@IAEXABV_Locinfo@2@@Z */
-/* ?_Init@?$collate@D@std@@IEAAXAEBV_Locinfo@2@@Z */
-DEFINE_THISCALL_WRAPPER(collate_char__Init, 8)
-void __thiscall collate_char__Init(collate *this, const _Locinfo *locinfo)
-{
-    FIXME("(%p %p) stub\n", this, locinfo);
+    if(facet && !*facet) {
+        *facet = MSVCRT_operator_new(sizeof(collate));
+        if(!*facet) {
+            ERR("Out of memory\n");
+            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            return 0;
+        }
+        collate_char_ctor_name((collate*)*facet,
+                MSVCP_basic_string_char_c_str(&loc->ptr->name), 0);
+    }
+
+    return LC_COLLATE;
 }
 
 /* ?do_compare@?$collate@D@std@@MBEHPBD000@Z */
@@ -928,7 +951,7 @@ collate* __thiscall collate_short_ctor(collate *this)
 /* ?_Getcat@?$collate@_W@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
 /* ?_Getcat@?$collate@G@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$collate@G@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
-MSVCP_size_t __cdecl collate_wchar__Getcat(const locale_facet **facet, const locale_facet *loc)
+MSVCP_size_t __cdecl collate_wchar__Getcat(const locale_facet **facet, const locale *loc)
 {
     FIXME("(%p %p) stub\n", facet, loc);
     return 0;
@@ -1296,7 +1319,7 @@ const char* __thiscall ctype_char__Widen_s(const ctype_char *this,
 
 /* ?_Getcat@?$ctype@D@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$ctype@D@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
-MSVCP_size_t __cdecl ctype_char__Getcat(const locale_facet **facet, const locale_facet *loc)
+MSVCP_size_t __cdecl ctype_char__Getcat(const locale_facet **facet, const locale *loc)
 {
     FIXME("(%p %p) stub\n", facet, loc);
     return 0;
@@ -1730,7 +1753,7 @@ const char* __thiscall ctype_wchar__Widen_s(const ctype_wchar *this,
 /* ?_Getcat@?$ctype@_W@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
 /* ?_Getcat@?$ctype@G@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$ctype@G@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
-MSVCP_size_t __cdecl ctype_wchar__Getcat(const locale_facet **facet, const locale_facet *loc)
+MSVCP_size_t __cdecl ctype_wchar__Getcat(const locale_facet **facet, const locale *loc)
 {
     FIXME("(%p %p) stub\n", facet, loc);
     return 0;
