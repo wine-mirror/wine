@@ -1131,8 +1131,8 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     state->render_states[WINED3DRS_ZWRITEENABLE] = TRUE;
     state->render_states[WINED3DRS_ALPHATESTENABLE] = FALSE;
     state->render_states[WINED3DRS_LASTPIXEL] = TRUE;
-    state->render_states[WINED3DRS_SRCBLEND] = WINED3DBLEND_ONE;
-    state->render_states[WINED3DRS_DESTBLEND] = WINED3DBLEND_ZERO;
+    state->render_states[WINED3DRS_SRCBLEND] = WINED3D_BLEND_ONE;
+    state->render_states[WINED3DRS_DESTBLEND] = WINED3D_BLEND_ZERO;
     state->render_states[WINED3DRS_CULLMODE] = WINED3DCULL_CCW;
     state->render_states[WINED3DRS_ZFUNC] = WINED3DCMP_LESSEQUAL;
     state->render_states[WINED3DRS_ALPHAFUNC] = WINED3DCMP_ALWAYS;
@@ -1245,8 +1245,8 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     state->render_states[WINED3DRS_WRAP14] = 0;
     state->render_states[WINED3DRS_WRAP15] = 0;
     state->render_states[WINED3DRS_SEPARATEALPHABLENDENABLE] = FALSE;
-    state->render_states[WINED3DRS_SRCBLENDALPHA] = WINED3DBLEND_ONE;
-    state->render_states[WINED3DRS_DESTBLENDALPHA] = WINED3DBLEND_ZERO;
+    state->render_states[WINED3DRS_SRCBLENDALPHA] = WINED3D_BLEND_ONE;
+    state->render_states[WINED3DRS_DESTBLENDALPHA] = WINED3D_BLEND_ZERO;
     state->render_states[WINED3DRS_BLENDOPALPHA] = WINED3DBLENDOP_ADD;
 
     /* Texture Stage States - Put directly into state block, we will call function below */

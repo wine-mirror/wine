@@ -292,41 +292,41 @@ static void state_blendop(struct wined3d_context *context, const struct wined3d_
     }
 }
 
-static GLenum gl_blend_factor(WINED3DBLEND factor, const struct wined3d_format *dst_format)
+static GLenum gl_blend_factor(enum wined3d_blend factor, const struct wined3d_format *dst_format)
 {
     switch (factor)
     {
-        case WINED3DBLEND_ZERO:
+        case WINED3D_BLEND_ZERO:
             return GL_ZERO;
-        case WINED3DBLEND_ONE:
+        case WINED3D_BLEND_ONE:
             return GL_ONE;
-        case WINED3DBLEND_SRCCOLOR:
+        case WINED3D_BLEND_SRCCOLOR:
             return GL_SRC_COLOR;
-        case WINED3DBLEND_INVSRCCOLOR:
+        case WINED3D_BLEND_INVSRCCOLOR:
             return GL_ONE_MINUS_SRC_COLOR;
-        case WINED3DBLEND_SRCALPHA:
+        case WINED3D_BLEND_SRCALPHA:
             return GL_SRC_ALPHA;
-        case WINED3DBLEND_INVSRCALPHA:
+        case WINED3D_BLEND_INVSRCALPHA:
             return GL_ONE_MINUS_SRC_ALPHA;
-        case WINED3DBLEND_DESTCOLOR:
+        case WINED3D_BLEND_DESTCOLOR:
             return GL_DST_COLOR;
-        case WINED3DBLEND_INVDESTCOLOR:
+        case WINED3D_BLEND_INVDESTCOLOR:
             return GL_ONE_MINUS_DST_COLOR;
         /* To compensate for the lack of format switching with backbuffer
          * offscreen rendering, and with onscreen rendering, we modify the
          * alpha test parameters for (INV)DESTALPHA if the render target
          * doesn't support alpha blending. A nonexistent alpha channel
-         * returns 1.0, so WINED3DBLEND_DESTALPHA becomes GL_ONE, and
-         * WINED3DBLEND_INVDESTALPHA becomes GL_ZERO. */
-        case WINED3DBLEND_DESTALPHA:
+         * returns 1.0, so WINED3D_BLEND_DESTALPHA becomes GL_ONE, and
+         * WINED3D_BLEND_INVDESTALPHA becomes GL_ZERO. */
+        case WINED3D_BLEND_DESTALPHA:
             return dst_format->alpha_mask ? GL_DST_ALPHA : GL_ONE;
-        case WINED3DBLEND_INVDESTALPHA:
+        case WINED3D_BLEND_INVDESTALPHA:
             return dst_format->alpha_mask ? GL_ONE_MINUS_DST_ALPHA : GL_ZERO;
-        case WINED3DBLEND_SRCALPHASAT:
+        case WINED3D_BLEND_SRCALPHASAT:
             return GL_SRC_ALPHA_SATURATE;
-        case WINED3DBLEND_BLENDFACTOR:
+        case WINED3D_BLEND_BLENDFACTOR:
             return GL_CONSTANT_COLOR_EXT;
-        case WINED3DBLEND_INVBLENDFACTOR:
+        case WINED3D_BLEND_INVBLENDFACTOR:
             return GL_ONE_MINUS_CONSTANT_COLOR_EXT;
         default:
             FIXME("Unhandled blend factor %#x.\n", factor);
@@ -339,7 +339,7 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
     const struct wined3d_surface *target = state->fb->render_targets[0];
     const struct wined3d_gl_info *gl_info = context->gl_info;
     GLenum srcBlend, dstBlend;
-    WINED3DBLEND d3d_blend;
+    enum wined3d_blend d3d_blend;
 
     /* According to the red book, GL_LINE_SMOOTH needs GL_BLEND with specific
      * blending parameters to work. */
@@ -367,16 +367,16 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
         return;
     };
 
-    /* WINED3DBLEND_BOTHSRCALPHA and WINED3DBLEND_BOTHINVSRCALPHA are legacy
+    /* WINED3D_BLEND_BOTHSRCALPHA and WINED3D_BLEND_BOTHINVSRCALPHA are legacy
      * source blending values which are still valid up to d3d9. They should
      * not occur as dest blend values. */
     d3d_blend = state->render_states[WINED3DRS_SRCBLEND];
-    if (d3d_blend == WINED3DBLEND_BOTHSRCALPHA)
+    if (d3d_blend == WINED3D_BLEND_BOTHSRCALPHA)
     {
         srcBlend = GL_SRC_ALPHA;
         dstBlend = GL_ONE_MINUS_SRC_ALPHA;
     }
-    else if (d3d_blend == WINED3DBLEND_BOTHINVSRCALPHA)
+    else if (d3d_blend == WINED3D_BLEND_BOTHINVSRCALPHA)
     {
         srcBlend = GL_ONE_MINUS_SRC_ALPHA;
         dstBlend = GL_SRC_ALPHA;
@@ -419,16 +419,16 @@ static void state_blend(struct wined3d_context *context, const struct wined3d_st
             return;
         }
 
-        /* WINED3DBLEND_BOTHSRCALPHA and WINED3DBLEND_BOTHINVSRCALPHA are legacy
+        /* WINED3D_BLEND_BOTHSRCALPHA and WINED3D_BLEND_BOTHINVSRCALPHA are legacy
          * source blending values which are still valid up to d3d9. They should
          * not occur as dest blend values. */
         d3d_blend = state->render_states[WINED3DRS_SRCBLENDALPHA];
-        if (d3d_blend == WINED3DBLEND_BOTHSRCALPHA)
+        if (d3d_blend == WINED3D_BLEND_BOTHSRCALPHA)
         {
             srcBlendAlpha = GL_SRC_ALPHA;
             dstBlendAlpha = GL_ONE_MINUS_SRC_ALPHA;
         }
-        else if (d3d_blend == WINED3DBLEND_BOTHINVSRCALPHA)
+        else if (d3d_blend == WINED3D_BLEND_BOTHINVSRCALPHA)
         {
             srcBlendAlpha = GL_ONE_MINUS_SRC_ALPHA;
             dstBlendAlpha = GL_SRC_ALPHA;

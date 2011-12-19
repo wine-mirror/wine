@@ -385,25 +385,24 @@ typedef enum _WINED3DRENDERSTATETYPE
 } WINED3DRENDERSTATETYPE;
 #define WINEHIGHEST_RENDER_STATE                                WINED3DRS_BLENDOPALPHA
 
-typedef enum _WINED3DBLEND
+enum wined3d_blend
 {
-    WINED3DBLEND_ZERO                       =  1,
-    WINED3DBLEND_ONE                        =  2,
-    WINED3DBLEND_SRCCOLOR                   =  3,
-    WINED3DBLEND_INVSRCCOLOR                =  4,
-    WINED3DBLEND_SRCALPHA                   =  5,
-    WINED3DBLEND_INVSRCALPHA                =  6,
-    WINED3DBLEND_DESTALPHA                  =  7,
-    WINED3DBLEND_INVDESTALPHA               =  8,
-    WINED3DBLEND_DESTCOLOR                  =  9,
-    WINED3DBLEND_INVDESTCOLOR               = 10,
-    WINED3DBLEND_SRCALPHASAT                = 11,
-    WINED3DBLEND_BOTHSRCALPHA               = 12,
-    WINED3DBLEND_BOTHINVSRCALPHA            = 13,
-    WINED3DBLEND_BLENDFACTOR                = 14,
-    WINED3DBLEND_INVBLENDFACTOR             = 15,
-    WINED3DBLEND_FORCE_DWORD                = 0x7fffffff
-} WINED3DBLEND;
+    WINED3D_BLEND_ZERO                      =  1,
+    WINED3D_BLEND_ONE                       =  2,
+    WINED3D_BLEND_SRCCOLOR                  =  3,
+    WINED3D_BLEND_INVSRCCOLOR               =  4,
+    WINED3D_BLEND_SRCALPHA                  =  5,
+    WINED3D_BLEND_INVSRCALPHA               =  6,
+    WINED3D_BLEND_DESTALPHA                 =  7,
+    WINED3D_BLEND_INVDESTALPHA              =  8,
+    WINED3D_BLEND_DESTCOLOR                 =  9,
+    WINED3D_BLEND_INVDESTCOLOR              = 10,
+    WINED3D_BLEND_SRCALPHASAT               = 11,
+    WINED3D_BLEND_BOTHSRCALPHA              = 12,
+    WINED3D_BLEND_BOTHINVSRCALPHA           = 13,
+    WINED3D_BLEND_BLENDFACTOR               = 14,
+    WINED3D_BLEND_INVBLENDFACTOR            = 15,
+};
 
 typedef enum _WINED3DBLENDOP
 {
