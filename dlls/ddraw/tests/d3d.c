@@ -71,16 +71,15 @@ typedef struct
 
 static HRESULT (WINAPI *pDirectDrawCreateEx)(LPGUID,LPVOID*,REFIID,LPUNKNOWN);
 
-typedef struct _VERTEX
+struct vec3
 {
-    float x, y, z;  /* position */
-} VERTEX, *LPVERTEX;
+    float x, y, z;
+};
 
-typedef struct _TVERTEX
+struct vec4
 {
-    float x, y, z;  /* position */
-    float rhw;
-} TVERTEX, *LPTVERTEX;
+    float x, y, z, w;
+};
 
 static BOOL compare_float(float f, float g, unsigned int ulps)
 {
@@ -98,19 +97,19 @@ static BOOL compare_float(float f, float g, unsigned int ulps)
     return TRUE;
 }
 
-static BOOL compare_vec3(VERTEX *vec, float x, float y, float z, unsigned int ulps)
+static BOOL compare_vec3(struct vec3 *vec, float x, float y, float z, unsigned int ulps)
 {
     return compare_float(vec->x, x, ulps)
             && compare_float(vec->y, y, ulps)
             && compare_float(vec->z, z, ulps);
 }
 
-static BOOL compare_vec4(TVERTEX *vec, float x, float y, float z, float w, unsigned int ulps)
+static BOOL compare_vec4(struct vec4 *vec, float x, float y, float z, float w, unsigned int ulps)
 {
     return compare_float(vec->x, x, ulps)
             && compare_float(vec->y, y, ulps)
             && compare_float(vec->z, z, ulps)
-            && compare_float(vec->rhw, w, ulps);
+            && compare_float(vec->w, w, ulps);
 }
 
 static void init_function_pointers(void)
@@ -457,10 +456,10 @@ static void LightTest(void)
 static void ProcessVerticesTest(void)
 {
     D3DVERTEXBUFFERDESC desc;
+    struct vec4 *out;
+    struct vec3 *out2;
+    struct vec3 *in;
     HRESULT rc;
-    VERTEX *in;
-    TVERTEX *out;
-    VERTEX *out2;
     D3DVIEWPORT7 vp;
     D3DMATRIX view = {  2.0, 0.0, 0.0, 0.0,
                         0.0, -1.0, 0.0, 0.0,
@@ -566,16 +565,16 @@ static void ProcessVerticesTest(void)
     /* Check the results */
     ok(compare_vec4(&out[0], +1.280e+2f, +1.280e+2f, +0.000e+0f, +1.000e+0f, 4096),
             "Got unexpected vertex 0 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[0].x, out[0].y, out[0].z, out[0].rhw);
+            out[0].x, out[0].y, out[0].z, out[0].w);
     ok(compare_vec4(&out[1], +1.920e+2f, +6.400e+1f, +1.000e+0f, +1.000e+0f, 4096),
             "Got unexpected vertex 1 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[1].x, out[1].y, out[1].z, out[1].rhw);
+            out[1].x, out[1].y, out[1].z, out[1].w);
     ok(compare_vec4(&out[2], +6.400e+1f, +1.920e+2f, +5.000e-1f, +1.000e+0f, 4096),
             "Got unexpected vertex 2 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[2].x, out[2].y, out[2].z, out[2].rhw);
+            out[2].x, out[2].y, out[2].z, out[2].w);
     ok(compare_vec4(&out[3], +1.600e+2f, +1.600e+2f, +2.500e-1f, +1.000e+0f, 4096),
             "Got unexpected vertex 3 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[3].x, out[3].y, out[3].z, out[3].rhw);
+            out[3].x, out[3].y, out[3].z, out[3].w);
 
     rc = IDirect3DVertexBuffer7_Unlock(lpVBufDest1);
     ok(rc==D3D_OK , "IDirect3DVertexBuffer::Unlock returned: %x\n", rc);
@@ -618,16 +617,16 @@ static void ProcessVerticesTest(void)
     /* Check the results */
     ok(compare_vec4(&out[0], +1.330e+2f, +7.000e+1f, -2.000e+0f, +1.000e+0f, 4096),
             "Got unexpected vertex 0 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[0].x, out[0].y, out[0].z, out[0].rhw);
+            out[0].x, out[0].y, out[0].z, out[0].w);
     ok(compare_vec4(&out[1], +2.560e+2f, +5.000e+0f, +4.000e+0f, +1.000e+0f, 4096),
             "Got unexpected vertex 1 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[1].x, out[1].y, out[1].z, out[1].rhw);
+            out[1].x, out[1].y, out[1].z, out[1].w);
     ok(compare_vec4(&out[2], +1.000e+1f, +1.350e+2f, +1.000e+0f, +1.000e+0f, 4096),
             "Got unexpected vertex 2 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[2].x, out[2].y, out[2].z, out[2].rhw);
+            out[2].x, out[2].y, out[2].z, out[2].w);
     ok(compare_vec4(&out[3], +1.945e+2f, +1.025e+2f, -5.000e-1f, +1.000e+0f, 4096),
             "Got unexpected vertex 3 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[3].x, out[3].y, out[3].z, out[3].rhw);
+            out[3].x, out[3].y, out[3].z, out[3].w);
 
     rc = IDirect3DVertexBuffer7_Unlock(lpVBufDest1);
     ok(rc==D3D_OK , "IDirect3DVertexBuffer::Unlock returned: %x\n", rc);
@@ -654,16 +653,16 @@ static void ProcessVerticesTest(void)
     /* Check the results */
     ok(compare_vec4(&out[0], +2.560e+2f, +7.000e+1f, -2.000e+0f, +3.333e-1f, 4096),
             "Got unexpected vertex 0 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[0].x, out[0].y, out[0].z, out[0].rhw);
+            out[0].x, out[0].y, out[0].z, out[0].w);
     ok(compare_vec4(&out[1], +2.560e+2f, +7.813e+1f, -2.750e+0f, +1.250e-1f, 4096),
             "Got unexpected vertex 1 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[1].x, out[1].y, out[1].z, out[1].rhw);
+            out[1].x, out[1].y, out[1].z, out[1].w);
     ok(compare_vec4(&out[2], +2.560e+2f, +4.400e+1f, +4.000e-1f, +4.000e-1f, 4096),
             "Got unexpected vertex 2 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[2].x, out[2].y, out[2].z, out[2].rhw);
+            out[2].x, out[2].y, out[2].z, out[2].w);
     ok(compare_vec4(&out[3], +2.560e+2f, +8.182e+1f, -3.091e+0f, +3.636e-1f, 4096),
             "Got unexpected vertex 3 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[3].x, out[3].y, out[3].z, out[3].rhw);
+            out[3].x, out[3].y, out[3].z, out[3].w);
 
     rc = IDirect3DVertexBuffer7_Unlock(lpVBufDest1);
     ok(rc==D3D_OK , "IDirect3DVertexBuffer::Unlock returned: %x\n", rc);
