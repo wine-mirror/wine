@@ -35,8 +35,6 @@ static LPDIRECTDRAWSURFACE7    lpDDS = NULL;
 static LPDIRECTDRAWSURFACE7    lpDDSdepth = NULL;
 static LPDIRECT3DDEVICE7       lpD3DDevice = NULL;
 static LPDIRECT3DVERTEXBUFFER7 lpVBufSrc = NULL;
-static LPDIRECT3DVERTEXBUFFER7 lpVBufDest1 = NULL;
-static LPDIRECT3DVERTEXBUFFER7 lpVBufDest2 = NULL;
 
 static IDirectDraw *DirectDraw1 = NULL;
 static IDirectDrawSurface *Surface1 = NULL;
@@ -70,47 +68,6 @@ typedef struct
 } D3D7ELifetimeTest;
 
 static HRESULT (WINAPI *pDirectDrawCreateEx)(LPGUID,LPVOID*,REFIID,LPUNKNOWN);
-
-struct vec3
-{
-    float x, y, z;
-};
-
-struct vec4
-{
-    float x, y, z, w;
-};
-
-static BOOL compare_float(float f, float g, unsigned int ulps)
-{
-    int x = *(int *)&f;
-    int y = *(int *)&g;
-
-    if (x < 0)
-        x = INT_MIN - x;
-    if (y < 0)
-        y = INT_MIN - y;
-
-    if (abs(x - y) > ulps)
-        return FALSE;
-
-    return TRUE;
-}
-
-static BOOL compare_vec3(struct vec3 *vec, float x, float y, float z, unsigned int ulps)
-{
-    return compare_float(vec->x, x, ulps)
-            && compare_float(vec->y, y, ulps)
-            && compare_float(vec->z, z, ulps);
-}
-
-static BOOL compare_vec4(struct vec4 *vec, float x, float y, float z, float w, unsigned int ulps)
-{
-    return compare_float(vec->x, x, ulps)
-            && compare_float(vec->y, y, ulps)
-            && compare_float(vec->z, z, ulps)
-            && compare_float(vec->w, w, ulps);
-}
 
 static void init_function_pointers(void)
 {
@@ -451,186 +408,6 @@ static void LightTest(void)
         rc = IDirect3DDevice7_LightEnable(lpD3DDevice, i, FALSE);
         ok(rc == D3D_OK, "Disabling light %u failed with %x\n", i, rc);
     }
-}
-
-static void ProcessVerticesTest(void)
-{
-    D3DVERTEXBUFFERDESC desc;
-    struct vec4 *out;
-    struct vec3 *out2;
-    struct vec3 *in;
-    D3DVIEWPORT7 vp;
-    HRESULT hr;
-
-    D3DMATRIX view = {  2.0, 0.0, 0.0, 0.0,
-                        0.0, -1.0, 0.0, 0.0,
-                        0.0, 0.0, 1.0, 0.0,
-                        0.0, 0.0, 0.0, 3.0 };
-
-    D3DMATRIX world = { 0.0, 1.0, 0.0, 0.0,
-                        1.0, 0.0, 0.0, 0.0,
-                        0.0, 0.0, 0.0, 1.0,
-                        0.0, 1.0, 1.0, 1.0 };
-
-    D3DMATRIX proj = {  1.0, 0.0, 0.0, 1.0,
-                        0.0, 1.0, 1.0, 0.0,
-                        0.0, 1.0, 1.0, 0.0,
-                        1.0, 0.0, 0.0, 1.0 };
-    /* Create some vertex buffers */
-
-    memset(&desc, 0, sizeof(desc));
-    desc.dwSize = sizeof(desc);
-    desc.dwCaps = 0;
-    desc.dwFVF = D3DFVF_XYZ;
-    desc.dwNumVertices = 16;
-    hr = IDirect3D7_CreateVertexBuffer(lpD3D, &desc, &lpVBufSrc, 0);
-    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
-
-    memset(&desc, 0, sizeof(desc));
-    desc.dwSize = sizeof(desc);
-    desc.dwCaps = 0;
-    desc.dwFVF = D3DFVF_XYZRHW;
-    desc.dwNumVertices = 16;
-    /* Msdn says that the last parameter must be 0 - check that */
-    hr = IDirect3D7_CreateVertexBuffer(lpD3D, &desc, &lpVBufDest1, 4);
-    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
-
-    memset(&desc, 0, sizeof(desc));
-    desc.dwSize = sizeof(desc);
-    desc.dwCaps = 0;
-    desc.dwFVF = D3DFVF_XYZ;
-    desc.dwNumVertices = 16;
-    /* Msdn says that the last parameter must be 0 - check that */
-    hr = IDirect3D7_CreateVertexBuffer(lpD3D, &desc, &lpVBufDest2, 12345678);
-    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
-
-    hr = IDirect3DVertexBuffer7_Lock(lpVBufSrc, 0, (void **)&in, NULL);
-    ok(SUCCEEDED(hr), "Failed to lock source vertex buffer, hr %#x.\n", hr);
-    in[0].x = 0.0f;
-    in[0].y = 0.0f;
-    in[0].z = 0.0f;
-    in[1].x = 1.0f;
-    in[1].y = 1.0f;
-    in[1].z = 1.0f;
-    in[2].x = -1.0f;
-    in[2].y = -1.0f;
-    in[2].z = 0.5f;
-    in[3].x = 0.5f;
-    in[3].y = -0.5f;
-    in[3].z = 0.25f;
-    hr = IDirect3DVertexBuffer7_Unlock(lpVBufSrc);
-    ok(SUCCEEDED(hr), "Failed to unlock source vertex buffer, hr %#x.\n", hr);
-
-    memset(&vp, 0, sizeof(vp));
-    vp.dwX = 64;
-    vp.dwY = 64;
-    vp.dwWidth = 128;
-    vp.dwHeight = 128;
-    vp.dvMinZ = 0.0f;
-    vp.dvMaxZ = 1.0f;
-    hr = IDirect3DDevice7_SetViewport(lpD3DDevice, &vp);
-    ok(SUCCEEDED(hr), "Failed to set viewport, hr %#x.\n", hr);
-
-    hr = IDirect3DVertexBuffer7_ProcessVertices(lpVBufDest1, D3DVOP_TRANSFORM, 0, 4, lpVBufSrc, 0, lpD3DDevice, 0);
-    ok(SUCCEEDED(hr), "Failed to process vertices, hr %#x.\n", hr);
-    hr = IDirect3DVertexBuffer7_ProcessVertices(lpVBufDest2, D3DVOP_TRANSFORM, 0, 4, lpVBufSrc, 0, lpD3DDevice, 0);
-    ok(SUCCEEDED(hr), "Failed to process vertices, hr %#x.\n", hr);
-
-    hr = IDirect3DVertexBuffer7_Lock(lpVBufDest1, 0, (void **)&out, NULL);
-    ok(SUCCEEDED(hr), "Failed to lock destination vertex buffer, hr %#x.\n", hr);
-    ok(compare_vec4(&out[0], +1.280e+2f, +1.280e+2f, +0.000e+0f, +1.000e+0f, 4096),
-            "Got unexpected vertex 0 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[0].x, out[0].y, out[0].z, out[0].w);
-    ok(compare_vec4(&out[1], +1.920e+2f, +6.400e+1f, +1.000e+0f, +1.000e+0f, 4096),
-            "Got unexpected vertex 1 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[1].x, out[1].y, out[1].z, out[1].w);
-    ok(compare_vec4(&out[2], +6.400e+1f, +1.920e+2f, +5.000e-1f, +1.000e+0f, 4096),
-            "Got unexpected vertex 2 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[2].x, out[2].y, out[2].z, out[2].w);
-    ok(compare_vec4(&out[3], +1.600e+2f, +1.600e+2f, +2.500e-1f, +1.000e+0f, 4096),
-            "Got unexpected vertex 3 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[3].x, out[3].y, out[3].z, out[3].w);
-    hr = IDirect3DVertexBuffer7_Unlock(lpVBufDest1);
-    ok(SUCCEEDED(hr), "Failed to unlock destination vertex buffer, hr %#x.\n", hr);
-    out = NULL;
-
-    hr = IDirect3DVertexBuffer7_Lock(lpVBufDest2, 0, (void **)&out2, NULL);
-    ok(SUCCEEDED(hr), "Failed to lock destination vertex buffer, hr %#x.\n", hr);
-    /* Small thing without much practical meaning, but I stumbled upon it,
-     * so let's check for it: If the output vertex buffer has to RHW value,
-     * The RHW value of the last vertex is written into the next vertex. */
-    ok(compare_vec3(&out2[4], +1.000e+0f, +0.000e+0f, +0.000e+0f, 4096),
-            "Got unexpected vertex 4 {%.8e, %.8e, %.8e}.\n",
-            out2[4].x, out2[4].y, out2[4].z);
-    hr = IDirect3DVertexBuffer7_Unlock(lpVBufDest2);
-    ok(SUCCEEDED(hr), "Failed to unlock destination vertex buffer, hr %#x.\n", hr);
-    out = NULL;
-
-    /* Try a more complicated viewport, same vertices. */
-    memset(&vp, 0, sizeof(vp));
-    vp.dwX = 10;
-    vp.dwY = 5;
-    vp.dwWidth = 246;
-    vp.dwHeight = 130;
-    vp.dvMinZ = -2.0;
-    vp.dvMaxZ = 4.0;
-    hr = IDirect3DDevice7_SetViewport(lpD3DDevice, &vp);
-    ok(SUCCEEDED(hr), "Failed to set viewport, hr %#x.\n", hr);
-
-    /* Process again */
-    hr = IDirect3DVertexBuffer7_ProcessVertices(lpVBufDest1, D3DVOP_TRANSFORM, 0, 4, lpVBufSrc, 0, lpD3DDevice, 0);
-    ok(SUCCEEDED(hr), "Failed to process vertices, hr %#x.\n", hr);
-
-    hr = IDirect3DVertexBuffer7_Lock(lpVBufDest1, 0, (void **) &out, NULL);
-    ok(SUCCEEDED(hr), "Failed to lock destination vertex buffer, hr %#x.\n", hr);
-    ok(compare_vec4(&out[0], +1.330e+2f, +7.000e+1f, -2.000e+0f, +1.000e+0f, 4096),
-            "Got unexpected vertex 0 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[0].x, out[0].y, out[0].z, out[0].w);
-    ok(compare_vec4(&out[1], +2.560e+2f, +5.000e+0f, +4.000e+0f, +1.000e+0f, 4096),
-            "Got unexpected vertex 1 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[1].x, out[1].y, out[1].z, out[1].w);
-    ok(compare_vec4(&out[2], +1.000e+1f, +1.350e+2f, +1.000e+0f, +1.000e+0f, 4096),
-            "Got unexpected vertex 2 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[2].x, out[2].y, out[2].z, out[2].w);
-    ok(compare_vec4(&out[3], +1.945e+2f, +1.025e+2f, -5.000e-1f, +1.000e+0f, 4096),
-            "Got unexpected vertex 3 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[3].x, out[3].y, out[3].z, out[3].w);
-    hr = IDirect3DVertexBuffer7_Unlock(lpVBufDest1);
-    ok(SUCCEEDED(hr), "Failed to unlock destination vertex buffer, hr %#x.\n", hr);
-    out = NULL;
-
-    /* Play with some matrices. */
-    hr = IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_WORLD, &world);
-    ok(SUCCEEDED(hr), "Failed to set world transform, hr %#x.\n", hr);
-    hr = IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_VIEW, &view);
-    ok(SUCCEEDED(hr), "Failed to set view transform, hr %#x.\n", hr);
-    hr = IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_PROJECTION, &proj);
-    ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
-
-    hr = IDirect3DVertexBuffer7_ProcessVertices(lpVBufDest1, D3DVOP_TRANSFORM, 0, 4, lpVBufSrc, 0, lpD3DDevice, 0);
-    ok(SUCCEEDED(hr), "Failed to process vertices, hr %#x.\n", hr);
-
-    hr = IDirect3DVertexBuffer7_Lock(lpVBufDest1, 0, (void **) &out, NULL);
-    ok(SUCCEEDED(hr), "Failed to lock destination vertex buffer, hr %#x.\n", hr);
-    ok(compare_vec4(&out[0], +2.560e+2f, +7.000e+1f, -2.000e+0f, +3.333e-1f, 4096),
-            "Got unexpected vertex 0 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[0].x, out[0].y, out[0].z, out[0].w);
-    ok(compare_vec4(&out[1], +2.560e+2f, +7.813e+1f, -2.750e+0f, +1.250e-1f, 4096),
-            "Got unexpected vertex 1 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[1].x, out[1].y, out[1].z, out[1].w);
-    ok(compare_vec4(&out[2], +2.560e+2f, +4.400e+1f, +4.000e-1f, +4.000e-1f, 4096),
-            "Got unexpected vertex 2 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[2].x, out[2].y, out[2].z, out[2].w);
-    ok(compare_vec4(&out[3], +2.560e+2f, +8.182e+1f, -3.091e+0f, +3.636e-1f, 4096),
-            "Got unexpected vertex 3 {%.8e, %.8e, %.8e, %.8e}.\n",
-            out[3].x, out[3].y, out[3].z, out[3].w);
-    hr = IDirect3DVertexBuffer7_Unlock(lpVBufDest1);
-    ok(SUCCEEDED(hr), "Failed to unlock destination vertex buffer, hr %#x.\n", hr);
-    out = NULL;
-
-    IDirect3DVertexBuffer7_Release(lpVBufSrc);
-    IDirect3DVertexBuffer7_Release(lpVBufDest1);
-    IDirect3DVertexBuffer7_Release(lpVBufDest2);
 }
 
 static void StateTest( void )
@@ -5157,7 +4934,6 @@ START_TEST(d3d)
         skip("Skipping d3d7 tests\n");
     } else {
         LightTest();
-        ProcessVerticesTest();
         StateTest();
         SceneTest();
         LimitTest();
