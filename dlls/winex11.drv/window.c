@@ -1007,19 +1007,28 @@ static void set_mwm_hints( Display *display, struct x11drv_win_data *data, DWORD
 {
     MwmHints mwm_hints;
 
-    mwm_hints.flags = MWM_HINTS_FUNCTIONS | MWM_HINTS_DECORATIONS;
-    mwm_hints.decorations = get_mwm_decorations( data, style, ex_style );
-    mwm_hints.functions = MWM_FUNC_MOVE;
-    if (is_window_resizable( data, style )) mwm_hints.functions |= MWM_FUNC_RESIZE;
-    if (!(style & WS_DISABLED))
+    if (data->hwnd == GetDesktopWindow())
     {
-        if (style & WS_MINIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MINIMIZE;
-        if (style & WS_MAXIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MAXIMIZE;
-        if (style & WS_SYSMENU)     mwm_hints.functions |= MWM_FUNC_CLOSE;
+        mwm_hints.decorations = MWM_DECOR_TITLE | MWM_DECOR_BORDER | MWM_DECOR_MENU | MWM_DECOR_MINIMIZE;
+        mwm_hints.functions   = MWM_FUNC_MOVE | MWM_FUNC_MINIMIZE | MWM_FUNC_CLOSE;
     }
+    else
+    {
+        mwm_hints.decorations = get_mwm_decorations( data, style, ex_style );
+        mwm_hints.functions = MWM_FUNC_MOVE;
+        if (is_window_resizable( data, style )) mwm_hints.functions |= MWM_FUNC_RESIZE;
+        if (!(style & WS_DISABLED))
+        {
+            if (style & WS_MINIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MINIMIZE;
+            if (style & WS_MAXIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MAXIMIZE;
+            if (style & WS_SYSMENU)     mwm_hints.functions |= MWM_FUNC_CLOSE;
+        }
+    }
+
     TRACE( "%p setting mwm hints to %lx,%lx (style %x exstyle %x)\n",
            data->hwnd, mwm_hints.decorations, mwm_hints.functions, style, ex_style );
 
+    mwm_hints.flags = MWM_HINTS_FUNCTIONS | MWM_HINTS_DECORATIONS;
     XChangeProperty( display, data->whole_window, x11drv_atom(_MOTIF_WM_HINTS),
                      x11drv_atom(_MOTIF_WM_HINTS), 32, PropModeReplace,
                      (unsigned char*)&mwm_hints, sizeof(mwm_hints)/sizeof(long) );
