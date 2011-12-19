@@ -882,6 +882,47 @@ static HRESULT compile_expression_statement(compiler_ctx_t *ctx, expression_stat
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    12.5 */
+static HRESULT compile_if_statement(compiler_ctx_t *ctx, if_statement_t *stat)
+{
+    unsigned jmp_else, jmp_end;
+    HRESULT hres;
+
+    hres = compile_expression(ctx, stat->expr);
+    if(FAILED(hres))
+        return hres;
+
+    jmp_else = push_instr(ctx, OP_jmp_z);
+    if(jmp_else == -1)
+        return E_OUTOFMEMORY;
+
+    hres = compile_statement(ctx, stat->if_stat);
+    if(FAILED(hres))
+        return hres;
+
+    jmp_end = push_instr(ctx, OP_jmp);
+    if(jmp_end == -1)
+        return E_OUTOFMEMORY;
+
+    instr_ptr(ctx, jmp_else)->arg1.uint = ctx->code_off;
+
+    if(push_instr(ctx, OP_pop) == -1)
+        return E_OUTOFMEMORY;
+
+    if(stat->else_stat) {
+        hres = compile_statement(ctx, stat->else_stat);
+        if(FAILED(hres))
+            return hres;
+    }else {
+        /* FIXME: We could sometimes avoid it */
+        if(push_instr(ctx, OP_undefined) == -1)
+            return E_OUTOFMEMORY;
+    }
+
+    instr_ptr(ctx, jmp_end)->arg1.uint = ctx->code_off;
+    return S_OK;
+}
+
 static HRESULT compile_statement(compiler_ctx_t *ctx, statement_t *stat)
 {
     switch(stat->type) {
@@ -889,6 +930,8 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_t *stat)
         return compile_block_statement(ctx, ((block_statement_t*)stat)->stat_list);
     case STAT_EXPR:
         return compile_expression_statement(ctx, (expression_statement_t*)stat);
+    case STAT_IF:
+        return compile_if_statement(ctx, (if_statement_t*)stat);
     default:
         return compile_interp_fallback(ctx, stat);
     }

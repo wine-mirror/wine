@@ -712,35 +712,6 @@ HRESULT empty_statement_eval(script_ctx_t *ctx, statement_t *stat, return_type_t
     return S_OK;
 }
 
-/* ECMA-262 3rd Edition    12.5 */
-HRESULT if_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
-{
-    if_statement_t *stat = (if_statement_t*)_stat;
-    VARIANT_BOOL b;
-    VARIANT v;
-    HRESULT hres;
-
-    TRACE("\n");
-
-    hres = expr_eval(ctx, stat->expr, 0, &rt->ei, &v);
-    if(FAILED(hres))
-        return hres;
-
-    hres = to_boolean(&v, &b);
-    VariantClear(&v);
-    if(FAILED(hres))
-        return hres;
-
-    if(b)
-        hres = stat_eval(ctx, stat->if_stat, rt, ret);
-    else if(stat->else_stat)
-        hres = stat_eval(ctx, stat->else_stat, rt, ret);
-    else
-        V_VT(ret) = VT_EMPTY;
-
-    return hres;
-}
-
 /* ECMA-262 3rd Edition    12.6.2 */
 HRESULT while_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
 {
