@@ -404,15 +404,14 @@ enum wined3d_blend
     WINED3D_BLEND_INVBLENDFACTOR            = 15,
 };
 
-typedef enum _WINED3DBLENDOP
+enum wined3d_blend_op
 {
-    WINED3DBLENDOP_ADD                      = 1,
-    WINED3DBLENDOP_SUBTRACT                 = 2,
-    WINED3DBLENDOP_REVSUBTRACT              = 3,
-    WINED3DBLENDOP_MIN                      = 4,
-    WINED3DBLENDOP_MAX                      = 5,
-    WINED3DBLENDOP_FORCE_DWORD              = 0x7fffffff
-} WINED3DBLENDOP;
+    WINED3D_BLEND_OP_ADD                    = 1,
+    WINED3D_BLEND_OP_SUBTRACT               = 2,
+    WINED3D_BLEND_OP_REVSUBTRACT            = 3,
+    WINED3D_BLEND_OP_MIN                    = 4,
+    WINED3D_BLEND_OP_MAX                    = 5,
+};
 
 typedef enum _WINED3DVERTEXBLENDFLAGS
 {

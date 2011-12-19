@@ -242,19 +242,19 @@ static void state_blendop_w(struct wined3d_context *context, const struct wined3
     WARN("Unsupported in local OpenGL implementation: glBlendEquation\n");
 }
 
-static GLenum gl_blend_op(WINED3DBLENDOP op)
+static GLenum gl_blend_op(enum wined3d_blend_op op)
 {
     switch (op)
     {
-        case WINED3DBLENDOP_ADD:
+        case WINED3D_BLEND_OP_ADD:
             return GL_FUNC_ADD_EXT;
-        case WINED3DBLENDOP_SUBTRACT:
+        case WINED3D_BLEND_OP_SUBTRACT:
             return GL_FUNC_SUBTRACT_EXT;
-        case WINED3DBLENDOP_REVSUBTRACT:
+        case WINED3D_BLEND_OP_REVSUBTRACT:
             return GL_FUNC_REVERSE_SUBTRACT_EXT;
-        case WINED3DBLENDOP_MIN:
+        case WINED3D_BLEND_OP_MIN:
             return GL_MIN_EXT;
-        case WINED3DBLENDOP_MAX:
+        case WINED3D_BLEND_OP_MAX:
             return GL_MAX_EXT;
         default:
             FIXME("Unhandled blend op %#x.\n", op);

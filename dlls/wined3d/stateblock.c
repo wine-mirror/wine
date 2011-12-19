@@ -1207,7 +1207,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     state->render_states[WINED3DRS_COLORWRITEENABLE] = 0x0000000f;
     tmpfloat.f = 0.0f;
     state->render_states[WINED3DRS_TWEENFACTOR] = tmpfloat.d;
-    state->render_states[WINED3DRS_BLENDOP] = WINED3DBLENDOP_ADD;
+    state->render_states[WINED3DRS_BLENDOP] = WINED3D_BLEND_OP_ADD;
     state->render_states[WINED3DRS_POSITIONDEGREE] = WINED3DDEGREE_CUBIC;
     state->render_states[WINED3DRS_NORMALDEGREE] = WINED3DDEGREE_LINEAR;
     /* states new in d3d9 */
@@ -1247,7 +1247,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     state->render_states[WINED3DRS_SEPARATEALPHABLENDENABLE] = FALSE;
     state->render_states[WINED3DRS_SRCBLENDALPHA] = WINED3D_BLEND_ONE;
     state->render_states[WINED3DRS_DESTBLENDALPHA] = WINED3D_BLEND_ZERO;
-    state->render_states[WINED3DRS_BLENDOPALPHA] = WINED3DBLENDOP_ADD;
+    state->render_states[WINED3DRS_BLENDOPALPHA] = WINED3D_BLEND_OP_ADD;
 
     /* Texture Stage States - Put directly into state block, we will call function below */
     for (i = 0; i < MAX_TEXTURES; ++i)
