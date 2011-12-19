@@ -94,7 +94,7 @@ struct ACImpl {
     LONG ref;
 
     snd_pcm_t *pcm_handle;
-    snd_pcm_uframes_t alsa_bufsize_frames;
+    snd_pcm_uframes_t alsa_bufsize_frames, alsa_period_frames;
     snd_pcm_hw_params_t *hw_params; /* does not hold state between calls */
     snd_pcm_format_t alsa_format;
 
@@ -110,7 +110,7 @@ struct ACImpl {
     BOOL initted, started;
     REFERENCE_TIME mmdev_period_rt;
     UINT64 written_frames, last_pos_frames;
-    UINT32 bufsize_frames, held_frames, tmp_buffer_frames;
+    UINT32 bufsize_frames, held_frames, tmp_buffer_frames, mmdev_period_frames;
     UINT32 lcl_offs_frames; /* offs into local_buffer where valid data starts */
 
     HANDLE timer;
@@ -808,9 +808,8 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
     ACImpl *This = impl_from_IAudioClient(iface);
     snd_pcm_sw_params_t *sw_params = NULL;
     snd_pcm_format_t format;
-    snd_pcm_uframes_t alsa_period_frames;
     const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)fmt;
-    unsigned int rate, mmdev_period_frames, alsa_period_us;
+    unsigned int rate, alsa_period_us;
     int err, i;
     HRESULT hr = S_OK;
 
@@ -955,19 +954,13 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         goto exit;
     }
 
-    if((err = snd_pcm_hw_params_current(This->pcm_handle, This->hw_params)) < 0){
-        WARN("Unable to get current hw params: %d (%s)\n", err, snd_strerror(err));
-        hr = E_FAIL;
-        goto exit;
-    }
-
     if((err = snd_pcm_hw_params_get_period_size(This->hw_params,
-                    &alsa_period_frames, NULL)) < 0){
+                    &This->alsa_period_frames, NULL)) < 0){
         WARN("Unable to get period size: %d (%s)\n", err, snd_strerror(err));
         hr = E_FAIL;
         goto exit;
     }
-    TRACE("alsa_period_frames: %lu\n", alsa_period_frames);
+    TRACE("alsa_period_frames: %lu\n", This->alsa_period_frames);
 
     if((err = snd_pcm_hw_params_get_buffer_size(This->hw_params,
                     &This->alsa_bufsize_frames)) < 0){
@@ -1020,10 +1013,10 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
     /* Check if the ALSA buffer is so small that it will run out before
      * the next MMDevAPI period tick occurs. Allow a little wiggle room
      * with 120% of the period time. */
-    mmdev_period_frames = fmt->nSamplesPerSec * (This->mmdev_period_rt / 10000000.);
-    if(This->alsa_bufsize_frames < 1.2 * mmdev_period_frames)
+    This->mmdev_period_frames = (fmt->nSamplesPerSec * This->mmdev_period_rt) / 10000000.;
+    if(This->alsa_bufsize_frames < 1.2 * This->mmdev_period_frames)
         FIXME("ALSA buffer time is smaller than our period time. Expect underruns. (%lu < %u)\n",
-                This->alsa_bufsize_frames, mmdev_period_frames);
+                This->alsa_bufsize_frames, This->mmdev_period_frames);
 
     This->bufsize_frames = ceil((duration / 10000000.) * fmt->nSamplesPerSec);
     This->local_buffer = HeapAlloc(GetProcessHeap(), 0,
@@ -1151,23 +1144,11 @@ static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient *iface,
         return AUDCLNT_E_NOT_INITIALIZED;
     }
 
-    if(This->dataflow == eRender){
-        snd_pcm_sframes_t avail_frames;
+    *out = This->held_frames;
 
-        avail_frames = snd_pcm_avail_update(This->pcm_handle);
-        if(This->alsa_bufsize_frames < avail_frames ||
-                snd_pcm_state(This->pcm_handle) == SND_PCM_STATE_XRUN)
-            *out = This->held_frames;
-        else
-            *out = This->alsa_bufsize_frames - avail_frames + This->held_frames;
-        TRACE("PCM state: %u, avail: %ld, pad: %u\n",
-                snd_pcm_state(This->pcm_handle), avail_frames, *out);
-    }else if(This->dataflow == eCapture){
-        *out = This->held_frames;
-    }else{
-        LeaveCriticalSection(&This->lock);
-        return E_UNEXPECTED;
-    }
+    /* call required to get accurate snd_pcm_state() */
+    snd_pcm_avail_update(This->pcm_handle);
+    TRACE("pad: %u, state: %u\n", *out, snd_pcm_state(This->pcm_handle));
 
     LeaveCriticalSection(&This->lock);
 
@@ -1554,7 +1535,7 @@ static snd_pcm_sframes_t alsa_write_best_effort(snd_pcm_t *handle, BYTE *buf,
 static void alsa_write_data(ACImpl *This)
 {
     snd_pcm_sframes_t written;
-    snd_pcm_uframes_t to_write, avail;
+    snd_pcm_uframes_t to_write, avail, write_limit, max_period, in_alsa;
     int err;
     BYTE *buf =
         This->local_buffer + (This->lcl_offs_frames * This->fmt->nBlockAlign);
@@ -1565,6 +1546,8 @@ static void alsa_write_data(ACImpl *This)
     if(snd_pcm_state(This->pcm_handle) == SND_PCM_STATE_XRUN ||
             avail > This->alsa_bufsize_frames){
         TRACE("XRun state, recovering\n");
+
+        avail = This->alsa_bufsize_frames;
 
         if((err = snd_pcm_recover(This->pcm_handle, -EPIPE, 1)) < 0)
             WARN("snd_pcm_recover failed: %d (%s)\n", err, snd_strerror(err));
@@ -1584,6 +1567,19 @@ static void alsa_write_data(ACImpl *This)
     else
         to_write = This->held_frames;
 
+    max_period = max(This->mmdev_period_frames, This->alsa_period_frames);
+
+    /* try to keep 3 ALSA periods or 3 MMDevAPI periods in the ALSA buffer and
+     * no more */
+    write_limit = 0;
+    in_alsa = This->alsa_bufsize_frames - avail;
+    while(in_alsa + write_limit < max_period * 3)
+        write_limit += max_period;
+    if(write_limit == 0)
+        return;
+
+    to_write = min(to_write, write_limit);
+
     written = alsa_write_best_effort(This->pcm_handle, buf, to_write, This);
     if(written < 0){
         WARN("Couldn't write: %ld (%s)\n", written, snd_strerror(written));
@@ -1599,10 +1595,10 @@ static void alsa_write_data(ACImpl *This)
         return;
     }
 
-    if(This->held_frames){
+    if(This->held_frames && (written < write_limit)){
         /* wrapped and have some data back at the start to write */
         written = alsa_write_best_effort(This->pcm_handle, This->local_buffer,
-                This->held_frames, This);
+                min(This->held_frames, write_limit - written), This);
         if(written < 0){
             WARN("Couldn't write: %ld (%s)\n", written, snd_strerror(written));
             return;
