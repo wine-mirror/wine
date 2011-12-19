@@ -1877,6 +1877,22 @@ DWORD WINAPI GetTcpTable(PMIB_TCPTABLE pTcpTable, PDWORD pdwSize, BOOL bOrder)
     return ret;
 }
 
+/******************************************************************
+ *    GetExtendedTcpTable (IPHLPAPI.@)
+ */
+DWORD WINAPI GetExtendedTcpTable(PVOID pTcpTable, PDWORD pdwSize, BOOL bOrder,
+                                 ULONG ulAf, TCP_TABLE_CLASS TableClass, ULONG Reserved)
+{
+    TRACE("pTcpTable %p, pdwSize %p, bOrder %d, ulAf %u, TableClass %u, Reserved %u\n",
+           pTcpTable, pdwSize, bOrder, ulAf, TableClass, Reserved);
+
+    if (ulAf == AF_INET6 || TableClass != TCP_TABLE_BASIC_ALL)
+    {
+        FIXME("ulAf = %u, TableClass = %u not supportted\n", ulAf, TableClass);
+        return ERROR_NOT_SUPPORTED;
+    }
+    return GetTcpTable(pTcpTable, pdwSize, bOrder);
+}
 
 /******************************************************************
  *    GetUdpTable (IPHLPAPI.@)

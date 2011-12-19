@@ -26,6 +26,7 @@
 @ stub GetBestInterfaceFromStack
 @ stdcall GetBestRoute( long long long )
 @ stub GetBestRouteFromStack
+@ stdcall GetExtendedTcpTable( ptr ptr long long long long )
 @ stdcall GetFriendlyIfIndex( long )
 @ stdcall GetIcmpStatistics( ptr )
 @ stub GetIcmpStatsFromStack
