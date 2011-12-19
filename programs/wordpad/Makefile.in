@@ -11,10 +11,7 @@ C_SRCS = \
 	registry.c \
 	wordpad.c
 
-RC_SRCS = \
-	En.rc \
-	wordpad.rc
-
+RC_SRCS = wordpad.rc
 PO_SRCS = wordpad.rc
 
 SVG_SRCS = \
