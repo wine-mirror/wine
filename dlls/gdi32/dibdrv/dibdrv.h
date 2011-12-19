@@ -112,7 +112,6 @@ typedef struct dibdrv_physdev
 } dibdrv_physdev;
 
 #define DEFER_PEN        2
-#define DEFER_BRUSH      4
 
 extern BOOL     dibdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
                                    PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION blend ) DECLSPEC_HIDDEN;
@@ -252,9 +251,4 @@ static inline int edge_coord( int y, int x1, int y1, int x2, int y2 )
 static inline BOOL defer_pen(dibdrv_physdev *pdev)
 {
     return pdev->defer & DEFER_PEN;
-}
-
-static inline BOOL defer_brush(dibdrv_physdev *pdev)
-{
-    return pdev->defer & DEFER_BRUSH;
 }

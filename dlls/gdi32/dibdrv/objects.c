@@ -1657,7 +1657,6 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
         pdev->brush_pattern_bits = bits;
         pdev->brush_pattern_usage = usage;
         pdev->brush_pattern_bitmap = bitmap;
-        pdev->defer &= ~DEFER_BRUSH;
         free_pattern_brush( pdev ); /* brush is actually selected only when it's used */
 
         return next->funcs->pSelectBrush( next, hbrush, bitmap, info, bits, usage );
@@ -1670,8 +1669,6 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
 
     pdev->brush_style = logbrush.lbStyle;
 
-    pdev->defer |= DEFER_BRUSH;
-
     free_pattern_brush( pdev );
 
     switch(logbrush.lbStyle)
@@ -1681,12 +1678,10 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
         pdev->brush_color = get_pixel_color( pdev, pdev->brush_colorref, TRUE );
         calc_and_xor_masks(GetROP2(dev->hdc), pdev->brush_color, &pdev->brush_and, &pdev->brush_xor);
         pdev->brush_rects = solid_brush;
-        pdev->defer &= ~DEFER_BRUSH;
         break;
 
     case BS_NULL:
         pdev->brush_rects = null_brush;
-        pdev->defer &= ~DEFER_BRUSH;
         break;
 
     case BS_HATCHED:
@@ -1696,7 +1691,6 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
         pdev->brush_color = get_pixel_color( pdev, pdev->brush_colorref, TRUE );
         calc_and_xor_masks(GetROP2(dev->hdc), pdev->brush_color, &pdev->brush_and, &pdev->brush_xor);
         pdev->brush_rects = pattern_brush;
-        pdev->defer &= ~DEFER_BRUSH;
         break;
 
     default:

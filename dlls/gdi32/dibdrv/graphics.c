@@ -467,26 +467,16 @@ static inline INT get_rop2_from_rop(INT rop)
  */
 BOOL dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pPatBlt );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     INT rop2 = get_rop2_from_rop(rop);
-    BOOL done;
+    BOOL ret;
 
     TRACE("(%p, %d, %d, %d, %d, %06x)\n", dev, dst->x, dst->y, dst->width, dst->height, rop);
 
-    if(defer_brush(pdev))
-        return next->funcs->pPatBlt( next, dst, rop );
-
     update_brush_rop( pdev, rop2 );
-
-    done = brush_rects( pdev, 1, &dst->visrect );
-
+    ret = brush_rects( pdev, 1, &dst->visrect );
     update_brush_rop( pdev, GetROP2(dev->hdc) );
-
-    if(!done)
-        return next->funcs->pPatBlt( next, dst, rop );
-
-    return TRUE;
+    return ret;
 }
 
 /***********************************************************************
@@ -494,15 +484,12 @@ BOOL dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
  */
 BOOL dibdrv_PaintRgn( PHYSDEV dev, HRGN rgn )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pPaintRgn );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     const WINEREGION *region;
     int i;
     RECT rect;
 
     TRACE("%p, %p\n", dev, rgn);
-
-    if(defer_brush(pdev)) return next->funcs->pPaintRgn( next, rgn );
 
     region = get_wine_region( rgn );
     if(!region) return FALSE;
@@ -587,7 +574,7 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 
     if(rect.left == rect.right || rect.top == rect.bottom) return TRUE;
 
-    if(defer_pen(pdev) || defer_brush(pdev))
+    if(defer_pen(pdev))
         return next->funcs->pRectangle( next, left, top, right, bottom );
 
     reset_dash_origin(pdev);
