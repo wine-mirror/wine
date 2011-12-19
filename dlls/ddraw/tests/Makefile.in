@@ -3,6 +3,7 @@ IMPORTS   = ddraw user32 gdi32 ole32
 
 C_SRCS = \
 	d3d.c \
+	ddraw4.c \
 	ddrawmodes.c \
 	dsurface.c \
 	overlay.c \
