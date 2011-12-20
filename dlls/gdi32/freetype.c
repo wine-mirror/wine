@@ -1587,16 +1587,14 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
             if(fake_family)
             {
                 english_family = towstr(CP_ACP, fake_family);
+                localised_family = NULL;
             }
             else
             {
                 english_family = get_face_name(ft_face, TT_NAME_ID_FONT_FAMILY, TT_MS_LANGID_ENGLISH_UNITED_STATES);
                 if(!english_family)
                     english_family = towstr(CP_ACP, ft_face->family_name);
-            }
 
-            localised_family = NULL;
-            if(!fake_family) {
                 localised_family = get_face_name(ft_face, TT_NAME_ID_FONT_FAMILY, GetUserDefaultLCID());
                 if(localised_family && !strcmpiW(localised_family, english_family)) {
                     HeapFree(GetProcessHeap(), 0, localised_family);
