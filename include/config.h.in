@@ -70,9 +70,6 @@
 /* Define if you have the daylight variable */
 #undef HAVE_DAYLIGHT
 
-/* Define to 1 if you have the <dbus/dbus.h> header file. */
-#undef HAVE_DBUS_DBUS_H
-
 /* Define to 1 if you have the <direct.h> header file. */
 #undef HAVE_DIRECT_H
 
@@ -250,9 +247,6 @@
 
 /* Define to 1 if you have the <gsm.h> header file. */
 #undef HAVE_GSM_H
-
-/* Define to 1 if you have the <hal/libhal.h> header file. */
-#undef HAVE_HAL_LIBHAL_H
 
 /* Define to 1 if you have the <ieeefp.h> header file. */
 #undef HAVE_IEEEFP_H
@@ -1207,6 +1201,9 @@
 
 /* Define to the soname of the libcurses library. */
 #undef SONAME_LIBCURSES
+
+/* Define to the soname of the libdbus-1 library. */
+#undef SONAME_LIBDBUS_1
 
 /* Define to the soname of the libfontconfig library. */
 #undef SONAME_LIBFONTCONFIG

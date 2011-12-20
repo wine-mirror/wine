@@ -42,6 +42,7 @@ AC_ARG_WITH(coreaudio, AS_HELP_STRING([--without-coreaudio],[do not use the Core
 AC_ARG_WITH(cups,      AS_HELP_STRING([--without-cups],[do not use CUPS]))
 AC_ARG_WITH(curses,    AS_HELP_STRING([--without-curses],[do not use (n)curses]),
             [if test "x$withval" = "xno"; then ac_cv_header_ncurses_h=no; ac_cv_header_curses_h=no; fi])
+AC_ARG_WITH(dbus,      AS_HELP_STRING([--without-dbus],[do not use DBus (dynamic device support)]))
 AC_ARG_WITH(fontconfig,AS_HELP_STRING([--without-fontconfig],[do not use fontconfig]),
             [if test "x$withval" = "xno"; then ac_cv_header_fontconfig_fontconfig_h=no; fi])
 AC_ARG_WITH(freetype,  AS_HELP_STRING([--without-freetype],[do not use the FreeType library]))
@@ -1211,9 +1212,27 @@ fi
 WINE_WARNING_WITH(xslt,[test "x$ac_cv_lib_soname_xslt" = "x"],
                  [libxslt ${notice_platform}development files not found, xslt won't be supported.])
 
+dnl **** Check for libdbus ****
+if test "x$with_dbus" != "xno"
+then
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    if test "$PKG_CONFIG" != "false"
+    then
+        ac_dbus_libs="`$PKG_CONFIG --libs dbus-1 2>/dev/null`"
+        ac_dbus_cflags="`$PKG_CONFIG --cflags dbus-1 2>/dev/null`"
+        CPPFLAGS="$CPPFLAGS $ac_dbus_cflags"
+    fi
+    AC_CHECK_HEADER([dbus/dbus.h],
+        [WINE_CHECK_SONAME(dbus-1, dbus_connection_close,
+            [AC_SUBST(DBUSINCL,"$ac_dbus_cflags")],,[$ac_dbus_libs])])
+    CPPFLAGS="$ac_save_CPPFLAGS"
+fi
+WINE_NOTICE_WITH(dbus,[test "x$ac_cv_lib_soname_dbus_1" = "x" -a \
+                            "x$ac_cv_header_DiskArbitration_DiskArbitration_h" != "xyes"],
+                 [libdbus ${notice_platform}development files not found, no dynamic device support.])
+
 dnl **** Check for libhal ****
-AC_SUBST(HALINCL,"")
-if test "x$with_hal" != "xno"
+if test "x$with_hal" != "xno" -a "x$ac_cv_lib_soname_dbus_1" != x
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
     if test "$PKG_CONFIG" != "false"
@@ -1222,17 +1241,14 @@ then
         ac_hal_cflags="`$PKG_CONFIG --cflags hal 2>/dev/null`"
         CPPFLAGS="$CPPFLAGS $ac_hal_cflags"
     fi
-    AC_CHECK_HEADERS([dbus/dbus.h hal/libhal.h])
-    if test "$ac_cv_header_dbus_dbus_h" = "yes" -a "$ac_cv_header_hal_libhal_h" = "yes"
-    then
-        AC_CHECK_LIB(dbus-1, dbus_connection_close,
-          [WINE_CHECK_SONAME(hal, libhal_ctx_new,
-            [HALINCL="$ac_hal_cflags"],,[$ac_hal_libs])],,[$ac_hal_libs])
-    fi
+    AC_CHECK_HEADER([hal/libhal.h],
+        [WINE_CHECK_SONAME(hal, libhal_ctx_new,
+            [AC_SUBST(HALINCL,"$ac_hal_cflags")],,[$ac_hal_libs])])
     CPPFLAGS="$ac_save_CPPFLAGS"
+    WINE_NOTICE_WITH(hal,[test "x$ac_cv_lib_soname_hal" = "x" -a \
+                               "x$ac_cv_header_DiskArbitration_DiskArbitration_h" != "xyes"],
+                     [libhal ${notice_platform}development files not found, no legacy dynamic device support.])
 fi
-WINE_NOTICE_WITH(hal,[test "x$ac_cv_lib_soname_hal" = "x" -a "x$ac_cv_header_DiskArbitration_DiskArbitration_h" != "xyes"],
-                 [libhal/libdbus ${notice_platform}development files not found, no dynamic device support.])
 
 dnl **** Check for libgnutls ****
 if test "x$with_gnutls" != "xno"

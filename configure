@@ -644,6 +644,7 @@ SANEINCL
 sane_devel
 GNUTLSINCL
 HALINCL
+DBUSINCL
 XSLTINCL
 XML2INCL
 XML2LIBS
@@ -782,6 +783,7 @@ with_cms
 with_coreaudio
 with_cups
 with_curses
+with_dbus
 with_fontconfig
 with_freetype
 with_gettext
@@ -1472,6 +1474,7 @@ Optional Packages:
   --without-coreaudio     do not use the CoreAudio sound support
   --without-cups          do not use CUPS
   --without-curses        do not use (n)curses
+  --without-dbus          do not use DBus (dynamic device support)
   --without-fontconfig    do not use fontconfig
   --without-freetype      do not use the FreeType library
   --without-gettext       do not use gettext
@@ -2548,6 +2551,12 @@ fi
 # Check whether --with-curses was given.
 if test "${with_curses+set}" = set; then :
   withval=$with_curses; if test "x$withval" = "xno"; then ac_cv_header_ncurses_h=no; ac_cv_header_curses_h=no; fi
+fi
+
+
+# Check whether --with-dbus was given.
+if test "${with_dbus+set}" = set; then :
+  withval=$with_dbus;
 fi
 
 
@@ -9490,40 +9499,25 @@ This is an error since --with-xslt was requested." "$LINENO" 5 ;;
 esac
 fi
 
-HALINCL=""
-
-if test "x$with_hal" != "xno"
+if test "x$with_dbus" != "xno"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
     if test "$PKG_CONFIG" != "false"
     then
-        ac_hal_libs="`$PKG_CONFIG --libs hal 2>/dev/null`"
-        ac_hal_cflags="`$PKG_CONFIG --cflags hal 2>/dev/null`"
-        CPPFLAGS="$CPPFLAGS $ac_hal_cflags"
+        ac_dbus_libs="`$PKG_CONFIG --libs dbus-1 2>/dev/null`"
+        ac_dbus_cflags="`$PKG_CONFIG --cflags dbus-1 2>/dev/null`"
+        CPPFLAGS="$CPPFLAGS $ac_dbus_cflags"
     fi
-    for ac_header in dbus/dbus.h hal/libhal.h
-do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-
-done
-
-    if test "$ac_cv_header_dbus_dbus_h" = "yes" -a "$ac_cv_header_hal_libhal_h" = "yes"
-    then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for dbus_connection_close in -ldbus-1" >&5
-$as_echo_n "checking for dbus_connection_close in -ldbus-1... " >&6; }
-if ${ac_cv_lib_dbus_1_dbus_connection_close+:} false; then :
+    ac_fn_c_check_header_mongrel "$LINENO" "dbus/dbus.h" "ac_cv_header_dbus_dbus_h" "$ac_includes_default"
+if test "x$ac_cv_header_dbus_dbus_h" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -ldbus-1" >&5
+$as_echo_n "checking for -ldbus-1... " >&6; }
+if ${ac_cv_lib_soname_dbus_1+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-ldbus-1 $ac_hal_libs $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  ac_check_soname_save_LIBS=$LIBS
+LIBS="-ldbus-1 $ac_dbus_libs $LIBS"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 /* Override any GCC internal prototype to avoid an error.
@@ -9542,17 +9536,57 @@ return dbus_connection_close ();
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_dbus_1_dbus_connection_close=yes
-else
-  ac_cv_lib_dbus_1_dbus_connection_close=no
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_dbus_1=`$ac_cv_path_LDD conftest.exe | grep "dbus-1" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_dbus_1=`otool -L conftest$ac_exeext | grep "libdbus-1\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libdbus-1\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_dbus_1=`$ac_cv_path_LDD conftest$ac_exeext | grep "libdbus-1\\.$LIBEXT" | sed -e "s/^.*\(libdbus-1\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
+  LIBS=$ac_check_soname_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_dbus_1_dbus_connection_close" >&5
-$as_echo "$ac_cv_lib_dbus_1_dbus_connection_close" >&6; }
-if test "x$ac_cv_lib_dbus_1_dbus_connection_close" = xyes; then :
+if test "x$ac_cv_lib_soname_dbus_1" = "x"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_dbus_1" >&5
+$as_echo "$ac_cv_lib_soname_dbus_1" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBDBUS_1 "$ac_cv_lib_soname_dbus_1"
+_ACEOF
+
+       DBUSINCL="$ac_dbus_cflags"
+
+fi
+fi
+
+
+    CPPFLAGS="$ac_save_CPPFLAGS"
+fi
+if test "x$ac_cv_lib_soname_dbus_1" = "x" -a \
+                            "x$ac_cv_header_DiskArbitration_DiskArbitration_h" != "xyes"; then :
+  case "x$with_dbus" in
+  x)   as_fn_append wine_notices "|libdbus ${notice_platform}development files not found, no dynamic device support." ;;
+  xno) ;;
+  *)   as_fn_error $? "libdbus ${notice_platform}development files not found, no dynamic device support.
+This is an error since --with-dbus was requested." "$LINENO" 5 ;;
+esac
+fi
+
+if test "x$with_hal" != "xno" -a "x$ac_cv_lib_soname_dbus_1" != x
+then
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    if test "$PKG_CONFIG" != "false"
+    then
+        ac_hal_libs="`$PKG_CONFIG --libs hal 2>/dev/null`"
+        ac_hal_cflags="`$PKG_CONFIG --cflags hal 2>/dev/null`"
+        CPPFLAGS="$CPPFLAGS $ac_hal_cflags"
+    fi
+    ac_fn_c_check_header_mongrel "$LINENO" "hal/libhal.h" "ac_cv_header_hal_libhal_h" "$ac_includes_default"
+if test "x$ac_cv_header_hal_libhal_h" = xyes; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lhal" >&5
 $as_echo_n "checking for -lhal... " >&6; }
 if ${ac_cv_lib_soname_hal+:} false; then :
@@ -9602,19 +9636,21 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
        HALINCL="$ac_hal_cflags"
+
 fi
 fi
 
-    fi
+
     CPPFLAGS="$ac_save_CPPFLAGS"
-fi
-if test "x$ac_cv_lib_soname_hal" = "x" -a "x$ac_cv_header_DiskArbitration_DiskArbitration_h" != "xyes"; then :
+    if test "x$ac_cv_lib_soname_hal" = "x" -a \
+                               "x$ac_cv_header_DiskArbitration_DiskArbitration_h" != "xyes"; then :
   case "x$with_hal" in
-  x)   as_fn_append wine_notices "|libhal/libdbus ${notice_platform}development files not found, no dynamic device support." ;;
+  x)   as_fn_append wine_notices "|libhal ${notice_platform}development files not found, no legacy dynamic device support." ;;
   xno) ;;
-  *)   as_fn_error $? "libhal/libdbus ${notice_platform}development files not found, no dynamic device support.
+  *)   as_fn_error $? "libhal ${notice_platform}development files not found, no legacy dynamic device support.
 This is an error since --with-hal was requested." "$LINENO" 5 ;;
 esac
+fi
 fi
 
 if test "x$with_gnutls" != "xno"
