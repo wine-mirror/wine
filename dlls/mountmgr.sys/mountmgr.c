@@ -461,7 +461,7 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     RtlInitUnicodeString( &nameW, harddiskW );
     status = IoCreateDriver( &nameW, harddisk_driver_entry );
 
-    initialize_hal();
+    initialize_dbus();
     initialize_diskarbitration();
 
     return status;

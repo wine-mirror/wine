@@ -1,5 +1,5 @@
 /*
- * HAL devices support
+ * DBus devices support
  *
  * Copyright 2006 Alexandre Julliard
  *
@@ -26,8 +26,10 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/time.h>
-#ifdef SONAME_LIBHAL
+#ifdef SONAME_LIBDBUS_1
 # include <dbus/dbus.h>
+#endif
+#ifdef SONAME_LIBHAL
 # include <hal/libhal.h>
 #endif
 
@@ -135,7 +137,7 @@ static GUID *parse_uuid( GUID *guid, const char *str )
 }
 
 /* HAL callback for new device */
-static void new_device( LibHalContext *ctx, const char *udi )
+static void hal_new_device( LibHalContext *ctx, const char *udi )
 {
     DBusError error;
     char *parent = NULL;
@@ -187,7 +189,7 @@ done:
 }
 
 /* HAL callback for removed device */
-static void removed_device( LibHalContext *ctx, const char *udi )
+static void hal_removed_device( LibHalContext *ctx, const char *udi )
 {
     DBusError error;
 
@@ -203,17 +205,17 @@ static void removed_device( LibHalContext *ctx, const char *udi )
 }
 
 /* HAL callback for property changes */
-static void property_modified (LibHalContext *ctx, const char *udi,
-                               const char *key, dbus_bool_t is_removed, dbus_bool_t is_added)
+static void hal_property_modified (LibHalContext *ctx, const char *udi,
+                                   const char *key, dbus_bool_t is_removed, dbus_bool_t is_added)
 {
     TRACE( "udi %s key %s %s\n", wine_dbgstr_a(udi), wine_dbgstr_a(key),
-                is_added ? "added" : is_removed ? "removed" : "modified" );
+           is_added ? "added" : is_removed ? "removed" : "modified" );
 
-    if (!strcmp( key, "volume.mount_point" )) new_device( ctx, udi );
+    if (!strcmp( key, "volume.mount_point" )) hal_new_device( ctx, udi );
 }
 
 
-static DWORD WINAPI hal_thread( void *arg )
+static DWORD WINAPI dbus_thread( void *arg )
 {
     DBusError error;
     DBusConnection *dbc;
@@ -232,9 +234,9 @@ static DWORD WINAPI hal_thread( void *arg )
     }
 
     p_libhal_ctx_set_dbus_connection( ctx, dbc );
-    p_libhal_ctx_set_device_added( ctx, new_device );
-    p_libhal_ctx_set_device_removed( ctx, removed_device );
-    p_libhal_ctx_set_device_property_modified( ctx, property_modified );
+    p_libhal_ctx_set_device_added( ctx, hal_new_device );
+    p_libhal_ctx_set_device_removed( ctx, hal_removed_device );
+    p_libhal_ctx_set_device_property_modified( ctx, hal_property_modified );
 
     if (!p_libhal_ctx_init( ctx, &error ))
     {
@@ -247,7 +249,7 @@ static DWORD WINAPI hal_thread( void *arg )
     if (!(list = p_libhal_get_all_devices( ctx, &num, &error ))) p_dbus_error_free( &error );
     else
     {
-        for (i = 0; i < num; i++) new_device( ctx, list[i] );
+        for (i = 0; i < num; i++) hal_new_device( ctx, list[i] );
         p_libhal_free_string_array( list );
     }
 
@@ -269,20 +271,20 @@ static DWORD WINAPI hal_thread( void *arg )
     return 0;
 }
 
-void initialize_hal(void)
+void initialize_dbus(void)
 {
     HANDLE handle;
 
     if (!load_functions()) return;
-    if (!(handle = CreateThread( NULL, 0, hal_thread, NULL, 0, NULL ))) return;
+    if (!(handle = CreateThread( NULL, 0, dbus_thread, NULL, 0, NULL ))) return;
     CloseHandle( handle );
 }
 
 #else  /* SONAME_LIBHAL */
 
-void initialize_hal(void)
+void initialize_dbus(void)
 {
-    TRACE( "Skipping, HAL support not compiled in\n" );
+    TRACE( "Skipping, DBUS support not compiled in\n" );
 }
 
 #endif  /* SONAME_LIBHAL */

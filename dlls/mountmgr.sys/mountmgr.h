@@ -35,7 +35,7 @@
 #define WINE_MOUNTMGR_EXTENSIONS
 #include "ddk/mountmgr.h"
 
-extern void initialize_hal(void) DECLSPEC_HIDDEN;
+extern void initialize_dbus(void) DECLSPEC_HIDDEN;
 extern void initialize_diskarbitration(void) DECLSPEC_HIDDEN;
 
 /* device functions */

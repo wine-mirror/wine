@@ -6,9 +6,9 @@ EXTRADEFS = @HALINCL@
 EXTRALIBS = @DISKARBITRATIONLIB@
 
 C_SRCS = \
+	dbus.c \
 	device.c \
 	diskarb.c \
-	hal.c \
 	mountmgr.c
 
 @MAKE_DLL_RULES@
