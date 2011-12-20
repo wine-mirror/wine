@@ -1877,6 +1877,8 @@ static HRESULT SS_ItemOut( SCRIPT_STRING_ANALYSIS ssa,
     INT runStart, runEnd;
     INT iGlyph, cGlyphs;
     HFONT oldFont = 0x0;
+    RECT  crc;
+    int i;
 
     TRACE("(%p,%d,%d,%d,%d,%d, 0x%1x, %d, %d)\n",
          ssa, iX, iY, iItem, cStart, cEnd, uOptions, fSelected, fDisabled);
@@ -1887,6 +1889,7 @@ static HRESULT SS_ItemOut( SCRIPT_STRING_ANALYSIS ssa,
          (cEnd >= 0 && analysis->pItem[iItem].iCharPos >= cEnd))
             return S_OK;
 
+    CopyRect(&crc,prc);
     if (fSelected)
     {
         BkMode = GetBkMode(analysis->hdc);
@@ -1917,6 +1920,7 @@ static HRESULT SS_ItemOut( SCRIPT_STRING_ANALYSIS ssa,
             ScriptStringCPtoX(ssa, cEnd, FALSE, &off_x);
         else
             ScriptStringCPtoX(ssa, analysis->pItem[iItem+1].iCharPos-1, TRUE, &off_x);
+        crc.left = iX + off_x;
     }
     else
     {
@@ -1924,6 +1928,7 @@ static HRESULT SS_ItemOut( SCRIPT_STRING_ANALYSIS ssa,
             ScriptStringCPtoX(ssa, cStart, FALSE, &off_x);
         else
             ScriptStringCPtoX(ssa, analysis->pItem[iItem].iCharPos, FALSE, &off_x);
+        crc.left = iX + off_x;
     }
 
     if (analysis->pItem[iItem].a.fRTL)
@@ -1937,6 +1942,24 @@ static HRESULT SS_ItemOut( SCRIPT_STRING_ANALYSIS ssa,
         cGlyphs = analysis->glyphs[iItem].pwLogClust[runEnd] - iGlyph;
 
     cGlyphs++;
+
+    /* adjust for cluster glyphs when starting */
+    if (analysis->pItem[iItem].a.fRTL)
+        i = analysis->pItem[iItem+1].iCharPos - 1;
+    else
+        i = analysis->pItem[iItem].iCharPos;
+
+    for (; i >=analysis->pItem[iItem].iCharPos && i < analysis->pItem[iItem+1].iCharPos; (analysis->pItem[iItem].a.fRTL)?i--:i++)
+    {
+        if (analysis->glyphs[iItem].pwLogClust[i - analysis->pItem[iItem].iCharPos] == iGlyph)
+        {
+            if (analysis->pItem[iItem].a.fRTL)
+                ScriptStringCPtoX(ssa, i, TRUE, &off_x);
+            else
+                ScriptStringCPtoX(ssa, i, FALSE, &off_x);
+            break;
+        }
+    }
 
     if (cEnd < 0 || scriptInformation[analysis->pItem[iItem].a.eScript].props.fNeedsCaretInfo)
     {
@@ -1959,7 +1982,7 @@ static HRESULT SS_ItemOut( SCRIPT_STRING_ANALYSIS ssa,
 
     hr = ScriptTextOut(analysis->hdc,
                        (SCRIPT_CACHE *)&analysis->glyphs[iItem].sc, iX + off_x,
-                       iY, uOptions, prc, &analysis->pItem[iItem].a, NULL, 0,
+                       iY, uOptions, &crc, &analysis->pItem[iItem].a, NULL, 0,
                        &analysis->glyphs[iItem].glyphs[iGlyph], cGlyphs,
                        &analysis->glyphs[iItem].piAdvance[iGlyph], NULL,
                        &analysis->glyphs[iItem].pGoffset[iGlyph]);
