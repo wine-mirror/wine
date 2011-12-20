@@ -1529,8 +1529,7 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
             lstrcpyW(fodInfos->filename,nameBit);
 
             *nameBit = 0x00;
-            if (fodInfos->initdir == NULL)
-                MemFree(fodInfos->initdir);
+            MemFree(fodInfos->initdir);
             fodInfos->initdir = MemAlloc((lstrlenW(tmpBuf) + 1)*sizeof(WCHAR));
             lstrcpyW(fodInfos->initdir, tmpBuf);
             handledPath = TRUE;
