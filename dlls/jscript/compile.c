@@ -915,7 +915,7 @@ static HRESULT compile_if_statement(compiler_ctx_t *ctx, if_statement_t *stat)
     if(FAILED(hres))
         return hres;
 
-    jmp_else = push_instr(ctx, OP_cnd_z);
+    jmp_else = push_instr(ctx, OP_jmp_z);
     if(jmp_else == -1)
         return E_OUTOFMEMORY;
 
@@ -928,9 +928,6 @@ static HRESULT compile_if_statement(compiler_ctx_t *ctx, if_statement_t *stat)
         return E_OUTOFMEMORY;
 
     instr_ptr(ctx, jmp_else)->arg1.uint = ctx->code_off;
-
-    if(push_instr(ctx, OP_pop) == -1)
-        return E_OUTOFMEMORY;
 
     if(stat->else_stat) {
         hres = compile_statement(ctx, stat->else_stat);

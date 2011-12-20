@@ -2884,6 +2884,28 @@ static HRESULT interp_jmp(exec_ctx_t *ctx)
     return S_OK;
 }
 
+static HRESULT interp_jmp_z(exec_ctx_t *ctx)
+{
+    const unsigned arg = ctx->parser->code->instrs[ctx->ip].arg1.uint;
+    VARIANT_BOOL b;
+    VARIANT *v;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    v = stack_pop(ctx);
+    hres = to_boolean(v, &b);
+    VariantClear(v);
+    if(FAILED(hres))
+        return hres;
+
+    if(b)
+        ctx->ip++;
+    else
+        ctx->ip = arg;
+    return S_OK;
+}
+
 static HRESULT interp_pop(exec_ctx_t *ctx)
 {
     TRACE("\n");
