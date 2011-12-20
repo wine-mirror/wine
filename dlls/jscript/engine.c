@@ -29,8 +29,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
-#define EXPR_NOVAL   0x0001
-
 static const WCHAR booleanW[] = {'b','o','o','l','e','a','n',0};
 static const WCHAR functionW[] = {'f','u','n','c','t','i','o','n',0};
 static const WCHAR numberW[] = {'n','u','m','b','e','r',0};
@@ -54,7 +52,7 @@ static inline HRESULT stat_eval(script_ctx_t *ctx, statement_t *stat, return_typ
     return stat->eval(ctx, stat, rt, ret);
 }
 
-static HRESULT expr_eval(script_ctx_t*,expression_t*,DWORD,jsexcept_t*,VARIANT*);
+static HRESULT expr_eval(script_ctx_t*,expression_t*,jsexcept_t*,VARIANT*);
 
 static HRESULT stack_push(exec_ctx_t *ctx, VARIANT *v)
 {
@@ -674,7 +672,7 @@ static HRESULT variable_list_eval(script_ctx_t *ctx, variable_declaration_t *var
         if(!iter->expr)
             continue;
 
-        hres = expr_eval(ctx, iter->expr, 0, ei, &val);
+        hres = expr_eval(ctx, iter->expr, ei, &val);
         if(FAILED(hres))
             break;
 
@@ -718,7 +716,7 @@ HRESULT while_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_
 
     while(1) {
         if(test_expr) {
-            hres = expr_eval(ctx, stat->expr, 0, &rt->ei, &tmp);
+            hres = expr_eval(ctx, stat->expr, &rt->ei, &tmp);
             if(FAILED(hres))
                 break;
 
@@ -770,7 +768,7 @@ HRESULT for_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t 
         if(FAILED(hres))
             return hres;
     }else if(stat->begin_expr) {
-        hres = expr_eval(ctx, stat->begin_expr, 0, &rt->ei, &val);
+        hres = expr_eval(ctx, stat->begin_expr, &rt->ei, &val);
         if(FAILED(hres))
             return hres;
 
@@ -781,7 +779,7 @@ HRESULT for_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t 
 
     while(1) {
         if(stat->expr) {
-            hres = expr_eval(ctx, stat->expr, 0, &rt->ei, &tmp);
+            hres = expr_eval(ctx, stat->expr, &rt->ei, &tmp);
             if(FAILED(hres))
                 break;
 
@@ -804,7 +802,7 @@ HRESULT for_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t 
             break;
 
         if(stat->end_expr) {
-            hres = expr_eval(ctx, stat->end_expr, 0, &rt->ei, &val);
+            hres = expr_eval(ctx, stat->end_expr, &rt->ei, &val);
             if(FAILED(hres))
                 break;
 
@@ -847,7 +845,7 @@ HRESULT forin_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_
             return hres;
     }
 
-    hres = expr_eval(ctx, stat->in_expr, 0, &rt->ei, &val);
+    hres = expr_eval(ctx, stat->in_expr, &rt->ei, &val);
     if(FAILED(hres))
         return hres;
 
@@ -896,7 +894,7 @@ HRESULT forin_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_
                 hres = member_expression_eval(ctx, stat->expr, &rt->ei, &exprval);
                 break;
             default:
-                hres = expr_eval(ctx, stat->expr, 0, &rt->ei, &tmp);
+                hres = expr_eval(ctx, stat->expr, &rt->ei, &tmp);
                 if(FAILED(hres))
                     break;
 
@@ -985,7 +983,7 @@ HRESULT return_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type
     TRACE("\n");
 
     if(stat->expr) {
-        hres = expr_eval(ctx, stat->expr, 0, &rt->ei, ret);
+        hres = expr_eval(ctx, stat->expr, &rt->ei, ret);
         if(FAILED(hres))
             return hres;
     }else {
@@ -1008,7 +1006,7 @@ HRESULT with_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t
 
     TRACE("\n");
 
-    hres = expr_eval(ctx, stat->expr, 0, &rt->ei, &val);
+    hres = expr_eval(ctx, stat->expr, &rt->ei, &val);
     if(FAILED(hres))
         return hres;
 
@@ -1054,7 +1052,7 @@ HRESULT switch_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type
 
     TRACE("\n");
 
-    hres = expr_eval(ctx, stat->expr, 0, &rt->ei, &val);
+    hres = expr_eval(ctx, stat->expr, &rt->ei, &val);
     if(FAILED(hres))
         return hres;
 
@@ -1064,7 +1062,7 @@ HRESULT switch_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type
             continue;
         }
 
-        hres = expr_eval(ctx, iter->expr, 0, &rt->ei, &cval);
+        hres = expr_eval(ctx, iter->expr, &rt->ei, &cval);
         if(FAILED(hres))
             break;
 
@@ -1119,7 +1117,7 @@ HRESULT throw_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_
 
     TRACE("\n");
 
-    hres = expr_eval(ctx, stat->expr, 0, &rt->ei, &val);
+    hres = expr_eval(ctx, stat->expr, &rt->ei, &val);
     if(FAILED(hres))
         return hres;
 
@@ -1240,11 +1238,11 @@ static HRESULT array_expression_eval(script_ctx_t *ctx, expression_t *_expr, jse
 
     TRACE("\n");
 
-    hres = expr_eval(ctx, expr->expression1, 0, ei, &member);
+    hres = expr_eval(ctx, expr->expression1, ei, &member);
     if(FAILED(hres))
         return hres;
 
-    hres = expr_eval(ctx, expr->expression2, 0, ei, &val);
+    hres = expr_eval(ctx, expr->expression2, ei, &val);
     if(SUCCEEDED(hres)) {
         hres = to_object(ctx, &member, &obj);
         if(FAILED(hres))
@@ -1321,7 +1319,7 @@ static HRESULT member_expression_eval(script_ctx_t *ctx, expression_t *_expr, js
 
     TRACE("\n");
 
-    hres = expr_eval(ctx, expr->expression, 0, ei, &member);
+    hres = expr_eval(ctx, expr->expression, ei, &member);
     if(FAILED(hres))
         return hres;
 
@@ -2983,7 +2981,7 @@ HRESULT compiled_statement_eval(script_ctx_t *ctx, statement_t *stat, return_typ
     return S_OK;
 }
 
-static HRESULT expr_eval(script_ctx_t *ctx, expression_t *expr, DWORD flags, jsexcept_t *ei, VARIANT *ret)
+static HRESULT expr_eval(script_ctx_t *ctx, expression_t *expr, jsexcept_t *ei, VARIANT *ret)
 {
     exec_ctx_t *exec_ctx = ctx->exec_ctx;
     unsigned prev_ip, prev_top;
@@ -2994,7 +2992,7 @@ static HRESULT expr_eval(script_ctx_t *ctx, expression_t *expr, DWORD flags, jse
     TRACE("\n");
 
     if(expr->instr_off == -1) {
-        hres = compile_subscript(ctx->exec_ctx->parser, expr, !(flags & EXPR_NOVAL), &expr->instr_off);
+        hres = compile_subscript(ctx->exec_ctx->parser, expr, &expr->instr_off);
         if(FAILED(hres))
             return hres;
     }
@@ -3021,7 +3019,7 @@ static HRESULT expr_eval(script_ctx_t *ctx, expression_t *expr, DWORD flags, jse
         return hres;
     }
 
-    assert(exec_ctx->top == prev_top+1 || ((flags&EXPR_NOVAL) && exec_ctx->top == prev_top));
+    assert(exec_ctx->top == prev_top+1);
 
     if(exec_ctx->top == prev_top)
         V_VT(ret) = VT_EMPTY;

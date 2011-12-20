@@ -1003,9 +1003,8 @@ static HRESULT init_compiler(parser_ctx_t *parser)
     return S_OK;
 }
 
-HRESULT compile_subscript(parser_ctx_t *parser, expression_t *expr, BOOL do_ret, unsigned *ret_off)
+HRESULT compile_subscript(parser_ctx_t *parser, expression_t *expr, unsigned *ret_off)
 {
-    BOOL no_ret = FALSE;
     HRESULT hres;
 
     hres = init_compiler(parser);
@@ -1013,7 +1012,7 @@ HRESULT compile_subscript(parser_ctx_t *parser, expression_t *expr, BOOL do_ret,
         return hres;
 
     *ret_off = parser->compiler->code_off;
-    hres = compile_expression_noret(parser->compiler, expr, do_ret ? NULL : &no_ret);
+    hres = compile_expression(parser->compiler, expr);
     if(FAILED(hres))
         return hres;
 
