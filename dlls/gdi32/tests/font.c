@@ -4121,7 +4121,6 @@ static void test_vertical_font(void)
     }
 
     num = pAddFontResourceExA(ttf_name, FR_PRIVATE, 0);
-    todo_wine
     ok(num == 2, "AddFontResourceExA should add 2 fonts from vertical.ttf\n");
 
     check_vertical_font("@WineTestVertical", &installed, &selected, &gm);
@@ -4133,11 +4132,8 @@ static void test_vertical_font(void)
        gm.gmBlackBoxX, gm.gmBlackBoxY);
 
     check_vertical_font("@@WineTestVertical", &installed, &selected, &gm);
-    todo_wine
     ok(installed, "@@WineTestVertical is not installed\n");
-    todo_wine
     ok(selected, "@@WineTestVertical is not selected\n");
-    todo_wine
     ok(gm.gmBlackBoxX < gm.gmBlackBoxY,
        "gmBlackBoxX(%u) should be less than gmBlackBoxY(%u) if vertical\n",
        gm.gmBlackBoxX, gm.gmBlackBoxY);

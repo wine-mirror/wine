@@ -1450,11 +1450,25 @@ static void AddFaceToFamily(Face *face, Family *family)
     list_add_before( entry, &face->entry );
 }
 
+static WCHAR *prepend_at(WCHAR *family)
+{
+    WCHAR *str;
+
+    if (!family)
+        return NULL;
+
+    str = HeapAlloc(GetProcessHeap(), 0, sizeof (WCHAR) * (strlenW(family) + 2));
+    str[0] = '@';
+    strcpyW(str + 1, family);
+    HeapFree(GetProcessHeap(), 0, family);
+    return str;
+}
+
 #define ADDFONT_EXTERNAL_FONT 0x01
 #define ADDFONT_FORCE_BITMAP  0x02
 #define ADDFONT_ADD_TO_CACHE  0x04
 
-static void AddFaceToList(FT_Face ft_face, char *fake_family, const char *file, void *font_data_ptr, DWORD font_data_size, FT_Long face_index, DWORD flags)
+static void AddFaceToList(FT_Face ft_face, char *fake_family, const char *file, void *font_data_ptr, DWORD font_data_size, FT_Long face_index, DWORD flags, BOOL vertical)
 {
     int bitmap_num = 0;
     Family *family;
@@ -1492,6 +1506,12 @@ static void AddFaceToList(FT_Face ft_face, char *fake_family, const char *file, 
                 HeapFree(GetProcessHeap(), 0, localised_family);
                 localised_family = NULL;
             }
+        }
+
+        if (vertical)
+        {
+            english_family = prepend_at(english_family);
+            localised_family = prepend_at(localised_family);
         }
 
         family = find_family_from_name(localised_family ? localised_family : english_family);
@@ -1671,6 +1691,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
     WCHAR *localised_family;
     FT_Error err;
     FT_Long face_index = 0, num_faces;
+    INT ret = 0;
 
     /* we always load external fonts from files - otherwise we would get a crash in update_reg_entries */
     assert(file || !(flags & ADDFONT_EXTERNAL_FONT));
@@ -1779,12 +1800,19 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
             HeapFree(GetProcessHeap(), 0, localised_family);
         }
 
-        AddFaceToList(ft_face, fake_family, file, font_data_ptr, font_data_size, face_index, flags);
+        AddFaceToList(ft_face, fake_family, file, font_data_ptr, font_data_size, face_index, flags, FALSE);
+        ++ret;
+
+        if (FT_HAS_VERTICAL(ft_face))
+        {
+            AddFaceToList(ft_face, fake_family, file, font_data_ptr, font_data_size, face_index, flags, TRUE);
+            ++ret;
+        }
 
 	num_faces = ft_face->num_faces;
 	pFT_Done_Face(ft_face);
     } while(num_faces > ++face_index);
-    return num_faces;
+    return ret;
 }
 
 static INT AddFontFileToList(const char *file, char *fake_family, const WCHAR *target_family, DWORD flags)
