@@ -1454,20 +1454,223 @@ static void AddFaceToFamily(Face *face, Family *family)
 #define ADDFONT_FORCE_BITMAP  0x02
 #define ADDFONT_ADD_TO_CACHE  0x04
 
+static void AddFaceToList(FT_Face ft_face, char *fake_family, const char *file, void *font_data_ptr, DWORD font_data_size, FT_Long face_index, DWORD flags)
+{
+    int bitmap_num = 0;
+    Family *family;
+    WCHAR *StyleW;
+
+    do {
+        TT_OS2 *pOS2;
+        TT_Header *pHeader;
+        WCHAR *english_family, *localised_family;
+        Face *face;
+        struct list *face_elem_ptr;
+        FT_WinFNT_HeaderRec winfnt_header;
+        int internal_leading;
+        FONTSIGNATURE fs;
+        My_FT_Bitmap_Size *size = NULL;
+        FT_ULong tmp_size;
+
+        if(!FT_IS_SCALABLE(ft_face))
+            size = (My_FT_Bitmap_Size *)ft_face->available_sizes + bitmap_num;
+
+        if (fake_family)
+        {
+            english_family = towstr(CP_ACP, fake_family);
+            localised_family = NULL;
+        }
+        else
+        {
+            english_family = get_face_name(ft_face, TT_NAME_ID_FONT_FAMILY, TT_MS_LANGID_ENGLISH_UNITED_STATES);
+            if (!english_family)
+                english_family = towstr(CP_ACP, ft_face->family_name);
+
+            localised_family = get_face_name(ft_face, TT_NAME_ID_FONT_FAMILY, GetUserDefaultLCID());
+            if (localised_family && !strcmpiW(localised_family, english_family))
+            {
+                HeapFree(GetProcessHeap(), 0, localised_family);
+                localised_family = NULL;
+            }
+        }
+
+        family = find_family_from_name(localised_family ? localised_family : english_family);
+        if(!family) {
+            family = HeapAlloc(GetProcessHeap(), 0, sizeof(*family));
+            family->FamilyName = strdupW(localised_family ? localised_family : english_family);
+            family->EnglishName = localised_family ? strdupW(english_family) : NULL;
+            list_init(&family->faces);
+            list_add_tail(&font_list, &family->entry);
+
+            if(localised_family) {
+                FontSubst *subst = HeapAlloc(GetProcessHeap(), 0, sizeof(*subst));
+                subst->from.name = strdupW(english_family);
+                subst->from.charset = -1;
+                subst->to.name = strdupW(localised_family);
+                subst->to.charset = -1;
+                add_font_subst(&font_subst_list, subst, 0);
+            }
+        }
+        HeapFree(GetProcessHeap(), 0, localised_family);
+        HeapFree(GetProcessHeap(), 0, english_family);
+
+        StyleW = towstr(CP_ACP, ft_face->style_name);
+
+        internal_leading = 0;
+        memset(&fs, 0, sizeof(fs));
+
+        pOS2 = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
+        if(pOS2) {
+            fs.fsCsb[0] = pOS2->ulCodePageRange1;
+            fs.fsCsb[1] = pOS2->ulCodePageRange2;
+            fs.fsUsb[0] = pOS2->ulUnicodeRange1;
+            fs.fsUsb[1] = pOS2->ulUnicodeRange2;
+            fs.fsUsb[2] = pOS2->ulUnicodeRange3;
+            fs.fsUsb[3] = pOS2->ulUnicodeRange4;
+            if(pOS2->version == 0) {
+                FT_UInt dummy;
+
+                if(pFT_Get_First_Char( ft_face, &dummy ) < 0x100)
+                    fs.fsCsb[0] |= FS_LATIN1;
+                else
+                    fs.fsCsb[0] |= FS_SYMBOL;
+            }
+        }
+        else if(!pFT_Get_WinFNT_Header(ft_face, &winfnt_header)) {
+            CHARSETINFO csi;
+            TRACE("pix_h %d charset %d dpi %dx%d pt %d\n", winfnt_header.pixel_height, winfnt_header.charset,
+                  winfnt_header.vertical_resolution,winfnt_header.horizontal_resolution, winfnt_header.nominal_point_size);
+            if(TranslateCharsetInfo((DWORD*)(UINT_PTR)winfnt_header.charset, &csi, TCI_SRCCHARSET))
+                fs = csi.fs;
+            internal_leading = winfnt_header.internal_leading;
+        }
+
+        pHeader = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_head);
+        LIST_FOR_EACH(face_elem_ptr, &family->faces) {
+            face = LIST_ENTRY(face_elem_ptr, Face, entry);
+            if(!strcmpiW(face->StyleName, StyleW) &&
+               (FT_IS_SCALABLE(ft_face) || ((size->y_ppem == face->size.y_ppem) && !memcmp(&fs, &face->fs, sizeof(fs)) ))) {
+                TRACE("Already loaded font %s %s original version is %lx, this version is %lx\n",
+                      debugstr_w(family->FamilyName), debugstr_w(StyleW),
+                      face->font_version,  pHeader ? pHeader->Font_Revision : 0);
+
+                if(fake_family) {
+                    TRACE("This font is a replacement but the original really exists, so we'll skip the replacement\n");
+                    HeapFree(GetProcessHeap(), 0, StyleW);
+                    return;
+                }
+                if(!pHeader || pHeader->Font_Revision <= face->font_version) {
+                    TRACE("Original font is newer so skipping this one\n");
+                    HeapFree(GetProcessHeap(), 0, StyleW);
+                    return;
+                } else {
+                    TRACE("Replacing original with this one\n");
+                    list_remove(&face->entry);
+                    HeapFree(GetProcessHeap(), 0, face->file);
+                    HeapFree(GetProcessHeap(), 0, face->StyleName);
+                    HeapFree(GetProcessHeap(), 0, face->FullName);
+                    HeapFree(GetProcessHeap(), 0, face);
+                    break;
+                }
+            }
+        }
+        face = HeapAlloc(GetProcessHeap(), 0, sizeof(*face));
+        face->cached_enum_data = NULL;
+        face->StyleName = StyleW;
+        face->FullName = get_face_name(ft_face, TT_NAME_ID_FULL_NAME, TT_MS_LANGID_ENGLISH_UNITED_STATES);
+        if (file)
+        {
+            face->file = strdupA(file);
+            face->font_data_ptr = NULL;
+            face->font_data_size = 0;
+        }
+        else
+        {
+            face->file = NULL;
+            face->font_data_ptr = font_data_ptr;
+            face->font_data_size = font_data_size;
+        }
+        face->face_index = face_index;
+        face->ntmFlags = 0;
+        if (ft_face->style_flags & FT_STYLE_FLAG_ITALIC)
+            face->ntmFlags |= NTM_ITALIC;
+        if (ft_face->style_flags & FT_STYLE_FLAG_BOLD)
+            face->ntmFlags |= NTM_BOLD;
+        if (face->ntmFlags == 0) face->ntmFlags = NTM_REGULAR;
+        face->font_version = pHeader ? pHeader->Font_Revision : 0;
+        face->family = family;
+        face->external = (flags & ADDFONT_EXTERNAL_FONT) ? TRUE : FALSE;
+        face->fs = fs;
+        memset(&face->fs_links, 0, sizeof(face->fs_links));
+
+        if(FT_IS_SCALABLE(ft_face)) {
+            memset(&face->size, 0, sizeof(face->size));
+            face->scalable = TRUE;
+        } else {
+            TRACE("Adding bitmap size h %d w %d size %ld x_ppem %ld y_ppem %ld\n",
+                  size->height, size->width, size->size >> 6,
+                  size->x_ppem >> 6, size->y_ppem >> 6);
+            face->size.height = size->height;
+            face->size.width = size->width;
+            face->size.size = size->size;
+            face->size.x_ppem = size->x_ppem;
+            face->size.y_ppem = size->y_ppem;
+            face->size.internal_leading = internal_leading;
+            face->scalable = FALSE;
+        }
+
+        /* check for the presence of the 'CFF ' table to check if the font is Type1 */
+        tmp_size = 0;
+        if (!pFT_Load_Sfnt_Table(ft_face, FT_MAKE_TAG('C','F','F',' '), 0, NULL, &tmp_size))
+        {
+            TRACE("Font %s/%p is OTF Type1\n", wine_dbgstr_a(file), font_data_ptr);
+            face->ntmFlags |= NTM_PS_OPENTYPE;
+        }
+
+        TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
+              face->fs.fsCsb[0], face->fs.fsCsb[1],
+              face->fs.fsUsb[0], face->fs.fsUsb[1],
+              face->fs.fsUsb[2], face->fs.fsUsb[3]);
+
+        if(face->fs.fsCsb[0] == 0)
+        {
+            int i;
+
+            /* let's see if we can find any interesting cmaps */
+            for(i = 0; i < ft_face->num_charmaps; i++) {
+                switch(ft_face->charmaps[i]->encoding) {
+                case FT_ENCODING_UNICODE:
+                case FT_ENCODING_APPLE_ROMAN:
+			face->fs.fsCsb[0] |= FS_LATIN1;
+                    break;
+                case FT_ENCODING_MS_SYMBOL:
+                    face->fs.fsCsb[0] |= FS_SYMBOL;
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+
+        if(flags & ADDFONT_ADD_TO_CACHE)
+            add_face_to_cache(face);
+
+        AddFaceToFamily(face, family);
+
+    } while(!FT_IS_SCALABLE(ft_face) && ++bitmap_num < ft_face->num_fixed_sizes);
+
+    TRACE("Added font %s %s\n", debugstr_w(family->FamilyName),
+          debugstr_w(StyleW));
+}
+
 static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_size, char *fake_family, const WCHAR *target_family, DWORD flags)
 {
     FT_Face ft_face;
     TT_OS2 *pOS2;
     TT_Header *pHeader = NULL;
-    WCHAR *english_family, *localised_family, *StyleW;
-    Family *family;
-    Face *face;
-    struct list *face_elem_ptr;
+    WCHAR *localised_family;
     FT_Error err;
     FT_Long face_index = 0, num_faces;
-    FT_WinFNT_HeaderRec winfnt_header;
-    int i, bitmap_num, internal_leading;
-    FONTSIGNATURE fs;
 
     /* we always load external fonts from files - otherwise we would get a crash in update_reg_entries */
     assert(file || !(flags & ADDFONT_EXTERNAL_FONT));
@@ -1576,199 +1779,10 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
             HeapFree(GetProcessHeap(), 0, localised_family);
         }
 
-        bitmap_num = 0;
-        do {
-            My_FT_Bitmap_Size *size = NULL;
-            FT_ULong tmp_size;
-
-            if(!FT_IS_SCALABLE(ft_face))
-                size = (My_FT_Bitmap_Size *)ft_face->available_sizes + bitmap_num;
-
-            if(fake_family)
-            {
-                english_family = towstr(CP_ACP, fake_family);
-                localised_family = NULL;
-            }
-            else
-            {
-                english_family = get_face_name(ft_face, TT_NAME_ID_FONT_FAMILY, TT_MS_LANGID_ENGLISH_UNITED_STATES);
-                if(!english_family)
-                    english_family = towstr(CP_ACP, ft_face->family_name);
-
-                localised_family = get_face_name(ft_face, TT_NAME_ID_FONT_FAMILY, GetUserDefaultLCID());
-                if(localised_family && !strcmpiW(localised_family, english_family)) {
-                    HeapFree(GetProcessHeap(), 0, localised_family);
-                    localised_family = NULL;
-                }
-            }
-
-            family = find_family_from_name(localised_family ? localised_family : english_family);
-            if(!family) {
-                family = HeapAlloc(GetProcessHeap(), 0, sizeof(*family));
-                family->FamilyName = strdupW(localised_family ? localised_family : english_family);
-                family->EnglishName = localised_family ? strdupW(english_family) : NULL;
-                list_init(&family->faces);
-                list_add_tail(&font_list, &family->entry);
-
-                if(localised_family) {
-                    FontSubst *subst = HeapAlloc(GetProcessHeap(), 0, sizeof(*subst));
-                    subst->from.name = strdupW(english_family);
-                    subst->from.charset = -1;
-                    subst->to.name = strdupW(localised_family);
-                    subst->to.charset = -1;
-                    add_font_subst(&font_subst_list, subst, 0);
-                }
-            }
-            HeapFree(GetProcessHeap(), 0, localised_family);
-            HeapFree(GetProcessHeap(), 0, english_family);
-
-            StyleW = towstr(CP_ACP, ft_face->style_name);
-
-            internal_leading = 0;
-            memset(&fs, 0, sizeof(fs));
-
-            pOS2 = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
-            if(pOS2) {
-                fs.fsCsb[0] = pOS2->ulCodePageRange1;
-                fs.fsCsb[1] = pOS2->ulCodePageRange2;
-                fs.fsUsb[0] = pOS2->ulUnicodeRange1;
-                fs.fsUsb[1] = pOS2->ulUnicodeRange2;
-                fs.fsUsb[2] = pOS2->ulUnicodeRange3;
-                fs.fsUsb[3] = pOS2->ulUnicodeRange4;
-                if(pOS2->version == 0) {
-                    FT_UInt dummy;
-
-                    if(pFT_Get_First_Char( ft_face, &dummy ) < 0x100)
-                        fs.fsCsb[0] |= FS_LATIN1;
-                    else
-                        fs.fsCsb[0] |= FS_SYMBOL;
-                }
-            }
-            else if(!pFT_Get_WinFNT_Header(ft_face, &winfnt_header)) {
-                CHARSETINFO csi;
-                TRACE("pix_h %d charset %d dpi %dx%d pt %d\n", winfnt_header.pixel_height, winfnt_header.charset,
-                      winfnt_header.vertical_resolution,winfnt_header.horizontal_resolution, winfnt_header.nominal_point_size);
-                if(TranslateCharsetInfo((DWORD*)(UINT_PTR)winfnt_header.charset, &csi, TCI_SRCCHARSET))
-                    fs = csi.fs;
-                internal_leading = winfnt_header.internal_leading;
-            }
-
-            LIST_FOR_EACH(face_elem_ptr, &family->faces) {
-                face = LIST_ENTRY(face_elem_ptr, Face, entry);
-                if(!strcmpiW(face->StyleName, StyleW) &&
-                   (FT_IS_SCALABLE(ft_face) || ((size->y_ppem == face->size.y_ppem) && !memcmp(&fs, &face->fs, sizeof(fs)) ))) {
-                    TRACE("Already loaded font %s %s original version is %lx, this version is %lx\n",
-                          debugstr_w(family->FamilyName), debugstr_w(StyleW),
-                          face->font_version,  pHeader ? pHeader->Font_Revision : 0);
-
-                    if(fake_family) {
-                        TRACE("This font is a replacement but the original really exists, so we'll skip the replacement\n");
-                        HeapFree(GetProcessHeap(), 0, StyleW);
-                        pFT_Done_Face(ft_face);
-                        return 1;
-                    }
-                    if(!pHeader || pHeader->Font_Revision <= face->font_version) {
-                        TRACE("Original font is newer so skipping this one\n");
-                        HeapFree(GetProcessHeap(), 0, StyleW);
-                        pFT_Done_Face(ft_face);
-                        return 1;
-                    } else {
-                        TRACE("Replacing original with this one\n");
-                        list_remove(&face->entry);
-                        HeapFree(GetProcessHeap(), 0, face->file);
-                        HeapFree(GetProcessHeap(), 0, face->StyleName);
-                        HeapFree(GetProcessHeap(), 0, face->FullName);
-                        HeapFree(GetProcessHeap(), 0, face);
-                        break;
-                    }
-                }
-            }
-            face = HeapAlloc(GetProcessHeap(), 0, sizeof(*face));
-            face->cached_enum_data = NULL;
-            face->StyleName = StyleW;
-            face->FullName = get_face_name(ft_face, TT_NAME_ID_FULL_NAME, TT_MS_LANGID_ENGLISH_UNITED_STATES);
-            if (file)
-            {
-                face->file = strdupA(file);
-                face->font_data_ptr = NULL;
-                face->font_data_size = 0;
-            }
-            else
-            {
-                face->file = NULL;
-                face->font_data_ptr = font_data_ptr;
-                face->font_data_size = font_data_size;
-            }
-            face->face_index = face_index;
-            face->ntmFlags = 0;
-            if (ft_face->style_flags & FT_STYLE_FLAG_ITALIC)
-                face->ntmFlags |= NTM_ITALIC;
-            if (ft_face->style_flags & FT_STYLE_FLAG_BOLD)
-                face->ntmFlags |= NTM_BOLD;
-            if (face->ntmFlags == 0) face->ntmFlags = NTM_REGULAR;
-            face->font_version = pHeader ? pHeader->Font_Revision : 0;
-            face->family = family;
-            face->external = (flags & ADDFONT_EXTERNAL_FONT) ? TRUE : FALSE;
-            face->fs = fs;
-            memset(&face->fs_links, 0, sizeof(face->fs_links));
-
-            if(FT_IS_SCALABLE(ft_face)) {
-                memset(&face->size, 0, sizeof(face->size));
-                face->scalable = TRUE;
-            } else {
-                TRACE("Adding bitmap size h %d w %d size %ld x_ppem %ld y_ppem %ld\n",
-                      size->height, size->width, size->size >> 6,
-                      size->x_ppem >> 6, size->y_ppem >> 6);
-                face->size.height = size->height;
-                face->size.width = size->width;
-                face->size.size = size->size;
-                face->size.x_ppem = size->x_ppem;
-                face->size.y_ppem = size->y_ppem;
-                face->size.internal_leading = internal_leading;
-                face->scalable = FALSE;
-            }
-
-            /* check for the presence of the 'CFF ' table to check if the font is Type1 */
-            tmp_size = 0;
-            if (!pFT_Load_Sfnt_Table(ft_face, FT_MAKE_TAG('C','F','F',' '), 0, NULL, &tmp_size))
-            {
-                TRACE("Font %s/%p is OTF Type1\n", wine_dbgstr_a(file), font_data_ptr);
-                face->ntmFlags |= NTM_PS_OPENTYPE;
-            }
-
-            TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
-                  face->fs.fsCsb[0], face->fs.fsCsb[1],
-                  face->fs.fsUsb[0], face->fs.fsUsb[1],
-                  face->fs.fsUsb[2], face->fs.fsUsb[3]);
-
-
-            if(face->fs.fsCsb[0] == 0) { /* let's see if we can find any interesting cmaps */
-                for(i = 0; i < ft_face->num_charmaps; i++) {
-                    switch(ft_face->charmaps[i]->encoding) {
-                    case FT_ENCODING_UNICODE:
-                    case FT_ENCODING_APPLE_ROMAN:
-			face->fs.fsCsb[0] |= FS_LATIN1;
-                        break;
-                    case FT_ENCODING_MS_SYMBOL:
-                        face->fs.fsCsb[0] |= FS_SYMBOL;
-                        break;
-                    default:
-                        break;
-                    }
-                }
-            }
-
-            if(flags & ADDFONT_ADD_TO_CACHE)
-                add_face_to_cache(face);
-
-            AddFaceToFamily(face, family);
-
-        } while(!FT_IS_SCALABLE(ft_face) && ++bitmap_num < ft_face->num_fixed_sizes);
+        AddFaceToList(ft_face, fake_family, file, font_data_ptr, font_data_size, face_index, flags);
 
 	num_faces = ft_face->num_faces;
 	pFT_Done_Face(ft_face);
-	TRACE("Added font %s %s\n", debugstr_w(family->FamilyName),
-	      debugstr_w(StyleW));
     } while(num_faces > ++face_index);
     return num_faces;
 }
