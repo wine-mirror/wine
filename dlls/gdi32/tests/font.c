@@ -4126,7 +4126,6 @@ static void test_vertical_font(void)
     check_vertical_font("@WineTestVertical", &installed, &selected, &gm);
     ok(installed, "@WineTestVertical is not installed\n");
     ok(selected, "@WineTestVertical is not selected\n");
-    todo_wine
     ok(gm.gmBlackBoxX > gm.gmBlackBoxY,
        "gmBlackBoxX(%u) should be greater than gmBlackBoxY(%u) if horizontal\n",
        gm.gmBlackBoxX, gm.gmBlackBoxY);

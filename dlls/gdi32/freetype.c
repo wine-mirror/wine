@@ -269,6 +269,7 @@ typedef struct tagFace {
     DWORD ntmFlags;
     FT_Fixed font_version;
     BOOL scalable;
+    BOOL vertical;
     Bitmap_Size size;     /* set if face is a bitmap */
     BOOL external; /* TRUE if we should manually add this font to the registry */
     struct tagFamily *family;
@@ -1619,6 +1620,7 @@ static void AddFaceToList(FT_Face ft_face, char *fake_family, const char *file, 
         if (face->ntmFlags == 0) face->ntmFlags = NTM_REGULAR;
         face->font_version = pHeader ? pHeader->Font_Revision : 0;
         face->family = family;
+        face->vertical = vertical;
         face->external = (flags & ADDFONT_EXTERNAL_FONT) ? TRUE : FALSE;
         face->fs = fs;
         memset(&face->fs_links, 0, sizeof(face->fs_links));
@@ -4248,7 +4250,7 @@ found_face:
     ret->strikeout = lf.lfStrikeOut ? 0xff : 0;
     create_child_font_list(ret);
 
-    if (lf.lfFaceName[0]=='@') /* We need to try to load the GSUB table */
+    if (face->vertical) /* We need to try to load the GSUB table */
     {
         int length = get_font_data(ret, GSUB_TAG , 0, NULL, 0);
         if (length != GDI_ERROR)
