@@ -3780,10 +3780,11 @@ static void transform_worldex(struct wined3d_context *context, const struct wine
 
 static void state_vertexblend_w(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    WINED3DVERTEXBLENDFLAGS f = state->render_states[WINED3D_RS_VERTEXBLEND];
+    enum wined3d_vertex_blend_flags f = state->render_states[WINED3D_RS_VERTEXBLEND];
     static unsigned int once;
 
-    if (f == WINED3DVBF_DISABLE) return;
+    if (f == WINED3D_VBF_DISABLE)
+        return;
 
     if (!once++) FIXME("Vertex blend flags %#x not supported.\n", f);
     else WARN("Vertex blend flags %#x not supported.\n", f);
@@ -3791,15 +3792,16 @@ static void state_vertexblend_w(struct wined3d_context *context, const struct wi
 
 static void state_vertexblend(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    WINED3DVERTEXBLENDFLAGS val = state->render_states[WINED3D_RS_VERTEXBLEND];
+    enum wined3d_vertex_blend_flags val = state->render_states[WINED3D_RS_VERTEXBLEND];
     struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     static unsigned int once;
 
-    switch(val) {
-        case WINED3DVBF_1WEIGHTS:
-        case WINED3DVBF_2WEIGHTS:
-        case WINED3DVBF_3WEIGHTS:
+    switch (val)
+    {
+        case WINED3D_VBF_1WEIGHTS:
+        case WINED3D_VBF_2WEIGHTS:
+        case WINED3D_VBF_3WEIGHTS:
             glEnable(GL_VERTEX_BLEND_ARB);
             checkGLcall("glEnable(GL_VERTEX_BLEND_ARB)");
 
@@ -3820,12 +3822,12 @@ static void state_vertexblend(struct wined3d_context *context, const struct wine
             }
             break;
 
-        case WINED3DVBF_TWEENING:
-        case WINED3DVBF_0WEIGHTS: /* Indexed vertex blending, not supported. */
+        case WINED3D_VBF_TWEENING:
+        case WINED3D_VBF_0WEIGHTS: /* Indexed vertex blending, not supported. */
             if (!once++) FIXME("Vertex blend flags %#x not supported.\n", val);
             else WARN("Vertex blend flags %#x not supported.\n", val);
             /* Fall through. */
-        case WINED3DVBF_DISABLE:
+        case WINED3D_VBF_DISABLE:
             glDisable(GL_VERTEX_BLEND_ARB);
             checkGLcall("glDisable(GL_VERTEX_BLEND_ARB)");
             break;

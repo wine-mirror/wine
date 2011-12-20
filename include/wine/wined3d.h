@@ -411,15 +411,15 @@ enum wined3d_blend_op
     WINED3D_BLEND_OP_MAX                    = 5,
 };
 
-typedef enum _WINED3DVERTEXBLENDFLAGS
+enum wined3d_vertex_blend_flags
 {
-    WINED3DVBF_DISABLE                      = 0,
-    WINED3DVBF_1WEIGHTS                     = 1,
-    WINED3DVBF_2WEIGHTS                     = 2,
-    WINED3DVBF_3WEIGHTS                     = 3,
-    WINED3DVBF_TWEENING                     = 255,
-    WINED3DVBF_0WEIGHTS                     = 256
-} WINED3DVERTEXBLENDFLAGS;
+    WINED3D_VBF_DISABLE                     = 0,
+    WINED3D_VBF_1WEIGHTS                    = 1,
+    WINED3D_VBF_2WEIGHTS                    = 2,
+    WINED3D_VBF_3WEIGHTS                    = 3,
+    WINED3D_VBF_TWEENING                    = 255,
+    WINED3D_VBF_0WEIGHTS                    = 256,
+};
 
 typedef enum _WINED3DCMPFUNC
 {
