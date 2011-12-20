@@ -1766,9 +1766,14 @@ static void surface_remove_pbo(struct wined3d_surface *surface, const struct win
     {
         surface->resource.allocatedMemory = surface->dib.bitmap_data;
     }
-    else if (!surface->resource.heapMemory)
+    else
     {
-        surface->resource.heapMemory = HeapAlloc(GetProcessHeap(), 0, surface->resource.size + RESOURCE_ALIGNMENT);
+        if (!surface->resource.heapMemory)
+            surface->resource.heapMemory = HeapAlloc(GetProcessHeap(), 0, surface->resource.size + RESOURCE_ALIGNMENT);
+        else if (!(surface->flags & SFLAG_CLIENT))
+            ERR("Surface %p has heapMemory %p and flags %#x.\n",
+                    surface, surface->resource.heapMemory, surface->flags);
+
         surface->resource.allocatedMemory = (BYTE *)(((ULONG_PTR)surface->resource.heapMemory
                 + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
     }
