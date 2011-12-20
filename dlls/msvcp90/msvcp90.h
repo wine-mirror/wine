@@ -136,6 +136,14 @@ const rtti_object_locator name ## _rtti = { \
 
 extern void *vtbl_wrapper_0;
 extern void *vtbl_wrapper_4;
+extern void *vtbl_wrapper_12;
+extern void *vtbl_wrapper_16;
+extern void *vtbl_wrapper_20;
+extern void *vtbl_wrapper_24;
+extern void *vtbl_wrapper_28;
+extern void *vtbl_wrapper_32;
+extern void *vtbl_wrapper_36;
+extern void *vtbl_wrapper_40;
 
 #else
 

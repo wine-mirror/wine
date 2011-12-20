@@ -777,11 +777,18 @@ int __thiscall collate_char_compare(const collate *this, const char *first1,
 /* ?do_hash@?$collate@D@std@@MBEJPBD0@Z */
 /* ?do_hash@?$collate@D@std@@MEBAJPEBD0@Z */
 DEFINE_THISCALL_WRAPPER(collate_char_do_hash, 12)
+#define call_collate_char_do_hash(this, first, last) CALL_VTBL_FUNC(this, 12, LONG, \
+        (const collate*, const char*, const char*), (this, first, last))
 LONG __thiscall collate_char_do_hash(const collate *this,
         const char *first, const char *last)
 {
-    FIXME("(%p %p %p) stub\n", this, first, last);
-    return 0;
+    ULONG ret = 0;
+
+    TRACE("(%p %p %p)\n", this, first, last);
+
+    for(; first<last; first++)
+        ret = (ret<<8 | ret>>24) + *first;
+    return ret;
 }
 
 /* ?hash@?$collate@D@std@@QBEJPBD0@Z */
@@ -790,8 +797,8 @@ DEFINE_THISCALL_WRAPPER(collate_char_hash, 12)
 LONG __thiscall collate_char_hash(const collate *this,
         const char *first, const char *last)
 {
-    FIXME("(%p %p %p) stub\n", this, first, last);
-    return 0;
+    TRACE("(%p %p %p)\n", this, first, last);
+    return call_collate_char_do_hash(this, first, last);
 }
 
 /* ?do_transform@?$collate@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@PBD0@Z */
