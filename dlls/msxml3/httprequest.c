@@ -47,10 +47,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
 
-static const WCHAR MethodGetW[] = {'G','E','T',0};
-static const WCHAR MethodPutW[] = {'P','U','T',0};
-static const WCHAR MethodPostW[] = {'P','O','S','T',0};
-
 static const WCHAR colspaceW[] = {':',' ',0};
 static const WCHAR crlfW[] = {'\r','\n',0};
 
@@ -75,6 +71,7 @@ typedef struct
 
     /* request */
     BINDVERB verb;
+    BSTR custom;
     BSTR url;
     BOOL async;
     struct list reqheaders;
@@ -334,6 +331,11 @@ static HRESULT WINAPI BindStatusCallback_GetBindInfo(IBindStatusCallback *iface,
     }
 
     pbindinfo->dwBindVerb = This->request->verb;
+    if (This->request->verb == BINDVERB_CUSTOM)
+    {
+        pbindinfo->szCustomVerb = CoTaskMemAlloc(SysStringByteLen(This->request->custom));
+        strcpyW(pbindinfo->szCustomVerb, This->request->custom);
+    }
 
     return S_OK;
 }
@@ -732,6 +734,7 @@ static ULONG WINAPI httprequest_Release(IXMLHTTPRequest *iface)
         if (This->site)
             IUnknown_Release( This->site );
 
+        SysFreeString(This->custom);
         SysFreeString(This->url);
         SysFreeString(This->user);
         SysFreeString(This->password);
@@ -827,9 +830,14 @@ static HRESULT WINAPI httprequest_Invoke(IXMLHTTPRequest *iface, DISPID dispIdMe
 static HRESULT WINAPI httprequest_open(IXMLHTTPRequest *iface, BSTR method, BSTR url,
         VARIANT async, VARIANT user, VARIANT password)
 {
+    static const WCHAR MethodGetW[] = {'G','E','T',0};
+    static const WCHAR MethodPutW[] = {'P','U','T',0};
+    static const WCHAR MethodPostW[] = {'P','O','S','T',0};
+    static const WCHAR MethodDeleteW[] = {'D','E','L','E','T','E',0};
+
     httprequest *This = impl_from_IXMLHTTPRequest( iface );
-    HRESULT hr;
     VARIANT str, is_async;
+    HRESULT hr;
 
     TRACE("(%p)->(%s %s %s)\n", This, debugstr_w(method), debugstr_w(url),
         debugstr_variant(&async));
@@ -842,17 +850,22 @@ static HRESULT WINAPI httprequest_open(IXMLHTTPRequest *iface, BSTR method, BSTR
     SysFreeString(This->password);
     This->url = This->user = This->password = NULL;
 
-    if (lstrcmpiW(method, MethodGetW) == 0)
+    if (!strcmpiW(method, MethodGetW))
     {
         This->verb = BINDVERB_GET;
     }
-    else if (lstrcmpiW(method, MethodPutW) == 0)
+    else if (!strcmpiW(method, MethodPutW))
     {
         This->verb = BINDVERB_PUT;
     }
-    else if (lstrcmpiW(method, MethodPostW) == 0)
+    else if (!strcmpiW(method, MethodPostW))
     {
         This->verb = BINDVERB_POST;
+    }
+    else if (!strcmpiW(method, MethodDeleteW))
+    {
+        This->verb = BINDVERB_CUSTOM;
+        SysReAllocString(&This->custom, method);
     }
     else
     {
@@ -1219,7 +1232,7 @@ static HRESULT WINAPI httprequest_put_onreadystatechange(IXMLHTTPRequest *iface,
     return S_OK;
 }
 
-static const struct IXMLHTTPRequestVtbl dimimpl_vtbl =
+static const struct IXMLHTTPRequestVtbl XMLHTTPRequestVtbl =
 {
     httprequest_QueryInterface,
     httprequest_AddRef,
@@ -1293,7 +1306,7 @@ static HRESULT WINAPI httprequest_ObjectWithSite_SetSite( IObjectWithSite *iface
     return S_OK;
 }
 
-static const IObjectWithSiteVtbl httprequestObjectSite =
+static const IObjectWithSiteVtbl ObjectWithSiteVtbl =
 {
     httprequest_ObjectWithSite_QueryInterface,
     httprequest_ObjectWithSite_AddRef,
@@ -1354,7 +1367,7 @@ static HRESULT WINAPI httprequest_Safety_SetInterfaceSafetyOptions(IObjectSafety
 
 #undef SAFETY_SUPPORTED_OPTIONS
 
-static const IObjectSafetyVtbl httprequestObjectSafety = {
+static const IObjectSafetyVtbl ObjectSafetyVtbl = {
     httprequest_Safety_QueryInterface,
     httprequest_Safety_AddRef,
     httprequest_Safety_Release,
@@ -1373,13 +1386,14 @@ HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **ppObj)
     if( !req )
         return E_OUTOFMEMORY;
 
-    req->IXMLHTTPRequest_iface.lpVtbl = &dimimpl_vtbl;
-    req->IObjectWithSite_iface.lpVtbl = &httprequestObjectSite;
-    req->IObjectSafety_iface.lpVtbl = &httprequestObjectSafety;
+    req->IXMLHTTPRequest_iface.lpVtbl = &XMLHTTPRequestVtbl;
+    req->IObjectWithSite_iface.lpVtbl = &ObjectWithSiteVtbl;
+    req->IObjectSafety_iface.lpVtbl = &ObjectSafetyVtbl;
     req->ref = 1;
 
     req->async = FALSE;
     req->verb = -1;
+    req->custom = NULL;
     req->url = req->user = req->password = NULL;
 
     req->state = READYSTATE_UNINITIALIZED;
