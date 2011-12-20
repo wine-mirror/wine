@@ -1020,19 +1020,27 @@ static BOOL add_font_subst(struct list *subst_list, FontSubst *subst, INT flags)
     return FALSE;
 }
 
+static WCHAR *towstr(UINT cp, const char *str)
+{
+    int len;
+    WCHAR *wstr;
+
+    len = MultiByteToWideChar(cp, 0, str, -1, NULL, 0);
+    wstr = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    MultiByteToWideChar(cp, 0, str, -1, wstr, len);
+    return wstr;
+}
+
 static void split_subst_info(NameCs *nc, LPSTR str)
 {
     CHAR *p = strrchr(str, ',');
-    DWORD len;
 
     nc->charset = -1;
     if(p && *(p+1)) {
         nc->charset = strtol(p+1, NULL, 10);
 	*p = '\0';
     }
-    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    nc->name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, str, -1, nc->name, len);
+    nc->name = towstr(CP_ACP, str);
 }
 
 static void LoadSubstList(void)
@@ -1452,7 +1460,6 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
     TT_OS2 *pOS2;
     TT_Header *pHeader = NULL;
     WCHAR *english_family, *localised_family, *StyleW;
-    DWORD len;
     Family *family;
     Face *face;
     struct list *family_elem_ptr, *face_elem_ptr;
@@ -1579,19 +1586,13 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
 
             if(fake_family)
             {
-                len = MultiByteToWideChar(CP_ACP, 0, fake_family, -1, NULL, 0);
-                english_family = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-                MultiByteToWideChar(CP_ACP, 0, fake_family, -1, english_family, len);
+                english_family = towstr(CP_ACP, fake_family);
             }
             else
             {
                 english_family = get_face_name(ft_face, TT_NAME_ID_FONT_FAMILY, TT_MS_LANGID_ENGLISH_UNITED_STATES);
                 if(!english_family)
-                {
-                    len = MultiByteToWideChar(CP_ACP, 0, ft_face->family_name, -1, NULL, 0);
-                    english_family = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-                    MultiByteToWideChar(CP_ACP, 0, ft_face->family_name, -1, english_family, len);
-                }
+                    english_family = towstr(CP_ACP, ft_face->family_name);
             }
 
             localised_family = NULL;
@@ -1629,9 +1630,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
             HeapFree(GetProcessHeap(), 0, localised_family);
             HeapFree(GetProcessHeap(), 0, english_family);
 
-            len = MultiByteToWideChar(CP_ACP, 0, ft_face->style_name, -1, NULL, 0);
-            StyleW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-            MultiByteToWideChar(CP_ACP, 0, ft_face->style_name, -1, StyleW, len);
+            StyleW = towstr(CP_ACP, ft_face->style_name);
 
             internal_leading = 0;
             memset(&fs, 0, sizeof(fs));
@@ -2779,7 +2778,6 @@ static void populate_system_links(HKEY hkey, const WCHAR *name, const WCHAR *con
     Face *face;
     const char *file;
     WCHAR *fileW;
-    int fileLen;
     WCHAR buff[MAX_PATH];
     WCHAR *data;
     int entryLen;
@@ -2817,9 +2815,7 @@ static void populate_system_links(HKEY hkey, const WCHAR *name, const WCHAR *con
             }
             if (!file)
                 continue;
-            fileLen = MultiByteToWideChar(CP_UNIXCP, 0, file, -1, NULL, 0);
-            fileW = HeapAlloc(GetProcessHeap(), 0, fileLen * sizeof(WCHAR));
-            MultiByteToWideChar(CP_UNIXCP, 0, file, -1, fileW, fileLen);
+            fileW = towstr(CP_UNIXCP, file);
             entryLen = strlenW(fileW) + 1 + strlenW(value) + 1;
             if (sizeof(buff)-(data-buff) < entryLen + 1)
             {
