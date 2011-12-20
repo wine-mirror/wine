@@ -413,3 +413,5 @@ library BackgroundCopyManager
 
     interface IBackgroundCopyCallback;
 }
+
+cpp_quote("#include \"bits1_5.h\"")
