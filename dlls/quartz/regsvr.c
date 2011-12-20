@@ -124,43 +124,43 @@ static HRESULT unregister_filters(struct regsvr_filter const *list);
 /***********************************************************************
  *		static string constants
  */
-static WCHAR const interface_keyname[] = {
+static const WCHAR interface_keyname[] = {
     'I', 'n', 't', 'e', 'r', 'f', 'a', 'c', 'e', 0 };
-static WCHAR const base_ifa_keyname[] = {
+static const WCHAR base_ifa_keyname[] = {
     'B', 'a', 's', 'e', 'I', 'n', 't', 'e', 'r', 'f', 'a', 'c',
     'e', 0 };
-static WCHAR const num_methods_keyname[] = {
+static const WCHAR num_methods_keyname[] = {
     'N', 'u', 'm', 'M', 'e', 't', 'h', 'o', 'd', 's', 0 };
-static WCHAR const ps_clsid_keyname[] = {
+static const WCHAR ps_clsid_keyname[] = {
     'P', 'r', 'o', 'x', 'y', 'S', 't', 'u', 'b', 'C', 'l', 's',
     'i', 'd', 0 };
-static WCHAR const ps_clsid32_keyname[] = {
+static const WCHAR ps_clsid32_keyname[] = {
     'P', 'r', 'o', 'x', 'y', 'S', 't', 'u', 'b', 'C', 'l', 's',
     'i', 'd', '3', '2', 0 };
-static WCHAR const clsid_keyname[] = {
+static const WCHAR clsid_keyname[] = {
     'C', 'L', 'S', 'I', 'D', 0 };
-static WCHAR const curver_keyname[] = {
+static const WCHAR curver_keyname[] = {
     'C', 'u', 'r', 'V', 'e', 'r', 0 };
-static WCHAR const ips_keyname[] = {
+static const WCHAR ips_keyname[] = {
     'I', 'n', 'P', 'r', 'o', 'c', 'S', 'e', 'r', 'v', 'e', 'r',
     0 };
-static WCHAR const ips32_keyname[] = {
+static const WCHAR ips32_keyname[] = {
     'I', 'n', 'P', 'r', 'o', 'c', 'S', 'e', 'r', 'v', 'e', 'r',
     '3', '2', 0 };
-static WCHAR const progid_keyname[] = {
+static const WCHAR progid_keyname[] = {
     'P', 'r', 'o', 'g', 'I', 'D', 0 };
-static WCHAR const viprogid_keyname[] = {
+static const WCHAR viprogid_keyname[] = {
     'V', 'e', 'r', 's', 'i', 'o', 'n', 'I', 'n', 'd', 'e', 'p',
     'e', 'n', 'd', 'e', 'n', 't', 'P', 'r', 'o', 'g', 'I', 'D',
     0 };
-static char const tmodel_valuename[] = "ThreadingModel";
-static WCHAR const mediatype_name[] = {
+static const char tmodel_valuename[] = "ThreadingModel";
+static const WCHAR mediatype_name[] = {
     'M', 'e', 'd', 'i', 'a', ' ', 'T', 'y', 'p', 'e', 0 };
-static WCHAR const subtype_valuename[] = {
+static const WCHAR subtype_valuename[] = {
     'S', 'u', 'b', 't', 'y', 'p', 'e', 0 };
-static WCHAR const sourcefilter_valuename[] = {
+static const WCHAR sourcefilter_valuename[] = {
     'S', 'o', 'u', 'r', 'c', 'e', ' ', 'F', 'i', 'l', 't', 'e', 'r', 0 };
-static WCHAR const extensions_keyname[] = {
+static const WCHAR extensions_keyname[] = {
     'E', 'x', 't', 'e', 'n', 's', 'i', 'o', 'n', 's', 0 };
 
 /***********************************************************************
@@ -209,7 +209,7 @@ static HRESULT register_interfaces(struct regsvr_interface const *list)
 	}
 
 	if (0 <= list->num_methods) {
-	    static WCHAR const fmt[] = { '%', 'd', 0 };
+	    static const WCHAR fmt[] = { '%', 'd', 0 };
 	    HKEY key;
 
 	    res = RegCreateKeyExW(iid_key, num_methods_keyname, 0, NULL, 0,

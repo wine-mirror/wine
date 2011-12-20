@@ -99,39 +99,39 @@ static HRESULT unregister_converters(struct regsvr_converter const *list);
 /***********************************************************************
  *		static string constants
  */
-static WCHAR const clsid_keyname[] = {
+static const WCHAR clsid_keyname[] = {
     'C', 'L', 'S', 'I', 'D', 0 };
-static WCHAR const curver_keyname[] = {
+static const WCHAR curver_keyname[] = {
     'C', 'u', 'r', 'V', 'e', 'r', 0 };
-static WCHAR const ips_keyname[] = {
+static const WCHAR ips_keyname[] = {
     'I', 'n', 'P', 'r', 'o', 'c', 'S', 'e', 'r', 'v', 'e', 'r',
     0 };
-static WCHAR const ips32_keyname[] = {
+static const WCHAR ips32_keyname[] = {
     'I', 'n', 'P', 'r', 'o', 'c', 'S', 'e', 'r', 'v', 'e', 'r',
     '3', '2', 0 };
-static WCHAR const progid_keyname[] = {
+static const WCHAR progid_keyname[] = {
     'P', 'r', 'o', 'g', 'I', 'D', 0 };
-static WCHAR const viprogid_keyname[] = {
+static const WCHAR viprogid_keyname[] = {
     'V', 'e', 'r', 's', 'i', 'o', 'n', 'I', 'n', 'd', 'e', 'p',
     'e', 'n', 'd', 'e', 'n', 't', 'P', 'r', 'o', 'g', 'I', 'D',
     0 };
-static char const tmodel_valuename[] = "ThreadingModel";
-static char const author_valuename[] = "Author";
-static char const friendlyname_valuename[] = "FriendlyName";
-static WCHAR const vendor_valuename[] = {'V','e','n','d','o','r',0};
-static char const version_valuename[] = "Version";
-static char const mimetypes_valuename[] = "MimeTypes";
-static char const extensions_valuename[] = "FileExtensions";
-static WCHAR const formats_keyname[] = {'F','o','r','m','a','t','s',0};
-static WCHAR const patterns_keyname[] = {'P','a','t','t','e','r','n','s',0};
-static WCHAR const instance_keyname[] = {'I','n','s','t','a','n','c','e',0};
-static WCHAR const clsid_valuename[] = {'C','L','S','I','D',0};
-static char const length_valuename[] = "Length";
-static char const position_valuename[] = "Position";
-static char const pattern_valuename[] = "Pattern";
-static char const mask_valuename[] = "Mask";
-static char const endofstream_valuename[] = "EndOfStream";
-static WCHAR const pixelformats_keyname[] = {'P','i','x','e','l','F','o','r','m','a','t','s',0};
+static const char tmodel_valuename[] = "ThreadingModel";
+static const char author_valuename[] = "Author";
+static const char friendlyname_valuename[] = "FriendlyName";
+static const WCHAR vendor_valuename[] = {'V','e','n','d','o','r',0};
+static const char version_valuename[] = "Version";
+static const char mimetypes_valuename[] = "MimeTypes";
+static const char extensions_valuename[] = "FileExtensions";
+static const WCHAR formats_keyname[] = {'F','o','r','m','a','t','s',0};
+static const WCHAR patterns_keyname[] = {'P','a','t','t','e','r','n','s',0};
+static const WCHAR instance_keyname[] = {'I','n','s','t','a','n','c','e',0};
+static const WCHAR clsid_valuename[] = {'C','L','S','I','D',0};
+static const char length_valuename[] = "Length";
+static const char position_valuename[] = "Position";
+static const char pattern_valuename[] = "Pattern";
+static const char mask_valuename[] = "Mask";
+static const char endofstream_valuename[] = "EndOfStream";
+static const WCHAR pixelformats_keyname[] = {'P','i','x','e','l','F','o','r','m','a','t','s',0};
 
 /***********************************************************************
  *		register_decoders

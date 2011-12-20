@@ -60,9 +60,9 @@ static inline AsyncReader *impl_from_IFileSourceFilter( IFileSourceFilter *iface
     return (AsyncReader *)((char*)iface - FIELD_OFFSET(AsyncReader, lpVtblFSF));
 }
 
-static WCHAR const mediatype_name[] = {
+static const WCHAR mediatype_name[] = {
     'M', 'e', 'd', 'i', 'a', ' ', 'T', 'y', 'p', 'e', 0 };
-static WCHAR const subtype_name[] = {
+static const WCHAR subtype_name[] = {
     'S', 'u', 'b', 't', 'y', 'p', 'e', 0 };
 
 static HRESULT process_extensions(HKEY hkeyExtensions, LPCOLESTR pszFileName, GUID * majorType, GUID * minorType)

@@ -53,10 +53,10 @@ static LONG server_locks = 0;
  */
 #define MAX_KEY_LEN  260
 
-static WCHAR const clsid_keyname[] = {'C','L','S','I','D',0 };
-static WCHAR const ips32_keyname[] = {'I','n','P','r','o','c','S','e','r','v','e','r','3','2',0};
-static WCHAR const tmodel_keyname[] = {'T','h','r','e','a','d','i','n','g','M','o','d','e','l',0};
-static WCHAR const tmodel_both[] = {'B','o','t','h',0};
+static const WCHAR clsid_keyname[] = {'C','L','S','I','D',0 };
+static const WCHAR ips32_keyname[] = {'I','n','P','r','o','c','S','e','r','v','e','r','3','2',0};
+static const WCHAR tmodel_keyname[] = {'T','h','r','e','a','d','i','n','g','M','o','d','e','l',0};
+static const WCHAR tmodel_both[] = {'B','o','t','h',0};
 
 /*
  * SetupRegisterClass()

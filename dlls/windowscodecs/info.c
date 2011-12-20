@@ -36,8 +36,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
-static WCHAR const mimetypes_valuename[] = {'M','i','m','e','T','y','p','e','s',0};
-static WCHAR const pixelformats_keyname[] = {'P','i','x','e','l','F','o','r','m','a','t','s',0};
+static const WCHAR mimetypes_valuename[] = {'M','i','m','e','T','y','p','e','s',0};
+static const WCHAR pixelformats_keyname[] = {'P','i','x','e','l','F','o','r','m','a','t','s',0};
 
 static HRESULT ComponentInfo_GetStringValue(HKEY classkey, LPCWSTR value,
     UINT buffer_size, WCHAR *buffer, UINT *actual_size)
@@ -975,8 +975,8 @@ static HRESULT FormatConverterInfo_Constructor(HKEY classkey, REFCLSID clsid, IW
     return S_OK;
 }
 
-static WCHAR const clsid_keyname[] = {'C','L','S','I','D',0};
-static WCHAR const instance_keyname[] = {'I','n','s','t','a','n','c','e',0};
+static const WCHAR clsid_keyname[] = {'C','L','S','I','D',0};
+static const WCHAR instance_keyname[] = {'I','n','s','t','a','n','c','e',0};
 
 struct category {
     WICComponentType type;
