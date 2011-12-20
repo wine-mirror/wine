@@ -135,6 +135,7 @@ const rtti_object_locator name ## _rtti = { \
 #define CALL_VTBL_FUNC(this, off, ret, type, args) ((ret (WINAPI*)type)&vtbl_wrapper_##off)args
 
 extern void *vtbl_wrapper_0;
+extern void *vtbl_wrapper_4;
 
 #else
 

@@ -60,6 +60,11 @@ static char* (__thiscall *p_char_allocate)(void*, size_t);
 static void (__thiscall *p_char_construct)(void*, char*, const char*);
 static size_t (__thiscall *p_char_max_size)(void*);
 
+void* (__thiscall *p_collate_char_ctor_refs)(void*, size_t);
+int (__thiscall *p_collate_char_compare)(const void*, const char*,
+        const char*, const char*, const char*);
+void (__thiscall *p_collate_char_dtor)(void*);
+
 static int invalid_parameter = 0;
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
         const wchar_t *function, const wchar_t *file,
@@ -90,6 +95,8 @@ struct thiscall_thunk
 static void * (WINAPI *call_thiscall_func1)( void *func, void *this );
 static void * (WINAPI *call_thiscall_func2)( void *func, void *this, const void *a );
 static void * (WINAPI *call_thiscall_func3)( void *func, void *this, const void *a, const void *b );
+static void * (WINAPI *call_thiscall_func5)( void *func, void *this, const void *a, const void *b,
+        const void *c, const void *d );
 
 static void init_thiscall_thunk(void)
 {
@@ -103,11 +110,14 @@ static void init_thiscall_thunk(void)
     call_thiscall_func1 = (void *)thunk;
     call_thiscall_func2 = (void *)thunk;
     call_thiscall_func3 = (void *)thunk;
+    call_thiscall_func5 = (void *)thunk;
 }
 
 #define call_func1(func,_this) call_thiscall_func1(func,_this)
-#define call_func2(func,_this,a) call_thiscall_func2(func,_this,(const void*)a)
-#define call_func3(func,_this,a,b) call_thiscall_func3(func,_this,(const void*)a,(const void*)b)
+#define call_func2(func,_this,a) call_thiscall_func2(func,_this,(const void*)(a))
+#define call_func3(func,_this,a,b) call_thiscall_func3(func,_this,(const void*)(a),(const void*)(b))
+#define call_func5(func,_this,a,b,c,d) call_thiscall_func5(func,_this,(const void*)(a),(const void*)(b), \
+        (const void*)(c), (const void *)(d))
 
 #else
 
@@ -115,6 +125,7 @@ static void init_thiscall_thunk(void)
 #define call_func1(func,_this) func(_this)
 #define call_func2(func,_this,a) func(_this,a)
 #define call_func3(func,_this,a,b) func(_this,a,b)
+#define call_func5(func,_this,a,b,c,d) func(_this,a,b,c,d)
 
 #endif /* __i386__ */
 
@@ -158,6 +169,10 @@ static BOOL init(void)
         SET(p_char_allocate, "?allocate@?$allocator@D@std@@QEAAPEAD_K@Z");
         SET(p_char_construct, "?construct@?$allocator@D@std@@QEAAXPEADAEBD@Z");
         SET(p_char_max_size, "?max_size@?$allocator@D@std@@QEBA_KXZ");
+
+        SET(p_collate_char_ctor_refs, "??0?$collate@D@std@@QEAA@_K@Z");
+        SET(p_collate_char_compare, "?compare@?$collate@D@std@@QEBAHPEBD000@Z");
+        SET(p_collate_char_dtor, "??1?$collate@D@std@@MEAA@XZ");
     } else {
         SET(p_char_assign, "?assign@?$char_traits@D@std@@SAXAADABD@Z");
         SET(p_wchar_assign, "?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z");
@@ -175,6 +190,10 @@ static BOOL init(void)
         SET(p_char_allocate, "?allocate@?$allocator@D@std@@QAEPADI@Z");
         SET(p_char_construct, "?construct@?$allocator@D@std@@QAEXPADABD@Z");
         SET(p_char_max_size, "?max_size@?$allocator@D@std@@QBEIXZ");
+
+        SET(p_collate_char_ctor_refs, "??0?$collate@D@std@@QAE@I@Z");
+        SET(p_collate_char_compare, "?compare@?$collate@D@std@@QBEHPBD000@Z");
+        SET(p_collate_char_dtor, "??1?$collate@D@std@@MAE@XZ");
     }
 
     init_thiscall_thunk();
@@ -356,6 +375,23 @@ static void test_allocator_char(void)
     ok(size == (unsigned int)0xffffffff, "size = %x\n", size);
 }
 
+static void test_virtual_call(void)
+{
+    BYTE collate_char[16];
+    char str1[] = "test";
+    char str2[] = "TEST";
+    int ret;
+
+    call_func2(p_collate_char_ctor_refs, collate_char, 0);
+    ret = (int)call_func5(p_collate_char_compare, collate_char, str1, str1+4, str1, str1+4);
+    ok(ret == 0, "collate<char>::compare returned %d\n", ret);
+    ret = (int)call_func5(p_collate_char_compare, collate_char, str2, str2+4, str1, str1+4);
+    ok(ret == 1, "collate<char>::compare returned %d\n", ret);
+    ret = (int)call_func5(p_collate_char_compare, collate_char, str1, str1+3, str1, str1+4);
+    ok(ret == -1, "collate<char>::compare returned %d\n", ret);
+    call_func1(p_collate_char_dtor, collate_char);
+}
+
 START_TEST(misc)
 {
     if(!init())
@@ -366,6 +402,7 @@ START_TEST(misc)
     test_Copy_s();
     test_wctype();
     test__Getctype();
+    test_virtual_call();
 
     test_allocator_char();
 

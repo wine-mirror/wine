@@ -5796,7 +5796,7 @@
 @ stub _Stoull
 @ stub _Stoullx
 @ stub _Stoulx
-@ stub _Strcoll
+@ cdecl _Strcoll(ptr ptr ptr ptr ptr)
 @ stub _Strxfrm
 @ stub _Tolower
 @ stub _Toupper

@@ -39,6 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcp90);
         "jmp *" #off "(%eax)\n\t")
 
 DEFINE_VTBL_WRAPPER(0);
+DEFINE_VTBL_WRAPPER(4);
 
 #endif
 

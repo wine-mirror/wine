@@ -25,6 +25,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "wine/debug.h"
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp90);
 
@@ -742,14 +743,25 @@ MSVCP_size_t __cdecl collate_char__Getcat(const locale_facet **facet, const loca
     return LC_COLLATE;
 }
 
+/* _Strcoll */
+int __cdecl _Strcoll(const char *first1, const char *last1, const char *first2,
+        const char *last2, const _Collvec *coll)
+{
+    TRACE("(%s %s)\n", debugstr_an(first1, last1-first1), debugstr_an(first2, last2-first2));
+    return CompareStringA(coll->handle, 0, first1, last1-first1, first2, last2-first2)-2;
+}
+
 /* ?do_compare@?$collate@D@std@@MBEHPBD000@Z */
 /* ?do_compare@?$collate@D@std@@MEBAHPEBD000@Z */
 DEFINE_THISCALL_WRAPPER(collate_char_do_compare, 20)
+#define call_collate_char_do_compare(this, first1, last1, first2, last2) CALL_VTBL_FUNC(this, 4, int, \
+        (const collate*, const char*, const char*, const char*, const char*), \
+        (this, first1, last1, first2, last2))
 int __thiscall collate_char_do_compare(const collate *this, const char *first1,
         const char *last1, const char *first2, const char *last2)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, first1, last1, first2, last2);
-    return 0;
+    TRACE("(%p %p %p %p %p)\n", this, first1, last1, first2, last2);
+    return _Strcoll(first1, last1, first2, last2, &this->coll);
 }
 
 /* ?compare@?$collate@D@std@@QBEHPBD000@Z */
@@ -758,8 +770,8 @@ DEFINE_THISCALL_WRAPPER(collate_char_compare, 20)
 int __thiscall collate_char_compare(const collate *this, const char *first1,
         const char *last1, const char *first2, const char *last2)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, first1, last1, first2, last2);
-    return 0;
+    TRACE("(%p %p %p %p %p)\n", this, first1, last1, first2, last2);
+    return call_collate_char_do_compare(this, first1, last1, first2, last2);
 }
 
 /* ?do_hash@?$collate@D@std@@MBEJPBD0@Z */
