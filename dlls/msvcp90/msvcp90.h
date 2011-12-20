@@ -130,6 +130,18 @@ const rtti_object_locator name ## _rtti = { \
     &name ## _hierarchy \
 }
 
+#ifdef __i386__
+
+#define CALL_VTBL_FUNC(this, off, ret, type, args) ((ret (WINAPI*)type)&vtbl_wrapper_##off)args
+
+extern void *vtbl_wrapper_0;
+
+#else
+
+#define CALL_VTBL_FUNC(this, off, ret, type, args) ((ret (__cdecl***)type)this)[0][off/4]args
+
+#endif
+
 /* exception object */
 typedef void (*vtable_ptr)(void);
 typedef struct __exception

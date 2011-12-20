@@ -28,6 +28,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp90);
 
+#ifdef __i386__
+
+#define DEFINE_VTBL_WRAPPER(off)            \
+    __ASM_GLOBAL_FUNC(vtbl_wrapper_ ## off, \
+        "popl %eax\n\t"                     \
+        "popl %ecx\n\t"                     \
+        "pushl %eax\n\t"                    \
+        "movl 0(%ecx), %eax\n\t"            \
+        "jmp *" #off "(%eax)\n\t")
+
+DEFINE_VTBL_WRAPPER(0);
+
+#endif
+
 void* (__cdecl *MSVCRT_operator_new)(MSVCP_size_t);
 void (__cdecl *MSVCRT_operator_delete)(void*);
 void* (__cdecl *MSVCRT_set_new_handler)(void*);

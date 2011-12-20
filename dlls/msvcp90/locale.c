@@ -117,6 +117,8 @@ void __thiscall locale_facet_dtor(locale_facet *this)
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_locale_facet_vector_dtor, 8)
+#define call_locale_facet_vector_dtor(this, flags) CALL_VTBL_FUNC(this, 0, \
+        locale_facet*, (locale_facet*, unsigned int), (this, flags))
 locale_facet* __thiscall MSVCP_locale_facet_vector_dtor(locale_facet *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
@@ -139,25 +141,6 @@ locale_facet* __thiscall MSVCP_locale_facet_vector_dtor(locale_facet *this, unsi
 const vtable_ptr MSVCP_locale_facet_vtable[] = {
     (vtable_ptr)THISCALL_NAME(MSVCP_locale_facet_vector_dtor)
 };
-#ifdef __i386__
-static inline locale_facet* call_locale_facet_vector_dtor(locale_facet *this, unsigned int flags)
-{
-    locale_facet *ret;
-    void *dummy;
-
-    __asm__ __volatile__ ("pushl %3\n\tcall *%2"
-                          : "=a" (ret), "=c" (dummy)
-                          : "r" (this->vtable[0]), "r" (flags), "1" (this)
-                          : "edx", "memory" );
-    return ret;
-}
-#else
-static inline locale_facet* call_locale_facet_vector_dtor(locale_facet *this, unsigned int flags)
-{
-    locale_facet * (__thiscall *dtor)(locale_facet *, unsigned int) = (void *)this->vtable[0];
-    return dtor(this, flags);
-}
-#endif
 
 /* ??0id@locale@std@@QAE@I@Z */
 /* ??0id@locale@std@@QEAA@_K@Z */
