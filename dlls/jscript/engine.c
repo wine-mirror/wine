@@ -1765,7 +1765,7 @@ HRESULT interp_obj_prop(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.11 */
-static HRESULT interp_jmp_nz(exec_ctx_t *ctx)
+static HRESULT interp_cnd_nz(exec_ctx_t *ctx)
 {
     const unsigned arg = ctx->parser->code->instrs[ctx->ip].arg1.uint;
     VARIANT_BOOL b;
@@ -1787,7 +1787,7 @@ static HRESULT interp_jmp_nz(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.11 */
-static HRESULT interp_jmp_z(exec_ctx_t *ctx)
+static HRESULT interp_cnd_z(exec_ctx_t *ctx)
 {
     const unsigned arg = ctx->parser->code->instrs[ctx->ip].arg1.uint;
     VARIANT_BOOL b;

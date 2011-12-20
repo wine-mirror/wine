@@ -377,7 +377,7 @@ static HRESULT compile_conditional_expression(compiler_ctx_t *ctx, conditional_e
     if(FAILED(hres))
         return hres;
 
-    jmp_false = push_instr(ctx, OP_jmp_z);
+    jmp_false = push_instr(ctx, OP_cnd_z);
     if(jmp_false == -1)
         return E_OUTOFMEMORY;
 
@@ -716,7 +716,7 @@ static HRESULT compile_expression_noret(compiler_ctx_t *ctx, expression_t *expr,
     case EXPR_ADD:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_add);
     case EXPR_AND:
-        return compile_logical_expression(ctx, (binary_expression_t*)expr, OP_jmp_z);
+        return compile_logical_expression(ctx, (binary_expression_t*)expr, OP_cnd_z);
     case EXPR_ARRAY:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_array);
     case EXPR_ARRAYLIT:
@@ -802,7 +802,7 @@ static HRESULT compile_expression_noret(compiler_ctx_t *ctx, expression_t *expr,
     case EXPR_NOTEQEQ:
         return compile_binary_expression(ctx, (binary_expression_t*)expr, OP_neq2);
     case EXPR_OR:
-        return compile_logical_expression(ctx, (binary_expression_t*)expr, OP_jmp_nz);
+        return compile_logical_expression(ctx, (binary_expression_t*)expr, OP_cnd_nz);
     case EXPR_PLUS:
         return compile_unary_expression(ctx, (unary_expression_t*)expr, OP_tonum);
     case EXPR_POSTDEC:
@@ -915,7 +915,7 @@ static HRESULT compile_if_statement(compiler_ctx_t *ctx, if_statement_t *stat)
     if(FAILED(hres))
         return hres;
 
-    jmp_else = push_instr(ctx, OP_jmp_z);
+    jmp_else = push_instr(ctx, OP_cnd_z);
     if(jmp_else == -1)
         return E_OUTOFMEMORY;
 

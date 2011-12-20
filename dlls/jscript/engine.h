@@ -52,6 +52,8 @@ typedef struct _func_stack {
     X(call,       1, ARG_UINT,   ARG_UINT) \
     X(call_member,1, ARG_UINT,   ARG_UINT) \
     X(carray,     1, ARG_UINT,   0)        \
+    X(cnd_nz,     0, ARG_ADDR,   0)        \
+    X(cnd_z,      0, ARG_ADDR,   0)        \
     X(delete,     1, 0,0)                  \
     X(delete_ident,1,ARG_BSTR,   0)        \
     X(div,        1, 0,0)                  \
@@ -67,8 +69,6 @@ typedef struct _func_stack {
     X(instanceof, 1, 0,0)                  \
     X(int,        1, ARG_INT,    0)        \
     X(jmp,        0, ARG_ADDR,   0)        \
-    X(jmp_nz,     0, ARG_ADDR,   0)        \
-    X(jmp_z,      0, ARG_ADDR,   0)        \
     X(lshift,     1, 0,0)                  \
     X(lt,         1, 0,0)                  \
     X(lteq,       1, 0,0)                  \
