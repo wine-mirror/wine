@@ -2680,6 +2680,12 @@ INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
 found:
     if (buf != lpChar)
         HeapFree(GetProcessHeap(), 0, lpChar);
+
+    /* Null-terminate the buffer, if there's room.  MSDN clearly states that the
+       caller must not assume this is done, but some programs (e.g. Audiosurf) do. */
+    if (1 <= ret && ret < bufW_size)
+        bufW[ret] = 0;
+
     TRACE_(key)("returning %d with %s\n", ret, debugstr_wn(bufW, ret));
     return ret;
 }
