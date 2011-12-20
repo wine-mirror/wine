@@ -1939,6 +1939,7 @@ static DWORD map_prot_to_access(DWORD prot)
 static BOOL is_compatible_access(DWORD map_prot, DWORD view_prot)
 {
     DWORD access = map_prot_to_access(map_prot);
+    if (!access) return FALSE;
     return (view_prot & access) == view_prot;
 }
 
@@ -2012,16 +2013,28 @@ static void test_mapping(void)
         SetLastError(0xdeadbeef);
         hmap = CreateFileMapping(hfile, NULL, page_prot[i] | SEC_COMMIT, 0, si.dwPageSize, NULL);
 
+        if (page_prot[i] == PAGE_NOACCESS)
+        {
+            HANDLE hmap2;
+
+            ok(!hmap, "CreateFileMapping(PAGE_NOACCESS) should fail\n");
+            ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+            /* A trick to create a not accessible mapping */
+            SetLastError(0xdeadbeef);
+            hmap = CreateFileMapping(hfile, NULL, PAGE_READWRITE | SEC_COMMIT, 0, si.dwPageSize, NULL);
+            ok(hmap != 0, "CreateFileMapping(PAGE_READWRITE) error %d\n", GetLastError());
+            SetLastError(0xdeadbeef);
+            ret = DuplicateHandle(GetCurrentProcess(), hmap, GetCurrentProcess(), &hmap2, 0, FALSE, 0);
+            ok(ret, "DuplicateHandle error %d\n", GetLastError());
+            CloseHandle(hmap);
+            hmap = hmap2;
+        }
+
         if (!hmap)
         {
             trace("%d: CreateFileMapping(%04x) failed: %d\n", i, page_prot[i], GetLastError());
 
-            if (page_prot[i] == PAGE_NOACCESS)
-            {
-                ok(!hmap, "%d: CreateFileMapping(%04x) should fail\n", i, page_prot[i]);
-                ok(GetLastError() == ERROR_INVALID_PARAMETER, "%d: expected ERROR_INVALID_PARAMETER, got %d\n", i, GetLastError());
-                continue;
-            }
             /* NT4 and win2k don't support EXEC on file mappings */
             if (page_prot[i] == PAGE_EXECUTE_READ || page_prot[i] == PAGE_EXECUTE_READWRITE)
             {
