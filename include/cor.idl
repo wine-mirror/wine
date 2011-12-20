@@ -20,8 +20,8 @@ import "propidl.idl";
 
 cpp_quote("#include <ole2.h>")
 /* FIXME: #include "specstrings.h" */
-/* FIXME: #include "corerror.h" */
-/* FIXME: #include "corhdr.h" */
+cpp_quote("#include <corerror.h>")
+cpp_quote("#include <corhdr.h>")
 
 cpp_quote("DEFINE_GUID(CLSID_CorMetaDataDispenser, 0xe5cb7a31,0x7512,0x11d2,0x89,0xce,0x00,0x80,0xc7,0x92,0xe5,0xd8);")
 cpp_quote("DEFINE_GUID(CLSID_CorMetaDataDispenserRuntime, 0x1ec2de53,0x75cc,0x11d2,0x97,0x75,0x00,0xa0,0xc9,0xb4,0xd5,0x0c);")
