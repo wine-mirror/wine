@@ -421,18 +421,17 @@ enum wined3d_vertex_blend_flags
     WINED3D_VBF_0WEIGHTS                    = 256,
 };
 
-typedef enum _WINED3DCMPFUNC
+enum wined3d_cmp_func
 {
-    WINED3DCMP_NEVER                        = 1,
-    WINED3DCMP_LESS                         = 2,
-    WINED3DCMP_EQUAL                        = 3,
-    WINED3DCMP_LESSEQUAL                    = 4,
-    WINED3DCMP_GREATER                      = 5,
-    WINED3DCMP_NOTEQUAL                     = 6,
-    WINED3DCMP_GREATEREQUAL                 = 7,
-    WINED3DCMP_ALWAYS                       = 8,
-    WINED3DCMP_FORCE_DWORD                  = 0x7fffffff
-} WINED3DCMPFUNC;
+    WINED3D_CMP_NEVER                        = 1,
+    WINED3D_CMP_LESS                         = 2,
+    WINED3D_CMP_EQUAL                        = 3,
+    WINED3D_CMP_LESSEQUAL                    = 4,
+    WINED3D_CMP_GREATER                      = 5,
+    WINED3D_CMP_NOTEQUAL                     = 6,
+    WINED3D_CMP_GREATEREQUAL                 = 7,
+    WINED3D_CMP_ALWAYS                       = 8,
+};
 
 typedef enum _WINED3DZBUFFERTYPE
 {

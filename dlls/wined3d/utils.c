@@ -2496,22 +2496,6 @@ GLenum StencilOp(DWORD op) {
     }
 }
 
-GLenum CompareFunc(DWORD func) {
-    switch ((WINED3DCMPFUNC)func) {
-    case WINED3DCMP_NEVER        : return GL_NEVER;
-    case WINED3DCMP_LESS         : return GL_LESS;
-    case WINED3DCMP_EQUAL        : return GL_EQUAL;
-    case WINED3DCMP_LESSEQUAL    : return GL_LEQUAL;
-    case WINED3DCMP_GREATER      : return GL_GREATER;
-    case WINED3DCMP_NOTEQUAL     : return GL_NOTEQUAL;
-    case WINED3DCMP_GREATEREQUAL : return GL_GEQUAL;
-    case WINED3DCMP_ALWAYS       : return GL_ALWAYS;
-    default:
-        FIXME("Unrecognized WINED3DCMPFUNC value %d\n", func);
-        return 0;
-    }
-}
-
 BOOL is_invalid_op(const struct wined3d_state *state, int stage,
         WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3)
 {

@@ -202,9 +202,35 @@ static void state_zwritenable(struct wined3d_context *context, const struct wine
     }
 }
 
+static GLenum gl_compare_func(enum wined3d_cmp_func f)
+{
+    switch (f)
+    {
+        case WINED3D_CMP_NEVER:
+            return GL_NEVER;
+        case WINED3D_CMP_LESS:
+            return GL_LESS;
+        case WINED3D_CMP_EQUAL:
+            return GL_EQUAL;
+        case WINED3D_CMP_LESSEQUAL:
+            return GL_LEQUAL;
+        case WINED3D_CMP_GREATER:
+            return GL_GREATER;
+        case WINED3D_CMP_NOTEQUAL:
+            return GL_NOTEQUAL;
+        case WINED3D_CMP_GREATEREQUAL:
+            return GL_GEQUAL;
+        case WINED3D_CMP_ALWAYS:
+            return GL_ALWAYS;
+        default:
+            FIXME("Unrecognized compare function %#x.\n", f);
+            return GL_NONE;
+    }
+}
+
 static void state_zfunc(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    GLenum depth_func = CompareFunc(state->render_states[WINED3D_RS_ZFUNC]);
+    GLenum depth_func = gl_compare_func(state->render_states[WINED3D_RS_ZFUNC]);
 
     if (!depth_func) return;
 
@@ -530,7 +556,7 @@ static void state_alpha(struct wined3d_context *context, const struct wined3d_st
     else
     {
         ref = ((float)state->render_states[WINED3D_RS_ALPHAREF]) / 255.0f;
-        glParm = CompareFunc(state->render_states[WINED3D_RS_ALPHAFUNC]);
+        glParm = gl_compare_func(state->render_states[WINED3D_RS_ALPHAFUNC]);
     }
     if(glParm) {
         glAlphaFunc(glParm, ref);
@@ -801,9 +827,9 @@ static void state_stencil(struct wined3d_context *context, const struct wined3d_
 
     onesided_enable = state->render_states[WINED3D_RS_STENCILENABLE];
     twosided_enable = state->render_states[WINED3D_RS_TWOSIDEDSTENCILMODE];
-    if (!(func = CompareFunc(state->render_states[WINED3D_RS_STENCILFUNC])))
+    if (!(func = gl_compare_func(state->render_states[WINED3D_RS_STENCILFUNC])))
         func = GL_ALWAYS;
-    if (!(func_ccw = CompareFunc(state->render_states[WINED3D_RS_CCW_STENCILFUNC])))
+    if (!(func_ccw = gl_compare_func(state->render_states[WINED3D_RS_CCW_STENCILFUNC])))
         func_ccw = GL_ALWAYS;
     ref = state->render_states[WINED3D_RS_STENCILREF];
     mask = state->render_states[WINED3D_RS_STENCILMASK];

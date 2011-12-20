@@ -1134,8 +1134,8 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     state->render_states[WINED3D_RS_SRCBLEND] = WINED3D_BLEND_ONE;
     state->render_states[WINED3D_RS_DESTBLEND] = WINED3D_BLEND_ZERO;
     state->render_states[WINED3D_RS_CULLMODE] = WINED3DCULL_CCW;
-    state->render_states[WINED3D_RS_ZFUNC] = WINED3DCMP_LESSEQUAL;
-    state->render_states[WINED3D_RS_ALPHAFUNC] = WINED3DCMP_ALWAYS;
+    state->render_states[WINED3D_RS_ZFUNC] = WINED3D_CMP_LESSEQUAL;
+    state->render_states[WINED3D_RS_ALPHAFUNC] = WINED3D_CMP_ALWAYS;
     state->render_states[WINED3D_RS_ALPHAREF] = 0;
     state->render_states[WINED3D_RS_DITHERENABLE] = FALSE;
     state->render_states[WINED3D_RS_ALPHABLENDENABLE] = FALSE;
@@ -1158,7 +1158,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     state->render_states[WINED3D_RS_STENCILPASS] = WINED3DSTENCILOP_KEEP;
     state->render_states[WINED3D_RS_STENCILREF] = 0;
     state->render_states[WINED3D_RS_STENCILMASK] = 0xffffffff;
-    state->render_states[WINED3D_RS_STENCILFUNC] = WINED3DCMP_ALWAYS;
+    state->render_states[WINED3D_RS_STENCILFUNC] = WINED3D_CMP_ALWAYS;
     state->render_states[WINED3D_RS_STENCILWRITEMASK] = 0xffffffff;
     state->render_states[WINED3D_RS_TEXTUREFACTOR] = 0xffffffff;
     state->render_states[WINED3D_RS_WRAP0] = 0;
@@ -1229,7 +1229,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     state->render_states[WINED3D_RS_CCW_STENCILFAIL] = WINED3DSTENCILOP_KEEP;
     state->render_states[WINED3D_RS_CCW_STENCILZFAIL] = WINED3DSTENCILOP_KEEP;
     state->render_states[WINED3D_RS_CCW_STENCILPASS] = WINED3DSTENCILOP_KEEP;
-    state->render_states[WINED3D_RS_CCW_STENCILFUNC] = WINED3DCMP_ALWAYS;
+    state->render_states[WINED3D_RS_CCW_STENCILFUNC] = WINED3D_CMP_ALWAYS;
     state->render_states[WINED3D_RS_COLORWRITEENABLE1] = 0x0000000f;
     state->render_states[WINED3D_RS_COLORWRITEENABLE2] = 0x0000000f;
     state->render_states[WINED3D_RS_COLORWRITEENABLE3] = 0x0000000f;
