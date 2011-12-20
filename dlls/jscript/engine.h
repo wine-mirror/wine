@@ -423,7 +423,6 @@ typedef struct {
             IDispatch *disp;
             DISPID id;
         } idref;
-        BSTR identifier;
     } u;
 } exprval_t;
 

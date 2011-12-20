@@ -220,7 +220,7 @@ static void exprval_release(exprval_t *val)
             IDispatch_Release(val->u.idref.disp);
         return;
     case EXPRVAL_INVALID:
-        SysFreeString(val->u.identifier);
+        return;
     }
 }
 
@@ -240,7 +240,7 @@ static HRESULT exprval_value(script_ctx_t *ctx, exprval_t *val, jsexcept_t *ei, 
 
         return disp_propget(ctx, val->u.idref.disp, val->u.idref.id, ret, ei, NULL/*FIXME*/);
     case EXPRVAL_INVALID:
-        return throw_type_error(ctx, ei, JS_E_UNDEFINED_VARIABLE, val->u.identifier);
+        assert(0);
     }
 
     ERR("type %d\n", val->type);
@@ -653,10 +653,6 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, DWORD flags, 
     }
 
     ret->type = EXPRVAL_INVALID;
-    ret->u.identifier = SysAllocString(identifier);
-    if(!ret->u.identifier)
-        return E_OUTOFMEMORY;
-
     return S_OK;
 }
 
@@ -1584,6 +1580,9 @@ static HRESULT interp_ident(exec_ctx_t *ctx)
     hres = identifier_eval(ctx->parser->script, arg, 0, ctx->ei, &exprval);
     if(FAILED(hres))
         return hres;
+
+    if(exprval.type == EXPRVAL_INVALID)
+        return throw_type_error(ctx->parser->script, ctx->ei, JS_E_UNDEFINED_VARIABLE, arg);
 
     hres = exprval_to_value(ctx->parser->script, &exprval, ctx->ei, &v);
     exprval_release(&exprval);
