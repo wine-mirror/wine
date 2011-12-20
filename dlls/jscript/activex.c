@@ -130,7 +130,6 @@ static IUnknown *create_activex_object(script_ctx_t *ctx, const WCHAR *progid)
         }
         IObjectWithSite_Release(obj_site);
         if(!ax_site || FAILED(hres)) {
-            IObjectWithSite_Release(obj_site);
             IUnknown_Release(obj);
             return NULL;
         }
