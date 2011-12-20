@@ -841,6 +841,7 @@ static HRESULT compile_expression(compiler_ctx_t *ctx, expression_t *expr)
     return compile_expression_noret(ctx, expr, NULL);
 }
 
+/* ECMA-262 3rd Edition    12.1 */
 static HRESULT compile_block_statement(compiler_ctx_t *ctx, statement_t *iter)
 {
     HRESULT hres;
@@ -863,6 +864,28 @@ static HRESULT compile_block_statement(compiler_ctx_t *ctx, statement_t *iter)
     }
 
     return S_OK;
+}
+
+/* ECMA-262 3rd Edition    12.2 */
+static HRESULT compile_var_statement(compiler_ctx_t *ctx, var_statement_t *stat)
+{
+    variable_declaration_t *iter;
+    HRESULT hres;
+
+    for(iter = stat->variable_list; iter; iter = iter->next) {
+        if(!iter->expr)
+            continue;
+
+        hres = compile_expression(ctx, iter->expr);
+        if(FAILED(hres))
+            return hres;
+
+        hres = push_instr_bstr(ctx, OP_var_set, iter->identifier);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return push_instr(ctx, OP_undefined) == -1 ? E_OUTOFMEMORY : S_OK;
 }
 
 /* ECMA-262 3rd Edition    12.4 */
@@ -934,6 +957,8 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_t *stat)
         return compile_expression_statement(ctx, (expression_statement_t*)stat);
     case STAT_IF:
         return compile_if_statement(ctx, (if_statement_t*)stat);
+    case STAT_VAR:
+        return compile_var_statement(ctx, (var_statement_t*)stat);
     default:
         return compile_interp_fallback(ctx, stat);
     }

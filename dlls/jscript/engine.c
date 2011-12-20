@@ -688,19 +688,18 @@ static HRESULT variable_list_eval(script_ctx_t *ctx, variable_declaration_t *var
 }
 
 /* ECMA-262 3rd Edition    12.2 */
-HRESULT var_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
+static HRESULT interp_var_set(exec_ctx_t *ctx)
 {
-    var_statement_t *stat = (var_statement_t*)_stat;
+    const BSTR name = ctx->parser->code->instrs[ctx->ip].arg1.bstr;
+    VARIANT *v;
     HRESULT hres;
 
-    TRACE("\n");
+    TRACE("%s\n", debugstr_w(name));
 
-    hres = variable_list_eval(ctx, stat->variable_list, &rt->ei);
-    if(FAILED(hres))
-        return hres;
-
-    V_VT(ret) = VT_EMPTY;
-    return S_OK;
+    v = stack_pop(ctx);
+    hres = jsdisp_propput_name(ctx->var_disp, name, v, ctx->ei, NULL/*FIXME*/);
+    VariantClear(v);
+    return hres;
 }
 
 /* ECMA-262 3rd Edition    12.6.2 */

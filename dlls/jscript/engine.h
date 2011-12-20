@@ -104,6 +104,7 @@ typedef struct _func_stack {
     X(ret,        0, 0,0)                  \
     X(sub,        1, 0,0)                  \
     X(undefined,  1, 0,0)                  \
+    X(var_set,    1, ARG_BSTR,   0)        \
     X(void,       1, 0,0)                  \
     X(xor,        1, 0,0)
 
@@ -398,7 +399,6 @@ typedef struct {
 } try_statement_t;
 
 HRESULT compiled_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
-HRESULT var_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT while_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT for_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT forin_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
