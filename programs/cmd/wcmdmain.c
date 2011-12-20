@@ -1161,10 +1161,7 @@ void WCMD_run_program (WCHAR *command, int called) {
       launched = TRUE;
 
       /* Special case BAT and CMD */
-      if (ext && !strcmpiW(ext, batExt)) {
-        WCMD_batch (thisDir, command, called, NULL, INVALID_HANDLE_VALUE);
-        return;
-      } else if (ext && !strcmpiW(ext, cmdExt)) {
+      if (ext && (!strcmpiW(ext, batExt) || !strcmpiW(ext, cmdExt))) {
         WCMD_batch (thisDir, command, called, NULL, INVALID_HANDLE_VALUE);
         return;
       } else {
