@@ -51,8 +51,8 @@
 #include "shlwapi.h"
 #include "xdg.h"
 #include "sddl.h"
-#define INITGUID
 #include "knownfolders.h"
+#include "initguid.h"
 #include "shobjidl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);

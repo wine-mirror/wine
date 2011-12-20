@@ -30,9 +30,10 @@
 #include "shlguid.h"
 #include "shlobj.h"
 #include "shlwapi.h"
-#include "initguid.h"
 #include "knownfolders.h"
 #include "wine/test.h"
+
+#include "initguid.h"
 
 /* CSIDL_MYDOCUMENTS is now the same as CSIDL_PERSONAL, but what we want
  * here is its original value.
