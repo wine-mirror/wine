@@ -1156,18 +1156,52 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
  */
 static void EDIT_GetLineRect(EDITSTATE *es, INT line, INT scol, INT ecol, LPRECT rc)
 {
-	INT line_index =  EDIT_EM_LineIndex(es, line);
-	INT pt1, pt2;
+	SCRIPT_STRING_ANALYSIS ssa;
+	INT line_index = 0;
+	INT pt1, pt2, pt3;
 
 	if (es->style & ES_MULTILINE)
+	{
+		const LINEDEF *line_def = NULL;
 		rc->top = es->format_rect.top + (line - es->y_offset) * es->line_height;
+		if (line >= es->line_count)
+			return;
+
+		line_def = es->first_line_def;
+		if (line == -1) {
+			INT index = es->selection_end - line_def->length;
+			while ((index >= 0) && line_def->next) {
+				line_index += line_def->length;
+				line_def = line_def->next;
+				index -= line_def->length;
+			}
+		} else {
+			while (line > 0) {
+				line_index += line_def->length;
+				line_def = line_def->next;
+				line--;
+			}
+		}
+		ssa = line_def->ssa;
+	}
 	else
+	{
+		line_index = 0;
 		rc->top = es->format_rect.top;
+		ssa = es->ssa;
+	}
+
 	rc->bottom = rc->top + es->line_height;
 	pt1 = (scol == 0) ? es->format_rect.left : (short)LOWORD(EDIT_EM_PosFromChar(es, line_index + scol, TRUE));
 	pt2 = (ecol == -1) ? es->format_rect.right : (short)LOWORD(EDIT_EM_PosFromChar(es, line_index + ecol, TRUE));
-	rc->right = max(pt1 , pt2);
-	rc->left = min(pt1, pt2);
+	if (ssa)
+	{
+		ScriptStringCPtoX(ssa, line_index + scol, FALSE, &pt3);
+		pt3+=es->format_rect.left;
+	}
+	else pt3 = pt1;
+	rc->right = max(max(pt1 , pt2),pt3);
+	rc->left = min(min(pt1, pt2),pt3);
 }
 
 
@@ -3678,11 +3712,13 @@ static void EDIT_WM_Paint(EDITSTATE *es, HDC hdc)
 	if (es->style & ES_MULTILINE) {
 		INT vlc = get_vertical_line_count(es);
 		for (i = es->y_offset ; i <= min(es->y_offset + vlc, es->y_offset + es->line_count - 1) ; i++) {
+			EDIT_UpdateUniscribeData(es, dc, i);
 			EDIT_GetLineRect(es, i, 0, -1, &rcLine);
 			if (IntersectRect(&rc, &rcRgn, &rcLine))
 				EDIT_PaintLine(es, dc, i, rev);
 		}
 	} else {
+		EDIT_UpdateUniscribeData(es, dc, 0);
 		EDIT_GetLineRect(es, 0, 0, -1, &rcLine);
 		if (IntersectRect(&rc, &rcRgn, &rcLine))
 			EDIT_PaintLine(es, dc, 0, rev);
