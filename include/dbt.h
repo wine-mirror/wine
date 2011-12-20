@@ -19,6 +19,10 @@
 #ifndef __WINE_DBT_H
 #define __WINE_DBT_H
 
+#ifndef GUID_DEFINED
+# include <guiddef.h>
+#endif
+
 /* dbt.h doesn't use the normal convention, it adds an underscore before A/W */
 #ifdef WINE_NO_UNICODE_MACROS
 # define DECL_WINELIB_DBT_TYPE_AW(type)  /* nothing */

@@ -19,13 +19,17 @@
 #ifndef _NTDDNDIS_
 #define _NTDDNDIS_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <ifdef.h>
 #include <devpkey.h>
 /* #include <pciprop.h> */
+
+#ifndef GUID_DEFINED
+# include <guiddef.h>
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define _NDIS_CONTROL_CODE(request, method) \
     CTL_CODE(FILE_DEVICE_PHYSICAL_NETCARD, request, method, FILE_ANY_ACCESS)

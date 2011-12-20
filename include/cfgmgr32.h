@@ -21,6 +21,10 @@
 
 /* FIXME: #include <cfg.h> */
 
+#ifndef GUID_DEFINED
+# include <guiddef.h>
+#endif
+
 /* cfgmgr32 doesn't use the normal convention, it adds an underscore before A/W */
 #ifdef WINE_NO_UNICODE_MACROS
 # define DECL_WINELIB_CFGMGR32_TYPE_AW(type)  /* nothing */

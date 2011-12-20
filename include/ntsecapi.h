@@ -19,6 +19,10 @@
 #ifndef __WINE_NTSECAPI_H
 #define __WINE_NTSECAPI_H
 
+#ifndef GUID_DEFINED
+# include <guiddef.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
