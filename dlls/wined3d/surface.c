@@ -1810,7 +1810,8 @@ static void surface_unload(struct wined3d_resource *resource)
          * or the depth stencil into an FBO the texture or render buffer will be removed
          * and all flags get lost
          */
-        surface_init_sysmem(surface);
+        if (!(surface->flags & SFLAG_PBO))
+            surface_init_sysmem(surface);
         /* We also get here when the ddraw swapchain is destroyed, for example
          * for a mode switch. In this case this surface won't necessarily be
          * an implicit surface. We have to mark it lost so that the
