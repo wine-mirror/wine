@@ -1462,7 +1462,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
     WCHAR *english_family, *localised_family, *StyleW;
     Family *family;
     Face *face;
-    struct list *family_elem_ptr, *face_elem_ptr;
+    struct list *face_elem_ptr;
     FT_Error err;
     FT_Long face_index = 0, num_faces;
     FT_WinFNT_HeaderRec winfnt_header;
@@ -1604,13 +1604,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
                 }
             }
 
-            family = NULL;
-            LIST_FOR_EACH(family_elem_ptr, &font_list) {
-                family = LIST_ENTRY(family_elem_ptr, Family, entry);
-                if(!strcmpiW(family->FamilyName, localised_family ? localised_family : english_family))
-                    break;
-                family = NULL;
-            }
+            family = find_family_from_name(localised_family ? localised_family : english_family);
             if(!family) {
                 family = HeapAlloc(GetProcessHeap(), 0, sizeof(*family));
                 family->FamilyName = strdupW(localised_family ? localised_family : english_family);
@@ -1661,10 +1655,8 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
                 internal_leading = winfnt_header.internal_leading;
             }
 
-            face_elem_ptr = list_head(&family->faces);
-            while(face_elem_ptr) {
+            LIST_FOR_EACH(face_elem_ptr, &family->faces) {
                 face = LIST_ENTRY(face_elem_ptr, Face, entry);
-                face_elem_ptr = list_next(&family->faces, face_elem_ptr);
                 if(!strcmpiW(face->StyleName, StyleW) &&
                    (FT_IS_SCALABLE(ft_face) || ((size->y_ppem == face->size.y_ppem) && !memcmp(&fs, &face->fs, sizeof(fs)) ))) {
                     TRACE("Already loaded font %s %s original version is %lx, this version is %lx\n",
