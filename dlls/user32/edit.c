@@ -1069,13 +1069,15 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
 		while (line_def->index != li)
 			line_def = line_def->next;
 
-		if (!line_def->ssa)
-			return 0;
-
 		lw = line_def->width;
 		w = es->format_rect.right - es->format_rect.left;
-		ScriptStringCPtoX(line_def->ssa, (index - 1) - li, TRUE, &x);
-		x -= es->x_offset;
+		if (line_def->ssa)
+		{
+			ScriptStringCPtoX(line_def->ssa, (index - 1) - li, TRUE, &x);
+			x -= es->x_offset;
+		}
+		else
+			x = es->x_offset;
 
 		if (es->style & ES_RIGHT)
 			x = w - (lw - x);
