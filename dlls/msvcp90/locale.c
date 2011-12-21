@@ -73,7 +73,7 @@ typedef struct {
 typedef struct {
     LCID handle;
     unsigned page;
-    short *table;
+    const short *table;
     int delfl;
 } _Ctypevec;
 
@@ -477,18 +477,20 @@ _Ctypevec __cdecl _Getctype(void)
 {
     _Ctypevec ret;
     _locale_t locale = _get_current_locale();
+    short *table;
 
     TRACE("\n");
 
     ret.page = locale->locinfo->lc_codepage;
     ret.handle = locale->locinfo->lc_handle[LC_COLLATE];
     ret.delfl = TRUE;
-    ret.table = malloc(sizeof(short[256]));
-    if(!ret.table) {
+    table = malloc(sizeof(short[256]));
+    if(!table) {
         _free_locale(locale);
         throw_exception(EXCEPTION_BAD_ALLOC, NULL);
     }
-    memcpy(ret.table, locale->locinfo->pctype, sizeof(short[256]));
+    memcpy(table, locale->locinfo->pctype, sizeof(short[256]));
+    ret.table = table;
     _free_locale(locale);
     return ret;
 }
@@ -1156,8 +1158,8 @@ extern const vtable_ptr MSVCP_ctype_char_vtable;
 /* ?_Id_func@?$ctype@D@std@@SAAEAVid@locale@2@XZ */
 locale_id* __cdecl ctype_char__Id_func(void)
 {
-    FIXME("() stub\n");
-    return NULL;
+    TRACE("()\n");
+    return &ctype_char_id;
 }
 
 /* ?_Init@?$ctype@D@std@@IAEXABV_Locinfo@2@@Z */
@@ -1165,7 +1167,8 @@ locale_id* __cdecl ctype_char__Id_func(void)
 DEFINE_THISCALL_WRAPPER(ctype_char__Init, 8)
 void __thiscall ctype_char__Init(ctype_char *this, _Locinfo *locinfo)
 {
-    FIXME("(%p %p) stub\n", this, locinfo);
+    TRACE("(%p %p)\n", this, locinfo);
+    this->ctype = _Locinfo__Getctype(locinfo);
 }
 
 /* ?_Tidy@?$ctype@D@std@@IAEXXZ */
@@ -1173,15 +1176,18 @@ void __thiscall ctype_char__Init(ctype_char *this, _Locinfo *locinfo)
 DEFINE_THISCALL_WRAPPER(ctype_char__Tidy, 4)
 void __thiscall ctype_char__Tidy(ctype_char *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+
+    if(this->ctype.delfl)
+        free((short*)this->ctype.table);
 }
 
 /* ?classic_table@?$ctype@D@std@@KAPBFXZ */
 /* ?classic_table@?$ctype@D@std@@KAPEBFXZ */
 const short* __cdecl ctype_char_classic_table(void)
 {
-    FIXME("() stub\n");
-    return NULL;
+    TRACE("()\n");
+    return &((short*)GetProcAddress(GetModuleHandleA("msvcrt.dll"), "_ctype"))[1];
 }
 
 /* ??0?$ctype@D@std@@QAE@ABV_Locinfo@1@I@Z */
@@ -1190,9 +1196,11 @@ DEFINE_THISCALL_WRAPPER(ctype_char_ctor_locinfo, 12)
 ctype_char* __thiscall ctype_char_ctor_locinfo(ctype_char *this,
         _Locinfo *locinfo, MSVCP_size_t refs)
 {
-    FIXME("(%p %p %lu) stub\n", this, locinfo, refs);
+    TRACE("(%p %p %lu)\n", this, locinfo, refs);
+    ctype_base_ctor_refs(&this->base, refs);
     this->base.facet.vtable = &MSVCP_ctype_char_vtable;
-    return NULL;
+    ctype_char__Init(this, locinfo);
+    return this;
 }
 
 /* ??0?$ctype@D@std@@QAE@PBF_NI@Z */
@@ -1201,9 +1209,26 @@ DEFINE_THISCALL_WRAPPER(ctype_char_ctor_table, 16)
 ctype_char* __thiscall ctype_char_ctor_table(ctype_char *this,
         const short *table, MSVCP_bool delete, MSVCP_size_t refs)
 {
-    FIXME("(%p %p %d %lu) stub\n", this, table, delete, refs);
+    _Lockit lockit;
+    _Locinfo locinfo;
+
+    TRACE("(%p %p %d %lu)\n", this, table, delete, refs);
+
+    ctype_base_ctor_refs(&this->base, refs);
     this->base.facet.vtable = &MSVCP_ctype_char_vtable;
-    return NULL;
+
+    _Lockit_ctor_locktype(&lockit, _LOCK_LOCALE);
+    _Locinfo_ctor(&locinfo);
+    ctype_char__Init(this, &locinfo);
+    _Locinfo_dtor(&locinfo);
+    _Lockit_dtor(&lockit);
+
+    if(table) {
+        ctype_char__Tidy(this);
+        this->ctype.table = table;
+        this->ctype.delfl = delete;
+    }
+    return this;
 }
 
 /* ??_F?$ctype@D@std@@QAEXXZ */
@@ -1211,9 +1236,7 @@ ctype_char* __thiscall ctype_char_ctor_table(ctype_char *this,
 DEFINE_THISCALL_WRAPPER(ctype_char_ctor, 4)
 ctype_char* __thiscall ctype_char_ctor(ctype_char *this)
 {
-    FIXME("(%p) stub\n", this);
-    this->base.facet.vtable = &MSVCP_ctype_char_vtable;
-    return NULL;
+    return ctype_char_ctor_table(this, NULL, FALSE, 0);
 }
 
 /* ??1?$ctype@D@std@@MAE@XZ */
@@ -1221,7 +1244,8 @@ ctype_char* __thiscall ctype_char_ctor(ctype_char *this)
 DEFINE_THISCALL_WRAPPER(ctype_char_dtor, 4)
 void __thiscall ctype_char_dtor(ctype_char *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    ctype_char__Tidy(this);
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_ctype_char_vector_dtor, 8)
