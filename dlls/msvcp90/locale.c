@@ -34,6 +34,7 @@ char* __cdecl _Getdays(void);
 char* __cdecl _Getmonths(void);
 void* __cdecl _Gettnames(void);
 unsigned int __cdecl ___lc_codepage_func(void);
+LCID* __cdecl ___lc_handle_func(void);
 
 typedef int category;
 
@@ -746,8 +747,15 @@ MSVCP_size_t __cdecl collate_char__Getcat(const locale_facet **facet, const loca
 int __cdecl _Strcoll(const char *first1, const char *last1, const char *first2,
         const char *last2, const _Collvec *coll)
 {
+    LCID lcid;
+
     TRACE("(%s %s)\n", debugstr_an(first1, last1-first1), debugstr_an(first2, last2-first2));
-    return CompareStringA(coll->handle, 0, first1, last1-first1, first2, last2-first2)-2;
+
+    if(coll)
+        lcid = coll->handle;
+    else
+        lcid = ___lc_handle_func()[LC_COLLATE];
+    return CompareStringA(lcid, 0, first1, last1-first1, first2, last2-first2)-2;
 }
 
 /* ?do_compare@?$collate@D@std@@MBEHPBD000@Z */
@@ -992,8 +1000,15 @@ MSVCP_size_t __cdecl collate_wchar__Getcat(const locale_facet **facet, const loc
 int __cdecl _Wcscoll(const wchar_t *first1, const wchar_t *last1, const wchar_t *first2,
         const wchar_t *last2, const _Collvec *coll)
 {
+    LCID lcid;
+
     TRACE("(%s %s)\n", debugstr_wn(first1, last1-first1), debugstr_wn(first2, last2-first2));
-    return CompareStringW(coll->handle, 0, first1, last1-first1, first2, last2-first2)-2;
+
+    if(coll)
+        lcid = coll->handle;
+    else
+        lcid = ___lc_handle_func()[LC_COLLATE];
+    return CompareStringW(lcid, 0, first1, last1-first1, first2, last2-first2)-2;
 }
 
 /* ?do_compare@?$collate@_W@std@@MBEHPB_W000@Z */
