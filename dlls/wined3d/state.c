@@ -104,21 +104,21 @@ static void state_zenable(struct wined3d_context *context, const struct wined3d_
 
     switch (state->render_states[WINED3D_RS_ZENABLE])
     {
-        case WINED3DZB_FALSE:
+        case WINED3D_ZB_FALSE:
             glDisable(GL_DEPTH_TEST);
             checkGLcall("glDisable GL_DEPTH_TEST");
             break;
-        case WINED3DZB_TRUE:
+        case WINED3D_ZB_TRUE:
             glEnable(GL_DEPTH_TEST);
             checkGLcall("glEnable GL_DEPTH_TEST");
             break;
-        case WINED3DZB_USEW:
+        case WINED3D_ZB_USEW:
             glEnable(GL_DEPTH_TEST);
             checkGLcall("glEnable GL_DEPTH_TEST");
             FIXME("W buffer is not well handled\n");
             break;
         default:
-            FIXME("Unrecognized D3DZBUFFERTYPE value %#x.\n",
+            FIXME("Unrecognized depth buffer type %#x.\n",
                     state->render_states[WINED3D_RS_ZENABLE]);
     }
 }

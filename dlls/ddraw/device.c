@@ -6933,8 +6933,7 @@ IDirect3DDeviceImpl *unsafe_impl_from_IDirect3DDevice(IDirect3DDevice *iface)
  *  The depth stencil state to set if creating the device
  *
  *****************************************************************************/
-WINED3DZBUFFERTYPE
-IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DDeviceImpl *This)
+enum wined3d_depth_buffer_type IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DDeviceImpl *This)
 {
     IDirectDrawSurface7 *depthStencil = NULL;
     IDirectDrawSurfaceImpl *dsi;
@@ -6945,7 +6944,7 @@ IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DDeviceImpl *This)
     {
         TRACE("Setting wined3d depth stencil to NULL\n");
         wined3d_device_set_depth_stencil(This->wined3d_device, NULL);
-        return WINED3DZB_FALSE;
+        return WINED3D_ZB_FALSE;
     }
 
     dsi = impl_from_IDirectDrawSurface7(depthStencil);
@@ -6953,7 +6952,7 @@ IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DDeviceImpl *This)
     wined3d_device_set_depth_stencil(This->wined3d_device, dsi->wined3d_surface);
 
     IDirectDrawSurface7_Release(depthStencil);
-    return WINED3DZB_TRUE;
+    return WINED3D_ZB_TRUE;
 }
 
 HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDirectDrawSurfaceImpl *target)

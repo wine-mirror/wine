@@ -329,7 +329,7 @@ extern const GUID IID_D3DDEVICE_WineD3D DECLSPEC_HIDDEN;
 /* Helper functions */
 HRESULT IDirect3DImpl_GetCaps(const struct wined3d *wined3d,
         D3DDEVICEDESC *Desc123, D3DDEVICEDESC7 *Desc7) DECLSPEC_HIDDEN;
-WINED3DZBUFFERTYPE IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DDeviceImpl *This) DECLSPEC_HIDDEN;
+enum wined3d_depth_buffer_type IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DDeviceImpl *device) DECLSPEC_HIDDEN;
 
 static inline IDirect3DDeviceImpl *impl_from_IDirect3DDevice(IDirect3DDevice *iface)
 {

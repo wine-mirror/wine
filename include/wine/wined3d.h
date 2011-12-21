@@ -423,23 +423,22 @@ enum wined3d_vertex_blend_flags
 
 enum wined3d_cmp_func
 {
-    WINED3D_CMP_NEVER                        = 1,
-    WINED3D_CMP_LESS                         = 2,
-    WINED3D_CMP_EQUAL                        = 3,
-    WINED3D_CMP_LESSEQUAL                    = 4,
-    WINED3D_CMP_GREATER                      = 5,
-    WINED3D_CMP_NOTEQUAL                     = 6,
-    WINED3D_CMP_GREATEREQUAL                 = 7,
-    WINED3D_CMP_ALWAYS                       = 8,
+    WINED3D_CMP_NEVER                       = 1,
+    WINED3D_CMP_LESS                        = 2,
+    WINED3D_CMP_EQUAL                       = 3,
+    WINED3D_CMP_LESSEQUAL                   = 4,
+    WINED3D_CMP_GREATER                     = 5,
+    WINED3D_CMP_NOTEQUAL                    = 6,
+    WINED3D_CMP_GREATEREQUAL                = 7,
+    WINED3D_CMP_ALWAYS                      = 8,
 };
 
-typedef enum _WINED3DZBUFFERTYPE
+enum wined3d_depth_buffer_type
 {
-    WINED3DZB_FALSE                         = 0,
-    WINED3DZB_TRUE                          = 1,
-    WINED3DZB_USEW                          = 2,
-    WINED3DZB_FORCE_DWORD                   = 0x7fffffff
-} WINED3DZBUFFERTYPE;
+    WINED3D_ZB_FALSE                        = 0,
+    WINED3D_ZB_TRUE                         = 1,
+    WINED3D_ZB_USEW                         = 2,
+};
 
 typedef enum _WINED3DFOGMODE
 {
