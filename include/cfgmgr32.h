@@ -108,6 +108,56 @@ typedef DWORD CONFIGRET;
 #define MAX_GUID_STRING_LEN             39
 #define MAX_PROFILE_LEN                 80
 
+#define CM_DRP_DEVICEDESC               0x01
+#define CM_DRP_HARDWAREID               0x02
+#define CM_DRP_COMPATIBLEIDS            0x03
+#define CM_DRP_UNUSED0                  0x04
+#define CM_DRP_SERVICE                  0x05
+#define CM_DRP_UNUSED1                  0x06
+#define CM_DRP_UNUSED2                  0x07
+#define CM_DRP_CLASS                    0x08
+#define CM_DRP_CLASSGUID                0x09
+#define CM_DRP_DRIVER                   0x0A
+#define CM_DRP_CONFIGFLAGS              0x0B
+#define CM_DRP_MFG                      0x0C
+#define CM_DRP_FRIENDLYNAME             0x0D
+#define CM_DRP_LOCATION_INFORMATION     0x0E
+#define CM_DRP_PHYSICAL_DEVICE_OBJECT_NAME 0x0F
+#define CM_DRP_CAPABILITIES             0x10
+#define CM_DRP_UI_NUMBER                0x11
+#define CM_DRP_UPPERFILTERS             0x12
+#define CM_DRP_LOWERFILTERS             0x13
+#define CM_DRP_BUSTYPEGUID              0x14
+#define CM_DRP_LEGACYBUSTYPE            0x15
+#define CM_DRP_BUSNUMBER                0x16
+#define CM_DRP_ENUMERATOR_NAME          0x17
+#define CM_DRP_SECURITY                 0x18
+#define CM_DRP_SECURITY_SDS             0x19
+#define CM_DRP_DEVTYPE                  0x1A
+#define CM_DRP_EXCLUSIVE                0x1B
+#define CM_DRP_CHARACTERISTICS          0x1C
+#define CM_DRP_ADDRESS                  0x1D
+#define CM_DRP_UI_NUMBER_DESC_FORMAT    0x1E
+#define CM_DRP_DEVICE_POWER_DATA        0x1F
+#define CM_DRP_REMOVAL_POLICY           0x20
+#define CM_DRP_REMOVAL_POLICY_HW_DEFAULT 0x21
+#define CM_DRP_REMOVAL_POLICY_OVERRIDE  0x22
+#define CM_DRP_INSTALL_STATE            0x23
+#define CM_DRP_LOCATION_PATHS           0x24
+#define CM_DRP_BASE_CONTAINERID         0x25
+#define CM_DRP_MIN                      0x01
+#define CM_DRP_MAX                      0x25
+
+#define CM_CRP_UPPERFILTERS             CM_DRP_UPPERFILTERS
+#define CM_CRP_LOWERFILTERS             CM_DRP_LOWERFILTERS
+#define CM_CRP_SECURITY                 CM_DRP_SECURITY
+#define CM_CRP_SECURITY_SDS             CM_DRP_SECURITY_SDS
+#define CM_CRP_DEVTYPE                  CM_DRP_DEVTYPE
+#define CM_CRP_EXCLUSIVE                CM_DRP_EXCLUSIVE
+#define CM_CRP_CHARACTERISTICS          CM_DRP_CHARACTERISTICS
+#define CM_CRP_MIN                      CM_DRP_MIN
+#define CM_CRP_MAX                      CM_DRP_MAX
+
 typedef DWORD DEVINST, *PDEVINST;
 typedef DWORD DEVNODE, *PDEVNODE;
 typedef HANDLE HMACHINE, *PHMACHINE;
