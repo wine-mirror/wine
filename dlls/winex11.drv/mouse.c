@@ -131,6 +131,8 @@ static Cursor create_cursor( HANDLE handle );
 #ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
 static BOOL xinput2_available;
 static int xinput2_core_pointer;
+static int xinput2_device_count;
+static XIDeviceInfo *xinput2_devices;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(XIFreeDeviceInfo);
 MAKE_FUNCPTR(XIQueryDevice);
@@ -255,10 +257,9 @@ static void enable_xinput2(void)
 {
 #ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
     struct x11drv_thread_data *data = x11drv_thread_data();
-    XIDeviceInfo *devices;
     XIEventMask mask;
     unsigned char mask_bits[XIMaskLen(XI_LASTEVENT)];
-    int i, j, count;
+    int i, j;
 
     if (!xinput2_available) return;
 
@@ -277,27 +278,29 @@ static void enable_xinput2(void)
     if (data->xi2_state == xi_unavailable) return;
 
     wine_tsx11_lock();
-    devices = pXIQueryDevice( data->display, XIAllDevices, &count );
-    for (i = 0; i < count; ++i)
+    if (xinput2_devices) pXIFreeDeviceInfo( xinput2_devices );
+    xinput2_devices = pXIQueryDevice( data->display, XIAllDevices, &xinput2_device_count );
+    for (i = 0; i < xinput2_device_count; ++i)
     {
-        if (devices[i].use != XIMasterPointer) continue;
-        for (j = 0; j < devices[i].num_classes; j++)
+        if (xinput2_devices[i].use != XIMasterPointer) continue;
+        for (j = 0; j < xinput2_devices[i].num_classes; j++)
         {
-            XIValuatorClassInfo *class = (XIValuatorClassInfo *)devices[i].classes[j];
+            XIValuatorClassInfo *class = (XIValuatorClassInfo *)xinput2_devices[i].classes[j];
 
-            if (devices[i].classes[j]->type != XIValuatorClass) continue;
+            if (xinput2_devices[i].classes[j]->type != XIValuatorClass) continue;
             if (class->number != 0 && class->number != 1) continue;
+            TRACE( "Device %u (%s) class %u num %u %f,%f res %u mode %u\n",
+                   xinput2_devices[i].deviceid, debugstr_a(xinput2_devices[i].name),
+                   j, class->number, class->min, class->max, class->resolution, class->mode );
             if (class->mode == XIModeAbsolute)
             {
-                TRACE( "Device %u (%s) class %u num %u %f,%f res %u is absolute, not enabling XInput2\n",
-                       devices[i].deviceid, debugstr_a(devices[i].name),
-                       j, class->number, class->min, class->max, class->resolution );
+                TRACE( "Device is absolute, not enabling XInput2\n" );
                 goto done;
             }
         }
         TRACE( "Using %u (%s) as core pointer\n",
-               devices[i].deviceid, debugstr_a(devices[i].name) );
-        xinput2_core_pointer = devices[i].deviceid;
+               xinput2_devices[i].deviceid, debugstr_a(xinput2_devices[i].name) );
+        xinput2_core_pointer = xinput2_devices[i].deviceid;
         break;
     }
 
@@ -307,20 +310,20 @@ static void enable_xinput2(void)
     XISetMask( mask_bits, XI_RawMotion );
     XISetMask( mask_bits, XI_ButtonPress );
 
-    for (i = 0; i < count; ++i)
+    for (i = 0; i < xinput2_device_count; ++i)
     {
-        if (devices[i].use == XISlavePointer && devices[i].attachment == xinput2_core_pointer)
+        if (xinput2_devices[i].use == XISlavePointer &&
+            xinput2_devices[i].attachment == xinput2_core_pointer)
         {
             TRACE( "Device %u (%s) is attached to the core pointer\n",
-                   devices[i].deviceid, debugstr_a(devices[i].name) );
-            mask.deviceid = devices[i].deviceid;
+                   xinput2_devices[i].deviceid, debugstr_a(xinput2_devices[i].name) );
+            mask.deviceid = xinput2_devices[i].deviceid;
             pXISelectEvents( data->display, DefaultRootWindow( data->display ), &mask, 1 );
             data->xi2_state = xi_enabled;
         }
     }
 
 done:
-    pXIFreeDeviceInfo( devices );
     wine_tsx11_unlock();
 #endif
 }
@@ -333,8 +336,7 @@ static void disable_xinput2(void)
 #ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
     struct x11drv_thread_data *data = x11drv_thread_data();
     XIEventMask mask;
-    XIDeviceInfo *devices;
-    int i, count;
+    int i;
 
     if (data->xi2_state != xi_enabled) return;
 
@@ -345,16 +347,18 @@ static void disable_xinput2(void)
     mask.mask_len = 0;
 
     wine_tsx11_lock();
-    devices = pXIQueryDevice( data->display, XIAllDevices, &count );
-    for (i = 0; i < count; ++i)
+    for (i = 0; i < xinput2_device_count; ++i)
     {
-        if (devices[i].use == XISlavePointer && devices[i].attachment == xinput2_core_pointer)
+        if (xinput2_devices[i].use == XISlavePointer &&
+            xinput2_devices[i].attachment == xinput2_core_pointer)
         {
-            mask.deviceid = devices[i].deviceid;
+            mask.deviceid = xinput2_devices[i].deviceid;
             pXISelectEvents( data->display, DefaultRootWindow( data->display ), &mask, 1 );
         }
     }
-    pXIFreeDeviceInfo( devices );
+    pXIFreeDeviceInfo( xinput2_devices );
+    xinput2_devices = NULL;
+    xinput2_device_count = 0;
     wine_tsx11_unlock();
 #endif
 }
