@@ -596,19 +596,6 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
             }
             WideCharToMultiByte(cp, 0, str, len, ptr, size, NULL, NULL);
             if (cp == CP_UTF8) This->use_utf8_content = TRUE;
-
-            bsc->body = GlobalAlloc(GMEM_FIXED, size);
-            if (!bsc->body)
-            {
-                heap_free(bsc);
-                heap_free(ptr);
-                return E_OUTOFMEMORY;
-            }
-
-            send_data = GlobalLock(bsc->body);
-            memcpy(send_data, ptr, size);
-            GlobalUnlock(bsc->body);
-            heap_free(ptr);
             break;
         }
         case VT_ARRAY|VT_UI1:
