@@ -1432,20 +1432,44 @@ static void X11DRV_RawMotion( XGenericEventCookie *xev )
     XIRawEvent *event = xev->data;
     const double *values = event->valuators.values;
     INPUT input;
+    int i, j;
+    double dx = 0, dy = 0;
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
 
     if (!event->valuators.mask_len) return;
     if (thread_data->xi2_state != xi_enabled) return;
 
-    input.u.mi.dx          = 0;
-    input.u.mi.dy          = 0;
     input.u.mi.mouseData   = 0;
     input.u.mi.dwFlags     = MOUSEEVENTF_MOVE;
     input.u.mi.time        = EVENT_x11_time_to_win32_time( event->time );
     input.u.mi.dwExtraInfo = 0;
 
-    if (XIMaskIsSet( event->valuators.mask, 0 )) input.u.mi.dx = *values++;
-    if (XIMaskIsSet( event->valuators.mask, 1 )) input.u.mi.dy = *values++;
+    if (XIMaskIsSet( event->valuators.mask, 0 )) dx = *values++;
+    if (XIMaskIsSet( event->valuators.mask, 1 )) dy = *values++;
+    input.u.mi.dx = dx;
+    input.u.mi.dy = dy;
+
+    wine_tsx11_lock();
+    for (i = 0; i < xinput2_device_count; ++i)
+    {
+        if (xinput2_devices[i].deviceid != event->deviceid) continue;
+        for (j = 0; j < xinput2_devices[i].num_classes; j++)
+        {
+            XIValuatorClassInfo *class = (XIValuatorClassInfo *)xinput2_devices[i].classes[j];
+
+            if (xinput2_devices[i].classes[j]->type != XIValuatorClass) continue;
+            if (class->min >= class->max) continue;
+            if (class->number == 0)
+                input.u.mi.dx = dx * (virtual_screen_rect.right - virtual_screen_rect.left)
+                                   / (class->max - class->min);
+            else if (class->number == 1)
+                input.u.mi.dy = dy * (virtual_screen_rect.bottom - virtual_screen_rect.top)
+                                   / (class->max - class->min);
+        }
+        break;
+    }
+
+    wine_tsx11_unlock();
 
     if (thread_data->warp_serial)
     {
@@ -1457,7 +1481,7 @@ static void X11DRV_RawMotion( XGenericEventCookie *xev )
         thread_data->warp_serial = 0;  /* we caught up now */
     }
 
-    TRACE( "pos %d,%d\n", input.u.mi.dx, input.u.mi.dy );
+    TRACE( "pos %d,%d (event %f,%f)\n", input.u.mi.dx, input.u.mi.dy, dx, dy );
 
     input.type = INPUT_MOUSE;
     __wine_send_input( 0, &input );
