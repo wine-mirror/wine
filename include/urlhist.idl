@@ -20,7 +20,6 @@ import "objidl.idl";
 import "oleidl.idl";
 import "oaidl.idl";
 import "docobj.idl";
-import "servprov.idl";
 
 typedef enum _ADDURL_FLAG
 {
