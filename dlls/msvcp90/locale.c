@@ -342,7 +342,6 @@ _Locinfo* __cdecl _Locinfo__Locinfo_ctor_cat_cstr(_Locinfo *locinfo, int categor
         MSVCP_basic_string_char_ctor_cstr(&locinfo->newlocname, locale);
     else
         MSVCP_basic_string_char_ctor_cstr(&locinfo->newlocname, "*");
-    _Lockit_dtor(&locinfo->lock);
 
     return locinfo;
 }
@@ -396,6 +395,7 @@ void __cdecl _Locinfo__Locinfo_dtor(_Locinfo *locinfo)
     MSVCP_basic_string_char_dtor(&locinfo->months);
     MSVCP_basic_string_char_dtor(&locinfo->oldlocname);
     MSVCP_basic_string_char_dtor(&locinfo->newlocname);
+    _Lockit_dtor(&locinfo->lock);
 }
 
 /* ??_F_Locinfo@std@@QAEXXZ */
@@ -425,7 +425,6 @@ _Locinfo* __cdecl _Locinfo__Locinfo_Addcats(_Locinfo *locinfo, int category, con
     if(!locstr)
         throw_exception(EXCEPTION_RUNTIME_ERROR, "bad locale name");
 
-    _Lockit_ctor_locktype(&locinfo->lock, _LOCK_LOCALE);
     MSVCP_basic_string_char_dtor(&locinfo->newlocname);
 
     if(category)
@@ -437,7 +436,6 @@ _Locinfo* __cdecl _Locinfo__Locinfo_Addcats(_Locinfo *locinfo, int category, con
         MSVCP_basic_string_char_ctor_cstr(&locinfo->newlocname, locale);
     else
         MSVCP_basic_string_char_ctor_cstr(&locinfo->newlocname, "*");
-    _Lockit_dtor(&locinfo->lock);
 
     return locinfo;
 }
@@ -652,7 +650,6 @@ void __thiscall collate_char__Init(collate *this, const _Locinfo *locinfo)
 DEFINE_THISCALL_WRAPPER(collate_char_ctor_name, 12)
 collate* __thiscall collate_char_ctor_name(collate *this, const char *name, MSVCP_size_t refs)
 {
-    _Lockit lockit;
     _Locinfo locinfo;
 
     TRACE("(%p %s %lu)\n", this, name, refs);
@@ -660,11 +657,9 @@ collate* __thiscall collate_char_ctor_name(collate *this, const char *name, MSVC
     locale_facet_ctor_refs(&this->facet, refs);
     this->facet.vtable = &MSVCP_collate_char_vtable;
 
-    _Lockit_ctor_locktype(&lockit, _LOCK_LOCALE);
     _Locinfo_ctor_cstr(&locinfo, name);
     collate_char__Init(this, &locinfo);
     _Locinfo_dtor(&locinfo);
-    _Lockit_dtor(&lockit);
     return this;
 }
 
@@ -851,7 +846,6 @@ void __thiscall collate_wchar__Init(collate *this, const _Locinfo *locinfo)
 DEFINE_THISCALL_WRAPPER(collate_wchar_ctor_name, 12)
 collate* __thiscall collate_wchar_ctor_name(collate *this, const char *name, MSVCP_size_t refs)
 {
-    _Lockit lockit;
     _Locinfo locinfo;
 
     TRACE("(%p %s %lu)\n", this, name, refs);
@@ -859,11 +853,9 @@ collate* __thiscall collate_wchar_ctor_name(collate *this, const char *name, MSV
     locale_facet_ctor_refs(&this->facet, refs);
     this->facet.vtable = &MSVCP_collate_wchar_vtable;
 
-    _Lockit_ctor_locktype(&lockit, _LOCK_LOCALE);
     _Locinfo_ctor_cstr(&locinfo, name);
     collate_wchar__Init(this, &locinfo);
     _Locinfo_dtor(&locinfo);
-    _Lockit_dtor(&lockit);
     return this;
 }
 
@@ -1209,7 +1201,6 @@ DEFINE_THISCALL_WRAPPER(ctype_char_ctor_table, 16)
 ctype_char* __thiscall ctype_char_ctor_table(ctype_char *this,
         const short *table, MSVCP_bool delete, MSVCP_size_t refs)
 {
-    _Lockit lockit;
     _Locinfo locinfo;
 
     TRACE("(%p %p %d %lu)\n", this, table, delete, refs);
@@ -1217,11 +1208,9 @@ ctype_char* __thiscall ctype_char_ctor_table(ctype_char *this,
     ctype_base_ctor_refs(&this->base, refs);
     this->base.facet.vtable = &MSVCP_ctype_char_vtable;
 
-    _Lockit_ctor_locktype(&lockit, _LOCK_LOCALE);
     _Locinfo_ctor(&locinfo);
     ctype_char__Init(this, &locinfo);
     _Locinfo_dtor(&locinfo);
-    _Lockit_dtor(&lockit);
 
     if(table) {
         ctype_char__Tidy(this);
