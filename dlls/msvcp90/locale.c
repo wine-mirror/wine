@@ -1505,23 +1505,73 @@ const char* __thiscall ctype_char_tolower(const ctype_char *this, char *first, c
     return call_ctype_char_do_tolower(this, first, last);
 }
 
+/* _Toupper */
+int __cdecl _Toupper(int ch, const _Ctypevec *ctype)
+{
+    unsigned int cp;
+
+    TRACE("%d %p\n", ch, ctype);
+
+    if(ctype)
+        cp = ctype->page;
+    else
+        cp = ___lc_codepage_func();
+
+    /* Don't convert to unicode in case of C locale */
+    if(!cp) {
+        if(ch>='a' && ch<='z')
+            ch = ch-'a'+'A';
+        return ch;
+    } else {
+        WCHAR wide, upper;
+        char str[2];
+        int size;
+
+        if(ch > 255) {
+            str[0] = (ch>>8) & 255;
+            str[1] = ch & 255;
+            size = 2;
+        } else {
+            str[0] = ch & 255;
+            size = 1;
+        }
+
+        if(!MultiByteToWideChar(cp, MB_ERR_INVALID_CHARS, str, size, &wide, 1))
+            return ch;
+
+        upper = toupperW(wide);
+        if(upper == wide)
+            return ch;
+
+        WideCharToMultiByte(cp, 0, &upper, 1, str, 2, NULL, NULL);
+
+        return str[0] + (str[1]<<8);
+    }
+}
+
 /* ?do_toupper@?$ctype@D@std@@MBEDD@Z */
 /* ?do_toupper@?$ctype@D@std@@MEBADD@Z */
+#define call_ctype_char_do_toupper_ch(this, ch) CALL_VTBL_FUNC(this, 16, \
+        char, (const ctype_char*, char), (this, ch))
 DEFINE_THISCALL_WRAPPER(ctype_char_do_toupper_ch, 8)
 char __thiscall ctype_char_do_toupper_ch(const ctype_char *this, char ch)
 {
-    FIXME("(%p %c) stub\n", this, ch);
-    return 0;
+    TRACE("(%p %c)\n", this, ch);
+    return _Toupper(ch, &this->ctype);
 }
 
 /* ?do_toupper@?$ctype@D@std@@MBEPBDPADPBD@Z */
 /* ?do_toupper@?$ctype@D@std@@MEBAPEBDPEADPEBD@Z */
+#define call_ctype_char_do_toupper(this, first, last) CALL_VTBL_FUNC(this, 12, \
+        const char*, (const ctype_char*, char*, const char*), (this, first, last))
 DEFINE_THISCALL_WRAPPER(ctype_char_do_toupper, 12)
 const char* __thiscall ctype_char_do_toupper(const ctype_char *this,
         char *first, const char *last)
 {
-    FIXME("(%p %p %p) stub\n", this, first, last);
-    return NULL;
+    TRACE("(%p %p %p)\n", this, first, last);
+    for(; first<last; first++)
+        *first = _Toupper(*first, &this->ctype);
+    return last;
 }
 
 /* ?toupper@?$ctype@D@std@@QBEDD@Z */
@@ -1529,8 +1579,8 @@ const char* __thiscall ctype_char_do_toupper(const ctype_char *this,
 DEFINE_THISCALL_WRAPPER(ctype_char_toupper_ch, 8)
 char __thiscall ctype_char_toupper_ch(const ctype_char *this, char ch)
 {
-    FIXME("(%p %c) stub\n", this, ch);
-    return 0;
+    TRACE("(%p %c)\n", this, ch);
+    return call_ctype_char_do_toupper_ch(this, ch);
 }
 
 /* ?toupper@?$ctype@D@std@@QBEPBDPADPBD@Z */
@@ -1538,8 +1588,8 @@ char __thiscall ctype_char_toupper_ch(const ctype_char *this, char ch)
 DEFINE_THISCALL_WRAPPER(ctype_char_toupper, 12)
 const char* __thiscall ctype_char_toupper(const ctype_char *this, char *first, const char *last)
 {
-    FIXME("(%p %p %p) stub\n", this, first, last);
-    return NULL;
+    TRACE("(%p %p %p)\n", this, first, last);
+    return call_ctype_char_do_toupper(this, first, last);
 }
 
 /* ?is@?$ctype@D@std@@QBE_NFD@Z */

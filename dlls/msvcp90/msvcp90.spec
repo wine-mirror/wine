@@ -5799,7 +5799,7 @@
 @ cdecl _Strcoll(ptr ptr ptr ptr ptr)
 @ stub _Strxfrm
 @ cdecl _Tolower(long ptr)
-@ stub _Toupper
+@ cdecl _Toupper(long ptr)
 @ stub _Towlower
 @ stub _Towupper
 @ stub _Wcrtomb
