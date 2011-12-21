@@ -1198,7 +1198,7 @@ static void EDIT_GetLineRect(EDITSTATE *es, INT line, INT scol, INT ecol, LPRECT
 	pt2 = (ecol == -1) ? es->format_rect.right : (short)LOWORD(EDIT_EM_PosFromChar(es, line_index + ecol, TRUE));
 	if (ssa)
 	{
-		ScriptStringCPtoX(ssa, line_index + scol, FALSE, &pt3);
+		ScriptStringCPtoX(ssa, scol, FALSE, &pt3);
 		pt3+=es->format_rect.left;
 	}
 	else pt3 = pt1;
