@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-11 15:50+0300\n"
+"PO-Revision-Date: 2011-12-21 23:30+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: none\n"
 "Language: Russian\n"
@@ -3318,24 +3318,20 @@ msgid "Address"
 msgstr "Адрес"
 
 #: ieframe.rc:78
-#, fuzzy
 msgid "Searching for %s"
-msgstr "Настройки %s"
+msgstr "Поиск %s"
 
 #: ieframe.rc:79
-#, fuzzy
 msgid "Start downloading %s"
-msgstr "Загрузка с %s..."
+msgstr "Начинается загрузка %s"
 
 #: ieframe.rc:80
-#, fuzzy
 msgid "Downloading %s"
-msgstr "Загрузка..."
+msgstr "Загрузка %s"
 
 #: ieframe.rc:81
-#, fuzzy
 msgid "Asking for %s"
-msgstr "Настройки %s"
+msgstr "Запрос %s"
 
 #: inetcpl.rc:46
 msgid " Home page "
@@ -3498,9 +3494,8 @@ msgid "Subscript out of range"
 msgstr "Индекс вне диапазона"
 
 #: jscript.rc:28
-#, fuzzy
 msgid "Object required"
-msgstr "Ожидается объект"
+msgstr "Требуется объект"
 
 #: jscript.rc:29
 msgid "Automation server can't create object"
@@ -3571,9 +3566,8 @@ msgid "Boolean object expected"
 msgstr "Ожидается объект типа 'bool'"
 
 #: jscript.rc:46
-#, fuzzy
 msgid "Cannot delete '|'"
-msgstr "Невозможно завершить выполнение\n"
+msgstr "Невозможно удалить '|'"
 
 #: jscript.rc:47
 msgid "VBArray object expected"
@@ -6818,7 +6812,6 @@ msgid "&Data Rate"
 msgstr "&Поток данных"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/s"
 msgstr "КБ/сек"
 
@@ -10009,13 +10002,11 @@ msgid "Parameter error\n"
 msgstr "Неверный параметр\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
-"Том диска %1!c! %2\n"
-" Серийный номер %3!04x!-%4!04x!\n"
+"Серийный номер тома %1!04x!-%2!04x!\n"
 "\n"
 
 #: cmd.rc:319
