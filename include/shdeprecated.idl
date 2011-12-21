@@ -20,6 +20,7 @@
 
 import "objidl.idl";
 import "ocidl.idl";
+import "shtypes.idl";
 import "shobjidl.idl";
 import "hlink.idl";
 import "exdisp.idl";
