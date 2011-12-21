@@ -1339,30 +1339,40 @@ const char* __thiscall ctype_char__Narrow_s(const ctype_char *this, const char *
 /* ?do_widen@?$ctype@D@std@@MBEDD@Z */
 /* ?do_widen@?$ctype@D@std@@MEBADD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_char_do_widen_ch, 8)
+#define call_ctype_char_do_widen_ch(this, ch) CALL_VTBL_FUNC(this, 24, \
+        char, (const ctype_char*, char), (this, ch))
 char __thiscall ctype_char_do_widen_ch(const ctype_char *this, char ch)
 {
-    FIXME("(%p %c) stub\n", this, ch);
-    return 0;
+    TRACE("(%p %c)\n", this, ch);
+    return ch;
 }
 
 /* ?do_widen@?$ctype@D@std@@MBEPBDPBD0PAD@Z */
 /* ?do_widen@?$ctype@D@std@@MEBAPEBDPEBD0PEAD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_char_do_widen, 16)
+#define call_ctype_char_do_widen(this, first, last, dest) CALL_VTBL_FUNC(this, 20, \
+        const char*, (const ctype_char*, const char*, const char*, char*), \
+        (this, first, last, dest))
 const char* __thiscall ctype_char_do_widen(const ctype_char *this,
         const char *first, const char *last, char *dest)
 {
-    FIXME("(%p %p %p %p) stub\n", this, first, last, dest);
-    return NULL;
+    TRACE("(%p %p %p %p)\n", this, first, last, dest);
+    memcpy(dest, first, last-first);
+    return last;
 }
 
 /* ?_Do_widen_s@?$ctype@D@std@@MBEPBDPBD0PADI@Z */
 /* ?_Do_widen_s@?$ctype@D@std@@MEBAPEBDPEBD0PEAD_K@Z */
 DEFINE_THISCALL_WRAPPER(ctype_char__Do_widen_s, 20)
+#define call_ctype_char__Do_widen_s(this, first, last, dest, size) CALL_VTBL_FUNC(this, 28, \
+        const char*, (const ctype_char*, const char*, const char*, char*, MSVCP_size_t), \
+        (this, first, last, dest, size))
 const char* __thiscall ctype_char__Do_widen_s(const ctype_char *this,
         const char *first, const char *last, char *dest, MSVCP_size_t size)
 {
-    FIXME("(%p %p %p %p %lu) stub\n", this, first, last, dest, size);
-    return NULL;
+    TRACE("(%p %p %p %p %lu)\n", this, first, last, dest, size);
+    memcpy_s(dest, size, first, last-first);
+    return last;
 }
 
 /* ?widen@?$ctype@D@std@@QBEDD@Z */
@@ -1370,8 +1380,8 @@ const char* __thiscall ctype_char__Do_widen_s(const ctype_char *this,
 DEFINE_THISCALL_WRAPPER(ctype_char_widen_ch, 8)
 char __thiscall ctype_char_widen_ch(const ctype_char *this, char ch)
 {
-    FIXME("(%p %c) stub\n", this, ch);
-    return 0;
+    TRACE("(%p %c)\n", this, ch);
+    return call_ctype_char_do_widen_ch(this, ch);
 }
 
 /* ?widen@?$ctype@D@std@@QBEPBDPBD0PAD@Z */
@@ -1380,8 +1390,8 @@ DEFINE_THISCALL_WRAPPER(ctype_char_widen, 16)
 const char* __thiscall ctype_char_widen(const ctype_char *this,
         const char *first, const char *last, char *dest)
 {
-    FIXME("(%p %p %p %p) stub\n", this, first, last, dest);
-    return NULL;
+    TRACE("(%p %p %p %p)\n", this, first, last, dest);
+    return call_ctype_char_do_widen(this, first, last, dest);
 }
 
 /* ?_Widen_s@?$ctype@D@std@@QBEPBDPBD0PADI@Z */
@@ -1390,8 +1400,8 @@ DEFINE_THISCALL_WRAPPER(ctype_char__Widen_s, 20)
 const char* __thiscall ctype_char__Widen_s(const ctype_char *this,
         const char *first, const char *last, char *dest, MSVCP_size_t size)
 {
-    FIXME("(%p %p %p %p %lu) stub\n", this, first, last, dest, size);
-    return NULL;
+    TRACE("(%p %p %p %p %lu)\n", this, first, last, dest, size);
+    return call_ctype_char__Do_widen_s(this, first, last, dest, size);
 }
 
 /* ?_Getcat@?$ctype@D@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
