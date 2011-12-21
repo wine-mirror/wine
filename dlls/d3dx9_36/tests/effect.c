@@ -21,6 +21,12 @@
 #include "wine/test.h"
 #include "d3dx9.h"
 
+/* helper functions */
+static inline BOOL get_bool(LPCVOID data)
+{
+    return (*(BOOL *)data) ? TRUE : FALSE;
+}
+
 static const char effect_desc[] =
 "Technique\n"
 "{\n"
@@ -502,6 +508,30 @@ static void test_effect_parameter_value_GetValue(const struct test_effect_parame
     }
 }
 
+static void test_effect_parameter_value_GetBool(const struct test_effect_parameter_value_result *res,
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+{
+    const D3DXPARAMETER_DESC *res_desc = &res->desc;
+    LPCSTR res_full_name = res->full_name;
+    BOOL bvalue = 0xabababab;
+    HRESULT hr;
+
+    hr = effect->lpVtbl->GetBool(effect, parameter, &bvalue);
+    if (!res_desc->Elements && res_desc->Rows == 1 && res_desc->Columns == 1)
+    {
+        ok(hr == D3D_OK, "%u - %s: GetBool failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+        ok(bvalue == get_bool(res_value), "%u - %s: GetBool bvalue failed, got %#x, expected %#x\n",
+                i, res_full_name, bvalue, get_bool(res_value));
+    }
+    else
+    {
+        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBool failed, got %#x, expected %#x\n",
+                i, res_full_name, hr, D3DERR_INVALIDCALL);
+        ok(bvalue == 0xabababab, "%u - %s: GetBool bvalue failed, got %#x, expected %#x\n",
+                i, res_full_name, bvalue, 0xabababab);
+    }
+}
+
 static void test_effect_parameter_value(IDirect3DDevice9 *device)
 {
     UINT i;
@@ -572,6 +602,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     "%u - %s: Warning: Array size to small\n", i, res_full_name);
 
             test_effect_parameter_value_GetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
+            test_effect_parameter_value_GetBool(&res[k], effect, &blob[res_value_offset], parameter, i);
         }
 
         count = effect->lpVtbl->Release(effect);
