@@ -422,6 +422,8 @@ static struct volume *find_matching_volume( const char *udi, const char *device,
 
     LIST_FOR_EACH_ENTRY( volume, &volumes_list, struct volume, entry )
     {
+        int match = 0;
+
         /* when we have a udi we only match drives added manually */
         if (udi && volume->udi) continue;
         /* and when we don't have a udi we only match dynamic drives */
@@ -429,8 +431,17 @@ static struct volume *find_matching_volume( const char *udi, const char *device,
 
         disk_device = volume->device;
         if (disk_device->type != type) continue;
-        if (device && disk_device->unix_device && strcmp( device, disk_device->unix_device )) continue;
-        if (mount_point && disk_device->unix_mount && strcmp( mount_point, disk_device->unix_mount )) continue;
+        if (device && disk_device->unix_device)
+        {
+            if (strcmp( device, disk_device->unix_device )) continue;
+            match++;
+        }
+        if (mount_point && disk_device->unix_mount)
+        {
+            if (strcmp( mount_point, disk_device->unix_mount )) continue;
+            match++;
+        }
+        if (!match) continue;
         TRACE( "found matching volume %s for device %s mount %s type %u\n",
                debugstr_guid(&volume->guid), debugstr_a(device), debugstr_a(mount_point), type );
         return grab_volume( volume );
