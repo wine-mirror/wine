@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-15 21:33+0100\n"
+"PO-Revision-Date: 2011-12-21 21:00+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -3334,24 +3334,20 @@ msgid "Address"
 msgstr "Adresse"
 
 #: ieframe.rc:78
-#, fuzzy
 msgid "Searching for %s"
-msgstr "Propriétés de %s"
+msgstr "Recherche de %s"
 
 #: ieframe.rc:79
-#, fuzzy
 msgid "Start downloading %s"
-msgstr "Téléchargement depuis %s..."
+msgstr "Début du téléchargement de %s"
 
 #: ieframe.rc:80
-#, fuzzy
 msgid "Downloading %s"
-msgstr "Téléchargement..."
+msgstr "Téléchargement de %s"
 
 #: ieframe.rc:81
-#, fuzzy
 msgid "Asking for %s"
-msgstr "Propriétés de %s"
+msgstr "Demande de %s"
 
 #: inetcpl.rc:46
 msgid " Home page "
