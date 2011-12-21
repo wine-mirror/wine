@@ -1247,7 +1247,7 @@ static void Direct3D1Test(void)
 
         ok(cmp[i].x == out[i].x && cmp[i].y == out[i].y &&
            cmp[i].z == out[i].z && cmp[i].rhw == out[i].rhw,
-           "Vertex %d differs. Got %f %f %f %f, expexted %f %f %f %f\n", i + 1,
+           "Vertex %d differs. Got %f %f %f %f, expected %f %f %f %f\n", i + 1,
            out[i].x, out[i].y, out[i].z, out[i].rhw,
            cmp[i].x, cmp[i].y, cmp[i].z, cmp[i].rhw);
     }
@@ -1274,7 +1274,7 @@ static void Direct3D1Test(void)
         };
         ok(cmp[i].x == out[i].x && cmp[i].y == out[i].y &&
            cmp[i].z == out[i].z && cmp[i].rhw == out[i].rhw,
-           "Vertex %d differs. Got %f %f %f %f, expexted %f %f %f %f\n", i + 1,
+           "Vertex %d differs. Got %f %f %f %f, expected %f %f %f %f\n", i + 1,
            out[i].x, out[i].y, out[i].z, out[i].rhw,
            cmp[i].x, cmp[i].y, cmp[i].z, cmp[i].rhw);
     }
@@ -1296,7 +1296,7 @@ static void Direct3D1Test(void)
         };
         ok(cmp[i].x == out[i].x && cmp[i].y == out[i].y &&
            cmp[i].z == out[i].z && cmp[i].rhw == out[i].rhw,
-           "Vertex %d differs. Got %f %f %f %f, expexted %f %f %f %f\n", i + 1,
+           "Vertex %d differs. Got %f %f %f %f, expected %f %f %f %f\n", i + 1,
            out[i].x, out[i].y, out[i].z, out[i].rhw,
            cmp[i].x, cmp[i].y, cmp[i].z, cmp[i].rhw);
     }
@@ -1315,7 +1315,7 @@ static void Direct3D1Test(void)
         };
         ok(U1(cmpH[i]).hx == U1(outH[i]).hx && U2(cmpH[i]).hy == U2(outH[i]).hy &&
            U3(cmpH[i]).hz == U3(outH[i]).hz && cmpH[i].dwFlags == outH[i].dwFlags,
-           "HVertex %d differs. Got %08x %f %f %f, expexted %08x %f %f %f\n", i + 1,
+           "HVertex %d differs. Got %08x %f %f %f, expected %08x %f %f %f\n", i + 1,
            outH[i].dwFlags, U1(outH[i]).hx, U2(outH[i]).hy, U3(outH[i]).hz,
            cmpH[i].dwFlags, U1(cmpH[i]).hx, U2(cmpH[i]).hy, U3(cmpH[i]).hz);
 
@@ -1332,7 +1332,7 @@ static void Direct3D1Test(void)
             };
             ok(cmp[i].x == out[i].x && cmp[i].y == out[i].y &&
                cmp[i].z == out[i].z && cmp[i].rhw == out[i].rhw,
-                "Vertex %d differs. Got %f %f %f %f, expexted %f %f %f %f\n", i + 1,
+                "Vertex %d differs. Got %f %f %f %f, expected %f %f %f %f\n", i + 1,
                out[i].x, out[i].y, out[i].z, out[i].rhw,
                cmp[i].x, cmp[i].y, cmp[i].z, cmp[i].rhw);
         }
@@ -1358,7 +1358,7 @@ static void Direct3D1Test(void)
             D3DCLIP_LEFT  | D3DCLIP_BOTTOM | D3DCLIP_FRONT,
         };
         ok(Flags[i] == outH[i].dwFlags,
-           "Cliptest %d differs. Got %08x expexted %08x\n", i + 1,
+           "Cliptest %d differs. Got %08x expected %08x\n", i + 1,
            outH[i].dwFlags, Flags[i]);
     }
 
@@ -1382,7 +1382,7 @@ static void Direct3D1Test(void)
             D3DCLIP_LEFT  | D3DCLIP_FRONT,
         };
         ok(Flags[i] == outH[i].dwFlags,
-           "Cliptest %d differs. Got %08x expexted %08x\n", i + 1,
+           "Cliptest %d differs. Got %08x expected %08x\n", i + 1,
            outH[i].dwFlags, Flags[i]);
     }
 
@@ -1407,7 +1407,7 @@ static void Direct3D1Test(void)
             D3DCLIP_FRONT,
         };
         ok(Flags[i] == outH[i].dwFlags,
-           "Cliptest %d differs. Got %08x expexted %08x\n", i + 1,
+           "Cliptest %d differs. Got %08x expected %08x\n", i + 1,
            outH[i].dwFlags, Flags[i]);
     }
 
