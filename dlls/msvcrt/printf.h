@@ -485,7 +485,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             i = flags.Precision;
             flags.Precision = 2*sizeof(void*);
             FUNC_NAME(pf_integer_conv)(buf, sizeof(buf)/sizeof(APICHAR), &flags,
-                    pf_args(args_ctx, pos, VT_INT, valist).get_int);
+                                       (ULONG_PTR)pf_args(args_ctx, pos, VT_PTR, valist).get_ptr);
             flags.PadZero = 0;
             flags.Precision = i;
 
