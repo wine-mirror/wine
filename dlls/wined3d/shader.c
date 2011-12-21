@@ -1710,7 +1710,7 @@ void find_vs_compile_args(const struct wined3d_state *state,
         const struct wined3d_shader *shader, struct vs_compile_args *args)
 {
     args->fog_src = state->render_states[WINED3D_RS_FOGTABLEMODE]
-            == WINED3DFOG_NONE ? VS_FOG_COORD : VS_FOG_Z;
+            == WINED3D_FOG_NONE ? VS_FOG_COORD : VS_FOG_Z;
     args->clip_enabled = state->render_states[WINED3D_RS_CLIPPING]
             && state->render_states[WINED3D_RS_CLIPPLANEENABLE];
     args->swizzle_map = shader->device->strided_streams.swizzle_map;
@@ -1980,7 +1980,7 @@ void find_ps_compile_args(const struct wined3d_state *state,
         {
             switch (state->render_states[WINED3D_RS_FOGTABLEMODE])
             {
-                case WINED3DFOG_NONE:
+                case WINED3D_FOG_NONE:
                     if (device->strided_streams.position_transformed || use_vs(state))
                     {
                         args->fog = FOG_LINEAR;
@@ -1989,16 +1989,16 @@ void find_ps_compile_args(const struct wined3d_state *state,
 
                     switch (state->render_states[WINED3D_RS_FOGVERTEXMODE])
                     {
-                        case WINED3DFOG_NONE: /* Fall through. */
-                        case WINED3DFOG_LINEAR: args->fog = FOG_LINEAR; break;
-                        case WINED3DFOG_EXP:    args->fog = FOG_EXP;    break;
-                        case WINED3DFOG_EXP2:   args->fog = FOG_EXP2;   break;
+                        case WINED3D_FOG_NONE: /* Fall through. */
+                        case WINED3D_FOG_LINEAR: args->fog = FOG_LINEAR; break;
+                        case WINED3D_FOG_EXP:    args->fog = FOG_EXP;    break;
+                        case WINED3D_FOG_EXP2:   args->fog = FOG_EXP2;   break;
                     }
                     break;
 
-                case WINED3DFOG_LINEAR: args->fog = FOG_LINEAR; break;
-                case WINED3DFOG_EXP:    args->fog = FOG_EXP;    break;
-                case WINED3DFOG_EXP2:   args->fog = FOG_EXP2;   break;
+                case WINED3D_FOG_LINEAR: args->fog = FOG_LINEAR; break;
+                case WINED3D_FOG_EXP:    args->fog = FOG_EXP;    break;
+                case WINED3D_FOG_EXP2:   args->fog = FOG_EXP2;   break;
             }
         }
         else

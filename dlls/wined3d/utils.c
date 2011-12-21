@@ -3070,7 +3070,7 @@ void gen_ffp_frag_op(const struct wined3d_device *device, const struct wined3d_s
     {
         settings->fog = FOG_OFF;
     }
-    else if (state->render_states[WINED3D_RS_FOGTABLEMODE] == WINED3DFOG_NONE)
+    else if (state->render_states[WINED3D_RS_FOGTABLEMODE] == WINED3D_FOG_NONE)
     {
         if (use_vs(state) || state->vertex_declaration->position_transformed)
         {
@@ -3080,14 +3080,14 @@ void gen_ffp_frag_op(const struct wined3d_device *device, const struct wined3d_s
         {
             switch (state->render_states[WINED3D_RS_FOGVERTEXMODE])
             {
-                case WINED3DFOG_NONE:
-                case WINED3DFOG_LINEAR:
+                case WINED3D_FOG_NONE:
+                case WINED3D_FOG_LINEAR:
                     settings->fog = FOG_LINEAR;
                     break;
-                case WINED3DFOG_EXP:
+                case WINED3D_FOG_EXP:
                     settings->fog = FOG_EXP;
                     break;
-                case WINED3DFOG_EXP2:
+                case WINED3D_FOG_EXP2:
                     settings->fog = FOG_EXP2;
                     break;
             }
@@ -3097,13 +3097,13 @@ void gen_ffp_frag_op(const struct wined3d_device *device, const struct wined3d_s
     {
         switch (state->render_states[WINED3D_RS_FOGTABLEMODE])
         {
-            case WINED3DFOG_LINEAR:
+            case WINED3D_FOG_LINEAR:
                 settings->fog = FOG_LINEAR;
                 break;
-            case WINED3DFOG_EXP:
+            case WINED3D_FOG_EXP:
                 settings->fog = FOG_EXP;
                 break;
-            case WINED3DFOG_EXP2:
+            case WINED3D_FOG_EXP2:
                 settings->fog = FOG_EXP2;
                 break;
         }

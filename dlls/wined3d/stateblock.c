@@ -1143,7 +1143,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     state->render_states[WINED3D_RS_SPECULARENABLE] = FALSE;
     state->render_states[WINED3D_RS_ZVISIBLE] = 0;
     state->render_states[WINED3D_RS_FOGCOLOR] = 0;
-    state->render_states[WINED3D_RS_FOGTABLEMODE] = WINED3DFOG_NONE;
+    state->render_states[WINED3D_RS_FOGTABLEMODE] = WINED3D_FOG_NONE;
     tmpfloat.f = 0.0f;
     state->render_states[WINED3D_RS_FOGSTART] = tmpfloat.d;
     tmpfloat.f = 1.0f;
@@ -1172,7 +1172,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     state->render_states[WINED3D_RS_CLIPPING] = TRUE;
     state->render_states[WINED3D_RS_LIGHTING] = TRUE;
     state->render_states[WINED3D_RS_AMBIENT] = 0;
-    state->render_states[WINED3D_RS_FOGVERTEXMODE] = WINED3DFOG_NONE;
+    state->render_states[WINED3D_RS_FOGVERTEXMODE] = WINED3D_FOG_NONE;
     state->render_states[WINED3D_RS_COLORVERTEX] = TRUE;
     state->render_states[WINED3D_RS_LOCALVIEWER] = TRUE;
     state->render_states[WINED3D_RS_NORMALIZENORMALS] = FALSE;

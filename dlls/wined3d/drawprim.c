@@ -144,9 +144,9 @@ static void drawStridedSlow(const struct wined3d_device *device, const struct wi
 
         /* special case where the fog density is stored in the specular alpha channel */
         if (state->render_states[WINED3D_RS_FOGENABLE]
-                && (state->render_states[WINED3D_RS_FOGVERTEXMODE] == WINED3DFOG_NONE
+                && (state->render_states[WINED3D_RS_FOGVERTEXMODE] == WINED3D_FOG_NONE
                     || si->elements[WINED3D_FFP_POSITION].format->id == WINED3DFMT_R32G32B32A32_FLOAT)
-                && state->render_states[WINED3D_RS_FOGTABLEMODE] == WINED3DFOG_NONE)
+                && state->render_states[WINED3D_RS_FOGTABLEMODE] == WINED3D_FOG_NONE)
         {
             if (gl_info->supported[EXT_FOG_COORD])
             {

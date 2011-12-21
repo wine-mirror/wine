@@ -6411,7 +6411,7 @@ static void state_arbfp_fog(struct wined3d_context *context, const struct wined3
     if (!state->render_states[WINED3D_RS_FOGENABLE])
         return;
 
-    if (state->render_states[WINED3D_RS_FOGTABLEMODE] == WINED3DFOG_NONE)
+    if (state->render_states[WINED3D_RS_FOGTABLEMODE] == WINED3D_FOG_NONE)
     {
         if (use_vs(state))
         {
@@ -6419,7 +6419,7 @@ static void state_arbfp_fog(struct wined3d_context *context, const struct wined3
         }
         else
         {
-            if (state->render_states[WINED3D_RS_FOGVERTEXMODE] == WINED3DFOG_NONE || context->last_was_rhw)
+            if (state->render_states[WINED3D_RS_FOGVERTEXMODE] == WINED3D_FOG_NONE || context->last_was_rhw)
                 new_source = FOGSOURCE_COORD;
             else
                 new_source = FOGSOURCE_FFP;

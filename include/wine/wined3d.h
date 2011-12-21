@@ -440,14 +440,13 @@ enum wined3d_depth_buffer_type
     WINED3D_ZB_USEW                         = 2,
 };
 
-typedef enum _WINED3DFOGMODE
+enum wined3d_fog_mode
 {
-    WINED3DFOG_NONE                         = 0,
-    WINED3DFOG_EXP                          = 1,
-    WINED3DFOG_EXP2                         = 2,
-    WINED3DFOG_LINEAR                       = 3,
-    WINED3DFOG_FORCE_DWORD                  = 0x7fffffff
-} WINED3DFOGMODE;
+    WINED3D_FOG_NONE                        = 0,
+    WINED3D_FOG_EXP                         = 1,
+    WINED3D_FOG_EXP2                        = 2,
+    WINED3D_FOG_LINEAR                      = 3,
+};
 
 typedef enum _WINED3DSHADEMODE
 {

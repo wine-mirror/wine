@@ -931,7 +931,7 @@ static void state_fog_vertexpart(struct wined3d_context *context, const struct w
         return;
 
     /* Table fog on: Never use fog coords, and use per-fragment fog */
-    if (state->render_states[WINED3D_RS_FOGTABLEMODE] != WINED3DFOG_NONE)
+    if (state->render_states[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE)
     {
         glHint(GL_FOG_HINT, GL_NICEST);
         if(context->fog_coord) {
@@ -952,7 +952,7 @@ static void state_fog_vertexpart(struct wined3d_context *context, const struct w
     /* Otherwise use per-vertex fog in any case */
     glHint(GL_FOG_HINT, GL_FASTEST);
 
-    if (state->render_states[WINED3D_RS_FOGVERTEXMODE] == WINED3DFOG_NONE || context->last_was_rhw)
+    if (state->render_states[WINED3D_RS_FOGVERTEXMODE] == WINED3D_FOG_NONE || context->last_was_rhw)
     {
         /* No fog at all, or transformed vertices: Use fog coord */
         if(!context->fog_coord) {
@@ -1099,7 +1099,7 @@ void state_fog_fragpart(struct wined3d_context *context, const struct wined3d_st
     /* DX 7 sdk: "If both render states(vertex and table fog) are set to valid modes,
      * the system will apply only pixel(=table) fog effects."
      */
-    if (state->render_states[WINED3D_RS_FOGTABLEMODE] == WINED3DFOG_NONE)
+    if (state->render_states[WINED3D_RS_FOGTABLEMODE] == WINED3D_FOG_NONE)
     {
         if (use_vs(state))
         {
@@ -1112,8 +1112,9 @@ void state_fog_fragpart(struct wined3d_context *context, const struct wined3d_st
             switch (state->render_states[WINED3D_RS_FOGVERTEXMODE])
             {
                 /* If processed vertices are used, fall through to the NONE case */
-                case WINED3DFOG_EXP:
-                    if(!context->last_was_rhw) {
+                case WINED3D_FOG_EXP:
+                    if (!context->last_was_rhw)
+                    {
                         glFogi(GL_FOG_MODE, GL_EXP);
                         checkGLcall("glFogi(GL_FOG_MODE, GL_EXP)");
                         new_source = FOGSOURCE_FFP;
@@ -1121,8 +1122,9 @@ void state_fog_fragpart(struct wined3d_context *context, const struct wined3d_st
                     }
                     /* drop through */
 
-                case WINED3DFOG_EXP2:
-                    if(!context->last_was_rhw) {
+                case WINED3D_FOG_EXP2:
+                    if (!context->last_was_rhw)
+                    {
                         glFogi(GL_FOG_MODE, GL_EXP2);
                         checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2)");
                         new_source = FOGSOURCE_FFP;
@@ -1130,8 +1132,9 @@ void state_fog_fragpart(struct wined3d_context *context, const struct wined3d_st
                     }
                     /* drop through */
 
-                case WINED3DFOG_LINEAR:
-                    if(!context->last_was_rhw) {
+                case WINED3D_FOG_LINEAR:
+                    if (!context->last_was_rhw)
+                    {
                         glFogi(GL_FOG_MODE, GL_LINEAR);
                         checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR)");
                         new_source = FOGSOURCE_FFP;
@@ -1139,7 +1142,7 @@ void state_fog_fragpart(struct wined3d_context *context, const struct wined3d_st
                     }
                     /* drop through */
 
-                case WINED3DFOG_NONE:
+                case WINED3D_FOG_NONE:
                     /* Both are none? According to msdn the alpha channel of the specular
                      * color contains a fog factor. Set it in drawStridedSlow.
                      * Same happens with Vertexfog on transformed vertices
@@ -1160,22 +1163,22 @@ void state_fog_fragpart(struct wined3d_context *context, const struct wined3d_st
 
         switch (state->render_states[WINED3D_RS_FOGTABLEMODE])
         {
-            case WINED3DFOG_EXP:
+            case WINED3D_FOG_EXP:
                 glFogi(GL_FOG_MODE, GL_EXP);
                 checkGLcall("glFogi(GL_FOG_MODE, GL_EXP)");
                 break;
 
-            case WINED3DFOG_EXP2:
+            case WINED3D_FOG_EXP2:
                 glFogi(GL_FOG_MODE, GL_EXP2);
                 checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2)");
                 break;
 
-            case WINED3DFOG_LINEAR:
+            case WINED3D_FOG_LINEAR:
                 glFogi(GL_FOG_MODE, GL_LINEAR);
                 checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR)");
                 break;
 
-            case WINED3DFOG_NONE:   /* Won't happen */
+            case WINED3D_FOG_NONE:   /* Won't happen */
             default:
                 FIXME("Unexpected WINED3D_RS_FOGTABLEMODE %#x.\n",
                         state->render_states[WINED3D_RS_FOGTABLEMODE]);
