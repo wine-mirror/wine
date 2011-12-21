@@ -1597,8 +1597,8 @@ const char* __thiscall ctype_char_toupper(const ctype_char *this, char *first, c
 DEFINE_THISCALL_WRAPPER(ctype_char_is_ch, 12)
 MSVCP_bool __thiscall ctype_char_is_ch(const ctype_char *this, short mask, char ch)
 {
-    FIXME("(%p %x %c) stub\n", this, mask, ch);
-    return 0;
+    TRACE("(%p %x %c)\n", this, mask, ch);
+    return (this->ctype.table[(unsigned char)ch] & mask) != 0;
 }
 
 /* ?is@?$ctype@D@std@@QBEPBDPBD0PAF@Z */
@@ -1606,8 +1606,10 @@ MSVCP_bool __thiscall ctype_char_is_ch(const ctype_char *this, short mask, char 
 DEFINE_THISCALL_WRAPPER(ctype_char_is, 16)
 const char* __thiscall ctype_char_is(const ctype_char *this, const char *first, const char *last, short *dest)
 {
-    FIXME("(%p %p %p %p) stub\n", this, first, last, dest);
-    return NULL;
+    TRACE("(%p %p %p %p)\n", this, first, last, dest);
+    for(; first<last; first++)
+        *dest++ = this->ctype.table[(unsigned char)*first];
+    return last;
 }
 
 /* ?scan_is@?$ctype@D@std@@QBEPBDFPBD0@Z */
@@ -1615,8 +1617,11 @@ const char* __thiscall ctype_char_is(const ctype_char *this, const char *first, 
 DEFINE_THISCALL_WRAPPER(ctype_char_scan_is, 16)
 const char* __thiscall ctype_char_scan_is(const ctype_char *this, short mask, const char *first, const char *last)
 {
-    FIXME("(%p %x %p %p) stub\n", this, mask, first, last);
-    return NULL;
+    TRACE("(%p %x %p %p)\n", this, mask, first, last);
+    for(; first<last; first++)
+        if(!ctype_char_is_ch(this, mask, *first))
+            break;
+    return first;
 }
 
 /* ?scan_not@?$ctype@D@std@@QBEPBDFPBD0@Z */
@@ -1624,8 +1629,11 @@ const char* __thiscall ctype_char_scan_is(const ctype_char *this, short mask, co
 DEFINE_THISCALL_WRAPPER(ctype_char_scan_not, 16)
 const char* __thiscall ctype_char_scan_not(const ctype_char *this, short mask, const char *first, const char *last)
 {
-    FIXME("(%p %x %p %p) stub\n", this, mask, first, last);
-    return NULL;
+    TRACE("(%p %x %p %p)\n", this, mask, first, last);
+    for(; first<last; first++)
+        if(ctype_char_is_ch(this, mask, *first))
+            break;
+    return first;
 }
 
 /* ?table@?$ctype@D@std@@IBEPBFXZ */
@@ -1633,8 +1641,8 @@ const char* __thiscall ctype_char_scan_not(const ctype_char *this, short mask, c
 DEFINE_THISCALL_WRAPPER(ctype_char_table, 4)
 const short* __thiscall ctype_char_table(const ctype_char *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+    return this->ctype.table;
 }
 
 /* ?id@?$ctype@_W@std@@2V0locale@2@A */
