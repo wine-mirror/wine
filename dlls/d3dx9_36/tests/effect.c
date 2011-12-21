@@ -646,6 +646,48 @@ static void test_effect_parameter_value_GetInt(const struct test_effect_paramete
     }
 }
 
+static void test_effect_parameter_value_GetIntArray(const struct test_effect_parameter_value_result *res,
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+{
+    const D3DXPARAMETER_DESC *res_desc = &res->desc;
+    LPCSTR res_full_name = res->full_name;
+    INT iavalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
+    HRESULT hr;
+    UINT l;
+
+    memset(iavalue, 0xab, sizeof(iavalue));
+    hr = effect->lpVtbl->GetIntArray(effect, parameter, iavalue, res_desc->Bytes / sizeof(*iavalue));
+    if (res_desc->Class == D3DXPC_SCALAR
+            || res_desc->Class == D3DXPC_VECTOR
+            || res_desc->Class == D3DXPC_MATRIX_ROWS)
+    {
+        ok(hr == D3D_OK, "%u - %s: GetIntArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+
+        for (l = 0; l < res_desc->Bytes / sizeof(*iavalue); ++l)
+        {
+            ok(iavalue[l] == get_int(res_desc->Type, &res_value[l]), "%u - %s: GetIntArray iavalue[%u] failed, got %i, expected %i\n",
+                    i, res_full_name, l, iavalue[l], get_int(res_desc->Type, &res_value[l]));
+        }
+
+        for (l = res_desc->Bytes / sizeof(*iavalue); l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
+        {
+            ok(iavalue[l] == 0xabababab, "%u - %s: GetIntArray iavalue[%u] failed, got %i, expected %i\n",
+                    i, res_full_name, l, iavalue[l], 0xabababab);
+        }
+    }
+    else
+    {
+        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetIntArray failed, got %#x, expected %#x\n",
+                i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+        for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
+        {
+            ok(iavalue[l] == 0xabababab, "%u - %s: GetIntArray iavalue[%u] failed, got %i, expected %i\n",
+                    i, res_full_name, l, iavalue[l], 0xabababab);
+        }
+    }
+}
+
 static void test_effect_parameter_value(IDirect3DDevice9 *device)
 {
     UINT i;
@@ -719,6 +761,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             test_effect_parameter_value_GetBool(&res[k], effect, &blob[res_value_offset], parameter, i);
             test_effect_parameter_value_GetBoolArray(&res[k], effect, &blob[res_value_offset], parameter, i);
             test_effect_parameter_value_GetInt(&res[k], effect, &blob[res_value_offset], parameter, i);
+            test_effect_parameter_value_GetIntArray(&res[k], effect, &blob[res_value_offset], parameter, i);
         }
 
         count = effect->lpVtbl->Release(effect);
