@@ -532,6 +532,48 @@ static void test_effect_parameter_value_GetBool(const struct test_effect_paramet
     }
 }
 
+static void test_effect_parameter_value_GetBoolArray(const struct test_effect_parameter_value_result *res,
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+{
+    const D3DXPARAMETER_DESC *res_desc = &res->desc;
+    LPCSTR res_full_name = res->full_name;
+    BOOL bavalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
+    HRESULT hr;
+    UINT l;
+
+    memset(bavalue, 0xab, sizeof(bavalue));
+    hr = effect->lpVtbl->GetBoolArray(effect, parameter, bavalue, res_desc->Bytes / sizeof(*bavalue));
+    if (res_desc->Class == D3DXPC_SCALAR
+            || res_desc->Class == D3DXPC_VECTOR
+            || res_desc->Class == D3DXPC_MATRIX_ROWS)
+    {
+        ok(hr == D3D_OK, "%u - %s: GetBoolArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+
+        for (l = 0; l < res_desc->Bytes / sizeof(*bavalue); ++l)
+        {
+            ok(bavalue[l] == get_bool(&res_value[l]), "%u - %s: GetBoolArray bavalue[%u] failed, got %#x, expected %#x\n",
+                    i, res_full_name, l, bavalue[l], get_bool(&res_value[l]));
+        }
+
+        for (l = res_desc->Bytes / sizeof(*bavalue); l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
+        {
+            ok(bavalue[l] == 0xabababab, "%u - %s: GetBoolArray bavalue[%u] failed, got %#x, expected %#x\n",
+                    i, res_full_name, l, bavalue[l], 0xabababab);
+        }
+    }
+    else
+    {
+        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBoolArray failed, got %#x, expected %#x\n",
+                i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+        for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
+        {
+            ok(bavalue[l] == 0xabababab, "%u - %s: GetBoolArray bavalue[%u] failed, got %#x, expected %#x\n",
+                    i, res_full_name, l, bavalue[l], 0xabababab);
+        }
+    }
+}
+
 static void test_effect_parameter_value(IDirect3DDevice9 *device)
 {
     UINT i;
@@ -603,6 +645,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
 
             test_effect_parameter_value_GetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
             test_effect_parameter_value_GetBool(&res[k], effect, &blob[res_value_offset], parameter, i);
+            test_effect_parameter_value_GetBoolArray(&res[k], effect, &blob[res_value_offset], parameter, i);
         }
 
         count = effect->lpVtbl->Release(effect);
