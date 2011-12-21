@@ -833,14 +833,36 @@ extern const vtable_ptr MSVCP_collate_wchar_vtable;
 /* ??_7?$collate@G@std@@6B@ */
 extern const vtable_ptr MSVCP_collate_short_vtable;
 
+/* ?_Init@?$collate@_W@std@@IAEXABV_Locinfo@2@@Z */
+/* ?_Init@?$collate@_W@std@@IEAAXAEBV_Locinfo@2@@Z */
+/* ?_Init@?$collate@G@std@@IAEXABV_Locinfo@2@@Z */
+/* ?_Init@?$collate@G@std@@IEAAXAEBV_Locinfo@2@@Z */
+DEFINE_THISCALL_WRAPPER(collate_wchar__Init, 8)
+void __thiscall collate_wchar__Init(collate *this, const _Locinfo *locinfo)
+{
+    TRACE("(%p %p)\n", this, locinfo);
+    this->coll = _Locinfo__Getcoll(locinfo);
+}
+
 /* ??0?$collate@_W@std@@IAE@PBDI@Z */
 /* ??0?$collate@_W@std@@IEAA@PEBD_K@Z */
 DEFINE_THISCALL_WRAPPER(collate_wchar_ctor_name, 12)
 collate* __thiscall collate_wchar_ctor_name(collate *this, const char *name, MSVCP_size_t refs)
 {
-    FIXME("(%p %s %lu) stub\n", this, name, refs);
+    _Lockit lockit;
+    _Locinfo locinfo;
+
+    TRACE("(%p %s %lu)\n", this, name, refs);
+
+    locale_facet_ctor_refs(&this->facet, refs);
     this->facet.vtable = &MSVCP_collate_wchar_vtable;
-    return NULL;
+
+    _Lockit_ctor_locktype(&lockit, _LOCK_LOCALE);
+    _Locinfo_ctor_cstr(&locinfo, name);
+    collate_wchar__Init(this, &locinfo);
+    _Locinfo_dtor(&locinfo);
+    _Lockit_dtor(&lockit);
+    return this;
 }
 
 /* ??0?$collate@G@std@@IAE@PBDI@Z */
@@ -858,9 +880,12 @@ collate* __thiscall collate_short_ctor_name(collate *this, const char *name, MSV
 DEFINE_THISCALL_WRAPPER(collate_wchar_ctor_locinfo, 12)
 collate* __thiscall collate_wchar_ctor_locinfo(collate *this, _Locinfo *locinfo, MSVCP_size_t refs)
 {
-    FIXME("(%p %p %lu) stub\n", this, locinfo, refs);
+    TRACE("(%p %p %lu)\n", this, locinfo, refs);
+
+    locale_facet_ctor_refs(&this->facet, refs);
     this->facet.vtable = &MSVCP_collate_wchar_vtable;
-    return NULL;
+    collate_wchar__Init(this, locinfo);
+    return this;
 }
 
 /* ??0?$collate@G@std@@QAE@ABV_Locinfo@1@I@Z */
@@ -878,9 +903,7 @@ collate* __thiscall collate_short_ctor_locinfo(collate *this, _Locinfo *locinfo,
 DEFINE_THISCALL_WRAPPER(collate_wchar_ctor_refs, 8)
 collate* __thiscall collate_wchar_ctor_refs(collate *this, MSVCP_size_t refs)
 {
-    FIXME("(%p %lu) stub\n", this, refs);
-    this->facet.vtable = &MSVCP_collate_wchar_vtable;
-    return NULL;
+    return collate_wchar_ctor_name(this, "C", refs);
 }
 
 /* ??0?$collate@G@std@@QAE@I@Z */
@@ -900,7 +923,7 @@ collate* __thiscall collate_short_ctor_refs(collate *this, MSVCP_size_t refs)
 DEFINE_THISCALL_WRAPPER(collate_wchar_dtor, 4)
 void __thiscall collate_wchar_dtor(collate *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_collate_wchar_vector_dtor, 8)
@@ -934,9 +957,7 @@ collate* __thiscall MSVCP_collate_short_vector_dtor(collate *this, unsigned int 
 DEFINE_THISCALL_WRAPPER(collate_wchar_ctor, 4)
 collate* __thiscall collate_wchar_ctor(collate *this)
 {
-    FIXME("(%p) stub\n", this);
-    this->facet.vtable = &MSVCP_collate_wchar_vtable;
-    return NULL;
+    return collate_wchar_ctor_name(this, "C", 0);
 }
 
 /* ??_F?$collate@G@std@@QAEXXZ */
@@ -955,18 +976,28 @@ collate* __thiscall collate_short_ctor(collate *this)
 /* ?_Getcat@?$collate@G@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
 MSVCP_size_t __cdecl collate_wchar__Getcat(const locale_facet **facet, const locale *loc)
 {
-    FIXME("(%p %p) stub\n", facet, loc);
-    return 0;
+    TRACE("(%p %p)\n", facet, loc);
+
+    if(facet && !*facet) {
+        *facet = MSVCRT_operator_new(sizeof(collate));
+        if(!*facet) {
+            ERR("Out of memory\n");
+            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            return 0;
+        }
+        collate_wchar_ctor_name((collate*)*facet,
+                MSVCP_basic_string_char_c_str(&loc->ptr->name), 0);
+    }
+
+    return LC_COLLATE;
 }
 
-/* ?_Init@?$collate@_W@std@@IAEXABV_Locinfo@2@@Z */
-/* ?_Init@?$collate@_W@std@@IEAAXAEBV_Locinfo@2@@Z */
-/* ?_Init@?$collate@G@std@@IAEXABV_Locinfo@2@@Z */
-/* ?_Init@?$collate@G@std@@IEAAXAEBV_Locinfo@2@@Z */
-DEFINE_THISCALL_WRAPPER(collate_wchar__Init, 8)
-void __thiscall collate_wchar__Init(collate *this, const _Locinfo *locinfo)
+/* _Wcscoll */
+int __cdecl _Wcscoll(const wchar_t *first1, const wchar_t *last1, const wchar_t *first2,
+        const wchar_t *last2, const _Collvec *coll)
 {
-    FIXME("(%p %p) stub\n", this, locinfo);
+    TRACE("(%s %s)\n", debugstr_wn(first1, last1-first1), debugstr_wn(first2, last2-first2));
+    return CompareStringW(coll->handle, 0, first1, last1-first1, first2, last2-first2)-2;
 }
 
 /* ?do_compare@?$collate@_W@std@@MBEHPB_W000@Z */
@@ -974,11 +1005,14 @@ void __thiscall collate_wchar__Init(collate *this, const _Locinfo *locinfo)
 /* ?do_compare@?$collate@G@std@@MBEHPBG000@Z */
 /* ?do_compare@?$collate@G@std@@MEBAHPEBG000@Z */
 DEFINE_THISCALL_WRAPPER(collate_wchar_do_compare, 20)
+#define call_collate_wchar_do_compare(this, first1, last1, first2, last2) CALL_VTBL_FUNC(this, 4, int, \
+        (const collate*, const wchar_t*, const wchar_t*, const wchar_t*, const wchar_t*), \
+        (this, first1, last1, first2, last2))
 int __thiscall collate_wchar_do_compare(const collate *this, const wchar_t *first1,
         const wchar_t *last1, const wchar_t *first2, const wchar_t *last2)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, first1, last1, first2, last2);
-    return 0;
+    TRACE("(%p %p %p %p %p)\n", this, first1, last1, first2, last2);
+    return _Wcscoll(first1, last1, first2, last2, &this->coll);
 }
 
 /* ?compare@?$collate@_W@std@@QBEHPB_W000@Z */
@@ -989,8 +1023,8 @@ DEFINE_THISCALL_WRAPPER(collate_wchar_compare, 20)
 int __thiscall collate_wchar_compare(const collate *this, const wchar_t *first1,
         const wchar_t *last1, const wchar_t *first2, const wchar_t *last2)
 {
-    FIXME("(%p %p %p %p %p) stub\n", this, first1, last1, first2, last2);
-    return 0;
+    TRACE("(%p %p %p %p %p)\n", this, first1, last1, first2, last2);
+    return call_collate_wchar_do_compare(this, first1, last1, first2, last2);
 }
 
 /* ?do_hash@?$collate@_W@std@@MBEJPB_W0@Z */
@@ -998,11 +1032,18 @@ int __thiscall collate_wchar_compare(const collate *this, const wchar_t *first1,
 /* ?do_hash@?$collate@G@std@@MBEJPBG0@Z */
 /* ?do_hash@?$collate@G@std@@MEBAJPEBG0@Z */
 DEFINE_THISCALL_WRAPPER(collate_wchar_do_hash, 12)
+#define call_collate_wchar_do_hash(this, first, last) CALL_VTBL_FUNC(this, 12, LONG, \
+        (const collate*, const wchar_t*, const wchar_t*), (this, first, last))
 LONG __thiscall collate_wchar_do_hash(const collate *this,
         const wchar_t *first, const wchar_t *last)
 {
-    FIXME("(%p %p %p) stub\n", this, first, last);
-    return 0;
+    ULONG ret = 0;
+
+    TRACE("(%p %p %p)\n", this, first, last);
+
+    for(; first<last; first++)
+        ret = (ret<<8 | ret>>24) + *first;
+    return ret;
 }
 
 /* ?hash@?$collate@_W@std@@QBEJPB_W0@Z */
@@ -1013,8 +1054,8 @@ DEFINE_THISCALL_WRAPPER(collate_wchar_hash, 12)
 LONG __thiscall collate_wchar_hash(const collate *this,
         const wchar_t *first, const wchar_t *last)
 {
-    FIXME("(%p %p %p) stub\n", this, first, last);
-    return 0;
+    TRACE("(%p %p %p)\n", this, first, last);
+    return call_collate_wchar_do_hash(this, first, last);
 }
 
 /* ?do_transform@?$collate@_W@std@@MBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@PB_W0@Z */

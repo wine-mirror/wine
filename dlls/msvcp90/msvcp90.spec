@@ -5803,7 +5803,7 @@
 @ stub _Towlower
 @ stub _Towupper
 @ stub _Wcrtomb
-@ stub _Wcscoll
+@ cdecl _Wcscoll(ptr ptr ptr ptr ptr)
 @ stub _Wcsxfrm
 # extern _Xbig
 @ stub __Wcrtomb_lk
