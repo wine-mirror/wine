@@ -218,7 +218,7 @@ extern thread_data_t *msvcrt_get_thread_data(void);
 
 LCID MSVCRT_locale_to_LCID(const char *);
 extern MSVCRT__locale_t MSVCRT_locale;
-extern int MSVCRT___lc_codepage;
+extern unsigned int MSVCRT___lc_codepage;
 extern int MSVCRT___lc_collate_cp;
 extern WORD MSVCRT__ctype [257];
 

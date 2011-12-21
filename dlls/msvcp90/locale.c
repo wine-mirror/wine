@@ -26,12 +26,14 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp90);
 
 char* __cdecl _Getdays(void);
 char* __cdecl _Getmonths(void);
 void* __cdecl _Gettnames(void);
+unsigned int __cdecl ___lc_codepage_func(void);
 
 typedef int category;
 
@@ -1397,26 +1399,92 @@ const char* __thiscall ctype_char__Widen_s(const ctype_char *this,
 /* ?_Getcat@?$ctype@D@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
 MSVCP_size_t __cdecl ctype_char__Getcat(const locale_facet **facet, const locale *loc)
 {
-    FIXME("(%p %p) stub\n", facet, loc);
-    return 0;
+    TRACE("(%p %p)\n", facet, loc);
+
+    if(facet && !*facet) {
+        _Locinfo locinfo;
+
+        *facet = MSVCRT_operator_new(sizeof(ctype_char));
+        if(!*facet) {
+            ERR("Out of memory\n");
+            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            return 0;
+        }
+
+        _Locinfo_ctor_cstr(&locinfo, MSVCP_basic_string_char_c_str(&loc->ptr->name));
+        ctype_char_ctor_locinfo((ctype_char*)*facet, &locinfo, 0);
+        _Locinfo_dtor(&locinfo);
+    }
+
+    return LC_CTYPE;
+}
+
+/* _Tolower */
+int __cdecl _Tolower(int ch, const _Ctypevec *ctype)
+{
+    unsigned int cp;
+
+    TRACE("%d %p\n", ch, ctype);
+
+    if(ctype)
+        cp = ctype->page;
+    else
+        cp = ___lc_codepage_func();
+
+    /* Don't convert to unicode in case of C locale */
+    if(!cp) {
+        if(ch>='A' && ch<='Z')
+            ch = ch-'A'+'a';
+        return ch;
+    } else {
+        WCHAR wide, lower;
+        char str[2];
+        int size;
+
+        if(ch > 255) {
+            str[0] = (ch>>8) & 255;
+            str[1] = ch & 255;
+            size = 2;
+        } else {
+            str[0] = ch & 255;
+            size = 1;
+        }
+
+        if(!MultiByteToWideChar(cp, MB_ERR_INVALID_CHARS, str, size, &wide, 1))
+            return ch;
+
+        lower = tolowerW(wide);
+        if(lower == wide)
+            return ch;
+
+        WideCharToMultiByte(cp, 0, &lower, 1, str, 2, NULL, NULL);
+
+        return str[0] + (str[1]<<8);
+    }
 }
 
 /* ?do_tolower@?$ctype@D@std@@MBEDD@Z */
 /* ?do_tolower@?$ctype@D@std@@MEBADD@Z */
+#define call_ctype_char_do_tolower_ch(this, ch) CALL_VTBL_FUNC(this, 8, \
+        char, (const ctype_char*, char), (this, ch))
 DEFINE_THISCALL_WRAPPER(ctype_char_do_tolower_ch, 8)
 char __thiscall ctype_char_do_tolower_ch(const ctype_char *this, char ch)
 {
-    FIXME("(%p %c) stub\n", this, ch);
-    return 0;
+    TRACE("(%p %c)\n", this, ch);
+    return _Tolower(ch, &this->ctype);
 }
 
 /* ?do_tolower@?$ctype@D@std@@MBEPBDPADPBD@Z */
 /* ?do_tolower@?$ctype@D@std@@MEBAPEBDPEADPEBD@Z */
+#define call_ctype_char_do_tolower(this, first, last) CALL_VTBL_FUNC(this, 4, \
+        const char*, (const ctype_char*, char*, const char*), (this, first, last))
 DEFINE_THISCALL_WRAPPER(ctype_char_do_tolower, 12)
 const char* __thiscall ctype_char_do_tolower(const ctype_char *this, char *first, const char *last)
 {
-    FIXME("(%p %p %p) stub\n", this, first, last);
-    return NULL;
+    TRACE("(%p %p %p)\n", this, first, last);
+    for(; first<last; first++)
+        *first = _Tolower(*first, &this->ctype);
+    return last;
 }
 
 /* ?tolower@?$ctype@D@std@@QBEDD@Z */
@@ -1424,8 +1492,8 @@ const char* __thiscall ctype_char_do_tolower(const ctype_char *this, char *first
 DEFINE_THISCALL_WRAPPER(ctype_char_tolower_ch, 8)
 char __thiscall ctype_char_tolower_ch(const ctype_char *this, char ch)
 {
-    FIXME("(%p %c) stub\n", this, ch);
-    return 0;
+    TRACE("(%p %c)\n", this, ch);
+    return call_ctype_char_do_tolower_ch(this, ch);
 }
 
 /* ?tolower@?$ctype@D@std@@QBEPBDPADPBD@Z */
@@ -1433,8 +1501,8 @@ char __thiscall ctype_char_tolower_ch(const ctype_char *this, char ch)
 DEFINE_THISCALL_WRAPPER(ctype_char_tolower, 12)
 const char* __thiscall ctype_char_tolower(const ctype_char *this, char *first, const char *last)
 {
-    FIXME("(%p %p %p) stub\n", this, first, last);
-    return NULL;
+    TRACE("(%p %p %p)\n", this, first, last);
+    return call_ctype_char_do_tolower(this, first, last);
 }
 
 /* ?do_toupper@?$ctype@D@std@@MBEDD@Z */

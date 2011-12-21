@@ -42,7 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #define MAX_LOCALE_LENGTH 256
 MSVCRT__locale_t MSVCRT_locale = NULL;
 unsigned short *MSVCRT__pctype = NULL;
-int MSVCRT___lc_codepage = 0;
+unsigned int MSVCRT___lc_codepage = 0;
 int MSVCRT___lc_collate_cp = 0;
 LCID MSVCRT___lc_handle[MSVCRT_LC_MAX - MSVCRT_LC_MIN + 1] = { 0 };
 int MSVCRT___mb_cur_max = 1;
@@ -640,7 +640,7 @@ LCID* CDECL ___lc_handle_func(void)
 /*********************************************************************
  *      ___lc_codepage_func (MSVCRT.@)
  */
-int CDECL ___lc_codepage_func(void)
+unsigned int CDECL ___lc_codepage_func(void)
 {
     return MSVCRT___lc_codepage;
 }
