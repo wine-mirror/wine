@@ -73,6 +73,15 @@ STRINGTABLE
     IDS_ADDRESS             "Address"
 }
 
+STRINGTABLE
+{
+    IDS_FINDINGRESOURCE     "Searching for %s"
+    IDS_BEGINDOWNLOADDATA   "Start downloading %s"
+    IDS_ENDDOWNLOADDATA     "Downloading %s"
+    IDS_SENDINGREQUEST      "Asking for %s"
+}
+
+
 IDD_BROWSE_OPEN DIALOG 10, 10, 200, 70
 STYLE DS_MODALFRAME | WS_CAPTION
 CAPTION "Open URL"

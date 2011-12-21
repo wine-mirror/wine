@@ -54,7 +54,7 @@ msgstr ""
 #: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 comdlg32.rc:240 comdlg32.rc:270
 #: comdlg32.rc:313 comdlg32.rc:367 comdlg32.rc:406 comdlg32.rc:460
 #: credui.rc:49 cryptui.rc:260 cryptui.rc:272 cryptui.rc:362 dinput.rc:43
-#: ieframe.rc:84 localui.rc:41 localui.rc:54 mpr.rc:46 msacm32.rc:50
+#: ieframe.rc:93 localui.rc:41 localui.rc:54 mpr.rc:46 msacm32.rc:50
 #: mshtml.rc:45 mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87
 #: serialui.rc:38 setupapi.rc:56 shell32.rc:286 shell32.rc:310 shell32.rc:332
 #: shell32.rc:350 shlwapi.rc:41 user32.rc:77 user32.rc:95 wininet.rc:48
@@ -133,7 +133,7 @@ msgstr ""
 #: comdlg32.rc:271 comdlg32.rc:314 comdlg32.rc:336 comdlg32.rc:356
 #: comdlg32.rc:368 comdlg32.rc:407 comdlg32.rc:461 comdlg32.rc:485
 #: comdlg32.rc:503 credui.rc:50 cryptui.rc:261 cryptui.rc:273 cryptui.rc:363
-#: dinput.rc:44 ieframe.rc:85 inetcpl.rc:78 localui.rc:42 localui.rc:55
+#: dinput.rc:44 ieframe.rc:94 inetcpl.rc:78 localui.rc:42 localui.rc:55
 #: mpr.rc:47 msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34
 #: oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57
 #: shell32.rc:287 shell32.rc:311 shell32.rc:322 shell32.rc:351 shlwapi.rc:42
@@ -3229,15 +3229,15 @@ msgstr "Α&γαπημένα"
 msgid "&About Internet Explorer"
 msgstr ""
 
-#: ieframe.rc:78
+#: ieframe.rc:87
 msgid "Open URL"
 msgstr ""
 
-#: ieframe.rc:81
+#: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
 msgstr ""
 
-#: ieframe.rc:82
+#: ieframe.rc:91
 msgid "Open:"
 msgstr ""
 
@@ -3254,6 +3254,24 @@ msgstr "Εκτύπωση"
 #: ieframe.rc:73
 msgid "Address"
 msgstr ""
+
+#: ieframe.rc:78
+#, fuzzy
+msgid "Searching for %s"
+msgstr "Επιλογές"
+
+#: ieframe.rc:79
+msgid "Start downloading %s"
+msgstr ""
+
+#: ieframe.rc:80
+msgid "Downloading %s"
+msgstr ""
+
+#: ieframe.rc:81
+#, fuzzy
+msgid "Asking for %s"
+msgstr "Επιλογές"
 
 #: inetcpl.rc:46
 msgid " Home page "

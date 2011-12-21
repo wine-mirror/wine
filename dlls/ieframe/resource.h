@@ -57,3 +57,11 @@
 #define IDS_TB_PRINT                   1105
 
 #define IDS_ADDRESS                    1106
+
+/* update status text in BINDSTATUS_* callback */
+#define IDS_STATUSFMT_FIRST            4096
+#define IDS_FINDINGRESOURCE            (IDS_STATUSFMT_FIRST + 1)
+#define IDS_BEGINDOWNLOADDATA          (IDS_STATUSFMT_FIRST + 4)
+#define IDS_ENDDOWNLOADDATA            (IDS_STATUSFMT_FIRST + 6)
+#define IDS_SENDINGREQUEST             (IDS_STATUSFMT_FIRST + 11)
+#define IDS_STATUSFMT_MAXLEN           256

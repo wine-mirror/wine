@@ -27,6 +27,7 @@
 #include "shlwapi.h"
 #include "wininet.h"
 #include "mshtml.h"
+#include "resource.h"
 
 #include "wine/debug.h"
 
@@ -93,21 +94,36 @@ static void dump_BINDINFO(BINDINFO *bi)
             );
 }
 
-static void set_status_text(BindStatusCallback *This, LPCWSTR str)
+static void set_status_text(BindStatusCallback *This, ULONG statuscode, LPCWSTR str)
 {
     VARIANTARG arg;
     DISPPARAMS dispparams = {&arg, NULL, 1, 0};
+    WCHAR fmt[IDS_STATUSFMT_MAXLEN];
+    WCHAR buffer[IDS_STATUSFMT_MAXLEN + INTERNET_MAX_URL_LENGTH];
 
     if(!This->doc_host)
         return;
 
+    TRACE("(%p, %d, %s)\n", This, statuscode, debugstr_w(str));
+    buffer[0] = 0;
+    if (statuscode && str && *str) {
+        fmt[0] = 0;
+        /* the format string must have one "%s" for the str */
+        LoadStringW(ieframe_instance, IDS_STATUSFMT_FIRST + statuscode, fmt, IDS_STATUSFMT_MAXLEN);
+        snprintfW(buffer, sizeof(buffer)/sizeof(WCHAR), fmt, str);
+    }
+
     V_VT(&arg) = VT_BSTR;
-    V_BSTR(&arg) = str ? SysAllocString(str) : NULL;
+    V_BSTR(&arg) = str ? SysAllocString(buffer) : NULL;
+    TRACE("=> %s\n", debugstr_w(V_BSTR(&arg)));
+
     call_sink(This->doc_host->cps.wbe2, DISPID_STATUSTEXTCHANGE, &dispparams);
-    VariantClear(&arg);
 
     if(This->doc_host->frame)
-        IOleInPlaceFrame_SetStatusText(This->doc_host->frame, str);
+        IOleInPlaceFrame_SetStatusText(This->doc_host->frame, buffer);
+
+    VariantClear(&arg);
+
 }
 
 HRESULT set_dochost_url(DocHost *This, const WCHAR *url)
@@ -251,14 +267,20 @@ static HRESULT WINAPI BindStatusCallback_OnProgress(IBindStatusCallback *iface,
     case BINDSTATUS_REDIRECTING:
         return set_dochost_url(This->doc_host, szStatusText);
     case BINDSTATUS_BEGINDOWNLOADDATA:
-        set_status_text(This, szStatusText); /* FIXME: "Start downloading from site: %s" */
+        set_status_text(This, ulStatusCode, szStatusText);
         status_code = get_http_status_code(This->binding);
         if(status_code != HTTP_STATUS_OK)
             handle_navigation_error(This->doc_host, status_code, This->url, NULL);
         return S_OK;
+
+    case BINDSTATUS_FINDINGRESOURCE:
     case BINDSTATUS_ENDDOWNLOADDATA:
-        set_status_text(This, szStatusText); /* FIXME: "Downloading from site: %s" */
+    case BINDSTATUS_SENDINGREQUEST:
+        set_status_text(This, ulStatusCode, szStatusText);
         return S_OK;
+
+    case BINDSTATUS_CONNECTING:
+    case BINDSTATUS_CACHEFILENAMEAVAILABLE:
     case BINDSTATUS_CLASSIDAVAILABLE:
     case BINDSTATUS_MIMETYPEAVAILABLE:
     case BINDSTATUS_BEGINSYNCOPERATION:
@@ -323,7 +345,7 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
 
     TRACE("(%p)->(%08x %s)\n", This, hresult, debugstr_w(szError));
 
-    set_status_text(This, emptyW);
+    set_status_text(This, 0, emptyW);
 
     if(!This->doc_host)
         return S_OK;
