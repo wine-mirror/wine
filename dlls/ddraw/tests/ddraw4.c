@@ -216,13 +216,13 @@ static void test_process_vertices(void)
 
     hr = IDirect3DVertexBuffer_Lock(dst_vb, DDLOCK_READONLY, (void **)&dst_data, NULL);
     ok(SUCCEEDED(hr), "Failed to lock destination vertex buffer, hr %#x.\n", hr);
-    todo_wine ok(compare_vec4(&dst_data[0], -6.500e+1f, +1.800e+2f, +2.000e-1f, +1.000e+0f, 4096),
+    ok(compare_vec4(&dst_data[0], -6.500e+1f, +1.800e+2f, +2.000e-1f, +1.000e+0f, 4096),
             "Got unexpected vertex 0 {%.8e, %.8e, %.8e, %.8e}.\n",
             dst_data[0].x, dst_data[0].y, dst_data[0].z, dst_data[0].w);
-    todo_wine ok(compare_vec4(&dst_data[1], -4.000e+1f, +1.400e+2f, +4.000e-1f, +1.000e+0f, 4096),
+    ok(compare_vec4(&dst_data[1], -4.000e+1f, +1.400e+2f, +4.000e-1f, +1.000e+0f, 4096),
             "Got unexpected vertex 1 {%.8e, %.8e, %.8e, %.8e}.\n",
             dst_data[1].x, dst_data[1].y, dst_data[1].z, dst_data[1].w);
-    todo_wine ok(compare_vec4(&dst_data[2], -1.500e+1f, +1.000e+2f, +6.000e-1f, +1.000e+0f, 4096),
+    ok(compare_vec4(&dst_data[2], -1.500e+1f, +1.000e+2f, +6.000e-1f, +1.000e+0f, 4096),
             "Got unexpected vertex 2 {%.8e, %.8e, %.8e, %.8e}.\n",
             dst_data[2].x, dst_data[2].y, dst_data[2].z, dst_data[2].w);
     hr = IDirect3DVertexBuffer_Unlock(dst_vb);
@@ -236,13 +236,13 @@ static void test_process_vertices(void)
 
     hr = IDirect3DVertexBuffer_Lock(dst_vb, DDLOCK_READONLY, (void **)&dst_data, NULL);
     ok(SUCCEEDED(hr), "Failed to lock destination vertex buffer, hr %#x.\n", hr);
-    todo_wine ok(compare_vec4(&dst_data[0], +8.500e+1f, -1.000e+2f, +1.800e+0f, +1.000e+0f, 4096),
+    ok(compare_vec4(&dst_data[0], +8.500e+1f, -1.000e+2f, +1.800e+0f, +1.000e+0f, 4096),
             "Got unexpected vertex 0 {%.8e, %.8e, %.8e, %.8e}.\n",
             dst_data[0].x, dst_data[0].y, dst_data[0].z, dst_data[0].w);
-    todo_wine ok(compare_vec4(&dst_data[1], +1.100e+2f, -1.400e+2f, +2.000e+0f, +1.000e+0f, 4096),
+    ok(compare_vec4(&dst_data[1], +1.100e+2f, -1.400e+2f, +2.000e+0f, +1.000e+0f, 4096),
             "Got unexpected vertex 1 {%.8e, %.8e, %.8e, %.8e}.\n",
             dst_data[1].x, dst_data[1].y, dst_data[1].z, dst_data[1].w);
-    todo_wine ok(compare_vec4(&dst_data[2], +1.350e+2f, -1.800e+2f, +2.200e+0f, +1.000e+0f, 4096),
+    ok(compare_vec4(&dst_data[2], +1.350e+2f, -1.800e+2f, +2.200e+0f, +1.000e+0f, 4096),
             "Got unexpected vertex 2 {%.8e, %.8e, %.8e, %.8e}.\n",
             dst_data[2].x, dst_data[2].y, dst_data[2].z, dst_data[2].w);
     hr = IDirect3DVertexBuffer_Unlock(dst_vb);
@@ -267,13 +267,13 @@ static void test_process_vertices(void)
 
     hr = IDirect3DVertexBuffer_Lock(dst_vb, DDLOCK_READONLY, (void **)&dst_data, NULL);
     ok(SUCCEEDED(hr), "Failed to lock destination vertex buffer, hr %#x.\n", hr);
-    todo_wine ok(compare_vec4(&dst_data[0], +7.500e+1f, +4.000e+1f, -8.000e-1f, +1.000e+0f, 4096),
+    ok(compare_vec4(&dst_data[0], +7.500e+1f, +4.000e+1f, -8.000e-1f, +1.000e+0f, 4096),
             "Got unexpected vertex 0 {%.8e, %.8e, %.8e, %.8e}.\n",
             dst_data[0].x, dst_data[0].y, dst_data[0].z, dst_data[0].w);
-    todo_wine ok(compare_vec4(&dst_data[1], +1.200e+2f, +2.000e+1f, -1.000e+0f, +1.000e+0f, 4096),
+    ok(compare_vec4(&dst_data[1], +1.200e+2f, +2.000e+1f, -1.000e+0f, +1.000e+0f, 4096),
             "Got unexpected vertex 1 {%.8e, %.8e, %.8e, %.8e}.\n",
             dst_data[1].x, dst_data[1].y, dst_data[1].z, dst_data[1].w);
-    todo_wine ok(compare_vec4(&dst_data[2], +1.650e+2f, +0.000e+0f, -1.200e+0f, +1.000e+0f, 4096),
+    ok(compare_vec4(&dst_data[2], +1.650e+2f, +0.000e+0f, -1.200e+0f, +1.000e+0f, 4096),
             "Got unexpected vertex 2 {%.8e, %.8e, %.8e, %.8e}.\n",
             dst_data[2].x, dst_data[2].y, dst_data[2].z, dst_data[2].w);
     hr = IDirect3DVertexBuffer_Unlock(dst_vb);
@@ -298,13 +298,13 @@ static void test_process_vertices(void)
 
     hr = IDirect3DVertexBuffer_Lock(dst_vb, DDLOCK_READONLY, (void **)&dst_data, NULL);
     ok(SUCCEEDED(hr), "Failed to lock destination vertex buffer, hr %#x.\n", hr);
-    todo_wine ok(compare_vec4(&dst_data[0], +1.100e+2f, +6.800e+1f, +7.000e+0f, +1.000e+0f, 4096),
+    ok(compare_vec4(&dst_data[0], +1.100e+2f, +6.800e+1f, +7.000e+0f, +1.000e+0f, 4096),
             "Got unexpected vertex 0 {%.8e, %.8e, %.8e, %.8e}.\n",
             dst_data[0].x, dst_data[0].y, dst_data[0].z, dst_data[0].w);
-    todo_wine ok(compare_vec4(&dst_data[1], +1.170e+2f, +6.600e+1f, +8.000e+0f, +1.000e+0f, 4096),
+    ok(compare_vec4(&dst_data[1], +1.170e+2f, +6.600e+1f, +8.000e+0f, +1.000e+0f, 4096),
             "Got unexpected vertex 1 {%.8e, %.8e, %.8e, %.8e}.\n",
             dst_data[1].x, dst_data[1].y, dst_data[1].z, dst_data[1].w);
-    todo_wine ok(compare_vec4(&dst_data[2], +1.240e+2f, +6.400e+1f, +9.000e+0f, +1.000e+0f, 4096),
+    ok(compare_vec4(&dst_data[2], +1.240e+2f, +6.400e+1f, +9.000e+0f, +1.000e+0f, 4096),
             "Got unexpected vertex 2 {%.8e, %.8e, %.8e, %.8e}.\n",
             dst_data[2].x, dst_data[2].y, dst_data[2].z, dst_data[2].w);
     hr = IDirect3DVertexBuffer_Unlock(dst_vb);

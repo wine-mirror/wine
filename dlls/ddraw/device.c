@@ -3279,13 +3279,32 @@ IDirect3DDeviceImpl_7_SetTransform_FPUPreserve(IDirect3DDevice7 *iface,
 }
 
 static HRESULT WINAPI IDirect3DDeviceImpl_3_SetTransform(IDirect3DDevice3 *iface,
-        D3DTRANSFORMSTATETYPE TransformStateType, D3DMATRIX *D3DMatrix)
+        D3DTRANSFORMSTATETYPE state, D3DMATRIX *matrix)
 {
     IDirect3DDeviceImpl *This = impl_from_IDirect3DDevice3(iface);
 
-    TRACE("iface %p, state %#x, matrix %p.\n", iface, TransformStateType, D3DMatrix);
+    TRACE("iface %p, state %#x, matrix %p.\n", iface, state, matrix);
 
-    return IDirect3DDevice7_SetTransform(&This->IDirect3DDevice7_iface, TransformStateType, D3DMatrix);
+    if (!matrix)
+        return DDERR_INVALIDPARAMS;
+
+    if (state == D3DTRANSFORMSTATE_PROJECTION)
+    {
+        D3DMATRIX projection;
+        HRESULT hr;
+
+        wined3d_mutex_lock();
+        multiply_matrix(&projection, &This->legacy_clipspace, matrix);
+        hr = wined3d_device_set_transform(This->wined3d_device,
+                WINED3DTS_PROJECTION, (struct wined3d_matrix *)&projection);
+        if (SUCCEEDED(hr))
+            This->legacy_projection = *matrix;
+        wined3d_mutex_unlock();
+
+        return hr;
+    }
+
+    return IDirect3DDevice7_SetTransform(&This->IDirect3DDevice7_iface, state, matrix);
 }
 
 static HRESULT WINAPI IDirect3DDeviceImpl_2_SetTransform(IDirect3DDevice2 *iface,
@@ -3370,13 +3389,24 @@ IDirect3DDeviceImpl_7_GetTransform_FPUPreserve(IDirect3DDevice7 *iface,
 }
 
 static HRESULT WINAPI IDirect3DDeviceImpl_3_GetTransform(IDirect3DDevice3 *iface,
-        D3DTRANSFORMSTATETYPE TransformStateType, D3DMATRIX *D3DMatrix)
+        D3DTRANSFORMSTATETYPE state, D3DMATRIX *matrix)
 {
     IDirect3DDeviceImpl *This = impl_from_IDirect3DDevice3(iface);
 
-    TRACE("iface %p, state %#x, matrix %p.\n", iface, TransformStateType, D3DMatrix);
+    TRACE("iface %p, state %#x, matrix %p.\n", iface, state, matrix);
 
-    return IDirect3DDevice7_GetTransform(&This->IDirect3DDevice7_iface, TransformStateType, D3DMatrix);
+    if (!matrix)
+        return DDERR_INVALIDPARAMS;
+
+    if (state == D3DTRANSFORMSTATE_PROJECTION)
+    {
+        wined3d_mutex_lock();
+        *matrix = This->legacy_projection;
+        wined3d_mutex_unlock();
+        return DD_OK;
+    }
+
+    return IDirect3DDevice7_GetTransform(&This->IDirect3DDevice7_iface, state, matrix);
 }
 
 static HRESULT WINAPI IDirect3DDeviceImpl_2_GetTransform(IDirect3DDevice2 *iface,
@@ -3460,13 +3490,30 @@ IDirect3DDeviceImpl_7_MultiplyTransform_FPUPreserve(IDirect3DDevice7 *iface,
 }
 
 static HRESULT WINAPI IDirect3DDeviceImpl_3_MultiplyTransform(IDirect3DDevice3 *iface,
-        D3DTRANSFORMSTATETYPE TransformStateType, D3DMATRIX *D3DMatrix)
+        D3DTRANSFORMSTATETYPE state, D3DMATRIX *matrix)
 {
     IDirect3DDeviceImpl *This = impl_from_IDirect3DDevice3(iface);
 
-    TRACE("iface %p, state %#x, matrix %p.\n", iface, TransformStateType, D3DMatrix);
+    TRACE("iface %p, state %#x, matrix %p.\n", iface, state, matrix);
 
-    return IDirect3DDevice7_MultiplyTransform(&This->IDirect3DDevice7_iface, TransformStateType, D3DMatrix);
+    if (state == D3DTRANSFORMSTATE_PROJECTION)
+    {
+        D3DMATRIX projection, tmp;
+        HRESULT hr;
+
+        wined3d_mutex_lock();
+        multiply_matrix(&tmp, &This->legacy_projection, matrix);
+        multiply_matrix(&projection, &This->legacy_clipspace, &tmp);
+        hr = wined3d_device_set_transform(This->wined3d_device,
+                WINED3DTS_PROJECTION, (struct wined3d_matrix *)&projection);
+        if (SUCCEEDED(hr))
+            This->legacy_projection = tmp;
+        wined3d_mutex_unlock();
+
+        return hr;
+    }
+
+    return IDirect3DDevice7_MultiplyTransform(&This->IDirect3DDevice7_iface, state, matrix);
 }
 
 static HRESULT WINAPI IDirect3DDeviceImpl_2_MultiplyTransform(IDirect3DDevice2 *iface,
@@ -6911,6 +6958,13 @@ IDirect3DDeviceImpl_UpdateDepthStencil(IDirect3DDeviceImpl *This)
 
 HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDirectDrawSurfaceImpl *target)
 {
+    static const D3DMATRIX ident =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    };
     HRESULT hr;
 
     if (ddraw->cooperative_level & DDSCL_FPUPRESERVE)
@@ -6933,6 +6987,8 @@ HRESULT d3d_device_init(IDirect3DDeviceImpl *device, IDirectDrawImpl *ddraw, IDi
     }
 
     device->legacyTextureBlending = FALSE;
+    device->legacy_projection = ident;
+    device->legacy_clipspace = ident;
 
     /* Create an index buffer, it's needed for indexed drawing */
     hr = wined3d_buffer_create_ib(ddraw->wined3d_device, 0x40000 /* Length. Don't know how long it should be */,

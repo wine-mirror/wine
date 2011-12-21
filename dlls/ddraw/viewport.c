@@ -30,6 +30,26 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
  * Helper functions
  *****************************************************************************/
 
+static void update_clip_space(IDirect3DDeviceImpl *device,
+        struct wined3d_vec3 *scale, struct wined3d_vec3 *offset)
+{
+    D3DMATRIX clip_space =
+    {
+        scale->x,  0.0f,      0.0f,      0.0f,
+        0.0f,      scale->y,  0.0f,      0.0f,
+        0.0f,      0.0f,      scale->z,  0.0f,
+        offset->x, offset->y, offset->z, 1.0f,
+    };
+    D3DMATRIX projection;
+    HRESULT hr;
+
+    multiply_matrix(&projection, &clip_space, &device->legacy_projection);
+    hr = wined3d_device_set_transform(device->wined3d_device,
+            WINED3DTS_PROJECTION, (struct wined3d_matrix *)&projection);
+    if (SUCCEEDED(hr))
+        device->legacy_clipspace = clip_space;
+}
+
 /*****************************************************************************
  * viewport_activate
  *
@@ -38,6 +58,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
  *****************************************************************************/
 void viewport_activate(IDirect3DViewportImpl *This, BOOL ignore_lights)
 {
+    struct wined3d_vec3 scale, offset;
     D3DVIEWPORT7 vp;
 
     if (!ignore_lights)
@@ -58,8 +79,15 @@ void viewport_activate(IDirect3DViewportImpl *This, BOOL ignore_lights)
         vp.dwY = This->viewports.vp2.dwY;
         vp.dwHeight = This->viewports.vp2.dwHeight;
         vp.dwWidth = This->viewports.vp2.dwWidth;
-        vp.dvMinZ = This->viewports.vp2.dvMinZ;
-        vp.dvMaxZ = This->viewports.vp2.dvMaxZ;
+        vp.dvMinZ = 0.0f;
+        vp.dvMaxZ = 1.0f;
+
+        scale.x = 2.0f / This->viewports.vp2.dvClipWidth;
+        scale.y = 2.0f / This->viewports.vp2.dvClipHeight;
+        scale.z = 1.0f / (This->viewports.vp2.dvMaxZ - This->viewports.vp2.dvMinZ);
+        offset.x = -2.0f * This->viewports.vp2.dvClipX / This->viewports.vp2.dvClipWidth - 1.0f;
+        offset.y = -2.0f * This->viewports.vp2.dvClipY / This->viewports.vp2.dvClipHeight + 1.0f;
+        offset.z = -This->viewports.vp2.dvMinZ / (This->viewports.vp2.dvMaxZ - This->viewports.vp2.dvMinZ);
     }
     else
     {
@@ -67,11 +95,18 @@ void viewport_activate(IDirect3DViewportImpl *This, BOOL ignore_lights)
         vp.dwY = This->viewports.vp1.dwY;
         vp.dwHeight = This->viewports.vp1.dwHeight;
         vp.dwWidth = This->viewports.vp1.dwWidth;
-        vp.dvMinZ = This->viewports.vp1.dvMinZ;
-        vp.dvMaxZ = This->viewports.vp1.dvMaxZ;
+        vp.dvMinZ = 0.0f;
+        vp.dvMaxZ = 1.0f;
+
+        scale.x = 2.0f * This->viewports.vp1.dvScaleX / This->viewports.vp1.dwWidth;
+        scale.y = 2.0f * This->viewports.vp1.dvScaleY / This->viewports.vp1.dwHeight;
+        scale.z = 1.0f;
+        offset.x = 0.0f;
+        offset.y = 0.0f;
+        offset.z = 0.0f;
     }
 
-    /* And also set the viewport */
+    update_clip_space(This->active_device, &scale, &offset);
     IDirect3DDevice7_SetViewport(&This->active_device->IDirect3DDevice7_iface, &vp);
 }
 
@@ -368,7 +403,7 @@ IDirect3DViewportImpl_TransformVertices(IDirect3DViewport3 *iface,
                                         DWORD *lpOffScreen)
 {
     IDirect3DViewportImpl *This = impl_from_IDirect3DViewport3(iface);
-    D3DMATRIX view_mat, world_mat, proj_mat, mat;
+    D3DMATRIX view_mat, world_mat, mat;
     float *in;
     float *out;
     float x, y, z, w;
@@ -399,11 +434,9 @@ IDirect3DViewportImpl_TransformVertices(IDirect3DViewport3 *iface,
     wined3d_device_get_transform(This->active_device->wined3d_device,
             D3DTRANSFORMSTATE_VIEW, (struct wined3d_matrix *)&view_mat);
     wined3d_device_get_transform(This->active_device->wined3d_device,
-            D3DTRANSFORMSTATE_PROJECTION, (struct wined3d_matrix *)&proj_mat);
-    wined3d_device_get_transform(This->active_device->wined3d_device,
             WINED3DTS_WORLDMATRIX(0), (struct wined3d_matrix *)&world_mat);
-    multiply_matrix(&mat,&view_mat,&world_mat);
-    multiply_matrix(&mat,&proj_mat,&mat);
+    multiply_matrix(&mat, &view_mat, &world_mat);
+    multiply_matrix(&mat, &This->active_device->legacy_projection, &mat);
 
     in = lpData->lpIn;
     out = lpData->lpOut;

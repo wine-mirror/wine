@@ -300,6 +300,8 @@ struct IDirect3DDeviceImpl
 
     /* Required to keep track which of two available texture blending modes in d3ddevice3 is used */
     BOOL legacyTextureBlending;
+    D3DMATRIX legacy_projection;
+    D3DMATRIX legacy_clipspace;
 
     /* Light state */
     DWORD material;
