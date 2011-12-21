@@ -1271,30 +1271,40 @@ ctype_char* __thiscall MSVCP_ctype_char_vector_dtor(ctype_char *this, unsigned i
 /* ?do_narrow@?$ctype@D@std@@MBEDDD@Z */
 /* ?do_narrow@?$ctype@D@std@@MEBADDD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_char_do_narrow_ch, 12)
+#define call_ctype_char_do_narrow_ch(this, ch, unused) CALL_VTBL_FUNC(this, 36, \
+        char, (const ctype_char*, char, char), (this, ch, unused))
 char __thiscall ctype_char_do_narrow_ch(const ctype_char *this, char ch, char unused)
 {
-    FIXME("(%p %c %c) stub\n", this, ch, unused);
-    return 0;
+    TRACE("(%p %c %c)\n", this, ch, unused);
+    return ch;
 }
 
 /* ?do_narrow@?$ctype@D@std@@MBEPBDPBD0DPAD@Z */
 /* ?do_narrow@?$ctype@D@std@@MEBAPEBDPEBD0DPEAD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_char_do_narrow, 20)
+#define call_ctype_char_do_narrow(this, first, last, unused, dest) CALL_VTBL_FUNC(this, 32, \
+        const char*, (const ctype_char*, const char*, const char*, char, char*), \
+        (this, first, last, unused, dest))
 const char* __thiscall ctype_char_do_narrow(const ctype_char *this,
         const char *first, const char *last, char unused, char *dest)
 {
-    FIXME("(%p %p %p %p) stub\n", this, first, last, dest);
-    return NULL;
+    TRACE("(%p %p %p %p)\n", this, first, last, dest);
+    memcpy(dest, first, last-first);
+    return last;
 }
 
 /* ?_Do_narrow_s@?$ctype@D@std@@MBEPBDPBD0DPADI@Z */
 /* ?_Do_narrow_s@?$ctype@D@std@@MEBAPEBDPEBD0DPEAD_K@Z */
 DEFINE_THISCALL_WRAPPER(ctype_char__Do_narrow_s, 24)
+#define call_ctype_char__Do_narrow_s(this, first, last, unused, dest, size) CALL_VTBL_FUNC(this, 40, \
+        const char*, (const ctype_char*, const char*, const char*, char, char*, MSVCP_size_t), \
+        (this, first, last, unused, dest, size))
 const char* __thiscall ctype_char__Do_narrow_s(const ctype_char *this, const char *first,
         const char *last, char unused, char *dest, MSVCP_size_t size)
 {
-    FIXME("(%p %p %p %p %lu) stub\n", this, first, last, dest, size);
-    return NULL;
+    TRACE("(%p %p %p %p %lu)\n", this, first, last, dest, size);
+    memcpy_s(dest, size, first, last-first);
+    return last;
 }
 
 /* ?narrow@?$ctype@D@std@@QBEDDD@Z */
@@ -1302,8 +1312,8 @@ const char* __thiscall ctype_char__Do_narrow_s(const ctype_char *this, const cha
 DEFINE_THISCALL_WRAPPER(ctype_char_narrow_ch, 12)
 char __thiscall ctype_char_narrow_ch(const ctype_char *this, char ch, char dflt)
 {
-    FIXME("(%p %c %c) stub\n", this, ch, dflt);
-    return 0;
+    TRACE("(%p %c %c)\n", this, ch, dflt);
+    return call_ctype_char_do_narrow_ch(this, ch, dflt);
 }
 
 /* ?narrow@?$ctype@D@std@@QBEPBDPBD0DPAD@Z */
@@ -1312,18 +1322,18 @@ DEFINE_THISCALL_WRAPPER(ctype_char_narrow, 20)
 const char* __thiscall ctype_char_narrow(const ctype_char *this,
         const char *first, const char *last, char dflt, char *dest)
 {
-    FIXME("(%p %p %p %c %p) stub\n", this, first, last, dflt, dest);
-    return NULL;
+    TRACE("(%p %p %p %c %p)\n", this, first, last, dflt, dest);
+    return call_ctype_char_do_narrow(this, first, last, dflt, dest);
 }
 
 /* ?_Narrow_s@?$ctype@D@std@@QBEPBDPBD0DPADI@Z */
 /* ?_Narrow_s@?$ctype@D@std@@QEBAPEBDPEBD0DPEAD_K@Z */
 DEFINE_THISCALL_WRAPPER(ctype_char__Narrow_s, 24)
 const char* __thiscall ctype_char__Narrow_s(const ctype_char *this, const char *first,
-        const char *last, char unused, char *dest, MSVCP_size_t size)
+        const char *last, char dflt, char *dest, MSVCP_size_t size)
 {
-    FIXME("(%p %p %p %p %lu) stub\n", this, first, last, dest, size);
-    return NULL;
+    TRACE("(%p %p %p %p %lu)\n", this, first, last, dest, size);
+    return call_ctype_char__Do_narrow_s(this, first, last, dflt, dest, size);
 }
 
 /* ?do_widen@?$ctype@D@std@@MBEDD@Z */
