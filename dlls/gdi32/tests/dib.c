@@ -137,6 +137,8 @@ static const char *sha1_graphics_a8r8g8b8[] =
     "e462052a03dbe4ec3814db7700e166d00d4d686f",
     "a27917d4db49ce77989fae246015aeb2a28520ee",
     "657514a4ca1f2b6ca7a125ad58dfed82099a37d1",
+    "5e0549fdcf0fc7c50054dccc51d37fc734ab8134",
+    "eca1998a4d79fb81b2a4103f79e3b846a864eaaf",
     NULL
 };
 
@@ -200,6 +202,8 @@ static const char *sha1_graphics_a8r8g8b8_bitfields[] =
     "0cda6b3297003b3ccd6d5baa17e1ca9bb7c56f08",
     "b2c8e1ebb9435031fe068442f479d1304096e79f",
     "657514a4ca1f2b6ca7a125ad58dfed82099a37d1",
+    "5e0549fdcf0fc7c50054dccc51d37fc734ab8134",
+    "eca1998a4d79fb81b2a4103f79e3b846a864eaaf",
     NULL
 };
 
@@ -263,6 +267,8 @@ static const char *sha1_graphics_a8b8g8r8[] =
     "87f57a31253a38dbf3dc3070473328fa04b68a48",
     "db64cc4d830fc35ed170b53943e722b2342954d4",
     "9988ceca44dafbee247aece1f027c06c27c01652",
+    "d80d45a97bc877b50ba2c3f720d5197f2f1c5fc5",
+    "b76e0724496e471b01ef8b34f8beba69f5bde261",
     NULL
 };
 
@@ -326,6 +332,8 @@ static const char *sha1_graphics_r10g10b10[] =
     "8ea5d7e4bebc40a1d91b04b12e1c11a42c188095",
     "317521e576801acaea62c76fe16813cdfe20f4ad",
     "ce0fc29bb0281d6c955d64e239254ef9e6dbc06d",
+    "5ab49e7b61eddd3bab4182f362a38e1ab6a5a3b7",
+    "555b6f04ba8dec9e2a60693dcaac594227052727",
     NULL
 };
 
@@ -389,6 +397,8 @@ static const char *sha1_graphics_r6g6b6[] =
     "aecb242c31f31a90f071b6455ea7d808d4ea22e3",
     "77ea86e51a94b11a8081b29696cb4115687843e3",
     "d67b897cad72d31e75359094007b1346fd8806ea",
+    "442bcf4d94a649c9406c3b0bf2f00cb7c6a4d1d4",
+    "3d0853f4f7580d7cd5148c21c34d878ecf39a5f3",
     NULL
 };
 
@@ -452,6 +462,8 @@ static const char *sha1_graphics_24[] =
     "354b92008a8409c62d0fa1dff1532c5943aa37a2",
     "8dc9cb7deae5c24d1eae004d53893fa6caf4723c",
     "cf311a96d41bd98fdbdfb5dfaac4ba1ba9b7d6da",
+    "bf5ec23456efe00e1e0931c17de9040ab2092858",
+    "0bbdf0a0489428f96e3c1d3e5305f9a893820852",
     NULL
 };
 
@@ -519,6 +531,8 @@ static const char *sha1_graphics_r5g5b5[] =
     "295ec16530126046790fb734e99f86f5b3b74ed8",
     "d98b0561010606b55a1b9b85fbc93640f681d256",
     "1c1499051860b7caa25173b328ca9c862f01dd1a",
+    "a655512753bc90e6d4eb3848f69e96db1ad348e5",
+    "2230f36f12d4becb242e2962fa1b3694db2496ca",
     NULL
 };
 
@@ -581,6 +595,8 @@ static const char *sha1_graphics_r4g4b4[] =
     "7587a9c87cab1eca827807f351bb67ca184d1ac5",
     "b53ef0b5c674822e784903a9dbdd3b386d9f2350",
     "5505d2ed20dc61ffe48832ecf5329162a5ceb734",
+    "9f72be4467219a345b1164205d1fbfda2d64271e",
+    "13d1634e03bc49cfe14a32278d9b1f5ddbb9be10",
     NULL
 };
 
@@ -649,6 +665,8 @@ static const char *sha1_graphics_8_color[] =
     "e58d9c0acf0219d0839e1dbd162e08a765ed7f0f",
     "34ca0f9660e1889f9f2c0deb80535d3c4f349fa4",
     "2c07272462c68cf5944b03e2aa049475b99143c5",
+    "07ca369fb875d37b9cf855045f528af1827edec4",
+    "5e9e3e71b06c5efe20f93b3838e745b40b878471",
     NULL
 };
 
@@ -722,6 +740,8 @@ static const char *sha1_graphics_8_grayscale[] =
     "0ca8775d9a61ccc251d1e6f2e3cfd26a24ae24a2",
     "17ae603c199a5d6695d198a7f36e6d7263990951",
     "1918a33f59d3500204ffc573318a39e9ff754221",
+    "5449d1aef0d2d6af9ac3fd7adb32c23ddc9be1e2",
+    "55d302ece31a9b7fc4be4a07a53767ba210273e7",
     NULL
 };
 
@@ -788,6 +808,8 @@ static const char *sha1_graphics_8[] =
     "bd28d77cd85b20a2384d6b25082cfd884bba683e",
     "7e591ec8ae9bb61c3a443c93f071cab2b8978394",
     "f81c70b6ee2d4690f9f7c797c66582b176f8dcef",
+    "d3f359cac7318ce09e0531d51c8c2b316cf3a23b",
+    "293c41a7ed923a4617560481ae8815cebf83701a",
     NULL
 };
 
@@ -850,6 +872,8 @@ static const char *sha1_graphics_4[] =
     "28a6b9f7927e99e53cf46f0333d29168cb10e920",
     "029552113292cc110fd6b7888e766628950aaeef",
     "297f6ad15200bffbf15198324ee8f27a61a6f2d4",
+    "70cfa427a1a0d6f2232b1fd544905d48af69cb98",
+    "287ea7db721e641439888cb9f4bac3a5f16124eb",
     NULL
 };
 
@@ -912,6 +936,8 @@ static const char *sha1_graphics_4_grayscale[] =
     "ada3b7c34946e584dcdf4203e07cfa3dad02bc63",
     "c2f61571b067a44b30f56b4658c9606f0edfc0f3",
     "58f400c9bb78e49a879276fb049edfc9c981740a",
+    "cb3794f676d6e9502f27172ac7d79a12ca2ba32c",
+    "aa89612798fbc4e11a73b6233c0ac4832e6af2f9",
     NULL
 };
 
@@ -992,6 +1018,8 @@ static const char *sha1_graphics_1[] =
     "781d8c5cbc28591fd48fce06f984c502fdc6b363",
     "df510792a7790cc699532b1420d43c6d4da2ae2f",
     "55c26d22f11d80b73383fa57d0fac552d705b092",
+    "14443b33a9879bf829ed3b06e1aef0d7dcf662cc",
+    "53ab1fcccd09fa5cbff77497f36a70a3b3cb8b81",
     NULL
 };
 
@@ -1157,6 +1185,11 @@ static const RECT wide_lines[] =
     { 61, 200,  61, 100},
 };
 
+static const POINT poly_lines[] =
+{
+    {100, 100}, {200, 100}, {200, 200}, {100, 200}
+};
+
 static const RECT patblt_clips[] =
 {
     {120, 120, 140, 126}, /* unclipped */
@@ -1228,6 +1261,7 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
 {
     DWORD dib_size = get_dib_size(bmi);
     HPEN solid_pen, dashed_pen, wide_pen, orig_pen;
+    LOGBRUSH log_brush;
     HBRUSH solid_brush, dib_brush, hatch_brush, orig_brush;
     HBITMAP bmp;
     INT i, j, x, y, hatch_style;
@@ -2273,6 +2307,32 @@ static void draw_graphics(HDC hdc, BITMAPINFO *bmi, BYTE *bits, const char ***sh
     }
 
     compare_hash(bmi, bits, sha1, "wide pen" );
+    memset(bits, 0xcc, dib_size);
+
+    SelectObject( hdc, orig_pen );
+    DeleteObject( wide_pen );
+
+    log_brush.lbStyle = BS_SOLID;
+    log_brush.lbColor = RGB(0xff, 0, 0);
+    log_brush.lbHatch = 0;
+
+    wide_pen = ExtCreatePen( PS_GEOMETRIC | PS_ENDCAP_FLAT | PS_JOIN_MITER | PS_SOLID,
+                             9, &log_brush, 0, NULL );
+    SelectObject( hdc, wide_pen );
+
+    Polyline( hdc, poly_lines, sizeof(poly_lines) / sizeof(poly_lines[0]) );
+    compare_hash(bmi, bits, sha1, "wide pen - flat caps, mitred" );
+    memset(bits, 0xcc, dib_size);
+
+    SelectObject( hdc, orig_pen );
+    DeleteObject( wide_pen );
+
+    wide_pen = ExtCreatePen( PS_GEOMETRIC | PS_ENDCAP_SQUARE | PS_JOIN_BEVEL | PS_SOLID,
+                             16, &log_brush, 0, NULL );
+    SelectObject( hdc, wide_pen );
+
+    Polyline( hdc, poly_lines, sizeof(poly_lines) / sizeof(poly_lines[0]) );
+    compare_hash(bmi, bits, sha1, "wide pen - square caps, bevelled" );
     memset(bits, 0xcc, dib_size);
 
     SelectObject(hdc, orig_brush);
