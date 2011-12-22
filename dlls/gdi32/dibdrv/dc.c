@@ -262,13 +262,6 @@ static void update_fg_colors( dibdrv_physdev *pdev )
     pdev->text_color  = get_pixel_color( pdev, GetTextColor( pdev->dev.hdc ), TRUE );
 }
 
-static void update_masks( dibdrv_physdev *pdev, INT rop )
-{
-    update_brush_rop( pdev, rop );
-    if( GetBkMode( pdev->dev.hdc ) == OPAQUE )
-        calc_and_xor_masks( rop, pdev->bkgnd_color, &pdev->bkgnd_and, &pdev->bkgnd_xor );
-}
-
  /***********************************************************************
  *           add_extra_clipping_region
  *
@@ -379,38 +372,9 @@ static COLORREF dibdrv_SetBkColor( PHYSDEV dev, COLORREF color )
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetBkColor );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
 
-    pdev->bkgnd_color = get_pixel_color( pdev, color, FALSE );
-
-    if( GetBkMode(dev->hdc) == OPAQUE )
-        calc_and_xor_masks( GetROP2(dev->hdc), pdev->bkgnd_color, &pdev->bkgnd_and, &pdev->bkgnd_xor );
-    else
-    {
-        pdev->bkgnd_and = ~0u;
-        pdev->bkgnd_xor = 0;
-    }
-
     update_fg_colors( pdev ); /* Only needed in the 1 bpp case */
 
     return next->funcs->pSetBkColor( next, color );
-}
-
-/***********************************************************************
- *           dibdrv_SetBkMode
- */
-static INT dibdrv_SetBkMode( PHYSDEV dev, INT mode )
-{
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetBkMode );
-    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
-
-    if( mode == OPAQUE )
-        calc_and_xor_masks( GetROP2(dev->hdc), pdev->bkgnd_color, &pdev->bkgnd_and, &pdev->bkgnd_xor );
-    else
-    {
-        pdev->bkgnd_and = ~0u;
-        pdev->bkgnd_xor = 0;
-    }
-
-    return next->funcs->pSetBkMode( next, mode );
 }
 
 /***********************************************************************
@@ -438,10 +402,8 @@ static UINT dibdrv_SetDIBColorTable( PHYSDEV dev, UINT pos, UINT count, const RG
 
     if (pdev->dib.color_table)
     {
-        pdev->bkgnd_color = get_pixel_color( pdev, GetBkColor( dev->hdc ), FALSE );
         update_fg_colors( pdev );
-
-        update_masks( pdev, GetROP2( dev->hdc ) );
+        update_brush_rop( pdev, GetROP2( dev->hdc ) );
     }
     return next->funcs->pSetDIBColorTable( next, pos, count, colors );
 }
@@ -454,7 +416,7 @@ static INT dibdrv_SetROP2( PHYSDEV dev, INT rop )
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetROP2 );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
 
-    update_masks( pdev, rop );
+    update_brush_rop( pdev, rop );
 
     return next->funcs->pSetROP2( next, rop );
 }
@@ -575,7 +537,7 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_SelectPen,                   /* pSelectPen */
     NULL,                               /* pSetArcDirection */
     dibdrv_SetBkColor,                  /* pSetBkColor */
-    dibdrv_SetBkMode,                   /* pSetBkMode */
+    NULL,                               /* pSetBkMode */
     dibdrv_SetDCBrushColor,             /* pSetDCBrushColor */
     dibdrv_SetDCPenColor,               /* pSetDCPenColor */
     dibdrv_SetDIBColorTable,            /* pSetDIBColorTable */

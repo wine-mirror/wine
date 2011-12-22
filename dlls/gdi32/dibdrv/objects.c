@@ -180,8 +180,9 @@ DWORD get_pixel_color( dibdrv_physdev *pdev, COLORREF color, BOOL mono_fixup )
     if(rgbquad_equal(&fg_quad, pdev->dib.color_table + 1))
         return 1;
 
-    if(color == GetBkColor(pdev->dev.hdc)) return pdev->bkgnd_color;
-    else return pdev->bkgnd_color ? 0 : 1;
+    pixel = get_pixel_color( pdev, GetBkColor(pdev->dev.hdc), FALSE );
+    if (color == GetBkColor(pdev->dev.hdc)) return pixel;
+    else return !pixel;
 }
 
 /***************************************************************************
@@ -194,17 +195,25 @@ DWORD get_pixel_color( dibdrv_physdev *pdev, COLORREF color, BOOL mono_fixup )
  */
 static inline void get_pen_bkgnd_masks(dibdrv_physdev *pdev, DWORD *and, DWORD *xor)
 {
-    if(pdev->dib.bit_count != 1 || GetBkMode(pdev->dev.hdc) == TRANSPARENT)
+    DWORD color;
+
+    if (GetBkMode(pdev->dev.hdc) == TRANSPARENT)
     {
-        *and = pdev->bkgnd_and;
-        *xor = pdev->bkgnd_xor;
+        *and = ~0u;
+        *xor = 0;
+        return;
+    }
+
+    if (pdev->dib.bit_count != 1)
+    {
+        color = get_pixel_color( pdev, GetBkColor(pdev->dev.hdc), FALSE );
     }
     else
     {
-        DWORD color = get_pixel_color( pdev, pdev->pen_colorref, TRUE );
+        color = get_pixel_color( pdev, pdev->pen_colorref, TRUE );
         if(pdev->pen_colorref != GetBkColor(pdev->dev.hdc)) color = !color;
-        calc_and_xor_masks( GetROP2(pdev->dev.hdc), color, and, xor );
     }
+    calc_and_xor_masks( GetROP2(pdev->dev.hdc), color, and, xor );
 }
 
 static inline void get_brush_bkgnd_masks(dibdrv_physdev *pdev, DWORD *and, DWORD *xor)
@@ -213,8 +222,8 @@ static inline void get_brush_bkgnd_masks(dibdrv_physdev *pdev, DWORD *and, DWORD
 
     if(GetBkMode(pdev->dev.hdc) == TRANSPARENT)
     {
-        *and = pdev->bkgnd_and;
-        *xor = pdev->bkgnd_xor;
+        *and = ~0u;
+        *xor = 0;
     }
     else
     {

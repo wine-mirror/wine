@@ -114,16 +114,18 @@ void update_aa_ranges( dibdrv_physdev *pdev )
  *
  * See the comment above get_pen_bkgnd_masks
  */
-static inline void get_text_bkgnd_masks( const dibdrv_physdev *pdev, rop_mask *mask )
+static inline void get_text_bkgnd_masks( dibdrv_physdev *pdev, rop_mask *mask )
 {
+    COLORREF bg = GetBkColor( pdev->dev.hdc );
+
     mask->and = 0;
 
     if (pdev->dib.bit_count != 1)
-        mask->xor = pdev->bkgnd_color;
+        mask->xor = get_pixel_color( pdev, bg, FALSE );
     else
     {
         mask->xor = ~pdev->text_color;
-        if (GetTextColor( pdev->dev.hdc ) == GetBkColor( pdev->dev.hdc ))
+        if (GetTextColor( pdev->dev.hdc ) == bg)
             mask->xor = pdev->text_color;
     }
 }

@@ -103,9 +103,6 @@ typedef struct dibdrv_physdev
     HBITMAP brush_pattern_bitmap;
     BOOL   (* brush_rects)(struct dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects, HRGN clip);
 
-    /* background */
-    DWORD bkgnd_color, bkgnd_and, bkgnd_xor;
-
     /* text */
     DWORD text_color;
     struct intensity_range glyph_intensities[17];
