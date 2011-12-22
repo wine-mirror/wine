@@ -859,6 +859,67 @@ static void test_effect_parameter_value_GetVector(const struct test_effect_param
     }
 }
 
+static void test_effect_parameter_value_GetVectorArray(const struct test_effect_parameter_value_result *res,
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+{
+    const D3DXPARAMETER_DESC *res_desc = &res->desc;
+    LPCSTR res_full_name = res->full_name;
+    HRESULT hr;
+    DWORD cmp = 0xabababab;
+    FLOAT fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
+    UINT l, k;
+
+    memset(fvalue, 0xab, sizeof(fvalue));
+    hr = effect->lpVtbl->GetVectorArray(effect, parameter, (D3DXVECTOR4 *)&fvalue, res_desc->Elements);
+    if (!res_desc->Elements)
+    {
+        ok(hr == D3D_OK, "%u - %s: GetVectorArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+
+        for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
+        {
+            ok(fvalue[l] == *(FLOAT *)&cmp, "%u - %s: GetVectorArray fvalue[%u] failed, got %f, expected %f\n",
+                    i, res_full_name, l, fvalue[l], *(FLOAT *)&cmp);
+        }
+    }
+    else if (res_desc->Elements && res_desc->Class == D3DXPC_VECTOR)
+    {
+        ok(hr == D3D_OK, "%u - %s: GetVectorArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+
+        for (k = 0; k < res_desc->Elements; ++k)
+        {
+            for (l = 0; l < res_desc->Columns; ++l)
+            {
+                ok(compare_float(fvalue[l + k * 4], get_float(res_desc->Type, &res_value[ l + k * res_desc->Columns]), 512),
+                        "%u - %s: GetVectorArray fvalue[%u] failed, got %f, expected %f\n",
+                        i, res_full_name, l + k * 4, fvalue[ l + k * 4], get_float(res_desc->Type, &res_value[ l + k * res_desc->Columns]));
+            }
+
+            for (l = res_desc->Columns; l < 4; ++l)
+            {
+                ok(fvalue[ l + k * 4] == 0.0f, "%u - %s: GetVectorArray fvalue[%u] failed, got %f, expected %f\n",
+                        i, res_full_name, l + k * 4, fvalue[ l + k * 4], 0.0f);
+            }
+        }
+
+        for (l = res_desc->Elements * 4; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
+        {
+            ok(fvalue[l] == *(FLOAT *)&cmp, "%u - %s: GetVectorArray fvalue[%u] failed, got %f, expected %f\n",
+                    i, res_full_name, l, fvalue[l], *(FLOAT *)&cmp);
+        }
+    }
+    else
+    {
+        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetVectorArray failed, got %#x, expected %#x\n",
+                i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+        for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
+        {
+            ok(fvalue[l] == *(FLOAT *)&cmp, "%u - %s: GetVectorArray fvalue[%u] failed, got %f, expected %f\n",
+                    i, res_full_name, l, fvalue[l], *(FLOAT *)&cmp);
+        }
+    }
+}
+
 static void test_effect_parameter_value(IDirect3DDevice9 *device)
 {
     UINT i;
@@ -936,6 +997,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             test_effect_parameter_value_GetFloat(&res[k], effect, &blob[res_value_offset], parameter, i);
             test_effect_parameter_value_GetFloatArray(&res[k], effect, &blob[res_value_offset], parameter, i);
             test_effect_parameter_value_GetVector(&res[k], effect, &blob[res_value_offset], parameter, i);
+            test_effect_parameter_value_GetVectorArray(&res[k], effect, &blob[res_value_offset], parameter, i);
         }
 
         count = effect->lpVtbl->Release(effect);
