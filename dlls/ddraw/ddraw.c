@@ -788,21 +788,20 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
     }
 
     /* Handle those levels first which set various hwnds */
-    if(cooplevel & DDSCL_SETFOCUSWINDOW)
+    if ((cooplevel & DDSCL_SETFOCUSWINDOW) && !(cooplevel & DDSCL_CREATEDEVICEWINDOW))
     {
         /* This isn't compatible with a lot of flags */
-        if(cooplevel & ( DDSCL_MULTITHREADED      |
-                         DDSCL_CREATEDEVICEWINDOW |
-                         DDSCL_FPUSETUP           |
-                         DDSCL_FPUPRESERVE        |
-                         DDSCL_ALLOWREBOOT        |
-                         DDSCL_ALLOWMODEX         |
-                         DDSCL_SETDEVICEWINDOW    |
-                         DDSCL_NORMAL             |
-                         DDSCL_EXCLUSIVE          |
-                         DDSCL_FULLSCREEN         ) )
+        if (cooplevel & (DDSCL_MULTITHREADED
+                | DDSCL_FPUSETUP
+                | DDSCL_FPUPRESERVE
+                | DDSCL_ALLOWREBOOT
+                | DDSCL_ALLOWMODEX
+                | DDSCL_SETDEVICEWINDOW
+                | DDSCL_NORMAL
+                | DDSCL_EXCLUSIVE
+                | DDSCL_FULLSCREEN))
         {
-            TRACE("Called with incompatible flags, returning DDERR_INVALIDPARAMS\n");
+            WARN("Called with incompatible flags, returning DDERR_INVALIDPARAMS.\n");
             wined3d_mutex_unlock();
             return DDERR_INVALIDPARAMS;
         }
@@ -845,7 +844,26 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
             ShowWindow(device_window, SW_SHOW);
             TRACE("Created a device window %p.\n", device_window);
 
+            /* Native apparently leaks the created device window if setting the
+             * focus window below fails. */
+            This->cooperative_level |= DDSCL_CREATEDEVICEWINDOW;
             This->devicewindow = device_window;
+
+            if (cooplevel & DDSCL_SETFOCUSWINDOW)
+            {
+                if (!hwnd)
+                {
+                    wined3d_mutex_unlock();
+                    return DDERR_NOHWND;
+                }
+
+                if (FAILED(hr = ddraw_set_focus_window(This, hwnd)))
+                {
+                    wined3d_mutex_unlock();
+                    return hr;
+                }
+            }
+
             hwnd = device_window;
         }
     }
