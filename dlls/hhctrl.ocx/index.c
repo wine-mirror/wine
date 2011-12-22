@@ -277,6 +277,7 @@ void ReleaseIndex(HHInfo *info)
     IndexItem *item = info->index, *next;
     int i;
 
+    if(!item) return;
     /* Note: item->merge is identical for all items, only free once */
     heap_free(item->merge.chm_file);
     heap_free(item->merge.chm_index);
