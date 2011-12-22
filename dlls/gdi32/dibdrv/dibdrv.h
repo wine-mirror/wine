@@ -94,7 +94,6 @@ typedef struct dibdrv_physdev
     UINT brush_hatch;
     INT brush_rop;   /* PatBlt, for example, can override the DC's rop2 */
     COLORREF brush_colorref;
-    DWORD brush_color, brush_and, brush_xor;
     dib_info brush_dib;
     void *brush_and_bits, *brush_xor_bits;
     const BITMAPINFO *brush_pattern_info;

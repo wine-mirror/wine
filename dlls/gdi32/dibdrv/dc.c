@@ -260,7 +260,6 @@ DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
 static void update_fg_colors( dibdrv_physdev *pdev )
 {
     pdev->pen_color   = get_pixel_color( pdev, pdev->pen_colorref,   TRUE );
-    pdev->brush_color = get_pixel_color( pdev, pdev->brush_colorref, TRUE );
     pdev->text_color  = get_pixel_color( pdev, GetTextColor( pdev->dev.hdc ), TRUE );
 }
 

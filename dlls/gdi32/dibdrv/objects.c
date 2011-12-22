@@ -207,8 +207,10 @@ static inline void get_pen_bkgnd_masks(const dibdrv_physdev *pdev, DWORD *and, D
     }
 }
 
-static inline void get_brush_bkgnd_masks(const dibdrv_physdev *pdev, DWORD *and, DWORD *xor)
+static inline void get_brush_bkgnd_masks(dibdrv_physdev *pdev, DWORD *and, DWORD *xor)
 {
+    DWORD color;
+
     if(GetBkMode(pdev->dev.hdc) == TRANSPARENT)
     {
         *and = pdev->bkgnd_and;
@@ -216,15 +218,15 @@ static inline void get_brush_bkgnd_masks(const dibdrv_physdev *pdev, DWORD *and,
     }
     else
     {
-        DWORD color = pdev->bkgnd_color;
-
         if(pdev->dib.bit_count == 1)
         {
             if(pdev->brush_colorref == GetBkColor(pdev->dev.hdc))
-                color = pdev->brush_color;
+                color = get_pixel_color( pdev, pdev->brush_colorref, TRUE );
             else
-                color = ~pdev->brush_color;
+                color = ~get_pixel_color( pdev, pdev->brush_colorref, TRUE );
         }
+        else color = get_pixel_color( pdev, GetBkColor( pdev->dev.hdc ), FALSE );
+
         calc_and_xor_masks( pdev->brush_rop, color, and, xor );
     }
 }
@@ -1455,10 +1457,9 @@ void solid_rects( dib_info *dib, int num, const RECT *rects, const rop_mask *col
 static BOOL solid_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects, HRGN region)
 {
     rop_mask brush_color;
+    DWORD color = get_pixel_color( pdev, pdev->brush_colorref, TRUE );
 
-    brush_color.and = pdev->brush_and;
-    brush_color.xor = pdev->brush_xor;
-
+    calc_and_xor_masks( pdev->brush_rop, color, &brush_color.and, &brush_color.xor );
     solid_rects( dib, num, rects, &brush_color, region );
     return TRUE;
 }
@@ -1522,7 +1523,7 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev)
     dib_info hatch;
     rop_mask fg_mask, bg_mask;
     rop_mask_bits mask_bits;
-    DWORD size;
+    DWORD size, color;
     BOOL ret;
 
     assert(pdev->brush_and_bits == NULL);
@@ -1556,8 +1557,9 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev)
     hatch.bits.free = hatch.bits.param = NULL;
     hatch.bits.is_copy = FALSE;
 
-    fg_mask.and = pdev->brush_and;
-    fg_mask.xor = pdev->brush_xor;
+    color = get_pixel_color( pdev, pdev->brush_colorref, TRUE );
+    calc_and_xor_masks( pdev->brush_rop, color, &fg_mask.and, &fg_mask.xor );
+
     get_brush_bkgnd_masks( pdev, &bg_mask.and, &bg_mask.xor );
 
     ret = pdev->brush_dib.funcs->create_rop_masks( &pdev->brush_dib, &hatch, &fg_mask, &bg_mask, &mask_bits );
@@ -1705,7 +1707,7 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RE
     if (!clip)
     {
         dib->funcs->pattern_rects( dib, num, rects, &origin, &pdev->brush_dib, pdev->brush_and_bits, pdev->brush_xor_bits );
-        return TRUE;
+        goto done;
     }
 
     for(i = 0; i < num; i++)
@@ -1738,8 +1740,8 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RE
     }
     release_wine_region( region );
 
+done:
     if (needs_reselect) free_pattern_brush( pdev );
-
     return TRUE;
 }
 
@@ -1751,8 +1753,6 @@ static BOOL null_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RECT 
 void update_brush_rop( dibdrv_physdev *pdev, INT rop )
 {
     pdev->brush_rop = rop;
-    if(pdev->brush_style == BS_SOLID || pdev->brush_style == BS_HATCHED)
-        calc_and_xor_masks(rop, pdev->brush_color, &pdev->brush_and, &pdev->brush_xor);
     free_pattern_brush_bits( pdev );
 }
 
@@ -1768,6 +1768,8 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
 
     TRACE("(%p, %p)\n", dev, hbrush);
 
+    free_pattern_brush( pdev );
+
     if (bitmap || info)  /* pattern brush */
     {
         pdev->brush_rects = pattern_brush;
@@ -1776,26 +1778,23 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
         pdev->brush_pattern_bits = bits;
         pdev->brush_pattern_usage = usage;
         pdev->brush_pattern_bitmap = bitmap;
-        free_pattern_brush( pdev ); /* brush is actually selected only when it's used */
+        /* brush is actually selected only when it's used */
 
         return next->funcs->pSelectBrush( next, hbrush, bitmap, info, bits, usage );
     }
 
-    if (!GetObjectW( hbrush, sizeof(logbrush), &logbrush )) return 0;
+    GetObjectW( hbrush, sizeof(logbrush), &logbrush );
 
     if (hbrush == GetStockObject( DC_BRUSH ))
         logbrush.lbColor = GetDCBrushColor( dev->hdc );
 
     pdev->brush_style = logbrush.lbStyle;
 
-    free_pattern_brush( pdev );
-
     switch(logbrush.lbStyle)
     {
     case BS_SOLID:
         pdev->brush_colorref = logbrush.lbColor;
-        pdev->brush_color = get_pixel_color( pdev, pdev->brush_colorref, TRUE );
-        calc_and_xor_masks(GetROP2(dev->hdc), pdev->brush_color, &pdev->brush_and, &pdev->brush_xor);
+        pdev->brush_rop = GetROP2( dev->hdc );
         pdev->brush_rects = solid_brush;
         break;
 
@@ -1807,8 +1806,7 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
         if(logbrush.lbHatch > HS_DIAGCROSS) return 0;
         pdev->brush_hatch = logbrush.lbHatch;
         pdev->brush_colorref = logbrush.lbColor;
-        pdev->brush_color = get_pixel_color( pdev, pdev->brush_colorref, TRUE );
-        calc_and_xor_masks(GetROP2(dev->hdc), pdev->brush_color, &pdev->brush_and, &pdev->brush_xor);
+        pdev->brush_rop = GetROP2( dev->hdc );
         pdev->brush_rects = pattern_brush;
         break;
 
@@ -1828,11 +1826,7 @@ COLORREF dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color )
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
 
     if (GetCurrentObject(dev->hdc, OBJ_BRUSH) == GetStockObject( DC_BRUSH ))
-    {
         pdev->brush_colorref = color;
-        pdev->brush_color = get_pixel_color( pdev, pdev->brush_colorref, TRUE );
-        calc_and_xor_masks(GetROP2(dev->hdc), pdev->brush_color, &pdev->brush_and, &pdev->brush_xor);
-    }
 
     return next->funcs->pSetDCBrushColor( next, color );
 }
