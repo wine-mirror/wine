@@ -1589,16 +1589,24 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, BOOL *needs_reselect )
     if (pattern.bit_count == 1 && !pattern.color_table)
     {
         /* monochrome DDB pattern uses DC colors */
-        COLORREF color = GetTextColor( pdev->dev.hdc );
+        DWORD pixel;
+        BOOL got_pixel;
+        COLORREF color;
+
+        color = make_rgb_colorref( pdev->dev.hdc, &pdev->dib, GetTextColor( pdev->dev.hdc ),
+                                   &got_pixel, &pixel );
         color_table[0].rgbRed      = GetRValue( color );
         color_table[0].rgbGreen    = GetGValue( color );
         color_table[0].rgbBlue     = GetBValue( color );
         color_table[0].rgbReserved = 0;
-        color = GetBkColor( pdev->dev.hdc );
+
+        color = make_rgb_colorref( pdev->dev.hdc, &pdev->dib, GetBkColor( pdev->dev.hdc ),
+                                   &got_pixel, &pixel );
         color_table[1].rgbRed      = GetRValue( color );
         color_table[1].rgbGreen    = GetGValue( color );
         color_table[1].rgbBlue     = GetBValue( color );
         color_table[1].rgbReserved = 0;
+
         pattern.color_table = color_table;
         pattern.color_table_size = 2;
         *needs_reselect = TRUE;
