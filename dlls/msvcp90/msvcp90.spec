@@ -2301,12 +2301,12 @@
 @ stub -arch=win64 ?_Getcat@?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z
 @ cdecl -arch=win32 ?_Getcat@facet@locale@std@@SAIPAPBV123@PBV23@@Z(ptr ptr) locale_facet__Getcat
 @ cdecl -arch=win64 ?_Getcat@facet@locale@std@@SA_KPEAPEBV123@PEBV23@@Z(ptr ptr) locale_facet__Getcat
-@ thiscall -arch=win32 ?_Getcoll@_Locinfo@std@@QBE?AU_Collvec@@XZ(ptr) _Locinfo__Getcoll
-@ cdecl -arch=win64 ?_Getcoll@_Locinfo@std@@QEBA?AU_Collvec@@XZ(ptr) _Locinfo__Getcoll
+@ thiscall -arch=win32 ?_Getcoll@_Locinfo@std@@QBE?AU_Collvec@@XZ(ptr ptr) _Locinfo__Getcoll
+@ cdecl -arch=win64 ?_Getcoll@_Locinfo@std@@QEBA?AU_Collvec@@XZ(ptr ptr) _Locinfo__Getcoll
 @ thiscall -arch=win32 ?_Getctype@_Locinfo@std@@QBE?AU_Ctypevec@@XZ(ptr ptr) _Locinfo__Getctype
 @ cdecl -arch=win64 ?_Getctype@_Locinfo@std@@QEBA?AU_Ctypevec@@XZ(ptr ptr) _Locinfo__Getctype
-@ thiscall -arch=win32 ?_Getcvt@_Locinfo@std@@QBE?AU_Cvtvec@@XZ(ptr) _Locinfo__Getcvt
-@ cdecl -arch=win64 ?_Getcvt@_Locinfo@std@@QEBA?AU_Cvtvec@@XZ(ptr) _Locinfo__Getcvt
+@ thiscall -arch=win32 ?_Getcvt@_Locinfo@std@@QBE?AU_Cvtvec@@XZ(ptr ptr) _Locinfo__Getcvt
+@ cdecl -arch=win64 ?_Getcvt@_Locinfo@std@@QEBA?AU_Cvtvec@@XZ(ptr ptr) _Locinfo__Getcvt
 @ thiscall -arch=win32 ?_Getdateorder@_Locinfo@std@@QBEHXZ(ptr) _Locinfo__Getdateorder
 @ cdecl -arch=win64 ?_Getdateorder@_Locinfo@std@@QEBAHXZ(ptr) _Locinfo__Getdateorder
 @ thiscall -arch=win32 ?_Getdays@_Locinfo@std@@QBEPBDXZ(ptr) _Locinfo__Getdays
@@ -2361,7 +2361,7 @@
 @ stub -arch=win64 ?_Getstate@?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AEAAHH@Z
 @ stub -arch=win32 ?_Getstate@?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@AAEHH@Z
 @ stub -arch=win64 ?_Getstate@?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@AEAAHH@Z
-@ thiscall -arch=win32 ?_Gettnames@_Locinfo@std@@QBE?AV_Timevec@2@XZ(ptr) _Locinfo__Gettnames
+@ thiscall -arch=win32 ?_Gettnames@_Locinfo@std@@QBE?AV_Timevec@2@XZ(ptr ptr) _Locinfo__Gettnames
 @ cdecl -arch=win64 ?_Gettnames@_Locinfo@std@@QEBA?AV_Timevec@2@XZ(ptr) _Locinfo__Gettnames
 @ thiscall -arch=win32 ?_Gettrue@_Locinfo@std@@QBEPBDXZ(ptr) _Locinfo__Gettrue
 @ cdecl -arch=win64 ?_Gettrue@_Locinfo@std@@QEBAPEBDXZ(ptr) _Locinfo__Gettrue
@@ -5772,7 +5772,7 @@
 @ extern _LSnan
 # extern _LXbig
 @ extern _LZero
-@ stub _Mbrtowc
+@ cdecl _Mbrtowc(ptr ptr long ptr ptr)
 @ stub _Mtxdst
 @ stub _Mtxinit
 @ stub _Mtxlock

@@ -469,7 +469,7 @@ _Collvec __cdecl _Getcoll(void)
 
 /* ?_Getcoll@_Locinfo@std@@QBE?AU_Collvec@@XZ */
 /* ?_Getcoll@_Locinfo@std@@QEBA?AU_Collvec@@XZ */
-DEFINE_THISCALL_WRAPPER(_Locinfo__Getcoll, 4)
+DEFINE_THISCALL_WRAPPER_RETPTR(_Locinfo__Getcoll, 4)
 _Collvec __thiscall _Locinfo__Getcoll(const _Locinfo *this)
 {
     return _Getcoll();
@@ -522,7 +522,7 @@ _Cvtvec __cdecl _Getcvt(void)
 
 /* ?_Getcvt@_Locinfo@std@@QBE?AU_Cvtvec@@XZ */
 /* ?_Getcvt@_Locinfo@std@@QEBA?AU_Cvtvec@@XZ */
-DEFINE_THISCALL_WRAPPER(_Locinfo__Getcvt, 4)
+DEFINE_THISCALL_WRAPPER_RETPTR(_Locinfo__Getcvt, 4)
 _Cvtvec __thiscall _Locinfo__Getcvt(const _Locinfo *this)
 {
     return _Getcvt();
@@ -618,7 +618,7 @@ basic_string_char __thiscall _Locinfo__Getname(const _Locinfo *this)
 
 /* ?_Gettnames@_Locinfo@std@@QBE?AV_Timevec@2@XZ */
 /* ?_Gettnames@_Locinfo@std@@QEBA?AV_Timevec@2@XZ */
-DEFINE_THISCALL_WRAPPER(_Locinfo__Gettnames, 4)
+DEFINE_THISCALL_WRAPPER_RETPTR(_Locinfo__Gettnames, 4)
 _Timevec __thiscall _Locinfo__Gettnames(const _Locinfo *this)
 {
     _Timevec ret;
@@ -1957,6 +1957,75 @@ const wchar_t* __thiscall ctype_wchar__Narrow_s(const ctype_wchar *this, const w
     return call_ctype_wchar__Do_narrow_s(this, first, last, dflt, dest, size);
 }
 
+/* _Mbrtowc */
+int __cdecl _Mbrtowc(wchar_t *out, const char *in, MSVCP_size_t len, int *state, const _Cvtvec *cvt)
+{
+    int i, cp;
+    CPINFO cp_info;
+    BOOL is_lead;
+
+    TRACE("(%p %p %lu %p %p)\n", out, in, len, state, cvt);
+
+    if(!len)
+        return 0;
+
+    if(cvt)
+        cp = cvt->page;
+    else
+        cp = ___lc_codepage_func();
+
+    if(!cp) {
+        if(out)
+            *out = (unsigned char)*in;
+
+        *state = 0;
+        return *in ? 1 : 0;
+    }
+
+    if(*state) {
+        ((char*)state)[1] = *in;
+
+        if(!MultiByteToWideChar(cp, MB_ERR_INVALID_CHARS, (char*)state, 2, out, out ? 1 : 0)) {
+            *state = 0;
+            *_errno() = EILSEQ;
+            return -1;
+        }
+
+        *state = 0;
+        return 2;
+    }
+
+    GetCPInfo(cp, &cp_info);
+    is_lead = FALSE;
+    for(i=0; i<MAX_LEADBYTES; i+=2) {
+        if(!cp_info.LeadByte[i+1])
+            break;
+        if((unsigned char)*in>=cp_info.LeadByte[i] && (unsigned char)*in<=cp_info.LeadByte[i+1]) {
+            is_lead = TRUE;
+            break;
+        }
+    }
+
+    if(is_lead) {
+        if(len == 1) {
+            *state = (unsigned char)*in;
+            return -2;
+        }
+
+        if(!MultiByteToWideChar(cp, MB_ERR_INVALID_CHARS, in, 2, out, out ? 1 : 0)) {
+            *_errno() = EILSEQ;
+            return -1;
+        }
+        return 2;
+    }
+
+    if(!MultiByteToWideChar(cp, MB_ERR_INVALID_CHARS, in, 1, out, out ? 1 : 0)) {
+        *_errno() = EILSEQ;
+        return -1;
+    }
+    return 1;
+}
+
 /* ?_Dowiden@?$ctype@_W@std@@IBE_WD@Z */
 /* ?_Dowiden@?$ctype@_W@std@@IEBA_WD@Z */
 /* ?_Dowiden@?$ctype@G@std@@IBEGD@Z */
@@ -1964,8 +2033,10 @@ const wchar_t* __thiscall ctype_wchar__Narrow_s(const ctype_wchar *this, const w
 DEFINE_THISCALL_WRAPPER(ctype_wchar__Dowiden, 8)
 wchar_t __thiscall ctype_wchar__Dowiden(const ctype_wchar *this, char ch)
 {
-    FIXME("(%p %d) stub\n", this, ch);
-    return 0;
+    wchar_t ret;
+    int state = 0;
+    TRACE("(%p %d)\n", this, ch);
+    return _Mbrtowc(&ret, &ch, 1, &state, &this->cvt)<0 ? WEOF : ret;
 }
 
 /* ?do_widen@?$ctype@_W@std@@MBE_WD@Z */
@@ -1973,10 +2044,11 @@ wchar_t __thiscall ctype_wchar__Dowiden(const ctype_wchar *this, char ch)
 /* ?do_widen@?$ctype@G@std@@MBEGD@Z */
 /* ?do_widen@?$ctype@G@std@@MEBAGD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_widen_ch, 8)
+#define call_ctype_wchar_do_widen_ch(this, ch) CALL_VTBL_FUNC(this, 40, \
+        wchar_t, (const ctype_wchar*, char), (this, ch))
 wchar_t __thiscall ctype_wchar_do_widen_ch(const ctype_wchar *this, char ch)
 {
-    FIXME("(%p %d) stub\n", this, ch);
-    return 0;
+    return ctype_wchar__Dowiden(this, ch);
 }
 
 /* ?do_widen@?$ctype@_W@std@@MBEPBDPBD0PA_W@Z */
@@ -1984,11 +2056,16 @@ wchar_t __thiscall ctype_wchar_do_widen_ch(const ctype_wchar *this, char ch)
 /* ?do_widen@?$ctype@G@std@@MBEPBDPBD0PAG@Z */
 /* ?do_widen@?$ctype@G@std@@MEBAPEBDPEBD0PEAG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_widen, 16)
+#define call_ctype_wchar_do_widen(this, first, last, dest) CALL_VTBL_FUNC(this, 36, \
+        const char*, (const ctype_wchar*, const char*, const char*, wchar_t*), \
+        (this, first, last, dest))
 const char* __thiscall ctype_wchar_do_widen(const ctype_wchar *this,
         const char *first, const char *last, wchar_t *dest)
 {
-    FIXME("(%p %p %p %p) stub\n", this, first, last, dest);
-    return NULL;
+    TRACE("(%p %p %p %p)\n", this, first, last, dest);
+    for(; first<last; first++)
+        *dest++ = ctype_wchar__Dowiden(this, *first);
+    return last;
 }
 
 /* ?_Do_widen_s@?$ctype@_W@std@@MBEPBDPBD0PA_WI@Z */
@@ -1996,11 +2073,18 @@ const char* __thiscall ctype_wchar_do_widen(const ctype_wchar *this,
 /* ?_Do_widen_s@?$ctype@G@std@@MBEPBDPBD0PAGI@Z */
 /* ?_Do_widen_s@?$ctype@G@std@@MEBAPEBDPEBD0PEAG_K@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar__Do_widen_s, 20)
+#define call_ctype_wchar__Do_widen_s(this, first, last, dest, size) CALL_VTBL_FUNC(this, 44, \
+        const char*, (const ctype_wchar*, const char*, const char*, wchar_t*, MSVCP_size_t), \
+        (this, first, last, dest, size))
 const char* __thiscall ctype_wchar__Do_widen_s(const ctype_wchar *this,
         const char *first, const char *last, wchar_t *dest, MSVCP_size_t size)
 {
-    FIXME("(%p %p %p %p %lu) stub\n", this, first, last, dest, size);
-    return NULL;
+    TRACE("(%p %p %p %p %lu)\n", this, first, last, dest, size);
+    /* This function converts all multi-byte characters to WEOF,
+     * thanks to it result size is known before converting */
+    if(size < last-first)
+        ctype_base__Xran();
+    return ctype_wchar_do_widen(this, first, last, dest);
 }
 
 /* ?widen@?$ctype@_W@std@@QBE_WD@Z */
@@ -2010,8 +2094,8 @@ const char* __thiscall ctype_wchar__Do_widen_s(const ctype_wchar *this,
 DEFINE_THISCALL_WRAPPER(ctype_wchar_widen_ch, 8)
 wchar_t __thiscall ctype_wchar_widen_ch(const ctype_wchar *this, char ch)
 {
-    FIXME("(%p %d) stub\n", this, ch);
-    return 0;
+    TRACE("(%p %d)\n", this, ch);
+    return call_ctype_wchar_do_widen_ch(this, ch);
 }
 
 /* ?widen@?$ctype@_W@std@@QBEPBDPBD0PA_W@Z */
@@ -2022,8 +2106,8 @@ DEFINE_THISCALL_WRAPPER(ctype_wchar_widen, 16)
 const char* __thiscall ctype_wchar_widen(const ctype_wchar *this,
         const char *first, const char *last, wchar_t *dest)
 {
-    FIXME("(%p %p %p %p) stub\n", this, first, last, dest);
-    return NULL;
+    TRACE("(%p %p %p %p)\n", this, first, last, dest);
+    return call_ctype_wchar_do_widen(this, first, last, dest);
 }
 
 /* ?_Widen_s@?$ctype@_W@std@@QBEPBDPBD0PA_WI@Z */
@@ -2034,8 +2118,8 @@ DEFINE_THISCALL_WRAPPER(ctype_wchar__Widen_s, 20)
 const char* __thiscall ctype_wchar__Widen_s(const ctype_wchar *this,
         const char *first, const char *last, wchar_t *dest, MSVCP_size_t size)
 {
-    FIXME("(%p %p %p %p %lu) stub\n", this, first, last, dest, size);
-    return NULL;
+    TRACE("(%p %p %p %p %lu)\n", this, first, last, dest, size);
+    return call_ctype_wchar__Do_widen_s(this, first, last, dest, size);
 }
 
 /* ?_Getcat@?$ctype@_W@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
