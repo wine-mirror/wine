@@ -887,14 +887,6 @@ static inline BOOL get_bool(LPCVOID data)
     return (*(DWORD *)data) ? TRUE : FALSE;
 }
 
-static void get_vector(struct d3dx_parameter *param, D3DXVECTOR4 *vector)
-{
-    vector->x = get_float(param->type, (float *)param->data);
-    vector->y = param->columns > 1 ? get_float(param->type, (float *)param->data + 1) : 0.0f;
-    vector->z = param->columns > 2 ? get_float(param->type, (float *)param->data + 2) : 0.0f;
-    vector->w = param->columns > 3 ? get_float(param->type, (float *)param->data + 3) : 0.0f;
-}
-
 static void set_number(LPVOID outdata, D3DXPARAMETER_TYPE outtype, LPCVOID indata, D3DXPARAMETER_TYPE intype)
 {
     TRACE("Changing from type %i to type %i\n", intype, outtype);
@@ -920,6 +912,16 @@ static void set_number(LPVOID outdata, D3DXPARAMETER_TYPE outtype, LPCVOID indat
     }
 }
 
+static void get_vector(struct d3dx_parameter *param, D3DXVECTOR4 *vector)
+{
+    UINT i;
+
+    for (i = 0; i < 4; ++i)
+    {
+        ((FLOAT *)vector)[i] = i < param->columns ? get_float(param->type, (DWORD *)param->data + i) : 0.0f;
+    }
+}
+
 static void set_vector(struct d3dx_parameter *param, CONST D3DXVECTOR4 *vector)
 {
     UINT i;
@@ -932,14 +934,14 @@ static void set_vector(struct d3dx_parameter *param, CONST D3DXVECTOR4 *vector)
 
 static void get_matrix(struct d3dx_parameter *param, D3DXMATRIX *matrix)
 {
-    unsigned int i, k;
+    UINT i, k;
 
     for (i = 0; i < 4; ++i)
     {
         for (k = 0; k < 4; ++k)
         {
             if ((i < param->rows) && (k < param->columns))
-                matrix->u.m[i][k] = get_float(param->type, (float *)param->data + i * param->columns + k);
+                matrix->u.m[i][k] = get_float(param->type, (FLOAT *)param->data + i * param->columns + k);
             else
                 matrix->u.m[i][k] = 0.0f;
         }
@@ -948,14 +950,14 @@ static void get_matrix(struct d3dx_parameter *param, D3DXMATRIX *matrix)
 
 static void set_matrix(struct d3dx_parameter *param, CONST D3DXMATRIX *matrix)
 {
-    unsigned int i, k;
+    UINT i, k;
 
     for (i = 0; i < 4; ++i)
     {
         for (k = 0; k < 4; ++k)
         {
             if ((i < param->rows) && (k < param->columns))
-                set_number((float *)param->data + i * param->columns + k, param->type, &matrix->u.m[i][k], D3DXPT_FLOAT);
+                set_number((FLOAT *)param->data + i * param->columns + k, param->type, &matrix->u.m[i][k], D3DXPT_FLOAT);
         }
     }
 }
