@@ -1,5 +1,6 @@
 /*
  * Copyright 2010 Christian Costa
+ * Copyright 2011 Rico Schüller
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1839,19 +1840,14 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_SetInt(ID3DXBaseEffect *iface, D3DXHAN
             ((param->class == D3DXPC_VECTOR && param->columns != 2) ||
             (param->class == D3DXPC_MATRIX_ROWS && param->rows != 2 && param->columns == 1)))
         {
-            FLOAT tmp = ((n & 0xff0000) >> 16) * INT_FLOAT_MULTI_INVERSE;
-            set_number((DWORD *)param->data, param->type, &tmp, D3DXPT_FLOAT);
+            TRACE("Vector fixup\n");
 
-            tmp = ((n & 0xff00) >> 8) * INT_FLOAT_MULTI_INVERSE;
-            set_number((DWORD *)param->data + 1, param->type, &tmp, D3DXPT_FLOAT);
-
-            tmp = (n & 0xff) * INT_FLOAT_MULTI_INVERSE;
-            set_number((DWORD *)param->data + 2, param->type, &tmp, D3DXPT_FLOAT);
-
+            *(FLOAT *)param->data = ((n & 0xff0000) >> 16) * INT_FLOAT_MULTI_INVERSE;
+            ((FLOAT *)param->data)[1] = ((n & 0xff00) >> 8) * INT_FLOAT_MULTI_INVERSE;
+            ((FLOAT *)param->data)[2] = (n & 0xff) * INT_FLOAT_MULTI_INVERSE;
             if (param->rows * param->columns > 3)
             {
-                tmp = ((n & 0xff000000) >> 24) * INT_FLOAT_MULTI_INVERSE;
-                set_number((DWORD *)param->data + 3, param->type, &tmp, D3DXPT_FLOAT);
+                ((FLOAT *)param->data)[3] = ((n & 0xff000000) >> 24) * INT_FLOAT_MULTI_INVERSE;
             }
             return D3D_OK;
         }
@@ -1882,6 +1878,8 @@ static HRESULT WINAPI ID3DXBaseEffectImpl_GetInt(ID3DXBaseEffect *iface, D3DXHAN
                 ((param->class == D3DXPC_VECTOR && param->columns != 2)
                 || (param->class == D3DXPC_MATRIX_ROWS && param->rows != 2 && param->columns == 1)))
         {
+            TRACE("Vector fixup\n");
+
             /* all components (3,4) are clamped (0,255) and put in the INT */
             *n = (INT)(min(max(0.0f, *((FLOAT *)param->data + 2)), 1.0f) * INT_FLOAT_MULTI);
             *n += ((INT)(min(max(0.0f, *((FLOAT *)param->data + 1)), 1.0f) * INT_FLOAT_MULTI)) << 8;
