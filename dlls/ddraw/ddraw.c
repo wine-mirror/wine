@@ -831,7 +831,7 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
                 return DDERR_NOFOCUSWINDOW;
             }
 
-            device_window = CreateWindowExA(0, DDRAW_WINDOW_CLASS_NAME, "DDraw device window",
+            device_window = CreateWindowExA(0, DDRAW_WINDOW_CLASS_NAME, "DirectDrawDeviceWnd",
                     WS_POPUP, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
                     NULL, NULL, NULL, NULL);
             if (!device_window)

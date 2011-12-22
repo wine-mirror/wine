@@ -120,7 +120,7 @@ struct IDirectDrawImpl
     UINT                    numConvertedDecls, declArraySize;
 };
 
-#define DDRAW_WINDOW_CLASS_NAME "ddraw_wc"
+#define DDRAW_WINDOW_CLASS_NAME "DirectDrawDeviceWnd"
 
 HRESULT ddraw_init(IDirectDrawImpl *ddraw, enum wined3d_device_type device_type) DECLSPEC_HIDDEN;
 void ddraw_destroy_swapchain(IDirectDrawImpl *ddraw) DECLSPEC_HIDDEN;
