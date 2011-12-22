@@ -145,6 +145,11 @@ extern void *vtbl_wrapper_28;
 extern void *vtbl_wrapper_32;
 extern void *vtbl_wrapper_36;
 extern void *vtbl_wrapper_40;
+extern void *vtbl_wrapper_44;
+extern void *vtbl_wrapper_48;
+extern void *vtbl_wrapper_52;
+extern void *vtbl_wrapper_56;
+extern void *vtbl_wrapper_60;
 
 #else
 

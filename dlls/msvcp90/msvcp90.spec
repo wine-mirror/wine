@@ -5802,7 +5802,7 @@
 @ cdecl _Toupper(long ptr)
 @ stub _Towlower
 @ stub _Towupper
-@ stub _Wcrtomb
+@ cdecl _Wcrtomb(ptr long ptr ptr)
 @ cdecl _Wcscoll(ptr ptr ptr ptr ptr)
 @ stub _Wcsxfrm
 # extern _Xbig

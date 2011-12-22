@@ -22,6 +22,8 @@
 
 #include "msvcp90.h"
 #include "locale.h"
+#include "errno.h"
+#include "limits.h"
 
 #include "windef.h"
 #include "winbase.h"
@@ -1826,6 +1828,38 @@ ctype_wchar* __thiscall MSVCP_ctype_short_vector_dtor(ctype_wchar *this, unsigne
     return MSVCP_ctype_wchar_vector_dtor(this, flags);
 }
 
+/* _Wcrtomb */
+int __cdecl _Wcrtomb(char *s, wchar_t wch, int *state, const _Cvtvec *cvt)
+{
+    int cp, size;
+    BOOL def;
+
+    TRACE("%p %d %p %p\n", s, wch, state, cvt);
+
+    if(cvt)
+        cp = cvt->page;
+    else
+        cp = ___lc_codepage_func();
+
+    if(!cp) {
+        if(wch > 255) {
+           *_errno() = EILSEQ;
+           return -1;
+        }
+
+        *s = wch & 255;
+        return 1;
+    }
+
+    size = WideCharToMultiByte(cp, 0, &wch, 1, s, MB_LEN_MAX, NULL, &def);
+    if(!size || def) {
+        *_errno() = EILSEQ;
+        return -1;
+    }
+
+    return size;
+}
+
 /* ?_Donarrow@?$ctype@_W@std@@IBED_WD@Z */
 /* ?_Donarrow@?$ctype@_W@std@@IEBAD_WD@Z */
 /* ?_Donarrow@?$ctype@G@std@@IBEDGD@Z */
@@ -1833,8 +1867,11 @@ ctype_wchar* __thiscall MSVCP_ctype_short_vector_dtor(ctype_wchar *this, unsigne
 DEFINE_THISCALL_WRAPPER(ctype_wchar__Donarrow, 12)
 char __thiscall ctype_wchar__Donarrow(const ctype_wchar *this, wchar_t ch, char dflt)
 {
-    FIXME("(%p %d %d) stub\n", this, ch, dflt);
-    return 0;
+    char buf[MB_LEN_MAX];
+
+    TRACE("(%p %d %d)\n", this, ch, dflt);
+
+    return _Wcrtomb(buf, ch, NULL, &this->cvt)==1 ? buf[0] : dflt;
 }
 
 /* ?do_narrow@?$ctype@_W@std@@MBED_WD@Z */
@@ -1842,10 +1879,11 @@ char __thiscall ctype_wchar__Donarrow(const ctype_wchar *this, wchar_t ch, char 
 /* ?do_narrow@?$ctype@G@std@@MBEDGD@Z */
 /* ?do_narrow@?$ctype@G@std@@MEBADGD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_narrow_ch, 12)
-wchar_t __thiscall ctype_wchar_do_narrow_ch(const ctype_wchar *this, wchar_t ch, char dflt)
+#define call_ctype_wchar_do_narrow_ch(this, ch, dflt) CALL_VTBL_FUNC(this, 52, \
+        char, (const ctype_wchar*, wchar_t, char), (this, ch, dflt))
+char __thiscall ctype_wchar_do_narrow_ch(const ctype_wchar *this, wchar_t ch, char dflt)
 {
-    FIXME("(%p %d %d) stub\n", this, ch, dflt);
-    return 0;
+    return ctype_wchar__Donarrow(this, ch, dflt);
 }
 
 /* ?do_narrow@?$ctype@_W@std@@MBEPB_WPB_W0DPAD@Z */
@@ -1853,11 +1891,16 @@ wchar_t __thiscall ctype_wchar_do_narrow_ch(const ctype_wchar *this, wchar_t ch,
 /* ?do_narrow@?$ctype@G@std@@MBEPBGPBG0DPAD@Z */
 /* ?do_narrow@?$ctype@G@std@@MEBAPEBGPEBG0DPEAD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_narrow, 20)
+#define call_ctype_wchar_do_narrow(this, first, last, dflt, dest) CALL_VTBL_FUNC(this, 48, \
+        const wchar_t*, (const ctype_wchar*, const wchar_t*, const wchar_t*, char, char*), \
+        (this, first, last, dflt, dest))
 const wchar_t* __thiscall ctype_wchar_do_narrow(const ctype_wchar *this,
         const wchar_t *first, const wchar_t *last, char dflt, char *dest)
 {
-    FIXME("(%p %p %p %d %p) stub\n", this, first, last, dflt, dest);
-    return NULL;
+    TRACE("(%p %p %p %d %p)\n", this, first, last, dflt, dest);
+    for(; first<last; first++)
+        *dest++ = ctype_wchar__Donarrow(this, *first, dflt);
+    return last;
 }
 
 /* ?_Do_narrow_s@?$ctype@_W@std@@MBEPB_WPB_W0DPADI@Z */
@@ -1865,11 +1908,18 @@ const wchar_t* __thiscall ctype_wchar_do_narrow(const ctype_wchar *this,
 /* ?_Do_narrow_s@?$ctype@G@std@@MBEPBGPBG0DPADI@Z */
 /* ?_Do_narrow_s@?$ctype@G@std@@MEBAPEBGPEBG0DPEAD_K@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar__Do_narrow_s, 24)
+#define call_ctype_wchar__Do_narrow_s(this, first, last, dflt, dest, size) CALL_VTBL_FUNC(this, 56, \
+        const wchar_t*, (const ctype_wchar*, const wchar_t*, const wchar_t*, char, char*, MSVCP_size_t), \
+        (this, first, last, dflt, dest, size))
 const wchar_t* __thiscall ctype_wchar__Do_narrow_s(const ctype_wchar *this,
         const wchar_t *first, const wchar_t *last, char dflt, char *dest, MSVCP_size_t size)
 {
-    FIXME("(%p %p %p %d %p %lu) stub\n", this, first, last, dflt, dest, size);
-    return NULL;
+    TRACE("(%p %p %p %d %p %lu)\n", this, first, last, dflt, dest, size);
+    /* This function converts all multi-byte characters to dflt,
+     * thanks to it result size is known before converting */
+    if(last-first > size)
+        ctype_base__Xran();
+    return ctype_wchar_do_narrow(this, first, last, dflt, dest);
 }
 
 /* ?narrow@?$ctype@_W@std@@QBED_WD@Z */
@@ -1879,8 +1929,8 @@ const wchar_t* __thiscall ctype_wchar__Do_narrow_s(const ctype_wchar *this,
 DEFINE_THISCALL_WRAPPER(ctype_wchar_narrow_ch, 12)
 char __thiscall ctype_wchar_narrow_ch(const ctype_wchar *this, wchar_t ch, char dflt)
 {
-    FIXME("(%p %d %d) stub\n", this, ch, dflt);
-    return 0;
+    TRACE("(%p %d %d)\n", this, ch, dflt);
+    return call_ctype_wchar_do_narrow_ch(this, ch, dflt);
 }
 
 /* ?narrow@?$ctype@_W@std@@QBEPB_WPB_W0DPAD@Z */
@@ -1891,8 +1941,8 @@ DEFINE_THISCALL_WRAPPER(ctype_wchar_narrow, 20)
 const wchar_t* __thiscall ctype_wchar_narrow(const ctype_wchar *this,
         const wchar_t *first, const wchar_t *last, char dflt, char *dest)
 {
-    FIXME("(%p %p %p %d %p) stub\n", this, first, last, dflt, dest);
-    return NULL;
+    TRACE("(%p %p %p %d %p)\n", this, first, last, dflt, dest);
+    return call_ctype_wchar_do_narrow(this, first, last, dflt, dest);
 }
 
 /* ?_Narrow_s@?$ctype@_W@std@@QBEPB_WPB_W0DPADI@Z */
@@ -1901,10 +1951,10 @@ const wchar_t* __thiscall ctype_wchar_narrow(const ctype_wchar *this,
 /* ?_Narrow_s@?$ctype@G@std@@QEBAPEBGPEBG0DPEAD_K@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar__Narrow_s, 24)
 const wchar_t* __thiscall ctype_wchar__Narrow_s(const ctype_wchar *this, const wchar_t *first,
-        const wchar_t *last, char dflt, char *dest, unsigned int size)
+        const wchar_t *last, char dflt, char *dest, MSVCP_size_t size)
 {
-    FIXME("(%p %p %p %d %p %d) stub\n", this, first, last, dflt, dest, size);
-    return NULL;
+    TRACE("(%p %p %p %d %p %lu)\n", this, first, last, dflt, dest, size);
+    return call_ctype_wchar__Do_narrow_s(this, first, last, dflt, dest, size);
 }
 
 /* ?_Dowiden@?$ctype@_W@std@@IBE_WD@Z */
