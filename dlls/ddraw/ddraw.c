@@ -606,13 +606,6 @@ static HRESULT ddraw_set_focus_window(IDirectDrawImpl *ddraw, HWND window)
     /* Use the focus window for drawing too. */
     ddraw->dest_window = ddraw->focuswindow;
 
-    /* Destroy the device window, if we have one. */
-    if (ddraw->devicewindow)
-    {
-        DestroyWindow(ddraw->devicewindow);
-        ddraw->devicewindow = NULL;
-    }
-
     return DD_OK;
 }
 
@@ -827,6 +820,13 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
             wined3d_mutex_unlock();
             return DDERR_INVALIDPARAMS;
         }
+    }
+    else
+    {
+        if (This->cooperative_level & DDSCL_CREATEDEVICEWINDOW)
+            DestroyWindow(This->devicewindow);
+        This->devicewindow = NULL;
+        This->focuswindow = NULL;
     }
 
     if ((This->cooperative_level & DDSCL_EXCLUSIVE)
