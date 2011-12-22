@@ -103,12 +103,6 @@ static inline void get_aa_ranges( COLORREF col, struct intensity_range intensiti
     }
 }
 
-void update_aa_ranges( dibdrv_physdev *pdev )
-{
-    COLORREF text = pdev->dib.funcs->pixel_to_colorref( &pdev->dib, pdev->text_color );
-    get_aa_ranges( text, pdev->glyph_intensities );
-}
-
 /**********************************************************************
  *                 get_text_bkgnd_masks
  *
@@ -124,14 +118,15 @@ static inline void get_text_bkgnd_masks( dibdrv_physdev *pdev, rop_mask *mask )
         mask->xor = get_pixel_color( pdev, bg, FALSE );
     else
     {
-        mask->xor = ~pdev->text_color;
-        if (GetTextColor( pdev->dev.hdc ) == bg)
-            mask->xor = pdev->text_color;
+        COLORREF fg = GetTextColor( pdev->dev.hdc );
+        mask->xor = get_pixel_color( pdev, fg, TRUE );
+        if (fg != bg) mask->xor = ~mask->xor;
     }
 }
 
 static void draw_glyph( dibdrv_physdev *pdev, const POINT *origin, const GLYPHMETRICS *metrics,
-                        const struct gdi_image_bits *image )
+                        const struct gdi_image_bits *image, DWORD text_color,
+                        const struct intensity_range *ranges )
 {
     const WINEREGION *clip = get_wine_region( pdev->clip );
     int i;
@@ -158,7 +153,7 @@ static void draw_glyph( dibdrv_physdev *pdev, const POINT *origin, const GLYPHME
             src_origin.y = clipped_rect.top  - rect.top;
 
             pdev->dib.funcs->draw_glyph( &pdev->dib, &clipped_rect, &glyph_dib, &src_origin,
-                                         pdev->text_color, pdev->glyph_intensities );
+                                         text_color, ranges );
         }
     }
 
@@ -339,8 +334,9 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     UINT aa_flags, i;
     POINT origin;
-    DWORD err;
+    DWORD text_color, err;
     HRGN saved_clip = NULL;
+    struct intensity_range ranges[17];
 
     if (flags & ETO_OPAQUE)
     {
@@ -358,6 +354,9 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         DeleteObject( clip );
     }
 
+    text_color = get_pixel_color( pdev, GetTextColor( pdev->dev.hdc ), TRUE );
+    get_aa_ranges( pdev->dib.funcs->pixel_to_colorref( &pdev->dib, text_color ), ranges );
+
     aa_flags = get_font_aa_flags( dev->hdc );
     origin.x = x;
     origin.y = y;
@@ -369,7 +368,7 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         err = get_glyph_bitmap( dev->hdc, (UINT)str[i], aa_flags, &metrics, &image );
         if (err) continue;
 
-        if (image.ptr) draw_glyph( pdev, &origin, &metrics, &image );
+        if (image.ptr) draw_glyph( pdev, &origin, &metrics, &image, text_color, ranges );
         if (image.free) image.free( &image );
 
         if (dx)

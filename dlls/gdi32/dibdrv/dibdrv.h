@@ -102,10 +102,6 @@ typedef struct dibdrv_physdev
     UINT brush_pattern_usage;
     HBITMAP brush_pattern_bitmap;
     BOOL   (* brush_rects)(struct dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects, HRGN clip);
-
-    /* text */
-    DWORD text_color;
-    struct intensity_range glyph_intensities[17];
 } dibdrv_physdev;
 
 #define DEFER_PEN        2
@@ -234,7 +230,6 @@ extern HRGN add_extra_clipping_region( dibdrv_physdev *pdev, HRGN rgn ) DECLSPEC
 extern void restore_clipping_region( dibdrv_physdev *pdev, HRGN rgn ) DECLSPEC_HIDDEN;
 extern int clip_line(const POINT *start, const POINT *end, const RECT *clip,
                      const bres_params *params, POINT *pt1, POINT *pt2) DECLSPEC_HIDDEN;
-extern void update_aa_ranges( dibdrv_physdev *pdev ) DECLSPEC_HIDDEN;
 
 /* compute the x coordinate corresponding to y on the specified edge */
 static inline int edge_coord( int y, int x1, int y1, int x2, int y2 )

@@ -257,11 +257,6 @@ DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
     return ERROR_SUCCESS;
 }
 
-static void update_fg_colors( dibdrv_physdev *pdev )
-{
-    pdev->text_color  = get_pixel_color( pdev, GetTextColor( pdev->dev.hdc ), TRUE );
-}
-
  /***********************************************************************
  *           add_extra_clipping_region
  *
@@ -365,19 +360,6 @@ static HBITMAP dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
 }
 
 /***********************************************************************
- *           dibdrv_SetBkColor
- */
-static COLORREF dibdrv_SetBkColor( PHYSDEV dev, COLORREF color )
-{
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetBkColor );
-    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
-
-    update_fg_colors( pdev ); /* Only needed in the 1 bpp case */
-
-    return next->funcs->pSetBkColor( next, color );
-}
-
-/***********************************************************************
  *           dibdrv_SetDeviceClipping
  */
 static void dibdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
@@ -400,11 +382,8 @@ static UINT dibdrv_SetDIBColorTable( PHYSDEV dev, UINT pos, UINT count, const RG
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     TRACE("(%p, %d, %d, %p)\n", dev, pos, count, colors);
 
-    if (pdev->dib.color_table)
-    {
-        update_fg_colors( pdev );
-        update_brush_rop( pdev, GetROP2( dev->hdc ) );
-    }
+    if (pdev->dib.color_table) update_brush_rop( pdev, GetROP2( dev->hdc ) );
+
     return next->funcs->pSetDIBColorTable( next, pos, count, colors );
 }
 
@@ -421,19 +400,6 @@ static INT dibdrv_SetROP2( PHYSDEV dev, INT rop )
     return next->funcs->pSetROP2( next, rop );
 }
 
-/***********************************************************************
- *           dibdrv_SetTextColor
- */
-static COLORREF dibdrv_SetTextColor( PHYSDEV dev, COLORREF color )
-{
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetTextColor );
-    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
-
-    pdev->text_color = get_pixel_color( pdev, color, TRUE );
-    update_aa_ranges( pdev );
-
-    return next->funcs->pSetTextColor( next, color );
-}
 
 const struct gdi_dc_funcs dib_driver =
 {
@@ -536,7 +502,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pSelectPalette */
     dibdrv_SelectPen,                   /* pSelectPen */
     NULL,                               /* pSetArcDirection */
-    dibdrv_SetBkColor,                  /* pSetBkColor */
+    NULL,                               /* pSetBkColor */
     NULL,                               /* pSetBkMode */
     dibdrv_SetDCBrushColor,             /* pSetDCBrushColor */
     dibdrv_SetDCPenColor,               /* pSetDCPenColor */
@@ -555,7 +521,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pSetStretchBltMode */
     NULL,                               /* pSetTextAlign */
     NULL,                               /* pSetTextCharacterExtra */
-    dibdrv_SetTextColor,                /* pSetTextColor */
+    NULL,                               /* pSetTextColor */
     NULL,                               /* pSetTextJustification */
     NULL,                               /* pSetViewportExt */
     NULL,                               /* pSetViewportOrg */
