@@ -2207,15 +2207,23 @@ const wchar_t* __thiscall ctype_wchar_tolower(const ctype_wchar *this,
     return call_ctype_wchar_do_tolower(this, first, last);
 }
 
+/* _Towupper */
+wchar_t __cdecl _Towupper(wchar_t ch, const _Ctypevec *ctype)
+{
+    TRACE("(%d %p)\n", ch, ctype);
+    return toupperW(ch);
+}
+
 /* ?do_toupper@?$ctype@_W@std@@MBE_W_W@Z */
 /* ?do_toupper@?$ctype@_W@std@@MEBA_W_W@Z */
 /* ?do_toupper@?$ctype@G@std@@MBEGG@Z */
 /* ?do_toupper@?$ctype@G@std@@MEBAGG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_toupper_ch, 8)
+#define call_ctype_wchar_do_toupper_ch(this, ch) CALL_VTBL_FUNC(this, 32, \
+        wchar_t, (const ctype_wchar*, wchar_t), (this, ch))
 wchar_t __thiscall ctype_wchar_do_toupper_ch(const ctype_wchar *this, wchar_t ch)
 {
-    FIXME("(%p %d) stub\n", this, ch);
-    return 0;
+    return _Towupper(ch, &this->ctype);
 }
 
 /* ?do_toupper@?$ctype@_W@std@@MBEPB_WPA_WPB_W@Z */
@@ -2223,11 +2231,16 @@ wchar_t __thiscall ctype_wchar_do_toupper_ch(const ctype_wchar *this, wchar_t ch
 /* ?do_toupper@?$ctype@G@std@@MBEPBGPAGPBG@Z */
 /* ?do_toupper@?$ctype@G@std@@MEBAPEBGPEAGPEBG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_toupper, 12)
+#define call_ctype_wchar_do_toupper(this, first, last) CALL_VTBL_FUNC(this, 28, \
+        const wchar_t*, (const ctype_wchar*, wchar_t*, const wchar_t*), \
+        (this, first, last))
 const wchar_t* __thiscall ctype_wchar_do_toupper(const ctype_wchar *this,
         wchar_t *first, const wchar_t *last)
 {
-    FIXME("(%p %p %p) stub\n", this, first, last);
-    return NULL;
+    TRACE("(%p %p %p)\n", this, first, last);
+    for(; first<last; first++)
+        *first = _Towupper(*first, &this->ctype);
+    return last;
 }
 
 /* ?toupper@?$ctype@_W@std@@QBE_W_W@Z */
@@ -2237,8 +2250,8 @@ const wchar_t* __thiscall ctype_wchar_do_toupper(const ctype_wchar *this,
 DEFINE_THISCALL_WRAPPER(ctype_wchar_toupper_ch, 8)
 wchar_t __thiscall ctype_wchar_toupper_ch(const ctype_wchar *this, wchar_t ch)
 {
-    FIXME("(%p %d) stub\n", this, ch);
-    return 0;
+    TRACE("(%p %d)\n", this, ch);
+    return call_ctype_wchar_do_toupper_ch(this, ch);
 }
 
 /* ?toupper@?$ctype@_W@std@@QBEPB_WPA_WPB_W@Z */
@@ -2249,8 +2262,8 @@ DEFINE_THISCALL_WRAPPER(ctype_wchar_toupper, 12)
 const wchar_t* __thiscall ctype_wchar_toupper(const ctype_wchar *this,
         wchar_t *first, const wchar_t *last)
 {
-    FIXME("(%p %p %p) stub\n", this, first, last);
-    return NULL;
+    TRACE("(%p %p %p)\n", this, first, last);
+    return call_ctype_wchar_do_toupper(this, first, last);
 }
 
 /* ?do_is@?$ctype@_W@std@@MBE_NF_W@Z */
