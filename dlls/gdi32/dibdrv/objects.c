@@ -999,18 +999,27 @@ static BOOL null_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close
     return TRUE;
 }
 
+struct face
+{
+    POINT start, end;
+    int dx, dy;
+};
+
 static void add_cap( dibdrv_physdev *pdev, HRGN region, const POINT *pt )
 {
     HRGN cap;
 
     switch (pdev->pen_endcap)
     {
+    default: FIXME( "Unknown end cap %x\n", pdev->pen_endcap );
+        /* fall through */
     case PS_ENDCAP_ROUND:
         cap = CreateEllipticRgn( pt->x - pdev->pen_width / 2, pt->y - pdev->pen_width / 2,
                                  pt->x + (pdev->pen_width + 1) / 2, pt->y + (pdev->pen_width + 1) / 2 );
         break;
 
-    default: /* only supporting cosmetic pens so far, so always PS_ENDCAP_ROUND */
+    case PS_ENDCAP_SQUARE: /* already been handled */
+    case PS_ENDCAP_FLAT:
         return;
     }
 
@@ -1019,27 +1028,98 @@ static void add_cap( dibdrv_physdev *pdev, HRGN region, const POINT *pt )
     return;
 }
 
-static void add_join( dibdrv_physdev *pdev, HRGN region, const POINT *pt )
+#define round( f ) (((f) > 0) ? (f) + 0.5 : (f) - 0.5)
+
+/*******************************************************************************
+ *                 create_miter_region
+ *
+ * We need to calculate the intersection of two lines.  We know a point
+ * on each line (a face start and the other face end point) and
+ * the direction vector of each line eg. (dx_1, dy_1).
+ *
+ * (x, y) = (x_1, y_1) + u * (dx_1, dy_1) = (x_2, y_2) + v * (dx_2, dy_2)
+ * solving (eg using Cramer's rule) gives:
+ * u = ((x_2 - x_1) dy_2 - (y_2 - y_1) dx_2) / det
+ * with det = dx_1 dy_2 - dx_2 dy_1
+ * substituting back in and simplifying gives
+ * (x, y) = a (dx_1, dy_1) - b (dx_2, dy_2)
+ * with a = (x_2 dy_2 - y_2 dx_2) / det
+ * and  b = (x_1 dy_1 - y_1 dx_1) / det
+ */
+static HRGN create_miter_region( dibdrv_physdev *pdev, const POINT *pt,
+                                 const struct face *face_1, const struct face *face_2 )
+{
+    int det = face_1->dx * face_2->dy - face_1->dy * face_2->dx;
+    POINT pt_1, pt_2, pts[5];
+    double a, b, x, y;
+    FLOAT limit;
+
+    if (det == 0) return 0;
+
+    if (det < 0)
+    {
+        const struct face *tmp = face_1;
+        face_1 = face_2;
+        face_2 = tmp;
+        det = -det;
+    }
+
+    pt_1 = face_1->start;
+    pt_2 = face_2->end;
+
+    a = (double)((pt_2.x * face_2->dy - pt_2.y * face_2->dx)) / det;
+    b = (double)((pt_1.x * face_1->dy - pt_1.y * face_1->dx)) / det;
+
+    x = a * face_1->dx - b * face_2->dx;
+    y = a * face_1->dy - b * face_2->dy;
+
+    GetMiterLimit( pdev->dev.hdc, &limit );
+
+    if (((x - pt->x) * (x - pt->x) + (y - pt->y) * (y - pt->y)) * 4 > limit * limit * pdev->pen_width * pdev->pen_width)
+        return 0;
+
+    pts[0] = face_2->start;
+    pts[1] = face_1->start;
+    pts[2].x = round( x );
+    pts[2].y = round( y );
+    pts[3] = face_2->end;
+    pts[4] = face_1->end;
+
+    return CreatePolygonRgn( pts, 5, ALTERNATE );
+}
+
+static void add_join( dibdrv_physdev *pdev, HRGN region, const POINT *pt,
+                      const struct face *face_1, const struct face *face_2 )
 {
     HRGN join;
+    POINT pts[4];
 
     switch (pdev->pen_join)
     {
+    default: FIXME( "Unknown line join %x\n", pdev->pen_join );
+        /* fall through */
     case PS_JOIN_ROUND:
         join = CreateEllipticRgn( pt->x - pdev->pen_width / 2, pt->y - pdev->pen_width / 2,
                                   pt->x + (pdev->pen_width + 1) / 2, pt->y + (pdev->pen_width + 1) / 2 );
         break;
 
-    default: /* only supporting cosmetic pens so far, so always PS_JOIN_ROUND */
-        return;
+    case PS_JOIN_MITER:
+        join = create_miter_region( pdev, pt, face_1, face_2 );
+        if (join) break;
+        /* fall through */
+    case PS_JOIN_BEVEL:
+        pts[0] = face_1->start;
+        pts[1] = face_2->end;
+        pts[2] = face_1->end;
+        pts[3] = face_2->start;
+        join = CreatePolygonRgn( pts, 4, ALTERNATE );
+        break;
     }
 
     CombineRgn( region, region, join, RGN_OR );
     DeleteObject( join );
     return;
 }
-
-#define round( f ) (((f) > 0) ? (f) + 0.5 : (f) - 0.5)
 
 static HRGN get_wide_lines_region( dibdrv_physdev *pdev, int num, POINT *pts, BOOL close )
 {
@@ -1058,6 +1138,11 @@ static HRGN get_wide_lines_region( dibdrv_physdev *pdev, int num, POINT *pts, BO
         int dx = pt_2->x - pt_1->x;
         int dy = pt_2->y - pt_1->y;
         RECT rect;
+        struct face face_1, face_2, prev_face, first_face;
+        BOOL need_cap_1 = !close && (i == 0);
+        BOOL need_cap_2 = !close && (i == num - 1);
+        BOOL sq_cap_1 = need_cap_1 && (pdev->pen_endcap == PS_ENDCAP_SQUARE);
+        BOOL sq_cap_2 = need_cap_2 && (pdev->pen_endcap == PS_ENDCAP_SQUARE);
 
         if (dx == 0 && dy == 0) continue;
 
@@ -1067,7 +1152,23 @@ static HRGN get_wide_lines_region( dibdrv_physdev *pdev, int num, POINT *pts, BO
             rect.right = rect.left + abs( dx );
             rect.top = pt_1->y - pdev->pen_width / 2;
             rect.bottom = rect.top + pdev->pen_width;
+            if ((sq_cap_1 && dx > 0) || (sq_cap_2 && dx < 0)) rect.left  -= pdev->pen_width / 2;
+            if ((sq_cap_2 && dx > 0) || (sq_cap_1 && dx < 0)) rect.right += pdev->pen_width / 2;
             segment = CreateRectRgnIndirect( &rect );
+            if (dx > 0)
+            {
+                face_1.start.x = face_1.end.x   = rect.left;
+                face_1.start.y = face_2.end.y   = rect.bottom;
+                face_1.end.y   = face_2.start.y = rect.top;
+                face_2.start.x = face_2.end.x   = rect.right - 1;
+            }
+            else
+            {
+                face_1.start.x = face_1.end.x   = rect.right;
+                face_1.start.y = face_2.end.y   = rect.top;
+                face_1.end.y   = face_2.start.y = rect.bottom;
+                face_2.start.x = face_2.end.x   = rect.left + 1;
+            }
         }
         else if (dx == 0)
         {
@@ -1075,7 +1176,23 @@ static HRGN get_wide_lines_region( dibdrv_physdev *pdev, int num, POINT *pts, BO
             rect.bottom = rect.top + abs( dy );
             rect.left = pt_1->x - pdev->pen_width / 2;
             rect.right = rect.left + pdev->pen_width;
+            if ((sq_cap_1 && dy > 0) || (sq_cap_2 && dy < 0)) rect.top    -= pdev->pen_width / 2;
+            if ((sq_cap_2 && dy > 0) || (sq_cap_1 && dy < 0)) rect.bottom += pdev->pen_width / 2;
             segment = CreateRectRgnIndirect( &rect );
+            if (dy > 0)
+            {
+                face_1.start.x = face_2.end.x   = rect.left;
+                face_1.start.y = face_1.end.y   = rect.top;
+                face_1.end.x   = face_2.start.x = rect.right;
+                face_2.start.y = face_2.end.y   = rect.bottom - 1;
+            }
+            else
+            {
+                face_1.start.x = face_2.end.x   = rect.right;
+                face_1.start.y = face_1.end.y   = rect.bottom;
+                face_1.end.x   = face_2.start.x = rect.left;
+                face_2.start.y = face_2.end.y   = rect.top + 1;
+            }
         }
         else
         {
@@ -1114,25 +1231,46 @@ static HRGN get_wide_lines_region( dibdrv_physdev *pdev, int num, POINT *pts, BO
             seg_pts[3].x = pt_2->x - narrow_half.x;
             seg_pts[3].y = pt_2->y + narrow_half.y;
 
+            if (sq_cap_1)
+            {
+                seg_pts[0].x -= narrow_half.y;
+                seg_pts[1].x -= narrow_half.y;
+                seg_pts[0].y -= narrow_half.x;
+                seg_pts[1].y -= narrow_half.x;
+            }
+
+            if (sq_cap_2)
+            {
+                seg_pts[2].x += wide_half.y;
+                seg_pts[3].x += wide_half.y;
+                seg_pts[2].y += wide_half.x;
+                seg_pts[3].y += wide_half.x;
+            }
+
             segment = CreatePolygonRgn( seg_pts, 4, ALTERNATE );
+
+            face_1.start = seg_pts[0];
+            face_1.end   = seg_pts[1];
+            face_2.start = seg_pts[2];
+            face_2.end   = seg_pts[3];
         }
 
         CombineRgn( total, total, segment, RGN_OR );
         DeleteObject( segment );
 
-        if (i == 0)
-        {
-            if (!close) add_cap( pdev, total, pt_1 );
-        }
-        else
-            add_join( pdev, total, pt_1 );
+        if (need_cap_1) add_cap( pdev, total, pt_1 );
+        if (need_cap_2) add_cap( pdev, total, pt_2 );
 
-        if (i == num - 1)
-        {
-            if (close) add_join( pdev, total, pt_2 );
-            else add_cap( pdev, total, pt_2 );
-        }
+        face_1.dx = face_2.dx = dx;
+        face_1.dy = face_2.dy = dy;
 
+        if (i == 0) first_face = face_1;
+        else add_join( pdev, total, pt_1, &prev_face, &face_1 );
+
+        if (i == num - 1 && close)
+            add_join( pdev, total, pt_2, &face_2, &first_face );
+
+        prev_face = face_2;
     }
     return total;
 }
@@ -1235,7 +1373,6 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
     switch(style)
     {
     case PS_SOLID:
-        if(logpen.lopnStyle & PS_GEOMETRIC) break;
         if(pdev->pen_width <= 1)
             pdev->pen_lines = solid_pen_lines;
         else
