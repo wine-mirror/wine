@@ -125,49 +125,31 @@ static inline BOOL rgbquad_equal(const RGBQUAD *a, const RGBQUAD *b)
 
 COLORREF make_rgb_colorref( HDC hdc, dib_info *dib, COLORREF color, BOOL *got_pixel, DWORD *pixel )
 {
-    BYTE type = color >> 24;
-    WORD index = LOWORD( color );
-    HPALETTE pal = GetCurrentObject( hdc, OBJ_PAL );
-    PALETTEENTRY pal_ent;
-
     *pixel = 0;
     *got_pixel = FALSE;
 
-    switch( type )
+    if (color & (1 << 24))  /* PALETTEINDEX */
     {
-    case 0: break;
+        HPALETTE pal = GetCurrentObject( hdc, OBJ_PAL );
+        PALETTEENTRY pal_ent;
 
-    case 0x10: /* DIBINDEX */
-        *got_pixel = TRUE;
-        *pixel = 0;
-        color = RGB(0, 0, 0);
-
-        if (dib->bit_count <= 8 && index < (1 << dib->bit_count))
-        {
-            *pixel = index;
-            if (index < dib->color_table_size)
-                color = RGB( dib->color_table[index].rgbRed,
-                             dib->color_table[index].rgbGreen,
-                             dib->color_table[index].rgbBlue );
-        }
-        break;
-
-    case 2: /* PALETTERGB */
-        color &= 0xffffff;
-        break;
-
-    case 1: /* PALETTEINDEX */
-        if (!GetPaletteEntries( pal, index, 1, &pal_ent ))
+        if (!GetPaletteEntries( pal, LOWORD(color), 1, &pal_ent ))
             GetPaletteEntries( pal, 0, 1, &pal_ent );
-        color = RGB( pal_ent.peRed, pal_ent.peGreen, pal_ent.peBlue );
-        break;
-
-    default:
-        FIXME("Unhandled color type %08x\n", color);
-        color &= 0xffffff;
+        return RGB( pal_ent.peRed, pal_ent.peGreen, pal_ent.peBlue );
     }
 
-    return color;
+    if (color >> 16 == 0x10ff)  /* DIBINDEX */
+    {
+        WORD index = LOWORD( color );
+        *got_pixel = TRUE;
+        if (!dib->color_table || index >= (1 << dib->bit_count)) return 0;
+        *pixel = index;
+        return RGB( dib->color_table[index].rgbRed,
+                    dib->color_table[index].rgbGreen,
+                    dib->color_table[index].rgbBlue );
+    }
+
+    return color & 0xffffff;
 }
 
 /******************************************************************
