@@ -812,13 +812,41 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
         return hr;
     }
 
-    if(cooplevel & DDSCL_EXCLUSIVE)
+    if (cooplevel & DDSCL_EXCLUSIVE)
     {
-        if( !(cooplevel & DDSCL_FULLSCREEN) || !hwnd )
+        if (!(cooplevel & DDSCL_FULLSCREEN) || !(hwnd || (cooplevel & DDSCL_CREATEDEVICEWINDOW)))
         {
-            TRACE("(%p) DDSCL_EXCLUSIVE needs DDSCL_FULLSCREEN and a window\n", This);
+            WARN("DDSCL_EXCLUSIVE requires DDSCL_FULLSCREEN and a window.\n");
             wined3d_mutex_unlock();
             return DDERR_INVALIDPARAMS;
+        }
+
+        if (cooplevel & DDSCL_CREATEDEVICEWINDOW)
+        {
+            HWND device_window;
+
+            if (!This->focuswindow && !(cooplevel & DDSCL_SETFOCUSWINDOW))
+            {
+                WARN("No focus window set.\n");
+                wined3d_mutex_unlock();
+                return DDERR_NOFOCUSWINDOW;
+            }
+
+            device_window = CreateWindowExA(0, DDRAW_WINDOW_CLASS_NAME, "DDraw device window",
+                    WS_POPUP, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
+                    NULL, NULL, NULL, NULL);
+            if (!device_window)
+            {
+                ERR("Failed to create window, last error %#x.\n", GetLastError());
+                wined3d_mutex_unlock();
+                return E_FAIL;
+            }
+
+            ShowWindow(device_window, SW_SHOW);
+            TRACE("Created a device window %p.\n", device_window);
+
+            This->devicewindow = device_window;
+            hwnd = device_window;
         }
     }
     else
@@ -863,29 +891,6 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
     /* Don't override focus windows or private device windows */
     if (hwnd && !This->focuswindow && !This->devicewindow && (hwnd != window))
         This->dest_window = hwnd;
-
-    if(cooplevel & DDSCL_CREATEDEVICEWINDOW)
-    {
-        /* Don't create a device window if a focus window is set */
-        if( !(This->focuswindow) )
-        {
-            HWND devicewindow = CreateWindowExA(0, DDRAW_WINDOW_CLASS_NAME, "DDraw device window",
-                    WS_POPUP, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
-                    NULL, NULL, NULL, NULL);
-            if (!devicewindow)
-            {
-                ERR("Failed to create window, last error %#x.\n", GetLastError());
-                wined3d_mutex_unlock();
-                return E_FAIL;
-            }
-
-            ShowWindow(devicewindow, SW_SHOW);   /* Just to be sure */
-            TRACE("(%p) Created a DDraw device window. HWND=%p\n", This, devicewindow);
-
-            This->devicewindow = devicewindow;
-            This->dest_window = devicewindow;
-        }
-    }
 
     if (cooplevel & DDSCL_MULTITHREADED && !(This->cooperative_level & DDSCL_MULTITHREADED))
         wined3d_device_set_multithreaded(This->wined3d_device);

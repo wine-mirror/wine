@@ -357,7 +357,7 @@ static void test_coop_level_create_device_window(void)
     device_window = FindWindowA("DirectDrawDeviceWnd", "DirectDrawDeviceWnd");
     ok(!device_window, "Unexpected device window found.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, NULL, DDSCL_CREATEDEVICEWINDOW | DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
-    todo_wine ok(hr == DDERR_NOFOCUSWINDOW || broken(hr == DDERR_INVALIDPARAMS), "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_NOFOCUSWINDOW || broken(hr == DDERR_INVALIDPARAMS), "Got unexpected hr %#x.\n", hr);
     device_window = FindWindowA("DirectDrawDeviceWnd", "DirectDrawDeviceWnd");
     ok(!device_window, "Unexpected device window found.\n");
 
@@ -404,7 +404,7 @@ static void test_coop_level_create_device_window(void)
     device_window = FindWindowA("DirectDrawDeviceWnd", "DirectDrawDeviceWnd");
     ok(!device_window, "Unexpected device window found.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, NULL, DDSCL_CREATEDEVICEWINDOW | DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
-    todo_wine ok(hr == DDERR_NOFOCUSWINDOW, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_NOFOCUSWINDOW, "Got unexpected hr %#x.\n", hr);
     device_window = FindWindowA("DirectDrawDeviceWnd", "DirectDrawDeviceWnd");
     ok(!device_window, "Unexpected device window found.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, focus_window, DDSCL_SETFOCUSWINDOW);
@@ -412,7 +412,7 @@ static void test_coop_level_create_device_window(void)
     device_window = FindWindowA("DirectDrawDeviceWnd", "DirectDrawDeviceWnd");
     ok(!device_window, "Unexpected device window found.\n");
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, NULL, DDSCL_CREATEDEVICEWINDOW | DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
-    todo_wine ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     device_window = FindWindowA("DirectDrawDeviceWnd", "DirectDrawDeviceWnd");
     todo_wine ok(!!device_window, "Device window not found.\n");
 
