@@ -2148,15 +2148,23 @@ MSVCP_size_t __cdecl ctype_wchar__Getcat(const locale_facet **facet, const local
     return LC_CTYPE;
 }
 
+/* _Towlower */
+wchar_t __cdecl _Towlower(wchar_t ch, const _Ctypevec *ctype)
+{
+    TRACE("(%d %p)\n", ch, ctype);
+    return tolowerW(ch);
+}
+
 /* ?do_tolower@?$ctype@_W@std@@MBE_W_W@Z */
 /* ?do_tolower@?$ctype@_W@std@@MEBA_W_W@Z */
 /* ?do_tolower@?$ctype@G@std@@MBEGG@Z */
 /* ?do_tolower@?$ctype@G@std@@MEBAGG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_tolower_ch, 8)
-char __thiscall ctype_wchar_do_tolower_ch(const ctype_wchar *this, wchar_t ch)
+#define call_ctype_wchar_do_tolower_ch(this, ch) CALL_VTBL_FUNC(this, 24, \
+        wchar_t, (const ctype_wchar*, wchar_t), (this, ch))
+wchar_t __thiscall ctype_wchar_do_tolower_ch(const ctype_wchar *this, wchar_t ch)
 {
-    FIXME("(%p %d) stub\n", this, ch);
-    return 0;
+    return _Towlower(ch, &this->ctype);
 }
 
 /* ?do_tolower@?$ctype@_W@std@@MBEPB_WPA_WPB_W@Z */
@@ -2164,11 +2172,16 @@ char __thiscall ctype_wchar_do_tolower_ch(const ctype_wchar *this, wchar_t ch)
 /* ?do_tolower@?$ctype@G@std@@MBEPBGPAGPBG@Z */
 /* ?do_tolower@?$ctype@G@std@@MEBAPEBGPEAGPEBG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_tolower, 12)
+#define call_ctype_wchar_do_tolower(this, first, last) CALL_VTBL_FUNC(this, 20, \
+        const wchar_t*, (const ctype_wchar*, wchar_t*, const wchar_t*), \
+        (this, first, last))
 const wchar_t* __thiscall ctype_wchar_do_tolower(const ctype_wchar *this,
         wchar_t *first, const wchar_t *last)
 {
-    FIXME("(%p %p %p) stub\n", this, first, last);
-    return NULL;
+    TRACE("(%p %p %p)\n", this, first, last);
+    for(; first<last; first++)
+        *first = _Towlower(*first, &this->ctype);
+    return last;
 }
 
 /* ?tolower@?$ctype@_W@std@@QBE_W_W@Z */
@@ -2178,8 +2191,8 @@ const wchar_t* __thiscall ctype_wchar_do_tolower(const ctype_wchar *this,
 DEFINE_THISCALL_WRAPPER(ctype_wchar_tolower_ch, 8)
 wchar_t __thiscall ctype_wchar_tolower_ch(const ctype_wchar *this, wchar_t ch)
 {
-    FIXME("(%p %d) stub\n", this, ch);
-    return 0;
+    TRACE("(%p %d)\n", this, ch);
+    return call_ctype_wchar_do_tolower_ch(this, ch);
 }
 
 /* ?tolower@?$ctype@_W@std@@QBEPB_WPA_WPB_W@Z */
@@ -2190,8 +2203,8 @@ DEFINE_THISCALL_WRAPPER(ctype_wchar_tolower, 12)
 const wchar_t* __thiscall ctype_wchar_tolower(const ctype_wchar *this,
         wchar_t *first, const wchar_t *last)
 {
-    FIXME("(%p %p %p) stub\n", this, first, last);
-    return NULL;
+    TRACE("(%p %p %p)\n", this, first, last);
+    return call_ctype_wchar_do_tolower(this, first, last);
 }
 
 /* ?do_toupper@?$ctype@_W@std@@MBE_W_W@Z */
