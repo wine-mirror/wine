@@ -18,10 +18,27 @@
 
 #define COBJMACROS
 #include "initguid.h"
+#include <limits.h>
 #include "wine/test.h"
 #include "d3dx9.h"
 
 /* helper functions */
+static BOOL compare_float(FLOAT f, FLOAT g, UINT ulps)
+{
+    INT x = *(INT *)&f;
+    INT y = *(INT *)&g;
+
+    if (x < 0)
+        x = INT_MIN - x;
+    if (y < 0)
+        y = INT_MIN - y;
+
+    if (abs(x - y) > ulps)
+        return FALSE;
+
+    return TRUE;
+}
+
 static inline INT get_int(D3DXPARAMETER_TYPE type, LPCVOID data)
 {
     INT i;
@@ -47,6 +64,33 @@ static inline INT get_int(D3DXPARAMETER_TYPE type, LPCVOID data)
     }
 
     return i;
+}
+
+static inline FLOAT get_float(D3DXPARAMETER_TYPE type, LPCVOID data)
+{
+    FLOAT f;
+
+    switch (type)
+    {
+        case D3DXPT_FLOAT:
+            f = *(FLOAT *)data;
+            break;
+
+        case D3DXPT_INT:
+            f = *(INT *)data;
+            break;
+
+        case D3DXPT_BOOL:
+            f = *(BOOL *)data;
+            break;
+
+        default:
+            f = 0.0f;
+            ok(0, "Unhandled type %x.\n", type);
+            break;
+    }
+
+    return f;
 }
 
 static inline BOOL get_bool(LPCVOID data)
@@ -688,6 +732,31 @@ static void test_effect_parameter_value_GetIntArray(const struct test_effect_par
     }
 }
 
+static void test_effect_parameter_value_GetFloat(const struct test_effect_parameter_value_result *res,
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+{
+    const D3DXPARAMETER_DESC *res_desc = &res->desc;
+    LPCSTR res_full_name = res->full_name;
+    HRESULT hr;
+    DWORD cmp = 0xabababab;
+    FLOAT fvalue = *(FLOAT *)&cmp;
+
+    hr = effect->lpVtbl->GetFloat(effect, parameter, &fvalue);
+    if (!res_desc->Elements && res_desc->Columns == 1 && res_desc->Rows == 1)
+    {
+        ok(hr == D3D_OK, "%u - %s: GetFloat failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+        ok(compare_float(fvalue, get_float(res_desc->Type, res_value), 512), "%u - %s: GetFloat fvalue failed, got %f, expected %f\n",
+                i, res_full_name, fvalue, get_float(res_desc->Type, res_value));
+    }
+    else
+    {
+        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloat failed, got %#x, expected %#x\n",
+                i, res_full_name, hr, D3DERR_INVALIDCALL);
+        ok(fvalue == *(FLOAT *)&cmp, "%u - %s: GetFloat fvalue failed, got %f, expected %f\n",
+                i, res_full_name, fvalue, *(FLOAT *)&cmp);
+    }
+}
+
 static void test_effect_parameter_value(IDirect3DDevice9 *device)
 {
     UINT i;
@@ -762,6 +831,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             test_effect_parameter_value_GetBoolArray(&res[k], effect, &blob[res_value_offset], parameter, i);
             test_effect_parameter_value_GetInt(&res[k], effect, &blob[res_value_offset], parameter, i);
             test_effect_parameter_value_GetIntArray(&res[k], effect, &blob[res_value_offset], parameter, i);
+            test_effect_parameter_value_GetFloat(&res[k], effect, &blob[res_value_offset], parameter, i);
         }
 
         count = effect->lpVtbl->Release(effect);
