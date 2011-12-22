@@ -1674,16 +1674,16 @@ extern const vtable_ptr MSVCP_ctype_short_vtable;
 /* ?_Id_func@?$ctype@_W@std@@SAAEAVid@locale@2@XZ */
 locale_id* __cdecl ctype_wchar__Id_func(void)
 {
-    FIXME("() stub\n");
-    return NULL;
+    TRACE("()\n");
+    return &ctype_wchar_id;
 }
 
 /* ?_Id_func@?$ctype@G@std@@SAAAVid@locale@2@XZ */
 /* ?_Id_func@?$ctype@G@std@@SAAEAVid@locale@2@XZ */
 locale_id* __cdecl ctype_short__Id_func(void)
 {
-    FIXME("() stub\n");
-    return NULL;
+    TRACE("()\n");
+    return &ctype_short_id;
 }
 
 /* ?_Init@?$ctype@_W@std@@IAEXABV_Locinfo@2@@Z */
@@ -1693,7 +1693,9 @@ locale_id* __cdecl ctype_short__Id_func(void)
 DEFINE_THISCALL_WRAPPER(ctype_wchar__Init, 8)
 void __thiscall ctype_wchar__Init(ctype_wchar *this, _Locinfo *locinfo)
 {
-    FIXME("(%p %p) stub\n", this, locinfo);
+    TRACE("(%p %p)\n", this, locinfo);
+    this->ctype = _Locinfo__Getctype(locinfo);
+    this->cvt = _Locinfo__Getcvt(locinfo);
 }
 
 /* ??0?$ctype@_W@std@@QAE@ABV_Locinfo@1@I@Z */
@@ -1702,9 +1704,11 @@ DEFINE_THISCALL_WRAPPER(ctype_wchar_ctor_locinfo, 12)
 ctype_wchar* __thiscall ctype_wchar_ctor_locinfo(ctype_wchar *this,
         _Locinfo *locinfo, MSVCP_size_t refs)
 {
-    FIXME("(%p %p %lu) stub\n", this, locinfo, refs);
+    TRACE("(%p %p %lu)\n", this, locinfo, refs);
+    ctype_base_ctor_refs(&this->base, refs);
     this->base.facet.vtable = &MSVCP_ctype_wchar_vtable;
-    return NULL;
+    ctype_wchar__Init(this, locinfo);
+    return this;
 }
 
 /* ??0?$ctype@G@std@@QAE@ABV_Locinfo@1@I@Z */
@@ -1723,9 +1727,17 @@ ctype_wchar* __thiscall ctype_short_ctor_locinfo(ctype_wchar *this,
 DEFINE_THISCALL_WRAPPER(ctype_wchar_ctor_refs, 8)
 ctype_wchar* __thiscall ctype_wchar_ctor_refs(ctype_wchar *this, MSVCP_size_t refs)
 {
-    FIXME("(%p %lu) stub\n", this, refs);
+    _Locinfo locinfo;
+
+    TRACE("(%p %lu)\n", this, refs);
+
+    ctype_base_ctor_refs(&this->base, refs);
     this->base.facet.vtable = &MSVCP_ctype_wchar_vtable;
-    return NULL;
+
+    _Locinfo_ctor(&locinfo);
+    ctype_wchar__Init(this, &locinfo);
+    _Locinfo_dtor(&locinfo);
+    return this;
 }
 
 /* ??0?$ctype@G@std@@QAE@I@Z */
@@ -1739,13 +1751,22 @@ ctype_wchar* __thiscall ctype_short_ctor_refs(ctype_wchar *this, MSVCP_size_t re
 }
 
 /* ??0?$ctype@G@std@@IAE@PBDI@Z */
+/* ??0?$ctype@G@std@@IEAA@PEBD_K@Z */
 DEFINE_THISCALL_WRAPPER(ctype_short_ctor_name, 12)
 ctype_wchar* __thiscall ctype_short_ctor_name(ctype_wchar *this,
     const char *name, MSVCP_size_t refs)
 {
-    FIXME("(%p %s %lu) stub\n", this, debugstr_a(name), refs);
+    _Locinfo locinfo;
+
+    TRACE("(%p %s %lu)\n", this, debugstr_a(name), refs);
+
+    ctype_base_ctor_refs(&this->base, refs);
     this->base.facet.vtable = &MSVCP_ctype_short_vtable;
-    return NULL;
+
+    _Locinfo_ctor_cstr(&locinfo, name);
+    ctype_wchar__Init(this, &locinfo);
+    _Locinfo_dtor(&locinfo);
+    return this;
 }
 
 /* ??_F?$ctype@_W@std@@QAEXXZ */
@@ -1753,9 +1774,8 @@ ctype_wchar* __thiscall ctype_short_ctor_name(ctype_wchar *this,
 DEFINE_THISCALL_WRAPPER(ctype_wchar_ctor, 4)
 ctype_wchar* __thiscall ctype_wchar_ctor(ctype_wchar *this)
 {
-    FIXME("(%p) stub\n", this);
-    this->base.facet.vtable = &MSVCP_ctype_wchar_vtable;
-    return NULL;
+    TRACE("(%p)\n", this);
+    return ctype_short_ctor_refs(this, 0);
 }
 
 /* ??_F?$ctype@G@std@@QAEXXZ */
@@ -1775,7 +1795,9 @@ ctype_wchar* __thiscall ctype_short_ctor(ctype_wchar *this)
 DEFINE_THISCALL_WRAPPER(ctype_wchar_dtor, 4)
 void __thiscall ctype_wchar_dtor(ctype_wchar *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    if(this->ctype.delfl)
+        free((void*)this->ctype.table);
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_ctype_wchar_vector_dtor, 8)
@@ -1972,8 +1994,24 @@ const char* __thiscall ctype_wchar__Widen_s(const ctype_wchar *this,
 /* ?_Getcat@?$ctype@G@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
 MSVCP_size_t __cdecl ctype_wchar__Getcat(const locale_facet **facet, const locale *loc)
 {
-    FIXME("(%p %p) stub\n", facet, loc);
-    return 0;
+    TRACE("(%p %p)\n", facet, loc);
+
+    if(facet && !*facet) {
+        _Locinfo locinfo;
+
+        *facet = MSVCRT_operator_new(sizeof(ctype_wchar));
+        if(!*facet) {
+            ERR("Out of memory\n");
+            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            return 0;
+        }
+
+        _Locinfo_ctor_cstr(&locinfo, MSVCP_basic_string_char_c_str(&loc->ptr->name));
+        ctype_wchar_ctor_locinfo((ctype_wchar*)*facet, &locinfo, 0);
+        _Locinfo_dtor(&locinfo);
+    }
+
+    return LC_CTYPE;
 }
 
 /* ?do_tolower@?$ctype@_W@std@@MBE_W_W@Z */
