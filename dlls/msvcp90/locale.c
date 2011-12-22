@@ -2339,11 +2339,17 @@ const wchar_t* __thiscall ctype_wchar_is(const ctype_wchar *this,
 /* ?do_scan_is@?$ctype@G@std@@MBEPBGFPBG0@Z */
 /* ?do_scan_is@?$ctype@G@std@@MEBAPEBGFPEBG0@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_scan_is, 16)
+#define call_ctype_wchar_do_scan_is(this, mask, first, last) CALL_VTBL_FUNC(this, 12, \
+        const wchar_t*, (const ctype_wchar*, short, const wchar_t*, const wchar_t*), \
+        (this, mask, first, last))
 const wchar_t* __thiscall ctype_wchar_do_scan_is(const ctype_wchar *this,
         short mask, const wchar_t *first, const wchar_t *last)
 {
-    FIXME("(%p %d %p %p) stub\n", this, mask, first, last);
-    return NULL;
+    TRACE("(%p %d %p %p)\n", this, mask, first, last);
+    for(; first<last; first++)
+        if(!ctype_wchar_is_ch(this, mask, *first))
+            break;
+    return first;
 }
 
 /* ?scan_is@?$ctype@_W@std@@QBEPB_WFPB_W0@Z */
@@ -2354,8 +2360,8 @@ DEFINE_THISCALL_WRAPPER(ctype_wchar_scan_is, 16)
 const wchar_t* __thiscall ctype_wchar_scan_is(const ctype_wchar *this,
         short mask, const wchar_t *first, const wchar_t *last)
 {
-    FIXME("(%p %x %p %p) stub\n", this, mask, first, last);
-    return NULL;
+    TRACE("(%p %x %p %p)\n", this, mask, first, last);
+    return call_ctype_wchar_do_scan_is(this, mask, first, last);
 }
 
 /* ?do_scan_not@?$ctype@_W@std@@MBEPB_WFPB_W0@Z */
@@ -2363,11 +2369,17 @@ const wchar_t* __thiscall ctype_wchar_scan_is(const ctype_wchar *this,
 /* ?do_scan_not@?$ctype@G@std@@MBEPBGFPBG0@Z */
 /* ?do_scan_not@?$ctype@G@std@@MEBAPEBGFPEBG0@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_scan_not, 16)
+#define call_ctype_wchar_do_scan_not(this, mask, first, last) CALL_VTBL_FUNC(this, 16, \
+        const wchar_t*, (const ctype_wchar*, short, const wchar_t*, const wchar_t*), \
+        (this, mask, first, last))
 const wchar_t* __thiscall ctype_wchar_do_scan_not(const ctype_wchar *this,
         short mask, const wchar_t *first, const wchar_t *last)
 {
-    FIXME("(%p %x %p %p) stub\n", this, mask, first, last);
-    return NULL;
+    TRACE("(%p %x %p %p)\n", this, mask, first, last);
+    for(; first<last; first++)
+        if(ctype_wchar_is_ch(this, mask, *first))
+            break;
+    return first;
 }
 
 /* ?scan_not@?$ctype@_W@std@@QBEPB_WFPB_W0@Z */
@@ -2378,8 +2390,8 @@ DEFINE_THISCALL_WRAPPER(ctype_wchar_scan_not, 16)
 const wchar_t* __thiscall ctype_wchar_scan_not(const ctype_wchar *this,
         short mask, const wchar_t *first, const wchar_t *last)
 {
-    FIXME("(%p %x %p %p) stub\n", this, mask, first, last);
-    return NULL;
+    TRACE("(%p %x %p %p)\n", this, mask, first, last);
+    return call_ctype_wchar_do_scan_not(this, mask, first, last);
 }
 
 /* ??0_Locimp@locale@std@@AAE@_N@Z */
