@@ -10,7 +10,7 @@
 @ stub ScriptGetFontFeatureTags
 @ stub ScriptGetFontLanguageTags
 @ stdcall ScriptGetFontProperties(long ptr ptr)
-@ stub ScriptGetFontScriptTags
+@ stdcall ScriptGetFontScriptTags(long ptr ptr long ptr ptr)
 @ stdcall ScriptGetGlyphABCWidth(ptr ptr long ptr)
 @ stdcall ScriptGetLogicalWidths(ptr long long ptr ptr ptr ptr)
 @ stdcall ScriptGetProperties(ptr long)

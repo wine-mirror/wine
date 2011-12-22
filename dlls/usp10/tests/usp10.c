@@ -59,6 +59,8 @@ static HRESULT (WINAPI *pScriptShapeOpenType)( HDC hdc, SCRIPT_CACHE *psc, SCRIP
 
 static DWORD (WINAPI *pGetGlyphIndicesW)(HDC hdc, LPCWSTR lpstr, INT count, LPWORD pgi, DWORD flags);
 
+static HRESULT (WINAPI *pScriptGetFontScriptTags)( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa, int cMaxTags, OPENTYPE_TAG *pScriptTags, int *pcTags);
+
 static inline void _test_items_ok(LPCWSTR string, DWORD cchString,
                          SCRIPT_CONTROL *Control, SCRIPT_STATE *State,
                          DWORD nItems, const itemTest* items, BOOL nItemsToDo,
@@ -2865,6 +2867,46 @@ static void test_newlines(void)
     ok(count == 4, "got %d expected 4\n", count);
 }
 
+static void test_ScriptGetFontFunctions(HDC hdc)
+{
+    HRESULT hr;
+    pScriptGetFontScriptTags = (void*)GetProcAddress(GetModuleHandleA("usp10.dll"), "ScriptGetFontScriptTags");
+    if (!pScriptGetFontScriptTags)
+    {
+        win_skip("ScriptGetFontScriptTags not available on this platform\n");
+    }
+    else
+    {
+        SCRIPT_CACHE sc = NULL;
+        OPENTYPE_TAG tags[5];
+        int count = 0;
+
+        hr = pScriptGetFontScriptTags(hdc, &sc, NULL, 0, NULL, NULL);
+        ok(hr == E_INVALIDARG,"Incorrect return code\n");
+        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
+        hr = pScriptGetFontScriptTags(hdc, &sc, NULL, 0, NULL, &count);
+        ok(hr == E_INVALIDARG,"Incorrect return code\n");
+        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
+        hr = pScriptGetFontScriptTags(hdc, &sc, NULL, 5, tags, NULL);
+        ok(hr == E_INVALIDARG,"Incorrect return code\n");
+        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
+        hr = pScriptGetFontScriptTags(hdc, &sc, NULL, 0, tags, &count);
+        ok(hr == E_INVALIDARG,"Incorrect return code\n");
+        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
+        hr = pScriptGetFontScriptTags(NULL, &sc, NULL, 5, tags, &count);
+        ok(hr == E_PENDING,"Incorrect return code\n");
+        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
+        hr = pScriptGetFontScriptTags(hdc, &sc, NULL, 5, tags, &count);
+        ok((hr == S_OK || hr == E_OUTOFMEMORY),"Incorrect return code\n");
+        if (hr == S_OK)
+            ok(count <= 5, "Count should be less or equal to 5 with S_OK return\n");
+        else if (hr == E_OUTOFMEMORY)
+            ok(count == 0, "Count should be 0 with E_OUTOFMEMORY return\n");
+        ok(sc != NULL, "ScriptCache should be initialized\n");
+        ScriptFreeCache(&sc);
+    }
+}
+
 START_TEST(usp10)
 {
     HWND            hwnd;
@@ -2916,6 +2958,8 @@ START_TEST(usp10)
     test_ScriptGetProperties();
     test_ScriptBreak();
     test_newlines();
+
+    test_ScriptGetFontFunctions(hdc);
 
     ReleaseDC(hwnd, hdc);
     DestroyWindow(hwnd);

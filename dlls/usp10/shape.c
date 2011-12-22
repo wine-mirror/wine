@@ -3775,3 +3775,63 @@ DWORD CMAP_GetGlyphIndex(HDC hdc, ScriptCache *psc, DWORD utf32c, LPWORD pgi, DW
     }
     return 0;
 }
+
+static HRESULT GSUB_GetFontScriptTags(LPCVOID table, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pScriptTags, int *pcTags, LPCVOID* script_table)
+{
+    const GSUB_ScriptList *script;
+    const GSUB_Header* header = (const GSUB_Header*)table;
+    int i;
+    HRESULT rc = S_OK;
+
+    script = (const GSUB_ScriptList*)((const BYTE*)header + GET_BE_WORD(header->ScriptList));
+
+    *pcTags = 0;
+    TRACE("%i scripts in this font\n",GET_BE_WORD(script->ScriptCount));
+    if (!searchingFor && cMaxTags < GET_BE_WORD(script->ScriptCount))
+        rc = E_OUTOFMEMORY;
+    for (i = 0; i < GET_BE_WORD(script->ScriptCount); i++)
+    {
+        if (searchingFor)
+        {
+            if (strncmp(script->ScriptRecord[i].ScriptTag, (char*)&searchingFor,4)==0)
+            {
+                pScriptTags[0] = MS_MAKE_TAG(script->ScriptRecord[i].ScriptTag[0], script->ScriptRecord[i].ScriptTag[1], script->ScriptRecord[i].ScriptTag[2], script->ScriptRecord[i].ScriptTag[3]);
+                *pcTags = 1;
+                if (script_table)
+                {
+                    int offset = GET_BE_WORD(script->ScriptRecord[i].Script);
+                    *script_table = ((const BYTE*)script + offset);
+                }
+                break;
+            }
+        }
+        else if (i < cMaxTags)
+        {
+            pScriptTags[i] = MS_MAKE_TAG(script->ScriptRecord[i].ScriptTag[0], script->ScriptRecord[i].ScriptTag[1], script->ScriptRecord[i].ScriptTag[2], script->ScriptRecord[i].ScriptTag[3]);
+            *pcTags = *pcTags + 1;
+        }
+    }
+    return rc;
+}
+
+HRESULT SHAPE_GetFontScriptTags( HDC hdc, ScriptCache *psc,
+                                 SCRIPT_ANALYSIS *psa, int cMaxTags,
+                                 OPENTYPE_TAG *pScriptTags, int *pcTags)
+{
+    HRESULT hr;
+    OPENTYPE_TAG searching = 0x00000000;
+
+    if (!psc->GSUB_Table)
+        psc->GSUB_Table = load_gsub_table(hdc);
+
+    if (psa)
+    {
+        if (ShapingData[psa->eScript].otTag[0] != 0)
+            searching = MS_MAKE_TAG(ShapingData[psa->eScript].otTag[0], ShapingData[psa->eScript].otTag[1], ShapingData[psa->eScript].otTag[2], ShapingData[psa->eScript].otTag[3]);
+    }
+
+    hr = GSUB_GetFontScriptTags(psc->GSUB_Table, searching, cMaxTags, pScriptTags, pcTags, NULL);
+    if (FAILED(hr))
+        *pcTags = 0;
+    return hr;
+}

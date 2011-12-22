@@ -3525,3 +3525,12 @@ HRESULT WINAPI ScriptJustify(const SCRIPT_VISATTR *sva, const int *advance,
     for (i = 0; i < num_glyphs; i++) justify[i] = advance[i];
     return S_OK;
 }
+
+HRESULT WINAPI ScriptGetFontScriptTags( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa, int cMaxTags, OPENTYPE_TAG *pScriptTags, int *pcTags)
+{
+    HRESULT hr;
+    if (!pScriptTags || !pcTags || cMaxTags == 0) return E_INVALIDARG;
+    if ((hr = init_script_cache(hdc, psc)) != S_OK) return hr;
+
+    return SHAPE_GetFontScriptTags(hdc, (ScriptCache *)*psc, psa, cMaxTags, pScriptTags, pcTags);
+}
