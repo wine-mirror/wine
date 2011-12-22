@@ -5754,8 +5754,8 @@
 @ cdecl _Getctype()
 @ cdecl _Getcvt()
 @ stub _Getdateorder
-@ stub _Getwctype
-@ stub _Getwctypes
+@ cdecl _Getwctype(long ptr)
+@ cdecl _Getwctypes(ptr ptr ptr ptr)
 @ extern _Hugeval
 @ extern _Inf
 @ stub _LCosh

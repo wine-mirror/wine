@@ -2266,15 +2266,34 @@ const wchar_t* __thiscall ctype_wchar_toupper(const ctype_wchar *this,
     return call_ctype_wchar_do_toupper(this, first, last);
 }
 
+/* _Getwctypes */
+const wchar_t* __cdecl _Getwctypes(const wchar_t *first, const wchar_t *last,
+        short *mask, const _Ctypevec *ctype)
+{
+    TRACE("(%p %p %p %p)\n", first, last, mask, ctype);
+    GetStringTypeW(CT_CTYPE1, first, last-first, (WORD*)mask);
+    return last;
+}
+
+/* _Getwctype */
+short __cdecl _Getwctype(wchar_t ch, const _Ctypevec *ctype)
+{
+    short mask = 0;
+    _Getwctypes(&ch, &ch+1, &mask, ctype);
+    return mask;
+}
+
 /* ?do_is@?$ctype@_W@std@@MBE_NF_W@Z */
 /* ?do_is@?$ctype@_W@std@@MEBA_NF_W@Z */
 /* ?do_is@?$ctype@G@std@@MBE_NFG@Z */
 /* ?do_is@?$ctype@G@std@@MEBA_NFG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_is_ch, 12)
+#define call_ctype_wchar_do_is_ch(this, mask, ch) CALL_VTBL_FUNC(this, 8, \
+        MSVCP_bool, (const ctype_wchar*, short, wchar_t), (this, mask, ch))
 MSVCP_bool __thiscall ctype_wchar_do_is_ch(const ctype_wchar *this, short mask, wchar_t ch)
 {
-    FIXME("(%p %x %d) stub\n", this, mask, ch);
-    return 0;
+    TRACE("(%p %x %d)\n", this, mask, ch);
+    return !(_Getwctype(ch, &this->ctype) & mask);
 }
 
 /* ?do_is@?$ctype@_W@std@@MBEPB_WPB_W0PAF@Z */
@@ -2282,11 +2301,14 @@ MSVCP_bool __thiscall ctype_wchar_do_is_ch(const ctype_wchar *this, short mask, 
 /* ?do_is@?$ctype@G@std@@MBEPBGPBG0PAF@Z */
 /* ?do_is@?$ctype@G@std@@MEBAPEBGPEBG0PEAF@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_is, 16)
+#define call_ctype_wchar_do_is(this, first, last, dest) CALL_VTBL_FUNC(this, 4, \
+        const wchar_t*, (const ctype_wchar*, const wchar_t*, const wchar_t*, short*), \
+        (this, first, last, dest))
 const wchar_t* __thiscall ctype_wchar_do_is(const ctype_wchar *this,
         const wchar_t *first, const wchar_t *last, short *dest)
 {
-    FIXME("(%p %p %p %p) stub\n", this, first, last, dest);
-    return NULL;
+    TRACE("(%p %p %p %p)\n", this, first, last, dest);
+    return _Getwctypes(first, last, dest, &this->ctype);
 }
 
 /* ?is@?$ctype@_W@std@@QBE_NF_W@Z */
@@ -2296,8 +2318,8 @@ const wchar_t* __thiscall ctype_wchar_do_is(const ctype_wchar *this,
 DEFINE_THISCALL_WRAPPER(ctype_wchar_is_ch, 12)
 MSVCP_bool __thiscall ctype_wchar_is_ch(const ctype_wchar *this, short mask, wchar_t ch)
 {
-    FIXME("(%p %x %d) stub\n", this, mask, ch);
-    return 0;
+    TRACE("(%p %x %d)\n", this, mask, ch);
+    return call_ctype_wchar_do_is_ch(this, mask, ch);
 }
 
 /* ?is@?$ctype@_W@std@@QBEPB_WPB_W0PAF@Z */
@@ -2308,8 +2330,8 @@ DEFINE_THISCALL_WRAPPER(ctype_wchar_is, 16)
 const wchar_t* __thiscall ctype_wchar_is(const ctype_wchar *this,
         const wchar_t *first, const wchar_t *last, short *dest)
 {
-    FIXME("(%p %p %p %p) stub\n", this, first, last, dest);
-    return NULL;
+    TRACE("(%p %p %p %p)\n", this, first, last, dest);
+    return call_ctype_wchar_do_is(this, first, last, dest);
 }
 
 /* ?do_scan_is@?$ctype@_W@std@@MBEPB_WFPB_W0@Z */
