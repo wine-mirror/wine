@@ -115,6 +115,10 @@
 #define Script_Osmanya_Numeric 77
 /* Unicode Chapter 15 : Plane 1 */
 #define Script_MathAlpha 78
+/* Additional Currency Scripts */
+#define Script_Hebrew_Currency 79
+#define Script_Vietnamese_Currency 80
+#define Script_Thai_Currency 81
 
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)

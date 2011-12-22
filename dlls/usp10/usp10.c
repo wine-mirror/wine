@@ -624,6 +624,18 @@ static const scriptData scriptInformation[] = {
      {0, 0, 1, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      MS_MAKE_TAG('m','a','t','h'),
      {'C','a','m','b','r','i','a',' ','M','a','t','h'}},
+    {{Script_Hebrew_Currency, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_HEBREW, 0, 1, 0, 0, HEBREW_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('h','e','b','r'),
+     {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0}},
+    {{Script_Vietnamese_Currency, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_VIETNAMESE, 0, 0, 0, 0, VIETNAMESE_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('l','a','t','n'),
+     {0}},
+    {{Script_Thai_Currency, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
+     {LANG_THAI, 0, 1, 0, 0, THAI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     MS_MAKE_TAG('t','h','a','i'),
+     {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f',0}},
 };
 
 static const SCRIPT_PROPERTIES *script_props[] =
@@ -667,7 +679,8 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &scriptInformation[72].props, &scriptInformation[73].props,
     &scriptInformation[74].props, &scriptInformation[75].props,
     &scriptInformation[76].props, &scriptInformation[77].props,
-    &scriptInformation[78].props
+    &scriptInformation[78].props, &scriptInformation[79].props,
+    &scriptInformation[80].props, &scriptInformation[81].props
 };
 
 typedef struct {
@@ -829,6 +842,18 @@ static WORD get_char_script( LPCWSTR str, INT index, INT end, INT *consumed)
     /* These chars are itemized as Punctuation by Windows */
     if (str[index] == 0x2212 || str[index] == 0x2044)
         return Script_Punctuation;
+
+    /* Currency Symboles by Unicode point */
+    switch (str[index])
+    {
+        case 0x09f2:
+        case 0x09f3: return Script_Bengali_Currency;
+        case 0x0af1: return Script_Gujarati_Currency;
+        case 0x0e3f: return Script_Thai_Currency;
+        case 0x20aa: return Script_Hebrew_Currency;
+        case 0x20ab: return Script_Vietnamese_Currency;
+        case 0xfb29: return Script_Hebrew_Currency;
+    }
 
     GetStringTypeW(CT_CTYPE1, &str[index], 1, &type);
 
