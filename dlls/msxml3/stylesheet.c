@@ -40,9 +40,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
-#ifdef HAVE_LIBXML2
-
-typedef struct _xsltemplate
+typedef struct
 {
     DispatchEx dispex;
     IXSLTemplate IXSLTemplate_iface;
@@ -51,7 +49,7 @@ typedef struct _xsltemplate
     IXMLDOMNode *node;
 } xsltemplate;
 
-typedef struct _xslprocessor
+typedef struct
 {
     DispatchEx dispex;
     IXSLProcessor IXSLProcessor_iface;
@@ -115,15 +113,17 @@ static HRESULT WINAPI xsltemplate_QueryInterface(
 static ULONG WINAPI xsltemplate_AddRef( IXSLTemplate *iface )
 {
     xsltemplate *This = impl_from_IXSLTemplate( iface );
-    return InterlockedIncrement( &This->ref );
+    ULONG ref = InterlockedIncrement( &This->ref );
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
 }
 
 static ULONG WINAPI xsltemplate_Release( IXSLTemplate *iface )
 {
     xsltemplate *This = impl_from_IXSLTemplate( iface );
-    ULONG ref;
+    ULONG ref = InterlockedDecrement( &This->ref );
 
-    ref = InterlockedDecrement( &This->ref );
+    TRACE("(%p)->(%d)\n", This, ref);
     if ( ref == 0 )
     {
         if (This->node) IXMLDOMNode_Release( This->node );
@@ -220,7 +220,6 @@ static const struct IXSLTemplateVtbl XSLTemplateVtbl =
     xsltemplate_GetTypeInfo,
     xsltemplate_GetIDsOfNames,
     xsltemplate_Invoke,
-
     xsltemplate_putref_stylesheet,
     xsltemplate_get_stylesheet,
     xsltemplate_createProcessor
@@ -295,15 +294,17 @@ static HRESULT WINAPI xslprocessor_QueryInterface(
 static ULONG WINAPI xslprocessor_AddRef( IXSLProcessor *iface )
 {
     xslprocessor *This = impl_from_IXSLProcessor( iface );
-    return InterlockedIncrement( &This->ref );
+    ULONG ref = InterlockedIncrement( &This->ref );
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
 }
 
 static ULONG WINAPI xslprocessor_Release( IXSLProcessor *iface )
 {
     xslprocessor *This = impl_from_IXSLProcessor( iface );
-    ULONG ref;
+    ULONG ref = InterlockedDecrement( &This->ref );
 
-    ref = InterlockedDecrement( &This->ref );
+    TRACE("(%p)->(%d)\n", This, ref);
     if ( ref == 0 )
     {
         if (This->input) IXMLDOMNode_Release(This->input);
@@ -591,7 +592,6 @@ static const struct IXSLProcessorVtbl XSLProcessorVtbl =
     xslprocessor_GetTypeInfo,
     xslprocessor_GetIDsOfNames,
     xslprocessor_Invoke,
-
     xslprocessor_put_input,
     xslprocessor_get_input,
     xslprocessor_get_ownerTemplate,
@@ -645,14 +645,3 @@ HRESULT XSLProcessor_create(xsltemplate *template, IXSLProcessor **ppObj)
 
     return S_OK;
 }
-
-#else
-
-HRESULT XSLTemplate_create(IUnknown *pUnkOuter, void **ppObj)
-{
-    MESSAGE("This program tried to use a XSLTemplate object, but\n"
-            "libxml2 support was not present at compile time.\n");
-    return E_NOTIMPL;
-}
-
-#endif
