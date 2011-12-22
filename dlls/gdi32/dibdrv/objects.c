@@ -192,7 +192,7 @@ DWORD get_pixel_color( dibdrv_physdev *pdev, COLORREF color, BOOL mono_fixup )
  * this makes pdev->bkgnd_color unusable.  So here we take the inverse
  * of the relevant fg color (which is always set up correctly).
  */
-static inline void get_pen_bkgnd_masks(const dibdrv_physdev *pdev, DWORD *and, DWORD *xor)
+static inline void get_pen_bkgnd_masks(dibdrv_physdev *pdev, DWORD *and, DWORD *xor)
 {
     if(pdev->dib.bit_count != 1 || GetBkMode(pdev->dev.hdc) == TRANSPARENT)
     {
@@ -201,8 +201,8 @@ static inline void get_pen_bkgnd_masks(const dibdrv_physdev *pdev, DWORD *and, D
     }
     else
     {
-        DWORD color = ~pdev->pen_color;
-        if(pdev->pen_colorref == GetBkColor(pdev->dev.hdc)) color = pdev->pen_color;
+        DWORD color = get_pixel_color( pdev, pdev->pen_colorref, TRUE );
+        if(pdev->pen_colorref != GetBkColor(pdev->dev.hdc)) color = !color;
         calc_and_xor_masks( GetROP2(pdev->dev.hdc), color, and, xor );
     }
 }
@@ -552,7 +552,7 @@ static void bres_line_with_bias(const POINT *start, const struct line_params *pa
     }
 }
 
-static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
+static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end, DWORD and, DWORD xor)
 {
     const WINEREGION *clip = get_wine_region(pdev->clip);
 
@@ -573,7 +573,7 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
             /* Optimize the unclipped case */
             if(clip->rects[i].left <= rect.left && clip->rects[i].right >= rect.right)
             {
-                pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, pdev->pen_and, pdev->pen_xor);
+                pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, and, xor);
                 break;
             }
             if(clip->rects[i].right > rect.left && clip->rects[i].left < rect.right)
@@ -581,7 +581,7 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
                 RECT tmp = rect;
                 tmp.left = max(rect.left, clip->rects[i].left);
                 tmp.right = min(rect.right, clip->rects[i].right);
-                pdev->dib.funcs->solid_rects(&pdev->dib, 1, &tmp, pdev->pen_and, pdev->pen_xor);
+                pdev->dib.funcs->solid_rects(&pdev->dib, 1, &tmp, and, xor);
             }
         }
     }
@@ -601,7 +601,7 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
             if(clip->rects[i].top <= rect.top && clip->rects[i].bottom >= rect.bottom &&
                clip->rects[i].left <= rect.left && clip->rects[i].right >= rect.right)
             {
-                pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, pdev->pen_and, pdev->pen_xor);
+                pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, and, xor);
                 break;
             }
             if(clip->rects[i].top >= rect.bottom) break;
@@ -611,7 +611,7 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
                 RECT tmp = rect;
                 tmp.top = max(rect.top, clip->rects[i].top);
                 tmp.bottom = min(rect.bottom, clip->rects[i].bottom);
-                pdev->dib.funcs->solid_rects(&pdev->dib, 1, &tmp, pdev->pen_and, pdev->pen_xor);
+                pdev->dib.funcs->solid_rects(&pdev->dib, 1, &tmp, and, xor);
             }
         }
     }
@@ -668,8 +668,7 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
 
                 if (clipped_end.x == end->x && clipped_end.y == end->y) line_params.length--;
 
-                pdev->dib.funcs->solid_line( &pdev->dib, &clipped_start, &line_params,
-                                             pdev->pen_and, pdev->pen_xor );
+                pdev->dib.funcs->solid_line( &pdev->dib, &clipped_start, &line_params, and, xor );
 
                 if(clip_status == 2) break; /* completely unclipped, so we can finish */
             }
@@ -683,13 +682,17 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
 static BOOL solid_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close)
 {
     int i;
+    DWORD color, and, xor;
+
+    color = get_pixel_color( pdev, pdev->pen_colorref, TRUE );
+    calc_and_xor_masks( GetROP2(pdev->dev.hdc), color, &and, &xor );
 
     assert( num >= 2 );
     for (i = 0; i < num - 1; i++)
-        if (!solid_pen_line( pdev, pts + i, pts + i + 1 ))
+        if (!solid_pen_line( pdev, pts + i, pts + i + 1, and, xor ))
             return FALSE;
 
-    if (close) return solid_pen_line( pdev, pts + num - 1, pts );
+    if (close) return solid_pen_line( pdev, pts + num - 1, pts, and, xor );
 
     return TRUE;
 }
@@ -719,38 +722,23 @@ static inline void skip_dash(dibdrv_physdev *pdev, unsigned int skip)
     }
 }
 
-static inline void get_dash_colors(const dibdrv_physdev *pdev, DWORD *and, DWORD *xor)
-{
-    if(pdev->dash_pos.mark)
-    {
-        *and = pdev->pen_and;
-        *xor = pdev->pen_xor;
-    }
-    else /* space */
-    {
-        get_pen_bkgnd_masks( pdev, and, xor );
-    }
-}
-
 static void dashed_pen_line_callback(dibdrv_physdev *pdev, INT x, INT y)
 {
     RECT rect;
-    DWORD and, xor;
+    rop_mask mask = pdev->dash_masks[pdev->dash_pos.mark];
 
-    get_dash_colors(pdev, &and, &xor);
     skip_dash(pdev, 1);
     rect.left   = x;
     rect.right  = x + 1;
     rect.top    = y;
     rect.bottom = y + 1;
-    pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, and, xor);
+    pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, mask.and, mask.xor);
     return;
 }
 
 static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
 {
     const WINEREGION *clip = get_wine_region(pdev->clip);
-    DWORD and, xor;
     int i, dash_len;
     RECT rect;
     const dash_pos start_pos = pdev->dash_pos;
@@ -796,14 +784,14 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
 
                     while(cur_x <= clipped_right)
                     {
-                        get_dash_colors(pdev, &and, &xor);
+                        rop_mask mask = pdev->dash_masks[pdev->dash_pos.mark];
                         dash_len = pdev->dash_pos.left_in_dash;
                         if(cur_x + dash_len > clipped_right + 1)
                             dash_len = clipped_right - cur_x + 1;
                         rect.left = cur_x;
                         rect.right = cur_x + dash_len;
 
-                        pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, and, xor);
+                        pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, mask.and, mask.xor);
                         cur_x += dash_len;
                         skip_dash(pdev, dash_len);
                     }
@@ -816,14 +804,14 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
 
                     while(cur_x >= clipped_left)
                     {
-                        get_dash_colors(pdev, &and, &xor);
+                        rop_mask mask = pdev->dash_masks[pdev->dash_pos.mark];
                         dash_len = pdev->dash_pos.left_in_dash;
                         if(cur_x - dash_len < clipped_left - 1)
                             dash_len = cur_x - clipped_left + 1;
                         rect.left = cur_x - dash_len + 1;
                         rect.right = cur_x + 1;
 
-                        pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, and, xor);
+                        pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, mask.and, mask.xor);
                         cur_x -= dash_len;
                         skip_dash(pdev, dash_len);
                     }
@@ -873,14 +861,14 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
 
                     while(cur_y <= clipped_bottom)
                     {
-                        get_dash_colors(pdev, &and, &xor);
+                        rop_mask mask = pdev->dash_masks[pdev->dash_pos.mark];
                         dash_len = pdev->dash_pos.left_in_dash;
                         if(cur_y + dash_len > clipped_bottom + 1)
                             dash_len = clipped_bottom - cur_y + 1;
                         rect.top = cur_y;
                         rect.bottom = cur_y + dash_len;
 
-                        pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, and, xor);
+                        pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, mask.and, mask.xor);
                         cur_y += dash_len;
                         skip_dash(pdev, dash_len);
                     }
@@ -893,14 +881,14 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
 
                     while(cur_y >= clipped_top)
                     {
-                        get_dash_colors(pdev, &and, &xor);
+                        rop_mask mask = pdev->dash_masks[pdev->dash_pos.mark];
                         dash_len = pdev->dash_pos.left_in_dash;
                         if(cur_y - dash_len < clipped_top - 1)
                             dash_len = cur_y - clipped_top + 1;
                         rect.top = cur_y - dash_len + 1;
                         rect.bottom = cur_y + 1;
 
-                        pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, and, xor);
+                        pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, mask.and, mask.xor);
                         cur_y -= dash_len;
                         skip_dash(pdev, dash_len);
                     }
@@ -985,6 +973,12 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
 static BOOL dashed_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close)
 {
     int i;
+    DWORD color;
+
+    color = get_pixel_color( pdev, pdev->pen_colorref, TRUE );
+    get_pen_bkgnd_masks( pdev, &pdev->dash_masks[0].and, &pdev->dash_masks[0].xor );
+    calc_and_xor_masks( GetROP2(pdev->dev.hdc), color,
+                        &pdev->dash_masks[1].and, &pdev->dash_masks[1].xor );
 
     assert( num >= 2 );
     for (i = 0; i < num - 1; i++)
@@ -1282,9 +1276,9 @@ static BOOL wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close
     const WINEREGION *data;
     rop_mask color;
     HRGN region;
+    DWORD pen_color = get_pixel_color( pdev, pdev->pen_colorref, TRUE );
 
-    color.and = pdev->pen_and;
-    color.xor = pdev->pen_xor;
+    calc_and_xor_masks( GetROP2(pdev->dev.hdc), pen_color, &color.and, &color.xor );
 
     region = get_wide_lines_region( pdev, num, pts, close );
 
@@ -1363,9 +1357,6 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
         logpen.lopnColor = GetDCPenColor( dev->hdc );
 
     pdev->pen_colorref = logpen.lopnColor;
-    pdev->pen_color = get_pixel_color( pdev, pdev->pen_colorref, TRUE );
-    calc_and_xor_masks(GetROP2(dev->hdc), pdev->pen_color, &pdev->pen_and, &pdev->pen_xor);
-
     pdev->pen_pattern = dash_patterns[PS_SOLID];
 
     pdev->defer |= DEFER_PEN;
@@ -1414,11 +1405,7 @@ COLORREF dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
 
     if (GetCurrentObject(dev->hdc, OBJ_PEN) == GetStockObject( DC_PEN ))
-    {
         pdev->pen_colorref = color;
-        pdev->pen_color = get_pixel_color( pdev, pdev->pen_colorref, TRUE );
-        calc_and_xor_masks(GetROP2(dev->hdc), pdev->pen_color, &pdev->pen_and, &pdev->pen_xor);
-    }
 
     return next->funcs->pSetDCPenColor( next, color );
 }

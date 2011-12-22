@@ -259,13 +259,11 @@ DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
 
 static void update_fg_colors( dibdrv_physdev *pdev )
 {
-    pdev->pen_color   = get_pixel_color( pdev, pdev->pen_colorref,   TRUE );
     pdev->text_color  = get_pixel_color( pdev, GetTextColor( pdev->dev.hdc ), TRUE );
 }
 
 static void update_masks( dibdrv_physdev *pdev, INT rop )
 {
-    calc_and_xor_masks( rop, pdev->pen_color, &pdev->pen_and, &pdev->pen_xor );
     update_brush_rop( pdev, rop );
     if( GetBkMode( pdev->dev.hdc ) == OPAQUE )
         calc_and_xor_masks( rop, pdev->bkgnd_color, &pdev->bkgnd_and, &pdev->bkgnd_xor );
