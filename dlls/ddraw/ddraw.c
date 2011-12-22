@@ -787,6 +787,13 @@ static HRESULT WINAPI ddraw7_SetCooperativeLevel(IDirectDraw7 *iface, HWND hwnd,
         return DDERR_INVALIDPARAMS;
     }
 
+    if ((cooplevel & DDSCL_CREATEDEVICEWINDOW) && !(cooplevel & DDSCL_EXCLUSIVE))
+    {
+        WARN("DDSCL_CREATEDEVICEWINDOW requires DDSCL_EXCLUSIVE.\n");
+        wined3d_mutex_unlock();
+        return DDERR_INVALIDPARAMS;
+    }
+
     /* Handle those levels first which set various hwnds */
     if(cooplevel & DDSCL_SETFOCUSWINDOW)
     {
