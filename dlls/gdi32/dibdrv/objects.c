@@ -94,13 +94,18 @@ void get_rop_codes(INT rop, struct rop_codes *codes)
     codes->x2 = rop2_xor_array[rop-1][1];
 }
 
-void calc_and_xor_masks(INT rop, DWORD color, DWORD *and, DWORD *xor)
+static inline void calc_and_xor_masks(INT rop, DWORD color, DWORD *and, DWORD *xor)
 {
     struct rop_codes codes;
     get_rop_codes( rop, &codes );
 
     *and = (color & codes.a1) ^ codes.a2;
     *xor = (color & codes.x1) ^ codes.x2;
+}
+
+static inline void calc_rop_masks(INT rop, DWORD color, rop_mask *masks)
+{
+    calc_and_xor_masks( rop, color, &masks->and, &masks->xor );
 }
 
 static inline RGBQUAD rgbquad_from_colorref(COLORREF c)
@@ -186,58 +191,30 @@ DWORD get_pixel_color( dibdrv_physdev *pdev, COLORREF color, BOOL mono_fixup )
 }
 
 /***************************************************************************
- *                get_pen_bkgnd_masks
+ *                get_color_masks
  *
- * Returns the pre-calculated bkgnd color masks unless the dib is 1 bpp.
- * In this case since there are several fg sources (pen, brush, text)
- * this makes pdev->bkgnd_color unusable.  So here we take the inverse
+ * Returns the color masks unless the dib is 1 bpp.  In this case since
+ * there are several fg sources (pen, brush, text) we take as bg the inverse
  * of the relevant fg color (which is always set up correctly).
  */
-static inline void get_pen_bkgnd_masks(dibdrv_physdev *pdev, DWORD *and, DWORD *xor)
+static inline void get_color_masks( dibdrv_physdev *pdev, UINT rop, COLORREF colorref,
+                                    rop_mask *fg_mask, rop_mask *bg_mask )
 {
-    DWORD color;
+    DWORD color = get_pixel_color( pdev, colorref, TRUE );
+
+    calc_rop_masks( rop, color, fg_mask );
 
     if (GetBkMode(pdev->dev.hdc) == TRANSPARENT)
     {
-        *and = ~0u;
-        *xor = 0;
+        bg_mask->and = ~0u;
+        bg_mask->xor = 0;
         return;
     }
 
-    if (pdev->dib.bit_count != 1)
-    {
-        color = get_pixel_color( pdev, GetBkColor(pdev->dev.hdc), FALSE );
-    }
-    else
-    {
-        color = get_pixel_color( pdev, pdev->pen_colorref, TRUE );
-        if(pdev->pen_colorref != GetBkColor(pdev->dev.hdc)) color = !color;
-    }
-    calc_and_xor_masks( GetROP2(pdev->dev.hdc), color, and, xor );
-}
+    if (pdev->dib.bit_count != 1) color = get_pixel_color( pdev, GetBkColor(pdev->dev.hdc), FALSE );
+    else if (colorref != GetBkColor(pdev->dev.hdc)) color = !color;
 
-static inline void get_brush_bkgnd_masks(dibdrv_physdev *pdev, DWORD *and, DWORD *xor)
-{
-    DWORD color;
-
-    if(GetBkMode(pdev->dev.hdc) == TRANSPARENT)
-    {
-        *and = ~0u;
-        *xor = 0;
-    }
-    else
-    {
-        if(pdev->dib.bit_count == 1)
-        {
-            if(pdev->brush_colorref == GetBkColor(pdev->dev.hdc))
-                color = get_pixel_color( pdev, pdev->brush_colorref, TRUE );
-            else
-                color = ~get_pixel_color( pdev, pdev->brush_colorref, TRUE );
-        }
-        else color = get_pixel_color( pdev, GetBkColor( pdev->dev.hdc ), FALSE );
-
-        calc_and_xor_masks( pdev->brush_rop, color, and, xor );
-    }
+    calc_rop_masks( rop, color, bg_mask );
 }
 
 static inline void order_end_points(int *s, int *e)
@@ -982,12 +959,9 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
 static BOOL dashed_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close)
 {
     int i;
-    DWORD color;
 
-    color = get_pixel_color( pdev, pdev->pen_colorref, TRUE );
-    get_pen_bkgnd_masks( pdev, &pdev->dash_masks[0].and, &pdev->dash_masks[0].xor );
-    calc_and_xor_masks( GetROP2(pdev->dev.hdc), color,
-                        &pdev->dash_masks[1].and, &pdev->dash_masks[1].xor );
+    get_color_masks( pdev, GetROP2(pdev->dev.hdc), pdev->pen_colorref,
+                     &pdev->dash_masks[1], &pdev->dash_masks[0] );
 
     assert( num >= 2 );
     for (i = 0; i < num - 1; i++)
@@ -1287,7 +1261,7 @@ static BOOL wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close
     HRGN region;
     DWORD pen_color = get_pixel_color( pdev, pdev->pen_colorref, TRUE );
 
-    calc_and_xor_masks( GetROP2(pdev->dev.hdc), pen_color, &color.and, &color.xor );
+    calc_rop_masks( GetROP2(pdev->dev.hdc), pen_color, &color );
 
     region = get_wide_lines_region( pdev, num, pts, close );
 
@@ -1455,7 +1429,7 @@ static BOOL solid_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RECT
     rop_mask brush_color;
     DWORD color = get_pixel_color( pdev, pdev->brush_colorref, TRUE );
 
-    calc_and_xor_masks( pdev->brush_rop, color, &brush_color.and, &brush_color.xor );
+    calc_rop_masks( pdev->brush_rop, color, &brush_color );
     solid_rects( dib, num, rects, &brush_color, region );
     return TRUE;
 }
@@ -1519,7 +1493,7 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev)
     dib_info hatch;
     rop_mask fg_mask, bg_mask;
     rop_mask_bits mask_bits;
-    DWORD size, color;
+    DWORD size;
     BOOL ret;
 
     assert(pdev->brush_and_bits == NULL);
@@ -1553,10 +1527,7 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev)
     hatch.bits.free = hatch.bits.param = NULL;
     hatch.bits.is_copy = FALSE;
 
-    color = get_pixel_color( pdev, pdev->brush_colorref, TRUE );
-    calc_and_xor_masks( pdev->brush_rop, color, &fg_mask.and, &fg_mask.xor );
-
-    get_brush_bkgnd_masks( pdev, &bg_mask.and, &bg_mask.xor );
+    get_color_masks( pdev, pdev->brush_rop, pdev->brush_colorref, &fg_mask, &bg_mask );
 
     ret = pdev->brush_dib.funcs->create_rop_masks( &pdev->brush_dib, &hatch, &fg_mask, &bg_mask, &mask_bits );
     if(!ret) free_pattern_brush_bits( pdev );
