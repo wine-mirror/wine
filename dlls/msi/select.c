@@ -57,11 +57,15 @@ static UINT SELECT_fetch_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT 
     if( !sv->table )
          return ERROR_FUNCTION_FAILED;
 
-    if( (col==0) || (col>sv->num_cols) )
+    if( !col || col > sv->num_cols )
          return ERROR_FUNCTION_FAILED;
 
     col = sv->cols[ col - 1 ];
-
+    if( !col )
+    {
+        *val = 0;
+        return ERROR_SUCCESS;
+    }
     return sv->table->ops->fetch_int( sv->table, row, col, val );
 }
 
@@ -74,11 +78,15 @@ static UINT SELECT_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, IS
     if( !sv->table )
          return ERROR_FUNCTION_FAILED;
 
-    if( (col==0) || (col>sv->num_cols) )
+    if( !col || col > sv->num_cols )
          return ERROR_FUNCTION_FAILED;
 
     col = sv->cols[ col - 1 ];
-
+    if( !col )
+    {
+        *stm = NULL;
+        return ERROR_SUCCESS;
+    }
     return sv->table->ops->fetch_stream( sv->table, row, col, stm );
 }
 
@@ -218,11 +226,18 @@ static UINT SELECT_get_column_info( struct tagMSIVIEW *view, UINT n, LPCWSTR *na
     if( !sv->table )
          return ERROR_FUNCTION_FAILED;
 
-    if( (n==0) || (n>sv->num_cols) )
+    if( !n || n > sv->num_cols )
          return ERROR_FUNCTION_FAILED;
 
     n = sv->cols[ n - 1 ];
-
+    if( !n )
+    {
+        if (name) *name = szEmpty;
+        if (type) *type = MSITYPE_UNKNOWN | MSITYPE_VALID;
+        if (temporary) *temporary = FALSE;
+        if (table_name) *table_name = szEmpty;
+        return ERROR_SUCCESS;
+    }
     return sv->table->ops->get_column_info( sv->table, n, name,
                                             type, temporary, table_name );
 }
@@ -360,7 +375,7 @@ static const MSIVIEWOPS select_ops =
 static UINT SELECT_AddColumn( MSISELECTVIEW *sv, LPCWSTR name,
                               LPCWSTR table_name )
 {
-    UINT r, n=0;
+    UINT r, n;
     MSIVIEW *table;
 
     TRACE("%p adding %s.%s\n", sv, debugstr_w( table_name ),
@@ -380,9 +395,13 @@ static UINT SELECT_AddColumn( MSISELECTVIEW *sv, LPCWSTR name,
     if( sv->num_cols >= sv->max_cols )
         return ERROR_FUNCTION_FAILED;
 
-    r = VIEW_find_column( table, name, table_name, &n );
-    if( r != ERROR_SUCCESS )
-        return r;
+    if ( !name[0] ) n = 0;
+    else
+    {
+        r = VIEW_find_column( table, name, table_name, &n );
+        if( r != ERROR_SUCCESS )
+            return r;
+    }
 
     sv->cols[sv->num_cols] = n;
     TRACE("Translating column %s from %d -> %d\n", 

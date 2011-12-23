@@ -111,8 +111,8 @@ static struct expr * EXPR_wildcard( void *info );
 %nonassoc END_OF_FILE ILLEGAL SPACE UNCLOSED_STRING COMMENT FUNCTION
           COLUMN AGG_FUNCTION.
 
-%type <string> table tablelist id
-%type <column_list> selcollist column column_and_type column_def table_def
+%type <string> table tablelist id string
+%type <column_list> selcollist collist selcolumn column column_and_type column_def table_def
 %type <column_list> column_assignment update_assign_list constlist
 %type <query> query from selectfrom unorderdfrom
 %type <query> oneupdate onedelete oneselect onequery onecreate oneinsert onealter onedrop
@@ -120,7 +120,6 @@ static struct expr * EXPR_wildcard( void *info );
 %type <column_type> column_type data_type data_type_l data_count
 %type <integer> number alterop
 
-/* Reference: http://mates.ms.mff.cuni.cz/oracle/doc/ora815nt/server.815/a67779/operator.htm */
 %left TK_OR
 %left TK_AND
 %left TK_NOT
@@ -148,7 +147,7 @@ onequery:
     ;
 
 oneinsert:
-    TK_INSERT TK_INTO table TK_LP selcollist TK_RP TK_VALUES TK_LP constlist TK_RP
+    TK_INSERT TK_INTO table TK_LP collist TK_RP TK_VALUES TK_LP constlist TK_RP
         {
             SQL_input *sql = (SQL_input*) info;
             MSIVIEW *insert = NULL;
@@ -159,7 +158,7 @@ oneinsert:
 
             PARSER_BUBBLE_UP_VIEW( sql, $$,  insert );
         }
-  | TK_INSERT TK_INTO table TK_LP selcollist TK_RP TK_VALUES TK_LP constlist TK_RP TK_TEMPORARY
+  | TK_INSERT TK_INTO table TK_LP collist TK_RP TK_VALUES TK_LP constlist TK_RP TK_TEMPORARY
         {
             SQL_input *sql = (SQL_input*) info;
             MSIVIEW *insert = NULL;
@@ -307,7 +306,7 @@ onedrop:
   ;
 
 table_def:
-    column_def TK_PRIMARY TK_KEY selcollist
+    column_def TK_PRIMARY TK_KEY collist
         {
             if( SQL_MarkPrimaryKeys( &$1, $4 ) )
                 $$ = $1;
@@ -448,8 +447,20 @@ selectfrom:
     ;
 
 selcollist:
+    selcolumn
+  | selcolumn TK_COMMA selcollist
+        {
+            $1->next = $3;
+        }
+  | TK_STAR
+        {
+            $$ = NULL;
+        }
+    ;
+
+collist:
     column
-  | column TK_COMMA selcollist
+  | column TK_COMMA collist
         {
             $1->next = $3;
         }
@@ -472,7 +483,7 @@ from:
 
             PARSER_BUBBLE_UP_VIEW( sql, $$, table );
         }
-  | unorderdfrom TK_ORDER TK_BY selcollist
+  | unorderdfrom TK_ORDER TK_BY collist
         {
             UINT r;
 
@@ -520,8 +531,7 @@ tablelist:
         {
             $$ = $1;
         }
-  |
-    table TK_COMMA tablelist
+  | table TK_COMMA tablelist
         {
             $$ = parser_add_table( info, $3, $1 );
             if (!$$)
@@ -689,6 +699,27 @@ column:
         }
     ;
 
+selcolumn:
+    table TK_DOT id
+        {
+            $$ = parser_alloc_column( info, $1, $3 );
+            if( !$$ )
+                YYABORT;
+        }
+  | id
+        {
+            $$ = parser_alloc_column( info, NULL, $1 );
+            if( !$$ )
+                YYABORT;
+        }
+  | string
+        {
+            $$ = parser_alloc_column( info, NULL, $1 );
+            if( !$$ )
+                YYABORT;
+        }
+    ;
+
 table:
     id
         {
@@ -698,6 +729,14 @@ table:
 
 id:
     TK_ID
+        {
+            if ( SQL_getstring( info, &$1, &$$ ) != ERROR_SUCCESS || !$$ )
+                YYABORT;
+        }
+    ;
+
+string:
+    TK_STRING
         {
             if ( SQL_getstring( info, &$1, &$$ ) != ERROR_SUCCESS || !$$ )
                 YYABORT;

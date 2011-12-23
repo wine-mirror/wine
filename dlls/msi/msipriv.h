@@ -47,6 +47,7 @@ static const BOOL is_64bit = sizeof(void *) > sizeof(int);
 #define MSITYPE_NULLABLE 0x1000
 #define MSITYPE_KEY      0x2000
 #define MSITYPE_TEMPORARY 0x4000
+#define MSITYPE_UNKNOWN   0x8000
 
 #define MAX_STREAM_NAME_LEN     62
 #define LONG_STR_BYTES  3

@@ -501,6 +501,8 @@ static UINT msi_set_record_type_string( MSIRECORD *rec, UINT field,
         szType[0] = 'v';
     else if (type & MSITYPE_LOCALIZABLE)
         szType[0] = 'l';
+    else if (type & MSITYPE_UNKNOWN)
+        szType[0] = 'f';
     else if (type & MSITYPE_STRING)
     {
         if (temporary)
