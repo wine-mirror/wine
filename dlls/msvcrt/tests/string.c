@@ -1583,7 +1583,7 @@ static void test__strlwr_s(void)
     ok(ret == EINVAL, "Expected _strlwr_s to return EINVAL, got %d\n", ret);
     ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
     ok(!memcmp(buffer, "\0oRrIsTeR", sizeof("\0oRrIsTeR")),
-       "Expected the output buffer to be \"gorrIsTeR\"\n");
+       "Expected the output buffer to be \"\\0oRrIsTeR\"\n");
 
     strcpy(buffer, "GoRrIsTeR");
     errno = EBADF;
@@ -1591,7 +1591,7 @@ static void test__strlwr_s(void)
     ok(ret == EINVAL, "Expected _strlwr_s to return EINVAL, got %d\n", ret);
     ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
     ok(!memcmp(buffer, "\0oRrIsTeR", sizeof("\0oRrIsTeR")),
-       "Expected the output buffer to be \"gorrIsTeR\"\n");
+       "Expected the output buffer to be \"\\0oRrIsTeR\"\n");
 
     strcpy(buffer, "GoRrIsTeR");
     ret = p_strlwr_s(buffer, sizeof("GoRrIsTeR"));
