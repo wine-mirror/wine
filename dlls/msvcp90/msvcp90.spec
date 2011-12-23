@@ -1012,12 +1012,12 @@
 @ stub -arch=win64 ??0?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEAA@AEBV_Locinfo@1@_K@Z
 @ stub -arch=win32 ??0?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QAE@I@Z
 @ stub -arch=win64 ??0?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEAA@_K@Z
-@ stub -arch=win32 ??0?$numpunct@D@std@@IAE@PBDI_N@Z
-@ stub -arch=win64 ??0?$numpunct@D@std@@IEAA@PEBD_K_N@Z
-@ stub -arch=win32 ??0?$numpunct@D@std@@QAE@ABV_Locinfo@1@I_N@Z
-@ stub -arch=win64 ??0?$numpunct@D@std@@QEAA@AEBV_Locinfo@1@_K_N@Z
-@ stub -arch=win32 ??0?$numpunct@D@std@@QAE@I@Z
-@ stub -arch=win64 ??0?$numpunct@D@std@@QEAA@_K@Z
+@ thiscall -arch=win32 ??0?$numpunct@D@std@@IAE@PBDI_N@Z(ptr str long long) numpunct_char_ctor_name
+@ cdecl -arch=win64 ??0?$numpunct@D@std@@IEAA@PEBD_K_N@Z(ptr str long long) numpunct_char_ctor_name
+@ thiscall -arch=win32 ??0?$numpunct@D@std@@QAE@ABV_Locinfo@1@I_N@Z(ptr ptr long long) numpunct_char_ctor_locinfo
+@ cdecl -arch=win64 ??0?$numpunct@D@std@@QEAA@AEBV_Locinfo@1@_K_N@Z(ptr ptr long long) numpunct_char_ctor_locinfo
+@ thiscall -arch=win32 ??0?$numpunct@D@std@@QAE@I@Z(ptr long) numpunct_char_ctor_refs
+@ cdecl -arch=win64 ??0?$numpunct@D@std@@QEAA@_K@Z(ptr long) numpunct_char_ctor_refs
 @ stub -arch=win32 ??0?$numpunct@G@std@@IAE@PBDI_N@Z
 @ stub -arch=win64 ??0?$numpunct@G@std@@IEAA@PEBD_K_N@Z
 @ stub -arch=win32 ??0?$numpunct@G@std@@QAE@ABV_Locinfo@1@I_N@Z
@@ -1290,8 +1290,8 @@
 @ stub -arch=win64 ??1?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@MEAA@XZ
 @ stub -arch=win32 ??1?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MAE@XZ
 @ stub -arch=win64 ??1?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEAA@XZ
-@ stub -arch=win32 ??1?$numpunct@D@std@@MAE@XZ
-@ stub -arch=win64 ??1?$numpunct@D@std@@MEAA@XZ
+@ thiscall -arch=win32 ??1?$numpunct@D@std@@MAE@XZ(ptr) numpunct_char_dtor
+@ cdecl -arch=win64 ??1?$numpunct@D@std@@MEAA@XZ(ptr) numpunct_char_dtor
 @ stub -arch=win32 ??1?$numpunct@G@std@@MAE@XZ
 @ stub -arch=win64 ??1?$numpunct@G@std@@MEAA@XZ
 @ stub -arch=win32 ??1?$numpunct@_W@std@@MAE@XZ
@@ -1848,7 +1848,7 @@
 # extern ??_7?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@
 # extern ??_7?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@
 # extern ??_7?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@
-# extern ??_7?$numpunct@D@std@@6B@
+@ extern ??_7?$numpunct@D@std@@6B@ MSVCP_numpunct_char_vtable
 # extern ??_7?$numpunct@G@std@@6B@
 # extern ??_7?$numpunct@_W@std@@6B@
 # extern ??_7?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@
@@ -2057,8 +2057,8 @@
 @ stub -arch=win64 ??_F?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@QEAAXXZ
 @ stub -arch=win32 ??_F?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QAEXXZ
 @ stub -arch=win64 ??_F?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@QEAAXXZ
-@ stub -arch=win32 ??_F?$numpunct@D@std@@QAEXXZ
-@ stub -arch=win64 ??_F?$numpunct@D@std@@QEAAXXZ
+@ thiscall -arch=win32 ??_F?$numpunct@D@std@@QAEXXZ(ptr) numpunct_char_ctor
+@ cdecl -arch=win64 ??_F?$numpunct@D@std@@QEAAXXZ(ptr) numpunct_char_ctor
 @ stub -arch=win32 ??_F?$numpunct@G@std@@QAEXXZ
 @ stub -arch=win64 ??_F?$numpunct@G@std@@QEAAXXZ
 @ stub -arch=win32 ??_F?$numpunct@_W@std@@QAEXXZ
@@ -2281,8 +2281,8 @@
 @ stub -arch=win64 ?_Getcat@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z
 @ stub -arch=win32 ?_Getcat@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@SAIPAPBVfacet@locale@2@PBV42@@Z
 @ stub -arch=win64 ?_Getcat@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z
-@ stub -arch=win32 ?_Getcat@?$numpunct@D@std@@SAIPAPBVfacet@locale@2@PBV42@@Z
-@ stub -arch=win64 ?_Getcat@?$numpunct@D@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z
+@ cdecl -arch=win32 ?_Getcat@?$numpunct@D@std@@SAIPAPBVfacet@locale@2@PBV42@@Z(ptr ptr) numpunct_char__Getcat
+@ cdecl -arch=win64 ?_Getcat@?$numpunct@D@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z(ptr ptr) numpunct_char__Getcat
 @ stub -arch=win32 ?_Getcat@?$numpunct@G@std@@SAIPAPBVfacet@locale@2@PBV42@@Z
 @ stub -arch=win64 ?_Getcat@?$numpunct@G@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z
 @ stub -arch=win32 ?_Getcat@?$numpunct@_W@std@@SAIPAPBVfacet@locale@2@PBV42@@Z
@@ -2506,8 +2506,8 @@
 @ stub -arch=win64 ?_Init@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@IEAAXAEBV_Locinfo@2@@Z
 @ stub -arch=win32 ?_Init@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@IAEXABV_Locinfo@2@@Z
 @ stub -arch=win64 ?_Init@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@IEAAXAEBV_Locinfo@2@@Z
-@ stub -arch=win32 ?_Init@?$numpunct@D@std@@IAEXABV_Locinfo@2@_N@Z
-@ stub -arch=win64 ?_Init@?$numpunct@D@std@@IEAAXAEBV_Locinfo@2@_N@Z
+@ thiscall -arch=win32 ?_Init@?$numpunct@D@std@@IAEXABV_Locinfo@2@_N@Z(ptr ptr long) numpunct_char__Init
+@ cdecl -arch=win64 ?_Init@?$numpunct@D@std@@IEAAXAEBV_Locinfo@2@_N@Z(ptr ptr long) numpunct_char__Init
 @ stub -arch=win32 ?_Init@?$numpunct@G@std@@IAEXABV_Locinfo@2@_N@Z
 @ stub -arch=win64 ?_Init@?$numpunct@G@std@@IEAAXAEBV_Locinfo@2@_N@Z
 @ stub -arch=win32 ?_Init@?$numpunct@_W@std@@IAEXABV_Locinfo@2@_N@Z
@@ -2822,8 +2822,8 @@
 @ stub -arch=win64 ?_Tidy@?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@IEAAXXZ
 @ thiscall -arch=win32 ?_Tidy@?$ctype@D@std@@IAEXXZ(ptr) ctype_char__Tidy
 @ cdecl -arch=win64 ?_Tidy@?$ctype@D@std@@IEAAXXZ(ptr) ctype_char__Tidy
-@ stub -arch=win32 ?_Tidy@?$numpunct@D@std@@AAEXXZ
-@ stub -arch=win64 ?_Tidy@?$numpunct@D@std@@AEAAXXZ
+@ thiscall -arch=win32 ?_Tidy@?$numpunct@D@std@@AAEXXZ(ptr) numpunct_char__Tidy
+@ cdecl -arch=win64 ?_Tidy@?$numpunct@D@std@@AEAAXXZ(ptr) numpunct_char__Tidy
 @ stub -arch=win32 ?_Tidy@?$numpunct@G@std@@AAEXXZ
 @ stub -arch=win64 ?_Tidy@?$numpunct@G@std@@AEAAXXZ
 @ stub -arch=win32 ?_Tidy@?$numpunct@_W@std@@AAEXXZ
@@ -3222,8 +3222,8 @@
 @ stub -arch=win64 ?decimal_point@?$_Mpunct@G@std@@QEBAGXZ
 @ stub -arch=win32 ?decimal_point@?$_Mpunct@_W@std@@QBE_WXZ
 @ stub -arch=win64 ?decimal_point@?$_Mpunct@_W@std@@QEBA_WXZ
-@ stub -arch=win32 ?decimal_point@?$numpunct@D@std@@QBEDXZ
-@ stub -arch=win64 ?decimal_point@?$numpunct@D@std@@QEBADXZ
+@ thiscall -arch=win32 ?decimal_point@?$numpunct@D@std@@QBEDXZ(ptr) numpunct_char_decimal_point
+@ cdecl -arch=win64 ?decimal_point@?$numpunct@D@std@@QEBADXZ(ptr) numpunct_char_decimal_point
 @ stub -arch=win32 ?decimal_point@?$numpunct@G@std@@QBEGXZ
 @ stub -arch=win64 ?decimal_point@?$numpunct@G@std@@QEBAGXZ
 @ stub -arch=win32 ?decimal_point@?$numpunct@_W@std@@QBE_WXZ
@@ -3320,16 +3320,16 @@
 @ stub -arch=win64 ?do_decimal_point@?$_Mpunct@G@std@@MEBAGXZ
 @ stub -arch=win32 ?do_decimal_point@?$_Mpunct@_W@std@@MBE_WXZ
 @ stub -arch=win64 ?do_decimal_point@?$_Mpunct@_W@std@@MEBA_WXZ
-@ stub -arch=win32 ?do_decimal_point@?$numpunct@D@std@@MBEDXZ
-@ stub -arch=win64 ?do_decimal_point@?$numpunct@D@std@@MEBADXZ
+@ thiscall -arch=win32 ?do_decimal_point@?$numpunct@D@std@@MBEDXZ(ptr) numpunct_char_do_decimal_point
+@ cdecl -arch=win64 ?do_decimal_point@?$numpunct@D@std@@MEBADXZ(ptr) numpunct_char_do_decimal_point
 @ stub -arch=win32 ?do_decimal_point@?$numpunct@G@std@@MBEGXZ
 @ stub -arch=win64 ?do_decimal_point@?$numpunct@G@std@@MEBAGXZ
 @ stub -arch=win32 ?do_decimal_point@?$numpunct@_W@std@@MBE_WXZ
 @ stub -arch=win64 ?do_decimal_point@?$numpunct@_W@std@@MEBA_WXZ
 @ stub -arch=win32 ?do_encoding@codecvt_base@std@@MBEHXZ
 @ stub -arch=win64 ?do_encoding@codecvt_base@std@@MEBAHXZ
-@ stub -arch=win32 ?do_falsename@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win64 ?do_falsename@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
+@ thiscall -arch=win32 ?do_falsename@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) numpunct_char_do_falsename
+@ cdecl -arch=win64 ?do_falsename@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) numpunct_char_do_falsename
 @ stub -arch=win32 ?do_falsename@?$numpunct@G@std@@MBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
 @ stub -arch=win64 ?do_falsename@?$numpunct@G@std@@MEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
 @ stub -arch=win32 ?do_falsename@?$numpunct@_W@std@@MBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ
@@ -3460,8 +3460,8 @@
 @ stub -arch=win64 ?do_grouping@?$_Mpunct@G@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win32 ?do_grouping@?$_Mpunct@_W@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win64 ?do_grouping@?$_Mpunct@_W@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win32 ?do_grouping@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win64 ?do_grouping@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
+@ thiscall -arch=win32 ?do_grouping@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) numpunct_char_do_grouping
+@ cdecl -arch=win64 ?do_grouping@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) numpunct_char_do_grouping
 @ stub -arch=win32 ?do_grouping@?$numpunct@G@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win64 ?do_grouping@?$numpunct@G@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win32 ?do_grouping@?$numpunct@_W@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
@@ -3626,8 +3626,8 @@
 @ stub -arch=win64 ?do_thousands_sep@?$_Mpunct@G@std@@MEBAGXZ
 @ stub -arch=win32 ?do_thousands_sep@?$_Mpunct@_W@std@@MBE_WXZ
 @ stub -arch=win64 ?do_thousands_sep@?$_Mpunct@_W@std@@MEBA_WXZ
-@ stub -arch=win32 ?do_thousands_sep@?$numpunct@D@std@@MBEDXZ
-@ stub -arch=win64 ?do_thousands_sep@?$numpunct@D@std@@MEBADXZ
+@ thiscall -arch=win32 ?do_thousands_sep@?$numpunct@D@std@@MBEDXZ(ptr) numpunct_char_do_thousands_sep
+@ cdecl -arch=win64 ?do_thousands_sep@?$numpunct@D@std@@MEBADXZ(ptr) numpunct_char_do_thousands_sep
 @ stub -arch=win32 ?do_thousands_sep@?$numpunct@G@std@@MBEGXZ
 @ stub -arch=win64 ?do_thousands_sep@?$numpunct@G@std@@MEBAGXZ
 @ stub -arch=win32 ?do_thousands_sep@?$numpunct@_W@std@@MBE_WXZ
@@ -3662,8 +3662,8 @@
 @ cdecl -arch=win64 ?do_transform@?$collate@G@std@@MEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@PEBG0@Z(ptr ptr ptr ptr) collate_wchar_do_transform
 @ thiscall -arch=win32 ?do_transform@?$collate@_W@std@@MBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@PB_W0@Z(ptr ptr ptr ptr) collate_wchar_do_transform
 @ cdecl -arch=win64 ?do_transform@?$collate@_W@std@@MEBA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@PEB_W0@Z(ptr ptr ptr ptr) collate_wchar_do_transform
-@ stub -arch=win32 ?do_truename@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win64 ?do_truename@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
+@ thiscall -arch=win32 ?do_truename@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) numpunct_char_do_truename
+@ cdecl -arch=win64 ?do_truename@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) numpunct_char_do_truename
 @ stub -arch=win32 ?do_truename@?$numpunct@G@std@@MBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
 @ stub -arch=win64 ?do_truename@?$numpunct@G@std@@MEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
 @ stub -arch=win32 ?do_truename@?$numpunct@_W@std@@MBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ
@@ -3799,8 +3799,8 @@
 @ cdecl ?exp@?$_Ctraits@O@std@@SAOO@Z(double) std_Ctraits_long_double_exp
 @ thiscall -arch=win32 ?fail@ios_base@std@@QBE_NXZ(ptr) ios_base_fail
 @ cdecl -arch=win64 ?fail@ios_base@std@@QEBA_NXZ(ptr) ios_base_fail
-@ stub -arch=win32 ?falsename@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win64 ?falsename@?$numpunct@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
+@ thiscall -arch=win32 ?falsename@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) numpunct_char_falsename
+@ cdecl -arch=win64 ?falsename@?$numpunct@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) numpunct_char_falsename
 @ stub -arch=win32 ?falsename@?$numpunct@G@std@@QBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
 @ stub -arch=win64 ?falsename@?$numpunct@G@std@@QEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
 @ stub -arch=win32 ?falsename@?$numpunct@_W@std@@QBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ
@@ -4171,8 +4171,8 @@
 @ stub -arch=win64 ?grouping@?$_Mpunct@G@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win32 ?grouping@?$_Mpunct@_W@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win64 ?grouping@?$_Mpunct@_W@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win32 ?grouping@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win64 ?grouping@?$numpunct@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
+@ thiscall -arch=win32 ?grouping@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) numpunct_char_grouping
+@ cdecl -arch=win64 ?grouping@?$numpunct@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) numpunct_char_grouping
 @ stub -arch=win32 ?grouping@?$numpunct@G@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win64 ?grouping@?$numpunct@G@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
 @ stub -arch=win32 ?grouping@?$numpunct@_W@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
@@ -4223,7 +4223,7 @@
 # extern ?id@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@2V0locale@2@A
 # extern ?id@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@2V0locale@2@A
 # extern ?id@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@2V0locale@2@A
-# extern ?id@?$numpunct@D@std@@2V0locale@2@A
+@ extern ?id@?$numpunct@D@std@@2V0locale@2@A numpunct_char_id
 # extern ?id@?$numpunct@G@std@@2V0locale@2@A
 # extern ?id@?$numpunct@_W@std@@2V0locale@2@A
 # extern ?id@?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@2V0locale@2@A
@@ -5558,8 +5558,8 @@
 @ stub -arch=win64 ?thousands_sep@?$_Mpunct@G@std@@QEBAGXZ
 @ stub -arch=win32 ?thousands_sep@?$_Mpunct@_W@std@@QBE_WXZ
 @ stub -arch=win64 ?thousands_sep@?$_Mpunct@_W@std@@QEBA_WXZ
-@ stub -arch=win32 ?thousands_sep@?$numpunct@D@std@@QBEDXZ
-@ stub -arch=win64 ?thousands_sep@?$numpunct@D@std@@QEBADXZ
+@ thiscall -arch=win32 ?thousands_sep@?$numpunct@D@std@@QBEDXZ(ptr) numpunct_char_thousands_sep
+@ cdecl -arch=win64 ?thousands_sep@?$numpunct@D@std@@QEBADXZ(ptr) numpunct_char_thousands_sep
 @ stub -arch=win32 ?thousands_sep@?$numpunct@G@std@@QBEGXZ
 @ stub -arch=win64 ?thousands_sep@?$numpunct@G@std@@QEBAGXZ
 @ stub -arch=win32 ?thousands_sep@?$numpunct@_W@std@@QBE_WXZ
@@ -5622,8 +5622,8 @@
 @ cdecl -arch=win64 ?transform@?$collate@_W@std@@QEBA?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@PEB_W0@Z(ptr ptr ptr ptr) collate_wchar_transform
 @ extern ?traps@_Num_base@std@@2_NB std_Num_base_traps
 @ extern ?traps@_Num_float_base@std@@2_NB std_Num_float_base_traps
-@ stub -arch=win32 ?truename@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
-@ stub -arch=win64 ?truename@?$numpunct@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ
+@ thiscall -arch=win32 ?truename@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) numpunct_char_truename
+@ cdecl -arch=win64 ?truename@?$numpunct@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ(ptr ptr) numpunct_char_truename
 @ stub -arch=win32 ?truename@?$numpunct@G@std@@QBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
 @ stub -arch=win64 ?truename@?$numpunct@G@std@@QEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ
 @ stub -arch=win32 ?truename@?$numpunct@_W@std@@QBE?AV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@XZ

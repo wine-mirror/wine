@@ -107,6 +107,15 @@ typedef struct {
     _Cvtvec cvt;
 } ctype_wchar;
 
+typedef struct {
+    locale_facet facet;
+    const char *grouping;
+    char dp;
+    char sep;
+    const char *false_name;
+    const char *true_name;
+} numpunct_char;
+
 /* ?_Id_cnt@id@locale@std@@0HA */
 int locale_id__Id_cnt = 0;
 
@@ -2394,6 +2403,200 @@ const wchar_t* __thiscall ctype_wchar_scan_not(const ctype_wchar *this,
     return call_ctype_wchar_do_scan_not(this, mask, first, last);
 }
 
+/* ?id@?$numpunct@D@std@@2V0locale@2@A */
+locale_id numpunct_char_id = {0};
+
+/* ??_7?$numpunct@D@std@@6B@ */
+extern const vtable_ptr MSVCP_numpunct_char_vtable;
+
+/* ?_Init@?$numpunct@D@std@@IAEXABV_Locinfo@2@_N@Z */
+/* ?_Init@?$numpunct@D@std@@IEAAXAEBV_Locinfo@2@_N@Z */
+DEFINE_THISCALL_WRAPPER(numpunct_char__Init, 12)
+void __thiscall numpunct_char__Init(numpunct_char *this, _Locinfo *locinfo, MSVCP_bool isdef)
+{
+    FIXME("(%p %p %d) stub\n", this, locinfo, isdef);
+}
+
+/* ?_Tidy@?$numpunct@D@std@@AAEXXZ */
+/* ?_Tidy@?$numpunct@D@std@@AEAAXXZ */
+DEFINE_THISCALL_WRAPPER(numpunct_char__Tidy, 4)
+void __thiscall numpunct_char__Tidy(numpunct_char *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ??0?$numpunct@D@std@@QAE@ABV_Locinfo@1@I_N@Z */
+/* ??0?$numpunct@D@std@@QEAA@AEBV_Locinfo@1@_K_N@Z */
+DEFINE_THISCALL_WRAPPER(numpunct_char_ctor_locinfo, 16)
+numpunct_char* __thiscall numpunct_char_ctor_locinfo(numpunct_char *this,
+        _Locinfo *locinfo, MSVCP_size_t refs, MSVCP_bool usedef)
+{
+    FIXME("(%p %p %lu %d) stub\n", this, locinfo, refs, usedef);
+    this->facet.vtable = &MSVCP_numpunct_char_vtable;
+    return NULL;
+}
+
+/* ??0?$numpunct@D@std@@IAE@PBDI_N@Z */
+/* ??0?$numpunct@D@std@@IEAA@PEBD_K_N@Z */
+DEFINE_THISCALL_WRAPPER(numpunct_char_ctor_name, 16)
+numpunct_char* __thiscall numpunct_char_ctor_name(numpunct_char *this,
+        const char *name, MSVCP_size_t refs, MSVCP_bool usedef)
+{
+    FIXME("(%p %s %lu %d) stub\n", this, debugstr_a(name), refs, usedef);
+    this->facet.vtable = &MSVCP_numpunct_char_vtable;
+    return NULL;
+}
+
+/* ??0?$numpunct@D@std@@QAE@I@Z */
+/* ??0?$numpunct@D@std@@QEAA@_K@Z */
+DEFINE_THISCALL_WRAPPER(numpunct_char_ctor_refs, 8)
+numpunct_char* __thiscall numpunct_char_ctor_refs(numpunct_char *this, MSVCP_size_t refs)
+{
+    FIXME("(%p %lu) stub\n", this, refs);
+    this->facet.vtable = &MSVCP_numpunct_char_vtable;
+    return NULL;
+}
+
+/* ??_F?$numpunct@D@std@@QAEXXZ */
+/* ??_F?$numpunct@D@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(numpunct_char_ctor, 4)
+numpunct_char* __thiscall numpunct_char_ctor(numpunct_char *this)
+{
+    return numpunct_char_ctor_refs(this, 0);
+}
+
+/* ??1?$numpunct@D@std@@MAE@XZ */
+/* ??1?$numpunct@D@std@@MEAA@XZ */
+DEFINE_THISCALL_WRAPPER(numpunct_char_dtor, 4)
+void __thiscall numpunct_char_dtor(numpunct_char *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_numpunct_char_vector_dtor, 8)
+numpunct_char* __thiscall MSVCP_numpunct_char_vector_dtor(numpunct_char *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        int i, *ptr = (int *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            numpunct_char_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        numpunct_char_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+/* ?_Getcat@?$numpunct@D@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
+/* ?_Getcat@?$numpunct@D@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
+MSVCP_size_t __cdecl numpunct_char__Getcat(const locale_facet **facet, const locale *loc)
+{
+    FIXME("(%p %p) stub\n", facet, loc);
+    return 0;
+}
+
+/* ?do_decimal_point@?$numpunct@D@std@@MBEDXZ */
+/* ?do_decimal_point@?$numpunct@D@std@@MEBADXZ */
+DEFINE_THISCALL_WRAPPER(numpunct_char_do_decimal_point, 4)
+char __thiscall numpunct_char_do_decimal_point(const numpunct_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?decimal_point@?$numpunct@D@std@@QBEDXZ */
+/* ?decimal_point@?$numpunct@D@std@@QEBADXZ */
+DEFINE_THISCALL_WRAPPER(numpunct_char_decimal_point, 4)
+char __thiscall numpunct_char_decimal_point(const numpunct_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?do_thousands_sep@?$numpunct@D@std@@MBEDXZ */
+/* ?do_thousands_sep@?$numpunct@D@std@@MEBADXZ */
+DEFINE_THISCALL_WRAPPER(numpunct_char_do_thousands_sep, 4)
+char __thiscall numpunct_char_do_thousands_sep(const numpunct_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?thousands_sep@?$numpunct@D@std@@QBEDXZ */
+/* ?thousands_sep@?$numpunct@D@std@@QEBADXZ */
+DEFINE_THISCALL_WRAPPER(numpunct_char_thousands_sep, 4)
+char __thiscall numpunct_char_thousands_sep(const numpunct_char *this)
+{
+    FIXME("(%p) stub\n", this);
+    return 0;
+}
+
+/* ?do_grouping@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+/* ?do_grouping@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+DEFINE_THISCALL_WRAPPER_RETPTR(numpunct_char_do_grouping, 4)
+basic_string_char __thiscall numpunct_char_do_grouping(const numpunct_char *this)
+{
+    basic_string_char ret = {0};
+    FIXME("(%p) stub\n", this);
+    return ret;
+}
+
+/* ?grouping@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+/* ?grouping@?$numpunct@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+DEFINE_THISCALL_WRAPPER_RETPTR(numpunct_char_grouping, 4)
+basic_string_char __thiscall numpunct_char_grouping(const numpunct_char *this)
+{
+    basic_string_char ret = {0};
+    FIXME("(%p) stub\n", this);
+    return ret;
+}
+
+/* ?do_falsename@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+/* ?do_falsename@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+DEFINE_THISCALL_WRAPPER_RETPTR(numpunct_char_do_falsename, 4)
+basic_string_char __thiscall numpunct_char_do_falsename(const numpunct_char *this)
+{
+    basic_string_char ret = {0};
+    FIXME("(%p) stub\n", this);
+    return ret;
+}
+
+/* ?falsename@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+/* ?falsename@?$numpunct@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+DEFINE_THISCALL_WRAPPER_RETPTR(numpunct_char_falsename, 4)
+basic_string_char __thiscall numpunct_char_falsename(const numpunct_char *this)
+{
+    basic_string_char ret = {0};
+    FIXME("(%p) stub\n", this);
+    return ret;
+}
+
+/* ?do_truename@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+/* ?do_truename@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+DEFINE_THISCALL_WRAPPER_RETPTR(numpunct_char_do_truename, 4)
+basic_string_char __thiscall numpunct_char_do_truename(const numpunct_char *this)
+{
+    basic_string_char ret = {0};
+    FIXME("(%p) stub\n", this);
+    return ret;
+}
+
+/* ?truename@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+/* ?truename@?$numpunct@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+DEFINE_THISCALL_WRAPPER_RETPTR(numpunct_char_truename, 4)
+basic_string_char __thiscall numpunct_char_truename(const numpunct_char *this)
+{
+    basic_string_char ret = {0};
+    FIXME("(%p) stub\n", this);
+    return ret;
+}
+
 /* ??0_Locimp@locale@std@@AAE@_N@Z */
 /* ??0_Locimp@locale@std@@AEAA@_N@Z */
 DEFINE_THISCALL_WRAPPER(locale__Locimp_ctor_transparent, 8)
@@ -2812,6 +3015,7 @@ DEFINE_RTTI_DATA(ctype_base, 0, 1, &locale_facet_rtti_base_descriptor, NULL, NUL
 DEFINE_RTTI_DATA(ctype_char, 0, 2, &ctype_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, NULL, ".?AV?$ctype@D@std@@");
 DEFINE_RTTI_DATA(ctype_wchar, 0, 2, &ctype_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, NULL, ".?AV?$ctype@_W@std@@");
 DEFINE_RTTI_DATA(ctype_short, 0, 2, &ctype_base_rtti_base_descriptor, &locale_facet_rtti_base_descriptor, NULL, ".?AV?$ctype@G@std@@");
+DEFINE_RTTI_DATA(numpunct_char, 0, 1, &locale_facet_rtti_base_descriptor, NULL, NULL, ".?AV?$numpunct@D@std@@");
 
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
@@ -2870,6 +3074,12 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(ctype_wchar_do_narrow)
             VTABLE_ADD_FUNC(ctype_wchar_do_narrow_ch)
             VTABLE_ADD_FUNC(ctype_wchar__Do_narrow_s));
+    __ASM_VTABLE(numpunct_char,
+            VTABLE_ADD_FUNC(numpunct_char_do_decimal_point)
+            VTABLE_ADD_FUNC(numpunct_char_do_thousands_sep)
+            VTABLE_ADD_FUNC(numpunct_char_do_grouping)
+            VTABLE_ADD_FUNC(numpunct_char_do_falsename)
+            VTABLE_ADD_FUNC(numpunct_char_do_truename));
 #ifndef __GNUC__
 }
 #endif
