@@ -331,7 +331,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
         if (!file->Component->Enabled) continue;
 
         if (file->state != msifs_hashmatch &&
-            (rc = ready_media( package, file->Sequence, file->IsCompressed, mi )))
+            (rc = ready_media( package, file->IsCompressed, mi )))
         {
             ERR("Failed to ready media for %s\n", debugstr_w(file->File));
             goto done;
@@ -512,7 +512,7 @@ UINT ACTION_PatchFiles( MSIPACKAGE *package )
         {
             MSICABDATA data;
 
-            rc = ready_media( package, patch->Sequence, TRUE, mi );
+            rc = ready_media( package, TRUE, mi );
             if (rc != ERROR_SUCCESS)
             {
                 ERR("Failed to ready media for %s\n", debugstr_w(file->File));

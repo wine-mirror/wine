@@ -838,79 +838,71 @@ static UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi)
     return ERROR_FUNCTION_FAILED;
 }
 
-UINT ready_media(MSIPACKAGE *package, UINT Sequence, BOOL IsCompressed, MSIMEDIAINFO *mi)
+UINT ready_media( MSIPACKAGE *package, BOOL compressed, MSIMEDIAINFO *mi )
 {
-    UINT rc = ERROR_SUCCESS;
-    WCHAR *cabinet_file;
+    UINT rc;
+    WCHAR *cabinet_file = NULL;
 
     /* media info for continuous cabinet is already loaded */
-    if (mi->is_continuous)
-        return ERROR_SUCCESS;
+    if (mi->is_continuous) return ERROR_SUCCESS;
 
-    /* cabinet is internal, no checks needed */
-    if (!mi->cabinet || mi->cabinet[0] == '#')
-        return ERROR_SUCCESS;
-
-    cabinet_file = get_cabinet_filename(mi);
-
-    /* package should be downloaded */
-    if (IsCompressed &&
-        GetFileAttributesW(cabinet_file) == INVALID_FILE_ATTRIBUTES &&
-        package->BaseURL && UrlIsW(package->BaseURL, URLIS_URL))
+    if (mi->cabinet)
     {
-        WCHAR temppath[MAX_PATH], *p;
+        /* cabinet is internal, no checks needed */
+        if (mi->cabinet[0] == '#') return ERROR_SUCCESS;
 
-        rc = msi_download_file(cabinet_file, temppath);
-        if (rc != ERROR_SUCCESS)
+        if (!(cabinet_file = get_cabinet_filename( mi ))) return ERROR_OUTOFMEMORY;
+
+        /* package should be downloaded */
+        if (compressed && GetFileAttributesW( cabinet_file ) == INVALID_FILE_ATTRIBUTES &&
+            package->BaseURL && UrlIsW( package->BaseURL, URLIS_URL ))
         {
-            ERR("Failed to download %s (%u)\n", debugstr_w(cabinet_file), rc);
-            msi_free(cabinet_file);
-            return rc;
-        }
-        if ((p = strrchrW(temppath, '\\'))) *p = 0;
-        strcpyW(mi->sourcedir, temppath);
-        PathAddBackslashW(mi->sourcedir);
-        msi_free(mi->cabinet);
-        mi->cabinet = strdupW(p + 1);
+            WCHAR temppath[MAX_PATH], *p;
 
-        msi_free(cabinet_file);
-        return ERROR_SUCCESS;
-    }
-
-    /* check volume matches, change media if not */
-    if (mi->volume_label && mi->disk_id > 1 &&
-        strcmpW( mi->first_volume, mi->volume_label ))
-    {
-        LPWSTR source = msi_dup_property(package->db, szSourceDir);
-        BOOL matches;
-
-        matches = source_matches_volume(mi, source);
-        msi_free(source);
-
-        if ((mi->type == DRIVE_CDROM || mi->type == DRIVE_REMOVABLE) && !matches)
-        {
-            rc = msi_change_media(package, mi);
-            if (rc != ERROR_SUCCESS)
+            if ((rc = msi_download_file( cabinet_file, temppath )) != ERROR_SUCCESS)
             {
-                msi_free(cabinet_file);
+                ERR("failed to download %s (%u)\n", debugstr_w(cabinet_file), rc);
+                msi_free( cabinet_file );
+                return rc;
+            }
+            if ((p = strrchrW( temppath, '\\' ))) *p = 0;
+            strcpyW( mi->sourcedir, temppath );
+            PathAddBackslashW( mi->sourcedir );
+            msi_free( mi->cabinet );
+            mi->cabinet = strdupW( p + 1 );
+            msi_free( cabinet_file );
+            return ERROR_SUCCESS;
+        }
+    }
+    /* check volume matches, change media if not */
+    if (mi->volume_label && mi->disk_id > 1 && strcmpW( mi->first_volume, mi->volume_label ))
+    {
+        WCHAR *source = msi_dup_property( package->db, szSourceDir );
+        BOOL match = source_matches_volume( mi, source );
+        msi_free( source );
+
+        if (!match && (mi->type == DRIVE_CDROM || mi->type == DRIVE_REMOVABLE))
+        {
+            if ((rc = msi_change_media( package, mi )) != ERROR_SUCCESS)
+            {
+                msi_free( cabinet_file );
                 return rc;
             }
         }
     }
-
-    if (IsCompressed &&
-        GetFileAttributesW(cabinet_file) == INVALID_FILE_ATTRIBUTES)
+    if (mi->cabinet)
     {
-        rc = find_published_source(package, mi);
-        if (rc != ERROR_SUCCESS)
+        if (compressed && GetFileAttributesW( cabinet_file ) == INVALID_FILE_ATTRIBUTES)
         {
-            ERR("Cabinet not found: %s\n", debugstr_w(cabinet_file));
-            msi_free(cabinet_file);
-            return ERROR_INSTALL_FAILURE;
+            if ((rc = find_published_source( package, mi )) != ERROR_SUCCESS)
+            {
+                ERR("cabinet not found: %s\n", debugstr_w(cabinet_file));
+                msi_free( cabinet_file );
+                return ERROR_INSTALL_FAILURE;
+            }
         }
     }
-
-    msi_free(cabinet_file);
+    msi_free( cabinet_file );
     return ERROR_SUCCESS;
 }
 

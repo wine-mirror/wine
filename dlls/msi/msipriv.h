@@ -1041,7 +1041,7 @@ typedef struct
     PVOID user;
 } MSICABDATA;
 
-extern UINT ready_media(MSIPACKAGE *package, UINT Sequence, BOOL IsCompressed, MSIMEDIAINFO *mi) DECLSPEC_HIDDEN;
+extern UINT ready_media(MSIPACKAGE *package, BOOL compressed, MSIMEDIAINFO *mi) DECLSPEC_HIDDEN;
 extern UINT msi_load_media_info(MSIPACKAGE *package, UINT Sequence, MSIMEDIAINFO *mi) DECLSPEC_HIDDEN;
 extern void msi_free_media_info(MSIMEDIAINFO *mi) DECLSPEC_HIDDEN;
 extern BOOL msi_cabextract(MSIPACKAGE* package, MSIMEDIAINFO *mi, LPVOID data) DECLSPEC_HIDDEN;
