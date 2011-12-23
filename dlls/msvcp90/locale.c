@@ -996,8 +996,6 @@ collate* __thiscall collate_short_ctor(collate *this)
 
 /* ?_Getcat@?$collate@_W@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$collate@_W@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
-/* ?_Getcat@?$collate@G@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
-/* ?_Getcat@?$collate@G@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
 MSVCP_size_t __cdecl collate_wchar__Getcat(const locale_facet **facet, const locale *loc)
 {
     TRACE("(%p %p)\n", facet, loc);
@@ -1011,6 +1009,18 @@ MSVCP_size_t __cdecl collate_wchar__Getcat(const locale_facet **facet, const loc
         }
         collate_wchar_ctor_name((collate*)*facet,
                 MSVCP_basic_string_char_c_str(&loc->ptr->name), 0);
+    }
+
+    return LC_COLLATE;
+}
+
+/* ?_Getcat@?$collate@G@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
+/* ?_Getcat@?$collate@G@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
+MSVCP_size_t __cdecl collate_short__Getcat(const locale_facet **facet, const locale *loc)
+{
+    if(facet && !*facet) {
+        collate_wchar__Getcat(facet, loc);
+        (*(locale_facet**)facet)->vtable = &MSVCP_collate_short_vtable;
     }
 
     return LC_COLLATE;
@@ -2142,8 +2152,6 @@ const char* __thiscall ctype_wchar__Widen_s(const ctype_wchar *this,
 
 /* ?_Getcat@?$ctype@_W@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
 /* ?_Getcat@?$ctype@_W@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
-/* ?_Getcat@?$ctype@G@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
-/* ?_Getcat@?$ctype@G@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
 MSVCP_size_t __cdecl ctype_wchar__Getcat(const locale_facet **facet, const locale *loc)
 {
     TRACE("(%p %p)\n", facet, loc);
@@ -2161,6 +2169,18 @@ MSVCP_size_t __cdecl ctype_wchar__Getcat(const locale_facet **facet, const local
         _Locinfo_ctor_cstr(&locinfo, MSVCP_basic_string_char_c_str(&loc->ptr->name));
         ctype_wchar_ctor_locinfo((ctype_wchar*)*facet, &locinfo, 0);
         _Locinfo_dtor(&locinfo);
+    }
+
+    return LC_CTYPE;
+}
+
+/* ?_Getcat@?$ctype@G@std@@SAIPAPBVfacet@locale@2@PBV42@@Z */
+/* ?_Getcat@?$ctype@G@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
+MSVCP_size_t __cdecl ctype_short__Getcat(const locale_facet **facet, const locale *loc)
+{
+    if(facet && !*facet) {
+        ctype_wchar__Getcat(facet, loc);
+        (*(locale_facet**)facet)->vtable = &MSVCP_ctype_short_vtable;
     }
 
     return LC_CTYPE;
