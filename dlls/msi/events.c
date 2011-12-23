@@ -389,20 +389,7 @@ static UINT ControlEvent_Reinstall( MSIPACKAGE *package, LPCWSTR argument,
 static UINT ControlEvent_ValidateProductID(MSIPACKAGE *package, LPCWSTR argument,
                                            msi_dialog *dialog)
 {
-    LPWSTR key, template;
-    UINT ret = ERROR_SUCCESS;
-
-    template = msi_dup_property( package->db, szPIDTemplate );
-    key = msi_dup_property( package->db, szPIDKEY );
-
-    if (key && template)
-    {
-        FIXME( "partial stub: template %s key %s\n", debugstr_w(template), debugstr_w(key) );
-        ret = msi_set_property( package->db, szProductID, key );
-    }
-    msi_free( template );
-    msi_free( key );
-    return ret;
+    return msi_validate_product_id( package );
 }
 
 static const WCHAR end_dialogW[] = {'E','n','d','D','i','a','l','o','g',0};

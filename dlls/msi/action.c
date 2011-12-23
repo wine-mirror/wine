@@ -6871,7 +6871,7 @@ static UINT ACTION_RemoveEnvironmentStrings( MSIPACKAGE *package )
     return rc;
 }
 
-static UINT ACTION_ValidateProductID( MSIPACKAGE *package )
+UINT msi_validate_product_id( MSIPACKAGE *package )
 {
     LPWSTR key, template, id;
     UINT r = ERROR_SUCCESS;
@@ -6884,7 +6884,6 @@ static UINT ACTION_ValidateProductID( MSIPACKAGE *package )
     }
     template = msi_dup_property( package->db, szPIDTemplate );
     key = msi_dup_property( package->db, szPIDKEY );
-
     if (key && template)
     {
         FIXME( "partial stub: template %s key %s\n", debugstr_w(template), debugstr_w(key) );
@@ -6893,6 +6892,11 @@ static UINT ACTION_ValidateProductID( MSIPACKAGE *package )
     msi_free( template );
     msi_free( key );
     return r;
+}
+
+static UINT ACTION_ValidateProductID( MSIPACKAGE *package )
+{
+    return msi_validate_product_id( package );
 }
 
 static UINT ACTION_ScheduleReboot( MSIPACKAGE *package )

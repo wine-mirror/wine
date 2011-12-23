@@ -786,6 +786,7 @@ extern INSTALLSTATE msi_get_component_action( MSIPACKAGE *package, MSICOMPONENT 
 extern INSTALLSTATE msi_get_feature_action( MSIPACKAGE *package, MSIFEATURE *feature ) DECLSPEC_HIDDEN;
 extern UINT msi_load_all_components( MSIPACKAGE *package ) DECLSPEC_HIDDEN;
 extern UINT msi_load_all_features( MSIPACKAGE *package ) DECLSPEC_HIDDEN;
+extern UINT msi_validate_product_id( MSIPACKAGE *package ) DECLSPEC_HIDDEN;
 
 /* record internals */
 extern void MSI_CloseRecord( MSIOBJECTHDR * ) DECLSPEC_HIDDEN;
