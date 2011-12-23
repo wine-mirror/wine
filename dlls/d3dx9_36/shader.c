@@ -1145,8 +1145,8 @@ static HRESULT parse_ctab_constant_type(const D3DXSHADER_TYPEINFO *type, ctab_co
     constant->desc.Bytes = calc_bytes(&constant->desc);
 
     TRACE("class = %d, type = %d, rows = %d, columns = %d, elements = %d, struct_members = %d\n",
-          constant->desc.Class, constant->desc.Type, constant->desc.Elements,
-          constant->desc.Rows, constant->desc.Columns, constant->desc.StructMembers);
+          constant->desc.Class, constant->desc.Type, constant->desc.Rows,
+          constant->desc.Columns, constant->desc.Elements, constant->desc.StructMembers);
 
     if ((constant->desc.Class == D3DXPC_STRUCT) && constant->desc.StructMembers)
     {
