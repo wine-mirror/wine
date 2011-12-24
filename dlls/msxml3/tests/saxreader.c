@@ -327,8 +327,8 @@ static HRESULT WINAPI contentHandler_putDocumentLocator(
         ISAXContentHandler* iface,
         ISAXLocator *pLocator)
 {
-    ISAXAttributes *attr;
-    HRESULT hres;
+    ISAXAttributes *attr, *attr1;
+    HRESULT hr;
 
     if(!test_expect_call(CH_PUTDOCUMENTLOCATOR))
         return E_FAIL;
@@ -338,9 +338,16 @@ static HRESULT WINAPI contentHandler_putDocumentLocator(
             msxml_version>=6 ? expectCall->column_v6 : expectCall->column);
 
     if(msxml_version >= 6) {
-        hres = ISAXLocator_QueryInterface(pLocator, &IID_ISAXAttributes, (void**)&attr);
-        ok(hres == S_OK, "QueryInterface failed: %x\n", hres);
+        EXPECT_REF(pLocator, 1);
+        hr = ISAXLocator_QueryInterface(pLocator, &IID_ISAXAttributes, (void**)&attr);
+        EXPECT_HR(hr, S_OK);
+        EXPECT_REF(pLocator, 2);
+        hr = ISAXLocator_QueryInterface(pLocator, &IID_ISAXAttributes, (void**)&attr1);
+        EXPECT_HR(hr, S_OK);
+        EXPECT_REF(pLocator, 3);
+        ok(attr == attr1, "got %p, %p\n", attr, attr1);
         ISAXAttributes_Release(attr);
+        ISAXAttributes_Release(attr1);
     }
 
     return (expectCall++)->ret;

@@ -42,6 +42,7 @@
 #include "shlwapi.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 
 #include "msxml_private.h"
 
@@ -74,6 +75,22 @@ struct bstrpool
     unsigned int index;
     unsigned int len;
 };
+
+typedef struct
+{
+    BSTR prefix;
+    BSTR uri;
+} ns;
+
+typedef struct
+{
+    struct list entry;
+    BSTR prefix;
+    BSTR local;
+    BSTR qname;
+    ns *ns; /* namespaces defined in this particular element */
+    int ns_count;
+} element_entry;
 
 typedef struct
 {
@@ -111,14 +128,7 @@ typedef struct
     int line;
     int column;
     BOOL vbInterface;
-    int nsStackSize;
-    int nsStackLast;
-    struct nsstack
-    {
-        const xmlChar *ptr;
-        BSTR prefix;
-        BSTR uri;
-    } *nsStack;
+    struct list elements;
 
     BSTR namespaceUri;
     int attributesSize;
@@ -259,71 +269,124 @@ static inline BOOL has_error_handler(const saxlocator *locator)
           (!locator->vbInterface && locator->saxreader->errorHandler);
 }
 
-static HRESULT namespacePush(saxlocator *locator, const xmlChar *prefix,
-        const xmlChar *uri)
+static BSTR build_qname(BSTR prefix, BSTR local)
 {
-    if(locator->nsStackLast>=locator->nsStackSize)
+    if (prefix && *prefix)
     {
-        struct nsstack *new_stack;
+        BSTR qname = SysAllocStringLen(NULL, SysStringLen(prefix) + SysStringLen(local) + 1);
+        WCHAR *ptr;
 
-        new_stack = HeapReAlloc(GetProcessHeap(), 0,
-                locator->nsStack, sizeof(struct nsstack)*locator->nsStackSize*2);
-        if(!new_stack) return E_OUTOFMEMORY;
-        locator->nsStack = new_stack;
-        locator->nsStackSize *= 2;
-    }
-
-    locator->nsStack[locator->nsStackLast].ptr = uri;
-    if(uri)
-    {
-        locator->nsStack[locator->nsStackLast].prefix = bstr_from_xmlChar(prefix);
-        if(!locator->nsStack[locator->nsStackLast].prefix)
-            return E_OUTOFMEMORY;
-        locator->nsStack[locator->nsStackLast].uri = bstr_from_xmlChar(uri);
-        if(!locator->nsStack[locator->nsStackLast].uri)
-        {
-            SysFreeString(locator->nsStack[locator->nsStackLast].prefix);
-            return E_OUTOFMEMORY;
-        }
+        ptr = qname;
+        strcpyW(ptr, prefix);
+        ptr += SysStringLen(prefix);
+        *ptr++ = ':';
+        strcpyW(ptr, local);
+        return qname;
     }
     else
-    {
-        locator->nsStack[locator->nsStackLast].prefix = NULL;
-        locator->nsStack[locator->nsStackLast].uri = NULL;
-    }
-
-    locator->nsStackLast++;
-
-    return S_OK;
+        return SysAllocString(local);
 }
 
-static HRESULT namespacePop(saxlocator *locator)
+static element_entry* alloc_element_entry(const xmlChar *local, const xmlChar *prefix, int nb_ns,
+    const xmlChar **namespaces)
 {
-    if(locator->nsStackLast == 0)
+    element_entry *ret;
+    int i;
+
+    ret = heap_alloc(sizeof(*ret));
+    if (!ret) return ret;
+
+    ret->local  = bstr_from_xmlChar(local);
+    ret->prefix = bstr_from_xmlChar(prefix);
+    ret->qname  = build_qname(ret->prefix, ret->local);
+    ret->ns = nb_ns ? heap_alloc(nb_ns*sizeof(ns)) : NULL;
+    ret->ns_count = nb_ns;
+
+    for (i=0; i < nb_ns; i++)
     {
-        ERR("namespace stack is empty\n");
-        return E_UNEXPECTED;
+        ret->ns[i].prefix = bstr_from_xmlChar(namespaces[2*i]);
+        ret->ns[i].uri = bstr_from_xmlChar(namespaces[2*i+1]);
     }
 
-    SysFreeString(locator->nsStack[--locator->nsStackLast].prefix);
-    SysFreeString(locator->nsStack[locator->nsStackLast].uri);
-    locator->nsStack[locator->nsStackLast].prefix = NULL;
-    locator->nsStack[locator->nsStackLast].uri = NULL;
-    return S_OK;
+    return ret;
 }
 
-static BSTR namespaceFind(saxlocator *locator, const xmlChar *ptr)
+static void free_element_entry(element_entry *element)
 {
     int i;
 
-    for(i=locator->nsStackLast-1; i>=0; i--)
+    for (i=0; i<element->ns_count;i++)
     {
-        if(ptr == locator->nsStack[i].ptr)
-            return locator->nsStack[i].uri;
+        SysFreeString(element->ns[i].prefix);
+        SysFreeString(element->ns[i].uri);
     }
 
-    ERR("namespace not found\n");
+    SysFreeString(element->prefix);
+    SysFreeString(element->local);
+
+    heap_free(element->ns);
+    heap_free(element);
+}
+
+static void push_element_ns(saxlocator *locator, element_entry *element)
+{
+    list_add_head(&locator->elements, &element->entry);
+}
+
+static element_entry * pop_element_ns(saxlocator *locator)
+{
+    element_entry *element = LIST_ENTRY(list_head(&locator->elements), element_entry, entry);
+
+    if (element)
+        list_remove(&element->entry);
+
+    return element;
+}
+
+static BSTR find_element_uri(saxlocator *locator, const xmlChar *uri)
+{
+    element_entry *element;
+    BSTR uriW;
+    int i;
+
+    if (!uri) return NULL;
+
+    uriW = bstr_from_xmlChar(uri);
+
+    LIST_FOR_EACH_ENTRY(element, &locator->elements, element_entry, entry)
+    {
+        for (i=0; i < element->ns_count; i++)
+            if (!strcmpW(uriW, element->ns[i].uri))
+            {
+                SysFreeString(uriW);
+                return element->ns[i].uri;
+            }
+    }
+
+    SysFreeString(uriW);
+    ERR("namespace uri not found, %s\n", debugstr_a((char*)uri));
     return NULL;
+}
+
+/* used to localize version dependent error check behaviour */
+static inline BOOL sax_callback_failed(saxlocator *This, HRESULT hr)
+{
+    return This->saxreader->version >= MSXML6 ? FAILED(hr) : hr != S_OK;
+}
+
+/* index value -1 means it tries to loop for a first time */
+static inline BOOL iterate_endprefix_index(saxlocator *This, const element_entry *element, int *i)
+{
+    if (This->saxreader->version >= MSXML6)
+    {
+        if (*i == -1) *i = 0; else ++*i;
+        return *i < element->ns_count;
+    }
+    else
+    {
+        if (*i == -1) *i = element->ns_count-1; else --*i;
+        return *i >= 0;
+    }
 }
 
 static BOOL bstr_pool_insert(struct bstrpool *pool, BSTR pool_entry)
@@ -417,19 +480,6 @@ static BSTR pooled_bstr_from_xmlChar(struct bstrpool *pool, const xmlChar *buf)
 static BSTR pooled_bstr_from_xmlCharN(struct bstrpool *pool, const xmlChar *buf, int len)
 {
     BSTR pool_entry = bstr_from_xmlCharN(buf, len);
-
-    if (pool_entry && !bstr_pool_insert(pool, pool_entry))
-    {
-        SysFreeString(pool_entry);
-        return NULL;
-    }
-
-    return pool_entry;
-}
-
-static BSTR pooled_QName_from_xmlChar(struct bstrpool *pool, const xmlChar *prefix, const xmlChar *name)
-{
-    BSTR pool_entry = QName_from_xmlChar(prefix, name);
 
     if (pool_entry && !bstr_pool_insert(pool, pool_entry))
     {
@@ -1086,7 +1136,7 @@ static HRESULT SAXAttributes_populate(saxlocator *locator,
     for(index=0; index<nb_attributes; index++)
     {
         attrs[index].szLocalname = bstr_from_xmlChar(xmlAttributes[index*5]);
-        attrs[index].szURI = namespaceFind(locator, xmlAttributes[index*5+2]);
+        attrs[index].szURI = find_element_uri(locator, xmlAttributes[index*5+2]);
         attrs[index].szValue = bstr_from_xmlCharN(xmlAttributes[index*5+3],
                 xmlAttributes[index*5+4]-xmlAttributes[index*5+3]);
         attrs[index].szQName = QName_from_xmlChar(xmlAttributes[index*5+1],
@@ -1124,7 +1174,7 @@ static void libxmlStartDocument(void *ctx)
         else
             hr = ISAXContentHandler_startDocument(This->saxreader->contentHandler);
 
-        if(This->saxreader->version>=MSXML6 ? FAILED(hr) : hr!=S_OK)
+        if (sax_callback_failed(This, hr))
             format_error_message_from_id(This, hr);
     }
 }
@@ -1153,7 +1203,7 @@ static void libxmlEndDocument(void *ctx)
         else
             hr = ISAXContentHandler_endDocument(This->saxreader->contentHandler);
 
-        if(This->saxreader->version>=MSXML6 ? FAILED(hr) : hr!=S_OK)
+        if (sax_callback_failed(This, hr))
             format_error_message_from_id(This, hr);
     }
 }
@@ -1169,10 +1219,9 @@ static void libxmlStartElementNS(
         int nb_defaulted,
         const xmlChar **attributes)
 {
-    BSTR NamespaceUri, LocalName, QName;
     saxlocator *This = ctx;
-    HRESULT hr;
-    int index;
+    element_entry *element;
+    HRESULT hr = S_OK;
 
     update_position(This, TRUE);
     if(*(This->pParserCtxt->input->cur) == '/')
@@ -1180,58 +1229,54 @@ static void libxmlStartElementNS(
     if(This->saxreader->version < MSXML6)
         This->column++;
 
-    hr = namespacePush(This, NULL, NULL);
-    for(index=0; hr==S_OK && index<nb_namespaces; index++)
-        hr = namespacePush(This, namespaces[2*index], namespaces[2*index+1]);
-    if(hr != S_OK)
-    {
-        for(; index>=0; index--)
-            namespacePop(This);
-        namespacePop(This);
-    }
+    element = alloc_element_entry(localname, prefix, nb_namespaces, namespaces);
+    push_element_ns(This, element);
 
-    if(hr==S_OK && has_content_handler(This))
+    if (has_content_handler(This))
     {
-        for(index=0; index<nb_namespaces; index++)
+        BSTR uri;
+        int i;
+
+        for (i = 0; i < nb_namespaces; i++)
         {
             if(This->vbInterface)
                 hr = IVBSAXContentHandler_startPrefixMapping(
                         This->saxreader->vbcontentHandler,
-                        &This->nsStack[This->nsStackLast-nb_namespaces+index].prefix,
-                        &This->nsStack[This->nsStackLast-nb_namespaces+index].uri);
+                        &element->ns[i].prefix,
+                        &element->ns[i].uri);
             else
                 hr = ISAXContentHandler_startPrefixMapping(
                         This->saxreader->contentHandler,
-                        This->nsStack[This->nsStackLast-nb_namespaces+index].prefix,
-                        SysStringLen(This->nsStack[This->nsStackLast-nb_namespaces+index].prefix),
-                        This->nsStack[This->nsStackLast-nb_namespaces+index].uri,
-                        SysStringLen(This->nsStack[This->nsStackLast-nb_namespaces+index].uri));
+                        element->ns[i].prefix,
+                        SysStringLen(element->ns[i].prefix),
+                        element->ns[i].uri,
+                        SysStringLen(element->ns[i].uri));
 
-            if(This->saxreader->version>=MSXML6 ? FAILED(hr) : hr!=S_OK)
+            if (sax_callback_failed(This, hr))
             {
                 format_error_message_from_id(This, hr);
                 return;
             }
         }
 
-        NamespaceUri = namespaceFind(This, URI);
-        LocalName = pooled_bstr_from_xmlChar(&This->saxreader->pool, localname);
-        QName = pooled_QName_from_xmlChar(&This->saxreader->pool, prefix, localname);
+        uri = find_element_uri(This, URI);
 
         hr = SAXAttributes_populate(This, nb_namespaces, namespaces, nb_attributes, attributes);
         if(hr == S_OK)
         {
             if(This->vbInterface)
                 hr = IVBSAXContentHandler_startElement(This->saxreader->vbcontentHandler,
-                        &NamespaceUri, &LocalName, &QName, &This->IVBSAXAttributes_iface);
+                        &uri, &element->local, &element->qname, &This->IVBSAXAttributes_iface);
             else
-                hr = ISAXContentHandler_startElement(This->saxreader->contentHandler, NamespaceUri,
-                        SysStringLen(NamespaceUri), LocalName, SysStringLen(LocalName), QName,
-                        SysStringLen(QName), &This->ISAXAttributes_iface);
+                hr = ISAXContentHandler_startElement(This->saxreader->contentHandler,
+                        uri, SysStringLen(uri),
+                        element->local, SysStringLen(element->local),
+                        element->qname, SysStringLen(element->qname),
+                        &This->ISAXAttributes_iface);
         }
     }
 
-    if(This->saxreader->version>=MSXML6 ? FAILED(hr) : hr!=S_OK)
+    if (sax_callback_failed(This, hr))
         format_error_message_from_id(This, hr);
 }
 
@@ -1241,11 +1286,12 @@ static void libxmlEndElementNS(
         const xmlChar *prefix,
         const xmlChar *URI)
 {
-    BSTR NamespaceUri, LocalName, QName;
     saxlocator *This = ctx;
-    HRESULT hr;
+    element_entry *element;
     const xmlChar *p;
-    struct nsstack *elem = &This->nsStack[This->nsStackLast-1];
+    HRESULT hr;
+    BSTR uri;
+    int i;
 
     update_position(This, FALSE);
     p = This->pParserCtxt->input->cur;
@@ -1274,96 +1320,53 @@ static void libxmlEndElementNS(
     for(; p>=This->pParserCtxt->input->base && *p!='\n' && *p!='\r'; p--)
         This->column++;
 
-    if(has_content_handler(This))
+    uri = find_element_uri(This, URI);
+    element = pop_element_ns(This);
+
+    if (!has_content_handler(This))
     {
-        NamespaceUri = namespaceFind(This, URI);
-        LocalName = pooled_bstr_from_xmlChar(&This->saxreader->pool, localname);
-        QName = pooled_QName_from_xmlChar(&This->saxreader->pool, prefix, localname);
-
-        if(This->vbInterface)
-            hr = IVBSAXContentHandler_endElement(
-                    This->saxreader->vbcontentHandler,
-                    &NamespaceUri, &LocalName, &QName);
-        else
-            hr = ISAXContentHandler_endElement(
-                    This->saxreader->contentHandler,
-                    NamespaceUri, SysStringLen(NamespaceUri),
-                    LocalName, SysStringLen(LocalName),
-                    QName, SysStringLen(QName));
-
         This->nb_attributes = 0;
-
-        if(This->saxreader->version>=MSXML6 ? FAILED(hr) : hr!=S_OK)
-        {
-            format_error_message_from_id(This, hr);
-            return;
-        }
-
-        if(This->saxreader->version >= MSXML6)
-        {
-            while(elem->ptr) {
-                elem--;
-            }
-            elem++;
-
-            while(elem < &This->nsStack[This->nsStackLast]) {
-                if(This->vbInterface)
-                    hr = IVBSAXContentHandler_endPrefixMapping(
-                            This->saxreader->vbcontentHandler, &elem->prefix);
-                else
-                    hr = ISAXContentHandler_endPrefixMapping(
-                            This->saxreader->contentHandler,
-                            elem->prefix, SysStringLen(elem->prefix));
-
-                if(hr != S_OK)
-                {
-                    format_error_message_from_id(This, hr);
-                    return;
-                }
-
-                elem++;
-            }
-
-            elem--;
-            while(elem->ptr) {
-                namespacePop(This);
-                elem--;
-            }
-        }
-        else
-        {
-            while(1) {
-                if(!elem->ptr)
-                    break;
-
-                if(This->vbInterface)
-                    hr = IVBSAXContentHandler_endPrefixMapping(
-                            This->saxreader->vbcontentHandler, &elem->prefix);
-                else
-                    hr = ISAXContentHandler_endPrefixMapping(
-                            This->saxreader->contentHandler,
-                            elem->prefix, SysStringLen(elem->prefix));
-
-                if(FAILED(hr))
-                {
-                    format_error_message_from_id(This, hr);
-                    return;
-                }
-
-                namespacePop(This);
-                elem--;
-            }
-        }
+        free_element_entry(element);
+        return;
     }
+
+    if(This->vbInterface)
+        hr = IVBSAXContentHandler_endElement(
+                This->saxreader->vbcontentHandler,
+                &uri, &element->local, &element->qname);
     else
+        hr = ISAXContentHandler_endElement(
+                This->saxreader->contentHandler,
+                uri, SysStringLen(uri),
+                element->local, SysStringLen(element->local),
+                element->qname, SysStringLen(element->qname));
+
+    This->nb_attributes = 0;
+
+    if (sax_callback_failed(This, hr))
     {
-        This->nb_attributes = 0;
-        while(elem->ptr) {
-            namespacePop(This);
-            elem--;
-        }
+        format_error_message_from_id(This, hr);
+        return;
     }
-    namespacePop(This);
+
+    i = -1;
+    while (iterate_endprefix_index(This, element, &i))
+    {
+        if(This->vbInterface)
+            hr = IVBSAXContentHandler_endPrefixMapping(
+                    This->saxreader->vbcontentHandler, &element->ns[i].prefix);
+        else
+            hr = ISAXContentHandler_endPrefixMapping(
+                    This->saxreader->contentHandler,
+                    element->ns[i].prefix, SysStringLen(element->ns[i].prefix));
+
+        if (sax_callback_failed(This, hr)) break;
+    }
+
+    if (sax_callback_failed(This, hr))
+        format_error_message_from_id(This, hr);
+
+    free_element_entry(element);
 }
 
 static void libxmlCharacters(
@@ -1438,7 +1441,7 @@ static void libxmlCharacters(
                     This->saxreader->contentHandler,
                     Chars, SysStringLen(Chars));
 
-        if(This->saxreader->version>=MSXML6 ? FAILED(hr) : hr!=S_OK)
+        if (sax_callback_failed(This, hr))
         {
             format_error_message_from_id(This, hr);
             return;
@@ -1820,7 +1823,7 @@ static HRESULT WINAPI ivbsaxlocator_get_systemId(
             (const WCHAR**)systemId);
 }
 
-static const struct IVBSAXLocatorVtbl ivbsaxlocator_vtbl =
+static const struct IVBSAXLocatorVtbl VBSAXLocatorVtbl =
 {
     ivbsaxlocator_QueryInterface,
     ivbsaxlocator_AddRef,
@@ -1868,29 +1871,27 @@ static HRESULT WINAPI isaxlocator_QueryInterface(ISAXLocator* iface, REFIID riid
 static ULONG WINAPI isaxlocator_AddRef(ISAXLocator* iface)
 {
     saxlocator *This = impl_from_ISAXLocator( iface );
-    TRACE("%p\n", This );
-    return InterlockedIncrement( &This->ref );
+    ULONG ref = InterlockedIncrement( &This->ref );
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
 }
 
 static ULONG WINAPI isaxlocator_Release(
         ISAXLocator* iface)
 {
     saxlocator *This = impl_from_ISAXLocator( iface );
-    LONG ref;
+    LONG ref = InterlockedDecrement( &This->ref );
 
-    TRACE("%p\n", This );
+    TRACE("(%p)->(%d)\n", This, ref );
 
-    ref = InterlockedDecrement( &This->ref );
-    if ( ref == 0 )
+    if (ref == 0)
     {
+        element_entry *element, *element2;
         int index;
 
         SysFreeString(This->publicId);
         SysFreeString(This->systemId);
         SysFreeString(This->namespaceUri);
-        while(This->nsStackLast)
-            namespacePop(This);
-        heap_free(This->nsStack);
 
         for(index=0; index<This->nb_attributes; index++)
         {
@@ -1899,6 +1900,13 @@ static ULONG WINAPI isaxlocator_Release(
             SysFreeString(This->attributes[index].szQName);
         }
         heap_free(This->attributes);
+
+        /* element stack */
+        LIST_FOR_EACH_ENTRY_SAFE(element, element2, &This->elements, element_entry, entry)
+        {
+            list_remove(&element->entry);
+            free_element_entry(element);
+        }
 
         ISAXXMLReader_Release(&This->saxreader->ISAXXMLReader_iface);
         heap_free( This );
@@ -1972,7 +1980,7 @@ static HRESULT WINAPI isaxlocator_getSystemId(
     return S_OK;
 }
 
-static const struct ISAXLocatorVtbl isaxlocator_vtbl =
+static const struct ISAXLocatorVtbl SAXLocatorVtbl =
 {
     isaxlocator_QueryInterface,
     isaxlocator_AddRef,
@@ -1994,8 +2002,8 @@ static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator, B
     if( !locator )
         return E_OUTOFMEMORY;
 
-    locator->IVBSAXLocator_iface.lpVtbl = &ivbsaxlocator_vtbl;
-    locator->ISAXLocator_iface.lpVtbl = &isaxlocator_vtbl;
+    locator->IVBSAXLocator_iface.lpVtbl = &VBSAXLocatorVtbl;
+    locator->ISAXLocator_iface.lpVtbl = &SAXLocatorVtbl;
     locator->IVBSAXAttributes_iface.lpVtbl = &ivbsaxattributes_vtbl;
     locator->ISAXAttributes_iface.lpVtbl = &isaxattributes_vtbl;
     locator->ref = 1;
@@ -2020,16 +2028,6 @@ static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator, B
         heap_free(locator);
         return E_OUTOFMEMORY;
     }
-    locator->nsStackSize = 8;
-    locator->nsStackLast = 0;
-    locator->nsStack = heap_alloc(sizeof(struct nsstack)*locator->nsStackSize);
-    if(!locator->nsStack)
-    {
-        ISAXXMLReader_Release(&reader->ISAXXMLReader_iface);
-        SysFreeString(locator->namespaceUri);
-        heap_free(locator);
-        return E_OUTOFMEMORY;
-    }
 
     locator->attributesSize = 8;
     locator->nb_attributes = 0;
@@ -2038,10 +2036,11 @@ static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator, B
     {
         ISAXXMLReader_Release(&reader->ISAXXMLReader_iface);
         SysFreeString(locator->namespaceUri);
-        heap_free(locator->nsStack);
         heap_free(locator);
         return E_OUTOFMEMORY;
     }
+
+    list_init(&locator->elements);
 
     *ppsaxlocator = locator;
 
@@ -2915,7 +2914,7 @@ static HRESULT WINAPI saxxmlreader_parseURL(
     return internal_parseURL(This, url, TRUE);
 }
 
-static const struct IVBSAXXMLReaderVtbl saxreader_vtbl =
+static const struct IVBSAXXMLReaderVtbl VBSAXXMLReaderVtbl =
 {
     saxxmlreader_QueryInterface,
     saxxmlreader_AddRef,
@@ -3113,7 +3112,7 @@ static HRESULT WINAPI isaxxmlreader_parseURL(
     return internal_parseURL(This, url, FALSE);
 }
 
-static const struct ISAXXMLReaderVtbl isaxreader_vtbl =
+static const struct ISAXXMLReaderVtbl SAXXMLReaderVtbl =
 {
     isaxxmlreader_QueryInterface,
     isaxxmlreader_AddRef,
@@ -3149,18 +3148,18 @@ static dispex_static_data_t saxreader_dispex = {
     saxreader_iface_tids
 };
 
-HRESULT SAXXMLReader_create(MSXML_VERSION version, IUnknown *pUnkOuter, LPVOID *ppObj)
+HRESULT SAXXMLReader_create(MSXML_VERSION version, IUnknown *outer, LPVOID *ppObj)
 {
     saxreader *reader;
 
-    TRACE("(%p,%p)\n", pUnkOuter, ppObj);
+    TRACE("(%p, %p)\n", outer, ppObj);
 
     reader = heap_alloc( sizeof (*reader) );
     if( !reader )
         return E_OUTOFMEMORY;
 
-    reader->IVBSAXXMLReader_iface.lpVtbl = &saxreader_vtbl;
-    reader->ISAXXMLReader_iface.lpVtbl = &isaxreader_vtbl;
+    reader->IVBSAXXMLReader_iface.lpVtbl = &VBSAXXMLReaderVtbl;
+    reader->ISAXXMLReader_iface.lpVtbl = &SAXXMLReaderVtbl;
     reader->ref = 1;
     reader->contentHandler = NULL;
     reader->vbcontentHandler = NULL;
