@@ -3303,24 +3303,20 @@ msgid "Address"
 msgstr "주소"
 
 #: ieframe.rc:78
-#, fuzzy
 msgid "Searching for %s"
-msgstr "%s 설정"
+msgstr "%s 찾는 중"
 
 #: ieframe.rc:79
-#, fuzzy
 msgid "Start downloading %s"
-msgstr "%s로부터 다운로드중..."
+msgstr "%s 다운로드 시작."
 
 #: ieframe.rc:80
-#, fuzzy
 msgid "Downloading %s"
-msgstr "다운로드중..."
+msgstr " %s 다운로드중..."
 
 #: ieframe.rc:81
-#, fuzzy
 msgid "Asking for %s"
-msgstr "%s 설정"
+msgstr "%s 대하여 묻기"
 
 #: inetcpl.rc:46
 msgid " Home page "
@@ -3328,7 +3324,7 @@ msgstr " 홈 페이지 "
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
-msgstr "홈페이지로 사용할 주소를 선택할 수 있습니다."
+msgstr "당신은 홈페이지로 사용할 주소를 선택할 수 있습니다."
 
 #: inetcpl.rc:50
 msgid "&Current page"
