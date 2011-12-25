@@ -239,20 +239,20 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateDeviceFromClipper(IDirect3DRM* iface
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirect3DRMImpl_CreateShadow(IDirect3DRM* iface, LPDIRECT3DRMVISUAL pVisual, LPDIRECT3DRMLIGHT pLight, D3DVALUE px, D3DVALUE py, D3DVALUE pz, D3DVALUE nx, D3DVALUE ny, D3DVALUE nz, LPDIRECT3DRMVISUAL * ppVisual)
-{
-    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
-
-    FIXME("(%p/%p)->(%p,%p,%f,%f,%f,%f,%f,%f,%p): stub\n", iface, This, pVisual, pLight, px, py, pz, nx, ny, nz, ppVisual);
-
-    return E_NOTIMPL;
-}
-
 static HRESULT WINAPI IDirect3DRMImpl_CreateTextureFromSurface(IDirect3DRM* iface, LPDIRECTDRAWSURFACE pDDS, LPDIRECT3DRMTEXTURE * ppTexture)
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
 
     FIXME("(%p/%p)->(%p,%p): stub\n", iface, This, pDDS, ppTexture);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IDirect3DRMImpl_CreateShadow(IDirect3DRM* iface, LPDIRECT3DRMVISUAL pVisual, LPDIRECT3DRMLIGHT pLight, D3DVALUE px, D3DVALUE py, D3DVALUE pz, D3DVALUE nx, D3DVALUE ny, D3DVALUE nz, LPDIRECT3DRMVISUAL * ppVisual)
+{
+    IDirect3DRMImpl *This = impl_from_IDirect3DRM(iface);
+
+    FIXME("(%p/%p)->(%p,%p,%f,%f,%f,%f,%f,%f,%p): stub\n", iface, This, pVisual, pLight, px, py, pz, nx, ny, nz, ppVisual);
 
     return E_NOTIMPL;
 }
@@ -412,8 +412,8 @@ static const struct IDirect3DRMVtbl Direct3DRM_Vtbl =
     IDirect3DRMImpl_CreateDeviceFromSurface,
     IDirect3DRMImpl_CreateDeviceFromD3D,
     IDirect3DRMImpl_CreateDeviceFromClipper,
-    IDirect3DRMImpl_CreateShadow,
     IDirect3DRMImpl_CreateTextureFromSurface,
+    IDirect3DRMImpl_CreateShadow,
     IDirect3DRMImpl_CreateViewport,
     IDirect3DRMImpl_CreateWrap,
     IDirect3DRMImpl_CreateUserVisual,
