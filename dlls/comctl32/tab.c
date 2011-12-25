@@ -684,7 +684,8 @@ TAB_LButtonDown (TAB_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
           break;
         }
 
-      TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGING);
+      if (TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGING))
+        return 0;
 
       if (pressed)
         TAB_DeselectAll (infoPtr, FALSE);
