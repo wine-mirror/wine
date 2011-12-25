@@ -162,9 +162,6 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 	D3DVALUE flAngle;
 	D3DVECTOR vLeft;
 	/* doppler shift related stuff */
-#if 0
-	D3DVALUE flFreq, flBufferVel, flListenerVel;
-#endif
 
 	TRACE("(%p)\n",dsb);
 
@@ -263,13 +260,17 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 	TRACE("panning: Angle = %f rad, lPan = %d\n", flAngle, dsb->volpan.lPan);
 
 	/* FIXME: Doppler Effect disabled since i have no idea which frequency to change and how to do it */
-#if 0	
+if(0)
+{
+	D3DVALUE flFreq, flBufferVel, flListenerVel;
 	/* doppler shift*/
-	if ((VectorMagnitude(&ds3db_ds3db.vVelocity) == 0) && (VectorMagnitude(&dsb->device->ds3dl.vVelocity) == 0))
+	if (!VectorMagnitude(&dsb->ds3db_ds3db.vVelocity) && !VectorMagnitude(&dsb->device->ds3dl.vVelocity))
 	{
 		TRACE("doppler: Buffer and Listener don't have velocities\n");
 	}
-	else if (ds3db_ds3db.vVelocity != dsb->device->ds3dl.vVelocity)
+	else if (!(dsb->ds3db_ds3db.vVelocity.x == dsb->device->ds3dl.vVelocity.x &&
+	           dsb->ds3db_ds3db.vVelocity.y == dsb->device->ds3dl.vVelocity.y &&
+	           dsb->ds3db_ds3db.vVelocity.z == dsb->device->ds3dl.vVelocity.z))
 	{
 		/* calculate length of ds3db_ds3db.vVelocity component which causes Doppler Effect
 		   NOTE: if buffer moves TOWARDS the listener, it's velocity component is NEGATIVE
@@ -282,14 +283,14 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 		/* formula taken from Gianicoli D.: Physics, 4th edition: */
 		/* FIXME: replace dsb->freq with appropriate frequency ! */
 		flFreq = dsb->freq * ((DEFAULT_VELOCITY + flListenerVel)/(DEFAULT_VELOCITY + flBufferVel));
-		TRACE("doppler: Buffer velocity (component) = %lf, Listener velocity (component) = %lf => Doppler shift: %ld Hz -> %lf Hz\n", flBufferVel, flListenerVel,
-		      dsb->freq, flFreq);
+		TRACE("doppler: Buffer velocity (component) = %f, Listener velocity (component) = %f => Doppler shift: %d Hz -> %f Hz\n",
+		      flBufferVel, flListenerVel, dsb->freq, flFreq);
 		/* FIXME: replace following line with correct frequency setting ! */
 		dsb->freq = flFreq;
 		DSOUND_RecalcFormat(dsb);
-		DSOUND_MixToTemporary(dsb, 0, dsb->buflen);
+		DSOUND_MixToTemporary(dsb, 0, dsb->buflen, FALSE);
 	}
-#endif	
+}
 	
 	/* time for remix */
 	DSOUND_RecalcVolPan(&dsb->volpan);
