@@ -1596,13 +1596,15 @@ UINT WINAPI GetOutlineTextMetricsW(
 static LPSTR FONT_GetCharsByRangeA(HDC hdc, UINT firstChar, UINT lastChar, PINT pByteLen)
 {
     INT i, count = lastChar - firstChar + 1;
+    UINT mbcp;
     UINT c;
     LPSTR str;
 
     if (count <= 0)
         return NULL;
 
-    switch (GdiGetCodePage(hdc))
+    mbcp = GdiGetCodePage(hdc);
+    switch (mbcp)
     {
     case 932:
     case 936:
@@ -1617,6 +1619,7 @@ static LPSTR FONT_GetCharsByRangeA(HDC hdc, UINT firstChar, UINT lastChar, PINT 
     default:
         if (lastChar > 0xff)
             return NULL;
+        mbcp = 0;
         break;
     }
 
@@ -1626,9 +1629,16 @@ static LPSTR FONT_GetCharsByRangeA(HDC hdc, UINT firstChar, UINT lastChar, PINT 
 
     for(i = 0, c = firstChar; c <= lastChar; i++, c++)
     {
-        if (c > 0xff)
-            str[i++] = (BYTE)(c >> 8);
-        str[i] = (BYTE)c;
+        if (mbcp) {
+            if (c > 0xff)
+                str[i++] = (BYTE)(c >> 8);
+            if (c <= 0xff && IsDBCSLeadByteEx(mbcp, c))
+                str[i] = 0x1f; /* FIXME: use default character */
+            else
+                str[i] = (BYTE)c;
+        }
+        else
+            str[i] = (BYTE)c;
     }
     str[i] = '\0';
 

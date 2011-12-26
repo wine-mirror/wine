@@ -957,7 +957,8 @@ static void test_GetCharABCWidths(void)
         {0xffffff, 0xffffff},
         {0x1000000, 0x1000000},
         {0xffffff, 0x1000000},
-        {0xffffffff, 0xffffffff}
+        {0xffffffff, 0xffffffff},
+        {0x00, 0xff}
     };
     static const struct
     {
@@ -967,12 +968,18 @@ static void test_GetCharABCWidths(void)
         BOOL r[sizeof range / sizeof range[0]];
     } c[] =
     {
-        {ANSI_CHARSET, 0x30, 0x30, {TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE}},
-        {SHIFTJIS_CHARSET, 0x82a0, 0x3042, {TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE}},
-        {HANGEUL_CHARSET, 0x8141, 0xac02, {TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE}},
-        {JOHAB_CHARSET, 0x8446, 0x3135, {TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE}},
-        {GB2312_CHARSET, 0x8141, 0x4e04, {TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE}},
-        {CHINESEBIG5_CHARSET, 0xa142, 0x3001, {TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE}}
+        {ANSI_CHARSET, 0x30, 0x30,
+         {TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE}},
+        {SHIFTJIS_CHARSET, 0x82a0, 0x3042,
+         {TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE}},
+        {HANGEUL_CHARSET, 0x8141, 0xac02,
+         {TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE}},
+        {JOHAB_CHARSET, 0x8446, 0x3135,
+         {TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE}},
+        {GB2312_CHARSET, 0x8141, 0x4e04,
+         {TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE}},
+        {CHINESEBIG5_CHARSET, 0xa142, 0x3001,
+         {TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE}}
     };
     UINT i;
 
@@ -1057,9 +1064,18 @@ static void test_GetCharABCWidths(void)
 
         for (j = 0; j < sizeof range / sizeof range[0]; ++j)
         {
+            memset(full, 0xdd, sizeof full);
             ret = pGetCharABCWidthsA(hdc, range[j].first, range[j].last, full);
             ok(ret == c[i].r[j], "GetCharABCWidthsA %x - %x should have %s\n",
                range[j].first, range[j].last, c[i].r[j] ? "succeeded" : "failed");
+            if (ret)
+            {
+                UINT last = range[j].last - range[j].first;
+                ret = pGetCharABCWidthsA(hdc, range[j].last, range[j].last, a);
+                ok(ret && memcmp(&full[last], &a[0], sizeof(ABC)) == 0,
+                   "GetCharABCWidthsA %x should match. codepage = %u\n",
+                   range[j].last, c[i].cs);
+            }
         }
 
         hfont = SelectObject(hdc, hfont);
