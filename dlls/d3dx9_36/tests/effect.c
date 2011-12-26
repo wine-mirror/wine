@@ -1037,6 +1037,77 @@ static void test_effect_parameter_value_GetMatrixArray(const struct test_effect_
     }
 }
 
+static void test_effect_parameter_value_GetMatrixTranspose(const struct test_effect_parameter_value_result *res,
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+{
+    const D3DXPARAMETER_DESC *res_desc = &res->desc;
+    LPCSTR res_full_name = res->full_name;
+    HRESULT hr;
+    DWORD cmp = 0xabababab;
+    FLOAT fvalue[16];
+    UINT l, k;
+
+    memset(fvalue, 0xab, sizeof(fvalue));
+    hr = effect->lpVtbl->GetMatrixTranspose(effect, parameter, (D3DXMATRIX *)&fvalue);
+    if (!res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
+    {
+        ok(hr == D3D_OK, "%u - %s: GetMatrixTranspose failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+
+        for (k = 0; k < 4; ++k)
+        {
+            for (l = 0; l < 4; ++l)
+            {
+                if (k < res_desc->Columns && l < res_desc->Rows)
+                {
+                    ok(compare_float(fvalue[l + k * 4], get_float(res_desc->Type, &res_value[l * res_desc->Columns + k]), 512),
+                            "%u - %s: GetMatrixTranspose fvalue[%u] failed, got %f, expected %f\n",
+                            i, res_full_name, l + k * 4, fvalue[l + k * 4],
+                            get_float(res_desc->Type, &res_value[l * res_desc->Columns + k]));
+                }
+                else
+                {
+                    ok(fvalue[l + k * 4] == 0.0f, "%u - %s: GetMatrixTranspose fvalue[%u] failed, got %f, expected %f\n",
+                            i, res_full_name, l + k * 4, fvalue[l + k * 4], 0.0f);
+                }
+            }
+        }
+    }
+    else if (!res_desc->Elements && (res_desc->Class == D3DXPC_VECTOR || res_desc->Class == D3DXPC_SCALAR))
+    {
+        ok(hr == D3D_OK, "%u - %s: GetMatrixTranspose failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+
+        for (k = 0; k < 4; ++k)
+        {
+            for (l = 0; l < 4; ++l)
+            {
+                if (k < res_desc->Columns && l < res_desc->Rows)
+                {
+                    FLOAT res = get_float(res_desc->Type, &res_value[l * res_desc->Columns + k]);
+
+                    ok(fvalue[l * 4 + k] == res, "%u - %s: GetMatrixTranspose fvalue[%u] failed, got %f, expected %f\n",
+                            i, res_full_name, l * 4 + k, fvalue[l * 4 + k], res);
+                }
+                else
+                {
+                    ok(fvalue[l * 4 + k] == 0.0f, "%u - %s: GetMatrixTranspose fvalue[%u] failed, got %f, expected %f\n",
+                            i, res_full_name, l * 4 + k, fvalue[l * 4 + k], 0.0f);
+                }
+            }
+        }
+    }
+    else
+    {
+        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTranspose failed, got %#x, expected %#x\n",
+                i, res_full_name, hr, D3DERR_INVALIDCALL);
+
+        for (l = 0; l < sizeof(fvalue) / sizeof(*fvalue); ++l)
+        {
+            ok(fvalue[l] == *(FLOAT *)&cmp, "%u - %s: GetMatrixTranspose fvalue[%u] failed, got %f, expected %f\n",
+                    i, res_full_name, l, fvalue[l], *(FLOAT *)&cmp);
+        }
+    }
+}
+
 static void test_effect_parameter_value(IDirect3DDevice9 *device)
 {
     UINT i;
@@ -1117,6 +1188,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             test_effect_parameter_value_GetVectorArray(&res[k], effect, &blob[res_value_offset], parameter, i);
             test_effect_parameter_value_GetMatrix(&res[k], effect, &blob[res_value_offset], parameter, i);
             test_effect_parameter_value_GetMatrixArray(&res[k], effect, &blob[res_value_offset], parameter, i);
+            test_effect_parameter_value_GetMatrixTranspose(&res[k], effect, &blob[res_value_offset], parameter, i);
         }
 
         count = effect->lpVtbl->Release(effect);
