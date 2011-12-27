@@ -540,66 +540,29 @@ static void bres_line_with_bias(const POINT *start, const struct line_params *pa
 
 static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end, DWORD and, DWORD xor)
 {
-    const WINEREGION *clip = get_wine_region(pdev->clip);
+    struct clipped_rects clipped_rects;
+    RECT rect;
+    int i;
 
     if(start->y == end->y)
     {
-        RECT rect;
-        int i;
-
         rect.left   = start->x;
         rect.top    = start->y;
         rect.right  = end->x;
         rect.bottom = end->y + 1;
         order_end_points(&rect.left, &rect.right);
-        for(i = 0; i < clip->numRects; i++)
-        {
-            if(clip->rects[i].top >= rect.bottom) break;
-            if(clip->rects[i].bottom <= rect.top) continue;
-            /* Optimize the unclipped case */
-            if(clip->rects[i].left <= rect.left && clip->rects[i].right >= rect.right)
-            {
-                pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, and, xor);
-                break;
-            }
-            if(clip->rects[i].right > rect.left && clip->rects[i].left < rect.right)
-            {
-                RECT tmp = rect;
-                tmp.left = max(rect.left, clip->rects[i].left);
-                tmp.right = min(rect.right, clip->rects[i].right);
-                pdev->dib.funcs->solid_rects(&pdev->dib, 1, &tmp, and, xor);
-            }
-        }
+        if (!get_clipped_rects( &pdev->dib, &rect, pdev->clip, &clipped_rects )) return TRUE;
+        pdev->dib.funcs->solid_rects(&pdev->dib, clipped_rects.count, clipped_rects.rects, and, xor);
     }
     else if(start->x == end->x)
     {
-        RECT rect;
-        int i;
-
         rect.left   = start->x;
         rect.top    = start->y;
         rect.right  = end->x + 1;
         rect.bottom = end->y;
         order_end_points(&rect.top, &rect.bottom);
-        for(i = 0; i < clip->numRects; i++)
-        {
-            /* Optimize unclipped case */
-            if(clip->rects[i].top <= rect.top && clip->rects[i].bottom >= rect.bottom &&
-               clip->rects[i].left <= rect.left && clip->rects[i].right >= rect.right)
-            {
-                pdev->dib.funcs->solid_rects(&pdev->dib, 1, &rect, and, xor);
-                break;
-            }
-            if(clip->rects[i].top >= rect.bottom) break;
-            if(clip->rects[i].bottom <= rect.top) continue;
-            if(clip->rects[i].right > rect.left && clip->rects[i].left < rect.right)
-            {
-                RECT tmp = rect;
-                tmp.top = max(rect.top, clip->rects[i].top);
-                tmp.bottom = min(rect.bottom, clip->rects[i].bottom);
-                pdev->dib.funcs->solid_rects(&pdev->dib, 1, &tmp, and, xor);
-            }
-        }
+        if (!get_clipped_rects( &pdev->dib, &rect, pdev->clip, &clipped_rects )) return TRUE;
+        pdev->dib.funcs->solid_rects(&pdev->dib, clipped_rects.count, clipped_rects.rects, and, xor);
     }
     else
     {
@@ -607,7 +570,6 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end, DWORD
         struct line_params line_params;
         INT dx = end->x - start->x, dy = end->y - start->y;
         INT abs_dx = abs(dx), abs_dy = abs(dy);
-        INT i;
 
         clip_params.dx = abs_dx;
         clip_params.dy = abs_dy;
@@ -630,12 +592,17 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end, DWORD
             line_params.err_add_2 = 2 * abs_dx;
         }
 
-        for(i = 0; i < clip->numRects; i++)
+        rect.left   = min( start->x, end->x );
+        rect.top    = min( start->y, end->y );
+        rect.right  = max( start->x, end->x ) + 1;
+        rect.bottom = max( start->y, end->y ) + 1;
+        if (!get_clipped_rects( &pdev->dib, &rect, pdev->clip, &clipped_rects )) return TRUE;
+        for (i = 0; i < clipped_rects.count; i++)
         {
             POINT clipped_start, clipped_end;
             int clip_status;
-            clip_status = clip_line(start, end, clip->rects + i, &clip_params, &clipped_start, &clipped_end);
 
+            clip_status = clip_line(start, end, clipped_rects.rects + i, &clip_params, &clipped_start, &clipped_end);
             if(clip_status)
             {
                 int m = abs(clipped_start.x - start->x);
@@ -659,9 +626,8 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end, DWORD
                 if(clip_status == 2) break; /* completely unclipped, so we can finish */
             }
         }
-
     }
-    release_wine_region(pdev->clip);
+    free_clipped_rects( &clipped_rects );
     return TRUE;
 }
 
@@ -724,7 +690,7 @@ static void dashed_pen_line_callback(dibdrv_physdev *pdev, INT x, INT y)
 
 static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
 {
-    const WINEREGION *clip = get_wine_region(pdev->clip);
+    struct clipped_rects clipped_rects;
     int i, dash_len;
     RECT rect;
     const dash_pos start_pos = pdev->dash_pos;
@@ -750,15 +716,15 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
             l_to_r = FALSE;
         }
 
-        for(i = 0; i < clip->numRects; i++)
+        rect.left = min( start->x, end->x );
+        rect.right = max( start->x, end->x ) + 1;
+        get_clipped_rects( &pdev->dib, &rect, pdev->clip, &clipped_rects );
+        for (i = 0; i < clipped_rects.count; i++)
         {
-            if(clip->rects[i].top > start->y) break;
-            if(clip->rects[i].bottom <= start->y) continue;
-
-            if(clip->rects[i].right > left && clip->rects[i].left <= right)
+            if(clipped_rects.rects[i].right > left && clipped_rects.rects[i].left <= right)
             {
-                int clipped_left  = max(clip->rects[i].left, left);
-                int clipped_right = min(clip->rects[i].right - 1, right);
+                int clipped_left  = max(clipped_rects.rects[i].left, left);
+                int clipped_right = min(clipped_rects.rects[i].right - 1, right);
 
                 pdev->dash_pos = start_pos;
 
@@ -828,14 +794,15 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
             t_to_b = FALSE;
         }
 
-        for(i = 0; i < clip->numRects; i++)
+        rect.top = min( start->y, end->y );
+        rect.bottom = max( start->y, end->y ) + 1;
+        get_clipped_rects( &pdev->dib, &rect, pdev->clip, &clipped_rects );
+        for (i = 0; i < clipped_rects.count; i++)
         {
-            if(clip->rects[i].top > bottom) break;
-            if(clip->rects[i].bottom <= top) continue;
-            if(clip->rects[i].right > start->x && clip->rects[i].left <= start->x)
+            if(clipped_rects.rects[i].right > start->x && clipped_rects.rects[i].left <= start->x)
             {
-                int clipped_top    = max(clip->rects[i].top, top);
-                int clipped_bottom = min(clip->rects[i].bottom - 1, bottom);
+                int clipped_top    = max(clipped_rects.rects[i].top, top);
+                int clipped_bottom = min(clipped_rects.rects[i].bottom - 1, bottom);
 
                 pdev->dash_pos = start_pos;
 
@@ -890,7 +857,6 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
         struct line_params line_params;
         INT dx = end->x - start->x, dy = end->y - start->y;
         INT abs_dx = abs(dx), abs_dy = abs(dy);
-        INT i;
 
         clip_params.dx = abs_dx;
         clip_params.dy = abs_dy;
@@ -913,11 +879,16 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
             line_params.err_add_2 = 2 * abs_dx;
         }
 
-        for(i = 0; i < clip->numRects; i++)
+        rect.left   = min( start->x, end->x );
+        rect.top    = min( start->y, end->y );
+        rect.right  = max( start->x, end->x ) + 1;
+        rect.bottom = max( start->y, end->y ) + 1;
+        get_clipped_rects( &pdev->dib, &rect, pdev->clip, &clipped_rects );
+        for (i = 0; i < clipped_rects.count; i++)
         {
             POINT clipped_start, clipped_end;
             int clip_status;
-            clip_status = clip_line(start, end, clip->rects + i, &clip_params, &clipped_start, &clipped_end);
+            clip_status = clip_line(start, end, clipped_rects.rects + i, &clip_params, &clipped_start, &clipped_end);
 
             if(clip_status)
             {
@@ -952,7 +923,7 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
             skip_dash(pdev, abs_dy);
     }
 
-    release_wine_region(pdev->clip);
+    free_clipped_rects( &clipped_rects );
     return TRUE;
 }
 
@@ -1256,7 +1227,7 @@ static HRGN get_wide_lines_region( dibdrv_physdev *pdev, int num, POINT *pts, BO
 
 static BOOL wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close)
 {
-    const WINEREGION *data;
+    struct clipped_rects clipped_rects;
     rop_mask color;
     HRGN region;
     DWORD pen_color = get_pixel_color( pdev, pdev->pen_colorref, TRUE );
@@ -1264,14 +1235,14 @@ static BOOL wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close
     calc_rop_masks( GetROP2(pdev->dev.hdc), pen_color, &color );
 
     region = get_wide_lines_region( pdev, num, pts, close );
+    if (pdev->clip) CombineRgn( region, region, pdev->clip, RGN_AND );
 
-    if (CombineRgn( region, region, pdev->clip, RGN_AND ) != ERROR)
+    if (get_clipped_rects( &pdev->dib, NULL, region, &clipped_rects ))
     {
-        data = get_wine_region( region );
-        solid_rects( &pdev->dib, data->numRects, data->rects, &color, NULL );
-        release_wine_region( region );
+        pdev->dib.funcs->solid_rects( &pdev->dib, clipped_rects.count, clipped_rects.rects,
+                                      color.and, color.xor );
+        free_clipped_rects( &clipped_rects );
     }
-
     DeleteObject( region );
     return TRUE;
 }
