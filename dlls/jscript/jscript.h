@@ -190,6 +190,7 @@ static inline IDispatch *to_disp(jsdisp_t *jsdisp)
 }
 
 jsdisp_t *as_jsdisp(IDispatch*);
+jsdisp_t *to_jsdisp(IDispatch*);
 
 static inline void jsdisp_addref(jsdisp_t *jsdisp)
 {

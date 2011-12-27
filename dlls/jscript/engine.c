@@ -1029,6 +1029,43 @@ HRESULT with_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t
     return hres;
 }
 
+/* ECMA-262 3rd Edition    12.10 */
+HRESULT interp_push_scope(exec_ctx_t *ctx)
+{
+    IDispatch *disp;
+    jsdisp_t *obj;
+    VARIANT *v;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    v = stack_pop(ctx);
+    hres = to_object(ctx->parser->script, v, &disp);
+    VariantClear(v);
+    if(FAILED(hres))
+        return hres;
+
+    obj = to_jsdisp(disp);
+    if(!obj) {
+        IDispatch_Release(disp);
+        FIXME("disp is not jsdisp\n");
+        return E_NOTIMPL;
+    }
+
+    hres = scope_push(ctx->scope_chain, obj, &ctx->scope_chain);
+    jsdisp_release(obj);
+    return hres;
+}
+
+/* ECMA-262 3rd Edition    12.10 */
+HRESULT interp_pop_scope(exec_ctx_t *ctx)
+{
+    TRACE("\n");
+
+    scope_pop(&ctx->scope_chain);
+    return S_OK;
+}
+
 /* ECMA-262 3rd Edition    12.12 */
 HRESULT labelled_statement_eval(script_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
 {
@@ -2955,6 +2992,7 @@ HRESULT compiled_statement_eval(script_ctx_t *ctx, statement_t *stat, return_typ
 {
     exec_ctx_t *exec_ctx = ctx->exec_ctx;
     unsigned prev_ip, prev_top;
+    scope_chain_t *prev_scope;
     return_type_t *prev_rt;
     jsexcept_t *prev_ei;
     jsop_t op;
@@ -2970,6 +3008,7 @@ HRESULT compiled_statement_eval(script_ctx_t *ctx, statement_t *stat, return_typ
 
     prev_rt = exec_ctx->rt;
     prev_top = exec_ctx->top;
+    prev_scope = exec_ctx->scope_chain;
     prev_ip = exec_ctx->ip;
     prev_ei = exec_ctx->ei;
     exec_ctx->ip = stat->instr_off;
@@ -2990,10 +3029,13 @@ HRESULT compiled_statement_eval(script_ctx_t *ctx, statement_t *stat, return_typ
 
     if(FAILED(hres)) {
         stack_popn(exec_ctx, exec_ctx->top-prev_top);
+        while(exec_ctx->scope_chain != prev_scope)
+            scope_pop(&exec_ctx->scope_chain);
         return hres;
     }
 
     assert(exec_ctx->top == prev_top+1 || exec_ctx->top == prev_top);
+    assert(exec_ctx->scope_chain == prev_scope);
 
     if(exec_ctx->top == prev_top)
         V_VT(ret) = VT_EMPTY;

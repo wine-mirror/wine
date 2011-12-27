@@ -87,8 +87,10 @@ typedef struct _func_stack {
     X(obj_prop,   1, ARG_BSTR,   0)        \
     X(or,         1, 0,0)                  \
     X(pop,        1, 0,0)                  \
+    X(pop_scope,  1, 0,0)                  \
     X(postinc,    1, ARG_INT,    0)        \
     X(preinc,     1, ARG_INT,    0)        \
+    X(push_scope, 1, 0,0)                  \
     X(regexp,     1, ARG_STR,    ARG_INT)  \
     X(rshift,     1, 0,0)                  \
     X(rshift2,    1, 0,0)                  \

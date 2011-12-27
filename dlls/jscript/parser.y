@@ -851,7 +851,7 @@ static const statement_eval_t stat_eval_table[] = {
     try_statement_eval,
     compiled_statement_eval,
     compiled_statement_eval,
-    with_statement_eval
+    compiled_statement_eval
 };
 
 static void *new_statement(parser_ctx_t *ctx, statement_type_t type, size_t size)

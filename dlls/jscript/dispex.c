@@ -837,6 +837,11 @@ jsdisp_t *as_jsdisp(IDispatch *disp)
     return impl_from_IDispatchEx((IDispatchEx*)disp);
 }
 
+jsdisp_t *to_jsdisp(IDispatch *disp)
+{
+    return disp->lpVtbl == (IDispatchVtbl*)&DispatchExVtbl ? impl_from_IDispatchEx((IDispatchEx*)disp) : NULL;
+}
+
 HRESULT init_dispex(jsdisp_t *dispex, script_ctx_t *ctx, const builtin_info_t *builtin_info, jsdisp_t *prototype)
 {
     TRACE("%p (%p)\n", dispex, prototype);

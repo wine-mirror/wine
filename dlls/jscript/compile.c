@@ -1097,6 +1097,40 @@ static HRESULT compile_for_statement(compiler_ctx_t *ctx, for_statement_t *stat)
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    12.10 */
+static HRESULT compile_with_statement(compiler_ctx_t *ctx, with_statement_t *stat)
+{
+    unsigned off_backup;
+    BOOL prev_no_fallback;
+    HRESULT hres;
+
+    off_backup = ctx->code_off;
+
+    hres = compile_expression(ctx, stat->expr);
+    if(FAILED(hres))
+        return hres;
+
+    if(push_instr(ctx, OP_push_scope) == -1)
+        return E_OUTOFMEMORY;
+
+    prev_no_fallback = ctx->no_fallback;
+    ctx->no_fallback = TRUE;
+    hres = compile_statement(ctx, stat->statement);
+    ctx->no_fallback = prev_no_fallback;
+    if(hres == E_NOTIMPL) {
+        ctx->code_off = off_backup;
+        stat->stat.eval = with_statement_eval;
+        return compile_interp_fallback(ctx, &stat->stat);
+    }
+    if(FAILED(hres))
+        return hres;
+
+    if(push_instr(ctx, OP_pop_scope) == -1)
+        return E_OUTOFMEMORY;
+
+    return S_OK;
+}
+
 static HRESULT compile_statement(compiler_ctx_t *ctx, statement_t *stat)
 {
     switch(stat->type) {
@@ -1114,6 +1148,8 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_t *stat)
         return compile_var_statement(ctx, (var_statement_t*)stat);
     case STAT_WHILE:
         return compile_while_statement(ctx, (while_statement_t*)stat);
+    case STAT_WITH:
+        return compile_with_statement(ctx, (with_statement_t*)stat);
     default:
         return compile_interp_fallback(ctx, stat);
     }
