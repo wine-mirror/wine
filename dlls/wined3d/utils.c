@@ -3035,14 +3035,14 @@ void gen_ffp_frag_op(const struct wined3d_device *device, const struct wined3d_s
         {
             ttff = state->texture_states[i][WINED3DTSS_TEXTURETRANSFORMFLAGS];
             if (ttff == (WINED3DTTFF_PROJECTED | WINED3DTTFF_COUNT3))
-            {
                 settings->op[i].projected = proj_count3;
-            } else if(ttff == (WINED3DTTFF_PROJECTED | WINED3DTTFF_COUNT4)) {
+            else if (ttff & WINED3DTTFF_PROJECTED)
                 settings->op[i].projected = proj_count4;
-            } else {
+            else
                 settings->op[i].projected = proj_none;
-            }
-        } else {
+        }
+        else
+        {
             settings->op[i].projected = proj_none;
         }
 
