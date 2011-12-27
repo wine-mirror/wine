@@ -399,7 +399,7 @@ static void testGetIpNetTable(void)
           for (i = 0; i < buf->dwNumEntries; i++)
           {
               trace( "%u: idx %u type %u addr %s phys",
-                     i, buf->table[i].dwIndex, buf->table[i].dwType, ntoa( buf->table[i].dwAddr ));
+                     i, buf->table[i].dwIndex, U(buf->table[i]).dwType, ntoa( buf->table[i].dwAddr ));
               for (j = 0; j < buf->table[i].dwPhysAddrLen; j++)
                   printf( " %02x", buf->table[i].bPhysAddr[j] );
               printf( "\n" );
