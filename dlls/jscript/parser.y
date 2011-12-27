@@ -841,7 +841,7 @@ static const statement_eval_t stat_eval_table[] = {
     continue_statement_eval,
     compiled_statement_eval,
     compiled_statement_eval,
-    for_statement_eval,
+    compiled_statement_eval,
     forin_statement_eval,
     compiled_statement_eval,
     labelled_statement_eval,
