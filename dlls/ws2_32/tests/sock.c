@@ -5203,6 +5203,226 @@ static void test_WSAAsyncGetServByPort(void)
     DestroyWindow(hwnd);
 }
 
+static void test_completion_port(void)
+{
+    HANDLE previous_port, io_port;
+    WSAOVERLAPPED ov, *olp;
+    SOCKET src, dest;
+    char buf[1024];
+    WSABUF bufs;
+    DWORD num_bytes, flags;
+    struct linger ling;
+    int iret;
+    BOOL bret;
+    ULONG_PTR key;
+    struct sockaddr_in bindAddress;
+    GUID acceptExGuid = WSAID_ACCEPTEX;
+    LPFN_ACCEPTEX pAcceptEx = NULL;
+
+    previous_port = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
+    ok( previous_port != NULL, "Failed to create completion port %u\n", GetLastError());
+
+    memset(&ov, 0, sizeof(ov));
+
+    tcp_socketpair(&src, &dest);
+    if (src == INVALID_SOCKET || dest == INVALID_SOCKET)
+    {
+        skip("failed to create sockets\n");
+        goto end;
+    }
+
+    bufs.len = sizeof(buf);
+    bufs.buf = buf;
+    flags = 0;
+
+    ling.l_onoff = 1;
+    ling.l_linger = 0;
+    iret = setsockopt (src, SOL_SOCKET, SO_LINGER, (char *) &ling, sizeof(ling));
+    ok(!iret, "Failed to set linger %d\n", GetLastError());
+
+    io_port = CreateIoCompletionPort( (HANDLE)dest, previous_port, 125, 0 );
+    ok(io_port != NULL, "Failed to create completion port %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+
+    iret = WSARecv(dest, &bufs, 1, &num_bytes, &flags, &ov, NULL);
+    ok(iret == SOCKET_ERROR, "WSARecv returned %d\n", iret);
+    ok(GetLastError() == ERROR_IO_PENDING, "Last error was %d\n", GetLastError());
+
+    closesocket(src);
+    src = INVALID_SOCKET;
+
+    SetLastError(0xdeadbeef);
+    key = 0xdeadbeef;
+    num_bytes = 0xdeadbeef;
+    olp = (WSAOVERLAPPED *)0xdeadbeef;
+
+    bret = GetQueuedCompletionStatus(io_port, &num_bytes, &key, &olp, 100);
+    todo_wine ok(bret == FALSE, "GetQueuedCompletionStatus returned %d\n", bret);
+    todo_wine ok(GetLastError() == ERROR_NETNAME_DELETED, "Last error was %d\n", GetLastError());
+    ok(key == 125, "Key is %lu\n", key);
+    ok(num_bytes == 0, "Number of bytes received is %u\n", num_bytes);
+    ok(olp == &ov, "Overlaped structure is at %p\n", olp);
+
+    SetLastError(0xdeadbeef);
+    key = 0xdeadbeef;
+    num_bytes = 0xdeadbeef;
+    olp = (WSAOVERLAPPED *)0xdeadbeef;
+
+    bret = GetQueuedCompletionStatus(io_port, &num_bytes, &key, &olp, 100);
+    ok(bret == FALSE, "GetQueuedCompletionStatus returned %d\n", bret );
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %lu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transfered is %u\n", num_bytes);
+    ok(!olp, "Overlaped structure is at %p\n", olp);
+
+    if (dest != INVALID_SOCKET)
+        closesocket(dest);
+    if (src != INVALID_SOCKET)
+        closesocket(src);
+
+    memset(&ov, 0, sizeof(ov));
+
+    tcp_socketpair(&src, &dest);
+    if (src == INVALID_SOCKET || dest == INVALID_SOCKET)
+    {
+        skip("failed to create sockets\n");
+        goto end;
+    }
+
+    bufs.len = sizeof(buf);
+    bufs.buf = buf;
+    flags = 0;
+
+    ling.l_onoff = 1;
+    ling.l_linger = 0;
+    iret = setsockopt (src, SOL_SOCKET, SO_LINGER, (char *) &ling, sizeof(ling));
+    ok(!iret, "Failed to set linger %d\n", GetLastError());
+
+    io_port = CreateIoCompletionPort((HANDLE)dest, previous_port, 125, 0);
+    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+
+    set_blocking(dest, FALSE);
+
+    closesocket(src);
+    src = INVALID_SOCKET;
+    num_bytes = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+
+    iret = WSASend(dest, &bufs, 1, &num_bytes, 0, &ov, NULL);
+    ok(iret == SOCKET_ERROR, "WSASend failed - %d\n", iret);
+    ok(GetLastError() == WSAECONNRESET, "Last error was %d\n", GetLastError());
+    ok(num_bytes == 0xdeadbeef, "Managed to send %d\n", num_bytes);
+
+    SetLastError(0xdeadbeef);
+    key = 0xdeadbeef;
+    num_bytes = 0xdeadbeef;
+    olp = (WSAOVERLAPPED *)0xdeadbeef;
+
+    bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
+    ok(bret == FALSE, "GetQueuedCompletionStatus returned %u\n", bret );
+    todo_wine ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
+    todo_wine ok(key == 0xdeadbeef, "Key is %lu\n", key);
+    todo_wine ok(num_bytes == 0xdeadbeef, "Number of bytes transfered is %u\n", num_bytes);
+    todo_wine ok(!olp, "Overlaped structure is at %p\n", olp);
+
+    if (dest != INVALID_SOCKET)
+        closesocket(dest);
+    if (src != INVALID_SOCKET)
+        closesocket(src);
+
+
+    src = socket(AF_INET, SOCK_STREAM, 0);
+    if (src == INVALID_SOCKET)
+    {
+        skip("could not create listener socket, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    dest = socket(AF_INET, SOCK_STREAM, 0);
+    if (dest == INVALID_SOCKET)
+    {
+        skip("could not create acceptor socket, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    iret = WSAIoctl(src, SIO_GET_EXTENSION_FUNCTION_POINTER, &acceptExGuid, sizeof(acceptExGuid),
+            &pAcceptEx, sizeof(pAcceptEx), &num_bytes, NULL, NULL);
+    if (iret)
+    {
+        skip("WSAIoctl failed to get AcceptEx with ret %d + errno %d\n", iret, WSAGetLastError());
+        goto end;
+    }
+
+    memset(&bindAddress, 0, sizeof(bindAddress));
+    bindAddress.sin_family = AF_INET;
+    bindAddress.sin_addr.s_addr = inet_addr("127.0.0.1");
+    iret = bind(src, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
+    if (iret != 0)
+    {
+        skip("failed to bind, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    if (set_blocking(src, FALSE))
+    {
+        skip("couldn't make socket non-blocking, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    iret = listen(src, 5);
+    if (iret != 0)
+    {
+        skip("listening failed, errno = %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    SetLastError(0xdeadbeef);
+
+    bret = pAcceptEx(src, dest, buf, sizeof(buf) - 2*(sizeof(struct sockaddr_in) + 16),
+            sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
+            &num_bytes, &ov);
+    ok(bret == FALSE, "AcceptEx returned %d\n", bret);
+    ok(GetLastError() == ERROR_IO_PENDING, "Last error was %d\n", GetLastError());
+
+    io_port = CreateIoCompletionPort((HANDLE)src, previous_port, 125, 0);
+    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
+
+    closesocket(src);
+    src = INVALID_SOCKET;
+
+    SetLastError(0xdeadbeef);
+    key = 0xdeadbeef;
+    num_bytes = 0xdeadbeef;
+    olp = (WSAOVERLAPPED *)0xdeadbeef;
+
+    bret = GetQueuedCompletionStatus(io_port, &num_bytes, &key, &olp, 100);
+    ok(bret == FALSE, "failed to get completion status %u\n", bret);
+    todo_wine ok(GetLastError() == ERROR_OPERATION_ABORTED, "Last error was %d\n", GetLastError());
+    todo_wine ok(key == 125, "Key is %lu\n", key);
+    todo_wine ok(num_bytes == 0, "Number of bytes transfered is %u\n", num_bytes);
+    todo_wine ok(olp == &ov, "Overlaped structure is at %p\n", olp);
+    todo_wine ok(olp && (olp->Internal == (ULONG)STATUS_CANCELLED), "Internal status is %lx\n", olp ? olp->Internal : 0);
+
+    SetLastError(0xdeadbeef);
+    key = 0xdeadbeef;
+    num_bytes = 0xdeadbeef;
+    olp = (WSAOVERLAPPED *)0xdeadbeef;
+    bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
+    ok(bret == FALSE, "failed to get completion status %u\n", bret);
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %lu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transfered is %u\n", num_bytes);
+    ok(!olp, "Overlaped structure is at %p\n", olp);
+
+    end:
+    if (dest != INVALID_SOCKET)
+        closesocket(dest);
+    if (src != INVALID_SOCKET)
+        closesocket(src);
+    CloseHandle(previous_port);
+}
+
 /**************** Main program  ***************/
 
 START_TEST( sock )
@@ -5265,6 +5485,8 @@ START_TEST( sock )
     test_sioRoutingInterfaceQuery();
 
     test_WSAAsyncGetServByPort();
+
+    test_completion_port();
 
     /* this is a io heavy test, do it at the end so the kernel doesn't start dropping packets */
     test_send();
