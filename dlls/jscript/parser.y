@@ -850,7 +850,7 @@ static const statement_eval_t stat_eval_table[] = {
     throw_statement_eval,
     try_statement_eval,
     compiled_statement_eval,
-    while_statement_eval,
+    compiled_statement_eval,
     with_statement_eval
 };
 

@@ -32,6 +32,8 @@ struct _compiler_ctx_t {
 
     unsigned code_off;
     unsigned code_size;
+
+    BOOL no_fallback;
 };
 
 static HRESULT compile_expression(compiler_ctx_t*,expression_t*);
@@ -424,6 +426,9 @@ static HRESULT compile_new_expression(compiler_ctx_t *ctx, call_expression_t *ex
 static HRESULT compile_interp_fallback(compiler_ctx_t *ctx, statement_t *stat)
 {
     unsigned instr;
+
+    if(ctx->no_fallback)
+        return E_NOTIMPL;
 
     instr = push_instr(ctx, OP_tree);
     if(instr == -1)
@@ -943,6 +948,67 @@ static HRESULT compile_if_statement(compiler_ctx_t *ctx, if_statement_t *stat)
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    12.6.2 */
+static HRESULT compile_while_statement(compiler_ctx_t *ctx, while_statement_t *stat)
+{
+    unsigned off_backup, jmp_off, jmp = -1;
+    BOOL prev_no_fallback;
+    HRESULT hres;
+
+    off_backup = ctx->code_off;
+
+    if(!stat->do_while) {
+        /* FIXME: avoid */
+        if(push_instr(ctx, OP_undefined) == -1)
+            return E_OUTOFMEMORY;
+
+        jmp_off = ctx->code_off;
+        hres = compile_expression(ctx, stat->expr);
+        if(FAILED(hres))
+            return hres;
+
+        jmp = push_instr(ctx, OP_jmp_z);
+        if(jmp == -1)
+            return E_OUTOFMEMORY;
+
+        if(push_instr(ctx, OP_pop) == -1)
+            return E_OUTOFMEMORY;
+    }else {
+        jmp_off = ctx->code_off;
+    }
+
+    prev_no_fallback = ctx->no_fallback;
+    ctx->no_fallback = TRUE;
+    hres = compile_statement(ctx, stat->statement);
+    ctx->no_fallback = prev_no_fallback;
+    if(hres == E_NOTIMPL) {
+        ctx->code_off = off_backup;
+        stat->stat.eval = while_statement_eval;
+        return compile_interp_fallback(ctx, &stat->stat);
+    }
+    if(FAILED(hres))
+        return hres;
+
+    if(stat->do_while) {
+        hres = compile_expression(ctx, stat->expr);
+        if(FAILED(hres))
+            return hres;
+
+        jmp = push_instr(ctx, OP_jmp_z);
+        if(jmp == -1)
+            return E_OUTOFMEMORY;
+
+        if(push_instr(ctx, OP_pop) == -1)
+            return E_OUTOFMEMORY;
+    }
+    hres = push_instr_uint(ctx, OP_jmp, jmp_off);
+    if(FAILED(hres))
+        return hres;
+
+    instr_ptr(ctx, jmp)->arg1.uint = ctx->code_off;
+    return S_OK;
+}
+
 static HRESULT compile_statement(compiler_ctx_t *ctx, statement_t *stat)
 {
     switch(stat->type) {
@@ -956,6 +1022,8 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_t *stat)
         return compile_if_statement(ctx, (if_statement_t*)stat);
     case STAT_VAR:
         return compile_var_statement(ctx, (var_statement_t*)stat);
+    case STAT_WHILE:
+        return compile_while_statement(ctx, (while_statement_t*)stat);
     default:
         return compile_interp_fallback(ctx, stat);
     }
