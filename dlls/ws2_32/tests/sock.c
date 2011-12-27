@@ -5321,10 +5321,10 @@ static void test_completion_port(void)
 
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
     ok(bret == FALSE, "GetQueuedCompletionStatus returned %u\n", bret );
-    todo_wine ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
-    todo_wine ok(key == 0xdeadbeef, "Key is %lu\n", key);
-    todo_wine ok(num_bytes == 0xdeadbeef, "Number of bytes transfered is %u\n", num_bytes);
-    todo_wine ok(!olp, "Overlaped structure is at %p\n", olp);
+    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %d\n", GetLastError());
+    ok(key == 0xdeadbeef, "Key is %lu\n", key);
+    ok(num_bytes == 0xdeadbeef, "Number of bytes transfered is %u\n", num_bytes);
+    ok(!olp, "Overlaped structure is at %p\n", olp);
 
     if (dest != INVALID_SOCKET)
         closesocket(dest);
