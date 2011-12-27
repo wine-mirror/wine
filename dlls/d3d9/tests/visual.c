@@ -3699,6 +3699,154 @@ out:
     IDirect3D9_Release(d3d);
 }
 
+static void check_rect(IDirect3DDevice9 *device, RECT r, const char *message)
+{
+    LONG x_coords[2][2] =
+    {
+        {r.left - 1, r.left + 1},
+        {r.right + 1, r.right - 1},
+    };
+    LONG y_coords[2][2] =
+    {
+        {r.top - 1, r.top + 1},
+        {r.bottom + 1, r.bottom - 1}
+    };
+    unsigned int i, j, x_side, y_side;
+
+    for (i = 0; i < 2; ++i)
+    {
+        for (j = 0; j < 2; ++j)
+        {
+            for (x_side = 0; x_side < 2; ++x_side)
+            {
+                for (y_side = 0; y_side < 2; ++y_side)
+                {
+                    unsigned int x = x_coords[i][x_side], y = y_coords[j][y_side];
+                    DWORD color;
+                    DWORD expected = (x_side == 1 && y_side == 1) ? 0x00ffffff : 0;
+
+                    color = getPixelColor(device, x, y);
+                    ok(color == expected, "%s: Pixel (%d, %d) has color %08x, expected %08x\n",
+                            message, x, y, color, expected);
+                }
+            }
+        }
+    }
+}
+
+struct projected_textures_test_run
+{
+    const char *message;
+    DWORD flags;
+    IDirect3DVertexDeclaration9 *decl;
+    BOOL vs, ps;
+    RECT rect;
+};
+
+static void projected_textures_test(IDirect3DDevice9 *device,
+        struct projected_textures_test_run tests[4])
+{
+    unsigned int i;
+
+    static const DWORD vertex_shader[] =
+    {
+        0xfffe0101,                                     /* vs_1_1           */
+        0x0000001f, 0x80000000, 0x900f0000,             /* dcl_position v0  */
+        0x0000001f, 0x80000005, 0x900f0001,             /* dcl_texcoord0 v1 */
+        0x00000001, 0xc00f0000, 0x90e40000,             /* mov oPos, v0     */
+        0x00000001, 0xe00f0000, 0x90e40001,             /* mov oT0, v1      */
+        0x0000ffff                                      /* end              */
+    };
+    static const DWORD pixel_shader[] =
+    {
+        0xffff0103,                                     /* ps_1_3           */
+        0x00000042, 0xb00f0000,                         /* tex t0           */
+        0x00000001, 0x800f0000, 0xb0e40000,             /* mov r0, t0       */
+        0x0000ffff                                      /* end              */
+    };
+    IDirect3DVertexShader9 *vs = NULL;
+    IDirect3DPixelShader9 *ps = NULL;
+    HRESULT hr;
+
+    hr = IDirect3DDevice9_CreateVertexShader(device, vertex_shader, &vs);
+    ok(SUCCEEDED(hr), "CreateVertexShader failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_CreatePixelShader(device, pixel_shader, &ps);
+    ok(SUCCEEDED(hr), "CreatePixelShader failed (%08x)\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff203040, 0.0f, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %08x\n", hr);
+    if (FAILED(hr))
+        return;
+
+    for (i = 0; i < 4; ++i)
+    {
+        DWORD value = 0xdeadbeef;
+        static const float proj_quads[] =
+        {
+            -1.0,   -1.0,    0.1,    0.0,    0.0,    4.0,    6.0,
+             0.0,   -1.0,    0.1,    4.0,    0.0,    4.0,    6.0,
+            -1.0,    0.0,    0.1,    0.0,    4.0,    4.0,    6.0,
+             0.0,    0.0,    0.1,    4.0,    4.0,    4.0,    6.0,
+
+             0.0,   -1.0,    0.1,    0.0,    0.0,    4.0,    6.0,
+             1.0,   -1.0,    0.1,    4.0,    0.0,    4.0,    6.0,
+             0.0,    0.0,    0.1,    0.0,    4.0,    4.0,    6.0,
+             1.0,    0.0,    0.1,    4.0,    4.0,    4.0,    6.0,
+
+            -1.0,    0.0,    0.1,    0.0,    0.0,    4.0,    6.0,
+             0.0,    0.0,    0.1,    4.0,    0.0,    4.0,    6.0,
+            -1.0,    1.0,    0.1,    0.0,    4.0,    4.0,    6.0,
+             0.0,    1.0,    0.1,    4.0,    4.0,    4.0,    6.0,
+
+             0.0,    0.0,    0.1,    0.0,    0.0,    4.0,    6.0,
+             1.0,    0.0,    0.1,    4.0,    0.0,    4.0,    6.0,
+             0.0,    1.0,    0.1,    0.0,    4.0,    4.0,    6.0,
+             1.0,    1.0,    0.1,    4.0,    4.0,    4.0,    6.0,
+        };
+
+        if (tests[i].vs)
+            hr = IDirect3DDevice9_SetVertexShader(device, vs);
+        else
+            hr = IDirect3DDevice9_SetVertexShader(device, NULL);
+        ok(SUCCEEDED(hr), "SetVertexShader failed (%08x)\n", hr);
+        if (tests[i].ps)
+            hr = IDirect3DDevice9_SetPixelShader(device, ps);
+        else
+            hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+        ok(SUCCEEDED(hr), "SetPixelShader failed (%08x)\n", hr);
+
+        hr = IDirect3DDevice9_SetVertexDeclaration(device, tests[i].decl);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed with %08x\n", hr);
+
+        IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, tests[i].flags);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_GetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, &value);
+        ok(SUCCEEDED(hr) && value == tests[i].flags,
+                "GetTextureStageState returned: hr %08x, value %08x.\n", hr, value);
+
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2,
+                &proj_quads[i * 4 * 7], 7 * sizeof(float));
+        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+    }
+
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %08x\n", hr);
+
+    hr = IDirect3DDevice9_SetVertexShader(device, NULL);
+    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+    IDirect3DVertexShader9_Release(vs);
+    IDirect3DPixelShader9_Release(ps);
+
+    for (i = 0; i < 4; ++i)
+        check_rect(device, tests[i].rect, tests[i].message);
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
+}
+
 static void texture_transform_flags_test(IDirect3DDevice9 *device)
 {
     HRESULT hr;
@@ -3712,7 +3860,7 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
     D3DLOCKED_BOX lb;
     DWORD color;
     UINT w, h;
-    IDirect3DVertexDeclaration9 *decl, *decl2, *decl3;
+    IDirect3DVertexDeclaration9 *decl, *decl2, *decl3, *decl4;
     float identity[16] = {1.0, 0.0, 0.0, 0.0,
                            0.0, 1.0, 0.0, 0.0,
                            0.0, 0.0, 1.0, 0.0,
@@ -3730,6 +3878,11 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
     static const D3DVERTEXELEMENT9 decl_elements3[] = {
         {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
         {0, 12, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+        D3DDECL_END()
+    };
+    static const D3DVERTEXELEMENT9 decl_elements4[] = {
+        {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
         D3DDECL_END()
     };
     static const unsigned char proj_texdata[] = {0x00, 0x00, 0x00, 0x00,
@@ -3751,6 +3904,8 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements2, &decl2);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %08x\n", hr);
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements3, &decl3);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %08x\n", hr);
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements4, &decl4);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %08x\n", hr);
     hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, FALSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState(D3DSAMP_SRGBTEXTURE) returned %08x\n", hr);
@@ -3995,132 +4150,126 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
     IDirect3DTexture9_Release(texture);
 
     /* Test projected textures, without any fancy matrices */
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff203040, 0.0, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
     hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, 0, D3DFMT_L8, D3DPOOL_MANAGED, &texture, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture returned %08x\n", hr);
-    hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) &identity);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %08x\n", hr);
-    hr = IDirect3DDevice9_SetVertexDeclaration(device, decl3);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed with %08x\n", hr);
-
-    hr = IDirect3DTexture9_LockRect(texture, 0, &lr, NULL, 0);
-    ok(hr == D3D_OK, "IDirect3DTexture9_LockRect failed with %08x\n", hr);
-    for(x = 0; x < 4; x++) {
-        memcpy(((BYTE *) lr.pBits) + lr.Pitch * x, proj_texdata + 4 * x, 4 * sizeof(proj_texdata[0]));
-    }
-    hr = IDirect3DTexture9_UnlockRect(texture, 0);
-    ok(hr == D3D_OK, "IDirect3DTexture9_UnlockRect failed with %08x\n", hr);
-    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) texture);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed with %08x\n", hr);
-
-    hr = IDirect3DDevice9_BeginScene(device);
-    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %08x\n", hr);
-    if(SUCCEEDED(hr))
+    if (SUCCEEDED(hr))
     {
-        const float proj_quads[] = {
-           -1.0,   -1.0,    0.1,    0.0,    0.0,    4.0,    6.0,
-            1.0,   -1.0,    0.1,    4.0,    0.0,    4.0,    6.0,
-           -1.0,    0.0,    0.1,    0.0,    4.0,    4.0,    6.0,
-            1.0,    0.0,    0.1,    4.0,    4.0,    4.0,    6.0,
-           -1.0,    0.0,    0.1,    0.0,    0.0,    4.0,    6.0,
-            1.0,    0.0,    0.1,    4.0,    0.0,    4.0,    6.0,
-           -1.0,    1.0,    0.1,    0.0,    4.0,    4.0,    6.0,
-            1.0,    1.0,    0.1,    4.0,    4.0,    4.0,    6.0,
+        struct projected_textures_test_run projected_tests_1[4] =
+        {
+            {
+                "D3DTTFF_COUNT4 | D3DTTFF_PROJECTED - bottom left",
+                D3DTTFF_COUNT4 | D3DTTFF_PROJECTED,
+                decl3,
+                FALSE, TRUE,
+                {120, 300, 240, 390},
+            },
+            {
+                "D3DTTFF_COUNT3 | D3DTTFF_PROJECTED - bottom right",
+                D3DTTFF_COUNT3 | D3DTTFF_PROJECTED,
+                decl3,
+                FALSE, TRUE,
+                {400, 360, 480, 420},
+            },
+            /* Try with some invalid values */
+            {
+                "0xffffffff (draws like COUNT4 | PROJECTED) - top left",
+                0xffffffff,
+                decl3,
+                FALSE, TRUE,
+                {120, 60, 240, 150}
+            },
+            {
+                "D3DTTFF_COUNT3 | D3DTTFF_PROJECTED (draws non-projected) - top right",
+                D3DTTFF_COUNT3 | D3DTTFF_PROJECTED,
+                decl4,
+                FALSE, TRUE,
+                {340, 210, 360, 225},
+            }
+        };
+        struct projected_textures_test_run projected_tests_2[4] =
+        {
+            {
+                "D3DTTFF_PROJECTED (like COUNT4 | PROJECTED, texcoord has 4 components) - bottom left",
+                D3DTTFF_PROJECTED,
+                decl3,
+                FALSE, TRUE,
+                {120, 300, 240, 390},
+            },
+            {
+                "D3DTTFF_PROJECTED (like COUNT3 | PROJECTED, texcoord has only 3 components) - bottom right",
+                D3DTTFF_PROJECTED,
+                decl,
+                FALSE, TRUE,
+                {400, 360, 480, 420},
+            },
+            {
+                "0xffffffff (like COUNT3 | PROJECTED, texcoord has only 3 components) - top left",
+                0xffffffff,
+                decl,
+                FALSE, TRUE,
+                {80, 120, 160, 180},
+            },
+            {
+                "D3DTTFF_COUNT1 (draws non-projected) - top right",
+                D3DTTFF_COUNT1,
+                decl4,
+                FALSE, TRUE,
+                {340, 210, 360, 225},
+            }
+        };
+        struct projected_textures_test_run projected_tests_3[4] =
+        {
+            {
+                "D3DTTFF_PROJECTED (like COUNT4 | PROJECTED) - bottom left",
+                D3DTTFF_PROJECTED,
+                decl3,
+                TRUE, TRUE,
+                {120, 300, 240, 390},
+            },
+            {
+                "D3DTTFF_PROJECTED (like COUNT4 | PROJECTED, the w component has the default value 1.0) - bottom right",
+                D3DTTFF_PROJECTED,
+                decl,
+                TRUE, TRUE,
+                {340, 450, 360, 465},
+            },
+            {
+                "0xffffffff (like COUNT4 | PROJECTED, the w component has the default value 1.0) - top left",
+                0xffffffff,
+                decl,
+                TRUE, TRUE,
+                {20, 210, 40, 225},
+            },
+            {
+                "D3DTTFF_PROJECTED (like COUNT4 | PROJECTED) - top right",
+                D3DTTFF_PROJECTED,
+                decl3,
+                FALSE, FALSE,
+                {440, 60, 560, 150},
+            },
         };
 
-        IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT4 | D3DTTFF_PROJECTED);
-        ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &proj_quads[0*7], 7 * sizeof(float));
-        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) &identity);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %08x\n", hr);
 
-        IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT3 | D3DTTFF_PROJECTED);
-        ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &proj_quads[4*7], 7 * sizeof(float));
-        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
+        hr = IDirect3DTexture9_LockRect(texture, 0, &lr, NULL, 0);
+        ok(hr == D3D_OK, "IDirect3DTexture9_LockRect failed with %08x\n", hr);
+        for(x = 0; x < 4; x++) {
+            memcpy(((BYTE *) lr.pBits) + lr.Pitch * x, proj_texdata + 4 * x, 4 * sizeof(proj_texdata[0]));
+        }
+        hr = IDirect3DTexture9_UnlockRect(texture, 0);
+        ok(hr == D3D_OK, "IDirect3DTexture9_UnlockRect failed with %08x\n", hr);
+        hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) texture);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed with %08x\n", hr);
 
-        hr = IDirect3DDevice9_EndScene(device);
-        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %08x\n", hr);
+        projected_textures_test(device, projected_tests_1);
+        projected_textures_test(device, projected_tests_2);
+        projected_textures_test(device, projected_tests_3);
+
+        hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed with %08x\n", hr);
+        IDirect3DTexture9_Release(texture);
     }
-
-    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed with %08x\n", hr);
-    IDirect3DTexture9_Release(texture);
-
-    color = getPixelColor(device, 158, 118);
-    ok(color == 0x00000000, "proj: Pixel 158/118 has color 0x%08x, expected 0x00000000\n", color);
-    color = getPixelColor(device, 162, 118);
-    ok(color == 0x00000000, "proj: Pixel 162/118 has color 0x%08x, expected 0x00000000\n", color);
-    color = getPixelColor(device, 158, 122);
-    ok(color == 0x00000000, "proj: Pixel 158/122 has color 0x%08x, expected 0x00000000\n", color);
-    color = getPixelColor(device, 162, 122);
-    ok(color == 0x00FFFFFF, "proj: Pixel 162/122 has color 0x%08x, expected 0x00FFFFFF\n", color);
-
-    color = getPixelColor(device, 158, 178);
-    ok(color == 0x00000000, "proj: Pixel 158/178 has color 0x%08x, expected 0x00000000\n", color);
-    color = getPixelColor(device, 162, 178);
-    ok(color == 0x00FFFFFF, "proj: Pixel 158/178 has color 0x%08x, expected 0x00FFFFFF\n", color);
-    color = getPixelColor(device, 158, 182);
-    ok(color == 0x00000000, "proj: Pixel 158/182 has color 0x%08x, expected 0x00000000\n", color);
-    color = getPixelColor(device, 162, 182);
-    ok(color == 0x00000000, "proj: Pixel 158/182 has color 0x%08x, expected 0x00000000\n", color);
-
-    color = getPixelColor(device, 318, 118);
-    ok(color == 0x00000000, "proj: Pixel 318/118 has color 0x%08x, expected 0x00000000\n", color);
-    color = getPixelColor(device, 322, 118);
-    ok(color == 0x00000000, "proj: Pixel 322/118 has color 0x%08x, expected 0x00000000\n", color);
-    color = getPixelColor(device, 318, 122);
-    ok(color == 0x00FFFFFF, "proj: Pixel 318/122 has color 0x%08x, expected 0x00FFFFFF\n", color);
-    color = getPixelColor(device, 322, 122);
-    ok(color == 0x00000000, "proj: Pixel 322/122 has color 0x%08x, expected 0x00000000\n", color);
-
-    color = getPixelColor(device, 318, 178);
-    ok(color == 0x00FFFFFF, "proj: Pixel 318/178 has color 0x%08x, expected 0x00FFFFFF\n", color);
-    color = getPixelColor(device, 322, 178);
-    ok(color == 0x00000000, "proj: Pixel 322/178 has color 0x%08x, expected 0x00000000\n", color);
-    color = getPixelColor(device, 318, 182);
-    ok(color == 0x00000000, "proj: Pixel 318/182 has color 0x%08x, expected 0x00000000\n", color);
-    color = getPixelColor(device, 322, 182);
-    ok(color == 0x00000000, "proj: Pixel 322/182 has color 0x%08x, expected 0x00000000\n", color);
-
-    color = getPixelColor(device, 238, 298);
-    ok(color == 0x00000000, "proj: Pixel 238/298 has color 0x%08x, expected 0x00000000\n", color);
-    color = getPixelColor(device, 242, 298);
-    ok(color == 0x00000000, "proj: Pixel 242/298 has color 0x%08x, expected 0x00000000\n", color);
-    color = getPixelColor(device, 238, 302);
-    ok(color == 0x00000000, "proj: Pixel 238/302 has color 0x%08x, expected 0x00000000\n", color);
-    color = getPixelColor(device, 242, 302);
-    ok(color == 0x00FFFFFF, "proj: Pixel 242/302 has color 0x%08x, expected 0x00FFFFFF\n", color);
-
-    color = getPixelColor(device, 238, 388);
-    ok(color == 0x00000000, "proj: Pixel 238/388 has color 0x%08x, expected 0x00000000\n", color);
-    color = getPixelColor(device, 242, 388);
-    ok(color == 0x00FFFFFF, "proj: Pixel 242/388 has color 0x%08x, expected 0x00FFFFFF\n", color);
-    color = getPixelColor(device, 238, 392);
-    ok(color == 0x00000000, "proj: Pixel 238/392 has color 0x%08x, expected 0x00000000\n", color);
-    color = getPixelColor(device, 242, 392);
-    ok(color == 0x00000000, "proj: Pixel 242/392 has color 0x%08x, expected 0x00000000\n", color);
-
-    color = getPixelColor(device, 478, 298);
-    ok(color == 0x00000000, "proj: Pixel 478/298 has color 0x%08x, expected 0x00000000\n", color);
-    color = getPixelColor(device, 482, 298);
-    ok(color == 0x00000000, "proj: Pixel 482/298 has color 0x%08x, expected 0x00000000\n", color);
-    color = getPixelColor(device, 478, 302);
-    ok(color == 0x00FFFFFF, "proj: Pixel 478/302 has color 0x%08x, expected 0x00FFFFFF\n", color);
-    color = getPixelColor(device, 482, 302);
-    ok(color == 0x00000000, "proj: Pixel 482/302 has color 0x%08x, expected 0x00000000\n", color);
-
-    color = getPixelColor(device, 478, 388);
-    ok(color == 0x00FFFFFF, "proj: Pixel 478/388 has color 0x%08x, expected 0x00FFFFFF\n", color);
-    color = getPixelColor(device, 482, 388);
-    ok(color == 0x00000000, "proj: Pixel 482/388 has color 0x%08x, expected 0x00000000\n", color);
-    color = getPixelColor(device, 478, 392);
-    ok(color == 0x00000000, "proj: Pixel 478/392 has color 0x%08x, expected 0x00000000\n", color);
-    color = getPixelColor(device, 482, 392);
-    ok(color == 0x00000000, "proj: Pixel 482/392 has color 0x%08x, expected 0x00000000\n", color);
-
-    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff203040, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
@@ -4356,6 +4505,7 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
     IDirect3DVertexDeclaration9_Release(decl);
     IDirect3DVertexDeclaration9_Release(decl2);
     IDirect3DVertexDeclaration9_Release(decl3);
+    IDirect3DVertexDeclaration9_Release(decl4);
 }
 
 static void texdepth_test(IDirect3DDevice9 *device)
