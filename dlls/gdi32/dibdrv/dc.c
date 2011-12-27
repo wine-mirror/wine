@@ -298,33 +298,6 @@ int get_clipped_rects( const dib_info *dib, const RECT *rc, HRGN clip, struct cl
     return clip_rects->count;
 }
 
-/***********************************************************************
- *           add_extra_clipping_region
- *
- * Temporarily add a region to the current clipping region.
- * The returned region must be restored with restore_clipping_region.
- */
-HRGN add_extra_clipping_region( dibdrv_physdev *pdev, HRGN rgn )
-{
-    HRGN ret, clip;
-
-    if (!(clip = CreateRectRgn( 0, 0, 0, 0 ))) return 0;
-    CombineRgn( clip, pdev->clip, rgn, RGN_AND );
-    ret = pdev->clip;
-    pdev->clip = clip;
-    return ret;
-}
-
-/***********************************************************************
- *           restore_clipping_region
- */
-void restore_clipping_region( dibdrv_physdev *pdev, HRGN rgn )
-{
-    if (!rgn) return;
-    DeleteObject( pdev->clip );
-    pdev->clip = rgn;
-}
-
 /**********************************************************************
  *	     dibdrv_CreateDC
  */
@@ -334,11 +307,6 @@ static BOOL dibdrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
     dibdrv_physdev *pdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*pdev) );
 
     if (!pdev) return FALSE;
-    if (!(pdev->clip = CreateRectRgn(0, 0, 0, 0)))
-    {
-        HeapFree( GetProcessHeap(), 0, pdev );
-        return FALSE;
-    }
     clear_dib_info(&pdev->dib);
     clear_dib_info(&pdev->brush_dib);
     push_dc_driver( dev, &pdev->dev, &dib_driver );
@@ -352,7 +320,6 @@ static BOOL dibdrv_DeleteDC( PHYSDEV dev )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     TRACE("(%p)\n", dev);
-    DeleteObject(pdev->clip);
     free_pattern_brush(pdev);
     HeapFree( GetProcessHeap(), 0, pdev );
     return TRUE;
@@ -409,8 +376,7 @@ static void dibdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     TRACE("(%p, %p)\n", dev, rgn);
 
-    SetRectRgn( pdev->clip, 0, 0, pdev->dib.width, pdev->dib.height );
-    if (rgn) CombineRgn( pdev->clip, pdev->clip, rgn, RGN_AND );
+    pdev->clip = rgn;
     return next->funcs->pSetDeviceClipping( next, rgn );
 }
 

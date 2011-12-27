@@ -232,8 +232,6 @@ extern COLORREF make_rgb_colorref( HDC hdc, dib_info *dib, COLORREF color, BOOL 
 extern DWORD get_pixel_color(dibdrv_physdev *pdev, COLORREF color, BOOL mono_fixup) DECLSPEC_HIDDEN;
 extern BOOL brush_rect( dibdrv_physdev *pdev, const RECT *rect ) DECLSPEC_HIDDEN;
 extern int get_clipped_rects( const dib_info *dib, const RECT *rc, HRGN clip, struct clipped_rects *clip_rects ) DECLSPEC_HIDDEN;
-extern HRGN add_extra_clipping_region( dibdrv_physdev *pdev, HRGN rgn ) DECLSPEC_HIDDEN;
-extern void restore_clipping_region( dibdrv_physdev *pdev, HRGN rgn ) DECLSPEC_HIDDEN;
 extern int clip_line(const POINT *start, const POINT *end, const RECT *clip,
                      const bres_params *params, POINT *pt1, POINT *pt2) DECLSPEC_HIDDEN;
 

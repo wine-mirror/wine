@@ -929,7 +929,7 @@ DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
     struct clipped_rects clipped_rects;
     DWORD ret;
     dib_info src_dib;
-    HRGN saved_clip = NULL;
+    HRGN tmp_rgn = 0;
     dibdrv_physdev *pdev = NULL;
 
     TRACE( "%p %p %p\n", dev, hbitmap, info );
@@ -972,8 +972,13 @@ DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
 
     if (!hbitmap)
     {
-        if (clip) saved_clip = add_extra_clipping_region( pdev, clip );
-        clip = pdev->clip;
+        if (clip && pdev->clip)
+        {
+            tmp_rgn = CreateRectRgn( 0, 0, 0, 0 );
+            CombineRgn( tmp_rgn, clip, pdev->clip, RGN_AND );
+            clip = tmp_rgn;
+        }
+        else if (!clip) clip = pdev->clip;
     }
 
     if (!get_clipped_rects( dib, &dst->visrect, clip, &clipped_rects ))
@@ -1000,7 +1005,7 @@ update_format:
     ret = ERROR_BAD_FORMAT;
 
 done:
-    if (saved_clip) restore_clipping_region( pdev, saved_clip );
+    if (tmp_rgn) DeleteObject( tmp_rgn );
     if (hbitmap) GDI_ReleaseObj( hbitmap );
     return ret;
 }
