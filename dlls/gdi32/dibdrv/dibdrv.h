@@ -93,7 +93,7 @@ typedef struct dibdrv_physdev
     /* brush */
     UINT brush_style;
     UINT brush_hatch;
-    INT brush_rop;   /* PatBlt, for example, can override the DC's rop2 */
+    INT brush_rop;   /* rop2 last used to create the brush bits */
     COLORREF brush_colorref;
     dib_info brush_dib;
     void *brush_and_bits, *brush_xor_bits;
@@ -101,7 +101,7 @@ typedef struct dibdrv_physdev
     void *brush_pattern_bits;
     UINT brush_pattern_usage;
     HBITMAP brush_pattern_bitmap;
-    BOOL   (* brush_rects)(struct dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects);
+    BOOL   (* brush_rects)(struct dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects, INT rop);
 } dibdrv_physdev;
 
 #define DEFER_PEN        2
@@ -220,7 +220,6 @@ struct clipped_rects
 };
 
 extern void get_rop_codes(INT rop, struct rop_codes *codes) DECLSPEC_HIDDEN;
-extern void update_brush_rop( dibdrv_physdev *pdev, INT rop ) DECLSPEC_HIDDEN;
 extern void reset_dash_origin(dibdrv_physdev *pdev) DECLSPEC_HIDDEN;
 extern void init_dib_info_from_bitmapinfo(dib_info *dib, const BITMAPINFO *info, void *bits, enum dib_info_flags flags) DECLSPEC_HIDDEN;
 extern BOOL init_dib_info_from_bitmapobj(dib_info *dib, BITMAPOBJ *bmp, enum dib_info_flags flags) DECLSPEC_HIDDEN;
@@ -230,7 +229,7 @@ extern void copy_dib_color_info(dib_info *dst, const dib_info *src) DECLSPEC_HID
 extern BOOL convert_dib(dib_info *dst, const dib_info *src) DECLSPEC_HIDDEN;
 extern COLORREF make_rgb_colorref( HDC hdc, dib_info *dib, COLORREF color, BOOL *got_pixel, DWORD *pixel ) DECLSPEC_HIDDEN;
 extern DWORD get_pixel_color(dibdrv_physdev *pdev, COLORREF color, BOOL mono_fixup) DECLSPEC_HIDDEN;
-extern BOOL brush_rect( dibdrv_physdev *pdev, const RECT *rect ) DECLSPEC_HIDDEN;
+extern BOOL brush_rect( dibdrv_physdev *pdev, const RECT *rect, INT rop ) DECLSPEC_HIDDEN;
 extern int get_clipped_rects( const dib_info *dib, const RECT *rc, HRGN clip, struct clipped_rects *clip_rects ) DECLSPEC_HIDDEN;
 extern int clip_line(const POINT *start, const POINT *end, const RECT *clip,
                      const bres_params *params, POINT *pt1, POINT *pt2) DECLSPEC_HIDDEN;

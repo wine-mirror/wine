@@ -476,15 +476,10 @@ static inline INT get_rop2_from_rop(INT rop)
 BOOL dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
-    INT rop2 = get_rop2_from_rop(rop);
-    BOOL ret;
 
     TRACE("(%p, %d, %d, %d, %d, %06x)\n", dev, dst->x, dst->y, dst->width, dst->height, rop);
 
-    update_brush_rop( pdev, rop2 );
-    ret = brush_rect( pdev, &dst->visrect );
-    update_brush_rop( pdev, GetROP2(dev->hdc) );
-    return ret;
+    return brush_rect( pdev, &dst->visrect, get_rop2_from_rop(rop) );
 }
 
 /***********************************************************************
@@ -506,7 +501,7 @@ BOOL dibdrv_PaintRgn( PHYSDEV dev, HRGN rgn )
     {
         rect = get_device_rect( dev->hdc, region->rects[i].left, region->rects[i].top,
                                 region->rects[i].right, region->rects[i].bottom, FALSE );
-        brush_rect( pdev, &rect );
+        brush_rect( pdev, &rect, GetROP2( dev->hdc ) );
     }
 
     release_wine_region( rgn );
@@ -602,7 +597,7 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
     rect.right  -= 1;
     rect.bottom -= 1;
 
-    brush_rect(pdev, &rect);
+    brush_rect( pdev, &rect, GetROP2(dev->hdc) );
 
     return TRUE;
 }

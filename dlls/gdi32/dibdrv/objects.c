@@ -1369,12 +1369,12 @@ COLORREF dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
  *
  * Fill a number of rectangles with the solid brush
  */
-static BOOL solid_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects)
+static BOOL solid_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects, INT rop)
 {
     rop_mask brush_color;
     DWORD color = get_pixel_color( pdev, pdev->brush_colorref, TRUE );
 
-    calc_rop_masks( pdev->brush_rop, color, &brush_color );
+    calc_rop_masks( rop, color, &brush_color );
     dib->funcs->solid_rects( dib, num, rects, brush_color.and, brush_color.xor );
     return TRUE;
 }
@@ -1433,7 +1433,7 @@ static const DWORD hatches[6][8] =
     { 0x81, 0x42, 0x24, 0x18, 0x18, 0x24, 0x42, 0x81 }  /* HS_DIAGCROSS  */
 };
 
-static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev)
+static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev, BOOL *needs_reselect)
 {
     dib_info hatch;
     rop_mask fg_mask, bg_mask;
@@ -1473,6 +1473,11 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev)
     hatch.bits.is_copy = FALSE;
 
     get_color_masks( pdev, pdev->brush_rop, pdev->brush_colorref, &fg_mask, &bg_mask );
+
+    if (pdev->brush_colorref & (1 << 24))  /* PALETTEINDEX */
+        *needs_reselect = TRUE;
+    if (GetBkMode(pdev->dev.hdc) != TRANSPARENT && (GetBkColor(pdev->dev.hdc) & (1 << 24)))
+        *needs_reselect = TRUE;
 
     ret = pdev->brush_dib.funcs->create_rop_masks( &pdev->brush_dib, &hatch, &fg_mask, &bg_mask, &mask_bits );
     if(!ret) free_pattern_brush_bits( pdev );
@@ -1591,10 +1596,16 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, BOOL *needs_reselect )
  * Fill a number of rectangles with the pattern brush
  * FIXME: Should we insist l < r && t < b?  Currently we assume this.
  */
-static BOOL pattern_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects)
+static BOOL pattern_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects, INT rop)
 {
     POINT origin;
     BOOL needs_reselect = FALSE;
+
+    if (rop != pdev->brush_rop)
+    {
+        free_pattern_brush_bits( pdev );
+        pdev->brush_rop = rop;
+    }
 
     if(pdev->brush_and_bits == NULL)
     {
@@ -1608,7 +1619,7 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RE
             break;
 
         case BS_HATCHED:
-            if(!create_hatch_brush_bits(pdev))
+            if(!create_hatch_brush_bits(pdev, &needs_reselect))
                 return FALSE;
             break;
 
@@ -1626,15 +1637,9 @@ static BOOL pattern_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RE
     return TRUE;
 }
 
-static BOOL null_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects)
+static BOOL null_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects, INT rop)
 {
     return TRUE;
-}
-
-void update_brush_rop( dibdrv_physdev *pdev, INT rop )
-{
-    pdev->brush_rop = rop;
-    free_pattern_brush_bits( pdev );
 }
 
 /***********************************************************************
@@ -1675,7 +1680,6 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
     {
     case BS_SOLID:
         pdev->brush_colorref = logbrush.lbColor;
-        pdev->brush_rop = GetROP2( dev->hdc );
         pdev->brush_rects = solid_brush;
         break;
 
@@ -1687,7 +1691,6 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
         if(logbrush.lbHatch > HS_DIAGCROSS) return 0;
         pdev->brush_hatch = logbrush.lbHatch;
         pdev->brush_colorref = logbrush.lbColor;
-        pdev->brush_rop = GetROP2( dev->hdc );
         pdev->brush_rects = pattern_brush;
         break;
 
@@ -1712,13 +1715,13 @@ COLORREF dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color )
     return next->funcs->pSetDCBrushColor( next, color );
 }
 
-BOOL brush_rect(dibdrv_physdev *pdev, const RECT *rect)
+BOOL brush_rect(dibdrv_physdev *pdev, const RECT *rect, INT rop)
 {
     struct clipped_rects clipped_rects;
     BOOL ret;
 
     if (!get_clipped_rects( &pdev->dib, rect, pdev->clip, &clipped_rects )) return TRUE;
-    ret = pdev->brush_rects( pdev, &pdev->dib, clipped_rects.count, clipped_rects.rects );
+    ret = pdev->brush_rects( pdev, &pdev->dib, clipped_rects.count, clipped_rects.rects, rop );
     free_clipped_rects( &clipped_rects );
     return ret;
 }

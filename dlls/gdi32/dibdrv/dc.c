@@ -389,22 +389,9 @@ static UINT dibdrv_SetDIBColorTable( PHYSDEV dev, UINT pos, UINT count, const RG
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     TRACE("(%p, %d, %d, %p)\n", dev, pos, count, colors);
 
-    if (pdev->dib.color_table) update_brush_rop( pdev, GetROP2( dev->hdc ) );
+    if (pdev->dib.color_table) pdev->brush_rop = -1;  /* force re-creating the brush bits */
 
     return next->funcs->pSetDIBColorTable( next, pos, count, colors );
-}
-
-/***********************************************************************
- *           dibdrv_SetROP2
- */
-static INT dibdrv_SetROP2( PHYSDEV dev, INT rop )
-{
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetROP2 );
-    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
-
-    update_brush_rop( pdev, rop );
-
-    return next->funcs->pSetROP2( next, rop );
 }
 
 
@@ -523,7 +510,7 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_SetPixel,                    /* pSetPixel */
     NULL,                               /* pSetPixelFormat */
     NULL,                               /* pSetPolyFillMode */
-    dibdrv_SetROP2,                     /* pSetROP2 */
+    NULL,                               /* pSetROP2 */
     NULL,                               /* pSetRelAbs */
     NULL,                               /* pSetStretchBltMode */
     NULL,                               /* pSetTextAlign */
