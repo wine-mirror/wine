@@ -687,28 +687,29 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
 
 static HRESULT compile_assign_statement(compile_ctx_t *ctx, assign_statement_t *stat, BOOL is_set)
 {
+    unsigned args_cnt;
+    vbsop_t op;
     HRESULT hres;
 
     hres = compile_expression(ctx, stat->value_expr);
     if(FAILED(hres))
         return hres;
 
-    if(stat->member_expr->args) {
-        FIXME("arguments support not implemented\n");
-        return E_NOTIMPL;
-    }
-
     if(stat->member_expr->obj_expr) {
         hres = compile_expression(ctx, stat->member_expr->obj_expr);
         if(FAILED(hres))
             return hres;
 
-        hres = push_instr_bstr(ctx, is_set ? OP_set_member : OP_assign_member, stat->member_expr->identifier);
+        op = is_set ? OP_set_member : OP_assign_member;
     }else {
-        hres = push_instr_bstr(ctx, is_set ? OP_set_ident : OP_assign_ident, stat->member_expr->identifier);
+        op = is_set ? OP_set_ident : OP_assign_ident;
     }
 
-    return hres;
+    hres = compile_args(ctx, stat->member_expr->args, &args_cnt);
+    if(FAILED(hres))
+        return hres;
+
+    return push_instr_bstr_uint(ctx, op, stat->member_expr->identifier, args_cnt);
 }
 
 static BOOL lookup_dim_decls(compile_ctx_t *ctx, const WCHAR *name)

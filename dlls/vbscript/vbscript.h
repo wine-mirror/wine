@@ -186,8 +186,8 @@ typedef enum {
 #define OP_LIST                                   \
     X(add,            1, 0,           0)          \
     X(and,            1, 0,           0)          \
-    X(assign_ident,   1, ARG_BSTR,    0)          \
-    X(assign_member,  1, ARG_BSTR,    0)          \
+    X(assign_ident,   1, ARG_BSTR,    ARG_UINT)   \
+    X(assign_member,  1, ARG_BSTR,    ARG_UINT)   \
     X(bool,           1, ARG_INT,     0)          \
     X(concat,         1, 0,           0)          \
     X(const,          1, ARG_BSTR,    0)          \
@@ -226,8 +226,8 @@ typedef enum {
     X(or,             1, 0,           0)          \
     X(pop,            1, ARG_UINT,    0)          \
     X(ret,            0, 0,           0)          \
-    X(set_ident,      1, ARG_BSTR,    0)          \
-    X(set_member,     1, ARG_BSTR,    0)          \
+    X(set_ident,      1, ARG_BSTR,    ARG_UINT)   \
+    X(set_member,     1, ARG_BSTR,    ARG_UINT)   \
     X(short,          1, ARG_INT,     0)          \
     X(step,           0, ARG_ADDR,    ARG_BSTR)   \
     X(stop,           1, 0,           0)          \

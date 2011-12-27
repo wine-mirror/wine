@@ -562,10 +562,16 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, VARIANT *val, BOOL own_v
 static HRESULT interp_assign_ident(exec_ctx_t *ctx)
 {
     const BSTR arg = ctx->instr->arg1.bstr;
+    const unsigned arg_cnt = ctx->instr->arg2.uint;
     variant_val_t v;
     HRESULT hres;
 
     TRACE("%s\n", debugstr_w(arg));
+
+    if(arg_cnt) {
+        FIXME("arguments not supported\n");
+        return E_NOTIMPL;
+    }
 
     hres = stack_pop_val(ctx, &v);
     if(FAILED(hres))
@@ -577,11 +583,17 @@ static HRESULT interp_assign_ident(exec_ctx_t *ctx)
 static HRESULT interp_set_ident(exec_ctx_t *ctx)
 {
     const BSTR arg = ctx->instr->arg1.bstr;
+    const unsigned arg_cnt = ctx->instr->arg2.uint;
     IDispatch *disp;
     VARIANT v;
     HRESULT hres;
 
     TRACE("%s\n", debugstr_w(arg));
+
+    if(arg_cnt) {
+        FIXME("arguments not supported\n");
+        return E_NOTIMPL;
+    }
 
     hres = stack_pop_disp(ctx, &disp);
     if(FAILED(hres))
@@ -595,12 +607,18 @@ static HRESULT interp_set_ident(exec_ctx_t *ctx)
 static HRESULT interp_assign_member(exec_ctx_t *ctx)
 {
     BSTR identifier = ctx->instr->arg1.bstr;
+    const unsigned arg_cnt = ctx->instr->arg2.uint;
     variant_val_t val;
     IDispatch *obj;
     DISPID id;
     HRESULT hres;
 
     TRACE("%s\n", debugstr_w(identifier));
+
+    if(arg_cnt) {
+        FIXME("arguments not supported\n");
+        return E_NOTIMPL;
+    }
 
     hres = stack_pop_disp(ctx, &obj);
     if(FAILED(hres))
@@ -629,11 +647,17 @@ static HRESULT interp_assign_member(exec_ctx_t *ctx)
 static HRESULT interp_set_member(exec_ctx_t *ctx)
 {
     BSTR identifier = ctx->instr->arg1.bstr;
+    const unsigned arg_cnt = ctx->instr->arg2.uint;
     IDispatch *obj, *val;
     DISPID id;
     HRESULT hres;
 
     TRACE("%s\n", debugstr_w(identifier));
+
+    if(arg_cnt) {
+        FIXME("arguments not supported\n");
+        return E_NOTIMPL;
+    }
 
     hres = stack_pop_disp(ctx, &obj);
     if(FAILED(hres))
