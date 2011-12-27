@@ -126,9 +126,8 @@ static inline void get_text_bkgnd_masks( dibdrv_physdev *pdev, rop_mask *mask )
 
 static void draw_glyph( dibdrv_physdev *pdev, const POINT *origin, const GLYPHMETRICS *metrics,
                         const struct gdi_image_bits *image, DWORD text_color,
-                        const struct intensity_range *ranges )
+                        const struct intensity_range *ranges, const struct clipped_rects *clipped_rects )
 {
-    const WINEREGION *clip = get_wine_region( pdev->clip );
     int i;
     RECT rect, clipped_rect;
     POINT src_origin;
@@ -145,9 +144,9 @@ static void draw_glyph( dibdrv_physdev *pdev, const POINT *origin, const GLYPHME
     rect.right  = rect.left  + metrics->gmBlackBoxX;
     rect.bottom = rect.top   + metrics->gmBlackBoxY;
 
-    for (i = 0; i < clip->numRects; i++)
+    for (i = 0; i < clipped_rects->count; i++)
     {
-        if (intersect_rect( &clipped_rect, &rect, clip->rects + i ))
+        if (intersect_rect( &clipped_rect, &rect, clipped_rects->rects + i ))
         {
             src_origin.x = clipped_rect.left - rect.left;
             src_origin.y = clipped_rect.top  - rect.top;
@@ -156,8 +155,6 @@ static void draw_glyph( dibdrv_physdev *pdev, const POINT *origin, const GLYPHME
                                          text_color, ranges );
         }
     }
-
-    release_wine_region( pdev->clip );
 }
 
 static const BYTE masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
@@ -267,7 +264,7 @@ BOOL render_aa_text_bitmapinfo( HDC hdc, BITMAPINFO *info, struct gdi_image_bits
 
         bkgnd_color.and = 0;
         bkgnd_color.xor = bg_pixel;
-        solid_rects( &dib, 1, &src->visrect, &bkgnd_color, 0 );
+        dib.funcs->solid_rects( &dib, 1, &src->visrect, bkgnd_color.and, bkgnd_color.xor );
     }
 
     for (i = 0; i < count; i++)
@@ -332,27 +329,36 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
                         const RECT *rect, LPCWSTR str, UINT count, const INT *dx )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+    struct clipped_rects clipped_rects;
     UINT aa_flags, i;
     POINT origin;
     DWORD text_color, err;
-    HRGN saved_clip = NULL;
     struct intensity_range ranges[17];
+
+    init_clipped_rects( &clipped_rects );
 
     if (flags & ETO_OPAQUE)
     {
         rop_mask bkgnd_color;
         get_text_bkgnd_masks( pdev, &bkgnd_color );
-        solid_rects( &pdev->dib, 1, rect, &bkgnd_color, pdev->clip );
+        get_clipped_rects( &pdev->dib, rect, pdev->clip, &clipped_rects );
+        pdev->dib.funcs->solid_rects( &pdev->dib, clipped_rects.count, clipped_rects.rects,
+                                      bkgnd_color.and, bkgnd_color.xor );
     }
 
-    if (count == 0) return TRUE;
+    if (count == 0) goto done;
 
     if (flags & ETO_CLIPPED)
     {
-        HRGN clip = CreateRectRgnIndirect( rect );
-        saved_clip = add_extra_clipping_region( pdev, clip );
-        DeleteObject( clip );
+        if (!(flags & ETO_OPAQUE))  /* otherwise we have done it already */
+            get_clipped_rects( &pdev->dib, rect, pdev->clip, &clipped_rects );
     }
+    else
+    {
+        free_clipped_rects( &clipped_rects );
+        get_clipped_rects( &pdev->dib, NULL, pdev->clip, &clipped_rects );
+    }
+    if (!clipped_rects.count) return TRUE;
 
     text_color = get_pixel_color( pdev, GetTextColor( pdev->dev.hdc ), TRUE );
     get_aa_ranges( pdev->dib.funcs->pixel_to_colorref( &pdev->dib, text_color ), ranges );
@@ -368,7 +374,7 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         err = get_glyph_bitmap( dev->hdc, (UINT)str[i], aa_flags, &metrics, &image );
         if (err) continue;
 
-        if (image.ptr) draw_glyph( pdev, &origin, &metrics, &image, text_color, ranges );
+        if (image.ptr) draw_glyph( pdev, &origin, &metrics, &image, text_color, ranges, &clipped_rects );
         if (image.free) image.free( &image );
 
         if (dx)
@@ -388,7 +394,8 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         }
     }
 
-    restore_clipping_region( pdev, saved_clip );
+done:
+    free_clipped_rects( &clipped_rects );
     return TRUE;
 }
 
