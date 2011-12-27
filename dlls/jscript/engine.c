@@ -1067,7 +1067,7 @@ HRESULT interp_pop_scope(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    12.12 */
-HRESULT labelled_statement_eval(script_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
+HRESULT interp_label(exec_ctx_t *ctx)
 {
     FIXME("\n");
     return E_NOTIMPL;

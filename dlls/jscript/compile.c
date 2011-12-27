@@ -1246,6 +1246,8 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_t *stat)
         return compile_for_statement(ctx, (for_statement_t*)stat);
     case STAT_IF:
         return compile_if_statement(ctx, (if_statement_t*)stat);
+    case STAT_LABEL:
+        return push_instr(ctx, OP_label) == -1 ? E_OUTOFMEMORY : S_OK; /* FIXME */
     case STAT_SWITCH:
         return compile_switch_statement(ctx, (switch_statement_t*)stat);
     case STAT_VAR:

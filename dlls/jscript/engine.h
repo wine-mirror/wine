@@ -71,6 +71,7 @@ typedef struct _func_stack {
     X(int,        1, ARG_INT,    0)        \
     X(jmp,        0, ARG_ADDR,   0)        \
     X(jmp_z,      0, ARG_ADDR,   0)        \
+    X(label,      0, 0,0)                  \
     X(lshift,     1, 0,0)                  \
     X(lt,         1, 0,0)                  \
     X(lteq,       1, 0,0)                  \
@@ -410,7 +411,6 @@ HRESULT continue_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIAN
 HRESULT break_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT return_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT with_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
-HRESULT labelled_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT switch_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT throw_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT try_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
