@@ -50,5 +50,5 @@ HRESULT WINAPI Direct3DRMCreate(LPDIRECT3DRM* ppDirect3DRM)
 {
     TRACE("(%p)\n", ppDirect3DRM);
 
-    return Direct3DRM_create(ppDirect3DRM);
+    return Direct3DRM_create((IUnknown**)ppDirect3DRM);
 }
