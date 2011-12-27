@@ -437,6 +437,8 @@ HKLM,System\CurrentControlSet\Control\ContentIndex\Language\Neutral,"StemmerClas
 HKLM,System\CurrentControlSet\Control\ContentIndex\Language\Neutral,"Locale",0x10003,0
 
 [ControlClass]
+HKLM,System\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318},,,"Disk drives"
+HKLM,System\CurrentControlSet\Control\Class\{4d36e967-e325-11ce-bfc1-08002be10318},"Class",,"DiskDrive"
 HKLM,System\CurrentControlSet\Control\Class\{4d36e978-e325-11ce-bfc1-08002be10318},,,"Ports (COM & LPT)"
 HKLM,System\CurrentControlSet\Control\Class\{4d36e978-e325-11ce-bfc1-08002be10318},"Class",,"Ports"
 HKLM,System\CurrentControlSet\Control\Class\{6bdd1fc6-810f-11d0-bec7-08002be2092f},,,"Imaging devices"
