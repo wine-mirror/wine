@@ -1074,6 +1074,31 @@ HRESULT labelled_statement_eval(script_ctx_t *ctx, statement_t *stat, return_typ
 }
 
 /* ECMA-262 3rd Edition    12.13 */
+static HRESULT interp_case(exec_ctx_t *ctx)
+{
+    const unsigned arg = ctx->parser->code->instrs[ctx->ip].arg1.uint;
+    VARIANT *v;
+    BOOL b;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    v = stack_pop(ctx);
+    hres = equal2_values(stack_top(ctx), v, &b);
+    VariantClear(v);
+    if(FAILED(hres))
+        return hres;
+
+    if(b) {
+        stack_popn(ctx, 1);
+        ctx->ip = arg;
+    }else {
+        ctx->ip++;
+    }
+    return S_OK;
+}
+
+/* ECMA-262 3rd Edition    12.13 */
 HRESULT switch_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
 {
     switch_statement_t *stat = (switch_statement_t*)_stat;

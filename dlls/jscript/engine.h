@@ -52,6 +52,7 @@ typedef struct _func_stack {
     X(call,       1, ARG_UINT,   ARG_UINT) \
     X(call_member,1, ARG_UINT,   ARG_UINT) \
     X(carray,     1, ARG_UINT,   0)        \
+    X(case,       0, ARG_ADDR,   0)        \
     X(cnd_nz,     0, ARG_ADDR,   0)        \
     X(cnd_z,      0, ARG_ADDR,   0)        \
     X(delete,     1, 0,0)                  \

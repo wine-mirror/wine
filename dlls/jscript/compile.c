@@ -1131,6 +1131,108 @@ static HRESULT compile_with_statement(compiler_ctx_t *ctx, with_statement_t *sta
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    12.13 */
+static HRESULT compile_switch_statement(compiler_ctx_t *ctx, switch_statement_t *stat)
+{
+    unsigned case_cnt = 0, *case_jmps, i, default_jmp;
+    BOOL have_default = FALSE;
+    statement_t *stat_iter;
+    case_clausule_t *iter;
+    unsigned off_backup;
+    BOOL prev_no_fallback;
+    HRESULT hres;
+
+    off_backup = ctx->code_off;
+
+    hres = compile_expression(ctx, stat->expr);
+    if(FAILED(hres))
+        return hres;
+
+    for(iter = stat->case_list; iter; iter = iter->next) {
+        if(iter->expr)
+            case_cnt++;
+    }
+
+    case_jmps = heap_alloc(case_cnt * sizeof(*case_jmps));
+    if(!case_jmps)
+        return E_OUTOFMEMORY;
+
+    i = 0;
+    for(iter = stat->case_list; iter; iter = iter->next) {
+        if(!iter->expr) {
+            have_default = TRUE;
+            continue;
+        }
+
+        hres = compile_expression(ctx, iter->expr);
+        if(FAILED(hres))
+            break;
+
+        case_jmps[i] = push_instr(ctx, OP_case);
+        if(case_jmps[i] == -1) {
+            hres = E_OUTOFMEMORY;
+            break;
+        }
+        i++;
+    }
+
+    if(SUCCEEDED(hres)) {
+        if(push_instr(ctx, OP_pop) != -1) {
+            default_jmp = push_instr(ctx, OP_jmp);
+            if(default_jmp == -1)
+                hres = E_OUTOFMEMORY;
+        }else {
+            hres = E_OUTOFMEMORY;
+        }
+    }
+
+    if(FAILED(hres)) {
+        heap_free(case_jmps);
+        return hres;
+    }
+
+    i = 0;
+    for(iter = stat->case_list; iter; iter = iter->next) {
+        while(iter->next && iter->next->stat == iter->stat) {
+            instr_ptr(ctx, iter->expr ? case_jmps[i++] : default_jmp)->arg1.uint = ctx->code_off;
+            iter = iter->next;
+        }
+
+        instr_ptr(ctx, iter->expr ? case_jmps[i++] : default_jmp)->arg1.uint = ctx->code_off;
+
+        for(stat_iter = iter->stat; stat_iter && (!iter->next || iter->next->stat != stat_iter); stat_iter = stat_iter->next) {
+            prev_no_fallback = ctx->no_fallback;
+            ctx->no_fallback = TRUE;
+            hres = compile_statement(ctx, stat_iter);
+            ctx->no_fallback = prev_no_fallback;
+            if(hres == E_NOTIMPL) {
+                ctx->code_off = off_backup;
+                stat->stat.eval = switch_statement_eval;
+                return compile_interp_fallback(ctx, &stat->stat);
+            }
+            if(FAILED(hres))
+                break;
+
+            if(stat_iter->next && push_instr(ctx, OP_pop) == -1) {
+                hres = E_OUTOFMEMORY;
+                break;
+            }
+        }
+        if(FAILED(hres))
+            break;
+    }
+
+    heap_free(case_jmps);
+    if(FAILED(hres))
+        return hres;
+    assert(i == case_cnt);
+
+    if(!have_default)
+        instr_ptr(ctx, default_jmp)->arg1.uint = ctx->code_off;
+
+    return S_OK;
+}
+
 static HRESULT compile_statement(compiler_ctx_t *ctx, statement_t *stat)
 {
     switch(stat->type) {
@@ -1144,6 +1246,8 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_t *stat)
         return compile_for_statement(ctx, (for_statement_t*)stat);
     case STAT_IF:
         return compile_if_statement(ctx, (if_statement_t*)stat);
+    case STAT_SWITCH:
+        return compile_switch_statement(ctx, (switch_statement_t*)stat);
     case STAT_VAR:
         return compile_var_statement(ctx, (var_statement_t*)stat);
     case STAT_WHILE:
