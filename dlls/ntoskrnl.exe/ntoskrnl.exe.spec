@@ -470,7 +470,7 @@
 @ stdcall IoUnregisterFileSystem(ptr)
 @ stub IoUnregisterFsRegistrationChange
 @ stub IoUnregisterPlugPlayNotification
-@ stub IoUnregisterShutdownNotification
+@ stdcall IoUnregisterShutdownNotification(ptr)
 @ stub IoUpdateShareAccess
 @ stub IoValidateDeviceIoControlAccess
 @ stub IoVerifyPartitionTable

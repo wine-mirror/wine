@@ -838,6 +838,15 @@ NTSTATUS WINAPI IoRegisterShutdownNotification( PDEVICE_OBJECT obj )
 
 
 /***********************************************************************
+ *           IoUnregisterShutdownNotification    (NTOSKRNL.EXE.@)
+ */
+VOID WINAPI IoUnregisterShutdownNotification( PDEVICE_OBJECT obj )
+{
+    FIXME( "stub: %p\n", obj );
+}
+
+
+/***********************************************************************
  *           IoReportResourceUsage    (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI IoReportResourceUsage(PUNICODE_STRING name, PDRIVER_OBJECT drv_obj, PCM_RESOURCE_LIST drv_list,
