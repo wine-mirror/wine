@@ -1266,9 +1266,9 @@ static inline int get_pen_device_width( dibdrv_physdev *pdev, LOGPEN *pen )
         pts[0].x = pts[0].y = pts[1].y = 0;
         pts[1].x = width;
         LPtoDP( pdev->dev.hdc, pts, 2 );
-        width = max( abs( pts[1].x - pts[0].x ), 1 );
+        width = abs( pts[1].x - pts[0].x );
     }
-    return width;
+    return max( width, 1 );
 }
 
 /***********************************************************************

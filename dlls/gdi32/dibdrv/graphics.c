@@ -590,12 +590,10 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 
     pdev->pen_lines(pdev, 4, pts, TRUE);
 
-    /* FIXME: Will need updating when we support wide pens */
-
-    rect.left   += 1;
-    rect.top    += 1;
-    rect.right  -= 1;
-    rect.bottom -= 1;
+    rect.left   += (pdev->pen_width + 1) / 2;
+    rect.top    += (pdev->pen_width + 1) / 2;
+    rect.right  -= (pdev->pen_width + 2) / 2;
+    rect.bottom -= (pdev->pen_width + 2) / 2;
 
     brush_rect( pdev, &rect, GetROP2(dev->hdc) );
 
