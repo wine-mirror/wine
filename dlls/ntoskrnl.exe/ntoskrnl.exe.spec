@@ -378,7 +378,7 @@
 @ stub IoGetBaseFileSystemDeviceObject
 @ stub IoGetBootDiskInformation
 @ stdcall IoGetConfigurationInformation()
-@ stub IoGetCurrentProcess
+@ stdcall IoGetCurrentProcess()
 @ stub IoGetDeviceAttachmentBaseRef
 @ stub IoGetDeviceInterfaceAlias
 @ stdcall IoGetDeviceInterfaces(ptr ptr long ptr)
@@ -849,7 +849,7 @@
 @ stub PsDisableImpersonation
 @ stub PsEstablishWin32Callouts
 @ stub PsGetContextThread
-@ stub PsGetCurrentProcess
+@ stdcall PsGetCurrentProcess() IoGetCurrentProcess
 @ stdcall PsGetCurrentProcessId()
 @ stub PsGetCurrentProcessSessionId
 @ stdcall PsGetCurrentThread() KeGetCurrentThread

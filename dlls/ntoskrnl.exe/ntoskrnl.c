@@ -1113,6 +1113,15 @@ NTSTATUS WINAPI FsRtlRegisterUncProvider(PHANDLE MupHandle, PUNICODE_STRING Redi
 }
 
 /***********************************************************************
+ *           IoGetCurrentProcess / PsGetCurrentProcess   (NTOSKRNL.EXE.@)
+ */
+PEPROCESS WINAPI IoGetCurrentProcess(void)
+{
+    FIXME("() stub\n");
+    return NULL;
+}
+
+/***********************************************************************
  *           KeGetCurrentThread / PsGetCurrentThread   (NTOSKRNL.EXE.@)
  */
 PRKTHREAD WINAPI KeGetCurrentThread(void)
