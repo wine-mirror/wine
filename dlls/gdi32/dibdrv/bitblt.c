@@ -576,28 +576,17 @@ static DWORD blend_rect( dib_info *dst, const RECT *dst_rect, const dib_info *sr
                          HRGN clip, BLENDFUNCTION blend )
 {
     POINT origin;
-    RECT clipped_rect;
-    const WINEREGION *clip_data;
+    struct clipped_rects clipped_rects;
     int i;
 
-    origin.x = src_rect->left;
-    origin.y = src_rect->top;
-
-    if (clip == NULL) dst->funcs->blend_rect( dst, dst_rect, src, &origin, blend );
-    else
+    if (!get_clipped_rects( dst, dst_rect, clip, &clipped_rects )) return ERROR_SUCCESS;
+    for (i = 0; i < clipped_rects.count; i++)
     {
-        clip_data = get_wine_region( clip );
-        for (i = 0; i < clip_data->numRects; i++)
-        {
-            if (intersect_rect( &clipped_rect, dst_rect, clip_data->rects + i ))
-            {
-                origin.x = src_rect->left + clipped_rect.left - dst_rect->left;
-                origin.y = src_rect->top  + clipped_rect.top  - dst_rect->top;
-                dst->funcs->blend_rect( dst, &clipped_rect, src, &origin, blend );
-            }
-        }
-        release_wine_region( clip );
+        origin.x = src_rect->left + clipped_rects.rects[i].left - dst_rect->left;
+        origin.y = src_rect->top  + clipped_rects.rects[i].top  - dst_rect->top;
+        dst->funcs->blend_rect( dst, &clipped_rects.rects[i], src, &origin, blend );
     }
+    free_clipped_rects( &clipped_rects );
     return ERROR_SUCCESS;
 }
 
@@ -679,7 +668,8 @@ static void get_gradient_triangle_vertices( const GRADIENT_TRIANGLE *tri, const 
 static BOOL gradient_rect( dib_info *dib, TRIVERTEX *v, int mode, HRGN clip )
 {
     int i;
-    RECT rect, clipped_rect;
+    struct clipped_rects clipped_rects;
+    RECT rect;
     BOOL ret = TRUE;
 
     if (mode == GRADIENT_FILL_TRIANGLE)
@@ -696,26 +686,13 @@ static BOOL gradient_rect( dib_info *dib, TRIVERTEX *v, int mode, HRGN clip )
         rect.right  = v[1].x;
         rect.bottom = v[1].y;
     }
-    rect.left   = max( rect.left, 0 );
-    rect.top    = max( rect.top, 0 );
-    rect.right  = min( rect.right, dib->width );
-    rect.bottom = min( rect.bottom, dib->height );
 
-    if (clip)
+    if (!get_clipped_rects( dib, &rect, clip, &clipped_rects )) return TRUE;
+    for (i = 0; i < clipped_rects.count; i++)
     {
-        const WINEREGION *clip_data = get_wine_region( clip );
-
-        for (i = 0; i < clip_data->numRects; i++)
-        {
-            if (intersect_rect( &clipped_rect, &rect, clip_data->rects + i ))
-            {
-                if (!(ret = dib->funcs->gradient_rect( dib, &clipped_rect, v, mode ))) break;
-            }
-        }
-        release_wine_region( clip );
+        if (!(ret = dib->funcs->gradient_rect( dib, &clipped_rects.rects[i], v, mode ))) break;
     }
-    else if (!is_rect_empty( &rect )) ret = dib->funcs->gradient_rect( dib, &rect, v, mode );
-
+    free_clipped_rects( &clipped_rects );
     return ret;
 }
 

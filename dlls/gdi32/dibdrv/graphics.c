@@ -606,36 +606,27 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 COLORREF dibdrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
-    int i;
+    struct clipped_rects clipped_rects;
+    RECT rect;
     POINT pt;
     DWORD pixel;
-    const WINEREGION *clip = get_wine_region( pdev->clip );
 
     TRACE( "(%p, %d, %d, %08x)\n", dev, x, y, color );
 
     pt.x = x;
     pt.y = y;
     LPtoDP( dev->hdc, &pt, 1 );
+    rect.left = pt.x;
+    rect.top =  pt.y;
+    rect.right = rect.left + 1;
+    rect.bottom = rect.top + 1;
 
     /* SetPixel doesn't do the 1bpp massaging like other fg colors */
     pixel = get_pixel_color( pdev, color, FALSE );
     color = pdev->dib.funcs->pixel_to_colorref( &pdev->dib, pixel );
 
-    for (i = 0; i < clip->numRects; i++)
-    {
-        if (pt_in_rect( clip->rects + i, pt ))
-        {
-            RECT rect;
-            rect.left = pt.x;
-            rect.top =  pt.y;
-            rect.right = rect.left + 1;
-            rect.bottom = rect.top + 1;
-
-            pdev->dib.funcs->solid_rects( &pdev->dib, 1, &rect, 0, pixel );
-            break;
-        }
-    }
-
-    release_wine_region( pdev->clip );
+    if (!get_clipped_rects( &pdev->dib, &rect, pdev->clip, &clipped_rects )) return color;
+    pdev->dib.funcs->solid_rects( &pdev->dib, clipped_rects.count, clipped_rects.rects, 0, pixel );
+    free_clipped_rects( &clipped_rects );
     return color;
 }

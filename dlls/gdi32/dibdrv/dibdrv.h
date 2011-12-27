@@ -212,6 +212,13 @@ typedef struct
     DWORD octant;
 } bres_params;
 
+struct clipped_rects
+{
+    RECT *rects;
+    int   count;
+    RECT  buffer[32];
+};
+
 extern void get_rop_codes(INT rop, struct rop_codes *codes) DECLSPEC_HIDDEN;
 extern void update_brush_rop( dibdrv_physdev *pdev, INT rop ) DECLSPEC_HIDDEN;
 extern void reset_dash_origin(dibdrv_physdev *pdev) DECLSPEC_HIDDEN;
@@ -225,10 +232,22 @@ extern COLORREF make_rgb_colorref( HDC hdc, dib_info *dib, COLORREF color, BOOL 
 extern DWORD get_pixel_color(dibdrv_physdev *pdev, COLORREF color, BOOL mono_fixup) DECLSPEC_HIDDEN;
 extern BOOL brush_rects( dibdrv_physdev *pdev, int num, const RECT *rects ) DECLSPEC_HIDDEN;
 extern void solid_rects( dib_info *dib, int num, const RECT *rects, const rop_mask *color, HRGN region ) DECLSPEC_HIDDEN;
+extern int get_clipped_rects( const dib_info *dib, const RECT *rc, HRGN clip, struct clipped_rects *clip_rects ) DECLSPEC_HIDDEN;
 extern HRGN add_extra_clipping_region( dibdrv_physdev *pdev, HRGN rgn ) DECLSPEC_HIDDEN;
 extern void restore_clipping_region( dibdrv_physdev *pdev, HRGN rgn ) DECLSPEC_HIDDEN;
 extern int clip_line(const POINT *start, const POINT *end, const RECT *clip,
                      const bres_params *params, POINT *pt1, POINT *pt2) DECLSPEC_HIDDEN;
+
+static inline void init_clipped_rects( struct clipped_rects *clip_rects )
+{
+    clip_rects->count = 0;
+    clip_rects->rects = clip_rects->buffer;
+}
+
+static inline void free_clipped_rects( struct clipped_rects *clip_rects )
+{
+    if (clip_rects->rects != clip_rects->buffer) HeapFree( GetProcessHeap(), 0, clip_rects->rects );
+}
 
 /* compute the x coordinate corresponding to y on the specified edge */
 static inline int edge_coord( int y, int x1, int y1, int x2, int y2 )

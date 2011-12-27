@@ -257,7 +257,48 @@ DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
     return ERROR_SUCCESS;
 }
 
- /***********************************************************************
+int get_clipped_rects( const dib_info *dib, const RECT *rc, HRGN clip, struct clipped_rects *clip_rects )
+{
+    const WINEREGION *region;
+    RECT rect, *out = clip_rects->buffer;
+    int i;
+
+    init_clipped_rects( clip_rects );
+
+    rect.left   = 0;
+    rect.top    = 0;
+    rect.right  = dib->width;
+    rect.bottom = dib->height;
+    if (rc && !intersect_rect( &rect, &rect, rc )) return 0;
+
+    if (!clip)
+    {
+        *out = rect;
+        clip_rects->count = 1;
+        return 1;
+    }
+
+    if (!(region = get_wine_region( clip ))) return 0;
+
+    for (i = 0; i < region->numRects; i++)
+    {
+        if (region->rects[i].top >= rect.bottom) break;
+        if (!intersect_rect( out, &rect, &region->rects[i] )) continue;
+        out++;
+        if (out == &clip_rects->buffer[sizeof(clip_rects->buffer) / sizeof(RECT)])
+        {
+            clip_rects->rects = HeapAlloc( GetProcessHeap(), 0, region->numRects * sizeof(RECT) );
+            if (!clip_rects->rects) return 0;
+            memcpy( clip_rects->rects, clip_rects->buffer, (out - clip_rects->buffer) * sizeof(RECT) );
+            out = clip_rects->rects + (out - clip_rects->buffer);
+        }
+    }
+    release_wine_region( clip );
+    clip_rects->count = out - clip_rects->rects;
+    return clip_rects->count;
+}
+
+/***********************************************************************
  *           add_extra_clipping_region
  *
  * Temporarily add a region to the current clipping region.
