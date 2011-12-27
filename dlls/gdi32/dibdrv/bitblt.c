@@ -467,13 +467,23 @@ static int get_overlap( const dib_info *dst, const RECT *dst_rect,
 }
 
 static DWORD copy_rect( dib_info *dst, const RECT *dst_rect, const dib_info *src, const RECT *src_rect,
-                        HRGN clip, INT rop2 )
+                        const struct clipped_rects *clipped_rects, INT rop2 )
 {
     POINT origin;
-    RECT clipped_rect;
-    const WINEREGION *clip_data;
-    int i, start, end, overlap;
+    const RECT *rects;
+    int i, count, start, end, overlap;
     DWORD and = 0, xor = 0;
+
+    if (clipped_rects)
+    {
+        rects = clipped_rects->rects;
+        count = clipped_rects->count;
+    }
+    else
+    {
+        rects = dst_rect;
+        count = 1;
+    }
 
     switch (rop2)
     {
@@ -482,92 +492,63 @@ static DWORD copy_rect( dib_info *dst, const RECT *dst_rect, const dib_info *src
     case R2_WHITE: xor = ~0u;
         /* fall through */
     case R2_BLACK:
-        if (clip)
-        {
-            clip_data = get_wine_region( clip );
-            for (i = 0; i < clip_data->numRects; i++)
-                if (intersect_rect( &clipped_rect, dst_rect, clip_data->rects + i ))
-                    dst->funcs->solid_rects( dst, 1, &clipped_rect, and, xor );
-            release_wine_region( clip );
-        }
-        else dst->funcs->solid_rects( dst, 1, dst_rect, and, xor );
+        dst->funcs->solid_rects( dst, count, rects, and, xor );
         /* fall through */
     case R2_NOP:
         return ERROR_SUCCESS;
     }
 
-    origin.x = src_rect->left;
-    origin.y = src_rect->top;
     overlap = get_overlap( dst, dst_rect, src, src_rect );
-
-    if (clip == NULL) dst->funcs->copy_rect( dst, dst_rect, src, &origin, rop2, overlap );
-    else
+    if (overlap & OVERLAP_BELOW)
     {
-        clip_data = get_wine_region( clip );
-        if (overlap & OVERLAP_BELOW)
+        if (overlap & OVERLAP_RIGHT)  /* right to left, bottom to top */
         {
-            if (overlap & OVERLAP_RIGHT)  /* right to left, bottom to top */
+            for (i = count - 1; i >= 0; i--)
             {
-                for (i = clip_data->numRects - 1; i >= 0; i--)
-                {
-                    if (intersect_rect( &clipped_rect, dst_rect, clip_data->rects + i ))
-                    {
-                        origin.x = src_rect->left + clipped_rect.left - dst_rect->left;
-                        origin.y = src_rect->top  + clipped_rect.top  - dst_rect->top;
-                        dst->funcs->copy_rect( dst, &clipped_rect, src, &origin, rop2, overlap );
-                    }
-                }
+                origin.x = src_rect->left + rects[i].left - dst_rect->left;
+                origin.y = src_rect->top  + rects[i].top  - dst_rect->top;
+                dst->funcs->copy_rect( dst, &rects[i], src, &origin, rop2, overlap );
             }
-            else  /* left to right, bottom to top */
+        }
+        else  /* left to right, bottom to top */
+        {
+            for (start = count - 1; start >= 0; start = end)
             {
-                for (start = clip_data->numRects - 1; start >= 0; start = end)
-                {
-                    for (end = start - 1; end >= 0; end--)
-                        if (clip_data->rects[start].top != clip_data->rects[end].top) break;
+                for (end = start - 1; end >= 0; end--)
+                    if (rects[start].top != rects[end].top) break;
 
-                    for (i = end + 1; i <= start; i++)
-                    {
-                        if (intersect_rect( &clipped_rect, dst_rect, clip_data->rects + i ))
-                        {
-                            origin.x = src_rect->left + clipped_rect.left - dst_rect->left;
-                            origin.y = src_rect->top  + clipped_rect.top  - dst_rect->top;
-                            dst->funcs->copy_rect( dst, &clipped_rect, src, &origin, rop2, overlap );
-                        }
-                    }
+                for (i = end + 1; i <= start; i++)
+                {
+                    origin.x = src_rect->left + rects[i].left - dst_rect->left;
+                    origin.y = src_rect->top  + rects[i].top  - dst_rect->top;
+                    dst->funcs->copy_rect( dst, &rects[i], src, &origin, rop2, overlap );
                 }
             }
         }
-        else if (overlap & OVERLAP_RIGHT)  /* right to left, top to bottom */
+    }
+    else if (overlap & OVERLAP_RIGHT)  /* right to left, top to bottom */
+    {
+        for (start = 0; start < count; start = end)
         {
-            for (start = 0; start < clip_data->numRects; start = end)
-            {
-                for (end = start + 1; end < clip_data->numRects; end++)
-                    if (clip_data->rects[start].top != clip_data->rects[end].top) break;
+            for (end = start + 1; end < count; end++)
+                if (rects[start].top != rects[end].top) break;
 
-                for (i = end - 1; i >= start; i--)
-                {
-                    if (intersect_rect( &clipped_rect, dst_rect, clip_data->rects + i ))
-                    {
-                        origin.x = src_rect->left + clipped_rect.left - dst_rect->left;
-                        origin.y = src_rect->top  + clipped_rect.top  - dst_rect->top;
-                        dst->funcs->copy_rect( dst, &clipped_rect, src, &origin, rop2, overlap );
-                    }
-                }
-            }
-        }
-        else  /* left to right, top to bottom */
-        {
-            for (i = 0; i < clip_data->numRects; i++)
+            for (i = end - 1; i >= start; i--)
             {
-                if (intersect_rect( &clipped_rect, dst_rect, clip_data->rects + i ))
-                {
-                    origin.x = src_rect->left + clipped_rect.left - dst_rect->left;
-                    origin.y = src_rect->top  + clipped_rect.top  - dst_rect->top;
-                    dst->funcs->copy_rect( dst, &clipped_rect, src, &origin, rop2, overlap );
-                }
+                origin.x = src_rect->left + rects[i].left - dst_rect->left;
+                origin.y = src_rect->top  + rects[i].top  - dst_rect->top;
+                dst->funcs->copy_rect( dst, &rects[i], src, &origin, rop2, overlap );
             }
         }
-        release_wine_region( clip );
+    }
+    else  /* left to right, top to bottom */
+    {
+        for (i = 0; i < count; i++)
+        {
+            origin.x = src_rect->left + rects[i].left - dst_rect->left;
+            origin.y = src_rect->top  + rects[i].top  - dst_rect->top;
+            dst->funcs->copy_rect( dst, &rects[i], src, &origin, rop2, overlap );
+        }
     }
     return ERROR_SUCCESS;
 }
@@ -734,7 +715,7 @@ static DWORD create_tmp_dib( const dib_info *copy, int width, int height, dib_in
 }
 
 static DWORD execute_rop( dibdrv_physdev *pdev, const RECT *dst_rect, dib_info *src,
-                          const RECT *src_rect, HRGN clip, DWORD rop )
+                          const RECT *src_rect, const struct clipped_rects *clipped_rects, DWORD rop )
 {
     dib_info *dibs[3], *result = src, tmp;
     RECT rects[3];
@@ -777,13 +758,16 @@ static DWORD execute_rop( dibdrv_physdev *pdev, const RECT *dst_rect, dib_info *
         case OP_ARGS(TMP,DST):
             copy_rect( dibs[OP_DST(*opcode)], &rects[OP_DST(*opcode)],
                        dibs[OP_SRC(*opcode)], &rects[OP_SRC(*opcode)],
-                       OP_DST(*opcode) == DST ? clip : NULL, OP_ROP(*opcode) );
+                       OP_DST(*opcode) == DST ? clipped_rects : NULL, OP_ROP(*opcode) );
             break;
         case OP_ARGS(PAT,DST):
+            update_brush_rop( pdev, OP_ROP(*opcode) );
+            pdev->brush_rects( pdev, dibs[DST], clipped_rects->count, clipped_rects->rects );
+            update_brush_rop( pdev, GetROP2(pdev->dev.hdc) );
+            break;
         case OP_ARGS(PAT,SRC):
             update_brush_rop( pdev, OP_ROP(*opcode) );
-            pdev->brush_rects( pdev, dibs[OP_DST(*opcode)], 1, &rects[OP_DST(*opcode)],
-                               OP_DST(*opcode) == DST ? clip : NULL );
+            pdev->brush_rects( pdev, dibs[SRC], 1, &rects[SRC] );
             update_brush_rop( pdev, GetROP2(pdev->dev.hdc) );
             break;
         }
@@ -791,7 +775,8 @@ static DWORD execute_rop( dibdrv_physdev *pdev, const RECT *dst_rect, dib_info *
 
     if (dibs[TMP]) free_dib_info( dibs[TMP] );
 
-    if (result == src) copy_rect( dibs[DST], &rects[DST], dibs[SRC], &rects[SRC], clip, R2_COPYPEN );
+    if (result == src)
+        copy_rect( dibs[DST], &rects[DST], dibs[SRC], &rects[SRC], clipped_rects, R2_COPYPEN );
 
     return ERROR_SUCCESS;
 }
@@ -941,6 +926,7 @@ DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
                        struct bitblt_coords *dst, DWORD rop )
 {
     dib_info *dib = NULL, stand_alone;
+    struct clipped_rects clipped_rects;
     DWORD ret;
     dib_info src_dib;
     HRGN saved_clip = NULL;
@@ -990,17 +976,21 @@ DWORD dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAPINFO *info
         clip = pdev->clip;
     }
 
+    if (!get_clipped_rects( dib, &dst->visrect, clip, &clipped_rects ))
+    {
+        ret = ERROR_SUCCESS;
+        goto done;
+    }
+
     if (!rop_uses_pat( rop ))
     {
         int rop2 = ((rop >> 16) & 0xf) + 1;
-        ret = copy_rect( dib, &dst->visrect, &src_dib, &src->visrect, clip, rop2 );
+        ret = copy_rect( dib, &dst->visrect, &src_dib, &src->visrect, &clipped_rects, rop2 );
     }
     else
     {
-        ret = execute_rop( pdev, &dst->visrect, &src_dib, &src->visrect, clip, rop );
+        ret = execute_rop( pdev, &dst->visrect, &src_dib, &src->visrect, &clipped_rects, rop );
     }
-
-    if (saved_clip) restore_clipping_region( pdev, saved_clip );
     goto done;
 
 update_format:
@@ -1010,6 +1000,7 @@ update_format:
     ret = ERROR_BAD_FORMAT;
 
 done:
+    if (saved_clip) restore_clipping_region( pdev, saved_clip );
     if (hbitmap) GDI_ReleaseObj( hbitmap );
     return ret;
 }

@@ -101,7 +101,7 @@ typedef struct dibdrv_physdev
     void *brush_pattern_bits;
     UINT brush_pattern_usage;
     HBITMAP brush_pattern_bitmap;
-    BOOL   (* brush_rects)(struct dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects, HRGN clip);
+    BOOL   (* brush_rects)(struct dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects);
 } dibdrv_physdev;
 
 #define DEFER_PEN        2
@@ -230,8 +230,7 @@ extern void copy_dib_color_info(dib_info *dst, const dib_info *src) DECLSPEC_HID
 extern BOOL convert_dib(dib_info *dst, const dib_info *src) DECLSPEC_HIDDEN;
 extern COLORREF make_rgb_colorref( HDC hdc, dib_info *dib, COLORREF color, BOOL *got_pixel, DWORD *pixel ) DECLSPEC_HIDDEN;
 extern DWORD get_pixel_color(dibdrv_physdev *pdev, COLORREF color, BOOL mono_fixup) DECLSPEC_HIDDEN;
-extern BOOL brush_rects( dibdrv_physdev *pdev, int num, const RECT *rects ) DECLSPEC_HIDDEN;
-extern void solid_rects( dib_info *dib, int num, const RECT *rects, const rop_mask *color, HRGN region ) DECLSPEC_HIDDEN;
+extern BOOL brush_rect( dibdrv_physdev *pdev, const RECT *rect ) DECLSPEC_HIDDEN;
 extern int get_clipped_rects( const dib_info *dib, const RECT *rc, HRGN clip, struct clipped_rects *clip_rects ) DECLSPEC_HIDDEN;
 extern HRGN add_extra_clipping_region( dibdrv_physdev *pdev, HRGN rgn ) DECLSPEC_HIDDEN;
 extern void restore_clipping_region( dibdrv_physdev *pdev, HRGN rgn ) DECLSPEC_HIDDEN;
