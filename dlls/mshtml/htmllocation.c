@@ -504,9 +504,7 @@ static HRESULT WINAPI HTMLLocation_put_hash(IHTMLLocation *iface, BSTR v)
 static HRESULT WINAPI HTMLLocation_get_hash(IHTMLLocation *iface, BSTR *p)
 {
     HTMLLocation *This = impl_from_IHTMLLocation(iface);
-    URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW)};
-    const WCHAR hash[] = {'#',0};
-    DWORD hash_pos = 0;
+    BSTR hash;
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -514,23 +512,21 @@ static HRESULT WINAPI HTMLLocation_get_hash(IHTMLLocation *iface, BSTR *p)
     if(!p)
         return E_POINTER;
 
-    url.dwExtraInfoLength = 1;
-    hres = get_url_components(This, &url);
-    if(FAILED(hres))
-        return hres;
-
-    if(!url.dwExtraInfoLength){
-        *p = NULL;
-        return S_OK;
+    if(!This->window || !This->window->uri) {
+        FIXME("No current URI\n");
+        return E_NOTIMPL;
     }
 
-    hash_pos = strcspnW(url.lpszExtraInfo, hash);
-    url.dwExtraInfoLength -= hash_pos;
+    hres = IUri_GetFragment(This->window->uri, &hash);
+    if(hres == S_OK) {
+        *p = hash;
+    }else if(hres == S_FALSE) {
+        SysFreeString(hash);
+        *p = NULL;
+    }else {
+        return hres;
+    }
 
-    *p = SysAllocStringLen(url.lpszExtraInfo + hash_pos, url.dwExtraInfoLength);
-
-    if(!*p)
-        return E_OUTOFMEMORY;
     return S_OK;
 }
 
