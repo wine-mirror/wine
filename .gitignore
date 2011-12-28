@@ -166,6 +166,7 @@ include/exdisp.h
 include/fusion.h
 include/gameux.h
 include/hlink.h
+include/htiface.h
 include/htiframe.h
 include/httprequest.h
 include/iads.h

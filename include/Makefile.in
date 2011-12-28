@@ -38,6 +38,7 @@ PUBLIC_IDL_H_SRCS = \
 	fusion.idl \
 	gameux.idl \
 	hlink.idl \
+	htiface.idl \
 	htiframe.idl \
 	httprequest.idl \
 	iads.idl \

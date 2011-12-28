@@ -69,6 +69,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "hlink.h"
 #include "optary.h"
 #include "indexsrv.h"
+#include "htiface.h"
 #include "htiframe.h"
 #include "urlhist.h"
 #include "hlguids.h"
