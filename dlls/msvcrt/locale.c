@@ -444,6 +444,7 @@ char* CDECL _Getdays(void)
         memcpy(&out[size], cur->str[7+i], len);
         size += len;
     }
+    out[size] = '\0';
 
     return out;
 }
@@ -478,6 +479,7 @@ char* CDECL _Getmonths(void)
         memcpy(&out[size], cur->str[months_offset+12+i], len);
         size += len;
     }
+    out[size] = '\0';
 
     return out;
 }
