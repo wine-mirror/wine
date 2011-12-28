@@ -322,7 +322,7 @@ static HRESULT compile_increment_expression(compiler_ctx_t *ctx, unary_expressio
         if(FAILED(hres))
             return hres;
 
-        return push_instr_uint(ctx, OP_throw, JS_E_ILLEGAL_ASSIGN);
+        return push_instr_uint(ctx, OP_throw_ref, JS_E_ILLEGAL_ASSIGN);
     }
 
     hres = compile_memberid_expression(ctx, expr->expression, fdexNameEnsure);
@@ -545,7 +545,7 @@ static HRESULT compile_assign_expression(compiler_ctx_t *ctx, binary_expression_
         if(op != OP_LAST && push_instr(ctx, op) == -1)
             return E_OUTOFMEMORY;
 
-        return push_instr_uint(ctx, OP_throw, JS_E_ILLEGAL_ASSIGN);
+        return push_instr_uint(ctx, OP_throw_ref, JS_E_ILLEGAL_ASSIGN);
     }
 
     hres = compile_memberid_expression(ctx, expr->expression1, fdexNameEnsure);
@@ -1123,7 +1123,7 @@ static HRESULT compile_forin_statement(compiler_ctx_t *ctx, forin_statement_t *s
         if(FAILED(hres))
             return hres;
     }else {
-        hres = push_instr_uint(ctx, OP_throw, JS_E_ILLEGAL_ASSIGN);
+        hres = push_instr_uint(ctx, OP_throw_ref, JS_E_ILLEGAL_ASSIGN);
         if(FAILED(hres))
             return hres;
 

@@ -99,7 +99,7 @@ typedef struct _func_stack {
     X(rshift2,    1, 0,0)                  \
     X(str,        1, ARG_STR,    0)        \
     X(this,       1, 0,0)                  \
-    X(throw,      0, ARG_UINT,   0)        \
+    X(throw_ref,  0, ARG_UINT,   0)        \
     X(throw_type, 0, ARG_UINT,   ARG_STR)  \
     X(tonum,      1, 0,0)                  \
     X(tree,       1, ARG_STAT,   0)        \

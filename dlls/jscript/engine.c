@@ -1250,7 +1250,7 @@ HRESULT throw_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_
     return DISP_E_EXCEPTION;
 }
 
-static HRESULT interp_throw(exec_ctx_t *ctx)
+static HRESULT interp_throw_ref(exec_ctx_t *ctx)
 {
     const HRESULT arg = ctx->parser->code->instrs[ctx->ip].arg1.uint;
 
