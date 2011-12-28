@@ -47,6 +47,15 @@ struct _return_type_t {
     jsexcept_t ei;
 };
 
+struct _except_frame_t {
+    unsigned stack_top;
+    scope_chain_t *scope;
+    unsigned catch_off;
+    BSTR ident;
+
+    except_frame_t *next;
+};
+
 static inline HRESULT stat_eval(script_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
 {
     return stat->eval(ctx, stat, rt, ret);
@@ -1321,6 +1330,77 @@ HRESULT try_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t 
     }
 
     *ret = val;
+    return S_OK;
+}
+
+/* ECMA-262 3rd Edition    12.14 */
+static HRESULT interp_push_except(exec_ctx_t *ctx)
+{
+    const unsigned arg1 = ctx->parser->code->instrs[ctx->ip].arg1.uint;
+    const BSTR arg2 = ctx->parser->code->instrs[ctx->ip].arg2.bstr;
+    except_frame_t *except;
+    unsigned stack_top;
+
+    TRACE("\n");
+
+    stack_top = ctx->top;
+
+    if(!arg2) {
+        HRESULT hres;
+
+        hres = stack_push_bool(ctx, TRUE);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    except = heap_alloc(sizeof(*except));
+    if(!except)
+        return E_OUTOFMEMORY;
+
+    except->stack_top = stack_top;
+    except->scope = ctx->scope_chain;
+    except->catch_off = arg1;
+    except->ident = arg2;
+    except->next = ctx->except_frame;
+    ctx->except_frame = except;
+    return S_OK;
+}
+
+/* ECMA-262 3rd Edition    12.14 */
+static HRESULT interp_pop_except(exec_ctx_t *ctx)
+{
+    except_frame_t *except;
+
+    TRACE("\n");
+
+    except = ctx->except_frame;
+    assert(except != NULL);
+
+    ctx->except_frame = except->next;
+    heap_free(except);
+    return S_OK;
+}
+
+/* ECMA-262 3rd Edition    12.14 */
+static HRESULT interp_end_finally(exec_ctx_t *ctx)
+{
+    VARIANT *v;
+
+    TRACE("\n");
+
+    v = stack_pop(ctx);
+
+    assert(V_VT(stack_top(ctx)) == VT_BOOL);
+    if(!V_BOOL(stack_top(ctx))) {
+        TRACE("passing exception\n");
+
+        VariantClear(v);
+        stack_popn(ctx, 1);
+        ctx->rt->ei.var = *stack_pop(ctx);
+        return DISP_E_EXCEPTION;
+    }
+
+    *stack_top(ctx) = *v;
     return S_OK;
 }
 
@@ -3072,9 +3152,68 @@ OP_LIST
 #undef X
 };
 
+static HRESULT unwind_exception(exec_ctx_t *ctx)
+{
+    except_frame_t *except_frame;
+    VARIANT except_val;
+    BSTR ident;
+    HRESULT hres;
+
+    except_frame = ctx->except_frame;
+    ctx->except_frame = except_frame->next;
+
+    assert(except_frame->stack_top <= ctx->top);
+    stack_popn(ctx, ctx->top - except_frame->stack_top);
+
+    while(except_frame->scope != ctx->scope_chain)
+        scope_pop(&ctx->scope_chain);
+
+    ctx->ip = except_frame->catch_off;
+
+    assert(ctx->rt->type == RT_NORMAL);
+    except_val = ctx->rt->ei.var;
+    memset(&ctx->rt->ei, 0, sizeof(ctx->rt->ei));
+
+    ident = except_frame->ident;
+    heap_free(except_frame);
+
+    if(ident) {
+        jsdisp_t *scope_obj;
+
+        hres = create_dispex(ctx->parser->script, NULL, NULL, &scope_obj);
+        if(SUCCEEDED(hres)) {
+            hres = jsdisp_propput_name(scope_obj, ident, &except_val, &ctx->rt->ei, NULL/*FIXME*/);
+            if(FAILED(hres))
+                jsdisp_release(scope_obj);
+        }
+        VariantClear(&except_val);
+        if(FAILED(hres))
+            return hres;
+
+        hres = scope_push(ctx->scope_chain, scope_obj, &ctx->scope_chain);
+        jsdisp_release(scope_obj);
+    }else {
+        VARIANT v;
+
+        hres = stack_push(ctx, &except_val);
+        if(FAILED(hres))
+            return hres;
+
+        hres = stack_push_bool(ctx, FALSE);
+        if(FAILED(hres))
+            return hres;
+
+        V_VT(&v) = VT_EMPTY;
+        hres = stack_push(ctx, &v);
+    }
+
+    return hres;
+}
+
 HRESULT compiled_statement_eval(script_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
 {
     exec_ctx_t *exec_ctx = ctx->exec_ctx;
+    except_frame_t *prev_except_frame;
     unsigned prev_ip, prev_top;
     scope_chain_t *prev_scope;
     return_type_t *prev_rt;
@@ -3093,23 +3232,35 @@ HRESULT compiled_statement_eval(script_ctx_t *ctx, statement_t *stat, return_typ
     prev_rt = exec_ctx->rt;
     prev_top = exec_ctx->top;
     prev_scope = exec_ctx->scope_chain;
+    prev_except_frame = exec_ctx->except_frame;
     prev_ip = exec_ctx->ip;
     prev_ei = exec_ctx->ei;
     exec_ctx->ip = stat->instr_off;
     exec_ctx->rt = rt;
     exec_ctx->ei = &rt->ei;
+    exec_ctx->except_frame = NULL;
 
     while(exec_ctx->ip != -1 && exec_ctx->rt->type == RT_NORMAL) {
         op = exec_ctx->parser->code->instrs[exec_ctx->ip].op;
         hres = op_funcs[op](exec_ctx);
-        if(FAILED(hres))
-            break;
-        exec_ctx->ip += op_move[op];
+        if(FAILED(hres)) {
+            TRACE("EXCEPTION\n");
+
+            if(!exec_ctx->except_frame)
+                break;
+
+            hres = unwind_exception(exec_ctx);
+            if(FAILED(hres))
+                break;
+        }else {
+            exec_ctx->ip += op_move[op];
+        }
     }
 
     exec_ctx->rt = prev_rt;
     exec_ctx->ip = prev_ip;
     exec_ctx->ei = prev_ei;
+    exec_ctx->except_frame = prev_except_frame;
 
     if(FAILED(hres)) {
         stack_popn(exec_ctx, exec_ctx->top-prev_top);

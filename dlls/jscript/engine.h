@@ -58,7 +58,8 @@ typedef struct _func_stack {
     X(delete,     1, 0,0)                  \
     X(delete_ident,1,ARG_BSTR,   0)        \
     X(div,        1, 0,0)                  \
-    X(double,     1, ARG_SBL,    0)        \
+    X(double,     1, ARG_DBL,    0)        \
+    X(end_finally,1, 0,0)                  \
     X(eq,         1, 0,0)                  \
     X(eq2,        1, 0,0)                  \
     X(forin,      0, ARG_UINT,   0)        \
@@ -90,9 +91,11 @@ typedef struct _func_stack {
     X(obj_prop,   1, ARG_BSTR,   0)        \
     X(or,         1, 0,0)                  \
     X(pop,        1, 0,0)                  \
+    X(pop_except, 1, 0,0)                  \
     X(pop_scope,  1, 0,0)                  \
     X(postinc,    1, ARG_INT,    0)        \
     X(preinc,     1, ARG_INT,    0)        \
+    X(push_except,1, ARG_UINT,   ARG_BSTR) \
     X(push_scope, 1, 0,0)                  \
     X(regexp,     1, ARG_STR,    ARG_INT)  \
     X(rshift,     1, 0,0)                  \
@@ -222,6 +225,7 @@ static inline void scope_addref(scope_chain_t *scope)
 }
 
 typedef struct _return_type_t return_type_t;
+typedef struct _except_frame_t except_frame_t;
 
 struct _exec_ctx_t {
     LONG ref;
@@ -235,6 +239,7 @@ struct _exec_ctx_t {
     VARIANT *stack;
     unsigned stack_size;
     unsigned top;
+    except_frame_t *except_frame;
 
     unsigned ip;
     jsexcept_t *ei;

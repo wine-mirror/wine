@@ -1311,6 +1311,96 @@ static HRESULT compile_throw_statement(compiler_ctx_t *ctx, expression_statement
     return push_instr(ctx, OP_throw) == -1 ? E_OUTOFMEMORY : S_OK;
 }
 
+/* ECMA-262 3rd Edition    12.14 */
+static HRESULT compile_try_statement(compiler_ctx_t *ctx, try_statement_t *stat)
+{
+    unsigned off_backup, push_except;
+    BOOL prev_no_fallback;
+    BSTR ident;
+    HRESULT hres;
+
+    off_backup = ctx->code_off;
+    prev_no_fallback = ctx->no_fallback;
+
+    push_except = push_instr(ctx, OP_push_except);
+    if(push_except == -1)
+        return E_OUTOFMEMORY;
+
+    if(stat->catch_block) {
+        ident = compiler_alloc_bstr(ctx, stat->catch_block->identifier);
+        if(!ident)
+            return E_OUTOFMEMORY;
+    }else {
+        ident = NULL;
+    }
+
+    instr_ptr(ctx, push_except)->arg2.bstr = ident;
+
+    ctx->no_fallback = TRUE;
+    hres = compile_statement(ctx, stat->try_statement);
+    ctx->no_fallback = prev_no_fallback;
+    if(hres == E_NOTIMPL) {
+        ctx->code_off = off_backup;
+        stat->stat.eval = try_statement_eval;
+        return compile_interp_fallback(ctx, &stat->stat);
+    }
+    if(FAILED(hres))
+        return hres;
+
+    if(push_instr(ctx, OP_pop_except) == -1)
+        return E_OUTOFMEMORY;
+
+    if(stat->catch_block) {
+        unsigned jmp_finally;
+
+        jmp_finally = push_instr(ctx, OP_jmp);
+        if(jmp_finally == -1)
+            return E_OUTOFMEMORY;
+
+        instr_ptr(ctx, push_except)->arg1.uint = ctx->code_off;
+
+        ctx->no_fallback = TRUE;
+        hres = compile_statement(ctx, stat->catch_block->statement);
+        ctx->no_fallback = prev_no_fallback;
+        if(hres == E_NOTIMPL) {
+            ctx->code_off = off_backup;
+            stat->stat.eval = try_statement_eval;
+            return compile_interp_fallback(ctx, &stat->stat);
+        }
+        if(FAILED(hres))
+            return hres;
+
+        if(push_instr(ctx, OP_pop_scope) == -1)
+            return E_OUTOFMEMORY;
+
+        instr_ptr(ctx, jmp_finally)->arg1.uint = ctx->code_off;
+    }else {
+        instr_ptr(ctx, push_except)->arg1.uint = ctx->code_off;
+    }
+
+    if(stat->finally_statement) {
+        /* FIXME: avoid */
+        if(push_instr(ctx, OP_pop) == -1)
+            return E_OUTOFMEMORY;
+
+        ctx->no_fallback = TRUE;
+        hres = compile_statement(ctx, stat->finally_statement);
+        ctx->no_fallback = prev_no_fallback;
+        if(hres == E_NOTIMPL) {
+            ctx->code_off = off_backup;
+            stat->stat.eval = try_statement_eval;
+            return compile_interp_fallback(ctx, &stat->stat);
+        }
+        if(FAILED(hres))
+            return hres;
+
+        if(!stat->catch_block && push_instr(ctx, OP_end_finally) == -1)
+            return E_OUTOFMEMORY;
+    }
+
+    return S_OK;
+}
+
 static HRESULT compile_statement(compiler_ctx_t *ctx, statement_t *stat)
 {
     switch(stat->type) {
@@ -1332,6 +1422,8 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_t *stat)
         return compile_switch_statement(ctx, (switch_statement_t*)stat);
     case STAT_THROW:
         return compile_throw_statement(ctx, (expression_statement_t*)stat);
+    case STAT_TRY:
+        return compile_try_statement(ctx, (try_statement_t*)stat);
     case STAT_VAR:
         return compile_var_statement(ctx, (var_statement_t*)stat);
     case STAT_WHILE:

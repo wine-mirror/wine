@@ -564,6 +564,29 @@ ok(state === "finally", "state = " + state + " expected finally");
 
 state = "";
 try {
+    try {
+        throw 0;
+    }finally {
+        state = "finally";
+    }
+}catch(e) {
+    ok(state === "finally", "state = " + state + " expected finally");
+    state = "catch";
+}
+ok(state === "catch", "state = " + state + " expected catch");
+
+try {
+    try {
+        throw 0;
+    }finally {
+        throw 1;
+    }
+}catch(e) {
+    ok(e === 1, "e = " + e);
+}
+
+state = "";
+try {
     ok(state === "", "try: state = " + state);
     state = "try";
 }catch(ex) {
