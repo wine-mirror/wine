@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-21 20:14+0100\n"
+"PO-Revision-Date: 2011-12-28 19:19+0100\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -41,7 +41,7 @@ msgstr ""
 
 #: appwiz.rc:64
 msgid "&Support Info"
-msgstr "&Informationen..."
+msgstr "&Informationen"
 
 #: appwiz.rc:65 regedit.rc:42 regedit.rc:87
 msgid "&Modify..."
@@ -54,7 +54,7 @@ msgstr "&Entfernen"
 
 #: appwiz.rc:72
 msgid "Support Information"
-msgstr "Support Information"
+msgstr "Informationen"
 
 #: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 comdlg32.rc:240 comdlg32.rc:270
 #: comdlg32.rc:313 comdlg32.rc:367 comdlg32.rc:406 comdlg32.rc:460
@@ -102,7 +102,7 @@ msgstr "Supportrufnummer:"
 
 #: appwiz.rc:82
 msgid "Readme:"
-msgstr "Readme:"
+msgstr "Liesmich:"
 
 #: appwiz.rc:83
 msgid "Product Updates:"
@@ -255,11 +255,11 @@ msgstr "Aktuelles Format:"
 
 #: avifil32.rc:27
 msgid "Waveform: %s"
-msgstr "Waveform: %s"
+msgstr "Kurvenform: %s"
 
 #: avifil32.rc:28
 msgid "Waveform"
-msgstr "Waveform"
+msgstr "Kurvenform"
 
 #: avifil32.rc:29
 msgid "All multimedia files"
@@ -763,7 +763,7 @@ msgstr "&Drucker..."
 
 #: comdlg32.rc:470
 msgid "Look &in:"
-msgstr "&Suche in"
+msgstr "&Suche in:"
 
 #: comdlg32.rc:476
 msgid "File &name:"
@@ -771,7 +771,7 @@ msgstr "Datei&name:"
 
 #: comdlg32.rc:479
 msgid "Files of &type:"
-msgstr "Datei&typen"
+msgstr "Datei&typen:"
 
 #: comdlg32.rc:482
 msgid "Open as &read-only"
@@ -1249,7 +1249,7 @@ msgstr "Schlüsselbenutzungseinschränkung"
 
 #: crypt32.rc:30
 msgid "Subject Alternative Name"
-msgstr "Alternativer Name des Antragsstellers"
+msgstr "Alternativer Name des Antragstellers"
 
 #: crypt32.rc:31
 msgid "Issuer Alternative Name"
@@ -1269,7 +1269,7 @@ msgstr "Zertifikatsrichtlinien"
 
 #: crypt32.rc:35
 msgid "Subject Key Identifier"
-msgstr "Schlüsselkennung des Antragsstellers"
+msgstr "Schlüsselkennung des Antragstellers"
 
 #: crypt32.rc:36
 msgid "CRL Reason Code"
@@ -1658,7 +1658,7 @@ msgstr "Bekomme CRL"
 
 #: crypt32.rc:132
 msgid "Revoke Request"
-msgstr "Anfrageablehnen"
+msgstr "Anfrage ablehnen"
 
 #: crypt32.rc:133
 msgid "Query Pending"
@@ -2234,7 +2234,7 @@ msgstr "&Dateiname:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:306
 msgid "B&rowse..."
-msgstr "&Wählen"
+msgstr "&Wählen..."
 
 #: cryptui.rc:294
 msgid ""
@@ -2656,7 +2656,7 @@ msgstr "Unbekanntes Format. Wählen Sie eine andere Datei."
 
 #: cryptui.rc:83
 msgid "Could not open "
-msgstr "Konnte die Datei nicht öffnen: "
+msgstr "Konnte die Datei nicht öffnen "
 
 #: cryptui.rc:84
 msgid "Determined by the program"
@@ -2848,7 +2848,9 @@ msgstr "Beweist Ihre Identität für einen entfernten Computers"
 msgid ""
 "Ensures software came from software publisher\n"
 "Protects software from alteration after publication"
-msgstr "Schützt Software vor Manipulation nach der Veröffentlichung"
+msgstr ""
+"Stellt die Herkunft der Software sicher\n"
+"Schützt Software vor Manipulation nach der Veröffentlichung"
 
 #: cryptui.rc:124
 msgid "Protects e-mail messages"
@@ -3335,7 +3337,7 @@ msgstr " Startseite "
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
-msgstr "Sie können eine Addresse wählen, die als Startseite verwendet wird."
+msgstr "Sie können eine Adresse wählen, die als Startseite verwendet wird."
 
 #: inetcpl.rc:50
 msgid "&Current page"
@@ -3446,7 +3448,7 @@ msgstr "Internet Einstellungen"
 
 #: inetcpl.rc:29
 msgid "Configure Wine Internet Browser and related settings"
-msgstr "Wine Internet Browser und zugehörige Einstellungen anpassen."
+msgstr "Wine Internet Browser und zugehörige Einstellungen anpassen"
 
 #: inetcpl.rc:30
 msgid "Security settings for zone: "
@@ -3558,7 +3560,7 @@ msgstr "'|' nicht definiert"
 
 #: jscript.rc:45
 msgid "Boolean object expected"
-msgstr "Boolisches Objekt erwartet"
+msgstr "Boolesches Objekt erwartet"
 
 #: jscript.rc:46
 msgid "Cannot delete '|'"
@@ -4390,7 +4392,7 @@ msgstr "Ungültige Nachricht\n"
 
 #: winerror.mc:1031
 msgid "Cannot complete\n"
-msgstr "Kann nicht abschliessen\n"
+msgstr "Kann nicht abschließen\n"
 
 #: winerror.mc:1036
 msgid "Invalid flags\n"
@@ -5228,7 +5230,7 @@ msgstr "LUIDs ausgeschöpft\n"
 
 #: winerror.mc:2081
 msgid "Invalid sub authority\n"
-msgstr "Ungültige Subauthorität\n"
+msgstr "Ungültige Subautorität\n"
 
 #: winerror.mc:2086
 msgid "Invalid ACL\n"
@@ -5256,7 +5258,7 @@ msgstr "Server nicht deaktiviert\n"
 
 #: winerror.mc:2116
 msgid "Invalid ID authority\n"
-msgstr "Ungültige ID-Authorität\n"
+msgstr "Ungültige ID-Autorität\n"
 
 #: winerror.mc:2121
 msgid "Allotted space exceeded\n"
@@ -5340,7 +5342,7 @@ msgstr "Logon-Sitzungs-ID existiert\n"
 
 #: winerror.mc:2221
 msgid "Unknown authentication package\n"
-msgstr "Unbekanntes Authentifizierungs-Paket\n"
+msgstr "Unbekanntes Authentifizierungspaket\n"
 
 #: winerror.mc:2226
 msgid "Bad logon session state\n"
@@ -5456,7 +5458,7 @@ msgstr "Datenträger beschädigt\n"
 
 #: winerror.mc:2371
 msgid "No user session key\n"
-msgstr "Kein Beutzer-Sitzungs-Schlüssel\n"
+msgstr "Kein Benutzer-Sitzungs-Schlüssel\n"
 
 #: winerror.mc:2376
 msgid "Licence quota exceeded\n"
@@ -5536,7 +5538,7 @@ msgstr "Ungültiges Icon-Handle\n"
 
 #: winerror.mc:2471
 msgid "Private dialog index\n"
-msgstr "Private dialog index\n"
+msgstr "Privater Dialogindex\n"
 
 #: winerror.mc:2476
 msgid "List box ID not found\n"
@@ -6044,7 +6046,7 @@ msgstr "Nicht unterstützte Namens-Syntax\n"
 
 #: winerror.mc:3111
 msgid "No network address\n"
-msgstr "Keine Netzwerk-Addresse\n"
+msgstr "Keine Netzwerk-Adresse\n"
 
 #: winerror.mc:3116
 msgid "Duplicate endpoint\n"
@@ -6052,7 +6054,7 @@ msgstr "Doppelter Endpunkt\n"
 
 #: winerror.mc:3121
 msgid "Unknown authentication type\n"
-msgstr "Unbekannter Authentifizierungs-Typ\n"
+msgstr "Unbekannter Authentifizierungstyp\n"
 
 #: winerror.mc:3126
 msgid "Maximum calls too low\n"
@@ -6068,23 +6070,23 @@ msgstr "Protokollsequenz nicht gefunden\n"
 
 #: winerror.mc:3141
 msgid "Procedure number out of range\n"
-msgstr "Prozedur-Nummer ausserhalb des Bereichs\n"
+msgstr "Prozedur-Nummer außerhalb des Bereichs\n"
 
 #: winerror.mc:3146
 msgid "Binding has no authentication data\n"
-msgstr "Bindung hat keine Authentifizierungs-Daten\n"
+msgstr "Bindung hat keine Authentifizierungsdaten\n"
 
 #: winerror.mc:3151
 msgid "Unknown authentication service\n"
-msgstr "Unbekannter Authentifizierungs-Dienst\n"
+msgstr "Unbekannter Authentifizierungsdienst\n"
 
 #: winerror.mc:3156
 msgid "Unknown authentication level\n"
-msgstr "Unbekanntes Authentifizierungs-Level\n"
+msgstr "Unbekanntes Authentifizierungslevel\n"
 
 #: winerror.mc:3161
 msgid "Invalid authentication identity\n"
-msgstr "Ungültige Authentifizierungs-Identität\n"
+msgstr "Ungültige Authentifizierungsidentität\n"
 
 #: winerror.mc:3166
 msgid "Unknown authorisation service\n"
@@ -6196,7 +6198,7 @@ msgstr "Kontext-Handle beschädigt\n"
 
 #: winerror.mc:3301
 msgid "Binding handle mismatch\n"
-msgstr "Bindungs-Handle stimmen nicht überein\n"
+msgstr "Bindungshandle stimmen nicht überein\n"
 
 #: winerror.mc:3306
 msgid "Cannot get call handle\n"
@@ -6208,7 +6210,7 @@ msgstr "Referenz-Zeiger ist Null\n"
 
 #: winerror.mc:3316
 msgid "Enumeration value out of range\n"
-msgstr "Aufzählungswert ausserhalb des Bereichs\n"
+msgstr "Aufzählungswert außerhalb des Bereichs\n"
 
 #: winerror.mc:3321
 msgid "Byte count too small\n"
@@ -6240,7 +6242,7 @@ msgstr "Vertrauens-Domänen-Fehler\n"
 
 #: winerror.mc:3356
 msgid "Trusted relationship failure\n"
-msgstr "Vertrauens-Beziehungs-Fehler\n"
+msgstr "Vertrauens-Beziehungsfehler\n"
 
 #: winerror.mc:3361
 msgid "Trust logon failure\n"
@@ -6420,7 +6422,7 @@ msgstr "Gruppenmitglied nicht gefunden\n"
 
 #: winerror.mc:3581
 msgid "Can't create endpoint mapper DB\n"
-msgstr "Kann Endpunkt-Abbildungs-Datenbank nicht erstellen\n"
+msgstr "Kann Endpunkt-Abbildungsdatenbank nicht erstellen\n"
 
 #: winerror.mc:3586
 msgid "Invalid object\n"
@@ -6560,7 +6562,7 @@ msgstr "Lokalen Anschluss hinzufügen"
 
 #: localui.rc:39
 msgid "&Enter the port name to add:"
-msgstr "&Lokaler Anschuss, der hinzugefügt werden soll:"
+msgstr "&Lokaler Anschluss, der hinzugefügt werden soll:"
 
 #: localui.rc:48
 msgid "Configure LPT Port"
@@ -6682,11 +6684,11 @@ msgstr ""
 
 #: msi.rc:28
 msgid "path %s not found"
-msgstr "Der Pfad %s wurde nicht gefunden."
+msgstr "Der Pfad %s wurde nicht gefunden"
 
 #: msi.rc:29
 msgid "insert disk %s"
-msgstr "Bitte Disk %s einlegen."
+msgstr "Bitte Disk %s einlegen"
 
 #: msi.rc:30
 msgid ""
@@ -6752,15 +6754,15 @@ msgstr ""
 
 #: msi.rc:57
 msgid "enter which folder contains %s"
-msgstr "Geben Sie das Verzeichnis ein, dass %s enthält."
+msgstr "Geben Sie das Verzeichnis ein, dass %s enthält"
 
 #: msi.rc:58
 msgid "install source for feature missing"
-msgstr "Die Installationsquelle für das Feature fehlt."
+msgstr "Die Installationsquelle für das Feature fehlt"
 
 #: msi.rc:59
 msgid "network drive for feature missing"
-msgstr "Das Netzwerklaufwerk für das Feature fehlt."
+msgstr "Das Netzwerklaufwerk für das Feature fehlt"
 
 #: msi.rc:60
 msgid "feature from:"
@@ -6768,7 +6770,7 @@ msgstr "Feature von:"
 
 #: msi.rc:61
 msgid "choose which folder contains %s"
-msgstr "Wählen Sie das Verzeichnis aus, dass %s enthält."
+msgstr "Wählen Sie das Verzeichnis aus, dass %s enthält"
 
 #: msrle32.rc:28
 msgid "Wine MS-RLE video codec"
@@ -6780,11 +6782,11 @@ msgid ""
 "Copyright 2002 by Michael Guennewig"
 msgstr ""
 "Wine MS-RLE Videodekoder\n"
-"Copyright 2002 by Michael Günnewig"
+"Copyright 2002 Michael Günnewig"
 
 #: msvfw32.rc:30
 msgid "Video Compression"
-msgstr "Video Compression"
+msgstr "Video Kompression"
 
 #: msvfw32.rc:36
 msgid "&Compressor:"
@@ -6792,11 +6794,11 @@ msgstr "&Komprimierer:"
 
 #: msvfw32.rc:39
 msgid "Con&figure..."
-msgstr "Kon&figurieren"
+msgstr "Kon&figurieren..."
 
 #: msvfw32.rc:40
 msgid "&About"
-msgstr "&Über..."
+msgstr "&Über"
 
 #: msvfw32.rc:44
 msgid "Compression &Quality:"
@@ -7124,7 +7126,7 @@ msgstr "A&us Datei erstellen"
 
 #: oledlg.rc:65
 msgid "&Add Control..."
-msgstr "Steuerung hin&zufügen"
+msgstr "Steuerung hin&zufügen..."
 
 #: oledlg.rc:66
 msgid "Display As Icon"
@@ -7169,7 +7171,7 @@ msgstr "&Symbol ändern..."
 
 #: oledlg.rc:25
 msgid "Insert a new %s object into your document"
-msgstr "Fügt ein neues %s - Objekt in Ihr Dokument ein."
+msgstr "Fügt ein neues %s - Objekt in Ihr Dokument ein"
 
 #: oledlg.rc:26
 msgid ""
@@ -7344,7 +7346,7 @@ msgstr "Dateien des Herstellers kopieren von:"
 
 #: setupapi.rc:28
 msgid "The file '%1' on %2 is needed"
-msgstr "Die Datei '%1' von %2 wird benötigt."
+msgstr "Die Datei '%1' von %2 wird benötigt"
 
 #: setupapi.rc:29 ipconfig.rc:31
 msgid "Unknown"
@@ -7376,7 +7378,7 @@ msgstr "Hintergrund &kopieren"
 
 #: shdoclc.rc:44
 msgid "Set as &Desktop Item"
-msgstr "Als Desktopelement einrichten..."
+msgstr "Als &Desktopelement einrichten"
 
 #: shdoclc.rc:46 shdoclc.rc:95 shdoclc.rc:117 user32.rc:62
 msgid "Select &All"
@@ -7444,7 +7446,7 @@ msgstr "Als Hintergrund"
 
 #: shdoclc.rc:74 shdoclc.rc:154 shdoclc.rc:178
 msgid "Set as &Desktop Item..."
-msgstr "Als Desktopelement einrichten..."
+msgstr "Als &Desktopelement einrichten..."
 
 #: shdoclc.rc:76 shdoclc.rc:90 shdoclc.rc:114 shdoclc.rc:156 shdoclc.rc:180
 #: user32.rc:57 wordpad.rc:101
@@ -7800,7 +7802,7 @@ msgid ""
 "will open it for you."
 msgstr ""
 "Geben sie den Namen eines Programmes, eines Ordners, eines Dokumentes oder "
-"einer Internet-Ressource ein, die geöffnet werden soll"
+"einer Internet-Ressource ein, und Wine wird es öffnen."
 
 #: shell32.rc:348
 msgid "&Open:"
@@ -7809,7 +7811,7 @@ msgstr "Ö&ffnen:"
 #: shell32.rc:352 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:245
 #: winefile.rc:136
 msgid "&Browse..."
-msgstr "&Durchsuchen"
+msgstr "&Durchsuchen..."
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
@@ -8429,7 +8431,7 @@ msgstr ""
 
 #: winmm.rc:33
 msgid "The specified device handle is invalid."
-msgstr "Das angegebende Gerätehandle ist ungültig."
+msgstr "Das angegebene Gerätehandle ist ungültig."
 
 #: winmm.rc:34
 msgid "There is no driver installed on your system!\n"
@@ -8579,7 +8581,7 @@ msgid ""
 "unique alias."
 msgstr ""
 "Der Gerätename wird von dieser Anwendung bereits als Alias benutzt. Benutzen "
-"Sie einen eindeutigen Alias"
+"Sie einen eindeutigen Alias."
 
 #: winmm.rc:63
 msgid ""
@@ -8878,36 +8880,33 @@ msgid ""
 "All wave devices that can play files in the current format are in use. Wait "
 "until a wave device is free, and then try again."
 msgstr ""
-"Alle Waveformgeräte, die diese Dateien in dem gegenwärtigen Format "
-"wiedergeben könnten, sind in Benutzung. Warten Sie, bis ein Waveformgerät "
-"frei ist, und wiederholen Sie den Vorgang."
+"Alle Wave Geräte, die diese Dateien in dem gegenwärtigen Format wiedergeben "
+"könnten, sind in Benutzung. Warten Sie, bis ein Wave Gerät frei ist, und "
+"wiederholen Sie den Vorgang."
 
 #: winmm.rc:109
 msgid ""
 "Cannot set the current wave device for play back because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"Das gegenwärtige Waveformgerät kann nicht wiedergeben, weil es gerade "
-"benutzt wird. Warten Sie, bis das Gerät frei ist, und wiederholen Sie den "
-"Vorgang."
+"Das gegenwärtige Wave Gerät kann nicht wiedergeben, weil es gerade benutzt "
+"wird. Warten Sie, bis das Gerät frei ist, und wiederholen Sie den Vorgang."
 
 #: winmm.rc:110
 msgid ""
 "All wave devices that can record files in the current format are in use. "
 "Wait until a wave device is free, and then try again."
 msgstr ""
-"Es ist kein Waveformgerät frei, das das gegenwärtige Format aufzeichnen "
-"könnte. Warten Sie, bis ein Waveformgerät frei ist, und wiederholen Sie den "
-"Vorgang."
+"Es ist kein Wave Gerät frei, das das gegenwärtige Format aufzeichnen könnte. "
+"Warten Sie, bis ein Wave Gerät frei ist, und wiederholen Sie den Vorgang."
 
 #: winmm.rc:111
 msgid ""
 "Cannot set the current wave device for recording because it is in use. Wait "
 "until the device is free, and then try again."
 msgstr ""
-"Das gegenwärtige Waveformgerät kann nicht aufzeichnen, weil es gerade "
-"verwendet wird. Warten Sie, bis das Gerät frei ist, und wiederholen Sie den "
-"Vorgang."
+"Das gegenwärtige Wave Gerät kann nicht aufzeichnen, weil es gerade verwendet "
+"wird. Warten Sie, bis das Gerät frei ist, und wiederholen Sie den Vorgang."
 
 #: winmm.rc:112
 msgid "Any compatible waveform playback device may be used."
@@ -8922,9 +8921,9 @@ msgid ""
 "No wave device that can play files in the current format is installed. Use "
 "the Drivers option to install the wave device."
 msgstr ""
-"Es ist kein Waveformgerät installiert, das Dateien im aktuellen Format "
+"Es ist kein Wave Gerät installiert, das Dateien im aktuellen Format "
 "wiedergeben kann. Benutzen Sie die Hardwareerkennung in der Systemsteuerung, "
-"um ein Waveformgerät zu installieren."
+"um ein Wave Gerät zu installieren."
 
 #: winmm.rc:115
 msgid ""
@@ -8937,9 +8936,9 @@ msgid ""
 "No wave device that can record files in the current format is installed. Use "
 "the Drivers option to install the wave device."
 msgstr ""
-"Es ist kein Waveformgerät installiert, das Dateien im aktuellen Format "
+"Es ist kein Wave Gerät installiert, das Dateien im aktuellen Format "
 "aufnehmen kann. Benutzen Sie die Hardwareerkennung in der Systemsteuerung, "
-"um ein Waveformgerät zu installieren."
+"um ein Wave Gerät zu installieren."
 
 #: winmm.rc:117
 msgid ""
@@ -8970,8 +8969,8 @@ msgid ""
 "The specified MIDI device is not installed on the system. Use the Drivers "
 "option from the Control Panel to install a MIDI device."
 msgstr ""
-"Es sind keine angegebnen MIDI - Geräte auf dem System installiert. Benutzen "
-"Sie die Hardwareerkennung in der Systemsteuerung, um ein MIDI - Gerät zu "
+"Das angegebene MIDI Gerät ist auf dem System nicht installiert. Benutzen Sie "
+"die Hardwareerkennung in der Systemsteuerung, um ein MIDI Gerät zu "
 "installieren."
 
 #: winmm.rc:125
@@ -9188,7 +9187,7 @@ msgstr "Indexbereichsfehler"
 
 #: wldap32.rc:91
 msgid "Naming Violation"
-msgstr "Bennenungsverletzung"
+msgstr "Benennungsverletzung"
 
 #: wldap32.rc:92
 msgid "Object Class Violation"
@@ -9427,7 +9426,7 @@ msgstr "DATE zeigt oder ändert das Systemdatum.\n"
 
 #: cmd.rc:48
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr "DEL löscht eine oder mehrere Dateien\n"
+msgstr "DEL löscht eine oder mehrere Dateien.\n"
 
 #: cmd.rc:49
 msgid "DIR lists the contents of a directory.\n"
@@ -9507,7 +9506,7 @@ msgstr ""
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
-msgstr "HELP zeigt die Hilfe an\n"
+msgstr "HELP zeigt die Hilfe an.\n"
 
 #: cmd.rc:94
 msgid ""
@@ -9549,11 +9548,11 @@ msgstr ""
 
 #: cmd.rc:103
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
-msgstr "MD ist die Kurzform von MKDIR\n"
+msgstr "MD ist die Kurzform von MKDIR.\n"
 
 #: cmd.rc:104
 msgid "MKDIR <name> creates a subdirectory.\n"
-msgstr "MKDIR erstellt ein Verzeichnis\n"
+msgstr "MKDIR erstellt ein Verzeichnis.\n"
 
 #: cmd.rc:111
 msgid ""
@@ -9609,7 +9608,7 @@ msgstr ""
 "PAUSE lässt eine Meldung auf dem Bildschirm erscheinen, die zum drücken "
 "einer Taste auffordert.\n"
 "\n"
-"Es wird hauptsächlich in Batchdateien genutzt, um dem Beutzer\n"
+"Es wird hauptsächlich in Batchdateien genutzt, um dem Benutzer\n"
 "zu erlauben, die Ausgabe eines vorherigen Befehls zu lesen,\n"
 "bevor sie durch Scrollen vom Bildschirm verschwindet.\n"
 
@@ -9645,7 +9644,7 @@ msgstr ""
 "\n"
 "$$    Dollarzeichen       $_    Zeilenvorschub      $b    Pipe Zeichen (|)\n"
 "$d    aktuelles Datum     $e    Escape              $g    > Zeichen\n"
-"$l    < Zeichen           $n    akutelles Laufwerk  $p    aktueller Pfad\n"
+"$l    < Zeichen           $n    aktuelles Laufwerk  $p    aktueller Pfad\n"
 "$q    Gleichheitszeichen  $t    aktuelle Zeit       $v    cmd Version\n"
 "\n"
 "Hinweis: Die Eingabe des PROMPT Befehls ohne eine Prompt-Zeichenkette,\n"
@@ -9742,9 +9741,7 @@ msgstr "TIME Setzt oder zeigt die aktuelle Systemzeit an.\n"
 #: cmd.rc:187
 msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
 msgstr ""
-"Setzt den Fenstertitel für das CMD - Fenster.\n"
-"\n"
-"Syntax: TITLE [Zeichenkette]\n"
+"Setzt den Fenstertitel für das CMD - Fenster. Syntax: TITLE [Zeichenkette]\n"
 
 #: cmd.rc:191
 msgid ""
@@ -9780,7 +9777,7 @@ msgstr "VER zeigt die aktuelle Version von CMD an.\n"
 
 #: cmd.rc:205
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr "VOL zeigt die Volumeseriennummer an\n"
+msgstr "VOL zeigt die Volumeseriennummer an.\n"
 
 #: cmd.rc:209
 msgid ""
@@ -10115,7 +10112,7 @@ msgstr "Volume in Laufwerk %1!c! ist %2\n"
 
 #: cmd.rc:327
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr "Volume in Laufwerk %1!c! hat keine Bezeichnung\n"
+msgstr "Volume in Laufwerk %1!c! hat keine Bezeichnung.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10259,7 +10256,7 @@ msgstr ""
 
 #: net.rc:30
 msgid "Stopping dependent service: %1\n"
-msgstr "Stoppe den abbhängigen Dienst: %1\n"
+msgstr "Stoppe den abhängigen Dienst: %1\n"
 
 #: net.rc:31
 msgid "Could not stop service %1\n"
@@ -10434,7 +10431,7 @@ msgstr "&Fußzeile:"
 
 #: notepad.rc:112
 msgid "&Margins (millimeters):"
-msgstr "Ränder (Millimeter)"
+msgstr "&Ränder (Millimeter):"
 
 #: notepad.rc:113
 msgid "&Left:"
@@ -10841,7 +10838,7 @@ msgstr "OLE-1.0-Objekte"
 
 #: oleview.rc:131
 msgid "COM Library Objects"
-msgstr "COM-Bibliotheks-Objekte"
+msgstr "COM-Bibliotheksobjekte"
 
 #: oleview.rc:132
 msgid "All Objects"
@@ -11579,12 +11576,12 @@ msgid ""
 "See the COPYING.LIB file for license information.\n"
 msgstr ""
 "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
-"Dieses Programm ist freie Software; Sie dürfen es unter den Bedingungen\n"
+"Dieses Programm ist freie Software; Sie dürfen sie unter den Bedingungen\n"
 "der GNU Lesser General Public License, wie von der Free Software Foundation\n"
 "veröffentlicht, weiterverteilen und/oder modifizieren; entweder gemäß\n"
 "Version 2.1 der Lizenz oder (nach Ihrer Option) jeder späteren Version.\n"
 "\n"
-"Diese Bibliothek wird in der Hoffnung weiterverbreitet, daß es nützlich "
+"Diese Bibliothek wird in der Hoffnung weiterverbreitet, dass sie nützlich "
 "sein\n"
 "wird, jedoch OHNE IRGENDEINE GARANTIE, auch ohne die implizierte\n"
 "Garantie der MARKTREIFE oder der VERWENDBARKEIT FÜR EINEN\n"
@@ -11596,7 +11593,7 @@ msgstr ""
 "Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110, "
 "USA.\n"
 "\n"
-"Schau in die Datei COPYING.LIB für Lizenzinformationen.\n"
+"Schauen Sie in die Datei COPYING.LIB für Lizenzinformationen.\n"
 
 #: start.rc:66
 msgid ""
@@ -12186,7 +12183,7 @@ msgstr "Zeigt Tasks mit kleinen Symbolen an"
 
 #: taskmgr.rc:195
 msgid "Displays information about each task"
-msgstr "Zeigt detailierte Informationen über jeden einzelnen Task an"
+msgstr "Zeigt detaillierte Informationen über jeden einzelnen Task an"
 
 #: taskmgr.rc:196
 msgid "Updates the display twice per second"
@@ -12467,7 +12464,7 @@ msgstr "Leerlauf Prozess"
 
 #: taskmgr.rc:323
 msgid "Not Responding"
-msgstr "Anwortet nicht"
+msgstr "Antwortet nicht"
 
 #: taskmgr.rc:324
 msgid "Running"
@@ -12746,7 +12743,7 @@ msgstr "Ge&rät:"
 
 #: winecfg.rc:253
 msgid "Bro&wse..."
-msgstr "Durch&suchen"
+msgstr "Durch&suchen..."
 
 #: winecfg.rc:255
 msgid "&Label:"
@@ -13369,7 +13366,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Bespiel:\n"
+"Beispiel:\n"
 "  wineconsole cmd\n"
 "Startet die Wine-Befehlszeile in einer Wine-Konsole.\n"
 "\n"
@@ -13501,7 +13498,7 @@ msgstr "&Nebeneinander\tUmschalt+F4"
 
 #: winefile.rc:87
 msgid "&About Wine File Manager"
-msgstr "&Info über Wine Dateimanager"
+msgstr "&Über Wine Dateimanager"
 
 #: winefile.rc:128
 msgid "Select destination"
@@ -13768,7 +13765,7 @@ msgstr "Immer im &Vordergrund"
 
 #: winhlp32.rc:56
 msgid "&About Wine Help"
-msgstr "&Info..."
+msgstr "&Über Wine Hilfe"
 
 #: winhlp32.rc:64
 msgid "Annotation..."
@@ -13930,7 +13927,7 @@ msgstr "Ü&ber Wine Wordpad"
 
 #: wordpad.rc:130
 msgid "Automatic"
-msgstr "Automatic"
+msgstr "Automatisch"
 
 #: wordpad.rc:199
 msgid "Date and time"
@@ -14262,7 +14259,7 @@ msgstr ""
 "[/E]  Kopiere Verzeichnisse und Unterverzeichnisse, auch leere.\n"
 "[/Q]  Zeige die Dateinamen beim Kopieren nicht an.\n"
 "[/F]  Zeige vollständige Dateinamen von Quelle und Ziel an.\n"
-"[/L]  Simulation: Zeige die Namen der Datein, die kopiert würden.\n"
+"[/L]  Simulation: Zeige die Namen der Dateien, die kopiert würden.\n"
 "[/W]  Wartet vor Beginn des Kopierens auf Bestätigung.\n"
 "[/T]  Erzeuge eine leere Verzeichnisstruktur, ohne Dateien zu kopieren.\n"
 "[/Y]  Keine Nachfrage vor dem Überschreiben von Dateien.\n"
@@ -14276,6 +14273,6 @@ msgstr ""
 "[/A]  Nur Dateien mit Archivbit kopieren.\n"
 "[/M]  Nur Dateien mit Archivbit kopieren, danach Archivbit löschen.\n"
 "[/D | /D:M-T-J] Kopiere neue Dateien und Dateien, die neuer als das\n"
-"\t\tangegebene Datum sind. Wird kein Datum angegegebn, werden nur\n"
+"\t\tangegebene Datum sind. Wird kein Datum angegeben, werden nur\n"
 "\t\tQuelldateien kopiert, die neuer sind als die Zieldatei.\n"
 "\n"
