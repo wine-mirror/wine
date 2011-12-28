@@ -1245,18 +1245,15 @@ static const dash_pattern dash_patterns[5] =
     {6, {9, 3, 3, 3, 3, 3}, 24}   /* PS_DASHDOTDOT */
 };
 
-static inline int get_pen_device_width( dibdrv_physdev *pdev, LOGPEN *pen )
+static inline int get_pen_device_width( dibdrv_physdev *pdev, int width )
 {
-    int width = pen->lopnWidth.x;
+    POINT pts[2];
 
-    if (pen->lopnStyle & PS_GEOMETRIC && width > 1)
-    {
-        POINT pts[2];
-        pts[0].x = pts[0].y = pts[1].y = 0;
-        pts[1].x = width;
-        LPtoDP( pdev->dev.hdc, pts, 2 );
-        width = abs( pts[1].x - pts[0].x );
-    }
+    if (!width) return 1;
+    pts[0].x = pts[0].y = pts[1].y = 0;
+    pts[1].x = width;
+    LPtoDP( pdev->dev.hdc, pts, 2 );
+    width = abs( pts[1].x - pts[0].x );
     return max( width, 1 );
 }
 
@@ -1285,15 +1282,16 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
         /* FIXME: add support for user style pens */
         logpen.lopnStyle = elp->elpPenStyle;
         logpen.lopnWidth.x = elp->elpWidth;
-        logpen.lopnWidth.y = 0;
         logpen.lopnColor = elp->elpColor;
+        /* cosmetic ext pens are always 1-pixel wide */
+        if (!(logpen.lopnStyle & PS_GEOMETRIC)) logpen.lopnWidth.x = 0;
 
         HeapFree( GetProcessHeap(), 0, elp );
     }
 
     pdev->pen_join   = logpen.lopnStyle & PS_JOIN_MASK;
     pdev->pen_endcap = logpen.lopnStyle & PS_ENDCAP_MASK;
-    pdev->pen_width  = get_pen_device_width( pdev, &logpen );
+    pdev->pen_width  = get_pen_device_width( pdev, logpen.lopnWidth.x );
 
     if (hpen == GetStockObject( DC_PEN ))
         logpen.lopnColor = GetDCPenColor( dev->hdc );
