@@ -1279,7 +1279,6 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectPen );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     LOGPEN logpen;
-    DWORD style;
 
     TRACE("(%p, %p)\n", dev, hpen);
 
@@ -1315,11 +1314,12 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
 
     pdev->defer |= DEFER_PEN;
 
-    style = logpen.lopnStyle & PS_STYLE_MASK;
+    pdev->pen_style = logpen.lopnStyle & PS_STYLE_MASK;
 
-    switch(style)
+    switch (pdev->pen_style)
     {
     case PS_SOLID:
+    case PS_INSIDEFRAME:
         if(pdev->pen_width <= 1)
             pdev->pen_lines = solid_pen_lines;
         else
@@ -1334,7 +1334,7 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
         if(logpen.lopnStyle & PS_GEOMETRIC) break;
         if(logpen.lopnWidth.x > 1) break;
         pdev->pen_lines = dashed_pen_lines;
-        pdev->pen_pattern = dash_patterns[style];
+        pdev->pen_pattern = dash_patterns[pdev->pen_style];
         pdev->defer &= ~DEFER_PEN;
         break;
 

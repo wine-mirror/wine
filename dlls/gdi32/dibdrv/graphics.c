@@ -580,6 +580,14 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
     if(defer_pen(pdev))
         return next->funcs->pRectangle( next, left, top, right, bottom );
 
+    if (pdev->pen_style == PS_INSIDEFRAME)
+    {
+        rect.left   += pdev->pen_width / 2;
+        rect.top    += pdev->pen_width / 2;
+        rect.right  -= (pdev->pen_width - 1) / 2;
+        rect.bottom -= (pdev->pen_width - 1) / 2;
+    }
+
     reset_dash_origin(pdev);
 
     /* 4 pts going anti-clockwise starting from top-right */

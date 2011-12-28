@@ -83,7 +83,7 @@ typedef struct dibdrv_physdev
 
     /* pen */
     COLORREF pen_colorref;
-    DWORD pen_endcap, pen_join;
+    DWORD pen_style, pen_endcap, pen_join;
     int pen_width;
     dash_pattern pen_pattern;
     dash_pos dash_pos;
