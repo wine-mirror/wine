@@ -2146,7 +2146,7 @@ msgstr "&Свойства на клетката"
 
 #: cryptui.rc:211
 #, fuzzy
-msgid "Certification &path"
+msgid "Certification path"
 msgstr "&Свойства на клетката"
 
 #: cryptui.rc:214

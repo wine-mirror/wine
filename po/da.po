@@ -2166,7 +2166,7 @@ msgstr "Egenskaper for &celle"
 
 #: cryptui.rc:211
 #, fuzzy
-msgid "Certification &path"
+msgid "Certification path"
 msgstr "Egenskaper for &celle"
 
 #: cryptui.rc:214

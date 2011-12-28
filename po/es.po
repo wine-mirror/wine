@@ -2169,7 +2169,7 @@ msgstr "Propiedades de &celda"
 
 #: cryptui.rc:211
 #, fuzzy
-msgid "Certification &path"
+msgid "Certification path"
 msgstr "Propiedades de &celda"
 
 #: cryptui.rc:214

@@ -2146,7 +2146,7 @@ msgstr "معلومات"
 
 #: cryptui.rc:211
 #, fuzzy
-msgid "Certification &path"
+msgid "Certification path"
 msgstr "معلومات"
 
 #: cryptui.rc:214

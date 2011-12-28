@@ -2145,7 +2145,7 @@ msgstr "Сертификати"
 
 #: cryptui.rc:211
 #, fuzzy
-msgid "Certification &path"
+msgid "Certification path"
 msgstr "Сертификати"
 
 #: cryptui.rc:214

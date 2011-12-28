@@ -2159,7 +2159,7 @@ msgstr "&Vlastnosti"
 
 #: cryptui.rc:211
 #, fuzzy
-msgid "Certification &path"
+msgid "Certification path"
 msgstr "&Vlastnosti"
 
 #: cryptui.rc:214

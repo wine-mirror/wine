@@ -2101,7 +2101,7 @@ msgstr "ਜਾਣਕਾਰੀ(&o)"
 
 #: cryptui.rc:211
 #, fuzzy
-msgid "Certification &path"
+msgid "Certification path"
 msgstr "ਜਾਣਕਾਰੀ(&o)"
 
 #: cryptui.rc:214

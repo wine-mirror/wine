@@ -2223,7 +2223,7 @@ msgstr "Sertifikati"
 
 #: cryptui.rc:211
 #, fuzzy
-msgid "Certification &path"
+msgid "Certification path"
 msgstr "Sertifikati"
 
 #: cryptui.rc:214

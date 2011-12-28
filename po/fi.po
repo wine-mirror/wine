@@ -2153,7 +2153,7 @@ msgstr "S&olun Ominaisuudet"
 
 #: cryptui.rc:211
 #, fuzzy
-msgid "Certification &path"
+msgid "Certification path"
 msgstr "S&olun Ominaisuudet"
 
 #: cryptui.rc:214

@@ -2101,7 +2101,7 @@ msgstr "വി_വരം"
 
 #: cryptui.rc:211
 #, fuzzy
-msgid "Certification &path"
+msgid "Certification path"
 msgstr "വി_വരം"
 
 #: cryptui.rc:214

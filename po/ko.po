@@ -2123,7 +2123,8 @@ msgid "Certification Path"
 msgstr "인증서 경로"
 
 #: cryptui.rc:211
-msgid "Certification &path"
+#, fuzzy
+msgid "Certification path"
 msgstr "인증서 경로(&P)"
 
 #: cryptui.rc:214

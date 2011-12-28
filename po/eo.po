@@ -2151,7 +2151,7 @@ msgstr "&Ecoj"
 
 #: cryptui.rc:211
 #, fuzzy
-msgid "Certification &path"
+msgid "Certification path"
 msgstr "&Ecoj"
 
 #: cryptui.rc:214

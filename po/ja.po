@@ -2126,7 +2126,8 @@ msgid "Certification Path"
 msgstr "証明のパス"
 
 #: cryptui.rc:211
-msgid "Certification &path"
+#, fuzzy
+msgid "Certification path"
 msgstr "証明のパス(&P)"
 
 #: cryptui.rc:214

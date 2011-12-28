@@ -2138,7 +2138,7 @@ msgstr "格属性(&C)"
 
 #: cryptui.rc:211
 #, fuzzy
-msgid "Certification &path"
+msgid "Certification path"
 msgstr "格属性(&C)"
 
 #: cryptui.rc:214

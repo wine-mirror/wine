@@ -2124,8 +2124,8 @@ msgid "Certification Path"
 msgstr "Certification Path"
 
 #: cryptui.rc:211
-msgid "Certification &path"
-msgstr "Certification &path"
+msgid "Certification path"
+msgstr "Certification path"
 
 #: cryptui.rc:214
 msgid "&View Certificate"

@@ -2083,7 +2083,7 @@ msgid "Certification Path"
 msgstr ""
 
 #: cryptui.rc:211
-msgid "Certification &path"
+msgid "Certification path"
 msgstr ""
 
 #: cryptui.rc:214

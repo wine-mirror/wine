@@ -2124,7 +2124,8 @@ msgid "Certification Path"
 msgstr "Путь сертификации"
 
 #: cryptui.rc:211
-msgid "Certification &path"
+#, fuzzy
+msgid "Certification path"
 msgstr "П&уть сертификации"
 
 #: cryptui.rc:214
