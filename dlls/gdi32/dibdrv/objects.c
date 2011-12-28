@@ -198,13 +198,13 @@ DWORD get_pixel_color( dibdrv_physdev *pdev, COLORREF color, BOOL mono_fixup )
  * of the relevant fg color (which is always set up correctly).
  */
 static inline void get_color_masks( dibdrv_physdev *pdev, UINT rop, COLORREF colorref,
-                                    rop_mask *fg_mask, rop_mask *bg_mask )
+                                    INT bkgnd_mode, rop_mask *fg_mask, rop_mask *bg_mask )
 {
     DWORD color = get_pixel_color( pdev, colorref, TRUE );
 
     calc_rop_masks( rop, color, fg_mask );
 
-    if (GetBkMode(pdev->dev.hdc) == TRANSPARENT)
+    if (bkgnd_mode == TRANSPARENT)
     {
         bg_mask->and = ~0u;
         bg_mask->xor = 0;
@@ -932,6 +932,7 @@ static BOOL dashed_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL clo
     int i;
 
     get_color_masks( pdev, GetROP2(pdev->dev.hdc), pdev->pen_colorref,
+                     pdev->pen_is_ext ? TRANSPARENT : GetBkMode(pdev->dev.hdc),
                      &pdev->dash_masks[1], &pdev->dash_masks[0] );
 
     assert( num >= 2 );
@@ -1265,13 +1266,13 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectPen );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     LOGPEN logpen;
+    EXTLOGPEN *elp = NULL;
 
     TRACE("(%p, %p)\n", dev, hpen);
 
     if (!GetObjectW( hpen, sizeof(logpen), &logpen ))
     {
         /* must be an extended pen */
-        EXTLOGPEN *elp;
         INT size = GetObjectW( hpen, 0, NULL );
 
         if (!size) return 0;
@@ -1285,8 +1286,6 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
         logpen.lopnColor = elp->elpColor;
         /* cosmetic ext pens are always 1-pixel wide */
         if (!(logpen.lopnStyle & PS_GEOMETRIC)) logpen.lopnWidth.x = 0;
-
-        HeapFree( GetProcessHeap(), 0, elp );
     }
 
     pdev->pen_join   = logpen.lopnStyle & PS_JOIN_MASK;
@@ -1335,6 +1334,9 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
     default:
         break;
     }
+
+    pdev->pen_is_ext = (elp != NULL);
+    HeapFree( GetProcessHeap(), 0, elp );
 
     return next->funcs->pSelectPen( next, hpen );
 }
@@ -1461,7 +1463,8 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev, BOOL *needs_reselect)
     hatch.bits.free = hatch.bits.param = NULL;
     hatch.bits.is_copy = FALSE;
 
-    get_color_masks( pdev, pdev->brush_rop, pdev->brush_colorref, &fg_mask, &bg_mask );
+    get_color_masks( pdev, pdev->brush_rop, pdev->brush_colorref, GetBkMode(pdev->dev.hdc),
+                     &fg_mask, &bg_mask );
 
     if (pdev->brush_colorref & (1 << 24))  /* PALETTEINDEX */
         *needs_reselect = TRUE;
