@@ -517,13 +517,26 @@ BOOL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWO
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pPolyPolyline );
     DWORD max_points = 0, i;
     POINT *points;
+    BOOL ret = TRUE;
+    INT rop = GetROP2( dev->hdc );
+    HRGN outline = 0;
 
     if (defer_pen( pdev )) return next->funcs->pPolyPolyline( next, pt, counts, polylines );
 
-    for (i = 0; i < polylines; i++) max_points = max( counts[i], max_points );
+    for (i = 0; i < polylines; i++)
+    {
+        if (counts[i] < 2) return FALSE;
+        max_points = max( counts[i], max_points );
+    }
 
     points = HeapAlloc( GetProcessHeap(), 0, max_points * sizeof(*pt) );
     if (!points) return FALSE;
+
+    if (pdev->pen_uses_region && !(outline = CreateRectRgn( 0, 0, 0, 0 )))
+    {
+        HeapFree( GetProcessHeap(), 0, points );
+        return FALSE;
+    }
 
     for (i = 0; i < polylines; i++)
     {
@@ -532,11 +545,18 @@ BOOL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWO
         LPtoDP( dev->hdc, points, counts[i] );
 
         reset_dash_origin( pdev );
-        pdev->pen_lines( pdev, counts[i], points, FALSE, 0 );
+        pdev->pen_lines( pdev, counts[i], points, FALSE, outline );
+    }
+
+    if (outline)
+    {
+        if (pdev->clip) CombineRgn( outline, outline, pdev->clip, RGN_AND );
+        ret = pen_rect( pdev, NULL, outline, rop );
+        DeleteObject( outline );
     }
 
     HeapFree( GetProcessHeap(), 0, points );
-    return TRUE;
+    return ret;
 }
 
 /***********************************************************************
@@ -544,23 +564,10 @@ BOOL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWO
  */
 BOOL dibdrv_Polyline( PHYSDEV dev, const POINT* pt, INT count )
 {
-    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pPolyline );
-    POINT *points;
+    DWORD counts[1] = { count };
 
-    if (defer_pen( pdev )) return next->funcs->pPolyline( next, pt, count );
-
-    points = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*pt) );
-    if (!points) return FALSE;
-
-    memcpy( points, pt, count * sizeof(*pt) );
-    LPtoDP( dev->hdc, points, count );
-
-    reset_dash_origin( pdev );
-    pdev->pen_lines( pdev, count, points, FALSE, 0 );
-
-    HeapFree( GetProcessHeap(), 0, points );
-    return TRUE;
+    if (count < 0) return FALSE;
+    return dibdrv_PolyPolyline( dev, pt, counts, 1 );
 }
 
 /***********************************************************************

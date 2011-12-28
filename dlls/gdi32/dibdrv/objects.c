@@ -1615,6 +1615,7 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
         break;
 
     case PS_NULL:
+        pdev->pen_width = 0;
         pdev->pen_lines = null_pen_lines;
         pdev->defer &= ~DEFER_PEN;
         break;
@@ -1637,6 +1638,7 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
         break;
     }
 
+    pdev->pen_uses_region = (logpen.lopnStyle & PS_GEOMETRIC || pdev->pen_width > 1);
     pdev->pen_is_ext = (elp != NULL);
     HeapFree( GetProcessHeap(), 0, elp );
 
