@@ -1345,6 +1345,12 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
         pdev->defer &= ~DEFER_PEN;
         break;
 
+    case PS_ALTERNATE:
+        pdev->pen_lines = dashed_pen_lines;
+        pdev->pen_pattern = dash_patterns_geometric[PS_DOT - 1];
+        pdev->defer &= ~DEFER_PEN;
+        break;
+
     default:
         break;
     }
