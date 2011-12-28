@@ -1305,23 +1305,25 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
 
     switch (pdev->pen_style)
     {
-    case PS_SOLID:
-    case PS_INSIDEFRAME:
-        if(pdev->pen_width <= 1)
-            pdev->pen_lines = solid_pen_lines;
-        else
-            pdev->pen_lines = wide_pen_lines;
-        pdev->defer &= ~DEFER_PEN;
-        break;
-
     case PS_DASH:
     case PS_DOT:
     case PS_DASHDOT:
     case PS_DASHDOTDOT:
         if(logpen.lopnStyle & PS_GEOMETRIC) break;
-        if(logpen.lopnWidth.x > 1) break;
-        pdev->pen_lines = dashed_pen_lines;
-        pdev->pen_pattern = dash_patterns[pdev->pen_style];
+        if (pdev->pen_width == 1)  /* wide cosmetic pens are not dashed */
+        {
+            pdev->pen_lines = dashed_pen_lines;
+            pdev->pen_pattern = dash_patterns[pdev->pen_style];
+            pdev->defer &= ~DEFER_PEN;
+            break;
+        }
+        /* fall through */
+    case PS_SOLID:
+    case PS_INSIDEFRAME:
+        if(pdev->pen_width == 1)
+            pdev->pen_lines = solid_pen_lines;
+        else
+            pdev->pen_lines = wide_pen_lines;
         pdev->defer &= ~DEFER_PEN;
         break;
 
