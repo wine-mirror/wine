@@ -402,12 +402,6 @@ qNoOp (va_list ap)
 }
 
 static int
-qFatal (va_list ap)
-{
-    exit (1);
-}
-
-static int
 qAsk (va_list ap)
 {
     return MBdefault (va_arg (ap, int));
@@ -507,7 +501,7 @@ report (enum report_type t, ...)
     static r_fun_t * const quiet_funcs[] =
         {qNoOp, qNoOp, qNoOp, qNoOp,
          qNoOp, qNoOp, qNoOp,
-         qNoOp, qNoOp, qFatal, qAsk};
+         qNoOp, textError, textFatal, qAsk};
     static r_fun_t * const * funcs = NULL;
 
     switch (t) {
