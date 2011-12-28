@@ -1288,8 +1288,8 @@ DWORD gradient_bitmapinfo( const BITMAPINFO *info, void *bits, TRIVERTEX *vert_a
     unsigned int i;
     int y;
     TRIVERTEX vert[3];
+    RECT rc;
     DWORD ret = ERROR_SUCCESS;
-    HRGN tmp_rgn = 0;
 
     init_dib_info_from_bitmapinfo( &dib, info, bits, default_color_table );
 
@@ -1300,9 +1300,11 @@ DWORD gradient_bitmapinfo( const BITMAPINFO *info, void *bits, TRIVERTEX *vert_a
         {
             get_gradient_hrect_vertices( rect, vert_array, dev_pts, vert );
             gradient_rect( &dib, vert, mode, 0 );
-            if (!tmp_rgn) tmp_rgn = CreateRectRgn( vert[0].x, vert[0].y, vert[1].x, vert[1].y );
-            else SetRectRgn( tmp_rgn, vert[0].x, vert[0].y, vert[1].x, vert[1].y );
-            CombineRgn( rgn, rgn, tmp_rgn, RGN_OR );
+            rc.left   = vert[0].x;
+            rc.top    = vert[0].y;
+            rc.right  = vert[1].x;
+            rc.bottom = vert[1].y;
+            add_rect_to_region( rgn, &rc );
         }
         break;
 
@@ -1311,9 +1313,11 @@ DWORD gradient_bitmapinfo( const BITMAPINFO *info, void *bits, TRIVERTEX *vert_a
         {
             get_gradient_vrect_vertices( rect, vert_array, dev_pts, vert );
             gradient_rect( &dib, vert, mode, 0 );
-            if (!tmp_rgn) tmp_rgn = CreateRectRgn( vert[0].x, vert[0].y, vert[1].x, vert[1].y );
-            else SetRectRgn( tmp_rgn, vert[0].x, vert[0].y, vert[1].x, vert[1].y );
-            CombineRgn( rgn, rgn, tmp_rgn, RGN_OR );
+            rc.left   = vert[0].x;
+            rc.top    = vert[0].y;
+            rc.right  = vert[1].x;
+            rc.bottom = vert[1].y;
+            add_rect_to_region( rgn, &rc );
         }
         break;
 
@@ -1323,22 +1327,23 @@ DWORD gradient_bitmapinfo( const BITMAPINFO *info, void *bits, TRIVERTEX *vert_a
             get_gradient_triangle_vertices( tri, vert_array, dev_pts, vert );
             if (gradient_rect( &dib, vert, mode, 0 ))
             {
-                if (!tmp_rgn) tmp_rgn = CreateRectRgn( 0, 0, 0, 0 );
                 for (y = vert[0].y; y < vert[2].y; y++)
                 {
                     int x1, x2 = edge_coord( y, vert[0].x, vert[0].y, vert[2].x, vert[2].y );
                     if (y < vert[1].y) x1 = edge_coord( y, vert[0].x, vert[0].y, vert[1].x, vert[1].y );
                     else x1 = edge_coord( y, vert[1].x, vert[1].y, vert[2].x, vert[2].y );
 
-                    SetRectRgn( tmp_rgn, min(x1,x2), y, max(x1,x2), y + 1 );
-                    CombineRgn( rgn, rgn, tmp_rgn, RGN_OR );
+                    rc.left   = min( x1, x2 );
+                    rc.top    = y;
+                    rc.right  = max( x1, x2 );
+                    rc.bottom = y + 1;
+                    add_rect_to_region( rgn, &rc );
                 }
             }
             else ret = ERROR_INVALID_PARAMETER;
         }
         break;
     }
-    DeleteObject( tmp_rgn );
     return ret;
 }
 
