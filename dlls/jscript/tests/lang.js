@@ -839,6 +839,64 @@ for(tmp in obj1.nonexistent)
     ok(false, "for(tmp in obj1.nonexistent) called with tmp = " + tmp);
 ok(!("nonexistent" in obj1), "nonexistent added to obj1 by for..in loop");
 
+var i, j;
+
+
+tmp = "";
+i = 0;
+while(true) {
+    tmp += "1";
+    for(i = 1; i < 3; i++) {
+        switch(i) {
+        case 1:
+            tmp += "2";
+            continue;
+        case 2:
+            tmp += "3";
+            try {
+                throw null;
+            }finally {
+                tmp += "4";
+                break;
+            }
+        default:
+            ok(false, "unexpected state");
+        }
+        tmp += "5";
+    }
+    with({prop: "6"}) {
+        tmp += prop;
+        break;
+    }
+}
+ok(tmp === "123456", "tmp = " + tmp);
+
+tmp = "";
+i = 0;
+for(j in [1,2,3]) {
+    tmp += "1";
+    for(;;) {
+        with({prop: "2"}) {
+            tmp += prop;
+            try {
+                throw "3";
+            }catch(e) {
+                tmp += e;
+                with([0])
+                    break;
+            }
+        }
+        ok(false, "unexpected state");
+    }
+    while(true) {
+        tmp += "4";
+        break;
+    }
+    break;
+}
+ok(tmp === "1234", "tmp = " + tmp);
+
+
 ok((void 1) === undefined, "(void 1) !== undefined");
 
 var inobj = new Object();
