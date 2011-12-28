@@ -1097,6 +1097,72 @@ static HRESULT compile_for_statement(compiler_ctx_t *ctx, for_statement_t *stat)
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    12.6.4 */
+static HRESULT compile_forin_statement(compiler_ctx_t *ctx, forin_statement_t *stat)
+{
+    unsigned loop_addr, off_backup = ctx->code_off;
+    BOOL prev_no_fallback;
+    HRESULT hres;
+
+    if(stat->variable) {
+        hres = compile_variable_list(ctx, stat->variable);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    hres = compile_expression(ctx, stat->in_expr);
+    if(FAILED(hres))
+        return hres;
+
+    if(stat->variable) {
+        hres = push_instr_bstr_uint(ctx, OP_identid, stat->variable->identifier, fdexNameEnsure);
+        if(FAILED(hres))
+            return hres;
+    }else if(is_memberid_expr(stat->expr->type)) {
+        hres = compile_memberid_expression(ctx, stat->expr, fdexNameEnsure);
+        if(FAILED(hres))
+            return hres;
+    }else {
+        hres = push_instr_uint(ctx, OP_throw, JS_E_ILLEGAL_ASSIGN);
+        if(FAILED(hres))
+            return hres;
+
+        /* FIXME: compile statement anyways when we depend on compiler to check errors */
+        return S_OK;
+    }
+
+    hres = push_instr_int(ctx, OP_int, DISPID_STARTENUM);
+    if(FAILED(hres))
+        return hres;
+
+    /* FIXME: avoid */
+    if(push_instr(ctx, OP_undefined) == -1)
+        return E_OUTOFMEMORY;
+
+    loop_addr = ctx->code_off;
+    if(push_instr(ctx, OP_forin) == -1)
+        return E_OUTOFMEMORY;
+
+    prev_no_fallback = ctx->no_fallback;
+    ctx->no_fallback = TRUE;
+    hres = compile_statement(ctx, stat->statement);
+    ctx->no_fallback = prev_no_fallback;
+    if(hres == E_NOTIMPL) {
+        ctx->code_off = off_backup;
+        stat->stat.eval = forin_statement_eval;
+        return compile_interp_fallback(ctx, &stat->stat);
+    }
+    if(FAILED(hres))
+        return hres;
+
+    hres = push_instr_uint(ctx, OP_jmp, loop_addr);
+    if(FAILED(hres))
+        return hres;
+
+    instr_ptr(ctx, loop_addr)->arg1.uint = ctx->code_off;
+    return S_OK;
+}
+
 /* ECMA-262 3rd Edition    12.10 */
 static HRESULT compile_with_statement(compiler_ctx_t *ctx, with_statement_t *stat)
 {
@@ -1244,6 +1310,8 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_t *stat)
         return compile_expression_statement(ctx, (expression_statement_t*)stat);
     case STAT_FOR:
         return compile_for_statement(ctx, (for_statement_t*)stat);
+    case STAT_FORIN:
+        return compile_forin_statement(ctx, (forin_statement_t*)stat);
     case STAT_IF:
         return compile_if_statement(ctx, (if_statement_t*)stat);
     case STAT_LABEL:

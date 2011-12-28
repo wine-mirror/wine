@@ -61,6 +61,7 @@ typedef struct _func_stack {
     X(double,     1, ARG_SBL,    0)        \
     X(eq,         1, 0,0)                  \
     X(eq2,        1, 0,0)                  \
+    X(forin,      0, ARG_UINT,   0)        \
     X(func,       1, ARG_FUNC,   0)        \
     X(gt,         1, 0,0)                  \
     X(gteq,       1, 0,0)                  \

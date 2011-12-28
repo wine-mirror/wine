@@ -936,6 +936,73 @@ HRESULT forin_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    12.6.4 */
+static HRESULT interp_forin(exec_ctx_t *ctx)
+{
+    const HRESULT arg = ctx->parser->code->instrs[ctx->ip].arg1.uint;
+    IDispatch *var_obj, *obj = NULL;
+    IDispatchEx *dispex;
+    DISPID id, var_id;
+    BSTR name = NULL;
+    VARIANT *val;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    val = stack_pop(ctx);
+
+    assert(V_VT(stack_top(ctx)) == VT_I4);
+    id = V_I4(stack_top(ctx));
+
+    var_obj = stack_topn_objid(ctx, 1, &var_id);
+    if(!var_obj) {
+        FIXME("invalid ref\n");
+        VariantClear(val);
+        return E_FAIL;
+    }
+
+    if(V_VT(stack_topn(ctx, 3)) == VT_DISPATCH)
+        obj = V_DISPATCH(stack_topn(ctx, 3));
+
+    if(obj) {
+        hres = IDispatch_QueryInterface(obj, &IID_IDispatchEx, (void**)&dispex);
+        if(SUCCEEDED(hres)) {
+            hres = IDispatchEx_GetNextDispID(dispex, fdexEnumDefault, id, &id);
+            if(hres == S_OK)
+                hres = IDispatchEx_GetMemberName(dispex, id, &name);
+            IDispatchEx_Release(dispex);
+            if(FAILED(hres)) {
+                VariantClear(val);
+                return hres;
+            }
+        }else {
+            TRACE("No IDispatchEx\n");
+        }
+    }
+
+    if(name) {
+        VARIANT v;
+
+        VariantClear(val);
+
+        V_I4(stack_top(ctx)) = id;
+
+        V_VT(&v) = VT_BSTR;
+        V_BSTR(&v) = name;
+        hres = disp_propput(ctx->parser->script, var_obj, var_id, &v, ctx->ei, NULL/*FIXME*/);
+        SysFreeString(name);
+        if(FAILED(hres))
+            return hres;
+
+        ctx->ip++;
+    }else {
+        stack_popn(ctx, 4);
+        ctx->ip = arg;
+        return stack_push(ctx, val);
+    }
+    return S_OK;
+}
+
 /* ECMA-262 3rd Edition    12.7 */
 HRESULT continue_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
 {
