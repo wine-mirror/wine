@@ -1253,6 +1253,24 @@ static const dash_pattern dash_patterns_geometric[4] =
     {6, {3, 1, 1, 1, 1, 1}, 8}    /* PS_DASHDOTDOT */
 };
 
+static inline void set_dash_pattern( dash_pattern *pattern, DWORD count, DWORD *dashes )
+{
+    DWORD i;
+
+    pattern->count = count;
+    pattern->total_len = 0;
+    memcpy( pattern->dashes, dashes, count * sizeof(DWORD) );
+    for (i = 0; i < count; i++) pattern->total_len += dashes[i];
+    if (pattern->count % 2) pattern->total_len *= 2;
+}
+
+static inline void scale_dash_pattern( dash_pattern *pattern, DWORD scale )
+{
+    DWORD i;
+    for (i = 0; i < pattern->count; i++) pattern->dashes[i] *= scale;
+    pattern->total_len *= scale;
+}
+
 static inline int get_pen_device_width( dibdrv_physdev *pdev, int width )
 {
     POINT pts[2];
@@ -1303,7 +1321,7 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
         logpen.lopnColor = GetDCPenColor( dev->hdc );
 
     pdev->pen_colorref = logpen.lopnColor;
-    memset( &pdev->pen_pattern, 0, sizeof(pdev->pen_pattern) );
+    set_dash_pattern( &pdev->pen_pattern, 0, NULL );
 
     pdev->defer |= DEFER_PEN;
 
@@ -1348,6 +1366,14 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
     case PS_ALTERNATE:
         pdev->pen_lines = dashed_pen_lines;
         pdev->pen_pattern = dash_patterns_geometric[PS_DOT - 1];
+        pdev->defer &= ~DEFER_PEN;
+        break;
+
+    case PS_USERSTYLE:
+        if (pdev->pen_width > 1) break;  /* not supported yet */
+        pdev->pen_lines = dashed_pen_lines;
+        set_dash_pattern( &pdev->pen_pattern, elp->elpNumEntries, elp->elpStyleEntry );
+        if (!(logpen.lopnStyle & PS_GEOMETRIC)) scale_dash_pattern( &pdev->pen_pattern, 3 );
         pdev->defer &= ~DEFER_PEN;
         break;
 
