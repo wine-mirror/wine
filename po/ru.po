@@ -2283,7 +2283,7 @@ msgstr ""
 msgid "You have specified the following settings:"
 msgstr "Вы определили следующие параметры импорта:"
 
-#: cryptui.rc:334 cryptui.rc:119
+#: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
 msgstr "Сертификаты"
 
@@ -3331,7 +3331,8 @@ msgid "Asking for %s"
 msgstr "Запрос %s"
 
 #: inetcpl.rc:46
-msgid " Home page "
+#, fuzzy
+msgid "Home page"
 msgstr " Домашняя страница "
 
 #: inetcpl.rc:47
@@ -3351,7 +3352,8 @@ msgid "&Blank page"
 msgstr "Пу&стая страница"
 
 #: inetcpl.rc:53
-msgid " Browsing history "
+#, fuzzy
+msgid "Browsing history"
 msgstr " История использования браузера "
 
 #: inetcpl.rc:54
@@ -3421,10 +3423,6 @@ msgstr "Удалить"
 #: inetcpl.rc:87 winefile.rc:118
 msgid "Security"
 msgstr "Безопасность"
-
-#: inetcpl.rc:108
-msgid " Certificates "
-msgstr " Сертификаты "
 
 #: inetcpl.rc:109
 msgid ""

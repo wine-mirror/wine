@@ -2293,7 +2293,7 @@ msgstr ""
 msgid "You have specified the following settings:"
 msgstr ""
 
-#: cryptui.rc:334 cryptui.rc:119
+#: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
 msgstr ""
 
@@ -3311,7 +3311,7 @@ msgid "Asking for %s"
 msgstr "انتخاب &همه\tCtrl+A"
 
 #: inetcpl.rc:46
-msgid " Home page "
+msgid "Home page"
 msgstr ""
 
 #: inetcpl.rc:47
@@ -3331,7 +3331,7 @@ msgid "&Blank page"
 msgstr ""
 
 #: inetcpl.rc:53
-msgid " Browsing history "
+msgid "Browsing history"
 msgstr ""
 
 #: inetcpl.rc:54
@@ -3390,11 +3390,6 @@ msgstr "&حذف\tDel"
 #: inetcpl.rc:87 winefile.rc:118
 msgid "Security"
 msgstr ""
-
-#: inetcpl.rc:108
-#, fuzzy
-msgid " Certificates "
-msgstr "اطلاعات"
 
 #: inetcpl.rc:109
 msgid ""

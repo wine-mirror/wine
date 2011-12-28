@@ -2307,7 +2307,7 @@ msgstr ""
 msgid "You have specified the following settings:"
 msgstr ""
 
-#: cryptui.rc:334 cryptui.rc:119
+#: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
 msgstr ""
 
@@ -3353,7 +3353,7 @@ msgid "Asking for %s"
 msgstr "Ecoj"
 
 #: inetcpl.rc:46
-msgid " Home page "
+msgid "Home page"
 msgstr ""
 
 #: inetcpl.rc:47
@@ -3375,7 +3375,7 @@ msgstr ""
 
 #: inetcpl.rc:53
 #, fuzzy
-msgid " Browsing history "
+msgid "Browsing history"
 msgstr "Kronologio"
 
 #: inetcpl.rc:54
@@ -3434,11 +3434,6 @@ msgstr "Forigu\tDel"
 #: inetcpl.rc:87 winefile.rc:118
 msgid "Security"
 msgstr ""
-
-#: inetcpl.rc:108
-#, fuzzy
-msgid " Certificates "
-msgstr "&Ecoj"
 
 #: inetcpl.rc:109
 msgid ""

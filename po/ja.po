@@ -2276,7 +2276,7 @@ msgstr "証明書インポート ウィザードが正常に完了しました�
 msgid "You have specified the following settings:"
 msgstr "以下の設定を指定しています:"
 
-#: cryptui.rc:334 cryptui.rc:119
+#: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
 msgstr "証明書"
 
@@ -3319,7 +3319,8 @@ msgid "Asking for %s"
 msgstr "Properties for %s"
 
 #: inetcpl.rc:46
-msgid " Home page "
+#, fuzzy
+msgid "Home page"
 msgstr " ホーム ページ "
 
 #: inetcpl.rc:47
@@ -3339,7 +3340,8 @@ msgid "&Blank page"
 msgstr "空白(&B)"
 
 #: inetcpl.rc:53
-msgid " Browsing history "
+#, fuzzy
+msgid "Browsing history"
 msgstr " 閲覧履歴 "
 
 #: inetcpl.rc:54
@@ -3407,10 +3409,6 @@ msgstr "削除"
 #: inetcpl.rc:87 winefile.rc:118
 msgid "Security"
 msgstr "セキュリティ"
-
-#: inetcpl.rc:108
-msgid " Certificates "
-msgstr " 証明書 "
 
 #: inetcpl.rc:109
 msgid ""

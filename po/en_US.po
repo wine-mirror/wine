@@ -2279,7 +2279,7 @@ msgstr "You have successfully completed the Certificate Import Wizard."
 msgid "You have specified the following settings:"
 msgstr "You have specified the following settings:"
 
-#: cryptui.rc:334 cryptui.rc:119
+#: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
 msgstr "Certificates"
 
@@ -3324,8 +3324,8 @@ msgid "Asking for %s"
 msgstr "Asking for %s"
 
 #: inetcpl.rc:46
-msgid " Home page "
-msgstr " Home page "
+msgid "Home page"
+msgstr "Home page"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
@@ -3344,8 +3344,8 @@ msgid "&Blank page"
 msgstr "&Blank page"
 
 #: inetcpl.rc:53
-msgid " Browsing history "
-msgstr " Browsing history "
+msgid "Browsing history"
+msgstr "Browsing history"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
@@ -3412,10 +3412,6 @@ msgstr "Delete"
 #: inetcpl.rc:87 winefile.rc:118
 msgid "Security"
 msgstr "Security"
-
-#: inetcpl.rc:108
-msgid " Certificates "
-msgstr " Certificates "
 
 #: inetcpl.rc:109
 msgid ""

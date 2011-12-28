@@ -59,7 +59,6 @@ typedef struct secdlg_data_s {
 
 #define NUM_TRACKBAR_POS 5
 
-static WCHAR spaceW[] = {' ',0};
 static DWORD url_templates[] = {URLTEMPLATE_CUSTOM,
                                 URLTEMPLATE_LOW,
                                 URLTEMPLATE_MEDLOW,
@@ -135,13 +134,9 @@ static void update_zone_info(secdlg_data *sd, DWORD lv_index)
 
     SetWindowTextW(GetDlgItem(sd->hsec, IDC_SEC_ZONE_INFO), za->szDescription);
 
-    name[0] = ' ';
-    name[1] = 0;
-
-    LoadStringW(hcpl, IDS_SEC_SETTINGS, &name[1], sizeof(name)/sizeof(name[0]) - 3);
+    LoadStringW(hcpl, IDS_SEC_SETTINGS, name, sizeof(name)/sizeof(*name));
     len = lstrlenW(name);
-    lstrcpynW(&name[len], za->szDisplayName, sizeof(name)/sizeof(name[0]) - len - 3);
-    lstrcatW(name, spaceW);
+    lstrcpynW(&name[len], za->szDisplayName, sizeof(name)/sizeof(*name) - len - 1);
 
     TRACE("new title: %s\n", debugstr_w(name));
     SetWindowTextW(GetDlgItem(sd->hsec, IDC_SEC_GROUP), name);

@@ -2229,7 +2229,7 @@ msgstr ""
 msgid "You have specified the following settings:"
 msgstr ""
 
-#: cryptui.rc:334 cryptui.rc:119
+#: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
 msgstr "Certificates"
 
@@ -3222,8 +3222,8 @@ msgid "Asking for %s"
 msgstr "Asking for %s"
 
 #: inetcpl.rc:46
-msgid " Home page "
-msgstr ""
+msgid "Home page"
+msgstr "Home page"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
@@ -3242,7 +3242,7 @@ msgid "&Blank page"
 msgstr ""
 
 #: inetcpl.rc:53
-msgid " Browsing history "
+msgid "Browsing history"
 msgstr ""
 
 #: inetcpl.rc:54
@@ -3299,10 +3299,6 @@ msgstr "Delete"
 #: inetcpl.rc:87 winefile.rc:118
 msgid "Security"
 msgstr "Security"
-
-#: inetcpl.rc:108
-msgid " Certificates "
-msgstr " Certificates "
 
 #: inetcpl.rc:109
 msgid ""

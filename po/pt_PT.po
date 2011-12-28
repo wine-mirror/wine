@@ -2394,7 +2394,7 @@ msgstr "Completou com sucesso o Assistente de Importação de Certificados."
 msgid "You have specified the following settings:"
 msgstr "Especificou as seguintes configurações:"
 
-#: cryptui.rc:334 cryptui.rc:119
+#: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
 msgstr "Certificados"
 
@@ -3511,7 +3511,7 @@ msgstr "Propriedades de %s"
 
 #: inetcpl.rc:46
 #, fuzzy
-msgid " Home page "
+msgid "Home page"
 msgstr "Uma página"
 
 #: inetcpl.rc:47
@@ -3535,7 +3535,7 @@ msgstr "Uma página"
 
 #: inetcpl.rc:53
 #, fuzzy
-msgid " Browsing history "
+msgid "Browsing history"
 msgstr "Histórico de comandos"
 
 #: inetcpl.rc:54
@@ -3593,11 +3593,6 @@ msgstr "Excluir"
 #: inetcpl.rc:87 winefile.rc:118
 msgid "Security"
 msgstr "Segurança"
-
-#: inetcpl.rc:108
-#, fuzzy
-msgid " Certificates "
-msgstr "Certificados"
 
 #: inetcpl.rc:109
 msgid ""

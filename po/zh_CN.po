@@ -2286,7 +2286,7 @@ msgstr ""
 msgid "You have specified the following settings:"
 msgstr ""
 
-#: cryptui.rc:334 cryptui.rc:119
+#: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
 msgstr ""
 
@@ -3345,7 +3345,7 @@ msgstr "属性"
 
 #: inetcpl.rc:46
 #, fuzzy
-msgid " Home page "
+msgid "Home page"
 msgstr "单页"
 
 #: inetcpl.rc:47
@@ -3369,7 +3369,7 @@ msgstr "单页"
 
 #: inetcpl.rc:53
 #, fuzzy
-msgid " Browsing history "
+msgid "Browsing history"
 msgstr "命令历史"
 
 #: inetcpl.rc:54
@@ -3428,11 +3428,6 @@ msgstr "删除"
 #, fuzzy
 msgid "Security"
 msgstr "安全(&S)"
-
-#: inetcpl.rc:108
-#, fuzzy
-msgid " Certificates "
-msgstr "格属性(&C)"
 
 #: inetcpl.rc:109
 msgid ""

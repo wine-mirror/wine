@@ -2316,7 +2316,7 @@ msgstr ""
 msgid "You have specified the following settings:"
 msgstr ""
 
-#: cryptui.rc:334 cryptui.rc:119
+#: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
 msgstr ""
 
@@ -3392,7 +3392,7 @@ msgstr "Egenskaper for %s"
 
 #: inetcpl.rc:46
 #, fuzzy
-msgid " Home page "
+msgid "Home page"
 msgstr "Én side"
 
 #: inetcpl.rc:47
@@ -3416,7 +3416,7 @@ msgstr "Én side"
 
 #: inetcpl.rc:53
 #, fuzzy
-msgid " Browsing history "
+msgid "Browsing history"
 msgstr "Kommando historik"
 
 #: inetcpl.rc:54
@@ -3474,11 +3474,6 @@ msgstr "Slet"
 #: inetcpl.rc:87 winefile.rc:118
 msgid "Security"
 msgstr "Sikkerhed"
-
-#: inetcpl.rc:108
-#, fuzzy
-msgid " Certificates "
-msgstr "Egenskaper for &celle"
 
 #: inetcpl.rc:109
 msgid ""

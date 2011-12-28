@@ -43,14 +43,14 @@ FONT 8, "MS Shell Dlg"
 CAPTION "General"
 BEGIN
 
-    GROUPBOX    " Home page ", IDC_STATIC, 4, 4, 312, 56
+    GROUPBOX    "Home page", IDC_STATIC, 4, 4, 312, 56
     LTEXT       "You can choose the address that will be used as your home page.",
                 IDC_STATIC, 10, 14, 300, 10
     EDITTEXT    IDC_HOME_EDIT, 10, 26, 300, 12, WS_VISIBLE | ES_AUTOHSCROLL
     PUSHBUTTON  "&Current page", IDC_HOME_CURRENT, 58, 42, 80, 14
     PUSHBUTTON  "&Default page", IDC_HOME_DEFAULT, 144, 42, 80, 14
     PUSHBUTTON  "&Blank page", IDC_HOME_BLANK, 230, 42, 80, 14
-    GROUPBOX    " Browsing history ", IDC_STATIC, 4, 66, 312, 42
+    GROUPBOX    "Browsing history", IDC_STATIC, 4, 66, 312, 42
     LTEXT       "You can delete cached pages, cookies and other data.",
                 IDC_STATIC, 10, 76, 300, 10
     PUSHBUTTON  "Delete &files...", IDC_HISTORY_DELETE, 144, 90, 80, 14
@@ -105,7 +105,7 @@ FONT 8, "MS Shell Dlg"
 CAPTION "Content"
 BEGIN
 
-    GROUPBOX    " Certificates ", IDC_STATIC, 4, 4, 312, 50
+    GROUPBOX    "Certificates", IDC_STATIC, 4, 4, 312, 50
     LTEXT       "Certificates are used for your personal identification and to identify certificate authorities and publishers.",
                 IDC_STATIC, 58, 14, 252, 18
     PUSHBUTTON  "Certificates...", IDC_CERT, 146, 34, 80, 14

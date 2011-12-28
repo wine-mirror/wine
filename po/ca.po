@@ -2286,7 +2286,7 @@ msgstr "Heu completat amb èxit l'Assistent d'Importació de Certificats."
 msgid "You have specified the following settings:"
 msgstr "Heu especificat la configuració següent:"
 
-#: cryptui.rc:334 cryptui.rc:119
+#: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
 msgstr "Certificats"
 
@@ -3343,7 +3343,8 @@ msgid "Asking for %s"
 msgstr "Ajustaments de %s"
 
 #: inetcpl.rc:46
-msgid " Home page "
+#, fuzzy
+msgid "Home page"
 msgstr " Pàgina d'inici "
 
 #: inetcpl.rc:47
@@ -3363,7 +3364,8 @@ msgid "&Blank page"
 msgstr "Pàgina en blanc"
 
 #: inetcpl.rc:53
-msgid " Browsing history "
+#, fuzzy
+msgid "Browsing history"
 msgstr " Historial de navegació "
 
 #: inetcpl.rc:54
@@ -3431,10 +3433,6 @@ msgstr "Suprimeix"
 #: inetcpl.rc:87 winefile.rc:118
 msgid "Security"
 msgstr "Seguritat"
-
-#: inetcpl.rc:108
-msgid " Certificates "
-msgstr " Certificats "
 
 #: inetcpl.rc:109
 msgid ""

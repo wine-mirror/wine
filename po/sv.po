@@ -2289,7 +2289,7 @@ msgstr "Du har slutfört guiden för import av certifikat."
 msgid "You have specified the following settings:"
 msgstr "Du har angett följande inställningar:"
 
-#: cryptui.rc:334 cryptui.rc:119
+#: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
 msgstr "Certifikat"
 
@@ -3351,7 +3351,8 @@ msgid "Asking for %s"
 msgstr "Egenskaper för %s"
 
 #: inetcpl.rc:46
-msgid " Home page "
+#, fuzzy
+msgid "Home page"
 msgstr " Startsida "
 
 #: inetcpl.rc:47
@@ -3371,7 +3372,8 @@ msgid "&Blank page"
 msgstr "&Blank sida"
 
 #: inetcpl.rc:53
-msgid " Browsing history "
+#, fuzzy
+msgid "Browsing history"
 msgstr " Bläddringshistorik "
 
 #: inetcpl.rc:54
@@ -3429,10 +3431,6 @@ msgstr "Ta bort"
 #: inetcpl.rc:87 winefile.rc:118
 msgid "Security"
 msgstr "Säkerhet"
-
-#: inetcpl.rc:108
-msgid " Certificates "
-msgstr " Certifikat "
 
 #: inetcpl.rc:109
 msgid ""

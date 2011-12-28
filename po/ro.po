@@ -2432,7 +2432,7 @@ msgstr "Ați finalizat cu succes Asistentul de importare a certificatelor."
 msgid "You have specified the following settings:"
 msgstr "Ați specificat următoarea configurație:"
 
-#: cryptui.rc:334 cryptui.rc:119
+#: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
 msgstr "Certificate"
 
@@ -3517,7 +3517,7 @@ msgstr "Proprietăți pentru %s"
 
 #: inetcpl.rc:46
 #, fuzzy
-msgid " Home page "
+msgid "Home page"
 msgstr "O pagină"
 
 #: inetcpl.rc:47
@@ -3541,7 +3541,7 @@ msgstr "O pagină"
 
 #: inetcpl.rc:53
 #, fuzzy
-msgid " Browsing history "
+msgid "Browsing history"
 msgstr "Istoric comenzi"
 
 #: inetcpl.rc:54
@@ -3599,11 +3599,6 @@ msgstr "Șterge"
 #: inetcpl.rc:87 winefile.rc:118
 msgid "Security"
 msgstr "Securitate"
-
-#: inetcpl.rc:108
-#, fuzzy
-msgid " Certificates "
-msgstr "Certificate"
 
 #: inetcpl.rc:109
 msgid ""

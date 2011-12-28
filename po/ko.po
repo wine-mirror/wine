@@ -2277,7 +2277,7 @@ msgstr "당신은 인증서 가져오기 마법사를 마치는데 성공했습�
 msgid "You have specified the following settings:"
 msgstr "당신은 다음 설정을 지정했습니다:"
 
-#: cryptui.rc:334 cryptui.rc:119
+#: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
 msgstr "인증서"
 
@@ -3316,7 +3316,8 @@ msgid "Asking for %s"
 msgstr "%s 대하여 묻기"
 
 #: inetcpl.rc:46
-msgid " Home page "
+#, fuzzy
+msgid "Home page"
 msgstr " 홈 페이지 "
 
 #: inetcpl.rc:47
@@ -3336,7 +3337,8 @@ msgid "&Blank page"
 msgstr "빈 페이지(&B)"
 
 #: inetcpl.rc:53
-msgid " Browsing history "
+#, fuzzy
+msgid "Browsing history"
 msgstr " 방문 기록 "
 
 #: inetcpl.rc:54
@@ -3404,10 +3406,6 @@ msgstr "지우기"
 #: inetcpl.rc:87 winefile.rc:118
 msgid "Security"
 msgstr "보안"
-
-#: inetcpl.rc:108
-msgid " Certificates "
-msgstr " 인증서 "
 
 #: inetcpl.rc:109
 msgid ""

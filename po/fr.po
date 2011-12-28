@@ -2292,7 +2292,7 @@ msgstr ""
 msgid "You have specified the following settings:"
 msgstr "Vous avez spécifié les paramètres suivants :"
 
-#: cryptui.rc:334 cryptui.rc:119
+#: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
 msgstr "Certificats"
 
@@ -3347,7 +3347,8 @@ msgid "Asking for %s"
 msgstr "Demande de %s"
 
 #: inetcpl.rc:46
-msgid " Home page "
+#, fuzzy
+msgid "Home page"
 msgstr " Page d'accueil "
 
 #: inetcpl.rc:47
@@ -3367,7 +3368,8 @@ msgid "&Blank page"
 msgstr "Page &blanche"
 
 #: inetcpl.rc:53
-msgid " Browsing history "
+#, fuzzy
+msgid "Browsing history"
 msgstr " Historique de navigation "
 
 #: inetcpl.rc:54
@@ -3436,10 +3438,6 @@ msgstr "Supprimer"
 #: inetcpl.rc:87 winefile.rc:118
 msgid "Security"
 msgstr "Sécurité"
-
-#: inetcpl.rc:108
-msgid " Certificates "
-msgstr " Certificats "
 
 #: inetcpl.rc:109
 msgid ""

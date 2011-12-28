@@ -2307,7 +2307,7 @@ msgstr ""
 msgid "You have specified the following settings:"
 msgstr ""
 
-#: cryptui.rc:334 cryptui.rc:119
+#: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
 msgstr ""
 
@@ -3367,8 +3367,9 @@ msgid "Asking for %s"
 msgstr "&Vlastnosti"
 
 #: inetcpl.rc:46
-msgid " Home page "
-msgstr ""
+#, fuzzy
+msgid "Home page"
+msgstr "Domů"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
@@ -3389,7 +3390,7 @@ msgstr ""
 
 #: inetcpl.rc:53
 #, fuzzy
-msgid " Browsing history "
+msgid "Browsing history"
 msgstr "Historie příkazů"
 
 #: inetcpl.rc:54
@@ -3447,11 +3448,6 @@ msgstr "Smazat"
 #: inetcpl.rc:87 winefile.rc:118
 msgid "Security"
 msgstr "Zabezpečení"
-
-#: inetcpl.rc:108
-#, fuzzy
-msgid " Certificates "
-msgstr "&Vlastnosti"
 
 #: inetcpl.rc:109
 msgid ""

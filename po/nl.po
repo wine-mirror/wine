@@ -2282,7 +2282,7 @@ msgstr "U heeft de certificaat importeerhulp succesvol afgerond."
 msgid "You have specified the following settings:"
 msgstr "U heeft de volgende instellingen ingegeven:"
 
-#: cryptui.rc:334 cryptui.rc:119
+#: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
 msgstr "Certificaten"
 
@@ -3340,7 +3340,8 @@ msgid "Asking for %s"
 msgstr "Instellingen voor %s"
 
 #: inetcpl.rc:46
-msgid " Home page "
+#, fuzzy
+msgid "Home page"
 msgstr " Startpagina "
 
 #: inetcpl.rc:47
@@ -3360,7 +3361,8 @@ msgid "&Blank page"
 msgstr "&Lege pagina"
 
 #: inetcpl.rc:53
-msgid " Browsing history "
+#, fuzzy
+msgid "Browsing history"
 msgstr " Browsing history "
 
 #: inetcpl.rc:54
@@ -3428,10 +3430,6 @@ msgstr "Verwijderen"
 #: inetcpl.rc:87 winefile.rc:118
 msgid "Security"
 msgstr "Beveiliging"
-
-#: inetcpl.rc:108
-msgid " Certificates "
-msgstr " Certificaten "
 
 #: inetcpl.rc:109
 msgid ""

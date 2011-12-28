@@ -2308,7 +2308,7 @@ msgstr ""
 msgid "You have specified the following settings:"
 msgstr ""
 
-#: cryptui.rc:334 cryptui.rc:119
+#: cryptui.rc:334 cryptui.rc:119 inetcpl.rc:108
 msgid "Certificates"
 msgstr "Potrdila"
 
@@ -3381,7 +3381,7 @@ msgstr "Lastnosti %s"
 
 #: inetcpl.rc:46
 #, fuzzy
-msgid " Home page "
+msgid "Home page"
 msgstr "Ena stran"
 
 #: inetcpl.rc:47
@@ -3405,7 +3405,7 @@ msgstr "Ena stran"
 
 #: inetcpl.rc:53
 #, fuzzy
-msgid " Browsing history "
+msgid "Browsing history"
 msgstr "Zgodovina ukazov"
 
 #: inetcpl.rc:54
@@ -3463,11 +3463,6 @@ msgstr "Izbriši"
 #: inetcpl.rc:87 winefile.rc:118
 msgid "Security"
 msgstr "Varnost"
-
-#: inetcpl.rc:108
-#, fuzzy
-msgid " Certificates "
-msgstr "Potrdila"
 
 #: inetcpl.rc:109
 msgid ""
