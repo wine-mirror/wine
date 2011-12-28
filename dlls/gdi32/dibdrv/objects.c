@@ -631,21 +631,141 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end, DWORD
     return TRUE;
 }
 
+static BOOL solid_pen_line_region( dibdrv_physdev *pdev, POINT *start, POINT *end, HRGN region )
+{
+    RECT rect;
+
+    rect.left   = start->x;
+    rect.top    = start->y;
+    rect.right  = start->x + 1;
+    rect.bottom = start->y + 1;
+
+    if (start->y == end->y)
+    {
+        rect.right = end->x;
+        order_end_points(&rect.left, &rect.right);
+        add_rect_to_region( region, &rect );
+    }
+    else if(start->x == end->x)
+    {
+        rect.bottom = end->y;
+        order_end_points(&rect.top, &rect.bottom);
+        add_rect_to_region( region, &rect );
+    }
+    else
+    {
+        INT dx = end->x - start->x, dy = end->y - start->y;
+        INT abs_dx = abs(dx), abs_dy = abs(dy);
+        DWORD octant = get_octant_mask(dx, dy);
+        INT bias = get_bias( octant );
+
+        if (is_xmajor( octant ))
+        {
+            int y_inc = is_y_increasing( octant ) ? 1 : -1;
+            int err_add_1 = 2 * abs_dy - 2 * abs_dx;
+            int err_add_2 = 2 * abs_dy;
+            int err = 2 * abs_dy - abs_dx;
+
+            if (is_x_increasing( octant ))
+            {
+                for (rect.right = start->x + 1; rect.right <= end->x; rect.right++)
+                {
+                    if (err + bias > 0)
+                    {
+                        add_rect_to_region( region, &rect );
+                        rect.left = rect.right;
+                        rect.top += y_inc;
+                        rect.bottom += y_inc;
+                        err += err_add_1;
+                    }
+                    else err += err_add_2;
+                }
+            }
+            else
+            {
+                for (rect.left = start->x; rect.left > end->x; rect.left--)
+                {
+                    if (err + bias > 0)
+                    {
+                        add_rect_to_region( region, &rect );
+                        rect.right = rect.left;
+                        rect.top += y_inc;
+                        rect.bottom += y_inc;
+                        err += err_add_1;
+                    }
+                    else err += err_add_2;
+                }
+            }
+        }
+        else
+        {
+            int x_inc = is_x_increasing( octant ) ? 1 : -1;
+            int err_add_1 = 2 * abs_dx - 2 * abs_dy;
+            int err_add_2 = 2 * abs_dx;
+            int err = 2 * abs_dx - abs_dy;
+
+            if (is_y_increasing( octant ))
+            {
+                for (rect.bottom = start->y + 1; rect.bottom <= end->y; rect.bottom++)
+                {
+                    if (err + bias > 0)
+                    {
+                        add_rect_to_region( region, &rect );
+                        rect.top = rect.bottom;
+                        rect.left += x_inc;
+                        rect.right += x_inc;
+                        err += err_add_1;
+                    }
+                    else err += err_add_2;
+                }
+            }
+            else
+            {
+                for (rect.top = start->y; rect.top > end->y; rect.top--)
+                {
+                    if (err + bias > 0)
+                    {
+                        add_rect_to_region( region, &rect );
+                        rect.bottom = rect.top;
+                        rect.left += x_inc;
+                        rect.right += x_inc;
+                        err += err_add_1;
+                    }
+                    else err += err_add_2;
+                }
+            }
+        }
+        /* add final rect */
+        add_rect_to_region( region, &rect );
+    }
+    return TRUE;
+}
+
 static BOOL solid_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close, HRGN region)
 {
     int i;
-    DWORD color, and, xor;
-
-    color = get_pixel_color( pdev, pdev->pen_colorref, TRUE );
-    calc_and_xor_masks( GetROP2(pdev->dev.hdc), color, &and, &xor );
 
     assert( num >= 2 );
-    for (i = 0; i < num - 1; i++)
-        if (!solid_pen_line( pdev, pts + i, pts + i + 1, and, xor ))
-            return FALSE;
 
-    if (close) return solid_pen_line( pdev, pts + num - 1, pts, and, xor );
+    if (region)
+    {
+        for (i = 0; i < num - 1; i++)
+            if (!solid_pen_line_region( pdev, pts + i, pts + i + 1, region ))
+                return FALSE;
+        if (close) return solid_pen_line_region( pdev, pts + num - 1, pts, region );
+    }
+    else
+    {
+        DWORD color, and, xor;
 
+        color = get_pixel_color( pdev, pdev->pen_colorref, TRUE );
+        calc_and_xor_masks( GetROP2(pdev->dev.hdc), color, &and, &xor );
+
+        for (i = 0; i < num - 1; i++)
+            if (!solid_pen_line( pdev, pts + i, pts + i + 1, and, xor ))
+                return FALSE;
+        if (close) return solid_pen_line( pdev, pts + num - 1, pts, and, xor );
+    }
     return TRUE;
 }
 
