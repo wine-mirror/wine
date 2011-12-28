@@ -418,8 +418,8 @@ msgstr "Tlač"
 msgid "Printer:"
 msgstr "Tlačiareň:"
 
-#: comdlg32.rc:214
-msgid "Print Range"
+#: comdlg32.rc:214 comdlg32.rc:391
+msgid "Print range"
 msgstr "Rozsah tlače"
 
 #: comdlg32.rc:215 comdlg32.rc:392 regedit.rc:216
@@ -682,10 +682,6 @@ msgstr "Počet &kópií:"
 #: comdlg32.rc:388
 msgid "C&ollate"
 msgstr "C&ollate"
-
-#: comdlg32.rc:391
-msgid "Print range"
-msgstr "Rozsah tlače"
 
 #: comdlg32.rc:393
 msgid "Pa&ges"

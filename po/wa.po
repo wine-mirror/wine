@@ -420,8 +420,9 @@ msgstr "Rexhe"
 msgid "Printer:"
 msgstr "Sicrirece:"
 
-#: comdlg32.rc:214
-msgid "Print Range"
+#: comdlg32.rc:214 comdlg32.rc:391
+#, fuzzy
+msgid "Print range"
 msgstr "Cwé rexhe"
 
 #: comdlg32.rc:215 comdlg32.rc:392 regedit.rc:216
@@ -686,11 +687,6 @@ msgstr ""
 #: comdlg32.rc:388
 msgid "C&ollate"
 msgstr ""
-
-#: comdlg32.rc:391
-#, fuzzy
-msgid "Print range"
-msgstr "Cwé rexhe"
 
 #: comdlg32.rc:393
 msgid "Pa&ges"

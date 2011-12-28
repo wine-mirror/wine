@@ -428,8 +428,8 @@ msgstr "Natisni"
 msgid "Printer:"
 msgstr "Tiskalnik:"
 
-#: comdlg32.rc:214
-msgid "Print Range"
+#: comdlg32.rc:214 comdlg32.rc:391
+msgid "Print range"
 msgstr "Obseg tiskanja"
 
 #: comdlg32.rc:215 comdlg32.rc:392 regedit.rc:216
@@ -692,10 +692,6 @@ msgstr "Število &kopij:"
 #: comdlg32.rc:388
 msgid "C&ollate"
 msgstr "Z&biranje"
-
-#: comdlg32.rc:391
-msgid "Print range"
-msgstr "Obseg tiskanja"
 
 #: comdlg32.rc:393
 msgid "Pa&ges"

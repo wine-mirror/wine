@@ -424,9 +424,9 @@ msgstr "印刷"
 msgid "Printer:"
 msgstr "使用するプリンタ:"
 
-#: comdlg32.rc:214
-msgid "Print Range"
-msgstr "印刷範囲の選択"
+#: comdlg32.rc:214 comdlg32.rc:391
+msgid "Print range"
+msgstr "印刷範囲"
 
 #: comdlg32.rc:215 comdlg32.rc:392 regedit.rc:216
 msgid "&All"
@@ -688,10 +688,6 @@ msgstr "部数(&C):"
 #: comdlg32.rc:388
 msgid "C&ollate"
 msgstr "部単位で印刷(&O)"
-
-#: comdlg32.rc:391
-msgid "Print range"
-msgstr "印刷範囲"
 
 #: comdlg32.rc:393
 msgid "Pa&ges"

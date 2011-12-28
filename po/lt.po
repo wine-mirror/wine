@@ -425,9 +425,9 @@ msgstr "Spausdinti"
 msgid "Printer:"
 msgstr "Spausdintuvas:"
 
-#: comdlg32.rc:214
-msgid "Print Range"
-msgstr "Spausdinimo rėžis"
+#: comdlg32.rc:214 comdlg32.rc:391
+msgid "Print range"
+msgstr "Rėžis"
 
 #: comdlg32.rc:215 comdlg32.rc:392 regedit.rc:216
 msgid "&All"
@@ -689,10 +689,6 @@ msgstr "&Kopijų skaičius:"
 #: comdlg32.rc:388
 msgid "C&ollate"
 msgstr "Su&dėst."
-
-#: comdlg32.rc:391
-msgid "Print range"
-msgstr "Rėžis"
 
 #: comdlg32.rc:393
 msgid "Pa&ges"

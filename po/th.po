@@ -413,8 +413,8 @@ msgstr "พิมพ์"
 msgid "Printer:"
 msgstr "เครื่องพิมพ์:"
 
-#: comdlg32.rc:214
-msgid "Print Range"
+#: comdlg32.rc:214 comdlg32.rc:391
+msgid "Print range"
 msgstr "ย่อ"
 
 #: comdlg32.rc:215 comdlg32.rc:392 regedit.rc:216
@@ -677,10 +677,6 @@ msgstr "กี่สําเนา:"
 #: comdlg32.rc:388
 msgid "C&ollate"
 msgstr "จัดเรียงตามลําดับ"
-
-#: comdlg32.rc:391
-msgid "Print range"
-msgstr "ย่อ"
 
 #: comdlg32.rc:393
 msgid "Pa&ges"

@@ -429,8 +429,8 @@ msgstr "Tipărire"
 msgid "Printer:"
 msgstr "Imprimantă:"
 
-#: comdlg32.rc:214
-msgid "Print Range"
+#: comdlg32.rc:214 comdlg32.rc:391
+msgid "Print range"
 msgstr "Interval tipărire"
 
 #: comdlg32.rc:215 comdlg32.rc:392 regedit.rc:216
@@ -693,10 +693,6 @@ msgstr "Număr de &copii:"
 #: comdlg32.rc:388
 msgid "C&ollate"
 msgstr "C&olaționate"
-
-#: comdlg32.rc:391
-msgid "Print range"
-msgstr "Interval tipărire"
 
 #: comdlg32.rc:393
 msgid "Pa&ges"

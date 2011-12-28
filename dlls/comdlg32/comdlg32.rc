@@ -211,7 +211,7 @@ FONT 8, "MS Shell Dlg"
 {
  LTEXT "Printer:", stc1, 6, 6, 40, 9
  LTEXT "", stc2, 60, 6, 150, 9
- GROUPBOX "Print Range", grp1, 6, 30, 160, 65, BS_GROUPBOX
+ GROUPBOX "Print range", grp1, 6, 30, 160, 65, BS_GROUPBOX
  RADIOBUTTON "&All", rad1, 16, 45, 60, 12
  RADIOBUTTON "S&election", rad2, 16, 60, 60, 12
  RADIOBUTTON "&Pages", rad3, 16, 75, 60, 12

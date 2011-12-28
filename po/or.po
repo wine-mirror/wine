@@ -410,9 +410,10 @@ msgstr ""
 msgid "Printer:"
 msgstr "ଅକ୍ଷରରୂପ (&F)..."
 
-#: comdlg32.rc:214
-msgid "Print Range"
-msgstr ""
+#: comdlg32.rc:214 comdlg32.rc:391
+#, fuzzy
+msgid "Print range"
+msgstr "ଅକ୍ଷରରୂପ (&F)..."
 
 #: comdlg32.rc:215 comdlg32.rc:392 regedit.rc:216
 msgid "&All"
@@ -677,11 +678,6 @@ msgstr ""
 #: comdlg32.rc:388
 msgid "C&ollate"
 msgstr ""
-
-#: comdlg32.rc:391
-#, fuzzy
-msgid "Print range"
-msgstr "ଅକ୍ଷରରୂପ (&F)..."
 
 #: comdlg32.rc:393
 msgid "Pa&ges"

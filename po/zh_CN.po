@@ -416,8 +416,8 @@ msgstr "打印"
 msgid "Printer:"
 msgstr "打印机:"
 
-#: comdlg32.rc:214
-msgid "Print Range"
+#: comdlg32.rc:214 comdlg32.rc:391
+msgid "Print range"
 msgstr "打印范围"
 
 #: comdlg32.rc:215 comdlg32.rc:392 regedit.rc:216
@@ -680,10 +680,6 @@ msgstr "份数(&C)："
 #: comdlg32.rc:388
 msgid "C&ollate"
 msgstr "逐份打印(&O)"
-
-#: comdlg32.rc:391
-msgid "Print range"
-msgstr "打印范围"
 
 #: comdlg32.rc:393
 msgid "Pa&ges"

@@ -429,8 +429,8 @@ msgstr "Udskriv"
 msgid "Printer:"
 msgstr "Printer:"
 
-#: comdlg32.rc:214
-msgid "Print Range"
+#: comdlg32.rc:214 comdlg32.rc:391
+msgid "Print range"
 msgstr "Udskriv område"
 
 #: comdlg32.rc:215 comdlg32.rc:392 regedit.rc:216
@@ -693,10 +693,6 @@ msgstr "Antal &kopier:"
 #: comdlg32.rc:388
 msgid "C&ollate"
 msgstr "&hold sammen"
-
-#: comdlg32.rc:391
-msgid "Print range"
-msgstr "Udskriv område"
 
 #: comdlg32.rc:393
 msgid "Pa&ges"

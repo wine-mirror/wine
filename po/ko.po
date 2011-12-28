@@ -423,8 +423,8 @@ msgstr "인쇄"
 msgid "Printer:"
 msgstr "프린터:"
 
-#: comdlg32.rc:214
-msgid "Print Range"
+#: comdlg32.rc:214 comdlg32.rc:391
+msgid "Print range"
 msgstr "인쇄 범위"
 
 #: comdlg32.rc:215 comdlg32.rc:392 regedit.rc:216
@@ -687,10 +687,6 @@ msgstr "복사본 갯수(&C):"
 #: comdlg32.rc:388
 msgid "C&ollate"
 msgstr "정렬(&O)"
-
-#: comdlg32.rc:391
-msgid "Print range"
-msgstr "인쇄 범위"
 
 #: comdlg32.rc:393
 msgid "Pa&ges"

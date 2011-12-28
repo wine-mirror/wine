@@ -425,9 +425,9 @@ msgstr "Skriv ut"
 msgid "Printer:"
 msgstr "Skrivare:"
 
-#: comdlg32.rc:214
-msgid "Print Range"
-msgstr "Skriv ut del"
+#: comdlg32.rc:214 comdlg32.rc:391
+msgid "Print range"
+msgstr "Skriv ut"
 
 #: comdlg32.rc:215 comdlg32.rc:392 regedit.rc:216
 msgid "&All"
@@ -689,10 +689,6 @@ msgstr "Antal k&opior:"
 #: comdlg32.rc:388
 msgid "C&ollate"
 msgstr "&Sortera"
-
-#: comdlg32.rc:391
-msgid "Print range"
-msgstr "Skriv ut"
 
 #: comdlg32.rc:393
 msgid "Pa&ges"

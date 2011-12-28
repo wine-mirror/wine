@@ -441,9 +441,9 @@ msgstr "Tulosta"
 msgid "Printer:"
 msgstr "Kirjoitin:"
 
-#: comdlg32.rc:214
-msgid "Print Range"
-msgstr "Tulostusalue"
+#: comdlg32.rc:214 comdlg32.rc:391
+msgid "Print range"
+msgstr "Tulosta alueelta"
 
 #: comdlg32.rc:215 comdlg32.rc:392 regedit.rc:216
 msgid "&All"
@@ -705,10 +705,6 @@ msgstr "Kopioiden &määrä:"
 #: comdlg32.rc:388
 msgid "C&ollate"
 msgstr "&Kokoa"
-
-#: comdlg32.rc:391
-msgid "Print range"
-msgstr "Tulosta alueelta"
 
 #: comdlg32.rc:393
 msgid "Pa&ges"

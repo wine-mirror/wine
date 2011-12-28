@@ -434,9 +434,9 @@ msgstr "Imprimir"
 msgid "Printer:"
 msgstr "Impressora:"
 
-#: comdlg32.rc:214
-msgid "Print Range"
-msgstr "Faixa de Impressão"
+#: comdlg32.rc:214 comdlg32.rc:391
+msgid "Print range"
+msgstr "Faixa de impressão"
 
 #: comdlg32.rc:215 comdlg32.rc:392 regedit.rc:216
 msgid "&All"
@@ -698,10 +698,6 @@ msgstr "Número de &cópias:"
 #: comdlg32.rc:388
 msgid "C&ollate"
 msgstr "&Agrupar"
-
-#: comdlg32.rc:391
-msgid "Print range"
-msgstr "Faixa de impressão"
 
 #: comdlg32.rc:393
 msgid "Pa&ges"
