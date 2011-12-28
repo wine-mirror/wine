@@ -837,8 +837,8 @@ static BOOL allow_auto_semicolon(parser_ctx_t *ctx)
 
 static const statement_eval_t stat_eval_table[] = {
     compiled_statement_eval,
-    break_statement_eval,
-    continue_statement_eval,
+    compiled_statement_eval,
+    compiled_statement_eval,
     compiled_statement_eval,
     compiled_statement_eval,
     compiled_statement_eval,
