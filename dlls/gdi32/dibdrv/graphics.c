@@ -579,6 +579,9 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     RECT rect = get_device_rect( dev->hdc, left, top, right, bottom, TRUE );
     POINT pts[4];
+    BOOL ret;
+    INT rop = GetROP2( dev->hdc );
+    HRGN outline = 0;
 
     TRACE("(%p, %d, %d, %d, %d)\n", dev, left, top, right, bottom);
 
@@ -595,22 +598,43 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
         rect.bottom -= (pdev->pen_width - 1) / 2;
     }
 
+    if (pdev->pen_uses_region && !(outline = CreateRectRgn( 0, 0, 0, 0 ))) return FALSE;
+
+    rect.right--;
+    rect.bottom--;
     reset_dash_origin(pdev);
 
     /* 4 pts going anti-clockwise starting from top-right */
-    pts[0].x = pts[3].x = rect.right - 1;
+    pts[0].x = pts[3].x = rect.right;
     pts[0].y = pts[1].y = rect.top;
     pts[1].x = pts[2].x = rect.left;
-    pts[2].y = pts[3].y = rect.bottom - 1;
+    pts[2].y = pts[3].y = rect.bottom;
 
-    pdev->pen_lines(pdev, 4, pts, TRUE, 0);
+    pdev->pen_lines(pdev, 4, pts, TRUE, outline);
 
-    rect.left   += (pdev->pen_width + 1) / 2;
-    rect.top    += (pdev->pen_width + 1) / 2;
-    rect.right  -= (pdev->pen_width + 2) / 2;
-    rect.bottom -= (pdev->pen_width + 2) / 2;
+    if (outline)
+    {
+        HRGN interior = CreateRectRgnIndirect( &rect );
 
-    return brush_rect( pdev, &rect, pdev->clip, GetROP2(dev->hdc) );
+        CombineRgn( interior, interior, outline, RGN_DIFF );
+        if (pdev->clip)
+        {
+            CombineRgn( outline, outline, pdev->clip, RGN_AND );
+            CombineRgn( interior, interior, pdev->clip, RGN_AND );
+        }
+        ret = pen_rect( pdev, NULL, outline, rop ) && brush_rect( pdev, NULL, interior, rop );
+        DeleteObject( outline );
+        DeleteObject( interior );
+    }
+    else
+    {
+        rect.left   += (pdev->pen_width + 1) / 2;
+        rect.top    += (pdev->pen_width + 1) / 2;
+        rect.right  -= pdev->pen_width / 2;
+        rect.bottom -= pdev->pen_width / 2;
+        ret = brush_rect( pdev, &rect, pdev->clip, rop );
+    }
+    return ret;
 }
 
 /***********************************************************************
