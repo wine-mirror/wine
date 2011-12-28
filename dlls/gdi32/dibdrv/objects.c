@@ -1227,22 +1227,11 @@ static HRGN get_wide_lines_region( dibdrv_physdev *pdev, int num, POINT *pts, BO
 
 static BOOL wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close)
 {
-    struct clipped_rects clipped_rects;
-    rop_mask color;
     HRGN region;
-    DWORD pen_color = get_pixel_color( pdev, pdev->pen_colorref, TRUE );
-
-    calc_rop_masks( GetROP2(pdev->dev.hdc), pen_color, &color );
 
     region = get_wide_lines_region( pdev, num, pts, close );
     if (pdev->clip) CombineRgn( region, region, pdev->clip, RGN_AND );
-
-    if (get_clipped_rects( &pdev->dib, NULL, region, &clipped_rects ))
-    {
-        pdev->dib.funcs->solid_rects( &pdev->dib, clipped_rects.count, clipped_rects.rects,
-                                      color.and, color.xor );
-        free_clipped_rects( &clipped_rects );
-    }
+    pen_rect( pdev, NULL, region, GetROP2( pdev->dev.hdc ) );
     DeleteObject( region );
     return TRUE;
 }
@@ -1715,13 +1704,28 @@ COLORREF dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color )
     return next->funcs->pSetDCBrushColor( next, color );
 }
 
-BOOL brush_rect(dibdrv_physdev *pdev, const RECT *rect, INT rop)
+BOOL brush_rect(dibdrv_physdev *pdev, const RECT *rect, HRGN clip, INT rop)
 {
     struct clipped_rects clipped_rects;
     BOOL ret;
 
-    if (!get_clipped_rects( &pdev->dib, rect, pdev->clip, &clipped_rects )) return TRUE;
+    if (!get_clipped_rects( &pdev->dib, rect, clip, &clipped_rects )) return TRUE;
     ret = pdev->brush_rects( pdev, &pdev->dib, clipped_rects.count, clipped_rects.rects, rop );
     free_clipped_rects( &clipped_rects );
     return ret;
+}
+
+BOOL pen_rect(dibdrv_physdev *pdev, const RECT *rect, HRGN clip, INT rop)
+{
+    struct clipped_rects clipped_rects;
+    rop_mask color;
+    DWORD pen_color = get_pixel_color( pdev, pdev->pen_colorref, TRUE );
+
+    if (!get_clipped_rects( &pdev->dib, rect, clip, &clipped_rects )) return TRUE;
+
+    calc_rop_masks( rop, pen_color, &color );
+    pdev->dib.funcs->solid_rects( &pdev->dib, clipped_rects.count, clipped_rects.rects,
+                                  color.and, color.xor );
+    free_clipped_rects( &clipped_rects );
+    return TRUE;
 }
