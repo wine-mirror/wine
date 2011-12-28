@@ -53,7 +53,13 @@ static void test_logpen(void)
         { PS_NULL, 123, RGB(0x12,0x34,0x56), PS_NULL, 1, 0 },
         { PS_INSIDEFRAME, 123, RGB(0x12,0x34,0x56), PS_INSIDEFRAME, 123, RGB(0x12,0x34,0x56) },
         { PS_USERSTYLE, 123, RGB(0x12,0x34,0x56), PS_SOLID, 123, RGB(0x12,0x34,0x56) },
-        { PS_ALTERNATE, 123, RGB(0x12,0x34,0x56), PS_SOLID, 123, RGB(0x12,0x34,0x56) }
+        { PS_ALTERNATE, 123, RGB(0x12,0x34,0x56), PS_SOLID, 123, RGB(0x12,0x34,0x56) },
+        {  9, 123, RGB(0x12,0x34,0x56), PS_SOLID, 123, RGB(0x12,0x34,0x56) },
+        { 10, 123, RGB(0x12,0x34,0x56), PS_SOLID, 123, RGB(0x12,0x34,0x56) },
+        { 11, 123, RGB(0x12,0x34,0x56), PS_SOLID, 123, RGB(0x12,0x34,0x56) },
+        { 13, 123, RGB(0x12,0x34,0x56), PS_SOLID, 123, RGB(0x12,0x34,0x56) },
+        { 14, 123, RGB(0x12,0x34,0x56), PS_SOLID, 123, RGB(0x12,0x34,0x56) },
+        { 15, 123, RGB(0x12,0x34,0x56), PS_SOLID, 123, RGB(0x12,0x34,0x56) },
     };
     INT i, size;
     HPEN hpen;
@@ -216,6 +222,12 @@ static void test_logpen(void)
             ok(hpen == 0, "ExtCreatePen should fail\n");
             goto test_geometric_pens;
         }
+        if (pen[i].style > PS_ALTERNATE)
+        {
+            ok(hpen == 0, "ExtCreatePen should fail\n");
+            ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong last error value %d\n", GetLastError());
+            goto test_geometric_pens;
+        }
         ok(hpen != 0, "ExtCreatePen error %d\n", GetLastError());
 
         obj_type = GetObjectType(hpen);
@@ -333,6 +345,12 @@ test_geometric_pens:
         {
             /* This style is applicable only for cosmetic pens */
             ok(hpen == 0, "ExtCreatePen should fail\n");
+            continue;
+        }
+        if (pen[i].style > PS_ALTERNATE)
+        {
+            ok(hpen == 0, "ExtCreatePen should fail\n");
+            ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong last error value %d\n", GetLastError());
             continue;
         }
         ok(hpen != 0, "ExtCreatePen error %d\n", GetLastError());

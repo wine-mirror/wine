@@ -89,24 +89,31 @@ HPEN WINAPI CreatePenIndirect( const LOGPEN * pen )
 
     if (!(penPtr = HeapAlloc( GetProcessHeap(), 0, sizeof(*penPtr) ))) return 0;
 
-    if (pen->lopnStyle == PS_USERSTYLE || pen->lopnStyle == PS_ALTERNATE)
-        penPtr->logpen.elpPenStyle = PS_SOLID;
-    else
-        penPtr->logpen.elpPenStyle = pen->lopnStyle;
-    if (pen->lopnStyle == PS_NULL)
-    {
-        penPtr->logpen.elpWidth = 1;
-        penPtr->logpen.elpColor = RGB(0, 0, 0);
-    }
-    else
-    {
-        penPtr->logpen.elpWidth = abs(pen->lopnWidth.x);
-        penPtr->logpen.elpColor = pen->lopnColor;
-    }
+    penPtr->logpen.elpPenStyle = pen->lopnStyle;
+    penPtr->logpen.elpWidth = abs(pen->lopnWidth.x);
+    penPtr->logpen.elpColor = pen->lopnColor;
     penPtr->logpen.elpBrushStyle = BS_SOLID;
     penPtr->logpen.elpHatch = 0;
     penPtr->logpen.elpNumEntries = 0;
     penPtr->logpen.elpStyleEntry[0] = 0;
+
+    switch (pen->lopnStyle)
+    {
+    case PS_SOLID:
+    case PS_DASH:
+    case PS_DOT:
+    case PS_DASHDOT:
+    case PS_DASHDOTDOT:
+    case PS_INSIDEFRAME:
+        break;
+    case PS_NULL:
+        penPtr->logpen.elpWidth = 1;
+        penPtr->logpen.elpColor = 0;
+        break;
+    default:
+        penPtr->logpen.elpPenStyle = PS_SOLID;
+        break;
+    }
 
     if (!(hpen = alloc_gdi_handle( &penPtr->header, OBJ_PEN, &pen_funcs )))
         HeapFree( GetProcessHeap(), 0, penPtr );
@@ -124,10 +131,26 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
     PENOBJ * penPtr;
     HPEN hpen;
 
-    if ((style & PS_STYLE_MASK) == PS_USERSTYLE)
+    if ((style_count || style_bits) && (style & PS_STYLE_MASK) != PS_USERSTYLE)
     {
-        if(((INT)style_count) <= 0)
-            return 0;
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    switch (style & PS_STYLE_MASK)
+    {
+    case PS_NULL:
+        return CreatePen( PS_NULL, 0, brush->lbColor );
+
+    case PS_SOLID:
+    case PS_DASH:
+    case PS_DOT:
+    case PS_DASHDOT:
+    case PS_DASHDOTDOT:
+        break;
+
+    case PS_USERSTYLE:
+        if (((INT)style_count) <= 0) return 0;
 
         if ((style_count > 16) || !style_bits)
         {
@@ -152,28 +175,31 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
                 return 0;
             }
         }
-    }
-    else
-    {
-        if (style_count || style_bits)
+        break;
+
+    case PS_INSIDEFRAME:  /* applicable only for geometric pens */
+        if ((style & PS_TYPE_MASK) != PS_GEOMETRIC)
         {
             SetLastError(ERROR_INVALID_PARAMETER);
             return 0;
         }
-    }
+        break;
 
-    if ((style & PS_STYLE_MASK) == PS_NULL)
-        return CreatePen( PS_NULL, 0, brush->lbColor );
+    case PS_ALTERNATE:  /* applicable only for cosmetic pens */
+        if ((style & PS_TYPE_MASK) == PS_GEOMETRIC)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return 0;
+        }
+        break;
+
+    default:
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
 
     if ((style & PS_TYPE_MASK) == PS_GEOMETRIC)
     {
-        /* PS_ALTERNATE is applicable only for cosmetic pens */
-        if ((style & PS_STYLE_MASK) == PS_ALTERNATE)
-        {
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return 0;
-        }
-
         if (brush->lbHatch && ((brush->lbStyle != BS_SOLID) && (brush->lbStyle != BS_HOLLOW)))
         {
             static int fixme_hatches_shown;
@@ -182,8 +208,7 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
     }
     else
     {
-        /* PS_INSIDEFRAME is applicable only for geometric pens */
-        if ((style & PS_STYLE_MASK) == PS_INSIDEFRAME || width != 1)
+        if (width != 1)
         {
             SetLastError(ERROR_INVALID_PARAMETER);
             return 0;
