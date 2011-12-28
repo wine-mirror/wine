@@ -1351,6 +1351,9 @@ static HRESULT interp_push_except(exec_ctx_t *ctx)
         hres = stack_push_bool(ctx, TRUE);
         if(FAILED(hres))
             return hres;
+        hres = stack_push_bool(ctx, TRUE);
+        if(FAILED(hres))
+            return hres;
     }
 
     except = heap_alloc(sizeof(*except));
@@ -1400,8 +1403,8 @@ static HRESULT interp_end_finally(exec_ctx_t *ctx)
         return DISP_E_EXCEPTION;
     }
 
-    *stack_top(ctx) = *v;
-    return S_OK;
+    stack_popn(ctx, 2);
+    return stack_push(ctx, v);
 }
 
 /* ECMA-262 3rd Edition    13 */

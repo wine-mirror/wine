@@ -62,7 +62,7 @@ typedef struct _func_stack {
     X(end_finally,1, 0,0)                  \
     X(eq,         1, 0,0)                  \
     X(eq2,        1, 0,0)                  \
-    X(forin,      0, ARG_UINT,   0)        \
+    X(forin,      0, ARG_ADDR,   0)        \
     X(func,       1, ARG_FUNC,   0)        \
     X(gt,         1, 0,0)                  \
     X(gteq,       1, 0,0)                  \
@@ -95,7 +95,7 @@ typedef struct _func_stack {
     X(pop_scope,  1, 0,0)                  \
     X(postinc,    1, ARG_INT,    0)        \
     X(preinc,     1, ARG_INT,    0)        \
-    X(push_except,1, ARG_UINT,   ARG_BSTR) \
+    X(push_except,1, ARG_ADDR,   ARG_BSTR) \
     X(push_scope, 1, 0,0)                  \
     X(regexp,     1, ARG_STR,    ARG_INT)  \
     X(rshift,     1, 0,0)                  \
@@ -139,10 +139,12 @@ typedef enum {
     ARG_NONE = 0,
     ARG_ADDR,
     ARG_BSTR,
+    ARG_DBL,
     ARG_STAT,
     ARG_FUNC,
     ARG_INT,
-    ARG_STR
+    ARG_STR,
+    ARG_UINT
 } instr_arg_type_t;
 
 typedef struct {
