@@ -89,7 +89,7 @@ typedef struct dibdrv_physdev
     dash_pattern pen_pattern;
     dash_pos dash_pos;
     rop_mask dash_masks[2];
-    BOOL   (* pen_lines)(struct dibdrv_physdev *pdev, int num, POINT *pts, BOOL close);
+    BOOL   (* pen_lines)(struct dibdrv_physdev *pdev, int num, POINT *pts, BOOL close, HRGN region);
 
     /* brush */
     UINT brush_style;

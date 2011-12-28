@@ -453,7 +453,7 @@ BOOL dibdrv_LineTo( PHYSDEV dev, INT x, INT y )
 
     reset_dash_origin(pdev);
 
-    if(defer_pen(pdev) || !pdev->pen_lines(pdev, 2, pts, FALSE))
+    if(defer_pen(pdev) || !pdev->pen_lines(pdev, 2, pts, FALSE, 0))
         return next->funcs->pLineTo( next, x, y );
 
     return TRUE;
@@ -532,7 +532,7 @@ BOOL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWO
         LPtoDP( dev->hdc, points, counts[i] );
 
         reset_dash_origin( pdev );
-        pdev->pen_lines( pdev, counts[i], points, FALSE );
+        pdev->pen_lines( pdev, counts[i], points, FALSE, 0 );
     }
 
     HeapFree( GetProcessHeap(), 0, points );
@@ -557,7 +557,7 @@ BOOL dibdrv_Polyline( PHYSDEV dev, const POINT* pt, INT count )
     LPtoDP( dev->hdc, points, count );
 
     reset_dash_origin( pdev );
-    pdev->pen_lines( pdev, count, points, FALSE );
+    pdev->pen_lines( pdev, count, points, FALSE, 0 );
 
     HeapFree( GetProcessHeap(), 0, points );
     return TRUE;
@@ -596,7 +596,7 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
     pts[1].x = pts[2].x = rect.left;
     pts[2].y = pts[3].y = rect.bottom - 1;
 
-    pdev->pen_lines(pdev, 4, pts, TRUE);
+    pdev->pen_lines(pdev, 4, pts, TRUE, 0);
 
     rect.left   += (pdev->pen_width + 1) / 2;
     rect.top    += (pdev->pen_width + 1) / 2;

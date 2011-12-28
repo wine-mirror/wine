@@ -631,7 +631,7 @@ static BOOL solid_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end, DWORD
     return TRUE;
 }
 
-static BOOL solid_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close)
+static BOOL solid_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close, HRGN region)
 {
     int i;
     DWORD color, and, xor;
@@ -927,7 +927,7 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
     return TRUE;
 }
 
-static BOOL dashed_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close)
+static BOOL dashed_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close, HRGN region)
 {
     int i;
 
@@ -945,7 +945,7 @@ static BOOL dashed_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL clo
     return TRUE;
 }
 
-static BOOL null_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close)
+static BOOL null_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close, HRGN region)
 {
     return TRUE;
 }
@@ -1072,14 +1072,12 @@ static void add_join( dibdrv_physdev *pdev, HRGN region, const POINT *pt,
     return;
 }
 
-static HRGN get_wide_lines_region( dibdrv_physdev *pdev, int num, POINT *pts, BOOL close )
+static BOOL get_wide_lines_region( dibdrv_physdev *pdev, int num, POINT *pts, BOOL close, HRGN total )
 {
     int i;
-    HRGN total, segment;
+    HRGN segment;
 
     assert( num >= 2 );
-
-    total = CreateRectRgn( 0, 0, 0, 0 );
 
     if (!close) num--;
     for (i = 0; i < num; i++)
@@ -1223,14 +1221,15 @@ static HRGN get_wide_lines_region( dibdrv_physdev *pdev, int num, POINT *pts, BO
 
         prev_face = face_2;
     }
-    return total;
+    return TRUE;
 }
 
-static BOOL wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close)
+static BOOL wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close, HRGN region)
 {
-    HRGN region;
+    if (region) return get_wide_lines_region( pdev, num, pts, close, region );
 
-    region = get_wide_lines_region( pdev, num, pts, close );
+    if (!(region = CreateRectRgn( 0, 0, 0, 0 ))) return FALSE;
+    get_wide_lines_region( pdev, num, pts, close, region );
     if (pdev->clip) CombineRgn( region, region, pdev->clip, RGN_AND );
     pen_rect( pdev, NULL, region, GetROP2( pdev->dev.hdc ) );
     DeleteObject( region );
