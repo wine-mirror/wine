@@ -49,8 +49,6 @@ struct _compiler_ctx_t {
     unsigned labels_cnt;
 
     statement_ctx_t *stat_ctx;
-
-    BOOL no_fallback;
 };
 
 static const struct {
@@ -482,9 +480,6 @@ static HRESULT compile_new_expression(compiler_ctx_t *ctx, call_expression_t *ex
 static HRESULT compile_interp_fallback(compiler_ctx_t *ctx, statement_t *stat)
 {
     unsigned instr;
-
-    if(ctx->no_fallback)
-        return E_NOTIMPL;
 
     instr = push_instr(ctx, OP_tree);
     if(instr == -1)
@@ -1021,7 +1016,6 @@ static HRESULT compile_while_statement(compiler_ctx_t *ctx, while_statement_t *s
 {
     statement_ctx_t stat_ctx = {0, FALSE, FALSE};
     unsigned off_backup, jmp_off;
-    BOOL prev_no_fallback;
     HRESULT hres;
 
     off_backup = ctx->code_off;
@@ -1055,10 +1049,7 @@ static HRESULT compile_while_statement(compiler_ctx_t *ctx, while_statement_t *s
         jmp_off = ctx->code_off;
     }
 
-    prev_no_fallback = ctx->no_fallback;
-    ctx->no_fallback = TRUE;
     hres = compile_statement(ctx, &stat_ctx, stat->statement);
-    ctx->no_fallback = prev_no_fallback;
     if(hres == E_NOTIMPL) {
         ctx->code_off = off_backup;
         stat->stat.eval = while_statement_eval;
@@ -1094,7 +1085,6 @@ static HRESULT compile_for_statement(compiler_ctx_t *ctx, for_statement_t *stat)
 {
     statement_ctx_t stat_ctx = {0, FALSE, FALSE};
     unsigned off_backup, expr_off;
-    BOOL prev_no_fallback;
     HRESULT hres;
 
     off_backup = ctx->code_off;
@@ -1140,10 +1130,7 @@ static HRESULT compile_for_statement(compiler_ctx_t *ctx, for_statement_t *stat)
     if(push_instr(ctx, OP_pop) == -1)
         return E_OUTOFMEMORY;
 
-    prev_no_fallback = ctx->no_fallback;
-    ctx->no_fallback = TRUE;
     hres = compile_statement(ctx, &stat_ctx, stat->statement);
-    ctx->no_fallback = prev_no_fallback;
     if(hres == E_NOTIMPL) {
         ctx->code_off = off_backup;
         stat->stat.eval = for_statement_eval;
@@ -1178,7 +1165,6 @@ static HRESULT compile_forin_statement(compiler_ctx_t *ctx, forin_statement_t *s
 {
     statement_ctx_t stat_ctx = {4, FALSE, FALSE};
     unsigned off_backup = ctx->code_off;
-    BOOL prev_no_fallback;
     HRESULT hres;
 
     if(stat->variable) {
@@ -1229,10 +1215,7 @@ static HRESULT compile_forin_statement(compiler_ctx_t *ctx, forin_statement_t *s
     if(FAILED(hres))
         return E_OUTOFMEMORY;
 
-    prev_no_fallback = ctx->no_fallback;
-    ctx->no_fallback = TRUE;
     hres = compile_statement(ctx, &stat_ctx, stat->statement);
-    ctx->no_fallback = prev_no_fallback;
     if(hres == E_NOTIMPL) {
         ctx->code_off = off_backup;
         stat->stat.eval = forin_statement_eval;
@@ -1331,7 +1314,6 @@ static HRESULT compile_with_statement(compiler_ctx_t *ctx, with_statement_t *sta
 {
     statement_ctx_t stat_ctx = {0, TRUE, FALSE, -1, -1};
     unsigned off_backup;
-    BOOL prev_no_fallback;
     HRESULT hres;
 
     off_backup = ctx->code_off;
@@ -1343,10 +1325,7 @@ static HRESULT compile_with_statement(compiler_ctx_t *ctx, with_statement_t *sta
     if(push_instr(ctx, OP_push_scope) == -1)
         return E_OUTOFMEMORY;
 
-    prev_no_fallback = ctx->no_fallback;
-    ctx->no_fallback = TRUE;
     hres = compile_statement(ctx, &stat_ctx, stat->statement);
-    ctx->no_fallback = prev_no_fallback;
     if(hres == E_NOTIMPL) {
         ctx->code_off = off_backup;
         stat->stat.eval = with_statement_eval;
@@ -1370,7 +1349,6 @@ static HRESULT compile_switch_statement(compiler_ctx_t *ctx, switch_statement_t 
     statement_t *stat_iter;
     case_clausule_t *iter;
     unsigned off_backup;
-    BOOL prev_no_fallback;
     HRESULT hres;
 
     off_backup = ctx->code_off;
@@ -1436,10 +1414,7 @@ static HRESULT compile_switch_statement(compiler_ctx_t *ctx, switch_statement_t 
         instr_ptr(ctx, iter->expr ? case_jmps[i++] : default_jmp)->arg1.uint = ctx->code_off;
 
         for(stat_iter = iter->stat; stat_iter && (!iter->next || iter->next->stat != stat_iter); stat_iter = stat_iter->next) {
-            prev_no_fallback = ctx->no_fallback;
-            ctx->no_fallback = TRUE;
             hres = compile_statement(ctx, &stat_ctx, stat_iter);
-            ctx->no_fallback = prev_no_fallback;
             if(hres == E_NOTIMPL) {
                 ctx->code_off = off_backup;
                 stat->stat.eval = switch_statement_eval;
@@ -1487,12 +1462,10 @@ static HRESULT compile_try_statement(compiler_ctx_t *ctx, try_statement_t *stat)
     statement_ctx_t try_ctx = {0, FALSE, TRUE, -1, -1}, catch_ctx = {0, TRUE, FALSE, -1, -1};
     statement_ctx_t finally_ctx = {2, FALSE, FALSE, -1, -1};
     unsigned off_backup, push_except;
-    BOOL prev_no_fallback;
     BSTR ident;
     HRESULT hres;
 
     off_backup = ctx->code_off;
-    prev_no_fallback = ctx->no_fallback;
 
     push_except = push_instr(ctx, OP_push_except);
     if(push_except == -1)
@@ -1511,9 +1484,7 @@ static HRESULT compile_try_statement(compiler_ctx_t *ctx, try_statement_t *stat)
     if(!stat->catch_block)
         try_ctx.stack_use = 2;
 
-    ctx->no_fallback = TRUE;
     hres = compile_statement(ctx, &try_ctx, stat->try_statement);
-    ctx->no_fallback = prev_no_fallback;
     if(hres == E_NOTIMPL) {
         ctx->code_off = off_backup;
         stat->stat.eval = try_statement_eval;
@@ -1534,9 +1505,7 @@ static HRESULT compile_try_statement(compiler_ctx_t *ctx, try_statement_t *stat)
 
         instr_ptr(ctx, push_except)->arg1.uint = ctx->code_off;
 
-        ctx->no_fallback = TRUE;
         hres = compile_statement(ctx, &catch_ctx, stat->catch_block->statement);
-        ctx->no_fallback = prev_no_fallback;
         if(hres == E_NOTIMPL) {
             ctx->code_off = off_backup;
             stat->stat.eval = try_statement_eval;
@@ -1558,9 +1527,7 @@ static HRESULT compile_try_statement(compiler_ctx_t *ctx, try_statement_t *stat)
         if(push_instr(ctx, OP_pop) == -1)
             return E_OUTOFMEMORY;
 
-        ctx->no_fallback = TRUE;
         hres = compile_statement(ctx, stat->catch_block ? NULL : &finally_ctx, stat->finally_statement);
-        ctx->no_fallback = prev_no_fallback;
         if(hres == E_NOTIMPL) {
             ctx->code_off = off_backup;
             stat->stat.eval = try_statement_eval;

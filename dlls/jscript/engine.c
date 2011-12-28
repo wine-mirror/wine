@@ -3265,10 +3265,12 @@ HRESULT compiled_statement_eval(script_ctx_t *ctx, statement_t *stat, return_typ
     exec_ctx->ei = prev_ei;
     exec_ctx->except_frame = prev_except_frame;
 
-    if(FAILED(hres)) {
-        stack_popn(exec_ctx, exec_ctx->top-prev_top);
+    if(FAILED(hres) || rt->type != RT_NORMAL) {
         while(exec_ctx->scope_chain != prev_scope)
             scope_pop(&exec_ctx->scope_chain);
+    }
+    if(FAILED(hres)) {
+        stack_popn(exec_ctx, exec_ctx->top-prev_top);
         return hres;
     }
 
