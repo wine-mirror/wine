@@ -1237,13 +1237,20 @@ static BOOL wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close
     return TRUE;
 }
 
-static const dash_pattern dash_patterns[5] =
+static const dash_pattern dash_patterns_cosmetic[4] =
 {
-    {0, {0}, 0},                  /* PS_SOLID - a pseudo-pattern used to initialise unpatterned pens. */
     {2, {18, 6}, 24},             /* PS_DASH */
     {2, {3,  3}, 6},              /* PS_DOT */
     {4, {9, 6, 3, 6}, 24},        /* PS_DASHDOT */
     {6, {9, 3, 3, 3, 3, 3}, 24}   /* PS_DASHDOTDOT */
+};
+
+static const dash_pattern dash_patterns_geometric[4] =
+{
+    {2, {3, 1}, 4},               /* PS_DASH */
+    {2, {1, 1}, 2},               /* PS_DOT */
+    {4, {3, 1, 1, 1}, 6},         /* PS_DASHDOT */
+    {6, {3, 1, 1, 1, 1, 1}, 8}    /* PS_DASHDOTDOT */
 };
 
 static inline int get_pen_device_width( dibdrv_physdev *pdev, int width )
@@ -1296,7 +1303,7 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
         logpen.lopnColor = GetDCPenColor( dev->hdc );
 
     pdev->pen_colorref = logpen.lopnColor;
-    pdev->pen_pattern = dash_patterns[PS_SOLID];
+    memset( &pdev->pen_pattern, 0, sizeof(pdev->pen_pattern) );
 
     pdev->defer |= DEFER_PEN;
 
@@ -1308,11 +1315,18 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
     case PS_DOT:
     case PS_DASHDOT:
     case PS_DASHDOTDOT:
-        if(logpen.lopnStyle & PS_GEOMETRIC) break;
+        if (logpen.lopnStyle & PS_GEOMETRIC)
+        {
+            if (pdev->pen_width > 1) break;  /* not supported yet */
+            pdev->pen_lines = dashed_pen_lines;
+            pdev->pen_pattern = dash_patterns_geometric[pdev->pen_style - 1];
+            pdev->defer &= ~DEFER_PEN;
+            break;
+        }
         if (pdev->pen_width == 1)  /* wide cosmetic pens are not dashed */
         {
             pdev->pen_lines = dashed_pen_lines;
-            pdev->pen_pattern = dash_patterns[pdev->pen_style];
+            pdev->pen_pattern = dash_patterns_cosmetic[pdev->pen_style - 1];
             pdev->defer &= ~DEFER_PEN;
             break;
         }
