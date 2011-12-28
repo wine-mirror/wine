@@ -1234,19 +1234,11 @@ HRESULT switch_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type
 }
 
 /* ECMA-262 3rd Edition    12.13 */
-HRESULT throw_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
+static HRESULT interp_throw(exec_ctx_t *ctx)
 {
-    expression_statement_t *stat = (expression_statement_t*)_stat;
-    VARIANT val;
-    HRESULT hres;
-
     TRACE("\n");
 
-    hres = expr_eval(ctx, stat->expr, &rt->ei, &val);
-    if(FAILED(hres))
-        return hres;
-
-    rt->ei.var = val;
+    ctx->rt->ei.var = *stack_pop(ctx);
     return DISP_E_EXCEPTION;
 }
 

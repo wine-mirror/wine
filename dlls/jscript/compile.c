@@ -1299,6 +1299,18 @@ static HRESULT compile_switch_statement(compiler_ctx_t *ctx, switch_statement_t 
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    12.13 */
+static HRESULT compile_throw_statement(compiler_ctx_t *ctx, expression_statement_t *stat)
+{
+    HRESULT hres;
+
+    hres = compile_expression(ctx, stat->expr);
+    if(FAILED(hres))
+        return hres;
+
+    return push_instr(ctx, OP_throw) == -1 ? E_OUTOFMEMORY : S_OK;
+}
+
 static HRESULT compile_statement(compiler_ctx_t *ctx, statement_t *stat)
 {
     switch(stat->type) {
@@ -1318,6 +1330,8 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_t *stat)
         return push_instr(ctx, OP_label) == -1 ? E_OUTOFMEMORY : S_OK; /* FIXME */
     case STAT_SWITCH:
         return compile_switch_statement(ctx, (switch_statement_t*)stat);
+    case STAT_THROW:
+        return compile_throw_statement(ctx, (expression_statement_t*)stat);
     case STAT_VAR:
         return compile_var_statement(ctx, (var_statement_t*)stat);
     case STAT_WHILE:

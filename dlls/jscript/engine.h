@@ -99,6 +99,7 @@ typedef struct _func_stack {
     X(rshift2,    1, 0,0)                  \
     X(str,        1, ARG_STR,    0)        \
     X(this,       1, 0,0)                  \
+    X(throw,      0, 0,0)                  \
     X(throw_ref,  0, ARG_UINT,   0)        \
     X(throw_type, 0, ARG_UINT,   ARG_STR)  \
     X(tonum,      1, 0,0)                  \
@@ -413,7 +414,6 @@ HRESULT break_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*)
 HRESULT return_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT with_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT switch_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
-HRESULT throw_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT try_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
 
 typedef struct {
