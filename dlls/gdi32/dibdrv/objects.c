@@ -1047,21 +1047,158 @@ static BOOL dashed_pen_line(dibdrv_physdev *pdev, POINT *start, POINT *end)
     return TRUE;
 }
 
+static BOOL dashed_pen_line_region(dibdrv_physdev *pdev, POINT *start, POINT *end, HRGN region)
+{
+    int i, dash_len;
+    RECT rect;
+
+    rect.left   = start->x;
+    rect.top    = start->y;
+    rect.right  = start->x + 1;
+    rect.bottom = start->y + 1;
+
+    if (start->y == end->y) /* hline */
+    {
+        if (start->x <= end->x)
+        {
+            for (i = start->x; i < end->x; i += dash_len)
+            {
+                dash_len = min( pdev->dash_pos.left_in_dash, end->x - i );
+                if (pdev->dash_pos.mark)
+                {
+                    rect.left = i;
+                    rect.right = i + dash_len;
+                    add_rect_to_region( region, &rect );
+                }
+                skip_dash(pdev, dash_len);
+            }
+        }
+        else
+        {
+            for (i = start->x; i > end->x; i -= dash_len)
+            {
+                dash_len = min( pdev->dash_pos.left_in_dash, i - end->x );
+                if (pdev->dash_pos.mark)
+                {
+                    rect.left = i - dash_len + 1;
+                    rect.right = i + 1;
+                    add_rect_to_region( region, &rect );
+                }
+                skip_dash(pdev, dash_len);
+            }
+        }
+    }
+    else if (start->x == end->x) /* vline */
+    {
+        if (start->y <= end->y)
+        {
+            for (i = start->y; i < end->y; i += dash_len)
+            {
+                dash_len = min( pdev->dash_pos.left_in_dash, end->y - i );
+                if (pdev->dash_pos.mark)
+                {
+                    rect.top = i;
+                    rect.bottom = i + dash_len;
+                    add_rect_to_region( region, &rect );
+                }
+                skip_dash(pdev, dash_len);
+            }
+        }
+        else
+        {
+            for (i = start->y; i > end->y; i -= dash_len)
+            {
+                dash_len = min( pdev->dash_pos.left_in_dash, i - end->y );
+                if (pdev->dash_pos.mark)
+                {
+                    rect.top = i - dash_len + 1;
+                    rect.bottom = i + 1;
+                    add_rect_to_region( region, &rect );
+                }
+                skip_dash(pdev, dash_len);
+            }
+        }
+    }
+    else
+    {
+        INT dx = end->x - start->x, dy = end->y - start->y;
+        INT abs_dx = abs(dx), abs_dy = abs(dy);
+        DWORD octant = get_octant_mask(dx, dy);
+        INT bias = get_bias( octant );
+        int x_inc = is_x_increasing( octant ) ? 1 : -1;
+        int y_inc = is_y_increasing( octant ) ? 1 : -1;
+
+        if (is_xmajor( octant ))
+        {
+            int err_add_1 = 2 * abs_dy - 2 * abs_dx;
+            int err_add_2 = 2 * abs_dy;
+            int err = 2 * abs_dy - abs_dx;
+
+            while (abs_dx--)
+            {
+                if (pdev->dash_pos.mark) add_rect_to_region( region, &rect );
+                skip_dash(pdev, 1);
+                rect.left += x_inc;
+                rect.right += x_inc;
+                if (err + bias > 0)
+                {
+                    rect.top += y_inc;
+                    rect.bottom += y_inc;
+                    err += err_add_1;
+                }
+                else err += err_add_2;
+            }
+
+        }
+        else
+        {
+            int err_add_1 = 2 * abs_dx - 2 * abs_dy;
+            int err_add_2 = 2 * abs_dx;
+            int err = 2 * abs_dx - abs_dy;
+
+            while (abs_dy--)
+            {
+                if (pdev->dash_pos.mark) add_rect_to_region( region, &rect );
+                skip_dash(pdev, 1);
+                rect.top += y_inc;
+                rect.bottom += y_inc;
+                if (err + bias > 0)
+                {
+                    rect.left += x_inc;
+                    rect.right += x_inc;
+                    err += err_add_1;
+                }
+                else err += err_add_2;
+            }
+        }
+    }
+    return TRUE;
+}
+
 static BOOL dashed_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close, HRGN region)
 {
     int i;
 
-    get_color_masks( pdev, GetROP2(pdev->dev.hdc), pdev->pen_colorref,
-                     pdev->pen_is_ext ? TRANSPARENT : GetBkMode(pdev->dev.hdc),
-                     &pdev->dash_masks[1], &pdev->dash_masks[0] );
-
     assert( num >= 2 );
-    for (i = 0; i < num - 1; i++)
-        if (!dashed_pen_line( pdev, pts + i, pts + i + 1 ))
-            return FALSE;
 
-    if (close) return dashed_pen_line( pdev, pts + num - 1, pts );
+    if (region)
+    {
+        for (i = 0; i < num - 1; i++)
+            if (!dashed_pen_line_region( pdev, pts + i, pts + i + 1, region ))
+                return FALSE;
+        if (close) return dashed_pen_line_region( pdev, pts + num - 1, pts, region );
+    }
+    else
+    {
+        get_color_masks( pdev, GetROP2(pdev->dev.hdc), pdev->pen_colorref,
+                         pdev->pen_is_ext ? TRANSPARENT : GetBkMode(pdev->dev.hdc),
+                         &pdev->dash_masks[1], &pdev->dash_masks[0] );
 
+        for (i = 0; i < num - 1; i++)
+            if (!dashed_pen_line( pdev, pts + i, pts + i + 1 ))
+                return FALSE;
+        if (close) return dashed_pen_line( pdev, pts + num - 1, pts );
+    }
     return TRUE;
 }
 
