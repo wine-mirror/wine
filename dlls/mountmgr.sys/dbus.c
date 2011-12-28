@@ -226,7 +226,7 @@ static void udisks_new_device( const char *udi )
     p_dbus_message_unref( request );
     if (!reply)
     {
-        WARN( "failed: %s", error.message );
+        WARN( "failed: %s\n", error.message );
         p_dbus_error_free( &error );
         return;
     }
