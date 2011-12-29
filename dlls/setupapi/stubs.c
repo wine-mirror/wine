@@ -437,6 +437,17 @@ BOOL WINAPI SetupDiDeleteDeviceInfo(HDEVINFO DeviceInfoSet, PSP_DEVINFO_DATA Dev
  }
 
 /***********************************************************************
+ *              SetupDiDrawMiniIcon  (SETUPAPI.@)
+ */
+INT WINAPI SetupDiDrawMiniIcon(HDC hdc, RECT rc, INT MiniIconIndex, DWORD Flags)
+{
+    FIXME("(%p, %s, %d, %x) stub\n", hdc, wine_dbgstr_rect(&rc), MiniIconIndex, Flags);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+/***********************************************************************
  *              SetupDiGetClassBitmapIndex  (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiGetClassBitmapIndex(const GUID *ClassGuid, PINT MiniIconIndex)
