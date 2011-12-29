@@ -1158,23 +1158,23 @@ static INT GSUB_apply_feature_all_lookups(const GSUB_Header * header, const GSUB
     return out_index;
 }
 
-static const char* get_opentype_script(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc, BOOL tryNew)
+static OPENTYPE_TAG get_opentype_script(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc, BOOL tryNew)
 {
     UINT charset;
 
     if (psc->userScript != 0)
     {
         if (tryNew && ShapingData[psa->eScript].newOtTag[0] != 0 && strncmp((char*)&psc->userScript,ShapingData[psa->eScript].otTag,4)==0)
-            return ShapingData[psa->eScript].newOtTag;
+            return MS_MAKE_TAG(ShapingData[psa->eScript].newOtTag[0], ShapingData[psa->eScript].newOtTag[1], ShapingData[psa->eScript].newOtTag[2], ShapingData[psa->eScript].newOtTag[3]);
         else
-            return (char*)&psc->userScript;
+            return psc->userScript;
     }
 
     if (tryNew && ShapingData[psa->eScript].newOtTag[0] != 0)
-        return ShapingData[psa->eScript].newOtTag;
+        return MS_MAKE_TAG(ShapingData[psa->eScript].newOtTag[0], ShapingData[psa->eScript].newOtTag[1], ShapingData[psa->eScript].newOtTag[2], ShapingData[psa->eScript].newOtTag[3]);
 
     if (ShapingData[psa->eScript].otTag[0] != 0)
-        return ShapingData[psa->eScript].otTag;
+        return MS_MAKE_TAG(ShapingData[psa->eScript].otTag[0], ShapingData[psa->eScript].otTag[1], ShapingData[psa->eScript].otTag[2], ShapingData[psa->eScript].otTag[3]);
 
     /*
      * fall back to the font charset
@@ -1182,36 +1182,36 @@ static const char* get_opentype_script(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCach
     charset = GetTextCharsetInfo(hdc, NULL, 0x0);
     switch (charset)
     {
-        case ANSI_CHARSET: return "latn";
-        case BALTIC_CHARSET: return "latn"; /* ?? */
-        case CHINESEBIG5_CHARSET: return "hani";
-        case EASTEUROPE_CHARSET: return "latn"; /* ?? */
-        case GB2312_CHARSET: return "hani";
-        case GREEK_CHARSET: return "grek";
-        case HANGUL_CHARSET: return "hang";
-        case RUSSIAN_CHARSET: return "cyrl";
-        case SHIFTJIS_CHARSET: return "kana";
-        case TURKISH_CHARSET: return "latn"; /* ?? */
-        case VIETNAMESE_CHARSET: return "latn";
-        case JOHAB_CHARSET: return "latn"; /* ?? */
-        case ARABIC_CHARSET: return "arab";
-        case HEBREW_CHARSET: return "hebr";
-        case THAI_CHARSET: return "thai";
-        default: return "latn";
+        case ANSI_CHARSET:
+        case BALTIC_CHARSET: return MS_MAKE_TAG('l','a','t','n');
+        case CHINESEBIG5_CHARSET: return MS_MAKE_TAG('h','a','n','i');
+        case EASTEUROPE_CHARSET: return MS_MAKE_TAG('l','a','t','n'); /* ?? */
+        case GB2312_CHARSET: return MS_MAKE_TAG('h','a','n','i');
+        case GREEK_CHARSET: return MS_MAKE_TAG('g','r','e','k');
+        case HANGUL_CHARSET: return MS_MAKE_TAG('h','a','n','g');
+        case RUSSIAN_CHARSET: return MS_MAKE_TAG('c','y','r','l');
+        case SHIFTJIS_CHARSET: return MS_MAKE_TAG('k','a','n','a');
+        case TURKISH_CHARSET: return MS_MAKE_TAG('l','a','t','n'); /* ?? */
+        case VIETNAMESE_CHARSET: return MS_MAKE_TAG('l','a','t','n');
+        case JOHAB_CHARSET: return MS_MAKE_TAG('l','a','t','n'); /* ?? */
+        case ARABIC_CHARSET: return MS_MAKE_TAG('a','r','a','b');
+        case HEBREW_CHARSET: return MS_MAKE_TAG('h','e','b','r');
+        case THAI_CHARSET: return MS_MAKE_TAG('t','h','a','i');
+        default: return MS_MAKE_TAG('l','a','t','n');
     }
 }
 
 static LPCVOID load_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc, const char* feat)
 {
     const GSUB_Feature *feature;
-    const char* script;
+    OPENTYPE_TAG script;
     int i;
 
     script = get_opentype_script(hdc,psa,psc,FALSE);
 
     for (i = 0; i <  psc->feature_count; i++)
     {
-        if (strncmp(psc->features[i].tag,feat,4)==0 && strncmp(psc->features[i].script,script,4)==0)
+        if (strncmp(psc->features[i].tag,feat,4)==0 && psc->features[i].script == script)
             return psc->features[i].feature;
     }
 
@@ -1228,10 +1228,7 @@ static LPCVOID load_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc
 
         do
         {
-            const char* tag;
-
-            tag = get_opentype_script(hdc,psa,psc,(attempt==2));
-            hr = GSUB_GetFontScriptTags(psc, MS_MAKE_TAG(tag[0],tag[1],tag[2],tag[3]), 1, &scriptTags, &cTags, (LPCVOID*)&script);
+            hr = GSUB_GetFontScriptTags(psc, get_opentype_script(hdc,psa,psc,(attempt==2)), 1, &scriptTags, &cTags, (LPCVOID*)&script);
 
             attempt--;
             if (SUCCEEDED(hr) && cTags && script)
@@ -1268,7 +1265,7 @@ static LPCVOID load_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc
         psc->features = HeapAlloc(GetProcessHeap(), 0, psc->feature_count * sizeof(LoadedFeature));
 
     lstrcpynA(psc->features[psc->feature_count - 1].tag, feat, 5);
-    lstrcpynA(psc->features[psc->feature_count - 1].script, script, 5);
+    psc->features[psc->feature_count - 1].script = script;
     psc->features[psc->feature_count - 1].feature = feature;
     return feature;
 }

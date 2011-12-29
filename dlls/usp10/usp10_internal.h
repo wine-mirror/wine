@@ -127,7 +127,7 @@
 
 typedef struct {
     char    tag[5];
-    char    script[5];
+    OPENTYPE_TAG script;
     LPCVOID  feature;
 } LoadedFeature;
 
