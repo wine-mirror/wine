@@ -2438,7 +2438,46 @@ extern const vtable_ptr MSVCP_numpunct_char_vtable;
 DEFINE_THISCALL_WRAPPER(numpunct_char__Init, 12)
 void __thiscall numpunct_char__Init(numpunct_char *this, _Locinfo *locinfo, MSVCP_bool isdef)
 {
-    FIXME("(%p %p %d) stub\n", this, locinfo, isdef);
+    const struct lconv *lc = _Locinfo__Getlconv(locinfo);
+    int len;
+
+    TRACE("(%p %p %d)\n", this, locinfo, isdef);
+
+    len = strlen(_Locinfo__Getfalse(locinfo))+1;
+    this->false_name = MSVCRT_operator_new(len);
+    if(this->false_name)
+        memcpy((char*)this->false_name, _Locinfo__Getfalse(locinfo), len);
+
+    len = strlen(_Locinfo__Gettrue(locinfo))+1;
+    this->true_name = MSVCRT_operator_new(len);
+    if(this->true_name)
+        memcpy((char*)this->true_name, _Locinfo__Gettrue(locinfo), len);
+
+    if(isdef) {
+        this->grouping = MSVCRT_operator_new(1);
+        if(this->grouping)
+            *(char*)this->grouping = 0;
+
+        this->dp = '.';
+        this->sep = ',';
+    } else {
+        len = strlen(lc->grouping)+1;
+        this->grouping = MSVCRT_operator_new(len);
+        if(this->grouping)
+            memcpy((char*)this->grouping, lc->grouping, len);
+
+        this->dp = lc->decimal_point[0];
+        this->sep = lc->thousands_sep[0];
+    }
+
+    if(!this->false_name || !this->true_name || !this->grouping) {
+        MSVCRT_operator_delete((char*)this->grouping);
+        MSVCRT_operator_delete((char*)this->false_name);
+        MSVCRT_operator_delete((char*)this->true_name);
+
+        ERR("Out of memory\n");
+        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+    }
 }
 
 /* ?_Tidy@?$numpunct@D@std@@AAEXXZ */
@@ -2446,7 +2485,11 @@ void __thiscall numpunct_char__Init(numpunct_char *this, _Locinfo *locinfo, MSVC
 DEFINE_THISCALL_WRAPPER(numpunct_char__Tidy, 4)
 void __thiscall numpunct_char__Tidy(numpunct_char *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+
+    MSVCRT_operator_delete((char*)this->grouping);
+    MSVCRT_operator_delete((char*)this->false_name);
+    MSVCRT_operator_delete((char*)this->true_name);
 }
 
 /* ??0?$numpunct@D@std@@QAE@ABV_Locinfo@1@I_N@Z */
@@ -2455,9 +2498,11 @@ DEFINE_THISCALL_WRAPPER(numpunct_char_ctor_locinfo, 16)
 numpunct_char* __thiscall numpunct_char_ctor_locinfo(numpunct_char *this,
         _Locinfo *locinfo, MSVCP_size_t refs, MSVCP_bool usedef)
 {
-    FIXME("(%p %p %lu %d) stub\n", this, locinfo, refs, usedef);
+    TRACE("(%p %p %lu %d)\n", this, locinfo, refs, usedef);
+    locale_facet_ctor_refs(&this->facet, refs);
     this->facet.vtable = &MSVCP_numpunct_char_vtable;
-    return NULL;
+    numpunct_char__Init(this, locinfo, usedef);
+    return this;
 }
 
 /* ??0?$numpunct@D@std@@IAE@PBDI_N@Z */
@@ -2466,9 +2511,16 @@ DEFINE_THISCALL_WRAPPER(numpunct_char_ctor_name, 16)
 numpunct_char* __thiscall numpunct_char_ctor_name(numpunct_char *this,
         const char *name, MSVCP_size_t refs, MSVCP_bool usedef)
 {
-    FIXME("(%p %s %lu %d) stub\n", this, debugstr_a(name), refs, usedef);
+    _Locinfo locinfo;
+
+    TRACE("(%p %s %lu %d)\n", this, debugstr_a(name), refs, usedef);
+    locale_facet_ctor_refs(&this->facet, refs);
     this->facet.vtable = &MSVCP_numpunct_char_vtable;
-    return NULL;
+
+    _Locinfo_ctor_cstr(&locinfo, name);
+    numpunct_char__Init(this, &locinfo, usedef);
+    _Locinfo_dtor(&locinfo);
+    return this;
 }
 
 /* ??0?$numpunct@D@std@@QAE@I@Z */
@@ -2476,9 +2528,8 @@ numpunct_char* __thiscall numpunct_char_ctor_name(numpunct_char *this,
 DEFINE_THISCALL_WRAPPER(numpunct_char_ctor_refs, 8)
 numpunct_char* __thiscall numpunct_char_ctor_refs(numpunct_char *this, MSVCP_size_t refs)
 {
-    FIXME("(%p %lu) stub\n", this, refs);
-    this->facet.vtable = &MSVCP_numpunct_char_vtable;
-    return NULL;
+    TRACE("(%p %lu)\n", this, refs);
+    return numpunct_char_ctor_name(this, "C", refs, FALSE);
 }
 
 /* ??_F?$numpunct@D@std@@QAEXXZ */
@@ -2494,7 +2545,8 @@ numpunct_char* __thiscall numpunct_char_ctor(numpunct_char *this)
 DEFINE_THISCALL_WRAPPER(numpunct_char_dtor, 4)
 void __thiscall numpunct_char_dtor(numpunct_char *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    numpunct_char__Tidy(this);
 }
 
 DEFINE_THISCALL_WRAPPER(MSVCP_numpunct_char_vector_dtor, 8)
@@ -2521,8 +2573,20 @@ numpunct_char* __thiscall MSVCP_numpunct_char_vector_dtor(numpunct_char *this, u
 /* ?_Getcat@?$numpunct@D@std@@SA_KPEAPEBVfacet@locale@2@PEBV42@@Z */
 MSVCP_size_t __cdecl numpunct_char__Getcat(const locale_facet **facet, const locale *loc)
 {
-    FIXME("(%p %p) stub\n", facet, loc);
-    return 0;
+    TRACE("(%p %p)\n", facet, loc);
+
+    if(facet && !*facet) {
+        *facet = MSVCRT_operator_new(sizeof(numpunct_char));
+        if(!*facet) {
+            ERR("Out of memory\n");
+            throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+            return 0;
+        }
+        numpunct_char_ctor_name((numpunct_char*)*facet,
+                MSVCP_basic_string_char_c_str(&loc->ptr->name), 0, TRUE);
+    }
+
+    return LC_NUMERIC;
 }
 
 /* ?do_decimal_point@?$numpunct@D@std@@MBEDXZ */
