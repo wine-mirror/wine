@@ -30,6 +30,19 @@ typedef struct {
     int delfl;
 } MSVCP__Ctypevec;
 
+/* basic_string<char, char_traits<char>, allocator<char>> */
+#define BUF_SIZE_CHAR 16
+typedef struct
+{
+    void *allocator;
+    union {
+        char buf[BUF_SIZE_CHAR];
+        char *ptr;
+    } data;
+    size_t size;
+    size_t res;
+} basic_string_char;
+
 static void* (__cdecl *p_set_invalid_parameter_handler)(void*);
 static _locale_t (__cdecl *p__get_current_locale)(void);
 static void  (__cdecl *p_free)(void*);
@@ -64,6 +77,11 @@ void* (__thiscall *p_collate_char_ctor_refs)(void*, size_t);
 int (__thiscall *p_collate_char_compare)(const void*, const char*,
         const char*, const char*, const char*);
 void (__thiscall *p_collate_char_dtor)(void*);
+void* (__thiscall *p_numpunct_char_ctor)(void*);
+basic_string_char* (__thiscall *p_numpunct_char_falsename)(void*,basic_string_char*);
+void (__thiscall *p_numpunct_char_dtor)(void*);
+static void (__thiscall *p_basic_string_char_dtor)(basic_string_char*);
+static const char* (__thiscall *p_basic_string_char_cstr)(basic_string_char*);
 
 static int invalid_parameter = 0;
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
@@ -97,6 +115,7 @@ static void * (WINAPI *call_thiscall_func2)( void *func, void *this, const void 
 static void * (WINAPI *call_thiscall_func3)( void *func, void *this, const void *a, const void *b );
 static void * (WINAPI *call_thiscall_func5)( void *func, void *this, const void *a, const void *b,
         const void *c, const void *d );
+struct thiscall_thunk_retptr *thunk_retptr;
 
 static void init_thiscall_thunk(void)
 {
@@ -173,6 +192,13 @@ static BOOL init(void)
         SET(p_collate_char_ctor_refs, "??0?$collate@D@std@@QEAA@_K@Z");
         SET(p_collate_char_compare, "?compare@?$collate@D@std@@QEBAHPEBD000@Z");
         SET(p_collate_char_dtor, "??1?$collate@D@std@@MEAA@XZ");
+        SET(p_numpunct_char_ctor, "??_F?$numpunct@D@std@@QEAAXXZ");
+        SET(p_numpunct_char_falsename, "?falsename@?$numpunct@D@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ");
+        SET(p_numpunct_char_dtor, "??1?$numpunct@D@std@@MEAA@XZ");
+        SET(p_basic_string_char_dtor,
+                "??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@XZ");
+        SET(p_basic_string_char_cstr,
+                "?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAPEBDXZ");
     } else {
         SET(p_char_assign, "?assign@?$char_traits@D@std@@SAXAADABD@Z");
         SET(p_wchar_assign, "?assign@?$char_traits@_W@std@@SAXAA_WAB_W@Z");
@@ -194,6 +220,13 @@ static BOOL init(void)
         SET(p_collate_char_ctor_refs, "??0?$collate@D@std@@QAE@I@Z");
         SET(p_collate_char_compare, "?compare@?$collate@D@std@@QBEHPBD000@Z");
         SET(p_collate_char_dtor, "??1?$collate@D@std@@MAE@XZ");
+        SET(p_numpunct_char_ctor, "??_F?$numpunct@D@std@@QAEXXZ");
+        SET(p_numpunct_char_falsename, "?falsename@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ");
+        SET(p_numpunct_char_dtor, "??1?$numpunct@D@std@@MAE@XZ");
+        SET(p_basic_string_char_dtor,
+                "??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ");
+        SET(p_basic_string_char_cstr,
+                "?c_str@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEPBDXZ");
     }
 
     init_thiscall_thunk();
@@ -377,19 +410,28 @@ static void test_allocator_char(void)
 
 static void test_virtual_call(void)
 {
-    BYTE collate_char[16];
+    BYTE this[256];
+    basic_string_char bstr;
+    const char *p;
     char str1[] = "test";
     char str2[] = "TEST";
     int ret;
 
-    call_func2(p_collate_char_ctor_refs, collate_char, 0);
-    ret = (int)call_func5(p_collate_char_compare, collate_char, str1, str1+4, str1, str1+4);
+    call_func2(p_collate_char_ctor_refs, this, 0);
+    ret = (int)call_func5(p_collate_char_compare, this, str1, str1+4, str1, str1+4);
     ok(ret == 0, "collate<char>::compare returned %d\n", ret);
-    ret = (int)call_func5(p_collate_char_compare, collate_char, str2, str2+4, str1, str1+4);
+    ret = (int)call_func5(p_collate_char_compare, this, str2, str2+4, str1, str1+4);
     ok(ret == 1, "collate<char>::compare returned %d\n", ret);
-    ret = (int)call_func5(p_collate_char_compare, collate_char, str1, str1+3, str1, str1+4);
+    ret = (int)call_func5(p_collate_char_compare, this, str1, str1+3, str1, str1+4);
     ok(ret == -1, "collate<char>::compare returned %d\n", ret);
-    call_func1(p_collate_char_dtor, collate_char);
+    call_func1(p_collate_char_dtor, this);
+
+    call_func1(p_numpunct_char_ctor, this);
+    call_func2(p_numpunct_char_falsename, this, &bstr);
+    p = call_func1(p_basic_string_char_cstr, &bstr);
+    ok(!strcmp(p, "false"), "numpunct<char>::falsename returned %s\n", p);
+    call_func1(p_basic_string_char_dtor, &bstr);
+    call_func1(p_numpunct_char_dtor, this);
 }
 
 START_TEST(misc)
