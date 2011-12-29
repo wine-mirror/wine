@@ -3063,6 +3063,12 @@ BOOL WINAPI DestroyPropertySheetPage(HPROPSHEETPAGE hPropPage)
   if ((psp->dwFlags & PSP_USETITLE) && !IS_INTRESOURCE( psp->pszTitle ))
      Free ((LPVOID)psp->pszTitle);
 
+  if ((psp->dwFlags & PSP_USEHEADERTITLE) && !IS_INTRESOURCE( psp->pszHeaderTitle ))
+     Free ((LPVOID)psp->pszHeaderTitle);
+
+  if ((psp->dwFlags & PSP_USEHEADERSUBTITLE) && !IS_INTRESOURCE( psp->pszHeaderSubTitle ))
+     Free ((LPVOID)psp->pszHeaderSubTitle);
+
   Free(hPropPage);
 
   return TRUE;
