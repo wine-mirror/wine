@@ -13700,8 +13700,13 @@ msgstr "&Najboljši časi ..."
 msgid "&About WineMine"
 msgstr "&O Wine"
 
-#: winemine.rc:56 winemine.rc:58
+#: winemine.rc:56
 msgid "Fastest Times"
+msgstr "Najboljši časi"
+
+#: winemine.rc:58
+#, fuzzy
+msgid "Fastest times"
 msgstr "Najboljši časi"
 
 #: winemine.rc:59

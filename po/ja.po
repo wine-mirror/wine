@@ -13583,8 +13583,13 @@ msgstr "ハイスコア(&F)"
 msgid "&About WineMine"
 msgstr "バージョン情報(&A)"
 
-#: winemine.rc:56 winemine.rc:58
+#: winemine.rc:56
 msgid "Fastest Times"
+msgstr "ハイスコア"
+
+#: winemine.rc:58
+#, fuzzy
+msgid "Fastest times"
 msgstr "ハイスコア"
 
 #: winemine.rc:59

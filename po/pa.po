@@ -12940,8 +12940,12 @@ msgstr ""
 msgid "&About WineMine"
 msgstr "ਘੜੀ ਬਾਰੇ(&A)..."
 
-#: winemine.rc:56 winemine.rc:58
+#: winemine.rc:56
 msgid "Fastest Times"
+msgstr ""
+
+#: winemine.rc:58
+msgid "Fastest times"
 msgstr ""
 
 #: winemine.rc:59

@@ -13578,8 +13578,13 @@ msgstr "&Лучшие результаты"
 msgid "&About WineMine"
 msgstr "&О WineMine"
 
-#: winemine.rc:56 winemine.rc:58
+#: winemine.rc:56
 msgid "Fastest Times"
+msgstr "Лучшее время"
+
+#: winemine.rc:58
+#, fuzzy
+msgid "Fastest times"
 msgstr "Лучшее время"
 
 #: winemine.rc:59

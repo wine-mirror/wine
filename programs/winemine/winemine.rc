@@ -55,7 +55,7 @@ STYLE DS_MODALFRAME | DS_3DLOOK | WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPU
 FONT 8, "MS Shell Dlg"
 CAPTION "Fastest Times"
 {
-    GROUPBOX        "Fastest Times", -1,  10,  10, 150,  45
+    GROUPBOX        "Fastest times", -1,  10,  10, 150,  45
     LTEXT           "Beginner",      -1,  20,  20,  50,   8
     LTEXT           "Advanced",      -1,  20,  30,  50,   8
     LTEXT           "Expert",        -1,  20,  40,  50,   8

@@ -13507,8 +13507,13 @@ msgstr "가장 빠른 시간(&F)"
 msgid "&About WineMine"
 msgstr "WINE지뢰찾기 정보(&A)"
 
-#: winemine.rc:56 winemine.rc:58
+#: winemine.rc:56
 msgid "Fastest Times"
+msgstr "최단 시간"
+
+#: winemine.rc:58
+#, fuzzy
+msgid "Fastest times"
 msgstr "최단 시간"
 
 #: winemine.rc:59

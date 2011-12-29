@@ -14224,8 +14224,13 @@ msgstr "&Scoruri maxime"
 msgid "&About WineMine"
 msgstr "Des&pre Wine"
 
-#: winemine.rc:56 winemine.rc:58
+#: winemine.rc:56
 msgid "Fastest Times"
+msgstr "Scoruri maxime"
+
+#: winemine.rc:58
+#, fuzzy
+msgid "Fastest times"
 msgstr "Scoruri maxime"
 
 #: winemine.rc:59

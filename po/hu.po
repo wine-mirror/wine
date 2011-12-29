@@ -13749,9 +13749,14 @@ msgstr ""
 msgid "&About WineMine"
 msgstr "&Wine névjegye"
 
-#: winemine.rc:56 winemine.rc:58
+#: winemine.rc:56
 msgid "Fastest Times"
 msgstr ""
+
+#: winemine.rc:58
+#, fuzzy
+msgid "Fastest times"
+msgstr "Törlési dátum"
 
 #: winemine.rc:59
 msgid "Beginner"

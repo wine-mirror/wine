@@ -13589,8 +13589,13 @@ msgstr "&Geriausi laikai"
 msgid "&About WineMine"
 msgstr "&Apie Wine minas"
 
-#: winemine.rc:56 winemine.rc:58
+#: winemine.rc:56
 msgid "Fastest Times"
+msgstr "Geriausi laikai"
+
+#: winemine.rc:58
+#, fuzzy
+msgid "Fastest times"
 msgstr "Geriausi laikai"
 
 #: winemine.rc:59

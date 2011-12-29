@@ -13723,8 +13723,13 @@ msgstr "Meilleurs &temps"
 msgid "&About WineMine"
 msgstr "À &propos de WineMine"
 
-#: winemine.rc:56 winemine.rc:58
+#: winemine.rc:56
 msgid "Fastest Times"
+msgstr "Meilleurs temps"
+
+#: winemine.rc:58
+#, fuzzy
+msgid "Fastest times"
 msgstr "Meilleurs temps"
 
 #: winemine.rc:59

@@ -13629,8 +13629,13 @@ msgstr "Najszybsze czasy"
 msgid "&About WineMine"
 msgstr "Saper Wine - i&nformacje"
 
-#: winemine.rc:56 winemine.rc:58
+#: winemine.rc:56
 msgid "Fastest Times"
+msgstr "Najlepsze Wyniki"
+
+#: winemine.rc:58
+#, fuzzy
+msgid "Fastest times"
 msgstr "Najlepsze Wyniki"
 
 #: winemine.rc:59

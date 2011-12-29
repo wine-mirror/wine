@@ -13604,8 +13604,13 @@ msgstr "Snabbaste &tider"
 msgid "&About WineMine"
 msgstr "&Om Minor"
 
-#: winemine.rc:56 winemine.rc:58
+#: winemine.rc:56
 msgid "Fastest Times"
+msgstr "Snabbaste tider"
+
+#: winemine.rc:58
+#, fuzzy
+msgid "Fastest times"
 msgstr "Snabbaste tider"
 
 #: winemine.rc:59

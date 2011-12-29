@@ -13657,8 +13657,13 @@ msgstr "&Millors Temps"
 msgid "&About WineMine"
 msgstr "&Quant al WineMine..."
 
-#: winemine.rc:56 winemine.rc:58
+#: winemine.rc:56
 msgid "Fastest Times"
+msgstr "Millors Temps"
+
+#: winemine.rc:58
+#, fuzzy
+msgid "Fastest times"
 msgstr "Millors Temps"
 
 #: winemine.rc:59

@@ -13163,9 +13163,14 @@ msgstr ""
 msgid "&About WineMine"
 msgstr "&درباره نت‌پد"
 
-#: winemine.rc:56 winemine.rc:58
+#: winemine.rc:56
 msgid "Fastest Times"
 msgstr ""
+
+#: winemine.rc:58
+#, fuzzy
+msgid "Fastest times"
+msgstr "&حذف\tDel"
 
 #: winemine.rc:59
 msgid "Beginner"

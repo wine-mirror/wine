@@ -13766,9 +13766,14 @@ msgstr ""
 msgid "&About WineMine"
 msgstr "&O Beležnici"
 
-#: winemine.rc:56 winemine.rc:58
+#: winemine.rc:56
 msgid "Fastest Times"
 msgstr ""
+
+#: winemine.rc:58
+#, fuzzy
+msgid "Fastest times"
+msgstr "Datum brisanja"
 
 #: winemine.rc:59
 msgid "Beginner"
