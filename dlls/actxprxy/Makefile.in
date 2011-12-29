@@ -12,6 +12,7 @@ IDL_P_SRCS = \
 	actxprxy_comcat.idl \
 	actxprxy_docobj.idl \
 	actxprxy_hlink.idl \
+	actxprxy_htiface.idl \
 	actxprxy_htiframe.idl \
 	actxprxy_objsafe.idl \
 	actxprxy_ocmm.idl \
@@ -25,6 +26,7 @@ IDL_R_SRCS = \
 	actxprxy_comcat.idl \
 	actxprxy_docobj.idl \
 	actxprxy_hlink.idl \
+	actxprxy_htiface.idl \
 	actxprxy_htiframe.idl \
 	actxprxy_objsafe.idl \
 	actxprxy_ocmm.idl \

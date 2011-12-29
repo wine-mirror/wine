@@ -31,6 +31,8 @@ dlls/actxprxy/actxprxy_docobj.h
 dlls/actxprxy/actxprxy_docobj_p.c
 dlls/actxprxy/actxprxy_hlink.h
 dlls/actxprxy/actxprxy_hlink_p.c
+dlls/actxprxy/actxprxy_htiface.h
+dlls/actxprxy/actxprxy_htiface_p.c
 dlls/actxprxy/actxprxy_htiframe.h
 dlls/actxprxy/actxprxy_htiframe_p.c
 dlls/actxprxy/actxprxy_objsafe.h
