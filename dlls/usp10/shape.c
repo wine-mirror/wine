@@ -3779,39 +3779,53 @@ DWORD CMAP_GetGlyphIndex(HDC hdc, ScriptCache *psc, DWORD utf32c, LPWORD pgi, DW
     return 0;
 }
 
-static HRESULT GSUB_GetFontScriptTags(LPCVOID table, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pScriptTags, int *pcTags, LPCVOID* script_table)
+static void GSUB_initialize_script_cache(ScriptCache *psc)
 {
-    const GSUB_ScriptList *script;
-    const GSUB_Header* header = (const GSUB_Header*)table;
+    int i;
+
+    if (!psc->script_count)
+    {
+        const GSUB_ScriptList *script;
+        const GSUB_Header* header = (const GSUB_Header*)psc->GSUB_Table;
+        script = (const GSUB_ScriptList*)((const BYTE*)header + GET_BE_WORD(header->ScriptList));
+        psc->script_count = GET_BE_WORD(script->ScriptCount);
+        TRACE("initializing %i scripts in this font\n",psc->script_count);
+        psc->scripts = HeapAlloc(GetProcessHeap(),0,sizeof(LoadedScript) * psc->script_count);
+        for (i = 0; i < psc->script_count; i++)
+        {
+            int offset = GET_BE_WORD(script->ScriptRecord[i].Script);
+            psc->scripts[i].tag = MS_MAKE_TAG(script->ScriptRecord[i].ScriptTag[0], script->ScriptRecord[i].ScriptTag[1], script->ScriptRecord[i].ScriptTag[2], script->ScriptRecord[i].ScriptTag[3]);
+            psc->scripts[i].table = ((const BYTE*)script + offset);
+        }
+    }
+}
+
+static HRESULT GSUB_GetFontScriptTags(ScriptCache *psc, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pScriptTags, int *pcTags, LPCVOID* script_table)
+{
     int i;
     HRESULT rc = S_OK;
 
-    script = (const GSUB_ScriptList*)((const BYTE*)header + GET_BE_WORD(header->ScriptList));
-
-    *pcTags = GET_BE_WORD(script->ScriptCount);
-    TRACE("%i scripts in this font\n",*pcTags);
+    GSUB_initialize_script_cache(psc);
+    *pcTags = psc->script_count;
 
     if (!searchingFor && cMaxTags < *pcTags)
         rc = E_OUTOFMEMORY;
     else if (searchingFor)
         rc = USP_E_SCRIPT_NOT_IN_FONT;
 
-    for (i = 0; i < *pcTags; i++)
+    for (i = 0; i < psc->script_count; i++)
     {
         if (i < cMaxTags)
-            pScriptTags[i] = MS_MAKE_TAG(script->ScriptRecord[i].ScriptTag[0], script->ScriptRecord[i].ScriptTag[1], script->ScriptRecord[i].ScriptTag[2], script->ScriptRecord[i].ScriptTag[3]);
+            pScriptTags[i] = psc->scripts[i].tag;
 
         if (searchingFor)
         {
-            if (strncmp(script->ScriptRecord[i].ScriptTag, (char*)&searchingFor,4)==0)
+            if (searchingFor == psc->scripts[i].tag)
             {
-                pScriptTags[0] = MS_MAKE_TAG(script->ScriptRecord[i].ScriptTag[0], script->ScriptRecord[i].ScriptTag[1], script->ScriptRecord[i].ScriptTag[2], script->ScriptRecord[i].ScriptTag[3]);
+                pScriptTags[0] = psc->scripts[i].tag;
                 *pcTags = 1;
                 if (script_table)
-                {
-                    int offset = GET_BE_WORD(script->ScriptRecord[i].Script);
-                    *script_table = ((const BYTE*)script + offset);
-                }
+                    *script_table = psc->scripts[i].table;
                 rc = S_OK;
                 break;
             }
@@ -3836,7 +3850,7 @@ HRESULT SHAPE_GetFontScriptTags( HDC hdc, ScriptCache *psc,
             searching = MS_MAKE_TAG(ShapingData[psa->eScript].otTag[0], ShapingData[psa->eScript].otTag[1], ShapingData[psa->eScript].otTag[2], ShapingData[psa->eScript].otTag[3]);
     }
 
-    hr = GSUB_GetFontScriptTags(psc->GSUB_Table, searching, cMaxTags, pScriptTags, pcTags, NULL);
+    hr = GSUB_GetFontScriptTags(psc, searching, cMaxTags, pScriptTags, pcTags, NULL);
     if (FAILED(hr))
         *pcTags = 0;
     return hr;

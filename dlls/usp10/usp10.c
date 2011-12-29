@@ -933,6 +933,7 @@ HRESULT WINAPI ScriptFreeCache(SCRIPT_CACHE *psc)
         heap_free(((ScriptCache *)*psc)->GSUB_Table);
         heap_free(((ScriptCache *)*psc)->GDEF_Table);
         heap_free(((ScriptCache *)*psc)->CMAP_Table);
+        heap_free(((ScriptCache *)*psc)->scripts);
         heap_free(((ScriptCache *)*psc)->features);
         heap_free(*psc);
         *psc = NULL;

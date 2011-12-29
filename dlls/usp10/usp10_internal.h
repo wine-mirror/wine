@@ -132,6 +132,11 @@ typedef struct {
 } LoadedFeature;
 
 typedef struct {
+    OPENTYPE_TAG tag;
+    LPCVOID table;
+} LoadedScript;
+
+typedef struct {
     LOGFONTW lf;
     TEXTMETRICW tm;
     BOOL sfnt;
@@ -143,6 +148,8 @@ typedef struct {
     LPVOID CMAP_format12_Table;
     INT feature_count;
     LoadedFeature *features;
+    INT script_count;
+    LoadedScript *scripts;
 
     OPENTYPE_TAG userScript;
     OPENTYPE_TAG userLang;
