@@ -1068,44 +1068,6 @@ HRESULT return_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type
 }
 
 /* ECMA-262 3rd Edition    12.10 */
-HRESULT with_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
-{
-    with_statement_t *stat = (with_statement_t*)_stat;
-    IDispatch *disp;
-    jsdisp_t *obj;
-    VARIANT val;
-    HRESULT hres;
-
-    TRACE("\n");
-
-    hres = expr_eval(ctx, stat->expr, &rt->ei, &val);
-    if(FAILED(hres))
-        return hres;
-
-    hres = to_object(ctx, &val, &disp);
-    VariantClear(&val);
-    if(FAILED(hres))
-        return hres;
-
-    obj = iface_to_jsdisp((IUnknown*)disp);
-    IDispatch_Release(disp);
-    if(!obj) {
-        FIXME("disp id not jsdisp\n");
-        return E_NOTIMPL;
-    }
-
-    hres = scope_push(ctx->exec_ctx->scope_chain, obj, &ctx->exec_ctx->scope_chain);
-    jsdisp_release(obj);
-    if(FAILED(hres))
-        return hres;
-
-    hres = stat_eval(ctx, stat->statement, rt, ret);
-
-    scope_pop(&ctx->exec_ctx->scope_chain);
-    return hres;
-}
-
-/* ECMA-262 3rd Edition    12.10 */
 HRESULT interp_push_scope(exec_ctx_t *ctx)
 {
     IDispatch *disp;

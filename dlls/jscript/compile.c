@@ -1313,10 +1313,7 @@ static HRESULT compile_break_statement(compiler_ctx_t *ctx, branch_statement_t *
 static HRESULT compile_with_statement(compiler_ctx_t *ctx, with_statement_t *stat)
 {
     statement_ctx_t stat_ctx = {0, TRUE, FALSE, -1, -1};
-    unsigned off_backup;
     HRESULT hres;
-
-    off_backup = ctx->code_off;
 
     hres = compile_expression(ctx, stat->expr);
     if(FAILED(hres))
@@ -1326,11 +1323,6 @@ static HRESULT compile_with_statement(compiler_ctx_t *ctx, with_statement_t *sta
         return E_OUTOFMEMORY;
 
     hres = compile_statement(ctx, &stat_ctx, stat->statement);
-    if(hres == E_NOTIMPL) {
-        ctx->code_off = off_backup;
-        stat->stat.eval = with_statement_eval;
-        return compile_interp_fallback(ctx, &stat->stat);
-    }
     if(FAILED(hres))
         return hres;
 
