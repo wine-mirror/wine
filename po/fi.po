@@ -10247,7 +10247,8 @@ msgid "&Footer:"
 msgstr "Alao&tsikko:"
 
 #: notepad.rc:112
-msgid "&Margins (millimeters):"
+#, fuzzy
+msgid "Margins (millimeters)"
 msgstr "&Marginaali:"
 
 #: notepad.rc:113

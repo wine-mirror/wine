@@ -10425,7 +10425,8 @@ msgid "&Footer:"
 msgstr "&Fußzeile:"
 
 #: notepad.rc:112
-msgid "&Margins (millimeters):"
+#, fuzzy
+msgid "Margins (millimeters)"
 msgstr "&Ränder (Millimeter):"
 
 #: notepad.rc:113

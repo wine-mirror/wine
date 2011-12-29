@@ -10300,7 +10300,8 @@ msgid "&Footer:"
 msgstr "&Поглавље:"
 
 #: notepad.rc:112
-msgid "&Margins (millimeters):"
+#, fuzzy
+msgid "Margins (millimeters)"
 msgstr "&Маргине (у милиметрима):"
 
 #: notepad.rc:113

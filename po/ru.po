@@ -10359,7 +10359,8 @@ msgid "&Footer:"
 msgstr "Н&ижний колонтитул:"
 
 #: notepad.rc:112
-msgid "&Margins (millimeters):"
+#, fuzzy
+msgid "Margins (millimeters)"
 msgstr "Поля (мм):"
 
 #: notepad.rc:113

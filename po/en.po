@@ -10144,7 +10144,7 @@ msgid "&Footer:"
 msgstr ""
 
 #: notepad.rc:112
-msgid "&Margins (millimeters):"
+msgid "Margins (millimeters)"
 msgstr ""
 
 #: notepad.rc:113

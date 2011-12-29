@@ -10255,7 +10255,8 @@ msgid "&Footer:"
 msgstr "页脚(&F)："
 
 #: notepad.rc:112
-msgid "&Margins (millimeters):"
+#, fuzzy
+msgid "Margins (millimeters)"
 msgstr "边距（毫米）(&M)："
 
 #: notepad.rc:113

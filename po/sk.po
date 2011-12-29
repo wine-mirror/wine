@@ -10020,8 +10020,9 @@ msgid "&Footer:"
 msgstr ""
 
 #: notepad.rc:112
-msgid "&Margins (millimeters):"
-msgstr ""
+#, fuzzy
+msgid "Margins (millimeters)"
+msgstr "Okraje [mm]"
 
 #: notepad.rc:113
 msgid "&Left:"
