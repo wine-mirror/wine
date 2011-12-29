@@ -276,7 +276,8 @@ static HRESULT WINAPI HTMLLocation_put_protocol(IHTMLLocation *iface, BSTR v)
 static HRESULT WINAPI HTMLLocation_get_protocol(IHTMLLocation *iface, BSTR *p)
 {
     HTMLLocation *This = impl_from_IHTMLLocation(iface);
-    URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW)};
+    BSTR protocol, ret;
+    unsigned len;
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -284,22 +285,28 @@ static HRESULT WINAPI HTMLLocation_get_protocol(IHTMLLocation *iface, BSTR *p)
     if(!p)
         return E_POINTER;
 
-    url.dwSchemeLength = 1;
-    hres = get_url_components(This, &url);
+    if(!This->window || !This->window->uri) {
+        FIXME("No current URI\n");
+        return E_NOTIMPL;
+    }
+
+    hres = IUri_GetSchemeName(This->window->uri, &protocol);
     if(FAILED(hres))
         return hres;
-
-    if(!url.dwSchemeLength) {
-        FIXME("Unexpected blank protocol\n");
-        return E_NOTIMPL;
-    }else {
-        WCHAR *buf;
-        buf = *p = SysAllocStringLen(NULL, url.dwSchemeLength + 1);
-        memcpy(buf, url.lpszScheme, url.dwSchemeLength * sizeof(WCHAR));
-        buf[url.dwSchemeLength] = ':';
+    if(hres == S_FALSE) {
+        SysFreeString(protocol);
+        *p = NULL;
+        return S_OK;
     }
-    if(!*p)
+
+    len = SysStringLen(protocol);
+    ret = SysAllocStringLen(protocol, len+1);
+    SysFreeString(protocol);
+    if(!ret)
         return E_OUTOFMEMORY;
+
+    ret[len] = ':';
+    *p = ret;
     return S_OK;
 }
 
