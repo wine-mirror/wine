@@ -444,6 +444,10 @@ BOOL dibdrv_LineTo( PHYSDEV dev, INT x, INT y )
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pLineTo );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     POINT pts[2];
+    HRGN region = 0;
+    BOOL ret;
+
+    if(defer_pen(pdev)) return next->funcs->pLineTo( next, x, y );
 
     GetCurrentPositionEx(dev->hdc, pts);
     pts[1].x = x;
@@ -451,12 +455,19 @@ BOOL dibdrv_LineTo( PHYSDEV dev, INT x, INT y )
 
     LPtoDP(dev->hdc, pts, 2);
 
+    if (pdev->pen_uses_region && !(region = CreateRectRgn( 0, 0, 0, 0 ))) return FALSE;
+
     reset_dash_origin(pdev);
 
-    if(defer_pen(pdev) || !pdev->pen_lines(pdev, 2, pts, FALSE, 0))
-        return next->funcs->pLineTo( next, x, y );
+    ret = pdev->pen_lines(pdev, 2, pts, FALSE, region);
 
-    return TRUE;
+    if (region)
+    {
+        if (pdev->clip) CombineRgn( region, region, pdev->clip, RGN_AND );
+        ret = pen_rect( pdev, NULL, region, GetROP2(dev->hdc) );
+        DeleteObject( region );
+    }
+    return ret;
 }
 
 /***********************************************************************
