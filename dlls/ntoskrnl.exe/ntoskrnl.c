@@ -1742,3 +1742,12 @@ BOOLEAN WINAPI Ke386IoSetAccessProcess(PEPROCESS *process, ULONG flag)
     FIXME("(%p %d) stub\n", process, flag);
     return FALSE;
 }
+
+/*****************************************************
+ *           Ke386SetIoAccessMap  (NTOSKRNL.EXE.@)
+ */
+BOOLEAN WINAPI Ke386SetIoAccessMap(ULONG flag, PVOID buffer)
+{
+    FIXME("(%d %p) stub\n", flag, buffer);
+    return FALSE;
+}

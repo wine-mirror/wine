@@ -505,7 +505,7 @@
 @ stub Ke386CallBios
 @ stdcall Ke386IoSetAccessProcess(ptr long)
 @ stub Ke386QueryIoAccessMap
-@ stub Ke386SetIoAccessMap
+@ stdcall Ke386SetIoAccessMap(long ptr)
 @ stub KeAcquireInterruptSpinLock
 @ stub KeAcquireSpinLockAtDpcLevel
 @ stub KeAddSystemServiceTable
