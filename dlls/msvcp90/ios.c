@@ -1094,40 +1094,40 @@ locale __thiscall basic_streambuf_char_pubimbue(basic_streambuf_char *this, cons
 
 /* ?pubseekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAE?AV?$fpos@H@2@JHH@Z */
 /* ?pubseekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAA?AV?$fpos@H@2@_JHH@Z */
-DEFINE_THISCALL_WRAPPER_RETPTR(basic_streambuf_char_pubseekoff, 16)
-fpos_int __thiscall basic_streambuf_char_pubseekoff(basic_streambuf_char *this, streamoff off, int way, int mode)
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_pubseekoff, 20)
+fpos_int* __thiscall basic_streambuf_char_pubseekoff(basic_streambuf_char *this,
+        fpos_int *ret, streamoff off, int way, int mode)
 {
-    fpos_int ret = { 0 }; /* FIXME */
     FIXME("(%p %lu %d %d) stub\n", this, off, way, mode);
     return ret;
 }
 
 /* ?pubseekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAE?AV?$fpos@H@2@JII@Z */
 /* ?pubseekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAA?AV?$fpos@H@2@_JII@Z */
-DEFINE_THISCALL_WRAPPER_RETPTR(basic_streambuf_char_pubseekoff_old, 16)
-fpos_int __thiscall basic_streambuf_char_pubseekoff_old(basic_streambuf_char *this, streamoff off, unsigned int way, unsigned int mode)
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_pubseekoff_old, 20)
+fpos_int* __thiscall basic_streambuf_char_pubseekoff_old(basic_streambuf_char *this,
+        fpos_int *ret, streamoff off, unsigned int way, unsigned int mode)
 {
-    fpos_int ret = { 0 }; /* FIXME */
     FIXME("(%p %lu %d %d) stub\n", this, off, way, mode);
     return ret;
 }
 
 /* ?pubseekpos@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAE?AV?$fpos@H@2@V32@H@Z */
 /* ?pubseekpos@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAA?AV?$fpos@H@2@V32@H@Z */
-DEFINE_THISCALL_WRAPPER_RETPTR(basic_streambuf_char_pubseekpos, 32)
-fpos_int __thiscall basic_streambuf_char_pubseekpos(basic_streambuf_char *this, fpos_int pos, int mode)
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_pubseekpos, 36)
+fpos_int* __thiscall basic_streambuf_char_pubseekpos(basic_streambuf_char *this,
+        fpos_int *ret, fpos_int pos, int mode)
 {
-    fpos_int ret = { 0 }; /* FIXME */
     FIXME("(%p %s %d) stub\n", this, debugstr_fpos_int(&pos), mode);
     return ret;
 }
 
 /* ?pubseekpos@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAE?AV?$fpos@H@2@V32@I@Z */
 /* ?pubseekpos@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAA?AV?$fpos@H@2@V32@I@Z */
-DEFINE_THISCALL_WRAPPER_RETPTR(basic_streambuf_char_pubseekpos_old, 32)
-fpos_int __thiscall basic_streambuf_char_pubseekpos_old(basic_streambuf_char *this, fpos_int pos, unsigned int mode)
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_pubseekpos_old, 36)
+fpos_int* __thiscall basic_streambuf_char_pubseekpos_old(basic_streambuf_char *this,
+        fpos_int *ret, fpos_int pos, unsigned int mode)
 {
-    fpos_int ret = { 0 }; /* FIXME */
     FIXME("(%p %s %d) stub\n", this, debugstr_fpos_int(&pos), mode);
     return ret;
 }
@@ -1161,20 +1161,20 @@ int __thiscall basic_streambuf_char_sbumpc(basic_streambuf_char *this)
 
 /* ?seekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAE?AV?$fpos@H@2@JHH@Z */
 /* ?seekoff@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAA?AV?$fpos@H@2@_JHH@Z */
-DEFINE_THISCALL_WRAPPER_RETPTR(basic_streambuf_char_seekoff, 16)
-fpos_int __thiscall basic_streambuf_char_seekoff(basic_streambuf_char *this, streamoff off, int way, int mode)
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_seekoff, 20)
+fpos_int* __thiscall basic_streambuf_char_seekoff(basic_streambuf_char *this,
+        fpos_int *ret, streamoff off, int way, int mode)
 {
-    fpos_int ret = { 0 }; /* FIXME */
     FIXME("(%p %lu %d %d) stub\n", this, off, way, mode);
     return ret;
 }
 
 /* ?seekpos@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAE?AV?$fpos@H@2@V32@H@Z */
 /* ?seekpos@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAA?AV?$fpos@H@2@V32@H@Z */
-DEFINE_THISCALL_WRAPPER_RETPTR(basic_streambuf_char_seekpos, 32)
-fpos_int __thiscall basic_streambuf_char_seekpos(basic_streambuf_char *this, fpos_int pos, int mode)
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_seekpos, 36)
+fpos_int* __thiscall basic_streambuf_char_seekpos(basic_streambuf_char *this,
+        fpos_int *ret, fpos_int pos, int mode)
 {
-    fpos_int ret = { 0 }; /* FIXME */
     FIXME("(%p %s %d) stub\n", this, debugstr_fpos_int(&pos), mode);
     return ret;
 }
@@ -1574,10 +1574,9 @@ basic_ostream_char* __thiscall basic_ostream_char_seekp_fpos(basic_ostream_char 
 
 /* ?tellp@?$basic_ostream@DU?$char_traits@D@std@@@std@@QAE?AV?$fpos@H@2@XZ */
 /* ?tellp@?$basic_ostream@DU?$char_traits@D@std@@@std@@QEAA?AV?$fpos@H@2@XZ */
-DEFINE_THISCALL_WRAPPER_RETPTR(basic_ostream_char_tellp, 4)
-fpos_int __thiscall basic_ostream_char_tellp(basic_ostream_char *this)
+DEFINE_THISCALL_WRAPPER(basic_ostream_char_tellp, 8)
+fpos_int* __thiscall basic_ostream_char_tellp(basic_ostream_char *this, fpos_int *ret)
 {
-    fpos_int ret = { 0 }; /* FIXME */
     FIXME("(%p) stub\n", this);
     return ret;
 }
