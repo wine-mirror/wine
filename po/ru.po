@@ -760,7 +760,7 @@ msgstr "&Принтер..."
 
 #: comdlg32.rc:470
 msgid "Look &in:"
-msgstr "Искать &в"
+msgstr "Искать &в:"
 
 #: comdlg32.rc:476
 msgid "File &name:"
@@ -981,7 +981,7 @@ msgid ""
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "Это значение не лежит внутри диапазона страниц.\n"
-"Введите значение между %1!%d! и %2!d!"
+"Введите значение между %1!%d! и %2!d!."
 
 #: comdlg32.rc:70
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -2142,7 +2142,7 @@ msgstr "Уведомление"
 
 #: cryptui.rc:228
 msgid "More &Info"
-msgstr "&Дополнительно..."
+msgstr "&Дополнительно"
 
 #: cryptui.rc:236
 msgid "&Friendly name:"
@@ -2231,7 +2231,7 @@ msgstr "Имя &файла:"
 
 #: cryptui.rc:293 cryptui.rc:315 cryptui.rc:429 winecfg.rc:306
 msgid "B&rowse..."
-msgstr "Обзор"
+msgstr "&Обзор..."
 
 #: cryptui.rc:294
 msgid ""
@@ -3337,7 +3337,7 @@ msgstr " Домашняя страница "
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
-msgstr "Укажите адрес для вашей домашней страницы:"
+msgstr "Укажите адрес для вашей домашней страницы."
 
 #: inetcpl.rc:50
 msgid "&Current page"
@@ -7803,7 +7803,7 @@ msgstr "&Открыть:"
 #: shell32.rc:352 progman.rc:179 progman.rc:198 progman.rc:215 winecfg.rc:245
 #: winefile.rc:136
 msgid "&Browse..."
-msgstr "&Обзор"
+msgstr "&Обзор..."
 
 #: shell32.rc:135 shell32.rc:139 winefile.rc:111
 msgid "Size"
@@ -8722,7 +8722,7 @@ msgstr ""
 msgid ""
 "A closing double-quotation mark is missing from the parameter value. Please "
 "supply one."
-msgstr "Закрывающая кавычка отсутствует в значении параметра. Поставьте ее ;-)"
+msgstr "Закрывающая кавычка отсутствует в значении параметра. Поставьте ее."
 
 #: winmm.rc:90
 msgid "A parameter or value was specified twice. Only specify it once."
@@ -8802,7 +8802,7 @@ msgid ""
 "restarting your computer."
 msgstr ""
 "Нет доступа к указанному файлу или устройству МCI. Попробуйте перезапустить "
-"компьютер ;-)"
+"компьютер."
 
 #: winmm.rc:103
 msgid ""
@@ -8977,7 +8977,7 @@ msgid ""
 "check your disk or network connection."
 msgstr ""
 "Невозможно прочитать указанный файл. Убедитесь, что файл существует, или "
-"проверьте диск или сетевое подключение. "
+"проверьте диск или сетевое подключение."
 
 #: winmm.rc:121
 msgid ""
@@ -9341,7 +9341,7 @@ msgid ""
 "Changes to default directory, environment variables etc made within a\n"
 "called procedure are inherited by the caller.\n"
 msgstr ""
-"CALL <имя bat-файла> используется в bat-файлах для запуска других\n"
+"CALL <bat-файл> используется в bat-файлах для запуска других\n"
 "bat-файлов. При выходе из bat-файла управление возвращается\n"
 "файлу, вызвавшему его. Команда CALL может передавать параметры\n"
 "вызванному bat-файлу.\n"
@@ -9353,35 +9353,37 @@ msgstr ""
 msgid ""
 "CD <dir> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
-msgstr "Справка о CD\n"
+msgstr ""
+"СD <директория> это сокращение от CHDIR. Она изменяет текущую\n"
+"директорию.\n"
 
 #: cmd.rc:41
 msgid "CHDIR <dir> changes the current default directory.\n"
-msgstr "Справка о CHDIR\n"
+msgstr "CHDIR <директория> изменяет текущую директорию.\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
-msgstr "CLS очищает экран консоли\n"
+msgstr "CLS очищает экран консоли.\n"
 
 #: cmd.rc:45
 msgid "COPY <filename> copies a file.\n"
-msgstr "Справка о COPY\n"
+msgstr "COPY <файл> копирует файл.\n"
 
 #: cmd.rc:46
 msgid "CTTY changes the input/output device.\n"
-msgstr "Справка о CTTY\n"
+msgstr "CTTY изменяет устройство ввода/вывода.\n"
 
 #: cmd.rc:47
 msgid "DATE shows or changes the system date.\n"
-msgstr "Справка о DATE\n"
+msgstr "DATE показывается или устанавливает системную дату.\n"
 
 #: cmd.rc:48
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr "Справка о DEL\n"
+msgstr "DEL <файл> удаляет файл или несколько файлов.\n"
 
 #: cmd.rc:49
 msgid "DIR lists the contents of a directory.\n"
-msgstr "Справка о DIR\n"
+msgstr "DIR отображает содержимое директории.\n"
 
 #: cmd.rc:59
 msgid ""
@@ -9404,7 +9406,7 @@ msgstr ""
 
 #: cmd.rc:61
 msgid "ERASE <filename> deletes a file or set of files.\n"
-msgstr "Справка об ERASE\n"
+msgstr "ERASE <файл> удаляет файл или несколько файлов.\n"
 
 #: cmd.rc:69
 msgid ""
@@ -9453,7 +9455,9 @@ msgstr ""
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
-msgstr "Справка о HELP\n"
+msgstr ""
+"HELP <команда> показывается краткую информацию о команде.\n"
+"HELP без аргументов выводит список встроенных команд.\n"
 
 #: cmd.rc:94
 msgid ""
@@ -9491,11 +9495,11 @@ msgstr ""
 
 #: cmd.rc:103
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
-msgstr "Справка о MD\n"
+msgstr "MD <имя> это краткий вариант MKDIR. Она создает поддиректорию.\n"
 
 #: cmd.rc:104
 msgid "MKDIR <name> creates a subdirectory.\n"
-msgstr "Справка о MKDIR\n"
+msgstr "MKDIR <имя> создает поддиректорю.\n"
 
 #: cmd.rc:111
 msgid ""
@@ -9603,19 +9607,20 @@ msgstr ""
 
 #: cmd.rc:156
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
-msgstr "Справка о REN\n"
+msgstr "REN <файл> краткий вариант RENAME. Она переименовывает файл.\n"
 
 #: cmd.rc:157
 msgid "RENAME <filename> renames a file.\n"
-msgstr "RENAME <имя файла> переименовывает файл.\n"
+msgstr "RENAME <файла> переименовывает файл.\n"
 
 #: cmd.rc:159
 msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
-msgstr "Справка о RD\n"
+msgstr ""
+"RD <директория> это краткий вариант RMDIR. Она удаляет поддиректорию.\n"
 
 #: cmd.rc:160
 msgid "RMDIR <dir> deletes a subdirectory.\n"
-msgstr "Справка о RMDIR\n"
+msgstr "RMDIR <директория> удаляет поддиректорию.\n"
 
 #: cmd.rc:178
 msgid ""
@@ -9665,7 +9670,7 @@ msgstr ""
 
 #: cmd.rc:185
 msgid "TIME sets or shows the current system time.\n"
-msgstr "Справка о TIME\n"
+msgstr "TIME устанавливает или отображает системное время.\n"
 
 #: cmd.rc:187
 msgid "Sets the window title for the cmd window, syntax TITLE [string]\n"
@@ -9704,11 +9709,11 @@ msgstr ""
 
 #: cmd.rc:203
 msgid "VER displays the version of cmd you are running.\n"
-msgstr "VER выводит версию используемого cmd\n"
+msgstr "VER выводит версию используемого cmd.\n"
 
 #: cmd.rc:205
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr "Справка о VOL\n"
+msgstr "VOL выводит метку тома дискового устройства.\n"
 
 #: cmd.rc:209
 msgid ""
@@ -9895,7 +9900,7 @@ msgstr ""
 
 #: cmd.rc:291
 msgid "Are you sure"
-msgstr "Вы уверены?"
+msgstr "Вы уверены"
 
 #: cmd.rc:292 xcopy.rc:40
 msgctxt "Yes key"
@@ -10046,9 +10051,7 @@ msgstr "Утилита диагностики DirectX"
 
 #: dxdiag.rc:28
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
-msgstr ""
-"Использование: dxdiag [/whql:off | /whql:on] [/t <имя файла> | /x <имя "
-"файла>]"
+msgstr "Использование: dxdiag [/whql:off | /whql:on] [/t файл | /x файл]"
 
 #: explorer.rc:28
 msgid "Wine Explorer"
@@ -10325,7 +10328,7 @@ msgstr "&Перенос по словам"
 
 #: notepad.rc:53
 msgid "&Search...\tCtrl+F"
-msgstr "&Найти..."
+msgstr "&Найти...\tCtrl+F"
 
 #: notepad.rc:54
 msgid "&Search next\tF3"
@@ -10412,7 +10415,7 @@ msgid ""
 "You did not enter any text.\n"
 "Please type something and try again."
 msgstr ""
-"Вы не ввели текст. \n"
+"Вы не ввели текст.\n"
 "Введите что-нибудь и попробуйте еще."
 
 #: notepad.rc:83
@@ -10446,7 +10449,7 @@ msgid ""
 "Not enough memory to complete this task.\n"
 "Close one or more applications to increase the amount of free memory."
 msgstr ""
-"Недостаточно памяти для завершения этой операции \n"
+"Недостаточно памяти для завершения этой операции.\n"
 "Закройте одно или несколько приложений и повторите попытку."
 
 #: notepad.rc:90
@@ -10564,7 +10567,7 @@ msgstr "&Обновить\tF5"
 
 #: oleview.rc:71
 msgid "&About OleView"
-msgstr "&О программе..."
+msgstr "&О OleView"
 
 #: oleview.rc:79
 msgid "&Save as..."
@@ -10830,7 +10833,7 @@ msgstr "Группировать типы по видам"
 
 #: progman.rc:30
 msgid "&New..."
-msgstr "&Создать"
+msgstr "&Создать..."
 
 #: progman.rc:31
 msgid "O&pen\tEnter"
@@ -11521,7 +11524,7 @@ msgid ""
 msgstr ""
 "Приложение не может быть запущено или нет ассоциированных с типом данного "
 "документа приложений.\n"
-"Вызов ShellExecuteEx провалился."
+"Вызов ShellExecuteEx провалился"
 
 #: start.rc:68
 msgid "Could not translate the specified Unix filename to a DOS filename."
@@ -12322,7 +12325,7 @@ msgstr ""
 
 #: taskmgr.rc:305
 msgid "Unable to Change Priority"
-msgstr "Невозможно сменить приоритет."
+msgstr "Невозможно сменить приоритет"
 
 #: taskmgr.rc:310
 msgid ""
@@ -12351,11 +12354,11 @@ msgstr ""
 
 #: taskmgr.rc:314
 msgid "Unable to Debug Process"
-msgstr "Отладка процесса невозможна."
+msgstr "Отладка процесса невозможна"
 
 #: taskmgr.rc:315
 msgid "The process must have affinity with at least one processor"
-msgstr "Процессу должен соответствовать хотя бы один ЦП."
+msgstr "Процессу должен соответствовать хотя бы один процессор"
 
 #: taskmgr.rc:316
 msgid "Invalid Option"
@@ -12553,7 +12556,7 @@ msgstr " Разрешение экрана "
 
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
-msgstr "Пример текста (This is a sample text). Шрифт Tahoma 10 пунктов."
+msgstr "Пример текста (This is a sample text), шрифт Tahoma 10 пунктов"
 
 #: winecfg.rc:193
 msgid " DLL Overrides "
@@ -12582,7 +12585,7 @@ msgstr "Существующие замещения:"
 
 #: winecfg.rc:201
 msgid "&Edit..."
-msgstr "&Изменить"
+msgstr "&Изменить..."
 
 #: winecfg.rc:207
 msgid "Edit Override"
@@ -12634,7 +12637,7 @@ msgstr "&Добавить..."
 
 #: winecfg.rc:240
 msgid "Auto&detect"
-msgstr "&Автоопределение..."
+msgstr "&Автоопределение"
 
 #: winecfg.rc:243
 msgid "&Path:"
@@ -12646,7 +12649,7 @@ msgstr "Показать дополнительные"
 
 #: winecfg.rc:251
 msgid "De&vice:"
-msgstr "De&vice:"
+msgstr "Ус&тройство:"
 
 #: winecfg.rc:253
 msgid "Bro&wse..."
@@ -12666,15 +12669,15 @@ msgstr "Показывать файлы, начинающиеся с точки"
 
 #: winecfg.rc:267
 msgid " Driver Diagnostics "
-msgstr " Driver Diagnostics "
+msgstr " Диагностика драйвера "
 
 #: winecfg.rc:269
 msgid " Defaults "
-msgstr " Defaults "
+msgstr " По умолчанию "
 
 #: winecfg.rc:270
 msgid "Output device:"
-msgstr "Output device:"
+msgstr "Устройство вывода:"
 
 #: winecfg.rc:271
 msgid "Voice output device:"
@@ -12682,11 +12685,11 @@ msgstr "Voice output device:"
 
 #: winecfg.rc:272
 msgid "Input device:"
-msgstr "Input device:"
+msgstr "Устройство ввода:"
 
 #: winecfg.rc:273
 msgid "Voice input device:"
-msgstr "Voice input device:"
+msgstr "Устройство голосового ввода:"
 
 #: winecfg.rc:278
 msgid "&Test Sound"
@@ -12730,7 +12733,7 @@ msgstr "Диски"
 
 #: winecfg.rc:33
 msgid "Select the Unix target directory, please."
-msgstr "Выберите целевой каталог в системе:"
+msgstr "Выберите целевой каталог в системе."
 
 #: winecfg.rc:34
 msgid "Hide &Advanced"
@@ -13987,7 +13990,7 @@ msgstr "дм"
 
 #: wordpad.rc:174
 msgid "inch"
-msgstr "inch"
+msgstr "дюйм"
 
 #: wordpad.rc:175
 msgctxt "unit: point"
