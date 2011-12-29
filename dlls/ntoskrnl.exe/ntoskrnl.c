@@ -1733,3 +1733,12 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     }
     return TRUE;
 }
+
+/*****************************************************
+ *           Ke386IoSetAccessProcess  (NTOSKRNL.EXE.@)
+ */
+BOOLEAN WINAPI Ke386IoSetAccessProcess(PEPROCESS *process, ULONG flag)
+{
+    FIXME("(%p %d) stub\n", process, flag);
+    return FALSE;
+}

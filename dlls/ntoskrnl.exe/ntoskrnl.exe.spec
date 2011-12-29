@@ -503,7 +503,7 @@
 @ stub KdPollBreakIn
 @ stub KdPowerTransition
 @ stub Ke386CallBios
-@ stub Ke386IoSetAccessProcess
+@ stdcall Ke386IoSetAccessProcess(ptr long)
 @ stub Ke386QueryIoAccessMap
 @ stub Ke386SetIoAccessMap
 @ stub KeAcquireInterruptSpinLock
