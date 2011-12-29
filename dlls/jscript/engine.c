@@ -499,87 +499,6 @@ static BOOL lookup_global_members(script_ctx_t *ctx, BSTR identifier, exprval_t 
     return FALSE;
 }
 
-HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *source, BOOL from_eval,
-        jsexcept_t *ei, VARIANT *retv)
-{
-    script_ctx_t *script = parser->script;
-    function_declaration_t *func;
-    parser_ctx_t *prev_parser;
-    var_list_t *var;
-    VARIANT val;
-    exec_ctx_t *prev_ctx;
-    return_type_t rt;
-    HRESULT hres = S_OK;
-
-    for(func = source->functions; func; func = func->next) {
-        jsdisp_t *func_obj;
-        VARIANT var;
-
-        hres = create_source_function(parser, func->expr->parameter_list, func->expr->source_elements,
-                ctx->scope_chain, func->expr->src_str, func->expr->src_len, &func_obj);
-        if(FAILED(hres))
-            return hres;
-
-        var_set_jsdisp(&var, func_obj);
-        hres = jsdisp_propput_name(ctx->var_disp, func->expr->identifier, &var, ei, NULL);
-        jsdisp_release(func_obj);
-        if(FAILED(hres))
-            return hres;
-    }
-
-    for(var = source->variables; var; var = var->next) {
-        DISPID id = 0;
-        BSTR name;
-
-        name = SysAllocString(var->identifier);
-        if(!name)
-            return E_OUTOFMEMORY;
-
-        if(!ctx->is_global || !lookup_global_members(parser->script, name, NULL))
-            hres = jsdisp_get_id(ctx->var_disp, var->identifier, fdexNameEnsure, &id);
-        SysFreeString(name);
-        if(FAILED(hres))
-            return hres;
-    }
-
-    prev_ctx = script->exec_ctx;
-    script->exec_ctx = ctx;
-
-    prev_parser = ctx->parser;
-    ctx->parser = parser;
-
-    V_VT(&val) = VT_EMPTY;
-    memset(&rt, 0, sizeof(rt));
-    rt.type = RT_NORMAL;
-
-    if(source->statement) {
-        if(source->statement->instr_off == -1)
-            hres = compile_subscript_stat(ctx->parser, source->statement, TRUE, &source->statement->instr_off);
-        if(SUCCEEDED(hres))
-            hres = compiled_statement_eval(script, source->statement, &rt, &val);
-    }
-
-    script->exec_ctx = prev_ctx;
-    ctx->parser = prev_parser;
-
-    if(rt.type != RT_NORMAL && rt.type != RT_RETURN) {
-        FIXME("wrong rt %d\n", rt.type);
-        hres = E_FAIL;
-    }
-
-    *ei = rt.ei;
-    if(FAILED(hres)) {
-        VariantClear(&val);
-        return hres;
-    }
-
-    if(!retv || (!from_eval && rt.type != RT_RETURN))
-        VariantClear(&val);
-    if(retv)
-        *retv = val;
-    return S_OK;
-}
-
 /* ECMA-262 3rd Edition    10.1.4 */
 static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
@@ -2785,5 +2704,86 @@ static HRESULT expr_eval(script_ctx_t *ctx, expression_t *expr, jsexcept_t *ei, 
         V_VT(ret) = VT_EMPTY;
     else
         *ret = *stack_pop(exec_ctx);
+    return S_OK;
+}
+
+HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *source, BOOL from_eval,
+        jsexcept_t *ei, VARIANT *retv)
+{
+    script_ctx_t *script = parser->script;
+    function_declaration_t *func;
+    parser_ctx_t *prev_parser;
+    var_list_t *var;
+    VARIANT val;
+    exec_ctx_t *prev_ctx;
+    return_type_t rt;
+    HRESULT hres = S_OK;
+
+    for(func = source->functions; func; func = func->next) {
+        jsdisp_t *func_obj;
+        VARIANT var;
+
+        hres = create_source_function(parser, func->expr->parameter_list, func->expr->source_elements,
+                ctx->scope_chain, func->expr->src_str, func->expr->src_len, &func_obj);
+        if(FAILED(hres))
+            return hres;
+
+        var_set_jsdisp(&var, func_obj);
+        hres = jsdisp_propput_name(ctx->var_disp, func->expr->identifier, &var, ei, NULL);
+        jsdisp_release(func_obj);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    for(var = source->variables; var; var = var->next) {
+        DISPID id = 0;
+        BSTR name;
+
+        name = SysAllocString(var->identifier);
+        if(!name)
+            return E_OUTOFMEMORY;
+
+        if(!ctx->is_global || !lookup_global_members(parser->script, name, NULL))
+            hres = jsdisp_get_id(ctx->var_disp, var->identifier, fdexNameEnsure, &id);
+        SysFreeString(name);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    prev_ctx = script->exec_ctx;
+    script->exec_ctx = ctx;
+
+    prev_parser = ctx->parser;
+    ctx->parser = parser;
+
+    V_VT(&val) = VT_EMPTY;
+    memset(&rt, 0, sizeof(rt));
+    rt.type = RT_NORMAL;
+
+    if(source->statement) {
+        if(source->statement->instr_off == -1)
+            hres = compile_subscript_stat(ctx->parser, source->statement, TRUE, &source->statement->instr_off);
+        if(SUCCEEDED(hres))
+            hres = compiled_statement_eval(script, source->statement, &rt, &val);
+    }
+
+    script->exec_ctx = prev_ctx;
+    ctx->parser = prev_parser;
+
+    if(rt.type != RT_NORMAL && rt.type != RT_RETURN) {
+        FIXME("wrong rt %d\n", rt.type);
+        hres = E_FAIL;
+    }
+
+    *ei = rt.ei;
+    if(FAILED(hres)) {
+        VariantClear(&val);
+        return hres;
+    }
+
+    if(!retv || (!from_eval && rt.type != RT_RETURN))
+        VariantClear(&val);
+    if(retv)
+        *retv = val;
     return S_OK;
 }
