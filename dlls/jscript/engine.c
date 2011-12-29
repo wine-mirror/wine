@@ -657,31 +657,6 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, DWORD flags, 
 }
 
 /* ECMA-262 3rd Edition    12.2 */
-static HRESULT variable_list_eval(script_ctx_t *ctx, variable_declaration_t *var_list, jsexcept_t *ei)
-{
-    variable_declaration_t *iter;
-    HRESULT hres = S_OK;
-
-    for(iter = var_list; iter; iter = iter->next) {
-        VARIANT val;
-
-        if(!iter->expr)
-            continue;
-
-        hres = expr_eval(ctx, iter->expr, ei, &val);
-        if(FAILED(hres))
-            break;
-
-        hres = jsdisp_propput_name(ctx->exec_ctx->var_disp, iter->identifier, &val, ei, NULL/*FIXME*/);
-        VariantClear(&val);
-        if(FAILED(hres))
-            break;
-    }
-
-    return hres;
-}
-
-/* ECMA-262 3rd Edition    12.2 */
 static HRESULT interp_var_set(exec_ctx_t *ctx)
 {
     const BSTR name = ctx->parser->code->instrs[ctx->ip].arg1.bstr;
@@ -746,75 +721,6 @@ HRESULT while_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_
         rt->type = RT_NORMAL;
 
     *ret = val;
-    return S_OK;
-}
-
-/* ECMA-262 3rd Edition    12.6.3 */
-HRESULT for_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
-{
-    for_statement_t *stat = (for_statement_t*)_stat;
-    VARIANT val, tmp, retv;
-    VARIANT_BOOL b;
-    HRESULT hres;
-
-    TRACE("\n");
-
-    if(stat->variable_list) {
-        hres = variable_list_eval(ctx, stat->variable_list, &rt->ei);
-        if(FAILED(hres))
-            return hres;
-    }else if(stat->begin_expr) {
-        hres = expr_eval(ctx, stat->begin_expr, &rt->ei, &val);
-        if(FAILED(hres))
-            return hres;
-
-        VariantClear(&val);
-    }
-
-    V_VT(&retv) = VT_EMPTY;
-
-    while(1) {
-        if(stat->expr) {
-            hres = expr_eval(ctx, stat->expr, &rt->ei, &tmp);
-            if(FAILED(hres))
-                break;
-
-            hres = to_boolean(&tmp, &b);
-            VariantClear(&tmp);
-            if(FAILED(hres) || !b)
-                break;
-        }
-
-        hres = stat_eval(ctx, stat->statement, rt, &tmp);
-        if(FAILED(hres))
-            break;
-
-        VariantClear(&retv);
-        retv = tmp;
-
-        if(rt->type == RT_CONTINUE)
-            rt->type = RT_NORMAL;
-        else if(rt->type != RT_NORMAL)
-            break;
-
-        if(stat->end_expr) {
-            hres = expr_eval(ctx, stat->end_expr, &rt->ei, &val);
-            if(FAILED(hres))
-                break;
-
-            VariantClear(&val);
-        }
-    }
-
-    if(FAILED(hres)) {
-        VariantClear(&retv);
-        return hres;
-    }
-
-    if(rt->type == RT_BREAK)
-        rt->type = RT_NORMAL;
-
-    *ret = retv;
     return S_OK;
 }
 

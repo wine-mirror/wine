@@ -1084,10 +1084,8 @@ static HRESULT compile_while_statement(compiler_ctx_t *ctx, while_statement_t *s
 static HRESULT compile_for_statement(compiler_ctx_t *ctx, for_statement_t *stat)
 {
     statement_ctx_t stat_ctx = {0, FALSE, FALSE};
-    unsigned off_backup, expr_off;
+    unsigned expr_off;
     HRESULT hres;
-
-    off_backup = ctx->code_off;
 
     if(stat->variable_list) {
         hres = compile_variable_list(ctx, stat->variable_list);
@@ -1131,11 +1129,6 @@ static HRESULT compile_for_statement(compiler_ctx_t *ctx, for_statement_t *stat)
         return E_OUTOFMEMORY;
 
     hres = compile_statement(ctx, &stat_ctx, stat->statement);
-    if(hres == E_NOTIMPL) {
-        ctx->code_off = off_backup;
-        stat->stat.eval = for_statement_eval;
-        return compile_interp_fallback(ctx, &stat->stat);
-    }
     if(FAILED(hres))
         return hres;
 
