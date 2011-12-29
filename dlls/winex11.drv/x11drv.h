@@ -224,7 +224,7 @@ extern BOOL X11DRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bot
 extern HBITMAP X11DRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap ) DECLSPEC_HIDDEN;
 extern HBRUSH X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
 extern HFONT X11DRV_SelectFont( PHYSDEV dev, HFONT hfont ) DECLSPEC_HIDDEN;
-extern HPEN X11DRV_SelectPen( PHYSDEV dev, HPEN hpen ) DECLSPEC_HIDDEN;
+extern HPEN X11DRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
 extern COLORREF X11DRV_SetBkColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern COLORREF X11DRV_SetDCBrushColor( PHYSDEV dev, COLORREF crColor ) DECLSPEC_HIDDEN;
 extern COLORREF X11DRV_SetDCPenColor( PHYSDEV dev, COLORREF crColor ) DECLSPEC_HIDDEN;

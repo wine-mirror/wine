@@ -1531,7 +1531,7 @@ static inline int get_pen_device_width( dibdrv_physdev *pdev, int width )
 /***********************************************************************
  *           dibdrv_SelectPen
  */
-HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
+HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *pattern )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectPen );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
@@ -1631,7 +1631,7 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen )
     pdev->pen_is_ext = (elp != NULL);
     HeapFree( GetProcessHeap(), 0, elp );
 
-    return next->funcs->pSelectPen( next, hpen );
+    return next->funcs->pSelectPen( next, hpen, pattern );
 }
 
 /***********************************************************************

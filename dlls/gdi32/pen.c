@@ -221,7 +221,7 @@ invalid:
  */
 static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc )
 {
-    PHYSDEV physdev;
+    PENOBJ *pen;
     HGDIOBJ ret = 0;
     DC *dc = get_dc_ptr( hdc );
 
@@ -231,22 +231,43 @@ static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc )
         return 0;
     }
 
-    if (!GDI_inc_ref_count( handle ))
+    if ((pen = GDI_GetObjPtr( handle, 0 )))
     {
-        release_dc_ptr( dc );
-        return 0;
-    }
+        struct brush_pattern *pattern;
+        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSelectPen );
 
-    physdev = GET_DC_PHYSDEV( dc, pSelectPen );
-    if (!physdev->funcs->pSelectPen( physdev, handle ))
-    {
-        GDI_dec_ref_count( handle );
-    }
-    else
-    {
-        ret = dc->hPen;
-        dc->hPen = handle;
-        GDI_dec_ref_count( ret );
+        switch (pen->header.type)
+        {
+        case OBJ_PEN:
+            pattern = NULL;
+            break;
+        case OBJ_EXTPEN:
+            pattern = &pen->pattern;
+            if (!pattern->info)
+            {
+                if (pattern->bitmap) cache_pattern_bits( physdev, pattern );
+                else pattern = NULL;
+            }
+            break;
+        default:
+            GDI_ReleaseObj( handle );
+            release_dc_ptr( dc );
+            return 0;
+        }
+
+        GDI_inc_ref_count( handle );
+        GDI_ReleaseObj( handle );
+
+        if (!physdev->funcs->pSelectPen( physdev, handle, pattern ))
+        {
+            GDI_dec_ref_count( handle );
+        }
+        else
+        {
+            ret = dc->hPen;
+            dc->hPen = handle;
+            GDI_dec_ref_count( ret );
+        }
     }
     release_dc_ptr( dc );
     return ret;

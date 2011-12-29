@@ -361,7 +361,7 @@ static DWORD EMFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen)
 /******************************************************************
  *         EMFDRV_SelectPen
  */
-HPEN EMFDRV_SelectPen(PHYSDEV dev, HPEN hPen )
+HPEN EMFDRV_SelectPen(PHYSDEV dev, HPEN hPen, const struct brush_pattern *pattern )
 {
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*)dev;
     EMRSELECTOBJECT emr;

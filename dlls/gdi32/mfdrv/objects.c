@@ -323,7 +323,7 @@ static UINT16 MFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen, LOGPEN16 *logpen)
 /***********************************************************************
  *           MFDRV_SelectPen
  */
-HPEN MFDRV_SelectPen( PHYSDEV dev, HPEN hpen )
+HPEN MFDRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *pattern )
 {
     LOGPEN16 logpen;
     INT16 index;

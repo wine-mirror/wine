@@ -541,7 +541,7 @@ static HPALETTE nulldrv_SelectPalette( PHYSDEV dev, HPALETTE palette, BOOL bkgnd
     return palette;
 }
 
-static HPEN nulldrv_SelectPen( PHYSDEV dev, HPEN pen )
+static HPEN nulldrv_SelectPen( PHYSDEV dev, HPEN pen, const struct brush_pattern *pattern )
 {
     return pen;
 }

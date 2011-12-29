@@ -37,7 +37,7 @@ static const DWORD PEN_alternate[]  = { 1 };
 /***********************************************************************
  *           SelectPen   (WINEPS.@)
  */
-HPEN PSDRV_SelectPen( PHYSDEV dev, HPEN hpen )
+HPEN PSDRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *pattern )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     LOGPEN logpen;

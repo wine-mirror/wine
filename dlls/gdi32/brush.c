@@ -56,33 +56,42 @@ static const struct gdi_obj_funcs brush_funcs =
 
 
 /* fetch the contents of the brush bitmap and cache them in the brush pattern */
-static BOOL store_bitmap_bits( struct brush_pattern *brush, BITMAPOBJ *bmp )
+void cache_pattern_bits( PHYSDEV physdev, struct brush_pattern *pattern )
 {
-    const struct gdi_dc_funcs *funcs = get_bitmap_funcs( bmp );
+    const struct gdi_dc_funcs *funcs;
     struct gdi_image_bits bits;
     struct bitblt_coords src;
     BITMAPINFO *info;
+    BITMAPOBJ *bmp;
 
-    if (!(info = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( BITMAPINFO, bmiColors[256] ))))
-        return FALSE;
+    if (pattern->info) return;  /* already cached */
+    if (!(bmp = GDI_GetObjPtr( pattern->bitmap, OBJ_BITMAP ))) return;
+
+    /* we don't need to cache if we are selecting into the same type of DC */
+    if (physdev && bmp->funcs == physdev->funcs) goto done;
+
+    if (!(info = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET( BITMAPINFO, bmiColors[256] )))) goto done;
 
     src.visrect.left   = src.x = 0;
     src.visrect.top    = src.y = 0;
     src.visrect.right  = src.width = bmp->bitmap.bmWidth;
     src.visrect.bottom = src.height = bmp->bitmap.bmHeight;
-    if (funcs->pGetImage( NULL, brush->bitmap, info, &bits, &src ))
+    funcs = get_bitmap_funcs( bmp );
+    if (funcs->pGetImage( NULL, pattern->bitmap, info, &bits, &src ))
     {
         HeapFree( GetProcessHeap(), 0, info );
-        return FALSE;
+        goto done;
     }
 
     /* release the unneeded space */
     HeapReAlloc( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY, info,
                  get_dib_info_size( info, DIB_RGB_COLORS ));
-    brush->info  = info;
-    brush->bits  = bits;
-    brush->usage = DIB_RGB_COLORS;
-    return TRUE;
+    pattern->info  = info;
+    pattern->bits  = bits;
+    pattern->usage = DIB_RGB_COLORS;
+
+done:
+    GDI_ReleaseObj( pattern->bitmap );
 }
 
 static BOOL copy_bitmap( struct brush_pattern *brush, HBITMAP bitmap )
@@ -204,16 +213,8 @@ BOOL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void **bits, UINT *
 
     if (!(brush = GDI_GetObjPtr( handle, OBJ_BRUSH ))) return FALSE;
 
-    if (!brush->pattern.info)
-    {
-        BITMAPOBJ *bmp = GDI_GetObjPtr( brush->pattern.bitmap, OBJ_BITMAP );
+    if (!brush->pattern.info) cache_pattern_bits( NULL, &brush->pattern );
 
-        if (bmp)
-        {
-            store_bitmap_bits( &brush->pattern, bmp );
-            GDI_ReleaseObj( brush->pattern.bitmap );
-        }
-    }
     if (brush->pattern.info)
     {
         memcpy( info, brush->pattern.info, get_dib_info_size( brush->pattern.info, brush->pattern.usage ));
@@ -496,14 +497,11 @@ static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc )
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSelectBrush );
         struct brush_pattern *pattern = &brush->pattern;
 
-        if (pattern->bitmap && !pattern->info)
+        if (!pattern->info)
         {
-            BITMAPOBJ *bmp = GDI_GetObjPtr( pattern->bitmap, OBJ_BITMAP );
-            /* fetch the bitmap bits if we are selecting into a different type of DC */
-            if (bmp && bmp->funcs != physdev->funcs) store_bitmap_bits( pattern, bmp );
-            GDI_ReleaseObj( pattern->bitmap );
+            if (pattern->bitmap) cache_pattern_bits( physdev, pattern );
+            else pattern = NULL;
         }
-        else if (!pattern->info) pattern = NULL;
 
         GDI_inc_ref_count( handle );
         GDI_ReleaseObj( handle );
