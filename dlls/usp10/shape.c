@@ -347,6 +347,7 @@ typedef struct {
 } CMAP_SegmentedCoverage;
 
 static INT GSUB_apply_lookup(const GSUB_LookupList* lookup, INT lookup_index, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count);
+static HRESULT GSUB_GetFontScriptTags(ScriptCache *psc, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pScriptTags, int *pcTags, LPCVOID* script_table);
 
 typedef struct tagVowelComponents
 {
@@ -762,30 +763,6 @@ static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
         ERR("Unknown CoverageFormat %i\n",GET_BE_WORD(cf1->CoverageFormat));
 
     return -1;
-}
-
-static const GSUB_Script* GSUB_get_script_table( const GSUB_Header* header, const char* tag)
-{
-    const GSUB_ScriptList *script;
-    const GSUB_Script *deflt = NULL;
-    int i;
-    script = (const GSUB_ScriptList*)((const BYTE*)header + GET_BE_WORD(header->ScriptList));
-
-    TRACE("%i scripts in this font\n",GET_BE_WORD(script->ScriptCount));
-    for (i = 0; i < GET_BE_WORD(script->ScriptCount); i++)
-    {
-        const GSUB_Script *scr;
-        int offset;
-
-        offset = GET_BE_WORD(script->ScriptRecord[i].Script);
-        scr = (const GSUB_Script*)((const BYTE*)script + offset);
-
-        if (strncmp(script->ScriptRecord[i].ScriptTag, tag,4)==0)
-            return scr;
-        if (strncmp(script->ScriptRecord[i].ScriptTag, "dflt",4)==0)
-            deflt = scr;
-    }
-    return deflt;
 }
 
 static const GSUB_LangSys* GSUB_get_lang_table( const GSUB_Script* script, const char* tag)
@@ -1242,15 +1219,22 @@ static LPCVOID load_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc
 
     if (psc->GSUB_Table)
     {
-        const GSUB_Script *script;
+        const GSUB_Script *script = NULL;
         const GSUB_LangSys *language;
         int attempt = 2;
+        OPENTYPE_TAG scriptTags;
+        int cTags;
+        HRESULT hr;
 
         do
         {
-            script = GSUB_get_script_table(psc->GSUB_Table, get_opentype_script(hdc,psa,psc,(attempt==2)));
+            const char* tag;
+
+            tag = get_opentype_script(hdc,psa,psc,(attempt==2));
+            hr = GSUB_GetFontScriptTags(psc, MS_MAKE_TAG(tag[0],tag[1],tag[2],tag[3]), 1, &scriptTags, &cTags, (LPCVOID*)&script);
+
             attempt--;
-            if (script)
+            if (SUCCEEDED(hr) && cTags && script)
             {
                 if (psc->userLang != 0)
                     language = GSUB_get_lang_table(script,(char*)&psc->userLang);
@@ -1264,8 +1248,8 @@ static LPCVOID load_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc
         /* try in the default (latin) table */
         if (!feature)
         {
-            script = GSUB_get_script_table(psc->GSUB_Table, "latn");
-            if (script)
+            hr = GSUB_GetFontScriptTags(psc, MS_MAKE_TAG('l','a','t','n'), 1, &scriptTags, &cTags, (LPCVOID*)&script);
+            if (SUCCEEDED(hr) && script)
             {
                 language = GSUB_get_lang_table(script, "xxxx"); /* Need to get Lang tag */
                 if (language)
@@ -1609,7 +1593,13 @@ static int apply_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, W
 
 static inline BOOL get_GSUB_Indic2(SCRIPT_ANALYSIS *psa, ScriptCache *psc)
 {
-    return(GSUB_get_script_table(psc->GSUB_Table,ShapingData[psa->eScript].newOtTag)!=NULL);
+    OPENTYPE_TAG tag;
+    HRESULT hr;
+    int count = 0;
+
+    hr = GSUB_GetFontScriptTags(psc, MS_MAKE_TAG(ShapingData[psa->eScript].newOtTag[0],ShapingData[psa->eScript].newOtTag[1],ShapingData[psa->eScript].newOtTag[2],ShapingData[psa->eScript].newOtTag[3]), 1, &tag, &count, NULL);
+
+    return(SUCCEEDED(hr));
 }
 
 static WCHAR neighbour_char(int i, int delta, const WCHAR* chars, INT cchLen)
