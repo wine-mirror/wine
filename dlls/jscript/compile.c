@@ -25,6 +25,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
+WINE_DECLARE_DEBUG_CHANNEL(jscript_disas);
 
 typedef struct _statement_ctx_t {
     unsigned stack_use;
@@ -60,6 +61,46 @@ static const struct {
 OP_LIST
 #undef X
 };
+
+static void dump_instr_arg(instr_arg_type_t type, instr_arg_t *arg)
+{
+    switch(type) {
+    case ARG_STR:
+        TRACE_(jscript_disas)("\t%s", debugstr_w(arg->str));
+        break;
+    case ARG_BSTR:
+        TRACE_(jscript_disas)("\t%s", debugstr_wn(arg->bstr, SysStringLen(arg->bstr)));
+        break;
+    case ARG_INT:
+        TRACE_(jscript_disas)("\t%d", arg->uint);
+        break;
+    case ARG_UINT:
+    case ARG_ADDR:
+        TRACE_(jscript_disas)("\t%u", arg->uint);
+        break;
+    case ARG_DBL:
+        TRACE_(jscript_disas)("\t%lf", *arg->dbl);
+        break;
+    case ARG_STAT:
+    case ARG_FUNC:
+    case ARG_NONE:
+        break;
+    default:
+        assert(0);
+    }
+}
+
+static void dump_code(compiler_ctx_t *ctx, unsigned off)
+{
+    instr_t *instr;
+
+    for(instr = ctx->code->instrs+off; instr < ctx->code->instrs+ctx->code_off; instr++) {
+        TRACE_(jscript_disas)("%d:\t%s", (int)(instr-ctx->code->instrs), instr_info[instr->op].op_str);
+        dump_instr_arg(instr_info[instr->op].arg1_type, &instr->arg1);
+        dump_instr_arg(instr_info[instr->op].arg2_type, &instr->arg2);
+        TRACE_(jscript_disas)("\n");
+    }
+}
 
 static HRESULT compile_expression(compiler_ctx_t*,expression_t*);
 static HRESULT compile_statement(compiler_ctx_t*,statement_ctx_t*,statement_t*);
@@ -1639,6 +1680,7 @@ HRESULT compile_subscript(parser_ctx_t *parser, expression_t *expr, unsigned *re
 
 HRESULT compile_subscript_stat(parser_ctx_t *parser, statement_t *stat, unsigned *ret_off)
 {
+    unsigned off;
     HRESULT hres;
 
     TRACE("\n");
@@ -1647,7 +1689,7 @@ HRESULT compile_subscript_stat(parser_ctx_t *parser, statement_t *stat, unsigned
     if(FAILED(hres))
         return hres;
 
-    *ret_off = parser->compiler->code_off;
+    off = parser->compiler->code_off;
     if(stat->next)
         hres = compile_block_statement(parser->compiler, stat);
     else
@@ -1655,7 +1697,14 @@ HRESULT compile_subscript_stat(parser_ctx_t *parser, statement_t *stat, unsigned
     if(FAILED(hres))
         return hres;
 
-    resolve_labels(parser->compiler, *ret_off);
+    resolve_labels(parser->compiler, off);
 
-    return push_instr(parser->compiler, OP_ret) == -1 ? E_OUTOFMEMORY : S_OK;
+    if(push_instr(parser->compiler, OP_ret) == -1)
+        return E_OUTOFMEMORY;
+
+    if(TRACE_ON(jscript_disas))
+        dump_code(parser->compiler, off);
+
+    *ret_off = off;
+    return S_OK;
 }
