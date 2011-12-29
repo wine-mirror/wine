@@ -2592,10 +2592,12 @@ MSVCP_size_t __cdecl numpunct_char__Getcat(const locale_facet **facet, const loc
 /* ?do_decimal_point@?$numpunct@D@std@@MBEDXZ */
 /* ?do_decimal_point@?$numpunct@D@std@@MEBADXZ */
 DEFINE_THISCALL_WRAPPER(numpunct_char_do_decimal_point, 4)
+#define call_numpunct_char_do_decimal_point(this) CALL_VTBL_FUNC(this, 4, \
+        char, (const numpunct_char *this), (this))
 char __thiscall numpunct_char_do_decimal_point(const numpunct_char *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return this->dp;
 }
 
 /* ?decimal_point@?$numpunct@D@std@@QBEDXZ */
@@ -2603,17 +2605,19 @@ char __thiscall numpunct_char_do_decimal_point(const numpunct_char *this)
 DEFINE_THISCALL_WRAPPER(numpunct_char_decimal_point, 4)
 char __thiscall numpunct_char_decimal_point(const numpunct_char *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return call_numpunct_char_do_decimal_point(this);
 }
 
 /* ?do_thousands_sep@?$numpunct@D@std@@MBEDXZ */
 /* ?do_thousands_sep@?$numpunct@D@std@@MEBADXZ */
 DEFINE_THISCALL_WRAPPER(numpunct_char_do_thousands_sep, 4)
+#define call_numpunct_char_do_thousands_sep(this) CALL_VTBL_FUNC(this, 8, \
+        char, (const numpunct_char*), (this))
 char __thiscall numpunct_char_do_thousands_sep(const numpunct_char *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return this->sep;
 }
 
 /* ?thousands_sep@?$numpunct@D@std@@QBEDXZ */
@@ -2621,17 +2625,20 @@ char __thiscall numpunct_char_do_thousands_sep(const numpunct_char *this)
 DEFINE_THISCALL_WRAPPER(numpunct_char_thousands_sep, 4)
 char __thiscall numpunct_char_thousands_sep(const numpunct_char *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return call_numpunct_char_do_thousands_sep(this);
 }
 
 /* ?do_grouping@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
 /* ?do_grouping@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
 DEFINE_THISCALL_WRAPPER(numpunct_char_do_grouping, 8)
-basic_string_char* __thiscall numpunct_char_do_grouping(const numpunct_char *this, basic_string_char *ret)
+#define call_numpunct_char_do_grouping(this, ret) CALL_VTBL_FUNC(this, 12, \
+        basic_string_char*, (const numpunct_char*, basic_string_char*), (this, ret))
+basic_string_char* __thiscall numpunct_char_do_grouping(
+        const numpunct_char *this, basic_string_char *ret)
 {
-    FIXME("(%p) stub\n", this);
-    return ret;
+    TRACE("(%p)\n", this);
+    return MSVCP_basic_string_char_ctor_cstr(ret, this->grouping);
 }
 
 /* ?grouping@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
@@ -2639,17 +2646,20 @@ basic_string_char* __thiscall numpunct_char_do_grouping(const numpunct_char *thi
 DEFINE_THISCALL_WRAPPER(numpunct_char_grouping, 8)
 basic_string_char* __thiscall numpunct_char_grouping(const numpunct_char *this, basic_string_char *ret)
 {
-    FIXME("(%p) stub\n", this);
-    return ret;
+    TRACE("(%p)\n", this);
+    return call_numpunct_char_do_grouping(this, ret);
 }
 
 /* ?do_falsename@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
 /* ?do_falsename@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
 DEFINE_THISCALL_WRAPPER(numpunct_char_do_falsename, 8)
-basic_string_char* __thiscall numpunct_char_do_falsename(const numpunct_char *this, basic_string_char *ret)
+#define call_numpunct_char_do_falsename(this, ret) CALL_VTBL_FUNC(this, 16, \
+        basic_string_char*, (const numpunct_char*, basic_string_char*), (this, ret))
+basic_string_char* __thiscall numpunct_char_do_falsename(
+        const numpunct_char *this, basic_string_char *ret)
 {
-    FIXME("(%p) stub\n", this);
-    return ret;
+    TRACE("(%p)\n", this);
+    return MSVCP_basic_string_char_ctor_cstr(ret, this->false_name);
 }
 
 /* ?falsename@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
@@ -2657,17 +2667,20 @@ basic_string_char* __thiscall numpunct_char_do_falsename(const numpunct_char *th
 DEFINE_THISCALL_WRAPPER(numpunct_char_falsename, 8)
 basic_string_char* __thiscall numpunct_char_falsename(const numpunct_char *this, basic_string_char *ret)
 {
-    FIXME("(%p) stub\n", this);
-    return ret;
+    TRACE("(%p)\n", this);
+    return call_numpunct_char_do_falsename(this, ret);
 }
 
 /* ?do_truename@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
 /* ?do_truename@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
 DEFINE_THISCALL_WRAPPER(numpunct_char_do_truename, 8)
-basic_string_char* __thiscall numpunct_char_do_truename(const numpunct_char *this, basic_string_char *ret)
+#define call_numpunct_char_do_truename(this, ret) CALL_VTBL_FUNC(this, 20, \
+        basic_string_char*, (const numpunct_char*, basic_string_char*), (this, ret))
+basic_string_char* __thiscall numpunct_char_do_truename(
+        const numpunct_char *this, basic_string_char *ret)
 {
-    FIXME("(%p) stub\n", this);
-    return ret;
+    TRACE("(%p)\n", this);
+    return MSVCP_basic_string_char_ctor_cstr(ret, this->true_name);
 }
 
 /* ?truename@?$numpunct@D@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
@@ -2675,8 +2688,8 @@ basic_string_char* __thiscall numpunct_char_do_truename(const numpunct_char *thi
 DEFINE_THISCALL_WRAPPER(numpunct_char_truename, 8)
 basic_string_char* __thiscall numpunct_char_truename(const numpunct_char *this, basic_string_char *ret)
 {
-    FIXME("(%p) stub\n", this);
-    return ret;
+    TRACE("(%p)\n", this);
+    return call_numpunct_char_do_truename(this, ret);
 }
 
 /* ?id@?$numpunct@_W@std@@2V0locale@2@A */
