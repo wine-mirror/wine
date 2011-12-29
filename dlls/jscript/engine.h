@@ -417,7 +417,6 @@ HRESULT while_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*)
 HRESULT continue_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT break_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT return_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
-HRESULT switch_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT try_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
 
 typedef struct {

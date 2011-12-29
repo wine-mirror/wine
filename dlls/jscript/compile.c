@@ -1327,10 +1327,7 @@ static HRESULT compile_switch_statement(compiler_ctx_t *ctx, switch_statement_t 
     BOOL have_default = FALSE;
     statement_t *stat_iter;
     case_clausule_t *iter;
-    unsigned off_backup;
     HRESULT hres;
-
-    off_backup = ctx->code_off;
 
     hres = compile_expression(ctx, stat->expr);
     if(FAILED(hres))
@@ -1394,11 +1391,6 @@ static HRESULT compile_switch_statement(compiler_ctx_t *ctx, switch_statement_t 
 
         for(stat_iter = iter->stat; stat_iter && (!iter->next || iter->next->stat != stat_iter); stat_iter = stat_iter->next) {
             hres = compile_statement(ctx, &stat_ctx, stat_iter);
-            if(hres == E_NOTIMPL) {
-                ctx->code_off = off_backup;
-                stat->stat.eval = switch_statement_eval;
-                return compile_interp_fallback(ctx, &stat->stat);
-            }
             if(FAILED(hres))
                 break;
 
