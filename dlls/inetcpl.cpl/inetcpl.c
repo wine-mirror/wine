@@ -201,3 +201,13 @@ BOOL WINAPI LaunchInternetControlPanel(HWND parent)
     display_cpl_sheets(parent);
     return TRUE;
 }
+
+/*********************************************************************
+ * LaunchInternetControlPanel (inetcpl.@)
+ *
+ */
+BOOL WINAPI LaunchPrivacyDialog(HWND hParent)
+{
+    FIXME(": stub\n");
+    return FALSE;
+}

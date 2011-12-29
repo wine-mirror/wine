@@ -11,7 +11,7 @@
 @ stdcall LaunchInternetControlPanel(long)
 @ stub LaunchPerSitePrivacyActionDialog
 @ stub LaunchPopupWindowManagementDialog
-@ stub LaunchPrivacyDialog
+@ stdcall LaunchPrivacyDialog(long)
 @ stub LaunchSecurityDialog
 @ stub LaunchSecurityDialogEx
 @ stdcall LaunchSiteCertDialog(long)
