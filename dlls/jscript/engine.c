@@ -2589,7 +2589,7 @@ static HRESULT unwind_exception(exec_ctx_t *ctx)
     return hres;
 }
 
-HRESULT compiled_statement_eval(script_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
+static HRESULT enter_bytecode(script_ctx_t *ctx, unsigned ip, return_type_t *rt, VARIANT *ret)
 {
     exec_ctx_t *exec_ctx = ctx->exec_ctx;
     except_frame_t *prev_except_frame;
@@ -2602,19 +2602,13 @@ HRESULT compiled_statement_eval(script_ctx_t *ctx, statement_t *stat, return_typ
 
     TRACE("\n");
 
-    if(stat->instr_off == -1) {
-        hres = compile_subscript_stat(exec_ctx->parser, stat, FALSE, &stat->instr_off);
-        if(FAILED(hres))
-            return hres;
-    }
-
     prev_rt = exec_ctx->rt;
     prev_top = exec_ctx->top;
     prev_scope = exec_ctx->scope_chain;
     prev_except_frame = exec_ctx->except_frame;
     prev_ip = exec_ctx->ip;
     prev_ei = exec_ctx->ei;
-    exec_ctx->ip = stat->instr_off;
+    exec_ctx->ip = ip;
     exec_ctx->rt = rt;
     exec_ctx->ei = &rt->ei;
     exec_ctx->except_frame = NULL;
@@ -2762,9 +2756,9 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
 
     if(source->statement) {
         if(source->statement->instr_off == -1)
-            hres = compile_subscript_stat(ctx->parser, source->statement, TRUE, &source->statement->instr_off);
+            hres = compile_subscript_stat(ctx->parser, source->statement, &source->statement->instr_off);
         if(SUCCEEDED(hres))
-            hres = compiled_statement_eval(script, source->statement, &rt, &val);
+            hres = enter_bytecode(script, source->statement->instr_off, &rt, &val);
     }
 
     script->exec_ctx = prev_ctx;

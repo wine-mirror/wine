@@ -1637,7 +1637,7 @@ HRESULT compile_subscript(parser_ctx_t *parser, expression_t *expr, unsigned *re
     return push_instr(parser->compiler, OP_ret) == -1 ? E_OUTOFMEMORY : S_OK;
 }
 
-HRESULT compile_subscript_stat(parser_ctx_t *parser, statement_t *stat, BOOL compile_block, unsigned *ret_off)
+HRESULT compile_subscript_stat(parser_ctx_t *parser, statement_t *stat, unsigned *ret_off)
 {
     HRESULT hres;
 
@@ -1648,7 +1648,7 @@ HRESULT compile_subscript_stat(parser_ctx_t *parser, statement_t *stat, BOOL com
         return hres;
 
     *ret_off = parser->compiler->code_off;
-    if(compile_block && stat->next)
+    if(stat->next)
         hres = compile_block_statement(parser->compiler, stat);
     else
         hres = compile_statement(parser->compiler, NULL, stat);
