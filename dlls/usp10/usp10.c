@@ -298,16 +298,8 @@ static const scriptRange scriptRanges[] = {
     { SCRIPT_UNDEFINED,  0, 0, 0}
 };
 
-typedef struct _scriptData
-{
-    SCRIPT_ANALYSIS a;
-    SCRIPT_PROPERTIES props;
-    OPENTYPE_TAG scriptTag;
-    WCHAR fallbackFont[LF_FACESIZE];
-} scriptData;
-
 /* the must be in order so that the index matches the Script value */
-static const scriptData scriptInformation[] = {
+const scriptData scriptInformation[] = {
     {{SCRIPT_UNDEFINED, 0, 0, 0, 0, 0, 0, { 0,0,0,0,0,0,0,0,0,0,0}},
      {LANG_NEUTRAL, 0, 0, 0, 0, ANSI_CHARSET, 0, 0, 0, 0, 0, 0, 0, 0, 0},
      0x00000000,

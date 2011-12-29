@@ -155,6 +155,14 @@ typedef struct {
     OPENTYPE_TAG userLang;
 } ScriptCache;
 
+typedef struct _scriptData
+{
+    SCRIPT_ANALYSIS a;
+    SCRIPT_PROPERTIES props;
+    OPENTYPE_TAG scriptTag;
+    WCHAR fallbackFont[LF_FACESIZE];
+} scriptData;
+
 typedef struct {
     INT start;
     INT base;
