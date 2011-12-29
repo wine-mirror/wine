@@ -835,25 +835,6 @@ static BOOL allow_auto_semicolon(parser_ctx_t *ctx)
     return ctx->nl || ctx->ptr == ctx->end || *(ctx->ptr-1) == '}';
 }
 
-static const statement_eval_t stat_eval_table[] = {
-    compiled_statement_eval,
-    compiled_statement_eval,
-    compiled_statement_eval,
-    compiled_statement_eval,
-    compiled_statement_eval,
-    compiled_statement_eval,
-    compiled_statement_eval,
-    compiled_statement_eval,
-    compiled_statement_eval,
-    return_statement_eval,
-    compiled_statement_eval,
-    compiled_statement_eval,
-    compiled_statement_eval,
-    compiled_statement_eval,
-    compiled_statement_eval,
-    compiled_statement_eval
-};
-
 static void *new_statement(parser_ctx_t *ctx, statement_type_t type, size_t size)
 {
     statement_t *stat;
@@ -863,7 +844,7 @@ static void *new_statement(parser_ctx_t *ctx, statement_type_t type, size_t size
         return NULL;
 
     stat->type = type;
-    stat->eval = stat_eval_table[type];
+    stat->eval = NULL;
     stat->instr_off = -1;
     stat->next = NULL;
 

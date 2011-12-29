@@ -1289,6 +1289,13 @@ static HRESULT compile_break_statement(compiler_ctx_t *ctx, branch_statement_t *
     return push_instr_uint(ctx, OP_jmp, pop_ctx->break_label);
 }
 
+/* ECMA-262 3rd Edition    12.9 */
+static HRESULT compile_return_statement(compiler_ctx_t *ctx, expression_statement_t *stat)
+{
+    stat->stat.eval = return_statement_eval;
+    return compile_interp_fallback(ctx, &stat->stat);
+}
+
 /* ECMA-262 3rd Edition    12.10 */
 static HRESULT compile_with_statement(compiler_ctx_t *ctx, with_statement_t *stat)
 {
@@ -1526,6 +1533,9 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_ctx_t *stat_ctx,
         break;
     case STAT_LABEL:
         hres = push_instr(ctx, OP_label) == -1 ? E_OUTOFMEMORY : S_OK; /* FIXME */
+        break;
+    case STAT_RETURN:
+        hres = compile_return_statement(ctx, (expression_statement_t*)stat);
         break;
     case STAT_SWITCH:
         hres = compile_switch_statement(ctx, (switch_statement_t*)stat);
