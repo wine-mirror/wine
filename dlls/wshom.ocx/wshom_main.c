@@ -16,8 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "initguid.h"
 #include "wshom_private.h"
+
+#include "initguid.h"
 #include "wshom.h"
 #include "rpcproxy.h"
 
@@ -26,6 +27,70 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wshom);
 
 static HINSTANCE wshom_instance;
+
+static ITypeLib *typelib;
+static ITypeInfo *typeinfos[LAST_tid];
+
+static REFIID tid_ids[] = {
+    &IID_NULL,
+    &IID_IWshShell3
+};
+
+static HRESULT load_typelib(void)
+{
+    HRESULT hres;
+    ITypeLib *tl;
+
+    hres = LoadRegTypeLib(&LIBID_IWshRuntimeLibrary, 1, 0, LOCALE_SYSTEM_DEFAULT, &tl);
+    if(FAILED(hres)) {
+        ERR("LoadRegTypeLib failed: %08x\n", hres);
+        return hres;
+    }
+
+    if(InterlockedCompareExchangePointer((void**)&typelib, tl, NULL))
+        ITypeLib_Release(tl);
+    return hres;
+}
+
+HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
+{
+    HRESULT hres;
+
+    if (!typelib)
+        hres = load_typelib();
+    if (!typelib)
+        return hres;
+
+    if(!typeinfos[tid]) {
+        ITypeInfo *ti;
+
+        hres = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &ti);
+        if(FAILED(hres)) {
+            ERR("GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_guid(tid_ids[tid]), hres);
+            return hres;
+        }
+
+        if(InterlockedCompareExchangePointer((void**)(typeinfos+tid), ti, NULL))
+            ITypeInfo_Release(ti);
+    }
+
+    *typeinfo = typeinfos[tid];
+    return S_OK;
+}
+
+void release_typelib(void)
+{
+    unsigned i;
+
+    if(!typelib)
+        return;
+
+    for(i=0; i < sizeof(typeinfos)/sizeof(*typeinfos); i++)
+        if(typeinfos[i])
+            ITypeInfo_Release(typeinfos[i]);
+
+    ITypeLib_Release(typelib);
+}
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
 {
@@ -90,6 +155,9 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     case DLL_PROCESS_ATTACH:
         wshom_instance = hInstDLL;
         DisableThreadLibraryCalls(wshom_instance);
+        break;
+    case DLL_PROCESS_DETACH:
+        release_typelib();
         break;
     }
 

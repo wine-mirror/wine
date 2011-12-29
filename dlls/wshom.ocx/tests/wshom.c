@@ -31,6 +31,7 @@ DEFINE_GUID(IID_IWshShell3, 0x41904400, 0xbe18, 0x11d3, 0xa2,0x8b, 0x00,0x10,0x4
 
 static void test_wshshell(void)
 {
+    IDispatchEx *dispex;
     IDispatch *disp;
     IUnknown *shell;
     HRESULT hres;
@@ -43,9 +44,12 @@ static void test_wshshell(void)
     }
 
     hres = IDispatch_QueryInterface(disp, &IID_IWshShell3, (void**)&shell);
-    IDispatch_Release(disp);
     ok(hres == S_OK, "Could not get IWshShell3 iface: %08x\n", hres);
 
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == E_NOINTERFACE, "got %08x\n", hres);
+
+    IDispatch_Release(disp);
     IUnknown_Release(shell);
 }
 
