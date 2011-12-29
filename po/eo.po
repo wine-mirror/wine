@@ -13213,7 +13213,7 @@ msgstr "Laý­ &Tipo"
 
 #: winefile.rc:146
 #, fuzzy
-msgid "File Type"
+msgid "File type"
 msgstr "Dosiero"
 
 #: winefile.rc:147
@@ -13284,7 +13284,7 @@ msgstr ""
 
 #: winefile.rc:184
 #, fuzzy
-msgid "&Version Information"
+msgid "Version information"
 msgstr "Informo pri"
 
 #: winefile.rc:93

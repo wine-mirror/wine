@@ -13111,8 +13111,8 @@ msgid "By File Type"
 msgstr ""
 
 #: winefile.rc:146
-msgid "File Type"
-msgstr "File Type"
+msgid "File type"
+msgstr "File type"
 
 #: winefile.rc:147
 msgid "&Directories"
@@ -13171,8 +13171,8 @@ msgid "&Compressed"
 msgstr "&Compressed"
 
 #: winefile.rc:184
-msgid "&Version Information"
-msgstr "&Version Information"
+msgid "Version information"
+msgstr "Version information"
 
 #: winefile.rc:93
 msgid "Applying font settings"

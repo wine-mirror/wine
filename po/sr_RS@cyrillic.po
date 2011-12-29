@@ -13439,7 +13439,7 @@ msgstr "По &врсти"
 
 #: winefile.rc:146
 #, fuzzy
-msgid "File Type"
+msgid "File type"
 msgstr "Датотека"
 
 #: winefile.rc:147
@@ -13507,7 +13507,7 @@ msgstr "несажето"
 
 #: winefile.rc:184
 #, fuzzy
-msgid "&Version Information"
+msgid "Version information"
 msgstr "Подаци"
 
 #: winefile.rc:93

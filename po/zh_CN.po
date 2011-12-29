@@ -13296,7 +13296,7 @@ msgstr "按类型 (&T)"
 
 #: winefile.rc:146
 #, fuzzy
-msgid "File Type"
+msgid "File type"
 msgstr "文件"
 
 #: winefile.rc:147
@@ -13364,7 +13364,7 @@ msgstr "未压缩"
 
 #: winefile.rc:184
 #, fuzzy
-msgid "&Version Information"
+msgid "Version information"
 msgstr "信息"
 
 #: winefile.rc:93

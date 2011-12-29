@@ -13535,7 +13535,8 @@ msgid "By File Type"
 msgstr "Glede na vrsto datoteke"
 
 #: winefile.rc:146
-msgid "File Type"
+#, fuzzy
+msgid "File type"
 msgstr "Vrsta datoteke"
 
 #: winefile.rc:147
@@ -13595,7 +13596,8 @@ msgid "&Compressed"
 msgstr "S&tisnjeno"
 
 #: winefile.rc:184
-msgid "&Version Information"
+#, fuzzy
+msgid "Version information"
 msgstr "Informacije o &različici"
 
 #: winefile.rc:93

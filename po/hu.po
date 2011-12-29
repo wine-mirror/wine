@@ -13570,7 +13570,7 @@ msgstr "&Típus szerint"
 
 #: winefile.rc:146
 #, fuzzy
-msgid "File Type"
+msgid "File type"
 msgstr "Fájl"
 
 #: winefile.rc:147
@@ -13641,7 +13641,7 @@ msgstr "tömörítetlen"
 
 #: winefile.rc:184
 #, fuzzy
-msgid "&Version Information"
+msgid "Version information"
 msgstr "Kliens információk"
 
 #: winefile.rc:93

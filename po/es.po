@@ -13931,7 +13931,8 @@ msgid "By File Type"
 msgstr "Por tipo de archivo"
 
 #: winefile.rc:146
-msgid "File Type"
+#, fuzzy
+msgid "File type"
 msgstr "Tipo de archivo"
 
 #: winefile.rc:147
@@ -13991,7 +13992,8 @@ msgid "&Compressed"
 msgstr "&Comprimido"
 
 #: winefile.rc:184
-msgid "&Version Information"
+#, fuzzy
+msgid "Version information"
 msgstr "Información de &versión"
 
 #: winefile.rc:93

@@ -13613,7 +13613,7 @@ msgstr "Podle &Typu"
 
 #: winefile.rc:146
 #, fuzzy
-msgid "File Type"
+msgid "File type"
 msgstr "Název"
 
 #: winefile.rc:147
@@ -13681,7 +13681,7 @@ msgstr "nekomprimovaný"
 
 #: winefile.rc:184
 #, fuzzy
-msgid "&Version Information"
+msgid "Version information"
 msgstr "Informace"
 
 #: winefile.rc:93

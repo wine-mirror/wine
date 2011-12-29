@@ -13582,7 +13582,7 @@ msgstr "Po &vrsti"
 
 #: winefile.rc:146
 #, fuzzy
-msgid "File Type"
+msgid "File type"
 msgstr ""
 "#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
 "&Datoteka\n"
@@ -13654,7 +13654,7 @@ msgstr "nesažeto"
 
 #: winefile.rc:184
 #, fuzzy
-msgid "&Version Information"
+msgid "Version information"
 msgstr ""
 "#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
 "Podaci\n"

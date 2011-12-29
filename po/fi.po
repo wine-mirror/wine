@@ -13339,7 +13339,7 @@ msgstr "&Tyypin mukaan"
 
 #: winefile.rc:146
 #, fuzzy
-msgid "File Type"
+msgid "File type"
 msgstr "Tiedosto"
 
 #: winefile.rc:147
@@ -13406,7 +13406,7 @@ msgstr ""
 
 #: winefile.rc:184
 #, fuzzy
-msgid "&Version Information"
+msgid "Version information"
 msgstr ""
 "#-#-#-#-#  fi.po (Wine)  #-#-#-#-#\n"
 "Tiedoitus\n"

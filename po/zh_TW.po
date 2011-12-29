@@ -13360,7 +13360,7 @@ msgstr "類型"
 
 #: winefile.rc:146
 #, fuzzy
-msgid "File Type"
+msgid "File type"
 msgstr "檔案"
 
 #: winefile.rc:147
@@ -13428,7 +13428,7 @@ msgstr "未壓縮"
 
 #: winefile.rc:184
 #, fuzzy
-msgid "&Version Information"
+msgid "Version information"
 msgstr ""
 "#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
 "信息\n"

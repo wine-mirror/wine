@@ -12995,7 +12995,7 @@ msgstr ""
 
 #: winefile.rc:146
 #, fuzzy
-msgid "File Type"
+msgid "File type"
 msgstr "แฟ้ม"
 
 #: winefile.rc:147
@@ -13061,7 +13061,7 @@ msgstr ""
 
 #: winefile.rc:184
 #, fuzzy
-msgid "&Version Information"
+msgid "Version information"
 msgstr "รายละเอียด"
 
 #: winefile.rc:93

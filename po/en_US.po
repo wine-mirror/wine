@@ -10024,11 +10024,11 @@ msgstr "The input line is too long.\n"
 
 #: cmd.rc:326
 msgid "Volume in drive %1!c! is %2\n"
-msgstr ""
+msgstr "Volume in drive %1!c! is %2\n"
 
 #: cmd.rc:327
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr ""
+msgstr "Volume in drive %1!c! has no label.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -13397,8 +13397,8 @@ msgid "By File Type"
 msgstr "By File Type"
 
 #: winefile.rc:146
-msgid "File Type"
-msgstr "File Type"
+msgid "File type"
+msgstr "File type"
 
 #: winefile.rc:147
 msgid "&Directories"
@@ -13457,8 +13457,8 @@ msgid "&Compressed"
 msgstr "&Compressed"
 
 #: winefile.rc:184
-msgid "&Version Information"
-msgstr "&Version Information"
+msgid "Version information"
+msgstr "Version information"
 
 #: winefile.rc:93
 msgid "Applying font settings"

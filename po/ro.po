@@ -14059,7 +14059,8 @@ msgid "By File Type"
 msgstr "După tipul de fișier"
 
 #: winefile.rc:146
-msgid "File Type"
+#, fuzzy
+msgid "File type"
 msgstr "Tip fișier"
 
 #: winefile.rc:147
@@ -14119,7 +14120,8 @@ msgid "&Compressed"
 msgstr "&Comprimat"
 
 #: winefile.rc:184
-msgid "&Version Information"
+#, fuzzy
+msgid "Version information"
 msgstr "Informații despre &versiune"
 
 #: winefile.rc:93

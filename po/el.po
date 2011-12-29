@@ -12942,7 +12942,7 @@ msgstr ""
 
 #: winefile.rc:146
 #, fuzzy
-msgid "File Type"
+msgid "File type"
 msgstr "&Περιεχόμενα"
 
 #: winefile.rc:147
@@ -13003,8 +13003,9 @@ msgid "&Compressed"
 msgstr ""
 
 #: winefile.rc:184
-msgid "&Version Information"
-msgstr ""
+#, fuzzy
+msgid "Version information"
+msgstr "Εκτύπωση"
 
 #: winefile.rc:93
 msgid "Applying font settings"
