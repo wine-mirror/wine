@@ -154,7 +154,7 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateMeshBuilder(IDirect3DRM* iface, LPDI
 
     TRACE("(%p/%p)->(%p)\n", iface, This, ppMeshBuilder);
 
-    return Direct3DRMMeshBuilder_create((IUnknown**)ppMeshBuilder);
+    return Direct3DRMMeshBuilder_create(&IID_IDirect3DRMMeshBuilder, (IUnknown**)ppMeshBuilder);
 }
 
 static HRESULT WINAPI IDirect3DRMImpl_CreateFace(IDirect3DRM* iface, LPDIRECT3DRMFACE * ppFace)
@@ -519,7 +519,7 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateMeshBuilder(IDirect3DRM2* iface,
 
     TRACE("(%p/%p)->(%p)\n", iface, This, ppMeshBuilder);
 
-    return Direct3DRMMeshBuilder_create((IUnknown**)ppMeshBuilder);
+    return Direct3DRMMeshBuilder_create(&IID_IDirect3DRMMeshBuilder2, (IUnknown**)ppMeshBuilder);
 }
 
 static HRESULT WINAPI IDirect3DRM2Impl_CreateFace(IDirect3DRM2* iface, LPDIRECT3DRMFACE * ppFace)

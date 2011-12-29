@@ -27,6 +27,6 @@
 #include "d3drm.h"
 
 HRESULT Direct3DRM_create(IUnknown** ppObj) DECLSPEC_HIDDEN;
-HRESULT Direct3DRMMeshBuilder_create(IUnknown** ppObj) DECLSPEC_HIDDEN;
+HRESULT Direct3DRMMeshBuilder_create(REFIID riid, IUnknown** ppObj) DECLSPEC_HIDDEN;
 
 #endif /* __D3DRM_PRIVATE_INCLUDED__ */
