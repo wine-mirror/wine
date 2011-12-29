@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-08 18:14+0100\n"
+"PO-Revision-Date: 2011-12-29 20:15+0100\n"
 "Last-Translator: Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: Polish\n"
@@ -2131,9 +2131,8 @@ msgid "Certification Path"
 msgstr "Ścieżka certyfikacji"
 
 #: cryptui.rc:211
-#, fuzzy
 msgid "Certification path"
-msgstr "Ścieżka &certyfikacji"
+msgstr "Ścieżka certyfikacji"
 
 #: cryptui.rc:214
 msgid "&View Certificate"
@@ -2694,7 +2693,7 @@ msgstr "Plik"
 
 #: cryptui.rc:89 inetcpl.rc:105
 msgid "Content"
-msgstr "Zawartość"
+msgstr "Treść"
 
 #: cryptui.rc:91
 msgid "Certificate Revocation List"
@@ -3326,29 +3325,24 @@ msgid "Address"
 msgstr "Adres"
 
 #: ieframe.rc:78
-#, fuzzy
 msgid "Searching for %s"
-msgstr "Ustawienia dla %s"
+msgstr "Szukanie %s"
 
 #: ieframe.rc:79
-#, fuzzy
 msgid "Start downloading %s"
-msgstr "Pobieranie od %s..."
+msgstr "Rozpocznij pobieranie %s..."
 
 #: ieframe.rc:80
-#, fuzzy
 msgid "Downloading %s"
-msgstr "Pobieranie..."
+msgstr "Pobieranie %s"
 
 #: ieframe.rc:81
-#, fuzzy
 msgid "Asking for %s"
-msgstr "Ustawienia dla %s"
+msgstr "Pytanie o %s"
 
 #: inetcpl.rc:46
-#, fuzzy
 msgid "Home page"
-msgstr " Strona domowa "
+msgstr "Strona domowa"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
@@ -3367,9 +3361,8 @@ msgid "&Blank page"
 msgstr "Użyj pu&stej"
 
 #: inetcpl.rc:53
-#, fuzzy
 msgid "Browsing history"
-msgstr " Historia przeglądania "
+msgstr "Historia przeglądania "
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
@@ -3505,9 +3498,8 @@ msgid "Subscript out of range"
 msgstr "Indeks dolny poza zakresem"
 
 #: jscript.rc:28
-#, fuzzy
 msgid "Object required"
-msgstr "Oczekiwany obiekt"
+msgstr "Wymagany obiekt"
 
 #: jscript.rc:29
 msgid "Automation server can't create object"
@@ -6835,9 +6827,8 @@ msgid "&Data Rate"
 msgstr "&Strumień"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/s"
-msgstr "kB/sek"
+msgstr "kB/s"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
@@ -10051,13 +10042,11 @@ msgid "Parameter error\n"
 msgstr "Błąd parametru\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
-"Wolumenem w napędzie %1!c! jest %2\n"
-"Numer seryjny wolumenu: %3!04x!-%4!04x!\n"
+"Numer seryny wolumenu to %1!04x!-%2!04x!\n"
 "\n"
 
 #: cmd.rc:319
@@ -10090,11 +10079,11 @@ msgstr "Wpisany tekst jest zbyt długi.\n"
 
 #: cmd.rc:326
 msgid "Volume in drive %1!c! is %2\n"
-msgstr ""
+msgstr "Wolumen w napędzie %1!c! to %2\n"
 
 #: cmd.rc:327
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr ""
+msgstr "Wolumen w napędzie %1!c! nie ma etykiety.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10413,9 +10402,8 @@ msgid "&Footer:"
 msgstr "&Stopka:"
 
 #: notepad.rc:112
-#, fuzzy
 msgid "Margins (millimeters)"
-msgstr "&Marginesy:"
+msgstr "Marginesy (milimetry)"
 
 #: notepad.rc:113
 msgid "&Left:"
@@ -11799,12 +11787,10 @@ msgid "&Show processes from all users"
 msgstr "&Pokazuj procesy wszystkich użytkowników"
 
 #: taskmgr.rc:376
-#, fuzzy
 msgid "CPU usage"
 msgstr "Użycie procesora"
 
 #: taskmgr.rc:377
-#, fuzzy
 msgid "MEM usage"
 msgstr "Użycie pamięci"
 
@@ -11813,19 +11799,16 @@ msgid "Totals"
 msgstr "Sumy"
 
 #: taskmgr.rc:379
-#, fuzzy
 msgid "Commit charge (K)"
-msgstr "Pamięć zadeklarowana (KB)"
+msgstr "Pamięć zadeklarowana (K)"
 
 #: taskmgr.rc:380
-#, fuzzy
 msgid "Physical memory (K)"
 msgstr "Pamięć fizyczna (KB)"
 
 #: taskmgr.rc:381
-#, fuzzy
 msgid "Kernel memory (K)"
-msgstr "Pamięć jądra (KB)"
+msgstr "Pamięć jądra (K)"
 
 #: taskmgr.rc:382 taskmgr.rc:290
 msgid "Handles"
@@ -11864,12 +11847,10 @@ msgid "Nonpaged"
 msgstr "Niestronicowana"
 
 #: taskmgr.rc:418
-#, fuzzy
 msgid "CPU usage history"
 msgstr "Historia użycia procesora"
 
 #: taskmgr.rc:419
-#, fuzzy
 msgid "Memory usage history"
 msgstr "Historia użycia pamięci"
 
@@ -12615,7 +12596,7 @@ msgstr " Direct3D "
 
 #: winecfg.rc:178
 msgid "&Vertex Shader Support: "
-msgstr "Obsługa Vertex Shader: "
+msgstr "Obsługa cieniowania &wierzchołków: "
 
 #: winecfg.rc:180
 msgid "Allow &Pixel Shader (if supported by hardware)"
@@ -13495,9 +13476,8 @@ msgid "By File Type"
 msgstr "Według typu pliku"
 
 #: winefile.rc:146
-#, fuzzy
 msgid "File type"
-msgstr "Wyświetl pliki typu"
+msgstr "Typ pliku"
 
 #: winefile.rc:147
 msgid "&Directories"
@@ -13556,9 +13536,8 @@ msgid "&Compressed"
 msgstr "S&kompresowany"
 
 #: winefile.rc:184
-#, fuzzy
 msgid "Version information"
-msgstr "We&rsja"
+msgstr "Informacja o wersji"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -13664,9 +13643,8 @@ msgid "Fastest Times"
 msgstr "Najlepsze Wyniki"
 
 #: winemine.rc:58
-#, fuzzy
 msgid "Fastest times"
-msgstr "Najlepsze Wyniki"
+msgstr "Najlepsze wyniki"
 
 #: winemine.rc:59
 msgid "Beginner"
