@@ -1432,11 +1432,9 @@ static HRESULT compile_try_statement(compiler_ctx_t *ctx, try_statement_t *stat)
 {
     statement_ctx_t try_ctx = {0, FALSE, TRUE, -1, -1}, catch_ctx = {0, TRUE, FALSE, -1, -1};
     statement_ctx_t finally_ctx = {2, FALSE, FALSE, -1, -1};
-    unsigned off_backup, push_except;
+    unsigned push_except;
     BSTR ident;
     HRESULT hres;
-
-    off_backup = ctx->code_off;
 
     push_except = push_instr(ctx, OP_push_except);
     if(push_except == -1)
@@ -1456,11 +1454,6 @@ static HRESULT compile_try_statement(compiler_ctx_t *ctx, try_statement_t *stat)
         try_ctx.stack_use = 2;
 
     hres = compile_statement(ctx, &try_ctx, stat->try_statement);
-    if(hres == E_NOTIMPL) {
-        ctx->code_off = off_backup;
-        stat->stat.eval = try_statement_eval;
-        return compile_interp_fallback(ctx, &stat->stat);
-    }
     if(FAILED(hres))
         return hres;
 
@@ -1477,11 +1470,6 @@ static HRESULT compile_try_statement(compiler_ctx_t *ctx, try_statement_t *stat)
         instr_ptr(ctx, push_except)->arg1.uint = ctx->code_off;
 
         hres = compile_statement(ctx, &catch_ctx, stat->catch_block->statement);
-        if(hres == E_NOTIMPL) {
-            ctx->code_off = off_backup;
-            stat->stat.eval = try_statement_eval;
-            return compile_interp_fallback(ctx, &stat->stat);
-        }
         if(FAILED(hres))
             return hres;
 
@@ -1499,11 +1487,6 @@ static HRESULT compile_try_statement(compiler_ctx_t *ctx, try_statement_t *stat)
             return E_OUTOFMEMORY;
 
         hres = compile_statement(ctx, stat->catch_block ? NULL : &finally_ctx, stat->finally_statement);
-        if(hres == E_NOTIMPL) {
-            ctx->code_off = off_backup;
-            stat->stat.eval = try_statement_eval;
-            return compile_interp_fallback(ctx, &stat->stat);
-        }
         if(FAILED(hres))
             return hres;
 

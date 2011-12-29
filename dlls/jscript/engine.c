@@ -944,69 +944,6 @@ static HRESULT interp_throw_type(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    12.14 */
-static HRESULT catch_eval(script_ctx_t *ctx, catch_block_t *block, return_type_t *rt, VARIANT *ret)
-{
-    jsdisp_t *var_disp;
-    VARIANT ex, val;
-    HRESULT hres;
-
-    ex = rt->ei.var;
-    memset(&rt->ei, 0, sizeof(jsexcept_t));
-
-    hres = create_dispex(ctx, NULL, NULL, &var_disp);
-    if(SUCCEEDED(hres)) {
-        hres = jsdisp_propput_name(var_disp, block->identifier, &ex, &rt->ei, NULL/*FIXME*/);
-        if(SUCCEEDED(hres)) {
-            hres = scope_push(ctx->exec_ctx->scope_chain, var_disp, &ctx->exec_ctx->scope_chain);
-            if(SUCCEEDED(hres)) {
-                hres = stat_eval(ctx, block->statement, rt, &val);
-                scope_pop(&ctx->exec_ctx->scope_chain);
-            }
-        }
-
-        jsdisp_release(var_disp);
-    }
-
-    VariantClear(&ex);
-    if(FAILED(hres))
-        return hres;
-
-    *ret = val;
-    return S_OK;
-}
-
-/* ECMA-262 3rd Edition    12.14 */
-HRESULT try_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
-{
-    try_statement_t *stat = (try_statement_t*)_stat;
-    VARIANT val;
-    HRESULT hres;
-
-    TRACE("\n");
-
-    hres = stat_eval(ctx, stat->try_statement, rt, &val);
-    if(FAILED(hres)) {
-        TRACE("EXCEPTION\n");
-        if(!stat->catch_block)
-            return hres;
-
-        hres = catch_eval(ctx, stat->catch_block, rt, &val);
-        if(FAILED(hres))
-            return hres;
-    }
-
-    if(stat->finally_statement) {
-        VariantClear(&val);
-        hres = stat_eval(ctx, stat->finally_statement, rt, &val);
-        if(FAILED(hres))
-            return hres;
-    }
-
-    *ret = val;
-    return S_OK;
-}
-
-/* ECMA-262 3rd Edition    12.14 */
 static HRESULT interp_push_except(exec_ctx_t *ctx)
 {
     const unsigned arg1 = ctx->parser->code->instrs[ctx->ip].arg1.uint;
