@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-21 21:00+0100\n"
+"PO-Revision-Date: 2011-12-29 21:39+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -2131,9 +2131,8 @@ msgid "Certification Path"
 msgstr "Chemin de certification"
 
 #: cryptui.rc:211
-#, fuzzy
 msgid "Certification path"
-msgstr "Chemin de &certification"
+msgstr "Chemin de certification"
 
 #: cryptui.rc:214
 msgid "&View Certificate"
@@ -3347,9 +3346,8 @@ msgid "Asking for %s"
 msgstr "Demande de %s"
 
 #: inetcpl.rc:46
-#, fuzzy
 msgid "Home page"
-msgstr " Page d'accueil "
+msgstr "Page d'accueil"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
@@ -3368,9 +3366,8 @@ msgid "&Blank page"
 msgstr "Page &blanche"
 
 #: inetcpl.rc:53
-#, fuzzy
 msgid "Browsing history"
-msgstr " Historique de navigation "
+msgstr "Historique de navigation"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
@@ -10462,9 +10459,8 @@ msgid "&Footer:"
 msgstr "&Pied de page :"
 
 #: notepad.rc:112
-#, fuzzy
 msgid "Margins (millimeters)"
-msgstr "&Marges (millimètres):"
+msgstr "Marges (millimètres)"
 
 #: notepad.rc:113
 msgid "&Left:"
@@ -11868,12 +11864,10 @@ msgid "&Show processes from all users"
 msgstr "Afficher les processus de &tous les utilisateurs"
 
 #: taskmgr.rc:376
-#, fuzzy
 msgid "CPU usage"
 msgstr "Util. processeur"
 
 #: taskmgr.rc:377
-#, fuzzy
 msgid "MEM usage"
 msgstr "Util. mémoire"
 
@@ -11882,19 +11876,16 @@ msgid "Totals"
 msgstr "Totaux"
 
 #: taskmgr.rc:379
-#, fuzzy
 msgid "Commit charge (K)"
 msgstr "Charge dédiée (Kio)"
 
 #: taskmgr.rc:380
-#, fuzzy
 msgid "Physical memory (K)"
 msgstr "Mémoire physique (Kio)"
 
 #: taskmgr.rc:381
-#, fuzzy
 msgid "Kernel memory (K)"
-msgstr "Mémoire pour le noyau (Kio)"
+msgstr "Mémoire noyau (Kio)"
 
 #: taskmgr.rc:382 taskmgr.rc:290
 msgid "Handles"
@@ -11933,12 +11924,10 @@ msgid "Nonpaged"
 msgstr "Non paginée"
 
 #: taskmgr.rc:418
-#, fuzzy
 msgid "CPU usage history"
 msgstr "Historique de l'utilisation du processeur"
 
 #: taskmgr.rc:419
-#, fuzzy
 msgid "Memory usage history"
 msgstr "Historique de l'utilisation de la mémoire"
 
@@ -13569,9 +13558,8 @@ msgid "By File Type"
 msgstr "Par type de fichier"
 
 #: winefile.rc:146
-#, fuzzy
 msgid "File type"
-msgstr "Type de fichier "
+msgstr "Type de fichier"
 
 #: winefile.rc:147
 msgid "&Directories"
@@ -13630,9 +13618,8 @@ msgid "&Compressed"
 msgstr "&Compressé"
 
 #: winefile.rc:184
-#, fuzzy
 msgid "Version information"
-msgstr "&Informations de version"
+msgstr "Informations de version"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -13738,7 +13725,6 @@ msgid "Fastest Times"
 msgstr "Meilleurs temps"
 
 #: winemine.rc:58
-#, fuzzy
 msgid "Fastest times"
 msgstr "Meilleurs temps"
 
