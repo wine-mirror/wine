@@ -1065,6 +1065,33 @@ typedef enum _MM_SYSTEM_SIZE
     MmLargeSystem
 } MM_SYSTEMSIZE;
 
+typedef struct _IO_REMOVE_LOCK_COMMON_BLOCK {
+    BOOLEAN Removed;
+    BOOLEAN Reserved[3];
+    LONG IoCount;
+    KEVENT RemoveEvent;
+} IO_REMOVE_LOCK_COMMON_BLOCK;
+
+typedef struct _IO_REMOVE_LOCK_TRACKING_BLOCK *PIO_REMOVE_LOCK_TRACKING_BLOCK;
+
+typedef struct _IO_REMOVE_LOCK_DBG_BLOCK {
+    LONG Signature;
+    LONG HighWatermark;
+    LONGLONG MaxLockedTicks;
+    LONG AllocateTag;
+    LIST_ENTRY LockList;
+    KSPIN_LOCK Spin;
+    LONG LowMemoryCount;
+    ULONG Reserved1[4];
+    PVOID Reserved2;
+    PIO_REMOVE_LOCK_TRACKING_BLOCK Blocks;
+} IO_REMOVE_LOCK_DBG_BLOCK;
+
+typedef struct _IO_REMOVE_LOCK {
+	IO_REMOVE_LOCK_COMMON_BLOCK Common;
+	IO_REMOVE_LOCK_DBG_BLOCK Dbg;
+} IO_REMOVE_LOCK, *PIO_REMOVE_LOCK;
+
 NTSTATUS WINAPI ObCloseHandle(IN HANDLE handle);
 
 #ifdef NONAMELESSUNION
@@ -1125,6 +1152,7 @@ NTSTATUS  WINAPI IoGetDeviceProperty(PDEVICE_OBJECT,DEVICE_REGISTRY_PROPERTY,ULO
 PVOID     WINAPI IoGetDriverObjectExtension(PDRIVER_OBJECT,PVOID);
 PDEVICE_OBJECT WINAPI IoGetRelatedDeviceObject(PFILE_OBJECT);
 void      WINAPI IoInitializeIrp(IRP*,USHORT,CCHAR);
+VOID      WINAPI IoInitializeRemoveLockEx(PIO_REMOVE_LOCK,ULONG,ULONG,ULONG,ULONG);
 NTSTATUS  WINAPI IoWMIRegistrationControl(PDEVICE_OBJECT,ULONG);
 
 PKTHREAD  WINAPI KeGetCurrentThread(void);

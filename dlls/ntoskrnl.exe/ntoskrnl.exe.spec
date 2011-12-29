@@ -398,7 +398,7 @@
 @ stub IoGetStackLimits
 @ stub IoGetTopLevelIrp
 @ stdcall IoInitializeIrp(ptr long long)
-@ stub IoInitializeRemoveLockEx
+@ stdcall IoInitializeRemoveLockEx(ptr long long long long)
 @ stdcall IoInitializeTimer(ptr ptr ptr)
 @ stub IoInvalidateDeviceRelations
 @ stub IoInvalidateDeviceState

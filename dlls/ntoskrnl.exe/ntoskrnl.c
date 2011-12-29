@@ -1700,6 +1700,16 @@ BOOLEAN WINAPI IoSetThreadHardErrorMode(BOOLEAN EnableHardErrors)
     return FALSE;
 }
 
+
+/*****************************************************
+ *           IoInitializeRemoveLockEx  (NTOSKRNL.EXE.@)
+ */
+VOID WINAPI IoInitializeRemoveLockEx(PIO_REMOVE_LOCK lock, ULONG tag,
+		                             ULONG maxmin, ULONG high, ULONG size)
+{
+    FIXME("(%p %u %u %u %u) stub\n", lock, tag, maxmin, high, size);
+}
+
 /*****************************************************
  *           DllMain
  */
