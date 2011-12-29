@@ -182,6 +182,14 @@ typedef struct tagBITMAPOBJ
     RGBQUAD            *color_table;  /* DIB color table if <= 8bpp (always 1 << bpp in size) */
 } BITMAPOBJ;
 
+struct brush_pattern
+{
+    HBITMAP               bitmap;   /* bitmap handle for DDB patterns */
+    BITMAPINFO           *info;     /* DIB info */
+    struct gdi_image_bits bits;     /* DIB bits */
+    UINT                  usage;    /* color usage for DIB info */
+};
+
 /* bidi.c */
 
 /* Wine_GCPW Flags */
@@ -208,6 +216,8 @@ extern DWORD stretch_bits( const BITMAPINFO *src_info, struct bitblt_coords *src
                            struct gdi_image_bits *bits, int mode ) DECLSPEC_HIDDEN;
 
 /* brush.c */
+extern BOOL store_brush_pattern( LOGBRUSH *brush, struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
+extern void free_brush_pattern( struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
 extern BOOL get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void **bits, UINT *usage ) DECLSPEC_HIDDEN;
 
 /* clipping.c */
