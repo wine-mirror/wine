@@ -311,7 +311,7 @@
 @ stub SetupDiEnumDriverInfoW
 @ stdcall SetupDiGetActualSectionToInstallA(long str str long ptr ptr)
 @ stdcall SetupDiGetActualSectionToInstallW(long wstr wstr long ptr ptr)
-@ stub SetupDiGetClassBitmapIndex
+@ stdcall SetupDiGetClassBitmapIndex(ptr ptr)
 @ stdcall SetupDiGetClassDescriptionA(ptr str long ptr)
 @ stdcall SetupDiGetClassDescriptionExA(ptr str long ptr str ptr)
 @ stdcall SetupDiGetClassDescriptionExW(ptr wstr long ptr wstr ptr)

@@ -437,6 +437,17 @@ BOOL WINAPI SetupDiDeleteDeviceInfo(HDEVINFO DeviceInfoSet, PSP_DEVINFO_DATA Dev
  }
 
 /***********************************************************************
+ *              SetupDiGetClassBitmapIndex  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupDiGetClassBitmapIndex(const GUID *ClassGuid, PINT MiniIconIndex)
+{
+    FIXME("(%s, %p) stub\n", debugstr_guid(ClassGuid), MiniIconIndex);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
  *              SetupDiLoadClassIcon  (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiLoadClassIcon(const GUID *ClassGuid, HICON *LargeIcon, PINT MiniIconIndex)
