@@ -2755,10 +2755,10 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
     rt.type = RT_NORMAL;
 
     if(source->statement) {
-        if(source->statement->instr_off == -1)
-            hres = compile_subscript_stat(ctx->parser, source->statement, &source->statement->instr_off);
+        if(source->instr_off == -1)
+            hres = compile_subscript_stat(ctx->parser, source->statement, &source->instr_off);
         if(SUCCEEDED(hres))
-            hres = enter_bytecode(script, source->statement->instr_off, &rt, &val);
+            hres = enter_bytecode(script, source->instr_off, &rt, &val);
     }
 
     script->exec_ctx = prev_ctx;

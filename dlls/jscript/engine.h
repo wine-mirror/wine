@@ -320,7 +320,6 @@ typedef enum {
 struct _statement_t {
     statement_type_t type;
     statement_eval_t eval;
-    unsigned instr_off;
     statement_t *next;
 };
 
@@ -508,6 +507,7 @@ struct _source_elements_t {
     statement_t *statement_tail;
     function_declaration_t *functions;
     var_list_t *variables;
+    unsigned instr_off;
 };
 
 struct _function_expression_t {

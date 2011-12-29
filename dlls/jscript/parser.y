@@ -845,7 +845,6 @@ static void *new_statement(parser_ctx_t *ctx, statement_type_t type, size_t size
 
     stat->type = type;
     stat->eval = NULL;
-    stat->instr_off = -1;
     stat->next = NULL;
 
     return stat;
@@ -1472,6 +1471,7 @@ static source_elements_t *new_source_elements(parser_ctx_t *ctx)
     source_elements_t *ret = parser_alloc(ctx, sizeof(source_elements_t));
 
     memset(ret, 0, sizeof(*ret));
+    ret->instr_off = -1;
 
     return ret;
 }
