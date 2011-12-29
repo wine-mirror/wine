@@ -2880,6 +2880,11 @@ static void test_ScriptGetFontFunctions(HDC hdc)
         SCRIPT_CACHE sc = NULL;
         OPENTYPE_TAG tags[5];
         int count = 0;
+        int outnItems=0;
+        SCRIPT_ITEM outpItems[15];
+        SCRIPT_CONTROL Control;
+        SCRIPT_STATE State;
+        static const WCHAR test_phagspa[] = {0xa84f, 0xa861, 0xa843, 0x0020, 0xa863, 0xa861, 0xa859, 0x0020, 0xa850, 0xa85c, 0xa85e};
 
         hr = pScriptGetFontScriptTags(hdc, &sc, NULL, 0, NULL, NULL);
         ok(hr == E_INVALIDARG,"Incorrect return code\n");
@@ -2903,6 +2908,15 @@ static void test_ScriptGetFontFunctions(HDC hdc)
         else if (hr == E_OUTOFMEMORY)
             ok(count == 0, "Count should be 0 with E_OUTOFMEMORY return\n");
         ok(sc != NULL, "ScriptCache should be initialized\n");
+
+        memset(&Control, 0, sizeof(Control));
+        memset(&State, 0, sizeof(State));
+
+        hr = ScriptItemize(test_phagspa, 10, 15, &Control, &State, outpItems, &outnItems);
+        ok(hr == S_OK, "ScriptItemize failed: 0x%08x\n", hr);
+        memset(tags,0,sizeof(tags));
+        hr = pScriptGetFontScriptTags(hdc, &sc, &outpItems[0].a, 5, tags, &count);
+        ok( hr == USP_E_SCRIPT_NOT_IN_FONT || broken(hr == S_OK), "wrong return code\n");
         ScriptFreeCache(&sc);
     }
 }
