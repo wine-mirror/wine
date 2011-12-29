@@ -1015,10 +1015,8 @@ static HRESULT compile_if_statement(compiler_ctx_t *ctx, if_statement_t *stat)
 static HRESULT compile_while_statement(compiler_ctx_t *ctx, while_statement_t *stat)
 {
     statement_ctx_t stat_ctx = {0, FALSE, FALSE};
-    unsigned off_backup, jmp_off;
+    unsigned jmp_off;
     HRESULT hres;
-
-    off_backup = ctx->code_off;
 
     stat_ctx.break_label = alloc_label(ctx);
     if(stat_ctx.break_label == -1)
@@ -1050,11 +1048,6 @@ static HRESULT compile_while_statement(compiler_ctx_t *ctx, while_statement_t *s
     }
 
     hres = compile_statement(ctx, &stat_ctx, stat->statement);
-    if(hres == E_NOTIMPL) {
-        ctx->code_off = off_backup;
-        stat->stat.eval = while_statement_eval;
-        return compile_interp_fallback(ctx, &stat->stat);
-    }
     if(FAILED(hres))
         return hres;
 

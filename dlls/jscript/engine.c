@@ -56,11 +56,6 @@ struct _except_frame_t {
     except_frame_t *next;
 };
 
-static inline HRESULT stat_eval(script_ctx_t *ctx, statement_t *stat, return_type_t *rt, VARIANT *ret)
-{
-    return stat->eval(ctx, stat, rt, ret);
-}
-
 static HRESULT expr_eval(script_ctx_t*,expression_t*,jsexcept_t*,VARIANT*);
 
 static HRESULT stack_push(exec_ctx_t *ctx, VARIANT *v)
@@ -669,59 +664,6 @@ static HRESULT interp_var_set(exec_ctx_t *ctx)
     hres = jsdisp_propput_name(ctx->var_disp, name, v, ctx->ei, NULL/*FIXME*/);
     VariantClear(v);
     return hres;
-}
-
-/* ECMA-262 3rd Edition    12.6.2 */
-HRESULT while_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
-{
-    while_statement_t *stat = (while_statement_t*)_stat;
-    VARIANT val, tmp;
-    VARIANT_BOOL b;
-    BOOL test_expr;
-    HRESULT hres;
-
-    TRACE("\n");
-
-    V_VT(&val) = VT_EMPTY;
-    test_expr = !stat->do_while;
-
-    while(1) {
-        if(test_expr) {
-            hres = expr_eval(ctx, stat->expr, &rt->ei, &tmp);
-            if(FAILED(hres))
-                break;
-
-            hres = to_boolean(&tmp, &b);
-            VariantClear(&tmp);
-            if(FAILED(hres) || !b)
-                break;
-        }else {
-            test_expr = TRUE;
-        }
-
-        hres = stat_eval(ctx, stat->statement, rt, &tmp);
-        if(FAILED(hres))
-            break;
-
-        VariantClear(&val);
-        val = tmp;
-
-        if(rt->type == RT_CONTINUE)
-            rt->type = RT_NORMAL;
-        if(rt->type != RT_NORMAL)
-            break;
-    }
-
-    if(FAILED(hres)) {
-        VariantClear(&val);
-        return hres;
-    }
-
-    if(rt->type == RT_BREAK)
-        rt->type = RT_NORMAL;
-
-    *ret = val;
-    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    12.6.4 */
@@ -2649,7 +2591,7 @@ static HRESULT interp_tree(exec_ctx_t *ctx)
 
     TRACE("\n");
 
-    hres = stat_eval(ctx->parser->script, instr->arg1.stat, ctx->rt, &v);
+    hres = instr->arg1.stat->eval(ctx->parser->script, instr->arg1.stat, ctx->rt, &v);
     if(FAILED(hres))
         return hres;
 
