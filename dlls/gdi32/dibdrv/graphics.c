@@ -464,7 +464,7 @@ BOOL dibdrv_LineTo( PHYSDEV dev, INT x, INT y )
     if (region)
     {
         if (pdev->clip) CombineRgn( region, region, pdev->clip, RGN_AND );
-        ret = pen_rect( pdev, NULL, region, GetROP2(dev->hdc) );
+        ret = pen_region( pdev, region );
         DeleteObject( region );
     }
     return ret;
@@ -529,7 +529,6 @@ BOOL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD 
     DWORD total, i, pos;
     BOOL ret = FALSE;
     POINT *points;
-    INT rop = GetROP2( dev->hdc );
     HRGN outline = 0, interior;
 
     if (defer_pen( pdev )) return next->funcs->pPolyPolygon( next, pt, counts, polygons );
@@ -551,11 +550,9 @@ BOOL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD 
         return FALSE;
     }
 
-    if (pdev->clip) CombineRgn( interior, interior, pdev->clip, RGN_AND );
-
     /* if not using a region, paint the interior first so the outline can overlap it */
     if (!pdev->pen_uses_region || !(outline = CreateRectRgn( 0, 0, 0, 0 )))
-        ret = brush_rect( pdev, NULL, interior, rop );
+        ret = brush_region( pdev, interior );
 
     for (i = pos = 0; i < polygons; i++)
     {
@@ -566,9 +563,8 @@ BOOL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD 
 
     if (outline)
     {
-        if (pdev->clip) CombineRgn( outline, outline, pdev->clip, RGN_AND );
         CombineRgn( interior, interior, outline, RGN_DIFF );
-        ret = pen_rect( pdev, NULL, outline, rop ) && brush_rect( pdev, NULL, interior, rop );
+        ret = pen_region( pdev, outline ) && brush_region( pdev, interior );
         DeleteObject( outline );
     }
 
@@ -587,7 +583,6 @@ BOOL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWO
     DWORD max_points = 0, i;
     POINT *points;
     BOOL ret = TRUE;
-    INT rop = GetROP2( dev->hdc );
     HRGN outline = 0;
 
     if (defer_pen( pdev )) return next->funcs->pPolyPolyline( next, pt, counts, polylines );
@@ -620,7 +615,7 @@ BOOL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWO
     if (outline)
     {
         if (pdev->clip) CombineRgn( outline, outline, pdev->clip, RGN_AND );
-        ret = pen_rect( pdev, NULL, outline, rop );
+        ret = pen_region( pdev, outline );
         DeleteObject( outline );
     }
 
@@ -659,7 +654,6 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
     RECT rect = get_device_rect( dev->hdc, left, top, right, bottom, TRUE );
     POINT pts[4];
     BOOL ret;
-    INT rop = GetROP2( dev->hdc );
     HRGN outline = 0;
 
     TRACE("(%p, %d, %d, %d, %d)\n", dev, left, top, right, bottom);
@@ -696,12 +690,7 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
         HRGN interior = CreateRectRgnIndirect( &rect );
 
         CombineRgn( interior, interior, outline, RGN_DIFF );
-        if (pdev->clip)
-        {
-            CombineRgn( outline, outline, pdev->clip, RGN_AND );
-            CombineRgn( interior, interior, pdev->clip, RGN_AND );
-        }
-        ret = pen_rect( pdev, NULL, outline, rop ) && brush_rect( pdev, NULL, interior, rop );
+        ret = pen_region( pdev, outline ) && brush_region( pdev, interior );
         DeleteObject( outline );
         DeleteObject( interior );
     }
@@ -711,7 +700,7 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
         rect.top    += (pdev->pen_width + 1) / 2;
         rect.right  -= pdev->pen_width / 2;
         rect.bottom -= pdev->pen_width / 2;
-        ret = brush_rect( pdev, &rect, pdev->clip, rop );
+        ret = brush_rect( pdev, &rect, pdev->clip, GetROP2(dev->hdc) );
     }
     return ret;
 }

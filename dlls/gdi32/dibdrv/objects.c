@@ -1329,11 +1329,12 @@ static void add_join( dibdrv_physdev *pdev, HRGN region, const POINT *pt,
     return;
 }
 
-static BOOL get_wide_lines_region( dibdrv_physdev *pdev, int num, POINT *pts, BOOL close, HRGN total )
+static BOOL wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close, HRGN total)
 {
     int i;
     HRGN segment;
 
+    assert( total != 0 );  /* wide pens should always be drawn through a region */
     assert( num >= 2 );
 
     if (!close) num--;
@@ -1478,18 +1479,6 @@ static BOOL get_wide_lines_region( dibdrv_physdev *pdev, int num, POINT *pts, BO
 
         prev_face = face_2;
     }
-    return TRUE;
-}
-
-static BOOL wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close, HRGN region)
-{
-    if (region) return get_wide_lines_region( pdev, num, pts, close, region );
-
-    if (!(region = CreateRectRgn( 0, 0, 0, 0 ))) return FALSE;
-    get_wide_lines_region( pdev, num, pts, close, region );
-    if (pdev->clip) CombineRgn( region, region, pdev->clip, RGN_AND );
-    pen_rect( pdev, NULL, region, GetROP2( pdev->dev.hdc ) );
-    DeleteObject( region );
     return TRUE;
 }
 
@@ -2022,15 +2011,25 @@ BOOL brush_rect(dibdrv_physdev *pdev, const RECT *rect, HRGN clip, INT rop)
     return ret;
 }
 
-BOOL pen_rect(dibdrv_physdev *pdev, const RECT *rect, HRGN clip, INT rop)
+/* paint a region with the brush (note: the region can be modified) */
+BOOL brush_region( dibdrv_physdev *pdev, HRGN region )
+{
+    if (pdev->clip) CombineRgn( region, region, pdev->clip, RGN_AND );
+    return brush_rect( pdev, NULL, region, GetROP2( pdev->dev.hdc ));
+}
+
+/* paint a region with the pen (note: the region can be modified) */
+BOOL pen_region( dibdrv_physdev *pdev, HRGN region )
 {
     struct clipped_rects clipped_rects;
     rop_mask color;
     DWORD pen_color = get_pixel_color( pdev, pdev->pen_colorref, TRUE );
 
-    if (!get_clipped_rects( &pdev->dib, rect, clip, &clipped_rects )) return TRUE;
+    if (pdev->clip) CombineRgn( region, region, pdev->clip, RGN_AND );
 
-    calc_rop_masks( rop, pen_color, &color );
+    if (!get_clipped_rects( &pdev->dib, NULL, region, &clipped_rects )) return TRUE;
+
+    calc_rop_masks( GetROP2( pdev->dev.hdc ), pen_color, &color );
     pdev->dib.funcs->solid_rects( &pdev->dib, clipped_rects.count, clipped_rects.rects,
                                   color.and, color.xor );
     free_clipped_rects( &clipped_rects );
