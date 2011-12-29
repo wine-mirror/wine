@@ -192,6 +192,17 @@ static void test_pattern_brush(void)
     ret = GlobalFlags( mem );
     ok( ret == 2, "wrong flags %x\n", ret );
 
+    brush = CreateDIBPatternBrushPt( info, DIB_PAL_COLORS );
+    ok( brush != 0, "CreateDIBPatternBrushPt failed\n" );
+    DeleteObject( brush );
+    brush = CreateDIBPatternBrushPt( info, DIB_PAL_COLORS + 1 );
+    ok( brush != 0, "CreateDIBPatternBrushPt failed\n" );
+    DeleteObject( brush );
+    brush = CreateDIBPatternBrushPt( info, DIB_PAL_COLORS + 2 );
+    ok( !brush, "CreateDIBPatternBrushPt succeeded\n" );
+    brush = CreateDIBPatternBrushPt( info, DIB_PAL_COLORS + 3 );
+    ok( !brush, "CreateDIBPatternBrushPt succeeded\n" );
+
     info->bmiHeader.biBitCount = 8;
     info->bmiHeader.biCompression = BI_RLE8;
     brush = CreateDIBPatternBrushPt( info, DIB_RGB_COLORS );

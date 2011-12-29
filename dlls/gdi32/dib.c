@@ -169,7 +169,7 @@ static BOOL bitmapinfoheader_from_user_bitmapinfo( BITMAPINFOHEADER *dst, const 
 /*******************************************************************************************
  *  Fill out a true BITMAPINFO from a variable sized BITMAPINFO / BITMAPCOREINFO.
  *
- * The resulting stanitized BITMAPINFO is guaranteed to have:
+ * The resulting sanitized BITMAPINFO is guaranteed to have:
  * - biSize set to sizeof(BITMAPINFOHEADER)
  * - biSizeImage set to the actual image size even for non-compressed DIB
  * - biClrUsed set to the size of the color table, and 0 only when there is no color table
@@ -180,6 +180,7 @@ static BOOL bitmapinfo_from_user_bitmapinfo( BITMAPINFO *dst, const BITMAPINFO *
 {
     void *src_colors;
 
+    if (coloruse > DIB_PAL_COLORS + 1) return FALSE;  /* FIXME: handle DIB_PAL_COLORS+1 format */
     if (!bitmapinfoheader_from_user_bitmapinfo( &dst->bmiHeader, &info->bmiHeader )) return FALSE;
     if (!is_valid_dib_format( &dst->bmiHeader, allow_compression )) return FALSE;
 
@@ -645,7 +646,7 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
     HRGN clip = 0;
     const struct gdi_dc_funcs *funcs;
 
-    if (!bitmapinfo_from_user_bitmapinfo( src_info, info, coloruse, TRUE ))
+    if (!bitmapinfo_from_user_bitmapinfo( src_info, info, coloruse, TRUE ) || coloruse > DIB_PAL_COLORS)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
@@ -1209,6 +1210,7 @@ INT WINAPI GetDIBits(
     /* Since info may be a BITMAPCOREINFO or any of the larger BITMAPINFO structures, we'll use our
        own copy and transfer the colour info back at the end */
     if (!bitmapinfoheader_from_user_bitmapinfo( &dst_info->bmiHeader, &info->bmiHeader )) return 0;
+    if (coloruse > DIB_PAL_COLORS) return 0;
     if (bits &&
         (dst_info->bmiHeader.biCompression == BI_JPEG || dst_info->bmiHeader.biCompression == BI_PNG))
         return 0;
@@ -1426,6 +1428,7 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
 
     if (!bitmapinfoheader_from_user_bitmapinfo( &info, header )) return 0;
     if (info.biCompression == BI_JPEG || info.biCompression == BI_PNG) return 0;
+    if (coloruse > DIB_PAL_COLORS + 1) return 0;
     if (info.biWidth < 0) return 0;
 
     /* Top-down DIBs have a negative height */
@@ -1474,6 +1477,7 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
 
     if (bits) *bits = NULL;
     if (!bitmapinfo_from_user_bitmapinfo( info, bmi, usage, FALSE )) return 0;
+    if (usage > DIB_PAL_COLORS) return 0;
     if (info->bmiHeader.biPlanes != 1)
     {
         if (info->bmiHeader.biPlanes * info->bmiHeader.biBitCount > 16) return 0;

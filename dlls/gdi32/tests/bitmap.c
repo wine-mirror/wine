@@ -1155,6 +1155,56 @@ static void test_dib_formats(void)
     ret = GetDIBits(hdc, hbmp, 0, 2, NULL, bi, DIB_RGB_COLORS);
     ok( !ret || broken(ret), /* nt4 */ "GetDIBits succeeded with zero height\n" );
 
+    /* some functions accept DIB_PAL_COLORS+1, but not beyond */
+
+    bi->bmiHeader.biWidth = 2;
+    bi->bmiHeader.biHeight = 2;
+    bi->bmiHeader.biBitCount = 1;
+    bi->bmiHeader.biCompression = BI_RGB;
+    hdib = CreateDIBSection(hdc, bi, DIB_PAL_COLORS+1, &bits, NULL, 0);
+    ok( hdib == NULL, "CreateDIBSection succeeded with DIB_PAL_COLORS+1\n" );
+    hdib = CreateDIBitmap( hdc, &bi->bmiHeader, 0, bits, bi, DIB_PAL_COLORS+1 );
+    ok( hdib != NULL, "CreateDIBitmap failed with DIB_PAL_COLORS+1\n" );
+    DeleteObject( hdib );
+    ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_PAL_COLORS+1);
+    ok( !ret, "SetDIBits succeeded with DIB_PAL_COLORS+1\n" );
+    ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, DIB_PAL_COLORS+1 );
+    ok( ret, "SetDIBitsToDevice failed with DIB_PAL_COLORS+1\n" );
+    ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_PAL_COLORS+1, SRCCOPY );
+    ok( ret, "StretchDIBits failed with DIB_PAL_COLORS+1\n" );
+    ret = GetDIBits(hdc, hbmp, 0, 2, data, bi, DIB_PAL_COLORS+1);
+    ok( !ret, "GetDIBits succeeded with DIB_PAL_COLORS+1\n" );
+    bi->bmiHeader.biWidth = 2;
+    bi->bmiHeader.biHeight = 2;
+    bi->bmiHeader.biBitCount = 1;
+    bi->bmiHeader.biCompression = BI_RGB;
+    ret = GetDIBits(hdc, hbmp, 0, 0, NULL, bi, DIB_PAL_COLORS+1);
+    ok( !ret, "GetDIBits succeeded with DIB_PAL_COLORS+1\n" );
+
+    bi->bmiHeader.biWidth = 2;
+    bi->bmiHeader.biHeight = 2;
+    bi->bmiHeader.biBitCount = 1;
+    bi->bmiHeader.biCompression = BI_RGB;
+    hdib = CreateDIBSection(hdc, bi, DIB_PAL_COLORS+2, &bits, NULL, 0);
+    ok( hdib == NULL, "CreateDIBSection succeeded with DIB_PAL_COLORS+2\n" );
+    hdib = CreateDIBitmap( hdc, &bi->bmiHeader, 0, bits, bi, DIB_PAL_COLORS+2 );
+    ok( hdib == NULL, "CreateDIBitmap succeeded with DIB_PAL_COLORS+2\n" );
+    DeleteObject( hdib );
+    ret = SetDIBits(hdc, hbmp, 0, 1, data, bi, DIB_PAL_COLORS+2);
+    ok( !ret, "SetDIBits succeeded with DIB_PAL_COLORS+2\n" );
+    ret = SetDIBitsToDevice( memdc, 0, 0, 1, 1, 0, 0, 0, 1, data, bi, DIB_PAL_COLORS+2 );
+    ok( !ret, "SetDIBitsToDevice succeeded with DIB_PAL_COLORS+2\n" );
+    ret = StretchDIBits( memdc, 0, 0, 1, 1, 0, 0, 1, 1, data, bi, DIB_PAL_COLORS+2, SRCCOPY );
+    ok( !ret, "StretchDIBits succeeded with DIB_PAL_COLORS+2\n" );
+    ret = GetDIBits(hdc, hbmp, 0, 2, data, bi, DIB_PAL_COLORS+2);
+    ok( !ret, "GetDIBits succeeded with DIB_PAL_COLORS+2\n" );
+    bi->bmiHeader.biWidth = 2;
+    bi->bmiHeader.biHeight = 2;
+    bi->bmiHeader.biBitCount = 1;
+    bi->bmiHeader.biCompression = BI_RGB;
+    ret = GetDIBits(hdc, hbmp, 0, 0, NULL, bi, DIB_PAL_COLORS+2);
+    ok( !ret, "GetDIBits succeeded with DIB_PAL_COLORS+2\n" );
+
     DeleteDC( memdc );
     DeleteObject( hbmp );
     ReleaseDC( 0, hdc );
