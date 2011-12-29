@@ -36,8 +36,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
   /* GDI logical pen object */
 typedef struct
 {
-    GDIOBJHDR header;
-    EXTLOGPEN logpen;
+    GDIOBJHDR            header;
+    struct brush_pattern pattern;
+    EXTLOGPEN            logpen;
 } PENOBJ;
 
 
@@ -87,15 +88,12 @@ HPEN WINAPI CreatePenIndirect( const LOGPEN * pen )
         if (hpen) return hpen;
     }
 
-    if (!(penPtr = HeapAlloc( GetProcessHeap(), 0, sizeof(*penPtr) ))) return 0;
+    if (!(penPtr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*penPtr) ))) return 0;
 
     penPtr->logpen.elpPenStyle = pen->lopnStyle;
     penPtr->logpen.elpWidth = abs(pen->lopnWidth.x);
     penPtr->logpen.elpColor = pen->lopnColor;
     penPtr->logpen.elpBrushStyle = BS_SOLID;
-    penPtr->logpen.elpHatch = 0;
-    penPtr->logpen.elpNumEntries = 0;
-    penPtr->logpen.elpStyleEntry[0] = 0;
 
     switch (pen->lopnStyle)
     {
@@ -128,14 +126,12 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
                               const LOGBRUSH * brush, DWORD style_count,
                               const DWORD *style_bits )
 {
-    PENOBJ * penPtr;
+    PENOBJ *penPtr = NULL;
     HPEN hpen;
+    LOGBRUSH logbrush;
 
     if ((style_count || style_bits) && (style & PS_STYLE_MASK) != PS_USERSTYLE)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
+        goto invalid;
 
     switch (style & PS_STYLE_MASK)
     {
@@ -152,11 +148,7 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
     case PS_USERSTYLE:
         if (((INT)style_count) <= 0) return 0;
 
-        if ((style_count > 16) || !style_bits)
-        {
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return 0;
-        }
+        if ((style_count > 16) || !style_bits) goto invalid;
 
         if ((style & PS_TYPE_MASK) == PS_GEOMETRIC)
         {
@@ -169,28 +161,16 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
                 all_zero = all_zero && (style_bits[i] == 0);
             }
 
-            if(all_zero || has_neg)
-            {
-                SetLastError(ERROR_INVALID_PARAMETER);
-                return 0;
-            }
+            if (all_zero || has_neg) goto invalid;
         }
         break;
 
     case PS_INSIDEFRAME:  /* applicable only for geometric pens */
-        if ((style & PS_TYPE_MASK) != PS_GEOMETRIC)
-        {
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return 0;
-        }
+        if ((style & PS_TYPE_MASK) != PS_GEOMETRIC) goto invalid;
         break;
 
     case PS_ALTERNATE:  /* applicable only for cosmetic pens */
-        if ((style & PS_TYPE_MASK) == PS_GEOMETRIC)
-        {
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return 0;
-        }
+        if ((style & PS_TYPE_MASK) == PS_GEOMETRIC) goto invalid;
         break;
 
     default:
@@ -200,35 +180,40 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
 
     if ((style & PS_TYPE_MASK) == PS_GEOMETRIC)
     {
-        if (brush->lbHatch && ((brush->lbStyle != BS_SOLID) && (brush->lbStyle != BS_HOLLOW)))
-        {
-            static int fixme_hatches_shown;
-            if (!fixme_hatches_shown++) FIXME("Hatches not implemented\n");
-        }
+        if (brush->lbStyle == BS_NULL) return CreatePen( PS_NULL, 0, 0 );
     }
     else
     {
-        if (width != 1)
-        {
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return 0;
-        }
+        if (width != 1) goto invalid;
+        if (brush->lbStyle != BS_SOLID) goto invalid;
     }
 
     if (!(penPtr = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(PENOBJ,logpen.elpStyleEntry[style_count]))))
         return 0;
 
+    logbrush = *brush;
+    if (!store_brush_pattern( &logbrush, &penPtr->pattern )) goto invalid;
+    if (logbrush.lbStyle == BS_DIBPATTERN) logbrush.lbStyle = BS_DIBPATTERNPT;
+
     penPtr->logpen.elpPenStyle = style;
     penPtr->logpen.elpWidth = abs(width);
-    penPtr->logpen.elpBrushStyle = brush->lbStyle;
-    penPtr->logpen.elpColor = brush->lbColor;
+    penPtr->logpen.elpBrushStyle = logbrush.lbStyle;
+    penPtr->logpen.elpColor = logbrush.lbColor;
     penPtr->logpen.elpHatch = brush->lbHatch;
     penPtr->logpen.elpNumEntries = style_count;
     memcpy(penPtr->logpen.elpStyleEntry, style_bits, style_count * sizeof(DWORD));
 
     if (!(hpen = alloc_gdi_handle( &penPtr->header, OBJ_EXTPEN, &pen_funcs )))
+    {
+        free_brush_pattern( &penPtr->pattern );
         HeapFree( GetProcessHeap(), 0, penPtr );
+    }
     return hpen;
+
+invalid:
+    HeapFree( GetProcessHeap(), 0, penPtr );
+    SetLastError( ERROR_INVALID_PARAMETER );
+    return 0;
 }
 
 /***********************************************************************
@@ -276,6 +261,7 @@ static BOOL PEN_DeleteObject( HGDIOBJ handle )
     PENOBJ *pen = free_gdi_handle( handle );
 
     if (!pen) return FALSE;
+    free_brush_pattern( &pen->pattern );
     return HeapFree( GetProcessHeap(), 0, pen );
 }
 

@@ -570,9 +570,130 @@ static void test_ps_userstyle(void)
     DeleteObject(pen);
 }
 
+static void test_brush_pens(void)
+{
+    char buffer[sizeof(EXTLOGPEN) + 15 * sizeof(DWORD)];
+    EXTLOGPEN *elp = (EXTLOGPEN *)buffer;
+    LOGBRUSH lb;
+    HPEN pen = 0;
+    DWORD size;
+    HBITMAP bmp = CreateBitmap( 8, 8, 1, 1, NULL );
+    BITMAPINFO *info;
+    HGLOBAL hmem;
+
+    hmem = GlobalAlloc( GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(*info) + 16 * 16 * 4 );
+    info = GlobalLock( hmem );
+    info->bmiHeader.biSize        = sizeof(info->bmiHeader);
+    info->bmiHeader.biWidth       = 16;
+    info->bmiHeader.biHeight      = 16;
+    info->bmiHeader.biPlanes      = 1;
+    info->bmiHeader.biBitCount    = 32;
+    info->bmiHeader.biCompression = BI_RGB;
+
+    for (lb.lbStyle = BS_SOLID; lb.lbStyle <= BS_MONOPATTERN + 1; lb.lbStyle++)
+    {
+        SetLastError( 0xdeadbeef );
+        memset( buffer, 0xcc, sizeof(buffer) );
+        trace( "testing brush style %u\n", lb.lbStyle );
+
+        switch (lb.lbStyle)
+        {
+        case BS_SOLID:
+        case BS_HATCHED:
+            lb.lbColor = RGB(12,34,56);
+            lb.lbHatch = HS_CROSS;
+            pen = ExtCreatePen( PS_DOT | PS_GEOMETRIC, 3, &lb, 0, NULL );
+            ok( pen != 0, "ExtCreatePen failed err %u\n", GetLastError() );
+            size = GetObject( pen, sizeof(buffer), elp );
+            ok( size == FIELD_OFFSET( EXTLOGPEN, elpStyleEntry ), "wrong size %u\n", size );
+            ok( elp->elpPenStyle == (PS_DOT | PS_GEOMETRIC), "wrong pen style %x\n", elp->elpPenStyle );
+            ok( elp->elpBrushStyle == lb.lbStyle, "wrong brush style %x\n", elp->elpBrushStyle );
+            ok( elp->elpColor == RGB(12,34,56), "wrong color %x\n", elp->elpColor );
+            ok( elp->elpHatch == HS_CROSS, "wrong hatch %lx\n", elp->elpHatch );
+            ok( elp->elpNumEntries == 0, "wrong entries %x\n", elp->elpNumEntries );
+            break;
+
+        case BS_NULL:
+            pen = ExtCreatePen( PS_SOLID | PS_GEOMETRIC, 3, &lb, 0, NULL );
+            ok( pen != 0, "ExtCreatePen failed err %u\n", GetLastError() );
+            size = GetObject( pen, sizeof(buffer), elp );
+            ok( size == sizeof(LOGPEN), "wrong size %u\n", size );
+            ok( ((LOGPEN *)elp)->lopnStyle == PS_NULL,
+                "wrong pen style %x\n", ((LOGPEN *)elp)->lopnStyle );
+            ok( ((LOGPEN *)elp)->lopnColor == 0,
+                "wrong color %x\n", ((LOGPEN *)elp)->lopnColor );
+            break;
+
+        case BS_PATTERN:
+            lb.lbColor = RGB(12,34,56);
+            lb.lbHatch = (ULONG_PTR)bmp;
+            pen = ExtCreatePen( PS_DOT | PS_GEOMETRIC, 3, &lb, 0, NULL );
+            ok( pen != 0, "ExtCreatePen failed err %u\n", GetLastError() );
+            size = GetObject( pen, sizeof(buffer), elp );
+            ok( size == FIELD_OFFSET( EXTLOGPEN, elpStyleEntry ), "wrong size %u\n", size );
+            ok( elp->elpPenStyle == (PS_DOT | PS_GEOMETRIC), "wrong pen style %x\n", elp->elpPenStyle );
+            ok( elp->elpBrushStyle == BS_PATTERN, "wrong brush style %x\n", elp->elpBrushStyle );
+            ok( elp->elpColor == 0, "wrong color %x\n", elp->elpColor );
+            ok( elp->elpHatch == (ULONG_PTR)bmp, "wrong hatch %lx/%p\n", elp->elpHatch, bmp );
+            ok( elp->elpNumEntries == 0, "wrong entries %x\n", elp->elpNumEntries );
+            break;
+
+        case BS_DIBPATTERN:
+        case BS_DIBPATTERNPT:
+            lb.lbColor = DIB_PAL_COLORS;
+            lb.lbHatch = lb.lbStyle == BS_DIBPATTERN ? (ULONG_PTR)hmem : (ULONG_PTR)info;
+            pen = ExtCreatePen( PS_DOT | PS_GEOMETRIC, 3, &lb, 0, NULL );
+            ok( pen != 0, "ExtCreatePen failed err %u\n", GetLastError() );
+            size = GetObject( pen, sizeof(buffer), elp );
+            ok( size == FIELD_OFFSET( EXTLOGPEN, elpStyleEntry ), "wrong size %u\n", size );
+            ok( elp->elpPenStyle == (PS_DOT | PS_GEOMETRIC), "wrong pen style %x\n", elp->elpPenStyle );
+            ok( elp->elpBrushStyle == BS_DIBPATTERNPT, "wrong brush style %x\n", elp->elpBrushStyle );
+            ok( elp->elpColor == 0, "wrong color %x\n", elp->elpColor );
+            ok( elp->elpHatch == lb.lbHatch || broken(elp->elpHatch != lb.lbHatch), /* <= w2k */
+                "wrong hatch %lx/%lx\n", elp->elpHatch, lb.lbHatch );
+            ok( elp->elpNumEntries == 0, "wrong entries %x\n", elp->elpNumEntries );
+            break;
+
+        default:
+            pen = ExtCreatePen( PS_DOT | PS_GEOMETRIC, 3, &lb, 0, NULL );
+            ok( !pen, "ExtCreatePen succeeded\n" );
+            ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+            break;
+        }
+
+        if (pen) DeleteObject( pen );
+        else continue;
+
+        /* cosmetic pens require BS_SOLID */
+        SetLastError( 0xdeadbeef );
+        pen = ExtCreatePen( PS_DOT, 1, &lb, 0, NULL );
+        if (lb.lbStyle == BS_SOLID)
+        {
+            ok( pen != 0, "ExtCreatePen failed err %u\n", GetLastError() );
+            size = GetObject( pen, sizeof(buffer), elp );
+            ok( size == FIELD_OFFSET( EXTLOGPEN, elpStyleEntry ), "wrong size %u\n", size );
+            ok( elp->elpPenStyle == PS_DOT, "wrong pen style %x\n", elp->elpPenStyle );
+            ok( elp->elpBrushStyle == BS_SOLID, "wrong brush style %x\n", elp->elpBrushStyle );
+            ok( elp->elpColor == RGB(12,34,56), "wrong color %x\n", elp->elpColor );
+            ok( elp->elpHatch == HS_CROSS, "wrong hatch %lx\n", elp->elpHatch );
+            DeleteObject( pen );
+        }
+        else
+        {
+            ok( !pen, "ExtCreatePen succeeded\n" );
+            ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError() );
+        }
+    }
+
+    GlobalUnlock( hmem );
+    GlobalFree( hmem );
+    DeleteObject( bmp );
+}
+
 START_TEST(pen)
 {
     test_logpen();
+    test_brush_pens();
     test_ps_alternate();
     test_ps_userstyle();
 }
