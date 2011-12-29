@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-28 19:19+0100\n"
+"PO-Revision-Date: 2011-12-29 17:17+0100\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -320,7 +320,7 @@ msgstr "Toolbar einrichten"
 #: comctl32.rc:81 cryptui.rc:348 ieframe.rc:40 oleview.rc:80 oleview.rc:185
 #: oleview.rc:198 oleview.rc:210 taskmgr.rc:139
 msgid "&Close"
-msgstr "&Schliessen"
+msgstr "&Schließen"
 
 #: comctl32.rc:82
 msgid "R&eset"
@@ -1169,11 +1169,11 @@ msgstr "Standard Drucker; "
 
 #: comdlg32.rc:88
 msgid "There are %d documents in the queue"
-msgstr "Es sind %d Dokumente in der Queue"
+msgstr "Es sind %d Dokumente in der Warteschlange"
 
 #: comdlg32.rc:89
 msgid "Margins [inches]"
-msgstr "Ränder [inches/zoll]"
+msgstr "Ränder [Zoll]"
 
 #: comdlg32.rc:90
 msgid "Margins [mm]"
@@ -1225,7 +1225,7 @@ msgid ""
 msgstr ""
 "Mit aktivierter Feststelltaste könnte das Kennwort falsch eingeben werden.\n"
 "\n"
-"Vor der Eingabe des Kennworts sollten Sie die Feststelltaste deaktivieren."
+"Vor der Eingabe des Kennwortes sollten Sie die Feststelltaste deaktivieren."
 
 #: credui.rc:31
 msgid "Caps Lock is On"
@@ -1870,7 +1870,7 @@ msgstr "Unbekannte Verwendung des Schlüssels"
 
 #: crypt32.rc:194
 msgid "Subject Type="
-msgstr "Subject Typ="
+msgstr "Subjekt Typ="
 
 #: crypt32.rc:195
 msgctxt "Certificate Authority"
@@ -1957,7 +1957,7 @@ msgstr "Zugehörigkeit verändert"
 
 #: crypt32.rc:215
 msgid "Superseded"
-msgstr "Ersätzt"
+msgstr "Ersetzt"
 
 #: crypt32.rc:216
 msgid "Operation Ceased"
@@ -2219,7 +2219,7 @@ msgstr ""
 "Zertifikatsvertrauenslisten aus einer Datei zu importieren.\n"
 "\n"
 "Ein Zertifikat dient zur Identifikation von Ihnen oder ihrem Computer. Es "
-"kann auch fÃ¼r die Authentifizierung und zum Unterzeichnen genutzt werden. "
+"kann auch für die Authentifizierung und zum Unterzeichnen genutzt werden. "
 "Zertifikatsspeicher sind Sammlungen von Zertifikaten, Zertifikatssperrlisten "
 "und Zertifikatsvertrauenslisten.\n"
 "\n"
@@ -3368,7 +3368,7 @@ msgstr "&Einstellungen..."
 
 #: inetcpl.rc:65
 msgid "Delete browsing history"
-msgstr "Gespeicherte Browserdaten löchen"
+msgstr "Gespeicherte Browserdaten löschen"
 
 #: inetcpl.rc:68
 msgid ""
@@ -3410,8 +3410,8 @@ msgid ""
 "Passwords\n"
 "Saved passwords you have entered into forms."
 msgstr ""
-"&Kennwörter\n"
-"Gespeicherte Kennwörter, die Sie in Formulare eingegeben haben."
+"&Kennworte\n"
+"Gespeicherte Kennworte, die Sie in Formulare eingegeben haben."
 
 #: inetcpl.rc:79 progman.rc:64
 msgid "Delete"
@@ -4099,7 +4099,7 @@ msgstr "Fehlerhafte Argumente für DosExecPgm\n"
 
 #: winerror.mc:671
 msgid "Path is invalid\n"
-msgstr "Pfad is ungültig\n"
+msgstr "Pfad ist ungültig\n"
 
 #: winerror.mc:676
 msgid "Signal pending\n"
@@ -4115,7 +4115,7 @@ msgstr "Sperre fehlgeschlagen\n"
 
 #: winerror.mc:691
 msgid "Resource in use\n"
-msgstr "Resource in Benutzung\n"
+msgstr "Ressource in Benutzung\n"
 
 #: winerror.mc:696
 msgid "Cancel violation\n"
@@ -4131,7 +4131,7 @@ msgstr "Ungültige Segmentnummer\n"
 
 #: winerror.mc:711
 msgid "Invalid ordinal for %1\n"
-msgstr "Ungültiges Ordinal für %1\n"
+msgstr "Ungültige Ordinale für %1\n"
 
 #: winerror.mc:716
 msgid "File already exists\n"
@@ -4507,7 +4507,7 @@ msgstr "Dienst existiert nicht\n"
 
 #: winerror.mc:1181
 msgid "Service cannot accept control message\n"
-msgstr "Dienst kann keine Steuerungs-Meldungen akzeptieren\n"
+msgstr "Dienst kann keine Steuerungsmeldungen akzeptieren\n"
 
 #: winerror.mc:1186
 msgid "Service not active\n"
@@ -4689,19 +4689,19 @@ msgstr "Timeout von seriellem E/A Zähler\n"
 
 #: winerror.mc:1406
 msgid "Floppy ID address mark not found\n"
-msgstr "Floppy-ID-Adressmarke nicht gefunden\n"
+msgstr "Adressmarke der Disketten-ID nicht gefunden\n"
 
 #: winerror.mc:1411
 msgid "Floppy reports wrong cylinder\n"
-msgstr "Floppy meldet falschen Zylinder\n"
+msgstr "Diskette meldet falschen Zylinder\n"
 
 #: winerror.mc:1416
 msgid "Unknown floppy error\n"
-msgstr "Unbekannter Floppy-Fehler\n"
+msgstr "Unbekannter Disketten-Fehler\n"
 
 #: winerror.mc:1421
 msgid "Floppy registers inconsistent\n"
-msgstr "Floppy-Register inkonsistent\n"
+msgstr "Disketten-Register inkonsistent\n"
 
 #: winerror.mc:1426
 msgid "Hard disk recalibrate failed\n"
@@ -4877,7 +4877,7 @@ msgstr "Verbindung nicht verfügbar\n"
 
 #: winerror.mc:1641
 msgid "Device already remembered\n"
-msgstr "Gerät wird bereits errinnert\n"
+msgstr "Gerät bereits vermerkt\n"
 
 #: winerror.mc:1646
 msgid "No network or bad path\n"
@@ -4941,7 +4941,7 @@ msgstr "Ungültiges Nachrichtenziel\n"
 
 #: winerror.mc:1726
 msgid "Session credential conflict\n"
-msgstr "Konflikt in Sitzungs-Berechtigung\n"
+msgstr "Konflikt in Sitzungsberechtigung\n"
 
 #: winerror.mc:1731
 msgid "Remote session limit exceeded\n"
@@ -5109,7 +5109,7 @@ msgstr "Unbekannte Revision\n"
 
 #: winerror.mc:1936
 msgid "Incompatible revision levels\n"
-msgstr "Inkompatible Revisions-Levels\n"
+msgstr "Inkompatible Revisionslevels\n"
 
 #: winerror.mc:1941
 msgid "Invalid owner\n"
@@ -5237,7 +5237,7 @@ msgstr "Ungültige SID\n"
 
 #: winerror.mc:2096
 msgid "Invalid security descriptor\n"
-msgstr "Ungültiger Sicherheits-Deskriptor\n"
+msgstr "Ungültiger Sicherheitsdeskriptor\n"
 
 #: winerror.mc:2101
 msgid "Bad inherited ACL\n"
@@ -5269,7 +5269,7 @@ msgstr "Fehlerhaftes Impersonation-Level\n"
 
 #: winerror.mc:2136
 msgid "Can't open anonymous security token\n"
-msgstr "Kann anonymes Sicherheits-Token nicht öffnen\n"
+msgstr "Kann anonymes Sicherheitstoken nicht öffnen\n"
 
 #: winerror.mc:2141
 msgid "Bad validation class\n"
@@ -5341,11 +5341,11 @@ msgstr "Unbekanntes Authentifizierungspaket\n"
 
 #: winerror.mc:2226
 msgid "Bad logon session state\n"
-msgstr "Fehlerhafter Logon-Sitzungs-Status\n"
+msgstr "Fehlerhafter Logon Sitzungsstatus\n"
 
 #: winerror.mc:2231
 msgid "Logon session ID collision\n"
-msgstr "Kollision von Logon-Sitzungs-ID\n"
+msgstr "Kollision von Logon Sitzungs-ID\n"
 
 #: winerror.mc:2236
 msgid "Invalid logon type\n"
@@ -5361,7 +5361,7 @@ msgstr "Ungültiger Transaktions-Status\n"
 
 #: winerror.mc:2251
 msgid "Security DB commit failure\n"
-msgstr "Commit-Fehler bei Sicherheits-Datenbank\n"
+msgstr "Commit-Fehler bei Sicherheitsdatenbank\n"
 
 #: winerror.mc:2256
 msgid "Account is built-in\n"
@@ -5413,7 +5413,7 @@ msgstr "Secret zu lang\n"
 
 #: winerror.mc:2316
 msgid "Internal security DB error\n"
-msgstr "Interner Sicherheits-Datenbank-Fehler\n"
+msgstr "Interner Fehler der Sicherheitsdatenbank\n"
 
 #: winerror.mc:2321
 msgid "Too many context IDs\n"
@@ -5453,7 +5453,7 @@ msgstr "Datenträger beschädigt\n"
 
 #: winerror.mc:2371
 msgid "No user session key\n"
-msgstr "Kein Benutzer-Sitzungs-Schlüssel\n"
+msgstr "Kein Benutzer Sitzungsschlüssel\n"
 
 #: winerror.mc:2376
 msgid "Licence quota exceeded\n"
@@ -5821,7 +5821,7 @@ msgstr "Benutzeroberfläche des Installers fehlgeschlagen\n"
 
 #: winerror.mc:2831
 msgid "Failed to open installation log file\n"
-msgstr "Konnte Installations Logdatei nicht öffnen\n"
+msgstr "Konnte Logdatei der Installation nicht öffnen\n"
 
 #: winerror.mc:2836
 msgid "Installation language not supported\n"
@@ -6145,7 +6145,7 @@ msgstr "Operation nicht unterstützt\n"
 
 #: winerror.mc:3241
 msgid "No security context available\n"
-msgstr "Kein Sicherheits-Kontext verfügbar\n"
+msgstr "Kein Sicherheitskontext verfügbar\n"
 
 #: winerror.mc:3246
 msgid "RPCInternal error\n"
@@ -6381,7 +6381,7 @@ msgstr "UUID ist nur lokal\n"
 
 #: winerror.mc:3536
 msgid "Security package error\n"
-msgstr "Sicherheits-Paket-Fehler\n"
+msgstr "Sicherheitspaket Fehler\n"
 
 #: winerror.mc:3541
 msgid "Thread not canceled\n"
@@ -6433,7 +6433,7 @@ msgstr "Ungültiger Formularname\n"
 
 #: winerror.mc:3601
 msgid "Invalid form size\n"
-msgstr "Ungültige Formular-Grösse\n"
+msgstr "Ungültige Formular-Größe\n"
 
 #: winerror.mc:3606
 msgid "Already awaiting printer handle\n"
@@ -6720,7 +6720,7 @@ msgstr ""
 "Windows Installer %s\n"
 "\n"
 "Aufruf:\n"
-"msiexec Befehl {Parameter} [Zusätzliche Parammeter]\n"
+"msiexec Befehl {Parameter} [Zusätzliche Parameter]\n"
 "\n"
 "Produkt installieren:\n"
 "\t/i {Paket|Produktcode} [Eigenschaft]\n"
@@ -6785,7 +6785,7 @@ msgstr "Video Kompression"
 
 #: msvfw32.rc:36
 msgid "&Compressor:"
-msgstr "&Komprimierer:"
+msgstr "&Kompressor:"
 
 #: msvfw32.rc:39
 msgid "Con&figure..."
@@ -7313,7 +7313,7 @@ msgstr "Datenbits"
 
 #: serialui.rc:36
 msgid "Stop Bits"
-msgstr "Stoppbits"
+msgstr "Stopbits"
 
 #: setupapi.rc:36
 msgid "Copying Files..."
@@ -7532,7 +7532,7 @@ msgstr "Tags nachgehen"
 
 #: shdoclc.rc:197
 msgid "Resource Failures"
-msgstr "Resourcen Fehler"
+msgstr "Ressourcen Fehler"
 
 #: shdoclc.rc:198
 msgid "Dump Tracking Info"
@@ -8364,7 +8364,7 @@ msgstr "Server"
 
 #: wininet.rc:74
 msgid "Security Warning"
-msgstr "Sicherheits Warnung"
+msgstr "Sicherheitswarnung"
 
 #: wininet.rc:77
 msgid "There is a problem with the certificate for this site."
@@ -8532,7 +8532,7 @@ msgid ""
 "Windows SYSTEM directory, and then try again."
 msgstr ""
 "Das aktuelle MIDI Setup ist beschädigt. Kopieren sie die ursprüngliche Datei "
-"MIDIMAP.CFG ind das Windows - Systemverzeichnis und versuchen Sie es erneut."
+"MIDIMAP.CFG in das Windows Systemverzeichnis und versuchen Sie es erneut."
 
 #: winmm.rc:56
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
@@ -8948,7 +8948,7 @@ msgid ""
 "The time formats of the \"song pointer\" and SMPTE are mutually exclusive. "
 "You can't use them together."
 msgstr ""
-"Die Zeitformate von \"song pointer\" und SMPTE schliessen sich gegenseitig "
+"Die Zeitformate von \"song pointer\" und SMPTE schließen sich gegenseitig "
 "aus. Sie können sie nicht zusammen verwenden."
 
 #: winmm.rc:124
@@ -9328,7 +9328,7 @@ msgstr ""
 "\n"
 "  +   Setzt ein Attribut.\n"
 "  -   Löscht ein Attribut.\n"
-"  R   Schreibschut Dateiattribut.\n"
+"  R   Schreibschutz Dateiattribut.\n"
 "  A   Archiv Dateiattribut.\n"
 "  S   System Dateiattribut.\n"
 "  H   Verbergen Dateiattribut.\n"
@@ -9385,10 +9385,9 @@ msgid ""
 "called procedure are inherited by the caller.\n"
 msgstr ""
 "CALL <Batchdateiname> wird in einer Batchdatei genutzt, um Befehle aus\n"
-"einer anderen Batchdatei auszuführen. Wenn die Batchdatei exisiert, kehrt\n"
-"die Kontrolle zu der Datei zurück, die sie aufgerufen hat. Der CALL Befehl "
-"kann\n"
-"Parameter zu der rufenden Prozedure übergeben.\n"
+"einer anderen Batchdatei auszuführen. Wenn die Batchdatei existiert, kehrt\n"
+"die Kontrolle zu der Datei zurück, die sie aufgerufen hat. Der CALL Befehl\n"
+"kann Parameter zu der rufenden Prozedur übergeben.\n"
 "\n"
 "Änderungen für das aktuelle Verzeichnis, Umgebungsvariablen usw. werden in\n"
 "der gerufenen Prozedur gemacht, die sie von der aufgerufenen geerbt hat.\n"
@@ -9444,7 +9443,7 @@ msgstr ""
 "ECHO ON bewirkt, dass alle nachfolgenden Befehle in einer Batchdatei zuerst\n"
 "auf dem Terminalgerät angezeigt und danach ausgeführt werden.\n"
 "\n"
-"ECHO OFF kehrt den Effekt des vorherigen ECHO ON (ECHO ist standardmässig\n"
+"ECHO OFF kehrt den Effekt des vorherigen ECHO ON (ECHO ist standardmäßig\n"
 "auf OFF) um. Um den ECHO OFF Befehl nicht anzeigen zu lassen, kann vor "
 "dessen\n"
 "ein @ Zeichen gesetzt werden.\n"
@@ -9878,7 +9877,7 @@ msgid ""
 "to the operating system or shell from which you invoked cmd.\n"
 msgstr ""
 "EXIT beendet die aktuelle Befehlssitzung und kehrt zum\n"
-"Betriebssystem oder der Shell zurück, von der CMD gestart wurde.\n"
+"Betriebssystem oder der Shell zurück, von der CMD gestartet wurde.\n"
 
 #: cmd.rc:289
 msgid ""
@@ -10038,7 +10037,7 @@ msgstr "'%1' konnte nicht geöffnet werden\n"
 
 #: cmd.rc:311
 msgid "Cannot call batch label outside of a batch script\n"
-msgstr "Kann kein Batch-Label außerhalb eines Batch-Scripts aufrufen\n"
+msgstr "Kann kein Batch-Label außerhalb eines Batch-Skripts aufrufen\n"
 
 #: cmd.rc:312 xcopy.rc:42
 msgctxt "All key"
@@ -10059,7 +10058,7 @@ msgstr "Verify ist %1\n"
 
 #: cmd.rc:316
 msgid "Verify must be ON or OFF\n"
-msgstr "Verify muß ON oder OFF sein\n"
+msgstr "Verify muss ON oder OFF sein\n"
 
 #: cmd.rc:317
 msgid "Parameter error\n"
@@ -10491,10 +10490,9 @@ msgid ""
 "\n"
 "Do you want to create a new file?"
 msgstr ""
-"Die Datei '%s'\n"
-"existiert nicht.\n"
+"Die Datei '%s' existiert nicht.\n"
 "\n"
-" Möchten Sie eine neue Datei erstellen ?"
+"Möchten Sie eine neue Datei erstellen?"
 
 #: notepad.rc:85
 msgid ""
@@ -10502,10 +10500,9 @@ msgid ""
 "\n"
 "Would you like to save the changes?"
 msgstr ""
-"Datei %s\n"
-" wurde geändert.\n"
+"Datei %s wurde geändert.\n"
 "\n"
-" Möchten Sie die Änderungen speichern ?"
+"Möchten Sie die Änderungen speichern?"
 
 #: notepad.rc:86
 msgid "'%s' could not be found."
@@ -10894,7 +10891,7 @@ msgstr "Als eine .IDL- oder .H-Datei speichern"
 
 #: oleview.rc:125
 msgid "Close window"
-msgstr "Fenster schliessen"
+msgstr "Fenster schließen"
 
 #: oleview.rc:126
 msgid "Group typeinfos by kind"
@@ -11430,7 +11427,7 @@ msgstr "Fügt einen neuen Schlüssel hinzu"
 
 #: regedit.rc:146
 msgid "Adds a new string value"
-msgstr "Fügt eine neue Zeichenfolge hinzu "
+msgstr "Fügt eine neue Zeichenfolge hinzu"
 
 #: regedit.rc:147
 msgid "Adds a new binary value"
@@ -11478,7 +11475,7 @@ msgstr "Wollen Sie '%s' wirklich löschen?"
 
 #: regedit.rc:186
 msgid "Search string '%s' not found"
-msgstr "Suchfolge '%s' wurde nicht gefunden."
+msgstr "Suchfolge '%s' wurde nicht gefunden"
 
 #: regedit.rc:183
 msgid "Are you sure you want to delete these values?"
@@ -11641,7 +11638,7 @@ msgstr ""
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 msgstr ""
-"Ein Beendigungssignal wurde an die Top-Level Fenster des Prozessess \"%1\" "
+"Ein Beendigungssignal wurde an die Top-Level Fenster des Prozesses \"%1\" "
 "mit der PID %2!u! geschickt.\n"
 
 #: taskkill.rc:35
@@ -12044,7 +12041,7 @@ msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
 msgstr ""
 "Wählen Sie die Spalten aus, die auf der Prozess-Seite des Task-Managers "
-"erscheinen sollen"
+"erscheinen sollen."
 
 #: taskmgr.rc:525
 msgid "&Image Name"
@@ -12112,7 +12109,7 @@ msgstr "Aus&gelagerter Pool"
 
 #: taskmgr.rc:557
 msgid "N&on-paged Pool"
-msgstr "Nich&tausgelagerter Pool"
+msgstr "Nich&t ausgelagerter Pool"
 
 #: taskmgr.rc:559
 msgid "Base P&riority"
@@ -12395,7 +12392,7 @@ msgstr "Ausgelagerter Pool"
 
 #: taskmgr.rc:288
 msgid "NP Pool"
-msgstr "Nichtausgelagerter Pool"
+msgstr "Nicht ausgelagerter Pool"
 
 #: taskmgr.rc:289
 msgid "Base Pri"
@@ -12417,7 +12414,7 @@ msgstr ""
 
 #: taskmgr.rc:305
 msgid "Unable to Change Priority"
-msgstr "Die Priorität kann nicht geändert werden "
+msgstr "Die Priorität kann nicht geändert werden"
 
 #: taskmgr.rc:310
 msgid ""
@@ -12431,7 +12428,7 @@ msgstr ""
 "Ergebnissen und Systeminstabilität, sowie Datenverlust\n"
 "führen. Dem Prozess wird es nicht möglich sein geänderte\n"
 "Daten oder seinen Zustand zu speichern.\n"
-"Sind Sie sicher, dass Sie inh beenden möchten?"
+"Sind Sie sicher, dass Sie ihn beenden möchten?"
 
 #: taskmgr.rc:311
 msgid "Unable to Terminate Process"
@@ -12596,7 +12593,7 @@ msgstr ""
 
 #: winecfg.rc:156
 msgid "&Add application..."
-msgstr "Anw. &hinzufügen"
+msgstr "Anw. &hinzufügen..."
 
 #: winecfg.rc:157
 msgid "&Remove application"
@@ -12678,7 +12675,7 @@ msgstr "Bestehende Über&schreibungen:"
 
 #: winecfg.rc:201
 msgid "&Edit..."
-msgstr "&Bearbeiten"
+msgstr "&Bearbeiten..."
 
 #: winecfg.rc:207
 msgid "Edit Override"
@@ -12726,7 +12723,7 @@ msgstr ""
 
 #: winecfg.rc:238
 msgid "&Add..."
-msgstr "&Hinzufügen"
+msgstr "&Hinzufügen..."
 
 #: winecfg.rc:240
 msgid "Auto&detect"
@@ -13295,7 +13292,7 @@ msgstr "Konfigurationsfehler"
 
 #: wineconsole.rc:39
 msgid "Screen buffer size must be greater or equal to the window's one"
-msgstr "Die Bildschirmgröße muß größer oder gleich der des Fensters sein"
+msgstr "Die Bildschirmgröße muss größer oder gleich der des Fensters sein"
 
 #: wineconsole.rc:34
 msgid "Each character is %1!u! pixels wide on %2!u! pixels high"
@@ -13319,7 +13316,7 @@ msgstr "wineconsole: Nicht erkannte Befehlszeilenoption\n"
 
 #: wineconsole.rc:44
 msgid "Starts a program in a Wine console\n"
-msgstr "Startet ein Programm in einer Wine-Konsole.\n"
+msgstr "Startet ein Programm in einer Wine-Konsole\n"
 
 #: wineconsole.rc:45
 msgid ""
@@ -13449,7 +13446,7 @@ msgstr "Netzwerklaufwerk &verbinden..."
 
 #: winefile.rc:46
 msgid "&Disconnect Network Drive"
-msgstr "Netzwerklaufwerk &trennen..."
+msgstr "Netzwerklaufwerk &trennen"
 
 #: winefile.rc:52
 msgid "&Name"
@@ -13825,7 +13822,7 @@ msgstr ""
 
 #: winhlp32.rc:90
 msgid "Cannot find a richedit implementation... Aborting"
-msgstr "Die Richedit Implementation konnte nicht gefunden werden... Breche ab."
+msgstr "Die Richedit Implementation konnte nicht gefunden werden... Breche ab"
 
 #: winhlp32.rc:91
 msgid "Help topics: "
@@ -14128,11 +14125,11 @@ msgstr ""
 
 #: wordpad.rc:187
 msgid "Invalid number format"
-msgstr "Diese Maßeinheit ist nicht zulässig."
+msgstr "Diese Maßeinheit ist nicht zulässig"
 
 #: wordpad.rc:188
 msgid "OLE storage documents are not supported"
-msgstr "OLE-Dokumentenspeicherung wird nicht unterstützt."
+msgstr "OLE-Dokumentenspeicherung wird nicht unterstützt"
 
 #: wordpad.rc:189
 msgid "Could not save the file."
@@ -14273,7 +14270,7 @@ msgstr ""
 "[/W]  Wartet vor Beginn des Kopierens auf Bestätigung.\n"
 "[/T]  Erzeuge eine leere Verzeichnisstruktur, ohne Dateien zu kopieren.\n"
 "[/Y]  Keine Nachfrage vor dem Überschreiben von Dateien.\n"
-"[/-Y] Nachrage vor dem Überschreiben von Dateien.\n"
+"[/-Y] Nachfrage vor dem Überschreiben von Dateien.\n"
 "[/P]  Fragt für jede Quelldatei, ob sie kopiert werden soll.\n"
 "[/N]  Kopiert die Dateien unter ihrem Kurznamen.\n"
 "[/U]  Kopiert nur Dateien, die am Ziel bereits existieren.\n"
