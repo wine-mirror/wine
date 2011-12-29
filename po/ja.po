@@ -11744,11 +11744,13 @@ msgid "&Show processes from all users"
 msgstr "すべてのユーザーのプロセスを表示(&S)"
 
 #: taskmgr.rc:376
-msgid "CPU Usage"
+#, fuzzy
+msgid "CPU usage"
 msgstr "CPU 使用率"
 
 #: taskmgr.rc:377
-msgid "MEM Usage"
+#, fuzzy
+msgid "MEM usage"
 msgstr "メモリ使用量"
 
 #: taskmgr.rc:378
@@ -11756,15 +11758,18 @@ msgid "Totals"
 msgstr "合計"
 
 #: taskmgr.rc:379
-msgid "Commit Charge (K)"
+#, fuzzy
+msgid "Commit charge (K)"
 msgstr "コミットチャージ (K)"
 
 #: taskmgr.rc:380
-msgid "Physical Memory (K)"
+#, fuzzy
+msgid "Physical memory (K)"
 msgstr "物理メモリ (K)"
 
 #: taskmgr.rc:381
-msgid "Kernel Memory (K)"
+#, fuzzy
+msgid "Kernel memory (K)"
 msgstr "カーネル メモリ (K)"
 
 #: taskmgr.rc:382 taskmgr.rc:290
@@ -11804,11 +11809,13 @@ msgid "Nonpaged"
 msgstr "非ページ"
 
 #: taskmgr.rc:418
-msgid "CPU Usage History"
+#, fuzzy
+msgid "CPU usage history"
 msgstr "CPU 使用率の履歴"
 
 #: taskmgr.rc:419
-msgid "Memory Usage History"
+#, fuzzy
+msgid "Memory usage history"
 msgstr "メモリ使用量の履歴"
 
 #: taskmgr.rc:432 taskmgr.rc:327

@@ -12046,11 +12046,13 @@ msgid "&Show processes from all users"
 msgstr "&Tüm kullanıcı süreçlerini göster"
 
 #: taskmgr.rc:376
-msgid "CPU Usage"
+#, fuzzy
+msgid "CPU usage"
 msgstr "MİB Kullanımı"
 
 #: taskmgr.rc:377
-msgid "MEM Usage"
+#, fuzzy
+msgid "MEM usage"
 msgstr "BLK Kullanımı"
 
 #: taskmgr.rc:378
@@ -12058,15 +12060,18 @@ msgid "Totals"
 msgstr "Toplamlar"
 
 #: taskmgr.rc:379
-msgid "Commit Charge (K)"
+#, fuzzy
+msgid "Commit charge (K)"
 msgstr "Commit Charge (K)"
 
 #: taskmgr.rc:380
-msgid "Physical Memory (K)"
+#, fuzzy
+msgid "Physical memory (K)"
 msgstr "Fiziksel Bellek (K)"
 
 #: taskmgr.rc:381
-msgid "Kernel Memory (K)"
+#, fuzzy
+msgid "Kernel memory (K)"
 msgstr "Çekirdek Belleği (K)"
 
 #: taskmgr.rc:382 taskmgr.rc:290
@@ -12106,11 +12111,13 @@ msgid "Nonpaged"
 msgstr "Sayfalanmamış"
 
 #: taskmgr.rc:418
-msgid "CPU Usage History"
+#, fuzzy
+msgid "CPU usage history"
 msgstr "MİB Kullanım Geçmişi"
 
 #: taskmgr.rc:419
-msgid "Memory Usage History"
+#, fuzzy
+msgid "Memory usage history"
 msgstr "Bellek Kullanım Geçmişi"
 
 #: taskmgr.rc:432 taskmgr.rc:327

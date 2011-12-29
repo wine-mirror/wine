@@ -11739,11 +11739,13 @@ msgid "&Show processes from all users"
 msgstr "&Отображать процессы всех пользователей"
 
 #: taskmgr.rc:376
-msgid "CPU Usage"
+#, fuzzy
+msgid "CPU usage"
 msgstr "Загрузка ЦП"
 
 #: taskmgr.rc:377
-msgid "MEM Usage"
+#, fuzzy
+msgid "MEM usage"
 msgstr "Файл подкачки"
 
 #: taskmgr.rc:378
@@ -11751,15 +11753,18 @@ msgid "Totals"
 msgstr "Всего"
 
 #: taskmgr.rc:379
-msgid "Commit Charge (K)"
+#, fuzzy
+msgid "Commit charge (K)"
 msgstr "Выделение памяти (КБ)"
 
 #: taskmgr.rc:380
-msgid "Physical Memory (K)"
+#, fuzzy
+msgid "Physical memory (K)"
 msgstr "Физическая память (КБ)"
 
 #: taskmgr.rc:381
-msgid "Kernel Memory (K)"
+#, fuzzy
+msgid "Kernel memory (K)"
 msgstr "Память ядра (КБ)"
 
 #: taskmgr.rc:382 taskmgr.rc:290
@@ -11799,11 +11804,13 @@ msgid "Nonpaged"
 msgstr "Невыгруж."
 
 #: taskmgr.rc:418
-msgid "CPU Usage History"
+#, fuzzy
+msgid "CPU usage history"
 msgstr "Хронология загрузки ЦП"
 
 #: taskmgr.rc:419
-msgid "Memory Usage History"
+#, fuzzy
+msgid "Memory usage history"
 msgstr "Хронология использования файла подкачки"
 
 #: taskmgr.rc:432 taskmgr.rc:327

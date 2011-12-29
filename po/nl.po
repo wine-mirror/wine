@@ -11813,11 +11813,13 @@ msgid "&Show processes from all users"
 msgstr "&Toon processen van alle gebruikers"
 
 #: taskmgr.rc:376
-msgid "CPU Usage"
+#, fuzzy
+msgid "CPU usage"
 msgstr "CPU-gebruik"
 
 #: taskmgr.rc:377
-msgid "MEM Usage"
+#, fuzzy
+msgid "MEM usage"
 msgstr "Geheugengebruik"
 
 #: taskmgr.rc:378
@@ -11825,15 +11827,18 @@ msgid "Totals"
 msgstr "Totaal"
 
 #: taskmgr.rc:379
-msgid "Commit Charge (K)"
+#, fuzzy
+msgid "Commit charge (K)"
 msgstr "Commit Charge (K)"
 
 #: taskmgr.rc:380
-msgid "Physical Memory (K)"
+#, fuzzy
+msgid "Physical memory (K)"
 msgstr "Fysiek geheugen (K)"
 
 #: taskmgr.rc:381
-msgid "Kernel Memory (K)"
+#, fuzzy
+msgid "Kernel memory (K)"
 msgstr "Kernelgeheugen (K)"
 
 #: taskmgr.rc:382 taskmgr.rc:290
@@ -11873,11 +11878,13 @@ msgid "Nonpaged"
 msgstr "Niet in swap"
 
 #: taskmgr.rc:418
-msgid "CPU Usage History"
+#, fuzzy
+msgid "CPU usage history"
 msgstr "Geschiedenis van het CPU-gebruik"
 
 #: taskmgr.rc:419
-msgid "Memory Usage History"
+#, fuzzy
+msgid "Memory usage history"
 msgstr "Geschiedenis van het geheugengebruik"
 
 #: taskmgr.rc:432 taskmgr.rc:327

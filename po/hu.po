@@ -11871,12 +11871,12 @@ msgstr ""
 
 #: taskmgr.rc:376
 #, fuzzy
-msgid "CPU Usage"
+msgid "CPU usage"
 msgstr "Kulcs használat"
 
 #: taskmgr.rc:377
 #, fuzzy
-msgid "MEM Usage"
+msgid "MEM usage"
 msgstr "Kulcs használat"
 
 #: taskmgr.rc:378
@@ -11884,15 +11884,15 @@ msgid "Totals"
 msgstr ""
 
 #: taskmgr.rc:379
-msgid "Commit Charge (K)"
+msgid "Commit charge (K)"
 msgstr ""
 
 #: taskmgr.rc:380
-msgid "Physical Memory (K)"
+msgid "Physical memory (K)"
 msgstr ""
 
 #: taskmgr.rc:381
-msgid "Kernel Memory (K)"
+msgid "Kernel memory (K)"
 msgstr ""
 
 #: taskmgr.rc:382 taskmgr.rc:290
@@ -11934,12 +11934,13 @@ msgid "Nonpaged"
 msgstr ""
 
 #: taskmgr.rc:418
-msgid "CPU Usage History"
-msgstr ""
+#, fuzzy
+msgid "CPU usage history"
+msgstr "Memóriafigyelő"
 
 #: taskmgr.rc:419
 #, fuzzy
-msgid "Memory Usage History"
+msgid "Memory usage history"
 msgstr "Memóriafigyelő"
 
 #: taskmgr.rc:432 taskmgr.rc:327

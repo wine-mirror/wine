@@ -11868,11 +11868,13 @@ msgid "&Show processes from all users"
 msgstr "Afficher les processus de &tous les utilisateurs"
 
 #: taskmgr.rc:376
-msgid "CPU Usage"
+#, fuzzy
+msgid "CPU usage"
 msgstr "Util. processeur"
 
 #: taskmgr.rc:377
-msgid "MEM Usage"
+#, fuzzy
+msgid "MEM usage"
 msgstr "Util. mémoire"
 
 #: taskmgr.rc:378
@@ -11880,15 +11882,18 @@ msgid "Totals"
 msgstr "Totaux"
 
 #: taskmgr.rc:379
-msgid "Commit Charge (K)"
+#, fuzzy
+msgid "Commit charge (K)"
 msgstr "Charge dédiée (Kio)"
 
 #: taskmgr.rc:380
-msgid "Physical Memory (K)"
+#, fuzzy
+msgid "Physical memory (K)"
 msgstr "Mémoire physique (Kio)"
 
 #: taskmgr.rc:381
-msgid "Kernel Memory (K)"
+#, fuzzy
+msgid "Kernel memory (K)"
 msgstr "Mémoire pour le noyau (Kio)"
 
 #: taskmgr.rc:382 taskmgr.rc:290
@@ -11928,11 +11933,13 @@ msgid "Nonpaged"
 msgstr "Non paginée"
 
 #: taskmgr.rc:418
-msgid "CPU Usage History"
+#, fuzzy
+msgid "CPU usage history"
 msgstr "Historique de l'utilisation du processeur"
 
 #: taskmgr.rc:419
-msgid "Memory Usage History"
+#, fuzzy
+msgid "Memory usage history"
 msgstr "Historique de l'utilisation de la mémoire"
 
 #: taskmgr.rc:432 taskmgr.rc:327

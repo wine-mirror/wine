@@ -11808,11 +11808,13 @@ msgid "&Show processes from all users"
 msgstr "&Mostra els processos de tots els usuaris"
 
 #: taskmgr.rc:376
-msgid "CPU Usage"
+#, fuzzy
+msgid "CPU usage"
 msgstr "Ús de CPU"
 
 #: taskmgr.rc:377
-msgid "MEM Usage"
+#, fuzzy
+msgid "MEM usage"
 msgstr "Ús MEM"
 
 #: taskmgr.rc:378
@@ -11820,15 +11822,18 @@ msgid "Totals"
 msgstr ""
 
 #: taskmgr.rc:379
-msgid "Commit Charge (K)"
+#, fuzzy
+msgid "Commit charge (K)"
 msgstr "Càrrega de Transaccions (K)"
 
 #: taskmgr.rc:380
-msgid "Physical Memory (K)"
+#, fuzzy
+msgid "Physical memory (K)"
 msgstr "Memòria Física (K)"
 
 #: taskmgr.rc:381
-msgid "Kernel Memory (K)"
+#, fuzzy
+msgid "Kernel memory (K)"
 msgstr "Memòria del Nucli (K)"
 
 #: taskmgr.rc:382 taskmgr.rc:290
@@ -11868,11 +11873,13 @@ msgid "Nonpaged"
 msgstr "No pàginada"
 
 #: taskmgr.rc:418
-msgid "CPU Usage History"
+#, fuzzy
+msgid "CPU usage history"
 msgstr "Historial d'Ús de CPU"
 
 #: taskmgr.rc:419
-msgid "Memory Usage History"
+#, fuzzy
+msgid "Memory usage history"
 msgstr "Monitor d'Ús de Memòria"
 
 #: taskmgr.rc:432 taskmgr.rc:327
