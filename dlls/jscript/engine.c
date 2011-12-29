@@ -388,15 +388,6 @@ static HRESULT disp_get_id(script_ctx_t *ctx, IDispatch *disp, BSTR name, DWORD 
     return hres;
 }
 
-/* ECMA-262 3rd Edition    8.7.2 */
-static HRESULT put_value(script_ctx_t *ctx, exprval_t *ref, VARIANT *v, jsexcept_t *ei)
-{
-    if(ref->type != EXPRVAL_IDREF)
-        return throw_reference_error(ctx, ei, JS_E_ILLEGAL_ASSIGN, NULL);
-
-    return disp_propput(ctx, ref->u.idref.disp, ref->u.idref.id, v, ei, NULL/*FIXME*/);
-}
-
 static inline BOOL is_null(const VARIANT *v)
 {
     return V_VT(v) == VT_NULL || (V_VT(v) == VT_DISPATCH && !V_DISPATCH(v));
@@ -815,124 +806,6 @@ HRESULT for_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t 
         }
     }
 
-    if(FAILED(hres)) {
-        VariantClear(&retv);
-        return hres;
-    }
-
-    if(rt->type == RT_BREAK)
-        rt->type = RT_NORMAL;
-
-    *ret = retv;
-    return S_OK;
-}
-
-static HRESULT array_expression_eval(script_ctx_t*,expression_t*,jsexcept_t*,exprval_t*);
-static HRESULT member_expression_eval(script_ctx_t*,expression_t*,jsexcept_t*,exprval_t*);
-static HRESULT identifier_expression_eval(script_ctx_t*,expression_t*,jsexcept_t*,exprval_t*);
-
-/* ECMA-262 3rd Edition    12.6.4 */
-HRESULT forin_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
-{
-    forin_statement_t *stat = (forin_statement_t*)_stat;
-    VARIANT val, name, retv, tmp;
-    DISPID id = DISPID_STARTENUM;
-    BSTR str, identifier = NULL;
-    IDispatchEx *in_obj;
-    exprval_t exprval;
-    HRESULT hres;
-
-    TRACE("\n");
-
-    if(stat->variable) {
-        hres = variable_list_eval(ctx, stat->variable, &rt->ei);
-        if(FAILED(hres))
-            return hres;
-    }
-
-    hres = expr_eval(ctx, stat->in_expr, &rt->ei, &val);
-    if(FAILED(hres))
-        return hres;
-
-    if(V_VT(&val) != VT_DISPATCH) {
-        TRACE("in vt %d\n", V_VT(&val));
-        VariantClear(&val);
-        V_VT(ret) = VT_EMPTY;
-        return S_OK;
-    }
-
-    hres = IDispatch_QueryInterface(V_DISPATCH(&val), &IID_IDispatchEx, (void**)&in_obj);
-    IDispatch_Release(V_DISPATCH(&val));
-    if(FAILED(hres)) {
-        TRACE("Object doesn't support IDispatchEx\n");
-        V_VT(ret) = VT_EMPTY;
-        return S_OK;
-    }
-
-    V_VT(&retv) = VT_EMPTY;
-
-    if(stat->variable)
-        identifier = SysAllocString(stat->variable->identifier);
-
-    while(1) {
-        hres = IDispatchEx_GetNextDispID(in_obj, fdexEnumDefault, id, &id);
-        if(FAILED(hres) || hres == S_FALSE)
-            break;
-
-        hres = IDispatchEx_GetMemberName(in_obj, id, &str);
-        if(FAILED(hres))
-            break;
-
-        TRACE("iter %s\n", debugstr_w(str));
-
-        if(stat->variable) {
-            hres = identifier_eval(ctx, identifier, 0, NULL, &exprval);
-        }else {
-            switch(stat->expr->type) {
-            case EXPR_ARRAY:
-                hres = array_expression_eval(ctx, stat->expr, &rt->ei, &exprval);
-                break;
-            case EXPR_IDENT:
-                hres = identifier_expression_eval(ctx, stat->expr, &rt->ei, &exprval);
-                break;
-            case EXPR_MEMBER:
-                hres = member_expression_eval(ctx, stat->expr, &rt->ei, &exprval);
-                break;
-            default:
-                hres = expr_eval(ctx, stat->expr, &rt->ei, &tmp);
-                if(FAILED(hres))
-                    break;
-
-                VariantClear(&tmp);
-                hres = throw_reference_error(ctx, &rt->ei, JS_E_ILLEGAL_ASSIGN, NULL);
-                break;
-            }
-        }
-        if(SUCCEEDED(hres)) {
-            V_VT(&name) = VT_BSTR;
-            V_BSTR(&name) = str;
-            hres = put_value(ctx, &exprval, &name, &rt->ei);
-            exprval_release(&exprval);
-        }
-        SysFreeString(str);
-        if(FAILED(hres))
-            break;
-
-        hres = stat_eval(ctx, stat->statement, rt, &tmp);
-        if(FAILED(hres))
-            break;
-
-        VariantClear(&retv);
-        retv = tmp;
-
-        if(rt->type == RT_CONTINUE)
-            rt->type = RT_NORMAL;
-        else if(rt->type != RT_NORMAL)
-            break;
-    }
-
-    SysFreeString(identifier);
-    IDispatchEx_Release(in_obj);
     if(FAILED(hres)) {
         VariantClear(&retv);
         return hres;
@@ -1389,46 +1262,6 @@ static HRESULT interp_func(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.2.1 */
-static HRESULT array_expression_eval(script_ctx_t *ctx, expression_t *_expr, jsexcept_t *ei, exprval_t *ret)
-{
-    binary_expression_t *expr = (binary_expression_t*)_expr;
-    VARIANT member, val;
-    DISPID id;
-    BSTR str;
-    IDispatch *obj = NULL;
-    HRESULT hres;
-
-    TRACE("\n");
-
-    hres = expr_eval(ctx, expr->expression1, ei, &member);
-    if(FAILED(hres))
-        return hres;
-
-    hres = expr_eval(ctx, expr->expression2, ei, &val);
-    if(SUCCEEDED(hres)) {
-        hres = to_object(ctx, &member, &obj);
-        if(FAILED(hres))
-            VariantClear(&val);
-    }
-    VariantClear(&member);
-    if(SUCCEEDED(hres)) {
-        hres = to_string(ctx, &val, ei, &str);
-        VariantClear(&val);
-        if(SUCCEEDED(hres)) {
-            hres = disp_get_id(ctx, obj, str, fdexNameEnsure, &id);
-            SysFreeString(str);
-        }
-
-        if(SUCCEEDED(hres))
-            exprval_set_idref(ret, obj, id);
-
-        IDispatch_Release(obj);
-    }
-
-    return hres;
-}
-
-/* ECMA-262 3rd Edition    11.2.1 */
 static HRESULT interp_array(exec_ctx_t *ctx)
 {
     VARIANT v, *namev;
@@ -1467,42 +1300,6 @@ static HRESULT interp_array(exec_ctx_t *ctx)
         return hres;
 
     return stack_push(ctx, &v);
-}
-
-/* ECMA-262 3rd Edition    11.2.1 */
-static HRESULT member_expression_eval(script_ctx_t *ctx, expression_t *_expr, jsexcept_t *ei, exprval_t *ret)
-{
-    member_expression_t *expr = (member_expression_t*)_expr;
-    IDispatch *obj = NULL;
-    VARIANT member;
-    DISPID id;
-    BSTR str;
-    HRESULT hres;
-
-    TRACE("\n");
-
-    hres = expr_eval(ctx, expr->expression, ei, &member);
-    if(FAILED(hres))
-        return hres;
-
-    hres = to_object(ctx, &member, &obj);
-    VariantClear(&member);
-    if(FAILED(hres))
-        return hres;
-
-    str = SysAllocString(expr->identifier);
-    if(!str) {
-        IDispatch_Release(obj);
-        return E_OUTOFMEMORY;
-    }
-
-    hres = disp_get_id(ctx, obj, str, fdexNameEnsure, &id);
-    SysFreeString(str);
-    if(SUCCEEDED(hres))
-        exprval_set_idref(ret, obj, id);
-
-    IDispatch_Release(obj);
-    return hres;
 }
 
 /* ECMA-262 3rd Edition    11.2.1 */
@@ -1712,25 +1509,6 @@ static HRESULT interp_this(exec_ctx_t *ctx)
     V_DISPATCH(&v) = ctx->this_obj;
     IDispatch_AddRef(ctx->this_obj);
     return stack_push(ctx, &v);
-}
-
-/* ECMA-262 3rd Edition    10.1.4 */
-static HRESULT identifier_expression_eval(script_ctx_t *ctx, expression_t *_expr, jsexcept_t *ei, exprval_t *ret)
-{
-    identifier_expression_t *expr = (identifier_expression_t*)_expr;
-    BSTR identifier;
-    HRESULT hres;
-
-    TRACE("\n");
-
-    identifier = SysAllocString(expr->identifier);
-    if(!identifier)
-        return E_OUTOFMEMORY;
-
-    hres = identifier_eval(ctx, identifier, fdexNameEnsure, ei, ret);
-
-    SysFreeString(identifier);
-    return hres;
 }
 
 /* ECMA-262 3rd Edition    10.1.4 */

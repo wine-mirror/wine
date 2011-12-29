@@ -1164,7 +1164,6 @@ static HRESULT compile_for_statement(compiler_ctx_t *ctx, for_statement_t *stat)
 static HRESULT compile_forin_statement(compiler_ctx_t *ctx, forin_statement_t *stat)
 {
     statement_ctx_t stat_ctx = {4, FALSE, FALSE};
-    unsigned off_backup = ctx->code_off;
     HRESULT hres;
 
     if(stat->variable) {
@@ -1216,11 +1215,6 @@ static HRESULT compile_forin_statement(compiler_ctx_t *ctx, forin_statement_t *s
         return E_OUTOFMEMORY;
 
     hres = compile_statement(ctx, &stat_ctx, stat->statement);
-    if(hres == E_NOTIMPL) {
-        ctx->code_off = off_backup;
-        stat->stat.eval = forin_statement_eval;
-        return compile_interp_fallback(ctx, &stat->stat);
-    }
     if(FAILED(hres))
         return hres;
 
