@@ -229,8 +229,7 @@ done:
 /***********************************************************************
  *           MFDRV_SelectBrush
  */
-HBRUSH MFDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
-                          const BITMAPINFO *info, void *bits, UINT usage )
+HBRUSH MFDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern )
 {
     INT16 index;
 

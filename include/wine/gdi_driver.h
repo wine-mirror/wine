@@ -52,6 +52,14 @@ struct gdi_image_bits
     void   *param;     /* extra parameter for callback private use */
 };
 
+struct brush_pattern
+{
+    HBITMAP               bitmap;   /* bitmap handle for DDB patterns */
+    BITMAPINFO           *info;     /* DIB info */
+    struct gdi_image_bits bits;     /* DIB bits */
+    UINT                  usage;    /* color usage for DIB info */
+};
+
 struct gdi_dc_funcs
 {
     INT      (*pAbortDoc)(PHYSDEV);
@@ -147,7 +155,7 @@ struct gdi_dc_funcs
     BOOL     (*pScaleViewportExtEx)(PHYSDEV,INT,INT,INT,INT,SIZE*);
     BOOL     (*pScaleWindowExtEx)(PHYSDEV,INT,INT,INT,INT,SIZE*);
     HBITMAP  (*pSelectBitmap)(PHYSDEV,HBITMAP);
-    HBRUSH   (*pSelectBrush)(PHYSDEV,HBRUSH,HBITMAP,const BITMAPINFO*,void*,UINT);
+    HBRUSH   (*pSelectBrush)(PHYSDEV,HBRUSH,const struct brush_pattern*);
     BOOL     (*pSelectClipPath)(PHYSDEV,INT);
     HFONT    (*pSelectFont)(PHYSDEV,HFONT);
     HPALETTE (*pSelectPalette)(PHYSDEV,HPALETTE,BOOL);
@@ -205,7 +213,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 20
+#define WINE_GDI_DRIVER_VERSION 21
 
 static inline PHYSDEV get_physdev_entry_point( PHYSDEV dev, size_t offset )
 {

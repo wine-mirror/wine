@@ -2620,25 +2620,26 @@ fallback:
 /***********************************************************************
  *           xrenderdrv_SelectBrush
  */
-static HBRUSH xrenderdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
-                                      const BITMAPINFO *info, void *bits, UINT usage )
+static HBRUSH xrenderdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern )
 {
     struct xrender_physdev *physdev = get_xrender_dev( dev );
     X_PHYSBITMAP *physbitmap;
     enum wxr_format format;
     BOOL delete_bitmap = FALSE;
     BITMAP bm;
+    HBITMAP bitmap;
     Pixmap pixmap;
     Picture src_pict, dst_pict;
     XRenderPictureAttributes pa;
 
     if (!X11DRV_XRender_Installed) goto x11drv_fallback;
-    if (!bitmap && !info) goto x11drv_fallback;
+    if (!pattern) goto x11drv_fallback;
     if (physdev->format == WXR_FORMAT_MONO) goto x11drv_fallback;
 
+    bitmap = pattern->bitmap;
     if (!bitmap || !(physbitmap = X11DRV_get_phys_bitmap( bitmap )))
     {
-        if (!(bitmap = create_brush_bitmap( physdev->x11dev, info, bits, usage ))) return 0;
+        if (!(bitmap = create_brush_bitmap( physdev->x11dev, pattern ))) return 0;
         physbitmap = X11DRV_get_phys_bitmap( bitmap );
         delete_bitmap = TRUE;
     }
@@ -2676,7 +2677,7 @@ static HBRUSH xrenderdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap
 x11drv_fallback:
     if (delete_bitmap) DeleteObject( bitmap );
     dev = GET_NEXT_PHYSDEV( dev, pSelectBrush );
-    return dev->funcs->pSelectBrush( dev, hbrush, bitmap, info, bits, usage );
+    return dev->funcs->pSelectBrush( dev, hbrush, pattern );
 }
 
 

@@ -198,8 +198,7 @@ DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
 /***********************************************************************
  *           EMFDRV_SelectBrush
  */
-HBRUSH EMFDRV_SelectBrush( PHYSDEV dev, HBRUSH hBrush, HBITMAP bitmap,
-                           const BITMAPINFO *info, void *bits, UINT usage )
+HBRUSH EMFDRV_SelectBrush( PHYSDEV dev, HBRUSH hBrush, const struct brush_pattern *pattern )
 {
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*)dev;
     EMRSELECTOBJECT emr;

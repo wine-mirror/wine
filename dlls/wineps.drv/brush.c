@@ -27,8 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 /***********************************************************************
  *           SelectBrush   (WINEPS.@)
  */
-HBRUSH PSDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
-                          const BITMAPINFO *info, void *bits, UINT usage )
+HBRUSH PSDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern )
 {
     PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
     LOGBRUSH logbrush;
@@ -55,9 +54,7 @@ HBRUSH PSDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
 
     case BS_PATTERN:
     case BS_DIBPATTERN:
-        physDev->brush.info  = info;
-        physDev->brush.bits  = bits;
-        physDev->brush.usage = usage;
+        physDev->brush.pattern = *pattern;
 	break;
 
     default:
@@ -238,8 +235,8 @@ BOOL PSDRV_Brush(PHYSDEV dev, BOOL EO)
     case BS_DIBPATTERN:
         if(physDev->pi->ppd->LanguageLevel > 1) {
             PSDRV_WriteGSave(dev);
-            ret = PSDRV_WriteDIBPatternDict(dev, physDev->brush.info,
-                                            physDev->brush.bits, physDev->brush.usage );
+            ret = PSDRV_WriteDIBPatternDict(dev, physDev->brush.pattern.info,
+                                            physDev->brush.pattern.bits.ptr, physDev->brush.pattern.usage );
             PSDRV_Fill(dev, EO);
             PSDRV_WriteGRestore(dev);
         } else {

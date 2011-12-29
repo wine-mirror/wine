@@ -182,14 +182,6 @@ typedef struct tagBITMAPOBJ
     RGBQUAD            *color_table;  /* DIB color table if <= 8bpp (always 1 << bpp in size) */
 } BITMAPOBJ;
 
-struct brush_pattern
-{
-    HBITMAP               bitmap;   /* bitmap handle for DDB patterns */
-    BITMAPINFO           *info;     /* DIB info */
-    struct gdi_image_bits bits;     /* DIB bits */
-    UINT                  usage;    /* color usage for DIB info */
-};
-
 /* bidi.c */
 
 /* Wine_GCPW Flags */

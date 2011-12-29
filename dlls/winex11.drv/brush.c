@@ -254,11 +254,12 @@ static void BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, 
 }
 
 /* create a bitmap appropriate for the given DIB pattern brush */
-HBITMAP create_brush_bitmap( X11DRV_PDEVICE *physDev, const BITMAPINFO *info, void *bits, UINT usage )
+HBITMAP create_brush_bitmap( X11DRV_PDEVICE *physDev, const struct brush_pattern *pattern )
 {
     HDC memdc;
     int bpp = screen_bpp;
     HBITMAP bitmap;
+    const BITMAPINFO *info = pattern->info;
 
     if (physDev->depth == 1 || info->bmiHeader.biBitCount == 1) bpp = 1;
     bitmap = CreateBitmap( info->bmiHeader.biWidth, abs(info->bmiHeader.biHeight), 1, bpp, NULL );
@@ -269,7 +270,8 @@ HBITMAP create_brush_bitmap( X11DRV_PDEVICE *physDev, const BITMAPINFO *info, vo
     SelectObject( memdc, bitmap );
     DeleteDC( memdc );
 
-    SetDIBits( physDev->dev.hdc, bitmap, 0, abs(info->bmiHeader.biHeight), bits, info, usage );
+    SetDIBits( physDev->dev.hdc, bitmap, 0, abs(info->bmiHeader.biHeight),
+               pattern->bits.ptr, info, pattern->usage );
     return bitmap;
 }
 
@@ -277,20 +279,20 @@ HBITMAP create_brush_bitmap( X11DRV_PDEVICE *physDev, const BITMAPINFO *info, vo
 /***********************************************************************
  *           SelectBrush   (X11DRV.@)
  */
-HBRUSH X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
-                           const BITMAPINFO *info, void *bits, UINT usage )
+HBRUSH X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
     LOGBRUSH logbrush;
 
-    if (bitmap || info)  /* pattern brush */
+    if (pattern)  /* pattern brush */
     {
         X_PHYSBITMAP *physbitmap;
+        HBITMAP bitmap = pattern->bitmap;
         BOOL delete_bitmap = FALSE;
 
         if (!bitmap || !(physbitmap = X11DRV_get_phys_bitmap( bitmap )))
         {
-            if (!(bitmap = create_brush_bitmap( physDev, info, bits, usage ))) return 0;
+            if (!(bitmap = create_brush_bitmap( physDev, pattern ))) return 0;
             physbitmap = X11DRV_get_phys_bitmap( bitmap );
             delete_bitmap = TRUE;
         }

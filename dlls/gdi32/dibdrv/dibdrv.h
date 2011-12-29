@@ -98,10 +98,7 @@ typedef struct dibdrv_physdev
     COLORREF brush_colorref;
     dib_info brush_dib;
     void *brush_and_bits, *brush_xor_bits;
-    const BITMAPINFO *brush_pattern_info;
-    void *brush_pattern_bits;
-    UINT brush_pattern_usage;
-    HBITMAP brush_pattern_bitmap;
+    struct brush_pattern brush_pattern;
     BOOL   (* brush_rects)(struct dibdrv_physdev *pdev, dib_info *dib, int num, const RECT *rects, INT rop);
 } dibdrv_physdev;
 
@@ -131,8 +128,7 @@ extern DWORD    dibdrv_PutImage( PHYSDEV dev, HBITMAP hbitmap, HRGN clip, BITMAP
                                  const struct gdi_image_bits *bits, struct bitblt_coords *src,
                                  struct bitblt_coords *dst, DWORD rop ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
-extern HBRUSH   dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
-                                    const BITMAPINFO *info, void *bits, UINT usage ) DECLSPEC_HIDDEN;
+extern HBRUSH   dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
 extern HPEN     dibdrv_SelectPen( PHYSDEV dev, HPEN hpen ) DECLSPEC_HIDDEN;
 extern COLORREF dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern COLORREF dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;

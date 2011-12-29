@@ -494,26 +494,21 @@ static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc )
     if ((brush = GDI_GetObjPtr( handle, OBJ_BRUSH )))
     {
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSelectBrush );
-        HBITMAP bitmap = brush->pattern.bitmap;
-        BITMAPINFO *info;
-        void *bits;
-        UINT usage;
+        struct brush_pattern *pattern = &brush->pattern;
 
-        if (bitmap && !brush->pattern.info)
+        if (pattern->bitmap && !pattern->info)
         {
-            BITMAPOBJ *bmp = GDI_GetObjPtr( bitmap, OBJ_BITMAP );
+            BITMAPOBJ *bmp = GDI_GetObjPtr( pattern->bitmap, OBJ_BITMAP );
             /* fetch the bitmap bits if we are selecting into a different type of DC */
-            if (bmp && bmp->funcs != physdev->funcs) store_bitmap_bits( &brush->pattern, bmp );
-            GDI_ReleaseObj( bitmap );
+            if (bmp && bmp->funcs != physdev->funcs) store_bitmap_bits( pattern, bmp );
+            GDI_ReleaseObj( pattern->bitmap );
         }
+        else if (!pattern->info) pattern = NULL;
 
-        info   = brush->pattern.info;
-        bits   = brush->pattern.bits.ptr;
-        usage  = brush->pattern.usage;
         GDI_inc_ref_count( handle );
         GDI_ReleaseObj( handle );
 
-        if (!physdev->funcs->pSelectBrush( physdev, handle, bitmap, info, bits, usage ))
+        if (!physdev->funcs->pSelectBrush( physdev, handle, pattern ))
         {
             GDI_dec_ref_count( handle );
         }

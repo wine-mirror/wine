@@ -1799,26 +1799,26 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, BOOL *needs_reselect )
     RECT rect;
     dib_info pattern;
 
-    if (!pdev->brush_pattern_info)
+    if (!pdev->brush_pattern.info)
     {
-        BITMAPOBJ *bmp = GDI_GetObjPtr( pdev->brush_pattern_bitmap, OBJ_BITMAP );
+        BITMAPOBJ *bmp = GDI_GetObjPtr( pdev->brush_pattern.bitmap, OBJ_BITMAP );
         BOOL ret;
 
         if (!bmp) return FALSE;
         ret = init_dib_info_from_bitmapobj( &pattern, bmp, 0 );
-        GDI_ReleaseObj( pdev->brush_pattern_bitmap );
+        GDI_ReleaseObj( pdev->brush_pattern.bitmap );
         if (!ret) return FALSE;
     }
-    else if (pdev->brush_pattern_info->bmiHeader.biClrUsed && pdev->brush_pattern_usage == DIB_PAL_COLORS)
+    else if (pdev->brush_pattern.info->bmiHeader.biClrUsed && pdev->brush_pattern.usage == DIB_PAL_COLORS)
     {
-        copy_bitmapinfo( info, pdev->brush_pattern_info );
+        copy_bitmapinfo( info, pdev->brush_pattern.info );
         fill_color_table_from_pal_colors( info, pdev->dev.hdc );
-        init_dib_info_from_bitmapinfo( &pattern, info, pdev->brush_pattern_bits, 0 );
+        init_dib_info_from_bitmapinfo( &pattern, info, pdev->brush_pattern.bits.ptr, 0 );
         *needs_reselect = TRUE;
     }
     else
     {
-        init_dib_info_from_bitmapinfo( &pattern, pdev->brush_pattern_info, pdev->brush_pattern_bits, 0 );
+        init_dib_info_from_bitmapinfo( &pattern, pdev->brush_pattern.info, pdev->brush_pattern.bits.ptr, 0 );
     }
 
     if (pattern.bit_count == 1 && !pattern.color_table)
@@ -1930,8 +1930,7 @@ static BOOL null_brush(dibdrv_physdev *pdev, dib_info *dib, int num, const RECT 
 /***********************************************************************
  *           dibdrv_SelectBrush
  */
-HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
-                           const BITMAPINFO *info, void *bits, UINT usage )
+HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern )
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectBrush );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
@@ -1941,17 +1940,14 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
 
     free_pattern_brush( pdev );
 
-    if (bitmap || info)  /* pattern brush */
+    if (pattern)  /* pattern brush */
     {
         pdev->brush_rects = pattern_brush;
         pdev->brush_style = BS_DIBPATTERN;
-        pdev->brush_pattern_info = info;
-        pdev->brush_pattern_bits = bits;
-        pdev->brush_pattern_usage = usage;
-        pdev->brush_pattern_bitmap = bitmap;
+        pdev->brush_pattern = *pattern;
         /* brush is actually selected only when it's used */
 
-        return next->funcs->pSelectBrush( next, hbrush, bitmap, info, bits, usage );
+        return next->funcs->pSelectBrush( next, hbrush, pattern );
     }
 
     GetObjectW( hbrush, sizeof(logbrush), &logbrush );
@@ -1983,7 +1979,7 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, HBITMAP bitmap,
         return 0;
     }
 
-    return next->funcs->pSelectBrush( next, hbrush, bitmap, info, bits, usage );
+    return next->funcs->pSelectBrush( next, hbrush, pattern );
 }
 
 /***********************************************************************
