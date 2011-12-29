@@ -474,9 +474,9 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pPolyBezier */
     NULL,                               /* pPolyBezierTo */
     NULL,                               /* pPolyDraw */
-    NULL,                               /* pPolyPolygon */
+    dibdrv_PolyPolygon,                 /* pPolyPolygon */
     dibdrv_PolyPolyline,                /* pPolyPolyline */
-    NULL,                               /* pPolygon */
+    dibdrv_Polygon,                     /* pPolygon */
     dibdrv_Polyline,                    /* pPolyline */
     NULL,                               /* pPolylineTo */
     dibdrv_PutImage,                    /* pPutImage */

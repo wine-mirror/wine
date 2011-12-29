@@ -520,6 +520,64 @@ BOOL dibdrv_PaintRgn( PHYSDEV dev, HRGN rgn )
 }
 
 /***********************************************************************
+ *           dibdrv_PolyPolygon
+ */
+BOOL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD polygons )
+{
+    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pPolyPolygon );
+    DWORD total, i, pos;
+    BOOL ret = FALSE;
+    POINT *points;
+    INT rop = GetROP2( dev->hdc );
+    HRGN outline = 0, interior;
+
+    if (defer_pen( pdev )) return next->funcs->pPolyPolygon( next, pt, counts, polygons );
+
+    for (i = total = 0; i < polygons; i++)
+    {
+        if (counts[i] < 2) return FALSE;
+        total += counts[i];
+    }
+
+    points = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*pt) );
+    if (!points) return FALSE;
+    memcpy( points, pt, total * sizeof(*pt) );
+    LPtoDP( dev->hdc, points, total );
+
+    if (!(interior = CreatePolyPolygonRgn( points, counts, polygons, GetPolyFillMode( dev->hdc ))))
+    {
+        HeapFree( GetProcessHeap(), 0, points );
+        return FALSE;
+    }
+
+    if (pdev->clip) CombineRgn( interior, interior, pdev->clip, RGN_AND );
+
+    /* if not using a region, paint the interior first so the outline can overlap it */
+    if (!pdev->pen_uses_region || !(outline = CreateRectRgn( 0, 0, 0, 0 )))
+        ret = brush_rect( pdev, NULL, interior, rop );
+
+    for (i = pos = 0; i < polygons; i++)
+    {
+        reset_dash_origin( pdev );
+        pdev->pen_lines( pdev, counts[i], points + pos, TRUE, outline );
+        pos += counts[i];
+    }
+
+    if (outline)
+    {
+        if (pdev->clip) CombineRgn( outline, outline, pdev->clip, RGN_AND );
+        CombineRgn( interior, interior, outline, RGN_DIFF );
+        ret = pen_rect( pdev, NULL, outline, rop ) && brush_rect( pdev, NULL, interior, rop );
+        DeleteObject( outline );
+    }
+
+    DeleteObject( interior );
+    HeapFree( GetProcessHeap(), 0, points );
+    return ret;
+}
+
+/***********************************************************************
  *           dibdrv_PolyPolyline
  */
 BOOL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWORD polylines )
@@ -568,6 +626,16 @@ BOOL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWO
 
     HeapFree( GetProcessHeap(), 0, points );
     return ret;
+}
+
+/***********************************************************************
+ *           dibdrv_Polygon
+ */
+BOOL dibdrv_Polygon( PHYSDEV dev, const POINT *pt, INT count )
+{
+    INT counts[1] = { count };
+
+    return dibdrv_PolyPolygon( dev, pt, counts, 1 );
 }
 
 /***********************************************************************
