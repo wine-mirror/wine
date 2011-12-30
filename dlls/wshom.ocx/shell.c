@@ -19,7 +19,10 @@
 #include "wshom_private.h"
 #include "wshom.h"
 
+#include "shlobj.h"
+
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wshom);
 
@@ -167,8 +170,45 @@ static HRESULT WINAPI WshCollection_Invoke(IWshCollection *iface, DISPID dispIdM
 static HRESULT WINAPI WshCollection_Item(IWshCollection *iface, VARIANT *index, VARIANT *value)
 {
     WshCollection *This = impl_from_IWshCollection(iface);
-    FIXME("(%p)->(%s %p): stub\n", This, debugstr_variant(index), value);
-    return E_NOTIMPL;
+    static const WCHAR desktopW[] = {'D','e','s','k','t','o','p',0};
+    PIDLIST_ABSOLUTE pidl;
+    WCHAR pathW[MAX_PATH];
+    int kind = 0;
+    BSTR folder;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(index), value);
+
+    if (V_VT(index) != VT_BSTR)
+    {
+        FIXME("only BSTR index supported, got %d\n", V_VT(index));
+        return E_NOTIMPL;
+    }
+
+    folder = V_BSTR(index);
+    if (!strcmpiW(folder, desktopW))
+        kind = CSIDL_DESKTOP;
+    else
+    {
+        FIXME("folder kind %s not supported\n", debugstr_w(folder));
+        return E_NOTIMPL;
+    }
+
+    hr = SHGetSpecialFolderLocation(NULL, kind, &pidl);
+    if (hr != S_OK) return hr;
+
+    if (SHGetPathFromIDListW(pidl, pathW))
+    {
+        V_VT(value) = VT_BSTR;
+        V_BSTR(value) = SysAllocString(pathW);
+        hr = V_BSTR(value) ? S_OK : E_OUTOFMEMORY;
+    }
+    else
+        hr = E_FAIL;
+
+    CoTaskMemFree(pidl);
+
+    return hr;
 }
 
 static HRESULT WINAPI WshCollection_Count(IWshCollection *iface, LONG *count)

@@ -26,11 +26,14 @@
 #include "wshom.h"
 #include "wine/test.h"
 
+DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
+
 #define EXPECT_HR(hr,hr_exp) \
     ok(hr == hr_exp, "got 0x%08x, expected 0x%08x\n", hr, hr_exp)
 
 static void test_wshshell(void)
 {
+    static const WCHAR desktopW[] = {'D','e','s','k','t','o','p',0};
     IWshShell3 *sh3;
     IDispatchEx *dispex;
     IWshCollection *coll;
@@ -40,6 +43,11 @@ static void test_wshshell(void)
     ITypeInfo *ti;
     HRESULT hr;
     TYPEATTR *tattr;
+    DISPPARAMS dp;
+    EXCEPINFO ei;
+    VARIANT arg, res;
+    BSTR str;
+    UINT err;
 
     hr = CoCreateInstance(&CLSID_WshShell, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IDispatch, (void**)&disp);
@@ -72,11 +80,31 @@ static void test_wshshell(void)
 
     hr = ITypeInfo_GetTypeAttr(ti, &tattr);
     EXPECT_HR(hr, S_OK);
-    ok(IsEqualIID(&tattr->guid, &IID_IWshCollection), "got \n");
+    ok(IsEqualIID(&tattr->guid, &IID_IWshCollection), "got wrong type guid\n");
     ITypeInfo_ReleaseTypeAttr(ti, tattr);
 
-    IWshShell3_Release(sh3);
+    /* try to call Item() with normal IDispatch procedure */
+    str = SysAllocString(desktopW);
+    V_VT(&arg) = VT_BSTR;
+    V_BSTR(&arg) = str;
+    dp.rgvarg = &arg;
+    dp.rgdispidNamedArgs = NULL;
+    dp.cArgs = 1;
+    dp.cNamedArgs = 0;
+    hr = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 1033, DISPATCH_PROPERTYGET, &dp, &res, &ei, &err);
+    EXPECT_HR(hr, DISP_E_MEMBERNOTFOUND);
 
+    /* try Item() directly, it returns directory path apparently */
+    V_VT(&res) = VT_EMPTY;
+    hr = IWshCollection_Item(coll, &arg, &res);
+    EXPECT_HR(hr, S_OK);
+    SysFreeString(str);
+    ok(V_VT(&res) == VT_BSTR, "got res type %d\n", V_VT(&res));
+    VariantClear(&res);
+
+    IWshCollection_Release(coll);
+    IDispatch_Release(disp);
+    IWshShell3_Release(sh3);
     IUnknown_Release(shell);
 }
 
