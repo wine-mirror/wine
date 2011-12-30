@@ -5,6 +5,7 @@ IMPORTS   = dxguid uuid d3dxof
 C_SRCS = \
 	d3drm.c \
 	d3drm_main.c \
+	frame.c \
 	math.c \
 	meshbuilder.c
 
