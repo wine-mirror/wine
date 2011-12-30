@@ -532,6 +532,7 @@ report (enum report_type t, ...)
                         GetLastError ());
             else {
                 DWORD ret = WaitForSingleObject (initEvent, INFINITE);
+                CloseHandle(DlgThread);
                 switch (ret) {
                 case WAIT_OBJECT_0:
                     funcs = GUI_funcs;
