@@ -1258,7 +1258,7 @@ static HRESULT pop_to_stat(compiler_ctx_t *ctx, statement_ctx_t *stat_ctx)
     statement_ctx_t *iter = ctx->stat_ctx;
     unsigned stack_pop = 0;
 
-    while(1) {
+    while(iter) {
         if(iter->using_scope && push_instr(ctx, OP_pop_scope) == -1)
             return E_OUTOFMEMORY;
         if(iter->using_except && push_instr(ctx, OP_pop_except) == -1)
@@ -1343,8 +1343,19 @@ static HRESULT compile_break_statement(compiler_ctx_t *ctx, branch_statement_t *
 /* ECMA-262 3rd Edition    12.9 */
 static HRESULT compile_return_statement(compiler_ctx_t *ctx, expression_statement_t *stat)
 {
-    stat->stat.eval = return_statement_eval;
-    return compile_interp_fallback(ctx, &stat->stat);
+    HRESULT hres;
+
+    hres = pop_to_stat(ctx, NULL);
+    if(FAILED(hres))
+        return hres;
+
+    if(stat->expr) {
+        hres = compile_expression(ctx, stat->expr);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return push_instr(ctx, OP_ret) == -1 ? E_OUTOFMEMORY : S_OK;
 }
 
 /* ECMA-262 3rd Edition    12.10 */
@@ -1670,22 +1681,6 @@ static HRESULT init_compiler(parser_ctx_t *parser)
     }
 
     return S_OK;
-}
-
-HRESULT compile_subscript(parser_ctx_t *parser, expression_t *expr, unsigned *ret_off)
-{
-    HRESULT hres;
-
-    hres = init_compiler(parser);
-    if(FAILED(hres))
-        return hres;
-
-    *ret_off = parser->compiler->code_off;
-    hres = compile_expression(parser->compiler, expr);
-    if(FAILED(hres))
-        return hres;
-
-    return push_instr(parser->compiler, OP_ret) == -1 ? E_OUTOFMEMORY : S_OK;
 }
 
 HRESULT compile_subscript_stat(parser_ctx_t *parser, statement_t *stat, BOOL from_eval, unsigned *ret_off)

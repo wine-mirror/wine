@@ -54,8 +54,6 @@ struct _except_frame_t {
     except_frame_t *next;
 };
 
-static HRESULT expr_eval(script_ctx_t*,expression_t*,jsexcept_t*,VARIANT*);
-
 static HRESULT stack_push(exec_ctx_t *ctx, VARIANT *v)
 {
     if(!ctx->stack_size) {
@@ -668,27 +666,6 @@ HRESULT break_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_
     assert(stat->identifier != NULL);
     FIXME("identifier not implemented\n");
     return E_NOTIMPL;
-}
-
-/* ECMA-262 3rd Edition    12.9 */
-HRESULT return_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
-{
-    expression_statement_t *stat = (expression_statement_t*)_stat;
-    HRESULT hres;
-
-    TRACE("\n");
-
-    if(stat->expr) {
-        hres = expr_eval(ctx, stat->expr, &rt->ei, ret);
-        if(FAILED(hres))
-            return hres;
-    }else {
-        V_VT(ret) = VT_EMPTY;
-    }
-
-    TRACE("= %s\n", debugstr_variant(ret));
-    rt->type = RT_RETURN;
-    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    12.10 */
@@ -2630,53 +2607,6 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, unsigned ip, return_type_t *rt,
 
     assert(exec_ctx->top == prev_top+1 || exec_ctx->top == prev_top);
     assert(exec_ctx->scope_chain == prev_scope);
-
-    if(exec_ctx->top == prev_top)
-        V_VT(ret) = VT_EMPTY;
-    else
-        *ret = *stack_pop(exec_ctx);
-    return S_OK;
-}
-
-static HRESULT expr_eval(script_ctx_t *ctx, expression_t *expr, jsexcept_t *ei, VARIANT *ret)
-{
-    exec_ctx_t *exec_ctx = ctx->exec_ctx;
-    unsigned prev_ip, prev_top;
-    jsexcept_t *prev_ei;
-    jsop_t op;
-    HRESULT hres = S_OK;
-
-    TRACE("\n");
-
-    if(expr->instr_off == -1) {
-        hres = compile_subscript(ctx->exec_ctx->parser, expr, &expr->instr_off);
-        if(FAILED(hres))
-            return hres;
-    }
-
-    prev_top = exec_ctx->top;
-    prev_ip = exec_ctx->ip;
-    prev_ei = exec_ctx->ei;
-    exec_ctx->ip = expr->instr_off;
-    exec_ctx->ei = ei;
-
-    while(exec_ctx->ip != -1) {
-        op = exec_ctx->parser->code->instrs[exec_ctx->ip].op;
-        hres = op_funcs[op](exec_ctx);
-        if(FAILED(hres))
-            break;
-        exec_ctx->ip += op_move[op];
-    }
-
-    exec_ctx->ip = prev_ip;
-    exec_ctx->ei = prev_ei;
-
-    if(FAILED(hres)) {
-        stack_popn(exec_ctx, exec_ctx->top-prev_top);
-        return hres;
-    }
-
-    assert(exec_ctx->top == prev_top+1);
 
     if(exec_ctx->top == prev_top)
         V_VT(ret) = VT_EMPTY;

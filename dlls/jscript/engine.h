@@ -413,7 +413,6 @@ typedef struct {
 
 HRESULT continue_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
 HRESULT break_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
-HRESULT return_statement_eval(script_ctx_t*,statement_t*,return_type_t*,VARIANT*) DECLSPEC_HIDDEN;
 
 typedef struct {
     enum {
@@ -590,5 +589,4 @@ typedef struct {
     prop_val_t *property_list;
 } property_value_expression_t;
 
-HRESULT compile_subscript(parser_ctx_t*,expression_t*,unsigned*) DECLSPEC_HIDDEN;
 HRESULT compile_subscript_stat(parser_ctx_t*,statement_t*,BOOL,unsigned*) DECLSPEC_HIDDEN;
