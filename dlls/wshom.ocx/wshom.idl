@@ -17,6 +17,7 @@
  */
 
 import "oaidl.idl";
+cpp_quote("#undef ExpandEnvironmentStrings")
 
 [
     helpstring("Windows Script Host Object Model"),
@@ -26,6 +27,61 @@ import "oaidl.idl";
 library IWshRuntimeLibrary
 {
     importlib("stdole2.tlb");
+
+    typedef enum {
+        WshRunning  = 0,
+        WshFinished,
+        WshFailed
+    } WshExecStatus;
+
+    [
+        uuid(53bad8c1-e718-11cf-893d-00a0c9054228),
+        odl,
+        hidden,
+        dual,
+        nonextensible,
+        oleautomation
+    ]
+    interface ITextStream : IDispatch {
+        [id(0x2710), propget]
+        HRESULT Line([out, retval] long* Line);
+
+        [id(0xfffffdef), propget]
+        HRESULT Column([out, retval] long* Column);
+
+        [id(0x2712), propget]
+        HRESULT AtEndOfStream([out, retval] VARIANT_BOOL* EOS);
+
+        [id(0x2713), propget]
+        HRESULT AtEndOfLine([out, retval] VARIANT_BOOL* EOL);
+
+        [id(0x2714)]
+        HRESULT Read([in] long Characters, [out, retval] BSTR* Text);
+
+        [id(0x2715)]
+        HRESULT ReadLine([out, retval] BSTR* Text);
+
+        [id(0x2716)]
+        HRESULT ReadAll([out, retval] BSTR* Text);
+
+        [id(0x2717)]
+        HRESULT Write([in] BSTR Text);
+
+        [id(0x2718)]
+        HRESULT WriteLine([in, optional, defaultvalue("")] BSTR Text);
+
+        [id(0x2719)]
+        HRESULT WriteBlankLines([in] long Lines);
+
+        [id(0x271a)]
+        HRESULT Skip([in] long Characters);
+
+        [id(0x271b)]
+        HRESULT SkipLine();
+
+        [id(0x271c)]
+        HRESULT Close();
+    };
 
     [
         uuid(f935dc27-1cf0-11d0-adb9-00c04fd58a0b),
@@ -80,27 +136,135 @@ library IWshRuntimeLibrary
     }
 
     [
+        uuid(08fed190-be19-11d3-a28b-00104bd35090),
+        odl,
+        dual,
+        oleautomation
+    ]
+    interface IWshExec : IDispatch {
+        [id(0x0001), propget]
+        HRESULT Status([out, retval] WshExecStatus* Status);
+
+        [id(0x0003), propget]
+        HRESULT StdIn([out, retval] ITextStream** stream);
+
+        [id(0x0004), propget]
+        HRESULT StdOut([out, retval] ITextStream** stream);
+
+        [id(0x0005), propget]
+        HRESULT StdErr([out, retval] ITextStream** stream);
+
+        [id(0x0006), propget]
+        HRESULT ProcessID([out, retval] long* pid);
+
+        [id(0x0007), propget]
+        HRESULT ExitCode([out, retval] long* ExitCode);
+
+        [id(0x0008)]
+        HRESULT Terminate();
+    };
+
+    [
+        uuid(f935dc21-1cf0-11d0-adb9-00c04fd58a0b),
+        odl,
+        dual,
+        oleautomation,
+        hidden
+    ]
+    interface IWshShell : IDispatch {
+        [id(0x0064), propget]
+        HRESULT SpecialFolders([out, retval] IWshCollection** out_Folders);
+
+        [id(0x00c8), propget]
+        HRESULT Environment(
+            [in, optional] VARIANT* Type,
+            [out, retval] IWshEnvironment** out_Env);
+
+        [id(0x03e8)]
+        HRESULT Run(
+            [in] BSTR Command,
+            [in, optional] VARIANT* WindowStyle,
+            [in, optional] VARIANT* WaitOnReturn,
+            [out, retval] int* out_ExitCode);
+
+        [id(0x03e9)]
+        HRESULT Popup(
+            [in] BSTR Text,
+            [in, optional] VARIANT* SecondsToWait,
+            [in, optional] VARIANT* Title,
+            [in, optional] VARIANT* Type,
+            [out, retval] int* out_Button);
+
+        [id(0x03ea)]
+        HRESULT CreateShortcut(
+            [in] BSTR PathLink,
+            [out, retval] IDispatch** out_Shortcut);
+
+        [id(0x03ee)]
+        HRESULT ExpandEnvironmentStrings(
+            [in] BSTR Src,
+            [out, retval] BSTR* out_Dst);
+
+        [id(0x07d0)]
+        HRESULT RegRead(
+            [in] BSTR Name,
+            [out, retval] VARIANT* out_Value);
+
+        [id(0x07d1)]
+        HRESULT RegWrite(
+            [in] BSTR Name,
+            [in] VARIANT* Value,
+            [in, optional] VARIANT* Type);
+
+        [id(0x07d2)]
+        HRESULT RegDelete([in] BSTR Name);
+    };
+
+    [
+      uuid(24be5a30-edfe-11d2-b933-00104b365c9f),
+      odl,
+      dual,
+      oleautomation,
+      hidden
+    ]
+    interface IWshShell2 : IWshShell {
+        [id(0x0bb8)]
+        HRESULT LogEvent(
+            [in] VARIANT* Type,
+            [in] BSTR Message,
+            [in, optional, defaultvalue("")] BSTR Target,
+            [out, retval] VARIANT_BOOL* out_Success);
+
+        [id(0x0bc2)]
+        HRESULT AppActivate(
+            [in] VARIANT* App,
+            [in, optional] VARIANT* Wait,
+            [out, retval] VARIANT_BOOL* out_Success);
+
+        [id(0x0bc3)]
+        HRESULT SendKeys(
+            [in] BSTR Keys,
+            [in, optional] VARIANT* Wait);
+    };
+
+    [
         uuid(41904400-be18-11d3-a28b-00104bd35090),
         odl,
         dual,
         oleautomation
     ]
-    interface IWshShell3 : IDispatch {
-        [id(0x0064), propget]
-        HRESULT SpecialFolders([out, retval] IWshCollection **out_Folders);
+    interface IWshShell3 : IWshShell2 {
+        [id(0x0bc4)]
+        HRESULT Exec(
+            [in] BSTR Command,
+            [out, retval] IWshExec** out_Exec);
 
-        [id(0x00c8), propget]
-        HRESULT Environment(
-                [in, optional] VARIANT *Type,
-                [out, retval] IWshEnvironment **out_Env);
+        [id(0x0bc5), propget]
+        HRESULT CurrentDirectory([out, retval] BSTR* out_Directory);
 
-        [id(0x03e8)]
-        HRESULT Run(
-                [in] BSTR Command,
-                [in, optional] VARIANT *WindowStyle,
-                [in, optional] VARIANT *WaitOnReturn,
-                [out, retval] int *out_ExitCode);
-    }
+        [id(0x0bc5), propput]
+        HRESULT CurrentDirectory([in] BSTR out_Directory);
+    };
 
     [
         uuid(24be5a31-edfe-11d2-b933-00104b365c9f),
