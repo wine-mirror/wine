@@ -761,11 +761,11 @@ static DWORD execute_rop( dibdrv_physdev *pdev, const RECT *dst_rect, dib_info *
                        OP_DST(*opcode) == DST ? clipped_rects : NULL, OP_ROP(*opcode) );
             break;
         case OP_ARGS(PAT,DST):
-            pdev->brush_rects( pdev, dibs[DST], clipped_rects->count, clipped_rects->rects,
+            pdev->brush.rects( pdev, &pdev->brush, dibs[DST], clipped_rects->count, clipped_rects->rects,
                                OP_ROP(*opcode) );
             break;
         case OP_ARGS(PAT,SRC):
-            pdev->brush_rects( pdev, dibs[SRC], 1, &rects[SRC], OP_ROP(*opcode) );
+            pdev->brush.rects( pdev, &pdev->brush, dibs[SRC], 1, &rects[SRC], OP_ROP(*opcode) );
             break;
         }
     }
