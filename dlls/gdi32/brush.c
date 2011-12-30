@@ -149,7 +149,15 @@ BOOL store_brush_pattern( LOGBRUSH *brush, struct brush_pattern *pattern )
     {
     case BS_SOLID:
     case BS_HOLLOW:
+        return TRUE;
+
     case BS_HATCHED:
+        if (brush->lbHatch > HS_DIAGCROSS)
+        {
+            if (brush->lbHatch >= HS_API_MAX) return FALSE;
+            brush->lbStyle = BS_SOLID;
+            brush->lbHatch = 0;
+        }
         return TRUE;
 
     case BS_PATTERN8X8:

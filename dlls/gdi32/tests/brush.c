@@ -79,6 +79,42 @@ static void test_solidbrush(void)
     }
 }
 
+static void test_hatch_brush(void)
+{
+    int i, size;
+    HBRUSH brush;
+    LOGBRUSH lb;
+
+    for (i = 0; i < 20; i++)
+    {
+        SetLastError( 0xdeadbeef );
+        brush = CreateHatchBrush( i, RGB(12,34,56) );
+        if (i < HS_API_MAX)
+        {
+            ok( brush != 0, "%u: CreateHatchBrush failed err %u\n", i, GetLastError() );
+            size = GetObject( brush, sizeof(lb), &lb );
+            ok( size == sizeof(lb), "wrong size %u\n", size );
+            ok( lb.lbColor == RGB(12,34,56), "wrong color %08x\n", lb.lbColor );
+            if (i <= HS_DIAGCROSS)
+            {
+                ok( lb.lbStyle == BS_HATCHED, "wrong style %u\n", lb.lbStyle );
+                ok( lb.lbHatch == i, "wrong hatch %lu/%u\n", lb.lbHatch, i );
+            }
+            else
+            {
+                ok( lb.lbStyle == BS_SOLID, "wrong style %u\n", lb.lbStyle );
+                ok( lb.lbHatch == 0, "wrong hatch %lu\n", lb.lbHatch );
+            }
+            DeleteObject( brush );
+        }
+        else
+        {
+            ok( !brush, "%u: CreateHatchBrush succeeded\n", i );
+            ok( GetLastError() == 0xdeadbeef, "wrong error %u\n", GetLastError() );
+        }
+    }
+}
+
 static void test_pattern_brush(void)
 {
     char buffer[sizeof(BITMAPINFOHEADER) + 2 * sizeof(RGBQUAD) + 32 * 32 / 8];
@@ -310,6 +346,7 @@ static void test_palette_brush(void)
 START_TEST(brush)
 {
     test_solidbrush();
+    test_hatch_brush();
     test_pattern_brush();
     test_palette_brush();
 }

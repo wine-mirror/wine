@@ -526,6 +526,7 @@ typedef LOGBRUSH PATTERN, *PPATTERN, *LPPATTERN;
 #define HS_BDIAGONAL        3
 #define HS_CROSS            4
 #define HS_DIAGCROSS        5
+#define HS_API_MAX          12
 
   /* Fonts */
 
