@@ -12536,7 +12536,8 @@ msgstr ""
 "(według własnego uznania) dowolnej późniejszej."
 
 #: winecfg.rc:140
-msgid " Windows Registration Information "
+#, fuzzy
+msgid "Windows registration information"
 msgstr " Informacje do rejestracji w Windows "
 
 #: winecfg.rc:141
@@ -12548,7 +12549,8 @@ msgid "Organi&zation:"
 msgstr "Organizacja:"
 
 #: winecfg.rc:151
-msgid " Application Settings "
+#, fuzzy
+msgid "Application settings"
 msgstr " Ustawienia aplikacji"
 
 #: winecfg.rc:152
@@ -12574,7 +12576,8 @@ msgid "&Windows Version:"
 msgstr "&Wersja Windows:"
 
 #: winecfg.rc:166
-msgid " Window Settings "
+#, fuzzy
+msgid "Window settings"
 msgstr " Ustawienia okna "
 
 #: winecfg.rc:167
@@ -12598,7 +12601,8 @@ msgid "Desktop &size:"
 msgstr "&Rozmiar pulpitu:"
 
 #: winecfg.rc:177
-msgid " Direct3D "
+#, fuzzy
+msgid "Direct3D"
 msgstr " Direct3D "
 
 #: winecfg.rc:178
@@ -12610,7 +12614,8 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr "Obsługuj Pixel Shader (jeżeli są obsługiwane przez kartę graficzną)"
 
 #: winecfg.rc:182
-msgid " Screen &Resolution "
+#, fuzzy
+msgid "Screen resolution"
 msgstr " Rozdzielczość "
 
 #: winecfg.rc:186
@@ -12618,7 +12623,8 @@ msgid "This is a sample text using 10 point Tahoma"
 msgstr "Oto przykład zastosowania 10-punktowej czcionki Tahoma"
 
 #: winecfg.rc:193
-msgid " DLL Overrides "
+#, fuzzy
+msgid "DLL overrides"
 msgstr " Reguły bibliotek DLL "
 
 #: winecfg.rc:194
@@ -12652,7 +12658,8 @@ msgid "Edit Override"
 msgstr "Edycja reguły"
 
 #: winecfg.rc:210
-msgid " Load Order "
+#, fuzzy
+msgid "Load order"
 msgstr " Biblioteka "
 
 #: winecfg.rc:211
@@ -12680,7 +12687,8 @@ msgid "Select Drive Letter"
 msgstr "Wybierz literę napędu"
 
 #: winecfg.rc:234
-msgid " Drive &mappings "
+#, fuzzy
+msgid "Drive mappings"
 msgstr " Przyporządkowanie dysków "
 
 #: winecfg.rc:235
@@ -12728,11 +12736,13 @@ msgid "Show &dot files"
 msgstr "Pokazuj pliki zaczynające się od kropki"
 
 #: winecfg.rc:267
-msgid " Driver Diagnostics "
+#, fuzzy
+msgid "Driver diagnostics"
 msgstr " Diagnostyka sterownika "
 
 #: winecfg.rc:269
-msgid " Defaults "
+#, fuzzy
+msgid "Defaults"
 msgstr " Domyślne "
 
 #: winecfg.rc:270
@@ -12756,7 +12766,8 @@ msgid "&Test Sound"
 msgstr "Test dźwięku"
 
 #: winecfg.rc:285
-msgid " Appearance "
+#, fuzzy
+msgid "Appearance"
 msgstr " Wygląd "
 
 #: winecfg.rc:286
@@ -12776,8 +12787,9 @@ msgid "C&olor:"
 msgstr "Kolor:"
 
 #: winecfg.rc:301
-msgid " Fol&ders "
-msgstr " Foldery specjalne "
+#, fuzzy
+msgid "Folders"
+msgstr "Katalog"
 
 #: winecfg.rc:304
 msgid "&Link to:"

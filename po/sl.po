@@ -12585,7 +12585,8 @@ msgstr ""
 "option) any later version."
 
 #: winecfg.rc:140
-msgid " Windows Registration Information "
+#, fuzzy
+msgid "Windows registration information"
 msgstr " Podatki o registraciji Oken "
 
 #: winecfg.rc:141
@@ -12597,7 +12598,8 @@ msgid "Organi&zation:"
 msgstr "Organizacija:"
 
 #: winecfg.rc:151
-msgid " Application Settings "
+#, fuzzy
+msgid "Application settings"
 msgstr " Nastavitve programov "
 
 #: winecfg.rc:152
@@ -12624,7 +12626,8 @@ msgid "&Windows Version:"
 msgstr "&Različica Oken:"
 
 #: winecfg.rc:166
-msgid " Window Settings "
+#, fuzzy
+msgid "Window settings"
 msgstr " Nastavitve oken "
 
 #: winecfg.rc:167
@@ -12648,7 +12651,8 @@ msgid "Desktop &size:"
 msgstr "&Velikost okna:"
 
 #: winecfg.rc:177
-msgid " Direct3D "
+#, fuzzy
+msgid "Direct3D"
 msgstr " Direct3D "
 
 #: winecfg.rc:178
@@ -12660,7 +12664,8 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr "Omogoči &Pixel Shader (če to omogoča strojna oprema)"
 
 #: winecfg.rc:182
-msgid " Screen &Resolution "
+#, fuzzy
+msgid "Screen resolution"
 msgstr " Ločljivost &zaslona "
 
 #: winecfg.rc:186
@@ -12668,7 +12673,8 @@ msgid "This is a sample text using 10 point Tahoma"
 msgstr "Vzorčno besedilo, napisano s pisavo Tahoma velikosti 10 točk"
 
 #: winecfg.rc:193
-msgid " DLL Overrides "
+#, fuzzy
+msgid "DLL overrides"
 msgstr " Nastavitve DLL knjižnic "
 
 #: winecfg.rc:194
@@ -12702,7 +12708,8 @@ msgid "Edit Override"
 msgstr "Urejanje nastavitve"
 
 #: winecfg.rc:210
-msgid " Load Order "
+#, fuzzy
+msgid "Load order"
 msgstr " Vrstni red nalaganja "
 
 #: winecfg.rc:211
@@ -12730,7 +12737,8 @@ msgid "Select Drive Letter"
 msgstr "Izberi črko pogona"
 
 #: winecfg.rc:234
-msgid " Drive &mappings "
+#, fuzzy
+msgid "Drive mappings"
 msgstr " Preslikave &pogonov "
 
 #: winecfg.rc:235
@@ -12778,11 +12786,13 @@ msgid "Show &dot files"
 msgstr "Pokaži &datoteke s piko"
 
 #: winecfg.rc:267
-msgid " Driver Diagnostics "
+#, fuzzy
+msgid "Driver diagnostics"
 msgstr " Driver Diagnostics "
 
 #: winecfg.rc:269
-msgid " Defaults "
+#, fuzzy
+msgid "Defaults"
 msgstr " Defaults "
 
 #: winecfg.rc:270
@@ -12806,7 +12816,8 @@ msgid "&Test Sound"
 msgstr "&Preizkusi zvok"
 
 #: winecfg.rc:285
-msgid " Appearance "
+#, fuzzy
+msgid "Appearance"
 msgstr " Izgled "
 
 #: winecfg.rc:286
@@ -12826,8 +12837,9 @@ msgid "C&olor:"
 msgstr "B&arva:"
 
 #: winecfg.rc:301
-msgid " Fol&ders "
-msgstr " Vmesniške &mape "
+#, fuzzy
+msgid "Folders"
+msgstr "Mapa"
 
 #: winecfg.rc:304
 msgid "&Link to:"

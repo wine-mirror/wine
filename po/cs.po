@@ -12659,7 +12659,8 @@ msgstr ""
 "option) any later version."
 
 #: winecfg.rc:140
-msgid " Windows Registration Information "
+#, fuzzy
+msgid "Windows registration information"
 msgstr " Windows Registration Information "
 
 #: winecfg.rc:141
@@ -12671,7 +12672,8 @@ msgid "Organi&zation:"
 msgstr "Organization:"
 
 #: winecfg.rc:151
-msgid " Application Settings "
+#, fuzzy
+msgid "Application settings"
 msgstr "Nastavení aplikací"
 
 #: winecfg.rc:152
@@ -12697,7 +12699,8 @@ msgid "&Windows Version:"
 msgstr "Verze &Windows:"
 
 #: winecfg.rc:166
-msgid " Window Settings "
+#, fuzzy
+msgid "Window settings"
 msgstr " Nastavení oken "
 
 #: winecfg.rc:167
@@ -12721,7 +12724,8 @@ msgid "Desktop &size:"
 msgstr "Velikost desktopu:"
 
 #: winecfg.rc:177
-msgid " Direct3D "
+#, fuzzy
+msgid "Direct3D"
 msgstr " Direct3D "
 
 #: winecfg.rc:178
@@ -12733,7 +12737,8 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr "Povolit stínování pixelů (spoléhá se na hardware podporu)"
 
 #: winecfg.rc:182
-msgid " Screen &Resolution "
+#, fuzzy
+msgid "Screen resolution"
 msgstr " Screen &Resolution "
 
 #: winecfg.rc:186
@@ -12741,7 +12746,8 @@ msgid "This is a sample text using 10 point Tahoma"
 msgstr "This is a sample text using 10 point Tahoma"
 
 #: winecfg.rc:193
-msgid " DLL Overrides "
+#, fuzzy
+msgid "DLL overrides"
 msgstr "Náhrady DLL"
 
 #: winecfg.rc:194
@@ -12774,7 +12780,8 @@ msgid "Edit Override"
 msgstr "Edit Override"
 
 #: winecfg.rc:210
-msgid " Load Order "
+#, fuzzy
+msgid "Load order"
 msgstr " Pořadí nahravání "
 
 #: winecfg.rc:211
@@ -12803,7 +12810,8 @@ msgid "Select Drive Letter"
 msgstr "Písmo výběru"
 
 #: winecfg.rc:234
-msgid " Drive &mappings "
+#, fuzzy
+msgid "Drive mappings"
 msgstr " Mapování disků "
 
 #: winecfg.rc:235
@@ -12851,11 +12859,13 @@ msgid "Show &dot files"
 msgstr "Zobrazit soubory s tečkou na začátku názvu"
 
 #: winecfg.rc:267
-msgid " Driver Diagnostics "
+#, fuzzy
+msgid "Driver diagnostics"
 msgstr " Driver Diagnostics "
 
 #: winecfg.rc:269
-msgid " Defaults "
+#, fuzzy
+msgid "Defaults"
 msgstr " Defaults "
 
 #: winecfg.rc:270
@@ -12879,7 +12889,8 @@ msgid "&Test Sound"
 msgstr "&Test Sound"
 
 #: winecfg.rc:285
-msgid " Appearance "
+#, fuzzy
+msgid "Appearance"
 msgstr " Vzhled "
 
 #: winecfg.rc:286
@@ -12899,8 +12910,9 @@ msgid "C&olor:"
 msgstr "Barva:"
 
 #: winecfg.rc:301
-msgid " Fol&ders "
-msgstr " Domácí adresáře "
+#, fuzzy
+msgid "Folders"
+msgstr "Domácí adresáře"
 
 #: winecfg.rc:304
 msgid "&Link to:"

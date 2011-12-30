@@ -12485,7 +12485,8 @@ msgstr ""
 "(Jūsų pasirinkimu) bet kurios vėlesnės licencijos versijos sąlygomis."
 
 #: winecfg.rc:140
-msgid " Windows Registration Information "
+#, fuzzy
+msgid "Windows registration information"
 msgstr " Windows registracijos informacija "
 
 #: winecfg.rc:141
@@ -12497,7 +12498,8 @@ msgid "Organi&zation:"
 msgstr "Organizacija:"
 
 #: winecfg.rc:151
-msgid " Application Settings "
+#, fuzzy
+msgid "Application settings"
 msgstr " Programos nuostatos "
 
 #: winecfg.rc:152
@@ -12524,7 +12526,8 @@ msgid "&Windows Version:"
 msgstr "Windows &versija:"
 
 #: winecfg.rc:166
-msgid " Window Settings "
+#, fuzzy
+msgid "Window settings"
 msgstr " Langų nuostatos "
 
 #: winecfg.rc:167
@@ -12548,7 +12551,8 @@ msgid "Desktop &size:"
 msgstr "Darbalaukio d&ydis:"
 
 #: winecfg.rc:177
-msgid " Direct3D "
+#, fuzzy
+msgid "Direct3D"
 msgstr " Direct3D "
 
 #: winecfg.rc:178
@@ -12560,7 +12564,8 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr "Leisti &Pixel Shader (jei palaiko aparatinė įranga)"
 
 #: winecfg.rc:182
-msgid " Screen &Resolution "
+#, fuzzy
+msgid "Screen resolution"
 msgstr " Ekrano &skiriamoji geba "
 
 #: winecfg.rc:186
@@ -12568,7 +12573,8 @@ msgid "This is a sample text using 10 point Tahoma"
 msgstr "Tai yra pavyzdinis tekstas naudojantis 10 taškų Tahoma"
 
 #: winecfg.rc:193
-msgid " DLL Overrides "
+#, fuzzy
+msgid "DLL overrides"
 msgstr " DLL nustelbimai "
 
 #: winecfg.rc:194
@@ -12601,7 +12607,8 @@ msgid "Edit Override"
 msgstr "Redaguoti nustelbimą"
 
 #: winecfg.rc:210
-msgid " Load Order "
+#, fuzzy
+msgid "Load order"
 msgstr " Įkėlimo tvarka "
 
 #: winecfg.rc:211
@@ -12629,7 +12636,8 @@ msgid "Select Drive Letter"
 msgstr "Parinkite disko raidę"
 
 #: winecfg.rc:234
-msgid " Drive &mappings "
+#, fuzzy
+msgid "Drive mappings"
 msgstr " Diskų atvai&zdavimas "
 
 #: winecfg.rc:235
@@ -12677,11 +12685,13 @@ msgid "Show &dot files"
 msgstr "Rodyti &failus su tašku"
 
 #: winecfg.rc:267
-msgid " Driver Diagnostics "
+#, fuzzy
+msgid "Driver diagnostics"
 msgstr " Tvarkyklės diagnostika "
 
 #: winecfg.rc:269
-msgid " Defaults "
+#, fuzzy
+msgid "Defaults"
 msgstr " Numatytosios reikšmės "
 
 #: winecfg.rc:270
@@ -12705,7 +12715,8 @@ msgid "&Test Sound"
 msgstr "&Testuoti garsą"
 
 #: winecfg.rc:285
-msgid " Appearance "
+#, fuzzy
+msgid "Appearance"
 msgstr " Išvaizda "
 
 #: winecfg.rc:286
@@ -12725,8 +12736,9 @@ msgid "C&olor:"
 msgstr "S&palva:"
 
 #: winecfg.rc:301
-msgid " Fol&ders "
-msgstr " Ap&lankai "
+#, fuzzy
+msgid "Folders"
+msgstr "Aplankas"
 
 #: winecfg.rc:304
 msgid "&Link to:"

@@ -12217,8 +12217,8 @@ msgstr ""
 "option) any later version."
 
 #: winecfg.rc:140
-msgid " Windows Registration Information "
-msgstr " Windows Registration Information "
+msgid "Windows registration information"
+msgstr "Windows registration information"
 
 #: winecfg.rc:141
 msgid "&Owner:"
@@ -12229,8 +12229,8 @@ msgid "Organi&zation:"
 msgstr "Organi&sation:"
 
 #: winecfg.rc:151
-msgid " Application Settings "
-msgstr " Application Settings "
+msgid "Application settings"
+msgstr "Application settings"
 
 #: winecfg.rc:152
 msgid ""
@@ -12252,8 +12252,8 @@ msgid "&Windows Version:"
 msgstr "&Windows Version:"
 
 #: winecfg.rc:166
-msgid " Window Settings "
-msgstr " Window Settings "
+msgid "Window settings"
+msgstr "Window settings"
 
 #: winecfg.rc:167
 msgid "Automatically capture the &mouse in full-screen windows"
@@ -12276,8 +12276,8 @@ msgid "Desktop &size:"
 msgstr "Desktop &size:"
 
 #: winecfg.rc:177
-msgid " Direct3D "
-msgstr ""
+msgid "Direct3D"
+msgstr "Direct3D"
 
 #: winecfg.rc:178
 msgid "&Vertex Shader Support: "
@@ -12288,7 +12288,7 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr ""
 
 #: winecfg.rc:182
-msgid " Screen &Resolution "
+msgid "Screen resolution"
 msgstr ""
 
 #: winecfg.rc:186
@@ -12296,8 +12296,8 @@ msgid "This is a sample text using 10 point Tahoma"
 msgstr ""
 
 #: winecfg.rc:193
-msgid " DLL Overrides "
-msgstr ""
+msgid "DLL overrides"
+msgstr "DLL overrides"
 
 #: winecfg.rc:194
 msgid ""
@@ -12327,7 +12327,7 @@ msgid "Edit Override"
 msgstr "Edit Override"
 
 #: winecfg.rc:210
-msgid " Load Order "
+msgid "Load order"
 msgstr ""
 
 #: winecfg.rc:211
@@ -12355,8 +12355,8 @@ msgid "Select Drive Letter"
 msgstr "Select Drive Letter"
 
 #: winecfg.rc:234
-msgid " Drive &mappings "
-msgstr " Drive &mappings "
+msgid "Drive mappings"
+msgstr "Drive mappings"
 
 #: winecfg.rc:235
 msgid ""
@@ -12401,12 +12401,12 @@ msgid "Show &dot files"
 msgstr "Show &dot files"
 
 #: winecfg.rc:267
-msgid " Driver Diagnostics "
+msgid "Driver diagnostics"
 msgstr ""
 
 #: winecfg.rc:269
-msgid " Defaults "
-msgstr " Defaults "
+msgid "Defaults"
+msgstr "Defaults"
 
 #: winecfg.rc:270
 msgid "Output device:"
@@ -12429,8 +12429,8 @@ msgid "&Test Sound"
 msgstr ""
 
 #: winecfg.rc:285
-msgid " Appearance "
-msgstr " Appearance "
+msgid "Appearance"
+msgstr "Appearance"
 
 #: winecfg.rc:286
 msgid "&Theme:"
@@ -12449,8 +12449,8 @@ msgid "C&olor:"
 msgstr "C&olour:"
 
 #: winecfg.rc:301
-msgid " Fol&ders "
-msgstr " Fol&ders "
+msgid "Folders"
+msgstr "Folders"
 
 #: winecfg.rc:304
 msgid "&Link to:"

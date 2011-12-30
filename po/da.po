@@ -12746,7 +12746,8 @@ msgstr ""
 "dit valg) en senere version."
 
 #: winecfg.rc:140
-msgid " Windows Registration Information "
+#, fuzzy
+msgid "Windows registration information"
 msgstr " Windows registreringsoplysninger "
 
 #: winecfg.rc:141
@@ -12758,7 +12759,8 @@ msgid "Organi&zation:"
 msgstr "Organisationen:"
 
 #: winecfg.rc:151
-msgid " Application Settings "
+#, fuzzy
+msgid "Application settings"
 msgstr " Program indstillinger "
 
 #: winecfg.rc:152
@@ -12784,7 +12786,8 @@ msgid "&Windows Version:"
 msgstr "&Windows version:"
 
 #: winecfg.rc:166
-msgid " Window Settings "
+#, fuzzy
+msgid "Window settings"
 msgstr " Vindues indstillinger "
 
 #: winecfg.rc:167
@@ -12808,7 +12811,8 @@ msgid "Desktop &size:"
 msgstr "Skrivebords &størrelse:"
 
 #: winecfg.rc:177
-msgid " Direct3D "
+#, fuzzy
+msgid "Direct3D"
 msgstr " Direct3D "
 
 #: winecfg.rc:178
@@ -12820,7 +12824,8 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr "Tillad &Pixelshader (hvis det er understøttet af hardware)"
 
 #: winecfg.rc:182
-msgid " Screen &Resolution "
+#, fuzzy
+msgid "Screen resolution"
 msgstr " Skærm &Opløsning "
 
 #: winecfg.rc:186
@@ -12828,7 +12833,8 @@ msgid "This is a sample text using 10 point Tahoma"
 msgstr "Dette er en eksempel tekst med 10 punkts Tahoma"
 
 #: winecfg.rc:193
-msgid " DLL Overrides "
+#, fuzzy
+msgid "DLL overrides"
 msgstr " DLL prioritetter"
 
 #: winecfg.rc:194
@@ -12861,7 +12867,8 @@ msgid "Edit Override"
 msgstr "Editér indlæsnings prioritet"
 
 #: winecfg.rc:210
-msgid " Load Order "
+#, fuzzy
+msgid "Load order"
 msgstr " Indlæsnings rækkefølge "
 
 #: winecfg.rc:211
@@ -12889,7 +12896,8 @@ msgid "Select Drive Letter"
 msgstr "Vælg Drevbogstav"
 
 #: winecfg.rc:234
-msgid " Drive &mappings "
+#, fuzzy
+msgid "Drive mappings"
 msgstr " Enhedsoversættelse "
 
 #: winecfg.rc:235
@@ -12937,11 +12945,13 @@ msgid "Show &dot files"
 msgstr "Vis &punktum filer"
 
 #: winecfg.rc:267
-msgid " Driver Diagnostics "
+#, fuzzy
+msgid "Driver diagnostics"
 msgstr " Driver Diagnostics "
 
 #: winecfg.rc:269
-msgid " Defaults "
+#, fuzzy
+msgid "Defaults"
 msgstr " Defaults "
 
 #: winecfg.rc:270
@@ -12965,7 +12975,8 @@ msgid "&Test Sound"
 msgstr "&Test lyd"
 
 #: winecfg.rc:285
-msgid " Appearance "
+#, fuzzy
+msgid "Appearance"
 msgstr " Udseende "
 
 #: winecfg.rc:286
@@ -12985,8 +12996,9 @@ msgid "C&olor:"
 msgstr "F&arve:"
 
 #: winecfg.rc:301
-msgid " Fol&ders "
-msgstr " S&hell Folder "
+#, fuzzy
+msgid "Folders"
+msgstr "Shell folder"
 
 #: winecfg.rc:304
 msgid "&Link to:"

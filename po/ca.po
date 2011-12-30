@@ -12559,7 +12559,8 @@ msgstr ""
 "elecció) qualsevol versió posterior."
 
 #: winecfg.rc:140
-msgid " Windows Registration Information "
+#, fuzzy
+msgid "Windows registration information"
 msgstr " Informació de Registració del Windows "
 
 #: winecfg.rc:141
@@ -12571,7 +12572,8 @@ msgid "Organi&zation:"
 msgstr "Organit&zació:"
 
 #: winecfg.rc:151
-msgid " Application Settings "
+#, fuzzy
+msgid "Application settings"
 msgstr " Ajustaments de les Aplicacions "
 
 #: winecfg.rc:152
@@ -12598,7 +12600,8 @@ msgid "&Windows Version:"
 msgstr "Versió de &Windows:"
 
 #: winecfg.rc:166
-msgid " Window Settings "
+#, fuzzy
+msgid "Window settings"
 msgstr " Ajustaments de Finestra "
 
 #: winecfg.rc:167
@@ -12622,8 +12625,9 @@ msgid "Desktop &size:"
 msgstr "&Mida d'escriptori:"
 
 #: winecfg.rc:177
-msgid " Direct3D "
-msgstr ""
+#, fuzzy
+msgid "Direct3D"
+msgstr "Direcció"
 
 #: winecfg.rc:178
 msgid "&Vertex Shader Support: "
@@ -12634,7 +12638,8 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr "Permet Shader de &Píxels (si compatible amb el maquinari)"
 
 #: winecfg.rc:182
-msgid " Screen &Resolution "
+#, fuzzy
+msgid "Screen resolution"
 msgstr " &Resolució de Pantalla "
 
 #: winecfg.rc:186
@@ -12642,7 +12647,8 @@ msgid "This is a sample text using 10 point Tahoma"
 msgstr "Això és un text de mostra en Tahoma de 10 punts"
 
 #: winecfg.rc:193
-msgid " DLL Overrides "
+#, fuzzy
+msgid "DLL overrides"
 msgstr " Reemplaçaments DLL "
 
 #: winecfg.rc:194
@@ -12676,7 +12682,8 @@ msgid "Edit Override"
 msgstr "Editar Reemplaçament"
 
 #: winecfg.rc:210
-msgid " Load Order "
+#, fuzzy
+msgid "Load order"
 msgstr " Ordre de Càrrega "
 
 #: winecfg.rc:211
@@ -12704,7 +12711,8 @@ msgid "Select Drive Letter"
 msgstr "Lletra de la Unitat"
 
 #: winecfg.rc:234
-msgid " Drive &mappings "
+#, fuzzy
+msgid "Drive mappings"
 msgstr " &Mapes d'unitat "
 
 #: winecfg.rc:235
@@ -12752,11 +12760,13 @@ msgid "Show &dot files"
 msgstr "Mostra els fitxers de &punt"
 
 #: winecfg.rc:267
-msgid " Driver Diagnostics "
+#, fuzzy
+msgid "Driver diagnostics"
 msgstr " Diagnòstics de Controlador "
 
 #: winecfg.rc:269
-msgid " Defaults "
+#, fuzzy
+msgid "Defaults"
 msgstr " Predeterminats "
 
 #: winecfg.rc:270
@@ -12780,7 +12790,8 @@ msgid "&Test Sound"
 msgstr "&Prova el So"
 
 #: winecfg.rc:285
-msgid " Appearance "
+#, fuzzy
+msgid "Appearance"
 msgstr " Aparença "
 
 #: winecfg.rc:286
@@ -12800,8 +12811,9 @@ msgid "C&olor:"
 msgstr "C&olor:"
 
 #: winecfg.rc:301
-msgid " Fol&ders "
-msgstr " Car&petes "
+#, fuzzy
+msgid "Folders"
+msgstr "Carpeta"
 
 #: winecfg.rc:304
 msgid "&Link to:"

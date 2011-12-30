@@ -137,7 +137,7 @@ BEGIN
     CONTROL         "",IDC_ABT_WEB_LINK,"SysLink", LWS_TRANSPARENT, 105,53,106,8
     LTEXT           "This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
                     IDC_ABT_LICENSE_TEXT,105,64,145,60
-    GROUPBOX        " Windows Registration Information ", IDC_STATIC, 15, 155, 230, 55
+    GROUPBOX        "Windows registration information", IDC_STATIC, 15, 155, 230, 55
     LTEXT           "&Owner:", IDC_STATIC, 22, 171, 40, 20
     EDITTEXT        IDC_ABT_OWNER, 75, 171, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
     LTEXT           "Organi&zation:", IDC_STATIC, 22, 185, 50, 20
@@ -148,7 +148,7 @@ IDD_APPCFG DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Application Settings ",IDC_STATIC, 8,4,244,210
+    GROUPBOX        "Application settings",IDC_STATIC, 8,4,244,210
     LTEXT           "Wine can mimic different Windows versions for each application.  This tab is linked to the Libraries and Graphics tabs to allow you to change systemwide or per-application settings in those tabs as well.",
                     IDC_STATIC,15,15,227,45
     CONTROL         "",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
@@ -163,7 +163,7 @@ IDD_GRAPHCFG DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX    " Window Settings ",IDC_STATIC,8,4,244,84
+    GROUPBOX    "Window settings",IDC_STATIC,8,4,244,84
     CONTROL     "Automatically capture the &mouse in full-screen windows",IDC_FULLSCREEN_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
     CONTROL     "Allow the window manager to &decorate the windows",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
     CONTROL     "Allow the &window manager to control the windows",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
@@ -174,12 +174,12 @@ BEGIN
     EDITTEXT    IDC_DESKTOP_WIDTH,84,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
     EDITTEXT    IDC_DESKTOP_HEIGHT,137,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
-    GROUPBOX    " Direct3D ",IDC_STATIC,8,95,244,49
+    GROUPBOX    "Direct3D",IDC_STATIC,8,95,244,49
     LTEXT       "&Vertex Shader Support: ",IDC_STATIC,15,110,100,32
     COMBOBOX    IDC_D3D_VSHADER_MODE,115,108,130,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL     "Allow &Pixel Shader (if supported by hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
 
-    GROUPBOX    " Screen &Resolution ",IDC_STATIC,8,151,244,63
+    GROUPBOX    "Screen resolution",IDC_STATIC,8,151,244,63
     CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
     EDITTEXT    IDC_RES_DPIEDIT,204,161,23,13,ES_NUMBER|WS_TABSTOP
     LTEXT       "#msgctxt#unit: dots/inch#dpi",IDC_STATIC,233,163,12,8
@@ -190,7 +190,7 @@ IDD_DLLCFG DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " DLL Overrides ",IDC_STATIC,8,4,244,210
+    GROUPBOX        "DLL overrides",IDC_STATIC,8,4,244,210
     LTEXT           "Dynamic Link Libraries can be specified individually to be either builtin (provided by Wine) or native (taken from Windows or provided by the application)."
                     ,IDC_STATIC,16,16,228,32
     LTEXT           "&New override for library:",IDC_STATIC,16,58,220,8
@@ -207,7 +207,7 @@ STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Edit Override"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Load Order ",IDC_STATIC,8,4,144,66
+    GROUPBOX        "Load order",IDC_STATIC,8,4,144,66
     CONTROL         "&Builtin (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,125,10
     CONTROL         "&Native (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,125,10
     CONTROL         "Bui&ltin then Native",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,125,10
@@ -231,7 +231,7 @@ IDD_DRIVECFG DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Drive &mappings ",IDC_STATIC,8,4,244,195
+    GROUPBOX        "Drive mappings",IDC_STATIC,8,4,244,195
     LTEXT           "Failed to connect to the mount manager, the drive configuration cannot be edited.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,190,76
     CONTROL         "",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
@@ -264,9 +264,9 @@ IDD_AUDIOCFG DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Driver Diagnostics ",IDC_STATIC,8,4,244,27
+    GROUPBOX        "Driver diagnostics",IDC_STATIC,8,4,244,27
     LTEXT           "",IDC_AUDIO_DRIVER,18,16,230,8
-    GROUPBOX        " Defaults ",IDC_STATIC,8,33,244,76
+    GROUPBOX        "Defaults",IDC_STATIC,8,33,244,76
     LTEXT           "Output device:",IDC_STATIC,18,45,230,8
     LTEXT           "Voice output device:",IDC_STATIC,18,61,230,8
     LTEXT           "Input device:",IDC_STATIC,18,77,230,8
@@ -282,7 +282,7 @@ IDD_DESKTOP_INTEGRATION DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Appearance ",IDC_STATIC,8,4,244,106
+    GROUPBOX        "Appearance",IDC_STATIC,8,4,244,106
     LTEXT           "&Theme:",IDC_STATIC,15,16,130,8
     COMBOBOX        IDC_THEME_THEMECOMBO,15,26,130,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "&Install theme...",IDC_THEME_INSTALL,152,26,93,14
@@ -298,7 +298,7 @@ BEGIN
     EDITTEXT        IDC_SYSPARAM_SIZE,164,90,23,13,ES_AUTOHSCROLL | WS_TABSTOP | WS_DISABLED
     CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASS,UDS_SETBUDDYINT | WS_DISABLED,185,90,15,13
     PUSHBUTTON      "&Font...",IDC_SYSPARAM_FONT,200,90,45,13,WS_DISABLED
-    GROUPBOX        " Fol&ders ",IDC_STATIC,8,114,244,100
+    GROUPBOX        "Folders",IDC_STATIC,8,114,244,100
     CONTROL         "",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                      LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
     CONTROL         "&Link to:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,65,13

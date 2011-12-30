@@ -12388,7 +12388,8 @@ msgstr ""
 "option) any later version."
 
 #: winecfg.rc:140
-msgid " Windows Registration Information "
+#, fuzzy
+msgid "Windows registration information"
 msgstr " Windows Registration Information "
 
 #: winecfg.rc:141
@@ -12400,7 +12401,8 @@ msgid "Organi&zation:"
 msgstr "Organisaatio:"
 
 #: winecfg.rc:151
-msgid " Application Settings "
+#, fuzzy
+msgid "Application settings"
 msgstr " Sovellusten asetukset "
 
 #: winecfg.rc:152
@@ -12426,7 +12428,8 @@ msgid "&Windows Version:"
 msgstr "&Windowsin versio:"
 
 #: winecfg.rc:166
-msgid " Window Settings "
+#, fuzzy
+msgid "Window settings"
 msgstr " Ikkuna-asetukset "
 
 #: winecfg.rc:167
@@ -12450,7 +12453,8 @@ msgid "Desktop &size:"
 msgstr "Työpöydän koko:"
 
 #: winecfg.rc:177
-msgid " Direct3D "
+#, fuzzy
+msgid "Direct3D"
 msgstr " Direct3D "
 
 #: winecfg.rc:178
@@ -12462,7 +12466,8 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr "Salli &Pixel Shader:n käyttö laitteiston tukiessa"
 
 #: winecfg.rc:182
-msgid " Screen &Resolution "
+#, fuzzy
+msgid "Screen resolution"
 msgstr " Screen &Resolution "
 
 #: winecfg.rc:186
@@ -12470,7 +12475,8 @@ msgid "This is a sample text using 10 point Tahoma"
 msgstr "This is a sample text using 10 point Tahoma"
 
 #: winecfg.rc:193
-msgid " DLL Overrides "
+#, fuzzy
+msgid "DLL overrides"
 msgstr " DLL-kirjastojen määritykset "
 
 #: winecfg.rc:194
@@ -12504,7 +12510,8 @@ msgid "Edit Override"
 msgstr "Edit Override"
 
 #: winecfg.rc:210
-msgid " Load Order "
+#, fuzzy
+msgid "Load order"
 msgstr " Lataamisjärjestys "
 
 #: winecfg.rc:211
@@ -12533,7 +12540,8 @@ msgid "Select Drive Letter"
 msgstr "&Valitse Kaikki"
 
 #: winecfg.rc:234
-msgid " Drive &mappings "
+#, fuzzy
+msgid "Drive mappings"
 msgstr " Asemien mappaukset "
 
 #: winecfg.rc:235
@@ -12581,11 +12589,13 @@ msgid "Show &dot files"
 msgstr "Näytä p&istetiedostot"
 
 #: winecfg.rc:267
-msgid " Driver Diagnostics "
+#, fuzzy
+msgid "Driver diagnostics"
 msgstr " Driver Diagnostics "
 
 #: winecfg.rc:269
-msgid " Defaults "
+#, fuzzy
+msgid "Defaults"
 msgstr " Defaults "
 
 #: winecfg.rc:270
@@ -12609,7 +12619,8 @@ msgid "&Test Sound"
 msgstr "&Test Sound"
 
 #: winecfg.rc:285
-msgid " Appearance "
+#, fuzzy
+msgid "Appearance"
 msgstr " Ulkonäkö "
 
 #: winecfg.rc:286
@@ -12629,8 +12640,9 @@ msgid "C&olor:"
 msgstr "Color:"
 
 #: winecfg.rc:301
-msgid " Fol&ders "
-msgstr " Shell Folder "
+#, fuzzy
+msgid "Folders"
+msgstr "Kansio:"
 
 #: winecfg.rc:304
 msgid "&Link to:"

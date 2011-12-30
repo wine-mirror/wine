@@ -12352,7 +12352,8 @@ msgstr ""
 "option) any later version."
 
 #: winecfg.rc:140
-msgid " Windows Registration Information "
+#, fuzzy
+msgid "Windows registration information"
 msgstr " Windows 注册信息 "
 
 #: winecfg.rc:141
@@ -12364,7 +12365,8 @@ msgid "Organi&zation:"
 msgstr "单位："
 
 #: winecfg.rc:151
-msgid " Application Settings "
+#, fuzzy
+msgid "Application settings"
 msgstr " 应用程序设置 "
 
 #: winecfg.rc:152
@@ -12389,7 +12391,8 @@ msgid "&Windows Version:"
 msgstr "&Windows 版本:"
 
 #: winecfg.rc:166
-msgid " Window Settings "
+#, fuzzy
+msgid "Window settings"
 msgstr " 窗口设置 "
 
 #: winecfg.rc:167
@@ -12413,7 +12416,8 @@ msgid "Desktop &size:"
 msgstr "桌面大小(&S):"
 
 #: winecfg.rc:177
-msgid " Direct3D "
+#, fuzzy
+msgid "Direct3D"
 msgstr " Direct3D "
 
 #: winecfg.rc:178
@@ -12425,7 +12429,8 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr "允许 &Pixel Shader（如果硬件支持）"
 
 #: winecfg.rc:182
-msgid " Screen &Resolution "
+#, fuzzy
+msgid "Screen resolution"
 msgstr " 屏幕分辨率(&R) "
 
 #: winecfg.rc:186
@@ -12433,7 +12438,8 @@ msgid "This is a sample text using 10 point Tahoma"
 msgstr "This is a sample text using 10 point Tahoma"
 
 #: winecfg.rc:193
-msgid " DLL Overrides "
+#, fuzzy
+msgid "DLL overrides"
 msgstr " DLL 顶替 "
 
 #: winecfg.rc:194
@@ -12466,7 +12472,8 @@ msgid "Edit Override"
 msgstr "编辑顶替"
 
 #: winecfg.rc:210
-msgid " Load Order "
+#, fuzzy
+msgid "Load order"
 msgstr " 载入顺序 "
 
 #: winecfg.rc:211
@@ -12494,7 +12501,8 @@ msgid "Select Drive Letter"
 msgstr "选择驱动器盘符"
 
 #: winecfg.rc:234
-msgid " Drive &mappings "
+#, fuzzy
+msgid "Drive mappings"
 msgstr " 驱动器映射(&M) "
 
 #: winecfg.rc:235
@@ -12540,11 +12548,13 @@ msgid "Show &dot files"
 msgstr "显示隐藏文件(&D)"
 
 #: winecfg.rc:267
-msgid " Driver Diagnostics "
+#, fuzzy
+msgid "Driver diagnostics"
 msgstr " Driver Diagnostics "
 
 #: winecfg.rc:269
-msgid " Defaults "
+#, fuzzy
+msgid "Defaults"
 msgstr " Defaults "
 
 #: winecfg.rc:270
@@ -12568,7 +12578,8 @@ msgid "&Test Sound"
 msgstr "测试音频(&T)"
 
 #: winecfg.rc:285
-msgid " Appearance "
+#, fuzzy
+msgid "Appearance"
 msgstr " 外观 "
 
 #: winecfg.rc:286
@@ -12588,8 +12599,9 @@ msgid "C&olor:"
 msgstr "颜色(&O):"
 
 #: winecfg.rc:301
-msgid " Fol&ders "
-msgstr " 特殊文件夹(&D) "
+#, fuzzy
+msgid "Folders"
+msgstr "特殊文件夹"
 
 #: winecfg.rc:304
 msgid "&Link to:"

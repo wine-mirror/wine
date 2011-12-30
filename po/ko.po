@@ -12416,7 +12416,8 @@ msgstr ""
 "(선택적으로) 그 이후 버전을 따르면 됩니다."
 
 #: winecfg.rc:140
-msgid " Windows Registration Information "
+#, fuzzy
+msgid "Windows registration information"
 msgstr " 윈도우즈 등록 정보 "
 
 #: winecfg.rc:141
@@ -12428,7 +12429,8 @@ msgid "Organi&zation:"
 msgstr "단체(&Z):"
 
 #: winecfg.rc:151
-msgid " Application Settings "
+#, fuzzy
+msgid "Application settings"
 msgstr " 어플리케이션 설정 "
 
 #: winecfg.rc:152
@@ -12454,7 +12456,8 @@ msgid "&Windows Version:"
 msgstr "윈도우즈 버젼(&W):"
 
 #: winecfg.rc:166
-msgid " Window Settings "
+#, fuzzy
+msgid "Window settings"
 msgstr " 창 설정 "
 
 #: winecfg.rc:167
@@ -12478,7 +12481,8 @@ msgid "Desktop &size:"
 msgstr "데스크탑 크기(&S):"
 
 #: winecfg.rc:177
-msgid " Direct3D "
+#, fuzzy
+msgid "Direct3D"
 msgstr " 다이렉트 3D "
 
 #: winecfg.rc:178
@@ -12490,7 +12494,8 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr "(만약 하드웨어에서 지원할 경우 ) 픽셀 쉐이더 허용(&P)"
 
 #: winecfg.rc:182
-msgid " Screen &Resolution "
+#, fuzzy
+msgid "Screen resolution"
 msgstr " 화면 해상도(&R) "
 
 #: winecfg.rc:186
@@ -12498,7 +12503,8 @@ msgid "This is a sample text using 10 point Tahoma"
 msgstr "This is a sample text using 10 point Tahoma"
 
 #: winecfg.rc:193
-msgid " DLL Overrides "
+#, fuzzy
+msgid "DLL overrides"
 msgstr " DLL 덮어쓰기 "
 
 #: winecfg.rc:194
@@ -12531,7 +12537,8 @@ msgid "Edit Override"
 msgstr "덮어쓰기 고치기"
 
 #: winecfg.rc:210
-msgid " Load Order "
+#, fuzzy
+msgid "Load order"
 msgstr "불러오기 순서 "
 
 #: winecfg.rc:211
@@ -12559,7 +12566,8 @@ msgid "Select Drive Letter"
 msgstr "드라이브 문자 선택"
 
 #: winecfg.rc:234
-msgid " Drive &mappings "
+#, fuzzy
+msgid "Drive mappings"
 msgstr " 드라이브 연결(&M) "
 
 #: winecfg.rc:235
@@ -12606,11 +12614,13 @@ msgid "Show &dot files"
 msgstr "숨은 파일 보이기(&D)"
 
 #: winecfg.rc:267
-msgid " Driver Diagnostics "
+#, fuzzy
+msgid "Driver diagnostics"
 msgstr " 드라이버 진단 "
 
 #: winecfg.rc:269
-msgid " Defaults "
+#, fuzzy
+msgid "Defaults"
 msgstr " 기본 "
 
 #: winecfg.rc:270
@@ -12634,7 +12644,8 @@ msgid "&Test Sound"
 msgstr "소리 테스트(&T)"
 
 #: winecfg.rc:285
-msgid " Appearance "
+#, fuzzy
+msgid "Appearance"
 msgstr "외관 "
 
 #: winecfg.rc:286
@@ -12654,8 +12665,9 @@ msgid "C&olor:"
 msgstr "색상(&O):"
 
 #: winecfg.rc:301
-msgid " Fol&ders "
-msgstr " 폴더(&D) "
+#, fuzzy
+msgid "Folders"
+msgstr "폴더"
 
 #: winecfg.rc:304
 msgid "&Link to:"

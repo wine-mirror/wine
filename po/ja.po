@@ -12490,7 +12490,8 @@ msgstr ""
 "option) any later version."
 
 #: winecfg.rc:140
-msgid " Windows Registration Information "
+#, fuzzy
+msgid "Windows registration information"
 msgstr " Windows 登録情報 "
 
 #: winecfg.rc:141
@@ -12502,7 +12503,8 @@ msgid "Organi&zation:"
 msgstr "組織(&Z):"
 
 #: winecfg.rc:151
-msgid " Application Settings "
+#, fuzzy
+msgid "Application settings"
 msgstr " アプリケーション設定 "
 
 #: winecfg.rc:152
@@ -12528,7 +12530,8 @@ msgid "&Windows Version:"
 msgstr "&Windows バージョン:"
 
 #: winecfg.rc:166
-msgid " Window Settings "
+#, fuzzy
+msgid "Window settings"
 msgstr " ウィンドウ設定 "
 
 #: winecfg.rc:167
@@ -12552,7 +12555,8 @@ msgid "Desktop &size:"
 msgstr "デスクトップの大きさ(&Z):"
 
 #: winecfg.rc:177
-msgid " Direct3D "
+#, fuzzy
+msgid "Direct3D"
 msgstr " Direct3D "
 
 #: winecfg.rc:178
@@ -12564,7 +12568,8 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr "&Pixel Shader を有効にする(ハードウェアでサポートされている場合のみ)"
 
 #: winecfg.rc:182
-msgid " Screen &Resolution "
+#, fuzzy
+msgid "Screen resolution"
 msgstr " スクリーン解像度(&R) "
 
 #: winecfg.rc:186
@@ -12572,7 +12577,8 @@ msgid "This is a sample text using 10 point Tahoma"
 msgstr "This is a sample text using 10 point Tahoma"
 
 #: winecfg.rc:193
-msgid " DLL Overrides "
+#, fuzzy
+msgid "DLL overrides"
 msgstr " DLL オーバーライド "
 
 #: winecfg.rc:194
@@ -12605,7 +12611,8 @@ msgid "Edit Override"
 msgstr "オーバーライドの編集"
 
 #: winecfg.rc:210
-msgid " Load Order "
+#, fuzzy
+msgid "Load order"
 msgstr " 読込順序 "
 
 #: winecfg.rc:211
@@ -12633,7 +12640,8 @@ msgid "Select Drive Letter"
 msgstr "ドライブ レターを選択"
 
 #: winecfg.rc:234
-msgid " Drive &mappings "
+#, fuzzy
+msgid "Drive mappings"
 msgstr " ドライブのマッピング "
 
 #: winecfg.rc:235
@@ -12680,11 +12688,13 @@ msgid "Show &dot files"
 msgstr "ドット ファイルを表示する"
 
 #: winecfg.rc:267
-msgid " Driver Diagnostics "
+#, fuzzy
+msgid "Driver diagnostics"
 msgstr " ドライバ診断 "
 
 #: winecfg.rc:269
-msgid " Defaults "
+#, fuzzy
+msgid "Defaults"
 msgstr " デフォルト "
 
 #: winecfg.rc:270
@@ -12708,7 +12718,8 @@ msgid "&Test Sound"
 msgstr "音をテスト(&T)"
 
 #: winecfg.rc:285
-msgid " Appearance "
+#, fuzzy
+msgid "Appearance"
 msgstr " 外観 "
 
 #: winecfg.rc:286
@@ -12728,8 +12739,9 @@ msgid "C&olor:"
 msgstr "色(&O):"
 
 #: winecfg.rc:301
-msgid " Fol&ders "
-msgstr " シェルフォルダ(&H) "
+#, fuzzy
+msgid "Folders"
+msgstr "シェルフォルダ"
 
 #: winecfg.rc:304
 msgid "&Link to:"

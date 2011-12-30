@@ -12491,7 +12491,8 @@ msgstr ""
 "Foundation; версії 2.1 Ліцензії, чи (на ваш розсуд) новішої версії."
 
 #: winecfg.rc:140
-msgid " Windows Registration Information "
+#, fuzzy
+msgid "Windows registration information"
 msgstr " Реєстраційна інформація Windows "
 
 #: winecfg.rc:141
@@ -12503,7 +12504,8 @@ msgid "Organi&zation:"
 msgstr "Органі&зація:"
 
 #: winecfg.rc:151
-msgid " Application Settings "
+#, fuzzy
+msgid "Application settings"
 msgstr " Налаштування програм "
 
 #: winecfg.rc:152
@@ -12529,7 +12531,8 @@ msgid "&Windows Version:"
 msgstr "&Версія Windows:"
 
 #: winecfg.rc:166
-msgid " Window Settings "
+#, fuzzy
+msgid "Window settings"
 msgstr " Параметри вікна "
 
 #: winecfg.rc:167
@@ -12553,7 +12556,8 @@ msgid "Desktop &size:"
 msgstr "Розмір робочого &столу:"
 
 #: winecfg.rc:177
-msgid " Direct3D "
+#, fuzzy
+msgid "Direct3D"
 msgstr " Direct3D "
 
 #: winecfg.rc:178
@@ -12565,7 +12569,8 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr "Ввімкнути &Pixel Shader (якщо підтримується обладнанням)"
 
 #: winecfg.rc:182
-msgid " Screen &Resolution "
+#, fuzzy
+msgid "Screen resolution"
 msgstr " &Розширення екрану "
 
 #: winecfg.rc:186
@@ -12573,7 +12578,8 @@ msgid "This is a sample text using 10 point Tahoma"
 msgstr "Приклад тексту. Шрифт Tahoma 10 пунктів"
 
 #: winecfg.rc:193
-msgid " DLL Overrides "
+#, fuzzy
+msgid "DLL overrides"
 msgstr " Заміщення DLL "
 
 #: winecfg.rc:194
@@ -12606,7 +12612,8 @@ msgid "Edit Override"
 msgstr "Змінити заміщення"
 
 #: winecfg.rc:210
-msgid " Load Order "
+#, fuzzy
+msgid "Load order"
 msgstr " Порядок завантаження "
 
 #: winecfg.rc:211
@@ -12634,7 +12641,8 @@ msgid "Select Drive Letter"
 msgstr "Виберіть букву диску"
 
 #: winecfg.rc:234
-msgid " Drive &mappings "
+#, fuzzy
+msgid "Drive mappings"
 msgstr " Парамет&ри дисків "
 
 #: winecfg.rc:235
@@ -12682,11 +12690,13 @@ msgid "Show &dot files"
 msgstr "Показати &файли, що починаються з крапки"
 
 #: winecfg.rc:267
-msgid " Driver Diagnostics "
+#, fuzzy
+msgid "Driver diagnostics"
 msgstr " Driver Diagnostics "
 
 #: winecfg.rc:269
-msgid " Defaults "
+#, fuzzy
+msgid "Defaults"
 msgstr " Defaults "
 
 #: winecfg.rc:270
@@ -12710,7 +12720,8 @@ msgid "&Test Sound"
 msgstr "&Тест звуку"
 
 #: winecfg.rc:285
-msgid " Appearance "
+#, fuzzy
+msgid "Appearance"
 msgstr " Вигляд "
 
 #: winecfg.rc:286
@@ -12730,8 +12741,9 @@ msgid "C&olor:"
 msgstr "Ко&лір:"
 
 #: winecfg.rc:301
-msgid " Fol&ders "
-msgstr " &Теки "
+#, fuzzy
+msgid "Folders"
+msgstr "Тека"
 
 #: winecfg.rc:304
 msgid "&Link to:"

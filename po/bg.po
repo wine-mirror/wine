@@ -12231,7 +12231,8 @@ msgstr ""
 "option) any later version."
 
 #: winecfg.rc:140
-msgid " Windows Registration Information "
+#, fuzzy
+msgid "Windows registration information"
 msgstr " Windows Registration Information "
 
 #: winecfg.rc:141
@@ -12243,7 +12244,8 @@ msgid "Organi&zation:"
 msgstr "Organization:"
 
 #: winecfg.rc:151
-msgid " Application Settings "
+#, fuzzy
+msgid "Application settings"
 msgstr " Настройка на приложенията "
 
 #: winecfg.rc:152
@@ -12270,7 +12272,8 @@ msgid "&Windows Version:"
 msgstr "&Версия на Windows:"
 
 #: winecfg.rc:166
-msgid " Window Settings "
+#, fuzzy
+msgid "Window settings"
 msgstr " Настройка на прозорците "
 
 #: winecfg.rc:167
@@ -12294,7 +12297,8 @@ msgid "Desktop &size:"
 msgstr "Размер на работния плот:"
 
 #: winecfg.rc:177
-msgid " Direct3D "
+#, fuzzy
+msgid "Direct3D"
 msgstr " Direct3D "
 
 #: winecfg.rc:178
@@ -12306,7 +12310,8 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr "Разреши Pixel Shader (ако се поддържа от хардуера)"
 
 #: winecfg.rc:182
-msgid " Screen &Resolution "
+#, fuzzy
+msgid "Screen resolution"
 msgstr " Screen &Resolution "
 
 #: winecfg.rc:186
@@ -12314,7 +12319,8 @@ msgid "This is a sample text using 10 point Tahoma"
 msgstr "This is a sample text using 10 point Tahoma"
 
 #: winecfg.rc:193
-msgid " DLL Overrides "
+#, fuzzy
+msgid "DLL overrides"
 msgstr " DLL замени "
 
 #: winecfg.rc:194
@@ -12348,7 +12354,8 @@ msgid "Edit Override"
 msgstr "Редактиране на замяна"
 
 #: winecfg.rc:210
-msgid " Load Order "
+#, fuzzy
+msgid "Load order"
 msgstr " Ред на зареждане "
 
 #: winecfg.rc:211
@@ -12377,7 +12384,8 @@ msgid "Select Drive Letter"
 msgstr "Маркирай &всичко"
 
 #: winecfg.rc:234
-msgid " Drive &mappings "
+#, fuzzy
+msgid "Drive mappings"
 msgstr " Пренасочване на устройствата "
 
 #: winecfg.rc:235
@@ -12425,11 +12433,13 @@ msgid "Show &dot files"
 msgstr "Показвай файловете, започващи с точка"
 
 #: winecfg.rc:267
-msgid " Driver Diagnostics "
+#, fuzzy
+msgid "Driver diagnostics"
 msgstr " Driver Diagnostics "
 
 #: winecfg.rc:269
-msgid " Defaults "
+#, fuzzy
+msgid "Defaults"
 msgstr " Defaults "
 
 #: winecfg.rc:270
@@ -12453,7 +12463,8 @@ msgid "&Test Sound"
 msgstr "&Test Sound"
 
 #: winecfg.rc:285
-msgid " Appearance "
+#, fuzzy
+msgid "Appearance"
 msgstr " Външен вид "
 
 #: winecfg.rc:286
@@ -12473,8 +12484,9 @@ msgid "C&olor:"
 msgstr "Color:"
 
 #: winecfg.rc:301
-msgid " Fol&ders "
-msgstr " Папки "
+#, fuzzy
+msgid "Folders"
+msgstr "Папка"
 
 #: winecfg.rc:304
 msgid "&Link to:"

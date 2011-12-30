@@ -12265,7 +12265,7 @@ msgstr ""
 
 #: winecfg.rc:140
 #, fuzzy
-msgid " Windows Registration Information "
+msgid "Windows registration information"
 msgstr "Informo pri"
 
 #: winecfg.rc:141
@@ -12280,7 +12280,7 @@ msgstr "Informo pri"
 
 #: winecfg.rc:151
 #, fuzzy
-msgid " Application Settings "
+msgid "Application settings"
 msgstr "Wine Programa Malinstalilo"
 
 #: winecfg.rc:152
@@ -12307,7 +12307,7 @@ msgstr "Fenestro"
 
 #: winecfg.rc:166
 #, fuzzy
-msgid " Window Settings "
+msgid "Window settings"
 msgstr "&Aløustigu la fenestron"
 
 #: winecfg.rc:167
@@ -12332,8 +12332,9 @@ msgid "Desktop &size:"
 msgstr "Desktop"
 
 #: winecfg.rc:177
-msgid " Direct3D "
-msgstr ""
+#, fuzzy
+msgid "Direct3D"
+msgstr "Direkto"
 
 #: winecfg.rc:178
 msgid "&Vertex Shader Support: "
@@ -12344,7 +12345,7 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr ""
 
 #: winecfg.rc:182
-msgid " Screen &Resolution "
+msgid "Screen resolution"
 msgstr ""
 
 #: winecfg.rc:186
@@ -12352,7 +12353,7 @@ msgid "This is a sample text using 10 point Tahoma"
 msgstr ""
 
 #: winecfg.rc:193
-msgid " DLL Overrides "
+msgid "DLL overrides"
 msgstr ""
 
 #: winecfg.rc:194
@@ -12388,7 +12389,7 @@ msgid "Edit Override"
 msgstr ""
 
 #: winecfg.rc:210
-msgid " Load Order "
+msgid "Load order"
 msgstr ""
 
 #: winecfg.rc:211
@@ -12420,7 +12421,7 @@ msgid "Select Drive Letter"
 msgstr "Elektu"
 
 #: winecfg.rc:234
-msgid " Drive &mappings "
+msgid "Drive mappings"
 msgstr ""
 
 #: winecfg.rc:235
@@ -12466,12 +12467,12 @@ msgid "Show &dot files"
 msgstr ""
 
 #: winecfg.rc:267
-msgid " Driver Diagnostics "
+msgid "Driver diagnostics"
 msgstr ""
 
 #: winecfg.rc:269
 #, fuzzy
-msgid " Defaults "
+msgid "Defaults"
 msgstr "Agordu &Defaýltojn"
 
 #: winecfg.rc:270
@@ -12496,7 +12497,7 @@ msgid "&Test Sound"
 msgstr ""
 
 #: winecfg.rc:285
-msgid " Appearance "
+msgid "Appearance"
 msgstr ""
 
 #: winecfg.rc:286
@@ -12519,8 +12520,8 @@ msgstr "&Koloro"
 
 #: winecfg.rc:301
 #, fuzzy
-msgid " Fol&ders "
-msgstr "Sistemdosierujoj"
+msgid "Folders"
+msgstr "New Folder"
 
 #: winecfg.rc:304
 msgid "&Link to:"

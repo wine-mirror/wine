@@ -12579,7 +12579,7 @@ msgstr ""
 
 #: winecfg.rc:140
 #, fuzzy
-msgid " Windows Registration Information "
+msgid "Windows registration information"
 msgstr "&פרטי הגרסה"
 
 #: winecfg.rc:141
@@ -12594,7 +12594,7 @@ msgstr "הנפשה"
 
 #: winecfg.rc:151
 #, fuzzy
-msgid " Application Settings "
+msgid "Application settings"
 msgstr "יישומים"
 
 #: winecfg.rc:152
@@ -12621,7 +12621,7 @@ msgstr "גודל החלון"
 
 #: winecfg.rc:166
 #, fuzzy
-msgid " Window Settings "
+msgid "Window settings"
 msgstr "טקסט בחלון"
 
 #: winecfg.rc:167
@@ -12646,8 +12646,9 @@ msgid "Desktop &size:"
 msgstr "שולחן העבודה"
 
 #: winecfg.rc:177
-msgid " Direct3D "
-msgstr ""
+#, fuzzy
+msgid "Direct3D"
+msgstr "כיוון"
 
 #: winecfg.rc:178
 msgid "&Vertex Shader Support: "
@@ -12658,7 +12659,7 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr ""
 
 #: winecfg.rc:182
-msgid " Screen &Resolution "
+msgid "Screen resolution"
 msgstr ""
 
 #: winecfg.rc:186
@@ -12666,8 +12667,9 @@ msgid "This is a sample text using 10 point Tahoma"
 msgstr ""
 
 #: winecfg.rc:193
-msgid " DLL Overrides "
-msgstr ""
+#, fuzzy
+msgid "DLL overrides"
+msgstr "תצוגת ע&ריכה"
 
 #: winecfg.rc:194
 msgid ""
@@ -12699,7 +12701,7 @@ msgid "Edit Override"
 msgstr "תצוגת ע&ריכה"
 
 #: winecfg.rc:210
-msgid " Load Order "
+msgid "Load order"
 msgstr ""
 
 #: winecfg.rc:211
@@ -12734,7 +12736,7 @@ msgstr "טקסט הבחירה"
 
 #: winecfg.rc:234
 #, fuzzy
-msgid " Drive &mappings "
+msgid "Drive mappings"
 msgstr "מיפוי כוננים"
 
 #: winecfg.rc:235
@@ -12787,12 +12789,12 @@ msgstr "אין עוד קבצים\n"
 
 #: winecfg.rc:267
 #, fuzzy
-msgid " Driver Diagnostics "
+msgid "Driver diagnostics"
 msgstr "כלי ניתוח ה־DirectX"
 
 #: winecfg.rc:269
 #, fuzzy
-msgid " Defaults "
+msgid "Defaults"
 msgstr "הגדרת &בררות מחדל"
 
 #: winecfg.rc:270
@@ -12817,7 +12819,7 @@ msgid "&Test Sound"
 msgstr ""
 
 #: winecfg.rc:285
-msgid " Appearance "
+msgid "Appearance"
 msgstr ""
 
 #: winecfg.rc:286
@@ -12840,8 +12842,8 @@ msgstr "&צבע"
 
 #: winecfg.rc:301
 #, fuzzy
-msgid " Fol&ders "
-msgstr "תיקייה חדשה"
+msgid "Folders"
+msgstr "תיקייה"
 
 #: winecfg.rc:304
 #, fuzzy

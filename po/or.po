@@ -11872,8 +11872,9 @@ msgid ""
 msgstr ""
 
 #: winecfg.rc:140
-msgid " Windows Registration Information "
-msgstr ""
+#, fuzzy
+msgid "Windows registration information"
+msgstr "ଅକ୍ଷରରୂପ (&F)..."
 
 #: winecfg.rc:141
 msgid "&Owner:"
@@ -11884,7 +11885,7 @@ msgid "Organi&zation:"
 msgstr ""
 
 #: winecfg.rc:151
-msgid " Application Settings "
+msgid "Application settings"
 msgstr ""
 
 #: winecfg.rc:152
@@ -11907,7 +11908,7 @@ msgid "&Windows Version:"
 msgstr ""
 
 #: winecfg.rc:166
-msgid " Window Settings "
+msgid "Window settings"
 msgstr ""
 
 #: winecfg.rc:167
@@ -11931,7 +11932,7 @@ msgid "Desktop &size:"
 msgstr ""
 
 #: winecfg.rc:177
-msgid " Direct3D "
+msgid "Direct3D"
 msgstr ""
 
 #: winecfg.rc:178
@@ -11943,7 +11944,7 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr ""
 
 #: winecfg.rc:182
-msgid " Screen &Resolution "
+msgid "Screen resolution"
 msgstr ""
 
 #: winecfg.rc:186
@@ -11951,7 +11952,7 @@ msgid "This is a sample text using 10 point Tahoma"
 msgstr ""
 
 #: winecfg.rc:193
-msgid " DLL Overrides "
+msgid "DLL overrides"
 msgstr ""
 
 #: winecfg.rc:194
@@ -11983,7 +11984,7 @@ msgid "Edit Override"
 msgstr ""
 
 #: winecfg.rc:210
-msgid " Load Order "
+msgid "Load order"
 msgstr ""
 
 #: winecfg.rc:211
@@ -12011,7 +12012,7 @@ msgid "Select Drive Letter"
 msgstr ""
 
 #: winecfg.rc:234
-msgid " Drive &mappings "
+msgid "Drive mappings"
 msgstr ""
 
 #: winecfg.rc:235
@@ -12057,11 +12058,11 @@ msgid "Show &dot files"
 msgstr ""
 
 #: winecfg.rc:267
-msgid " Driver Diagnostics "
+msgid "Driver diagnostics"
 msgstr ""
 
 #: winecfg.rc:269
-msgid " Defaults "
+msgid "Defaults"
 msgstr ""
 
 #: winecfg.rc:270
@@ -12085,7 +12086,7 @@ msgid "&Test Sound"
 msgstr ""
 
 #: winecfg.rc:285
-msgid " Appearance "
+msgid "Appearance"
 msgstr ""
 
 #: winecfg.rc:286
@@ -12105,7 +12106,7 @@ msgid "C&olor:"
 msgstr ""
 
 #: winecfg.rc:301
-msgid " Fol&ders "
+msgid "Folders"
 msgstr ""
 
 #: winecfg.rc:304

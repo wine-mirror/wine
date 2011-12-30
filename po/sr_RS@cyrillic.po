@@ -12452,7 +12452,7 @@ msgstr ""
 
 #: winecfg.rc:140
 #, fuzzy
-msgid " Windows Registration Information "
+msgid "Windows registration information"
 msgstr "Подаци"
 
 #: winecfg.rc:141
@@ -12467,7 +12467,7 @@ msgstr "анимација"
 
 #: winecfg.rc:151
 #, fuzzy
-msgid " Application Settings "
+msgid "Application settings"
 msgstr "Програми"
 
 #: winecfg.rc:152
@@ -12494,7 +12494,7 @@ msgstr "&Прозор"
 
 #: winecfg.rc:166
 #, fuzzy
-msgid " Window Settings "
+msgid "Window settings"
 msgstr "&Прозор"
 
 #: winecfg.rc:167
@@ -12519,8 +12519,9 @@ msgid "Desktop &size:"
 msgstr "Радна површина"
 
 #: winecfg.rc:177
-msgid " Direct3D "
-msgstr ""
+#, fuzzy
+msgid "Direct3D"
+msgstr "Правац"
 
 #: winecfg.rc:178
 msgid "&Vertex Shader Support: "
@@ -12531,7 +12532,7 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr ""
 
 #: winecfg.rc:182
-msgid " Screen &Resolution "
+msgid "Screen resolution"
 msgstr ""
 
 #: winecfg.rc:186
@@ -12539,8 +12540,9 @@ msgid "This is a sample text using 10 point Tahoma"
 msgstr ""
 
 #: winecfg.rc:193
-msgid " DLL Overrides "
-msgstr ""
+#, fuzzy
+msgid "DLL overrides"
+msgstr "&Уређивање"
 
 #: winecfg.rc:194
 msgid ""
@@ -12572,8 +12574,9 @@ msgid "Edit Override"
 msgstr "&Уређивање"
 
 #: winecfg.rc:210
-msgid " Load Order "
-msgstr ""
+#, fuzzy
+msgid "Load order"
+msgstr "граница"
 
 #: winecfg.rc:211
 #, fuzzy
@@ -12604,7 +12607,7 @@ msgid "Select Drive Letter"
 msgstr "Изабери &све"
 
 #: winecfg.rc:234
-msgid " Drive &mappings "
+msgid "Drive mappings"
 msgstr ""
 
 #: winecfg.rc:235
@@ -12655,12 +12658,12 @@ msgid "Show &dot files"
 msgstr ""
 
 #: winecfg.rc:267
-msgid " Driver Diagnostics "
+msgid "Driver diagnostics"
 msgstr ""
 
 #: winecfg.rc:269
 #, fuzzy
-msgid " Defaults "
+msgid "Defaults"
 msgstr "Подразумевано"
 
 #: winecfg.rc:270
@@ -12686,7 +12689,7 @@ msgid "&Test Sound"
 msgstr "звук"
 
 #: winecfg.rc:285
-msgid " Appearance "
+msgid "Appearance"
 msgstr ""
 
 #: winecfg.rc:286
@@ -12709,7 +12712,7 @@ msgstr "&Колона"
 
 #: winecfg.rc:301
 #, fuzzy
-msgid " Fol&ders "
+msgid "Folders"
 msgstr "Нова фасцикла"
 
 #: winecfg.rc:304
