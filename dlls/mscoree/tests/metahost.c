@@ -24,6 +24,7 @@
 #include "ole2.h"
 
 #include "corerror.h"
+#include "ocidl.h"
 #include "initguid.h"
 #include "metahost.h"
 #include "wine/test.h"
