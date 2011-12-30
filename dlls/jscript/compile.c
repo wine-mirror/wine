@@ -1294,10 +1294,8 @@ static HRESULT compile_continue_statement(compiler_ctx_t *ctx, branch_statement_
         return JS_E_INVALID_CONTINUE;
     }
 
-    if(stat->identifier) {
-        stat->stat.eval = continue_statement_eval;
-        return compile_interp_fallback(ctx, &stat->stat);
-    }
+    if(stat->identifier)
+        return push_instr(ctx, OP_label) == -1 ? E_OUTOFMEMORY : S_OK; /* FIXME */
 
     hres = pop_to_stat(ctx, pop_ctx);
     if(FAILED(hres))
@@ -1325,10 +1323,8 @@ static HRESULT compile_break_statement(compiler_ctx_t *ctx, branch_statement_t *
         return JS_E_INVALID_BREAK;
     }
 
-    if(stat->identifier) {
-        stat->stat.eval = break_statement_eval;
-        return compile_interp_fallback(ctx, &stat->stat);
-    }
+    if(stat->identifier)
+        return push_instr(ctx, OP_label) == -1 ? E_OUTOFMEMORY : S_OK; /* FIXME */
 
     hres = pop_to_stat(ctx, pop_ctx);
     if(FAILED(hres))

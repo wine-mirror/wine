@@ -644,26 +644,6 @@ static HRESULT interp_forin(exec_ctx_t *ctx)
     return S_OK;
 }
 
-/* ECMA-262 3rd Edition    12.7 */
-HRESULT continue_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
-{
-    branch_statement_t *stat = (branch_statement_t*)_stat;
-
-    assert(stat->identifier != NULL);
-    FIXME("identifier not implemented\n");
-    return E_NOTIMPL;
-}
-
-/* ECMA-262 3rd Edition    12.8 */
-HRESULT break_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_t *rt, VARIANT *ret)
-{
-    branch_statement_t *stat = (branch_statement_t*)_stat;
-
-    assert(stat->identifier != NULL);
-    FIXME("identifier not implemented\n");
-    return E_NOTIMPL;
-}
-
 /* ECMA-262 3rd Edition    12.10 */
 HRESULT interp_push_scope(exec_ctx_t *ctx)
 {
