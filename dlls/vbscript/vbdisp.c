@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
+
 #include "vbscript.h"
 
 #include "wine/debug.h"
@@ -133,7 +135,8 @@ static HRESULT invoke_variant_prop(vbdisp_t *This, VARIANT *v, WORD flags, DISPP
 
 static HRESULT invoke_builtin(vbdisp_t *This, const builtin_prop_t *prop, WORD flags, DISPPARAMS *dp, VARIANT *res)
 {
-    VARIANT *args;
+    VARIANT *args, arg_buf[8];
+    unsigned argn;
 
     switch(flags) {
     case DISPATCH_PROPERTYGET:
@@ -163,15 +166,36 @@ static HRESULT invoke_builtin(vbdisp_t *This, const builtin_prop_t *prop, WORD f
         return E_NOTIMPL;
     }
 
-    if(arg_cnt(dp) < prop->min_args || arg_cnt(dp) > (prop->max_args ? prop->max_args : prop->min_args)) {
+    argn = arg_cnt(dp);
+
+    if(argn < prop->min_args || argn > (prop->max_args ? prop->max_args : prop->min_args)) {
         FIXME("invalid number of arguments\n");
         return E_FAIL;
     }
 
-    if(arg_cnt(dp) == 1 && V_VT(dp->rgvarg) == (VT_BYREF|VT_VARIANT))
-        args = V_VARIANTREF(dp->rgvarg);
-    else
-        args = dp->rgvarg;
+    args = dp->rgvarg;
+
+    if(argn == 1) {
+        if(V_VT(dp->rgvarg) == (VT_BYREF|VT_VARIANT))
+            args = V_VARIANTREF(dp->rgvarg);
+    }else {
+        unsigned i;
+
+        assert(argn < sizeof(arg_buf)/sizeof(*arg_buf));
+
+        for(i=0; i < argn; i++) {
+            if(V_VT(dp->rgvarg+i) == (VT_BYREF|VT_VARIANT)) {
+                for(i=0; i < argn; i++) {
+                    if(V_VT(dp->rgvarg+i) == (VT_BYREF|VT_VARIANT))
+                        arg_buf[i] = *V_VARIANTREF(dp->rgvarg+i);
+                    else
+                        arg_buf[i] = dp->rgvarg[i];
+                }
+                args = arg_buf;
+                break;
+            }
+        }
+    }
 
     return prop->proc(This, args, dp->cArgs, res);
 }
