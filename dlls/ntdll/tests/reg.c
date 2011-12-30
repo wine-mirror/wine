@@ -396,7 +396,8 @@ static void test_NtCreateKey(void)
 
     /* Only attributes */
     status = pNtCreateKey(NULL, 0, &attr, 0, 0, 0, 0);
-    ok(status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got: 0x%08x\n", status);
+    ok(status == STATUS_ACCESS_VIOLATION || status == STATUS_ACCESS_DENIED /* Win7 */,
+       "Expected STATUS_ACCESS_VIOLATION or STATUS_ACCESS_DENIED, got: 0x%08x\n", status);
 
     /* Length > sizeof(OBJECT_ATTRIBUTES) */
     attr.Length *= 2;
