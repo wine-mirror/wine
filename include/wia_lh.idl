@@ -16,8 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-import "wtypes.idl";
-import "objidl.idl";
+import "unknwn.idl";
+import "oaidl.idl";
+import "propidl.idl";
 
 interface IEnumWIA_DEV_INFO;
 interface IWiaItem;
