@@ -2579,6 +2579,7 @@ int CDECL X11DRV_AcquireClipboard(HWND hWndClipWindow)
         if (!selectionThread)
         {
             WARN("Could not start clipboard thread\n");
+            CloseHandle(event);
             return 0;
         }
 
