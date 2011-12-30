@@ -591,4 +591,4 @@ typedef struct {
 } property_value_expression_t;
 
 HRESULT compile_subscript(parser_ctx_t*,expression_t*,unsigned*) DECLSPEC_HIDDEN;
-HRESULT compile_subscript_stat(parser_ctx_t*,statement_t*,unsigned*) DECLSPEC_HIDDEN;
+HRESULT compile_subscript_stat(parser_ctx_t*,statement_t*,BOOL,unsigned*) DECLSPEC_HIDDEN;

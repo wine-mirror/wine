@@ -2740,7 +2740,7 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
 
     if(source->statement) {
         if(source->instr_off == -1) {
-            hres = compile_subscript_stat(ctx->parser, source->statement, &source->instr_off);
+            hres = compile_subscript_stat(ctx->parser, source->statement, from_eval, &source->instr_off);
             if(FAILED(hres) && is_jscript_error(hres))
                 hres = throw_syntax_error(script, &rt.ei, hres, NULL);
         }
@@ -2751,18 +2751,13 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
     script->exec_ctx = prev_ctx;
     ctx->parser = prev_parser;
 
-    if(rt.type != RT_NORMAL && rt.type != RT_RETURN) {
-        FIXME("wrong rt %d\n", rt.type);
-        hres = E_FAIL;
-    }
-
     *ei = rt.ei;
     if(FAILED(hres)) {
         VariantClear(&val);
         return hres;
     }
 
-    if(!retv || (!from_eval && rt.type != RT_RETURN))
+    if(!retv)
         VariantClear(&val);
     if(retv)
         *retv = val;
