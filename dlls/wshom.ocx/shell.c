@@ -23,6 +23,38 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wshom);
 
+const char *debugstr_variant(const VARIANT *v)
+{
+    if(!v)
+        return "(null)";
+
+    switch(V_VT(v)) {
+    case VT_EMPTY:
+        return "{VT_EMPTY}";
+    case VT_NULL:
+        return "{VT_NULL}";
+    case VT_I4:
+        return wine_dbg_sprintf("{VT_I4: %d}", V_I4(v));
+    case VT_R8:
+        return wine_dbg_sprintf("{VT_R8: %lf}", V_R8(v));
+    case VT_BSTR:
+        return wine_dbg_sprintf("{VT_BSTR: %s}", debugstr_w(V_BSTR(v)));
+    case VT_DISPATCH:
+        return wine_dbg_sprintf("{VT_DISPATCH: %p}", V_DISPATCH(v));
+    case VT_BOOL:
+        return wine_dbg_sprintf("{VT_BOOL: %x}", V_BOOL(v));
+    case VT_UNKNOWN:
+        return wine_dbg_sprintf("{VT_UNKNOWN: %p}", V_UNKNOWN(v));
+    case VT_UINT:
+        return wine_dbg_sprintf("{VT_UINT: %u}", V_UINT(v));
+    case VT_BSTR|VT_BYREF:
+        return wine_dbg_sprintf("{VT_BSTR|VT_BYREF: ptr %p, data %s}",
+            V_BSTRREF(v), debugstr_w(V_BSTRREF(v) ? *V_BSTRREF(v) : NULL));
+    default:
+        return wine_dbg_sprintf("{vt %d}", V_VT(v));
+    }
+}
+
 static IWshShell3 WshShell3;
 
 typedef struct
@@ -70,6 +102,10 @@ static ULONG WINAPI WshCollection_Release(IWshCollection *iface)
     WshCollection *This = impl_from_IWshCollection(iface);
     LONG ref = InterlockedDecrement(&This->ref);
     TRACE("(%p) ref = %d\n", This, ref);
+
+    if (!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
     return ref;
 }
 
@@ -131,7 +167,7 @@ static HRESULT WINAPI WshCollection_Invoke(IWshCollection *iface, DISPID dispIdM
 static HRESULT WINAPI WshCollection_Item(IWshCollection *iface, VARIANT *index, VARIANT *value)
 {
     WshCollection *This = impl_from_IWshCollection(iface);
-    FIXME("(%p)->(%p %p): stub\n", This, index, value);
+    FIXME("(%p)->(%s %p): stub\n", This, debugstr_variant(index), value);
     return E_NOTIMPL;
 }
 
@@ -281,13 +317,14 @@ static HRESULT WINAPI WshShell3_get_Environment(IWshShell3 *iface, VARIANT *Type
 
 static HRESULT WINAPI WshShell3_Run(IWshShell3 *iface, BSTR Command, VARIANT *WindowStyle, VARIANT *WaitOnReturn, int *out_ExitCode)
 {
-    FIXME("(%p %p %p): stub\n", WindowStyle, WaitOnReturn, out_ExitCode);
+    FIXME("(%s %s %p): stub\n", debugstr_variant(WindowStyle), debugstr_variant(WaitOnReturn), out_ExitCode);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI WshShell3_Popup(IWshShell3 *iface, BSTR Text, VARIANT* SecondsToWait, VARIANT *Title, VARIANT *Type, int *button)
 {
-    FIXME("(%s %p %p %p %p): stub\n", debugstr_w(Text), SecondsToWait, Title, Type, button);
+    FIXME("(%s %s %s %s %p): stub\n", debugstr_w(Text), debugstr_variant(SecondsToWait),
+        debugstr_variant(Title), debugstr_variant(Type), button);
     return E_NOTIMPL;
 }
 
@@ -311,7 +348,7 @@ static HRESULT WINAPI WshShell3_RegRead(IWshShell3 *iface, BSTR Name, VARIANT* o
 
 static HRESULT WINAPI WshShell3_RegWrite(IWshShell3 *iface, BSTR Name, VARIANT *Value, VARIANT *Type)
 {
-    FIXME("(%s %p %p): stub\n", debugstr_w(Name), Value, Type);
+    FIXME("(%s %s %s): stub\n", debugstr_w(Name), debugstr_variant(Value), debugstr_variant(Type));
     return E_NOTIMPL;
 }
 
@@ -323,13 +360,13 @@ static HRESULT WINAPI WshShell3_RegDelete(IWshShell3 *iface, BSTR Name)
 
 static HRESULT WINAPI WshShell3_LogEvent(IWshShell3 *iface, VARIANT *Type, BSTR Message, BSTR Target, VARIANT_BOOL *out_Success)
 {
-    FIXME("(%p %s %s %p): stub\n", Type, debugstr_w(Message), debugstr_w(Target), out_Success);
+    FIXME("(%s %s %s %p): stub\n", debugstr_variant(Type), debugstr_w(Message), debugstr_w(Target), out_Success);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI WshShell3_AppActivate(IWshShell3 *iface, VARIANT *App, VARIANT *Wait, VARIANT_BOOL *out_Success)
 {
-    FIXME("(%p %p %p): stub\n", App, Wait, out_Success);
+    FIXME("(%s %s %p): stub\n", debugstr_variant(App), debugstr_variant(Wait), out_Success);
     return E_NOTIMPL;
 }
 
