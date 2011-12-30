@@ -74,6 +74,9 @@ static basic_string_char* (__thiscall *p_basic_string_char_append_substr)(basic_
 static int (__thiscall *p_basic_string_char_compare_substr_substr)(basic_string_char*, size_t, size_t, basic_string_char*, size_t, size_t);
 static int (__thiscall *p_basic_string_char_compare_substr_cstr_len)(basic_string_char*, size_t, size_t, const char*, size_t);
 static size_t (__thiscall *p_basic_string_char_find_cstr_substr)(basic_string_char*, const char*, size_t, size_t);
+static size_t (__thiscall *p_basic_string_char_rfind_cstr_substr)(basic_string_char*, const char*, size_t, size_t);
+
+static size_t *p_basic_string_char_npos;
 
 static basic_string_wchar* (__thiscall *p_basic_string_wchar_ctor)(basic_string_wchar*);
 static basic_string_wchar* (__thiscall *p_basic_string_wchar_copy_ctor)(basic_string_wchar*, basic_string_wchar*);
@@ -219,6 +222,10 @@ static BOOL init(void)
                 "??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@AEBV10@PEBD@Z");
         SET(p_basic_string_char_find_cstr_substr,
                 "?find@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K1@Z");
+        SET(p_basic_string_char_rfind_cstr_substr,
+                "?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K1@Z");
+        SET(p_basic_string_char_npos,
+                "?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2_KB");
 
         SET(p_basic_string_wchar_ctor,
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA@XZ");
@@ -279,6 +286,10 @@ static BOOL init(void)
                 "??$?HDU?$char_traits@D@std@@V?$allocator@D@1@@std@@YA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@0@ABV10@PBD@Z");
         SET(p_basic_string_char_find_cstr_substr,
                 "?find@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDII@Z");
+        SET(p_basic_string_char_rfind_cstr_substr,
+                "?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDII@Z");
+        SET(p_basic_string_char_npos,
+                "?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2IB");
 
         SET(p_basic_string_wchar_ctor,
                 "??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@XZ");
@@ -503,6 +514,40 @@ static void test_basic_string_char_find(void) {
     call_func1(p_basic_string_char_dtor, &str);
 }
 
+static void test_basic_string_char_rfind(void) {
+    struct rfind_char_test {
+        const char *str;
+        const char *find;
+        size_t pos;
+        size_t len;
+        size_t ret;
+    };
+
+    int i;
+    basic_string_char str;
+    size_t ret;
+    struct rfind_char_test tests[] = {
+        { "",    "a",   0, 1, *p_basic_string_char_npos }, /* empty string */
+        { "a",   "",    0, 0, 0 }, /* empty find */
+        { "aaa", "aaa", 0, 3, 0 }, /* simple case */
+        { "aaa", "a",   0, 1, 0 }, /* start of string */
+        { "aaa", "a",   2, 1, 2 }, /* end of string */
+        { "aaa", "a",   *p_basic_string_char_npos, 1, 2 }, /* off == npos */
+        { "aaa", "z",   0, 1, *p_basic_string_char_npos }  /* can't find */
+    };
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        call_func2(p_basic_string_char_ctor_cstr, &str, tests[i].str);
+
+        ret = (size_t)call_func4(p_basic_string_char_rfind_cstr_substr, &str,
+            tests[i].find, tests[i].pos, tests[i].len);
+        ok(ret == tests[i].ret, "str = '%s' find = '%s' ret = %lu\n",
+            tests[i].str, tests[i].find, (unsigned long)ret);
+
+        call_func1(p_basic_string_char_dtor, &str);
+    }
+}
+
 static void test_basic_string_wchar(void) {
     static const wchar_t test[] = { 't','e','s','t',0 };
 
@@ -614,6 +659,7 @@ START_TEST(string)
     test_basic_string_char_compare();
     test_basic_string_char_concatenate();
     test_basic_string_char_find();
+    test_basic_string_char_rfind();
     test_basic_string_wchar();
     test_basic_string_wchar_swap();
 
