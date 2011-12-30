@@ -3440,66 +3440,70 @@ msgid "Can't have 'break' outside of loop"
 msgstr ""
 
 #: jscript.rc:39
-msgid "Conditional compilation is turned off"
-msgstr ""
-
-#: jscript.rc:42
-msgid "Number expected"
+msgid "Can't have 'continue' outside of loop"
 msgstr ""
 
 #: jscript.rc:40
-msgid "Function expected"
-msgstr ""
-
-#: jscript.rc:41
-msgid "'[object]' is not a date object"
+msgid "Conditional compilation is turned off"
 msgstr ""
 
 #: jscript.rc:43
-msgid "Object expected"
+msgid "Number expected"
+msgstr ""
+
+#: jscript.rc:41
+msgid "Function expected"
+msgstr ""
+
+#: jscript.rc:42
+msgid "'[object]' is not a date object"
 msgstr ""
 
 #: jscript.rc:44
-msgid "Illegal assignment"
+msgid "Object expected"
 msgstr ""
 
 #: jscript.rc:45
-msgid "'|' is undefined"
+msgid "Illegal assignment"
 msgstr ""
 
 #: jscript.rc:46
-msgid "Boolean object expected"
+msgid "'|' is undefined"
 msgstr ""
 
 #: jscript.rc:47
-msgid "Cannot delete '|'"
+msgid "Boolean object expected"
 msgstr ""
 
 #: jscript.rc:48
-msgid "VBArray object expected"
+msgid "Cannot delete '|'"
 msgstr ""
 
 #: jscript.rc:49
-msgid "JScript object expected"
+msgid "VBArray object expected"
 msgstr ""
 
 #: jscript.rc:50
-msgid "Syntax error in regular expression"
-msgstr ""
-
-#: jscript.rc:52
-msgid "URI to be encoded contains invalid characters"
+msgid "JScript object expected"
 msgstr ""
 
 #: jscript.rc:51
-msgid "URI to be decoded is incorrect"
+msgid "Syntax error in regular expression"
 msgstr ""
 
 #: jscript.rc:53
-msgid "Array length must be a finite positive integer"
+msgid "URI to be encoded contains invalid characters"
+msgstr ""
+
+#: jscript.rc:52
+msgid "URI to be decoded is incorrect"
 msgstr ""
 
 #: jscript.rc:54
+msgid "Array length must be a finite positive integer"
+msgstr ""
+
+#: jscript.rc:55
 msgid "Array object expected"
 msgstr ""
 

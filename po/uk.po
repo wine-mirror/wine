@@ -3534,68 +3534,72 @@ msgid "Can't have 'break' outside of loop"
 msgstr ""
 
 #: jscript.rc:39
+msgid "Can't have 'continue' outside of loop"
+msgstr ""
+
+#: jscript.rc:40
 msgid "Conditional compilation is turned off"
 msgstr "Умовна компіляція вимкнена"
 
-#: jscript.rc:42
+#: jscript.rc:43
 msgid "Number expected"
 msgstr "Очікується число"
 
-#: jscript.rc:40
+#: jscript.rc:41
 msgid "Function expected"
 msgstr "Очікується функція"
 
-#: jscript.rc:41
+#: jscript.rc:42
 msgid "'[object]' is not a date object"
 msgstr "'[object]' не об'єкт типу date"
 
-#: jscript.rc:43
+#: jscript.rc:44
 msgid "Object expected"
 msgstr "Очікується об'єкт"
 
-#: jscript.rc:44
+#: jscript.rc:45
 msgid "Illegal assignment"
 msgstr "Невірне присвоєння"
 
-#: jscript.rc:45
+#: jscript.rc:46
 msgid "'|' is undefined"
 msgstr "'|' не визначено"
 
-#: jscript.rc:46
+#: jscript.rc:47
 msgid "Boolean object expected"
 msgstr "Очікується об'єкт Boolean"
 
-#: jscript.rc:47
+#: jscript.rc:48
 #, fuzzy
 msgid "Cannot delete '|'"
 msgstr "Неможливо завершити\n"
 
-#: jscript.rc:48
+#: jscript.rc:49
 msgid "VBArray object expected"
 msgstr "Очікується об'єкт VBArray"
 
-#: jscript.rc:49
+#: jscript.rc:50
 msgid "JScript object expected"
 msgstr "Очікується об'єкт JScript"
 
-#: jscript.rc:50
+#: jscript.rc:51
 msgid "Syntax error in regular expression"
 msgstr "Синтаксична помилка в регулярному виразі"
 
-#: jscript.rc:52
+#: jscript.rc:53
 msgid "URI to be encoded contains invalid characters"
 msgstr "URI, що буде закодований, містить неприпустимі символи"
 
-#: jscript.rc:51
+#: jscript.rc:52
 #, fuzzy
 msgid "URI to be decoded is incorrect"
 msgstr "URI, що буде закодований, містить неприпустимі символи"
 
-#: jscript.rc:53
+#: jscript.rc:54
 msgid "Array length must be a finite positive integer"
 msgstr "Довжиною масиву повинне бути скінченне додатнє ціле число"
 
-#: jscript.rc:54
+#: jscript.rc:55
 msgid "Array object expected"
 msgstr "Очікується об'єкт Array"
 

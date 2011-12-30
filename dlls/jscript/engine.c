@@ -40,8 +40,7 @@ static const WCHAR unknownW[] = {'u','n','k','n','o','w','n',0};
 struct _return_type_t {
     enum{
         RT_NORMAL,
-        RT_RETURN,
-        RT_CONTINUE
+        RT_RETURN
     } type;
     jsexcept_t ei;
 };
@@ -656,16 +655,9 @@ HRESULT continue_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_ty
 {
     branch_statement_t *stat = (branch_statement_t*)_stat;
 
-    TRACE("\n");
-
-    if(stat->identifier) {
-        FIXME("indentifier not implemented\n");
-        return E_NOTIMPL;
-    }
-
-    rt->type = RT_CONTINUE;
-    V_VT(ret) = VT_EMPTY;
-    return S_OK;
+    assert(stat->identifier != NULL);
+    FIXME("identifier not implemented\n");
+    return E_NOTIMPL;
 }
 
 /* ECMA-262 3rd Edition    12.8 */

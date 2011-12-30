@@ -1289,7 +1289,12 @@ static HRESULT compile_continue_statement(compiler_ctx_t *ctx, branch_statement_
             break;
     }
 
-    if(!pop_ctx || stat->identifier) {
+    if(!pop_ctx) {
+        WARN("continue outside loop\n");
+        return JS_E_INVALID_CONTINUE;
+    }
+
+    if(stat->identifier) {
         stat->stat.eval = continue_statement_eval;
         return compile_interp_fallback(ctx, &stat->stat);
     }
