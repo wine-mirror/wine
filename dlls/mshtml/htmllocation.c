@@ -402,7 +402,7 @@ static HRESULT WINAPI HTMLLocation_put_port(IHTMLLocation *iface, BSTR v)
 static HRESULT WINAPI HTMLLocation_get_port(IHTMLLocation *iface, BSTR *p)
 {
     HTMLLocation *This = impl_from_IHTMLLocation(iface);
-    URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW)};
+    DWORD port;
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
@@ -410,18 +410,23 @@ static HRESULT WINAPI HTMLLocation_get_port(IHTMLLocation *iface, BSTR *p)
     if(!p)
         return E_POINTER;
 
-    hres = get_url_components(This, &url);
+    if(!This->window || !This->window->uri) {
+        FIXME("No current URI\n");
+        return E_NOTIMPL;
+    }
+
+    hres = IUri_GetPort(This->window->uri, &port);
     if(FAILED(hres))
         return hres;
 
-    if(url.nPort) {
-        const WCHAR format[] = {'%','u',0};
-        WCHAR buf[6];
-        snprintfW(buf, 6, format, url.nPort);
+    if(hres == S_OK) {
+        static const WCHAR formatW[] = {'%','u',0};
+        WCHAR buf[12];
+
+        sprintfW(buf, formatW, port);
         *p = SysAllocString(buf);
     }else {
-        const WCHAR empty[] = {0};
-        *p = SysAllocString(empty);
+        *p = SysAllocStringLen(NULL, 0);
     }
 
     if(!*p)
