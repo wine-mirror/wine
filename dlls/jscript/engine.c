@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Jacek Caban for CodeWeavers
+ * Copyright 2008,2011 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2437,21 +2437,6 @@ static HRESULT interp_ret(exec_ctx_t *ctx)
 
     ctx->ip = -1;
     return S_OK;
-}
-
-static HRESULT interp_tree(exec_ctx_t *ctx)
-{
-    instr_t *instr = ctx->parser->code->instrs+ctx->ip;
-    VARIANT v;
-    HRESULT hres;
-
-    TRACE("\n");
-
-    hres = instr->arg1.stat->eval(ctx->parser->script, instr->arg1.stat, ctx->rt, &v);
-    if(FAILED(hres))
-        return hres;
-
-    return stack_push(ctx, &v);
 }
 
 typedef HRESULT (*op_func_t)(exec_ctx_t*);

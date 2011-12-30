@@ -81,7 +81,6 @@ static void dump_instr_arg(instr_arg_type_t type, instr_arg_t *arg)
     case ARG_DBL:
         TRACE_(jscript_disas)("\t%lf", *arg->dbl);
         break;
-    case ARG_STAT:
     case ARG_FUNC:
     case ARG_NONE:
         break;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Jacek Caban for CodeWeavers
+ * Copyright 2008,2011 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -106,7 +106,6 @@ typedef struct _func_stack {
     X(throw_ref,  0, ARG_UINT,   0)        \
     X(throw_type, 0, ARG_UINT,   ARG_STR)  \
     X(tonum,      1, 0,0)                  \
-    X(tree,       1, ARG_STAT,   0)        \
     X(typeof,     1, 0,0)                  \
     X(typeofid,   1, 0,0)                  \
     X(typeofident,1, 0,0)                  \
@@ -126,7 +125,6 @@ OP_LIST
 } jsop_t;
 
 typedef union {
-    statement_t *stat;
     BSTR bstr;
     double *dbl;
     LONG lng;
@@ -140,7 +138,6 @@ typedef enum {
     ARG_ADDR,
     ARG_BSTR,
     ARG_DBL,
-    ARG_STAT,
     ARG_FUNC,
     ARG_INT,
     ARG_STR,
@@ -296,8 +293,6 @@ typedef struct _variable_declaration_t {
     struct _variable_declaration_t *next;
 } variable_declaration_t;
 
-typedef HRESULT (*statement_eval_t)(script_ctx_t*,statement_t*,return_type_t*,VARIANT*);
-
 typedef enum {
     STAT_BLOCK,
     STAT_BREAK,
@@ -319,7 +314,6 @@ typedef enum {
 
 struct _statement_t {
     statement_type_t type;
-    statement_eval_t eval;
     statement_t *next;
 };
 

@@ -844,7 +844,6 @@ static void *new_statement(parser_ctx_t *ctx, statement_type_t type, size_t size
         return NULL;
 
     stat->type = type;
-    stat->eval = NULL;
     stat->next = NULL;
 
     return stat;
