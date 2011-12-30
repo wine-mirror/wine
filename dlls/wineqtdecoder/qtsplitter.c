@@ -892,6 +892,7 @@ static HRESULT QT_Process_Movie(QTSplitter* filter)
     Track trk;
     short id = 0;
     DWORD tid;
+    HANDLE thread;
 
     TRACE("Trying movie connect\n");
 
@@ -930,8 +931,14 @@ static HRESULT QT_Process_Movie(QTSplitter* filter)
     if (trk)
         hr = QT_Process_Audio_Track(filter, trk);
 
-    CreateThread(NULL, 0, QTSplitter_thread, filter, 0, &tid);
-    TRACE("Created thread 0x%08x\n",tid);
+    thread = CreateThread(NULL, 0, QTSplitter_thread, filter, 0, &tid);
+    if (thread)
+    {
+        TRACE("Created thread 0x%08x\n", tid);
+        CloseHandle(thread);
+    }
+    else
+        hr = HRESULT_FROM_WIN32(GetLastError());
 
     return hr;
 }
