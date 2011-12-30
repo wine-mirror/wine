@@ -170,6 +170,7 @@ static HRESULT WINAPI WshCollection_Invoke(IWshCollection *iface, DISPID dispIdM
 static HRESULT WINAPI WshCollection_Item(IWshCollection *iface, VARIANT *index, VARIANT *value)
 {
     WshCollection *This = impl_from_IWshCollection(iface);
+    static const WCHAR allusersdesktopW[] = {'A','l','l','U','s','e','r','s','D','e','s','k','t','o','p',0};
     static const WCHAR desktopW[] = {'D','e','s','k','t','o','p',0};
     PIDLIST_ABSOLUTE pidl;
     WCHAR pathW[MAX_PATH];
@@ -188,6 +189,8 @@ static HRESULT WINAPI WshCollection_Item(IWshCollection *iface, VARIANT *index, 
     folder = V_BSTR(index);
     if (!strcmpiW(folder, desktopW))
         kind = CSIDL_DESKTOP;
+    else if (!strcmpiW(folder, allusersdesktopW))
+        kind = CSIDL_COMMON_DESKTOPDIRECTORY;
     else
     {
         FIXME("folder kind %s not supported\n", debugstr_w(folder));
