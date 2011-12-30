@@ -518,18 +518,6 @@ static HRESULT compile_new_expression(compiler_ctx_t *ctx, call_expression_t *ex
     return push_instr_int(ctx, OP_new, arg_cnt);
 }
 
-static HRESULT compile_interp_fallback(compiler_ctx_t *ctx, statement_t *stat)
-{
-    unsigned instr;
-
-    instr = push_instr(ctx, OP_tree);
-    if(instr == -1)
-        return E_OUTOFMEMORY;
-
-    instr_ptr(ctx, instr)->arg1.stat = stat;
-    return S_OK;
-}
-
 static HRESULT compile_call_expression(compiler_ctx_t *ctx, call_expression_t *expr, BOOL *no_ret)
 {
     unsigned arg_cnt = 0;
@@ -1614,7 +1602,7 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_ctx_t *stat_ctx,
         hres = compile_with_statement(ctx, (with_statement_t*)stat);
         break;
     default:
-        hres = compile_interp_fallback(ctx, stat);
+        assert(0);
     }
 
     if(stat_ctx) {
