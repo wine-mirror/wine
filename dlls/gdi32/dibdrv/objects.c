@@ -758,7 +758,7 @@ static BOOL solid_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL clos
     {
         DWORD color, and, xor;
 
-        color = get_pixel_color( pdev, pdev->pen_colorref, TRUE );
+        color = get_pixel_color( pdev, pdev->pen_brush.colorref, TRUE );
         calc_and_xor_masks( GetROP2(pdev->dev.hdc), color, &and, &xor );
 
         for (i = 0; i < num - 1; i++)
@@ -1190,7 +1190,7 @@ static BOOL dashed_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL clo
     }
     else
     {
-        get_color_masks( pdev, GetROP2(pdev->dev.hdc), pdev->pen_colorref,
+        get_color_masks( pdev, GetROP2(pdev->dev.hdc), pdev->pen_brush.colorref,
                          pdev->pen_is_ext ? TRANSPARENT : GetBkMode(pdev->dev.hdc),
                          &pdev->dash_masks[1], &pdev->dash_masks[0] );
 
@@ -1529,112 +1529,6 @@ static inline int get_pen_device_width( dibdrv_physdev *pdev, int width )
 }
 
 /***********************************************************************
- *           dibdrv_SelectPen
- */
-HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *pattern )
-{
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectPen );
-    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
-    LOGPEN logpen;
-    EXTLOGPEN *elp = NULL;
-
-    TRACE("(%p, %p)\n", dev, hpen);
-
-    if (!GetObjectW( hpen, sizeof(logpen), &logpen ))
-    {
-        /* must be an extended pen */
-        INT size = GetObjectW( hpen, 0, NULL );
-
-        if (!size) return 0;
-
-        elp = HeapAlloc( GetProcessHeap(), 0, size );
-
-        GetObjectW( hpen, size, elp );
-        /* FIXME: add support for user style pens */
-        logpen.lopnStyle = elp->elpPenStyle;
-        logpen.lopnWidth.x = elp->elpWidth;
-        logpen.lopnColor = elp->elpColor;
-        /* cosmetic ext pens are always 1-pixel wide */
-        if (!(logpen.lopnStyle & PS_GEOMETRIC)) logpen.lopnWidth.x = 0;
-    }
-
-    pdev->pen_join   = logpen.lopnStyle & PS_JOIN_MASK;
-    pdev->pen_endcap = logpen.lopnStyle & PS_ENDCAP_MASK;
-    pdev->pen_width  = get_pen_device_width( pdev, logpen.lopnWidth.x );
-
-    if (hpen == GetStockObject( DC_PEN ))
-        logpen.lopnColor = GetDCPenColor( dev->hdc );
-
-    pdev->pen_colorref = logpen.lopnColor;
-    set_dash_pattern( &pdev->pen_pattern, 0, NULL );
-
-    pdev->defer |= DEFER_PEN;
-
-    pdev->pen_style = logpen.lopnStyle & PS_STYLE_MASK;
-
-    switch (pdev->pen_style)
-    {
-    case PS_DASH:
-    case PS_DOT:
-    case PS_DASHDOT:
-    case PS_DASHDOTDOT:
-        if (logpen.lopnStyle & PS_GEOMETRIC)
-        {
-            if (pdev->pen_width > 1) break;  /* not supported yet */
-            pdev->pen_lines = dashed_pen_lines;
-            pdev->pen_pattern = dash_patterns_geometric[pdev->pen_style - 1];
-            pdev->defer &= ~DEFER_PEN;
-            break;
-        }
-        if (pdev->pen_width == 1)  /* wide cosmetic pens are not dashed */
-        {
-            pdev->pen_lines = dashed_pen_lines;
-            pdev->pen_pattern = dash_patterns_cosmetic[pdev->pen_style - 1];
-            pdev->defer &= ~DEFER_PEN;
-            break;
-        }
-        /* fall through */
-    case PS_SOLID:
-    case PS_INSIDEFRAME:
-        if(pdev->pen_width == 1)
-            pdev->pen_lines = solid_pen_lines;
-        else
-            pdev->pen_lines = wide_pen_lines;
-        pdev->defer &= ~DEFER_PEN;
-        break;
-
-    case PS_NULL:
-        pdev->pen_width = 0;
-        pdev->pen_lines = null_pen_lines;
-        pdev->defer &= ~DEFER_PEN;
-        break;
-
-    case PS_ALTERNATE:
-        pdev->pen_lines = dashed_pen_lines;
-        pdev->pen_pattern = dash_patterns_geometric[PS_DOT - 1];
-        pdev->defer &= ~DEFER_PEN;
-        break;
-
-    case PS_USERSTYLE:
-        if (pdev->pen_width > 1) break;  /* not supported yet */
-        pdev->pen_lines = dashed_pen_lines;
-        set_dash_pattern( &pdev->pen_pattern, elp->elpNumEntries, elp->elpStyleEntry );
-        if (!(logpen.lopnStyle & PS_GEOMETRIC)) scale_dash_pattern( &pdev->pen_pattern, 3 );
-        pdev->defer &= ~DEFER_PEN;
-        break;
-
-    default:
-        break;
-    }
-
-    pdev->pen_uses_region = (logpen.lopnStyle & PS_GEOMETRIC || pdev->pen_width > 1);
-    pdev->pen_is_ext = (elp != NULL);
-    HeapFree( GetProcessHeap(), 0, elp );
-
-    return next->funcs->pSelectPen( next, hpen, pattern );
-}
-
-/***********************************************************************
  *           dibdrv_SetDCPenColor
  */
 COLORREF dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
@@ -1643,7 +1537,7 @@ COLORREF dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
 
     if (GetCurrentObject(dev->hdc, OBJ_PEN) == GetStockObject( DC_PEN ))
-        pdev->pen_colorref = color;
+        pdev->pen_brush.colorref = color;
 
     return next->funcs->pSetDCPenColor( next, color );
 }
@@ -1929,6 +1823,31 @@ static BOOL null_brush(dibdrv_physdev *pdev, dib_brush *brush, dib_info *dib,
     return TRUE;
 }
 
+static void select_brush( dib_brush *brush, const LOGBRUSH *logbrush, const struct brush_pattern *pattern )
+{
+    free_pattern_brush( brush );
+
+    if (pattern)
+    {
+        brush->style   = BS_DIBPATTERN;
+        brush->pattern = *pattern;  /* brush is actually selected only when it's used */
+        brush->rects   = pattern_brush;
+    }
+    else
+    {
+        brush->style    = logbrush->lbStyle;
+        brush->colorref = logbrush->lbColor;
+        brush->hatch    = logbrush->lbHatch;
+
+        switch (logbrush->lbStyle)
+        {
+        case BS_SOLID:   brush->rects = solid_brush; break;
+        case BS_NULL:    brush->rects = null_brush; break;
+        case BS_HATCHED: brush->rects = pattern_brush; break;
+        }
+    }
+}
+
 /***********************************************************************
  *           dibdrv_SelectBrush
  */
@@ -1936,53 +1855,127 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_patter
 {
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectBrush );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
-    dib_brush *brush = &pdev->brush;
     LOGBRUSH logbrush;
 
     TRACE("(%p, %p)\n", dev, hbrush);
-
-    free_pattern_brush( brush );
-
-    if (pattern)  /* pattern brush */
-    {
-        brush->rects = pattern_brush;
-        brush->style = BS_DIBPATTERN;
-        brush->pattern = *pattern;
-        /* brush is actually selected only when it's used */
-
-        return next->funcs->pSelectBrush( next, hbrush, pattern );
-    }
 
     GetObjectW( hbrush, sizeof(logbrush), &logbrush );
 
     if (hbrush == GetStockObject( DC_BRUSH ))
         logbrush.lbColor = GetDCBrushColor( dev->hdc );
 
-    brush->style = logbrush.lbStyle;
-
-    switch(logbrush.lbStyle)
-    {
-    case BS_SOLID:
-        brush->colorref = logbrush.lbColor;
-        brush->rects = solid_brush;
-        break;
-
-    case BS_NULL:
-        brush->rects = null_brush;
-        break;
-
-    case BS_HATCHED:
-        if(logbrush.lbHatch > HS_DIAGCROSS) return 0;
-        brush->hatch = logbrush.lbHatch;
-        brush->colorref = logbrush.lbColor;
-        brush->rects = pattern_brush;
-        break;
-
-    default:
-        return 0;
-    }
+    select_brush( &pdev->brush, &logbrush, pattern );
 
     return next->funcs->pSelectBrush( next, hbrush, pattern );
+}
+
+/***********************************************************************
+ *           dibdrv_SelectPen
+ */
+HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *pattern )
+{
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectPen );
+    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
+    LOGPEN logpen;
+    LOGBRUSH logbrush;
+    EXTLOGPEN *elp = NULL;
+
+    TRACE("(%p, %p)\n", dev, hpen);
+
+    if (!GetObjectW( hpen, sizeof(logpen), &logpen ))
+    {
+        /* must be an extended pen */
+        INT size = GetObjectW( hpen, 0, NULL );
+
+        if (!size) return 0;
+
+        elp = HeapAlloc( GetProcessHeap(), 0, size );
+
+        GetObjectW( hpen, size, elp );
+        logpen.lopnStyle = elp->elpPenStyle;
+        logpen.lopnWidth.x = elp->elpWidth;
+        /* cosmetic ext pens are always 1-pixel wide */
+        if (!(logpen.lopnStyle & PS_GEOMETRIC)) logpen.lopnWidth.x = 0;
+
+        logbrush.lbStyle = elp->elpBrushStyle;
+        logbrush.lbColor = elp->elpColor;
+        logbrush.lbHatch = elp->elpHatch;
+    }
+    else
+    {
+        logbrush.lbStyle = BS_SOLID;
+        logbrush.lbColor = logpen.lopnColor;
+        logbrush.lbHatch = 0;
+    }
+
+    pdev->pen_join   = logpen.lopnStyle & PS_JOIN_MASK;
+    pdev->pen_endcap = logpen.lopnStyle & PS_ENDCAP_MASK;
+    pdev->pen_width  = get_pen_device_width( pdev, logpen.lopnWidth.x );
+
+    if (hpen == GetStockObject( DC_PEN ))
+        logbrush.lbColor = GetDCPenColor( dev->hdc );
+
+    set_dash_pattern( &pdev->pen_pattern, 0, NULL );
+    select_brush( &pdev->pen_brush, &logbrush, pattern );
+
+    pdev->defer |= DEFER_PEN;
+
+    pdev->pen_style = logpen.lopnStyle & PS_STYLE_MASK;
+
+    switch (pdev->pen_style)
+    {
+    case PS_DASH:
+    case PS_DOT:
+    case PS_DASHDOT:
+    case PS_DASHDOTDOT:
+        if (logpen.lopnStyle & PS_GEOMETRIC)
+        {
+            if (pdev->pen_width > 1) break;  /* not supported yet */
+            pdev->pen_lines = dashed_pen_lines;
+            pdev->pen_pattern = dash_patterns_geometric[pdev->pen_style - 1];
+            pdev->defer &= ~DEFER_PEN;
+            break;
+        }
+        if (pdev->pen_width == 1)  /* wide cosmetic pens are not dashed */
+        {
+            pdev->pen_lines = dashed_pen_lines;
+            pdev->pen_pattern = dash_patterns_cosmetic[pdev->pen_style - 1];
+            pdev->defer &= ~DEFER_PEN;
+            break;
+        }
+        /* fall through */
+    case PS_SOLID:
+    case PS_INSIDEFRAME:
+        pdev->pen_lines = (pdev->pen_width == 1) ? solid_pen_lines : wide_pen_lines;
+        pdev->defer &= ~DEFER_PEN;
+        break;
+
+    case PS_NULL:
+        pdev->pen_width = 0;
+        pdev->pen_lines = null_pen_lines;
+        pdev->defer &= ~DEFER_PEN;
+        break;
+
+    case PS_ALTERNATE:
+        pdev->pen_lines = dashed_pen_lines;
+        pdev->pen_pattern = dash_patterns_geometric[PS_DOT - 1];
+        pdev->defer &= ~DEFER_PEN;
+        break;
+
+    case PS_USERSTYLE:
+        if (pdev->pen_width > 1) break;  /* not supported yet */
+        pdev->pen_lines = dashed_pen_lines;
+        set_dash_pattern( &pdev->pen_pattern, elp->elpNumEntries, elp->elpStyleEntry );
+        if (!(logpen.lopnStyle & PS_GEOMETRIC)) scale_dash_pattern( &pdev->pen_pattern, 3 );
+        pdev->defer &= ~DEFER_PEN;
+        break;
+    }
+
+    pdev->pen_uses_region = (logpen.lopnStyle & PS_GEOMETRIC || pdev->pen_width > 1);
+    pdev->pen_is_ext = (elp != NULL);
+    HeapFree( GetProcessHeap(), 0, elp );
+
+    return next->funcs->pSelectPen( next, hpen, pattern );
 }
 
 /***********************************************************************
@@ -2020,17 +2013,6 @@ BOOL brush_region( dibdrv_physdev *pdev, HRGN region )
 /* paint a region with the pen (note: the region can be modified) */
 BOOL pen_region( dibdrv_physdev *pdev, HRGN region )
 {
-    struct clipped_rects clipped_rects;
-    rop_mask color;
-    DWORD pen_color = get_pixel_color( pdev, pdev->pen_colorref, TRUE );
-
     if (pdev->clip) CombineRgn( region, region, pdev->clip, RGN_AND );
-
-    if (!get_clipped_rects( &pdev->dib, NULL, region, &clipped_rects )) return TRUE;
-
-    calc_rop_masks( GetROP2( pdev->dev.hdc ), pen_color, &color );
-    pdev->dib.funcs->solid_rects( &pdev->dib, clipped_rects.count, clipped_rects.rects,
-                                  color.and, color.xor );
-    free_clipped_rects( &clipped_rects );
-    return TRUE;
+    return brush_rect( pdev, &pdev->pen_brush, NULL, region, GetROP2( pdev->dev.hdc ));
 }

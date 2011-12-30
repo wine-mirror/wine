@@ -99,10 +99,10 @@ typedef struct dibdrv_physdev
     DWORD defer;
 
     /* pen */
-    COLORREF pen_colorref;
     DWORD pen_style, pen_endcap, pen_join;
     BOOL pen_uses_region, pen_is_ext;
     int pen_width;
+    dib_brush pen_brush;
     dash_pattern pen_pattern;
     dash_pos dash_pos;
     rop_mask dash_masks[2];

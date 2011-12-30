@@ -309,6 +309,7 @@ static BOOL dibdrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
     if (!pdev) return FALSE;
     clear_dib_info(&pdev->dib);
     clear_dib_info(&pdev->brush.dib);
+    clear_dib_info(&pdev->pen_brush.dib);
     push_dc_driver( dev, &pdev->dev, &dib_driver );
     return TRUE;
 }
@@ -321,6 +322,7 @@ static BOOL dibdrv_DeleteDC( PHYSDEV dev )
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     TRACE("(%p)\n", dev);
     free_pattern_brush( &pdev->brush );
+    free_pattern_brush( &pdev->pen_brush );
     HeapFree( GetProcessHeap(), 0, pdev );
     return TRUE;
 }
@@ -389,7 +391,11 @@ static UINT dibdrv_SetDIBColorTable( PHYSDEV dev, UINT pos, UINT count, const RG
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     TRACE("(%p, %d, %d, %p)\n", dev, pos, count, colors);
 
-    if (pdev->dib.color_table) pdev->brush.rop = -1;  /* force re-creating the brush bits */
+    if (pdev->dib.color_table)  /* force re-creating the brush bits */
+    {
+        pdev->brush.rop = -1;
+        pdev->pen_brush.rop = -1;
+    }
 
     return next->funcs->pSetDIBColorTable( next, pos, count, colors );
 }
