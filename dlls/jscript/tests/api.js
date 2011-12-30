@@ -1978,6 +1978,7 @@ var exception_array = {
     E_SEMICOLON:         { type: "SyntaxError",  number: -2146827284 },
     E_UNTERMINATED_STR:  { type: "SyntaxError",  number: -2146827273 },
     E_DISABLED_CC:       { type: "SyntaxError",  number: -2146827258 },
+    E_INVALID_BREAK:     { type: "SyntaxError",  number: -2146827269 },
 
     E_ILLEGAL_ASSIGN:  { type: "ReferenceError", number: -2146823280 },
 
@@ -2084,6 +2085,7 @@ testSyntaxError("*", "E_SYNTAX_ERROR");
 testSyntaxError("@_jscript_version", "E_DISABLED_CC");
 testSyntaxError("@a", "E_DISABLED_CC");
 testSyntaxError("/* @cc_on @*/ @_jscript_version", "E_DISABLED_CC");
+testSyntaxError("ok(false, 'unexpected execution'); break;", "E_INVALID_BREAK");
 
 // ReferenceError tests
 testException(function() {test = function() {}}, "E_ILLEGAL_ASSIGN");

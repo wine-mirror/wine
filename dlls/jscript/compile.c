@@ -1315,7 +1315,12 @@ static HRESULT compile_break_statement(compiler_ctx_t *ctx, branch_statement_t *
             break;
     }
 
-    if(!pop_ctx || stat->identifier) {
+    if(!pop_ctx) {
+        WARN("Break outside loop\n");
+        return JS_E_INVALID_BREAK;
+    }
+
+    if(stat->identifier) {
         stat->stat.eval = break_statement_eval;
         return compile_interp_fallback(ctx, &stat->stat);
     }

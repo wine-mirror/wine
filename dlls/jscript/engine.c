@@ -41,7 +41,6 @@ struct _return_type_t {
     enum{
         RT_NORMAL,
         RT_RETURN,
-        RT_BREAK,
         RT_CONTINUE
     } type;
     jsexcept_t ei;
@@ -674,16 +673,9 @@ HRESULT break_statement_eval(script_ctx_t *ctx, statement_t *_stat, return_type_
 {
     branch_statement_t *stat = (branch_statement_t*)_stat;
 
-    TRACE("\n");
-
-    if(stat->identifier) {
-        FIXME("indentifier not implemented\n");
-        return E_NOTIMPL;
-    }
-
-    rt->type = RT_BREAK;
-    V_VT(ret) = VT_EMPTY;
-    return S_OK;
+    assert(stat->identifier != NULL);
+    FIXME("identifier not implemented\n");
+    return E_NOTIMPL;
 }
 
 /* ECMA-262 3rd Edition    12.9 */
@@ -2755,8 +2747,11 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
     rt.type = RT_NORMAL;
 
     if(source->statement) {
-        if(source->instr_off == -1)
+        if(source->instr_off == -1) {
             hres = compile_subscript_stat(ctx->parser, source->statement, &source->instr_off);
+            if(FAILED(hres) && is_jscript_error(hres))
+                hres = throw_syntax_error(script, &rt.ei, hres, NULL);
+        }
         if(SUCCEEDED(hres))
             hres = enter_bytecode(script, source->instr_off, &rt, &val);
     }

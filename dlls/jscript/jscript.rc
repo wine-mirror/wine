@@ -35,6 +35,7 @@ STRINGTABLE
     IDS_LBRACKET            "Expected '('"
     IDS_RBRACKET            "Expected ')'"
     IDS_UNTERMINATED_STR    "Unterminated string constant"
+    IDS_INVALID_BREAK       "Can't have 'break' outside of loop"
     IDS_DISABLED_CC         "Conditional compilation is turned off"
     IDS_NOT_FUNC            "Function expected"
     IDS_NOT_DATE            "'[object]' is not a date object"
