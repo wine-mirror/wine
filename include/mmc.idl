@@ -20,6 +20,12 @@
 import "basetsd.h";
 import "oaidl.idl";
 
+#ifndef __WIDL__
+#define threading(model)
+#define progid(str)
+#define vi_progid(str)
+#endif
+
 [
     uuid(A8D2C5FE-CDCB-4B9D-BDE5-A27343FF54BC),
 ]
@@ -38,8 +44,11 @@ library MMCVersionLib
    importlib("stdole2.tlb");
 
    [
-      helpstring("MMCVersionInfo coclass"),
-      uuid(D6FEDB1D-CF21-4BD9-AF3B-C5468E9C6684)
+      helpstring("MMCVersionInfo 1.0 Object"),
+      uuid(D6FEDB1D-CF21-4BD9-AF3B-C5468E9C6684),
+      threading(apartment),
+      progid("NODEMGR.MMCVersionInfo.1"),
+      vi_progid("NODEMGR.MMCVersionInfo")
    ]
    coclass MMCVersionInfo
    {
