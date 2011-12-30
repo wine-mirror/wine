@@ -1592,7 +1592,9 @@ interface ID3D10Multithread : IUnknown
         BOOL GetMultithreadProtected();
 }
 
+cpp_quote("#ifndef D3D10_IGNORE_SDK_LAYERS")
+cpp_quote("/* FIXME: # include <d3d10sdklayers.h> */")
+cpp_quote("#endif")
 cpp_quote("#include \"d3d10misc.h\"")
 cpp_quote("#include \"d3d10shader.h\"")
 cpp_quote("#include \"d3d10effect.h\"")
-/* TODO: Include "d310sdklayers.h" as soon as it exists */

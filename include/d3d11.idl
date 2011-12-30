@@ -21,6 +21,16 @@ import "ocidl.idl";
 import "dxgi.idl";
 import "d3dcommon.idl";
 
+cpp_quote("#include <d3d10_1.h>")
+cpp_quote("#ifndef D3D11_IGNORE_SDK_LAYERS")
+cpp_quote("/* FIXME: # include <d3d11sdklayers.h> */")
+cpp_quote("#endif")
+cpp_quote("#include <d3d10misc.h>")
+cpp_quote("#include <d3d10shader.h>")
+cpp_quote("#include <d3d10effect.h>")
+cpp_quote("#include <d3d10_1shader.h>")
+
+
 typedef D3D_SRV_DIMENSION D3D11_SRV_DIMENSION;
 
 typedef D3D_PRIMITIVE D3D11_PRIMITIVE;
