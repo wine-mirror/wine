@@ -223,7 +223,6 @@ static inline void scope_addref(scope_chain_t *scope)
     scope->ref++;
 }
 
-typedef struct _return_type_t return_type_t;
 typedef struct _except_frame_t except_frame_t;
 
 struct _exec_ctx_t {
@@ -242,7 +241,6 @@ struct _exec_ctx_t {
 
     unsigned ip;
     jsexcept_t *ei;
-    return_type_t *rt; /* FIXME */
 };
 
 static inline void exec_addref(exec_ctx_t *ctx)

@@ -37,10 +37,6 @@ static const WCHAR stringW[] = {'s','t','r','i','n','g',0};
 static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
 static const WCHAR unknownW[] = {'u','n','k','n','o','w','n',0};
 
-struct _return_type_t {
-    jsexcept_t ei;
-};
-
 struct _except_frame_t {
     unsigned stack_top;
     scope_chain_t *scope;
@@ -718,7 +714,7 @@ static HRESULT interp_throw(exec_ctx_t *ctx)
 {
     TRACE("\n");
 
-    ctx->rt->ei.var = *stack_pop(ctx);
+    ctx->ei->var = *stack_pop(ctx);
     return DISP_E_EXCEPTION;
 }
 
@@ -807,7 +803,7 @@ static HRESULT interp_end_finally(exec_ctx_t *ctx)
 
         VariantClear(v);
         stack_popn(ctx, 1);
-        ctx->rt->ei.var = *stack_pop(ctx);
+        ctx->ei->var = *stack_pop(ctx);
         return DISP_E_EXCEPTION;
     }
 
@@ -2471,8 +2467,8 @@ static HRESULT unwind_exception(exec_ctx_t *ctx)
 
     ctx->ip = except_frame->catch_off;
 
-    except_val = ctx->rt->ei.var;
-    memset(&ctx->rt->ei, 0, sizeof(ctx->rt->ei));
+    except_val = ctx->ei->var;
+    memset(ctx->ei, 0, sizeof(*ctx->ei));
 
     ident = except_frame->ident;
     heap_free(except_frame);
@@ -2482,7 +2478,7 @@ static HRESULT unwind_exception(exec_ctx_t *ctx)
 
         hres = create_dispex(ctx->parser->script, NULL, NULL, &scope_obj);
         if(SUCCEEDED(hres)) {
-            hres = jsdisp_propput_name(scope_obj, ident, &except_val, &ctx->rt->ei, NULL/*FIXME*/);
+            hres = jsdisp_propput_name(scope_obj, ident, &except_val, ctx->ei, NULL/*FIXME*/);
             if(FAILED(hres))
                 jsdisp_release(scope_obj);
         }
@@ -2510,28 +2506,25 @@ static HRESULT unwind_exception(exec_ctx_t *ctx)
     return hres;
 }
 
-static HRESULT enter_bytecode(script_ctx_t *ctx, unsigned ip, return_type_t *rt, VARIANT *ret)
+static HRESULT enter_bytecode(script_ctx_t *ctx, unsigned ip, jsexcept_t *ei, VARIANT *ret)
 {
     exec_ctx_t *exec_ctx = ctx->exec_ctx;
     except_frame_t *prev_except_frame;
     unsigned prev_ip, prev_top;
     scope_chain_t *prev_scope;
-    return_type_t *prev_rt;
     jsexcept_t *prev_ei;
     jsop_t op;
     HRESULT hres = S_OK;
 
     TRACE("\n");
 
-    prev_rt = exec_ctx->rt;
     prev_top = exec_ctx->top;
     prev_scope = exec_ctx->scope_chain;
     prev_except_frame = exec_ctx->except_frame;
     prev_ip = exec_ctx->ip;
     prev_ei = exec_ctx->ei;
     exec_ctx->ip = ip;
-    exec_ctx->rt = rt;
-    exec_ctx->ei = &rt->ei;
+    exec_ctx->ei = ei;
     exec_ctx->except_frame = NULL;
 
     while(exec_ctx->ip != -1) {
@@ -2551,7 +2544,6 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, unsigned ip, return_type_t *rt,
         }
     }
 
-    exec_ctx->rt = prev_rt;
     exec_ctx->ip = prev_ip;
     exec_ctx->ei = prev_ei;
     exec_ctx->except_frame = prev_except_frame;
@@ -2582,7 +2574,6 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
     var_list_t *var;
     VARIANT val;
     exec_ctx_t *prev_ctx;
-    return_type_t rt;
     HRESULT hres = S_OK;
 
     for(func = source->functions; func; func = func->next) {
@@ -2622,31 +2613,29 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
     prev_parser = ctx->parser;
     ctx->parser = parser;
 
-    V_VT(&val) = VT_EMPTY;
-    memset(&rt, 0, sizeof(rt));
-
     if(source->statement) {
         if(source->instr_off == -1) {
             hres = compile_subscript_stat(ctx->parser, source->statement, from_eval, &source->instr_off);
             if(FAILED(hres) && is_jscript_error(hres))
-                hres = throw_syntax_error(script, &rt.ei, hres, NULL);
+                hres = throw_syntax_error(script, ei, hres, NULL);
         }
         if(SUCCEEDED(hres))
-            hres = enter_bytecode(script, source->instr_off, &rt, &val);
+            hres = enter_bytecode(script, source->instr_off, ei, &val);
+    }else {
+        V_VT(&val) = VT_EMPTY;
     }
 
     script->exec_ctx = prev_ctx;
     ctx->parser = prev_parser;
 
-    *ei = rt.ei;
     if(FAILED(hres)) {
         VariantClear(&val);
         return hres;
     }
 
-    if(!retv)
-        VariantClear(&val);
     if(retv)
         *retv = val;
+    else
+        VariantClear(&val);
     return S_OK;
 }
