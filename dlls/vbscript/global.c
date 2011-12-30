@@ -85,6 +85,26 @@ static HRESULT return_short(VARIANT *res, short val)
     return S_OK;
 }
 
+static HRESULT return_int(VARIANT *res, int val)
+{
+    if((short)val == val)
+        return return_short(res, val);
+
+    if(res) {
+        V_VT(res) = VT_I4;
+        V_I4(res) = val;
+    }
+
+    return S_OK;
+}
+
+static inline HRESULT return_null(VARIANT *res)
+{
+    if(res)
+        V_VT(res) = VT_NULL;
+    return S_OK;
+}
+
 static IUnknown *create_object(script_ctx_t *ctx, const WCHAR *progid)
 {
     IInternetHostSecurityManager *secmgr = NULL;
@@ -511,10 +531,78 @@ static HRESULT Global_String(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VA
     return E_NOTIMPL;
 }
 
-static HRESULT Global_InStr(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_InStr(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT *startv, *str1v, *str2v;
+    BSTR str1, str2;
+    int start, ret;
+
+    TRACE("\n");
+
+    switch(args_cnt) {
+    case 2:
+        startv = NULL;
+        str1v = args+1;
+        str2v = args;
+        break;
+    case 3:
+        startv = args+2;
+        str1v = args+1;
+        str2v = args;
+        break;
+    case 4:
+        FIXME("unsupported compare argument %s\n", debugstr_variant(args));
+        return E_NOTIMPL;
+    default:
+        assert(0);
+    }
+
+    if(startv) {
+        /* FIXME: Move to helper */
+        switch(V_VT(startv)) {
+        case VT_I2:
+            start = V_I2(startv);
+            break;
+        case VT_I4:
+            start = V_I4(startv);
+            break;
+        default:
+            FIXME("unsupported start %s\n", debugstr_variant(startv));
+            return E_NOTIMPL;
+        }
+        if(--start < 0) {
+            FIXME("start %d\n", start);
+            return E_FAIL;
+        }
+    }else {
+        start = 0;
+    }
+
+    if(V_VT(str1v) == VT_NULL || V_VT(str2v) == VT_NULL)
+        return return_null(res);
+
+    if(V_VT(str1v) != VT_BSTR) {
+        FIXME("Unsupported str1 type %s\n", debugstr_variant(str1v));
+        return E_NOTIMPL;
+    }
+    str1 = V_BSTR(str1v);
+
+    if(V_VT(str2v) != VT_BSTR) {
+        FIXME("Unsupported str2 type %s\n", debugstr_variant(str2v));
+        return E_NOTIMPL;
+    }
+    str2 = V_BSTR(str2v);
+
+    if(start < SysStringLen(str1)) {
+        WCHAR *ptr;
+
+        ptr = strstrW(str1+start, str2);
+        ret = ptr ? ptr-str1+1 : 0;
+    }else {
+        ret = 0;
+    }
+
+    return return_int(res, ret);
 }
 
 static HRESULT Global_InStrB(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
@@ -1532,7 +1620,7 @@ static const builtin_prop_t global_props[] = {
     {DISPID_GLOBAL_TRIM,                      Global_Trim, 0, 1},
     {DISPID_GLOBAL_SPACE,                     Global_Space, 0, 1},
     {DISPID_GLOBAL_STRING,                    Global_String, 0, 0, 2},
-    {DISPID_GLOBAL_INSTR,                     Global_InStr, 0, 3, 4},
+    {DISPID_GLOBAL_INSTR,                     Global_InStr, 0, 2, 4},
     {DISPID_GLOBAL_INSTRB,                    Global_InStrB, 0, 3, 4},
     {DISPID_GLOBAL_ASCB,                      Global_AscB, 0, 1},
     {DISPID_GLOBAL_CHRB,                      Global_ChrB, 0, 1},
