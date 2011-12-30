@@ -2079,7 +2079,7 @@ basic_string_char* __thiscall basic_string_char_replace_iter_bstr(basic_string_c
 {
     String_iterator_char begin = { this, basic_string_char_ptr(this) };
     return basic_string_char_replace(this, MSVCP_basic_string_char_Pdif(beg, begin),
-            MSVCP_basic_string_char_Pdif(end, begin), str);
+            MSVCP_basic_string_char_Pdif(end, beg), str);
 }
 
 /* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0ID@Z */
@@ -2090,7 +2090,7 @@ basic_string_char* __thiscall basic_string_char_replace_iter_ch(basic_string_cha
 {
     String_iterator_char begin = { this, basic_string_char_ptr(this) };
     return basic_string_char_replace_ch(this, MSVCP_basic_string_char_Pdif(beg, begin),
-            MSVCP_basic_string_char_Pdif(end, begin), count, ch);
+            MSVCP_basic_string_char_Pdif(end, beg), count, ch);
 }
 
 /* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0PBD1@Z */
@@ -2102,7 +2102,7 @@ basic_string_char* __thiscall basic_string_char_replace_iter_ptr_ptr(basic_strin
 {
     String_iterator_char begin = { this, basic_string_char_ptr(this) };
     return basic_string_char_replace_cstr_len(this, MSVCP_basic_string_char_Pdif(beg, begin),
-            MSVCP_basic_string_char_Pdif(end, begin), res_beg, res_end-res_beg);
+            MSVCP_basic_string_char_Pdif(end, beg), res_beg, res_end-res_beg);
 }
 
 /* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0PBD@Z */
@@ -2113,7 +2113,7 @@ basic_string_char* __thiscall basic_string_char_replace_iter_cstr(basic_string_c
 {
     String_iterator_char begin = { this, basic_string_char_ptr(this) };
     return basic_string_char_replace_cstr(this, MSVCP_basic_string_char_Pdif(beg, begin),
-            MSVCP_basic_string_char_Pdif(end, begin), str);
+            MSVCP_basic_string_char_Pdif(end, beg), str);
 }
 
 /* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_String_const_iterator@DU?$char_traits@D@std@@V?$allocator@D@2@@2@0PBDI@Z */
@@ -2124,7 +2124,7 @@ basic_string_char* __thiscall basic_string_char_replace_iter_cstr_len(basic_stri
 {
     String_iterator_char begin = { this, basic_string_char_ptr(this) };
     return basic_string_char_replace_cstr_len(this, MSVCP_basic_string_char_Pdif(beg, begin),
-            MSVCP_basic_string_char_Pdif(end, begin), str, len);
+            MSVCP_basic_string_char_Pdif(end, beg), str, len);
 }
 
 /* ?insert@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@IABV12@@Z */
@@ -4034,7 +4034,7 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_iter_iter(basic_string
 {
     String_iterator_wchar begin = { this, basic_string_wchar_ptr(this) };
     return basic_string_wchar_replace_cstr_len(this,
-            MSVCP_basic_string_wchar_Pdif(beg, begin), MSVCP_basic_string_wchar_Pdif(end, begin),
+            MSVCP_basic_string_wchar_Pdif(beg, begin), MSVCP_basic_string_wchar_Pdif(end, beg),
             res_beg.pos, MSVCP_basic_string_wchar_Pdif(res_end, res_beg));
 }
 
@@ -4048,7 +4048,7 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_iter_bstr(basic_string
 {
     String_iterator_wchar begin = { this, basic_string_wchar_ptr(this) };
     return basic_string_wchar_replace(this, MSVCP_basic_string_wchar_Pdif(beg, begin),
-            MSVCP_basic_string_wchar_Pdif(end, begin), str);
+            MSVCP_basic_string_wchar_Pdif(end, beg), str);
 }
 
 /* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0I_W@Z */
@@ -4061,7 +4061,7 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_iter_ch(basic_string_w
 {
     String_iterator_wchar begin = { this, basic_string_wchar_ptr(this) };
     return basic_string_wchar_replace_ch(this, MSVCP_basic_string_wchar_Pdif(beg, begin),
-            MSVCP_basic_string_wchar_Pdif(end, begin), count, ch);
+            MSVCP_basic_string_wchar_Pdif(end, beg), count, ch);
 }
 
 /* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0PB_W1@Z */
@@ -4075,7 +4075,7 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_iter_ptr_ptr(basic_str
 {
     String_iterator_wchar begin = { this, basic_string_wchar_ptr(this) };
     return basic_string_wchar_replace_cstr_len(this, MSVCP_basic_string_wchar_Pdif(beg, begin),
-            MSVCP_basic_string_wchar_Pdif(end, begin), res_beg, res_end-res_beg);
+            MSVCP_basic_string_wchar_Pdif(end, beg), res_beg, res_end-res_beg);
 }
 
 /* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0PB_W@Z */
@@ -4088,7 +4088,7 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_iter_cstr(basic_string
 {
     String_iterator_wchar begin = { this, basic_string_wchar_ptr(this) };
     return basic_string_wchar_replace_cstr(this, MSVCP_basic_string_wchar_Pdif(beg, begin),
-            MSVCP_basic_string_wchar_Pdif(end, begin), str);
+            MSVCP_basic_string_wchar_Pdif(end, beg), str);
 }
 
 /* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@0PB_WI@Z */
@@ -4101,7 +4101,7 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_iter_cstr_len(basic_st
 {
     String_iterator_wchar begin = { this, basic_string_wchar_ptr(this) };
     return basic_string_wchar_replace_cstr_len(this, MSVCP_basic_string_wchar_Pdif(beg, begin),
-            MSVCP_basic_string_wchar_Pdif(end, begin), str, len);
+            MSVCP_basic_string_wchar_Pdif(end, beg), str, len);
 }
 
 /* ?insert@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@IABV12@@Z */
