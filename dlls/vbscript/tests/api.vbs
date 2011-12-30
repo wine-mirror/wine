@@ -89,4 +89,39 @@ TestHex empty, "0"
 Call ok(getVT(hex(null)) = "VT_NULL", "getVT(hex(null)) = " & getVT(hex(null)))
 Call ok(getVT(hex(empty)) = "VT_BSTR", "getVT(hex(empty)) = " & getVT(hex(empty)))
 
+x = InStr(1, "abcd", "bc")
+Call ok(x = 2, "InStr returned " & x)
+
+x = InStr("abcd", "bc")
+Call ok(x = 2, "InStr returned " & x)
+
+x = InStr("abc", "bc")
+Call ok(x = 2, "InStr returned " & x)
+
+x = InStr("abcbc", "bc")
+Call ok(x = 2, "InStr returned " & x)
+
+x = InStr("bcabc", "bc")
+Call ok(x = 1, "InStr returned " & x)
+
+x = InStr(3, "abcd", "bc")
+Call ok(x = 0, "InStr returned " & x)
+
+x = InStr("abcd", "bcx")
+Call ok(x = 0, "InStr returned " & x)
+
+x = InStr(5, "abcd", "bc")
+Call ok(x = 0, "InStr returned " & x)
+
+x = "abcd"
+x = InStr(x, "bc")
+Call ok(x = 2, "InStr returned " & x)
+
+x = InStr("abcd", null)
+Call ok(isNull(x), "InStr returned " & x)
+x = InStr(null, "abcd")
+Call ok(isNull(x), "InStr returned " & x)
+x = InStr(2, null, "abcd")
+Call ok(isNull(x), "InStr returned " & x)
+
 Call reportSuccess()
