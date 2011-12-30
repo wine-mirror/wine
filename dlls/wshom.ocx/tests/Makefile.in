@@ -4,4 +4,6 @@ IMPORTS   = ole32
 C_SRCS = \
 	wshom.c
 
+IDL_H_SRCS = wshom.idl
+
 @MAKE_TEST_RULES@

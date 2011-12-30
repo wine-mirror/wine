@@ -23,33 +23,60 @@
 #include <ole2.h>
 #include <dispex.h>
 
+#include "wshom.h"
 #include "wine/test.h"
 
-DEFINE_GUID(CLSID_WshShell, 0x72c24dd5, 0xd70a, 0x438b, 0x8a,0x42, 0x98,0x42,0x4b,0x88,0xaf,0xb8);
-
-DEFINE_GUID(IID_IWshShell3, 0x41904400, 0xbe18, 0x11d3, 0xa2,0x8b, 0x00,0x10,0x4b,0xd3,0x50,0x90);
+#define EXPECT_HR(hr,hr_exp) \
+    ok(hr == hr_exp, "got 0x%08x, expected 0x%08x\n", hr, hr_exp)
 
 static void test_wshshell(void)
 {
+    IWshShell3 *sh3;
     IDispatchEx *dispex;
+    IWshCollection *coll;
     IDispatch *disp;
     IUnknown *shell;
-    HRESULT hres;
+    IFolderCollection *folders;
+    ITypeInfo *ti;
+    HRESULT hr;
+    TYPEATTR *tattr;
 
-    hres = CoCreateInstance(&CLSID_WshShell, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+    hr = CoCreateInstance(&CLSID_WshShell, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IDispatch, (void**)&disp);
-    if(FAILED(hres)) {
-        win_skip("Could not create WshShell object: %08x\n", hres);
+    if(FAILED(hr)) {
+        win_skip("Could not create WshShell object: %08x\n", hr);
         return;
     }
 
-    hres = IDispatch_QueryInterface(disp, &IID_IWshShell3, (void**)&shell);
-    ok(hres == S_OK, "Could not get IWshShell3 iface: %08x\n", hres);
-
-    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
-    ok(hres == E_NOINTERFACE, "got %08x\n", hres);
-
+    hr = IDispatch_QueryInterface(disp, &IID_IWshShell3, (void**)&shell);
+    EXPECT_HR(hr, S_OK);
     IDispatch_Release(disp);
+
+    hr = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    EXPECT_HR(hr, E_NOINTERFACE);
+
+    hr = IDispatch_QueryInterface(shell, &IID_IWshShell3, (void**)&sh3);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IWshShell3_get_SpecialFolders(sh3, &coll);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IWshCollection_QueryInterface(coll, &IID_IFolderCollection, (void**)&folders);
+    EXPECT_HR(hr, E_NOINTERFACE);
+
+    hr = IWshCollection_QueryInterface(coll, &IID_IDispatch, (void**)&disp);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IDispatch_GetTypeInfo(disp, 0, 0, &ti);
+    EXPECT_HR(hr, S_OK);
+
+    hr = ITypeInfo_GetTypeAttr(ti, &tattr);
+    EXPECT_HR(hr, S_OK);
+    ok(IsEqualIID(&tattr->guid, &IID_IWshCollection), "got \n");
+    ITypeInfo_ReleaseTypeAttr(ti, tattr);
+
+    IWshShell3_Release(sh3);
+
     IUnknown_Release(shell);
 }
 

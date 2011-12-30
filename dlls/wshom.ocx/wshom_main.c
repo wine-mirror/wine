@@ -33,7 +33,8 @@ static ITypeInfo *typeinfos[LAST_tid];
 
 static REFIID tid_ids[] = {
     &IID_NULL,
-    &IID_IWshShell3
+    &IID_IWshShell3,
+    &IID_IWshCollection
 };
 
 static HRESULT load_typelib(void)

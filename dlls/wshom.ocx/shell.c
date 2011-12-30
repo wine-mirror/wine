@@ -25,16 +25,27 @@ WINE_DEFAULT_DEBUG_CHANNEL(wshom);
 
 static IWshShell3 WshShell3;
 
-static HRESULT WINAPI WshShell3_QueryInterface(IWshShell3 *iface, REFIID riid, void **ppv)
+typedef struct
 {
-    if(IsEqualGUID(riid, &IID_IUnknown)) {
-        TRACE("(IID_IUnknown %p)\n", ppv);
-        *ppv = iface;
-    }else if(IsEqualGUID(riid, &IID_IDispatch)) {
-        TRACE("(IID_IDispatch %p)\n", ppv);
-        *ppv = iface;
-    }else if(IsEqualGUID(riid, &IID_IWshShell3)) {
-        TRACE("(IID_IWshShell3 %p)\n", ppv);
+    IWshCollection IWshCollection_iface;
+    LONG ref;
+} WshCollection;
+
+static inline WshCollection *impl_from_IWshCollection( IWshCollection *iface )
+{
+    return CONTAINING_RECORD(iface, WshCollection, IWshCollection_iface);
+}
+
+static HRESULT WINAPI WshCollection_QueryInterface(IWshCollection *iface, REFIID riid, void **ppv)
+{
+    WshCollection *This = impl_from_IWshCollection(iface);
+
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
+
+    if (IsEqualGUID(riid, &IID_IUnknown)  ||
+        IsEqualGUID(riid, &IID_IDispatch) ||
+        IsEqualGUID(riid, &IID_IWshCollection))
+    {
         *ppv = iface;
     }else {
         FIXME("Unknown iface %s\n", debugstr_guid(riid));
@@ -43,6 +54,153 @@ static HRESULT WINAPI WshShell3_QueryInterface(IWshShell3 *iface, REFIID riid, v
     }
 
     IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI WshCollection_AddRef(IWshCollection *iface)
+{
+    WshCollection *This = impl_from_IWshCollection(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p) ref = %d\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI WshCollection_Release(IWshCollection *iface)
+{
+    WshCollection *This = impl_from_IWshCollection(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+    TRACE("(%p) ref = %d\n", This, ref);
+    return ref;
+}
+
+static HRESULT WINAPI WshCollection_GetTypeInfoCount(IWshCollection *iface, UINT *pctinfo)
+{
+    WshCollection *This = impl_from_IWshCollection(iface);
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+    *pctinfo = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI WshCollection_GetTypeInfo(IWshCollection *iface, UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
+{
+    WshCollection *This = impl_from_IWshCollection(iface);
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    return get_typeinfo(IWshCollection_tid, ppTInfo);
+}
+
+static HRESULT WINAPI WshCollection_GetIDsOfNames(IWshCollection *iface, REFIID riid, LPOLESTR *rgszNames,
+        UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    WshCollection *This = impl_from_IWshCollection(iface);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+
+    hr = get_typeinfo(IWshCollection_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI WshCollection_Invoke(IWshCollection *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
+        WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    WshCollection *This = impl_from_IWshCollection(iface);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+          lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo(IWshCollection_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, &This->IWshCollection_iface, dispIdMember, wFlags,
+                pDispParams, pVarResult, pExcepInfo, puArgErr);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI WshCollection_Item(IWshCollection *iface, VARIANT *index, VARIANT *value)
+{
+    WshCollection *This = impl_from_IWshCollection(iface);
+    FIXME("(%p)->(%p %p): stub\n", This, index, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WshCollection_Count(IWshCollection *iface, LONG *count)
+{
+    WshCollection *This = impl_from_IWshCollection(iface);
+    FIXME("(%p)->(%p): stub\n", This, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WshCollection_get_length(IWshCollection *iface, LONG *count)
+{
+    WshCollection *This = impl_from_IWshCollection(iface);
+    FIXME("(%p)->(%p): stub\n", This, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WshCollection__NewEnum(IWshCollection *iface, IUnknown *Enum)
+{
+    WshCollection *This = impl_from_IWshCollection(iface);
+    FIXME("(%p)->(%p): stub\n", This, Enum);
+    return E_NOTIMPL;
+}
+
+static const IWshCollectionVtbl WshCollectionVtbl = {
+    WshCollection_QueryInterface,
+    WshCollection_AddRef,
+    WshCollection_Release,
+    WshCollection_GetTypeInfoCount,
+    WshCollection_GetTypeInfo,
+    WshCollection_GetIDsOfNames,
+    WshCollection_Invoke,
+    WshCollection_Item,
+    WshCollection_Count,
+    WshCollection_get_length,
+    WshCollection__NewEnum
+};
+
+static HRESULT WshCollection_Create(IWshCollection **collection)
+{
+    WshCollection *This;
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    if (!This) return E_OUTOFMEMORY;
+
+    This->IWshCollection_iface.lpVtbl = &WshCollectionVtbl;
+    This->ref = 1;
+
+    *collection = &This->IWshCollection_iface;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI WshShell3_QueryInterface(IWshShell3 *iface, REFIID riid, void **ppv)
+{
+    TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
+
+    if(IsEqualGUID(riid, &IID_IUnknown)   ||
+       IsEqualGUID(riid, &IID_IDispatch) ||
+       IsEqualGUID(riid, &IID_IWshShell3))
+    {
+        *ppv = iface;
+    }else {
+        FIXME("Unknown iface %s\n", debugstr_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IWshShell3_AddRef(iface);
     return S_OK;
 }
 
@@ -109,10 +267,10 @@ static HRESULT WINAPI WshShell3_Invoke(IWshShell3 *iface, DISPID dispIdMember, R
     return hr;
 }
 
-static HRESULT WINAPI WshShell3_get_SpecialFolders(IWshShell3 *iface, IWshCollection **out_Folders)
+static HRESULT WINAPI WshShell3_get_SpecialFolders(IWshShell3 *iface, IWshCollection **folders)
 {
-    FIXME("(%p): stub\n", out_Folders);
-    return E_NOTIMPL;
+    TRACE("(%p)\n", folders);
+    return WshCollection_Create(folders);
 }
 
 static HRESULT WINAPI WshShell3_get_Environment(IWshShell3 *iface, VARIANT *Type, IWshEnvironment **out_Env)
