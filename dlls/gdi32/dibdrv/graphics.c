@@ -527,9 +527,9 @@ BOOL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD 
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pPolyPolygon );
     DWORD total, i, pos;
-    BOOL ret = FALSE;
+    BOOL ret = TRUE;
     POINT *points;
-    HRGN outline = 0, interior;
+    HRGN outline = 0, interior = 0;
 
     if (defer_pen( pdev )) return next->funcs->pPolyPolygon( next, pt, counts, polygons );
 
@@ -544,15 +544,22 @@ BOOL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD 
     memcpy( points, pt, total * sizeof(*pt) );
     LPtoDP( dev->hdc, points, total );
 
-    if (!(interior = CreatePolyPolygonRgn( points, counts, polygons, GetPolyFillMode( dev->hdc ))))
+    if (pdev->brush.style != BS_NULL &&
+        !(interior = CreatePolyPolygonRgn( points, counts, polygons, GetPolyFillMode( dev->hdc ))))
     {
         HeapFree( GetProcessHeap(), 0, points );
         return FALSE;
     }
 
+    if (pdev->pen_uses_region) outline = CreateRectRgn( 0, 0, 0, 0 );
+
     /* if not using a region, paint the interior first so the outline can overlap it */
-    if (!pdev->pen_uses_region || !(outline = CreateRectRgn( 0, 0, 0, 0 )))
+    if (interior && !outline)
+    {
         ret = brush_region( pdev, interior );
+        DeleteObject( interior );
+        interior = 0;
+    }
 
     for (i = pos = 0; i < polygons; i++)
     {
@@ -561,14 +568,17 @@ BOOL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD 
         pos += counts[i];
     }
 
-    if (outline)
+    if (interior)
     {
         CombineRgn( interior, interior, outline, RGN_DIFF );
-        ret = pen_region( pdev, outline ) && brush_region( pdev, interior );
+        ret = brush_region( pdev, interior );
+        DeleteObject( interior );
+    }
+    if (outline)
+    {
+        if (ret) ret = pen_region( pdev, outline );
         DeleteObject( outline );
     }
-
-    DeleteObject( interior );
     HeapFree( GetProcessHeap(), 0, points );
     return ret;
 }
@@ -687,12 +697,16 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 
     if (outline)
     {
-        HRGN interior = CreateRectRgnIndirect( &rect );
+        if (pdev->brush.style != BS_NULL)
+        {
+            HRGN interior = CreateRectRgnIndirect( &rect );
 
-        CombineRgn( interior, interior, outline, RGN_DIFF );
-        ret = pen_region( pdev, outline ) && brush_region( pdev, interior );
+            CombineRgn( interior, interior, outline, RGN_DIFF );
+            brush_region( pdev, interior );
+            DeleteObject( interior );
+        }
+        ret = pen_region( pdev, outline );
         DeleteObject( outline );
-        DeleteObject( interior );
     }
     else
     {
