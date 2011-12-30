@@ -128,7 +128,7 @@ LONG CoreAudio_MIDIInit(void)
         InitializeCriticalSection(&midiInLock);
         midiInLock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": midiInLock");
         MIDIInThreadPortName = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("MIDIInThreadPortName.%u"), getpid());
-        CreateThread(NULL, 0, MIDIIn_MessageThread, NULL, 0, NULL);
+        CloseHandle( CreateThread(NULL, 0, MIDIIn_MessageThread, NULL, 0, NULL));
 
         name = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("WineInputPort.%u"), getpid());
         MIDIInputPortCreate(wineMIDIClient, name, MIDIIn_ReadProc, NULL, &MIDIInPort);
