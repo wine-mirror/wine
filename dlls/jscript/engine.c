@@ -38,10 +38,6 @@ static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
 static const WCHAR unknownW[] = {'u','n','k','n','o','w','n',0};
 
 struct _return_type_t {
-    enum{
-        RT_NORMAL,
-        RT_RETURN
-    } type;
     jsexcept_t ei;
 };
 
@@ -2510,7 +2506,6 @@ static HRESULT unwind_exception(exec_ctx_t *ctx)
 
     ctx->ip = except_frame->catch_off;
 
-    assert(ctx->rt->type == RT_NORMAL);
     except_val = ctx->rt->ei.var;
     memset(&ctx->rt->ei, 0, sizeof(ctx->rt->ei));
 
@@ -2574,7 +2569,7 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, unsigned ip, return_type_t *rt,
     exec_ctx->ei = &rt->ei;
     exec_ctx->except_frame = NULL;
 
-    while(exec_ctx->ip != -1 && exec_ctx->rt->type == RT_NORMAL) {
+    while(exec_ctx->ip != -1) {
         op = exec_ctx->parser->code->instrs[exec_ctx->ip].op;
         hres = op_funcs[op](exec_ctx);
         if(FAILED(hres)) {
@@ -2596,11 +2591,9 @@ static HRESULT enter_bytecode(script_ctx_t *ctx, unsigned ip, return_type_t *rt,
     exec_ctx->ei = prev_ei;
     exec_ctx->except_frame = prev_except_frame;
 
-    if(FAILED(hres) || rt->type != RT_NORMAL) {
+    if(FAILED(hres)) {
         while(exec_ctx->scope_chain != prev_scope)
             scope_pop(&exec_ctx->scope_chain);
-    }
-    if(FAILED(hres)) {
         stack_popn(exec_ctx, exec_ctx->top-prev_top);
         return hres;
     }
@@ -2666,7 +2659,6 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
 
     V_VT(&val) = VT_EMPTY;
     memset(&rt, 0, sizeof(rt));
-    rt.type = RT_NORMAL;
 
     if(source->statement) {
         if(source->instr_off == -1) {
