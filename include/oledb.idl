@@ -72,5 +72,7 @@ typedef struct {
 #include "binres.idl"
 #include "crtrow.idl"
 
+cpp_quote("#include <accctrl.h>")
+
 cpp_quote("#include <poppack.h>")
 cpp_quote("")
