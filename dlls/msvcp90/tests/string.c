@@ -76,6 +76,7 @@ static int (__thiscall *p_basic_string_char_compare_substr_substr)(basic_string_
 static int (__thiscall *p_basic_string_char_compare_substr_cstr_len)(basic_string_char*, size_t, size_t, const char*, size_t);
 static size_t (__thiscall *p_basic_string_char_find_cstr_substr)(basic_string_char*, const char*, size_t, size_t);
 static size_t (__thiscall *p_basic_string_char_rfind_cstr_substr)(basic_string_char*, const char*, size_t, size_t);
+static basic_string_char* (__thiscall *p_basic_string_char_replace_cstr)(basic_string_char*, size_t, size_t, const char*);
 
 static size_t *p_basic_string_char_npos;
 
@@ -225,6 +226,8 @@ static BOOL init(void)
                 "?find@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K1@Z");
         SET(p_basic_string_char_rfind_cstr_substr,
                 "?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBA_KPEBD_K1@Z");
+        SET(p_basic_string_char_replace_cstr,
+                "?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAV12@_K0PEBD@Z");
         SET(p_basic_string_char_npos,
                 "?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2_KB");
 
@@ -289,6 +292,8 @@ static BOOL init(void)
                 "?find@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDII@Z");
         SET(p_basic_string_char_rfind_cstr_substr,
                 "?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDII@Z");
+        SET(p_basic_string_char_replace_cstr,
+                "?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@IIPBD@Z");
         SET(p_basic_string_char_npos,
                 "?npos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@2IB");
 
@@ -549,6 +554,54 @@ static void test_basic_string_char_rfind(void) {
     }
 }
 
+static void test_basic_string_char_replace(void) {
+    struct replace_char_test {
+        const char *str;
+        size_t off;
+        size_t len;
+        const char *replace;
+        const char *ret;
+    };
+
+    int i;
+    basic_string_char str;
+    basic_string_char *ret;
+    struct replace_char_test tests[] = {
+        { "", 0, 0,  "", "" },  /* empty string */
+        { "", 0, 10, "", "" },  /* empty string with invalid len */
+
+        { "ABCDEF", 0, 0, "",  "ABCDEF" },  /* replace with empty string */
+        { "ABCDEF", 0, 0, "-", "-ABCDEF"},  /* replace with 0 len */
+        { "ABCDEF", 0, 1, "-", "-BCDEF" },  /* replace 1 at beginning */
+        { "ABCDEF", 0, 3, "-", "-DEF" },    /* replace 3 at beginning */
+        { "ABCDEF", 0, 42, "-", "-" },      /* replace whole string with invalid long len */
+        { "ABCDEF", 0, *p_basic_string_char_npos, "-", "-" }, /* replace whole string with npos */
+
+        { "ABCDEF", 5, 0, "",   "ABCDEF" },  /* replace at end with empty string */
+        { "ABCDEF", 5, 0, "-",  "ABCDE-F"},  /* replace at end with 0 len */
+        { "ABCDEF", 5, 1, "-",  "ABCDE-" },  /* replace 1 at end */
+        { "ABCDEF", 5, 42, "-", "ABCDE-" },  /* replace end with invalid long len */
+        { "ABCDEF", 5, *p_basic_string_char_npos, "-", "ABCDE-" }, /* replace end with npos */
+
+        { "ABCDEF", 6, 0, "",   "ABCDEF" },   /* replace after end with empty string */
+        { "ABCDEF", 6, 0, "-",  "ABCDEF-"},   /* replace after end with 0 len */
+        { "ABCDEF", 6, 1, "-",  "ABCDEF-" },  /* replace 1 after end */
+        { "ABCDEF", 6, 42, "-", "ABCDEF-" },  /* replace after end with invalid long len */
+        { "ABCDEF", 6, *p_basic_string_char_npos, "-", "ABCDEF-" }, /* replace after end with npos */
+    };
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        call_func2(p_basic_string_char_ctor_cstr, &str, tests[i].str);
+
+        ret = call_func4(p_basic_string_char_replace_cstr, &str, tests[i].off, tests[i].len, tests[i].replace);
+        ok(ret == &str, "str = %p ret = %p\n", ret, &str);
+        ok(strcmp(tests[i].ret, (const char *) call_func1(p_basic_string_char_cstr, ret)) == 0, "str = %s ret = %s\n",
+                  tests[i].ret, (const char *) call_func1(p_basic_string_char_cstr, ret));
+
+        call_func1(p_basic_string_char_dtor, &str);
+    }
+}
+
 static void test_basic_string_wchar(void) {
     static const wchar_t test[] = { 't','e','s','t',0 };
 
@@ -661,6 +714,7 @@ START_TEST(string)
     test_basic_string_char_concatenate();
     test_basic_string_char_find();
     test_basic_string_char_rfind();
+    test_basic_string_char_replace();
     test_basic_string_wchar();
     test_basic_string_wchar_swap();
 

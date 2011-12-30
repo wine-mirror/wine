@@ -1949,7 +1949,7 @@ basic_string_char* __thiscall basic_string_char_replace_cstr_len(basic_string_ch
     if(this->size < off)
         MSVCP__String_base_Xran();
 
-    if(off+len > this->size)
+    if(len > this->size-off)
         len = this->size-off;
 
     if(MSVCP_basic_string_char_npos-str_len <= this->size-len)
@@ -2040,7 +2040,7 @@ basic_string_char* __thiscall basic_string_char_replace_ch(basic_string_char *th
     if(this->size < off)
         MSVCP__String_base_Xran();
 
-    if(off+len > this->size)
+    if(len > this->size-off)
         len = this->size-off;
 
     if(MSVCP_basic_string_char_npos-count <= this->size-len)
@@ -3901,7 +3901,7 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_cstr_len(basic_string_
     if(this->size < off)
         MSVCP__String_base_Xran();
 
-    if(off+len > this->size)
+    if(len > this->size-off)
         len = this->size-off;
 
     if(MSVCP_basic_string_wchar_npos-str_len <= this->size-len)
@@ -4000,7 +4000,7 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_ch(basic_string_wchar 
     if(this->size < off)
         MSVCP__String_base_Xran();
 
-    if(off+len > this->size)
+    if(len > this->size-off)
         len = this->size-off;
 
     if(MSVCP_basic_string_wchar_npos-count <= this->size-len)
