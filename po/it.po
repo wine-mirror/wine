@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-29 21:50+0100\n"
+"PO-Revision-Date: 2011-12-30 18:15+0100\n"
 "Last-Translator: Luca Bennati <lucak3@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Italian\n"
@@ -3534,11 +3534,11 @@ msgstr "Costante stringa non terminata"
 
 #: jscript.rc:38
 msgid "Can't have 'break' outside of loop"
-msgstr ""
+msgstr "Impossibile avere 'break' fuori dal ciclo"
 
 #: jscript.rc:39
 msgid "Can't have 'continue' outside of loop"
-msgstr ""
+msgstr "Impossibile avere 'continue' fuori dal ciclo"
 
 #: jscript.rc:40
 msgid "Conditional compilation is turned off"
@@ -12553,9 +12553,8 @@ msgstr ""
 "scelta) qualunque altra versione più recente."
 
 #: winecfg.rc:140
-#, fuzzy
 msgid "Windows registration information"
-msgstr " Informazioni di registrazione di Windows "
+msgstr "Informazioni di registrazione di Windows"
 
 #: winecfg.rc:141
 msgid "&Owner:"
@@ -12566,7 +12565,6 @@ msgid "Organi&zation:"
 msgstr "&Organizzazione:"
 
 #: winecfg.rc:151
-#, fuzzy
 msgid "Application settings"
 msgstr "Impostazioni delle applicazioni"
 
@@ -12594,9 +12592,8 @@ msgid "&Windows Version:"
 msgstr "Versione di Windows:"
 
 #: winecfg.rc:166
-#, fuzzy
 msgid "Window settings"
-msgstr " Impostazioni delle finestre "
+msgstr "Impostazioni delle finestre"
 
 #: winecfg.rc:167
 msgid "Automatically capture the &mouse in full-screen windows"
@@ -12619,9 +12616,8 @@ msgid "Desktop &size:"
 msgstr "Dimensione del desktop:"
 
 #: winecfg.rc:177
-#, fuzzy
 msgid "Direct3D"
-msgstr " Direct3D "
+msgstr "Direct3D"
 
 #: winecfg.rc:178
 msgid "&Vertex Shader Support: "
@@ -12632,18 +12628,16 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr "Permetti &Pixel Shader (se supportato dall'hardware)"
 
 #: winecfg.rc:182
-#, fuzzy
 msgid "Screen resolution"
-msgstr " &Risoluzione dello schermo "
+msgstr "Risoluzione dello schermo"
 
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Questo è un testo di esempio che usa il carattere Tahoma a 10 punti"
 
 #: winecfg.rc:193
-#, fuzzy
 msgid "DLL overrides"
-msgstr " Sostituzioni di DLL "
+msgstr "Sostituzioni di DLL"
 
 #: winecfg.rc:194
 msgid ""
@@ -12676,9 +12670,8 @@ msgid "Edit Override"
 msgstr "Modifica sostituzione"
 
 #: winecfg.rc:210
-#, fuzzy
 msgid "Load order"
-msgstr " Carica l'ordine "
+msgstr "Ordine di caricamento"
 
 #: winecfg.rc:211
 msgid "&Builtin (Wine)"
@@ -12705,9 +12698,8 @@ msgid "Select Drive Letter"
 msgstr "Seleziona la lettera dell'unità"
 
 #: winecfg.rc:234
-#, fuzzy
 msgid "Drive mappings"
-msgstr " Mappature delle unità "
+msgstr "Mappature delle unità"
 
 #: winecfg.rc:235
 msgid ""
@@ -12754,14 +12746,12 @@ msgid "Show &dot files"
 msgstr "Mostra file &dot"
 
 #: winecfg.rc:267
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " Diagnostica del driver "
+msgstr "Diagnostica del driver"
 
 #: winecfg.rc:269
-#, fuzzy
 msgid "Defaults"
-msgstr " Valori predefiniti "
+msgstr "Valori predefiniti"
 
 #: winecfg.rc:270
 msgid "Output device:"
@@ -12784,9 +12774,8 @@ msgid "&Test Sound"
 msgstr "&Test dell'audio"
 
 #: winecfg.rc:285
-#, fuzzy
 msgid "Appearance"
-msgstr " Aspetto "
+msgstr "Aspetto"
 
 #: winecfg.rc:286
 msgid "&Theme:"
@@ -12805,9 +12794,8 @@ msgid "C&olor:"
 msgstr "C&olore:"
 
 #: winecfg.rc:301
-#, fuzzy
 msgid "Folders"
-msgstr "Cartella"
+msgstr "Cartelle"
 
 #: winecfg.rc:304
 msgid "&Link to:"
