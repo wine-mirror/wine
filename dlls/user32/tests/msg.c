@@ -13490,6 +13490,105 @@ end:
     flush_sequence();
 }
 
+
+static const struct message WmSetFocus_1[] = {
+    { HCBT_SETFOCUS, hook }, /* child */
+    { HCBT_ACTIVATE, hook }, /* parent */
+    { WM_QUERYNEWPALETTE, sent|wparam|lparam|parent|optional, 0, 0 },
+    { WM_WINDOWPOSCHANGING, sent|parent, 0, SWP_NOSIZE|SWP_NOMOVE },
+    { WM_ACTIVATEAPP, sent|wparam|parent, 1 },
+    { WM_NCACTIVATE, sent|wparam|parent, 1 },
+    { WM_GETTEXT, sent|defwinproc|parent|optional },
+    { WM_GETTEXT, sent|defwinproc|parent|optional },
+    { WM_ACTIVATE, sent|wparam|parent, 1 },
+    { HCBT_SETFOCUS, hook }, /* parent */
+    { WM_SETFOCUS, sent|defwinproc|parent },
+    { WM_KILLFOCUS, sent|parent },
+    { WM_SETFOCUS, sent },
+    { 0 }
+};
+static const struct message WmSetFocus_2[] = {
+    { HCBT_SETFOCUS, hook }, /* parent */
+    { WM_KILLFOCUS, sent },
+    { WM_SETFOCUS, sent|parent },
+    { 0 }
+};
+static const struct message WmSetFocus_3[] = {
+    { HCBT_SETFOCUS, hook }, /* child */
+    { 0 }
+};
+static const struct message WmSetFocus_4[] = {
+    { 0 }
+};
+
+static void test_SetFocus(void)
+{
+    HWND parent, old_parent, child, old_focus;
+    MSG msg;
+
+    parent = CreateWindowEx(0, "TestParentClass", NULL, WS_OVERLAPPEDWINDOW,
+                            0, 0, 0, 0, 0, 0, 0, NULL);
+    ok(parent != 0, "failed to create parent window\n");
+    child = CreateWindowEx(0, "TestWindowClass", NULL, WS_CHILD,
+                           0, 0, 0, 0, parent, 0, 0, NULL);
+    ok(child != 0, "failed to create child window\n");
+
+    trace("parent %p, child %p\n", parent, child);
+
+    SetFocus(0);
+    SetActiveWindow(0);
+
+    flush_events();
+    flush_sequence();
+
+    ok(GetActiveWindow() == 0, "expected active 0, got %p\n", GetActiveWindow());
+    ok(GetFocus() == 0, "expected focus 0, got %p\n", GetFocus());
+
+    log_all_parent_messages++;
+
+    old_focus = SetFocus(child);
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    ok_sequence(WmSetFocus_1, "SetFocus on a child window", TRUE);
+    ok(old_focus == parent, "expected old focus %p, got %p\n", parent, old_focus);
+    ok(GetActiveWindow() == parent, "expected active %p, got %p\n", parent, GetActiveWindow());
+    ok(GetFocus() == child, "expected focus %p, got %p\n", child, GetFocus());
+
+    old_focus = SetFocus(parent);
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    ok_sequence(WmSetFocus_2, "SetFocus on a parent window", FALSE);
+    ok(old_focus == child, "expected old focus %p, got %p\n", child, old_focus);
+    ok(GetActiveWindow() == parent, "expected active %p, got %p\n", parent, GetActiveWindow());
+    ok(GetFocus() == parent, "expected focus %p, got %p\n", parent, GetFocus());
+
+    old_parent = SetParent(child, GetDesktopWindow());
+    ok(old_parent == parent, "expected old parent %p, got %p\n", parent, old_parent);
+
+    ok(GetActiveWindow() == parent, "expected active %p, got %p\n", parent, GetActiveWindow());
+    ok(GetFocus() == parent, "expected focus %p, got %p\n", parent, GetFocus());
+
+    flush_events();
+    flush_sequence();
+
+    old_focus = SetFocus(child);
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    ok_sequence(WmSetFocus_3, "SetFocus on a child window", TRUE);
+    ok(old_focus == 0, "expected old focus 0, got %p\n", old_focus);
+    ok(GetActiveWindow() == parent, "expected active %p, got %p\n", parent, GetActiveWindow());
+    ok(GetFocus() == parent, "expected focus %p, got %p\n", parent, GetFocus());
+
+    old_focus = SetActiveWindow(child);
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    ok_sequence(WmEmptySeq, "SetActiveWindow on a child window", FALSE);
+    ok(old_focus == parent, "expected old active %p, got %p\n", parent, old_focus);
+    ok(GetActiveWindow() == parent, "expected active %p, got %p\n", parent, GetActiveWindow());
+    ok(GetFocus() == parent, "expected focus %p, got %p\n", parent, GetFocus());
+
+    log_all_parent_messages--;
+
+    DestroyWindow(child);
+    DestroyWindow(parent);
+}
+
 START_TEST(msg)
 {
     char **test_argv;
@@ -13553,6 +13652,7 @@ START_TEST(msg)
     hEvent_hook = 0;
 #endif
 
+    test_SetFocus();
     test_SetParent();
     test_PostMessage();
     test_ShowWindow();
