@@ -1998,6 +1998,8 @@ static DWORD WINAPI CONSOLE_SendEventThread(void* pmt)
  */
 int     CONSOLE_HandleCtrlC(unsigned sig)
 {
+    HANDLE thread;
+
     /* FIXME: better test whether a console is attached to this process ??? */
     extern    unsigned CONSOLE_GetNumHistoryEntries(void);
     if (CONSOLE_GetNumHistoryEntries() == (unsigned)-1) return 0;
@@ -2014,7 +2016,11 @@ int     CONSOLE_HandleCtrlC(unsigned sig)
          *    console critical section, we need another execution environment where
          *    we can wait on this critical section 
          */
-        CreateThread(NULL, 0, CONSOLE_SendEventThread, (void*)CTRL_C_EVENT, 0, NULL);
+        thread = CreateThread(NULL, 0, CONSOLE_SendEventThread, (void*)CTRL_C_EVENT, 0, NULL);
+        if (thread == NULL)
+            return 0;
+
+        CloseHandle(thread);
     }
     return 1;
 }
