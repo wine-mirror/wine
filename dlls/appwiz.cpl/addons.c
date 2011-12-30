@@ -500,7 +500,7 @@ static INT_PTR CALLBACK installer_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
             ShowWindow(GetDlgItem(hwnd, ID_DWL_PROGRESS), SW_SHOW);
             EnableWindow(GetDlgItem(hwnd, ID_DWL_INSTALL), 0);
             EnableWindow(GetDlgItem(hwnd, IDCANCEL), 0); /* FIXME */
-            CreateThread(NULL, 0, download_proc, NULL, 0, NULL);
+            CloseHandle( CreateThread(NULL, 0, download_proc, NULL, 0, NULL));
             return FALSE;
         }
     }
