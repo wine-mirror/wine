@@ -343,7 +343,7 @@ PerformancePageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         GraphCtrl_SetPlotColor(&PerformancePageMemUsageHistoryGraph, 0, RGB(255, 255, 0)) ;
 		/*  Start our refresh thread */
 #ifdef RUN_PERF_PAGE
-        CreateThread(NULL, 0, PerformancePageRefreshThread, NULL, 0, NULL);
+        CloseHandle( CreateThread(NULL, 0, PerformancePageRefreshThread, NULL, 0, NULL));
 #endif
 
 		/* 

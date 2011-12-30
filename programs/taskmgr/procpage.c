@@ -483,7 +483,7 @@ ProcessPageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         OldProcessListWndProc = (WNDPROC)SetWindowLongPtrW(hProcessPageListCtrl, GWLP_WNDPROC, (LONG_PTR)ProcessListWndProc);
 
         /* Start our refresh thread */
-         CreateThread(NULL, 0, ProcessPageRefreshThread, NULL, 0, NULL);
+        CloseHandle( CreateThread(NULL, 0, ProcessPageRefreshThread, NULL, 0, NULL));
 
         return TRUE;
 

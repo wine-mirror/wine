@@ -891,7 +891,7 @@ ApplicationPageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         UpdateApplicationListControlViewSetting();
 
         /* Start our refresh thread */
-        CreateThread(NULL, 0, ApplicationPageRefreshThread, NULL, 0, NULL);
+        CloseHandle( CreateThread(NULL, 0, ApplicationPageRefreshThread, NULL, 0, NULL));
 
         return TRUE;
 
