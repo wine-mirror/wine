@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-29 21:39+0100\n"
+"PO-Revision-Date: 2011-12-30 10:22+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -12618,9 +12618,8 @@ msgstr ""
 "Licence, soit (à votre gré) toute version ultérieure."
 
 #: winecfg.rc:140
-#, fuzzy
 msgid "Windows registration information"
-msgstr "Informations d'enregistrement de Windows "
+msgstr "Informations d'enregistrement de Windows"
 
 #: winecfg.rc:141
 msgid "&Owner:"
@@ -12631,9 +12630,8 @@ msgid "Organi&zation:"
 msgstr "&Organisation:"
 
 #: winecfg.rc:151
-#, fuzzy
 msgid "Application settings"
-msgstr " Paramètres des applications "
+msgstr "Paramètres des applications"
 
 #: winecfg.rc:152
 msgid ""
@@ -12659,9 +12657,8 @@ msgid "&Windows Version:"
 msgstr "Version de &Windows :"
 
 #: winecfg.rc:166
-#, fuzzy
 msgid "Window settings"
-msgstr " Paramètres des fenêtres "
+msgstr "Paramètres des fenêtres"
 
 #: winecfg.rc:167
 msgid "Automatically capture the &mouse in full-screen windows"
@@ -12684,9 +12681,8 @@ msgid "Desktop &size:"
 msgstr "Taille du bureau:"
 
 #: winecfg.rc:177
-#, fuzzy
 msgid "Direct3D"
-msgstr " Direct3D "
+msgstr "Direct3D"
 
 #: winecfg.rc:178
 msgid "&Vertex Shader Support: "
@@ -12697,18 +12693,16 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr "Utiliser le Pixel Shader (si supporté par le matériel)"
 
 #: winecfg.rc:182
-#, fuzzy
 msgid "Screen resolution"
-msgstr " Résolution de l'écran "
+msgstr "Résolution de l'écran"
 
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Ceci est un exemple utilisant du Tahoma 10 points"
 
 #: winecfg.rc:193
-#, fuzzy
 msgid "DLL overrides"
-msgstr " Remplacement de DLL "
+msgstr "Remplacement de DLL"
 
 #: winecfg.rc:194
 msgid ""
@@ -12742,9 +12736,8 @@ msgid "Edit Override"
 msgstr "Éditer le remplacement"
 
 #: winecfg.rc:210
-#, fuzzy
 msgid "Load order"
-msgstr " Ordre de chargement "
+msgstr "Ordre de chargement"
 
 #: winecfg.rc:211
 msgid "&Builtin (Wine)"
@@ -12771,9 +12764,8 @@ msgid "Select Drive Letter"
 msgstr "Sélectionnez la lettre du lecteur"
 
 #: winecfg.rc:234
-#, fuzzy
 msgid "Drive mappings"
-msgstr " Assignation des lecteurs "
+msgstr "Assignation des lecteurs"
 
 #: winecfg.rc:235
 msgid ""
@@ -12820,39 +12812,36 @@ msgid "Show &dot files"
 msgstr "Montrer les fichiers cachés"
 
 #: winecfg.rc:267
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " Driver Diagnostics "
+msgstr "Diagnostic de pilotes"
 
 #: winecfg.rc:269
-#, fuzzy
 msgid "Defaults"
-msgstr " Defaults "
+msgstr "Valeurs par défaut"
 
 #: winecfg.rc:270
 msgid "Output device:"
-msgstr "Output device:"
+msgstr "Périphérique de sortie :"
 
 #: winecfg.rc:271
 msgid "Voice output device:"
-msgstr "Voice output device:"
+msgstr "Périphérique de sortie voix :"
 
 #: winecfg.rc:272
 msgid "Input device:"
-msgstr "Input device:"
+msgstr "Périphérique d'entrée :"
 
 #: winecfg.rc:273
 msgid "Voice input device:"
-msgstr "Voice input device:"
+msgstr "Périphérique d'entrée voix :"
 
 #: winecfg.rc:278
 msgid "&Test Sound"
 msgstr "&Tester le son"
 
 #: winecfg.rc:285
-#, fuzzy
 msgid "Appearance"
-msgstr " Apparence "
+msgstr "Apparence"
 
 #: winecfg.rc:286
 msgid "&Theme:"
@@ -12871,9 +12860,8 @@ msgid "C&olor:"
 msgstr "Couleu&r :"
 
 #: winecfg.rc:301
-#, fuzzy
 msgid "Folders"
-msgstr "Dossier"
+msgstr "Dossiers"
 
 #: winecfg.rc:304
 msgid "&Link to:"
