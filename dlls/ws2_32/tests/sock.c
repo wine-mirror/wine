@@ -5328,8 +5328,6 @@ static void test_completion_port(void)
 
     if (dest != INVALID_SOCKET)
         closesocket(dest);
-    if (src != INVALID_SOCKET)
-        closesocket(src);
 
 
     src = socket(AF_INET, SOCK_STREAM, 0);
