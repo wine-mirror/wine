@@ -1271,11 +1271,12 @@ static BOOL REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn)
 BOOL add_rect_to_region( HRGN rgn, const RECT *rect )
 {
     RGNOBJ *obj = GDI_GetObjPtr( rgn, OBJ_REGION );
+    BOOL ret;
 
     if (!obj) return FALSE;
-    REGION_UnionRectWithRegion( rect, &obj->rgn );
+    ret = REGION_UnionRectWithRegion( rect, &obj->rgn );
     GDI_ReleaseObj( rgn );
-    return TRUE;
+    return ret;
 }
 
 /***********************************************************************
