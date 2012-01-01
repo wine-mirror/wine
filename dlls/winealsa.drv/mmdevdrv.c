@@ -1173,13 +1173,12 @@ static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient *iface,
         return AUDCLNT_E_NOT_INITIALIZED;
     }
 
+    /* padding is solely updated at callback time in shared mode */
     *out = This->held_frames;
 
-    /* call required to get accurate snd_pcm_state() */
-    snd_pcm_avail_update(This->pcm_handle);
-    TRACE("pad: %u, state: %u\n", *out, snd_pcm_state(This->pcm_handle));
-
     LeaveCriticalSection(&This->lock);
+
+    TRACE("pad: %u\n", *out);
 
     return S_OK;
 }
@@ -1522,7 +1521,7 @@ static void alsa_write_data(ACImpl *This)
 
     if(snd_pcm_state(This->pcm_handle) == SND_PCM_STATE_XRUN ||
             avail > This->alsa_bufsize_frames){
-        TRACE("XRun state, recovering\n");
+        TRACE("XRun state avail %ld, recovering\n", avail);
 
         avail = This->alsa_bufsize_frames;
 
@@ -1534,7 +1533,8 @@ static void alsa_write_data(ACImpl *This)
 
         if((err = snd_pcm_prepare(This->pcm_handle)) < 0)
             WARN("snd_pcm_prepare failed: %d (%s)\n", err, snd_strerror(err));
-    }
+    }else
+        TRACE("pad: %ld\n", This->alsa_bufsize_frames - avail);
 
     if(This->held_frames == 0)
         return;
@@ -1953,8 +1953,6 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
 {
     ACImpl *This = impl_from_IAudioRenderClient(iface);
     UINT32 write_pos;
-    UINT32 pad;
-    HRESULT hr;
 
     TRACE("(%p)->(%u, %p)\n", This, frames, data);
 
@@ -1974,13 +1972,8 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
         return S_OK;
     }
 
-    hr = IAudioClient_GetCurrentPadding(&This->IAudioClient_iface, &pad);
-    if(FAILED(hr)){
-        LeaveCriticalSection(&This->lock);
-        return hr;
-    }
-
-    if(pad + frames > This->bufsize_frames){
+    /* held_frames == GetCurrentPadding_nolock(); */
+    if(This->held_frames + frames > This->bufsize_frames){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_BUFFER_TOO_LARGE;
     }
