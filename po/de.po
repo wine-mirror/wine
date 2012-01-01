@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-29 17:17+0100\n"
+"PO-Revision-Date: 2012-01-01 16:28+0100\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -2124,9 +2124,8 @@ msgid "Certification Path"
 msgstr "Zertifizierungspfad"
 
 #: cryptui.rc:211
-#, fuzzy
 msgid "Certification path"
-msgstr "&Zertifizierungspfad"
+msgstr "Zertifizierungspfad"
 
 #: cryptui.rc:214
 msgid "&View Certificate"
@@ -3329,9 +3328,8 @@ msgid "Asking for %s"
 msgstr "Frage nach %s"
 
 #: inetcpl.rc:46
-#, fuzzy
 msgid "Home page"
-msgstr " Startseite "
+msgstr "Startseite"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
@@ -3350,9 +3348,8 @@ msgid "&Blank page"
 msgstr "&Leere Seite"
 
 #: inetcpl.rc:53
-#, fuzzy
 msgid "Browsing history"
-msgstr " Browserverlauf "
+msgstr "Browserverlauf"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
@@ -3527,11 +3524,11 @@ msgstr "konstante Zeichenkette nicht terminiert"
 
 #: jscript.rc:38
 msgid "Can't have 'break' outside of loop"
-msgstr ""
+msgstr "Unerwartetes 'break' außerhalb der Schleife"
 
 #: jscript.rc:39
 msgid "Can't have 'continue' outside of loop"
-msgstr ""
+msgstr "Unerwartetes 'continue' außerhalb der Schleife"
 
 #: jscript.rc:40
 msgid "Conditional compilation is turned off"
@@ -10432,9 +10429,8 @@ msgid "&Footer:"
 msgstr "&Fußzeile:"
 
 #: notepad.rc:112
-#, fuzzy
 msgid "Margins (millimeters)"
-msgstr "&Ränder (Millimeter):"
+msgstr "Ränder (Millimeter):"
 
 #: notepad.rc:113
 msgid "&Left:"
@@ -11822,12 +11818,10 @@ msgid "&Show processes from all users"
 msgstr "P&rozesse aller Benutzern anzeigen"
 
 #: taskmgr.rc:376
-#, fuzzy
 msgid "CPU usage"
-msgstr "CPU-Auslastung"
+msgstr "CPU Auslastung"
 
 #: taskmgr.rc:377
-#, fuzzy
 msgid "MEM usage"
 msgstr "Speicherausl."
 
@@ -11836,17 +11830,14 @@ msgid "Totals"
 msgstr "Insgesamt"
 
 #: taskmgr.rc:379
-#, fuzzy
 msgid "Commit charge (K)"
 msgstr "Zugesicherter Speicher (K)"
 
 #: taskmgr.rc:380
-#, fuzzy
 msgid "Physical memory (K)"
 msgstr "Physikalischer Speicher (K)"
 
 #: taskmgr.rc:381
-#, fuzzy
 msgid "Kernel memory (K)"
 msgstr "Kernelspeicher (K)"
 
@@ -11887,12 +11878,10 @@ msgid "Nonpaged"
 msgstr "Nicht ausgelagert"
 
 #: taskmgr.rc:418
-#, fuzzy
 msgid "CPU usage history"
 msgstr "Verlauf der CPU-Auslastung"
 
 #: taskmgr.rc:419
-#, fuzzy
 msgid "Memory usage history"
 msgstr "Verlauf der Speicherauslastung"
 
@@ -12573,9 +12562,8 @@ msgstr ""
 "Version 2.1 der Lizenz oder (nach Ihrer Option) jeder späteren Version."
 
 #: winecfg.rc:140
-#, fuzzy
 msgid "Windows registration information"
-msgstr " Windows-Registrierungs-Informationen "
+msgstr "Windows Registrierungs Informationen"
 
 #: winecfg.rc:141
 msgid "&Owner:"
@@ -12586,9 +12574,8 @@ msgid "Organi&zation:"
 msgstr "&Organisation:"
 
 #: winecfg.rc:151
-#, fuzzy
 msgid "Application settings"
-msgstr " Anwendungseinstellungen "
+msgstr "Anwendungseinstellungen"
 
 #: winecfg.rc:152
 msgid ""
@@ -12614,9 +12601,8 @@ msgid "&Windows Version:"
 msgstr "&Windows Version:"
 
 #: winecfg.rc:166
-#, fuzzy
 msgid "Window settings"
-msgstr " Fenstereinstellungen "
+msgstr "Fenstereinstellungen"
 
 #: winecfg.rc:167
 msgid "Automatically capture the &mouse in full-screen windows"
@@ -12639,9 +12625,8 @@ msgid "Desktop &size:"
 msgstr "Desktop-&Größe:"
 
 #: winecfg.rc:177
-#, fuzzy
 msgid "Direct3D"
-msgstr " Direct3D "
+msgstr "Direct3D"
 
 #: winecfg.rc:178
 msgid "&Vertex Shader Support: "
@@ -12652,18 +12637,16 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr "&Pixel Shader aktivieren (wenn von Hardware unterstützt)"
 
 #: winecfg.rc:182
-#, fuzzy
 msgid "Screen resolution"
-msgstr " Bildschi&rmauflösung "
+msgstr "Bildschirmauflösung"
 
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Dies ist ein Beispieltext in 10 Punkt Tahoma"
 
 #: winecfg.rc:193
-#, fuzzy
 msgid "DLL overrides"
-msgstr " DLL Überschreibung "
+msgstr "DLL Überschreibungen"
 
 #: winecfg.rc:194
 msgid ""
@@ -12696,9 +12679,8 @@ msgid "Edit Override"
 msgstr "Bearbeite Überschreibung"
 
 #: winecfg.rc:210
-#, fuzzy
 msgid "Load order"
-msgstr " Ladereihenfolge "
+msgstr "Ladereihenfolge"
 
 #: winecfg.rc:211
 msgid "&Builtin (Wine)"
@@ -12725,9 +12707,8 @@ msgid "Select Drive Letter"
 msgstr "Laufwerksbuchstaben wählen"
 
 #: winecfg.rc:234
-#, fuzzy
 msgid "Drive mappings"
-msgstr " Laufwerksz&uordnung "
+msgstr "Laufwerkszuordnung"
 
 #: winecfg.rc:235
 msgid ""
@@ -12774,14 +12755,12 @@ msgid "Show &dot files"
 msgstr "Zeige D&ot-Dateien an"
 
 #: winecfg.rc:267
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " Treiber Diagnose "
+msgstr "Treiber Diagnose"
 
 #: winecfg.rc:269
-#, fuzzy
 msgid "Defaults"
-msgstr " Standards "
+msgstr "Standards"
 
 #: winecfg.rc:270
 msgid "Output device:"
@@ -12804,9 +12783,8 @@ msgid "&Test Sound"
 msgstr "Sound &testen"
 
 #: winecfg.rc:285
-#, fuzzy
 msgid "Appearance"
-msgstr " Darstellung "
+msgstr "Darstellung"
 
 #: winecfg.rc:286
 msgid "&Theme:"
@@ -12825,9 +12803,8 @@ msgid "C&olor:"
 msgstr "F&arbe:"
 
 #: winecfg.rc:301
-#, fuzzy
 msgid "Folders"
-msgstr "Shell-Ordner"
+msgstr "Ordner"
 
 #: winecfg.rc:304
 msgid "&Link to:"
@@ -13529,7 +13506,6 @@ msgid "By File Type"
 msgstr "Angaben auswählen"
 
 #: winefile.rc:146
-#, fuzzy
 msgid "File type"
 msgstr "Dateityp"
 
@@ -13590,9 +13566,8 @@ msgid "&Compressed"
 msgstr "&Komprimiert"
 
 #: winefile.rc:184
-#, fuzzy
 msgid "Version information"
-msgstr "&Versionsinformationen"
+msgstr "Versionsinformationen"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -13698,7 +13673,6 @@ msgid "Fastest Times"
 msgstr "Beste Zeiten"
 
 #: winemine.rc:58
-#, fuzzy
 msgid "Fastest times"
 msgstr "Beste Zeiten"
 
