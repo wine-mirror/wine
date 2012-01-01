@@ -820,8 +820,7 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 		return;
 	}
 
-	pos_bytes = (clock_pos * device->pwfx->nBlockAlign * clock_freq) /
-        device->pwfx->nSamplesPerSec;
+	pos_bytes = (clock_pos * device->pwfx->nSamplesPerSec * device->pwfx->nBlockAlign) / clock_freq;
 
 	delta_frags = (pos_bytes - device->last_pos_bytes) / device->fraglen;
 	if(delta_frags > 0){
