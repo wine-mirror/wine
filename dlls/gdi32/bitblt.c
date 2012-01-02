@@ -395,7 +395,7 @@ BOOL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
     struct gdi_image_bits bits;
     unsigned int i;
     POINT *pts;
-    BOOL ret = TRUE;
+    BOOL ret = FALSE;
     DWORD err;
     HRGN rgn;
 
@@ -436,15 +436,14 @@ BOOL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
     info->bmiHeader.biClrImportant  = 0;
     info->bmiHeader.biWidth         = dst.visrect.right - dst.visrect.left;
     info->bmiHeader.biHeight        = dst.visrect.bottom - dst.visrect.top;
-    info->bmiHeader.biSizeImage     = get_dib_image_size( info );
+    info->bmiHeader.biSizeImage     = 0;
     dev = GET_DC_PHYSDEV( dc, pPutImage );
     err = dev->funcs->pPutImage( dev, 0, 0, info, NULL, NULL, NULL, 0 );
-    if ((err && err != ERROR_BAD_FORMAT) ||
-        !(bits.ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, info->bmiHeader.biSizeImage )))
-    {
-        ret = FALSE;
+    if (err && err != ERROR_BAD_FORMAT) goto done;
+
+    info->bmiHeader.biSizeImage = get_dib_image_size( info );
+    if (!(bits.ptr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, info->bmiHeader.biSizeImage )))
         goto done;
-    }
     bits.is_copy = TRUE;
     bits.free = free_heap_bits;
 
@@ -462,7 +461,7 @@ BOOL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
     rgn = CreateRectRgn( 0, 0, 0, 0 );
     gradient_bitmapinfo( info, bits.ptr, vert_array, nvert, grad_array, ngrad, mode, pts, rgn );
     OffsetRgn( rgn, dst.visrect.left, dst.visrect.top );
-    if (dev->funcs->pPutImage( dev, 0, rgn, info, &bits, &src, &dst, SRCCOPY )) ret = FALSE;
+    ret = !dev->funcs->pPutImage( dev, 0, rgn, info, &bits, &src, &dst, SRCCOPY );
 
     if (bits.free) bits.free( &bits );
     DeleteObject( rgn );
