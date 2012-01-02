@@ -33,6 +33,6 @@ typedef enum tid_t {
     LAST_tid
 } tid_t;
 
-HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo);
+HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI WshShellFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;

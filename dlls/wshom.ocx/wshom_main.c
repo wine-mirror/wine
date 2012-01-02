@@ -80,6 +80,7 @@ HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
     return S_OK;
 }
 
+static
 void release_typelib(void)
 {
     unsigned i;
