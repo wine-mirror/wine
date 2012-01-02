@@ -2614,7 +2614,7 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
     ctx->parser = parser;
 
     if(source->statement) {
-        if(source->instr_off == -1) {
+        if(!source->instr_off) {
             hres = compile_subscript_stat(ctx->parser, source->statement, from_eval, &source->instr_off);
             if(FAILED(hres) && is_jscript_error(hres))
                 hres = throw_syntax_error(script, ei, hres, NULL);

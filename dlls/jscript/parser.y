@@ -1342,7 +1342,7 @@ static void *new_expression(parser_ctx_t *ctx, expression_type_t type, size_t si
     expression_t *ret = parser_alloc(ctx, size ? size : sizeof(*ret));
 
     ret->type = type;
-    ret->instr_off = -1;
+    ret->instr_off = 0;
 
     return ret;
 }
@@ -1470,7 +1470,7 @@ static source_elements_t *new_source_elements(parser_ctx_t *ctx)
     source_elements_t *ret = parser_alloc(ctx, sizeof(source_elements_t));
 
     memset(ret, 0, sizeof(*ret));
-    ret->instr_off = -1;
+    ret->instr_off = 0;
 
     return ret;
 }
