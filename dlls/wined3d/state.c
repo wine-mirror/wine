@@ -155,19 +155,19 @@ static void state_shademode(struct wined3d_context *context, const struct wined3
 {
     switch (state->render_states[WINED3D_RS_SHADEMODE])
     {
-        case WINED3DSHADE_FLAT:
+        case WINED3D_SHADE_FLAT:
             glShadeModel(GL_FLAT);
             checkGLcall("glShadeModel(GL_FLAT)");
             break;
-        case WINED3DSHADE_GOURAUD:
+        case WINED3D_SHADE_GOURAUD:
             glShadeModel(GL_SMOOTH);
             checkGLcall("glShadeModel(GL_SMOOTH)");
             break;
-        case WINED3DSHADE_PHONG:
-            FIXME("WINED3DSHADE_PHONG isn't supported\n");
+        case WINED3D_SHADE_PHONG:
+            FIXME("WINED3D_SHADE_PHONG isn't supported.\n");
             break;
         default:
-            FIXME("Unrecognized/Unhandled WINED3DSHADEMODE value %#x.\n",
+            FIXME("Unrecognized shade mode %#x.\n",
                     state->render_states[WINED3D_RS_SHADEMODE]);
     }
 }

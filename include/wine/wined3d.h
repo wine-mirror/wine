@@ -448,13 +448,12 @@ enum wined3d_fog_mode
     WINED3D_FOG_LINEAR                      = 3,
 };
 
-typedef enum _WINED3DSHADEMODE
+enum wined3d_shade_mode
 {
-    WINED3DSHADE_FLAT                       = 1,
-    WINED3DSHADE_GOURAUD                    = 2,
-    WINED3DSHADE_PHONG                      = 3,
-    WINED3DSHADE_FORCE_DWORD                = 0x7fffffff
-} WINED3DSHADEMODE;
+    WINED3D_SHADE_FLAT                      = 1,
+    WINED3D_SHADE_GOURAUD                   = 2,
+    WINED3D_SHADE_PHONG                     = 3,
+};
 
 typedef enum _WINED3DFILLMODE
 {

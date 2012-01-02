@@ -1124,7 +1124,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     else
        state->render_states[WINED3D_RS_ZENABLE] = WINED3D_ZB_FALSE;
     state->render_states[WINED3D_RS_FILLMODE] = WINED3DFILL_SOLID;
-    state->render_states[WINED3D_RS_SHADEMODE] = WINED3DSHADE_GOURAUD;
+    state->render_states[WINED3D_RS_SHADEMODE] = WINED3D_SHADE_GOURAUD;
     lp.lp.repeat_factor = 0;
     lp.lp.line_pattern = 0;
     state->render_states[WINED3D_RS_LINEPATTERN] = lp.d;
