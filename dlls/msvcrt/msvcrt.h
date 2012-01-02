@@ -174,7 +174,7 @@ typedef struct MSVCRT_localeinfo_struct
 
 
 /* TLS data */
-extern DWORD msvcrt_tls_index;
+extern DWORD msvcrt_tls_index DECLSPEC_HIDDEN;
 
 /* Keep in sync with msvcr90/tests/msvcr90.c */
 struct __thread_data {
@@ -214,15 +214,15 @@ struct __thread_data {
 
 typedef struct __thread_data thread_data_t;
 
-extern thread_data_t *msvcrt_get_thread_data(void);
+extern thread_data_t *msvcrt_get_thread_data(void) DECLSPEC_HIDDEN;
 
-LCID MSVCRT_locale_to_LCID(const char *);
-extern MSVCRT__locale_t MSVCRT_locale;
+LCID MSVCRT_locale_to_LCID(const char *) DECLSPEC_HIDDEN;
+extern MSVCRT__locale_t MSVCRT_locale DECLSPEC_HIDDEN;
 extern unsigned int MSVCRT___lc_codepage;
 extern int MSVCRT___lc_collate_cp;
 extern WORD MSVCRT__ctype [257];
 
-void   msvcrt_set_errno(int);
+void   msvcrt_set_errno(int) DECLSPEC_HIDDEN;
 
 void __cdecl _purecall(void);
 void __cdecl _amsg_exit(int errnum);
@@ -230,10 +230,10 @@ void __cdecl _amsg_exit(int errnum);
 extern char **MSVCRT__environ;
 extern MSVCRT_wchar_t **MSVCRT__wenviron;
 
-extern char ** msvcrt_SnapshotOfEnvironmentA(char **);
-extern MSVCRT_wchar_t ** msvcrt_SnapshotOfEnvironmentW(MSVCRT_wchar_t **);
+extern char ** msvcrt_SnapshotOfEnvironmentA(char **) DECLSPEC_HIDDEN;
+extern MSVCRT_wchar_t ** msvcrt_SnapshotOfEnvironmentW(MSVCRT_wchar_t **) DECLSPEC_HIDDEN;
 
-MSVCRT_wchar_t *msvcrt_wstrdupa(const char *);
+MSVCRT_wchar_t *msvcrt_wstrdupa(const char *) DECLSPEC_HIDDEN;
 
 /* FIXME: This should be declared in new.h but it's not an extern "C" so
  * it would not be much use anyway. Even for Winelib applications.
@@ -250,21 +250,21 @@ extern char* __cdecl __unDName(char *,const char*,int,malloc_func_t,free_func_t,
 extern char* __cdecl __unDNameEx(char *,const char*,int,malloc_func_t,free_func_t,void *,unsigned short int);
 
 /* Setup and teardown multi threaded locks */
-extern void msvcrt_init_mt_locks(void);
-extern void msvcrt_free_mt_locks(void);
+extern void msvcrt_init_mt_locks(void) DECLSPEC_HIDDEN;
+extern void msvcrt_free_mt_locks(void) DECLSPEC_HIDDEN;
 
-extern BOOL msvcrt_init_locale(void);
-extern void msvcrt_init_math(void);
-extern void msvcrt_init_io(void);
-extern void msvcrt_free_io(void);
-extern void msvcrt_init_console(void);
-extern void msvcrt_free_console(void);
-extern void msvcrt_init_args(void);
-extern void msvcrt_free_args(void);
-extern void msvcrt_init_signals(void);
-extern void msvcrt_free_signals(void);
+extern BOOL msvcrt_init_locale(void) DECLSPEC_HIDDEN;
+extern void msvcrt_init_math(void) DECLSPEC_HIDDEN;
+extern void msvcrt_init_io(void) DECLSPEC_HIDDEN;
+extern void msvcrt_free_io(void) DECLSPEC_HIDDEN;
+extern void msvcrt_init_console(void) DECLSPEC_HIDDEN;
+extern void msvcrt_free_console(void) DECLSPEC_HIDDEN;
+extern void msvcrt_init_args(void) DECLSPEC_HIDDEN;
+extern void msvcrt_free_args(void) DECLSPEC_HIDDEN;
+extern void msvcrt_init_signals(void) DECLSPEC_HIDDEN;
+extern void msvcrt_free_signals(void) DECLSPEC_HIDDEN;
 
-extern unsigned msvcrt_create_io_inherit_block(WORD*, BYTE**);
+extern unsigned msvcrt_create_io_inherit_block(WORD*, BYTE**) DECLSPEC_HIDDEN;
 
 extern unsigned int __cdecl _control87(unsigned int, unsigned int);
 
@@ -902,12 +902,12 @@ int            __cdecl MSVCRT_raise(int sig);
 #define MSVCRT__DISABLE_PER_THREAD_LOCALE 2
 
 extern MSVCRT__locale_t MSVCRT_locale;
-MSVCRT_pthreadlocinfo get_locinfo(void);
-MSVCRT_pthreadmbcinfo get_mbcinfo(void);
+MSVCRT_pthreadlocinfo get_locinfo(void) DECLSPEC_HIDDEN;
+MSVCRT_pthreadmbcinfo get_mbcinfo(void) DECLSPEC_HIDDEN;
 void __cdecl MSVCRT__free_locale(MSVCRT__locale_t);
-void free_locinfo(MSVCRT_pthreadlocinfo);
-void free_mbcinfo(MSVCRT_pthreadmbcinfo);
-int _setmbcp_l(int, LCID, MSVCRT_pthreadmbcinfo);
+void free_locinfo(MSVCRT_pthreadlocinfo) DECLSPEC_HIDDEN;
+void free_mbcinfo(MSVCRT_pthreadmbcinfo) DECLSPEC_HIDDEN;
+int _setmbcp_l(int, LCID, MSVCRT_pthreadmbcinfo) DECLSPEC_HIDDEN;
 
 #ifndef __WINE_MSVCRT_TEST
 int            __cdecl MSVCRT__write(int,const void*,unsigned int);
@@ -972,10 +972,10 @@ typedef union _printf_arg
 } printf_arg;
 typedef printf_arg (*args_clbk)(void*, int, int, __ms_va_list*);
 int pf_printf_a(puts_clbk_a, void*, const char*, MSVCRT__locale_t,
-        BOOL, BOOL, args_clbk, void*, __ms_va_list*);
+        BOOL, BOOL, args_clbk, void*, __ms_va_list*) DECLSPEC_HIDDEN;
 int pf_printf_w(puts_clbk_w, void*, const MSVCRT_wchar_t*, MSVCRT__locale_t,
-        BOOL, BOOL, args_clbk, void*, __ms_va_list*);
-printf_arg arg_clbk_valist(void*, int, int, __ms_va_list*);
+        BOOL, BOOL, args_clbk, void*, __ms_va_list*) DECLSPEC_HIDDEN;
+printf_arg arg_clbk_valist(void*, int, int, __ms_va_list*) DECLSPEC_HIDDEN;
 
 #define MSVCRT__OVERFLOW  3
 #define MSVCRT__UNDERFLOW 4
