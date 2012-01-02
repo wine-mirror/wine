@@ -2123,9 +2123,8 @@ msgid "Certification Path"
 msgstr "인증서 경로"
 
 #: cryptui.rc:211
-#, fuzzy
 msgid "Certification path"
-msgstr "인증서 경로(&P)"
+msgstr "인증서 경로"
 
 #: cryptui.rc:214
 msgid "&View Certificate"
@@ -3309,16 +3308,15 @@ msgstr "%s 다운로드 시작."
 
 #: ieframe.rc:80
 msgid "Downloading %s"
-msgstr " %s 다운로드중..."
+msgstr "%s 다운로드중"
 
 #: ieframe.rc:81
 msgid "Asking for %s"
 msgstr "%s 대하여 묻기"
 
 #: inetcpl.rc:46
-#, fuzzy
 msgid "Home page"
-msgstr " 홈 페이지 "
+msgstr "홈 페이지"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
@@ -3337,9 +3335,8 @@ msgid "&Blank page"
 msgstr "빈 페이지(&B)"
 
 #: inetcpl.rc:53
-#, fuzzy
 msgid "Browsing history"
-msgstr " 방문 기록 "
+msgstr "방문 기록 "
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
@@ -3507,19 +3504,19 @@ msgstr "')' 가 필요합니다"
 
 #: jscript.rc:37
 msgid "Unterminated string constant"
-msgstr "띁나지 않은 문자열 상수"
+msgstr "끝나지 않은 문자열 상수"
 
 #: jscript.rc:38
 msgid "Can't have 'break' outside of loop"
-msgstr ""
+msgstr "루프 바깥에는 'break'를 사용할 수 없음"
 
 #: jscript.rc:39
 msgid "Can't have 'continue' outside of loop"
-msgstr ""
+msgstr "루프 바깥에는 'continue'를 사용할 수 없음"
 
 #: jscript.rc:40
 msgid "Conditional compilation is turned off"
-msgstr "조건부 컴파일이 설정되어 있음"
+msgstr "조건부 컴파일이 해제되어 있음"
 
 #: jscript.rc:43
 msgid "Number expected"
@@ -10290,7 +10287,7 @@ msgstr "다음 찾기(&N)\tF3"
 
 #: notepad.rc:55 wordpad.rc:52
 msgid "&Replace...\tCtrl+H"
-msgstr " 바꾸기(&R)...\tCtrl+H"
+msgstr "바꾸기(&R)...\tCtrl+H"
 
 #: notepad.rc:58 progman.rc:53 regedit.rc:78 winefile.rc:86
 msgid "&Contents\tF1"
@@ -10313,9 +10310,8 @@ msgid "&Footer:"
 msgstr "바닥글(&F):"
 
 #: notepad.rc:112
-#, fuzzy
 msgid "Margins (millimeters)"
-msgstr "여백(&M):"
+msgstr "여백(밀리미터)"
 
 #: notepad.rc:113
 msgid "&Left:"
@@ -11683,31 +11679,26 @@ msgid "&Show processes from all users"
 msgstr "모든 사용자의 작업 보여주기(&S)"
 
 #: taskmgr.rc:376
-#, fuzzy
 msgid "CPU usage"
-msgstr "CPU 사용"
+msgstr "CPU 사용량"
 
 #: taskmgr.rc:377
-#, fuzzy
 msgid "MEM usage"
-msgstr "MEM 사용"
+msgstr "메모리 사용량"
 
 #: taskmgr.rc:378
 msgid "Totals"
 msgstr "합계"
 
 #: taskmgr.rc:379
-#, fuzzy
 msgid "Commit charge (K)"
-msgstr "가상 메모리 (K)"
+msgstr "할당된 메모리 (K)"
 
 #: taskmgr.rc:380
-#, fuzzy
 msgid "Physical memory (K)"
 msgstr "물리적 메모리 (K)"
 
 #: taskmgr.rc:381
-#, fuzzy
 msgid "Kernel memory (K)"
 msgstr "커널 메모리 (K)"
 
@@ -11748,14 +11739,12 @@ msgid "Nonpaged"
 msgstr "페이지안된"
 
 #: taskmgr.rc:418
-#, fuzzy
 msgid "CPU usage history"
-msgstr "CPU 사용 기록"
+msgstr "CPU 사용 현황"
 
 #: taskmgr.rc:419
-#, fuzzy
 msgid "Memory usage history"
-msgstr "메모리 사용 보여주기"
+msgstr "메모리 사용 현황"
 
 #: taskmgr.rc:432 taskmgr.rc:327
 msgid "Debug Channels"
@@ -12424,9 +12413,8 @@ msgstr ""
 "(선택적으로) 그 이후 버전을 따르면 됩니다."
 
 #: winecfg.rc:140
-#, fuzzy
 msgid "Windows registration information"
-msgstr " 윈도우즈 등록 정보 "
+msgstr "윈도우즈 등록 정보 "
 
 #: winecfg.rc:141
 msgid "&Owner:"
@@ -12437,9 +12425,8 @@ msgid "Organi&zation:"
 msgstr "단체(&Z):"
 
 #: winecfg.rc:151
-#, fuzzy
 msgid "Application settings"
-msgstr " 어플리케이션 설정 "
+msgstr "응용프로그램 설정 "
 
 #: winecfg.rc:152
 msgid ""
@@ -12464,9 +12451,8 @@ msgid "&Windows Version:"
 msgstr "윈도우즈 버젼(&W):"
 
 #: winecfg.rc:166
-#, fuzzy
 msgid "Window settings"
-msgstr " 창 설정 "
+msgstr "창 설정"
 
 #: winecfg.rc:167
 msgid "Automatically capture the &mouse in full-screen windows"
@@ -12489,9 +12475,8 @@ msgid "Desktop &size:"
 msgstr "데스크탑 크기(&S):"
 
 #: winecfg.rc:177
-#, fuzzy
 msgid "Direct3D"
-msgstr " 다이렉트 3D "
+msgstr "다이렉트 3D "
 
 #: winecfg.rc:178
 msgid "&Vertex Shader Support: "
@@ -12502,18 +12487,16 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr "(만약 하드웨어에서 지원할 경우 ) 픽셀 쉐이더 허용(&P)"
 
 #: winecfg.rc:182
-#, fuzzy
 msgid "Screen resolution"
-msgstr " 화면 해상도(&R) "
+msgstr "화면 해상도 "
 
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "This is a sample text using 10 point Tahoma"
 
 #: winecfg.rc:193
-#, fuzzy
 msgid "DLL overrides"
-msgstr " DLL 덮어쓰기 "
+msgstr "DLL 덮어쓰기 "
 
 #: winecfg.rc:194
 msgid ""
@@ -12545,7 +12528,6 @@ msgid "Edit Override"
 msgstr "덮어쓰기 고치기"
 
 #: winecfg.rc:210
-#, fuzzy
 msgid "Load order"
 msgstr "불러오기 순서 "
 
@@ -12574,9 +12556,8 @@ msgid "Select Drive Letter"
 msgstr "드라이브 문자 선택"
 
 #: winecfg.rc:234
-#, fuzzy
 msgid "Drive mappings"
-msgstr " 드라이브 연결(&M) "
+msgstr "드라이브 연결 "
 
 #: winecfg.rc:235
 msgid ""
@@ -12622,14 +12603,12 @@ msgid "Show &dot files"
 msgstr "숨은 파일 보이기(&D)"
 
 #: winecfg.rc:267
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " 드라이버 진단 "
+msgstr "드라이버 진단 "
 
 #: winecfg.rc:269
-#, fuzzy
 msgid "Defaults"
-msgstr " 기본 "
+msgstr "기본 "
 
 #: winecfg.rc:270
 msgid "Output device:"
@@ -12652,9 +12631,8 @@ msgid "&Test Sound"
 msgstr "소리 테스트(&T)"
 
 #: winecfg.rc:285
-#, fuzzy
 msgid "Appearance"
-msgstr "외관 "
+msgstr "외양"
 
 #: winecfg.rc:286
 msgid "&Theme:"
@@ -12673,7 +12651,6 @@ msgid "C&olor:"
 msgstr "색상(&O):"
 
 #: winecfg.rc:301
-#, fuzzy
 msgid "Folders"
 msgstr "폴더"
 
@@ -13373,7 +13350,6 @@ msgid "By File Type"
 msgstr "파일 타입으로"
 
 #: winefile.rc:146
-#, fuzzy
 msgid "File type"
 msgstr "파일 타입"
 
@@ -13383,7 +13359,7 @@ msgstr "디렉토리(&D)"
 
 #: winefile.rc:149
 msgid "&Programs"
-msgstr "풀그림(&P)"
+msgstr "프로그램(&P)"
 
 #: winefile.rc:151
 msgid "Docu&ments"
@@ -13434,7 +13410,6 @@ msgid "&Compressed"
 msgstr "압축(&C)"
 
 #: winefile.rc:184
-#, fuzzy
 msgid "Version information"
 msgstr "버젼 정보(&V)"
 
@@ -13542,7 +13517,6 @@ msgid "Fastest Times"
 msgstr "최단 시간"
 
 #: winemine.rc:58
-#, fuzzy
 msgid "Fastest times"
 msgstr "최단 시간"
 
