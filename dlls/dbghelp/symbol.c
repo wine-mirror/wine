@@ -690,6 +690,7 @@ static void symt_fill_sym_info(struct module_pair* pair,
                 sym_info->Flags |= SYMFLAG_PARAMETER;
                 /* fall through */
             case DataIsLocal:
+                sym_info->Flags |= SYMFLAG_LOCAL;
                 {
                     struct location loc = data->u.var;
 
@@ -712,7 +713,6 @@ static void symt_fill_sym_info(struct module_pair* pair,
                     {
                     case loc_error:
                         /* for now we report error cases as a negative register number */
-                        sym_info->Flags |= SYMFLAG_LOCAL;
                         /* fall through */
                     case loc_register:
                         sym_info->Flags |= SYMFLAG_REGISTER;
@@ -720,7 +720,7 @@ static void symt_fill_sym_info(struct module_pair* pair,
                         sym_info->Address = 0;
                         break;
                     case loc_regrel:
-                        sym_info->Flags |= SYMFLAG_LOCAL | SYMFLAG_REGREL;
+                        sym_info->Flags |= SYMFLAG_REGREL;
                         sym_info->Register = loc.reg;
                         if (loc.reg == CV_REG_NONE || (int)loc.reg < 0 /* error */)
                             FIXME("suspicious register value %x\n", loc.reg);
