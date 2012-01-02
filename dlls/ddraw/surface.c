@@ -1353,6 +1353,7 @@ static HRESULT ddraw_surface_blt_clipped(IDirectDrawSurfaceImpl *dst_surface, co
             &dst_rect, clip_list, &clip_list_size)))
     {
         WARN("Failed to get clip list, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, clip_list);
         return hr;
     }
 
@@ -1386,6 +1387,7 @@ static HRESULT ddraw_surface_blt_clipped(IDirectDrawSurfaceImpl *dst_surface, co
         }
     }
 
+    HeapFree(GetProcessHeap(), 0, clip_list);
     return hr;
 }
 
