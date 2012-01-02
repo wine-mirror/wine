@@ -3125,13 +3125,14 @@ static void test_WebBrowser(BOOL do_download, BOOL do_close)
         ok(doc == doc2, "doc != doc2\n");
         IDispatch_Release(doc2);
 
+        trace("Navigate2 repeated...\n");
         test_Navigate2(unk);
         test_download(DWL_EXPECT_BEFORE_NAVIGATE);
         test_TranslateAccelerator(unk);
         doc2 = get_document(unk);
         ok(doc == doc2, "doc != doc2\n");
         IDispatch_Release(doc2);
-        IDispatch_Release(doc2);
+        IDispatch_Release(doc);
 
         test_dochost_qs(unk);
     }
@@ -3196,6 +3197,7 @@ START_TEST(webbrowser)
     test_WebBrowser(FALSE, TRUE);
     trace("Testing WebBrowser...\n");
     test_WebBrowser(TRUE, FALSE);
+    trace("Testing WebBrowser (with close)...\n");
     test_WebBrowser(TRUE, TRUE);
     trace("Testing WebBrowser w/o container-based olecmd...\n");
     test_WebBrowser_NoContainerOlecmd();
