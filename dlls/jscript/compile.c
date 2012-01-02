@@ -328,14 +328,14 @@ static unsigned alloc_label(compiler_ctx_t *ctx)
     if(!ctx->labels_size) {
         ctx->labels = heap_alloc(8 * sizeof(*ctx->labels));
         if(!ctx->labels)
-            return -1;
+            return 0;
         ctx->labels_size = 8;
     }else if(ctx->labels_size == ctx->labels_cnt) {
         unsigned *new_labels;
 
         new_labels = heap_realloc(ctx->labels, 2*ctx->labels_size*sizeof(*ctx->labels));
         if(!new_labels)
-            return -1;
+            return 0;
 
         ctx->labels = new_labels;
         ctx->labels_size *= 2;
@@ -1042,11 +1042,11 @@ static HRESULT compile_while_statement(compiler_ctx_t *ctx, while_statement_t *s
     HRESULT hres;
 
     stat_ctx.break_label = alloc_label(ctx);
-    if(stat_ctx.break_label == -1)
+    if(!stat_ctx.break_label)
         return E_OUTOFMEMORY;
 
     stat_ctx.continue_label = alloc_label(ctx);
-    if(stat_ctx.continue_label == -1)
+    if(!stat_ctx.continue_label)
         return E_OUTOFMEMORY;
 
     if(!stat->do_while) {
@@ -1118,11 +1118,11 @@ static HRESULT compile_for_statement(compiler_ctx_t *ctx, for_statement_t *stat)
     }
 
     stat_ctx.break_label = alloc_label(ctx);
-    if(stat_ctx.break_label == -1)
+    if(!stat_ctx.break_label)
         return E_OUTOFMEMORY;
 
     stat_ctx.continue_label = alloc_label(ctx);
-    if(stat_ctx.continue_label == -1)
+    if(!stat_ctx.continue_label)
         return E_OUTOFMEMORY;
 
     /* FIXME: avoid */
@@ -1182,11 +1182,11 @@ static HRESULT compile_forin_statement(compiler_ctx_t *ctx, forin_statement_t *s
     }
 
     stat_ctx.break_label = alloc_label(ctx);
-    if(stat_ctx.break_label == -1)
+    if(!stat_ctx.break_label)
         return E_OUTOFMEMORY;
 
     stat_ctx.continue_label = alloc_label(ctx);
-    if(stat_ctx.continue_label == -1)
+    if(!stat_ctx.continue_label)
         return E_OUTOFMEMORY;
 
     hres = compile_expression(ctx, stat->in_expr);
@@ -1267,7 +1267,7 @@ static HRESULT compile_continue_statement(compiler_ctx_t *ctx, branch_statement_
     HRESULT hres;
 
     for(pop_ctx = ctx->stat_ctx; pop_ctx; pop_ctx = pop_ctx->next) {
-        if(pop_ctx->continue_label != -1)
+        if(pop_ctx->continue_label)
             break;
     }
 
@@ -1296,7 +1296,7 @@ static HRESULT compile_break_statement(compiler_ctx_t *ctx, branch_statement_t *
     HRESULT hres;
 
     for(pop_ctx = ctx->stat_ctx; pop_ctx; pop_ctx = pop_ctx->next) {
-        if(pop_ctx->break_label != -1)
+        if(pop_ctx->break_label)
             break;
     }
 
@@ -1339,7 +1339,7 @@ static HRESULT compile_return_statement(compiler_ctx_t *ctx, expression_statemen
 /* ECMA-262 3rd Edition    12.10 */
 static HRESULT compile_with_statement(compiler_ctx_t *ctx, with_statement_t *stat)
 {
-    statement_ctx_t stat_ctx = {0, TRUE, FALSE, -1, -1};
+    statement_ctx_t stat_ctx = {0, TRUE, FALSE};
     HRESULT hres;
 
     hres = compile_expression(ctx, stat->expr);
@@ -1362,7 +1362,7 @@ static HRESULT compile_with_statement(compiler_ctx_t *ctx, with_statement_t *sta
 /* ECMA-262 3rd Edition    12.13 */
 static HRESULT compile_switch_statement(compiler_ctx_t *ctx, switch_statement_t *stat)
 {
-    statement_ctx_t stat_ctx = {0, FALSE, FALSE, -1, -1};
+    statement_ctx_t stat_ctx = {0, FALSE, FALSE};
     unsigned case_cnt = 0, *case_jmps, i, default_jmp;
     BOOL have_default = FALSE;
     statement_t *stat_iter;
@@ -1374,7 +1374,7 @@ static HRESULT compile_switch_statement(compiler_ctx_t *ctx, switch_statement_t 
         return hres;
 
     stat_ctx.break_label = alloc_label(ctx);
-    if(stat_ctx.break_label == -1)
+    if(!stat_ctx.break_label)
         return E_OUTOFMEMORY;
 
     for(iter = stat->case_list; iter; iter = iter->next) {
@@ -1470,8 +1470,8 @@ static HRESULT compile_throw_statement(compiler_ctx_t *ctx, expression_statement
 /* ECMA-262 3rd Edition    12.14 */
 static HRESULT compile_try_statement(compiler_ctx_t *ctx, try_statement_t *stat)
 {
-    statement_ctx_t try_ctx = {0, FALSE, TRUE, -1, -1}, catch_ctx = {0, TRUE, FALSE, -1, -1};
-    statement_ctx_t finally_ctx = {2, FALSE, FALSE, -1, -1};
+    statement_ctx_t try_ctx = {0, FALSE, TRUE}, catch_ctx = {0, TRUE, FALSE};
+    statement_ctx_t finally_ctx = {2, FALSE, FALSE};
     unsigned push_except;
     BSTR ident;
     HRESULT hres;
