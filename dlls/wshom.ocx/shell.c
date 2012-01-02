@@ -462,8 +462,8 @@ static HRESULT WINAPI WshShortcut_get_TargetPath(IWshShortcut *iface, BSTR *Path
 static HRESULT WINAPI WshShortcut_put_TargetPath(IWshShortcut *iface, BSTR Path)
 {
     WshShortcut *This = impl_from_IWshShortcut(iface);
-    FIXME("(%p)->(%s): stub\n", This, debugstr_w(Path));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(Path));
+    return IShellLinkW_SetPath(This->link, Path);
 }
 
 static HRESULT WINAPI WshShortcut_get_WindowStyle(IWshShortcut *iface, int *ShowCmd)
