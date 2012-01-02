@@ -455,13 +455,12 @@ enum wined3d_shade_mode
     WINED3D_SHADE_PHONG                     = 3,
 };
 
-typedef enum _WINED3DFILLMODE
+enum wined3d_fill_mode
 {
-    WINED3DFILL_POINT                       = 1,
-    WINED3DFILL_WIREFRAME                   = 2,
-    WINED3DFILL_SOLID                       = 3,
-    WINED3DFILL_FORCE_DWORD                 = 0x7fffffff
-} WINED3DFILLMODE;
+    WINED3D_FILL_POINT                      = 1,
+    WINED3D_FILL_WIREFRAME                  = 2,
+    WINED3D_FILL_SOLID                      = 3,
+};
 
 typedef enum _WINED3DCULL
 {

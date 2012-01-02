@@ -49,24 +49,24 @@ static void state_nop(struct wined3d_context *context, const struct wined3d_stat
 
 static void state_fillmode(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    WINED3DFILLMODE mode = state->render_states[WINED3D_RS_FILLMODE];
+    enum wined3d_fill_mode mode = state->render_states[WINED3D_RS_FILLMODE];
 
     switch (mode)
     {
-        case WINED3DFILL_POINT:
+        case WINED3D_FILL_POINT:
             glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
             checkGLcall("glPolygonMode(GL_FRONT_AND_BACK, GL_POINT)");
             break;
-        case WINED3DFILL_WIREFRAME:
+        case WINED3D_FILL_WIREFRAME:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             checkGLcall("glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)");
             break;
-        case WINED3DFILL_SOLID:
+        case WINED3D_FILL_SOLID:
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             checkGLcall("glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)");
             break;
         default:
-            FIXME("Unrecognized WINED3D_RS_FILLMODE %d.\n", mode);
+            FIXME("Unrecognized fill mode %#x.\n", mode);
     }
 }
 
