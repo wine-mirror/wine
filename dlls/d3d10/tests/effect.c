@@ -3599,6 +3599,404 @@ static void test_effect_get_variable_by(ID3D10Device *device)
     effect->lpVtbl->Release(effect);
 }
 
+#if 0
+RasterizerState rast_state
+{
+    FillMode = wireframe;                       /* 0x0c */
+    CullMode = front;                           /* 0x0d */
+    FrontCounterClockwise = true;               /* 0x0e */
+    DepthBias = -4;                             /* 0x0f */
+    DepthBiasClamp = 0.5f;                      /* 0x10 */
+    SlopeScaledDepthBias = 0.25f;               /* 0x11 */
+    DepthClipEnable = false;                    /* 0x12 */
+    ScissorEnable = true;                       /* 0x13 */
+    MultisampleEnable = true;                   /* 0x14 */
+    AntialiasedLineEnable = true;               /* 0x15 */
+};
+
+DepthStencilState ds_state
+{
+    DepthEnable = false;                        /* 0x16 */
+    DepthWriteMask = zero;                      /* 0x17 */
+    DepthFunc = equal;                          /* 0x18 */
+    StencilEnable = true;                       /* 0x19 */
+    StencilReadMask = 0x4;                      /* 0x1a */
+    StencilWriteMask = 0x5;                     /* 0x1b */
+    FrontFaceStencilFail = invert;              /* 0x1c */
+    FrontFaceStencilDepthFail = incr;           /* 0x1d */
+    FrontFaceStencilPass = decr;                /* 0x1e */
+    FrontFaceStencilFunc = less_equal;          /* 0x1f */
+    BackFaceStencilFail = replace;              /* 0x20 */
+    BackFaceStencilDepthFail = incr_sat;        /* 0x21 */
+    BackFaceStencilPass = decr_sat;             /* 0x22 */
+    BackFaceStencilFunc = greater_equal;        /* 0x23 */
+};
+
+BlendState blend_state
+{
+    AlphaToCoverageEnable = false;              /* 0x24 */
+    BlendEnable[0] = true;                      /* 0x25[0] */
+    BlendEnable[7] = false;                     /* 0x25[7] */
+    SrcBlend = one;                             /* 0x26 */
+    DestBlend = src_color;                      /* 0x27 */
+    BlendOp = min;                              /* 0x28 */
+    SrcBlendAlpha = src_alpha;                  /* 0x29 */
+    DestBlendAlpha = inv_src_alpha;             /* 0x2a */
+    BlendOpAlpha = max;                         /* 0x2b */
+    RenderTargetWriteMask[0] = 0x8;             /* 0x2c[0] */
+    RenderTargetWriteMask[7] = 0x7;             /* 0x2c[7] */
+};
+
+SamplerState sampler0
+{
+    Filter = min_mag_mip_linear;                /* 0x2d */
+    AddressU = wrap;                            /* 0x2e */
+    AddressV = mirror;                          /* 0x2f */
+    AddressW = clamp;                           /* 0x30 */
+    MipMapLODBias = -1;                         /* 0x31 */
+    MaxAnisotropy = 4u;                         /* 0x32 */
+    ComparisonFunc = always;                    /* 0x33 */
+    BorderColor = float4(1.0, 2.0, 3.0, 4.0);   /* 0x34 */
+    MinLOD = 6u;                                /* 0x35 */
+    MaxLOD = 5u;                                /* 0x36 */
+};
+
+technique10 tech0
+{
+    pass pass0
+    {
+        SetBlendState(blend_state, float4(0.5f, 0.6f, 0.7f, 0.8f), 0xffff);
+        SetDepthStencilState(ds_state, 1.0f);
+        SetRasterizerState(rast_state);
+    }
+};
+#endif
+static DWORD fx_test_state_groups[] =
+{
+    0x43425844, 0x519ef0cc, 0x85962b86, 0x3c2272fb,
+    0x17942172, 0x00000001, 0x00000794, 0x00000001,
+    0x00000024, 0x30315846, 0x00000768, 0xfeff1001,
+    0x00000001, 0x00000000, 0x00000004, 0x00000000,
+    0x00000000, 0x00000000, 0x00000001, 0x0000035c,
+    0x00000000, 0x00000000, 0x00000001, 0x00000001,
+    0x00000001, 0x00000001, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x6f6c4724,
+    0x736c6162, 0x73615200, 0x69726574, 0x5372657a,
+    0x65746174, 0x00000d00, 0x00000200, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000400,
+    0x73617200, 0x74735f74, 0x00657461, 0x00000001,
+    0x00000002, 0x00000002, 0x00000001, 0x00000002,
+    0x00000002, 0x00000001, 0x00000004, 0x00000001,
+    0x00000001, 0x00000002, 0xfffffffc, 0x00000001,
+    0x00000001, 0x3f000000, 0x00000001, 0x00000001,
+    0x3e800000, 0x00000001, 0x00000004, 0x00000000,
+    0x00000001, 0x00000004, 0x00000001, 0x00000001,
+    0x00000004, 0x00000001, 0x00000001, 0x00000004,
+    0x00000001, 0x74706544, 0x65745368, 0x6c69636e,
+    0x74617453, 0x00bc0065, 0x00020000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00030000,
+    0x73640000, 0x6174735f, 0x01006574, 0x04000000,
+    0x00000000, 0x01000000, 0x02000000, 0x00000000,
+    0x01000000, 0x02000000, 0x03000000, 0x01000000,
+    0x04000000, 0x01000000, 0x01000000, 0x02000000,
+    0x04000000, 0x01000000, 0x02000000, 0x05000000,
+    0x01000000, 0x02000000, 0x06000000, 0x01000000,
+    0x02000000, 0x07000000, 0x01000000, 0x02000000,
+    0x08000000, 0x01000000, 0x02000000, 0x04000000,
+    0x01000000, 0x02000000, 0x03000000, 0x01000000,
+    0x02000000, 0x04000000, 0x01000000, 0x02000000,
+    0x05000000, 0x01000000, 0x02000000, 0x07000000,
+    0x42000000, 0x646e656c, 0x74617453, 0x019b0065,
+    0x00020000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00020000, 0x6c620000, 0x5f646e65,
+    0x74617473, 0x00010065, 0x00040000, 0x00000000,
+    0x00010000, 0x00040000, 0x00010000, 0x00010000,
+    0x00040000, 0x00000000, 0x00010000, 0x00020000,
+    0x00020000, 0x00010000, 0x00020000, 0x00030000,
+    0x00010000, 0x00020000, 0x00040000, 0x00010000,
+    0x00020000, 0x00050000, 0x00010000, 0x00020000,
+    0x00060000, 0x00010000, 0x00020000, 0x00050000,
+    0x00010000, 0x00020000, 0x00080000, 0x00010000,
+    0x00020000, 0x00070000, 0x61530000, 0x656c706d,
+    0x61745372, 0x52006574, 0x02000002, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x15000000,
+    0x73000000, 0x6c706d61, 0x00307265, 0x00000001,
+    0x00000002, 0x00000015, 0x00000001, 0x00000002,
+    0x00000001, 0x00000001, 0x00000002, 0x00000002,
+    0x00000001, 0x00000002, 0x00000003, 0x00000001,
+    0x00000002, 0xffffffff, 0x00000001, 0x00000002,
+    0x00000004, 0x00000001, 0x00000002, 0x00000008,
+    0x00000004, 0x00000001, 0x3f800000, 0x00000001,
+    0x40000000, 0x00000001, 0x40400000, 0x00000001,
+    0x40800000, 0x00000001, 0x00000002, 0x00000006,
+    0x00000001, 0x00000002, 0x00000005, 0x68636574,
+    0x61700030, 0x00307373, 0x00000004, 0x00000001,
+    0x3f000000, 0x00000001, 0x3f19999a, 0x00000001,
+    0x3f333333, 0x00000001, 0x3f4ccccd, 0x00000001,
+    0x00000002, 0x0000ffff, 0x00000001, 0x00000001,
+    0x3f800000, 0x00000004, 0x00000000, 0x00000000,
+    0x00000000, 0xffffffff, 0x00000000, 0x00000039,
+    0x0000001d, 0x00000000, 0xffffffff, 0x0000000a,
+    0x0000000c, 0x00000000, 0x00000001, 0x00000044,
+    0x0000000d, 0x00000000, 0x00000001, 0x00000050,
+    0x0000000e, 0x00000000, 0x00000001, 0x0000005c,
+    0x0000000f, 0x00000000, 0x00000001, 0x00000068,
+    0x00000010, 0x00000000, 0x00000001, 0x00000074,
+    0x00000011, 0x00000000, 0x00000001, 0x00000080,
+    0x00000012, 0x00000000, 0x00000001, 0x0000008c,
+    0x00000013, 0x00000000, 0x00000001, 0x00000098,
+    0x00000014, 0x00000000, 0x00000001, 0x000000a4,
+    0x00000015, 0x00000000, 0x00000001, 0x000000b0,
+    0x00000000, 0x000000ea, 0x000000ce, 0x00000000,
+    0xffffffff, 0x0000000e, 0x00000016, 0x00000000,
+    0x00000001, 0x000000f3, 0x00000017, 0x00000000,
+    0x00000001, 0x000000ff, 0x00000018, 0x00000000,
+    0x00000001, 0x0000010b, 0x00000019, 0x00000000,
+    0x00000001, 0x00000117, 0x0000001a, 0x00000000,
+    0x00000001, 0x00000123, 0x0000001b, 0x00000000,
+    0x00000001, 0x0000012f, 0x0000001c, 0x00000000,
+    0x00000001, 0x0000013b, 0x0000001d, 0x00000000,
+    0x00000001, 0x00000147, 0x0000001e, 0x00000000,
+    0x00000001, 0x00000153, 0x0000001f, 0x00000000,
+    0x00000001, 0x0000015f, 0x00000020, 0x00000000,
+    0x00000001, 0x0000016b, 0x00000021, 0x00000000,
+    0x00000001, 0x00000177, 0x00000022, 0x00000000,
+    0x00000001, 0x00000183, 0x00000023, 0x00000000,
+    0x00000001, 0x0000018f, 0x00000000, 0x000001c2,
+    0x000001a6, 0x00000000, 0xffffffff, 0x0000000b,
+    0x00000024, 0x00000000, 0x00000001, 0x000001ce,
+    0x00000025, 0x00000000, 0x00000001, 0x000001da,
+    0x00000025, 0x00000007, 0x00000001, 0x000001e6,
+    0x00000026, 0x00000000, 0x00000001, 0x000001f2,
+    0x00000027, 0x00000000, 0x00000001, 0x000001fe,
+    0x00000028, 0x00000000, 0x00000001, 0x0000020a,
+    0x00000029, 0x00000000, 0x00000001, 0x00000216,
+    0x0000002a, 0x00000000, 0x00000001, 0x00000222,
+    0x0000002b, 0x00000000, 0x00000001, 0x0000022e,
+    0x0000002c, 0x00000000, 0x00000001, 0x0000023a,
+    0x0000002c, 0x00000007, 0x00000001, 0x00000246,
+    0x00000000, 0x0000027b, 0x0000025f, 0x00000000,
+    0xffffffff, 0x0000000a, 0x0000002d, 0x00000000,
+    0x00000001, 0x00000284, 0x0000002e, 0x00000000,
+    0x00000001, 0x00000290, 0x0000002f, 0x00000000,
+    0x00000001, 0x0000029c, 0x00000030, 0x00000000,
+    0x00000001, 0x000002a8, 0x00000031, 0x00000000,
+    0x00000001, 0x000002b4, 0x00000032, 0x00000000,
+    0x00000001, 0x000002c0, 0x00000033, 0x00000000,
+    0x00000001, 0x000002cc, 0x00000034, 0x00000000,
+    0x00000001, 0x000002d8, 0x00000035, 0x00000000,
+    0x00000001, 0x000002fc, 0x00000036, 0x00000000,
+    0x00000001, 0x00000308, 0x00000000, 0x00000314,
+    0x00000001, 0x00000000, 0x0000031a, 0x00000006,
+    0x00000000, 0x0000000a, 0x00000000, 0x00000001,
+    0x00000320, 0x0000000b, 0x00000000, 0x00000001,
+    0x00000344, 0x00000002, 0x00000000, 0x00000002,
+    0x000001c2, 0x00000009, 0x00000000, 0x00000001,
+    0x00000350, 0x00000001, 0x00000000, 0x00000002,
+    0x000000ea, 0x00000000, 0x00000000, 0x00000002,
+    0x00000039,
+};
+
+static void test_effect_state_groups(ID3D10Device *device)
+{
+    ID3D10EffectDepthStencilVariable *d;
+    ID3D10EffectRasterizerVariable *r;
+    ID3D10DepthStencilState *ds_state;
+    ID3D10RasterizerState *rast_state;
+    ID3D10EffectTechnique *technique;
+    D3D10_DEPTH_STENCIL_DESC ds_desc;
+    D3D10_RASTERIZER_DESC rast_desc;
+    D3D10_SAMPLER_DESC sampler_desc;
+    ID3D10EffectSamplerVariable *s;
+    ID3D10BlendState *blend_state;
+    UINT sample_mask, stencil_ref;
+    ID3D10EffectBlendVariable *b;
+    D3D10_BLEND_DESC blend_desc;
+    D3D10_PASS_DESC pass_desc;
+    ID3D10EffectVariable *v;
+    ID3D10EffectPass *pass;
+    float blend_factor[4];
+    ID3D10Effect *effect;
+    HRESULT hr;
+
+    hr = create_effect(fx_test_state_groups, 0, device, NULL, &effect);
+    todo_wine ok(SUCCEEDED(hr), "Failed to create effect, hr %#x.\n", hr);
+    if (FAILED(hr))
+        return;
+
+    v = effect->lpVtbl->GetVariableByName(effect, "sampler0");
+    s = v->lpVtbl->AsSampler(v);
+    s->lpVtbl->GetBackingStore(s, 0, &sampler_desc);
+    ok(sampler_desc.Filter == D3D10_FILTER_MIN_MAG_MIP_LINEAR, "Got unexpected Filter %#x.\n", sampler_desc.Filter);
+    ok(sampler_desc.AddressU == D3D10_TEXTURE_ADDRESS_WRAP, "Got unexpected AddressU %#x.\n", sampler_desc.AddressU);
+    ok(sampler_desc.AddressV == D3D10_TEXTURE_ADDRESS_MIRROR, "Got unexpected AddressV %#x.\n", sampler_desc.AddressV);
+    ok(sampler_desc.AddressW == D3D10_TEXTURE_ADDRESS_CLAMP, "Got unexpected AddressW %#x.\n", sampler_desc.AddressW);
+    ok(sampler_desc.MipLODBias == -1.0f, "Got unexpected MipLODBias %.8e.\n", sampler_desc.MipLODBias);
+    ok(sampler_desc.MaxAnisotropy == 4, "Got unexpected MaxAnisotropy %#x.\n", sampler_desc.MaxAnisotropy);
+    ok(sampler_desc.ComparisonFunc == D3D10_COMPARISON_ALWAYS, "Got unexpected ComparisonFunc %#x.\n",
+            sampler_desc.ComparisonFunc);
+    ok(sampler_desc.BorderColor[0] == 1.0f, "Got unexpected BorderColor[0] %.8e.\n", sampler_desc.BorderColor[0]);
+    ok(sampler_desc.BorderColor[1] == 2.0f, "Got unexpected BorderColor[1] %.8e.\n", sampler_desc.BorderColor[1]);
+    ok(sampler_desc.BorderColor[2] == 3.0f, "Got unexpected BorderColor[2] %.8e.\n", sampler_desc.BorderColor[2]);
+    ok(sampler_desc.BorderColor[3] == 4.0f, "Got unexpected BorderColor[3] %.8e.\n", sampler_desc.BorderColor[3]);
+    ok(sampler_desc.MinLOD == 6.0f, "Got unexpected MinLOD %.8e.\n", sampler_desc.MinLOD);
+    ok(sampler_desc.MaxLOD == 5.0f, "Got unexpected MaxLOD %.8e.\n", sampler_desc.MaxLOD);
+
+    v = effect->lpVtbl->GetVariableByName(effect, "blend_state");
+    b = v->lpVtbl->AsBlend(v);
+    b->lpVtbl->GetBackingStore(b, 0, &blend_desc);
+    ok(!blend_desc.AlphaToCoverageEnable, "Got unexpected AlphaToCoverageEnable %#x.\n",
+            blend_desc.AlphaToCoverageEnable);
+    ok(blend_desc.BlendEnable[0], "Got unexpected BlendEnable[0] %#x.\n", blend_desc.BlendEnable[0]);
+    ok(!blend_desc.BlendEnable[7], "Got unexpected BlendEnable[7] %#x.\n", blend_desc.BlendEnable[7]);
+    ok(blend_desc.SrcBlend == D3D10_BLEND_ONE, "Got unexpected SrcBlend %#x.\n", blend_desc.SrcBlend);
+    ok(blend_desc.DestBlend == D3D10_BLEND_SRC_COLOR, "Got unexpected DestBlend %#x.\n", blend_desc.DestBlend);
+    ok(blend_desc.BlendOp == D3D10_BLEND_OP_MIN, "Got unexpected BlendOp %#x.\n", blend_desc.BlendOp);
+    ok(blend_desc.SrcBlendAlpha == D3D10_BLEND_SRC_ALPHA, "Got unexpected SrcBlendAlpha %#x.\n",
+            blend_desc.SrcBlendAlpha);
+    ok(blend_desc.DestBlendAlpha == D3D10_BLEND_INV_SRC_ALPHA, "Got unexpected DestBlendAlpha %#x.\n",
+            blend_desc.DestBlendAlpha);
+    ok(blend_desc.BlendOpAlpha == D3D10_BLEND_OP_MAX, "Got unexpected BlendOpAlpha %#x.\n", blend_desc.BlendOpAlpha);
+    ok(blend_desc.RenderTargetWriteMask[0] == 0x8, "Got unexpected RenderTargetWriteMask[0] %#x.\n",
+            blend_desc.RenderTargetWriteMask[0]);
+    ok(blend_desc.RenderTargetWriteMask[7] == 0x7, "Got unexpected RenderTargetWriteMask[7] %#x.\n",
+            blend_desc.RenderTargetWriteMask[7]);
+
+    v = effect->lpVtbl->GetVariableByName(effect, "ds_state");
+    d = v->lpVtbl->AsDepthStencil(v);
+    d->lpVtbl->GetBackingStore(d, 0, &ds_desc);
+    ok(!ds_desc.DepthEnable, "Got unexpected DepthEnable %#x.\n", ds_desc.DepthEnable);
+    ok(ds_desc.DepthWriteMask == D3D10_DEPTH_WRITE_MASK_ZERO, "Got unexpected DepthWriteMask %#x.\n",
+            ds_desc.DepthWriteMask);
+    ok(ds_desc.DepthFunc == D3D10_COMPARISON_EQUAL, "Got unexpected DepthFunc %#x.\n", ds_desc.DepthFunc);
+    ok(ds_desc.StencilEnable, "Got unexpected StencilEnable %#x.\n", ds_desc.StencilEnable);
+    ok(ds_desc.StencilReadMask == 0x4, "Got unexpected StencilReadMask %#x.\n", ds_desc.StencilReadMask);
+    ok(ds_desc.StencilWriteMask == 0x5, "Got unexpected StencilWriteMask %#x.\n", ds_desc.StencilWriteMask);
+    ok(ds_desc.FrontFace.StencilFailOp == D3D10_STENCIL_OP_INVERT, "Got unexpected FrontFaceStencilFail %#x.\n",
+            ds_desc.FrontFace.StencilFailOp);
+    ok(ds_desc.FrontFace.StencilDepthFailOp == D3D10_STENCIL_OP_INCR,
+            "Got unexpected FrontFaceStencilDepthFail %#x.\n", ds_desc.FrontFace.StencilDepthFailOp);
+    ok(ds_desc.FrontFace.StencilPassOp == D3D10_STENCIL_OP_DECR, "Got unexpected FrontFaceStencilPass %#x.\n",
+            ds_desc.FrontFace.StencilPassOp);
+    ok(ds_desc.FrontFace.StencilFunc == D3D10_COMPARISON_LESS_EQUAL, "Got unexpected FrontFaceStencilFunc %#x.\n",
+            ds_desc.FrontFace.StencilFunc);
+    ok(ds_desc.BackFace.StencilFailOp == D3D10_STENCIL_OP_REPLACE, "Got unexpected BackFaceStencilFail %#x.\n",
+            ds_desc.BackFace.StencilFailOp);
+    ok(ds_desc.BackFace.StencilDepthFailOp == D3D10_STENCIL_OP_INCR_SAT,
+            "Got unexpected BackFaceStencilDepthFail %#x.\n", ds_desc.BackFace.StencilDepthFailOp);
+    ok(ds_desc.BackFace.StencilPassOp == D3D10_STENCIL_OP_DECR_SAT, "Got unexpected BackFaceStencilPass %#x.\n",
+            ds_desc.BackFace.StencilPassOp);
+    ok(ds_desc.BackFace.StencilFunc == D3D10_COMPARISON_GREATER_EQUAL, "Got unexpected BackFaceStencilFunc %#x.\n",
+            ds_desc.BackFace.StencilFunc);
+
+    v = effect->lpVtbl->GetVariableByName(effect, "rast_state");
+    r = v->lpVtbl->AsRasterizer(v);
+    r->lpVtbl->GetBackingStore(r, 0, &rast_desc);
+    ok(rast_desc.FillMode == D3D10_FILL_WIREFRAME, "Got unexpected FillMode %#x.\n", rast_desc.FillMode);
+    ok(rast_desc.CullMode == D3D10_CULL_FRONT, "Got unexpected CullMode %#x.\n", rast_desc.CullMode);
+    ok(rast_desc.FrontCounterClockwise, "Got unexpected FrontCounterClockwise %#x.\n",
+            rast_desc.FrontCounterClockwise);
+    ok(rast_desc.DepthBias == -4, "Got unexpected DepthBias %#x.\n", rast_desc.DepthBias);
+    ok(rast_desc.DepthBiasClamp == 0.5f, "Got unexpected DepthBiasClamp %.8e.\n", rast_desc.DepthBiasClamp);
+    ok(rast_desc.SlopeScaledDepthBias == 0.25f, "Got unexpected SlopeScaledDepthBias %.8e.\n",
+            rast_desc.SlopeScaledDepthBias);
+    ok(!rast_desc.DepthClipEnable, "Got unexpected DepthClipEnable %#x.\n", rast_desc.DepthClipEnable);
+    ok(rast_desc.ScissorEnable, "Got unexpected ScissorEnable %#x.\n", rast_desc.ScissorEnable);
+    ok(rast_desc.MultisampleEnable, "Got unexpected MultisampleEnable %#x.\n", rast_desc.MultisampleEnable);
+    ok(rast_desc.AntialiasedLineEnable, "Got unexpected AntialiasedLineEnable %#x.\n",
+            rast_desc.AntialiasedLineEnable);
+
+    technique = effect->lpVtbl->GetTechniqueByName(effect, "tech0");
+    ok(!!technique, "Failed to get technique.\n");
+    pass = technique->lpVtbl->GetPassByName(technique, "pass0");
+    ok(!!pass, "Failed to get pass.\n");
+    hr = pass->lpVtbl->GetDesc(pass, &pass_desc);
+    ok(SUCCEEDED(hr), "Failed to get pass desc, hr %#x.\n", hr);
+    ok(!strcmp(pass_desc.Name, "pass0"), "Got unexpected Name \"%s\".\n", pass_desc.Name);
+    ok(!pass_desc.Annotations, "Got unexpected Annotations %#x.\n", pass_desc.Annotations);
+    ok(!pass_desc.pIAInputSignature, "Got unexpected pIAInputSignature %p.\n", pass_desc.pIAInputSignature);
+    ok(pass_desc.StencilRef == 1, "Got unexpected StencilRef %#x.\n", pass_desc.StencilRef);
+    ok(pass_desc.SampleMask == 0xffff, "Got unexpected SampleMask %#x.\n", pass_desc.SampleMask);
+    ok(pass_desc.BlendFactor[0] == 0.5f, "Got unexpected BlendFactor[0] %.8e.\n", pass_desc.BlendFactor[0]);
+    ok(pass_desc.BlendFactor[1] == 0.6f, "Got unexpected BlendFactor[1] %.8e.\n", pass_desc.BlendFactor[1]);
+    ok(pass_desc.BlendFactor[2] == 0.7f, "Got unexpected BlendFactor[2] %.8e.\n", pass_desc.BlendFactor[2]);
+    ok(pass_desc.BlendFactor[3] == 0.8f, "Got unexpected BlendFactor[3] %.8e.\n", pass_desc.BlendFactor[3]);
+    hr = pass->lpVtbl->Apply(pass, 0);
+    ok(SUCCEEDED(hr), "Failed to apply pass, hr %#x.\n", hr);
+
+    ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
+    ID3D10BlendState_GetDesc(blend_state, &blend_desc);
+    ok(!blend_desc.AlphaToCoverageEnable, "Got unexpected AlphaToCoverageEnable %#x.\n",
+            blend_desc.AlphaToCoverageEnable);
+    ok(blend_desc.BlendEnable[0], "Got unexpected BlendEnable[0] %#x.\n", blend_desc.BlendEnable[0]);
+    ok(!blend_desc.BlendEnable[7], "Got unexpected BlendEnable[7] %#x.\n", blend_desc.BlendEnable[7]);
+    ok(blend_desc.SrcBlend == D3D10_BLEND_ONE, "Got unexpected SrcBlend %#x.\n", blend_desc.SrcBlend);
+    ok(blend_desc.DestBlend == D3D10_BLEND_SRC_COLOR, "Got unexpected DestBlend %#x.\n", blend_desc.DestBlend);
+    ok(blend_desc.BlendOp == D3D10_BLEND_OP_MIN, "Got unexpected BlendOp %#x.\n", blend_desc.BlendOp);
+    ok(blend_desc.SrcBlendAlpha == D3D10_BLEND_SRC_ALPHA, "Got unexpected SrcBlendAlpha %#x.\n",
+            blend_desc.SrcBlendAlpha);
+    ok(blend_desc.DestBlendAlpha == D3D10_BLEND_INV_SRC_ALPHA, "Got unexpected DestBlendAlpha %#x.\n",
+            blend_desc.DestBlendAlpha);
+    ok(blend_desc.BlendOpAlpha == D3D10_BLEND_OP_MAX, "Got unexpected BlendOpAlpha %#x.\n", blend_desc.BlendOpAlpha);
+    ok(blend_desc.RenderTargetWriteMask[0] == 0x8, "Got unexpected RenderTargetWriteMask[0] %#x.\n",
+            blend_desc.RenderTargetWriteMask[0]);
+    ok(blend_desc.RenderTargetWriteMask[7] == 0x7, "Got unexpected RenderTargetWriteMask[7] %#x.\n",
+            blend_desc.RenderTargetWriteMask[7]);
+    ok(blend_factor[0] == 0.5f, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
+    ok(blend_factor[1] == 0.6f, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
+    ok(blend_factor[2] == 0.7f, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
+    ok(blend_factor[3] == 0.8f, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
+    ok(sample_mask == 0xffff, "Got unexpected sample_mask %#x.\n", sample_mask);
+
+    ID3D10Device_OMGetDepthStencilState(device, &ds_state, &stencil_ref);
+    ID3D10DepthStencilState_GetDesc(ds_state, &ds_desc);
+    ok(!ds_desc.DepthEnable, "Got unexpected DepthEnable %#x.\n", ds_desc.DepthEnable);
+    ok(ds_desc.DepthWriteMask == D3D10_DEPTH_WRITE_MASK_ZERO, "Got unexpected DepthWriteMask %#x.\n",
+            ds_desc.DepthWriteMask);
+    ok(ds_desc.DepthFunc == D3D10_COMPARISON_NEVER, "Got unexpected DepthFunc %#x.\n", ds_desc.DepthFunc);
+    ok(ds_desc.StencilEnable, "Got unexpected StencilEnable %#x.\n", ds_desc.StencilEnable);
+    ok(ds_desc.StencilReadMask == 0x4, "Got unexpected StencilReadMask %#x.\n", ds_desc.StencilReadMask);
+    ok(ds_desc.StencilWriteMask == 0x5, "Got unexpected StencilWriteMask %#x.\n", ds_desc.StencilWriteMask);
+    ok(ds_desc.FrontFace.StencilFailOp == D3D10_STENCIL_OP_INVERT, "Got unexpected FrontFaceStencilFail %#x.\n",
+            ds_desc.FrontFace.StencilFailOp);
+    ok(ds_desc.FrontFace.StencilDepthFailOp == D3D10_STENCIL_OP_INCR,
+            "Got unexpected FrontFaceStencilDepthFail %#x.\n", ds_desc.FrontFace.StencilDepthFailOp);
+    ok(ds_desc.FrontFace.StencilPassOp == D3D10_STENCIL_OP_DECR, "Got unexpected FrontFaceStencilPass %#x.\n",
+            ds_desc.FrontFace.StencilPassOp);
+    ok(ds_desc.FrontFace.StencilFunc == D3D10_COMPARISON_LESS_EQUAL, "Got unexpected FrontFaceStencilFunc %#x.\n",
+            ds_desc.FrontFace.StencilFunc);
+    ok(ds_desc.BackFace.StencilFailOp == D3D10_STENCIL_OP_REPLACE, "Got unexpected BackFaceStencilFail %#x.\n",
+            ds_desc.BackFace.StencilFailOp);
+    ok(ds_desc.BackFace.StencilDepthFailOp == D3D10_STENCIL_OP_INCR_SAT,
+            "Got unexpected BackFaceStencilDepthFail %#x.\n", ds_desc.BackFace.StencilDepthFailOp);
+    ok(ds_desc.BackFace.StencilPassOp == D3D10_STENCIL_OP_DECR_SAT, "Got unexpected BackFaceStencilPass %#x.\n",
+            ds_desc.BackFace.StencilPassOp);
+    ok(ds_desc.BackFace.StencilFunc == D3D10_COMPARISON_GREATER_EQUAL, "Got unexpected BackFaceStencilFunc %#x.\n",
+            ds_desc.BackFace.StencilFunc);
+    ok(stencil_ref == 1, "Got unexpected stencil_ref %#x.\n", stencil_ref);
+
+    ID3D10Device_RSGetState(device, &rast_state);
+    ID3D10RasterizerState_GetDesc(rast_state, &rast_desc);
+    ok(rast_desc.FillMode == D3D10_FILL_WIREFRAME, "Got unexpected FillMode %#x.\n", rast_desc.FillMode);
+    ok(rast_desc.CullMode == D3D10_CULL_FRONT, "Got unexpected CullMode %#x.\n", rast_desc.CullMode);
+    ok(rast_desc.FrontCounterClockwise, "Got unexpected FrontCounterClockwise %#x.\n",
+            rast_desc.FrontCounterClockwise);
+    ok(rast_desc.DepthBias == -4, "Got unexpected DepthBias %#x.\n", rast_desc.DepthBias);
+    ok(rast_desc.DepthBiasClamp == 0.5f, "Got unexpected DepthBiasClamp %.8e.\n", rast_desc.DepthBiasClamp);
+    ok(rast_desc.SlopeScaledDepthBias == 0.25f, "Got unexpected SlopeScaledDepthBias %.8e.\n",
+            rast_desc.SlopeScaledDepthBias);
+    ok(!rast_desc.DepthClipEnable, "Got unexpected DepthClipEnable %#x.\n", rast_desc.DepthClipEnable);
+    ok(rast_desc.ScissorEnable, "Got unexpected ScissorEnable %#x.\n", rast_desc.ScissorEnable);
+    ok(rast_desc.MultisampleEnable, "Got unexpected MultisampleEnable %#x.\n", rast_desc.MultisampleEnable);
+    ok(rast_desc.AntialiasedLineEnable, "Got unexpected AntialiasedLineEnable %#x.\n",
+            rast_desc.AntialiasedLineEnable);
+
+    ID3D10RasterizerState_Release(rast_state);
+    ID3D10DepthStencilState_Release(ds_state);
+    ID3D10BlendState_Release(blend_state);
+    effect->lpVtbl->Release(effect);
+}
+
 START_TEST(effect)
 {
     ID3D10Device *device;
@@ -3619,6 +4017,7 @@ START_TEST(effect)
     test_effect_constant_buffer_stride(device);
     test_effect_local_shader(device);
     test_effect_get_variable_by(device);
+    test_effect_state_groups(device);
 
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left\n", refcount);
