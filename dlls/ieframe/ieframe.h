@@ -34,7 +34,7 @@
 #include "mshtmhst.h"
 #include "exdisp.h"
 #include "hlink.h"
-#include "htiframe.h"
+#include "htiface.h"
 #include "shdeprecated.h"
 #include "docobjectservice.h"
 
@@ -57,6 +57,7 @@ typedef struct {
 typedef struct {
     IHlinkFrame    IHlinkFrame_iface;
     ITargetFrame2  ITargetFrame2_iface;
+    ITargetFramePriv2 ITargetFramePriv2_iface;
 
     IUnknown *outer;
     DocHost *doc_host;

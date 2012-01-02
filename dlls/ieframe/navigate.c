@@ -1229,6 +1229,97 @@ static const ITargetFrame2Vtbl TargetFrame2Vtbl = {
     TargetFrame2_GetTargetAlias
 };
 
+static inline HlinkFrame *impl_from_ITargetFramePriv2(ITargetFramePriv2 *iface)
+{
+    return CONTAINING_RECORD(iface, HlinkFrame, ITargetFramePriv2_iface);
+}
+
+static HRESULT WINAPI TargetFramePriv2_QueryInterface(ITargetFramePriv2 *iface, REFIID riid, void **ppv)
+{
+    HlinkFrame *This = impl_from_ITargetFramePriv2(iface);
+    return IUnknown_QueryInterface(This->outer, riid, ppv);
+}
+
+static ULONG WINAPI TargetFramePriv2_AddRef(ITargetFramePriv2 *iface)
+{
+    HlinkFrame *This = impl_from_ITargetFramePriv2(iface);
+    return IUnknown_AddRef(This->outer);
+}
+
+static ULONG WINAPI TargetFramePriv2_Release(ITargetFramePriv2 *iface)
+{
+    HlinkFrame *This = impl_from_ITargetFramePriv2(iface);
+    return IUnknown_Release(This->outer);
+}
+
+static HRESULT WINAPI TargetFramePriv2_FindFrameDownwards(ITargetFramePriv2 *iface,
+        LPCWSTR pszTargetName, DWORD dwFlags, IUnknown **ppunkTargetFrame)
+{
+    HlinkFrame *This = impl_from_ITargetFramePriv2(iface);
+    FIXME("(%p)->(%s %x %p)\n", This, debugstr_w(pszTargetName), dwFlags, ppunkTargetFrame);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TargetFramePriv2_FindFrameInContext(ITargetFramePriv2 *iface,
+        LPCWSTR pszTargetName, IUnknown *punkContextFrame, DWORD dwFlags, IUnknown **ppunkTargetFrame)
+{
+    HlinkFrame *This = impl_from_ITargetFramePriv2(iface);
+    FIXME("(%p)->(%s %p %x %p)\n", This, debugstr_w(pszTargetName), punkContextFrame, dwFlags, ppunkTargetFrame);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TargetFramePriv2_OnChildFrameActivate(ITargetFramePriv2 *iface, IUnknown *pUnkChildFrame)
+{
+    HlinkFrame *This = impl_from_ITargetFramePriv2(iface);
+    FIXME("(%p)->(%p)\n", This, pUnkChildFrame);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TargetFramePriv2_OnChildFrameDeactivate(ITargetFramePriv2 *iface, IUnknown *pUnkChildFrame)
+{
+    HlinkFrame *This = impl_from_ITargetFramePriv2(iface);
+    FIXME("(%p)->(%p)\n", This, pUnkChildFrame);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TargetFramePriv2_NavigateHack(ITargetFramePriv2 *iface, DWORD grfHLNF, LPBC pbc,
+        IBindStatusCallback *pibsc, LPCWSTR pszTargetName, LPCWSTR pszUrl, LPCWSTR pszLocation)
+{
+    HlinkFrame *This = impl_from_ITargetFramePriv2(iface);
+    FIXME("(%p)->(%x %p %p %s %s %s)\n", This, grfHLNF, pbc, pibsc, debugstr_w(pszTargetName),
+          debugstr_w(pszUrl), debugstr_w(pszLocation));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TargetFramePriv2_FindBrowserByIndex(ITargetFramePriv2 *iface, DWORD dwID, IUnknown **ppunkBrowser)
+{
+    HlinkFrame *This = impl_from_ITargetFramePriv2(iface);
+    FIXME("(%p)->(%d %p)\n", This, dwID, ppunkBrowser);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TargetFramePriv2_AggregatedNavigation2(ITargetFramePriv2 *iface, DWORD grfHLNF, LPBC pbc,
+        IBindStatusCallback *pibsc, LPCWSTR pszTargetName, IUri *pUri, LPCWSTR pszLocation)
+{
+    HlinkFrame *This = impl_from_ITargetFramePriv2(iface);
+    FIXME("(%p)->(%x %p %p %s %p %s)\n", This, grfHLNF, pbc, pibsc, debugstr_w(pszTargetName),
+          pUri, debugstr_w(pszLocation));
+    return E_NOTIMPL;
+}
+
+static const ITargetFramePriv2Vtbl TargetFramePriv2Vtbl = {
+    TargetFramePriv2_QueryInterface,
+    TargetFramePriv2_AddRef,
+    TargetFramePriv2_Release,
+    TargetFramePriv2_FindFrameDownwards,
+    TargetFramePriv2_FindFrameInContext,
+    TargetFramePriv2_OnChildFrameActivate,
+    TargetFramePriv2_OnChildFrameDeactivate,
+    TargetFramePriv2_NavigateHack,
+    TargetFramePriv2_FindBrowserByIndex,
+    TargetFramePriv2_AggregatedNavigation2
+};
+
 BOOL HlinkFrame_QI(HlinkFrame *This, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IHlinkFrame, riid)) {
@@ -1237,6 +1328,12 @@ BOOL HlinkFrame_QI(HlinkFrame *This, REFIID riid, void **ppv)
     }else if(IsEqualGUID(&IID_ITargetFrame2, riid)) {
         TRACE("(%p)->(IID_ITargetFrame2 %p)\n", This, ppv);
         *ppv = &This->ITargetFrame2_iface;
+    }else if(IsEqualGUID(&IID_ITargetFramePriv, riid)) {
+        TRACE("(%p)->(IID_ITargetFramePriv %p)\n", This, ppv);
+        *ppv = &This->ITargetFramePriv2_iface;
+    }else if(IsEqualGUID(&IID_ITargetFramePriv2, riid)) {
+        TRACE("(%p)->(IID_ITargetFramePriv2 %p)\n", This, ppv);
+        *ppv = &This->ITargetFramePriv2_iface;
     }else {
         return FALSE;
     }
@@ -1249,6 +1346,7 @@ void HlinkFrame_Init(HlinkFrame *This, IUnknown *outer, DocHost *doc_host)
 {
     This->IHlinkFrame_iface.lpVtbl   = &HlinkFrameVtbl;
     This->ITargetFrame2_iface.lpVtbl = &TargetFrame2Vtbl;
+    This->ITargetFramePriv2_iface.lpVtbl = &TargetFramePriv2Vtbl;
 
     This->outer = outer;
     This->doc_host = doc_host;
