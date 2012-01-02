@@ -571,10 +571,8 @@ HRESULT to_string(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, BSTR *str)
     case VT_I4:
         *str = int_to_bstr(V_I4(v));
         break;
-    case VT_R8: {
+    case VT_R8:
         return double_to_bstr(V_R8(v), str);
-        break;
-    }
     case VT_BSTR:
         *str = SysAllocString(V_BSTR(v));
         break;
