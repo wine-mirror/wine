@@ -1158,14 +1158,40 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6800,         "AMD Radeon HD 6800 Series",        DRIVER_AMD_R600,         1024},
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD6900,         "AMD Radeon HD 6900 Series",        DRIVER_AMD_R600,         2048},
     /* Intel cards */
-    {HW_VENDOR_INTEL,      CARD_INTEL_I830G,               "Intel(R) 82830M Graphics Controller",                       DRIVER_INTEL_GMA800,  32 },
-    {HW_VENDOR_INTEL,      CARD_INTEL_I855G,               "Intel(R) 82852/82855 GM/GME Graphics Controller",           DRIVER_INTEL_GMA800,  32 },
-    {HW_VENDOR_INTEL,      CARD_INTEL_I865G,               "Intel(R) 82865G Graphics Controller",                       DRIVER_INTEL_GMA800,  32 },
-    {HW_VENDOR_INTEL,      CARD_INTEL_I915G,               "Intel(R) 82915G/GV/910GL Express Chipset Family",           DRIVER_INTEL_GMA900,  64 },
-    {HW_VENDOR_INTEL,      CARD_INTEL_I915GM,              "Mobile Intel(R) 915GM/GMS,910GML Express Chipset Family",   DRIVER_INTEL_GMA900,  64 },
-    {HW_VENDOR_INTEL,      CARD_INTEL_I945GM,              "Mobile Intel(R) 945GM Express Chipset Family",              DRIVER_INTEL_GMA950,  64 },
-    {HW_VENDOR_INTEL,      CARD_INTEL_X3100,               "Mobile Intel(R) 965 Express Chipset Family",                DRIVER_INTEL_GMA3000, 128},
-    {HW_VENDOR_INTEL,      CARD_INTEL_GM45,                "Mobile Intel(R) GM45 Express Chipset Family",               DRIVER_INTEL_GMA3000, 512}
+    {HW_VENDOR_INTEL,      CARD_INTEL_830M,                "Intel(R) 82830M Graphics Controller",                       DRIVER_INTEL_GMA800,  32 },
+    {HW_VENDOR_INTEL,      CARD_INTEL_855GM,               "Intel(R) 82852/82855 GM/GME Graphics Controller",           DRIVER_INTEL_GMA800,  32 },
+    {HW_VENDOR_INTEL,      CARD_INTEL_845G,                "Intel(R) 845G",                                             DRIVER_INTEL_GMA800,  32 },
+    {HW_VENDOR_INTEL,      CARD_INTEL_865G,                "Intel(R) 82865G Graphics Controller",                       DRIVER_INTEL_GMA800,  32 },
+    {HW_VENDOR_INTEL,      CARD_INTEL_915G,                "Intel(R) 82915G/GV/910GL Express Chipset Family",           DRIVER_INTEL_GMA900,  64 },
+    {HW_VENDOR_INTEL,      CARD_INTEL_E7221G,              "Intel(R) E7221G",                                           DRIVER_INTEL_GMA900,  64 },
+    {HW_VENDOR_INTEL,      CARD_INTEL_915GM,               "Mobile Intel(R) 915GM/GMS,910GML Express Chipset Family",   DRIVER_INTEL_GMA900,  64 },
+    {HW_VENDOR_INTEL,      CARD_INTEL_945G,                "Intel(R) 945G",                                             DRIVER_INTEL_GMA950,  64 },
+    {HW_VENDOR_INTEL,      CARD_INTEL_945GM,               "Mobile Intel(R) 945GM Express Chipset Family",              DRIVER_INTEL_GMA950,  64 },
+    {HW_VENDOR_INTEL,      CARD_INTEL_945GME,              "Intel(R) 945GME",                                           DRIVER_INTEL_GMA950,  64 },
+    {HW_VENDOR_INTEL,      CARD_INTEL_Q35,                 "Intel(R) Q35",                                              DRIVER_INTEL_GMA950,  64 },
+    {HW_VENDOR_INTEL,      CARD_INTEL_G33,                 "Intel(R) G33",                                              DRIVER_INTEL_GMA950,  64 },
+    {HW_VENDOR_INTEL,      CARD_INTEL_Q33,                 "Intel(R) Q33",                                              DRIVER_INTEL_GMA950,  64 },
+    {HW_VENDOR_INTEL,      CARD_INTEL_PNVG,                "Intel(R) IGD",                                              DRIVER_INTEL_GMA950,  64 },
+    {HW_VENDOR_INTEL,      CARD_INTEL_PNVM,                "Intel(R) IGD",                                              DRIVER_INTEL_GMA950,  64 },
+    {HW_VENDOR_INTEL,      CARD_INTEL_965Q,                "Intel(R) 965Q",                                             DRIVER_INTEL_GMA3000, 128},
+    {HW_VENDOR_INTEL,      CARD_INTEL_965G,                "Intel(R) 965G",                                             DRIVER_INTEL_GMA3000, 128},
+    {HW_VENDOR_INTEL,      CARD_INTEL_946GZ,               "Intel(R) 946GZ",                                            DRIVER_INTEL_GMA3000, 128},
+    {HW_VENDOR_INTEL,      CARD_INTEL_965GM,               "Mobile Intel(R) 965 Express Chipset Family",                DRIVER_INTEL_GMA3000, 128},
+    {HW_VENDOR_INTEL,      CARD_INTEL_965GME,              "Intel(R) 965GME",                                           DRIVER_INTEL_GMA3000, 128},
+    {HW_VENDOR_INTEL,      CARD_INTEL_GM45,                "Mobile Intel(R) GM45 Express Chipset Family",               DRIVER_INTEL_GMA3000, 512},
+    {HW_VENDOR_INTEL,      CARD_INTEL_IGD,                 "Intel(R) Integrated Graphics Device",                       DRIVER_INTEL_GMA3000, 512},
+    {HW_VENDOR_INTEL,      CARD_INTEL_G45,                 "Intel(R) G45/G43",                                          DRIVER_INTEL_GMA3000, 512},
+    {HW_VENDOR_INTEL,      CARD_INTEL_Q45,                 "Intel(R) Q45/Q43",                                          DRIVER_INTEL_GMA3000, 512},
+    {HW_VENDOR_INTEL,      CARD_INTEL_G41,                 "Intel(R) G41",                                              DRIVER_INTEL_GMA3000, 512},
+    {HW_VENDOR_INTEL,      CARD_INTEL_B43,                 "Intel(R) B43",                                              DRIVER_INTEL_GMA3000, 512},
+    {HW_VENDOR_INTEL,      CARD_INTEL_ILKD,                "Intel(R) Ironlake Desktop",                                 DRIVER_INTEL_GMA3000, 1024},
+    {HW_VENDOR_INTEL,      CARD_INTEL_ILKM,                "Intel(R) Ironlake Mobile",                                  DRIVER_INTEL_GMA3000, 1024},
+    {HW_VENDOR_INTEL,      CARD_INTEL_SNBD,                "Intel(R) Sandybridge Desktop",                              DRIVER_INTEL_GMA3000, 1024},
+    {HW_VENDOR_INTEL,      CARD_INTEL_SNBM,                "Intel(R) Sandybridge Mobile",                               DRIVER_INTEL_GMA3000, 1024},
+    {HW_VENDOR_INTEL,      CARD_INTEL_SNBS,                "Intel(R) Sandybridge Server",                               DRIVER_INTEL_GMA3000, 1024},
+    {HW_VENDOR_INTEL,      CARD_INTEL_IVBD,                "Intel(R) Ivybridge Desktop",                                DRIVER_INTEL_GMA3000, 1024},
+    {HW_VENDOR_INTEL,      CARD_INTEL_IVBM,                "Intel(R) Ivybridge Mobile",                                 DRIVER_INTEL_GMA3000, 1024},
+    {HW_VENDOR_INTEL,      CARD_INTEL_IVBS,                "Intel(R) Ivybridge Server",                                 DRIVER_INTEL_GMA3000, 1024},
 };
 
 static const struct driver_version_information *get_driver_version_info(enum wined3d_display_driver driver,
@@ -1794,26 +1820,69 @@ static enum wined3d_pci_device select_card_amd_binary(const struct wined3d_gl_in
 static enum wined3d_pci_device select_card_intel(const struct wined3d_gl_info *gl_info,
         const char *gl_renderer)
 {
-    if (strstr(gl_renderer, "GM45")) return CARD_INTEL_GM45;
-    if (strstr(gl_renderer, "X3100") || strstr(gl_renderer, "965GM"))
+    unsigned int i;
+
+    static const struct
     {
-        /* MacOS calls the card GMA X3100, otherwise known as GM965/GL960 */
-        return CARD_INTEL_X3100;
+        const char *renderer;
+        enum wined3d_pci_device id;
+    }
+    cards[] =
+    {
+        /* Ivybridge */
+        {"Ivybridge Server",            CARD_INTEL_IVBS},
+        {"Ivybridge Mobile",            CARD_INTEL_IVBM},
+        {"Ivybridge Desktop",           CARD_INTEL_IVBD},
+        /* Sandybridge */
+        {"Sandybridge Server",          CARD_INTEL_SNBS},
+        {"Sandybridge Mobile",          CARD_INTEL_SNBM},
+        {"Sandybridge Desktop",         CARD_INTEL_SNBD},
+        /* Ironlake */
+        {"Ironlake Mobile",             CARD_INTEL_ILKM},
+        {"Ironlake Desktop",            CARD_INTEL_ILKD},
+        /* G4x */
+        {"B43",                         CARD_INTEL_B43},
+        {"G41",                         CARD_INTEL_G41},
+        {"G45",                         CARD_INTEL_G45},
+        {"Q45",                         CARD_INTEL_Q45},
+        {"Integrated Graphics Device",  CARD_INTEL_IGD},
+        {"GM45",                        CARD_INTEL_GM45},
+        /* i965 */
+        {"965GME",                      CARD_INTEL_965GME},
+        {"965GM",                       CARD_INTEL_965GM},
+        {"X3100",                       CARD_INTEL_965GM},  /* MacOS */
+        {"946GZ",                       CARD_INTEL_946GZ},
+        {"965G",                        CARD_INTEL_965G},
+        {"965Q",                        CARD_INTEL_965Q},
+        /* i945 */
+        {"Pineview M",                  CARD_INTEL_PNVM},
+        {"Pineview G",                  CARD_INTEL_PNVG},
+        {"IGD",                         CARD_INTEL_PNVG},
+        {"Q33",                         CARD_INTEL_Q33},
+        {"G33",                         CARD_INTEL_G33},
+        {"Q35",                         CARD_INTEL_Q35},
+        {"945GME",                      CARD_INTEL_945GME},
+        {"945GM",                       CARD_INTEL_945GM},
+        {"GMA 950",                     CARD_INTEL_945GM},  /* MacOS */
+        {"945G",                        CARD_INTEL_945G},
+        /* i915 */
+        {"915GM",                       CARD_INTEL_915GM},
+        {"E7221G",                      CARD_INTEL_E7221G},
+        {"915G",                        CARD_INTEL_915G},
+        /* i8xx */
+        {"865G",                        CARD_INTEL_865G},
+        {"845G",                        CARD_INTEL_845G},
+        {"855GM",                       CARD_INTEL_855GM},
+        {"830M",                        CARD_INTEL_830M},
+    };
+
+    for (i = 0; i < sizeof(cards) / sizeof(*cards); ++i)
+    {
+        if (strstr(gl_renderer, cards[i].renderer))
+            return cards[i].id;
     }
 
-    if (strstr(gl_renderer, "GMA 950") || strstr(gl_renderer, "945GM"))
-    {
-        /* MacOS calls the card GMA 950, but everywhere else the PCI ID is named 945GM */
-        return CARD_INTEL_I945GM;
-    }
-
-    if (strstr(gl_renderer, "915GM")) return CARD_INTEL_I915GM;
-    if (strstr(gl_renderer, "915G")) return CARD_INTEL_I915G;
-    if (strstr(gl_renderer, "865G")) return CARD_INTEL_I865G;
-    if (strstr(gl_renderer, "855G")) return CARD_INTEL_I855G;
-    if (strstr(gl_renderer, "830G")) return CARD_INTEL_I830G;
-    return CARD_INTEL_I915G;
-
+    return CARD_INTEL_915G;
 }
 
 static enum wined3d_pci_device select_card_amd_mesa(const struct wined3d_gl_info *gl_info,
