@@ -481,7 +481,6 @@ typedef enum {
 
 struct _expression_t {
     expression_type_t type;
-    unsigned instr_off;
 };
 
 struct _parameter_t {
