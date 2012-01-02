@@ -34,11 +34,12 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 static void test_wshshell(void)
 {
     static const WCHAR desktopW[] = {'D','e','s','k','t','o','p',0};
+    static const WCHAR lnk1W[] = {'f','i','l','e','.','l','n','k',0};
     IWshShell3 *sh3;
     IDispatchEx *dispex;
     IWshCollection *coll;
-    IDispatch *disp;
-    IUnknown *shell;
+    IDispatch *disp, *shortcut;
+    IUnknown *shell, *unk;
     IFolderCollection *folders;
     ITypeInfo *ti;
     HRESULT hr;
@@ -98,9 +99,19 @@ static void test_wshshell(void)
     V_VT(&res) = VT_EMPTY;
     hr = IWshCollection_Item(coll, &arg, &res);
     EXPECT_HR(hr, S_OK);
-    SysFreeString(str);
     ok(V_VT(&res) == VT_BSTR, "got res type %d\n", V_VT(&res));
+    SysFreeString(str);
     VariantClear(&res);
+
+    /* CreateShortcut() */
+    str = SysAllocString(lnk1W);
+    hr = IWshShell3_CreateShortcut(sh3, str, &shortcut);
+    EXPECT_HR(hr, S_OK);
+    SysFreeString(str);
+    hr = IDispatch_QueryInterface(shortcut, &IID_IWshShortcut, (void**)&unk);
+    EXPECT_HR(hr, S_OK);
+    IUnknown_Release(unk);
+    IDispatch_Release(shortcut);
 
     IWshCollection_Release(coll);
     IDispatch_Release(disp);

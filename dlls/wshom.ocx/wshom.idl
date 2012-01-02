@@ -444,6 +444,68 @@ library IWshRuntimeLibrary
     };
 
     [
+        uuid(f935dc23-1cf0-11d0-adb9-00c04fd58a0b),
+        odl,
+        dual,
+        oleautomation
+    ]
+    interface IWshShortcut : IDispatch {
+        [id(DISPID_VALUE), propget]
+        HRESULT FullName([out, retval] BSTR* name);
+
+        [id(0x03e8), propget]
+        HRESULT Arguments([out, retval] BSTR* Arguments);
+
+        [id(0x03e8), propput]
+        HRESULT Arguments([in] BSTR Arguments);
+
+        [id(0x03e9), propget]
+        HRESULT Description([out, retval] BSTR* Description);
+
+        [id(0x03e9), propput]
+        HRESULT Description([in] BSTR Description);
+
+        [id(0x03ea), propget]
+        HRESULT Hotkey([out, retval] BSTR* HotKey);
+
+        [id(0x03ea), propput]
+        HRESULT Hotkey([in] BSTR HotKey);
+
+        [id(0x03eb), propget]
+        HRESULT IconLocation([out, retval] BSTR* IconPath);
+
+        [id(0x03eb), propput]
+        HRESULT IconLocation([in] BSTR IconPath);
+
+        [id(0x03ec), propput]
+        HRESULT RelativePath([in] BSTR rhs);
+
+        [id(0x03ed), propget]
+        HRESULT TargetPath([out, retval] BSTR* Path);
+
+        [id(0x03ed), propput]
+        HRESULT TargetPath([in] BSTR Path);
+
+        [id(0x03ee), propget]
+        HRESULT WindowStyle([out, retval] int* ShowCmd);
+
+        [id(0x03ee), propput]
+        HRESULT WindowStyle([in] int ShowCmd);
+
+        [id(0x03ef), propget]
+        HRESULT WorkingDirectory([out, retval] BSTR* WorkingDirectory);
+
+        [id(0x03ef), propput]
+        HRESULT WorkingDirectory([in] BSTR WorkingDirectory);
+
+        [id(0x07d0), hidden]
+        HRESULT Load([in] BSTR PathLink);
+
+        [id(0x07d1)]
+        HRESULT Save();
+    };
+
+    [
         uuid(f935dc21-1cf0-11d0-adb9-00c04fd58a0b),
         odl,
         dual,
