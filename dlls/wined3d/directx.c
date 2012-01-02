@@ -1440,6 +1440,7 @@ static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_s
     if (strstr(gl_vendor_string, "Intel(R)")
             /* Intel switched from Intel(R) to Intel® recently, so just match Intel. */
             || strstr(gl_renderer, "Intel")
+            || strstr(gl_renderer, "i915")
             || strstr(gl_vendor_string, "Intel Inc."))
         return HW_VENDOR_INTEL;
 
