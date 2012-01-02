@@ -490,8 +490,8 @@ static HRESULT WINAPI WshShortcut_get_WorkingDirectory(IWshShortcut *iface, BSTR
 static HRESULT WINAPI WshShortcut_put_WorkingDirectory(IWshShortcut *iface, BSTR WorkingDirectory)
 {
     WshShortcut *This = impl_from_IWshShortcut(iface);
-    FIXME("(%p)->(%s): stub\n", This, debugstr_w(WorkingDirectory));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s): stub\n", This, debugstr_w(WorkingDirectory));
+    return IShellLinkW_SetWorkingDirectory(This->link, WorkingDirectory);
 }
 
 static HRESULT WINAPI WshShortcut_Load(IWshShortcut *iface, BSTR PathLink)
