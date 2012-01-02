@@ -300,7 +300,15 @@ static unsigned be_x86_64_is_step_over_insn(const void* insn)
 static unsigned be_x86_64_is_function_return(const void* insn)
 {
     BYTE c;
-    return dbg_read_memory(insn, &c, sizeof(c)) && ((c == 0xC2) || (c == 0xC3));
+
+    /* sigh... amd64 for prefetch optimization requires 'rep ret' in some cases */
+    if (!dbg_read_memory(insn, &c, sizeof(c))) return FALSE;
+    if (c == 0xF3) /* REP */
+    {
+        insn = (const char*)insn + 1;
+        if (!dbg_read_memory(insn, &c, sizeof(c))) return FALSE;
+    }
+    return c == 0xC2 /* ret */ || c == 0xC3 /* ret NN */;
 }
 
 static unsigned be_x86_64_is_break_insn(const void* insn)
