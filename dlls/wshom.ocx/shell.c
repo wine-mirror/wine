@@ -504,8 +504,16 @@ static HRESULT WINAPI WshShortcut_Load(IWshShortcut *iface, BSTR PathLink)
 static HRESULT WINAPI WshShortcut_Save(IWshShortcut *iface)
 {
     WshShortcut *This = impl_from_IWshShortcut(iface);
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+    IPersistFile *file;
+    HRESULT hr;
+
+    TRACE("(%p)\n", This);
+
+    IShellLinkW_QueryInterface(This->link, &IID_IPersistFile, (void**)&file);
+    hr = IPersistFile_Save(file, This->path_link, TRUE);
+    IPersistFile_Release(file);
+
+    return hr;
 }
 
 static const IWshShortcutVtbl WshShortcutVtbl = {
