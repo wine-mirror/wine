@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-21 23:30+0300\n"
+"PO-Revision-Date: 2011-12-31 13:50+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: none\n"
 "Language: Russian\n"
@@ -2124,9 +2124,8 @@ msgid "Certification Path"
 msgstr "Путь сертификации"
 
 #: cryptui.rc:211
-#, fuzzy
 msgid "Certification path"
-msgstr "П&уть сертификации"
+msgstr "Путь сертификации"
 
 #: cryptui.rc:214
 msgid "&View Certificate"
@@ -3331,9 +3330,8 @@ msgid "Asking for %s"
 msgstr "Запрос %s"
 
 #: inetcpl.rc:46
-#, fuzzy
 msgid "Home page"
-msgstr " Домашняя страница "
+msgstr "Домашняя страница"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
@@ -3352,9 +3350,8 @@ msgid "&Blank page"
 msgstr "Пу&стая страница"
 
 #: inetcpl.rc:53
-#, fuzzy
 msgid "Browsing history"
-msgstr " История использования браузера "
+msgstr "История использования браузера"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
@@ -3530,11 +3527,11 @@ msgstr "Незавершённая строковая константа"
 
 #: jscript.rc:38
 msgid "Can't have 'break' outside of loop"
-msgstr ""
+msgstr "Выражение 'break' не может находится вне цикла"
 
 #: jscript.rc:39
 msgid "Can't have 'continue' outside of loop"
-msgstr ""
+msgstr "Выражение 'continue' не может находится вне цикла"
 
 #: jscript.rc:40
 msgid "Conditional compilation is turned off"
@@ -10367,9 +10364,8 @@ msgid "&Footer:"
 msgstr "Н&ижний колонтитул:"
 
 #: notepad.rc:112
-#, fuzzy
 msgid "Margins (millimeters)"
-msgstr "Поля (мм):"
+msgstr "Поля (мм)"
 
 #: notepad.rc:113
 msgid "&Left:"
@@ -11747,31 +11743,26 @@ msgid "&Show processes from all users"
 msgstr "&Отображать процессы всех пользователей"
 
 #: taskmgr.rc:376
-#, fuzzy
 msgid "CPU usage"
 msgstr "Загрузка ЦП"
 
 #: taskmgr.rc:377
-#, fuzzy
 msgid "MEM usage"
-msgstr "Файл подкачки"
+msgstr "использование памяти"
 
 #: taskmgr.rc:378
 msgid "Totals"
 msgstr "Всего"
 
 #: taskmgr.rc:379
-#, fuzzy
 msgid "Commit charge (K)"
-msgstr "Выделение памяти (КБ)"
+msgstr "Выделено памяти (КБ)"
 
 #: taskmgr.rc:380
-#, fuzzy
 msgid "Physical memory (K)"
 msgstr "Физическая память (КБ)"
 
 #: taskmgr.rc:381
-#, fuzzy
 msgid "Kernel memory (K)"
 msgstr "Память ядра (КБ)"
 
@@ -11812,14 +11803,12 @@ msgid "Nonpaged"
 msgstr "Невыгруж."
 
 #: taskmgr.rc:418
-#, fuzzy
 msgid "CPU usage history"
 msgstr "Хронология загрузки ЦП"
 
 #: taskmgr.rc:419
-#, fuzzy
 msgid "Memory usage history"
-msgstr "Хронология использования файла подкачки"
+msgstr "Хронология использования памяти"
 
 #: taskmgr.rc:432 taskmgr.rc:327
 msgid "Debug Channels"
@@ -12493,9 +12482,8 @@ msgstr ""
 "option) any later version."
 
 #: winecfg.rc:140
-#, fuzzy
 msgid "Windows registration information"
-msgstr " Регистрационная информация Windows "
+msgstr "Регистрационная информация Windows"
 
 #: winecfg.rc:141
 msgid "&Owner:"
@@ -12506,9 +12494,8 @@ msgid "Organi&zation:"
 msgstr "Организация:"
 
 #: winecfg.rc:151
-#, fuzzy
 msgid "Application settings"
-msgstr " Настройка приложений "
+msgstr "Настройка приложений"
 
 #: winecfg.rc:152
 msgid ""
@@ -12533,9 +12520,8 @@ msgid "&Windows Version:"
 msgstr "&Версия Windows:"
 
 #: winecfg.rc:166
-#, fuzzy
 msgid "Window settings"
-msgstr " Настройки окна "
+msgstr "Настройки окон"
 
 #: winecfg.rc:167
 msgid "Automatically capture the &mouse in full-screen windows"
@@ -12558,9 +12544,8 @@ msgid "Desktop &size:"
 msgstr "Размер рабочего стола:"
 
 #: winecfg.rc:177
-#, fuzzy
 msgid "Direct3D"
-msgstr " Direct3D "
+msgstr "Direct3D"
 
 #: winecfg.rc:178
 msgid "&Vertex Shader Support: "
@@ -12571,18 +12556,16 @@ msgid "Allow &Pixel Shader (if supported by hardware)"
 msgstr "Включить Pixel Shader (если поддерживается оборудованием)"
 
 #: winecfg.rc:182
-#, fuzzy
 msgid "Screen resolution"
-msgstr " Разрешение экрана "
+msgstr "Разрешение экрана"
 
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Пример текста (This is a sample text), шрифт Tahoma 10 пунктов"
 
 #: winecfg.rc:193
-#, fuzzy
 msgid "DLL overrides"
-msgstr " Замещения DLL "
+msgstr "Замещения DLL"
 
 #: winecfg.rc:194
 msgid ""
@@ -12614,9 +12597,8 @@ msgid "Edit Override"
 msgstr "Изменить замещение"
 
 #: winecfg.rc:210
-#, fuzzy
 msgid "Load order"
-msgstr " Порядок загрузки "
+msgstr "Порядок загрузки"
 
 #: winecfg.rc:211
 msgid "&Builtin (Wine)"
@@ -12643,9 +12625,8 @@ msgid "Select Drive Letter"
 msgstr "Выберите букву диска"
 
 #: winecfg.rc:234
-#, fuzzy
 msgid "Drive mappings"
-msgstr " Настройка дисков "
+msgstr "Настройка дисков"
 
 #: winecfg.rc:235
 msgid ""
@@ -12692,14 +12673,12 @@ msgid "Show &dot files"
 msgstr "Показывать файлы, начинающиеся с точки"
 
 #: winecfg.rc:267
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " Диагностика драйвера "
+msgstr "Диагностика драйвера"
 
 #: winecfg.rc:269
-#, fuzzy
 msgid "Defaults"
-msgstr " По умолчанию "
+msgstr "По умолчанию"
 
 #: winecfg.rc:270
 msgid "Output device:"
@@ -12722,13 +12701,12 @@ msgid "&Test Sound"
 msgstr "&Проверить звук"
 
 #: winecfg.rc:285
-#, fuzzy
 msgid "Appearance"
-msgstr " Внешний вид "
+msgstr "Внешний вид"
 
 #: winecfg.rc:286
 msgid "&Theme:"
-msgstr "Тема:"
+msgstr "&Тема:"
 
 #: winecfg.rc:288
 msgid "&Install theme..."
@@ -12743,13 +12721,12 @@ msgid "C&olor:"
 msgstr "Цвет:"
 
 #: winecfg.rc:301
-#, fuzzy
 msgid "Folders"
-msgstr "Стандартные папки"
+msgstr "Папки"
 
 #: winecfg.rc:304
 msgid "&Link to:"
-msgstr "Направить в:"
+msgstr "Привязать к:"
 
 #: winecfg.rc:31
 msgid "Libraries"
@@ -13444,7 +13421,6 @@ msgid "By File Type"
 msgstr "По типу файлов"
 
 #: winefile.rc:146
-#, fuzzy
 msgid "File type"
 msgstr "Тип файла"
 
@@ -13505,9 +13481,8 @@ msgid "&Compressed"
 msgstr "С&жатый"
 
 #: winefile.rc:184
-#, fuzzy
 msgid "Version information"
-msgstr "&Информация о версии"
+msgstr "Информация о версии"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -13613,7 +13588,6 @@ msgid "Fastest Times"
 msgstr "Лучшее время"
 
 #: winemine.rc:58
-#, fuzzy
 msgid "Fastest times"
 msgstr "Лучшее время"
 
