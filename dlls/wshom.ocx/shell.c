@@ -70,6 +70,9 @@ typedef struct
 {
     IWshShortcut IWshShortcut_iface;
     LONG ref;
+
+    IShellLinkW *link;
+    BSTR path_link;
 } WshShortcut;
 
 static inline WshCollection *impl_from_IWshCollection( IWshCollection *iface )
@@ -315,7 +318,11 @@ static ULONG WINAPI WshShortcut_Release(IWshShortcut *iface)
     TRACE("(%p) ref = %d\n", This, ref);
 
     if (!ref)
+    {
+        SysFreeString(This->path_link);
+        IShellLinkW_Release(This->link);
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -406,8 +413,8 @@ static HRESULT WINAPI WshShortcut_get_Description(IWshShortcut *iface, BSTR *Des
 static HRESULT WINAPI WshShortcut_put_Description(IWshShortcut *iface, BSTR Description)
 {
     WshShortcut *This = impl_from_IWshShortcut(iface);
-    FIXME("(%p)->(%s): stub\n", This, debugstr_w(Description));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(Description));
+    return IShellLinkW_SetDescription(This->link, Description);
 }
 
 static HRESULT WINAPI WshShortcut_get_Hotkey(IWshShortcut *iface, BSTR *Hotkey)
@@ -529,9 +536,12 @@ static const IWshShortcutVtbl WshShortcutVtbl = {
     WshShortcut_Save
 };
 
-static HRESULT WshShortcut_Create(IDispatch **shortcut)
+static HRESULT WshShortcut_Create(const WCHAR *path, IDispatch **shortcut)
 {
     WshShortcut *This;
+    HRESULT hr;
+
+    *shortcut = NULL;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
@@ -539,6 +549,15 @@ static HRESULT WshShortcut_Create(IDispatch **shortcut)
     This->IWshShortcut_iface.lpVtbl = &WshShortcutVtbl;
     This->ref = 1;
 
+    hr = CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IShellLinkW, (void**)&This->link);
+    if (FAILED(hr))
+    {
+        HeapFree(GetProcessHeap(), 0, This);
+        return hr;
+    }
+
+    This->path_link = SysAllocString(path);
     *shortcut = (IDispatch*)&This->IWshShortcut_iface;
 
     return S_OK;
@@ -654,7 +673,7 @@ static HRESULT WINAPI WshShell3_Popup(IWshShell3 *iface, BSTR Text, VARIANT* Sec
 static HRESULT WINAPI WshShell3_CreateShortcut(IWshShell3 *iface, BSTR PathLink, IDispatch** Shortcut)
 {
     TRACE("(%s %p)\n", debugstr_w(PathLink), Shortcut);
-    return WshShortcut_Create(Shortcut);
+    return WshShortcut_Create(PathLink, Shortcut);
 }
 
 static HRESULT WINAPI WshShell3_ExpandEnvironmentStrings(IWshShell3 *iface, BSTR Src, BSTR* out_Dst)
