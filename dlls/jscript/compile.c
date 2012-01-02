@@ -150,12 +150,7 @@ static unsigned push_instr(compiler_ctx_t *ctx, jsop_t op)
 {
     assert(ctx->code_size >= ctx->code_off);
 
-    if(!ctx->code_size) {
-        ctx->code->instrs = heap_alloc(64 * sizeof(instr_t));
-        if(!ctx->code->instrs)
-            return -1;
-        ctx->code_size = 64;
-    }else if(ctx->code_size == ctx->code_off) {
+    if(ctx->code_size == ctx->code_off) {
         instr_t *new_instrs;
 
         new_instrs = heap_realloc(ctx->code->instrs, ctx->code_size*2*sizeof(instr_t));
@@ -1647,22 +1642,36 @@ void release_compiler(compiler_ctx_t *ctx)
 
 static HRESULT init_compiler(parser_ctx_t *parser)
 {
-    if(!parser->code) {
-        parser->code = heap_alloc_zero(sizeof(bytecode_t));
-        if(!parser->code)
-            return E_OUTOFMEMORY;
-        jsheap_init(&parser->code->heap);
+    compiler_ctx_t *compiler;
+
+    if(parser->compiler)
+        return S_OK;
+
+    compiler = heap_alloc_zero(sizeof(*compiler));
+    if(!compiler)
+        return E_OUTOFMEMORY;
+
+    compiler->code = heap_alloc_zero(sizeof(bytecode_t));
+    if(!compiler->code) {
+        release_compiler(compiler);
+        return E_OUTOFMEMORY;
     }
 
-    if(!parser->compiler) {
-        parser->compiler = heap_alloc_zero(sizeof(compiler_ctx_t));
-        if(!parser->compiler)
-            return E_OUTOFMEMORY;
+    jsheap_init(&compiler->code->heap);
 
-        parser->compiler->parser = parser;
-        parser->compiler->code = parser->code;
+    compiler->code->instrs = heap_alloc(64 * sizeof(instr_t));
+    if(!compiler->code->instrs) {
+        release_bytecode(compiler->code);
+        release_compiler(compiler);
+        return E_OUTOFMEMORY;
     }
 
+    compiler->code_size = 64;
+
+    compiler->parser = parser;
+
+    parser->code = compiler->code;
+    parser->compiler = compiler;
     return S_OK;
 }
 
