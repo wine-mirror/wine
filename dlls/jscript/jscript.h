@@ -189,8 +189,8 @@ static inline IDispatch *to_disp(jsdisp_t *jsdisp)
     return (IDispatch*)&jsdisp->IDispatchEx_iface;
 }
 
-jsdisp_t *as_jsdisp(IDispatch*);
-jsdisp_t *to_jsdisp(IDispatch*);
+jsdisp_t *as_jsdisp(IDispatch*) DECLSPEC_HIDDEN;
+jsdisp_t *to_jsdisp(IDispatch*) DECLSPEC_HIDDEN;
 
 static inline void jsdisp_addref(jsdisp_t *jsdisp)
 {
