@@ -478,31 +478,29 @@ static HRESULT WINAPI HTMLLocation_put_search(IHTMLLocation *iface, BSTR v)
 static HRESULT WINAPI HTMLLocation_get_search(IHTMLLocation *iface, BSTR *p)
 {
     HTMLLocation *This = impl_from_IHTMLLocation(iface);
-    URL_COMPONENTSW url = {sizeof(URL_COMPONENTSW)};
+    BSTR query;
     HRESULT hres;
-    const WCHAR hash[] = {'#',0};
 
     TRACE("(%p)->(%p)\n", This, p);
 
     if(!p)
         return E_POINTER;
 
-    url.dwExtraInfoLength = 1;
-    hres = get_url_components(This, &url);
-    if(FAILED(hres))
-        return hres;
-
-    if(!url.dwExtraInfoLength){
-        *p = NULL;
-        return S_OK;
+    if(!This->window || !This->window->uri) {
+        FIXME("No current URI\n");
+        return E_NOTIMPL;
     }
 
-    url.dwExtraInfoLength = strcspnW(url.lpszExtraInfo, hash);
+    hres = IUri_GetQuery(This->window->uri, &query);
+    if(hres == S_OK) {
+        *p = query;
+    }else if(hres == S_FALSE) {
+        SysFreeString(query);
+        *p = NULL;
+    }else {
+        return hres;
+    }
 
-    *p = SysAllocStringLen(url.lpszExtraInfo, url.dwExtraInfoLength);
-
-    if(!*p)
-        return E_OUTOFMEMORY;
     return S_OK;
 }
 
