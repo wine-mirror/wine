@@ -128,6 +128,8 @@
 typedef struct {
     OPENTYPE_TAG tag;
     LPCVOID  feature;
+    INT lookup_count;
+    WORD *lookups;
 } LoadedFeature;
 
 typedef struct {

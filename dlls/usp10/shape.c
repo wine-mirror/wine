@@ -1089,18 +1089,23 @@ static INT GSUB_apply_lookup(const GSUB_LookupList* lookup, INT lookup_index, WO
     return GSUB_E_NOGLYPH;
 }
 
-static INT GSUB_apply_feature_all_lookups(const GSUB_Header * header, const GSUB_Feature* feature, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
+static INT apply_GSUB_lookup(LPCVOID table, INT lookup_index, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
+{
+    const GSUB_Header *header = (const GSUB_Header *)table;
+    const GSUB_LookupList *lookup = (const GSUB_LookupList*)((const BYTE*)header + GET_BE_WORD(header->LookupList));
+
+    return GSUB_apply_lookup(lookup, lookup_index, glyphs, glyph_index, write_dir, glyph_count);
+}
+
+static INT GSUB_apply_feature_all_lookups(LPCVOID header, LoadedFeature *feature, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
 {
     int i;
     int out_index = GSUB_E_NOGLYPH;
-    const GSUB_LookupList *lookup;
 
-    lookup = (const GSUB_LookupList*)((const BYTE*)header + GET_BE_WORD(header->LookupList));
-
-    TRACE("%i lookups\n", GET_BE_WORD(feature->LookupCount));
-    for (i = 0; i < GET_BE_WORD(feature->LookupCount); i++)
+    TRACE("%i lookups\n", feature->lookup_count);
+    for (i = 0; i < feature->lookup_count; i++)
     {
-        out_index = GSUB_apply_lookup(lookup, GET_BE_WORD(feature->LookupListIndex[i]), glyphs, glyph_index, write_dir, glyph_count);
+        out_index = apply_GSUB_lookup(header, feature->lookups[i], glyphs, glyph_index, write_dir, glyph_count);
         if (out_index != GSUB_E_NOGLYPH)
             break;
     }
@@ -1202,7 +1207,7 @@ static INT apply_GSUB_feature_to_glyph(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCach
         return GSUB_E_NOFEATURE;
 
     TRACE("applying feature %s\n",feat);
-    return GSUB_apply_feature_all_lookups(psc->GSUB_Table, feature->feature, glyphs, index, write_dir, glyph_count);
+    return GSUB_apply_feature_all_lookups(psc->GSUB_Table, feature, glyphs, index, write_dir, glyph_count);
 }
 
 static VOID *load_gsub_table(HDC hdc)
@@ -1469,22 +1474,15 @@ static int apply_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, W
 {
     if (psc->GSUB_Table)
     {
-        LoadedFeature *load_feature;
-        const GSUB_Feature *feature;
-        const GSUB_LookupList *lookup;
-        const GSUB_Header *header = psc->GSUB_Table;
-        int lookup_index, lookup_count;
+        LoadedFeature *feature;
+        int lookup_index;
 
-        load_feature = load_GSUB_feature(hdc, psa, psc, feat);
-        if (!load_feature)
+        feature = load_GSUB_feature(hdc, psa, psc, feat);
+        if (!feature)
             return GSUB_E_NOFEATURE;
-        feature = load_feature->feature;
 
-        TRACE("applying feature %s\n",debugstr_an(feat,4));
-        lookup = (const GSUB_LookupList*)((const BYTE*)header + GET_BE_WORD(header->LookupList));
-        lookup_count = GET_BE_WORD(feature->LookupCount);
-        TRACE("%i lookups\n", lookup_count);
-        for (lookup_index = 0; lookup_index < lookup_count; lookup_index++)
+        TRACE("applying feature %s: %i lookups\n",debugstr_an(feat,4),feature->lookup_count);
+        for (lookup_index = 0; lookup_index < feature->lookup_count; lookup_index++)
         {
             int i;
 
@@ -1492,13 +1490,13 @@ static int apply_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, W
                 i = 0;
             else
                 i = *pcGlyphs-1;
-            TRACE("applying lookup (%i/%i)\n",lookup_index,lookup_count);
+            TRACE("applying lookup (%i/%i)\n",lookup_index,feature->lookup_count);
             while(i < *pcGlyphs && i >= 0)
             {
                 INT nextIndex;
                 INT prevCount = *pcGlyphs;
 
-                nextIndex = GSUB_apply_lookup(lookup, GET_BE_WORD(feature->LookupListIndex[lookup_index]), pwOutGlyphs, i, write_dir, pcGlyphs);
+                nextIndex = apply_GSUB_lookup(psc->GSUB_Table, feature->lookups[lookup_index], pwOutGlyphs, i, write_dir, pcGlyphs);
                 if (*pcGlyphs != prevCount)
                 {
                     UpdateClusters(nextIndex, *pcGlyphs - prevCount, write_dir, cChars, pwLogClust);
@@ -2200,7 +2198,7 @@ static void Apply_Indic_BasicForm(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     {
             INT nextIndex;
             INT prevCount = *pcGlyphs;
-            nextIndex = GSUB_apply_feature_all_lookups(psc->GSUB_Table, feature->feature, pwOutGlyphs, index, 1, pcGlyphs);
+            nextIndex = GSUB_apply_feature_all_lookups(psc->GSUB_Table, feature, pwOutGlyphs, index, 1, pcGlyphs);
             if (nextIndex > GSUB_E_NOGLYPH)
             {
                 UpdateClusters(nextIndex, *pcGlyphs - prevCount, 1, cChars, pwLogClust);
@@ -3855,10 +3853,17 @@ static void GSUB_initialize_feature_cache(LPCVOID table, LoadedLanguage *languag
 
         for (i = 0; i < language->feature_count; i++)
         {
+            const GSUB_Feature *feature;
+            int j;
             int index = GET_BE_WORD(lang->FeatureIndex[i]);
 
             language->features[i].tag = MS_MAKE_TAG(feature_list->FeatureRecord[index].FeatureTag[0], feature_list->FeatureRecord[index].FeatureTag[1], feature_list->FeatureRecord[index].FeatureTag[2], feature_list->FeatureRecord[index].FeatureTag[3]);
             language->features[i].feature = ((const BYTE*)feature_list + GET_BE_WORD(feature_list->FeatureRecord[index].Feature));
+            feature = (const GSUB_Feature*)language->features[i].feature;
+            language->features[i].lookup_count = GET_BE_WORD(feature->LookupCount);
+            language->features[i].lookups = HeapAlloc(GetProcessHeap(),0,sizeof(WORD) * language->features[i].lookup_count);
+            for (j = 0; j < language->features[i].lookup_count; j++)
+                language->features[i].lookups[j] = GET_BE_WORD(feature->LookupListIndex[j]);
         }
     }
 }

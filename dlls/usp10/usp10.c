@@ -929,7 +929,12 @@ HRESULT WINAPI ScriptFreeCache(SCRIPT_CACHE *psc)
         {
             int j;
             for (j = 0; j < ((ScriptCache *)*psc)->scripts[i].language_count; j++)
+            {
+                int k;
+                for (k = 0; k < ((ScriptCache *)*psc)->scripts[i].languages[j].feature_count; k++)
+                    heap_free(((ScriptCache *)*psc)->scripts[i].languages[j].features[k].lookups);
                 heap_free(((ScriptCache *)*psc)->scripts[i].languages[j].features);
+            }
             heap_free(((ScriptCache *)*psc)->scripts[i].languages);
         }
         heap_free(((ScriptCache *)*psc)->scripts);
