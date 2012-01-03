@@ -126,7 +126,7 @@
 #define GLYPH_MAX         65536
 
 typedef struct {
-    char    tag[5];
+    OPENTYPE_TAG tag;
     OPENTYPE_TAG script;
     LPCVOID  feature;
 } LoadedFeature;

@@ -1188,7 +1188,7 @@ static LPCVOID load_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc
 
     for (i = 0; i <  psc->feature_count; i++)
     {
-        if (strncmp(psc->features[i].tag,feat,4)==0 && psc->features[i].script == script)
+        if (psc->features[i].tag == MS_MAKE_TAG(feat[0],feat[1],feat[2],feat[3])&& psc->features[i].script == script)
             return psc->features[i].feature;
     }
 
@@ -1231,7 +1231,7 @@ static LPCVOID load_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc
     else
         psc->features = HeapAlloc(GetProcessHeap(), 0, psc->feature_count * sizeof(LoadedFeature));
 
-    lstrcpynA(psc->features[psc->feature_count - 1].tag, feat, 5);
+    psc->features[psc->feature_count - 1].tag = MS_MAKE_TAG(feat[0],feat[1],feat[2],feat[3]);
     psc->features[psc->feature_count - 1].script = script;
     psc->features[psc->feature_count - 1].feature = feature;
     return feature;
