@@ -1058,47 +1058,43 @@ static void testSignSeal(void)
     ok(sec_status == SEC_E_OK, "EncryptMessage returned %s, not SEC_E_OK.\n",
             getSecError(sec_status));
 
-    ok(!memcmp(crypt.pBuffers[0].pvBuffer, crypt_trailer_client,
-               crypt.pBuffers[0].cbBuffer), "Crypt trailer not as expected.\n");
-    if (memcmp(crypt.pBuffers[0].pvBuffer, crypt_trailer_client,
-               crypt.pBuffers[0].cbBuffer))
+    /* first 8 bytes must always be the same */
+    ok(!memcmp(crypt.pBuffers[0].pvBuffer, crypt_trailer_client, 8), "Crypt trailer not as expected.\n");
+
+    /* the rest depends on the session key */
+    if (!memcmp(crypt.pBuffers[0].pvBuffer, crypt_trailer_client, crypt.pBuffers[0].cbBuffer))
     {
-        int i;
-        for (i = 0; i < crypt.pBuffers[0].cbBuffer; i++)
+        ok(!memcmp(crypt.pBuffers[0].pvBuffer, crypt_trailer_client,
+                   crypt.pBuffers[0].cbBuffer), "Crypt trailer not as expected.\n");
+        ok(!memcmp(crypt.pBuffers[1].pvBuffer, crypt_message_client,
+                   crypt.pBuffers[1].cbBuffer), "Crypt message not as expected.\n");
+        if (memcmp(crypt.pBuffers[1].pvBuffer, crypt_message_client,
+                   crypt.pBuffers[1].cbBuffer))
         {
-            if (i % 8 == 0) printf("     ");
-            printf("0x%02x,", ((unsigned char *)crypt.pBuffers[0].pvBuffer)[i]);
-            if (i % 8 == 7) printf("\n");
+            int i;
+            for (i = 0; i < crypt.pBuffers[1].cbBuffer; i++)
+            {
+                if (i % 8 == 0) printf("     ");
+                printf("0x%02x,", ((unsigned char *)crypt.pBuffers[1].pvBuffer)[i]);
+                if (i % 8 == 7) printf("\n");
+            }
+            printf("\n");
         }
-        printf("\n");
+
+        data[0].cbBuffer = sizeof(crypt_trailer_server);
+        data[1].cbBuffer = sizeof(crypt_message_server);
+        memcpy(data[0].pvBuffer, crypt_trailer_server, data[0].cbBuffer);
+        memcpy(data[1].pvBuffer, crypt_message_server, data[1].cbBuffer);
+
+        sec_status = pDecryptMessage(&client.ctxt, &crypt, 0, &qop);
+
+        ok(sec_status == SEC_E_OK, "DecryptMessage returned %s, not SEC_E_OK.\n",
+           getSecError(sec_status));
+        ok(!memcmp(crypt.pBuffers[1].pvBuffer, message_binary,
+                   crypt.pBuffers[1].cbBuffer),
+           "Failed to decrypt message correctly.\n");
     }
-    ok(!memcmp(crypt.pBuffers[1].pvBuffer, crypt_message_client,
-               crypt.pBuffers[1].cbBuffer), "Crypt message not as expected.\n");
-    if (memcmp(crypt.pBuffers[1].pvBuffer, crypt_message_client,
-               crypt.pBuffers[1].cbBuffer))
-    {
-        int i;
-        for (i = 0; i < crypt.pBuffers[1].cbBuffer; i++)
-        {
-            if (i % 8 == 0) printf("     ");
-            printf("0x%02x,", ((unsigned char *)crypt.pBuffers[1].pvBuffer)[i]);
-            if (i % 8 == 7) printf("\n");
-        }
-        printf("\n");
-    }
-
-    data[0].cbBuffer = sizeof(crypt_trailer_server);
-    data[1].cbBuffer = sizeof(crypt_message_server);
-    memcpy(data[0].pvBuffer, crypt_trailer_server, data[0].cbBuffer);
-    memcpy(data[1].pvBuffer, crypt_message_server, data[1].cbBuffer);
-
-    sec_status = pDecryptMessage(&client.ctxt, &crypt, 0, &qop);
-
-    ok(sec_status == SEC_E_OK, "DecryptMessage returned %s, not SEC_E_OK.\n",
-            getSecError(sec_status));
-    ok(!memcmp(crypt.pBuffers[1].pvBuffer, message_binary,
-               crypt.pBuffers[1].cbBuffer),
-            "Failed to decrypt message correctly.\n");
+    else trace( "A different session key is being used\n" );
 
     trace("Testing with more than one buffer.\n");
 
@@ -1139,20 +1135,10 @@ static void testSignSeal(void)
     ok(sec_status == SEC_E_OK, "EncryptMessage returned %s, not SEC_E_OK.\n",
             getSecError(sec_status));
 
-    ok(!memcmp(crypt.pBuffers[3].pvBuffer, crypt_trailer_client2,
-               crypt.pBuffers[3].cbBuffer), "Crypt trailer not as expected.\n");
+    ok(!memcmp(crypt.pBuffers[3].pvBuffer, crypt_trailer_client2, 8), "Crypt trailer not as expected.\n");
+
     if (memcmp(crypt.pBuffers[3].pvBuffer, crypt_trailer_client2,
-               crypt.pBuffers[3].cbBuffer))
-    {
-        int i;
-        for (i = 0; i < crypt.pBuffers[3].cbBuffer; i++)
-        {
-            if (i % 8 == 0) printf("     ");
-            printf("0x%02x,", ((unsigned char *)crypt.pBuffers[3].pvBuffer)[i]);
-            if (i % 8 == 7) printf("\n");
-        }
-        printf("\n");
-    }
+               crypt.pBuffers[3].cbBuffer)) goto end;
 
     ok(!memcmp(crypt.pBuffers[1].pvBuffer, crypt_message_client2,
                crypt.pBuffers[1].cbBuffer), "Crypt message not as expected.\n");
