@@ -1153,9 +1153,9 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     state->render_states[WINED3D_RS_EDGEANTIALIAS] = FALSE;
     state->render_states[WINED3D_RS_RANGEFOGENABLE] = FALSE;
     state->render_states[WINED3D_RS_STENCILENABLE] = FALSE;
-    state->render_states[WINED3D_RS_STENCILFAIL] = WINED3DSTENCILOP_KEEP;
-    state->render_states[WINED3D_RS_STENCILZFAIL] = WINED3DSTENCILOP_KEEP;
-    state->render_states[WINED3D_RS_STENCILPASS] = WINED3DSTENCILOP_KEEP;
+    state->render_states[WINED3D_RS_STENCILFAIL] = WINED3D_STENCIL_OP_KEEP;
+    state->render_states[WINED3D_RS_STENCILZFAIL] = WINED3D_STENCIL_OP_KEEP;
+    state->render_states[WINED3D_RS_STENCILPASS] = WINED3D_STENCIL_OP_KEEP;
     state->render_states[WINED3D_RS_STENCILREF] = 0;
     state->render_states[WINED3D_RS_STENCILMASK] = 0xffffffff;
     state->render_states[WINED3D_RS_STENCILFUNC] = WINED3D_CMP_ALWAYS;
@@ -1226,9 +1226,9 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     state->render_states[WINED3D_RS_ADAPTIVETESS_W] = tmpfloat.d;
     state->render_states[WINED3D_RS_ENABLEADAPTIVETESSELLATION] = FALSE;
     state->render_states[WINED3D_RS_TWOSIDEDSTENCILMODE] = FALSE;
-    state->render_states[WINED3D_RS_CCW_STENCILFAIL] = WINED3DSTENCILOP_KEEP;
-    state->render_states[WINED3D_RS_CCW_STENCILZFAIL] = WINED3DSTENCILOP_KEEP;
-    state->render_states[WINED3D_RS_CCW_STENCILPASS] = WINED3DSTENCILOP_KEEP;
+    state->render_states[WINED3D_RS_CCW_STENCILFAIL] = WINED3D_STENCIL_OP_KEEP;
+    state->render_states[WINED3D_RS_CCW_STENCILZFAIL] = WINED3D_STENCIL_OP_KEEP;
+    state->render_states[WINED3D_RS_CCW_STENCILPASS] = WINED3D_STENCIL_OP_KEEP;
     state->render_states[WINED3D_RS_CCW_STENCILFUNC] = WINED3D_CMP_ALWAYS;
     state->render_states[WINED3D_RS_COLORWRITEENABLE1] = 0x0000000f;
     state->render_states[WINED3D_RS_COLORWRITEENABLE2] = 0x0000000f;

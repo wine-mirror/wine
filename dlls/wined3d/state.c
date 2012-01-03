@@ -801,6 +801,32 @@ static void renderstate_stencil_twosided(struct wined3d_context *context, GLint 
     checkGLcall("glStencilOp(...)");
 }
 
+static GLenum gl_stencil_op(enum wined3d_stencil_op op)
+{
+    switch (op)
+    {
+        case WINED3D_STENCIL_OP_KEEP:
+            return GL_KEEP;
+        case WINED3D_STENCIL_OP_ZERO:
+            return GL_ZERO;
+        case WINED3D_STENCIL_OP_REPLACE:
+            return GL_REPLACE;
+        case WINED3D_STENCIL_OP_INCR_SAT:
+            return GL_INCR;
+        case WINED3D_STENCIL_OP_DECR_SAT:
+            return GL_DECR;
+        case WINED3D_STENCIL_OP_INVERT:
+            return GL_INVERT;
+        case WINED3D_STENCIL_OP_INCR:
+            return GL_INCR_WRAP_EXT;
+        case WINED3D_STENCIL_OP_DECR:
+            return GL_DECR_WRAP_EXT;
+        default:
+            FIXME("Unrecognized stencil op %#x.\n", op);
+            return GL_KEEP;
+    }
+}
+
 static void state_stencil(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -833,12 +859,12 @@ static void state_stencil(struct wined3d_context *context, const struct wined3d_
         func_ccw = GL_ALWAYS;
     ref = state->render_states[WINED3D_RS_STENCILREF];
     mask = state->render_states[WINED3D_RS_STENCILMASK];
-    stencilFail = StencilOp(state->render_states[WINED3D_RS_STENCILFAIL]);
-    depthFail = StencilOp(state->render_states[WINED3D_RS_STENCILZFAIL]);
-    stencilPass = StencilOp(state->render_states[WINED3D_RS_STENCILPASS]);
-    stencilFail_ccw = StencilOp(state->render_states[WINED3D_RS_CCW_STENCILFAIL]);
-    depthFail_ccw = StencilOp(state->render_states[WINED3D_RS_CCW_STENCILZFAIL]);
-    stencilPass_ccw = StencilOp(state->render_states[WINED3D_RS_CCW_STENCILPASS]);
+    stencilFail = gl_stencil_op(state->render_states[WINED3D_RS_STENCILFAIL]);
+    depthFail = gl_stencil_op(state->render_states[WINED3D_RS_STENCILZFAIL]);
+    stencilPass = gl_stencil_op(state->render_states[WINED3D_RS_STENCILPASS]);
+    stencilFail_ccw = gl_stencil_op(state->render_states[WINED3D_RS_CCW_STENCILFAIL]);
+    depthFail_ccw = gl_stencil_op(state->render_states[WINED3D_RS_CCW_STENCILZFAIL]);
+    stencilPass_ccw = gl_stencil_op(state->render_states[WINED3D_RS_CCW_STENCILPASS]);
 
     TRACE("(onesided %d, twosided %d, ref %x, mask %x, "
           "GL_FRONT: func: %x, fail %x, zfail %x, zpass %x "

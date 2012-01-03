@@ -2515,8 +2515,6 @@ const char *debug_d3dtop(WINED3DTEXTUREOP d3dtop) DECLSPEC_HIDDEN;
 void dump_color_fixup_desc(struct color_fixup_desc fixup) DECLSPEC_HIDDEN;
 const char *debug_surflocation(DWORD flag) DECLSPEC_HIDDEN;
 
-/* Routines for GL <-> D3D values */
-GLenum StencilOp(DWORD op) DECLSPEC_HIDDEN;
 BOOL is_invalid_op(const struct wined3d_state *state, int stage,
         WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3) DECLSPEC_HIDDEN;
 void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state,

@@ -2477,25 +2477,6 @@ const char *debug_surflocation(DWORD flag) {
     return wine_dbg_sprintf("%s", buf[0] ? buf + 3 : "0");
 }
 
-/*****************************************************************************
- * Useful functions mapping GL <-> D3D values
- */
-GLenum StencilOp(DWORD op) {
-    switch(op) {
-    case WINED3DSTENCILOP_KEEP    : return GL_KEEP;
-    case WINED3DSTENCILOP_ZERO    : return GL_ZERO;
-    case WINED3DSTENCILOP_REPLACE : return GL_REPLACE;
-    case WINED3DSTENCILOP_INCRSAT : return GL_INCR;
-    case WINED3DSTENCILOP_DECRSAT : return GL_DECR;
-    case WINED3DSTENCILOP_INVERT  : return GL_INVERT;
-    case WINED3DSTENCILOP_INCR    : return GL_INCR_WRAP_EXT;
-    case WINED3DSTENCILOP_DECR    : return GL_DECR_WRAP_EXT;
-    default:
-        FIXME("Unrecognized stencil op %d\n", op);
-        return GL_KEEP;
-    }
-}
-
 BOOL is_invalid_op(const struct wined3d_state *state, int stage,
         WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3)
 {

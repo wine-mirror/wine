@@ -469,18 +469,17 @@ enum wined3d_cull
     WINED3D_CULL_CCW                        = 3,
 };
 
-typedef enum _WINED3DSTENCILOP
+enum wined3d_stencil_op
 {
-    WINED3DSTENCILOP_KEEP                   = 1,
-    WINED3DSTENCILOP_ZERO                   = 2,
-    WINED3DSTENCILOP_REPLACE                = 3,
-    WINED3DSTENCILOP_INCRSAT                = 4,
-    WINED3DSTENCILOP_DECRSAT                = 5,
-    WINED3DSTENCILOP_INVERT                 = 6,
-    WINED3DSTENCILOP_INCR                   = 7,
-    WINED3DSTENCILOP_DECR                   = 8,
-    WINED3DSTENCILOP_FORCE_DWORD            = 0x7fffffff
-} WINED3DSTENCILOP;
+    WINED3D_STENCIL_OP_KEEP                 = 1,
+    WINED3D_STENCIL_OP_ZERO                 = 2,
+    WINED3D_STENCIL_OP_REPLACE              = 3,
+    WINED3D_STENCIL_OP_INCR_SAT             = 4,
+    WINED3D_STENCIL_OP_DECR_SAT             = 5,
+    WINED3D_STENCIL_OP_INVERT               = 6,
+    WINED3D_STENCIL_OP_INCR                 = 7,
+    WINED3D_STENCIL_OP_DECR                 = 8,
+};
 
 typedef enum _WINED3DMATERIALCOLORSOURCE
 {
