@@ -925,6 +925,8 @@ HRESULT WINAPI ScriptFreeCache(SCRIPT_CACHE *psc)
         heap_free(((ScriptCache *)*psc)->GSUB_Table);
         heap_free(((ScriptCache *)*psc)->GDEF_Table);
         heap_free(((ScriptCache *)*psc)->CMAP_Table);
+        for (i = 0; i < ((ScriptCache *)*psc)->script_count; i++)
+            heap_free(((ScriptCache *)*psc)->scripts[i].languages);
         heap_free(((ScriptCache *)*psc)->scripts);
         heap_free(((ScriptCache *)*psc)->features);
         heap_free(*psc);
@@ -3551,4 +3553,13 @@ HRESULT WINAPI ScriptGetFontScriptTags( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALY
     if ((hr = init_script_cache(hdc, psc)) != S_OK) return hr;
 
     return SHAPE_GetFontScriptTags(hdc, (ScriptCache *)*psc, psa, cMaxTags, pScriptTags, pcTags);
+}
+
+HRESULT WINAPI ScriptGetFontLanguageTags( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa, OPENTYPE_TAG tagScript, int cMaxTags, OPENTYPE_TAG *pLangSysTags, int *pcTags)
+{
+    HRESULT hr;
+    if (!pLangSysTags || !pcTags || cMaxTags == 0) return E_INVALIDARG;
+    if ((hr = init_script_cache(hdc, psc)) != S_OK) return hr;
+
+    return SHAPE_GetFontLanguageTags(hdc, (ScriptCache *)*psc, psa, tagScript, cMaxTags, pLangSysTags, pcTags);
 }

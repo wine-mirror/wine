@@ -3778,7 +3778,7 @@ static void GSUB_initialize_script_cache(ScriptCache *psc)
         script = (const GSUB_ScriptList*)((const BYTE*)header + GET_BE_WORD(header->ScriptList));
         psc->script_count = GET_BE_WORD(script->ScriptCount);
         TRACE("initializing %i scripts in this font\n",psc->script_count);
-        psc->scripts = HeapAlloc(GetProcessHeap(),0,sizeof(LoadedScript) * psc->script_count);
+        psc->scripts = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(LoadedScript) * psc->script_count);
         for (i = 0; i < psc->script_count; i++)
         {
             int offset = GET_BE_WORD(script->ScriptRecord[i].Script);
@@ -3822,6 +3822,96 @@ static HRESULT GSUB_GetFontScriptTags(ScriptCache *psc, OPENTYPE_TAG searchingFo
     return rc;
 }
 
+static void GSUB_initialize_language_cache(LoadedScript *script)
+{
+    int i;
+
+    if (!script->language_count)
+    {
+        const GSUB_Script* table = script->table;
+        script->language_count = GET_BE_WORD(table->LangSysCount);
+        script->default_language.tag = MS_MAKE_TAG('d','f','l','t');
+        script->default_language.table = (const BYTE*)table + GET_BE_WORD(table->DefaultLangSys);
+
+        TRACE("Deflang %p, LangCount %i\n",script->default_language.table, script->language_count);
+
+        script->languages = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(LoadedLanguage) * script->language_count);
+
+        for (i = 0; i < script->language_count; i++)
+        {
+            int offset = GET_BE_WORD(table->LangSysRecord[i].LangSys);
+            script->languages[i].tag = MS_MAKE_TAG(table->LangSysRecord[i].LangSysTag[0], table->LangSysRecord[i].LangSysTag[1], table->LangSysRecord[i].LangSysTag[2], table->LangSysRecord[i].LangSysTag[3]);
+            script->languages[i].table = ((const BYTE*)table + offset);
+        }
+    }
+}
+
+static HRESULT GSUB_GetFontLanguageTags(ScriptCache *psc, OPENTYPE_TAG script_tag, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pLanguageTags, int *pcTags, LPCVOID* language_table)
+{
+    int i;
+    HRESULT rc = S_OK;
+    LoadedScript *script = NULL;
+
+    GSUB_initialize_script_cache(psc);
+
+    for (i = 0; i < psc->script_count; i++)
+    {
+         if (psc->scripts[i].tag == script_tag)
+         {
+            script = &psc->scripts[i];
+            break;
+         }
+    }
+
+    if (!script)
+        return E_INVALIDARG;
+
+    GSUB_initialize_language_cache(script);
+
+    if (!searchingFor && cMaxTags < script->language_count)
+        rc = E_OUTOFMEMORY;
+    else if (searchingFor)
+        rc = E_INVALIDARG;
+
+    *pcTags = script->language_count;
+
+    for (i = 0; i < script->language_count; i++)
+    {
+        if (i < cMaxTags)
+            pLanguageTags[i] = script->languages[i].tag;
+
+        if (searchingFor)
+        {
+            if (searchingFor == script->languages[i].tag)
+            {
+                pLanguageTags[0] = script->languages[i].tag;
+                *pcTags = 1;
+                if (language_table)
+                    *language_table = script->languages[i].table;
+                rc = S_OK;
+                break;
+            }
+        }
+    }
+
+    if (script->default_language.table)
+    {
+        if (i < cMaxTags)
+            pLanguageTags[i] = script->default_language.tag;
+
+        if (searchingFor  && FAILED(rc))
+        {
+            pLanguageTags[0] = script->default_language.tag;
+            if (language_table)
+                *language_table = script->default_language.table;
+        }
+        i++;
+        *pcTags = (*pcTags) + 1;
+    }
+
+    return rc;
+}
+
 HRESULT SHAPE_GetFontScriptTags( HDC hdc, ScriptCache *psc,
                                  SCRIPT_ANALYSIS *psa, int cMaxTags,
                                  OPENTYPE_TAG *pScriptTags, int *pcTags)
@@ -3838,5 +3928,34 @@ HRESULT SHAPE_GetFontScriptTags( HDC hdc, ScriptCache *psc,
     hr = GSUB_GetFontScriptTags(psc, searching, cMaxTags, pScriptTags, pcTags, NULL);
     if (FAILED(hr))
         *pcTags = 0;
+    return hr;
+}
+
+HRESULT SHAPE_GetFontLanguageTags( HDC hdc, ScriptCache *psc,
+                                   SCRIPT_ANALYSIS *psa, OPENTYPE_TAG tagScript,
+                                   int cMaxTags, OPENTYPE_TAG *pLangSysTags,
+                                   int *pcTags)
+{
+    HRESULT hr;
+    OPENTYPE_TAG searching = 0x00000000;
+    BOOL fellback = FALSE;
+
+    if (!psc->GSUB_Table)
+        psc->GSUB_Table = load_gsub_table(hdc);
+
+    if (psa && psc->userLang != 0)
+        searching = psc->userLang;
+
+    hr = GSUB_GetFontLanguageTags(psc, tagScript, searching, cMaxTags, pLangSysTags, pcTags, NULL);
+    if (FAILED(hr))
+    {
+        fellback = TRUE;
+        hr = GSUB_GetFontLanguageTags(psc, MS_MAKE_TAG('l','a','t','n'), searching, cMaxTags, pLangSysTags, pcTags, NULL);
+    }
+
+    if (FAILED(hr) || fellback)
+        *pcTags = 0;
+    if (SUCCEEDED(hr) && fellback && psa)
+        hr = E_INVALIDARG;
     return hr;
 }

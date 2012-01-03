@@ -60,6 +60,7 @@ static HRESULT (WINAPI *pScriptShapeOpenType)( HDC hdc, SCRIPT_CACHE *psc, SCRIP
 static DWORD (WINAPI *pGetGlyphIndicesW)(HDC hdc, LPCWSTR lpstr, INT count, LPWORD pgi, DWORD flags);
 
 static HRESULT (WINAPI *pScriptGetFontScriptTags)( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa, int cMaxTags, OPENTYPE_TAG *pScriptTags, int *pcTags);
+static HRESULT (WINAPI *pScriptGetFontLanguageTags)( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa, OPENTYPE_TAG tagScript, int cMaxTags, OPENTYPE_TAG *pLangSysTags, int *pcTags);
 
 static inline void _test_items_ok(LPCWSTR string, DWORD cchString,
                          SCRIPT_CONTROL *Control, SCRIPT_STATE *State,
@@ -2871,9 +2872,10 @@ static void test_ScriptGetFontFunctions(HDC hdc)
 {
     HRESULT hr;
     pScriptGetFontScriptTags = (void*)GetProcAddress(GetModuleHandleA("usp10.dll"), "ScriptGetFontScriptTags");
-    if (!pScriptGetFontScriptTags)
+    pScriptGetFontLanguageTags = (void*)GetProcAddress(GetModuleHandleA("usp10.dll"), "ScriptGetFontLanguageTags");
+    if (!pScriptGetFontScriptTags || !pScriptGetFontLanguageTags)
     {
-        win_skip("ScriptGetFontScriptTags not available on this platform\n");
+        win_skip("ScriptGetFontScriptTags or ScriptGetFontLanguageTags not available on this platform\n");
     }
     else
     {
@@ -2909,6 +2911,31 @@ static void test_ScriptGetFontFunctions(HDC hdc)
             ok(count == 0, "Count should be 0 with E_OUTOFMEMORY return\n");
         ok(sc != NULL, "ScriptCache should be initialized\n");
 
+        ScriptFreeCache(&sc);
+        sc = NULL;
+
+        hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, 0, NULL, NULL);
+        ok(hr == E_INVALIDARG,"Incorrect return code\n");
+        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
+        hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, 0, NULL, &count);
+        ok(hr == E_INVALIDARG,"Incorrect return code\n");
+        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
+        hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, 5, tags, NULL);
+        ok(hr == E_INVALIDARG,"Incorrect return code\n");
+        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
+        hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, 0, tags, &count);
+        ok(hr == E_INVALIDARG,"Incorrect return code\n");
+        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
+        hr = pScriptGetFontLanguageTags(NULL, &sc, NULL, latn_tag, 5, tags, &count);
+        ok(hr == E_PENDING,"Incorrect return code\n");
+        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
+        hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, latn_tag, 5, tags, &count);
+        ok((hr == S_OK || hr == E_OUTOFMEMORY),"Incorrect return code\n");
+        if (hr == S_OK)
+            ok(count <= 5, "Count should be less or equal to 5 with S_OK return\n");
+        else if (hr == E_OUTOFMEMORY)
+            ok(count == 0, "Count should be 0 with E_OUTOFMEMORY return\n");
+
         memset(&Control, 0, sizeof(Control));
         memset(&State, 0, sizeof(State));
 
@@ -2917,6 +2944,12 @@ static void test_ScriptGetFontFunctions(HDC hdc)
         memset(tags,0,sizeof(tags));
         hr = pScriptGetFontScriptTags(hdc, &sc, &outpItems[0].a, 5, tags, &count);
         ok( hr == USP_E_SCRIPT_NOT_IN_FONT || broken(hr == S_OK), "wrong return code\n");
+
+        hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, dsrt_tag, 5, tags, &count);
+        ok( hr == S_OK, "wrong return code\n");
+        hr = pScriptGetFontLanguageTags(hdc, &sc, &outpItems[0].a, dsrt_tag, 5, tags, &count);
+        ok( hr == E_INVALIDARG || broken(hr == S_OK), "wrong return code\n");
+
         ScriptFreeCache(&sc);
     }
 }

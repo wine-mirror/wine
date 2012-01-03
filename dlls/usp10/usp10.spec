@@ -8,7 +8,7 @@
 @ stdcall ScriptGetCMap(ptr ptr ptr long long ptr)
 @ stub ScriptGetFontAlternateGlyphs
 @ stub ScriptGetFontFeatureTags
-@ stub ScriptGetFontLanguageTags
+@ stdcall ScriptGetFontLanguageTags(long ptr ptr long long ptr ptr)
 @ stdcall ScriptGetFontProperties(long ptr ptr)
 @ stdcall ScriptGetFontScriptTags(long ptr ptr long ptr ptr)
 @ stdcall ScriptGetGlyphABCWidth(ptr ptr long ptr)
