@@ -363,7 +363,7 @@ static D3D10_SHADER_VARIABLE_TYPE d3d10_variable_type(DWORD t, BOOL is_object)
             case 21: return D3D10_SVT_SAMPLER;
             default:
                 FIXME("Unknown variable type %#x.\n", t);
-                return 0;
+                return D3D10_SVT_VOID;
         }
     }
     else
@@ -376,7 +376,7 @@ static D3D10_SHADER_VARIABLE_TYPE d3d10_variable_type(DWORD t, BOOL is_object)
             case 4: return D3D10_SVT_BOOL;
             default:
                 FIXME("Unknown variable type %#x.\n", t);
-                return 0;
+                return D3D10_SVT_VOID;
         }
     }
 }
