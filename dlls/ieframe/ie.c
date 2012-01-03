@@ -625,8 +625,6 @@ static HRESULT WINAPI InternetExplorer_put_Resizable(IWebBrowser2 *iface, VARIAN
     return E_NOTIMPL;
 }
 
-#undef impl_from_IWebBrowser2
-
 static const IWebBrowser2Vtbl InternetExplorerVtbl =
 {
     InternetExplorer_QueryInterface,
