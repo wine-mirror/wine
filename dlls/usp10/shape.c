@@ -3878,6 +3878,112 @@ static HRESULT GSUB_GetFontLanguageTags(ScriptCache *psc, OPENTYPE_TAG script_ta
     return rc;
 }
 
+static void GSUB_initialize_feature_cache(LPCVOID table, LoadedLanguage *language)
+{
+    int i;
+
+    if (!language->feature_count)
+    {
+        const GSUB_LangSys *lang= language->table;
+        const GSUB_Header *header = (const GSUB_Header *)table;
+        const GSUB_FeatureList *feature_list;
+
+        language->feature_count = GET_BE_WORD(lang->FeatureCount);
+        TRACE("%i features\n",language->feature_count);
+
+        language->features = HeapAlloc(GetProcessHeap(),0,sizeof(LoadedFeature)*language->feature_count);
+
+        feature_list = (const GSUB_FeatureList*)((const BYTE*)header + GET_BE_WORD(header->FeatureList));
+
+        for (i = 0; i < language->feature_count; i++)
+        {
+            int index = GET_BE_WORD(lang->FeatureIndex[i]);
+
+            language->features[i].tag = MS_MAKE_TAG(feature_list->FeatureRecord[index].FeatureTag[0], feature_list->FeatureRecord[index].FeatureTag[1], feature_list->FeatureRecord[index].FeatureTag[2], feature_list->FeatureRecord[index].FeatureTag[3]);
+            language->features[i].feature = ((const BYTE*)feature_list + GET_BE_WORD(feature_list->FeatureRecord[index].Feature));
+        }
+    }
+}
+
+static HRESULT GSUB_GetFontFeatureTags(ScriptCache *psc, OPENTYPE_TAG script_tag, OPENTYPE_TAG language_tag, BOOL filtered, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pFeatureTags, int *pcTags, LoadedFeature** feature)
+{
+    int i;
+    HRESULT rc = S_OK;
+    LoadedScript *script = NULL;
+    LoadedLanguage *language = NULL;
+
+    GSUB_initialize_script_cache(psc);
+
+    for (i = 0; i < psc->script_count; i++)
+    {
+        if (psc->scripts[i].tag == script_tag)
+        {
+            script = &psc->scripts[i];
+            break;
+        }
+    }
+
+    if (!script)
+    {
+        *pcTags = 0;
+        if (!filtered)
+            return S_OK;
+        else
+            return E_INVALIDARG;
+    }
+
+    GSUB_initialize_language_cache(script);
+
+    if (script->default_language.table && script->default_language.tag == language_tag)
+        language = &script->default_language;
+    else
+    {
+        for (i = 0; i < script->language_count; i++)
+        {
+            if (script->languages[i].tag == language_tag)
+            {
+                language = &script->languages[i];
+                break;
+            }
+        }
+    }
+
+    if (!language)
+    {
+        *pcTags = 0;
+        return S_OK;
+    }
+
+    GSUB_initialize_feature_cache(psc->GSUB_Table, language);
+
+    *pcTags = language->feature_count;
+
+    if (!searchingFor && cMaxTags < *pcTags)
+        rc = E_OUTOFMEMORY;
+    else if (searchingFor)
+        rc = E_INVALIDARG;
+
+    for (i = 0; i < language->feature_count; i++)
+    {
+        if (i < cMaxTags)
+            pFeatureTags[i] = language->features[i].tag;
+
+        if (searchingFor)
+        {
+            if (searchingFor == language->features[i].tag)
+            {
+                pFeatureTags[0] = language->features[i].tag;
+                *pcTags = 1;
+                if (feature)
+                    *feature = &language->features[i];
+                rc = S_OK;
+                break;
+            }
+        }
+    }
+    return rc;
+}
+
 HRESULT SHAPE_GetFontScriptTags( HDC hdc, ScriptCache *psc,
                                  SCRIPT_ANALYSIS *psa, int cMaxTags,
                                  OPENTYPE_TAG *pScriptTags, int *pcTags)
@@ -3923,5 +4029,29 @@ HRESULT SHAPE_GetFontLanguageTags( HDC hdc, ScriptCache *psc,
         *pcTags = 0;
     if (SUCCEEDED(hr) && fellback && psa)
         hr = E_INVALIDARG;
+    return hr;
+}
+
+HRESULT SHAPE_GetFontFeatureTags( HDC hdc, ScriptCache *psc,
+                                  SCRIPT_ANALYSIS *psa, OPENTYPE_TAG tagScript,
+                                  OPENTYPE_TAG tagLangSys, int cMaxTags,
+                                  OPENTYPE_TAG *pFeatureTags, int *pcTags)
+{
+    HRESULT hr;
+    BOOL filter = FALSE;
+
+    if (!psc->GSUB_Table)
+        psc->GSUB_Table = load_gsub_table(hdc);
+
+    if (psa && scriptInformation[psa->eScript].scriptTag)
+    {
+        FIXME("Filtering not implemented\n");
+        filter = TRUE;
+    }
+
+    hr = GSUB_GetFontFeatureTags(psc, tagScript, tagLangSys, filter, 0x00000000, cMaxTags, pFeatureTags, pcTags, NULL);
+
+    if (FAILED(hr))
+        *pcTags = 0;
     return hr;
 }

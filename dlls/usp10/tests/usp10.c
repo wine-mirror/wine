@@ -61,6 +61,7 @@ static DWORD (WINAPI *pGetGlyphIndicesW)(HDC hdc, LPCWSTR lpstr, INT count, LPWO
 
 static HRESULT (WINAPI *pScriptGetFontScriptTags)( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa, int cMaxTags, OPENTYPE_TAG *pScriptTags, int *pcTags);
 static HRESULT (WINAPI *pScriptGetFontLanguageTags)( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa, OPENTYPE_TAG tagScript, int cMaxTags, OPENTYPE_TAG *pLangSysTags, int *pcTags);
+static HRESULT (WINAPI *pScriptGetFontFeatureTags)( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS *psa, OPENTYPE_TAG tagScript, OPENTYPE_TAG tagLangSys, int cMaxTags, OPENTYPE_TAG *pFeatureTags, int *pcTags);
 
 static inline void _test_items_ok(LPCWSTR string, DWORD cchString,
                          SCRIPT_CONTROL *Control, SCRIPT_STATE *State,
@@ -2873,9 +2874,10 @@ static void test_ScriptGetFontFunctions(HDC hdc)
     HRESULT hr;
     pScriptGetFontScriptTags = (void*)GetProcAddress(GetModuleHandleA("usp10.dll"), "ScriptGetFontScriptTags");
     pScriptGetFontLanguageTags = (void*)GetProcAddress(GetModuleHandleA("usp10.dll"), "ScriptGetFontLanguageTags");
-    if (!pScriptGetFontScriptTags || !pScriptGetFontLanguageTags)
+    pScriptGetFontFeatureTags = (void*)GetProcAddress(GetModuleHandleA("usp10.dll"), "ScriptGetFontFeatureTags");
+    if (!pScriptGetFontScriptTags || !pScriptGetFontLanguageTags || !pScriptGetFontFeatureTags)
     {
-        win_skip("ScriptGetFontScriptTags or ScriptGetFontLanguageTags not available on this platform\n");
+        win_skip("ScriptGetFontScriptTags,ScriptGetFontLanguageTags or ScriptGetFontFeatureTags not available on this platform\n");
     }
     else
     {
@@ -2936,6 +2938,31 @@ static void test_ScriptGetFontFunctions(HDC hdc)
         else if (hr == E_OUTOFMEMORY)
             ok(count == 0, "Count should be 0 with E_OUTOFMEMORY return\n");
 
+        ScriptFreeCache(&sc);
+        sc = NULL;
+
+        hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, 0, NULL, NULL);
+        ok(hr == E_INVALIDARG,"Incorrect return code\n");
+        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
+        hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, 0, NULL, &count);
+        ok(hr == E_INVALIDARG,"Incorrect return code\n");
+        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
+        hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, 5, tags, NULL);
+        ok(hr == E_INVALIDARG,"Incorrect return code\n");
+        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
+        hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, 0, tags, &count);
+        ok(hr == E_INVALIDARG,"Incorrect return code\n");
+        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
+        hr = pScriptGetFontFeatureTags(NULL, &sc, NULL, latn_tag, 0x0, 5, tags, &count);
+        ok(hr == E_PENDING,"Incorrect return code\n");
+        ok(sc == NULL, "ScriptCache should remain uninitialized\n");
+        hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, latn_tag, 0x0, 5, tags, &count);
+        ok((hr == S_OK || hr == E_OUTOFMEMORY),"Incorrect return code\n");
+        if (hr == S_OK)
+            ok(count <= 5, "Count should be less or equal to 5 with S_OK return\n");
+        else if (hr == E_OUTOFMEMORY)
+            ok(count == 0, "Count should be 0 with E_OUTOFMEMORY return\n");
+
         memset(&Control, 0, sizeof(Control));
         memset(&State, 0, sizeof(State));
 
@@ -2948,6 +2975,11 @@ static void test_ScriptGetFontFunctions(HDC hdc)
         hr = pScriptGetFontLanguageTags(hdc, &sc, NULL, dsrt_tag, 5, tags, &count);
         ok( hr == S_OK, "wrong return code\n");
         hr = pScriptGetFontLanguageTags(hdc, &sc, &outpItems[0].a, dsrt_tag, 5, tags, &count);
+        ok( hr == E_INVALIDARG || broken(hr == S_OK), "wrong return code\n");
+
+        hr = pScriptGetFontFeatureTags(hdc, &sc, NULL, dsrt_tag, 0x0, 5, tags, &count);
+        ok( hr == S_OK, "wrong return code\n");
+        hr = pScriptGetFontFeatureTags(hdc, &sc, &outpItems[0].a, dsrt_tag, 0x0, 5, tags, &count);
         ok( hr == E_INVALIDARG || broken(hr == S_OK), "wrong return code\n");
 
         ScriptFreeCache(&sc);
