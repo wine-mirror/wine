@@ -1,11 +1,11 @@
 # Italian translations for Wine
-# Luca Bennati <lucak3@gmail.com>, 2011.
+# Luca Bennati <lucak3@gmail.com>, 2011, 2012.
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-30 18:15+0100\n"
+"PO-Revision-Date: 2012-01-03 21:32+0100\n"
 "Last-Translator: Luca Bennati <lucak3@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Italian\n"
@@ -8433,9 +8433,8 @@ msgid "The specified device handle is invalid."
 msgstr "L'handle del dispositivo specificato non è valido."
 
 #: winmm.rc:34
-#, fuzzy
 msgid "There is no driver installed on your system!"
-msgstr "Non è stato installato nessun driver nel sistema !\n"
+msgstr "Non è presente nessun driver installato nel sistema!"
 
 #: winmm.rc:35 winmm.rc:61
 msgid ""
