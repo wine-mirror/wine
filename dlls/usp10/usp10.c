@@ -2737,7 +2737,7 @@ HRESULT WINAPI ScriptShapeOpenType( HDC hdc, SCRIPT_CACHE *psc,
     ((ScriptCache *)*psc)->userLang = tagLangSys;
 
     /* set fNoGlyphIndex non truetype/opentype fonts */
-    if (!psa->fNoGlyphIndex && !((ScriptCache *)*psc)->sfnt)
+    if (psa && !psa->fNoGlyphIndex && !((ScriptCache *)*psc)->sfnt)
         psa->fNoGlyphIndex = TRUE;
 
     /* Initialize a SCRIPT_VISATTR and LogClust for each char in this run */
