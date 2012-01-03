@@ -725,8 +725,6 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start,
         WCMD_strsubstW(start, endOfVar + 1, startCopy, substrlength);
       }
 
-      return start;
-
     /* search and replace manipulation */
     } else {
       WCHAR *equalspos = strstrW(colonpos, equalW);
@@ -786,9 +784,8 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start,
       HeapFree(GetProcessHeap(), 0, s);
       HeapFree(GetProcessHeap(), 0, searchIn);
       HeapFree(GetProcessHeap(), 0, searchFor);
-      return start;
     }
-    return start+1;
+    return start;
 }
 
 /*****************************************************************************
