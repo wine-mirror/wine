@@ -129,24 +129,24 @@ static void state_cullmode(struct wined3d_context *context, const struct wined3d
      * offscreen / onscreen rendering switch. */
     switch (state->render_states[WINED3D_RS_CULLMODE])
     {
-        case WINED3DCULL_NONE:
+        case WINED3D_CULL_NONE:
             glDisable(GL_CULL_FACE);
             checkGLcall("glDisable GL_CULL_FACE");
             break;
-        case WINED3DCULL_CW:
+        case WINED3D_CULL_CW:
             glEnable(GL_CULL_FACE);
             checkGLcall("glEnable GL_CULL_FACE");
             glCullFace(GL_FRONT);
             checkGLcall("glCullFace(GL_FRONT)");
             break;
-        case WINED3DCULL_CCW:
+        case WINED3D_CULL_CCW:
             glEnable(GL_CULL_FACE);
             checkGLcall("glEnable GL_CULL_FACE");
             glCullFace(GL_BACK);
             checkGLcall("glCullFace(GL_BACK)");
             break;
         default:
-            FIXME("Unrecognized/Unhandled WINED3DCULL value %#x.\n",
+            FIXME("Unrecognized cull mode %#x.\n",
                     state->render_states[WINED3D_RS_CULLMODE]);
     }
 }

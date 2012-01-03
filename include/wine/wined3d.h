@@ -462,13 +462,12 @@ enum wined3d_fill_mode
     WINED3D_FILL_SOLID                      = 3,
 };
 
-typedef enum _WINED3DCULL
+enum wined3d_cull
 {
-    WINED3DCULL_NONE                        = 1,
-    WINED3DCULL_CW                          = 2,
-    WINED3DCULL_CCW                         = 3,
-    WINED3DCULL_FORCE_DWORD                 = 0x7fffffff
-} WINED3DCULL;
+    WINED3D_CULL_NONE                       = 1,
+    WINED3D_CULL_CW                         = 2,
+    WINED3D_CULL_CCW                        = 3,
+};
 
 typedef enum _WINED3DSTENCILOP
 {
