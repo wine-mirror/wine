@@ -820,10 +820,13 @@ static UINT find_published_source(MSIPACKAGE *package, MSIMEDIAINFO *mi)
                                         volume, &volumesz, prompt, &promptsz) == ERROR_SUCCESS)
     {
         mi->disk_id = id;
-        mi->volume_label = msi_realloc(mi->volume_label, ++volumesz * sizeof(WCHAR));
-        lstrcpyW(mi->volume_label, volume);
-        mi->disk_prompt = msi_realloc(mi->disk_prompt, ++promptsz * sizeof(WCHAR));
-        lstrcpyW(mi->disk_prompt, prompt);
+        msi_free( mi->volume_label );
+        if (!(mi->volume_label = msi_alloc( ++volumesz * sizeof(WCHAR) ))) return ERROR_OUTOFMEMORY;
+        strcpyW( mi->volume_label, volume );
+
+        msi_free( mi->disk_prompt );
+        if (!(mi->disk_prompt = msi_alloc( ++promptsz * sizeof(WCHAR) ))) return ERROR_OUTOFMEMORY;
+        strcpyW( mi->disk_prompt, prompt );
 
         if (source_matches_volume(mi, source))
         {
