@@ -400,6 +400,158 @@ static UINT dibdrv_SetDIBColorTable( PHYSDEV dev, UINT pos, UINT count, const RG
     return next->funcs->pSetDIBColorTable( next, pos, count, colors );
 }
 
+/***********************************************************************
+ *           dibdrv_ChoosePixelFormat
+ */
+static INT dibdrv_ChoosePixelFormat( PHYSDEV dev, const PIXELFORMATDESCRIPTOR *pfd )
+{
+    FIXME( "Not supported on DIB section\n" );
+    return 0;
+}
+
+/***********************************************************************
+ *           dibdrv_DescribePixelFormat
+ */
+static INT dibdrv_DescribePixelFormat( PHYSDEV dev, INT fmt, UINT size, PIXELFORMATDESCRIPTOR *pfd )
+{
+    FIXME( "Not supported on DIB section\n" );
+    return 0;
+}
+
+/***********************************************************************
+ *           dibdrv_GetPixelFormat
+ */
+static INT dibdrv_GetPixelFormat( PHYSDEV dev )
+{
+    FIXME( "Not supported on DIB section\n" );
+    return 0;
+}
+
+/***********************************************************************
+ *           dibdrv_SetPixelFormat
+ */
+static BOOL dibdrv_SetPixelFormat( PHYSDEV dev, INT fmt, const PIXELFORMATDESCRIPTOR *pfd )
+{
+    FIXME( "Not supported on DIB section\n" );
+    return FALSE;
+}
+
+/***********************************************************************
+ *           dibdrv_SwapBuffers
+ */
+static BOOL dibdrv_SwapBuffers( PHYSDEV dev )
+{
+    FIXME( "Not supported on DIB section\n" );
+    return FALSE;
+}
+
+/***********************************************************************
+ *           dibdrv_wglCopyContext
+ */
+static BOOL dibdrv_wglCopyContext( HGLRC src, HGLRC dst, UINT mask )
+{
+    FIXME( "Not supported on DIB section\n" );
+    return FALSE;
+}
+
+/***********************************************************************
+ *           dibdrv_wglCreateContext
+ */
+static HGLRC dibdrv_wglCreateContext( PHYSDEV dev )
+{
+    FIXME( "Not supported on DIB section\n" );
+    return 0;
+}
+
+/***********************************************************************
+ *           dibdrv_wglCreateContextAttribsARB
+ */
+static HGLRC dibdrv_wglCreateContextAttribsARB( PHYSDEV dev, HGLRC ctx, const int *attribs )
+{
+    FIXME( "Not supported on DIB section\n" );
+    return 0;
+}
+
+/***********************************************************************
+ *           dibdrv_wglDeleteContext
+ */
+static BOOL dibdrv_wglDeleteContext( HGLRC ctx )
+{
+    FIXME( "Not supported on DIB section\n" );
+    return FALSE;
+}
+
+/***********************************************************************
+ *           dibdrv_wglGetPbufferDCARB
+ */
+static HDC dibdrv_wglGetPbufferDCARB( PHYSDEV dev, void *buffer )
+{
+    FIXME( "Not supported on DIB section\n" );
+    return 0;
+}
+
+/***********************************************************************
+ *           dibdrv_wglGetProcAddress
+ */
+static PROC dibdrv_wglGetProcAddress( LPCSTR name )
+{
+    FIXME( "Not supported on DIB section\n" );
+    return NULL;
+}
+
+/***********************************************************************
+ *           dibdrv_wglMakeContextCurrentARB
+ */
+static BOOL dibdrv_wglMakeContextCurrentARB( PHYSDEV draw_dev, PHYSDEV read_dev, HGLRC ctx )
+{
+    FIXME( "Not supported on DIB section\n" );
+    return FALSE;
+}
+
+/***********************************************************************
+ *           dibdrv_wglMakeCurrent
+ */
+static BOOL dibdrv_wglMakeCurrent( PHYSDEV dev, HGLRC ctx )
+{
+    FIXME( "Not supported on DIB section\n" );
+    return FALSE;
+}
+
+/***********************************************************************
+ *           dibdrv_wglSetPixelFormatWINE
+ */
+static BOOL dibdrv_wglSetPixelFormatWINE( PHYSDEV dev, INT fmt, const PIXELFORMATDESCRIPTOR *pfd )
+{
+    FIXME( "Not supported on DIB section\n" );
+    return FALSE;
+}
+
+/***********************************************************************
+ *           dibdrv_wglShareLists
+ */
+static BOOL dibdrv_wglShareLists( HGLRC ctx1, HGLRC ctx2 )
+{
+    FIXME( "Not supported on DIB section\n" );
+    return FALSE;
+}
+
+/***********************************************************************
+ *           dibdrv_wglUseFontBitmapsA
+ */
+static BOOL dibdrv_wglUseFontBitmapsA( PHYSDEV dev, DWORD first, DWORD count, DWORD base )
+{
+    FIXME( "Not supported on DIB section\n" );
+    return FALSE;
+}
+
+/***********************************************************************
+ *           dibdrv_wglUseFontBitmapsW
+ */
+static BOOL dibdrv_wglUseFontBitmapsW( PHYSDEV dev, DWORD first, DWORD count, DWORD base )
+{
+    FIXME( "Not supported on DIB section\n" );
+    return FALSE;
+}
 
 const struct gdi_dc_funcs dib_driver =
 {
@@ -411,7 +563,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pArcTo */
     NULL,                               /* pBeginPath */
     dibdrv_BlendImage,                  /* pBlendImage */
-    NULL,                               /* pChoosePixelFormat */
+    dibdrv_ChoosePixelFormat,           /* pChoosePixelFormat */
     NULL,                               /* pChord */
     NULL,                               /* pCloseFigure */
     dibdrv_CopyBitmap,                  /* pCopyBitmap */
@@ -422,7 +574,7 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_DeleteBitmap,                /* pDeleteBitmap */
     dibdrv_DeleteDC,                    /* pDeleteDC */
     NULL,                               /* pDeleteObject */
-    NULL,                               /* pDescribePixelFormat */
+    dibdrv_DescribePixelFormat,         /* pDescribePixelFormat */
     NULL,                               /* pDeviceCapabilities */
     NULL,                               /* pEllipse */
     NULL,                               /* pEndDoc */
@@ -458,7 +610,7 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_GetNearestColor,             /* pGetNearestColor */
     NULL,                               /* pGetOutlineTextMetrics */
     dibdrv_GetPixel,                    /* pGetPixel */
-    NULL,                               /* pGetPixelFormat */
+    dibdrv_GetPixelFormat,              /* pGetPixelFormat */
     NULL,                               /* pGetSystemPaletteEntries */
     NULL,                               /* pGetTextCharsetInfo */
     NULL,                               /* pGetTextExtentExPoint */
@@ -514,7 +666,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pSetMapMode */
     NULL,                               /* pSetMapperFlags */
     dibdrv_SetPixel,                    /* pSetPixel */
-    NULL,                               /* pSetPixelFormat */
+    dibdrv_SetPixelFormat,              /* pSetPixelFormat */
     NULL,                               /* pSetPolyFillMode */
     NULL,                               /* pSetROP2 */
     NULL,                               /* pSetRelAbs */
@@ -534,19 +686,19 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pStretchDIBits */
     NULL,                               /* pStrokeAndFillPath */
     NULL,                               /* pStrokePath */
-    NULL,                               /* pSwapBuffers */
+    dibdrv_SwapBuffers,                 /* pSwapBuffers */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pWidenPath */
-    NULL,                               /* pwglCopyContext */
-    NULL,                               /* pwglCreateContext */
-    NULL,                               /* pwglCreateContextAttribsARB */
-    NULL,                               /* pwglDeleteContext */
-    NULL,                               /* pwglGetPbufferDCARB */
-    NULL,                               /* pwglGetProcAddress */
-    NULL,                               /* pwglMakeContextCurrentARB */
-    NULL,                               /* pwglMakeCurrent */
-    NULL,                               /* pwglSetPixelFormatWINE */
-    NULL,                               /* pwglShareLists */
-    NULL,                               /* pwglUseFontBitmapsA */
-    NULL                                /* pwglUseFontBitmapsW */
+    dibdrv_wglCopyContext,              /* pwglCopyContext */
+    dibdrv_wglCreateContext,            /* pwglCreateContext */
+    dibdrv_wglCreateContextAttribsARB,  /* pwglCreateContextAttribsARB */
+    dibdrv_wglDeleteContext,            /* pwglDeleteContext */
+    dibdrv_wglGetPbufferDCARB,          /* pwglGetPbufferDCARB */
+    dibdrv_wglGetProcAddress,           /* pwglGetProcAddress */
+    dibdrv_wglMakeContextCurrentARB,    /* pwglMakeContextCurrentARB */
+    dibdrv_wglMakeCurrent,              /* pwglMakeCurrent */
+    dibdrv_wglSetPixelFormatWINE,       /* pwglSetPixelFormatWINE */
+    dibdrv_wglShareLists,               /* pwglShareLists */
+    dibdrv_wglUseFontBitmapsA,          /* pwglUseFontBitmapsA */
+    dibdrv_wglUseFontBitmapsW,          /* pwglUseFontBitmapsW */
 };
