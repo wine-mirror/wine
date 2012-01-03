@@ -8703,10 +8703,11 @@ msgid "The specified device handle is invalid."
 msgstr "Det oppgitte enhetshåndtaket er ugyldig."
 
 #: winmm.rc:34
-msgid "There is no driver installed on your system!\n"
+#, fuzzy
+msgid "There is no driver installed on your system!"
 msgstr "Det er ingen driver installert på systemet.\n"
 
-#: winmm.rc:35
+#: winmm.rc:35 winmm.rc:61
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
@@ -8830,15 +8831,6 @@ msgstr ""
 #: winmm.rc:60
 msgid "The specified device is not open or is not recognized by MCI."
 msgstr "Den oppgitte enheten er ikke åpen, eller ikke gjenkjent av MCI."
-
-#: winmm.rc:61
-msgid ""
-"Not enough memory available for this task.\n"
-"Quit one or more applications to increase available memory, and then try "
-"again."
-msgstr ""
-"Ikke nok minne for denne operasjonen.\n"
-"Avslutt ett eller flere programmer for å frigjøre minne og prøv igjen."
 
 #: winmm.rc:62
 msgid ""

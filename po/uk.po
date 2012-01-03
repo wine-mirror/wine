@@ -8439,10 +8439,11 @@ msgid "The specified device handle is invalid."
 msgstr "Вказано неправильний дескриптор пристрою."
 
 #: winmm.rc:34
-msgid "There is no driver installed on your system!\n"
+#, fuzzy
+msgid "There is no driver installed on your system!"
 msgstr "У системі немає встановлених драйверів !\n"
 
-#: winmm.rc:35
+#: winmm.rc:35 winmm.rc:61
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
@@ -8568,15 +8569,6 @@ msgstr ""
 #: winmm.rc:60
 msgid "The specified device is not open or is not recognized by MCI."
 msgstr "Вказаний пристрій не відкритий або не розпізнається інтерфейсом MCI."
-
-#: winmm.rc:61
-msgid ""
-"Not enough memory available for this task.\n"
-"Quit one or more applications to increase available memory, and then try "
-"again."
-msgstr ""
-"Недостатньо пам'яті для виконання цього завдання.\n"
-"Закрийте один або декілька додатків шоб звільнити пам'ять і повторіть спробу."
 
 #: winmm.rc:62
 msgid ""

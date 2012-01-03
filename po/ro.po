@@ -8949,10 +8949,11 @@ msgid "The specified device handle is invalid."
 msgstr "Handle specificat pentru dispozitiv nu este valid."
 
 #: winmm.rc:34
-msgid "There is no driver installed on your system!\n"
+#, fuzzy
+msgid "There is no driver installed on your system!"
 msgstr "Nu este instalat nici un driver în sistem !\n"
 
-#: winmm.rc:35
+#: winmm.rc:35 winmm.rc:61
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
@@ -9080,16 +9081,6 @@ msgstr ""
 #: winmm.rc:60
 msgid "The specified device is not open or is not recognized by MCI."
 msgstr "Dispozitivul specificat nu este deschis sau nu este recunoscut de MCI."
-
-#: winmm.rc:61
-msgid ""
-"Not enough memory available for this task.\n"
-"Quit one or more applications to increase available memory, and then try "
-"again."
-msgstr ""
-"Memoria disponibilă nu este suficientă pentru această sarcină.\n"
-"Închideți una sau mai multe aplicații pentru a mări memoria disponibilă, "
-"apoi încercați din nou."
 
 #: winmm.rc:62
 msgid ""

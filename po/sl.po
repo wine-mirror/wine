@@ -8496,10 +8496,10 @@ msgstr "Navedeni ročnik naprave je neveljaven."
 
 #: winmm.rc:34
 #, fuzzy
-msgid "There is no driver installed on your system!\n"
+msgid "There is no driver installed on your system!"
 msgstr "Na vašem sistemu ni nameščen noben gonilnik!\n"
 
-#: winmm.rc:35
+#: winmm.rc:35 winmm.rc:61
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
@@ -8625,15 +8625,6 @@ msgstr ""
 #: winmm.rc:60
 msgid "The specified device is not open or is not recognized by MCI."
 msgstr "Navedena naprava ni odprta ali ni poznana naprava MCI."
-
-#: winmm.rc:61
-msgid ""
-"Not enough memory available for this task.\n"
-"Quit one or more applications to increase available memory, and then try "
-"again."
-msgstr ""
-"Za to opravilo ni na voljo dovolj pomnilnika.\n"
-"Zaprite enega ali več programov in poskusite znova."
 
 #: winmm.rc:62
 msgid ""

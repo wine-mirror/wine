@@ -8411,10 +8411,11 @@ msgid "The specified device handle is invalid."
 msgstr "無効なデバイスハンドルです。"
 
 #: winmm.rc:34
-msgid "There is no driver installed on your system!\n"
+#, fuzzy
+msgid "There is no driver installed on your system!"
 msgstr "システムにドライバがインストールされていません!\n"
 
-#: winmm.rc:35
+#: winmm.rc:35 winmm.rc:61
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
@@ -8539,15 +8540,6 @@ msgstr ""
 #: winmm.rc:60
 msgid "The specified device is not open or is not recognized by MCI."
 msgstr "指定されたデバイスはオープンされていないか、MCIに認識されていません。"
-
-#: winmm.rc:61
-msgid ""
-"Not enough memory available for this task.\n"
-"Quit one or more applications to increase available memory, and then try "
-"again."
-msgstr ""
-"この操作を実行するためのメモリが不足しています。\n"
-"いくつかのアプリケーションを終了して空きメモリを増やしてやり直して下さい。"
 
 #: winmm.rc:62
 msgid ""

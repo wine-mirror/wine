@@ -8691,10 +8691,11 @@ msgid "The specified device handle is invalid."
 msgstr "O handle do dispositivo especificado é inválido."
 
 #: winmm.rc:34
-msgid "There is no driver installed on your system!\n"
+#, fuzzy
+msgid "There is no driver installed on your system!"
 msgstr "Não há nenhum driver instalado em seu sistema !\n"
 
-#: winmm.rc:35
+#: winmm.rc:35 winmm.rc:61
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
@@ -8821,16 +8822,6 @@ msgstr ""
 msgid "The specified device is not open or is not recognized by MCI."
 msgstr ""
 "O dispositivo especificado não está aberto ou não é reconhecido pelo MCI."
-
-#: winmm.rc:61
-msgid ""
-"Not enough memory available for this task.\n"
-"Quit one or more applications to increase available memory, and then try "
-"again."
-msgstr ""
-"Não já memória disponível sufuciente para esta tarefa.\n"
-"Feche uma ou mais aplicações para aumentar a memória disponível, e então "
-"tente novamente."
 
 #: winmm.rc:62
 msgid ""

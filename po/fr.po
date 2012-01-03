@@ -8452,10 +8452,11 @@ msgid "The specified device handle is invalid."
 msgstr "Le descripteur de périphérique spécifié est invalide."
 
 #: winmm.rc:34
-msgid "There is no driver installed on your system!\n"
+#, fuzzy
+msgid "There is no driver installed on your system!"
 msgstr "Aucun pilote n'est installé sur votre système !\n"
 
-#: winmm.rc:35
+#: winmm.rc:35 winmm.rc:61
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
 "increase available memory, and then try again."
@@ -8584,16 +8585,6 @@ msgstr ""
 msgid "The specified device is not open or is not recognized by MCI."
 msgstr ""
 "Le périphérique spécifié n'est pas ouvert ou n'est pas  reconnu par MCI."
-
-#: winmm.rc:61
-msgid ""
-"Not enough memory available for this task.\n"
-"Quit one or more applications to increase available memory, and then try "
-"again."
-msgstr ""
-"Mémoire insuffisante pour cette tâche.\n"
-"Quittez un ou plusieurs programmes pour libérer de la mémoire, puis essayez "
-"à nouveau."
 
 #: winmm.rc:62
 msgid ""

@@ -8391,10 +8391,10 @@ msgid "The specified device handle is invalid."
 msgstr ""
 
 #: winmm.rc:34
-msgid "There is no driver installed on your system!\n"
+msgid "There is no driver installed on your system!"
 msgstr ""
 
-#: winmm.rc:35
+#: winmm.rc:35 winmm.rc:61
 #, fuzzy
 msgid ""
 "Not enough memory available for this task. Quit one or more applications to "
@@ -8497,17 +8497,6 @@ msgstr ""
 #: winmm.rc:60
 msgid "The specified device is not open or is not recognized by MCI."
 msgstr ""
-
-#: winmm.rc:61
-#, fuzzy
-msgid ""
-"Not enough memory available for this task.\n"
-"Quit one or more applications to increase available memory, and then try "
-"again."
-msgstr ""
-"حافظه‌ی موقت برای انجام این کار وجود ندارد. \n"
-"یک یا چند ابزار و برنامه‌ی دیگر را ببندید تا مقدار آزاد حافظه‌ی موقت را افزایش "
-"دهید."
 
 #: winmm.rc:62
 msgid ""
