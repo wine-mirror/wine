@@ -58,7 +58,7 @@ msgstr "技术支持信息"
 #: mshtml.rc:45 mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87
 #: serialui.rc:38 setupapi.rc:56 shell32.rc:286 shell32.rc:310 shell32.rc:332
 #: shell32.rc:350 shlwapi.rc:41 user32.rc:77 user32.rc:95 wininet.rc:48
-#: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:122 oleview.rc:159
+#: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:114 oleview.rc:159
 #: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
 #: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
 #: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
@@ -138,7 +138,7 @@ msgstr "安装(&I)"
 #: oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57
 #: shell32.rc:287 shell32.rc:311 shell32.rc:322 shell32.rc:351 shlwapi.rc:42
 #: user32.rc:78 user32.rc:96 wininet.rc:49 wininet.rc:69 winspool.rc:40
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
+#: notepad.rc:115 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
 #: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
 #: regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298
 #: regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217
@@ -192,7 +192,7 @@ msgstr "安装程序"
 msgid "Programs (*.exe)"
 msgstr "程序 (*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:75
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:73
 #: oleview.rc:101 progman.rc:79 regedit.rc:195 winhlp32.rc:87
 msgid "All files (*.*)"
 msgstr "所有文件 (*.*)"
@@ -316,7 +316,7 @@ msgstr "重置(&e)"
 #: comctl32.rc:83 comdlg32.rc:180 comdlg32.rc:202 comdlg32.rc:273
 #: comdlg32.rc:337 comdlg32.rc:357 comdlg32.rc:369 comdlg32.rc:486
 #: comdlg32.rc:504 ieframe.rc:55 msacm32.rc:49 oledlg.rc:89 shell32.rc:125
-#: clock.rc:41 notepad.rc:57 notepad.rc:124 oleview.rc:69 progman.rc:52
+#: clock.rc:41 notepad.rc:57 notepad.rc:116 oleview.rc:69 progman.rc:52
 #: progman.rc:105 progman.rc:123 progman.rc:141 progman.rc:157 progman.rc:181
 #: progman.rc:199 progman.rc:216 regedit.rc:76 taskmgr.rc:87 winefile.rc:85
 #: winemine.rc:48 winhlp32.rc:53 wordpad.rc:91
@@ -733,7 +733,7 @@ msgstr "边距"
 msgid "L&eft:"
 msgstr "左(&E)："
 
-#: comdlg32.rc:454 notepad.rc:117
+#: comdlg32.rc:454 notepad.rc:109
 msgid "&Right:"
 msgstr "右(&R)："
 
@@ -741,7 +741,7 @@ msgstr "右(&R)："
 msgid "T&op:"
 msgstr "上(&O)："
 
-#: comdlg32.rc:458 notepad.rc:119
+#: comdlg32.rc:458 notepad.rc:111
 msgid "&Bottom:"
 msgstr "下(&B)："
 
@@ -10250,32 +10250,32 @@ msgstr "内容(&C)"
 msgid "&About Notepad"
 msgstr "关于记事本(&A)"
 
-#: notepad.rc:105
+#: notepad.rc:97
 msgid "Page Setup"
 msgstr "页面设置"
 
-#: notepad.rc:107
+#: notepad.rc:99
 msgid "&Header:"
 msgstr "页眉(&H)："
 
-#: notepad.rc:109
+#: notepad.rc:101
 msgid "&Footer:"
 msgstr "页脚(&F)："
 
-#: notepad.rc:112
+#: notepad.rc:104
 #, fuzzy
 msgid "Margins (millimeters)"
 msgstr "边距（毫米）(&M)："
 
-#: notepad.rc:113
+#: notepad.rc:105
 msgid "&Left:"
 msgstr "左(&L)："
 
-#: notepad.rc:115
+#: notepad.rc:107
 msgid "&Top:"
 msgstr "上(&T)："
 
-#: notepad.rc:131
+#: notepad.rc:123
 msgid "Encoding:"
 msgstr "编码："
 
@@ -10291,40 +10291,15 @@ msgstr "记事本"
 msgid "ERROR"
 msgstr "错误"
 
-#: notepad.rc:70 progman.rc:62 winhlp32.rc:80
-msgid "WARNING"
-msgstr "警告"
-
-#: notepad.rc:71 progman.rc:63 winhlp32.rc:81
-msgid "Information"
-msgstr "信息"
-
-#: notepad.rc:73
+#: notepad.rc:71
 msgid "Untitled"
 msgstr "（未命名）"
 
-#: notepad.rc:76
+#: notepad.rc:74
 msgid "Text files (*.txt)"
 msgstr "文本文件 (*.txt)"
 
-#: notepad.rc:79
-msgid ""
-"File '%s' is too large for notepad.\n"
-"Please use a different editor."
-msgstr ""
-"记事本不能打开“%s“这么大的文件。\n"
-"请使用别的编辑器。"
-
-#: notepad.rc:81
-#, fuzzy
-msgid ""
-"You did not enter any text.\n"
-"Please type something and try again."
-msgstr ""
-"您没有输入任何文本。\n"
-"请输入一些再试。"
-
-#: notepad.rc:83
+#: notepad.rc:77
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
@@ -10334,7 +10309,7 @@ msgstr ""
 "\n"
 "您想新建一个文件吗？"
 
-#: notepad.rc:85
+#: notepad.rc:79
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -10344,30 +10319,24 @@ msgstr ""
 "\n"
 "是否保存更改？"
 
-#: notepad.rc:86
+#: notepad.rc:80
 msgid "'%s' could not be found."
 msgstr "找不到“%s”。"
 
-#: notepad.rc:88
-msgid ""
-"Not enough memory to complete this task.\n"
-"Close one or more applications to increase the amount of free memory."
-msgstr "没有足够的内存可以用来完成此项任务。请关闭一些程序后再试。"
-
-#: notepad.rc:90
+#: notepad.rc:82
 msgid "Unicode (UTF-16)"
 msgstr "Unicode (UTF-16)"
 
-#: notepad.rc:91
+#: notepad.rc:83
 msgid "Unicode (UTF-16 big-endian)"
 msgstr "Unicode (UTF-16 大尾)"
 
-#: notepad.rc:92
+#: notepad.rc:84
 #, fuzzy
 msgid "Unicode (UTF-8)"
 msgstr "Unicode (UTF-16)"
 
-#: notepad.rc:99
+#: notepad.rc:91
 #, fuzzy
 msgid ""
 "%1\n"
@@ -10893,6 +10862,14 @@ msgstr "执行程序"
 #: progman.rc:60
 msgid "Program Manager"
 msgstr "程序管理器"
+
+#: progman.rc:62 winhlp32.rc:80
+msgid "WARNING"
+msgstr "警告"
+
+#: progman.rc:63 winhlp32.rc:81
+msgid "Information"
+msgstr "信息"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"

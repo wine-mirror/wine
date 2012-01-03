@@ -67,7 +67,7 @@ msgstr "Informacje o wsparciu"
 #: mshtml.rc:45 mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87
 #: serialui.rc:38 setupapi.rc:56 shell32.rc:286 shell32.rc:310 shell32.rc:332
 #: shell32.rc:350 shlwapi.rc:41 user32.rc:77 user32.rc:95 wininet.rc:48
-#: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:122 oleview.rc:159
+#: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:114 oleview.rc:159
 #: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
 #: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
 #: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
@@ -152,7 +152,7 @@ msgstr "&Zainstaluj"
 #: oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57
 #: shell32.rc:287 shell32.rc:311 shell32.rc:322 shell32.rc:351 shlwapi.rc:42
 #: user32.rc:78 user32.rc:96 wininet.rc:49 wininet.rc:69 winspool.rc:40
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
+#: notepad.rc:115 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
 #: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
 #: regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298
 #: regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217
@@ -210,7 +210,7 @@ msgstr "Programy instalacyjne"
 msgid "Programs (*.exe)"
 msgstr "Programy (*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:75
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:73
 #: oleview.rc:101 progman.rc:79 regedit.rc:195 winhlp32.rc:87
 msgid "All files (*.*)"
 msgstr "Wszystkie pliki (*.*)"
@@ -335,7 +335,7 @@ msgstr "Z&resetuj"
 #: comctl32.rc:83 comdlg32.rc:180 comdlg32.rc:202 comdlg32.rc:273
 #: comdlg32.rc:337 comdlg32.rc:357 comdlg32.rc:369 comdlg32.rc:486
 #: comdlg32.rc:504 ieframe.rc:55 msacm32.rc:49 oledlg.rc:89 shell32.rc:125
-#: clock.rc:41 notepad.rc:57 notepad.rc:124 oleview.rc:69 progman.rc:52
+#: clock.rc:41 notepad.rc:57 notepad.rc:116 oleview.rc:69 progman.rc:52
 #: progman.rc:105 progman.rc:123 progman.rc:141 progman.rc:157 progman.rc:181
 #: progman.rc:199 progman.rc:216 regedit.rc:76 taskmgr.rc:87 winefile.rc:85
 #: winemine.rc:48 winhlp32.rc:53 wordpad.rc:91
@@ -747,7 +747,7 @@ msgstr "Marginesy"
 msgid "L&eft:"
 msgstr "&Lewy:"
 
-#: comdlg32.rc:454 notepad.rc:117
+#: comdlg32.rc:454 notepad.rc:109
 msgid "&Right:"
 msgstr "P&rawy:"
 
@@ -755,7 +755,7 @@ msgstr "P&rawy:"
 msgid "T&op:"
 msgstr "&Górny:"
 
-#: comdlg32.rc:458 notepad.rc:119
+#: comdlg32.rc:458 notepad.rc:111
 msgid "&Bottom:"
 msgstr "&Dolny:"
 
@@ -10389,31 +10389,31 @@ msgstr "&Tematy Pomocy\tF1"
 msgid "&About Notepad"
 msgstr "Notatnik - i&nformacje"
 
-#: notepad.rc:105
+#: notepad.rc:97
 msgid "Page Setup"
 msgstr "Ustawienia strony"
 
-#: notepad.rc:107
+#: notepad.rc:99
 msgid "&Header:"
 msgstr "&Nagłówek:"
 
-#: notepad.rc:109
+#: notepad.rc:101
 msgid "&Footer:"
 msgstr "&Stopka:"
 
-#: notepad.rc:112
+#: notepad.rc:104
 msgid "Margins (millimeters)"
 msgstr "Marginesy (milimetry)"
 
-#: notepad.rc:113
+#: notepad.rc:105
 msgid "&Left:"
 msgstr "&Lewy:"
 
-#: notepad.rc:115
+#: notepad.rc:107
 msgid "&Top:"
 msgstr "&Górny:"
 
-#: notepad.rc:131
+#: notepad.rc:123
 msgid "Encoding:"
 msgstr "Kodowanie:"
 
@@ -10429,39 +10429,15 @@ msgstr "Notatnik"
 msgid "ERROR"
 msgstr "BŁĄD"
 
-#: notepad.rc:70 progman.rc:62 winhlp32.rc:80
-msgid "WARNING"
-msgstr "OSTRZEŻENIE"
-
-#: notepad.rc:71 progman.rc:63 winhlp32.rc:81
-msgid "Information"
-msgstr "Informacja"
-
-#: notepad.rc:73
+#: notepad.rc:71
 msgid "Untitled"
 msgstr "Bez tytułu"
 
-#: notepad.rc:76
+#: notepad.rc:74
 msgid "Text files (*.txt)"
 msgstr "Dokumenty tekstowe (*.txt)"
 
-#: notepad.rc:79
-msgid ""
-"File '%s' is too large for notepad.\n"
-"Please use a different editor."
-msgstr ""
-"Plik '%s' jest za duży dla notatnika.\n"
-"Użyj innego edytora do edycji pliku."
-
-#: notepad.rc:81
-msgid ""
-"You did not enter any text.\n"
-"Please type something and try again."
-msgstr ""
-"Nie wprowadzono żadnego tekstu.\n"
-"Proszę coś wpisać i spróbować ponownie."
-
-#: notepad.rc:83
+#: notepad.rc:77
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
@@ -10471,7 +10447,7 @@ msgstr ""
 "\n"
 "Czy chcesz utworzyć nowy plik ?"
 
-#: notepad.rc:85
+#: notepad.rc:79
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -10481,31 +10457,23 @@ msgstr ""
 "\n"
 "Czy chcesz zapisać zmiany?"
 
-#: notepad.rc:86
+#: notepad.rc:80
 msgid "'%s' could not be found."
 msgstr "Nie można odnaleźć '%s'."
 
-#: notepad.rc:88
-msgid ""
-"Not enough memory to complete this task.\n"
-"Close one or more applications to increase the amount of free memory."
-msgstr ""
-"Za mało pamięci, aby zakończyć tę operację.\n"
-"Zamknij jedną lub więcej aplikacji aby zwiększyć ilość wolnej pamięci."
-
-#: notepad.rc:90
+#: notepad.rc:82
 msgid "Unicode (UTF-16)"
 msgstr "Unicode (UTF-16)"
 
-#: notepad.rc:91
+#: notepad.rc:83
 msgid "Unicode (UTF-16 big-endian)"
 msgstr "Unicode (UTF-16 big-endian)"
 
-#: notepad.rc:92
+#: notepad.rc:84
 msgid "Unicode (UTF-8)"
 msgstr "Unicode (UTF-8)"
 
-#: notepad.rc:99
+#: notepad.rc:91
 msgid ""
 "%1\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -11018,6 +10986,14 @@ msgstr "Uruchom program"
 #: progman.rc:60
 msgid "Program Manager"
 msgstr "Menedżer zadań"
+
+#: progman.rc:62 winhlp32.rc:80
+msgid "WARNING"
+msgstr "OSTRZEŻENIE"
+
+#: progman.rc:63 winhlp32.rc:81
+msgid "Information"
+msgstr "Informacja"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"

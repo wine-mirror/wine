@@ -62,7 +62,7 @@ msgstr "지원 정보"
 #: mshtml.rc:45 mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87
 #: serialui.rc:38 setupapi.rc:56 shell32.rc:286 shell32.rc:310 shell32.rc:332
 #: shell32.rc:350 shlwapi.rc:41 user32.rc:77 user32.rc:95 wininet.rc:48
-#: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:122 oleview.rc:159
+#: wininet.rc:68 winspool.rc:39 net.rc:44 notepad.rc:114 oleview.rc:159
 #: oleview.rc:172 progman.rc:103 progman.rc:121 progman.rc:139 progman.rc:155
 #: progman.rc:177 progman.rc:196 progman.rc:213 regedit.rc:244 regedit.rc:255
 #: regedit.rc:268 regedit.rc:284 regedit.rc:297 regedit.rc:310 taskmgr.rc:446
@@ -145,7 +145,7 @@ msgstr "설치(&I)"
 #: oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57
 #: shell32.rc:287 shell32.rc:311 shell32.rc:322 shell32.rc:351 shlwapi.rc:42
 #: user32.rc:78 user32.rc:96 wininet.rc:49 wininet.rc:69 winspool.rc:40
-#: notepad.rc:123 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
+#: notepad.rc:115 oleview.rc:160 oleview.rc:173 progman.rc:104 progman.rc:122
 #: progman.rc:140 progman.rc:156 progman.rc:178 progman.rc:197 progman.rc:214
 #: regedit.rc:245 regedit.rc:256 regedit.rc:269 regedit.rc:285 regedit.rc:298
 #: regedit.rc:311 taskmgr.rc:447 taskmgr.rc:522 wineboot.rc:31 winecfg.rc:217
@@ -203,7 +203,7 @@ msgstr "설치 프로그램"
 msgid "Programs (*.exe)"
 msgstr "프로그램 (*.exe)"
 
-#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:75
+#: appwiz.rc:40 avifil32.rc:30 cryptui.rc:80 shell32.rc:196 notepad.rc:73
 #: oleview.rc:101 progman.rc:79 regedit.rc:195 winhlp32.rc:87
 msgid "All files (*.*)"
 msgstr "모든 파일 (*.*)"
@@ -328,7 +328,7 @@ msgstr "재설정(&E)"
 #: comctl32.rc:83 comdlg32.rc:180 comdlg32.rc:202 comdlg32.rc:273
 #: comdlg32.rc:337 comdlg32.rc:357 comdlg32.rc:369 comdlg32.rc:486
 #: comdlg32.rc:504 ieframe.rc:55 msacm32.rc:49 oledlg.rc:89 shell32.rc:125
-#: clock.rc:41 notepad.rc:57 notepad.rc:124 oleview.rc:69 progman.rc:52
+#: clock.rc:41 notepad.rc:57 notepad.rc:116 oleview.rc:69 progman.rc:52
 #: progman.rc:105 progman.rc:123 progman.rc:141 progman.rc:157 progman.rc:181
 #: progman.rc:199 progman.rc:216 regedit.rc:76 taskmgr.rc:87 winefile.rc:85
 #: winemine.rc:48 winhlp32.rc:53 wordpad.rc:91
@@ -740,7 +740,7 @@ msgstr "가장자리"
 msgid "L&eft:"
 msgstr "왼쪽(&E):"
 
-#: comdlg32.rc:454 notepad.rc:117
+#: comdlg32.rc:454 notepad.rc:109
 msgid "&Right:"
 msgstr "오른쪽(&R):"
 
@@ -748,7 +748,7 @@ msgstr "오른쪽(&R):"
 msgid "T&op:"
 msgstr "위(&O):"
 
-#: comdlg32.rc:458 notepad.rc:119
+#: comdlg32.rc:458 notepad.rc:111
 msgid "&Bottom:"
 msgstr "아래(&B):"
 
@@ -10297,31 +10297,31 @@ msgstr "목차(&C)"
 msgid "&About Notepad"
 msgstr "노트패드 정보(&A)"
 
-#: notepad.rc:105
+#: notepad.rc:97
 msgid "Page Setup"
 msgstr "페이지 설정"
 
-#: notepad.rc:107
+#: notepad.rc:99
 msgid "&Header:"
 msgstr "머리글(&H):"
 
-#: notepad.rc:109
+#: notepad.rc:101
 msgid "&Footer:"
 msgstr "바닥글(&F):"
 
-#: notepad.rc:112
+#: notepad.rc:104
 msgid "Margins (millimeters)"
 msgstr "여백(밀리미터)"
 
-#: notepad.rc:113
+#: notepad.rc:105
 msgid "&Left:"
 msgstr "왼쪽(&L):"
 
-#: notepad.rc:115
+#: notepad.rc:107
 msgid "&Top:"
 msgstr "위(&T):"
 
-#: notepad.rc:131
+#: notepad.rc:123
 msgid "Encoding:"
 msgstr "인코딩:"
 
@@ -10337,39 +10337,15 @@ msgstr "메모장"
 msgid "ERROR"
 msgstr "오류!!"
 
-#: notepad.rc:70 progman.rc:62 winhlp32.rc:80
-msgid "WARNING"
-msgstr "경고"
-
-#: notepad.rc:71 progman.rc:63 winhlp32.rc:81
-msgid "Information"
-msgstr "정보"
-
-#: notepad.rc:73
+#: notepad.rc:71
 msgid "Untitled"
 msgstr "제목 없음"
 
-#: notepad.rc:76
+#: notepad.rc:74
 msgid "Text files (*.txt)"
 msgstr "텍스트 파일 (*.txt)"
 
-#: notepad.rc:79
-msgid ""
-"File '%s' is too large for notepad.\n"
-"Please use a different editor."
-msgstr ""
-"%s 파일이 너무 커서 메모장으로는 열 수 없습니다.\n"
-" 다른 편집기를 사용하십시오."
-
-#: notepad.rc:81
-msgid ""
-"You did not enter any text.\n"
-"Please type something and try again."
-msgstr ""
-"입력한 내용이 없습니다.\n"
-"내용을 입력한 후 재시도하십시오"
-
-#: notepad.rc:83
+#: notepad.rc:77
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
@@ -10379,7 +10355,7 @@ msgstr ""
 "\n"
 " 파일을 새로 만드시겠습니까?"
 
-#: notepad.rc:85
+#: notepad.rc:79
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -10389,32 +10365,23 @@ msgstr ""
 "\n"
 " 변경 내용을 저장하시겠습니까?"
 
-#: notepad.rc:86
+#: notepad.rc:80
 msgid "'%s' could not be found."
 msgstr "%s 문자열을 찾을 수 없습니다."
 
-#: notepad.rc:88
-msgid ""
-"Not enough memory to complete this task.\n"
-"Close one or more applications to increase the amount of free memory."
-msgstr ""
-"이 작업을 완료하는 데 필요한 메모리가 부족합니다.\n"
-"사용 가능한 메모리의 양을 확보하기 위해 하나 이상의 응용 프로그램을 닫아 주십"
-"시오."
-
-#: notepad.rc:90
+#: notepad.rc:82
 msgid "Unicode (UTF-16)"
 msgstr "유니코드 (UTF-16)"
 
-#: notepad.rc:91
+#: notepad.rc:83
 msgid "Unicode (UTF-16 big-endian)"
 msgstr "유니코드  (UTF-16 빅-엔디언)"
 
-#: notepad.rc:92
+#: notepad.rc:84
 msgid "Unicode (UTF-8)"
 msgstr "유니코드 (UTF-8)"
 
-#: notepad.rc:99
+#: notepad.rc:91
 msgid ""
 "%1\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -10926,6 +10893,14 @@ msgstr "풀그림 실행"
 #: progman.rc:60
 msgid "Program Manager"
 msgstr "풀그림 관리자"
+
+#: progman.rc:62 winhlp32.rc:80
+msgid "WARNING"
+msgstr "경고"
+
+#: progman.rc:63 winhlp32.rc:81
+msgid "Information"
+msgstr "정보"
 
 #: progman.rc:65
 msgid "Delete group `%s'?"
