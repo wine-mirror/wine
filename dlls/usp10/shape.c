@@ -1159,7 +1159,7 @@ static OPENTYPE_TAG get_opentype_script(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCac
     }
 }
 
-static LPCVOID load_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc, const char* feat)
+static LoadedFeature* load_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc, const char* feat)
 {
     LoadedFeature *feature = NULL;
 
@@ -1189,28 +1189,20 @@ static LPCVOID load_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc
             GSUB_GetFontFeatureTags(psc, MS_MAKE_TAG('l','a','t','n'), MS_MAKE_TAG('d','f','l','t'), FALSE, MS_MAKE_TAG(feat[0],feat[1],feat[2],feat[3]), 1, &tags, &cTags, &feature);
     }
 
-    if (feature)
-    {
-        TRACE("Feature %s located at %p\n",debugstr_an(feat,4),feature->feature);
-        return feature->feature;
-    }
-    else
-    {
-        TRACE("Feature %s not located\n",debugstr_an(feat,4));
-        return NULL;
-    }
+    TRACE("Feature %s located at %p\n",debugstr_an(feat,4),feature);
+    return feature;
 }
 
 static INT apply_GSUB_feature_to_glyph(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, WORD *glyphs, INT index, INT write_dir, INT* glyph_count, const char* feat)
 {
-    const GSUB_Feature *feature;
+    LoadedFeature *feature;
 
     feature = load_GSUB_feature(hdc, psa, psc, feat);
     if (!feature)
         return GSUB_E_NOFEATURE;
 
     TRACE("applying feature %s\n",feat);
-    return GSUB_apply_feature_all_lookups(psc->GSUB_Table, feature, glyphs, index, write_dir, glyph_count);
+    return GSUB_apply_feature_all_lookups(psc->GSUB_Table, feature->feature, glyphs, index, write_dir, glyph_count);
 }
 
 static VOID *load_gsub_table(HDC hdc)
@@ -1477,14 +1469,16 @@ static int apply_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, W
 {
     if (psc->GSUB_Table)
     {
+        LoadedFeature *load_feature;
         const GSUB_Feature *feature;
         const GSUB_LookupList *lookup;
         const GSUB_Header *header = psc->GSUB_Table;
         int lookup_index, lookup_count;
 
-        feature = load_GSUB_feature(hdc, psa, psc, feat);
-        if (!feature)
+        load_feature = load_GSUB_feature(hdc, psa, psc, feat);
+        if (!load_feature)
             return GSUB_E_NOFEATURE;
+        feature = load_feature->feature;
 
         TRACE("applying feature %s\n",debugstr_an(feat,4));
         lookup = (const GSUB_LookupList*)((const BYTE*)header + GET_BE_WORD(header->LookupList));
@@ -2195,7 +2189,7 @@ static inline void shift_syllable_glyph_indexs(IndicSyllable *glyph_index, INT i
         glyph_index->pref+= shift;
 }
 
-static void Apply_Indic_BasicForm(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwChars, INT cChars, IndicSyllable *syllable, WORD *pwOutGlyphs, INT* pcGlyphs, WORD *pwLogClust, lexical_function lexical, IndicSyllable *glyph_index, const GSUB_Feature *feature )
+static void Apply_Indic_BasicForm(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa, WCHAR* pwChars, INT cChars, IndicSyllable *syllable, WORD *pwOutGlyphs, INT* pcGlyphs, WORD *pwLogClust, lexical_function lexical, IndicSyllable *glyph_index, LoadedFeature *feature )
 {
     int index = glyph_index->start;
 
@@ -2206,7 +2200,7 @@ static void Apply_Indic_BasicForm(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *ps
     {
             INT nextIndex;
             INT prevCount = *pcGlyphs;
-            nextIndex = GSUB_apply_feature_all_lookups(psc->GSUB_Table, feature, pwOutGlyphs, index, 1, pcGlyphs);
+            nextIndex = GSUB_apply_feature_all_lookups(psc->GSUB_Table, feature->feature, pwOutGlyphs, index, 1, pcGlyphs);
             if (nextIndex > GSUB_E_NOGLYPH)
             {
                 UpdateClusters(nextIndex, *pcGlyphs - prevCount, 1, cChars, pwLogClust);
@@ -2332,13 +2326,13 @@ static void ShapeIndicSyllables(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa,
 {
     int c;
     int overall_shift = 0;
-    const GSUB_Feature *locl = (modern)?load_GSUB_feature(hdc, psa, psc, "locl"):NULL;
-    const GSUB_Feature *nukt = load_GSUB_feature(hdc, psa, psc, "nukt");
-    const GSUB_Feature *akhn = load_GSUB_feature(hdc, psa, psc, "akhn");
-    const GSUB_Feature *rkrf = (modern)?load_GSUB_feature(hdc, psa, psc, "rkrf"):NULL;
-    const GSUB_Feature *pstf = load_GSUB_feature(hdc, psa, psc, "pstf");
-    const GSUB_Feature *vatu = (!rkrf)?load_GSUB_feature(hdc, psa, psc, "vatu"):NULL;
-    const GSUB_Feature *cjct = (modern)?load_GSUB_feature(hdc, psa, psc, "cjct"):NULL;
+    LoadedFeature *locl = (modern)?load_GSUB_feature(hdc, psa, psc, "locl"):NULL;
+    LoadedFeature *nukt = load_GSUB_feature(hdc, psa, psc, "nukt");
+    LoadedFeature *akhn = load_GSUB_feature(hdc, psa, psc, "akhn");
+    LoadedFeature *rkrf = (modern)?load_GSUB_feature(hdc, psa, psc, "rkrf"):NULL;
+    LoadedFeature *pstf = load_GSUB_feature(hdc, psa, psc, "pstf");
+    LoadedFeature *vatu = (!rkrf)?load_GSUB_feature(hdc, psa, psc, "vatu"):NULL;
+    LoadedFeature *cjct = (modern)?load_GSUB_feature(hdc, psa, psc, "cjct"):NULL;
     BOOL rphf = (load_GSUB_feature(hdc, psa, psc, "rphf") != NULL);
     BOOL pref = (load_GSUB_feature(hdc, psa, psc, "pref") != NULL);
     BOOL blwf = (load_GSUB_feature(hdc, psa, psc, "blwf") != NULL);
@@ -3592,7 +3586,7 @@ rpRangeProperties = &ShapingData[psa->eScript].defaultTextRange;
 
 HRESULT SHAPE_CheckFontForRequiredFeatures(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *psa)
 {
-    const GSUB_Feature *feature;
+    LoadedFeature *feature;
     int i;
 
     if (!ShapingData[psa->eScript].requiredFeatures)
