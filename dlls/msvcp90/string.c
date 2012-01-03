@@ -1958,8 +1958,10 @@ basic_string_char* __thiscall basic_string_char_replace_cstr_len(basic_string_ch
     if(basic_string_char_inside(this, str))
         inside_pos = str-ptr;
 
-    if(len < str_len)
+    if(len < str_len) {
         basic_string_char_grow(this, this->size-len+str_len, FALSE);
+        ptr = basic_string_char_ptr(this);
+    }
 
     if(inside_pos == -1) {
         memmove(ptr+off+str_len, ptr+off+len, (this->size-off-len)*sizeof(char));
@@ -2044,8 +2046,10 @@ basic_string_char* __thiscall basic_string_char_replace_ch(basic_string_char *th
     if(MSVCP_basic_string_char_npos-count <= this->size-len)
         MSVCP__String_base_Xlen();
 
-    if(len < count)
+    if(len < count) {
         basic_string_char_grow(this, this->size-len+count, FALSE);
+        ptr = basic_string_char_ptr(this);
+    }
 
     memmove(ptr+off+count, ptr+off+len, (this->size-off-len)*sizeof(char));
     MSVCP_char_traits_char_assignn(ptr+off, count, ch);
@@ -3911,8 +3915,10 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_cstr_len(basic_string_
     if(basic_string_wchar_inside(this, str))
         inside_pos = str-ptr;
 
-    if(len < str_len)
+    if(len < str_len) {
         basic_string_wchar_grow(this, this->size-len+str_len, FALSE);
+        ptr = basic_string_wchar_ptr(this);
+    }
 
     if(inside_pos == -1) {
         memmove(ptr+off+str_len, ptr+off+len, (this->size-off-len)*sizeof(wchar_t));
@@ -4005,8 +4011,10 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_ch(basic_string_wchar 
     if(MSVCP_basic_string_wchar_npos-count <= this->size-len)
         MSVCP__String_base_Xlen();
 
-    if(len < count)
+    if(len < count) {
         basic_string_wchar_grow(this, this->size-len+count, FALSE);
+        ptr = basic_string_wchar_ptr(this);
+    }
 
     memmove(ptr+off+count, ptr+off+len, (this->size-off-len)*sizeof(wchar_t));
     MSVCP_char_traits_wchar_assignn(ptr+off, count, ch);
