@@ -361,6 +361,7 @@ static D3D10_SHADER_VARIABLE_TYPE d3d10_variable_type(DWORD t, BOOL is_object)
             case 19: return D3D10_SVT_RENDERTARGETVIEW;
             case 20: return D3D10_SVT_DEPTHSTENCILVIEW;
             case 21: return D3D10_SVT_SAMPLER;
+            case 22: return D3D10_SVT_BUFFER;
             default:
                 FIXME("Unknown variable type %#x.\n", t);
                 return D3D10_SVT_VOID;
@@ -648,6 +649,7 @@ static void set_variable_vtbl(struct d3d10_effect_variable *v)
                 case D3D10_SVT_TEXTURE2DMSARRAY:
                 case D3D10_SVT_TEXTURE3D:
                 case D3D10_SVT_TEXTURECUBE:
+                case D3D10_SVT_BUFFER: /* Either resource or constant buffer. */
                     v->vtbl = (const ID3D10EffectVariableVtbl *)&d3d10_effect_shader_resource_variable_vtbl;
                     break;
 
@@ -1222,6 +1224,7 @@ static HRESULT parse_fx10_local_variable(struct d3d10_effect_variable *v, const 
         case D3D10_SVT_TEXTURECUBE:
         case D3D10_SVT_RENDERTARGETVIEW:
         case D3D10_SVT_DEPTHSTENCILVIEW:
+        case D3D10_SVT_BUFFER:
             TRACE("SVT could not have elements.\n");
             break;
 
