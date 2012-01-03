@@ -1785,6 +1785,16 @@ static enum packet_return packet_query(struct gdb_context* gdbctx)
             return packet_done;
         }
         break;
+    case 'A':
+        if (strncmp(gdbctx->in_packet, "Attached", gdbctx->in_packet_len) == 0)
+        {
+            char    buf[2];
+
+            buf[0] = '1';
+            buf[1] = 0;
+            return packet_reply(gdbctx, buf, -1);
+        }
+        break;
     case 'C':
         if (gdbctx->in_packet_len == 1)
         {
