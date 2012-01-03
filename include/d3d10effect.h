@@ -827,6 +827,9 @@ DECLARE_INTERFACE_(ID3D10StateBlock, IUnknown)
 extern "C" {
 #endif
 
+HRESULT WINAPI D3D10CompileEffectFromMemory(void *data, SIZE_T data_size, const char *filename,
+        const D3D10_SHADER_MACRO *defines, ID3D10Include *include, UINT hlsl_flags, UINT fx_flags,
+        ID3D10Blob **effect, ID3D10Blob **errors);
 HRESULT WINAPI D3D10CreateEffectFromMemory(void *data, SIZE_T data_size, UINT flags,
         ID3D10Device *device, ID3D10EffectPool *effect_pool, ID3D10Effect **effect);
 HRESULT WINAPI D3D10CreateStateBlock(ID3D10Device *device,
