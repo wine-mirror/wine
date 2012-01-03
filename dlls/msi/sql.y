@@ -797,7 +797,7 @@ static column_info *parser_alloc_column( void *info, LPCWSTR table, LPCWSTR colu
 
 static int sql_lex( void *SQL_lval, SQL_input *sql )
 {
-    int token;
+    int token, skip;
     struct sql_str * str = SQL_lval;
 
     do
@@ -807,11 +807,12 @@ static int sql_lex( void *SQL_lval, SQL_input *sql )
             return 0;  /* end of input */
 
         /* TRACE("string : %s\n", debugstr_w(&sql->command[sql->n])); */
-        sql->len = sqliteGetToken( &sql->command[sql->n], &token );
+        sql->len = sqliteGetToken( &sql->command[sql->n], &token, &skip );
         if( sql->len==0 )
             break;
         str->data = &sql->command[sql->n];
         str->len = sql->len;
+        sql->n += skip;
     }
     while( token == TK_SPACE );
 

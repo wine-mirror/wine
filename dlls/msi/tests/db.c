@@ -727,6 +727,36 @@ static void test_msibadqueries(void)
     r = try_query( hdb, "select * from 'c'");
     ok(r == ERROR_BAD_QUERY_SYNTAX, "query failed\n");
 
+    r = try_query( hdb, "select `c`.`b` from `c` order by `c`.`order`");
+    ok( r == ERROR_BAD_QUERY_SYNTAX, "query failed: %u\n", r );
+
+    r = try_query( hdb, "select `c`.b` from `c`");
+    ok( r == ERROR_SUCCESS, "query failed: %u\n", r );
+
+    r = try_query( hdb, "select `c`.`b from `c`");
+    ok( r == ERROR_BAD_QUERY_SYNTAX, "query failed: %u\n", r );
+
+    r = try_query( hdb, "select `c`.b from `c`");
+    ok( r == ERROR_SUCCESS, "query failed: %u\n", r );
+
+    r = try_query( hdb, "select `c.`b` from `c`");
+    ok( r == ERROR_BAD_QUERY_SYNTAX, "query failed: %u\n", r );
+
+    r = try_query( hdb, "select c`.`b` from `c`");
+    ok( r == ERROR_SUCCESS, "query failed: %u\n", r );
+
+    r = try_query( hdb, "select c.`b` from `c`");
+    ok( r == ERROR_SUCCESS, "query failed: %u\n", r );
+
+    r = try_query( hdb, "select `c`.`b` from c`");
+    ok( r == ERROR_SUCCESS, "query failed: %u\n", r );
+
+    r = try_query( hdb, "select `c`.`b` from `c");
+    ok( r == ERROR_BAD_QUERY_SYNTAX, "query failed: %u\n", r );
+
+    r = try_query( hdb, "select `c`.`b` from c");
+    ok( r == ERROR_SUCCESS, "query failed: %u\n", r );
+
     r = try_query( hdb, "CREATE TABLE `\5a` (`b` CHAR NOT NULL PRIMARY KEY `b`)" );
     ok( r == ERROR_SUCCESS , "query failed: %u\n", r );
 

@@ -190,8 +190,10 @@ static const char isIdChar[] = {
 ** -1 if the token is (or might be) incomplete.  Store the token
 ** type in *tokenType before returning.
 */
-int sqliteGetToken(const WCHAR *z, int *tokenType){
+int sqliteGetToken(const WCHAR *z, int *tokenType, int *skip){
   int i;
+
+  *skip = 0;
   switch( *z ){
     case ' ': case '\t': case '\n': case '\f':
       for(i=1; isspace(z[i]) && z[i] != '\r'; i++){}
@@ -280,6 +282,7 @@ int sqliteGetToken(const WCHAR *z, int *tokenType){
       }
       for(i=1; isIdChar[z[i]]; i++){}
       *tokenType = sqliteKeywordCode(z, i);
+      if( *tokenType == TK_ID && z[i] == '`' ) *skip = 1;
       return i;
   }
   *tokenType = TK_ILLEGAL;

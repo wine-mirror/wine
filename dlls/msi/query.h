@@ -131,7 +131,7 @@ UINT STORAGES_CreateView( MSIDATABASE *db, MSIVIEW **view ) DECLSPEC_HIDDEN;
 
 UINT DROP_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR name ) DECLSPEC_HIDDEN;
 
-int sqliteGetToken(const WCHAR *z, int *tokenType) DECLSPEC_HIDDEN;
+int sqliteGetToken(const WCHAR *z, int *tokenType, int *skip) DECLSPEC_HIDDEN;
 
 MSIRECORD *msi_query_merge_record( UINT fields, const column_info *vl, MSIRECORD *rec ) DECLSPEC_HIDDEN;
 
