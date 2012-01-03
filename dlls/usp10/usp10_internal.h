@@ -127,7 +127,6 @@
 
 typedef struct {
     OPENTYPE_TAG tag;
-    OPENTYPE_TAG script;
     LPCVOID  feature;
 } LoadedFeature;
 
@@ -156,8 +155,6 @@ typedef struct {
     LPVOID GDEF_Table;
     LPVOID CMAP_Table;
     LPVOID CMAP_format12_Table;
-    INT feature_count;
-    LoadedFeature *features;
     INT script_count;
     LoadedScript *scripts;
 

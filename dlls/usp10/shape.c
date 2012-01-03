@@ -349,6 +349,7 @@ typedef struct {
 static INT GSUB_apply_lookup(const GSUB_LookupList* lookup, INT lookup_index, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count);
 static HRESULT GSUB_GetFontScriptTags(ScriptCache *psc, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pScriptTags, int *pcTags, LPCVOID* script_table);
 static HRESULT GSUB_GetFontLanguageTags(ScriptCache *psc, OPENTYPE_TAG script_tag, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pLanguageTags, int *pcTags, LPCVOID* language_table);
+static HRESULT GSUB_GetFontFeatureTags(ScriptCache *psc, OPENTYPE_TAG script_tag, OPENTYPE_TAG language_tag, BOOL filtered, OPENTYPE_TAG searchingFor, int cMaxTags, OPENTYPE_TAG *pFeatureTags, int *pcTags, LoadedFeature** feature);
 
 typedef struct tagVowelComponents
 {
@@ -767,26 +768,6 @@ static INT GSUB_is_glyph_covered(LPCVOID table , UINT glyph)
     return -1;
 }
 
-static const GSUB_Feature * GSUB_get_feature(const GSUB_Header *header, const GSUB_LangSys *lang, const char* tag)
-{
-    int i;
-    const GSUB_FeatureList *feature;
-    feature = (const GSUB_FeatureList*)((const BYTE*)header + GET_BE_WORD(header->FeatureList));
-
-    TRACE("%i features\n",GET_BE_WORD(lang->FeatureCount));
-    for (i = 0; i < GET_BE_WORD(lang->FeatureCount); i++)
-    {
-        int index = GET_BE_WORD(lang->FeatureIndex[i]);
-        if (strncmp(feature->FeatureRecord[index].FeatureTag,tag,4)==0)
-        {
-            const GSUB_Feature *feat;
-            feat = (const GSUB_Feature*)((const BYTE*)feature + GET_BE_WORD(feature->FeatureRecord[index].Feature));
-            return feat;
-        }
-    }
-    return NULL;
-}
-
 static INT GSUB_apply_SingleSubst(const GSUB_LookupTable *look, WORD *glyphs, INT glyph_index, INT write_dir, INT *glyph_count)
 {
     int j;
@@ -1180,61 +1161,44 @@ static OPENTYPE_TAG get_opentype_script(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCac
 
 static LPCVOID load_GSUB_feature(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache *psc, const char* feat)
 {
-    const GSUB_Feature *feature;
-    OPENTYPE_TAG script;
-    int i;
-
-    script = get_opentype_script(hdc,psa,psc,FALSE);
-
-    for (i = 0; i <  psc->feature_count; i++)
-    {
-        if (psc->features[i].tag == MS_MAKE_TAG(feat[0],feat[1],feat[2],feat[3])&& psc->features[i].script == script)
-            return psc->features[i].feature;
-    }
-
-    feature = NULL;
+    LoadedFeature *feature = NULL;
 
     if (psc->GSUB_Table)
     {
-        const GSUB_LangSys *language = NULL;
         int attempt = 2;
-        OPENTYPE_TAG scriptTags;
+        OPENTYPE_TAG tags;
+        OPENTYPE_TAG language;
+        OPENTYPE_TAG script;
         int cTags;
 
         do
         {
+            script = get_opentype_script(hdc,psa,psc,(attempt==2));
             if (psc->userLang != 0)
-                GSUB_GetFontLanguageTags(psc, get_opentype_script(hdc,psa,psc,(attempt==2)), psc->userLang, 1, &scriptTags, &cTags, (LPCVOID*)&language);
+                language = psc->userLang;
             else
-                GSUB_GetFontLanguageTags(psc, get_opentype_script(hdc,psa,psc,(attempt==2)), MS_MAKE_TAG('x','x','x','x'), 1, &scriptTags, &cTags, (LPCVOID*)&language); /* Need to get Lang tag */
-
+                language = MS_MAKE_TAG('d','f','l','t');
             attempt--;
-            if (language)
-                feature = GSUB_get_feature(psc->GSUB_Table, language, feat);
+
+            GSUB_GetFontFeatureTags(psc, script, language, FALSE, MS_MAKE_TAG(feat[0],feat[1],feat[2],feat[3]), 1, &tags, &cTags, &feature);
+
         } while(attempt && !feature);
 
         /* try in the default (latin) table */
         if (!feature)
-        {
-            GSUB_GetFontLanguageTags(psc, MS_MAKE_TAG('l','a','t','n'), MS_MAKE_TAG('x','x','x','x'), 1, &scriptTags, &cTags, (LPCVOID*)&language); /* Need to get Lang tag */
-            if (language)
-                feature = GSUB_get_feature(psc->GSUB_Table, language, feat);
-        }
+            GSUB_GetFontFeatureTags(psc, MS_MAKE_TAG('l','a','t','n'), MS_MAKE_TAG('d','f','l','t'), FALSE, MS_MAKE_TAG(feat[0],feat[1],feat[2],feat[3]), 1, &tags, &cTags, &feature);
     }
 
-    TRACE("Feature %s located at %p\n",debugstr_an(feat,4),feature);
-
-    psc->feature_count++;
-
-    if (psc->features)
-        psc->features = HeapReAlloc(GetProcessHeap(), 0, psc->features, psc->feature_count * sizeof(LoadedFeature));
+    if (feature)
+    {
+        TRACE("Feature %s located at %p\n",debugstr_an(feat,4),feature->feature);
+        return feature->feature;
+    }
     else
-        psc->features = HeapAlloc(GetProcessHeap(), 0, psc->feature_count * sizeof(LoadedFeature));
-
-    psc->features[psc->feature_count - 1].tag = MS_MAKE_TAG(feat[0],feat[1],feat[2],feat[3]);
-    psc->features[psc->feature_count - 1].script = script;
-    psc->features[psc->feature_count - 1].feature = feature;
-    return feature;
+    {
+        TRACE("Feature %s not located\n",debugstr_an(feat,4));
+        return NULL;
+    }
 }
 
 static INT apply_GSUB_feature_to_glyph(HDC hdc, SCRIPT_ANALYSIS *psa, ScriptCache* psc, WORD *glyphs, INT index, INT write_dir, INT* glyph_count, const char* feat)
