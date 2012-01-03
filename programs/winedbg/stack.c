@@ -192,6 +192,7 @@ unsigned stack_fetch_frames(const CONTEXT* _ctx)
      * it to avoid any damage
      */
     CONTEXT      ctx = *_ctx;
+    BOOL         ret;
 
     HeapFree(GetProcessHeap(), 0, dbg_curr_thread->frames);
     dbg_curr_thread->frames = NULL;
@@ -208,11 +209,12 @@ unsigned stack_fetch_frames(const CONTEXT* _ctx)
         sf.AddrFrame.Mode = AddrModeFlat;
     }
 
-    while (StackWalk64(be_cpu->machine, dbg_curr_process->handle,
-                       dbg_curr_thread->handle, &sf, &ctx, stack_read_mem,
-                       SymFunctionTableAccess64, SymGetModuleBase64, NULL))
+    while ((ret = StackWalk64(be_cpu->machine, dbg_curr_process->handle,
+                              dbg_curr_thread->handle, &sf, &ctx, stack_read_mem,
+                              SymFunctionTableAccess64, SymGetModuleBase64, NULL)) ||
+           nf == 0) /* we always register first frame information */
     {
-        dbg_curr_thread->frames = dbg_heap_realloc(dbg_curr_thread->frames, 
+        dbg_curr_thread->frames = dbg_heap_realloc(dbg_curr_thread->frames,
                                                    (nf + 1) * sizeof(dbg_curr_thread->frames[0]));
 
         dbg_curr_thread->frames[nf].addr_pc      = sf.AddrPC;
@@ -230,8 +232,11 @@ unsigned stack_fetch_frames(const CONTEXT* _ctx)
              (dbg_curr_thread->frames[nf - 1].is_ctx_valid &&
               memcmp(&dbg_curr_thread->frames[nf - 1].context, &ctx, sizeof(ctx))));
         nf++;
-        /* we've probably gotten ourselves into an infinite loop so bail */
-        if (nf > 200) break;
+        /* bail if:
+         * - we've (probably) gotten ourselves into an infinite loop,
+         * - or StackWalk failed on first frame
+         */
+        if (nf > 200 || !ret) break;
     }
     dbg_curr_thread->curr_frame = -1;
     dbg_curr_thread->num_frames = nf;
