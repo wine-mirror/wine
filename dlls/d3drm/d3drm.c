@@ -152,7 +152,7 @@ static HRESULT WINAPI IDirect3DRMImpl_CreateFrame(IDirect3DRM* iface, LPDIRECT3D
     if (pFrameParent)
         FIXME("(%p/%p): Parent frame not yet supported\n", iface, This);
 
-    return Direct3DRMFrame_create((IUnknown**)ppFrame);
+    return Direct3DRMFrame_create(&IID_IDirect3DRMFrame, (IUnknown**)ppFrame);
 }
 
 static HRESULT WINAPI IDirect3DRMImpl_CreateMesh(IDirect3DRM* iface, LPDIRECT3DRMMESH * ppMesh)
@@ -519,7 +519,7 @@ static HRESULT WINAPI IDirect3DRM2Impl_CreateFrame(IDirect3DRM2* iface,
     if (pFrameParent)
         FIXME("(%p/%p): Parent frame not yet supported\n", iface, This);
 
-    return Direct3DRMFrame_create((IUnknown**)ppFrame);
+    return Direct3DRMFrame_create(&IID_IDirect3DRMFrame2, (IUnknown**)ppFrame);
 }
 
 static HRESULT WINAPI IDirect3DRM2Impl_CreateMesh(IDirect3DRM2* iface, LPDIRECT3DRMMESH * ppMesh)
@@ -943,9 +943,12 @@ static HRESULT WINAPI IDirect3DRM3Impl_CreateFrame(IDirect3DRM3* iface,
 {
     IDirect3DRMImpl *This = impl_from_IDirect3DRM3(iface);
 
-    FIXME("(%p/%p)->(%p,%p): stub\n", iface, This, FrameParent, Frame);
+    TRACE("(%p/%p)->(%p,%p)\n", iface, This, FrameParent, Frame);
 
-    return E_NOTIMPL;
+    if (FrameParent)
+        FIXME("(%p/%p): Parent frame not yet supported\n", iface, This);
+
+    return Direct3DRMFrame_create(&IID_IDirect3DRMFrame3, (IUnknown**)Frame);
 }
 
 static HRESULT WINAPI IDirect3DRM3Impl_CreateMesh(IDirect3DRM3* iface, LPDIRECT3DRMMESH* Mesh)
