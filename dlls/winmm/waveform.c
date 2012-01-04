@@ -1723,32 +1723,25 @@ static MMRESULT WINMM_FramesToMMTime(MMTIME *time, UINT32 played_frames,
         time->u.sample = played_frames;
         return MMSYSERR_NOERROR;
     case TIME_MS:
-        time->u.ms = (DWORD)((played_frames / (double)sample_rate) * 1000);
+        time->u.ms = (UINT64)played_frames * 1000 / sample_rate;
         return MMSYSERR_NOERROR;
     case TIME_SMPTE:
         time->u.smpte.fps = 30;
-        if(played_frames >= sample_rate){
-            time->u.smpte.sec = played_frames / (double)sample_rate;
-            time->u.smpte.min = time->u.smpte.sec / 60;
-            time->u.smpte.hour = time->u.smpte.min / 60;
-            time->u.smpte.sec %= 60;
-            time->u.smpte.min %= 60;
-            played_frames %= sample_rate;
-        }else{
-            time->u.smpte.sec = 0;
-            time->u.smpte.min = 0;
-            time->u.smpte.hour = 0;
-        }
-        time->u.smpte.frame = (played_frames / (double)sample_rate) * 30;
+        played_frames += sample_rate / time->u.smpte.fps - 1; /* round up */
+        time->u.smpte.frame = (played_frames % sample_rate) * time->u.smpte.fps / sample_rate;
+        played_frames /= sample_rate; /* yields seconds */
+        time->u.smpte.sec = played_frames % 60;
+        played_frames /= 60;
+        time->u.smpte.min = played_frames % 60;
+        time->u.smpte.hour= played_frames / 60;
         return MMSYSERR_NOERROR;
-    case TIME_BYTES:
     default:
         time->wType = TIME_BYTES;
+        /* fall through */
+    case TIME_BYTES:
         time->u.cb = played_frames * bytes_per_frame;
         return MMSYSERR_NOERROR;
     }
-
-    return MMSYSERR_ERROR;
 }
 
 static LRESULT WINMM_GetPosition(HWAVE hwave, MMTIME *time)

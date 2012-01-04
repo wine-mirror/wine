@@ -471,10 +471,10 @@ DWORD time_to_bytes(LPMMTIME mmtime, LPWAVEFORMATEX pwfx)
     else if (mmtime->wType == TIME_MS)
         return mmtime->u.ms * pwfx->nAvgBytesPerSec / 1000;
     else if (mmtime->wType == TIME_SMPTE)
-        return ((mmtime->u.smpte.hour * 60.0 * 60.0) +
-                (mmtime->u.smpte.min * 60.0) +
-                (mmtime->u.smpte.sec) +
-                (mmtime->u.smpte.frame / 30.0)) * pwfx->nAvgBytesPerSec;
+        return ((mmtime->u.smpte.hour * 60 * 60) +
+                (mmtime->u.smpte.min * 60) +
+                (mmtime->u.smpte.sec)) * pwfx->nAvgBytesPerSec +
+                mmtime->u.smpte.frame  * pwfx->nAvgBytesPerSec / 30;
 
     trace("FIXME: time_to_bytes() type not supported\n");
     return -1;
