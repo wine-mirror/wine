@@ -339,7 +339,7 @@ static void test_clipper_blt(void)
     }
 
     hr = IDirectDrawSurface_BltFast(dst_surface, 0, 0, src_surface, NULL, DDBLTFAST_WAIT);
-    todo_wine ok(hr == DDERR_BLTFASTCANTCLIP || broken(hr == E_NOTIMPL /* NT4 */), "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_BLTFASTCANTCLIP || broken(hr == E_NOTIMPL /* NT4 */), "Got unexpected hr %#x.\n", hr);
 
     IDirectDrawSurface_Release(dst_surface);
     IDirectDrawSurface_Release(src_surface);

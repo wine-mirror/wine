@@ -3869,7 +3869,20 @@ static HRESULT WINAPI ddraw_surface7_BltFast(IDirectDrawSurface7 *iface, DWORD d
         flags |= WINEDDBLT_DONOTWAIT;
 
     wined3d_mutex_lock();
-    hr = ddraw_surface_blt_clipped(This, &dst_rect, src, rsrc, flags, NULL, WINED3DTEXF_POINT);
+    if (This->clipper)
+    {
+        wined3d_mutex_unlock();
+        WARN("Destination surface has a clipper set, returning DDERR_BLTFASTCANTCLIP.\n");
+        return DDERR_BLTFASTCANTCLIP;
+    }
+
+    if (src->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
+        hr = ddraw_surface_update_frontbuffer(src, rsrc, TRUE);
+    if (SUCCEEDED(hr))
+        hr = wined3d_surface_blt(This->wined3d_surface, &dst_rect,
+                src->wined3d_surface, rsrc, flags, NULL, WINED3DTEXF_POINT);
+    if (SUCCEEDED(hr) && (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER))
+        hr = ddraw_surface_update_frontbuffer(This, &dst_rect, FALSE);
     wined3d_mutex_unlock();
 
     switch(hr)
