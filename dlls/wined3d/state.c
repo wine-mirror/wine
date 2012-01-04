@@ -1264,47 +1264,47 @@ static void state_colormat(struct wined3d_context *context, const struct wined3d
                 state->render_states[WINED3D_RS_EMISSIVEMATERIALSOURCE],
                 state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE]);
 
-        if (state->render_states[WINED3D_RS_DIFFUSEMATERIALSOURCE] == WINED3DMCS_COLOR1)
+        if (state->render_states[WINED3D_RS_DIFFUSEMATERIALSOURCE] == WINED3D_MCS_COLOR1)
         {
-            if (state->render_states[WINED3D_RS_AMBIENTMATERIALSOURCE] == WINED3DMCS_COLOR1)
+            if (state->render_states[WINED3D_RS_AMBIENTMATERIALSOURCE] == WINED3D_MCS_COLOR1)
                 Parm = GL_AMBIENT_AND_DIFFUSE;
             else
                 Parm = GL_DIFFUSE;
-            if (state->render_states[WINED3D_RS_EMISSIVEMATERIALSOURCE] == WINED3DMCS_COLOR1)
+            if (state->render_states[WINED3D_RS_EMISSIVEMATERIALSOURCE] == WINED3D_MCS_COLOR1)
             {
                 context->untracked_materials[context->num_untracked_materials] = GL_EMISSION;
                 context->num_untracked_materials++;
             }
-            if (state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1)
+            if (state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE] == WINED3D_MCS_COLOR1)
             {
                 context->untracked_materials[context->num_untracked_materials] = GL_SPECULAR;
                 context->num_untracked_materials++;
             }
         }
-        else if (state->render_states[WINED3D_RS_AMBIENTMATERIALSOURCE] == WINED3DMCS_COLOR1)
+        else if (state->render_states[WINED3D_RS_AMBIENTMATERIALSOURCE] == WINED3D_MCS_COLOR1)
         {
             Parm = GL_AMBIENT;
-            if (state->render_states[WINED3D_RS_EMISSIVEMATERIALSOURCE] == WINED3DMCS_COLOR1)
+            if (state->render_states[WINED3D_RS_EMISSIVEMATERIALSOURCE] == WINED3D_MCS_COLOR1)
             {
                 context->untracked_materials[context->num_untracked_materials] = GL_EMISSION;
                 context->num_untracked_materials++;
             }
-            if (state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1)
+            if (state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE] == WINED3D_MCS_COLOR1)
             {
                 context->untracked_materials[context->num_untracked_materials] = GL_SPECULAR;
                 context->num_untracked_materials++;
             }
         }
-        else if (state->render_states[WINED3D_RS_EMISSIVEMATERIALSOURCE] == WINED3DMCS_COLOR1)
+        else if (state->render_states[WINED3D_RS_EMISSIVEMATERIALSOURCE] == WINED3D_MCS_COLOR1)
         {
             Parm = GL_EMISSION;
-            if (state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1)
+            if (state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE] == WINED3D_MCS_COLOR1)
             {
                 context->untracked_materials[context->num_untracked_materials] = GL_SPECULAR;
                 context->num_untracked_materials++;
             }
         }
-        else if (state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1)
+        else if (state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE] == WINED3D_MCS_COLOR1)
         {
             Parm = GL_SPECULAR;
         }

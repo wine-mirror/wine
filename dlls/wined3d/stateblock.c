@@ -1176,10 +1176,10 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     state->render_states[WINED3D_RS_COLORVERTEX] = TRUE;
     state->render_states[WINED3D_RS_LOCALVIEWER] = TRUE;
     state->render_states[WINED3D_RS_NORMALIZENORMALS] = FALSE;
-    state->render_states[WINED3D_RS_DIFFUSEMATERIALSOURCE] = WINED3DMCS_COLOR1;
-    state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE] = WINED3DMCS_COLOR2;
-    state->render_states[WINED3D_RS_AMBIENTMATERIALSOURCE] = WINED3DMCS_MATERIAL;
-    state->render_states[WINED3D_RS_EMISSIVEMATERIALSOURCE] = WINED3DMCS_MATERIAL;
+    state->render_states[WINED3D_RS_DIFFUSEMATERIALSOURCE] = WINED3D_MCS_COLOR1;
+    state->render_states[WINED3D_RS_SPECULARMATERIALSOURCE] = WINED3D_MCS_COLOR2;
+    state->render_states[WINED3D_RS_AMBIENTMATERIALSOURCE] = WINED3D_MCS_MATERIAL;
+    state->render_states[WINED3D_RS_EMISSIVEMATERIALSOURCE] = WINED3D_MCS_MATERIAL;
     state->render_states[WINED3D_RS_VERTEXBLEND] = WINED3D_VBF_DISABLE;
     state->render_states[WINED3D_RS_CLIPPLANEENABLE] = 0;
     state->render_states[WINED3D_RS_SOFTWAREVERTEXPROCESSING] = FALSE;

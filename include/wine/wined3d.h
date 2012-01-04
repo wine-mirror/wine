@@ -481,13 +481,12 @@ enum wined3d_stencil_op
     WINED3D_STENCIL_OP_DECR                 = 8,
 };
 
-typedef enum _WINED3DMATERIALCOLORSOURCE
+enum wined3d_material_color_source
 {
-    WINED3DMCS_MATERIAL                     = 0,
-    WINED3DMCS_COLOR1                       = 1,
-    WINED3DMCS_COLOR2                       = 2,
-    WINED3DMCS_FORCE_DWORD                  = 0x7fffffff
-} WINED3DMATERIALCOLORSOURCE;
+    WINED3D_MCS_MATERIAL                    = 0,
+    WINED3D_MCS_COLOR1                      = 1,
+    WINED3D_MCS_COLOR2                      = 2,
+};
 
 typedef enum _WINED3DPATCHEDGESTYLE
 {
