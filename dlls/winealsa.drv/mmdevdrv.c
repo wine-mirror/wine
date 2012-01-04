@@ -718,6 +718,38 @@ static WAVEFORMATEX *clone_format(const WAVEFORMATEX *fmt)
     return ret;
 }
 
+static snd_pcm_format_t alsa_format(const WAVEFORMATEX *fmt)
+{
+    snd_pcm_format_t format = SND_PCM_FORMAT_UNKNOWN;
+    const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)fmt;
+
+    if(fmt->wFormatTag == WAVE_FORMAT_PCM ||
+      (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+       IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))){
+        if(fmt->wBitsPerSample == 8)
+            format = SND_PCM_FORMAT_U8;
+        else if(fmt->wBitsPerSample == 16)
+            format = SND_PCM_FORMAT_S16_LE;
+        else if(fmt->wBitsPerSample == 24)
+            format = SND_PCM_FORMAT_S24_3LE;
+        else if(fmt->wBitsPerSample == 32)
+            format = SND_PCM_FORMAT_S32_LE;
+        else
+            WARN("Unsupported bit depth: %u\n", fmt->wBitsPerSample);
+    }else if(fmt->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
+            (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))){
+        if(fmt->wBitsPerSample == 32)
+            format = SND_PCM_FORMAT_FLOAT_LE;
+        else if(fmt->wBitsPerSample == 64)
+            format = SND_PCM_FORMAT_FLOAT64_LE;
+        else
+            WARN("Unsupported float size: %u\n", fmt->wBitsPerSample);
+    }else
+        WARN("Unknown wave format: %04x\n", fmt->wFormatTag);
+    return format;
+}
+
 static void session_init_vols(AudioSession *session, UINT channels)
 {
     if(session->channel_count < channels){
@@ -808,7 +840,6 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
     ACImpl *This = impl_from_IAudioClient(iface);
     snd_pcm_sw_params_t *sw_params = NULL;
     snd_pcm_format_t format;
-    const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)fmt;
     unsigned int rate, alsa_period_us;
     int err, i;
     HRESULT hr = S_OK;
@@ -878,36 +909,8 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         goto exit;
     }
 
-    if(fmt->wFormatTag == WAVE_FORMAT_PCM ||
-            (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))){
-        if(fmt->wBitsPerSample == 8)
-            format = SND_PCM_FORMAT_U8;
-        else if(fmt->wBitsPerSample == 16)
-            format = SND_PCM_FORMAT_S16_LE;
-        else if(fmt->wBitsPerSample == 24)
-            format = SND_PCM_FORMAT_S24_3LE;
-        else if(fmt->wBitsPerSample == 32)
-            format = SND_PCM_FORMAT_S32_LE;
-        else{
-            WARN("Unsupported bit depth: %u\n", fmt->wBitsPerSample);
-            hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
-            goto exit;
-        }
-    }else if(fmt->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
-            (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))){
-        if(fmt->wBitsPerSample == 32)
-            format = SND_PCM_FORMAT_FLOAT_LE;
-        else if(fmt->wBitsPerSample == 64)
-            format = SND_PCM_FORMAT_FLOAT64_LE;
-        else{
-            WARN("Unsupported float size: %u\n", fmt->wBitsPerSample);
-            hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
-            goto exit;
-        }
-    }else{
-        WARN("Unknown wave format: %04x\n", fmt->wFormatTag);
+    format = alsa_format(fmt);
+    if (format == SND_PCM_FORMAT_UNKNOWN){
         hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
         goto exit;
     }
@@ -1205,6 +1208,7 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
 {
     ACImpl *This = impl_from_IAudioClient(iface);
     snd_pcm_format_mask_t *formats = NULL;
+    snd_pcm_format_t format;
     HRESULT hr = S_OK;
     WAVEFORMATEX *closest = NULL;
     const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)fmt;
@@ -1246,60 +1250,9 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
     }
 
     snd_pcm_hw_params_get_format_mask(This->hw_params, formats);
-
-    if(fmt->wFormatTag == WAVE_FORMAT_PCM ||
-            (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))){
-        switch(fmt->wBitsPerSample){
-        case 8:
-            if(!snd_pcm_format_mask_test(formats, SND_PCM_FORMAT_U8)){
-                hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
-                goto exit;
-            }
-            break;
-        case 16:
-            if(!snd_pcm_format_mask_test(formats, SND_PCM_FORMAT_S16_LE)){
-                hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
-                goto exit;
-            }
-            break;
-        case 24:
-            if(!snd_pcm_format_mask_test(formats, SND_PCM_FORMAT_S24_3LE)){
-                hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
-                goto exit;
-            }
-            break;
-        case 32:
-            if(!snd_pcm_format_mask_test(formats, SND_PCM_FORMAT_S32_LE)){
-                hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
-                goto exit;
-            }
-            break;
-        default:
-            hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
-            goto exit;
-        }
-    }else if(fmt->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
-            (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))){
-        switch(fmt->wBitsPerSample){
-        case 32:
-            if(!snd_pcm_format_mask_test(formats, SND_PCM_FORMAT_FLOAT_LE)){
-                hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
-                goto exit;
-            }
-            break;
-        case 64:
-            if(!snd_pcm_format_mask_test(formats, SND_PCM_FORMAT_FLOAT64_LE)){
-                hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
-                goto exit;
-            }
-            break;
-        default:
-            hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
-            goto exit;
-        }
-    }else{
+    format = alsa_format(fmt);
+    if (format == SND_PCM_FORMAT_UNKNOWN ||
+        !snd_pcm_format_mask_test(formats, format)){
         hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
         goto exit;
     }
