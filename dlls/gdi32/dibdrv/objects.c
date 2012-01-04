@@ -1523,6 +1523,125 @@ static BOOL wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close
     return TRUE;
 }
 
+static BOOL dashed_wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close, HRGN total)
+{
+    int i, start, cur_len, initial_num = 0;
+    POINT initial_point, start_point, end_point;
+    HRGN round_cap = 0;
+
+    assert( total != 0 );  /* wide pens should always be drawn through a region */
+    assert( num >= 2 );
+
+    /* skip empty segments */
+    while (num > 2 && pts[0].x == pts[1].x && pts[0].y == pts[1].y) { pts++; num--; }
+    while (num > 2 && pts[num - 1].x == pts[num - 2].x && pts[num - 1].y == pts[num - 2].y) num--;
+
+    if (pdev->pen_join == PS_JOIN_ROUND || pdev->pen_endcap == PS_ENDCAP_ROUND)
+        round_cap = CreateEllipticRgn( -(pdev->pen_width / 2), -(pdev->pen_width / 2),
+                                       (pdev->pen_width + 1) / 2, (pdev->pen_width + 1) / 2 );
+
+    start = 0;
+    cur_len = 0;
+    start_point = pts[0];
+
+    for (i = 0; i < (close ? num : num - 1); i++)
+    {
+        const POINT *pt_1 = pts + i;
+        const POINT *pt_2 = pts + ((close && i == num - 1) ? 0 : i + 1);
+        int dx = pt_2->x - pt_1->x;
+        int dy = pt_2->y - pt_1->y;
+
+        if (dx == 0 && dy == 0) continue;
+
+        if (dy == 0)
+        {
+            if (abs( dx ) - cur_len < pdev->dash_pos.left_in_dash)
+            {
+                skip_dash( pdev, abs( dx ) - cur_len );
+                cur_len = 0;
+                continue;
+            }
+            cur_len += pdev->dash_pos.left_in_dash;
+            dx = (dx > 0) ? cur_len : -cur_len;
+        }
+        else if (dx == 0)
+        {
+            if (abs( dy ) - cur_len < pdev->dash_pos.left_in_dash)
+            {
+                skip_dash( pdev, abs( dy ) - cur_len );
+                cur_len = 0;
+                continue;
+            }
+            cur_len += pdev->dash_pos.left_in_dash;
+            dy = (dy > 0) ? cur_len : -cur_len;
+        }
+        else
+        {
+            double len = hypot( dx, dy );
+
+            if (len - cur_len < pdev->dash_pos.left_in_dash)
+            {
+                skip_dash( pdev, len - cur_len );
+                cur_len = 0;
+                continue;
+            }
+            cur_len += pdev->dash_pos.left_in_dash;
+            dx = dx * cur_len / len;
+            dy = dy * cur_len / len;
+        }
+        end_point.x = pt_1->x + dx;
+        end_point.y = pt_1->y + dy;
+
+        if (pdev->dash_pos.mark)
+        {
+            if (!initial_num && close)  /* this is the first dash, save it for later */
+            {
+                initial_num = i - start + 1;
+                initial_point = end_point;
+            }
+            else wide_line_segments( pdev, num, pts, FALSE, start, i - start + 1,
+                                     &start_point, &end_point, round_cap, total );
+        }
+        if (!initial_num) initial_num = -1;  /* no need to close it */
+
+        skip_dash( pdev, pdev->dash_pos.left_in_dash );
+        start_point = end_point;
+        start = i;
+        i--;  /* go on with the same segment */
+    }
+
+    if (pdev->dash_pos.mark)  /* we have a final dash */
+    {
+        int count;
+
+        if (initial_num > 0)
+        {
+            count = num - start + initial_num;
+            end_point = initial_point;
+        }
+        else if (close)
+        {
+            count = num - start;
+            end_point = pts[0];
+        }
+        else
+        {
+            count = num - start - 1;
+            end_point = pts[num - 1];
+        }
+        wide_line_segments( pdev, num, pts, FALSE, start, count,
+                            &start_point, &end_point, round_cap, total );
+    }
+    else if (initial_num > 0)  /* initial dash only */
+    {
+        wide_line_segments( pdev, num, pts, FALSE, 0, initial_num,
+                            &pts[0], &initial_point, round_cap, total );
+    }
+
+    if (round_cap) DeleteObject( round_cap );
+    return TRUE;
+}
+
 static const dash_pattern dash_patterns_cosmetic[4] =
 {
     {2, {18, 6}, 24},             /* PS_DASH */
@@ -1550,11 +1669,21 @@ static inline void set_dash_pattern( dash_pattern *pattern, DWORD count, DWORD *
     if (pattern->count % 2) pattern->total_len *= 2;
 }
 
-static inline void scale_dash_pattern( dash_pattern *pattern, DWORD scale )
+static inline void scale_dash_pattern( dash_pattern *pattern, DWORD scale, DWORD endcap )
 {
     DWORD i;
+
     for (i = 0; i < pattern->count; i++) pattern->dashes[i] *= scale;
     pattern->total_len *= scale;
+
+    if (endcap != PS_ENDCAP_FLAT)  /* shrink the dashes to leave room for the caps */
+    {
+        for (i = 0; i < pattern->count; i += 2)
+        {
+            pattern->dashes[i] -= scale;
+            pattern->dashes[i + 1] += scale;
+        }
+    }
 }
 
 static inline int get_pen_device_width( dibdrv_physdev *pdev, int width )
@@ -1971,9 +2100,13 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *patte
     case PS_DASHDOTDOT:
         if (logpen.lopnStyle & PS_GEOMETRIC)
         {
-            if (pdev->pen_width > 1) break;  /* not supported yet */
-            pdev->pen_lines = dashed_pen_lines;
             pdev->pen_pattern = dash_patterns_geometric[pdev->pen_style - 1];
+            if (pdev->pen_width > 1)
+            {
+                scale_dash_pattern( &pdev->pen_pattern, pdev->pen_width, pdev->pen_endcap );
+                pdev->pen_lines = dashed_wide_pen_lines;
+            }
+            else pdev->pen_lines = dashed_pen_lines;
             pdev->defer &= ~DEFER_PEN;
             break;
         }
@@ -2004,10 +2137,9 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *patte
         break;
 
     case PS_USERSTYLE:
-        if (pdev->pen_width > 1) break;  /* not supported yet */
-        pdev->pen_lines = dashed_pen_lines;
+        pdev->pen_lines = (pdev->pen_width == 1) ? dashed_pen_lines : dashed_wide_pen_lines;
         set_dash_pattern( &pdev->pen_pattern, elp->elpNumEntries, elp->elpStyleEntry );
-        if (!(logpen.lopnStyle & PS_GEOMETRIC)) scale_dash_pattern( &pdev->pen_pattern, 3 );
+        if (!(logpen.lopnStyle & PS_GEOMETRIC)) scale_dash_pattern( &pdev->pen_pattern, 3, PS_ENDCAP_FLAT );
         pdev->defer &= ~DEFER_PEN;
         break;
     }
