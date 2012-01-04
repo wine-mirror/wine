@@ -839,12 +839,12 @@
 @ stub -arch=win64 ??0__non_rtti_object@std@@QEAA@AEBV01@@Z
 @ stub -arch=win32 ??0__non_rtti_object@std@@QAE@PBD@Z
 @ stub -arch=win64 ??0__non_rtti_object@std@@QEAA@PEBD@Z
-@ stub -arch=win32 ??0bad_alloc@std@@QAE@ABV01@@Z
-@ stub -arch=win64 ??0bad_alloc@std@@QEAA@AEBV01@@Z
-@ stub -arch=win32 ??0bad_alloc@std@@QAE@PBD@Z
-@ stub -arch=win64 ??0bad_alloc@std@@QEAA@PEBD@Z
-@ stub -arch=win32 ??0bad_alloc@std@@QAE@XZ
-@ stub -arch=win64 ??0bad_alloc@std@@QEAA@XZ
+@ thiscall -arch=win32 ??0bad_alloc@std@@QAE@ABV01@@Z(ptr ptr) MSVCP_bad_alloc_copy_ctor
+@ cdecl -arch=win64 ??0bad_alloc@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_bad_alloc_copy_ctor
+@ thiscall -arch=win32 ??0bad_alloc@std@@QAE@PBD@Z(ptr str) MSVCP_bad_alloc_ctor
+@ cdecl -arch=win64 ??0bad_alloc@std@@QEAA@PEBD@Z(ptr str) MSVCP_bad_alloc_ctor
+@ thiscall -arch=win32 ??0bad_alloc@std@@QAE@XZ(ptr) MSVCP_bad_alloc_default_ctor
+@ cdecl -arch=win64 ??0bad_alloc@std@@QEAA@XZ(ptr) MSVCP_bad_alloc_default_ctor
 @ stub -arch=win32 ??0bad_cast@std@@QAE@ABV01@@Z
 @ stub -arch=win64 ??0bad_cast@std@@QEAA@AEBV01@@Z
 @ stub -arch=win32 ??0bad_cast@std@@QAE@PBD@Z
@@ -871,10 +871,10 @@
 @ stub -arch=win64 ??0ios_base@std@@IEAA@XZ  # don't forward to msvcp90
 @ stub -arch=win32 ??0ios_base@std@@QAE@ABV01@@Z  # don't forward to msvcp90
 @ stub -arch=win64 ??0ios_base@std@@QEAA@AEBV01@@Z  # don't forward to msvcp90
-@ stub -arch=win32 ??0length_error@std@@QAE@ABV01@@Z
-@ stub -arch=win64 ??0length_error@std@@QEAA@AEBV01@@Z
-@ stub -arch=win32 ??0length_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z
-@ stub -arch=win64 ??0length_error@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z
+@ thiscall -arch=win32 ??0length_error@std@@QAE@ABV01@@Z(ptr ptr) MSVCP_length_error_copy_ctor
+@ cdecl -arch=win64 ??0length_error@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_length_error_copy_ctor
+@ thiscall -arch=win32 ??0length_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_length_error_ctor_bstr
+@ cdecl -arch=win64 ??0length_error@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_length_error_ctor_bstr
 @ stub -arch=win32 ??0locale@std@@AAE@PAV_Locimp@01@@Z  # don't forward to msvcp90
 @ stub -arch=win64 ??0locale@std@@AEAA@PEAV_Locimp@01@@Z  # don't forward to msvcp90
 @ stub -arch=win32 ??0locale@std@@QAE@ABV01@0H@Z  # don't forward to msvcp90
@@ -889,20 +889,20 @@
 @ stub -arch=win64 ??0locale@std@@QEAA@W4_Uninitialized@1@@Z  # don't forward to msvcp90
 @ stub -arch=win32 ??0locale@std@@QAE@XZ  # don't forward to msvcp90
 @ stub -arch=win64 ??0locale@std@@QEAA@XZ  # don't forward to msvcp90
-@ stub -arch=win32 ??0logic_error@std@@QAE@ABV01@@Z
-@ stub -arch=win64 ??0logic_error@std@@QEAA@AEBV01@@Z
-@ stub -arch=win32 ??0logic_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z
-@ stub -arch=win64 ??0logic_error@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z
+@ thiscall -arch=win32 ??0logic_error@std@@QAE@ABV01@@Z(ptr ptr) MSVCP_logic_error_copy_ctor
+@ cdecl -arch=win64 ??0logic_error@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_logic_error_copy_ctor
+@ thiscall -arch=win32 ??0logic_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_logic_error_ctor_bstr
+@ cdecl -arch=win64 ??0logic_error@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_logic_error_ctor_bstr
 @ stub -arch=win32 ??0messages_base@std@@QAE@I@Z
 @ stub -arch=win64 ??0messages_base@std@@QEAA@_K@Z
 @ stub -arch=win32 ??0money_base@std@@QAE@I@Z
 @ stub -arch=win64 ??0money_base@std@@QEAA@_K@Z
 @ stub -arch=win32 ??0ostrstream@std@@QAE@PADHH@Z
 @ stub -arch=win64 ??0ostrstream@std@@QEAA@PEAD_JH@Z
-@ stub -arch=win32 ??0out_of_range@std@@QAE@ABV01@@Z
-@ stub -arch=win64 ??0out_of_range@std@@QEAA@AEBV01@@Z
-@ stub -arch=win32 ??0out_of_range@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z
-@ stub -arch=win64 ??0out_of_range@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z
+@ thiscall -arch=win32 ??0out_of_range@std@@QAE@ABV01@@Z(ptr ptr) MSVCP_out_of_range_copy_ctor
+@ cdecl -arch=win64 ??0out_of_range@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_out_of_range_copy_ctor
+@ thiscall -arch=win32 ??0out_of_range@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_out_of_range_ctor_bstr
+@ cdecl -arch=win64 ??0out_of_range@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_out_of_range_ctor_bstr
 @ stub -arch=win32 ??0overflow_error@std@@QAE@ABV01@@Z
 @ stub -arch=win64 ??0overflow_error@std@@QEAA@AEBV01@@Z
 @ stub -arch=win32 ??0overflow_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z
@@ -911,10 +911,10 @@
 @ stub -arch=win64 ??0range_error@std@@QEAA@AEBV01@@Z
 @ stub -arch=win32 ??0range_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z
 @ stub -arch=win64 ??0range_error@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z
-@ stub -arch=win32 ??0runtime_error@std@@QAE@ABV01@@Z
-@ stub -arch=win64 ??0runtime_error@std@@QEAA@AEBV01@@Z
-@ stub -arch=win32 ??0runtime_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z
-@ stub -arch=win64 ??0runtime_error@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z
+@ thiscall -arch=win32 ??0runtime_error@std@@QAE@ABV01@@Z(ptr ptr) MSVCP_runtime_error_copy_ctor
+@ cdecl -arch=win64 ??0runtime_error@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_runtime_error_copy_ctor
+@ thiscall -arch=win32 ??0runtime_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_runtime_error_ctor_bstr
+@ cdecl -arch=win64 ??0runtime_error@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_runtime_error_ctor_bstr
 @ stub -arch=win32 ??0strstream@std@@QAE@PADHH@Z
 @ stub -arch=win64 ??0strstream@std@@QEAA@PEAD_JH@Z
 @ stub -arch=win32 ??0time_base@std@@QAE@I@Z
@@ -1047,8 +1047,8 @@
 @ stub -arch=win64 ??1_Winit@std@@QEAA@XZ
 @ stub -arch=win32 ??1__non_rtti_object@std@@UAE@XZ
 @ stub -arch=win64 ??1__non_rtti_object@std@@UEAA@XZ
-@ stub -arch=win32 ??1bad_alloc@std@@UAE@XZ
-@ stub -arch=win64 ??1bad_alloc@std@@UEAA@XZ
+@ thiscall -arch=win32 ??1bad_alloc@std@@UAE@XZ(ptr) MSVCP_bad_alloc_dtor
+@ cdecl -arch=win64 ??1bad_alloc@std@@UEAA@XZ(ptr) MSVCP_bad_alloc_dtor
 @ stub -arch=win32 ??1bad_cast@std@@UAE@XZ
 @ stub -arch=win64 ??1bad_cast@std@@UEAA@XZ
 @ stub -arch=win32 ??1bad_exception@std@@UAE@XZ
@@ -1067,26 +1067,26 @@
 @ stub -arch=win64 ??1ios_base@std@@UEAA@XZ  # don't forward to msvcp90
 @ stub -arch=win32 ??1istrstream@std@@UAE@XZ
 @ stub -arch=win64 ??1istrstream@std@@UEAA@XZ
-@ stub -arch=win32 ??1length_error@std@@UAE@XZ
-@ stub -arch=win64 ??1length_error@std@@UEAA@XZ
+@ thiscall -arch=win32 ??1length_error@std@@UAE@XZ(ptr) MSVCP_logic_error_dtor
+@ cdecl -arch=win64 ??1length_error@std@@UEAA@XZ(ptr) MSVCP_logic_error_dtor
 @ stub -arch=win32 ??1locale@std@@QAE@XZ  # don't forward to msvcp90
 @ stub -arch=win64 ??1locale@std@@QEAA@XZ  # don't forward to msvcp90
-@ stub -arch=win32 ??1logic_error@std@@UAE@XZ
-@ stub -arch=win64 ??1logic_error@std@@UEAA@XZ
+@ thiscall -arch=win32 ??1logic_error@std@@UAE@XZ(ptr) MSVCP_logic_error_dtor
+@ cdecl -arch=win64 ??1logic_error@std@@UEAA@XZ(ptr) MSVCP_logic_error_dtor
 @ stub -arch=win32 ??1messages_base@std@@UAE@XZ
 @ stub -arch=win64 ??1messages_base@std@@UEAA@XZ
 @ stub -arch=win32 ??1money_base@std@@UAE@XZ
 @ stub -arch=win64 ??1money_base@std@@UEAA@XZ
 @ stub -arch=win32 ??1ostrstream@std@@UAE@XZ
 @ stub -arch=win64 ??1ostrstream@std@@UEAA@XZ
-@ stub -arch=win32 ??1out_of_range@std@@UAE@XZ
-@ stub -arch=win64 ??1out_of_range@std@@UEAA@XZ
+@ thiscall -arch=win32 ??1out_of_range@std@@UAE@XZ(ptr) MSVCP_logic_error_dtor
+@ cdecl -arch=win64 ??1out_of_range@std@@UEAA@XZ(ptr) MSVCP_logic_error_dtor
 @ stub -arch=win32 ??1overflow_error@std@@UAE@XZ
 @ stub -arch=win64 ??1overflow_error@std@@UEAA@XZ
 @ stub -arch=win32 ??1range_error@std@@UAE@XZ
 @ stub -arch=win64 ??1range_error@std@@UEAA@XZ
-@ stub -arch=win32 ??1runtime_error@std@@UAE@XZ
-@ stub -arch=win64 ??1runtime_error@std@@UEAA@XZ
+@ thiscall -arch=win32 ??1runtime_error@std@@UAE@XZ(ptr) MSVCP_logic_error_dtor
+@ cdecl -arch=win64 ??1runtime_error@std@@UEAA@XZ(ptr) MSVCP_logic_error_dtor
 @ stub -arch=win32 ??1strstream@std@@UAE@XZ
 @ stub -arch=win64 ??1strstream@std@@UEAA@XZ
 @ stub -arch=win32 ??1strstreambuf@std@@UAE@XZ
@@ -1233,8 +1233,8 @@
 @ stub -arch=win64 ??4_Winit@std@@QEAAAEAV01@AEBV01@@Z
 @ stub -arch=win32 ??4__non_rtti_object@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4__non_rtti_object@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4bad_alloc@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4bad_alloc@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4bad_alloc@std@@QAEAAV01@ABV01@@Z(ptr ptr) MSVCP_bad_alloc_assign
+@ cdecl -arch=win64 ??4bad_alloc@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) MSVCP_bad_alloc_assign
 @ stub -arch=win32 ??4bad_cast@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4bad_cast@std@@QEAAAEAV01@AEBV01@@Z
 @ stub -arch=win32 ??4bad_exception@std@@QAEAAV01@ABV01@@Z
@@ -1247,20 +1247,20 @@
 @ stub -arch=win64 ??4id@locale@std@@QEAAAEAV012@AEBV012@@Z
 @ stub -arch=win32 ??4ios_base@std@@QAEAAV01@ABV01@@Z  # don't forward to msvcp90
 @ stub -arch=win64 ??4ios_base@std@@QEAAAEAV01@AEBV01@@Z  # don't forward to msvcp90
-@ stub -arch=win32 ??4length_error@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4length_error@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4length_error@std@@QAEAAV01@ABV01@@Z(ptr ptr) MSVCP_length_error_assign
+@ cdecl -arch=win64 ??4length_error@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) MSVCP_length_error_assign
 @ stub -arch=win32 ??4locale@std@@QAEAAV01@ABV01@@Z  # don't forward to msvcp90
 @ stub -arch=win64 ??4locale@std@@QEAAAEAV01@AEBV01@@Z  # don't forward to msvcp90
-@ stub -arch=win32 ??4logic_error@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4logic_error@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4out_of_range@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4out_of_range@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4logic_error@std@@QAEAAV01@ABV01@@Z(ptr ptr) MSVCP_logic_error_assign
+@ cdecl -arch=win64 ??4logic_error@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) MSVCP_logic_error_assign
+@ thiscall -arch=win32 ??4out_of_range@std@@QAEAAV01@ABV01@@Z(ptr ptr) MSVCP_out_of_range_assign
+@ cdecl -arch=win64 ??4out_of_range@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) MSVCP_out_of_range_assign
 @ stub -arch=win32 ??4overflow_error@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4overflow_error@std@@QEAAAEAV01@AEBV01@@Z
 @ stub -arch=win32 ??4range_error@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4range_error@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=win32 ??4runtime_error@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4runtime_error@std@@QEAAAEAV01@AEBV01@@Z
+@ thiscall -arch=win32 ??4runtime_error@std@@QAEAAV01@ABV01@@Z(ptr) MSVCP_runtime_error_assign
+@ thiscall -arch=win64 ??4runtime_error@std@@QEAAAEAV01@AEBV01@@Z(ptr) MSVCP_runtime_error_assign
 @ stub -arch=win32 ??4underflow_error@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4underflow_error@std@@QEAAAEAV01@AEBV01@@Z
 @ stub -arch=win32 ??5?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV01@AAF@Z
@@ -1814,7 +1814,7 @@
 # extern ??_7?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@
 # extern ??_7?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@
 # extern ??_7__non_rtti_object@std@@6B@
-# extern ??_7bad_alloc@std@@6B@
+@ extern ??_7bad_alloc@std@@6B@ MSVCP_bad_alloc_vtable
 # extern ??_7bad_cast@std@@6B@
 # extern ??_7bad_exception@std@@6B@
 # extern ??_7bad_typeid@std@@6B@
@@ -1823,14 +1823,14 @@
 # extern ??_7domain_error@std@@6B@
 # extern ??_7facet@locale@std@@6B@
 # extern ??_7ios_base@std@@6B@ msvcp90.??_7ios_base@std@@6B@  # don't forward to msvcp90
-# extern ??_7length_error@std@@6B@
-# extern ??_7logic_error@std@@6B@
+@ extern ??_7length_error@std@@6B@ MSVCP_length_error_vtable
+@ extern ??_7logic_error@std@@6B@ MSVCP_logic_error_vtable
 # extern ??_7messages_base@std@@6B@
 # extern ??_7money_base@std@@6B@
-# extern ??_7out_of_range@std@@6B@
+@ extern ??_7out_of_range@std@@6B@ MSVCP_out_of_range_vtable
 # extern ??_7overflow_error@std@@6B@
 # extern ??_7range_error@std@@6B@
-# extern ??_7runtime_error@std@@6B@
+@ extern ??_7runtime_error@std@@6B@ MSVCP_runtime_error_vtable
 # extern ??_7time_base@std@@6B@
 # extern ??_7underflow_error@std@@6B@
 # extern ??_8?$basic_fstream@DU?$char_traits@D@std@@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@
@@ -2027,8 +2027,8 @@
 @ stub ?_Cosh@?$_Ctr@O@std@@SAOOO@Z
 @ stub -arch=win32 ?_Decref@facet@locale@std@@QAEPAV123@XZ  # don't forward to msvcp90
 @ stub -arch=win64 ?_Decref@facet@locale@std@@QEAAPEAV123@XZ  # don't forward to msvcp90
-@ stub -arch=win32 ?_Doraise@bad_alloc@std@@MBEXXZ
-@ stub -arch=win64 ?_Doraise@bad_alloc@std@@MEBAXXZ
+@ thiscall -arch=win32 ?_Doraise@bad_alloc@std@@MBEXXZ(ptr) MSVCP_exception__Doraise
+@ cdecl -arch=win64 ?_Doraise@bad_alloc@std@@MEBAXXZ(ptr) MSVCP_exception__Doraise
 @ stub -arch=win32 ?_Doraise@bad_cast@std@@MBEXXZ
 @ stub -arch=win64 ?_Doraise@bad_cast@std@@MEBAXXZ
 @ stub -arch=win32 ?_Doraise@bad_exception@std@@MBEXXZ
@@ -2037,18 +2037,18 @@
 @ stub -arch=win64 ?_Doraise@bad_typeid@std@@MEBAXXZ
 @ stub -arch=win32 ?_Doraise@domain_error@std@@MBEXXZ
 @ stub -arch=win64 ?_Doraise@domain_error@std@@MEBAXXZ
-@ stub -arch=win32 ?_Doraise@length_error@std@@MBEXXZ
-@ stub -arch=win64 ?_Doraise@length_error@std@@MEBAXXZ
-@ stub -arch=win32 ?_Doraise@logic_error@std@@MBEXXZ
-@ stub -arch=win64 ?_Doraise@logic_error@std@@MEBAXXZ
-@ stub -arch=win32 ?_Doraise@out_of_range@std@@MBEXXZ
-@ stub -arch=win64 ?_Doraise@out_of_range@std@@MEBAXXZ
+@ thiscall -arch=win32 ?_Doraise@length_error@std@@MBEXXZ(ptr) MSVCP_exception__Doraise
+@ cdecl -arch=win64 ?_Doraise@length_error@std@@MEBAXXZ(ptr) MSVCP_exception__Doraise
+@ thiscall -arch=win32 ?_Doraise@logic_error@std@@MBEXXZ(ptr) MSVCP_exception__Doraise
+@ cdecl -arch=win64 ?_Doraise@logic_error@std@@MEBAXXZ(ptr) MSVCP_exception__Doraise
+@ thiscall -arch=win32 ?_Doraise@out_of_range@std@@MBEXXZ(ptr) MSVCP_exception__Doraise
+@ cdecl -arch=win64 ?_Doraise@out_of_range@std@@MEBAXXZ(ptr) MSVCP_exception__Doraise
 @ stub -arch=win32 ?_Doraise@overflow_error@std@@MBEXXZ
 @ stub -arch=win64 ?_Doraise@overflow_error@std@@MEBAXXZ
 @ stub -arch=win32 ?_Doraise@range_error@std@@MBEXXZ
 @ stub -arch=win64 ?_Doraise@range_error@std@@MEBAXXZ
-@ stub -arch=win32 ?_Doraise@runtime_error@std@@MBEXXZ
-@ stub -arch=win64 ?_Doraise@runtime_error@std@@MEBAXXZ
+@ thiscall -arch=win32 ?_Doraise@runtime_error@std@@MBEXXZ(ptr) MSVCP_exception__Doraise
+@ cdecl -arch=win64 ?_Doraise@runtime_error@std@@MEBAXXZ(ptr) MSVCP_exception__Doraise
 @ stub -arch=win32 ?_Doraise@underflow_error@std@@MBEXXZ
 @ stub -arch=win64 ?_Doraise@underflow_error@std@@MEBAXXZ
 @ thiscall -arch=win32 ?_Eos@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAEXI@Z(ptr long) basic_string_char__Eos
@@ -4217,10 +4217,10 @@
 # extern ?wcin@std@@3V?$basic_istream@GU?$char_traits@G@std@@@1@A
 # extern ?wclog@std@@3V?$basic_ostream@GU?$char_traits@G@std@@@1@A
 # extern ?wcout@std@@3V?$basic_ostream@GU?$char_traits@G@std@@@1@A
-@ stub -arch=win32 ?what@logic_error@std@@UBEPBDXZ
-@ stub -arch=win64 ?what@logic_error@std@@UEBAPEBDXZ
-@ stub -arch=win32 ?what@runtime_error@std@@UBEPBDXZ
-@ stub -arch=win64 ?what@runtime_error@std@@UEBAPEBDXZ
+@ thiscall -arch=win32 ?what@logic_error@std@@UBEPBDXZ(ptr) MSVCP_logic_error_what
+@ cdecl -arch=win64 ?what@logic_error@std@@UEBAPEBDXZ(ptr) MSVCP_logic_error_what
+@ thiscall -arch=win32 ?what@runtime_error@std@@UBEPBDXZ(ptr) MSVCP_runtime_error_what
+@ cdecl -arch=win64 ?what@runtime_error@std@@UEBAPEBDXZ(ptr) MSVCP_runtime_error_what
 @ stub -arch=win32 ?widen@?$basic_ios@DU?$char_traits@D@std@@@std@@QBEDD@Z  # don't forward to msvcp90
 @ stub -arch=win64 ?widen@?$basic_ios@DU?$char_traits@D@std@@@std@@QEBADD@Z  # don't forward to msvcp90
 @ stub -arch=win32 ?widen@?$basic_ios@GU?$char_traits@G@std@@@std@@QBEGD@Z
