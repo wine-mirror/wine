@@ -180,7 +180,12 @@ static HRESULT WINAPI ddraw_clipper_GetClipList(IDirectDrawClipper *iface, RECT 
  *****************************************************************************/
 static HRESULT WINAPI ddraw_clipper_SetClipList(IDirectDrawClipper *iface, RGNDATA *region, DWORD flags)
 {
+    struct ddraw_clipper *clipper = impl_from_IDirectDrawClipper(iface);
+
     FIXME("iface %p, region %p, flags %#x stub!\n", iface, region, flags);
+
+    if (clipper->window)
+        return DDERR_CLIPPERISUSINGHWND;
 
     return DD_OK;
 }

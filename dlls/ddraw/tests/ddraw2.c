@@ -255,7 +255,7 @@ static void test_clipper_blt(void)
     DeleteObject(r1);
 
     hr = IDirectDrawClipper_SetClipList(clipper, rgn_data, 0);
-    todo_wine ok(hr == DDERR_CLIPPERISUSINGHWND, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_CLIPPERISUSINGHWND, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawClipper_SetHWnd(clipper, 0, NULL);
     ok(SUCCEEDED(hr), "Failed to set clipper window, hr %#x.\n", hr);
     hr = IDirectDrawClipper_SetClipList(clipper, rgn_data, 0);
