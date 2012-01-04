@@ -96,7 +96,6 @@ typedef struct dibdrv_physdev
     dib_brush brush;
 
     HRGN clip;
-    DWORD defer;
 
     /* pen */
     DWORD pen_style, pen_endcap, pen_join;
@@ -108,8 +107,6 @@ typedef struct dibdrv_physdev
     rop_mask dash_masks[2];
     BOOL   (* pen_lines)(struct dibdrv_physdev *pdev, int num, POINT *pts, BOOL close, HRGN region);
 } dibdrv_physdev;
-
-#define DEFER_PEN        2
 
 extern BOOL     dibdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
                                    PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION blend ) DECLSPEC_HIDDEN;
@@ -260,9 +257,4 @@ static inline int edge_coord( int y, int x1, int y1, int x2, int y2 )
         return x2 + (y - y2) * (x2 - x1) / (y2 - y1);
     else
         return x1 + (y - y1) * (x2 - x1) / (y2 - y1);
-}
-
-static inline BOOL defer_pen(dibdrv_physdev *pdev)
-{
-    return pdev->defer & DEFER_PEN;
 }

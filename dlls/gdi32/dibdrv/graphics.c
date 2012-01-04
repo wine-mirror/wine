@@ -441,13 +441,10 @@ COLORREF dibdrv_GetPixel( PHYSDEV dev, INT x, INT y )
  */
 BOOL dibdrv_LineTo( PHYSDEV dev, INT x, INT y )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pLineTo );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     POINT pts[2];
     HRGN region = 0;
     BOOL ret;
-
-    if(defer_pen(pdev)) return next->funcs->pLineTo( next, x, y );
 
     GetCurrentPositionEx(dev->hdc, pts);
     pts[1].x = x;
@@ -525,13 +522,10 @@ BOOL dibdrv_PaintRgn( PHYSDEV dev, HRGN rgn )
 BOOL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD polygons )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pPolyPolygon );
     DWORD total, i, pos;
     BOOL ret = TRUE;
     POINT *points;
     HRGN outline = 0, interior = 0;
-
-    if (defer_pen( pdev )) return next->funcs->pPolyPolygon( next, pt, counts, polygons );
 
     for (i = total = 0; i < polygons; i++)
     {
@@ -589,13 +583,10 @@ BOOL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD 
 BOOL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts, DWORD polylines )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pPolyPolyline );
     DWORD max_points = 0, i;
     POINT *points;
     BOOL ret = TRUE;
     HRGN outline = 0;
-
-    if (defer_pen( pdev )) return next->funcs->pPolyPolyline( next, pt, counts, polylines );
 
     for (i = 0; i < polylines; i++)
     {
@@ -659,7 +650,6 @@ BOOL dibdrv_Polyline( PHYSDEV dev, const POINT* pt, INT count )
  */
 BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pRectangle );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     RECT rect = get_device_rect( dev->hdc, left, top, right, bottom, TRUE );
     POINT pts[4];
@@ -669,9 +659,6 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
     TRACE("(%p, %d, %d, %d, %d)\n", dev, left, top, right, bottom);
 
     if(rect.left == rect.right || rect.top == rect.bottom) return TRUE;
-
-    if(defer_pen(pdev))
-        return next->funcs->pRectangle( next, left, top, right, bottom );
 
     if (pdev->pen_style == PS_INSIDEFRAME)
     {

@@ -363,7 +363,6 @@ static HBITMAP dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
         return 0;
     }
     pdev->dib = dib;
-    pdev->defer = 0;
     GDI_ReleaseObj( bitmap );
 
     return next->funcs->pSelectBitmap( next, bitmap );

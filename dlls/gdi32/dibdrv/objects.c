@@ -2088,8 +2088,6 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *patte
     set_dash_pattern( &pdev->pen_pattern, 0, NULL );
     select_brush( &pdev->pen_brush, &logbrush, pattern );
 
-    pdev->defer |= DEFER_PEN;
-
     pdev->pen_style = logpen.lopnStyle & PS_STYLE_MASK;
 
     switch (pdev->pen_style)
@@ -2107,40 +2105,34 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *patte
                 pdev->pen_lines = dashed_wide_pen_lines;
             }
             else pdev->pen_lines = dashed_pen_lines;
-            pdev->defer &= ~DEFER_PEN;
             break;
         }
         if (pdev->pen_width == 1)  /* wide cosmetic pens are not dashed */
         {
             pdev->pen_lines = dashed_pen_lines;
             pdev->pen_pattern = dash_patterns_cosmetic[pdev->pen_style - 1];
-            pdev->defer &= ~DEFER_PEN;
             break;
         }
         /* fall through */
     case PS_SOLID:
     case PS_INSIDEFRAME:
         pdev->pen_lines = (pdev->pen_width == 1) ? solid_pen_lines : wide_pen_lines;
-        pdev->defer &= ~DEFER_PEN;
         break;
 
     case PS_NULL:
         pdev->pen_width = 0;
         pdev->pen_lines = null_pen_lines;
-        pdev->defer &= ~DEFER_PEN;
         break;
 
     case PS_ALTERNATE:
         pdev->pen_lines = dashed_pen_lines;
         pdev->pen_pattern = dash_patterns_geometric[PS_DOT - 1];
-        pdev->defer &= ~DEFER_PEN;
         break;
 
     case PS_USERSTYLE:
         pdev->pen_lines = (pdev->pen_width == 1) ? dashed_pen_lines : dashed_wide_pen_lines;
         set_dash_pattern( &pdev->pen_pattern, elp->elpNumEntries, elp->elpStyleEntry );
         if (!(logpen.lopnStyle & PS_GEOMETRIC)) scale_dash_pattern( &pdev->pen_pattern, 3, PS_ENDCAP_FLAT );
-        pdev->defer &= ~DEFER_PEN;
         break;
     }
 
