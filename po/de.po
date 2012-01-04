@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-01 16:28+0100\n"
+"PO-Revision-Date: 2012-01-04 18:34+0100\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -1354,7 +1354,7 @@ msgstr "Ausgeber des Zertifikationsautorität"
 
 #: crypt32.rc:57
 msgid "Certification Template Name"
-msgstr "Zertifkationsvorlagenname"
+msgstr "Zertifikationsvorlagenname"
 
 #: crypt32.rc:58
 msgid "Certificate Type"
@@ -1382,7 +1382,7 @@ msgstr "Netscape CA Sperrungs-URL"
 
 #: crypt32.rc:64
 msgid "Netscape Cert Renewal URL"
-msgstr "Netscape Zertifikationsernerung-URL"
+msgstr "Netscape Zertifikationserneuerungs-URL"
 
 #: crypt32.rc:65
 msgid "Netscape CA Policy URL"
@@ -1534,7 +1534,7 @@ msgstr "Anwendungsrichtlinienzuordnungen"
 
 #: crypt32.rc:102
 msgid "Application Policy Constraints"
-msgstr "Anwendungsungsrichtlinieneinschränkungen"
+msgstr "Anwendungsrichtlinieneinschränkungen"
 
 #: crypt32.rc:103
 msgid "CMC Data"
@@ -3292,7 +3292,7 @@ msgstr "URL öffnen"
 
 #: ieframe.rc:90
 msgid "Specify the URL you wish to open in Internet Explorer"
-msgstr "Geben Sie die Url ein, die Sie mit Internet Explorer öffnen möchten"
+msgstr "Geben Sie die URL ein, die Sie mit Internet Explorer öffnen möchten"
 
 #: ieframe.rc:91
 msgid "Open:"
@@ -3372,7 +3372,7 @@ msgid ""
 "Temporary internet files\n"
 "Cached copies of webpages, images and certificates."
 msgstr ""
-"&Temporäre Inernetdateien\n"
+"&Temporäre Internetdateien\n"
 "Zwischengespeicherte Kopien von Webseiten, Bildern und Zertifikaten."
 
 #: inetcpl.rc:70
@@ -4504,7 +4504,7 @@ msgstr "Dienst ist deaktiviert\n"
 
 #: winerror.mc:1171
 msgid "Circular dependency\n"
-msgstr "Zirkuläre Abhängigkeit\n"
+msgstr "Zirkulare Abhängigkeit\n"
 
 #: winerror.mc:1176
 msgid "Service does not exist\n"
@@ -8391,7 +8391,7 @@ msgstr ""
 
 #: wininet.rc:27
 msgid "The date on the certificate is invalid."
-msgstr "Das Datum des Zertifkats ist ungültig."
+msgstr "Das Datum des Zertifikats ist ungültig."
 
 #: wininet.rc:28
 msgid "The name on the certificate does not match the site."
@@ -8434,9 +8434,8 @@ msgid "The specified device handle is invalid."
 msgstr "Das angegebene Gerätehandle ist ungültig."
 
 #: winmm.rc:34
-#, fuzzy
 msgid "There is no driver installed on your system!"
-msgstr "Es ist kein Treiber auf Ihrem System installiert !\n"
+msgstr "Es ist kein Treiber auf Ihrem System installiert!"
 
 #: winmm.rc:35 winmm.rc:61
 msgid ""
@@ -8671,7 +8670,7 @@ msgstr ""
 #: winmm.rc:78
 msgid "Cannot determine the device type from the given filename extension."
 msgstr ""
-"Kann keinen Gerätetyp aus der angegebenen Dateinamenerweiterung ermitteln."
+"Kann keinen Gerätetyp aus der angegebenen Dateinamenserweiterung ermitteln."
 
 #: winmm.rc:79
 msgid "The specified parameter is out of range for the specified command."
@@ -8809,7 +8808,7 @@ msgid ""
 "characters, followed by a period and an extension."
 msgstr ""
 "Der Dateiname ist ungültig. Der Dateiname muss aus maximal 8 Zeichen, "
-"gefolgt von einem Punkt und einer Dateinamenerweiterung bestehen."
+"gefolgt von einem Punkt und einer Dateinamenserweiterung bestehen."
 
 #: winmm.rc:100
 msgid ""
@@ -9800,7 +9799,7 @@ msgid ""
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
 "PUSHD <Verzeichnisname> speichert das aktuelle\n"
-"Verzeichnis auf einem Stack und wecheselt das Arbeitsverzeichnis\n"
+"Verzeichnis auf einem Stack und wechselt das Arbeitsverzeichnis\n"
 "zu dem angegebenen.\n"
 
 #: cmd.rc:223
@@ -9822,13 +9821,13 @@ msgid ""
 "Specifying no file type after the equal sign removes the current "
 "association, if any.\n"
 msgstr ""
-"ASSOC zeigt oder ändert Dateierweiterungs Zuordungen\n"
+"ASSOC zeigt oder ändert Dateierweiterungs Zuordnungen\n"
 "\n"
 "Syntax: ASSOC [.erw[=[Dateityp]]]\n"
 "\n"
-"ASSOC zeigt ohne Parameter die aktuellen Dateierweiterungs Zuordungen an.\n"
-"Mit nur einer Dateierweiterung, wird die aktuelle Zurordung angezeigt.\n"
-"Ohne Zuordung nach dem Gleichheitszeichen wird die aktuelle Zuordnung "
+"ASSOC zeigt ohne Parameter die aktuellen Dateierweiterungs Zuordnungen an.\n"
+"Mit nur einer Dateierweiterung, wird die aktuelle Zuordnung angezeigt.\n"
+"Ohne Zuordnung nach dem Gleichheitszeichen wird die aktuelle Zuordnung "
 "gelöscht, falls es eine gab.\n"
 
 #: cmd.rc:242
@@ -9932,7 +9931,7 @@ msgstr ""
 "ENDLOCAL\tBeendet die Begrenzung der Gültigkeit von Änderungen\n"
 "FTYPE\t\tZeigt oder ändert die Öffnen-Befehle zu Dateierweiterungs "
 "Zuordungen\n"
-"HELP\t\tZeigt detalierte Informationen zu einen Thema\n"
+"HELP\t\tZeigt detaillierte Informationen zu einen Thema\n"
 "MD (MKDIR)\tErzeugt ein Unterverzeichnis\n"
 "MORE\t\tZeigt die Ausgabe seitenweise an\n"
 "MOVE\t\tBewegt eine oder mehrere Dateien oder einen Verzeichnisbaum\n"
@@ -12133,7 +12132,7 @@ msgstr "Versteckt den Task-Manager, wenn er minimiert ist"
 #: taskmgr.rc:192
 msgid "Force Task Manager to update now, regardless of Update Speed setting"
 msgstr ""
-"Zwingt den Task Manager zu einer Aktualisierung, unabhänig von der "
+"Zwingt den Task Manager zu einer Aktualisierung, unabhängig von der "
 "Aktualisierungsgeschwindigkeit"
 
 #: taskmgr.rc:193
@@ -12186,7 +12185,7 @@ msgstr "Stellt die Fenster hintereinander auf dem Desktop dar"
 
 #: taskmgr.rc:210
 msgid "Brings the window front, but does not switch to it"
-msgstr "Holt das Fenster in den Vordergrund, aber wechslt nicht zu diesem"
+msgstr "Holt das Fenster in den Vordergrund, aber wechselt nicht zu diesem"
 
 #: taskmgr.rc:211
 msgid "Displays Task Manager help topics"
@@ -14148,7 +14147,7 @@ msgid ""
 "(F - File, D - Directory)\n"
 msgstr ""
 "Ist '%1' eine Datei oder ein Verzeichnis\n"
-"am Zielsort?\n"
+"am Zielort?\n"
 "(D - Datei, V - Verzeichnis)\n"
 
 #: xcopy.rc:35
