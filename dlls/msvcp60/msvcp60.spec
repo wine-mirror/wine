@@ -827,8 +827,8 @@
 @ stub -arch=win64 ??0_Locinfo@std@@QEAA@HPEBD@Z  # don't forward to msvcp90
 @ stub -arch=win32 ??0_Locinfo@std@@QAE@PBD@Z  # don't forward to msvcp90
 @ stub -arch=win64 ??0_Locinfo@std@@QEAA@PEBD@Z  # don't forward to msvcp90
-@ thiscall -arch=win32 ??0_Lockit@std@@QAE@XZ(ptr) msvcp90.??0_Lockit@std@@QAE@XZ
-@ cdecl -arch=win64 ??0_Lockit@std@@QEAA@XZ(ptr) msvcp90.??0_Lockit@std@@QEAA@XZ
+@ thiscall -arch=win32 ??0_Lockit@std@@QAE@XZ(ptr) _Lockit_ctor
+@ cdecl -arch=win64 ??0_Lockit@std@@QEAA@XZ(ptr) _Lockit_ctor
 @ stub -arch=win32 ??0_Timevec@std@@QAE@ABV01@@Z  # don't forward to msvcp90
 @ stub -arch=win64 ??0_Timevec@std@@QEAA@AEBV01@@Z  # don't forward to msvcp90
 @ stub -arch=win32 ??0_Timevec@std@@QAE@PAX@Z  # don't forward to msvcp90
@@ -1039,8 +1039,8 @@
 @ stub -arch=win64 ??1Init@ios_base@std@@QEAA@XZ
 @ stub -arch=win32 ??1_Locinfo@std@@QAE@XZ  # don't forward to msvcp90
 @ stub -arch=win64 ??1_Locinfo@std@@QEAA@XZ  # don't forward to msvcp90
-@ thiscall -arch=win32 ??1_Lockit@std@@QAE@XZ(ptr) msvcp90.??1_Lockit@std@@QAE@XZ
-@ cdecl -arch=win64 ??1_Lockit@std@@QEAA@XZ(ptr) msvcp90.??1_Lockit@std@@QEAA@XZ
+@ thiscall -arch=win32 ??1_Lockit@std@@QAE@XZ(ptr) _Lockit_dtor
+@ cdecl -arch=win64 ??1_Lockit@std@@QEAA@XZ(ptr) _Lockit_dtor
 @ stub -arch=win32 ??1_Timevec@std@@QAE@XZ  # don't forward to msvcp90
 @ stub -arch=win64 ??1_Timevec@std@@QEAA@XZ  # don't forward to msvcp90
 @ stub -arch=win32 ??1_Winit@std@@QAE@XZ
