@@ -1326,6 +1326,132 @@ static void add_join( dibdrv_physdev *pdev, HRGN region, HRGN round_cap, const P
     return;
 }
 
+static void wide_line_segment( dibdrv_physdev *pdev, HRGN total,
+                               const POINT *pt_1, const POINT *pt_2, int dx, int dy,
+                               BOOL need_cap_1, BOOL need_cap_2, struct face *face_1, struct face *face_2 )
+{
+    RECT rect;
+    BOOL sq_cap_1 = need_cap_1 && (pdev->pen_endcap == PS_ENDCAP_SQUARE);
+    BOOL sq_cap_2 = need_cap_2 && (pdev->pen_endcap == PS_ENDCAP_SQUARE);
+
+    if (dx == 0 && dy == 0) return;
+
+    if (dy == 0)
+    {
+        rect.left = min( pt_1->x, pt_2->x );
+        rect.right = max( pt_1->x, pt_2->x );
+        rect.top = pt_1->y - pdev->pen_width / 2;
+        rect.bottom = rect.top + pdev->pen_width;
+        if ((sq_cap_1 && dx > 0) || (sq_cap_2 && dx < 0)) rect.left  -= pdev->pen_width / 2;
+        if ((sq_cap_2 && dx > 0) || (sq_cap_1 && dx < 0)) rect.right += pdev->pen_width / 2;
+        add_rect_to_region( total, &rect );
+        if (dx > 0)
+        {
+            face_1->start.x = face_1->end.x   = rect.left;
+            face_1->start.y = face_2->end.y   = rect.bottom;
+            face_1->end.y   = face_2->start.y = rect.top;
+            face_2->start.x = face_2->end.x   = rect.right - 1;
+        }
+        else
+        {
+            face_1->start.x = face_1->end.x   = rect.right;
+            face_1->start.y = face_2->end.y   = rect.top;
+            face_1->end.y   = face_2->start.y = rect.bottom;
+            face_2->start.x = face_2->end.x   = rect.left + 1;
+        }
+    }
+    else if (dx == 0)
+    {
+        rect.top = min( pt_1->y, pt_2->y );
+        rect.bottom = max( pt_1->y, pt_2->y );
+        rect.left = pt_1->x - pdev->pen_width / 2;
+        rect.right = rect.left + pdev->pen_width;
+        if ((sq_cap_1 && dy > 0) || (sq_cap_2 && dy < 0)) rect.top    -= pdev->pen_width / 2;
+        if ((sq_cap_2 && dy > 0) || (sq_cap_1 && dy < 0)) rect.bottom += pdev->pen_width / 2;
+        add_rect_to_region( total, &rect );
+        if (dy > 0)
+        {
+            face_1->start.x = face_2->end.x   = rect.left;
+            face_1->start.y = face_1->end.y   = rect.top;
+            face_1->end.x   = face_2->start.x = rect.right;
+            face_2->start.y = face_2->end.y   = rect.bottom - 1;
+        }
+        else
+        {
+            face_1->start.x = face_2->end.x   = rect.right;
+            face_1->start.y = face_1->end.y   = rect.bottom;
+            face_1->end.x   = face_2->start.x = rect.left;
+            face_2->start.y = face_2->end.y   = rect.top + 1;
+        }
+    }
+    else
+    {
+        double len = hypot( dx, dy );
+        double width_x, width_y;
+        POINT seg_pts[4];
+        POINT wide_half, narrow_half;
+        HRGN segment;
+
+        width_x = pdev->pen_width * abs( dy ) / len;
+        width_y = pdev->pen_width * abs( dx ) / len;
+
+        narrow_half.x = round( width_x / 2 );
+        narrow_half.y = round( width_y / 2 );
+        wide_half.x   = round( (width_x + 1) / 2 );
+        wide_half.y   = round( (width_y + 1) / 2 );
+
+        if (dx < 0)
+        {
+            wide_half.y   = -wide_half.y;
+            narrow_half.y = -narrow_half.y;
+        }
+
+        if (dy < 0)
+        {
+            POINT tmp = narrow_half; narrow_half = wide_half; wide_half = tmp;
+            wide_half.x   = -wide_half.x;
+            narrow_half.x = -narrow_half.x;
+        }
+
+        seg_pts[0].x = pt_1->x - narrow_half.x;
+        seg_pts[0].y = pt_1->y + narrow_half.y;
+        seg_pts[1].x = pt_1->x + wide_half.x;
+        seg_pts[1].y = pt_1->y - wide_half.y;
+        seg_pts[2].x = pt_2->x + wide_half.x;
+        seg_pts[2].y = pt_2->y - wide_half.y;
+        seg_pts[3].x = pt_2->x - narrow_half.x;
+        seg_pts[3].y = pt_2->y + narrow_half.y;
+
+        if (sq_cap_1)
+        {
+            seg_pts[0].x -= narrow_half.y;
+            seg_pts[1].x -= narrow_half.y;
+            seg_pts[0].y -= narrow_half.x;
+            seg_pts[1].y -= narrow_half.x;
+        }
+
+        if (sq_cap_2)
+        {
+            seg_pts[2].x += wide_half.y;
+            seg_pts[3].x += wide_half.y;
+            seg_pts[2].y += wide_half.x;
+            seg_pts[3].y += wide_half.x;
+        }
+
+        segment = CreatePolygonRgn( seg_pts, 4, ALTERNATE );
+        CombineRgn( total, total, segment, RGN_OR );
+        DeleteObject( segment );
+
+        face_1->start = seg_pts[0];
+        face_1->end   = seg_pts[1];
+        face_2->start = seg_pts[2];
+        face_2->end   = seg_pts[3];
+    }
+
+    face_1->dx = face_2->dx = dx;
+    face_1->dy = face_2->dy = dy;
+}
+
 static BOOL wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close, HRGN total)
 {
     int i;
@@ -1349,132 +1475,14 @@ static BOOL wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close
         const POINT *pt_2 = pts + ((close && i == num - 1) ? 0 : i + 1);
         int dx = pt_2->x - pt_1->x;
         int dy = pt_2->y - pt_1->y;
-        RECT rect;
         struct face face_1, face_2, prev_face, first_face;
         BOOL need_cap_1 = !close && (i == 0);
         BOOL need_cap_2 = !close && (i == num - 1);
-        BOOL sq_cap_1 = need_cap_1 && (pdev->pen_endcap == PS_ENDCAP_SQUARE);
-        BOOL sq_cap_2 = need_cap_2 && (pdev->pen_endcap == PS_ENDCAP_SQUARE);
 
-        if (dx == 0 && dy == 0) continue;
-
-        if (dy == 0)
-        {
-            rect.left = min( pt_1->x, pt_2->x );
-            rect.right = rect.left + abs( dx );
-            rect.top = pt_1->y - pdev->pen_width / 2;
-            rect.bottom = rect.top + pdev->pen_width;
-            if ((sq_cap_1 && dx > 0) || (sq_cap_2 && dx < 0)) rect.left  -= pdev->pen_width / 2;
-            if ((sq_cap_2 && dx > 0) || (sq_cap_1 && dx < 0)) rect.right += pdev->pen_width / 2;
-            add_rect_to_region( total, &rect );
-            if (dx > 0)
-            {
-                face_1.start.x = face_1.end.x   = rect.left;
-                face_1.start.y = face_2.end.y   = rect.bottom;
-                face_1.end.y   = face_2.start.y = rect.top;
-                face_2.start.x = face_2.end.x   = rect.right - 1;
-            }
-            else
-            {
-                face_1.start.x = face_1.end.x   = rect.right;
-                face_1.start.y = face_2.end.y   = rect.top;
-                face_1.end.y   = face_2.start.y = rect.bottom;
-                face_2.start.x = face_2.end.x   = rect.left + 1;
-            }
-        }
-        else if (dx == 0)
-        {
-            rect.top = min( pt_1->y, pt_2->y );
-            rect.bottom = rect.top + abs( dy );
-            rect.left = pt_1->x - pdev->pen_width / 2;
-            rect.right = rect.left + pdev->pen_width;
-            if ((sq_cap_1 && dy > 0) || (sq_cap_2 && dy < 0)) rect.top    -= pdev->pen_width / 2;
-            if ((sq_cap_2 && dy > 0) || (sq_cap_1 && dy < 0)) rect.bottom += pdev->pen_width / 2;
-            add_rect_to_region( total, &rect );
-            if (dy > 0)
-            {
-                face_1.start.x = face_2.end.x   = rect.left;
-                face_1.start.y = face_1.end.y   = rect.top;
-                face_1.end.x   = face_2.start.x = rect.right;
-                face_2.start.y = face_2.end.y   = rect.bottom - 1;
-            }
-            else
-            {
-                face_1.start.x = face_2.end.x   = rect.right;
-                face_1.start.y = face_1.end.y   = rect.bottom;
-                face_1.end.x   = face_2.start.x = rect.left;
-                face_2.start.y = face_2.end.y   = rect.top + 1;
-            }
-        }
-        else
-        {
-            double len = hypot( dx, dy );
-            double width_x, width_y;
-            POINT seg_pts[4];
-            POINT wide_half, narrow_half;
-            HRGN segment;
-
-            width_x = pdev->pen_width * abs( dy ) / len;
-            width_y = pdev->pen_width * abs( dx ) / len;
-
-            narrow_half.x = round( width_x / 2 );
-            narrow_half.y = round( width_y / 2 );
-            wide_half.x   = round( (width_x + 1) / 2 );
-            wide_half.y   = round( (width_y + 1) / 2 );
-
-            if (dx < 0)
-            {
-                wide_half.y   = -wide_half.y;
-                narrow_half.y = -narrow_half.y;
-            }
-
-            if (dy < 0)
-            {
-                POINT tmp = narrow_half; narrow_half = wide_half; wide_half = tmp;
-                wide_half.x   = -wide_half.x;
-                narrow_half.x = -narrow_half.x;
-            }
-
-            seg_pts[0].x = pt_1->x - narrow_half.x;
-            seg_pts[0].y = pt_1->y + narrow_half.y;
-            seg_pts[1].x = pt_1->x + wide_half.x;
-            seg_pts[1].y = pt_1->y - wide_half.y;
-            seg_pts[2].x = pt_2->x + wide_half.x;
-            seg_pts[2].y = pt_2->y - wide_half.y;
-            seg_pts[3].x = pt_2->x - narrow_half.x;
-            seg_pts[3].y = pt_2->y + narrow_half.y;
-
-            if (sq_cap_1)
-            {
-                seg_pts[0].x -= narrow_half.y;
-                seg_pts[1].x -= narrow_half.y;
-                seg_pts[0].y -= narrow_half.x;
-                seg_pts[1].y -= narrow_half.x;
-            }
-
-            if (sq_cap_2)
-            {
-                seg_pts[2].x += wide_half.y;
-                seg_pts[3].x += wide_half.y;
-                seg_pts[2].y += wide_half.x;
-                seg_pts[3].y += wide_half.x;
-            }
-
-            segment = CreatePolygonRgn( seg_pts, 4, ALTERNATE );
-            CombineRgn( total, total, segment, RGN_OR );
-            DeleteObject( segment );
-
-            face_1.start = seg_pts[0];
-            face_1.end   = seg_pts[1];
-            face_2.start = seg_pts[2];
-            face_2.end   = seg_pts[3];
-        }
+        wide_line_segment( pdev, total, pt_1, pt_2, dx, dy, need_cap_1, need_cap_2, &face_1, &face_2 );
 
         if (need_cap_1) add_cap( pdev, total, round_cap, pt_1 );
         if (need_cap_2) add_cap( pdev, total, round_cap, pt_2 );
-
-        face_1.dx = face_2.dx = dx;
-        face_1.dy = face_2.dy = dy;
 
         if (i == 0) first_face = face_1;
         else add_join( pdev, total, round_cap, pt_1, &prev_face, &face_1 );
