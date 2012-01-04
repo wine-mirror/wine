@@ -779,7 +779,7 @@ void reset_dash_origin(dibdrv_physdev *pdev)
 static inline void skip_dash(dibdrv_physdev *pdev, unsigned int skip)
 {
     skip %= pdev->pen_pattern.total_len;
-    while(skip)
+    do
     {
         if(pdev->dash_pos.left_in_dash > skip)
         {
@@ -792,6 +792,7 @@ static inline void skip_dash(dibdrv_physdev *pdev, unsigned int skip)
         pdev->dash_pos.left_in_dash = pdev->pen_pattern.dashes[pdev->dash_pos.cur_dash];
         pdev->dash_pos.mark = !pdev->dash_pos.mark;
     }
+    while (skip);
 }
 
 static void dashed_pen_line_callback(dibdrv_physdev *pdev, INT x, INT y)
