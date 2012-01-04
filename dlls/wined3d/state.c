@@ -1826,7 +1826,7 @@ static void state_multisampmask(struct wined3d_context *context, const struct wi
 
 static void state_patchedgestyle(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (state->render_states[WINED3D_RS_PATCHEDGESTYLE] != WINED3DPATCHEDGE_DISCRETE)
+    if (state->render_states[WINED3D_RS_PATCHEDGESTYLE] != WINED3D_PATCH_EDGE_DISCRETE)
         FIXME("WINED3D_RS_PATCHEDGESTYLE %#x not yet implemented.\n",
                 state->render_states[WINED3D_RS_PATCHEDGESTYLE]);
 }

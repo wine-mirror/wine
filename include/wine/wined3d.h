@@ -488,12 +488,11 @@ enum wined3d_material_color_source
     WINED3D_MCS_COLOR2                      = 2,
 };
 
-typedef enum _WINED3DPATCHEDGESTYLE
+enum wined3d_patch_edge_style
 {
-    WINED3DPATCHEDGE_DISCRETE               = 0,
-    WINED3DPATCHEDGE_CONTINUOUS             = 1,
-    WINED3DPATCHEDGE_FORCE_DWORD            = 0x7fffffff
-} WINED3DPATCHEDGESTYLE;
+    WINED3D_PATCH_EDGE_DISCRETE             = 0,
+    WINED3D_PATCH_EDGE_CONTINUOUS           = 1,
+};
 
 typedef enum _WINED3DBACKBUFFER_TYPE
 {

@@ -1197,7 +1197,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     state->render_states[WINED3D_RS_POINTSCALE_C] = tmpfloat.d;
     state->render_states[WINED3D_RS_MULTISAMPLEANTIALIAS] = TRUE;
     state->render_states[WINED3D_RS_MULTISAMPLEMASK] = 0xffffffff;
-    state->render_states[WINED3D_RS_PATCHEDGESTYLE] = WINED3DPATCHEDGE_DISCRETE;
+    state->render_states[WINED3D_RS_PATCHEDGESTYLE] = WINED3D_PATCH_EDGE_DISCRETE;
     tmpfloat.f = 1.0f;
     state->render_states[WINED3D_RS_PATCHSEGMENTS] = tmpfloat.d;
     state->render_states[WINED3D_RS_DEBUGMONITORTOKEN] = 0xbaadcafe;
