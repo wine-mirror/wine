@@ -35,6 +35,7 @@ static const WCHAR constW[] = {'c','o','n','s','t',0};
 static const WCHAR defaultW[] = {'d','e','f','a','u','l','t',0};
 static const WCHAR dimW[] = {'d','i','m',0};
 static const WCHAR doW[] = {'d','o',0};
+static const WCHAR eachW[] = {'e','a','c','h',0};
 static const WCHAR elseW[] = {'e','l','s','e',0};
 static const WCHAR elseifW[] = {'e','l','s','e','i','f',0};
 static const WCHAR emptyW[] = {'e','m','p','t','y',0};
@@ -50,6 +51,7 @@ static const WCHAR getW[] = {'g','e','t',0};
 static const WCHAR gotoW[] = {'g','o','t','o',0};
 static const WCHAR ifW[] = {'i','f',0};
 static const WCHAR impW[] = {'i','m','p',0};
+static const WCHAR inW[] = {'i','n',0};
 static const WCHAR isW[] = {'i','s',0};
 static const WCHAR letW[] = {'l','e','t',0};
 static const WCHAR loopW[] = {'l','o','o','p',0};
@@ -93,6 +95,7 @@ static const struct {
     {defaultW,   tDEFAULT},
     {dimW,       tDIM},
     {doW,        tDO},
+    {eachW,      tEACH},
     {elseW,      tELSE},
     {elseifW,    tELSEIF},
     {emptyW,     tEMPTY},
@@ -108,6 +111,7 @@ static const struct {
     {gotoW,      tGOTO},
     {ifW,        tIF},
     {impW,       tIMP},
+    {inW,        tIN},
     {isW,        tIS},
     {letW,       tLET},
     {loopW,      tLOOP},

@@ -53,6 +53,7 @@ static statement_t *new_set_statement(parser_ctx_t*,member_expression_t*,express
 static statement_t *new_dim_statement(parser_ctx_t*,dim_decl_t*);
 static statement_t *new_while_statement(parser_ctx_t*,statement_type_t,expression_t*,statement_t*);
 static statement_t *new_forto_statement(parser_ctx_t*,const WCHAR*,expression_t*,expression_t*,expression_t*,statement_t*);
+static statement_t *new_foreach_statement(parser_ctx_t*,const WCHAR*,expression_t*,statement_t*);
 static statement_t *new_if_statement(parser_ctx_t*,expression_t*,statement_t*,elseif_decl_t*,statement_t*);
 static statement_t *new_function_statement(parser_ctx_t*,function_decl_t*);
 static statement_t *new_onerror_statement(parser_ctx_t*,BOOL);
@@ -103,7 +104,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %token tIS tLTEQ tGTEQ tMOD
 %token tCALL tDIM tSUB tFUNCTION tPROPERTY tGET tLET tCONST
 %token tIF tELSE tELSEIF tEND tTHEN tEXIT
-%token tWHILE tWEND tDO tLOOP tUNTIL tFOR tTO tSTEP
+%token tWHILE tWEND tDO tLOOP tUNTIL tFOR tTO tSTEP tEACH tIN
 %token tBYREF tBYVAL
 %token tOPTION tEXPLICIT
 %token tSTOP
@@ -190,6 +191,8 @@ SimpleStatement
     | tCONST ConstDeclList                  { $$ = new_const_statement(ctx, $2); CHECK_ERROR; }
     | tFOR tIdentifier '=' Expression tTO Expression Step_opt tNL StatementsNl_opt tNEXT
                                             { $$ = new_forto_statement(ctx, $2, $4, $6, $7, $9); CHECK_ERROR; }
+    | tFOR tEACH tIdentifier tIN Expression tNL StatementsNl_opt tNEXT
+                                            { $$ = new_foreach_statement(ctx, $3, $5, $7); }
 
 MemberExpression
     : tIdentifier                           { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
@@ -647,6 +650,21 @@ static statement_t *new_forto_statement(parser_ctx_t *ctx, const WCHAR *identifi
     stat->from_expr = from_expr;
     stat->to_expr = to_expr;
     stat->step_expr = step_expr;
+    stat->body = body;
+    return &stat->stat;
+}
+
+static statement_t *new_foreach_statement(parser_ctx_t *ctx, const WCHAR *identifier, expression_t *group_expr,
+        statement_t *body)
+{
+    foreach_statement_t *stat;
+
+    stat = new_statement(ctx, STAT_FOREACH, sizeof(*stat));
+    if(!stat)
+        return NULL;
+
+    stat->identifier = identifier;
+    stat->group_expr = group_expr;
     stat->body = body;
     return &stat->stat;
 }

@@ -616,6 +616,12 @@ static HRESULT compile_dowhile_statement(compile_ctx_t *ctx, while_statement_t *
     return S_OK;
 }
 
+static HRESULT compile_foreach_statement(compile_ctx_t *ctx, foreach_statement_t *stat)
+{
+    FIXME("for each loop not implemented\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *stat)
 {
     unsigned step_instr, instr, prev_label;
@@ -894,6 +900,9 @@ static HRESULT compile_statement(compile_ctx_t *ctx, statement_t *stat)
             break;
         case STAT_EXITSUB:
             hres = compile_exitsub_statement(ctx);
+            break;
+        case STAT_FOREACH:
+            hres = compile_foreach_statement(ctx, (foreach_statement_t*)stat);
             break;
         case STAT_FORTO:
             hres = compile_forto_statement(ctx, (forto_statement_t*)stat);

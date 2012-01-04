@@ -107,6 +107,7 @@ typedef enum {
     STAT_EXITFUNC,
     STAT_EXITPROP,
     STAT_EXITSUB,
+    STAT_FOREACH,
     STAT_FORTO,
     STAT_FUNC,
     STAT_IF,
@@ -206,6 +207,13 @@ typedef struct {
     expression_t *step_expr;
     statement_t *body;
 } forto_statement_t;
+
+typedef struct {
+    statement_t stat;
+    const WCHAR *identifier;
+    expression_t *group_expr;
+    statement_t *body;
+} foreach_statement_t;
 
 typedef struct {
     statement_t stat;
