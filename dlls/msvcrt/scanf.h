@@ -26,7 +26,7 @@
 #ifdef WIDE_SCANF
 #define _CHAR_ MSVCRT_wchar_t
 #define _EOF_ MSVCRT_WEOF
-#define _EOF_RET MSVCRT_WEOF
+#define _EOF_RET (short)MSVCRT_WEOF
 #define _ISSPACE_(c) MSVCRT_iswspace(c)
 #define _ISDIGIT_(c) MSVCRT_iswdigit(c)
 #define _WIDE2SUPPORTED_(c) c /* No conversion needed (wide to wide) */

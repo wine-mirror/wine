@@ -243,8 +243,25 @@ static void test_sscanf_s(void)
     ok(i==123, "i = %d\n", i);
 }
 
+static void test_swscanf( void )
+{
+    wchar_t buffer[100];
+    int result, ret;
+    static const WCHAR formatd[] = {'%','d',0};
+
+    /* check WEOF */
+    /* WEOF is an unsigned short -1 but swscanf returns int
+       so it should be sign-extended */
+    buffer[0] = 0;
+    ret = swscanf(buffer, formatd, &result);
+    /* msvcrt returns 0 but should return -1 (later versions do) */
+    ok( ret == (short)WEOF || broken(ret == 0),
+        "swscanf returns %x instead of %x\n", ret, WEOF );
+}
+
 START_TEST(scanf)
 {
     test_sscanf();
     test_sscanf_s();
+    test_swscanf();
 }
