@@ -73,6 +73,37 @@ typedef struct {
     CMAP_SegmentedCoverage_group groups[1];
 } CMAP_SegmentedCoverage;
 
+/* These are all structures needed for the GDEF table */
+#define GDEF_TAG MS_MAKE_TAG('G', 'D', 'E', 'F')
+
+enum {BaseGlyph=1, LigatureGlyph, MarkGlyph, ComponentGlyph};
+
+typedef struct {
+    DWORD Version;
+    WORD GlyphClassDef;
+    WORD AttachList;
+    WORD LigCaretList;
+    WORD MarkAttachClassDef;
+} GDEF_Header;
+
+typedef struct {
+    WORD ClassFormat;
+    WORD StartGlyph;
+    WORD GlyphCount;
+    WORD ClassValueArray[1];
+} GDEF_ClassDefFormat1;
+
+typedef struct {
+    WORD Start;
+    WORD End;
+    WORD Class;
+} GDEF_ClassRangeRecord;
+
+typedef struct {
+    WORD ClassFormat;
+    WORD ClassRangeCount;
+    GDEF_ClassRangeRecord ClassRangeRecord[1];
+} GDEF_ClassDefFormat2;
 
 /**********
  * CMAP
@@ -159,4 +190,119 @@ DWORD OpenType_CMAP_GetGlyphIndex(HDC hdc, ScriptCache *psc, DWORD utf32c, LPWOR
         }
     }
     return 0;
+}
+
+/**********
+ * GDEF
+ **********/
+
+static WORD GDEF_get_glyph_class(const GDEF_Header *header, WORD glyph)
+{
+    int offset;
+    WORD class = 0;
+    const GDEF_ClassDefFormat1 *cf1;
+
+    if (!header)
+        return 0;
+
+    offset = GET_BE_WORD(header->GlyphClassDef);
+    if (!offset)
+        return 0;
+
+    cf1 = (GDEF_ClassDefFormat1*)(((BYTE*)header)+offset);
+    if (GET_BE_WORD(cf1->ClassFormat) == 1)
+    {
+        if (glyph >= GET_BE_WORD(cf1->StartGlyph))
+        {
+            int index = glyph - GET_BE_WORD(cf1->StartGlyph);
+            if (index < GET_BE_WORD(cf1->GlyphCount))
+                class = GET_BE_WORD(cf1->ClassValueArray[index]);
+        }
+    }
+    else if (GET_BE_WORD(cf1->ClassFormat) == 2)
+    {
+        const GDEF_ClassDefFormat2 *cf2 = (GDEF_ClassDefFormat2*)cf1;
+        int i, top;
+        top = GET_BE_WORD(cf2->ClassRangeCount);
+        for (i = 0; i < top; i++)
+        {
+            if (glyph >= GET_BE_WORD(cf2->ClassRangeRecord[i].Start) &&
+                glyph <= GET_BE_WORD(cf2->ClassRangeRecord[i].End))
+            {
+                class = GET_BE_WORD(cf2->ClassRangeRecord[i].Class);
+                break;
+            }
+        }
+    }
+    else
+        ERR("Unknown Class Format %i\n",GET_BE_WORD(cf1->ClassFormat));
+
+    return class;
+}
+
+static VOID *load_gdef_table(HDC hdc)
+{
+    VOID* GDEF_Table = NULL;
+    int length = GetFontData(hdc, GDEF_TAG , 0, NULL, 0);
+    if (length != GDI_ERROR)
+    {
+        GDEF_Table = HeapAlloc(GetProcessHeap(),0,length);
+        GetFontData(hdc, GDEF_TAG , 0, GDEF_Table, length);
+        TRACE("Loaded GDEF table of %i bytes\n",length);
+    }
+    return GDEF_Table;
+}
+
+void OpenType_GDEF_UpdateGlyphProps(HDC hdc, ScriptCache *psc, const WORD *pwGlyphs, const WORD cGlyphs, WORD* pwLogClust, const WORD cChars, SCRIPT_GLYPHPROP *pGlyphProp)
+{
+    int i;
+
+    if (!psc->GDEF_Table)
+        psc->GDEF_Table = load_gdef_table(hdc);
+
+    for (i = 0; i < cGlyphs; i++)
+    {
+        WORD class;
+        int char_count = 0;
+        int k;
+
+        for (k = 0; k < cChars; k++)
+            if (pwLogClust[k] == i)
+                char_count++;
+
+        class = GDEF_get_glyph_class(psc->GDEF_Table, pwGlyphs[i]);
+
+        switch (class)
+        {
+            case 0:
+            case BaseGlyph:
+                pGlyphProp[i].sva.fClusterStart = 1;
+                pGlyphProp[i].sva.fDiacritic = 0;
+                pGlyphProp[i].sva.fZeroWidth = 0;
+                break;
+            case LigatureGlyph:
+                pGlyphProp[i].sva.fClusterStart = 1;
+                pGlyphProp[i].sva.fDiacritic = 0;
+                pGlyphProp[i].sva.fZeroWidth = 0;
+                break;
+            case MarkGlyph:
+                pGlyphProp[i].sva.fClusterStart = 0;
+                pGlyphProp[i].sva.fDiacritic = 1;
+                pGlyphProp[i].sva.fZeroWidth = 1;
+                break;
+            case ComponentGlyph:
+                pGlyphProp[i].sva.fClusterStart = 0;
+                pGlyphProp[i].sva.fDiacritic = 0;
+                pGlyphProp[i].sva.fZeroWidth = 0;
+                break;
+            default:
+                ERR("Unknown glyph class %i\n",class);
+                pGlyphProp[i].sva.fClusterStart = 1;
+                pGlyphProp[i].sva.fDiacritic = 0;
+                pGlyphProp[i].sva.fZeroWidth = 0;
+        }
+
+        if (char_count == 0)
+            pGlyphProp[i].sva.fClusterStart = 0;
+    }
 }
