@@ -1452,9 +1452,55 @@ static void wide_line_segment( dibdrv_physdev *pdev, HRGN total,
     face_1->dy = face_2->dy = dy;
 }
 
-static BOOL wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close, HRGN total)
+static void wide_line_segments( dibdrv_physdev *pdev, int num, const POINT *pts, BOOL close,
+                                int start, int count, const POINT *first_pt, const POINT *last_pt,
+                                HRGN round_cap, HRGN total )
 {
     int i;
+    struct face face_1, face_2, prev_face, first_face;
+    const POINT *pt_1, *pt_2;
+
+    if (!close)
+    {
+        add_cap( pdev, total, round_cap, first_pt );
+        add_cap( pdev, total, round_cap, last_pt );
+    }
+
+    if (count == 1)
+    {
+        pt_1 = &pts[start];
+        pt_2 = &pts[(start + 1) % num];
+        wide_line_segment( pdev, total, first_pt, last_pt, pt_2->x - pt_1->x, pt_2->y - pt_1->y,
+                           TRUE, TRUE, &face_1, &face_2 );
+        return;
+    }
+
+    pt_1 = &pts[start];
+    pt_2 = &pts[(start + 1) % num];
+    wide_line_segment( pdev, total, first_pt, pt_2, pt_2->x - pt_1->x, pt_2->y - pt_1->y,
+                       !close, FALSE, &first_face, &prev_face );
+
+
+    for (i = 1; i < count - 1; i++)
+    {
+        pt_1 = &pts[(start + i) % num];
+        pt_2 = &pts[(start + i + 1) % num];
+        wide_line_segment( pdev, total, pt_1, pt_2, pt_2->x - pt_1->x, pt_2->y - pt_1->y,
+                           FALSE, FALSE, &face_1, &face_2 );
+        add_join( pdev, total, round_cap, pt_1, &prev_face, &face_1 );
+        prev_face = face_2;
+    }
+
+    pt_1 = &pts[(start + count - 1) % num];
+    pt_2 = &pts[(start + count) % num];
+    wide_line_segment( pdev, total, pt_1, last_pt, pt_2->x - pt_1->x, pt_2->y - pt_1->y,
+                       FALSE, !close, &face_1, &face_2 );
+    add_join( pdev, total, round_cap, pt_1, &prev_face, &face_1 );
+    if (close) add_join( pdev, total, round_cap, last_pt, &face_2, &first_face );
+}
+
+static BOOL wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close, HRGN total)
+{
     HRGN round_cap = 0;
 
     assert( total != 0 );  /* wide pens should always be drawn through a region */
@@ -1468,30 +1514,11 @@ static BOOL wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close
         round_cap = CreateEllipticRgn( -(pdev->pen_width / 2), -(pdev->pen_width / 2),
                                        (pdev->pen_width + 1) / 2, (pdev->pen_width + 1) / 2 );
 
-    if (!close) num--;
-    for (i = 0; i < num; i++)
-    {
-        const POINT *pt_1 = pts + i;
-        const POINT *pt_2 = pts + ((close && i == num - 1) ? 0 : i + 1);
-        int dx = pt_2->x - pt_1->x;
-        int dy = pt_2->y - pt_1->y;
-        struct face face_1, face_2, prev_face, first_face;
-        BOOL need_cap_1 = !close && (i == 0);
-        BOOL need_cap_2 = !close && (i == num - 1);
+    if (close)
+        wide_line_segments( pdev, num, pts, TRUE, 0, num, &pts[0], &pts[0], round_cap, total );
+    else
+        wide_line_segments( pdev, num, pts, FALSE, 0, num - 1, &pts[0], &pts[num - 1], round_cap, total );
 
-        wide_line_segment( pdev, total, pt_1, pt_2, dx, dy, need_cap_1, need_cap_2, &face_1, &face_2 );
-
-        if (need_cap_1) add_cap( pdev, total, round_cap, pt_1 );
-        if (need_cap_2) add_cap( pdev, total, round_cap, pt_2 );
-
-        if (i == 0) first_face = face_1;
-        else add_join( pdev, total, round_cap, pt_1, &prev_face, &face_1 );
-
-        if (i == num - 1 && close)
-            add_join( pdev, total, round_cap, pt_2, &face_2, &first_face );
-
-        prev_face = face_2;
-    }
     if (round_cap) DeleteObject( round_cap );
     return TRUE;
 }
