@@ -1334,6 +1334,10 @@ static BOOL wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close
     assert( total != 0 );  /* wide pens should always be drawn through a region */
     assert( num >= 2 );
 
+    /* skip empty segments */
+    while (num > 2 && pts[0].x == pts[1].x && pts[0].y == pts[1].y) { pts++; num--; }
+    while (num > 2 && pts[num - 1].x == pts[num - 2].x && pts[num - 1].y == pts[num - 2].y) num--;
+
     if (pdev->pen_join == PS_JOIN_ROUND || pdev->pen_endcap == PS_ENDCAP_ROUND)
         round_cap = CreateEllipticRgn( -(pdev->pen_width / 2), -(pdev->pen_width / 2),
                                        (pdev->pen_width + 1) / 2, (pdev->pen_width + 1) / 2 );
