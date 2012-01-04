@@ -9,6 +9,7 @@ C_SRCS = \
 	indicsyllable.c \
 	linebreak.c \
 	mirror.c \
+	opentype.c \
 	shape.c \
 	shaping.c \
 	usp10.c

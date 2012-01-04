@@ -2800,7 +2800,7 @@ HRESULT WINAPI ScriptShapeOpenType( HDC hdc, SCRIPT_CACHE *psc,
                         heap_free(rChars);
                         return E_PENDING;
                     }
-                    if (CMAP_GetGlyphIndex(hdc, (ScriptCache *)*psc, chInput, &glyph, 0) == GDI_ERROR)
+                    if (OpenType_CMAP_GetGlyphIndex(hdc, (ScriptCache *)*psc, chInput, &glyph, 0) == GDI_ERROR)
                     {
                         heap_free(rChars);
                         return S_FALSE;
