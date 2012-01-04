@@ -843,6 +843,19 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_MMDevice *mmdevice,
         passed_fmt = &fmt;
         memcpy(passed_fmt, info->format, sizeof(PCMWAVEFORMAT));
         passed_fmt->cbSize = 0;
+        if(fmt.wBitsPerSample % 8 != 0){
+            WARN("Fixing bad wBitsPerSample (%u)\n", fmt.wBitsPerSample);
+            fmt.wBitsPerSample = (fmt.wBitsPerSample + 7) & ~7;
+        }
+        /* winmm ignores broken blockalign and avgbytes */
+        if(fmt.nBlockAlign != fmt.nChannels * fmt.wBitsPerSample/8){
+            WARN("Fixing bad nBlockAlign (%u)\n", fmt.nBlockAlign);
+            fmt.nBlockAlign  = fmt.nChannels * fmt.wBitsPerSample/8;
+        }
+        if (fmt.nAvgBytesPerSec != fmt.nSamplesPerSec * fmt.nBlockAlign) {
+            WARN("Fixing bad nAvgBytesPerSec (%u)\n", fmt.nAvgBytesPerSec);
+            fmt.nAvgBytesPerSec  = fmt.nSamplesPerSec * fmt.nBlockAlign;
+        }
     }else
         passed_fmt = info->format;
 
@@ -909,8 +922,8 @@ static LRESULT WINMM_OpenDevice(WINMM_Device *device, WINMM_MMDevice *mmdevice,
         goto error;
     }
 
-    device->bytes_per_frame = info->format->nBlockAlign;
-    device->samples_per_sec = info->format->nSamplesPerSec;
+    device->bytes_per_frame = passed_fmt->nBlockAlign;
+    device->samples_per_sec = passed_fmt->nSamplesPerSec;
 
     device->played_frames = 0;
     device->last_clock_pos = 0;
