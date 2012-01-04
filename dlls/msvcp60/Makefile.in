@@ -1,5 +1,13 @@
 MODULE = msvcp60.dll
+IMPORTS   = msvcrt
+MODCFLAGS = @BUILTINFLAG@
+EXTRAINCL = -I$(top_srcdir)/include/msvcrt
 
-C_SRCS = msvcp60.c
+C_SRCS = \
+	exception.c \
+	main.c \
+	memory.c \
+	misc.c \
+	string.c
 
 @MAKE_DLL_RULES@
