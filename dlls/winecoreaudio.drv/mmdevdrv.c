@@ -1396,21 +1396,10 @@ static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient *iface,
     if(!defperiod && !minperiod)
         return E_POINTER;
 
-    OSSpinLockLock(&This->lock);
-
-    if(This->period_ms){
-        if(defperiod)
-            *defperiod = This->period_ms * 10000;
-        if(minperiod)
-            *minperiod = This->period_ms * 10000;
-    }else{
-        if(defperiod)
-            *defperiod = DefaultPeriod;
-        if(minperiod)
-            *minperiod = MinimumPeriod;
-    }
-
-    OSSpinLockUnlock(&This->lock);
+    if(defperiod)
+        *defperiod = DefaultPeriod;
+    if(minperiod)
+        *minperiod = MinimumPeriod;
 
     return S_OK;
 }
