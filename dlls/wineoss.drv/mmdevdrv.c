@@ -1046,26 +1046,9 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient *iface,
         return AUDCLNT_E_NOT_INITIALIZED;
     }
 
-    if(This->dataflow == eRender){
-        int delay_bytes;
-        double delay_s;
-
-        if(ioctl(This->fd, SNDCTL_DSP_GETODELAY, &delay_bytes) < 0){
-            LeaveCriticalSection(&This->lock);
-            WARN("GETODELAY failed: %d (%s)\n", errno, strerror(errno));
-            return E_FAIL;
-        }
-
-        delay_s = delay_bytes / (double)(This->fmt->nSamplesPerSec *
-                This->fmt->nBlockAlign);
-
-        *latency = delay_s * 10000000;
-    }else
-        *latency = 10000; /* OSS doesn't provide input latency */
-
     /* pretend we process audio in Period chunks, so max latency includes
-     * the period time */
-    *latency += DefaultPeriod;
+     * the period time.  Some native machines add .6666ms in shared mode. */
+    *latency = This->period_us * 10 + 6666;
 
     LeaveCriticalSection(&This->lock);
 
