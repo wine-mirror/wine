@@ -1138,7 +1138,9 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient *iface,
 
     LeaveCriticalSection(&This->lock);
 
-    *latency = 500000;
+    /* one mmdevapi period plus one period we hide in the ALSA buffer */
+    *latency = MulDiv(This->alsa_period_frames, 10000000, This->fmt->nSamplesPerSec)
+             + This->mmdev_period_rt;
 
     return S_OK;
 }
