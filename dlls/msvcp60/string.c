@@ -167,7 +167,48 @@ void __thiscall basic_string_char__Tidy(basic_string_char *this, MSVCP_bool buil
     memset(this, 0, sizeof(*this));
 }
 
-MSVCP_bool __thiscall basic_string_char__Grow(basic_string_char*, MSVCP_size_t, MSVCP_bool);
+/* ?_Grow@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAE_NI_N@Z */
+/* ?_Grow@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AEAA_N_K_N@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_char__Grow, 12)
+MSVCP_bool __thiscall basic_string_char__Grow(basic_string_char *this, MSVCP_size_t new_size, MSVCP_bool trim)
+{
+    if(!new_size) {
+        if(trim)
+            basic_string_char__Tidy(this, TRUE);
+        else if(this->ptr)
+            basic_string_char__Eos(this, 0);
+    } else if(this->res<new_size || trim ||
+            (this->ptr && this->ptr[-1] && (unsigned char)this->ptr[-1]!=FROZEN)) {
+        MSVCP_size_t new_res = new_size, len = this->size;
+        char *ptr;
+
+        if(!trim && this->ptr && !this->ptr[-1]) {
+            new_res |= 0xf;
+            if(new_res/3 < this->res/2)
+                new_res = this->res + this->res/2;
+        }
+
+        ptr = MSVCP_allocator_char_allocate(this->allocator, new_res+2);
+        if(!ptr) {
+            new_res = new_size;
+            ptr = MSVCP_allocator_char_allocate(this->allocator, new_size+2);
+        }
+        if(!ptr) {
+            ERR("Out of memory\n");
+            return FALSE;
+        }
+
+        *ptr = 0;
+        if(this->ptr)
+            char_traits_char__Copy_s(ptr+1, new_size, this->ptr, this->size);
+        basic_string_char__Tidy(this, TRUE);
+        this->ptr = ptr+1;
+        this->res = new_res;
+        basic_string_char__Eos(this, len>new_res ? new_res : len);
+    }
+
+    return new_size>0;
+}
 
 /* ?_Split@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAEXXZ */
 /* ?_Split@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AEAAXXZ */
@@ -189,46 +230,6 @@ void __thiscall basic_string_char__Split(basic_string_char *this)
         char_traits_char__Copy_s(this->ptr, this->res, ptr, len);
         basic_string_char__Eos(this, len);
     }
-}
-
-/* ?_Grow@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAE_NI_N@Z */
-/* ?_Grow@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AEAA_N_K_N@Z */
-DEFINE_THISCALL_WRAPPER(basic_string_char__Grow, 12)
-MSVCP_bool __thiscall basic_string_char__Grow(basic_string_char *this, MSVCP_size_t new_size, MSVCP_bool trim)
-{
-    /* Fixme: grow string using one reallocation, don't ignore trim flag */
-    basic_string_char__Split(this);
-
-    if(this->res < new_size) {
-        MSVCP_size_t new_res = new_size, len = this->size;
-        char *ptr;
-
-        new_res |= 0xf;
-
-        if(new_res/3 < this->res/2)
-            new_res = this->res + this->res/2;
-
-        ptr = MSVCP_allocator_char_allocate(this->allocator, new_res+1);
-        if(!ptr)
-            ptr = MSVCP_allocator_char_allocate(this->allocator, new_size+1);
-        else
-            new_size = new_res;
-        if(!ptr) {
-            ERR("Out of memory\n");
-            basic_string_char__Tidy(this, TRUE);
-            return FALSE;
-        }
-
-        if(this->ptr)
-            char_traits_char__Copy_s(ptr, new_size, this->ptr, this->size);
-        basic_string_char__Tidy(this, TRUE);
-        this->ptr = ptr;
-        this->res = new_size;
-        basic_string_char__Eos(this, len);
-    } else if(new_size == 0)
-        basic_string_char__Eos(this, 0);
-
-    return (new_size>0);
 }
 
 /* ?_Freeze@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@AAEXXZ */
@@ -1862,7 +1863,48 @@ void __thiscall basic_string_wchar__Tidy(basic_string_wchar *this, MSVCP_bool bu
     memset(this, 0, sizeof(*this));
 }
 
-MSVCP_bool __thiscall basic_string_wchar__Grow(basic_string_wchar*, MSVCP_size_t, MSVCP_bool);
+/* ?_Grow@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AAE_NI_N@Z */
+/* ?_Grow@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AEAA_N_K_N@Z */
+DEFINE_THISCALL_WRAPPER(basic_string_wchar__Grow, 12)
+MSVCP_bool __thiscall basic_string_wchar__Grow(basic_string_wchar *this, MSVCP_size_t new_size, MSVCP_bool trim)
+{
+    if(!new_size) {
+        if(trim)
+            basic_string_wchar__Tidy(this, TRUE);
+        else if(this->ptr)
+            basic_string_wchar__Eos(this, 0);
+    } else if(this->res<new_size || trim ||
+            (this->ptr && this->ptr[-1] && (unsigned short)this->ptr[-1]!=FROZEN)) {
+        MSVCP_size_t new_res = new_size, len = this->size;
+        wchar_t *ptr;
+
+        if(!trim && this->ptr && !this->ptr[-1]) {
+            new_res |= 0xf;
+            if(new_res/3 < this->res/2)
+                new_res = this->res + this->res/2;
+        }
+
+        ptr = MSVCP_allocator_wchar_allocate(this->allocator, new_res+2);
+        if(!ptr) {
+            new_res = new_size;
+            ptr = MSVCP_allocator_wchar_allocate(this->allocator, new_size+2);
+        }
+        if(!ptr) {
+            ERR("Out of memory\n");
+            return FALSE;
+        }
+
+        *ptr = 0;
+        if(this->ptr)
+            char_traits_wchar__Copy_s(ptr+1, new_size, this->ptr, this->size);
+        basic_string_wchar__Tidy(this, TRUE);
+        this->ptr = ptr+1;
+        this->res = new_res;
+        basic_string_wchar__Eos(this, len>new_res ? new_res : len);
+    }
+
+    return new_size>0;
+}
 
 /* ?_Split@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AAEXXZ */
 /* ?_Split@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AEAAXXZ */
@@ -1884,46 +1926,6 @@ void __thiscall basic_string_wchar__Split(basic_string_wchar *this)
         char_traits_wchar__Copy_s(this->ptr, this->res, ptr, len);
         basic_string_wchar__Eos(this, len);
     }
-}
-
-/* ?_Grow@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AAE_NI_N@Z */
-/* ?_Grow@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AEAA_N_K_N@Z */
-DEFINE_THISCALL_WRAPPER(basic_string_wchar__Grow, 12)
-MSVCP_bool __thiscall basic_string_wchar__Grow(basic_string_wchar *this, MSVCP_size_t new_size, MSVCP_bool trim)
-{
-    /* Fixme: grow string using one reallocation, don't ignore trim flag */
-    basic_string_wchar__Split(this);
-
-    if(this->res < new_size) {
-        MSVCP_size_t new_res = new_size, len = this->size;
-        wchar_t *ptr;
-
-        new_res |= 0xf;
-
-        if(new_res/3 < this->res/2)
-            new_res = this->res + this->res/2;
-
-        ptr = MSVCP_allocator_wchar_allocate(this->allocator, new_res+1);
-        if(!ptr)
-            ptr = MSVCP_allocator_wchar_allocate(this->allocator, new_size+1);
-        else
-            new_size = new_res;
-        if(!ptr) {
-            ERR("Out of memory\n");
-            basic_string_wchar__Tidy(this, TRUE);
-            return FALSE;
-        }
-
-        if(this->ptr)
-            char_traits_wchar__Copy_s(ptr, new_size, this->ptr, this->size);
-        basic_string_wchar__Tidy(this, TRUE);
-        this->ptr = ptr;
-        this->res = new_size;
-        basic_string_wchar__Eos(this, len);
-    } else if(new_size == 0)
-        basic_string_wchar__Eos(this, 0);
-
-    return (new_size>0);
 }
 
 /* ?_Freeze@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@AAEXXZ */
