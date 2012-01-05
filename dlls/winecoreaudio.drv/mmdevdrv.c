@@ -1006,7 +1006,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
 
     This->period_ms = period / 10000;
 
-    This->bufsize_frames = ceil(fmt->nSamplesPerSec * (duration / 10000000.));
+    This->bufsize_frames = MulDiv(duration, fmt->nSamplesPerSec, 10000000);
 
     if(This->dataflow == eCapture){
         int i;
