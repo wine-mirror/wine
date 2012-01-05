@@ -232,12 +232,18 @@ HWND WINAPI SetActiveWindow( HWND hwnd )
 
     if (hwnd)
     {
-        LONG style = GetWindowLongW( hwnd, GWL_STYLE );
-
-        if ((style & (WS_POPUP|WS_CHILD)) == WS_CHILD)
-            return GetActiveWindow();  /* Windows doesn't seem to return an error here */
+        LONG style;
 
         hwnd = WIN_GetFullHandle( hwnd );
+        if (!IsWindow( hwnd ))
+        {
+            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+            return 0;
+        }
+
+        style = GetWindowLongW( hwnd, GWL_STYLE );
+        if ((style & (WS_POPUP|WS_CHILD)) == WS_CHILD)
+            return GetActiveWindow();  /* Windows doesn't seem to return an error here */
     }
 
     if (!set_active_window( hwnd, &prev, FALSE, TRUE )) return 0;
