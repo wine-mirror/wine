@@ -674,11 +674,22 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
     rect.bottom--;
     reset_dash_origin(pdev);
 
-    /* 4 pts going anti-clockwise starting from top-right */
-    pts[0].x = pts[3].x = rect.right;
-    pts[0].y = pts[1].y = rect.top;
-    pts[1].x = pts[2].x = rect.left;
-    pts[2].y = pts[3].y = rect.bottom;
+    if (GetArcDirection( dev->hdc ) == AD_CLOCKWISE)
+    {
+        /* 4 pts going clockwise starting from bottom-right */
+        pts[0].x = pts[3].x = rect.right;
+        pts[0].y = pts[1].y = rect.bottom;
+        pts[1].x = pts[2].x = rect.left;
+        pts[2].y = pts[3].y = rect.top;
+    }
+    else
+    {
+        /* 4 pts going anti-clockwise starting from top-right */
+        pts[0].x = pts[3].x = rect.right;
+        pts[0].y = pts[1].y = rect.top;
+        pts[1].x = pts[2].x = rect.left;
+        pts[2].y = pts[3].y = rect.bottom;
+    }
 
     pdev->pen_lines(pdev, 4, pts, TRUE, outline);
 
