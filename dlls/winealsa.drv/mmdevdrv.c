@@ -116,6 +116,7 @@ struct ACImpl {
     HANDLE timer;
     BYTE *local_buffer, *tmp_buffer;
     int buf_state;
+    long getbuf_last; /* <0 when using tmp_buffer */
 
     CRITICAL_SECTION lock;
 
@@ -1763,7 +1764,7 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient *iface)
         return AUDCLNT_E_NOT_STOPPED;
     }
 
-    if(This->buf_state != NOT_LOCKED){
+    if(This->buf_state != NOT_LOCKED || This->getbuf_last){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_BUFFER_OPERATION_PENDING;
     }
@@ -1964,16 +1965,16 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
 
     if(!data)
         return E_POINTER;
+    *data = NULL;
 
     EnterCriticalSection(&This->lock);
 
-    if(This->buf_state != NOT_LOCKED){
+    if(This->getbuf_last){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_OUT_OF_ORDER;
     }
 
     if(!frames){
-        This->buf_state = LOCKED_NORMAL;
         LeaveCriticalSection(&This->lock);
         return S_OK;
     }
@@ -2003,10 +2004,10 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
             This->tmp_buffer_frames = frames;
         }
         *data = This->tmp_buffer;
-        This->buf_state = LOCKED_WRAPPED;
+        This->getbuf_last = -frames;
     }else{
         *data = This->local_buffer + write_pos * This->fmt->nBlockAlign;
-        This->buf_state = LOCKED_NORMAL;
+        This->getbuf_last = frames;
     }
 
     LeaveCriticalSection(&This->lock);
@@ -2042,13 +2043,23 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
 
     EnterCriticalSection(&This->lock);
 
-    if(This->buf_state == NOT_LOCKED || !written_frames){
-        This->buf_state = NOT_LOCKED;
+    if(!written_frames){
+        This->getbuf_last = 0;
         LeaveCriticalSection(&This->lock);
-        return written_frames ? AUDCLNT_E_OUT_OF_ORDER : S_OK;
+        return S_OK;
     }
 
-    if(This->buf_state == LOCKED_NORMAL)
+    if(!This->getbuf_last){
+        LeaveCriticalSection(&This->lock);
+        return AUDCLNT_E_OUT_OF_ORDER;
+    }
+
+    if(written_frames > (This->getbuf_last >= 0 ? This->getbuf_last : -This->getbuf_last)){
+        LeaveCriticalSection(&This->lock);
+        return AUDCLNT_E_INVALID_SIZE;
+    }
+
+    if(This->getbuf_last >= 0)
         buffer = This->local_buffer + This->fmt->nBlockAlign *
           ((This->lcl_offs_frames + This->held_frames) % This->bufsize_frames);
     else
@@ -2061,12 +2072,12 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
             memset(buffer, 0, written_frames * This->fmt->nBlockAlign);
     }
 
-    if(This->buf_state == LOCKED_WRAPPED)
+    if(This->getbuf_last < 0)
         alsa_wrap_buffer(This, buffer, written_frames);
 
     This->held_frames += written_frames;
     This->written_frames += written_frames;
-    This->buf_state = NOT_LOCKED;
+    This->getbuf_last = 0;
 
     LeaveCriticalSection(&This->lock);
 
