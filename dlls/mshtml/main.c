@@ -125,6 +125,20 @@ void set_statustext(HTMLDocumentObj* doc, INT id, LPCWSTR arg)
         heap_free(p);
 }
 
+HRESULT do_query_service(IUnknown *unk, REFGUID guid_service, REFIID riid, void **ppv)
+{
+    IServiceProvider *sp;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IServiceProvider, (void**)&sp);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IServiceProvider_QueryService(sp, guid_service, riid, ppv);
+    IServiceProvider_Release(sp);
+    return hres;
+}
+
 HINSTANCE get_shdoclc(void)
 {
     static const WCHAR wszShdoclc[] =

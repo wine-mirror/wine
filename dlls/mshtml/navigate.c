@@ -1981,7 +1981,6 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url, nsChannel *nschanne
 {
     IHlinkFrame *hlink_frame;
     nsChannelBSC *callback;
-    IServiceProvider *sp;
     IBindCtx *bindctx;
     IMoniker *mon;
     IHlink *hlink;
@@ -1989,14 +1988,8 @@ HRESULT hlink_frame_navigate(HTMLDocument *doc, LPCWSTR url, nsChannel *nschanne
 
     *cancel = FALSE;
 
-    hres = IOleClientSite_QueryInterface(doc->doc_obj->client, &IID_IServiceProvider,
-            (void**)&sp);
-    if(FAILED(hres))
-        return S_OK;
-
-    hres = IServiceProvider_QueryService(sp, &IID_IHlinkFrame, &IID_IHlinkFrame,
+    hres = do_query_service((IUnknown*)doc->doc_obj->client, &IID_IHlinkFrame, &IID_IHlinkFrame,
             (void**)&hlink_frame);
-    IServiceProvider_Release(sp);
     if(FAILED(hres))
         return S_OK;
 
