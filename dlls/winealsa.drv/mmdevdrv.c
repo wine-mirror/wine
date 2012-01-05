@@ -2029,12 +2029,9 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
         (This->lcl_offs_frames + This->held_frames) % This->bufsize_frames;
     if(write_pos + frames > This->bufsize_frames){
         if(This->tmp_buffer_frames < frames){
-            if(This->tmp_buffer)
-                This->tmp_buffer = HeapReAlloc(GetProcessHeap(), 0,
-                        This->tmp_buffer, frames * This->fmt->nBlockAlign);
-            else
-                This->tmp_buffer = HeapAlloc(GetProcessHeap(), 0,
-                        frames * This->fmt->nBlockAlign);
+            HeapFree(GetProcessHeap(), 0, This->tmp_buffer);
+            This->tmp_buffer = HeapAlloc(GetProcessHeap(), 0,
+                    frames * This->fmt->nBlockAlign);
             if(!This->tmp_buffer){
                 LeaveCriticalSection(&This->lock);
                 return E_OUTOFMEMORY;
@@ -2184,12 +2181,9 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
     if(This->lcl_offs_frames + *frames > This->bufsize_frames){
         UINT32 chunk_bytes, offs_bytes, frames_bytes;
         if(This->tmp_buffer_frames < *frames){
-            if(This->tmp_buffer)
-                This->tmp_buffer = HeapReAlloc(GetProcessHeap(), 0,
-                        This->tmp_buffer, *frames * This->fmt->nBlockAlign);
-            else
-                This->tmp_buffer = HeapAlloc(GetProcessHeap(), 0,
-                        *frames * This->fmt->nBlockAlign);
+            HeapFree(GetProcessHeap(), 0, This->tmp_buffer);
+            This->tmp_buffer = HeapAlloc(GetProcessHeap(), 0,
+                    *frames * This->fmt->nBlockAlign);
             if(!This->tmp_buffer){
                 LeaveCriticalSection(&This->lock);
                 return E_OUTOFMEMORY;
