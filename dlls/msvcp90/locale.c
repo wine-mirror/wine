@@ -2339,7 +2339,7 @@ DEFINE_THISCALL_WRAPPER(ctype_wchar_do_is_ch, 12)
 MSVCP_bool __thiscall ctype_wchar_do_is_ch(const ctype_wchar *this, short mask, wchar_t ch)
 {
     TRACE("(%p %x %d)\n", this, mask, ch);
-    return !(_Getwctype(ch, &this->ctype) & mask);
+    return (_Getwctype(ch, &this->ctype) & mask) != 0;
 }
 
 /* ?do_is@?$ctype@_W@std@@MBEPB_WPB_W0PAF@Z */
