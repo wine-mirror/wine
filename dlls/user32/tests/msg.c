@@ -13573,10 +13573,9 @@ static void test_SetFocus(void)
 
     SetLastError(0xdeadbeef);
     old_focus = SetFocus((HWND)0xdeadbeef);
-todo_wine
     ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "expected ERROR_INVALID_WINDOW_HANDLE, got %d\n", GetLastError());
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
-    ok_sequence(WmEmptySeq, "SetFocus on an invalid window", TRUE);
+    ok_sequence(WmEmptySeq, "SetFocus on an invalid window", FALSE);
     ok(old_focus == 0, "expected old focus 0, got %p\n", old_focus);
     ok(GetActiveWindow() == parent, "expected active %p, got %p\n", parent, GetActiveWindow());
     ok(GetFocus() == parent, "expected focus %p, got %p\n", parent, GetFocus());

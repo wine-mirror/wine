@@ -259,6 +259,11 @@ HWND WINAPI SetFocus( HWND hwnd )
     {
         /* Check if we can set the focus to this window */
         hwnd = WIN_GetFullHandle( hwnd );
+        if (!IsWindow( hwnd ))
+        {
+            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+            return 0;
+        }
         if (hwnd == previous) return previous;  /* nothing to do */
         for (;;)
         {
