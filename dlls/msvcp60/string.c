@@ -899,7 +899,7 @@ DEFINE_THISCALL_WRAPPER(basic_string_char_rfind_ch, 12)
 MSVCP_size_t __thiscall basic_string_char_rfind_ch(
         const basic_string_char *this, char ch, MSVCP_size_t pos)
 {
-    return basic_string_char_find_cstr_substr(this, &ch, pos, 1);
+    return basic_string_char_rfind_cstr_substr(this, &ch, pos, 1);
 }
 
 /* ?rfind@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIPBDI@Z */
@@ -2594,7 +2594,7 @@ DEFINE_THISCALL_WRAPPER(basic_string_wchar_rfind_ch, 12)
 MSVCP_size_t __thiscall basic_string_wchar_rfind_ch(
         const basic_string_wchar *this, wchar_t ch, MSVCP_size_t pos)
 {
-    return basic_string_wchar_find_cstr_substr(this, &ch, pos, 1);
+    return basic_string_wchar_rfind_cstr_substr(this, &ch, pos, 1);
 }
 
 /* ?rfind@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEIPBGI@Z */
