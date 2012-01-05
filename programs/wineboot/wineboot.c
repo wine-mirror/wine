@@ -570,18 +570,6 @@ end:
     return res;
 }
 
-enum runkeys {
-    RUNKEY_RUN, RUNKEY_RUNONCE, RUNKEY_RUNSERVICES, RUNKEY_RUNSERVICESONCE
-};
-
-static const WCHAR runkeys_names[][30]=
-{
-    {'R','u','n',0},
-    {'R','u','n','O','n','c','e',0},
-    {'R','u','n','S','e','r','v','i','c','e','s',0},
-    {'R','u','n','S','e','r','v','i','c','e','s','O','n','c','e',0}
-};
-
 #define INVALID_RUNCMD_RETURN -1
 /*
  * This function runs the specified command in the specified dir.
@@ -1132,6 +1120,10 @@ static const struct option long_options[] =
 int main( int argc, char *argv[] )
 {
     extern HANDLE CDECL __wine_make_process_system(void);
+    static const WCHAR RunW[] = {'R','u','n',0};
+    static const WCHAR RunOnceW[] = {'R','u','n','O','n','c','e',0};
+    static const WCHAR RunServicesW[] = {'R','u','n','S','e','r','v','i','c','e','s',0};
+    static const WCHAR RunServicesOnceW[] = {'R','u','n','S','e','r','v','i','c','e','s','O','n','c','e',0};
     static const WCHAR wineboot_eventW[] = {'_','_','w','i','n','e','b','o','o','t','_','e','v','e','n','t',0};
 
     /* First, set the current directory to SystemRoot */
@@ -1212,23 +1204,23 @@ int main( int argc, char *argv[] )
     pendingRename();
 
     ProcessWindowsFileProtection();
-    ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICESONCE], TRUE, FALSE );
+    ProcessRunKeys( HKEY_LOCAL_MACHINE, RunServicesOnceW, TRUE, FALSE );
 
     if (init || (kill && !restart))
     {
-        ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNSERVICES], FALSE, FALSE );
+        ProcessRunKeys( HKEY_LOCAL_MACHINE, RunServicesW, FALSE, FALSE );
         start_services_process();
     }
     if (init || update) update_wineprefix( update );
 
     create_volatile_environment_registry_key();
 
-    ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUNONCE], TRUE, TRUE );
+    ProcessRunKeys( HKEY_LOCAL_MACHINE, RunOnceW, TRUE, TRUE );
 
     if (!init && !restart)
     {
-        ProcessRunKeys( HKEY_LOCAL_MACHINE, runkeys_names[RUNKEY_RUN], FALSE, FALSE );
-        ProcessRunKeys( HKEY_CURRENT_USER, runkeys_names[RUNKEY_RUN], FALSE, FALSE );
+        ProcessRunKeys( HKEY_LOCAL_MACHINE, RunW, FALSE, FALSE );
+        ProcessRunKeys( HKEY_CURRENT_USER, RunW, FALSE, FALSE );
         ProcessStartupItems();
     }
 
