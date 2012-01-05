@@ -2285,8 +2285,13 @@ void msi_resolve_target_folder( MSIPACKAGE *package, const WCHAR *name, BOOL loa
     }
     else if (!load_prop || !(path = msi_dup_property( package->db, folder->Directory )))
     {
-        parent = msi_get_loaded_folder( package, folder->Parent );
-        path = msi_build_directory_name( 3, parent->ResolvedTarget, folder->TargetDefault, NULL );
+        if (folder->Parent && strcmpW( folder->Directory, folder->Parent ))
+        {
+            parent = msi_get_loaded_folder( package, folder->Parent );
+            path = msi_build_directory_name( 3, parent->ResolvedTarget, folder->TargetDefault, NULL );
+        }
+        else
+            path = msi_build_directory_name( 2, folder->TargetDefault, NULL );
     }
     msi_clean_path( path );
     if (folder->ResolvedTarget && !strcmpiW( path, folder->ResolvedTarget ))
