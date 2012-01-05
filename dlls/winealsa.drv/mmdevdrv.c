@@ -736,6 +736,15 @@ static snd_pcm_format_t alsa_format(const WAVEFORMATEX *fmt)
             format = SND_PCM_FORMAT_S32_LE;
         else
             WARN("Unsupported bit depth: %u\n", fmt->wBitsPerSample);
+        if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+           fmt->wBitsPerSample != fmtex->Samples.wValidBitsPerSample){
+            if(fmtex->Samples.wValidBitsPerSample == 20 && fmt->wBitsPerSample == 24)
+                format = SND_PCM_FORMAT_S20_3LE;
+            else{
+                WARN("Unsupported ValidBits: %u\n", fmtex->Samples.wValidBitsPerSample);
+                format = SND_PCM_FORMAT_UNKNOWN;
+            }
+        }
     }else if(fmt->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
             (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
              IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))){
