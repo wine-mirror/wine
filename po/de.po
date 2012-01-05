@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-04 18:34+0100\n"
+"PO-Revision-Date: 2012-01-05 19:30+0100\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -315,7 +315,7 @@ msgstr "&Fertig"
 
 #: comctl32.rc:78
 msgid "Customize Toolbar"
-msgstr "Toolbar einrichten"
+msgstr "Symbolleiste einrichten"
 
 #: comctl32.rc:81 cryptui.rc:348 ieframe.rc:40 oleview.rc:80 oleview.rc:185
 #: oleview.rc:198 oleview.rc:210 taskmgr.rc:139
@@ -358,7 +358,7 @@ msgstr "<- &Löschen"
 
 #: comctl32.rc:90
 msgid "&Toolbar buttons:"
-msgstr "&Toolbarknöpfe:"
+msgstr "Symbolleis&tenknöpfe:"
 
 #: comctl32.rc:39
 msgid "Separator"
@@ -562,7 +562,7 @@ msgstr "Gr&undfarben:"
 
 #: comdlg32.rc:294
 msgid "&Custom Colors:"
-msgstr "Selbs&tdefinierte Farben:"
+msgstr "Selbs&t definierte Farben:"
 
 #: comdlg32.rc:295 comdlg32.rc:318
 msgid "Color |  Sol&id"
@@ -960,7 +960,7 @@ msgstr "Blau"
 
 #: comdlg32.rc:144 wordpad.rc:127
 msgid "Fuchsia"
-msgstr "Pink"
+msgstr "Fuchsin"
 
 #: comdlg32.rc:145 wordpad.rc:128
 msgid "Aqua"
@@ -1004,7 +1004,7 @@ msgid ""
 "Please enter a value between 1 and %d."
 msgstr ""
 "Ihr Drucker unterstützt so viele Kopien nicht.\n"
-"Bitte verwenden Sie eine Kopienzahl zwischen 1 und %d."
+"Bitte geben Sie eine Zahl zwischen 1 und %d ein."
 
 #: comdlg32.rc:77
 msgid "A printer error occurred."
@@ -1035,7 +1035,7 @@ msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
 msgstr ""
-"Bevor Sie drucker-relevante Aufgaben ausführen können, wie die "
+"Bevor Sie Drucker-relevante Aufgaben ausführen können, wie die "
 "Seiteneinrichtung oder ein Dokument zu drucken, müssen Sie einen Drucker "
 "installieren. Bitte führen Sie dies zuerst aus und versuchen Sie es erneut."
 
@@ -1093,7 +1093,7 @@ msgstr "Papierproblem; "
 
 #: comdlg32.rc:101
 msgid "Printer offline; "
-msgstr "Printer ist offline; "
+msgstr "Drucker ist offline; "
 
 #: comdlg32.rc:102
 msgid "I/O Active; "
@@ -1746,7 +1746,7 @@ msgstr "Lizenzserver Verifizierung"
 
 #: crypt32.rc:155 cryptui.rc:143
 msgid "Smart Card Logon"
-msgstr "Smart Card Anmeldung"
+msgstr "Smartcard Anmeldung"
 
 #: crypt32.rc:156 cryptui.rc:139
 msgid "Digital Rights"
@@ -1830,7 +1830,7 @@ msgstr "Ausgeber des Zertifikats"
 
 #: crypt32.rc:184
 msgid "Certificate Serial Number="
-msgstr "Serienummer des Zertifikats="
+msgstr "Seriennummer des Zertifikats="
 
 #: crypt32.rc:185
 msgid "Other Name="
@@ -1997,7 +1997,7 @@ msgstr "Digitale Signatur"
 
 #: crypt32.rc:225
 msgid "Non-Repudiation"
-msgstr "Unleugbarkeit"
+msgstr "Nachweisbarkeit"
 
 #: crypt32.rc:226
 msgid "Key Encipherment"
@@ -2089,7 +2089,7 @@ msgstr "Organisation="
 
 #: cryptdlg.rc:36
 msgid "Notice Number="
-msgstr "Serienummer des Zertifikats="
+msgstr "Seriennummer des Zertifikats="
 
 #: cryptdlg.rc:37
 msgid "Notice Text="
@@ -3728,7 +3728,7 @@ msgstr "Sharing-Verletzung\n"
 
 #: winerror.mc:191
 msgid "Lock violation\n"
-msgstr "Lock-Verletzung\n"
+msgstr "Sperr-Verletzung\n"
 
 #: winerror.mc:196
 msgid "Wrong disk\n"
@@ -3948,7 +3948,7 @@ msgstr "Aufruf nicht implementiert\n"
 
 #: winerror.mc:471
 msgid "Semaphore timeout\n"
-msgstr "Semaphoren-Timeout\n"
+msgstr "Semaphoren-Zeitüberschreitung\n"
 
 #: winerror.mc:476
 msgid "Insufficient buffer\n"
@@ -4064,7 +4064,7 @@ msgstr "System-Trace nicht spezifiziert oder erlaubt\n"
 
 #: winerror.mc:621
 msgid "Event count for DosMuxSemWait incorrect\n"
-msgstr "Event-Anzahl für DosMuxSemWait nicht korrekt\n"
+msgstr "Anzahl der Ereignisse für DosMuxSemWait nicht korrekt\n"
 
 #: winerror.mc:626
 msgid "Too many waiters for DosMuxSemWait\n"
@@ -4400,7 +4400,7 @@ msgstr "Ungültige Flags\n"
 
 #: winerror.mc:1041
 msgid "Unrecognised volume\n"
-msgstr "Unerkanntes Volume\n"
+msgstr "Unerkanntes Medium\n"
 
 #: winerror.mc:1046
 msgid "File invalid\n"
@@ -4480,7 +4480,7 @@ msgstr "Ungültige Dienststeuerung\n"
 
 #: winerror.mc:1141
 msgid "Service request timeout\n"
-msgstr "Timeout von Dienstanfrage\n"
+msgstr "Zeitüberschreitung der Dienstanfrage\n"
 
 #: winerror.mc:1146
 msgid "Cannot create service thread\n"
@@ -4520,7 +4520,7 @@ msgstr "Dienst nicht aktiv\n"
 
 #: winerror.mc:1191
 msgid "Service controller connect failed\n"
-msgstr "Verbindung zu Dienst-Controllor fehlgeschlagen\n"
+msgstr "Verbindung zu Dienst-Controller fehlgeschlagen\n"
 
 #: winerror.mc:1196
 msgid "Exception in service\n"
@@ -4690,7 +4690,7 @@ msgstr "Serielle E/A vollständig\n"
 
 #: winerror.mc:1401
 msgid "Serial I/O counter timeout\n"
-msgstr "Timeout von seriellem E/A Zähler\n"
+msgstr "Zeitüberschreitung von seriellem E/A Zähler\n"
 
 #: winerror.mc:1406
 msgid "Floppy ID address mark not found\n"
@@ -4710,7 +4710,7 @@ msgstr "Disketten-Register inkonsistent\n"
 
 #: winerror.mc:1426
 msgid "Hard disk recalibrate failed\n"
-msgstr "Festplattenrekalibrierung fehlgeschlagen\n"
+msgstr "Nachkalibrieren der Festplatte fehlgeschlagen\n"
 
 #: winerror.mc:1431
 msgid "Hard disk operation failed\n"
@@ -4790,7 +4790,7 @@ msgstr "Nachricht kann nur in synchronen Aufrufen verwendet werden\n"
 
 #: winerror.mc:1526
 msgid "The source element is empty\n"
-msgstr "Das Quellelement is leer\n"
+msgstr "Das Quellelement ist leer\n"
 
 #: winerror.mc:1531
 msgid "The destination element is full\n"
@@ -4950,7 +4950,7 @@ msgstr "Konflikt in Sitzungsberechtigung\n"
 
 #: winerror.mc:1731
 msgid "Remote session limit exceeded\n"
-msgstr "Situngslimit des Remoterechners überschritten\n"
+msgstr "Sitzungslimit des Remoterechners überschritten\n"
 
 #: winerror.mc:1736
 msgid "Duplicate domain or workgroup name\n"
@@ -5126,7 +5126,7 @@ msgstr "Ungültige primäre Gruppe\n"
 
 #: winerror.mc:1951
 msgid "No impersonation token\n"
-msgstr "Kein Impersonation-Token\n"
+msgstr "Kein Imitat-Token\n"
 
 #: winerror.mc:1956
 msgid "Can't disable mandatory group\n"
@@ -5270,7 +5270,7 @@ msgstr "Ungültige Gruppen-Attribute\n"
 
 #: winerror.mc:2131
 msgid "Bad impersonation level\n"
-msgstr "Fehlerhaftes Impersonation-Level\n"
+msgstr "Fehlerhaftes Imitat-Level\n"
 
 #: winerror.mc:2136
 msgid "Can't open anonymous security token\n"
@@ -5358,7 +5358,7 @@ msgstr "Ungültiger Logon-Typ\n"
 
 #: winerror.mc:2241
 msgid "Cannot impersonate\n"
-msgstr "Kann nicht Impersonaten\n"
+msgstr "Kann nicht imitieren\n"
 
 #: winerror.mc:2246
 msgid "Invalid transaction state\n"
@@ -5366,7 +5366,7 @@ msgstr "Ungültiger Transaktions-Status\n"
 
 #: winerror.mc:2251
 msgid "Security DB commit failure\n"
-msgstr "Commit-Fehler bei Sicherheitsdatenbank\n"
+msgstr "Übergabe-Fehler bei Sicherheitsdatenbank\n"
 
 #: winerror.mc:2256
 msgid "Account is built-in\n"
@@ -5490,7 +5490,7 @@ msgstr "Ungültiges Cursor-Handle\n"
 
 #: winerror.mc:2411
 msgid "Invalid accelerator table handle\n"
-msgstr "Ungültiges Accelerator-Tabellen-Handle\n"
+msgstr "Ungültiges Akzelerator-Tabellen-Handle\n"
 
 #: winerror.mc:2416
 msgid "Invalid hook handle\n"
@@ -5614,7 +5614,7 @@ msgstr "Ungültige LB_SETCOUNT gesendet\n"
 
 #: winerror.mc:2566
 msgid "No tab stops on this list box\n"
-msgstr "Keine Tabstops in dieser Listbox\n"
+msgstr "Keine Tabstopps in dieser Listbox\n"
 
 #: winerror.mc:2571
 msgid "Can't destroy object owned by another thread\n"
@@ -5622,7 +5622,7 @@ msgstr "Kann nicht Objekt zerstören dass anderem Thread gehört\n"
 
 #: winerror.mc:2576
 msgid "Child window menus not allowed\n"
-msgstr "Menüs in Kindfenstern nicht erlaubt\n"
+msgstr "Menüs in Kindfenster nicht erlaubt\n"
 
 #: winerror.mc:2581
 msgid "Window has no system menu\n"
@@ -5694,7 +5694,7 @@ msgstr "Keine Quota für Working Set\n"
 
 #: winerror.mc:2666
 msgid "No page file quota\n"
-msgstr "Keine Sollvorgabe für Pagefile\n"
+msgstr "Keine Sollvorgabe für die Auslagerungsdatei\n"
 
 #: winerror.mc:2671
 msgid "Exceeded commitment limit\n"
@@ -5942,7 +5942,7 @@ msgstr "Kein Endpunkt gefunden\n"
 
 #: winerror.mc:2976
 msgid "Invalid timeout value\n"
-msgstr "Ungültiger Timeout-Wert\n"
+msgstr "Ungültiger Zeitüberschreitungswert\n"
 
 #: winerror.mc:2981
 msgid "Object UUID not found\n"
@@ -6090,7 +6090,7 @@ msgstr "Ungültige Authentifizierungsidentität\n"
 
 #: winerror.mc:3166
 msgid "Unknown authorisation service\n"
-msgstr "Unbekannter Authorisierungs-Dienst\n"
+msgstr "Unbekannter Autorisierungsdienst\n"
 
 #: winerror.mc:3171
 msgid "Invalid entry\n"
@@ -6262,7 +6262,7 @@ msgstr "Account abgelaufen\n"
 
 #: winerror.mc:3381
 msgid "Redirector has open handles\n"
-msgstr "Redirector hat offene Handles\n"
+msgstr "Redirektor hat offene Handles\n"
 
 #: winerror.mc:3386
 msgid "Printer driver already installed\n"
@@ -6366,15 +6366,15 @@ msgstr "Bindung unvollständig\n"
 
 #: winerror.mc:3511
 msgid "RPC comm failure\n"
-msgstr "RPC Comm-Fehler\n"
+msgstr "RPC Kommunikations-Fehler\n"
 
 #: winerror.mc:3516
 msgid "Unsupported authorisation level\n"
-msgstr "Nicht unterstütztes Authorisierungs-Level\n"
+msgstr "Nicht unterstütztes Autorisierungslevel\n"
 
 #: winerror.mc:3521
 msgid "No principal name registered\n"
-msgstr "Keine Prinzipal-Name registriert\n"
+msgstr "Keine Prinzipalname registriert\n"
 
 #: winerror.mc:3526
 msgid "Not an RPC error\n"
@@ -6458,7 +6458,7 @@ msgstr "Benutzer muss Passwort ändern\n"
 
 #: winerror.mc:3626
 msgid "Domain controller not found\n"
-msgstr "Domänen-Controllor nicht gefunden\n"
+msgstr "Domänen-Controller nicht gefunden\n"
 
 #: winerror.mc:3631
 msgid "Account locked out\n"
@@ -6846,7 +6846,7 @@ msgstr "Fangpunkt"
 
 #: oleacc.rc:32
 msgid "sound"
-msgstr "Audio"
+msgstr "Klang"
 
 #: oleacc.rc:33
 msgid "cursor"
@@ -7014,7 +7014,7 @@ msgstr "Kombinationsfeld"
 
 #: oleacc.rc:74
 msgid "drop down"
-msgstr "Drop Down"
+msgstr "Dropdown"
 
 #: oleacc.rc:75
 msgid "progress bar"
@@ -7191,7 +7191,7 @@ msgid ""
 "control."
 msgstr ""
 "Die Datei ist offenbar kein gültiges OLE - Steuermodul. Die OLE - Steuerung "
-"konnte nicht registiert werden."
+"konnte nicht registriert werden."
 
 #: oledlg.rc:29
 msgid "Add Control"
@@ -7318,7 +7318,7 @@ msgstr "Datenbits"
 
 #: serialui.rc:36
 msgid "Stop Bits"
-msgstr "Stopbits"
+msgstr "Stoppbits"
 
 #: setupapi.rc:36
 msgid "Copying Files..."
@@ -7545,31 +7545,31 @@ msgstr "Tracking Info ausgeben"
 
 #: shdoclc.rc:199
 msgid "Debug Break"
-msgstr "Debug Break"
+msgstr "Haltepunkt debuggen"
 
 #: shdoclc.rc:200
 msgid "Debug View"
-msgstr "Debug View"
+msgstr "Ansicht debuggen"
 
 #: shdoclc.rc:201
 msgid "Dump Tree"
-msgstr "Dump Tree"
+msgstr "Baum ausgeben"
 
 #: shdoclc.rc:202
 msgid "Dump Lines"
-msgstr "Dump Lines"
+msgstr "Zeilen ausgeben"
 
 #: shdoclc.rc:203
 msgid "Dump DisplayTree"
-msgstr "Dump Displaytree"
+msgstr "Anzeigenbaum ausgeben"
 
 #: shdoclc.rc:204
 msgid "Dump FormatCaches"
-msgstr "Dump FormatCaches"
+msgstr "Formatierungspuffer ausgeben"
 
 #: shdoclc.rc:205
 msgid "Dump LayoutRects"
-msgstr "Dump LayoutRects"
+msgstr "Layout Rechtecke ausgeben"
 
 #: shdoclc.rc:206
 msgid "Memory Monitor"
@@ -8780,7 +8780,7 @@ msgstr "Sie müssen einen Alias mit dem 'new' - Parameter angeben."
 
 #: winmm.rc:95
 msgid "Cannot use the 'notify' flag with auto-opened devices."
-msgstr "Das 'notify' Flag ist unzulässig für selbstöffnende Geräte."
+msgstr "Das 'notify' Flag ist unzulässig für selbst öffnende Geräte."
 
 #: winmm.rc:96
 msgid "Cannot use a filename with the specified device."
@@ -8799,7 +8799,7 @@ msgid ""
 "Cannot carry out the specified command on an auto-opened device. Wait until "
 "the device is closed, and then try again."
 msgstr ""
-"Der Befehl kann nicht auf ein selbstöffnedes Gerät angewandt werden. Warten "
+"Der Befehl kann nicht auf ein selbst öffnedes Gerät angewandt werden. Warten "
 "Sie, bis das Gerät geschlossen wurde und versuchen Sie es erneut."
 
 #: winmm.rc:99
@@ -9178,7 +9178,7 @@ msgstr "Indexbereichsfehler"
 
 #: wldap32.rc:91
 msgid "Naming Violation"
-msgstr "Benennungsverletzung"
+msgstr "Benennung Fehlerhaft"
 
 #: wldap32.rc:92
 msgid "Object Class Violation"
@@ -9533,7 +9533,8 @@ msgstr ""
 "\n"
 "Der Befehl wartet auf die Eingabe einer neuen Bezeichnung für das "
 "angegebene\n"
-"Laufwerk. Sie können sich auch die Laufwerksbezeicnung mit dem VOL - Befehl\n"
+"Laufwerk. Sie können sich auch die Laufwerksbezeichnung mit dem VOL - "
+"Befehl\n"
 "anzeigen lassen.\n"
 
 #: cmd.rc:103
@@ -9767,7 +9768,7 @@ msgstr "VER zeigt die aktuelle Version von CMD an.\n"
 
 #: cmd.rc:205
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr "VOL zeigt die Volumeseriennummer an.\n"
+msgstr "VOL zeigt die Datenträgernummer an.\n"
 
 #: cmd.rc:209
 msgid ""
@@ -9843,7 +9844,7 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string "
 "associated to the specified file type.\n"
 msgstr ""
-"FTYPE zeigt oder ändert die Öffnen-Befehle zu Dateierweiterungs Zuordungen\n"
+"FTYPE zeigt oder ändert die Öffnen-Befehle zu Dateierweiterungs Zuordnungen\n"
 "\n"
 "Syntax: FTYPE [Dateityp[=[Öffnen-Befehl]]]\n"
 "\n"
@@ -9916,7 +9917,7 @@ msgid ""
 "Enter HELP <command> for further information on any of the above commands.\n"
 msgstr ""
 "In CMD eingebaute Befehle sind:\n"
-"ASSOC\t\tZeigt oder ändert Dateierweiterungs Zuordungen\n"
+"ASSOC\t\tZeigt oder ändert Dateierweiterungs Zuordnungen\n"
 "ATTRIB\t\tZeigt oder ändert die DOS Dateieigenschaften\n"
 "CALL\t\tRuft eine Batch-Datei innerhalb einer anderen auf\n"
 "CD (CHDIR)\tWechselt in ein Verzeichnis\n"
@@ -9930,7 +9931,7 @@ msgstr ""
 "ECHO\t\tKopiert den Text direkt zur Konsolenausgabe\n"
 "ENDLOCAL\tBeendet die Begrenzung der Gültigkeit von Änderungen\n"
 "FTYPE\t\tZeigt oder ändert die Öffnen-Befehle zu Dateierweiterungs "
-"Zuordungen\n"
+"Zuordnungen\n"
 "HELP\t\tZeigt detaillierte Informationen zu einen Thema\n"
 "MD (MKDIR)\tErzeugt ein Unterverzeichnis\n"
 "MORE\t\tZeigt die Ausgabe seitenweise an\n"
@@ -10065,12 +10066,12 @@ msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
-"Volumeseriennummer ist %1!04x!-%2!04x!\n"
+"Datenträgernummer ist %1!04x!-%2!04x!\n"
 "\n"
 
 #: cmd.rc:319
 msgid "Volume label (11 characters, ENTER for none)?"
-msgstr "Volumebezeichnung (11 Zeichen, EINGABETASTE für keine)?"
+msgstr "Datenträgerbezeichnung (11 Zeichen, EINGABETASTE für keine)?"
 
 #: cmd.rc:320
 msgid "PATH not found\n"
@@ -10098,11 +10099,11 @@ msgstr "Die Eingabezeile ist zu lang.\n"
 
 #: cmd.rc:326
 msgid "Volume in drive %1!c! is %2\n"
-msgstr "Volume in Laufwerk %1!c! ist %2\n"
+msgstr "Datenträger in Laufwerk %1!c! ist %2\n"
 
 #: cmd.rc:327
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr "Volume in Laufwerk %1!c! hat keine Bezeichnung.\n"
+msgstr "Datenträger in Laufwerk %1!c! hat keine Bezeichnung.\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10170,7 +10171,7 @@ msgstr "Broadcast"
 
 #: ipconfig.rc:37
 msgid "Peer-to-peer"
-msgstr "Peer-to-peer"
+msgstr "Peer-to-Peer"
 
 #: ipconfig.rc:38
 msgid "Mixed"
@@ -10405,7 +10406,7 @@ msgstr "&Inhalt"
 
 #: notepad.rc:59
 msgid "&About Notepad"
-msgstr "Ü&ber Notepad"
+msgstr "Ü&ber Editor"
 
 #: notepad.rc:97
 msgid "Page Setup"
@@ -10485,7 +10486,7 @@ msgstr "Unicode (UTF-16)"
 
 #: notepad.rc:83
 msgid "Unicode (UTF-16 big-endian)"
-msgstr "Unicode (UTF-16 Big-Endian)"
+msgstr "Unicode (UTF-16 Big Endian)"
 
 #: notepad.rc:84
 msgid "Unicode (UTF-8)"
@@ -10569,7 +10570,7 @@ msgstr "C&LSID in Zwischenablage kopieren"
 
 #: oleview.rc:54
 msgid "Copy &HTML object Tag to clipboard"
-msgstr "&HTML-object-Tag in Zwischenablage kopieren"
+msgstr "&HTML Objekt-Tag in Zwischenablage kopieren"
 
 #: oleview.rc:60
 msgid "&Expert mode"
@@ -10705,7 +10706,7 @@ msgstr "TypeLib-Datei öffnen und Inhalt betrachten"
 
 #: oleview.rc:105
 msgid "Change machine wide Distributed COM settings"
-msgstr "Maschinenweite Distributed-COM-Einstellungen ändern"
+msgstr "Maschinenweite Distributed COM Einstellungen ändern"
 
 #: oleview.rc:106
 msgid "Run the Wine registry editor"
@@ -11537,7 +11538,7 @@ msgid ""
 "\n"
 "See the COPYING.LIB file for license information.\n"
 msgstr ""
-"start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n"
+"start.exe Version 0.2 Copyright (C) 2003, Dan Kegel\n"
 "Dieses Programm ist freie Software; Sie dürfen sie unter den Bedingungen\n"
 "der GNU Lesser General Public License, wie von der Free Software Foundation\n"
 "veröffentlicht, weiterverteilen und/oder modifizieren; entweder gemäß\n"
@@ -11852,7 +11853,7 @@ msgstr "Verlauf der Speicherauslastung"
 
 #: taskmgr.rc:432 taskmgr.rc:327
 msgid "Debug Channels"
-msgstr "Debug Kanäle"
+msgstr "Debugkanäle"
 
 #: taskmgr.rc:443
 msgid "Processor Affinity"
@@ -12201,7 +12202,7 @@ msgstr "Beendet den Task-Manager"
 
 #: taskmgr.rc:215
 msgid "Shows 16-bit tasks under the associated ntvdm.exe"
-msgstr "Zeigt 16-bit-Tasks under der Verwendung von ntvdm.exe an"
+msgstr "Zeigt 16-bit-Tasks unter der Verwendung von ntvdm.exe an"
 
 #: taskmgr.rc:216
 msgid "Select which columns will be visible on the Process page"
@@ -12278,7 +12279,7 @@ msgstr "Setzt den Prozess in die NIEDRIG-Prioritätsklasse"
 
 #: taskmgr.rc:247
 msgid "Controls Debug Channels"
-msgstr "Stellt Debug-Kanäle ein"
+msgstr "Stellt Debugkanäle ein"
 
 #: taskmgr.rc:264
 msgid "Performance"
@@ -12504,7 +12505,7 @@ msgstr ""
 "Ein Abmelden oder Herunterfahren wird simuliert, aber dieses Programm "
 "reagiert nicht.\n"
 "\n"
-"Wenn Sie das Programm beenden, können Sie ungespeicherte Daten verlieren."
+"Wenn Sie das Programm beenden, können Sie ungesicherte Daten verlieren."
 
 #: wineboot.rc:39
 msgid "Wine"
@@ -13006,11 +13007,11 @@ msgstr "Auswahltext"
 
 #: winecfg.rc:104
 msgid "ToolTip Background"
-msgstr "ToolTip-Hintergrund"
+msgstr "Tooltip-Hintergrund"
 
 #: winecfg.rc:105
 msgid "ToolTip Text"
-msgstr "ToolTip-Text"
+msgstr "Tooltip-Text"
 
 #: winecfg.rc:106
 msgid "Window Background"
@@ -13106,7 +13107,7 @@ msgstr " Optionen "
 
 #: wineconsole.rc:60
 msgid "Cursor size"
-msgstr "Cursorgröße"
+msgstr "Cursor Größe"
 
 #: wineconsole.rc:61
 msgid "&Small"
@@ -13266,7 +13267,7 @@ msgstr "Dies ist ein Test"
 
 #: wineconsole.rc:41
 msgid "wineconsole: Couldn't parse event id\n"
-msgstr "wineconsole: Kann Event-ID nicht parsen\n"
+msgstr "wineconsole: Kann Ereignis-ID nicht parsen\n"
 
 #: wineconsole.rc:42
 msgid "wineconsole: Invalid backend\n"
