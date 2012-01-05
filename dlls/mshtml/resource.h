@@ -38,23 +38,6 @@
 
 #define IDR_BROWSE_CONTEXT_MENU  24641
 
-#define IDM_TRACETAGS           6004
-#define IDM_RESOURCEFAILURES    6005
-#define IDM_DUMPTRACKINGINFO    6006
-#define IDM_DEBUGBREAK          6007
-#define IDM_DEBUGVIEW           6008
-#define IDM_DUMPTREE            6009
-#define IDM_DUMPLINES           6010
-
-#define IDM_SAVEHTML            6012
-#define IDM_MEMORYMONITOR       6013
-#define IDM_PERFORMANCEMETERS   6014
-#define IDM_DUMPDISPLAYTREE     6015
-#define IDM_DUMPFORMATCACHES    6016
-#define IDM_DUMPLAYOUTRECTS     6017
-
-#define _IDM_REFRESH            6042
-
 #define IDD_HYPERLINK           8000
 
 #define IDC_URL                 9001
