@@ -592,9 +592,12 @@ static HRESULT WINAPI CLRRuntimeHost_ExecuteInDefaultAppDomain(ICLRRuntimeHost* 
         goto cleanup;
     }
 
+    /* The .NET function we are calling has the following declaration
+     *   public static int functionName(String param)
+     */
     argsA = WtoA(pwzArgument);
     str = This->mono->mono_string_new(domain, argsA);
-    args[0] = &str;
+    args[0] = str;
     args[1] = NULL;
     result = This->mono->mono_runtime_invoke(method, NULL, args, NULL);
     if (!result)
