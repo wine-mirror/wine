@@ -509,7 +509,7 @@ msgstr "&Dydis"
 msgid "&Source"
 msgstr "&Šaltinis"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
 msgstr "Šriftas"
 
@@ -3177,7 +3177,7 @@ msgstr "Į pradžią"
 msgid "Sync"
 msgstr "Sinchronizuoti"
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
 msgstr "Parinktys"
 
@@ -13002,10 +13002,6 @@ msgstr "Meniu paryškinimas"
 msgid "Menu Bar"
 msgstr "Meniu juosta"
 
-#: wineconsole.rc:57
-msgid " Options "
-msgstr " Parinktys "
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr "Žymeklio dydis"
@@ -13058,10 +13054,6 @@ msgstr "Prisimintų &komandų skaičius:"
 msgid "&Remove doubles"
 msgstr "&Šalinti vienodas"
 
-#: wineconsole.rc:81
-msgid " Font "
-msgstr " Šriftas "
-
 #: wineconsole.rc:84
 msgid "&Font"
 msgstr "&Šriftas"
@@ -13071,7 +13063,8 @@ msgid "&Color"
 msgstr "&Spalva"
 
 #: wineconsole.rc:97
-msgid " Configuration "
+#, fuzzy
+msgid "Configuration"
 msgstr " Konfigūracija "
 
 #: wineconsole.rc:100

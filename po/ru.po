@@ -509,7 +509,7 @@ msgstr "Ра&змер"
 msgid "&Source"
 msgstr "&Источник"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
 msgstr "Шрифт"
 
@@ -3177,7 +3177,7 @@ msgstr "Начало"
 msgid "Sync"
 msgstr "Синхронизировать"
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
 msgstr "Настройки"
 
@@ -12990,10 +12990,6 @@ msgstr "Плоское меню - подсветка"
 msgid "Menu Bar"
 msgstr "Плоское меню - фон"
 
-#: wineconsole.rc:57
-msgid " Options "
-msgstr " Параметры "
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr "Размер курсора"
@@ -13046,10 +13042,6 @@ msgstr "&История команд:"
 msgid "&Remove doubles"
 msgstr "&Удалять повторяющиеся"
 
-#: wineconsole.rc:81
-msgid " Font "
-msgstr " Шрифт "
-
 #: wineconsole.rc:84
 msgid "&Font"
 msgstr "&Шрифт"
@@ -13059,7 +13051,8 @@ msgid "&Color"
 msgstr "&Цвет"
 
 #: wineconsole.rc:97
-msgid " Configuration "
+#, fuzzy
+msgid "Configuration"
 msgstr " Настройка "
 
 #: wineconsole.rc:100

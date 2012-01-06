@@ -505,7 +505,7 @@ msgstr "&גודל"
 msgid "&Source"
 msgstr "מ&קור"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
 msgstr "גופן"
 
@@ -3156,7 +3156,7 @@ msgstr "דף הבית"
 msgid "Sync"
 msgstr "סנכרון"
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
 msgstr "אפשרויות"
 
@@ -13192,10 +13192,6 @@ msgstr "הדגשה בתפריט"
 msgid "Menu Bar"
 msgstr "סרגל תפריטים"
 
-#: wineconsole.rc:57
-msgid " Options "
-msgstr " אפשרויות "
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr "גודל הסמן"
@@ -13248,10 +13244,6 @@ msgstr "&מספר הפקודות שנשמרות :"
 msgid "&Remove doubles"
 msgstr "ה&סרת כפולים"
 
-#: wineconsole.rc:81
-msgid " Font "
-msgstr " גופן "
-
 #: wineconsole.rc:84
 msgid "&Font"
 msgstr "&גופן"
@@ -13261,7 +13253,8 @@ msgid "&Color"
 msgstr "&צבע"
 
 #: wineconsole.rc:97
-msgid " Configuration "
+#, fuzzy
+msgid "Configuration"
 msgstr " תצוגה "
 
 #: wineconsole.rc:100

@@ -514,7 +514,7 @@ msgstr "&Wielkość"
 msgid "&Source"
 msgstr "&Źródło"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
 msgstr "Czcionka"
 
@@ -3188,7 +3188,7 @@ msgstr "Strona główna"
 msgid "Sync"
 msgstr "Synchronizuj"
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
 msgstr "Opcje"
 
@@ -13046,10 +13046,6 @@ msgstr "Podświetlone menu"
 msgid "Menu Bar"
 msgstr "Pasek menu"
 
-#: wineconsole.rc:57
-msgid " Options "
-msgstr " Opcje "
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr "Wielkość kursora"
@@ -13102,10 +13098,6 @@ msgstr "&Ilość poleceń, które można przywołać:"
 msgid "&Remove doubles"
 msgstr "&Usuń powtórki"
 
-#: wineconsole.rc:81
-msgid " Font "
-msgstr " Czcionka "
-
 #: wineconsole.rc:84
 msgid "&Font"
 msgstr "&Czcionka"
@@ -13115,7 +13107,8 @@ msgid "&Color"
 msgstr "&Kolor"
 
 #: wineconsole.rc:97
-msgid " Configuration "
+#, fuzzy
+msgid "Configuration"
 msgstr " Konfiguracja "
 
 #: wineconsole.rc:100

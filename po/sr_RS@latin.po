@@ -551,7 +551,7 @@ msgstr "Veli&čina:"
 msgid "&Source"
 msgstr "Izvor:"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 #, fuzzy
 msgid "Font"
 msgstr "Fontovi"
@@ -3263,7 +3263,7 @@ msgstr "Početna"
 msgid "Sync"
 msgstr "Uskladi"
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
 msgstr "Opcije"
 
@@ -13152,11 +13152,6 @@ msgstr "Meni osvetljenog"
 msgid "Menu Bar"
 msgstr "Meni Bar"
 
-#: wineconsole.rc:57
-#, fuzzy
-msgid " Options "
-msgstr "Opcije"
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr ""
@@ -13216,11 +13211,6 @@ msgstr ""
 msgid "&Remove doubles"
 msgstr "&Ukloni..."
 
-#: wineconsole.rc:81
-#, fuzzy
-msgid " Font "
-msgstr "Fontovi"
-
 #: wineconsole.rc:84
 #, fuzzy
 msgid "&Font"
@@ -13233,7 +13223,7 @@ msgstr "&Kolona"
 
 #: wineconsole.rc:97
 #, fuzzy
-msgid " Configuration "
+msgid "Configuration"
 msgstr "Greška u radnjama"
 
 #: wineconsole.rc:100

@@ -525,7 +525,7 @@ msgstr "&Koko:"
 msgid "&Source"
 msgstr "Lä&hde:"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
 msgstr "Fontit"
 
@@ -3194,7 +3194,7 @@ msgstr "Alkuun"
 msgid "Sync"
 msgstr "Synkronoi"
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
 msgstr "Valinnat"
 
@@ -12921,11 +12921,6 @@ msgstr ""
 msgid "Menu Bar"
 msgstr ""
 
-#: wineconsole.rc:57
-#, fuzzy
-msgid " Options "
-msgstr "Valinnat"
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr ""
@@ -12982,11 +12977,6 @@ msgstr ""
 msgid "&Remove doubles"
 msgstr "&Huomautus..."
 
-#: wineconsole.rc:81
-#, fuzzy
-msgid " Font "
-msgstr "Fontit"
-
 #: wineconsole.rc:84
 #, fuzzy
 msgid "&Font"
@@ -12999,7 +12989,7 @@ msgstr "&Palsta"
 
 #: wineconsole.rc:97
 #, fuzzy
-msgid " Configuration "
+msgid "Configuration"
 msgstr "Valinnat"
 
 #: wineconsole.rc:100

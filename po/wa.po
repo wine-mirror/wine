@@ -505,7 +505,7 @@ msgstr "&Grandeu"
 msgid "&Source"
 msgstr "Ali&mentåcion"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
 msgstr "Fontes"
 
@@ -3139,7 +3139,7 @@ msgstr ""
 msgid "Sync"
 msgstr ""
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
 msgstr ""
 
@@ -12542,11 +12542,6 @@ msgstr ""
 msgid "Menu Bar"
 msgstr ""
 
-#: wineconsole.rc:57
-#, fuzzy
-msgid " Options "
-msgstr "&Options"
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr ""
@@ -12600,10 +12595,6 @@ msgstr ""
 msgid "&Remove doubles"
 msgstr "&Sicrîre..."
 
-#: wineconsole.rc:81
-msgid " Font "
-msgstr ""
-
 #: wineconsole.rc:84
 #, fuzzy
 msgid "&Font"
@@ -12619,7 +12610,7 @@ msgstr ""
 
 #: wineconsole.rc:97
 #, fuzzy
-msgid " Configuration "
+msgid "Configuration"
 msgstr "Informåcion"
 
 #: wineconsole.rc:100

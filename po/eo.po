@@ -507,7 +507,7 @@ msgstr "&Dimensio"
 msgid "&Source"
 msgstr "&Fonto"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
 msgstr "Tiparo"
 
@@ -3173,7 +3173,7 @@ msgstr ""
 msgid "Sync"
 msgstr ""
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
 msgstr ""
 
@@ -12798,10 +12798,6 @@ msgstr ""
 msgid "Menu Bar"
 msgstr ""
 
-#: wineconsole.rc:57
-msgid " Options "
-msgstr " Opcioj "
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr "Kursor-grandezo"
@@ -12854,10 +12850,6 @@ msgstr "&Nombro da plurfoje vokitaj komandoj :"
 msgid "&Remove doubles"
 msgstr "&Forigu duobla¼ojn"
 
-#: wineconsole.rc:81
-msgid " Font "
-msgstr " Tiparo "
-
 #: wineconsole.rc:84
 msgid "&Font"
 msgstr "&Tiparo"
@@ -12867,7 +12859,8 @@ msgid "&Color"
 msgstr "&Koloro"
 
 #: wineconsole.rc:97
-msgid " Configuration "
+#, fuzzy
+msgid "Configuration"
 msgstr " Agordoj "
 
 #: wineconsole.rc:100

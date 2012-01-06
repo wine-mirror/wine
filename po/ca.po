@@ -509,7 +509,7 @@ msgstr "&Mida"
 msgid "&Source"
 msgstr "&Font:"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
 msgstr "Tipus de Lletra"
 
@@ -3186,7 +3186,7 @@ msgstr "Inici"
 msgid "Sync"
 msgstr "Sincronitza"
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
 msgstr "Opcions"
 
@@ -13089,10 +13089,6 @@ msgstr "Menú--Ressalt"
 msgid "Menu Bar"
 msgstr "Menú--Barra"
 
-#: wineconsole.rc:57
-msgid " Options "
-msgstr " Opcions "
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr "Mida de cursor"
@@ -13145,10 +13141,6 @@ msgstr "&Nombre d'ordres cancel·lats"
 msgid "&Remove doubles"
 msgstr "&Treu dobles"
 
-#: wineconsole.rc:81
-msgid " Font "
-msgstr " Tipus de lletra "
-
 #: wineconsole.rc:84
 msgid "&Font"
 msgstr "&Tipus de lletra"
@@ -13158,7 +13150,8 @@ msgid "&Color"
 msgstr "&Color"
 
 #: wineconsole.rc:97
-msgid " Configuration "
+#, fuzzy
+msgid "Configuration"
 msgstr " Configuració "
 
 #: wineconsole.rc:100

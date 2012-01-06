@@ -520,7 +520,7 @@ msgstr "&Méret"
 msgid "&Source"
 msgstr "Fo&rrás"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
 msgstr "Betûtípus"
 
@@ -3252,7 +3252,7 @@ msgstr "Kezdőlap"
 msgid "Sync"
 msgstr "Szink."
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
 msgstr "Opciók"
 
@@ -13178,10 +13178,6 @@ msgstr ""
 msgid "Menu Bar"
 msgstr "menüsor"
 
-#: wineconsole.rc:57
-msgid " Options "
-msgstr " Beállítások "
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr "Kurzor mérete"
@@ -13234,10 +13230,6 @@ msgstr "&Visszahívható parancsok száma :"
 msgid "&Remove doubles"
 msgstr "Kettőzések &eltávolítása"
 
-#: wineconsole.rc:81
-msgid " Font "
-msgstr " Betűtípus "
-
 #: wineconsole.rc:84
 msgid "&Font"
 msgstr "&Betűtípus"
@@ -13247,7 +13239,8 @@ msgid "&Color"
 msgstr "&Szín"
 
 #: wineconsole.rc:97
-msgid " Configuration "
+#, fuzzy
+msgid "Configuration"
 msgstr " Beállítás "
 
 #: wineconsole.rc:100

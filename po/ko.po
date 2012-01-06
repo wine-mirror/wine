@@ -507,7 +507,7 @@ msgstr "크기(&Z)"
 msgid "&Source"
 msgstr "원본(&S)"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
 msgstr "글꼴"
 
@@ -3162,7 +3162,7 @@ msgstr "홈"
 msgid "Sync"
 msgstr "동기화"
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
 msgstr "옵션"
 
@@ -12919,10 +12919,6 @@ msgstr "메뉴 하이라이트"
 msgid "Menu Bar"
 msgstr "메뉴바"
 
-#: wineconsole.rc:57
-msgid " Options "
-msgstr " 옵션 "
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr "커서 크기"
@@ -12975,10 +12971,6 @@ msgstr "다시 부르는 명령의 갯수(&N):"
 msgid "&Remove doubles"
 msgstr "두번  제거(&R)"
 
-#: wineconsole.rc:81
-msgid " Font "
-msgstr " 글꼴 "
-
 #: wineconsole.rc:84
 msgid "&Font"
 msgstr "글꼴(&F)"
@@ -12988,7 +12980,8 @@ msgid "&Color"
 msgstr "색상(&C)"
 
 #: wineconsole.rc:97
-msgid " Configuration "
+#, fuzzy
+msgid "Configuration"
 msgstr " 설정 "
 
 #: wineconsole.rc:100

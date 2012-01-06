@@ -512,7 +512,7 @@ msgstr "Veli&kost"
 msgid "&Source"
 msgstr "&Vir"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
 msgstr "Pisava"
 
@@ -3219,7 +3219,7 @@ msgstr "Domov"
 msgid "Sync"
 msgstr "Uskladi"
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
 msgstr "Možnosti"
 
@@ -13123,10 +13123,6 @@ msgstr "Poudarjanje menija"
 msgid "Menu Bar"
 msgstr "Menijska vrstica"
 
-#: wineconsole.rc:57
-msgid " Options "
-msgstr " Možnosti "
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr "Velikost kurzorja"
@@ -13179,10 +13175,6 @@ msgstr "&Št. zapomnjenih ukazov:"
 msgid "&Remove doubles"
 msgstr "&Odstrani podvojene"
 
-#: wineconsole.rc:81
-msgid " Font "
-msgstr " Pisava "
-
 #: wineconsole.rc:84
 msgid "&Font"
 msgstr "&Pisava"
@@ -13192,7 +13184,8 @@ msgid "&Color"
 msgstr "&Barva"
 
 #: wineconsole.rc:97
-msgid " Configuration "
+#, fuzzy
+msgid "Configuration"
 msgstr " Nastavitve "
 
 #: wineconsole.rc:100

@@ -508,7 +508,7 @@ msgstr "&Größe"
 msgid "&Source"
 msgstr "P&apierquelle"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
 msgstr "Schriftart"
 
@@ -3175,7 +3175,7 @@ msgstr "Übersicht"
 msgid "Sync"
 msgstr "Synchronisieren"
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
 msgstr "Einstellungen"
 
@@ -13073,10 +13073,6 @@ msgstr "Menühervorhebung"
 msgid "Menu Bar"
 msgstr "Menütitelleiste"
 
-#: wineconsole.rc:57
-msgid " Options "
-msgstr " Optionen "
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr "Cursor Größe"
@@ -13129,10 +13125,6 @@ msgstr "&Anzahl der Puffer:"
 msgid "&Remove doubles"
 msgstr "Alte &Duplikate löschen"
 
-#: wineconsole.rc:81
-msgid " Font "
-msgstr " Schriftart "
-
 #: wineconsole.rc:84
 msgid "&Font"
 msgstr "Schrift&art"
@@ -13142,7 +13134,8 @@ msgid "&Color"
 msgstr "F&arbe"
 
 #: wineconsole.rc:97
-msgid " Configuration "
+#, fuzzy
+msgid "Configuration"
 msgstr " Konfiguration "
 
 #: wineconsole.rc:100

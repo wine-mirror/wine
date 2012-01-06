@@ -513,7 +513,7 @@ msgstr "Bo&yut"
 msgid "&Source"
 msgstr "&Kaynak"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
 msgstr "Yazı Tipi"
 
@@ -3186,7 +3186,7 @@ msgstr "Ev"
 msgid "Sync"
 msgstr "Eşitle"
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
 msgstr "Seçenekler"
 
@@ -13327,10 +13327,6 @@ msgstr ""
 msgid "Menu Bar"
 msgstr ""
 
-#: wineconsole.rc:57
-msgid " Options "
-msgstr " Seçenekler "
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr "İmleç boyutu"
@@ -13383,10 +13379,6 @@ msgstr "Çağrılabilecek komut &sayısı:"
 msgid "&Remove doubles"
 msgstr "&Çiftleri sil"
 
-#: wineconsole.rc:81
-msgid " Font "
-msgstr " Yazı Tipi "
-
 #: wineconsole.rc:84
 msgid "&Font"
 msgstr "&Yazı Tipi"
@@ -13396,7 +13388,8 @@ msgid "&Color"
 msgstr "&Renk"
 
 #: wineconsole.rc:97
-msgid " Configuration "
+#, fuzzy
+msgid "Configuration"
 msgstr " Yapılandırma "
 
 #: wineconsole.rc:100

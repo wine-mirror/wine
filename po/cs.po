@@ -515,7 +515,7 @@ msgstr "&Formát"
 msgid "&Source"
 msgstr "&Zdroj"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
 msgstr "Písmo"
 
@@ -3195,7 +3195,7 @@ msgstr "Domů"
 msgid "Sync"
 msgstr "Synchronizovat"
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
 msgstr "Volby"
 
@@ -13217,10 +13217,6 @@ msgstr ""
 msgid "Menu Bar"
 msgstr "Pozadí menu"
 
-#: wineconsole.rc:57
-msgid " Options "
-msgstr " Volby "
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr "Velikost kurzoru"
@@ -13273,10 +13269,6 @@ msgstr "&Počet znovuvolaných příkazů :"
 msgid "&Remove doubles"
 msgstr "Odst&ranit duplicity"
 
-#: wineconsole.rc:81
-msgid " Font "
-msgstr " Písmo "
-
 #: wineconsole.rc:84
 msgid "&Font"
 msgstr "&Písmo"
@@ -13286,7 +13278,8 @@ msgid "&Color"
 msgstr "&Barva"
 
 #: wineconsole.rc:97
-msgid " Configuration "
+#, fuzzy
+msgid "Configuration"
 msgstr " Nastavení "
 
 #: wineconsole.rc:100

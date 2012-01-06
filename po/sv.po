@@ -509,7 +509,7 @@ msgstr "St&orlek"
 msgid "&Source"
 msgstr "&Källa"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
 msgstr "Typsnitt"
 
@@ -3190,7 +3190,7 @@ msgstr "Hem"
 msgid "Sync"
 msgstr "Synkronisera"
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
 msgstr "Alternativ"
 
@@ -13030,10 +13030,6 @@ msgstr "Menymarkering"
 msgid "Menu Bar"
 msgstr "Menyrad"
 
-#: wineconsole.rc:57
-msgid " Options "
-msgstr " Alternativ "
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr "Cursor size"
@@ -13086,10 +13082,6 @@ msgstr "&Number of recalled commands :"
 msgid "&Remove doubles"
 msgstr "&Remove doubles"
 
-#: wineconsole.rc:81
-msgid " Font "
-msgstr " Typsnitt "
-
 #: wineconsole.rc:84
 msgid "&Font"
 msgstr "&Typsnitt"
@@ -13099,7 +13091,8 @@ msgid "&Color"
 msgstr "&Färg"
 
 #: wineconsole.rc:97
-msgid " Configuration "
+#, fuzzy
+msgid "Configuration"
 msgstr " Konfiguration "
 
 #: wineconsole.rc:100

@@ -509,7 +509,7 @@ msgstr "&Formaat"
 msgid "&Source"
 msgstr "&Bron"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
 msgstr "Lettertype"
 
@@ -3183,7 +3183,7 @@ msgstr "Startpagina"
 msgid "Sync"
 msgstr "Synchroniseren"
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
 msgstr "Instellingen"
 
@@ -13092,10 +13092,6 @@ msgstr "Menu Gemarkeerd"
 msgid "Menu Bar"
 msgstr "Menubalk"
 
-#: wineconsole.rc:57
-msgid " Options "
-msgstr " Opties "
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr "Cursorgrootte"
@@ -13148,10 +13144,6 @@ msgstr "&Aantal te bewaren opdrachten :"
 msgid "&Remove doubles"
 msgstr "&Verwijder dubbelen"
 
-#: wineconsole.rc:81
-msgid " Font "
-msgstr " Lettertype "
-
 #: wineconsole.rc:84
 msgid "&Font"
 msgstr "&Lettertype"
@@ -13161,7 +13153,8 @@ msgid "&Color"
 msgstr "&Kleur"
 
 #: wineconsole.rc:97
-msgid " Configuration "
+#, fuzzy
+msgid "Configuration"
 msgstr " Configuratie "
 
 #: wineconsole.rc:100

@@ -513,7 +513,7 @@ msgstr "Størrelse"
 msgid "&Source"
 msgstr "&Kilde"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
 msgstr "Skrifttyper"
 
@@ -3192,7 +3192,7 @@ msgstr "Hjem"
 msgid "Sync"
 msgstr "Synkroniser"
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 #, fuzzy
 msgid "Options"
 msgstr ""
@@ -13281,10 +13281,6 @@ msgstr "Markeret menu"
 msgid "Menu Bar"
 msgstr "Menulinie"
 
-#: wineconsole.rc:57
-msgid " Options "
-msgstr "Valg"
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr "Markør størrelse"
@@ -13337,10 +13333,6 @@ msgstr "A&ntal af genkaldte kommandoer:"
 msgid "&Remove doubles"
 msgstr "&Fjern dubletter"
 
-#: wineconsole.rc:81
-msgid " Font "
-msgstr "Skrifttype"
-
 #: wineconsole.rc:84
 msgid "&Font"
 msgstr "&Skrifttype"
@@ -13350,7 +13342,8 @@ msgid "&Color"
 msgstr "&Farve"
 
 #: wineconsole.rc:97
-msgid " Configuration "
+#, fuzzy
+msgid "Configuration"
 msgstr "Konfiguration"
 
 #: wineconsole.rc:100

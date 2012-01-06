@@ -511,7 +511,7 @@ msgstr "大小(&z)："
 msgid "&Source"
 msgstr "原始檔案:"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
 msgstr "字型"
 
@@ -3188,7 +3188,7 @@ msgstr "首頁"
 msgid "Sync"
 msgstr "同步"
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
 msgstr "選項"
 
@@ -12974,10 +12974,6 @@ msgstr ""
 msgid "Menu Bar"
 msgstr "功能表背景"
 
-#: wineconsole.rc:57
-msgid " Options "
-msgstr " 選項 "
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr "游標尺寸"
@@ -13030,10 +13026,6 @@ msgstr "最大記錄指令數:"
 msgid "&Remove doubles"
 msgstr "刪除連續相同的指令(&R)"
 
-#: wineconsole.rc:81
-msgid " Font "
-msgstr " 字型 "
-
 #: wineconsole.rc:84
 msgid "&Font"
 msgstr "字型(&F)"
@@ -13043,7 +13035,8 @@ msgid "&Color"
 msgstr "顏色(&C)"
 
 #: wineconsole.rc:97
-msgid " Configuration "
+#, fuzzy
+msgid "Configuration"
 msgstr " 配置 "
 
 #: wineconsole.rc:100

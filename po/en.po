@@ -492,7 +492,7 @@ msgstr "Si&ze"
 msgid "&Source"
 msgstr "&Source"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
 msgstr "Font"
 
@@ -3069,7 +3069,7 @@ msgstr "Home"
 msgid "Sync"
 msgstr "Sync"
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
 msgstr "Options"
 
@@ -12716,10 +12716,6 @@ msgstr "Menu Highlight"
 msgid "Menu Bar"
 msgstr "Menu Bar"
 
-#: wineconsole.rc:57
-msgid " Options "
-msgstr " Options "
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr ""
@@ -12772,10 +12768,6 @@ msgstr ""
 msgid "&Remove doubles"
 msgstr "&Remove doubles"
 
-#: wineconsole.rc:81
-msgid " Font "
-msgstr " Font "
-
 #: wineconsole.rc:84
 msgid "&Font"
 msgstr "&Font"
@@ -12785,8 +12777,8 @@ msgid "&Color"
 msgstr "&Colour"
 
 #: wineconsole.rc:97
-msgid " Configuration "
-msgstr " Configuration "
+msgid "Configuration"
+msgstr "Configuration"
 
 #: wineconsole.rc:100
 msgid "Buffer zone"

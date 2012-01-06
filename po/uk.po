@@ -505,7 +505,7 @@ msgstr "Ро&змір"
 msgid "&Source"
 msgstr "&Джерело"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
 msgstr "Шрифт"
 
@@ -3185,7 +3185,7 @@ msgstr "Додому"
 msgid "Sync"
 msgstr "Синхронізувати"
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
 msgstr "Параметри"
 
@@ -13024,10 +13024,6 @@ msgstr "Меню - підсвічування"
 msgid "Menu Bar"
 msgstr "Рядок меню"
 
-#: wineconsole.rc:57
-msgid " Options "
-msgstr " Параметри "
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr "Розмір курсора"
@@ -13080,10 +13076,6 @@ msgstr "&Кількість нагаданих команд :"
 msgid "&Remove doubles"
 msgstr "Видаляти &повтори"
 
-#: wineconsole.rc:81
-msgid " Font "
-msgstr " Шрифт "
-
 #: wineconsole.rc:84
 msgid "&Font"
 msgstr "&Шрифт"
@@ -13093,7 +13085,8 @@ msgid "&Color"
 msgstr "&Колір"
 
 #: wineconsole.rc:97
-msgid " Configuration "
+#, fuzzy
+msgid "Configuration"
 msgstr " Конфігурація "
 
 #: wineconsole.rc:100

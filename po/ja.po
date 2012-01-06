@@ -508,7 +508,7 @@ msgstr "用紙サイズ(&Z)"
 msgid "&Source"
 msgstr "給紙方法(&S)"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:244 wineconsole.rc:81
 msgid "Font"
 msgstr "フォントの指定"
 
@@ -3162,7 +3162,7 @@ msgstr "ホーム"
 msgid "Sync"
 msgstr "同期"
 
-#: hhctrl.rc:47 wordpad.rc:155
+#: hhctrl.rc:47 wineconsole.rc:57 wordpad.rc:155
 msgid "Options"
 msgstr "オプション"
 
@@ -13019,10 +13019,6 @@ msgstr "メニューの明るい部分"
 msgid "Menu Bar"
 msgstr "メニュー バー"
 
-#: wineconsole.rc:57
-msgid " Options "
-msgstr " オプション "
-
 #: wineconsole.rc:60
 msgid "Cursor size"
 msgstr "カーソルの大きさ"
@@ -13075,10 +13071,6 @@ msgstr "記憶するコマンド数(&N) :"
 msgid "&Remove doubles"
 msgstr "重複を削除(&R)"
 
-#: wineconsole.rc:81
-msgid " Font "
-msgstr " フォント "
-
 #: wineconsole.rc:84
 msgid "&Font"
 msgstr "フォント(&F)"
@@ -13088,7 +13080,8 @@ msgid "&Color"
 msgstr "色(&C)"
 
 #: wineconsole.rc:97
-msgid " Configuration "
+#, fuzzy
+msgid "Configuration"
 msgstr " 設定 "
 
 #: wineconsole.rc:100
