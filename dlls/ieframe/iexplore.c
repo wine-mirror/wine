@@ -698,6 +698,9 @@ static void create_frame_hwnd(InternetExplorer *This)
                 | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
             NULL, NULL /* FIXME */, ieframe_instance, This);
+
+    This->doc_host->doc_host.frame_hwnd = This->frame_hwnd;
+    create_doc_view_hwnd(&This->doc_host->doc_host);
 }
 
 static inline IEDocHost *impl_from_DocHost(DocHost *iface)
@@ -793,7 +796,6 @@ static HRESULT create_ie(InternetExplorer **ret_obj)
     HlinkFrame_Init(&ret->hlink_frame, (IUnknown*)&ret->IWebBrowser2_iface, &ret->doc_host->doc_host);
 
     create_frame_hwnd(ret);
-    ret->doc_host->doc_host.frame_hwnd = ret->frame_hwnd;
 
     InterlockedIncrement(&obj_cnt);
     list_add_tail(&ie_list, &ret->entry);
