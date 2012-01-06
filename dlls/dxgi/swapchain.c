@@ -159,7 +159,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetBuffer(IDXGISwapChain *iface,
     EnterCriticalSection(&dxgi_cs);
 
     hr = wined3d_swapchain_get_back_buffer(This->wined3d_swapchain,
-            buffer_idx, WINED3DBACKBUFFER_TYPE_MONO, &backbuffer);
+            buffer_idx, WINED3D_BACKBUFFER_TYPE_MONO, &backbuffer);
     if (FAILED(hr))
     {
         LeaveCriticalSection(&dxgi_cs);

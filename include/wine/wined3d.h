@@ -494,13 +494,12 @@ enum wined3d_patch_edge_style
     WINED3D_PATCH_EDGE_CONTINUOUS           = 1,
 };
 
-typedef enum _WINED3DBACKBUFFER_TYPE
+enum wined3d_backbuffer_type
 {
-    WINED3DBACKBUFFER_TYPE_MONO             = 0,
-    WINED3DBACKBUFFER_TYPE_LEFT             = 1,
-    WINED3DBACKBUFFER_TYPE_RIGHT            = 2,
-    WINED3DBACKBUFFER_TYPE_FORCE_DWORD      = 0x7fffffff
-} WINED3DBACKBUFFER_TYPE;
+    WINED3D_BACKBUFFER_TYPE_MONO            = 0,
+    WINED3D_BACKBUFFER_TYPE_LEFT            = 1,
+    WINED3D_BACKBUFFER_TYPE_RIGHT           = 2,
+};
 
 typedef enum _WINED3DSWAPEFFECT
 {
@@ -2099,7 +2098,7 @@ HRESULT __cdecl wined3d_device_end_stateblock(struct wined3d_device *device, str
 void __cdecl wined3d_device_evict_managed_resources(struct wined3d_device *device);
 UINT __cdecl wined3d_device_get_available_texture_mem(const struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_get_back_buffer(const struct wined3d_device *device, UINT swapchain_idx,
-        UINT backbuffer_idx, WINED3DBACKBUFFER_TYPE backbuffer_type, struct wined3d_surface **backbuffer);
+        UINT backbuffer_idx, enum wined3d_backbuffer_type backbuffer_type, struct wined3d_surface **backbuffer);
 INT __cdecl wined3d_device_get_base_vertex_index(const struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_get_clip_plane(const struct wined3d_device *device, UINT plane_idx, float *plane);
 HRESULT __cdecl wined3d_device_get_clip_status(const struct wined3d_device *device,
@@ -2353,7 +2352,7 @@ HRESULT __cdecl wined3d_swapchain_create(struct wined3d_device *device,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_swapchain **swapchain);
 ULONG __cdecl wined3d_swapchain_decref(struct wined3d_swapchain *swapchain);
 HRESULT __cdecl wined3d_swapchain_get_back_buffer(const struct wined3d_swapchain *swapchain,
-        UINT backbuffer_idx, WINED3DBACKBUFFER_TYPE backbuffer_type, struct wined3d_surface **backbuffer);
+        UINT backbuffer_idx, enum wined3d_backbuffer_type backbuffer_type, struct wined3d_surface **backbuffer);
 struct wined3d_device * __cdecl wined3d_swapchain_get_device(const struct wined3d_swapchain *swapchain);
 HRESULT __cdecl wined3d_swapchain_get_display_mode(const struct wined3d_swapchain *swapchain,
         struct wined3d_display_mode *mode);

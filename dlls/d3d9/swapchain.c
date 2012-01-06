@@ -126,7 +126,7 @@ static HRESULT WINAPI IDirect3DSwapChain9Impl_GetBackBuffer(IDirect3DSwapChain9 
 
     wined3d_mutex_lock();
     hr = wined3d_swapchain_get_back_buffer(This->wined3d_swapchain,
-            iBackBuffer, (WINED3DBACKBUFFER_TYPE)Type, &wined3d_surface);
+            iBackBuffer, (enum wined3d_backbuffer_type)Type, &wined3d_surface);
     if (SUCCEEDED(hr) && wined3d_surface)
     {
        *ppBackBuffer = wined3d_surface_get_parent(wined3d_surface);

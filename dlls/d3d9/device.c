@@ -620,7 +620,7 @@ static HRESULT WINAPI IDirect3DDevice9Impl_GetBackBuffer(IDirect3DDevice9Ex *ifa
 
     wined3d_mutex_lock();
     hr = wined3d_device_get_back_buffer(This->wined3d_device, iSwapChain,
-            BackBuffer, (WINED3DBACKBUFFER_TYPE) Type, &wined3d_surface);
+            BackBuffer, (enum wined3d_backbuffer_type)Type, &wined3d_surface);
     if (SUCCEEDED(hr) && wined3d_surface && ppBackBuffer)
     {
         *ppBackBuffer = wined3d_surface_get_parent(wined3d_surface);

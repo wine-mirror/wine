@@ -174,7 +174,7 @@ HRESULT CDECL wined3d_swapchain_get_front_buffer_data(const struct wined3d_swapc
 }
 
 HRESULT CDECL wined3d_swapchain_get_back_buffer(const struct wined3d_swapchain *swapchain,
-        UINT back_buffer_idx, WINED3DBACKBUFFER_TYPE type, struct wined3d_surface **back_buffer)
+        UINT back_buffer_idx, enum wined3d_backbuffer_type type, struct wined3d_surface **back_buffer)
 {
     TRACE("swapchain %p, back_buffer_idx %u, type %#x, back_buffer %p.\n",
             swapchain, back_buffer_idx, type, back_buffer);
