@@ -418,6 +418,15 @@ static INT dibdrv_DescribePixelFormat( PHYSDEV dev, INT fmt, UINT size, PIXELFOR
 }
 
 /***********************************************************************
+ *           dibdrv_ExtEscape
+ */
+static INT dibdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_size, const void *in_data,
+                             INT out_size, void *out_data )
+{
+    return 0;
+}
+
+/***********************************************************************
  *           dibdrv_GetDeviceGammaRamp
  */
 static BOOL dibdrv_GetDeviceGammaRamp( PHYSDEV dev, void *ramp )
@@ -601,7 +610,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pEnumICMProfiles */
     NULL,                               /* pExcludeClipRect */
     NULL,                               /* pExtDeviceMode */
-    NULL,                               /* pExtEscape */
+    dibdrv_ExtEscape,                   /* pExtEscape */
     dibdrv_ExtFloodFill,                /* pExtFloodFill */
     NULL,                               /* pExtSelectClipRgn */
     dibdrv_ExtTextOut,                  /* pExtTextOut */
