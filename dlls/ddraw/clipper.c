@@ -69,7 +69,11 @@ static ULONG WINAPI ddraw_clipper_Release(IDirectDrawClipper *iface)
     TRACE("%p decreasing refcount to %u.\n", clipper, refcount);
 
     if (!refcount)
+    {
+        if (clipper->region)
+            DeleteObject(clipper->region);
         HeapFree(GetProcessHeap(), 0, clipper);
+    }
 
     return refcount;
 }
@@ -141,7 +145,6 @@ static HRESULT WINAPI ddraw_clipper_GetClipList(IDirectDrawClipper *iface, RECT 
         RGNDATA *clip_list, DWORD *clip_list_size)
 {
     struct ddraw_clipper *clipper = impl_from_IDirectDrawClipper(iface);
-    static unsigned int once;
     HRGN region;
 
     TRACE("iface %p, rect %s, clip_list %p, clip_list_size %p.\n",
@@ -157,47 +160,49 @@ static HRESULT WINAPI ddraw_clipper_GetClipList(IDirectDrawClipper *iface, RECT 
             ERR("Failed to get window region.\n");
             return E_FAIL;
         }
-
-        if (rect)
+    }
+    else
+    {
+        if (!(region = clipper->region))
         {
-            HRGN clip_region;
-            int ret;
-
-            if (!(clip_region = CreateRectRgnIndirect(rect)))
-            {
-                wined3d_mutex_unlock();
-                ERR("Failed to create region.\n");
-                DeleteObject(region);
-                return E_FAIL;
-            }
-
-            ret = CombineRgn(region, region, clip_region, RGN_AND);
-            DeleteObject(clip_region);
-            if (ret == ERROR)
-            {
-                wined3d_mutex_unlock();
-                ERR("Failed to combine regions.\n");
-                DeleteObject(region);
-                return E_FAIL;
-            }
+            wined3d_mutex_unlock();
+            WARN("No clip list set.\n");
+            return DDERR_NOCLIPLIST;
         }
-
-        *clip_list_size = GetRegionData(region, *clip_list_size, clip_list);
-        DeleteObject(region);
-
-        wined3d_mutex_unlock();
-        return DD_OK;
     }
 
-    if (!once++)
-        FIXME("clipper %p, rect %s, clip_list %p, clip_list_size %p stub!\n",
-                clipper, wine_dbgstr_rect(rect), clip_list, clip_list_size);
+    if (rect)
+    {
+        HRGN clip_region;
 
-    if (clip_list_size)
-        *clip_list_size = 0;
+        if (!(clip_region = CreateRectRgnIndirect(rect)))
+        {
+            wined3d_mutex_unlock();
+            ERR("Failed to create region.\n");
+            if (clipper->window)
+                DeleteObject(region);
+            return E_FAIL;
+        }
+
+        if (CombineRgn(clip_region, region, clip_region, RGN_AND) == ERROR)
+        {
+            wined3d_mutex_unlock();
+            ERR("Failed to combine regions.\n");
+            DeleteObject(clip_region);
+            if (clipper->window)
+                DeleteObject(region);
+            return E_FAIL;
+        }
+
+        region = clip_region;
+    }
+
+    *clip_list_size = GetRegionData(region, *clip_list_size, clip_list);
+    if (rect || clipper->window)
+        DeleteObject(region);
 
     wined3d_mutex_unlock();
-    return DDERR_NOCLIPLIST;
+    return DD_OK;
 }
 
 /*****************************************************************************
@@ -218,10 +223,26 @@ static HRESULT WINAPI ddraw_clipper_SetClipList(IDirectDrawClipper *iface, RGNDA
 {
     struct ddraw_clipper *clipper = impl_from_IDirectDrawClipper(iface);
 
-    FIXME("iface %p, region %p, flags %#x stub!\n", iface, region, flags);
+    TRACE("iface %p, region %p, flags %#x.\n", iface, region, flags);
+
+    wined3d_mutex_lock();
 
     if (clipper->window)
+    {
+        wined3d_mutex_unlock();
         return DDERR_CLIPPERISUSINGHWND;
+    }
+
+    if (clipper->region)
+        DeleteObject(clipper->region);
+    if (!(clipper->region = ExtCreateRegion(NULL, 0, region)))
+    {
+        wined3d_mutex_unlock();
+        ERR("Failed to create creation.\n");
+        return E_FAIL;
+    }
+
+    wined3d_mutex_unlock();
 
     return DD_OK;
 }

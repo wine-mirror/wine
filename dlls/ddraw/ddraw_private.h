@@ -361,6 +361,7 @@ struct ddraw_clipper
     IDirectDrawClipper IDirectDrawClipper_iface;
     LONG ref;
     HWND window;
+    HRGN region;
     BOOL initialized;
 };
 
