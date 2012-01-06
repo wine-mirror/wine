@@ -2012,8 +2012,8 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
 /******************************************************************
  *		LdrLoadDll (NTDLL.@)
  */
-NTSTATUS WINAPI LdrLoadDll(LPCWSTR path_name, DWORD flags,
-                           const UNICODE_STRING *libname, HMODULE* hModule)
+NTSTATUS WINAPI DECLSPEC_HOTPATCH LdrLoadDll(LPCWSTR path_name, DWORD flags,
+                                             const UNICODE_STRING *libname, HMODULE* hModule)
 {
     WINE_MODREF *wm;
     NTSTATUS nts;
