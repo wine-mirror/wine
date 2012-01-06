@@ -109,6 +109,199 @@ static int ellipse_first_quadrant( int width, int height, POINT *data )
     return pos;
 }
 
+static int find_intersection( const POINT *points, int x, int y, int count )
+{
+    int i;
+
+    if (y >= 0)
+    {
+        if (x >= 0)  /* first quadrant */
+        {
+            for (i = 0; i < count; i++) if (points[i].x * y <= points[i].y * x) break;
+            return i;
+        }
+        /* second quadrant */
+        for (i = 0; i < count; i++) if (points[i].x * y < points[i].y * -x) break;
+        return 2 * count - i;
+    }
+    if (x >= 0)  /* fourth quadrant */
+    {
+        for (i = 0; i < count; i++) if (points[i].x * -y <= points[i].y * x) break;
+        return 4 * count - i;
+    }
+    /* third quadrant */
+    for (i = 0; i < count; i++) if (points[i].x * -y < points[i].y * -x) break;
+    return 2 * count + i;
+}
+
+static int get_arc_points( PHYSDEV dev, const RECT *rect, POINT start, POINT end, POINT *points )
+{
+    int i, pos, count, start_pos, end_pos;
+    int width = rect->right - rect->left;
+    int height = rect->bottom - rect->top;
+
+    count = ellipse_first_quadrant( width, height, points );
+    for (i = 0; i < count; i++)
+    {
+        points[i].x -= width / 2;
+        points[i].y -= height / 2;
+    }
+    if (GetArcDirection( dev->hdc ) != AD_CLOCKWISE)
+    {
+        start.y = -start.y;
+        end.y = -end.y;
+    }
+    start_pos = find_intersection( points, start.x, start.y, count );
+    end_pos = find_intersection( points, end.x, end.y, count );
+    if (end_pos <= start_pos) end_pos += 4 * count;
+
+    pos = count;
+    if (GetArcDirection( dev->hdc ) == AD_CLOCKWISE)
+    {
+        for (i = start_pos; i < end_pos; i++, pos++)
+        {
+            switch ((i / count) % 4)
+            {
+            case 0:
+                points[pos].x = rect->left + width/2 + points[i % count].x;
+                points[pos].y = rect->top + height/2 + points[i % count].y;
+                break;
+            case 1:
+                points[pos].x = rect->left + width/2 - points[count - 1 - i % count].x;
+                points[pos].y = rect->top + height/2 + points[count - 1 - i % count].y;
+                break;
+            case 2:
+                points[pos].x = rect->left + width/2 - points[i % count].x;
+                points[pos].y = rect->top + height/2 - points[i % count].y;
+                break;
+            case 3:
+                points[pos].x = rect->left + width/2 + points[count - 1 - i % count].x;
+                points[pos].y = rect->top + height/2 - points[count - 1 - i % count].y;
+                break;
+            }
+        }
+    }
+    else
+    {
+        for (i = start_pos; i < end_pos; i++, pos++)
+        {
+            switch ((i / count) % 4)
+            {
+            case 0:
+                points[pos].x = rect->left + width/2 + points[i % count].x;
+                points[pos].y = rect->top + height/2 - points[i % count].y;
+                break;
+            case 1:
+                points[pos].x = rect->left + width/2 - points[count - 1 - i % count].x;
+                points[pos].y = rect->top + height/2 - points[count - 1 - i % count].y;
+                break;
+            case 2:
+                points[pos].x = rect->left + width/2 - points[i % count].x;
+                points[pos].y = rect->top + height/2 + points[i % count].y;
+                break;
+            case 3:
+                points[pos].x = rect->left + width/2 + points[count - 1 - i % count].x;
+                points[pos].y = rect->top + height/2 + points[count - 1 - i % count].y;
+                break;
+            }
+        }
+    }
+
+    memmove( points, points + count, (pos - count) * sizeof(POINT) );
+    return pos - count;
+}
+
+/* backend for arc functions; extra_lines is -1 for ArcTo, 0 for Arc, 1 for Chord, 2 for Pie */
+static BOOL draw_arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                      INT start_x, INT start_y, INT end_x, INT end_y, INT extra_lines )
+{
+    dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
+    RECT rect;
+    POINT pt[2], *points;
+    int width, height, count;
+    BOOL ret = TRUE;
+    HRGN outline = 0, interior = 0;
+
+    if (!get_pen_device_rect( pdev, &rect, left, top, right, bottom )) return TRUE;
+
+    width = rect.right - rect.left;
+    height = rect.bottom - rect.top;
+
+    pt[0].x = start_x;
+    pt[0].y = start_y;
+    pt[1].x = end_x;
+    pt[1].y = end_y;
+    LPtoDP( dev->hdc, pt, 2 );
+    /* make them relative to the ellipse center */
+    pt[0].x -= left + width / 2;
+    pt[0].y -= top + height / 2;
+    pt[1].x -= left + width / 2;
+    pt[1].y -= top + height / 2;
+
+    points = HeapAlloc( GetProcessHeap(), 0, (width + height) * 3 * sizeof(*points) );
+    if (!points) return FALSE;
+
+    if (extra_lines == -1)
+    {
+        GetCurrentPositionEx( dev->hdc, points );
+        LPtoDP( dev->hdc, points, 1 );
+        count = 1 + get_arc_points( dev, &rect, pt[0], pt[1], points + 1 );
+    }
+    else count = get_arc_points( dev, &rect, pt[0], pt[1], points );
+
+    if (extra_lines == 2)
+    {
+        points[count].x = rect.left + width / 2;
+        points[count].y = rect.top + height / 2;
+        count++;
+    }
+    if (count < 2)
+    {
+        HeapFree( GetProcessHeap(), 0, points );
+        return TRUE;
+    }
+
+    if (pdev->pen_uses_region && !(outline = CreateRectRgn( 0, 0, 0, 0 )))
+    {
+        HeapFree( GetProcessHeap(), 0, points );
+        return FALSE;
+    }
+
+    if (pdev->brush.style != BS_NULL && extra_lines > 0 &&
+        !(interior = CreatePolygonRgn( points, count, WINDING )))
+    {
+        HeapFree( GetProcessHeap(), 0, points );
+        return FALSE;
+    }
+
+    if (pdev->pen_uses_region) outline = CreateRectRgn( 0, 0, 0, 0 );
+
+    /* if not using a region, paint the interior first so the outline can overlap it */
+    if (interior && !outline)
+    {
+        ret = brush_region( pdev, interior );
+        DeleteObject( interior );
+        interior = 0;
+    }
+
+    reset_dash_origin( pdev );
+    pdev->pen_lines( pdev, count, points, extra_lines > 0, outline );
+
+    if (interior)
+    {
+        CombineRgn( interior, interior, outline, RGN_DIFF );
+        ret = brush_region( pdev, interior );
+        DeleteObject( interior );
+    }
+    if (outline)
+    {
+        if (ret) ret = pen_region( pdev, outline );
+        DeleteObject( outline );
+    }
+    HeapFree( GetProcessHeap(), 0, points );
+    return ret;
+}
+
 /* Intensities of the 17 glyph levels when drawn with text component of 0xff on a
    black bkgnd.  [A log-log plot of these data gives: y = 77.05 * x^0.4315]. */
 static const BYTE ramp[17] =
@@ -449,6 +642,33 @@ BOOL dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 done:
     free_clipped_rects( &clipped_rects );
     return TRUE;
+}
+
+/***********************************************************************
+ *           dibdrv_Arc
+ */
+BOOL dibdrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                 INT start_x, INT start_y, INT end_x, INT end_y )
+{
+    return draw_arc( dev, left, top, right, bottom, start_x, start_y, end_x, end_y, 0 );
+}
+
+/***********************************************************************
+ *           dibdrv_ArcTo
+ */
+BOOL dibdrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                   INT start_x, INT start_y, INT end_x, INT end_y )
+{
+    return draw_arc( dev, left, top, right, bottom, start_x, start_y, end_x, end_y, -1 );
+}
+
+/***********************************************************************
+ *           dibdrv_Chord
+ */
+BOOL dibdrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                   INT start_x, INT start_y, INT end_x, INT end_y )
+{
+    return draw_arc( dev, left, top, right, bottom, start_x, start_y, end_x, end_y, 1 );
 }
 
 /***********************************************************************
@@ -879,6 +1099,15 @@ BOOL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     }
     HeapFree( GetProcessHeap(), 0, points );
     return ret;
+}
+
+/***********************************************************************
+ *           dibdrv_Pie
+ */
+BOOL dibdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                 INT start_x, INT start_y, INT end_x, INT end_y )
+{
+    return draw_arc( dev, left, top, right, bottom, start_x, start_y, end_x, end_y, 2 );
 }
 
 /***********************************************************************

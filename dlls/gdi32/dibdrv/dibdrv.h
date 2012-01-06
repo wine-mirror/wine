@@ -110,8 +110,14 @@ typedef struct dibdrv_physdev
 
 extern BOOL     dibdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
                                    PHYSDEV src_dev, struct bitblt_coords *src, BLENDFUNCTION blend ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                            INT start_x, INT start_y, INT end_x, INT end_y ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                              INT start_x, INT start_y, INT end_x, INT end_y ) DECLSPEC_HIDDEN;
 extern DWORD    dibdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_image_bits *bits,
                                    struct bitblt_coords *src, struct bitblt_coords *dst, BLENDFUNCTION func ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                              INT start_x, INT start_y, INT end_x, INT end_y ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
                                    const RECT *rect, LPCWSTR str, UINT count, const INT *dx ) DECLSPEC_HIDDEN;
@@ -124,6 +130,8 @@ extern BOOL     dibdrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG n
 extern BOOL     dibdrv_LineTo( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_PaintRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                            INT start_x, INT start_y, INT end_x, INT end_y ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD polygons ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts,
                                      DWORD polylines ) DECLSPEC_HIDDEN;

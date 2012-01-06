@@ -558,12 +558,12 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pAbortPath */
     dibdrv_AlphaBlend,                  /* pAlphaBlend */
     NULL,                               /* pAngleArc */
-    NULL,                               /* pArc */
-    NULL,                               /* pArcTo */
+    dibdrv_Arc,                         /* pArc */
+    dibdrv_ArcTo,                       /* pArcTo */
     NULL,                               /* pBeginPath */
     dibdrv_BlendImage,                  /* pBlendImage */
     dibdrv_ChoosePixelFormat,           /* pChoosePixelFormat */
-    NULL,                               /* pChord */
+    dibdrv_Chord,                       /* pChord */
     NULL,                               /* pCloseFigure */
     dibdrv_CopyBitmap,                  /* pCopyBitmap */
     NULL,                               /* pCreateBitmap */
@@ -627,7 +627,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pOffsetWindowOrg */
     dibdrv_PaintRgn,                    /* pPaintRgn */
     dibdrv_PatBlt,                      /* pPatBlt */
-    NULL,                               /* pPie */
+    dibdrv_Pie,                         /* pPie */
     NULL,                               /* pPolyBezier */
     NULL,                               /* pPolyBezierTo */
     NULL,                               /* pPolyDraw */
