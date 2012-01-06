@@ -58,7 +58,7 @@
 @ stub HalStartNextProcessor
 @ stub HalStartProfileInterrupt
 @ stub HalStopProfileInterrupt
-@ stub HalTranslateBusAddress
+@ stdcall HalTranslateBusAddress(long long int64 ptr ptr)
 @ stub IoAssignDriveLetters
 @ stub IoFlushAdapterBuffers
 @ stub IoFreeAdapterChannel

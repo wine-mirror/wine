@@ -145,6 +145,14 @@ ULONG WINAPI HalGetBusDataByOffset(BUS_DATA_TYPE BusDataType, ULONG BusNumber, U
     return 0;
 }
 
+BOOLEAN WINAPI HalTranslateBusAddress(INTERFACE_TYPE InterfaceType, ULONG BusNumber, PHYSICAL_ADDRESS BusAddress,
+		                              PULONG AddressSpace, PPHYSICAL_ADDRESS TranslatedAddress)
+{
+    FIXME("(%d %d %s %p %p) stub!\n", InterfaceType, BusNumber,
+		wine_dbgstr_longlong(BusAddress.QuadPart), AddressSpace, TranslatedAddress);
+    return FALSE;
+}
+
 KIRQL WINAPI KeGetCurrentIrql(VOID)
 {
     FIXME( " stub!\n");
