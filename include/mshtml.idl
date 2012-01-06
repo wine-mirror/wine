@@ -24,6 +24,7 @@
 import "ocidl.idl";
 import "dimm.idl";
 import "shtypes.idl";
+import "dispex.idl";
 
 cpp_quote("#include <olectl.h>")
 
