@@ -355,7 +355,6 @@ interface IBindStatusCallbackEx : IBindStatusCallback
  * IAuthenticate interface
  */
 [
-    local,
     object,
     uuid(79EAC9D0-BAf9-11CE-8C82-00AA004BA90B),
     pointer_default(unique)
@@ -1628,7 +1627,6 @@ typedef struct _tagPROTOCOLFILTERDATA {
  * IUri interface
  */
 [
-    local,
     object,
     uuid(a39ee748-6a27-4817-a6f2-13914bef5890),
     pointer_default(unique)
