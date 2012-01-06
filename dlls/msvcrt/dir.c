@@ -601,7 +601,7 @@ int CDECL MSVCRT__findnexti64(MSVCRT_intptr_t hand, struct MSVCRT__finddatai64_t
  *
  * 64-bit version of _findnext.
  */
-int CDECL MSVCRT__findnext64(long hand, struct MSVCRT__finddata64_t * ft)
+int CDECL MSVCRT__findnext64(MSVCRT_intptr_t hand, struct MSVCRT__finddata64_t * ft)
 {
   WIN32_FIND_DATAA find_data;
 
@@ -639,7 +639,7 @@ int CDECL MSVCRT__wfindnext64(MSVCRT_intptr_t hand, struct MSVCRT__wfinddata64_t
  *
  * 64-bit/32-bit version of _findnext.
  */
-int CDECL MSVCRT__findnext64i32(long hand, struct MSVCRT__finddata64i32_t * ft)
+int CDECL MSVCRT__findnext64i32(MSVCRT_intptr_t hand, struct MSVCRT__finddata64i32_t * ft)
 {
   WIN32_FIND_DATAA find_data;
 
