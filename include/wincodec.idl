@@ -18,7 +18,6 @@
 
 import "wtypes.idl";
 import "propidl.idl";
-import "objidl.idl";
 import "ocidl.idl";
 
 cpp_quote("#define WINCODEC_SDK_VERSION 0x0236")
