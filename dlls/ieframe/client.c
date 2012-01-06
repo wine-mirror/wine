@@ -685,6 +685,11 @@ static HRESULT WINAPI ClServiceProvider_QueryService(IServiceProvider *iface, RE
         return IShellBrowser_QueryInterface(&This->browser_service->IShellBrowser_iface, riid, ppv);
     }
 
+    if(IsEqualGUID(&SID_SNewWindowManager, guidService)) {
+        TRACE("SID_SNewWindowManager service\n");
+        return INewWindowManager_QueryInterface(&This->nwm.INewWindowManager_iface, riid, ppv);
+    }
+
     FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
 
     return E_NOINTERFACE;

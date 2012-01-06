@@ -2,6 +2,7 @@
  * Implementation of IShellBrowser interface
  *
  * Copyright 2011 Piotr Caban for CodeWeavers
+ * Copyright 2012 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -912,4 +913,70 @@ void detach_browser_service(ShellBrowser *sb)
 {
     sb->doc_host = NULL;
     IShellBrowser_Release(&sb->IShellBrowser_iface);
+}
+
+static inline NewWindowManager *impl_from_INewWindowManager(INewWindowManager *iface)
+{
+    return CONTAINING_RECORD(iface, NewWindowManager, INewWindowManager_iface);
+}
+
+static HRESULT WINAPI NewWindowManager_QueryInterface(INewWindowManager *iface, REFIID riid, void **ppv)
+{
+    NewWindowManager *This = impl_from_INewWindowManager(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->INewWindowManager_iface;
+    }else if(IsEqualGUID(&IID_INewWindowManager, riid)) {
+        TRACE("(%p)->(IID_INewWindowManager %p)\n", This, ppv);
+        *ppv = &This->INewWindowManager_iface;
+    }else {
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI NewWindowManager_AddRef(INewWindowManager *iface)
+{
+    NewWindowManager *This = impl_from_INewWindowManager(iface);
+
+    TRACE("(%p)\n", This);
+
+    return IOleClientSite_AddRef(&This->doc_host->IOleClientSite_iface);
+}
+
+static ULONG WINAPI NewWindowManager_Release(INewWindowManager *iface)
+{
+    NewWindowManager *This = impl_from_INewWindowManager(iface);
+
+    TRACE("(%p)\n", This);
+
+    return IOleClientSite_Release(&This->doc_host->IOleClientSite_iface);
+}
+
+static HRESULT WINAPI NewWindowManager_EvaluateNewWindow(INewWindowManager *iface, LPCWSTR pszUrl,
+        LPCWSTR pszName, LPCWSTR pszUrlContext, LPCWSTR pszFeatures, BOOL fReplace, DWORD dwFlags,
+        DWORD dwUserActionTime)
+{
+    NewWindowManager *This = impl_from_INewWindowManager(iface);
+    FIXME("(%p)->(%s %s %s %s %x %x %d)\n", This, debugstr_w(pszUrl), debugstr_w(pszName), debugstr_w(pszUrlContext),
+          debugstr_w(pszFeatures), fReplace, dwFlags, dwUserActionTime);
+    return S_OK;
+}
+
+static const INewWindowManagerVtbl NewWindowManagerVtbl = {
+    NewWindowManager_QueryInterface,
+    NewWindowManager_AddRef,
+    NewWindowManager_Release,
+    NewWindowManager_EvaluateNewWindow
+};
+
+void NewWindowManager_Init(DocHost *doc_host)
+{
+    doc_host->nwm.INewWindowManager_iface.lpVtbl = &NewWindowManagerVtbl;
+    doc_host->nwm.doc_host = doc_host;
 }
