@@ -592,7 +592,7 @@ static void test_clipper_blt(void)
 
     SetRect(&src_rect, 0, 0, 4, 1);
     hr = IDirectDrawSurface7_Blt(dst_surface, NULL, src_surface, &src_rect, DDBLT_WAIT, NULL);
-    todo_wine ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
     for (i = 0; i < 4; ++i)
     {
         for (j = 0; j < 4; ++j)
@@ -600,12 +600,8 @@ static void test_clipper_blt(void)
             x = 80 * ((2 * j) + 1);
             y = 60 * ((2 * i) + 1);
             color = get_surface_color(dst_surface, x, y);
-            if ((i < 2 && j < 2) || (i >= 2 && j >= 2))
-                todo_wine ok(compare_color(color, expected1[i * 4 + j], 1),
-                        "Expected color 0x%08x at %u,%u, got 0x%08x.\n", expected1[i * 4 + j], x, y, color);
-            else
-                ok(compare_color(color, expected1[i * 4 + j], 1),
-                        "Expected color 0x%08x at %u,%u, got 0x%08x.\n", expected1[i * 4 + j], x, y, color);
+            ok(compare_color(color, expected1[i * 4 + j], 1),
+                    "Expected color 0x%08x at %u,%u, got 0x%08x.\n", expected1[i * 4 + j], x, y, color);
         }
     }
 

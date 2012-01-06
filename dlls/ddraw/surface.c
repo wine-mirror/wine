@@ -1361,10 +1361,10 @@ static HRESULT ddraw_surface_blt_clipped(IDirectDrawSurfaceImpl *dst_surface, co
 
         if (src_surface)
         {
-            src_rect_clipped.left += (clip_rect[i].left - dst_rect.left) * scale_x;
-            src_rect_clipped.top += (clip_rect[i].top - dst_rect.top) * scale_y;
-            src_rect_clipped.right -= (dst_rect.right - clip_rect[i].right) * scale_x;
-            src_rect_clipped.bottom -= (dst_rect.bottom - clip_rect[i].bottom) * scale_y;
+            src_rect_clipped.left += (LONG)((clip_rect[i].left - dst_rect.left) * scale_x);
+            src_rect_clipped.top += (LONG)((clip_rect[i].top - dst_rect.top) * scale_y);
+            src_rect_clipped.right -= (LONG)((dst_rect.right - clip_rect[i].right) * scale_x);
+            src_rect_clipped.bottom -= (LONG)((dst_rect.bottom - clip_rect[i].bottom) * scale_y);
 
             if (src_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
             {
