@@ -135,15 +135,18 @@ static LPCWSTR format_insert( BOOL unicode_caller, int insert, LPCWSTR format,
     if (*format != '!')  /* simple string */
     {
         arg = get_arg( insert, flags, args );
-        if (unicode_caller)
+        if (unicode_caller || !arg)
         {
-            WCHAR *str = (WCHAR *)arg;
+            static const WCHAR nullW[] = {'(','n','u','l','l',')',0};
+            const WCHAR *str = (const WCHAR *)arg;
+
+            if (!str) str = nullW;
             *result = HeapAlloc( GetProcessHeap(), 0, (strlenW(str) + 1) * sizeof(WCHAR) );
             strcpyW( *result, str );
         }
         else
         {
-            char *str = (char *)arg;
+            const char *str = (const char *)arg;
             DWORD length = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
             *result = HeapAlloc( GetProcessHeap(), 0, length * sizeof(WCHAR) );
             MultiByteToWideChar( CP_ACP, 0, str, -1, *result, length );
