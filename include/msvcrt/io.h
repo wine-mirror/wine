@@ -47,6 +47,16 @@ struct _finddatai64_t
   __int64 DECLSPEC_ALIGN(8) size;
   char           name[260];
 };
+
+struct _finddata64_t
+{
+  unsigned attrib;
+  __time64_t time_create;
+  __time64_t time_access;
+  __time64_t time_write;
+  __int64 DECLSPEC_ALIGN(8) size;
+  char           name[260];
+};
 #endif /* _FINDDATA_T_DEFINED */
 
 #ifndef _WFINDDATA_T_DEFINED
@@ -88,8 +98,10 @@ __msvcrt_long __cdecl _filelength(int);
 int         __cdecl _findclose(intptr_t);
 intptr_t    __cdecl _findfirst(const char*,struct _finddata_t*);
 intptr_t    __cdecl _findfirsti64(const char*, struct _finddatai64_t*);
+intptr_t    __cdecl _findfirst64(const char*, struct _finddata64_t*);
 int         __cdecl _findnext(intptr_t,struct _finddata_t*);
 int         __cdecl _findnexti64(intptr_t, struct _finddatai64_t*);
+int         __cdecl _findnext64(intptr_t, struct _finddata64_t*);
 intptr_t    __cdecl _get_osfhandle(int);
 int         __cdecl _isatty(int);
 int         __cdecl _locking(int,int,__msvcrt_long);
