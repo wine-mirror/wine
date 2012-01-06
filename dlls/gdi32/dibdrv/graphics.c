@@ -57,6 +57,43 @@ static RECT get_device_rect( HDC hdc, int left, int top, int right, int bottom, 
     return rect;
 }
 
+/* compute the points for the first quadrant of an ellipse, counterclockwise from the x axis */
+/* 'data' must contain enough space, (width+height)/2 is a reasonable upper bound */
+static int ellipse_first_quadrant( int width, int height, POINT *data )
+{
+    const int a = width - 1;
+    const int b = height - 1;
+    const int asq = 8 * a * a;
+    const int bsq = 8 * b * b;
+    int dx  = 4 * b * b * (1 - a);
+    int dy  = 4 * a * a * (1 + (b % 2));
+    int err = dx + dy + a * a * (b % 2);
+    int pos = 0;
+    POINT pt;
+
+    pt.x = a;
+    pt.y = height / 2;
+
+    /* based on an algorithm by Alois Zingl */
+
+    while (pt.x >= width / 2)
+    {
+        int e2 = 2 * err;
+        data[pos++] = pt;
+        if (e2 >= dx)
+        {
+            pt.x--;
+            err += dx += bsq;
+        }
+        if (e2 <= dy)
+        {
+            pt.y++;
+            err += dy += asq;
+        }
+    }
+    return pos;
+}
+
 /* Intensities of the 17 glyph levels when drawn with text component of 0xff on a
    black bkgnd.  [A log-log plot of these data gives: y = 77.05 * x^0.4315]. */
 static const BYTE ramp[17] =
@@ -400,6 +437,14 @@ done:
 }
 
 /***********************************************************************
+ *           dibdrv_Ellipse
+ */
+BOOL dibdrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+{
+    return dibdrv_RoundRect( dev, left, top, right, bottom, right - left, bottom - top );
+}
+
+/***********************************************************************
  *           dibdrv_GetNearestColor
  */
 COLORREF dibdrv_GetNearestColor( PHYSDEV dev, COLORREF color )
@@ -714,6 +759,126 @@ BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
         rect.bottom -= pdev->pen_width / 2;
         ret = brush_rect( pdev, &pdev->brush, &rect, pdev->clip, GetROP2(dev->hdc) );
     }
+    return ret;
+}
+
+/***********************************************************************
+ *           dibdrv_RoundRect
+ */
+BOOL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                       INT ellipse_width, INT ellipse_height )
+{
+    dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
+    RECT rect = get_device_rect( dev->hdc, left, top, right, bottom, TRUE );
+    POINT pt[2], *points;
+    int i, end, count;
+    BOOL ret = TRUE;
+    HRGN outline = 0, interior = 0;
+
+    if (rect.left == rect.right || rect.top == rect.bottom) return TRUE;
+
+    if (pdev->pen_style == PS_INSIDEFRAME)
+    {
+        rect.left   += pdev->pen_width / 2;
+        rect.top    += pdev->pen_width / 2;
+        rect.right  -= (pdev->pen_width - 1) / 2;
+        rect.bottom -= (pdev->pen_width - 1) / 2;
+    }
+
+    pt[0].x = pt[0].y = 0;
+    pt[1].x = ellipse_width;
+    pt[1].y = ellipse_height;
+    LPtoDP( dev->hdc, pt, 2 );
+    ellipse_width = min( rect.right - rect.left, abs( pt[1].x - pt[0].x ));
+    ellipse_height = min( rect.bottom - rect.top, abs( pt[1].y - pt[0].y ));
+    if (ellipse_width <= 2|| ellipse_height <= 2)
+        return dibdrv_Rectangle( dev, left, top, right, bottom );
+
+    points = HeapAlloc( GetProcessHeap(), 0, (ellipse_width + ellipse_height) * 2 * sizeof(*points) );
+    if (!points) return FALSE;
+
+    if (pdev->pen_uses_region && !(outline = CreateRectRgn( 0, 0, 0, 0 )))
+    {
+        HeapFree( GetProcessHeap(), 0, points );
+        return FALSE;
+    }
+
+    if (pdev->brush.style != BS_NULL &&
+        !(interior = CreateRoundRectRgn( rect.left, rect.top, rect.right + 1, rect.bottom + 1,
+                                         ellipse_width, ellipse_height )))
+    {
+        HeapFree( GetProcessHeap(), 0, points );
+        return FALSE;
+    }
+
+    if (pdev->pen_uses_region) outline = CreateRectRgn( 0, 0, 0, 0 );
+
+    /* if not using a region, paint the interior first so the outline can overlap it */
+    if (interior && !outline)
+    {
+        ret = brush_region( pdev, interior );
+        DeleteObject( interior );
+        interior = 0;
+    }
+
+    count = ellipse_first_quadrant( ellipse_width, ellipse_height, points );
+
+    if (GetArcDirection( dev->hdc ) == AD_CLOCKWISE)
+    {
+        for (i = 0; i < count; i++)
+        {
+            points[i].x = rect.right - ellipse_width + points[i].x;
+            points[i].y = rect.bottom - ellipse_height + points[i].y;
+        }
+    }
+    else
+    {
+        for (i = 0; i < count; i++)
+        {
+            points[i].x = rect.right - ellipse_width + points[i].x;
+            points[i].y = rect.top + ellipse_height - 1 - points[i].y;
+        }
+    }
+
+    /* horizontal symmetry */
+
+    end = 2 * count - 1;
+    /* avoid duplicating the midpoint */
+    if (ellipse_width % 2 && ellipse_width == rect.right - rect.left) end--;
+    for (i = 0; i < count; i++)
+    {
+        points[end - i].x = rect.left + rect.right - 1 - points[i].x;
+        points[end - i].y = points[i].y;
+    }
+    count = end + 1;
+
+    /* vertical symmetry */
+
+    end = 2 * count - 1;
+    /* avoid duplicating the midpoint */
+    if (ellipse_height % 2 && ellipse_height == rect.bottom - rect.top) end--;
+    for (i = 0; i < count; i++)
+    {
+        points[end - i].x = points[i].x;
+        points[end - i].y = rect.top + rect.bottom - 1 - points[i].y;
+    }
+    count = end + 1;
+
+    reset_dash_origin( pdev );
+    pdev->pen_lines( pdev, count, points, TRUE, outline );
+
+    if (interior)
+    {
+        CombineRgn( interior, interior, outline, RGN_DIFF );
+        ret = brush_region( pdev, interior );
+        DeleteObject( interior );
+    }
+    if (outline)
+    {
+        if (ret) ret = pen_region( pdev, outline );
+        DeleteObject( outline );
+    }
+    HeapFree( GetProcessHeap(), 0, points );
     return ret;
 }
 

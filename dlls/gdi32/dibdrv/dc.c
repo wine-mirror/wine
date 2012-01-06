@@ -575,7 +575,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pDeleteObject */
     dibdrv_DescribePixelFormat,         /* pDescribePixelFormat */
     NULL,                               /* pDeviceCapabilities */
-    NULL,                               /* pEllipse */
+    dibdrv_Ellipse,                     /* pEllipse */
     NULL,                               /* pEndDoc */
     NULL,                               /* pEndPage */
     NULL,                               /* pEndPath */
@@ -642,7 +642,7 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_Rectangle,                   /* pRectangle */
     NULL,                               /* pResetDC */
     NULL,                               /* pRestoreDC */
-    NULL,                               /* pRoundRect */
+    dibdrv_RoundRect,                   /* pRoundRect */
     NULL,                               /* pSaveDC */
     NULL,                               /* pScaleViewportExt */
     NULL,                               /* pScaleWindowExt */
