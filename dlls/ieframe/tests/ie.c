@@ -26,6 +26,7 @@
 #include "winbase.h"
 #include "ole2.h"
 #include "exdisp.h"
+#include "mshtml.h"
 
 static void test_visible(IWebBrowser2 *wb)
 {
@@ -49,6 +50,22 @@ static void test_visible(IWebBrowser2 *wb)
     ok(hres == S_OK, "put_Visible failed: %08x\n", hres);
 }
 
+static void test_html_window(IWebBrowser2 *wb)
+{
+    IHTMLWindow2 *html_window;
+    IServiceProvider *sp;
+    HRESULT hres;
+
+    hres = IWebBrowser2_QueryInterface(wb, &IID_IServiceProvider, (void**)&sp);
+    ok(hres == S_OK, "Could not get IServiceProvider iface: %08x\n", hres);
+
+    hres = IServiceProvider_QueryService(sp, &SID_SHTMLWindow, &IID_IHTMLWindow2, (void**)&html_window);
+    IServiceProvider_Release(sp);
+    ok(hres == S_OK, "Could not get SHTMLWindow service: %08x\n", hres);
+
+    IHTMLWindow2_Release(html_window);
+}
+
 static void test_InternetExplorer(void)
 {
     IWebBrowser2 *wb;
@@ -67,6 +84,7 @@ static void test_InternetExplorer(void)
     ok(hres == S_OK, "Could not get IWebBrowser2 interface: %08x\n", hres);
 
     test_visible(wb);
+    test_html_window(wb);
 
     IWebBrowser2_Release(wb);
     ref = IUnknown_Release(unk);
