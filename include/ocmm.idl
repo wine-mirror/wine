@@ -17,7 +17,7 @@
  */
 
 import "oaidl.idl";
-import "ocidl.idl";
+import "oleidl.idl";
 
 cpp_quote("EXTERN_C const GUID NAMEDTIMER_DRAW;")
 
