@@ -17,6 +17,7 @@
  */
 
 import "oaidl.idl";
+import "ocidl.idl";
 
 cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
 cpp_quote("#undef FindText")
