@@ -680,6 +680,15 @@ BOOL dibdrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 }
 
 /***********************************************************************
+ *           dibdrv_ExtFloodFill
+ */
+BOOL dibdrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type )
+{
+    FIXME( "not implemented yet\n" );
+    return TRUE;
+}
+
+/***********************************************************************
  *           dibdrv_GetNearestColor
  */
 COLORREF dibdrv_GetNearestColor( PHYSDEV dev, COLORREF color )

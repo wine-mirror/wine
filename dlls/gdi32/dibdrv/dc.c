@@ -584,7 +584,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pExcludeClipRect */
     NULL,                               /* pExtDeviceMode */
     NULL,                               /* pExtEscape */
-    NULL,                               /* pExtFloodFill */
+    dibdrv_ExtFloodFill,                /* pExtFloodFill */
     NULL,                               /* pExtSelectClipRgn */
     dibdrv_ExtTextOut,                  /* pExtTextOut */
     NULL,                               /* pFillPath */

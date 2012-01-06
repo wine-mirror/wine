@@ -119,6 +119,7 @@ extern DWORD    dibdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct g
 extern BOOL     dibdrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                               INT start_x, INT start_y, INT end_x, INT end_y ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
+extern BOOL     dibdrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT type ) DECLSPEC_HIDDEN;
 extern BOOL     dibdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
                                    const RECT *rect, LPCWSTR str, UINT count, const INT *dx ) DECLSPEC_HIDDEN;
 extern DWORD    dibdrv_GetImage( PHYSDEV dev, HBITMAP hbitmap, BITMAPINFO *info,
