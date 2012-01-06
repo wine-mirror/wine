@@ -946,7 +946,7 @@
 @ varargs _snscanf_s(str long str) msvcrt._snscanf_s
 @ varargs _snscanf_s_l(str long str ptr) msvcrt._snscanf_s_l
 @ varargs _snwprintf(ptr long wstr) msvcrt._snwprintf
-@ stub _snwprintf_l
+@ varargs _snwprintf_l(ptr long wstr ptr) msvcrt._snwprintf_l
 @ varargs _snwprintf_s(ptr long long wstr) msvcrt._snwprintf_s
 @ stub _snwprintf_s_l
 @ varargs _snwscanf(wstr long wstr) msvcrt._snwscanf
