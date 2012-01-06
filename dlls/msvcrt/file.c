@@ -2371,7 +2371,11 @@ char * CDECL MSVCRT__tempnam(const char *dir, const char *prefix)
  */
 MSVCRT_wchar_t * CDECL MSVCRT__wtempnam(const MSVCRT_wchar_t *dir, const MSVCRT_wchar_t *prefix)
 {
+  static const MSVCRT_wchar_t tmpW[] = {'T','M','P',0};
   MSVCRT_wchar_t tmpbuf[MAX_PATH];
+  const MSVCRT_wchar_t *tmp_dir = MSVCRT__wgetenv(tmpW);
+
+  if (tmp_dir) dir = tmp_dir;
 
   TRACE("dir (%s) prefix (%s)\n",debugstr_w(dir),debugstr_w(prefix));
   if (GetTempFileNameW(dir,prefix,0,tmpbuf))
