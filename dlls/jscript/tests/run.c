@@ -108,7 +108,7 @@ static const CHAR test_valA[] = "testVal";
 static BOOL strict_dispid_check;
 static const char *test_name = "(null)";
 static IDispatch *script_disp;
-static int invoke_version;
+static int invoke_version = 2;
 static IActiveScriptError *script_error;
 
 /* Returns true if the user interface is in English. Note that this does not
