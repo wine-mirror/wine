@@ -524,9 +524,9 @@ static UINT ITERATE_Actions(MSIRECORD *row, LPVOID param)
     }
 
     if (needs_ui_sequence(package))
-        rc = ACTION_PerformUIAction(package, action, -1);
+        rc = ACTION_PerformUIAction(package, action, SCRIPT_NONE);
     else
-        rc = ACTION_PerformAction(package, action, -1);
+        rc = ACTION_PerformAction(package, action, SCRIPT_NONE);
 
     msi_dialog_check_messages( NULL );
 
@@ -1580,7 +1580,7 @@ static UINT execute_script( MSIPACKAGE *package, UINT script )
         ERR("no script!\n");
         return ERROR_FUNCTION_FAILED;
     }
-    if (script == ROLLBACK_SCRIPT)
+    if (script == SCRIPT_ROLLBACK)
     {
         for (i = package->script->ActionCount[script]; i > 0; i--)
         {
@@ -4916,7 +4916,7 @@ done:
 
 static UINT ACTION_InstallExecute(MSIPACKAGE *package)
 {
-    return execute_script(package,INSTALL_SCRIPT);
+    return execute_script(package, SCRIPT_INSTALL);
 }
 
 static UINT ITERATE_UnpublishIcon( MSIRECORD *row, LPVOID param )
@@ -5028,8 +5028,8 @@ static UINT ACTION_InstallFinalize(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         return rc;
 
-    /* then handle Commit Actions */
-    rc = execute_script(package,COMMIT_SCRIPT);
+    /* then handle commit actions */
+    rc = execute_script(package, SCRIPT_COMMIT);
     if (rc != ERROR_SUCCESS)
         return rc;
 
@@ -7293,7 +7293,7 @@ static BOOL ACTION_HandleStandardAction( MSIPACKAGE *package, LPCWSTR action, UI
                 if (StandardActions[i].action_rollback && !package->need_rollback)
                 {
                     TRACE("scheduling rollback action\n");
-                    msi_schedule_action( package, ROLLBACK_SCRIPT, StandardActions[i].action_rollback );
+                    msi_schedule_action( package, SCRIPT_ROLLBACK, StandardActions[i].action_rollback );
                 }
             }
             else
@@ -7400,9 +7400,9 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq)
         }
 
         if (needs_ui_sequence(package))
-            rc = ACTION_PerformUIAction(package, action, -1);
+            rc = ACTION_PerformUIAction(package, action, SCRIPT_NONE);
         else
-            rc = ACTION_PerformAction(package, action, -1);
+            rc = ACTION_PerformAction(package, action, SCRIPT_NONE);
 
         msiobj_release(&row->hdr);
     }
@@ -7528,7 +7528,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     if (package->need_rollback && !(reinstall = msi_dup_property( package->db, szReinstall )))
     {
         WARN("installation failed, running rollback script\n");
-        execute_script( package, ROLLBACK_SCRIPT );
+        execute_script( package, SCRIPT_ROLLBACK );
     }
     msi_free( reinstall );
 

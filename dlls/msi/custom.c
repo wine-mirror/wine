@@ -69,7 +69,7 @@ UINT msi_schedule_action( MSIPACKAGE *package, UINT script, const WCHAR *action 
     UINT count;
     WCHAR **newbuf = NULL;
 
-    if (script >= TOTAL_SCRIPTS)
+    if (script >= SCRIPT_MAX)
     {
         FIXME("Unknown script requested %u\n", script);
         return ERROR_FUNCTION_FAILED;
@@ -1164,6 +1164,60 @@ static UINT HANDLE_CustomType53_54(MSIPACKAGE *package, LPCWSTR source,
     return wait_thread_handle( info );
 }
 
+static BOOL action_type_matches_script( MSIPACKAGE *package, UINT type, UINT script )
+{
+    switch (script)
+    {
+    case SCRIPT_NONE:
+    case SCRIPT_INSTALL:
+        return !(type & msidbCustomActionTypeCommit) && !(type & msidbCustomActionTypeRollback);
+    case SCRIPT_COMMIT:
+        return (type & msidbCustomActionTypeCommit);
+    case SCRIPT_ROLLBACK:
+        return (type & msidbCustomActionTypeRollback);
+    default:
+        ERR("unhandled script %u\n", script);
+    }
+    return FALSE;
+}
+
+static UINT defer_custom_action( MSIPACKAGE *package, const WCHAR *action, UINT type )
+{
+    WCHAR *actiondata = msi_dup_property( package->db, action );
+    WCHAR *usersid = msi_dup_property( package->db, szUserSID );
+    WCHAR *prodcode = msi_dup_property( package->db, szProductCode );
+    WCHAR *deferred = msi_get_deferred_action( action, actiondata, usersid, prodcode );
+
+    if (!deferred)
+    {
+        msi_free( actiondata );
+        msi_free( usersid );
+        msi_free( prodcode );
+        return ERROR_OUTOFMEMORY;
+    }
+    if (type & msidbCustomActionTypeCommit)
+    {
+        TRACE("deferring commit action\n");
+        msi_schedule_action( package, SCRIPT_COMMIT, deferred );
+    }
+    else if (type & msidbCustomActionTypeRollback)
+    {
+        TRACE("deferring rollback action\n");
+        msi_schedule_action( package, SCRIPT_ROLLBACK, deferred );
+    }
+    else
+    {
+        TRACE("deferring install action\n");
+        msi_schedule_action( package, SCRIPT_INSTALL, deferred );
+    }
+
+    msi_free( actiondata );
+    msi_free( usersid );
+    msi_free( prodcode );
+    msi_free( deferred );
+    return ERROR_SUCCESS;
+}
+
 UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL execute)
 {
     static const WCHAR query[] = {
@@ -1192,7 +1246,6 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
     }
 
     type = MSI_RecordGetInteger(row,2);
-
     source = MSI_RecordGetString(row,3);
     target = MSI_RecordGetString(row,4);
 
@@ -1208,34 +1261,9 @@ UINT ACTION_CustomAction(MSIPACKAGE *package, LPCWSTR action, UINT script, BOOL 
         if (type & msidbCustomActionTypeNoImpersonate)
             WARN("msidbCustomActionTypeNoImpersonate not handled\n");
 
-        if (!execute)
+        if (!execute || !action_type_matches_script( package, type, script ))
         {
-            LPWSTR actiondata = msi_dup_property(package->db, action);
-            LPWSTR usersid = msi_dup_property(package->db, szUserSID);
-            LPWSTR prodcode = msi_dup_property(package->db, szProductCode);
-            LPWSTR deferred = msi_get_deferred_action(action, actiondata, usersid, prodcode);
-
-            if (type & msidbCustomActionTypeCommit)
-            {
-                TRACE("Deferring commit action\n");
-                msi_schedule_action(package, COMMIT_SCRIPT, deferred);
-            }
-            else if (type & msidbCustomActionTypeRollback)
-            {
-                TRACE("Deferring rollback action\n");
-                msi_schedule_action(package, ROLLBACK_SCRIPT, deferred);
-            }
-            else
-            {
-                TRACE("Deferring action\n");
-                msi_schedule_action(package, INSTALL_SCRIPT, deferred);
-            }
-
-            rc = ERROR_SUCCESS;
-            msi_free(actiondata);
-            msi_free(usersid);
-            msi_free(prodcode);
-            msi_free(deferred);
+            rc = defer_custom_action( package, action, type );
             goto end;
         }
         else

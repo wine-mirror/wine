@@ -658,11 +658,13 @@ struct tagMSIMIME
     BOOL InstallMe;
 };
 
-enum SCRIPTS {
-    INSTALL_SCRIPT = 0,
-    COMMIT_SCRIPT = 1,
-    ROLLBACK_SCRIPT = 2,
-    TOTAL_SCRIPTS = 3
+enum SCRIPTS
+{
+    SCRIPT_NONE     = -1,
+    SCRIPT_INSTALL  = 0,
+    SCRIPT_COMMIT   = 1,
+    SCRIPT_ROLLBACK = 2,
+    SCRIPT_MAX      = 3
 };
 
 #define SEQUENCE_UI       0x1
@@ -671,8 +673,8 @@ enum SCRIPTS {
 
 typedef struct tagMSISCRIPT
 {
-    LPWSTR  *Actions[TOTAL_SCRIPTS];
-    UINT    ActionCount[TOTAL_SCRIPTS];
+    LPWSTR  *Actions[SCRIPT_MAX];
+    UINT    ActionCount[SCRIPT_MAX];
     BOOL    ExecuteSequenceRun;
     BOOL    CurrentlyScripting;
     UINT    InWhatSequence;

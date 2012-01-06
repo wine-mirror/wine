@@ -283,7 +283,7 @@ static void free_package_structures( MSIPACKAGE *package )
 
     if (package->script)
     {
-        for (i = 0; i < TOTAL_SCRIPTS; i++)
+        for (i = 0; i < SCRIPT_MAX; i++)
             msi_free_action_script( package, i );
 
         for (i = 0; i < package->script->UniqueActionsCount; i++)
