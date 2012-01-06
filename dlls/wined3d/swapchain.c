@@ -546,8 +546,8 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
          *
          * The DISCARD swap effect is ok as well since any backbuffer content is allowed after
          * the swap. */
-        if (swapchain->desc.swap_effect == WINED3DSWAPEFFECT_FLIP)
-            FIXME("Render-to-fbo with WINED3DSWAPEFFECT_FLIP\n");
+        if (swapchain->desc.swap_effect == WINED3D_SWAP_EFFECT_FLIP)
+            FIXME("Render-to-fbo with WINED3D_SWAP_EFFECT_FLIP\n");
 
         swapchain_blit(swapchain, context, &src_rect, &dst_rect);
     }
@@ -588,7 +588,7 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
      * bug shows up much more than it does on Windows, and the players see single pixels
      * with wrong colors.
      * (The Max Payne bug has been confirmed on Windows with the debug runtime) */
-    if (FALSE && swapchain->desc.swap_effect == WINED3DSWAPEFFECT_DISCARD)
+    if (FALSE && swapchain->desc.swap_effect == WINED3D_SWAP_EFFECT_DISCARD)
     {
         static const struct wined3d_color cyan = {0.0f, 1.0f, 1.0f, 1.0f};
 
@@ -632,7 +632,7 @@ static HRESULT swapchain_gl_present(struct wined3d_swapchain *swapchain, const R
          * If the swapeffect is COPY, the content remains the same. If it is FLIP however,
          * the texture / sysmem copy needs to be reloaded from the drawable
          */
-        if (swapchain->desc.swap_effect == WINED3DSWAPEFFECT_FLIP)
+        if (swapchain->desc.swap_effect == WINED3D_SWAP_EFFECT_FLIP)
             surface_modify_location(swapchain->back_buffers[0], swapchain->back_buffers[0]->draw_binding, TRUE);
     }
 

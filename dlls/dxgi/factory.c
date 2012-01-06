@@ -212,7 +212,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IWineDXGIFactory *
         wined3d_desc.multisample_type = WINED3DMULTISAMPLE_NONE;
         wined3d_desc.multisample_quality = 0;
     }
-    wined3d_desc.swap_effect = WINED3DSWAPEFFECT_DISCARD;
+    wined3d_desc.swap_effect = WINED3D_SWAP_EFFECT_DISCARD;
     wined3d_desc.device_window = desc->OutputWindow;
     wined3d_desc.windowed = desc->Windowed;
     wined3d_desc.enable_auto_depth_stencil = FALSE;

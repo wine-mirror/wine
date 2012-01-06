@@ -685,7 +685,7 @@ static HRESULT ddraw_create_swapchain(IDirectDrawImpl *ddraw, HWND window, BOOL 
     swapchain_desc.backbuffer_width = mode.width;
     swapchain_desc.backbuffer_height = mode.height;
     swapchain_desc.backbuffer_format = mode.format_id;
-    swapchain_desc.swap_effect = WINED3DSWAPEFFECT_COPY;
+    swapchain_desc.swap_effect = WINED3D_SWAP_EFFECT_COPY;
     swapchain_desc.device_window = window;
     swapchain_desc.windowed = windowed;
 

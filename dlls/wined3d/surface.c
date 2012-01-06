@@ -1689,13 +1689,13 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
                     && dst_surface == dst_swapchain->front_buffer
                     && src_surface == dst_swapchain->back_buffers[0])
             {
-                WINED3DSWAPEFFECT swap_effect = dst_swapchain->desc.swap_effect;
+                enum wined3d_swap_effect swap_effect = dst_swapchain->desc.swap_effect;
 
                 TRACE("Using present for backbuffer -> frontbuffer blit.\n");
 
                 /* Set the swap effect to COPY, we don't want the backbuffer
                  * to become undefined. */
-                dst_swapchain->desc.swap_effect = WINED3DSWAPEFFECT_COPY;
+                dst_swapchain->desc.swap_effect = WINED3D_SWAP_EFFECT_COPY;
                 wined3d_swapchain_present(dst_swapchain, NULL, NULL, dst_swapchain->win_handle, NULL, 0);
                 dst_swapchain->desc.swap_effect = swap_effect;
 

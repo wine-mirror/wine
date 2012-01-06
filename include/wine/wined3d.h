@@ -501,14 +501,13 @@ enum wined3d_backbuffer_type
     WINED3D_BACKBUFFER_TYPE_RIGHT           = 2,
 };
 
-typedef enum _WINED3DSWAPEFFECT
+enum wined3d_swap_effect
 {
-    WINED3DSWAPEFFECT_DISCARD               = 1,
-    WINED3DSWAPEFFECT_FLIP                  = 2,
-    WINED3DSWAPEFFECT_COPY                  = 3,
-    WINED3DSWAPEFFECT_COPY_VSYNC            = 4,
-    WINED3DSWAPEFFECT_FORCE_DWORD           = 0xffffffff
-} WINED3DSWAPEFFECT;
+    WINED3D_SWAP_EFFECT_DISCARD             = 1,
+    WINED3D_SWAP_EFFECT_FLIP                = 2,
+    WINED3D_SWAP_EFFECT_COPY                = 3,
+    WINED3D_SWAP_EFFECT_COPY_VSYNC          = 4,
+};
 
 typedef enum _WINED3DSAMPLERSTATETYPE
 {
@@ -1629,7 +1628,7 @@ struct wined3d_swapchain_desc
     UINT backbuffer_count;
     WINED3DMULTISAMPLE_TYPE multisample_type;
     DWORD multisample_quality;
-    WINED3DSWAPEFFECT swap_effect;
+    enum wined3d_swap_effect swap_effect;
     HWND device_window;
     BOOL windowed;
     BOOL enable_auto_depth_stencil;
