@@ -97,22 +97,9 @@ typedef struct
 /***********************************************************************
  * Control IDs
  */
-#define IDS_ABOUTBOX                    101
-#define IDS_DOCUMENTFOLDERS             102
-#define IDS_PERSONAL                    103
-#define IDS_FAVORITES                   104
-#define IDS_PATH                        105
-#define IDS_DESKTOP                     106
-
-#define IDS_FONTS                       108
-#define IDS_MYCOMPUTER                  110
-#define IDS_SYSTEMFOLDERS               112
-#define IDS_LOCALHARDRIVES              113
 #define IDS_FILENOTFOUND                114
 #define IDS_VERIFYFILE                  115
 #define IDS_CREATEFILE                  116
-#define IDS_CREATEFOLDER_DENIED         117
-#define IDS_FILEOPEN_CAPTION            118
 #define IDS_OVERWRITEFILE		119
 #define IDS_INVALID_FILENAME_TITLE	120
 #define IDS_INVALID_FILENAME		121

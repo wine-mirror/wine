@@ -56,8 +56,8 @@ msgstr "削除(&R)"
 msgid "Support Information"
 msgstr "サポート情報"
 
-#: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 comdlg32.rc:240 comdlg32.rc:270
-#: comdlg32.rc:313 comdlg32.rc:367 comdlg32.rc:406 comdlg32.rc:460
+#: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 comdlg32.rc:226 comdlg32.rc:256
+#: comdlg32.rc:299 comdlg32.rc:353 comdlg32.rc:392 comdlg32.rc:446
 #: credui.rc:49 cryptui.rc:260 cryptui.rc:272 cryptui.rc:362 dinput.rc:43
 #: ieframe.rc:93 localui.rc:41 localui.rc:54 mpr.rc:46 msacm32.rc:50
 #: mshtml.rc:45 mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87
@@ -137,10 +137,10 @@ msgid "&Install"
 msgstr "インストール(&I)"
 
 #: appwiz.rc:107 avifil32.rc:52 browseui.rc:37 comctl32.rc:53 comctl32.rc:68
-#: comdlg32.rc:179 comdlg32.rc:201 comdlg32.rc:219 comdlg32.rc:241
-#: comdlg32.rc:271 comdlg32.rc:314 comdlg32.rc:336 comdlg32.rc:356
-#: comdlg32.rc:368 comdlg32.rc:407 comdlg32.rc:461 comdlg32.rc:485
-#: comdlg32.rc:503 credui.rc:50 cryptui.rc:261 cryptui.rc:273 cryptui.rc:363
+#: comdlg32.rc:165 comdlg32.rc:187 comdlg32.rc:205 comdlg32.rc:227
+#: comdlg32.rc:257 comdlg32.rc:300 comdlg32.rc:322 comdlg32.rc:342
+#: comdlg32.rc:354 comdlg32.rc:393 comdlg32.rc:447 comdlg32.rc:471
+#: comdlg32.rc:489 credui.rc:50 cryptui.rc:261 cryptui.rc:273 cryptui.rc:363
 #: dinput.rc:44 ieframe.rc:94 inetcpl.rc:78 localui.rc:42 localui.rc:55
 #: mpr.rc:47 msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34
 #: oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57
@@ -289,11 +289,11 @@ msgstr "キャンセル…"
 msgid "Properties for %s"
 msgstr "Properties for %s"
 
-#: comctl32.rc:54 comdlg32.rc:272
+#: comctl32.rc:54 comdlg32.rc:258
 msgid "&Apply"
 msgstr "適用(&A)"
 
-#: comctl32.rc:55 comctl32.rc:69 comdlg32.rc:315 user32.rc:86
+#: comctl32.rc:55 comctl32.rc:69 comdlg32.rc:301 user32.rc:86
 msgid "Help"
 msgstr "ヘルプ"
 
@@ -326,9 +326,9 @@ msgstr "閉じる(&C)"
 msgid "R&eset"
 msgstr "リセット(R&)"
 
-#: comctl32.rc:83 comdlg32.rc:180 comdlg32.rc:202 comdlg32.rc:273
-#: comdlg32.rc:337 comdlg32.rc:357 comdlg32.rc:369 comdlg32.rc:486
-#: comdlg32.rc:504 ieframe.rc:55 msacm32.rc:49 oledlg.rc:89 shell32.rc:125
+#: comctl32.rc:83 comdlg32.rc:166 comdlg32.rc:188 comdlg32.rc:259
+#: comdlg32.rc:323 comdlg32.rc:343 comdlg32.rc:355 comdlg32.rc:472
+#: comdlg32.rc:490 ieframe.rc:55 msacm32.rc:49 oledlg.rc:89 shell32.rc:125
 #: clock.rc:41 notepad.rc:57 notepad.rc:116 oleview.rc:69 progman.rc:52
 #: progman.rc:105 progman.rc:123 progman.rc:141 progman.rc:157 progman.rc:181
 #: progman.rc:199 progman.rc:216 regedit.rc:76 taskmgr.rc:87 winefile.rc:85
@@ -382,459 +382,418 @@ msgstr "今日:"
 msgid "Go to today"
 msgstr "今日へ移動"
 
-#: comdlg32.rc:165 comdlg32.rc:178 comdlg32.rc:467 comdlg32.rc:492
+#: comdlg32.rc:151 comdlg32.rc:164 comdlg32.rc:453 comdlg32.rc:478
 #: shell32.rc:164 oleview.rc:99
 msgid "Open"
 msgstr "開く"
 
-#: comdlg32.rc:168 comdlg32.rc:190
+#: comdlg32.rc:154 comdlg32.rc:176
 msgid "File &Name:"
 msgstr "ファイル名(&N):"
 
-#: comdlg32.rc:171 comdlg32.rc:193
+#: comdlg32.rc:157 comdlg32.rc:179
 msgid "&Directories:"
 msgstr "ディレクトリ(&D):"
 
-#: comdlg32.rc:174 comdlg32.rc:196
+#: comdlg32.rc:160 comdlg32.rc:182
 msgid "List Files of &Type:"
 msgstr "ファイルの種類(&T):"
 
-#: comdlg32.rc:176 comdlg32.rc:198
+#: comdlg32.rc:162 comdlg32.rc:184
 msgid "Dri&ves:"
 msgstr "ドライブ(&V):"
 
-#: comdlg32.rc:181 comdlg32.rc:203 winefile.rc:179
+#: comdlg32.rc:167 comdlg32.rc:189 winefile.rc:179
 msgid "&Read Only"
 msgstr "&Read Only"
 
-#: comdlg32.rc:187
+#: comdlg32.rc:173
 msgid "Save As..."
 msgstr "名前をつけて保存"
 
-#: comdlg32.rc:200 comdlg32.rc:155
+#: comdlg32.rc:186 comdlg32.rc:141
 msgid "Save As"
 msgstr "名前を付けて保存"
 
-#: comdlg32.rc:209 comdlg32.rc:218 comdlg32.rc:364 comdlg32.rc:64 hhctrl.rc:46
+#: comdlg32.rc:195 comdlg32.rc:204 comdlg32.rc:350 comdlg32.rc:50 hhctrl.rc:46
 #: wordpad.rc:162
 msgid "Print"
 msgstr "印刷"
 
-#: comdlg32.rc:212
+#: comdlg32.rc:198
 msgid "Printer:"
 msgstr "使用するプリンタ:"
 
-#: comdlg32.rc:214 comdlg32.rc:391
+#: comdlg32.rc:200 comdlg32.rc:377
 msgid "Print range"
 msgstr "印刷範囲"
 
-#: comdlg32.rc:215 comdlg32.rc:392 regedit.rc:216
+#: comdlg32.rc:201 comdlg32.rc:378 regedit.rc:216
 msgid "&All"
 msgstr "すべて(&A)"
 
-#: comdlg32.rc:216
+#: comdlg32.rc:202
 msgid "S&election"
 msgstr "選択した部分(&E)"
 
-#: comdlg32.rc:217
+#: comdlg32.rc:203
 msgid "&Pages"
 msgstr "ページ設定(&P)"
 
-#: comdlg32.rc:220 comdlg32.rc:242
+#: comdlg32.rc:206 comdlg32.rc:228
 msgid "&Setup"
 msgstr "プリンタの設定(&S)"
 
-#: comdlg32.rc:221
+#: comdlg32.rc:207
 msgid "&From:"
 msgstr "ページから(&F):"
 
-#: comdlg32.rc:222
+#: comdlg32.rc:208
 msgid "&To:"
 msgstr "ページまで(&T):"
 
-#: comdlg32.rc:223
+#: comdlg32.rc:209
 msgid "Print &Quality:"
 msgstr "印字品質(&Q):"
 
-#: comdlg32.rc:225
+#: comdlg32.rc:211
 msgid "Print to Fi&le"
 msgstr "ファイルへ出力(&L)"
 
-#: comdlg32.rc:226
+#: comdlg32.rc:212
 msgid "Condensed"
 msgstr "Condensed"
 
-#: comdlg32.rc:232 comdlg32.rc:403
+#: comdlg32.rc:218 comdlg32.rc:389
 msgid "Print Setup"
 msgstr "プリンタの設定"
 
-#: comdlg32.rc:235 comdlg32.rc:371 comdlg32.rc:410
+#: comdlg32.rc:221 comdlg32.rc:357 comdlg32.rc:396
 msgid "Printer"
 msgstr "プリンタの選択"
 
-#: comdlg32.rc:236
+#: comdlg32.rc:222
 msgid "&Default Printer"
 msgstr "通常使うプリンタ(&D)"
 
-#: comdlg32.rc:237
+#: comdlg32.rc:223
 msgid "[none]"
 msgstr "(通常使うプリンタが設定されていません)"
 
-#: comdlg32.rc:238
+#: comdlg32.rc:224
 msgid "Specific &Printer"
 msgstr "その他のプリンタ(&P)"
 
-#: comdlg32.rc:243 comdlg32.rc:429 comdlg32.rc:448 wineps.rc:31
+#: comdlg32.rc:229 comdlg32.rc:415 comdlg32.rc:434 wineps.rc:31
 msgid "Orientation"
 msgstr "方向"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:230
 msgid "Po&rtrait"
 msgstr "縦(&R)"
 
-#: comdlg32.rc:245 comdlg32.rc:450 wineps.rc:34
+#: comdlg32.rc:231 comdlg32.rc:436 wineps.rc:34
 msgid "&Landscape"
 msgstr "横(&L)"
 
-#: comdlg32.rc:248 comdlg32.rc:423 comdlg32.rc:443 wineps.rc:25
+#: comdlg32.rc:234 comdlg32.rc:409 comdlg32.rc:429 wineps.rc:25
 msgid "Paper"
 msgstr "用紙"
 
-#: comdlg32.rc:249
+#: comdlg32.rc:235
 msgid "Si&ze"
 msgstr "用紙サイズ(&Z)"
 
-#: comdlg32.rc:250
+#: comdlg32.rc:236
 msgid "&Source"
 msgstr "給紙方法(&S)"
 
-#: comdlg32.rc:258
+#: comdlg32.rc:244
 msgid "Font"
 msgstr "フォントの指定"
 
-#: comdlg32.rc:261
+#: comdlg32.rc:247
 msgid "&Font:"
 msgstr "フォント名(&F):"
 
-#: comdlg32.rc:264
+#: comdlg32.rc:250
 msgid "Font St&yle:"
 msgstr "スタイル(&Y):"
 
-#: comdlg32.rc:267 comdlg32.rc:444 winecfg.rc:291
+#: comdlg32.rc:253 comdlg32.rc:430 winecfg.rc:291
 msgid "&Size:"
 msgstr "サイズ(&S):"
 
-#: comdlg32.rc:274
+#: comdlg32.rc:260
 msgid "Effects"
 msgstr "文字飾り"
 
-#: comdlg32.rc:275
+#: comdlg32.rc:261
 msgid "Stri&keout"
 msgstr "取り消し線(&K)"
 
-#: comdlg32.rc:276
+#: comdlg32.rc:262
 msgid "&Underline"
 msgstr "下線(&U)"
 
-#: comdlg32.rc:277 winecfg.rc:289
+#: comdlg32.rc:263 winecfg.rc:289
 msgid "&Color:"
 msgstr "配色(&C):"
 
-#: comdlg32.rc:280
+#: comdlg32.rc:266
 msgid "Sample"
 msgstr "サンプル"
 
-#: comdlg32.rc:281
+#: comdlg32.rc:267
 msgid "AaBbYyZz"
 msgstr "AaBbYyZz"
 
-#: comdlg32.rc:282
+#: comdlg32.rc:268
 msgid "Scr&ipt:"
 msgstr "文字セット(&I):"
 
-#: comdlg32.rc:290
+#: comdlg32.rc:276
 msgid "Color"
 msgstr "色の設定"
 
-#: comdlg32.rc:293
+#: comdlg32.rc:279
 msgid "&Basic Colors:"
 msgstr "基本色(&B):"
 
-#: comdlg32.rc:294
+#: comdlg32.rc:280
 msgid "&Custom Colors:"
 msgstr "作成した色(&C):"
 
-#: comdlg32.rc:295 comdlg32.rc:318
+#: comdlg32.rc:281 comdlg32.rc:304
 msgid "Color |  Sol&id"
 msgstr "色 |  純色(&I)"
 
-#: comdlg32.rc:296
+#: comdlg32.rc:282
 msgid "&Red:"
 msgstr "赤(&R):"
 
-#: comdlg32.rc:298
+#: comdlg32.rc:284
 msgid "&Green:"
 msgstr "緑(&G):"
 
-#: comdlg32.rc:300
+#: comdlg32.rc:286
 msgid "&Blue:"
 msgstr "青(&B):"
 
-#: comdlg32.rc:302
+#: comdlg32.rc:288
 msgid "&Hue:"
 msgstr "色合い(&H):"
 
-#: comdlg32.rc:304
+#: comdlg32.rc:290
 msgid "&Sat:"
 msgstr "鮮やかさ(&S):"
 
-#: comdlg32.rc:306
+#: comdlg32.rc:292
 msgid "&Lum:"
 msgstr "明るさ(&L):"
 
-#: comdlg32.rc:316
+#: comdlg32.rc:302
 msgid "&Add to Custom Colors"
 msgstr "色の追加(&A)"
 
-#: comdlg32.rc:317
+#: comdlg32.rc:303
 msgid "&Define Custom Colors >>"
 msgstr "色の作成(&D) >>"
 
-#: comdlg32.rc:324 regedit.rc:223 regedit.rc:233
+#: comdlg32.rc:310 regedit.rc:223 regedit.rc:233
 msgid "Find"
 msgstr "検索"
 
-#: comdlg32.rc:327 comdlg32.rc:346
+#: comdlg32.rc:313 comdlg32.rc:332
 msgid "Fi&nd What:"
 msgstr "検索する文字列(&N):"
 
-#: comdlg32.rc:329 comdlg32.rc:350
+#: comdlg32.rc:315 comdlg32.rc:336
 msgid "Match &Whole Word Only"
 msgstr "単語単位で検索(&W)"
 
-#: comdlg32.rc:330 comdlg32.rc:351
+#: comdlg32.rc:316 comdlg32.rc:337
 msgid "Match &Case"
 msgstr "大文字と小文字を区別する(&C)"
 
-#: comdlg32.rc:331
+#: comdlg32.rc:317
 msgid "Direction"
 msgstr "検索する方向"
 
-#: comdlg32.rc:332 view.rc:39
+#: comdlg32.rc:318 view.rc:39
 msgid "&Up"
 msgstr "上(&U)"
 
-#: comdlg32.rc:333 view.rc:40
+#: comdlg32.rc:319 view.rc:40
 msgid "&Down"
 msgstr "下(&D)"
 
-#: comdlg32.rc:335 comdlg32.rc:353
+#: comdlg32.rc:321 comdlg32.rc:339
 msgid "&Find Next"
 msgstr "次を検索(&F)"
 
-#: comdlg32.rc:343
+#: comdlg32.rc:329
 msgid "Replace"
 msgstr "文字列の置換"
 
-#: comdlg32.rc:348
+#: comdlg32.rc:334
 msgid "Re&place With:"
 msgstr "置換後の文字列(&P):"
 
-#: comdlg32.rc:354
+#: comdlg32.rc:340
 msgid "&Replace"
 msgstr "置換して次に(&R)"
 
-#: comdlg32.rc:355
+#: comdlg32.rc:341
 msgid "Replace &All"
 msgstr "すべてを置換(&A)"
 
-#: comdlg32.rc:372
+#: comdlg32.rc:358
 msgid "Print to fi&le"
 msgstr "ファイルへ出力(&L)"
 
-#: comdlg32.rc:373 comdlg32.rc:411 ieframe.rc:39 shdoclc.rc:58 shell32.rc:105
+#: comdlg32.rc:359 comdlg32.rc:397 ieframe.rc:39 shdoclc.rc:58 shell32.rc:105
 #: clock.rc:28 wineconsole.rc:27
 msgid "&Properties"
 msgstr "プロパティ(&P)"
 
-#: comdlg32.rc:374 comdlg32.rc:412 msacm32.rc:31 winefile.rc:144
+#: comdlg32.rc:360 comdlg32.rc:398 msacm32.rc:31 winefile.rc:144
 msgid "&Name:"
 msgstr "&Name:"
 
-#: comdlg32.rc:376 comdlg32.rc:414
+#: comdlg32.rc:362 comdlg32.rc:400
 msgid "Status:"
 msgstr "状態:"
 
-#: comdlg32.rc:378 comdlg32.rc:416
+#: comdlg32.rc:364 comdlg32.rc:402
 msgid "Type:"
 msgstr "種類:"
 
-#: comdlg32.rc:380 comdlg32.rc:418
+#: comdlg32.rc:366 comdlg32.rc:404
 msgid "Where:"
 msgstr "場所:"
 
-#: comdlg32.rc:382 comdlg32.rc:420
+#: comdlg32.rc:368 comdlg32.rc:406
 msgid "Comment:"
 msgstr "コメント:"
 
-#: comdlg32.rc:385
+#: comdlg32.rc:371
 msgid "Copies"
 msgstr "印刷部数"
 
-#: comdlg32.rc:386
+#: comdlg32.rc:372
 msgid "Number of &copies:"
 msgstr "部数(&C):"
 
-#: comdlg32.rc:388
+#: comdlg32.rc:374
 msgid "C&ollate"
 msgstr "部単位で印刷(&O)"
 
-#: comdlg32.rc:393
+#: comdlg32.rc:379
 msgid "Pa&ges"
 msgstr "ページ指定(&G)"
 
-#: comdlg32.rc:394
+#: comdlg32.rc:380
 msgid "&Selection"
 msgstr "選択した部分(&S)"
 
-#: comdlg32.rc:397
+#: comdlg32.rc:383
 msgid "&from:"
 msgstr "ページから(&F):"
 
-#: comdlg32.rc:398
+#: comdlg32.rc:384
 msgid "&to:"
 msgstr "ページまで(&T):"
 
-#: comdlg32.rc:424 winecfg.rc:297
+#: comdlg32.rc:410 winecfg.rc:297
 msgid "Si&ze:"
 msgstr "サイズ(&Z):"
 
-#: comdlg32.rc:426
+#: comdlg32.rc:412
 msgid "&Source:"
 msgstr "&Source:"
 
-#: comdlg32.rc:431
+#: comdlg32.rc:417
 msgid "P&ortrait"
 msgstr "縦(&O)"
 
-#: comdlg32.rc:432
+#: comdlg32.rc:418
 msgid "L&andscape"
 msgstr "横(&A)"
 
-#: comdlg32.rc:437
+#: comdlg32.rc:423
 msgid "Setup Page"
 msgstr "ページ設定"
 
-#: comdlg32.rc:446
+#: comdlg32.rc:432
 msgid "&Tray:"
 msgstr "給紙方法(&T):"
 
-#: comdlg32.rc:449 wineps.rc:32
+#: comdlg32.rc:435 wineps.rc:32
 msgid "&Portrait"
 msgstr "縦(&P)"
 
-#: comdlg32.rc:451
+#: comdlg32.rc:437
 msgid "Borders"
 msgstr "余白"
 
-#: comdlg32.rc:452
+#: comdlg32.rc:438
 msgid "L&eft:"
 msgstr "左(&E):"
 
-#: comdlg32.rc:454 notepad.rc:109
+#: comdlg32.rc:440 notepad.rc:109
 msgid "&Right:"
 msgstr "右(&R):"
 
-#: comdlg32.rc:456
+#: comdlg32.rc:442
 msgid "T&op:"
 msgstr "上(&O):"
 
-#: comdlg32.rc:458 notepad.rc:111
+#: comdlg32.rc:444 notepad.rc:111
 msgid "&Bottom:"
 msgstr "下(&B):"
 
-#: comdlg32.rc:462
+#: comdlg32.rc:448
 msgid "P&rinter..."
 msgstr "プリンタ(&R)..."
 
-#: comdlg32.rc:470
+#: comdlg32.rc:456
 msgid "Look &in:"
 msgstr "ファイルの場所(&I):"
 
-#: comdlg32.rc:476
+#: comdlg32.rc:462
 msgid "File &name:"
 msgstr "ファイル名(&N):"
 
-#: comdlg32.rc:479
+#: comdlg32.rc:465
 msgid "Files of &type:"
 msgstr "ファイルの種類(&T):"
 
-#: comdlg32.rc:482
+#: comdlg32.rc:468
 msgid "Open as &read-only"
 msgstr "読み取り専用ファイルとして開く(&R)"
 
-#: comdlg32.rc:484 comdlg32.rc:502 shdoclc.rc:124 shell32.rc:96
+#: comdlg32.rc:470 comdlg32.rc:488 shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
 msgstr "開く(&O)"
 
-#: comdlg32.rc:495
+#: comdlg32.rc:481
 msgid "File name:"
 msgstr "ファイル名:"
 
-#: comdlg32.rc:498
+#: comdlg32.rc:484
 msgid "Files of type:"
 msgstr "ファイルの種類:"
 
 #: comdlg32.rc:29
-msgid "&About FolderPicker Test"
-msgstr "バージョン情報(&A)"
-
-#: comdlg32.rc:30
-msgid "Document Folders"
-msgstr "ドキュメント フォルダ"
-
-#: comdlg32.rc:31 shell32.rc:200
-msgid "My Documents"
-msgstr "My Documents"
-
-#: comdlg32.rc:32
-msgid "My Favorites"
-msgstr "お気に入り"
-
-#: comdlg32.rc:33
-msgid "System Path"
-msgstr "システム パス"
-
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:98 winefile.rc:103
-msgctxt "display name"
-msgid "Desktop"
-msgstr "デスクトップ"
-
-#: comdlg32.rc:35 winhlp32.rc:46 winhlp32.rc:67
-msgid "Fonts"
-msgstr "フォント"
-
-#: comdlg32.rc:36 shell32.rc:154 regedit.rc:200
-msgid "My Computer"
-msgstr "マイ コンピュータ"
-
-#: comdlg32.rc:41
-msgid "System Folders"
-msgstr "システム フォルダ"
-
-#: comdlg32.rc:42
-msgid "Local Hard Drives"
-msgstr "ローカル ハード ドライブ"
-
-#: comdlg32.rc:43
 msgid "File not found"
 msgstr "ファイルが見つかりません。"
 
-#: comdlg32.rc:44
+#: comdlg32.rc:30
 msgid "Please verify that the correct file name was given"
 msgstr "ファイル名を確認してください。"
 
-#: comdlg32.rc:45
+#: comdlg32.rc:31
 msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
@@ -842,7 +801,7 @@ msgstr ""
 "このファイルは存在しません。\n"
 "作成しますか?"
 
-#: comdlg32.rc:46
+#: comdlg32.rc:32
 msgid ""
 "File already exists.\n"
 "Do you want to replace it?"
@@ -850,11 +809,11 @@ msgstr ""
 "ファイルは既に存在します。\n"
 "上書きしますか?"
 
-#: comdlg32.rc:47
+#: comdlg32.rc:33
 msgid "Invalid character(s) in path"
 msgstr "ファイル名に使えない文字"
 
-#: comdlg32.rc:48
+#: comdlg32.rc:34
 msgid ""
 "A filename cannot contain any of the following characters:\n"
 "                          / : < > |"
@@ -862,119 +821,119 @@ msgstr ""
 "ファイル名には以下の文字は使えません:\n"
 "                          / : < > |"
 
-#: comdlg32.rc:49
+#: comdlg32.rc:35
 msgid "Path does not exist"
 msgstr "パスが見つかりません"
 
-#: comdlg32.rc:50
+#: comdlg32.rc:36
 msgid "File does not exist"
 msgstr "ファイルが見つかりません"
 
-#: comdlg32.rc:55
+#: comdlg32.rc:41
 msgid "Up One Level"
 msgstr "一つ上のフォルダへ"
 
-#: comdlg32.rc:56
+#: comdlg32.rc:42
 msgid "Create New Folder"
 msgstr "新しいフォルダの作成"
 
-#: comdlg32.rc:57
+#: comdlg32.rc:43
 msgid "List"
 msgstr "一覧"
 
-#: comdlg32.rc:58 cryptui.rc:193
+#: comdlg32.rc:44 cryptui.rc:193
 msgid "Details"
 msgstr "詳細"
 
-#: comdlg32.rc:59
+#: comdlg32.rc:45
 msgid "Browse to Desktop"
 msgstr "デスクトップを参照"
 
-#: comdlg32.rc:123
+#: comdlg32.rc:109
 msgid "Regular"
 msgstr "標準"
 
-#: comdlg32.rc:124
+#: comdlg32.rc:110
 msgid "Bold"
 msgstr "太字"
 
-#: comdlg32.rc:125
+#: comdlg32.rc:111
 msgid "Italic"
 msgstr "斜体"
 
-#: comdlg32.rc:126
+#: comdlg32.rc:112
 msgid "Bold Italic"
 msgstr "太字 斜体"
 
-#: comdlg32.rc:131 wordpad.rc:114
+#: comdlg32.rc:117 wordpad.rc:114
 msgid "Black"
 msgstr "黒"
 
-#: comdlg32.rc:132 wordpad.rc:115
+#: comdlg32.rc:118 wordpad.rc:115
 msgid "Maroon"
 msgstr "茶色"
 
-#: comdlg32.rc:133 wordpad.rc:116
+#: comdlg32.rc:119 wordpad.rc:116
 msgid "Green"
 msgstr "緑"
 
-#: comdlg32.rc:134 wordpad.rc:117
+#: comdlg32.rc:120 wordpad.rc:117
 msgid "Olive"
 msgstr "オリーブ"
 
-#: comdlg32.rc:135 wordpad.rc:118
+#: comdlg32.rc:121 wordpad.rc:118
 msgid "Navy"
 msgstr "紺"
 
-#: comdlg32.rc:136 wordpad.rc:119
+#: comdlg32.rc:122 wordpad.rc:119
 msgid "Purple"
 msgstr "紫"
 
-#: comdlg32.rc:137 wordpad.rc:120
+#: comdlg32.rc:123 wordpad.rc:120
 msgid "Teal"
 msgstr "青緑"
 
-#: comdlg32.rc:138 wordpad.rc:121
+#: comdlg32.rc:124 wordpad.rc:121
 msgid "Gray"
 msgstr "灰色"
 
-#: comdlg32.rc:139 wordpad.rc:122
+#: comdlg32.rc:125 wordpad.rc:122
 msgid "Silver"
 msgstr "銀色"
 
-#: comdlg32.rc:140 wordpad.rc:123
+#: comdlg32.rc:126 wordpad.rc:123
 msgid "Red"
 msgstr "赤"
 
-#: comdlg32.rc:141 wordpad.rc:124
+#: comdlg32.rc:127 wordpad.rc:124
 msgid "Lime"
 msgstr "黄緑"
 
-#: comdlg32.rc:142 wordpad.rc:125
+#: comdlg32.rc:128 wordpad.rc:125
 msgid "Yellow"
 msgstr "黄"
 
-#: comdlg32.rc:143 wordpad.rc:126
+#: comdlg32.rc:129 wordpad.rc:126
 msgid "Blue"
 msgstr "青"
 
-#: comdlg32.rc:144 wordpad.rc:127
+#: comdlg32.rc:130 wordpad.rc:127
 msgid "Fuchsia"
 msgstr "赤紫"
 
-#: comdlg32.rc:145 wordpad.rc:128
+#: comdlg32.rc:131 wordpad.rc:128
 msgid "Aqua"
 msgstr "水色"
 
-#: comdlg32.rc:146 wordpad.rc:129
+#: comdlg32.rc:132 wordpad.rc:129
 msgid "White"
 msgstr "白"
 
-#: comdlg32.rc:66
+#: comdlg32.rc:52
 msgid "Unreadable Entry"
 msgstr ""
 
-#: comdlg32.rc:68
+#: comdlg32.rc:54
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
@@ -982,11 +941,11 @@ msgstr ""
 "この値はページの範囲に含まれません。\n"
 "%1!d! から %2!d! までの値を入力してください。"
 
-#: comdlg32.rc:70
+#: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
 msgstr "開始ページの値は、終了ページの値を超えない値にしてください。"
 
-#: comdlg32.rc:72
+#: comdlg32.rc:58
 msgid ""
 "Margins overlap or fall outside Paper boundaries.\n"
 "Please reenter margins."
@@ -994,11 +953,11 @@ msgstr ""
 "余白が重なっているか、用紙の境界を超えています。\n"
 "余白を再入力してください。"
 
-#: comdlg32.rc:74
+#: comdlg32.rc:60
 msgid "The 'Number of copies' field cannot be empty."
 msgstr "部数は、空にできません。"
 
-#: comdlg32.rc:76
+#: comdlg32.rc:62
 msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
@@ -1006,31 +965,31 @@ msgstr ""
 "部数がプリンタがサポートしている範囲を超えています。\n"
 "1 から %d までの値を入力してください。"
 
-#: comdlg32.rc:77
+#: comdlg32.rc:63
 msgid "A printer error occurred."
 msgstr "プリンタ エラーが発生しました。"
 
-#: comdlg32.rc:78
+#: comdlg32.rc:64
 msgid "No default printer defined."
 msgstr "既定のプリンタが定義されていません。"
 
-#: comdlg32.rc:79
+#: comdlg32.rc:65
 msgid "Cannot find the printer."
 msgstr "プリンタが見つかりません。"
 
-#: comdlg32.rc:80 progman.rc:73
+#: comdlg32.rc:66 progman.rc:73
 msgid "Out of memory."
 msgstr "メモリ不足です。"
 
-#: comdlg32.rc:81
+#: comdlg32.rc:67
 msgid "An error occurred."
 msgstr "エラーが発生しました。"
 
-#: comdlg32.rc:82
+#: comdlg32.rc:68
 msgid "Unknown printer driver."
 msgstr "プリンタ ドライバが不明です。"
 
-#: comdlg32.rc:85
+#: comdlg32.rc:71
 msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
@@ -1039,148 +998,148 @@ msgstr ""
 "をインストールする必要があります。 プリンタをインストールしてから再度実行して"
 "ください。"
 
-#: comdlg32.rc:151
+#: comdlg32.rc:137
 msgid "Select a font size between %1!d! and %2!d! points."
 msgstr ""
 "フォントサイズを %1!d! ポイントから %2!d! ポイントの間で選択してください。"
 
-#: comdlg32.rc:152 ieframe.rc:32
+#: comdlg32.rc:138 ieframe.rc:32
 msgid "&Save"
 msgstr "保存(&S)"
 
-#: comdlg32.rc:153
+#: comdlg32.rc:139
 msgid "Save &in:"
 msgstr "保存する場所(&I):"
 
-#: comdlg32.rc:154
+#: comdlg32.rc:140
 msgid "Save"
 msgstr "保存"
 
-#: comdlg32.rc:156
+#: comdlg32.rc:142
 msgid "Open File"
 msgstr "ファイルを開く"
 
-#: comdlg32.rc:93 oleview.rc:95
+#: comdlg32.rc:79 oleview.rc:95
 msgid "Ready"
 msgstr "待機中"
 
-#: comdlg32.rc:94
+#: comdlg32.rc:80
 msgid "Paused; "
 msgstr "一時停止 -"
 
-#: comdlg32.rc:95
+#: comdlg32.rc:81
 msgid "Error; "
 msgstr "エラー -"
 
-#: comdlg32.rc:96
+#: comdlg32.rc:82
 msgid "Pending deletion; "
 msgstr "削除待ち -"
 
-#: comdlg32.rc:97
+#: comdlg32.rc:83
 msgid "Paper jam; "
 msgstr "紙詰まり -"
 
-#: comdlg32.rc:98
+#: comdlg32.rc:84
 msgid "Out of paper; "
 msgstr "用紙切れ -"
 
-#: comdlg32.rc:99
+#: comdlg32.rc:85
 msgid "Feed paper manual; "
 msgstr "手差し -"
 
-#: comdlg32.rc:100
+#: comdlg32.rc:86
 msgid "Paper problem; "
 msgstr "用紙の問題 -"
 
-#: comdlg32.rc:101
+#: comdlg32.rc:87
 msgid "Printer offline; "
 msgstr "オフライン -"
 
-#: comdlg32.rc:102
+#: comdlg32.rc:88
 msgid "I/O Active; "
 msgstr "入出力中 -"
 
-#: comdlg32.rc:103
+#: comdlg32.rc:89
 msgid "Busy; "
 msgstr "ビジー -"
 
-#: comdlg32.rc:104
+#: comdlg32.rc:90
 msgid "Printing; "
 msgstr "印刷中 -"
 
-#: comdlg32.rc:105
+#: comdlg32.rc:91
 msgid "Output tray is full; "
 msgstr "出力トレイが満杯 -"
 
-#: comdlg32.rc:106
+#: comdlg32.rc:92
 msgid "Not available; "
 msgstr "利用不可 -"
 
-#: comdlg32.rc:107
+#: comdlg32.rc:93
 msgid "Waiting; "
 msgstr "待機中 -"
 
-#: comdlg32.rc:108
+#: comdlg32.rc:94
 msgid "Processing; "
 msgstr "処理中 -"
 
-#: comdlg32.rc:109
+#: comdlg32.rc:95
 msgid "Initialising; "
 msgstr "初期化中 -"
 
-#: comdlg32.rc:110
+#: comdlg32.rc:96
 msgid "Warming up; "
 msgstr "ウォーミング アップ -"
 
-#: comdlg32.rc:111
+#: comdlg32.rc:97
 msgid "Toner low; "
 msgstr "トナー少量 -"
 
-#: comdlg32.rc:112
+#: comdlg32.rc:98
 msgid "No toner; "
 msgstr "トナーなし -"
 
-#: comdlg32.rc:113
+#: comdlg32.rc:99
 msgid "Page punt; "
 msgstr "処理不能 -"
 
-#: comdlg32.rc:114
+#: comdlg32.rc:100
 msgid "Interrupted by user; "
 msgstr "ユーザー操作が必要 -"
 
-#: comdlg32.rc:115
+#: comdlg32.rc:101
 msgid "Out of memory; "
 msgstr "メモリ不足 -"
 
-#: comdlg32.rc:116
+#: comdlg32.rc:102
 msgid "The printer door is open; "
 msgstr "プリンタ カバー開放 -"
 
-#: comdlg32.rc:117
+#: comdlg32.rc:103
 msgid "Print server unknown; "
 msgstr "プリント サーバ不明 -"
 
-#: comdlg32.rc:118
+#: comdlg32.rc:104
 msgid "Power save mode; "
 msgstr "省電力モード -"
 
-#: comdlg32.rc:87
+#: comdlg32.rc:73
 msgid "Default Printer; "
 msgstr "既定のプリンタ "
 
-#: comdlg32.rc:88
+#: comdlg32.rc:74
 msgid "There are %d documents in the queue"
 msgstr "キューに %d つの文書"
 
-#: comdlg32.rc:89
+#: comdlg32.rc:75
 msgid "Margins [inches]"
 msgstr "余白 [インチ]"
 
-#: comdlg32.rc:90
+#: comdlg32.rc:76
 msgid "Margins [mm]"
 msgstr "余白 [mm]"
 
-#: comdlg32.rc:91 sane.rc:33
+#: comdlg32.rc:77 sane.rc:33
 msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "mm"
@@ -7842,6 +7801,15 @@ msgstr "元の場所"
 msgid "Date deleted"
 msgstr "削除日"
 
+#: shell32.rc:153 winecfg.rc:98 winefile.rc:103
+msgctxt "display name"
+msgid "Desktop"
+msgstr "デスクトップ"
+
+#: shell32.rc:154 regedit.rc:200
+msgid "My Computer"
+msgstr "マイ コンピュータ"
+
 #: shell32.rc:156
 msgid "Control Panel"
 msgstr "コントロール パネル"
@@ -7869,6 +7837,10 @@ msgstr "Wine セッションをシャットダウンしますか?"
 #: shell32.rc:199
 msgid "Start Menu\\Programs"
 msgstr "Start Menu\\Programs"
+
+#: shell32.rc:200
+msgid "My Documents"
+msgstr "My Documents"
 
 #: shell32.rc:201
 msgid "Favorites"
@@ -13656,6 +13628,10 @@ msgstr "定義(&D)..."
 #: winhlp32.rc:45
 msgid "History"
 msgstr "履歴"
+
+#: winhlp32.rc:46 winhlp32.rc:67
+msgid "Fonts"
+msgstr "フォント"
 
 #: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"

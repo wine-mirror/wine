@@ -26,20 +26,6 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-    IDS_ABOUTBOX            "&About FolderPicker Test"
-    IDS_DOCUMENTFOLDERS     "Document Folders"
-    IDS_PERSONAL            "My Documents"
-    IDS_FAVORITES           "My Favorites"
-    IDS_PATH                "System Path"
-    IDS_DESKTOP             "#msgctxt#display name#Desktop"
-    IDS_FONTS               "Fonts"
-    IDS_MYCOMPUTER          "My Computer"
-}
-
-STRINGTABLE
-{
-    IDS_SYSTEMFOLDERS       "System Folders"
-    IDS_LOCALHARDRIVES      "Local Hard Drives"
     IDS_FILENOTFOUND        "File not found"
     IDS_VERIFYFILE          "Please verify that the correct file name was given"
     IDS_CREATEFILE          "File does not exist.\nDo you want to create file?"

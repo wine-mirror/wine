@@ -51,8 +51,8 @@ msgstr "刪除(&R)"
 msgid "Support Information"
 msgstr "技術支援資訊"
 
-#: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 comdlg32.rc:240 comdlg32.rc:270
-#: comdlg32.rc:313 comdlg32.rc:367 comdlg32.rc:406 comdlg32.rc:460
+#: appwiz.rc:75 avifil32.rc:51 comctl32.rc:52 comdlg32.rc:226 comdlg32.rc:256
+#: comdlg32.rc:299 comdlg32.rc:353 comdlg32.rc:392 comdlg32.rc:446
 #: credui.rc:49 cryptui.rc:260 cryptui.rc:272 cryptui.rc:362 dinput.rc:43
 #: ieframe.rc:93 localui.rc:41 localui.rc:54 mpr.rc:46 msacm32.rc:50
 #: mshtml.rc:45 mshtml.rc:55 msvfw32.rc:33 oledlg.rc:55 oledlg.rc:87
@@ -128,10 +128,10 @@ msgid "&Install"
 msgstr "安裝(&I)"
 
 #: appwiz.rc:107 avifil32.rc:52 browseui.rc:37 comctl32.rc:53 comctl32.rc:68
-#: comdlg32.rc:179 comdlg32.rc:201 comdlg32.rc:219 comdlg32.rc:241
-#: comdlg32.rc:271 comdlg32.rc:314 comdlg32.rc:336 comdlg32.rc:356
-#: comdlg32.rc:368 comdlg32.rc:407 comdlg32.rc:461 comdlg32.rc:485
-#: comdlg32.rc:503 credui.rc:50 cryptui.rc:261 cryptui.rc:273 cryptui.rc:363
+#: comdlg32.rc:165 comdlg32.rc:187 comdlg32.rc:205 comdlg32.rc:227
+#: comdlg32.rc:257 comdlg32.rc:300 comdlg32.rc:322 comdlg32.rc:342
+#: comdlg32.rc:354 comdlg32.rc:393 comdlg32.rc:447 comdlg32.rc:471
+#: comdlg32.rc:489 credui.rc:50 cryptui.rc:261 cryptui.rc:273 cryptui.rc:363
 #: dinput.rc:44 ieframe.rc:94 inetcpl.rc:78 localui.rc:42 localui.rc:55
 #: mpr.rc:47 msacm32.rc:51 mshtml.rc:46 mshtml.rc:56 msvfw32.rc:34
 #: oledlg.rc:56 oledlg.rc:88 serialui.rc:39 setupapi.rc:39 setupapi.rc:57
@@ -274,11 +274,11 @@ msgstr "正在取消..."
 msgid "Properties for %s"
 msgstr "屬性 %s"
 
-#: comctl32.rc:54 comdlg32.rc:272
+#: comctl32.rc:54 comdlg32.rc:258
 msgid "&Apply"
 msgstr "套用(&A)"
 
-#: comctl32.rc:55 comctl32.rc:69 comdlg32.rc:315 user32.rc:86
+#: comctl32.rc:55 comctl32.rc:69 comdlg32.rc:301 user32.rc:86
 msgid "Help"
 msgstr "幫助"
 
@@ -311,9 +311,9 @@ msgstr "關閉(&C)"
 msgid "R&eset"
 msgstr "重置(&e)"
 
-#: comctl32.rc:83 comdlg32.rc:180 comdlg32.rc:202 comdlg32.rc:273
-#: comdlg32.rc:337 comdlg32.rc:357 comdlg32.rc:369 comdlg32.rc:486
-#: comdlg32.rc:504 ieframe.rc:55 msacm32.rc:49 oledlg.rc:89 shell32.rc:125
+#: comctl32.rc:83 comdlg32.rc:166 comdlg32.rc:188 comdlg32.rc:259
+#: comdlg32.rc:323 comdlg32.rc:343 comdlg32.rc:355 comdlg32.rc:472
+#: comdlg32.rc:490 ieframe.rc:55 msacm32.rc:49 oledlg.rc:89 shell32.rc:125
 #: clock.rc:41 notepad.rc:57 notepad.rc:116 oleview.rc:69 progman.rc:52
 #: progman.rc:105 progman.rc:123 progman.rc:141 progman.rc:157 progman.rc:181
 #: progman.rc:199 progman.rc:216 regedit.rc:76 taskmgr.rc:87 winefile.rc:85
@@ -372,486 +372,444 @@ msgstr "今天:"
 msgid "Go to today"
 msgstr "轉到今天"
 
-#: comdlg32.rc:165 comdlg32.rc:178 comdlg32.rc:467 comdlg32.rc:492
+#: comdlg32.rc:151 comdlg32.rc:164 comdlg32.rc:453 comdlg32.rc:478
 #: shell32.rc:164 oleview.rc:99
 msgid "Open"
 msgstr "開啟"
 
-#: comdlg32.rc:168 comdlg32.rc:190
+#: comdlg32.rc:154 comdlg32.rc:176
 msgid "File &Name:"
 msgstr "檔案名稱(&N):"
 
-#: comdlg32.rc:171 comdlg32.rc:193
+#: comdlg32.rc:157 comdlg32.rc:179
 msgid "&Directories:"
 msgstr "目錄(&D):"
 
-#: comdlg32.rc:174 comdlg32.rc:196
+#: comdlg32.rc:160 comdlg32.rc:182
 msgid "List Files of &Type:"
 msgstr "檔案類型(&T):"
 
-#: comdlg32.rc:176 comdlg32.rc:198
+#: comdlg32.rc:162 comdlg32.rc:184
 msgid "Dri&ves:"
 msgstr "磁碟機(&V):"
 
-#: comdlg32.rc:181 comdlg32.rc:203 winefile.rc:179
+#: comdlg32.rc:167 comdlg32.rc:189 winefile.rc:179
 msgid "&Read Only"
 msgstr "唯讀(&R)"
 
-#: comdlg32.rc:187
+#: comdlg32.rc:173
 msgid "Save As..."
 msgstr "另存新檔..."
 
-#: comdlg32.rc:200 comdlg32.rc:155
+#: comdlg32.rc:186 comdlg32.rc:141
 msgid "Save As"
 msgstr "另存新檔"
 
-#: comdlg32.rc:209 comdlg32.rc:218 comdlg32.rc:364 comdlg32.rc:64 hhctrl.rc:46
+#: comdlg32.rc:195 comdlg32.rc:204 comdlg32.rc:350 comdlg32.rc:50 hhctrl.rc:46
 #: wordpad.rc:162
 msgid "Print"
 msgstr "列印"
 
-#: comdlg32.rc:212
+#: comdlg32.rc:198
 #, fuzzy
 msgid "Printer:"
 msgstr "列印"
 
-#: comdlg32.rc:214 comdlg32.rc:391
+#: comdlg32.rc:200 comdlg32.rc:377
 #, fuzzy
 msgid "Print range"
 msgstr "列印目標(&P)"
 
-#: comdlg32.rc:215 comdlg32.rc:392 regedit.rc:216
+#: comdlg32.rc:201 comdlg32.rc:378 regedit.rc:216
 msgid "&All"
 msgstr "全部(&A)"
 
-#: comdlg32.rc:216
+#: comdlg32.rc:202
 #, fuzzy
 msgid "S&election"
 msgstr "選择區文字"
 
-#: comdlg32.rc:217
+#: comdlg32.rc:203
 #, fuzzy
 msgid "&Pages"
 msgstr "向上翻頁"
 
-#: comdlg32.rc:220 comdlg32.rc:242
+#: comdlg32.rc:206 comdlg32.rc:228
 #, fuzzy
 msgid "&Setup"
 msgstr "版面設定"
 
-#: comdlg32.rc:221
+#: comdlg32.rc:207
 msgid "&From:"
 msgstr ""
 
-#: comdlg32.rc:222
+#: comdlg32.rc:208
 msgid "&To:"
 msgstr ""
 
-#: comdlg32.rc:223
+#: comdlg32.rc:209
 #, fuzzy
 msgid "Print &Quality:"
 msgstr "壓縮質量(&Q):"
 
-#: comdlg32.rc:225
+#: comdlg32.rc:211
 #, fuzzy
 msgid "Print to Fi&le"
 msgstr "列印到檔案"
 
-#: comdlg32.rc:226
+#: comdlg32.rc:212
 msgid "Condensed"
 msgstr ""
 
-#: comdlg32.rc:232 comdlg32.rc:403
+#: comdlg32.rc:218 comdlg32.rc:389
 #, fuzzy
 msgid "Print Setup"
 msgstr "列印設定(&R)..."
 
-#: comdlg32.rc:235 comdlg32.rc:371 comdlg32.rc:410
+#: comdlg32.rc:221 comdlg32.rc:357 comdlg32.rc:396
 #, fuzzy
 msgid "Printer"
 msgstr "列印"
 
-#: comdlg32.rc:236
+#: comdlg32.rc:222
 #, fuzzy
 msgid "&Default Printer"
 msgstr "默認印表機; "
 
-#: comdlg32.rc:237
+#: comdlg32.rc:223
 msgid "[none]"
 msgstr ""
 
-#: comdlg32.rc:238
+#: comdlg32.rc:224
 msgid "Specific &Printer"
 msgstr ""
 
-#: comdlg32.rc:243 comdlg32.rc:429 comdlg32.rc:448 wineps.rc:31
+#: comdlg32.rc:229 comdlg32.rc:415 comdlg32.rc:434 wineps.rc:31
 msgid "Orientation"
 msgstr "方向"
 
-#: comdlg32.rc:244
+#: comdlg32.rc:230
 #, fuzzy
 msgid "Po&rtrait"
 msgstr "縱向(&P)"
 
-#: comdlg32.rc:245 comdlg32.rc:450 wineps.rc:34
+#: comdlg32.rc:231 comdlg32.rc:436 wineps.rc:34
 msgid "&Landscape"
 msgstr "橫向(&L)"
 
-#: comdlg32.rc:248 comdlg32.rc:423 comdlg32.rc:443 wineps.rc:25
+#: comdlg32.rc:234 comdlg32.rc:409 comdlg32.rc:429 wineps.rc:25
 msgid "Paper"
 msgstr "紙張"
 
-#: comdlg32.rc:249
+#: comdlg32.rc:235
 #, fuzzy
 msgid "Si&ze"
 msgstr "大小(&z)："
 
-#: comdlg32.rc:250
+#: comdlg32.rc:236
 #, fuzzy
 msgid "&Source"
 msgstr "原始檔案:"
 
-#: comdlg32.rc:258
+#: comdlg32.rc:244
 msgid "Font"
 msgstr "字型"
 
-#: comdlg32.rc:261
+#: comdlg32.rc:247
 msgid "&Font:"
 msgstr "字型(&F):"
 
-#: comdlg32.rc:264
+#: comdlg32.rc:250
 msgid "Font St&yle:"
 msgstr "字型樣式(&Y):"
 
-#: comdlg32.rc:267 comdlg32.rc:444 winecfg.rc:291
+#: comdlg32.rc:253 comdlg32.rc:430 winecfg.rc:291
 msgid "&Size:"
 msgstr "大小(&S)："
 
-#: comdlg32.rc:274
+#: comdlg32.rc:260
 msgid "Effects"
 msgstr "效果"
 
-#: comdlg32.rc:275
+#: comdlg32.rc:261
 msgid "Stri&keout"
 msgstr "刪除線(&K)"
 
-#: comdlg32.rc:276
+#: comdlg32.rc:262
 msgid "&Underline"
 msgstr "底線(&U)"
 
-#: comdlg32.rc:277 winecfg.rc:289
+#: comdlg32.rc:263 winecfg.rc:289
 msgid "&Color:"
 msgstr "配色(&C)："
 
-#: comdlg32.rc:280
+#: comdlg32.rc:266
 msgid "Sample"
 msgstr "範例"
 
-#: comdlg32.rc:281
+#: comdlg32.rc:267
 msgid "AaBbYyZz"
 msgstr "AaBbYyZz"
 
-#: comdlg32.rc:282
+#: comdlg32.rc:268
 msgid "Scr&ipt:"
 msgstr "语言:"
 
-#: comdlg32.rc:290
+#: comdlg32.rc:276
 msgid "Color"
 msgstr "色彩"
 
-#: comdlg32.rc:293
+#: comdlg32.rc:279
 msgid "&Basic Colors:"
 msgstr "基本色彩(&B):"
 
-#: comdlg32.rc:294
+#: comdlg32.rc:280
 msgid "&Custom Colors:"
 msgstr "自定色彩(&C):"
 
-#: comdlg32.rc:295 comdlg32.rc:318
+#: comdlg32.rc:281 comdlg32.rc:304
 msgid "Color |  Sol&id"
 msgstr "色彩 | 實心(&I)"
 
-#: comdlg32.rc:296
+#: comdlg32.rc:282
 msgid "&Red:"
 msgstr "紅(&R):"
 
-#: comdlg32.rc:298
+#: comdlg32.rc:284
 msgid "&Green:"
 msgstr "綠(&G):"
 
-#: comdlg32.rc:300
+#: comdlg32.rc:286
 msgid "&Blue:"
 msgstr "藍(&B):"
 
-#: comdlg32.rc:302
+#: comdlg32.rc:288
 msgid "&Hue:"
 msgstr "色調(&H):"
 
-#: comdlg32.rc:304
+#: comdlg32.rc:290
 msgid "&Sat:"
 msgstr "濃度(&S):"
 
-#: comdlg32.rc:306
+#: comdlg32.rc:292
 msgid "&Lum:"
 msgstr "亮度(&L):"
 
-#: comdlg32.rc:316
+#: comdlg32.rc:302
 msgid "&Add to Custom Colors"
 msgstr "新增自定色彩(&A)"
 
-#: comdlg32.rc:317
+#: comdlg32.rc:303
 msgid "&Define Custom Colors >>"
 msgstr "定義自定色彩(&D) >>"
 
-#: comdlg32.rc:324 regedit.rc:223 regedit.rc:233
+#: comdlg32.rc:310 regedit.rc:223 regedit.rc:233
 msgid "Find"
 msgstr "查找"
 
-#: comdlg32.rc:327 comdlg32.rc:346
+#: comdlg32.rc:313 comdlg32.rc:332
 msgid "Fi&nd What:"
 msgstr "搜尋目標(&N):"
 
-#: comdlg32.rc:329 comdlg32.rc:350
+#: comdlg32.rc:315 comdlg32.rc:336
 msgid "Match &Whole Word Only"
 msgstr "全字拼寫須符合(&W)"
 
-#: comdlg32.rc:330 comdlg32.rc:351
+#: comdlg32.rc:316 comdlg32.rc:337
 msgid "Match &Case"
 msgstr "大小寫視為相異(&C)"
 
-#: comdlg32.rc:331
+#: comdlg32.rc:317
 msgid "Direction"
 msgstr "方向"
 
-#: comdlg32.rc:332 view.rc:39
+#: comdlg32.rc:318 view.rc:39
 msgid "&Up"
 msgstr "上(&U)"
 
-#: comdlg32.rc:333 view.rc:40
+#: comdlg32.rc:319 view.rc:40
 msgid "&Down"
 msgstr "下(&D)"
 
-#: comdlg32.rc:335 comdlg32.rc:353
+#: comdlg32.rc:321 comdlg32.rc:339
 msgid "&Find Next"
 msgstr "找下一個(&F)"
 
-#: comdlg32.rc:343
+#: comdlg32.rc:329
 msgid "Replace"
 msgstr "取代"
 
-#: comdlg32.rc:348
+#: comdlg32.rc:334
 msgid "Re&place With:"
 msgstr "取代為(&P):"
 
-#: comdlg32.rc:354
+#: comdlg32.rc:340
 msgid "&Replace"
 msgstr "取代(&R)"
 
-#: comdlg32.rc:355
+#: comdlg32.rc:341
 msgid "Replace &All"
 msgstr "取代全部(&A)"
 
-#: comdlg32.rc:372
+#: comdlg32.rc:358
 #, fuzzy
 msgid "Print to fi&le"
 msgstr "列印到檔案"
 
-#: comdlg32.rc:373 comdlg32.rc:411 ieframe.rc:39 shdoclc.rc:58 shell32.rc:105
+#: comdlg32.rc:359 comdlg32.rc:397 ieframe.rc:39 shdoclc.rc:58 shell32.rc:105
 #: clock.rc:28 wineconsole.rc:27
 msgid "&Properties"
 msgstr "屬性(&P)"
 
-#: comdlg32.rc:374 comdlg32.rc:412 msacm32.rc:31 winefile.rc:144
+#: comdlg32.rc:360 comdlg32.rc:398 msacm32.rc:31 winefile.rc:144
 msgid "&Name:"
 msgstr "名稱(&N):"
 
-#: comdlg32.rc:376 comdlg32.rc:414
+#: comdlg32.rc:362 comdlg32.rc:400
 #, fuzzy
 msgid "Status:"
 msgstr "狀態欄(&S)"
 
-#: comdlg32.rc:378 comdlg32.rc:416
+#: comdlg32.rc:364 comdlg32.rc:402
 #, fuzzy
 msgid "Type:"
 msgstr "類型(&T)："
 
-#: comdlg32.rc:380 comdlg32.rc:418
+#: comdlg32.rc:366 comdlg32.rc:404
 msgid "Where:"
 msgstr ""
 
-#: comdlg32.rc:382 comdlg32.rc:420
+#: comdlg32.rc:368 comdlg32.rc:406
 #, fuzzy
 msgid "Comment:"
 msgstr "備註:"
 
-#: comdlg32.rc:385
+#: comdlg32.rc:371
 msgid "Copies"
 msgstr ""
 
-#: comdlg32.rc:386
+#: comdlg32.rc:372
 msgid "Number of &copies:"
 msgstr ""
 
-#: comdlg32.rc:388
+#: comdlg32.rc:374
 msgid "C&ollate"
 msgstr ""
 
-#: comdlg32.rc:393
+#: comdlg32.rc:379
 msgid "Pa&ges"
 msgstr ""
 
-#: comdlg32.rc:394
+#: comdlg32.rc:380
 #, fuzzy
 msgid "&Selection"
 msgstr "選擇(&S)"
 
-#: comdlg32.rc:397
+#: comdlg32.rc:383
 msgid "&from:"
 msgstr ""
 
-#: comdlg32.rc:398
+#: comdlg32.rc:384
 msgid "&to:"
 msgstr ""
 
-#: comdlg32.rc:424 winecfg.rc:297
+#: comdlg32.rc:410 winecfg.rc:297
 msgid "Si&ze:"
 msgstr "大小(&z)："
 
-#: comdlg32.rc:426
+#: comdlg32.rc:412
 #, fuzzy
 msgid "&Source:"
 msgstr "原始檔案:"
 
-#: comdlg32.rc:431
+#: comdlg32.rc:417
 #, fuzzy
 msgid "P&ortrait"
 msgstr "縱向(&P)"
 
-#: comdlg32.rc:432
+#: comdlg32.rc:418
 #, fuzzy
 msgid "L&andscape"
 msgstr "橫向(&L)"
 
-#: comdlg32.rc:437
+#: comdlg32.rc:423
 msgid "Setup Page"
 msgstr ""
 
-#: comdlg32.rc:446
+#: comdlg32.rc:432
 msgid "&Tray:"
 msgstr ""
 
-#: comdlg32.rc:449 wineps.rc:32
+#: comdlg32.rc:435 wineps.rc:32
 msgid "&Portrait"
 msgstr "縱向(&P)"
 
-#: comdlg32.rc:451
+#: comdlg32.rc:437
 #, fuzzy
 msgid "Borders"
 msgstr "當前標題欄"
 
-#: comdlg32.rc:452
+#: comdlg32.rc:438
 #, fuzzy
 msgid "L&eft:"
 msgstr "左(&L):"
 
-#: comdlg32.rc:454 notepad.rc:109
+#: comdlg32.rc:440 notepad.rc:109
 msgid "&Right:"
 msgstr "右(&R):"
 
-#: comdlg32.rc:456
+#: comdlg32.rc:442
 msgid "T&op:"
 msgstr ""
 
-#: comdlg32.rc:458 notepad.rc:111
+#: comdlg32.rc:444 notepad.rc:111
 msgid "&Bottom:"
 msgstr "下(&B):"
 
-#: comdlg32.rc:462
+#: comdlg32.rc:448
 #, fuzzy
 msgid "P&rinter..."
 msgstr "列印"
 
-#: comdlg32.rc:470
+#: comdlg32.rc:456
 msgid "Look &in:"
 msgstr "搜尋位置(&I)"
 
-#: comdlg32.rc:476
+#: comdlg32.rc:462
 msgid "File &name:"
 msgstr "檔案名稱(&N):"
 
-#: comdlg32.rc:479
+#: comdlg32.rc:465
 msgid "Files of &type:"
 msgstr "檔案類型(&T):"
 
-#: comdlg32.rc:482
+#: comdlg32.rc:468
 msgid "Open as &read-only"
 msgstr "開啟成唯讀(&R)"
 
-#: comdlg32.rc:484 comdlg32.rc:502 shdoclc.rc:124 shell32.rc:96
+#: comdlg32.rc:470 comdlg32.rc:488 shdoclc.rc:124 shell32.rc:96
 msgid "&Open"
 msgstr "開啟(&O)"
 
-#: comdlg32.rc:495
+#: comdlg32.rc:481
 #, fuzzy
 msgid "File name:"
 msgstr "檔案名(&F):"
 
-#: comdlg32.rc:498
+#: comdlg32.rc:484
 #, fuzzy
 msgid "Files of type:"
 msgstr "檔案類型(&T):"
 
 #: comdlg32.rc:29
-msgid "&About FolderPicker Test"
-msgstr "关于資料夹选择器(&A)"
-
-#: comdlg32.rc:30
-msgid "Document Folders"
-msgstr "資料夾"
-
-#: comdlg32.rc:31 shell32.rc:200
-msgid "My Documents"
-msgstr "我的檔案"
-
-#: comdlg32.rc:32
-msgid "My Favorites"
-msgstr "我的最愛"
-
-#: comdlg32.rc:33
-msgid "System Path"
-msgstr "系統路徑"
-
-#: comdlg32.rc:34 shell32.rc:153 winecfg.rc:98 winefile.rc:103
-#, fuzzy
-msgctxt "display name"
-msgid "Desktop"
-msgstr "桌面"
-
-#: comdlg32.rc:35 winhlp32.rc:46 winhlp32.rc:67
-msgid "Fonts"
-msgstr "字型"
-
-#: comdlg32.rc:36 shell32.rc:154 regedit.rc:200
-msgid "My Computer"
-msgstr "我的電腦"
-
-#: comdlg32.rc:41
-msgid "System Folders"
-msgstr "系統資料夾"
-
-#: comdlg32.rc:42
-msgid "Local Hard Drives"
-msgstr "本地硬盤驅動器"
-
-#: comdlg32.rc:43
 msgid "File not found"
 msgstr "找不到檔案"
 
-#: comdlg32.rc:44
+#: comdlg32.rc:30
 msgid "Please verify that the correct file name was given"
 msgstr "請檢驗是否給予正確的檔案名稱。"
 
-#: comdlg32.rc:45
+#: comdlg32.rc:31
 msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
@@ -859,7 +817,7 @@ msgstr ""
 "找不到檔案\n"
 "是否創建新檔案?"
 
-#: comdlg32.rc:46
+#: comdlg32.rc:32
 msgid ""
 "File already exists.\n"
 "Do you want to replace it?"
@@ -867,11 +825,11 @@ msgstr ""
 "檔案已經存在。\n"
 "要替換嗎?"
 
-#: comdlg32.rc:47
+#: comdlg32.rc:33
 msgid "Invalid character(s) in path"
 msgstr "檔案名中存在無效的字符"
 
-#: comdlg32.rc:48
+#: comdlg32.rc:34
 msgid ""
 "A filename cannot contain any of the following characters:\n"
 "                          / : < > |"
@@ -879,120 +837,120 @@ msgstr ""
 "檔案名中不能包含任何一下字符::\n"
 "                          / : < > |"
 
-#: comdlg32.rc:49
+#: comdlg32.rc:35
 msgid "Path does not exist"
 msgstr "資料夾不存在"
 
-#: comdlg32.rc:50
+#: comdlg32.rc:36
 msgid "File does not exist"
 msgstr "檔案不存在"
 
-#: comdlg32.rc:55
+#: comdlg32.rc:41
 msgid "Up One Level"
 msgstr "向上一層"
 
-#: comdlg32.rc:56
+#: comdlg32.rc:42
 msgid "Create New Folder"
 msgstr "建立新資料夾"
 
-#: comdlg32.rc:57
+#: comdlg32.rc:43
 msgid "List"
 msgstr "清單"
 
-#: comdlg32.rc:58 cryptui.rc:193
+#: comdlg32.rc:44 cryptui.rc:193
 msgid "Details"
 msgstr "詳細資料"
 
-#: comdlg32.rc:59
+#: comdlg32.rc:45
 msgid "Browse to Desktop"
 msgstr "顯示桌面"
 
-#: comdlg32.rc:123
+#: comdlg32.rc:109
 msgid "Regular"
 msgstr ""
 
-#: comdlg32.rc:124
+#: comdlg32.rc:110
 msgid "Bold"
 msgstr ""
 
-#: comdlg32.rc:125
+#: comdlg32.rc:111
 msgid "Italic"
 msgstr ""
 
-#: comdlg32.rc:126
+#: comdlg32.rc:112
 msgid "Bold Italic"
 msgstr ""
 
-#: comdlg32.rc:131 wordpad.rc:114
+#: comdlg32.rc:117 wordpad.rc:114
 msgid "Black"
 msgstr ""
 
-#: comdlg32.rc:132 wordpad.rc:115
+#: comdlg32.rc:118 wordpad.rc:115
 msgid "Maroon"
 msgstr ""
 
-#: comdlg32.rc:133 wordpad.rc:116
+#: comdlg32.rc:119 wordpad.rc:116
 msgid "Green"
 msgstr ""
 
-#: comdlg32.rc:134 wordpad.rc:117
+#: comdlg32.rc:120 wordpad.rc:117
 msgid "Olive"
 msgstr ""
 
-#: comdlg32.rc:135 wordpad.rc:118
+#: comdlg32.rc:121 wordpad.rc:118
 msgid "Navy"
 msgstr ""
 
-#: comdlg32.rc:136 wordpad.rc:119
+#: comdlg32.rc:122 wordpad.rc:119
 msgid "Purple"
 msgstr ""
 
-#: comdlg32.rc:137 wordpad.rc:120
+#: comdlg32.rc:123 wordpad.rc:120
 msgid "Teal"
 msgstr ""
 
-#: comdlg32.rc:138 wordpad.rc:121
+#: comdlg32.rc:124 wordpad.rc:121
 msgid "Gray"
 msgstr ""
 
-#: comdlg32.rc:139 wordpad.rc:122
+#: comdlg32.rc:125 wordpad.rc:122
 msgid "Silver"
 msgstr ""
 
-#: comdlg32.rc:140 wordpad.rc:123
+#: comdlg32.rc:126 wordpad.rc:123
 #, fuzzy
 msgid "Red"
 msgstr "倒回"
 
-#: comdlg32.rc:141 wordpad.rc:124
+#: comdlg32.rc:127 wordpad.rc:124
 msgid "Lime"
 msgstr ""
 
-#: comdlg32.rc:142 wordpad.rc:125
+#: comdlg32.rc:128 wordpad.rc:125
 msgid "Yellow"
 msgstr ""
 
-#: comdlg32.rc:143 wordpad.rc:126
+#: comdlg32.rc:129 wordpad.rc:126
 msgid "Blue"
 msgstr ""
 
-#: comdlg32.rc:144 wordpad.rc:127
+#: comdlg32.rc:130 wordpad.rc:127
 msgid "Fuchsia"
 msgstr ""
 
-#: comdlg32.rc:145 wordpad.rc:128
+#: comdlg32.rc:131 wordpad.rc:128
 msgid "Aqua"
 msgstr ""
 
-#: comdlg32.rc:146 wordpad.rc:129
+#: comdlg32.rc:132 wordpad.rc:129
 msgid "White"
 msgstr ""
 
-#: comdlg32.rc:66
+#: comdlg32.rc:52
 msgid "Unreadable Entry"
 msgstr "數值不可讀"
 
-#: comdlg32.rc:68
+#: comdlg32.rc:54
 #, fuzzy
 msgid ""
 "This value does not lie within the page range.\n"
@@ -1001,11 +959,11 @@ msgstr ""
 "這個值不在頁數範圍。\n"
 " 請輸入一個 %d 和 %d 之間的數。"
 
-#: comdlg32.rc:70
+#: comdlg32.rc:56
 msgid "The 'from' entry cannot exceed the 'to' entry."
 msgstr "'從'項的值不能大於'到'項的值。"
 
-#: comdlg32.rc:72
+#: comdlg32.rc:58
 msgid ""
 "Margins overlap or fall outside Paper boundaries.\n"
 "Please reenter margins."
@@ -1013,12 +971,12 @@ msgstr ""
 "邊緣空白重迭或落於紙外,\n"
 "請重新輸入邊緣空白。"
 
-#: comdlg32.rc:74
+#: comdlg32.rc:60
 #, fuzzy
 msgid "The 'Number of copies' field cannot be empty."
 msgstr "'份數' 項不能空."
 
-#: comdlg32.rc:76
+#: comdlg32.rc:62
 msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
@@ -1026,19 +984,19 @@ msgstr ""
 "你的印表機不支持這麼大的份數。\n"
 " 請輸入一個 1 和 %d 之間的數。"
 
-#: comdlg32.rc:77
+#: comdlg32.rc:63
 msgid "A printer error occurred."
 msgstr "印表機錯誤。"
 
-#: comdlg32.rc:78
+#: comdlg32.rc:64
 msgid "No default printer defined."
 msgstr "沒有默認印表機。"
 
-#: comdlg32.rc:79
+#: comdlg32.rc:65
 msgid "Cannot find the printer."
 msgstr "找不到印表機。"
 
-#: comdlg32.rc:80 progman.rc:73
+#: comdlg32.rc:66 progman.rc:73
 #, fuzzy
 msgid "Out of memory."
 msgstr ""
@@ -1047,15 +1005,15 @@ msgstr ""
 "#-#-#-#-#  zh_TW.po (Wine)  #-#-#-#-#\n"
 "內存不夠。"
 
-#: comdlg32.rc:81
+#: comdlg32.rc:67
 msgid "An error occurred."
 msgstr "出現一些錯誤。"
 
-#: comdlg32.rc:82
+#: comdlg32.rc:68
 msgid "Unknown printer driver."
 msgstr "找不到印表機驅動器。"
 
-#: comdlg32.rc:85
+#: comdlg32.rc:71
 msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
@@ -1063,150 +1021,150 @@ msgstr ""
 "在使用與印表機有關功能(版面設定, 列印檔案)之前, 你必須先裝印表機。請裝一個印"
 "表機再試。"
 
-#: comdlg32.rc:151
+#: comdlg32.rc:137
 msgid "Select a font size between %1!d! and %2!d! points."
 msgstr ""
 
-#: comdlg32.rc:152 ieframe.rc:32
+#: comdlg32.rc:138 ieframe.rc:32
 msgid "&Save"
 msgstr ""
 
-#: comdlg32.rc:153
+#: comdlg32.rc:139
 #, fuzzy
 msgid "Save &in:"
 msgstr "另存為(&A)..."
 
-#: comdlg32.rc:154
+#: comdlg32.rc:140
 #, fuzzy
 msgid "Save"
 msgstr "儲存 HTML"
 
-#: comdlg32.rc:156
+#: comdlg32.rc:142
 #, fuzzy
 msgid "Open File"
 msgstr "Wine地雷"
 
-#: comdlg32.rc:93 oleview.rc:95
+#: comdlg32.rc:79 oleview.rc:95
 msgid "Ready"
 msgstr "待命"
 
-#: comdlg32.rc:94
+#: comdlg32.rc:80
 msgid "Paused; "
 msgstr "暫停; "
 
-#: comdlg32.rc:95
+#: comdlg32.rc:81
 msgid "Error; "
 msgstr "錯誤; "
 
-#: comdlg32.rc:96
+#: comdlg32.rc:82
 msgid "Pending deletion; "
 msgstr "等待刪除; "
 
-#: comdlg32.rc:97
+#: comdlg32.rc:83
 msgid "Paper jam; "
 msgstr "卡紙; "
 
-#: comdlg32.rc:98
+#: comdlg32.rc:84
 msgid "Out of paper; "
 msgstr "無紙; "
 
-#: comdlg32.rc:99
+#: comdlg32.rc:85
 msgid "Feed paper manual; "
 msgstr "手動進紙; "
 
-#: comdlg32.rc:100
+#: comdlg32.rc:86
 msgid "Paper problem; "
 msgstr "紙的問題; "
 
-#: comdlg32.rc:101
+#: comdlg32.rc:87
 msgid "Printer offline; "
 msgstr "印表機離線; "
 
-#: comdlg32.rc:102
+#: comdlg32.rc:88
 msgid "I/O Active; "
 msgstr "I/O 活動; "
 
-#: comdlg32.rc:103
+#: comdlg32.rc:89
 msgid "Busy; "
 msgstr "繁忙; "
 
-#: comdlg32.rc:104
+#: comdlg32.rc:90
 msgid "Printing; "
 msgstr "正在列印; "
 
-#: comdlg32.rc:105
+#: comdlg32.rc:91
 msgid "Output tray is full; "
 msgstr "出紙托盤已滿; "
 
-#: comdlg32.rc:106
+#: comdlg32.rc:92
 msgid "Not available; "
 msgstr "不可用; "
 
-#: comdlg32.rc:107
+#: comdlg32.rc:93
 msgid "Waiting; "
 msgstr "等待; "
 
-#: comdlg32.rc:108
+#: comdlg32.rc:94
 msgid "Processing; "
 msgstr "正在處理; "
 
-#: comdlg32.rc:109
+#: comdlg32.rc:95
 msgid "Initialising; "
 msgstr "正在啓動; "
 
-#: comdlg32.rc:110
+#: comdlg32.rc:96
 msgid "Warming up; "
 msgstr "預熱; "
 
-#: comdlg32.rc:111
+#: comdlg32.rc:97
 msgid "Toner low; "
 msgstr "墨低; "
 
-#: comdlg32.rc:112
+#: comdlg32.rc:98
 msgid "No toner; "
 msgstr "沒墨; "
 
-#: comdlg32.rc:113
+#: comdlg32.rc:99
 msgid "Page punt; "
 msgstr "頁處理內存超支; "
 
-#: comdlg32.rc:114
+#: comdlg32.rc:100
 msgid "Interrupted by user; "
 msgstr "用戶干預; "
 
-#: comdlg32.rc:115
+#: comdlg32.rc:101
 msgid "Out of memory; "
 msgstr "內存不夠; "
 
-#: comdlg32.rc:116
+#: comdlg32.rc:102
 msgid "The printer door is open; "
 msgstr "印表機蓋是打開的; "
 
-#: comdlg32.rc:117
+#: comdlg32.rc:103
 msgid "Print server unknown; "
 msgstr "找不到列印服務器; "
 
-#: comdlg32.rc:118
+#: comdlg32.rc:104
 msgid "Power save mode; "
 msgstr "省電狀態; "
 
-#: comdlg32.rc:87
+#: comdlg32.rc:73
 msgid "Default Printer; "
 msgstr "默認印表機; "
 
-#: comdlg32.rc:88
+#: comdlg32.rc:74
 msgid "There are %d documents in the queue"
 msgstr "有 %d 個文檔正在等待列印"
 
-#: comdlg32.rc:89
+#: comdlg32.rc:75
 msgid "Margins [inches]"
 msgstr "邊緣空白 [英寸]"
 
-#: comdlg32.rc:90
+#: comdlg32.rc:76
 msgid "Margins [mm]"
 msgstr "邊緣空白 [毫米]"
 
-#: comdlg32.rc:91 sane.rc:33
+#: comdlg32.rc:77 sane.rc:33
 msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "毫米"
@@ -8109,6 +8067,16 @@ msgstr ""
 msgid "Date deleted"
 msgstr "刪除"
 
+#: shell32.rc:153 winecfg.rc:98 winefile.rc:103
+#, fuzzy
+msgctxt "display name"
+msgid "Desktop"
+msgstr "桌面"
+
+#: shell32.rc:154 regedit.rc:200
+msgid "My Computer"
+msgstr "我的電腦"
+
 #: shell32.rc:156
 #, fuzzy
 msgid "Control Panel"
@@ -8139,6 +8107,10 @@ msgstr ""
 #: shell32.rc:199
 msgid "Start Menu\\Programs"
 msgstr ""
+
+#: shell32.rc:200
+msgid "My Documents"
+msgstr "我的檔案"
 
 #: shell32.rc:201
 #, fuzzy
@@ -13617,6 +13589,10 @@ msgstr "定義(&D)..."
 #: winhlp32.rc:45
 msgid "History"
 msgstr "歷史"
+
+#: winhlp32.rc:46 winhlp32.rc:67
+msgid "Fonts"
+msgstr "字型"
 
 #: winhlp32.rc:48 winhlp32.rc:69
 msgid "Small"
