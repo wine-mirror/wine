@@ -10,6 +10,7 @@ C_SRCS = \
 	frame.c \
 	ie.c \
 	ieframe_main.c \
+	iehtmlwnd.c \
 	iexplore.c \
 	intshcut.c \
 	navigate.c \

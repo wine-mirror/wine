@@ -84,6 +84,11 @@ typedef struct {
     DocHost *doc_host;
 }  ShellBrowser;
 
+typedef struct {
+    IHTMLWindow2 IHTMLWindow2_iface;
+    DocHost *doc_host;
+} IEHTMLWindow;
+
 typedef struct _IDocHostContainerVtbl
 {
     ULONG (*addref)(DocHost*);
@@ -139,6 +144,7 @@ struct DocHost {
     ShellBrowser *browser_service;
 
     ConnectionPointContainer cps;
+    IEHTMLWindow html_window;
 };
 
 struct WebBrowser {
@@ -225,6 +231,8 @@ void DocHost_ClientSite_Init(DocHost*) DECLSPEC_HIDDEN;
 void DocHost_ClientSite_Release(DocHost*) DECLSPEC_HIDDEN;
 void DocHost_Frame_Init(DocHost*) DECLSPEC_HIDDEN;
 void release_dochost_client(DocHost*) DECLSPEC_HIDDEN;
+
+void IEHTMLWindow_Init(DocHost*) DECLSPEC_HIDDEN;
 
 void HlinkFrame_Init(HlinkFrame*,IUnknown*,DocHost*) DECLSPEC_HIDDEN;
 BOOL HlinkFrame_QI(HlinkFrame*,REFIID,void**) DECLSPEC_HIDDEN;

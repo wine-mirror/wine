@@ -887,6 +887,7 @@ void DocHost_Init(DocHost *This, IDispatch *disp, const IDocHostContainerVtbl* c
     DocHost_Frame_Init(This);
 
     ConnectionPointContainer_Init(&This->cps, (IUnknown*)disp);
+    IEHTMLWindow_Init(This);
 }
 
 void DocHost_Release(DocHost *This)

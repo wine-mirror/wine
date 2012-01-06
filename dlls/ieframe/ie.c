@@ -731,6 +731,12 @@ static HRESULT WINAPI IEServiceProvider_QueryService(IServiceProvider *iface,
         REFGUID guidService, REFIID riid, void **ppv)
 {
     InternetExplorer *This = impl_from_IServiceProvider(iface);
+
+    if(IsEqualGUID(&SID_SHTMLWindow, riid)) {
+        TRACE("(%p)->(SID_SHTMLWindow)\n", This);
+        return IHTMLWindow2_QueryInterface(&This->doc_host->doc_host.html_window.IHTMLWindow2_iface, riid, ppv);
+    }
+
     FIXME("(%p)->(%s, %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
     *ppv = NULL;
     return E_NOINTERFACE;
