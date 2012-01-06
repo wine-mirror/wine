@@ -1843,8 +1843,8 @@ BOOL WINAPI SymUnDName64(PIMAGEHLP_SYMBOL64 sym, PSTR UnDecName, DWORD UnDecName
                                 UNDNAME_COMPLETE) != 0;
 }
 
-static void* und_alloc(size_t len) { return HeapAlloc(GetProcessHeap(), 0, len); }
-static void  und_free (void* ptr)  { HeapFree(GetProcessHeap(), 0, ptr); }
+static void * CDECL und_alloc(size_t len) { return HeapAlloc(GetProcessHeap(), 0, len); }
+static void   CDECL und_free (void* ptr)  { HeapFree(GetProcessHeap(), 0, ptr); }
 
 /***********************************************************************
  *		UnDecorateSymbolName (DBGHELP.@)
@@ -1853,7 +1853,7 @@ DWORD WINAPI UnDecorateSymbolName(PCSTR DecoratedName, PSTR UnDecoratedName,
                                   DWORD UndecoratedLength, DWORD Flags)
 {
     /* undocumented from msvcrt */
-    static char* (*p_undname)(char*, const char*, int, void* (*)(size_t), void (*)(void*), unsigned short);
+    static char* (* CDECL p_undname)(char*, const char*, int, void* (* CDECL)(size_t), void (* CDECL)(void*), unsigned short);
     static const WCHAR szMsvcrt[] = {'m','s','v','c','r','t','.','d','l','l',0};
 
     TRACE("(%s, %p, %d, 0x%08x)\n",
