@@ -305,21 +305,38 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr )
         DESKTOPVERTRES,
         DESKTOPHORZRES,
         BLTALIGNMENT,
-        SHADEBLENDCAPS,
-        COLORMGMTCAPS
+        SHADEBLENDCAPS
     };
     unsigned int i;
+    WORD ramp[3][256];
+    BOOL ret;
 
     if (GetObjectType( hdc ) == OBJ_METADC)
+    {
         for (i = 0; i < sizeof(caps)/sizeof(caps[0]); i++)
             ok( GetDeviceCaps( hdc, caps[i] ) == (caps[i] == TECHNOLOGY ? DT_METAFILE : 0),
                 "wrong caps on %s for %u: %u\n", descr, caps[i],
                 GetDeviceCaps( hdc, caps[i] ) );
+
+        SetLastError( 0xdeadbeef );
+        ret = GetDeviceGammaRamp( hdc, &ramp );
+        ok( !ret, "GetDeviceGammaRamp succeeded on %s\n", descr );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == 0xdeadbeef), /* nt4 */
+            "wrong error %u on %s\n", GetLastError(), descr );
+    }
     else
+    {
         for (i = 0; i < sizeof(caps)/sizeof(caps[0]); i++)
             ok( GetDeviceCaps( hdc, caps[i] ) == GetDeviceCaps( ref_dc, caps[i] ),
                 "mismatched caps on %s for %u: %u/%u\n", descr, caps[i],
                 GetDeviceCaps( hdc, caps[i] ), GetDeviceCaps( ref_dc, caps[i] ) );
+
+        SetLastError( 0xdeadbeef );
+        ret = GetDeviceGammaRamp( hdc, &ramp );
+        ok( !ret, "GetDeviceGammaRamp succeeded on %s\n", descr );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == 0xdeadbeef), /* nt4 */
+            "wrong error %u on %s\n", GetLastError(), descr );
+    }
 
     if (GetObjectType( hdc ) == OBJ_MEMDC)
     {
@@ -341,6 +358,12 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr )
             ok( GetDeviceCaps( hdc, caps[i] ) == GetDeviceCaps( ref_dc, caps[i] ),
                 "mismatched caps on %s and DIB for %u: %u/%u\n", descr, caps[i],
                 GetDeviceCaps( hdc, caps[i] ), GetDeviceCaps( ref_dc, caps[i] ) );
+
+        SetLastError( 0xdeadbeef );
+        ret = GetDeviceGammaRamp( hdc, &ramp );
+        ok( !ret, "GetDeviceGammaRamp succeeded on %s\n", descr );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == 0xdeadbeef), /* nt4 */
+            "wrong error %u on %s\n", GetLastError(), descr );
 
         SelectObject( hdc, old );
         DeleteObject( dib );

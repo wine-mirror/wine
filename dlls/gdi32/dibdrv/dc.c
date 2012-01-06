@@ -418,12 +418,30 @@ static INT dibdrv_DescribePixelFormat( PHYSDEV dev, INT fmt, UINT size, PIXELFOR
 }
 
 /***********************************************************************
+ *           dibdrv_GetDeviceGammaRamp
+ */
+static BOOL dibdrv_GetDeviceGammaRamp( PHYSDEV dev, void *ramp )
+{
+    SetLastError( ERROR_INVALID_PARAMETER );
+    return FALSE;
+}
+
+/***********************************************************************
  *           dibdrv_GetPixelFormat
  */
 static INT dibdrv_GetPixelFormat( PHYSDEV dev )
 {
     FIXME( "Not supported on DIB section\n" );
     return 0;
+}
+
+/***********************************************************************
+ *           dibdrv_SetDeviceGammaRamp
+ */
+static BOOL dibdrv_SetDeviceGammaRamp( PHYSDEV dev, void *ramp )
+{
+    SetLastError( ERROR_INVALID_PARAMETER );
+    return FALSE;
 }
 
 /***********************************************************************
@@ -598,7 +616,7 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pGetCharABCWidthsI */
     NULL,                               /* pGetCharWidth */
     NULL,                               /* pGetDeviceCaps */
-    NULL,                               /* pGetDeviceGammaRamp */
+    dibdrv_GetDeviceGammaRamp,          /* pGetDeviceGammaRamp */
     NULL,                               /* pGetFontData */
     NULL,                               /* pGetFontUnicodeRanges */
     NULL,                               /* pGetGlyphIndices */
@@ -660,7 +678,7 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_SetDIBColorTable,            /* pSetDIBColorTable */
     NULL,                               /* pSetDIBitsToDevice */
     dibdrv_SetDeviceClipping,           /* pSetDeviceClipping */
-    NULL,                               /* pSetDeviceGammaRamp */
+    dibdrv_SetDeviceGammaRamp,          /* pSetDeviceGammaRamp */
     NULL,                               /* pSetLayout */
     NULL,                               /* pSetMapMode */
     NULL,                               /* pSetMapperFlags */

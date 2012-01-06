@@ -355,6 +355,7 @@ static INT nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
 
 static BOOL nulldrv_GetDeviceGammaRamp( PHYSDEV dev, void *ramp )
 {
+    SetLastError( ERROR_INVALID_PARAMETER );
     return FALSE;
 }
 
@@ -587,6 +588,7 @@ static DWORD nulldrv_SetLayout( PHYSDEV dev, DWORD layout )
 
 static BOOL nulldrv_SetDeviceGammaRamp( PHYSDEV dev, void *ramp )
 {
+    SetLastError( ERROR_INVALID_PARAMETER );
     return FALSE;
 }
 
