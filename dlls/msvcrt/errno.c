@@ -130,7 +130,7 @@ static MSVCRT_invalid_parameter_handler invalid_parameter_handler = NULL;
 /* INTERNAL: Set the crt and dos errno's from the OS error given. */
 void msvcrt_set_errno(int err)
 {
-  int *errno = MSVCRT__errno();
+  int *errno_ptr = MSVCRT__errno();
   MSVCRT_ulong *doserrno = MSVCRT___doserrno();
 
   *doserrno = err;
@@ -138,7 +138,7 @@ void msvcrt_set_errno(int err)
   switch(err)
   {
 #define ERR_CASE(oserr) case oserr:
-#define ERR_MAPS(oserr, crterr) case oserr: *errno = crterr; break
+#define ERR_MAPS(oserr, crterr) case oserr: *errno_ptr = crterr; break
     ERR_CASE(ERROR_ACCESS_DENIED)
     ERR_CASE(ERROR_NETWORK_ACCESS_DENIED)
     ERR_CASE(ERROR_CANNOT_MAKE)
@@ -184,7 +184,7 @@ void msvcrt_set_errno(int err)
   default:
     /*  Remaining cases map to EINVAL */
     /* FIXME: may be missing some errors above */
-    *errno = MSVCRT_EINVAL;
+    *errno_ptr = MSVCRT_EINVAL;
   }
 }
 
