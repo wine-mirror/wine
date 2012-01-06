@@ -3777,24 +3777,6 @@ INT X11DRV_CoerceDIBSection(X11DRV_PDEVICE *physDev, INT req)
     return X11DRV_DIB_Coerce(physDev->bitmap, req);
 }
 
-/***********************************************************************
- *           X11DRV_LockDIBSection
- */
-INT X11DRV_LockDIBSection(X11DRV_PDEVICE *physDev, INT req)
-{
-    if (!physDev || !physDev->bitmap) return DIB_Status_None;
-    return X11DRV_DIB_Lock(physDev->bitmap, req);
-}
-
-/***********************************************************************
- *           X11DRV_UnlockDIBSection
- */
-void X11DRV_UnlockDIBSection(X11DRV_PDEVICE *physDev, BOOL commit)
-{
-    if (!physDev || !physDev->bitmap) return;
-    X11DRV_DIB_Unlock(physDev->bitmap, commit);
-}
-
 
 #ifdef HAVE_LIBXXSHM
 /***********************************************************************

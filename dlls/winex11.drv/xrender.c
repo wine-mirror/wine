@@ -1751,8 +1751,6 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     XChangeGC( gdi_display, physdev->x11dev->gc, GCFunction | GCBackground | GCFillStyle, &xgcval );
     wine_tsx11_unlock();
 
-    X11DRV_LockDIBSection( physdev->x11dev, DIB_Status_GdiMod );
-
     if(physdev->x11dev->depth == 1) {
         if((physdev->x11dev->textPixel & 0xffffff) == 0) {
 	    textPixel = 0;
@@ -1776,11 +1774,7 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         wine_tsx11_unlock();
     }
 
-    if(count == 0)
-    {
-        X11DRV_UnlockDIBSection( physdev->x11dev, TRUE );
-        return TRUE;
-    }
+    if(count == 0) return TRUE;
 
     EnterCriticalSection(&xrender_cs);
 
@@ -1802,7 +1796,6 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     {
         WARN("could not upload requested glyphs\n");
         LeaveCriticalSection(&xrender_cs);
-        X11DRV_UnlockDIBSection( physdev->x11dev, TRUE );
         return FALSE;
     }
 
@@ -1871,7 +1864,6 @@ static BOOL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     HeapFree(GetProcessHeap(), 0, elts);
 
     LeaveCriticalSection(&xrender_cs);
-    X11DRV_UnlockDIBSection( physdev->x11dev, TRUE );
     return TRUE;
 }
 

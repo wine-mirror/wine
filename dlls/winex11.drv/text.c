@@ -47,7 +47,6 @@ BOOL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     XFontStruct*	font;
     BOOL		rotated = FALSE;
     XChar2b		*str2b = NULL;
-    BOOL		dibUpdateFlag = FALSE;
     BOOL                result = TRUE;
 
     if (!pfo)
@@ -71,8 +70,6 @@ BOOL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 
     if (flags & ETO_OPAQUE)
     {
-        X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod );
-        dibUpdateFlag = TRUE;
         wine_tsx11_lock();
         XSetForeground( gdi_display, physDev->gc, physDev->backgroundPixel );
         XFillRectangle( gdi_display, physDev->drawable, physDev->gc,
@@ -90,14 +87,6 @@ BOOL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         HRGN clip_region = CreateRectRgnIndirect( lprect );
         restore_region = add_extra_clipping_region( physDev, clip_region );
         DeleteObject( clip_region );
-    }
-
-      /* Draw the text background if necessary */
-
-    if (!dibUpdateFlag)
-    {
-        X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod );
-        dibUpdateFlag = TRUE;
     }
 
 
@@ -181,7 +170,6 @@ BOOL X11DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 
 END:
     HeapFree( GetProcessHeap(), 0, str2b );
-    if (dibUpdateFlag) X11DRV_UnlockDIBSection( physDev, TRUE );
     if (restore_region) restore_clipping_region( physDev );
     return result;
 }
