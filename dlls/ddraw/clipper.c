@@ -93,6 +93,32 @@ static HRESULT WINAPI ddraw_clipper_SetHWnd(IDirectDrawClipper *iface, DWORD fla
     return DD_OK;
 }
 
+static HRGN get_window_region(HWND window)
+{
+    POINT origin = {0, 0};
+    RECT client_rect;
+
+    if (!GetClientRect(window, &client_rect))
+    {
+        ERR("Failed to get client rect.\n");
+        return NULL;
+    }
+
+    if (!ClientToScreen(window, &origin))
+    {
+        ERR("Failed to translate origin.\n");
+        return NULL;
+    }
+
+    if (!OffsetRect(&client_rect, origin.x, origin.y))
+    {
+        ERR("Failed to translate client rect.\n");
+        return NULL;
+    }
+
+    return CreateRectRgnIndirect(&client_rect);
+}
+
 /*****************************************************************************
  * IDirectDrawClipper::GetClipList
  *
@@ -116,6 +142,7 @@ static HRESULT WINAPI ddraw_clipper_GetClipList(IDirectDrawClipper *iface, RECT 
 {
     struct ddraw_clipper *clipper = impl_from_IDirectDrawClipper(iface);
     static unsigned int once;
+    HRGN region;
 
     TRACE("iface %p, rect %s, clip_list %p, clip_list_size %p.\n",
             iface, wine_dbgstr_rect(rect), clip_list, clip_list_size);
@@ -124,30 +151,39 @@ static HRESULT WINAPI ddraw_clipper_GetClipList(IDirectDrawClipper *iface, RECT 
 
     if (clipper->window)
     {
-        HDC dc = GetDCEx(clipper->window, NULL, DCX_WINDOW);
-        if (dc)
+        if (!(region = get_window_region(clipper->window)))
         {
-            HRGN rgn = CreateRectRgn(0, 0, 0, 0);
-            if (GetRandomRgn(dc, rgn, SYSRGN))
-            {
-                if (GetVersion() & 0x80000000)
-                {
-                    POINT origin;
-                    GetDCOrgEx(dc, &origin);
-                    OffsetRgn(rgn, origin.x, origin.y);
-                }
-                if (rect)
-                {
-                    HRGN clip_rgn = CreateRectRgn(rect->left, rect->top,
-                            rect->right, rect->bottom);
-                    CombineRgn(rgn, rgn, clip_rgn, RGN_AND);
-                    DeleteObject(clip_rgn);
-                }
-                *clip_list_size = GetRegionData(rgn, *clip_list_size, clip_list);
-            }
-            DeleteObject(rgn);
-            ReleaseDC(clipper->window, dc);
+            wined3d_mutex_unlock();
+            ERR("Failed to get window region.\n");
+            return E_FAIL;
         }
+
+        if (rect)
+        {
+            HRGN clip_region;
+            int ret;
+
+            if (!(clip_region = CreateRectRgnIndirect(rect)))
+            {
+                wined3d_mutex_unlock();
+                ERR("Failed to create region.\n");
+                DeleteObject(region);
+                return E_FAIL;
+            }
+
+            ret = CombineRgn(region, region, clip_region, RGN_AND);
+            DeleteObject(clip_region);
+            if (ret == ERROR)
+            {
+                wined3d_mutex_unlock();
+                ERR("Failed to combine regions.\n");
+                DeleteObject(region);
+                return E_FAIL;
+            }
+        }
+
+        *clip_list_size = GetRegionData(region, *clip_list_size, clip_list);
+        DeleteObject(region);
 
         wined3d_mutex_unlock();
         return DD_OK;
