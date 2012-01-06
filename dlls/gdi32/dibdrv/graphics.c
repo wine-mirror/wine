@@ -57,6 +57,21 @@ static RECT get_device_rect( HDC hdc, int left, int top, int right, int bottom, 
     return rect;
 }
 
+static BOOL get_pen_device_rect( dibdrv_physdev *dev, RECT *rect, int left, int top, int right, int bottom )
+{
+    *rect = get_device_rect( dev->dev.hdc, left, top, right, bottom, TRUE );
+    if (rect->left == rect->right || rect->top == rect->bottom) return FALSE;
+
+    if (dev->pen_style == PS_INSIDEFRAME)
+    {
+        rect->left   += dev->pen_width / 2;
+        rect->top    += dev->pen_width / 2;
+        rect->right  -= (dev->pen_width - 1) / 2;
+        rect->bottom -= (dev->pen_width - 1) / 2;
+    }
+    return TRUE;
+}
+
 /* compute the points for the first quadrant of an ellipse, counterclockwise from the x axis */
 /* 'data' must contain enough space, (width+height)/2 is a reasonable upper bound */
 static int ellipse_first_quadrant( int width, int height, POINT *data )
@@ -696,22 +711,14 @@ BOOL dibdrv_Polyline( PHYSDEV dev, const POINT* pt, INT count )
 BOOL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
-    RECT rect = get_device_rect( dev->hdc, left, top, right, bottom, TRUE );
+    RECT rect;
     POINT pts[4];
     BOOL ret;
     HRGN outline = 0;
 
     TRACE("(%p, %d, %d, %d, %d)\n", dev, left, top, right, bottom);
 
-    if(rect.left == rect.right || rect.top == rect.bottom) return TRUE;
-
-    if (pdev->pen_style == PS_INSIDEFRAME)
-    {
-        rect.left   += pdev->pen_width / 2;
-        rect.top    += pdev->pen_width / 2;
-        rect.right  -= (pdev->pen_width - 1) / 2;
-        rect.bottom -= (pdev->pen_width - 1) / 2;
-    }
+    if (!get_pen_device_rect( pdev, &rect, left, top, right, bottom )) return TRUE;
 
     if (pdev->pen_uses_region && !(outline = CreateRectRgn( 0, 0, 0, 0 ))) return FALSE;
 
@@ -769,21 +776,13 @@ BOOL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                        INT ellipse_width, INT ellipse_height )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev( dev );
-    RECT rect = get_device_rect( dev->hdc, left, top, right, bottom, TRUE );
+    RECT rect;
     POINT pt[2], *points;
     int i, end, count;
     BOOL ret = TRUE;
     HRGN outline = 0, interior = 0;
 
-    if (rect.left == rect.right || rect.top == rect.bottom) return TRUE;
-
-    if (pdev->pen_style == PS_INSIDEFRAME)
-    {
-        rect.left   += pdev->pen_width / 2;
-        rect.top    += pdev->pen_width / 2;
-        rect.right  -= (pdev->pen_width - 1) / 2;
-        rect.bottom -= (pdev->pen_width - 1) / 2;
-    }
+    if (!get_pen_device_rect( pdev, &rect, left, top, right, bottom )) return TRUE;
 
     pt[0].x = pt[0].y = 0;
     pt[1].x = ellipse_width;
