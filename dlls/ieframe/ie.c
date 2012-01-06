@@ -51,6 +51,9 @@ static HRESULT WINAPI InternetExplorer_QueryInterface(IWebBrowser2 *iface, REFII
     }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
         TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
         *ppv = &This->doc_host->doc_host.cps.IConnectionPointContainer_iface;
+    }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
+        TRACE("(%p)->(IID_IServiceProvider %p)\n", This, ppv);
+        *ppv = &This->IServiceProvider_iface;
     }else if(HlinkFrame_QI(&This->hlink_frame, riid, ppv)) {
         return S_OK;
     }
@@ -700,7 +703,49 @@ static const IWebBrowser2Vtbl InternetExplorerVtbl =
     InternetExplorer_put_Resizable
 };
 
+static inline InternetExplorer *impl_from_IServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, InternetExplorer, IServiceProvider_iface);
+}
+
+static HRESULT WINAPI IEServiceProvider_QueryInterface(IServiceProvider *iface,
+            REFIID riid, LPVOID *ppv)
+{
+    InternetExplorer *This = impl_from_IServiceProvider(iface);
+    return IWebBrowser_QueryInterface(&This->IWebBrowser2_iface, riid, ppv);
+}
+
+static ULONG WINAPI IEServiceProvider_AddRef(IServiceProvider *iface)
+{
+    InternetExplorer *This = impl_from_IServiceProvider(iface);
+    return IWebBrowser_AddRef(&This->IWebBrowser2_iface);
+}
+
+static ULONG WINAPI IEServiceProvider_Release(IServiceProvider *iface)
+{
+    InternetExplorer *This = impl_from_IServiceProvider(iface);
+    return IWebBrowser_Release(&This->IWebBrowser2_iface);
+}
+
+static HRESULT WINAPI IEServiceProvider_QueryService(IServiceProvider *iface,
+        REFGUID guidService, REFIID riid, void **ppv)
+{
+    InternetExplorer *This = impl_from_IServiceProvider(iface);
+    FIXME("(%p)->(%s, %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static const IServiceProviderVtbl ServiceProviderVtbl =
+{
+    IEServiceProvider_QueryInterface,
+    IEServiceProvider_AddRef,
+    IEServiceProvider_Release,
+    IEServiceProvider_QueryService
+};
+
 void InternetExplorer_WebBrowser_Init(InternetExplorer *This)
 {
     This->IWebBrowser2_iface.lpVtbl = &InternetExplorerVtbl;
+    This->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
 }

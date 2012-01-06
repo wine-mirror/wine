@@ -198,6 +198,7 @@ typedef struct {
 
 struct InternetExplorer {
     IWebBrowser2 IWebBrowser2_iface;
+    IServiceProvider IServiceProvider_iface;
     HlinkFrame hlink_frame;
 
     LONG ref;
