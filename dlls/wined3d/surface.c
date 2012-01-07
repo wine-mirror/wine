@@ -4531,6 +4531,12 @@ HRESULT d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_alpha_c
             break;
     }
 
+    if (*convert != NO_CONVERSION)
+    {
+        format->rtInternal = format->glInternal;
+        format->glGammaInternal = format->glInternal;
+    }
+
     return WINED3D_OK;
 }
 
