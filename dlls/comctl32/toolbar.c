@@ -4908,11 +4908,10 @@ TOOLBAR_SetState (TOOLBAR_INFO *infoPtr, INT Id, LPARAM lParam)
 
 
 static LRESULT
-TOOLBAR_SetStyle (TOOLBAR_INFO *infoPtr, LPARAM lParam)
+TOOLBAR_SetStyle (TOOLBAR_INFO *infoPtr, DWORD style)
 {
-    SetWindowLongW(infoPtr->hwndSelf, GWL_STYLE, lParam);
-
-    return TRUE;
+    infoPtr->dwStyle = style;
+    return 0;
 }
 
 
@@ -5155,7 +5154,7 @@ TOOLBAR_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
     DWORD dwStyle = GetWindowLongW (hwnd, GWL_STYLE);
     LOGFONTW logFont;
 
-    TRACE("hwnd = %p\n", hwnd);
+    TRACE("hwnd = %p, style=0x%08x\n", hwnd, lpcs->style);
 
     infoPtr->dwStyle = dwStyle;
     GetClientRect(hwnd, &infoPtr->client_rect);

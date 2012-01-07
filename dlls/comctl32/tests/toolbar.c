@@ -164,6 +164,7 @@ static void basic_test(void)
     TBBUTTON buttons[9];
     HWND hToolbar;
     int i;
+
     for (i=0; i<9; i++)
         MakeButton(buttons+i, 1000+i, TBSTYLE_CHECKGROUP, 0);
     MakeButton(buttons+3, 1003, TBSTYLE_SEP|TBSTYLE_GROUP, 0);
@@ -1633,6 +1634,54 @@ static void test_tooltip(void)
     DestroyWindow(hToolbar);
 }
 
+static void test_get_set_style(void)
+{
+    TBBUTTON buttons[9];
+    DWORD style, style2, ret;
+    HWND hToolbar;
+    int i;
+
+    for (i=0; i<9; i++)
+        MakeButton(buttons+i, 1000+i, TBSTYLE_CHECKGROUP, 0);
+    MakeButton(buttons+3, 1003, TBSTYLE_SEP|TBSTYLE_GROUP, 0);
+    MakeButton(buttons+6, 1006, TBSTYLE_SEP, 0);
+
+    hToolbar = CreateToolbarEx(hMainWnd,
+        WS_VISIBLE | WS_CLIPCHILDREN | CCS_TOP |
+        WS_CHILD | TBSTYLE_LIST,
+        100,
+        0, NULL, 0,
+        buttons, sizeof(buttons)/sizeof(buttons[0]),
+        0, 0, 20, 16, sizeof(TBBUTTON));
+    ok(hToolbar != NULL, "Toolbar creation\n");
+    SendMessage(hToolbar, TB_ADDSTRINGA, 0, (LPARAM)"test\000");
+
+    style = SendMessageA(hToolbar, TB_GETSTYLE, 0, 0);
+    style2 = GetWindowLongA(hToolbar, GWL_STYLE);
+todo_wine
+    ok(style == style2, "got 0x%08x, expected 0x%08x\n", style, style2);
+
+    /* try to alter common window bits */
+    style2 |= WS_BORDER;
+    ret = SendMessageA(hToolbar, TB_SETSTYLE, 0, style2);
+    ok(ret == 0, "got %d\n", ret);
+    style = SendMessageA(hToolbar, TB_GETSTYLE, 0, 0);
+    style2 = GetWindowLongA(hToolbar, GWL_STYLE);
+    ok((style != style2) && (style == (style2 | WS_BORDER)),
+        "got 0x%08x, expected 0x%08x\n", style, style2);
+    ok(style & WS_BORDER, "got 0x%08x\n", style);
+
+    /* now styles are the same, alter window style */
+    ret = SendMessageA(hToolbar, TB_SETSTYLE, 0, style2);
+    ok(ret == 0, "got %d\n", ret);
+    style2 |= WS_BORDER;
+    SetWindowLongA(hToolbar, GWL_STYLE, style2);
+    style = SendMessageA(hToolbar, TB_GETSTYLE, 0, 0);
+    ok(style == style2, "got 0x%08x, expected 0x%08x\n", style, style2);
+
+    DestroyWindow(hToolbar);
+}
+
 START_TEST(toolbar)
 {
     WNDCLASSA wc;
@@ -1672,6 +1721,7 @@ START_TEST(toolbar)
     test_setrows();
     test_getstring();
     test_tooltip();
+    test_get_set_style();
 
     PostQuitMessage(0);
     while(GetMessageA(&msg,0,0,0)) {
