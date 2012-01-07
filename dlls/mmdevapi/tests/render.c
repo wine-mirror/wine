@@ -267,7 +267,8 @@ static void test_audioclient(void)
         fmtex->dwChannelMask = 0;
 
         hr = IAudioClient_IsFormatSupported(ac, AUDCLNT_SHAREMODE_SHARED, pwfx, &fmt2);
-        ok(hr == S_OK, "IsFormatSupported(dwChannelMask = 0) call returns %08x\n", hr);
+        ok(hr == S_OK || broken(hr == S_FALSE /* w7 Realtek HDA */),
+           "IsFormatSupported(dwChannelMask = 0) call returns %08x\n", hr);
         ok(fmtex->dwChannelMask == 0, "Passed format was modified\n");
 
         CoTaskMemFree(fmt2);
@@ -304,7 +305,8 @@ static void test_audioclient(void)
     ok(hr == S_OK, "Valid GetStreamLatency call returns %08x\n", hr);
     trace("Returned latency: %u.%04u ms\n",
           (UINT)(t2/10000), (UINT)(t2 % 10000));
-    ok(t2 >= t1, "Latency < default period, delta %ldus\n", (long)((t2-t1)/10));
+    ok(t2 >= t1 || broken(t2 >= t1/2 && pwfx->nSamplesPerSec > 48000),
+       "Latency < default period, delta %ldus\n", (long)((t2-t1)/10));
 
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000, 0, pwfx, NULL);
     ok(hr == AUDCLNT_E_ALREADY_INITIALIZED, "Calling Initialize twice returns %08x\n", hr);
@@ -415,10 +417,10 @@ static void test_formats(AUDCLNT_SHAREMODE mode)
                fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr, hrs);
         else
             /* On testbot 48000x16x1 claims support, but does not Initialize.
-             * 5:1 cards Initialize 44100|48000x16x1 yet claim no support. */
+             * Some cards Initialize 44100|48000x16x1 yet claim no support. */
             ok(hrs == S_OK ? hr == S_OK || broken(hr == AUDCLNT_E_ENDPOINT_CREATE_FAILED)
                : hr == AUDCLNT_E_ENDPOINT_CREATE_FAILED || broken(hr == S_OK &&
-                   pwfx->nChannels > 2 && fmt.nChannels == 1),
+                   fmt.nChannels == 1 && pwfx->wBitsPerSample == fmt.wBitsPerSample),
                "Initialize(exclus., %ux%2ux%u) returns %08x\n",
                fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr);
 
