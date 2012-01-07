@@ -42,28 +42,32 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
+
+typedef struct
+{
+    IContextMenu2 IContextMenu2_iface;
+    LONG ref;
+    IShellFolder* parent;
+    UINT verb_offset;
+} ContextMenu;
+
 /**************************************************************************
 *  IContextMenu Implementation
 */
 typedef struct
 {
-    IContextMenu2   IContextMenu2_iface;
-    LONG            ref;
-    IShellFolder*   pSFParent;
+    ContextMenu     menu;
+
     LPITEMIDLIST    pidl;       /* root pidl */
     LPITEMIDLIST    *apidl;     /* array of child pidls */
     UINT            cidl;
     BOOL            bAllValues;
-    UINT            verb_offset;
 } ItemCmImpl;
 
 static inline ItemCmImpl *impl_from_IContextMenu2(IContextMenu2 *iface)
 {
-    return CONTAINING_RECORD(iface, ItemCmImpl, IContextMenu2_iface);
+    return CONTAINING_RECORD(iface, ItemCmImpl, menu.IContextMenu2_iface);
 }
-
-
-static const IContextMenu2Vtbl cmvt;
 
 /**************************************************************************
 * ISvItemCm_CanRenameItems()
@@ -79,39 +83,10 @@ static BOOL ISvItemCm_CanRenameItems(ItemCmImpl *This)
 	  for(i = 0; i < This->cidl; i++){}
 	  if(i > 1) return FALSE;		/* can't rename more than one item at a time*/
 	  dwAttributes = SFGAO_CANRENAME;
-	  IShellFolder_GetAttributesOf(This->pSFParent, 1, (LPCITEMIDLIST*)This->apidl, &dwAttributes);
+	  IShellFolder_GetAttributesOf(This->menu.parent, 1, (LPCITEMIDLIST*)This->apidl, &dwAttributes);
 	  return dwAttributes & SFGAO_CANRENAME;
 	}
 	return FALSE;
-}
-
-/**************************************************************************
-*   ISvItemCm_Constructor()
-*/
-IContextMenu2 *ISvItemCm_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST pidl, const LPCITEMIDLIST *apidl, UINT cidl)
-{	ItemCmImpl* cm;
-	UINT  u;
-
-	cm = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ItemCmImpl));
-	cm->IContextMenu2_iface.lpVtbl = &cmvt;
-	cm->ref = 1;
-	cm->pidl = ILClone(pidl);
-	cm->pSFParent = pSFParent;
-
-	if(pSFParent) IShellFolder_AddRef(pSFParent);
-
-	cm->apidl = _ILCopyaPidl(apidl, cidl);
-	cm->cidl = cidl;
-
-	cm->bAllValues = 1;
-	for(u = 0; u < cidl; u++)
-	{
-	  cm->bAllValues &= (_ILIsValue(apidl[u]) ? 1 : 0);
-	}
-
-	TRACE("(%p)->()\n",cm);
-
-	return &cm->IContextMenu2_iface;
 }
 
 /**************************************************************************
@@ -152,7 +127,7 @@ static HRESULT WINAPI ISvItemCm_fnQueryInterface(IContextMenu2 *iface, REFIID ri
 static ULONG WINAPI ISvItemCm_fnAddRef(IContextMenu2 *iface)
 {
 	ItemCmImpl *This = impl_from_IContextMenu2(iface);
-	ULONG refCount = InterlockedIncrement(&This->ref);
+	ULONG refCount = InterlockedIncrement(&This->menu.ref);
 
 	TRACE("(%p)->(count=%u)\n", This, refCount - 1);
 
@@ -165,7 +140,7 @@ static ULONG WINAPI ISvItemCm_fnAddRef(IContextMenu2 *iface)
 static ULONG WINAPI ISvItemCm_fnRelease(IContextMenu2 *iface)
 {
 	ItemCmImpl *This = impl_from_IContextMenu2(iface);
-	ULONG refCount = InterlockedDecrement(&This->ref);
+	ULONG refCount = InterlockedDecrement(&This->menu.ref);
 
 	TRACE("(%p)->(count=%i)\n", This, refCount + 1);
 
@@ -173,8 +148,8 @@ static ULONG WINAPI ISvItemCm_fnRelease(IContextMenu2 *iface)
 	{
 	  TRACE(" destroying IContextMenu(%p)\n",This);
 
-	  if(This->pSFParent)
-	    IShellFolder_Release(This->pSFParent);
+	  if(This->menu.parent)
+	    IShellFolder_Release(This->menu.parent);
 
 	  SHFree(This->pidl);
 
@@ -229,7 +204,7 @@ static HRESULT WINAPI ISvItemCm_fnQueryContextMenu(
 
     TRACE("(%p)->(hmenu=%p indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",This, hmenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
 
-    This->verb_offset=idCmdFirst;
+    This->menu.verb_offset=idCmdFirst;
 
     if(!(CMF_DEFAULTONLY & uFlags) && This->cidl>0)
     {
@@ -339,7 +314,7 @@ static void DoDelete(ItemCmImpl *This)
 {
 	ISFHelper * psfhlp;
 
-	IShellFolder_QueryInterface(This->pSFParent, &IID_ISFHelper, (LPVOID*)&psfhlp);
+	IShellFolder_QueryInterface(This->menu.parent, &IID_ISFHelper, (LPVOID*)&psfhlp);
 	if (psfhlp)
 	{
 	  ISFHelper_DeleteItems(psfhlp, This->cidl, (LPCITEMIDLIST *)This->apidl);
@@ -516,7 +491,7 @@ static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
 
     if (HIWORD(lpcmi->lpVerb) == 0)
     {
-        switch(LOWORD(lpcmi->lpVerb-This->verb_offset))
+        switch(LOWORD(lpcmi->lpVerb-This->menu.verb_offset))
         {
         case FCIDM_SHVIEW_EXPLORE:
             TRACE("Verb FCIDM_SHVIEW_EXPLORE\n");
@@ -547,7 +522,7 @@ static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
             DoOpenProperties(This, lpcmi->hwnd);
             break;
         default:
-            FIXME("Unhandled Verb %xl\n",LOWORD(lpcmi->lpVerb)-This->verb_offset);
+            FIXME("Unhandled Verb %xl\n",LOWORD(lpcmi->lpVerb)-This->menu.verb_offset);
             return E_INVALIDARG;
         }
     }
@@ -591,7 +566,7 @@ static HRESULT WINAPI ISvItemCm_fnGetCommandString(
 	    break;
 
 	  case GCS_VERBA:
-	    switch(idCommand-This->verb_offset)
+	    switch(idCommand-This->menu.verb_offset)
 	    {
 	    case FCIDM_SHVIEW_RENAME:
 	        strcpy(lpszName, "rename");
@@ -603,7 +578,7 @@ static HRESULT WINAPI ISvItemCm_fnGetCommandString(
 	     /* NT 4.0 with IE 3.0x or no IE will always call This with GCS_VERBW. In This
 	     case, you need to do the lstrcpyW to the pointer passed.*/
 	  case GCS_VERBW:
-	    switch(idCommand-This->verb_offset)
+	    switch(idCommand-This->menu.verb_offset)
 	    {
 	    case FCIDM_SHVIEW_RENAME:
                 MultiByteToWideChar( CP_ACP, 0, "rename", -1, (LPWSTR)lpszName, uMaxNameLen );
@@ -640,7 +615,7 @@ static HRESULT WINAPI ISvItemCm_fnHandleMenuMsg(
 	return E_NOTIMPL;
 }
 
-static const IContextMenu2Vtbl cmvt =
+static const IContextMenu2Vtbl ItemContextMenuVtbl =
 {
 	ISvItemCm_fnQueryInterface,
 	ISvItemCm_fnAddRef,
@@ -650,3 +625,29 @@ static const IContextMenu2Vtbl cmvt =
 	ISvItemCm_fnGetCommandString,
 	ISvItemCm_fnHandleMenuMsg
 };
+
+IContextMenu2 *ISvItemCm_Constructor(IShellFolder *parent, LPCITEMIDLIST pidl, const LPCITEMIDLIST *apidl, UINT cidl)
+{	ItemCmImpl* cm;
+	UINT  u;
+
+	cm = HeapAlloc(GetProcessHeap(), 0, sizeof(ItemCmImpl));
+	cm->menu.IContextMenu2_iface.lpVtbl = &ItemContextMenuVtbl;
+	cm->menu.ref = 1;
+	cm->menu.verb_offset = 0;
+	cm->menu.parent = parent;
+
+	cm->pidl = ILClone(pidl);
+
+	if (parent) IShellFolder_AddRef(parent);
+
+	cm->apidl = _ILCopyaPidl(apidl, cidl);
+	cm->cidl = cidl;
+
+	cm->bAllValues = 1;
+	for(u = 0; u < cidl; u++)
+	  cm->bAllValues &= (_ILIsValue(apidl[u]) ? 1 : 0);
+
+	TRACE("(%p)\n",cm);
+
+	return &cm->menu.IContextMenu2_iface;
+}

@@ -430,7 +430,7 @@ static HRESULT WINAPI ISVBgCm_fnHandleMenuMsg(
 * IContextMenu2 VTable
 *
 */
-static const IContextMenu2Vtbl cmvt =
+static const IContextMenu2Vtbl BackgroundContextMenuVtbl =
 {
 	ISVBgCm_fnQueryInterface,
 	ISVBgCm_fnAddRef,
@@ -445,11 +445,12 @@ IContextMenu2 *ISvBgCm_Constructor(IShellFolder *pSFParent, BOOL bDesktop)
 {
     BgCmImpl *cm;
 
-    cm = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*cm));
-    cm->IContextMenu2_iface.lpVtbl = &cmvt;
+    cm = HeapAlloc(GetProcessHeap(), 0, sizeof(*cm));
+    cm->IContextMenu2_iface.lpVtbl = &BackgroundContextMenuVtbl;
     cm->ref = 1;
     cm->pSFParent = pSFParent;
     cm->bDesktop = bDesktop;
+    cm->verb_offset = 0;
     if(pSFParent) IShellFolder_AddRef(pSFParent);
 
     TRACE("(%p)->()\n", cm);
