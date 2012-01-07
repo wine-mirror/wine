@@ -180,19 +180,7 @@ UINT WINAPI SendInput( UINT count, LPINPUT inputs, int size )
             /* we need to update the coordinates to what the server expects */
             INPUT input = inputs[i];
             update_mouse_coords( &input );
-            if (!(status = send_hardware_message( 0, &input, SEND_HWMSG_INJECTED )))
-            {
-                if ((input.u.mi.dwFlags & MOUSEEVENTF_MOVE) &&
-                    ((input.u.mi.dwFlags & MOUSEEVENTF_ABSOLUTE) || input.u.mi.dx || input.u.mi.dy))
-                {
-                    /* we have to actually move the cursor */
-                    POINT pt;
-                    GetCursorPos( &pt );
-                    if (!(input.u.mi.dwFlags & MOUSEEVENTF_ABSOLUTE) ||
-                        pt.x != input.u.mi.dx  || pt.y != input.u.mi.dy)
-                        USER_Driver->pSetCursorPos( pt.x, pt.y );
-                }
-            }
+            status = send_hardware_message( 0, &input, SEND_HWMSG_INJECTED );
         }
         else status = send_hardware_message( 0, &inputs[i], SEND_HWMSG_INJECTED );
 

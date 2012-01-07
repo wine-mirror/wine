@@ -2204,6 +2204,9 @@ DECL_HANDLER(send_hardware_message)
         }
     }
 
+    reply->prev_x = desktop->cursor.x;
+    reply->prev_y = desktop->cursor.y;
+
     switch (req->input.type)
     {
     case INPUT_MOUSE:
@@ -2219,6 +2222,9 @@ DECL_HANDLER(send_hardware_message)
         set_error( STATUS_INVALID_PARAMETER );
     }
     if (thread) release_object( thread );
+
+    reply->new_x = desktop->cursor.x;
+    reply->new_y = desktop->cursor.y;
     set_reply_data( desktop->keystate, size );
     release_object( desktop );
 }
