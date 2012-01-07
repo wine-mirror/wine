@@ -4016,40 +4016,6 @@ void X11DRV_DIB_DeleteDIBSection(X_PHYSBITMAP *physBitmap, DIBSECTION *dib)
   DeleteCriticalSection(&physBitmap->lock);
 }
 
-/***********************************************************************
- *           SetDIBColorTable   (X11DRV.@)
- */
-UINT X11DRV_SetDIBColorTable( PHYSDEV dev, UINT start, UINT count, const RGBQUAD *colors )
-{
-    X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
-    DIBSECTION dib;
-    UINT ret = 0;
-    X_PHYSBITMAP *physBitmap = physDev->bitmap;
-
-    if (!physBitmap) return 0;
-    GetObjectW( physBitmap->hbitmap, sizeof(dib), &dib );
-
-    if (physBitmap->colorMap && start < physBitmap->nColorMap) {
-        UINT end = count + start;
-        if (end > physBitmap->nColorMap) end = physBitmap->nColorMap;
-        /*
-         * Changing color table might change the mapping between
-         * DIB colors and X11 colors and thus alter the visible state
-         * of the bitmap object.
-         */
-        /*
-         * FIXME we need to recalculate the pen, brush, text and bkgnd pixels here,
-         * at least for a 1 bpp dibsection
-         */
-        X11DRV_DIB_Lock( physBitmap, DIB_Status_AppMod );
-        X11DRV_DIB_GenColorMap( physDev, physBitmap->colorMap, DIB_RGB_COLORS,
-                                dib.dsBm.bmBitsPixel, colors, start, end );
-        X11DRV_DIB_Unlock( physBitmap, TRUE );
-        ret = end - start;
-    }
-    return ret;
-}
-
 
 /***********************************************************************
  *           X11DRV_DIB_CreateDIBFromBitmap

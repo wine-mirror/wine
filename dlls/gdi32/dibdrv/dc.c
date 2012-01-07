@@ -382,24 +382,6 @@ static void dibdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
 }
 
 /***********************************************************************
- *           dibdrv_SetDIBColorTable
- */
-static UINT dibdrv_SetDIBColorTable( PHYSDEV dev, UINT pos, UINT count, const RGBQUAD *colors )
-{
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetDIBColorTable );
-    dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
-    TRACE("(%p, %d, %d, %p)\n", dev, pos, count, colors);
-
-    if (pdev->dib.color_table)  /* force re-creating the brush bits */
-    {
-        pdev->brush.rop = -1;
-        pdev->pen_brush.rop = -1;
-    }
-
-    return next->funcs->pSetDIBColorTable( next, pos, count, colors );
-}
-
-/***********************************************************************
  *           dibdrv_ChoosePixelFormat
  */
 static INT dibdrv_ChoosePixelFormat( PHYSDEV dev, const PIXELFORMATDESCRIPTOR *pfd )
@@ -684,7 +666,6 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pSetBkMode */
     dibdrv_SetDCBrushColor,             /* pSetDCBrushColor */
     dibdrv_SetDCPenColor,               /* pSetDCPenColor */
-    dibdrv_SetDIBColorTable,            /* pSetDIBColorTable */
     NULL,                               /* pSetDIBitsToDevice */
     dibdrv_SetDeviceClipping,           /* pSetDeviceClipping */
     dibdrv_SetDeviceGammaRamp,          /* pSetDeviceGammaRamp */

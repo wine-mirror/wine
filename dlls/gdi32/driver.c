@@ -572,11 +572,6 @@ static COLORREF nulldrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
     return color;
 }
 
-static UINT nulldrv_SetDIBColorTable( PHYSDEV dev, UINT pos, UINT count, const RGBQUAD *colors )
-{
-    return 0;
-}
-
 static void nulldrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
 {
 }
@@ -832,7 +827,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_SetBkMode,                  /* pSetBkMode */
     nulldrv_SetDCBrushColor,            /* pSetDCBrushColor */
     nulldrv_SetDCPenColor,              /* pSetDCPenColor */
-    nulldrv_SetDIBColorTable,           /* pSetDIBColorTable */
     nulldrv_SetDIBitsToDevice,          /* pSetDIBitsToDevice */
     nulldrv_SetDeviceClipping,          /* pSetDeviceClipping */
     nulldrv_SetDeviceGammaRamp,         /* pSetDeviceGammaRamp */

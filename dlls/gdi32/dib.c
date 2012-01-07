@@ -898,8 +898,6 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, CONST RGBQUA
 
     if ((bitmap = GDI_GetObjPtr( dc->hBitmap, OBJ_BITMAP )))
     {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetDIBColorTable );
-
         /* Check if currently selected bitmap is a DIB */
         if (bitmap->color_table)
         {
@@ -910,7 +908,14 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, CONST RGBQUA
             }
         }
         GDI_ReleaseObj( dc->hBitmap );
-        physdev->funcs->pSetDIBColorTable( physdev, startpos, entries, colors );
+
+        if (result)  /* update colors of selected objects */
+        {
+            SetTextColor( hdc, dc->textColor );
+            SetBkColor( hdc, dc->backgroundColor );
+            SelectObject( hdc, dc->hPen );
+            SelectObject( hdc, dc->hBrush );
+        }
     }
     release_dc_ptr( dc );
     return result;

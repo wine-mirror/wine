@@ -139,7 +139,6 @@ static const struct gdi_dc_funcs EMFDRV_Funcs =
     EMFDRV_SetBkMode,                /* pSetBkMode */
     EMFDRV_SetDCBrushColor,          /* pSetDCBrushColor*/
     EMFDRV_SetDCPenColor,            /* pSetDCPenColor*/
-    NULL,                            /* pSetDIBColorTable */
     EMFDRV_SetDIBitsToDevice,        /* pSetDIBitsToDevice */
     NULL,                            /* pSetDeviceClipping */
     NULL,                            /* pSetDeviceGammaRamp */

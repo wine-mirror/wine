@@ -922,7 +922,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pSetBkMode */
     PSDRV_SetDCBrushColor,              /* pSetDCBrushColor */
     PSDRV_SetDCPenColor,                /* pSetDCPenColor */
-    NULL,                               /* pSetDIBColorTable */
     NULL,                               /* pSetDIBitsToDevice */
     NULL,                               /* pSetDeviceClipping */
     NULL,                               /* pSetDeviceGammaRamp */

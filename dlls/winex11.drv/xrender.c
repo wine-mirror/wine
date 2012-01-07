@@ -2778,7 +2778,6 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pSetBkMode */
     NULL,                               /* pSetDCBrushColor */
     NULL,                               /* pSetDCPenColor */
-    NULL,                               /* pSetDIBColorTable */
     NULL,                               /* pSetDIBitsToDevice */
     xrenderdrv_SetDeviceClipping,       /* pSetDeviceClipping */
     NULL,                               /* pSetDeviceGammaRamp */
