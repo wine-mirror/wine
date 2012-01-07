@@ -329,9 +329,9 @@ TOOLBAR_ButtonHasString(const TBUTTON_INFO *btnPtr)
 * function should be null.
 */
 static void
-TOOLBAR_CheckStyle (const TOOLBAR_INFO *infoPtr, DWORD dwStyle)
+TOOLBAR_CheckStyle (const TOOLBAR_INFO *infoPtr)
 {
-    if (dwStyle & TBSTYLE_REGISTERDROP)
+    if (infoPtr->dwStyle & TBSTYLE_REGISTERDROP)
 	FIXME("[%p] TBSTYLE_REGISTERDROP not implemented\n", infoPtr->hwndSelf);
 }
 
@@ -5166,7 +5166,7 @@ TOOLBAR_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
     
     OpenThemeData (hwnd, themeClass);
 
-    TOOLBAR_CheckStyle (infoPtr, infoPtr->dwStyle);
+    TOOLBAR_CheckStyle (infoPtr);
 
     return 0;
 }
@@ -6368,11 +6368,10 @@ TOOLBAR_StyleChanged (TOOLBAR_INFO *infoPtr, INT nType, const STYLESTRUCT *lpSty
         else
             infoPtr->dwDTFlags = DT_CENTER | DT_END_ELLIPSIS;
 
-        TOOLBAR_CheckStyle (infoPtr, lpStyle->styleNew);
-
         TRACE("new style 0x%08x\n", lpStyle->styleNew);
 
         infoPtr->dwStyle = lpStyle->styleNew;
+        TOOLBAR_CheckStyle (infoPtr);
 
         if ((dwOldStyle ^ lpStyle->styleNew) & (TBSTYLE_WRAPABLE | CCS_VERT))
             TOOLBAR_LayoutToolbar(infoPtr);
