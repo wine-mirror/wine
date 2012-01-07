@@ -5151,12 +5151,11 @@ static LRESULT
 TOOLBAR_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
 {
     TOOLBAR_INFO *infoPtr = (TOOLBAR_INFO *)GetWindowLongPtrW(hwnd, 0);
-    DWORD dwStyle = GetWindowLongW (hwnd, GWL_STYLE);
     LOGFONTW logFont;
 
     TRACE("hwnd = %p, style=0x%08x\n", hwnd, lpcs->style);
 
-    infoPtr->dwStyle = dwStyle;
+    infoPtr->dwStyle = lpcs->style;
     GetClientRect(hwnd, &infoPtr->client_rect);
     infoPtr->bUnicode = infoPtr->hwndNotify && 
         (NFR_UNICODE == SendMessageW(hwnd, WM_NOTIFYFORMAT, (WPARAM)hwnd, NF_REQUERY));
@@ -5167,7 +5166,7 @@ TOOLBAR_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
     
     OpenThemeData (hwnd, themeClass);
 
-    TOOLBAR_CheckStyle (infoPtr, dwStyle);
+    TOOLBAR_CheckStyle (infoPtr, infoPtr->dwStyle);
 
     return 0;
 }

@@ -1658,7 +1658,6 @@ static void test_get_set_style(void)
 
     style = SendMessageA(hToolbar, TB_GETSTYLE, 0, 0);
     style2 = GetWindowLongA(hToolbar, GWL_STYLE);
-todo_wine
     ok(style == style2, "got 0x%08x, expected 0x%08x\n", style, style2);
 
     /* try to alter common window bits */
