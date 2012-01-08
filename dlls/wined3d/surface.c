@@ -4740,16 +4740,9 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back)
 
     /* Flip the DIBsection */
     {
-        HBITMAP tmp;
-        BOOL hasDib = front->flags & SFLAG_DIBSECTION;
-        tmp = front->dib.DIBsection;
+        HBITMAP tmp = front->dib.DIBsection;
         front->dib.DIBsection = back->dib.DIBsection;
         back->dib.DIBsection = tmp;
-
-        if (back->flags & SFLAG_DIBSECTION) front->flags |= SFLAG_DIBSECTION;
-        else front->flags &= ~SFLAG_DIBSECTION;
-        if (hasDib) back->flags |= SFLAG_DIBSECTION;
-        else back->flags &= ~SFLAG_DIBSECTION;
     }
 
     /* Flip the surface data */
