@@ -73,20 +73,17 @@ static inline ItemCmImpl *impl_from_IContextMenu2(IContextMenu2 *iface)
 * ISvItemCm_CanRenameItems()
 */
 static BOOL ISvItemCm_CanRenameItems(ItemCmImpl *This)
-{	UINT  i;
-	DWORD dwAttributes;
+{
+    DWORD attr;
 
-	TRACE("(%p)->()\n",This);
+    TRACE("(%p)\n", This);
 
-	if(This->apidl)
-	{
-	  for(i = 0; i < This->cidl; i++){}
-	  if(i > 1) return FALSE;		/* can't rename more than one item at a time*/
-	  dwAttributes = SFGAO_CANRENAME;
-	  IShellFolder_GetAttributesOf(This->menu.parent, 1, (LPCITEMIDLIST*)This->apidl, &dwAttributes);
-	  return dwAttributes & SFGAO_CANRENAME;
-	}
-	return FALSE;
+    /* can't rename more than one item at a time*/
+    if (!This->apidl || This->cidl > 1) return FALSE;
+
+    attr = SFGAO_CANRENAME;
+    IShellFolder_GetAttributesOf(This->menu.parent, 1, (LPCITEMIDLIST*)This->apidl, &attr);
+    return attr & SFGAO_CANRENAME;
 }
 
 /**************************************************************************
