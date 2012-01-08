@@ -3557,7 +3557,7 @@ static struct wined3d_surface *surface_convert_format(struct wined3d_surface *so
 
     wined3d_surface_create(source->resource.device, source->resource.width,
             source->resource.height, to_fmt, 0 /* level */, 0 /* usage */, WINED3DPOOL_SCRATCH,
-            WINED3DMULTISAMPLE_NONE /* TODO: Multisampled conversion */, 0 /* MultiSampleQuality */,
+            WINED3D_MULTISAMPLE_NONE /* TODO: Multisampled conversion */, 0 /* MultiSampleQuality */,
             source->surface_type, WINED3D_SURFACE_MAPPABLE | WINED3D_SURFACE_DISCARD,
             NULL /* parent */, &wined3d_null_parent_ops, &ret);
     if (!ret)
@@ -7095,7 +7095,7 @@ const struct blit_shader cpu_blit =  {
 };
 
 static HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE surface_type, UINT alignment,
-        UINT width, UINT height, UINT level, WINED3DMULTISAMPLE_TYPE multisample_type,
+        UINT width, UINT height, UINT level, enum wined3d_multisample_type multisample_type,
         UINT multisample_quality, struct wined3d_device *device, DWORD usage, enum wined3d_format_id format_id,
         WINED3DPOOL pool, DWORD flags, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
@@ -7237,7 +7237,7 @@ static HRESULT surface_init(struct wined3d_surface *surface, WINED3DSURFTYPE sur
 
 HRESULT CDECL wined3d_surface_create(struct wined3d_device *device, UINT width, UINT height,
         enum wined3d_format_id format_id, UINT level, DWORD usage, WINED3DPOOL pool,
-        WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, WINED3DSURFTYPE surface_type,
+        enum wined3d_multisample_type multisample_type, DWORD multisample_quality, WINED3DSURFTYPE surface_type,
         DWORD flags, void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_surface **surface)
 {
     struct wined3d_surface *object;

@@ -527,27 +527,26 @@ enum wined3d_sampler_state
 };
 #define WINED3D_HIGHEST_SAMPLER_STATE                           WINED3D_SAMP_DMAP_OFFSET
 
-typedef enum _WINED3DMULTISAMPLE_TYPE
+enum wined3d_multisample_type
 {
-    WINED3DMULTISAMPLE_NONE                 = 0,
-    WINED3DMULTISAMPLE_NONMASKABLE          = 1,
-    WINED3DMULTISAMPLE_2_SAMPLES            = 2,
-    WINED3DMULTISAMPLE_3_SAMPLES            = 3,
-    WINED3DMULTISAMPLE_4_SAMPLES            = 4,
-    WINED3DMULTISAMPLE_5_SAMPLES            = 5,
-    WINED3DMULTISAMPLE_6_SAMPLES            = 6,
-    WINED3DMULTISAMPLE_7_SAMPLES            = 7,
-    WINED3DMULTISAMPLE_8_SAMPLES            = 8,
-    WINED3DMULTISAMPLE_9_SAMPLES            = 9,
-    WINED3DMULTISAMPLE_10_SAMPLES           = 10,
-    WINED3DMULTISAMPLE_11_SAMPLES           = 11,
-    WINED3DMULTISAMPLE_12_SAMPLES           = 12,
-    WINED3DMULTISAMPLE_13_SAMPLES           = 13,
-    WINED3DMULTISAMPLE_14_SAMPLES           = 14,
-    WINED3DMULTISAMPLE_15_SAMPLES           = 15,
-    WINED3DMULTISAMPLE_16_SAMPLES           = 16,
-    WINED3DMULTISAMPLE_FORCE_DWORD          = 0xffffffff
-} WINED3DMULTISAMPLE_TYPE;
+    WINED3D_MULTISAMPLE_NONE                = 0,
+    WINED3D_MULTISAMPLE_NON_MASKABLE        = 1,
+    WINED3D_MULTISAMPLE_2_SAMPLES           = 2,
+    WINED3D_MULTISAMPLE_3_SAMPLES           = 3,
+    WINED3D_MULTISAMPLE_4_SAMPLES           = 4,
+    WINED3D_MULTISAMPLE_5_SAMPLES           = 5,
+    WINED3D_MULTISAMPLE_6_SAMPLES           = 6,
+    WINED3D_MULTISAMPLE_7_SAMPLES           = 7,
+    WINED3D_MULTISAMPLE_8_SAMPLES           = 8,
+    WINED3D_MULTISAMPLE_9_SAMPLES           = 9,
+    WINED3D_MULTISAMPLE_10_SAMPLES          = 10,
+    WINED3D_MULTISAMPLE_11_SAMPLES          = 11,
+    WINED3D_MULTISAMPLE_12_SAMPLES          = 12,
+    WINED3D_MULTISAMPLE_13_SAMPLES          = 13,
+    WINED3D_MULTISAMPLE_14_SAMPLES          = 14,
+    WINED3D_MULTISAMPLE_15_SAMPLES          = 15,
+    WINED3D_MULTISAMPLE_16_SAMPLES          = 16,
+};
 
 typedef enum _WINED3DTEXTURESTAGESTATETYPE
 {
@@ -1625,7 +1624,7 @@ struct wined3d_swapchain_desc
     UINT backbuffer_height;
     enum wined3d_format_id backbuffer_format;
     UINT backbuffer_count;
-    WINED3DMULTISAMPLE_TYPE multisample_type;
+    enum wined3d_multisample_type multisample_type;
     DWORD multisample_quality;
     enum wined3d_swap_effect swap_effect;
     HWND device_window;
@@ -1642,7 +1641,7 @@ struct wined3d_resource_desc
 {
     WINED3DRESOURCETYPE resource_type;
     enum wined3d_format_id format;
-    WINED3DMULTISAMPLE_TYPE multisample_type;
+    enum wined3d_multisample_type multisample_type;
     UINT multisample_quality;
     DWORD usage;
     WINED3DPOOL pool;
@@ -1994,10 +1993,10 @@ struct wined3d_device_parent_ops
             UINT width, UINT height, enum wined3d_format_id format_id, DWORD usage, WINED3DPOOL pool,
             UINT level, WINED3DCUBEMAP_FACES face, struct wined3d_surface **surface);
     HRESULT (__cdecl *create_rendertarget)(struct wined3d_device_parent *device_parent, void *container_parent,
-            UINT width, UINT height, enum wined3d_format_id format_id, WINED3DMULTISAMPLE_TYPE multisample_type,
+            UINT width, UINT height, enum wined3d_format_id format_id, enum wined3d_multisample_type multisample_type,
             DWORD multisample_quality, BOOL lockable, struct wined3d_surface **surface);
     HRESULT (__cdecl *create_depth_stencil)(struct wined3d_device_parent *device_parent,
-            UINT width, UINT height, enum wined3d_format_id format_id, WINED3DMULTISAMPLE_TYPE multisample_type,
+            UINT width, UINT height, enum wined3d_format_id format_id, enum wined3d_multisample_type multisample_type,
             DWORD multisample_quality, BOOL discard, struct wined3d_surface **surface);
     HRESULT (__cdecl *create_volume)(struct wined3d_device_parent *device_parent, void *container_parent,
             UINT width, UINT height, UINT depth, enum wined3d_format_id format_id, WINED3DPOOL pool, DWORD usage,
@@ -2023,7 +2022,7 @@ HRESULT __cdecl wined3d_check_device_format_conversion(const struct wined3d *win
         enum wined3d_format_id target_format_id);
 HRESULT __cdecl wined3d_check_device_multisample_type(const struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_device_type device_type, enum wined3d_format_id surface_format_id, BOOL windowed,
-        WINED3DMULTISAMPLE_TYPE multisample_type, DWORD *quality_levels);
+        enum wined3d_multisample_type multisample_type, DWORD *quality_levels);
 HRESULT __cdecl wined3d_check_device_type(const struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_device_type device_type, enum wined3d_format_id display_format_id,
         enum wined3d_format_id backbuffer_format_id, BOOL windowed);
@@ -2310,7 +2309,7 @@ HRESULT __cdecl wined3d_surface_blt(struct wined3d_surface *dst_surface, const R
         const WINEDDBLTFX *blt_fx, WINED3DTEXTUREFILTERTYPE filter);
 HRESULT __cdecl wined3d_surface_create(struct wined3d_device *device, UINT width, UINT height,
         enum wined3d_format_id format_id, UINT level, DWORD usage, WINED3DPOOL pool,
-        WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, WINED3DSURFTYPE surface_type,
+        enum wined3d_multisample_type multisample_type, DWORD multisample_quality, WINED3DSURFTYPE surface_type,
         DWORD flags, void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_surface **surface);
 ULONG __cdecl wined3d_surface_decref(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_flip(struct wined3d_surface *surface, struct wined3d_surface *override, DWORD flags);

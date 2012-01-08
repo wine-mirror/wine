@@ -1197,7 +1197,7 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
     }
 
     hr = resource_init(&buffer->resource, device, WINED3DRTYPE_BUFFER, format,
-            WINED3DMULTISAMPLE_NONE, 0, usage, pool, size, 1, 1, size,
+            WINED3D_MULTISAMPLE_NONE, 0, usage, pool, size, 1, 1, size,
             parent, parent_ops, &buffer_resource_ops);
     if (FAILED(hr))
     {

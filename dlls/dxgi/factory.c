@@ -209,7 +209,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IWineDXGIFactory *
     }
     else
     {
-        wined3d_desc.multisample_type = WINED3DMULTISAMPLE_NONE;
+        wined3d_desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
         wined3d_desc.multisample_quality = 0;
     }
     wined3d_desc.swap_effect = WINED3D_SWAP_EFFECT_DISCARD;

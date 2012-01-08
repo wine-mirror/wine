@@ -33,7 +33,7 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     HRESULT hr;
 
     hr = resource_init(&texture->resource, device, resource_type, format,
-            WINED3DMULTISAMPLE_NONE, 0, usage, pool, 0, 0, 0, 0,
+            WINED3D_MULTISAMPLE_NONE, 0, usage, pool, 0, 0, 0, 0,
             parent, parent_ops, resource_ops);
     if (FAILED(hr))
     {

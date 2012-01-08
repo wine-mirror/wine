@@ -261,7 +261,8 @@ static HRESULT WINAPI IDirect3D8Impl_CheckDeviceMultiSampleType(IDirect3D8 *ifac
 
     wined3d_mutex_lock();
     hr = wined3d_check_device_multisample_type(This->WineD3D, Adapter, DeviceType,
-            wined3dformat_from_d3dformat(SurfaceFormat), Windowed, (WINED3DMULTISAMPLE_TYPE)MultiSampleType, NULL);
+            wined3dformat_from_d3dformat(SurfaceFormat), Windowed,
+            (enum wined3d_multisample_type)MultiSampleType, NULL);
     wined3d_mutex_unlock();
 
     return hr;

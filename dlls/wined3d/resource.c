@@ -78,7 +78,7 @@ static void resource_check_usage(DWORD usage)
 
 HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *device,
         WINED3DRESOURCETYPE resource_type, const struct wined3d_format *format,
-        WINED3DMULTISAMPLE_TYPE multisample_type, UINT multisample_quality,
+        enum wined3d_multisample_type multisample_type, UINT multisample_quality,
         DWORD usage, WINED3DPOOL pool, UINT width, UINT height, UINT depth, UINT size,
         void *parent, const struct wined3d_parent_ops *parent_ops,
         const struct wined3d_resource_ops *resource_ops)

@@ -5414,7 +5414,7 @@ static const struct wined3d_parent_ops ddraw_frontbuffer_parent_ops =
 
 static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format,
-        WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, BOOL lockable,
+        enum wined3d_multisample_type multisample_type, DWORD multisample_quality, BOOL lockable,
         struct wined3d_surface **surface)
 {
     struct IDirectDrawImpl *ddraw = ddraw_from_device_parent(device_parent);
@@ -5445,7 +5445,7 @@ static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_par
 }
 
 static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_parent *device_parent,
-        UINT width, UINT height, enum wined3d_format_id format, WINED3DMULTISAMPLE_TYPE multisample_type,
+        UINT width, UINT height, enum wined3d_format_id format, enum wined3d_multisample_type multisample_type,
         DWORD multisample_quality, BOOL discard, struct wined3d_surface **surface)
 {
     ERR("DirectDraw doesn't have and shouldn't try creating implicit depth buffers.\n");

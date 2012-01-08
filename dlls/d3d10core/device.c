@@ -1406,7 +1406,7 @@ static HRESULT CDECL device_parent_create_surface(struct wined3d_device_parent *
 
 static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_parent *device_parent,
         void *container_parent, UINT width, UINT height, enum wined3d_format_id format,
-        WINED3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality, BOOL lockable,
+        enum wined3d_multisample_type multisample_type, DWORD multisample_quality, BOOL lockable,
         struct wined3d_surface **surface)
 {
     struct d3d10_device *device = device_from_wined3d_device_parent(device_parent);
@@ -1449,7 +1449,7 @@ static HRESULT CDECL device_parent_create_rendertarget(struct wined3d_device_par
 }
 
 static HRESULT CDECL device_parent_create_depth_stencil(struct wined3d_device_parent *device_parent,
-        UINT width, UINT height, enum wined3d_format_id format, WINED3DMULTISAMPLE_TYPE multisample_type,
+        UINT width, UINT height, enum wined3d_format_id format, enum wined3d_multisample_type multisample_type,
         DWORD multisample_quality, BOOL discard, struct wined3d_surface **surface)
 {
     struct d3d10_device *device = device_from_wined3d_device_parent(device_parent);

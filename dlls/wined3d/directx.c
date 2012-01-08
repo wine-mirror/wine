@@ -3252,7 +3252,7 @@ HRESULT CDECL wined3d_check_depth_stencil_match(const struct wined3d *wined3d,
 
 HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_device_type device_type, enum wined3d_format_id surface_format_id, BOOL windowed,
-        WINED3DMULTISAMPLE_TYPE multisample_type, DWORD *quality_levels)
+        enum wined3d_multisample_type multisample_type, DWORD *quality_levels)
 {
     const struct wined3d_gl_info *gl_info;
 
@@ -3277,7 +3277,7 @@ HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d *wined3
 
     if (quality_levels)
     {
-        if (multisample_type == WINED3DMULTISAMPLE_NONMASKABLE)
+        if (multisample_type == WINED3D_MULTISAMPLE_NON_MASKABLE)
             /* FIXME: This is probably wrong. */
             *quality_levels = gl_info->limits.samples;
         else
