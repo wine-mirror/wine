@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-01-05 19:30+0100\n"
+"PO-Revision-Date: 2012-01-08 16:10+0100\n"
 "Last-Translator: André Hentschel\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -1301,7 +1301,7 @@ msgstr "CPS"
 
 #: crypt32.rc:54 cryptdlg.rc:32
 msgid "User Notice"
-msgstr "Benutzerbenachrichtung"
+msgstr "Benutzerbenachrichtigung"
 
 #: crypt32.rc:55
 msgid "On-line Certificate Status Protocol"
@@ -8771,7 +8771,7 @@ msgid ""
 "Cannot carry out the specified command on an auto-opened device. Wait until "
 "the device is closed, and then try again."
 msgstr ""
-"Der Befehl kann nicht auf ein selbst öffnedes Gerät angewandt werden. Warten "
+"Der Befehl kann nicht auf ein selbst öffnendes Gerät angewandt werden. Warten "
 "Sie, bis das Gerät geschlossen wurde und versuchen Sie es erneut."
 
 #: winmm.rc:99
@@ -13126,9 +13126,8 @@ msgid "&Color"
 msgstr "F&arbe"
 
 #: wineconsole.rc:97
-#, fuzzy
 msgid "Configuration"
-msgstr " Konfiguration "
+msgstr "Konfiguration"
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
