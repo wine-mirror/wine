@@ -428,7 +428,7 @@ static HRESULT WINAPI entityref_put_dataType(
 {
     entityref *This = impl_from_IXMLDOMEntityReference( iface );
 
-    FIXME("(%p)->(%s)\n", This, debugstr_w(p));
+    TRACE("(%p)->(%s)\n", This, debugstr_w(p));
 
     if(!p)
         return E_INVALIDARG;

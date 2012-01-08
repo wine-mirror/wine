@@ -42,7 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
 #ifdef HAVE_LIBXML2
 
-typedef struct _domcdata
+typedef struct
 {
     xmlnode node;
     IXMLDOMCDATASection IXMLDOMCDATASection_iface;
@@ -436,7 +436,7 @@ static HRESULT WINAPI domcdata_put_dataType(
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
 
-    FIXME("(%p)->(%s)\n", This, debugstr_w(p));
+    TRACE("(%p)->(%s)\n", This, debugstr_w(p));
 
     if(!p)
         return E_INVALIDARG;

@@ -433,7 +433,7 @@ static HRESULT WINAPI domfrag_put_dataType(
 {
     domfrag *This = impl_from_IXMLDOMDocumentFragment( iface );
 
-    FIXME("(%p)->(%s)\n", This, debugstr_w(p));
+    TRACE("(%p)->(%s)\n", This, debugstr_w(p));
 
     if(!p)
         return E_INVALIDARG;

@@ -435,7 +435,7 @@ static HRESULT WINAPI domcomment_put_dataType(
 {
     domcomment *This = impl_from_IXMLDOMComment( iface );
 
-    FIXME("(%p)->(%s)\n", This, debugstr_w(p));
+    TRACE("(%p)->(%s)\n", This, debugstr_w(p));
 
     if(!p)
         return E_INVALIDARG;

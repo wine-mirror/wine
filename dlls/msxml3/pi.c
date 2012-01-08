@@ -506,7 +506,7 @@ static HRESULT WINAPI dom_pi_put_dataType(
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
 
-    FIXME("(%p)->(%s)\n", This, debugstr_w(p));
+    TRACE("(%p)->(%s)\n", This, debugstr_w(p));
 
     if(!p)
         return E_INVALIDARG;

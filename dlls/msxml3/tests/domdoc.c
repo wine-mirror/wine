@@ -6777,10 +6777,26 @@ static put_datatype_t put_datatype_data[] = {
     { NULL }
 };
 
-static void test_nodeTypeTests( void )
+typedef struct {
+    DOMNodeType type;
+    HRESULT hr;
+} put_datatype_notype_t;
+
+static put_datatype_notype_t put_dt_notype[] = {
+    { NODE_PROCESSING_INSTRUCTION, E_FAIL },
+    { NODE_DOCUMENT_FRAGMENT,      E_FAIL },
+    { NODE_ENTITY_REFERENCE,       E_FAIL },
+    { NODE_CDATA_SECTION,          E_FAIL },
+    { NODE_COMMENT,                E_FAIL },
+    { NODE_INVALID }
+};
+
+static void test_put_dataType( void )
 {
+    const put_datatype_notype_t *ptr2 = put_dt_notype;
     const put_datatype_t *ptr = put_datatype_data;
     IXMLDOMElement *root, *element;
+    BSTR nameW, type1W, type2W;
     IXMLDOMDocument *doc;
     HRESULT hr;
 
@@ -6830,6 +6846,38 @@ static void test_nodeTypeTests( void )
     EXPECT_HR(hr, S_OK);
 
     IXMLDOMElement_Release(element);
+
+    /* try to set type for node without a type */
+    nameW  = _bstr_("testname");
+    type1W = _bstr_("string");
+    type2W = _bstr_("number");
+    while (ptr2->type != NODE_INVALID)
+    {
+        IXMLDOMNode *node;
+        VARIANT type;
+
+        V_VT(&type) = VT_I2;
+        V_I2(&type) = ptr2->type;
+
+        hr = IXMLDOMDocument_createNode(doc, type, nameW, NULL, &node);
+        EXPECT_HR(hr, S_OK);
+        if(hr == S_OK)
+        {
+            hr = IXMLDOMElement_appendChild(root, node, NULL);
+            EXPECT_HR(hr, S_OK);
+
+            hr = IXMLDOMNode_put_dataType(node, NULL);
+            EXPECT_HR(hr, E_INVALIDARG);
+
+            hr = IXMLDOMNode_put_dataType(node, type1W);
+            ok(hr == ptr2->hr, "failed for type %d, 0x%08x\n", ptr2->type, ptr->hr);
+            hr = IXMLDOMNode_put_dataType(node, type2W);
+            ok(hr == ptr2->hr, "failed for type %d, 0x%08x\n", ptr2->type, ptr->hr);
+
+            IXMLDOMNode_Release(node);
+        }
+        ptr2++;
+    }
 
     IXMLDOMElement_Release(root);
     IXMLDOMDocument_Release(doc);
@@ -8486,32 +8534,6 @@ static void test_setAttributeNode(void)
     IXMLDOMElement_Release(elem);
     IXMLDOMAttribute_Release(attr);
     IXMLDOMDocument_Release(doc2);
-    IXMLDOMDocument_Release(doc);
-    free_bstrs();
-}
-
-static void test_put_dataType(void)
-{
-    IXMLDOMCDATASection *cdata;
-    IXMLDOMDocument *doc;
-    VARIANT_BOOL b;
-    HRESULT hr;
-
-    doc = create_document(&IID_IXMLDOMDocument);
-    if (!doc) return;
-
-    hr = IXMLDOMDocument_loadXML( doc, _bstr_(complete4A), &b );
-    ok( hr == S_OK, "loadXML failed\n");
-    ok( b == VARIANT_TRUE, "failed to load XML string\n");
-
-    hr = IXMLDOMDocument_createCDATASection(doc, _bstr_("test"), &cdata);
-    ok( hr == S_OK, "got 0x%08x\n", hr);
-    hr = IXMLDOMCDATASection_put_dataType(cdata, _bstr_("number"));
-    ok( hr == E_FAIL, "got 0x%08x\n", hr);
-    hr = IXMLDOMCDATASection_put_dataType(cdata, _bstr_("string"));
-    ok( hr == E_FAIL, "got 0x%08x\n", hr);
-    IXMLDOMCDATASection_Release(cdata);
-
     IXMLDOMDocument_Release(doc);
     free_bstrs();
 }
@@ -11062,7 +11084,6 @@ START_TEST(domdoc)
     test_XSLPattern();
     test_cloneNode();
     test_xmlTypes();
-    test_nodeTypeTests();
     test_save();
     test_testTransforms();
     test_namespaces();
