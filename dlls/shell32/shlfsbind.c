@@ -166,7 +166,7 @@ static HRESULT WINAPI IFileSystemBindData_fnGetFindData(
         return E_INVALIDARG;
 
     *pfd = This->findFile;
-    return NOERROR;
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileSystemBindData_fnSetFindData(
@@ -179,5 +179,5 @@ static HRESULT WINAPI IFileSystemBindData_fnSetFindData(
         This->findFile = *pfd;
     else
         memset(&This->findFile, 0, sizeof(WIN32_FIND_DATAW));
-    return NOERROR;
+    return S_OK;
 }

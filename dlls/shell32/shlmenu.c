@@ -184,7 +184,7 @@ static int FM_InitMenuPopup(HMENU hmenu, LPCITEMIDLIST pAlternatePidl)
 	      LPITEMIDLIST pidlTemp = NULL;
 	      ULONG ulFetched;
 
-	      while ((!bAbortInit) && (NOERROR == IEnumIDList_Next(lpe,1,&pidlTemp,&ulFetched)))
+	      while ((!bAbortInit) && (S_OK == IEnumIDList_Next(lpe,1,&pidlTemp,&ulFetched)))
 	      {
 		if (SUCCEEDED (IShellFolder_GetAttributesOf(lpsf, 1, (LPCITEMIDLIST*)&pidlTemp, &ulItemAttr)))
 		{

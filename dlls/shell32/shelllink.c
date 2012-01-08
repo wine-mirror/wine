@@ -509,11 +509,11 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
     return r;
 }
 
-static HRESULT WINAPI IPersistFile_fnSaveCompleted(IPersistFile* iface, LPCOLESTR pszFileName)
+static HRESULT WINAPI IPersistFile_fnSaveCompleted(IPersistFile* iface, LPCOLESTR filename)
 {
-	IShellLinkImpl *This = impl_from_IPersistFile(iface);
-	FIXME("(%p)->(%s)\n",This,debugstr_w(pszFileName));
-	return NOERROR;
+    IShellLinkImpl *This = impl_from_IPersistFile(iface);
+    FIXME("(%p)->(%s): stub\n", This, debugstr_w(filename));
+    return S_OK;
 }
 
 static HRESULT WINAPI IPersistFile_fnGetCurFile(IPersistFile* iface, LPOLESTR *filename)
@@ -1597,7 +1597,7 @@ static HRESULT WINAPI IShellLinkA_fnSetShowCmd(IShellLinkA *iface, INT iShowCmd)
     This->iShowCmd = iShowCmd;
     This->bDirty = TRUE;
 
-    return NOERROR;
+    return S_OK;
 }
 
 static HRESULT WINAPI IShellLinkA_fnGetIconLocation(IShellLinkA *iface, LPSTR pszIconPath,
@@ -1866,7 +1866,7 @@ static HRESULT WINAPI IShellLinkW_fnGetArguments(IShellLinkW * iface, LPWSTR psz
     if( This->sArgs )
         lstrcpynW( pszArgs, This->sArgs, cchMaxPath );
 
-    return NOERROR;
+    return S_OK;
 }
 
 static HRESULT WINAPI IShellLinkW_fnSetArguments(IShellLinkW * iface, LPCWSTR pszArgs)

@@ -381,7 +381,7 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
 	}
 
 	TRACE("-- %s %x\n", debugstr_w(szIconFile), *piIndex);
-	return NOERROR;
+	return S_OK;
 }
 
 /**************************************************************************

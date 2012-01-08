@@ -1162,7 +1162,7 @@ HRESULT WINAPI SHGetInstanceExplorer (IUnknown **lpUnknown)
 	  return E_FAIL;
 
 	IUnknown_AddRef(SHELL32_IExplorerInterface);
-	return NOERROR;
+	return S_OK;
 }
 /*************************************************************************
  * SHFreeUnusedLibraries			[SHELL32.123]

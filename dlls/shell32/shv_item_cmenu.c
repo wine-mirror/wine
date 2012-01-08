@@ -535,7 +535,7 @@ static HRESULT WINAPI ISvItemCm_fnInvokeCommand(
             return E_FAIL;
         }
     }
-    return NOERROR;
+    return S_OK;
 }
 
 /**************************************************************************
@@ -567,7 +567,7 @@ static HRESULT WINAPI ISvItemCm_fnGetCommandString(
 	    {
 	    case FCIDM_SHVIEW_RENAME:
 	        strcpy(lpszName, "rename");
-	        hr = NOERROR;
+	        hr = S_OK;
 	        break;
 	    }
 	    break;
@@ -579,14 +579,14 @@ static HRESULT WINAPI ISvItemCm_fnGetCommandString(
 	    {
 	    case FCIDM_SHVIEW_RENAME:
                 MultiByteToWideChar( CP_ACP, 0, "rename", -1, (LPWSTR)lpszName, uMaxNameLen );
-	        hr = NOERROR;
+	        hr = S_OK;
 	        break;
 	    }
 	    break;
 
 	  case GCS_VALIDATEA:
 	  case GCS_VALIDATEW:
-	    hr = NOERROR;
+	    hr = S_OK;
 	    break;
 	}
 	TRACE("-- (%p)->(name=%s)\n",This, lpszName);

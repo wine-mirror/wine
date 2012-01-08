@@ -372,7 +372,7 @@ static HRESULT WINAPI ISVBgCm_fnInvokeCommand(
         if (lpSV)
 	  IShellView_Release(lpSV);	/* QueryActiveShellView does AddRef */
 
-	return NOERROR;
+	return S_OK;
 }
 
 /**************************************************************************
@@ -401,7 +401,7 @@ static HRESULT WINAPI ISVBgCm_fnGetCommandString(
 	        !strcmp((LPSTR)idCommand, CMDSTR_VIEWDETAILSA) ||
 	        !strcmp((LPSTR)idCommand, CMDSTR_NEWFOLDERA))
 	    {
-	      return NOERROR;
+	      return S_OK;
 	    }
 	  }
 	}

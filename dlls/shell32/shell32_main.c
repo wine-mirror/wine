@@ -932,7 +932,7 @@ HRESULT WINAPI SHLoadInProc (REFCLSID rclsid)
     {
         IUnknown * pUnk = ptr;
         IUnknown_Release(pUnk);
-        return NOERROR;
+        return S_OK;
     }
     return DISP_E_MEMBERNOTFOUND;
 }

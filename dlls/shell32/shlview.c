@@ -1998,7 +1998,7 @@ static HRESULT WINAPI IShellView_fnGetCurrentInfo(IShellView2 *iface, LPFOLDERSE
 	if (!lpfs) return E_INVALIDARG;
 
 	*lpfs = This->FolderSettings;
-	return NOERROR;
+	return S_OK;
 }
 
 static HRESULT WINAPI IShellView_fnAddPropertySheetPages(IShellView2 *iface, DWORD dwReserved,
@@ -2559,7 +2559,7 @@ static HRESULT WINAPI ISVDropSource_QueryContinueDrag(
 	else if (!(grfKeyState & MK_LBUTTON) && !(grfKeyState & MK_RBUTTON))
 	  return DRAGDROP_S_DROP;
 	else
-	  return NOERROR;
+	  return S_OK;
 }
 
 static HRESULT WINAPI ISVDropSource_GiveFeedback(
