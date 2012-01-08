@@ -245,7 +245,7 @@ static HRESULT WINAPI xmlnodemap_removeQualifiedItem(
 {
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
 
-    ERR("(%p)->(%s %s %p)\n", This, debugstr_w(baseName), debugstr_w(namespaceURI), item);
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_w(baseName), debugstr_w(namespaceURI), item);
 
     return This->funcs->remove_qualified_item(This->node, baseName, namespaceURI, item);
 }
@@ -266,7 +266,7 @@ static HRESULT WINAPI xmlnodemap_reset(
 {
     xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
 
-    TRACE("(%p: %d)\n", This, This->iterator);
+    TRACE("(%p)->(%d)\n", This, This->iterator);
 
     This->iterator = 0;
 
@@ -282,7 +282,7 @@ static HRESULT WINAPI xmlnodemap__newEnum(
     return E_NOTIMPL;
 }
 
-static const struct IXMLDOMNamedNodeMapVtbl xmlnodemap_vtbl =
+static const struct IXMLDOMNamedNodeMapVtbl XMLDOMNamedNodeMapVtbl =
 {
     xmlnodemap_QueryInterface,
     xmlnodemap_AddRef,
@@ -335,7 +335,7 @@ static HRESULT WINAPI support_error_InterfaceSupportsErrorInfo(
     return IsEqualGUID(riid, &IID_IXMLDOMNamedNodeMap) ? S_OK : S_FALSE;
 }
 
-static const struct ISupportErrorInfoVtbl support_error_vtbl =
+static const struct ISupportErrorInfoVtbl SupportErrorInfoVtbl =
 {
     support_error_QueryInterface,
     support_error_AddRef,
@@ -418,8 +418,8 @@ IXMLDOMNamedNodeMap *create_nodemap(xmlNodePtr node, const struct nodemap_funcs 
     if ( !This )
         return NULL;
 
-    This->IXMLDOMNamedNodeMap_iface.lpVtbl = &xmlnodemap_vtbl;
-    This->ISupportErrorInfo_iface.lpVtbl = &support_error_vtbl;
+    This->IXMLDOMNamedNodeMap_iface.lpVtbl = &XMLDOMNamedNodeMapVtbl;
+    This->ISupportErrorInfo_iface.lpVtbl = &SupportErrorInfoVtbl;
     This->node = node;
     This->ref = 1;
     This->iterator = 0;
