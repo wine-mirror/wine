@@ -2,7 +2,7 @@
  *    IXMLHTTPRequest implementation
  *
  * Copyright 2008 Alistair Leslie-Hughes
- * Copyright 2010 Nikolay Sivov for CodeWeavers
+ * Copyright 2010-2012 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -149,6 +149,7 @@ struct BindStatusCallback
 {
     IBindStatusCallback IBindStatusCallback_iface;
     IHttpNegotiate      IHttpNegotiate_iface;
+    IAuthenticate       IAuthenticate_iface;
     LONG ref;
 
     IBinding *binding;
@@ -169,6 +170,11 @@ static inline BindStatusCallback *impl_from_IBindStatusCallback( IBindStatusCall
 static inline BindStatusCallback *impl_from_IHttpNegotiate( IHttpNegotiate *iface )
 {
     return CONTAINING_RECORD(iface, BindStatusCallback, IHttpNegotiate_iface);
+}
+
+static inline BindStatusCallback *impl_from_IAuthenticate( IAuthenticate *iface )
+{
+    return CONTAINING_RECORD(iface, BindStatusCallback, IAuthenticate_iface);
 }
 
 static void BindStatusCallback_Detach(BindStatusCallback *bsc)
@@ -198,6 +204,10 @@ static HRESULT WINAPI BindStatusCallback_QueryInterface(IBindStatusCallback *ifa
     else if (IsEqualGUID(&IID_IHttpNegotiate, riid))
     {
         *ppv = &This->IHttpNegotiate_iface;
+    }
+    else if (IsEqualGUID(&IID_IAuthenticate, riid))
+    {
+        *ppv = &This->IAuthenticate_iface;
     }
     else if (IsEqualGUID(&IID_IServiceProvider, riid) ||
              IsEqualGUID(&IID_IBindStatusCallbackEx, riid) ||
@@ -534,6 +544,40 @@ static const IHttpNegotiateVtbl BSCHttpNegotiateVtbl = {
     BSCHttpNegotiate_OnResponse
 };
 
+static HRESULT WINAPI Authenticate_QueryInterface(IAuthenticate *iface,
+        REFIID riid, void **ppv)
+{
+    BindStatusCallback *This = impl_from_IAuthenticate(iface);
+    return IBindStatusCallback_QueryInterface(&This->IBindStatusCallback_iface, riid, ppv);
+}
+
+static ULONG WINAPI Authenticate_AddRef(IAuthenticate *iface)
+{
+    BindStatusCallback *This = impl_from_IAuthenticate(iface);
+    return IBindStatusCallback_AddRef(&This->IBindStatusCallback_iface);
+}
+
+static ULONG WINAPI Authenticate_Release(IAuthenticate *iface)
+{
+    BindStatusCallback *This = impl_from_IAuthenticate(iface);
+    return IBindStatusCallback_Release(&This->IBindStatusCallback_iface);
+}
+
+static HRESULT WINAPI Authenticate_Authenticate(IAuthenticate *iface,
+    HWND *hwnd, LPWSTR *username, LPWSTR *password)
+{
+    BindStatusCallback *This = impl_from_IAuthenticate(iface);
+    FIXME("(%p)->(%p %p %p)\n", This, hwnd, username, password);
+    return E_NOTIMPL;
+}
+
+static const IAuthenticateVtbl AuthenticateVtbl = {
+    Authenticate_QueryInterface,
+    Authenticate_AddRef,
+    Authenticate_Release,
+    Authenticate_Authenticate
+};
+
 static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback **obj, const VARIANT *body)
 {
     BindStatusCallback *bsc;
@@ -553,6 +597,7 @@ static HRESULT BindStatusCallback_create(httprequest* This, BindStatusCallback *
 
     bsc->IBindStatusCallback_iface.lpVtbl = &BindStatusCallbackVtbl;
     bsc->IHttpNegotiate_iface.lpVtbl = &BSCHttpNegotiateVtbl;
+    bsc->IAuthenticate_iface.lpVtbl = &AuthenticateVtbl;
     bsc->ref = 1;
     bsc->request = This;
     bsc->binding = NULL;
