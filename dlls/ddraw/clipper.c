@@ -194,6 +194,8 @@ static HRESULT WINAPI ddraw_clipper_GetClipList(IDirectDrawClipper *iface, RECT 
             return E_FAIL;
         }
 
+        if (clipper->window)
+            DeleteObject(region);
         region = clip_region;
     }
 
