@@ -114,18 +114,18 @@ static const DWORD pixel_states_texture[] =
 
 static const DWORD pixel_states_sampler[] =
 {
-    WINED3DSAMP_ADDRESSU,
-    WINED3DSAMP_ADDRESSV,
-    WINED3DSAMP_ADDRESSW,
-    WINED3DSAMP_BORDERCOLOR,
-    WINED3DSAMP_MAGFILTER,
-    WINED3DSAMP_MINFILTER,
-    WINED3DSAMP_MIPFILTER,
-    WINED3DSAMP_MIPMAPLODBIAS,
-    WINED3DSAMP_MAXMIPLEVEL,
-    WINED3DSAMP_MAXANISOTROPY,
-    WINED3DSAMP_SRGBTEXTURE,
-    WINED3DSAMP_ELEMENTINDEX,
+    WINED3D_SAMP_ADDRESS_U,
+    WINED3D_SAMP_ADDRESS_V,
+    WINED3D_SAMP_ADDRESS_W,
+    WINED3D_SAMP_BORDER_COLOR,
+    WINED3D_SAMP_MAG_FILTER,
+    WINED3D_SAMP_MIN_FILTER,
+    WINED3D_SAMP_MIP_FILTER,
+    WINED3D_SAMP_MIPMAP_LOD_BIAS,
+    WINED3D_SAMP_MAX_MIP_LEVEL,
+    WINED3D_SAMP_MAX_ANISOTROPY,
+    WINED3D_SAMP_SRGB_TEXTURE,
+    WINED3D_SAMP_ELEMENT_INDEX,
 };
 
 static const DWORD vertex_states_render[] =
@@ -185,7 +185,7 @@ static const DWORD vertex_states_texture[] =
 
 static const DWORD vertex_states_sampler[] =
 {
-    WINED3DSAMP_DMAPOFFSET,
+    WINED3D_SAMP_DMAP_OFFSET,
 };
 
 /* Allocates the correct amount of space for pixel and vertex shader constants,
@@ -1278,21 +1278,21 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     for (i = 0 ; i <  MAX_COMBINED_SAMPLERS; ++i)
     {
         TRACE("Setting up default samplers states for sampler %u.\n", i);
-        state->sampler_states[i][WINED3DSAMP_ADDRESSU] = WINED3DTADDRESS_WRAP;
-        state->sampler_states[i][WINED3DSAMP_ADDRESSV] = WINED3DTADDRESS_WRAP;
-        state->sampler_states[i][WINED3DSAMP_ADDRESSW] = WINED3DTADDRESS_WRAP;
-        state->sampler_states[i][WINED3DSAMP_BORDERCOLOR] = 0;
-        state->sampler_states[i][WINED3DSAMP_MAGFILTER] = WINED3DTEXF_POINT;
-        state->sampler_states[i][WINED3DSAMP_MINFILTER] = WINED3DTEXF_POINT;
-        state->sampler_states[i][WINED3DSAMP_MIPFILTER] = WINED3DTEXF_NONE;
-        state->sampler_states[i][WINED3DSAMP_MIPMAPLODBIAS] = 0;
-        state->sampler_states[i][WINED3DSAMP_MAXMIPLEVEL] = 0;
-        state->sampler_states[i][WINED3DSAMP_MAXANISOTROPY] = 1;
-        state->sampler_states[i][WINED3DSAMP_SRGBTEXTURE] = 0;
+        state->sampler_states[i][WINED3D_SAMP_ADDRESS_U] = WINED3DTADDRESS_WRAP;
+        state->sampler_states[i][WINED3D_SAMP_ADDRESS_V] = WINED3DTADDRESS_WRAP;
+        state->sampler_states[i][WINED3D_SAMP_ADDRESS_W] = WINED3DTADDRESS_WRAP;
+        state->sampler_states[i][WINED3D_SAMP_BORDER_COLOR] = 0;
+        state->sampler_states[i][WINED3D_SAMP_MAG_FILTER] = WINED3DTEXF_POINT;
+        state->sampler_states[i][WINED3D_SAMP_MIN_FILTER] = WINED3DTEXF_POINT;
+        state->sampler_states[i][WINED3D_SAMP_MIP_FILTER] = WINED3DTEXF_NONE;
+        state->sampler_states[i][WINED3D_SAMP_MIPMAP_LOD_BIAS] = 0;
+        state->sampler_states[i][WINED3D_SAMP_MAX_MIP_LEVEL] = 0;
+        state->sampler_states[i][WINED3D_SAMP_MAX_ANISOTROPY] = 1;
+        state->sampler_states[i][WINED3D_SAMP_SRGB_TEXTURE] = 0;
         /* TODO: Indicates which element of a multielement texture to use. */
-        state->sampler_states[i][WINED3DSAMP_ELEMENTINDEX] = 0;
+        state->sampler_states[i][WINED3D_SAMP_ELEMENT_INDEX] = 0;
         /* TODO: Vertex offset in the presampled displacement map. */
-        state->sampler_states[i][WINED3DSAMP_DMAPOFFSET] = 0;
+        state->sampler_states[i][WINED3D_SAMP_DMAP_OFFSET] = 0;
     }
 
     for (i = 0; i < gl_info->limits.textures; ++i)

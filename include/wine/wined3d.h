@@ -509,24 +509,23 @@ enum wined3d_swap_effect
     WINED3D_SWAP_EFFECT_COPY_VSYNC          = 4,
 };
 
-typedef enum _WINED3DSAMPLERSTATETYPE
+enum wined3d_sampler_state
 {
-    WINED3DSAMP_ADDRESSU                    = 1,
-    WINED3DSAMP_ADDRESSV                    = 2,
-    WINED3DSAMP_ADDRESSW                    = 3,
-    WINED3DSAMP_BORDERCOLOR                 = 4,
-    WINED3DSAMP_MAGFILTER                   = 5,
-    WINED3DSAMP_MINFILTER                   = 6,
-    WINED3DSAMP_MIPFILTER                   = 7,
-    WINED3DSAMP_MIPMAPLODBIAS               = 8,
-    WINED3DSAMP_MAXMIPLEVEL                 = 9,
-    WINED3DSAMP_MAXANISOTROPY               = 10,
-    WINED3DSAMP_SRGBTEXTURE                 = 11,
-    WINED3DSAMP_ELEMENTINDEX                = 12,
-    WINED3DSAMP_DMAPOFFSET                  = 13,
-    WINED3DSAMP_FORCE_DWORD                 = 0x7fffffff,
-} WINED3DSAMPLERSTATETYPE;
-#define WINED3D_HIGHEST_SAMPLER_STATE                           WINED3DSAMP_DMAPOFFSET
+    WINED3D_SAMP_ADDRESS_U                  = 1,
+    WINED3D_SAMP_ADDRESS_V                  = 2,
+    WINED3D_SAMP_ADDRESS_W                  = 3,
+    WINED3D_SAMP_BORDER_COLOR               = 4,
+    WINED3D_SAMP_MAG_FILTER                 = 5,
+    WINED3D_SAMP_MIN_FILTER                 = 6,
+    WINED3D_SAMP_MIP_FILTER                 = 7,
+    WINED3D_SAMP_MIPMAP_LOD_BIAS            = 8,
+    WINED3D_SAMP_MAX_MIP_LEVEL              = 9,
+    WINED3D_SAMP_MAX_ANISOTROPY             = 10,
+    WINED3D_SAMP_SRGB_TEXTURE               = 11,
+    WINED3D_SAMP_ELEMENT_INDEX              = 12,
+    WINED3D_SAMP_DMAP_OFFSET                = 13,
+};
+#define WINED3D_HIGHEST_SAMPLER_STATE                           WINED3D_SAMP_DMAP_OFFSET
 
 typedef enum _WINED3DMULTISAMPLE_TYPE
 {
@@ -2136,7 +2135,7 @@ HRESULT __cdecl wined3d_device_get_render_state(const struct wined3d_device *dev
 HRESULT __cdecl wined3d_device_get_render_target(const struct wined3d_device *device,
         UINT render_target_idx, struct wined3d_surface **render_target);
 HRESULT __cdecl wined3d_device_get_sampler_state(const struct wined3d_device *device,
-        UINT sampler_idx, WINED3DSAMPLERSTATETYPE state, DWORD *value);
+        UINT sampler_idx, enum wined3d_sampler_state state, DWORD *value);
 HRESULT __cdecl wined3d_device_get_scissor_rect(const struct wined3d_device *device, RECT *rect);
 BOOL __cdecl wined3d_device_get_software_vertex_processing(const struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_get_stream_source(const struct wined3d_device *device,
@@ -2215,7 +2214,7 @@ HRESULT __cdecl wined3d_device_set_render_state(struct wined3d_device *device,
 HRESULT __cdecl wined3d_device_set_render_target(struct wined3d_device *device,
         UINT render_target_idx, struct wined3d_surface *render_target, BOOL set_viewport);
 HRESULT __cdecl wined3d_device_set_sampler_state(struct wined3d_device *device,
-        UINT sampler_idx, WINED3DSAMPLERSTATETYPE state, DWORD value);
+        UINT sampler_idx, enum wined3d_sampler_state state, DWORD value);
 HRESULT __cdecl wined3d_device_set_scissor_rect(struct wined3d_device *device, const RECT *rect);
 HRESULT __cdecl wined3d_device_set_software_vertex_processing(struct wined3d_device *device, BOOL software);
 HRESULT __cdecl wined3d_device_set_stream_source(struct wined3d_device *device,

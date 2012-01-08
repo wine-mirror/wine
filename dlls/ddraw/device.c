@@ -2356,7 +2356,7 @@ static HRESULT IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
         {
             WINED3DTEXTUREFILTERTYPE tex_mag;
 
-            hr = wined3d_device_get_sampler_state(This->wined3d_device, 0, WINED3DSAMP_MAGFILTER, &tex_mag);
+            hr = wined3d_device_get_sampler_state(This->wined3d_device, 0, WINED3D_SAMP_MAG_FILTER, &tex_mag);
 
             switch (tex_mag)
             {
@@ -2379,14 +2379,14 @@ static HRESULT IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
             WINED3DTEXTUREFILTERTYPE tex_mip;
 
             hr = wined3d_device_get_sampler_state(This->wined3d_device,
-                    0, WINED3DSAMP_MINFILTER, &tex_min);
+                    0, WINED3D_SAMP_MIN_FILTER, &tex_min);
             if (FAILED(hr))
             {
                 wined3d_mutex_unlock();
                 return hr;
             }
             hr = wined3d_device_get_sampler_state(This->wined3d_device,
-                    0, WINED3DSAMP_MIPFILTER, &tex_mip);
+                    0, WINED3D_SAMP_MIP_FILTER, &tex_mip);
 
             switch (tex_min)
             {
@@ -2437,11 +2437,11 @@ static HRESULT IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
         case D3DRENDERSTATE_TEXTUREADDRESS:
         case D3DRENDERSTATE_TEXTUREADDRESSU:
             hr = wined3d_device_get_sampler_state(This->wined3d_device,
-                    0, WINED3DSAMP_ADDRESSU, Value);
+                    0, WINED3D_SAMP_ADDRESS_U, Value);
             break;
         case D3DRENDERSTATE_TEXTUREADDRESSV:
             hr = wined3d_device_get_sampler_state(This->wined3d_device,
-                    0, WINED3DSAMP_ADDRESSV, Value);
+                    0, WINED3D_SAMP_ADDRESS_V, Value);
             break;
 
         case D3DRENDERSTATE_BORDERCOLOR:
@@ -2688,7 +2688,7 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
                     break;
             }
 
-            hr = wined3d_device_set_sampler_state(This->wined3d_device, 0, WINED3DSAMP_MAGFILTER, tex_mag);
+            hr = wined3d_device_set_sampler_state(This->wined3d_device, 0, WINED3D_SAMP_MAG_FILTER, tex_mag);
             break;
         }
 
@@ -2732,23 +2732,23 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
             }
 
             wined3d_device_set_sampler_state(This->wined3d_device,
-                    0, WINED3DSAMP_MIPFILTER, tex_mip);
+                    0, WINED3D_SAMP_MIP_FILTER, tex_mip);
             hr = wined3d_device_set_sampler_state(This->wined3d_device,
-                    0, WINED3DSAMP_MINFILTER, tex_min);
+                    0, WINED3D_SAMP_MIN_FILTER, tex_min);
             break;
         }
 
         case D3DRENDERSTATE_TEXTUREADDRESS:
             wined3d_device_set_sampler_state(This->wined3d_device,
-                    0, WINED3DSAMP_ADDRESSV, Value);
+                    0, WINED3D_SAMP_ADDRESS_V, Value);
             /* Drop through */
         case D3DRENDERSTATE_TEXTUREADDRESSU:
             hr = wined3d_device_set_sampler_state(This->wined3d_device,
-                    0, WINED3DSAMP_ADDRESSU, Value);
+                    0, WINED3D_SAMP_ADDRESS_U, Value);
             break;
         case D3DRENDERSTATE_TEXTUREADDRESSV:
             hr = wined3d_device_set_sampler_state(This->wined3d_device,
-                    0, WINED3DSAMP_ADDRESSV, Value);
+                    0, WINED3D_SAMP_ADDRESS_V, Value);
             break;
 
         case D3DRENDERSTATE_BORDERCOLOR:
@@ -4794,16 +4794,16 @@ tss_lookup[] =
     {FALSE, WINED3DTSS_BUMPENVMAT10},           /*  9, D3DTSS_BUMPENVMAT10 */
     {FALSE, WINED3DTSS_BUMPENVMAT11},           /* 10, D3DTSS_BUMPENVMAT11 */
     {FALSE, WINED3DTSS_TEXCOORDINDEX},          /* 11, D3DTSS_TEXCOORDINDEX */
-    {TRUE,  WINED3DSAMP_ADDRESSU},              /* 12, D3DTSS_ADDRESS */
-    {TRUE,  WINED3DSAMP_ADDRESSU},              /* 13, D3DTSS_ADDRESSU */
-    {TRUE,  WINED3DSAMP_ADDRESSV},              /* 14, D3DTSS_ADDRESSV */
-    {TRUE,  WINED3DSAMP_BORDERCOLOR},           /* 15, D3DTSS_BORDERCOLOR */
-    {TRUE,  WINED3DSAMP_MAGFILTER},             /* 16, D3DTSS_MAGFILTER */
-    {TRUE,  WINED3DSAMP_MINFILTER},             /* 17, D3DTSS_MINFILTER */
-    {TRUE,  WINED3DSAMP_MIPFILTER},             /* 18, D3DTSS_MIPFILTER */
-    {TRUE,  WINED3DSAMP_MIPMAPLODBIAS},         /* 19, D3DTSS_MIPMAPLODBIAS */
-    {TRUE,  WINED3DSAMP_MAXMIPLEVEL},           /* 20, D3DTSS_MAXMIPLEVEL */
-    {TRUE,  WINED3DSAMP_MAXANISOTROPY},         /* 21, D3DTSS_MAXANISOTROPY */
+    {TRUE,  WINED3D_SAMP_ADDRESS_U},            /* 12, D3DTSS_ADDRESS */
+    {TRUE,  WINED3D_SAMP_ADDRESS_U},            /* 13, D3DTSS_ADDRESSU */
+    {TRUE,  WINED3D_SAMP_ADDRESS_V},            /* 14, D3DTSS_ADDRESSV */
+    {TRUE,  WINED3D_SAMP_BORDER_COLOR},         /* 15, D3DTSS_BORDERCOLOR */
+    {TRUE,  WINED3D_SAMP_MAG_FILTER},           /* 16, D3DTSS_MAGFILTER */
+    {TRUE,  WINED3D_SAMP_MIN_FILTER},           /* 17, D3DTSS_MINFILTER */
+    {TRUE,  WINED3D_SAMP_MIP_FILTER},           /* 18, D3DTSS_MIPFILTER */
+    {TRUE,  WINED3D_SAMP_MIPMAP_LOD_BIAS},      /* 19, D3DTSS_MIPMAPLODBIAS */
+    {TRUE,  WINED3D_SAMP_MAX_MIP_LEVEL},        /* 20, D3DTSS_MAXMIPLEVEL */
+    {TRUE,  WINED3D_SAMP_MAX_ANISOTROPY},       /* 21, D3DTSS_MAXANISOTROPY */
     {FALSE, WINED3DTSS_BUMPENVLSCALE},          /* 22, D3DTSS_BUMPENVLSCALE */
     {FALSE, WINED3DTSS_BUMPENVLOFFSET},         /* 23, D3DTSS_BUMPENVLOFFSET */
     {FALSE, WINED3DTSS_TEXTURETRANSFORMFLAGS},  /* 24, D3DTSS_TEXTURETRANSFORMFLAGS */
@@ -5025,7 +5025,7 @@ IDirect3DDeviceImpl_7_SetTextureStageState(IDirect3DDevice7 *iface,
             }
 
             case D3DTSS_ADDRESS:
-                wined3d_device_set_sampler_state(This->wined3d_device, Stage, WINED3DSAMP_ADDRESSV, State);
+                wined3d_device_set_sampler_state(This->wined3d_device, Stage, WINED3D_SAMP_ADDRESS_V, State);
                 break;
 
             default:

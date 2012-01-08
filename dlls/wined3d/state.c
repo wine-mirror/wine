@@ -3615,14 +3615,14 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
     if (state->textures[sampler])
     {
         struct wined3d_texture *texture = state->textures[sampler];
-        BOOL srgb = state->sampler_states[sampler][WINED3DSAMP_SRGBTEXTURE];
+        BOOL srgb = state->sampler_states[sampler][WINED3D_SAMP_SRGB_TEXTURE];
 
         texture->texture_ops->texture_bind(texture, context, srgb);
         wined3d_texture_apply_state_changes(texture, state->sampler_states[sampler], gl_info);
 
         if (gl_info->supported[EXT_TEXTURE_LOD_BIAS])
         {
-            tmpvalue.d = state->sampler_states[sampler][WINED3DSAMP_MIPMAPLODBIAS];
+            tmpvalue.d = state->sampler_states[sampler][WINED3D_SAMP_MIPMAP_LOD_BIAS];
             glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT,
                       GL_TEXTURE_LOD_BIAS_EXT,
                       tmpvalue.f);

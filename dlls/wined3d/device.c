@@ -465,7 +465,7 @@ static void device_preload_texture(const struct wined3d_state *state, unsigned i
     enum WINED3DSRGB srgb;
 
     if (!(texture = state->textures[idx])) return;
-    srgb = state->sampler_states[idx][WINED3DSAMP_SRGBTEXTURE] ? SRGB_SRGB : SRGB_RGB;
+    srgb = state->sampler_states[idx][WINED3D_SAMP_SRGB_TEXTURE] ? SRGB_SRGB : SRGB_RGB;
     texture->texture_ops->texture_preload(texture, srgb);
 }
 
@@ -2455,7 +2455,7 @@ HRESULT CDECL wined3d_device_get_render_state(const struct wined3d_device *devic
 }
 
 HRESULT CDECL wined3d_device_set_sampler_state(struct wined3d_device *device,
-        UINT sampler_idx, WINED3DSAMPLERSTATETYPE state, DWORD value)
+        UINT sampler_idx, enum wined3d_sampler_state state, DWORD value)
 {
     DWORD old_value;
 
@@ -2495,7 +2495,7 @@ HRESULT CDECL wined3d_device_set_sampler_state(struct wined3d_device *device,
 }
 
 HRESULT CDECL wined3d_device_get_sampler_state(const struct wined3d_device *device,
-        UINT sampler_idx, WINED3DSAMPLERSTATETYPE state, DWORD *value)
+        UINT sampler_idx, enum wined3d_sampler_state state, DWORD *value)
 {
     TRACE("device %p, sampler_idx %u, state %s, value %p.\n",
             device, sampler_idx, debug_d3dsamplerstate(state), value);
@@ -4465,12 +4465,12 @@ HRESULT CDECL wined3d_device_validate_device(const struct wined3d_device *device
 
     for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
     {
-        if (state->sampler_states[i][WINED3DSAMP_MINFILTER] == WINED3DTEXF_NONE)
+        if (state->sampler_states[i][WINED3D_SAMP_MIN_FILTER] == WINED3DTEXF_NONE)
         {
             WARN("Sampler state %u has minfilter D3DTEXF_NONE, returning D3DERR_UNSUPPORTEDTEXTUREFILTER\n", i);
             return WINED3DERR_UNSUPPORTEDTEXTUREFILTER;
         }
-        if (state->sampler_states[i][WINED3DSAMP_MAGFILTER] == WINED3DTEXF_NONE)
+        if (state->sampler_states[i][WINED3D_SAMP_MAG_FILTER] == WINED3DTEXF_NONE)
         {
             WARN("Sampler state %u has magfilter D3DTEXF_NONE, returning D3DERR_UNSUPPORTEDTEXTUREFILTER\n", i);
             return WINED3DERR_UNSUPPORTEDTEXTUREFILTER;
@@ -4479,18 +4479,18 @@ HRESULT CDECL wined3d_device_validate_device(const struct wined3d_device *device
         texture = state->textures[i];
         if (!texture || texture->resource.format->flags & WINED3DFMT_FLAG_FILTERING) continue;
 
-        if (state->sampler_states[i][WINED3DSAMP_MAGFILTER] != WINED3DTEXF_POINT)
+        if (state->sampler_states[i][WINED3D_SAMP_MAG_FILTER] != WINED3DTEXF_POINT)
         {
             WARN("Non-filterable texture and mag filter enabled on samper %u, returning E_FAIL\n", i);
             return E_FAIL;
         }
-        if (state->sampler_states[i][WINED3DSAMP_MINFILTER] != WINED3DTEXF_POINT)
+        if (state->sampler_states[i][WINED3D_SAMP_MIN_FILTER] != WINED3DTEXF_POINT)
         {
             WARN("Non-filterable texture and min filter enabled on samper %u, returning E_FAIL\n", i);
             return E_FAIL;
         }
-        if (state->sampler_states[i][WINED3DSAMP_MIPFILTER] != WINED3DTEXF_NONE
-                && state->sampler_states[i][WINED3DSAMP_MIPFILTER] != WINED3DTEXF_POINT)
+        if (state->sampler_states[i][WINED3D_SAMP_MIP_FILTER] != WINED3DTEXF_NONE
+                && state->sampler_states[i][WINED3D_SAMP_MIP_FILTER] != WINED3DTEXF_POINT)
         {
             WARN("Non-filterable texture and mip filter enabled on samper %u, returning E_FAIL\n", i);
             return E_FAIL;
