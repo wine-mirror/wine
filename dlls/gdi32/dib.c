@@ -975,25 +975,17 @@ static int fill_query_info( BITMAPINFO *info, BITMAPOBJ *bmp )
     header.biWidth  = bmp->bitmap.bmWidth;
     header.biHeight = bmp->bitmap.bmHeight;
     header.biPlanes = 1;
+    header.biBitCount = bmp->bitmap.bmBitsPixel;
 
-    if (bmp->dib)
+    switch (header.biBitCount)
     {
-        header.biBitCount = bmp->dib->dsBm.bmBitsPixel;
-        switch (bmp->dib->dsBm.bmBitsPixel)
-        {
-        case 16:
-        case 32:
-            header.biCompression = BI_BITFIELDS;
-            break;
-        default:
-            header.biCompression = BI_RGB;
-            break;
-        }
-    }
-    else
-    {
-        header.biCompression = (bmp->bitmap.bmBitsPixel > 8) ? BI_BITFIELDS : BI_RGB;
-        header.biBitCount = bmp->bitmap.bmBitsPixel;
+    case 16:
+    case 32:
+        header.biCompression = BI_BITFIELDS;
+        break;
+    default:
+        header.biCompression = BI_RGB;
+        break;
     }
 
     header.biSizeImage = get_dib_image_size( (BITMAPINFO *)&header );

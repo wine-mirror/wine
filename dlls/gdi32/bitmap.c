@@ -342,9 +342,7 @@ LONG WINAPI GetBitmapBits(
     if (!bmp) return 0;
     funcs = get_bitmap_funcs( bmp );
 
-    if (bmp->dib) dst_stride = get_bitmap_stride( bmp->dib->dsBmih.biWidth, bmp->dib->dsBmih.biBitCount );
-    else dst_stride = get_bitmap_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
-
+    dst_stride = get_bitmap_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
     ret = max = dst_stride * bmp->bitmap.bmHeight;
     if (!bits) goto done;
     if (count > max) count = max;
@@ -426,8 +424,7 @@ LONG WINAPI SetBitmapBits(
 	count = -count;
     }
 
-    if (bmp->dib) src_stride = get_bitmap_stride( bmp->dib->dsBmih.biWidth, bmp->dib->dsBmih.biBitCount );
-    else src_stride = get_bitmap_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
+    src_stride = get_bitmap_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
     count = min( count, src_stride * bmp->bitmap.bmHeight );
 
     dst_stride = get_dib_stride( bmp->bitmap.bmWidth, bmp->bitmap.bmBitsPixel );
@@ -481,7 +478,7 @@ LONG WINAPI SetBitmapBits(
     /* query the color info */
     info->bmiHeader.biSize          = sizeof(info->bmiHeader);
     info->bmiHeader.biPlanes        = 1;
-    info->bmiHeader.biBitCount      = bmp->dib ? bmp->dib->dsBmih.biBitCount : bmp->bitmap.bmBitsPixel;
+    info->bmiHeader.biBitCount      = bmp->bitmap.bmBitsPixel;
     info->bmiHeader.biCompression   = BI_RGB;
     info->bmiHeader.biXPelsPerMeter = 0;
     info->bmiHeader.biYPelsPerMeter = 0;
