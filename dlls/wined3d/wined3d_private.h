@@ -2153,8 +2153,6 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
 #define SFLAG_INDRAWABLE        0x00100000 /* The GL drawable is current. */
 #define SFLAG_INRB_MULTISAMPLE  0x00200000 /* The multisample renderbuffer is current. */
 #define SFLAG_INRB_RESOLVED     0x00400000 /* The resolved renderbuffer is current. */
-#define SFLAG_DS_ONSCREEN       0x00800000 /* This is a depth / stencil surface, last modified onscreen. */
-#define SFLAG_DS_OFFSCREEN      0x01000000 /* This is a depth / stencil surface, last modified offscreen. */
 #define SFLAG_PIN_SYSMEM        0x02000000 /* Keep the surface in sysmem, at the same address. */
 
 /* In some conditions the surface memory must not be freed:
@@ -2181,9 +2179,10 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
                              SFLAG_INRB_MULTISAMPLE | \
                              SFLAG_INRB_RESOLVED)
 
-#define SFLAG_DS_LOCATIONS  (SFLAG_DS_ONSCREEN | \
-                             SFLAG_DS_OFFSCREEN)
-#define SFLAG_DS_DISCARDED   SFLAG_DS_LOCATIONS
+#define SFLAG_DS_DISCARDED  (SFLAG_INTEXTURE        | \
+                             SFLAG_INDRAWABLE       | \
+                             SFLAG_INRB_MULTISAMPLE | \
+                             SFLAG_INRB_RESOLVED)
 
 typedef enum {
     NO_CONVERSION,

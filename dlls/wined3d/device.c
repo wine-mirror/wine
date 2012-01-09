@@ -571,8 +571,9 @@ void device_switch_onscreen_ds(struct wined3d_device *device,
 {
     if (device->onscreen_depth_stencil)
     {
-        surface_load_ds_location(device->onscreen_depth_stencil, context, SFLAG_DS_OFFSCREEN);
-        surface_modify_ds_location(device->onscreen_depth_stencil, SFLAG_DS_OFFSCREEN,
+        surface_load_ds_location(device->onscreen_depth_stencil, context, SFLAG_INTEXTURE);
+
+        surface_modify_ds_location(device->onscreen_depth_stencil, SFLAG_INTEXTURE,
                 device->onscreen_depth_stencil->ds_current_size.cx,
                 device->onscreen_depth_stencil->ds_current_size.cy);
         wined3d_surface_decref(device->onscreen_depth_stencil);
@@ -696,9 +697,9 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
 
     if (flags & WINED3DCLEAR_ZBUFFER)
     {
-        DWORD location = render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
+        DWORD location = render_offscreen ? fb->depth_stencil->draw_binding : SFLAG_INDRAWABLE;
 
-        if (location == SFLAG_DS_ONSCREEN && fb->depth_stencil != device->onscreen_depth_stencil)
+        if (!render_offscreen && fb->depth_stencil != device->onscreen_depth_stencil)
             device_switch_onscreen_ds(device, context, fb->depth_stencil);
         prepare_ds_clear(fb->depth_stencil, context, location, draw_rect, rect_count, clear_rect);
     }
@@ -729,7 +730,9 @@ HRESULT device_clear_render_targets(struct wined3d_device *device, UINT rt_count
 
     if (flags & WINED3DCLEAR_ZBUFFER)
     {
-        surface_modify_location(fb->depth_stencil, fb->depth_stencil->draw_binding, TRUE);
+        DWORD location = render_offscreen ? fb->depth_stencil->draw_binding : SFLAG_INDRAWABLE;
+
+        surface_modify_location(fb->depth_stencil, location, TRUE);
 
         glDepthMask(GL_TRUE);
         context_invalidate_state(context, STATE_RENDER(WINED3D_RS_ZWRITEENABLE));

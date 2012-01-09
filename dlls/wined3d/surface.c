@@ -1395,9 +1395,8 @@ static HRESULT wined3d_surface_depth_blt(struct wined3d_surface *src_surface, co
 
     wined3d_surface_depth_blt_fbo(device, src_surface, src_rect, dst_surface, dst_rect);
 
-    surface_modify_ds_location(dst_surface, SFLAG_DS_OFFSCREEN,
+    surface_modify_ds_location(dst_surface, SFLAG_INTEXTURE,
             dst_surface->ds_current_size.cx, dst_surface->ds_current_size.cy);
-    surface_modify_location(dst_surface, SFLAG_INTEXTURE, TRUE);
 
     return WINED3D_OK;
 }
@@ -5557,12 +5556,19 @@ void surface_modify_ds_location(struct wined3d_surface *surface,
 {
     TRACE("surface %p, new location %#x, w %u, h %u.\n", surface, location, w, h);
 
-    if (location & ~SFLAG_DS_LOCATIONS)
+    if (location & ~SFLAG_LOCATIONS)
         FIXME("Invalid location (%#x) specified.\n", location);
+
+    if (!(surface->flags & SFLAG_ALLOCATED))
+        location &= ~SFLAG_INTEXTURE;
+    if (!(surface->rb_resolved))
+        location &= ~SFLAG_INRB_RESOLVED;
+    if (!(surface->rb_multisample))
+        location &= ~SFLAG_INRB_MULTISAMPLE;
 
     surface->ds_current_size.cx = w;
     surface->ds_current_size.cy = h;
-    surface->flags &= ~SFLAG_DS_LOCATIONS;
+    surface->flags &= ~SFLAG_LOCATIONS;
     surface->flags |= location;
 }
 
@@ -5603,7 +5609,7 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
         return;
     }
 
-    if (!(surface->flags & SFLAG_DS_LOCATIONS))
+    if (!(surface->flags & SFLAG_LOCATIONS))
     {
         /* This mostly happens when a depth / stencil is used without being
          * cleared first. In principle we could upload from sysmem, or
@@ -5617,7 +5623,7 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
         return;
     }
 
-    if (location == SFLAG_DS_OFFSCREEN)
+    if (location == SFLAG_INTEXTURE)
     {
         GLint old_binding = 0;
         GLenum bind_target;
@@ -5684,7 +5690,7 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
 
         if (wined3d_settings.strict_draw_ordering) wglFlush(); /* Flush to ensure ordering across contexts. */
     }
-    else if (location == SFLAG_DS_ONSCREEN)
+    else if (location == SFLAG_INDRAWABLE)
     {
         TRACE("Copying depth texture to onscreen depth buffer.\n");
 
@@ -5721,6 +5727,7 @@ void surface_modify_location(struct wined3d_surface *surface, DWORD location, BO
             surface, debug_surflocation(location), persistent);
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && surface_is_offscreen(surface)
+            && !(surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
             && (location & SFLAG_INDRAWABLE))
         ERR("Trying to invalidate the SFLAG_INDRAWABLE location of an offscreen surface.\n");
 
@@ -6112,7 +6119,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location, c
         if (location == SFLAG_INTEXTURE)
         {
             struct wined3d_context *context = context_acquire(device, NULL);
-            surface_load_ds_location(surface, context, SFLAG_DS_OFFSCREEN);
+            surface_load_ds_location(surface, context, location);
             context_release(context);
             return WINED3D_OK;
         }
