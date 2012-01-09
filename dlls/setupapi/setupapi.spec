@@ -68,7 +68,7 @@
 @ stub CM_Get_DevNode_Registry_PropertyA
 @ stub CM_Get_DevNode_Registry_PropertyW
 @ stub CM_Get_DevNode_Registry_Property_ExA
-@ stub CM_Get_DevNode_Registry_Property_ExW
+@ stdcall CM_Get_DevNode_Registry_Property_ExW(long long ptr ptr ptr long ptr)
 @ stub CM_Get_DevNode_Status
 @ stub CM_Get_DevNode_Status_Ex
 @ stdcall CM_Get_Device_IDA(ptr ptr long long)

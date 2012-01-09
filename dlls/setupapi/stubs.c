@@ -359,6 +359,16 @@ CONFIGRET WINAPI CM_Get_Device_Interface_List_Size_ExW(PULONG len, LPGUID class,
 }
 
 /***********************************************************************
+ *      CM_Get_DevNode_Registry_Property_ExW (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_DevNode_Registry_Property_ExW(DEVINST dev, ULONG prop, PULONG regdatatype,
+    PVOID buf, PULONG len, ULONG flags, HMACHINE machine)
+{
+    FIXME("0x%08x %u %p %p %p 0x%08x %p: stub\n", dev, prop, regdatatype, buf, len, flags, machine);
+    return CR_FAILURE;
+}
+
+/***********************************************************************
  *      CM_Enumerate_Classes (SETUPAPI.@)
  */
 CONFIGRET WINAPI CM_Enumerate_Classes(ULONG index, LPGUID class, ULONG flags)
