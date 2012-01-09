@@ -641,7 +641,7 @@ static HRESULT interp_forin(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    12.10 */
-HRESULT interp_push_scope(exec_ctx_t *ctx)
+static HRESULT interp_push_scope(exec_ctx_t *ctx)
 {
     IDispatch *disp;
     jsdisp_t *obj;
@@ -669,7 +669,7 @@ HRESULT interp_push_scope(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    12.10 */
-HRESULT interp_pop_scope(exec_ctx_t *ctx)
+static HRESULT interp_pop_scope(exec_ctx_t *ctx)
 {
     TRACE("\n");
 
@@ -678,7 +678,7 @@ HRESULT interp_pop_scope(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    12.12 */
-HRESULT interp_label(exec_ctx_t *ctx)
+static HRESULT interp_label(exec_ctx_t *ctx)
 {
     FIXME("\n");
     return E_NOTIMPL;
@@ -1241,7 +1241,7 @@ static HRESULT interp_carray(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.1.5 */
-HRESULT interp_new_obj(exec_ctx_t *ctx)
+static HRESULT interp_new_obj(exec_ctx_t *ctx)
 {
     jsdisp_t *obj;
     VARIANT v;
@@ -1258,7 +1258,7 @@ HRESULT interp_new_obj(exec_ctx_t *ctx)
 }
 
 /* ECMA-262 3rd Edition    11.1.5 */
-HRESULT interp_obj_prop(exec_ctx_t *ctx)
+static HRESULT interp_obj_prop(exec_ctx_t *ctx)
 {
     const BSTR name = ctx->parser->code->instrs[ctx->ip].arg1.bstr;
     jsdisp_t *obj;
