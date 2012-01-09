@@ -1453,19 +1453,11 @@ static void WID_PullACMData(WINMM_Device *device)
     MMRESULT mr;
 
     if(device->acm_hdr.cbDstLength == 0){
-        hr = IAudioClient_GetCurrentPadding(device->client, &packet);
-        if(FAILED(hr)){
-            ERR("GetCurrentPadding failed: %08x\n", hr);
-            return;
-        }
-
-        if(packet == 0)
-            return;
-
         hr = IAudioCaptureClient_GetBuffer(device->capture, &data, &packet,
                 &flags, NULL, NULL);
-        if(FAILED(hr)){
-            ERR("GetBuffer failed: %08x\n", hr);
+        if(hr != S_OK){
+            if(FAILED(hr))
+                ERR("GetBuffer failed: %08x\n", hr);
             return;
         }
 
@@ -1566,26 +1558,20 @@ static void WID_PullData(WINMM_Device *device)
 
     while(device->first){
         BYTE *data;
-        UINT32 pad, packet_len, packet;
+        UINT32 packet_len, packet;
         DWORD flags;
 
-        hr = IAudioClient_GetCurrentPadding(device->client, &pad);
-        if(FAILED(hr)){
-            ERR("GetCurrentPadding failed: %08x\n", hr);
-            goto exit;
-        }
-
-        if(pad == 0)
-            goto exit;
-
-        hr = IAudioCaptureClient_GetBuffer(device->capture, &data, &packet,
+        hr = IAudioCaptureClient_GetBuffer(device->capture, &data, &packet_len,
                 &flags, NULL, NULL);
-        if(FAILED(hr)){
-            ERR("GetBuffer failed: %08x\n", hr);
+        if(hr != S_OK){
+            if(FAILED(hr))
+                ERR("GetBuffer failed: %08x\n", hr);
+            else /* AUDCLNT_S_BUFFER_EMPTY success code */
+                IAudioCaptureClient_ReleaseBuffer(device->capture, 0);
             goto exit;
         }
 
-        packet_len = packet;
+        packet = packet_len;
         queue = device->first;
         while(queue && packet > 0){
             UINT32 to_copy_bytes;
@@ -1612,6 +1598,8 @@ static void WID_PullData(WINMM_Device *device)
         if(FAILED(hr))
             ERR("ReleaseBuffer failed: %08x\n", hr);
 
+        if(packet > 0)
+            WARN("losing %u frames\n", packet);
         device->played_frames += packet_len;
     }
 
