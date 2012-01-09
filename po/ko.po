@@ -8361,9 +8361,8 @@ msgid "The specified device handle is invalid."
 msgstr "지정된 장치 핸들은 적합하지 않습니다."
 
 #: winmm.rc:34
-#, fuzzy
 msgid "There is no driver installed on your system!"
-msgstr "당신의 시스템에는 어떤 드라이버도 설치되어 있지 않습니다 !\n"
+msgstr "당신의 시스템에는 어떤 드라이버도 설치되어 있지 않습니다 !"
 
 #: winmm.rc:35 winmm.rc:61
 msgid ""
@@ -12961,7 +12960,7 @@ msgstr "다시 부르는 명령의 갯수(&N):"
 
 #: wineconsole.rc:76
 msgid "&Remove doubles"
-msgstr "두번  제거(&R)"
+msgstr "두번 제거(&R)"
 
 #: wineconsole.rc:84
 msgid "&Font"
@@ -12972,9 +12971,8 @@ msgid "&Color"
 msgstr "색상(&C)"
 
 #: wineconsole.rc:97
-#, fuzzy
 msgid "Configuration"
-msgstr " 설정 "
+msgstr "설정 "
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
