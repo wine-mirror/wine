@@ -967,27 +967,27 @@ static void test_himetric(void)
 
 START_TEST(olepicture)
 {
-	hOleaut32 = GetModuleHandleA("oleaut32.dll");
-	pOleLoadPicture = (void*)GetProcAddress(hOleaut32, "OleLoadPicture");
-	pOleCreatePictureIndirect = (void*)GetProcAddress(hOleaut32, "OleCreatePictureIndirect");
-	if (!pOleLoadPicture)
-	{
-	    win_skip("OleLoadPicture is not available\n");
-	    return;
-	}
+    hOleaut32 = GetModuleHandleA("oleaut32.dll");
+    pOleLoadPicture = (void*)GetProcAddress(hOleaut32, "OleLoadPicture");
+    pOleCreatePictureIndirect = (void*)GetProcAddress(hOleaut32, "OleCreatePictureIndirect");
+    if (!pOleLoadPicture)
+    {
+        win_skip("OleLoadPicture is not available\n");
+        return;
+    }
 
-	/* Test regular 1x1 pixel images of gif, jpg, bmp type */
-        test_pic(gifimage, sizeof(gifimage));
-	test_pic(jpgimage, sizeof(jpgimage));
-	test_pic(bmpimage, sizeof(bmpimage));
-        test_pic(gif4pixel, sizeof(gif4pixel));
-	/* FIXME: No PNG support in Windows... */
-	if (0) test_pic(pngimage, sizeof(pngimage));
-	test_empty_image();
-	test_empty_image_2();
-        test_apm();
-        test_metafile();
-        test_enhmetafile();
+    /* Test regular 1x1 pixel images of gif, jpg, bmp type */
+    test_pic(gifimage, sizeof(gifimage));
+    test_pic(jpgimage, sizeof(jpgimage));
+    test_pic(bmpimage, sizeof(bmpimage));
+    test_pic(gif4pixel, sizeof(gif4pixel));
+    /* FIXME: No PNG support in Windows... */
+    if (0) test_pic(pngimage, sizeof(pngimage));
+    test_empty_image();
+    test_empty_image_2();
+    test_apm();
+    test_metafile();
+    test_enhmetafile();
 
     test_Invoke();
     test_OleCreatePictureIndirect();
