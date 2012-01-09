@@ -200,7 +200,6 @@ struct IDirectDrawSurfaceImpl
 };
 
 HRESULT ddraw_surface_create_texture(IDirectDrawSurfaceImpl *surface) DECLSPEC_HIDDEN;
-void ddraw_surface_destroy(IDirectDrawSurfaceImpl *surface) DECLSPEC_HIDDEN;
 HRESULT ddraw_surface_init(IDirectDrawSurfaceImpl *surface, IDirectDrawImpl *ddraw,
         DDSURFACEDESC2 *desc, UINT mip_level, UINT version) DECLSPEC_HIDDEN;
 ULONG ddraw_surface_release_iface(IDirectDrawSurfaceImpl *This) DECLSPEC_HIDDEN;

@@ -429,7 +429,7 @@ static ULONG WINAPI d3d_texture1_AddRef(IDirect3DTexture *iface)
  *  This: Surface to free
  *
  *****************************************************************************/
-void ddraw_surface_destroy(IDirectDrawSurfaceImpl *This)
+static void ddraw_surface_destroy(IDirectDrawSurfaceImpl *This)
 {
     TRACE("surface %p.\n", This);
 

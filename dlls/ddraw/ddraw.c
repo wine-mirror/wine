@@ -2649,7 +2649,7 @@ CreateAdditionalSurfaces(IDirectDrawImpl *This,
     return DD_OK;
 }
 
-HRESULT CDECL ddraw_reset_enum_callback(struct wined3d_resource *resource)
+static HRESULT CDECL ddraw_reset_enum_callback(struct wined3d_resource *resource)
 {
     return DD_OK;
 }
