@@ -466,6 +466,7 @@ struct HTMLDocumentObj {
     BOOL is_webbrowser;
     BOOL container_locked;
     BOOL focus;
+    BOOL has_popup;
     INT download_state;
 
     USERMODE usermode;

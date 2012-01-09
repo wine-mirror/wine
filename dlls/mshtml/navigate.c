@@ -33,6 +33,8 @@
 #include "shlguid.h"
 #include "wininet.h"
 #include "shlwapi.h"
+#include "htiface.h"
+#include "shdeprecated.h"
 
 #include "wine/debug.h"
 
@@ -43,6 +45,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define CONTENT_LENGTH "Content-Length"
 #define UTF16_STR "utf-16"
+
+static const WCHAR emptyW[] = {0};
 
 struct nsProtocolStream {
     nsIInputStream nsIInputStream_iface;
@@ -1974,6 +1978,59 @@ HRESULT super_navigate(HTMLWindow *window, IUri *uri, const WCHAR *headers, BYTE
         window->readystate = READYSTATE_COMPLETE;
     }
 
+    return S_OK;
+}
+
+HRESULT navigate_new_window(HTMLWindow *window, IUri *uri, const WCHAR *name, IHTMLWindow2 **ret)
+{
+    IWebBrowser2 *web_browser;
+    IHTMLWindow2 *new_window;
+    IBindCtx *bind_ctx;
+    nsChannelBSC *bsc;
+    HRESULT hres;
+
+    hres = create_channelbsc(NULL, NULL, NULL, 0, &bsc);
+    if(FAILED(hres))
+        return hres;
+
+    hres = CreateAsyncBindCtx(0, &bsc->bsc.IBindStatusCallback_iface, NULL, &bind_ctx);
+    if(FAILED(hres)) {
+        IBindStatusCallback_Release(&bsc->bsc.IBindStatusCallback_iface);
+        return hres;
+    }
+
+    hres = CoCreateInstance(&CLSID_InternetExplorer, NULL, CLSCTX_LOCAL_SERVER,
+            &IID_IWebBrowser2, (void**)&web_browser);
+    if(SUCCEEDED(hres)) {
+        ITargetFramePriv2 *target_frame_priv;
+
+        hres = IWebBrowser_QueryInterface(web_browser, &IID_ITargetFramePriv2, (void**)&target_frame_priv);
+        if(SUCCEEDED(hres)) {
+            hres = ITargetFramePriv2_AggregatedNavigation2(target_frame_priv,
+                    HLNF_DISABLEWINDOWRESTRICTIONS|HLNF_OPENINNEWWINDOW, bind_ctx, &bsc->bsc.IBindStatusCallback_iface,
+                    name, uri, emptyW);
+            ITargetFramePriv2_Release(target_frame_priv);
+
+            if(SUCCEEDED(hres))
+                hres = do_query_service((IUnknown*)web_browser, &SID_SHTMLWindow, &IID_IHTMLWindow2, (void**)&new_window);
+        }
+        if(FAILED(hres)) {
+            IWebBrowser2_Quit(web_browser);
+            IWebBrowser2_Release(web_browser);
+        }
+    }else {
+        WARN("Could not create InternetExplorer instance: %08x\n", hres);
+    }
+
+    IBindStatusCallback_Release(&bsc->bsc.IBindStatusCallback_iface);
+    IBindCtx_Release(bind_ctx);
+    if(FAILED(hres))
+        return hres;
+
+    IWebBrowser2_put_Visible(web_browser, VARIANT_TRUE);
+    IWebBrowser2_Release(web_browser);
+
+    *ret = new_window;
     return S_OK;
 }
 

@@ -5194,19 +5194,15 @@ static void test_open_window(IHTMLDocument2 *doc)
     CHECK_CALLED(TranslateUrl);
 
     if(!called_EvaluateNewWindow) {
-        todo_wine
         win_skip("INewWindowManager not supported\n");
         if(SUCCEEDED(hres) && new_window)
             IHTMLWindow2_Release(new_window);
         IHTMLWindow2_Release(window);
         return;
     }
-    todo_wine
     CHECK_CALLED(EvaluateNewWindow);
 
-    todo_wine
     ok(hres == S_OK, "open failed: %08x\n", hres);
-    todo_wine
     ok(new_window == NULL, "new_window != NULL\n");
 
     IHTMLWindow2_Release(window);

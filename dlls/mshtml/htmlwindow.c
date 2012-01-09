@@ -26,6 +26,7 @@
 #include "ole2.h"
 #include "mshtmdid.h"
 #include "shlguid.h"
+#include "shobjidl.h"
 
 #define NO_SHLWAPI_REG
 #include "shlwapi.h"
@@ -776,9 +777,47 @@ static HRESULT WINAPI HTMLWindow2_open(IHTMLWindow2 *iface, BSTR url, BSTR name,
          BSTR features, VARIANT_BOOL replace, IHTMLWindow2 **pomWindowResult)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->(%s %s %s %x %p)\n", This, debugstr_w(url), debugstr_w(name),
+    INewWindowManager *new_window_mgr;
+    IUri *uri;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %s %s %x %p)\n", This, debugstr_w(url), debugstr_w(name),
           debugstr_w(features), replace, pomWindowResult);
-    return E_NOTIMPL;
+
+    if(!This->doc_obj)
+        return E_UNEXPECTED;
+
+    if(name && *name == '_') {
+        FIXME("Unsupported name %s\n", debugstr_w(name));
+        return E_NOTIMPL;
+    }
+
+    hres = do_query_service((IUnknown*)This->doc_obj->client, &SID_SNewWindowManager, &IID_INewWindowManager,
+            (void**)&new_window_mgr);
+    if(FAILED(hres)) {
+        FIXME("No INewWindowManager\n");
+        return E_NOTIMPL;
+    }
+
+    hres = INewWindowManager_EvaluateNewWindow(new_window_mgr, url, name, This->url,
+            features, !!replace, This->doc_obj->has_popup ? 0 : NWMF_FIRST, 0);
+    INewWindowManager_Release(new_window_mgr);
+    This->doc_obj->has_popup = TRUE;
+    if(FAILED(hres)) {
+        *pomWindowResult = NULL;
+        return S_OK;
+    }
+
+    if(This->uri)
+        hres = CoInternetCombineUrlEx(This->uri, url, URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO, &uri, 0);
+    else
+        hres = CreateUri(url, 0, 0, &uri);
+    if(FAILED(hres))
+        return hres;
+
+    hres = navigate_new_window(This, uri, name, pomWindowResult);
+    IUri_Release(uri);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLWindow2_get_self(IHTMLWindow2 *iface, IHTMLWindow2 **p)

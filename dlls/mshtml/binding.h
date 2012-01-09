@@ -108,6 +108,7 @@ HRESULT load_nsuri(HTMLWindow*,nsWineURI*,nsChannelBSC*,DWORD) DECLSPEC_HIDDEN;
 HRESULT set_moniker(HTMLDocument*,IMoniker*,IBindCtx*,nsChannelBSC*,BOOL) DECLSPEC_HIDDEN;
 void prepare_for_binding(HTMLDocument*,IMoniker*,BOOL) DECLSPEC_HIDDEN;
 HRESULT super_navigate(HTMLWindow*,IUri*,const WCHAR*,BYTE*,DWORD) DECLSPEC_HIDDEN;
+HRESULT navigate_new_window(HTMLWindow*,IUri*,const WCHAR*,IHTMLWindow2**) DECLSPEC_HIDDEN;
 
 HRESULT create_channelbsc(IMoniker*,const WCHAR*,BYTE*,DWORD,nsChannelBSC**) DECLSPEC_HIDDEN;
 HRESULT channelbsc_load_stream(nsChannelBSC*,IStream*) DECLSPEC_HIDDEN;
