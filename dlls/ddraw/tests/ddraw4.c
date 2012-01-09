@@ -566,12 +566,12 @@ static void test_clipper_blt(void)
     surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
     surface_desc.dwWidth = 640;
     surface_desc.dwHeight = 480;
-    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
-    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(surface_desc.ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(surface_desc.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(surface_desc.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(surface_desc.ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
+    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
 
     hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &src_surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create source surface, hr %#x.\n", hr);
