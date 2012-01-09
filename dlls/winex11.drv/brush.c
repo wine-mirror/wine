@@ -215,8 +215,6 @@ static void BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, 
 
     GetObjectW( hbitmap, sizeof(bitmap), &bitmap );
 
-    X11DRV_DIB_Lock( physBitmap, DIB_Status_GdiMod );
-
     wine_tsx11_lock();
 
     if (physDev->brush.pixmap) XFreePixmap( gdi_display, physDev->brush.pixmap );
@@ -238,8 +236,6 @@ static void BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, 
                    get_bitmap_gc(physBitmap->depth), 0, 0, bitmap.bmWidth, bitmap.bmHeight, 0, 0 );
     }
     wine_tsx11_unlock();
-
-    X11DRV_DIB_Unlock( physBitmap, TRUE );
 
     if (physBitmap->depth > 1)
     {

@@ -1997,9 +1997,6 @@ static DWORD create_image_pixmap( BITMAPINFO *info, const struct gdi_image_bits 
     if (ret) return ret;
 
     image->data = dst_bits.ptr;
-    /* hack: make sure the bits are readable if we are reading from a DIB section */
-    /* to be removed once we get rid of DIB access protections */
-    if (!dst_bits.is_copy) IsBadReadPtr( dst_bits.ptr, image->height * image->bytes_per_line );
 
     *use_repeat = (width == 1 && height == 1);
     pa.repeat = *use_repeat ? RepeatNormal : RepeatNone;
@@ -2641,8 +2638,6 @@ static HBRUSH xrenderdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct b
 
     GetObjectW( bitmap, sizeof(bm), &bm );
 
-    X11DRV_DIB_Lock( physbitmap, DIB_Status_GdiMod );
-
     wine_tsx11_lock();
     pixmap = XCreatePixmap( gdi_display, root_window, bm.bmWidth, bm.bmHeight,
                             physdev->pict_format->depth );
@@ -2662,7 +2657,6 @@ static HBRUSH xrenderdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct b
     physdev->x11dev->brush.style = BS_PATTERN;
     wine_tsx11_unlock();
 
-    X11DRV_DIB_Unlock( physbitmap, TRUE );
     if (delete_bitmap) DeleteObject( bitmap );
     return hbrush;
 
