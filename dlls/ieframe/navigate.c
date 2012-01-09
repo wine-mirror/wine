@@ -1302,9 +1302,25 @@ static HRESULT WINAPI TargetFramePriv2_AggregatedNavigation2(ITargetFramePriv2 *
         IBindStatusCallback *pibsc, LPCWSTR pszTargetName, IUri *pUri, LPCWSTR pszLocation)
 {
     HlinkFrame *This = impl_from_ITargetFramePriv2(iface);
-    FIXME("(%p)->(%x %p %p %s %p %s)\n", This, grfHLNF, pbc, pibsc, debugstr_w(pszTargetName),
+    IMoniker *mon;
+    HRESULT hres;
+
+    TRACE("(%p)->(%x %p %p %s %p %s)\n", This, grfHLNF, pbc, pibsc, debugstr_w(pszTargetName),
           pUri, debugstr_w(pszLocation));
-    return E_NOTIMPL;
+
+    /*
+     * NOTE: This is an undocumented function. It seems to be working the way it's implemented,
+     * but I couldn't get its tests working. It's used by mshtml to load content in a new
+     * instance of browser.
+     */
+
+    hres = CreateURLMonikerEx2(NULL, pUri, &mon, 0);
+    if(FAILED(hres))
+        return hres;
+
+    hres = navigate_hlink(This->doc_host, mon, pbc, pibsc);
+    IMoniker_Release(mon);
+    return hres;
 }
 
 static const ITargetFramePriv2Vtbl TargetFramePriv2Vtbl = {
