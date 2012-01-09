@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-11-30 21:20+0900\n"
+"PO-Revision-Date: 2012-01-09 16:45+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Japanese\n"
@@ -115,7 +115,6 @@ msgid "Wine Gecko Installer"
 msgstr "Wine Gecko インストーラ"
 
 #: appwiz.rc:100
-#, fuzzy
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
 "embedding HTML to work correctly. Wine can automatically download and "
@@ -125,12 +124,13 @@ msgid ""
 "href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> for "
 "details."
 msgstr ""
-"Gecko パッケージが見つかりません。このパッケージは、HTML を組み込んだアプリ"
+"Gecko パッケージを見つけられません。このパッケージは HTML を組み込んだアプリ"
 "ケーションが正しく動作するために必要です。 Wine で Gecko パッケージを自動的に"
 "ダウンロードし、インストールできます。\n"
 "\n"
 "注意: 代わりにディストリビューションのパッケージを利用することをおすすめしま"
-"す。詳しくは、http://wiki.winehq.org/Gecko を参照ください。"
+"す。詳しくは、<a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq."
+"org/Gecko</a> を参照ください。"
 
 #: appwiz.rc:106
 msgid "&Install"
@@ -287,7 +287,7 @@ msgstr "キャンセル…"
 
 #: comctl32.rc:49 winefile.rc:163
 msgid "Properties for %s"
-msgstr "Properties for %s"
+msgstr "%sのプロパティ"
 
 #: comctl32.rc:54 comdlg32.rc:258
 msgid "&Apply"
@@ -405,11 +405,11 @@ msgstr "ドライブ(&V):"
 
 #: comdlg32.rc:167 comdlg32.rc:189 winefile.rc:179
 msgid "&Read Only"
-msgstr "&Read Only"
+msgstr "読み取り専用(&R)"
 
 #: comdlg32.rc:173
 msgid "Save As..."
-msgstr "名前をつけて保存"
+msgstr "名前をつけて保存..."
 
 #: comdlg32.rc:186 comdlg32.rc:141
 msgid "Save As"
@@ -462,7 +462,7 @@ msgstr "ファイルへ出力(&L)"
 
 #: comdlg32.rc:212
 msgid "Condensed"
-msgstr "Condensed"
+msgstr "縮小"
 
 #: comdlg32.rc:218 comdlg32.rc:389
 msgid "Print Setup"
@@ -478,7 +478,7 @@ msgstr "通常使うプリンタ(&D)"
 
 #: comdlg32.rc:223
 msgid "[none]"
-msgstr "(通常使うプリンタが設定されていません)"
+msgstr "[なし]"
 
 #: comdlg32.rc:224
 msgid "Specific &Printer"
@@ -659,7 +659,7 @@ msgstr "プロパティ(&P)"
 
 #: comdlg32.rc:360 comdlg32.rc:398 msacm32.rc:31 winefile.rc:144
 msgid "&Name:"
-msgstr "&Name:"
+msgstr "名前(&N):"
 
 #: comdlg32.rc:362 comdlg32.rc:400
 msgid "Status:"
@@ -2085,9 +2085,8 @@ msgid "Certification Path"
 msgstr "証明のパス"
 
 #: cryptui.rc:211
-#, fuzzy
 msgid "Certification path"
-msgstr "証明のパス(&P)"
+msgstr "証明のパス"
 
 #: cryptui.rc:214
 msgid "&View Certificate"
@@ -2163,7 +2162,6 @@ msgid "Welcome to the Certificate Import Wizard"
 msgstr "証明書インポート ウィザードへようこそ"
 
 #: cryptui.rc:283
-#, fuzzy
 msgid ""
 "This wizard helps you import certificates, certificate revocation lists, and "
 "certificate trust lists from a file to a certificate store.\n"
@@ -2175,9 +2173,14 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"このウィザードは証明書や証明書失効リスト、証明書信頼リストそれぞれをファイル"
+"から証明書ストアへインポートする手助けをします。\n"
+"\n"
 "証明書は個人識別や、利用しているコンピュータの識別に利用されます。また、認証"
 "やメッセージの署名にも使われます。 証明書ストアは証明書、証明書失効リスト、証"
-"明書信頼リストの集合です。"
+"明書信頼リストの集合です。\n"
+"\n"
+"続けるには[次へ]をクリックしてください。"
 
 #: cryptui.rc:291 cryptui.rc:427
 msgid "&File name:"
@@ -2212,8 +2215,8 @@ msgid ""
 "Wine can automatically select the certificate store, or you can specify a "
 "location for the certificates."
 msgstr ""
-"Wine が証明書ストアを自動的に選択するか、証明書の位置を指定することができま"
-"す。"
+"Wine は証明書ストアを自動的に選択できますが、証明書の位置を指定することも可能"
+"です。"
 
 #: cryptui.rc:310
 msgid "&Automatically select certificate store"
@@ -2293,7 +2296,6 @@ msgid "Welcome to the Certificate Export Wizard"
 msgstr "証明書エクスポート ウィザードへようこそ"
 
 #: cryptui.rc:373
-#, fuzzy
 msgid ""
 "This wizard helps you export certificates, certificate revocation lists, and "
 "certificate trust lists from a certificate store to a file.\n"
@@ -2305,9 +2307,14 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
+"このウィザードは証明書や証明書失効リスト、証明書信頼リストそれぞれを証明書ス"
+"トアからファイルへエクスポートする手助けをします。\n"
+"\n"
 "証明書は個人識別や、利用しているコンピュータの識別に利用されます。また、認証"
 "やメッセージの署名にも使われます。 証明書ストアは証明書、証明書失効リスト、証"
-"明書信頼リストの集合です。"
+"明書信頼リストの集合です。\n"
+"\n"
+"続けるには[次へ]をクリックしてください。"
 
 #: cryptui.rc:381
 msgid ""
@@ -2923,38 +2930,32 @@ msgid "Default MidiOut Device"
 msgstr "デフォルト MidiOut デバイス"
 
 #: dinput.rc:40
-#, fuzzy
 msgid "Configure Devices"
-msgstr "設定(&F)..."
+msgstr "デバイスの設定"
 
 #: dinput.rc:45
 msgid "Reset"
-msgstr ""
+msgstr "リセット"
 
 #: dinput.rc:48
-#, fuzzy
 msgid "Player"
-msgstr "再生"
+msgstr "プレイヤー"
 
 #: dinput.rc:49
-#, fuzzy
 msgid "Device"
-msgstr "De&vice:"
+msgstr "デバイス"
 
 #: dinput.rc:50
-#, fuzzy
 msgid "Actions"
 msgstr "動作"
 
 #: dinput.rc:51
-#, fuzzy
 msgid "Mapping"
-msgstr "ドライブの割り当て"
+msgstr "割り当て"
 
 #: dinput.rc:53
-#, fuzzy
 msgid "Show Assigned First"
-msgstr "すでに割り当てられています。\n"
+msgstr "割り当て済みを先に表示"
 
 #: dinput.rc:34
 msgid "Action"
@@ -3258,29 +3259,24 @@ msgid "Address"
 msgstr "アドレス"
 
 #: ieframe.rc:78
-#, fuzzy
 msgid "Searching for %s"
-msgstr "Properties for %s"
+msgstr "%sの検索"
 
 #: ieframe.rc:79
-#, fuzzy
 msgid "Start downloading %s"
-msgstr "%s からダウンロード中..."
+msgstr "%sのダウンロードを開始"
 
 #: ieframe.rc:80
-#, fuzzy
 msgid "Downloading %s"
-msgstr "ダウンロードしています..."
+msgstr "%sをダウンロードしています"
 
 #: ieframe.rc:81
-#, fuzzy
 msgid "Asking for %s"
-msgstr "Properties for %s"
+msgstr "%sを問い合わせ中"
 
 #: inetcpl.rc:46
-#, fuzzy
 msgid "Home page"
-msgstr " ホーム ページ "
+msgstr "ホーム ページ"
 
 #: inetcpl.rc:47
 msgid "You can choose the address that will be used as your home page."
@@ -3299,9 +3295,8 @@ msgid "&Blank page"
 msgstr "空白(&B)"
 
 #: inetcpl.rc:53
-#, fuzzy
 msgid "Browsing history"
-msgstr " 閲覧履歴 "
+msgstr "閲覧履歴"
 
 #: inetcpl.rc:54
 msgid "You can delete cached pages, cookies and other data."
@@ -3432,9 +3427,8 @@ msgid "Subscript out of range"
 msgstr "添字が範囲外です"
 
 #: jscript.rc:28
-#, fuzzy
 msgid "Object required"
-msgstr "オブジェクトを期待していました"
+msgstr "オブジェクトが必要です"
 
 #: jscript.rc:29
 msgid "Automation server can't create object"
@@ -3474,11 +3468,11 @@ msgstr "文字列定数が終端していません"
 
 #: jscript.rc:38
 msgid "Can't have 'break' outside of loop"
-msgstr ""
+msgstr "ループ外で break は使えません"
 
 #: jscript.rc:39
 msgid "Can't have 'continue' outside of loop"
-msgstr ""
+msgstr "ループ外で continue は使えません"
 
 #: jscript.rc:40
 msgid "Conditional compilation is turned off"
@@ -3502,20 +3496,19 @@ msgstr "オブジェクトを期待していました"
 
 #: jscript.rc:45
 msgid "Illegal assignment"
-msgstr "不正な割り当て"
+msgstr "不正な代入です"
 
 #: jscript.rc:46
 msgid "'|' is undefined"
-msgstr "'|'は定義されていません"
+msgstr "'|'は未定義です"
 
 #: jscript.rc:47
 msgid "Boolean object expected"
 msgstr "Boolean オブジェクトを期待していました"
 
 #: jscript.rc:48
-#, fuzzy
 msgid "Cannot delete '|'"
-msgstr "完了できません。\n"
+msgstr "'|'を削除できません"
 
 #: jscript.rc:49
 msgid "VBArray object expected"
@@ -6763,9 +6756,8 @@ msgid "&Data Rate"
 msgstr "データ レート(&D)"
 
 #: msvfw32.rc:52
-#, fuzzy
 msgid "kB/s"
-msgstr "KB/秒"
+msgstr "kB/秒"
 
 #: msvfw32.rc:25
 msgid "Full Frames (Uncompressed)"
@@ -7244,9 +7236,8 @@ msgid "us"
 msgstr "µs"
 
 #: serialui.rc:25
-#, fuzzy
 msgid "Settings for %s"
-msgstr "Properties for %s"
+msgstr "%sの設定"
 
 #: serialui.rc:28
 msgid "Baud Rate"
@@ -8319,19 +8310,16 @@ msgid "Server"
 msgstr "サーバ"
 
 #: wininet.rc:74
-#, fuzzy
 msgid "Security Warning"
-msgstr "セキュリティ"
+msgstr "セキュリティ警告"
 
 #: wininet.rc:77
-#, fuzzy
 msgid "There is a problem with the certificate for this site."
-msgstr "証明書の名前がサイト名と一致しません。"
+msgstr "このサイトの証明書に問題があります。"
 
 #: wininet.rc:79
-#, fuzzy
 msgid "Do you want to continue anyway?"
-msgstr "Windows の再起動をシミュレートしますか?"
+msgstr "とにかく続行してしまいますか?"
 
 #: wininet.rc:25
 msgid "LAN Connection"
@@ -8383,9 +8371,8 @@ msgid "The specified device handle is invalid."
 msgstr "無効なデバイスハンドルです。"
 
 #: winmm.rc:34
-#, fuzzy
 msgid "There is no driver installed on your system!"
-msgstr "システムにドライバがインストールされていません!\n"
+msgstr "システムにドライバがインストールされていません!"
 
 #: winmm.rc:35 winmm.rc:61
 msgid ""
@@ -9873,19 +9860,16 @@ msgid "N"
 msgstr "N"
 
 #: cmd.rc:294
-#, fuzzy
 msgid "File association missing for extension %1\n"
-msgstr "拡張子 %s に対するファイル関連付けがありません。\n"
+msgstr "拡張子 %1 に対するファイル関連付けがありません。\n"
 
 #: cmd.rc:295
-#, fuzzy
 msgid "No open command associated with file type '%1'\n"
-msgstr "ファイル タイプ '%s' に関連付けられた開くコマンドがありません。\n"
+msgstr "ファイル タイプ '%1' に関連付けられた開くコマンドがありません。\n"
 
 #: cmd.rc:296
-#, fuzzy
 msgid "Overwrite %1"
-msgstr "上書き %s"
+msgstr "上書き %1"
 
 #: cmd.rc:297
 msgid "More..."
@@ -9904,23 +9888,20 @@ msgid "Syntax error\n"
 msgstr "構文エラー\n"
 
 #: cmd.rc:303
-#, fuzzy
 msgid "No help available for %1\n"
-msgstr "%s に対するヘルプはありません\n"
+msgstr "%1 に対するヘルプはありません\n"
 
 #: cmd.rc:304
 msgid "Target to GOTO not found\n"
 msgstr "GOTO の対象が見つかりません\n"
 
 #: cmd.rc:305
-#, fuzzy
 msgid "Current Date is %1\n"
-msgstr "現在の日付は %s\n"
+msgstr "現在の日付は %1\n"
 
 #: cmd.rc:306
-#, fuzzy
 msgid "Current Time is %1\n"
-msgstr "現在の時刻は %s\n"
+msgstr "現在の時刻は %1\n"
 
 #: cmd.rc:307
 msgid "Enter new date: "
@@ -9931,9 +9912,8 @@ msgid "Enter new time: "
 msgstr "新しい時刻を入力してください: "
 
 #: cmd.rc:309
-#, fuzzy
 msgid "Environment variable %1 not defined\n"
-msgstr "環境変数 %s は定義されていません\n"
+msgstr "環境変数 %1 は定義されていません\n"
 
 #: cmd.rc:310 xcopy.rc:38
 msgid "Failed to open '%1'\n"
@@ -9949,19 +9929,16 @@ msgid "A"
 msgstr "A"
 
 #: cmd.rc:313
-#, fuzzy
 msgid "%1, Delete"
-msgstr "%s, 削除"
+msgstr "%1, 削除"
 
 #: cmd.rc:314
-#, fuzzy
 msgid "Echo is %1\n"
-msgstr "Echo は %s\n"
+msgstr "Echo は %1\n"
 
 #: cmd.rc:315
-#, fuzzy
 msgid "Verify is %1\n"
-msgstr "Verify は %s\n"
+msgstr "Verify は %1\n"
 
 #: cmd.rc:316
 msgid "Verify must be ON or OFF\n"
@@ -9972,13 +9949,11 @@ msgid "Parameter error\n"
 msgstr "パラメータ エラー\n"
 
 #: cmd.rc:318
-#, fuzzy
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
 msgstr ""
-"ドライブ %c のボリューム ラベルは %s\n"
-"ボリューム シリアル番号は %04x-%04x\n"
+"ボリューム シリアル番号は %1!04x!-%2!04x!\n"
 "\n"
 
 #: cmd.rc:319
@@ -9998,9 +9973,8 @@ msgid "Wine Command Prompt"
 msgstr "Wine コマンド プロンプト"
 
 #: cmd.rc:323
-#, fuzzy
 msgid "CMD Version %1!S!\n"
-msgstr "CMD バージョン %s\n"
+msgstr "CMD バージョン %1!S!\n"
 
 #: cmd.rc:324
 msgid "More? "
@@ -10012,11 +9986,11 @@ msgstr "入力行が長すぎます。\n"
 
 #: cmd.rc:326
 msgid "Volume in drive %1!c! is %2\n"
-msgstr ""
+msgstr "ドライブ %1!c! のボリューム ラベルは %2 です\n"
 
 #: cmd.rc:327
 msgid "Volume in drive %1!c! has no label.\n"
-msgstr ""
+msgstr "ドライブ %1!c! のボリュームラベルがありません。\n"
 
 #: dxdiag.rc:27
 msgid "DirectX Diagnostic Tool"
@@ -10333,9 +10307,8 @@ msgid "&Footer:"
 msgstr "フッタ(&F):"
 
 #: notepad.rc:104
-#, fuzzy
 msgid "Margins (millimeters)"
-msgstr "マージン(&M):"
+msgstr "マージン(mm):"
 
 #: notepad.rc:105
 msgid "&Left:"
@@ -11683,12 +11656,10 @@ msgid "&Show processes from all users"
 msgstr "すべてのユーザーのプロセスを表示(&S)"
 
 #: taskmgr.rc:376
-#, fuzzy
 msgid "CPU usage"
 msgstr "CPU 使用率"
 
 #: taskmgr.rc:377
-#, fuzzy
 msgid "MEM usage"
 msgstr "メモリ使用量"
 
@@ -11697,17 +11668,14 @@ msgid "Totals"
 msgstr "合計"
 
 #: taskmgr.rc:379
-#, fuzzy
 msgid "Commit charge (K)"
-msgstr "コミットチャージ (K)"
+msgstr "コミット チャージ (K)"
 
 #: taskmgr.rc:380
-#, fuzzy
 msgid "Physical memory (K)"
 msgstr "物理メモリ (K)"
 
 #: taskmgr.rc:381
-#, fuzzy
 msgid "Kernel memory (K)"
 msgstr "カーネル メモリ (K)"
 
@@ -11748,12 +11716,10 @@ msgid "Nonpaged"
 msgstr "非ページ"
 
 #: taskmgr.rc:418
-#, fuzzy
 msgid "CPU usage history"
 msgstr "CPU 使用率の履歴"
 
 #: taskmgr.rc:419
-#, fuzzy
 msgid "Memory usage history"
 msgstr "メモリ使用量の履歴"
 
@@ -12429,9 +12395,8 @@ msgstr ""
 "option) any later version."
 
 #: winecfg.rc:140
-#, fuzzy
 msgid "Windows registration information"
-msgstr " Windows 登録情報 "
+msgstr "Windows 登録情報"
 
 #: winecfg.rc:141
 msgid "&Owner:"
@@ -12442,9 +12407,8 @@ msgid "Organi&zation:"
 msgstr "組織(&Z):"
 
 #: winecfg.rc:151
-#, fuzzy
 msgid "Application settings"
-msgstr " アプリケーション設定 "
+msgstr "アプリケーション設定"
 
 #: winecfg.rc:152
 msgid ""
@@ -12469,9 +12433,8 @@ msgid "&Windows Version:"
 msgstr "&Windows バージョン:"
 
 #: winecfg.rc:166
-#, fuzzy
 msgid "Window settings"
-msgstr " ウィンドウ設定 "
+msgstr "ウィンドウ設定"
 
 #: winecfg.rc:167
 msgid "Automatically capture the &mouse in full-screen windows"
@@ -12494,31 +12457,29 @@ msgid "Desktop &size:"
 msgstr "デスクトップの大きさ(&Z):"
 
 #: winecfg.rc:177
-#, fuzzy
 msgid "Direct3D"
-msgstr " Direct3D "
+msgstr "Direct3D"
 
 #: winecfg.rc:178
 msgid "&Vertex Shader Support: "
-msgstr "&Vertex Shader サポート: "
+msgstr "頂点シェーダのサポート(&V): "
 
 #: winecfg.rc:180
 msgid "Allow &Pixel Shader (if supported by hardware)"
-msgstr "&Pixel Shader を有効にする(ハードウェアでサポートされている場合のみ)"
+msgstr ""
+"ピクセル シェーダを有効にする(ハードウェアでサポートされている場合のみ)(&P)"
 
 #: winecfg.rc:182
-#, fuzzy
 msgid "Screen resolution"
-msgstr " スクリーン解像度(&R) "
+msgstr "画面の解像度(&R)"
 
 #: winecfg.rc:186
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "This is a sample text using 10 point Tahoma"
 
 #: winecfg.rc:193
-#, fuzzy
 msgid "DLL overrides"
-msgstr " DLL オーバーライド "
+msgstr "DLL オーバーライド"
 
 #: winecfg.rc:194
 msgid ""
@@ -12550,9 +12511,8 @@ msgid "Edit Override"
 msgstr "オーバーライドの編集"
 
 #: winecfg.rc:210
-#, fuzzy
 msgid "Load order"
-msgstr " 読込順序 "
+msgstr "読込順序"
 
 #: winecfg.rc:211
 msgid "&Builtin (Wine)"
@@ -12579,9 +12539,8 @@ msgid "Select Drive Letter"
 msgstr "ドライブ レターを選択"
 
 #: winecfg.rc:234
-#, fuzzy
 msgid "Drive mappings"
-msgstr " ドライブのマッピング "
+msgstr "ドライブのマッピング"
 
 #: winecfg.rc:235
 msgid ""
@@ -12627,14 +12586,12 @@ msgid "Show &dot files"
 msgstr "ドット ファイルを表示する"
 
 #: winecfg.rc:267
-#, fuzzy
 msgid "Driver diagnostics"
-msgstr " ドライバ診断 "
+msgstr "ドライバ診断"
 
 #: winecfg.rc:269
-#, fuzzy
 msgid "Defaults"
-msgstr " デフォルト "
+msgstr "デフォルト"
 
 #: winecfg.rc:270
 msgid "Output device:"
@@ -12657,9 +12614,8 @@ msgid "&Test Sound"
 msgstr "音をテスト(&T)"
 
 #: winecfg.rc:285
-#, fuzzy
 msgid "Appearance"
-msgstr " 外観 "
+msgstr "外観"
 
 #: winecfg.rc:286
 msgid "&Theme:"
@@ -12678,9 +12634,8 @@ msgid "C&olor:"
 msgstr "色(&O):"
 
 #: winecfg.rc:301
-#, fuzzy
 msgid "Folders"
-msgstr "シェルフォルダ"
+msgstr "フォルダ"
 
 #: winecfg.rc:304
 msgid "&Link to:"
@@ -13072,9 +13027,8 @@ msgid "&Color"
 msgstr "色(&C)"
 
 #: wineconsole.rc:97
-#, fuzzy
 msgid "Configuration"
-msgstr " 設定 "
+msgstr "設定"
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
@@ -13370,73 +13324,71 @@ msgstr "移動先を選択"
 
 #: winefile.rc:141
 msgid "By File Type"
-msgstr "By File Type"
+msgstr "ファイル タイプ"
 
 #: winefile.rc:146
-#, fuzzy
 msgid "File type"
-msgstr "File Type"
+msgstr "ファイルの種類"
 
 #: winefile.rc:147
 msgid "&Directories"
-msgstr "&Directories"
+msgstr "ディレクトリ(&D)"
 
 #: winefile.rc:149
 msgid "&Programs"
-msgstr "&Programs"
+msgstr "プログラム(&P)"
 
 #: winefile.rc:151
 msgid "Docu&ments"
-msgstr "Docu&ments"
+msgstr "文書(&M)"
 
 #: winefile.rc:153
 msgid "&Other files"
-msgstr "&Other files"
+msgstr "その他のファイル(&O)"
 
 #: winefile.rc:155
 msgid "Show Hidden/&System Files"
-msgstr "Show Hidden/&System Files"
+msgstr "隠し/システムファイルの表示(&S)"
 
 #: winefile.rc:166
 msgid "&File Name:"
-msgstr "&File Name:"
+msgstr "ファイル名(&F):"
 
 #: winefile.rc:168
 msgid "Full &Path:"
-msgstr "Full &Path:"
+msgstr "フル パス(&P):"
 
 #: winefile.rc:170
 msgid "Last Change:"
-msgstr "Last Change:"
+msgstr "最終変更日時:"
 
 #: winefile.rc:174
 msgid "Cop&yright:"
-msgstr "Cop&yright:"
+msgstr "著作権(&Y):"
 
 #: winefile.rc:176
 msgid "Size:"
-msgstr "Size:"
+msgstr "サイズ:"
 
 #: winefile.rc:180
 msgid "H&idden"
-msgstr "H&idden"
+msgstr "隠し(&I)"
 
 #: winefile.rc:181
 msgid "&Archive"
-msgstr "&Archive"
+msgstr "アーカイブ(&A)"
 
 #: winefile.rc:182
 msgid "&System"
-msgstr "&System"
+msgstr "システム(&S)"
 
 #: winefile.rc:183
 msgid "&Compressed"
-msgstr "&Compressed"
+msgstr "圧縮済み(&C)"
 
 #: winefile.rc:184
-#, fuzzy
 msgid "Version information"
-msgstr "&Version Information"
+msgstr "バージョン情報"
 
 #: winefile.rc:93
 msgid "Applying font settings"
@@ -13542,7 +13494,6 @@ msgid "Fastest Times"
 msgstr "ハイスコア"
 
 #: winemine.rc:58
-#, fuzzy
 msgid "Fastest times"
 msgstr "ハイスコア"
 
@@ -13572,15 +13523,15 @@ msgstr "盤面の変更"
 
 #: winemine.rc:86
 msgid "Rows"
-msgstr "Rows"
+msgstr "縦"
 
 #: winemine.rc:87
 msgid "Columns"
-msgstr "Columns"
+msgstr "横"
 
 #: winemine.rc:88
 msgid "Mines"
-msgstr "Mines"
+msgstr "地雷"
 
 #: winemine.rc:27
 msgid "WineMine"
