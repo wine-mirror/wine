@@ -328,7 +328,8 @@ static void compare_mesh(const char *name, ID3DXMesh *d3dxmesh, struct mesh *mes
                name, index_buffer_description.Format, D3DFMT_INDEX16);
             ok(index_buffer_description.Type == D3DRTYPE_INDEXBUFFER, "Test %s, result %x, expected %x (D3DRTYPE_INDEXBUFFER)\n",
                name, index_buffer_description.Type, D3DRTYPE_INDEXBUFFER);
-            todo_wine ok(index_buffer_description.Usage == 0, "Test %s, result %x, expected %x\n", name, index_buffer_description.Usage, 0);
+            ok(index_buffer_description.Usage == 0, "Test %s, result %#x, expected %#x.\n",
+                    name, index_buffer_description.Usage, 0);
             ok(index_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, result %x, expected %x (D3DPOOL_MANAGED)\n",
                name, index_buffer_description.Pool, D3DPOOL_MANAGED);
             expected = number_of_faces * sizeof(WORD) * 3;
@@ -3676,7 +3677,8 @@ static void compare_text_outline_mesh(const char *name, ID3DXMesh *d3dxmesh, str
            name, index_buffer_description.Format, D3DFMT_INDEX16);
         ok(index_buffer_description.Type == D3DRTYPE_INDEXBUFFER, "Test %s, result %x, expected %x (D3DRTYPE_INDEXBUFFER)\n",
            name, index_buffer_description.Type, D3DRTYPE_INDEXBUFFER);
-        todo_wine ok(index_buffer_description.Usage == 0, "Test %s, result %x, expected %x\n", name, index_buffer_description.Usage, 0);
+        ok(index_buffer_description.Usage == 0, "Test %s, result %#x, expected %#x.\n",
+                name, index_buffer_description.Usage, 0);
         ok(index_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, result %x, expected %x (D3DPOOL_MANAGED)\n",
            name, index_buffer_description.Pool, D3DPOOL_MANAGED);
         expected = number_of_faces * sizeof(WORD) * 3;

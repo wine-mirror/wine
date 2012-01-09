@@ -245,7 +245,7 @@ static HRESULT WINAPI d3d9_vertexbuffer_GetDesc(IDirect3DVertexBuffer9 *iface,
     wined3d_mutex_unlock();
 
     desc->Format = D3DFMT_VERTEXDATA;
-    desc->Usage = wined3d_desc.usage;
+    desc->Usage = wined3d_desc.usage & WINED3DUSAGE_MASK;
     desc->Pool = wined3d_desc.pool;
     desc->Size = wined3d_desc.size;
     desc->Type = D3DRTYPE_VERTEXBUFFER;
@@ -540,7 +540,7 @@ static HRESULT WINAPI d3d9_indexbuffer_GetDesc(IDirect3DIndexBuffer9 *iface,
     wined3d_mutex_unlock();
 
     desc->Format = d3dformat_from_wined3dformat(buffer->format);
-    desc->Usage = wined3d_desc.usage;
+    desc->Usage = wined3d_desc.usage & WINED3DUSAGE_MASK;
     desc->Pool = wined3d_desc.pool;
     desc->Size = wined3d_desc.size;
     desc->Type = D3DRTYPE_INDEXBUFFER;

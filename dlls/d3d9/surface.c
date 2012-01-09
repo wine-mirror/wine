@@ -275,7 +275,7 @@ static HRESULT WINAPI IDirect3DSurface9Impl_GetDesc(IDirect3DSurface9 *iface, D3
 
     desc->Format = d3dformat_from_wined3dformat(wined3d_desc.format);
     desc->Type = wined3d_desc.resource_type;
-    desc->Usage = wined3d_desc.usage;
+    desc->Usage = wined3d_desc.usage & WINED3DUSAGE_MASK;
     desc->Pool = wined3d_desc.pool;
     desc->MultiSampleType = wined3d_desc.multisample_type;
     desc->MultiSampleQuality = wined3d_desc.multisample_quality;
