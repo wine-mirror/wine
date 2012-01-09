@@ -630,6 +630,18 @@ static void test_clipper_blt(void)
     hr = IDirectDrawSurface4_BltFast(dst_surface, 0, 0, src_surface, NULL, DDBLTFAST_WAIT);
     ok(hr == DDERR_BLTFASTCANTCLIP, "Got unexpected hr %#x.\n", hr);
 
+    hr = IDirectDrawClipper_SetHWnd(clipper, 0, window);
+    ok(SUCCEEDED(hr), "Failed to set clipper window, hr %#x.\n", hr);
+    hr = IDirectDrawClipper_GetClipList(clipper, NULL, NULL, &ret);
+    ok(SUCCEEDED(hr), "Failed to get clip list size, hr %#x.\n", hr);
+    DestroyWindow(window);
+    hr = IDirectDrawClipper_GetClipList(clipper, NULL, NULL, &ret);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawClipper_SetHWnd(clipper, 0, NULL);
+    ok(SUCCEEDED(hr), "Failed to set clipper window, hr %#x.\n", hr);
+    hr = IDirectDrawClipper_GetClipList(clipper, NULL, NULL, &ret);
+    ok(SUCCEEDED(hr), "Failed to get clip list size, hr %#x.\n", hr);
+
     IDirectDrawSurface4_Release(dst_surface);
     IDirectDrawSurface4_Release(src_surface);
     IDirectDrawClipper_Release(clipper);

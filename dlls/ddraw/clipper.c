@@ -104,7 +104,8 @@ static HRGN get_window_region(HWND window)
 
     if (!GetClientRect(window, &client_rect))
     {
-        ERR("Failed to get client rect.\n");
+        /* This can happen if the window is destroyed, for example. */
+        WARN("Failed to get client rect.\n");
         return NULL;
     }
 
@@ -157,7 +158,7 @@ static HRESULT WINAPI ddraw_clipper_GetClipList(IDirectDrawClipper *iface, RECT 
         if (!(region = get_window_region(clipper->window)))
         {
             wined3d_mutex_unlock();
-            ERR("Failed to get window region.\n");
+            WARN("Failed to get window region.\n");
             return E_FAIL;
         }
     }
