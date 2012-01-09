@@ -1093,6 +1093,7 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
 			{
 				if (es->x_offset >= get_text_length(es))
 				{
+					int leftover = es->x_offset - get_text_length(es);
 					if (es->ssa)
 					{
 						const SIZE *size;
@@ -1101,8 +1102,10 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
 					}
 					else
 						xoff = 0;
+					xoff += es->char_width * leftover;
 				}
-				ScriptStringCPtoX(es->ssa, es->x_offset, FALSE, &xoff);
+				else
+					ScriptStringCPtoX(es->ssa, es->x_offset, FALSE, &xoff);
 			}
 			else
 				xoff = 0;
