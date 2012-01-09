@@ -1911,23 +1911,12 @@ void find_ps_compile_args(const struct wined3d_state *state,
         for (i = 0; i < 4; ++i)
         {
             DWORD flags = state->texture_states[i][WINED3DTSS_TEXTURETRANSFORMFLAGS];
-            DWORD count, tex_transform = 0;
-
-            /* Filter some invalid flags */
-            count = flags & ~WINED3DTTFF_PROJECTED;
-            if (count > WINED3DTTFF_COUNT4 || (!(flags & WINED3DTTFF_PROJECTED) && count != 0))
-            {
-                WARN("The application set an invalid %#x TEXTURETRANSFORMFLAGS value.\n", flags);
-                count = 0;
-            }
 
             if (flags & WINED3DTTFF_PROJECTED)
             {
                 enum wined3d_sampler_texture_type sampler_type = shader->reg_maps.sampler_type[i];
+                DWORD tex_transform = flags & ~WINED3DTTFF_PROJECTED;
                 DWORD max_valid = WINED3DTTFF_COUNT4;
-
-                if (!count)
-                    count = WINED3DTTFF_COUNT4;
 
                 if (!state->vertex_shader)
                 {
@@ -1947,10 +1936,12 @@ void find_ps_compile_args(const struct wined3d_state *state,
                     }
                 }
 
-                tex_transform = min(count, max_valid);
-                if (tex_transform != (flags & ~WINED3DTTFF_PROJECTED))
-                    WARN("Fixing up %#x projected texture transform flag to %#x.\n",
-                            flags & ~WINED3DTTFF_PROJECTED, tex_transform);
+                if (!tex_transform || tex_transform > max_valid)
+                {
+                    WARN("Fixing up projected texture transform flags from %#x to %#x.\n",
+                            tex_transform, max_valid);
+                    tex_transform = max_valid;
+                }
 
                 if ((sampler_type == WINED3DSTT_1D && tex_transform > WINED3DTTFF_COUNT1)
                         || (sampler_type == WINED3DSTT_2D && tex_transform > WINED3DTTFF_COUNT2)
@@ -1958,9 +1949,9 @@ void find_ps_compile_args(const struct wined3d_state *state,
                     tex_transform |= WINED3D_PSARGS_PROJECTED;
                 else
                     WARN("Application requested projected texture with unsuitable texture coordinates.\n");
+
+                args->tex_transform |= tex_transform << i * WINED3D_PSARGS_TEXTRANSFORM_SHIFT;
             }
-            tex_transform &= WINED3D_PSARGS_TEXTRANSFORM_MASK;
-            args->tex_transform |= tex_transform << i * WINED3D_PSARGS_TEXTRANSFORM_SHIFT;
         }
     }
 
