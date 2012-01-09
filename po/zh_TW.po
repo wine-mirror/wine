@@ -10528,14 +10528,6 @@ msgstr "CLSID:"
 msgid "IPersistStream Interface Viewer"
 msgstr "IPersistStream 界面查看器"
 
-#: oleview.rc:211
-msgid "&IsDirty"
-msgstr "已修改(&I)"
-
-#: oleview.rc:213
-msgid "&GetSizeMax"
-msgstr "獲取最大(&G)"
-
 #: oleview.rc:93 oleview.rc:94
 msgid "OleView"
 msgstr "OleView"

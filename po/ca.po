@@ -10642,14 +10642,6 @@ msgstr ""
 msgid "IPersistStream Interface Viewer"
 msgstr "Visor de Interfície IPersistStream"
 
-#: oleview.rc:211
-msgid "&IsDirty"
-msgstr ""
-
-#: oleview.rc:213
-msgid "&GetSizeMax"
-msgstr ""
-
 #: oleview.rc:93 oleview.rc:94
 msgid "OleView"
 msgstr ""

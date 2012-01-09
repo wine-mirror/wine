@@ -10640,14 +10640,6 @@ msgstr "CLSID:"
 msgid "IPersistStream Interface Viewer"
 msgstr "IPersistStream-Schnittstellen-Betrachter"
 
-#: oleview.rc:211
-msgid "&IsDirty"
-msgstr "&IsDirty"
-
-#: oleview.rc:213
-msgid "&GetSizeMax"
-msgstr "&GetSizeMax"
-
 #: oleview.rc:93 oleview.rc:94
 msgid "OleView"
 msgstr "OleView"

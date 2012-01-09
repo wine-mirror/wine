@@ -208,9 +208,9 @@ FONT 8, "MS Shell Dlg"
     LTEXT   "CLSID:", -1, 5, 16, 50, 8
     LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
     DEFPUSHBUTTON   "&Close", IDCANCEL, 230, 6, 45, 14
-    PUSHBUTTON  "&IsDirty", IDC_ISDIRTY_BUTTON, 6, 31, 50, 14
+    PUSHBUTTON  "#msgctxt#do not translate#&IsDirty", IDC_ISDIRTY_BUTTON, 6, 31, 50, 14
     LTEXT   "", IDC_ISDIRTY, 60, 34, 145, 8
-    PUSHBUTTON  "&GetSizeMax", IDC_GETSIZEMAX_BUTTON, 6, 49, 50, 14
+    PUSHBUTTON  "#msgctxt#do not translate#&GetSizeMax", IDC_GETSIZEMAX_BUTTON, 6, 49, 50, 14
     LTEXT   "", IDC_GETSIZEMAX, 60, 52, 145, 8
 }
 
