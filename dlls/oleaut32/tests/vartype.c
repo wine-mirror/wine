@@ -504,6 +504,7 @@ static HRESULT (WINAPI *pVarBstrFromDate)(DATE,LCID,ULONG,BSTR*);
 static HRESULT (WINAPI *pVarBstrFromCy)(CY,LCID,ULONG,BSTR*);
 static HRESULT (WINAPI *pVarBstrFromDec)(DECIMAL*,LCID,ULONG,BSTR*);
 static HRESULT (WINAPI *pVarBstrCmp)(BSTR,BSTR,LCID,ULONG);
+static HRESULT (WINAPI *pVarBstrCat)(BSTR,BSTR,BSTR*);
 
 static INT (WINAPI *pSystemTimeToVariantTime)(LPSYSTEMTIME,double*);
 static void (WINAPI *pClearCustData)(LPCUSTDATA);
@@ -5493,14 +5494,16 @@ static void test_VarBstrCat(void)
     BSTR str1, str2, res;
     UINT len;
 
+    CHECKPTR(VarBstrCat);
+
 if (0)
 {
     /* Crash */
-    VarBstrCat(NULL, NULL, NULL);
+    pVarBstrCat(NULL, NULL, NULL);
 }
 
     /* Concatenation of two NULL strings works */
-    ret = VarBstrCat(NULL, NULL, &res);
+    ret = pVarBstrCat(NULL, NULL, &res);
     ok(ret == S_OK, "VarBstrCat failed: %08x\n", ret);
     ok(res != NULL, "Expected a string\n");
     ok(SysStringLen(res) == 0, "Expected a 0-length string\n");
@@ -5509,13 +5512,13 @@ if (0)
     str1 = SysAllocString(sz1);
 
     /* Concatenation with one NULL arg */
-    ret = VarBstrCat(NULL, str1, &res);
+    ret = pVarBstrCat(NULL, str1, &res);
     ok(ret == S_OK, "VarBstrCat failed: %08x\n", ret);
     ok(res != NULL, "Expected a string\n");
     ok(SysStringLen(res) == SysStringLen(str1), "Unexpected length\n");
     ok(!memcmp(res, sz1, SysStringLen(str1)), "Unexpected value\n");
     SysFreeString(res);
-    ret = VarBstrCat(str1, NULL, &res);
+    ret = pVarBstrCat(str1, NULL, &res);
     ok(ret == S_OK, "VarBstrCat failed: %08x\n", ret);
     ok(res != NULL, "Expected a string\n");
     ok(SysStringLen(res) == SysStringLen(str1), "Unexpected length\n");
@@ -5524,7 +5527,7 @@ if (0)
 
     /* Concatenation of two zero-terminated strings */
     str2 = SysAllocString(sz2);
-    ret = VarBstrCat(str1, str2, &res);
+    ret = pVarBstrCat(str1, str2, &res);
     ok(ret == S_OK, "VarBstrCat failed: %08x\n", ret);
     ok(res != NULL, "Expected a string\n");
     ok(SysStringLen(res) == sizeof(sz1sz2) / sizeof(WCHAR) - 1,
@@ -5539,7 +5542,7 @@ if (0)
     str1 = SysAllocStringLen(s1, sizeof(s1) / sizeof(WCHAR));
     str2 = SysAllocStringLen(s2, sizeof(s2) / sizeof(WCHAR));
 
-    ret = VarBstrCat(str1, str2, &res);
+    ret = pVarBstrCat(str1, str2, &res);
     ok(ret == S_OK, "VarBstrCat failed: %08x\n", ret);
     ok(res != NULL, "Expected a string\n");
     ok(SysStringLen(res) == sizeof(s1s2) / sizeof(WCHAR),
@@ -5558,7 +5561,7 @@ if (0)
     len = SysStringLen(str2);
     ok(len == (sizeof(str2A)-1)/sizeof(WCHAR), "got length %u\n", len);
 
-    ret = VarBstrCat(str1, str2, &res);
+    ret = pVarBstrCat(str1, str2, &res);
     ok(ret == S_OK, "VarBstrCat failed: %08x\n", ret);
     ok(res != NULL, "Expected a string\n");
     len = (sizeof(str1A) + sizeof(str2A) - 2)/sizeof(WCHAR);
@@ -5577,7 +5580,7 @@ if (0)
     len = SysStringLen(str2);
     ok(len == 0, "got length %u\n", len);
 
-    ret = VarBstrCat(str1, str2, &res);
+    ret = pVarBstrCat(str1, str2, &res);
     ok(ret == S_OK, "VarBstrCat failed: %08x\n", ret);
     ok(res != NULL, "Expected a string\n");
     ok(SysStringLen(res) == 1, "got %d, expected 1\n", SysStringLen(res));
