@@ -443,7 +443,7 @@ static HRESULT WINAPI ITS_IParseDisplayNameImpl_ParseDisplayName(
     TRACE("%p %s %p %p\n", This,
           debugstr_w( pszDisplayName ), pchEaten, ppmkOut );
 
-    if( strncmpW( pszDisplayName, szPrefix, prefix_len ) )
+    if( strncmpiW( pszDisplayName, szPrefix, prefix_len ) )
         return MK_E_SYNTAX;
 
     /* search backwards for a double colon */
