@@ -269,7 +269,7 @@ MSVCP_size_t __cdecl basic_string_char__Pdif(const char *i1, const char *i2)
 /* ?_Psum@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@CAPEBDPEBD_K@Z */
 char* __cdecl basic_string_char__Psum(char *iter, MSVCP_size_t add)
 {
-    TRACE("(%p %lu)", iter, add);
+    TRACE("(%p %lu)\n", iter, add);
     return iter ? iter+add : iter;
 }
 
@@ -1965,7 +1965,7 @@ MSVCP_size_t __cdecl basic_string_wchar__Pdif(const wchar_t *i1, const wchar_t *
 /* ?_Psum@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@CAPEBGPEBG_K@Z */
 wchar_t* __cdecl basic_string_wchar__Psum(wchar_t *iter, MSVCP_size_t add)
 {
-    TRACE("(%p %lu)", iter, add);
+    TRACE("(%p %lu)\n", iter, add);
     return iter ? iter+add : iter;
 }
 
