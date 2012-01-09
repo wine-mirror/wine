@@ -600,8 +600,8 @@ static BOOL pe_load_msc_debug_info(const struct process* pcs, struct module* mod
         if (nDbg != 1 || dbg->Type != IMAGE_DEBUG_TYPE_MISC ||
             misc->DataType != IMAGE_DEBUG_MISC_EXENAME)
         {
-            WINE_ERR("-Debug info stripped, but no .DBG file in module %s\n",
-                     debugstr_w(module->module.ModuleName));
+            ERR("-Debug info stripped, but no .DBG file in module %s\n",
+                debugstr_w(module->module.ModuleName));
         }
         else
         {
