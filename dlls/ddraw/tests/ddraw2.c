@@ -346,6 +346,12 @@ static void test_clipper_blt(void)
     ok(SUCCEEDED(hr), "Failed to set clipper window, hr %#x.\n", hr);
     hr = IDirectDrawClipper_GetClipList(clipper, NULL, NULL, &ret);
     ok(SUCCEEDED(hr), "Failed to get clip list size, hr %#x.\n", hr);
+    hr = IDirectDrawClipper_SetClipList(clipper, NULL, 0);
+    ok(SUCCEEDED(hr), "Failed to set clip list, hr %#x.\n", hr);
+    hr = IDirectDrawClipper_GetClipList(clipper, NULL, NULL, &ret);
+    ok(hr == DDERR_NOCLIPLIST, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_Blt(dst_surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(hr == DDERR_NOCLIPLIST, "Got unexpected hr %#x.\n", hr);
 
     IDirectDrawSurface_Release(dst_surface);
     IDirectDrawSurface_Release(src_surface);

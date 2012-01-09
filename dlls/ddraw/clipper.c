@@ -238,10 +238,12 @@ static HRESULT WINAPI ddraw_clipper_SetClipList(IDirectDrawClipper *iface, RGNDA
 
     if (clipper->region)
         DeleteObject(clipper->region);
-    if (!(clipper->region = ExtCreateRegion(NULL, 0, region)))
+    if (!region)
+        clipper->region = NULL;
+    else if (!(clipper->region = ExtCreateRegion(NULL, 0, region)))
     {
         wined3d_mutex_unlock();
-        ERR("Failed to create creation.\n");
+        ERR("Failed to create region.\n");
         return E_FAIL;
     }
 
