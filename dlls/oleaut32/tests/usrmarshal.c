@@ -36,12 +36,16 @@
 # define V_U2(A)  (*(A))
 #endif
 
+static HRESULT (WINAPI *pSafeArrayGetIID)(SAFEARRAY*,GUID*);
+static HRESULT (WINAPI *pSafeArrayGetVartype)(SAFEARRAY*,VARTYPE*);
+static HRESULT (WINAPI *pVarBstrCmp)(BSTR,BSTR,LCID,ULONG);
+
 static inline SF_TYPE get_union_type(SAFEARRAY *psa)
 {
     VARTYPE vt;
     HRESULT hr;
 
-    hr = SafeArrayGetVartype(psa, &vt);
+    hr = pSafeArrayGetVartype(psa, &vt);
     if (FAILED(hr))
     {
         if(psa->fFeatures & FADF_VARIANT) return SF_VARIANT;
@@ -129,7 +133,10 @@ static void check_safearray(void *buffer, LPSAFEARRAY lpsa)
         return;
     }
 
-    if(FAILED(SafeArrayGetVartype(lpsa, &vt)))
+    if (!pSafeArrayGetVartype || !pSafeArrayGetIID)
+        return;
+
+    if(FAILED(pSafeArrayGetVartype(lpsa, &vt)))
         vt = 0;
 
     sftype = get_union_type(lpsa);
@@ -158,7 +165,7 @@ static void check_safearray(void *buffer, LPSAFEARRAY lpsa)
     if(sftype == SF_HAVEIID)
     {
         GUID guid;
-        SafeArrayGetIID(lpsa, &guid);
+        pSafeArrayGetIID(lpsa, &guid);
         ok(IsEqualGUID(&guid, wiresa), "guid mismatch\n");
         wiresa += sizeof(GUID);
     }
@@ -259,9 +266,12 @@ static void test_marshal_LPSAFEARRAY(void)
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
     LPSAFEARRAY_UserUnmarshal(&umcb.Flags, buffer, &lpsa2);
     ok(lpsa2 != NULL, "LPSAFEARRAY didn't unmarshal\n");
-    SafeArrayGetVartype(lpsa, &vt);
-    SafeArrayGetVartype(lpsa2, &vt2);
-    ok(vt == vt2, "vts differ %x %x\n", vt, vt2);
+    if (pSafeArrayGetVartype)
+    {
+        pSafeArrayGetVartype(lpsa, &vt);
+        pSafeArrayGetVartype(lpsa2, &vt2);
+        ok(vt == vt2, "vts differ %x %x\n", vt, vt2);
+    }
     ok(lpsa2->cLocks == 0, "got lock count %u, expected 0\n", lpsa2->cLocks);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
     LPSAFEARRAY_UserFree(&umcb.Flags, &lpsa2);
@@ -302,9 +312,12 @@ static void test_marshal_LPSAFEARRAY(void)
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
     LPSAFEARRAY_UserUnmarshal(&umcb.Flags, buffer, &lpsa2);
     ok(lpsa2 != NULL, "LPSAFEARRAY didn't unmarshal\n");
-    SafeArrayGetVartype(lpsa, &vt);
-    SafeArrayGetVartype(lpsa2, &vt2);
-    ok(vt == vt2, "vts differ %x %x\n", vt, vt2);
+    if (pSafeArrayGetVartype)
+    {
+        pSafeArrayGetVartype(lpsa, &vt);
+        pSafeArrayGetVartype(lpsa2, &vt2);
+        ok(vt == vt2, "vts differ %x %x\n", vt, vt2);
+    }
     ok(lpsa2->cLocks == 0, "got lock count %u, expected 0\n", lpsa2->cLocks);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
     LPSAFEARRAY_UserFree(&umcb.Flags, &lpsa2);
@@ -374,8 +387,11 @@ static void test_marshal_LPSAFEARRAY(void)
     hr = SafeArrayAllocData(lpsa);
     ok(hr == S_OK, "saad failed %08x\n", hr);
 
-    hr = SafeArrayGetVartype(lpsa, &vt);
-    ok(hr == E_INVALIDARG, "ret %08x\n", hr);
+    if (pSafeArrayGetVartype)
+    {
+        hr = pSafeArrayGetVartype(lpsa, &vt);
+        ok(hr == E_INVALIDARG, "ret %08x\n", hr);
+    }
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
     size = LPSAFEARRAY_UserSize(&umcb.Flags, 0, &lpsa);
@@ -455,7 +471,8 @@ static void test_marshal_LPSAFEARRAY(void)
             ok(hr == S_OK, "Failed to get bstr element at hres 0x%x\n", hr);
             if (hr == S_OK)
             {
-                ok(VarBstrCmp(values[i], gotvalue, 0, 0) == VARCMP_EQ, "String %d does not match\n", i);
+                if (pVarBstrCmp)
+                    ok(pVarBstrCmp(values[i], gotvalue, 0, 0) == VARCMP_EQ, "String %d does not match\n", i);
                 SysFreeString(gotvalue);
             }
         }
@@ -480,8 +497,11 @@ static void test_marshal_LPSAFEARRAY(void)
     hr = SafeArrayAllocData(lpsa);
     ok(hr == S_OK, "saad failed %08x\n", hr);
 
-    hr = SafeArrayGetVartype(lpsa, &vt);
-    ok(hr == E_INVALIDARG, "ret %08x\n", hr);
+    if (pSafeArrayGetVartype)
+    {
+        hr = pSafeArrayGetVartype(lpsa, &vt);
+        ok(hr == E_INVALIDARG, "ret %08x\n", hr);
+    }
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
     size = LPSAFEARRAY_UserSize(&umcb.Flags, 0, &lpsa);
@@ -1273,9 +1293,12 @@ static void test_marshal_VARIANT(void)
     SafeArrayGetUBound(V_ARRAY(&v), 1, &bound);
     SafeArrayGetUBound(V_ARRAY(&v2), 1, &bound2);
     ok(bound == bound2, "array ubounds differ\n");
-    SafeArrayGetVartype(V_ARRAY(&v), &vt);
-    SafeArrayGetVartype(V_ARRAY(&v2), &vt2);
-    ok(vt == vt2, "array vts differ %x %x\n", vt, vt2);
+    if (pSafeArrayGetVartype)
+    {
+        pSafeArrayGetVartype(V_ARRAY(&v), &vt);
+        pSafeArrayGetVartype(V_ARRAY(&v2), &vt2);
+        ok(vt == vt2, "array vts differ %x %x\n", vt, vt2);
+    }
     VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
 
@@ -1313,9 +1336,12 @@ static void test_marshal_VARIANT(void)
     SafeArrayGetUBound(*V_ARRAYREF(&v), 1, &bound);
     SafeArrayGetUBound(*V_ARRAYREF(&v2), 1, &bound2);
     ok(bound == bound2, "array ubounds differ\n");
-    SafeArrayGetVartype(*V_ARRAYREF(&v), &vt);
-    SafeArrayGetVartype(*V_ARRAYREF(&v2), &vt2);
-    ok(vt == vt2, "array vts differ %x %x\n", vt, vt2);
+    if (pSafeArrayGetVartype)
+    {
+        pSafeArrayGetVartype(*V_ARRAYREF(&v), &vt);
+        pSafeArrayGetVartype(*V_ARRAYREF(&v2), &vt2);
+        ok(vt == vt2, "array vts differ %x %x\n", vt, vt2);
+    }
     VARIANT_UserFree(&umcb.Flags, &v2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
     hr = SafeArrayDestroy(lpsa);
@@ -1481,6 +1507,16 @@ static void test_marshal_VARIANT(void)
 
 START_TEST(usrmarshal)
 {
+    HANDLE hOleaut32 = GetModuleHandleA("oleaut32.dll");
+#define GETPTR(func) p##func = (void*)GetProcAddress(hOleaut32, #func)
+    GETPTR(SafeArrayGetIID);
+    GETPTR(SafeArrayGetVartype);
+    GETPTR(VarBstrCmp);
+#undef GETPTR
+
+    if (!pSafeArrayGetIID || !pSafeArrayGetVartype)
+        win_skip("SafeArrayGetIID and/or SafeArrayGetVartype is not available, some tests will be skipped\n");
+
     CoInitialize(NULL);
 
     test_marshal_LPSAFEARRAY();

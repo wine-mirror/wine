@@ -5326,6 +5326,9 @@ static void test_VarAdd(void)
     SysFreeString(rbstr);
 }
 
+static HRESULT (WINAPI *pVarCmp)(LPVARIANT,LPVARIANT,LCID,ULONG);
+static HRESULT (WINAPI *pVarCat)(LPVARIANT,LPVARIANT,LPVARIANT);
+
 static void test_VarCat(void)
 {
     LCID lcid;
@@ -5341,6 +5344,8 @@ static void test_VarCat(void)
     VARTYPE leftvt, rightvt, resultvt;
     HRESULT hres;
     HRESULT expected_error_num;
+
+    CHECKPTR(VarCat);
 
     /* Set date format for testing */
     lcid = LOCALE_USER_DEFAULT;
@@ -5458,7 +5463,7 @@ static void test_VarCat(void)
                 V_I8(&right) = 0;
             }
 
-            hres = VarCat(&left, &right, &result);
+            hres = pVarCat(&left, &right, &result);
 
             /* Determine the error code for the vt combination */
             ok(hres == expected_error_num,
@@ -5485,10 +5490,11 @@ static void test_VarCat(void)
     V_BSTR(&left) = SysAllocString(sz12);
     V_BSTR(&right) = SysAllocString(sz34);
     V_BSTR(&expected) = SysAllocString(sz1234);
-    hres = VarCat(&left,&right,&result);
+    hres = pVarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08x\n", hres);
-    ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
-        "VarCat: VT_BSTR concat with VT_BSTR failed to return correct result\n");
+    if (pVarCmp)
+        ok(pVarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
+           "VarCat: VT_BSTR concat with VT_BSTR failed to return correct result\n");
 
     VariantClear(&left);
     VariantClear(&right);
@@ -5498,7 +5504,7 @@ static void test_VarCat(void)
     V_VT(&left) = VT_ERROR;
     V_VT(&right) = VT_BSTR;
     V_BSTR(&right) = SysAllocString(sz1234);
-    hres = VarCat(&left,&right,&result);
+    hres = pVarCat(&left,&right,&result);
     ok(hres == DISP_E_TYPEMISMATCH, "VarCat should have returned DISP_E_TYPEMISMATCH instead of 0x%08x\n", hres);
     ok(V_VT(&result) == VT_EMPTY,
         "VarCat: VT_ERROR concat with VT_BSTR should have returned VT_EMPTY\n");
@@ -5510,7 +5516,7 @@ static void test_VarCat(void)
     V_VT(&left) = VT_BSTR;
     V_VT(&right) = VT_ERROR;
     V_BSTR(&left) = SysAllocString(sz1234);
-    hres = VarCat(&left,&right,&result);
+    hres = pVarCat(&left,&right,&result);
     ok(hres == DISP_E_TYPEMISMATCH, "VarCat should have returned DISP_E_TYPEMISMATCH instead of 0x%08x\n", hres);
     ok(V_VT(&result) == VT_EMPTY,
         "VarCat: VT_BSTR concat with VT_ERROR should have returned VT_EMPTY\n");
@@ -5527,11 +5533,14 @@ static void test_VarCat(void)
     V_INT(&left) = 12;
     V_BOOL(&right) = TRUE;
     V_BSTR(&expected) = SysAllocString(sz12_true);
-    hres = VarCat(&left,&right,&result);
+    hres = pVarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08x\n", hres);
-    hres = VarCmp(&result,&expected,lcid,0);
-    ok(hres == VARCMP_EQ, "Expected VARCMP_EQ, got %08x for %s, %s\n",
-        hres, variantstr(&result), variantstr(&expected));
+    if (pVarCmp)
+    {
+        hres = pVarCmp(&result,&expected,lcid,0);
+        ok(hres == VARCMP_EQ, "Expected VARCMP_EQ, got %08x for %s, %s\n",
+           hres, variantstr(&result), variantstr(&expected));
+    }
 
     VariantClear(&left);
     VariantClear(&right);
@@ -5544,11 +5553,14 @@ static void test_VarCat(void)
     V_INT(&left) = 12;
     V_BOOL(&right) = FALSE;
     V_BSTR(&expected) = SysAllocString(sz12_false);
-    hres = VarCat(&left,&right,&result);
+    hres = pVarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08x\n", hres);
-    hres = VarCmp(&result,&expected,lcid,0);
-    ok(hres == VARCMP_EQ, "Expected VARCMP_EQ, got %08x for %s, %s\n",
-        hres, variantstr(&result), variantstr(&expected));
+    if (pVarCmp)
+    {
+        hres = pVarCmp(&result,&expected,lcid,0);
+        ok(hres == VARCMP_EQ, "Expected VARCMP_EQ, got %08x for %s, %s\n",
+           hres, variantstr(&result), variantstr(&expected));
+    }
 
     VariantClear(&left);
     VariantClear(&right);
@@ -5562,10 +5574,11 @@ static void test_VarCat(void)
     V_INT(&left)  = 12;
     V_INT(&right) = 34;
     V_BSTR(&expected) = SysAllocString(sz1234);
-    hres = VarCat(&left,&right,&result);
+    hres = pVarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08x\n", hres);
-    ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
-        "VarCat: NUMBER concat with NUMBER returned incorrect result\n");
+    if (pVarCmp)
+        ok(pVarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
+           "VarCat: NUMBER concat with NUMBER returned incorrect result\n");
 
     VariantClear(&left);
     VariantClear(&right);
@@ -5576,10 +5589,11 @@ static void test_VarCat(void)
     V_VT(&right) = VT_BSTR;
     V_INT(&left) = 12;
     V_BSTR(&right) = SysAllocString(sz34);
-    hres = VarCat(&left,&right,&result);
+    hres = pVarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08x\n", hres);
-    ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
-        "VarCat: NUMBER concat with VT_BSTR, incorrect result\n");
+    if (pVarCmp)
+        ok(pVarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
+           "VarCat: NUMBER concat with VT_BSTR, incorrect result\n");
 
     VariantClear(&left);
     VariantClear(&right);
@@ -5589,10 +5603,11 @@ static void test_VarCat(void)
     V_VT(&right) = VT_INT;
     V_BSTR(&left) = SysAllocString(sz12);
     V_INT(&right) = 34;
-    hres = VarCat(&left,&right,&result);
+    hres = pVarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08x\n", hres);
-    ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
-        "VarCat: VT_BSTR concat with NUMBER, incorrect result\n");
+    if (pVarCmp)
+        ok(pVarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
+           "VarCat: VT_BSTR concat with NUMBER, incorrect result\n");
 
     VariantClear(&left);
     VariantClear(&right);
@@ -5608,11 +5623,12 @@ static void test_VarCat(void)
     V_DATE(&right) = 29494.0;
     V_BSTR(&expected)= SysAllocString(sz12_date);
     V_BSTR(&expected_broken)= SysAllocString(sz12_date_broken);
-    hres = VarCat(&left,&right,&result);
+    hres = pVarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08x\n", hres);
-    ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ ||
-        broken(VarCmp(&result,&expected_broken,lcid,0) == VARCMP_EQ), /* Some W98 and NT4 (intermittent) */
-        "VarCat: VT_BSTR concat with VT_DATE returned incorrect result\n");
+    if (pVarCmp)
+        ok(pVarCmp(&result,&expected,lcid,0) == VARCMP_EQ ||
+           broken(pVarCmp(&result,&expected_broken,lcid,0) == VARCMP_EQ), /* Some W98 and NT4 (intermittent) */
+           "VarCat: VT_BSTR concat with VT_DATE returned incorrect result\n");
 
     VariantClear(&left);
     VariantClear(&right);
@@ -5628,11 +5644,12 @@ static void test_VarCat(void)
     V_BSTR(&right) = SysAllocString(sz12);
     V_BSTR(&expected)= SysAllocString(date_sz12);
     V_BSTR(&expected_broken)= SysAllocString(date_sz12_broken);
-    hres = VarCat(&left,&right,&result);
+    hres = pVarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08x\n", hres);
-    ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ ||
-        broken(VarCmp(&result,&expected_broken,lcid,0) == VARCMP_EQ), /* Some W98 and NT4 (intermittent) */
-        "VarCat: VT_DATE concat with VT_BSTR returned incorrect result\n");
+    if (pVarCmp)
+        ok(pVarCmp(&result,&expected,lcid,0) == VARCMP_EQ ||
+           broken(pVarCmp(&result,&expected_broken,lcid,0) == VARCMP_EQ), /* Some W98 and NT4 (intermittent) */
+           "VarCat: VT_DATE concat with VT_BSTR returned incorrect result\n");
 
     VariantClear(&left);
     VariantClear(&right);
@@ -5647,10 +5664,11 @@ static void test_VarCat(void)
     V_BSTR(&left) = SysAllocString(sz_empty);
     V_BSTR(&right) = SysAllocString(sz_empty);
     V_BSTR(&expected)= SysAllocString(sz_empty);
-    hres = VarCat(&left,&right,&result);
+    hres = pVarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08x\n", hres);
-    ok(VarCmp(&result,&left,lcid,0) == VARCMP_EQ,
-        "VarCat: EMPTY concat with EMPTY did not return empty VT_BSTR\n");
+    if (pVarCmp)
+        ok(pVarCmp(&result,&left,lcid,0) == VARCMP_EQ,
+           "VarCat: EMPTY concat with EMPTY did not return empty VT_BSTR\n");
 
     /* Restore original date format settings */
     SetLocaleInfo(lcid,LOCALE_SSHORTDATE,orig_date_format);
@@ -5665,18 +5683,18 @@ static void test_VarCat(void)
     V_BOOL(&left) = VARIANT_TRUE;
     V_VT(&right) = VT_BSTR;
     V_BSTR(&right) = SysAllocStringLen(NULL,0);
-    hres = VarCat(&left, &right, &result);
+    hres = pVarCat(&left, &right, &result);
     ok(hres == S_OK, "VarCat failed: %08x\n", hres);
     if(!strcmp_wa(V_BSTR(&result), "True")) {
         V_VT(&right) = VT_BOOL;
         V_BOOL(&right) = 100;
-        hres = VarCat(&left, &right, &result);
+        hres = pVarCat(&left, &right, &result);
         ok(hres == S_OK, "VarCat failed: %08x\n", hres);
         test_bstr_var(&result, "TrueTrue");
         VariantClear(&result);
 
         V_BOOL(&right) = VARIANT_FALSE;
-        hres = VarCat(&left, &right, &result);
+        hres = pVarCat(&left, &right, &result);
         ok(hres == S_OK, "VarCat failed: %08x\n", hres);
         test_bstr_var(&result, "TrueFalse");
         VariantClear(&result);
@@ -6363,11 +6381,11 @@ static void test_VarAnd(void)
     SysFreeString(false_str);
 }
 
-static HRESULT (WINAPI *pVarCmp)(LPVARIANT,LPVARIANT,LCID,ULONG);
-
 static void test_cmp( int line, LCID lcid, UINT flags, VARIANT *left, VARIANT *right, HRESULT result )
 {
     HRESULT hres;
+
+    CHECKPTR(VarCmp);
 
     hres = pVarCmp(left,right,lcid,flags);
     ok_(__FILE__,line)(hres == result, "VarCmp(%s,%s): expected 0x%x, got hres=0x%x\n",
@@ -8700,8 +8718,8 @@ START_TEST(vartest)
   test_VarEqv();
   test_VarMul();
   test_VarAdd();
+  test_VarCmp(); /* Before test_VarCat() which needs VarCmp() */
   test_VarCat();
-  test_VarCmp();
   test_VarAnd();
   test_VarDiv();
   test_VarIdiv();

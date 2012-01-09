@@ -29,6 +29,9 @@
 #include "tmarshal.h"
 #include "tmarshal_dispids.h"
 
+static HRESULT (WINAPI *pVarAdd)(LPVARIANT,LPVARIANT,LPVARIANT);
+
+
 #define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08lx\n", (unsigned long int)hr)
 
 /* ULL suffix is not portable */
@@ -481,8 +484,6 @@ static HRESULT WINAPI Widget_VariantCArray(
     VARIANT values[])
 {
     ULONG i;
-    VARIANT inc, res;
-    HRESULT hr;
 
     trace("VariantCArray(%u,%p)\n", count, values);
 
@@ -490,21 +491,29 @@ static HRESULT WINAPI Widget_VariantCArray(
     for (i = 0; i < count; i++)
         ok(V_VT(&values[i]) == VT_I4, "values[%d] is not VT_I4\n", i);
 
-    V_VT(&inc) = VT_I4;
-    V_I4(&inc) = 1;
-    for (i = 0; i < count; i++) {
-        VariantInit(&res);
-        hr = VarAdd(&values[i], &inc, &res);
-        if (FAILED(hr)) {
-            ok(0, "VarAdd failed at %u with error 0x%x\n", i, hr);
-            return hr;
-        }
-        hr = VariantCopy(&values[i], &res);
-        if (FAILED(hr)) {
-            ok(0, "VariantCopy failed at %u with error 0x%x\n", i, hr);
-            return hr;
+    if (pVarAdd)
+    {
+        VARIANT inc, res;
+        HRESULT hr;
+
+        V_VT(&inc) = VT_I4;
+        V_I4(&inc) = 1;
+        for (i = 0; i < count; i++) {
+            VariantInit(&res);
+            hr = pVarAdd(&values[i], &inc, &res);
+            if (FAILED(hr)) {
+                ok(0, "VarAdd failed at %u with error 0x%x\n", i, hr);
+                return hr;
+            }
+            hr = VariantCopy(&values[i], &res);
+            if (FAILED(hr)) {
+                ok(0, "VariantCopy failed at %u with error 0x%x\n", i, hr);
+                return hr;
+            }
         }
     }
+    else
+        win_skip("VarAdd is not available\n");
 
     return S_OK;
 }
@@ -1593,6 +1602,8 @@ static void test_libattr(void)
 START_TEST(tmarshal)
 {
     HRESULT hr;
+    HANDLE hOleaut32 = GetModuleHandleA("oleaut32.dll");
+    pVarAdd = (void*)GetProcAddress(hOleaut32, "VarAdd");
 
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 

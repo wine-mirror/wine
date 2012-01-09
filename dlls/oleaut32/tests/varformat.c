@@ -39,6 +39,7 @@
 
 static HMODULE hOleaut32;
 
+static HRESULT (WINAPI *pVarBstrCmp)(BSTR,BSTR,LCID,ULONG);
 static HRESULT (WINAPI *pVarFormatNumber)(LPVARIANT,int,int,int,int,ULONG,BSTR*);
 static HRESULT (WINAPI *pVarFormat)(LPVARIANT,LPOLESTR,int,int,ULONG,BSTR*);
 static HRESULT (WINAPI *pVarWeekdayName)(int,int,int,ULONG,BSTR*);
@@ -525,28 +526,30 @@ static void test_VarWeekdayName(void)
      "Null pointer: expected E_INVALIDARG, got 0x%08x\n", hres);
 
   /* Check all combinations */
-  for (iWeekday = 1; iWeekday <= 7; ++iWeekday)
-  {
-    for (fAbbrev = 0; fAbbrev <= 1; ++fAbbrev)
+  pVarBstrCmp = (void*)GetProcAddress(hOleaut32, "VarBstrCmp");
+  if (pVarBstrCmp)
+    for (iWeekday = 1; iWeekday <= 7; ++iWeekday)
     {
-      /* 0 = Default, 1 = Sunday, 2 = Monday, .. */
-      for (iFirstDay = 0; iFirstDay <= 7; ++iFirstDay)
+      for (fAbbrev = 0; fAbbrev <= 1; ++fAbbrev)
       {
-        VARWDN_O(iWeekday, fAbbrev, iFirstDay, 0);
-        if (iFirstDay == 0)
-          firstDay = defaultFirstDay;
-        else
-          /* Translate from 0=Sunday to 0=Monday in the modulo 7 space */
-          firstDay = iFirstDay - 2;
-        day = (7 + iWeekday - 1 + firstDay) % 7;
-        ok(VARCMP_EQ == VarBstrCmp(out, dayNames[day][fAbbrev],
-                                   LOCALE_USER_DEFAULT, 0),
-           "VarWeekdayName(%d,%d,%d): got wrong dayname: '%s'\n",
-           iWeekday, fAbbrev, iFirstDay, buff);
-        SysFreeString(out);
+        /* 0 = Default, 1 = Sunday, 2 = Monday, .. */
+        for (iFirstDay = 0; iFirstDay <= 7; ++iFirstDay)
+        {
+          VARWDN_O(iWeekday, fAbbrev, iFirstDay, 0);
+          if (iFirstDay == 0)
+            firstDay = defaultFirstDay;
+          else
+            /* Translate from 0=Sunday to 0=Monday in the modulo 7 space */
+            firstDay = iFirstDay - 2;
+          day = (7 + iWeekday - 1 + firstDay) % 7;
+          ok(VARCMP_EQ == pVarBstrCmp(out, dayNames[day][fAbbrev],
+                                      LOCALE_USER_DEFAULT, 0),
+             "VarWeekdayName(%d,%d,%d): got wrong dayname: '%s'\n",
+             iWeekday, fAbbrev, iFirstDay, buff);
+          SysFreeString(out);
+        }
       }
     }
-  }
 
   /* Cleanup */
   for (day = 0; day <= 6; ++day)
