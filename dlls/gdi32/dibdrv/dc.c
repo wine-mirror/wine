@@ -348,7 +348,6 @@ static BOOL dibdrv_DeleteBitmap( HBITMAP bitmap )
  */
 static HBITMAP dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectBitmap );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     BITMAPOBJ *bmp = GDI_GetObjPtr( bitmap, OBJ_BITMAP );
     dib_info dib;
@@ -365,7 +364,7 @@ static HBITMAP dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
     pdev->dib = dib;
     GDI_ReleaseObj( bitmap );
 
-    return next->funcs->pSelectBitmap( next, bitmap );
+    return bitmap;
 }
 
 /***********************************************************************
@@ -373,12 +372,10 @@ static HBITMAP dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
  */
 static void dibdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetDeviceClipping );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     TRACE("(%p, %p)\n", dev, rgn);
 
     pdev->clip = rgn;
-    return next->funcs->pSetDeviceClipping( next, rgn );
 }
 
 /***********************************************************************

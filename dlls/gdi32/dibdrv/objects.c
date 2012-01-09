@@ -1703,13 +1703,12 @@ static inline int get_pen_device_width( dibdrv_physdev *pdev, int width )
  */
 COLORREF dibdrv_SetDCPenColor( PHYSDEV dev, COLORREF color )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetDCPenColor );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
 
     if (GetCurrentObject(dev->hdc, OBJ_PEN) == GetStockObject( DC_PEN ))
         pdev->pen_brush.colorref = color;
 
-    return next->funcs->pSetDCPenColor( next, color );
+    return color;
 }
 
 /**********************************************************************
@@ -2023,7 +2022,6 @@ static void select_brush( dib_brush *brush, const LOGBRUSH *logbrush, const stru
  */
 HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_pattern *pattern )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectBrush );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     LOGBRUSH logbrush;
 
@@ -2035,8 +2033,7 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_patter
         logbrush.lbColor = GetDCBrushColor( dev->hdc );
 
     select_brush( &pdev->brush, &logbrush, pattern );
-
-    return next->funcs->pSelectBrush( next, hbrush, pattern );
+    return hbrush;
 }
 
 /***********************************************************************
@@ -2044,7 +2041,6 @@ HBRUSH dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_patter
  */
 HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *pattern )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSelectPen );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
     LOGPEN logpen;
     LOGBRUSH logbrush;
@@ -2139,8 +2135,7 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *patte
     pdev->pen_uses_region = (logpen.lopnStyle & PS_GEOMETRIC || pdev->pen_width > 1);
     pdev->pen_is_ext = (elp != NULL);
     HeapFree( GetProcessHeap(), 0, elp );
-
-    return next->funcs->pSelectPen( next, hpen, pattern );
+    return hpen;
 }
 
 /***********************************************************************
@@ -2148,13 +2143,12 @@ HPEN dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern *patte
  */
 COLORREF dibdrv_SetDCBrushColor( PHYSDEV dev, COLORREF color )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetDCBrushColor );
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
 
     if (GetCurrentObject(dev->hdc, OBJ_BRUSH) == GetStockObject( DC_BRUSH ))
         pdev->brush.colorref = color;
 
-    return next->funcs->pSetDCBrushColor( next, color );
+    return color;
 }
 
 BOOL brush_rect(dibdrv_physdev *pdev, dib_brush *brush, const RECT *rect, HRGN clip, INT rop)
