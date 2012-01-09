@@ -26,7 +26,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wshom);
 
-const char *debugstr_variant(const VARIANT *v)
+static const char *debugstr_variant(const VARIANT *v)
 {
     if(!v)
         return "(null)";
