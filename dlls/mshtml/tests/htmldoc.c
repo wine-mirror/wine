@@ -41,6 +41,7 @@
 #include "shdeprecated.h"
 #include "perhist.h"
 #include "shobjidl.h"
+#include "htiface.h"
 #include "mshtml_test.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
@@ -199,7 +200,7 @@ static BOOL inplace_deactivated, open_call;
 static BOOL complete, loading_js, loading_hash;
 static DWORD status_code = HTTP_STATUS_OK;
 static BOOL asynchronous_binding = FALSE;
-static BOOL support_wbapp;
+static BOOL support_wbapp, allow_new_window;
 static int stream_read, protocol_read;
 static enum load_state_t {
     LD_DOLOAD,
@@ -828,10 +829,10 @@ static HRESULT WINAPI NewWindowManager_EvaluateNewWindow(INewWindowManager *ifac
     ok(!strcmp_wa(pszUrlContext, "about:replace"), "pszUrlContext = %s\n", wine_dbgstr_w(pszUrlContext));
     ok(!pszFeatures, "pszFeatures = %s\n", wine_dbgstr_w(pszFeatures));
     ok(!fReplace, "fReplace = %x\n", fReplace);
-    ok(dwFlags == NWMF_FIRST, "dwFlags = %x\n", dwFlags);
+    ok(dwFlags == (allow_new_window ? 0 : NWMF_FIRST), "dwFlags = %x\n", dwFlags);
     ok(!dwUserActionTime, "dwUserActionime = %d\n", dwUserActionTime);
 
-    return E_FAIL;
+    return allow_new_window ? S_OK : E_FAIL;
 }
 
 static const INewWindowManagerVtbl NewWindowManagerVtbl = {
@@ -5162,11 +5163,13 @@ static void test_put_href(IHTMLDocument2 *doc, BOOL use_replace, const char *hre
         nav_url = prev_nav_url;
 }
 
-static void test_open_window(IHTMLDocument2 *doc)
+static void test_open_window(IHTMLDocument2 *doc, BOOL do_block)
 {
     IHTMLWindow2 *window, *new_window;
     BSTR name, url;
     HRESULT hres;
+
+    allow_new_window = !do_block;
 
     hres = IHTMLDocument2_get_parentWindow(doc, &window);
     ok(hres == S_OK, "get_parentWindow failed: %08x\n", hres);
@@ -5203,7 +5206,16 @@ static void test_open_window(IHTMLDocument2 *doc)
     CHECK_CALLED(EvaluateNewWindow);
 
     ok(hres == S_OK, "open failed: %08x\n", hres);
-    ok(new_window == NULL, "new_window != NULL\n");
+
+    if(do_block) {
+        ok(!new_window, "new_window != NULL\n");
+    }else {
+        ok(new_window != NULL, "new_window == NULL\n");
+
+        trace("WINDOW %p\n", new_window);
+        hres = IHTMLWindow2_close(new_window);
+        ok(hres == S_OK, "close failed: %08x\n", hres);
+    }
 
     IHTMLWindow2_Release(window);
 }
@@ -6535,7 +6547,9 @@ static void test_HTMLDocument_http(BOOL with_wbapp)
     test_put_href(doc, FALSE, NULL, "about:blank", FALSE, FALSE);
     test_put_href(doc, TRUE, NULL, "about:replace", FALSE, FALSE);
 
-    test_open_window(doc);
+    test_open_window(doc, TRUE);
+    if(!support_wbapp) /* FIXME */
+        test_open_window(doc, FALSE);
 
     test_InPlaceDeactivate(doc, TRUE);
     test_Close(doc, FALSE);
