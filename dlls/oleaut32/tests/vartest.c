@@ -55,7 +55,7 @@ static WCHAR sz12_true[32];
 
 /* Get a conversion function ptr, return if function not available */
 #define CHECKPTR(func) p##func = (void*)GetProcAddress(hOleaut32, #func); \
-  if (!p##func) { trace("function " # func " not available, not testing it\n"); return; }
+  if (!p##func) { win_skip("function " # func " not available, not testing it\n"); return; }
 
 /* Have IRecordInfo data type? */
 static int HAVE_OLEAUT32_RECORD = 0;

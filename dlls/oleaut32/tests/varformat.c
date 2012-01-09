@@ -51,7 +51,7 @@ static HRESULT (WINAPI *pVarWeekdayName)(int,int,int,ULONG,BSTR*);
 
 /* Get a conversion function ptr, return if function not available */
 #define CHECKPTR(func) p##func = (void*)GetProcAddress(hOleaut32, #func); \
-  if (!p##func) { trace("function " # func " not available, not testing it\n"); return; }
+  if (!p##func) { win_skip("function " # func " not available, not testing it\n"); return; }
 
 static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 )
 {
