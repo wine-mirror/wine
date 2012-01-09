@@ -467,7 +467,6 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_CreateBitmap,                /* pCreateBitmap */
     X11DRV_CreateCompatibleDC,          /* pCreateCompatibleDC */
     X11DRV_CreateDC,                    /* pCreateDC */
-    X11DRV_CreateDIBSection,            /* pCreateDIBSection */
     X11DRV_DeleteBitmap,                /* pDeleteBitmap */
     X11DRV_DeleteDC,                    /* pDeleteDC */
     NULL,                               /* pDeleteObject */

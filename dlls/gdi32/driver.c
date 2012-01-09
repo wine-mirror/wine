@@ -227,11 +227,6 @@ static BOOL nulldrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
     return FALSE;
 }
 
-static HBITMAP nulldrv_CreateDIBSection( PHYSDEV dev, HBITMAP bitmap, BITMAPINFO *info, UINT usage )
-{
-    return bitmap;
-}
-
 static BOOL nulldrv_DeleteBitmap( HBITMAP bitmap )
 {
     return TRUE;
@@ -739,7 +734,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_CreateBitmap,               /* pCreateBitmap */
     nulldrv_CreateCompatibleDC,         /* pCreateCompatibleDC */
     nulldrv_CreateDC,                   /* pCreateDC */
-    nulldrv_CreateDIBSection,           /* pCreateDIBSection */
     nulldrv_DeleteBitmap,               /* pDeleteBitmap */
     nulldrv_DeleteDC,                   /* pDeleteDC */
     nulldrv_DeleteObject,               /* pDeleteObject */

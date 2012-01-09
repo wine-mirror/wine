@@ -77,7 +77,6 @@ struct gdi_dc_funcs
     BOOL     (*pCreateBitmap)(PHYSDEV,HBITMAP);
     BOOL     (*pCreateCompatibleDC)(PHYSDEV,PHYSDEV*);
     BOOL     (*pCreateDC)(PHYSDEV*,LPCWSTR,LPCWSTR,LPCWSTR,const DEVMODEW*);
-    HBITMAP  (*pCreateDIBSection)(PHYSDEV,HBITMAP,BITMAPINFO *,UINT);
     BOOL     (*pDeleteBitmap)(HBITMAP);
     BOOL     (*pDeleteDC)(PHYSDEV);
     BOOL     (*pDeleteObject)(PHYSDEV,HGDIOBJ);
@@ -212,7 +211,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 23
+#define WINE_GDI_DRIVER_VERSION 24
 
 static inline PHYSDEV get_physdev_entry_point( PHYSDEV dev, size_t offset )
 {

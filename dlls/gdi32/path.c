@@ -2250,7 +2250,6 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pCreateBitmap */
     NULL,                               /* pCreateCompatibleDC */
     pathdrv_CreateDC,                   /* pCreateDC */
-    NULL,                               /* pCreateDIBSection */
     NULL,                               /* pDeleteBitmap */
     pathdrv_DeleteDC,                   /* pDeleteDC */
     NULL,                               /* pDeleteObject */

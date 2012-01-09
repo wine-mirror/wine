@@ -51,7 +51,6 @@ static const struct gdi_dc_funcs EMFDRV_Funcs =
     NULL,                            /* pCreateBitmap */
     NULL,                            /* pCreateCompatibleDC */
     NULL,                            /* pCreateDC */
-    NULL,                            /* pCreateDIBSection */
     NULL,                            /* pDeleteBitmap */
     EMFDRV_DeleteDC,                 /* pDeleteDC */
     EMFDRV_DeleteObject,             /* pDeleteObject */

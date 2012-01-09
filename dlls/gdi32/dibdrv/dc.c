@@ -575,7 +575,6 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pCreateBitmap */
     NULL,                               /* pCreateCompatibleDC */
     dibdrv_CreateDC,                    /* pCreateDC */
-    NULL,                               /* pCreateDIBSection */
     dibdrv_DeleteBitmap,                /* pDeleteBitmap */
     dibdrv_DeleteDC,                    /* pDeleteDC */
     NULL,                               /* pDeleteObject */

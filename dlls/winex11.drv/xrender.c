@@ -2684,7 +2684,6 @@ static const struct gdi_dc_funcs xrender_funcs =
     xrenderdrv_CreateBitmap,            /* pCreateBitmap */
     xrenderdrv_CreateCompatibleDC,      /* pCreateCompatibleDC */
     xrenderdrv_CreateDC,                /* pCreateDC */
-    NULL,                               /* pCreateDIBSection */
     xrenderdrv_DeleteBitmap,            /* pDeleteBitmap */
     xrenderdrv_DeleteDC,                /* pDeleteDC */
     NULL,                               /* pDeleteObject */

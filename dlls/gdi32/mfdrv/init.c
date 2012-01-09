@@ -96,7 +96,6 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pCreateBitmap */
     MFDRV_CreateCompatibleDC,        /* pCreateCompatibleDC */
     NULL,                            /* pCreateDC */
-    NULL,                            /* pCreateDIBSection */
     NULL,                            /* pDeleteBitmap */
     MFDRV_DeleteDC,                  /* pDeleteDC */
     MFDRV_DeleteObject,              /* pDeleteObject */
