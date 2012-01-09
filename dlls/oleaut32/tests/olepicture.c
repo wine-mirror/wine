@@ -54,6 +54,7 @@
 static HMODULE hOleaut32;
 
 static HRESULT (WINAPI *pOleLoadPicture)(LPSTREAM,LONG,BOOL,REFIID,LPVOID*);
+static HRESULT (WINAPI *pOleLoadPictureEx)(LPSTREAM,LONG,BOOL,REFIID,DWORD,DWORD,DWORD,LPVOID*);
 static HRESULT (WINAPI *pOleCreatePictureIndirect)(PICTDESC*,REFIID,BOOL,LPVOID*);
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08x\n", hr)
@@ -531,7 +532,7 @@ static void test_apm(void)
     memcpy(data, apmdata, sizeof(apmdata));
 
     ole_check(CreateStreamOnHGlobal(hglob, TRUE, &stream));
-    ole_check(OleLoadPictureEx(stream, sizeof(apmdata), TRUE, &IID_IPicture, 100, 100, 0, (LPVOID *)&pict));
+    ole_check(pOleLoadPictureEx(stream, sizeof(apmdata), TRUE, &IID_IPicture, 100, 100, 0, (LPVOID *)&pict));
 
     ole_check(IPicture_get_Handle(pict, &handle));
     ok(handle != 0, "handle is null\n");
@@ -566,7 +567,7 @@ static void test_metafile(void)
 
     ole_check(CreateStreamOnHGlobal(hglob, TRUE, &stream));
     /* Windows does not load simple metafiles */
-    ole_expect(OleLoadPictureEx(stream, sizeof(metafile), TRUE, &IID_IPicture, 100, 100, 0, (LPVOID *)&pict), E_FAIL);
+    ole_expect(pOleLoadPictureEx(stream, sizeof(metafile), TRUE, &IID_IPicture, 100, 100, 0, (LPVOID *)&pict), E_FAIL);
 
     IStream_Release(stream);
 }
@@ -587,7 +588,7 @@ static void test_enhmetafile(void)
     memcpy(data, enhmetafile, sizeof(enhmetafile));
 
     ole_check(CreateStreamOnHGlobal(hglob, TRUE, &stream));
-    ole_check(OleLoadPictureEx(stream, sizeof(enhmetafile), TRUE, &IID_IPicture, 10, 10, 0, (LPVOID *)&pict));
+    ole_check(pOleLoadPictureEx(stream, sizeof(enhmetafile), TRUE, &IID_IPicture, 10, 10, 0, (LPVOID *)&pict));
 
     ole_check(IPicture_get_Handle(pict, &handle));
     ok(handle != 0, "handle is null\n");
@@ -969,6 +970,7 @@ START_TEST(olepicture)
 {
     hOleaut32 = GetModuleHandleA("oleaut32.dll");
     pOleLoadPicture = (void*)GetProcAddress(hOleaut32, "OleLoadPicture");
+    pOleLoadPictureEx = (void*)GetProcAddress(hOleaut32, "OleLoadPictureEx");
     pOleCreatePictureIndirect = (void*)GetProcAddress(hOleaut32, "OleCreatePictureIndirect");
     if (!pOleLoadPicture)
     {
@@ -985,10 +987,14 @@ START_TEST(olepicture)
     if (0) test_pic(pngimage, sizeof(pngimage));
     test_empty_image();
     test_empty_image_2();
-    test_apm();
-    test_metafile();
-    test_enhmetafile();
-
+    if (pOleLoadPictureEx)
+    {
+        test_apm();
+        test_metafile();
+        test_enhmetafile();
+    }
+    else
+        win_skip("OleLoadPictureEx is not available\n");
     test_Invoke();
     test_OleCreatePictureIndirect();
     test_Render();
