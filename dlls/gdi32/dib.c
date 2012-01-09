@@ -657,7 +657,6 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
     struct bitblt_coords src, dst;
     INT src_to_dst_offset;
     HRGN clip = 0;
-    const struct gdi_dc_funcs *funcs;
 
     if (!bitmapinfo_from_user_bitmapinfo( src_info, info, coloruse, TRUE ) || coloruse > DIB_PAL_COLORS)
     {
@@ -715,8 +714,6 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
         if (lines < src.visrect.bottom) src.visrect.bottom = lines;
     }
 
-    funcs = get_bitmap_funcs( bitmap );
-
     result = lines;
 
     offset_rect( &src.visrect, 0, src_to_dst_offset );
@@ -736,11 +733,11 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
 
     copy_bitmapinfo( dst_info, src_info );
 
-    err = funcs->pPutImage( NULL, hbitmap, clip, dst_info, &src_bits, &src, &dst, 0 );
+    err = bitmap->funcs->pPutImage( NULL, hbitmap, clip, dst_info, &src_bits, &src, &dst, 0 );
     if (err == ERROR_BAD_FORMAT)
     {
         err = convert_bits( src_info, &src, dst_info, &src_bits, FALSE );
-        if (!err) err = funcs->pPutImage( NULL, hbitmap, clip, dst_info, &src_bits, &src, &dst, 0 );
+        if (!err) err = bitmap->funcs->pPutImage( NULL, hbitmap, clip, dst_info, &src_bits, &src, &dst, 0 );
     }
     if(err) result = 0;
 
@@ -1212,7 +1209,6 @@ INT WINAPI GetDIBits(
     BITMAPINFO *dst_info = (BITMAPINFO *)dst_bmibuf;
     char src_bmibuf[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *src_info = (BITMAPINFO *)src_bmibuf;
-    const struct gdi_dc_funcs *funcs;
     struct gdi_image_bits src_bits;
     struct bitblt_coords src, dst;
     BOOL empty_rect = FALSE;
@@ -1238,8 +1234,6 @@ INT WINAPI GetDIBits(
         release_dc_ptr( dc );
 	return 0;
     }
-
-    funcs = get_bitmap_funcs( bmp );
 
     src.visrect.left   = 0;
     src.visrect.top    = 0;
@@ -1348,7 +1342,7 @@ INT WINAPI GetDIBits(
         lines = src.height;
     }
 
-    err = funcs->pGetImage( NULL, hbitmap, src_info, bits ? &src_bits : NULL, bits ? &src : NULL );
+    err = bmp->funcs->pGetImage( NULL, hbitmap, src_info, bits ? &src_bits : NULL, bits ? &src : NULL );
 
     if (err) goto done;
 

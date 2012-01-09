@@ -58,7 +58,6 @@ static const struct gdi_obj_funcs brush_funcs =
 /* fetch the contents of the brush bitmap and cache them in the brush pattern */
 void cache_pattern_bits( PHYSDEV physdev, struct brush_pattern *pattern )
 {
-    const struct gdi_dc_funcs *funcs;
     struct gdi_image_bits bits;
     struct bitblt_coords src;
     BITMAPINFO *info;
@@ -76,8 +75,7 @@ void cache_pattern_bits( PHYSDEV physdev, struct brush_pattern *pattern )
     src.visrect.top    = src.y = 0;
     src.visrect.right  = src.width = bmp->bitmap.bmWidth;
     src.visrect.bottom = src.height = bmp->bitmap.bmHeight;
-    funcs = get_bitmap_funcs( bmp );
-    if (funcs->pGetImage( NULL, pattern->bitmap, info, &bits, &src ))
+    if (bmp->funcs->pGetImage( NULL, pattern->bitmap, info, &bits, &src ))
     {
         HeapFree( GetProcessHeap(), 0, info );
         goto done;
