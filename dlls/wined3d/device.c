@@ -2809,14 +2809,14 @@ static void device_update_fixed_function_usage_map(struct wined3d_device *device
     for (i = 0; i < MAX_TEXTURES; ++i)
     {
         const struct wined3d_state *state = &device->stateBlock->state;
-        WINED3DTEXTUREOP color_op = state->texture_states[i][WINED3DTSS_COLOROP];
-        WINED3DTEXTUREOP alpha_op = state->texture_states[i][WINED3DTSS_ALPHAOP];
-        DWORD color_arg1 = state->texture_states[i][WINED3DTSS_COLORARG1] & WINED3DTA_SELECTMASK;
-        DWORD color_arg2 = state->texture_states[i][WINED3DTSS_COLORARG2] & WINED3DTA_SELECTMASK;
-        DWORD color_arg3 = state->texture_states[i][WINED3DTSS_COLORARG0] & WINED3DTA_SELECTMASK;
-        DWORD alpha_arg1 = state->texture_states[i][WINED3DTSS_ALPHAARG1] & WINED3DTA_SELECTMASK;
-        DWORD alpha_arg2 = state->texture_states[i][WINED3DTSS_ALPHAARG2] & WINED3DTA_SELECTMASK;
-        DWORD alpha_arg3 = state->texture_states[i][WINED3DTSS_ALPHAARG0] & WINED3DTA_SELECTMASK;
+        WINED3DTEXTUREOP color_op = state->texture_states[i][WINED3D_TSS_COLOR_OP];
+        WINED3DTEXTUREOP alpha_op = state->texture_states[i][WINED3D_TSS_ALPHA_OP];
+        DWORD color_arg1 = state->texture_states[i][WINED3D_TSS_COLOR_ARG1] & WINED3DTA_SELECTMASK;
+        DWORD color_arg2 = state->texture_states[i][WINED3D_TSS_COLOR_ARG2] & WINED3DTA_SELECTMASK;
+        DWORD color_arg3 = state->texture_states[i][WINED3D_TSS_COLOR_ARG0] & WINED3DTA_SELECTMASK;
+        DWORD alpha_arg1 = state->texture_states[i][WINED3D_TSS_ALPHA_ARG1] & WINED3DTA_SELECTMASK;
+        DWORD alpha_arg2 = state->texture_states[i][WINED3D_TSS_ALPHA_ARG2] & WINED3DTA_SELECTMASK;
+        DWORD alpha_arg3 = state->texture_states[i][WINED3D_TSS_ALPHA_ARG0] & WINED3DTA_SELECTMASK;
 
         if (color_op == WINED3DTOP_DISABLE) {
             /* Not used, and disable higher stages */
@@ -3589,7 +3589,7 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
 }
 
 HRESULT CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *device,
-        UINT stage, WINED3DTEXTURESTAGESTATETYPE state, DWORD value)
+        UINT stage, enum wined3d_texture_stage_state state, DWORD value)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     DWORD old_value;
@@ -3629,7 +3629,7 @@ HRESULT CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *devi
 
     if (stage > device->stateBlock->state.lowest_disabled_stage
             && device->StateTable[STATE_TEXTURESTAGE(0, state)].representative
-            == STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP))
+            == STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_OP))
     {
         /* Colorop change above lowest disabled stage? That won't change
          * anything in the GL setup. Changes in other states are important on
@@ -3637,7 +3637,7 @@ HRESULT CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *devi
         return WINED3D_OK;
     }
 
-    if (state == WINED3DTSS_COLOROP)
+    if (state == WINED3D_TSS_COLOR_OP)
     {
         unsigned int i;
 
@@ -3650,7 +3650,7 @@ HRESULT CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *devi
             for (i = stage + 1; i < device->stateBlock->state.lowest_disabled_stage; ++i)
             {
                 TRACE("Additionally dirtifying stage %u.\n", i);
-                device_invalidate_state(device, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP));
+                device_invalidate_state(device, STATE_TEXTURESTAGE(i, WINED3D_TSS_COLOR_OP));
             }
             device->stateBlock->state.lowest_disabled_stage = stage;
             TRACE("New lowest disabled: %u.\n", stage);
@@ -3667,10 +3667,10 @@ HRESULT CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *devi
              * handled below. */
             for (i = stage + 1; i < gl_info->limits.texture_stages; ++i)
             {
-                if (device->updateStateBlock->state.texture_states[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE)
+                if (device->updateStateBlock->state.texture_states[i][WINED3D_TSS_COLOR_OP] == WINED3DTOP_DISABLE)
                     break;
                 TRACE("Additionally dirtifying stage %u due to enable.\n", i);
-                device_invalidate_state(device, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP));
+                device_invalidate_state(device, STATE_TEXTURESTAGE(i, WINED3D_TSS_COLOR_OP));
             }
             device->stateBlock->state.lowest_disabled_stage = i;
             TRACE("New lowest disabled: %u.\n", i);
@@ -3683,7 +3683,7 @@ HRESULT CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *devi
 }
 
 HRESULT CDECL wined3d_device_get_texture_stage_state(const struct wined3d_device *device,
-        UINT stage, WINED3DTEXTURESTAGESTATETYPE state, DWORD *value)
+        UINT stage, enum wined3d_texture_stage_state state, DWORD *value)
 {
     TRACE("device %p, stage %u, state %s, value %p.\n",
             device, stage, debug_d3dtexturestate(state), value);
@@ -3761,10 +3761,10 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
         if (!prev && stage < gl_info->limits.texture_stages)
         {
             /* The source arguments for color and alpha ops have different
-             * meanings when a NULL texture is bound, so the COLOROP and
-             * ALPHAOP have to be dirtified. */
-            device_invalidate_state(device, STATE_TEXTURESTAGE(stage, WINED3DTSS_COLOROP));
-            device_invalidate_state(device, STATE_TEXTURESTAGE(stage, WINED3DTSS_ALPHAOP));
+             * meanings when a NULL texture is bound, so the COLOR_OP and
+             * ALPHA_OP have to be dirtified. */
+            device_invalidate_state(device, STATE_TEXTURESTAGE(stage, WINED3D_TSS_COLOR_OP));
+            device_invalidate_state(device, STATE_TEXTURESTAGE(stage, WINED3D_TSS_ALPHA_OP));
         }
 
         if (bind_count == 1)
@@ -3779,8 +3779,8 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
 
         if (!texture && stage < gl_info->limits.texture_stages)
         {
-            device_invalidate_state(device, STATE_TEXTURESTAGE(stage, WINED3DTSS_COLOROP));
-            device_invalidate_state(device, STATE_TEXTURESTAGE(stage, WINED3DTSS_ALPHAOP));
+            device_invalidate_state(device, STATE_TEXTURESTAGE(stage, WINED3D_TSS_COLOR_OP));
+            device_invalidate_state(device, STATE_TEXTURESTAGE(stage, WINED3D_TSS_ALPHA_OP));
         }
 
         if (bind_count && prev->sampler == stage)

@@ -173,7 +173,7 @@ static void drawStridedSlow(const struct wined3d_device *device, const struct wi
 
     for (textureNo = 0; textureNo < texture_stages; ++textureNo)
     {
-        int coordIdx = state->texture_states[textureNo][WINED3DTSS_TEXCOORDINDEX];
+        int coordIdx = state->texture_states[textureNo][WINED3D_TSS_TEXCOORD_INDEX];
         DWORD texture_idx = device->texUnitMap[textureNo];
 
         if (!gl_info->supported[ARB_MULTITEXTURE] && textureNo > 0)
@@ -243,7 +243,7 @@ static void drawStridedSlow(const struct wined3d_device *device, const struct wi
 
             if (!(tmp_tex_mask & 1)) continue;
 
-            coord_idx = state->texture_states[texture][WINED3DTSS_TEXCOORDINDEX];
+            coord_idx = state->texture_states[texture][WINED3D_TSS_TEXCOORD_INDEX];
             ptr = texCoords[coord_idx] + (SkipnStrides * si->elements[WINED3D_FFP_TEXCOORD0 + coord_idx].stride);
 
             texture_idx = device->texUnitMap[texture];

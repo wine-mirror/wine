@@ -2543,12 +2543,12 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
 
             This->legacyTextureBlending = TRUE;
 
-            wined3d_device_get_texture_stage_state(This->wined3d_device, 0, WINED3DTSS_COLOROP, &colorop);
-            wined3d_device_get_texture_stage_state(This->wined3d_device, 0, WINED3DTSS_COLORARG1, &colorarg1);
-            wined3d_device_get_texture_stage_state(This->wined3d_device, 0, WINED3DTSS_COLORARG2, &colorarg2);
-            wined3d_device_get_texture_stage_state(This->wined3d_device, 0, WINED3DTSS_ALPHAOP, &alphaop);
-            wined3d_device_get_texture_stage_state(This->wined3d_device, 0, WINED3DTSS_ALPHAARG1, &alphaarg1);
-            wined3d_device_get_texture_stage_state(This->wined3d_device, 0, WINED3DTSS_ALPHAARG2, &alphaarg2);
+            wined3d_device_get_texture_stage_state(This->wined3d_device, 0, WINED3D_TSS_COLOR_OP, &colorop);
+            wined3d_device_get_texture_stage_state(This->wined3d_device, 0, WINED3D_TSS_COLOR_ARG1, &colorarg1);
+            wined3d_device_get_texture_stage_state(This->wined3d_device, 0, WINED3D_TSS_COLOR_ARG2, &colorarg2);
+            wined3d_device_get_texture_stage_state(This->wined3d_device, 0, WINED3D_TSS_ALPHA_OP, &alphaop);
+            wined3d_device_get_texture_stage_state(This->wined3d_device, 0, WINED3D_TSS_ALPHA_ARG1, &alphaarg1);
+            wined3d_device_get_texture_stage_state(This->wined3d_device, 0, WINED3D_TSS_ALPHA_ARG2, &alphaarg2);
 
             if (colorop == WINED3DTOP_SELECTARG1 && colorarg1 == WINED3DTA_TEXTURE &&
                 alphaop == WINED3DTOP_SELECTARG1 && alphaarg1 == WINED3DTA_TEXTURE)
@@ -2897,74 +2897,74 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
 
                     if (tex_alpha)
                         wined3d_device_set_texture_stage_state(This->wined3d_device,
-                                0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG1);
+                                0, WINED3D_TSS_ALPHA_OP, WINED3DTOP_SELECTARG1);
                     else
                         wined3d_device_set_texture_stage_state(This->wined3d_device,
-                                0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG2);
+                                0, WINED3D_TSS_ALPHA_OP, WINED3DTOP_SELECTARG2);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_ALPHAARG1, WINED3DTA_TEXTURE);
+                            0, WINED3D_TSS_ALPHA_ARG1, WINED3DTA_TEXTURE);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_ALPHAARG2, WINED3DTA_CURRENT);
+                            0, WINED3D_TSS_ALPHA_ARG2, WINED3DTA_CURRENT);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_COLORARG1, WINED3DTA_TEXTURE);
+                            0, WINED3D_TSS_COLOR_ARG1, WINED3DTA_TEXTURE);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_COLORARG2, WINED3DTA_CURRENT);
+                            0, WINED3D_TSS_COLOR_ARG2, WINED3DTA_CURRENT);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_COLOROP, WINED3DTOP_MODULATE);
+                            0, WINED3D_TSS_COLOR_OP, WINED3DTOP_MODULATE);
                     break;
                 }
 
                 case D3DTBLEND_ADD:
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_COLOROP, WINED3DTOP_ADD);
+                            0, WINED3D_TSS_COLOR_OP, WINED3DTOP_ADD);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_COLORARG1, WINED3DTA_TEXTURE);
+                            0, WINED3D_TSS_COLOR_ARG1, WINED3DTA_TEXTURE);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_COLORARG2, WINED3DTA_CURRENT);
+                            0, WINED3D_TSS_COLOR_ARG2, WINED3DTA_CURRENT);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG2);
+                            0, WINED3D_TSS_ALPHA_OP, WINED3DTOP_SELECTARG2);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_ALPHAARG2, WINED3DTA_CURRENT);
+                            0, WINED3D_TSS_ALPHA_ARG2, WINED3DTA_CURRENT);
                     break;
 
                 case D3DTBLEND_MODULATEALPHA:
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_COLORARG1, WINED3DTA_TEXTURE);
+                            0, WINED3D_TSS_COLOR_ARG1, WINED3DTA_TEXTURE);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_ALPHAARG1, WINED3DTA_TEXTURE);
+                            0, WINED3D_TSS_ALPHA_ARG1, WINED3DTA_TEXTURE);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_COLORARG2, WINED3DTA_CURRENT);
+                            0, WINED3D_TSS_COLOR_ARG2, WINED3DTA_CURRENT);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_ALPHAARG2, WINED3DTA_CURRENT);
+                            0, WINED3D_TSS_ALPHA_ARG2, WINED3DTA_CURRENT);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_COLOROP, WINED3DTOP_MODULATE);
+                            0, WINED3D_TSS_COLOR_OP, WINED3DTOP_MODULATE);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_ALPHAOP, WINED3DTOP_MODULATE);
+                            0, WINED3D_TSS_ALPHA_OP, WINED3DTOP_MODULATE);
                     break;
 
                 case D3DTBLEND_COPY:
                 case D3DTBLEND_DECAL:
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_COLORARG1, WINED3DTA_TEXTURE);
+                            0, WINED3D_TSS_COLOR_ARG1, WINED3DTA_TEXTURE);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_ALPHAARG1, WINED3DTA_TEXTURE);
+                            0, WINED3D_TSS_ALPHA_ARG1, WINED3DTA_TEXTURE);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_COLOROP, WINED3DTOP_SELECTARG1);
+                            0, WINED3D_TSS_COLOR_OP, WINED3DTOP_SELECTARG1);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG1);
+                            0, WINED3D_TSS_ALPHA_OP, WINED3DTOP_SELECTARG1);
                     break;
 
                 case D3DTBLEND_DECALALPHA:
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_COLOROP, WINED3DTOP_BLENDTEXTUREALPHA);
+                            0, WINED3D_TSS_COLOR_OP, WINED3DTOP_BLENDTEXTUREALPHA);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_COLORARG1, WINED3DTA_TEXTURE);
+                            0, WINED3D_TSS_COLOR_ARG1, WINED3DTA_TEXTURE);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_COLORARG2, WINED3DTA_CURRENT);
+                            0, WINED3D_TSS_COLOR_ARG2, WINED3DTA_CURRENT);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG2);
+                            0, WINED3D_TSS_ALPHA_OP, WINED3DTOP_SELECTARG2);
                     wined3d_device_set_texture_stage_state(This->wined3d_device,
-                            0, WINED3DTSS_ALPHAARG2, WINED3DTA_CURRENT);
+                            0, WINED3D_TSS_ALPHA_ARG2, WINED3DTA_CURRENT);
                     break;
 
                 default:
@@ -4765,9 +4765,11 @@ IDirect3DDeviceImpl_3_SetTexture(IDirect3DDevice3 *iface,
 
         /* Arg 1/2 are already set to WINED3DTA_TEXTURE/WINED3DTA_CURRENT in case of D3DTBLEND_MODULATE */
         if (tex_alpha)
-            wined3d_device_set_texture_stage_state(This->wined3d_device, 0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG1);
+            wined3d_device_set_texture_stage_state(This->wined3d_device,
+                    0, WINED3D_TSS_ALPHA_OP, WINED3DTOP_SELECTARG1);
         else
-            wined3d_device_set_texture_stage_state(This->wined3d_device, 0, WINED3DTSS_ALPHAOP, WINED3DTOP_SELECTARG2);
+            wined3d_device_set_texture_stage_state(This->wined3d_device,
+                    0, WINED3D_TSS_ALPHA_OP, WINED3DTOP_SELECTARG2);
     }
 
     wined3d_mutex_unlock();
@@ -4778,35 +4780,35 @@ IDirect3DDeviceImpl_3_SetTexture(IDirect3DDevice3 *iface,
 static const struct tss_lookup
 {
     BOOL sampler_state;
-    DWORD state;
+    enum wined3d_texture_stage_state state;
 }
 tss_lookup[] =
 {
-    {FALSE, WINED3DTSS_FORCE_DWORD},            /*  0, unused */
-    {FALSE, WINED3DTSS_COLOROP},                /*  1, D3DTSS_COLOROP */
-    {FALSE, WINED3DTSS_COLORARG1},              /*  2, D3DTSS_COLORARG1 */
-    {FALSE, WINED3DTSS_COLORARG2},              /*  3, D3DTSS_COLORARG2 */
-    {FALSE, WINED3DTSS_ALPHAOP},                /*  4, D3DTSS_ALPHAOP */
-    {FALSE, WINED3DTSS_ALPHAARG1},              /*  5, D3DTSS_ALPHAARG1 */
-    {FALSE, WINED3DTSS_ALPHAARG2},              /*  6, D3DTSS_ALPHAARG2 */
-    {FALSE, WINED3DTSS_BUMPENVMAT00},           /*  7, D3DTSS_BUMPENVMAT00 */
-    {FALSE, WINED3DTSS_BUMPENVMAT01},           /*  8, D3DTSS_BUMPENVMAT01 */
-    {FALSE, WINED3DTSS_BUMPENVMAT10},           /*  9, D3DTSS_BUMPENVMAT10 */
-    {FALSE, WINED3DTSS_BUMPENVMAT11},           /* 10, D3DTSS_BUMPENVMAT11 */
-    {FALSE, WINED3DTSS_TEXCOORDINDEX},          /* 11, D3DTSS_TEXCOORDINDEX */
-    {TRUE,  WINED3D_SAMP_ADDRESS_U},            /* 12, D3DTSS_ADDRESS */
-    {TRUE,  WINED3D_SAMP_ADDRESS_U},            /* 13, D3DTSS_ADDRESSU */
-    {TRUE,  WINED3D_SAMP_ADDRESS_V},            /* 14, D3DTSS_ADDRESSV */
-    {TRUE,  WINED3D_SAMP_BORDER_COLOR},         /* 15, D3DTSS_BORDERCOLOR */
-    {TRUE,  WINED3D_SAMP_MAG_FILTER},           /* 16, D3DTSS_MAGFILTER */
-    {TRUE,  WINED3D_SAMP_MIN_FILTER},           /* 17, D3DTSS_MINFILTER */
-    {TRUE,  WINED3D_SAMP_MIP_FILTER},           /* 18, D3DTSS_MIPFILTER */
-    {TRUE,  WINED3D_SAMP_MIPMAP_LOD_BIAS},      /* 19, D3DTSS_MIPMAPLODBIAS */
-    {TRUE,  WINED3D_SAMP_MAX_MIP_LEVEL},        /* 20, D3DTSS_MAXMIPLEVEL */
-    {TRUE,  WINED3D_SAMP_MAX_ANISOTROPY},       /* 21, D3DTSS_MAXANISOTROPY */
-    {FALSE, WINED3DTSS_BUMPENVLSCALE},          /* 22, D3DTSS_BUMPENVLSCALE */
-    {FALSE, WINED3DTSS_BUMPENVLOFFSET},         /* 23, D3DTSS_BUMPENVLOFFSET */
-    {FALSE, WINED3DTSS_TEXTURETRANSFORMFLAGS},  /* 24, D3DTSS_TEXTURETRANSFORMFLAGS */
+    {FALSE, WINED3D_TSS_INVALID},                   /*  0, unused */
+    {FALSE, WINED3D_TSS_COLOR_OP},                  /*  1, D3DTSS_COLOROP */
+    {FALSE, WINED3D_TSS_COLOR_ARG1},                /*  2, D3DTSS_COLORARG1 */
+    {FALSE, WINED3D_TSS_COLOR_ARG2},                /*  3, D3DTSS_COLORARG2 */
+    {FALSE, WINED3D_TSS_ALPHA_OP},                  /*  4, D3DTSS_ALPHAOP */
+    {FALSE, WINED3D_TSS_ALPHA_ARG1},                /*  5, D3DTSS_ALPHAARG1 */
+    {FALSE, WINED3D_TSS_ALPHA_ARG2},                /*  6, D3DTSS_ALPHAARG2 */
+    {FALSE, WINED3D_TSS_BUMPENV_MAT00},             /*  7, D3DTSS_BUMPENVMAT00 */
+    {FALSE, WINED3D_TSS_BUMPENV_MAT01},             /*  8, D3DTSS_BUMPENVMAT01 */
+    {FALSE, WINED3D_TSS_BUMPENV_MAT10},             /*  9, D3DTSS_BUMPENVMAT10 */
+    {FALSE, WINED3D_TSS_BUMPENV_MAT11},             /* 10, D3DTSS_BUMPENVMAT11 */
+    {FALSE, WINED3D_TSS_TEXCOORD_INDEX},            /* 11, D3DTSS_TEXCOORDINDEX */
+    {TRUE,  WINED3D_SAMP_ADDRESS_U},                /* 12, D3DTSS_ADDRESS */
+    {TRUE,  WINED3D_SAMP_ADDRESS_U},                /* 13, D3DTSS_ADDRESSU */
+    {TRUE,  WINED3D_SAMP_ADDRESS_V},                /* 14, D3DTSS_ADDRESSV */
+    {TRUE,  WINED3D_SAMP_BORDER_COLOR},             /* 15, D3DTSS_BORDERCOLOR */
+    {TRUE,  WINED3D_SAMP_MAG_FILTER},               /* 16, D3DTSS_MAGFILTER */
+    {TRUE,  WINED3D_SAMP_MIN_FILTER},               /* 17, D3DTSS_MINFILTER */
+    {TRUE,  WINED3D_SAMP_MIP_FILTER},               /* 18, D3DTSS_MIPFILTER */
+    {TRUE,  WINED3D_SAMP_MIPMAP_LOD_BIAS},          /* 19, D3DTSS_MIPMAPLODBIAS */
+    {TRUE,  WINED3D_SAMP_MAX_MIP_LEVEL},            /* 20, D3DTSS_MAXMIPLEVEL */
+    {TRUE,  WINED3D_SAMP_MAX_ANISOTROPY},           /* 21, D3DTSS_MAXANISOTROPY */
+    {FALSE, WINED3D_TSS_BUMPENV_LSCALE},            /* 22, D3DTSS_BUMPENVLSCALE */
+    {FALSE, WINED3D_TSS_BUMPENV_LOFFSET},           /* 23, D3DTSS_BUMPENVLOFFSET */
+    {FALSE, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS},   /* 24, D3DTSS_TEXTURETRANSFORMFLAGS */
 };
 
 /*****************************************************************************

@@ -1697,41 +1697,41 @@ static HRESULT WINAPI IDirect3DDevice9Impl_SetTexture(IDirect3DDevice9Ex *iface,
     return hr;
 }
 
-static const WINED3DTEXTURESTAGESTATETYPE tss_lookup[] =
+static const enum wined3d_texture_stage_state tss_lookup[] =
 {
-    WINED3DTSS_FORCE_DWORD,             /*  0, unused */
-    WINED3DTSS_COLOROP,                 /*  1, D3DTSS_COLOROP */
-    WINED3DTSS_COLORARG1,               /*  2, D3DTSS_COLORARG1 */
-    WINED3DTSS_COLORARG2,               /*  3, D3DTSS_COLORARG2 */
-    WINED3DTSS_ALPHAOP,                 /*  4, D3DTSS_ALPHAOP */
-    WINED3DTSS_ALPHAARG1,               /*  5, D3DTSS_ALPHAARG1 */
-    WINED3DTSS_ALPHAARG2,               /*  6, D3DTSS_ALPHAARG2 */
-    WINED3DTSS_BUMPENVMAT00,            /*  7, D3DTSS_BUMPENVMAT00 */
-    WINED3DTSS_BUMPENVMAT01,            /*  8, D3DTSS_BUMPENVMAT01 */
-    WINED3DTSS_BUMPENVMAT10,            /*  9, D3DTSS_BUMPENVMAT10 */
-    WINED3DTSS_BUMPENVMAT11,            /* 10, D3DTSS_BUMPENVMAT11 */
-    WINED3DTSS_TEXCOORDINDEX,           /* 11, D3DTSS_TEXCOORDINDEX */
-    WINED3DTSS_FORCE_DWORD,             /* 12, unused */
-    WINED3DTSS_FORCE_DWORD,             /* 13, unused */
-    WINED3DTSS_FORCE_DWORD,             /* 14, unused */
-    WINED3DTSS_FORCE_DWORD,             /* 15, unused */
-    WINED3DTSS_FORCE_DWORD,             /* 16, unused */
-    WINED3DTSS_FORCE_DWORD,             /* 17, unused */
-    WINED3DTSS_FORCE_DWORD,             /* 18, unused */
-    WINED3DTSS_FORCE_DWORD,             /* 19, unused */
-    WINED3DTSS_FORCE_DWORD,             /* 20, unused */
-    WINED3DTSS_FORCE_DWORD,             /* 21, unused */
-    WINED3DTSS_BUMPENVLSCALE,           /* 22, D3DTSS_BUMPENVLSCALE */
-    WINED3DTSS_BUMPENVLOFFSET,          /* 23, D3DTSS_BUMPENVLOFFSET */
-    WINED3DTSS_TEXTURETRANSFORMFLAGS,   /* 24, D3DTSS_TEXTURETRANSFORMFLAGS */
-    WINED3DTSS_FORCE_DWORD,             /* 25, unused */
-    WINED3DTSS_COLORARG0,               /* 26, D3DTSS_COLORARG0 */
-    WINED3DTSS_ALPHAARG0,               /* 27, D3DTSS_ALPHAARG0 */
-    WINED3DTSS_RESULTARG,               /* 28, D3DTSS_RESULTARG */
-    WINED3DTSS_FORCE_DWORD,             /* 29, unused */
-    WINED3DTSS_FORCE_DWORD,             /* 30, unused */
-    WINED3DTSS_FORCE_DWORD,             /* 31, unused */
-    WINED3DTSS_CONSTANT,                /* 32, D3DTSS_CONSTANT */
+    WINED3D_TSS_INVALID,                    /*  0, unused */
+    WINED3D_TSS_COLOR_OP,                   /*  1, D3DTSS_COLOROP */
+    WINED3D_TSS_COLOR_ARG1,                 /*  2, D3DTSS_COLORARG1 */
+    WINED3D_TSS_COLOR_ARG2,                 /*  3, D3DTSS_COLORARG2 */
+    WINED3D_TSS_ALPHA_OP,                   /*  4, D3DTSS_ALPHAOP */
+    WINED3D_TSS_ALPHA_ARG1,                 /*  5, D3DTSS_ALPHAARG1 */
+    WINED3D_TSS_ALPHA_ARG2,                 /*  6, D3DTSS_ALPHAARG2 */
+    WINED3D_TSS_BUMPENV_MAT00,              /*  7, D3DTSS_BUMPENVMAT00 */
+    WINED3D_TSS_BUMPENV_MAT01,              /*  8, D3DTSS_BUMPENVMAT01 */
+    WINED3D_TSS_BUMPENV_MAT10,              /*  9, D3DTSS_BUMPENVMAT10 */
+    WINED3D_TSS_BUMPENV_MAT11,              /* 10, D3DTSS_BUMPENVMAT11 */
+    WINED3D_TSS_TEXCOORD_INDEX,             /* 11, D3DTSS_TEXCOORDINDEX */
+    WINED3D_TSS_INVALID,                    /* 12, unused */
+    WINED3D_TSS_INVALID,                    /* 13, unused */
+    WINED3D_TSS_INVALID,                    /* 14, unused */
+    WINED3D_TSS_INVALID,                    /* 15, unused */
+    WINED3D_TSS_INVALID,                    /* 16, unused */
+    WINED3D_TSS_INVALID,                    /* 17, unused */
+    WINED3D_TSS_INVALID,                    /* 18, unused */
+    WINED3D_TSS_INVALID,                    /* 19, unused */
+    WINED3D_TSS_INVALID,                    /* 20, unused */
+    WINED3D_TSS_INVALID,                    /* 21, unused */
+    WINED3D_TSS_BUMPENV_LSCALE,             /* 22, D3DTSS_BUMPENVLSCALE */
+    WINED3D_TSS_BUMPENV_LOFFSET,            /* 23, D3DTSS_BUMPENVLOFFSET */
+    WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS,    /* 24, D3DTSS_TEXTURETRANSFORMFLAGS */
+    WINED3D_TSS_INVALID,                    /* 25, unused */
+    WINED3D_TSS_COLOR_ARG0,                 /* 26, D3DTSS_COLORARG0 */
+    WINED3D_TSS_ALPHA_ARG0,                 /* 27, D3DTSS_ALPHAARG0 */
+    WINED3D_TSS_RESULT_ARG,                 /* 28, D3DTSS_RESULTARG */
+    WINED3D_TSS_INVALID,                    /* 29, unused */
+    WINED3D_TSS_INVALID,                    /* 30, unused */
+    WINED3D_TSS_INVALID,                    /* 31, unused */
+    WINED3D_TSS_CONSTANT,                   /* 32, D3DTSS_CONSTANT */
 };
 
 static HRESULT WINAPI IDirect3DDevice9Impl_GetTextureStageState(IDirect3DDevice9Ex *iface,

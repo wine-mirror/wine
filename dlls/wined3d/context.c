@@ -1729,7 +1729,7 @@ static void SetupForBlit(const struct wined3d_device *device, struct wined3d_con
         if (sampler != WINED3D_UNMAPPED_STAGE)
         {
             if (sampler < MAX_TEXTURES)
-                context_invalidate_state(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP));
+                context_invalidate_state(context, STATE_TEXTURESTAGE(sampler, WINED3D_TSS_COLOR_OP));
             context_invalidate_state(context, STATE_SAMPLER(sampler));
         }
     }
@@ -1772,7 +1772,7 @@ static void SetupForBlit(const struct wined3d_device *device, struct wined3d_con
         if (sampler < MAX_TEXTURES)
         {
             context_invalidate_state(context, STATE_TRANSFORM(WINED3DTS_TEXTURE0 + sampler));
-            context_invalidate_state(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP));
+            context_invalidate_state(context, STATE_TEXTURESTAGE(sampler, WINED3D_TSS_COLOR_OP));
         }
         context_invalidate_state(context, STATE_SAMPLER(sampler));
     }

@@ -93,23 +93,23 @@ static const DWORD pixel_states_render[] =
 
 static const DWORD pixel_states_texture[] =
 {
-    WINED3DTSS_ALPHAARG0,
-    WINED3DTSS_ALPHAARG1,
-    WINED3DTSS_ALPHAARG2,
-    WINED3DTSS_ALPHAOP,
-    WINED3DTSS_BUMPENVLOFFSET,
-    WINED3DTSS_BUMPENVLSCALE,
-    WINED3DTSS_BUMPENVMAT00,
-    WINED3DTSS_BUMPENVMAT01,
-    WINED3DTSS_BUMPENVMAT10,
-    WINED3DTSS_BUMPENVMAT11,
-    WINED3DTSS_COLORARG0,
-    WINED3DTSS_COLORARG1,
-    WINED3DTSS_COLORARG2,
-    WINED3DTSS_COLOROP,
-    WINED3DTSS_RESULTARG,
-    WINED3DTSS_TEXCOORDINDEX,
-    WINED3DTSS_TEXTURETRANSFORMFLAGS,
+    WINED3D_TSS_ALPHA_ARG0,
+    WINED3D_TSS_ALPHA_ARG1,
+    WINED3D_TSS_ALPHA_ARG2,
+    WINED3D_TSS_ALPHA_OP,
+    WINED3D_TSS_BUMPENV_LOFFSET,
+    WINED3D_TSS_BUMPENV_LSCALE,
+    WINED3D_TSS_BUMPENV_MAT00,
+    WINED3D_TSS_BUMPENV_MAT01,
+    WINED3D_TSS_BUMPENV_MAT10,
+    WINED3D_TSS_BUMPENV_MAT11,
+    WINED3D_TSS_COLOR_ARG0,
+    WINED3D_TSS_COLOR_ARG1,
+    WINED3D_TSS_COLOR_ARG2,
+    WINED3D_TSS_COLOR_OP,
+    WINED3D_TSS_RESULT_ARG,
+    WINED3D_TSS_TEXCOORD_INDEX,
+    WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS,
 };
 
 static const DWORD pixel_states_sampler[] =
@@ -179,8 +179,8 @@ static const DWORD vertex_states_render[] =
 
 static const DWORD vertex_states_texture[] =
 {
-    WINED3DTSS_TEXCOORDINDEX,
-    WINED3DTSS_TEXTURETRANSFORMFLAGS,
+    WINED3D_TSS_TEXCOORD_INDEX,
+    WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS,
 };
 
 static const DWORD vertex_states_sampler[] =
@@ -1072,7 +1072,7 @@ HRESULT CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblo
     stateblock->device->stateBlock->state.lowest_disabled_stage = MAX_TEXTURES - 1;
     for (i = 0; i < MAX_TEXTURES - 1; ++i)
     {
-        if (stateblock->device->stateBlock->state.texture_states[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE)
+        if (stateblock->device->stateBlock->state.texture_states[i][WINED3D_TSS_COLOR_OP] == WINED3DTOP_DISABLE)
         {
             stateblock->device->stateBlock->state.lowest_disabled_stage = i;
             break;
@@ -1254,23 +1254,23 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
     {
         TRACE("Setting up default texture states for texture Stage %u.\n", i);
         memcpy(&state->transforms[WINED3DTS_TEXTURE0 + i], identity, sizeof(identity));
-        state->texture_states[i][WINED3DTSS_COLOROP] = i ? WINED3DTOP_DISABLE : WINED3DTOP_MODULATE;
-        state->texture_states[i][WINED3DTSS_COLORARG1] = WINED3DTA_TEXTURE;
-        state->texture_states[i][WINED3DTSS_COLORARG2] = WINED3DTA_CURRENT;
-        state->texture_states[i][WINED3DTSS_ALPHAOP] = i ? WINED3DTOP_DISABLE : WINED3DTOP_SELECTARG1;
-        state->texture_states[i][WINED3DTSS_ALPHAARG1] = WINED3DTA_TEXTURE;
-        state->texture_states[i][WINED3DTSS_ALPHAARG2] = WINED3DTA_CURRENT;
-        state->texture_states[i][WINED3DTSS_BUMPENVMAT00] = 0;
-        state->texture_states[i][WINED3DTSS_BUMPENVMAT01] = 0;
-        state->texture_states[i][WINED3DTSS_BUMPENVMAT10] = 0;
-        state->texture_states[i][WINED3DTSS_BUMPENVMAT11] = 0;
-        state->texture_states[i][WINED3DTSS_TEXCOORDINDEX] = i;
-        state->texture_states[i][WINED3DTSS_BUMPENVLSCALE] = 0;
-        state->texture_states[i][WINED3DTSS_BUMPENVLOFFSET] = 0;
-        state->texture_states[i][WINED3DTSS_TEXTURETRANSFORMFLAGS] = WINED3DTTFF_DISABLE;
-        state->texture_states[i][WINED3DTSS_COLORARG0] = WINED3DTA_CURRENT;
-        state->texture_states[i][WINED3DTSS_ALPHAARG0] = WINED3DTA_CURRENT;
-        state->texture_states[i][WINED3DTSS_RESULTARG] = WINED3DTA_CURRENT;
+        state->texture_states[i][WINED3D_TSS_COLOR_OP] = i ? WINED3DTOP_DISABLE : WINED3DTOP_MODULATE;
+        state->texture_states[i][WINED3D_TSS_COLOR_ARG1] = WINED3DTA_TEXTURE;
+        state->texture_states[i][WINED3D_TSS_COLOR_ARG2] = WINED3DTA_CURRENT;
+        state->texture_states[i][WINED3D_TSS_ALPHA_OP] = i ? WINED3DTOP_DISABLE : WINED3DTOP_SELECTARG1;
+        state->texture_states[i][WINED3D_TSS_ALPHA_ARG1] = WINED3DTA_TEXTURE;
+        state->texture_states[i][WINED3D_TSS_ALPHA_ARG2] = WINED3DTA_CURRENT;
+        state->texture_states[i][WINED3D_TSS_BUMPENV_MAT00] = 0;
+        state->texture_states[i][WINED3D_TSS_BUMPENV_MAT01] = 0;
+        state->texture_states[i][WINED3D_TSS_BUMPENV_MAT10] = 0;
+        state->texture_states[i][WINED3D_TSS_BUMPENV_MAT11] = 0;
+        state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX] = i;
+        state->texture_states[i][WINED3D_TSS_BUMPENV_LSCALE] = 0;
+        state->texture_states[i][WINED3D_TSS_BUMPENV_LOFFSET] = 0;
+        state->texture_states[i][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS] = WINED3DTTFF_DISABLE;
+        state->texture_states[i][WINED3D_TSS_COLOR_ARG0] = WINED3DTA_CURRENT;
+        state->texture_states[i][WINED3D_TSS_ALPHA_ARG0] = WINED3DTA_CURRENT;
+        state->texture_states[i][WINED3D_TSS_RESULT_ARG] = WINED3DTA_CURRENT;
     }
     state->lowest_disabled_stage = 1;
 

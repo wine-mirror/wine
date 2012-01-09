@@ -1910,7 +1910,7 @@ void find_ps_compile_args(const struct wined3d_state *state,
     {
         for (i = 0; i < 4; ++i)
         {
-            DWORD flags = state->texture_states[i][WINED3DTSS_TEXTURETRANSFORMFLAGS];
+            DWORD flags = state->texture_states[i][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS];
 
             if (flags & WINED3DTTFF_PROJECTED)
             {
@@ -1921,7 +1921,7 @@ void find_ps_compile_args(const struct wined3d_state *state,
                 if (!state->vertex_shader)
                 {
                     unsigned int j;
-                    unsigned int index = state->texture_states[i][WINED3DTSS_TEXCOORDINDEX];
+                    unsigned int index = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];
                     for (j = 0; j < state->vertex_declaration->element_count; ++j)
                     {
                         struct wined3d_vertex_declaration_element *element =

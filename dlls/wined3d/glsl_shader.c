@@ -776,7 +776,7 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
 
             if(prog->bumpenvmat_location[i] == -1) continue;
 
-            data = (const float *)&state->texture_states[i][WINED3DTSS_BUMPENVMAT00];
+            data = (const float *)&state->texture_states[i][WINED3D_TSS_BUMPENV_MAT00];
             GL_EXTCALL(glUniformMatrix2fvARB(prog->bumpenvmat_location[i], 1, 0, data));
             checkGLcall("glUniformMatrix2fvARB");
 
@@ -785,8 +785,8 @@ static void shader_glsl_load_constants(const struct wined3d_context *context,
              * needsbumpmat check. */
             if (prog->luminancescale_location[i] != -1)
             {
-                const GLfloat *scale = (const GLfloat *)&state->texture_states[i][WINED3DTSS_BUMPENVLSCALE];
-                const GLfloat *offset = (const GLfloat *)&state->texture_states[i][WINED3DTSS_BUMPENVLOFFSET];
+                const GLfloat *scale = (const GLfloat *)&state->texture_states[i][WINED3D_TSS_BUMPENV_LSCALE];
+                const GLfloat *offset = (const GLfloat *)&state->texture_states[i][WINED3D_TSS_BUMPENV_LOFFSET];
 
                 GL_EXTCALL(glUniform1fvARB(prog->luminancescale_location[i], 1, scale));
                 checkGLcall("glUniform1fvARB");

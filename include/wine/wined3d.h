@@ -548,29 +548,29 @@ enum wined3d_multisample_type
     WINED3D_MULTISAMPLE_16_SAMPLES          = 16,
 };
 
-typedef enum _WINED3DTEXTURESTAGESTATETYPE
+enum wined3d_texture_stage_state
 {
-    WINED3DTSS_COLOROP                      = 0,
-    WINED3DTSS_COLORARG1                    = 1,
-    WINED3DTSS_COLORARG2                    = 2,
-    WINED3DTSS_ALPHAOP                      = 3,
-    WINED3DTSS_ALPHAARG1                    = 4,
-    WINED3DTSS_ALPHAARG2                    = 5,
-    WINED3DTSS_BUMPENVMAT00                 = 6,
-    WINED3DTSS_BUMPENVMAT01                 = 7,
-    WINED3DTSS_BUMPENVMAT10                 = 8,
-    WINED3DTSS_BUMPENVMAT11                 = 9,
-    WINED3DTSS_TEXCOORDINDEX                = 10,
-    WINED3DTSS_BUMPENVLSCALE                = 11,
-    WINED3DTSS_BUMPENVLOFFSET               = 12,
-    WINED3DTSS_TEXTURETRANSFORMFLAGS        = 13,
-    WINED3DTSS_COLORARG0                    = 14,
-    WINED3DTSS_ALPHAARG0                    = 15,
-    WINED3DTSS_RESULTARG                    = 16,
-    WINED3DTSS_CONSTANT                     = 17,
-    WINED3DTSS_FORCE_DWORD                  = 0x7fffffff
-} WINED3DTEXTURESTAGESTATETYPE;
-#define WINED3D_HIGHEST_TEXTURE_STATE                           WINED3DTSS_CONSTANT
+    WINED3D_TSS_COLOR_OP                    = 0,
+    WINED3D_TSS_COLOR_ARG1                  = 1,
+    WINED3D_TSS_COLOR_ARG2                  = 2,
+    WINED3D_TSS_ALPHA_OP                    = 3,
+    WINED3D_TSS_ALPHA_ARG1                  = 4,
+    WINED3D_TSS_ALPHA_ARG2                  = 5,
+    WINED3D_TSS_BUMPENV_MAT00               = 6,
+    WINED3D_TSS_BUMPENV_MAT01               = 7,
+    WINED3D_TSS_BUMPENV_MAT10               = 8,
+    WINED3D_TSS_BUMPENV_MAT11               = 9,
+    WINED3D_TSS_TEXCOORD_INDEX              = 10,
+    WINED3D_TSS_BUMPENV_LSCALE              = 11,
+    WINED3D_TSS_BUMPENV_LOFFSET             = 12,
+    WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS     = 13,
+    WINED3D_TSS_COLOR_ARG0                  = 14,
+    WINED3D_TSS_ALPHA_ARG0                  = 15,
+    WINED3D_TSS_RESULT_ARG                  = 16,
+    WINED3D_TSS_CONSTANT                    = 17,
+    WINED3D_TSS_INVALID                     = ~0U,
+};
+#define WINED3D_HIGHEST_TEXTURE_STATE                           WINED3D_TSS_CONSTANT
 
 typedef enum _WINED3DTEXTURETRANSFORMFLAGS
 {
@@ -2149,7 +2149,7 @@ UINT __cdecl wined3d_device_get_swapchain_count(const struct wined3d_device *dev
 HRESULT __cdecl wined3d_device_get_texture(const struct wined3d_device *device,
         UINT stage, struct wined3d_texture **texture);
 HRESULT __cdecl wined3d_device_get_texture_stage_state(const struct wined3d_device *device,
-        UINT stage, WINED3DTEXTURESTAGESTATETYPE state, DWORD *value);
+        UINT stage, enum wined3d_texture_stage_state state, DWORD *value);
 HRESULT __cdecl wined3d_device_get_transform(const struct wined3d_device *device,
         WINED3DTRANSFORMSTATETYPE state, struct wined3d_matrix *matrix);
 HRESULT __cdecl wined3d_device_get_vertex_declaration(const struct wined3d_device *device,
@@ -2221,7 +2221,7 @@ HRESULT __cdecl wined3d_device_set_stream_source(struct wined3d_device *device,
 HRESULT __cdecl wined3d_device_set_stream_source_freq(struct wined3d_device *device, UINT stream_idx, UINT divider);
 HRESULT __cdecl wined3d_device_set_texture(struct wined3d_device *device, UINT stage, struct wined3d_texture *texture);
 HRESULT __cdecl wined3d_device_set_texture_stage_state(struct wined3d_device *device,
-        UINT stage, WINED3DTEXTURESTAGESTATETYPE state, DWORD value);
+        UINT stage, enum wined3d_texture_stage_state state, DWORD value);
 HRESULT __cdecl wined3d_device_set_transform(struct wined3d_device *device,
         WINED3DTRANSFORMSTATETYPE state, const struct wined3d_matrix *matrix);
 HRESULT __cdecl wined3d_device_set_vertex_declaration(struct wined3d_device *device,

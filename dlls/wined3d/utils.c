@@ -2197,29 +2197,29 @@ const char *debug_d3dtexturefiltertype(WINED3DTEXTUREFILTERTYPE filter_type) {
     }
 }
 
-const char *debug_d3dtexturestate(DWORD state)
+const char *debug_d3dtexturestate(enum wined3d_texture_stage_state state)
 {
     switch (state)
     {
 #define D3DSTATE_TO_STR(u) case u: return #u
-        D3DSTATE_TO_STR(WINED3DTSS_COLOROP);
-        D3DSTATE_TO_STR(WINED3DTSS_COLORARG1);
-        D3DSTATE_TO_STR(WINED3DTSS_COLORARG2);
-        D3DSTATE_TO_STR(WINED3DTSS_ALPHAOP);
-        D3DSTATE_TO_STR(WINED3DTSS_ALPHAARG1);
-        D3DSTATE_TO_STR(WINED3DTSS_ALPHAARG2);
-        D3DSTATE_TO_STR(WINED3DTSS_BUMPENVMAT00);
-        D3DSTATE_TO_STR(WINED3DTSS_BUMPENVMAT01);
-        D3DSTATE_TO_STR(WINED3DTSS_BUMPENVMAT10);
-        D3DSTATE_TO_STR(WINED3DTSS_BUMPENVMAT11);
-        D3DSTATE_TO_STR(WINED3DTSS_TEXCOORDINDEX);
-        D3DSTATE_TO_STR(WINED3DTSS_BUMPENVLSCALE);
-        D3DSTATE_TO_STR(WINED3DTSS_BUMPENVLOFFSET);
-        D3DSTATE_TO_STR(WINED3DTSS_TEXTURETRANSFORMFLAGS);
-        D3DSTATE_TO_STR(WINED3DTSS_COLORARG0);
-        D3DSTATE_TO_STR(WINED3DTSS_ALPHAARG0);
-        D3DSTATE_TO_STR(WINED3DTSS_RESULTARG);
-        D3DSTATE_TO_STR(WINED3DTSS_CONSTANT);
+        D3DSTATE_TO_STR(WINED3D_TSS_COLOR_OP);
+        D3DSTATE_TO_STR(WINED3D_TSS_COLOR_ARG1);
+        D3DSTATE_TO_STR(WINED3D_TSS_COLOR_ARG2);
+        D3DSTATE_TO_STR(WINED3D_TSS_ALPHA_OP);
+        D3DSTATE_TO_STR(WINED3D_TSS_ALPHA_ARG1);
+        D3DSTATE_TO_STR(WINED3D_TSS_ALPHA_ARG2);
+        D3DSTATE_TO_STR(WINED3D_TSS_BUMPENV_MAT00);
+        D3DSTATE_TO_STR(WINED3D_TSS_BUMPENV_MAT01);
+        D3DSTATE_TO_STR(WINED3D_TSS_BUMPENV_MAT10);
+        D3DSTATE_TO_STR(WINED3D_TSS_BUMPENV_MAT11);
+        D3DSTATE_TO_STR(WINED3D_TSS_TEXCOORD_INDEX);
+        D3DSTATE_TO_STR(WINED3D_TSS_BUMPENV_LSCALE);
+        D3DSTATE_TO_STR(WINED3D_TSS_BUMPENV_LOFFSET);
+        D3DSTATE_TO_STR(WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS);
+        D3DSTATE_TO_STR(WINED3D_TSS_COLOR_ARG0);
+        D3DSTATE_TO_STR(WINED3D_TSS_ALPHA_ARG0);
+        D3DSTATE_TO_STR(WINED3D_TSS_RESULT_ARG);
+        D3DSTATE_TO_STR(WINED3D_TSS_CONSTANT);
 #undef D3DSTATE_TO_STR
         default:
             FIXME("Unrecognized %u texture state!\n", state);
@@ -2885,7 +2885,7 @@ void gen_ffp_frag_op(const struct wined3d_device *device, const struct wined3d_s
         const struct wined3d_texture *texture;
 
         settings->op[i].padding = 0;
-        if (state->texture_states[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE)
+        if (state->texture_states[i][WINED3D_TSS_COLOR_OP] == WINED3DTOP_DISABLE)
         {
             settings->op[i].cop = WINED3DTOP_DISABLE;
             settings->op[i].aop = WINED3DTOP_DISABLE;
@@ -2932,12 +2932,12 @@ void gen_ffp_frag_op(const struct wined3d_device *device, const struct wined3d_s
             settings->op[i].tex_type = tex_1d;
         }
 
-        cop = state->texture_states[i][WINED3DTSS_COLOROP];
-        aop = state->texture_states[i][WINED3DTSS_ALPHAOP];
+        cop = state->texture_states[i][WINED3D_TSS_COLOR_OP];
+        aop = state->texture_states[i][WINED3D_TSS_ALPHA_OP];
 
-        carg1 = (args[cop] & ARG1) ? state->texture_states[i][WINED3DTSS_COLORARG1] : ARG_UNUSED;
-        carg2 = (args[cop] & ARG2) ? state->texture_states[i][WINED3DTSS_COLORARG2] : ARG_UNUSED;
-        carg0 = (args[cop] & ARG0) ? state->texture_states[i][WINED3DTSS_COLORARG0] : ARG_UNUSED;
+        carg1 = (args[cop] & ARG1) ? state->texture_states[i][WINED3D_TSS_COLOR_ARG1] : ARG_UNUSED;
+        carg2 = (args[cop] & ARG2) ? state->texture_states[i][WINED3D_TSS_COLOR_ARG2] : ARG_UNUSED;
+        carg0 = (args[cop] & ARG0) ? state->texture_states[i][WINED3D_TSS_COLOR_ARG0] : ARG_UNUSED;
 
         if (is_invalid_op(state, i, cop, carg1, carg2, carg0))
         {
@@ -2958,9 +2958,9 @@ void gen_ffp_frag_op(const struct wined3d_device *device, const struct wined3d_s
         }
         else
         {
-            aarg1 = (args[aop] & ARG1) ? state->texture_states[i][WINED3DTSS_ALPHAARG1] : ARG_UNUSED;
-            aarg2 = (args[aop] & ARG2) ? state->texture_states[i][WINED3DTSS_ALPHAARG2] : ARG_UNUSED;
-            aarg0 = (args[aop] & ARG0) ? state->texture_states[i][WINED3DTSS_ALPHAARG0] : ARG_UNUSED;
+            aarg1 = (args[aop] & ARG1) ? state->texture_states[i][WINED3D_TSS_ALPHA_ARG1] : ARG_UNUSED;
+            aarg2 = (args[aop] & ARG2) ? state->texture_states[i][WINED3D_TSS_ALPHA_ARG2] : ARG_UNUSED;
+            aarg0 = (args[aop] & ARG0) ? state->texture_states[i][WINED3D_TSS_ALPHA_ARG0] : ARG_UNUSED;
         }
 
         if (!i && state->textures[0] && state->render_states[WINED3D_RS_COLORKEYENABLE])
@@ -3014,7 +3014,7 @@ void gen_ffp_frag_op(const struct wined3d_device *device, const struct wined3d_s
         if (carg1 == WINED3DTA_TEXTURE || carg2 == WINED3DTA_TEXTURE || carg0 == WINED3DTA_TEXTURE
                 || aarg1 == WINED3DTA_TEXTURE || aarg2 == WINED3DTA_TEXTURE || aarg0 == WINED3DTA_TEXTURE)
         {
-            ttff = state->texture_states[i][WINED3DTSS_TEXTURETRANSFORMFLAGS];
+            ttff = state->texture_states[i][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS];
             if (ttff == (WINED3DTTFF_PROJECTED | WINED3DTTFF_COUNT3))
                 settings->op[i].projected = proj_count3;
             else if (ttff & WINED3DTTFF_PROJECTED)
@@ -3036,7 +3036,7 @@ void gen_ffp_frag_op(const struct wined3d_device *device, const struct wined3d_s
         settings->op[i].aarg1 = aarg1;
         settings->op[i].aarg2 = aarg2;
 
-        if (state->texture_states[i][WINED3DTSS_RESULTARG] == WINED3DTA_TEMP)
+        if (state->texture_states[i][WINED3D_TSS_RESULT_ARG] == WINED3DTA_TEMP)
             settings->op[i].dst = tempreg;
         else
             settings->op[i].dst = resultreg;
@@ -3228,7 +3228,7 @@ void sampler_texdim(struct wined3d_context *context, const struct wined3d_state 
         return;
     if (sampler >= state->lowest_disabled_stage)
         return;
-    if (isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP)))
+    if (isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3D_TSS_COLOR_OP)))
         return;
 
     texture_activate_dimensions(state->textures[sampler], context->gl_info);
