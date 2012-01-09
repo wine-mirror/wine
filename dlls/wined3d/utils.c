@@ -2503,30 +2503,41 @@ void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, B
     glMatrixMode(GL_TEXTURE);
     checkGLcall("glMatrixMode(GL_TEXTURE)");
 
-    if (flags == WINED3DTTFF_DISABLE || flags == WINED3DTTFF_COUNT1 || transformed) {
+    if (flags == WINED3D_TTFF_DISABLE || flags == WINED3D_TTFF_COUNT1 || transformed)
+    {
         glLoadIdentity();
         checkGLcall("glLoadIdentity()");
         return;
     }
 
-    if (flags == (WINED3DTTFF_COUNT1|WINED3DTTFF_PROJECTED)) {
-        ERR("Invalid texture transform flags: WINED3DTTFF_COUNT1|WINED3DTTFF_PROJECTED\n");
+    if (flags == (WINED3D_TTFF_COUNT1 | WINED3D_TTFF_PROJECTED))
+    {
+        ERR("Invalid texture transform flags: WINED3D_TTFF_COUNT1 | WINED3D_TTFF_PROJECTED.\n");
         return;
     }
 
     memcpy(mat, smat, 16 * sizeof(float));
 
-    if (flags & WINED3DTTFF_PROJECTED) {
-        if(!ffp_proj_control) {
-            switch (flags & ~WINED3DTTFF_PROJECTED) {
-            case WINED3DTTFF_COUNT2:
-                mat[3] = mat[1], mat[7] = mat[5], mat[11] = mat[9], mat[15] = mat[13];
-                mat[1] = mat[5] = mat[9] = mat[13] = 0;
-                break;
-            case WINED3DTTFF_COUNT3:
-                mat[3] = mat[2], mat[7] = mat[6], mat[11] = mat[10], mat[15] = mat[14];
-                mat[2] = mat[6] = mat[10] = mat[14] = 0;
-                break;
+    if (flags & WINED3D_TTFF_PROJECTED)
+    {
+        if (!ffp_proj_control)
+        {
+            switch (flags & ~WINED3D_TTFF_PROJECTED)
+            {
+                case WINED3D_TTFF_COUNT2:
+                    mat[ 3] = mat[ 1];
+                    mat[ 7] = mat[ 5];
+                    mat[11] = mat[ 9];
+                    mat[15] = mat[13];
+                    mat[ 1] = mat[ 5] = mat[ 9] = mat[13] = 0.0f;
+                    break;
+                case WINED3D_TTFF_COUNT3:
+                    mat[ 3] = mat[ 2];
+                    mat[ 7] = mat[ 6];
+                    mat[11] = mat[10];
+                    mat[15] = mat[14];
+                    mat[ 2] = mat[ 6] = mat[10] = mat[14] = 0.0f;
+                    break;
             }
         }
     } else { /* under directx the R/Z coord can be used for translation, under opengl we use the Q coord instead */
@@ -2564,10 +2575,13 @@ void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, B
                     FIXME("Unexpected fixed function texture coord input\n");
             }
         }
-        if(!ffp_proj_control) {
-            switch (flags & ~WINED3DTTFF_PROJECTED) {
-                /* case WINED3DTTFF_COUNT1: Won't ever get here */
-                case WINED3DTTFF_COUNT2: mat[2] = mat[6] = mat[10] = mat[14] = 0;
+        if (!ffp_proj_control)
+        {
+            switch (flags & ~WINED3D_TTFF_PROJECTED)
+            {
+                /* case WINED3D_TTFF_COUNT1: Won't ever get here. */
+                case WINED3D_TTFF_COUNT2:
+                    mat[2] = mat[6] = mat[10] = mat[14] = 0;
                 /* OpenGL divides the first 3 vertex coord by the 4th by default,
                 * which is essentially the same as D3DTTFF_PROJECTED. Make sure that
                 * the 4th coord evaluates to 1.0 to eliminate that.
@@ -2579,9 +2593,9 @@ void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, B
                 *
                 * A more serious problem occurs if the app passes 4 coordinates in, and the
                 * 4th is != 1.0(opengl default). This would have to be fixed in drawStridedSlow
-                * or a replacement shader
-                */
-                default: mat[3] = mat[7] = mat[11] = 0; mat[15] = 1;
+                * or a replacement shader. */
+                default:
+                    mat[3] = mat[7] = mat[11] = 0; mat[15] = 1;
             }
         }
     }
@@ -3015,9 +3029,9 @@ void gen_ffp_frag_op(const struct wined3d_device *device, const struct wined3d_s
                 || aarg1 == WINED3DTA_TEXTURE || aarg2 == WINED3DTA_TEXTURE || aarg0 == WINED3DTA_TEXTURE)
         {
             ttff = state->texture_states[i][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS];
-            if (ttff == (WINED3DTTFF_PROJECTED | WINED3DTTFF_COUNT3))
+            if (ttff == (WINED3D_TTFF_PROJECTED | WINED3D_TTFF_COUNT3))
                 settings->op[i].projected = proj_count3;
-            else if (ttff & WINED3DTTFF_PROJECTED)
+            else if (ttff & WINED3D_TTFF_PROJECTED)
                 settings->op[i].projected = proj_count4;
             else
                 settings->op[i].projected = proj_none;

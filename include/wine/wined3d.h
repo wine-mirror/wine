@@ -572,16 +572,15 @@ enum wined3d_texture_stage_state
 };
 #define WINED3D_HIGHEST_TEXTURE_STATE                           WINED3D_TSS_CONSTANT
 
-typedef enum _WINED3DTEXTURETRANSFORMFLAGS
+enum wined3d_texture_transform_flags
 {
-    WINED3DTTFF_DISABLE                     = 0,
-    WINED3DTTFF_COUNT1                      = 1,
-    WINED3DTTFF_COUNT2                      = 2,
-    WINED3DTTFF_COUNT3                      = 3,
-    WINED3DTTFF_COUNT4                      = 4,
-    WINED3DTTFF_PROJECTED                   = 256,
-    WINED3DTTFF_FORCE_DWORD                 = 0x7fffffff
-} WINED3DTEXTURETRANSFORMFLAGS;
+    WINED3D_TTFF_DISABLE                    = 0,
+    WINED3D_TTFF_COUNT1                     = 1,
+    WINED3D_TTFF_COUNT2                     = 2,
+    WINED3D_TTFF_COUNT3                     = 3,
+    WINED3D_TTFF_COUNT4                     = 4,
+    WINED3D_TTFF_PROJECTED                  = 256,
+};
 
 typedef enum _WINED3DTEXTUREOP
 {

@@ -3041,14 +3041,24 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
         enum wined3d_sampler_texture_type sampler_type = ins->ctx->reg_maps->sampler_type[sampler_idx];
 
         /* Projected cube textures don't make a lot of sense, the resulting coordinates stay the same. */
-        if (flags & WINED3D_PSARGS_PROJECTED && sampler_type != WINED3DSTT_CUBE) {
+        if (flags & WINED3D_PSARGS_PROJECTED && sampler_type != WINED3DSTT_CUBE)
+        {
             sample_flags |= WINED3D_GLSL_SAMPLE_PROJECTED;
-            switch (flags & ~WINED3D_PSARGS_PROJECTED) {
-                case WINED3DTTFF_COUNT1: FIXME("WINED3DTTFF_PROJECTED with WINED3DTTFF_COUNT1?\n"); break;
-                case WINED3DTTFF_COUNT2: mask = WINED3DSP_WRITEMASK_1; break;
-                case WINED3DTTFF_COUNT3: mask = WINED3DSP_WRITEMASK_2; break;
-                case WINED3DTTFF_COUNT4:
-                case WINED3DTTFF_DISABLE: mask = WINED3DSP_WRITEMASK_3; break;
+            switch (flags & ~WINED3D_PSARGS_PROJECTED)
+            {
+                case WINED3D_TTFF_COUNT1:
+                    FIXME("WINED3D_TTFF_PROJECTED with WINED3D_TTFF_COUNT1?\n");
+                    break;
+                case WINED3D_TTFF_COUNT2:
+                    mask = WINED3DSP_WRITEMASK_1;
+                    break;
+                case WINED3D_TTFF_COUNT3:
+                    mask = WINED3DSP_WRITEMASK_2;
+                    break;
+                case WINED3D_TTFF_COUNT4:
+                case WINED3D_TTFF_DISABLE:
+                    mask = WINED3DSP_WRITEMASK_3;
+                    break;
             }
         }
     }
@@ -3502,18 +3512,27 @@ static void shader_glsl_texbem(const struct wined3d_shader_instruction *ins)
 
     shader_glsl_write_mask_to_str(mask, coord_mask);
 
-    /* with projective textures, texbem only divides the static texture coord, not the displacement,
-         * so we can't let the GL handle this.
-         */
-    if (flags & WINED3D_PSARGS_PROJECTED) {
+    /* With projected textures, texbem only divides the static texture coord,
+     * not the displacement, so we can't let GL handle this. */
+    if (flags & WINED3D_PSARGS_PROJECTED)
+    {
         DWORD div_mask=0;
         char coord_div_mask[3];
-        switch (flags & ~WINED3D_PSARGS_PROJECTED) {
-            case WINED3DTTFF_COUNT1: FIXME("WINED3DTTFF_PROJECTED with WINED3DTTFF_COUNT1?\n"); break;
-            case WINED3DTTFF_COUNT2: div_mask = WINED3DSP_WRITEMASK_1; break;
-            case WINED3DTTFF_COUNT3: div_mask = WINED3DSP_WRITEMASK_2; break;
-            case WINED3DTTFF_COUNT4:
-            case WINED3DTTFF_DISABLE: div_mask = WINED3DSP_WRITEMASK_3; break;
+        switch (flags & ~WINED3D_PSARGS_PROJECTED)
+        {
+            case WINED3D_TTFF_COUNT1:
+                FIXME("WINED3D_TTFF_PROJECTED with WINED3D_TTFF_COUNT1?\n");
+                break;
+            case WINED3D_TTFF_COUNT2:
+                div_mask = WINED3DSP_WRITEMASK_1;
+                break;
+            case WINED3D_TTFF_COUNT3:
+                div_mask = WINED3DSP_WRITEMASK_2;
+                break;
+            case WINED3D_TTFF_COUNT4:
+            case WINED3D_TTFF_DISABLE:
+                div_mask = WINED3DSP_WRITEMASK_3;
+                break;
         }
         shader_glsl_write_mask_to_str(div_mask, coord_div_mask);
         shader_addline(ins->ctx->buffer, "T%u%s /= T%u%s;\n", sampler_idx, coord_mask, sampler_idx, coord_div_mask);

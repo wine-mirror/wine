@@ -1267,7 +1267,7 @@ void stateblock_init_default_state(struct wined3d_stateblock *stateblock)
         state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX] = i;
         state->texture_states[i][WINED3D_TSS_BUMPENV_LSCALE] = 0;
         state->texture_states[i][WINED3D_TSS_BUMPENV_LOFFSET] = 0;
-        state->texture_states[i][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS] = WINED3DTTFF_DISABLE;
+        state->texture_states[i][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS] = WINED3D_TTFF_DISABLE;
         state->texture_states[i][WINED3D_TSS_COLOR_ARG0] = WINED3DTA_CURRENT;
         state->texture_states[i][WINED3D_TSS_ALPHA_ARG0] = WINED3DTA_CURRENT;
         state->texture_states[i][WINED3D_TSS_RESULT_ARG] = WINED3DTA_CURRENT;
