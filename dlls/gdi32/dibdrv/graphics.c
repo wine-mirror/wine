@@ -271,10 +271,9 @@ static BOOL draw_arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
         !(interior = CreatePolygonRgn( points, count, WINDING )))
     {
         HeapFree( GetProcessHeap(), 0, points );
+        if (outline) DeleteObject( outline );
         return FALSE;
     }
-
-    if (pdev->pen_uses_region) outline = CreateRectRgn( 0, 0, 0, 0 );
 
     /* if not using a region, paint the interior first so the outline can overlap it */
     if (interior && !outline)
@@ -1036,10 +1035,9 @@ BOOL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                                          ellipse_width, ellipse_height )))
     {
         HeapFree( GetProcessHeap(), 0, points );
+        if (outline) DeleteObject( outline );
         return FALSE;
     }
-
-    if (pdev->pen_uses_region) outline = CreateRectRgn( 0, 0, 0, 0 );
 
     /* if not using a region, paint the interior first so the outline can overlap it */
     if (interior && !outline)
