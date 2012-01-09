@@ -289,7 +289,8 @@ extern BOOL destroy_glxpixmap(Display *display, XID glxpixmap) DECLSPEC_HIDDEN;
 
 /* IME support */
 extern void IME_UnregisterClasses(void) DECLSPEC_HIDDEN;
-extern void IME_SetOpenStatus(BOOL fOpen, BOOL force) DECLSPEC_HIDDEN;
+extern void IME_SetOpenStatus(BOOL fOpen) DECLSPEC_HIDDEN;
+extern void IME_SetCompositionStatus(BOOL fOpen) DECLSPEC_HIDDEN;
 extern INT IME_GetCursorPos(void) DECLSPEC_HIDDEN;
 extern void IME_SetCursorPos(DWORD pos) DECLSPEC_HIDDEN;
 extern void IME_UpdateAssociation(HWND focus) DECLSPEC_HIDDEN;
@@ -716,7 +717,7 @@ extern XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data) DECLSPEC_HIDDE
 extern void X11DRV_SetupXIM(void) DECLSPEC_HIDDEN;
 extern void X11DRV_XIMLookupChars( const char *str, DWORD count ) DECLSPEC_HIDDEN;
 extern void X11DRV_ForceXIMReset(HWND hwnd) DECLSPEC_HIDDEN;
-extern BOOL X11DRV_SetPreeditState(HWND hwnd, BOOL fOpen) DECLSPEC_HIDDEN;
+extern void X11DRV_SetPreeditState(HWND hwnd, BOOL fOpen) DECLSPEC_HIDDEN;
 
 #define XEMBED_MAPPED  (1 << 0)
 

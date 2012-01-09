@@ -129,10 +129,10 @@ static BOOL XIMPreEditStateNotifyCallback(XIC xic, XPointer p, XPointer data)
     switch (state)
     {
     case XIMPreeditEnable:
-        IME_SetOpenStatus(TRUE, TRUE);
+        IME_SetOpenStatus(TRUE);
         break;
     case XIMPreeditDisable:
-        IME_SetOpenStatus(FALSE, TRUE);
+        IME_SetOpenStatus(FALSE);
         break;
     default:
         break;
@@ -143,7 +143,7 @@ static BOOL XIMPreEditStateNotifyCallback(XIC xic, XPointer p, XPointer data)
 static int XIMPreEditStartCallback(XIC ic, XPointer client_data, XPointer call_data)
 {
     TRACE("PreEditStartCallback %p\n",ic);
-    IME_SetOpenStatus(TRUE, FALSE);
+    IME_SetCompositionStatus(TRUE);
     ximInComposeMode = TRUE;
     return -1;
 }
@@ -157,7 +157,7 @@ static void XIMPreEditDoneCallback(XIC ic, XPointer client_data, XPointer call_d
     dwCompStringSize = 0;
     dwCompStringLength = 0;
     CompositionString = NULL;
-    IME_SetOpenStatus(FALSE, FALSE);
+    IME_SetCompositionStatus(FALSE);
 }
 
 static void XIMPreEditDrawCallback(XIM ic, XPointer client_data,
@@ -264,48 +264,31 @@ void X11DRV_ForceXIMReset(HWND hwnd)
     }
 }
 
-BOOL X11DRV_SetPreeditState(HWND hwnd, BOOL fOpen)
+void X11DRV_SetPreeditState(HWND hwnd, BOOL fOpen)
 {
     XIC ic;
     XIMPreeditState state;
-    XVaNestedList attr_set, attr_get;
-    BOOL ret;
+    XVaNestedList attr;
 
     ic = X11DRV_get_ic(hwnd);
     if (!ic)
-        return FALSE;
+        return;
 
     if (fOpen)
         state = XIMPreeditEnable;
     else
         state = XIMPreeditDisable;
 
-    ret = FALSE;
     wine_tsx11_lock();
 
-    attr_set = XVaCreateNestedList(0, XNPreeditState, state, NULL);
-    if (attr_set == NULL)
-        goto error1;
+    attr = XVaCreateNestedList(0, XNPreeditState, state, NULL);
+    if (attr != NULL)
+    {
+        XSetICValues(ic, XNPreeditAttributes, attr, NULL);
+        XFree(attr);
+    }
 
-    attr_get = XVaCreateNestedList(0, XNPreeditState, &state, NULL);
-    if (attr_get == NULL)
-        goto error2;
-
-    if (XSetICValues(ic, XNPreeditAttributes, attr_set, NULL) != NULL)
-        goto error3;
-
-    /* SCIM claims it supports XNPreeditState, but seems to ignore */
-    state = XIMPreeditUnKnown;
-    ret = XGetICValues(ic, XNPreeditAttributes, attr_get, NULL) == NULL &&
-          ((fOpen && state == XIMPreeditEnable) ||
-           (!fOpen && state == XIMPreeditDisable));
-error3:
-    XFree(attr_get);
-error2:
-    XFree(attr_set);
-error1:
     wine_tsx11_unlock();
-    return ret;
 }
 
 
