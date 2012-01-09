@@ -13497,7 +13497,7 @@ static const struct message WmSetFocus_1[] = {
     { WM_QUERYNEWPALETTE, sent|wparam|lparam|parent|optional, 0, 0 },
     { WM_WINDOWPOSCHANGING, sent|parent, 0, SWP_NOSIZE|SWP_NOMOVE },
     { WM_ACTIVATEAPP, sent|wparam|parent, 1 },
-    { WM_NCACTIVATE, sent|wparam|parent, 1 },
+    { WM_NCACTIVATE, sent|parent },
     { WM_GETTEXT, sent|defwinproc|parent|optional },
     { WM_GETTEXT, sent|defwinproc|parent|optional },
     { WM_ACTIVATE, sent|wparam|parent, 1 },
@@ -13573,7 +13573,8 @@ static void test_SetFocus(void)
 
     SetLastError(0xdeadbeef);
     old_focus = SetFocus((HWND)0xdeadbeef);
-    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "expected ERROR_INVALID_WINDOW_HANDLE, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE || broken(GetLastError() == 0xdeadbeef),
+       "expected ERROR_INVALID_WINDOW_HANDLE, got %d\n", GetLastError());
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
     ok_sequence(WmEmptySeq, "SetFocus on an invalid window", FALSE);
     ok(old_focus == 0, "expected old focus 0, got %p\n", old_focus);
@@ -13602,7 +13603,8 @@ static void test_SetFocus(void)
 
     SetLastError(0xdeadbeef);
     old_active = SetActiveWindow((HWND)0xdeadbeef);
-    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "expected ERROR_INVALID_WINDOW_HANDLE, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE || broken(GetLastError() == 0xdeadbeef),
+       "expected ERROR_INVALID_WINDOW_HANDLE, got %d\n", GetLastError());
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
     ok_sequence(WmEmptySeq, "SetActiveWindow on an invalid window", FALSE);
     ok(old_active == 0, "expected old focus 0, got %p\n", old_active);
