@@ -429,6 +429,7 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                 break;
             case X11DRV_GET_DCE:
             case X11DRV_SET_DCE:
+            case X11DRV_SYNC_PIXMAP:
                 FIXME( "%x escape no longer supported\n", *(const enum x11drv_escape_codes *)in_data );
                 break;
             case X11DRV_GET_GLX_DRAWABLE:
@@ -438,13 +439,6 @@ static INT X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_d
                     return TRUE;
                 }
                 break;
-            case X11DRV_SYNC_PIXMAP:
-                if(physDev->bitmap)
-                {
-                    X11DRV_CoerceDIBSection(physDev, DIB_Status_GdiMod);
-                    return TRUE;
-                }
-                return FALSE;
             case X11DRV_FLUSH_GL_DRAWABLE:
                 flush_gl_drawable(physDev);
                 return TRUE;

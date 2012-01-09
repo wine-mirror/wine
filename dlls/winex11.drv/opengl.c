@@ -111,7 +111,6 @@ typedef struct wine_glpixelformat {
 
 typedef struct wine_glcontext {
     HDC hdc;
-    BOOL do_escape;
     BOOL has_been_current;
     BOOL sharing;
     DWORD tid;
@@ -1950,11 +1949,7 @@ BOOL X11DRV_wglMakeCurrent(PHYSDEV dev, HGLRC hglrc)
             ctx->drawables[1] = drawable;
             ctx->refresh_drawables = FALSE;
 
-            if (type == OBJ_MEMDC)
-            {
-                ctx->do_escape = TRUE;
-                pglDrawBuffer(GL_FRONT_LEFT);
-            }
+            if (type == OBJ_MEMDC) pglDrawBuffer(GL_FRONT_LEFT);
         }
         else
             SetLastError(ERROR_INVALID_HANDLE);

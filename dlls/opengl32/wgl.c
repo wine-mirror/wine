@@ -81,22 +81,6 @@ MAKE_FUNCPTR(gluTessVertex)
 #undef MAKE_FUNCPTR
 #endif /* SONAME_LIBGLU */
 
-/* x11drv GDI escapes */
-#define X11DRV_ESCAPE 6789
-enum x11drv_escape_codes
-{
-    X11DRV_GET_DISPLAY,         /* get X11 display for a DC */
-    X11DRV_GET_DRAWABLE,        /* get current drawable for a DC */
-    X11DRV_GET_FONT,            /* get current X font for a DC */
-    X11DRV_SET_DRAWABLE,        /* set current drawable for a DC */
-    X11DRV_START_EXPOSURES,     /* start graphics exposures */
-    X11DRV_END_EXPOSURES,       /* end graphics exposures */
-    X11DRV_GET_DCE,             /* get the DCE pointer */
-    X11DRV_SET_DCE,             /* set the DCE pointer */
-    X11DRV_GET_GLX_DRAWABLE,    /* get current glx drawable for a DC */
-    X11DRV_SYNC_PIXMAP          /* sync the dibsection to its pixmap */
-};
-
 void (*wine_tsx11_lock_ptr)(void) = NULL;
 void (*wine_tsx11_unlock_ptr)(void) = NULL;
 
@@ -105,26 +89,6 @@ static void* libglu_handle = NULL;
 
 static char* internal_gl_disabled_extensions = NULL;
 static char* internal_gl_extensions = NULL;
-
-typedef struct wine_glcontext {
-  HDC hdc;
-  BOOL do_escape;
-  /* ... more stuff here */
-} Wine_GLContext;
-
-void enter_gl(void)
-{
-    Wine_GLContext *curctx = NtCurrentTeb()->glContext;
-
-    if (curctx && curctx->do_escape)
-    {
-        enum x11drv_escape_codes escape = X11DRV_SYNC_PIXMAP;
-        ExtEscape(curctx->hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape, 0, NULL);
-    }
-
-    wine_tsx11_lock_ptr();
-    return;
-}
 
 const GLubyte * WINAPI wine_glGetString( GLenum name );
 
