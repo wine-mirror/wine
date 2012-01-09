@@ -215,8 +215,13 @@ static HRESULT WINAPI IEHTMLWindow2_get_history(IHTMLWindow2 *iface, IOmHistory 
 static HRESULT WINAPI IEHTMLWindow2_close(IHTMLWindow2 *iface)
 {
     IEHTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+
+    FIXME("(%p) semi-stub\n", This);
+
+    if(!This->doc_host->wb)
+        return E_UNEXPECTED;
+
+    return IWebBrowser2_put_Visible(This->doc_host->wb, VARIANT_FALSE);
 }
 
 static HRESULT WINAPI IEHTMLWindow2_put_opener(IHTMLWindow2 *iface, VARIANT v)
