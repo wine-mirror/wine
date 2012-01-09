@@ -284,7 +284,7 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr )
         CURVECAPS,
         LINECAPS,
         POLYGONALCAPS,
-        TEXTCAPS,
+        /* TEXTCAPS broken on printer DC on winxp */
         CLIPCAPS,
         RASTERCAPS,
         ASPECTX,
