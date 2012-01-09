@@ -1045,7 +1045,7 @@ static void on_stop_nsrequest(nsChannelBSC *This, HRESULT result)
                  (nsIRequest*)&This->nschannel->nsIHttpChannel_iface, This->nscontext,
                  request_result);
         if(NS_FAILED(nsres))
-            WARN("OnStopRequet failed: %08x\n", nsres);
+            WARN("OnStopRequest failed: %08x\n", nsres);
     }
 
     if(This->nschannel->load_group) {
