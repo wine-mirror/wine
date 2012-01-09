@@ -579,7 +579,12 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(const char *key, IMMDevice *dev,
     if(err < 0){
         HeapFree(GetProcessHeap(), 0, This);
         WARN("Unable to open PCM \"%s\": %d (%s)\n", key, err, snd_strerror(err));
-        return E_FAIL;
+        switch(err){
+        case EBUSY:
+            return AUDCLNT_E_DEVICE_IN_USE;
+        default:
+            return AUDCLNT_E_ENDPOINT_CREATE_FAILED;
+        }
     }
 
     This->hw_params = HeapAlloc(GetProcessHeap(), 0,
@@ -1241,7 +1246,7 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
     EnterCriticalSection(&This->lock);
 
     if((err = snd_pcm_hw_params_any(This->pcm_handle, This->hw_params)) < 0){
-        hr = E_FAIL;
+        hr = AUDCLNT_E_DEVICE_INVALIDATED;
         goto exit;
     }
 
@@ -1267,13 +1272,13 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
     }
 
     if((err = snd_pcm_hw_params_get_rate_min(This->hw_params, &min, NULL)) < 0){
-        hr = E_FAIL;
+        hr = AUDCLNT_E_DEVICE_INVALIDATED;
         WARN("Unable to get min rate: %d (%s)\n", err, snd_strerror(err));
         goto exit;
     }
 
     if((err = snd_pcm_hw_params_get_rate_max(This->hw_params, &max, NULL)) < 0){
-        hr = E_FAIL;
+        hr = AUDCLNT_E_DEVICE_INVALIDATED;
         WARN("Unable to get max rate: %d (%s)\n", err, snd_strerror(err));
         goto exit;
     }
@@ -1284,13 +1289,13 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
     }
 
     if((err = snd_pcm_hw_params_get_channels_min(This->hw_params, &min)) < 0){
-        hr = E_FAIL;
+        hr = AUDCLNT_E_DEVICE_INVALIDATED;
         WARN("Unable to get min channels: %d (%s)\n", err, snd_strerror(err));
         goto exit;
     }
 
     if((err = snd_pcm_hw_params_get_channels_max(This->hw_params, &max)) < 0){
-        hr = E_FAIL;
+        hr = AUDCLNT_E_DEVICE_INVALIDATED;
         WARN("Unable to get max channels: %d (%s)\n", err, snd_strerror(err));
         goto exit;
     }
@@ -1365,7 +1370,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
 
     if((err = snd_pcm_hw_params_any(This->pcm_handle, This->hw_params)) < 0){
         WARN("Unable to get hw_params: %d (%s)\n", err, snd_strerror(err));
-        hr = E_FAIL;
+        hr = AUDCLNT_E_DEVICE_INVALIDATED;
         goto exit;
     }
 
@@ -1389,14 +1394,14 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
         fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
     }else{
         ERR("Didn't recognize any available ALSA formats\n");
-        hr = E_FAIL;
+        hr = AUDCLNT_E_DEVICE_INVALIDATED;
         goto exit;
     }
 
     if((err = snd_pcm_hw_params_get_channels_max(This->hw_params,
                     &max_channels)) < 0){
         WARN("Unable to get max channels: %d (%s)\n", err, snd_strerror(err));
-        hr = E_FAIL;
+        hr = AUDCLNT_E_DEVICE_INVALIDATED;
         goto exit;
     }
 
@@ -1410,7 +1415,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
     if((err = snd_pcm_hw_params_get_rate_max(This->hw_params, &max_rate,
                     NULL)) < 0){
         WARN("Unable to get max rate: %d (%s)\n", err, snd_strerror(err));
-        hr = E_FAIL;
+        hr = AUDCLNT_E_DEVICE_INVALIDATED;
         goto exit;
     }
 
@@ -1426,7 +1431,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient *iface,
         fmt->Format.nSamplesPerSec = 8000;
     else{
         ERR("Unknown max rate: %u\n", max_rate);
-        hr = E_FAIL;
+        hr = AUDCLNT_E_DEVICE_INVALIDATED;
         goto exit;
     }
 
@@ -1681,7 +1686,7 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient *iface)
             This, 0, This->mmdev_period_rt / 10000, WT_EXECUTEINTIMERTHREAD)){
         LeaveCriticalSection(&This->lock);
         WARN("Unable to create timer: %u\n", GetLastError());
-        return E_FAIL;
+        return E_OUTOFMEMORY;
     }
 
     This->started = TRUE;
