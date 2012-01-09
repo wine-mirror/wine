@@ -2697,21 +2697,25 @@ static void test_olecmd(IUnknown *unk, BOOL loaded)
 static void test_IServiceProvider(IUnknown *unk)
 {
     IServiceProvider *servprov = (void*)0xdeadbeef;
+    IUnknown *iface;
     HRESULT hres;
-    IUnknown *ret = NULL;
 
     hres = IUnknown_QueryInterface(unk, &IID_IServiceProvider, (void**)&servprov);
     ok(hres == S_OK, "QueryInterface returned %08x, expected S_OK\n", hres);
     if(FAILED(hres))
         return;
 
-    hres = IServiceProvider_QueryService(servprov, &SID_STopLevelBrowser, &IID_IBrowserService2, (LPVOID*)&ret);
+    hres = IServiceProvider_QueryService(servprov, &SID_STopLevelBrowser, &IID_IBrowserService2, (LPVOID*)&iface);
     ok(hres == E_FAIL, "QueryService returned %08x, expected E_FAIL\n", hres);
-    ok(ret == NULL, "ret returned %p, expected NULL\n", ret);
+    ok(!iface, "QueryService returned %p, expected NULL\n", iface);
     if(hres == S_OK)
-    {
-        IUnknown_Release(ret);
-    }
+        IUnknown_Release(iface);
+
+    hres = IServiceProvider_QueryService(servprov, &SID_SHTMLWindow, &IID_IHTMLWindow2, (LPVOID*)&iface);
+    ok(hres == S_OK, "QueryService returned %08x, expected S_OK\n", hres);
+    ok(iface != NULL, "QueryService returned NULL\n");
+    if(hres == S_OK)
+        IUnknown_Release(iface);
 
     IServiceProvider_Release(servprov);
 }

@@ -1143,16 +1143,19 @@ static HRESULT STDMETHODCALLTYPE WBServiceProvider_QueryService(IServiceProvider
 {
     WebBrowser *This = impl_from_IServiceProvider(iface);
 
-    if(*ppv)
-        ppv = NULL;
+    if(IsEqualGUID(&SID_SHTMLWindow, riid)) {
+        TRACE("(%p)->(SID_SHTMLWindow)\n", This);
+        return IHTMLWindow2_QueryInterface(&This->doc_host.html_window.IHTMLWindow2_iface, riid, ppv);
+    }
 
     if(IsEqualGUID(&IID_IBrowserService2, riid)) {
         TRACE("(%p)->(IID_IBrowserService2 return E_FAIL)\n", This);
+        *ppv = NULL;
         return E_FAIL;
     }
 
     FIXME("(%p)->(%s, %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
-
+    *ppv = NULL;
     return E_NOINTERFACE;
 }
 
