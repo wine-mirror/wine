@@ -7884,14 +7884,20 @@ static void conditional_np2_repeat_test(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(hr == D3D_OK, "IDirect3DDevice9_GetDeviceCaps failed hr=%08x\n", hr);
-    if(!(caps.TextureCaps & D3DPTEXTURECAPS_POW2)) {
+    if (caps.TextureCaps & D3DPTEXTURECAPS_NONPOW2CONDITIONAL)
+    {
         /* NP2 conditional requires the POW2 flag. Check that while we're at it */
-        ok((caps.TextureCaps & D3DPTEXTURECAPS_NONPOW2CONDITIONAL) == 0,
-           "Card has conditional NP2 support without power of two restriction set\n");
-        skip("Card has unconditional pow2 support, skipping conditional NP2 tests\n");
-        return;
-    } else if(!(caps.TextureCaps & D3DPTEXTURECAPS_POW2)) {
+        ok(caps.TextureCaps & D3DPTEXTURECAPS_POW2,
+                "Card has conditional NP2 support without power of two restriction set\n");
+    }
+    else if (caps.TextureCaps & D3DPTEXTURECAPS_POW2)
+    {
         skip("No conditional NP2 support, skipping conditional NP2 tests\n");
+        return;
+    }
+    else
+    {
+        skip("Card has unconditional NP2 support, skipping conditional NP2 tests\n");
         return;
     }
 
