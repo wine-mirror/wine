@@ -208,6 +208,23 @@ static IDirect3DDevice9 *init_d3d9(void)
     return device_ptr;
 }
 
+static void cleanup_device(IDirect3DDevice9 *device)
+{
+    if (device)
+    {
+        D3DPRESENT_PARAMETERS present_parameters;
+        IDirect3DSwapChain9 *swapchain;
+        ULONG ref;
+
+        IDirect3DDevice9_GetSwapChain(device, 0, &swapchain);
+        IDirect3DSwapChain9_GetPresentParameters(swapchain, &present_parameters);
+        IDirect3DSwapChain9_Release(swapchain);
+        ref = IDirect3DDevice9_Release(device);
+        ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
+        DestroyWindow(present_parameters.hDeviceWindow);
+    }
+}
+
 struct vertex
 {
     float x, y, z;
@@ -12958,8 +12975,223 @@ static void multisample_get_rtdata_test(IDirect3DDevice9 *device)
     IDirect3DSurface9_Release(rt);
 }
 
+static void multisampled_depth_buffer_test(IDirect3D9 *d3d9)
+{
+    IDirect3DDevice9 *device = 0;
+    IDirect3DSurface9 *original_rt, *rt, *readback, *ds;
+    D3DCAPS9 caps;
+    HRESULT hr;
+    D3DPRESENT_PARAMETERS present_parameters;
+    unsigned int i;
+    static const struct
+    {
+        float x, y, z;
+        D3DCOLOR color;
+    }
+    quad_1[] =
+    {
+        { -1.0f,  1.0f, 0.0f, 0xffff0000},
+        {  1.0f,  1.0f, 1.0f, 0xffff0000},
+        { -1.0f, -1.0f, 0.0f, 0xffff0000},
+        {  1.0f, -1.0f, 1.0f, 0xffff0000},
+    },
+    quad_2[] =
+    {
+        { -1.0f,  1.0f, 1.0f, 0xff0000ff},
+        {  1.0f,  1.0f, 0.0f, 0xff0000ff},
+        { -1.0f, -1.0f, 1.0f, 0xff0000ff},
+        {  1.0f, -1.0f, 0.0f, 0xff0000ff},
+    };
+    static const struct
+    {
+        UINT x, y;
+        D3DCOLOR color;
+    }
+    expected_colors[] =
+    {
+        { 80, 100, D3DCOLOR_ARGB(0xff, 0xff, 0x00, 0x00)},
+        {240, 100, D3DCOLOR_ARGB(0xff, 0xff, 0x00, 0x00)},
+        {400, 100, D3DCOLOR_ARGB(0xff, 0x00, 0x00, 0xff)},
+        {560, 100, D3DCOLOR_ARGB(0xff, 0x00, 0x00, 0xff)},
+        { 80, 450, D3DCOLOR_ARGB(0xff, 0xff, 0x00, 0x00)},
+        {240, 450, D3DCOLOR_ARGB(0xff, 0xff, 0x00, 0x00)},
+        {400, 450, D3DCOLOR_ARGB(0xff, 0x00, 0x00, 0xff)},
+        {560, 450, D3DCOLOR_ARGB(0xff, 0x00, 0x00, 0xff)},
+    };
+
+    hr = IDirect3D9_CheckDeviceMultiSampleType(d3d9, D3DADAPTER_DEFAULT,
+            D3DDEVTYPE_HAL, D3DFMT_A8R8G8B8, TRUE, D3DMULTISAMPLE_2_SAMPLES, NULL);
+    if (FAILED(hr))
+    {
+        skip("Multisampling not supported for D3DFMT_A8R8G8B8, skipping multisampled depth buffer test.\n");
+        return;
+    }
+    hr = IDirect3D9_CheckDeviceMultiSampleType(d3d9, D3DADAPTER_DEFAULT,
+            D3DDEVTYPE_HAL, D3DFMT_D24S8, TRUE, D3DMULTISAMPLE_2_SAMPLES, NULL);
+    if (FAILED(hr))
+    {
+        skip("Multisampling not supported for D3DFMT_D24S8, skipping multisampled depth buffer test.\n");
+        return;
+    }
+
+    ZeroMemory(&present_parameters, sizeof(present_parameters));
+    present_parameters.Windowed = TRUE;
+    present_parameters.hDeviceWindow = create_window();
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.BackBufferWidth = 640;
+    present_parameters.BackBufferHeight = 480;
+    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+    present_parameters.EnableAutoDepthStencil = TRUE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+    present_parameters.MultiSampleType = D3DMULTISAMPLE_2_SAMPLES;
+
+    hr = IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            present_parameters.hDeviceWindow, D3DCREATE_HARDWARE_VERTEXPROCESSING,
+	    &present_parameters, &device);
+    ok(hr == D3D_OK, "Failed to create a device, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "GetDeviceCaps failed, hr %#x.\n", hr);
+    if (caps.TextureCaps & D3DPTEXTURECAPS_POW2)
+    {
+        skip("No unconditional NP2 texture support, skipping multisampled depth buffer test.\n");
+        goto cleanup;
+    }
+
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 640, 480, D3DFMT_A8R8G8B8,
+            D3DMULTISAMPLE_2_SAMPLES, 0, FALSE, &rt, NULL);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 640, 480, D3DFMT_A8R8G8B8,
+            D3DMULTISAMPLE_NONE, 0, TRUE, &readback, NULL);
+    ok(SUCCEEDED(hr), "Failed to create readback surface, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &original_rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetDepthStencilSurface(device, &ds);
+    ok(SUCCEEDED(hr), "Failed to get depth/stencil, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, TRUE);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
+    ok(SUCCEEDED(hr), "SetRenderState failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(SUCCEEDED(hr), "SetFVF failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff00ff00, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+
+    /* Render onscreen and then offscreen */
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad_1, sizeof(*quad_1));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_StretchRect(device, original_rt, NULL, rt, NULL, D3DTEXF_POINT);
+    ok(SUCCEEDED(hr), "StretchRect failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad_2, sizeof(*quad_2));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_StretchRect(device, rt, NULL, readback, NULL, D3DTEXF_POINT);
+    ok(SUCCEEDED(hr), "StretchRect failed, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(expected_colors) / sizeof(*expected_colors); ++i)
+    {
+        D3DCOLOR color = getPixelColorFromSurface(readback, expected_colors[i].x, expected_colors[i].y);
+        ok(color_match(color, expected_colors[i].color, 1),
+                "Expected color 0x%08x at (%u, %u), got 0x%08x.\n",
+                expected_colors[i].color, expected_colors[i].x, expected_colors[i].y, color);
+    }
+
+    hr = IDirect3DDevice9_StretchRect(device, rt, NULL, original_rt, NULL, D3DTEXF_POINT);
+    ok(SUCCEEDED(hr), "StretchRect failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+
+    /* Render offscreen and then onscreen */
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, NULL);
+    ok(SUCCEEDED(hr), "Failed to set depth/stencil, hr %#x.\n", hr);
+    IDirect3DSurface9_Release(ds);
+    hr = IDirect3DDevice9_CreateDepthStencilSurface(device, 640, 480, D3DFMT_D24S8,
+            D3DMULTISAMPLE_2_SAMPLES, 0, TRUE, &ds, NULL);
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, ds);
+    ok(SUCCEEDED(hr), "Failed to set depth/stencil, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff00ff00, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad_1, sizeof(*quad_1));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_StretchRect(device, rt, NULL, original_rt, NULL, D3DTEXF_POINT);
+    ok(SUCCEEDED(hr), "StretchRect failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, original_rt);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad_2, sizeof(*quad_2));
+    ok(SUCCEEDED(hr), "DrawPrimitiveUP failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_StretchRect(device, original_rt, NULL, readback, NULL, D3DTEXF_POINT);
+    ok(SUCCEEDED(hr), "StretchRect failed, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(expected_colors) / sizeof(*expected_colors); ++i)
+    {
+        D3DCOLOR color = getPixelColorFromSurface(readback, expected_colors[i].x, expected_colors[i].y);
+        ok(color_match(color, expected_colors[i].color, 1),
+                "Expected color 0x%08x at (%u, %u), got 0x%08x.\n",
+                expected_colors[i].color, expected_colors[i].x, expected_colors[i].y, color);
+    }
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+
+    hr = IDirect3DDevice9_SetDepthStencilSurface(device, NULL);
+    ok(SUCCEEDED(hr), "Failed to set depth/stencil, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, original_rt);
+    ok(SUCCEEDED(hr), "Failed to restore original render target, hr %#x.\n", hr);
+
+    IDirect3DSurface9_Release(original_rt);
+    IDirect3DSurface9_Release(ds);
+    IDirect3DSurface9_Release(readback);
+    IDirect3DSurface9_Release(rt);
+cleanup:
+    cleanup_device(device);
+}
+
 START_TEST(visual)
 {
+    IDirect3D9 *d3d9;
     IDirect3DDevice9 *device_ptr;
     D3DCAPS9 caps;
     HRESULT hr;
@@ -13134,17 +13366,14 @@ START_TEST(visual)
     update_surface_test(device_ptr);
     multisample_get_rtdata_test(device_ptr);
 
-cleanup:
-    if(device_ptr) {
-        D3DPRESENT_PARAMETERS present_parameters;
-        IDirect3DSwapChain9 *swapchain;
-        ULONG ref;
+    hr = IDirect3DDevice9_GetDirect3D(device_ptr, &d3d9);
+    ok(SUCCEEDED(hr), "Failed to get d3d9 interface, hr %#x.\n", hr);
+    cleanup_device(device_ptr);
+    device_ptr = NULL;
 
-        IDirect3DDevice9_GetSwapChain(device_ptr, 0, &swapchain);
-        IDirect3DSwapChain9_GetPresentParameters(swapchain, &present_parameters);
-        IDirect3DSwapChain9_Release(swapchain);
-        ref = IDirect3DDevice9_Release(device_ptr);
-        ok(ref == 0, "The device was not properly freed: refcount %u\n", ref);
-        DestroyWindow(present_parameters.hDeviceWindow);
-    }
+    multisampled_depth_buffer_test(d3d9);
+    IDirect3D9_Release(d3d9);
+
+cleanup:
+    cleanup_device(device_ptr);
 }
