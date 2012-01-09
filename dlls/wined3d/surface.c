@@ -2041,8 +2041,10 @@ void surface_set_texture_name(struct wined3d_surface *surface, GLuint new_name, 
         /* FIXME: We shouldn't need to remove SFLAG_INTEXTURE if the
          * surface has no texture name yet. See if we can get rid of this. */
         if (surface->flags & flag)
+        {
             ERR("Surface has %s set, but no texture name.\n", debug_surflocation(flag));
-        surface_modify_location(surface, flag, FALSE);
+            surface_modify_location(surface, flag, FALSE);
+        }
     }
 
     *name = new_name;
