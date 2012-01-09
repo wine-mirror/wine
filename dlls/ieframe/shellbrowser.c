@@ -706,7 +706,7 @@ static HRESULT WINAPI DocObjectService_FireBeforeNavigate2(
     V_BSTR(&var_url) = SysAllocString(lpszUrl);
 
     V_VT(params+6) = (VT_DISPATCH);
-    V_DISPATCH(params+6) = This->doc_host->disp;
+    V_DISPATCH(params+6) = (IDispatch*)This->doc_host->wb;
 
     TRACE(">>>\n");
     call_sink(This->doc_host->cps.wbe2, DISPID_BEFORENAVIGATE2, &dp);
@@ -751,7 +751,7 @@ static HRESULT WINAPI DocObjectService_FireNavigateComplete2(
     V_BYREF(params) = &url;
 
     V_VT(params+1) = VT_DISPATCH;
-    V_DISPATCH(params+1) = This->doc_host->disp;
+    V_DISPATCH(params+1) = (IDispatch*)This->doc_host->wb;
 
     V_VT(&url_var) = VT_BSTR;
     V_BSTR(&url_var) = url;
@@ -812,7 +812,7 @@ static HRESULT WINAPI DocObjectService_FireDocumentComplete(
     V_BYREF(params) = &url;
 
     V_VT(params+1) = VT_DISPATCH;
-    V_DISPATCH(params+1) = This->doc_host->disp;
+    V_DISPATCH(params+1) = (IDispatch*)This->doc_host->wb;
 
     V_VT(&url_var) = VT_BSTR;
     V_BSTR(&url_var) = url;

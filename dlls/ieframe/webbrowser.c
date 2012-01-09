@@ -1252,7 +1252,7 @@ static HRESULT create_webbrowser(int version, IUnknown *outer, REFIID riid, void
     ret->ref = 1;
     ret->version = version;
 
-    DocHost_Init(&ret->doc_host, (IDispatch*)&ret->IWebBrowser2_iface, &DocHostContainerVtbl);
+    DocHost_Init(&ret->doc_host, &ret->IWebBrowser2_iface, &DocHostContainerVtbl);
 
     ret->visible = VARIANT_TRUE;
     ret->menu_bar = VARIANT_TRUE;

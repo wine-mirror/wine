@@ -789,7 +789,7 @@ static HRESULT create_ie(InternetExplorer **ret_obj)
     ret->doc_host->ref = 1;
     ret->doc_host->ie = ret;
 
-    DocHost_Init(&ret->doc_host->doc_host, (IDispatch*)&ret->IWebBrowser2_iface, &DocHostContainerVtbl);
+    DocHost_Init(&ret->doc_host->doc_host, &ret->IWebBrowser2_iface, &DocHostContainerVtbl);
 
     InternetExplorer_WebBrowser_Init(ret);
 

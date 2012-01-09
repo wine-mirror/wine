@@ -91,7 +91,7 @@ static void notif_complete(DocHost *This, DISPID dispid)
     V_BYREF(params) = &url;
 
     V_VT(params+1) = VT_DISPATCH;
-    V_DISPATCH(params+1) = This->disp;
+    V_DISPATCH(params+1) = (IDispatch*)This->wb;
 
     V_VT(&url) = VT_BSTR;
     V_BSTR(&url) = SysAllocString(This->url);
@@ -871,13 +871,13 @@ static const IPropertyNotifySinkVtbl PropertyNotifySinkVtbl = {
     PropertyNotifySink_OnRequestEdit
 };
 
-void DocHost_Init(DocHost *This, IDispatch *disp, const IDocHostContainerVtbl* container)
+void DocHost_Init(DocHost *This, IWebBrowser2 *wb, const IDocHostContainerVtbl* container)
 {
     This->IDocHostUIHandler2_iface.lpVtbl  = &DocHostUIHandler2Vtbl;
     This->IOleCommandTarget_iface.lpVtbl   = &OleCommandTargetVtbl;
     This->IPropertyNotifySink_iface.lpVtbl = &PropertyNotifySinkVtbl;
 
-    This->disp = disp;
+    This->wb = wb;
     This->container_vtbl = container;
 
     This->ready_state = READYSTATE_UNINITIALIZED;
@@ -886,7 +886,7 @@ void DocHost_Init(DocHost *This, IDispatch *disp, const IDocHostContainerVtbl* c
     DocHost_ClientSite_Init(This);
     DocHost_Frame_Init(This);
 
-    ConnectionPointContainer_Init(&This->cps, (IUnknown*)disp);
+    ConnectionPointContainer_Init(&This->cps, (IUnknown*)wb);
     IEHTMLWindow_Init(This);
     NewWindowManager_Init(This);
 }

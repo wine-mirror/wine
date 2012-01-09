@@ -329,7 +329,7 @@ void handle_navigation_error(DocHost* doc_host, HRESULT hres, BSTR url, IHTMLWin
     V_BSTR(&var_url) = url;
 
     V_VT(params+4) = VT_DISPATCH;
-    V_DISPATCH(params+4) = doc_host->disp;
+    V_DISPATCH(params+4) = (IDispatch*)doc_host->wb;
 
     call_sink(doc_host->cps.wbe2, DISPID_NAVIGATEERROR, &dispparams);
     SysFreeString(V_BSTR(&var_frame_name));
@@ -551,7 +551,7 @@ static void on_before_navigate2(DocHost *This, LPCWSTR url, SAFEARRAY *post_data
     V_BSTR(&var_url) = SysAllocString(url);
 
     V_VT(params+6) = (VT_DISPATCH);
-    V_DISPATCH(params+6) = This->disp;
+    V_DISPATCH(params+6) = (IDispatch*)This->wb;
 
     call_sink(This->cps.wbe2, DISPID_BEFORENAVIGATE2, &dispparams);
 

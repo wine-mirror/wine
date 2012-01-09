@@ -118,7 +118,7 @@ struct DocHost {
     /* Interfaces of InPlaceFrame object */
     IOleInPlaceFrame  IOleInPlaceFrame_iface;
 
-    IDispatch *disp;
+    IWebBrowser2 *wb;
 
     IDispatch *client_disp;
     IDocHostUIHandler *hostui;
@@ -231,7 +231,7 @@ void WebBrowser_ClassInfo_Init(WebBrowser*) DECLSPEC_HIDDEN;
 
 void WebBrowser_OleObject_Destroy(WebBrowser*) DECLSPEC_HIDDEN;
 
-void DocHost_Init(DocHost*,IDispatch*,const IDocHostContainerVtbl*) DECLSPEC_HIDDEN;
+void DocHost_Init(DocHost*,IWebBrowser2*,const IDocHostContainerVtbl*) DECLSPEC_HIDDEN;
 void DocHost_Release(DocHost*) DECLSPEC_HIDDEN;
 void DocHost_ClientSite_Init(DocHost*) DECLSPEC_HIDDEN;
 void DocHost_ClientSite_Release(DocHost*) DECLSPEC_HIDDEN;

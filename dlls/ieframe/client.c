@@ -471,7 +471,7 @@ static HRESULT WINAPI ControlSite_TranslateAccelerator(IOleControlSite *iface, M
 
     TRACE("(%p)->(%p, %08x)\n", This, pMsg, grfModifiers);
 
-    hr = IDispatch_QueryInterface(This->disp, &IID_IOleObject, (void**)&wb_obj);
+    hr = IWebBrowser2_QueryInterface(This->wb, &IID_IOleObject, (void**)&wb_obj);
     if(SUCCEEDED(hr)) {
         hr = IOleObject_GetClientSite(wb_obj, &clientsite);
         if(SUCCEEDED(hr)) {
@@ -663,12 +663,12 @@ static HRESULT WINAPI ClServiceProvider_QueryService(IServiceProvider *iface, RE
 
     if(IsEqualGUID(&IID_IHlinkFrame, guidService)) {
         TRACE("(%p)->(IID_IHlinkFrame %s %p)\n", This, debugstr_guid(riid), ppv);
-        return IDispatch_QueryInterface(This->disp, riid, ppv);
+        return IWebBrowser2_QueryInterface(This->wb, riid, ppv);
     }
 
     if(IsEqualGUID(&IID_IWebBrowserApp, guidService)) {
         TRACE("IWebBrowserApp service\n");
-        return IDispatch_QueryInterface(This->disp, riid, ppv);
+        return IWebBrowser2_QueryInterface(This->wb, riid, ppv);
     }
 
     if(IsEqualGUID(&IID_IShellBrowser, guidService)) {
