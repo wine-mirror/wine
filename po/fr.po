@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2011-12-30 10:22+0100\n"
+"PO-Revision-Date: 2012-01-10 23:29+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -8424,9 +8424,8 @@ msgid "The specified device handle is invalid."
 msgstr "Le descripteur de périphérique spécifié est invalide."
 
 #: winmm.rc:34
-#, fuzzy
 msgid "There is no driver installed on your system!"
-msgstr "Aucun pilote n'est installé sur votre système !\n"
+msgstr "Aucun pilote n'est installé sur votre système !"
 
 #: winmm.rc:35 winmm.rc:61
 msgid ""
@@ -13184,9 +13183,8 @@ msgid "&Color"
 msgstr "&Couleur"
 
 #: wineconsole.rc:97
-#, fuzzy
 msgid "Configuration"
-msgstr " Configuration "
+msgstr "Configuration"
 
 #: wineconsole.rc:100
 msgid "Buffer zone"
