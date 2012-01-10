@@ -158,33 +158,6 @@ static ULONG WINAPI ISvItemCm_fnRelease(IContextMenu2 *iface)
 	return refCount;
 }
 
-static void _InsertMenuItemW (
-	HMENU hmenu,
-	UINT indexMenu,
-	BOOL fByPosition,
-	UINT wID,
-	UINT fType,
-	LPWSTR dwTypeData,
-	UINT fState)
-{
-	MENUITEMINFOW	mii;
-
-	mii.cbSize = sizeof(mii);
-	if (fType == MFT_SEPARATOR)
-	{
-	  mii.fMask = MIIM_ID | MIIM_TYPE;
-	}
-	else
-	{
-	  mii.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE;
-	  mii.dwTypeData = dwTypeData;
-	  mii.fState = fState;
-	}
-	mii.wID = wID;
-	mii.fType = fType;
-	InsertMenuItemW( hmenu, indexMenu, fByPosition, &mii);
-}
-
 /**************************************************************************
 * ISvItemCm_fnQueryContextMenu()
 */
@@ -224,7 +197,14 @@ static HRESULT WINAPI ISvItemCm_fnQueryContextMenu(
             mi.cch = 255;
             GetMenuItemInfoW(hmenu, FCIDM_SHVIEW_EXPLORE, MF_BYCOMMAND, &mi);
             RemoveMenu(hmenu, FCIDM_SHVIEW_EXPLORE, MF_BYCOMMAND);
-            _InsertMenuItemW(hmenu, (uFlags & CMF_EXPLORE) ? 1 : 2, MF_BYPOSITION, FCIDM_SHVIEW_EXPLORE, MFT_STRING, str, MFS_ENABLED);
+
+            mi.cbSize = sizeof(mi);
+            mi.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE;
+            mi.dwTypeData = str;
+            mi.fState = MFS_ENABLED;
+            mi.wID = FCIDM_SHVIEW_EXPLORE;
+            mi.fType = MFT_STRING;
+            InsertMenuItemW(hmenu, (uFlags & CMF_EXPLORE) ? 1 : 2, MF_BYPOSITION, &mi);
         }
 
         SetMenuDefaultItem(hmenu, 0, MF_BYPOSITION);
