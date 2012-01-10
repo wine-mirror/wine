@@ -25,6 +25,7 @@
 
 #include <stdlib.h> /*setenv*/
 #include <stdio.h> /*printf*/
+#include <locale.h>
 #include <errno.h>
 
 #define _MAX__TIME64_T     (((__time64_t)0x00000007 << 32) | 0x93406FFF)
@@ -37,6 +38,7 @@
 
 static __time32_t (__cdecl *p_mkgmtime32)(struct tm*);
 static struct tm* (__cdecl *p_gmtime32)(__time32_t*);
+static struct tm* (__cdecl *p_gmtime)(time_t*);
 static errno_t    (__cdecl *p_gmtime32_s)(struct tm*, __time32_t*);
 static errno_t    (__cdecl *p_strtime_s)(char*,size_t);
 static errno_t    (__cdecl *p_strdate_s)(char*,size_t);
@@ -44,12 +46,15 @@ static errno_t    (__cdecl *p_localtime32_s)(struct tm*, __time32_t*);
 static errno_t    (__cdecl *p_localtime64_s)(struct tm*, __time64_t*);
 static int*       (__cdecl *p__daylight)(void);
 static int*       (__cdecl *p___p__daylight)(void);
+static size_t     (__cdecl *p_strftime)(char *, size_t, const char *, const struct tm *);
+static size_t     (__cdecl *p_wcsftime)(wchar_t *, size_t, const wchar_t *, const struct tm *);
 
 static void init(void)
 {
-    HMODULE hmod = GetModuleHandleA("msvcrt.dll");
+    HMODULE hmod = LoadLibrary("msvcrt.dll");
 
     p_gmtime32 = (void*)GetProcAddress(hmod, "_gmtime32");
+    p_gmtime = (void*)GetProcAddress(hmod, "gmtime");
     p_gmtime32_s = (void*)GetProcAddress(hmod, "_gmtime32_s");
     p_mkgmtime32 = (void*)GetProcAddress(hmod, "_mkgmtime32");
     p_strtime_s = (void*)GetProcAddress(hmod, "_strtime_s");
@@ -58,6 +63,8 @@ static void init(void)
     p_localtime64_s = (void*)GetProcAddress(hmod, "_localtime64_s");
     p__daylight = (void*)GetProcAddress(hmod, "__daylight");
     p___p__daylight = (void*)GetProcAddress(hmod, "__p__daylight");
+    p_strftime = (void*)GetProcAddress(hmod, "strftime");
+    p_wcsftime = (void*)GetProcAddress(hmod, "wcsftime");
 }
 
 static int get_test_year(time_t *start)
@@ -568,10 +575,48 @@ static void test_daylight(void)
     ok(ret1 && ret1 == ret2, "got %p\n", ret1);
 }
 
+static void test_strftime(void)
+{
+    static const wchar_t cW[] = { '%','c',0 };
+    static const char expected[] = "01/01/70 00:00:00";
+    time_t gmt;
+    struct tm* gmt_tm;
+    char buf[256], bufA[256];
+    WCHAR bufW[256];
+    long retA, retW;
+
+    if (!p_strftime || !p_wcsftime || !p_gmtime)
+    {
+        win_skip("strftime, wcsftime or gmtime is not available\n");
+        return;
+    }
+
+    setlocale(LC_TIME, "C");
+
+    gmt = 0;
+    gmt_tm = p_gmtime(&gmt);
+    ok(gmt_tm != NULL, "gmtime failed\n");
+
+    retA = strftime(bufA, 256, "%c", gmt_tm);
+todo_wine {
+    ok(retA == 17, "expected 17, got %ld\n", retA);
+    ok(strcmp(bufA, expected) == 0, "expected %s, got %s\n", expected, bufA);
+}
+    retW = wcsftime(bufW, 256, cW, gmt_tm);
+todo_wine
+    ok(retW == 17, "expected 17, got %ld\n", retW);
+    ok(retA == retW, "expected %ld, got %ld\n", retA, retW);
+    buf[0] = 0;
+    retA = WideCharToMultiByte(CP_ACP, 0, bufW, retW, buf, 256, NULL, NULL);
+    buf[retA] = 0;
+    ok(strcmp(bufA, buf) == 0, "expected %s, got %s\n", bufA, buf);
+}
+
 START_TEST(time)
 {
     init();
 
+    test_strftime();
     test_ctime();
     test_gmtime();
     test_mktime();
